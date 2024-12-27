@@ -1,0 +1,31 @@
+[gd_scene load_steps=3 format=3 uid="uid://cj0pjd6y6krq8"]
+
+[ext_resource type="Script" path="res://scenes/CASINO.gd" id="1_acb1p"]
+[ext_resource type="Texture2D" uid="uid://csbl6t52yg8w8" path="res://images/CasinoBGtile.png" id="1_s6syj"]
+
+[node name="Node2D" type="Node2D"]
+script = ExtResource("1_acb1p")
+
+[node name="Background" type="TextureRect" parent="."]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_right = 1155.0
+offset_bottom = 650.0
+grow_horizontal = 2
+grow_vertical = 2
+texture = ExtResource("1_s6syj")
+stretch_mode = 1
+
+[node name="ChangeSceneButton" type="Button" parent="."]
+offset_left = 15.0
+offset_top = 16.0
+offset_right = 108.0
+offset_bottom = 47.0
+text = "Go to Shop"
+
+[node name="Control" type="Control" parent="."]
+layout_mode = 3
+anchors_preset = 0
+offset_right = 40.0
+offset_bottom = 40.0

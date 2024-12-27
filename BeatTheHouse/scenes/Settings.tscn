@@ -1,0 +1,6 @@
+[gd_scene load_steps=2 format=3 uid="uid://b5y2r7764nwi2"]
+
+[ext_resource type="Script" path="res://scenes/Settings.gd" id="1_j40ir"]
+
+[node name="Settings" type="Node2D"]
+script = ExtResource("1_j40ir")
