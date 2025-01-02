@@ -1,0 +1,53 @@
+extends Node2D
+
+var suits = ["Hearts", "Diamond", "Clubs", "Spades"]
+var values = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13"]
+var deck = []
+var saved_deck = []
+
+var sprites = []
+
+var btn1
+var btn2
+
+func _ready():
+	print("started")
+	#shuffle deck
+	make_deck()
+	saved_deck = deck
+	
+	btn1 = Button.new()
+	btn1.text = "Bet"
+	btn1.position = Vector2(0, 0)  # Adjust position as needed
+	add_child(btn1)
+	btn1.connect("pressed", Callable(self, "_on_rollButton_pressed"))
+	
+
+func getRandomCard():
+	# Get a random card from the deck
+	if deck.size() == 0:
+		print("The deck is empty! shuffling.")
+		make_deck()
+	
+	# Get a random index
+	var random_index = randi() % deck.size()
+	# Get the card at the random index
+	var new_card = deck[random_index] 
+	# Remove the chosen card from the deck
+	deck.remove_at(random_index)
+	
+	return new_card
+
+
+	
+func make_deck():
+	for suit in suits:
+		for value in values:
+			var card = "%s %s" % [suit, value]
+			deck.append(card)
+	
+	
+func clear_sprites():
+	for sprite in sprites:
+		sprite.queue_free()  # This will remove the node from the scene tree and free its memory
+	sprites.clear()  # Clear the array to remove references

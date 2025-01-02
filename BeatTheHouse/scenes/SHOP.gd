@@ -5,9 +5,11 @@ extends Node2D
 var money_label
 var inventory_label
 
-var bailout_button
+var bailout_button 
+var level_button
 var change_scene_button
 var Background
+
 
 var items = ["lucky_coin", "gamer_glasses", "smoked_sausage", "bean", "charm_bracelet", "ace_up_sleeve", "free_bev"]  # Add your item names here
 var item_sprites = []  # List to store the item sprites
@@ -25,13 +27,17 @@ var settings_to_backgrounds = {
 	"alley": "res://images/BackgroundFrames/alley.gif",
 	"bar": "res://images/BackgroundFrames/bar.gif",
 	"forest": "res://images/BackgroundFrames/forest.gif",
-	"market": "res://images/BackgroundFrames/market.gif"
+	"space": "res://images/BackgroundFrames/Settings.gif",
+	#"market": "res://images/BackgroundFrames/market.gif"
 }
 
 func _ready():
-	# Initialize the shop
-	generate_shop()
-		# Display money count
+	if Money.active_shop == null:
+		print("Generating new shop")
+		Money.active_shop = generate_shop()
+	else:
+		print("Loaded existing shop:", Money.active_shop)
+
 	var tmp_label = Label.new()
 	tmp_label.name = "tmp_label"
 	tmp_label.text = shop["setting"]
@@ -61,6 +67,13 @@ func _ready():
 	bailout_button.position = Vector2(890, 600)
 	bailout_button.connect("pressed", Callable(self, "_on_BailoutButton_pressed"))
 	add_child(bailout_button)
+
+	# Add and set up the next level button
+	level_button = Button.new()
+	level_button.text = "Move to next level"
+	level_button.position = Vector2(890, 560)
+	level_button.connect("pressed", Callable(self, "_on_next_level_pressed"))
+	add_child(level_button)
 	
 	# Display money count
 	money_label = Label.new()
@@ -81,10 +94,10 @@ func _ready():
 	update_money_label()
 
 		# Set background based on the setting
-	var background_path = settings_to_backgrounds[shop["setting"]]
+	var background_path = settings_to_backgrounds.get(Money.active_shop["setting"], null)
 	set_animated_background(background_path)
 	
-	populate_shop()
+	display_shop()
 	update_inventory_display()  # Update inventory display initially
 	
 	# Connect hitbox_selected signal to a handler
@@ -92,8 +105,9 @@ func _ready():
 	
 	#set up scene specific elements:
 	
-	if shop["setting"] == "bar":
-		# drunk wireframe command
+	if Money.active_shop["setting"] == "bar":
+		print("making bar hitboxes")
+		# character wireframe command
 		tools.create_wireframe(Vector2(0, 360), Vector2(180, 200), "_on_drunk_clicked")
 		tools.create_wireframe(Vector2(560, 290), Vector2(140, 150), "_on_dice_clicked")
 		tools.create_wireframe(Vector2(860, 290), Vector2(140, 150), "_on_lady_clicked")
@@ -119,30 +133,76 @@ func sleep(seconds: float) -> void:
 	await(timer)
 	timer.queue_free()
 
+
+# Function to generate a shop structure based on predetermined settings
 func generate_shop():
+	# Define shop object
+	var shop_structure = {
+		"setting": "default",
+		"exit_price": 200,
+		"available_items": [],
+		"prices": {"lucky_coin": 70, "gamer_glasses": 70, "smoked_sausage": 20, "bean": 400, "charm_bracelet": 35, "ace_up_sleeve": 50, "free_bev": 12}
+	}
+
 	# Randomly select a setting
 	var settings = settings_to_backgrounds.keys()
-	shop["setting"] = settings[randi() % settings.size()]
+	shop_structure["setting"] = settings[randi() % settings.size()]
 
 	# Log the current setting
-	print("Current shop setting: " + shop["setting"])
+	print("Generated shop setting: " + shop_structure["setting"])
 
 	# Randomly select available items, ensuring at least 2 items are available
-	shop["available_items"] = []
+	var selected_items = []
 	var num_items = randi() % (items.size() - 1) + 2  # Ensure at least 2 items are selected
-	while shop["available_items"].size() < num_items:
+	while selected_items.size() < num_items:
 		var item = items[randi() % items.size()]
-		if item not in shop["available_items"]:
-			shop["available_items"].append(item)
+		if item not in selected_items:
+			selected_items.append(item)
 
+	shop_structure["available_items"] = selected_items
+
+	# Save the generated shop as the active shop
+	var active_shop = shop_structure
+	print("Shop structure generated and saved:", active_shop)
+	return active_shop
+
+
+func display_shop():
+	if Money.active_shop == null:
+		print("No active shop to display.")
+		return
+
+	# Set the background based on the shop's setting
+	var background_path = settings_to_backgrounds.get(Money.active_shop["setting"], null)
+	if background_path:
+		set_animated_background(background_path)
+	else:
+		print("Warning: Background not found for setting", Money.active_shop["setting"])
+
+	# Populate the shop with items
+	clear_items()
+	for i in range(Money.active_shop["available_items"].size()):
+		var position
+		if Money.active_shop["setting"] == "bar":
+			position = Vector2(i * 80 + 200, 325)
+		else:
+			position = get_random_position_in_middle()
+		add_item_to_shop(Money.active_shop["available_items"][i], position)
+
+	# Show dialogue about the shop setting
+	tools.show_dialogue(2.0, "Welcome to the " + Money.active_shop["setting"])
+	print("Shop displayed.")
+
+
+# Function to set an animated background
 func set_animated_background(background_path: String):
 	var animated_texture = tools.load_gif(background_path)
 	if animated_texture:
 		Background.texture = animated_texture
-		Background.set_size(Vector2(get_viewport().size.x, get_viewport().size.y))  # Ensure it scales to the viewport size
-		Background.rect_size = get_viewport().get_visible_rect().size  # Scales to the current viewport size
+		Background.set_size(Vector2(get_viewport().size.x, get_viewport().size.y))
 	else:
-		print("Failed to load animated texture")
+		print("Failed to load animated texture for path:", background_path)
+
 
 func populate_shop():
 	clear_items()
@@ -161,6 +221,7 @@ func get_random_position_in_middle():
 	var y = randi() % int(screen_size.y * 0.6) + int(screen_size.y * 0.2)
 	return Vector2(x, y)
 
+# Function to add an item to the shop
 func add_item_to_shop(item_name: String, position: Vector2):
 	var item = TextureButton.new()
 	item.texture_normal = load("res://images/Items/" + item_name + ".png")
@@ -170,10 +231,11 @@ func add_item_to_shop(item_name: String, position: Vector2):
 	item.connect("pressed", Callable(self, "_on_item_pressed").bind(item_name))
 	item_sprites.append(item)
 
+# Function to clear existing items in the shop
 func clear_items():
 	for item in item_sprites:
-		item.queue_free()  # This will remove the node from the scene tree and free its memory
-	item_sprites.clear()  # Clear the array to remove references
+		item.queue_free()
+	item_sprites.clear()
 
 func update_money_label():
 	# Update the money label initially
@@ -201,11 +263,23 @@ func update_inventory_display():
 		x_offset += 60  # Adjust spacing as needed
 
 func _on_ChangeSceneButton_pressed():
-	get_tree().change_scene_to_file("res://scenes/CASINO.tscn")
+	print("Attempting to change to CASINO")
+	var result = get_tree().change_scene_to_file("res://scenes/CASINO.tscn")
+	if result != OK:
+		print("Scene change failed with error code:", result)
 
 func _on_BailoutButton_pressed():
 	# Define the bailout logic here
 	Money.update_money(13)
+
+func _on_next_level_pressed():
+	if(Money.active_shop["exit_price"] < Money.money):
+		Money.update_money(-1 * Money.active_shop["exit_price"])
+		Money.active_shop = null
+		#Move to shop reset scene
+		get_tree().change_scene_to_file("res://scenes/SHOP.tscn")
+	else:
+		print("You are too broke to continue...")
 
 func _on_money_changed(new_money, new_inventory):
 	# Update the money label when the signal is received
