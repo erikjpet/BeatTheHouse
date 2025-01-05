@@ -7,6 +7,9 @@ var money_instance = null
 # Shared money count variable
 var money = 0
 var inventory = []
+var level = 0
+var active_shop = null
+var queued_shop = null
 
 # Signal for money change
 signal money_changed(new_money)
@@ -42,3 +45,4 @@ func update_inventory(item, action):
 # Function to get current money count
 func get_money():
 	return money
+
