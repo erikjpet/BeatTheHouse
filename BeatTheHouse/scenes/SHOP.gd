@@ -32,11 +32,16 @@ var settings_to_backgrounds = {
 }
 
 func _ready():
+	#generate acitve shop if none
 	if Money.active_shop == null:
-		print("Generating new shop")
+		print("Generating new active shop")
 		Money.active_shop = generate_shop()
 	else:
 		print("Loaded existing shop:", Money.active_shop)
+	#generate queued shop if none
+	if Money.queued_shop == null:
+		print("Generating new queued shop")
+		Money.queued_shop = generate_shop()
 
 	var tmp_label = Label.new()
 	tmp_label.name = "tmp_label"
@@ -70,7 +75,7 @@ func _ready():
 
 	# Add and set up the next level button
 	level_button = Button.new()
-	level_button.text = "Move to next level"
+	level_button.text = "Travel to " + str(Money.queued_shop["setting"]) + " for " + str(Money.active_shop["exit_price"])
 	level_button.position = Vector2(890, 560)
 	level_button.connect("pressed", Callable(self, "_on_next_level_pressed"))
 	add_child(level_button)
@@ -136,17 +141,24 @@ func sleep(seconds: float) -> void:
 
 # Function to generate a shop structure based on predetermined settings
 func generate_shop():
+	Money.level = Money.level + 1
 	# Define shop object
 	var shop_structure = {
-		"setting": "default",
-		"exit_price": 200,
+		"setting": null,
+		"exit_price": 50,
+		"level" : Money.level,
 		"available_items": [],
 		"prices": {"lucky_coin": 70, "gamer_glasses": 70, "smoked_sausage": 20, "bean": 400, "charm_bracelet": 35, "ace_up_sleeve": 50, "free_bev": 12}
 	}
 
 	# Randomly select a setting
 	var settings = settings_to_backgrounds.keys()
-	shop_structure["setting"] = settings[randi() % settings.size()]
+	if Money.active_shop != null:
+		while 1:
+			shop_structure["setting"] = settings[randi() % settings.size()]
+			if shop_structure["setting"] != Money.active_shop["setting"]: break
+	else:
+		shop_structure["setting"] = settings[randi() % settings.size()]
 
 	# Log the current setting
 	print("Generated shop setting: " + shop_structure["setting"])
@@ -275,7 +287,8 @@ func _on_BailoutButton_pressed():
 func _on_next_level_pressed():
 	if(Money.active_shop["exit_price"] < Money.money):
 		Money.update_money(-1 * Money.active_shop["exit_price"])
-		Money.active_shop = null
+		Money.active_shop = Money.queued_shop
+		Money.queued_shop = null
 		#Move to shop reset scene
 		get_tree().change_scene_to_file("res://scenes/SHOP.tscn")
 	else:
