@@ -12,6 +12,7 @@ var slot_machine_instance
 var pull_tabs_instance
 var blackjack_instance
 var dice_instance
+var roulette_instance
 
 func _ready():
 	# Setting background node to fill entire screen
@@ -34,6 +35,7 @@ func _ready():
 	add_tab("Pull-Tabs")
 	add_tab("Blackjack")
 	add_tab("Dice")
+	add_tab("Roulette")
 	
 	# Select the initial tab
 	select_tab(0)
@@ -73,6 +75,8 @@ func select_tab(index):
 			load_blackjack()
 		3:
 			load_dice()
+		4:
+			load_roulette()
 		_:
 			clear_current_game()
 
@@ -175,6 +179,26 @@ func load_dice():
 	else:
 		print("Error: dice.tscn could not be loaded")
 
+func load_roulette():
+	print("loading roulette")
+	# Clear previous content
+	clear_current_game()
+
+	# Preload the SlotMachine scene
+	var roulette_scene = preload("res://scenes/Roulette.tscn")
+	if roulette_scene:
+		# Instance the scene properly
+		roulette_instance = roulette_scene.instantiate()
+		if roulette_instance:
+			add_child(roulette_instance)
+
+			# Adjust the position of the slot machine instance
+			roulette_instance.position = Vector2(200, 200)  # Adjust as needed
+		else:
+			print("Error: Failed to instance roulette scene")
+	else:
+		print("Error: roulette.tscn could not be loaded")
+
 func clear_current_game():
 	if slot_machine_instance:
 		remove_child(slot_machine_instance)
@@ -192,6 +216,10 @@ func clear_current_game():
 		remove_child(dice_instance)
 		dice_instance.queue_free()
 		dice_instance = null
+	if roulette_instance:
+		remove_child(roulette_instance)
+		roulette_instance.queue_free()
+		roulette_instance = null
 
 func _on_money_changed(new_money, inventory):
 	# Update the money label when the signal is received
