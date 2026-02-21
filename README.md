@@ -1,5 +1,16 @@
 # BeatTheHouse
 
+> Legacy Godot prototype is preserved in `BeatTheHouse/`.
+> New standalone rewrite lives in `standalone_casino/` and is the path for future development.
+
+## Standalone quick start
+
+```bash
+cd standalone_casino
+python -m pip install -e .
+beat-the-house
+```
+
  Beat the House
 DESIGN DOCUMENT
 By Erik
@@ -314,7 +325,6 @@ BEYOND (if ahead of schedule / extra time)
 Settings Menu
  Coding
  Not started
-
 
 
 
