@@ -1,0 +1,92 @@
+[
+	{
+		"id": "cashier_tip",
+		"display_name": "Cashier Tip",
+		"category": "information",
+		"description": "A quiet tip about who is watching and when to move on.",
+		"cost": 4,
+		"effect": {
+			"suspicion_delta": -1,
+			"messages": ["The room feels a little easier to read."]
+		}
+	},
+	{
+		"id": "house_drink",
+		"display_name": "Buy a Drink",
+		"category": "alcohol",
+		"description": "More luck now, sharper heat after the buzz.",
+		"cost": 8,
+		"message": "You buy a quick drink. Luck lifts, but the room gets easier to read wrong.",
+		"effect": {
+			"alcohol_intake": 16,
+			"suspicion_delta": 1,
+			"messages": ["The drink warms your nerve and loosens your timing."]
+		}
+	},
+	{
+		"id": "jazz_sax_round",
+		"display_name": "Buy Sax a Round",
+		"category": "favor",
+		"description": "Maybe coax a lucky coin from the sax.",
+		"cost": 8,
+		"message": "The sax player nods over the rim and lets the solo curl around your luck.",
+		"effect": {
+			"messages": ["The sax player remembers the round."]
+		}
+	},
+	{
+		"id": "jazz_cello_round",
+		"display_name": "Buy Cello a Round",
+		"category": "favor",
+		"description": "Maybe coax a lucky coin from the cello.",
+		"cost": 8,
+		"message": "The cellist smiles into a low walking line and keeps time with your nerve.",
+		"effect": {
+			"messages": ["The cellist remembers the round."]
+		}
+	},
+	{
+		"id": "jazz_drummer_round",
+		"display_name": "Buy Drummer a Round",
+		"category": "favor",
+		"description": "Maybe coax a coin, or glasses after two full sets.",
+		"cost": 8,
+		"message": "The drummer taps the glass twice, then rolls the groove forward.",
+		"effect": {
+			"messages": ["The drummer remembers the round."]
+		}
+	},
+	{
+		"id": "jazz_band_tip_jar",
+		"display_name": "Band Tip Jar",
+		"category": "favor",
+		"description": "A cheaper tip with a chance to buy each player a round.",
+		"cost": 6,
+		"message": "You feed the band jar and let chance carry the round.",
+		"effect": {
+			"messages": ["The band notices the tip jar."]
+		}
+	},
+	{
+		"id": "listen_to_jazz",
+		"display_name": "Stay for the Set",
+		"category": "music",
+		"description": "Stay through the changes and cool the room.",
+		"cost": 0,
+		"message": "You stay through the changes and let the room swing around you.",
+		"effect": {
+			"messages": ["The band notices you stayed for the music."]
+		}
+	},
+	{
+		"id": "show_drummer_glasses",
+		"display_name": "Show Legend's Glasses",
+		"category": "security",
+		"description": "Cool all local heat once per venue.",
+		"cost": 0,
+		"message": "The glasses make people rethink what they saw.",
+		"effect": {
+			"messages": ["Local heat drops away under the drummer's name."]
+		}
+	}
+]

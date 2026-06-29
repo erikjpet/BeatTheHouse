@@ -1,0 +1,288 @@
+[
+	{
+		"id": "late_shift_discount",
+		"display_name": "Late Shift Discount",
+		"type": "opportunistic",
+		"scopes": ["shop"],
+		"asset_path": "res://assets/art/events/late_shift_discount.png",
+		"icon_key": "discount_sticker",
+		"environment_prop": "clerk_counter",
+		"start_summary": "Talk to the tired clerk.",
+		"trigger": {"type": "manual"},
+		"payload": {
+			"summary": "A tired clerk points to a dubious half-off sticker.",
+			"choices": [
+				{"id": "haggle", "label": "Haggle", "text": "You squeeze a few dollars out of the moment.", "consequences": {"bankroll_delta": 5, "suspicion_delta": 1, "resolve_event": true}},
+				{"id": "move_on", "label": "Move On", "text": "You leave the clerk alone.", "consequences": {"resolve_event": true}}
+			]
+		}
+	},
+	{
+		"id": "chatty_clerk",
+		"display_name": "Chatty Clerk",
+		"type": "social",
+		"scopes": ["shop"],
+		"asset_path": "res://assets/art/events/chatty_clerk.png",
+		"icon_key": "clerk_chat",
+		"environment_prop": "clerk_talk",
+		"start_summary": "Talk to the clerk.",
+		"trigger": {"type": "manual"},
+		"payload": {
+			"summary": "The clerk knows which low-stakes rooms are loose.",
+			"choices": [
+				{"id": "ask_routes", "label": "Ask Routes", "text": "You get a cleaner read on nearby gambling rooms.", "consequences": {"set_next_archetypes": ["bar", "gas_station_casino"], "flags": {"heard_local_tip": true}, "resolve_event": true}},
+				{"id": "keep_quiet", "label": "Keep Quiet", "text": "You avoid becoming memorable.", "consequences": {"suspicion_delta": -1, "resolve_event": true}}
+			]
+		}
+	},
+	{
+		"id": "parking_lot_tip",
+		"display_name": "Parking Lot Tip",
+		"type": "progression",
+		"scopes": ["any"],
+		"asset_path": "res://assets/art/events/parking_lot_tip.png",
+		"icon_key": "parking_note",
+		"environment_prop": "paper_note",
+		"start_summary": "Pick up the parking lot note.",
+		"trigger": {"type": "manual"},
+		"conditions": {"blocked_by_flags": ["underground_tip"]},
+		"payload": {
+			"summary": "Someone mentions cash games behind bad signage.",
+			"choices": [
+				{"id": "follow_tip", "label": "Follow Tip", "text": "A riskier route opens up.", "consequences": {"add_next_archetypes": ["small_underground_casino"], "flags": {"underground_tip": true}, "resolve_event": true}},
+				{"id": "ignore_tip", "label": "Ignore", "text": "You stick with safer routes.", "consequences": {"resolve_event": true}}
+			]
+		}
+	},
+	{
+		"id": "suspicious_patron",
+		"display_name": "Suspicious Patron",
+		"type": "social",
+		"scopes": ["any"],
+		"asset_path": "res://assets/art/events/suspicious_patron.png",
+		"icon_key": "suspicious_patron",
+		"environment_prop": "patron_talk",
+		"start_summary": "Talk down the patron.",
+		"trigger": {"type": "timed", "turns": 2},
+		"payload": {
+			"summary": "A stranger checks whether you win too often.",
+			"choices": [
+				{"id": "talk_down", "label": "Talk", "text": "You make yourself seem ordinary.", "consequences": {"suspicion_delta": -3, "resolve_event": true}},
+				{"id": "brush_off", "label": "Brush Off", "text": "They remember your face.", "consequences": {"suspicion_delta": 4, "resolve_event": true}}
+			]
+		}
+	},
+	{
+		"id": "back_alley_offer",
+		"display_name": "Back Alley Offer",
+		"type": "opportunistic",
+		"scopes": ["shop"],
+		"asset_path": "res://assets/art/events/back_alley_offer.png",
+		"icon_key": "trunk_offer",
+		"environment_prop": "trunk_offer",
+		"start_summary": "Inspect the trunk offer.",
+		"trigger": {"type": "manual"},
+		"payload": {
+			"summary": "Someone offers a dubious edge item from a trunk.",
+			"choices": [
+				{"id": "take_cash", "label": "Take Cash", "text": "You take a small finder fee instead.", "consequences": {"bankroll_delta": 8, "suspicion_delta": 2, "resolve_event": true}},
+				{"id": "walk", "label": "Walk Away", "text": "You keep your hands clean.", "consequences": {"suspicion_delta": -1, "resolve_event": true}}
+			]
+		}
+	},
+	{
+		"id": "motel_knock",
+		"display_name": "Motel Knock",
+		"type": "debt",
+		"scopes": ["shop"],
+		"asset_path": "res://assets/art/events/motel_knock.png",
+		"icon_key": "motel_knock",
+		"environment_prop": "motel_door",
+		"start_summary": "Answer the motel door.",
+		"trigger": {"type": "timed", "turns": 1},
+		"conditions": {"economy_states": ["volatile", "distressed", "insolvent"]},
+		"payload": {
+			"summary": "A motel-door knock offers cash with strings.",
+			"choices": [
+				{"id": "borrow", "label": "Borrow $35", "text": "You take emergency cash and a name you may regret.", "consequences": {"bankroll_delta": 35, "debt": {"id": "motel_cash", "lender_id": "motel_friend", "balance": 45, "status": "active"}, "resolve_event": true}},
+				{"id": "refuse", "label": "Refuse", "text": "You keep your night quiet.", "consequences": {"resolve_event": true}}
+			]
+		}
+	},
+	{
+		"id": "rowdy_regular",
+		"display_name": "Rowdy Regular",
+		"type": "social",
+		"scopes": ["casino"],
+		"asset_path": "res://assets/art/events/rowdy_regular.png",
+		"icon_key": "rowdy_regular",
+		"environment_prop": "rowdy_patron",
+		"start_summary": "Join the regular's conversation.",
+		"trigger": {"type": "manual"},
+		"payload": {
+			"summary": "A loud regular draws every eye after a bad beat.",
+			"choices": [
+				{"id": "blend_in", "label": "Blend In", "text": "You let the noise cover your next move.", "consequences": {"suspicion_delta": -2, "resolve_event": true}},
+				{"id": "needle", "label": "Needle", "text": "You bait a scene and lose subtlety.", "consequences": {"bankroll_delta": 6, "suspicion_delta": 5, "resolve_event": true}}
+			]
+		}
+	},
+	{
+		"id": "machine_jam",
+		"display_name": "Machine Jam",
+		"type": "security",
+		"scopes": ["casino"],
+		"asset_path": "res://assets/art/events/machine_jam.png",
+		"icon_key": "machine_jam",
+		"environment_prop": "jammed_machine",
+		"start_summary": "Inspect the jammed machine.",
+		"trigger": {"type": "timed", "turns": 2},
+		"payload": {
+			"summary": "A jammed machine makes an attendant watch the floor.",
+			"choices": [
+				{"id": "wait", "label": "Wait", "text": "You cool off and lose momentum.", "consequences": {"bankroll_delta": -3, "suspicion_delta": -3, "resolve_event": true}},
+				{"id": "push", "label": "Push", "text": "You keep playing through the attention.", "consequences": {"suspicion_delta": 6, "resolve_event": true}}
+			]
+		}
+	},
+	{
+		"id": "side_door",
+		"display_name": "Side Door",
+		"type": "progression",
+		"scopes": ["casino"],
+		"asset_path": "res://assets/art/events/side_door.png",
+		"icon_key": "side_door",
+		"environment_prop": "side_door",
+		"start_summary": "Check the side door.",
+		"trigger": {"type": "manual"},
+		"payload": {
+			"summary": "A side door hints at cheaper rooms and darker routes.",
+			"choices": [
+				{"id": "cheap_route", "label": "Cheap Route", "text": "You learn a safer shop stop.", "consequences": {"set_next_archetypes": ["corner_store", "motel"], "resolve_event": true}},
+				{"id": "dark_route", "label": "Dark Route", "text": "You hear about the back alley circuit.", "consequences": {"add_next_archetypes": ["back_alley"], "suspicion_delta": 2, "resolve_event": true}}
+			]
+		}
+	},
+	{
+		"id": "heat_at_exit",
+		"display_name": "Heat at the Exit",
+		"type": "security",
+		"scopes": ["casino"],
+		"asset_path": "res://assets/art/events/heat_at_exit.png",
+		"icon_key": "security_exit",
+		"environment_prop": "security_exit",
+		"start_summary": "Watch the exit.",
+		"trigger": {"type": "travel"},
+		"payload": {
+			"summary": "Security watches the exit after noisy wins.",
+			"choices": [
+				{"id": "slip_out", "label": "Slip Out", "text": "You leave carefully.", "consequences": {"suspicion_delta": -2, "resolve_event": true}},
+				{"id": "rush", "label": "Rush", "text": "You move fast and look guilty.", "consequences": {"suspicion_delta": 5, "resolve_event": true}}
+			]
+		}
+	},
+	{
+		"id": "pit_boss_sweep",
+		"display_name": "Pit Boss Sweep",
+		"type": "security",
+		"scopes": ["boss"],
+		"asset_path": "res://assets/art/events/pit_boss_sweep.png",
+		"icon_key": "pit_boss",
+		"environment_prop": "pit_boss",
+		"start_summary": "Watch the pit boss sweep.",
+		"trigger": {"type": "manual"},
+		"payload": {
+			"summary": "Pit Boss Rourke sweeps the high-limit row.",
+			"choices": [
+				{"id": "lay_low", "label": "Lay Low", "text": "You sit out and let attention pass.", "consequence_summary": "Lose $8, heat -6", "consequences": {"bankroll_delta": -8, "suspicion_delta": -6, "flags": {"grand_casino_event_pit_boss_sweep_lay_low": true, "grand_casino_attention_pit_boss_sweep": false}, "resolve_event": true}},
+				{"id": "act_natural", "label": "Act Natural", "text": "You keep moving chips like nothing happened.", "consequence_summary": "Heat +4", "consequences": {"suspicion_delta": 4, "flags": {"grand_casino_event_pit_boss_sweep_act_natural": true, "grand_casino_attention_pit_boss_sweep": true}, "resolve_event": true}}
+			]
+		}
+	},
+	{
+		"id": "comped_suite_offer",
+		"display_name": "Comped Suite Offer",
+		"type": "social",
+		"scopes": ["boss"],
+		"asset_path": "res://assets/art/events/comped_suite_offer.png",
+		"icon_key": "casino_host",
+		"environment_prop": "casino_host",
+		"start_summary": "Talk to the casino host.",
+		"trigger": {"type": "manual"},
+		"payload": {
+			"summary": "A casino host offers a drink and a sharper table.",
+			"choices": [
+				{"id": "take_comp", "label": "Take Comp", "text": "You take the drink and become more memorable.", "consequence_summary": "Bankroll +10, drink +8, heat +5", "consequences": {"bankroll_delta": 10, "alcohol_intake": 8, "suspicion_delta": 5, "flags": {"grand_casino_event_comped_suite_offer_take_comp": true, "grand_casino_attention_host": true}, "resolve_event": true}},
+				{"id": "decline", "label": "Decline", "text": "You keep distance from the host.", "consequence_summary": "Heat -2", "consequences": {"suspicion_delta": -2, "flags": {"grand_casino_event_comped_suite_offer_decline": true, "grand_casino_attention_host": false}, "resolve_event": true}}
+			]
+		}
+	},
+	{
+		"id": "eye_in_the_sky",
+		"display_name": "Eye in the Sky",
+		"type": "security",
+		"scopes": ["boss"],
+		"asset_path": "res://assets/art/events/eye_in_the_sky.png",
+		"icon_key": "security_camera",
+		"environment_prop": "security_camera",
+		"start_summary": "Track the camera operator.",
+		"trigger": {"type": "timed", "turns": 2},
+		"payload": {
+			"summary": "A camera operator keeps returning to your table.",
+			"choices": [
+				{"id": "change_table", "label": "Change Table", "text": "You pay for a reset and drift to another game.", "consequence_summary": "Lose $5, heat -8", "consequences": {"bankroll_delta": -5, "suspicion_delta": -8, "flags": {"grand_casino_event_eye_in_the_sky_change_table": true, "grand_casino_attention_eye_in_the_sky": false}, "resolve_event": true}},
+				{"id": "press_anyway", "label": "Press Anyway", "text": "You press the streak while watched.", "consequence_summary": "Bankroll +15, heat +14", "consequences": {"bankroll_delta": 15, "suspicion_delta": 14, "flags": {"grand_casino_event_eye_in_the_sky_press_anyway": true, "grand_casino_attention_eye_in_the_sky": true}, "resolve_event": true}}
+			]
+		}
+	},
+	{
+		"id": "high_roller_cashout",
+		"display_name": "Players Card Review",
+		"type": "landmark",
+		"scopes": ["boss"],
+		"asset_path": "res://assets/art/events/comped_suite_offer.png",
+		"icon_key": "casino_host",
+		"environment_prop": "casino_host",
+		"start_summary": "Claim the Players Card.",
+		"trigger": {"type": "manual"},
+		"conditions": {"requires_flags": {"high_roller_cashout_pending": true}},
+		"payload": {
+			"kind": "grand_casino_high_roller_cashout",
+			"summary": "The host prepares your Grand Casino Players Card.",
+			"success_message": "The host issues you a Grand Casino Players Card and lets you leave with your winnings. The next act is not implemented yet.",
+			"choices": [
+				{"id": "high_roller_cashout", "label": "Claim Card", "text": "You accept the Players Card and leave before the floor changes its mind.", "consequence_summary": "Win the demo clean"},
+				{"id": "wait", "label": "Wait", "text": "You stay on the floor instead of claiming the card.", "consequence_summary": "Keep playing"}
+			]
+		}
+	},
+	{
+		"id": "the_house_calls",
+		"display_name": "The House Calls",
+		"type": "landmark",
+		"scopes": ["boss"],
+		"asset_path": "res://assets/art/events/pit_boss_sweep.png",
+		"icon_key": "pit_boss_call",
+		"environment_prop": "pit_boss",
+		"start_summary": "Answer Rourke's back-room call.",
+		"trigger": {"type": "manual"},
+		"conditions": {"requires_flags": {"the_house_calls_pending": true}},
+		"payload": {
+			"kind": "grand_casino_showdown",
+			"summary": "Rourke takes you off the floor and waits for one clean answer.",
+			"success_message": "Rourke cannot prove enough to hold you. The casino lets you walk with your winnings; the next act is not implemented yet.",
+			"failure_message": "The story falls apart in the back room. The casino takes you out back and the run ends.",
+			"showdown_tuning": {
+				"base_success_chance": 58,
+				"min_success_chance": 5,
+				"max_success_chance": 95
+			},
+			"choices": [
+				{"id": "enter_back_room", "label": "Enter Back Room", "text": "You follow Rourke off the floor and take the chair across from him.", "consequence_summary": "Showdown starts"},
+				{"id": "hold_steady", "label": "Hold Steady", "text": "You keep the story simple and let the record speak.", "consequence_summary": "Clean play helps if the floor has no proof"},
+				{"id": "talk_down", "label": "Talk Down", "text": "You frame the win as comps, manners, and lucky timing.", "consequence_summary": "A modest social edge"},
+				{"id": "take_the_edge", "label": "Take Edge", "text": "You try one last hidden edge under Rourke's stare.", "consequence_summary": "High upside, creates watched evidence"}
+			]
+		}
+	}
+]

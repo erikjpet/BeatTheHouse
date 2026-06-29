@@ -1,0 +1,2608 @@
+class_name RunState
+extends RefCounted
+
+# Source of truth for one active run in the foundation path.
+
+const DEFAULT_BANKROLL := 100
+const LOCAL_RISK_DECAY_BY_DISTANCE := {
+	"same": 0,
+	"near": 12,
+	"local": 35,
+	"far": 85,
+	"remote": 95,
+}
+const LOCAL_HEAT_RETURN_DECAY_PERCENT := 10
+const LOCAL_RISK_TURN_DECAY_INTERVAL := 2
+const ALCOHOL_MAX := 100
+const DRUNK_ABSORPTION_INTERVAL_MSEC := 3000
+const DRUNK_ABSORPTION_STACK_GRACE_MSEC := 250
+const BASELINE_LUCK_MIN := -20
+const BASELINE_LUCK_MAX := 20
+const EFFECTIVE_LUCK_MIN := -8
+const EFFECTIVE_LUCK_MAX := 8
+const DRUNK_TURN_DECAY := 3
+const DRUNK_TRAVEL_DECAY_BY_DISTANCE := {
+	"same": 0,
+	"near": 8,
+	"local": 14,
+	"far": 28,
+	"remote": 38,
+}
+const RUN_STATUS_ACTIVE := "active"
+const RUN_STATUS_DISTRESSED := "distressed"
+const RUN_STATUS_FAILED := "failed"
+const RUN_STATUS_ENDED := "ended"
+const FAILURE_NONE := ""
+const FAILURE_BANKROLL_ZERO := "bankroll_zero"
+const FAILURE_STRANDED := "stranded"
+const FAILURE_POLICE_CAPTURE := "police_capture"
+const FAILURE_CASINO_TAKEN_OUT_BACK := "casino_taken_out_back"
+const FAILURE_ABANDONED := "abandoned"
+const BANKROLL_ZERO_FAILURE_MESSAGE := "You are out of money. The run is over."
+const STRANDED_FAILURE_MESSAGE := "No valid stake, route, sale, lender, or cash event remains. The run is over."
+const POLICE_CAPTURE_FAILURE_MESSAGE := "Police flood the room and catch you before you can slip away. The run is over."
+const CASINO_TAKEN_OUT_BACK_FAILURE_MESSAGE := "The casino takes you out back. The run is over."
+const ABANDONED_FAILURE_MESSAGE := "You walk away from the table. The run is over."
+const GRAND_CASINO_ARCHETYPE_ID := "grand_casino"
+const GRAND_CASINO_OBJECTIVE_ID := "grand_casino_demo_bankroll"
+const GRAND_CASINO_SHOWDOWN_EVENT_ID := "the_house_calls"
+const GRAND_CASINO_HIGH_ROLLER_EVENT_ID := "high_roller_cashout"
+const GRAND_CASINO_STATE_PRE := "pre-grand"
+const GRAND_CASINO_STATE_INCOMPLETE := "grand-incomplete"
+const GRAND_CASINO_STATE_HIGH_ROLLER_READY := "high-roller-ready"
+const GRAND_CASINO_STATE_SHOWDOWN_PENDING := "showdown-pending"
+const GRAND_CASINO_STATE_SHOWDOWN_ACTIVE := "showdown-active"
+const GRAND_CASINO_STATE_VICTORY := "victory"
+const GRAND_CASINO_STATE_FAILURE := "failure"
+const GRAND_CASINO_SHOWDOWN_ROUTE := "pit_boss_showdown"
+const GRAND_CASINO_SHOWDOWN_STEP_PRESSURE := "pressure_choice"
+const GRAND_CASINO_SHOWDOWN_DEFAULT_SUCCESS_MESSAGE := "Rourke cannot prove enough to hold you. The casino lets you walk with your winnings; the next act is not implemented yet."
+const GRAND_CASINO_SHOWDOWN_DEFAULT_FAILURE_MESSAGE := "The story falls apart in the back room. The casino takes you out back and the run ends."
+const GRAND_CASINO_HIGH_ROLLER_DEFAULT_SUCCESS_MESSAGE := "The host issues you a Grand Casino Players Card and lets you leave with your winnings. The next act is not implemented yet."
+
+var seed_text: String = ""
+var seed_value: int = 1
+var rng_seed: int = 1
+var rng_state: int = 1
+var challenge_config: Dictionary = {}
+var bankroll: int = DEFAULT_BANKROLL
+var economic_state: String = "stable"
+var inventory: Array = []
+var active_item_id: String = ""
+var debt: Array = []
+var suspicion: Dictionary = {}
+var baseline_luck: int = 0
+var drunk_level: int = 0
+var alcoholic_level: int = 0
+var pending_drunk_absorption: Array = []
+var current_environment: Dictionary = {}
+var environment_history: Array = []
+var unlocked_travel: Array = []
+var narrative_flags: Dictionary = {}
+var story_log: Array = []
+var run_status: String = RUN_STATUS_ACTIVE
+var run_failure_reason: String = FAILURE_NONE
+var run_failure_message: String = ""
+
+
+# Resets the run from a seed and optional challenge.
+func start_new(p_seed_text: String = "FOUNDATION-SEED", p_challenge_config: Dictionary = {}) -> void:
+	challenge_config = normalize_challenge(p_seed_text, p_challenge_config)
+	seed_text = str(challenge_config.get("seed_text", "FOUNDATION-SEED"))
+	seed_value = text_to_seed(challenge_key(challenge_config))
+	rng_seed = seed_value
+	rng_state = seed_value
+	bankroll = DEFAULT_BANKROLL
+	economic_state = "stable"
+	inventory = []
+	active_item_id = ""
+	debt = []
+	suspicion = {
+		"level": 0,
+		"cues": [],
+		"local_levels": {},
+	}
+	baseline_luck = 0
+	drunk_level = 0
+	alcoholic_level = 0
+	pending_drunk_absorption = []
+	current_environment = {}
+	environment_history = []
+	unlocked_travel = []
+	narrative_flags = {}
+	story_log = []
+	run_status = RUN_STATUS_ACTIVE
+	run_failure_reason = FAILURE_NONE
+	run_failure_message = ""
+
+
+# Creates an RNG stream from the saved run RNG state.
+func create_rng(stream_key: String = "") -> RngStream:
+	var rng := RngStream.new()
+	rng.configure(rng_seed, rng_state)
+	if not stream_key.is_empty():
+		return rng.fork(stream_key)
+	return rng
+
+
+# Saves an RNG stream back into the run.
+func save_rng(rng: RngStream) -> void:
+	if rng == null:
+		return
+	rng_seed = rng.seed_value
+	rng_state = rng.state_value
+
+
+# Sets the current environment and records the previous one.
+func set_environment(environment_data: Dictionary) -> void:
+	var previous_was_grand_casino := _is_grand_casino_environment(current_environment)
+	if not current_environment.is_empty():
+		_store_current_local_suspicion()
+		environment_history.append(current_environment.duplicate(true))
+	current_environment = _normalize_environment(environment_data)
+	var next_environment := current_environment
+	unlocked_travel = _copy_array(next_environment.get("travel_hooks", []))
+	_activate_current_local_suspicion(false)
+	if previous_was_grand_casino and not _is_grand_casino_environment(current_environment):
+		_clear_grand_casino_clean_cashout_ready()
+	_initialize_grand_casino_objective_runtime()
+	_evaluate_immediate_terminal_state()
+
+
+# Changes bankroll and refreshes economy state.
+func change_bankroll(delta: int, defer_bankroll_zero: bool = false) -> void:
+	bankroll += delta
+	_refresh_economy(defer_bankroll_zero)
+
+
+# Changes suspicion and records a behavior cue.
+func add_suspicion(cue_id: String, amount: int, visibility: String = "behavior", revealed_meter: bool = false, context: Dictionary = {}, defer_bankroll_zero: bool = false) -> int:
+	var location_id := _suspicion_location_id_from_context(context)
+	var current_location_id := current_suspicion_location_id()
+	var levels := _local_suspicion_levels()
+	var base_level := suspicion_level()
+	if not location_id.is_empty():
+		base_level = int(levels.get(location_id, base_level if location_id == current_location_id or current_location_id.is_empty() else 0))
+	var adjusted_amount := alcohol_adjusted_suspicion_delta(amount)
+	var level := clampi(base_level + adjusted_amount, 0, 100)
+	var applied_amount := level - base_level
+	if location_id.is_empty():
+		suspicion["level"] = level
+	elif location_id == current_location_id or current_location_id.is_empty():
+		levels[location_id] = level
+		suspicion["local_levels"] = levels
+		suspicion["level"] = level
+	else:
+		levels[location_id] = level
+		suspicion["local_levels"] = levels
+	var cues: Array = suspicion.get("cues", [])
+	cues.append({
+		"id": cue_id,
+		"amount": applied_amount,
+		"base_amount": amount,
+		"alcohol_heat_multiplier": alcohol_heat_multiplier() if amount > 0 else 1.0,
+		"visibility": visibility,
+		"revealed_meter": revealed_meter,
+		"context": context.duplicate(true),
+	})
+	suspicion["cues"] = cues
+	_evaluate_immediate_terminal_state(defer_bankroll_zero)
+	return applied_amount
+
+
+# Returns current suspicion as a bounded behavior pressure value.
+func suspicion_level() -> int:
+	return clampi(int(suspicion.get("level", 0)), 0, 100)
+
+
+# Returns the local heat key for a generated or explicit environment id.
+func suspicion_location_id_for_environment_id(environment_id: String) -> String:
+	return _suspicion_location_id_from_context({"environment_id": environment_id})
+
+
+# Returns remembered heat for a specific environment without changing focus.
+func suspicion_level_for_environment_id(environment_id: String) -> int:
+	var location_id := suspicion_location_id_for_environment_id(environment_id)
+	if location_id.is_empty():
+		return suspicion_level()
+	var levels := _local_suspicion_levels()
+	if levels.has(location_id):
+		return clampi(int(levels.get(location_id, 0)), 0, 100)
+	if location_id == current_suspicion_location_id():
+		return suspicion_level()
+	return 0
+
+
+# Names the room's security posture without making the raw meter the primary UI.
+func security_pressure_label() -> String:
+	var level := suspicion_level()
+	if level >= 85:
+		return "security is ready to shut this down"
+	if level >= 65:
+		return "security is squeezing every risky move"
+	if level >= 50:
+		return "heat is closing in"
+	if level >= 25:
+		return "the room is watching"
+	if level >= 10:
+		return "people are noticing"
+	if level > 0:
+		return "a little attention is on you"
+	return "quiet"
+
+
+# Explains the current security posture in player-facing consequence language.
+func security_pressure_summary() -> String:
+	var label := security_pressure_label()
+	if label == "quiet":
+		return "The room feels quiet for now."
+	if suspicion_level() >= 85:
+		return "%s; one more risky move can end the run." % label.capitalize()
+	if suspicion_level() >= 65:
+		return "%s; risky moves now bring shakedown costs." % label.capitalize()
+	return "%s; risky moves draw more heat." % label.capitalize()
+
+
+# Raises both the temporary drunk meter and long-term alcohol need.
+func drink_alcohol(amount: int) -> void:
+	amount = maxi(0, amount)
+	if amount <= 0:
+		return
+	_queue_drunk_absorption(amount)
+	change_alcoholic(amount)
+
+
+# Changes the temporary drunk meter.
+func change_drunk(delta: int) -> void:
+	if delta == 0:
+		return
+	if delta < 0 and has_pending_drunk_absorption():
+		return
+	drunk_level = clampi(drunk_level + delta, 0, ALCOHOL_MAX)
+
+
+# Applies delayed drink absorption at one drunk point per drink every interval.
+func update_drunk_absorption(now_msec: int = -1) -> Dictionary:
+	if pending_drunk_absorption.is_empty():
+		return {
+			"applied": 0,
+			"pending": 0,
+			"active": false,
+		}
+	if now_msec < 0:
+		now_msec = _alcohol_now_msec()
+	var applied := 0
+	var next_queue: Array = []
+	for entry_value in pending_drunk_absorption:
+		if typeof(entry_value) != TYPE_DICTIONARY:
+			continue
+		var entry: Dictionary = (entry_value as Dictionary).duplicate(true)
+		var remaining := maxi(0, int(entry.get("remaining", 0)))
+		var interval := maxi(1, int(entry.get("interval_msec", DRUNK_ABSORPTION_INTERVAL_MSEC)))
+		var next_msec := int(entry.get("next_msec", now_msec + interval))
+		if remaining <= 0:
+			continue
+		while remaining > 0 and drunk_level < ALCOHOL_MAX and now_msec >= next_msec:
+			drunk_level = clampi(drunk_level + 1, 0, ALCOHOL_MAX)
+			remaining -= 1
+			applied += 1
+			next_msec += interval
+		if remaining > 0 and drunk_level < ALCOHOL_MAX:
+			entry["remaining"] = remaining
+			entry["next_msec"] = next_msec
+			entry["interval_msec"] = interval
+			next_queue.append(entry)
+	pending_drunk_absorption = next_queue
+	return {
+		"applied": applied,
+		"pending": pending_drunk_absorption_amount(),
+		"active": has_pending_drunk_absorption(),
+	}
+
+
+# Returns whether any drink effect is still ramping into the drunk meter.
+func has_pending_drunk_absorption() -> bool:
+	return pending_drunk_absorption_amount() > 0
+
+
+# Returns the remaining drunk-meter value queued from drinks.
+func pending_drunk_absorption_amount() -> int:
+	var total := 0
+	for entry_value in pending_drunk_absorption:
+		if typeof(entry_value) != TYPE_DICTIONARY:
+			continue
+		total += maxi(0, int((entry_value as Dictionary).get("remaining", 0)))
+	return total
+
+
+func _queue_drunk_absorption(amount: int) -> void:
+	var capacity := maxi(0, ALCOHOL_MAX - drunk_level - pending_drunk_absorption_amount())
+	var queued := mini(maxi(0, amount), capacity)
+	if queued <= 0:
+		return
+	var now_msec := _alcohol_now_msec()
+	var next_msec := now_msec + DRUNK_ABSORPTION_INTERVAL_MSEC
+	for entry_value in pending_drunk_absorption:
+		if typeof(entry_value) != TYPE_DICTIONARY:
+			continue
+		var entry: Dictionary = entry_value as Dictionary
+		var queued_msec := int(entry.get("queued_msec", 0))
+		if queued_msec > 0 and now_msec - queued_msec <= DRUNK_ABSORPTION_STACK_GRACE_MSEC:
+			next_msec = int(entry.get("next_msec", next_msec))
+			break
+	pending_drunk_absorption.append({
+		"remaining": queued,
+		"interval_msec": DRUNK_ABSORPTION_INTERVAL_MSEC,
+		"next_msec": next_msec,
+		"queued_msec": now_msec,
+	})
+
+
+# Changes the persistent alcohol need meter.
+func change_alcoholic(delta: int) -> void:
+	if delta == 0:
+		return
+	alcoholic_level = clampi(alcoholic_level + delta, 0, ALCOHOL_MAX)
+
+
+# Changes baseline luck before drunk/dependency modifiers are applied.
+func change_baseline_luck(delta: int) -> void:
+	if delta == 0:
+		return
+	baseline_luck = clampi(baseline_luck + delta, BASELINE_LUCK_MIN, BASELINE_LUCK_MAX)
+
+
+# Returns the total luck modifier currently affecting game odds and small payouts.
+func effective_luck() -> int:
+	var gap := maxi(0, alcoholic_level - drunk_level)
+	return clampi(
+		baseline_luck + _drunk_luck_bonus() - _alcohol_dependency_penalty(gap),
+		EFFECTIVE_LUCK_MIN,
+		EFFECTIVE_LUCK_MAX
+	)
+
+
+# Returns the chance modifier games should apply to outcome rolls.
+func luck_win_chance_bonus() -> int:
+	return effective_luck()
+
+
+# Returns a small payout adjustment from luck without letting luck dominate stakes.
+func luck_payout_bonus(stake: int, won: bool = true) -> int:
+	if not won or stake <= 0:
+		return 0
+	var luck := effective_luck()
+	if luck == 0:
+		return 0
+	return int(round(float(stake) * float(luck) * 0.03))
+
+
+# Scales positive heat while drunk or in alcohol debt.
+func alcohol_adjusted_suspicion_delta(amount: int) -> int:
+	if amount == 0:
+		return 0
+	if amount > 0:
+		return maxi(1, int(ceil(float(amount) * alcohol_heat_multiplier())))
+	if drunk_level >= 70:
+		return -maxi(1, int(round(float(abs(amount)) * 0.80)))
+	return amount
+
+
+# Returns how much more noticeable risky behavior is under alcohol pressure.
+func alcohol_heat_multiplier() -> float:
+	var multiplier := 1.0
+	if drunk_level >= 85:
+		multiplier += 0.42
+	elif drunk_level >= 65:
+		multiplier += 0.30
+	elif drunk_level >= 45:
+		multiplier += 0.20
+	elif drunk_level >= 30:
+		multiplier += 0.14
+	elif drunk_level >= 12:
+		multiplier += 0.08
+	var dependency_gap := maxi(0, alcoholic_level - drunk_level)
+	if dependency_gap >= 60:
+		multiplier += 0.15
+	elif dependency_gap >= 30:
+		multiplier += 0.10
+	return multiplier
+
+
+# Names the current alcohol condition without making the raw meter mandatory.
+func alcohol_condition_label() -> String:
+	if drunk_level <= 0 and alcoholic_level > 0:
+		return "dry"
+	if drunk_level <= 10:
+		return "sober"
+	if drunk_level <= 25:
+		return "warm"
+	if drunk_level <= 45:
+		return "buzzed"
+	if drunk_level <= 70:
+		return "drunk"
+	return "sloppy"
+
+
+# Explains the current alcohol/luck tradeoff in compact player-facing language.
+func alcohol_pressure_summary() -> String:
+	var luck := effective_luck()
+	var luck_text := "luck %+d" % luck if luck != 0 else "luck steady"
+	var pending := pending_drunk_absorption_amount()
+	if pending > 0:
+		return "%s; drink still kicking in +%d, %s." % [alcohol_condition_label().capitalize(), pending, luck_text]
+	if alcoholic_level > drunk_level:
+		return "%s; need outpaces drink, %s." % [alcohol_condition_label().capitalize(), luck_text]
+	if drunk_level > 0:
+		return "%s; %s, heat rises faster." % [alcohol_condition_label().capitalize(), luck_text]
+	return "Sober; %s." % luck_text
+
+
+# Adds pressure to risky/cheat choices when suspicion is already elevated.
+func security_risk_bonus(action_kind: String = "cheat") -> int:
+	if action_kind != "cheat" and action_kind != "risky" and action_kind != "advantage":
+		return 0
+	var level := suspicion_level()
+	if level >= 85:
+		return 10
+	if level >= 65:
+		return 7
+	if level >= 50:
+		return 5
+	if level >= 25:
+		return 2
+	if level >= 10:
+		return 1
+	return 0
+
+
+# Returns the extra consequence applied when a risky action pushes heat high.
+func security_action_pressure(action_kind: String, stake: int, projected_level: int = -1) -> Dictionary:
+	if action_kind != "cheat" and action_kind != "risky" and action_kind != "advantage":
+		return {
+			"bankroll_delta": 0,
+			"ended": false,
+			"message": "",
+		}
+	var level := clampi(projected_level if projected_level >= 0 else suspicion_level(), 0, 100)
+	var safe_stake := maxi(1, stake)
+	if level >= 100:
+		if _is_grand_casino_environment(current_environment):
+			return {
+				"bankroll_delta": 0,
+				"ended": false,
+				"message": "Rourke's crew closes in; the back room is coming.",
+			}
+		var shutdown_cost := -mini(maxi(10, safe_stake), maxi(bankroll, 0))
+		return {
+			"bankroll_delta": shutdown_cost,
+			"ended": true,
+			"message": "Police lights slam across the room; the run ends in cuffs.",
+		}
+	if level >= 85:
+		var crackdown_cost := -mini(maxi(8, safe_stake), maxi(bankroll, 0))
+		return {
+			"bankroll_delta": crackdown_cost,
+			"ended": false,
+			"message": "Security leans in hard and forces a costly exit.",
+		}
+	if level >= 65:
+		var half_stake := maxi(1, int(ceil(float(safe_stake) / 2.0)))
+		var shakedown_cost := -mini(maxi(3, half_stake), maxi(bankroll, 0))
+		return {
+			"bankroll_delta": shakedown_cost,
+			"ended": false,
+			"message": "Security pressure adds a shakedown cost.",
+		}
+	return {
+		"bankroll_delta": 0,
+		"ended": false,
+		"message": "",
+	}
+
+
+# Evaluates a prestige target using current run state without mutating the run.
+func prestige_purchase_status(definition: Dictionary) -> Dictionary:
+	var cost := maxi(0, int(definition.get("cost", 0)))
+	var requirements := _copy_dict(definition.get("requirements", {}))
+	var bankroll_min := maxi(cost, int(requirements.get("bankroll_min", cost)))
+	var max_heat := clampi(int(requirements.get("max_heat", 100)), 0, 100)
+	var environment_count_min := maxi(0, int(requirements.get("environment_count_min", 0)))
+	var available := true
+	var reasons: Array = []
+	if bankroll < bankroll_min:
+		available = false
+		reasons.append("Needs bankroll %d." % bankroll_min)
+	if suspicion_level() > max_heat:
+		available = false
+		reasons.append("Heat must be %d or lower." % max_heat)
+	var visited_environment_count := environment_history.size() + (0 if current_environment.is_empty() else 1)
+	if visited_environment_count < environment_count_min:
+		available = false
+		var remaining := environment_count_min - visited_environment_count
+		reasons.append("Visit %d more place%s." % [remaining, "" if remaining == 1 else "s"])
+	var required_flags := _copy_dict(requirements.get("flags", requirements.get("required_flags", {})))
+	for flag_key in required_flags.keys():
+		var expected: Variant = required_flags[flag_key]
+		if narrative_flags.get(str(flag_key), null) != expected:
+			available = false
+			reasons.append("Another clue is still missing.")
+			break
+	var reason := "Ready." if available else " ".join(reasons)
+	return {
+		"available": available,
+		"disabled_reason": reason,
+		"cost": cost,
+		"bankroll_min": bankroll_min,
+		"max_heat": max_heat,
+		"environment_count_min": environment_count_min,
+	}
+
+
+# Returns whether Grand Casino heat is high enough to route away from police capture.
+func grand_casino_heat_reroute_available() -> bool:
+	if run_status == RUN_STATUS_ENDED or run_status == RUN_STATUS_FAILED:
+		return false
+	if not _is_grand_casino_environment(current_environment):
+		return false
+	var status := demo_objective_status()
+	if not bool(status.get("grand_casino_objective", false)):
+		return false
+	if bool(status.get("showdown_pending", false)) or bool(status.get("showdown_active", false)):
+		return true
+	return bool(status.get("heat_route_ready", false)) or bool(status.get("dirty_money_showdown_ready", false))
+
+
+# Queues the Grand Casino back-room showdown when heat has crossed its route threshold.
+func handle_grand_casino_heat_reroute(trigger_context: String = "") -> bool:
+	if run_status == RUN_STATUS_ENDED or run_status == RUN_STATUS_FAILED:
+		return false
+	if not _is_grand_casino_environment(current_environment):
+		return false
+	var status := demo_objective_status()
+	if not bool(status.get("grand_casino_objective", false)):
+		return false
+	if bool(status.get("showdown_pending", false)) or bool(status.get("showdown_active", false)):
+		return true
+	if not bool(status.get("heat_route_ready", false)) and not bool(status.get("dirty_money_showdown_ready", false)):
+		return false
+	_evaluate_grand_casino_objective_state(status)
+	if not trigger_context.strip_edges().is_empty():
+		narrative_flags["grand_casino_heat_reroute_context"] = trigger_context
+	var next_status := demo_objective_status()
+	return bool(next_status.get("showdown_pending", false)) or bool(next_status.get("showdown_active", false))
+
+
+# Returns the staff attention state that can route Grand Casino heat to Rourke.
+func grand_casino_staff_attention_status(environment: Dictionary = {}, forced_heat_threshold: int = 95) -> Dictionary:
+	var source := environment if not environment.is_empty() else current_environment
+	if not _is_grand_casino_environment(source):
+		return {
+			"active": false,
+			"sources": [],
+			"watch": {"active": false},
+			"summary": "",
+		}
+	var sources: Array = []
+	var watch_status := pit_boss_watch_status(source)
+	if bool(watch_status.get("active", false)) and bool(watch_status.get("watched", false)):
+		sources.append("rourke_watch")
+	if bool(narrative_flags.get("grand_casino_watched_cheat_evidence", false)) or bool(narrative_flags.get("grand_casino_attention_watched_cheat", false)):
+		_append_unique_string(sources, "watched_cheat")
+	if bool(narrative_flags.get("grand_casino_attention_pit_boss_sweep", false)):
+		_append_unique_string(sources, "pit_boss_sweep")
+	if bool(narrative_flags.get("grand_casino_attention_eye_in_the_sky", false)):
+		_append_unique_string(sources, "eye_in_the_sky")
+	for event_source in _grand_casino_active_security_event_sources(source):
+		_append_unique_string(sources, str(event_source))
+	if bool(narrative_flags.get("grand_casino_attention_watched_risky", false)):
+		_append_unique_string(sources, "watched_risky")
+	if bool(narrative_flags.get("grand_casino_attention_host", false)):
+		_append_unique_string(sources, "host")
+	if bool(narrative_flags.get("grand_casino_attention_high_roller_review", false)):
+		_append_unique_string(sources, "high_roller_review")
+	if bool(narrative_flags.get("grand_casino_attention_forced_heat", false)) or suspicion_level() >= forced_heat_threshold:
+		_append_unique_string(sources, "forced_heat")
+	var source_labels := {
+		"rourke_watch": "Rourke watching",
+		"watched_cheat": "watched edge",
+		"pit_boss_sweep": "pit sweep",
+		"eye_in_the_sky": "camera review",
+		"watched_risky": "watched risky play",
+		"host": "host attention",
+		"high_roller_review": "Players Card review",
+		"forced_heat": "heat spike",
+	}
+	var label_parts: Array = []
+	for source_id in sources:
+		label_parts.append(str(source_labels.get(str(source_id), str(source_id).replace("_", " "))))
+	var summary := "No staff attention."
+	if not label_parts.is_empty():
+		summary = "Staff attention: %s." % ", ".join(label_parts)
+	return {
+		"active": not sources.is_empty(),
+		"sources": sources,
+		"watch": watch_status,
+		"summary": summary,
+	}
+
+
+# Returns the active environment objective without changing the run.
+func demo_objective_status(environment: Dictionary = {}) -> Dictionary:
+	var source := environment if not environment.is_empty() else current_environment
+	var objective := _copy_dict(source.get("demo_objective", {}))
+	if objective.is_empty():
+		return {"active": false}
+	if _is_grand_casino_objective(objective):
+		return _grand_casino_demo_objective_status(source, objective)
+	var objective_type := str(objective.get("type", "")).strip_edges()
+	var target_bankroll := maxi(0, int(objective.get("target_bankroll", 0)))
+	var remaining := maxi(0, target_bankroll - bankroll)
+	var complete := false
+	match objective_type:
+		"bankroll_target":
+			complete = bankroll >= target_bankroll
+		_:
+			complete = false
+	var title := str(objective.get("title", "Beat the house"))
+	var summary := str(objective.get("summary", "Reach the objective."))
+	var victory_message := str(objective.get("victory_message", "Demo Victory: you beat the house for now."))
+	var finale_event_id := str(objective.get("finale_event_id", "")).strip_edges()
+	var finale_required := not finale_event_id.is_empty()
+	var finale_pending := finale_required and bool(narrative_flags.get("demo_finale_pending", false)) and str(narrative_flags.get("demo_finale_event_id", "")) == finale_event_id
+	return {
+		"active": true,
+		"id": str(objective.get("id", "")),
+		"type": objective_type,
+		"title": title,
+		"summary": summary,
+		"target_bankroll": target_bankroll,
+		"current_bankroll": bankroll,
+		"remaining_bankroll": remaining,
+		"complete": complete,
+		"victory_message": victory_message,
+		"finale_required": finale_required,
+		"finale_event_id": finale_event_id,
+		"finale_pending": finale_pending,
+	}
+
+
+# Completes a data-authored environment objective when its condition is met.
+func evaluate_environment_objective_state() -> Dictionary:
+	var status := demo_objective_status()
+	if not bool(status.get("active", false)):
+		return status
+	if run_status == RUN_STATUS_ENDED or run_status == RUN_STATUS_FAILED:
+		return status
+	if bool(status.get("grand_casino_objective", false)):
+		_evaluate_grand_casino_objective_state(status)
+		return demo_objective_status()
+	if not bool(status.get("complete", false)):
+		return status
+	var objective := _copy_dict(current_environment.get("demo_objective", {}))
+	var finale_event_id := str(objective.get("finale_event_id", "")).strip_edges()
+	if not finale_event_id.is_empty():
+		var required_kind := str(objective.get("finale_requires_kind", "")).strip_edges()
+		if not required_kind.is_empty() and str(current_environment.get("kind", "")) != required_kind:
+			return status
+		if bool(objective.get("finale_requires_watched", false)):
+			var watch_status := pit_boss_watch_status(current_environment)
+			if not bool(watch_status.get("active", false)) or not bool(watch_status.get("watched", false)):
+				narrative_flags["demo_finale_ready"] = true
+				narrative_flags["demo_finale_event_id"] = finale_event_id
+				return demo_objective_status()
+		_trigger_demo_finale(status, objective)
+		return demo_objective_status()
+	_complete_demo_objective(status)
+	return demo_objective_status()
+
+
+# Records one settled Grand Casino game result for Players Card objective progress.
+func record_grand_casino_game_result(result: Dictionary) -> void:
+	if result.is_empty() or not bool(result.get("ok", false)):
+		return
+	if not _is_grand_casino_environment(current_environment):
+		return
+	if str(result.get("game_id", "")).strip_edges().is_empty():
+		return
+	_initialize_grand_casino_objective_runtime()
+	var entry_bankroll := int(narrative_flags.get("grand_casino_entry_bankroll", bankroll))
+	narrative_flags["grand_casino_net_winnings"] = bankroll - entry_bankroll
+	narrative_flags["grand_casino_max_heat"] = maxi(
+		int(narrative_flags.get("grand_casino_max_heat", 0)),
+		suspicion_level()
+	)
+	var action_kind := str(result.get("action_kind", ""))
+	var watch_status := pit_boss_watch_status(current_environment)
+	var watched_or_bonused := (
+		(bool(watch_status.get("active", false)) and bool(watch_status.get("watched", false)))
+		or _grand_casino_result_pit_boss_heat_bonus(result) > 0
+	)
+	if (action_kind == "cheat" or action_kind == "risky" or action_kind == "advantage") and watched_or_bonused:
+		narrative_flags["grand_casino_attention_watched_risky"] = true
+	if action_kind == "cheat":
+		narrative_flags["grand_casino_open_cheat_actions"] = maxi(0, int(narrative_flags.get("grand_casino_open_cheat_actions", 0))) + 1
+		narrative_flags["grand_casino_cheat_evidence"] = true
+		if watched_or_bonused:
+			narrative_flags["grand_casino_watched_cheat_evidence"] = true
+			narrative_flags["grand_casino_attention_watched_cheat"] = true
+	if not _grand_casino_result_has_wager(result):
+		return
+	var games_played := maxi(0, int(narrative_flags.get("grand_casino_games_played", 0))) + 1
+	narrative_flags["grand_casino_games_played"] = games_played
+
+
+func _grand_casino_demo_objective_status(source: Dictionary, objective: Dictionary) -> Dictionary:
+	if not _is_grand_casino_environment(source):
+		return {
+			"active": false,
+			"id": str(objective.get("id", "")),
+			"grand_casino_objective": false,
+		}
+	var config := _grand_casino_objective_config(objective)
+	var target_bankroll := int(config.get("high_roller_target_bankroll", 0))
+	var entry_bankroll := int(narrative_flags.get("grand_casino_entry_bankroll", bankroll))
+	var net_winnings := bankroll - entry_bankroll
+	var required_net := int(config.get("high_roller_net_winnings", 0))
+	var games_played := maxi(0, int(narrative_flags.get("grand_casino_games_played", 0)))
+	var min_games := int(config.get("high_roller_min_grand_casino_games", 0))
+	var max_heat := int(config.get("high_roller_max_heat", 100))
+	var current_heat := suspicion_level()
+	var max_visit_heat := maxi(current_heat, int(narrative_flags.get("grand_casino_max_heat", current_heat)))
+	var showdown_threshold := int(config.get("showdown_heat_threshold", 70))
+	var forced_threshold := int(config.get("forced_showdown_heat_threshold", 95))
+	var staff_attention := grand_casino_staff_attention_status(source, forced_threshold)
+	var staff_sources := _copy_array(staff_attention.get("sources", []))
+	var cheat_evidence := bool(narrative_flags.get("grand_casino_cheat_evidence", false))
+	var watched_cheat_evidence := bool(narrative_flags.get("grand_casino_watched_cheat_evidence", false))
+	var money_target_met := net_winnings >= required_net
+	if required_net <= 0 and target_bankroll > 0:
+		money_target_met = bankroll >= target_bankroll
+	var game_target_met := games_played >= min_games
+	var heat_clean := max_visit_heat <= max_heat
+	var high_roller_ready := money_target_met and game_target_met and heat_clean and not cheat_evidence and not watched_cheat_evidence
+	var high_roller_pending := bool(narrative_flags.get("high_roller_cashout_pending", false))
+	var showdown_event_id := str(config.get("showdown_event_id", GRAND_CASINO_SHOWDOWN_EVENT_ID))
+	var high_roller_event_id := str(config.get("high_roller_event_id", GRAND_CASINO_HIGH_ROLLER_EVENT_ID))
+	var showdown_pending := bool(narrative_flags.get("grand_casino_showdown_pending", false))
+	showdown_pending = showdown_pending or (
+		bool(narrative_flags.get("demo_finale_pending", false))
+		and str(narrative_flags.get("demo_finale_event_id", "")) == showdown_event_id
+	)
+	var showdown_active := bool(narrative_flags.get("grand_casino_showdown_active", false))
+	var staff_attention_active := bool(staff_attention.get("active", false))
+	var heat_route_ready := (current_heat >= showdown_threshold and staff_attention_active) or current_heat >= forced_threshold
+	var dirty_money_showdown_ready := money_target_met and (cheat_evidence or watched_cheat_evidence or max_visit_heat > max_heat)
+	var objective_state := _grand_casino_derived_state(source, high_roller_ready or high_roller_pending, showdown_pending, showdown_active)
+	var complete := bool(narrative_flags.get("demo_victory", false))
+	var remaining_bankroll := maxi(0, target_bankroll - bankroll)
+	var remaining_net := maxi(0, required_net - net_winnings)
+	var remaining_games := maxi(0, min_games - games_played)
+	var summary := _grand_casino_objective_summary(
+		high_roller_ready or high_roller_pending,
+		showdown_pending or showdown_active,
+		heat_route_ready,
+		dirty_money_showdown_ready,
+		money_target_met,
+		game_target_met,
+		target_bankroll,
+		required_net,
+		remaining_games
+	)
+	return {
+		"active": true,
+		"id": str(objective.get("id", "")),
+		"type": str(objective.get("type", "")),
+		"title": str(objective.get("title", "Beat the Grand Casino")),
+		"summary": summary,
+		"authored_summary": str(objective.get("summary", "")),
+		"target_bankroll": target_bankroll,
+		"current_bankroll": bankroll,
+		"remaining_bankroll": remaining_bankroll,
+		"complete": complete,
+		"victory_message": str(objective.get("victory_message", "Demo Victory: you beat the Grand Casino floor.")),
+		"finale_required": true,
+		"finale_event_id": showdown_event_id,
+		"finale_pending": showdown_pending,
+		"grand_casino_objective": true,
+		"objective_state": objective_state,
+		"grand_casino_entry_bankroll": entry_bankroll,
+		"grand_casino_net_winnings": net_winnings,
+		"grand_casino_open_cheat_actions": maxi(0, int(narrative_flags.get("grand_casino_open_cheat_actions", 0))),
+		"high_roller_target_bankroll": target_bankroll,
+		"high_roller_net_winnings": required_net,
+		"high_roller_remaining_net_winnings": remaining_net,
+		"high_roller_min_grand_casino_games": min_games,
+		"grand_casino_games_played": games_played,
+		"high_roller_remaining_games": remaining_games,
+		"high_roller_max_heat": max_heat,
+		"current_heat": current_heat,
+		"grand_casino_max_heat": max_visit_heat,
+		"high_roller_ready": high_roller_ready or high_roller_pending,
+		"high_roller_cashout_pending": high_roller_pending,
+		"high_roller_event_id": high_roller_event_id,
+		"players_card_ready": high_roller_ready or high_roller_pending,
+		"players_card_event_id": high_roller_event_id,
+		"players_card_required_net_winnings": required_net,
+		"players_card_remaining_net_winnings": remaining_net,
+		"cheat_evidence": cheat_evidence,
+		"watched_cheat_evidence": watched_cheat_evidence,
+		"showdown_heat_threshold": showdown_threshold,
+		"forced_showdown_heat_threshold": forced_threshold,
+		"showdown_event_id": showdown_event_id,
+		"showdown_pending": showdown_pending,
+		"showdown_active": showdown_active,
+		"showdown_ready": heat_route_ready or dirty_money_showdown_ready,
+		"heat_route_ready": heat_route_ready,
+		"dirty_money_showdown_ready": dirty_money_showdown_ready,
+		"staff_attention": staff_attention,
+		"staff_attention_active": staff_attention_active,
+		"staff_attention_sources": staff_sources,
+		"pit_boss_watch": _copy_dict(staff_attention.get("watch", {})),
+		"goal_text": summary,
+		"lanes": {
+			"clean": {
+				"route": GRAND_CASINO_HIGH_ROLLER_EVENT_ID,
+				"label": "players_card",
+				"event_id": high_roller_event_id,
+				"ready": high_roller_ready or high_roller_pending,
+				"pending": high_roller_pending,
+				"target_bankroll": target_bankroll,
+				"net_winnings": required_net,
+				"players_card_required_net_winnings": required_net,
+				"min_games": min_games,
+				"max_heat": max_heat,
+			},
+			"heat": {
+				"route": "pit_boss_showdown",
+				"event_id": showdown_event_id,
+				"ready": heat_route_ready or dirty_money_showdown_ready,
+				"pending": showdown_pending,
+				"heat_threshold": showdown_threshold,
+				"forced_heat_threshold": forced_threshold,
+				"staff_attention": staff_attention_active,
+			},
+		},
+	}
+
+
+func _evaluate_grand_casino_objective_state(status: Dictionary) -> void:
+	if not _is_grand_casino_environment(current_environment):
+		return
+	_initialize_grand_casino_objective_runtime()
+	if bool(status.get("showdown_pending", false)) or bool(status.get("showdown_active", false)):
+		return
+	if bool(status.get("dirty_money_showdown_ready", false)):
+		_trigger_grand_casino_showdown(status, "dirty_money")
+		return
+	if bool(status.get("heat_route_ready", false)):
+		var forced_threshold := int(status.get("forced_showdown_heat_threshold", 95))
+		var trigger_reason := "forced_heat" if suspicion_level() >= forced_threshold else "heat_attention"
+		_trigger_grand_casino_showdown(status, trigger_reason)
+		return
+	if bool(status.get("high_roller_ready", false)):
+		_set_grand_casino_high_roller_ready(status)
+
+
+func _set_grand_casino_high_roller_ready(status: Dictionary) -> void:
+	var high_roller_event_id := str(status.get("high_roller_event_id", GRAND_CASINO_HIGH_ROLLER_EVENT_ID)).strip_edges()
+	if high_roller_event_id.is_empty():
+		high_roller_event_id = GRAND_CASINO_HIGH_ROLLER_EVENT_ID
+	narrative_flags["grand_casino_endgame_state"] = GRAND_CASINO_STATE_HIGH_ROLLER_READY
+	narrative_flags["grand_casino_high_roller_ready"] = true
+	narrative_flags["high_roller_cashout_pending"] = true
+	narrative_flags["grand_casino_showdown_pending"] = false
+	narrative_flags["demo_objective_id"] = str(status.get("id", GRAND_CASINO_OBJECTIVE_ID))
+	narrative_flags["grand_casino_net_winnings"] = int(status.get("grand_casino_net_winnings", 0))
+	_ensure_current_event_id(high_roller_event_id)
+	if not _story_log_has_type("grand_casino_high_roller_ready", high_roller_event_id):
+		log_story({
+			"type": "grand_casino_high_roller_ready",
+			"event_id": high_roller_event_id,
+			"objective_id": str(status.get("id", GRAND_CASINO_OBJECTIVE_ID)),
+			"environment_id": str(current_environment.get("id", "")),
+			"environment_archetype_id": str(current_environment.get("archetype_id", "")),
+			"bankroll": bankroll,
+			"target_bankroll": int(status.get("high_roller_target_bankroll", status.get("target_bankroll", 0))),
+			"net_winnings": int(status.get("grand_casino_net_winnings", 0)),
+			"message": "The casino host is ready to issue the Players Card.",
+		})
+
+
+func complete_grand_casino_high_roller_cashout(config: Dictionary = {}) -> Dictionary:
+	if run_status == RUN_STATUS_ENDED or run_status == RUN_STATUS_FAILED:
+		return {"ok": false, "message": "The run is already over."}
+	if not _is_grand_casino_environment(current_environment):
+		return {"ok": false, "message": "The Players Card desk is only available in the Grand Casino."}
+	var status := demo_objective_status()
+	if not bool(status.get("grand_casino_objective", false)):
+		return {"ok": false, "message": "The Players Card is not available here."}
+	if bool(status.get("showdown_pending", false)) or bool(status.get("showdown_active", false)):
+		return {"ok": false, "message": "Rourke's call has priority now."}
+	if not bool(status.get("high_roller_ready", false)) and not bool(narrative_flags.get("high_roller_cashout_pending", false)):
+		evaluate_environment_objective_state()
+		status = demo_objective_status()
+	if not bool(status.get("high_roller_ready", false)) and not bool(narrative_flags.get("high_roller_cashout_pending", false)):
+		return {"ok": false, "message": "The host is not ready to issue the Players Card yet."}
+	var high_roller_event_id := str(status.get("high_roller_event_id", GRAND_CASINO_HIGH_ROLLER_EVENT_ID)).strip_edges()
+	if high_roller_event_id.is_empty():
+		high_roller_event_id = GRAND_CASINO_HIGH_ROLLER_EVENT_ID
+	var message := str(config.get("success_message", GRAND_CASINO_HIGH_ROLLER_DEFAULT_SUCCESS_MESSAGE)).strip_edges()
+	if message.is_empty():
+		message = GRAND_CASINO_HIGH_ROLLER_DEFAULT_SUCCESS_MESSAGE
+	_clear_grand_casino_clean_cashout_ready()
+	narrative_flags["grand_casino_endgame_state"] = GRAND_CASINO_STATE_VICTORY
+	var victory_status := status.duplicate(true)
+	victory_status["victory_message"] = message
+	_complete_demo_objective(victory_status, message, {
+		"finale_event_id": high_roller_event_id,
+		"finale_branch": GRAND_CASINO_HIGH_ROLLER_EVENT_ID,
+		"demo_victory_route": GRAND_CASINO_HIGH_ROLLER_EVENT_ID,
+	})
+	_log_demo_finale_result(high_roller_event_id, GRAND_CASINO_HIGH_ROLLER_EVENT_ID, message, true)
+	return {"ok": true, "success": true, "message": message, "status": demo_objective_status()}
+
+
+func _trigger_grand_casino_showdown(status: Dictionary, trigger_reason: String) -> void:
+	var showdown_event_id := str(status.get("showdown_event_id", GRAND_CASINO_SHOWDOWN_EVENT_ID))
+	if showdown_event_id.is_empty():
+		showdown_event_id = GRAND_CASINO_SHOWDOWN_EVENT_ID
+	if trigger_reason == "dirty_money":
+		narrative_flags["grand_casino_attention_high_roller_review"] = true
+	elif trigger_reason == "forced_heat":
+		narrative_flags["grand_casino_attention_forced_heat"] = true
+	var sources := _copy_array(status.get("staff_attention_sources", []))
+	if trigger_reason == "dirty_money":
+		_append_unique_string(sources, "high_roller_review")
+	elif trigger_reason == "forced_heat":
+		_append_unique_string(sources, "forced_heat")
+	narrative_flags["grand_casino_staff_attention_sources"] = sources
+	narrative_flags["grand_casino_staff_attention"] = not sources.is_empty()
+	narrative_flags["grand_casino_endgame_state"] = GRAND_CASINO_STATE_SHOWDOWN_PENDING
+	narrative_flags["grand_casino_showdown_pending"] = true
+	narrative_flags["grand_casino_showdown_trigger_reason"] = trigger_reason
+	narrative_flags["grand_casino_high_roller_ready"] = false
+	narrative_flags["high_roller_cashout_pending"] = false
+	_log_grand_casino_heat_reroute(showdown_event_id, trigger_reason, sources)
+	var objective := _copy_dict(current_environment.get("demo_objective", {}))
+	objective["finale_event_id"] = showdown_event_id
+	objective["finale_trigger_message"] = "Rourke calls you to the back room."
+	_trigger_demo_finale(status, objective)
+
+
+func _log_grand_casino_heat_reroute(showdown_event_id: String, trigger_reason: String, sources: Array) -> void:
+	if _story_log_has_type("grand_casino_heat_reroute", showdown_event_id):
+		return
+	var message := "Rourke calls you to the back room."
+	if trigger_reason == "forced_heat":
+		message = "A heat spike puts Rourke's crew on you."
+	elif trigger_reason == "heat_attention":
+		message = "Staff attention turns your heat into Rourke's call."
+	elif trigger_reason == "dirty_money":
+		message = "The Players Card review sends the win to Rourke."
+	log_story({
+		"type": "grand_casino_heat_reroute",
+		"event_id": showdown_event_id,
+		"trigger_reason": trigger_reason,
+		"attention_sources": sources.duplicate(true),
+		"environment_id": str(current_environment.get("id", "")),
+		"environment_archetype_id": str(current_environment.get("archetype_id", "")),
+		"heat": suspicion_level(),
+		"message": message,
+	})
+
+
+# Returns the current back-room showdown state and check preview.
+func grand_casino_showdown_status(config: Dictionary = {}, preview_choice_id: String = "") -> Dictionary:
+	var choice_id := preview_choice_id.strip_edges()
+	if choice_id.is_empty():
+		choice_id = str(narrative_flags.get("grand_casino_showdown_pressure_choice", "hold_steady"))
+	var check := _grand_casino_showdown_check(choice_id, config)
+	return {
+		"event_id": GRAND_CASINO_SHOWDOWN_EVENT_ID,
+		"pending": bool(narrative_flags.get("grand_casino_showdown_pending", false)),
+		"active": bool(narrative_flags.get("grand_casino_showdown_active", false)),
+		"step": str(narrative_flags.get("grand_casino_showdown_step", "")),
+		"attempt": maxi(0, int(narrative_flags.get("grand_casino_showdown_attempt", 0))),
+		"trigger_reason": str(narrative_flags.get("grand_casino_showdown_trigger_reason", "")),
+		"pressure_choice": str(narrative_flags.get("grand_casino_showdown_pressure_choice", "")),
+		"preview_choice": choice_id,
+		"check": check,
+	}
+
+
+# Starts the saveable back-room beat without resolving the final check.
+func start_grand_casino_showdown(config: Dictionary = {}) -> Dictionary:
+	if run_status == RUN_STATUS_ENDED or run_status == RUN_STATUS_FAILED:
+		return {"ok": false, "message": "The run is already over."}
+	if not _is_grand_casino_environment(current_environment):
+		return {"ok": false, "message": "Rourke is not here."}
+	if not bool(narrative_flags.get("grand_casino_showdown_pending", false)) and not bool(narrative_flags.get("the_house_calls_pending", false)) and not bool(narrative_flags.get("grand_casino_showdown_active", false)):
+		return {"ok": false, "message": "Rourke has not called yet."}
+	_initialize_grand_casino_objective_runtime()
+	if bool(narrative_flags.get("grand_casino_showdown_active", false)):
+		return {"ok": true, "message": "Rourke waits in the back room.", "status": grand_casino_showdown_status(config)}
+	var status := demo_objective_status()
+	var attempt := maxi(0, int(narrative_flags.get("grand_casino_showdown_attempt", 0))) + 1
+	var sources := _copy_array(status.get("staff_attention_sources", narrative_flags.get("grand_casino_staff_attention_sources", [])))
+	var trigger_reason := str(narrative_flags.get("grand_casino_showdown_trigger_reason", "")).strip_edges()
+	if trigger_reason.is_empty():
+		trigger_reason = "manual_event_resume"
+	narrative_flags["grand_casino_showdown_attempt"] = attempt
+	narrative_flags["grand_casino_showdown_start_heat"] = suspicion_level()
+	narrative_flags["grand_casino_showdown_attention_sources"] = sources
+	narrative_flags["grand_casino_showdown_trigger_reason"] = trigger_reason
+	narrative_flags["grand_casino_showdown_pending"] = false
+	narrative_flags["grand_casino_showdown_active"] = true
+	narrative_flags["grand_casino_showdown_step"] = GRAND_CASINO_SHOWDOWN_STEP_PRESSURE
+	narrative_flags["grand_casino_endgame_state"] = GRAND_CASINO_STATE_SHOWDOWN_ACTIVE
+	narrative_flags["grand_casino_high_roller_ready"] = false
+	narrative_flags["high_roller_cashout_pending"] = false
+	narrative_flags["demo_finale_ready"] = true
+	narrative_flags["demo_finale_pending"] = true
+	narrative_flags["demo_finale_event_id"] = GRAND_CASINO_SHOWDOWN_EVENT_ID
+	narrative_flags["the_house_calls_pending"] = true
+	narrative_flags.erase("grand_casino_showdown_pressure_choice")
+	narrative_flags.erase("grand_casino_showdown_roll")
+	narrative_flags.erase("grand_casino_showdown_success_chance")
+	narrative_flags.erase("grand_casino_showdown_margin")
+	narrative_flags.erase("grand_casino_showdown_success")
+	log_story({
+		"type": "grand_casino_showdown_arrival",
+		"event_id": GRAND_CASINO_SHOWDOWN_EVENT_ID,
+		"attempt": attempt,
+		"trigger_reason": trigger_reason,
+		"attention_sources": sources.duplicate(true),
+		"heat": suspicion_level(),
+		"environment_id": str(current_environment.get("id", "")),
+		"environment_archetype_id": str(current_environment.get("archetype_id", "")),
+		"message": "Rourke takes you to the back room.",
+	})
+	return {
+		"ok": true,
+		"message": "Rourke takes you to the back room and asks for one clean answer.",
+		"status": grand_casino_showdown_status(config),
+	}
+
+
+# Resolves the deterministic final back-room check and applies the terminal result.
+func resolve_grand_casino_showdown_pressure(choice_id: String, config: Dictionary = {}) -> Dictionary:
+	var pressure_choice := choice_id.strip_edges()
+	if not ["hold_steady", "talk_down", "take_the_edge"].has(pressure_choice):
+		return {"ok": false, "message": "That answer is not available."}
+	if not bool(narrative_flags.get("grand_casino_showdown_active", false)):
+		var start_status := start_grand_casino_showdown(config)
+		if not bool(start_status.get("ok", false)):
+			return start_status
+	narrative_flags["grand_casino_showdown_pressure_choice"] = pressure_choice
+	if pressure_choice == "take_the_edge":
+		narrative_flags["grand_casino_showdown_edge_taken"] = true
+		narrative_flags["grand_casino_cheat_evidence"] = true
+		narrative_flags["grand_casino_watched_cheat_evidence"] = true
+		narrative_flags["grand_casino_attention_watched_cheat"] = true
+	var check := _grand_casino_showdown_check(pressure_choice, config)
+	var success := bool(check.get("success", false))
+	narrative_flags["grand_casino_showdown_roll"] = int(check.get("roll", 0))
+	narrative_flags["grand_casino_showdown_success_chance"] = int(check.get("success_chance", 0))
+	narrative_flags["grand_casino_showdown_margin"] = int(check.get("margin", 0))
+	narrative_flags["grand_casino_showdown_success"] = success
+	narrative_flags["grand_casino_showdown_modifiers"] = _copy_dict(check.get("modifiers", {}))
+	var success_message := str(config.get("success_message", GRAND_CASINO_SHOWDOWN_DEFAULT_SUCCESS_MESSAGE)).strip_edges()
+	if success_message.is_empty():
+		success_message = GRAND_CASINO_SHOWDOWN_DEFAULT_SUCCESS_MESSAGE
+	var failure_message := str(config.get("failure_message", GRAND_CASINO_SHOWDOWN_DEFAULT_FAILURE_MESSAGE)).strip_edges()
+	if failure_message.is_empty():
+		failure_message = GRAND_CASINO_SHOWDOWN_DEFAULT_FAILURE_MESSAGE
+	if success:
+		_complete_grand_casino_showdown_success(success_message)
+		return {"ok": true, "success": true, "message": success_message, "check": check}
+	_complete_grand_casino_showdown_failure(failure_message)
+	return {"ok": true, "success": false, "message": failure_message, "check": check}
+
+
+# Applies the finale branch emitted by the landmark event or future duel surface.
+func apply_demo_finale_result(finale_data: Dictionary) -> Dictionary:
+	if finale_data.is_empty():
+		return demo_objective_status()
+	var event_id := str(finale_data.get("event_id", narrative_flags.get("demo_finale_event_id", ""))).strip_edges()
+	var branch := str(finale_data.get("branch", finale_data.get("outcome", ""))).strip_edges()
+	var status := demo_objective_status()
+	var default_message := str(status.get("victory_message", "Demo Victory: you beat the house for now."))
+	var message := str(finale_data.get("message", default_message)).strip_edges()
+	if message.is_empty():
+		message = default_message
+	match branch:
+		"win", "win_clean", "win_uncaught":
+			_clear_demo_finale_pending(event_id)
+			_complete_demo_objective(status, message, {
+				"finale_event_id": event_id,
+				"finale_branch": branch,
+			})
+		"caught", "caught_cheating":
+			_clear_demo_finale_pending(event_id)
+			narrative_flags["demo_finale_caught"] = true
+			narrative_flags["demo_finale_last_branch"] = branch
+			fail_run(FAILURE_POLICE_CAPTURE, message if not message.is_empty() else POLICE_CAPTURE_FAILURE_MESSAGE)
+			_log_demo_finale_result(event_id, branch, message, true)
+		"lose", "lose_duel":
+			narrative_flags["demo_finale_last_branch"] = branch
+			narrative_flags["demo_finale_pending"] = bankroll > 0
+			if not event_id.is_empty():
+				narrative_flags["demo_finale_event_id"] = event_id
+				narrative_flags["%s_pending" % event_id] = bankroll > 0
+				_ensure_current_event_id(event_id)
+			if bankroll <= 0:
+				_clear_demo_finale_pending(event_id)
+				fail_run(FAILURE_BANKROLL_ZERO, BANKROLL_ZERO_FAILURE_MESSAGE)
+				_log_demo_finale_result(event_id, branch, BANKROLL_ZERO_FAILURE_MESSAGE, true)
+			else:
+				_log_demo_finale_result(event_id, branch, message, false)
+		_:
+			_log_demo_finale_result(event_id, "unknown", message, false)
+	return demo_objective_status()
+
+
+func _complete_grand_casino_showdown_success(message: String) -> void:
+	_clear_grand_casino_showdown_terminal_flags()
+	narrative_flags["grand_casino_endgame_state"] = GRAND_CASINO_STATE_VICTORY
+	var status := demo_objective_status()
+	if not bool(status.get("grand_casino_objective", false)):
+		status = {
+			"id": GRAND_CASINO_OBJECTIVE_ID,
+			"target_bankroll": bankroll,
+			"victory_message": message,
+		}
+	_complete_demo_objective(status, message, {
+		"finale_event_id": GRAND_CASINO_SHOWDOWN_EVENT_ID,
+		"finale_branch": GRAND_CASINO_SHOWDOWN_ROUTE,
+		"demo_victory_route": GRAND_CASINO_SHOWDOWN_ROUTE,
+	})
+	_log_demo_finale_result(GRAND_CASINO_SHOWDOWN_EVENT_ID, GRAND_CASINO_SHOWDOWN_ROUTE, message, true)
+
+
+func _complete_grand_casino_showdown_failure(message: String) -> void:
+	_clear_grand_casino_showdown_terminal_flags()
+	narrative_flags["grand_casino_endgame_state"] = GRAND_CASINO_STATE_FAILURE
+	narrative_flags["demo_finale_last_branch"] = FAILURE_CASINO_TAKEN_OUT_BACK
+	fail_run(FAILURE_CASINO_TAKEN_OUT_BACK, message)
+	_log_demo_finale_result(GRAND_CASINO_SHOWDOWN_EVENT_ID, FAILURE_CASINO_TAKEN_OUT_BACK, message, true)
+
+
+func _clear_grand_casino_showdown_terminal_flags() -> void:
+	_clear_demo_finale_pending(GRAND_CASINO_SHOWDOWN_EVENT_ID)
+	narrative_flags["grand_casino_showdown_pending"] = false
+	narrative_flags["grand_casino_showdown_active"] = false
+	narrative_flags["grand_casino_high_roller_ready"] = false
+	narrative_flags["high_roller_cashout_pending"] = false
+
+
+func _clear_grand_casino_clean_cashout_ready() -> void:
+	narrative_flags["grand_casino_high_roller_ready"] = false
+	narrative_flags["high_roller_cashout_pending"] = false
+	narrative_flags["%s_pending" % GRAND_CASINO_HIGH_ROLLER_EVENT_ID] = false
+	if not bool(narrative_flags.get("grand_casino_showdown_pending", false)) and not bool(narrative_flags.get("grand_casino_showdown_active", false)):
+		if run_status == RUN_STATUS_ACTIVE or run_status == RUN_STATUS_DISTRESSED:
+			narrative_flags["grand_casino_endgame_state"] = GRAND_CASINO_STATE_PRE
+
+
+func _grand_casino_showdown_check(choice_id: String, config: Dictionary = {}) -> Dictionary:
+	var attempt := maxi(1, int(narrative_flags.get("grand_casino_showdown_attempt", 1)))
+	var roll := int(narrative_flags.get("grand_casino_showdown_roll", 0))
+	if roll <= 0:
+		var showdown_rng := create_rng("grand_casino_showdown").fork("attempt:%d" % attempt)
+		roll = showdown_rng.randi_range(1, 100)
+	var tuning := _grand_casino_showdown_tuning(config)
+	var modifiers := _grand_casino_showdown_modifier_breakdown(choice_id)
+	var success_chance := clampi(
+		int(tuning.get("base_success_chance", 58))
+		+ int(modifiers.get("pressure_choice_modifier", 0))
+		+ int(modifiers.get("clean_play_modifier", 0))
+		+ int(modifiers.get("item_modifier", 0))
+		+ int(modifiers.get("prior_boss_event_modifier", 0))
+		- int(modifiers.get("heat_penalty", 0))
+		- int(modifiers.get("evidence_penalty", 0))
+		- int(modifiers.get("alcohol_debt_penalty", 0)),
+		int(tuning.get("min_success_chance", 5)),
+		int(tuning.get("max_success_chance", 95))
+	)
+	var margin := success_chance - roll
+	return {
+		"choice_id": choice_id,
+		"attempt": attempt,
+		"roll": roll,
+		"success_chance": success_chance,
+		"margin": margin,
+		"success": roll <= success_chance,
+		"modifiers": modifiers,
+	}
+
+
+func _grand_casino_showdown_tuning(config: Dictionary) -> Dictionary:
+	var min_chance := clampi(int(config.get("min_success_chance", config.get("showdown_min_success_chance", 5))), 0, 100)
+	var max_chance := clampi(int(config.get("max_success_chance", config.get("showdown_max_success_chance", 95))), 0, 100)
+	if max_chance < min_chance:
+		var previous_min := min_chance
+		min_chance = max_chance
+		max_chance = previous_min
+	var base_chance := clampi(int(config.get("base_success_chance", config.get("showdown_base_success_chance", 58))), min_chance, max_chance)
+	return {
+		"base_success_chance": base_chance,
+		"min_success_chance": min_chance,
+		"max_success_chance": max_chance,
+	}
+
+
+func _grand_casino_showdown_modifier_breakdown(choice_id: String) -> Dictionary:
+	var pressure_choice := choice_id.strip_edges()
+	var effective_cheat_evidence := bool(narrative_flags.get("grand_casino_cheat_evidence", false))
+	var effective_watched_evidence := bool(narrative_flags.get("grand_casino_watched_cheat_evidence", false))
+	if pressure_choice == "take_the_edge":
+		effective_cheat_evidence = true
+		effective_watched_evidence = true
+	var pressure_modifier := 0
+	match pressure_choice:
+		"hold_steady":
+			pressure_modifier = -4 if effective_cheat_evidence or effective_watched_evidence else 8
+		"talk_down":
+			pressure_modifier = 4
+		"take_the_edge":
+			pressure_modifier = 16
+		_:
+			pressure_modifier = 0
+	var max_heat := 100
+	var status := demo_objective_status()
+	if bool(status.get("grand_casino_objective", false)):
+		max_heat = int(status.get("high_roller_max_heat", 100))
+	var heat_penalty := clampi(int(floor(float(maxi(0, suspicion_level() - max_heat)) / 5.0)) * 2, 0, 28)
+	var evidence_penalty := 20 if effective_watched_evidence else 10 if effective_cheat_evidence else 0
+	var clean_play_modifier := 0
+	if not effective_cheat_evidence and not effective_watched_evidence:
+		clean_play_modifier = 10 if suspicion_level() <= max_heat else 4
+	var item_modifier := _grand_casino_showdown_item_modifier(effective_cheat_evidence or effective_watched_evidence)
+	var alcohol_debt_penalty := _grand_casino_showdown_alcohol_debt_penalty()
+	var prior_modifier := _grand_casino_showdown_prior_boss_modifier()
+	return {
+		"pressure_choice_modifier": pressure_modifier,
+		"clean_play_modifier": clean_play_modifier,
+		"item_modifier": item_modifier,
+		"prior_boss_event_modifier": prior_modifier,
+		"heat_penalty": heat_penalty,
+		"evidence_penalty": evidence_penalty,
+		"alcohol_debt_penalty": alcohol_debt_penalty,
+	}
+
+
+func _grand_casino_showdown_item_modifier(has_cheat_evidence: bool) -> int:
+	var raw_modifier := 0
+	if inventory.has("cheap_sunglasses"):
+		raw_modifier += 4
+	if inventory.has("card_counters_notes") and not has_cheat_evidence:
+		raw_modifier += 4
+	if inventory.has("scratch_pad") and not has_cheat_evidence:
+		raw_modifier += 2
+	if inventory.has("creased_luck_card"):
+		raw_modifier += 2
+	if inventory.has("lucky_keychain"):
+		raw_modifier += 2
+	var contraband_count := 0
+	for item_id in ["marked_cards", "foil_sleeve", "weighted_keyring"]:
+		if inventory.has(item_id):
+			contraband_count += 1
+	raw_modifier -= mini(18, contraband_count * 6)
+	var surveillance_count := 0
+	for item_id in ["xray_glasses", "tab_detector", "tarot_card"]:
+		if inventory.has(item_id) or bool(narrative_flags.get("grand_casino_used_%s" % item_id, false)):
+			surveillance_count += 1
+	raw_modifier -= mini(16, surveillance_count * 8)
+	return clampi(raw_modifier, -24, 10)
+
+
+func _grand_casino_showdown_alcohol_debt_penalty() -> int:
+	var drunk_penalty := 0
+	if drunk_level >= 71:
+		drunk_penalty = 14
+	elif drunk_level >= 46:
+		drunk_penalty = 10
+	elif drunk_level >= 26:
+		drunk_penalty = 6
+	elif drunk_level >= 11:
+		drunk_penalty = 3
+	var dependence_gap := alcoholic_level - drunk_level
+	var dependence_penalty := 0
+	if dependence_gap >= 60:
+		dependence_penalty = 8
+	elif dependence_gap >= 30:
+		dependence_penalty = 4
+	var open_debt_count := 0
+	for debt_entry in debt:
+		if typeof(debt_entry) != TYPE_DICTIONARY:
+			continue
+		var debt_data := debt_entry as Dictionary
+		var debt_status := str(debt_data.get("status", "active"))
+		if debt_status == "active" or debt_status == "overdue":
+			open_debt_count += 1
+	var debt_penalty := mini(9, open_debt_count * 3)
+	return clampi(drunk_penalty + dependence_penalty + debt_penalty, 0, 24)
+
+
+func _grand_casino_showdown_prior_boss_modifier() -> int:
+	var raw_modifier := 0
+	if bool(narrative_flags.get("grand_casino_event_pit_boss_sweep_lay_low", false)):
+		raw_modifier += 4
+	if bool(narrative_flags.get("grand_casino_event_pit_boss_sweep_act_natural", false)):
+		raw_modifier -= 3
+	if bool(narrative_flags.get("grand_casino_event_eye_in_the_sky_change_table", false)):
+		raw_modifier += 5
+	if bool(narrative_flags.get("grand_casino_event_eye_in_the_sky_press_anyway", false)):
+		raw_modifier -= 8
+	if bool(narrative_flags.get("grand_casino_event_comped_suite_offer_decline", false)):
+		raw_modifier += 3
+	if bool(narrative_flags.get("grand_casino_event_comped_suite_offer_take_comp", false)):
+		raw_modifier -= 4
+	return clampi(raw_modifier, -12, 10)
+
+
+func _complete_demo_objective(status: Dictionary, override_message: String = "", finale_context: Dictionary = {}) -> void:
+	var message := str(status.get("victory_message", "Demo Victory: you beat the house for now."))
+	if not override_message.strip_edges().is_empty():
+		message = override_message.strip_edges()
+	narrative_flags["demo_victory"] = true
+	narrative_flags["demo_objective_id"] = str(status.get("id", ""))
+	narrative_flags["demo_victory_message"] = message
+	if not finale_context.is_empty():
+		for key in finale_context.keys():
+			narrative_flags[str(key)] = finale_context[key]
+		narrative_flags["demo_finale_completed"] = true
+	run_status = RUN_STATUS_ENDED
+	run_failure_reason = FAILURE_NONE
+	run_failure_message = ""
+	if not _story_log_has_demo_victory(str(status.get("id", ""))):
+		var story_entry := {
+			"type": "demo_victory",
+			"objective_id": str(status.get("id", "")),
+			"environment_id": str(current_environment.get("id", "")),
+			"environment_archetype_id": str(current_environment.get("archetype_id", "")),
+			"bankroll": bankroll,
+			"target_bankroll": int(status.get("target_bankroll", 0)),
+			"message": message,
+			"ended": true,
+		}
+		for key in finale_context.keys():
+			story_entry[str(key)] = finale_context[key]
+		log_story(story_entry)
+
+
+func _trigger_demo_finale(status: Dictionary, objective: Dictionary) -> void:
+	var event_id := str(objective.get("finale_event_id", "")).strip_edges()
+	if event_id.is_empty():
+		return
+	_ensure_current_event_id(event_id)
+	narrative_flags["demo_finale_ready"] = true
+	narrative_flags["demo_finale_pending"] = true
+	narrative_flags["demo_finale_event_id"] = event_id
+	narrative_flags["demo_objective_id"] = str(status.get("id", ""))
+	narrative_flags["demo_finale_target_bankroll"] = int(status.get("target_bankroll", 0))
+	narrative_flags["%s_pending" % event_id] = true
+	if not _story_log_has_type("demo_finale_triggered", event_id):
+		log_story({
+			"type": "demo_finale_triggered",
+			"event_id": event_id,
+			"objective_id": str(status.get("id", "")),
+			"environment_id": str(current_environment.get("id", "")),
+			"environment_archetype_id": str(current_environment.get("archetype_id", "")),
+			"bankroll": bankroll,
+			"target_bankroll": int(status.get("target_bankroll", 0)),
+			"message": str(objective.get("finale_trigger_message", "The House Calls.")),
+		})
+
+
+func _ensure_current_event_id(event_id: String) -> void:
+	if current_environment.is_empty() or event_id.is_empty():
+		return
+	var event_ids := _copy_array(current_environment.get("event_ids", []))
+	if not event_ids.has(event_id):
+		event_ids.append(event_id)
+	current_environment["event_ids"] = event_ids
+	current_environment["layout"] = EnvironmentInstance.ensure_generated_layout(current_environment)
+
+
+func _clear_demo_finale_pending(event_id: String) -> void:
+	narrative_flags["demo_finale_pending"] = false
+	if not event_id.is_empty():
+		narrative_flags["%s_pending" % event_id] = false
+
+
+func _log_demo_finale_result(event_id: String, branch: String, message: String, terminal: bool) -> void:
+	log_story({
+		"type": "demo_finale_result",
+		"event_id": event_id,
+		"branch": branch,
+		"environment_id": str(current_environment.get("id", "")),
+		"environment_archetype_id": str(current_environment.get("archetype_id", "")),
+		"bankroll": bankroll,
+		"suspicion_delta": 0,
+		"message": message,
+		"ended": terminal,
+	})
+
+
+# Returns current pit-boss surveillance state for boss-floor cheat pressure.
+func pit_boss_watch_status(environment: Dictionary = {}) -> Dictionary:
+	var source := environment if not environment.is_empty() else current_environment
+	var security := _copy_dict(source.get("security_profile", {}))
+	var boss := _copy_dict(security.get("pit_boss", {}))
+	if not bool(boss.get("enabled", false)):
+		return {"active": false}
+	var cycle_length := maxi(1, int(boss.get("cycle_length", 4)))
+	var watched_turns := clampi(int(boss.get("watched_turns", 2)), 0, cycle_length)
+	var phase := int(source.get("turns", 0)) % cycle_length
+	if phase < 0:
+		phase += cycle_length
+	var watched := phase < watched_turns
+	var label := str(boss.get("label", "Pit boss"))
+	var base_bonus := maxi(0, int(boss.get("cheat_heat_bonus", 25)))
+	var bonus := base_bonus if watched else 0
+	var summary := str(boss.get("watched_text", "%s is watching." % label)) if watched else str(boss.get("clear_text", "%s is turned away." % label))
+	return {
+		"active": true,
+		"label": label,
+		"watched": watched,
+		"phase": phase,
+		"cycle_length": cycle_length,
+		"watched_turns": watched_turns,
+		"cheat_heat_bonus": bonus,
+		"base_cheat_heat_bonus": base_bonus,
+		"summary": summary,
+	}
+
+
+func _initialize_grand_casino_objective_runtime() -> void:
+	if not _is_grand_casino_environment(current_environment):
+		return
+	var objective := _copy_dict(current_environment.get("demo_objective", {}))
+	if not _is_grand_casino_objective(objective):
+		return
+	var environment_id := str(current_environment.get("id", GRAND_CASINO_ARCHETYPE_ID))
+	var previous_environment_id := str(narrative_flags.get("grand_casino_entry_environment_id", ""))
+	if previous_environment_id != environment_id:
+		narrative_flags["grand_casino_entry_environment_id"] = environment_id
+		narrative_flags["grand_casino_entry_bankroll"] = bankroll
+		narrative_flags["grand_casino_games_played"] = 0
+		narrative_flags["grand_casino_max_heat"] = suspicion_level()
+		narrative_flags["grand_casino_open_cheat_actions"] = 0
+	if not narrative_flags.has("grand_casino_entry_bankroll"):
+		narrative_flags["grand_casino_entry_bankroll"] = bankroll
+	if not narrative_flags.has("grand_casino_games_played"):
+		narrative_flags["grand_casino_games_played"] = 0
+	var entry_bankroll := int(narrative_flags.get("grand_casino_entry_bankroll", bankroll))
+	narrative_flags["grand_casino_net_winnings"] = bankroll - entry_bankroll
+	if not narrative_flags.has("grand_casino_max_heat"):
+		narrative_flags["grand_casino_max_heat"] = suspicion_level()
+	else:
+		narrative_flags["grand_casino_max_heat"] = maxi(int(narrative_flags.get("grand_casino_max_heat", 0)), suspicion_level())
+	if not narrative_flags.has("grand_casino_open_cheat_actions"):
+		narrative_flags["grand_casino_open_cheat_actions"] = 0
+	if not narrative_flags.has("grand_casino_endgame_state"):
+		narrative_flags["grand_casino_endgame_state"] = GRAND_CASINO_STATE_INCOMPLETE
+	if not narrative_flags.has("grand_casino_high_roller_ready"):
+		narrative_flags["grand_casino_high_roller_ready"] = false
+	if not narrative_flags.has("high_roller_cashout_pending"):
+		narrative_flags["high_roller_cashout_pending"] = false
+	if not narrative_flags.has("grand_casino_showdown_pending"):
+		narrative_flags["grand_casino_showdown_pending"] = false
+	if not narrative_flags.has("grand_casino_showdown_active"):
+		narrative_flags["grand_casino_showdown_active"] = false
+
+
+func sync_grand_casino_entry_bankroll_after_travel_result(result: Dictionary) -> void:
+	if not _is_grand_casino_environment(current_environment):
+		return
+	var action_kind := str(result.get("action_kind", "")).strip_edges()
+	var result_type := str(result.get("type", "")).strip_edges()
+	if action_kind != "travel" and result_type != "travel":
+		return
+	var destination_archetype_id := str(result.get("environment_archetype_id", result.get("to_archetype_id", ""))).strip_edges()
+	if destination_archetype_id != GRAND_CASINO_ARCHETYPE_ID:
+		return
+	var environment_id := str(current_environment.get("id", GRAND_CASINO_ARCHETYPE_ID)).strip_edges()
+	if str(narrative_flags.get("grand_casino_entry_bankroll_after_travel_environment_id", "")) == environment_id:
+		return
+	_initialize_grand_casino_objective_runtime()
+	narrative_flags["grand_casino_entry_bankroll"] = bankroll
+	narrative_flags["grand_casino_net_winnings"] = 0
+	narrative_flags["grand_casino_entry_bankroll_after_travel_environment_id"] = environment_id
+
+
+func _is_grand_casino_objective(objective: Dictionary) -> bool:
+	return str(objective.get("id", "")).strip_edges() == GRAND_CASINO_OBJECTIVE_ID
+
+
+func _is_grand_casino_environment(environment: Dictionary) -> bool:
+	if environment.is_empty():
+		return false
+	var archetype_id := str(environment.get("archetype_id", "")).strip_edges()
+	if archetype_id == GRAND_CASINO_ARCHETYPE_ID:
+		return true
+	var environment_id := str(environment.get("id", "")).strip_edges()
+	if environment_id == GRAND_CASINO_ARCHETYPE_ID:
+		return true
+	return _location_id_from_generated_environment_id(environment_id) == GRAND_CASINO_ARCHETYPE_ID
+
+
+func _grand_casino_active_security_event_sources(environment: Dictionary) -> Array:
+	var sources: Array = []
+	var resolved_event_ids := _copy_array(environment.get("resolved_event_ids", []))
+	for event_id_value in _copy_array(environment.get("event_ids", [])):
+		var event_id := str(event_id_value)
+		if resolved_event_ids.has(event_id):
+			continue
+		if event_id == "pit_boss_sweep" or event_id == "eye_in_the_sky":
+			_append_unique_string(sources, event_id)
+	return sources
+
+
+func _grand_casino_objective_config(objective: Dictionary) -> Dictionary:
+	var target_bankroll := maxi(0, int(objective.get("target_bankroll", objective.get("high_roller_target_bankroll", 0))))
+	var high_roller_target := maxi(0, int(objective.get("high_roller_target_bankroll", target_bankroll)))
+	return {
+		"target_bankroll": target_bankroll,
+		"high_roller_target_bankroll": high_roller_target,
+		"high_roller_net_winnings": maxi(0, int(objective.get("high_roller_net_winnings", 0))),
+		"high_roller_min_grand_casino_games": maxi(0, int(objective.get("high_roller_min_grand_casino_games", 0))),
+		"high_roller_max_heat": clampi(int(objective.get("high_roller_max_heat", 100)), 0, 100),
+		"showdown_heat_threshold": clampi(int(objective.get("showdown_heat_threshold", 70)), 0, 100),
+		"forced_showdown_heat_threshold": clampi(int(objective.get("forced_showdown_heat_threshold", 95)), 0, 100),
+		"showdown_event_id": str(objective.get("showdown_event_id", objective.get("finale_event_id", GRAND_CASINO_SHOWDOWN_EVENT_ID))).strip_edges(),
+		"high_roller_event_id": str(objective.get("high_roller_event_id", GRAND_CASINO_HIGH_ROLLER_EVENT_ID)).strip_edges(),
+	}
+
+
+func _grand_casino_derived_state(source: Dictionary, high_roller_ready: bool, showdown_pending: bool, showdown_active: bool) -> String:
+	if run_status == RUN_STATUS_ENDED and bool(narrative_flags.get("demo_victory", false)):
+		return GRAND_CASINO_STATE_VICTORY
+	if run_status == RUN_STATUS_FAILED:
+		return GRAND_CASINO_STATE_FAILURE
+	if showdown_active:
+		return GRAND_CASINO_STATE_SHOWDOWN_ACTIVE
+	if showdown_pending:
+		return GRAND_CASINO_STATE_SHOWDOWN_PENDING
+	if high_roller_ready:
+		return GRAND_CASINO_STATE_HIGH_ROLLER_READY
+	if _is_grand_casino_environment(source):
+		return GRAND_CASINO_STATE_INCOMPLETE
+	return GRAND_CASINO_STATE_PRE
+
+
+func _grand_casino_objective_summary(high_roller_ready: bool, showdown_pending: bool, heat_route_ready: bool, dirty_money_showdown_ready: bool, money_target_met: bool, game_target_met: bool, _target_bankroll: int, required_net: int, remaining_games: int) -> String:
+	if showdown_pending:
+		return "Rourke is calling you to the back room."
+	if high_roller_ready:
+		return "Players Card review is ready at the host desk."
+	if dirty_money_showdown_ready:
+		return "The Players Card review is sending the win to Rourke."
+	if heat_route_ready:
+		return "Heat is drawing Rourke toward the table."
+	if not money_target_met:
+		return "Win $%d on the Grand Casino floor for a Players Card." % required_net
+	if not game_target_met:
+		return "Play %d more Grand Casino game%s before the host can issue the card." % [remaining_games, "" if remaining_games == 1 else "s"]
+	return "Keep heat low so the host can issue the Players Card."
+
+
+func _grand_casino_result_has_wager(result: Dictionary) -> bool:
+	if int(result.get("stake", 0)) > 0 or int(result.get("stake_cost", 0)) > 0:
+		return true
+	var deltas := _copy_dict(result.get("deltas", {}))
+	for key in ["stake_cost", "slot_stake_cost", "bar_dice_stake", "video_poker_bet", "baccarat_total_wager", "roulette_total_wager"]:
+		if int(result.get(key, deltas.get(key, 0))) > 0:
+			return true
+	for entry_value in _copy_array(deltas.get("story_log", [])):
+		if typeof(entry_value) != TYPE_DICTIONARY:
+			continue
+		var entry: Dictionary = entry_value
+		if int(entry.get("stake_cost", 0)) > 0:
+			return true
+	return false
+
+
+func _grand_casino_result_pit_boss_heat_bonus(result: Dictionary) -> int:
+	var bonus := 0
+	var deltas := _copy_dict(result.get("deltas", {}))
+	for key in ["pit_boss_heat_bonus", "slot_pit_boss_heat_bonus"]:
+		bonus = maxi(bonus, int(result.get(key, deltas.get(key, 0))))
+	for entry_value in _copy_array(deltas.get("story_log", [])):
+		if typeof(entry_value) != TYPE_DICTIONARY:
+			continue
+		var entry: Dictionary = entry_value
+		bonus = maxi(bonus, int(entry.get("pit_boss_heat_bonus", 0)))
+	return bonus
+
+
+func _append_unique_string(values: Array, id: String) -> void:
+	if id.is_empty():
+		return
+	if not values.has(id):
+		values.append(id)
+
+
+func current_demo_victory_message() -> String:
+	var message := str(narrative_flags.get("demo_victory_message", ""))
+	if not message.strip_edges().is_empty():
+		return message
+	return str(demo_objective_status().get("victory_message", "Demo Victory: you beat the house for now."))
+
+
+# Adds a run item if it is not already owned.
+func add_item(item_id: String) -> void:
+	if item_id.is_empty():
+		return
+	if not inventory.has(item_id):
+		inventory.append(item_id)
+
+
+# Removes a run item and clears the active slot if that item was equipped.
+func remove_item(item_id: String) -> void:
+	if item_id.is_empty():
+		return
+	inventory.erase(item_id)
+	if active_item_id == item_id:
+		active_item_id = ""
+
+
+# Sets the selected active item id. Validation belongs to the action service
+# because it owns item definitions.
+func set_active_item(item_id: String) -> void:
+	active_item_id = item_id if inventory.has(item_id) else ""
+
+
+# Removes an item offer from the current environment.
+func remove_item_offer(item_id: String) -> void:
+	var offers: Array = current_environment.get("item_offers", [])
+	for index in range(offers.size() - 1, -1, -1):
+		var offer: Variant = offers[index]
+		if typeof(offer) == TYPE_DICTIONARY and offer.get("id", "") == item_id:
+			offers.remove_at(index)
+	current_environment["item_offers"] = offers
+
+
+# Adds a debt entry and refreshes economy state.
+func add_debt(debt_data: Dictionary) -> void:
+	var normalized := _normalize_debt_entries([debt_data])
+	if normalized.is_empty():
+		return
+	debt.append(normalized[0])
+	_refresh_economy()
+
+
+# Returns the current economy label.
+func economy() -> String:
+	return economic_state
+
+
+# Returns whether a route can currently be traveled without mutating state.
+func travel_route_status(route_data: Dictionary) -> Dictionary:
+	var cost := maxi(0, int(route_data.get("cost", 0)))
+	var status := {
+		"available": true,
+		"disabled_reason": "",
+		"cost": cost,
+		"risk": str(route_data.get("risk", "")),
+		"suspicion_delta": int(route_data.get("suspicion_delta", 0)),
+		"distance": str(route_data.get("distance", "near")),
+		"risk_decay": travel_risk_decay(route_data),
+		"condition_text": str(route_data.get("condition_text", "")),
+		"hidden": false,
+		"requires_travel_count_min": maxi(0, int(route_data.get("requires_travel_count_min", 0))),
+		"travel_count": environment_history.size(),
+	}
+	var required_travel_count := int(status.get("requires_travel_count_min", 0))
+	if required_travel_count > environment_history.size():
+		status["available"] = false
+		status["hidden"] = bool(route_data.get("hide_until_travel_count_met", false))
+		status["disabled_reason"] = str(route_data.get("travel_count_condition_text", route_data.get("condition_text", "Travel farther before this route appears.")))
+		return status
+	var required_flags := _copy_dict(route_data.get("requires_flags", {}))
+	for key in required_flags.keys():
+		if narrative_flags.get(str(key), null) != required_flags[key]:
+			status["available"] = false
+			status["disabled_reason"] = str(route_data.get("condition_text", "A route condition is not met."))
+			return status
+	for flag_id in _copy_array(route_data.get("blocked_by_flags", [])):
+		if bool(narrative_flags.get(str(flag_id), false)):
+			status["available"] = false
+			status["disabled_reason"] = "This route is closed for now."
+			return status
+	if cost > bankroll:
+		status["available"] = false
+		status["disabled_reason"] = "Not enough bankroll for this route."
+	return status
+
+
+# Returns how much local heat a route sheds before arrival.
+func travel_risk_decay(route_data: Dictionary) -> int:
+	if route_data.has("risk_decay"):
+		return clampi(int(route_data.get("risk_decay", 0)), 0, 100)
+	var distance := str(route_data.get("distance", "near")).to_lower()
+	return clampi(int(LOCAL_RISK_DECAY_BY_DISTANCE.get(distance, LOCAL_RISK_DECAY_BY_DISTANCE["near"])), 0, 100)
+
+
+# Stores source heat and calculates carried heat before the new environment is generated.
+func begin_travel_suspicion_decay(route_data: Dictionary, destination_archetype_id: String = "") -> Dictionary:
+	_store_current_local_suspicion()
+	var source_location_id := current_suspicion_location_id()
+	var destination_location_id := str(destination_archetype_id).strip_edges()
+	if destination_location_id.is_empty():
+		destination_location_id = str(route_data.get("destination_archetype", "")).strip_edges()
+	var distance := str(route_data.get("distance", "near")).to_lower()
+	var route_decay_percent := travel_risk_decay(route_data)
+	var same_location := not destination_location_id.is_empty() and destination_location_id == source_location_id
+	var effective_route_decay := 0 if same_location else route_decay_percent
+	var before := suspicion_level()
+	var levels := _local_suspicion_levels()
+	var source_after := before
+	if not source_location_id.is_empty():
+		source_after = before if same_location else _decayed_suspicion_level(before, LOCAL_HEAT_RETURN_DECAY_PERCENT)
+		levels[source_location_id] = source_after
+	suspicion["local_levels"] = levels
+	suspicion["level"] = clampi(source_after, 0, 100)
+	var carried_heat := before if same_location else _decayed_suspicion_level(before, effective_route_decay)
+	return {
+		"distance": distance,
+		"risk_decay": effective_route_decay,
+		"source_location_id": source_location_id,
+		"destination_location_id": destination_location_id,
+		"before": before,
+		"source_after": clampi(source_after, 0, 100),
+		"carried_heat": clampi(carried_heat, 0, 100),
+		"return_decay": 0 if same_location else LOCAL_HEAT_RETURN_DECAY_PERCENT,
+		"same_location": same_location,
+	}
+
+
+# Activates destination heat after RunGenerator has assigned the new environment.
+func finish_travel_suspicion_decay(travel_heat: Dictionary) -> Dictionary:
+	var source_location_id := str(travel_heat.get("source_location_id", "")).strip_edges()
+	var destination_location_id := current_suspicion_location_id()
+	var expected_destination_id := str(travel_heat.get("destination_location_id", "")).strip_edges()
+	if destination_location_id.is_empty():
+		destination_location_id = expected_destination_id
+	var before := clampi(int(travel_heat.get("before", suspicion_level())), 0, 100)
+	var carried_heat := clampi(int(travel_heat.get("carried_heat", before)), 0, 100)
+	var levels := _local_suspicion_levels()
+	var remembered_destination: int = clampi(int(levels.get(destination_location_id, 0)), 0, 100) if not destination_location_id.is_empty() else 0
+	var same_location := bool(travel_heat.get("same_location", false)) or (not source_location_id.is_empty() and source_location_id == destination_location_id)
+	var destination_after: int = carried_heat if same_location else maxi(remembered_destination, carried_heat)
+	destination_after = clampi(destination_after, 0, 100)
+	if not destination_location_id.is_empty():
+		levels[destination_location_id] = destination_after
+	suspicion["local_levels"] = levels
+	suspicion["level"] = destination_after
+	_evaluate_immediate_terminal_state()
+	var result := travel_heat.duplicate(true)
+	result["destination_location_id"] = destination_location_id
+	result["destination_before"] = remembered_destination
+	result["destination_after"] = destination_after
+	result["after"] = destination_after
+	result["cooled"] = maxi(0, before - destination_after)
+	var drunk_before := drunk_level
+	var distance := str(travel_heat.get("distance", "near")).to_lower()
+	var drunk_decay := int(DRUNK_TRAVEL_DECAY_BY_DISTANCE.get(distance, DRUNK_TRAVEL_DECAY_BY_DISTANCE["near"]))
+	if drunk_decay > 0:
+		change_drunk(-drunk_decay)
+	result["drunk_before"] = drunk_before
+	result["drunk_after"] = drunk_level
+	result["drunk_delta"] = drunk_level - drunk_before
+	return result
+
+
+# Returns whether a service hook can currently be used without mutating state.
+func service_hook_status(service_data: Dictionary) -> Dictionary:
+	var cost := maxi(0, int(service_data.get("cost", 0)))
+	var status := {
+		"available": true,
+		"disabled_reason": "",
+		"cost": cost,
+	}
+	if service_data.is_empty():
+		status["available"] = false
+		status["disabled_reason"] = "Service is not available here."
+		return status
+	if cost > bankroll:
+		status["available"] = false
+		status["disabled_reason"] = "Not enough bankroll for this service."
+		return status
+	var effect := _copy_dict(service_data.get("effect", {}))
+	if int(effect.get("alcohol_intake", 0)) > 0 and drunk_level + pending_drunk_absorption_amount() >= ALCOHOL_MAX:
+		status["available"] = false
+		status["disabled_reason"] = "Too drunk to make another drink help."
+	return status
+
+
+# Returns whether a lender hook can currently be used without mutating state.
+func lender_hook_status(lender_data: Dictionary) -> Dictionary:
+	var lender_id := str(lender_data.get("id", ""))
+	var status := {
+		"available": true,
+		"disabled_reason": "",
+		"active_debt": false,
+	}
+	if lender_data.is_empty() or lender_id.is_empty():
+		status["available"] = false
+		status["disabled_reason"] = "Lender is not available here."
+		return status
+	for debt_entry in debt:
+		if typeof(debt_entry) != TYPE_DICTIONARY:
+			continue
+		var debt_data := debt_entry as Dictionary
+		if str(debt_data.get("lender_id", "")) != lender_id:
+			continue
+		var debt_status := str(debt_data.get("status", "active"))
+		if debt_status == "active" or debt_status == "overdue":
+			status["available"] = false
+			status["disabled_reason"] = "You already owe this lender."
+			status["active_debt"] = true
+			return status
+	return status
+
+
+# Returns the max stake allowed after current economy pressure is considered.
+func economy_stake_ceiling(base_ceiling: int = -1) -> int:
+	var available := bankroll if base_ceiling < 0 else mini(base_ceiling, bankroll)
+	available = maxi(0, available)
+	match economic_state:
+		"insolvent":
+			return 0
+		"distressed":
+			return mini(available, _fractional_bankroll_limit(4))
+		"volatile":
+			return mini(available, _fractional_bankroll_limit(2))
+		_:
+			return available
+
+
+# Returns the hard wager ceiling. Economy pressure may recommend smaller bets,
+# but wager actions can still risk any cash the player actually has.
+func wager_stake_ceiling(base_ceiling: int = -1) -> int:
+	var available := bankroll if base_ceiling < 0 else mini(base_ceiling, bankroll)
+	return maxi(0, available)
+
+
+# Explains economy pressure in player-facing terms.
+func economy_pressure_summary() -> String:
+	match economic_state:
+		"insolvent":
+			return "Insolvent: no valid stake remains without help."
+		"distressed":
+			return "Distressed: large stakes can end the run."
+		"volatile":
+			return "Volatile: low cash makes big stakes dangerous."
+		"growing":
+			return "Growing: bankroll pressure is low."
+		_:
+			return "Stable: normal stake range."
+
+
+# Describes run loss/recovery pressure without mutating the run.
+func recovery_pressure_status(recovery_available: bool = false, bankroll_zero_deferred: bool = false) -> Dictionary:
+	if run_status == RUN_STATUS_ENDED:
+		if bool(narrative_flags.get("demo_victory", false)):
+			return {
+				"state": "victory",
+				"title": "Demo victory",
+				"summary": current_demo_victory_message(),
+				"failed": false,
+				"recovery_available": false,
+				"terminal": true,
+			}
+		if bool(narrative_flags.get("prestige_victory", false)):
+			return {
+				"state": "victory",
+				"title": "Victory claimed",
+				"summary": "You beat the house for now.",
+				"failed": false,
+				"recovery_available": false,
+				"terminal": true,
+			}
+		return {
+			"state": "ended",
+			"title": "Run ended",
+			"summary": "This run is over.",
+			"failed": false,
+			"recovery_available": false,
+			"terminal": true,
+		}
+	if run_status == RUN_STATUS_FAILED:
+		var failure_summary := run_failure_message
+		if failure_summary.strip_edges().is_empty():
+			failure_summary = _failure_message_for_reason(run_failure_reason)
+		return {
+			"state": "failed",
+			"title": _failure_title_for_reason(run_failure_reason),
+			"summary": failure_summary,
+			"failed": true,
+			"recovery_available": false,
+			"terminal": true,
+			"reason": run_failure_reason,
+		}
+	if bankroll <= 0 and bankroll_zero_deferred:
+		return {
+			"state": "recovery",
+			"title": "All-in result pending",
+			"summary": "Your last wager is still resolving.",
+			"failed": false,
+			"recovery_available": true,
+			"terminal": false,
+		}
+	if bankroll <= 0:
+		return {
+			"state": "failed",
+			"title": "Run failed",
+			"summary": BANKROLL_ZERO_FAILURE_MESSAGE,
+			"failed": true,
+			"recovery_available": false,
+			"terminal": true,
+			"reason": FAILURE_BANKROLL_ZERO,
+		}
+	if economic_state == "distressed":
+		return {
+			"state": "distressed",
+			"title": "Debt pressure",
+			"summary": "Debt and low cash are squeezing your choices.",
+			"failed": false,
+			"recovery_available": true,
+			"terminal": false,
+		}
+	if economic_state == "volatile":
+		return {
+			"state": "volatile",
+			"title": "Low bankroll",
+			"summary": "Cash is thin, so stakes are tighter.",
+			"failed": false,
+			"recovery_available": false,
+			"terminal": false,
+		}
+	return {
+		"state": economic_state,
+		"title": economy_pressure_summary(),
+		"summary": economy_pressure_summary(),
+		"failed": false,
+		"recovery_available": false,
+		"terminal": false,
+	}
+
+
+# Adds a story entry to the run log.
+func log_story(event_data: Dictionary) -> void:
+	story_log.append(event_data.duplicate(true))
+
+
+# Advances the current environment clock.
+func advance_environment_turns(amount: int = 1) -> void:
+	if current_environment.is_empty() or is_terminal():
+		return
+	var alcohol_decay := maxi(0, amount) * DRUNK_TURN_DECAY
+	if alcohol_decay > 0:
+		change_drunk(-alcohol_decay)
+	var previous_turns := int(current_environment.get("turns", 0))
+	var next_turns := previous_turns + maxi(0, amount)
+	current_environment["turns"] = next_turns
+	var previous_decay_step := int(floor(float(previous_turns) / float(LOCAL_RISK_TURN_DECAY_INTERVAL)))
+	var next_decay_step := int(floor(float(next_turns) / float(LOCAL_RISK_TURN_DECAY_INTERVAL)))
+	_decrease_current_suspicion(next_decay_step - previous_decay_step)
+
+
+# Marks an environment event as resolved.
+func resolve_event(event_id: String) -> void:
+	if current_environment.is_empty() or event_id.is_empty():
+		return
+	var resolved: Array = current_environment.get("resolved_event_ids", [])
+	if not resolved.has(event_id):
+		resolved.append(event_id)
+	current_environment["resolved_event_ids"] = resolved
+
+
+# Adds travel targets to the current environment.
+func add_next_archetypes(archetype_ids: Array) -> void:
+	if current_environment.is_empty():
+		return
+	var next_ids: Array = current_environment.get("next_archetypes", [])
+	for archetype_id in archetype_ids:
+		var id := str(archetype_id)
+		if not id.is_empty() and not next_ids.has(id):
+			next_ids.append(id)
+	current_environment["next_archetypes"] = next_ids
+	current_environment["layout"] = EnvironmentInstance.ensure_generated_layout(current_environment)
+
+
+# Replaces current environment travel targets.
+func set_next_archetypes(archetype_ids: Array) -> void:
+	if current_environment.is_empty():
+		return
+	current_environment["next_archetypes"] = _string_array(archetype_ids)
+	current_environment["layout"] = EnvironmentInstance.ensure_generated_layout(current_environment)
+
+
+# Returns whether the current run is over.
+func is_terminal() -> bool:
+	return run_status == RUN_STATUS_FAILED or run_status == RUN_STATUS_ENDED
+
+
+# Marks the run as failed in the RunState source of truth.
+func fail_run(reason: String, message: String = "") -> void:
+	if run_status == RUN_STATUS_ENDED and (bool(narrative_flags.get("demo_victory", false)) or bool(narrative_flags.get("prestige_victory", false))):
+		return
+	run_status = RUN_STATUS_FAILED
+	run_failure_reason = reason if not reason.strip_edges().is_empty() else FAILURE_BANKROLL_ZERO
+	run_failure_message = message if not message.strip_edges().is_empty() else _failure_message_for_reason(run_failure_reason)
+	if bankroll <= 0:
+		bankroll = 0
+		economic_state = "insolvent"
+
+
+# Re-checks terminal failures that depend only on local RunState values.
+func evaluate_immediate_terminal_state(defer_bankroll_zero: bool = false) -> Dictionary:
+	_evaluate_immediate_terminal_state(defer_bankroll_zero)
+	return recovery_pressure_status(false, defer_bankroll_zero)
+
+
+# Returns the venue identity used for local heat memory.
+func current_suspicion_location_id() -> String:
+	return _suspicion_location_id_for_environment(current_environment)
+
+
+func _suspicion_location_id_from_context(context: Dictionary) -> String:
+	var archetype_id := str(context.get("environment_archetype_id", "")).strip_edges()
+	if not archetype_id.is_empty():
+		return archetype_id
+	var environment_id := str(context.get("environment_id", "")).strip_edges()
+	if environment_id.is_empty():
+		return current_suspicion_location_id()
+	var current_environment_id := str(current_environment.get("id", "")).strip_edges()
+	if not current_environment_id.is_empty() and environment_id == current_environment_id:
+		return current_suspicion_location_id()
+	var current_location_id := current_suspicion_location_id()
+	if not current_location_id.is_empty() and environment_id.begins_with("%s_" % current_location_id):
+		return current_location_id
+	var generated_location_id := _location_id_from_generated_environment_id(environment_id)
+	if not generated_location_id.is_empty():
+		return generated_location_id
+	return environment_id
+
+
+func _suspicion_location_id_for_environment(environment: Dictionary) -> String:
+	if environment.is_empty():
+		return ""
+	var archetype_id := str(environment.get("archetype_id", "")).strip_edges()
+	if not archetype_id.is_empty():
+		return archetype_id
+	var environment_id := str(environment.get("id", "")).strip_edges()
+	var generated_location_id := _location_id_from_generated_environment_id(environment_id)
+	if not generated_location_id.is_empty():
+		return generated_location_id
+	return environment_id
+
+
+func _location_id_from_generated_environment_id(environment_id: String) -> String:
+	var separator := environment_id.rfind("_")
+	if separator <= 0 or separator >= environment_id.length() - 1:
+		return ""
+	var suffix := environment_id.substr(separator + 1)
+	if not suffix.is_valid_int():
+		return ""
+	return environment_id.substr(0, separator)
+
+
+func _local_suspicion_levels() -> Dictionary:
+	return _copy_dict(suspicion.get("local_levels", {}))
+
+
+func _store_current_local_suspicion() -> void:
+	var location_id := current_suspicion_location_id()
+	if location_id.is_empty():
+		return
+	var levels := _local_suspicion_levels()
+	levels[location_id] = suspicion_level()
+	suspicion["local_levels"] = levels
+
+
+func _activate_current_local_suspicion(preserve_active_level: bool) -> void:
+	var location_id := current_suspicion_location_id()
+	if location_id.is_empty():
+		suspicion["level"] = clampi(int(suspicion.get("level", 0)), 0, 100)
+		return
+	var levels := _local_suspicion_levels()
+	if levels.has(location_id):
+		suspicion["level"] = clampi(int(levels.get(location_id, 0)), 0, 100)
+		return
+	if preserve_active_level:
+		var current_level := clampi(int(suspicion.get("level", 0)), 0, 100)
+		levels[location_id] = current_level
+		suspicion["local_levels"] = levels
+		suspicion["level"] = current_level
+		return
+	suspicion["level"] = 0
+
+
+func _decayed_suspicion_level(level: int, decay_percent: int) -> int:
+	level = clampi(level, 0, 100)
+	decay_percent = clampi(decay_percent, 0, 100)
+	if level <= 0 or decay_percent <= 0:
+		return level
+	var cooled := int(round(float(level) * (1.0 - float(decay_percent) / 100.0)))
+	if cooled >= level:
+		cooled = level - 1
+	return clampi(cooled, 0, 100)
+
+
+func _decrease_current_suspicion(amount: int) -> void:
+	amount = maxi(0, amount)
+	if amount <= 0:
+		return
+	var location_id := current_suspicion_location_id()
+	var next_level := clampi(suspicion_level() - amount, 0, 100)
+	suspicion["level"] = next_level
+	if location_id.is_empty():
+		return
+	var levels := _local_suspicion_levels()
+	levels[location_id] = next_level
+	suspicion["local_levels"] = levels
+
+
+func _story_log_has_demo_victory(objective_id: String) -> bool:
+	for entry in story_log:
+		if typeof(entry) != TYPE_DICTIONARY:
+			continue
+		var story_entry := entry as Dictionary
+		if str(story_entry.get("type", "")) != "demo_victory":
+			continue
+		if objective_id.is_empty() or str(story_entry.get("objective_id", "")) == objective_id:
+			return true
+	return false
+
+
+func _story_log_has_type(entry_type: String, event_id: String = "") -> bool:
+	for entry in story_log:
+		if typeof(entry) != TYPE_DICTIONARY:
+			continue
+		var story_entry := entry as Dictionary
+		if str(story_entry.get("type", "")) != entry_type:
+			continue
+		if event_id.is_empty() or str(story_entry.get("event_id", "")) == event_id:
+			return true
+	return false
+
+
+func _evaluate_immediate_terminal_state(defer_bankroll_zero: bool = false) -> void:
+	if run_status == RUN_STATUS_ENDED:
+		return
+	if run_status == RUN_STATUS_FAILED:
+		return
+	var heat_rerouted := handle_grand_casino_heat_reroute("immediate_terminal")
+	if suspicion_level() >= 100:
+		if heat_rerouted:
+			return
+		fail_run(FAILURE_POLICE_CAPTURE, POLICE_CAPTURE_FAILURE_MESSAGE)
+		return
+	if bankroll <= 0 and not defer_bankroll_zero:
+		fail_run(FAILURE_BANKROLL_ZERO, BANKROLL_ZERO_FAILURE_MESSAGE)
+
+
+func _failure_title_for_reason(reason: String) -> String:
+	match reason:
+		FAILURE_CASINO_TAKEN_OUT_BACK:
+			return "Taken out back"
+		FAILURE_ABANDONED:
+			return "Run abandoned"
+		FAILURE_POLICE_CAPTURE:
+			return "Captured by police"
+		FAILURE_STRANDED:
+			return "Run stranded"
+		FAILURE_BANKROLL_ZERO:
+			return "Run failed"
+		_:
+			return "Run failed"
+
+
+func _failure_message_for_reason(reason: String) -> String:
+	match reason:
+		FAILURE_CASINO_TAKEN_OUT_BACK:
+			return CASINO_TAKEN_OUT_BACK_FAILURE_MESSAGE
+		FAILURE_ABANDONED:
+			return ABANDONED_FAILURE_MESSAGE
+		FAILURE_POLICE_CAPTURE:
+			return POLICE_CAPTURE_FAILURE_MESSAGE
+		FAILURE_STRANDED:
+			return STRANDED_FAILURE_MESSAGE
+		FAILURE_BANKROLL_ZERO:
+			return BANKROLL_ZERO_FAILURE_MESSAGE
+		_:
+			return "The run is over."
+
+
+# Converts the run to saveable data.
+func to_dict() -> Dictionary:
+	return {
+		"seed_text": seed_text,
+		"seed_value": seed_value,
+		"rng_seed": rng_seed,
+		"rng_state": rng_state,
+		"challenge_config": challenge_config.duplicate(true),
+		"bankroll": bankroll,
+		"economic_state": economic_state,
+		"inventory": inventory.duplicate(true),
+		"active_item_id": active_item_id,
+		"debt": debt.duplicate(true),
+		"suspicion": suspicion.duplicate(true),
+		"baseline_luck": baseline_luck,
+		"drunk_level": drunk_level,
+		"alcoholic_level": alcoholic_level,
+		"pending_drunk_absorption": pending_drunk_absorption.duplicate(true),
+		"current_environment": current_environment.duplicate(true),
+		"environment_history": environment_history.duplicate(true),
+		"unlocked_travel": unlocked_travel.duplicate(true),
+		"narrative_flags": narrative_flags.duplicate(true),
+		"story_log": _normalize_story_log(story_log),
+		"run_status": run_status,
+		"run_failure_reason": run_failure_reason,
+		"run_failure_message": run_failure_message,
+	}
+
+
+# Restores the run from saved data.
+func from_dict(data: Dictionary) -> void:
+	seed_text = str(data.get("seed_text", "FOUNDATION-SEED"))
+	seed_value = int(data.get("seed_value", text_to_seed(seed_text)))
+	rng_seed = int(data.get("rng_seed", seed_value))
+	rng_state = int(data.get("rng_state", rng_seed))
+	challenge_config = normalize_challenge(seed_text, _copy_dict(data.get("challenge_config", standard_challenge(seed_text))))
+	bankroll = int(data.get("bankroll", DEFAULT_BANKROLL))
+	economic_state = str(data.get("economic_state", "stable"))
+	inventory = _copy_array(data.get("inventory", []))
+	active_item_id = str(data.get("active_item_id", ""))
+	if not inventory.has(active_item_id):
+		active_item_id = ""
+	debt = _normalize_debt_entries(_copy_array(data.get("debt", [])))
+	suspicion = _normalize_suspicion(_copy_dict(data.get("suspicion", {"level": 0, "cues": []})))
+	baseline_luck = clampi(int(data.get("baseline_luck", 0)), BASELINE_LUCK_MIN, BASELINE_LUCK_MAX)
+	drunk_level = clampi(int(data.get("drunk_level", 0)), 0, ALCOHOL_MAX)
+	alcoholic_level = clampi(int(data.get("alcoholic_level", 0)), 0, ALCOHOL_MAX)
+	pending_drunk_absorption = _normalize_pending_drunk_absorption(_copy_array(data.get("pending_drunk_absorption", [])))
+	current_environment = _normalize_environment(_copy_dict(data.get("current_environment", {})))
+	environment_history = _normalize_environment_history(_copy_array(data.get("environment_history", [])))
+	unlocked_travel = _copy_array(data.get("unlocked_travel", current_environment.get("travel_hooks", [])))
+	narrative_flags = _copy_dict(data.get("narrative_flags", {}))
+	story_log = _normalize_story_log(_copy_array(data.get("story_log", [])))
+	var saved_run_status := str(data.get("run_status", RUN_STATUS_ACTIVE))
+	run_status = saved_run_status
+	run_failure_reason = str(data.get("run_failure_reason", FAILURE_NONE))
+	run_failure_message = str(data.get("run_failure_message", ""))
+	_refresh_economy()
+	_activate_current_local_suspicion(true)
+	_initialize_grand_casino_objective_runtime()
+	if saved_run_status != RUN_STATUS_ENDED and saved_run_status != RUN_STATUS_FAILED:
+		_evaluate_immediate_terminal_state()
+	if saved_run_status == RUN_STATUS_ENDED:
+		run_status = saved_run_status
+	elif saved_run_status == RUN_STATUS_FAILED:
+		run_status = saved_run_status
+		if run_failure_reason.strip_edges().is_empty():
+			run_failure_reason = FAILURE_BANKROLL_ZERO if bankroll <= 0 else FAILURE_STRANDED
+		if run_failure_message.strip_edges().is_empty():
+			run_failure_message = _failure_message_for_reason(run_failure_reason)
+
+
+# Converts text into a deterministic positive seed.
+static func text_to_seed(text: String) -> int:
+	var hash_value := 2166136261
+	for index in range(text.length()):
+		hash_value = hash_value ^ text.unicode_at(index)
+		hash_value = (hash_value * 16777619) & 0x7fffffff
+	return max(1, hash_value)
+
+
+# Builds the default challenge config.
+static func standard_challenge(p_seed_text: String = "FOUNDATION-SEED") -> Dictionary:
+	var resolved_seed := p_seed_text if not p_seed_text.is_empty() else "FOUNDATION-SEED"
+	return _challenge_config("standard", "standard", resolved_seed)
+
+
+# Builds a daily challenge config.
+static func daily_challenge(daily_id: String) -> Dictionary:
+	var resolved_daily_id := daily_id if not daily_id.is_empty() else "UNSET-DAILY"
+	return _challenge_config(
+		"daily",
+		"daily",
+		"DAILY:%s" % resolved_daily_id,
+		resolved_daily_id,
+		{"leaderboard_scope": "daily"}
+	)
+
+
+# Builds a custom challenge config.
+static func custom_challenge(challenge_id: String, p_seed_text: String, modifiers: Dictionary = {}) -> Dictionary:
+	var resolved_id := challenge_id if not challenge_id.is_empty() else "custom"
+	var resolved_seed := p_seed_text if not p_seed_text.is_empty() else resolved_id
+	return _challenge_config("custom", resolved_id, resolved_seed, "", modifiers)
+
+
+# Builds a normalized challenge dictionary without repeating the field shape.
+static func _challenge_config(mode: String, challenge_id: String, p_seed_text: String, daily_id: String = "", modifiers: Dictionary = {}) -> Dictionary:
+	return {
+		"mode": mode,
+		"id": challenge_id,
+		"seed_text": p_seed_text,
+		"daily_id": daily_id,
+		"modifiers": modifiers.duplicate(true),
+	}
+
+
+# Fills missing challenge fields with safe defaults.
+static func normalize_challenge(p_seed_text: String, config: Dictionary = {}) -> Dictionary:
+	if config.is_empty():
+		return standard_challenge(p_seed_text)
+
+	var normalized: Dictionary = config.duplicate(true)
+	normalized["mode"] = normalized.get("mode", "custom")
+	normalized["id"] = normalized.get("id", normalized.get("mode", "custom"))
+	normalized["seed_text"] = normalized.get("seed_text", p_seed_text if not p_seed_text.is_empty() else "FOUNDATION-SEED")
+	normalized["daily_id"] = normalized.get("daily_id", "")
+	normalized["modifiers"] = _copy_dict(normalized.get("modifiers", {}))
+	return normalized
+
+
+# Builds the text that determines the run seed.
+static func challenge_key(config: Dictionary) -> String:
+	return "%s|%s|%s|%s" % [
+		config.get("mode", "standard"),
+		config.get("id", "standard"),
+		config.get("seed_text", "FOUNDATION-SEED"),
+		_mods_text(config.get("modifiers", {})),
+	]
+
+
+# Serializes modifiers in stable key order.
+static func _mods_text(modifiers: Dictionary) -> String:
+	var keys: Array = modifiers.keys()
+	keys.sort()
+	var parts: Array = []
+	for key in keys:
+		parts.append("%s=%s" % [key, modifiers[key]])
+	return ";".join(parts)
+
+
+# Safely duplicates array content.
+static func _copy_array(value: Variant) -> Array:
+	if typeof(value) != TYPE_ARRAY:
+		return []
+	return (value as Array).duplicate(true)
+
+
+# Safely duplicates dictionary content.
+static func _copy_dict(value: Variant) -> Dictionary:
+	if typeof(value) != TYPE_DICTIONARY:
+		return {}
+	return (value as Dictionary).duplicate(true)
+
+
+# Normalizes a list of ids into strings.
+static func _string_array(values: Array) -> Array:
+	var result: Array = []
+	for value in values:
+		var id := str(value)
+		if not id.is_empty():
+			result.append(id)
+	return result
+
+
+# Keeps suspicion state in the README behavior-first shape.
+static func _normalize_suspicion(data: Dictionary) -> Dictionary:
+	var local_levels := {}
+	var source_levels := _copy_dict(data.get("local_levels", {}))
+	for key in source_levels.keys():
+		var location_id := str(key)
+		if not location_id.is_empty():
+			local_levels[location_id] = clampi(int(source_levels.get(key, 0)), 0, 100)
+	return {
+		"level": clampi(int(data.get("level", 0)), 0, 100),
+		"cues": _copy_array(data.get("cues", [])),
+		"local_levels": local_levels,
+	}
+
+
+# Normalizes debt entries after JSON save/load.
+static func _normalize_debt_entries(entries: Array) -> Array:
+	var result: Array = []
+	for entry in entries:
+		if typeof(entry) != TYPE_DICTIONARY:
+			continue
+		var debt_entry := (entry as Dictionary).duplicate(true)
+		if debt_entry.has("balance"):
+			debt_entry["balance"] = int(debt_entry.get("balance", 0))
+		result.append(debt_entry)
+	return result
+
+
+# Normalizes saved environment history entries.
+static func _normalize_environment_history(entries: Array) -> Array:
+	var result: Array = []
+	for entry in entries:
+		if typeof(entry) == TYPE_DICTIONARY:
+			result.append(_normalize_environment(entry as Dictionary))
+	return result
+
+
+# Normalizes story entries after JSON save/load.
+static func _normalize_story_log(entries: Array) -> Array:
+	var result: Array = []
+	for entry in entries:
+		if typeof(entry) != TYPE_DICTIONARY:
+			continue
+		var story_entry := (entry as Dictionary).duplicate(true)
+		_normalize_story_numeric_fields(story_entry)
+		var skill_context := _copy_dict(story_entry.get("skill_story_context", {}))
+		if not skill_context.is_empty():
+			_normalize_story_numeric_fields(skill_context)
+			story_entry["skill_story_context"] = skill_context
+		result.append(story_entry)
+	return result
+
+
+static func _normalize_story_numeric_fields(story_entry: Dictionary) -> void:
+	for key in ["bankroll", "target_bankroll", "bankroll_delta", "suspicion_delta", "payout", "base_payout", "match_count", "security_bankroll_delta", "cost", "stake_cost", "jackpot_current", "bumper_progress", "bonus_total", "alcohol_intake", "drunk_delta", "alcoholic_delta", "baseline_luck_delta", "luck_modifier", "luck_payout_bonus", "item_payout_bonus", "item_loss_reduction", "pit_boss_heat_bonus", "tab_detector_heat", "tab_detector_base_heat", "base_heat", "suspicious_ticket_count", "fake_ticket_count", "loser_ticket_count", "cashout_pattern_heat"]:
+		if story_entry.has(key):
+			story_entry[key] = int(story_entry.get(key, 0))
+
+
+static func _normalize_pending_drunk_absorption(entries: Array) -> Array:
+	var result: Array = []
+	var now_msec := _alcohol_now_msec()
+	for entry_value in entries:
+		if typeof(entry_value) != TYPE_DICTIONARY:
+			continue
+		var entry: Dictionary = entry_value as Dictionary
+		var remaining := maxi(0, int(entry.get("remaining", 0)))
+		if remaining <= 0:
+			continue
+		var interval := maxi(1, int(entry.get("interval_msec", DRUNK_ABSORPTION_INTERVAL_MSEC)))
+		var next_msec := int(entry.get("next_msec", now_msec + interval))
+		if next_msec <= 0:
+			next_msec = now_msec + interval
+		var queued_msec := int(entry.get("queued_msec", now_msec))
+		if queued_msec <= 0:
+			queued_msec = maxi(0, next_msec - interval)
+		result.append({
+			"remaining": remaining,
+			"interval_msec": interval,
+			"next_msec": next_msec,
+			"queued_msec": queued_msec,
+		})
+	return result
+
+
+static func _alcohol_now_msec() -> int:
+	return int(Time.get_unix_time_from_system() * 1000.0)
+
+
+func _drunk_luck_bonus() -> int:
+	if drunk_level >= 85:
+		return 5
+	if drunk_level >= 65:
+		return 4
+	if drunk_level >= 45:
+		return 3
+	if drunk_level >= 25:
+		return 2
+	if drunk_level >= 12:
+		return 1
+	return 0
+
+
+func _alcohol_dependency_penalty(gap: int) -> int:
+	if gap >= 70:
+		return 6
+	if gap >= 50:
+		return 4
+	if gap >= 30:
+		return 3
+	if gap >= 15:
+		return 2
+	if gap >= 5:
+		return 1
+	return 0
+
+
+# Normalizes the saveable parts of the current environment owned by RunState.
+static func _normalize_environment(data: Dictionary) -> Dictionary:
+	if data.is_empty():
+		return {}
+	var environment := data.duplicate(true)
+	environment["depth"] = int(environment.get("depth", 0))
+	environment["tier"] = int(environment.get("tier", 1))
+	environment["turns"] = int(environment.get("turns", 0))
+	environment["resolved_event_ids"] = _copy_array(environment.get("resolved_event_ids", []))
+	environment["game_ids"] = _copy_array(environment.get("game_ids", []))
+	environment["event_ids"] = _copy_array(environment.get("event_ids", []))
+	environment["item_offers"] = _normalize_item_offers(_copy_array(environment.get("item_offers", [])))
+	environment["service_ids"] = _copy_array(environment.get("service_ids", []))
+	environment["lender_hooks"] = _copy_array(environment.get("lender_hooks", []))
+	environment["suspicion_cues"] = _copy_array(environment.get("suspicion_cues", []))
+	environment["travel_hooks"] = _copy_array(environment.get("travel_hooks", []))
+	environment["next_archetypes"] = _copy_array(environment.get("next_archetypes", []))
+	environment["local_narrative_flags"] = _copy_dict(environment.get("local_narrative_flags", {}))
+	environment["game_states"] = _normalize_game_states(_copy_dict(environment.get("game_states", {})))
+	environment["visual_context"] = _copy_dict(environment.get("visual_context", {}))
+	environment["layout"] = EnvironmentInstance.ensure_generated_layout(environment)
+	environment["security_profile"] = _copy_dict(environment.get("security_profile", {}))
+	environment["economic_profile"] = _normalize_economic_profile(_copy_dict(environment.get("economic_profile", {})))
+	environment["objective_hint"] = str(environment.get("objective_hint", ""))
+	environment["demo_objective"] = _copy_dict(environment.get("demo_objective", {}))
+	return environment
+
+
+# Normalizes generated item offers after JSON save/load.
+static func _normalize_item_offers(offers: Array) -> Array:
+	var result: Array = []
+	for offer in offers:
+		if typeof(offer) != TYPE_DICTIONARY:
+			continue
+		var item_offer := (offer as Dictionary).duplicate(true)
+		if item_offer.has("price"):
+			item_offer["price"] = int(item_offer.get("price", 0))
+		result.append(item_offer)
+	return result
+
+
+# Normalizes per-environment gameplay state owned by GameModule instances.
+static func _normalize_game_states(states: Dictionary) -> Dictionary:
+	var result := {}
+	for key in states.keys():
+		var game_id := str(key)
+		if game_id.is_empty():
+			continue
+		var value: Variant = states[key]
+		if typeof(value) == TYPE_DICTIONARY:
+			result[game_id] = (value as Dictionary).duplicate(true)
+	return result
+
+
+# Normalizes economy fields after JSON save/load.
+static func _normalize_economic_profile(profile: Dictionary) -> Dictionary:
+	var result := profile.duplicate(true)
+	for key in ["stake_floor", "stake_ceiling"]:
+		if result.has(key):
+			result[key] = int(result.get(key, 0))
+	return result
+
+
+# Returns a positive fraction of the current bankroll for pressure limits.
+func _fractional_bankroll_limit(divisor: int) -> int:
+	if bankroll <= 0:
+		return 0
+	return maxi(1, bankroll / maxi(1, divisor))
+
+
+# Updates economy and failure labels from bankroll and debt.
+func _refresh_economy(defer_bankroll_zero: bool = false) -> void:
+	if run_status == RUN_STATUS_ENDED or run_status == RUN_STATUS_FAILED:
+		return
+	if bankroll <= 0:
+		if defer_bankroll_zero:
+			bankroll = 0
+			economic_state = "insolvent"
+			return
+		fail_run(FAILURE_BANKROLL_ZERO, BANKROLL_ZERO_FAILURE_MESSAGE)
+	elif not debt.is_empty() and bankroll < DEFAULT_BANKROLL:
+		economic_state = "distressed"
+		run_status = RUN_STATUS_ACTIVE
+	elif bankroll < DEFAULT_BANKROLL / 2:
+		economic_state = "volatile"
+		run_status = RUN_STATUS_ACTIVE
+	elif bankroll >= DEFAULT_BANKROLL * 2:
+		economic_state = "growing"
+		run_status = RUN_STATUS_ACTIVE
+	else:
+		economic_state = "stable"
+		run_status = RUN_STATUS_ACTIVE
+	if run_status == RUN_STATUS_ACTIVE:
+		run_failure_reason = FAILURE_NONE
+		run_failure_message = ""

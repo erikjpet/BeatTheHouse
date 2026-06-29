@@ -1,0 +1,1575 @@
+[
+	{
+		"id": "corner_store",
+		"kind": "shop",
+		"is_start": true,
+		"next_archetypes": [
+			"bar",
+			"gas_station_casino"
+		],
+		"rare_next_archetypes": [
+			"jazz_club"
+		],
+		"rare_next_chance_percent": 8,
+		"tier": 1,
+		"name_prefixes": [
+			"Neon",
+			"Corner"
+		],
+		"name_nouns": [
+			"Store"
+		],
+		"visual_context": {
+			"perspective": "first_person",
+			"scene_type": "shop",
+			"asset_path": "res://assets/art/environments/corner_store.png",
+			"description": "A fluorescent corner store with pink shadows, narrow shelves, and a clerk half-awake behind the register."
+		},
+		"objective_hint": "Build $100 to buy into the Grand Casino.",
+		"layout": {
+			"shopkeeper_spots": [
+				[
+					780,
+					99
+				]
+			],
+			"item_spots": [
+				[
+					118,
+					159
+				],
+				[
+					286,
+					159
+				],
+				[
+					454,
+					159
+				],
+				[
+					202,
+					331
+				],
+				[
+					390,
+					331
+				]
+			],
+			"event_spots": [
+				[
+					604,
+					96
+				],
+				[
+					80,
+					369
+				],
+				[
+					604,
+					210
+				]
+			],
+			"service_spots": [
+				[
+					604,
+					331
+				],
+				[
+					445,
+					70
+				]
+			],
+			"travel_spots": [
+				[
+					780,
+					258
+				],
+				[
+					780,
+					369
+				]
+			],
+			"prestige_spots": [
+				[
+					68,
+					61
+				]
+			]
+		},
+		"security_profile": {
+			"strictness": "low",
+			"visible_cues": [
+				"The clerk watches the register more than the door."
+			]
+		},
+		"music_profile": {
+			"theme": "fluorescent shop",
+			"ambience": 0.56,
+			"mode": "minor",
+			"progression": [
+				0,
+				5,
+				2,
+				6
+			],
+			"motif": [
+				0,
+				-999,
+				2,
+				-999,
+				4,
+				-999,
+				2,
+				-999,
+				0,
+				-999,
+				3,
+				-999,
+				4,
+				-999,
+				2,
+				-999
+			],
+			"root_midi": 45,
+			"safety": 0.82,
+			"texture": "fluorescent",
+			"texture_rate": 0.23,
+			"volume": 0.27
+		},
+		"economic_profile": {
+			"price_tone": "cheap",
+			"stake_floor": 0,
+			"stake_ceiling": 0
+		},
+		"game_pool": [],
+		"game_count": [
+			0,
+			0
+		],
+		"item_pool": [
+			"creased_luck_card",
+			"instant_coffee",
+			"cheap_sunglasses",
+			"scratch_pad",
+			"card_counters_notes",
+			"side_bet_chart",
+			"xray_glasses",
+			"tab_detector",
+			"tarot_card",
+			"lucky_keychain",
+			"roadside_map"
+		],
+		"item_count": [
+			3,
+			5
+		],
+		"event_pool": [
+			"late_shift_discount",
+			"chatty_clerk",
+			"parking_lot_tip",
+			"suspicious_patron"
+		],
+		"event_scopes": [
+			"shop"
+		],
+		"event_count": [
+			2,
+			3
+		],
+		"service_pool": [
+			"cashier_tip",
+			"house_drink"
+		],
+		"lender_hooks": [],
+		"suspicion_cues": [
+			"The clerk glances up when you linger near the counter."
+		],
+		"travel_hooks": [
+			"bar",
+			"gas_station_casino"
+		],
+		"local_narrative_flags": {
+			"starting_stop": true,
+			"neon_shop": true
+		},
+		"moods": [
+			"fluorescent",
+			"quiet",
+			"watchful"
+		]
+	},
+	{
+		"id": "back_alley",
+		"kind": "shop",
+		"is_start": true,
+		"next_archetypes": [
+			"bar",
+			"small_underground_casino"
+		],
+		"rare_next_archetypes": [
+			"jazz_club"
+		],
+		"rare_next_chance_percent": 8,
+		"tier": 1,
+		"name_prefixes": [
+			"Wet",
+			"Back"
+		],
+		"name_nouns": [
+			"Alley"
+		],
+		"visual_context": {
+			"perspective": "first_person",
+			"scene_type": "shop",
+			"asset_path": "res://assets/art/environments/back_alley.png",
+			"description": "A rain-slick alley glowing magenta and cyan around a folding table of questionable tools."
+		},
+		"objective_hint": "Build $100 to buy into the Grand Casino.",
+		"layout": {
+			"shopkeeper_spots": [
+				[
+					780,
+					99
+				]
+			],
+			"item_spots": [
+				[
+					118,
+					159
+				],
+				[
+					286,
+					159
+				],
+				[
+					454,
+					159
+				],
+				[
+					202,
+					331
+				]
+			],
+			"event_spots": [
+				[
+					604,
+					96
+				],
+				[
+					80,
+					369
+				],
+				[
+					604,
+					210
+				]
+			],
+			"lender_spots": [
+				[
+					604,
+					331
+				]
+			],
+			"travel_spots": [
+				[
+					780,
+					258
+				],
+				[
+					780,
+					369
+				]
+			],
+			"prestige_spots": [
+				[
+					68,
+					61
+				]
+			]
+		},
+		"security_profile": {
+			"strictness": "uneven",
+			"visible_cues": [
+				"A parked car idles too long under the neon spill."
+			]
+		},
+		"music_profile": {
+			"theme": "rain alley",
+			"ambience": 0.86,
+			"bpm": 74,
+			"mode": "minor",
+			"progression": [
+				0,
+				6,
+				5,
+				4
+			],
+			"motif": [
+				-999,
+				4,
+				-999,
+				-999,
+				2,
+				-999,
+				1,
+				-999,
+				0,
+				-999,
+				-999,
+				-999,
+				2,
+				-999,
+				1,
+				-999
+			],
+			"root_midi": 43,
+			"safety": 0.2,
+			"texture": "rain",
+			"texture_rate": 0.37,
+			"volume": 0.26
+		},
+		"economic_profile": {
+			"price_tone": "shady",
+			"stake_floor": 0,
+			"stake_ceiling": 0
+		},
+		"game_pool": [],
+		"game_count": [
+			0,
+			0
+		],
+		"item_pool": [
+			"cheap_sunglasses",
+			"marked_cards",
+			"foil_sleeve",
+			"xray_glasses",
+			"tab_detector",
+			"tarot_card",
+			"weighted_keyring",
+			"roadside_map",
+			"lucky_keychain"
+		],
+		"item_count": [
+			2,
+			4
+		],
+		"event_pool": [
+			"back_alley_offer",
+			"parking_lot_tip",
+			"suspicious_patron"
+		],
+		"event_scopes": [
+			"shop"
+		],
+		"event_count": [
+			2,
+			3
+		],
+		"service_pool": [
+			"house_drink"
+		],
+		"lender_hooks": [
+			"street_lender"
+		],
+		"suspicion_cues": [
+			"The seller keeps one eye on the mouth of the alley."
+		],
+		"travel_hooks": [
+			"bar",
+			"small_underground_casino"
+		],
+		"local_narrative_flags": {
+			"shady_market": true
+		},
+		"moods": [
+			"wet",
+			"electric",
+			"dangerous"
+		]
+	},
+	{
+		"id": "motel",
+		"kind": "shop",
+		"is_start": true,
+		"next_archetypes": [
+			"gas_station_casino",
+			"small_underground_casino"
+		],
+		"rare_next_archetypes": [
+			"jazz_club"
+		],
+		"rare_next_chance_percent": 10,
+		"tier": 1,
+		"name_prefixes": [
+			"Sunset",
+			"Vacancy"
+		],
+		"name_nouns": [
+			"Motel"
+		],
+		"visual_context": {
+			"perspective": "first_person",
+			"scene_type": "shop",
+			"asset_path": "res://assets/art/environments/motel.png",
+			"description": "A cheap motel room with venetian shadows, a vibrating sign outside, and supplies spread on a bedspread."
+		},
+		"objective_hint": "Build $100 to buy into the Grand Casino.",
+		"layout": {
+			"shopkeeper_spots": [
+				[
+					780,
+					99
+				]
+			],
+			"item_spots": [
+				[
+					118,
+					159
+				],
+				[
+					286,
+					159
+				],
+				[
+					454,
+					159
+				],
+				[
+					202,
+					331
+				]
+			],
+			"event_spots": [
+				[
+					604,
+					96
+				],
+				[
+					80,
+					369
+				],
+				[
+					604,
+					210
+				]
+			],
+			"lender_spots": [
+				[
+					604,
+					331
+				]
+			],
+			"travel_spots": [
+				[
+					780,
+					258
+				],
+				[
+					780,
+					369
+				]
+			],
+			"prestige_spots": [
+				[
+					68,
+					61
+				]
+			]
+		},
+		"security_profile": {
+			"strictness": "private",
+			"visible_cues": [
+				"Footsteps pass the door whenever the sign buzzes."
+			]
+		},
+		"music_profile": {
+			"theme": "motel static",
+			"ambience": 0.78,
+			"mode": "harmonic_minor",
+			"progression": [
+				0,
+				3,
+				5,
+				4
+			],
+			"motif": [
+				0,
+				-999,
+				2,
+				-999,
+				3,
+				-999,
+				2,
+				-999,
+				0,
+				-999,
+				-999,
+				4,
+				5,
+				-999,
+				4,
+				-999
+			],
+			"root_midi": 46,
+			"safety": 0.62,
+			"texture": "static",
+			"texture_rate": 0.41,
+			"volume": 0.25
+		},
+		"economic_profile": {
+			"price_tone": "recovery",
+			"stake_floor": 0,
+			"stake_ceiling": 0
+		},
+		"game_pool": [],
+		"game_count": [
+			0,
+			0
+		],
+		"item_pool": [
+			"instant_coffee",
+			"scratch_pad",
+			"card_counters_notes",
+			"side_bet_chart",
+			"creased_luck_card",
+			"xray_glasses",
+			"tab_detector",
+			"tarot_card",
+			"roadside_map",
+			"cheap_sunglasses"
+		],
+		"item_count": [
+			2,
+			4
+		],
+		"event_pool": [
+			"motel_knock",
+			"parking_lot_tip",
+			"suspicious_patron"
+		],
+		"event_scopes": [
+			"shop"
+		],
+		"event_count": [
+			2,
+			3
+		],
+		"service_pool": [
+			"house_drink"
+		],
+		"lender_hooks": [
+			"motel_friend"
+		],
+		"suspicion_cues": [
+			"The front desk phone rings once and stops."
+		],
+		"travel_hooks": [
+			"gas_station_casino",
+			"small_underground_casino"
+		],
+		"local_narrative_flags": {
+			"recovery_stop": true
+		},
+		"moods": [
+			"quiet",
+			"pink",
+			"temporary"
+		]
+	},
+	{
+		"id": "bar",
+		"kind": "casino",
+		"is_start": false,
+		"next_archetypes": [
+			"corner_store",
+			"motel"
+		],
+		"rare_next_archetypes": [
+			"jazz_club"
+		],
+		"rare_next_chance_percent": 16,
+		"tier": 1,
+		"name_prefixes": [
+			"Roadside",
+			"Low Tide"
+		],
+		"name_nouns": [
+			"Bar"
+		],
+		"visual_context": {
+			"perspective": "first_person",
+			"scene_type": "bar",
+			"asset_path": "res://assets/art/environments/bar.png",
+			"description": "A low-stakes bar with game slips, a dice cup, and old machines glowing against teal walls."
+		},
+		"objective_hint": "Build $100 to buy into the Grand Casino.",
+		"layout": {
+			"game_spots": [
+				[
+					150,
+					192
+				],
+				[
+					330,
+					192
+				],
+				[
+					510,
+					192
+				]
+			],
+			"event_spots": [
+				[
+					80,
+					369
+				],
+				[
+					650,
+					91
+				],
+				[
+					80,
+					81
+				]
+			],
+			"service_spots": [
+				[
+					650,
+					281
+				]
+			],
+			"game_hook_spots": [
+				[
+					510,
+					369
+				]
+			],
+			"travel_spots": [
+				[
+					780,
+					258
+				],
+				[
+					780,
+					369
+				]
+			],
+			"prestige_spots": [
+				[
+					300,
+					61
+				]
+			]
+		},
+		"security_profile": {
+			"strictness": "loose",
+			"visible_cues": [
+				"The bartender notices repeat wins more than small bets."
+			]
+		},
+		"music_profile": {
+			"theme": "local bar",
+			"ambience": 0.82,
+			"mode": "dorian",
+			"progression": [
+				0,
+				6,
+				3,
+				5
+			],
+			"motif": [
+				0,
+				-999,
+				2,
+				-999,
+				4,
+				-999,
+				5,
+				-999,
+				4,
+				-999,
+				2,
+				-999,
+				0,
+				-999,
+				6,
+				-999
+			],
+			"root_midi": 49,
+			"safety": 0.7,
+			"texture": "bar",
+			"texture_rate": 0.31,
+			"volume": 0.27
+		},
+		"economic_profile": {
+			"stake_floor": 2,
+			"stake_ceiling": 20,
+			"cashout_tone": "informal"
+		},
+		"game_pool": [
+			"slot",
+			"bar_dice"
+		],
+		"game_count": [
+			2,
+			2
+		],
+		"item_pool": [],
+		"item_count": [
+			0,
+			0
+		],
+		"event_pool": [
+			"rowdy_regular",
+			"machine_jam",
+			"side_door",
+			"heat_at_exit",
+			"suspicious_patron"
+		],
+		"event_scopes": [
+			"casino"
+		],
+		"event_count": [
+			2,
+			3
+		],
+		"service_pool": [
+			"house_drink"
+		],
+		"lender_hooks": [],
+		"suspicion_cues": [
+			"A regular looks over after your third good roll."
+		],
+		"travel_hooks": [
+			"corner_store",
+			"motel"
+		],
+		"local_narrative_flags": {
+			"first_gambling_stop": true
+		},
+		"moods": [
+			"noisy",
+			"loose",
+			"local"
+		]
+	},
+	{
+		"id": "gas_station_casino",
+		"kind": "casino",
+		"is_start": false,
+		"next_archetypes": [
+			"corner_store",
+			"back_alley"
+		],
+		"rare_next_archetypes": [
+			"jazz_club"
+		],
+		"rare_next_chance_percent": 10,
+		"tier": 1,
+		"name_prefixes": [
+			"Sunset",
+			"Highway"
+		],
+		"name_nouns": [
+			"Gas Casino"
+		],
+		"visual_context": {
+			"perspective": "first_person",
+			"scene_type": "gas_station_casino",
+			"asset_path": "res://assets/art/environments/gas_station_casino.png",
+			"description": "A gas station game corner with buzzing coolers, scratchers, and video machines under violent neon."
+		},
+		"objective_hint": "Build $100 to buy into the Grand Casino.",
+		"layout": {
+			"game_spots": [
+				[
+					150,
+					192
+				],
+				[
+					330,
+					192
+				],
+				[
+					510,
+					192
+				]
+			],
+			"event_spots": [
+				[
+					80,
+					369
+				],
+				[
+					650,
+					91
+				],
+				[
+					80,
+					81
+				]
+			],
+			"service_spots": [
+				[
+					650,
+					281
+				]
+			],
+			"game_hook_spots": [
+				[
+					510,
+					369
+				]
+			],
+			"travel_spots": [
+				[
+					780,
+					258
+				],
+				[
+					780,
+					369
+				]
+			],
+			"prestige_spots": [
+				[
+					300,
+					61
+				]
+			]
+		},
+		"security_profile": {
+			"strictness": "low",
+			"visible_cues": [
+				"The cashier mirrors your movement in the cooler glass."
+			]
+		},
+		"music_profile": {
+			"theme": "highway casino",
+			"ambience": 0.66,
+			"mode": "minor",
+			"progression": [
+				0,
+				2,
+				6,
+				3
+			],
+			"motif": [
+				0,
+				-999,
+				4,
+				-999,
+				2,
+				-999,
+				6,
+				-999,
+				4,
+				-999,
+				-999,
+				2,
+				3,
+				-999,
+				2,
+				-999
+			],
+			"root_midi": 48,
+			"safety": 0.46,
+			"texture": "highway",
+			"texture_rate": 0.27,
+			"volume": 0.26
+		},
+		"economic_profile": {
+			"stake_floor": 1,
+			"stake_ceiling": 18,
+			"cashout_tone": "cashier"
+		},
+		"game_pool": [
+			"slot",
+			"video_poker"
+		],
+		"game_count": [
+			2,
+			2
+		],
+		"item_pool": [],
+		"item_count": [
+			0,
+			0
+		],
+		"event_pool": [
+			"machine_jam",
+			"parking_lot_tip",
+			"side_door",
+			"heat_at_exit",
+			"suspicious_patron"
+		],
+		"event_scopes": [
+			"casino"
+		],
+		"event_count": [
+			2,
+			3
+		],
+		"service_pool": [
+			"house_drink"
+		],
+		"lender_hooks": [],
+		"suspicion_cues": [
+			"A camera dome above the coolers twitches once."
+		],
+		"travel_hooks": [
+			"corner_store",
+			"back_alley"
+		],
+		"local_narrative_flags": {
+			"roadside_games": true
+		},
+		"moods": [
+			"bright",
+			"cheap",
+			"watched"
+		]
+	},
+	{
+		"id": "small_underground_casino",
+		"kind": "casino",
+		"is_start": false,
+		"next_archetypes": [
+			"back_alley",
+			"motel",
+			"grand_casino"
+		],
+		"rare_next_archetypes": [
+			"jazz_club"
+		],
+		"rare_next_chance_percent": 10,
+		"tier": 1,
+		"name_prefixes": [
+			"Pink Room",
+			"Basement"
+		],
+		"name_nouns": [
+			"Underground Casino"
+		],
+		"visual_context": {
+			"perspective": "first_person",
+			"scene_type": "underground",
+			"asset_path": "res://assets/art/environments/small_underground_casino.png",
+			"description": "A cramped underground room where cyan light catches felt tables, dice, and guarded side glances."
+		},
+		"objective_hint": "Win enough for the $100 Grand Casino entry.",
+		"layout": {
+			"game_spots": [
+				[
+					150,
+					192
+				],
+				[
+					330,
+					192
+				],
+				[
+					510,
+					192
+				]
+			],
+			"event_spots": [
+				[
+					90,
+					369
+				],
+				[
+					650,
+					78
+				],
+				[
+					650,
+					248
+				],
+				[
+					90,
+					78
+				]
+			],
+			"service_spots": [
+				[
+					330,
+					369
+				]
+			],
+			"lender_spots": [
+				[
+					500,
+					369
+				]
+			],
+			"travel_spots": [
+				[
+					805,
+					78
+				],
+				[
+					805,
+					218
+				],
+				[
+					805,
+					357
+				],
+				[
+					650,
+					382
+				]
+			],
+			"prestige_spots": [
+				[
+					300,
+					61
+				]
+			]
+		},
+		"security_profile": {
+			"strictness": "high",
+			"visible_cues": [
+				"A door guard remembers everyone who walks in twice."
+			]
+		},
+		"music_profile": {
+			"theme": "basement casino",
+			"ambience": 0.92,
+			"mode": "phrygian",
+			"progression": [
+				0,
+				1,
+				5,
+				4
+			],
+			"motif": [
+				0,
+				-999,
+				1,
+				-999,
+				3,
+				-999,
+				1,
+				-999,
+				0,
+				-999,
+				4,
+				-999,
+				5,
+				-999,
+				4,
+				-999
+			],
+			"root_midi": 41,
+			"safety": 0.14,
+			"texture": "basement",
+			"texture_rate": 0.19,
+			"volume": 0.25
+		},
+		"economic_profile": {
+			"stake_floor": 5,
+			"stake_ceiling": 35,
+			"cashout_tone": "private"
+		},
+		"game_pool": [
+			"slot",
+			"blackjack",
+			"video_poker"
+		],
+		"game_count": [
+			3,
+			3
+		],
+		"item_pool": [],
+		"item_count": [
+			0,
+			0
+		],
+		"event_pool": [
+			"rowdy_regular",
+			"machine_jam",
+			"side_door",
+			"heat_at_exit",
+			"suspicious_patron"
+		],
+		"event_scopes": [
+			"casino"
+		],
+		"event_count": [
+			2,
+			4
+		],
+		"service_pool": [
+			"house_drink"
+		],
+		"lender_hooks": [
+			"street_lender"
+		],
+		"suspicion_cues": [
+			"The guard near the side door stops laughing when you win."
+		],
+		"travel_hooks": [
+			"back_alley",
+			"motel",
+			"grand_casino"
+		],
+		"local_narrative_flags": {
+			"underground_pressure": true
+		},
+		"moods": [
+			"tight",
+			"pink",
+			"dangerous"
+		]
+	},
+	{
+		"id": "jazz_club",
+		"kind": "shop",
+		"is_start": false,
+		"rarity": "rare",
+		"spawn_weight": 1,
+		"next_archetypes": [
+			"bar",
+			"motel",
+			"corner_store"
+		],
+		"tier": 1,
+		"name_prefixes": [
+			"Blue Note",
+			"Velvet",
+			"After Hours"
+		],
+		"name_nouns": [
+			"Jazz Club",
+			"Supper Club"
+		],
+		"visual_context": {
+			"perspective": "first_person",
+			"scene_type": "jazz_club",
+			"asset_path": "res://assets/art/environments/jazz_club.png",
+			"description": "A late-1960s jazz club: amber stage wash, cigarette haze, small round tables, a sax player, a cellist, a legendary drummer, and a pull-tab machine glowing near the bar."
+		},
+		"objective_hint": "Buy the trio rounds, stay for the set, and earn rare luck gear.",
+		"layout": {
+			"game_spots": [
+				[
+					765,
+					285
+				]
+			],
+			"shopkeeper_spots": [
+				[
+					835,
+					185
+				]
+			],
+			"item_spots": [
+				[
+					560,
+					160
+				],
+				[
+					690,
+					160
+				],
+				[
+					440,
+					365
+				],
+				[
+					560,
+					365
+				]
+			],
+			"event_spots": [
+				[
+					90,
+					88
+				],
+				[
+					250,
+					88
+				],
+				[
+					410,
+					88
+				]
+			],
+			"service_spots": [
+				[
+					570,
+					260
+				],
+				[
+					130,
+					260
+				],
+				[
+					280,
+					260
+				],
+				[
+					430,
+					260
+				],
+				[
+					280,
+					365
+				],
+				[
+					130,
+					365
+				]
+			],
+			"travel_spots": [
+				[
+					540,
+					70
+				],
+				[
+					690,
+					70
+				],
+				[
+					840,
+					70
+				]
+			],
+			"game_hook_spots": [
+				[
+					760,
+					385
+				]
+			],
+			"prestige_spots": [
+				[
+					68,
+					61
+				]
+			]
+		},
+		"security_profile": {
+			"strictness": "loose",
+			"visible_cues": [
+				"The bartender cares more about the band than the door."
+			]
+		},
+		"music_profile": {
+			"theme": "classical jazz club",
+			"procedural_variant": "jazz_club",
+			"ambience": 0.74,
+			"mode": "dorian",
+			"progression": [
+				0,
+				3,
+				4,
+				5
+			],
+			"motif": [
+				0,
+				-999,
+				3,
+				4,
+				-999,
+				5,
+				4,
+				-999,
+				2,
+				-999,
+				4,
+				6,
+				-999,
+				5,
+				3,
+				-999
+			],
+			"root_midi": 46,
+			"safety": 0.76,
+			"texture": "jazz",
+			"texture_rate": 0.46,
+			"volume": 0.28,
+			"arrangement_phrases": 5
+		},
+		"economic_profile": {
+			"price_tone": "rare",
+			"stake_floor": 0,
+			"stake_ceiling": 0
+		},
+		"game_pool": [
+			"pull_tabs"
+		],
+		"game_count": [
+			1,
+			1
+		],
+		"item_pool": [
+			"creased_luck_card",
+			"lucky_keychain",
+			"scratch_pad",
+			"card_counters_notes",
+			"side_bet_chart",
+			"tarot_card",
+			"roadside_map"
+		],
+		"item_count": [
+			2,
+			4
+		],
+		"event_pool": [
+			"chatty_clerk",
+			"parking_lot_tip",
+			"suspicious_patron",
+			"late_shift_discount"
+		],
+		"event_scopes": [
+			"shop"
+		],
+		"event_count": [
+			2,
+			3
+		],
+		"service_pool": [
+			"house_drink",
+			"jazz_sax_round",
+			"jazz_cello_round",
+			"jazz_drummer_round",
+			"jazz_band_tip_jar",
+			"listen_to_jazz"
+		],
+		"lender_hooks": [],
+		"suspicion_cues": [
+			"The room quiets for half a beat when someone walks in hot."
+		],
+		"travel_hooks": [
+			"bar",
+			"motel",
+			"corner_store"
+		],
+		"local_narrative_flags": {
+			"jazz_club": true,
+			"rare_music_room": true
+		},
+		"moods": [
+			"amber",
+			"funky",
+			"late"
+		]
+	},
+	{
+		"id": "grand_casino",
+		"kind": "boss",
+		"is_start": false,
+		"next_archetypes": [
+			"motel",
+			"small_underground_casino"
+		],
+		"tier": 3,
+		"name_prefixes": [
+			"Grand"
+		],
+		"name_nouns": [
+			"Casino"
+		],
+		"visual_context": {
+			"perspective": "first_person",
+			"scene_type": "boss",
+			"asset_path": "res://assets/art/environments/grand_casino.png",
+			"description": "A polished boss casino floor with velvet ropes, camera domes, high-limit tables, and a pit boss watching for cheating."
+		},
+		"objective_hint": "Win $200 on the Grand Casino floor for a Players Card.",
+		"demo_objective": {
+			"id": "grand_casino_demo_bankroll",
+			"type": "bankroll_target",
+			"title": "Beat the Grand Casino",
+			"summary": "Earn the Players Card clean or survive Rourke's back-room call.",
+			"target_bankroll": 0,
+			"high_roller_target_bankroll": 0,
+			"high_roller_net_winnings": 200,
+			"high_roller_min_grand_casino_games": 3,
+			"high_roller_max_heat": 30,
+			"showdown_heat_threshold": 70,
+			"forced_showdown_heat_threshold": 95,
+			"showdown_event_id": "the_house_calls",
+			"high_roller_event_id": "high_roller_cashout",
+			"victory_message": "Demo Victory: you earned the Grand Casino Players Card.",
+			"finale_event_id": "the_house_calls",
+			"finale_requires_kind": "boss",
+			"finale_requires_watched": true,
+			"finale_trigger_message": "Rourke calls you to the house table."
+		},
+		"layout": {
+			"game_spots": [
+				[
+					150,
+					200
+				],
+				[
+					330,
+					200
+				],
+				[
+					510,
+					200
+				],
+				[
+					690,
+					200
+				],
+				[
+					300,
+					286
+				],
+				[
+					600,
+					286
+				]
+			],
+			"event_spots": [
+				[
+					92,
+					369
+				],
+				[
+					330,
+					369
+				],
+				[
+					568,
+					369
+				],
+				[
+					806,
+					369
+				]
+			],
+			"service_spots": [
+				[
+					450,
+					94
+				]
+			],
+			"travel_spots": [
+				[
+					780,
+					281
+				],
+				[
+					780,
+					382
+				]
+			],
+			"game_hook_spots": [
+				[
+					650,
+					94
+				]
+			]
+		},
+		"security_profile": {
+			"strictness": "boss",
+			"visible_cues": [
+				"Rourke watches anyone whose wins look too clean."
+			],
+			"pit_boss": {
+				"enabled": true,
+				"label": "Pit Boss Rourke",
+				"cycle_length": 4,
+				"watched_turns": 2,
+				"cheat_heat_bonus": 30,
+				"watched_text": "Rourke is watching; cheating heat spikes.",
+				"clear_text": "Rourke is turned away for the moment."
+			}
+		},
+		"music_profile": {
+			"theme": "boss casino",
+			"ambience": 0.48,
+			"bpm": 82,
+			"mode": "harmonic_minor",
+			"progression": [
+				0,
+				5,
+				6,
+				4
+			],
+			"motif": [
+				0,
+				-999,
+				3,
+				-999,
+				6,
+				-999,
+				5,
+				-999,
+				3,
+				-999,
+				1,
+				-999,
+				4,
+				-999,
+				3,
+				-999
+			],
+			"root_midi": 42,
+			"safety": 0.08,
+			"texture": "boss",
+			"texture_rate": 0.17,
+			"volume": 0.28
+		},
+		"economic_profile": {
+			"stake_floor": 10,
+			"stake_ceiling": 60,
+			"cashout_tone": "cage"
+		},
+		"game_pool": [
+			"slot",
+			"blackjack",
+			"video_poker",
+			"bar_dice",
+			"roulette",
+			"baccarat"
+		],
+		"game_count": [
+			6,
+			6
+		],
+		"item_pool": [],
+		"item_count": [
+			0,
+			0
+		],
+		"event_pool": [
+			"the_house_calls",
+			"pit_boss_sweep",
+			"comped_suite_offer",
+			"eye_in_the_sky"
+		],
+		"event_scopes": [
+			"boss"
+		],
+		"event_count": [
+			2,
+			3
+		],
+		"service_pool": [
+			"house_drink"
+		],
+		"lender_hooks": [],
+		"suspicion_cues": [
+			"Every repeated edge makes the pit boss look up."
+		],
+		"travel_hooks": [
+			"motel",
+			"small_underground_casino"
+		],
+		"local_narrative_flags": {
+			"boss_floor": true
+		},
+		"moods": [
+			"polished",
+			"watched",
+			"expensive"
+		]
+	}
+]

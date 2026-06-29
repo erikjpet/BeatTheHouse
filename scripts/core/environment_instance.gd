@@ -1,0 +1,713 @@
+class_name EnvironmentInstance
+extends RefCounted
+
+# One generated location, regardless of venue type.
+
+const ArtContractsScript := preload("res://scripts/core/art_contracts.gd")
+
+const ENVIRONMENT_BOARD_SIZE := Vector2(ArtContractsScript.ENVIRONMENT_BOARD_SIZE)
+const GENERATED_LAYOUT_VERSION := 4
+const EMPTY_MUSIC_NOTE := -999
+
+var id: String = ""
+var archetype_id: String = ""
+var kind: String = ""
+var display_name: String = ""
+var tier: int = 1
+var depth: int = 0
+var art_key: String = ""
+var visual_context: Dictionary = {}
+var layout: Dictionary = {}
+var security_profile: Dictionary = {}
+var music_profile: Dictionary = {}
+var economic_profile: Dictionary = {}
+var objective_hint: String = ""
+var demo_objective: Dictionary = {}
+var game_ids: Array = []
+var game_states: Dictionary = {}
+var event_ids: Array = []
+var item_offers: Array = []
+var service_ids: Array = []
+var lender_hooks: Array = []
+var suspicion_cues: Array = []
+var travel_hooks: Array = []
+var next_archetypes: Array = []
+var local_narrative_flags: Dictionary = {}
+var mood: String = ""
+var turns: int = 0
+var resolved_event_ids: Array = []
+
+
+# Builds one environment from an archetype and content library.
+static func from_archetype(archetype: Dictionary, p_depth: int, rng: RngStream, library: ContentLibrary = null) -> EnvironmentInstance:
+	var environment := EnvironmentInstance.new()
+	environment.depth = p_depth
+	environment.tier = int(archetype.get("tier", 1))
+	environment.kind = archetype.get("kind", "unknown")
+	environment.archetype_id = archetype.get("id", "unknown")
+	environment.id = "%s_%03d" % [environment.archetype_id, p_depth + 1]
+	environment.display_name = _build_name(archetype, rng)
+	environment.art_key = _art_key(archetype)
+	environment.visual_context = _simulation_visual_context(archetype, environment.art_key)
+	environment.layout = _copy_dict(archetype.get("layout", {}))
+	environment.security_profile = _copy_dict(archetype.get("security_profile", {}))
+	environment.music_profile = _generated_music_profile(archetype, environment, rng)
+	environment.economic_profile = _copy_dict(archetype.get("economic_profile", {}))
+	environment.objective_hint = str(archetype.get("objective_hint", ""))
+	environment.demo_objective = _copy_dict(archetype.get("demo_objective", {}))
+	environment.game_ids = _pick_ids(archetype.get("game_pool", []), archetype.get("game_count", 1), rng)
+	environment.game_states = {}
+	environment.event_ids = _pick_events(archetype, rng, library)
+	environment.item_offers = _build_offers(archetype, rng, library)
+	environment.service_ids = _copy_array(archetype.get("service_pool", []))
+	environment.lender_hooks = _copy_array(archetype.get("lender_hooks", []))
+	environment.suspicion_cues = _copy_array(archetype.get("suspicion_cues", environment.security_profile.get("visible_cues", [])))
+	environment.travel_hooks = _copy_array(archetype.get("travel_hooks", []))
+	environment.next_archetypes = _copy_array(archetype.get("next_archetypes", []))
+	var rare_route_rng := rng.fork("rare_next:%s" % environment.id)
+	_append_rare_archetypes(environment.next_archetypes, archetype, rare_route_rng)
+	environment.local_narrative_flags = _copy_dict(archetype.get("local_narrative_flags", {}))
+	environment.mood = rng.pick(archetype.get("moods", ["watchful"]), "watchful")
+	environment.layout = ensure_generated_layout(environment.to_dict())
+	return environment
+
+
+# Restores a generated environment from saveable data.
+static func from_dict(data: Dictionary) -> EnvironmentInstance:
+	var environment := EnvironmentInstance.new()
+	environment.id = str(data.get("id", ""))
+	environment.archetype_id = str(data.get("archetype_id", ""))
+	environment.kind = str(data.get("kind", ""))
+	environment.display_name = str(data.get("display_name", ""))
+	environment.tier = int(data.get("tier", 1))
+	environment.depth = int(data.get("depth", 0))
+	environment.art_key = str(data.get("art_key", _copy_dict(data.get("visual_context", {})).get("art_key", "")))
+	environment.visual_context = _strip_presentation_paths(_copy_dict(data.get("visual_context", {})), environment.art_key)
+	environment.layout = ensure_generated_layout(data)
+	environment.security_profile = _copy_dict(data.get("security_profile", {}))
+	environment.music_profile = _copy_dict(data.get("music_profile", {}))
+	environment.economic_profile = _copy_dict(data.get("economic_profile", {}))
+	environment.objective_hint = str(data.get("objective_hint", ""))
+	environment.demo_objective = _copy_dict(data.get("demo_objective", {}))
+	environment.game_ids = _copy_array(data.get("game_ids", []))
+	environment.game_states = _copy_dict(data.get("game_states", {}))
+	environment.event_ids = _copy_array(data.get("event_ids", []))
+	environment.item_offers = _copy_array(data.get("item_offers", []))
+	environment.service_ids = _copy_array(data.get("service_ids", []))
+	environment.lender_hooks = _copy_array(data.get("lender_hooks", []))
+	environment.suspicion_cues = _copy_array(data.get("suspicion_cues", []))
+	environment.travel_hooks = _copy_array(data.get("travel_hooks", []))
+	environment.next_archetypes = _copy_array(data.get("next_archetypes", []))
+	environment.local_narrative_flags = _copy_dict(data.get("local_narrative_flags", {}))
+	environment.mood = str(data.get("mood", ""))
+	environment.turns = int(data.get("turns", 0))
+	environment.resolved_event_ids = _copy_array(data.get("resolved_event_ids", []))
+	return environment
+
+
+# Converts the environment to saveable data.
+func to_dict() -> Dictionary:
+	return {
+		"id": id,
+		"archetype_id": archetype_id,
+		"kind": kind,
+		"display_name": display_name,
+		"tier": tier,
+		"depth": depth,
+		"art_key": art_key,
+		"visual_context": visual_context.duplicate(true),
+		"layout": layout.duplicate(true),
+		"security_profile": security_profile.duplicate(true),
+		"music_profile": music_profile.duplicate(true),
+		"economic_profile": economic_profile.duplicate(true),
+		"objective_hint": objective_hint,
+		"demo_objective": demo_objective.duplicate(true),
+		"game_ids": game_ids.duplicate(true),
+		"game_states": game_states.duplicate(true),
+		"event_ids": event_ids.duplicate(true),
+		"item_offers": item_offers.duplicate(true),
+		"service_ids": service_ids.duplicate(true),
+		"lender_hooks": lender_hooks.duplicate(true),
+		"suspicion_cues": suspicion_cues.duplicate(true),
+		"travel_hooks": travel_hooks.duplicate(true),
+		"next_archetypes": next_archetypes.duplicate(true),
+		"local_narrative_flags": local_narrative_flags.duplicate(true),
+		"mood": mood,
+		"turns": turns,
+		"resolved_event_ids": resolved_event_ids.duplicate(true),
+	}
+
+
+# Ensures a generated environment owns stable object placement keyed by object id.
+static func ensure_generated_layout(environment_data: Dictionary) -> Dictionary:
+	var layout := _copy_dict(environment_data.get("layout", {}))
+	var object_rects := _copy_dict(layout.get("object_rects", {}))
+	if int(layout.get("generated_object_rect_version", 0)) != GENERATED_LAYOUT_VERSION:
+		object_rects = {}
+	var active_entries := _active_object_layout_entries(environment_data)
+	var active_object_ids := _active_object_ids_from_entries(active_entries)
+	_prune_inactive_object_rects(object_rects, active_object_ids)
+	_assign_string_object_rects(object_rects, layout, "game", _copy_array(environment_data.get("game_ids", [])), "game_spots", active_object_ids)
+	_assign_string_object_rects(object_rects, layout, "event", _copy_array(environment_data.get("event_ids", [])), "event_spots", active_object_ids)
+	_assign_item_offer_rects(object_rects, layout, _copy_array(environment_data.get("item_offers", [])), active_object_ids)
+	_assign_single_object_rect(object_rects, layout, "shopkeeper:merchant", "shopkeeper", 0, "shopkeeper_spots", _shopkeeper_should_exist(environment_data), active_object_ids)
+	_assign_string_object_rects(object_rects, layout, "travel", _travel_target_ids(environment_data), "travel_spots", active_object_ids)
+	_assign_string_object_rects(object_rects, layout, "service", _copy_array(environment_data.get("service_ids", [])), "service_spots", active_object_ids)
+	_assign_string_object_rects(object_rects, layout, "lender", _copy_array(environment_data.get("lender_hooks", [])), "lender_spots", active_object_ids)
+	_assign_string_object_rects(object_rects, layout, "game_hook", _game_hook_ids(environment_data), "game_hook_spots", active_object_ids)
+	_resolve_active_object_rect_collisions(object_rects, layout, active_entries)
+	layout["object_rects"] = object_rects
+	layout["generated_object_rect_version"] = GENERATED_LAYOUT_VERSION
+	return layout
+
+
+# Creates a generated display name from archetype name parts.
+static func _build_name(archetype: Dictionary, rng: RngStream) -> String:
+	var prefixes: Array = archetype.get("name_prefixes", ["Unnamed"])
+	var nouns: Array = archetype.get("name_nouns", ["Room"])
+	return "%s %s" % [rng.pick(prefixes, "Unnamed"), rng.pick(nouns, "Room")]
+
+
+# Adds rare route hooks with deterministic per-instance odds.
+static func _append_rare_archetypes(target: Array, archetype: Dictionary, rng: RngStream) -> void:
+	var rare_ids := _string_array(archetype.get("rare_next_archetypes", []))
+	if rare_ids.is_empty():
+		return
+	var chance := clampi(int(archetype.get("rare_next_chance_percent", 8)), 0, 100)
+	if chance <= 0 or rng.randi_range(1, 100) > chance:
+		return
+	for archetype_id in rare_ids:
+		if not target.has(archetype_id):
+			target.append(archetype_id)
+
+
+# Generates one saved composition profile for venues that request unique music.
+static func _generated_music_profile(archetype: Dictionary, environment: EnvironmentInstance, rng: RngStream) -> Dictionary:
+	var profile := _copy_dict(archetype.get("music_profile", {}))
+	if str(profile.get("procedural_variant", "")) != "jazz_club":
+		return profile
+	var progression_options := [
+		[0, 3, 4, 5],
+		[0, 5, 3, 4],
+		[0, 2, 5, 4],
+		[0, 6, 3, 5],
+	]
+	var mode_options := ["dorian", "minor", "harmonic_minor"]
+	var texture_options := ["jazz", "funk_jazz"]
+	var root_options := [41, 43, 46, 48, 50]
+	var title_prefixes := ["Blue", "Velvet", "After Hours", "Fifth Street", "Midnight"]
+	var title_nouns := ["Turnaround", "Pocket", "Standard", "Break", "Cadence"]
+	var progression_value: Variant = rng.pick(progression_options, [0, 3, 4, 5])
+	var progression: Array = [0, 3, 4, 5]
+	if typeof(progression_value) == TYPE_ARRAY:
+		progression = (progression_value as Array).duplicate(true)
+	var motif := _generated_jazz_motif(rng)
+	profile["theme"] = "classical jazz club"
+	profile["texture"] = str(rng.pick(texture_options, "jazz"))
+	profile["mode"] = str(rng.pick(mode_options, "dorian"))
+	profile["bpm"] = rng.randi_range(88, 116)
+	profile["root_midi"] = int(rng.pick(root_options, 46))
+	profile["progression"] = progression.duplicate(true)
+	profile["motif"] = motif
+	profile["arrangement_phrases"] = rng.randi_range(4, 6)
+	profile["generated_title"] = "%s %s" % [str(rng.pick(title_prefixes, "Blue")), str(rng.pick(title_nouns, "Standard"))]
+	profile["generated_signature"] = "%s:%s:%d:%s:%s" % [
+		str(environment.id),
+		str(profile.get("mode", "")),
+		int(profile.get("root_midi", 0)),
+		JSON.stringify(profile.get("progression", [])),
+		JSON.stringify(profile.get("motif", [])),
+	]
+	return profile
+
+
+static func _generated_jazz_motif(rng: RngStream) -> Array:
+	var degrees := [0, 1, 2, 3, 4, 5, 6, 7]
+	var motif: Array = []
+	for index in range(16):
+		if index % 4 == 3 and rng.randi_range(1, 100) <= 72:
+			motif.append(EMPTY_MUSIC_NOTE)
+		elif index % 2 == 1 and rng.randi_range(1, 100) <= 42:
+			motif.append(EMPTY_MUSIC_NOTE)
+		else:
+			motif.append(int(rng.pick(degrees, 0)))
+	return motif
+
+
+# Returns the presentation manifest key for this environment.
+static func _art_key(archetype: Dictionary) -> String:
+	var visual := _copy_dict(archetype.get("visual_context", {}))
+	var key := str(archetype.get("art_key", visual.get("art_key", "")))
+	if not key.is_empty():
+		return key
+	return str(archetype.get("id", "unknown"))
+
+
+# Keeps first-person visual identity in simulation without concrete asset paths.
+static func _simulation_visual_context(archetype: Dictionary, p_art_key: String) -> Dictionary:
+	return _strip_presentation_paths(_copy_dict(archetype.get("visual_context", {})), p_art_key)
+
+
+# Removes presentation-only paths from generated environment state.
+static func _strip_presentation_paths(visual: Dictionary, p_art_key: String) -> Dictionary:
+	visual.erase("asset_path")
+	visual.erase("scene_asset_path")
+	visual["art_key"] = p_art_key
+	return visual
+
+
+# Builds priced item offers from the archetype item pool.
+static func _build_offers(archetype: Dictionary, rng: RngStream, library: ContentLibrary) -> Array:
+	if library == null:
+		return []
+	var offers: Array = []
+	var item_ids := _pick_ids(archetype.get("item_pool", []), archetype.get("item_count", 0), rng)
+	for item_id in item_ids:
+		var item := library.item(item_id)
+		if item.is_empty():
+			continue
+		var min_price := int(item.get("price_min", 1))
+		var max_price := int(item.get("price_max", min_price))
+		offers.append({
+			"id": item_id,
+			"display_name": item.get("display_name", item_id),
+			"price": rng.randi_range(min_price, max_price),
+			"price_min": min_price,
+			"price_max": max_price,
+		})
+	return offers
+
+
+# Picks event ids that match the environment scopes.
+static func _pick_events(archetype: Dictionary, rng: RngStream, library: ContentLibrary) -> Array:
+	if library == null:
+		return _pick_ids(archetype.get("event_pool", []), archetype.get("event_count", 1), rng)
+	var pool: Array = archetype.get("event_pool", [])
+	var scopes: Array = archetype.get("event_scopes", [])
+	var candidates: Array = []
+	for event in library.events:
+		var event_id: String = event.get("id", "")
+		if event_id.is_empty():
+			continue
+		if not pool.is_empty() and not pool.has(event_id):
+			continue
+		if _event_fits(event, scopes):
+			candidates.append(event_id)
+	return _pick_ids(candidates, archetype.get("event_count", 1), rng)
+
+
+# Checks whether an event can appear in the environment scopes.
+static func _event_fits(event: Dictionary, scopes: Array) -> bool:
+	var event_scopes: Array = event.get("scopes", [])
+	if event_scopes.has("any"):
+		return true
+	for scope in scopes:
+		if event_scopes.has(scope):
+			return true
+	return false
+
+
+# Picks a fixed or ranged number of unique ids from a pool.
+static func _pick_ids(pool: Array, requested_count: Variant, rng: RngStream) -> Array:
+	var count := _count(requested_count, rng)
+	return rng.pick_many(pool, max(0, count))
+
+
+# Resolves a fixed count or random count range.
+static func _count(requested_count: Variant, rng: RngStream) -> int:
+	if typeof(requested_count) == TYPE_ARRAY:
+		var range_values: Array = requested_count
+		if range_values.size() >= 2:
+			return rng.randi_range(int(range_values[0]), int(range_values[1]))
+	return int(requested_count)
+
+
+# Assigns stable rects to simple string-id object families.
+static func _assign_string_object_rects(object_rects: Dictionary, layout: Dictionary, object_type: String, ids: Array, spot_field: String, active_object_ids: Dictionary) -> void:
+	var stable_ids := _string_array(ids)
+	for index in range(stable_ids.size()):
+		_assign_single_object_rect(object_rects, layout, "%s:%s" % [object_type, stable_ids[index]], object_type, index, spot_field, true, active_object_ids)
+
+
+# Assigns stable rects to generated item offers by item id.
+static func _assign_item_offer_rects(object_rects: Dictionary, layout: Dictionary, offers: Array, active_object_ids: Dictionary) -> void:
+	var item_ids: Array = []
+	for offer in offers:
+		if typeof(offer) != TYPE_DICTIONARY:
+			continue
+		var item_id := str((offer as Dictionary).get("id", ""))
+		if not item_id.is_empty() and not item_ids.has(item_id):
+			item_ids.append(item_id)
+	for index in range(item_ids.size()):
+		_assign_single_object_rect(object_rects, layout, "item:%s" % item_ids[index], "item", index, "item_spots", true, active_object_ids)
+
+
+# Assigns one object rect without disturbing an existing generated rect.
+static func _assign_single_object_rect(object_rects: Dictionary, layout: Dictionary, object_id: String, object_type: String, index: int, spot_field: String, should_assign: bool, active_object_ids: Dictionary) -> void:
+	if not should_assign or object_id.is_empty() or object_rects.has(object_id):
+		return
+	var rect := _object_rect_from_layout(layout, object_type, index, spot_field)
+	rect = _first_available_object_rect(object_rects, active_object_ids, object_id, layout, object_type, index, spot_field, rect)
+	object_rects[object_id] = _rect_to_dict(rect)
+
+
+# Keeps late-added objects from taking a spot already owned by a persistent object.
+static func _first_available_object_rect(object_rects: Dictionary, active_object_ids: Dictionary, object_id: String, layout: Dictionary, object_type: String, index: int, spot_field: String, desired_rect: Rect2) -> Rect2:
+	if not _object_rect_collides_with_active(object_rects, active_object_ids, object_id, desired_rect):
+		return desired_rect
+	var slot_count := maxi(maxi(_layout_spot_count(layout, spot_field), index + 1), 8)
+	for slot_index in range(slot_count):
+		var candidate := _object_rect_from_layout(layout, object_type, slot_index, spot_field)
+		if not _object_rect_collides_with_active(object_rects, active_object_ids, object_id, candidate):
+			return candidate
+	return desired_rect
+
+
+static func _layout_spot_count(layout: Dictionary, spot_field: String) -> int:
+	if spot_field.is_empty():
+		return 0
+	var spots: Variant = layout.get(spot_field, [])
+	if typeof(spots) != TYPE_ARRAY:
+		return 0
+	return (spots as Array).size()
+
+
+static func _object_rect_collides_with_active(object_rects: Dictionary, active_object_ids: Dictionary, object_id: String, rect: Rect2) -> bool:
+	for key in object_rects.keys():
+		var existing_id := str(key)
+		if existing_id == object_id or not bool(active_object_ids.get(existing_id, false)):
+			continue
+		var existing_rect := _rect_from_dict(object_rects.get(key, {}))
+		if existing_rect.size.x <= 0.0 or existing_rect.size.y <= 0.0:
+			continue
+		if _rects_overlap_with_layout_gap(existing_rect, rect):
+			return true
+	return false
+
+
+static func _rects_overlap_with_layout_gap(a: Rect2, b: Rect2) -> bool:
+	var gap := Vector2(8.0 / ENVIRONMENT_BOARD_SIZE.x, 8.0 / ENVIRONMENT_BOARD_SIZE.y)
+	var a_padded := Rect2(a.position - gap, a.size + gap * 2.0)
+	var b_padded := Rect2(b.position - gap, b.size + gap * 2.0)
+	return a_padded.intersects(b_padded)
+
+
+# Returns authored spot placement when available, otherwise the generated fallback slot.
+static func _object_rect_from_layout(layout: Dictionary, object_type: String, index: int, spot_field: String) -> Rect2:
+	var fallback_rect := _fallback_object_rect(object_type, index)
+	var spot := _layout_spot(layout, spot_field, index)
+	if spot.x < 0.0 or spot.y < 0.0:
+		return fallback_rect
+	var center := Vector2(
+		clampf(spot.x / ENVIRONMENT_BOARD_SIZE.x, 0.0, 1.0),
+		clampf(spot.y / ENVIRONMENT_BOARD_SIZE.y, 0.0, 1.0)
+	)
+	return _clamped_rect_from_center(center, fallback_rect.size)
+
+
+# Mirrors the foundation UI fallback slots so generated layouts remain stable without authored spots.
+static func _fallback_object_rect(object_type: String, index: int) -> Rect2:
+	var center := Vector2(0.5, 0.5)
+	var size := Vector2(0.12, 0.18)
+	match object_type:
+		"game":
+			center = Vector2(0.28 + float(index % 3) * 0.18, 0.56 + float(index / 3) * 0.13)
+			size = Vector2(118.0 / ENVIRONMENT_BOARD_SIZE.x, 72.0 / ENVIRONMENT_BOARD_SIZE.y)
+		"event":
+			center = Vector2(0.68 + float(index % 2) * 0.12, 0.42 + float(index / 2) * 0.14)
+			size = Vector2(100.0 / ENVIRONMENT_BOARD_SIZE.x, 64.0 / ENVIRONMENT_BOARD_SIZE.y)
+		"item":
+			var item_columns := 5
+			center = Vector2(0.20 + float(index % item_columns) * 0.15, 0.36 + float(index / item_columns) * 0.14)
+			size = Vector2(90.0 / ENVIRONMENT_BOARD_SIZE.x, 54.0 / ENVIRONMENT_BOARD_SIZE.y)
+		"shopkeeper":
+			center = Vector2(0.80, 0.34)
+			size = Vector2(108.0 / ENVIRONMENT_BOARD_SIZE.x, 70.0 / ENVIRONMENT_BOARD_SIZE.y)
+		"game_hook":
+			var hook_columns := 5
+			center = Vector2(0.18 + float(index % hook_columns) * 0.16, 0.82 - float(index / hook_columns) * 0.14)
+			size = Vector2(104.0 / ENVIRONMENT_BOARD_SIZE.x, 58.0 / ENVIRONMENT_BOARD_SIZE.y)
+		"travel":
+			var travel_centers := [
+				Vector2(0.84, 0.34),
+				Vector2(0.84, 0.60),
+				Vector2(0.50, 0.18),
+				Vector2(0.50, 0.50),
+				Vector2(0.30, 0.28),
+				Vector2(0.30, 0.78),
+				Vector2(0.64, 0.30),
+				Vector2(0.64, 0.70),
+				Vector2(0.84, 0.84),
+			]
+			center = travel_centers[index % travel_centers.size()]
+			size = Vector2(118.0 / ENVIRONMENT_BOARD_SIZE.x, 64.0 / ENVIRONMENT_BOARD_SIZE.y)
+		"service":
+			var service_columns := 6
+			center = Vector2(0.14 + float(index % service_columns) * 0.14, 0.30 + float(index / service_columns) * 0.13)
+			size = Vector2(96.0 / ENVIRONMENT_BOARD_SIZE.x, 54.0 / ENVIRONMENT_BOARD_SIZE.y)
+		"lender":
+			var lender_columns := 5
+			center = Vector2(0.22 + float(index % lender_columns) * 0.15, 0.70 + float(index / lender_columns) * 0.12)
+			size = Vector2(102.0 / ENVIRONMENT_BOARD_SIZE.x, 58.0 / ENVIRONMENT_BOARD_SIZE.y)
+		"prestige":
+			center = Vector2(0.16 + float(index % 2) * 0.14, 0.30)
+			size = Vector2(112.0 / ENVIRONMENT_BOARD_SIZE.x, 58.0 / ENVIRONMENT_BOARD_SIZE.y)
+	return _clamped_rect_from_center(center, size)
+
+
+# Reads an authored board-coordinate spot from a generated layout.
+static func _layout_spot(layout: Dictionary, spot_field: String, index: int) -> Vector2:
+	if spot_field.is_empty():
+		return Vector2(-1.0, -1.0)
+	var spots: Variant = layout.get(spot_field, [])
+	if typeof(spots) != TYPE_ARRAY or index < 0 or index >= (spots as Array).size():
+		return Vector2(-1.0, -1.0)
+	return _layout_spot_to_board_position((spots as Array)[index])
+
+
+# Converts supported authoring spot formats to board coordinates.
+static func _layout_spot_to_board_position(value: Variant) -> Vector2:
+	if typeof(value) == TYPE_VECTOR2:
+		return value as Vector2
+	if typeof(value) == TYPE_VECTOR2I:
+		var spot_i := value as Vector2i
+		return Vector2(float(spot_i.x), float(spot_i.y))
+	if typeof(value) == TYPE_ARRAY:
+		var parts := value as Array
+		if parts.size() >= 2:
+			return Vector2(float(parts[0]), float(parts[1]))
+	if typeof(value) == TYPE_DICTIONARY:
+		var data := value as Dictionary
+		return Vector2(float(data.get("x", -1.0)), float(data.get("y", -1.0)))
+	return Vector2(-1.0, -1.0)
+
+
+# Keeps generated rects in the normalized environment canvas.
+static func _clamped_rect_from_center(center: Vector2, size: Vector2) -> Rect2:
+	var clamped_size := Vector2(clampf(size.x, 0.08, 0.22), clampf(size.y, 0.12, 0.28))
+	var max_position := Vector2(0.98, 0.96) - clamped_size
+	var position := center - clamped_size * 0.5
+	return Rect2(
+		Vector2(
+			clampf(position.x, 0.02, maxf(0.02, max_position.x)),
+			clampf(position.y, 0.04, maxf(0.04, max_position.y))
+		),
+		clamped_size
+	)
+
+
+# Converts a normalized rect to saveable primitive data.
+static func _rect_to_dict(rect: Rect2) -> Dictionary:
+	return {
+		"x": rect.position.x,
+		"y": rect.position.y,
+		"w": rect.size.x,
+		"h": rect.size.y,
+	}
+
+
+static func _rect_from_dict(value: Variant) -> Rect2:
+	if typeof(value) == TYPE_RECT2:
+		return value as Rect2
+	if typeof(value) != TYPE_DICTIONARY:
+		return Rect2()
+	var data: Dictionary = value
+	return Rect2(
+		Vector2(float(data.get("x", 0.0)), float(data.get("y", 0.0))),
+		Vector2(float(data.get("w", 0.0)), float(data.get("h", 0.0)))
+	)
+
+
+static func _resolve_active_object_rect_collisions(object_rects: Dictionary, layout: Dictionary, active_entries: Array) -> void:
+	var kept_rects: Dictionary = {}
+	for entry_value in active_entries:
+		if typeof(entry_value) != TYPE_DICTIONARY:
+			continue
+		var entry: Dictionary = entry_value
+		var object_id := str(entry.get("object_id", ""))
+		if object_id.is_empty():
+			continue
+		var object_type := str(entry.get("object_type", ""))
+		var index := int(entry.get("index", 0))
+		var spot_field := str(entry.get("spot_field", ""))
+		var rect := _rect_from_dict(object_rects.get(object_id, {}))
+		if rect.size.x <= 0.0 or rect.size.y <= 0.0 or _object_rect_collides_with_any(kept_rects, rect):
+			var desired_rect := _object_rect_from_layout(layout, object_type, index, spot_field)
+			rect = _first_noncolliding_object_rect(kept_rects, layout, object_type, index, spot_field, desired_rect)
+			object_rects[object_id] = _rect_to_dict(rect)
+		kept_rects[object_id] = _rect_to_dict(rect)
+
+
+static func _first_noncolliding_object_rect(placed_rects: Dictionary, layout: Dictionary, object_type: String, index: int, spot_field: String, desired_rect: Rect2) -> Rect2:
+	if not _object_rect_collides_with_any(placed_rects, desired_rect):
+		return desired_rect
+	var slot_count := maxi(maxi(_layout_spot_count(layout, spot_field), index + 1), 48)
+	for slot_index in range(slot_count):
+		var candidate := _object_rect_from_layout(layout, object_type, slot_index, spot_field)
+		if not _object_rect_collides_with_any(placed_rects, candidate):
+			return candidate
+	return desired_rect
+
+
+static func _object_rect_collides_with_any(placed_rects: Dictionary, rect: Rect2) -> bool:
+	for key in placed_rects.keys():
+		var existing_rect := _rect_from_dict(placed_rects.get(key, {}))
+		if existing_rect.size.x <= 0.0 or existing_rect.size.y <= 0.0:
+			continue
+		if _rects_overlap_with_layout_gap(existing_rect, rect):
+			return true
+	return false
+
+
+static func _active_object_layout_entries(environment_data: Dictionary) -> Array:
+	var entries: Array = []
+	_append_string_layout_entries(entries, "game", _copy_array(environment_data.get("game_ids", [])), "game_spots")
+	_append_string_layout_entries(entries, "event", _copy_array(environment_data.get("event_ids", [])), "event_spots")
+	_append_item_offer_layout_entries(entries, _copy_array(environment_data.get("item_offers", [])))
+	if _shopkeeper_should_exist(environment_data):
+		entries.append({"object_id": "shopkeeper:merchant", "object_type": "shopkeeper", "index": 0, "spot_field": "shopkeeper_spots"})
+	_append_string_layout_entries(entries, "travel", _travel_target_ids(environment_data), "travel_spots")
+	_append_string_layout_entries(entries, "service", _copy_array(environment_data.get("service_ids", [])), "service_spots")
+	_append_string_layout_entries(entries, "lender", _copy_array(environment_data.get("lender_hooks", [])), "lender_spots")
+	_append_string_layout_entries(entries, "game_hook", _game_hook_ids(environment_data), "game_hook_spots")
+	return entries
+
+
+static func _append_string_layout_entries(entries: Array, object_type: String, ids: Array, spot_field: String) -> void:
+	var stable_ids := _string_array(ids)
+	for index in range(stable_ids.size()):
+		entries.append({
+			"object_id": "%s:%s" % [object_type, stable_ids[index]],
+			"object_type": object_type,
+			"index": index,
+			"spot_field": spot_field,
+		})
+
+
+static func _append_item_offer_layout_entries(entries: Array, offers: Array) -> void:
+	var item_ids: Array = []
+	for offer in offers:
+		if typeof(offer) != TYPE_DICTIONARY:
+			continue
+		var item_id := str((offer as Dictionary).get("id", ""))
+		if not item_id.is_empty() and not item_ids.has(item_id):
+			item_ids.append(item_id)
+	for index in range(item_ids.size()):
+		entries.append({
+			"object_id": "item:%s" % item_ids[index],
+			"object_type": "item",
+			"index": index,
+			"spot_field": "item_spots",
+		})
+
+
+static func _active_object_ids_from_entries(entries: Array) -> Dictionary:
+	var result: Dictionary = {}
+	for entry_value in entries:
+		if typeof(entry_value) != TYPE_DICTIONARY:
+			continue
+		var object_id := str((entry_value as Dictionary).get("object_id", ""))
+		if not object_id.is_empty():
+			result[object_id] = true
+	return result
+
+
+static func _active_object_ids(environment_data: Dictionary) -> Dictionary:
+	var result: Dictionary = {}
+	for game_id in _string_array(environment_data.get("game_ids", [])):
+		result["game:%s" % game_id] = true
+	for event_id in _string_array(environment_data.get("event_ids", [])):
+		result["event:%s" % event_id] = true
+	for offer in _copy_array(environment_data.get("item_offers", [])):
+		if typeof(offer) != TYPE_DICTIONARY:
+			continue
+		var item_id := str((offer as Dictionary).get("id", ""))
+		if not item_id.is_empty():
+			result["item:%s" % item_id] = true
+	if _shopkeeper_should_exist(environment_data):
+		result["shopkeeper:merchant"] = true
+	for target_id in _travel_target_ids(environment_data):
+		result["travel:%s" % target_id] = true
+	for service_id in _string_array(environment_data.get("service_ids", [])):
+		result["service:%s" % service_id] = true
+	for lender_id in _string_array(environment_data.get("lender_hooks", [])):
+		result["lender:%s" % lender_id] = true
+	for hook_id in _game_hook_ids(environment_data):
+		result["game_hook:%s" % hook_id] = true
+	return result
+
+
+static func _prune_inactive_object_rects(object_rects: Dictionary, active_object_ids: Dictionary) -> void:
+	for key in object_rects.keys():
+		var object_id := str(key)
+		if _is_managed_object_id(object_id) and not bool(active_object_ids.get(object_id, false)):
+			object_rects.erase(key)
+
+
+static func _is_managed_object_id(object_id: String) -> bool:
+	for prefix in ["game:", "event:", "item:", "shopkeeper:", "travel:", "service:", "lender:", "game_hook:"]:
+		if object_id.begins_with(prefix):
+			return true
+	return false
+
+
+# Returns unique route target ids in the same order the UI exposes them.
+static func _travel_target_ids(environment_data: Dictionary) -> Array:
+	var result: Array = []
+	for source in [
+		environment_data.get("next_archetypes", []),
+		environment_data.get("travel_hooks", []),
+	]:
+		for target_id in _string_array(source):
+			if not result.has(target_id):
+				result.append(target_id)
+	return result
+
+
+static func _game_hook_ids(environment_data: Dictionary) -> Array:
+	var result: Array = []
+	var game_states := _copy_dict(environment_data.get("game_states", {}))
+	for game_id in _string_array(environment_data.get("game_ids", [])):
+		var machine: Variant = game_states.get(game_id, {})
+		if typeof(machine) != TYPE_DICTIONARY:
+			continue
+		for hook in _copy_array((machine as Dictionary).get("environment_hooks", [])):
+			if typeof(hook) != TYPE_DICTIONARY:
+				continue
+			var hook_id := str((hook as Dictionary).get("id", ""))
+			if not hook_id.is_empty():
+				result.append("%s:%s" % [game_id, hook_id])
+	return result
+
+
+# Returns whether this environment should expose a merchant prop.
+static func _shopkeeper_should_exist(environment_data: Dictionary) -> bool:
+	if not _copy_array(environment_data.get("item_offers", [])).is_empty():
+		return true
+	return str(environment_data.get("kind", "")) == "shop"
+
+
+# Safely duplicates array content.
+static func _copy_array(value: Variant) -> Array:
+	if typeof(value) != TYPE_ARRAY:
+		return []
+	return value.duplicate(true)
+
+
+# Safely converts an array-like value to non-empty strings.
+static func _string_array(value: Variant) -> Array:
+	var result: Array = []
+	if typeof(value) != TYPE_ARRAY:
+		return result
+	for entry in value:
+		var id := str(entry)
+		if not id.is_empty():
+			result.append(id)
+	return result
+
+
+# Safely duplicates dictionary content.
+static func _copy_dict(value: Variant) -> Dictionary:
+	if typeof(value) != TYPE_DICTIONARY:
+		return {}
+	return value.duplicate(true)

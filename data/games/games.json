@@ -1,0 +1,490 @@
+[
+	{
+		"id": "pull_tabs",
+		"display_name": "Pull Tabs",
+		"family": "novelty",
+		"gameplay_model": "full_simulation",
+		"module_path": "res://scripts/games/pull_tabs.gd",
+		"asset_path": "res://assets/art/games/pull_tabs.png",
+		"scene_asset_path": "res://assets/art/game_scenes/pull_tabs.png",
+		"environment_prop": "machine",
+		"intro": "A four-row pull-tab dispenser sits near the counter.",
+		"description": "Finite bar pull-tab deals with sealed ticket windows.",
+		"pull_tab_deals": [
+			{
+				"id": "cherry_bells",
+				"display_name": "Cherry Bells",
+				"theme": "classic fruit jar",
+				"form": "CB-310",
+				"price": 1,
+				"ticket_count": 150,
+				"palette": {"paper": "#fff0d8", "ink": "#5f1b1b", "accent": "#ff3f75", "trim": "#ffd35a"},
+				"prizes": [
+					{"id": "cherry_pair", "label": "3 CHERRY", "symbols": ["CHERRY", "CHERRY", "CHERRY"], "payout": 2, "count": 18},
+					{"id": "bell_row", "label": "3 BELL", "symbols": ["BELL", "BELL", "BELL"], "payout": 5, "count": 8},
+					{"id": "bar_row", "label": "3 BAR", "symbols": ["BAR", "BAR", "BAR"], "payout": 10, "count": 3},
+					{"id": "seven_row", "label": "3 7", "symbols": ["7", "7", "7"], "payout": 25, "count": 1}
+				]
+			},
+			{
+				"id": "lucky_sevens",
+				"display_name": "Lucky 7s",
+				"theme": "red seven flare",
+				"form": "L7-420",
+				"price": 2,
+				"ticket_count": 150,
+				"palette": {"paper": "#fff8e8", "ink": "#241027", "accent": "#ff2448", "trim": "#35e0ff"},
+				"prizes": [
+					{"id": "cherry_row", "label": "3 CHERRY", "symbols": ["CHERRY", "CHERRY", "CHERRY"], "payout": 4, "count": 12},
+					{"id": "bar_row", "label": "3 BAR", "symbols": ["BAR", "BAR", "BAR"], "payout": 8, "count": 6},
+					{"id": "bell_row", "label": "3 BELL", "symbols": ["BELL", "BELL", "BELL"], "payout": 16, "count": 3},
+					{"id": "seven_row", "label": "3 7", "symbols": ["7", "7", "7"], "payout": 50, "count": 1}
+				]
+			},
+			{
+				"id": "pickle_card",
+				"display_name": "Pickle Card",
+				"theme": "green bar board",
+				"form": "PC-155",
+				"price": 1,
+				"ticket_count": 150,
+				"palette": {"paper": "#eaffd7", "ink": "#12331c", "accent": "#5cff70", "trim": "#f7c845"},
+				"prizes": [
+					{"id": "lemon_row", "label": "3 LEMON", "symbols": ["LEMON", "LEMON", "LEMON"], "payout": 2, "count": 20},
+					{"id": "cherry_row", "label": "3 CHERRY", "symbols": ["CHERRY", "CHERRY", "CHERRY"], "payout": 4, "count": 8},
+					{"id": "bell_row", "label": "3 BELL", "symbols": ["BELL", "BELL", "BELL"], "payout": 12, "count": 3},
+					{"id": "bar_row", "label": "3 BAR", "symbols": ["BAR", "BAR", "BAR"], "payout": 20, "count": 1}
+				]
+			},
+			{
+				"id": "bowl_game",
+				"display_name": "Bowl Game",
+				"theme": "league night ticket",
+				"form": "BG-269",
+				"price": 3,
+				"ticket_count": 150,
+				"palette": {"paper": "#e6f4ff", "ink": "#11183a", "accent": "#45ffd0", "trim": "#ff9f43"},
+				"prizes": [
+					{"id": "lemon_row", "label": "3 LEMON", "symbols": ["LEMON", "LEMON", "LEMON"], "payout": 6, "count": 9},
+					{"id": "cherry_row", "label": "3 CHERRY", "symbols": ["CHERRY", "CHERRY", "CHERRY"], "payout": 12, "count": 5},
+					{"id": "bar_row", "label": "3 BAR", "symbols": ["BAR", "BAR", "BAR"], "payout": 24, "count": 2},
+					{"id": "seven_row", "label": "3 7", "symbols": ["7", "7", "7"], "payout": 75, "count": 1}
+				]
+			}
+		],
+		"legal_actions": [
+			{"id": "buy_tab", "label": "Buy Ticket", "summary": "Pick a dispenser row; ticket drops into the stack", "win_chance": 34, "payout_mult": 4}
+		],
+		"cheat_actions": [
+			{"id": "tab_detector_scan", "label": "Detector Scan", "summary": "Toggle detector; winning buys raise heat", "suspicion_delta": 4}
+		]
+	},
+	{
+		"id": "slot",
+		"display_name": "Slot",
+		"family": "slots",
+		"gameplay_model": "full_simulation",
+		"module_path": "res://scripts/games/slot.gd",
+		"asset_path": "res://assets/art/games/slot.png",
+		"scene_asset_path": "res://assets/art/game_scenes/slot.png",
+		"environment_prop": "machine",
+		"intro": "The reels hum, waiting for your bet.",
+		"description": "Full-simulation slots with two bonus families.",
+		"slot_generation": {
+			"behavior_combo_count": 72,
+			"visual_machine_count": 360,
+			"formula": "formats * families * math_variants * bonus_variants; visual adds cabinets"
+		},
+		"slot_formats": [
+			{
+				"id": "classic_3_reel",
+				"display_name": "Classic 3-Reel",
+				"weight": 34,
+				"geometry": {
+					"pinball": {"reel_count": 3, "row_count": 1, "pay_model": "single_line"},
+					"buffalo": {"reel_count": 3, "row_count": 1, "pay_model": "single_line"}
+				}
+			},
+			{
+				"id": "line_5x3",
+				"display_name": "5-Reel Lines",
+				"weight": 33,
+				"geometry": {
+					"pinball": {"reel_count": 5, "row_count": 3, "pay_model": "pinball_double_gold"},
+					"buffalo": {"reel_count": 5, "row_count": 4, "pay_model": "ways_1024"}
+				}
+			},
+			{
+				"id": "video_feature",
+				"display_name": "Video Feature",
+				"weight": 33,
+				"geometry": {
+					"pinball": {"reel_count": 6, "row_count": 5, "pay_model": "feature_driven"},
+					"buffalo": {"reel_count": 6, "row_count": 5, "pay_model": "feature_driven"}
+				}
+			}
+		],
+		"slot_types": [
+			{"id": "pinball", "display_name": "Pinball", "weight": 50},
+			{"id": "buffalo", "display_name": "Buffalo", "weight": 50}
+		],
+		"slot_math_variants": [
+			{"id": "steady", "display_name": "Steady", "weight": 28, "normal_pay_scale": 1.10, "bonus_scale": 0.85, "jackpot_scale": 0.80},
+			{"id": "standard", "display_name": "Standard", "weight": 44, "normal_pay_scale": 1.00, "bonus_scale": 1.00, "jackpot_scale": 1.00},
+			{"id": "volatile", "display_name": "Volatile", "weight": 28, "normal_pay_scale": 0.82, "bonus_scale": 1.35, "jackpot_scale": 1.55}
+		],
+		"slot_cabinet_variants": [
+			{"id": "neon_magenta", "display_name": "Neon Magenta", "weight": 24, "primary": "#24112f", "secondary": "#090b13", "accent": "#ff4fb3", "light": "#35e0ff", "audio_pitch_bias": 0.0},
+			{"id": "cyan_gold", "display_name": "Cyan Gold", "weight": 24, "primary": "#17253b", "secondary": "#080a12", "accent": "#f7c845", "light": "#45ffd0", "audio_pitch_bias": 0.025},
+			{"id": "hot_orange", "display_name": "Hot Orange", "weight": 20, "primary": "#2b1734", "secondary": "#0b0813", "accent": "#ff6f3c", "light": "#b8ff4f", "audio_pitch_bias": -0.025},
+			{"id": "blacklight", "display_name": "Blacklight", "weight": 18, "primary": "#130d22", "secondary": "#05070f", "accent": "#9d5cff", "light": "#ffe66d", "audio_pitch_bias": 0.045},
+			{"id": "toxic_teal", "display_name": "Toxic Teal", "weight": 14, "primary": "#092526", "secondary": "#050a0d", "accent": "#47ff88", "light": "#ff3f75", "audio_pitch_bias": 0.025}
+		],
+		"slot_bonus_variants": [
+			{"id": "plain", "display_name": "Plain Bonus", "weight": 32, "feature_scale": 0.90, "bonus_step_bonus": 0},
+			{"id": "retrigger", "display_name": "Retrigger Heavy", "weight": 32, "feature_scale": 1.08, "bonus_step_bonus": 2},
+			{"id": "jackpot_chase", "display_name": "Jackpot Chase", "weight": 22, "feature_scale": 1.22, "bonus_step_bonus": 1},
+			{"id": "skill_window", "display_name": "Skill Window", "weight": 14, "feature_scale": 1.12, "bonus_step_bonus": 3}
+		],
+		"slot_foundations": [
+			{"id": "pinball", "display_name": "Pinball", "title_terms": ["Chrome", "Bumper", "Lightning"], "default_format": "classic_3_reel"},
+			{"id": "buffalo", "display_name": "Buffalo", "title_terms": ["Prairie", "Sunset", "Gold"], "default_format": "line_5x3"}
+		],
+		"slot_pinball_config": {
+			"targets": {
+				"rtp": 0.96,
+				"rtp_tolerance": 0.035,
+				"hit_frequency_min": 0.28,
+				"hit_frequency_max": 0.42,
+				"true_win_min": 0.10,
+				"true_win_max": 0.20,
+				"ldw_min": 0.10,
+				"ldw_max": 0.25,
+				"near_miss": 0.08,
+				"near_miss_tolerance": 0.015,
+				"feature_frequency": 0.02,
+				"feature_tolerance": 0.012
+			},
+			"symbols": [
+				{"id": "BLANK", "weight": 22, "role": "filler", "shape": "backplate", "colors": ["#1b2230", "#3f5269", "#6d88a8"]},
+				{"id": "BUMPER", "weight": 18, "pair": 1, "triple": 2, "pay3": 2, "pay4": 8, "pay5": 22, "pay6": 36, "role": "low_pay", "shape": "bumper", "colors": ["#35e0ff", "#ffd35a", "#35e0ff"]},
+				{"id": "BALL", "weight": 16, "pair": 1, "triple": 3, "pay3": 3, "pay4": 10, "pay5": 30, "pay6": 48, "role": "pay", "shape": "steel_ball", "colors": ["#f8fafc", "#8fa7bd", "#35e0ff"]},
+				{"id": "SPINNER", "weight": 15, "triple": 3, "pay3": 3, "pay4": 12, "pay5": 34, "pay6": 54, "role": "pay", "shape": "spinner", "colors": ["#35e0ff", "#ff4fb3", "#ffd35a"]},
+				{"id": "CHERRY", "weight": 17, "pair": 1, "triple": 2, "pay3": 2, "pay4": 7, "pay5": 20, "pay6": 32, "role": "low_pay", "shape": "fruit", "colors": ["#ff6f6f", "#7dff8a", "#ff4fb3"]},
+				{"id": "BAR", "weight": 12, "triple": 4, "pay3": 4, "pay4": 16, "pay5": 42, "pay6": 70, "role": "pay", "shape": "bar", "colors": ["#7dff8a", "#172033", "#35e0ff"]},
+				{"id": "7", "weight": 6, "triple": 4, "pay3": 5, "pay4": 24, "pay5": 80, "pay6": 125, "role": "premium", "shape": "seven", "colors": ["#ffd35a", "#ff4fb3", "#35e0ff"]},
+				{"id": "DOUBLE", "weight": 4, "role": "wild_x2_overlay", "shape": "multiplier", "colors": ["#ffd35a", "#35e0ff", "#ff4fb3"]},
+				{"id": "DOUBLE_7", "weight": 2, "triple": 10, "pay3": 12, "pay4": 60, "pay5": 180, "pay6": 260, "role": "jackpot_x2_overlay", "shape": "double_seven", "colors": ["#ffd35a", "#ff4fb3", "#35e0ff"]},
+				{"id": "PINBALL", "weight": 4, "triple": 4, "pay3": 4, "pay4": 18, "pay5": 60, "pay6": 90, "role": "bonus_scatter", "shape": "chrome_ball", "colors": ["#ff4fb3", "#35e0ff", "#ffd35a"]},
+				{"id": "WILD", "weight": 3, "pay3": 3, "pay4": 12, "pay5": 48, "pay6": 80, "role": "wild", "shape": "wild_insert", "colors": ["#35e0ff", "#ffd35a", "#ff4fb3"]}
+			],
+			"true_win_profiles": {
+				"classic_3_reel": [
+					{"symbol": "BUMPER", "count": 3, "weight": 27},
+					{"symbol": "BALL", "count": 3, "weight": 25, "wild_chance": 4},
+					{"symbol": "SPINNER", "count": 3, "weight": 22, "wild_chance": 4},
+					{"symbol": "BAR", "count": 3, "weight": 17, "wild_chance": 5},
+					{"symbol": "7", "count": 3, "weight": 9, "wild_chance": 6}
+				],
+				"line_5x3": [
+					{"symbol": "BUMPER", "count": 3, "weight": 48},
+					{"symbol": "BALL", "count": 3, "weight": 22, "wild_chance": 2},
+					{"symbol": "SPINNER", "count": 3, "weight": 15, "wild_chance": 2},
+					{"symbol": "BAR", "count": 3, "weight": 6, "wild_chance": 3},
+					{"symbol": "7", "count": 3, "weight": 1, "wild_chance": 4},
+					{"symbol": "CHERRY", "count": 4, "weight": 4},
+					{"symbol": "BUMPER", "count": 4, "weight": 2},
+					{"symbol": "BALL", "count": 4, "weight": 1},
+					{"symbol": "BUMPER", "count": 6, "weight": 1}
+				],
+				"video_feature": [
+					{"symbol": "BUMPER", "count": 3, "weight": 48},
+					{"symbol": "BALL", "count": 3, "weight": 22, "wild_chance": 2},
+					{"symbol": "SPINNER", "count": 3, "weight": 15, "wild_chance": 2},
+					{"symbol": "BAR", "count": 3, "weight": 6, "wild_chance": 3},
+					{"symbol": "7", "count": 3, "weight": 1, "wild_chance": 4},
+					{"symbol": "CHERRY", "count": 4, "weight": 4},
+					{"symbol": "BUMPER", "count": 4, "weight": 2},
+					{"symbol": "BALL", "count": 4, "weight": 1},
+					{"symbol": "BUMPER", "count": 6, "weight": 1}
+				]
+			},
+			"outcome_table": [
+				{"id": "zero_loss", "weight": 512, "classification": "zero_loss", "payout": 0},
+				{"id": "near_miss", "weight": 80, "classification": "near_miss", "payout": 0},
+				{"id": "ldw", "weight": 200, "classification": "ldw", "payout": -1},
+				{"id": "true_win", "weight": 188, "classification": "true_win", "payout_multiplier": 3.0},
+				{"id": "bonus", "weight": 20, "classification": "bonus", "payout_multiplier": 0.0}
+			],
+			"shot_table": [
+				{"id": "chute", "label": "Chute", "weight": 250, "value": 0, "lane": "top"},
+				{"id": "cup_15", "label": "15 Cup", "weight": 160, "value": 15, "lane": "left"},
+				{"id": "cup_25", "label": "25 Cup", "weight": 120, "value": 25, "lane": "right"},
+				{"id": "cup_40", "label": "40 Cup", "weight": 100, "value": 40, "lane": "center"},
+				{"id": "cup_60", "label": "60 Cup", "weight": 80, "value": 60, "lane": "left"},
+				{"id": "cup_75", "label": "75 Cup", "weight": 70, "value": 75, "lane": "right"},
+				{"id": "cup_90", "label": "90 Cup", "weight": 60, "value": 90, "lane": "center"},
+				{"id": "cup_100", "label": "100 Cup", "weight": 50, "value": 100, "lane": "left"},
+				{"id": "cup_150", "label": "150 Cup", "weight": 30, "value": 150, "lane": "right"},
+				{"id": "cup_175", "label": "175 Cup", "weight": 20, "value": 175, "lane": "center"},
+				{"id": "cup_250", "label": "250 Cup", "weight": 8, "value": 250, "lane": "left"},
+				{"id": "cup_300", "label": "300 Cup", "weight": 2, "value": 300, "lane": "right"},
+				{"id": "cup_15_extra", "label": "15 +1 Shot", "weight": 40, "value": 15, "lane": "center", "extra_shot": true},
+				{"id": "cup_50_extra", "label": "50 +1 Shot", "weight": 10, "value": 50, "lane": "top", "extra_shot": true}
+			],
+			"double_gold_window_lines": [
+				[0, 0, 0],
+				[1, 1, 1],
+				[2, 2, 2],
+				[0, 2, 0],
+				[2, 0, 2],
+				[0, 1, 0],
+				[2, 1, 2],
+				[0, 0, 1],
+				[2, 2, 1]
+			],
+			"reel_strips": {
+				"classic_3_reel": [
+					["BLANK", "BUMPER", "BALL", "CHERRY", "BAR", "PINBALL", "SPINNER", "BLANK", "BUMPER", "BALL", "CHERRY", "7", "DOUBLE", "BLANK", "BAR", "WILD", "PINBALL", "CHERRY"],
+					["BLANK", "CHERRY", "BUMPER", "BALL", "BAR", "SPINNER", "PINBALL", "BLANK", "CHERRY", "DOUBLE", "BALL", "BUMPER", "7", "BLANK", "BAR", "WILD", "PINBALL", "SPINNER"],
+					["BLANK", "BALL", "CHERRY", "BUMPER", "BAR", "PINBALL", "SPINNER", "BLANK", "DOUBLE_7", "CHERRY", "BALL", "BUMPER", "7", "BLANK", "BAR", "WILD", "PINBALL", "SPINNER"]
+				],
+				"line_5x3": [
+					["BLANK", "BUMPER", "BALL", "CHERRY", "BAR", "PINBALL", "SPINNER", "BLANK", "BUMPER", "BALL", "CHERRY", "7", "DOUBLE", "BLANK", "BAR", "WILD", "PINBALL", "CHERRY", "SPINNER", "BLANK", "BALL", "BUMPER", "CHERRY", "BAR"],
+					["CHERRY", "BLANK", "BUMPER", "BALL", "BAR", "SPINNER", "PINBALL", "BLANK", "CHERRY", "DOUBLE", "BALL", "BUMPER", "7", "BLANK", "BAR", "WILD", "PINBALL", "SPINNER", "BLANK", "BALL", "CHERRY", "BUMPER", "BAR", "SPINNER"],
+					["BALL", "BLANK", "CHERRY", "BUMPER", "BAR", "PINBALL", "SPINNER", "BLANK", "DOUBLE_7", "CHERRY", "BALL", "BUMPER", "7", "BLANK", "BAR", "WILD", "PINBALL", "SPINNER", "BLANK", "BALL", "CHERRY", "BUMPER", "BAR", "DOUBLE"],
+					["BUMPER", "BLANK", "BALL", "CHERRY", "BAR", "PINBALL", "SPINNER", "BLANK", "BUMPER", "BALL", "CHERRY", "7", "DOUBLE", "BLANK", "BAR", "WILD", "PINBALL", "CHERRY", "SPINNER", "BLANK", "BALL", "BUMPER", "CHERRY", "BAR"],
+					["SPINNER", "BLANK", "BUMPER", "BALL", "BAR", "SPINNER", "PINBALL", "BLANK", "CHERRY", "DOUBLE", "BALL", "BUMPER", "7", "BLANK", "BAR", "WILD", "PINBALL", "SPINNER", "BLANK", "BALL", "CHERRY", "BUMPER", "BAR", "DOUBLE_7"]
+				],
+				"video_feature": [
+					["BLANK", "BUMPER", "BALL", "CHERRY", "BAR", "PINBALL", "SPINNER", "BLANK", "BUMPER", "BALL", "CHERRY", "7", "DOUBLE", "BLANK", "BAR", "WILD", "PINBALL", "CHERRY", "SPINNER", "BLANK", "BALL", "BUMPER", "CHERRY", "BAR", "BLANK", "BALL", "PINBALL", "SPINNER", "CHERRY", "WILD"],
+					["CHERRY", "BLANK", "BUMPER", "BALL", "BAR", "SPINNER", "PINBALL", "BLANK", "CHERRY", "DOUBLE", "BALL", "BUMPER", "7", "BLANK", "BAR", "WILD", "PINBALL", "SPINNER", "BLANK", "BALL", "CHERRY", "BUMPER", "BAR", "SPINNER", "BLANK", "BALL", "PINBALL", "CHERRY", "BAR", "WILD"],
+					["BALL", "BLANK", "CHERRY", "BUMPER", "BAR", "PINBALL", "SPINNER", "BLANK", "DOUBLE_7", "CHERRY", "BALL", "BUMPER", "7", "BLANK", "BAR", "WILD", "PINBALL", "SPINNER", "BLANK", "BALL", "CHERRY", "BUMPER", "BAR", "DOUBLE", "BLANK", "PINBALL", "BALL", "SPINNER", "CHERRY", "WILD"],
+					["BUMPER", "BLANK", "BALL", "CHERRY", "BAR", "PINBALL", "SPINNER", "BLANK", "BUMPER", "BALL", "CHERRY", "7", "DOUBLE", "BLANK", "BAR", "WILD", "PINBALL", "CHERRY", "SPINNER", "BLANK", "BALL", "BUMPER", "CHERRY", "BAR", "BLANK", "BALL", "PINBALL", "SPINNER", "CHERRY", "WILD"],
+					["SPINNER", "BLANK", "BUMPER", "BALL", "BAR", "SPINNER", "PINBALL", "BLANK", "CHERRY", "DOUBLE", "BALL", "BUMPER", "7", "BLANK", "BAR", "WILD", "PINBALL", "SPINNER", "BLANK", "BALL", "CHERRY", "BUMPER", "BAR", "DOUBLE_7", "BLANK", "BALL", "PINBALL", "CHERRY", "BAR", "WILD"],
+					["BAR", "BLANK", "BUMPER", "BALL", "CHERRY", "PINBALL", "SPINNER", "BLANK", "BUMPER", "BALL", "CHERRY", "7", "DOUBLE", "BLANK", "BAR", "WILD", "PINBALL", "CHERRY", "SPINNER", "BLANK", "BALL", "BUMPER", "CHERRY", "BAR", "BLANK", "BALL", "PINBALL", "SPINNER", "CHERRY", "WILD"]
+				]
+			}
+		},
+		"slot_buffalo_config": {
+			"targets": {
+				"rtp": 0.95,
+				"rtp_tolerance": 0.04,
+				"hit_frequency_min": 0.28,
+				"hit_frequency_max": 0.42,
+				"true_win_min": 0.10,
+				"true_win_max": 0.20,
+				"ldw_min": 0.10,
+				"ldw_max": 0.25,
+				"near_miss": 0.08,
+				"near_miss_tolerance": 0.015,
+				"feature_frequency": 0.018,
+				"feature_tolerance": 0.012
+			},
+			"symbols": [
+				{"id": "BUFFALO", "pay3": 1, "pay4": 3, "pay5": 8, "pay6": 9, "role": "premium_jackpot_body", "shape": "buffalo_head", "colors": ["#8b4b22", "#ffd16a", "#f4c15d"]},
+				{"id": "EAGLE", "pay3": 1, "pay4": 2, "pay5": 5, "pay6": 6, "role": "premium_animal_collection", "shape": "animal_badge", "colors": ["#d7e8ff", "#356b9e", "#9bd5ff"]},
+				{"id": "WOLF", "pay3": 1, "pay4": 2, "pay5": 4, "pay6": 5, "role": "premium_animal_collection", "shape": "animal_badge", "colors": ["#b9c2c9", "#38414a", "#d7e8ff"]},
+				{"id": "HORSE", "pay3": 1, "pay4": 2, "pay5": 4, "pay6": 5, "role": "premium_animal_collection", "shape": "animal_badge", "colors": ["#b56b3d", "#f0c28a", "#ffd16a"]},
+				{"id": "ELK", "pay3": 1, "pay4": 2, "pay5": 3, "pay6": 4, "role": "premium_animal_collection", "shape": "animal_badge", "colors": ["#9d6b3d", "#f0d58a", "#ffd16a"]},
+				{"id": "A", "pay3": 1, "pay4": 1, "pay5": 2, "pay6": 2, "role": "card_low", "shape": "card", "colors": ["#f9e7b8", "#65431d", "#f5bd35"]},
+				{"id": "K", "pay3": 1, "pay4": 1, "pay5": 2, "pay6": 2, "role": "card_low", "shape": "card", "colors": ["#f9e7b8", "#65431d", "#f5bd35"]},
+				{"id": "Q", "pay3": 1, "pay4": 1, "pay5": 2, "pay6": 2, "role": "card_low", "shape": "card", "colors": ["#f9e7b8", "#65431d", "#f5bd35"]},
+				{"id": "J", "pay3": 1, "pay4": 1, "pay5": 2, "pay6": 2, "role": "card_low", "shape": "card", "colors": ["#f9e7b8", "#65431d", "#f5bd35"]},
+				{"id": "10", "pay3": 1, "pay4": 1, "pay5": 2, "pay6": 2, "role": "card_low", "shape": "card", "colors": ["#f9e7b8", "#65431d", "#f5bd35"]},
+				{"id": "SUNSET", "role": "wild_x1", "shape": "sunset", "colors": ["#ef6a24", "#ffd16a", "#ff9d3a"]},
+				{"id": "SUNSET_2X", "role": "wild_x2", "shape": "sunset", "colors": ["#ef6a24", "#ffd16a", "#ff9d3a"]},
+				{"id": "SUNSET_3X", "role": "wild_x3", "shape": "sunset", "colors": ["#ef6a24", "#ffd16a", "#ff9d3a"]},
+				{"id": "GOLD_TOKEN", "role": "scatter_bonus", "shape": "coin", "colors": ["#f5bd35", "#fff2a7", "#ffd16a"]},
+				{"id": "CASH", "role": "hold_lock_value", "shape": "cash_tile", "colors": ["#49d36a", "#efffc6", "#7dff8a"]},
+				{"id": "BLANK", "role": "filler", "shape": "backplate", "colors": ["#1b2230", "#3f5269", "#6d88a8"]}
+			],
+			"true_win_profiles": {
+				"classic_3_reel": [
+					{"symbol": "J", "weight": 38, "wild_mode": "single_2x"},
+					{"symbol": "Q", "weight": 16, "wild_mode": "single_3x"},
+					{"symbol": "K", "weight": 14, "wild_mode": "dual_2x3x"},
+					{"symbol": "ELK", "weight": 10, "wild_mode": "single_2x"},
+					{"symbol": "HORSE", "weight": 8, "wild_mode": "single_3x"},
+					{"symbol": "WOLF", "weight": 7, "wild_mode": "dual_2x3x"},
+					{"symbol": "EAGLE", "weight": 4, "wild_mode": "dual_2x3x"},
+					{"symbol": "BUFFALO", "weight": 3, "wild_mode": "dual_2x3x"}
+				],
+				"line_5x3": [
+					{"symbol": "J", "weight": 23},
+					{"symbol": "Q", "weight": 20, "wild_chance": 1},
+					{"symbol": "K", "weight": 12, "wild_chance": 1},
+					{"symbol": "A", "weight": 11, "wild_chance": 1},
+					{"symbol": "ELK", "weight": 11, "wild_chance": 2},
+					{"symbol": "HORSE", "weight": 8, "wild_chance": 2},
+					{"symbol": "WOLF", "weight": 6, "wild_chance": 2},
+					{"symbol": "EAGLE", "weight": 5, "wild_chance": 3},
+					{"symbol": "BUFFALO", "weight": 4, "wild_chance": 4, "wild_symbols": ["SUNSET_2X", "SUNSET_3X"]}
+				],
+				"video_feature": [
+					{"symbol": "J", "weight": 29},
+					{"symbol": "Q", "weight": 25, "wild_chance": 1},
+					{"symbol": "K", "weight": 13, "wild_chance": 1},
+					{"symbol": "A", "weight": 11, "wild_chance": 1},
+					{"symbol": "ELK", "weight": 8, "wild_chance": 1},
+					{"symbol": "HORSE", "weight": 5, "wild_chance": 1},
+					{"symbol": "WOLF", "weight": 4, "wild_chance": 1},
+					{"symbol": "EAGLE", "weight": 3, "wild_chance": 2},
+					{"symbol": "BUFFALO", "weight": 2, "wild_chance": 3, "wild_symbols": ["SUNSET_2X", "SUNSET_3X"]}
+				]
+			},
+			"outcome_tables": {
+				"base": [
+					{"id": "zero_loss", "weight": 5940, "classification": "zero_loss", "payout": 0},
+					{"id": "near_miss", "weight": 800, "classification": "near_miss", "payout": 0},
+					{"id": "ldw", "weight": 2000, "classification": "ldw", "payout": -1},
+					{"id": "true_win", "weight": 1300, "classification": "true_win", "payout_multiplier": 2.40},
+					{"id": "free_games", "weight": 45, "classification": "free_games", "payout_multiplier": 0.0},
+					{"id": "hold_and_spin", "weight": 25, "classification": "hold_and_spin", "payout_multiplier": 0.0},
+					{"id": "monster_feature", "weight": 5, "classification": "monster_feature", "payout_multiplier": 0.0}
+				],
+				"video_feature": [
+					{"id": "zero_loss", "weight": 6290, "classification": "zero_loss", "payout": 0},
+					{"id": "near_miss", "weight": 800, "classification": "near_miss", "payout": 0},
+					{"id": "ldw", "weight": 1800, "classification": "ldw", "payout": -1},
+					{"id": "true_win", "weight": 1050, "classification": "true_win", "payout_multiplier": 1.90},
+					{"id": "free_games", "weight": 30, "classification": "free_games", "payout_multiplier": 0.0},
+					{"id": "monster_feature", "weight": 12, "classification": "monster_feature", "payout_multiplier": 0.0},
+					{"id": "hold_and_spin", "weight": 28, "classification": "hold_and_spin", "payout_multiplier": 0.0}
+				]
+			},
+			"collection_threshold": 15,
+			"must_hit_start": 100,
+			"must_hit_threshold": 1800,
+			"must_hit_meter_per_buffalo": 8,
+			"hold_and_spin": {"starting_spins": 3, "max_spins": 24, "lock_trigger_count": 8, "cash_value_multiplier": 5, "buffalo_value_multiplier": 2},
+			"wheel_gateway": {"choices": ["free_games", "hold_and_spin", "jackpot_boost"]},
+			"jackpot_tiers": [
+				{"id": "mini", "multiplier": 25, "eligible_bets": ["bet_2", "bet_5", "bet_10", "bet_15", "bet_20"]},
+				{"id": "minor", "multiplier": 75, "eligible_bets": ["bet_5", "bet_10", "bet_15", "bet_20"]},
+				{"id": "major", "multiplier": 250, "eligible_bets": ["bet_15", "bet_20"]},
+				{"id": "grand", "multiplier": 1200, "eligible_bets": ["bet_20"]}
+			],
+			"reel_strips": {
+				"classic_3_reel": [
+					["BLANK", "A", "K", "Q", "BUFFALO", "SUNSET", "10", "J", "GOLD_TOKEN", "EAGLE", "BLANK", "K", "Q", "BUFFALO", "A", "SUNSET_2X", "CASH", "10"],
+					["BLANK", "K", "Q", "A", "BUFFALO", "SUNSET", "10", "J", "GOLD_TOKEN", "WOLF", "BLANK", "K", "Q", "BUFFALO", "A", "SUNSET_2X", "CASH", "10"],
+					["BLANK", "Q", "A", "K", "BUFFALO", "SUNSET", "10", "J", "GOLD_TOKEN", "HORSE", "BLANK", "K", "Q", "BUFFALO", "A", "SUNSET_3X", "CASH", "10"]
+				],
+				"line_5x3": [
+					["BLANK", "A", "K", "Q", "J", "10", "BUFFALO", "SUNSET", "GOLD_TOKEN", "CASH", "BLANK", "A", "K", "Q", "J", "10", "BUFFALO", "SUNSET_2X", "BLANK", "A", "K", "Q", "J", "10", "EAGLE", "BLANK", "BUFFALO", "SUNSET", "GOLD_TOKEN", "CASH", "A", "K", "Q", "J", "10", "BLANK", "BUFFALO", "SUNSET", "A", "K", "Q", "J", "10", "BLANK", "BUFFALO", "SUNSET_3X", "A", "K"],
+					["K", "BLANK", "Q", "A", "J", "10", "BUFFALO", "SUNSET", "GOLD_TOKEN", "CASH", "BLANK", "A", "K", "Q", "J", "10", "BUFFALO", "SUNSET_2X", "BLANK", "A", "K", "Q", "J", "10", "WOLF", "BLANK", "BUFFALO", "SUNSET", "GOLD_TOKEN", "CASH", "A", "K", "Q", "J", "10", "BLANK", "BUFFALO", "SUNSET", "A", "K", "Q", "J", "10", "BLANK", "BUFFALO", "SUNSET_3X", "A", "K"],
+					["Q", "BLANK", "A", "K", "J", "10", "BUFFALO", "SUNSET", "GOLD_TOKEN", "CASH", "BLANK", "A", "K", "Q", "J", "10", "BUFFALO", "SUNSET_2X", "BLANK", "A", "K", "Q", "J", "10", "HORSE", "BLANK", "BUFFALO", "SUNSET", "GOLD_TOKEN", "CASH", "A", "K", "Q", "J", "10", "BLANK", "BUFFALO", "SUNSET", "A", "K", "Q", "J", "10", "BLANK", "BUFFALO", "SUNSET_3X", "A", "K"],
+					["A", "BLANK", "K", "Q", "J", "10", "BUFFALO", "SUNSET", "GOLD_TOKEN", "CASH", "BLANK", "A", "K", "Q", "J", "10", "BUFFALO", "SUNSET_2X", "BLANK", "A", "K", "Q", "J", "10", "ELK", "BLANK", "BUFFALO", "SUNSET", "GOLD_TOKEN", "CASH", "A", "K", "Q", "J", "10", "BLANK", "BUFFALO", "SUNSET", "A", "K", "Q", "J", "10", "BLANK", "BUFFALO", "SUNSET_3X", "A", "K"],
+					["J", "BLANK", "A", "K", "Q", "10", "BUFFALO", "SUNSET", "GOLD_TOKEN", "CASH", "BLANK", "A", "K", "Q", "J", "10", "BUFFALO", "SUNSET_2X", "BLANK", "A", "K", "Q", "J", "10", "EAGLE", "BLANK", "BUFFALO", "SUNSET", "GOLD_TOKEN", "CASH", "A", "K", "Q", "J", "10", "BLANK", "BUFFALO", "SUNSET", "A", "K", "Q", "J", "10", "BLANK", "BUFFALO", "SUNSET_3X", "A", "K"]
+				],
+				"video_feature": [
+					["BLANK", "A", "K", "Q", "J", "10", "BUFFALO", "SUNSET", "GOLD_TOKEN", "CASH", "BLANK", "A", "K", "Q", "J", "10", "BUFFALO", "SUNSET_2X", "BLANK", "A", "K", "Q", "J", "10", "EAGLE", "BLANK", "BUFFALO", "SUNSET", "GOLD_TOKEN", "CASH", "A", "K", "Q", "J", "10", "BLANK", "BUFFALO", "SUNSET", "A", "K", "Q", "J", "10", "BLANK", "BUFFALO", "SUNSET_3X", "A", "K", "BLANK", "Q", "J", "10", "BUFFALO", "SUNSET", "GOLD_TOKEN", "CASH", "A", "K", "Q", "J"],
+					["K", "BLANK", "Q", "A", "J", "10", "BUFFALO", "SUNSET", "GOLD_TOKEN", "CASH", "BLANK", "A", "K", "Q", "J", "10", "BUFFALO", "SUNSET_2X", "BLANK", "A", "K", "Q", "J", "10", "WOLF", "BLANK", "BUFFALO", "SUNSET", "GOLD_TOKEN", "CASH", "A", "K", "Q", "J", "10", "BLANK", "BUFFALO", "SUNSET", "A", "K", "Q", "J", "10", "BLANK", "BUFFALO", "SUNSET_3X", "A", "K", "BLANK", "Q", "J", "10", "BUFFALO", "SUNSET", "GOLD_TOKEN", "CASH", "A", "K", "Q", "J"],
+					["Q", "BLANK", "A", "K", "J", "10", "BUFFALO", "SUNSET", "GOLD_TOKEN", "CASH", "BLANK", "A", "K", "Q", "J", "10", "BUFFALO", "SUNSET_2X", "BLANK", "A", "K", "Q", "J", "10", "HORSE", "BLANK", "BUFFALO", "SUNSET", "GOLD_TOKEN", "CASH", "A", "K", "Q", "J", "10", "BLANK", "BUFFALO", "SUNSET", "A", "K", "Q", "J", "10", "BLANK", "BUFFALO", "SUNSET_3X", "A", "K", "BLANK", "Q", "J", "10", "BUFFALO", "SUNSET", "GOLD_TOKEN", "CASH", "A", "K", "Q", "J"],
+					["A", "BLANK", "K", "Q", "J", "10", "BUFFALO", "SUNSET", "GOLD_TOKEN", "CASH", "BLANK", "A", "K", "Q", "J", "10", "BUFFALO", "SUNSET_2X", "BLANK", "A", "K", "Q", "J", "10", "ELK", "BLANK", "BUFFALO", "SUNSET", "GOLD_TOKEN", "CASH", "A", "K", "Q", "J", "10", "BLANK", "BUFFALO", "SUNSET", "A", "K", "Q", "J", "10", "BLANK", "BUFFALO", "SUNSET_3X", "A", "K", "BLANK", "Q", "J", "10", "BUFFALO", "SUNSET", "GOLD_TOKEN", "CASH", "A", "K", "Q", "J"],
+					["J", "BLANK", "A", "K", "Q", "10", "BUFFALO", "SUNSET", "GOLD_TOKEN", "CASH", "BLANK", "A", "K", "Q", "J", "10", "BUFFALO", "SUNSET_2X", "BLANK", "A", "K", "Q", "J", "10", "EAGLE", "BLANK", "BUFFALO", "SUNSET", "GOLD_TOKEN", "CASH", "A", "K", "Q", "J", "10", "BLANK", "BUFFALO", "SUNSET", "A", "K", "Q", "J", "10", "BLANK", "BUFFALO", "SUNSET_3X", "A", "K", "BLANK", "Q", "J", "10", "BUFFALO", "SUNSET", "GOLD_TOKEN", "CASH", "A", "K", "Q", "J"],
+					["10", "BLANK", "A", "K", "Q", "J", "BUFFALO", "SUNSET", "GOLD_TOKEN", "CASH", "BLANK", "A", "K", "Q", "J", "10", "BUFFALO", "SUNSET_2X", "BLANK", "A", "K", "Q", "J", "10", "WOLF", "BLANK", "BUFFALO", "SUNSET", "GOLD_TOKEN", "CASH", "A", "K", "Q", "J", "10", "BLANK", "BUFFALO", "SUNSET", "A", "K", "Q", "J", "10", "BLANK", "BUFFALO", "SUNSET_3X", "A", "K", "BLANK", "Q", "J", "10", "BUFFALO", "SUNSET", "GOLD_TOKEN", "CASH", "A", "K", "Q", "J"]
+				]
+			}
+		},
+		"legal_actions": [
+			{"id": "spin", "label": "Spin", "summary": "Spin the selected fixed bet.", "win_chance": 36, "payout_mult": 3}
+		],
+		"cheat_actions": [
+			{"id": "nudge", "label": "Nudge", "summary": "Shift a near miss into a bounded bonus.", "win_chance": 0, "payout_mult": 0, "suspicion_delta": 12}
+		]
+	},
+	{
+		"id": "bar_dice",
+		"display_name": "Bar Dice",
+		"family": "dice",
+		"gameplay_model": "full_simulation",
+		"module_path": "res://scripts/games/bar_dice.gd",
+		"asset_path": "res://assets/art/games/bar_dice.png",
+		"scene_asset_path": "res://assets/art/game_scenes/bar_dice.png",
+		"environment_prop": "dice_table",
+		"intro": "A leather dice cup slaps down on the bar.",
+		"description": "Poker dice vs the house: reroll, then beat the cup.",
+		"legal_actions": [
+			{"id": "roll", "label": "Roll", "summary": "Toss five dice, keep or reroll, then beat the house", "win_chance": 48, "payout_mult": 2}
+		],
+		"cheat_actions": [
+			{"id": "loaded_toss", "label": "Loaded Toss", "summary": "Slip in a loaded die to rig a face; raises heat", "win_chance": 58, "payout_mult": 2, "suspicion_delta": 10},
+			{"id": "palmed_swap", "label": "Palmed Swap", "summary": "Swap one die after the cup settles; raises heat", "win_chance": 62, "payout_mult": 2, "suspicion_delta": 16}
+		]
+	},
+	{
+		"id": "blackjack",
+		"display_name": "Blackjack",
+		"family": "cards",
+		"gameplay_model": "full_simulation",
+		"module_path": "res://scripts/games/blackjack.gd",
+		"asset_path": "res://assets/art/games/blackjack.png",
+		"scene_asset_path": "res://assets/art/game_scenes/blackjack.png",
+		"environment_prop": "card_table",
+		"intro": "The dealer taps the felt and waits for your bet.",
+		"description": "Shoe blackjack with splits, doubles, side bets, and heat.",
+		"legal_actions": [
+			{"id": "play_basic", "label": "Play Hand", "summary": "Hit, stand, split, or double on a blackjack table; naturals pay 3:2", "win_chance": 49, "payout_mult": 2}
+		],
+		"cheat_actions": [
+			{"id": "peek_hole_card", "label": "Peek Hole Card", "summary": "Try to glimpse the dealer's down card; heat depends on table watchfulness", "win_chance": 0, "payout_mult": 0, "suspicion_delta": 6},
+			{"id": "count_cards", "label": "Count Cards", "summary": "Complete a Hi-Lo count check to update your recorded count", "win_chance": 0, "payout_mult": 0, "suspicion_delta": 8}
+		]
+	},
+	{
+		"id": "baccarat",
+		"display_name": "Baccarat",
+		"family": "cards",
+		"gameplay_model": "full_simulation",
+		"module_path": "res://scripts/games/baccarat.gd",
+		"asset_path": "res://assets/art/games/baccarat.png",
+		"scene_asset_path": "res://assets/art/game_scenes/baccarat.png",
+		"environment_prop": "baccarat_table",
+		"intro": "The croupier waits with the baccarat shoe.",
+		"description": "Mini-baccarat with shoe rules, pair bets, and commission.",
+		"legal_actions": [
+			{"id": "deal_baccarat", "label": "Deal", "summary": "Place Player, Banker, Tie, or pair chips before the croupier deals from the shoe.", "win_chance": 0, "payout_mult": 0}
+		],
+		"cheat_actions": [
+			{"id": "read_baccarat_shoe", "label": "Read Shoe", "summary": "Try to read shoe tempo and burn-card information before betting; raises heat", "win_chance": 0, "payout_mult": 0, "suspicion_delta": 8}
+		]
+	},
+	{
+		"id": "roulette",
+		"display_name": "Roulette",
+		"family": "wheel",
+		"gameplay_model": "full_simulation",
+		"module_path": "res://scripts/games/roulette.gd",
+		"asset_path": "res://assets/art/games/roulette.png",
+		"scene_asset_path": "res://assets/art/game_scenes/roulette.png",
+		"environment_prop": "roulette_table",
+		"intro": "The croupier spins the wheel and waits for chips on the felt.",
+		"description": "Full roulette with inside/outside bets and wheel physics.",
+		"legal_actions": [
+			{"id": "spin_roulette", "label": "Spin", "summary": "Place roulette chips across the layout, then spin the wheel.", "win_chance": 0, "payout_mult": 0}
+		],
+		"cheat_actions": [
+			{"id": "read_wheel_bias", "label": "Read Wheel", "summary": "Try to read the wheel's physical bias before betting; raises heat", "win_chance": 0, "payout_mult": 0, "suspicion_delta": 8}
+		]
+	},
+	{
+		"id": "video_poker",
+		"display_name": "Video Poker",
+		"family": "cards",
+		"gameplay_model": "full_simulation",
+		"module_path": "res://scripts/games/video_poker.gd",
+		"asset_path": "res://assets/art/games/video_poker.png",
+		"scene_asset_path": "res://assets/art/game_scenes/video_poker.png",
+		"environment_prop": "video_poker_machine",
+		"intro": "A video poker screen glows in candy static.",
+		"description": "Multi-game video poker: bet, hold, draw, double up.",
+		"legal_actions": [
+			{"id": "draw", "label": "Draw", "summary": "Hold cards, draw the rest, pay on Jacks or better", "win_chance": 31, "payout_mult": 3}
+		],
+		"cheat_actions": [
+			{"id": "mark_holds", "label": "Mark Holds", "summary": "Palm in one ideal card on the draw; raises heat", "win_chance": 46, "payout_mult": 3, "suspicion_delta": 14}
+		]
+	}
+]

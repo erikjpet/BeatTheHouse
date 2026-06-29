@@ -1,0 +1,94 @@
+[
+	{
+		"id": "corner_store",
+		"label": "Corner Store",
+		"destination_archetype": "corner_store",
+		"description": "A cheap reset stop with supplies and loose attention.",
+		"cost": 1,
+		"risk": "low",
+		"distance": "near",
+		"risk_decay": 18
+	},
+	{
+		"id": "back_alley",
+		"label": "Back Alley",
+		"destination_archetype": "back_alley",
+		"description": "A risky supply stop with shady help nearby.",
+		"cost": 1,
+		"risk": "high",
+		"distance": "near",
+		"risk_decay": 12,
+		"suspicion_delta": 1
+	},
+	{
+		"id": "motel",
+		"label": "Motel",
+		"destination_archetype": "motel",
+		"description": "A private recovery stop with a chance to regroup.",
+		"cost": 2,
+		"risk": "medium",
+		"distance": "far",
+		"risk_decay": 85
+	},
+	{
+		"id": "bar",
+		"label": "Roadside Bar",
+		"destination_archetype": "bar",
+		"description": "Loose local games with social attention.",
+		"cost": 2,
+		"risk": "medium",
+		"distance": "local",
+		"risk_decay": 35
+	},
+	{
+		"id": "jazz_club",
+		"label": "Jazz Club",
+		"destination_archetype": "jazz_club",
+		"description": "A rare late-night bar and shop with a live trio.",
+		"cost": 4,
+		"risk": "low",
+		"distance": "local",
+		"risk_decay": 55
+	},
+	{
+		"id": "gas_station_casino",
+		"label": "Gas Station Casino",
+		"destination_archetype": "gas_station_casino",
+		"description": "Small machine games under bright cameras.",
+		"cost": 3,
+		"risk": "medium",
+		"distance": "local",
+		"risk_decay": 35,
+		"suspicion_delta": 1
+	},
+	{
+		"id": "small_underground_casino",
+		"label": "Underground Casino",
+		"destination_archetype": "small_underground_casino",
+		"description": "Better action with sharper eyes on the door.",
+		"cost": 5,
+		"risk": "high",
+		"distance": "far",
+		"risk_decay": 70,
+		"suspicion_delta": 3,
+		"requires_flags": {
+			"underground_tip": true
+		},
+		"condition_text": "Requires a local tip."
+	},
+	{
+		"id": "grand_casino",
+		"label": "Grand Casino",
+		"destination_archetype": "grand_casino",
+		"description": "A $100 ride to the watched boss floor.",
+		"cost": 100,
+		"risk": "boss",
+		"distance": "remote",
+		"risk_decay": 95,
+		"suspicion_delta": 8,
+		"requires_travel_count_min": 1,
+		"hide_until_travel_count_met": true,
+		"travel_count_condition_text": "Travel once before this route appears.",
+		"condition_text": "Requires $100 bankroll."
+	}
+]

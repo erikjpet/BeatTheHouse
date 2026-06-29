@@ -1,0 +1,50 @@
+[
+	{
+		"id": "street_lender",
+		"display_name": "Street Lender",
+		"lender_type": "criminal",
+		"description": "Fast cash with pressure attached.",
+		"debt_profile": {
+			"principal_min": 25,
+			"principal_max": 60,
+			"interest_rate": 0.15,
+			"deadline_turns": 3,
+			"default_consequence": "forced_repayment"
+		},
+		"consequences": ["suspicion_pressure", "forced_repayment"],
+		"message": "The lender counts out fast cash and writes your name down.",
+		"effect": {
+			"bankroll_delta": 25,
+			"suspicion_delta": 1,
+			"debt_changes": [
+				{
+					"id": "street_lender_note",
+					"lender_id": "street_lender",
+					"balance": 30,
+					"status": "active",
+					"deadline_turns": 3,
+					"interest_rate": 0.15
+				}
+			],
+			"flags_set": {
+				"street_lender_debt": true
+			},
+			"messages": ["Fast cash lands in your hand, but the debt follows you."]
+		}
+	},
+	{
+		"id": "motel_friend",
+		"display_name": "Motel Friend",
+		"lender_type": "personal",
+		"description": "A softer loan with social strings.",
+		"debt_profile": {
+			"principal_min": 15,
+			"principal_max": 40,
+			"interest_rate": 0.05,
+			"deadline_turns": 4,
+			"default_consequence": "favor_owed"
+		},
+		"consequences": ["favor_owed", "story_pressure"],
+		"effect": {}
+	}
+]
