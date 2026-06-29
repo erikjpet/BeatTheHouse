@@ -47,6 +47,13 @@ class IsolatedHandler(SimpleHTTPRequestHandler):
         self.send_header("Cross-Origin-Embedder-Policy", "require-corp")
         super().end_headers()
 
+    def copyfile(self, source, outputfile):
+        # Browsers routinely abort/re-request large assets; ignore the noise.
+        try:
+            super().copyfile(source, outputfile)
+        except ConnectionError:
+            pass
+
 print(f"Serving {directory}")
 print(f"  http://127.0.0.1:{port}  (cross-origin isolated; SharedArrayBuffer enabled)")
 print("  Ctrl+C to stop.")
