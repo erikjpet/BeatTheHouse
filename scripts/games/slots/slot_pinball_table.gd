@@ -56,21 +56,29 @@ func launch_ball(session: Dictionary, rng: RngStream, launch_params: Dictionary 
 	var budget: int = maxi(1, int(session.get("ball_budget", 1)))
 	if launched >= budget and not bool(launch_params.get("force", false)):
 		return {}
-	var start: Vector2 = _vector2_from_value(layout.get("plunger_start", Vector2(0.5, 0.88)), Vector2(0.5, 0.88))
+	var start: Vector2 = _vector2_from_value(layout.get("plunger_start", Vector2(0.5, 0.12)), Vector2(0.5, 0.12))
 	var lane: String = str(launch_params.get("lane", "center"))
 	var lane_starts: Dictionary = _copy_dict(layout.get("lane_starts", {}))
 	if lane_starts.has(lane):
 		start = _vector2_from_value(lane_starts.get(lane, start), start)
 	else:
 		start.x = clampf(start.x + _lane_offset(layout, lane), 0.08, 0.92)
-	var direction: Vector2 = _vector2_from_value(layout.get("plunger_direction", Vector2(0.0, -1.0)), Vector2(0.0, -1.0))
+	if launch_params.has("start"):
+		start = _vector2_from_value(launch_params.get("start", start), start)
+	elif launch_params.has("start_x") or launch_params.has("start_y"):
+		start = Vector2(
+			clampf(float(launch_params.get("start_x", start.x)), 0.04, 0.96),
+			clampf(float(launch_params.get("start_y", start.y)), 0.02, 0.24)
+		)
+	var direction: Vector2 = _vector2_from_value(layout.get("plunger_direction", Vector2(0.0, 1.0)), Vector2(0.0, 1.0))
 	var lane_directions: Dictionary = _copy_dict(layout.get("lane_directions", {}))
 	if lane_directions.has(lane):
 		direction = _vector2_from_value(lane_directions.get(lane, direction), direction)
 	if direction.length_squared() <= EPSILON:
-		direction = Vector2(0.0, -1.0)
+		direction = Vector2(0.0, 1.0)
 	direction = direction.normalized()
-	direction = direction.rotated(clampf(float(launch_params.get("aim_offset", 0.0)), -0.34, 0.34)).normalized()
+	var max_aim_offset := clampf(float(layout.get("max_aim_offset", 1.05)), 0.05, 1.25)
+	direction = direction.rotated(clampf(float(launch_params.get("aim_offset", 0.0)), -max_aim_offset, max_aim_offset)).normalized()
 	var input: Dictionary = _copy_dict(session.get("input", {}))
 	var default_power: float = float(input.get("plunger_charge", 0.72))
 	var power: float = _normalized_power(launch_params.get("power", default_power))
@@ -234,14 +242,14 @@ func _em_bumper_drop_layout() -> Dictionary:
 		"gravity": Vector2(0.0, 2.85),
 		"linear_damping": 0.989,
 		"restitution": 0.80,
-		"launch_speed_min": 2.35,
-		"launch_speed_max": 3.45,
+		"launch_speed_min": 1.35,
+		"launch_speed_max": 2.65,
 		"max_ball_speed": 5.20,
-		"plunger_start": Vector2(0.50, 0.82),
-		"plunger_direction": Vector2(0.0, -1.0),
+		"plunger_start": Vector2(0.50, 0.12),
+		"plunger_direction": Vector2(0.0, 1.0),
 		"lane_offsets": {"left": -0.14, "center": 0.0, "right": 0.14},
-		"lane_starts": {"left": Vector2(0.22, 0.88), "center": Vector2(0.50, 0.92), "right": Vector2(0.78, 0.88)},
-		"lane_directions": {"left": Vector2(0.30, -1.0), "center": Vector2(0.0, -1.0), "right": Vector2(-0.30, -1.0)},
+		"lane_starts": {"left": Vector2(0.28, 0.12), "center": Vector2(0.50, 0.10), "right": Vector2(0.72, 0.12)},
+		"lane_directions": {"left": Vector2(-0.18, 1.0), "center": Vector2(0.0, 1.0), "right": Vector2(0.18, 1.0)},
 		"max_ticks": 300,
 		"elements": [
 			_segment("left_rail", "rail", Vector2(0.06, 0.08), Vector2(0.06, 0.94), 0),
@@ -271,14 +279,14 @@ func _lane_multiball_layout() -> Dictionary:
 		"gravity": Vector2(0.0, 3.10),
 		"linear_damping": 0.989,
 		"restitution": 0.81,
-		"launch_speed_min": 2.75,
-		"launch_speed_max": 3.95,
+		"launch_speed_min": 1.45,
+		"launch_speed_max": 2.85,
 		"max_ball_speed": 5.65,
-		"plunger_start": Vector2(0.50, 0.90),
-		"plunger_direction": Vector2(0.0, -1.0),
+		"plunger_start": Vector2(0.50, 0.11),
+		"plunger_direction": Vector2(0.0, 1.0),
 		"lane_offsets": {"left": -0.20, "center": 0.0, "right": 0.20},
-		"lane_starts": {"left": Vector2(0.22, 0.90), "center": Vector2(0.50, 0.92), "right": Vector2(0.78, 0.90)},
-		"lane_directions": {"left": Vector2(0.34, -1.0), "center": Vector2(0.0, -1.0), "right": Vector2(-0.34, -1.0)},
+		"lane_starts": {"left": Vector2(0.24, 0.11), "center": Vector2(0.50, 0.10), "right": Vector2(0.76, 0.11)},
+		"lane_directions": {"left": Vector2(-0.22, 1.0), "center": Vector2(0.0, 1.0), "right": Vector2(0.22, 1.0)},
 		"max_ticks": 300,
 		"elements": [
 			_segment("left_rail", "rail", Vector2(0.05, 0.06), Vector2(0.05, 0.95), 0),
@@ -309,14 +317,14 @@ func _video_feature_layout() -> Dictionary:
 		"gravity": Vector2(0.0, 3.05),
 		"linear_damping": 0.989,
 		"restitution": 0.82,
-		"launch_speed_min": 2.90,
-		"launch_speed_max": 4.05,
+		"launch_speed_min": 1.55,
+		"launch_speed_max": 3.05,
 		"max_ball_speed": 5.90,
-		"plunger_start": Vector2(0.90, 0.90),
-		"plunger_direction": Vector2(-0.20, -1.0),
+		"plunger_start": Vector2(0.78, 0.10),
+		"plunger_direction": Vector2(-0.26, 1.0),
 		"lane_offsets": {"left": -0.02, "center": 0.0, "right": 0.02},
-		"lane_starts": {"left": Vector2(0.88, 0.90), "center": Vector2(0.90, 0.91), "right": Vector2(0.92, 0.90)},
-		"lane_directions": {"left": Vector2(-0.66, -1.0), "center": Vector2(-0.36, -1.0), "right": Vector2(-0.12, -1.0)},
+		"lane_starts": {"left": Vector2(0.66, 0.10), "center": Vector2(0.78, 0.10), "right": Vector2(0.90, 0.10)},
+		"lane_directions": {"left": Vector2(-0.48, 1.0), "center": Vector2(-0.26, 1.0), "right": Vector2(-0.08, 1.0)},
 		"max_ticks": 360,
 		"elements": [
 			_segment("left_wall", "wall", Vector2(0.05, 0.05), Vector2(0.05, 0.93), 0),

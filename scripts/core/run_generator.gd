@@ -31,6 +31,12 @@ func next_environment(run_state: RunState, target_archetype_id: String = "") -> 
 func _pick_archetype(run_state: RunState, depth: int, rng: RngStream, target_archetype_id: String = "") -> Dictionary:
 	if depth == 0:
 		var starts := _start_archetypes()
+		var shop_starts := _archetypes_with_shop_items(starts)
+		if not shop_starts.is_empty():
+			return rng.pick(shop_starts, {})
+		var shop_tier_one := _archetypes_with_shop_items(library.archetypes_for(1), false)
+		if not shop_tier_one.is_empty():
+			return rng.pick(shop_tier_one, {})
 		var playable_starts := _archetypes_with_games(starts)
 		if not playable_starts.is_empty():
 			return rng.pick(playable_starts, {})
@@ -61,6 +67,25 @@ func _start_archetypes() -> Array:
 		if bool(archetype.get("is_start", false)):
 			starts.append(archetype)
 	return starts
+
+
+# Returns shop archetypes that can offer items before the first wager.
+func _archetypes_with_shop_items(archetypes: Array, include_rare: bool = true) -> Array:
+	var matches: Array = []
+	for archetype in archetypes:
+		if typeof(archetype) != TYPE_DICTIONARY:
+			continue
+		var data: Dictionary = archetype
+		if str(data.get("kind", "")) != "shop":
+			continue
+		if data.get("item_pool", []).is_empty():
+			continue
+		if _count_ceiling(data.get("item_count", 0)) <= 0:
+			continue
+		if not include_rare and str(data.get("rarity", "")).to_lower() == "rare":
+			continue
+		matches.append(data)
+	return matches
 
 
 # Returns archetypes with at least one game option.
@@ -153,6 +178,16 @@ func _string_array(value: Variant) -> Array:
 		if not id.is_empty():
 			result.append(id)
 	return result
+
+
+func _count_ceiling(value: Variant) -> int:
+	if typeof(value) == TYPE_ARRAY:
+		var values: Array = value
+		var max_count := 0
+		for entry in values:
+			max_count = maxi(max_count, int(entry))
+		return max_count
+	return int(value)
 
 
 func _copy_dict(value: Variant) -> Dictionary:

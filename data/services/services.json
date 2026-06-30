@@ -27,7 +27,7 @@
 		"id": "jazz_sax_round",
 		"display_name": "Buy Sax a Round",
 		"category": "favor",
-		"description": "Maybe coax a lucky coin from the sax.",
+		"description": "A long-shot chance to coax a lucky coin from the sax.",
 		"cost": 8,
 		"message": "The sax player nods over the rim and lets the solo curl around your luck.",
 		"effect": {
@@ -38,7 +38,7 @@
 		"id": "jazz_cello_round",
 		"display_name": "Buy Cello a Round",
 		"category": "favor",
-		"description": "Maybe coax a lucky coin from the cello.",
+		"description": "A long-shot chance to coax a lucky coin from the cello.",
 		"cost": 8,
 		"message": "The cellist smiles into a low walking line and keeps time with your nerve.",
 		"effect": {
@@ -49,7 +49,7 @@
 		"id": "jazz_drummer_round",
 		"display_name": "Buy Drummer a Round",
 		"category": "favor",
-		"description": "Maybe coax a coin, or glasses after two full sets.",
+		"description": "Small chance to coax a coin, or glasses after two full sets.",
 		"cost": 8,
 		"message": "The drummer taps the glass twice, then rolls the groove forward.",
 		"effect": {

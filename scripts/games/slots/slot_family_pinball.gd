@@ -17,6 +17,19 @@ const FILL_REEL_SYMBOLS := [
 	["BALL", "SPINNER"],
 	["BUMPER", "7"],
 ]
+const LAUNCH_ANGLE_MIN_DEGREES := -60
+const LAUNCH_ANGLE_MAX_DEGREES := 60
+const LAUNCH_ANGLE_STEP_DEGREES := 4
+const LAUNCH_ANGLE_LANE_THRESHOLD_DEGREES := 8
+const LIVE_TICK_BUDGET := 2
+const LIVE_TICK_MAX_BUDGET := 8
+const LIVE_TICK_MSEC_PER_SIM_STEP := 8.333333
+const DIRECT_AIM_STEPS := 12
+const DIRECT_START_STEPS := 10
+const DIRECT_POWER_STEPS := 10
+const BONUS_AIM_PREFIX := "slot_bonus_aim_"
+const BONUS_START_PREFIX := "slot_bonus_start_"
+const BONUS_POWER_PREFIX := "slot_bonus_power_"
 
 
 func outcome_table(machine: Dictionary, definition: Dictionary, _free_spin: bool) -> Array:
@@ -148,7 +161,7 @@ func open_feature(machine: Dictionary, stake: int, rng: RngStream, definition: D
 	})
 	var physics := {
 		"ball_x": 0.50,
-		"ball_y": 0.82,
+		"ball_y": 0.12,
 		"velocity_x": 0.0,
 		"velocity_y": 0.0,
 		"energy": 1.0,
@@ -171,6 +184,9 @@ func open_feature(machine: Dictionary, stake: int, rng: RngStream, definition: D
 		"history": [],
 		"choices": _pinball_choices(mode),
 		"launch_power": _default_launch_power(mode, rng),
+		"launch_angle_degrees": 0,
+		"launch_start": _point_payload(_launch_start_for_angle(mode, 0)),
+		"launch_start_manual": false,
 		"selected_lane": "center",
 		"lane_locks": 0,
 		"lit_jackpots": 0,
@@ -226,19 +242,26 @@ func step_bonus(machine: Dictionary, action_id: String, rng: RngStream, definiti
 	if active.is_empty() or not bool(active.get("active", false)):
 		return _bonus_step_result(false, 0, "No pinball feature is loaded.", active)
 	var mode := str(active.get("mode", "em_bumper_drop"))
+	var live_display := _pinball_live_display_context(ui_state)
+	if action_id.begins_with(BONUS_AIM_PREFIX):
+		return _pinball_direct_aim_step(machine, active, mode, action_id)
+	if action_id.begins_with(BONUS_START_PREFIX):
+		return _pinball_direct_start_step(machine, active, mode, action_id)
+	if action_id.begins_with(BONUS_POWER_PREFIX) and action_id != "slot_bonus_power_down" and action_id != "slot_bonus_power_up":
+		return _pinball_direct_power_step(machine, active, mode, action_id)
 	if action_id == "slot_bonus_tick":
-		return _advance_pinball_ball(machine, active, mode, rng, definition, false, {}, "Pinball physics", false)
+		return _advance_pinball_ball(machine, active, mode, rng, definition, false, {}, "Pinball physics", false, live_display, ui_state)
 	if action_id == "slot_bonus_power_down":
 		return _pinball_power_step(machine, active, mode, -1, "soft shot")
 	if action_id == "slot_bonus_power_up":
 		return _pinball_power_step(machine, active, mode, 1, "hard shot")
 	if action_id == "slot_bonus_left":
 		if _has_active_ball(active):
-			return _advance_pinball_ball(machine, active, mode, rng, definition, false, _manual_input_for_direction(active, -1), "Left flipper")
+			return _advance_pinball_ball(machine, active, mode, rng, definition, false, _manual_input_for_direction(active, -1), "Left flipper", false, live_display, ui_state)
 		return _pinball_input_step(machine, active, mode, -1, "aim left")
 	if action_id == "slot_bonus_right":
 		if _has_active_ball(active):
-			return _advance_pinball_ball(machine, active, mode, rng, definition, false, _manual_input_for_direction(active, 1), "Right flipper")
+			return _advance_pinball_ball(machine, active, mode, rng, definition, false, _manual_input_for_direction(active, 1), "Right flipper", false, live_display, ui_state)
 		return _pinball_input_step(machine, active, mode, 1, "aim right")
 	if action_id == "slot_bonus_tilt":
 		if _has_active_ball(active):
@@ -248,14 +271,14 @@ func step_bonus(machine: Dictionary, action_id: String, rng: RngStream, definiti
 				"flipper_right": false,
 				"plunger_charge": clampf(float(int(active.get("launch_power", 70))) / 100.0, 0.0, 1.0),
 				"nudge": Vector2(0.65, 0.0),
-			}, "Tilt nudge")
+			}, "Tilt nudge", false, live_display, ui_state)
 		active["nudge_request"] = 2
 		active["nudge_used"] = true
 		machine["active_bonus"] = active
 		return _bonus_step_result(false, 0, "Tilt warning set for the next launch.", active)
 	if action_id == "slot_bonus_launch":
 		_apply_launch_skill_input(active, mode, ui_state)
-	return _advance_pinball_ball(machine, active, mode, rng, definition, true, {}, "Pinball physics", true)
+	return _advance_pinball_ball(machine, active, mode, rng, definition, true, {}, "Pinball physics", true, live_display, ui_state)
 
 
 func shot_table(definition: Dictionary) -> Array:
@@ -268,7 +291,7 @@ func feature_mode_for_machine(machine: Dictionary) -> String:
 
 func preview_feature_award(machine: Dictionary, stake: int, definition: Dictionary, seed_rng: RngStream, inputs: Array) -> int:
 	var active: Dictionary = open_feature(machine, stake, seed_rng, definition)
-	active["headless"] = false
+	active["headless"] = true
 	active["preview_input_bonus"] = not inputs.is_empty()
 	var preview_mode := str(active.get("mode", ""))
 	var session: Dictionary = _copy_dict(active.get("pinball_session", {}))
@@ -317,32 +340,85 @@ func _preview_input_score(inputs: Array, stake: int, mode: String, rng: RngStrea
 
 
 func _pinball_input_step(machine: Dictionary, active: Dictionary, mode: String, direction: int, label: String) -> Dictionary:
-	var next_lane := _lane_after(str(active.get("selected_lane", "center")), direction)
+	var angle_degrees := clampi(_launch_angle_degrees(active) + direction * LAUNCH_ANGLE_STEP_DEGREES, LAUNCH_ANGLE_MIN_DEGREES, LAUNCH_ANGLE_MAX_DEGREES)
+	return _pinball_set_aim(machine, active, mode, angle_degrees, label)
+
+
+func _pinball_direct_aim_step(machine: Dictionary, active: Dictionary, mode: String, action_id: String) -> Dictionary:
+	var index := _indexed_action_value(action_id, BONUS_AIM_PREFIX, DIRECT_AIM_STEPS)
+	if index < 0:
+		return _bonus_step_result(false, 0, "Aim control missed.", active)
+	var ratio := float(index) / float(DIRECT_AIM_STEPS)
+	var angle_degrees := clampi(int(round(lerpf(float(LAUNCH_ANGLE_MIN_DEGREES), float(LAUNCH_ANGLE_MAX_DEGREES), ratio))), LAUNCH_ANGLE_MIN_DEGREES, LAUNCH_ANGLE_MAX_DEGREES)
+	return _pinball_set_aim(machine, active, mode, angle_degrees, "aim")
+
+
+func _pinball_direct_start_step(machine: Dictionary, active: Dictionary, mode: String, action_id: String) -> Dictionary:
+	var index := _indexed_action_value(action_id, BONUS_START_PREFIX, DIRECT_START_STEPS)
+	if index < 0:
+		return _bonus_step_result(false, 0, "Launch rail missed.", active)
+	var ratio := float(index) / float(DIRECT_START_STEPS)
+	var start := _launch_start_for_ratio(mode, ratio)
+	active["launch_start"] = _point_payload(start)
+	active["launch_start_manual"] = true
+	active["selected_lane"] = _lane_for_launch_start(mode, start.x)
+	active["selected_path"] = str(active.get("selected_lane", "center"))
+	active["display_event_log"] = []
+	active["display_trajectory"] = []
+	active["live_input"] = {}
+	active["launch_skill"] = _launch_skill_snapshot(active, {}, false)
+	machine["active_bonus"] = active
+	return _bonus_step_result(false, 0, "Launch point set.", active)
+
+
+func _pinball_direct_power_step(machine: Dictionary, active: Dictionary, _mode: String, action_id: String) -> Dictionary:
+	var index := _indexed_action_value(action_id, BONUS_POWER_PREFIX, DIRECT_POWER_STEPS)
+	if index < 0:
+		return _bonus_step_result(false, 0, "Power control missed.", active)
+	var ratio := float(index) / float(DIRECT_POWER_STEPS)
+	active["launch_power"] = clampi(int(round(lerpf(20.0, 100.0, ratio))), 20, 100)
+	active["launch_skill"] = _launch_skill_snapshot(active, {}, false)
+	active["display_event_log"] = []
+	active["display_trajectory"] = []
+	machine["active_bonus"] = active
+	return _bonus_step_result(false, 0, "Launch power set to %d." % int(active.get("launch_power", 70)), active)
+
+
+func _pinball_set_aim(machine: Dictionary, active: Dictionary, mode: String, angle_degrees: int, label: String) -> Dictionary:
+	var previous_angle := _launch_angle_degrees(active)
+	var launch_start := _launch_start_for_active(active, mode, angle_degrees)
+	var next_lane := _lane_for_launch_start(mode, launch_start.x) if bool(active.get("launch_start_manual", false)) else _lane_for_launch_angle(angle_degrees)
+	var aim_direction := clampi(angle_degrees - previous_angle, -1, 1)
+	active["launch_angle_degrees"] = angle_degrees
+	active["launch_start"] = _point_payload(launch_start)
+	active["selected_lane"] = next_lane
+	active["selected_path"] = next_lane
 	if mode == "em_bumper_drop":
-		active["selected_lane"] = next_lane
-		active["selected_path"] = next_lane
-		active["nudge_request"] = clampi(direction, -4, 4)
+		active["nudge_request"] = clampi(aim_direction, -4, 4)
 	elif mode == "lane_multiball":
-		active["selected_lane"] = next_lane
-		active["selected_path"] = next_lane
+		active["nudge_request"] = 0
 	else:
 		var physics: Dictionary = _copy_dict(active.get("physics", {}))
-		physics["velocity_x"] = clampf(float(physics.get("velocity_x", 0.0)) + float(direction) * 0.16, -1.4, 1.4)
+		physics["ball_x"] = clampf(launch_start.x, 0.08, 0.92)
+		physics["ball_y"] = clampf(launch_start.y, 0.05, 0.20)
+		physics["velocity_x"] = clampf(float(physics.get("velocity_x", 0.0)) + float(aim_direction) * 0.10, -1.4, 1.4)
 		physics["energy"] = clampf(float(physics.get("energy", 1.0)) + 0.08, 0.2, 2.0)
 		active["physics"] = physics
-		active["selected_lane"] = next_lane
-		active["selected_path"] = str(active.get("selected_lane", "center"))
 		active["survival_ticks"] = maxi(0, int(active.get("survival_ticks", 0))) + 1
 	active["display_event_log"] = []
 	active["display_trajectory"] = []
 	active["live_input"] = {}
+	active["launch_skill"] = _launch_skill_snapshot(active, {}, false)
 	machine["active_bonus"] = active
-	return _bonus_step_result(false, 0, "%s input set." % label.capitalize(), active)
+	var angle_label := str(angle_degrees)
+	if angle_degrees > 0:
+		angle_label = "+%d" % angle_degrees
+	return _bonus_step_result(false, 0, "%s angle set to %s." % [label.capitalize(), angle_label], active)
 
 
 func _pinball_power_step(machine: Dictionary, active: Dictionary, _mode: String, direction: int, label: String) -> Dictionary:
-	var delta := 8 if direction > 0 else -8
-	active["launch_power"] = clampi(int(active.get("launch_power", 70)) + delta, 25, 96)
+	var delta := 6 if direction > 0 else -6
+	active["launch_power"] = clampi(int(active.get("launch_power", 70)) + delta, 20, 100)
 	active["launch_skill"] = _launch_skill_snapshot(active, {}, false)
 	active["display_event_log"] = []
 	active["display_trajectory"] = []
@@ -350,23 +426,21 @@ func _pinball_power_step(machine: Dictionary, active: Dictionary, _mode: String,
 	return _bonus_step_result(false, 0, "%s power set to %d." % [label.capitalize(), int(active.get("launch_power", 70))], active)
 
 
-func _apply_launch_skill_input(active: Dictionary, _mode: String, ui_state: Dictionary) -> void:
+func _apply_launch_skill_input(active: Dictionary, mode: String, ui_state: Dictionary) -> void:
 	var skill: Dictionary = _launch_skill_snapshot(active, ui_state, true)
 	active["launch_power"] = int(skill.get("power", active.get("launch_power", 70)))
+	active["launch_start"] = _point_payload(_launch_start_for_active(active, mode, int(skill.get("angle_degrees", _launch_angle_degrees(active)))))
 	active["launch_skill"] = skill.duplicate(true)
 	active["last_launch_skill"] = skill.duplicate(true)
 
 
 func _launch_skill_snapshot(active: Dictionary, ui_state: Dictionary, sample_timing: bool) -> Dictionary:
-	var target_power := clampi(int(active.get("launch_power", 70)), 25, 96)
+	var target_power := clampi(int(active.get("launch_power", 70)), 20, 100)
 	var time_msec := maxi(0, int(ui_state.get("surface_time_msec", ui_state.get("slot_visual_time_msec", 0))))
 	if time_msec <= 0:
 		time_msec = 173 + int(active.get("step_index", 0)) * 137 + int(active.get("balls_remaining", 0)) * 83
-	var cycle_msec := 1040.0
-	var phase := fposmod(float(time_msec), cycle_msec) / cycle_msec
-	var swing := 18.0
-	var meter := 0.5 + 0.5 * sin(phase * TAU)
-	var sampled_power := clampi(int(round(float(target_power) + (meter - 0.5) * swing)), 24, 100)
+	var meter := clampf(float(target_power) / 100.0, 0.0, 1.0)
+	var sampled_power := target_power
 	var sweet_spot := 82
 	var error := absi(sampled_power - sweet_spot)
 	var rating := "clean"
@@ -384,10 +458,13 @@ func _launch_skill_snapshot(active: Dictionary, ui_state: Dictionary, sample_tim
 		"meter": snappedf(meter, 0.001),
 		"sweet_spot": sweet_spot,
 		"rating": rating,
+		"angle_degrees": _launch_angle_degrees(active),
+		"launch_start": _point_payload(_launch_start_for_active(active, str(active.get("mode", "")), _launch_angle_degrees(active))),
+		"controlled": true,
 	}
 
 
-func _advance_pinball_ball(machine: Dictionary, active: Dictionary, mode: String, rng: RngStream, _definition: Dictionary, launch_if_idle: bool = true, manual_input: Dictionary = {}, message_prefix: String = "Pinball physics", launch_request: bool = false) -> Dictionary:
+func _advance_pinball_ball(machine: Dictionary, active: Dictionary, mode: String, rng: RngStream, _definition: Dictionary, launch_if_idle: bool = true, manual_input: Dictionary = {}, message_prefix: String = "Pinball physics", launch_request: bool = false, live_display: bool = false, ui_state: Dictionary = {}) -> Dictionary:
 	var table: SlotPinballTable = TableScript.new()
 	var stake := maxi(1, int(active.get("stake", 1)))
 	var session: Dictionary = _copy_dict(active.get("pinball_session", {}))
@@ -454,8 +531,14 @@ func _advance_pinball_ball(machine: Dictionary, active: Dictionary, mode: String
 		policy["initial_input"] = manual_input.duplicate(true)
 		active["live_input"] = manual_input.duplicate(true)
 	var launch_active_count := table.active_ball_count(session)
-	var drain_on_timeout := not bool(active.get("headless", false))
-	table.run_ticks(session, rng, policy, _pinball_tick_budget(active, mode), drain_on_timeout)
+	var drain_on_timeout := not live_display
+	var tick_budget := _pinball_tick_budget(active, mode, live_display, ui_state)
+	active["physics_tick_budget"] = tick_budget
+	table.run_ticks(session, rng, policy, tick_budget, drain_on_timeout)
+	if live_display:
+		var real_time_msec := _live_surface_real_time_msec(ui_state)
+		if real_time_msec > 0:
+			active["last_physics_real_msec"] = real_time_msec
 	_apply_guided_pinball_events(table, session, active, mode, manual_input, launch_request)
 	var ball_still_active := table.active_ball_count(session) > 0
 	var max_active_count := maxi(int(active.get("max_active_count", 0)), launch_active_count)
@@ -472,10 +555,10 @@ func _advance_pinball_ball(machine: Dictionary, active: Dictionary, mode: String
 	var step_trajectory: Array = _normalize_timed_entries(_trajectory_since(session, before_trajectory_count))
 	if step_trajectory.is_empty() and table.active_ball_count(session) > 0:
 		step_trajectory = _snapshot_trajectory(session, true)
-	if max_active_count > 1:
-		step_trajectory.push_front({"time": 0.0, "ball_index": 2, "position": {"x": 0.56, "y": 0.76}})
-		step_trajectory.push_front({"time": 0.0, "ball_index": 1, "position": {"x": 0.44, "y": 0.76}})
-		step_trajectory.push_front({"time": 0.0, "ball_index": 0, "position": {"x": 0.50, "y": 0.80}})
+	if table.active_ball_count(session) > 0 and not _trajectory_has_visible_motion(step_trajectory):
+		var preview_trajectory: Array = _motion_preview_trajectory(session)
+		if _trajectory_has_visible_motion(preview_trajectory):
+			step_trajectory = preview_trajectory
 	_trim_pinball_session_history(session)
 	var step_award := maxi(0, feature_total - before_total)
 	active["feature_total"] = feature_total
@@ -524,7 +607,10 @@ func _advance_pinball_ball(machine: Dictionary, active: Dictionary, mode: String
 		"physics": _copy_dict(active.get("physics", {})),
 	}
 	_append_history(active, step)
-	active["trajectory"] = _recent_history_trajectory(active)
+	if live_display and not step_trajectory.is_empty():
+		active["trajectory"] = step_trajectory.duplicate(true)
+	else:
+		active["trajectory"] = _recent_history_trajectory(active)
 	if ball_still_active:
 		machine["active_bonus"] = active
 		return _bonus_step_result(false, 0, "%s in play." % message_prefix, active)
@@ -572,7 +658,7 @@ func _session_cap(stake: int, mode: String, feature_scale: float) -> int:
 
 func _scaled_layout(layout: Dictionary, stake: int, feature_scale: float, mode: String) -> Dictionary:
 	var result: Dictionary = layout.duplicate(true)
-	var mode_scale := 0.36
+	var mode_scale := 0.72
 	if mode == "lane_multiball":
 		mode_scale = 0.50
 	elif mode == "video_feature":
@@ -595,13 +681,21 @@ func _launch_params(active: Dictionary, mode: String) -> Dictionary:
 	var nudge := int(active.get("nudge_request", 0))
 	if mode == "em_bumper_drop" and nudge != 0:
 		lane = "left" if nudge < 0 else "right"
-	var power := clampf(float(int(active.get("launch_power", 70))) / 100.0, 0.0, 1.0)
+	var angle_degrees := _launch_angle_degrees(active)
+	var power := _controlled_launch_power(active)
 	var skill: Dictionary = _copy_dict(active.get("last_launch_skill", active.get("launch_skill", {})))
 	if not skill.is_empty():
 		power = clampf(float(int(skill.get("power", int(active.get("launch_power", 70))))) / 100.0, 0.0, 1.0)
+		angle_degrees = clampi(int(skill.get("angle_degrees", angle_degrees)), LAUNCH_ANGLE_MIN_DEGREES, LAUNCH_ANGLE_MAX_DEGREES)
+	var start := _launch_start_for_active(active, mode, angle_degrees)
+	var skill_start: Dictionary = _copy_dict(skill.get("launch_start", {}))
+	if not skill_start.is_empty():
+		start = _vector2_from_value(skill_start, start)
 	if mode == "video_feature" and bool(active.get("reference_policy", false)):
 		lane = _video_reference_lane(active)
 		power = _video_reference_power(active)
+		angle_degrees = 0
+		start = _reference_launch_start_for_mode(mode)
 	if mode == "lane_multiball":
 		if lane == "left":
 			power = clampf(power * 0.82, 0.0, 1.0)
@@ -615,13 +709,15 @@ func _launch_params(active: Dictionary, mode: String) -> Dictionary:
 	return {
 		"lane": lane,
 		"power": power,
-		"aim_offset": _lane_aim_offset(lane, mode),
+		"start": start,
+		"aim_offset": _launch_angle_radians(angle_degrees),
+		"launch_angle_degrees": angle_degrees,
 		"spread_scale": 0.38,
 	}
 
 
 func _launch_policy(active: Dictionary, mode: String) -> Dictionary:
-	var charge := clampf(float(int(active.get("launch_power", 70))) / 100.0, 0.0, 1.0)
+	var charge := _controlled_launch_power(active)
 	if mode == "video_feature" and bool(active.get("reference_policy", false)):
 		charge = _video_reference_power(active)
 	var initial_input: Dictionary = {
@@ -650,6 +746,12 @@ func _apply_guided_pinball_events(table: SlotPinballTable, session: Dictionary, 
 	var input_signal := _pinball_action_signal(manual_input, launch_request)
 	if input_signal.is_empty():
 		return
+	if input_signal == "launch":
+		var angle_degrees := _launch_angle_degrees(active)
+		if angle_degrees <= -LAUNCH_ANGLE_LANE_THRESHOLD_DEGREES or (mode == "video_feature" and angle_degrees < 0):
+			input_signal = "left"
+		elif angle_degrees >= LAUNCH_ANGLE_LANE_THRESHOLD_DEGREES or (mode == "video_feature" and angle_degrees > 0):
+			input_signal = "right"
 	match mode:
 		"video_feature":
 			_apply_guided_video_event(table, session, active, input_signal)
@@ -715,12 +817,21 @@ func _apply_guided_video_event(table: SlotPinballTable, session: Dictionary, act
 			table.add_award_event(session, "skill_bumper_combo", "bumper", Vector2(0.50, 0.35), maxi(1, int(round(float(stake) * 0.18))), maxi(0, int(active.get("step_index", 0))))
 	elif element_type == "drop_target":
 		_light_video_insert(session, element_id)
+	if input_signal == "left" or input_signal == "right":
+		var aim_bonus_scale := 0.65 if input_signal == "right" else 0.45
+		var aim_cap := maxi(int(session.get("cap", 0)), int(active.get("session_cap", 0)) + maxi(1, int(round(float(stake) * 3.0))))
+		session["cap"] = aim_cap
+		active["session_cap"] = aim_cap
+		table.add_award_event(session, "skill_aim_%s_%d" % [input_signal, event_index], "skill", Vector2(0.50, 0.50), maxi(1, int(round(float(stake) * aim_bonus_scale))), maxi(0, int(active.get("step_index", 0))))
+	if event_index >= 3 and element_type != "pocket":
+		var pocket_scale := 1.55 if input_signal == "right" else 1.25 if input_signal == "left" else 1.0
+		table.add_award_event(session, "cup_center", "pocket", Vector2(0.50, 0.92), maxi(1, int(round(float(stake) * 0.26 * pocket_scale))), maxi(0, int(active.get("step_index", 0))))
 	active["guided_video_index"] = event_index + 1
 
 
 func _guided_video_plan(input_signal: String) -> Array:
-	var aim_scale := 1.18 if input_signal == "right" else 1.08 if input_signal == "left" else 1.0
-	var ramp_scale := 1.15 if input_signal == "right" else 1.05 if input_signal == "left" else 1.0
+	var aim_scale := 1.55 if input_signal == "right" else 1.25 if input_signal == "left" else 1.0
+	var ramp_scale := 1.55 if input_signal == "right" else 1.25 if input_signal == "left" else 1.0
 	return [
 		{"id": "target_alpha", "type": "drop_target", "position": Vector2(0.41, 0.48), "scale": 0.18 * aim_scale},
 		{"id": "target_beta", "type": "drop_target", "position": Vector2(0.50, 0.52), "scale": 0.18 * aim_scale},
@@ -761,19 +872,139 @@ func _manual_input_for_direction(active: Dictionary, direction: int) -> Dictiona
 	return {
 		"flipper_left": direction < 0,
 		"flipper_right": direction > 0,
-		"plunger_charge": clampf(float(int(active.get("launch_power", 70))) / 100.0, 0.0, 1.0),
+		"plunger_charge": _controlled_launch_power(active),
 		"nudge": Vector2(float(direction) * 0.22, 0.0),
 	}
 
 
-func _pinball_tick_budget(active: Dictionary, mode: String) -> int:
+func _pinball_live_display_context(ui_state: Dictionary) -> bool:
+	return ui_state.has("surface_time_msec") or ui_state.has("drunk_scaled_surface_time_msec") or ui_state.has("slot_visual_time_msec")
+
+
+func _live_surface_real_time_msec(ui_state: Dictionary) -> int:
+	return maxi(0, int(ui_state.get("surface_time_msec", ui_state.get("slot_visual_time_msec", 0))))
+
+
+func _pinball_tick_budget(active: Dictionary, mode: String, live_display: bool = false, ui_state: Dictionary = {}) -> int:
 	if bool(active.get("headless", false)):
-		return 120
+		return 160
+	if live_display:
+		var real_time_msec := _live_surface_real_time_msec(ui_state)
+		var last_real_time_msec := maxi(0, int(active.get("last_physics_real_msec", 0)))
+		if real_time_msec <= 0 or last_real_time_msec <= 0:
+			return LIVE_TICK_BUDGET
+		var elapsed_msec := clampi(real_time_msec - last_real_time_msec, 1, 80)
+		var catchup_ticks := int(round(float(elapsed_msec) / LIVE_TICK_MSEC_PER_SIM_STEP))
+		return clampi(catchup_ticks, LIVE_TICK_BUDGET, LIVE_TICK_MAX_BUDGET)
 	if mode == "video_feature":
-		return 34
+		return 64
 	if mode == "lane_multiball":
-		return 30
-	return 36
+		return 58
+	return 64
+
+
+func _indexed_action_value(action_id: String, prefix: String, max_index: int) -> int:
+	if not action_id.begins_with(prefix):
+		return -1
+	var suffix := action_id.substr(prefix.length()).strip_edges()
+	if suffix.is_empty() or not suffix.is_valid_int():
+		return -1
+	return clampi(int(suffix), 0, maxi(0, max_index))
+
+
+func _controlled_launch_power(active: Dictionary) -> float:
+	return clampf(float(clampi(int(active.get("launch_power", 70)), 20, 100)) / 100.0, 0.0, 1.0)
+
+
+func _launch_angle_degrees(active: Dictionary) -> int:
+	return clampi(int(active.get("launch_angle_degrees", 0)), LAUNCH_ANGLE_MIN_DEGREES, LAUNCH_ANGLE_MAX_DEGREES)
+
+
+func _launch_angle_radians(angle_degrees: int) -> float:
+	return deg_to_rad(float(-clampi(angle_degrees, LAUNCH_ANGLE_MIN_DEGREES, LAUNCH_ANGLE_MAX_DEGREES)))
+
+
+func _lane_for_launch_angle(angle_degrees: int) -> String:
+	if angle_degrees <= -LAUNCH_ANGLE_LANE_THRESHOLD_DEGREES:
+		return "left"
+	if angle_degrees >= LAUNCH_ANGLE_LANE_THRESHOLD_DEGREES:
+		return "right"
+	return "center"
+
+
+func _preview_launch_x_for_lane(lane: String) -> float:
+	match lane:
+		"left":
+			return 0.28
+		"right":
+			return 0.72
+		_:
+			return 0.50
+
+
+func _launch_start_for_active(active: Dictionary, mode: String, angle_degrees: int) -> Vector2:
+	var fallback := _launch_start_for_angle(mode, angle_degrees)
+	if bool(active.get("launch_start_manual", false)):
+		return _clamped_launch_start(_vector2_from_value(active.get("launch_start", fallback), fallback), mode)
+	return fallback
+
+
+func _reference_launch_start_for_mode(mode: String) -> Vector2:
+	if mode == "video_feature":
+		return Vector2(0.78, 0.10)
+	return _launch_start_for_angle(mode, 0)
+
+
+func _launch_start_for_ratio(mode: String, ratio: float) -> Vector2:
+	var clamped_ratio := clampf(ratio, 0.0, 1.0)
+	var min_x := 0.16
+	var max_x := 0.84
+	var y := 0.10
+	if mode == "lane_multiball":
+		min_x = 0.14
+		max_x = 0.86
+		y = 0.09
+	elif mode == "video_feature":
+		min_x = 0.54
+		max_x = 0.94
+		y = 0.08
+	return Vector2(lerpf(min_x, max_x, clamped_ratio), y)
+
+
+func _clamped_launch_start(point: Vector2, mode: String) -> Vector2:
+	var left := _launch_start_for_ratio(mode, 0.0)
+	var right := _launch_start_for_ratio(mode, 1.0)
+	return Vector2(
+		clampf(point.x, minf(left.x, right.x), maxf(left.x, right.x)),
+		clampf(point.y, 0.02, 0.24)
+	)
+
+
+func _lane_for_launch_start(mode: String, x: float) -> String:
+	var left := _launch_start_for_ratio(mode, 0.0)
+	var right := _launch_start_for_ratio(mode, 1.0)
+	var normalized := clampf((x - left.x) / maxf(0.001, right.x - left.x), 0.0, 1.0)
+	if normalized < 0.34:
+		return "left"
+	if normalized > 0.66:
+		return "right"
+	return "center"
+
+
+func _launch_start_for_angle(mode: String, angle_degrees: int) -> Vector2:
+	var normalized := clampf(float(angle_degrees - LAUNCH_ANGLE_MIN_DEGREES) / float(LAUNCH_ANGLE_MAX_DEGREES - LAUNCH_ANGLE_MIN_DEGREES), 0.0, 1.0)
+	var min_x := 0.16
+	var max_x := 0.84
+	var y := 0.10
+	if mode == "lane_multiball":
+		min_x = 0.14
+		max_x = 0.86
+		y = 0.09
+	elif mode == "video_feature":
+		min_x = 0.54
+		max_x = 0.94
+		y = 0.08
+	return Vector2(lerpf(min_x, max_x, normalized), y)
 
 
 func _lane_aim_offset(lane: String, mode: String) -> float:
@@ -926,7 +1157,7 @@ func _events_since(session: Dictionary, start_index: int) -> Array:
 	return result
 
 
-func _trim_pinball_session_history(session: Dictionary, event_keep: int = 48, trajectory_keep: int = 72) -> void:
+func _trim_pinball_session_history(session: Dictionary, event_keep: int = 96, trajectory_keep: int = 72) -> void:
 	var events: Array = session.get("event_log", []) if typeof(session.get("event_log", [])) == TYPE_ARRAY else []
 	while events.size() > event_keep:
 		events.remove_at(0)
@@ -974,6 +1205,46 @@ func _snapshot_trajectory(session: Dictionary, local_time: bool = true) -> Array
 	return result
 
 
+func _motion_preview_trajectory(session: Dictionary) -> Array:
+	var layout: Dictionary = _copy_dict(session.get("layout", {}))
+	var gravity: Vector2 = _vector2_from_value(layout.get("gravity", Vector2(0.0, 2.8)), Vector2(0.0, 2.8))
+	var balls: Array = _copy_array(session.get("balls", []))
+	var result: Array = []
+	for ball_index in range(balls.size()):
+		var ball: Dictionary = _copy_dict(balls[ball_index])
+		if not bool(ball.get("alive", false)):
+			continue
+		var position: Vector2 = _vector2_from_value(ball.get("position", Vector2(0.5, 0.5)), Vector2(0.5, 0.5))
+		var velocity: Vector2 = _vector2_from_value(ball.get("velocity", Vector2.ZERO), Vector2.ZERO)
+		for preview_index in range(7):
+			result.append({
+				"time": snappedf(float(preview_index) * 0.06, 0.0001),
+				"ball_index": ball_index,
+				"position": _point_payload(position),
+			})
+			velocity += gravity * 0.06
+			position += velocity * 0.06
+			position.x = clampf(position.x, 0.02, 0.98)
+			position.y = clampf(position.y, 0.02, 1.02)
+	return result
+
+
+func _trajectory_has_visible_motion(trajectory: Array) -> bool:
+	var first_by_ball: Dictionary = {}
+	for point_value in trajectory:
+		var point: Dictionary = _copy_dict(point_value)
+		var ball_index := int(point.get("ball_index", 0))
+		var position: Vector2 = _vector2_from_value(point.get("position", Vector2(0.5, 0.5)), Vector2(0.5, 0.5))
+		var key := str(ball_index)
+		if not first_by_ball.has(key):
+			first_by_ball[key] = position
+			continue
+		var first_position: Vector2 = first_by_ball[key]
+		if first_position.distance_to(position) >= 0.006:
+			return true
+	return false
+
+
 func _point_payload(value: Variant) -> Dictionary:
 	if typeof(value) == TYPE_VECTOR2:
 		var point: Vector2 = value
@@ -982,6 +1253,15 @@ func _point_payload(value: Variant) -> Dictionary:
 		var dict: Dictionary = value
 		return {"x": snappedf(float(dict.get("x", 0.5)), 0.0001), "y": snappedf(float(dict.get("y", 0.5)), 0.0001)}
 	return {"x": 0.5, "y": 0.5}
+
+
+func _vector2_from_value(value: Variant, fallback: Vector2) -> Vector2:
+	if typeof(value) == TYPE_VECTOR2:
+		return value as Vector2
+	if typeof(value) == TYPE_DICTIONARY:
+		var dict: Dictionary = value
+		return Vector2(float(dict.get("x", fallback.x)), float(dict.get("y", fallback.y)))
+	return fallback
 
 
 func _lit_count(lit: Dictionary) -> int:
@@ -995,7 +1275,7 @@ func _lit_count(lit: Dictionary) -> int:
 func _physics_from_session(session: Dictionary, mode: String) -> Dictionary:
 	var trajectory: Array = _copy_array(session.get("trajectory", []))
 	var event_log: Array = _copy_array(session.get("event_log", []))
-	var point := Vector2(0.50, 0.82)
+	var point := Vector2(0.50, 0.12)
 	if not trajectory.is_empty():
 		var last_point: Dictionary = _copy_dict(_copy_dict(trajectory[trajectory.size() - 1]).get("position", {}))
 		point = Vector2(float(last_point.get("x", point.x)), float(last_point.get("y", point.y)))

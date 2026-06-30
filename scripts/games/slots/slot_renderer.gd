@@ -4,6 +4,11 @@ extends RefCounted
 const CatalogScript := preload("res://scripts/games/slots/slot_catalog.gd")
 const PinballTableScript := preload("res://scripts/games/slots/slot_pinball_table.gd")
 const DESIGN_SIZE := Vector2(960, 540)
+const PINBALL_AIM_MIN_DEGREES := -60
+const PINBALL_AIM_MAX_DEGREES := 60
+const PINBALL_AIM_CHOICES := 13
+const PINBALL_START_CHOICES := 11
+const PINBALL_POWER_CHOICES := 11
 
 var catalog
 
@@ -55,6 +60,8 @@ func render_signature(surface_state: Dictionary, _definition: Dictionary, time_m
 		"family": str(surface_state.get("slot_type_id", "")),
 		"format": str(surface_state.get("slot_format_id", "")),
 		"mode": mode,
+		"buffalo_grand_prize": int(surface_state.get("slot_buffalo_grand_prize", 0)),
+		"buffalo_grand_prize_advertised": str(surface_state.get("slot_type_id", "")) == "buffalo" and int(surface_state.get("slot_buffalo_grand_prize", 0)) > 0,
 		"time_bucket": attract_bucket,
 		"reel_motion": reel_motion,
 		"reel_phase": reel_phase,
@@ -68,6 +75,7 @@ func render_signature(surface_state: Dictionary, _definition: Dictionary, time_m
 		"gold_tease_level": int(plan.get("tease_coin_count", 0)),
 		"gold_tease_reels": _read_array(plan.get("tease_reels", [])),
 		"gold_tease_window_active": bool(surface_state.get("slot_nudge_tease_window_active", false)),
+		"buffalo_unintentional_gold_visible": _buffalo_unintentional_gold_visible(surface_state, time_msec, reel_motion),
 		"win_cells_highlighted": win_cells.size(),
 		"win_line_drawn": win_cells.size() >= 2 and win_kind == "line",
 		"win_reason_text": str(surface_state.get("slot_win_reason", "")),
@@ -366,6 +374,12 @@ func _draw_topper(surface, state: Dictionary, skin: Dictionary, accent: Color, l
 		for i in range(12):
 			var alpha := 0.20 + 0.18 * float(posmod(bucket + i, 4) == 0)
 			surface.draw_circle(rect.position + Vector2(24 + i * (rect.size.x - 48.0) / 11.0, rect.size.y * 0.5), 5.0, Color(light.r, light.g, light.b, alpha))
+	var grand_prize := int(state.get("slot_buffalo_grand_prize", 0))
+	if str(state.get("slot_type_id", "")) == "buffalo" and grand_prize > 0:
+		var grand_rect := Rect2(rect.position + Vector2(rect.size.x * 0.34, 5), Vector2(rect.size.x * 0.32, 28))
+		surface.draw_rect(grand_rect, Color(trim.r, trim.g, trim.b, 0.70))
+		surface.draw_rect(grand_rect, Color(light.r, light.g, light.b, 0.56), false, 2)
+		surface.surface_label_centered("GRAND $%d" % grand_prize, grand_rect.grow(-3), 13, Color("#130907"))
 	surface.surface_label(str(skin.get("cabinet_title", "")).to_upper(), rect.position + Vector2(18, rect.size.y * 0.62), 20, light)
 	surface.surface_label(str(skin.get("feature_name", "")).to_upper().left(24), rect.position + Vector2(rect.size.x - 300, rect.size.y * 0.62), 14, trim)
 
@@ -410,7 +424,9 @@ func _draw_reels(surface, state: Dictionary, definition: Dictionary, skin: Dicti
 			if visible_cell.size.x <= 0.0 or visible_cell.size.y <= 0.0:
 				continue
 			var landing_slot := phase == "decel" or phase == "tease_slow_roll" or phase == "settle" or phase == "settled"
-			var symbol := _visible_symbol(strips, stops, grid, reel_index, visual_row + whole_offset, row_count, landing_slot)
+			var source_row := visual_row + whole_offset
+			var symbol := _visible_symbol(strips, stops, grid, reel_index, source_row, row_count, landing_slot)
+			symbol = _buffalo_display_symbol(family, symbol, grid, reel_index, source_row, landing_slot, time_msec)
 			_draw_symbol(surface, definition, family, symbol, visible_cell, blur > 0.12)
 			if family == "buffalo" and symbol == "GOLD_TOKEN" and (bool(motion.get("tease", false)) or bool(signature.get("gold_tease_active", false))):
 				var coin_pulse := 0.48 + 0.24 * sin(float(time_msec) * 0.018 + float(reel_index))
@@ -593,6 +609,50 @@ func _buffalo_feature_spin_symbol(reel_index: int, row_index: int, time_msec: in
 	return str(cycle[step])
 
 
+func _buffalo_display_symbol(family: String, symbol: String, grid: Array, reel_index: int, row_index: int, landing_slot: bool, time_msec: int) -> String:
+	if family != "buffalo" or symbol != "GOLD_TOKEN":
+		return symbol
+	if _buffalo_gold_symbol_is_intentional(grid, reel_index, row_index, landing_slot):
+		return symbol
+	return _buffalo_feature_spin_symbol(reel_index, row_index, time_msec)
+
+
+func _buffalo_gold_symbol_is_intentional(grid: Array, reel_index: int, row_index: int, landing_slot: bool) -> bool:
+	if not landing_slot:
+		return false
+	if reel_index < 0 or reel_index >= grid.size() or typeof(grid[reel_index]) != TYPE_ARRAY:
+		return false
+	var column: Array = grid[reel_index] as Array
+	if row_index < 0 or row_index >= column.size():
+		return false
+	return str(column[row_index]) == "GOLD_TOKEN"
+
+
+func _buffalo_unintentional_gold_visible(surface_state: Dictionary, time_msec: int, motions: Array) -> bool:
+	if str(surface_state.get("slot_type_id", "")) != "buffalo":
+		return false
+	var grid: Array = _read_array(surface_state.get("slot_grid", []))
+	var strips: Array = _read_array(surface_state.get("slot_reel_strips", []))
+	var stops: Array = _read_array(surface_state.get("slot_reel_stops", []))
+	var reel_count := maxi(1, int(surface_state.get("slot_reel_count", 3)))
+	var row_count := maxi(1, int(surface_state.get("slot_row_count", 1)))
+	for reel_index in range(reel_count):
+		var motion: Dictionary = _read_dict(motions[reel_index]) if reel_index < motions.size() else {"phase": "settled", "scroll_cells": 0.0}
+		var phase := str(motion.get("phase", "settled"))
+		var scroll_cells := float(motion.get("scroll_cells", 0.0))
+		var whole_offset := int(floor(scroll_cells))
+		if phase == "settled":
+			whole_offset = 0
+		var landing_slot := phase == "decel" or phase == "tease_slow_roll" or phase == "settle" or phase == "settled"
+		for visual_row in range(-1, row_count + 2):
+			var source_row := visual_row + whole_offset
+			var raw_symbol := _visible_symbol(strips, stops, grid, reel_index, source_row, row_count, landing_slot)
+			var display_symbol := _buffalo_display_symbol("buffalo", raw_symbol, grid, reel_index, source_row, landing_slot, time_msec)
+			if display_symbol == "GOLD_TOKEN" and not _buffalo_gold_symbol_is_intentional(grid, reel_index, source_row, landing_slot):
+				return true
+	return false
+
+
 func _buffalo_lock_cell(lock: Dictionary, row_count: int) -> Dictionary:
 	if lock.has("reel") and lock.has("row"):
 		return {"reel": int(lock.get("reel", -1)), "row": int(lock.get("row", -1))}
@@ -737,23 +797,76 @@ func _draw_pinball_takeover(surface, state: Dictionary, _skin: Dictionary, accen
 
 func _draw_pinball_takeover_controls(surface, state: Dictionary, accent: Color, light: Color, trim: Color) -> void:
 	var active: Dictionary = _copy_dict(state.get("slot_active_bonus", {}))
-	var panel := Rect2(70, 462, 820, 60)
+	var panel := Rect2(60, 444, 840, 82)
 	surface.draw_rect(panel, Color(0.0, 0.0, 0.0, 0.56))
 	surface.draw_rect(panel, Color(light.r, light.g, light.b, 0.20), false, 1)
 	var launch_live := bool(active.get("launch_in_progress", false))
-	var button_y := panel.position.y + 9
-	_draw_button(surface, Rect2(panel.position.x + 18, button_y, 104, 42), "AIM L" if not launch_live else "LEFT", "slot_bonus_left", 0, accent)
-	_draw_button(surface, Rect2(panel.position.x + 132, button_y, 92, 42), "SOFT", "slot_bonus_power_down", 0, trim)
-	var launch_label := "IN PLAY" if launch_live else "LAUNCH"
-	_draw_button(surface, Rect2(panel.position.x + 236, panel.position.y + 4, 164, 52), launch_label, "slot_bonus_launch", 0, light)
-	_draw_button(surface, Rect2(panel.position.x + 412, button_y, 92, 42), "HARD", "slot_bonus_power_up", 0, trim)
-	_draw_button(surface, Rect2(panel.position.x + 514, button_y, 104, 42), "AIM R" if not launch_live else "RIGHT", "slot_bonus_right", 0, accent)
-	_draw_button(surface, Rect2(panel.position.x + 630, button_y, 92, 42), "TILT", "slot_bonus_tilt", 0, trim)
-	_draw_pinball_power_meter(surface, Rect2(panel.position.x + 734, panel.position.y + 8, 68, 44), active, light, trim)
+	if launch_live:
+		var button_y := panel.position.y + 14
+		_draw_button(surface, Rect2(panel.position.x + 32, button_y, 150, 50), "LEFT FLIP", "slot_bonus_left", 0, accent)
+		_draw_button(surface, Rect2(panel.position.x + 214, button_y, 150, 50), "RIGHT FLIP", "slot_bonus_right", 0, accent)
+		_draw_button(surface, Rect2(panel.position.x + 396, button_y, 128, 50), "NUDGE", "slot_bonus_tilt", 0, trim)
+		_draw_button(surface, Rect2(panel.position.x + 556, button_y, 132, 50), "IN PLAY", "slot_bonus_launch", 0, light)
+		_draw_pinball_power_meter(surface, Rect2(panel.position.x + 718, panel.position.y + 13, 92, 52), active, light, trim)
+	else:
+		_draw_pinball_choice_strip(surface, Rect2(panel.position.x + 18, panel.position.y + 12, 238, 34), "START", "slot_bonus_start_", PINBALL_START_CHOICES, _pinball_start_choice_index(active), trim)
+		_draw_pinball_choice_strip(surface, Rect2(panel.position.x + 276, panel.position.y + 12, 238, 34), "AIM", "slot_bonus_aim_", PINBALL_AIM_CHOICES, _pinball_aim_choice_index(active), accent)
+		_draw_pinball_choice_strip(surface, Rect2(panel.position.x + 534, panel.position.y + 12, 150, 34), "POWER", "slot_bonus_power_", PINBALL_POWER_CHOICES, _pinball_power_choice_index(active), light)
+		_draw_button(surface, Rect2(panel.position.x + 708, panel.position.y + 12, 114, 54), "LAUNCH", "slot_bonus_launch", 0, light)
 	var remaining := maxi(0, int(active.get("balls_remaining", active.get("remaining_steps", 0))))
 	var live := maxi(0, int(active.get("active_ball_count", 1 if bool(active.get("launch_in_progress", false)) else 0)))
-	var lane := str(active.get("selected_lane", "center")).to_upper().left(1)
-	surface.surface_label("B%d L%d %s" % [remaining, live, lane], panel.position + Vector2(panel.size.x - 42, 36), 10, light)
+	var angle := int(active.get("launch_angle_degrees", 0))
+	var angle_label := str(angle)
+	if angle > 0:
+		angle_label = "+%d" % angle
+	surface.surface_label_centered("BALLS %d  LIVE %d  ANGLE %s  PWR %d" % [remaining, live, angle_label, int(active.get("launch_power", 70))], Rect2(panel.position + Vector2(22, 53), Vector2(654, 18)), 10, light)
+
+
+func _draw_pinball_choice_strip(surface, rect: Rect2, title: String, action_prefix: String, choice_count: int, selected_index: int, color: Color) -> void:
+	var safe_count := maxi(2, choice_count)
+	surface.surface_label(title, rect.position + Vector2(0, 9), 9, color)
+	var strip := Rect2(rect.position + Vector2(0, 12), Vector2(rect.size.x, rect.size.y - 12))
+	surface.draw_rect(strip, Color(0.0, 0.0, 0.0, 0.36))
+	surface.draw_rect(strip, Color(color.r, color.g, color.b, 0.22), false, 1)
+	var gap := 2.0
+	var cell_w := (strip.size.x - gap * float(safe_count - 1)) / float(safe_count)
+	for index in range(safe_count):
+		var cell := Rect2(strip.position + Vector2(float(index) * (cell_w + gap), 0), Vector2(cell_w, strip.size.y))
+		var selected := index == clampi(selected_index, 0, safe_count - 1)
+		var hovered := bool(surface.surface_region_hovered("%s%02d" % [action_prefix, index], index))
+		var alpha := 0.48 if selected else 0.30 if hovered else 0.12
+		surface.draw_rect(cell, Color(color.r, color.g, color.b, alpha))
+		surface.draw_rect(cell, Color("#f8fafc") if hovered or selected else Color(color.r, color.g, color.b, 0.46), false, 1)
+		if selected:
+			surface.draw_line(Vector2(cell.position.x + cell.size.x * 0.5, cell.position.y - 2), Vector2(cell.position.x + cell.size.x * 0.5, cell.end.y + 2), Color("#f8fafc"), 2)
+		surface.surface_add_hit(cell, "%s%02d" % [action_prefix, index], index)
+
+
+func _pinball_aim_choice_index(active: Dictionary) -> int:
+	var angle := clampi(int(active.get("launch_angle_degrees", 0)), PINBALL_AIM_MIN_DEGREES, PINBALL_AIM_MAX_DEGREES)
+	var ratio := clampf(float(angle - PINBALL_AIM_MIN_DEGREES) / float(PINBALL_AIM_MAX_DEGREES - PINBALL_AIM_MIN_DEGREES), 0.0, 1.0)
+	return clampi(int(round(ratio * float(PINBALL_AIM_CHOICES - 1))), 0, PINBALL_AIM_CHOICES - 1)
+
+
+func _pinball_start_choice_index(active: Dictionary) -> int:
+	var mode := str(active.get("mode", "em_bumper_drop"))
+	var start := _pinball_launch_start(active, _pinball_layout_from_active(active), str(active.get("selected_lane", "center")))
+	var min_x := 0.16
+	var max_x := 0.84
+	if mode == "lane_multiball":
+		min_x = 0.14
+		max_x = 0.86
+	elif mode == "video_feature":
+		min_x = 0.54
+		max_x = 0.94
+	var ratio := clampf((start.x - min_x) / maxf(0.001, max_x - min_x), 0.0, 1.0)
+	return clampi(int(round(ratio * float(PINBALL_START_CHOICES - 1))), 0, PINBALL_START_CHOICES - 1)
+
+
+func _pinball_power_choice_index(active: Dictionary) -> int:
+	var power := clampi(int(active.get("launch_power", 70)), 20, 100)
+	var ratio := clampf(float(power - 20) / 80.0, 0.0, 1.0)
+	return clampi(int(round(ratio * float(PINBALL_POWER_CHOICES - 1))), 0, PINBALL_POWER_CHOICES - 1)
 
 
 func _draw_pinball_playfield(surface, rect: Rect2, state: Dictionary, active: Dictionary, accent: Color, light: Color, trim: Color, bucket: int, feature_msec: int) -> void:
@@ -822,6 +935,8 @@ func _pinball_feature_manifest(surface_state: Dictionary, time_msec: int, mode: 
 	var meter: Dictionary = _read_dict(active.get("pinball_launch_meter", {}))
 	if meter.is_empty():
 		meter = _read_dict(scene.get("launch_meter", {}))
+	var lane := str(active.get("selected_lane", "center"))
+	var launch_start: Vector2 = _pinball_launch_start(active, layout, lane)
 	var positions: Array = _pinball_positions_at_time(_pinball_trajectory(active), time_msec)
 	if positions.is_empty():
 		positions = _pinball_live_positions(active)
@@ -839,10 +954,22 @@ func _pinball_feature_manifest(surface_state: Dictionary, time_msec: int, mode: 
 		"pinball_event_flash_count": _pinball_recent_event_ids(_pinball_events(active), _pinball_playback_time(time_msec), 0.24).size(),
 		"pinball_feature_music_id": str(music.get("cue_id", "")),
 		"pinball_guideline_active": _pinball_guideline_active(active),
-		"pinball_aim_lane": str(active.get("selected_lane", "center")),
+		"pinball_aim_lane": lane,
 		"pinball_launch_power": int(active.get("launch_power", 0)),
 		"pinball_sampled_power": int(meter.get("sampled_power", active.get("launch_power", 0))),
 		"pinball_power_rating": str(meter.get("rating", "")),
+		"pinball_power_meter_controlled": bool(meter.get("controlled", false)),
+		"pinball_launch_angle_degrees": int(active.get("launch_angle_degrees", 0)),
+		"pinball_launch_start_x": snappedf(launch_start.x, 0.001),
+		"pinball_launch_start_y": snappedf(launch_start.y, 0.001),
+		"pinball_aim_choice_index": _pinball_aim_choice_index(active),
+		"pinball_aim_choice_count": PINBALL_AIM_CHOICES,
+		"pinball_start_choice_index": _pinball_start_choice_index(active),
+		"pinball_start_choice_count": PINBALL_START_CHOICES,
+		"pinball_power_choice_index": _pinball_power_choice_index(active),
+		"pinball_power_choice_count": PINBALL_POWER_CHOICES,
+		"pinball_physics_tick_budget": int(active.get("physics_tick_budget", 0)),
+		"pinball_last_physics_real_msec": int(active.get("last_physics_real_msec", 0)),
 		"pinball_playback_speed": _pinball_playback_speed(),
 		"pinball_gravity_y": snappedf(_vector2_from_payload(layout.get("gravity", Vector2.ZERO), Vector2.ZERO).y, 0.001),
 	}
@@ -1054,37 +1181,60 @@ func _pinball_positions_at_time(trajectory: Array, time_msec: int) -> Array:
 	if trajectory.is_empty():
 		return result
 	var playback_sec: float = _pinball_playback_time(time_msec)
-	var best_by_ball: Dictionary = {}
+	var duration_sec: float = _pinball_trajectory_time_span(trajectory)
+	if duration_sec > 0.035 and playback_sec > duration_sec:
+		playback_sec = fposmod(playback_sec, duration_sec)
+		if playback_sec < 0.012:
+			playback_sec = minf(duration_sec, 0.012)
+	var previous_by_ball: Dictionary = {}
+	var next_by_ball: Dictionary = {}
 	for point_value in trajectory:
 		if typeof(point_value) != TYPE_DICTIONARY:
 			continue
 		var point: Dictionary = point_value
 		var point_time := float(point.get("time", 0.0))
-		if point_time > playback_sec + 0.004:
-			break
 		var ball_index := int(point.get("ball_index", 0))
-		var key := str(ball_index)
-		var previous: Dictionary = {}
-		var previous_value: Variant = best_by_ball.get(key, {})
-		if typeof(previous_value) == TYPE_DICTIONARY:
-			previous = previous_value
-		if previous.is_empty() or point_time >= float(previous.get("time", -1.0)):
-			best_by_ball[key] = point
-	if best_by_ball.is_empty():
-		if typeof(trajectory[0]) == TYPE_DICTIONARY:
-			var first: Dictionary = trajectory[0]
-			best_by_ball[str(int(first.get("ball_index", 0)))] = first
-	for key_value in best_by_ball.keys():
-		var point: Dictionary = {}
-		var point_value: Variant = best_by_ball.get(key_value, {})
-		if typeof(point_value) == TYPE_DICTIONARY:
-			point = point_value
-		if point.is_empty():
+		var ball_key := str(ball_index)
+		if point_time <= playback_sec + 0.0001:
+			var previous: Dictionary = _read_dict(previous_by_ball.get(ball_key, {}))
+			if previous.is_empty() or point_time >= float(previous.get("time", -1.0)):
+				previous_by_ball[ball_key] = point
+		elif not next_by_ball.has(ball_key):
+			next_by_ball[ball_key] = point
+	var keys: Dictionary = {}
+	for key_value in previous_by_ball.keys():
+		keys[key_value] = true
+	for key_value in next_by_ball.keys():
+		keys[key_value] = true
+	if keys.is_empty() and typeof(trajectory[0]) == TYPE_DICTIONARY:
+		var first: Dictionary = trajectory[0]
+		keys[str(int(first.get("ball_index", 0)))] = true
+		next_by_ball[str(int(first.get("ball_index", 0)))] = first
+	for key_value in keys.keys():
+		var result_key := str(key_value)
+		var previous_point: Dictionary = _read_dict(previous_by_ball.get(result_key, {}))
+		var next_point: Dictionary = _read_dict(next_by_ball.get(result_key, {}))
+		var selected_point: Dictionary = previous_point if not previous_point.is_empty() else next_point
+		if selected_point.is_empty():
 			continue
+		var position: Vector2 = _vector2_from_payload(selected_point.get("position", Vector2(0.5, 0.5)), Vector2(0.5, 0.5))
+		if not previous_point.is_empty() and not next_point.is_empty():
+			var previous_time := float(previous_point.get("time", 0.0))
+			var next_time := float(next_point.get("time", previous_time))
+			if next_time > previous_time + 0.0001:
+				var ratio := clampf((playback_sec - previous_time) / (next_time - previous_time), 0.0, 1.0)
+				var previous_position: Vector2 = _vector2_from_payload(previous_point.get("position", Vector2(0.5, 0.5)), Vector2(0.5, 0.5))
+				var next_position: Vector2 = _vector2_from_payload(next_point.get("position", previous_position), previous_position)
+				position = previous_position.lerp(next_position, ratio)
+		var visual_phase := float(time_msec) * 0.006 + float(int(selected_point.get("ball_index", 0))) * 1.73
+		position = Vector2(
+			clampf(position.x + sin(visual_phase) * 0.0035, 0.03, 0.97),
+			clampf(position.y + cos(visual_phase * 0.81) * 0.0035, 0.03, 0.97)
+		)
 		result.append({
-			"ball_index": int(point.get("ball_index", 0)),
-			"position": _vector2_from_payload(point.get("position", Vector2(0.5, 0.5)), Vector2(0.5, 0.5)),
-			"time": float(point.get("time", 0.0)),
+			"ball_index": int(selected_point.get("ball_index", 0)),
+			"position": position,
+			"time": playback_sec,
 		})
 	return result
 
@@ -1301,11 +1451,14 @@ func _draw_pinball_launch_guideline(surface, rect: Rect2, active: Dictionary, la
 	if not _pinball_guideline_active(active):
 		return
 	var lane := str(active.get("selected_lane", "center"))
-	var start_norm: Vector2 = _pinball_lane_start(layout, lane)
+	var start_norm: Vector2 = _pinball_launch_start(active, layout, lane)
+	_draw_pinball_launch_start_rail(surface, rect, active, layout, trim)
 	var direction: Vector2 = _pinball_lane_direction(layout, lane)
 	if direction.length_squared() <= 0.000001:
-		direction = Vector2(0.0, -1.0)
+		direction = Vector2(0.0, 1.0)
+	var angle_degrees := clampi(int(active.get("launch_angle_degrees", 0)), PINBALL_AIM_MIN_DEGREES, PINBALL_AIM_MAX_DEGREES)
 	direction = direction.normalized()
+	direction = direction.rotated(deg_to_rad(float(-angle_degrees))).normalized()
 	var meter: Dictionary = _read_dict(active.get("pinball_launch_meter", {}))
 	var sampled_power := int(meter.get("sampled_power", active.get("launch_power", 70)))
 	var power := clampf(float(sampled_power) / 100.0, 0.0, 1.0)
@@ -1327,7 +1480,36 @@ func _draw_pinball_launch_guideline(surface, rect: Rect2, active: Dictionary, la
 	var end_point: Vector2 = points[points.size() - 1]
 	surface.draw_circle(start_point, 6.0, Color("#f8fafc"))
 	surface.draw_circle(end_point, 9.0 + pulse * 2.5, Color(trim.r, trim.g, trim.b, 0.30), false, 2)
-	surface.surface_label_centered("%s %d" % [lane.to_upper().left(1), sampled_power], Rect2(start_point + Vector2(-28, 10), Vector2(56, 18)), 10, trim)
+	var angle_label := str(angle_degrees)
+	if angle_degrees > 0:
+		angle_label = "+%d" % angle_degrees
+	surface.surface_label_centered("A%s P%d" % [angle_label, sampled_power], Rect2(start_point + Vector2(-34, 10), Vector2(68, 18)), 10, trim)
+
+
+func _draw_pinball_launch_start_rail(surface, rect: Rect2, active: Dictionary, _layout: Dictionary, trim: Color) -> void:
+	var mode := str(active.get("mode", "em_bumper_drop"))
+	var selected_index := _pinball_start_choice_index(active)
+	var y_norm := 0.10
+	var min_x := 0.16
+	var max_x := 0.84
+	if mode == "lane_multiball":
+		min_x = 0.14
+		max_x = 0.86
+		y_norm = 0.09
+	elif mode == "video_feature":
+		min_x = 0.54
+		max_x = 0.94
+		y_norm = 0.08
+	var rail_a := _pinball_point(rect, Vector2(min_x, y_norm))
+	var rail_b := _pinball_point(rect, Vector2(max_x, y_norm))
+	surface.draw_line(rail_a, rail_b, Color(trim.r, trim.g, trim.b, 0.30), 3)
+	for index in range(PINBALL_START_CHOICES):
+		var ratio := float(index) / float(PINBALL_START_CHOICES - 1)
+		var marker := _pinball_point(rect, Vector2(lerpf(min_x, max_x, ratio), y_norm))
+		var radius := 5.0 if index == selected_index else 3.0
+		var alpha := 0.82 if index == selected_index else 0.34
+		surface.draw_circle(marker, radius, Color(trim.r, trim.g, trim.b, alpha))
+		surface.surface_add_hit(Rect2(marker - Vector2(12, 12), Vector2(24, 24)), "slot_bonus_start_%02d" % index, index)
 
 
 func _draw_pinball_power_meter(surface, rect: Rect2, active: Dictionary, light: Color, trim: Color) -> void:
@@ -1339,11 +1521,12 @@ func _draw_pinball_power_meter(surface, rect: Rect2, active: Dictionary, light: 
 	surface.draw_rect(rect, Color(light.r, light.g, light.b, 0.20), false, 1)
 	var track := Rect2(rect.position + Vector2(8, 9), Vector2(rect.size.x - 16, 8))
 	surface.draw_rect(track, Color(light.r, light.g, light.b, 0.16))
+	surface.draw_rect(Rect2(track.position, Vector2(track.size.x * value, track.size.y)), Color(light.r, light.g, light.b, 0.42))
 	var sweet_x := track.position.x + track.size.x * 0.82
 	surface.draw_rect(Rect2(Vector2(sweet_x - 3, track.position.y - 2), Vector2(6, track.size.y + 4)), Color(trim.r, trim.g, trim.b, 0.42))
 	var marker_x := track.position.x + track.size.x * value
 	surface.draw_line(Vector2(marker_x, track.position.y - 4), Vector2(marker_x, track.end.y + 4), Color("#f8fafc"), 2)
-	surface.surface_label_centered("%d" % sampled_power, Rect2(rect.position + Vector2(4, 20), Vector2(rect.size.x - 8, 13)), 10, light)
+	surface.surface_label_centered("PWR %d" % sampled_power, Rect2(rect.position + Vector2(4, 20), Vector2(rect.size.x - 8, 13)), 10, light)
 	surface.surface_label_centered(rating.to_upper().left(6), Rect2(rect.position + Vector2(4, 32), Vector2(rect.size.x - 8, 10)), 8, trim)
 
 
@@ -1356,7 +1539,7 @@ func _pinball_guideline_active(active: Dictionary) -> bool:
 
 
 func _pinball_lane_start(layout: Dictionary, lane: String) -> Vector2:
-	var start: Vector2 = _vector2_from_payload(layout.get("plunger_start", Vector2(0.5, 0.90)), Vector2(0.5, 0.90))
+	var start: Vector2 = _vector2_from_payload(layout.get("plunger_start", Vector2(0.5, 0.12)), Vector2(0.5, 0.12))
 	var starts: Dictionary = _read_dict(layout.get("lane_starts", {}))
 	if starts.has(lane):
 		return _vector2_from_payload(starts.get(lane, start), start)
@@ -1364,8 +1547,19 @@ func _pinball_lane_start(layout: Dictionary, lane: String) -> Vector2:
 	return start
 
 
+func _pinball_launch_start(active: Dictionary, layout: Dictionary, lane: String) -> Vector2:
+	var fallback := _pinball_lane_start(layout, lane)
+	var launch_start: Dictionary = _read_dict(active.get("launch_start", {}))
+	if launch_start.is_empty():
+		return fallback
+	return Vector2(
+		clampf(float(launch_start.get("x", fallback.x)), 0.04, 0.96),
+		clampf(float(launch_start.get("y", fallback.y)), 0.02, 0.24)
+	)
+
+
 func _pinball_lane_direction(layout: Dictionary, lane: String) -> Vector2:
-	var direction: Vector2 = _vector2_from_payload(layout.get("plunger_direction", Vector2(0.0, -1.0)), Vector2(0.0, -1.0))
+	var direction: Vector2 = _vector2_from_payload(layout.get("plunger_direction", Vector2(0.0, 1.0)), Vector2(0.0, 1.0))
 	var directions: Dictionary = _read_dict(layout.get("lane_directions", {}))
 	if directions.has(lane):
 		direction = _vector2_from_payload(directions.get(lane, direction), direction)

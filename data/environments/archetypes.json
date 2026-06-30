@@ -10,7 +10,7 @@
 		"rare_next_archetypes": [
 			"jazz_club"
 		],
-		"rare_next_chance_percent": 8,
+		"rare_next_chance_percent": 20,
 		"tier": 1,
 		"name_prefixes": [
 			"Neon",
@@ -209,7 +209,7 @@
 		"rare_next_archetypes": [
 			"jazz_club"
 		],
-		"rare_next_chance_percent": 8,
+		"rare_next_chance_percent": 20,
 		"tier": 1,
 		"name_prefixes": [
 			"Wet",
@@ -398,7 +398,7 @@
 		"rare_next_archetypes": [
 			"jazz_club"
 		],
-		"rare_next_chance_percent": 10,
+		"rare_next_chance_percent": 22,
 		"tier": 1,
 		"name_prefixes": [
 			"Sunset",
@@ -587,7 +587,7 @@
 		"rare_next_archetypes": [
 			"jazz_club"
 		],
-		"rare_next_chance_percent": 16,
+		"rare_next_chance_percent": 30,
 		"tier": 1,
 		"name_prefixes": [
 			"Roadside",
@@ -600,7 +600,7 @@
 			"perspective": "first_person",
 			"scene_type": "bar",
 			"asset_path": "res://assets/art/environments/bar.png",
-			"description": "A low-stakes bar with game slips, a dice cup, and old machines glowing against teal walls."
+			"description": "A low-stakes bar with pull-tab slips, a dice cup, and old machines glowing against teal walls."
 		},
 		"objective_hint": "Build $100 to buy into the Grand Casino.",
 		"layout": {
@@ -708,11 +708,15 @@
 		},
 		"game_pool": [
 			"slot",
-			"bar_dice"
+			"bar_dice",
+			"pull_tabs"
+		],
+		"required_game_ids": [
+			"pull_tabs"
 		],
 		"game_count": [
-			2,
-			2
+			3,
+			3
 		],
 		"item_pool": [],
 		"item_count": [
@@ -764,7 +768,7 @@
 		"rare_next_archetypes": [
 			"jazz_club"
 		],
-		"rare_next_chance_percent": 10,
+		"rare_next_chance_percent": 22,
 		"tier": 1,
 		"name_prefixes": [
 			"Sunset",
@@ -777,7 +781,7 @@
 			"perspective": "first_person",
 			"scene_type": "gas_station_casino",
 			"asset_path": "res://assets/art/environments/gas_station_casino.png",
-			"description": "A gas station game corner with buzzing coolers, scratchers, and video machines under violent neon."
+			"description": "A gas station game corner with buzzing coolers, pull tabs, and video machines under violent neon."
 		},
 		"objective_hint": "Build $100 to buy into the Grand Casino.",
 		"layout": {
@@ -885,11 +889,15 @@
 		},
 		"game_pool": [
 			"slot",
-			"video_poker"
+			"video_poker",
+			"pull_tabs"
+		],
+		"required_game_ids": [
+			"pull_tabs"
 		],
 		"game_count": [
-			2,
-			2
+			3,
+			3
 		],
 		"item_pool": [],
 		"item_count": [
@@ -942,7 +950,7 @@
 		"rare_next_archetypes": [
 			"jazz_club"
 		],
-		"rare_next_chance_percent": 10,
+		"rare_next_chance_percent": 22,
 		"tier": 1,
 		"name_prefixes": [
 			"Pink Room",
@@ -1129,7 +1137,7 @@
 		"kind": "shop",
 		"is_start": false,
 		"rarity": "rare",
-		"spawn_weight": 1,
+		"spawn_weight": 4,
 		"next_archetypes": [
 			"bar",
 			"motel",
@@ -1149,98 +1157,82 @@
 			"perspective": "first_person",
 			"scene_type": "jazz_club",
 			"asset_path": "res://assets/art/environments/jazz_club.png",
-			"description": "A late-1960s jazz club: amber stage wash, cigarette haze, small round tables, a sax player, a cellist, a legendary drummer, and a pull-tab machine glowing near the bar."
+			"description": "A late-1960s jazz club: amber stage wash, cigarette haze, small round tables, a sax player, a cellist, a legendary drummer, and a pull-tab machine glowing at the bar."
 		},
 		"objective_hint": "Buy the trio rounds, stay for the set, and earn rare luck gear.",
 		"layout": {
 			"game_spots": [
 				[
-					765,
-					285
+					750,
+					300
 				]
 			],
 			"shopkeeper_spots": [
 				[
-					835,
-					185
+					825,
+					160
 				]
 			],
 			"item_spots": [
 				[
-					560,
-					160
+					615,
+					335
 				],
 				[
-					690,
-					160
-				],
-				[
-					440,
-					365
-				],
-				[
-					560,
-					365
+					120,
+					355
 				]
 			],
 			"event_spots": [
 				[
-					90,
-					88
-				],
-				[
-					250,
-					88
-				],
-				[
-					410,
-					88
+					80,
+					105
 				]
 			],
 			"service_spots": [
 				[
-					570,
+					620,
+					225
+				],
+				[
+					170,
 					260
 				],
 				[
-					130,
+					320,
 					260
 				],
 				[
-					280,
+					470,
 					260
 				],
 				[
-					430,
-					260
+					445,
+					350
 				],
 				[
-					280,
-					365
-				],
-				[
-					130,
-					365
+					260,
+					350
 				]
 			],
 			"travel_spots": [
 				[
-					540,
-					70
+					520,
+					75
 				],
 				[
-					690,
-					70
+					680,
+					75
 				],
 				[
 					840,
-					70
+					75
 				]
 			],
 			"game_hook_spots": [
 				[
-					760,
-					385
+					835,
+					382
 				]
 			],
 			"prestige_spots": [
@@ -1300,6 +1292,9 @@
 		"game_pool": [
 			"pull_tabs"
 		],
+		"required_game_ids": [
+			"pull_tabs"
+		],
 		"game_count": [
 			1,
 			1
@@ -1314,8 +1309,8 @@
 			"roadside_map"
 		],
 		"item_count": [
-			2,
-			4
+			1,
+			2
 		],
 		"event_pool": [
 			"chatty_clerk",
@@ -1327,8 +1322,8 @@
 			"shop"
 		],
 		"event_count": [
-			2,
-			3
+			1,
+			1
 		],
 		"service_pool": [
 			"house_drink",

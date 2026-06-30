@@ -405,13 +405,13 @@
 		"scene_asset_path": "res://assets/art/game_scenes/bar_dice.png",
 		"environment_prop": "dice_table",
 		"intro": "A leather dice cup slaps down on the bar.",
-		"description": "Poker dice vs the house: reroll, then beat the cup.",
+		"description": "Ship, Captain, Crew: lock 6-5-4 and win the cargo pot.",
 		"legal_actions": [
-			{"id": "roll", "label": "Roll", "summary": "Toss five dice, keep or reroll, then beat the house", "win_chance": 48, "payout_mult": 2}
+			{"id": "roll", "label": "Roll", "summary": "Ante into the bar pot, shake up to three times, lock 6-5-4, and beat the table's cargo.", "win_chance": 42, "payout_mult": 3}
 		],
 		"cheat_actions": [
-			{"id": "loaded_toss", "label": "Loaded Toss", "summary": "Slip in a loaded die to rig a face; raises heat", "win_chance": 58, "payout_mult": 2, "suspicion_delta": 10},
-			{"id": "palmed_swap", "label": "Palmed Swap", "summary": "Swap one die after the cup settles; raises heat", "win_chance": 62, "payout_mult": 2, "suspicion_delta": 16}
+			{"id": "loaded_toss", "label": "Loaded Toss", "summary": "Force the next needed Ship, Captain, or Crew face; raises heat if watched.", "win_chance": 54, "payout_mult": 3, "suspicion_delta": 10},
+			{"id": "palmed_swap", "label": "Palmed Swap", "summary": "Swap one die after the shake to improve cargo; raises heat if watched.", "win_chance": 60, "payout_mult": 3, "suspicion_delta": 16}
 		]
 	},
 	{

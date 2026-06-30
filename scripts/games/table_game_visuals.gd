@@ -189,6 +189,22 @@ static func draw_patron_wager_badge(surface, state: Dictionary, patron: Dictiona
 		surface.surface_add_hit(fade_rect, action, index + 100)
 
 
+static func draw_round_timer_panel(surface, timer: Dictionary, rect: Rect2, accent: Color = C_YELLOW) -> void:
+	if timer.is_empty() or not bool(timer.get("active", false)):
+		return
+	var warning := bool(timer.get("warning", false))
+	var color := C_PINK if warning else accent
+	_draw_neon_panel(surface, rect, color, 0.16 if warning else 0.11)
+	var label := str(timer.get("label", "Next round")).to_upper().left(20)
+	var seconds := maxi(0, int(timer.get("remaining_seconds", 0)))
+	surface.surface_label(label, rect.position + Vector2(8, 13), 8, C_SOFT)
+	surface.surface_label("%02ds" % seconds, rect.position + Vector2(rect.size.x - 44.0, 15), 14, color)
+	var bar_rect := Rect2(rect.position + Vector2(8, rect.size.y - 12.0), Vector2(maxf(1.0, rect.size.x - 16.0), 4.0))
+	var progress := clampf(float(timer.get("progress", 0.0)), 0.0, 1.0)
+	surface.draw_rect(bar_rect, Color("#070810"))
+	surface.draw_rect(Rect2(bar_rect.position, Vector2(bar_rect.size.x * progress, bar_rect.size.y)), color)
+
+
 static func dealer_focus_for_state(state: Dictionary) -> Dictionary:
 	var runtime := _copy_dict(state.get("dealer_focus_runtime", {}))
 	var profile := _copy_dict(state.get("dealer_profile", {}))

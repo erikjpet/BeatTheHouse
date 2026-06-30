@@ -70,11 +70,13 @@ const OBJECT_LABEL_HEIGHT := 15.0
 const OBJECT_LABEL_GAP := 4.0
 const EMULATED_TOUCH_SUPPRESS_MS := 120
 const EMULATED_TOUCH_SUPPRESS_DISTANCE := 6.0
+const DRUNK_TIME_SCALE_MIN := 0.33
 
 var environment_id: String = "corner_store"
 var environment_name: String = "Corner Store"
 var suspicion_level: int = 0
 var drunk_level: int = 0
+var drunk_time_scale := 1.0
 var scene_objects: Array = []
 var hovered_object_id: String = ""
 var selected_object_id: String = ""
@@ -124,6 +126,7 @@ func render_environment_snapshot(snapshot: Dictionary) -> void:
 	environment_name = str(foundation_snapshot.get("display_name", foundation_snapshot.get("name", environment_name)))
 	suspicion_level = int(foundation_snapshot.get("suspicion_level", suspicion_level))
 	drunk_level = int(foundation_snapshot.get("drunk_level", drunk_level))
+	drunk_time_scale = clampf(float(foundation_snapshot.get("drunk_time_scale", 1.0)), DRUNK_TIME_SCALE_MIN, 1.0)
 	reduce_motion = bool(foundation_snapshot.get("reduce_motion", false))
 	drunk_effect_mode = _normalized_drunk_effect_mode(str(foundation_snapshot.get("drunk_effect_mode", drunk_effect_mode)))
 	_update_drunk_distortion_overlay()
@@ -206,6 +209,8 @@ func current_view_snapshot() -> Dictionary:
 		"environment_name": environment_name,
 		"suspicion_level": suspicion_level,
 		"drunk_level": drunk_level,
+		"drunk_time_scale": drunk_time_scale,
+		"drunk_time_scale_percent": int(round(drunk_time_scale * 100.0)),
 		"hovered_object_id": hovered_object_id,
 		"selected_object_id": selected_object_id,
 		"camera_focus_active": camera_focus_active,
@@ -312,13 +317,14 @@ func _process(delta: float) -> void:
 		camera_offset = target_camera_offset
 		_snap_info_card_to_target()
 		return
-	flicker += delta
+	var scaled_delta := delta * drunk_time_scale
+	flicker += scaled_delta
 	_update_camera_target_if_needed()
 	var speed := FOCUS_LERP_SPEED if camera_focus_active else ROOM_LERP_SPEED
-	var weight := _camera_lerp_weight(delta, speed)
+	var weight := _camera_lerp_weight(scaled_delta, speed)
 	camera_zoom = lerpf(camera_zoom, target_camera_zoom, weight)
 	camera_offset = camera_offset.lerp(target_camera_offset, weight)
-	_update_info_card_animation(delta)
+	_update_info_card_animation(scaled_delta)
 	if absf(camera_zoom - target_camera_zoom) <= CAMERA_ZOOM_SNAP_EPSILON:
 		camera_zoom = target_camera_zoom
 	if camera_offset.distance_squared_to(target_camera_offset) <= CAMERA_OFFSET_SNAP_EPSILON * CAMERA_OFFSET_SNAP_EPSILON:

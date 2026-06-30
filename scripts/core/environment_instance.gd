@@ -6,7 +6,7 @@ extends RefCounted
 const ArtContractsScript := preload("res://scripts/core/art_contracts.gd")
 
 const ENVIRONMENT_BOARD_SIZE := Vector2(ArtContractsScript.ENVIRONMENT_BOARD_SIZE)
-const GENERATED_LAYOUT_VERSION := 4
+const GENERATED_LAYOUT_VERSION := 6
 const EMPTY_MUSIC_NOTE := -999
 
 var id: String = ""
@@ -55,7 +55,7 @@ static func from_archetype(archetype: Dictionary, p_depth: int, rng: RngStream, 
 	environment.economic_profile = _copy_dict(archetype.get("economic_profile", {}))
 	environment.objective_hint = str(archetype.get("objective_hint", ""))
 	environment.demo_objective = _copy_dict(archetype.get("demo_objective", {}))
-	environment.game_ids = _pick_ids(archetype.get("game_pool", []), archetype.get("game_count", 1), rng)
+	environment.game_ids = _pick_ids_with_required(archetype.get("game_pool", []), archetype.get("game_count", 1), archetype.get("required_game_ids", []), rng)
 	environment.game_states = {}
 	environment.event_ids = _pick_events(archetype, rng, library)
 	environment.item_offers = _build_offers(archetype, rng, library)
@@ -311,6 +311,33 @@ static func _event_fits(event: Dictionary, scopes: Array) -> bool:
 static func _pick_ids(pool: Array, requested_count: Variant, rng: RngStream) -> Array:
 	var count := _count(requested_count, rng)
 	return rng.pick_many(pool, max(0, count))
+
+
+# Picks unique ids while preserving explicit must-spawn ids.
+static func _pick_ids_with_required(pool: Array, requested_count: Variant, required_ids: Variant, rng: RngStream) -> Array:
+	var normalized_pool := _string_array(pool)
+	var required: Array = []
+	for required_id in _string_array(required_ids):
+		if normalized_pool.has(required_id) and not required.has(required_id):
+			required.append(required_id)
+	var count := maxi(_count(requested_count, rng), required.size())
+	var remaining_pool: Array = []
+	for pool_id in normalized_pool:
+		if not required.has(pool_id):
+			remaining_pool.append(pool_id)
+	var picks := rng.pick_many(remaining_pool, maxi(0, count - required.size()))
+	var selected := {}
+	for required_id in required:
+		selected[required_id] = true
+	for pick_value in picks:
+		var pick_id := str(pick_value)
+		if not pick_id.is_empty():
+			selected[pick_id] = true
+	var result: Array = []
+	for pool_id in normalized_pool:
+		if bool(selected.get(pool_id, false)):
+			result.append(pool_id)
+	return result
 
 
 # Resolves a fixed count or random count range.

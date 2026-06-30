@@ -25,8 +25,9 @@ const JAZZ_DRUMMER_GLASSES_ITEM_ID := "jazz_drummer_glasses"
 const JAZZ_MUSICIAN_SAX := "sax"
 const JAZZ_MUSICIAN_CELLO := "cello"
 const JAZZ_MUSICIAN_DRUMMER := "drummer"
-const JAZZ_REWARD_MIN_DRINKS := 2
-const JAZZ_REWARD_MAX_DRINKS := 4
+const JAZZ_NO_REWARD_HOLDER := "none"
+const JAZZ_REWARD_MIN_DRINKS := 3
+const JAZZ_REWARD_MAX_DRINKS := 5
 const JAZZ_DRUMMER_LISTEN_THRESHOLD := 2
 const JAZZ_TIP_JAR_CHANCE_DENOMINATOR := 4
 const JAZZ_COIN_LUCK_REWARD := 5
@@ -1001,7 +1002,7 @@ func _jazz_try_reward_from_round(musician_id: String, favor_count: int, flags: D
 	var setup := _jazz_reward_setup(flags)
 	var holder_id := str(setup.get("holder", ""))
 	var drinks_required := clampi(int(setup.get("drinks_required", JAZZ_REWARD_MIN_DRINKS)), JAZZ_REWARD_MIN_DRINKS, JAZZ_REWARD_MAX_DRINKS)
-	if musician_id != holder_id:
+	if holder_id == JAZZ_NO_REWARD_HOLDER or musician_id != holder_id:
 		flags[_jazz_no_item_flag(musician_id)] = true
 		messages.append(_jazz_no_item_message(musician_id))
 		return 0
@@ -1050,12 +1051,16 @@ func _jazz_reward_setup(flags: Dictionary) -> Dictionary:
 	var threshold_key := _jazz_local_flag("reward_drinks_required")
 	var holder_id := str(flags.get(holder_key, run_state.narrative_flags.get(holder_key, "")))
 	var drinks_required := int(flags.get(threshold_key, run_state.narrative_flags.get(threshold_key, 0)))
-	if not _jazz_musician_ids().has(holder_id) or drinks_required < JAZZ_REWARD_MIN_DRINKS or drinks_required > JAZZ_REWARD_MAX_DRINKS:
+	var needs_holder_roll := not _jazz_reward_holder_ids().has(holder_id)
+	var needs_threshold_roll := drinks_required < JAZZ_REWARD_MIN_DRINKS or drinks_required > JAZZ_REWARD_MAX_DRINKS
+	if needs_holder_roll or needs_threshold_roll:
 		var rng := run_state.create_rng("jazz_reward:%s" % str(run_state.current_environment.get("id", JAZZ_CLUB_ARCHETYPE_ID)))
-		holder_id = str(rng.pick(_jazz_musician_ids(), JAZZ_MUSICIAN_SAX))
-		drinks_required = rng.randi_range(JAZZ_REWARD_MIN_DRINKS, JAZZ_REWARD_MAX_DRINKS)
-		flags[holder_key] = holder_id
-		flags[threshold_key] = drinks_required
+		if needs_holder_roll:
+			holder_id = str(rng.pick(_jazz_reward_holder_pool(), JAZZ_NO_REWARD_HOLDER))
+			flags[holder_key] = holder_id
+		if needs_threshold_roll:
+			drinks_required = rng.randi_range(JAZZ_REWARD_MIN_DRINKS, JAZZ_REWARD_MAX_DRINKS)
+			flags[threshold_key] = drinks_required
 	return {
 		"holder": holder_id,
 		"drinks_required": drinks_required,
@@ -1064,6 +1069,20 @@ func _jazz_reward_setup(flags: Dictionary) -> Dictionary:
 
 func _jazz_musician_ids() -> Array:
 	return [JAZZ_MUSICIAN_SAX, JAZZ_MUSICIAN_CELLO, JAZZ_MUSICIAN_DRUMMER]
+
+
+func _jazz_reward_holder_ids() -> Array:
+	return [JAZZ_MUSICIAN_SAX, JAZZ_MUSICIAN_CELLO, JAZZ_MUSICIAN_DRUMMER, JAZZ_NO_REWARD_HOLDER]
+
+
+func _jazz_reward_holder_pool() -> Array:
+	return [
+		JAZZ_MUSICIAN_SAX,
+		JAZZ_MUSICIAN_CELLO,
+		JAZZ_MUSICIAN_DRUMMER,
+		JAZZ_NO_REWARD_HOLDER,
+		JAZZ_NO_REWARD_HOLDER,
+	]
 
 
 func _jazz_musician_for_service(service_id: String) -> String:

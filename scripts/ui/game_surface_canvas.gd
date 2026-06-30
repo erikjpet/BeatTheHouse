@@ -30,6 +30,7 @@ const C_BLUE := VisualStyleScript.BLUE
 const BOARD_SIZE := VisualStyleScript.GAME_BOARD_SIZE
 const SLOT_BOARD_SIZE := Vector2(960, 540)
 const MIN_SURFACE_TOUCH_HIT_SIZE := Vector2(44.0, 44.0)
+const DRUNK_TIME_SCALE_MIN := 0.33
 
 var game_id: String = ""
 var state: Dictionary = {}
@@ -55,6 +56,7 @@ var active_design_scale := Vector2.ONE
 var active_design_offset := Vector2.ZERO
 var design_space_active := false
 var reduce_motion := false
+var drunk_time_scale := 1.0
 
 
 func set_game_module(game_module: GameModule) -> void:
@@ -68,6 +70,7 @@ func render_game_snapshot(snapshot: Dictionary) -> void:
 	game_id = str(view_data.get("game_id", game_id))
 	state = view_data
 	reduce_motion = bool(state.get("reduce_motion", false))
+	drunk_time_scale = clampf(float(state.get("drunk_time_scale", 1.0)), DRUNK_TIME_SCALE_MIN, 1.0)
 	drunk_effect_mode = _normalized_drunk_effect_mode(str(state.get("drunk_effect_mode", drunk_effect_mode)))
 	_update_drunk_distortion_overlay()
 	_update_surface_animation_channels()
@@ -98,6 +101,8 @@ func current_view_snapshot() -> Dictionary:
 		"outcome_bankroll_delta": int(state.get("outcome_bankroll_delta", state.get("bankroll_delta", 0))),
 		"outcome_suspicion_delta": int(state.get("outcome_suspicion_delta", state.get("suspicion_delta", 0))),
 		"drunk_effect_mode": drunk_effect_mode,
+		"drunk_time_scale": drunk_time_scale,
+		"drunk_time_scale_percent": int(round(drunk_time_scale * 100.0)),
 		"reduce_motion": reduce_motion,
 		"drunk_distortion_visible": drunk_distortion_overlay != null and drunk_distortion_overlay.visible,
 		"drunk_distortion_debug": drunk_distortion_overlay.debug_snapshot() if drunk_distortion_overlay != null else {},
@@ -122,6 +127,8 @@ func surface_runtime_status() -> Dictionary:
 		"outcome_bankroll_delta": int(state.get("outcome_bankroll_delta", state.get("bankroll_delta", 0))),
 		"outcome_suspicion_delta": int(state.get("outcome_suspicion_delta", state.get("suspicion_delta", 0))),
 		"drunk_effect_mode": drunk_effect_mode,
+		"drunk_time_scale": drunk_time_scale,
+		"drunk_time_scale_percent": int(round(drunk_time_scale * 100.0)),
 		"reduce_motion": reduce_motion,
 		"drunk_distortion_visible": drunk_distortion_overlay != null and drunk_distortion_overlay.visible,
 		"drunk_distortion_debug": drunk_distortion_overlay.debug_snapshot() if drunk_distortion_overlay != null else {},
@@ -231,7 +238,8 @@ func surface_elapsed(channel_id: String) -> float:
 	var started_msec := int(channel.get("started_msec", 0))
 	if started_msec <= 0:
 		return 999.0
-	return float(Time.get_ticks_msec() - started_msec) / 1000.0
+	var elapsed_msec := maxi(0, Time.get_ticks_msec() - started_msec)
+	return float(elapsed_msec) * drunk_time_scale / 1000.0
 
 
 func surface_animation_duration(channel_id: String) -> float:
@@ -852,6 +860,7 @@ func _surface_animation_status_snapshot() -> Dictionary:
 			"elapsed": surface_elapsed(normalized_id),
 			"progress": surface_animation_progress(normalized_id),
 			"duration": surface_animation_duration(normalized_id),
+			"time_scale": drunk_time_scale,
 			"duration_msec": int(channel.get("duration_msec", 0)),
 			"started_msec": int(channel.get("started_msec", 0)),
 			"metadata": _copy_dict(channel.get("metadata", {})),

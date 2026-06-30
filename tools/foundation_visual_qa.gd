@@ -157,6 +157,11 @@ func _run() -> void:
 	_cover("r100_result_hidden_when_empty")
 	_assert_m2_player_feedback_clarity("environment screen")
 	await _verify_demo_objective_visible()
+	_require(_start_room_has_shop_offers(), "The first generated room did not expose shop items before gambling.")
+	_cover("shop_first_start")
+	_require(await _try_travel_object_flow("shop-first start"), "Could not travel from the shop start to a gambling environment.")
+	_return_to_room_view()
+	await _settle()
 	await _verify_all_visible_game_objects_clickable()
 
 	var serialized_before_game_focus := _serialized_run_text()
@@ -844,6 +849,35 @@ func _verify_demo_objective_visible() -> void:
 		_cover("pit_boss_watch_visible")
 
 
+func _start_room_has_shop_offers() -> bool:
+	var snapshot: Dictionary = app.call("current_environment_view_snapshot")
+	if str(snapshot.get("kind", "")) != "shop":
+		return false
+	var offers_value: Variant = snapshot.get("item_offers", [])
+	var offers: Array = []
+	if typeof(offers_value) == TYPE_ARRAY:
+		offers = offers_value
+	if offers.is_empty():
+		return false
+	var spatial_snapshot: Dictionary = app.call("current_spatial_interaction_snapshot")
+	var objects_value: Variant = spatial_snapshot.get("objects", [])
+	var objects: Array = []
+	if typeof(objects_value) == TYPE_ARRAY:
+		objects = objects_value
+	return not _interactable_by_type(objects, "item").is_empty() and not _interactable_by_type(objects, "shopkeeper").is_empty()
+
+
+func _interactable_by_type(objects: Array, object_type: String) -> Dictionary:
+	for object_value in objects:
+		if typeof(object_value) != TYPE_DICTIONARY:
+			continue
+		var object_data: Dictionary = object_value
+		var actual_type := str(object_data.get("type", object_data.get("object_type", "")))
+		if actual_type == object_type:
+			return object_data
+	return {}
+
+
 func _verify_all_visible_game_objects_clickable() -> void:
 	var canvas := app.get("environment_canvas") as Control
 	if canvas == null or not canvas.visible or not canvas.has_method("current_view_snapshot"):
@@ -1059,19 +1093,23 @@ func _verify_mouse_only_recovery_pressure_flow() -> void:
 	_set_seed_text(visual_qa_seed)
 	_require(not _click_button_exact("New Run").is_empty(), "Could not start recovery pressure QA run through visible controls.")
 	await _settle()
-	var serialized_before_travel := _serialized_run_text()
-	var lender_route := await _double_click_first_travel_to_lender_environment()
-	if lender_route.is_empty():
-		_add_warning("Recovery pressure QA could not find a visible route to a lender environment.")
-		return
-	await _settle()
-	_require(serialized_before_travel != _serialized_run_text(), "Recovery pressure QA travel did not update RunState through visible controls.")
 	var before_lender := _run_state_restore_summary(app.call("serialized_run_state"))
 	var serialized_before_lender := _serialized_run_text()
-	var lender_button := await _double_click_first_play_object_type("lender")
+	var lender_button := await _double_click_first_enabled_canvas_object_type("lender")
 	if lender_button.is_empty():
-		_add_warning("Recovery pressure QA reached a lender route but found no visible lender object.")
-		return
+		var serialized_before_travel := _serialized_run_text()
+		var lender_route := await _double_click_first_travel_to_lender_environment()
+		if lender_route.is_empty():
+			_add_warning("Recovery pressure QA could not find a visible lender or route to a lender environment.")
+			return
+		await _settle()
+		_require(serialized_before_travel != _serialized_run_text(), "Recovery pressure QA travel did not update RunState through visible controls.")
+		before_lender = _run_state_restore_summary(app.call("serialized_run_state"))
+		serialized_before_lender = _serialized_run_text()
+		lender_button = await _double_click_first_enabled_canvas_object_type("lender")
+		if lender_button.is_empty():
+			_add_warning("Recovery pressure QA reached a lender route but found no enabled visible lender object.")
+			return
 	await _settle()
 	_require(serialized_before_lender != _serialized_run_text(), "Recovery pressure QA lender interaction did not update RunState.")
 	var after_lender := _run_state_restore_summary(app.call("serialized_run_state"))
@@ -1679,7 +1717,11 @@ func _double_click_first_travel_to_lender_environment() -> String:
 		if typeof(item) != TYPE_DICTIONARY:
 			continue
 		var object_data: Dictionary = item
-		if str(object_data.get("type", "")) != "travel":
+		if _object_type_value(object_data) != "travel":
+			continue
+		if bool(object_data.get("disabled", false)):
+			continue
+		if not _canvas_object_center_hits(canvas, object_data):
 			continue
 		if _travel_destination_has_lender(str(object_data.get("source_id", ""))):
 			return await _double_click_canvas_object_data(canvas, object_data, "travel")
@@ -1921,7 +1963,7 @@ func _native_game_surface_action_binding(kind: String, fallback: Dictionary) -> 
 	if kind == "legal":
 		preferred_actions = ["video_poker_draw", "video_poker_deal", "video_poker_collect", "slot_spin", "bar_dice_roll"]
 	else:
-		preferred_actions = ["video_poker_mark", "blackjack_peek", "bar_dice_switch", "roulette_late_bet", "baccarat_palm"]
+		preferred_actions = ["video_poker_mark", "blackjack_peek", "bar_dice_load", "roulette_late_bet", "baccarat_palm"]
 	for preferred_action in preferred_actions:
 		var preferred_binding := _surface_hit_action_binding(hit_actions, str(preferred_action))
 		if not preferred_binding.is_empty():
@@ -2111,6 +2153,16 @@ func _double_click_first_canvas_object_type(object_type: String) -> String:
 	return await _double_click_canvas_object_data(canvas, object_data, object_type)
 
 
+func _double_click_first_enabled_canvas_object_type(object_type: String) -> String:
+	var canvas := app.get("environment_canvas") as Control
+	if canvas == null or not canvas.visible or not canvas.has_method("current_view_snapshot"):
+		return ""
+	var object_data := _first_clickable_canvas_object_type_enabled(canvas, object_type, true)
+	if object_data.is_empty():
+		return ""
+	return await _double_click_canvas_object_data(canvas, object_data, object_type)
+
+
 func _double_click_canvas_object_data(canvas: Control, object_data: Dictionary, object_type: String) -> String:
 	var object_id := str(object_data.get("id", ""))
 	var local_position := _canvas_local_center_for_object(canvas, object_data)
@@ -2143,9 +2195,13 @@ func _first_canvas_object_type(canvas: Control, object_type: String) -> Dictiona
 		if typeof(item) != TYPE_DICTIONARY:
 			continue
 		var object_data: Dictionary = item
-		if str(object_data.get("type", "")) == object_type:
+		if _object_type_value(object_data) == object_type:
 			return object_data.duplicate(true)
 	return {}
+
+
+func _object_type_value(object_data: Dictionary) -> String:
+	return str(object_data.get("type", object_data.get("object_type", "")))
 
 
 func _snapshot_has_object_type(objects: Array, object_type: String) -> bool:
@@ -2153,7 +2209,7 @@ func _snapshot_has_object_type(objects: Array, object_type: String) -> bool:
 		if typeof(item) != TYPE_DICTIONARY:
 			continue
 		var object_data: Dictionary = item
-		var type_value := str(object_data.get("type", object_data.get("object_type", "")))
+		var type_value := _object_type_value(object_data)
 		if type_value == object_type:
 			return true
 	return false
@@ -2179,7 +2235,7 @@ func _first_clickable_canvas_object_type_enabled(canvas: Control, object_type: S
 		if typeof(item) != TYPE_DICTIONARY:
 			continue
 		var object_data: Dictionary = item
-		if str(object_data.get("type", "")) != object_type:
+		if _object_type_value(object_data) != object_type:
 			continue
 		var object_enabled := not bool(object_data.get("disabled", false))
 		if object_enabled != enabled:

@@ -109,6 +109,9 @@ var travel_transition_target_id: String = ""
 var travel_transition_target_label: String = ""
 var game_surface_auto_resolving := false
 var last_game_surface_realtime_refresh_msec := 0
+var drunk_time_anchor_real_msec := 0
+var drunk_time_anchor_scaled_msec := 0
+var drunk_time_last_scale := 1.0
 var dev_game_test_mode := false
 var show_game_library_launcher := true
 var autosave_slot_id := AUTOSAVE_SLOT
@@ -136,8 +139,10 @@ var inventory_button: Button
 var profile_chip_texture: Texture2D
 var run_item_icon_texture_cache: Dictionary = {}
 var seed_input: LineEdit
+var main_menu_seed_counter: int = 0
 var start_status_label: Label
 var new_run_button: Button
+var daily_run_button: Button
 var continue_button: Button
 var settings_button: Button
 var exit_game_button: Button
@@ -278,6 +283,33 @@ func start_foundation_run(seed_text: String = DEFAULT_SEED, challenge_config: Di
 	_show_message("The run begins.")
 	_autosave_foundation_run("Autosaved.")
 	_refresh()
+
+
+func start_daily_challenge_run() -> void:
+	var today: Dictionary = Time.get_datetime_dict_from_system()
+	var day := int(today.get("day", 1))
+	var month := int(today.get("month", 1))
+	var seed_text := _daily_challenge_seed_for_date(day, month)
+	var daily_id := _daily_challenge_id_for_datetime(today)
+	var challenge_config: Dictionary = RunState.daily_challenge(daily_id, seed_text, true)
+	start_foundation_run(seed_text, challenge_config)
+	_show_message("Daily challenge begins. The seed is hidden.")
+	_refresh()
+
+
+func _daily_challenge_seed_for_date(day: int, month: int) -> String:
+	var safe_day := maxi(1, day)
+	var safe_month := maxi(1, month)
+	return "%d/%d" % [safe_day * 32, safe_month * 2]
+
+
+func _daily_challenge_id_for_datetime(datetime: Dictionary) -> String:
+	var year := int(datetime.get("year", 0))
+	var month := maxi(1, int(datetime.get("month", 1)))
+	var day := maxi(1, int(datetime.get("day", 1)))
+	if year <= 0:
+		return "daily-%02d-%02d" % [month, day]
+	return "%04d-%02d-%02d" % [year, month, day]
 
 
 # Selects which player-facing action category is expanded without changing simulation state.
@@ -483,7 +515,6 @@ func _advance_game_surface_automation() -> void:
 	if game_surface_auto_resolving or run_state == null or current_game == null:
 		return
 	var ui_state := _current_game_surface_ui_state()
-	ui_state["surface_time_msec"] = Time.get_ticks_msec()
 	if not current_game.surface_needs_auto_tick(ui_state, run_state, run_state.current_environment):
 		return
 	var command := current_game.surface_auto_action_command(ui_state, run_state, run_state.current_environment, _current_game_surface_status())
@@ -590,6 +621,45 @@ func _reset_game_surface_runtime_state() -> void:
 	game_surface_ui_state = {}
 	game_surface_auto_resolving = false
 	last_game_surface_realtime_refresh_msec = 0
+	_reset_drunk_time_surface_clock()
+
+
+func _reset_drunk_time_surface_clock() -> void:
+	drunk_time_anchor_real_msec = 0
+	drunk_time_anchor_scaled_msec = 0
+	drunk_time_last_scale = 1.0
+
+
+func _current_drunk_time_scale() -> float:
+	if run_state == null:
+		return 1.0
+	return clampf(run_state.drunk_time_scale(), RunState.DRUNK_TIME_SCALE_MIN, 1.0)
+
+
+func _apply_game_surface_time_fields(ui_state: Dictionary, real_time_msec: int = -1) -> Dictionary:
+	var now_msec := Time.get_ticks_msec() if real_time_msec < 0 else real_time_msec
+	var time_scale := _current_drunk_time_scale()
+	var speed_percent := clampi(int(round(time_scale * 100.0)), int(round(RunState.DRUNK_TIME_SCALE_MIN * 100.0)), 100)
+	ui_state["surface_time_msec"] = now_msec
+	ui_state["drunk_time_scale"] = time_scale
+	ui_state["drunk_time_scale_percent"] = speed_percent
+	ui_state["drunk_world_speed_percent"] = speed_percent
+	ui_state["drunk_scaled_surface_time_msec"] = _drunk_scaled_surface_time_msec(now_msec, time_scale)
+	return ui_state
+
+
+func _drunk_scaled_surface_time_msec(real_time_msec: int = -1, scale_value: float = -1.0) -> int:
+	var now_msec := Time.get_ticks_msec() if real_time_msec < 0 else real_time_msec
+	var time_scale := clampf(scale_value if scale_value > 0.0 else _current_drunk_time_scale(), RunState.DRUNK_TIME_SCALE_MIN, 1.0)
+	if drunk_time_anchor_real_msec <= 0:
+		drunk_time_anchor_real_msec = now_msec
+		drunk_time_anchor_scaled_msec = now_msec
+		drunk_time_last_scale = time_scale
+	if absf(time_scale - drunk_time_last_scale) > 0.001:
+		drunk_time_anchor_scaled_msec += int(round(float(maxi(0, now_msec - drunk_time_anchor_real_msec)) * drunk_time_last_scale))
+		drunk_time_anchor_real_msec = now_msec
+		drunk_time_last_scale = time_scale
+	return drunk_time_anchor_scaled_msec + int(round(float(maxi(0, now_msec - drunk_time_anchor_real_msec)) * time_scale))
 
 
 # Resolves the currently selected GameModule action.
@@ -1580,7 +1650,7 @@ func _build_start_screen() -> void:
 	stack.add_child(start_menu_controls)
 
 	seed_input = LineEdit.new()
-	seed_input.text = DEFAULT_SEED
+	seed_input.text = _generate_menu_seed_text()
 	seed_input.placeholder_text = "Enter run seed"
 	seed_input.tooltip_text = "Edit the seed before New Run to replay a deterministic climb."
 	seed_input.custom_minimum_size = Vector2(0, 54)
@@ -1595,6 +1665,8 @@ func _build_start_screen() -> void:
 	start_menu_controls.add_child(run_row)
 	new_run_button = _main_menu_button("New Run", "Start a seeded climb", Callable(self, "_on_start_pressed"))
 	run_row.add_child(new_run_button)
+	daily_run_button = _main_menu_button("Daily Run", "Start today's hidden-seed challenge", Callable(self, "start_daily_challenge_run"))
+	run_row.add_child(daily_run_button)
 	continue_button = _main_menu_button("Continue", "Load the saved run", Callable(self, "load_foundation_run"))
 	run_row.add_child(continue_button)
 
@@ -2351,7 +2423,7 @@ func _build_failure_summary_panel(parent: BoxContainer) -> void:
 	var menu_button := _button("Main Menu", Callable(self, "return_to_main_menu"))
 	menu_button.custom_minimum_size = Vector2(160, 36)
 	button_row.add_child(menu_button)
-	var fresh_button := _button("New Run", Callable(self, "start_foundation_run").bind(DEFAULT_SEED))
+	var fresh_button := _button("New Run", Callable(self, "start_generated_foundation_run"))
 	fresh_button.custom_minimum_size = Vector2(160, 36)
 	button_row.add_child(fresh_button)
 
@@ -2396,7 +2468,7 @@ func _build_victory_summary_panel(parent: BoxContainer) -> void:
 	var menu_button := _button("Main Menu", Callable(self, "return_to_main_menu"))
 	menu_button.custom_minimum_size = Vector2(160, 36)
 	button_row.add_child(menu_button)
-	var fresh_button := _button("New Run", Callable(self, "start_foundation_run").bind(DEFAULT_SEED))
+	var fresh_button := _button("New Run", Callable(self, "start_generated_foundation_run"))
 	fresh_button.custom_minimum_size = Vector2(160, 36)
 	button_row.add_child(fresh_button)
 
@@ -2508,7 +2580,10 @@ func _world_object_summary_text(object_data: Dictionary) -> String:
 
 
 func _set_current_screen(screen_id: String) -> void:
+	var previous_screen := current_screen
 	current_screen = screen_id
+	if screen_id == SCREEN_START and previous_screen != SCREEN_START:
+		_refresh_menu_seed_text()
 
 
 func _update_procedural_music() -> void:
@@ -2613,6 +2688,7 @@ func _render_failure_summary() -> void:
 		"Economy: %s" % str(snapshot.get("economy", "")),
 		"Heat: %d / 100, %s" % [int(snapshot.get("heat", 0)), str(snapshot.get("heat_label", ""))],
 	])
+	_add_failure_summary_section("Score", _copy_array(snapshot.get("score_lines", [])))
 	_add_failure_summary_section("Alcohol And Luck", _copy_array(snapshot.get("alcohol_lines", [])))
 	_add_failure_summary_section("Where It Ended", [
 		"Current room: %s" % str(snapshot.get("current_environment", "")),
@@ -2652,6 +2728,7 @@ func _render_victory_summary() -> void:
 		"Economy: %s" % str(snapshot.get("economy", "")),
 		"Heat: %d / 100, %s" % [int(snapshot.get("heat", 0)), str(snapshot.get("heat_label", ""))],
 	])
+	_add_victory_summary_section("Score", _copy_array(snapshot.get("score_lines", [])))
 	_add_victory_summary_section("Alcohol And Luck", _copy_array(snapshot.get("alcohol_lines", [])))
 	_add_victory_summary_section("Venues", [
 		"Current room: %s" % str(snapshot.get("current_environment", "")),
@@ -3703,6 +3780,9 @@ func _environment_view_snapshot() -> Dictionary:
 	var recent_deltas: Dictionary = recent_result.get("deltas", {})
 	snapshot["suspicion_level"] = run_state.suspicion_level()
 	snapshot["drunk_level"] = run_state.drunk_level
+	snapshot["drunk_time_scale"] = run_state.drunk_time_scale()
+	snapshot["drunk_time_scale_percent"] = run_state.drunk_time_scale_percent()
+	snapshot["drunk_world_speed_percent"] = run_state.drunk_time_scale_percent()
 	snapshot["pending_drunk_absorption"] = run_state.pending_drunk_absorption_amount()
 	snapshot["drunk_effect_mode"] = _drunk_effect_mode()
 	snapshot["reduce_motion"] = _reduce_motion_enabled()
@@ -4324,6 +4404,8 @@ func _game_view_snapshot() -> Dictionary:
 			result_message = "Pick a game from the choices to start playing."
 		elif message_label != null:
 			result_message = _player_facing_text(message_label.text)
+	var drunk_time_scale := run_state.drunk_time_scale()
+	var drunk_world_speed_percent := run_state.drunk_time_scale_percent()
 	var snapshot := {
 		"game_id": game_id,
 		"display_name": display_name,
@@ -4353,6 +4435,9 @@ func _game_view_snapshot() -> Dictionary:
 		"bankroll": run_state.bankroll,
 		"suspicion_level": run_state.suspicion_level(),
 		"drunk_level": run_state.drunk_level,
+		"drunk_time_scale": drunk_time_scale,
+		"drunk_time_scale_percent": drunk_world_speed_percent,
+		"drunk_world_speed_percent": drunk_world_speed_percent,
 		"pending_drunk_absorption": run_state.pending_drunk_absorption_amount(),
 		"drunk_effect_mode": _drunk_effect_mode(),
 		"reduce_motion": _reduce_motion_enabled(),
@@ -4384,9 +4469,8 @@ func _current_game_surface_ui_state() -> Dictionary:
 	ui_state["selected_action_id"] = selected_action_id
 	ui_state["selected_action_kind"] = selected_action_kind
 	ui_state["selected_stake"] = _current_selected_stake()
-	ui_state["surface_time_msec"] = Time.get_ticks_msec()
 	ui_state["surface_runtime_status"] = _current_game_surface_status()
-	return ui_state
+	return _apply_game_surface_time_fields(ui_state)
 
 
 func _current_game_embeds_result_feedback() -> bool:
@@ -4577,13 +4661,20 @@ func _failure_summary_snapshot() -> Dictionary:
 	if story_lines.is_empty():
 		story_lines.append("No story entries were recorded.")
 	var visited_places := _visited_environment_summary_lines()
+	var score_summary: Dictionary = run_state.terminal_score_summary()
+	var score_lines: Array = _terminal_score_lines(score_summary)
 	return {
 		"title": title,
 		"message": _player_facing_text(message),
 		"reason": reason,
 		"reason_label": _label_from_id(reason) if not reason.is_empty() else "Run failed",
 		"run_status": run_state.run_status,
-		"seed": run_state.seed_text,
+		"seed": run_state.player_facing_seed_text(),
+		"seed_hidden": run_state.seed_is_hidden(),
+		"score_spending": int(score_summary.get("base_spending", 0)),
+		"score_multiplier": int(score_summary.get("multiplier", 1)),
+		"score": int(score_summary.get("score", 0)),
+		"score_lines": score_lines,
 		"bankroll": run_state.bankroll,
 		"economy": _economy_cue_text(),
 		"heat": run_state.suspicion_level(),
@@ -4662,13 +4753,20 @@ func _victory_summary_snapshot() -> Dictionary:
 	if story_lines.is_empty():
 		story_lines.append("No story entries were recorded.")
 	var visited_places := _visited_environment_summary_lines()
+	var score_summary: Dictionary = run_state.terminal_score_summary()
+	var score_lines: Array = _terminal_score_lines(score_summary)
 	return {
 		"title": title,
 		"message": message,
 		"route": route,
 		"route_label": _label_from_id(route),
 		"run_status": run_state.run_status,
-		"seed": run_state.seed_text,
+		"seed": run_state.player_facing_seed_text(),
+		"seed_hidden": run_state.seed_is_hidden(),
+		"score_spending": int(score_summary.get("base_spending", 0)),
+		"score_multiplier": int(score_summary.get("multiplier", 1)),
+		"score": int(score_summary.get("score", 0)),
+		"score_lines": score_lines,
 		"bankroll": run_state.bankroll,
 		"economy": _economy_cue_text(),
 		"heat": run_state.suspicion_level(),
@@ -4690,6 +4788,18 @@ func _victory_summary_snapshot() -> Dictionary:
 		"story_lines": story_lines,
 		"flag_lines": _flag_view_list(),
 	}
+
+
+func _terminal_score_lines(score_summary: Dictionary) -> Array:
+	var base_spending := int(score_summary.get("base_spending", 0))
+	var multiplier := maxi(1, int(score_summary.get("multiplier", 1)))
+	var score := int(score_summary.get("score", base_spending * multiplier))
+	var lines: Array = [
+		"Items and travel spent: %d" % base_spending,
+		"Victory multiplier: x%d" % multiplier,
+		"Run score: %d" % score,
+	]
+	return lines
 
 
 func _visited_environment_summary_lines() -> Array:
@@ -5430,7 +5540,17 @@ func _style_hud_for_recent_consequence() -> void:
 
 func _on_start_pressed() -> void:
 	var seed_text := seed_input.text.strip_edges()
-	start_foundation_run(DEFAULT_SEED if seed_text.is_empty() else seed_text)
+	if seed_text.is_empty():
+		seed_text = _generate_menu_seed_text()
+		seed_input.text = seed_text
+	start_foundation_run(seed_text)
+
+
+func start_generated_foundation_run() -> void:
+	var seed_text := _generate_menu_seed_text()
+	if seed_input != null:
+		seed_input.text = seed_text
+	start_foundation_run(seed_text)
 
 
 func return_to_main_menu() -> void:
@@ -5675,11 +5795,26 @@ func _refresh_start_screen() -> void:
 		if has_save:
 			start_status_label.text = "Saved run available. Continue it, or enter a seed for a new run."
 		elif start_status_label.text.is_empty() or start_status_label.text.begins_with("Saved run") or start_status_label.text.begins_with("No saved"):
-			start_status_label.text = "No saved run yet. Enter a seed or use the default."
+			start_status_label.text = "No saved run yet. Enter a seed or use the generated one."
 	if continue_button != null:
 		continue_button.disabled = not has_save
 		continue_button.text = "Continue"
 		continue_button.tooltip_text = "Load the saved run." if has_save else "No saved run yet."
+
+
+func _generate_menu_seed_text() -> String:
+	main_menu_seed_counter = posmod(main_menu_seed_counter + 1, 1000000)
+	var now: Dictionary = Time.get_datetime_dict_from_system()
+	var year := int(now.get("year", 0))
+	var month := maxi(1, int(now.get("month", 1)))
+	var day := maxi(1, int(now.get("day", 1)))
+	var tick_fragment := posmod(Time.get_ticks_usec(), 1000000)
+	return "RUN-%04d%02d%02d-%06d-%03d" % [year, month, day, tick_fragment, main_menu_seed_counter]
+
+
+func _refresh_menu_seed_text() -> void:
+	if seed_input != null:
+		seed_input.text = _generate_menu_seed_text()
 
 
 func save_status_snapshot() -> Dictionary:
@@ -5734,7 +5869,7 @@ func _refresh_run_menu() -> void:
 		if run_state != null:
 			venue = str(run_state.current_environment.get("display_name", "Current venue"))
 			status = "Seed %s | %s | Bankroll %d | Heat %d" % [
-				run_state.seed_text,
+				run_state.player_facing_seed_text(),
 				venue,
 				run_state.bankroll,
 				run_state.suspicion_level(),
@@ -5822,11 +5957,15 @@ func _run_status_hud_model() -> Dictionary:
 	if heat_delta != 0:
 		heat_text += " (%+d)" % heat_delta
 	var drunk_meter := _hud_meter(run_state.drunk_level, 100, 8)
+	var drunk_time_scale := run_state.drunk_time_scale()
+	var drunk_world_speed_percent := run_state.drunk_time_scale_percent()
 	var alcohol_text := "[DRINK] %s %s Luck %+d" % [
 		run_state.alcohol_condition_label().capitalize(),
 		drunk_meter,
 		run_state.effective_luck(),
 	]
+	if run_state.drunk_level > 0:
+		alcohol_text += " Time %d%%" % drunk_world_speed_percent
 	var pending_drink := run_state.pending_drunk_absorption_amount()
 	if pending_drink > 0:
 		alcohol_text += " (+%d pending)" % pending_drink
@@ -5874,6 +6013,9 @@ func _run_status_hud_model() -> Dictionary:
 		"alcohol_text": alcohol_text,
 		"alcohol_summary_text": alcohol_summary_text,
 		"drunk_level": run_state.drunk_level,
+		"drunk_time_scale": drunk_time_scale,
+		"drunk_time_scale_percent": drunk_world_speed_percent,
+		"drunk_world_speed_percent": drunk_world_speed_percent,
 		"pending_drunk_absorption": pending_drink,
 		"alcoholic_level": run_state.alcoholic_level,
 		"baseline_luck": run_state.baseline_luck,

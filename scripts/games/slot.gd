@@ -12,6 +12,7 @@ const SELECT_BET_PREFIX := "select_bet_option:"
 const SLOT_AUTOPLAY_LOSS_HOLD_MSEC := 100
 const SLOT_AUTOPLAY_WIN_HOLD_MSEC := 500
 const SLOT_RESULT_REVEAL_BEAT_MSEC := 180
+const BUFFALO_AUTOPLAY_MAX_DELAY_MSEC := 10000
 
 var generator
 var resolver
@@ -145,6 +146,17 @@ func surface_action_command(surface_action: String, index: int, confirm_requeste
 			"set_stake": int(StateScript.selected_bet(machine).get("total_credits", 2)),
 			"message": "Bet set to $%d." % int(StateScript.selected_bet(machine).get("total_credits", 2)),
 		})
+	if _is_pinball_direct_bonus_action(surface_action):
+		return GameModule.surface_command({
+			"handled": true,
+			"action_id": surface_action,
+			"action_kind": "bonus",
+			"direct_resolve": true,
+			"skip_stake_validation": true,
+			"preserve_surface_ui_state": true,
+			"selected_index": index,
+			"message": "Bonus input.",
+		})
 	match surface_action:
 		"spin", "slot_spin":
 			return GameModule.surface_command({
@@ -202,9 +214,10 @@ func surface_action_command(surface_action: String, index: int, confirm_requeste
 
 func surface_needs_auto_tick(ui_state: Dictionary, run_state: RunState, environment: Dictionary) -> bool:
 	var machine: Dictionary = StateScript.read_machine(environment, get_id())
-	var surface_time := int(ui_state.get("surface_time_msec", 0))
-	if _pinball_bonus_runtime_tick_due(machine, surface_time):
+	var pinball_time := _pinball_surface_timing_msec(ui_state)
+	if _pinball_bonus_runtime_tick_due(machine, pinball_time):
 		return true
+	var surface_time := _surface_timing_msec(ui_state)
 	if machine.is_empty() or not bool(machine.get("slot_autoplay_active", false)):
 		return false
 	var next_msec := int(machine.get("slot_autoplay_next_msec", 0))
@@ -215,9 +228,10 @@ func surface_auto_action_command(ui_state: Dictionary, _run_state: RunState, env
 	var machine: Dictionary = StateScript.read_machine(environment, get_id())
 	if machine.is_empty():
 		return {"handled": false}
-	var surface_time := int(ui_state.get("surface_time_msec", 0))
-	if _pinball_bonus_runtime_tick_due(machine, surface_time):
-		machine["slot_pinball_next_tick_msec"] = surface_time + _slot_pinball_tick_interval_msec(machine)
+	var surface_time := _surface_timing_msec(ui_state)
+	var pinball_time := _pinball_surface_timing_msec(ui_state)
+	if _pinball_bonus_runtime_tick_due(machine, pinball_time):
+		machine["slot_pinball_next_tick_msec"] = pinball_time + _slot_pinball_tick_interval_msec(machine)
 		StateScript.write_machine(environment, get_id(), machine)
 		return GameModule.surface_command({
 			"handled": true,
@@ -254,7 +268,10 @@ func surface_auto_action_command(ui_state: Dictionary, _run_state: RunState, env
 		"action_id": "spin",
 		"action_kind": "legal",
 		"direct_resolve": true,
-		"ui_state": {"surface_time_msec": surface_time},
+		"ui_state": {
+			"surface_time_msec": int(ui_state.get("surface_time_msec", surface_time)),
+			"drunk_scaled_surface_time_msec": surface_time,
+		},
 		"set_stake": int(StateScript.selected_bet(machine).get("total_credits", 2)),
 		"message": "Autoplay spin.",
 	})
@@ -398,11 +415,20 @@ func _normalize_bonus_action(action_id: String) -> String:
 			return action_id
 
 
+func _is_pinball_direct_bonus_action(action_id: String) -> bool:
+	return action_id.begins_with("slot_bonus_aim_") or action_id.begins_with("slot_bonus_start_") or action_id.begins_with("slot_bonus_power_")
+
+
 func _slot_autoplay_delay_msec(machine: Dictionary) -> int:
 	var plan: Dictionary = _slot_copy_dict(machine.get("slot_animation_plan", {}))
+	var delay := 0
 	if not StateScript.active_bonus_incomplete(machine) and not str(machine.get("slot_animation_id", "")).begins_with("bonus:") and not _slot_copy_array(plan.get("reel_timeline", [])).is_empty():
-		return _slot_spin_reveal_msec(plan) + _slot_autoplay_outcome_hold_msec(machine)
-	return _slot_legacy_autoplay_delay_msec(machine)
+		delay = _slot_spin_reveal_msec(plan) + _slot_autoplay_outcome_hold_msec(machine)
+	else:
+		delay = _slot_legacy_autoplay_delay_msec(machine)
+	if _slot_active_bonus_family(machine) == "buffalo" or str(machine.get("type_id", "")) == "buffalo":
+		delay = mini(delay, BUFFALO_AUTOPLAY_MAX_DELAY_MSEC)
+	return delay
 
 
 func _slot_legacy_autoplay_delay_msec(machine: Dictionary) -> int:
@@ -437,10 +463,18 @@ func _slot_autoplay_outcome_hold_msec(machine: Dictionary) -> int:
 
 
 func _slot_autoplay_next_msec(machine: Dictionary, ui_state: Dictionary) -> int:
-	var base_msec := int(ui_state.get("surface_time_msec", 0))
+	var base_msec := _surface_timing_msec(ui_state)
 	if base_msec <= 0:
 		base_msec = Time.get_ticks_msec()
 	return base_msec + _slot_autoplay_delay_msec(machine)
+
+
+func _surface_timing_msec(ui_state: Dictionary) -> int:
+	return maxi(0, int(ui_state.get("drunk_scaled_surface_time_msec", ui_state.get("surface_time_msec", 0))))
+
+
+func _pinball_surface_timing_msec(ui_state: Dictionary) -> int:
+	return maxi(0, int(ui_state.get("surface_time_msec", _surface_timing_msec(ui_state))))
 
 
 func _pinball_bonus_runtime_tick_due(machine: Dictionary, surface_time_msec: int) -> bool:

@@ -272,13 +272,20 @@ func _check_pinball_feature_manifests(definition: Dictionary, presentation, rend
 		failures.append("Visual QA pinball prelaunch did not expose launch guideline.")
 	if int(prelaunch_manifest.get("pinball_sampled_power", 0)) <= 0:
 		failures.append("Visual QA pinball prelaunch did not expose sampled launch power.")
+	if not bool(prelaunch_manifest.get("pinball_power_meter_controlled", false)):
+		failures.append("Visual QA pinball prelaunch did not expose controlled launch power.")
+	if float(prelaunch_manifest.get("pinball_launch_start_y", 1.0)) > 0.20:
+		failures.append("Visual QA pinball prelaunch launch point was not at the top of the board.")
 	if float(prelaunch_manifest.get("pinball_playback_speed", 0.0)) <= 1.0:
 		failures.append("Visual QA pinball playback speed was not upgraded.")
-	print("VISUAL_QA_PINBALL_PRELAUNCH music=%s guideline=%s lane=%s power=%d rating=%s speed=%.2f gravity=%.2f" % [
+	print("VISUAL_QA_PINBALL_PRELAUNCH music=%s guideline=%s lane=%s angle=%d start_y=%.2f power=%d controlled=%s rating=%s speed=%.2f gravity=%.2f" % [
 		str(prelaunch_manifest.get("pinball_feature_music_id", "")),
 		str(prelaunch_manifest.get("pinball_guideline_active", false)),
 		str(prelaunch_manifest.get("pinball_aim_lane", "")),
+		int(prelaunch_manifest.get("pinball_launch_angle_degrees", 0)),
+		float(prelaunch_manifest.get("pinball_launch_start_y", 0.0)),
 		int(prelaunch_manifest.get("pinball_sampled_power", 0)),
+		str(prelaunch_manifest.get("pinball_power_meter_controlled", false)),
 		str(prelaunch_manifest.get("pinball_power_rating", "")),
 		float(prelaunch_manifest.get("pinball_playback_speed", 0.0)),
 		float(prelaunch_manifest.get("pinball_gravity_y", 0.0)),
@@ -367,7 +374,7 @@ func _pinball_visual_sample(definition: Dictionary, format_id: String, inputs: A
 		if input_index < inputs.size():
 			action_id = str(inputs[input_index])
 			input_index += 1
-		var step: Dictionary = pinball.step_bonus(machine, action_id, rng, definition)
+		var step: Dictionary = pinball.step_bonus(machine, action_id, rng, definition, {"surface_time_msec": 240 + guard * 180})
 		active = _dict(step.get("active_bonus", {}))
 		machine["active_bonus"] = active
 		guard += 1
@@ -386,10 +393,9 @@ func _pinball_manifest_time_pair(trajectory: Array) -> Array:
 		return [visual_start_msec + 40, visual_start_msec + 240]
 	var index_a := mini(2, distinct_times.size() - 1)
 	var index_b := mini(maxi(index_a + 6, distinct_times.size() / 3), distinct_times.size() - 1)
-	return [
-		visual_start_msec + int(round(float(distinct_times[index_a]) * 1000.0 / playback_speed)),
-		visual_start_msec + int(round(float(distinct_times[index_b]) * 1000.0 / playback_speed)),
-	]
+	var first_msec := visual_start_msec + int(round(float(distinct_times[index_a]) * 1000.0 / playback_speed))
+	var second_msec := visual_start_msec + int(round(float(distinct_times[index_b]) * 1000.0 / playback_speed))
+	return [first_msec, maxi(second_msec, first_msec + 220)]
 
 
 func _pinball_multiball_manifest_time(trajectory: Array) -> int:

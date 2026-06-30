@@ -7,6 +7,8 @@ const RESULT_CONTINUE := "continue"
 const RESULT_ENDED := "ended"
 const GAMEPLAY_MODEL_GENERIC_ODDS := "generic_odds"
 const GAMEPLAY_MODEL_FULL_SIMULATION := "full_simulation"
+const TABLE_ROUND_START_DELAY_MSEC := 20000
+const TABLE_ROUND_WARNING_MSEC := 5000
 
 var definition: Dictionary = {}
 var library: ContentLibrary
@@ -271,6 +273,35 @@ static func surface_audio_spec(payload: Dictionary = {}) -> Dictionary:
 	return spec
 
 
+static func table_round_timer_status(table: Dictionary, now_msec: int, label: String = "Next round", duration_msec: int = TABLE_ROUND_START_DELAY_MSEC, auto_start: bool = true) -> Dictionary:
+	var safe_duration := maxi(1000, duration_msec)
+	var started := int(table.get("table_round_timer_started_msec", 0))
+	if auto_start and started == 0:
+		started = now_msec
+		table["table_round_timer_started_msec"] = started
+	var elapsed := maxi(0, now_msec - started) if started != 0 else 0
+	var remaining := maxi(0, safe_duration - elapsed)
+	return {
+		"active": started != 0,
+		"label": label,
+		"started_msec": started,
+		"duration_msec": safe_duration,
+		"elapsed_msec": elapsed,
+		"remaining_msec": remaining,
+		"remaining_seconds": int(ceil(float(remaining) / 1000.0)),
+		"progress": clampf(float(elapsed) / float(safe_duration), 0.0, 1.0),
+		"due": started != 0 and elapsed >= safe_duration,
+		"warning": remaining <= TABLE_ROUND_WARNING_MSEC,
+	}
+
+
+static func reset_table_round_timer(table: Dictionary, now_msec: int = 0) -> void:
+	if now_msec > 0:
+		table["table_round_timer_started_msec"] = now_msec
+	else:
+		table["table_round_timer_started_msec"] = 0
+
+
 static func _is_skill_action_kind(action_kind: String) -> bool:
 	return action_kind == "cheat" or action_kind == "risky" or action_kind == "advantage"
 
@@ -436,6 +467,7 @@ static func apply_result(run_state: RunState, result: Dictionary, rng: RngStream
 		return
 	normalize_skill_cheat_contract(result)
 	var deltas := _normalize_result_deltas(result.get("deltas", {}))
+	run_state.record_score_spending_from_result(result, deltas)
 	var bankroll_delta := int(deltas.get("bankroll_delta", 0))
 	if bankroll_delta != 0:
 		run_state.change_bankroll(bankroll_delta, bool(result.get("defer_bankroll_zero_failure", false)))

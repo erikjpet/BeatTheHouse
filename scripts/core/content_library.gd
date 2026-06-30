@@ -476,6 +476,8 @@ func _validate_environment_references() -> void:
 			continue
 		var archetype_id := str(archetype.get("id", "")).strip_edges()
 		_validate_id_references("environment %s game_pool" % archetype_id, archetype.get("game_pool", []), game_ids)
+		_validate_id_references("environment %s required_game_ids" % archetype_id, archetype.get("required_game_ids", []), game_ids)
+		_validate_required_game_pool(archetype_id, archetype)
 		_validate_id_references("environment %s item_pool" % archetype_id, archetype.get("item_pool", []), item_ids)
 		_validate_id_references("environment %s event_pool" % archetype_id, archetype.get("event_pool", []), event_ids)
 		_validate_id_references("environment %s service_pool" % archetype_id, archetype.get("service_pool", []), service_ids)
@@ -484,6 +486,13 @@ func _validate_environment_references() -> void:
 		if not route_ids.is_empty():
 			_validate_id_references("environment %s travel_hooks route metadata" % archetype_id, archetype.get("travel_hooks", []), route_ids)
 		_validate_id_references("environment %s next_archetypes" % archetype_id, archetype.get("next_archetypes", []), archetype_ids)
+
+
+func _validate_required_game_pool(archetype_id: String, archetype: Dictionary) -> void:
+	var game_pool := _string_array(archetype.get("game_pool", []))
+	for required_id in _string_array(archetype.get("required_game_ids", [])):
+		if not game_pool.has(required_id):
+			validation_errors.append("environment %s required_game_ids includes %s but game_pool does not." % [archetype_id, required_id])
 
 
 # Validates that every id in a reference array exists in the supplied index.
@@ -510,6 +519,17 @@ static func _ids_for(values: Array) -> Dictionary:
 		if not id.is_empty():
 			ids[id] = true
 	return ids
+
+
+static func _string_array(value: Variant) -> Array:
+	var result: Array = []
+	if typeof(value) != TYPE_ARRAY:
+		return result
+	for entry in value:
+		var id := str(entry).strip_edges()
+		if not id.is_empty() and not result.has(id):
+			result.append(id)
+	return result
 
 
 # Safely returns dictionary values.

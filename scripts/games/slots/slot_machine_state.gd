@@ -196,6 +196,7 @@ static func _normalize_bonus_state(value: Variant) -> Dictionary:
 		"per_bet": per_bet,
 		"gold_buffalo_total_collected": maxi(0, int(source.get("gold_buffalo_total_collected", 0))),
 		"gold_buffalo_conversions": maxi(0, int(source.get("gold_buffalo_conversions", 0))),
+		"buffalo_grand_prize": maxi(0, int(source.get("buffalo_grand_prize", 0))),
 		"must_hit_forces": maxi(0, int(source.get("must_hit_forces", 0))),
 		"feature_completions": maxi(0, int(source.get("feature_completions", 0))),
 	}
@@ -244,6 +245,8 @@ static func _normalize_active_bonus(value: Variant) -> Dictionary:
 	active["shot_queue"] = _copy_array(active.get("shot_queue", []))
 	active["locks"] = _copy_array(active.get("locks", []))
 	active["launch_power"] = clampi(int(active.get("launch_power", 50)), 0, 100)
+	active["launch_angle_degrees"] = clampi(int(active.get("launch_angle_degrees", 0)), -60, 60)
+	active["launch_start"] = _copy_dict(active.get("launch_start", {}))
 	active["selected_path"] = str(active.get("selected_path", ""))
 	active["display_mode"] = str(active.get("display_mode", ""))
 	active["selected_lane"] = str(active.get("selected_lane", "center"))
@@ -266,6 +269,8 @@ static func _normalize_active_bonus(value: Variant) -> Dictionary:
 	active["lit_jackpots"] = maxi(0, int(active.get("lit_jackpots", 0)))
 	active["survival_ticks"] = maxi(0, int(active.get("survival_ticks", 0)))
 	active["session_cap"] = maxi(0, int(active.get("session_cap", 0)))
+	active["grand_prize"] = maxi(0, int(active.get("grand_prize", 0)))
+	active["grand_prize_awarded"] = maxi(0, int(active.get("grand_prize_awarded", 0)))
 	active["nudge_request"] = clampi(int(active.get("nudge_request", 0)), -4, 4)
 	active["feature_scale"] = maxf(0.0, float(active.get("feature_scale", 1.0)))
 	active["physics"] = _copy_dict(active.get("physics", {}))
@@ -276,6 +281,7 @@ static func _normalize_active_bonus(value: Variant) -> Dictionary:
 	active["display_trajectory"] = _copy_array(active.get("display_trajectory", []))
 	active["animation_duration_msec"] = maxi(0, int(active.get("animation_duration_msec", 0)))
 	active["launch_in_progress"] = bool(active.get("launch_in_progress", false))
+	active["physics_tick_budget"] = maxi(0, int(active.get("physics_tick_budget", 0)))
 	active["physics_frame_index"] = maxi(0, int(active.get("physics_frame_index", 0)))
 	active["current_launch_start_event_index"] = maxi(0, int(active.get("current_launch_start_event_index", 0)))
 	active["current_launch_start_trajectory_index"] = maxi(0, int(active.get("current_launch_start_trajectory_index", 0)))

@@ -72,7 +72,7 @@ The current environment pack contains:
 | `motel` | shop | 1 | Start-capable recovery and lender stop |
 | `bar` | casino | 1 | Low-stakes gambling room |
 | `gas_station_casino` | casino | 1 | Low-stakes gambling room |
-| `jazz_club` | shop | 1 | Rare late-1960s music room with trio services and a guaranteed pull-tab machine |
+| `jazz_club` | shop | 1 | Rare late-1960s music room with trio services, no games, and rare musician rewards |
 | `small_underground_casino` | casino | 1 | Larger room with Grand Casino route access |
 | `grand_casino` | boss | 3 | Demo objective destination |
 
@@ -92,7 +92,7 @@ rendering details.
 | --- | --- | --- | --- |
 | Pull Tabs | novelty | `scripts/games/pull_tabs.gd` | Finite pull-tab deals, ticket windows, row/deal state, detector and tarot item interactions |
 | Slot | slots | `scripts/games/slot.gd` | Generated Pinball/Buffalo machines, fixed bet ladder, nudge, autoplay, feature bonuses |
-| Bar Dice | dice | `scripts/games/bar_dice.gd` | Poker-dice rounds with roll, keep/reroll, house comparison, and cheat actions |
+| Bar Dice | dice | `scripts/games/bar_dice.gd` | Ship, Captain, Crew as a bar-top table game with patrons, cargo scoring, carryover pots, and loaded/palmed cheat actions |
 | Blackjack | cards | `scripts/games/blackjack.gd` | Shoe blackjack with hit/stand/split/double, side bets, count challenge, hole-card peek heat |
 | Baccarat | cards | `scripts/games/baccarat.gd` | Mini-baccarat with Player/Banker/Tie/pair bets, commission, and shoe state |
 | Roulette | wheel | `scripts/games/roulette.gd` | Full roulette layout with inside/outside bets, chip placement, wheel spin, and payout animation |

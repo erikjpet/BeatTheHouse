@@ -635,7 +635,16 @@ function Assert-ObjectInfoTextLength {
 
 foreach ($archetype in (Read-JsonArray "data/environments/archetypes.json")) {
     $archetypeId = [string](Get-JsonProperty $archetype "id")
-    Assert-IdArrayReferences "environment $archetypeId game_pool" (Get-JsonProperty $archetype "game_pool") $gameIds
+    $gamePool = Get-JsonProperty $archetype "game_pool"
+    $requiredGameIds = Get-JsonProperty $archetype "required_game_ids"
+    Assert-IdArrayReferences "environment $archetypeId game_pool" $gamePool $gameIds
+    Assert-IdArrayReferences "environment $archetypeId required_game_ids" $requiredGameIds $gameIds
+    $gamePoolValues = ConvertTo-ValueArray $gamePool
+    foreach ($requiredGameId in (ConvertTo-ValueArray $requiredGameIds)) {
+        if (-not $gamePoolValues.Contains($requiredGameId)) {
+            $failures.Add("environment $archetypeId required_game_ids includes $requiredGameId but game_pool does not.")
+        }
+    }
     Assert-IdArrayReferences "environment $archetypeId item_pool" (Get-JsonProperty $archetype "item_pool") $itemIds
     Assert-IdArrayReferences "environment $archetypeId event_pool" (Get-JsonProperty $archetype "event_pool") $eventIds
     Assert-IdArrayReferences "environment $archetypeId service_pool" (Get-JsonProperty $archetype "service_pool") $serviceIds

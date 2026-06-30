@@ -1,12 +1,14 @@
 class_name BarDiceGame
 extends GameModule
 
-# Full-simulation venue bar dice. The environment owns a generated table identity
-# and the surface owns only UI-local selections; resolution returns deltas through
-# the shared GameModule result path.
+# Release bar dice table. The canonical ruleset is Ship, Captain, Crew:
+# five dice, up to three shakes, lock 6-5-4, then compare cargo.
 
 const VisualStyleScript := preload("res://scripts/ui/visual_style.gd")
+const TableVisualsScript := preload("res://scripts/games/table_game_visuals.gd")
+
 const C_DARK := VisualStyleScript.DARK
+const C_DARK_2 := VisualStyleScript.DARK_2
 const C_PINK := VisualStyleScript.PINK
 const C_PINK_2 := VisualStyleScript.PINK_2
 const C_CYAN := VisualStyleScript.CYAN
@@ -19,295 +21,285 @@ const C_SOFT := VisualStyleScript.SOFT
 
 const DICE_COUNT := 5
 const DIE_FACES := 6
+const MAX_SHAKES := 3
 const STATE_SCHEMA := "bar_dice_table_state"
-const STATE_VERSION := 2
+const STATE_VERSION := 3
 const TUMBLE_CHANNEL := "bar_dice_tumble"
 const TUMBLE_DURATION_MSEC := 900
-const MATCH_LEGS := 3
 const PRESS_CAP := 3
+const CONSOLE_Y := 344.0
+const RULES_PANEL_RECT := Rect2(556, 218, 300, 58)
+const PAYTABLE_PANEL_RECT := Rect2(556, 282, 190, 50)
+const ROUND_TIMER_RECT := Rect2(752, 282, 116, 50)
+const RULES_PANEL_LINE_LIMIT := 47
 
-const RULESET_ORDER := ["poker_dice", "ship_captain_crew", "over_under_7", "bluff_call"]
+const PLAYER_DICE_ORIGIN := Vector2(262, 214)
+const DIE_SIZE := Vector2(38, 38)
+const DIE_SPACING := 46.0
+const OPPONENT_DIE_SIZE := Vector2(22, 22)
+const OPPONENT_DIE_SPACING := 29.0
+const MAX_VISIBLE_OPPONENT_ROWS := 3
+const OPPONENT_DICE_ORIGINS := [
+	Vector2(76, 150),
+	Vector2(76, 188),
+	Vector2(76, 226),
+]
+const BAR_PATRON_POSITIONS := [
+	Vector2(94, 84),
+	Vector2(236, 70),
+	Vector2(660, 70),
+	Vector2(808, 84),
+]
+
+const RULESET_ORDER := ["ship_captain_crew"]
 const RULESET_LABEL := {
-	"poker_dice": "Poker Dice",
-	"ship_captain_crew": "Ship Captain Crew",
-	"over_under_7": "Over Under Seven",
-	"bluff_call": "Liar Call",
+	"ship_captain_crew": "Ship, Captain, Crew",
 }
+const VARIATION_LIBRARY := [
+	{
+		"id": "ship_captain_crew",
+		"label": "Ship, Captain, Crew",
+		"status": "active",
+		"summary": "Lock 6-5-4, score cargo, high cargo wins the pot.",
+	},
+	{
+		"id": "midnight_cargo",
+		"label": "Midnight Cargo",
+		"status": "future",
+		"summary": "Cargo 12 side-pot variation reserved for later content.",
+	},
+	{
+		"id": "last_call_lowball",
+		"label": "Last Call Lowball",
+		"status": "future",
+		"summary": "Low cargo variation reserved for later content.",
+	},
+]
 const EDGE_TIER_ORDER := ["friendly", "standard", "sharp"]
 const EDGE_TIER_LABEL := {
-	"friendly": "Loose Rail",
-	"standard": "House Rack",
-	"sharp": "Sharp Cup",
+	"friendly": "Loose Bar Rake",
+	"standard": "House Bar Rake",
+	"sharp": "Sharp Bar Rake",
 }
-const EDGE_TIER_SCALE := {
-	"friendly": 1.10,
-	"standard": 1.08,
-	"sharp": 1.05,
+const EDGE_RAKE_PERCENT := {
+	"friendly": 4,
+	"standard": 7,
+	"sharp": 10,
 }
-const POKER_TIER_SCALE := {
-	"friendly": 0.98,
-	"standard": 0.96,
-	"sharp": 0.94,
+const EDGE_PAYOUT_PERCENT := {
+	"friendly": 68,
+	"standard": 66,
+	"sharp": 70,
 }
-const SHIP_TIER_SCALE := {
-	"friendly": 1.10,
-	"standard": 1.12,
-	"sharp": 1.05,
-}
-const BONUS_MODE_ORDER := ["hot_hand", "progressive", "press"]
-const BONUS_MODE_LABEL := {
-	"hot_hand": "Hot Hand Side Bet",
-	"progressive": "Five-Kind Progressive",
-	"press": "Clean-Win Press",
-}
-
 const CATEGORY_RANK := {
-	"high_card": 10,
-	"one_pair": 20,
-	"two_pair": 30,
-	"three_kind": 40,
-	"straight": 50,
-	"full_house": 60,
-	"four_kind": 70,
-	"five_kind": 90,
-	"crew_missing": 10,
-	"ship_captain_crew": 55,
-	"perfect_cargo": 72,
-	"under_seven": 25,
-	"over_seven": 35,
-	"bar_seven": 65,
-	"called_high": 10,
-	"called_pair": 25,
-	"called_trips": 45,
-	"made_four": 72,
-	"made_five": 92,
+	"not_qualified": 0,
+	"ship_only": 10,
+	"ship_captain": 20,
+	"ship_captain_crew": 50,
+	"perfect_cargo": 70,
 }
 const CATEGORY_LABEL := {
-	"high_card": "High Card",
-	"one_pair": "One Pair",
-	"two_pair": "Two Pair",
-	"three_kind": "Three of a Kind",
-	"straight": "Straight",
-	"full_house": "Full House",
-	"four_kind": "Four of a Kind",
-	"five_kind": "Five of a Kind",
-	"crew_missing": "Missing Crew",
+	"not_qualified": "No Ship",
+	"ship_only": "Ship Only",
+	"ship_captain": "Ship + Captain",
 	"ship_captain_crew": "Ship Captain Crew",
-	"perfect_cargo": "Heavy Cargo",
-	"under_seven": "Under Seven",
-	"over_seven": "Over Seven",
-	"bar_seven": "Bar Seven",
-	"called_high": "High Call",
-	"called_pair": "Pair Call",
-	"called_trips": "Trips Call",
-	"made_four": "Four Call",
-	"made_five": "Five Call",
-}
-const PAYTABLES := {
-	"poker_dice": {
-		"one_pair": 1.45,
-		"two_pair": 1.75,
-		"three_kind": 2.20,
-		"straight": 2.40,
-		"full_house": 2.80,
-		"four_kind": 3.70,
-		"five_kind": 9.00,
-	},
-	"ship_captain_crew": {
-		"ship_captain_crew": 2.10,
-		"perfect_cargo": 3.60,
-	},
-	"over_under_7": {
-		"under_seven": 1.30,
-		"over_seven": 1.43,
-		"bar_seven": 2.80,
-	},
-	"bluff_call": {
-		"called_pair": 1.45,
-		"called_trips": 2.10,
-		"made_four": 3.60,
-		"made_five": 9.00,
-	},
-}
-const PAYTABLE_DISPLAY_ORDER := {
-	"poker_dice": ["five_kind", "four_kind", "full_house", "straight", "three_kind", "two_pair", "one_pair"],
-	"ship_captain_crew": ["perfect_cargo", "ship_captain_crew"],
-	"over_under_7": ["bar_seven", "over_seven", "under_seven"],
-	"bluff_call": ["made_five", "made_four", "called_trips", "called_pair"],
-}
-const SIDE_BONUS_MULT := {
-	"hot_hand": 3,
-	"progressive": 8,
-	"press": 3,
+	"perfect_cargo": "Midnight Cargo",
 }
 const DIE_WORD := {1: "One", 2: "Two", 3: "Three", 4: "Four", 5: "Five", 6: "Six"}
 const DIE_WORD_PLURAL := {1: "Ones", 2: "Twos", 3: "Threes", 4: "Fours", 5: "Fives", 6: "Sixes"}
 
-const PLAYER_ROW_ORIGIN := Vector2(56, 132)
-const HOUSE_ROW_ORIGIN := Vector2(56, 248)
-const DIE_SIZE := Vector2(58, 58)
-const DIE_SPACING := 78.0
-
 
 func enter(run_state: RunState, environment: Dictionary) -> Dictionary:
 	var result: Dictionary = super.enter(run_state, environment)
-	var state: Dictionary = _dice_state(run_state, environment)
-	result["message"] = "%s runs %s at the %s. Best of three, chip ladder locked." % [
-		str(state.get("house_name", "The house")),
-		str(state.get("ruleset_label", "Bar Dice")),
-		str(state.get("bar_name", "bar")),
+	var state := _dice_state(run_state, environment)
+	result["message"] = "%s sets the dice cup on the %s. Lock 6-5-4, then high cargo wins the pot." % [
+		str(state.get("dealer_name", "The bartender")),
+		str(state.get("bar_name", "bar top")),
 	]
 	return result
 
 
 func generate_environment_state(run_state: RunState, environment: Dictionary, rng: RngStream) -> Dictionary:
-	var ruleset := str(rng.pick(RULESET_ORDER, "poker_dice"))
 	var tier := str(rng.pick(EDGE_TIER_ORDER, "standard"))
-	var bonus_mode := str(rng.pick(BONUS_MODE_ORDER, "hot_hand"))
-	var house_name := str(rng.pick(["Big Sal", "The Rail", "Mac", "Odette", "The Cooler", "Whistle"], "The House"))
-	var bar_name := str(rng.pick(["back bar", "rail counter", "corner stool", "house cup", "long bar"], "bar"))
-	var loaded_tell := str(rng.pick([
-		"the cup hangs a beat too long",
-		"one die always lands proud",
-		"your thumb rides the rim",
-		"the toss reads a touch flat",
-	], "the cup hangs a beat too long"))
-	var ladder: Array = _generated_stake_ladder(environment, rng)
+	var bar_name := str(rng.pick(["brass rail", "maple bar", "corner rail", "back bar", "long bar"], "bar top"))
+	var dealer_name := str(rng.pick(["Nora", "Cal", "Marta", "Dev", "Lou"], "Nora"))
+	var ladder := _generated_stake_ladder(environment, rng)
 	var default_index := clampi(ladder.size() / 2, 0, maxi(0, ladder.size() - 1))
-	var table_key := "%s:%s:%s:%s:%s" % [str(run_state.seed_text if run_state != null else "bar"), str(environment.get("id", "")), ruleset, tier, bonus_mode]
-	var base_progressive := maxi(40, int(ladder[ladder.size() - 1]) * rng.randi_range(18, 30))
-	return _normalize_state({
+	var table_key := "%s:%s:%s" % [str(run_state.seed_text if run_state != null else "bar"), str(environment.get("id", "")), bar_name]
+	var state := {
 		"schema": STATE_SCHEMA,
 		"version": STATE_VERSION,
 		"table_key": table_key,
-		"house_name": house_name,
-		"bar_name": bar_name,
-		"ruleset_family": ruleset,
-		"ruleset_label": str(RULESET_LABEL.get(ruleset, "Bar Dice")),
+		"ruleset_family": "ship_captain_crew",
+		"ruleset_label": str(RULESET_LABEL.get("ship_captain_crew", "Ship, Captain, Crew")),
+		"available_variants": VARIATION_LIBRARY.duplicate(true),
+		"bonus_mode": "pot_rake",
+		"bonus_label": "Carryover Pot",
 		"edge_tier": tier,
-		"edge_label": str(EDGE_TIER_LABEL.get(tier, "House Rack")),
-		"bonus_mode": bonus_mode,
-		"bonus_label": str(BONUS_MODE_LABEL.get(bonus_mode, "Hot Hand Side Bet")),
+		"edge_label": str(EDGE_TIER_LABEL.get(tier, "House Bar Rake")),
+		"rake_percent": int(EDGE_RAKE_PERCENT.get(tier, 7)),
+		"hosted_payout_percent": int(EDGE_PAYOUT_PERCENT.get(tier, 66)),
+		"bar_name": bar_name,
+		"dealer_name": dealer_name,
+		"dealer_profile": _generate_dealer_profile(rng, dealer_name, tier),
+		"patrons": _generate_patrons(rng, int(environment.get("depth", 2))),
 		"stake_ladder": ladder,
 		"selected_stake_index": default_index,
-		"rail_bettors": _generate_rail_bettors(rng, ladder),
-		"progressive_base": base_progressive,
-		"progressive_pot": base_progressive,
-		"loaded_die": {
-			"label": "Loaded Die",
-			"tell": loaded_tell,
-		},
+		"carryover_pot": 0,
+		"loaded_die": 0,
 		"rounds_played": 0,
 		"last_result": {},
-	})
+		"table_round_timer_started_msec": 0,
+	}
+	return _normalize_state(state)
 
 
-func wager_cost_for_context(_action_id: String, stake: int, run_state: RunState, environment: Dictionary, ui_state: Dictionary = {}) -> int:
-	var state: Dictionary = _dice_state(run_state, environment)
-	var active_stake := _active_stake_from_context(stake, state, ui_state, run_state, environment)
-	return active_stake + _side_bet_for(active_stake, state)
+func wager_cost_for_context(action_id: String, stake: int, run_state: RunState, environment: Dictionary, ui_state: Dictionary = {}) -> int:
+	if action_id == "press":
+		return maxi(0, stake)
+	var state := _dice_state(run_state, environment)
+	return _active_stake_from_context(stake, state, ui_state, run_state, environment)
 
 
 func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dictionary = {}) -> Dictionary:
-	var state: Dictionary = _dice_state(run_state, environment)
-	var ui: Dictionary = _normalized_ui_state(run_state, environment, ui_state, state)
-	var last_result: Dictionary = _copy_dict(state.get("last_result", {}))
+	var state := _dice_state(run_state, environment)
+	var ui := _normalized_ui_state(run_state, environment, ui_state, state)
+	var last_result := _copy_dict(state.get("last_result", {}))
 	var rolled := bool(ui.get("rolled", false))
 	var showing_result := not rolled and not last_result.is_empty()
 	var phase := "select" if rolled else ("settled" if showing_result else "bet")
-	var ruleset := str(state.get("ruleset_family", "poker_dice"))
 	var active_stake := _active_stake_from_context(0, state, ui, run_state, environment)
-	var side_bet := _side_bet_for(active_stake, state)
+	var patrons := _patrons_for_surface(state, last_result, active_stake)
+	var participants := _participant_count(state)
+	var working_pot := _working_pot(active_stake, state)
+	var rake := _rake_for_pot(working_pot, state)
+	var now_msec := int(ui_state.get("surface_time_msec", Time.get_ticks_msec()))
+	var timer_active := phase == "bet"
+	var timer_state := state.duplicate(true)
+	var round_timer := GameModule.table_round_timer_status(timer_state, now_msec, "Next shake", GameModule.TABLE_ROUND_START_DELAY_MSEC, false) if timer_active else {}
 
 	var player_dice: Array = []
-	var house_dice: Array = [0, 0, 0, 0, 0]
-	var scoring_indices: Array = []
-	var house_scoring_indices: Array = []
-	var house_revealed := false
-	var blurb := ""
-	var house_blurb := ""
-	var outcome := ""
-	var payout_mult := 0.0
+	var opponent_dice: Array = []
+	var player_score: Dictionary = {}
+	var opponent_score: Dictionary = {}
 	if phase == "select":
 		player_dice = _int_dice(ui.get("dice", []))
+		player_score = _score_ship(player_dice)
 	elif phase == "settled":
 		player_dice = _int_dice(last_result.get("player_dice", []))
-		house_dice = _int_dice(last_result.get("house_dice", []))
-		scoring_indices = _index_array(last_result.get("player_scoring_indices", []))
-		house_scoring_indices = _index_array(last_result.get("house_scoring_indices", []))
-		house_revealed = true
-		blurb = str(last_result.get("player_blurb", ""))
-		house_blurb = str(last_result.get("house_blurb", ""))
-		outcome = str(last_result.get("outcome", ""))
-		payout_mult = float(last_result.get("payout_mult", 0.0))
+		opponent_dice = _int_dice(last_result.get("winning_opponent_dice", last_result.get("house_dice", [])))
+		player_score = _copy_dict(last_result.get("player_score", {}))
+		opponent_score = _copy_dict(last_result.get("winning_opponent_score", last_result.get("house_score", {})))
 	else:
 		player_dice = _generate_opening(run_state, state)
+		player_score = _score_ship(player_dice)
 	if player_dice.size() != DICE_COUNT:
-		player_dice = _generate_opening(run_state, state)
-
-	var reroll: Array = _index_array(ui.get("reroll", [])) if phase == "select" else []
-	var suggested: Array = _suggested_reroll_for_ruleset(player_dice, ruleset) if phase != "settled" else []
-	var kept_dice: Array = _kept_dice(player_dice, reroll)
+		player_dice = [0, 0, 0, 0, 0]
+	var reroll := _index_array(ui.get("reroll", [])) if phase == "select" else []
+	var suggested := _suggested_reroll_for_ruleset(player_dice, "ship_captain_crew") if phase == "select" else []
+	var locked := _index_array(player_score.get("scoring_indices", [])) if not player_score.is_empty() else []
+	var remaining_shakes := _remaining_shakes(ui) if phase == "select" else 0
 	var loaded_armed := bool(ui.get("loaded_armed", false)) and phase == "select"
 	var palm_armed := bool(ui.get("palm_armed", false)) and phase == "select"
 	var loaded_value := int(ui.get("loaded_value", 0))
 	if loaded_armed and loaded_value <= 0:
-		loaded_value = _loaded_value_for_ruleset(kept_dice if not kept_dice.is_empty() else player_dice, ruleset)
-
-	var tumble: Dictionary = _active_tumble(ui, last_result, rolled)
-	var pit_boss: Dictionary = run_state.pit_boss_watch_status(environment)
-	var press_offer: Dictionary = _copy_dict(last_result.get("press_offer", {}))
+		loaded_value = _loaded_value_for_ruleset(player_dice, "ship_captain_crew")
+	var tumble := _active_tumble(ui, last_result, rolled)
+	var animated_dice_indices := _index_array(tumble.get("indices", []))
+	if rolled and not str(tumble.get("id", "")).is_empty() and animated_dice_indices.is_empty():
+		animated_dice_indices = _all_die_indices()
+	var pit_boss := run_state.pit_boss_watch_status(environment) if run_state != null else {}
+	var press_offer := _copy_dict(last_result.get("press_offer", {}))
 	var press_available := phase == "settled" and bool(press_offer.get("available", false))
-	var rail_bettors := _rail_bettors_for_surface(state, active_stake, side_bet)
+	var explainer := _bar_dice_explainer(phase, player_score, last_result, active_stake, working_pot, rake, participants, round_timer)
+	var turn_guide := _bar_dice_turn_guide(phase, player_score, reroll, suggested, remaining_shakes, active_stake, working_pot, round_timer, last_result)
+	var rules_lines := _bar_dice_rules_panel_lines(phase, turn_guide, explainer)
+	var action_buttons := _bar_dice_action_buttons(
+		phase,
+		remaining_shakes,
+		reroll,
+		suggested,
+		phase == "select" and remaining_shakes > 0 and not suggested.is_empty(),
+		press_available,
+		int(press_offer.get("risk", 0))
+	)
+	var opponent_rows := _surface_opponent_rows(state, last_result, phase)
 
 	return GameModule.surface_spec({
 		"surface_renderer": "dice_table",
-		"surface_life": "dice_bar",
-		"surface_cast": "none",
+		"surface_life": "bar_dice_table",
+		"surface_cast": "dealer_table",
 		"surface_controls_native": true,
 		"surface_stake_controls_required": false,
 		"surface_embeds_outcomes": true,
-		"surface_animates_idle": false,
-		"surface_realtime_state_refresh": false,
+		"surface_suppresses_game_result_burst": true,
+		"surface_animates_idle": true,
+		"surface_realtime_state_refresh": true,
 		"phase": phase,
-		"house_name": str(state.get("house_name", "The house")),
-		"bar_name": str(state.get("bar_name", "bar")),
 		"table_key": str(state.get("table_key", "")),
-		"ruleset_family": ruleset,
-		"ruleset_label": str(state.get("ruleset_label", RULESET_LABEL.get(ruleset, "Bar Dice"))),
+		"ruleset_family": "ship_captain_crew",
+		"ruleset_label": str(state.get("ruleset_label", "Ship, Captain, Crew")),
+		"available_variants": _copy_array(state.get("available_variants", [])),
+		"bonus_mode": str(state.get("bonus_mode", "pot_rake")),
+		"bonus_label": str(state.get("bonus_label", "Carryover Pot")),
 		"edge_tier": str(state.get("edge_tier", "standard")),
-		"edge_label": str(state.get("edge_label", "House Rack")),
-		"bonus_mode": str(state.get("bonus_mode", "hot_hand")),
-		"bonus_label": str(state.get("bonus_label", "Hot Hand Side Bet")),
-		"rail_bettors": rail_bettors,
+		"edge_label": str(state.get("edge_label", "House Bar Rake")),
+		"rake_percent": int(state.get("rake_percent", 7)),
+		"hosted_payout_percent": int(state.get("hosted_payout_percent", 66)),
+		"bar_name": str(state.get("bar_name", "bar top")),
+		"dealer_name": str(state.get("dealer_name", "Bartender")),
+		"dealer_profile": _copy_dict(state.get("dealer_profile", {})),
+		"dealer_attention_pressure": 8 if phase == "select" else 4,
+		"patrons": patrons,
+		"rail_bettors": patrons,
+		"patron_wager_action": "bar_dice_rail_bet",
+		"snitch_pressure": _patron_snitch_pressure(patrons),
+		"suspicion_level": run_state.suspicion_level() if run_state != null else 0,
 		"stake_ladder": _int_array(state.get("stake_ladder", [])),
 		"selected_stake_index": _selected_stake_index(state, ui),
+		"selected_stake": active_stake,
 		"active_stake": active_stake,
-		"side_bet": side_bet,
-		"bet_meter": active_stake + side_bet,
-		"chips_meter": maxi(0, run_state.bankroll),
-		"win_meter": int(last_result.get("gross_payout", 0)) if showing_result else 0,
-		"progressive_pot": int(state.get("progressive_pot", 0)),
-		"loaded_label": str(_copy_dict(state.get("loaded_die", {})).get("label", "Loaded Die")),
-		"loaded_tell": str(_copy_dict(state.get("loaded_die", {})).get("tell", "")),
+		"side_bet": 0,
+		"bet_meter": active_stake,
+		"chips_meter": maxi(0, run_state.bankroll) if run_state != null else 0,
+		"pot_meter": working_pot,
+		"rake_meter": rake,
+		"win_meter": int(last_result.get("gross_payout", 0)) if showing_result else _gross_payout_for_pot(working_pot, rake, state),
+		"carryover_pot": int(state.get("carryover_pot", 0)),
+		"participant_count": participants,
 		"player": player_dice,
-		"house": house_dice,
-		"house_revealed": house_revealed,
+		"house": opponent_dice,
+		"house_revealed": phase == "settled" and not opponent_dice.is_empty(),
+		"opponent_name": str(last_result.get("winning_opponent_name", "the table")),
+		"opponent_rows": opponent_rows,
 		"reroll": reroll,
 		"suggested_reroll": suggested,
-		"scoring_indices": scoring_indices,
-		"house_scoring_indices": house_scoring_indices,
+		"last_rerolled": _index_array(ui.get("last_rerolled", [])),
+		"animated_dice_indices": animated_dice_indices,
+		"reroll_summary": _reroll_summary(reroll if not reroll.is_empty() else suggested),
+		"scoring_indices": locked,
+		"house_scoring_indices": _index_array(opponent_score.get("scoring_indices", [])),
+		"shake_number": int(ui.get("shake_number", 0)) if phase == "select" else 0,
+		"remaining_shakes": remaining_shakes,
+		"can_shake_again": phase == "select" and _remaining_shakes(ui) > 0 and not _suggested_reroll_for_ruleset(player_dice, "ship_captain_crew").is_empty(),
 		"loaded_armed": loaded_armed,
 		"palm_armed": palm_armed,
 		"loaded_value": loaded_value,
-		"player_blurb": blurb,
-		"house_blurb": house_blurb,
-		"outcome": outcome,
-		"payout_mult": payout_mult,
+		"player_score": player_score,
+		"player_blurb": _hand_blurb(player_score),
+		"house_blurb": _hand_blurb(opponent_score),
+		"outcome": str(last_result.get("outcome", "")),
+		"payout_mult": float(last_result.get("payout_mult", 0.0)),
 		"paytable_rows": _paytable_rows(state, active_stake),
-		"match_legs": _copy_array(last_result.get("match_legs", [])),
-		"match_summary": str(last_result.get("match_summary", "")),
-		"info_text": _info_text(phase, player_dice, reroll, last_result, loaded_armed, palm_armed, loaded_value, state),
+		"table_round_timer": round_timer,
+		"bar_dice_explainer": explainer,
+		"bar_dice_turn_guide": turn_guide,
+		"bar_dice_rules_lines": rules_lines,
+		"bar_dice_layout": _bar_dice_layout_snapshot(),
+		"surface_ui_protected_regions": _bar_dice_text_panel_regions(),
+		"bar_dice_action_buttons": action_buttons,
+		"dice_legend": _bar_dice_legend(),
+		"info_text": str(explainer.get("summary", "")),
 		"result_message": str(last_result.get("summary", "")) if showing_result else "",
 		"result_bankroll_delta": int(last_result.get("bankroll_delta", 0)) if showing_result else 0,
 		"result_suspicion_delta": int(last_result.get("suspicion_delta", 0)) if showing_result else 0,
@@ -325,17 +317,20 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 				int(tumble.get("started", 0))
 			),
 		],
+		"surface_action_blocks": _tumble_action_blocks(),
 		"surface_action_bindings": {
 			"legal": {"action": "bar_dice_resolve", "index": 0},
 			"cheat": {"action": "bar_dice_load", "index": 0},
 			"bar_dice_palm": {"action": "bar_dice_palm", "index": 0},
 			"bar_dice_press": {"action": "bar_dice_press", "index": 0},
 			"bar_dice_stake": {"action": "bar_dice_stake", "index": 0},
+			"surface_stake_up": {"action": "bar_dice_stake", "index": 0},
 		},
 		"surface_audio": GameModule.surface_audio_spec({
 			"profile_id": "bar_dice_table",
 			"action_cues": {
 				"bar_dice_roll": "machine_button",
+				"bar_dice_shake": "machine_button",
 				"bar_dice_resolve": "machine_button",
 				"bar_dice_load": "machine_button",
 				"bar_dice_palm": "machine_button",
@@ -344,6 +339,7 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 				"bar_dice_stake": "machine_button",
 				"bar_dice_rail_bet": "machine_button",
 			},
+			"state_sync": {"method": "bar_dice_table_state", "tumble_channel": TUMBLE_CHANNEL},
 		}),
 	})
 
@@ -351,53 +347,30 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 func draw_surface(surface, surface_state: Dictionary, _render_context: Dictionary = {}) -> bool:
 	if str(surface_state.get("surface_renderer", "")) != "dice_table":
 		return false
-	var phase := str(surface_state.get("phase", "bet"))
-	_draw_dice_room(surface)
-	surface.surface_title("BAR DICE", Vector2(34, 24), C_YELLOW)
-	surface.surface_label("%s - %s" % [str(surface_state.get("house_name", "House")), str(surface_state.get("ruleset_label", "Dice"))], Vector2(210, 30), 15, C_PINK_2)
-	surface.surface_label("%s / %s" % [str(surface_state.get("edge_label", "")), str(surface_state.get("bonus_label", ""))], Vector2(560, 32), 13, C_CYAN)
-
-	_draw_meter_strip(surface, surface_state)
-	_draw_chip_ladder(surface, surface_state, phase)
-
-	surface.surface_label("YOUR CUP", Vector2(56, 114), 15, C_TEAL)
-	var player: Array = _int_dice(surface_state.get("player", []))
-	if player.size() != DICE_COUNT:
-		player = [0, 0, 0, 0, 0]
-	var reroll: Array = _index_array(surface_state.get("reroll", []))
-	var suggested: Array = _index_array(surface_state.get("suggested_reroll", []))
-	var scoring: Array = _index_array(surface_state.get("scoring_indices", []))
-	_draw_dice_row(surface, player, PLAYER_ROW_ORIGIN, reroll, suggested, scoring, false)
-	if phase == "select":
-		_add_dice_row_hits(surface, player, PLAYER_ROW_ORIGIN, "bar_dice_select")
-		surface.surface_label("REROLL marked dice; teal dice count toward the current pack.", Vector2(56, 200), 12, C_YELLOW)
-
-	surface.surface_label("HOUSE CUP", Vector2(56, 230), 15, C_PINK_2)
-	var house: Array = _int_dice(surface_state.get("house", []))
-	if house.size() != DICE_COUNT:
-		house = [0, 0, 0, 0, 0]
-	var house_revealed := bool(surface_state.get("house_revealed", false))
-	var house_scoring: Array = _index_array(surface_state.get("house_scoring_indices", []))
-	_draw_dice_row(surface, house if house_revealed else [0, 0, 0, 0, 0], HOUSE_ROW_ORIGIN, [], [], house_scoring if house_revealed else [], not house_revealed)
-
-	_draw_info_panel(surface, surface_state)
-	_draw_rail_bettors(surface, surface_state, phase)
-	_draw_controls(surface, surface_state, phase)
+	surface.surface_begin_design_space(surface.surface_board_size())
+	_draw_bar_room(surface, surface_state)
+	_draw_bar_top(surface, surface_state)
+	TableVisualsScript.draw_table_patrons(surface, surface_state, BAR_PATRON_POSITIONS)
+	TableVisualsScript.draw_dealer_station(surface, surface_state, "calls cargo")
+	_draw_dice_rows(surface, surface_state)
+	_draw_explainer(surface, surface_state)
+	_draw_paytable(surface, surface_state)
+	_draw_round_timer(surface, surface_state)
+	_draw_console(surface, surface_state)
+	surface.surface_end_design_space()
 	return true
 
 
 func surface_action_command(surface_action: String, index: int, confirm_requested: bool, ui_state: Dictionary, run_state: RunState, environment: Dictionary) -> Dictionary:
-	var state: Dictionary = _dice_state(run_state, environment)
-	var next: Dictionary = _normalized_ui_state(run_state, environment, ui_state, state)
+	var state := _dice_state(run_state, environment)
+	var next := _normalized_ui_state(run_state, environment, ui_state, state)
 	match surface_action:
 		"bar_dice_rail_bet":
-			if bool(next.get("rolled", false)):
-				return _message_command(next, "Rail bets are locked once the cup is out.")
-			return _rail_bettor_command(index, next, state, run_state, environment)
+			return _patron_bet_command(index, next, state, run_state, environment)
 		"bar_dice_stake":
 			if bool(next.get("rolled", false)):
-				return _message_command(next, "Settle this cup before changing chips.")
-			var ladder: Array = _int_array(state.get("stake_ladder", []))
+				return _message_command(next, "Settle this cup before changing your ante.")
+			var ladder := _int_array(state.get("stake_ladder", []))
 			if index >= 0 and index < ladder.size():
 				next["selected_stake_index"] = index
 				next.erase("table_social_alignment")
@@ -406,30 +379,61 @@ func surface_action_command(surface_action: String, index: int, confirm_requeste
 					"ui_state": next,
 					"selected_index": index,
 					"preserve_surface_ui_state": true,
-					"message": "Chip set to $%d." % int(ladder[index]),
+					"message": "Ante set to $%d." % int(ladder[index]),
 				})
-			return _message_command(next, "That chip is off the rack.")
+			return _message_command(next, "That chip is off the bar.")
 		"bar_dice_roll":
+			if bool(next.get("rolled", false)):
+				return _message_command(next, "The cup is already open.")
 			next["rolled"] = true
+			next["shake_number"] = 1
 			next["dice"] = _generate_opening(run_state, state)
 			next["reroll"] = []
 			next["loaded_armed"] = false
 			next["palm_armed"] = false
 			next.erase("loaded_value")
-			var now := Time.get_ticks_msec()
-			next["tumble_id"] = "open_%d" % now
-			next["tumble_started_msec"] = now
+			next["last_rerolled"] = _all_die_indices()
+			_set_tumble(next, "open", _all_die_indices())
 			return GameModule.surface_command({
 				"handled": true,
 				"ui_state": next,
 				"selected_index": index,
 				"preserve_surface_ui_state": true,
-				"message": "The dice spill across the bar. Keep or reroll, then resolve the leg.",
+				"message": "First shake down. Teal dice lock 6, then 5, then 4. Click amber dice to mark rerolls, then SHAKE or SETTLE.",
+			})
+		"bar_dice_shake":
+			if not bool(next.get("rolled", false)):
+				return _message_command(next, "Ante first, then roll the cup.")
+			if _remaining_shakes(next) <= 0:
+				return _message_command(next, "Three shakes are spent. Settle the cargo.")
+			var marked_before := _index_array(next.get("reroll", []))
+			var dice_before := _int_dice(next.get("dice", []))
+			var auto_marks := _suggested_reroll_for_ruleset(dice_before, "ship_captain_crew") if marked_before.is_empty() else []
+			var marks_for_shake := marked_before if not marked_before.is_empty() else auto_marks
+			next = _shake_again(next, run_state, state, marks_for_shake)
+			var rerolled_count := marks_for_shake.size()
+			var shake_message := "No legal reroll dice remain; settle the cup."
+			if rerolled_count > 0:
+				shake_message = "Shake rerolled dice %s. Unmarked dice stayed still; %d shake%s remain." % [
+					_reroll_summary(marks_for_shake),
+					_remaining_shakes(next),
+					"" if _remaining_shakes(next) == 1 else "s",
+				]
+			return GameModule.surface_command({
+				"handled": true,
+				"ui_state": next,
+				"selected_index": index,
+				"preserve_surface_ui_state": true,
+				"message": shake_message,
 			})
 		"bar_dice_select":
 			if not bool(next.get("rolled", false)):
-				return _message_command(next, "Toss the cup first.")
-			var marks: Array = _index_array(next.get("reroll", []))
+				return _message_command(next, "Roll the cup before marking cargo dice.")
+			var dice := _int_dice(next.get("dice", []))
+			var locks := _ship_lock_indices(dice)
+			if locks.has(index):
+				return _message_command(next, "Ship, Captain, and Crew stay locked once they show.")
+			var marks := _index_array(next.get("reroll", []))
 			if marks.has(index):
 				marks.erase(index)
 			elif index >= 0 and index < DICE_COUNT:
@@ -438,13 +442,15 @@ func surface_action_command(surface_action: String, index: int, confirm_requeste
 			next["reroll"] = marks
 			next["loaded_armed"] = false
 			next["palm_armed"] = false
+			next["last_rerolled"] = []
 			next.erase("loaded_value")
+			var select_message := "No dice marked. SHAKE AMBER rerolls suggested dice; SETTLE keeps the cup as shown." if marks.is_empty() else "Pink dice %s will reroll on SHAKE. Plain dice stay exactly where they are." % _reroll_summary(marks)
 			return GameModule.surface_command({
 				"handled": true,
 				"ui_state": next,
 				"selected_index": index,
 				"preserve_surface_ui_state": true,
-				"message": "Reroll marks: %s." % _reroll_summary(marks),
+				"message": select_message,
 			})
 		"bar_dice_resolve":
 			next["loaded_armed"] = false
@@ -452,20 +458,29 @@ func surface_action_command(surface_action: String, index: int, confirm_requeste
 			next.erase("loaded_value")
 			return _action_command("roll", "legal", confirm_requested, next, index, _resolve_prompt(next, "roll"))
 		"bar_dice_load":
-			var dice: Array = _int_dice(next.get("dice", []))
-			var kept: Array = _kept_dice(dice, _index_array(next.get("reroll", [])))
-			var loaded_value := _loaded_value_for_ruleset(kept if not kept.is_empty() else dice, str(state.get("ruleset_family", "poker_dice")))
+			if not bool(next.get("rolled", false)):
+				next["rolled"] = true
+				next["shake_number"] = 1
+				next["dice"] = _generate_opening(run_state, state)
+				next["last_rerolled"] = _all_die_indices()
+				_set_tumble(next, "open", _all_die_indices())
 			next["loaded_armed"] = true
 			next["palm_armed"] = false
-			next["loaded_value"] = loaded_value
+			next["loaded_value"] = _loaded_value_for_ruleset(_int_dice(next.get("dice", [])), "ship_captain_crew")
 			return _action_command("loaded_toss", "cheat", confirm_requested, next, index, _resolve_prompt(next, "loaded_toss"))
 		"bar_dice_palm":
+			if not bool(next.get("rolled", false)):
+				next["rolled"] = true
+				next["shake_number"] = 1
+				next["dice"] = _generate_opening(run_state, state)
+				next["last_rerolled"] = _all_die_indices()
+				_set_tumble(next, "open", _all_die_indices())
 			next["loaded_armed"] = false
 			next["palm_armed"] = true
 			next.erase("loaded_value")
 			return _action_command("palmed_swap", "cheat", confirm_requested, next, index, _resolve_prompt(next, "palmed_swap"))
 		"bar_dice_press":
-			return _action_command("press", "legal", confirm_requested, next, index, "Press the clean win. Click again to double or lose the risk.")
+			return _action_command("press", "legal", confirm_requested, next, index, "Press the last clean win. Click again to risk it.")
 	return {"handled": false}
 
 
@@ -478,137 +493,132 @@ func resolve_with_context(action_id: String, stake: int, run_state: RunState, en
 		return _resolve_press(stake, run_state, environment, rng)
 	if action_id != "roll" and action_id != "loaded_toss" and action_id != "palmed_swap":
 		return _empty_result(action_id, stake, environment, "That bar dice action is not available.")
+	if run_state == null:
+		return _empty_result(action_id, stake, environment, "No run is active for bar dice.")
 	var is_cheat := action_id == "loaded_toss" or action_id == "palmed_swap"
-	var state: Dictionary = _dice_state(run_state, environment)
-	var ruleset := str(state.get("ruleset_family", "poker_dice"))
-	var adjusted_stake := _active_stake_from_context(stake, state, ui_state, run_state, environment)
-	var side_bet := _side_bet_for(adjusted_stake, state)
-	var total_cost := adjusted_stake + side_bet
-	if total_cost > run_state.bankroll:
-		side_bet = maxi(0, run_state.bankroll - adjusted_stake)
-		total_cost = adjusted_stake + side_bet
-	if adjusted_stake <= 0 or total_cost <= 0 or total_cost > run_state.bankroll:
-		return _empty_result(action_id, stake, environment, "You do not have enough bankroll for this chip rack.")
-
-	var match_data: Dictionary = _resolve_match(action_id, run_state, state, rng, ui_state)
-	var player_wins := int(match_data.get("player_wins", 0))
-	var house_wins := int(match_data.get("house_wins", 0))
-	var outcome := "win" if player_wins > house_wins else ("push" if player_wins == house_wins else "lose")
-	var luck_bonus := clampi(run_state.luck_win_chance_bonus() + _item_bonus("win_chance", run_state, is_cheat), 0, 45)
-	if outcome == "lose" and luck_bonus > 0 and rng.randi_range(1, 100) <= luck_bonus:
-		match_data = _luck_flip_match(match_data)
-		player_wins = int(match_data.get("player_wins", 0))
-		house_wins = int(match_data.get("house_wins", 0))
-		outcome = "win" if player_wins > house_wins else ("push" if player_wins == house_wins else "lose")
-
-	var best_score: Dictionary = _copy_dict(match_data.get("best_player_score", {}))
-	if best_score.is_empty():
-		best_score = _score_for_ruleset(_int_dice(match_data.get("player_dice", [])), ruleset)
-	var player_category := str(best_score.get("category", "high_card"))
-	var payout_mult := _payout_multiplier(player_category, state)
-	var gross_payout := 0
-	if outcome == "win":
-		gross_payout = maxi(adjusted_stake + 1, int(round(float(adjusted_stake) * payout_mult)))
-	elif outcome == "push":
-		gross_payout = adjusted_stake
-
-	var side_result: Dictionary = _resolve_side_bet(match_data, state, side_bet)
-	var side_award := int(side_result.get("award", 0))
-	var progressive_award := int(side_result.get("progressive_award", 0))
-	var progressive_hit := bool(side_result.get("progressive_hit", false))
-	var bankroll_delta := gross_payout + side_award + progressive_award - total_cost
+	var state := _dice_state(run_state, environment)
+	var ui := _normalized_ui_state(run_state, environment, ui_state, state)
+	var adjusted_stake := _active_stake_from_context(stake, state, ui, run_state, environment)
+	if adjusted_stake <= 0 or adjusted_stake > run_state.bankroll:
+		return _empty_result(action_id, stake, environment, "You do not have enough bankroll for this ante.")
+	var table_result := _resolve_table_round(action_id, adjusted_stake, run_state, state, rng, ui)
+	var outcome := str(table_result.get("outcome", "lose"))
+	var player_score := _copy_dict(table_result.get("player_score", {}))
+	var player_category := str(player_score.get("category", "not_qualified"))
+	var participants := int(table_result.get("participant_count", _participant_count(state)))
+	var pot := int(table_result.get("pot", _working_pot(adjusted_stake, state)))
+	var rake := int(table_result.get("rake", _rake_for_pot(pot, state)))
+	var gross_payout := int(table_result.get("gross_payout", 0))
+	var bankroll_delta := gross_payout - adjusted_stake
+	if outcome == "carry":
+		bankroll_delta = -adjusted_stake
+	elif outcome == "lose":
+		bankroll_delta = -adjusted_stake
 	var won := outcome == "win"
+	var luck_bonus := clampi(run_state.luck_win_chance_bonus() + _item_effect_total("win_chance", run_state), 0, 45)
+	if not won and outcome == "lose" and luck_bonus > 0 and rng.randi_range(1, 100) <= luck_bonus:
+		table_result = _luck_lift_to_win(table_result, adjusted_stake, state)
+		outcome = "win"
+		won = true
+		player_score = _copy_dict(table_result.get("player_score", {}))
+		player_category = str(player_score.get("category", "ship_captain_crew"))
+		pot = int(table_result.get("pot", pot))
+		rake = int(table_result.get("rake", rake))
+		gross_payout = int(table_result.get("gross_payout", 0))
+		bankroll_delta = gross_payout - adjusted_stake
 	if won:
-		bankroll_delta = maxi(1, bankroll_delta + run_state.luck_payout_bonus(adjusted_stake, true) + _item_bonus("win_bonus", run_state, is_cheat))
+		bankroll_delta = maxi(1, bankroll_delta + run_state.luck_payout_bonus(adjusted_stake, true) + _item_effect_total("win_bonus", run_state))
 	elif bankroll_delta < 0:
-		bankroll_delta = mini(0, bankroll_delta + _item_bonus("loss_reduction", run_state, is_cheat))
+		bankroll_delta = mini(0, bankroll_delta + _item_effect_total("loss_reduction", run_state))
 
 	var suspicion_delta := 0
 	var security_message := ""
 	var pit_boss_summary := ""
 	var pit_boss_watched := false
 	var pit_boss_heat_bonus := 0
-	var skill_outcome := ""
 	var ended := false
+	var skill_outcome := ""
 	if is_cheat:
-		var heat: Dictionary = _cheat_heat(action_id, adjusted_stake, run_state, environment)
+		var heat := _cheat_heat(action_id, adjusted_stake, run_state, environment)
 		suspicion_delta = int(heat.get("suspicion_delta", 0))
 		security_message = str(heat.get("security_message", ""))
 		pit_boss_summary = str(heat.get("pit_boss_summary", ""))
 		pit_boss_watched = bool(heat.get("pit_boss_watched", false))
 		pit_boss_heat_bonus = int(heat.get("pit_boss_heat_bonus", 0))
-		skill_outcome = "loaded_die" if action_id == "loaded_toss" else "palmed_swap"
 		ended = bool(heat.get("ended", false))
 		bankroll_delta += int(heat.get("bankroll_delta", 0))
+		skill_outcome = "loaded_die" if action_id == "loaded_toss" else "palmed_swap"
 
-	var new_pot := int(state.get("progressive_pot", 0))
-	if progressive_hit:
-		new_pot = int(state.get("progressive_base", 80))
-	else:
-		new_pot += maxi(1, int(ceil(float(side_bet) * 0.50))) if side_bet > 0 else 0
-	state["progressive_pot"] = new_pot
-
-	var press_offer: Dictionary = {}
+	var carryover_pot := int(table_result.get("carryover_pot", 0))
+	state["carryover_pot"] = carryover_pot
+	state["rounds_played"] = int(state.get("rounds_played", 0)) + 1
+	GameModule.reset_table_round_timer(state)
+	var resolved_at := Time.get_ticks_msec()
+	var summary := _outcome_message(table_result, outcome, bankroll_delta, suspicion_delta, action_id, pit_boss_summary, security_message, state)
+	_apply_patron_rapport_after_round(state, ui, outcome)
+	var press_offer := {}
 	if won and not is_cheat and bankroll_delta > 0:
 		press_offer = {
 			"available": true,
-			"risk": mini(maxi(1, bankroll_delta), adjusted_stake * 12),
+			"risk": mini(maxi(1, bankroll_delta), adjusted_stake * 8),
 			"level": 0,
 			"cap": PRESS_CAP,
 		}
-	var resolved_at := Time.get_ticks_msec()
-	var player_score: Dictionary = _copy_dict(match_data.get("player_score", {}))
-	var house_score: Dictionary = _copy_dict(match_data.get("house_score", {}))
-	var player_dice: Array = _int_dice(match_data.get("player_dice", []))
-	var house_dice: Array = _int_dice(match_data.get("house_dice", []))
-	var summary := _outcome_message(match_data, outcome, bankroll_delta, suspicion_delta, action_id, pit_boss_summary, security_message, side_result, state)
-	_apply_rail_rapport_after_bar_dice(state, ui_state, adjusted_stake, side_bet, outcome)
+	var winning_opponent := _copy_dict(table_result.get("winning_opponent", {}))
 	state["last_result"] = {
-		"player_dice": player_dice,
-		"house_dice": house_dice,
+		"player_dice": _int_dice(table_result.get("player_dice", [])),
+		"house_dice": _int_dice(winning_opponent.get("dice", [])),
+		"winning_opponent_dice": _int_dice(winning_opponent.get("dice", [])),
+		"winning_opponent_name": str(winning_opponent.get("name", "the table")),
 		"player_category": player_category,
-		"house_category": str(house_score.get("category", "high_card")),
+		"house_category": str(_copy_dict(winning_opponent.get("score", {})).get("category", "not_qualified")),
+		"player_score": player_score,
+		"house_score": _copy_dict(winning_opponent.get("score", {})),
+		"winning_opponent_score": _copy_dict(winning_opponent.get("score", {})),
 		"player_scoring_indices": _index_array(player_score.get("scoring_indices", [])),
-		"house_scoring_indices": _index_array(house_score.get("scoring_indices", [])),
-		"player_blurb": _hand_blurb(best_score),
-		"house_blurb": _hand_blurb(house_score),
+		"house_scoring_indices": _index_array(_copy_dict(winning_opponent.get("score", {})).get("scoring_indices", [])),
+		"player_blurb": _hand_blurb(player_score),
+		"house_blurb": _hand_blurb(_copy_dict(winning_opponent.get("score", {}))),
 		"outcome": outcome,
-		"payout_mult": payout_mult,
+		"payout_mult": _payout_multiplier(player_category, state),
 		"stake": adjusted_stake,
-		"side_bet": side_bet,
-		"gross_payout": gross_payout + side_award + progressive_award,
-		"side_award": side_award,
-		"progressive_award": progressive_award,
-		"progressive_hit": progressive_hit,
+		"side_bet": 0,
+		"participant_count": participants,
+		"pot": pot,
+		"rake": rake,
+		"gross_payout": gross_payout,
+		"carryover_pot": carryover_pot,
 		"bankroll_delta": bankroll_delta,
 		"suspicion_delta": suspicion_delta,
 		"loaded": action_id == "loaded_toss",
 		"palmed": action_id == "palmed_swap",
-		"loaded_value": int(match_data.get("loaded_value", 0)),
-		"match_legs": _copy_array(match_data.get("legs", [])),
-		"match_summary": "%d-%d in best of %d" % [player_wins, house_wins, MATCH_LEGS],
+		"loaded_value": int(table_result.get("loaded_value", 0)),
+		"match_legs": _copy_array(table_result.get("opponent_results", [])),
+		"match_summary": _match_summary(table_result),
 		"summary": summary,
 		"press_offer": press_offer,
 		"tumble_id": "settle_%d" % resolved_at,
 		"resolved_at_msec": resolved_at,
+		"tumble_indices": _all_die_indices(),
 	}
-	state["rounds_played"] = int(state.get("rounds_played", 0)) + 1
 	_update_environment_state(environment, state)
 
 	var story_entry := {
 		"type": "game_action",
 		"game_id": get_id(),
 		"action_id": action_id,
+		"action_kind": "cheat" if is_cheat else "legal",
 		"won": won,
 		"outcome": outcome,
-		"ruleset": ruleset,
+		"ruleset": "ship_captain_crew",
 		"edge_tier": str(state.get("edge_tier", "standard")),
-		"bonus_mode": str(state.get("bonus_mode", "hot_hand")),
 		"player_category": player_category,
-		"house_category": str(house_score.get("category", "high_card")),
-		"match_score": "%d-%d" % [player_wins, house_wins],
-		"payout": gross_payout + side_award + progressive_award,
-		"stake_cost": total_cost,
+		"player_cargo": int(player_score.get("cargo", 0)),
+		"pot": pot,
+		"rake": rake,
+		"payout": gross_payout,
+		"stake_cost": adjusted_stake,
+		"bar_dice_stake": adjusted_stake,
 		"bankroll_delta": bankroll_delta,
 		"suspicion_delta": suspicion_delta,
 		"loaded": action_id == "loaded_toss",
@@ -621,13 +631,13 @@ func resolve_with_context(action_id: String, stake: int, run_state: RunState, en
 		"skill_security_pressure_checked": is_cheat,
 		"environment_id": environment.get("id", ""),
 	}
-	var deltas: Dictionary = GameModule.empty_result_deltas()
+	var deltas := GameModule.empty_result_deltas()
 	deltas["bankroll_delta"] = bankroll_delta
 	deltas["suspicion_delta"] = suspicion_delta
 	deltas["story_log"] = [story_entry]
 	deltas["messages"] = [summary]
 	deltas["ended"] = ended
-	var result: Dictionary = GameModule.build_action_result({
+	var payload := {
 		"ok": true,
 		"type": "game_action",
 		"source_id": get_id(),
@@ -642,245 +652,257 @@ func resolve_with_context(action_id: String, stake: int, run_state: RunState, en
 		"environment_id": environment.get("id", ""),
 		"environment_archetype_id": environment.get("archetype_id", ""),
 		"message": summary,
-	})
-	result["bar_dice_player_dice"] = player_dice
-	result["bar_dice_house_dice"] = house_dice
+		"pit_boss_watched": pit_boss_watched,
+		"pit_boss_heat_bonus": pit_boss_heat_bonus,
+		"skill_outcome": skill_outcome,
+		"skill_security_pressure_checked": is_cheat,
+		"security_message": security_message,
+		"skill_story_context": {
+			"game_id": get_id(),
+			"action_id": action_id,
+			"action_kind": "cheat" if is_cheat else "legal",
+			"ruleset": "ship_captain_crew",
+			"player_cargo": int(player_score.get("cargo", 0)),
+			"watched": pit_boss_watched,
+		},
+	}
+	var result := GameModule.build_action_result(payload)
+	result["bar_dice_player_dice"] = _int_dice(table_result.get("player_dice", []))
+	result["bar_dice_house_dice"] = _int_dice(winning_opponent.get("dice", []))
 	result["bar_dice_player_category"] = player_category
-	result["bar_dice_house_category"] = str(house_score.get("category", "high_card"))
+	result["bar_dice_house_category"] = str(_copy_dict(winning_opponent.get("score", {})).get("category", "not_qualified"))
 	result["bar_dice_outcome"] = outcome
-	result["bar_dice_payout_mult"] = payout_mult
+	result["bar_dice_payout_mult"] = _payout_multiplier(player_category, state)
 	result["bar_dice_loaded"] = action_id == "loaded_toss"
 	result["bar_dice_palmed"] = action_id == "palmed_swap"
-	result["bar_dice_loaded_value"] = int(match_data.get("loaded_value", 0))
-	result["bar_dice_match_legs"] = _copy_array(match_data.get("legs", []))
-	result["bar_dice_player_legs"] = player_wins
-	result["bar_dice_house_legs"] = house_wins
+	result["bar_dice_loaded_value"] = int(table_result.get("loaded_value", 0))
+	result["bar_dice_match_legs"] = _copy_array(table_result.get("opponent_results", []))
+	result["bar_dice_player_legs"] = 1 if won else 0
+	result["bar_dice_house_legs"] = 0 if won else 1
 	result["bar_dice_stake"] = adjusted_stake
-	result["bar_dice_side_bet"] = side_bet
-	result["bar_dice_side_award"] = side_award
-	result["bar_dice_progressive_award"] = progressive_award
-	result["bar_dice_progressive_hit"] = progressive_hit
-	result["bar_dice_ruleset"] = ruleset
+	result["bar_dice_side_bet"] = 0
+	result["bar_dice_side_award"] = 0
+	result["bar_dice_progressive_award"] = 0
+	result["bar_dice_progressive_hit"] = false
+	result["bar_dice_ruleset"] = "ship_captain_crew"
 	result["bar_dice_edge_tier"] = str(state.get("edge_tier", "standard"))
-	result["bar_dice_bonus_mode"] = str(state.get("bonus_mode", "hot_hand"))
+	result["bar_dice_bonus_mode"] = "pot_rake"
 	result["bar_dice_luck_bonus"] = luck_bonus
+	result["bar_dice_pot"] = pot
+	result["bar_dice_rake"] = rake
+	result["bar_dice_carryover_pot"] = carryover_pot
 	if is_cheat:
 		result["bar_dice_pit_boss_watched"] = pit_boss_watched
 		result["bar_dice_pit_boss_heat_bonus"] = pit_boss_heat_bonus
-		result["skill_outcome"] = skill_outcome
 	GameModule.apply_result(run_state, result, rng)
 	return result
 
 
 func environment_object_state(run_state: RunState, environment: Dictionary) -> Dictionary:
-	var state: Dictionary = _dice_state(run_state, environment)
-	if state.is_empty():
-		return {}
-	var last_result: Dictionary = _copy_dict(state.get("last_result", {}))
-	var rounds := int(state.get("rounds_played", 0))
-	var badge := str(state.get("ruleset_label", "DICE")).left(5).to_upper()
+	var state := _dice_state(run_state, environment)
+	var last_result := _copy_dict(state.get("last_result", {}))
+	var badge := "DICE"
 	if not last_result.is_empty():
-		badge = str(last_result.get("outcome", "dice")).to_upper()
+		badge = str(last_result.get("outcome", "dice")).to_upper().left(5)
 	return {
 		"runtime_state": {
-			"rounds_played": rounds,
+			"rounds_played": int(state.get("rounds_played", 0)),
 			"last_outcome": str(last_result.get("outcome", "")),
 			"last_bankroll_delta": int(last_result.get("bankroll_delta", 0)),
+			"carryover_pot": int(state.get("carryover_pot", 0)),
 		},
 		"visual_state": {
-			"house": str(state.get("house_name", "the house")),
-			"ruleset": str(state.get("ruleset_label", "Bar Dice")),
-			"bonus": str(state.get("bonus_label", "")),
+			"house": str(state.get("dealer_name", "Bartender")),
+			"ruleset": str(state.get("ruleset_label", "Ship, Captain, Crew")),
+			"bonus": "Pot carries on tied cargo.",
 		},
-		"status_summary": "%s runs %s. %d match%s tossed." % [
-			str(state.get("house_name", "The house")),
-			str(state.get("ruleset_label", "bar dice")),
-			rounds,
-			"" if rounds == 1 else "es",
-		],
-		"effect_summary": "%s with %s chips." % [str(state.get("bonus_label", "Side bet")), str(state.get("edge_label", "House Rack"))],
+		"status_summary": "%s runs Ship, Captain, Crew at the %s." % [str(state.get("dealer_name", "The bartender")), str(state.get("bar_name", "bar"))],
+		"effect_summary": "High cargo wins the pot; ties carry forward.",
 		"state_badge": badge,
 	}
 
 
-# --- Resolution helpers ------------------------------------------------------
-
-func _resolve_match(action_id: String, run_state: RunState, state: Dictionary, rng: RngStream, ui_state: Dictionary) -> Dictionary:
-	var ruleset := str(state.get("ruleset_family", "poker_dice"))
-	var legs: Array = []
-	var player_wins := 0
-	var house_wins := 0
-	var loaded_value := 0
-	var final_player: Array = []
-	var final_house: Array = []
-	var final_player_score: Dictionary = {}
-	var final_house_score: Dictionary = {}
-	var best_player_score: Dictionary = {}
-	for leg_index in range(MATCH_LEGS):
-		var player_open: Array = _opening_dice(run_state, state, ui_state) if leg_index == 0 else _roll_dice(rng, DICE_COUNT)
-		var player_dice: Array = _play_player_leg(player_open, rng, ruleset, ui_state if leg_index == 0 else {})
-		if leg_index == 0 and action_id == "loaded_toss":
-			loaded_value = _loaded_value_for_ruleset(player_dice, ruleset)
-			player_dice = _apply_loaded_die(player_dice, loaded_value)
-		elif leg_index == 0 and action_id == "palmed_swap":
-			player_dice = _apply_palmed_swap(player_dice, ruleset)
-		var house_open: Array = _roll_dice(rng, DICE_COUNT)
-		var house_dice: Array = _house_strategy_play(house_open, rng, ruleset)
-		var player_score: Dictionary = _score_for_ruleset(player_dice, ruleset)
-		var house_score: Dictionary = _score_for_ruleset(house_dice, ruleset)
-		var comparison := _compare_signatures(player_score.get("signature", []), house_score.get("signature", []))
-		var leg_outcome := "win" if comparison > 0 else ("push" if comparison == 0 else "lose")
-		if comparison > 0:
-			player_wins += 1
-			if best_player_score.is_empty() or _compare_signatures(player_score.get("signature", []), best_player_score.get("signature", [])) > 0:
-				best_player_score = player_score.duplicate(true)
-		elif comparison < 0:
-			house_wins += 1
-		final_player = player_dice
-		final_house = house_dice
-		final_player_score = player_score
-		final_house_score = house_score
-		legs.append({
-			"index": leg_index + 1,
-			"player_dice": player_dice,
-			"house_dice": house_dice,
-			"player_score": player_score,
-			"house_score": house_score,
-			"outcome": leg_outcome,
-		})
-		if player_wins >= 2 or house_wins >= 2:
-			break
-	if best_player_score.is_empty():
-		best_player_score = final_player_score.duplicate(true)
+func _resolve_table_round(action_id: String, stake: int, run_state: RunState, state: Dictionary, rng: RngStream, ui_state: Dictionary) -> Dictionary:
+	var player_dice := _player_final_dice(action_id, run_state, state, rng, ui_state)
+	var loaded_value := int(_loaded_value_for_ruleset(player_dice, "ship_captain_crew")) if action_id == "loaded_toss" else 0
+	if action_id == "loaded_toss":
+		player_dice = _apply_loaded_die(player_dice, loaded_value)
+	elif action_id == "palmed_swap":
+		player_dice = _apply_palmed_swap(player_dice, "ship_captain_crew")
+	var player_score := _score_ship(player_dice)
+	var opponent_results := _opponent_results(state, rng)
+	var seats: Array = [{
+		"id": "player",
+		"name": "You",
+		"dice": player_dice,
+		"score": player_score,
+	}]
+	seats.append_array(opponent_results)
+	var winners := _winning_seats(seats)
+	var player_is_winner := winners.size() == 1 and str(_copy_dict(winners[0]).get("id", "")) == "player"
+	var player_top_tie := false
+	for winner_value in winners:
+		var winner: Dictionary = winner_value
+		if str(winner.get("id", "")) == "player":
+			player_top_tie = winners.size() > 1
+	var pot := _working_pot(stake, state)
+	var rake := _rake_for_pot(pot, state)
+	var outcome := "lose"
+	var gross_payout := 0
+	var carryover := 0
+	if winners.is_empty():
+		outcome = "carry"
+		carryover = pot
+	elif player_is_winner:
+		outcome = "win"
+		gross_payout = _gross_payout_for_pot(pot, rake, state)
+	elif player_top_tie:
+		outcome = "carry"
+		carryover = pot
+	elif winners.size() > 1:
+		outcome = "carry"
+		carryover = pot
+	var winning_opponent := _best_non_player_seat(winners, opponent_results)
 	return {
-		"legs": legs,
-		"player_wins": player_wins,
-		"house_wins": house_wins,
-		"player_dice": final_player,
-		"house_dice": final_house,
-		"player_score": final_player_score,
-		"house_score": final_house_score,
-		"best_player_score": best_player_score,
+		"outcome": outcome,
+		"player_dice": player_dice,
+		"player_score": player_score,
+		"opponent_results": opponent_results,
+		"winning_opponent": winning_opponent,
+		"winners": winners,
+		"participant_count": _participant_count(state),
+		"stake": stake,
+		"pot": pot,
+		"rake": rake,
+		"gross_payout": gross_payout,
+		"carryover_pot": carryover,
 		"loaded_value": loaded_value,
 	}
 
 
-func _play_player_leg(open_dice: Array, rng: RngStream, ruleset: String, ui_state: Dictionary) -> Array:
+func _player_final_dice(_action_id: String, run_state: RunState, state: Dictionary, rng: RngStream, ui_state: Dictionary) -> Array:
 	if bool(ui_state.get("rolled", false)):
-		var dice: Array = _int_dice(ui_state.get("dice", []))
-		if dice.size() != DICE_COUNT:
-			dice = open_dice.duplicate()
-		var reroll: Array = _index_array(ui_state.get("reroll", []))
-		for index_value in reroll:
-			var die_index := int(index_value)
-			if die_index >= 0 and die_index < dice.size():
-				dice[die_index] = rng.randi_range(1, DIE_FACES)
-		return dice
-	var marks: Array = _suggested_reroll_for_ruleset(open_dice, ruleset)
-	var result: Array = open_dice.duplicate()
-	for index_value in marks:
-		var die_index := int(index_value)
-		if die_index >= 0 and die_index < result.size():
-			result[die_index] = rng.randi_range(1, DIE_FACES)
-	return result
-
-
-func _house_strategy_play(open_dice: Array, rng: RngStream, ruleset: String = "poker_dice") -> Array:
-	var hand: Array = _house_shake(open_dice, rng, ruleset)
-	hand = _house_shake(hand, rng, ruleset)
+		var dice := _int_dice(ui_state.get("dice", []))
+		if dice.size() == DICE_COUNT:
+			return dice
+	var hand := _roll_dice(rng, DICE_COUNT)
+	for _shake in range(MAX_SHAKES - 1):
+		var marks := _suggested_reroll_for_ruleset(hand, "ship_captain_crew")
+		if marks.is_empty():
+			break
+		for index_value in marks:
+			hand[int(index_value)] = rng.randi_range(1, DIE_FACES)
 	return hand
 
 
-func _house_shake(dice: Array, rng: RngStream, ruleset: String) -> Array:
-	var marks: Array = _suggested_reroll_for_ruleset(dice, ruleset)
-	var shaken: Array = dice.duplicate()
-	for index_value in marks:
-		var die_index := int(index_value)
-		if die_index >= 0 and die_index < shaken.size():
-			shaken[die_index] = rng.randi_range(1, DIE_FACES)
-	return shaken
+func _opponent_results(state: Dictionary, rng: RngStream) -> Array:
+	var result: Array = []
+	var patrons := _normalize_patrons(state.get("patrons", []))
+	for i in range(patrons.size()):
+		var patron: Dictionary = patrons[i]
+		var dice := _auto_play_ship_hand(rng)
+		result.append({
+			"id": str(patron.get("id", "patron_%d" % i)),
+			"name": str(patron.get("name", "Patron")),
+			"dice": dice,
+			"score": _score_ship(dice),
+			"seat": i,
+		})
+	var house_dice := _auto_play_ship_hand(rng)
+	result.append({
+		"id": "house",
+		"name": str(state.get("dealer_name", "House")),
+		"dice": house_dice,
+		"score": _score_ship(house_dice),
+		"seat": patrons.size(),
+	})
+	return result
 
 
-func _luck_flip_match(match_data: Dictionary) -> Dictionary:
-	var updated: Dictionary = match_data.duplicate(true)
-	var legs: Array = _copy_array(updated.get("legs", []))
-	for i in range(legs.size() - 1, -1, -1):
-		if typeof(legs[i]) != TYPE_DICTIONARY:
+func _auto_play_ship_hand(rng: RngStream) -> Array:
+	var hand := _roll_dice(rng, DICE_COUNT)
+	for _shake in range(MAX_SHAKES - 1):
+		var marks := _suggested_reroll_for_ruleset(hand, "ship_captain_crew")
+		if marks.is_empty():
+			break
+		for index_value in marks:
+			hand[int(index_value)] = rng.randi_range(1, DIE_FACES)
+	return hand
+
+
+func _winning_seats(seats: Array) -> Array:
+	var best_signature: Array = []
+	var winners: Array = []
+	for seat_value in seats:
+		var seat: Dictionary = seat_value
+		var score := _copy_dict(seat.get("score", {}))
+		if not bool(score.get("qualified", false)):
 			continue
-		var leg: Dictionary = legs[i]
-		if str(leg.get("outcome", "")) == "lose":
-			leg["outcome"] = "win"
-			leg["luck_flip"] = true
-			legs[i] = leg
-			updated["player_wins"] = int(updated.get("player_wins", 0)) + 1
-			updated["house_wins"] = maxi(0, int(updated.get("house_wins", 0)) - 1)
-			updated["legs"] = legs
-			var player_score: Dictionary = _copy_dict(leg.get("player_score", {}))
-			updated["best_player_score"] = player_score
-			return updated
+		var signature := _index_array_raw(score.get("signature", []))
+		if best_signature.is_empty() or _compare_signatures(signature, best_signature) > 0:
+			best_signature = signature
+			winners = [seat]
+		elif _compare_signatures(signature, best_signature) == 0:
+			winners.append(seat)
+	return winners
+
+
+func _best_non_player_seat(winners: Array, opponents: Array) -> Dictionary:
+	for winner_value in winners:
+		var winner: Dictionary = winner_value
+		if str(winner.get("id", "")) != "player":
+			return winner
+	var best: Dictionary = {}
+	for opponent_value in opponents:
+		var opponent: Dictionary = opponent_value
+		if best.is_empty() or _compare_signatures(_copy_dict(opponent.get("score", {})).get("signature", []), _copy_dict(best.get("score", {})).get("signature", [])) > 0:
+			best = opponent
+	return best
+
+
+func _luck_lift_to_win(table_result: Dictionary, stake: int, state: Dictionary) -> Dictionary:
+	var updated := table_result.duplicate(true)
+	var player_dice := [6, 5, 4, 6, 6]
+	var player_score := _score_ship(player_dice)
+	var pot := int(updated.get("pot", _working_pot(stake, state)))
+	var rake := _rake_for_pot(pot, state)
+	updated["outcome"] = "win"
+	updated["player_dice"] = player_dice
+	updated["player_score"] = player_score
+	updated["gross_payout"] = _gross_payout_for_pot(pot, rake, state)
+	updated["carryover_pot"] = 0
+	updated["luck_lift"] = true
 	return updated
 
 
-func _resolve_side_bet(match_data: Dictionary, state: Dictionary, side_bet: int) -> Dictionary:
-	if side_bet <= 0:
-		return {"award": 0, "progressive_award": 0, "progressive_hit": false, "reason": ""}
-	var legs: Array = _copy_array(match_data.get("legs", []))
-	var bonus_mode := str(state.get("bonus_mode", "hot_hand"))
-	var best_category := ""
-	var hit_five_kind := false
-	var clean_sweep := int(match_data.get("player_wins", 0)) >= 2 and int(match_data.get("house_wins", 0)) == 0
-	for leg_value in legs:
-		if typeof(leg_value) != TYPE_DICTIONARY:
-			continue
-		var leg: Dictionary = leg_value
-		var score: Dictionary = _copy_dict(leg.get("player_score", {}))
-		var category := str(score.get("category", ""))
-		if category == "five_kind" or category == "made_five":
-			hit_five_kind = true
-		if best_category.is_empty() or _category_power(category) > _category_power(best_category):
-			best_category = category
-	if bonus_mode == "progressive" and hit_five_kind:
-		return {
-			"award": side_bet * int(SIDE_BONUS_MULT.get(bonus_mode, 8)),
-			"progressive_award": int(state.get("progressive_pot", 0)),
-			"progressive_hit": true,
-			"reason": "five-kind progressive",
-		}
-	if bonus_mode == "hot_hand" and _category_power(best_category) >= _category_power("four_kind"):
-		return {"award": side_bet * int(SIDE_BONUS_MULT.get(bonus_mode, 7)), "progressive_award": 0, "progressive_hit": false, "reason": "hot hand"}
-	if bonus_mode == "press" and clean_sweep:
-		return {"award": side_bet * int(SIDE_BONUS_MULT.get(bonus_mode, 5)), "progressive_award": 0, "progressive_hit": false, "reason": "clean sweep"}
-	return {"award": 0, "progressive_award": 0, "progressive_hit": false, "reason": ""}
-
-
 func _resolve_press(stake: int, run_state: RunState, environment: Dictionary, rng: RngStream) -> Dictionary:
-	var state: Dictionary = _dice_state(run_state, environment)
-	var last_result: Dictionary = _copy_dict(state.get("last_result", {}))
-	var offer: Dictionary = _copy_dict(last_result.get("press_offer", {}))
+	var state := _dice_state(run_state, environment)
+	var last_result := _copy_dict(state.get("last_result", {}))
+	var offer := _copy_dict(last_result.get("press_offer", {}))
 	if not bool(offer.get("available", false)):
-		return _empty_result("press", stake, environment, "No clean win is available to press.")
+		return _empty_result("press", stake, environment, "No clean bar dice win is available to press.")
 	var risk := mini(maxi(1, int(offer.get("risk", 0))), maxi(0, run_state.bankroll))
 	if risk <= 0:
 		return _empty_result("press", stake, environment, "You do not have enough chips to press.")
 	var level := int(offer.get("level", 0))
-	var chance := clampi(47 + run_state.luck_win_chance_bonus() + _item_bonus("win_chance", run_state, false), 5, 85)
+	var chance := clampi(46 + run_state.luck_win_chance_bonus() + _item_effect_total("win_chance", run_state), 5, 85)
 	var press_won := rng.randi_range(1, 100) <= chance
 	var bankroll_delta := risk if press_won else -risk
-	var next_offer: Dictionary = {}
+	var next_offer := {}
 	if press_won and level + 1 < int(offer.get("cap", PRESS_CAP)):
 		next_offer = {
 			"available": true,
-			"risk": mini(risk * 2, maxi(1, int(last_result.get("stake", risk)) * 16)),
+			"risk": mini(risk * 2, maxi(1, int(last_result.get("stake", risk)) * 12)),
 			"level": level + 1,
 			"cap": int(offer.get("cap", PRESS_CAP)),
 		}
 	last_result["press_offer"] = next_offer
 	last_result["press_result"] = "win" if press_won else "lose"
 	last_result["bankroll_delta"] = int(last_result.get("bankroll_delta", 0)) + bankroll_delta
-	last_result["summary"] = "Press %s for %+d. %s" % ["hits" if press_won else "misses", bankroll_delta, str(last_result.get("summary", ""))]
+	last_result["summary"] = "Pressed the cargo win: %s %+d." % ["hit" if press_won else "miss", bankroll_delta]
 	state["last_result"] = last_result
 	_update_environment_state(environment, state)
-	var deltas: Dictionary = GameModule.empty_result_deltas()
+	var deltas := GameModule.empty_result_deltas()
 	deltas["bankroll_delta"] = bankroll_delta
 	deltas["messages"] = [str(last_result.get("summary", ""))]
 	deltas["story_log"] = [{
@@ -892,7 +914,7 @@ func _resolve_press(stake: int, run_state: RunState, environment: Dictionary, rn
 		"bankroll_delta": bankroll_delta,
 		"environment_id": environment.get("id", ""),
 	}]
-	var result: Dictionary = GameModule.build_action_result({
+	var result := GameModule.build_action_result({
 		"ok": true,
 		"type": "game_action",
 		"source_id": get_id(),
@@ -915,13 +937,13 @@ func _resolve_press(stake: int, run_state: RunState, environment: Dictionary, rn
 
 
 func _cheat_heat(action_id: String, adjusted_stake: int, run_state: RunState, environment: Dictionary) -> Dictionary:
-	var cheat_def: Dictionary = _action_def(action_id)
+	var cheat_def := _action_def(action_id)
 	var base_heat := int(cheat_def.get("suspicion_delta", 10))
-	var pit_boss_status: Dictionary = run_state.pit_boss_watch_status(environment)
+	var pit_boss_status := run_state.pit_boss_watch_status(environment)
 	var pit_boss_bonus := int(pit_boss_status.get("cheat_heat_bonus", 0)) if bool(pit_boss_status.get("active", false)) else 0
-	var raw_heat := maxi(1, base_heat + _item_bonus("cheat_suspicion_delta", run_state, true) + run_state.security_risk_bonus("cheat") + pit_boss_bonus)
+	var raw_heat := maxi(1, base_heat + _item_effect_total("cheat_suspicion_delta", run_state) + run_state.security_risk_bonus("cheat") + pit_boss_bonus)
 	var suspicion_delta := run_state.alcohol_adjusted_suspicion_delta(raw_heat)
-	var security_pressure: Dictionary = run_state.security_action_pressure("cheat", adjusted_stake, run_state.suspicion_level() + suspicion_delta)
+	var security_pressure := run_state.security_action_pressure("cheat", adjusted_stake, run_state.suspicion_level() + suspicion_delta)
 	return {
 		"suspicion_delta": suspicion_delta,
 		"bankroll_delta": int(security_pressure.get("bankroll_delta", 0)),
@@ -929,13 +951,9 @@ func _cheat_heat(action_id: String, adjusted_stake: int, run_state: RunState, en
 		"pit_boss_summary": str(pit_boss_status.get("summary", "")) if bool(pit_boss_status.get("active", false)) else "",
 		"pit_boss_watched": bool(pit_boss_status.get("watched", false)),
 		"pit_boss_heat_bonus": pit_boss_bonus,
-		"skill_security_pressure_checked": true,
 		"ended": bool(security_pressure.get("ended", false)),
-		"alcohol_multiplier": run_state.alcohol_heat_multiplier(),
 	}
 
-
-# --- State helpers -----------------------------------------------------------
 
 func _dice_state(run_state: RunState, environment: Dictionary) -> Dictionary:
 	var game_states: Dictionary = environment.get("game_states", {}) if typeof(environment.get("game_states", {})) == TYPE_DICTIONARY else {}
@@ -952,38 +970,38 @@ func _fallback_state(run_state: RunState, environment: Dictionary) -> Dictionary
 
 
 func _normalize_state(state: Dictionary) -> Dictionary:
-	var normalized: Dictionary = state.duplicate(true)
+	var normalized := state.duplicate(true)
 	normalized["schema"] = STATE_SCHEMA
 	normalized["version"] = STATE_VERSION
-	var ruleset := str(normalized.get("ruleset_family", "poker_dice"))
-	if not RULESET_ORDER.has(ruleset):
-		ruleset = "poker_dice"
+	normalized["ruleset_family"] = "ship_captain_crew"
+	normalized["ruleset_label"] = str(normalized.get("ruleset_label", RULESET_LABEL.get("ship_captain_crew", "Ship, Captain, Crew")))
+	normalized["available_variants"] = _copy_array(normalized.get("available_variants", VARIATION_LIBRARY.duplicate(true)))
+	normalized["bonus_mode"] = "pot_rake"
+	normalized["bonus_label"] = str(normalized.get("bonus_label", "Carryover Pot"))
 	var tier := str(normalized.get("edge_tier", "standard"))
 	if not EDGE_TIER_ORDER.has(tier):
 		tier = "standard"
-	var bonus := str(normalized.get("bonus_mode", "hot_hand"))
-	if not BONUS_MODE_ORDER.has(bonus):
-		bonus = "hot_hand"
-	normalized["ruleset_family"] = ruleset
-	normalized["ruleset_label"] = str(normalized.get("ruleset_label", RULESET_LABEL.get(ruleset, "Bar Dice")))
 	normalized["edge_tier"] = tier
-	normalized["edge_label"] = str(normalized.get("edge_label", EDGE_TIER_LABEL.get(tier, "House Rack")))
-	normalized["bonus_mode"] = bonus
-	normalized["bonus_label"] = str(normalized.get("bonus_label", BONUS_MODE_LABEL.get(bonus, "Hot Hand Side Bet")))
-	normalized["house_name"] = str(normalized.get("house_name", "The house"))
-	normalized["bar_name"] = str(normalized.get("bar_name", "bar"))
-	normalized["table_key"] = str(normalized.get("table_key", "%s:%s:%s" % [normalized["house_name"], ruleset, bonus]))
-	var ladder: Array = _int_array(normalized.get("stake_ladder", []))
+	normalized["edge_label"] = str(normalized.get("edge_label", EDGE_TIER_LABEL.get(tier, "House Bar Rake")))
+	normalized["rake_percent"] = clampi(int(normalized.get("rake_percent", EDGE_RAKE_PERCENT.get(tier, 7))), 0, 25)
+	normalized["hosted_payout_percent"] = clampi(int(normalized.get("hosted_payout_percent", EDGE_PAYOUT_PERCENT.get(tier, 66))), 30, 100)
+	normalized["dealer_name"] = str(normalized.get("dealer_name", "Bartender"))
+	normalized["bar_name"] = str(normalized.get("bar_name", "bar top"))
+	normalized["table_key"] = str(normalized.get("table_key", "%s:%s" % [normalized["dealer_name"], normalized["bar_name"]]))
+	normalized["dealer_profile"] = _normalize_dealer_profile(normalized.get("dealer_profile", {}), normalized)
+	var ladder := _int_array(normalized.get("stake_ladder", []))
 	if ladder.is_empty():
-		ladder = [1, 2, 5, 10, 20]
+		ladder = [2, 5, 10, 20, 40]
+	ladder.sort()
 	normalized["stake_ladder"] = ladder
 	normalized["selected_stake_index"] = clampi(int(normalized.get("selected_stake_index", 0)), 0, maxi(0, ladder.size() - 1))
-	normalized["rail_bettors"] = _normalize_rail_bettors(normalized.get("rail_bettors", []), ladder)
-	normalized["progressive_base"] = maxi(20, int(normalized.get("progressive_base", int(ladder[ladder.size() - 1]) * 20)))
-	normalized["progressive_pot"] = maxi(int(normalized.get("progressive_base", 20)), int(normalized.get("progressive_pot", normalized.get("progressive_base", 20))))
-	normalized["loaded_die"] = _copy_dict(normalized.get("loaded_die", {}))
-	normalized["rounds_played"] = int(normalized.get("rounds_played", 0))
+	normalized["patrons"] = _normalize_patrons(normalized.get("patrons", []))
+	normalized["rail_bettors"] = normalized["patrons"]
+	normalized["carryover_pot"] = maxi(0, int(normalized.get("carryover_pot", 0)))
+	normalized["loaded_die"] = clampi(int(normalized.get("loaded_die", 0)), 0, DIE_FACES)
+	normalized["rounds_played"] = maxi(0, int(normalized.get("rounds_played", 0)))
 	normalized["last_result"] = _copy_dict(normalized.get("last_result", {}))
+	normalized["table_round_timer_started_msec"] = int(normalized.get("table_round_timer_started_msec", 0))
 	return normalized
 
 
@@ -994,19 +1012,24 @@ func _update_environment_state(environment: Dictionary, state: Dictionary) -> vo
 
 
 func _normalized_ui_state(run_state: RunState, _environment: Dictionary, ui_state: Dictionary, state: Dictionary) -> Dictionary:
-	var next: Dictionary = ui_state.duplicate(true)
+	var next := ui_state.duplicate(true)
 	next["rolled"] = bool(next.get("rolled", false))
-	var selected := int(next.get("selected_stake_index", state.get("selected_stake_index", 0)))
-	var ladder: Array = _int_array(state.get("stake_ladder", []))
-	next["selected_stake_index"] = clampi(selected, 0, maxi(0, ladder.size() - 1))
+	var ladder := _int_array(state.get("stake_ladder", []))
+	next["selected_stake_index"] = clampi(int(next.get("selected_stake_index", state.get("selected_stake_index", 0))), 0, maxi(0, ladder.size() - 1))
 	if bool(next["rolled"]):
-		var dice: Array = _int_dice(next.get("dice", []))
+		var dice := _int_dice(next.get("dice", []))
 		if dice.size() != DICE_COUNT:
 			dice = _generate_opening(run_state, state)
 		next["dice"] = dice
+		next["shake_number"] = clampi(int(next.get("shake_number", 1)), 1, MAX_SHAKES)
 		next["reroll"] = _index_array(next.get("reroll", []))
+		next["last_rerolled"] = _index_array(next.get("last_rerolled", []))
+		next["tumble_indices"] = _index_array(next.get("tumble_indices", []))
 	else:
 		next["reroll"] = []
+		next["shake_number"] = 0
+		next["last_rerolled"] = []
+		next["tumble_indices"] = []
 	next["loaded_armed"] = bool(next.get("loaded_armed", false))
 	next["palm_armed"] = bool(next.get("palm_armed", false))
 	return next
@@ -1014,13 +1037,12 @@ func _normalized_ui_state(run_state: RunState, _environment: Dictionary, ui_stat
 
 func _generated_stake_ladder(environment: Dictionary, rng: RngStream) -> Array:
 	var economic_profile: Dictionary = environment.get("economic_profile", {}) if typeof(environment.get("economic_profile", {})) == TYPE_DICTIONARY else {}
-	var floor := maxi(1, int(economic_profile.get("stake_floor", 1)))
+	var floor := maxi(1, int(economic_profile.get("stake_floor", 2)))
 	var ceiling := maxi(floor, int(economic_profile.get("stake_ceiling", 80)))
 	var templates := [
-		[1, 2, 5, 10, 20],
-		[2, 5, 10, 25, 50],
+		[2, 5, 10, 20, 40],
 		[5, 10, 20, 40, 80],
-		[1, 3, 6, 12, 24],
+		[1, 2, 5, 10, 25],
 	]
 	var source: Array = rng.pick(templates, templates[0])
 	var ladder: Array = []
@@ -1034,153 +1056,201 @@ func _generated_stake_ladder(environment: Dictionary, rng: RngStream) -> Array:
 	return ladder
 
 
-func _generate_rail_bettors(rng: RngStream, ladder: Array) -> Array:
-	var names := ["Tess", "Milo", "June", "Vale", "Rin", "Cole"]
-	var styles := ["main", "side", "press"]
-	var colors := ["cyan", "teal", "yellow", "pink", "orange"]
-	var result: Array = []
-	var clean_ladder := _int_array(ladder)
-	if clean_ladder.is_empty():
-		clean_ladder = [1, 2, 5, 10, 20]
-	for i in range(3):
-		var style := str(styles[i % styles.size()])
-		var stake := int(clean_ladder[clampi(i + 1, 0, clean_ladder.size() - 1)])
-		if style == "side":
-			stake = int(clean_ladder[clean_ladder.size() - 1])
-		result.append({
-			"id": "rail_%d" % i,
-			"name": str(rng.pick(names, names[0])),
-			"style": style,
-			"stake": stake,
-			"rapport": rng.randi_range(42, 62),
-			"chip_color": str(colors[i % colors.size()]),
-		})
-	return result
+func _generate_dealer_profile(rng: RngStream, dealer_name: String, tier: String) -> Dictionary:
+	return {
+		"name": dealer_name,
+		"role": "bar_dice_caller",
+		"style": "bar",
+		"attention_base": 16 if tier == "friendly" else 24 if tier == "standard" else 32,
+		"tell": str(rng.pick(["watches the cup lip", "counts locked dice", "checks hands after shakes"], "watches the cup lip")),
+		"read_style": "bar sweep",
+		"uniform_accent": "bar towel",
+		"gaze_speed": rng.randi_range(80, 130),
+		"blink_offset": rng.randi_range(0, 1800),
+		"accent": _color_name(str(rng.pick(["cyan", "teal", "yellow", "pink"], "teal"))),
+	}
 
 
-func _normalize_rail_bettors(value: Variant, ladder: Array) -> Array:
-	var source: Array = value if typeof(value) == TYPE_ARRAY else []
-	if source.is_empty():
+func _normalize_dealer_profile(value: Variant, state: Dictionary) -> Dictionary:
+	var dealer := _copy_dict(value)
+	if dealer.is_empty():
 		var rng := RngStream.new()
-		rng.configure(_stable_hash("bar_dice:rail:fallback"))
-		source = _generate_rail_bettors(rng, ladder)
+		rng.configure(_stable_hash("%s:dealer" % str(state.get("table_key", "bar"))))
+		dealer = _generate_dealer_profile(rng, str(state.get("dealer_name", "Bartender")), str(state.get("edge_tier", "standard")))
+	dealer["name"] = str(dealer.get("name", state.get("dealer_name", "Bartender")))
+	dealer["role"] = str(dealer.get("role", "bar_dice_caller"))
+	dealer["attention_base"] = clampi(int(dealer.get("attention_base", 24)), 6, 70)
+	dealer["tell"] = str(dealer.get("tell", "tracks the cup"))
+	dealer["read_style"] = str(dealer.get("read_style", "bar sweep"))
+	dealer["uniform_accent"] = str(dealer.get("uniform_accent", "bar towel"))
+	dealer["gaze_speed"] = clampi(int(dealer.get("gaze_speed", 95)), 45, 180)
+	dealer["blink_offset"] = maxi(0, int(dealer.get("blink_offset", 0)))
+	if not dealer.has("accent"):
+		dealer["accent"] = _color_name("teal")
+	return dealer
+
+
+func _generate_patrons(rng: RngStream, depth: int) -> Array:
+	var names := ["Tess", "Milo", "June", "Vale", "Rin", "Cole", "Iris", "Sol"]
+	var tells := ["calls cargo", "leans on rail", "guards chips", "watches cup", "taps glass"]
 	var result: Array = []
-	var clean_ladder := _int_array(ladder)
-	for i in range(source.size()):
-		if typeof(source[i]) != TYPE_DICTIONARY:
-			continue
-		var bettor: Dictionary = source[i]
-		var style := str(bettor.get("style", "main"))
-		if not ["main", "side", "press"].has(style):
-			style = "main"
+	var count := clampi(2 + depth % 3, 2, 4)
+	for i in range(count):
 		result.append({
-			"id": str(bettor.get("id", "rail_%d" % i)),
-			"name": str(bettor.get("name", "Rail %d" % (i + 1))),
-			"style": style,
-			"stake": maxi(1, int(bettor.get("stake", clean_ladder[0] if not clean_ladder.is_empty() else 1))),
-			"rapport": clampi(int(bettor.get("rapport", 50)), 0, 100),
-			"chip_color": str(bettor.get("chip_color", "cyan")),
-			"last_social_delta": int(bettor.get("last_social_delta", 0)),
+			"id": "bar_patron_%d" % i,
+			"name": str(rng.pick(names, names[0])),
+			"seat": i,
+			"mood": str(rng.pick(["loose", "watchful", "loud", "quiet"], "loose")),
+			"preferred_bet": "cargo",
+			"cosmetic_bet": int(rng.pick([5, 10, 20, 25, 40], 10)),
+			"rapport": rng.randi_range(42, 62),
+			"snitch_risk": rng.randi_range(6, 34),
+			"chip_stack": rng.randi_range(20, 120),
+			"chip_color": str(rng.pick(["cyan", "teal", "yellow", "pink", "orange"], "cyan")),
+			"watching": rng.randi_range(0, 100) >= 42,
+			"silhouette": str(rng.pick(["cap", "glasses", "coat", "rings"], "cap")),
+			"tell": str(rng.pick(tells, tells[0])),
+			"temper": str(rng.pick(["nosy", "careless", "loyal", "sharp"], "careless")),
+			"seat_style": str(rng.pick(["vest", "jacket", "open"], "open")),
+			"animation_offset": rng.randi_range(0, 3600),
+			"snitch_threshold": rng.randi_range(18, 52),
+			"last_reaction": "neutral",
+			"accent": _color_name(str(rng.pick(["cyan", "teal", "yellow", "pink", "orange"], "cyan"))),
 		})
 	return result
 
 
-func _rail_bettors_for_surface(state: Dictionary, active_stake: int, side_bet: int) -> Array:
-	var bettors := _normalize_rail_bettors(state.get("rail_bettors", []), _int_array(state.get("stake_ladder", [])))
-	for i in range(bettors.size()):
-		var bettor: Dictionary = bettors[i]
-		bettor["visible_bet"] = _rail_wager_label(bettor)
-		bettor["with_player"] = _rail_bettor_matches(bettor, active_stake, side_bet)
-		bettors[i] = bettor
-	return bettors
+func _normalize_patrons(value: Variant) -> Array:
+	var patrons := _dictionary_array(value)
+	if patrons.is_empty():
+		var rng := RngStream.new()
+		rng.configure(_stable_hash("bar_dice:patrons:fallback"))
+		return _generate_patrons(rng, 2)
+	for i in range(patrons.size()):
+		var patron: Dictionary = patrons[i]
+		patron["id"] = str(patron.get("id", "bar_patron_%d" % i))
+		patron["name"] = str(patron.get("name", "Rail %d" % (i + 1)))
+		patron["seat"] = int(patron.get("seat", i))
+		patron["mood"] = str(patron.get("mood", "loose"))
+		patron["preferred_bet"] = str(patron.get("preferred_bet", "cargo"))
+		patron["cosmetic_bet"] = maxi(1, int(patron.get("cosmetic_bet", 10)))
+		patron["rapport"] = clampi(int(patron.get("rapport", 50)), 0, 100)
+		patron["snitch_risk"] = clampi(int(patron.get("snitch_risk", 18)), 0, 60)
+		patron["chip_stack"] = maxi(0, int(patron.get("chip_stack", int(patron.get("cosmetic_bet", 10)))))
+		patron["chip_color"] = str(patron.get("chip_color", "cyan"))
+		patron["watching"] = bool(patron.get("watching", true))
+		patron["silhouette"] = str(patron.get("silhouette", "cap"))
+		patron["tell"] = str(patron.get("tell", "calls cargo"))
+		patron["temper"] = str(patron.get("temper", "careless"))
+		patron["seat_style"] = str(patron.get("seat_style", "open"))
+		patron["animation_offset"] = maxi(0, int(patron.get("animation_offset", i * 620)))
+		patron["snitch_threshold"] = clampi(int(patron.get("snitch_threshold", 30)), 4, 70)
+		if not patron.has("accent"):
+			patron["accent"] = _color_name("cyan")
+		patrons[i] = patron
+	return patrons
 
 
-func _rail_wager_label(bettor: Dictionary) -> Dictionary:
-	var style := str(bettor.get("style", "main"))
-	var label := "MAIN"
-	if style == "side":
-		label = "SIDE"
-	elif style == "press":
-		label = "PRESS"
-	return {"id": style, "label": label, "stake": maxi(1, int(bettor.get("stake", 1)))}
-
-
-func _rail_bettor_command(index: int, ui_state: Dictionary, state: Dictionary, run_state: RunState, environment: Dictionary) -> Dictionary:
-	var fade := index >= 100
-	var bettor_index := index % 100
-	var bettors := _normalize_rail_bettors(state.get("rail_bettors", []), _int_array(state.get("stake_ladder", [])))
-	if bettor_index < 0 or bettor_index >= bettors.size():
-		return _message_command(ui_state, "That rail bettor stepped away.")
-	var bettor: Dictionary = bettors[bettor_index]
-	var ladder := _int_array(state.get("stake_ladder", []))
-	if ladder.is_empty():
-		return _message_command(ui_state, "The chip ladder is empty.")
-	var target_stake := int(bettor.get("stake", ladder[0]))
-	if fade:
-		if str(bettor.get("style", "main")) == "side":
-			target_stake = ladder[0]
+func _patrons_for_surface(state: Dictionary, last_result: Dictionary, active_stake: int) -> Array:
+	var patrons := _normalize_patrons(state.get("patrons", []))
+	var winner_name := str(last_result.get("winning_opponent_name", ""))
+	var outcome := str(last_result.get("outcome", ""))
+	for i in range(patrons.size()):
+		var patron: Dictionary = patrons[i]
+		var watching := bool(patron.get("watching", true))
+		patron["watching_player"] = watching
+		patron["active_snitch_risk"] = int(patron.get("snitch_risk", 0)) + (8 if watching else 0)
+		patron["visible_bet"] = {
+			"id": "cargo",
+			"label": "CARGO",
+			"stake": active_stake,
+		}
+		patron["wager"] = patron["visible_bet"]
+		if winner_name == str(patron.get("name", "")):
+			patron["last_reaction"] = "won"
+			patron["behavior"] = "took pot"
+		elif outcome == "win":
+			patron["last_reaction"] = "lost"
+			patron["behavior"] = "pays up"
+		elif outcome == "carry":
+			patron["last_reaction"] = "push"
+			patron["behavior"] = "pot rides"
 		else:
-			target_stake = int(ladder[ladder.size() - 1])
-	else:
-		if str(bettor.get("style", "main")) == "side":
-			target_stake = int(ladder[ladder.size() - 1])
-	var index_choice := _nearest_chip_index(ladder, target_stake)
-	ui_state["selected_stake_index"] = index_choice
+			patron["behavior"] = str(patron.get("mood", "loose"))
+		patrons[i] = patron
+	return patrons
+
+
+func _patron_bet_command(index: int, ui_state: Dictionary, state: Dictionary, _run_state: RunState, _environment: Dictionary) -> Dictionary:
+	var fade := index >= 100
+	var patron_index := index % 100
+	var patrons := _normalize_patrons(state.get("patrons", []))
+	if patron_index < 0 or patron_index >= patrons.size():
+		return _message_command(ui_state, "That rail player stepped away.")
+	var patron: Dictionary = patrons[patron_index]
 	ui_state["table_social_alignment"] = {
 		"game": "bar_dice",
-		"bettor_id": str(bettor.get("id", "rail_%d" % bettor_index)),
-		"bettor_name": str(bettor.get("name", "Rail")),
+		"patron_id": str(patron.get("id", "bar_patron_%d" % patron_index)),
+		"patron_name": str(patron.get("name", "Rail")),
 		"stance": "against" if fade else "with",
-		"style": str(bettor.get("style", "main")),
-		"stake": int(ladder[index_choice]),
+		"style": "cargo",
 	}
+	var delta := -2 if fade else 3
+	patron["rapport"] = clampi(int(patron.get("rapport", 50)) + delta, 0, 100)
+	patrons[patron_index] = patron
+	state["patrons"] = patrons
 	return GameModule.surface_command({
 		"handled": true,
 		"ui_state": ui_state,
-		"selected_index": bettor_index,
+		"selected_index": patron_index,
 		"preserve_surface_ui_state": true,
-		"message": "%s %s's rail action at $%d." % ["Fading" if fade else "Following", str(bettor.get("name", "Rail")), int(ladder[index_choice])],
+		"message": "%s %s's cargo read." % ["Fading" if fade else "Following", str(patron.get("name", "Rail"))],
 	})
 
 
-func _rail_bettor_matches(bettor: Dictionary, active_stake: int, side_bet: int) -> bool:
-	match str(bettor.get("style", "main")):
-		"side":
-			return side_bet > 0
-		"press":
-			return active_stake >= int(bettor.get("stake", active_stake))
-		_:
-			return abs(active_stake - int(bettor.get("stake", active_stake))) <= maxi(1, int(ceil(float(maxi(1, int(bettor.get("stake", 1)))) * 0.25)))
-
-
-func _apply_rail_rapport_after_bar_dice(state: Dictionary, ui_state: Dictionary, active_stake: int, side_bet: int, outcome: String) -> void:
-	var bettors := _normalize_rail_bettors(state.get("rail_bettors", []), _int_array(state.get("stake_ladder", [])))
+func _apply_patron_rapport_after_round(state: Dictionary, ui_state: Dictionary, outcome: String) -> void:
+	var patrons := _normalize_patrons(state.get("patrons", []))
 	var alignment := _copy_dict(ui_state.get("table_social_alignment", {}))
-	for i in range(bettors.size()):
-		var bettor: Dictionary = bettors[i]
-		var same := _rail_bettor_matches(bettor, active_stake, side_bet)
-		var explicitly_aligned := str(alignment.get("bettor_id", "")) == str(bettor.get("id", "rail_%d" % i))
-		var against := explicitly_aligned and str(alignment.get("stance", "")) == "against"
-		var delta := 2 if same else 0
-		if explicitly_aligned:
-			delta += 4 if str(alignment.get("stance", "")) == "with" else -4
-		if outcome == "win" and same:
-			delta += 1
-		elif outcome == "win" and against:
-			delta -= 1
-		bettor["rapport"] = clampi(int(bettor.get("rapport", 50)) + delta, 0, 100)
-		bettor["last_social_delta"] = delta
-		bettors[i] = bettor
-	state["rail_bettors"] = bettors
+	for i in range(patrons.size()):
+		var patron: Dictionary = patrons[i]
+		var aligned := str(alignment.get("patron_id", "")) == str(patron.get("id", "bar_patron_%d" % i))
+		var delta := 1 if outcome == "win" else -1 if outcome == "lose" else 0
+		if aligned:
+			delta += 3 if str(alignment.get("stance", "")) == "with" else -3
+		patron["rapport"] = clampi(int(patron.get("rapport", 50)) + delta, 0, 100)
+		patron["last_social_delta"] = delta
+		patrons[i] = patron
+	state["patrons"] = patrons
+	state["rail_bettors"] = patrons
+
+
+func _participant_count(state: Dictionary) -> int:
+	return 1 + _normalize_patrons(state.get("patrons", [])).size() + 1
+
+
+func _working_pot(stake: int, state: Dictionary) -> int:
+	return maxi(0, stake) * _participant_count(state) + maxi(0, int(state.get("carryover_pot", 0)))
+
+
+func _rake_for_pot(pot: int, state: Dictionary) -> int:
+	if pot <= 0:
+		return 0
+	return maxi(0, int(round(float(pot) * float(int(state.get("rake_percent", 7))) / 100.0)))
+
+
+func _gross_payout_for_pot(pot: int, rake: int, state: Dictionary) -> int:
+	var after_rake := maxi(0, pot - rake)
+	var hosted_percent := clampi(int(state.get("hosted_payout_percent", 66)), 30, 100)
+	return maxi(0, int(round(float(after_rake) * float(hosted_percent) / 100.0)))
 
 
 func _selected_stake_index(state: Dictionary, ui_state: Dictionary) -> int:
-	var ladder: Array = _int_array(state.get("stake_ladder", []))
+	var ladder := _int_array(state.get("stake_ladder", []))
 	return clampi(int(ui_state.get("selected_stake_index", state.get("selected_stake_index", 0))), 0, maxi(0, ladder.size() - 1))
 
 
 func _active_stake_from_context(stake: int, state: Dictionary, ui_state: Dictionary, run_state: RunState, environment: Dictionary) -> int:
-	var ladder: Array = _int_array(state.get("stake_ladder", []))
+	var ladder := _int_array(state.get("stake_ladder", []))
 	if ladder.is_empty():
 		return 0
 	var selected := _selected_stake_index(state, ui_state)
@@ -1206,32 +1276,50 @@ func _nearest_chip_index(ladder: Array, stake: int) -> int:
 	return best_index
 
 
-func _side_bet_for(stake: int, _state: Dictionary) -> int:
-	if stake <= 4:
-		return 0
-	return maxi(1, int(floor(float(stake) * 0.10)))
+func _remaining_shakes(ui_state: Dictionary) -> int:
+	return maxi(0, MAX_SHAKES - int(ui_state.get("shake_number", 0)))
 
 
-# --- Dice generation and play ------------------------------------------------
+func _shake_again(ui_state: Dictionary, run_state: RunState, state: Dictionary, reroll_marks: Array = []) -> Dictionary:
+	var next := ui_state.duplicate(true)
+	var dice := _int_dice(next.get("dice", []))
+	if dice.size() != DICE_COUNT:
+		dice = _generate_opening(run_state, state)
+	var marks := _index_array(reroll_marks)
+	if marks.is_empty():
+		marks = _index_array(next.get("reroll", []))
+	if marks.is_empty():
+		marks = _suggested_reroll_for_ruleset(dice, "ship_captain_crew")
+	var shake_number := clampi(int(next.get("shake_number", 1)) + 1, 1, MAX_SHAKES)
+	for index_value in marks:
+		var die_index := int(index_value)
+		if die_index >= 0 and die_index < dice.size():
+			dice[die_index] = _deterministic_die(run_state, state, shake_number, die_index)
+	next["dice"] = dice
+	next["shake_number"] = shake_number
+	next["reroll"] = []
+	next["loaded_armed"] = false
+	next["palm_armed"] = false
+	next["last_rerolled"] = marks
+	next.erase("loaded_value")
+	_set_tumble(next, "shake_%d" % shake_number, marks)
+	return next
+
 
 func _generate_opening(run_state: RunState, state: Dictionary) -> Array:
-	var rounds := int(state.get("rounds_played", 0))
-	var rng_state := int(run_state.rng_state) if run_state != null else 0
-	var seed_text := str(run_state.seed_text) if run_state != null else "bar_dice"
-	var table_key := str(state.get("table_key", "table"))
 	var dice: Array = []
 	for i in range(DICE_COUNT):
-		var hashed := _stable_hash("%s:%s:%s:%d:%d:%d:open" % [get_id(), table_key, seed_text, rng_state, rounds, i])
-		dice.append(1 + int(hashed % DIE_FACES))
+		dice.append(_deterministic_die(run_state, state, 1, i))
 	return dice
 
 
-func _opening_dice(run_state: RunState, state: Dictionary, ui_state: Dictionary) -> Array:
-	if bool(ui_state.get("rolled", false)):
-		var dice: Array = _int_dice(ui_state.get("dice", []))
-		if dice.size() == DICE_COUNT:
-			return dice
-	return _generate_opening(run_state, state)
+func _deterministic_die(run_state: RunState, state: Dictionary, shake_number: int, index: int) -> int:
+	var seed_text := str(run_state.seed_text) if run_state != null else "bar_dice"
+	var rng_state := int(run_state.rng_state) if run_state != null else 0
+	var table_key := str(state.get("table_key", "table"))
+	var rounds := int(state.get("rounds_played", 0))
+	var hashed := _stable_hash("%s:%s:%s:%d:%d:%d:%d" % [get_id(), table_key, seed_text, rng_state, rounds, shake_number, index])
+	return 1 + int(hashed % DIE_FACES)
 
 
 func _roll_dice(rng: RngStream, count: int) -> Array:
@@ -1242,311 +1330,132 @@ func _roll_dice(rng: RngStream, count: int) -> Array:
 
 
 func _suggested_reroll(dice: Array) -> Array:
-	return _suggested_reroll_for_ruleset(dice, "poker_dice")
+	return _suggested_reroll_for_ruleset(dice, "ship_captain_crew")
 
 
-func _suggested_reroll_for_ruleset(dice: Array, ruleset: String) -> Array:
-	match ruleset:
-		"ship_captain_crew":
-			return _ship_reroll_marks(dice)
-		"over_under_7":
-			return _over_under_reroll_marks(dice)
-		_:
-			var keep_value := _best_keep_value(dice)
-			var marks: Array = []
-			for i in range(dice.size()):
-				if int(dice[i]) != keep_value:
-					marks.append(i)
-			return marks
+func _suggested_reroll_for_ruleset(dice: Array, _ruleset: String) -> Array:
+	return _ship_reroll_marks(dice)
 
 
-func _ship_reroll_marks(dice: Array) -> Array:
-	var needed := [6, 5, 4]
+func _ship_reroll_marks(dice_value: Variant) -> Array:
+	var dice := _int_dice(dice_value)
+	var locks := _ship_lock_indices(dice)
 	var marks: Array = []
-	var kept_special: Array = []
 	for i in range(dice.size()):
-		var value := int(dice[i])
-		if needed.has(value) and not kept_special.has(value):
-			kept_special.append(value)
-		else:
+		if not locks.has(i):
 			marks.append(i)
-	for i in range(dice.size()):
-		var value := int(dice[i])
-		if not kept_special.has(6) and value != 6 and not marks.has(i):
-			marks.append(i)
-		elif not kept_special.has(5) and value != 5 and not marks.has(i):
-			marks.append(i)
-		elif not kept_special.has(4) and value != 4 and not marks.has(i):
-			marks.append(i)
-	marks.sort()
+	if locks.size() >= 3:
+		var score := _score_ship(dice)
+		if int(score.get("cargo", 0)) >= 12:
+			return []
 	return marks
 
 
-func _over_under_reroll_marks(dice: Array) -> Array:
-	var pair: Array = _best_seven_pair_indices(dice)
-	var marks: Array = []
-	for i in range(dice.size()):
-		if not pair.has(i):
-			marks.append(i)
-	return marks
-
-
-func _best_keep_value(dice: Array) -> int:
-	return _loaded_value_for(dice)
+func _ship_lock_indices(dice: Array) -> Array:
+	var locks: Array = []
+	var used: Array = []
+	for needed in [6, 5, 4]:
+		var found := false
+		for i in range(dice.size()):
+			if used.has(i):
+				continue
+			if int(dice[i]) == int(needed):
+				locks.append(i)
+				used.append(i)
+				found = true
+				break
+		if not found:
+			break
+	return locks
 
 
 func _loaded_value_for(dice: Array) -> int:
-	if dice.is_empty():
-		return DIE_FACES
-	var counts: Dictionary = _counts(dice)
-	var best_value := DIE_FACES
-	var best_key := -1
-	for value in counts.keys():
-		var key := int(counts[value]) * 10 + int(value)
-		if key > best_key:
-			best_key = key
-			best_value = int(value)
-	return best_value
+	return _loaded_value_for_ruleset(dice, "ship_captain_crew")
 
 
-func _loaded_value_for_ruleset(dice: Array, ruleset: String) -> int:
-	if ruleset == "ship_captain_crew":
-		for needed in [6, 5, 4]:
-			if not dice.has(needed):
-				return int(needed)
-	if ruleset == "over_under_7":
-		var pair: Array = _best_seven_pair_indices(dice)
-		if pair.size() >= 1:
-			var value := int(dice[int(pair[0])])
-			return clampi(7 - value, 1, DIE_FACES)
-	return _loaded_value_for(dice)
+func _loaded_value_for_ruleset(dice_value: Variant, _ruleset: String) -> int:
+	var dice := _int_dice(dice_value)
+	var locks := _ship_lock_indices(dice)
+	if locks.size() < 1:
+		return 6
+	if locks.size() < 2:
+		return 5
+	if locks.size() < 3:
+		return 4
+	return 6
 
 
-func _apply_loaded_die(dice: Array, loaded_value: int) -> Array:
-	if loaded_value < 1 or loaded_value > DIE_FACES:
+func _apply_loaded_die(dice_value: Variant, loaded_value: int) -> Array:
+	var dice := _int_dice(dice_value)
+	if dice.size() != DICE_COUNT or loaded_value < 1 or loaded_value > DIE_FACES:
 		return dice
-	var result: Array = dice.duplicate()
-	var counts: Dictionary = _counts(result)
+	var locks := _ship_lock_indices(dice)
 	var target_index := -1
-	var best_rank := 999
-	for i in range(result.size()):
-		var value := int(result[i])
-		if value == loaded_value:
-			continue
-		var rank := int(counts.get(value, 0)) * 10 + value
-		if rank < best_rank:
-			best_rank = rank
+	for i in range(dice.size()):
+		if not locks.has(i):
 			target_index = i
+			break
 	if target_index >= 0:
-		result[target_index] = loaded_value
-	return result
+		dice[target_index] = loaded_value
+	return dice
 
 
-func _apply_palmed_swap(dice: Array, ruleset: String) -> Array:
-	var best: Array = dice.duplicate()
-	var best_score: Dictionary = _score_for_ruleset(best, ruleset)
+func _apply_palmed_swap(dice_value: Variant, ruleset: String) -> Array:
+	var dice := _int_dice(dice_value)
+	if dice.size() != DICE_COUNT:
+		return dice
+	var best := dice.duplicate()
+	var best_score := _score_for_ruleset(best, ruleset)
 	for i in range(dice.size()):
 		for face in range(1, DIE_FACES + 1):
-			var candidate: Array = dice.duplicate()
+			var candidate := dice.duplicate()
 			candidate[i] = face
-			var score: Dictionary = _score_for_ruleset(candidate, ruleset)
+			var score := _score_for_ruleset(candidate, ruleset)
 			if _compare_signatures(score.get("signature", []), best_score.get("signature", [])) > 0:
 				best = candidate
 				best_score = score
 	return best
 
 
-func _kept_dice(dice: Array, reroll: Array) -> Array:
-	var kept: Array = []
-	for i in range(dice.size()):
-		if not reroll.has(i):
-			kept.append(int(dice[i]))
-	return kept
-
-
-# --- Scoring -----------------------------------------------------------------
-
 func _score(dice: Array) -> Dictionary:
-	return _score_poker(dice)
+	return _score_ship(dice)
 
 
-func _score_for_ruleset(dice: Array, ruleset: String) -> Dictionary:
-	match ruleset:
-		"ship_captain_crew":
-			return _score_ship(dice)
-		"over_under_7":
-			return _score_over_under(dice)
-		"bluff_call":
-			return _score_bluff(dice)
-		_:
-			return _score_poker(dice)
+func _score_for_ruleset(dice: Array, _ruleset: String) -> Dictionary:
+	return _score_ship(dice)
 
 
-func _score_poker(dice: Array) -> Dictionary:
-	var counts: Dictionary = _counts(dice)
-	var unique_sorted: Array = counts.keys()
-	unique_sorted.sort()
-	var group_keys: Array = []
-	for value in counts.keys():
-		group_keys.append(int(counts[value]) * 10 + int(value))
-	group_keys.sort()
-	group_keys.reverse()
-	var group_counts: Array = []
-	var group_values: Array = []
-	for key in group_keys:
-		group_counts.append(int(key) / 10)
-		group_values.append(int(key) % 10)
-	var top_count := int(group_counts[0]) if not group_counts.is_empty() else 0
-	var second_count := int(group_counts[1]) if group_counts.size() > 1 else 0
-	var is_straight := unique_sorted.size() == DICE_COUNT and (unique_sorted == [1, 2, 3, 4, 5] or unique_sorted == [2, 3, 4, 5, 6])
-	var category := "high_card"
-	if top_count == 5:
-		category = "five_kind"
-	elif top_count == 4:
-		category = "four_kind"
-	elif top_count == 3 and second_count == 2:
-		category = "full_house"
-	elif is_straight:
-		category = "straight"
-	elif top_count == 3:
-		category = "three_kind"
-	elif top_count == 2 and second_count == 2:
-		category = "two_pair"
-	elif top_count == 2:
-		category = "one_pair"
-	var signature: Array = [int(CATEGORY_RANK.get(category, 1))]
-	if category == "straight":
-		signature.append(int(unique_sorted[unique_sorted.size() - 1]))
-	else:
-		for value in group_values:
-			signature.append(int(value))
-	return {
-		"category": category,
-		"signature": signature,
-		"scoring_indices": _scoring_indices(dice, category, group_values),
-	}
-
-
-func _score_ship(dice: Array) -> Dictionary:
-	var used_indices: Array = []
-	var has_ship := false
-	var has_captain := false
-	var has_crew := false
-	for i in range(dice.size()):
-		var value := int(dice[i])
-		if value == 6 and not has_ship:
-			has_ship = true
-			used_indices.append(i)
-		elif value == 5 and not has_captain:
-			has_captain = true
-			used_indices.append(i)
-		elif value == 4 and not has_crew:
-			has_crew = true
-			used_indices.append(i)
-	var cargo_values: Array = []
-	for i in range(dice.size()):
-		if not used_indices.has(i):
-			cargo_values.append(int(dice[i]))
-	cargo_values.sort()
-	cargo_values.reverse()
+func _score_ship(dice_value: Variant) -> Dictionary:
+	var dice := _int_dice(dice_value)
+	var locks := _ship_lock_indices(dice)
+	var stage := locks.size()
 	var cargo := 0
-	for value in cargo_values:
-		cargo += int(value)
-	var complete := has_ship and has_captain and has_crew
-	var category := "perfect_cargo" if complete and cargo >= 10 else ("ship_captain_crew" if complete else "crew_missing")
-	var component_count := int(has_ship) + int(has_captain) + int(has_crew)
-	var signature: Array = [int(CATEGORY_RANK.get(category, 1)), cargo if complete else component_count]
-	for value in cargo_values:
-		signature.append(int(value))
-	return {
-		"category": category,
-		"signature": signature,
-		"cargo": cargo,
-		"scoring_indices": used_indices if complete else _highest_indices(dice, 2),
-	}
-
-
-func _score_over_under(dice: Array) -> Dictionary:
-	var pair: Array = _best_seven_pair_indices(dice)
-	var total := 0
-	for index_value in pair:
-		total += int(dice[int(index_value)])
-	var category := "bar_seven" if total == 7 else ("over_seven" if total > 7 else "under_seven")
-	var distance := absi(total - 7)
-	return {
-		"category": category,
-		"signature": [int(CATEGORY_RANK.get(category, 1)), -distance, total],
-		"pair_total": total,
-		"scoring_indices": pair,
-	}
-
-
-func _score_bluff(dice: Array) -> Dictionary:
-	var poker: Dictionary = _score_poker(dice)
-	var category := str(poker.get("category", "high_card"))
-	match category:
-		"five_kind":
-			category = "made_five"
-		"four_kind":
-			category = "made_four"
-		"three_kind", "full_house":
-			category = "called_trips"
-		"one_pair", "two_pair":
-			category = "called_pair"
-		_:
-			category = "called_high"
-	var signature: Array = _index_array_raw(poker.get("signature", []))
-	signature[0] = int(CATEGORY_RANK.get(category, 1))
-	return {
-		"category": category,
-		"signature": signature,
-		"scoring_indices": _index_array(poker.get("scoring_indices", [])),
-	}
-
-
-func _scoring_indices(dice: Array, category: String, group_values: Array) -> Array:
-	var indices: Array = []
-	if category == "straight":
+	var category := "not_qualified"
+	var qualified := false
+	if stage == 1:
+		category = "ship_only"
+	elif stage == 2:
+		category = "ship_captain"
+	elif stage >= 3:
+		qualified = true
+		category = "ship_captain_crew"
+		var cargo_indices: Array = []
 		for i in range(dice.size()):
-			indices.append(i)
-		return indices
-	if category == "high_card":
-		return _highest_indices(dice, 1)
-	var primary := int(group_values[0]) if not group_values.is_empty() else 0
-	var secondary := -1
-	if (category == "full_house" or category == "two_pair") and group_values.size() > 1:
-		secondary = int(group_values[1])
-	for i in range(dice.size()):
-		var value := int(dice[i])
-		if value == primary or (secondary >= 0 and value == secondary):
-			indices.append(i)
-	return indices
-
-
-func _best_seven_pair_indices(dice: Array) -> Array:
-	var best_pair: Array = [0, 1]
-	var best_key := 999
-	for i in range(dice.size()):
-		for j in range(i + 1, dice.size()):
-			var total := int(dice[i]) + int(dice[j])
-			var key := absi(total - 7) * 100 - total
-			if key < best_key:
-				best_key = key
-				best_pair = [i, j]
-	return best_pair
-
-
-func _highest_indices(dice: Array, count: int) -> Array:
-	var keyed: Array = []
-	for i in range(dice.size()):
-		keyed.append(int(dice[i]) * 10 + i)
-	keyed.sort()
-	keyed.reverse()
-	var result: Array = []
-	for i in range(mini(count, keyed.size())):
-		result.append(int(keyed[i]) % 10)
-	result.sort()
-	return result
+			if not locks.has(i):
+				cargo_indices.append(i)
+				cargo += int(dice[i])
+		if cargo >= 12:
+			category = "perfect_cargo"
+		locks.append_array(cargo_indices)
+	var signature := [1 if qualified else 0, cargo, stage]
+	return {
+		"category": category,
+		"signature": signature,
+		"qualified": qualified,
+		"cargo": cargo,
+		"stage": stage,
+		"scoring_indices": _index_array(locks),
+	}
 
 
 func _compare_signatures(a: Array, b: Array) -> int:
@@ -1565,175 +1474,370 @@ func _compare_signatures(a: Array, b: Array) -> int:
 	return 0
 
 
-func _counts(dice: Array) -> Dictionary:
-	var counts: Dictionary = {}
-	for value in dice:
-		var face := int(value)
-		if face < 1 or face > DIE_FACES:
-			continue
-		counts[face] = int(counts.get(face, 0)) + 1
-	return counts
-
-
 func _category_power(category: String) -> int:
 	return int(CATEGORY_RANK.get(category, 0))
 
 
-func _payout_multiplier(category: String, state: Dictionary) -> float:
-	var ruleset := str(state.get("ruleset_family", "poker_dice"))
-	var paytable: Dictionary = _copy_dict(PAYTABLES.get(ruleset, {}))
-	var base := float(paytable.get(category, 0.0))
-	if base <= 0.0:
-		return 0.0
-	var tier := str(state.get("edge_tier", "standard"))
-	var scale := float(EDGE_TIER_SCALE.get(tier, 1.0))
-	if ruleset == "poker_dice":
-		scale = float(POKER_TIER_SCALE.get(tier, scale))
-	elif ruleset == "ship_captain_crew":
-		scale = float(SHIP_TIER_SCALE.get(tier, scale))
-	return maxf(1.05, base * scale)
+func _payout_multiplier(_category: String, state: Dictionary) -> float:
+	var participants := float(_participant_count(state))
+	var rake_scale := 1.0 - float(int(state.get("rake_percent", 7))) / 100.0
+	var hosted_scale := float(int(state.get("hosted_payout_percent", 66))) / 100.0
+	return maxf(1.0, participants * rake_scale * hosted_scale)
 
 
-# --- Text helpers ------------------------------------------------------------
+func _paytable_rows(state: Dictionary, active_stake: int) -> Array:
+	var participants := _participant_count(state)
+	var pot := _working_pot(active_stake, state)
+	var rake := _rake_for_pot(pot, state)
+	return [
+		{"label": "Hosted pot win", "mult": _payout_multiplier("ship_captain_crew", state), "payout": _gross_payout_for_pot(pot, rake, state)},
+		{"label": "Tie cargo", "mult": 0.0, "payout": int(state.get("carryover_pot", 0)) + active_stake * participants},
+		{"label": "No 6-5-4", "mult": 0.0, "payout": 0},
+	]
+
 
 func _hand_blurb(score: Dictionary) -> String:
-	var category := str(score.get("category", "high_card"))
-	var signature: Array = _index_array_raw(score.get("signature", []))
-	var label := str(CATEGORY_LABEL.get(category, "High Card"))
-	match category:
-		"five_kind", "four_kind", "three_kind", "one_pair", "made_five", "made_four", "called_trips", "called_pair":
-			return "%s - %s" % [label, _word_plural(_sig_value(signature, 1))]
-		"full_house":
-			return "%s - %s over %s" % [label, _word_plural(_sig_value(signature, 1)), _word_plural(_sig_value(signature, 2))]
-		"two_pair":
-			return "%s - %s and %s" % [label, _word_plural(_sig_value(signature, 1)), _word_plural(_sig_value(signature, 2))]
-		"straight":
-			return "%s - %s high" % [label, _word_single(_sig_value(signature, 1))]
-		"ship_captain_crew", "perfect_cargo":
-			return "%s - cargo %d" % [label, int(score.get("cargo", _sig_value(signature, 1)))]
-		"under_seven", "over_seven", "bar_seven":
-			return "%s - pair totals %d" % [label, int(score.get("pair_total", _sig_value(signature, 2)))]
+	var category := str(score.get("category", "not_qualified"))
+	if bool(score.get("qualified", false)):
+		return "%s, cargo %d" % [str(CATEGORY_LABEL.get(category, "Ship Captain Crew")), int(score.get("cargo", 0))]
+	match int(score.get("stage", 0)):
+		2:
+			return "Ship and Captain, no Crew"
+		1:
+			return "Ship only"
 		_:
-			return "%s - %s" % [label, _word_single(_sig_value(signature, 1))]
+			return "No Ship"
 
 
-func _outcome_message(match_data: Dictionary, outcome: String, bankroll_delta: int, suspicion_delta: int, action_id: String, pit_boss_summary: String, security_message: String, side_result: Dictionary, state: Dictionary) -> String:
-	var player_score: Dictionary = _copy_dict(match_data.get("best_player_score", match_data.get("player_score", {})))
-	var house_score: Dictionary = _copy_dict(match_data.get("house_score", {}))
-	var verdict := "wins the match"
-	if outcome == "push":
-		verdict = "pushes the match"
-	elif outcome == "lose":
-		verdict = "loses to the house"
-	var cheat_text := ""
-	if action_id == "loaded_toss":
-		cheat_text = " Loaded die shows the tell."
-	elif action_id == "palmed_swap":
-		cheat_text = " Palmed swap cleans up one die."
-	var side_text := ""
-	var side_reason := str(side_result.get("reason", ""))
-	if int(side_result.get("award", 0)) > 0 or int(side_result.get("progressive_award", 0)) > 0:
-		side_text = " Bonus %s pays %+d." % [side_reason, int(side_result.get("award", 0)) + int(side_result.get("progressive_award", 0))]
-	var message := "%s - %s, pays %.1fx. House shows %s. You %s for %+d.%s%s" % [
-		_hand_blurb(player_score),
-		str(state.get("ruleset_label", "Bar Dice")),
-		_payout_multiplier(str(player_score.get("category", "high_card")), state),
-		_hand_blurb(house_score),
-		verdict,
-		bankroll_delta,
-		cheat_text,
-		side_text,
-	]
-	if suspicion_delta > 0:
-		message += " Suspicion pressure rises."
-	if not pit_boss_summary.is_empty():
-		message += " %s" % pit_boss_summary
-	if not security_message.is_empty():
-		message += " %s" % security_message
-	return message
-
-
-func _info_text(phase: String, player_dice: Array, reroll: Array, last_result: Dictionary, loaded_armed: bool, palm_armed: bool, loaded_value: int, state: Dictionary) -> String:
+func _bar_dice_explainer(phase: String, player_score: Dictionary, last_result: Dictionary, active_stake: int, pot: int, rake: int, participants: int, round_timer: Dictionary) -> Dictionary:
 	if phase == "settled" and not last_result.is_empty():
-		var blurb := str(last_result.get("player_blurb", ""))
-		var mult := float(last_result.get("payout_mult", 0.0))
-		return "%s, pays %.1fx (%s)" % [blurb, mult, str(last_result.get("match_summary", "match"))]
+		return {
+			"title": _result_title(str(last_result.get("outcome", ""))),
+			"summary": str(last_result.get("summary", "")),
+			"rule": "6-5-4 locks first; the last two dice are cargo.",
+			"pot": int(last_result.get("pot", pot)),
+			"rake": int(last_result.get("rake", rake)),
+			"cargo": int(_copy_dict(last_result.get("player_score", {})).get("cargo", 0)),
+		}
 	if phase == "select":
-		if loaded_armed:
-			return "Loaded die set to %s; heat scales with watch." % _word_single(loaded_value)
-		if palm_armed:
-			return "Palmed swap armed; one die will be improved."
-		var keep: Array = _kept_dice(player_dice, reroll)
-		var score: Dictionary = _score_for_ruleset(player_dice, str(state.get("ruleset_family", "poker_dice")))
-		return "Holding %d, rerolling %d. Pack reads %s." % [keep.size(), reroll.size(), str(CATEGORY_LABEL.get(str(score.get("category", "high_card")), "High Card"))]
-	return "Choose a chip, toss the cup, play best of three."
+		return {
+			"title": "BUILD 6-5-4",
+			"summary": "%s. Pink dice reroll; plain dice stay still." % _hand_blurb(player_score),
+			"rule": "Ship is 6, Captain is 5, Crew is 4. Cargo wins only after all three lock.",
+			"pot": pot,
+			"rake": rake,
+			"cargo": int(player_score.get("cargo", 0)),
+		}
+	var seconds := int(round_timer.get("remaining_seconds", 0))
+	return {
+		"title": "SHIP, CAPTAIN, CREW",
+		"summary": "$%d ante builds a $%d pot with %d seats." % [active_stake, pot, participants],
+		"rule": "High cargo wins after 6-5-4. Tied cargo carries the pot.",
+		"pot": pot,
+		"rake": rake,
+		"cargo": 0,
+		"timer": seconds,
+	}
+
+
+func _bar_dice_turn_guide(phase: String, player_score: Dictionary, reroll: Array, suggested: Array, remaining_shakes: int, active_stake: int, pot: int, round_timer: Dictionary, last_result: Dictionary) -> Dictionary:
+	var guide := {
+		"title": "How to play",
+		"goal": "Make 6, then 5, then 4. When all three lock, the last two dice are cargo.",
+		"next_step": "",
+		"selection": "",
+		"shake_hint": "",
+		"result_hint": "",
+		"steps": [
+			"1. Roll the cup.",
+			"2. Teal dice are locked.",
+			"3. Click dice: pink rerolls, plain stays.",
+			"4. Shake selected dice or settle shown cup.",
+		],
+	}
+	if phase == "settled" and not last_result.is_empty():
+		guide["title"] = "Round result"
+		guide["next_step"] = "Roll starts the next hand. If a clean win offers PRESS, that risks the last profit for more."
+		guide["selection"] = str(last_result.get("match_summary", "The table compares cargo."))
+		guide["shake_hint"] = "Wins pay from the hosted pot after rake; tied cargo carries the pot forward."
+		guide["result_hint"] = str(last_result.get("summary", ""))
+		return guide
+	if phase == "select":
+		var target := _next_ship_target(player_score)
+		var marked_count := reroll.size()
+		guide["title"] = "Your cup is open"
+		var target_text := "Need %s." % target if not target.is_empty() else "Cargo is live."
+		guide["next_step"] = "%s Click dice to toggle pink reroll marks; teal locks cannot move." % target_text
+		if marked_count > 0:
+			guide["selection"] = "%d pink die%s will reroll; every plain die stays frozen on SHAKE." % [marked_count, "" if marked_count == 1 else "s"]
+		elif suggested.size() > 0:
+			guide["selection"] = "Amber dice are suggested rerolls. Click them if you want manual control."
+		else:
+			guide["selection"] = "No reroll needed; this cup is ready to settle."
+		guide["shake_hint"] = "%d shake%s left. SHAKE moves only pink or amber dice; SETTLE compares what you see." % [remaining_shakes, "" if remaining_shakes == 1 else "s"]
+		guide["result_hint"] = _hand_blurb(player_score)
+		return guide
+	var seconds := int(round_timer.get("remaining_seconds", 0))
+	guide["title"] = "Before the roll"
+	guide["next_step"] = "Choose an ante, then ROLL to play the hand step by step."
+	guide["selection"] = "$%d ante feeds a $%d table pot." % [active_stake, pot]
+	guide["shake_hint"] = "AUTO-PLAY HAND skips choices; ROLL CUP lets you choose every reroll."
+	guide["result_hint"] = "Next automatic shake in %ds if you sit at the table." % seconds if seconds > 0 else "The table is waiting for your ante."
+	return guide
+
+
+func _bar_dice_rules_panel_lines(phase: String, guide: Dictionary, explainer: Dictionary) -> Array:
+	var lines: Array = []
+	if phase == "select":
+		lines.append("Goal: make 6 Ship, 5 Captain, 4 Crew.")
+		lines.append("Then cargo dice decide the pot.")
+		lines.append("Pink rerolls; teal locks; plain stays.")
+		lines.append("SHAKE marked dice only; SETTLE compares.")
+	elif phase == "settled":
+		lines.append("6-5-4 locks first; last two dice are cargo.")
+		lines.append("High cargo wins; tied cargo carries the pot.")
+		lines.append(str(guide.get("selection", explainer.get("summary", ""))))
+		lines.append("Roll again or press a clean win.")
+	else:
+		lines.append("Goal: make 6 Ship, 5 Captain, 4 Crew.")
+		lines.append("High cargo wins after all three lock.")
+		lines.append("Pick ante, then ROLL CUP for choices.")
+		lines.append("AUTO-PLAY skips choices; ties carry the pot.")
+	return _compact_text_lines(lines, RULES_PANEL_LINE_LIMIT)
+
+
+func _bar_dice_legend() -> Array:
+	return [
+		{"label": "TEAL", "text": "locked 6/5/4 or cargo score"},
+		{"label": "AMBER", "text": "suggested reroll"},
+		{"label": "PINK", "text": "selected reroll"},
+		{"label": "PLAIN", "text": "kept this shake"},
+	]
+
+
+func _bar_dice_action_buttons(phase: String, remaining_shakes: int, reroll: Array, suggested: Array, can_shake: bool, press_available: bool, press_risk: int) -> Array:
+	var buttons: Array = []
+	if phase == "select":
+		var suggested_count := suggested.size()
+		var shake_label := "SHAKE PINK DICE" if not reroll.is_empty() else "SHAKE AMBER DICE"
+		var shake_detail := "Reroll selected only" if not reroll.is_empty() else "Reroll suggestions"
+		var shake_button_detail := "%s; %d left" % [shake_detail, remaining_shakes]
+		if reroll.is_empty():
+			shake_button_detail = "Reroll %d suggested; %d left" % [suggested_count, remaining_shakes]
+		buttons.append({
+			"action": "bar_dice_shake",
+			"index": 0,
+			"label": shake_label,
+			"detail": shake_button_detail,
+			"accent": "teal",
+			"enabled": can_shake,
+		})
+		buttons.append({
+			"action": "bar_dice_resolve",
+			"index": 0,
+			"label": "SETTLE CURRENT",
+			"detail": "Compare shown dice",
+			"accent": "yellow",
+			"enabled": true,
+		})
+		buttons.append({
+			"action": "bar_dice_load",
+			"index": 0,
+			"label": "CHEAT LOAD DIE",
+			"detail": "Force next face",
+			"accent": "pink",
+			"enabled": true,
+		})
+		buttons.append({
+			"action": "bar_dice_palm",
+			"index": 0,
+			"label": "CHEAT PALM SWAP",
+			"detail": "Improve one die",
+			"accent": "orange",
+			"enabled": true,
+		})
+		return buttons
+	buttons.append({
+		"action": "bar_dice_roll",
+		"index": 0,
+		"label": "ROLL CUP",
+		"detail": "Start step play",
+		"accent": "teal",
+		"enabled": true,
+	})
+	buttons.append({
+		"action": "bar_dice_resolve",
+		"index": 0,
+		"label": "AUTO-PLAY HAND",
+		"detail": "Skip to result",
+		"accent": "yellow",
+		"enabled": true,
+	})
+	if press_available:
+		buttons.append({
+			"action": "bar_dice_press",
+			"index": 0,
+			"label": "PRESS LAST WIN",
+			"detail": "Risk $%d" % press_risk,
+			"accent": "amber",
+			"enabled": true,
+		})
+	return buttons
+
+
+func _surface_opponent_rows(state: Dictionary, last_result: Dictionary, phase: String) -> Array:
+	var rows: Array = []
+	if phase == "settled" and not last_result.is_empty():
+		var legs := _dictionary_array(last_result.get("match_legs", []))
+		var winning_name := str(last_result.get("winning_opponent_name", ""))
+		if not winning_name.is_empty():
+			for leg_value in legs:
+				var leg: Dictionary = leg_value
+				if str(leg.get("name", "")) == winning_name:
+					rows.append(_surface_opponent_row_from_leg(leg, true))
+					break
+		for leg_value in legs:
+			var leg: Dictionary = leg_value
+			if _opponent_rows_has_id(rows, str(leg.get("id", ""))):
+				continue
+			rows.append(_surface_opponent_row_from_leg(leg, false))
+			if rows.size() >= MAX_VISIBLE_OPPONENT_ROWS:
+				return rows
+		return rows
+	var patrons := _normalize_patrons(state.get("patrons", []))
+	for i in range(mini(patrons.size(), MAX_VISIBLE_OPPONENT_ROWS)):
+		var patron: Dictionary = patrons[i]
+		var dice := _opponent_preview_dice(state, i)
+		var score := _score_ship(dice)
+		rows.append({
+			"id": str(patron.get("id", "bar_patron_%d" % i)),
+			"name": str(patron.get("name", "Rail %d" % (i + 1))),
+			"dice": dice,
+			"score": score,
+			"scoring_indices": _index_array(score.get("scoring_indices", [])),
+			"blurb": _hand_blurb(score),
+			"winning": false,
+			"preview": true,
+		})
+	return rows
+
+
+func _surface_opponent_row_from_leg(leg: Dictionary, winning: bool) -> Dictionary:
+	var dice := _int_dice(leg.get("dice", []))
+	var score := _copy_dict(leg.get("score", {}))
+	if score.is_empty():
+		score = _score_ship(dice)
+	return {
+		"id": str(leg.get("id", "")),
+		"name": str(leg.get("name", "Rail")),
+		"dice": dice,
+		"score": score,
+		"scoring_indices": _index_array(score.get("scoring_indices", [])),
+		"blurb": _hand_blurb(score),
+		"winning": winning,
+		"preview": false,
+	}
+
+
+func _opponent_rows_has_id(rows: Array, id: String) -> bool:
+	if id.is_empty():
+		return false
+	for row_value in rows:
+		if typeof(row_value) == TYPE_DICTIONARY and str((row_value as Dictionary).get("id", "")) == id:
+			return true
+	return false
+
+
+func _opponent_preview_dice(state: Dictionary, patron_index: int) -> Array:
+	var dice: Array = []
+	var table_key := str(state.get("table_key", "bar"))
+	var rounds := int(state.get("rounds_played", 0))
+	for die_index in range(DICE_COUNT):
+		var hashed := _stable_hash("%s:preview:%d:%d:%d" % [table_key, rounds, patron_index, die_index])
+		dice.append(1 + int(hashed % DIE_FACES))
+	return dice
+
+
+func _tumble_action_blocks() -> Array:
+	return [
+		{"actions": ["bar_dice_roll", "bar_dice_shake", "bar_dice_select", "bar_dice_resolve", "bar_dice_load", "bar_dice_palm", "bar_dice_press", "bar_dice_stake", "bar_dice_rail_bet"], "while_animation": TUMBLE_CHANNEL},
+	]
+
+
+func _next_ship_target(score: Dictionary) -> String:
+	match int(score.get("stage", 0)):
+		0:
+			return "Ship: a 6"
+		1:
+			return "Captain: a 5"
+		2:
+			return "Crew: a 4"
+		_:
+			return ""
+
+
+func _remaining_from_score(score: Dictionary) -> int:
+	return maxi(0, MAX_SHAKES - int(score.get("stage", 0)))
+
+
+func _result_title(outcome: String) -> String:
+	match outcome:
+		"win":
+			return "YOU WIN THE POT"
+		"carry":
+			return "POT CARRIES"
+		_:
+			return "TABLE WINS"
+
+
+func _outcome_message(table_result: Dictionary, outcome: String, bankroll_delta: int, suspicion_delta: int, action_id: String, pit_boss_summary: String, security_message: String, state: Dictionary) -> String:
+	var player_score := _copy_dict(table_result.get("player_score", {}))
+	var pot := int(table_result.get("pot", 0))
+	var rake := int(table_result.get("rake", 0))
+	var winner_name := str(_copy_dict(table_result.get("winning_opponent", {})).get("name", "the table"))
+	var text := ""
+	if outcome == "win":
+		text = "Bar dice: you lock 6-5-4 with cargo %d and win the $%d pot after $%d rake. Bankroll %+d." % [int(player_score.get("cargo", 0)), pot, rake, bankroll_delta]
+	elif outcome == "carry":
+		text = "Bar dice: cargo ties or nobody completes 6-5-4. Your $%d ante rides into the next $%d carryover pot. Bankroll %+d." % [int(table_result.get("stake", 0)), int(table_result.get("carryover_pot", 0)), bankroll_delta]
+	else:
+		text = "Bar dice: %s beats your %s and takes the $%d pot. Bankroll %+d." % [winner_name, _hand_blurb(player_score), pot, bankroll_delta]
+	if action_id == "loaded_toss":
+		text += " Loaded die risk is visible."
+	elif action_id == "palmed_swap":
+		text += " Palmed swap risk is visible."
+	if suspicion_delta > 0:
+		text += " Heat %+d." % suspicion_delta
+	if not pit_boss_summary.is_empty():
+		text += " %s" % pit_boss_summary
+	if not security_message.is_empty():
+		text += " %s" % security_message
+	if not str(state.get("edge_label", "")).is_empty():
+		text += " %s." % str(state.get("edge_label", ""))
+	return text
+
+
+func _match_summary(table_result: Dictionary) -> String:
+	var outcome := str(table_result.get("outcome", ""))
+	if outcome == "win":
+		return "You beat the bar."
+	if outcome == "carry":
+		return "Pot carries forward."
+	var winner := _copy_dict(table_result.get("winning_opponent", {}))
+	return "%s wins cargo." % str(winner.get("name", "The table"))
 
 
 func _resolve_prompt(ui_state: Dictionary, action_id: String) -> String:
 	match action_id:
 		"loaded_toss":
-			return "Loaded toss armed. Click again to rig the first leg and resolve."
+			return "Loaded die armed. Click again to force the next needed face and take heat."
 		"palmed_swap":
-			return "Palmed swap armed. Click again to lift the first leg and resolve."
+			return "Palmed swap armed. Click again to improve one die and take heat."
 		_:
 			if bool(ui_state.get("rolled", false)):
-				return "Honest match ready. Click again to reroll marked dice and settle."
-			return "Quick match ready. Click again to toss and settle."
+				return "Settle this cup: your 6-5-4 cargo is compared against every seat. Click again to confirm."
+			return "Quick play rolls all three shakes automatically, then compares cargo against the table. Click again to confirm."
 
-
-func _paytable_rows(state: Dictionary, active_stake: int) -> Array:
-	var rows: Array = []
-	var ruleset := str(state.get("ruleset_family", "poker_dice"))
-	var order: Array = PAYTABLE_DISPLAY_ORDER.get(ruleset, [])
-	for category in order:
-		var mult := _payout_multiplier(str(category), state)
-		rows.append({
-			"label": str(CATEGORY_LABEL.get(str(category), str(category))),
-			"mult": mult,
-			"payout": int(round(float(active_stake) * mult)),
-		})
-	rows.append({
-		"label": str(state.get("bonus_label", "Side Bet")),
-		"mult": float(SIDE_BONUS_MULT.get(str(state.get("bonus_mode", "hot_hand")), 5)),
-		"payout": _side_bet_for(active_stake, state) * int(SIDE_BONUS_MULT.get(str(state.get("bonus_mode", "hot_hand")), 5)),
-	})
-	return rows
-
-
-func _reroll_summary(marks: Array) -> String:
-	if marks.is_empty():
-		return "keep all"
-	var labels: Array = []
-	for mark in marks:
-		labels.append(str(int(mark) + 1))
-	return ", ".join(labels)
-
-
-func _word_single(value: int) -> String:
-	return str(DIE_WORD.get(value, str(value)))
-
-
-func _word_plural(value: int) -> String:
-	return str(DIE_WORD_PLURAL.get(value, "%ss" % value))
-
-
-func _sig_value(signature: Array, index: int) -> int:
-	if index >= 0 and index < signature.size():
-		return int(signature[index])
-	return 0
-
-
-func _action_def(action_id: String) -> Dictionary:
-	for action_value in definition.get("legal_actions", []):
-		if typeof(action_value) == TYPE_DICTIONARY and str((action_value as Dictionary).get("id", "")) == action_id:
-			return (action_value as Dictionary).duplicate(true)
-	for action_value in definition.get("cheat_actions", []):
-		if typeof(action_value) == TYPE_DICTIONARY and str((action_value as Dictionary).get("id", "")) == action_id:
-			return (action_value as Dictionary).duplicate(true)
-	return {}
-
-
-# --- Surface command helpers -------------------------------------------------
 
 func _action_command(action_id: String, action_kind: String, confirm_requested: bool, ui_state: Dictionary, index: int, message: String) -> Dictionary:
 	var already_selected := str(ui_state.get("selected_action_id", "")) == action_id and str(ui_state.get("selected_action_kind", "")) == action_kind
@@ -1775,100 +1879,172 @@ func _selected_surface_actions(ui_state: Dictionary) -> Array:
 
 func _active_tumble(ui_state: Dictionary, last_result: Dictionary, rolled: bool) -> Dictionary:
 	if rolled and ui_state.has("tumble_id"):
-		return {"id": str(ui_state.get("tumble_id", "")), "started": int(ui_state.get("tumble_started_msec", 0))}
+		return {"id": str(ui_state.get("tumble_id", "")), "started": int(ui_state.get("tumble_started_msec", 0)), "indices": _index_array(ui_state.get("tumble_indices", []))}
 	if not rolled and not last_result.is_empty():
-		return {"id": str(last_result.get("tumble_id", "")), "started": int(last_result.get("resolved_at_msec", 0))}
-	return {"id": "", "started": 0}
+		return {"id": str(last_result.get("tumble_id", "")), "started": int(last_result.get("resolved_at_msec", 0)), "indices": _index_array(last_result.get("tumble_indices", []))}
+	return {"id": "", "started": 0, "indices": []}
 
 
-# --- Drawing -----------------------------------------------------------------
-
-func _draw_dice_room(surface) -> void:
-	var board_size: Vector2 = surface.surface_board_size()
-	surface.draw_rect(Rect2(Vector2.ZERO, board_size), Color("#0a0712"))
-	surface.draw_rect(Rect2(0, 0, board_size.x, 70), Color("#150a1d"))
-	surface.draw_rect(Rect2(40, 102, 470, 226), Color("#101a14"))
-	surface.draw_rect(Rect2(40, 102, 470, 226), Color(C_TEAL.r, C_TEAL.g, C_TEAL.b, 0.28), false, 2)
-	surface.draw_rect(Rect2(40, 218, 470, 2), Color(C_PINK.r, C_PINK.g, C_PINK.b, 0.30))
-	surface.draw_rect(Rect2(532, 86, 350, 260), Color("#0c0c1c"))
-	surface.draw_rect(Rect2(532, 86, 350, 260), Color(C_CYAN.r, C_CYAN.g, C_CYAN.b, 0.24), false, 2)
+func _set_tumble(ui_state: Dictionary, prefix: String, indices: Array = []) -> void:
+	var now := Time.get_ticks_msec()
+	ui_state["tumble_id"] = "%s_%d" % [prefix, now]
+	ui_state["tumble_started_msec"] = now
+	ui_state["tumble_indices"] = _index_array(indices)
 
 
-func _draw_meter_strip(surface, surface_state: Dictionary) -> void:
-	surface.draw_rect(Rect2(40, 76, 842, 20), Color("#191124"))
-	surface.surface_label("CHIPS $%d" % int(surface_state.get("chips_meter", 0)), Vector2(54, 91), 12, C_SOFT)
-	surface.surface_label("BET $%d" % int(surface_state.get("bet_meter", 0)), Vector2(188, 91), 12, C_YELLOW)
-	surface.surface_label("WIN $%d" % int(surface_state.get("win_meter", 0)), Vector2(306, 91), 12, C_TEAL)
-	surface.surface_label("PROG $%d" % int(surface_state.get("progressive_pot", 0)), Vector2(420, 91), 12, C_AMBER)
+func _draw_bar_room(surface, state: Dictionary) -> void:
+	TableVisualsScript.draw_room(surface, state, "BAR DICE", "%s / %s" % [str(state.get("bar_name", "bar top")), str(state.get("edge_label", "Bar Rake"))])
 
 
-func _draw_chip_ladder(surface, surface_state: Dictionary, phase: String) -> void:
-	var ladder: Array = _int_array(surface_state.get("stake_ladder", []))
-	var selected := int(surface_state.get("selected_stake_index", 0))
-	for i in range(ladder.size()):
-		var rect := Rect2(52 + i * 62, 354, 52, 34)
-		var enabled := phase != "select"
-		var fill := C_YELLOW if i == selected else Color("#271735")
-		surface.draw_rect(rect, fill)
-		surface.draw_rect(rect, C_SOFT, false, 2)
-		surface.surface_label_centered("$%d" % int(ladder[i]), rect, 13, C_DARK if i == selected else C_SOFT)
-		if enabled:
-			surface.surface_add_hit(rect, "bar_dice_stake", i)
+func _draw_bar_top(surface, _state: Dictionary) -> void:
+	var rail := Rect2(46, 134, 808, 194)
+	surface.draw_rect(rail, Color("#2a1420"))
+	surface.draw_rect(Rect2(rail.position + Vector2(12, 10), rail.size - Vector2(24, 20)), Color("#2f2118"))
+	surface.draw_rect(Rect2(rail.position + Vector2(24, 24), rail.size - Vector2(48, 48)), Color("#3a2619"))
+	for i in range(7):
+		var y := 156 + i * 21
+		surface.draw_line(Vector2(84, y), Vector2(814, y + 6), Color(C_YELLOW.r, C_YELLOW.g, C_YELLOW.b, 0.08), 1)
+	surface.draw_rect(rail, Color(C_AMBER.r, C_AMBER.g, C_AMBER.b, 0.32), false, 2)
+	surface.draw_rect(Rect2(132, 300, 636, 5), Color(C_CYAN.r, C_CYAN.g, C_CYAN.b, 0.22))
 
 
-func _draw_dice_row(surface, values: Array, start: Vector2, reroll: Array, suggested: Array, scoring: Array, hidden: bool) -> void:
+func _draw_dice_rows(surface, state: Dictionary) -> void:
+	var phase := str(state.get("phase", "bet"))
+	var player := _int_dice(state.get("player", []))
+	var reroll := _index_array(state.get("reroll", []))
+	var suggested := _index_array(state.get("suggested_reroll", []))
+	var scoring := _index_array(state.get("scoring_indices", []))
+	var animated := _index_array(state.get("animated_dice_indices", []))
+	var guide := _copy_dict(state.get("bar_dice_turn_guide", {}))
+	_draw_opponent_dice_rows(surface, state)
+	surface.surface_label("YOUR CUP", Vector2(262, 204), 12, C_TEAL)
+	if phase == "select":
+		surface.surface_label(str(guide.get("selection", "Pink rerolls; plain dice stay.")).left(64), Vector2(262, 194), 8, C_SOFT)
+	_draw_dice_row(surface, player, PLAYER_DICE_ORIGIN, reroll, suggested, scoring, false, DIE_SIZE, DIE_SPACING, animated, phase == "select", false)
+	if phase == "select":
+		_add_dice_row_hits(surface, player, PLAYER_DICE_ORIGIN, "bar_dice_select", DIE_SIZE, DIE_SPACING)
+		_draw_dice_goal_strip(surface, state, Vector2(262, 266))
+	_draw_legend_row(surface, state, Vector2(262, 306))
+	if bool(state.get("loaded_armed", false)):
+		surface.surface_label("Loaded face: %s" % _word_single(int(state.get("loaded_value", 0))), Vector2(262, 286), 12, C_PINK_2)
+	if bool(state.get("palm_armed", false)):
+		surface.surface_label("Palmed swap ready", Vector2(262, 286), 12, C_PINK_2)
+
+
+func _draw_opponent_dice_rows(surface, state: Dictionary) -> void:
+	var rows := _dictionary_array(state.get("opponent_rows", []))
+	if rows.is_empty():
+		return
+	surface.surface_label("RAIL CUPS", Vector2(76, 134), 9, C_PINK_2)
+	for i in range(mini(rows.size(), MAX_VISIBLE_OPPONENT_ROWS)):
+		var row: Dictionary = rows[i]
+		var origin: Vector2 = OPPONENT_DICE_ORIGINS[i]
+		var accent := C_YELLOW if bool(row.get("winning", false)) else C_PINK_2
+		var panel := Rect2(origin + Vector2(-8, -16), Vector2(204, 34))
+		surface.draw_rect(panel, Color("#130c18"))
+		surface.draw_rect(panel, Color(accent.r, accent.g, accent.b, 0.18), false, 1)
+		surface.surface_label(str(row.get("name", "Rail")).to_upper().left(10), origin + Vector2(0, -5), 7, accent)
+		surface.surface_label(str(row.get("blurb", "Cup ready")).left(18), origin + Vector2(88, -5), 7, C_SOFT)
+		_draw_dice_row(surface, _int_dice(row.get("dice", [])), origin + Vector2(0, 7), [], [], _index_array(row.get("scoring_indices", [])), false, OPPONENT_DIE_SIZE, OPPONENT_DIE_SPACING, [], false, true)
+
+
+func _draw_dice_row(surface, values: Array, start: Vector2, reroll: Array, suggested: Array, scoring: Array, hidden: bool, die_size: Vector2, die_spacing: float, rolling_indices: Array, show_keep_labels: bool, compact: bool) -> void:
 	var tumble_active := bool(surface.surface_animation_active(TUMBLE_CHANNEL))
 	var tumble_progress := float(surface.surface_animation_progress(TUMBLE_CHANNEL))
 	var flicker := float(surface.surface_flicker())
+	var rolling := _index_array(rolling_indices)
 	for i in range(values.size()):
-		var rect := Rect2(start + Vector2(i * DIE_SPACING, 0.0), DIE_SIZE)
-		var settle_point := float(i + 1) / float(DICE_COUNT + 1)
-		var rolling := tumble_active and tumble_progress < settle_point and not hidden
-		var marked := reroll.has(i)
-		var is_suggested := suggested.has(i) and not marked
-		var is_scoring := scoring.has(i)
-		if hidden:
-			_draw_die_cup(surface, rect)
-			continue
+		var rect := Rect2(start + Vector2(float(i) * die_spacing, 0.0), die_size)
+		var die_rolling := tumble_active and tumble_progress < 0.98 and rolling.has(i) and not hidden
 		var draw_rect := rect
-		if rolling:
-			var bounce := sin((flicker * 18.0) + float(i)) * 6.0
-			draw_rect = Rect2(rect.position + Vector2(0.0, bounce), rect.size)
-		var face := int(values[i])
-		if rolling:
-			face = 1 + int(flicker * 21.0 + i * 3) % DIE_FACES
-		_draw_die(surface, draw_rect, face, marked, is_suggested, is_scoring and not rolling)
+		if die_rolling:
+			draw_rect = Rect2(rect.position + Vector2(0, sin((flicker * 18.0) + float(i)) * 5.0), rect.size)
+			_draw_die_motion_trail(surface, rect, i, flicker)
+		if hidden:
+			_draw_die_cup(surface, draw_rect)
+		else:
+			var face := int(values[i])
+			if die_rolling:
+				face = 1 + int(flicker * 19.0 + i * 3) % DIE_FACES
+			_draw_die(surface, draw_rect, face, reroll.has(i), suggested.has(i), scoring.has(i) and not die_rolling, show_keep_labels, compact)
 
 
-func _add_dice_row_hits(surface, values: Array, start: Vector2, action: String) -> void:
+func _add_dice_row_hits(surface, values: Array, start: Vector2, action: String, die_size: Vector2, die_spacing: float) -> void:
 	for i in range(values.size()):
-		surface.surface_add_exact_hit(Rect2(start + Vector2(i * DIE_SPACING, 0.0), DIE_SIZE), action, i)
+		surface.surface_add_exact_hit(Rect2(start + Vector2(float(i) * die_spacing, 0.0), die_size), action, i)
 
 
-func _draw_die(surface, rect: Rect2, value: int, marked: bool, suggested: bool, scoring: bool) -> void:
+func _draw_die(surface, rect: Rect2, value: int, marked: bool, suggested: bool, scoring: bool, show_keep_label: bool, compact: bool) -> void:
+	var flicker := float(surface.surface_flicker())
 	if scoring:
-		surface.draw_rect(Rect2(rect.position - Vector2(5, 5), rect.size + Vector2(10, 10)), Color(C_TEAL.r, C_TEAL.g, C_TEAL.b, 0.30))
+		var grow := (3.0 if compact else 4.0) + absf(sin(flicker * 4.0)) * 1.5
+		surface.draw_rect(Rect2(rect.position - Vector2(grow, grow), rect.size + Vector2(grow * 2.0, grow * 2.0)), Color(C_TEAL.r, C_TEAL.g, C_TEAL.b, 0.30))
 	surface.draw_rect(rect, C_SOFT)
-	var face_color := Color("#f7f1e0") if not marked else Color("#e7c9d8")
-	surface.draw_rect(Rect2(rect.position + Vector2(4, 4), rect.size - Vector2(8, 8)), face_color)
+	var inset := 3.0 if compact else 4.0
+	surface.draw_rect(Rect2(rect.position + Vector2(inset, inset), rect.size - Vector2(inset * 2.0, inset * 2.0)), Color("#f7f1e0") if not marked else Color("#e8c8d8"))
 	if marked:
-		surface.draw_rect(Rect2(rect.position - Vector2(4, 4), rect.size + Vector2(8, 8)), Color(C_PINK.r, C_PINK.g, C_PINK.b, 0.55), false, 3)
-		surface.surface_label("RR", rect.position + Vector2(rect.size.x - 22, 16), 12, C_PINK)
+		var pulse := (3.0 if compact else 4.0) + absf(sin(flicker * 5.5)) * 2.0
+		surface.draw_rect(Rect2(rect.position - Vector2(pulse, pulse), rect.size + Vector2(pulse * 2.0, pulse * 2.0)), Color(C_PINK.r, C_PINK.g, C_PINK.b, 0.64), false, 3)
 	elif suggested:
-		surface.draw_rect(Rect2(rect.position - Vector2(3, 3), rect.size + Vector2(6, 6)), Color(C_AMBER.r, C_AMBER.g, C_AMBER.b, 0.45), false, 2)
+		var suggest_grow := (2.0 if compact else 3.0) + absf(sin(flicker * 3.0)) * 1.0
+		surface.draw_rect(Rect2(rect.position - Vector2(suggest_grow, suggest_grow), rect.size + Vector2(suggest_grow * 2.0, suggest_grow * 2.0)), Color(C_AMBER.r, C_AMBER.g, C_AMBER.b, 0.48), false, 2)
 	elif scoring:
-		surface.draw_rect(Rect2(rect.position - Vector2(4, 4), rect.size + Vector2(8, 8)), Color(C_TEAL.r, C_TEAL.g, C_TEAL.b, 0.70), false, 3)
+		var score_grow := 3.0 if compact else 4.0
+		surface.draw_rect(Rect2(rect.position - Vector2(score_grow, score_grow), rect.size + Vector2(score_grow * 2.0, score_grow * 2.0)), Color(C_TEAL.r, C_TEAL.g, C_TEAL.b, 0.70), false, 3)
 	if value <= 0:
-		surface.surface_label("?", rect.position + rect.size * 0.5 + Vector2(-7, 8), 26, C_DARK)
+		surface.surface_label_centered("?", rect, 18 if compact else 24, C_DARK)
 		return
 	_draw_pips(surface, rect, value)
+	var status := ""
+	var status_color := C_SOFT
+	if marked:
+		status = "REROLL"
+		status_color = C_PINK
+	elif suggested:
+		status = "TRY"
+		status_color = C_AMBER
+	elif scoring:
+		status = "LOCK"
+		status_color = C_TEAL
+	elif show_keep_label:
+		status = "KEEP"
+		status_color = C_SOFT
+	if not status.is_empty():
+		surface.surface_label_centered(status, Rect2(rect.position + Vector2(-2, rect.size.y + 2), Vector2(rect.size.x + 4, 10)), 6 if compact else 7, status_color)
+
+
+func _draw_die_motion_trail(surface, rect: Rect2, index: int, flicker: float) -> void:
+	var phase := fmod(flicker * 4.0 + float(index) * 0.17, 1.0)
+	for trail_index in range(3):
+		var offset := Vector2(-8.0 - float(trail_index) * 5.0, sin((phase + float(trail_index) * 0.2) * TAU) * 4.0)
+		var alpha := 0.12 - float(trail_index) * 0.03
+		surface.draw_rect(Rect2(rect.position + offset, rect.size), Color(C_CYAN.r, C_CYAN.g, C_CYAN.b, alpha), false, 1)
+
+
+func _draw_dice_goal_strip(surface, state: Dictionary, pos: Vector2) -> void:
+	var score := _copy_dict(state.get("player_score", {}))
+	var stage := int(score.get("stage", 0))
+	var steps := [
+		{"label": "SHIP 6", "done": stage >= 1},
+		{"label": "CAPTAIN 5", "done": stage >= 2},
+		{"label": "CREW 4", "done": stage >= 3},
+		{"label": "CARGO", "done": bool(score.get("qualified", false))},
+	]
+	for i in range(steps.size()):
+		var step: Dictionary = steps[i]
+		var rect := Rect2(pos + Vector2(float(i) * 68.0, 0), Vector2(62, 16))
+		var done := bool(step.get("done", false))
+		var color := C_TEAL if done else C_AMBER if i == stage else C_SOFT
+		surface.draw_rect(rect, Color(color.r, color.g, color.b, 0.16 if done or i == stage else 0.06))
+		surface.draw_rect(rect, color, false, 1)
+		surface.surface_label_centered(str(step.get("label", "")), rect.grow(-2), 7, color)
 
 
 func _draw_die_cup(surface, rect: Rect2) -> void:
 	surface.draw_rect(rect, Color("#1c1326"))
 	surface.draw_rect(Rect2(rect.position + Vector2(4, 4), rect.size - Vector2(8, 8)), Color("#2a1c36"))
 	surface.draw_rect(Rect2(rect.position + Vector2(2, 2), rect.size - Vector2(4, 4)), Color(C_PINK.r, C_PINK.g, C_PINK.b, 0.30), false, 2)
-	surface.surface_label("?", rect.position + rect.size * 0.5 + Vector2(-7, 8), 26, C_PINK_2)
+	surface.surface_label_centered("?", rect, 24, C_PINK_2)
 
 
 func _draw_pips(surface, rect: Rect2, value: int) -> void:
@@ -1883,7 +2059,6 @@ func _draw_pips(surface, rect: Rect2, value: int) -> void:
 		rect.position + Vector2(w * 0.28, h * 0.50),
 		rect.position + Vector2(w * 0.72, h * 0.50),
 	]
-	var pip_radius := maxf(4.0, minf(w, h) * 0.075)
 	var indices := {
 		1: [1],
 		2: [0, 2],
@@ -1893,101 +2068,221 @@ func _draw_pips(surface, rect: Rect2, value: int) -> void:
 		6: [0, 2, 3, 4, 5, 6],
 	}
 	for idx in indices.get(value, []):
-		surface.draw_circle(points[int(idx)], pip_radius, C_DARK)
+		surface.draw_circle(points[int(idx)], clampf(minf(w, h) * 0.085, 1.6, 3.5), C_DARK)
 
 
-func _draw_info_panel(surface, surface_state: Dictionary) -> void:
-	surface.surface_label("PAYTABLE", Vector2(548, 108), 16, C_YELLOW)
-	var rows: Array = surface_state.get("paytable_rows", [])
-	var info_blurb := str(surface_state.get("player_blurb", ""))
-	for i in range(mini(rows.size(), 7)):
-		var row: Dictionary = rows[i] if typeof(rows[i]) == TYPE_DICTIONARY else {}
-		var y := 130 + i * 22
-		var label := str(row.get("label", ""))
-		var mult := float(row.get("mult", 0.0))
-		var highlight := not info_blurb.is_empty() and info_blurb.begins_with(label)
-		var row_color := C_TEAL if highlight else C_SOFT
-		surface.surface_label(label.left(22), Vector2(548, y), 13, row_color)
-		surface.surface_label("%.1fx" % mult, Vector2(780, y), 13, C_YELLOW if highlight else C_SOFT)
-		surface.surface_label("$%d" % int(row.get("payout", 0)), Vector2(832, y), 13, C_AMBER if highlight else C_SOFT)
-
-	var info_text := str(surface_state.get("info_text", ""))
-	surface.surface_label(info_text.left(48), Vector2(548, 306), 13, C_CYAN)
-	if not str(surface_state.get("match_summary", "")).is_empty():
-		surface.surface_label(str(surface_state.get("match_summary", "")).left(40), Vector2(548, 326), 12, C_TEAL)
-	if bool(surface_state.get("loaded_armed", false)):
-		surface.surface_label("Loaded die: %s" % _word_single(int(surface_state.get("loaded_value", 0))), Vector2(56, 212), 13, C_PINK_2)
-	if bool(surface_state.get("palm_armed", false)):
-		surface.surface_label("Palmed swap ready", Vector2(56, 212), 13, C_PINK_2)
-	if bool(surface_state.get("pit_boss_watched", false)):
-		surface.surface_label(str(surface_state.get("pit_boss_summary", "")).left(42), Vector2(548, 92), 12, C_PINK)
+func _draw_explainer(surface, state: Dictionary) -> void:
+	var explainer := _copy_dict(state.get("bar_dice_explainer", {}))
+	var guide := _copy_dict(state.get("bar_dice_turn_guide", {}))
+	var rect := RULES_PANEL_RECT
+	_draw_neon_panel(surface, rect, C_AMBER, 0.14)
+	var title := str(guide.get("title", explainer.get("title", "How to play"))).to_upper()
+	surface.surface_label(title.left(22), rect.position + Vector2(10, 13), 9, C_YELLOW)
+	surface.surface_label("POT $%d" % int(explainer.get("pot", 0)), rect.position + Vector2(232, 13), 8, C_TEAL)
+	surface.surface_label("RAKE $%d" % int(explainer.get("rake", 0)), rect.position + Vector2(232, 25), 8, C_PINK_2)
+	var lines := _panel_string_lines(state.get("bar_dice_rules_lines", []))
+	var y := rect.position.y + 27.0
+	for i in range(mini(lines.size(), 4)):
+		var color := C_SOFT if i == 0 else C_WHITE if i == 1 else C_AMBER if i == 2 else C_TEAL
+		surface.surface_label(str(lines[i]), Vector2(rect.position.x + 10.0, y + float(i) * 9.0), 6, color)
+	surface.surface_label("CARGO %d" % int(explainer.get("cargo", 0)), rect.position + Vector2(232, 40), 8, C_YELLOW)
 
 
-func _draw_rail_bettors(surface, surface_state: Dictionary, phase: String) -> void:
-	var bettors: Array = surface_state.get("rail_bettors", []) if typeof(surface_state.get("rail_bettors", [])) == TYPE_ARRAY else []
-	if bettors.is_empty():
-		return
-	for i in range(mini(bettors.size(), 3)):
-		if typeof(bettors[i]) != TYPE_DICTIONARY:
+func _draw_paytable(surface, state: Dictionary) -> void:
+	var rect := PAYTABLE_PANEL_RECT
+	_draw_neon_panel(surface, rect, C_CYAN, 0.12)
+	surface.surface_label("POT RULES", rect.position + Vector2(10, 13), 9, C_CYAN)
+	var rows: Array = state.get("paytable_rows", []) if typeof(state.get("paytable_rows", [])) == TYPE_ARRAY else []
+	for i in range(mini(rows.size(), 3)):
+		var row: Dictionary = rows[i]
+		var y := rect.position.y + 26 + i * 9
+		surface.surface_label(str(row.get("label", "")).left(18), Vector2(rect.position.x + 10, y), 6, C_SOFT)
+		var payout_text := "$%d" % int(row.get("payout", 0)) if int(row.get("payout", 0)) > 0 else "NO PAY"
+		surface.surface_label(payout_text, Vector2(rect.position.x + 138, y), 6, C_YELLOW)
+
+
+func _draw_legend_row(surface, state: Dictionary, pos: Vector2) -> void:
+	var legend: Array = state.get("dice_legend", []) if typeof(state.get("dice_legend", [])) == TYPE_ARRAY else []
+	for i in range(mini(legend.size(), 4)):
+		if typeof(legend[i]) != TYPE_DICTIONARY:
 			continue
-		var bettor: Dictionary = bettors[i]
-		var rect := Rect2(56 + i * 98, 310, 92, 34)
-		var color := _rail_chip_color(str(bettor.get("chip_color", "cyan")))
-		var rapport := clampi(int(bettor.get("rapport", 50)), 0, 100)
-		var rapport_color := C_TEAL if rapport >= 58 else C_PINK if rapport <= 42 else C_YELLOW
-		surface.draw_rect(rect, Color(0.02, 0.02, 0.06, 0.78))
-		surface.draw_rect(rect, Color(rapport_color.r, rapport_color.g, rapport_color.b, 0.34), false, 1)
-		var wager := _copy_dict(bettor.get("visible_bet", _rail_wager_label(bettor)))
-		surface.draw_circle(rect.position + Vector2(10, 11), 6.0, color)
-		surface.draw_circle(rect.position + Vector2(10, 11), 2.5, Color("#f8f4dc"))
-		surface.surface_label(str(bettor.get("name", "Rail")).left(7), rect.position + Vector2(20, 10), 7, C_WHITE)
-		surface.surface_label("%s $%d" % [str(wager.get("label", "BET")).to_upper().left(5), int(wager.get("stake", 0))], rect.position + Vector2(6, 21), 7, C_YELLOW)
-		var meter := Rect2(rect.position + Vector2(58, 22), Vector2(28, 3))
-		surface.draw_rect(meter, Color("#070810"))
-		surface.draw_rect(Rect2(meter.position, Vector2(meter.size.x * float(rapport) / 100.0, meter.size.y)), rapport_color)
+		var entry: Dictionary = legend[i]
+		var color := C_TEAL if i == 0 else C_AMBER if i == 1 else C_PINK if i == 2 else C_SOFT
+		var x := pos.x + float(i) * 66.0
+		surface.draw_rect(Rect2(x, pos.y - 7, 9, 7), color)
+		surface.surface_label(str(entry.get("label", "")).left(6), Vector2(x + 12, pos.y), 7, color)
+
+
+func _draw_round_timer(surface, state: Dictionary) -> void:
+	TableVisualsScript.draw_round_timer_panel(surface, _copy_dict(state.get("table_round_timer", {})), ROUND_TIMER_RECT, C_TEAL)
+
+
+func _draw_console(surface, state: Dictionary) -> void:
+	var phase := str(state.get("phase", "bet"))
+	var panel := Rect2(0, CONSOLE_Y, 900, 86)
+	surface.draw_rect(panel, Color(0.02, 0.02, 0.05, 0.86))
+	surface.draw_rect(panel, Color(C_YELLOW.r, C_YELLOW.g, C_YELLOW.b, 0.18), false, 1)
+	var guide := _copy_dict(state.get("bar_dice_turn_guide", {}))
+	_draw_chip_ladder(surface, state, phase)
+	surface.surface_label("ANTE $%d" % int(state.get("active_stake", 0)), Vector2(330, CONSOLE_Y + 24), 12, C_YELLOW)
+	surface.surface_label("POT $%d" % int(state.get("pot_meter", 0)), Vector2(330, CONSOLE_Y + 44), 12, C_TEAL)
+	surface.surface_label("CARRY $%d" % int(state.get("carryover_pot", 0)), Vector2(330, CONSOLE_Y + 64), 11, C_SOFT)
+	var buttons := _dictionary_array(state.get("bar_dice_action_buttons", []))
+	var widths := [108.0, 108.0, 100.0, 100.0] if phase == "select" else [108.0, 124.0, 116.0]
+	var x := 428.0
+	for i in range(mini(buttons.size(), widths.size())):
+		var button: Dictionary = buttons[i]
+		var action := str(button.get("action", ""))
+		var rect := Rect2(x, CONSOLE_Y + 13, float(widths[i]), 44)
+		_draw_table_button(
+			surface,
+			rect,
+			str(button.get("label", "")),
+			action,
+			int(button.get("index", 0)),
+			_button_accent(str(button.get("accent", "teal"))),
+			bool(button.get("enabled", true)),
+			_selected_contains(state, action),
+			str(button.get("detail", ""))
+		)
+		x += float(widths[i]) + 8.0
+	if phase == "settled":
+		var delta := int(state.get("result_bankroll_delta", 0))
+		var heat := int(state.get("result_suspicion_delta", 0))
+		var color := C_TEAL if delta > 0 else C_YELLOW if delta == 0 else C_ORANGE
+		surface.surface_label("Bankroll %+d  Heat %+d" % [delta, heat], Vector2(452, CONSOLE_Y + 74), 11, color)
+	else:
+		var prompt := str(guide.get("shake_hint", "Roll, mark dice, shake, then settle."))
+		surface.surface_label(prompt.left(74), Vector2(452, CONSOLE_Y + 74), 9, C_SOFT)
+
+
+func _draw_chip_ladder(surface, state: Dictionary, phase: String) -> void:
+	var ladder := _int_array(state.get("stake_ladder", []))
+	var selected := int(state.get("selected_stake_index", 0))
+	for i in range(ladder.size()):
+		var rect := Rect2(28 + i * 54, CONSOLE_Y + 22, 46, 34)
+		var fill := C_YELLOW if i == selected else Color("#271735")
+		surface.draw_rect(rect, fill)
+		surface.draw_rect(rect, C_SOFT, false, 2)
+		surface.surface_label_centered("$%d" % int(ladder[i]), rect, 12, C_DARK if i == selected else C_SOFT)
 		if phase != "select":
-			var with_rect := Rect2(rect.position + Vector2(6, 25), Vector2(38, 8))
-			var fade_rect := Rect2(rect.position + Vector2(48, 25), Vector2(38, 8))
-			surface.draw_rect(with_rect, Color(C_TEAL.r, C_TEAL.g, C_TEAL.b, 0.18))
-			surface.draw_rect(fade_rect, Color(C_PINK.r, C_PINK.g, C_PINK.b, 0.18))
-			surface.surface_label_centered("WITH", with_rect, 6, C_TEAL)
-			surface.surface_label_centered("FADE", fade_rect, 6, C_PINK)
-			surface.surface_add_exact_hit(with_rect, "bar_dice_rail_bet", i)
-			surface.surface_add_exact_hit(fade_rect, "bar_dice_rail_bet", i + 100)
+			surface.surface_add_hit(rect, "bar_dice_stake", i)
 
 
-func _rail_chip_color(name: String) -> Color:
+func _draw_table_button(surface, rect: Rect2, label: String, action: String, index: int, accent: Color, enabled: bool = true, selected: bool = false, detail: String = "") -> void:
+	var alpha := 0.28 if enabled else 0.08
+	surface.draw_rect(rect, Color(accent.r, accent.g, accent.b, alpha))
+	surface.draw_rect(rect, C_WHITE if selected else accent, false, 2 if selected else 1)
+	var text_color := accent if enabled else Color(C_SOFT.r, C_SOFT.g, C_SOFT.b, 0.45)
+	if detail.is_empty():
+		surface.surface_label_centered(label.left(18), rect.grow(-4), 9, text_color)
+	else:
+		surface.surface_label_centered(label.left(18), Rect2(rect.position + Vector2(4, 8), Vector2(rect.size.x - 8.0, 13)), 8, text_color)
+		surface.surface_label_centered(detail.left(22), Rect2(rect.position + Vector2(4, 25), Vector2(rect.size.x - 8.0, 11)), 7, text_color)
+	if enabled:
+		surface.surface_add_exact_hit(rect, action, index)
+
+
+func _button_accent(name: String) -> Color:
 	match name:
-		"pink":
-			return C_PINK
 		"yellow":
 			return C_YELLOW
-		"teal":
-			return C_TEAL
+		"pink":
+			return C_PINK
 		"orange":
 			return C_ORANGE
+		"amber":
+			return C_AMBER
 		_:
-			return C_CYAN
+			return C_TEAL
 
 
-func _draw_controls(surface, surface_state: Dictionary, phase: String) -> void:
-	if phase == "select":
-		surface.surface_draw_action_button(Rect2(352, 354, 112, 38), "RESOLVE", "bar_dice_resolve", 0, C_TEAL)
-		surface.surface_draw_action_button(Rect2(474, 354, 132, 38), "LOADED", "bar_dice_load", 0, C_PINK)
-		surface.surface_draw_action_button(Rect2(616, 354, 132, 38), "PALM", "bar_dice_palm", 0, C_ORANGE)
-	else:
-		surface.surface_draw_action_button(Rect2(352, 354, 112, 38), "ROLL", "bar_dice_roll", 0, C_TEAL)
-		surface.surface_draw_action_button(Rect2(474, 354, 132, 38), "QUICK", "bar_dice_resolve", 0, C_AMBER)
-		if bool(surface_state.get("press_available", false)):
-			surface.surface_draw_action_button(Rect2(616, 354, 132, 38), "PRESS $%d" % int(surface_state.get("press_risk", 0)), "bar_dice_press", 0, C_YELLOW)
-	if phase == "settled":
-		var delta := int(surface_state.get("result_bankroll_delta", 0))
-		var heat := int(surface_state.get("result_suspicion_delta", 0))
-		var color := C_TEAL if delta > 0 else (C_YELLOW if delta == 0 else C_ORANGE)
-		surface.surface_label("Bankroll %+d   Heat %+d" % [delta, heat], Vector2(352, 414), 14, color)
+func _selected_contains(state: Dictionary, action: String) -> bool:
+	return (state.get("native_selected_surface_actions", []) as Array).has(action)
 
 
-# --- Result/value helpers ----------------------------------------------------
+func _draw_neon_panel(surface, rect: Rect2, accent: Color, alpha: float = 0.16) -> void:
+	surface.draw_rect(rect.grow(4), Color(accent.r, accent.g, accent.b, alpha * 0.20))
+	surface.draw_rect(rect, Color(0.01, 0.02, 0.05, 0.74))
+	surface.draw_rect(rect, Color(accent.r, accent.g, accent.b, alpha), false, 1)
+
+
+func _bar_dice_layout_snapshot() -> Dictionary:
+	return {
+		"rules_panel": _rect_payload(RULES_PANEL_RECT),
+		"paytable_panel": _rect_payload(PAYTABLE_PANEL_RECT),
+		"round_timer": _rect_payload(ROUND_TIMER_RECT),
+		"text_panel_rects": _bar_dice_text_panel_regions(),
+		"patron_safe_rects": _bar_dice_patron_safe_rects(),
+	}
+
+
+func _bar_dice_text_panel_regions() -> Array:
+	return [
+		_rect_payload(RULES_PANEL_RECT, "rules"),
+		_rect_payload(PAYTABLE_PANEL_RECT, "paytable"),
+		_rect_payload(ROUND_TIMER_RECT, "round_timer"),
+	]
+
+
+func _bar_dice_patron_safe_rects() -> Array:
+	var rects: Array = []
+	for i in range(mini(BAR_PATRON_POSITIONS.size(), 4)):
+		var pos: Vector2 = BAR_PATRON_POSITIONS[i]
+		rects.append(_rect_payload(Rect2(pos + Vector2(-50, -54), Vector2(142, 158)), "patron_%d" % i))
+	return rects
+
+
+func _rect_payload(rect: Rect2, id: String = "") -> Dictionary:
+	return {
+		"id": id,
+		"x": rect.position.x,
+		"y": rect.position.y,
+		"w": rect.size.x,
+		"h": rect.size.y,
+	}
+
+
+func _compact_text_lines(source_lines: Array, max_chars: int) -> Array:
+	var result: Array = []
+	for value in source_lines:
+		var line := str(value).strip_edges()
+		if line.is_empty():
+			continue
+		var wrapped := _wrap_text_line(line, max_chars)
+		result.append_array(wrapped)
+	return result
+
+
+func _wrap_text_line(text: String, max_chars: int) -> Array:
+	var limit := maxi(8, max_chars)
+	var words := text.split(" ", false)
+	var result: Array = []
+	var current := ""
+	for word_value in words:
+		var word := str(word_value)
+		if current.is_empty():
+			current = word
+		elif current.length() + 1 + word.length() <= limit:
+			current = "%s %s" % [current, word]
+		else:
+			result.append(current)
+			current = word
+	if not current.is_empty():
+		result.append(current)
+	return result
+
+
+func _panel_string_lines(value: Variant) -> Array:
+	var result: Array = []
+	if typeof(value) != TYPE_ARRAY:
+		return result
+	for line_value in value as Array:
+		var line := str(line_value).strip_edges()
+		if not line.is_empty():
+			result.append(line)
+	return result
+
 
 func _empty_result(action_id: String, stake: int, environment: Dictionary, text: String) -> Dictionary:
 	return GameModule.build_action_result({
@@ -2002,6 +2297,48 @@ func _empty_result(action_id: String, stake: int, environment: Dictionary, text:
 		"environment_id": environment.get("id", ""),
 		"message": text,
 	})
+
+
+func _action_def(action_id: String) -> Dictionary:
+	for action_value in definition.get("legal_actions", []):
+		if typeof(action_value) == TYPE_DICTIONARY and str((action_value as Dictionary).get("id", "")) == action_id:
+			return (action_value as Dictionary).duplicate(true)
+	for action_value in definition.get("cheat_actions", []):
+		if typeof(action_value) == TYPE_DICTIONARY and str((action_value as Dictionary).get("id", "")) == action_id:
+			return (action_value as Dictionary).duplicate(true)
+	return {}
+
+
+func _item_effect_total(key: String, run_state: RunState) -> int:
+	if run_state == null:
+		return 0
+	return run_state.item_effect_total(key, get_family()) if run_state.has_method("item_effect_total") else 0
+
+
+func _patron_snitch_pressure(patrons: Array) -> int:
+	var total := 0
+	for patron_value in patrons:
+		var patron: Dictionary = patron_value
+		if bool(patron.get("watching_player", false)):
+			total += int(patron.get("active_snitch_risk", patron.get("snitch_risk", 0)))
+	return total
+
+
+func _reroll_summary(marks: Array) -> String:
+	if marks.is_empty():
+		return "auto locks"
+	var labels: Array = []
+	for mark in marks:
+		labels.append(str(int(mark) + 1))
+	return ", ".join(labels)
+
+
+func _word_single(value: int) -> String:
+	return str(DIE_WORD.get(value, str(value)))
+
+
+func _word_plural(value: int) -> String:
+	return str(DIE_WORD_PLURAL.get(value, "%ss" % value))
 
 
 func _int_dice(value: Variant) -> Array:
@@ -2034,6 +2371,13 @@ func _index_array(value: Variant) -> Array:
 	return result
 
 
+func _all_die_indices() -> Array:
+	var result: Array = []
+	for i in range(DICE_COUNT):
+		result.append(i)
+	return result
+
+
 func _index_array_raw(value: Variant) -> Array:
 	var result: Array = []
 	if typeof(value) != TYPE_ARRAY:
@@ -2041,6 +2385,20 @@ func _index_array_raw(value: Variant) -> Array:
 	for entry in value:
 		result.append(int(entry))
 	return result
+
+
+func _dictionary_array(value: Variant) -> Array:
+	var result: Array = []
+	if typeof(value) != TYPE_ARRAY:
+		return result
+	for entry in value:
+		if typeof(entry) == TYPE_DICTIONARY:
+			result.append((entry as Dictionary).duplicate(true))
+	return result
+
+
+func _color_name(name: String) -> Dictionary:
+	return {"name": name}
 
 
 func _stable_hash(text: String) -> int:

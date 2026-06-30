@@ -14,6 +14,8 @@ const LOCAL_RISK_DECAY_BY_DISTANCE := {
 const LOCAL_HEAT_RETURN_DECAY_PERCENT := 10
 const LOCAL_RISK_TURN_DECAY_INTERVAL := 2
 const ALCOHOL_MAX := 100
+const DRUNK_TIME_SCALE_MIN := 0.33
+const DRUNK_TIME_SCALE_EXPONENT := 1.63
 const DRUNK_ABSORPTION_INTERVAL_MSEC := 3000
 const DRUNK_ABSORPTION_STACK_GRACE_MSEC := 250
 const BASELINE_LUCK_MIN := -20
@@ -59,6 +61,8 @@ const GRAND_CASINO_SHOWDOWN_STEP_PRESSURE := "pressure_choice"
 const GRAND_CASINO_SHOWDOWN_DEFAULT_SUCCESS_MESSAGE := "Rourke cannot prove enough to hold you. The casino lets you walk with your winnings; the next act is not implemented yet."
 const GRAND_CASINO_SHOWDOWN_DEFAULT_FAILURE_MESSAGE := "The story falls apart in the back room. The casino takes you out back and the run ends."
 const GRAND_CASINO_HIGH_ROLLER_DEFAULT_SUCCESS_MESSAGE := "The host issues you a Grand Casino Players Card and lets you leave with your winnings. The next act is not implemented yet."
+const TERMINAL_SCORE_VICTORY_MULTIPLIER := 3
+const ITEM_DEFINITIONS_PATH := "res://data/items/items.json"
 
 var seed_text: String = ""
 var seed_value: int = 1
@@ -83,6 +87,9 @@ var story_log: Array = []
 var run_status: String = RUN_STATUS_ACTIVE
 var run_failure_reason: String = FAILURE_NONE
 var run_failure_message: String = ""
+var run_spending_score: int = 0
+var _item_effects_by_id: Dictionary = {}
+var _item_effects_loaded: bool = false
 
 
 # Resets the run from a seed and optional challenge.
@@ -114,6 +121,7 @@ func start_new(p_seed_text: String = "FOUNDATION-SEED", p_challenge_config: Dict
 	run_status = RUN_STATUS_ACTIVE
 	run_failure_reason = FAILURE_NONE
 	run_failure_message = ""
+	run_spending_score = 0
 
 
 # Creates an RNG stream from the saved run RNG state.
@@ -367,6 +375,17 @@ func luck_win_chance_bonus() -> int:
 	return effective_luck()
 
 
+# Returns how quickly timing windows and surface motion should move while drunk.
+func drunk_time_scale() -> float:
+	var normalized := clampf(float(drunk_level) / float(ALCOHOL_MAX), 0.0, 1.0)
+	var scale := 1.0 - (1.0 - DRUNK_TIME_SCALE_MIN) * pow(normalized, DRUNK_TIME_SCALE_EXPONENT)
+	return clampf(scale, DRUNK_TIME_SCALE_MIN, 1.0)
+
+
+func drunk_time_scale_percent() -> int:
+	return clampi(int(round(drunk_time_scale() * 100.0)), int(round(DRUNK_TIME_SCALE_MIN * 100.0)), 100)
+
+
 # Returns a small payout adjustment from luck without letting luck dominate stakes.
 func luck_payout_bonus(stake: int, won: bool = true) -> int:
 	if not won or stake <= 0:
@@ -428,13 +447,16 @@ func alcohol_condition_label() -> String:
 func alcohol_pressure_summary() -> String:
 	var luck := effective_luck()
 	var luck_text := "luck %+d" % luck if luck != 0 else "luck steady"
+	var time_text := ""
+	if drunk_level > 0:
+		time_text = ", world %d%% speed" % drunk_time_scale_percent()
 	var pending := pending_drunk_absorption_amount()
 	if pending > 0:
-		return "%s; drink still kicking in +%d, %s." % [alcohol_condition_label().capitalize(), pending, luck_text]
+		return "%s; drink still kicking in +%d, %s%s." % [alcohol_condition_label().capitalize(), pending, luck_text, time_text]
 	if alcoholic_level > drunk_level:
-		return "%s; need outpaces drink, %s." % [alcohol_condition_label().capitalize(), luck_text]
+		return "%s; need outpaces drink, %s%s." % [alcohol_condition_label().capitalize(), luck_text, time_text]
 	if drunk_level > 0:
-		return "%s; %s, heat rises faster." % [alcohol_condition_label().capitalize(), luck_text]
+		return "%s; %s, heat rises faster%s." % [alcohol_condition_label().capitalize(), luck_text, time_text]
 	return "Sober; %s." % luck_text
 
 
@@ -1655,6 +1677,30 @@ func set_active_item(item_id: String) -> void:
 	active_item_id = item_id if inventory.has(item_id) else ""
 
 
+# Sums passive numeric item effects for owned run inventory.
+func item_effect_total(key: String, game_family: String = "") -> int:
+	var effect_key := key.strip_edges()
+	if effect_key.is_empty():
+		return 0
+	var family_key := game_family.strip_edges()
+	var effects_by_id := _item_effect_index()
+	if effects_by_id.is_empty():
+		return 0
+	var total := 0
+	for inventory_entry in inventory:
+		var item_id := _inventory_item_id(inventory_entry)
+		if item_id.is_empty():
+			continue
+		var effect := _copy_dict(effects_by_id.get(item_id, {}))
+		if effect.is_empty():
+			continue
+		total += _numeric_effect_value(effect, effect_key)
+		if not family_key.is_empty():
+			var families := _copy_dict(effect.get("families", {}))
+			total += _numeric_effect_value(_copy_dict(families.get(family_key, {})), effect_key)
+	return total
+
+
 # Removes an item offer from the current environment.
 func remove_item_offer(item_id: String) -> void:
 	var offers: Array = current_environment.get("item_offers", [])
@@ -2027,6 +2073,77 @@ func is_terminal() -> bool:
 	return run_status == RUN_STATUS_FAILED or run_status == RUN_STATUS_ENDED
 
 
+# Records player score input from money spent on travel and item purchases.
+func record_score_spending(amount: int, _source_type: String = "") -> void:
+	var spend := maxi(0, amount)
+	if spend <= 0:
+		return
+	run_spending_score = maxi(0, run_spending_score + spend)
+
+
+# Extracts scoreable spending from a shared result shape after it is accepted.
+func record_score_spending_from_result(result: Dictionary, deltas: Dictionary) -> void:
+	var result_type := str(result.get("type", ""))
+	var action_id := str(result.get("action_id", ""))
+	var action_kind := str(result.get("action_kind", ""))
+	if result_type == "travel" or action_kind == "travel":
+		var travel_spend := maxi(0, -int(deltas.get("bankroll_delta", result.get("bankroll_delta", 0))))
+		record_score_spending(travel_spend, "travel")
+		return
+	if action_id == "buy_item" or result_type == "item_purchase" or _result_story_has_type(deltas, "item_purchase"):
+		var item_spend := maxi(0, int(result.get("price", 0)))
+		if item_spend <= 0:
+			item_spend = _first_story_price(deltas, "item_purchase")
+		if item_spend <= 0:
+			item_spend = maxi(0, -int(deltas.get("bankroll_delta", result.get("bankroll_delta", 0))))
+		record_score_spending(item_spend, "items")
+
+
+func terminal_score_multiplier() -> int:
+	return TERMINAL_SCORE_VICTORY_MULTIPLIER if run_status == RUN_STATUS_ENDED else 1
+
+
+func terminal_score() -> int:
+	return run_spending_score * terminal_score_multiplier()
+
+
+func terminal_score_summary() -> Dictionary:
+	var multiplier := terminal_score_multiplier()
+	return {
+		"base_spending": run_spending_score,
+		"multiplier": multiplier,
+		"score": run_spending_score * multiplier,
+	}
+
+
+func seed_is_hidden() -> bool:
+	if bool(challenge_config.get("hidden_seed", false)):
+		return true
+	var modifiers := _copy_dict(challenge_config.get("modifiers", {}))
+	return bool(modifiers.get("hidden_seed", false))
+
+
+func player_facing_seed_text() -> String:
+	return "Hidden daily challenge" if seed_is_hidden() else seed_text
+
+
+func _result_story_has_type(deltas: Dictionary, story_type: String) -> bool:
+	for story_value in _copy_array(deltas.get("story_log", [])):
+		if typeof(story_value) == TYPE_DICTIONARY and str((story_value as Dictionary).get("type", "")) == story_type:
+			return true
+	return false
+
+
+func _first_story_price(deltas: Dictionary, story_type: String) -> int:
+	for story_value in _copy_array(deltas.get("story_log", [])):
+		if typeof(story_value) != TYPE_DICTIONARY:
+			continue
+		var story_entry := story_value as Dictionary
+		if str(story_entry.get("type", "")) == story_type:
+			return maxi(0, int(story_entry.get("price", 0)))
+	return 0
+
+
 # Marks the run as failed in the RunState source of truth.
 func fail_run(reason: String, message: String = "") -> void:
 	if run_status == RUN_STATUS_ENDED and (bool(narrative_flags.get("demo_victory", false)) or bool(narrative_flags.get("prestige_victory", false))):
@@ -2245,6 +2362,7 @@ func to_dict() -> Dictionary:
 		"run_status": run_status,
 		"run_failure_reason": run_failure_reason,
 		"run_failure_message": run_failure_message,
+		"run_spending_score": run_spending_score,
 	}
 
 
@@ -2276,6 +2394,7 @@ func from_dict(data: Dictionary) -> void:
 	run_status = saved_run_status
 	run_failure_reason = str(data.get("run_failure_reason", FAILURE_NONE))
 	run_failure_message = str(data.get("run_failure_message", ""))
+	run_spending_score = maxi(0, int(data.get("run_spending_score", 0)))
 	_refresh_economy()
 	_activate_current_local_suspicion(true)
 	_initialize_grand_casino_objective_runtime()
@@ -2307,15 +2426,19 @@ static func standard_challenge(p_seed_text: String = "FOUNDATION-SEED") -> Dicti
 
 
 # Builds a daily challenge config.
-static func daily_challenge(daily_id: String) -> Dictionary:
+static func daily_challenge(daily_id: String, p_seed_text: String = "", hidden_seed: bool = false) -> Dictionary:
 	var resolved_daily_id := daily_id if not daily_id.is_empty() else "UNSET-DAILY"
-	return _challenge_config(
+	var resolved_seed := p_seed_text if not p_seed_text.is_empty() else "DAILY:%s" % resolved_daily_id
+	var config := _challenge_config(
 		"daily",
 		"daily",
-		"DAILY:%s" % resolved_daily_id,
+		resolved_seed,
 		resolved_daily_id,
 		{"leaderboard_scope": "daily"}
 	)
+	if hidden_seed:
+		config["hidden_seed"] = true
+	return config
 
 
 # Builds a custom challenge config.
@@ -2333,6 +2456,7 @@ static func _challenge_config(mode: String, challenge_id: String, p_seed_text: S
 		"seed_text": p_seed_text,
 		"daily_id": daily_id,
 		"modifiers": modifiers.duplicate(true),
+		"hidden_seed": false,
 	}
 
 
@@ -2347,6 +2471,7 @@ static func normalize_challenge(p_seed_text: String, config: Dictionary = {}) ->
 	normalized["seed_text"] = normalized.get("seed_text", p_seed_text if not p_seed_text.is_empty() else "FOUNDATION-SEED")
 	normalized["daily_id"] = normalized.get("daily_id", "")
 	normalized["modifiers"] = _copy_dict(normalized.get("modifiers", {}))
+	normalized["hidden_seed"] = bool(normalized.get("hidden_seed", false))
 	return normalized
 
 
@@ -2382,6 +2507,43 @@ static func _copy_dict(value: Variant) -> Dictionary:
 	if typeof(value) != TYPE_DICTIONARY:
 		return {}
 	return (value as Dictionary).duplicate(true)
+
+
+func _item_effect_index() -> Dictionary:
+	if _item_effects_loaded:
+		return _item_effects_by_id
+	_item_effects_loaded = true
+	_item_effects_by_id = {}
+	if not FileAccess.file_exists(ITEM_DEFINITIONS_PATH):
+		return _item_effects_by_id
+	var parsed: Variant = JSON.parse_string(FileAccess.get_file_as_string(ITEM_DEFINITIONS_PATH))
+	if typeof(parsed) != TYPE_ARRAY:
+		return _item_effects_by_id
+	for item_value in parsed as Array:
+		if typeof(item_value) != TYPE_DICTIONARY:
+			continue
+		var item: Dictionary = item_value
+		var item_id := str(item.get("id", "")).strip_edges()
+		if item_id.is_empty():
+			continue
+		var effect := _copy_dict(item.get("effect", {}))
+		if not effect.is_empty():
+			_item_effects_by_id[item_id] = effect
+	return _item_effects_by_id
+
+
+static func _inventory_item_id(entry: Variant) -> String:
+	if typeof(entry) == TYPE_DICTIONARY:
+		return str((entry as Dictionary).get("id", "")).strip_edges()
+	return str(entry).strip_edges()
+
+
+static func _numeric_effect_value(effect: Dictionary, key: String) -> int:
+	var value: Variant = effect.get(key, 0)
+	var value_type := typeof(value)
+	if value_type == TYPE_INT or value_type == TYPE_FLOAT:
+		return int(value)
+	return 0
 
 
 # Normalizes a list of ids into strings.

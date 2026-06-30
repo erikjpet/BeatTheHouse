@@ -103,6 +103,7 @@ func generate_environment_state(_run_state: RunState, environment: Dictionary, r
 		"hand_history": [],
 		"shoe_history": [],
 		"dealer_catch_base": catch_base,
+		"table_round_timer_started_msec": 0,
 	}
 	table.merge(shoe_state, true)
 	return table
@@ -120,10 +121,15 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 	var deal_active := not last_result.is_empty() and elapsed_msec >= 0 and elapsed_msec < DEAL_ANIMATION_DURATION_MSEC
 	var payout_active := not last_result.is_empty() and elapsed_msec >= DEAL_ANIMATION_DURATION_MSEC and elapsed_msec < DEAL_ANIMATION_DURATION_MSEC + PAYOUT_ANIMATION_DURATION_MSEC
 	var min_ready := total_wager >= int(table.get("table_minimum", 20))
-	var table_notice := _table_notice(table, session, last_result, deal_active, payout_active)
+	var timer_active := not deal_active and not payout_active
+	var round_timer := GameModule.table_round_timer_status(table, now_msec, "Next hand") if timer_active else {}
+	if timer_active:
+		_update_environment_table(environment, table)
+	var table_notice := _table_notice(table, session, last_result, deal_active, payout_active, round_timer)
 	var rules := _table_rules(table)
 	var targets := _baccarat_bet_targets(table)
 	var surface_patrons := _patrons_for_surface(table, last_result)
+	var hand_explainer := _baccarat_hand_explainer(session, last_result, deal_active, payout_active, round_timer)
 	return GameModule.surface_spec({
 		"surface_renderer": "baccarat",
 		"surface_life": "immersive_table",
@@ -133,7 +139,7 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 		"surface_embeds_outcomes": true,
 		"surface_suppresses_game_result_burst": true,
 		"surface_animates_idle": true,
-		"surface_realtime_state_refresh": false,
+		"surface_realtime_state_refresh": true,
 		"surface_state_labels": [
 			{"label": "Wager", "value": "$%d" % total_wager},
 			{"label": "Shoe", "value": str(table.get("shoe_label", "8-deck shoe"))},
@@ -174,7 +180,7 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 		"total_wager_cost": total_wager,
 		"table_minimum": int(table.get("table_minimum", 20)),
 		"table_maximum": int(table.get("table_maximum", 500)),
-		"can_deal": total_wager > 0 and min_ready and not deal_active and not payout_active,
+		"can_deal": (total_wager <= 0 or min_ready) and not deal_active and not payout_active,
 		"can_clear": not bets.is_empty() and not deal_active and not payout_active,
 		"can_undo": not (_array(session.get("baccarat_undo_stack", [])).is_empty()) and not deal_active and not payout_active,
 		"can_rebet": not _bet_dict(session.get("baccarat_rebet", table.get("last_bets", {}))).is_empty() and not deal_active and not payout_active,
@@ -187,8 +193,10 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 		"last_hand": _copy_dict(table.get("last_hand", {})),
 		"hand_history": _dictionary_array(table.get("hand_history", [])),
 		"deal_animation_events": _dictionary_array(last_result.get("animation_events", [])),
+		"baccarat_explainer": hand_explainer,
 		"result_message": str(last_result.get("summary", "")) if not deal_active else "",
 		"table_notice": table_notice,
+		"table_round_timer": round_timer,
 		"native_selected_surface_actions": _selected_surface_actions(bets),
 		"surface_action_bindings": {
 			"legal": {"action": "baccarat_deal", "index": 0},
@@ -226,6 +234,7 @@ func draw_surface(surface, surface_state: Dictionary, _render_context: Dictionar
 		return false
 	surface.surface_begin_design_space(surface.surface_board_size())
 	_draw_baccarat_room(surface, surface_state)
+	_draw_hand_explainer(surface, surface_state)
 	_draw_baccarat_table(surface, surface_state)
 	_draw_table_patrons(surface, surface_state)
 	_draw_croupier_station(surface, surface_state)
@@ -234,10 +243,47 @@ func draw_surface(surface, surface_state: Dictionary, _render_context: Dictionar
 	_draw_bet_chips(surface, surface_state)
 	_draw_shoe_and_discard(surface, surface_state)
 	_draw_table_notice(surface, surface_state)
+	_draw_round_timer(surface, surface_state)
 	_draw_chip_rack(surface, surface_state)
 	_draw_action_console(surface, surface_state)
 	surface.surface_end_design_space()
 	return true
+
+
+func surface_needs_auto_tick(ui_state: Dictionary, run_state: RunState, environment: Dictionary) -> bool:
+	var table := _table_state(run_state, environment)
+	var session := _normalized_session(run_state, environment, ui_state, table)
+	if _surface_locked(table, session):
+		return false
+	var now_msec := int(ui_state.get("surface_time_msec", Time.get_ticks_msec()))
+	var timer := GameModule.table_round_timer_status(table, now_msec, "Next hand")
+	_update_environment_table(environment, table)
+	return bool(timer.get("due", false))
+
+
+func surface_auto_action_command(ui_state: Dictionary, run_state: RunState, environment: Dictionary, _surface_status: Dictionary = {}) -> Dictionary:
+	var table := _table_state(run_state, environment)
+	var session := _normalized_session(run_state, environment, ui_state, table)
+	if _surface_locked(table, session):
+		return {"handled": false}
+	var now_msec := int(ui_state.get("surface_time_msec", Time.get_ticks_msec()))
+	var timer := GameModule.table_round_timer_status(table, now_msec, "Next hand")
+	if not bool(timer.get("due", false)):
+		_update_environment_table(environment, table)
+		return {"handled": false}
+	session["baccarat_sit_out"] = _bet_dict(session.get("baccarat_bets", {})).is_empty()
+	GameModule.reset_table_round_timer(table)
+	_update_environment_table(environment, table)
+	return GameModule.surface_command({
+		"handled": true,
+		"ui_state": session,
+		"action_id": "deal_baccarat",
+		"action_kind": "legal",
+		"direct_resolve": true,
+		"skip_stake_validation": true,
+		"preserve_surface_ui_state": false,
+		"message": "The croupier deals; you sit this hand out." if bool(session.get("baccarat_sit_out", false)) else "The croupier deals the working baccarat bets.",
+	})
 
 
 func surface_action_command(surface_action: String, index: int, _confirm_requested: bool, ui_state: Dictionary, run_state: RunState, environment: Dictionary) -> Dictionary:
@@ -267,8 +313,8 @@ func surface_action_command(surface_action: String, index: int, _confirm_request
 		"baccarat_deal":
 			var total := _total_wager(_bet_dict(session.get("baccarat_bets", {})))
 			if total <= 0:
-				return _message_command(session, "Place a baccarat bet first.")
-			if total < int(table.get("table_minimum", 20)):
+				session["baccarat_sit_out"] = true
+			elif total < int(table.get("table_minimum", 20)):
 				return _message_command(session, "Baccarat table minimum is $%d." % int(table.get("table_minimum", 20)))
 			return GameModule.surface_command({
 				"handled": true,
@@ -308,21 +354,24 @@ func resolve_with_context(action_id: String, stake: int, run_state: RunState, en
 	var table := _table_state(run_state, environment)
 	var session := _normalized_session(run_state, environment, ui_state, table)
 	var bets := _bet_dict(session.get("baccarat_bets", {}))
-	if bets.is_empty():
+	var sit_out := bool(session.get("baccarat_sit_out", false)) and bets.is_empty()
+	if bets.is_empty() and not sit_out:
 		bets = _default_smoke_bets(maxi(stake, int(table.get("table_minimum", 20))))
 	var total_wager := _total_wager(bets)
-	if total_wager <= 0:
+	if total_wager <= 0 and not sit_out:
 		return _empty_baccarat_result(action_id, stake, environment, "Place a baccarat bet first.")
 	if run_state != null and total_wager > run_state.bankroll:
 		return _empty_baccarat_result(action_id, total_wager, environment, "You do not have enough bankroll for those baccarat chips.")
 	var min_total := int(table.get("table_minimum", 20))
-	if total_wager < min_total:
+	if total_wager > 0 and total_wager < min_total:
 		return _empty_baccarat_result(action_id, total_wager, environment, "Baccarat table minimum is $%d." % min_total)
 
 	var hand := _resolve_baccarat_hand(table, rng)
 	var settlement := _settle_baccarat_bets(bets, hand, _table_rules(table))
 	var bankroll_delta := int(settlement.get("bankroll_delta", 0))
 	var message := _baccarat_result_message(hand, settlement, bankroll_delta)
+	if sit_out:
+		message = "You sit out the baccarat hand. %s" % message
 	_update_table_after_hand(table, bets, hand, settlement, bankroll_delta, rng)
 	_apply_patron_rapport_after_baccarat(table, session, bets, str(hand.get("winner", "")))
 	_update_environment_table(environment, table)
@@ -335,6 +384,7 @@ func resolve_with_context(action_id: String, stake: int, run_state: RunState, en
 		"action_id": action_id,
 		"won": bankroll_delta > 0,
 		"stake_cost": total_wager,
+		"sat_out": sit_out,
 		"bankroll_delta": bankroll_delta,
 		"suspicion_delta": 0,
 		"environment_id": environment.get("id", ""),
@@ -359,6 +409,7 @@ func resolve_with_context(action_id: String, stake: int, run_state: RunState, en
 	result["baccarat_bets"] = bets.duplicate(true)
 	result["baccarat_bet_results"] = _dictionary_array(settlement.get("bet_results", []))
 	result["baccarat_total_wager"] = total_wager
+	result["baccarat_sat_out"] = sit_out
 	result["baccarat_commission"] = int(settlement.get("commission", 0))
 	result["baccarat_animation_events"] = _dictionary_array(hand.get("animation_events", []))
 	GameModule.apply_result(run_state, result, rng)
@@ -585,6 +636,7 @@ func _settle_baccarat_bets(bets_value: Variant, hand: Dictionary, rules: Diction
 
 func _update_table_after_hand(table: Dictionary, bets: Dictionary, hand: Dictionary, settlement: Dictionary, bankroll_delta: int, rng: RngStream) -> void:
 	table["hands_played"] = int(table.get("hands_played", 0)) + 1
+	GameModule.reset_table_round_timer(table)
 	table["last_bets"] = bets.duplicate(true)
 	table["last_hand"] = hand.duplicate(true)
 	table["commission_owed"] = int(table.get("commission_owed", 0)) + int(settlement.get("commission", 0))
@@ -1055,18 +1107,22 @@ func _selected_surface_actions(bets: Dictionary) -> Array:
 	return ["baccarat_deal"] if not bets.is_empty() else []
 
 
-func _table_notice(table: Dictionary, session: Dictionary, last_result: Dictionary, deal_active: bool, payout_active: bool) -> String:
+func _table_notice(table: Dictionary, session: Dictionary, last_result: Dictionary, deal_active: bool, payout_active: bool, round_timer: Dictionary = {}) -> String:
 	if deal_active:
 		return "No more bets. Cards are sliding from the shoe."
 	if payout_active:
-		return "The croupier marks winners and collects commission."
+		var winner_text := _winner_display(str(last_result.get("winner", "")))
+		return "%s is settling. Winning chips are marked." % winner_text if not winner_text.is_empty() else "The croupier marks winners and collects commission."
 	if not str(session.get("table_notice", "")).is_empty():
 		return str(session.get("table_notice", ""))
 	var bets := _bet_dict(session.get("baccarat_bets", {}))
 	if bets.is_empty():
 		if bool(table.get("reshuffle_pending", false)):
 			return "The cut card is out; the croupier will shuffle before the next hand."
-		return "Place Player, Banker, Tie, or pair chips, then deal."
+		var seconds := int(round_timer.get("remaining_seconds", 0))
+		if seconds > 0:
+			return "Place chips or sit out; next hand in %ds." % seconds
+		return "Place chips or sit out the next hand."
 	if _total_wager(bets) < int(table.get("table_minimum", 20)):
 		return "Add chips to reach the $%d table minimum." % int(table.get("table_minimum", 20))
 	if not last_result.is_empty():
@@ -1074,27 +1130,172 @@ func _table_notice(table: Dictionary, session: Dictionary, last_result: Dictiona
 	return "$%d working across %d baccarat space%s." % [_total_wager(bets), bets.size(), "" if bets.size() == 1 else "s"]
 
 
+func _baccarat_hand_explainer(session: Dictionary, last_result: Dictionary, deal_active: bool, payout_active: bool, round_timer: Dictionary = {}) -> Dictionary:
+	var bets := _bet_dict(session.get("baccarat_bets", {}))
+	if deal_active:
+		return {
+			"mode": "dealing",
+			"title": "HAND IN PROGRESS",
+			"primary": "Cards deal Player, Banker, Player, Banker.",
+			"secondary": "Closest to 9 wins; only the final digit counts.",
+			"bet_summary": "Totals appear when the hand is complete.",
+			"winner": "",
+			"player_total": -1,
+			"banker_total": -1,
+			"net": 0,
+		}
+	if not last_result.is_empty():
+		var winner := str(last_result.get("winner", "tie"))
+		var player_total := int(last_result.get("player_total", 0))
+		var banker_total := int(last_result.get("banker_total", 0))
+		var net := int(last_result.get("bankroll_delta", 0))
+		var natural := bool(last_result.get("natural", false))
+		return {
+			"mode": "payout" if payout_active else "last_hand",
+			"title": _winner_title(winner),
+			"primary": "Player %d  Banker %d" % [player_total, banker_total],
+			"secondary": _baccarat_winner_reason(winner, player_total, banker_total, natural),
+			"bet_summary": _baccarat_settlement_summary(_dictionary_array(last_result.get("bet_results", [])), net),
+			"winner": winner,
+			"player_total": player_total,
+			"banker_total": banker_total,
+			"net": net,
+			"natural": natural,
+		}
+	if bets.is_empty():
+		var seconds := int(round_timer.get("remaining_seconds", 0))
+		return {
+			"mode": "guide",
+			"title": "HOW BACCARAT WORKS",
+			"primary": "Bet Player, Banker, or Tie before the hand.",
+			"secondary": "Closest to 9 wins. Face cards count 0; aces count 1.",
+			"bet_summary": "Player and Banker bets push when the hand ties." if seconds <= 0 else "Next hand in %ds; you may sit out." % seconds,
+			"winner": "",
+			"player_total": -1,
+			"banker_total": -1,
+			"net": 0,
+		}
+	return {
+		"mode": "betting",
+		"title": "READY TO DEAL",
+		"primary": "$%d placed on %s." % [_total_wager(bets), _bets_display(bets)],
+		"secondary": "Player and Banker compare final totals.",
+		"bet_summary": "Pair side bets need matching first two cards.",
+		"winner": "",
+		"player_total": -1,
+		"banker_total": -1,
+		"net": 0,
+	}
+
+
 func _baccarat_result_message(hand: Dictionary, settlement: Dictionary, bankroll_delta: int) -> String:
-	var winner := str(hand.get("winner", "tie")).capitalize()
+	var winner := str(hand.get("winner", "tie"))
 	var player_total := int(hand.get("player_total", 0))
 	var banker_total := int(hand.get("banker_total", 0))
 	var commission := int(settlement.get("commission", 0))
 	var wins := 0
+	var losses := 0
+	var pushes := 0
 	for result_value in _dictionary_array(settlement.get("bet_results", [])):
-		if bool((result_value as Dictionary).get("won", false)):
+		var bet_result: Dictionary = result_value
+		if bool(bet_result.get("won", false)):
 			wins += 1
-	var natural := " Natural." if bool(hand.get("natural", false)) else ""
+		elif bool(bet_result.get("push", false)):
+			pushes += 1
+		else:
+			losses += 1
+	var natural := " Natural hand." if bool(hand.get("natural", false)) else ""
 	var commission_text := " Commission $%d." % commission if commission > 0 else ""
-	return "Baccarat: %s %d-%d.%s %d winning bet%s. Bankroll %+d.%s" % [
-		winner,
+	var bet_text := "No player chips settled." if wins + losses + pushes <= 0 else "%d won, %d lost, %d pushed." % [wins, losses, pushes]
+	return "Baccarat: %s Player %d, Banker %d. %s%s Net %+d.%s" % [
+		_winner_sentence(winner),
 		player_total,
 		banker_total,
 		natural,
-		wins,
-		"" if wins == 1 else "s",
+		bet_text,
 		bankroll_delta,
 		commission_text,
 	]
+
+
+func _winner_title(winner: String) -> String:
+	if winner == "tie":
+		return "TIE HAND"
+	return "%s WINS" % _winner_display(winner).to_upper()
+
+
+func _winner_sentence(winner: String) -> String:
+	if winner == "tie":
+		return "Tie hand."
+	return "%s wins." % _winner_display(winner)
+
+
+func _winner_display(winner: String) -> String:
+	match winner:
+		"player":
+			return "Player"
+		"banker":
+			return "Banker"
+		"tie":
+			return "Tie"
+		_:
+			return ""
+
+
+func _baccarat_winner_reason(winner: String, player_total: int, banker_total: int, natural: bool) -> String:
+	if winner == "tie":
+		return "Both sides finished at %d; Player/Banker bets push." % player_total
+	var trailing_total := banker_total if winner == "player" else player_total
+	var natural_text := " Natural 8/9." if natural else ""
+	return "%s is closer to 9 than %d.%s" % [_winner_display(winner), trailing_total, natural_text]
+
+
+func _baccarat_settlement_summary(bet_results: Array, net: int) -> String:
+	if bet_results.is_empty():
+		return "You sat out. Net $0."
+	var won: Array = []
+	var lost: Array = []
+	var pushed: Array = []
+	for result_value in bet_results:
+		var bet_result: Dictionary = result_value
+		var label := str(bet_result.get("label", bet_result.get("id", "bet")))
+		if bool(bet_result.get("push", false)):
+			pushed.append("%s push" % label)
+		elif bool(bet_result.get("won", false)):
+			won.append("%s +$%d" % [label, int(bet_result.get("payout", 0))])
+		else:
+			lost.append("%s -$%d" % [label, int(bet_result.get("stake", 0))])
+	var parts: Array = []
+	if not won.is_empty():
+		parts.append("Won %s" % _join_limited(won, 2))
+	if not lost.is_empty():
+		parts.append("Lost %s" % _join_limited(lost, 2))
+	if not pushed.is_empty():
+		parts.append(_join_limited(pushed, 2))
+	return "%s. Net %+d." % ["; ".join(parts), net]
+
+
+func _bets_display(bets: Dictionary) -> String:
+	var labels: Array = []
+	for bet_id in bets.keys():
+		var amount := int(bets.get(bet_id, 0))
+		if amount > 0:
+			labels.append("%s $%d" % [_target_label(str(bet_id)), amount])
+	return _join_limited(labels, 3)
+
+
+func _join_limited(values: Array, limit: int) -> String:
+	var clean: Array = []
+	for value in values:
+		var text := str(value)
+		if not text.is_empty():
+			clean.append(text)
+	var shown: Array = []
+	for i in range(mini(clean.size(), maxi(1, limit))):
+		shown.append(str(clean[i]))
+	if clean.size() > shown.size():
+		shown.append("+%d more" % (clean.size() - shown.size()))
+	return ", ".join(shown)
 
 
 func _baccarat_pressure_message(table: Dictionary, pit_boss_status: Dictionary) -> String:
@@ -1163,6 +1364,7 @@ func _normalize_table_state(value: Variant, environment: Dictionary) -> Dictiona
 	table["last_hand"] = _copy_dict(table.get("last_hand", {}))
 	table["hand_history"] = _dictionary_array(table.get("hand_history", []))
 	table["shoe_history"] = _dictionary_array(table.get("shoe_history", []))
+	table["table_round_timer_started_msec"] = int(table.get("table_round_timer_started_msec", 0))
 	return table
 
 
@@ -1392,6 +1594,21 @@ func _draw_croupier_station(surface, state: Dictionary) -> void:
 	TableVisualsScript.draw_dealer_station(surface, state)
 
 
+func _draw_hand_explainer(surface, state: Dictionary) -> void:
+	var explainer := _copy_dict(state.get("baccarat_explainer", {}))
+	if explainer.is_empty():
+		return
+	var rect := Rect2(684, 14, 192, 58)
+	var winner := str(explainer.get("winner", ""))
+	var accent := _target_color(winner) if not winner.is_empty() else C_YELLOW
+	_draw_neon_panel(surface, rect, accent, 0.15)
+	surface.draw_rect(rect, Color(accent.r, accent.g, accent.b, 0.52), false, 1)
+	surface.surface_label_centered(str(explainer.get("title", "BACCARAT")).left(24), Rect2(rect.position + Vector2(8, 5), Vector2(rect.size.x - 16, 13)), 11, accent)
+	surface.surface_label_centered(str(explainer.get("primary", "")).left(38), Rect2(rect.position + Vector2(8, 22), Vector2(rect.size.x - 16, 12)), 8, C_WHITE)
+	surface.surface_label_centered(str(explainer.get("secondary", "")).left(44), Rect2(rect.position + Vector2(8, 36), Vector2(rect.size.x - 16, 10)), 7, C_SOFT)
+	surface.surface_label_centered(str(explainer.get("bet_summary", "")).left(44), Rect2(rect.position + Vector2(8, 47), Vector2(rect.size.x - 16, 8)), 6, C_YELLOW)
+
+
 func _draw_table_patrons(surface, state: Dictionary) -> void:
 	TableVisualsScript.draw_table_patrons(surface, state)
 
@@ -1436,14 +1653,21 @@ func _draw_card_areas(surface, state: Dictionary) -> void:
 	surface.surface_label("PLAYER", Vector2(220, 236), 14, C_CYAN)
 	surface.surface_label("BANKER", Vector2(604, 228), 14, C_PINK_2)
 	if not last_hand.is_empty() and not deal_active:
-		surface.surface_label("TOTAL %d" % int(last_hand.get("player_total", 0)), Vector2(304, 306), 14, C_CYAN)
+		_draw_total_badge(surface, Rect2(282, 297, 132, 22), "PLAYER TOTAL", int(last_hand.get("player_total", 0)), C_CYAN)
 		var banker_total_x := _banker_card_target(banker_cards.size()).x + 8.0
-		surface.surface_label("TOTAL %d" % int(last_hand.get("banker_total", 0)), Vector2(banker_total_x, 210), 14, C_PINK_2)
-		var winner := str(last_hand.get("winner", "")).to_upper()
-		var marker := Rect2(390, 198, 120, 26)
+		_draw_total_badge(surface, Rect2(banker_total_x, 202, 132, 22), "BANKER TOTAL", int(last_hand.get("banker_total", 0)), C_PINK_2)
+		var winner := str(last_hand.get("winner", ""))
+		var marker := Rect2(382, 194, 136, 30)
 		surface.draw_rect(marker, Color(0.0, 0.0, 0.0, 0.64))
-		surface.draw_rect(marker, _target_color(str(last_hand.get("winner", ""))), false, 2)
-		surface.surface_label_centered(winner.left(12), marker, 14, C_WHITE)
+		surface.draw_rect(marker, _target_color(winner), false, 2)
+		surface.surface_label_centered(_winner_title(winner).left(16), marker, 14, C_WHITE)
+		surface.surface_label_centered(_baccarat_winner_reason(winner, int(last_hand.get("player_total", 0)), int(last_hand.get("banker_total", 0)), bool(last_hand.get("natural", false))).left(38), Rect2(314, 224, 272, 14), 9, C_YELLOW)
+
+
+func _draw_total_badge(surface, rect: Rect2, label: String, total: int, accent: Color) -> void:
+	surface.draw_rect(rect, Color(0.0, 0.0, 0.0, 0.58))
+	surface.draw_rect(rect, Color(accent.r, accent.g, accent.b, 0.64), false, 1)
+	surface.surface_label_centered("%s: %d" % [label, total], rect.grow(-2.0), 10, accent)
 
 
 func _visible_animation_cards(surface, state: Dictionary) -> Array:
@@ -1550,6 +1774,10 @@ func _draw_table_notice(surface, state: Dictionary) -> void:
 	var rect := Rect2(238, 314, 424, 26)
 	_draw_neon_panel(surface, rect, C_TEAL, 0.18)
 	surface.surface_label_centered(notice.left(78), Rect2(rect.position + Vector2(8, 5), rect.size - Vector2(16, 8)), 11, C_TEAL)
+
+
+func _draw_round_timer(surface, state: Dictionary) -> void:
+	TableVisualsScript.draw_round_timer_panel(surface, _copy_dict(state.get("table_round_timer", {})), Rect2(664, 314, 116, 26), C_CYAN)
 
 
 func _draw_chip_rack(surface, state: Dictionary) -> void:

@@ -121,8 +121,13 @@ func _run() -> void:
 		push_error("Main menu did not expose the Games page.")
 		quit(1)
 		return
-	if _has_visible_text(app, "Daily Run") or _has_visible_text(app, "Custom Challenge"):
-		push_error("Release main menu exposed challenge buttons before challenge content is complete.")
+	var daily_run_button: Button = app.get("daily_run_button")
+	if daily_run_button == null or not daily_run_button.visible or daily_run_button.disabled or not _has_visible_text(app, "Daily Run"):
+		push_error("Release main menu did not expose the Daily Run challenge button.")
+		quit(1)
+		return
+	if _has_visible_text(app, "Custom Challenge"):
+		push_error("Release main menu exposed Custom Challenge before that challenge content is complete.")
 		quit(1)
 		return
 	var settings_button: Button = app.get("settings_button")
@@ -302,6 +307,63 @@ func _run() -> void:
 		push_error("Seed entry did not expose clear release menu guidance.")
 		quit(1)
 		return
+	daily_run_button.emit_signal("pressed")
+	await process_frame
+	var daily_run_state: RunState = app.get("run_state")
+	if daily_run_state == null:
+		push_error("Daily Run button did not create a foundation RunState.")
+		quit(1)
+		return
+	var today: Dictionary = Time.get_datetime_dict_from_system()
+	var expected_daily_seed := str(app.call("_daily_challenge_seed_for_date", int(today.get("day", 1)), int(today.get("month", 1))))
+	if daily_run_state.seed_text != expected_daily_seed:
+		push_error("Daily Run did not use the date-derived hidden seed formula.")
+		quit(1)
+		return
+	if str(daily_run_state.challenge_config.get("mode", "")) != "daily" or not daily_run_state.seed_is_hidden():
+		push_error("Daily Run did not mark the run as a hidden-seed daily challenge.")
+		quit(1)
+		return
+	if _has_visible_text(app, expected_daily_seed):
+		push_error("Daily Run leaked the hidden seed into visible run UI.")
+		quit(1)
+		return
+	app.call("open_run_menu")
+	await process_frame
+	var daily_run_menu: Dictionary = app.call("current_run_menu_snapshot")
+	if str(daily_run_menu.get("status_text", "")).find(expected_daily_seed) != -1 or str(daily_run_menu.get("status_text", "")).find("Hidden daily challenge") == -1:
+		push_error("Daily Run menu status did not hide the challenge seed.")
+		quit(1)
+		return
+	app.call("close_run_menu")
+	daily_run_state.fail_run(RunState.FAILURE_ABANDONED, "")
+	app.call("_refresh")
+	await process_frame
+	var daily_failure_summary: Dictionary = app.call("current_failure_summary_snapshot")
+	if str(daily_failure_summary.get("seed", "")).find(expected_daily_seed) != -1 or str(daily_failure_summary.get("seed", "")) != "Hidden daily challenge":
+		push_error("Daily Run terminal summary did not hide the challenge seed.")
+		quit(1)
+		return
+	if _has_visible_text(app, expected_daily_seed):
+		push_error("Daily Run leaked the hidden seed into terminal UI.")
+		quit(1)
+		return
+	app.call("return_to_main_menu")
+	await process_frame
+	var generated_seed_after_daily := seed_input.text.strip_edges()
+	if generated_seed_after_daily.is_empty() or not generated_seed_after_daily.begins_with("RUN-"):
+		push_error("Main menu did not generate a fresh random seed when it was accessed.")
+		quit(1)
+		return
+	app.call("start_foundation_run", "UI-MENU-SEED-ROUNDTRIP")
+	await process_frame
+	app.call("return_to_main_menu")
+	await process_frame
+	var generated_seed_after_return := seed_input.text.strip_edges()
+	if generated_seed_after_return.is_empty() or not generated_seed_after_return.begins_with("RUN-") or generated_seed_after_return == generated_seed_after_daily:
+		push_error("Main menu did not regenerate the random seed on repeated access.")
+		quit(1)
+		return
 	seed_input.text = "UI-COMPILE-SEED"
 	new_run_button.emit_signal("pressed")
 	await process_frame
@@ -471,8 +533,12 @@ func _run() -> void:
 			push_error("M1.6 spatial interaction snapshot is missing UI-local field: %s." % field)
 			quit(1)
 			return
-	if _interactable_by_type(spatial_objects, "game").is_empty():
-		push_error("M1.6 spatial interaction model did not expose game objects from foundation state.")
+	if _interactable_by_type(spatial_objects, "item").is_empty():
+		push_error("M1.6 spatial interaction model did not expose item objects from the shop-start foundation state.")
+		quit(1)
+		return
+	if _interactable_by_type(spatial_objects, "shopkeeper").is_empty():
+		push_error("M1.6 spatial interaction model did not expose the shopkeeper from the shop-start foundation state.")
 		quit(1)
 		return
 	if _interactable_by_type(spatial_objects, "travel").is_empty():
@@ -750,15 +816,18 @@ func _run() -> void:
 		quit(1)
 		return
 	var initial_environment_snapshot: Dictionary = app.call("current_environment_view_snapshot")
-	var initial_game_ids: Array = initial_environment_snapshot.get("game_ids", [])
-	if initial_game_ids.is_empty():
-		push_error("M1.5 first environment layout test needs visible game choices.")
+	if str(initial_environment_snapshot.get("kind", "")) != "shop":
+		push_error("The first environment should be a shop so players can buy gear before gambling.")
 		quit(1)
 		return
-	var first_game_definition: Dictionary = app.get("library").game(str(initial_game_ids[0]))
-	var first_game_name := str(first_game_definition.get("display_name", ""))
-	if first_game_name.is_empty() or _interactable_by_type(app.call("current_spatial_interaction_snapshot").get("objects", []), "game").is_empty():
-		push_error("World-first environment did not expose the first available game as a room object.")
+	var initial_item_offers: Array = initial_environment_snapshot.get("item_offers", [])
+	if initial_item_offers.is_empty():
+		push_error("The first shop environment did not expose item offers.")
+		quit(1)
+		return
+	var initial_objects: Array = app.call("current_spatial_interaction_snapshot").get("objects", [])
+	if _interactable_by_type(initial_objects, "item").is_empty() or _interactable_by_type(initial_objects, "shopkeeper").is_empty():
+		push_error("The first shop environment did not expose item and shopkeeper room objects.")
 		quit(1)
 		return
 	if not _check_final_demo_objective_hud_matrix(app):
@@ -913,6 +982,20 @@ func _run() -> void:
 		quit(1)
 		return
 	environment_canvas.call("render_environment_snapshot", {
+		"id": "slow_drunk_room",
+		"display_name": "Slow Drunk Room",
+		"drunk_level": 100,
+		"drunk_time_scale": RunState.DRUNK_TIME_SCALE_MIN,
+		"drunk_effect_mode": "distortion",
+		"interactable_objects": [],
+	})
+	await process_frame
+	var slow_environment_snapshot: Dictionary = environment_canvas.call("current_view_snapshot")
+	if absf(float(slow_environment_snapshot.get("drunk_time_scale", 0.0)) - RunState.DRUNK_TIME_SCALE_MIN) > 0.001:
+		push_error("Environment canvas did not expose drunk world-speed scaling.")
+		quit(1)
+		return
+	environment_canvas.call("render_environment_snapshot", {
 		"id": "reduced_motion_drunk_room",
 		"display_name": "Reduced Motion Drunk Room",
 		"drunk_level": 70,
@@ -1001,8 +1084,15 @@ func _run() -> void:
 		quit(1)
 		return
 
+	if not await _travel_to_first_game_environment(app):
+		push_error("Foundation screen router could not reach a gambling environment after the shop start.")
+		quit(1)
+		return
 	var serialized_before_game_entry := JSON.stringify(app.call("serialized_run_state"))
-	app.call("enter_first_available_game")
+	if not _enter_ui_test_game(app):
+		push_error("Foundation screen router did not find a game after reaching a gambling environment.")
+		quit(1)
+		return
 	await process_frame
 	if serialized_before_game_entry != JSON.stringify(app.call("serialized_run_state")):
 		push_error("Entering a game panel mutated serialized RunState before action resolution.")
@@ -1075,7 +1165,10 @@ func _run() -> void:
 		push_error("M1.6B Back to environment left the game surface visible in room mode.")
 		quit(1)
 		return
-	app.call("enter_first_available_game")
+	if not _enter_ui_test_game(app):
+		push_error("Foundation screen router did not find a game after backing out.")
+		quit(1)
+		return
 	await process_frame
 	var game_snapshot_before: Dictionary = app.call("current_game_view_snapshot")
 	var legal_actions: Array = game_snapshot_before.get("legal_actions", [])
@@ -1134,7 +1227,10 @@ func _run() -> void:
 		return
 	app.call("back_to_environment")
 	await process_frame
-	app.call("enter_first_available_game")
+	if not _enter_ui_test_game(app):
+		push_error("Foundation screen router did not find a game after presentation sweep.")
+		quit(1)
+		return
 	await process_frame
 	game_snapshot_before = app.call("current_game_view_snapshot")
 	if serialized_before_surface_sweep != JSON.stringify(app.call("serialized_run_state")):
@@ -1196,12 +1292,45 @@ func _run() -> void:
 		push_error("Game drunk distortion did not protect readable UI regions.")
 		quit(1)
 		return
+	var slow_game_snapshot := game_snapshot_before.duplicate(true)
+	slow_game_snapshot["drunk_level"] = 100
+	slow_game_snapshot["drunk_time_scale"] = RunState.DRUNK_TIME_SCALE_MIN
+	slow_game_snapshot["drunk_effect_mode"] = "distortion"
+	slow_game_snapshot["reduce_motion"] = false
+	slow_game_snapshot["surface_animation_channels"] = [{
+		"id": "drunk_time_test",
+		"active_id": "slow_world",
+		"duration_msec": 10000,
+		"started_msec": Time.get_ticks_msec() - 3000,
+		"active": true,
+	}]
+	game_canvas.call("render_game_snapshot", slow_game_snapshot)
+	await process_frame
+	var slow_game_canvas_snapshot: Dictionary = game_canvas.call("current_view_snapshot")
+	var scaled_elapsed := float(game_canvas.call("surface_elapsed", "drunk_time_test"))
+	if scaled_elapsed < 0.85 or scaled_elapsed > 1.25:
+		push_error("Game surface animations did not use drunk-scaled elapsed time.")
+		quit(1)
+		return
+	var slow_surface_animations: Dictionary = slow_game_canvas_snapshot.get("surface_animations", {})
+	var slow_channel: Dictionary = slow_surface_animations.get("drunk_time_test", {})
+	if not bool(slow_channel.get("active", false)) or absf(float(slow_channel.get("time_scale", 0.0)) - RunState.DRUNK_TIME_SCALE_MIN) > 0.001:
+		push_error("Game surface animation snapshot did not expose drunk-time scaling.")
+		quit(1)
+		return
 	game_canvas.call("render_game_snapshot", game_snapshot_before)
 	await process_frame
 
 	focused_game_surface.queue_redraw()
 	await process_frame
-	var surface_click_position: Vector2 = focused_game_surface.call("local_position_for_surface_action", "surface_legal", 0)
+	var legal_surface_binding := _game_surface_action_binding(app, "legal")
+	var legal_surface_action := str(legal_surface_binding.get("action", "surface_legal"))
+	var legal_surface_index := int(legal_surface_binding.get("index", 0))
+	var surface_click_position: Vector2 = focused_game_surface.call(
+		"local_position_for_surface_action",
+		legal_surface_action,
+		legal_surface_index
+	)
 	if surface_click_position.x < 0.0 or surface_click_position.y < 0.0:
 		push_error("M1.6B game surface did not expose a visible legal action hit region.")
 		quit(1)
@@ -1218,18 +1347,20 @@ func _run() -> void:
 		quit(1)
 		return
 	var surface_selected_snapshot: Dictionary = app.call("current_game_view_snapshot")
-	if str(surface_selected_snapshot.get("selected_action_id", "")) != str(legal_actions[0].get("id", "")):
+	var generic_surface_selection := legal_surface_action == "surface_legal"
+	if generic_surface_selection and str(surface_selected_snapshot.get("selected_action_id", "")) != str(legal_actions[0].get("id", "")):
 		push_error("M1.6B clicking a game surface action did not update UI-local action selection.")
 		quit(1)
 		return
 	var focused_canvas_snapshot: Dictionary = focused_game_surface.call("current_view_snapshot")
-	if int(focused_canvas_snapshot.get("selected_view_index", -1)) < 0:
+	if generic_surface_selection and int(focused_canvas_snapshot.get("selected_view_index", -1)) < 0:
 		push_error("M1.6B game surface did not expose selected surface state after a surface click.")
 		quit(1)
 		return
-	if not _visible_text_fits_viewport(actions_list, "Click the highlighted surface action", viewport_rect, "game-mode surface resolve guidance"):
-		quit(1)
-		return
+	if generic_surface_selection:
+		if not _visible_text_fits_viewport(actions_list, "Click the highlighted surface action", viewport_rect, "game-mode surface resolve guidance"):
+			quit(1)
+			return
 	if not _control_fits_viewport(app.get("consequence_cards_scroll"), viewport_rect, "game-mode recent consequence strip"):
 		quit(1)
 		return
@@ -1293,7 +1424,13 @@ func _run() -> void:
 		quit(1)
 		return
 	var min_result_snapshot: Dictionary = app.call("current_game_view_snapshot")
-	if int(min_result_snapshot.get("result_stake", 0)) != min_stake:
+	var result_stake := int(min_result_snapshot.get("result_stake", 0))
+	var fixed_price_legal := bool(game_snapshot_before.get("surface_fixed_price_actions", false)) or not bool(game_snapshot_before.get("surface_stake_controls_required", true))
+	if fixed_price_legal and result_stake <= 0:
+		push_error("Fixed-price foundation game result did not report a positive authored stake.")
+		quit(1)
+		return
+	if not fixed_price_legal and result_stake != min_stake:
 		push_error("Foundation game result did not use the selected minimum stake.")
 		quit(1)
 		return
@@ -1333,7 +1470,7 @@ func _run() -> void:
 			push_error("Environment result feedback was not placed in the top-right HUD band above the environment panel.")
 			quit(1)
 			return
-	if min_bankroll_delta != 0 and status_label.text.find("%+d" % min_bankroll_delta) == -1:
+	if min_bankroll_delta != 0 and not legal_embeds_outcome and not fixed_price_legal and status_label.text.find("%+d" % min_bankroll_delta) == -1:
 		push_error("Top HUD did not visually emphasize the recent bankroll delta.")
 		quit(1)
 		return
@@ -1352,42 +1489,49 @@ func _run() -> void:
 		quit(1)
 		return
 	var serialized_before_consequence_view := JSON.stringify(app.call("serialized_run_state"))
-	var legal_cards: Array = legal_consequence_snapshot.get("cards", [])
-	if _card_by_title(legal_cards, "Play resolved").is_empty():
-		push_error("Legal action did not produce a readable consequence outcome card.")
-		quit(1)
-		return
-	if _card_by_title(legal_cards, "Bankroll").is_empty():
-		push_error("Legal action consequence cards did not show bankroll change.")
-		quit(1)
-		return
-	if _card_by_title(legal_cards, "Story").is_empty():
-		push_error("Legal action consequence cards did not show story/result message.")
-		quit(1)
-		return
-	if _card_by_title(legal_cards, "Next").is_empty():
-		push_error("Legal action consequence cards did not suggest next actions.")
-		quit(1)
-		return
-	if _has_visible_text(app, "Play resolved") or _has_visible_text(app, "Recent consequence"):
-		push_error("Resolved play leaked old consequence-card text into the normal play layout.")
-		quit(1)
-		return
-	if not _control_fits_viewport(app.get("consequence_cards_scroll"), viewport_rect, "consequence cards scroll after result"):
-		quit(1)
-		return
+	if legal_embeds_outcome:
+		if str(min_result_snapshot.get("result_message", "")).is_empty():
+			push_error("Embedded legal action did not expose a game-surface result message.")
+			quit(1)
+			return
+	else:
+		var legal_cards: Array = legal_consequence_snapshot.get("cards", [])
+		if _card_by_title(legal_cards, "Play resolved").is_empty():
+			push_error("Legal action did not produce a readable consequence outcome card.")
+			quit(1)
+			return
+		if _card_by_title(legal_cards, "Bankroll").is_empty():
+			push_error("Legal action consequence cards did not show bankroll change.")
+			quit(1)
+			return
+		if _card_by_title(legal_cards, "Story").is_empty():
+			push_error("Legal action consequence cards did not show story/result message.")
+			quit(1)
+			return
+		if _card_by_title(legal_cards, "Next").is_empty():
+			push_error("Legal action consequence cards did not suggest next actions.")
+			quit(1)
+			return
+		if _has_visible_text(app, "Play resolved") or _has_visible_text(app, "Recent consequence"):
+			push_error("Resolved play leaked old consequence-card text into the normal play layout.")
+			quit(1)
+			return
+		if not _control_fits_viewport(app.get("consequence_cards_scroll"), viewport_rect, "consequence cards scroll after result"):
+			quit(1)
+			return
 	if serialized_before_consequence_view != JSON.stringify(app.call("serialized_run_state")):
 		push_error("Displaying legal consequence cards mutated serialized RunState.")
 		quit(1)
 		return
-	if int(legal_consequence_snapshot.get("recent_bankroll_delta", 0)) != min_bankroll_delta:
-		push_error("Consequence snapshot did not show the recent legal bankroll delta.")
-		quit(1)
-		return
-	if str(legal_consequence_snapshot.get("recent_result_message", "")).is_empty():
-		push_error("Consequence snapshot did not show a recent legal result message.")
-		quit(1)
-		return
+	if not legal_embeds_outcome:
+		if int(legal_consequence_snapshot.get("recent_bankroll_delta", 0)) != min_bankroll_delta:
+			push_error("Consequence snapshot did not show the recent legal bankroll delta.")
+			quit(1)
+			return
+		if str(legal_consequence_snapshot.get("recent_result_message", "")).is_empty():
+			push_error("Consequence snapshot did not show a recent legal result message.")
+			quit(1)
+			return
 	if not bool(legal_consequence_snapshot.get("travel_available", false)):
 		push_error("Consequence snapshot did not show travel availability.")
 		quit(1)
@@ -1411,7 +1555,14 @@ func _run() -> void:
 	var higher_stake := min_stake + 1
 	app.call("start_foundation_run", "UI-COMPILE-SEED")
 	await process_frame
-	app.call("enter_first_available_game")
+	if not await _travel_to_first_game_environment(app):
+		push_error("Higher-stake check could not reach a gambling environment after the shop start.")
+		quit(1)
+		return
+	if not _enter_ui_test_game(app):
+		push_error("Higher-stake check did not find a game after reaching a gambling environment.")
+		quit(1)
+		return
 	await process_frame
 	var higher_snapshot: Dictionary = app.call("current_game_view_snapshot")
 	var higher_legal_actions: Array = higher_snapshot.get("legal_actions", [])
@@ -1448,6 +1599,22 @@ func _run() -> void:
 			return
 		if int(fixed_result_snapshot.get("bankroll_delta", 0)) == min_bankroll_delta:
 			push_error("Fixed bet_5 did not change the deterministic bankroll delta from the minimum bet.")
+			quit(1)
+			return
+	elif bool(higher_snapshot.get("surface_fixed_price_actions", false)):
+		var serialized_before_fixed_price_selection := JSON.stringify(app.call("serialized_run_state"))
+		app.call("select_game_action", str(higher_legal_action.get("id", "")), "legal")
+		await process_frame
+		var serialized_after_fixed_price_selection := JSON.stringify(app.call("serialized_run_state"))
+		if serialized_before_fixed_price_selection != serialized_after_fixed_price_selection:
+			push_error("Selecting a fixed-price action mutated serialized RunState.")
+			quit(1)
+			return
+		app.call("resolve_selected_game_action")
+		await process_frame
+		var fixed_price_result_snapshot: Dictionary = app.call("current_game_view_snapshot")
+		if int(fixed_price_result_snapshot.get("result_stake", 0)) <= 0:
+			push_error("Fixed-price game result did not report its authored stake.")
 			quit(1)
 			return
 	else:
@@ -1510,36 +1677,43 @@ func _run() -> void:
 	var cheat_consequence_snapshot: Dictionary = app.call("current_consequence_view_snapshot")
 	var cheat_run_state: Dictionary = app.call("serialized_run_state")
 	var cheat_suspicion_delta := int(cheat_result_snapshot.get("suspicion_delta", 0))
-	if cheat_suspicion_delta != 0 and status_label.text.find("%+d" % cheat_suspicion_delta) == -1:
+	if cheat_suspicion_delta != 0 and not cheat_embeds_outcome and status_label.text.find("%+d" % cheat_suspicion_delta) == -1:
 		push_error("Top HUD did not visually emphasize the recent risk/suspicion delta.")
 		quit(1)
 		return
-	var cheat_cards: Array = cheat_consequence_snapshot.get("cards", [])
-	if _card_by_title(cheat_cards, "Risky play resolved").is_empty():
-		push_error("Cheat/advantage action did not produce a readable consequence outcome card.")
-		quit(1)
-		return
-	if _card_by_title(cheat_cards, "Risk").is_empty():
-		push_error("Cheat/advantage consequence cards did not show risk/suspicion cue.")
-		quit(1)
-		return
-	if _has_visible_text(app, "Risky play resolved") or _has_visible_text(app, "Recent consequence"):
-		push_error("Cheat/advantage result leaked old consequence-card text into the normal play layout.")
-		quit(1)
-		return
+	if cheat_embeds_outcome:
+		if str(cheat_result_snapshot.get("result_message", "")).is_empty():
+			push_error("Embedded cheat/advantage action did not expose a game-surface result message.")
+			quit(1)
+			return
+	else:
+		var cheat_cards: Array = cheat_consequence_snapshot.get("cards", [])
+		if _card_by_title(cheat_cards, "Risky play resolved").is_empty():
+			push_error("Cheat/advantage action did not produce a readable consequence outcome card.")
+			quit(1)
+			return
+		if _card_by_title(cheat_cards, "Risk").is_empty():
+			push_error("Cheat/advantage consequence cards did not show risk/suspicion cue.")
+			quit(1)
+			return
+		if _has_visible_text(app, "Risky play resolved") or _has_visible_text(app, "Recent consequence"):
+			push_error("Cheat/advantage result leaked old consequence-card text into the normal play layout.")
+			quit(1)
+			return
 	if int(cheat_consequence_snapshot.get("suspicion_level", -1)) != int(cheat_run_state.get("suspicion", {}).get("level", -2)):
 		push_error("Consequence snapshot did not track current suspicion after cheat action.")
 		quit(1)
 		return
-	if int(cheat_consequence_snapshot.get("recent_suspicion_delta", 0)) != int(cheat_result_snapshot.get("suspicion_delta", 0)):
-		push_error("Consequence snapshot did not show the recent cheat suspicion delta.")
-		quit(1)
-		return
+	if not cheat_embeds_outcome:
+		if int(cheat_consequence_snapshot.get("recent_suspicion_delta", 0)) != int(cheat_result_snapshot.get("suspicion_delta", 0)):
+			push_error("Consequence snapshot did not show the recent cheat suspicion delta.")
+			quit(1)
+			return
 	if (cheat_consequence_snapshot.get("suspicion_cues", []) as Array).is_empty() and (cheat_consequence_snapshot.get("security_cues", []) as Array).is_empty():
 		push_error("Consequence snapshot did not expose suspicion or security cues.")
 		quit(1)
 		return
-	var save_ux_state: Dictionary = app.call("serialized_run_state")
+	var save_ux_state: Dictionary = {}
 	var save_status_before: Dictionary = app.call("save_status_snapshot")
 	if str(save_status_before.get("status_text", "")).is_empty():
 		push_error("Save status text should be visible before saving.")
@@ -1561,6 +1735,7 @@ func _run() -> void:
 		push_error("Save status did not report a saved foundation run.")
 		quit(1)
 		return
+	save_ux_state = app.call("serialized_run_state")
 	var save_objects := _interactable_by_type(app.call("current_spatial_interaction_snapshot").get("objects", []), "save")
 	var load_objects := _interactable_by_type(app.call("current_spatial_interaction_snapshot").get("objects", []), "load")
 	if not save_objects.is_empty() or not load_objects.is_empty():
@@ -1601,8 +1776,17 @@ func _run() -> void:
 		push_error("Load did not restore flags.")
 		quit(1)
 		return
-	if JSON.stringify(loaded_save_ux_state.get("story_log", [])) != JSON.stringify(save_ux_state.get("story_log", [])):
-		push_error("Load did not restore story state.")
+	var expected_story: Array = save_ux_state.get("story_log", [])
+	var loaded_story: Array = loaded_save_ux_state.get("story_log", [])
+	var normalized_expected_story: Variant = _normalize_json_numbers(expected_story)
+	var normalized_loaded_story: Variant = _normalize_json_numbers(loaded_story)
+	if JSON.stringify(normalized_loaded_story) != JSON.stringify(normalized_expected_story):
+		push_error("Load did not restore story state. expected=%d loaded=%d expected_last=%s loaded_last=%s" % [
+			expected_story.size(),
+			loaded_story.size(),
+			JSON.stringify(_normalize_json_numbers(expected_story[expected_story.size() - 1])) if not expected_story.is_empty() else "{}",
+			JSON.stringify(_normalize_json_numbers(loaded_story[loaded_story.size() - 1])) if not loaded_story.is_empty() else "{}",
+		])
 		quit(1)
 		return
 	var saved_environment: Dictionary = save_ux_state.get("current_environment", {})
@@ -1849,16 +2033,7 @@ func _run() -> void:
 	app.call("start_foundation_run", "UI-ITEM-SEED")
 	await process_frame
 	var item_start_snapshot: Dictionary = app.call("current_environment_view_snapshot")
-	var item_travel_choices: Array = item_start_snapshot.get("travel_choices", [])
-	if item_travel_choices.is_empty():
-		push_error("Foundation item-offer setup did not expose travel toward item offers.")
-		quit(1)
-		return
-	var item_travel_target_id := str((item_travel_choices[0] as Dictionary).get("id", ""))
-	app.call("select_travel_option", item_travel_target_id)
-	app.call("confirm_selected_travel")
-	await process_frame
-	var item_snapshot: Dictionary = app.call("current_environment_view_snapshot")
+	var item_snapshot: Dictionary = item_start_snapshot
 	var item_offers: Array = item_snapshot.get("item_offers", [])
 	if item_offers.is_empty():
 		push_error("Foundation UI did not expose generated item offers.")
@@ -2408,13 +2583,22 @@ func _run() -> void:
 		return
 	app.call("start_foundation_run", "UI-COMPILE-SEED")
 	await process_frame
-	app.call("enter_first_available_game")
+	if not await _travel_to_first_game_environment(app):
+		push_error("Failure screen check could not reach a gambling environment after the shop start.")
+		quit(1)
+		return
+	if not _enter_ui_test_game(app):
+		push_error("Failure screen check did not find a game after reaching a gambling environment.")
+		quit(1)
+		return
 	await process_frame
 	if str(app.call("current_screen_snapshot").get("screen", "")) != "GAME":
 		push_error("Failure screen check could not enter a game first.")
 		quit(1)
 		return
 	var failure_fixture_run: RunState = app.get("run_state")
+	failure_fixture_run.record_score_spending(19, "ui_failure_fixture")
+	var expected_failure_score := failure_fixture_run.run_spending_score
 	failure_fixture_run.add_suspicion("ui_failure_screen:police", 100, "behavior", true, {"environment_id": str(failure_fixture_run.current_environment.get("id", ""))})
 	app.call("_refresh")
 	await process_frame
@@ -2441,11 +2625,15 @@ func _run() -> void:
 		push_error("Failure summary did not preserve the RunState failure reason.")
 		quit(1)
 		return
+	if int(failure_summary.get("score_spending", -1)) != expected_failure_score or int(failure_summary.get("score_multiplier", -1)) != 1 or int(failure_summary.get("score", -1)) != expected_failure_score:
+		push_error("Failure summary did not show the unmultiplied run score.")
+		quit(1)
+		return
 	if str(failure_summary.get("current_environment", "")).is_empty() or (failure_summary.get("story_lines", []) as Array).is_empty() or (failure_summary.get("travel_lines", []) as Array).is_empty():
 		push_error("Failure summary did not include environment, travel, and story context.")
 		quit(1)
 		return
-	if not _has_visible_text(app, "Captured by police") or not _has_visible_text(app, "Money And Heat"):
+	if not _has_visible_text(app, "Captured by police") or not _has_visible_text(app, "Money And Heat") or not _has_visible_text(app, "Run score: %d" % expected_failure_score):
 		push_error("Failure screen did not present player-facing fail reason and run details.")
 		quit(1)
 		return
@@ -2478,7 +2666,14 @@ func _run() -> void:
 			return
 	app.call("start_foundation_run", "UI-VICTORY-SEED")
 	await process_frame
-	app.call("enter_first_available_game")
+	if not await _travel_to_first_game_environment(app):
+		push_error("Victory screen check could not reach a gambling environment after the shop start.")
+		quit(1)
+		return
+	if not _enter_ui_test_game(app):
+		push_error("Victory screen check did not find a game after reaching a gambling environment.")
+		quit(1)
+		return
 	await process_frame
 	if str(app.call("current_screen_snapshot").get("screen", "")) != "GAME":
 		push_error("Victory screen check could not enter a game first.")
@@ -2486,6 +2681,8 @@ func _run() -> void:
 		return
 	var victory_fixture_run: RunState = app.get("run_state")
 	victory_fixture_run.bankroll = 540
+	victory_fixture_run.record_score_spending(21, "ui_victory_fixture")
+	var expected_victory_score_spending := victory_fixture_run.run_spending_score
 	victory_fixture_run.add_suspicion("ui_victory_heat", 18, "behavior", true, {"environment_id": str(victory_fixture_run.current_environment.get("id", ""))})
 	victory_fixture_run.log_story({
 		"type": "demo_victory",
@@ -2529,6 +2726,10 @@ func _run() -> void:
 		push_error("Victory summary did not include seed, final bankroll, and final heat.")
 		quit(1)
 		return
+	if int(victory_summary.get("score_spending", -1)) != expected_victory_score_spending or int(victory_summary.get("score_multiplier", -1)) != 3 or int(victory_summary.get("score", -1)) != expected_victory_score_spending * 3:
+		push_error("Victory summary did not triple the run score.")
+		quit(1)
+		return
 	if str(victory_summary.get("current_environment", "")).is_empty() or (victory_summary.get("story_lines", []) as Array).is_empty():
 		push_error("Victory summary did not include venue and story context.")
 		quit(1)
@@ -2547,6 +2748,10 @@ func _run() -> void:
 		return
 	if not _has_visible_text(app, "The next act is not implemented yet."):
 		push_error("Victory screen did not present the next-act message.")
+		quit(1)
+		return
+	if not _has_visible_text(app, "Victory multiplier: x3") or not _has_visible_text(app, "Run score: %d" % (expected_victory_score_spending * 3)):
+		push_error("Victory screen did not present the final score multiplier.")
 		quit(1)
 		return
 	if not _has_visible_text(app, "Main Menu") or not _has_visible_text(app, "New Run"):
@@ -2872,7 +3077,12 @@ func _check_in_run_menu_flow(app: Control, save_service: SaveService, viewport_r
 	if not await _check_run_menu_open_resume(app, "ENVIRONMENT", "environment screen"):
 		return false
 
-	app.call("enter_first_available_game")
+	if not await _travel_to_first_game_environment(app):
+		push_error("Run menu game screen test could not reach a gambling environment.")
+		return false
+	if not _enter_ui_test_game(app):
+		push_error("Run menu game screen test did not find a game after reaching a gambling environment.")
+		return false
 	await process_frame
 	if not await _check_run_menu_open_resume(app, "GAME", "game screen"):
 		return false
@@ -2942,7 +3152,12 @@ func _check_in_run_menu_flow(app: Control, save_service: SaveService, viewport_r
 
 	app.call("start_foundation_run", "UI-RUN-MENU-SAVE-GAME")
 	await process_frame
-	app.call("enter_first_available_game")
+	if not await _travel_to_first_game_environment(app):
+		push_error("Run menu game-surface save test could not reach a gambling environment.")
+		return false
+	if not _enter_ui_test_game(app):
+		push_error("Run menu game-surface save test did not find a game after reaching a gambling environment.")
+		return false
 	await process_frame
 	if str(app.call("current_screen_snapshot").get("screen", "")) != "GAME":
 		push_error("Run menu game-surface save test could not enter a game.")
@@ -3019,6 +3234,190 @@ func _check_run_menu_open_resume(app: Control, expected_screen: String, label: S
 		push_error("Run menu resume mutated serialized RunState from %s." % label)
 		return false
 	return true
+
+
+func _travel_to_first_game_environment(app: Control) -> bool:
+	var current_snapshot: Dictionary = app.call("current_environment_view_snapshot")
+	var current_game_ids_value: Variant = current_snapshot.get("game_ids", [])
+	var current_game_ids: Array = []
+	if typeof(current_game_ids_value) == TYPE_ARRAY:
+		current_game_ids = current_game_ids_value
+	if not current_game_ids.is_empty():
+		return true
+	var travel_choices_value: Variant = current_snapshot.get("travel_choices", [])
+	var travel_choices: Array = []
+	if typeof(travel_choices_value) == TYPE_ARRAY:
+		travel_choices = travel_choices_value
+	for preferred_game_id in ["video_poker", "blackjack", "bar_dice", "pull_tabs"]:
+		for choice_value in travel_choices:
+			if typeof(choice_value) != TYPE_DICTIONARY:
+				continue
+			var preferred_choice: Dictionary = choice_value
+			var preferred_target_id := str(preferred_choice.get("id", ""))
+			if preferred_target_id.is_empty() or not _archetype_has_game(app, preferred_target_id, preferred_game_id):
+				continue
+			if await _travel_to_target_and_check_games(app, preferred_target_id):
+				return true
+	for choice_value in travel_choices:
+		if typeof(choice_value) != TYPE_DICTIONARY:
+			continue
+		var choice: Dictionary = choice_value
+		var target_id := str(choice.get("id", ""))
+		if target_id.is_empty() or not _archetype_has_games(app, target_id):
+			continue
+		if await _travel_to_target_and_check_games(app, target_id):
+			return true
+	return false
+
+
+func _travel_to_target_and_check_games(app: Control, target_id: String) -> bool:
+	if not bool(app.call("select_travel_option", target_id)):
+		return false
+	await process_frame
+	app.call("confirm_selected_travel")
+	await process_frame
+	app.call("select_action_category", "games")
+	await process_frame
+	var traveled_snapshot: Dictionary = app.call("current_environment_view_snapshot")
+	var traveled_game_ids_value: Variant = traveled_snapshot.get("game_ids", [])
+	var traveled_game_ids: Array = []
+	if typeof(traveled_game_ids_value) == TYPE_ARRAY:
+		traveled_game_ids = traveled_game_ids_value
+	return not traveled_game_ids.is_empty()
+
+
+func _game_surface_action_binding(app: Control, kind: String) -> Dictionary:
+	var fallback_action := "surface_legal" if kind == "legal" else "surface_cheat"
+	var fallback := {"action": fallback_action, "index": 0}
+	var snapshot: Dictionary = app.call("current_game_view_snapshot")
+	var bindings_value: Variant = snapshot.get("surface_action_bindings", {})
+	if typeof(bindings_value) == TYPE_DICTIONARY:
+		var bindings: Dictionary = bindings_value
+		var binding_value: Variant = bindings.get(kind, {})
+		if typeof(binding_value) == TYPE_DICTIONARY:
+			var binding: Dictionary = binding_value
+			if not binding.is_empty():
+				var action := str(binding.get("action", fallback_action))
+				if action.is_empty():
+					action = fallback_action
+				return {
+					"action": action,
+					"index": int(binding.get("index", 0)),
+				}
+	return _native_game_surface_action_binding(app, kind, fallback)
+
+
+func _native_game_surface_action_binding(app: Control, kind: String, fallback: Dictionary) -> Dictionary:
+	var surface_canvas := app.get("game_surface_canvas") as Control
+	if surface_canvas == null or not surface_canvas.visible or not surface_canvas.has_method("current_view_snapshot"):
+		return fallback
+	var surface_snapshot: Dictionary = surface_canvas.call("current_view_snapshot")
+	var hit_actions_value: Variant = surface_snapshot.get("surface_hit_actions", [])
+	var hit_actions: Array = []
+	if typeof(hit_actions_value) == TYPE_ARRAY:
+		hit_actions = hit_actions_value
+	var preferred_actions := []
+	if kind == "legal":
+		preferred_actions = ["video_poker_draw", "video_poker_deal", "video_poker_collect", "bar_dice_roll", "slot_spin"]
+	else:
+		preferred_actions = ["video_poker_mark", "blackjack_peek", "bar_dice_load", "roulette_late_bet", "baccarat_palm"]
+	for preferred_action in preferred_actions:
+		var preferred_binding := _surface_hit_action_binding(hit_actions, str(preferred_action))
+		if not preferred_binding.is_empty():
+			return preferred_binding
+	var fallback_binding := _surface_hit_action_binding(hit_actions, str(fallback.get("action", "")))
+	if not fallback_binding.is_empty():
+		return fallback_binding
+	return fallback
+
+
+func _surface_hit_action_binding(hit_actions: Array, action: String) -> Dictionary:
+	if action.is_empty():
+		return {}
+	for hit_value in hit_actions:
+		if typeof(hit_value) != TYPE_DICTIONARY:
+			continue
+		var hit_data: Dictionary = hit_value
+		if str(hit_data.get("action", "")) != action:
+			continue
+		return {
+			"action": action,
+			"index": int(hit_data.get("index", 0)),
+		}
+	return {}
+
+
+func _normalize_json_numbers(value: Variant) -> Variant:
+	match typeof(value):
+		TYPE_DICTIONARY:
+			var normalized_dict := {}
+			var source_dict: Dictionary = value as Dictionary
+			for key in source_dict.keys():
+				normalized_dict[key] = _normalize_json_numbers(source_dict.get(key))
+			return normalized_dict
+		TYPE_ARRAY:
+			var normalized_array: Array = []
+			var source_array: Array = value as Array
+			for entry in source_array:
+				normalized_array.append(_normalize_json_numbers(entry))
+			return normalized_array
+		TYPE_INT, TYPE_FLOAT:
+			return float(value)
+		_:
+			return value
+
+
+func _enter_ui_test_game(app: Control) -> bool:
+	var snapshot: Dictionary = app.call("current_environment_view_snapshot")
+	var game_ids_value: Variant = snapshot.get("game_ids", [])
+	var game_ids: Array = []
+	if typeof(game_ids_value) == TYPE_ARRAY:
+		game_ids = game_ids_value
+	if game_ids.is_empty():
+		app.call("enter_first_available_game")
+		return false
+	for preferred_id in ["video_poker", "blackjack", "bar_dice", "pull_tabs"]:
+		if game_ids.has(preferred_id):
+			app.call("enter_game", preferred_id)
+			return true
+	app.call("enter_first_available_game")
+	return true
+
+
+func _archetype_has_game(app: Control, archetype_id: String, game_id: String) -> bool:
+	var content_library: ContentLibrary = app.get("library")
+	if content_library == null:
+		return false
+	for archetype_value in content_library.environment_archetypes:
+		if typeof(archetype_value) != TYPE_DICTIONARY:
+			continue
+		var archetype: Dictionary = archetype_value
+		if str(archetype.get("id", "")) != archetype_id:
+			continue
+		var game_pool_value: Variant = archetype.get("game_pool", [])
+		var game_pool: Array = []
+		if typeof(game_pool_value) == TYPE_ARRAY:
+			game_pool = game_pool_value
+		return game_pool.has(game_id)
+	return false
+
+
+func _archetype_has_games(app: Control, archetype_id: String) -> bool:
+	var content_library: ContentLibrary = app.get("library")
+	if content_library == null:
+		return false
+	for archetype_value in content_library.environment_archetypes:
+		if typeof(archetype_value) != TYPE_DICTIONARY:
+			continue
+		var archetype: Dictionary = archetype_value
+		if str(archetype.get("id", "")) != archetype_id:
+			continue
+		var game_pool_value: Variant = archetype.get("game_pool", [])
+		var game_pool: Array = []
+		if typeof(game_pool_value) == TYPE_ARRAY:
+			game_pool = game_pool_value
+		return not game_pool.is_empty()
+	return false
 
 
 func _check_run_journal_flow(app: Control, save_service: SaveService, viewport_rect: Rect2) -> bool:

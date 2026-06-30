@@ -10,6 +10,7 @@ const SPIN_ACTION := "spin"
 const NUDGE_ACTION := "nudge"
 const HOST_APPLY_FLAG := "host_apply_result"
 const WIN_REVEAL_BEAT_SEC := 0.18
+const BUFFALO_BONUS_MAX_ANIMATION_MSEC := 10000
 
 var pinball
 var buffalo
@@ -92,6 +93,8 @@ func resolve_spin(machine: Dictionary, action_id: String, selected_bet: Dictiona
 	var headline_payout: int = 0 if feature_triggered else _grid_payout_for_family(family, grid, stake, stake_cost, machine, definition, entry)
 	var immediate_payout := 0
 	machine["last_grid"] = grid
+	if family_id == "buffalo" and normalized_action == SPIN_ACTION and stake_cost > 0:
+		buffalo.advance_grand_prize(machine, stake_cost, stake, bet_id)
 	if feature_triggered:
 		var preserved_bonus: Dictionary = _copy_dict(entry.get("preserve_active_bonus", {}))
 		if not preserved_bonus.is_empty():
@@ -216,6 +219,8 @@ func resolve_bonus_action(machine: Dictionary, action_id: String, rng: RngStream
 		if replay_duration > 0:
 			bonus_plan["duration_msec"] = maxi(int(bonus_plan.get("duration_msec", 0)), replay_duration)
 			bonus_plan["feature_duration_msec"] = maxi(int(bonus_plan.get("feature_duration_msec", 0)), replay_duration)
+		if family_id == "buffalo":
+			bonus_plan = _cap_buffalo_animation_plan(machine, bonus_plan)
 		machine["slot_animation_id"] = str(bonus_plan.get("id", ""))
 		machine["slot_animation_duration_msec"] = int(bonus_plan.get("duration_msec", 0))
 		machine["slot_animation_started_msec"] = 0
@@ -232,6 +237,9 @@ func resolve_bonus_action(machine: Dictionary, action_id: String, rng: RngStream
 		buckets[bet_id] = bucket
 		bonus_state["per_bet"] = buckets
 		machine["bonus_state"] = bonus_state
+		var completed_active: Dictionary = _copy_dict(step.get("active_bonus", {}))
+		if family_id == "buffalo" and int(completed_active.get("grand_prize_awarded", 0)) > 0:
+			buffalo.reset_grand_prize(machine, maxi(1, int(active_before.get("stake", 1))), bet_id)
 	var message := str(step.get("message", "Bonus advances."))
 	var deltas := GameModule.empty_result_deltas()
 	deltas["bankroll_delta"] = award
@@ -618,8 +626,7 @@ func _buffalo_nudge_grid_for_outcome(machine: Dictionary, offer: Dictionary, tar
 			MathScript.set_cell(grid, reel_index, row_index, "GOLD_TOKEN")
 		else:
 			MathScript.set_cell(grid, reel_index, row_index, _fallback_non_gold_symbol(reel_index, row_index))
-	if target_classification == "near_miss" or target_classification == "zero_loss":
-		_scrub_unprotected_gold_tokens(grid, target_cells.slice(0, target_coin_count))
+	_scrub_unprotected_gold_tokens(grid, target_cells.slice(0, target_coin_count))
 	return grid
 
 
@@ -836,7 +843,7 @@ func _animation_plan(machine: Dictionary, classification: String, active_bonus: 
 		feature_duration = int(round(float(bonus_steps) * 720.0 + 900.0))
 		total += float(feature_duration) / 1000.0
 	var id := "%s:%d:%s" % [str(machine.get("machine_key", "")), int(machine.get("spin_count", 0)) + 1, classification]
-	return {
+	var plan := {
 		"id": id,
 		"duration_msec": int(ceil(total * 1000.0)),
 		"reel_stop_times": stop_times,
@@ -857,13 +864,14 @@ func _animation_plan(machine: Dictionary, classification: String, active_bonus: 
 		"count_up_start_msec": int(round(celebration_start * 1000.0)),
 		"count_up_end_msec": int(round(celebration_start * 1000.0)) + celebration_duration,
 	}
+	return _cap_buffalo_animation_plan(machine, plan)
 
 
 func _bonus_completion_animation_plan(machine: Dictionary, win_attribution: Dictionary) -> Dictionary:
 	var tier := str(win_attribution.get("tier", "none"))
 	var celebration_duration := _celebration_duration_msec(tier)
 	var duration := maxi(900, celebration_duration + 300)
-	return {
+	var plan := {
 		"id": "bonus:%s:%d" % [str(machine.get("machine_key", "")), int(machine.get("spin_count", 0))],
 		"duration_msec": duration,
 		"reel_stop_times": [],
@@ -879,6 +887,7 @@ func _bonus_completion_animation_plan(machine: Dictionary, win_attribution: Dict
 		"count_up_start_msec": 80,
 		"count_up_end_msec": 80 + celebration_duration,
 	}
+	return _cap_buffalo_animation_plan(machine, plan)
 
 
 func _bonus_step_uses_reel_animation(family_id: String, active_before: Dictionary, step: Dictionary) -> bool:
@@ -914,6 +923,27 @@ func _bonus_step_animation_plan(machine: Dictionary, active_before: Dictionary, 
 		plan["celebration_duration_msec"] = celebration_duration
 		plan["count_up_start_msec"] = celebration_start
 		plan["count_up_end_msec"] = celebration_start + celebration_duration
+	return _cap_buffalo_animation_plan(machine, plan)
+
+
+func _cap_buffalo_animation_plan(machine: Dictionary, plan: Dictionary) -> Dictionary:
+	if str(machine.get("type_id", "")) != "buffalo":
+		return plan
+	var duration := maxi(0, int(plan.get("duration_msec", 0)))
+	if duration <= BUFFALO_BONUS_MAX_ANIMATION_MSEC:
+		return plan
+	plan["duration_msec"] = BUFFALO_BONUS_MAX_ANIMATION_MSEC
+	if plan.has("feature_duration_msec"):
+		plan["feature_duration_msec"] = mini(maxi(0, int(plan.get("feature_duration_msec", 0))), BUFFALO_BONUS_MAX_ANIMATION_MSEC)
+	for key in ["celebration_start_msec", "count_up_start_msec", "count_up_end_msec"]:
+		if plan.has(key):
+			plan[key] = mini(maxi(0, int(plan.get(key, 0))), BUFFALO_BONUS_MAX_ANIMATION_MSEC)
+	if plan.has("celebration_duration_msec"):
+		var celebration_start := maxi(0, int(plan.get("celebration_start_msec", 0)))
+		plan["celebration_duration_msec"] = mini(maxi(0, int(plan.get("celebration_duration_msec", 0))), maxi(0, BUFFALO_BONUS_MAX_ANIMATION_MSEC - celebration_start))
+	if plan.has("coin_collect_duration_msec"):
+		var collect_start := maxi(0, int(plan.get("coin_collect_start_msec", 0)))
+		plan["coin_collect_duration_msec"] = mini(maxi(0, int(plan.get("coin_collect_duration_msec", 0))), maxi(0, BUFFALO_BONUS_MAX_ANIMATION_MSEC - collect_start))
 	return plan
 
 

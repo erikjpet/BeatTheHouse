@@ -3,6 +3,8 @@ extends RefCounted
 
 const StateScript := preload("res://scripts/games/slots/slot_machine_state.gd")
 const CatalogScript := preload("res://scripts/games/slots/slot_catalog.gd")
+const BUFFALO_GRAND_BASE_MULTIPLIER := 1200
+const BUFFALO_BONUS_MAX_ANIMATION_MSEC := 10000
 
 var catalog
 
@@ -18,7 +20,7 @@ func surface_state(machine: Dictionary, run_state: RunState, definition: Diction
 	var active_bonus: Dictionary = _display_active_bonus(machine, stored_active_bonus)
 	var animation_duration := maxi(0, int(machine.get("slot_animation_duration_msec", 0)))
 	var animation_id := str(machine.get("slot_animation_id", ""))
-	var surface_time_msec := maxi(0, int(ui_state.get("surface_time_msec", 0)))
+	var surface_time_msec := maxi(0, int(ui_state.get("drunk_scaled_surface_time_msec", ui_state.get("surface_time_msec", 0))))
 	var spin_channel := GameModule.surface_animation_channel(
 		"slot_spin",
 		animation_id,
@@ -153,6 +155,7 @@ func surface_state(machine: Dictionary, run_state: RunState, definition: Diction
 		"slot_free_spins": int(machine.get("free_spins", 0)),
 		"slot_active_bonus": active_bonus.duplicate(true),
 		"slot_active_bonus_active": feature_active,
+		"slot_buffalo_grand_prize": _buffalo_grand_prize(machine, active_bonus, selected_bet),
 		"slot_fixed_bet_ladder": true,
 		"bet_options": bet_options.duplicate(true),
 		"selected_bet_id": str(selected_bet.get("id", "bet_2")),
@@ -223,7 +226,10 @@ func _display_active_bonus(machine: Dictionary, active_bonus: Dictionary) -> Dic
 	replay["active"] = true
 	replay["complete"] = true
 	replay["visual_replay"] = true
-	replay["animation_duration_msec"] = maxi(int(replay.get("animation_duration_msec", 0)), plan_duration)
+	var replay_duration := maxi(int(replay.get("animation_duration_msec", 0)), plan_duration)
+	if str(replay.get("family", "")) == "buffalo":
+		replay_duration = mini(replay_duration, BUFFALO_BONUS_MAX_ANIMATION_MSEC)
+	replay["animation_duration_msec"] = replay_duration
 	return replay
 
 
@@ -369,15 +375,44 @@ func _feature_channel_duration_msec(machine: Dictionary, active_bonus: Dictionar
 		return 0
 	var active_duration := maxi(0, int(active_bonus.get("animation_duration_msec", 0)))
 	if active_duration > 0:
-		return active_duration
+		return _cap_buffalo_feature_duration(active_bonus, active_duration)
 	var plan: Dictionary = _copy_dict(machine.get("slot_animation_plan", {}))
 	var plan_duration := maxi(0, int(plan.get("feature_duration_msec", 0)))
 	if plan_duration > 0:
-		return plan_duration
+		return _cap_buffalo_feature_duration(active_bonus, plan_duration)
 	var steps := maxi(0, int(active_bonus.get("total_steps", active_bonus.get("remaining_steps", 0))))
 	if steps > 0:
-		return int(round(float(steps) * 720.0 + 900.0))
-	return maxi(900, int(machine.get("slot_animation_duration_msec", 900)))
+		return _cap_buffalo_feature_duration(active_bonus, int(round(float(steps) * 720.0 + 900.0)))
+	return _cap_buffalo_feature_duration(active_bonus, maxi(900, int(machine.get("slot_animation_duration_msec", 900))))
+
+
+func _cap_buffalo_feature_duration(active_bonus: Dictionary, duration_msec: int) -> int:
+	if str(active_bonus.get("family", "")) == "buffalo":
+		return mini(maxi(0, duration_msec), BUFFALO_BONUS_MAX_ANIMATION_MSEC)
+	return duration_msec
+
+
+func _buffalo_grand_prize(machine: Dictionary, active_bonus: Dictionary, selected_bet: Dictionary) -> int:
+	if str(machine.get("type_id", "")) != "buffalo" and str(active_bonus.get("family", "")) != "buffalo":
+		return 0
+	var awarded := maxi(0, int(active_bonus.get("grand_prize_awarded", 0)))
+	if awarded > 0:
+		return awarded
+	var active_grand := maxi(0, int(active_bonus.get("grand_prize", 0)))
+	if active_grand > 0:
+		return active_grand
+	var bonus_state: Dictionary = _copy_dict(machine.get("bonus_state", {}))
+	var stored := maxi(0, int(bonus_state.get("buffalo_grand_prize", 0)))
+	if stored > 0:
+		return stored
+	var ladder: Dictionary = _copy_dict(active_bonus.get("jackpot_ladder", {}))
+	for tier_value in _copy_array(ladder.get("tiers", [])):
+		var tier: Dictionary = _copy_dict(tier_value)
+		if str(tier.get("id", "")) == "grand":
+			var ladder_award := maxi(0, int(tier.get("award", 0)))
+			if ladder_award > 0:
+				return ladder_award
+	return maxi(1, int(selected_bet.get("total_credits", 2))) * BUFFALO_GRAND_BASE_MULTIPLIER
 
 
 func _audio_cues(machine: Dictionary) -> Array:
@@ -482,14 +517,12 @@ func _pinball_feature_audio_cues(active_bonus: Dictionary, phase: String) -> Arr
 
 
 func _pinball_launch_meter(active_bonus: Dictionary, surface_time_msec: int) -> Dictionary:
-	var target_power := clampi(int(active_bonus.get("launch_power", 70)), 25, 96)
+	var target_power := clampi(int(active_bonus.get("launch_power", 70)), 20, 100)
 	var time_msec := maxi(0, surface_time_msec)
 	if time_msec <= 0:
 		time_msec = 173 + int(active_bonus.get("step_index", 0)) * 137 + int(active_bonus.get("balls_remaining", 0)) * 83
-	var cycle_msec := 1040.0
-	var phase := fposmod(float(time_msec), cycle_msec) / cycle_msec
-	var meter := 0.5 + 0.5 * sin(phase * TAU)
-	var sampled_power := clampi(int(round(float(target_power) + (meter - 0.5) * 18.0)), 24, 100)
+	var meter := clampf(float(target_power) / 100.0, 0.0, 1.0)
+	var sampled_power := target_power
 	var sweet_spot := 82
 	var error := absi(sampled_power - sweet_spot)
 	var rating := "clean"
@@ -507,6 +540,8 @@ func _pinball_launch_meter(active_bonus: Dictionary, surface_time_msec: int) -> 
 		"rating": rating,
 		"time_msec": time_msec,
 		"lane": str(active_bonus.get("selected_lane", "center")),
+		"angle_degrees": clampi(int(active_bonus.get("launch_angle_degrees", 0)), -60, 60),
+		"controlled": true,
 	}
 
 

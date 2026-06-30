@@ -482,6 +482,7 @@ func surface_action_command(surface_action: String, index: int, _confirm_request
 				"action_id": "buy_tab",
 				"action_kind": "legal",
 				"resolve": true,
+				"direct_resolve": true,
 				"set_stake": price,
 				"selected_index": index,
 				"message": "The dispenser button thumps and a %s ticket drops." % str(deal.get("display_name", "pull-tab")),
