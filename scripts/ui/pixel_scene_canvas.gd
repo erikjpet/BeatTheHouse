@@ -1370,6 +1370,12 @@ func _copy_array(value: Variant) -> Array:
 	return (value as Array).duplicate(true)
 
 
+func _copy_dictionary(value: Variant) -> Dictionary:
+	if typeof(value) != TYPE_DICTIONARY:
+		return {}
+	return (value as Dictionary).duplicate(true)
+
+
 func _scene_object(object_id: String) -> Dictionary:
 	for object_data in _active_scene_objects():
 		if typeof(object_data) == TYPE_DICTIONARY and str((object_data as Dictionary).get("id", "")) == object_id:
@@ -1653,7 +1659,7 @@ func _selected_info_action_label(object_data: Dictionary) -> String:
 		"enter_game":
 			label = "Enter"
 		"buy_item":
-			label = "Buy / apply"
+			label = "Buy"
 		"talk_shopkeeper":
 			label = "Talk"
 		"confirm_travel", "select_travel":
@@ -1667,7 +1673,7 @@ func _selected_info_action_label(object_data: Dictionary) -> String:
 			"event":
 				label = "Respond"
 			"item":
-				label = "Buy / apply"
+				label = "Buy"
 			"travel":
 				label = "Travel"
 			"shopkeeper":
@@ -1831,7 +1837,7 @@ func _compact_info_text(text: String) -> String:
 	for phrase in phrase_replacements.keys():
 		compact = compact.replace(str(phrase), str(phrase_replacements[phrase]))
 	var replacements := {
-		"Double-click to buy or apply this item.": "Double-click to buy/apply.",
+		"Buy this item.": "Buy item.",
 		"Double-click to sell gear.": "Double-click to sell.",
 		"Double-click this machine to enter.": "Double-click to enter.",
 		"Double-click to review this response.": "Double-click to review.",
@@ -2987,7 +2993,13 @@ func _draw_pull_tab_machine_prop(rect: Rect2, object_data: Dictionary, accent: C
 
 func _draw_slot_cabinet_prop(rect: Rect2, object_data: Dictionary, accent: Color, selected: bool, disabled: bool = false) -> void:
 	var phase := float(abs(hash(str(object_data.get("id", object_data.get("label", "slot"))))) % 1000) / 1000.0
-	var pulse := 0.38 + absf(sin(flicker * (3.5 if selected else 2.1) + phase * TAU)) * (0.30 if selected else 0.14)
+	var profile := _slot_prop_profile(object_data, accent)
+	var runtime := _slot_prop_runtime_state(object_data)
+	var preview := _slot_prop_preview_state(object_data)
+	var preview_phase := str(preview.get("phase", "idle"))
+	var live_preview := bool(preview.get("active", false)) or ["spinning", "win", "near_miss", "bonus", "nudge_chain"].has(preview_phase)
+	var pulse_speed := 4.8 if preview_phase == "spinning" else 4.1 if live_preview else 3.5 if selected else 2.1
+	var pulse := 0.38 + absf(sin(flicker * pulse_speed + phase * TAU)) * (0.34 if live_preview else 0.30 if selected else 0.14)
 	var safe := Rect2(
 		rect.position + Vector2(rect.size.x * 0.14, rect.size.y * 0.03),
 		Vector2(rect.size.x * 0.72, rect.size.y * 0.92)
@@ -2995,59 +3007,542 @@ func _draw_slot_cabinet_prop(rect: Rect2, object_data: Dictionary, accent: Color
 	if safe.size.x < 28.0 or safe.size.y < 42.0:
 		draw_rect(rect.grow(-2.0), Color("#111120"))
 		return
-	var base := Rect2(safe.position + Vector2(safe.size.x * 0.10, safe.size.y * 0.86), Vector2(safe.size.x * 0.80, safe.size.y * 0.10))
-	var body := Rect2(safe.position + Vector2(safe.size.x * 0.12, safe.size.y * 0.18), Vector2(safe.size.x * 0.76, safe.size.y * 0.70))
-	var topper := Rect2(safe.position + Vector2(safe.size.x * 0.06, safe.size.y * 0.03), Vector2(safe.size.x * 0.88, safe.size.y * 0.19))
-	var screen := Rect2(body.position + Vector2(body.size.x * 0.12, body.size.y * 0.26), Vector2(body.size.x * 0.76, body.size.y * 0.32))
-	var deck := Rect2(body.position + Vector2(body.size.x * 0.10, body.size.y * 0.68), Vector2(body.size.x * 0.80, body.size.y * 0.14))
-	var rail_color := Color(accent.r, accent.g, accent.b, 0.42 + pulse * 0.22)
-	draw_rect(Rect2(safe.position + Vector2(safe.size.x * 0.18, safe.size.y * 0.94), Vector2(safe.size.x * 0.64, safe.size.y * 0.035)), Color(accent.r, accent.g, accent.b, 0.24))
-	draw_rect(base, Color("#07070c"))
-	draw_rect(base, Color(accent.r, accent.g, accent.b, 0.16 + pulse * 0.10))
-	draw_rect(body, Color("#0b0d18"))
-	draw_rect(body, Color(accent.r, accent.g, accent.b, 0.08 + pulse * 0.06), false, 2)
-	draw_rect(Rect2(body.position + Vector2(0, body.size.y * 0.06), Vector2(body.size.x, 3)), Color(1.0, 1.0, 1.0, 0.12))
-	draw_rect(Rect2(body.position + Vector2(-safe.size.x * 0.04, body.size.y * 0.08), Vector2(safe.size.x * 0.05, body.size.y * 0.78)), rail_color)
-	draw_rect(Rect2(body.position + Vector2(body.size.x - safe.size.x * 0.01, body.size.y * 0.08), Vector2(safe.size.x * 0.05, body.size.y * 0.78)), rail_color)
-	draw_rect(topper, Color("#161020"))
-	draw_rect(topper, Color(accent.r, accent.g, accent.b, 0.22 + pulse * 0.16), false, 2)
-	var title := str(object_data.get("label", "SLOT")).strip_edges().to_upper()
-	if title.is_empty():
-		title = "SLOT"
-	var font := get_theme_default_font()
-	var title_size := clampi(int(topper.size.y * 0.34), 7, 13)
-	draw_string(font, topper.position + Vector2(4.0, topper.size.y * 0.62), _fit_draw_text(title.left(10), font, title_size, topper.size.x - 8.0), HORIZONTAL_ALIGNMENT_CENTER, topper.size.x - 8.0, title_size, C_YELLOW)
-	draw_rect(screen, C_SHADOW)
+	var format_id := str(profile.get("format_id", "classic_3_reel"))
+	var reel_count := maxi(3, int(profile.get("reel_count", 3)))
+	var row_count := maxi(1, int(profile.get("row_count", 1)))
+	var video_feature := format_id == "video_feature"
+	var classic := format_id == "classic_3_reel" or row_count <= 1
+	var slot_accent: Color = profile.get("accent", accent)
+	var slot_light: Color = profile.get("light", C_CYAN)
+	var slot_trim: Color = profile.get("trim", C_YELLOW)
+	var primary: Color = profile.get("primary", Color("#0b0d18"))
+	var secondary: Color = profile.get("secondary", Color("#07070c"))
+	var glass: Color = profile.get("glass", Color("#f2efe2"))
+	var base := Rect2(safe.position + Vector2(safe.size.x * (0.10 if classic else 0.08), safe.size.y * 0.86), Vector2(safe.size.x * (0.80 if classic else 0.84), safe.size.y * 0.10))
+	var body := Rect2(safe.position + Vector2(safe.size.x * (0.15 if classic else 0.08), safe.size.y * (0.20 if classic else 0.15)), Vector2(safe.size.x * (0.70 if classic else 0.84), safe.size.y * (0.68 if classic else 0.73)))
+	var topper := Rect2(safe.position + Vector2(safe.size.x * (0.10 if classic else 0.04), safe.size.y * 0.04), Vector2(safe.size.x * (0.80 if classic else 0.92), safe.size.y * (0.17 if classic else 0.15)))
+	var screen := Rect2(body.position + Vector2(body.size.x * (0.18 if classic else 0.10), body.size.y * (0.30 if classic else 0.22)), Vector2(body.size.x * (0.64 if classic else 0.80), body.size.y * (0.26 if classic else 0.42)))
+	if video_feature:
+		screen = Rect2(body.position + Vector2(body.size.x * 0.09, body.size.y * 0.20), Vector2(body.size.x * 0.58, body.size.y * 0.48))
+	var feature_panel := Rect2(body.position + Vector2(body.size.x * 0.72, body.size.y * 0.19), Vector2(body.size.x * 0.18, body.size.y * 0.48))
+	var deck := Rect2(body.position + Vector2(body.size.x * 0.10, body.size.y * (0.70 if classic else 0.72)), Vector2(body.size.x * 0.80, body.size.y * (0.13 if classic else 0.12)))
+	var rail_alpha := 0.34 + pulse * 0.24
+	draw_rect(Rect2(safe.position + Vector2(safe.size.x * 0.16, safe.size.y * 0.94), Vector2(safe.size.x * 0.68, safe.size.y * 0.035)), Color(slot_accent.r, slot_accent.g, slot_accent.b, 0.22))
+	draw_rect(base, Color("#06060b"))
+	draw_rect(base, Color(slot_trim.r, slot_trim.g, slot_trim.b, 0.14 + pulse * 0.08))
+	draw_rect(body, primary)
+	draw_rect(body, Color(slot_accent.r, slot_accent.g, slot_accent.b, 0.08 + pulse * 0.06), false, 2)
+	draw_rect(Rect2(body.position + Vector2(0, body.size.y * 0.06), Vector2(body.size.x, 3)), Color(1.0, 1.0, 1.0, 0.11))
+	draw_rect(Rect2(body.position + Vector2(-safe.size.x * 0.035, body.size.y * 0.09), Vector2(safe.size.x * 0.045, body.size.y * 0.76)), Color(slot_light.r, slot_light.g, slot_light.b, rail_alpha))
+	draw_rect(Rect2(body.position + Vector2(body.size.x - safe.size.x * 0.010, body.size.y * 0.09), Vector2(safe.size.x * 0.045, body.size.y * 0.76)), Color(slot_accent.r, slot_accent.g, slot_accent.b, rail_alpha))
+	draw_rect(topper, secondary)
+	draw_rect(topper, Color(slot_trim.r, slot_trim.g, slot_trim.b, 0.16 + pulse * 0.12), false, 2)
+	_draw_slot_prop_topper(topper, profile, pulse, phase, preview)
+	draw_rect(screen, Color("#03040a"))
 	draw_rect(Rect2(screen.position + Vector2(2, 2), screen.size - Vector2(4, 4)), Color("#06080f"))
-	draw_rect(screen, Color(C_CYAN.r, C_CYAN.g, C_CYAN.b, 0.14), false, 1)
-	var reel_gap := maxf(1.0, screen.size.x * 0.035)
-	var reel_w := (screen.size.x - reel_gap * 4.0) / 3.0
-	for i in range(3):
-		var reel := Rect2(screen.position + Vector2(reel_gap + float(i) * (reel_w + reel_gap), screen.size.y * 0.12), Vector2(reel_w, screen.size.y * 0.76))
-		draw_rect(reel, Color("#f2efe2"))
-		draw_rect(reel, Color("#0f1220"), false, 1)
-		var symbol := Rect2(reel.position + reel.size * 0.22, reel.size * 0.56)
-		draw_rect(symbol, _cycle_color(i * 47 + int(phase * 100.0)))
-		if symbol.size.x > 5.0 and symbol.size.y > 5.0:
-			draw_rect(symbol.grow(-2.0), Color(1.0, 1.0, 1.0, 0.16), false, 1)
-	draw_rect(deck, Color("#170912"))
-	draw_rect(deck, Color(C_YELLOW.r, C_YELLOW.g, C_YELLOW.b, 0.22), false, 1)
+	draw_rect(screen, Color(slot_light.r, slot_light.g, slot_light.b, 0.16 + pulse * 0.08), false, 1)
+	_draw_slot_prop_reels(screen, reel_count, row_count, profile, glass, phase, preview)
+	_draw_slot_prop_nudge_chain_overlay(screen, preview, profile, phase, pulse)
+	if video_feature:
+		_draw_slot_prop_feature_panel(feature_panel, profile, pulse, phase, preview)
+	else:
+		var feature_strip := Rect2(body.position + Vector2(body.size.x * 0.18, body.size.y * (0.60 if classic else 0.66)), Vector2(body.size.x * 0.64, body.size.y * (0.08 if classic else 0.05)))
+		_draw_slot_prop_feature_strip(feature_strip, profile, pulse, phase, preview)
+	draw_rect(deck, Color("#12080f"))
+	draw_rect(deck, Color(slot_trim.r, slot_trim.g, slot_trim.b, 0.18 + pulse * 0.08), false, 1)
 	for i in range(5):
-		var button_pos := deck.position + Vector2(deck.size.x * (0.14 + float(i) * 0.18), deck.size.y * 0.50)
-		draw_circle(button_pos, maxf(2.0, minf(deck.size.x, deck.size.y) * 0.11), _cycle_color(i * 29).lightened(0.08))
-	var lever_x := body.position.x + body.size.x * 0.92
-	draw_line(Vector2(lever_x, body.position.y + body.size.y * 0.28), Vector2(lever_x, body.position.y + body.size.y * 0.55), C_AMBER, 2)
-	draw_circle(Vector2(lever_x, body.position.y + body.size.y * 0.25), maxf(2.0, safe.size.x * 0.035), C_YELLOW)
+		var button_pos := deck.position + Vector2(deck.size.x * (0.14 + float(i) * 0.18), deck.size.y * 0.52)
+		var button_color: Color = _cycle_color(i * 29 + int(phase * 100.0)).lightened(0.08)
+		if i == 0:
+			button_color = slot_accent
+		elif i == 4:
+			button_color = slot_light
+		draw_circle(button_pos, maxf(2.0, minf(deck.size.x, deck.size.y) * 0.11), button_color)
+	_draw_slot_prop_runtime_marker(body, deck, runtime, profile, pulse, preview)
+	if classic:
+		var lever_x := body.position.x + body.size.x * 0.93
+		draw_line(Vector2(lever_x, body.position.y + body.size.y * 0.28), Vector2(lever_x, body.position.y + body.size.y * 0.55), slot_trim, 2)
+		draw_circle(Vector2(lever_x, body.position.y + body.size.y * 0.25), maxf(2.0, safe.size.x * 0.035), C_YELLOW)
 	var light_count := maxi(3, int(safe.size.x / 16.0))
 	for i in range(light_count):
 		var t := 0.0 if light_count <= 1 else float(i) / float(light_count - 1)
 		var pos := topper.position + Vector2(topper.size.x * t, -1.0)
-		draw_circle(pos, 1.6 + pulse * 1.2, Color(accent.r, accent.g, accent.b, 0.28 + pulse * 0.30))
+		var bulb := slot_light if i % 2 == 0 else slot_accent
+		draw_circle(pos, 1.6 + pulse * 1.2, Color(bulb.r, bulb.g, bulb.b, 0.28 + pulse * 0.30))
 	if selected:
 		draw_rect(safe.grow(2.0), Color(C_WHITE.r, C_WHITE.g, C_WHITE.b, 0.70), false, 2)
 	if disabled:
 		draw_rect(safe, Color(0.0, 0.0, 0.0, 0.48))
 		draw_line(safe.position + Vector2(safe.size.x * 0.12, safe.size.y * 0.20), safe.position + Vector2(safe.size.x * 0.88, safe.size.y * 0.78), C_SOFT, 3)
+
+
+func _slot_prop_visual_state(object_data: Dictionary) -> Dictionary:
+	var value: Variant = object_data.get("visual_state", {})
+	if typeof(value) == TYPE_DICTIONARY:
+		return (value as Dictionary)
+	return {}
+
+
+func _slot_prop_runtime_state(object_data: Dictionary) -> Dictionary:
+	var value: Variant = object_data.get("runtime_state", {})
+	if typeof(value) == TYPE_DICTIONARY:
+		return (value as Dictionary)
+	return {}
+
+
+func _slot_prop_preview_state(object_data: Dictionary) -> Dictionary:
+	var visual := _slot_prop_visual_state(object_data)
+	var value: Variant = visual.get("slot_preview", {})
+	if typeof(value) == TYPE_DICTIONARY:
+		return (value as Dictionary)
+	return {}
+
+
+func _slot_prop_profile(object_data: Dictionary, fallback_accent: Color) -> Dictionary:
+	var visual := _slot_prop_visual_state(object_data)
+	var family := str(visual.get("machine_family", "")).to_lower()
+	var format_id := str(visual.get("machine_format", "")).to_lower()
+	var identity := str(visual.get("cabinet_identity", "")).to_lower()
+	if format_id.is_empty():
+		format_id = "classic_3_reel"
+	var title := str(visual.get("cabinet_title", object_data.get("label", "SLOT"))).strip_edges().to_upper()
+	if title.is_empty():
+		title = "SLOT"
+	var reel_count := int(visual.get("reel_count", 5 if format_id != "classic_3_reel" else 3))
+	var row_count := int(visual.get("row_count", 3 if format_id != "classic_3_reel" else 1))
+	var profile := {
+		"identity": identity,
+		"family": family,
+		"format_id": format_id,
+		"title": title,
+		"reel_count": reel_count,
+		"row_count": row_count,
+		"primary": Color("#0b0d18"),
+		"secondary": Color("#161020"),
+		"accent": fallback_accent,
+		"light": C_CYAN,
+		"trim": C_YELLOW,
+		"glass": Color("#f2efe2"),
+		"marker": "generic",
+	}
+	match identity:
+		"em_bumper_drop":
+			profile.merge({
+				"title": "EM BUMP",
+				"primary": Color("#3b2418"),
+				"secondary": Color("#15100c"),
+				"accent": Color("#c99242"),
+				"light": Color("#ffe48a"),
+				"trim": Color("#b77b35"),
+				"glass": Color("#f6e6c8"),
+				"marker": "bumpers",
+			}, true)
+		"lane_multiball":
+			profile.merge({
+				"title": "LANES",
+				"primary": Color("#20304d"),
+				"secondary": Color("#080b14"),
+				"accent": Color("#ff7a2f"),
+				"light": Color("#59d8ff"),
+				"trim": Color("#ffd45a"),
+				"glass": Color("#d9fbff"),
+				"marker": "lanes",
+			}, true)
+		"full_table":
+			profile.merge({
+				"title": "TABLE",
+				"primary": Color("#141827"),
+				"secondary": Color("#05070f"),
+				"accent": Color("#6ff3ff"),
+				"light": Color("#ff4fd8"),
+				"trim": Color("#f8fafc"),
+				"glass": Color("#dffbff"),
+				"marker": "table",
+			}, true)
+		"heritage":
+			profile.merge({
+				"title": "HERITAGE",
+				"primary": Color("#352110"),
+				"secondary": Color("#160d07"),
+				"accent": Color("#d09a42"),
+				"light": Color("#f3d27a"),
+				"trim": Color("#7b3f1a"),
+				"glass": Color("#f8dfad"),
+				"marker": "horns",
+			}, true)
+		"ways":
+			profile.merge({
+				"title": "WAYS",
+				"primary": Color("#5b2c17"),
+				"secondary": Color("#130907"),
+				"accent": Color("#ef6a24"),
+				"light": Color("#ffd16a"),
+				"trim": Color("#f4c15d"),
+				"glass": Color("#ffe0a5"),
+				"marker": "sunset",
+			}, true)
+		"link_arena":
+			profile.merge({
+				"title": "LINK",
+				"primary": Color("#25140d"),
+				"secondary": Color("#070504"),
+				"accent": Color("#ffb44f"),
+				"light": Color("#65f0ff"),
+				"trim": Color("#d94c26"),
+				"glass": Color("#ffe0ad"),
+				"marker": "wheel",
+			}, true)
+		_:
+			if family == "buffalo":
+				profile.merge({
+					"primary": Color("#432514"),
+					"secondary": Color("#120807"),
+					"accent": Color("#ef6a24"),
+					"light": Color("#ffd16a"),
+					"trim": Color("#c9903d"),
+					"glass": Color("#ffe0a5"),
+					"marker": "sunset",
+				}, true)
+			elif format_id == "video_feature":
+				profile.merge({
+					"primary": Color("#141827"),
+					"secondary": Color("#05070f"),
+					"accent": Color("#6ff3ff"),
+					"light": Color("#ff4fd8"),
+					"trim": Color("#f8fafc"),
+					"glass": Color("#dffbff"),
+					"marker": "table",
+				}, true)
+	return profile
+
+
+func _draw_slot_prop_topper(topper: Rect2, profile: Dictionary, pulse: float, phase: float, preview: Dictionary = {}) -> void:
+	var accent_color: Color = profile.get("accent", C_PINK)
+	var light_color: Color = profile.get("light", C_CYAN)
+	var trim_color: Color = profile.get("trim", C_YELLOW)
+	var marker := str(profile.get("marker", "generic"))
+	var preview_phase := str(preview.get("phase", "idle"))
+	match marker:
+		"horns":
+			var center := topper.position + topper.size * 0.5
+			draw_line(center + Vector2(-8, 2), center + Vector2(-topper.size.x * 0.34, -topper.size.y * 0.20), trim_color, 2)
+			draw_line(center + Vector2(8, 2), center + Vector2(topper.size.x * 0.34, -topper.size.y * 0.20), trim_color, 2)
+			var head_color := light_color if preview_phase == "win" else accent_color
+			draw_circle(center + Vector2(0, -pulse * 1.8 if preview_phase == "bonus" else 0), maxf(3.0, topper.size.y * 0.22), head_color)
+		"sunset":
+			for i in range(3):
+				var band_y := topper.position.y + topper.size.y * (0.20 + float(i) * 0.20)
+				draw_rect(Rect2(topper.position.x + 4.0, band_y, topper.size.x - 8.0, maxf(2.0, topper.size.y * 0.10)), Color(accent_color.r, accent_color.g, accent_color.b, 0.20 + float(i) * 0.12))
+			draw_circle(topper.position + Vector2(topper.size.x * 0.72, topper.size.y * 0.42), maxf(3.0, topper.size.y * 0.16), light_color)
+		"lanes":
+			for i in range(4):
+				var x := topper.position.x + topper.size.x * (0.18 + float(i) * 0.16)
+				draw_line(Vector2(x, topper.position.y + topper.size.y * 0.72), Vector2(x + topper.size.x * 0.10, topper.position.y + topper.size.y * 0.20), Color(light_color.r, light_color.g, light_color.b, 0.50 + pulse * 0.20), 1)
+		"table":
+			draw_rect(Rect2(topper.position + Vector2(5.0, topper.size.y * 0.25), Vector2(topper.size.x - 10.0, maxf(3.0, topper.size.y * 0.16))), Color(light_color.r, light_color.g, light_color.b, 0.34 + pulse * 0.22))
+			draw_rect(Rect2(topper.position + Vector2(5.0, topper.size.y * 0.54), Vector2(topper.size.x - 10.0, maxf(3.0, topper.size.y * 0.16))), Color(accent_color.r, accent_color.g, accent_color.b, 0.34 + pulse * 0.22))
+		"wheel":
+			var wheel := topper.position + Vector2(topper.size.x * 0.75, topper.size.y * 0.48)
+			var wheel_angle := flicker * (2.8 if preview_phase == "bonus" else 1.2)
+			draw_circle(wheel, maxf(4.0, topper.size.y * 0.25), Color(light_color.r, light_color.g, light_color.b, 0.24 + pulse * 0.18))
+			draw_line(wheel, wheel + Vector2(cos(wheel_angle), sin(wheel_angle)) * maxf(4.0, topper.size.y * 0.24), trim_color, 1)
+			draw_circle(wheel, maxf(2.0, topper.size.y * 0.11), trim_color)
+		_:
+			for i in range(3):
+				var score := Rect2(topper.position + Vector2(topper.size.x * (0.17 + float(i) * 0.22), topper.size.y * 0.24), Vector2(topper.size.x * 0.13, topper.size.y * 0.24))
+				draw_rect(score, Color("#05050a"))
+				draw_rect(score, Color(trim_color.r, trim_color.g, trim_color.b, 0.22 + pulse * 0.10), false, 1)
+	var font := get_theme_default_font()
+	var title_size := clampi(int(topper.size.y * 0.34), 7, 13)
+	var title := str(profile.get("title", "SLOT")).left(10)
+	var status := str(preview.get("status_label", "")).strip_edges()
+	if not status.is_empty() and preview_phase != "idle":
+		title = status.left(10)
+	draw_string(font, topper.position + Vector2(4.0, topper.size.y * 0.66), _fit_draw_text(title, font, title_size, topper.size.x - 8.0), HORIZONTAL_ALIGNMENT_CENTER, topper.size.x - 8.0, title_size, C_YELLOW)
+
+
+func _draw_slot_prop_reels(screen: Rect2, reel_count: int, row_count: int, profile: Dictionary, glass: Color, phase: float, preview: Dictionary = {}) -> void:
+	var family := str(profile.get("family", ""))
+	var accent_color: Color = profile.get("accent", C_PINK)
+	var light_color: Color = profile.get("light", C_CYAN)
+	var preview_phase := str(preview.get("phase", "idle"))
+	var spin_active := preview_phase == "spinning"
+	var reel_gap := maxf(1.0, screen.size.x * 0.020)
+	var reel_w := (screen.size.x - reel_gap * float(reel_count + 1)) / float(reel_count)
+	var reel_h := screen.size.y * 0.76
+	for i in range(reel_count):
+		var reel := Rect2(screen.position + Vector2(reel_gap + float(i) * (reel_w + reel_gap), screen.size.y * 0.12), Vector2(reel_w, reel_h))
+		draw_rect(reel, glass)
+		draw_rect(reel, Color("#0f1220"), false, 1)
+		if row_count <= 1:
+			if spin_active:
+				var cell_h := reel.size.y * 0.42
+				var scroll := fposmod(flicker * (42.0 + float(i) * 5.0), cell_h)
+				for band in range(3):
+					var symbol_rect := Rect2(reel.position + Vector2(reel.size.x * 0.18, reel.size.y * 0.06 + float(band) * cell_h - scroll), Vector2(reel.size.x * 0.64, cell_h * 0.70))
+					_draw_slot_prop_symbol(symbol_rect, _slot_prop_preview_symbol(preview, i, band), family, i + band, phase, false)
+			else:
+				var symbol := Rect2(reel.position + reel.size * 0.22, reel.size * 0.56)
+				_draw_slot_prop_symbol(symbol, _slot_prop_preview_symbol(preview, i, 0), family, i, phase, _slot_prop_preview_cell_highlight(preview, i, 0))
+		else:
+			var cell_gap := maxf(1.0, reel.size.y * 0.035)
+			var cell_h := (reel.size.y - cell_gap * float(row_count + 1)) / float(row_count)
+			var scroll := fposmod(flicker * (38.0 + float(i) * 4.0), cell_h + cell_gap) if spin_active else 0.0
+			for row in range(row_count):
+				var cell := Rect2(reel.position + Vector2(reel.size.x * 0.18, cell_gap + float(row) * (cell_h + cell_gap) - scroll), Vector2(reel.size.x * 0.64, cell_h))
+				var symbol_id := _slot_prop_preview_symbol(preview, i, row + (1 if spin_active else 0))
+				if symbol_id == "BLANK" and row == 1:
+					symbol_id = "BUFFALO" if family == "buffalo" and i % 2 == 0 else "BALL"
+				var highlight := _slot_prop_preview_cell_highlight(preview, i, row)
+				_draw_slot_prop_symbol(cell, symbol_id, family, i + row * 7, phase, highlight)
+			if spin_active:
+				draw_rect(reel, Color(light_color.r, light_color.g, light_color.b, 0.10 + absf(sin(flicker * 10.0 + float(i))) * 0.12))
+
+
+func _slot_prop_symbol_color(family: String, index: int, phase: float) -> Color:
+	if family == "buffalo":
+		var colors := [Color("#f4c15d"), Color("#7b3f1a"), Color("#ef6a24"), Color("#ffd16a")]
+		return colors[posmod(index + int(phase * 10.0), colors.size())]
+	var pinball_colors := [C_PINK, C_CYAN, C_YELLOW, C_ORANGE]
+	return pinball_colors[posmod(index + int(phase * 10.0), pinball_colors.size())]
+
+
+func _slot_prop_symbol_color_for_id(symbol: String, family: String, index: int, phase: float) -> Color:
+	match symbol:
+		"GOLD_TOKEN", "COIN":
+			return Color("#ffd45a")
+		"BUFFALO":
+			return Color("#c67832")
+		"SUNSET", "SUNSET_2X", "SUNSET_3X", "WILD", "DOUBLE", "DOUBLE_7":
+			return Color("#65f0ff")
+		"7":
+			return Color("#ff3f75")
+		"BAR":
+			return Color("#f8fafc")
+		"CHERRY":
+			return Color("#ff4f5f")
+		"BALL", "BUMPER", "SPINNER":
+			return Color("#59d8ff")
+		"BLANK", "":
+			return Color("#1b1d2d")
+		_:
+			if family == "buffalo":
+				return _slot_prop_symbol_color(family, index, phase)
+			return _slot_prop_symbol_color(family, index, phase)
+
+
+func _slot_prop_symbol_short(symbol: String) -> String:
+	match symbol:
+		"GOLD_TOKEN", "COIN":
+			return "$"
+		"SUNSET_2X", "DOUBLE", "DOUBLE_7":
+			return "2"
+		"SUNSET_3X":
+			return "3"
+		"BUFFALO":
+			return "B"
+		"CHERRY":
+			return "C"
+		"BUMPER":
+			return "O"
+		"SPINNER":
+			return "*"
+		"BALL":
+			return "o"
+		"WOLF":
+			return "W"
+		"HORSE":
+			return "H"
+		"EAGLE":
+			return "E"
+		"ELK":
+			return "E"
+		"BLANK", "":
+			return ""
+		_:
+			return symbol.left(1)
+
+
+func _draw_slot_prop_symbol(rect: Rect2, symbol: String, family: String, index: int, phase: float, highlight: bool = false) -> void:
+	if rect.size.x <= 1.0 or rect.size.y <= 1.0:
+		return
+	var color := _slot_prop_symbol_color_for_id(symbol, family, index, phase)
+	var alpha := 0.94 if symbol != "BLANK" else 0.36
+	if symbol == "GOLD_TOKEN" or symbol == "COIN":
+		var center := rect.position + rect.size * 0.5
+		var radius := minf(rect.size.x, rect.size.y) * 0.42
+		draw_circle(center, radius, Color(color.r, color.g, color.b, alpha))
+		draw_circle(center + Vector2(-radius * 0.24, -radius * 0.24), radius * 0.28, Color(1.0, 1.0, 1.0, 0.42))
+		draw_circle(center, radius * 0.72, Color("#7b4f13"), false, 1)
+	else:
+		draw_rect(rect, Color(color.r, color.g, color.b, alpha))
+		draw_rect(rect.grow(-1.0), Color(1.0, 1.0, 1.0, 0.11), false, 1)
+	if highlight:
+		draw_rect(rect.grow(1.5), Color(C_YELLOW.r, C_YELLOW.g, C_YELLOW.b, 0.66), false, 2)
+	var label := _slot_prop_symbol_short(symbol)
+	if not label.is_empty() and rect.size.x >= 8.0 and rect.size.y >= 8.0:
+		var font := get_theme_default_font()
+		var label_size := clampi(int(minf(rect.size.x, rect.size.y) * 0.62), 6, 10)
+		draw_string(font, rect.position + Vector2(1.0, rect.size.y * 0.68), _fit_draw_text(label, font, label_size, rect.size.x - 2.0), HORIZONTAL_ALIGNMENT_CENTER, rect.size.x - 2.0, label_size, Color("#070812"))
+
+
+func _slot_prop_preview_symbol(preview: Dictionary, reel_index: int, row_index: int) -> String:
+	var grid_value: Variant = preview.get("grid", [])
+	if typeof(grid_value) != TYPE_ARRAY:
+		return "BLANK"
+	var grid: Array = grid_value as Array
+	if grid.is_empty():
+		return "BLANK"
+	var safe_reel := posmod(reel_index, grid.size())
+	if typeof(grid[safe_reel]) != TYPE_ARRAY:
+		return "BLANK"
+	var column: Array = grid[safe_reel] as Array
+	if column.is_empty():
+		return "BLANK"
+	return str(column[posmod(row_index, column.size())])
+
+
+func _slot_prop_preview_cell_highlight(preview: Dictionary, reel_index: int, row_index: int) -> bool:
+	for cell_value in _copy_array(preview.get("win_cells", [])):
+		if typeof(cell_value) != TYPE_DICTIONARY:
+			continue
+		var cell: Dictionary = cell_value
+		if int(cell.get("reel", -1)) == reel_index and int(cell.get("row", -1)) == row_index:
+			return true
+	return false
+
+
+func _draw_slot_prop_feature_strip(strip: Rect2, profile: Dictionary, pulse: float, phase: float, preview: Dictionary = {}) -> void:
+	var marker := str(profile.get("marker", "generic"))
+	var accent_color: Color = profile.get("accent", C_PINK)
+	var light_color: Color = profile.get("light", C_CYAN)
+	var bonus: Dictionary = _copy_dictionary(preview.get("bonus", {}))
+	var bonus_active := bool(bonus.get("active", false))
+	draw_rect(strip, Color("#07070c"))
+	draw_rect(strip, Color(accent_color.r, accent_color.g, accent_color.b, 0.16 + pulse * (0.18 if bonus_active else 0.10)), false, 1)
+	match marker:
+		"bumpers":
+			for i in range(3):
+				draw_circle(strip.position + Vector2(strip.size.x * (0.25 + float(i) * 0.25), strip.size.y * 0.50), maxf(2.0, strip.size.y * 0.24), _cycle_color(i * 33))
+		"lanes":
+			for i in range(5):
+				var x := strip.position.x + strip.size.x * (0.12 + float(i) * 0.18)
+				draw_line(Vector2(x, strip.position.y + strip.size.y * 0.78), Vector2(x + strip.size.x * 0.10, strip.position.y + strip.size.y * 0.20), light_color, 1)
+		"sunset", "horns":
+			draw_rect(Rect2(strip.position + Vector2(strip.size.x * 0.12, strip.size.y * 0.35), Vector2(strip.size.x * 0.76, maxf(2.0, strip.size.y * 0.20))), Color(light_color.r, light_color.g, light_color.b, 0.44))
+			draw_rect(Rect2(strip.position + Vector2(strip.size.x * 0.32, strip.size.y * 0.20), Vector2(strip.size.x * 0.18, strip.size.y * 0.42)), Color("#22130b"))
+		_:
+			for i in range(4):
+				var x := strip.position.x + fposmod(phase * strip.size.x + float(i) * strip.size.x * 0.25, strip.size.x)
+				draw_rect(Rect2(x, strip.position.y + strip.size.y * 0.30, maxf(3.0, strip.size.x * 0.08), maxf(2.0, strip.size.y * 0.34)), Color(light_color.r, light_color.g, light_color.b, 0.42))
+	if bonus_active:
+		var total := maxi(1, int(bonus.get("total_steps", bonus.get("remaining_steps", 1))))
+		var remaining := clampi(int(bonus.get("remaining_steps", 0)), 0, total)
+		var filled := 1.0 - float(remaining) / float(total)
+		draw_rect(Rect2(strip.position + Vector2(2.0, strip.size.y - 4.0), Vector2(maxf(2.0, (strip.size.x - 4.0) * filled), 2.0)), Color(light_color.r, light_color.g, light_color.b, 0.72))
+
+
+func _draw_slot_prop_feature_panel(panel: Rect2, profile: Dictionary, pulse: float, phase: float, preview: Dictionary = {}) -> void:
+	var marker := str(profile.get("marker", "generic"))
+	var accent_color: Color = profile.get("accent", C_PINK)
+	var light_color: Color = profile.get("light", C_CYAN)
+	var trim_color: Color = profile.get("trim", C_YELLOW)
+	var bonus: Dictionary = _copy_dictionary(preview.get("bonus", {}))
+	var bonus_active := bool(bonus.get("active", false))
+	draw_rect(panel, Color("#05060b"))
+	draw_rect(panel, Color(light_color.r, light_color.g, light_color.b, 0.12 + pulse * (0.20 if bonus_active else 0.12)), false, 1)
+	match marker:
+		"wheel":
+			var center := panel.position + panel.size * Vector2(0.50, 0.32)
+			draw_circle(center, maxf(5.0, panel.size.x * 0.34), Color(light_color.r, light_color.g, light_color.b, 0.26 + pulse * 0.16))
+			draw_circle(center, maxf(2.0, panel.size.x * 0.12), trim_color)
+			for i in range(4):
+				draw_rect(Rect2(panel.position + Vector2(panel.size.x * 0.22, panel.size.y * (0.58 + float(i) * 0.09)), Vector2(panel.size.x * 0.56, maxf(2.0, panel.size.y * 0.035))), Color(accent_color.r, accent_color.g, accent_color.b, 0.35 + float(i) * 0.08))
+		"table":
+			var playfield := Rect2(panel.position + Vector2(panel.size.x * 0.16, panel.size.y * 0.12), Vector2(panel.size.x * 0.68, panel.size.y * 0.72))
+			draw_rect(playfield, Color("#10151d"))
+			draw_line(playfield.position + Vector2(playfield.size.x * 0.22, playfield.size.y * 0.80), playfield.position + Vector2(playfield.size.x * 0.46, playfield.size.y * 0.62), accent_color, 2)
+			draw_line(playfield.position + Vector2(playfield.size.x * 0.78, playfield.size.y * 0.80), playfield.position + Vector2(playfield.size.x * 0.54, playfield.size.y * 0.62), light_color, 2)
+			draw_circle(playfield.position + Vector2(playfield.size.x * 0.52, playfield.size.y * 0.34), maxf(2.0, playfield.size.x * 0.12), trim_color)
+		_:
+			for i in range(5):
+				var y := panel.position.y + panel.size.y * (0.14 + float(i) * 0.15)
+				draw_rect(Rect2(panel.position.x + panel.size.x * 0.20, y, panel.size.x * 0.60, maxf(2.0, panel.size.y * 0.04)), Color(_cycle_color(i * 41 + int(phase * 100.0)).r, _cycle_color(i * 41 + int(phase * 100.0)).g, _cycle_color(i * 41 + int(phase * 100.0)).b, 0.46))
+	if bonus_active:
+		var remaining := int(bonus.get("remaining_steps", bonus.get("free_spins", 0)))
+		var font := get_theme_default_font()
+		draw_string(font, panel.position + Vector2(1.0, panel.size.y - 5.0), _fit_draw_text("B%d" % remaining, font, 7, panel.size.x - 2.0), HORIZONTAL_ALIGNMENT_CENTER, panel.size.x - 2.0, 7, trim_color)
+
+
+func _draw_slot_prop_nudge_chain_overlay(screen: Rect2, preview: Dictionary, profile: Dictionary, phase: float, pulse: float) -> void:
+	var chain: Dictionary = _copy_dictionary(preview.get("nudge_chain", {}))
+	if not bool(chain.get("active", false)):
+		return
+	var coins: Array = _copy_array(chain.get("coins", []))
+	var row_count := maxi(1, int(preview.get("row_count", 1)))
+	var active_index := clampi(int(chain.get("active_index", 0)), 0, maxi(0, coins.size() - 1))
+	var active_coin: Dictionary = _copy_dictionary(coins[active_index]) if active_index < coins.size() else {}
+	var active_row := clampi(int(active_coin.get("row", active_index)), 0, row_count - 1)
+	var side := str(active_coin.get("side", "left"))
+	var trim_color: Color = profile.get("trim", C_YELLOW)
+	var light_color: Color = profile.get("light", C_CYAN)
+	var accent_color: Color = profile.get("accent", C_PINK)
+	var row_h := screen.size.y * 0.76 / float(row_count)
+	var y := screen.position.y + screen.size.y * 0.12 + row_h * (float(active_row) + 0.5)
+	var peek := 0.22 + 0.78 * absf(sin(flicker * 3.9 + phase * TAU))
+	var radius := clampf(minf(screen.size.x, screen.size.y) * 0.09, 3.0, 9.0)
+	var edge_x := screen.position.x + 2.0 if side == "left" else screen.end.x - 2.0
+	var x := edge_x - radius + peek * radius * 2.0 if side == "left" else edge_x + radius - peek * radius * 2.0
+	var zone := Rect2(Vector2(edge_x - radius * 1.5, y - radius * 1.6), Vector2(radius * 3.0, radius * 3.2)) if side == "left" else Rect2(Vector2(edge_x - radius * 1.5, y - radius * 1.6), Vector2(radius * 3.0, radius * 3.2))
+	draw_rect(zone, Color(accent_color.r, accent_color.g, accent_color.b, 0.24 + pulse * 0.22), false, 1)
+	draw_circle(Vector2(x, y), radius, Color(trim_color.r, trim_color.g, trim_color.b, 0.92))
+	draw_circle(Vector2(x - radius * 0.25, y - radius * 0.25), radius * 0.28, Color(1.0, 1.0, 1.0, 0.45))
+	var collected := int(chain.get("collected_count", 0))
+	if collected > 0:
+		var font := get_theme_default_font()
+		draw_string(font, screen.position + Vector2(2.0, screen.size.y - 3.0), _fit_draw_text("%d/$%d" % [collected, int(chain.get("banked_payout", 0))], font, 7, screen.size.x - 4.0), HORIZONTAL_ALIGNMENT_CENTER, screen.size.x - 4.0, 7, light_color)
+
+
+func _draw_slot_prop_runtime_marker(body: Rect2, deck: Rect2, runtime: Dictionary, profile: Dictionary, pulse: float, preview: Dictionary = {}) -> void:
+	var visual_payout := 0
+	var payout := maxi(int(preview.get("payout", runtime.get("slot_last_payout", visual_payout))), 0)
+	var bonus: Dictionary = _copy_dictionary(preview.get("bonus", {}))
+	var free_spins := int(bonus.get("free_spins", runtime.get("slot_free_spins", 0)))
+	var bonus_active := bool(bonus.get("active", runtime.get("slot_bonus_active", false)))
+	var pending_feature := bool(preview.get("pending_feature", runtime.get("slot_pending_feature", bonus_active)))
+	var autoplay := bool(preview.get("autoplay_active", runtime.get("slot_autoplay_active", false)))
+	var preview_phase := str(preview.get("phase", runtime.get("slot_preview_phase", "")))
+	var trim_color: Color = profile.get("trim", C_YELLOW)
+	var light_color: Color = profile.get("light", C_CYAN)
+	var accent_color: Color = profile.get("accent", C_PINK)
+	if payout > 0:
+		var win_strip := Rect2(deck.position + Vector2(deck.size.x * 0.12, -deck.size.y * 0.52), Vector2(deck.size.x * 0.76, maxf(3.0, deck.size.y * 0.28)))
+		draw_rect(win_strip, Color(trim_color.r, trim_color.g, trim_color.b, 0.34 + pulse * 0.24))
+		for i in range(3):
+			draw_circle(win_strip.position + Vector2(win_strip.size.x * (0.24 + float(i) * 0.26), win_strip.size.y * 0.50), maxf(1.5, win_strip.size.y * 0.24), C_YELLOW)
+	if free_spins > 0 or bonus_active or pending_feature:
+		var bonus_lamp := body.position + Vector2(body.size.x * 0.12, body.size.y * 0.12)
+		var lamp_radius := maxf(2.0, body.size.x * (0.052 if pending_feature else 0.035))
+		draw_circle(bonus_lamp, lamp_radius * 1.75, Color(light_color.r, light_color.g, light_color.b, 0.14 + pulse * 0.18))
+		draw_circle(bonus_lamp, lamp_radius, Color(light_color.r, light_color.g, light_color.b, 0.62 + pulse * 0.30))
+	if autoplay:
+		var auto_lamp := body.position + Vector2(body.size.x * 0.88, body.size.y * 0.12)
+		draw_circle(auto_lamp, maxf(2.0, body.size.x * 0.035), Color(accent_color.r, accent_color.g, accent_color.b, 0.52 + pulse * 0.28))
+	if preview_phase == "spinning":
+		var sweep_x := body.position.x + fposmod(flicker * 42.0, body.size.x)
+		draw_rect(Rect2(Vector2(sweep_x, body.position.y + body.size.y * 0.25), Vector2(3.0, body.size.y * 0.40)), Color(light_color.r, light_color.g, light_color.b, 0.26))
+	elif preview_phase == "near_miss":
+		draw_rect(Rect2(deck.position + Vector2(deck.size.x * 0.16, -deck.size.y * 0.44), Vector2(deck.size.x * 0.68, maxf(3.0, deck.size.y * 0.22))), Color(accent_color.r, accent_color.g, accent_color.b, 0.26 + pulse * 0.18))
+	var caption := str(preview.get("status_label", runtime.get("slot_preview_phase", ""))).strip_edges().to_upper()
+	if pending_feature:
+		caption = "FEATURE"
+	if caption.is_empty() and autoplay:
+		caption = "AUTO"
+	if not caption.is_empty():
+		var font := get_theme_default_font()
+		var label_rect := Rect2(deck.position + Vector2(deck.size.x * 0.12, deck.size.y * 0.08), Vector2(deck.size.x * 0.76, deck.size.y * 0.36))
+		draw_rect(label_rect, Color(0.0, 0.0, 0.0, 0.52))
+		draw_string(font, label_rect.position + Vector2(2.0, label_rect.size.y - 2.0), _fit_draw_text(caption.left(8), font, 7, label_rect.size.x - 4.0), HORIZONTAL_ALIGNMENT_CENTER, label_rect.size.x - 4.0, 7, trim_color if preview_phase == "win" else light_color)
 
 
 func _draw_video_poker_machine_prop(rect: Rect2, object_data: Dictionary, accent: Color, selected: bool, disabled: bool = false) -> void:

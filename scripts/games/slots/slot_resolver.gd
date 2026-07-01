@@ -11,6 +11,20 @@ const NUDGE_ACTION := "nudge"
 const HOST_APPLY_FLAG := "host_apply_result"
 const WIN_REVEAL_BEAT_SEC := 0.18
 const BUFFALO_BONUS_MAX_ANIMATION_MSEC := 10000
+const NUDGE_CHAIN_MAX_COINS := 5
+const NUDGE_CHAIN_PEEK_CYCLE_MSEC := 1200
+const NUDGE_CHAIN_FIRST_READY_PADDING_MSEC := 340
+const NUDGE_CHAIN_NEXT_READY_DELAY_MSEC := 360
+const NUDGE_CHAIN_PERFECT_MSEC := 75
+const NUDGE_CHAIN_GOOD_MSEC := 210
+const NUDGE_CHAIN_BASE_REWARD_PERCENT := 60
+const NUDGE_CHAIN_REWARD_STEP_PERCENT := 35
+const NUDGE_CHAIN_PERFECT_BONUS_PERCENT := 50
+const NUDGE_CHAIN_SPAWN_BASE_PERCENT := 62
+const NUDGE_CHAIN_SPAWN_STEP_DELTA_PERCENT := -6
+const NUDGE_CHAIN_SPAWN_PERFECT_BONUS_PERCENT := 8
+const NUDGE_CHAIN_SPAWN_MIN_PERCENT := 40
+const NUDGE_CHAIN_EXTRA_ATTEMPTS := 1
 
 var pinball
 var buffalo
@@ -25,12 +39,15 @@ func resolve_spin(machine: Dictionary, action_id: String, selected_bet: Dictiona
 	if normalize_machine:
 		machine = StateScript.normalize(machine)
 	var normalized_action := _normalize_action(action_id)
+	var resolved_item_effects: Dictionary = item_effects.duplicate(true)
 	var family_id := str(machine.get("type_id", "pinball"))
 	var family = _family_hook(family_id)
 	var stake := maxi(1, int(selected_bet.get("total_credits", 2)))
 	var bet_id := str(selected_bet.get("id", "bet_2"))
 	var is_cheat := normalized_action == NUDGE_ACTION
 	var had_offer := is_cheat and not _copy_dict(machine.get("last_nudge_offer", {})).is_empty()
+	if had_offer and str(_copy_dict(machine.get("last_nudge_offer", {})).get("type", "")) == "coin_chain":
+		return _resolve_nudge_chain_offer(machine, _copy_dict(machine.get("last_nudge_offer", {})), selected_bet, rng, definition, environment, normalize_machine, run_state, resolved_item_effects, ui_state)
 	if StateScript.active_bonus_incomplete(machine) and not had_offer:
 		return _blocked_result(machine, normalized_action, stake, environment, "Finish the active bonus first.")
 	var free_spin := int(machine.get("free_spins", 0)) > 0 and normalized_action == SPIN_ACTION
@@ -59,7 +76,8 @@ func resolve_spin(machine: Dictionary, action_id: String, selected_bet: Dictiona
 		nudge_applied = true
 		stops = _copy_array(offer.get("stops", machine.get("reel_stops", [])))
 	else:
-		entry = _select_entry(machine, family, definition, rng, free_spin)
+		entry = _select_entry(machine, family, definition, rng, free_spin, resolved_item_effects)
+		entry = _apply_lucky_reel_grease_entry(machine, family, definition, rng, entry, normalized_action, stake_cost)
 		if audit_metrics_mode and family_id == "pinball":
 			grid = _blank_grid(int(machine.get("reel_count", 3)), int(machine.get("row_count", 1)))
 		else:
@@ -115,15 +133,21 @@ func resolve_spin(machine: Dictionary, action_id: String, selected_bet: Dictiona
 		machine["last_bonus_complete"] = false
 
 	var base_bankroll_delta := immediate_payout - stake_cost
-	var cross_effects: Dictionary = _slot_resolve_cross_effects(immediate_payout, stake, stake_cost, base_bankroll_delta, is_cheat, normalized_action, run_state, definition, environment, item_effects)
+	if is_cheat:
+		_apply_slot_nudge_item_heat_state(machine, resolved_item_effects, nudge_event)
+	var cross_effects: Dictionary = _slot_resolve_cross_effects(immediate_payout, stake, stake_cost, base_bankroll_delta, is_cheat, normalized_action, run_state, definition, environment, machine, resolved_item_effects)
 	var luck_payout_bonus := int(cross_effects.get("luck_payout_bonus", 0))
 	var item_payout_bonus := int(cross_effects.get("item_payout_bonus", 0))
 	var item_loss_reduction := int(cross_effects.get("item_loss_reduction", 0))
+	var slot_loss_refund := int(cross_effects.get("slot_loss_refund", 0))
 	if luck_payout_bonus + item_payout_bonus > 0:
 		immediate_payout = maxi(1, immediate_payout + luck_payout_bonus + item_payout_bonus)
 	var bankroll_delta := immediate_payout - stake_cost
 	if item_loss_reduction > 0 and bankroll_delta < 0:
 		bankroll_delta = mini(0, bankroll_delta + item_loss_reduction)
+	if slot_loss_refund > 0 and bankroll_delta < 0:
+		immediate_payout += slot_loss_refund
+		bankroll_delta = mini(0, bankroll_delta + slot_loss_refund)
 	var suspicion_delta := int(cross_effects.get("suspicion_delta", 0))
 	var security_bankroll_delta := int(cross_effects.get("security_bankroll_delta", 0))
 	if security_bankroll_delta != 0:
@@ -162,7 +186,7 @@ func resolve_spin(machine: Dictionary, action_id: String, selected_bet: Dictiona
 			},
 		}
 	machine["last_tease_events"] = _tease_events(classification, nudge_applied, nudge_event)
-	machine["last_nudge_offer"] = _nudge_offer(machine, entry, grid, stops, classification, nudge_applied)
+	machine["last_nudge_offer"] = _nudge_offer(machine, entry, grid, stops, classification, nudge_applied, resolved_item_effects)
 	var animation_plan: Dictionary = _animation_plan(machine, finalized_classification, active_bonus, win_attribution)
 	if feature_triggered:
 		active_bonus["animation_duration_msec"] = int(animation_plan.get("feature_duration_msec", 0))
@@ -193,11 +217,14 @@ func resolve_bonus_action(machine: Dictionary, action_id: String, rng: RngStream
 			"machine": machine,
 			"result": _zero_result(machine, action_id, environment, "Unknown bonus family: %s." % family_id),
 		}
-	var step: Dictionary = family.step_bonus(machine, _normalize_bonus_action(action_id), rng, definition, ui_state)
+	var bonus_ui_state: Dictionary = ui_state.duplicate(true)
+	bonus_ui_state["slot_item_effects"] = item_effects.duplicate(true)
+	var step: Dictionary = family.step_bonus(machine, _normalize_bonus_action(action_id), rng, definition, bonus_ui_state)
 	_apply_bonus_step_display(machine, family_id, active_before, step)
 	var award := maxi(0, int(step.get("award", 0)))
 	var luck_payout_bonus := 0
 	var item_payout_bonus := 0
+	var first_bonus_item_award := 0
 	if award > 0:
 		luck_payout_bonus = run_state.luck_payout_bonus(maxi(1, int(active_before.get("stake", 1))), true) if run_state != null else 0
 		item_payout_bonus = int(item_effects.get("win_bonus", 0)) + int(item_effects.get("payout_delta", 0))
@@ -206,6 +233,12 @@ func resolve_bonus_action(machine: Dictionary, action_id: String, rng: RngStream
 		step["award"] = award
 		step["luck_payout_bonus"] = luck_payout_bonus
 		step["item_payout_bonus"] = item_payout_bonus
+	if award > 0:
+		first_bonus_item_award = _slot_first_bonus_item_award(machine, award, item_effects)
+		if first_bonus_item_award > 0:
+			award += first_bonus_item_award
+			step["award"] = award
+			step["slot_first_bonus_item_award"] = first_bonus_item_award
 	var complete := bool(step.get("complete", false))
 	if complete:
 		machine["coin_out"] = maxi(0, int(machine.get("coin_out", 0))) + award
@@ -255,6 +288,7 @@ func resolve_bonus_action(machine: Dictionary, action_id: String, rng: RngStream
 		"payout": award,
 		"luck_payout_bonus": luck_payout_bonus,
 		"item_payout_bonus": item_payout_bonus,
+		"slot_first_bonus_item_award": first_bonus_item_award,
 		"bankroll_delta": award,
 		"suspicion_delta": 0,
 		"won": award > 0,
@@ -284,6 +318,7 @@ func resolve_bonus_action(machine: Dictionary, action_id: String, rng: RngStream
 	result["slot_reel_stop_times"] = _copy_array(machine.get("slot_reel_stop_times", []))
 	result["slot_luck_payout_bonus"] = luck_payout_bonus
 	result["slot_item_payout_bonus"] = item_payout_bonus
+	result["slot_first_bonus_item_award"] = first_bonus_item_award
 	result["slot_luck_win_chance_ignored"] = true
 	if complete:
 		result.merge(_result_win_fields(machine), true)
@@ -314,6 +349,11 @@ func complete_active_bonus_for_metrics(machine: Dictionary, rng: RngStream, defi
 		var step: Dictionary = family.step_bonus(machine, action_id, rng, definition)
 		if bool(step.get("complete", false)):
 			total += int(step.get("award", 0))
+			if family_id == "buffalo":
+				var completed_active: Dictionary = _copy_dict(step.get("active_bonus", {}))
+				if int(completed_active.get("grand_prize_awarded", step.get("grand_prize_awarded", 0))) > 0:
+					var bet_id := str(completed_active.get("bet_id", _copy_dict(metric_active_source.get("bet_ladder", {})).get("selected_id", "bet_2")))
+					buffalo.reset_grand_prize(machine, maxi(1, int(completed_active.get("stake", 1))), bet_id)
 		guard += 1
 	if StateScript.active_bonus_incomplete(machine):
 		machine["active_bonus"] = {"active": false, "complete": true}
@@ -416,7 +456,7 @@ func _grid_payout_for_family(family, grid: Array, stake: int, stake_cost: int, m
 	return maxi(0, int(family.payout_for(entry, stake, stake_cost, machine, definition)))
 
 
-func _select_entry(machine: Dictionary, family, definition: Dictionary, rng: RngStream, free_spin: bool) -> Dictionary:
+func _select_entry(machine: Dictionary, family, definition: Dictionary, rng: RngStream, free_spin: bool, item_effects: Dictionary = {}) -> Dictionary:
 	if str(machine.get("type_id", "")) == "buffalo":
 		var bet_id := str(_copy_dict(machine.get("bet_ladder", {})).get("selected_id", "bet_2"))
 		var bonus_state: Dictionary = _copy_dict(machine.get("bonus_state", {}))
@@ -435,7 +475,93 @@ func _select_entry(machine: Dictionary, family, definition: Dictionary, rng: Rng
 				if str(entry.get("id", "")) == "free_games":
 					entry["forced_by_meter"] = true
 					return entry.duplicate(true)
-	return MathScript.weighted_pick(family.outcome_table(machine, definition, free_spin), rng)
+	return MathScript.weighted_pick(_slot_item_adjusted_outcome_table(machine, family, definition, free_spin, item_effects), rng)
+
+
+func _slot_item_adjusted_outcome_table(machine: Dictionary, family, definition: Dictionary, free_spin: bool, item_effects: Dictionary) -> Array:
+	var table: Array = family.outcome_table(machine, definition, free_spin)
+	if free_spin:
+		return table
+	var feature_bonus_percent := maxi(0, int(item_effects.get("slot_feature_weight_bonus_percent", 0)))
+	var reel_win_percent := clampi(int(item_effects.get("slot_reel_win_weight_percent", 100)), 0, 1000)
+	if feature_bonus_percent <= 0 and reel_win_percent == 100:
+		return table
+	var result: Array = []
+	for entry_value in table:
+		var entry: Dictionary = _copy_dict(entry_value)
+		var base_weight := maxi(0, int(entry.get("weight", 0)))
+		var classification := str(entry.get("classification", ""))
+		if base_weight <= 0:
+			result.append(entry)
+			continue
+		if family != null and bool(family.opens_feature(classification)):
+			entry["weight"] = maxi(1, int(round(float(base_weight) * float(100 + feature_bonus_percent) / 100.0)))
+			entry["slot_item_weight_adjusted"] = true
+		elif classification == "ldw" or classification == "true_win":
+			entry["weight"] = maxi(1, int(round(float(base_weight) * float(reel_win_percent) / 100.0)))
+			entry["slot_item_weight_adjusted"] = true
+		result.append(entry)
+	return result
+
+
+func _apply_lucky_reel_grease_entry(machine: Dictionary, family, definition: Dictionary, rng: RngStream, entry: Dictionary, action_id: String, stake_cost: int) -> Dictionary:
+	if action_id != SPIN_ACTION or stake_cost <= 0:
+		return entry
+	var item_state: Dictionary = _copy_dict(machine.get("slot_item_state", {}))
+	var remaining := maxi(0, int(item_state.get("lucky_reel_grease_spins", 0)))
+	if remaining <= 0:
+		item_state["lucky_reel_grease_last_tease"] = false
+		machine["slot_item_state"] = item_state
+		return entry
+	var target := maxi(1, int(item_state.get("lucky_reel_grease_target", 3)))
+	var current := clampi(int(item_state.get("lucky_reel_grease_near_misses", 0)), 0, target)
+	var needed := maxi(0, target - current)
+	var force_near_miss: bool = needed > 0 and rng.randi_range(1, remaining) <= needed
+	var classification := str(entry.get("classification", "zero_loss"))
+	var selected_opens_feature: bool = family != null and bool(family.opens_feature(classification))
+	var adjusted: Dictionary = entry.duplicate(true)
+	if force_near_miss:
+		adjusted = _entry_for_classification(machine, family, definition, "near_miss")
+		adjusted["lucky_reel_grease_forced"] = true
+		current += 1
+	elif selected_opens_feature or classification == "near_miss":
+		adjusted = _entry_for_classification(machine, family, definition, "zero_loss")
+		adjusted["lucky_reel_grease_blocked_bonus"] = selected_opens_feature
+	adjusted["lucky_reel_grease_active"] = true
+	remaining -= 1
+	if remaining <= 0:
+		item_state.erase("lucky_reel_grease_spins")
+		item_state.erase("lucky_reel_grease_target")
+		item_state.erase("lucky_reel_grease_near_misses")
+	else:
+		item_state["lucky_reel_grease_spins"] = remaining
+		item_state["lucky_reel_grease_target"] = target
+		item_state["lucky_reel_grease_near_misses"] = current
+	item_state["lucky_reel_grease_last_tease"] = str(adjusted.get("classification", "")) == "near_miss"
+	machine["slot_item_state"] = item_state
+	return adjusted
+
+
+func _apply_slot_nudge_item_heat_state(machine: Dictionary, item_effects: Dictionary, nudge_event: Dictionary) -> void:
+	var item_state: Dictionary = _copy_dict(machine.get("slot_item_state", {}))
+	var cold_charges := maxi(0, int(item_state.get("cold_quarters_charges", 0)))
+	if cold_charges > 0:
+		var reduction := maxi(0, int(item_effects.get("slot_cold_quarter_heat_reduction", 0)))
+		if reduction > 0:
+			item_effects["cheat_suspicion_delta"] = int(item_effects.get("cheat_suspicion_delta", 0)) - reduction
+			item_effects["slot_cold_quarter_used"] = true
+			cold_charges -= 1
+			if cold_charges <= 0:
+				item_state.erase("cold_quarters_charges")
+			else:
+				item_state["cold_quarters_charges"] = cold_charges
+			item_effects["slot_cold_quarters_remaining"] = cold_charges
+	var skill_outcome := str(nudge_event.get("skill_outcome", ""))
+	if bool(nudge_event.get("lucky_reel_grease_active", false)) and (skill_outcome == "miss" or skill_outcome == "clean_miss"):
+		var heat_bonus := maxi(0, int(item_state.get("lucky_reel_grease_failed_nudge_heat_bonus", 14)))
+		item_effects["cheat_suspicion_delta"] = int(item_effects.get("cheat_suspicion_delta", 0)) + heat_bonus
+		item_effects["slot_grease_failed_nudge_heat_bonus_applied"] = heat_bonus
+	machine["slot_item_state"] = item_state
 
 
 func _derive_grid_side_effects(machine: Dictionary, grid: Array, family_id: String, stake: int, entry: Dictionary = {}, definition: Dictionary = {}) -> Dictionary:
@@ -471,25 +597,390 @@ func _tease_events(classification: String, nudge_applied: bool, nudge_event: Dic
 	return []
 
 
-func _nudge_offer(machine: Dictionary, entry: Dictionary, grid: Array, stops: Array, classification: String, nudge_applied: bool) -> Dictionary:
+func _nudge_offer(machine: Dictionary, entry: Dictionary, grid: Array, stops: Array, classification: String, nudge_applied: bool, item_effects: Dictionary = {}) -> Dictionary:
 	if nudge_applied:
 		return {}
-	var family_id := str(machine.get("type_id", "pinball"))
-	if family_id == "buffalo":
-		return _buffalo_nudge_offer(machine, entry, grid, stops, classification)
 	if classification != "near_miss":
 		return {}
+	return _coin_chain_offer(machine, entry, grid, stops, classification, item_effects)
+
+
+func _coin_chain_offer(machine: Dictionary, entry: Dictionary, grid: Array, stops: Array, classification: String, item_effects: Dictionary = {}) -> Dictionary:
+	var row_count := maxi(1, int(machine.get("row_count", 1)))
+	var coin_count := clampi(row_count, 1, NUDGE_CHAIN_MAX_COINS)
+	var stop_times := _rough_stop_times_for_machine(machine)
+	var last_stop := 0.86
+	for stop_value in stop_times:
+		last_stop = maxf(last_stop, float(stop_value))
+	var first_ready := int(round(last_stop * 1000.0)) + NUDGE_CHAIN_FIRST_READY_PADDING_MSEC
+	var perfect_bonus := maxi(0, int(item_effects.get("slot_nudge_perfect_msec_bonus", 0)))
+	var good_bonus := maxi(0, int(item_effects.get("slot_nudge_close_msec_bonus", 0)))
+	var item_state: Dictionary = _copy_dict(machine.get("slot_item_state", {}))
+	var split_note_armed := bool(item_state.get("split_reel_note_armed", false))
+	if split_note_armed:
+		perfect_bonus += maxi(0, int(item_effects.get("slot_split_reel_note_perfect_msec_bonus", 55)))
+		good_bonus += maxi(0, int(item_effects.get("slot_split_reel_note_close_msec_bonus", 90)))
+		item_state["split_reel_note_armed"] = false
+		machine["slot_item_state"] = item_state
+	var perfect_width := NUDGE_CHAIN_PERFECT_MSEC + perfect_bonus
+	var good_width := maxi(perfect_width, NUDGE_CHAIN_GOOD_MSEC + good_bonus)
+	var coins: Array = []
+	for index in range(coin_count):
+		coins.append({
+			"index": index,
+			"row": index,
+			"side": "left" if index % 2 == 0 else "right",
+			"ready_msec": first_ready if index == 0 else -1,
+			"phase_offset_msec": index * 160,
+			"collected": false,
+			"grade": "",
+			"award": 0,
+			"spawned": index == 0,
+		})
+	var first_apex := first_ready + NUDGE_CHAIN_PEEK_CYCLE_MSEC / 2
+	var max_attempts := coin_count + NUDGE_CHAIN_EXTRA_ATTEMPTS
+	var duration := first_ready + NUDGE_CHAIN_PEEK_CYCLE_MSEC * (coin_count + NUDGE_CHAIN_EXTRA_ATTEMPTS + 1)
 	return {
+		"type": "coin_chain",
 		"outcome_id": str(entry.get("id", "")),
 		"classification": classification,
+		"original_classification": classification,
 		"grid": MathScript.clone_grid(grid),
 		"stops": stops.duplicate(true),
 		"spin_count": int(machine.get("spin_count", 0)),
+		"event_id": "nudge-chain:%s:%d" % [str(machine.get("machine_key", "")), int(machine.get("spin_count", 0)) + 1],
+		"family": str(machine.get("type_id", "pinball")),
+		"format_id": str(machine.get("format_id", "classic_3_reel")),
+		"coin_count": coin_count,
+		"coins": coins,
+		"active_index": 0,
+		"collected_count": 0,
+		"collected": [],
+		"attempt_count": 0,
+		"max_attempts": max_attempts,
+		"banked_payout": 0,
+		"peek_cycle_msec": NUDGE_CHAIN_PEEK_CYCLE_MSEC,
+		"first_ready_msec": first_ready,
+		"duration_msec": duration,
+		"skill_perfect_msec": perfect_width,
+		"skill_good_msec": good_width,
+		"skill_close_msec": good_width,
+		"skill_window_msec": {
+			"start": first_apex - good_width,
+			"perfect": first_apex,
+			"end": first_apex + good_width,
+		},
+		"reward_base_percent": NUDGE_CHAIN_BASE_REWARD_PERCENT,
+		"reward_step_percent": NUDGE_CHAIN_REWARD_STEP_PERCENT,
+		"perfect_bonus_percent": NUDGE_CHAIN_PERFECT_BONUS_PERCENT,
+		"spawn_base_percent": NUDGE_CHAIN_SPAWN_BASE_PERCENT,
+		"spawn_step_delta_percent": NUDGE_CHAIN_SPAWN_STEP_DELTA_PERCENT,
+		"spawn_min_percent": NUDGE_CHAIN_SPAWN_MIN_PERCENT,
+		"spawn_perfect_bonus_percent": NUDGE_CHAIN_SPAWN_PERFECT_BONUS_PERCENT,
+		"lucky_reel_grease_active": bool(item_state.get("lucky_reel_grease_last_tease", false)) or bool(entry.get("lucky_reel_grease_active", false)),
+		"split_reel_note": split_note_armed,
 		"post_spin_available": true,
 	}
 
 
-func _buffalo_nudge_offer(machine: Dictionary, entry: Dictionary, grid: Array, stops: Array, classification: String) -> Dictionary:
+func _resolve_nudge_chain_offer(machine: Dictionary, offer: Dictionary, selected_bet: Dictionary, rng: RngStream, definition: Dictionary, environment: Dictionary, normalize_machine: bool, run_state: RunState, item_effects: Dictionary, ui_state: Dictionary) -> Dictionary:
+	var stake := maxi(1, int(selected_bet.get("total_credits", 2)))
+	var coins: Array = _copy_array(offer.get("coins", []))
+	var active_index := clampi(int(offer.get("active_index", 0)), 0, maxi(0, coins.size() - 1))
+	if coins.is_empty() or active_index >= coins.size():
+		machine["last_nudge_offer"] = {}
+		return {
+			"machine": StateScript.normalize(machine) if normalize_machine else machine,
+			"result": _nudge_chain_result(machine, {}, "clean_miss", 0, 0, 0, 0, environment, {}, {"message": "No coin chain is active."}),
+		}
+	var active_coin: Dictionary = _copy_dict(coins[active_index])
+	var skill: Dictionary = _nudge_chain_skill_result(offer, active_coin, ui_state)
+	var grade := str(skill.get("grade", "clean_miss"))
+	var success := grade == "perfect" or grade == "good"
+	var input_msec := int(skill.get("input_msec", -1))
+	var attempts := maxi(0, int(offer.get("attempt_count", 0))) + 1
+	var banked_before := maxi(0, int(offer.get("banked_payout", 0)))
+	var award := _nudge_chain_collect_award(offer, stake, active_index, grade) if success else 0
+	var event := {
+		"type": "nudge_coin_chain",
+		"family": str(offer.get("family", machine.get("type_id", ""))),
+		"skill_outcome": grade,
+		"chain_grade": grade,
+		"input_msec": input_msec,
+		"perfect_msec": int(skill.get("perfect_msec", -1)),
+		"distance_msec": int(skill.get("distance_msec", 9999)),
+		"coin_index": active_index,
+		"row": int(active_coin.get("row", active_index)),
+		"award": award,
+		"banked_before": banked_before,
+		"lucky_reel_grease_active": bool(offer.get("lucky_reel_grease_active", false)),
+		"split_reel_note": bool(offer.get("split_reel_note", false)),
+	}
+	var next_offer: Dictionary = {}
+	var chain_complete := false
+	var chain_break := false
+	if success:
+		active_coin["collected"] = true
+		active_coin["grade"] = grade
+		active_coin["award"] = award
+		active_coin["input_msec"] = input_msec
+		coins[active_index] = active_coin
+		var collected: Array = _copy_array(offer.get("collected", []))
+		collected.append({
+			"index": active_index,
+			"row": int(active_coin.get("row", active_index)),
+			"grade": grade,
+			"award": award,
+			"input_msec": input_msec,
+		})
+		var next_index := active_index + 1
+		if next_index < coins.size() and attempts < maxi(1, int(offer.get("max_attempts", coins.size() + 1))):
+			var chance := _nudge_chain_spawn_chance(offer, collected.size(), grade)
+			var spawned := rng.randi_range(1, 100) <= chance
+			var next_coin: Dictionary = _copy_dict(coins[next_index])
+			var cycle := maxi(1, int(offer.get("peek_cycle_msec", NUDGE_CHAIN_PEEK_CYCLE_MSEC)))
+			var next_ready := maxi(0, input_msec - cycle / 2) if spawned else maxi(0, input_msec + NUDGE_CHAIN_NEXT_READY_DELAY_MSEC)
+			next_coin["ready_msec"] = next_ready
+			next_coin["spawned"] = spawned
+			next_coin["spawn_chance_percent"] = chance
+			coins[next_index] = next_coin
+			next_offer = offer.duplicate(true)
+			next_offer["coins"] = coins
+			next_offer["active_index"] = next_index
+			next_offer["attempt_count"] = attempts
+			next_offer["collected"] = collected
+			next_offer["collected_count"] = collected.size()
+			next_offer["banked_payout"] = banked_before + award
+			next_offer["last_grade"] = grade
+			next_offer["last_input_msec"] = input_msec
+			next_offer["last_award"] = award
+			next_offer["last_spawned"] = spawned
+			next_offer["last_spawn_chance_percent"] = chance
+			next_offer["skill_window_msec"] = _nudge_chain_window_for_coin(next_offer, next_coin)
+			event["chain_continues"] = true
+			event["next_coin_index"] = next_index
+			event["next_spawned"] = spawned
+			event["next_spawn_chance_percent"] = chance
+		else:
+			chain_complete = true
+			event["chain_complete"] = true
+	else:
+		chain_break = true
+		event["chain_break"] = true
+	var base_bankroll_delta := award
+	_apply_slot_nudge_item_heat_state(machine, item_effects, event)
+	var cross_effects := _slot_resolve_cross_effects(award, stake, 0, base_bankroll_delta, true, NUDGE_ACTION, run_state, definition, environment, machine, item_effects)
+	var luck_payout_bonus := int(cross_effects.get("luck_payout_bonus", 0))
+	var item_payout_bonus := int(cross_effects.get("item_payout_bonus", 0))
+	var immediate_payout := award
+	if immediate_payout > 0 and luck_payout_bonus + item_payout_bonus > 0:
+		immediate_payout = maxi(1, immediate_payout + luck_payout_bonus + item_payout_bonus)
+	var bankroll_delta := immediate_payout
+	var suspicion_delta := int(cross_effects.get("suspicion_delta", 0))
+	var security_bankroll_delta := int(cross_effects.get("security_bankroll_delta", 0))
+	if security_bankroll_delta != 0:
+		bankroll_delta += security_bankroll_delta
+	_capture_previous_result(machine)
+	machine["coin_out"] = maxi(0, int(machine.get("coin_out", 0))) + immediate_payout
+	machine["last_payout"] = immediate_payout
+	machine["last_net"] = bankroll_delta
+	machine["last_stake_cost"] = 0
+	machine["last_line_payout"] = 0
+	machine["last_classification"] = "nudge_chain_collect" if success else "nudge_chain_break"
+	machine["last_outcome_id"] = "nudge_chain_%s" % grade
+	machine["last_tease_events"] = [event]
+	machine["last_nudge_offer"] = next_offer
+	_apply_win_attribution(machine, {
+		"cells": [],
+		"symbol": "COIN",
+		"count": active_index + 1 if success else active_index,
+		"kind": "nudge_chain",
+		"line_index": int(active_coin.get("row", active_index)),
+		"multiplier": active_index + 1,
+		"amount": immediate_payout,
+		"reason": "Coin chain %s" % grade.replace("_", " "),
+		"tier": "line" if success else "none",
+	})
+	var result := _nudge_chain_result(machine, event, grade, stake, immediate_payout, bankroll_delta, suspicion_delta, environment, next_offer, cross_effects)
+	result["slot_nudge_chain_complete"] = chain_complete
+	result["slot_nudge_chain_break"] = chain_break
+	result["slot_nudge_chain_active"] = not next_offer.is_empty()
+	return {"machine": StateScript.normalize(machine) if normalize_machine else machine, "result": result}
+
+
+func _nudge_chain_skill_result(offer: Dictionary, coin: Dictionary, ui_state: Dictionary) -> Dictionary:
+	var input_msec := _nudge_chain_input_msec(ui_state)
+	var ready_msec := maxi(0, int(coin.get("ready_msec", 0)))
+	var cycle := maxi(1, int(offer.get("peek_cycle_msec", NUDGE_CHAIN_PEEK_CYCLE_MSEC)))
+	var perfect_width := maxi(1, int(offer.get("skill_perfect_msec", NUDGE_CHAIN_PERFECT_MSEC)))
+	var good_width := maxi(perfect_width, int(offer.get("skill_good_msec", offer.get("skill_close_msec", NUDGE_CHAIN_GOOD_MSEC))))
+	if input_msec < 0:
+		input_msec = ready_msec + cycle + good_width + 999
+	var published_window: Dictionary = _copy_dict(offer.get("skill_window_msec", {}))
+	if not published_window.is_empty():
+		var window_start := int(published_window.get("start", ready_msec))
+		var window_end := int(published_window.get("end", ready_msec + cycle))
+		var window_perfect := int(published_window.get("perfect", ready_msec + cycle / 2))
+		if input_msec < window_start or input_msec > window_end:
+			return {
+				"grade": "clean_miss",
+				"input_msec": input_msec,
+				"perfect_msec": window_perfect,
+				"distance_msec": absi(input_msec - window_perfect),
+			}
+	var local := input_msec - ready_msec
+	var cycle_elapsed := posmod(local, cycle) if local >= 0 else -999999
+	var apex_offset := cycle / 2
+	var perfect_msec := ready_msec + int(floor(float(local) / float(cycle))) * cycle + apex_offset if local >= 0 else ready_msec + apex_offset
+	if local >= 0 and cycle_elapsed > apex_offset + cycle / 2:
+		perfect_msec += cycle
+	var distance := absi(input_msec - perfect_msec)
+	var grade := "clean_miss"
+	if local >= 0 and distance <= perfect_width:
+		grade = "perfect"
+	elif local >= 0 and distance <= good_width:
+		grade = "good"
+	return {
+		"grade": grade,
+		"input_msec": input_msec,
+		"perfect_msec": perfect_msec,
+		"distance_msec": distance,
+	}
+
+
+func _nudge_chain_input_msec(ui_state: Dictionary) -> int:
+	if int(ui_state.get("slot_nudge_chain_input_msec", -1)) >= 0:
+		return int(ui_state.get("slot_nudge_chain_input_msec", -1))
+	if int(ui_state.get("slot_tease_input_msec", -1)) >= 0:
+		return int(ui_state.get("slot_tease_input_msec", -1))
+	var runtime: Dictionary = _copy_dict(ui_state.get("surface_runtime_status", {}))
+	var animations: Dictionary = _copy_dict(runtime.get("surface_animations", {}))
+	var chain: Dictionary = _copy_dict(animations.get("slot_nudge_chain", {}))
+	if not chain.is_empty():
+		return maxi(0, int(round(float(chain.get("elapsed", 0.0)) * 1000.0)))
+	return -1
+
+
+func _nudge_chain_window_for_coin(offer: Dictionary, coin: Dictionary) -> Dictionary:
+	var ready_msec := maxi(0, int(coin.get("ready_msec", 0)))
+	var cycle := maxi(1, int(offer.get("peek_cycle_msec", NUDGE_CHAIN_PEEK_CYCLE_MSEC)))
+	var good_width := maxi(1, int(offer.get("skill_good_msec", offer.get("skill_close_msec", NUDGE_CHAIN_GOOD_MSEC))))
+	var perfect_msec := ready_msec + cycle / 2
+	return {
+		"start": perfect_msec - good_width,
+		"perfect": perfect_msec,
+		"end": perfect_msec + good_width,
+	}
+
+
+func _nudge_chain_collect_award(offer: Dictionary, stake: int, active_index: int, grade: String) -> int:
+	if grade != "perfect" and grade != "good":
+		return 0
+	var base_percent := maxi(1, int(offer.get("reward_base_percent", NUDGE_CHAIN_BASE_REWARD_PERCENT)))
+	var step_percent := maxi(0, int(offer.get("reward_step_percent", NUDGE_CHAIN_REWARD_STEP_PERCENT)))
+	var percent := base_percent + step_percent * maxi(0, active_index)
+	if grade == "perfect":
+		percent += maxi(0, int(offer.get("perfect_bonus_percent", NUDGE_CHAIN_PERFECT_BONUS_PERCENT)))
+	return maxi(1, int(round(float(maxi(1, stake)) * float(percent) / 100.0)))
+
+
+func _nudge_chain_spawn_chance(offer: Dictionary, collected_count: int, grade: String) -> int:
+	var chance := int(offer.get("spawn_base_percent", NUDGE_CHAIN_SPAWN_BASE_PERCENT))
+	chance += int(offer.get("spawn_step_delta_percent", NUDGE_CHAIN_SPAWN_STEP_DELTA_PERCENT)) * maxi(0, collected_count - 1)
+	if grade == "perfect":
+		chance += int(offer.get("spawn_perfect_bonus_percent", NUDGE_CHAIN_SPAWN_PERFECT_BONUS_PERCENT))
+	return clampi(chance, maxi(0, int(offer.get("spawn_min_percent", NUDGE_CHAIN_SPAWN_MIN_PERCENT))), 95)
+
+
+func _nudge_chain_result(machine: Dictionary, event: Dictionary, grade: String, stake: int, payout: int, bankroll_delta: int, suspicion_delta: int, environment: Dictionary, next_offer: Dictionary, cross_effects: Dictionary = {}) -> Dictionary:
+	var active_index := int(event.get("coin_index", -1))
+	var collected_total := int(next_offer.get("collected_count", active_index + 1 if payout > 0 else active_index))
+	var banked := int(next_offer.get("banked_payout", int(event.get("banked_before", 0)) + payout))
+	var message := ""
+	if grade == "perfect":
+		message = "Perfect coin collect. Chain %d banks $%d." % [collected_total, banked]
+	elif grade == "good":
+		message = "Good coin collect. Chain %d banks $%d." % [collected_total, banked]
+	else:
+		message = "Clean miss. Banked coin chain holds at $%d." % int(event.get("banked_before", 0))
+	var grease_heat_bonus := int(cross_effects.get("slot_grease_failed_nudge_heat_bonus_applied", 0))
+	if grease_heat_bonus > 0:
+		message = "%s Grease makes the blown nudge draw extra heat." % message
+	var security_message := str(cross_effects.get("security_message", ""))
+	if not security_message.is_empty():
+		message = "%s %s" % [message, security_message]
+	var deltas := GameModule.empty_result_deltas()
+	deltas["bankroll_delta"] = bankroll_delta
+	deltas["suspicion_delta"] = suspicion_delta
+	deltas["messages"] = [message]
+	deltas["ended"] = bool(cross_effects.get("security_ended", false))
+	deltas["story_log"] = [{
+		"type": "game_action",
+		"slot_event": "slot_nudge_chain",
+		"game_id": "slot",
+		"action_id": NUDGE_ACTION,
+		"family": str(machine.get("type_id", "")),
+		"format_id": str(machine.get("format_id", "")),
+		"skill_outcome": grade,
+		"coin_index": active_index,
+		"chain_collected": collected_total,
+		"banked_payout": banked,
+		"payout": payout,
+		"bankroll_delta": bankroll_delta,
+		"suspicion_delta": suspicion_delta,
+		"slot_grease_failed_nudge_heat_bonus": grease_heat_bonus,
+		"pit_boss_watched": bool(cross_effects.get("pit_boss_watched", false)),
+		"pit_boss_heat_bonus": int(cross_effects.get("pit_boss_heat_bonus", 0)),
+		"environment_id": str(environment.get("id", "")),
+	}]
+	var result := GameModule.build_action_result({
+		"ok": true,
+		"type": "game_action",
+		"source_id": "slot",
+		"game_id": "slot",
+		"action_id": NUDGE_ACTION,
+		"action_kind": "cheat",
+		"stake": stake,
+		"deltas": deltas,
+		"won": payout > 0,
+		"environment_id": str(environment.get("id", "")),
+		"message": message,
+	})
+	result[HOST_APPLY_FLAG] = true
+	result["slot_outcome_id"] = str(machine.get("last_outcome_id", "nudge_chain"))
+	result["slot_classification"] = str(machine.get("last_classification", "nudge_chain_break"))
+	result["slot_payout"] = payout
+	result["slot_stake"] = stake
+	result["slot_stake_cost"] = 0
+	result["slot_net"] = bankroll_delta
+	result["slot_nudge_applied"] = true
+	result["slot_nudge_skill_outcome"] = grade
+	result["slot_nudge_chain_result"] = event.duplicate(true)
+	result["slot_nudge_chain_collected"] = collected_total
+	result["slot_nudge_chain_banked_payout"] = banked
+	result["slot_nudge_chain_next_offer"] = next_offer.duplicate(true)
+	result["slot_feature_triggered"] = false
+	result["slot_active_bonus"] = _copy_dict(machine.get("active_bonus", {}))
+	result["slot_grid"] = _copy_array(machine.get("last_grid", []))
+	result["slot_reel_stops"] = _copy_array(machine.get("reel_stops", []))
+	result["slot_animation_plan"] = _copy_dict(machine.get("slot_animation_plan", {}))
+	result["slot_animation_id"] = str(machine.get("slot_animation_id", ""))
+	result["slot_animation_duration_msec"] = int(machine.get("slot_animation_duration_msec", 0))
+	result["slot_reel_stop_times"] = _copy_array(machine.get("slot_reel_stop_times", []))
+	result["slot_reel_timeline"] = _copy_array(machine.get("slot_reel_timeline", []))
+	result["slot_bonus_start_time"] = float(machine.get("slot_bonus_start_time", 0.0))
+	result["slot_grease_failed_nudge_heat_bonus"] = grease_heat_bonus
+	result["slot_cold_quarter_used"] = bool(cross_effects.get("slot_cold_quarter_used", false))
+	result["slot_cold_quarters_remaining"] = int(cross_effects.get("slot_cold_quarters_remaining", 0))
+	result["slot_security_bankroll_delta"] = int(cross_effects.get("security_bankroll_delta", 0))
+	result["slot_pit_boss_watched"] = bool(cross_effects.get("pit_boss_watched", false))
+	result["slot_pit_boss_heat_bonus"] = int(cross_effects.get("pit_boss_heat_bonus", 0))
+	result["slot_luck_win_chance_ignored"] = true
+	result.merge(_result_win_fields(machine), true)
+	return result
+
+
+func _buffalo_nudge_offer(machine: Dictionary, entry: Dictionary, grid: Array, stops: Array, classification: String, item_effects: Dictionary = {}) -> Dictionary:
 	if not ["near_miss", "free_games", "monster_feature"].has(classification):
 		return {}
 	var placement: Dictionary = _copy_dict(entry.get("forced_placement", {}))
@@ -509,6 +1000,15 @@ func _buffalo_nudge_offer(machine: Dictionary, entry: Dictionary, grid: Array, s
 	if skill_line_cells.is_empty():
 		skill_line_cells = _skill_line_cells_from_tease(machine, sorted_cells)
 	var window: Dictionary = _skill_window_for_reels(_rough_stop_times_for_machine(machine), first_reel, second_reel, visible_count)
+	var item_state: Dictionary = _copy_dict(machine.get("slot_item_state", {}))
+	var split_note_armed := bool(item_state.get("split_reel_note_armed", false))
+	var perfect_bonus := maxi(0, int(item_effects.get("slot_nudge_perfect_msec_bonus", 0)))
+	var close_bonus := maxi(0, int(item_effects.get("slot_nudge_close_msec_bonus", 0)))
+	if split_note_armed:
+		perfect_bonus += maxi(0, int(item_effects.get("slot_split_reel_note_perfect_msec_bonus", 55)))
+		close_bonus += maxi(0, int(item_effects.get("slot_split_reel_note_close_msec_bonus", 90)))
+		item_state["split_reel_note_armed"] = false
+		machine["slot_item_state"] = item_state
 	var offer: Dictionary = {
 		"outcome_id": str(entry.get("id", "")),
 		"classification": classification,
@@ -522,8 +1022,10 @@ func _buffalo_nudge_offer(machine: Dictionary, entry: Dictionary, grid: Array, s
 		"first_coin_reel": first_reel,
 		"second_coin_reel": second_reel,
 		"skill_window_msec": window,
-		"skill_perfect_msec": 75,
-		"skill_close_msec": 210,
+		"skill_perfect_msec": 75 + perfect_bonus,
+		"skill_close_msec": 210 + close_bonus,
+		"lucky_reel_grease_active": bool(item_state.get("lucky_reel_grease_last_tease", false)) or bool(entry.get("lucky_reel_grease_active", false)),
+		"split_reel_note": split_note_armed,
 		"post_spin_available": false,
 	}
 	if ["free_games", "monster_feature"].has(classification):
@@ -557,6 +1059,8 @@ func _resolve_buffalo_nudge_offer(machine: Dictionary, family, offer: Dictionary
 		"converted_to": target_classification,
 		"original_classification": original_classification,
 		"visible_coin_count": int(offer.get("visible_coin_count", 0)),
+		"lucky_reel_grease_active": bool(offer.get("lucky_reel_grease_active", false)),
+		"split_reel_note": bool(offer.get("split_reel_note", false)),
 	}
 	return {"entry": entry, "grid": grid, "tease_event": event}
 
@@ -983,11 +1487,26 @@ func _apply_bonus_step_display(machine: Dictionary, family_id: String, active_be
 		_apply_animation_plan_to_machine(machine, _bonus_step_animation_plan(machine, active_before, step, attribution, false))
 
 
-func _slot_resolve_cross_effects(payout: int, stake: int, stake_cost: int, bankroll_delta: int, is_cheat: bool, action_id: String, run_state: RunState, definition: Dictionary, environment: Dictionary, item_effects: Dictionary) -> Dictionary:
+func _slot_first_bonus_item_award(machine: Dictionary, award: int, item_effects: Dictionary) -> int:
+	var percent := maxi(0, int(item_effects.get("slot_first_bonus_bonus_percent", 0)))
+	if percent <= 0 or award <= 0:
+		return 0
+	var bonus_state: Dictionary = _copy_dict(machine.get("bonus_state", {}))
+	if bool(bonus_state.get("neon_players_charm_used", false)):
+		return 0
+	var cap := maxi(1, int(item_effects.get("slot_first_bonus_bonus_cap", 40)))
+	var bonus := mini(cap, maxi(1, int(round(float(award) * float(percent) / 100.0))))
+	bonus_state["neon_players_charm_used"] = true
+	machine["bonus_state"] = bonus_state
+	return bonus
+
+
+func _slot_resolve_cross_effects(payout: int, stake: int, stake_cost: int, bankroll_delta: int, is_cheat: bool, action_id: String, run_state: RunState, definition: Dictionary, environment: Dictionary, machine: Dictionary, item_effects: Dictionary) -> Dictionary:
 	var effects := {
 		"luck_payout_bonus": 0,
 		"item_payout_bonus": 0,
 		"item_loss_reduction": 0,
+		"slot_loss_refund": 0,
 		"suspicion_delta": 0,
 		"security_bankroll_delta": 0,
 		"security_message": "",
@@ -1001,10 +1520,17 @@ func _slot_resolve_cross_effects(payout: int, stake: int, stake_cost: int, bankr
 		effects["item_payout_bonus"] = int(item_effects.get("win_bonus", 0)) + int(item_effects.get("payout_delta", 0))
 	elif bankroll_delta < 0:
 		effects["item_loss_reduction"] = maxi(0, int(item_effects.get("loss_reduction", 0)))
+	if bankroll_delta < 0 and stake_cost > 0 and str(machine.get("format_id", "")) == "classic_3_reel":
+		var refund_percent := clampi(int(item_effects.get("slot_three_reel_loss_refund_percent", 0)), 0, 100)
+		if refund_percent > 0:
+			effects["slot_loss_refund"] = mini(absi(bankroll_delta), maxi(1, int(round(float(stake_cost) * float(refund_percent) / 100.0))))
 	if is_cheat:
 		var heat: Dictionary = _slot_cheat_heat(action_id, stake_basis, run_state, definition, environment, item_effects)
 		for key in heat.keys():
 			effects[key] = heat[key]
+	effects["slot_cold_quarter_used"] = bool(item_effects.get("slot_cold_quarter_used", false))
+	effects["slot_cold_quarters_remaining"] = maxi(0, int(item_effects.get("slot_cold_quarters_remaining", 0)))
+	effects["slot_grease_failed_nudge_heat_bonus_applied"] = maxi(0, int(item_effects.get("slot_grease_failed_nudge_heat_bonus_applied", 0)))
 	return effects
 
 
@@ -1054,6 +1580,14 @@ func _cheat_action_def(definition: Dictionary, action_id: String) -> Dictionary:
 func _spin_result(machine: Dictionary, entry: Dictionary, action_id: String, stake: int, stake_cost: int, payout: int, bankroll_delta: int, suspicion_delta: int, environment: Dictionary, animation_plan: Dictionary, feature_triggered: bool, active_bonus: Dictionary, side_effects: Dictionary, free_spin: bool, nudge_applied: bool, cross_effects: Dictionary = {}) -> Dictionary:
 	var classification := str(machine.get("last_classification", "zero_loss"))
 	var message := _message_for_spin(classification, payout, stake_cost, feature_triggered, active_bonus, nudge_applied)
+	var slot_loss_refund := int(cross_effects.get("slot_loss_refund", 0))
+	if slot_loss_refund > 0:
+		message = "%s Coin-Return Shim kicks back $%d." % [message, slot_loss_refund]
+	if bool(cross_effects.get("slot_cold_quarter_used", false)):
+		message = "%s A Cold Quarter chills the heat." % message
+	var grease_heat_bonus := int(cross_effects.get("slot_grease_failed_nudge_heat_bonus_applied", 0))
+	if grease_heat_bonus > 0:
+		message = "%s Grease makes the blown nudge draw extra heat." % message
 	var security_message := str(cross_effects.get("security_message", ""))
 	if not security_message.is_empty():
 		message = "%s %s" % [message, security_message]
@@ -1078,6 +1612,9 @@ func _spin_result(machine: Dictionary, entry: Dictionary, action_id: String, sta
 		"luck_payout_bonus": int(cross_effects.get("luck_payout_bonus", 0)),
 		"item_payout_bonus": int(cross_effects.get("item_payout_bonus", 0)),
 		"item_loss_reduction": int(cross_effects.get("item_loss_reduction", 0)),
+		"slot_loss_refund": slot_loss_refund,
+		"slot_cold_quarter_used": bool(cross_effects.get("slot_cold_quarter_used", false)),
+		"slot_grease_failed_nudge_heat_bonus": grease_heat_bonus,
 		"security_bankroll_delta": int(cross_effects.get("security_bankroll_delta", 0)),
 		"pit_boss_watched": bool(cross_effects.get("pit_boss_watched", false)),
 		"pit_boss_heat_bonus": int(cross_effects.get("pit_boss_heat_bonus", 0)),
@@ -1123,6 +1660,10 @@ func _spin_result(machine: Dictionary, entry: Dictionary, action_id: String, sta
 	result["slot_luck_payout_bonus"] = int(cross_effects.get("luck_payout_bonus", 0))
 	result["slot_item_payout_bonus"] = int(cross_effects.get("item_payout_bonus", 0))
 	result["slot_item_loss_reduction"] = int(cross_effects.get("item_loss_reduction", 0))
+	result["slot_loss_refund"] = slot_loss_refund
+	result["slot_cold_quarter_used"] = bool(cross_effects.get("slot_cold_quarter_used", false))
+	result["slot_cold_quarters_remaining"] = int(cross_effects.get("slot_cold_quarters_remaining", 0))
+	result["slot_grease_failed_nudge_heat_bonus"] = grease_heat_bonus
 	result["slot_security_bankroll_delta"] = int(cross_effects.get("security_bankroll_delta", 0))
 	result["slot_pit_boss_watched"] = bool(cross_effects.get("pit_boss_watched", false))
 	result["slot_pit_boss_heat_bonus"] = int(cross_effects.get("pit_boss_heat_bonus", 0))
@@ -1153,7 +1694,7 @@ func _message_for_spin(classification: String, payout: int, stake_cost: int, fea
 func _last_nudge_skill_outcome(machine: Dictionary) -> String:
 	for event_value in _copy_array(machine.get("last_tease_events", [])):
 		var event: Dictionary = _copy_dict(event_value)
-		if str(event.get("type", "")) == "nudge_shift":
+		if str(event.get("type", "")) == "nudge_shift" or str(event.get("type", "")) == "nudge_coin_chain":
 			return str(event.get("skill_outcome", "legacy"))
 	return ""
 

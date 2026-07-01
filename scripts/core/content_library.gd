@@ -6,6 +6,7 @@ extends RefCounted
 const ENVIRONMENT_ARCHETYPES_PATH := "res://data/environments/archetypes.json"
 const GAMES_PATH := "res://data/games/games.json"
 const ITEMS_PATH := "res://data/items/items.json"
+const CONTENT_GROUPS_PATH := "res://data/content_groups/groups.json"
 const EVENTS_PATH := "res://data/events/events.json"
 const CHALLENGES_PATH := "res://data/challenges/challenges.json"
 const LENDERS_PATH := "res://data/debt/lenders.json"
@@ -16,6 +17,7 @@ const PRESTIGE_PURCHASES_PATH := "res://data/prestige/purchases.json"
 var environment_archetypes: Array = []
 var games: Array = []
 var items: Array = []
+var content_groups: Array = []
 var events: Array = []
 var challenges: Array = []
 var lenders: Array = []
@@ -34,6 +36,7 @@ static func required_pack_paths() -> Dictionary:
 		"environment_archetypes": ENVIRONMENT_ARCHETYPES_PATH,
 		"games": GAMES_PATH,
 		"items": ITEMS_PATH,
+		"content_groups": CONTENT_GROUPS_PATH,
 		"events": EVENTS_PATH,
 	}
 
@@ -55,6 +58,7 @@ func load() -> Dictionary:
 	environment_archetypes = _load_array(ENVIRONMENT_ARCHETYPES_PATH, true)
 	games = _load_array(GAMES_PATH, true)
 	items = _load_array(ITEMS_PATH, true)
+	content_groups = _load_array(CONTENT_GROUPS_PATH, true)
 	events = _load_array(EVENTS_PATH, true)
 	challenges = _load_array(CHALLENGES_PATH, false)
 	lenders = _load_array(LENDERS_PATH, false)
@@ -67,6 +71,7 @@ func load() -> Dictionary:
 		"environment_archetypes": environment_archetypes,
 		"games": games,
 		"items": items,
+		"content_groups": content_groups,
 		"events": events,
 		"challenges": challenges,
 		"lenders": lenders,
@@ -118,6 +123,14 @@ func validate() -> Array:
 		"price_max",
 		"effect",
 	])
+	_validate_collection("content_groups", content_groups, [
+		"id",
+		"display_name",
+		"description",
+		"default_enabled",
+		"game_ids",
+		"item_ids",
+	])
 	_validate_collection("events", events, [
 		"id",
 		"display_name",
@@ -162,6 +175,7 @@ func validate() -> Array:
 	])
 	_validate_game_definitions()
 	_validate_item_definitions()
+	_validate_content_group_definitions()
 	_validate_event_definitions()
 	_validate_lender_definitions()
 	_validate_service_definitions()
@@ -188,6 +202,125 @@ func game(game_id: String) -> Dictionary:
 # Finds an item definition by id.
 func item(item_id: String) -> Dictionary:
 	return _lookup("items", items, item_id)
+
+
+# Finds a run content group definition by id.
+func content_group(group_id: String) -> Dictionary:
+	return _lookup("content_groups", content_groups, group_id)
+
+
+# Returns the content groups enabled by default for a normal run.
+func default_content_group_ids() -> Array:
+	var result: Array = []
+	for group_value in content_groups:
+		if typeof(group_value) != TYPE_DICTIONARY:
+			continue
+		var group: Dictionary = group_value
+		var group_id := str(group.get("id", "")).strip_edges()
+		if group_id.is_empty():
+			continue
+		if bool(group.get("default_enabled", true)) and not result.has(group_id):
+			result.append(group_id)
+	return result
+
+
+# Normalizes player-selected group ids while preserving content pack order.
+func normalize_content_group_ids(value: Variant) -> Array:
+	var requested := _string_set(value)
+	var result: Array = []
+	for group_value in content_groups:
+		if typeof(group_value) != TYPE_DICTIONARY:
+			continue
+		var group_id := str((group_value as Dictionary).get("id", "")).strip_edges()
+		if not group_id.is_empty() and bool(requested.get(group_id, false)):
+			result.append(group_id)
+	return result
+
+
+# Reads selected content groups from a RunState challenge config.
+func enabled_content_group_ids(challenge_config: Dictionary = {}) -> Array:
+	var modifiers := _as_dict(challenge_config.get("modifiers", {}))
+	var has_selection := modifiers.has("content_groups") or challenge_config.has("content_groups")
+	if not has_selection:
+		return default_content_group_ids()
+	var selected_value: Variant = modifiers.get("content_groups", challenge_config.get("content_groups", []))
+	return normalize_content_group_ids(selected_value)
+
+
+# Builds UI-ready group options without hardcoding ids in FoundationMain.
+func content_group_options(selected_group_ids: Array = []) -> Array:
+	var selected := _string_set(selected_group_ids)
+	var result: Array = []
+	for group_value in content_groups:
+		if typeof(group_value) != TYPE_DICTIONARY:
+			continue
+		var group: Dictionary = group_value
+		var group_id := str(group.get("id", "")).strip_edges()
+		if group_id.is_empty():
+			continue
+		result.append({
+			"id": group_id,
+			"display_name": str(group.get("display_name", group_id.capitalize())),
+			"description": str(group.get("description", "")),
+			"default_enabled": bool(group.get("default_enabled", true)),
+			"selected": bool(selected.get(group_id, false)),
+			"game_ids": _string_array(group.get("game_ids", [])),
+			"item_ids": _string_array(group.get("item_ids", [])),
+		})
+	return result
+
+
+# Returns true if a game definition belongs to at least one enabled group.
+func game_enabled_for_challenge(game_id: String, challenge_config: Dictionary = {}) -> bool:
+	return _definition_enabled_for_groups(game(game_id), enabled_content_group_ids(challenge_config))
+
+
+# Returns true if an item definition belongs to at least one enabled group.
+func item_enabled_for_challenge(item_id: String, challenge_config: Dictionary = {}) -> bool:
+	return _definition_enabled_for_groups(item(item_id), enabled_content_group_ids(challenge_config))
+
+
+# Filters a list of game ids against run content groups.
+func filter_game_ids_for_challenge(ids: Variant, challenge_config: Dictionary = {}) -> Array:
+	var enabled := enabled_content_group_ids(challenge_config)
+	var result: Array = []
+	for game_id in _string_array(ids):
+		if _definition_enabled_for_groups(game(game_id), enabled):
+			result.append(game_id)
+	return result
+
+
+# Filters a list of item ids against run content groups.
+func filter_item_ids_for_challenge(ids: Variant, challenge_config: Dictionary = {}) -> Array:
+	var enabled := enabled_content_group_ids(challenge_config)
+	var result: Array = []
+	for item_id in _string_array(ids):
+		if _definition_enabled_for_groups(item(item_id), enabled):
+			result.append(item_id)
+	return result
+
+
+# Builds the item pool used by generated shops. Authored archetype pools stay as
+# the front of the list, then enabled buyable content-group items fill in so new
+# modular item packs are reachable without hand-editing every shop archetype.
+func shop_item_pool_for_challenge(archetype_item_pool: Variant, challenge_config: Dictionary = {}) -> Array:
+	var result := filter_item_ids_for_challenge(archetype_item_pool, challenge_config)
+	var seen := _string_set(result)
+	var enabled := enabled_content_group_ids(challenge_config)
+	for item_value in items:
+		if typeof(item_value) != TYPE_DICTIONARY:
+			continue
+		var item_def: Dictionary = item_value
+		var item_id := str(item_def.get("id", "")).strip_edges()
+		if item_id.is_empty() or bool(seen.get(item_id, false)):
+			continue
+		if not bool(item_def.get("sellable", true)):
+			continue
+		if not _definition_enabled_for_groups(item_def, enabled):
+			continue
+		result.append(item_id)
+		seen[item_id] = true
+	return result
 
 
 # Finds an event definition by id.
@@ -240,6 +373,7 @@ func _rebuild_indexes() -> void:
 	_indexes = {
 		"games": _index_by_id(games),
 		"items": _index_by_id(items),
+		"content_groups": _index_by_id(content_groups),
 		"events": _index_by_id(events),
 		"challenges": _index_by_id(challenges),
 		"lenders": _index_by_id(lenders),
@@ -274,10 +408,12 @@ func _validate_collection(label: String, values: Array, required_fields: Array) 
 
 # Validates module routing and action shape for game definitions.
 func _validate_game_definitions() -> void:
+	var group_ids := _ids_for(content_groups)
 	for game_def in games:
 		if typeof(game_def) != TYPE_DICTIONARY:
 			continue
 		var game_id := str(game_def.get("id", "")).strip_edges()
+		_validate_content_group_tags("games %s content_groups" % game_id, game_def.get("content_groups", []), group_ids)
 		var module_path := str(game_def.get("module_path", "")).strip_edges()
 		if module_path.is_empty():
 			validation_errors.append("games %s is missing module_path." % game_id)
@@ -311,10 +447,12 @@ func _validate_actions(label: String, actions: Variant) -> void:
 
 # Validates item shape used by the first foundation loop.
 func _validate_item_definitions() -> void:
+	var group_ids := _ids_for(content_groups)
 	for item_def in items:
 		if typeof(item_def) != TYPE_DICTIONARY:
 			continue
 		var item_id := str(item_def.get("id", "")).strip_edges()
+		_validate_content_group_tags("items %s content_groups" % item_id, item_def.get("content_groups", []), group_ids)
 		if int(item_def.get("price_min", 0)) > int(item_def.get("price_max", 0)):
 			validation_errors.append("items %s has price_min greater than price_max." % item_id)
 		if typeof(item_def.get("effect", {})) != TYPE_DICTIONARY:
@@ -326,6 +464,49 @@ func _validate_item_definitions() -> void:
 			validation_errors.append("items %s is missing environment_prop." % item_id)
 		if str(item_def.get("surface", "")).strip_edges().is_empty():
 			validation_errors.append("items %s is missing surface." % item_id)
+
+
+# Validates content-group definitions and their game/item references.
+func _validate_content_group_definitions() -> void:
+	var game_ids := _ids_for(games)
+	var item_ids := _ids_for(items)
+	var grouped_games := {}
+	var grouped_items := {}
+	for group_def in content_groups:
+		if typeof(group_def) != TYPE_DICTIONARY:
+			continue
+		var group_id := str(group_def.get("id", "")).strip_edges()
+		if typeof(group_def.get("default_enabled", true)) != TYPE_BOOL:
+			validation_errors.append("content_groups %s default_enabled must be a boolean." % group_id)
+		_validate_id_references("content_groups %s game_ids" % group_id, group_def.get("game_ids", []), game_ids)
+		_validate_id_references("content_groups %s item_ids" % group_id, group_def.get("item_ids", []), item_ids)
+		for game_id in _string_array(group_def.get("game_ids", [])):
+			grouped_games[game_id] = true
+		for item_id in _string_array(group_def.get("item_ids", [])):
+			grouped_items[item_id] = true
+	for game_def in games:
+		if typeof(game_def) != TYPE_DICTIONARY:
+			continue
+		var game_id := str((game_def as Dictionary).get("id", "")).strip_edges()
+		if not game_id.is_empty() and not bool(grouped_games.get(game_id, false)):
+			validation_errors.append("games %s is not referenced by any content group." % game_id)
+	for item_def in items:
+		if typeof(item_def) != TYPE_DICTIONARY:
+			continue
+		var item_id := str((item_def as Dictionary).get("id", "")).strip_edges()
+		if not item_id.is_empty() and not bool(grouped_items.get(item_id, false)):
+			validation_errors.append("items %s is not referenced by any content group." % item_id)
+
+
+func _validate_content_group_tags(label: String, ids: Variant, valid_ids: Dictionary) -> void:
+	if typeof(ids) != TYPE_ARRAY:
+		validation_errors.append("%s must be an array." % label)
+		return
+	var group_ids := _string_array(ids)
+	if group_ids.is_empty():
+		validation_errors.append("%s must include at least one group id." % label)
+		return
+	_validate_id_references(label, group_ids, valid_ids)
 
 
 # Validates event choice payloads and route references inside consequences.
@@ -530,6 +711,26 @@ static func _string_array(value: Variant) -> Array:
 		if not id.is_empty() and not result.has(id):
 			result.append(id)
 	return result
+
+
+static func _string_set(value: Variant) -> Dictionary:
+	var result: Dictionary = {}
+	for id in _string_array(value):
+		result[id] = true
+	return result
+
+
+static func _definition_enabled_for_groups(definition: Dictionary, enabled_group_ids: Array) -> bool:
+	if definition.is_empty():
+		return false
+	var groups := _string_array(definition.get("content_groups", []))
+	if groups.is_empty():
+		return true
+	var enabled := _string_set(enabled_group_ids)
+	for group_id in groups:
+		if bool(enabled.get(group_id, false)):
+			return true
+	return false
 
 
 # Safely returns dictionary values.

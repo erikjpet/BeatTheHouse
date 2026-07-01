@@ -106,6 +106,23 @@ def chip(d, x, y, fill=PINK):
     d.rectangle((x + 3, y + 1, x + 5, y + 7), fill=CYAN)
 
 
+def coin(d, x, y, fill=AMBER, accent=CYAN):
+    ellipse(d, (x, y, x + 16, y + 16), fill)
+    d.ellipse((x + 4, y + 4, x + 12, y + 12), outline=BLACK)
+    d.rectangle((x + 7, y + 2, x + 9, y + 4), fill=accent)
+    d.rectangle((x + 7, y + 12, x + 9, y + 14), fill=accent)
+    d.rectangle((x + 2, y + 7, x + 4, y + 9), fill=accent)
+    d.rectangle((x + 12, y + 7, x + 14, y + 9), fill=accent)
+
+
+def music_note(d, x, y, color=CYAN):
+    d.rectangle((x + 3, y, x + 4, y + 8), fill=color)
+    d.rectangle((x + 4, y, x + 8, y + 1), fill=color)
+    d.rectangle((x + 8, y + 1, x + 9, y + 7), fill=color)
+    ellipse(d, (x, y + 7, x + 5, y + 12), color)
+    ellipse(d, (x + 5, y + 6, x + 10, y + 11), color)
+
+
 def tiny_smoke(d, points):
     for x, y, h in points:
         d.line((x, y + h, x - 1, y + h - 3, x, y), fill=METAL)
@@ -349,6 +366,255 @@ def draw_xray_glasses():
     return image
 
 
+def draw_side_bet_chart():
+    image, d = new_icon()
+    poly(d, [(7, 6), (24, 6), (26, 25), (8, 26)], PAPER)
+    d.rectangle((9, 8, 22, 10), fill=CYAN)
+    for y in (13, 16, 19, 22):
+        d.rectangle((10, y, 22, y), fill=BLACK)
+    for x in (14, 18):
+        d.rectangle((x, 12, x, 23), fill=rgba("#ad9f76"))
+    chip(d, 5, 20, PINK)
+    d.rectangle((20, 12, 22, 14), fill=YELLOW)
+    d.rectangle((11, 12, 13, 14), fill=PINK)
+    glint(d, 25, 7)
+    return image
+
+
+def draw_basic_strategy_card():
+    image, d = new_icon()
+    poly(d, [(6, 8), (17, 5), (17, 24), (6, 26)], PAPER)
+    poly(d, [(17, 5), (26, 9), (25, 26), (17, 24)], rgba("#f7edcf"))
+    d.line((17, 6, 17, 24), fill=rgba("#ad9f76"))
+    for y in (11, 15, 19):
+        d.rectangle((8, y, 15, y), fill=BLACK)
+        d.rectangle((19, y, 24, y), fill=BLACK)
+    d.rectangle((9, 8, 14, 9), fill=PINK)
+    d.rectangle((19, 8, 23, 9), fill=CYAN)
+    card(d, 20, 17, 6, 8, WHITE, PINK)
+    return image
+
+
+def draw_lucky_ladies_compact():
+    image, d = new_icon()
+    ellipse(d, (6, 14, 21, 27), PINK)
+    ellipse(d, (11, 5, 26, 18), PINK_2)
+    d.ellipse((14, 8, 23, 16), fill=rgba("#93f7ff"))
+    d.rectangle((12, 21, 15, 23), fill=YELLOW)
+    d.rectangle((14, 19, 18, 21), fill=YELLOW)
+    d.rectangle((17, 21, 20, 23), fill=YELLOW)
+    d.rectangle((12, 24, 20, 25), fill=AMBER)
+    glint(d, 22, 9, WHITE)
+    return image
+
+
+def draw_coolers_cufflinks():
+    image, d = new_icon()
+    ellipse(d, (6, 10, 16, 20), METAL)
+    ellipse(d, (16, 10, 26, 20), METAL)
+    d.rectangle((10, 14, 22, 16), fill=BLACK)
+    d.rectangle((9, 13, 13, 17), fill=CYAN)
+    d.rectangle((19, 13, 23, 17), fill=CYAN)
+    d.rectangle((11, 12, 12, 13), fill=WHITE)
+    d.rectangle((21, 12, 22, 13), fill=WHITE)
+    d.rectangle((13, 22, 19, 24), fill=PINK)
+    glint(d, 24, 8)
+    return image
+
+
+def draw_broken_cufflinks():
+    image, d = new_icon()
+    ellipse(d, (5, 11, 15, 21), METAL)
+    ellipse(d, (18, 9, 27, 18), METAL)
+    line(d, (13, 16, 19, 13), METAL, 2)
+    d.rectangle((8, 14, 12, 18), fill=CYAN)
+    d.rectangle((21, 12, 24, 15), fill=CYAN)
+    line(d, (10, 13, 13, 19), PINK)
+    line(d, (20, 10, 25, 17), PINK)
+    d.rectangle((16, 22, 23, 24), fill=rgba("#53616b"))
+    return image
+
+
+def draw_high_roller_watch():
+    image, d = new_icon()
+    poly(d, [(13, 4), (20, 4), (19, 9), (14, 9)], BROWN)
+    poly(d, [(13, 23), (20, 23), (19, 28), (14, 28)], BROWN)
+    ellipse(d, (8, 8, 25, 25), AMBER)
+    d.ellipse((12, 12, 21, 21), fill=rgba("#07222f"))
+    d.rectangle((15, 15, 16, 19), fill=CYAN)
+    d.rectangle((16, 18, 20, 19), fill=CYAN)
+    d.rectangle((11, 9, 14, 10), fill=YELLOW)
+    d.rectangle((20, 23, 24, 25), fill=PINK)
+    glint(d, 23, 9)
+    return image
+
+
+def draw_coin_return_shim():
+    image, d = new_icon()
+    poly(d, [(8, 17), (24, 10), (26, 15), (10, 22)], METAL)
+    d.rectangle((13, 17, 23, 18), fill=CYAN)
+    coin(d, 5, 8, AMBER, PINK)
+    line(d, (23, 23, 15, 23), CYAN, 2)
+    d.line((15, 23, 18, 20), fill=CYAN)
+    d.line((15, 23, 18, 26), fill=CYAN)
+    glint(d, 25, 9)
+    return image
+
+
+def draw_lucky_reel_grease():
+    image, d = new_icon()
+    poly(d, [(7, 18), (20, 7), (25, 12), (12, 25)], TEAL)
+    d.rectangle((18, 7, 23, 11), fill=METAL)
+    d.rectangle((10, 18, 16, 21), fill=YELLOW)
+    d.rectangle((12, 15, 18, 16), fill=BLACK)
+    ellipse(d, (20, 19, 25, 26), AMBER)
+    d.rectangle((22, 21, 23, 24), fill=PINK)
+    poly(d, [(6, 7), (9, 12), (5, 12)], CYAN)
+    return image
+
+
+def draw_timing_bracelet():
+    image, d = new_icon()
+    ellipse(d, (7, 7, 25, 25), METAL)
+    d.ellipse((11, 11, 21, 21), fill=FIELD)
+    rect(d, (11, 13, 21, 18), BLUE)
+    d.rectangle((13, 15, 18, 16), fill=CYAN)
+    d.rectangle((19, 15, 20, 16), fill=PINK)
+    d.rectangle((15, 5, 18, 8), fill=AMBER)
+    d.rectangle((15, 24, 18, 27), fill=AMBER)
+    glint(d, 24, 8)
+    return image
+
+
+def draw_gold_tooth_token():
+    image, d = new_icon()
+    coin(d, 7, 8, AMBER, PINK)
+    poly(d, [(13, 13), (19, 12), (21, 17), (18, 23), (14, 23), (11, 17)], WHITE)
+    d.rectangle((15, 14, 16, 21), fill=YELLOW)
+    d.rectangle((18, 14, 19, 21), fill=YELLOW)
+    d.arc((5, 6, 15, 17), 180, 315, fill=CYAN, width=2)
+    d.arc((17, 6, 28, 17), 225, 360, fill=CYAN, width=2)
+    glint(d, 23, 9)
+    return image
+
+
+def draw_payout_pamphlet():
+    image, d = new_icon()
+    poly(d, [(7, 7), (15, 5), (15, 25), (7, 27)], PAPER)
+    poly(d, [(15, 5), (25, 8), (25, 26), (15, 25)], rgba("#f7edcf"))
+    d.line((15, 6, 15, 25), fill=rgba("#ad9f76"))
+    for y, color in ((10, PINK), (14, CYAN), (18, YELLOW), (22, BLACK)):
+        d.rectangle((9, y, 13, y), fill=color)
+        d.rectangle((18, y, 23, y), fill=color)
+    coin(d, 20, 18, AMBER, PINK)
+    return image
+
+
+def draw_cold_quarters():
+    image, d = new_icon()
+    for x, y in ((8, 19), (10, 16), (12, 13), (14, 10), (16, 7), (18, 18)):
+        ellipse(d, (x, y, x + 9, y + 6), METAL)
+        d.rectangle((x + 3, y + 2, x + 6, y + 3), fill=CYAN)
+    d.rectangle((7, 24, 25, 26), fill=rgba("#79dfff"))
+    line(d, (7, 8, 12, 13), CYAN)
+    line(d, (12, 8, 7, 13), CYAN)
+    d.rectangle((9, 10, 10, 11), fill=WHITE)
+    glint(d, 25, 8, WHITE)
+    return image
+
+
+def draw_neon_players_charm():
+    image, d = new_icon()
+    ellipse(d, (8, 8, 24, 25), PURPLE)
+    d.rectangle((12, 13, 16, 22), fill=CYAN)
+    d.rectangle((16, 13, 20, 14), fill=CYAN)
+    d.rectangle((19, 15, 20, 18), fill=CYAN)
+    d.rectangle((16, 18, 19, 19), fill=CYAN)
+    d.rectangle((12, 11, 20, 11), fill=PINK)
+    d.rectangle((15, 4, 17, 8), fill=AMBER)
+    line(d, (11, 26, 23, 6), PINK)
+    glint(d, 24, 8, YELLOW)
+    return image
+
+
+def draw_split_reel_note():
+    image, d = new_icon()
+    poly(d, [(7, 6), (24, 7), (25, 25), (8, 26)], PAPER)
+    d.rectangle((10, 9, 21, 11), fill=PINK)
+    rect(d, (11, 14, 21, 22), rgba("#18202e"))
+    d.rectangle((15, 14, 16, 22), fill=CYAN)
+    d.rectangle((12, 16, 14, 18), fill=YELLOW)
+    d.rectangle((18, 17, 20, 19), fill=PINK)
+    line(d, (6, 20, 11, 20), CYAN, 2)
+    d.line((10, 18, 12, 20, 10, 22), fill=CYAN)
+    glint(d, 24, 8)
+    return image
+
+
+def draw_feature_magnet():
+    image, d = new_icon()
+    poly(d, [(7, 9), (13, 9), (13, 20), (16, 23), (19, 20), (19, 9), (25, 9), (25, 21), (19, 27), (13, 27), (7, 21)], PINK)
+    d.rectangle((9, 11, 12, 15), fill=CYAN)
+    d.rectangle((20, 11, 23, 15), fill=CYAN)
+    d.rectangle((14, 23, 18, 25), fill=BLACK)
+    poly(d, [(16, 4), (18, 9), (24, 9), (19, 12), (21, 18), (16, 14), (11, 18), (13, 12), (8, 9), (14, 9)], YELLOW)
+    return image
+
+
+def draw_jazz_sax_lucky_coin():
+    image, d = new_icon()
+    coin(d, 7, 8, AMBER, PURPLE)
+    line(d, (13, 12, 18, 18), CYAN, 2)
+    d.arc((13, 13, 22, 24), 70, 285, fill=CYAN, width=2)
+    d.rectangle((16, 10, 20, 11), fill=CYAN)
+    d.rectangle((20, 20, 24, 22), fill=PINK)
+    d.rectangle((17, 15, 18, 16), fill=YELLOW)
+    music_note(d, 4, 4, PINK)
+    return image
+
+
+def draw_jazz_cello_lucky_coin():
+    image, d = new_icon()
+    coin(d, 7, 8, rgba("#d88935"), CYAN)
+    ellipse(d, (13, 13, 20, 22), BROWN)
+    ellipse(d, (14, 9, 19, 16), BROWN)
+    d.rectangle((16, 6, 17, 22), fill=CYAN)
+    d.rectangle((12, 22, 21, 23), fill=BLACK)
+    line(d, (12, 14, 21, 14), YELLOW)
+    d.rectangle((21, 5, 23, 7), fill=PINK)
+    music_note(d, 4, 18, CYAN)
+    return image
+
+
+def draw_jazz_drummer_lucky_coin():
+    image, d = new_icon()
+    coin(d, 7, 8, AMBER, PINK)
+    ellipse(d, (11, 16, 22, 23), METAL)
+    d.rectangle((13, 16, 20, 18), fill=SOFT)
+    line(d, (9, 10, 20, 18), YELLOW)
+    line(d, (23, 10, 15, 18), YELLOW)
+    d.rectangle((5, 15, 7, 17), fill=rgba("#53616b"))
+    d.rectangle((24, 21, 26, 23), fill=rgba("#53616b"))
+    glint(d, 24, 8)
+    return image
+
+
+def draw_jazz_drummer_glasses():
+    image, d = new_icon()
+    ellipse(d, (5, 11, 15, 21), rgba("#07141c"))
+    ellipse(d, (17, 11, 27, 21), rgba("#07141c"))
+    d.ellipse((8, 14, 13, 19), fill=rgba("#3d1738"))
+    d.ellipse((20, 14, 25, 19), fill=rgba("#3d1738"))
+    d.rectangle((15, 16, 17, 17), fill=AMBER)
+    line(d, (3, 16, 6, 15), AMBER)
+    line(d, (27, 15, 29, 17), AMBER)
+    d.rectangle((10, 8, 12, 9), fill=CYAN)
+    d.rectangle((21, 8, 23, 9), fill=PINK)
+    music_note(d, 19, 20, YELLOW)
+    glint(d, 25, 8, WHITE)
+    return image
+
+
 def draw_tab_detector():
     image, d = new_icon()
     rect(d, (9, 9, 23, 24), BLUE)
@@ -563,27 +829,46 @@ def draw_vpoker():
 
 
 ITEM_ICONS = {
+    "basic_strategy_card": draw_basic_strategy_card,
+    "broken_cufflinks": draw_broken_cufflinks,
     "card_counters_notes": draw_card_counters_notes,
     "cheap_sunglasses": draw_cheap_sunglasses,
+    "coin_return_shim": draw_coin_return_shim,
+    "cold_quarters": draw_cold_quarters,
+    "coolers_cufflinks": draw_coolers_cufflinks,
     "creased_luck_card": draw_creased_luck_card,
+    "feature_magnet": draw_feature_magnet,
     "flask_of_courage": draw_flask_of_courage,
     "foil_sleeve": draw_foil_sleeve,
     "gambler_gloves": draw_gambler_gloves,
+    "gold_tooth_token": draw_gold_tooth_token,
+    "high_roller_watch": draw_high_roller_watch,
     "holdout_rig": draw_holdout_rig,
     "hot_streak_token": draw_hot_streak_token,
     "inside_man": draw_inside_man,
     "instant_coffee": draw_instant_coffee,
+    "jazz_cello_lucky_coin": draw_jazz_cello_lucky_coin,
+    "jazz_drummer_glasses": draw_jazz_drummer_glasses,
+    "jazz_drummer_lucky_coin": draw_jazz_drummer_lucky_coin,
+    "jazz_sax_lucky_coin": draw_jazz_sax_lucky_coin,
     "loaded_dice": draw_loaded_dice,
     "lucky_charm": draw_lucky_charm,
     "lucky_cigarette": draw_lucky_cigarette,
     "lucky_keychain": draw_lucky_keychain,
+    "lucky_ladies_compact": draw_lucky_ladies_compact,
+    "lucky_reel_grease": draw_lucky_reel_grease,
     "marked_cards": draw_marked_cards,
+    "neon_players_charm": draw_neon_players_charm,
+    "payout_pamphlet": draw_payout_pamphlet,
     "police_scanner": draw_police_scanner,
     "rabbits_foot": draw_rabbits_foot,
     "roadside_map": draw_roadside_map,
     "scratch_pad": draw_scratch_pad,
+    "side_bet_chart": draw_side_bet_chart,
+    "split_reel_note": draw_split_reel_note,
     "tab_detector": draw_tab_detector,
     "tarot_card": draw_tarot_card,
+    "timing_bracelet": draw_timing_bracelet,
     "tip_sheet": draw_tip_sheet,
     "weighted_keyring": draw_weighted_keyring,
     "xray_glasses": draw_xray_glasses,

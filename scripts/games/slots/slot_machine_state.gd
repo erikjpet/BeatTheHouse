@@ -11,6 +11,11 @@ const BET_OPTIONS := [
 	{"id": "bet_15", "label": "HIGH", "total_credits": 15},
 	{"id": "bet_20", "label": "MAX", "total_credits": 20},
 ]
+const BUFFALO_GRAND_PRIZE_STATE_KEY := "buffalo_grand_prize"
+const BUFFALO_GRAND_PRIZE_INITIAL_MULTIPLIER_KEY := "buffalo_grand_prize_initial_multiplier"
+const BUFFALO_GRAND_PRIZE_SPINS_KEY := "buffalo_grand_prize_spins"
+const BUFFALO_GRAND_MIN_INITIAL_MULTIPLIER := 50
+const BUFFALO_GRAND_MAX_INITIAL_MULTIPLIER := 70
 
 
 static func read_machine(environment: Dictionary, game_id: String) -> Dictionary:
@@ -83,6 +88,7 @@ static func normalize(machine_value: Variant) -> Dictionary:
 	machine["bet_ladder"] = _normalize_bet_ladder(machine.get("bet_ladder", {}))
 	machine["pinball_feature_state"] = _copy_dict(machine.get("pinball_feature_state", {}))
 	machine["buffalo_feature_state"] = _copy_dict(machine.get("buffalo_feature_state", {}))
+	machine["slot_item_state"] = _copy_dict(machine.get("slot_item_state", {}))
 	return machine
 
 
@@ -130,6 +136,23 @@ static func set_per_bet_bucket(machine: Dictionary, bet_id: String, bucket: Dict
 	buckets[bet_id] = _normalize_per_bet_bucket(bucket)
 	bonus_state["per_bet"] = buckets
 	machine["bonus_state"] = bonus_state
+
+
+static func seeded_buffalo_bonus_state(rng: RngStream) -> Dictionary:
+	var per_bet: Dictionary = {}
+	for option_value in BET_OPTIONS:
+		var option: Dictionary = option_value
+		var bet_id := str(option.get("id", ""))
+		var stake := maxi(1, int(option.get("total_credits", 1)))
+		var multiplier := BUFFALO_GRAND_MIN_INITIAL_MULTIPLIER
+		if rng != null:
+			multiplier = rng.randi_range(BUFFALO_GRAND_MIN_INITIAL_MULTIPLIER, BUFFALO_GRAND_MAX_INITIAL_MULTIPLIER)
+		per_bet[bet_id] = _normalize_per_bet_bucket({
+			BUFFALO_GRAND_PRIZE_STATE_KEY: stake * multiplier,
+			BUFFALO_GRAND_PRIZE_INITIAL_MULTIPLIER_KEY: multiplier,
+			BUFFALO_GRAND_PRIZE_SPINS_KEY: 0,
+		})
+	return {"per_bet": per_bet}
 
 
 static func active_bonus_incomplete(machine: Dictionary) -> bool:
@@ -199,6 +222,7 @@ static func _normalize_bonus_state(value: Variant) -> Dictionary:
 		"buffalo_grand_prize": maxi(0, int(source.get("buffalo_grand_prize", 0))),
 		"must_hit_forces": maxi(0, int(source.get("must_hit_forces", 0))),
 		"feature_completions": maxi(0, int(source.get("feature_completions", 0))),
+		"neon_players_charm_used": bool(source.get("neon_players_charm_used", false)),
 	}
 
 
@@ -210,6 +234,9 @@ static func _normalize_per_bet_bucket(value: Variant) -> Dictionary:
 		"must_hit_meter": maxi(100, int(bucket.get("must_hit_meter", 100))),
 		"must_hit_ready": bool(bucket.get("must_hit_ready", false)),
 		"feature_completion_count": maxi(0, int(bucket.get("feature_completion_count", 0))),
+		BUFFALO_GRAND_PRIZE_STATE_KEY: maxi(0, int(bucket.get(BUFFALO_GRAND_PRIZE_STATE_KEY, 0))),
+		BUFFALO_GRAND_PRIZE_INITIAL_MULTIPLIER_KEY: maxi(0, int(bucket.get(BUFFALO_GRAND_PRIZE_INITIAL_MULTIPLIER_KEY, 0))),
+		BUFFALO_GRAND_PRIZE_SPINS_KEY: maxi(0, int(bucket.get(BUFFALO_GRAND_PRIZE_SPINS_KEY, 0))),
 	}
 
 
@@ -220,6 +247,9 @@ static func _default_per_bet_bucket() -> Dictionary:
 		"must_hit_meter": 100,
 		"must_hit_ready": false,
 		"feature_completion_count": 0,
+		BUFFALO_GRAND_PRIZE_STATE_KEY: 0,
+		BUFFALO_GRAND_PRIZE_INITIAL_MULTIPLIER_KEY: 0,
+		BUFFALO_GRAND_PRIZE_SPINS_KEY: 0,
 	}
 
 

@@ -88,6 +88,7 @@ var run_status: String = RUN_STATUS_ACTIVE
 var run_failure_reason: String = FAILURE_NONE
 var run_failure_message: String = ""
 var run_spending_score: int = 0
+var defer_next_bankroll_zero_failure: bool = false
 var _item_effects_by_id: Dictionary = {}
 var _item_effects_loaded: bool = false
 
@@ -122,6 +123,7 @@ func start_new(p_seed_text: String = "FOUNDATION-SEED", p_challenge_config: Dict
 	run_failure_reason = FAILURE_NONE
 	run_failure_message = ""
 	run_spending_score = 0
+	defer_next_bankroll_zero_failure = false
 
 
 # Creates an RNG stream from the saved run RNG state.
@@ -161,6 +163,14 @@ func set_environment(environment_data: Dictionary) -> void:
 func change_bankroll(delta: int, defer_bankroll_zero: bool = false) -> void:
 	bankroll += delta
 	_refresh_economy(defer_bankroll_zero)
+
+
+func begin_deferred_bankroll_zero_resolution() -> void:
+	defer_next_bankroll_zero_failure = true
+
+
+func clear_deferred_bankroll_zero_resolution() -> void:
+	defer_next_bankroll_zero_failure = false
 
 
 # Changes suspicion and records a behavior cue.

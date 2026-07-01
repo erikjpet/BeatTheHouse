@@ -32,9 +32,15 @@ const PAYOUT_ANIMATION_DURATION_MSEC := 1800
 const COUNT_ICON_DURATION_MSEC := 3000
 const COUNT_ICON_STAGGER_MSEC := 520
 const COUNT_ICON_FADE_MSEC := 420
+const PATRON_DECISION_START_DELAY_MSEC := 260
+const PATRON_DECISION_STEP_DELAY_MSEC := 220
+const PATRON_HIT_CARD_DELAY_MSEC := 110
+const PATRON_DECISION_HIGHLIGHT_MSEC := 840
 const BLACKJACK_MAX_SIDE_BETS := 2
 const STRATEGY_DEVIATION_MAX_HEAT := 24
 const STRATEGY_DEVIATION_MAX_WATCH := 45
+const COOLERS_CUFFLINKS_ITEM_ID := "coolers_cufflinks"
+const BROKEN_CUFFLINKS_ITEM_ID := "broken_cufflinks"
 const PLAYER_CARD_SCALE := 0.70
 const DEALER_CARD_SCALE := 0.78
 const PATRON_CARD_SCALE := 0.43
@@ -70,6 +76,16 @@ func cheat_actions(run_state: RunState, environment: Dictionary) -> Array:
 	if bool(_table_state(run_state, environment).get("barred", false)):
 		return []
 	return super.cheat_actions(run_state, environment)
+
+
+func actions(run_state: RunState, environment: Dictionary) -> Dictionary:
+	var result: Dictionary = super.actions(run_state, environment)
+	result["stake_floor"] = _surface_stake_floor(run_state, environment)
+	result["stake_ceiling"] = _surface_stake_ceiling(run_state, environment)
+	result["base_stake_ceiling"] = _blackjack_base_stake_ceiling(run_state, environment)
+	result["economy_stake_ceiling"] = _surface_stake_ceiling(run_state, environment)
+	result["economy_pressure_applied"] = false
+	return result
 
 
 func generate_environment_state(_run_state: RunState, environment: Dictionary, rng: RngStream) -> Dictionary:
@@ -159,10 +175,11 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 		display_dealer_cards = showdown_dealer_cards
 	var dealer_view: Array = _dealer_view(display_dealer_cards, bool(session.get("dealer_hole_visible", false)) or dealer_cards.is_empty())
 	var total_info: Dictionary = _hand_total_info(active_cards)
-	var selected_stake: int = _session_stake(int(ui_state.get("selected_stake", session.get("selected_stake", 1))), session)
+	var selected_stake: int = _effective_table_stake(_session_stake(int(ui_state.get("selected_stake", session.get("selected_stake", 1))), session), session, run_state, environment)
 	var available_side_bets: Array = _available_side_bets_for_session(table, session)
 	for i in range(available_side_bets.size()):
 		var available_bet: Dictionary = available_side_bets[i]
+		available_bet = _item_adjusted_side_bet_for_surface(available_bet, run_state)
 		available_bet["surface_enabled"] = _side_bet_can_toggle_now(available_bet, session) and not barred
 		available_side_bets[i] = available_bet
 	var active_side_bets: Array = _valid_side_bet_ids_for_session(_string_array(session.get("blackjack_side_bets", [])), table, session)
@@ -179,8 +196,12 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 	var deal_active_id := str(session.get("deal_animation_id", table.get("last_deal_animation_id", "")))
 	var deal_started_msec := int(session.get("deal_started_msec", table.get("last_deal_started_msec", 0)))
 	var deal_events: Array = _deal_animation_event_array(session.get("deal_animation_events", table.get("last_deal_animation_events", [])))
-	var deal_duration_msec := _deal_animation_duration_msec(deal_events)
-	if deal_events.is_empty():
+	var patron_action_source: Variant = session.get("patron_action_events", []) if dealt else table.get("last_patron_action_events", [])
+	var patron_action_events: Array = _patron_action_event_array(patron_action_source)
+	if not dealt and not last_result.is_empty() and patron_action_events.is_empty():
+		patron_action_events = _patron_action_event_array(last_result.get("patron_action_events", []))
+	var deal_duration_msec := maxi(_deal_animation_duration_msec(deal_events), _patron_action_animation_duration_msec(patron_action_events))
+	if deal_events.is_empty() and patron_action_events.is_empty():
 		deal_active_id = ""
 		deal_started_msec = 0
 	var attention_active_id := str(session.get("dealer_lookaway_id", ""))
@@ -282,6 +303,7 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 		"patrons": patrons,
 		"patron_wager_action": "blackjack_patron_bet",
 		"patron_hands": patron_hands,
+		"patron_action_events": patron_action_events,
 		"deal_animation_events": deal_events,
 		"deal_animation_duration_msec": deal_duration_msec,
 		"last_result": last_result,
@@ -307,6 +329,7 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 		"active_hand_index": active_index,
 		"blackjack_total": int(total_info.get("total", 0)),
 		"blackjack_soft": bool(total_info.get("soft", false)),
+		"basic_strategy_advice": _basic_strategy_advice(session, table, run_state),
 		"count_hint": _count_hint(run_state, table, session),
 		"counting_enabled": bool(table.get("counting_enabled", false)),
 		"table_modifier": _table_summary(table),
@@ -434,6 +457,7 @@ func draw_surface(surface, surface_state: Dictionary, _render_context: Dictionar
 	_draw_blackjack_ambient_event(surface, draw_state)
 	_draw_chip_rack(surface, draw_state)
 	_draw_table_actions(surface, draw_state)
+	_draw_basic_strategy_advice(surface, draw_state)
 	_draw_blackjack_result_board(surface, draw_state)
 	_draw_side_bet_rule_overlay(surface, draw_state)
 	_draw_deal_animation(surface, draw_state)
@@ -502,7 +526,8 @@ func _blackjack_table_motion_active(table: Dictionary, now_msec: int) -> bool:
 			return true
 	var deal_started := int(table.get("last_deal_started_msec", 0))
 	var deal_events: Array = _deal_animation_event_array(table.get("last_deal_animation_events", []))
-	var deal_duration := _deal_animation_duration_msec(deal_events)
+	var patron_action_events: Array = _patron_action_event_array(table.get("last_patron_action_events", []))
+	var deal_duration := maxi(_deal_animation_duration_msec(deal_events), _patron_action_animation_duration_msec(patron_action_events))
 	if deal_started > 0:
 		var deal_elapsed := now_msec - deal_started
 		if deal_elapsed >= 0 and deal_elapsed < deal_duration:
@@ -513,7 +538,7 @@ func _blackjack_table_motion_active(table: Dictionary, now_msec: int) -> bool:
 func surface_action_command(surface_action: String, index: int, confirm_requested: bool, ui_state: Dictionary, run_state: RunState, environment: Dictionary) -> Dictionary:
 	var table: Dictionary = _table_state(run_state, environment)
 	var next_state: Dictionary = _normalized_session(run_state, environment, ui_state, table)
-	var selected_stake: int = _session_stake(int(ui_state.get("selected_stake", next_state.get("selected_stake", 1))), next_state)
+	var selected_stake: int = _effective_table_stake(_session_stake(int(ui_state.get("selected_stake", next_state.get("selected_stake", 1))), next_state), next_state, run_state, environment)
 	_update_live_count_state(next_state, table, run_state, true)
 	if bool(table.get("barred", false)):
 		return _message_command(next_state, str(table.get("barred_reason", "The dealer refuses to let you play this blackjack table.")))
@@ -721,7 +746,10 @@ func resolve_with_context(action_id: String, stake: int, run_state: RunState, en
 		_sync_count_challenge_icons(session, run_state)
 		_finalize_count_challenge(session, run_state)
 	var cheat: Dictionary = {} if sit_out else _cheat_detection_for_hand(session, table, run_state, environment, rng, table_stake)
+	var cufflinks_broke := _coolers_cufflinks_absorbed_failed_peek(action_id, cheat, run_state)
 	var raw_suspicion_delta: int = int(cheat.get("suspicion_delta", 0))
+	if cufflinks_broke:
+		raw_suspicion_delta = 0
 	var suspicion_delta: int = run_state.alcohol_adjusted_suspicion_delta(raw_suspicion_delta) if raw_suspicion_delta > 0 else raw_suspicion_delta
 	var security_pressure: Dictionary = run_state.security_action_pressure("cheat", stake, run_state.suspicion_level() + suspicion_delta) if suspicion_delta > 0 else {}
 	var security_bankroll_delta: int = int(security_pressure.get("bankroll_delta", 0))
@@ -733,9 +761,12 @@ func resolve_with_context(action_id: String, stake: int, run_state: RunState, en
 	var bankroll_delta: int = main_delta + side_delta + security_bankroll_delta
 
 	var used_cards: Array = _cards_used_for_counting(hands, dealer_cards, patron_hands)
+	var patron_action_events: Array = _patron_action_event_array(session.get("patron_action_events", []))
 	var actual_count_delta: int = _count_cards_delta(used_cards)
 	var count_record_delta: int = int(session.get("count_delta", 0)) if bool(session.get("count_answered", false)) else 0
 	var message := _blackjack_result_message(hand_results, side_results, main_delta, side_delta, cheat, item_adjustment, security_message)
+	if cufflinks_broke:
+		message = "%s Cooler's Cufflinks absorb the peek heat and break." % message
 	if sit_out:
 		message = "You watch the blackjack hand without wagering. %s" % message
 	var result_action_kind := "legal"
@@ -746,7 +777,7 @@ func resolve_with_context(action_id: String, stake: int, run_state: RunState, en
 	_update_table_after_hand(table, session, dealer_cards, actual_count_delta, count_record_delta, rng)
 	if not sit_out:
 		_apply_patron_rapport_after_blackjack(table, session, table_stake, bankroll_delta)
-	table["last_result"] = _blackjack_last_result_payload(message, hand_results, side_results, main_delta, side_delta, bankroll_delta, suspicion_delta, dealer_cards, hands, patron_hands, cheat)
+	table["last_result"] = _blackjack_last_result_payload(message, hand_results, side_results, main_delta, side_delta, bankroll_delta, suspicion_delta, dealer_cards, hands, patron_hands, patron_action_events, cheat)
 	_update_environment_table(environment, table)
 
 	var story_entry := {
@@ -762,6 +793,7 @@ func resolve_with_context(action_id: String, stake: int, run_state: RunState, en
 		"side_delta": side_delta,
 		"suspicion_delta": suspicion_delta,
 		"dealer_caught_cheat": bool(cheat.get("caught", false)),
+		"coolers_cufflinks_broke": cufflinks_broke,
 		"dealer_strategy_confronted": bool(cheat.get("strategy_confronted", false)),
 		"strategy_deviation_count": (_dictionary_array(cheat.get("strategy_deviation_events", []))).size(),
 		"dealer_total": int(_hand_total_info(dealer_cards).get("total", 0)),
@@ -775,6 +807,9 @@ func resolve_with_context(action_id: String, stake: int, run_state: RunState, en
 	var deltas := GameModule.empty_result_deltas()
 	deltas["bankroll_delta"] = bankroll_delta
 	deltas["suspicion_delta"] = suspicion_delta
+	if cufflinks_broke:
+		deltas["inventory_remove"] = [COOLERS_CUFFLINKS_ITEM_ID]
+		deltas["inventory_add"] = [BROKEN_CUFFLINKS_ITEM_ID]
 	deltas["story_log"] = [story_entry]
 	deltas["messages"] = [message]
 	deltas["ended"] = bool(security_pressure.get("ended", false))
@@ -797,12 +832,14 @@ func resolve_with_context(action_id: String, stake: int, run_state: RunState, en
 	result["blackjack_player_hands"] = hands
 	result["blackjack_dealer"] = dealer_cards
 	result["blackjack_patron_hands"] = patron_hands
+	result["blackjack_patron_action_events"] = patron_action_events
 	result["blackjack_hand_results"] = hand_results
 	result["blackjack_side_bet_results"] = side_results
 	result["blackjack_main_delta"] = main_delta
 	result["blackjack_side_bet_delta"] = side_delta
 	result["blackjack_sat_out"] = sit_out
 	result["blackjack_cheat_caught"] = bool(cheat.get("caught", false))
+	result["blackjack_coolers_cufflinks_broke"] = cufflinks_broke
 	result["blackjack_strategy_deviation_events"] = _dictionary_array(cheat.get("strategy_deviation_events", []))
 	result["blackjack_strategy_confronted"] = bool(cheat.get("strategy_confronted", false))
 	result["blackjack_pit_boss_watched"] = bool(cheat.get("pit_boss_watched", false))
@@ -882,17 +919,25 @@ func _resolve_cheat_only(action_id: String, run_state: RunState, environment: Di
 		if not bool(session.get("count_answered", false)):
 			_finalize_count_challenge(session, run_state)
 	var cheat: Dictionary = _cheat_detection_for_hand(session, table, run_state, environment, rng, _session_stake(maxi(1, int(ui_state.get("selected_stake", 1))), session))
+	var cufflinks_broke := _coolers_cufflinks_absorbed_failed_peek(action_id, cheat, run_state)
 	var raw_suspicion_delta: int = maxi(1, int(cheat.get("suspicion_delta", 0))) if action_id == "peek_hole_card" else maxi(0, int(cheat.get("suspicion_delta", 0)))
+	if cufflinks_broke:
+		raw_suspicion_delta = 0
 	var suspicion_delta: int = run_state.alcohol_adjusted_suspicion_delta(raw_suspicion_delta) if raw_suspicion_delta > 0 else raw_suspicion_delta
 	var security_pressure: Dictionary = run_state.security_action_pressure("cheat", maxi(1, int(ui_state.get("selected_stake", 1))), run_state.suspicion_level() + suspicion_delta) if suspicion_delta > 0 else {}
 	var bankroll_delta := int(security_pressure.get("bankroll_delta", 0))
 	var security_message := str(security_pressure.get("message", ""))
 	var message := str(cheat.get("message", "The dealer narrows their eyes."))
+	if cufflinks_broke:
+		message = "%s Cooler's Cufflinks take the heat, then snap." % message
 	if not security_message.is_empty():
 		message = "%s %s" % [message, security_message]
 	var deltas := GameModule.empty_result_deltas()
 	deltas["bankroll_delta"] = bankroll_delta
 	deltas["suspicion_delta"] = suspicion_delta
+	if cufflinks_broke:
+		deltas["inventory_remove"] = [COOLERS_CUFFLINKS_ITEM_ID]
+		deltas["inventory_add"] = [BROKEN_CUFFLINKS_ITEM_ID]
 	deltas["messages"] = [message]
 	deltas["story_log"] = [{
 		"type": "game_action",
@@ -905,6 +950,7 @@ func _resolve_cheat_only(action_id: String, run_state: RunState, environment: Di
 		"environment_id": environment.get("id", ""),
 		"pit_boss_watched": bool(cheat.get("pit_boss_watched", false)),
 		"pit_boss_heat_bonus": int(cheat.get("pit_boss_heat_bonus", 0)),
+		"coolers_cufflinks_broke": cufflinks_broke,
 		"security_message": security_message,
 	}]
 	deltas["ended"] = bool(security_pressure.get("ended", false))
@@ -931,6 +977,7 @@ func _resolve_cheat_only(action_id: String, run_state: RunState, environment: Di
 		result["blackjack_count_delta"] = int(session.get("count_delta", 0))
 	result["blackjack_pit_boss_watched"] = bool(cheat.get("pit_boss_watched", false))
 	result["blackjack_pit_boss_heat_bonus"] = int(cheat.get("pit_boss_heat_bonus", 0))
+	result["blackjack_coolers_cufflinks_broke"] = cufflinks_broke
 	GameModule.apply_result(run_state, result, rng)
 	return result
 
@@ -945,12 +992,18 @@ func _resolve_watched_peek_confrontation(table: Dictionary, session: Dictionary,
 	var applied_heat_preview := run_state.alcohol_adjusted_suspicion_delta(heat_delta) if run_state != null else heat_delta
 	var dealer_name := str(table.get("dealer_name", "The dealer"))
 	var message := "%s catches the peek cold, sweeps your bet, and tells you the blackjack table is closed to you for cheating." % dealer_name
+	var cufflinks_broke := run_state != null and run_state.inventory.has(COOLERS_CUFFLINKS_ITEM_ID)
+	if cufflinks_broke:
+		heat_delta = 0
+		applied_heat_preview = 0
+		message = "%s Cooler's Cufflinks catch the heat, then snap into useless metal." % message
 	table["barred"] = true
 	table["barred_reason"] = "%s will not deal to you again after the caught hole-card peek." % dealer_name
 	table["barred_at_hand"] = int(table.get("hands_played", 0))
 	table["barred_confiscated_bet"] = confiscated_bet
 	table["barred_scope"] = "blackjack_table"
 	table["barred_heat_delta"] = applied_heat_preview
+	table["last_patron_action_events"] = []
 	table["last_result"] = {
 		"headline": "BARRED",
 		"summary": message,
@@ -976,12 +1029,16 @@ func _resolve_watched_peek_confrontation(table: Dictionary, session: Dictionary,
 		"suspicion_delta": applied_heat_preview,
 		"dealer_caught_cheat": true,
 		"blackjack_table_barred": true,
+		"coolers_cufflinks_broke": cufflinks_broke,
 		"environment_id": environment.get("id", ""),
 		"environment_archetype_id": environment.get("archetype_id", ""),
 	}
 	var deltas := GameModule.empty_result_deltas()
 	deltas["bankroll_delta"] = -confiscated_bet
 	deltas["suspicion_delta"] = heat_delta
+	if cufflinks_broke:
+		deltas["inventory_remove"] = [COOLERS_CUFFLINKS_ITEM_ID]
+		deltas["inventory_add"] = [BROKEN_CUFFLINKS_ITEM_ID]
 	deltas["story_log"] = [story_entry]
 	deltas["messages"] = [message]
 	var result := GameModule.build_action_result({
@@ -1003,6 +1060,7 @@ func _resolve_watched_peek_confrontation(table: Dictionary, session: Dictionary,
 	result["blackjack_table_barred"] = true
 	result["blackjack_watched_peek"] = true
 	result["blackjack_confiscated_bet"] = confiscated_bet
+	result["blackjack_coolers_cufflinks_broke"] = cufflinks_broke
 	result["dealer_caught_cheat"] = true
 	result["defer_bankroll_zero_failure"] = true
 	GameModule.apply_result(run_state, result, rng)
@@ -1158,6 +1216,7 @@ func _draw_table_patrons(surface, surface_state: Dictionary) -> void:
 		TableVisualsScript.draw_patron_wager_badge(surface, surface_state, patron, pos, i)
 		var patron_cards: Array = _card_array(patron.get("cards", []))
 		if not patron_cards.is_empty():
+			var action_event := _patron_active_action_event(surface, surface_state, i)
 			var card_start := _patron_hand_base_position(i)
 			var pad := Rect2(card_start.x - 5, card_start.y - 5, 86, 36)
 			surface.draw_rect(pad, Color(0, 0, 0, 0.24))
@@ -1166,8 +1225,44 @@ func _draw_table_patrons(surface, surface_state: Dictionary) -> void:
 			var total := _hand_total(patron_cards)
 			var total_color := C_ORANGE if total > 21 else C_YELLOW if total == 21 else C_SOFT
 			surface.surface_label("%d" % total, card_start + Vector2(62, 29), 8, total_color)
+			_draw_patron_move_badge(surface, card_start + Vector2(-3, -23), patron, action_event)
 		surface.surface_label("cover", pos + Vector2(-18, 92), 8, Color(C_SOFT.r, C_SOFT.g, C_SOFT.b, 0.62))
 		surface.surface_add_invisible_hit(Rect2(pos.x - 34, pos.y - 24, 68, 94), "blackjack_patron_cover", i)
+
+
+func _patron_active_action_event(surface, surface_state: Dictionary, patron_index: int) -> Dictionary:
+	if not surface.surface_animation_active(DEAL_ANIMATION_CHANNEL):
+		return {}
+	var elapsed_msec := float(surface.surface_elapsed(DEAL_ANIMATION_CHANNEL)) * 1000.0
+	for event_value in _patron_action_event_array(surface_state.get("patron_action_events", [])):
+		var event: Dictionary = event_value
+		if int(event.get("patron_index", -1)) != patron_index:
+			continue
+		var start := float(event.get("delay_msec", 0))
+		var duration := float(event.get("duration_msec", PATRON_DECISION_HIGHLIGHT_MSEC))
+		if elapsed_msec >= start and elapsed_msec <= start + duration:
+			var progress := clampf((elapsed_msec - start) / maxf(1.0, duration), 0.0, 1.0)
+			event["progress"] = progress
+			return event
+	return {}
+
+
+func _draw_patron_move_badge(surface, pos: Vector2, patron: Dictionary, active_event: Dictionary) -> void:
+	var label := str(active_event.get("label", patron.get("hand_action_label", "")))
+	if label.is_empty():
+		return
+	var reason := str(active_event.get("reason", patron.get("hand_action_reason", "")))
+	var action := str(active_event.get("action", patron.get("hand_action", "")))
+	var peek_informed := bool(active_event.get("peek_informed", patron.get("hand_peek_informed", false)))
+	var active := not active_event.is_empty()
+	var accent := C_YELLOW if peek_informed else C_TEAL if action == "hit" else C_CYAN
+	var pulse := 0.26 + absf(sin(_surface_clock(surface) * 5.2)) * 0.12 if active else 0.10
+	var rect_width := 76.0 if peek_informed else 58.0
+	var rect := Rect2(pos, Vector2(rect_width, 18))
+	_draw_neon_panel(surface, rect, accent, pulse)
+	surface.surface_label(label.left(10), rect.position + Vector2(6, 12), 8, accent)
+	if active and not reason.is_empty():
+		surface.surface_label(reason.left(17), rect.position + Vector2(4, -4), 7, C_SOFT)
 
 
 func _draw_player_station(surface, surface_state: Dictionary) -> void:
@@ -1421,6 +1516,24 @@ func _draw_table_actions(surface, surface_state: Dictionary) -> void:
 		_draw_table_button(surface, Rect2(strip.position.x + 64 + i * 34, strip.position.y + 8, 30, 18), label, "blackjack_distraction", i, C_TEAL, true)
 
 
+func _draw_basic_strategy_advice(surface, surface_state: Dictionary) -> void:
+	var advice: Dictionary = _local_copy_dict(surface_state.get("basic_strategy_advice", {}))
+	if not bool(advice.get("visible", false)):
+		return
+	var rect := Rect2(662, 88, 198, 44)
+	var accent := C_YELLOW
+	_draw_neon_panel(surface, rect, accent, 0.18)
+	surface.draw_rect(rect.grow(1.0), Color(accent.r, accent.g, accent.b, 0.34), false, 1)
+	surface.draw_circle(rect.position + Vector2(24, 22), 14, Color(accent.r, accent.g, accent.b, 0.24))
+	surface.draw_circle(rect.position + Vector2(24, 22), 14, accent, false, 2)
+	surface.surface_label_centered("BOOK", Rect2(rect.position + Vector2(7, 16), Vector2(34, 12)), 8, C_WHITE)
+	surface.surface_label("BASIC STRATEGY", rect.position + Vector2(48, 14), 8, C_SOFT)
+	surface.surface_label(str(advice.get("label", "")).to_upper().left(18), rect.position + Vector2(48, 30), 14, accent)
+	var reason := str(advice.get("summary", ""))
+	if not reason.is_empty():
+		surface.surface_label(reason.left(28), rect.position + Vector2(122, 30), 8, C_SOFT)
+
+
 func _draw_deal_animation(surface, surface_state: Dictionary) -> void:
 	if not surface.surface_animation_active(DEAL_ANIMATION_CHANNEL):
 		return
@@ -1574,7 +1687,12 @@ func _dealer_focus_for_surface_state(surface_state: Dictionary) -> Dictionary:
 		attention = clampi(attention - 44 - int(runtime.get("dealer_distraction_cover", 0)), 0, 100)
 	var blink := phase > 0.94 and phase < 0.985
 	var watching_player := not active and phase >= 0.18 and phase <= 0.46
-	var read_window := active or (attention < 58 and phase > 0.54 and phase < 0.70)
+	var focus_snapshot: Dictionary = _local_copy_dict(surface_state.get("dealer_focus", {}))
+	var peek_window_percent := clampi(int(focus_snapshot.get("peek_window_percent", 100)), 10, 100)
+	var window_half_width := 0.08 * (float(peek_window_percent) / 100.0)
+	var read_start := 0.62 - window_half_width
+	var read_end := 0.62 + window_half_width
+	var read_window := active or (attention < 58 and phase > read_start and phase < read_end)
 	var peek_danger := clampi(attention + (0 if active else int(abs(sweep) * 16.0)) + int(int(surface_state.get("snitch_pressure", 0)) / 4.0), 0, 100)
 	var peek_window_open := active or (read_window and not watching_player and peek_danger <= 62)
 	var gaze_phase := "looking away" if active else "blink" if blink else "watching you" if watching_player else "hole card loose" if peek_window_open else "open read" if read_window else str(profile.get("read_style", "slow sweep"))
@@ -1594,6 +1712,7 @@ func _dealer_focus_for_surface_state(surface_state: Dictionary) -> Dictionary:
 		"count_pressure": count_pressure,
 		"strategy_pressure": strategy_pressure,
 		"peek_danger": peek_danger,
+		"peek_window_percent": peek_window_percent,
 		"eye_offset": -0.65 if active else sweep,
 		"blink": blink,
 	}
@@ -2311,6 +2430,8 @@ func _start_initial_hand(session: Dictionary, table: Dictionary, stake: int = 1,
 	session["player_hands"] = hands
 	session["dealer_cards"] = dealer_cards
 	session["patron_hands"] = patron_hands
+	session["patron_action_events"] = []
+	session["settlement_deal_animation_events"] = []
 	session["cards_consumed"] = int(initial.get("cards_consumed", 4))
 	session.erase("shoe")
 	session["shoe_remaining"] = _shoe_remaining_for_cursor(table, int(session.get("cards_consumed", 0)))
@@ -2472,6 +2593,53 @@ func _deal_animation_duration_msec(events: Array) -> int:
 		var event: Dictionary = event_value
 		duration = maxi(duration, int(event.get("delay_msec", 0)) + int(event.get("duration_msec", DEAL_CARD_DURATION_MSEC)) + 120)
 	return duration
+
+
+func _patron_action_event_array(value: Variant) -> Array:
+	var events: Array = []
+	for event_value in _dictionary_array(value):
+		var event: Dictionary = event_value
+		var action := str(event.get("action", "stand"))
+		if not ["hit", "stand"].has(action):
+			action = "stand"
+		events.append({
+			"patron_index": maxi(0, int(event.get("patron_index", 0))),
+			"patron_id": str(event.get("patron_id", "")),
+			"name": str(event.get("name", "Patron")),
+			"action": action,
+			"label": str(event.get("label", action.to_upper())),
+			"reason": str(event.get("reason", "")),
+			"total_before": maxi(0, int(event.get("total_before", 0))),
+			"total_after": maxi(0, int(event.get("total_after", event.get("total_before", 0)))),
+			"dealer_known_total": maxi(0, int(event.get("dealer_known_total", 0))),
+			"peek_informed": bool(event.get("peek_informed", false)),
+			"delay_msec": maxi(0, int(event.get("delay_msec", 0))),
+			"duration_msec": maxi(120, int(event.get("duration_msec", PATRON_DECISION_HIGHLIGHT_MSEC))),
+		})
+	return events
+
+
+func _patron_action_animation_duration_msec(events: Array) -> int:
+	var duration := 0
+	for event_value in events:
+		if typeof(event_value) != TYPE_DICTIONARY:
+			continue
+		var event: Dictionary = event_value
+		duration = maxi(duration, int(event.get("delay_msec", 0)) + int(event.get("duration_msec", PATRON_DECISION_HIGHLIGHT_MSEC)) + 120)
+	return duration
+
+
+func _settlement_next_deal_delay_msec(session: Dictionary, deal_events: Array) -> int:
+	var delay := 0
+	for event_value in deal_events:
+		if typeof(event_value) != TYPE_DICTIONARY:
+			continue
+		var event: Dictionary = event_value
+		delay = maxi(delay, int(event.get("delay_msec", 0)) + int(event.get("duration_msec", DEAL_CARD_DURATION_MSEC)))
+	for event_value in _patron_action_event_array(session.get("patron_action_events", [])):
+		var action_event: Dictionary = event_value
+		delay = maxi(delay, int(action_event.get("delay_msec", 0)) + int(action_event.get("duration_msec", PATRON_DECISION_HIGHLIGHT_MSEC)))
+	return delay + (PATRON_DECISION_STEP_DELAY_MSEC if delay > 0 else 0)
 
 
 func _event_point(pos: Vector2) -> Array:
@@ -2768,6 +2936,8 @@ func _dealer_final_cards(session: Dictionary, table: Dictionary) -> Array:
 		session["settlement_deal_animation_events"] = settlement_events
 		session["dealer_cards"] = dealer_cards
 		return dealer_cards
+	var dealer_draw_base_delay := _settlement_next_deal_delay_msec(session, settlement_events)
+	var dealer_draw_index := 0
 	while true:
 		var info: Dictionary = _hand_total_info(dealer_cards)
 		var total: int = int(info.get("total", 0))
@@ -2778,7 +2948,8 @@ func _dealer_final_cards(session: Dictionary, table: Dictionary) -> Array:
 		dealer_cards.append(_draw_card_from_session(session, table))
 		var new_card_index := dealer_cards.size() - 1
 		var new_card: Dictionary = (dealer_cards[new_card_index] as Dictionary).duplicate(true)
-		settlement_events.append(_deal_animation_event(new_card, "dealer", 0, new_card_index, DEAL_CARD_SHOE_POS, _dealer_card_target(new_card_index), settlement_events.size() * 145, DEALER_CARD_SCALE, "dealer draw"))
+		settlement_events.append(_deal_animation_event(new_card, "dealer", 0, new_card_index, DEAL_CARD_SHOE_POS, _dealer_card_target(new_card_index), dealer_draw_base_delay + dealer_draw_index * 145, DEALER_CARD_SCALE, "dealer draw"))
+		dealer_draw_index += 1
 	session["settlement_deal_animation_events"] = settlement_events
 	session["dealer_cards"] = dealer_cards
 	return dealer_cards
@@ -2786,17 +2957,35 @@ func _dealer_final_cards(session: Dictionary, table: Dictionary) -> Array:
 
 func _play_patron_hands_for_settlement(session: Dictionary, table: Dictionary) -> Array:
 	var events: Array = []
+	var action_events: Array = []
 	var patron_hands: Array = _hand_array(session.get("patron_hands", []))
+	session["patron_action_events"] = []
 	if patron_hands.is_empty():
 		return events
+	var decision_delay := PATRON_DECISION_START_DELAY_MSEC
 	for patron_index in range(patron_hands.size()):
 		var hand: Dictionary = patron_hands[patron_index]
 		var cards: Array = _card_array(hand.get("cards", []))
-		while _patron_should_hit(cards, hand, patron_index):
+		while not cards.is_empty() and not _is_bust(cards):
+			var decision: Dictionary = _patron_decision_for_hand(cards, hand, patron_index, session)
+			var action := str(decision.get("action", "stand"))
+			var total_before := _hand_total(cards)
+			action_events.append(_patron_action_event(hand, patron_index, action, total_before, total_before, decision, decision_delay))
+			decision_delay += PATRON_DECISION_STEP_DELAY_MSEC
+			if action != "hit":
+				break
 			cards.append(_draw_card_from_session(session, table))
 			var new_card_index := cards.size() - 1
 			var new_card: Dictionary = (cards[new_card_index] as Dictionary).duplicate(true)
-			events.append(_deal_animation_event(new_card, "patron", patron_index, new_card_index, DEAL_CARD_SHOE_POS, _patron_hand_card_target(patron_index, new_card_index), events.size() * 140, PATRON_CARD_SCALE, "patron hit"))
+			var total_after := _hand_total(cards)
+			var hit_event: Dictionary = action_events[action_events.size() - 1]
+			hit_event["total_after"] = total_after
+			action_events[action_events.size() - 1] = hit_event
+			var card_delay := maxi(0, decision_delay - PATRON_DECISION_STEP_DELAY_MSEC + PATRON_HIT_CARD_DELAY_MSEC)
+			events.append(_deal_animation_event(new_card, "patron", patron_index, new_card_index, DEAL_CARD_SHOE_POS, _patron_hand_card_target(patron_index, new_card_index), card_delay, PATRON_CARD_SCALE, "patron hit"))
+			decision_delay = maxi(decision_delay, card_delay + DEAL_CARD_DURATION_MSEC + 120)
+			if total_after >= 21:
+				break
 		hand["cards"] = cards
 		hand["stood"] = true
 		var total := _hand_total(cards)
@@ -2806,9 +2995,121 @@ func _play_patron_hands_for_settlement(session: Dictionary, table: Dictionary) -
 			hand["terminal_reason"] = "21"
 		elif str(hand.get("terminal_reason", "")).is_empty():
 			hand["terminal_reason"] = "stand"
+		hand["last_action"] = "hit" if _patron_hand_hit_count(action_events, patron_index) > 0 else "stand"
+		hand["last_action_label"] = str(_latest_patron_action_event(action_events, patron_index).get("label", str(hand.get("last_action", "stand")).to_upper()))
+		hand["last_decision_reason"] = str(_latest_patron_action_event(action_events, patron_index).get("reason", ""))
+		hand["peek_informed"] = bool(_latest_patron_action_event(action_events, patron_index).get("peek_informed", false))
 		patron_hands[patron_index] = hand
 	session["patron_hands"] = patron_hands
+	session["patron_action_events"] = _patron_action_event_array(action_events)
 	return events
+
+
+func _patron_decision_for_hand(cards: Array, hand: Dictionary, patron_index: int, session: Dictionary) -> Dictionary:
+	var baseline_hit := _patron_should_hit(cards, hand, patron_index)
+	var total := _hand_total(cards)
+	if cards.is_empty() or total > 21:
+		return {"action": "stand", "reason": "locked", "peek_informed": false}
+	if not _strategy_info_advantage_active(session):
+		return {
+			"action": "hit" if baseline_hit else "stand",
+			"reason": _patron_baseline_reason(hand, patron_index),
+			"peek_informed": false,
+		}
+	var dealer_cards: Array = _card_array(session.get("dealer_cards", []))
+	if dealer_cards.size() < 2:
+		return {
+			"action": "hit" if baseline_hit else "stand",
+			"reason": _patron_baseline_reason(hand, patron_index),
+			"peek_informed": false,
+		}
+	var dealer_total := _hand_total(_first_cards(dealer_cards, 2))
+	if dealer_total >= 17 and dealer_total <= 21 and total < dealer_total:
+		if total <= _patron_peek_chase_limit(hand, patron_index):
+			return {
+				"action": "hit",
+				"reason": "known dealer %d beats %d" % [dealer_total, total],
+				"peek_informed": true,
+				"dealer_known_total": dealer_total,
+			}
+		return {
+			"action": "stand",
+			"reason": "won't chase dealer %d" % dealer_total,
+			"peek_informed": true,
+			"dealer_known_total": dealer_total,
+		}
+	if dealer_total >= 12 and dealer_total <= 16 and total >= 12:
+		return {
+			"action": "stand",
+			"reason": "dealer stiff %d" % dealer_total,
+			"peek_informed": true,
+			"dealer_known_total": dealer_total,
+		}
+	return {
+		"action": "hit" if baseline_hit else "stand",
+		"reason": _patron_baseline_reason(hand, patron_index),
+		"peek_informed": false,
+		"dealer_known_total": dealer_total,
+	}
+
+
+func _patron_action_event(hand: Dictionary, patron_index: int, action: String, total_before: int, total_after: int, decision: Dictionary, delay_msec: int) -> Dictionary:
+	var label := "HIT" if action == "hit" else "STAND"
+	if bool(decision.get("peek_informed", false)):
+		label = "PEEK %s" % label
+	return {
+		"patron_index": patron_index,
+		"patron_id": str(hand.get("patron_id", "patron_%d" % patron_index)),
+		"name": str(hand.get("name", "Patron")),
+		"action": action,
+		"label": label,
+		"reason": str(decision.get("reason", "")),
+		"total_before": total_before,
+		"total_after": total_after,
+		"dealer_known_total": int(decision.get("dealer_known_total", 0)),
+		"peek_informed": bool(decision.get("peek_informed", false)),
+		"delay_msec": delay_msec,
+		"duration_msec": PATRON_DECISION_HIGHLIGHT_MSEC,
+	}
+
+
+func _latest_patron_action_event(events: Array, patron_index: int) -> Dictionary:
+	for i in range(events.size() - 1, -1, -1):
+		if typeof(events[i]) != TYPE_DICTIONARY:
+			continue
+		var event: Dictionary = events[i]
+		if int(event.get("patron_index", -1)) == patron_index:
+			return event
+	return {}
+
+
+func _patron_hand_hit_count(events: Array, patron_index: int) -> int:
+	var hits := 0
+	for event_value in events:
+		if typeof(event_value) != TYPE_DICTIONARY:
+			continue
+		var event: Dictionary = event_value
+		if int(event.get("patron_index", -1)) == patron_index and str(event.get("action", "")) == "hit":
+			hits += 1
+	return hits
+
+
+func _patron_baseline_reason(hand: Dictionary, patron_index: int) -> String:
+	var temper := str(hand.get("temper", "careless"))
+	if temper == "sharp" or patron_index % 3 == 1:
+		return "sharp table read"
+	if temper == "nosy":
+		return "nosy table read"
+	return "table habit"
+
+
+func _patron_peek_chase_limit(hand: Dictionary, patron_index: int) -> int:
+	var temper := str(hand.get("temper", "careless"))
+	if temper == "sharp" or patron_index % 3 == 1:
+		return 18
+	if temper == "nosy":
+		return 17
+	return 16
 
 
 func _patron_should_hit(cards: Array, hand: Dictionary, patron_index: int) -> bool:
@@ -2930,6 +3231,12 @@ func _side_bet_result(bet: Dictionary, player_cards: Array, dealer_cards: Array,
 			var buster: Dictionary = _buster_payout(dealer_cards)
 			payout_mult = int(buster.get("payout", 0))
 			detail = str(buster.get("detail", "miss"))
+	var payout_multiplier := 1
+	if bet_id == "lucky_ladies":
+		payout_multiplier = maxi(1, _item_effect_total("blackjack_lucky_ladies_payout_multiplier", run_state))
+		if payout_mult > 0 and payout_multiplier > 1:
+			payout_mult *= payout_multiplier
+			detail = "%s, compact doubled" % detail
 	var bonus_mult: int = _item_effect_total("blackjack_side_bet_bonus", run_state)
 	if payout_mult > 0:
 		payout_mult += bonus_mult
@@ -2940,6 +3247,7 @@ func _side_bet_result(bet: Dictionary, player_cards: Array, dealer_cards: Array,
 		"label": str(bet.get("label", bet_id)),
 		"stake": bet_stake,
 		"payout_mult": payout_mult,
+		"item_payout_multiplier": payout_multiplier,
 		"bankroll_delta": delta,
 		"won": payout_mult > 0,
 		"detail": detail,
@@ -3129,6 +3437,7 @@ func _update_table_after_hand(table: Dictionary, session: Dictionary, dealer_car
 	table["last_deal_animation_id"] = "%s:%d" % [get_id(), int(table.get("hands_played", 0))]
 	table["last_deal_started_msec"] = Time.get_ticks_msec()
 	table["last_deal_animation_events"] = _deal_animation_event_array(session.get("settlement_deal_animation_events", []))
+	table["last_patron_action_events"] = _patron_action_event_array(session.get("patron_action_events", []))
 
 
 func _update_environment_table(environment: Dictionary, table: Dictionary) -> void:
@@ -3466,6 +3775,58 @@ func _basic_strategy_action(session: Dictionary, table: Dictionary, run_state: R
 	return _hard_strategy_action(int(info.get("total", 0)), dealer_value, _can_double(session, table, selected_stake, run_state))
 
 
+func _basic_strategy_advice(session: Dictionary, table: Dictionary, run_state: RunState) -> Dictionary:
+	if run_state == null or _item_effect_total("blackjack_basic_strategy_card", run_state) <= 0:
+		return {"visible": false}
+	var action := _basic_strategy_action(session, table, run_state)
+	if action.is_empty():
+		return {"visible": false}
+	var hand: Dictionary = _active_hand(session)
+	var cards: Array = _card_array(hand.get("cards", []))
+	var dealer_cards: Array = _card_array(session.get("dealer_cards", []))
+	var total_info: Dictionary = _hand_total_info(cards)
+	var dealer_label := "dealer ?"
+	if not dealer_cards.is_empty():
+		dealer_label = "dealer %s" % _card_rank_label(_card_rank_value(dealer_cards[0]))
+	var total_label := "soft %d" % int(total_info.get("total", 0)) if bool(total_info.get("soft", false)) else "%d" % int(total_info.get("total", 0))
+	return {
+		"visible": true,
+		"action": action,
+		"label": _book_action_label(action),
+		"summary": "%s vs %s" % [total_label, dealer_label],
+	}
+
+
+func _book_action_label(action: String) -> String:
+	match action:
+		"hit":
+			return "Hit"
+		"stand":
+			return "Stand"
+		"double":
+			return "Double"
+		"split":
+			return "Split"
+		"surrender":
+			return "Surrender"
+		_:
+			return action.capitalize()
+
+
+func _card_rank_label(rank: int) -> String:
+	match rank:
+		RANK_ACE:
+			return "A"
+		13:
+			return "K"
+		12:
+			return "Q"
+		11:
+			return "J"
+		_:
+			return "%d" % mini(rank, 10)
+
+
 func _pair_strategy_action(cards: Array, dealer_value: int, table: Dictionary) -> String:
 	if cards.size() != 2:
 		return ""
@@ -3561,8 +3922,9 @@ func _chip_bet_command(index: int, ui_state: Dictionary, table: Dictionary, run_
 	if index < 0 or index >= chips.size():
 		return _message_command(ui_state, "That chip is not in your rack.")
 	var chip_value: int = int(chips[index])
+	var min_bet := _surface_stake_floor(run_state, environment)
 	var max_stake: int = _max_table_stake_for_blackjack(ui_state, table, run_state, environment)
-	var next_stake: int = clampi(maxi(1, selected_stake) + chip_value, 1, max_stake)
+	var next_stake: int = min_bet if max_stake < min_bet else clampi(maxi(min_bet, selected_stake) + chip_value, min_bet, max_stake)
 	ui_state["selected_stake"] = next_stake
 	ui_state.erase("table_social_alignment")
 	return GameModule.surface_command({
@@ -3731,11 +4093,33 @@ func _max_table_stake_for_blackjack(session: Dictionary, table: Dictionary, run_
 	return best
 
 
-func _surface_stake_ceiling(run_state: RunState, environment: Dictionary) -> int:
+func _effective_table_stake(stake: int, session: Dictionary, run_state: RunState, environment: Dictionary) -> int:
+	if session.has("locked_stake"):
+		return _session_stake(stake, session)
+	var min_bet := _surface_stake_floor(run_state, environment)
+	var max_bet := _surface_stake_ceiling(run_state, environment)
+	if max_bet < min_bet:
+		return min_bet
+	return clampi(maxi(1, stake), min_bet, max_bet)
+
+
+func _blackjack_original_stake_ceiling(run_state: RunState, environment: Dictionary) -> int:
 	if run_state == null:
 		return 1
 	var profile: Dictionary = environment.get("economic_profile", {}) if typeof(environment.get("economic_profile", {})) == TYPE_DICTIONARY else {}
-	var base_ceiling: int = int(profile.get("stake_ceiling", run_state.bankroll))
+	return maxi(1, int(profile.get("stake_ceiling", run_state.bankroll)))
+
+
+func _blackjack_base_stake_ceiling(run_state: RunState, environment: Dictionary) -> int:
+	var base_ceiling := _blackjack_original_stake_ceiling(run_state, environment)
+	var multiplier := maxi(1, _item_effect_total("blackjack_table_limit_multiplier", run_state))
+	return maxi(1, base_ceiling * multiplier)
+
+
+func _surface_stake_ceiling(run_state: RunState, environment: Dictionary) -> int:
+	if run_state == null:
+		return 1
+	var base_ceiling: int = _blackjack_base_stake_ceiling(run_state, environment)
 	var wager_ceiling: int = run_state.wager_stake_ceiling(base_ceiling)
 	return maxi(1, mini(wager_ceiling, run_state.bankroll))
 
@@ -3744,7 +4128,10 @@ func _surface_stake_floor(run_state: RunState, environment: Dictionary) -> int:
 	if run_state == null:
 		return 1
 	var profile: Dictionary = environment.get("economic_profile", {}) if typeof(environment.get("economic_profile", {})) == TYPE_DICTIONARY else {}
-	return maxi(1, int(profile.get("stake_floor", 1)))
+	var floor := maxi(1, int(profile.get("stake_floor", 1)))
+	if _item_effect_total("blackjack_table_minimum_to_previous_max", run_state) > 0:
+		floor = maxi(floor, _blackjack_original_stake_ceiling(run_state, environment))
+	return floor
 
 
 func _start_distraction_command(index: int, ui_state: Dictionary, table: Dictionary) -> Dictionary:
@@ -4309,10 +4696,14 @@ func _wager_cost_from_session(stake: int, session: Dictionary, table: Dictionary
 	return cost
 
 
-func _side_bet_stake(stake: int, bet: Dictionary, _run_state: RunState) -> int:
-	if str(bet.get("id", "")) == "insurance":
+func _side_bet_stake(stake: int, bet: Dictionary, run_state: RunState) -> int:
+	var bet_id := str(bet.get("id", ""))
+	if bet_id == "insurance":
 		return maxi(1, int(ceil(float(maxi(1, stake)) * 0.5)))
-	return maxi(1, int(ceil(float(maxi(1, stake)) * 0.25)))
+	var base_stake := maxi(1, int(ceil(float(maxi(1, stake)) * 0.25)))
+	if bet_id == "lucky_ladies":
+		base_stake *= maxi(1, _item_effect_total("blackjack_lucky_ladies_stake_multiplier", run_state))
+	return base_stake
 
 
 func _side_bet_catalog() -> Array:
@@ -4376,6 +4767,21 @@ func _available_side_bets_for_session(table: Dictionary, session: Dictionary) ->
 		if _side_bet_currently_available(bet, session):
 			result.append(bet)
 	return result
+
+
+func _item_adjusted_side_bet_for_surface(bet: Dictionary, run_state: RunState) -> Dictionary:
+	var adjusted := bet.duplicate(true)
+	if str(adjusted.get("id", "")) != "lucky_ladies":
+		return adjusted
+	var stake_multiplier := maxi(1, _item_effect_total("blackjack_lucky_ladies_stake_multiplier", run_state))
+	var payout_multiplier := maxi(1, _item_effect_total("blackjack_lucky_ladies_payout_multiplier", run_state))
+	if stake_multiplier <= 1 and payout_multiplier <= 1:
+		return adjusted
+	adjusted["item_boosted"] = true
+	adjusted["summary"] = "Compact active: double stake, double listed payouts"
+	adjusted["rules"] = ["Costs twice the normal side bet.", "Wins pay double Lucky Ladies odds."]
+	adjusted["payouts"] = ["twenty 8:1", "suited twenty 20:1", "suited queens 250:1", "queen hearts plus dealer blackjack 400:1"]
+	return adjusted
 
 
 func _side_bet_currently_available(bet: Dictionary, session: Dictionary) -> bool:
@@ -4541,7 +4947,14 @@ func _dealer_focus_state(table: Dictionary, session: Dictionary, run_state: RunS
 		attention = clampi(attention - 44 - int(session.get("dealer_distraction_cover", 0)), 0, 100)
 	var blink := phase > 0.94 and phase < 0.985
 	var watching_player := not active and phase >= 0.18 and phase <= 0.46
-	var read_window := active or (attention < 58 and phase > 0.54 and phase < 0.70)
+	var peek_window_percent := 100
+	var peek_window_effect := _item_effect_total("blackjack_peek_window_percent", run_state)
+	if peek_window_effect > 0:
+		peek_window_percent = clampi(peek_window_effect, 10, 100)
+	var window_half_width := 0.08 * (float(peek_window_percent) / 100.0)
+	var read_start := 0.62 - window_half_width
+	var read_end := 0.62 + window_half_width
+	var read_window := active or (attention < 58 and phase > read_start and phase < read_end)
 	var snitch_risk := patron_snitch_risk if patron_snitch_risk >= 0 else _patron_snitch_risk(table, session)
 	var peek_danger := clampi(attention + (0 if active else int(abs(sweep) * 16.0)) + int(snitch_risk / 4.0), 0, 100)
 	var peek_window_open := active or (read_window and not watching_player and peek_danger <= 62)
@@ -4563,6 +4976,7 @@ func _dealer_focus_state(table: Dictionary, session: Dictionary, run_state: RunS
 		"count_pressure": count_pressure,
 		"strategy_pressure": strategy_pressure,
 		"peek_danger": peek_danger,
+		"peek_window_percent": peek_window_percent,
 		"eye_offset": -0.65 if active else sweep,
 		"blink": blink,
 	}
@@ -4650,6 +5064,10 @@ func _patrons_for_surface(table: Dictionary, session: Dictionary) -> Array:
 			patron["cards"] = _card_array(hand.get("cards", []))
 			patron["hand_total"] = _hand_total(_card_array(hand.get("cards", [])))
 			patron["hand_status"] = str(hand.get("terminal_reason", ""))
+			patron["hand_action"] = str(hand.get("last_action", ""))
+			patron["hand_action_label"] = str(hand.get("last_action_label", ""))
+			patron["hand_action_reason"] = str(hand.get("last_decision_reason", ""))
+			patron["hand_peek_informed"] = bool(hand.get("peek_informed", false))
 		patrons.append(patron)
 	return patrons
 
@@ -4763,7 +5181,7 @@ func _blackjack_result_message(hand_results: Array, side_results: Array, main_de
 	return message
 
 
-func _blackjack_last_result_payload(message: String, hand_results: Array, side_results: Array, main_delta: int, side_delta: int, bankroll_delta: int, suspicion_delta: int, dealer_cards: Array, player_hands: Array, patron_hands: Array, cheat: Dictionary) -> Dictionary:
+func _blackjack_last_result_payload(message: String, hand_results: Array, side_results: Array, main_delta: int, side_delta: int, bankroll_delta: int, suspicion_delta: int, dealer_cards: Array, player_hands: Array, patron_hands: Array, patron_action_events: Array, cheat: Dictionary) -> Dictionary:
 	var resolved_at := Time.get_ticks_msec()
 	var headline := "PUSH"
 	if bankroll_delta > 0:
@@ -4791,6 +5209,7 @@ func _blackjack_last_result_payload(message: String, hand_results: Array, side_r
 		"dealer_cards": _card_array(dealer_cards),
 		"player_hands": _hand_array(player_hands),
 		"patron_hands": _hand_array(patron_hands),
+		"patron_action_events": _patron_action_event_array(patron_action_events),
 		"hand_results": _dictionary_array(hand_results),
 		"side_bet_results": _dictionary_array(side_results),
 		"outcomes": outcome_labels,
@@ -5041,6 +5460,14 @@ func _item_effect_total(key: String, run_state: RunState) -> int:
 		var family_effect: Dictionary = families.get(get_family(), {}) if typeof(families.get(get_family(), {})) == TYPE_DICTIONARY else {}
 		total += int(family_effect.get(key, 0))
 	return total
+
+
+func _coolers_cufflinks_absorbed_failed_peek(action_id: String, cheat: Dictionary, run_state: RunState) -> bool:
+	if run_state == null or not ["peek_hole_card", "play_basic"].has(action_id):
+		return false
+	if not run_state.inventory.has(COOLERS_CUFFLINKS_ITEM_ID):
+		return false
+	return bool(cheat.get("used_peek", false)) and bool(cheat.get("caught", false))
 
 
 func _empty_blackjack_result(action_id: String, stake: int, environment: Dictionary, text: String) -> Dictionary:

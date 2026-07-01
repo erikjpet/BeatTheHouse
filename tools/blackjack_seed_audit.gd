@@ -33,6 +33,7 @@ func _run() -> void:
 		"safe_peeks": 0,
 		"watched_peek_ejections": 0,
 		"strategy_confrontations": 0,
+		"patron_peek_adjustments": 0,
 		"side_bet_tables": 0,
 		"side_bet_resolves": 0,
 		"compact_ui_states": 0,
@@ -416,6 +417,7 @@ func _run_cheat_fixtures(game: GameModule) -> void:
 	_force_safe_peek(game)
 	_force_watched_peek(game)
 	_force_strategy_confrontation(game)
+	_force_patron_peek_adjustment(game)
 
 
 func _force_safe_peek(game: GameModule) -> void:
@@ -485,6 +487,46 @@ func _force_strategy_confrontation(game: GameModule) -> void:
 		stats["strategy_confrontations"] = int(stats.get("strategy_confrontations", 0)) + 1
 	else:
 		failures.append("Strategy deviation fixture did not create a heat-bearing confrontation.")
+
+
+func _force_patron_peek_adjustment(game: GameModule) -> void:
+	var data := _fixture_env("patron_peek")
+	var table: Dictionary = data.table
+	table["side_bets"] = []
+	table["patrons"] = [{
+		"id": "sharp_patron",
+		"name": "Sharp Seat",
+		"temper": "sharp",
+		"snitch_risk": 0,
+		"watching": false,
+		"chip_stack": 40,
+	}]
+	table["dealer_profile"] = {"attention_base": 8, "gaze_speed": 95, "blink_offset": 0, "tell": "test", "strategy_scrutiny": 8, "strategy_threshold": 4, "strategy_response": "watch"}
+	table["distractions"] = [{"id": "safe_window", "label": "Safe Window", "summary": "safe peek", "duration_msec": 4000, "cover": 20, "noise": 0}]
+	table["shoe"] = [
+		{"rank": 10, "suit": 0}, {"rank": 10, "suit": 1}, {"rank": 9, "suit": 2}, {"rank": 10, "suit": 3},
+		{"rank": 10, "suit": 0}, {"rank": 8, "suit": 1}, {"rank": 2, "suit": 2}, {"rank": 6, "suit": 3}
+	]
+	data.environment["game_states"] = {"blackjack": table}
+	var deal := game.surface_action_command("blackjack_deal", 0, false, {"selected_stake": 5}, data.run_state, data.environment)
+	var distract := game.surface_action_command("blackjack_distraction", 0, false, deal.get("ui_state", {}), data.run_state, data.environment)
+	var peek := game.surface_action_command("blackjack_peek", 0, false, distract.get("ui_state", {}), data.run_state, data.environment)
+	var stand := game.surface_action_command("blackjack_stand", 0, false, peek.get("ui_state", {}), data.run_state, data.environment)
+	var result := game.resolve_with_context("play_basic", 5, data.run_state, data.environment, data.run_state.create_rng("patron_peek_resolve"), stand.get("ui_state", {}))
+	var found_peek_hit := false
+	for event_value in result.get("blackjack_patron_action_events", []) as Array:
+		if typeof(event_value) != TYPE_DICTIONARY:
+			continue
+		var event: Dictionary = event_value
+		if int(event.get("patron_index", -1)) == 0 and str(event.get("action", "")) == "hit" and bool(event.get("peek_informed", false)):
+			found_peek_hit = true
+			break
+	var surface := game.surface_state(data.run_state, data.environment, {})
+	var surface_events: Array = surface.get("patron_action_events", []) as Array
+	if found_peek_hit and not surface_events.is_empty():
+		stats["patron_peek_adjustments"] = int(stats.get("patron_peek_adjustments", 0)) + 1
+	else:
+		failures.append("Patron peek fixture did not record a peek-informed patron hit.")
 
 
 func _fixture_env(label: String) -> Dictionary:

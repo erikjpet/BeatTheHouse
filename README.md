@@ -1,11 +1,28 @@
 # Beat the House
 
-Beat the House is a Godot casino roguelike foundation about surviving a gambling
-run, managing heat and debt, using items, choosing when to cheat, and pushing far
-enough to beat the Grand Casino demo objective.
+Beat the House is a single-player Godot casino roguelike about surviving a
+debt-and-heat spiral across low-stakes rooms and the Grand Casino. Build a
+seeded run, buy risky items, take loans and services, travel between venues, and
+play full simulations of Pull Tabs, Slots, Bar Dice, Blackjack, Baccarat,
+Roulette, and Video Poker. Every win, cheat, drink, loan, and bad exit pushes
+the run state forward.
 
-This is a runnable foundation/demo project, not a real-money gambling product. It
-has no gambling monetization and no store credentials checked into the repository.
+This is a runnable 0.2.0 demo candidate, not a real-money gambling product. It
+has no real-money wagering, cash prizes, gambling monetization, or store
+credentials checked into the repository.
+
+## 0.2.0 Demo Highlights
+
+- Seven full-simulation games with shared run-state consequences.
+- Generated Pinball and Buffalo slot machines with cabinet art, fixed bet
+  ladders, feature bonuses, nudge/autoplay support, and active room previews.
+- Seeded run generation, daily runs, content-group packs, autosave/load, travel,
+  events, services, lenders, debt, heat, alcohol/luck, items, and terminal
+  states.
+- Grand Casino demo objective with two victory routes: a clean Players Card
+  cashout or Pit Boss Rourke's back-room showdown.
+- Web/itch.io and Windows export packaging, with Android and iOS presets staged
+  for future credentialed store work.
 
 ## Current Implementation
 
@@ -14,10 +31,11 @@ has no gambling monetization and no store credentials checked into the repositor
 | Engine | Godot 4.x project with Godot 4.6 project feature metadata |
 | Main scene | `res://scenes/main.tscn` |
 | Main UI shell | `res://scripts/ui/foundation_main.gd` |
+| Release target | 0.2.0 demo release candidate |
 | Viewport | 1280x720, non-resizable, canvas stretch with kept aspect |
 | Renderer | Godot mobile renderer |
 | Input model | Single pointer interaction with mouse/touch parity |
-| Target exports | Windows desktop, Android, iOS |
+| Target exports | Web/itch.io, Windows desktop, Android, iOS |
 | Run model | Seeded deterministic run state with forked RNG streams |
 | Current win target | Reach the Grand Casino, then win either clean (net +$200 while staying low-heat for a Players Card) or by surviving Pit Boss Rourke's back-room showdown |
 | Prestige content | Code path exists, but `data/prestige/purchases.json` is currently empty |
@@ -50,7 +68,8 @@ Production content is JSON under `data/`.
 | --- | ---: | --- | --- |
 | Environments | 8 | `data/environments/archetypes.json` | Shops, casinos, the jazz club, and the Grand Casino boss destination |
 | Games | 7 | `data/games/games.json` | All current games are full-simulation modules |
-| Items | 18 | `data/items/items.json` | Permanent, temporary, consumable, contraband, active, game, security, and travel effects |
+| Items | 32 | `data/items/items.json` | Permanent, temporary, consumable, contraband, active, game, security, and travel effects |
+| Content groups | 9 | `data/content_groups/groups.json` | Modular run packs that enable/disable games and their related item pools |
 | Events | 15 | `data/events/events.json` | Scoped room events with choices and consequences, including the boss-floor `the_house_calls` and `high_roller_cashout` |
 | Services | 8 | `data/services/services.json` | `cashier_tip`, `house_drink`, plus jazz-club round/tip/show services |
 | Lenders | 2 | `data/debt/lenders.json` | `street_lender`, `motel_friend` |
@@ -60,6 +79,11 @@ Production content is JSON under `data/`.
 
 `data/art/art_manifest.json` maps art identities used by environments, events,
 items, games, and the UI. Asset files live under `assets/`.
+
+Run content groups are selected through the start-menu seed settings and stored
+in `RunState.challenge_config.modifiers.content_groups`. Standard runs enable
+all default groups; custom challenge work can remove a game pack to remove both
+that game from generated rooms and its game-specific items from shop pools.
 
 ## Environments
 
@@ -284,11 +308,16 @@ slot deep audit, roulette rule/audio/interface checks, baccarat interface captur
 pull-tab seed audit, and GDScript load checks. Reports are written under `.tmp/`
 or Godot `user://` paths and should not be committed as source documentation.
 
+For the 0.2.0 release gate, use the tracked checklist at
+`docs/plans/0.2_release_checklist.md` as the command-evidence ledger.
+
 ## Documentation
 
 The README is the current top-level implementation spec. The `docs/plans/`
-folder currently holds two tracked planning documents:
+folder holds active release and planning documents:
 
+- `docs/plans/0.2_release_checklist.md` - the current 0.2.0 release readiness
+  checklist, including validation evidence and known blockers.
 - `docs/plans/demo_release_task_board.md` - the executable finalization task
   board for taking the project from its runnable foundation to a polished demo
   release. This is the active planning entry point.
@@ -303,12 +332,15 @@ rather than any older file names referenced inside historical plan text.
 
 | Preset | Platform | Output |
 | --- | --- | --- |
+| Web | Web | `builds/web/index.html` |
 | Windows Steam | Windows Desktop | `builds/windows/BeatTheHouse.exe` |
 | Android | Android | `builds/android/BeatTheHouse.aab` |
 | iOS | iOS | `builds/ios/BeatTheHouse.zip` |
 
-Android signing and iOS team/signature values still require real project
-credentials before store submission.
+`tools/export_itch.ps1` packages the Web and Windows presets for itch.io upload
+after Godot export templates are installed. Android signing and iOS
+team/signature values still require real project credentials before store
+submission.
 
 ## Design Rules
 

@@ -39,7 +39,7 @@ var resolved_event_ids: Array = []
 
 
 # Builds one environment from an archetype and content library.
-static func from_archetype(archetype: Dictionary, p_depth: int, rng: RngStream, library: ContentLibrary = null) -> EnvironmentInstance:
+static func from_archetype(archetype: Dictionary, p_depth: int, rng: RngStream, library: ContentLibrary = null, challenge_config: Dictionary = {}) -> EnvironmentInstance:
 	var environment := EnvironmentInstance.new()
 	environment.depth = p_depth
 	environment.tier = int(archetype.get("tier", 1))
@@ -55,10 +55,12 @@ static func from_archetype(archetype: Dictionary, p_depth: int, rng: RngStream, 
 	environment.economic_profile = _copy_dict(archetype.get("economic_profile", {}))
 	environment.objective_hint = str(archetype.get("objective_hint", ""))
 	environment.demo_objective = _copy_dict(archetype.get("demo_objective", {}))
-	environment.game_ids = _pick_ids_with_required(archetype.get("game_pool", []), archetype.get("game_count", 1), archetype.get("required_game_ids", []), rng)
+	var game_pool := _filtered_game_pool(archetype, library, challenge_config)
+	var required_games := _filtered_required_games(archetype, game_pool)
+	environment.game_ids = _pick_ids_with_required(game_pool, archetype.get("game_count", 1), required_games, rng)
 	environment.game_states = {}
 	environment.event_ids = _pick_events(archetype, rng, library)
-	environment.item_offers = _build_offers(archetype, rng, library)
+	environment.item_offers = _build_offers(archetype, rng, library, challenge_config)
 	environment.service_ids = _copy_array(archetype.get("service_pool", []))
 	environment.lender_hooks = _copy_array(archetype.get("lender_hooks", []))
 	environment.suspicion_cues = _copy_array(archetype.get("suspicion_cues", environment.security_profile.get("visible_cues", [])))
@@ -257,11 +259,12 @@ static func _strip_presentation_paths(visual: Dictionary, p_art_key: String) -> 
 
 
 # Builds priced item offers from the archetype item pool.
-static func _build_offers(archetype: Dictionary, rng: RngStream, library: ContentLibrary) -> Array:
+static func _build_offers(archetype: Dictionary, rng: RngStream, library: ContentLibrary, challenge_config: Dictionary = {}) -> Array:
 	if library == null:
 		return []
 	var offers: Array = []
-	var item_ids := _pick_ids(archetype.get("item_pool", []), archetype.get("item_count", 0), rng)
+	var item_pool := library.shop_item_pool_for_challenge(archetype.get("item_pool", []), challenge_config)
+	var item_ids := _pick_ids(item_pool, archetype.get("item_count", 0), rng)
 	for item_id in item_ids:
 		var item := library.item(item_id)
 		if item.is_empty():
@@ -276,6 +279,21 @@ static func _build_offers(archetype: Dictionary, rng: RngStream, library: Conten
 			"price_max": max_price,
 		})
 	return offers
+
+
+static func _filtered_game_pool(archetype: Dictionary, library: ContentLibrary, challenge_config: Dictionary = {}) -> Array:
+	var pool := _copy_array(archetype.get("game_pool", []))
+	if library == null:
+		return _string_array(pool)
+	return library.filter_game_ids_for_challenge(pool, challenge_config)
+
+
+static func _filtered_required_games(archetype: Dictionary, filtered_pool: Array) -> Array:
+	var required: Array = []
+	for required_id in _string_array(archetype.get("required_game_ids", [])):
+		if filtered_pool.has(required_id):
+			required.append(required_id)
+	return required
 
 
 # Picks event ids that match the environment scopes.

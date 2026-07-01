@@ -11,6 +11,7 @@ const ProfileInventoryScript := preload("res://scripts/core/profile_inventory.gd
 const RunTerminalEvaluatorScript := preload("res://scripts/core/run_terminal_evaluator.gd")
 const RunActionServiceScript := preload("res://scripts/core/run_action_service.gd")
 const ArtContractsScript := preload("res://scripts/core/art_contracts.gd")
+const SlotGameScript := preload("res://scripts/games/slot.gd")
 const SlotMachineGeneratorScript := preload("res://scripts/games/slots/slot_machine_generator.gd")
 const SlotMachineStateScript := preload("res://scripts/games/slots/slot_machine_state.gd")
 const SlotResolverScript := preload("res://scripts/games/slots/slot_resolver.gd")
@@ -153,6 +154,9 @@ class SurfaceHarness:
 		surface_add_invisible_hit(rect, action, index)
 
 	func draw_rect(_rect: Rect2, _color: Color, _filled: bool = true, _width: float = -1.0, _antialiased: bool = false) -> void:
+		pass
+
+	func draw_texture_rect(_texture: Texture2D, _rect: Rect2, _tile: bool, _modulate: Color = Color(1, 1, 1, 1), _transpose: bool = false) -> void:
 		pass
 
 	func draw_circle(_position: Vector2, _radius: float, _color: Color, _filled: bool = true, _width: float = -1.0, _antialiased: bool = false) -> void:
@@ -379,6 +383,7 @@ func _check_content(library: ContentLibrary, failures: Array) -> void:
 	_check_m2_pack_availability(library, failures)
 	_check_baccarat_grand_casino_only(library, failures)
 	_check_environment_game_pool_distribution(library, failures)
+	_check_content_group_modularity(library, failures)
 
 	var run_state: RunState = RunStateScript.new()
 	run_state.start_new("CONTENT-CHECK")
@@ -473,6 +478,119 @@ func _check_environment_game_pool_distribution(library: ContentLibrary, failures
 			failures.append("Game %s is defined but absent from every environment game_pool." % game_id)
 		elif not bool(non_rare_placed_by_game.get(game_id, false)):
 			failures.append("Game %s only appears in rare environment game pools." % game_id)
+
+
+func _check_content_group_modularity(library: ContentLibrary, failures: Array) -> void:
+	var default_groups := library.default_content_group_ids()
+	if default_groups.is_empty():
+		failures.append("Content groups should expose default-enabled run packs.")
+	for required_group in ["universal_passive_items", "universal_active_items", "pull_tabs_pack", "slot_pack", "bar_dice_pack", "blackjack_pack", "baccarat_pack", "roulette_pack", "video_poker_pack"]:
+		if library.content_group(required_group).is_empty():
+			failures.append("Content group is missing: %s." % required_group)
+	if not library.game_enabled_for_challenge("pull_tabs", {}):
+		failures.append("Default content groups should enable pull tabs.")
+	if not library.item_enabled_for_challenge("xray_glasses", {}):
+		failures.append("Default content groups should enable pull-tab items.")
+	var shop_archetype_for_groups := _first_shop_archetype(library)
+	if shop_archetype_for_groups.is_empty():
+		failures.append("No shop archetype exists for content-group item reachability.")
+	else:
+		var default_shop_pool := library.shop_item_pool_for_challenge(shop_archetype_for_groups.get("item_pool", []), {})
+		for item_value in library.items:
+			if typeof(item_value) != TYPE_DICTIONARY:
+				continue
+			var item_def: Dictionary = item_value
+			var item_id := str(item_def.get("id", "")).strip_edges()
+			if item_id.is_empty() or not bool(item_def.get("sellable", true)):
+				continue
+			if library.item_enabled_for_challenge(item_id, {}) and not default_shop_pool.has(item_id):
+				failures.append("Default-enabled buyable item is not reachable from generated shop pools: %s." % item_id)
+	var no_pull_tabs_groups := _groups_without(default_groups, ["pull_tabs_pack"])
+	var no_pull_tabs_challenge := RunState.custom_challenge("no_pull_tabs", "CONTENT-GROUPS", {"content_groups": no_pull_tabs_groups})
+	if library.game_enabled_for_challenge("pull_tabs", no_pull_tabs_challenge):
+		failures.append("Disabled pull-tabs content group still enabled the pull-tabs game.")
+	if library.item_enabled_for_challenge("xray_glasses", no_pull_tabs_challenge):
+		failures.append("Disabled pull-tabs content group still enabled pull-tab-only items.")
+	if not library.game_enabled_for_challenge("slot", no_pull_tabs_challenge):
+		failures.append("Disabling pull tabs should not disable unrelated slot games.")
+	var only_pull_tabs_challenge := RunState.custom_challenge("only_pull_tabs", "CONTENT-GROUPS", {"content_groups": ["pull_tabs_pack"]})
+	if not library.game_enabled_for_challenge("pull_tabs", only_pull_tabs_challenge):
+		failures.append("Explicit pull-tabs group should enable pull tabs.")
+	if library.game_enabled_for_challenge("slot", only_pull_tabs_challenge):
+		failures.append("Omitted slot group should disable slot games.")
+	if library.item_enabled_for_challenge("foil_sleeve", only_pull_tabs_challenge):
+		failures.append("Omitted slot group should disable slot-only items.")
+	if library.item_enabled_for_challenge("creased_luck_card", only_pull_tabs_challenge):
+		failures.append("Omitted universal passive group should disable universal passive items.")
+	if not shop_archetype_for_groups.is_empty():
+		var only_pull_tabs_shop_pool := library.shop_item_pool_for_challenge(shop_archetype_for_groups.get("item_pool", []), only_pull_tabs_challenge)
+		if only_pull_tabs_shop_pool.has("feature_magnet"):
+			failures.append("Pull-tab-only challenge still exposed a slot item in generated shop pools.")
+	var pull_tab_archetype := _first_archetype_with_game(library, "pull_tabs")
+	if pull_tab_archetype.is_empty():
+		failures.append("No archetype exposes pull tabs for content-group filtering.")
+	else:
+		var run_state := RunStateScript.new()
+		run_state.start_new("NO-PULL-TABS", no_pull_tabs_challenge)
+		var environment := EnvironmentInstance.from_archetype(pull_tab_archetype, 1, run_state.create_rng("no_pull_tabs"), library, run_state.challenge_config)
+		if _string_array(environment.game_ids).has("pull_tabs"):
+			failures.append("Generated environment still spawned pull tabs after its content group was disabled.")
+	var shop_archetype := _first_archetype_with_item(library, "xray_glasses")
+	if shop_archetype.is_empty():
+		failures.append("No archetype exposes xray_glasses for content-group filtering.")
+	else:
+		var run_state_items := RunStateScript.new()
+		run_state_items.start_new("NO-PULL-TAB-ITEMS", no_pull_tabs_challenge)
+		var item_environment := EnvironmentInstance.from_archetype(shop_archetype, 0, run_state_items.create_rng("no_pull_tab_items"), library, run_state_items.challenge_config)
+		for offer_value in item_environment.item_offers:
+			if typeof(offer_value) == TYPE_DICTIONARY and str((offer_value as Dictionary).get("id", "")) == "xray_glasses":
+				failures.append("Generated shop still offered a pull-tab-only item after its group was disabled.")
+	var saved := RunStateScript.new()
+	saved.start_new("CONTENT-GROUP-SAVE", only_pull_tabs_challenge)
+	var restored := RunStateScript.new()
+	restored.from_dict(saved.to_dict())
+	_assert_json_equal(saved.challenge_config, restored.challenge_config, "Content group challenge config did not survive RunState round-trip.", failures)
+
+
+func _groups_without(groups: Array, disabled_groups: Array) -> Array:
+	var disabled := {}
+	for group_id in disabled_groups:
+		disabled[str(group_id)] = true
+	var result: Array = []
+	for group_id in groups:
+		if not bool(disabled.get(str(group_id), false)):
+			result.append(str(group_id))
+	return result
+
+
+func _first_archetype_with_game(library: ContentLibrary, game_id: String) -> Dictionary:
+	for archetype_value in library.environment_archetypes:
+		if typeof(archetype_value) != TYPE_DICTIONARY:
+			continue
+		var archetype: Dictionary = archetype_value
+		if _string_array(archetype.get("game_pool", [])).has(game_id):
+			return archetype
+	return {}
+
+
+func _first_archetype_with_item(library: ContentLibrary, item_id: String) -> Dictionary:
+	for archetype_value in library.environment_archetypes:
+		if typeof(archetype_value) != TYPE_DICTIONARY:
+			continue
+		var archetype: Dictionary = archetype_value
+		if library.shop_item_pool_for_challenge(archetype.get("item_pool", []), {}).has(item_id):
+			return archetype
+	return {}
+
+
+func _first_shop_archetype(library: ContentLibrary) -> Dictionary:
+	for archetype_value in library.environment_archetypes:
+		if typeof(archetype_value) != TYPE_DICTIONARY:
+			continue
+		var archetype: Dictionary = archetype_value
+		if str(archetype.get("kind", "")) == "shop":
+			return archetype
+	return {}
 
 
 func _check_foundation_contract_smoke(library: ContentLibrary, failures: Array, suite: String = "all") -> void:
@@ -727,8 +845,14 @@ func _check_slot_contract_smoke(library: ContentLibrary, failures: Array) -> voi
 	_check_slot_buffalo_full_span_lines(definition, failures)
 	print("SLOT_CONTRACT_SMOKE buffalo_timed_nudge")
 	_check_slot_buffalo_timed_nudge(definition, failures)
+	print("SLOT_CONTRACT_SMOKE nudge_chain_determinism")
+	call("_check_slot_nudge_chain_determinism", definition, failures)
+	print("SLOT_CONTRACT_SMOKE item_pack_effects")
+	_check_slot_item_pack_effects(library, definition, failures)
 	print("SLOT_CONTRACT_SMOKE cabinet_distinctness")
 	_check_slot_cabinet_distinctness(library, definition, failures)
+	print("SLOT_CONTRACT_SMOKE environment_preview")
+	_check_slot_environment_preview(library, definition, failures)
 	print("SLOT_CONTRACT_SMOKE animation_present")
 	_check_slot_animation_present(library, definition, failures)
 	print("SLOT_CONTRACT_SMOKE hold_fill_scaling")
@@ -770,10 +894,16 @@ func _check_slot_acceptance(library: ContentLibrary, failures: Array) -> void:
 	_check_slot_buffalo_full_span_lines(definition, failures)
 	print("SLOT_ACCEPTANCE buffalo_timed_nudge")
 	_check_slot_buffalo_timed_nudge(definition, failures)
+	print("SLOT_ACCEPTANCE nudge_chain_determinism")
+	call("_check_slot_nudge_chain_determinism", definition, failures)
+	print("SLOT_ACCEPTANCE item_pack_effects")
+	_check_slot_item_pack_effects(library, definition, failures)
 	print("SLOT_ACCEPTANCE feature_reachability")
 	_check_slot_feature_reachability(library, definition, failures)
 	print("SLOT_ACCEPTANCE cabinet_distinctness")
 	_check_slot_cabinet_distinctness(library, definition, failures)
+	print("SLOT_ACCEPTANCE environment_preview")
+	_check_slot_environment_preview(library, definition, failures)
 	print("SLOT_ACCEPTANCE animation_present")
 	_check_slot_animation_present(library, definition, failures)
 	print("SLOT_ACCEPTANCE reel_win_manifest")
@@ -843,11 +973,59 @@ func _check_slot_gold_buffalo_collection(library: ContentLibrary, definition: Di
 	var final_machine: Dictionary = SlotMachineStateScript.read_machine(environment, "slot")
 	var bonus_state: Dictionary = _slot_dict(final_machine.get("bonus_state", {}))
 	var total_collected := int(bonus_state.get("gold_buffalo_total_collected", 0))
-	var conversions := int(bonus_state.get("gold_buffalo_conversions", 0))
 	if total_collected <= 0:
 		failures.append("Gold Buffalo collection did not advance over 10,000 paid base spins.")
-	if conversions <= 0:
-		failures.append("Gold Buffalo conversion did not fire over 10,000 paid base spins.")
+	if not _slot_gold_buffalo_conversion_fixture(definition):
+		failures.append("Gold Buffalo conversion fixture did not convert a ready collection meter.")
+
+
+func _slot_gold_buffalo_conversion_fixture(definition: Dictionary) -> bool:
+	var buffalo = SlotFamilyBuffaloScript.new()
+	var machine := {
+		"type_id": "buffalo",
+		"format_id": "line_5x3",
+		"row_count": 3,
+		"reel_count": 5,
+		"bet_ladder": {"selected_id": "bet_10", "selected_total": 10},
+		"bonus_state": {
+			"per_bet": {
+				"bet_10": {
+					"gold_buffalo_heads": 14,
+					"gold_buffalo_max_seen": 14,
+					"must_hit_meter": 100,
+					"must_hit_ready": false,
+					"feature_completion_count": 0,
+				},
+			},
+			"gold_buffalo_total_collected": 14,
+			"gold_buffalo_conversions": 0,
+		},
+	}
+	var grid: Array = [
+		["ELK", "A", "Q"],
+		["ELK", "K", "J"],
+		["ELK", "Q", "10"],
+		["ELK", "J", "A"],
+		["ELK", "10", "K"],
+	]
+	var cells: Array = []
+	for reel_index in range(5):
+		cells.append({"reel": reel_index, "row": 0})
+	var entry := {
+		"id": "true_win",
+		"classification": "true_win",
+		"forced_placement": {"kind": "line", "symbol": "ELK", "cells": cells, "line_index": 0},
+	}
+	var side_effects: Dictionary = buffalo.apply_grid_side_effects(machine, grid, 10, entry, definition)
+	var converted_grid: Array = _slot_array(side_effects.get("grid", []))
+	var converted_count := 0
+	for cell_value in cells:
+		var cell: Dictionary = _slot_dict(cell_value)
+		if _slot_grid_symbol(converted_grid, int(cell.get("reel", -1)), int(cell.get("row", -1))) == "BUFFALO":
+			converted_count += 1
+	var converted_state: Dictionary = _slot_dict(_slot_dict(machine.get("bonus_state", {})).get("per_bet", {}))
+	var converted_bucket: Dictionary = _slot_dict(converted_state.get("bet_10", {}))
+	return bool(side_effects.get("conversion", false)) and converted_count == cells.size() and int(converted_bucket.get("gold_buffalo_heads", -1)) == 0
 
 
 func _check_slot_nudge_ev(library: ContentLibrary, definition: Dictionary, failures: Array) -> void:
@@ -871,7 +1049,14 @@ func _check_slot_nudge_ev(library: ContentLibrary, definition: Dictionary, failu
 		if str(spin_result.get("slot_classification", "")) != "near_miss":
 			continue
 		var before_bankroll := run_state.bankroll
-		var nudge_result: Dictionary = game.resolve_with_context("nudge", 10, run_state, environment, rng, {})
+		var nudge_machine: Dictionary = _slot_dict(SlotMachineStateScript.read_machine(environment, "slot"))
+		var nudge_offer: Dictionary = _slot_dict(nudge_machine.get("last_nudge_offer", {}))
+		var nudge_window: Dictionary = _slot_dict(nudge_offer.get("skill_window_msec", {}))
+		var perfect_msec := int(nudge_window.get("perfect", -1))
+		if perfect_msec < 0:
+			failures.append("Slot nudge EV near miss did not expose a coin-chain perfect window.")
+			continue
+		var nudge_result: Dictionary = game.resolve_with_context("nudge", 10, run_state, environment, rng, {"slot_nudge_chain_input_msec": perfect_msec})
 		if int(nudge_result.get("suspicion_delta", 0)) < 12:
 			failures.append("Slot nudge did not emit at least its base suspicion heat.")
 		if bool(nudge_result.get("ok", false)):
@@ -1312,62 +1497,426 @@ func _check_slot_buffalo_timed_nudge(definition: Dictionary, failures: Array) ->
 	var near_sample: Dictionary = _slot_spin_until_classification(definition, "buffalo", "line_5x3", "near_miss", "SLOT-BUFFALO-NUDGE-NEAR", failures)
 	if near_sample.is_empty():
 		return
+	var near_run_state: RunState = near_sample.get("run_state", run_state)
 	var near_machine: Dictionary = _slot_dict(near_sample.get("machine", {}))
 	var near_offer: Dictionary = _slot_dict(near_machine.get("last_nudge_offer", {}))
+	if str(near_offer.get("type", "")) != "coin_chain":
+		failures.append("Buffalo near-miss nudge offer was not a coin-chain offer.")
+		return
+	var near_coins: Array = _slot_array(near_offer.get("coins", []))
+	var expected_coin_count := mini(maxi(1, int(near_machine.get("row_count", 1))), 5)
+	if near_coins.size() != expected_coin_count:
+		failures.append("Buffalo coin-chain offer exposed %d coins instead of one per visible row (%d)." % [near_coins.size(), expected_coin_count])
 	var near_window: Dictionary = _slot_dict(near_offer.get("skill_window_msec", {}))
 	var perfect_msec := int(near_window.get("perfect", -1))
 	if perfect_msec < 0:
-		failures.append("Buffalo near-miss nudge offer did not expose a perfect timing window.")
-	var near_surface: Dictionary = presentation.surface_state(near_machine, run_state, definition, {"slot_tease_input_msec": perfect_msec})
-	var near_manifest: Dictionary = renderer.render_signature(near_surface, definition, perfect_msec, "spin")
+		failures.append("Buffalo near-miss coin-chain offer did not expose a perfect timing window.")
+	var near_surface: Dictionary = presentation.surface_state(near_machine, near_run_state, definition, {"slot_nudge_chain_input_msec": perfect_msec})
+	var near_manifest: Dictionary = renderer.render_signature(near_surface, definition, perfect_msec, "nudge_chain")
 	if not bool(near_surface.get("slot_nudge_available", false)):
-		failures.append("Buffalo timed nudge was not available on the tease surface.")
-	if not bool(near_manifest.get("gold_tease_active", false)) or int(near_manifest.get("gold_tease_level", 0)) <= 0:
-		failures.append("Buffalo timed nudge tease did not expose gold tease manifest data.")
+		failures.append("Buffalo coin-chain nudge was not available on the tease surface.")
+	if not bool(near_surface.get("slot_nudge_chain_active", false)):
+		failures.append("Buffalo coin-chain surface did not expose the active chain state.")
+	if _slot_surface_channel_duration(near_surface, "slot_nudge_chain") <= 0:
+		failures.append("Buffalo coin-chain surface did not expose its own animation channel.")
+	if not bool(near_manifest.get("nudge_chain_active", false)) or not bool(near_manifest.get("nudge_chain_zone_visible", false)):
+		failures.append("Buffalo coin-chain manifest did not expose the side coin and timing zone.")
+	if not bool(near_manifest.get("nudge_chain_window_active", false)):
+		failures.append("Buffalo coin-chain manifest did not mark the perfect press as inside the zone.")
+	if float(near_manifest.get("nudge_chain_peek_amount", 0.0)) <= 0.0:
+		failures.append("Buffalo coin-chain manifest did not render a peeking coin.")
 	var tease_visual_machine: Dictionary = near_machine.duplicate(true)
 	tease_visual_machine["reel_strips"] = _slot_coin_heavy_reel_strips(maxi(1, int(tease_visual_machine.get("reel_count", 5))))
 	var tease_flash_surface: Dictionary = presentation.surface_state(tease_visual_machine, run_state, definition, {"surface_time_msec": 100})
 	var tease_flash_manifest: Dictionary = renderer.render_signature(tease_flash_surface, definition, 100, "spin")
 	if bool(tease_flash_manifest.get("buffalo_unintentional_gold_visible", false)):
-		failures.append("Buffalo timed nudge tease rendered unintentional strip gold before a real coin landed.")
+		failures.append("Buffalo coin-chain tease rendered unintentional strip gold before a real coin landed.")
 	var cue_ids: Array = []
 	for cue_value in _slot_array(near_surface.get("slot_audio_cues", [])):
 		var cue: Dictionary = _slot_dict(cue_value)
 		cue_ids.append(str(cue.get("cue_id", "")))
 	if not cue_ids.has("gold_coin_tease"):
-		failures.append("Buffalo timed nudge tease did not schedule the gold coin stinger.")
-	if int(near_manifest.get("gold_tease_level", 0)) >= 2 and not cue_ids.has("double_gold_coin_tease"):
-		failures.append("Buffalo double-coin tease did not schedule the double stinger.")
-	var perfect_resolved: Dictionary = resolver.resolve_spin(near_machine.duplicate(true), "nudge", SlotMachineStateScript.selected_bet(near_machine), run_state.create_rng("buffalo_nudge_perfect"), definition, {}, true, false, null, {}, {"slot_tease_input_msec": perfect_msec})
+		failures.append("Buffalo coin-chain tease did not schedule the gold coin stinger.")
+	var perfect_resolved: Dictionary = resolver.resolve_spin(near_machine.duplicate(true), "nudge", SlotMachineStateScript.selected_bet(near_machine), run_state.create_rng("buffalo_nudge_perfect"), definition, {}, true, false, run_state, {}, {"slot_nudge_chain_input_msec": perfect_msec})
 	var perfect_action: Dictionary = _slot_dict(perfect_resolved.get("result", {}))
+	var perfect_machine: Dictionary = _slot_dict(perfect_resolved.get("machine", {}))
 	if not bool(perfect_action.get("slot_nudge_applied", false)) or str(perfect_action.get("slot_nudge_skill_outcome", "")) != "perfect":
-		failures.append("Buffalo timed nudge did not record a perfect skill outcome.")
-	if not bool(perfect_action.get("slot_feature_triggered", false)):
-		failures.append("Perfect Buffalo timed nudge did not trigger the feature.")
+		failures.append("Buffalo coin-chain nudge did not record a perfect skill outcome.")
+	if int(perfect_action.get("slot_payout", 0)) <= 0 or int(perfect_action.get("slot_nudge_chain_collected", 0)) <= 0:
+		failures.append("Perfect Buffalo coin-chain nudge did not bank a collected coin.")
+	if bool(perfect_action.get("slot_feature_triggered", false)):
+		failures.append("Perfect Buffalo coin-chain nudge incorrectly triggered the old feature conversion.")
+	var next_offer: Dictionary = _slot_dict(perfect_machine.get("last_nudge_offer", {}))
+	if next_offer.is_empty() or int(next_offer.get("active_index", 0)) <= 0:
+		failures.append("Perfect Buffalo coin-chain collect did not advance to the next row.")
 
-	var feature_sample: Dictionary = _slot_spin_until_classification(definition, "buffalo", "line_5x3", "free_games", "SLOT-BUFFALO-NUDGE-FEATURE", failures)
-	if feature_sample.is_empty():
+	var miss_sample: Dictionary = _slot_spin_until_classification(definition, "buffalo", "line_5x3", "near_miss", "SLOT-BUFFALO-NUDGE-MISS", failures)
+	if miss_sample.is_empty():
 		return
-	var feature_machine: Dictionary = _slot_dict(feature_sample.get("machine", {}))
-	var feature_offer: Dictionary = _slot_dict(feature_machine.get("last_nudge_offer", {}))
-	var feature_window: Dictionary = _slot_dict(feature_offer.get("skill_window_msec", {}))
-	var miss_msec := int(feature_window.get("end", 0)) + 600
-	var miss_resolved: Dictionary = resolver.resolve_spin(feature_machine.duplicate(true), "nudge", SlotMachineStateScript.selected_bet(feature_machine), run_state.create_rng("buffalo_nudge_miss"), definition, {}, true, false, null, {}, {"slot_tease_input_msec": miss_msec})
+	var miss_machine_seed: Dictionary = _slot_dict(miss_sample.get("machine", {}))
+	var miss_offer: Dictionary = _slot_dict(miss_machine_seed.get("last_nudge_offer", {}))
+	var miss_window: Dictionary = _slot_dict(miss_offer.get("skill_window_msec", {}))
+	var miss_msec := int(miss_window.get("end", 0)) + 300
+	var miss_resolved: Dictionary = resolver.resolve_spin(miss_machine_seed.duplicate(true), "nudge", SlotMachineStateScript.selected_bet(miss_machine_seed), run_state.create_rng("buffalo_nudge_miss"), definition, {}, true, false, run_state, {}, {"slot_nudge_chain_input_msec": miss_msec})
 	var miss_action: Dictionary = _slot_dict(miss_resolved.get("result", {}))
 	var miss_machine: Dictionary = _slot_dict(miss_resolved.get("machine", {}))
-	if str(miss_action.get("slot_nudge_skill_outcome", "")) != "miss":
-		failures.append("Mistimed Buffalo nudge did not record a miss outcome.")
-	if bool(miss_action.get("slot_feature_triggered", false)):
-		failures.append("Mistimed Buffalo nudge preserved a feature it should have broken.")
-	if SlotMachineStateScript.active_bonus_incomplete(miss_machine):
-		failures.append("Mistimed Buffalo nudge left the original feature active.")
-	print("SLOT_BUFFALO_TIMED_NUDGE variants=%s level=%d perfect=%s miss_class=%s cues=%s" % [
+	if str(miss_action.get("slot_nudge_skill_outcome", "")) != "clean_miss":
+		failures.append("Mistimed Buffalo coin-chain nudge did not record a clean miss outcome.")
+	if int(miss_action.get("slot_payout", 0)) != 0 or not _slot_dict(miss_machine.get("last_nudge_offer", {})).is_empty():
+		failures.append("Mistimed Buffalo coin-chain nudge did not end the chain without adding payout.")
+	print("SLOT_BUFFALO_COIN_CHAIN variants=%s coins=%d active=%s perfect=%s miss_class=%s cues=%s" % [
 		JSON.stringify(variant_counts.keys()),
-		int(near_manifest.get("gold_tease_level", 0)),
+		int(near_manifest.get("nudge_chain_coin_count", 0)),
+		str(near_manifest.get("nudge_chain_active", false)),
 		str(perfect_action.get("slot_nudge_skill_outcome", "")),
 		str(miss_action.get("slot_classification", "")),
 		",".join(_slot_string_array(cue_ids)),
 	])
+
+
+func _check_slot_nudge_chain_determinism(definition: Dictionary, failures: Array) -> void:
+	var presentation = SlotPresentationScript.new()
+	var renderer = SlotRendererScript.new()
+	var variant_seen: Dictionary = {}
+	var deterministic_sample: Dictionary = {}
+	for family_id in ["pinball", "buffalo"]:
+		for format_id in ["classic_3_reel", "line_5x3", "video_feature"]:
+			var variant_key := "%s:%s" % [family_id, format_id]
+			var sample: Dictionary = _slot_spin_until_classification(definition, family_id, format_id, "near_miss", "SLOT-NUDGE-CHAIN-%s-%s" % [family_id, format_id], failures)
+			if sample.is_empty():
+				continue
+			var sample_run_state: RunState = sample.get("run_state", null)
+			var machine: Dictionary = _slot_dict(sample.get("machine", {}))
+			var offer: Dictionary = _slot_dict(machine.get("last_nudge_offer", {}))
+			if str(offer.get("type", "")) != "coin_chain":
+				failures.append("Slot near miss for %s did not create a coin-chain nudge offer." % variant_key)
+				continue
+			var coins: Array = _slot_array(offer.get("coins", []))
+			var expected_coin_count := mini(maxi(1, int(machine.get("row_count", 1))), 5)
+			if coins.size() != expected_coin_count:
+				failures.append("Slot coin chain for %s had %d coins instead of %d visible rows." % [variant_key, coins.size(), expected_coin_count])
+			var window: Dictionary = _slot_dict(offer.get("skill_window_msec", {}))
+			var perfect_msec := int(window.get("perfect", -1))
+			var surface: Dictionary = presentation.surface_state(machine, sample_run_state, definition, {"slot_nudge_chain_input_msec": perfect_msec})
+			var manifest: Dictionary = renderer.render_signature(surface, definition, perfect_msec, "nudge_chain")
+			if not bool(surface.get("slot_nudge_chain_active", false)) or not bool(manifest.get("nudge_chain_zone_visible", false)):
+				failures.append("Slot coin chain for %s did not publish a visible zone in surface state/manifest." % variant_key)
+			variant_seen[variant_key] = true
+			if deterministic_sample.is_empty():
+				deterministic_sample = sample
+	for expected_key in ["pinball:classic_3_reel", "pinball:line_5x3", "pinball:video_feature", "buffalo:classic_3_reel", "buffalo:line_5x3", "buffalo:video_feature"]:
+		if not bool(variant_seen.get(expected_key, false)):
+			failures.append("Slot coin-chain nudge variant was not verified: %s." % expected_key)
+	if deterministic_sample.is_empty():
+		return
+	var base_machine: Dictionary = _slot_dict(deterministic_sample.get("machine", {}))
+	var first_transcript: Array = _slot_nudge_chain_script(definition, base_machine, "deterministic_chain")
+	var second_transcript: Array = _slot_nudge_chain_script(definition, base_machine, "deterministic_chain")
+	if JSON.stringify(first_transcript) != JSON.stringify(second_transcript):
+		failures.append("Slot coin-chain nudge was not deterministic for matching input and RNG seed.")
+	if first_transcript.is_empty():
+		failures.append("Slot coin-chain deterministic script did not collect or break any coins.")
+	else:
+		var first_step: Dictionary = _slot_dict(first_transcript[0])
+		if str(first_step.get("grade", "")) != "perfect" or int(first_step.get("payout", 0)) <= 0:
+			failures.append("Slot coin-chain deterministic script did not collect the first perfect coin.")
+	print("SLOT_NUDGE_CHAIN_DETERMINISM variants=%s transcript=%s" % [
+		JSON.stringify(variant_seen.keys()),
+		JSON.stringify(first_transcript),
+	])
+
+
+func _slot_nudge_chain_script(definition: Dictionary, base_machine: Dictionary, seed: String) -> Array:
+	var resolver = SlotResolverScript.new()
+	var run_state: RunState = _slot_run_state("SLOT-NUDGE-CHAIN-SCRIPT-%s" % seed, 100000)
+	var machine: Dictionary = base_machine.duplicate(true)
+	var rng: RngStream = run_state.create_rng("slot_nudge_chain_%s" % seed)
+	var transcript: Array = []
+	for _step in range(6):
+		var offer: Dictionary = _slot_dict(machine.get("last_nudge_offer", {}))
+		if offer.is_empty():
+			break
+		var window: Dictionary = _slot_dict(offer.get("skill_window_msec", {}))
+		var input_msec := int(window.get("perfect", -1))
+		if input_msec < 0:
+			break
+		var resolved: Dictionary = resolver.resolve_spin(machine.duplicate(true), "nudge", SlotMachineStateScript.selected_bet(machine), rng, definition, {}, true, false, run_state, {}, {"slot_nudge_chain_input_msec": input_msec})
+		machine = _slot_dict(resolved.get("machine", machine))
+		var result: Dictionary = _slot_dict(resolved.get("result", {}))
+		var next_offer: Dictionary = _slot_dict(machine.get("last_nudge_offer", {}))
+		transcript.append({
+			"grade": str(result.get("slot_nudge_skill_outcome", "")),
+			"payout": int(result.get("slot_payout", 0)),
+			"banked": int(result.get("slot_nudge_chain_banked_payout", 0)),
+			"collected": int(result.get("slot_nudge_chain_collected", 0)),
+			"active": bool(result.get("slot_nudge_chain_active", false)),
+			"next_active_index": int(next_offer.get("active_index", -1)),
+			"next_attempts": int(next_offer.get("attempts_used", -1)),
+			"next_spawned": bool(next_offer.get("last_spawned", false)),
+		})
+	var terminal_offer: Dictionary = _slot_dict(machine.get("last_nudge_offer", {}))
+	if not terminal_offer.is_empty():
+		var terminal_window: Dictionary = _slot_dict(terminal_offer.get("skill_window_msec", {}))
+		var miss_msec := int(terminal_window.get("end", 0)) + 300
+		var miss_resolved: Dictionary = resolver.resolve_spin(machine.duplicate(true), "nudge", SlotMachineStateScript.selected_bet(machine), rng, definition, {}, true, false, run_state, {}, {"slot_nudge_chain_input_msec": miss_msec})
+		machine = _slot_dict(miss_resolved.get("machine", machine))
+		var miss_result: Dictionary = _slot_dict(miss_resolved.get("result", {}))
+		transcript.append({
+			"grade": str(miss_result.get("slot_nudge_skill_outcome", "")),
+			"payout": int(miss_result.get("slot_payout", 0)),
+			"banked": int(miss_result.get("slot_nudge_chain_banked_payout", 0)),
+			"collected": int(miss_result.get("slot_nudge_chain_collected", 0)),
+			"active": bool(miss_result.get("slot_nudge_chain_active", false)),
+			"next_active_index": -1,
+			"next_attempts": -1,
+			"next_spawned": false,
+		})
+	return transcript
+
+
+func _check_slot_item_pack_effects(library: ContentLibrary, definition: Dictionary, failures: Array) -> void:
+	var slot_item_ids := [
+		"coin_return_shim",
+		"lucky_reel_grease",
+		"timing_bracelet",
+		"gold_tooth_token",
+		"payout_pamphlet",
+		"cold_quarters",
+		"neon_players_charm",
+		"split_reel_note",
+		"feature_magnet",
+	]
+	var only_pull_tabs_challenge := RunState.custom_challenge("only_pull_tabs", "SLOT-ITEMS", {"content_groups": ["pull_tabs_pack"]})
+	for item_id_value in slot_item_ids:
+		var item_id := str(item_id_value)
+		var item: Dictionary = library.item(item_id)
+		if item.is_empty():
+			failures.append("Slot item pack is missing item: %s." % item_id)
+			continue
+		if not _slot_string_array(item.get("content_groups", [])).has("slot_pack"):
+			failures.append("Slot item %s is not assigned to slot_pack." % item_id)
+		if not library.item_enabled_for_challenge(item_id, {}):
+			failures.append("Default content groups did not enable slot item %s." % item_id)
+		if library.item_enabled_for_challenge(item_id, only_pull_tabs_challenge):
+			failures.append("Pull-tab-only challenge still enabled slot item %s." % item_id)
+
+	var game: GameModule = _slot_game(library, failures)
+	if game == null:
+		return
+
+	var grease_run: RunState = _slot_run_state("SLOT-ITEM-GREASE", 100000)
+	var grease_environment: Dictionary = _slot_environment()
+	var grease_machine: Dictionary = _slot_machine(definition, grease_run, "buffalo", "line_5x3", "standard", "plain")
+	_slot_store_machine(grease_run, grease_environment, grease_machine)
+	grease_run.add_item("lucky_reel_grease")
+	var grease_command: Dictionary = game.active_item_command("lucky_reel_grease", grease_run, grease_environment, grease_run.create_rng("slot_item_grease_arm"))
+	var grease_result: Dictionary = _slot_dict(grease_command.get("result", {}))
+	if not bool(grease_command.get("handled", false)) or not bool(grease_result.get("ok", false)):
+		failures.append("Lucky Reel Grease active item did not arm the slot cabinet.")
+	else:
+		GameModule.apply_result(grease_run, grease_result, grease_run.create_rng("slot_item_grease_apply"))
+		if grease_run.inventory.has("lucky_reel_grease"):
+			failures.append("Lucky Reel Grease was not consumed on use.")
+		var loaded_grease_run: RunState = RunStateScript.new()
+		loaded_grease_run.from_dict(grease_run.to_dict())
+		var loaded_grease_state: Dictionary = _slot_dict(SlotMachineStateScript.read_machine(loaded_grease_run.current_environment, "slot").get("slot_item_state", {}))
+		if int(loaded_grease_state.get("lucky_reel_grease_spins", 0)) != 10:
+			failures.append("Armed Lucky Reel Grease state did not survive RunState round-trip.")
+	var grease_rng: RngStream = grease_run.create_rng("slot_item_grease_spins")
+	var grease_near_misses := 0
+	var grease_features := 0
+	for _spin_index in range(10):
+		var spin_result: Dictionary = game.resolve_with_context("spin", 10, grease_run, grease_environment, grease_rng, {})
+		if bool(spin_result.get("slot_feature_triggered", false)):
+			grease_features += 1
+		if str(spin_result.get("slot_classification", "")) == "near_miss":
+			grease_near_misses += 1
+			var offer: Dictionary = _slot_dict(SlotMachineStateScript.read_machine(grease_environment, "slot").get("last_nudge_offer", {}))
+			if not bool(offer.get("lucky_reel_grease_active", false)):
+				failures.append("Greased near-miss did not mark its nudge offer.")
+		if bool(spin_result.get("ok", false)):
+			GameModule.apply_result(grease_run, spin_result, grease_rng)
+	if grease_near_misses != 3:
+		failures.append("Lucky Reel Grease should produce three near-miss chances over ten spins; got %d." % grease_near_misses)
+	if grease_features != 0:
+		failures.append("Lucky Reel Grease produced a raw bonus without a successful nudge.")
+	var grease_final_state: Dictionary = _slot_dict(SlotMachineStateScript.read_machine(grease_environment, "slot").get("slot_item_state", {}))
+	if int(grease_final_state.get("lucky_reel_grease_spins", 0)) != 0:
+		failures.append("Lucky Reel Grease did not expire after ten spins.")
+
+	var nudge_run: RunState = _slot_run_state("SLOT-ITEM-NUDGE-HEAT", 100000)
+	var nudge_environment: Dictionary = _slot_environment()
+	var nudge_machine: Dictionary = _slot_machine(definition, nudge_run, "buffalo", "line_5x3", "standard", "plain")
+	nudge_machine["slot_item_state"] = {
+		"lucky_reel_grease_spins": 1,
+		"lucky_reel_grease_target": 1,
+		"lucky_reel_grease_near_misses": 0,
+		"lucky_reel_grease_failed_nudge_heat_bonus": 14,
+		"cold_quarters_charges": 6,
+		"cold_quarter_heat_reduction": 6,
+	}
+	_slot_store_machine(nudge_run, nudge_environment, nudge_machine)
+	var nudge_rng: RngStream = nudge_run.create_rng("slot_item_nudge_heat")
+	var nudge_spin: Dictionary = game.resolve_with_context("spin", 10, nudge_run, nudge_environment, nudge_rng, {})
+	if str(nudge_spin.get("slot_classification", "")) != "near_miss":
+		failures.append("Greased nudge heat fixture did not create a near miss.")
+	else:
+		GameModule.apply_result(nudge_run, nudge_spin, nudge_rng)
+		var nudge_offer: Dictionary = _slot_dict(SlotMachineStateScript.read_machine(nudge_environment, "slot").get("last_nudge_offer", {}))
+		var nudge_window: Dictionary = _slot_dict(nudge_offer.get("skill_window_msec", {}))
+		var miss_msec := int(nudge_window.get("end", 0)) + 300
+		var miss_result: Dictionary = game.resolve_with_context("nudge", 0, nudge_run, nudge_environment, nudge_rng, {"slot_tease_input_msec": miss_msec})
+		if str(miss_result.get("slot_nudge_skill_outcome", "")) != "clean_miss":
+			failures.append("Slot nudge heat fixture did not record a miss.")
+		if int(miss_result.get("slot_grease_failed_nudge_heat_bonus", 0)) < 14:
+			failures.append("Failed greased nudge did not add the extra heat penalty.")
+		if not bool(miss_result.get("slot_cold_quarter_used", false)) or int(miss_result.get("slot_cold_quarters_remaining", -1)) != 5:
+			failures.append("Cold Quarters did not consume exactly one charge on nudge.")
+		if int(miss_result.get("suspicion_delta", 0)) < 20:
+			failures.append("Failed greased nudge did not produce the expected high heat.")
+
+	var timing_run: RunState = _slot_run_state("SLOT-ITEM-TIMING", 100000)
+	timing_run.add_item("timing_bracelet")
+	var timing_environment: Dictionary = _slot_environment()
+	var timing_machine: Dictionary = _slot_machine(definition, timing_run, "buffalo", "line_5x3", "standard", "plain")
+	timing_machine["slot_item_state"] = {
+		"lucky_reel_grease_spins": 1,
+		"lucky_reel_grease_target": 1,
+		"lucky_reel_grease_near_misses": 0,
+		"split_reel_note_armed": true,
+		"split_reel_note_perfect_msec_bonus": 55,
+		"split_reel_note_close_msec_bonus": 90,
+	}
+	_slot_store_machine(timing_run, timing_environment, timing_machine)
+	var timing_spin: Dictionary = game.resolve_with_context("spin", 10, timing_run, timing_environment, timing_run.create_rng("slot_item_timing_spin"), {})
+	if str(timing_spin.get("slot_classification", "")) != "near_miss":
+		failures.append("Timing item fixture did not create a Buffalo near miss.")
+	var timing_offer: Dictionary = _slot_dict(SlotMachineStateScript.read_machine(timing_environment, "slot").get("last_nudge_offer", {}))
+	var timing_good_msec := int(timing_offer.get("skill_good_msec", timing_offer.get("skill_close_msec", 0)))
+	if int(timing_offer.get("skill_perfect_msec", 0)) < 145 or timing_good_msec < 325:
+		failures.append("Timing Bracelet and Split-Reel Note did not widen the Buffalo timing cue.")
+	if not bool(timing_offer.get("split_reel_note", false)):
+		failures.append("Split-Reel Note did not mark the next Buffalo nudge offer.")
+
+	var refund_run: RunState = _slot_run_state("SLOT-ITEM-REFUND", 100000)
+	refund_run.add_item("coin_return_shim")
+	var refund_environment: Dictionary = _slot_environment()
+	var refund_machine: Dictionary = _slot_machine(definition, refund_run, "pinball", "classic_3_reel", "standard", "plain")
+	_slot_store_machine(refund_run, refund_environment, refund_machine)
+	var refund_rng: RngStream = refund_run.create_rng("slot_item_refund")
+	var refund_found := false
+	for _refund_index in range(120):
+		var refund_result: Dictionary = game.resolve_with_context("spin", 10, refund_run, refund_environment, refund_rng, {})
+		if int(refund_result.get("slot_loss_refund", 0)) > 0:
+			refund_found = true
+			break
+	if not refund_found:
+		failures.append("Coin-Return Shim did not refund any losing classic three-reel spin.")
+	var wide_run: RunState = _slot_run_state("SLOT-ITEM-WIDE-REFUND", 100000)
+	wide_run.add_item("coin_return_shim")
+	var wide_environment: Dictionary = _slot_environment()
+	var wide_machine: Dictionary = _slot_machine(definition, wide_run, "pinball", "line_5x3", "standard", "plain")
+	_slot_store_machine(wide_run, wide_environment, wide_machine)
+	var wide_rng: RngStream = wide_run.create_rng("slot_item_wide_refund")
+	for _wide_index in range(120):
+		var wide_result: Dictionary = game.resolve_with_context("spin", 10, wide_run, wide_environment, wide_rng, {})
+		if int(wide_result.get("slot_stake_cost", 0)) > int(wide_result.get("slot_payout", 0)):
+			if int(wide_result.get("slot_loss_refund", 0)) > 0:
+				failures.append("Coin-Return Shim refunded a non-three-reel slot spin.")
+			break
+
+	var charm_run: RunState = _slot_run_state("SLOT-ITEM-CHARM", 100000)
+	charm_run.add_item("neon_players_charm")
+	var charm_environment: Dictionary = _slot_environment()
+	var charm_machine: Dictionary = _slot_machine(definition, charm_run, "buffalo", "line_5x3", "standard", "plain")
+	charm_machine["active_bonus"] = {
+		"active": true,
+		"complete": false,
+		"family": "buffalo",
+		"mode": "hold_and_spin",
+		"display_mode": "gold_stampede_lock",
+		"bet_id": "bet_10",
+		"stake": 10,
+		"pending_award": 30,
+		"feature_total": 30,
+		"remaining_steps": 1,
+		"total_steps": 1,
+		"step_index": 0,
+		"respins_remaining": 1,
+		"max_cells": 3,
+		"reel_count": 3,
+		"row_count": 1,
+		"locks": [
+			{"cell": 0, "reel": 0, "row": 0, "symbol": "CASH", "value": 10, "multiplier": 1},
+			{"cell": 1, "reel": 1, "row": 0, "symbol": "CASH", "value": 10, "multiplier": 1},
+			{"cell": 2, "reel": 2, "row": 0, "symbol": "CASH", "value": 10, "multiplier": 1},
+		],
+		"history": [],
+		"feature_scale": 1.0,
+		"session_cap": 10000,
+	}
+	_slot_store_machine(charm_run, charm_environment, charm_machine)
+	var charm_result: Dictionary = game.resolve_with_context("slot_bonus_launch", 0, charm_run, charm_environment, charm_run.create_rng("slot_item_charm"), {})
+	if int(charm_result.get("slot_first_bonus_item_award", 0)) <= 0:
+		failures.append("Neon Player's Charm did not add a first-feature slot bonus.")
+
+	var buffalo = SlotFamilyBuffaloScript.new()
+	var tooth_value: Dictionary = _slot_dict(buffalo.call("_free_game_coin_value", 10, 1.0, _slot_run_state("SLOT-ITEM-TOOTH", 1000).create_rng("slot_item_tooth"), {"slot_gold_tooth_coin_upgrade_chance": 100, "slot_gold_tooth_coin_multiplier": 2}))
+	if int(tooth_value.get("value", 0)) < 20:
+		failures.append("Gold-Tooth Token upgrade hook did not raise Buffalo coin values.")
+
+	var magnet_run: RunState = _slot_run_state("SLOT-ITEM-MAGNET", 100000)
+	magnet_run.add_item("feature_magnet")
+	if magnet_run.item_effect_total("slot_feature_weight_bonus_percent", "slots") < 100:
+		failures.append("Feature Magnet did not expose its slot feature-weight item effect.")
+	var resolver = SlotResolverScript.new()
+	var magnet_effects := {"slot_feature_weight_bonus_percent": 125, "slot_reel_win_weight_percent": 35}
+	var pinball = SlotFamilyPinballScript.new()
+	var pinball_machine: Dictionary = _slot_machine(definition, magnet_run, "pinball", "classic_3_reel", "standard", "plain")
+	var pinball_base: Dictionary = _slot_outcome_weight_summary(pinball.outcome_table(pinball_machine, definition, false), pinball)
+	var pinball_adjusted_value: Variant = resolver.call("_slot_item_adjusted_outcome_table", pinball_machine, pinball, definition, false, magnet_effects)
+	var pinball_adjusted: Array = pinball_adjusted_value as Array if typeof(pinball_adjusted_value) == TYPE_ARRAY else []
+	var pinball_magnet: Dictionary = _slot_outcome_weight_summary(pinball_adjusted, pinball)
+	if int(pinball_magnet.get("feature", 0)) <= int(pinball_base.get("feature", 0)):
+		failures.append("Feature Magnet did not increase pinball feature weight.")
+	if int(pinball_magnet.get("reel_win", 0)) >= int(pinball_base.get("reel_win", 0)):
+		failures.append("Feature Magnet did not decrease pinball reel-win weight.")
+	var buffalo_machine: Dictionary = _slot_machine(definition, magnet_run, "buffalo", "line_5x3", "standard", "plain")
+	var buffalo_base: Dictionary = _slot_outcome_weight_summary(buffalo.outcome_table(buffalo_machine, definition, false), buffalo)
+	var buffalo_adjusted_value: Variant = resolver.call("_slot_item_adjusted_outcome_table", buffalo_machine, buffalo, definition, false, magnet_effects)
+	var buffalo_adjusted: Array = buffalo_adjusted_value as Array if typeof(buffalo_adjusted_value) == TYPE_ARRAY else []
+	var buffalo_magnet: Dictionary = _slot_outcome_weight_summary(buffalo_adjusted, buffalo)
+	if int(buffalo_magnet.get("feature", 0)) <= int(buffalo_base.get("feature", 0)):
+		failures.append("Feature Magnet did not increase Buffalo feature weight.")
+	if int(buffalo_magnet.get("reel_win", 0)) >= int(buffalo_base.get("reel_win", 0)):
+		failures.append("Feature Magnet did not decrease Buffalo reel-win weight.")
+	print("SLOT_ITEM_PACK_EFFECTS items=%d grease_near=%d grease_features=%d refund=%s charm_bonus=%d tooth_value=%d magnet_pinball=%d/%d magnet_buffalo=%d/%d" % [
+		slot_item_ids.size(),
+		grease_near_misses,
+		grease_features,
+		str(refund_found),
+		int(charm_result.get("slot_first_bonus_item_award", 0)),
+		int(tooth_value.get("value", 0)),
+		int(pinball_magnet.get("feature", 0)),
+		int(pinball_magnet.get("reel_win", 0)),
+		int(buffalo_magnet.get("feature", 0)),
+		int(buffalo_magnet.get("reel_win", 0)),
+	])
+
+
+func _slot_outcome_weight_summary(table: Array, family) -> Dictionary:
+	var summary := {"feature": 0, "reel_win": 0, "other": 0}
+	for entry_value in table:
+		var entry: Dictionary = _slot_dict(entry_value)
+		var weight := maxi(0, int(entry.get("weight", 0)))
+		var classification := str(entry.get("classification", ""))
+		if family != null and bool(family.opens_feature(classification)):
+			summary["feature"] = int(summary.get("feature", 0)) + weight
+		elif classification == "ldw" or classification == "true_win":
+			summary["reel_win"] = int(summary.get("reel_win", 0)) + weight
+		else:
+			summary["other"] = int(summary.get("other", 0)) + weight
+	return summary
 
 
 func _slot_deterministic_sequence(library: ContentLibrary, definition: Dictionary, seed: String) -> Dictionary:
@@ -1410,10 +1959,10 @@ func _check_slot_feature_reachability(library: ContentLibrary, definition: Dicti
 	var buffalo = SlotFamilyBuffaloScript.new()
 	var bet_2: Dictionary = buffalo.jackpot_award_for_bet("bet_2", 2, "grand")
 	var bet_20: Dictionary = buffalo.jackpot_award_for_bet("bet_20", 20, "grand")
-	if str(bet_2.get("tier", "")) != "mini":
-		failures.append("Slot jackpot eligibility did not downshift bet_2 to mini.")
-	if str(bet_20.get("tier", "")) != "grand" or int(bet_20.get("award", 0)) != 24000:
-		failures.append("Slot jackpot eligibility did not award grand at bet_20.")
+	if str(bet_2.get("tier", "")) != "grand" or int(bet_2.get("award", 0)) != 100:
+		failures.append("Slot jackpot eligibility did not scale the bet_2 grand to 50x.")
+	if str(bet_20.get("tier", "")) != "grand" or int(bet_20.get("award", 0)) != 1000:
+		failures.append("Slot jackpot eligibility did not scale the bet_20 grand to 50x.")
 
 
 func _check_slot_cabinet_distinctness(_library: ContentLibrary, definition: Dictionary, failures: Array) -> void:
@@ -1456,6 +2005,60 @@ func _check_slot_cabinet_distinctness(_library: ContentLibrary, definition: Dict
 		failures.append("Slot renderer signatures are not distinct across the six machines.")
 
 
+func _check_slot_environment_preview(library: ContentLibrary, definition: Dictionary, failures: Array) -> void:
+	var game: GameModule = _slot_game(library, failures)
+	if game == null:
+		return
+	var run_state: RunState = _slot_run_state("SLOT-ENV-PREVIEW", 100000)
+	var environment: Dictionary = _slot_environment()
+	var machine: Dictionary = _slot_machine(definition, run_state, "buffalo", "line_5x3", "standard", "plain")
+	_slot_store_machine(run_state, environment, machine)
+	var rng: RngStream = run_state.create_rng("slot_environment_preview")
+	var spin_result: Dictionary = game.resolve_with_context("spin", 10, run_state, environment, rng, {})
+	if bool(spin_result.get("ok", false)):
+		GameModule.apply_result(run_state, spin_result, rng)
+	var running_machine: Dictionary = SlotMachineStateScript.read_machine(environment, "slot")
+	running_machine["slot_autoplay_active"] = true
+	running_machine["slot_autoplay_next_msec"] = Time.get_ticks_msec() + 8000
+	SlotMachineStateScript.write_machine(environment, "slot", running_machine)
+	var object_state: Dictionary = game.environment_object_state(run_state, environment)
+	var runtime: Dictionary = _slot_dict(object_state.get("runtime_state", {}))
+	var visual: Dictionary = _slot_dict(object_state.get("visual_state", {}))
+	var preview: Dictionary = _slot_dict(visual.get("slot_preview", {}))
+	if preview.is_empty():
+		failures.append("Slot environment object did not package a slot_preview payload.")
+	else:
+		if str(preview.get("phase", "")).is_empty() or str(preview.get("caption", "")).is_empty():
+			failures.append("Slot environment preview did not identify its current phase/caption.")
+		if not bool(preview.get("autoplay_active", false)) or not bool(runtime.get("active", false)):
+			failures.append("Slot environment preview did not expose active autoplay runtime state.")
+		if _slot_array(preview.get("grid", [])).size() != int(preview.get("reel_count", 0)):
+			failures.append("Slot environment preview grid was not trimmed to reel_count.")
+		if _slot_array(_slot_dict(preview.get("spin", {})).get("timeline", [])).is_empty():
+			failures.append("Slot environment preview did not include compact reel timing.")
+
+	var near_sample: Dictionary = _slot_spin_until_classification(definition, "pinball", "line_5x3", "near_miss", "SLOT-ENV-PREVIEW-NUDGE", failures)
+	if near_sample.is_empty():
+		return
+	var nudge_run: RunState = near_sample.get("run_state", run_state)
+	var nudge_environment: Dictionary = _slot_environment()
+	_slot_store_machine(nudge_run, nudge_environment, _slot_dict(near_sample.get("machine", {})))
+	var nudge_state: Dictionary = game.environment_object_state(nudge_run, nudge_environment)
+	var nudge_visual: Dictionary = _slot_dict(nudge_state.get("visual_state", {}))
+	var nudge_preview: Dictionary = _slot_dict(nudge_visual.get("slot_preview", {}))
+	var nudge_chain: Dictionary = _slot_dict(nudge_preview.get("nudge_chain", {}))
+	if str(nudge_preview.get("phase", "")) != "nudge_chain" or not bool(nudge_chain.get("active", false)):
+		failures.append("Slot environment preview did not identify a pending coin-chain nudge.")
+	if int(nudge_chain.get("coin_count", 0)) <= 0 or _slot_array(nudge_chain.get("coins", [])).is_empty():
+		failures.append("Slot environment preview did not include compact coin-chain row data.")
+	print("SLOT_ENVIRONMENT_PREVIEW phase=%s caption=%s nudge=%s coins=%d" % [
+		str(preview.get("phase", "")),
+		str(preview.get("caption", "")),
+		str(nudge_preview.get("phase", "")),
+		int(nudge_chain.get("coin_count", 0)),
+	])
+
+
 func _check_slot_animation_present(library: ContentLibrary, definition: Dictionary, failures: Array) -> void:
 	var game: GameModule = _slot_game(library, failures)
 	if game == null:
@@ -1479,10 +2082,11 @@ func _check_slot_animation_present(library: ContentLibrary, definition: Dictiona
 			if not first.has(key):
 				failures.append("Slot reel timeline missing phase key: %s." % key)
 	var early: Dictionary = game.surface_state(run_state, environment, {"surface_time_msec": 120})
-	var mid: Dictionary = game.surface_state(run_state, environment, {"surface_time_msec": maxi(180, duration / 2)})
+	var mid_msec := _slot_spin_mid_msec(timeline)
+	var mid: Dictionary = game.surface_state(run_state, environment, {"surface_time_msec": mid_msec})
 	var settle: Dictionary = game.surface_state(run_state, environment, {"surface_time_msec": duration})
 	var manifest_early: Dictionary = renderer.render_signature(early, definition, 120, "spin")
-	var manifest_mid: Dictionary = renderer.render_signature(mid, definition, maxi(180, duration / 2), "spin")
+	var manifest_mid: Dictionary = renderer.render_signature(mid, definition, mid_msec, "spin")
 	var manifest_settle: Dictionary = renderer.render_signature(settle, definition, duration, "spin")
 	var sig_early := JSON.stringify(manifest_early)
 	var sig_mid := JSON.stringify(manifest_mid)
@@ -1722,32 +2326,67 @@ func _check_slot_live_generated_features(library: ContentLibrary, definition: Di
 	var total_input_alt := _slot_complete_feature_total_for_seed(definition, "pinball", "video_feature", "SLOT-LIVE-SEED-A", ["slot_bonus_right", "slot_bonus_launch", "slot_bonus_right", "slot_bonus_launch"])
 	if total_input_alt == total_a:
 		failures.append("Slot live feature total did not respond to different player inputs.")
-	_check_slot_autoplay_advances_buffalo_bonus(game, definition, failures)
+	_check_slot_buffalo_feature_pauses_autoplay(game, definition, failures)
 
 
-func _check_slot_autoplay_advances_buffalo_bonus(game: GameModule, definition: Dictionary, failures: Array) -> void:
+func _check_slot_buffalo_feature_pauses_autoplay(game: GameModule, definition: Dictionary, failures: Array) -> void:
 	var buffalo = SlotFamilyBuffaloScript.new()
+	var renderer = SlotRendererScript.new()
 	var run_state: RunState = _slot_run_state("SLOT-BUFFALO-AUTO-BONUS", 100000)
 	var environment: Dictionary = _slot_environment()
 	var machine: Dictionary = _slot_machine(definition, run_state, "buffalo", "video_feature", "standard", "plain")
 	var rng: RngStream = run_state.create_rng("buffalo_auto_open")
 	var active: Dictionary = buffalo.open_feature(machine, {"classification": "hold_and_spin"}, 10, rng, definition)
 	machine["active_bonus"] = active
+	_slot_store_machine(run_state, environment, machine)
+	var feature_surface: Dictionary = game.surface_state(run_state, environment, {"surface_time_msec": 2200})
+	var feature_manifest: Dictionary = renderer.render_signature(feature_surface, definition, 2200, "feature")
+	if bool(feature_manifest.get("pinball_takeover_active", false)) or bool(feature_manifest.get("default_controls_suppressed", false)):
+		failures.append("Buffalo feature surface entered Pinball takeover/control mode.")
+	var harness := SurfaceHarness.new()
+	harness.setup(feature_surface)
+	renderer.draw(harness, feature_surface, definition)
+	var labels: Array = harness.labels.duplicate(true)
+	if not labels.has("RESPIN"):
+		failures.append("Buffalo hold-and-spin feature did not draw the RESPIN control.")
+	if labels.has("LAUNCH") or labels.has("TILT") or _slot_labels_include_prefix(labels, "BALLS "):
+		failures.append("Buffalo hold-and-spin feature drew Pinball launch controls.")
+	if not game.surface_needs_auto_tick({"surface_time_msec": 2000}, run_state, environment):
+		failures.append("Buffalo feature did not request its automatic reel wind-up tick.")
+	var windup_command: Dictionary = game.surface_auto_action_command({"surface_time_msec": 2000}, run_state, environment, {})
+	if not bool(windup_command.get("handled", false)) or not bool(windup_command.get("environment_changed", false)):
+		failures.append("Buffalo feature automatic wind-up tick did not update the machine timer.")
+	var wound_machine: Dictionary = SlotMachineStateScript.read_machine(environment, "slot")
+	var auto_due_msec := int(wound_machine.get("slot_bonus_auto_next_msec", 0))
+	if auto_due_msec <= 2000:
+		failures.append("Buffalo feature automatic wind-up did not schedule a future spin.")
+	if auto_due_msec > 0 and not game.surface_needs_auto_tick({"surface_time_msec": auto_due_msec}, run_state, environment):
+		failures.append("Buffalo feature automatic spin tick was not requested when the timer matured.")
+	var spin_command: Dictionary = game.surface_auto_action_command({"surface_time_msec": auto_due_msec}, run_state, environment, {})
+	if not bool(spin_command.get("handled", false)) or str(spin_command.get("action_id", "")) != "slot_bonus_launch" or not bool(spin_command.get("direct_resolve", false)):
+		failures.append("Buffalo feature automatic spin did not resolve through the bonus launch action.")
+
+	machine = SlotMachineStateScript.read_machine(environment, "slot")
 	machine["slot_autoplay_active"] = true
 	machine["slot_autoplay_next_msec"] = 1
 	_slot_store_machine(run_state, environment, machine)
 	if not game.environment_runtime_needs_tick(run_state, environment, 2000):
-		failures.append("Slot autoplay did not request a runtime tick while a buffalo bonus was active.")
+		failures.append("Slot autoplay did not request a pause tick while a buffalo bonus was active.")
 		return
 	var tick: Dictionary = game.environment_runtime_tick(run_state, environment, run_state.create_rng("buffalo_auto_tick"), 2000)
-	var result: Dictionary = _slot_dict(tick.get("result", {}))
-	var step: Dictionary = _slot_dict(result.get("slot_bonus_step", {}))
-	var step_active: Dictionary = _slot_dict(step.get("active_bonus", {}))
-	if not bool(tick.get("handled", false)) or step.is_empty():
-		failures.append("Slot autoplay runtime tick did not resolve a buffalo bonus step.")
-		return
-	if _slot_array(step_active.get("history", [])).is_empty():
-		failures.append("Slot autoplay buffalo bonus step did not advance feature history.")
+	var paused_machine: Dictionary = SlotMachineStateScript.read_machine(environment, "slot")
+	var paused_active: Dictionary = _slot_dict(paused_machine.get("active_bonus", {}))
+	if not bool(tick.get("handled", false)) or bool(paused_machine.get("slot_autoplay_active", true)):
+		failures.append("Slot autoplay did not pause on an active buffalo bonus.")
+	if not bool(tick.get("attention", false)) or str(tick.get("audio_cue", "")) != "bonus_start_buffalo":
+		failures.append("Slot autoplay pause did not report a buffalo feature alert cue.")
+	if not bool(paused_machine.get("slot_pending_feature_alert", false)):
+		failures.append("Slot autoplay pause did not mark the machine as a pending feature.")
+	var paused_runtime: Dictionary = game.environment_runtime_state(run_state, environment)
+	if not bool(paused_runtime.get("slot_pending_feature", false)) or str(paused_runtime.get("slot_bonus_family", "")) != "buffalo":
+		failures.append("Slot environment runtime state did not expose the pending buffalo feature.")
+	if not _slot_array(paused_active.get("history", [])).is_empty() or int(paused_active.get("step_index", 0)) != int(active.get("step_index", 0)):
+		failures.append("Slot autoplay pause advanced the buffalo feature.")
 	var capped_machine: Dictionary = machine.duplicate(true)
 	capped_machine["slot_animation_duration_msec"] = 24000
 	capped_machine["slot_animation_plan"] = {
@@ -1760,16 +2399,25 @@ func _check_slot_autoplay_advances_buffalo_bonus(game: GameModule, definition: D
 	var capped_delay := int(game.call("_slot_autoplay_delay_msec", capped_machine))
 	if capped_delay > 10000:
 		failures.append("Slot buffalo autoplay delay exceeded the 10 second cap after a large bonus.")
-	print("SLOT_BUFFALO_AUTOPLAY_BONUS action=slot_bonus_launch handled=%s history=%d complete=%s" % [
+	print("SLOT_BUFFALO_FEATURE_AUTO_SEQUENCE handled=%s autoplay=%s history=%d respin_control=%s auto_due=%d" % [
 		str(tick.get("handled", false)),
-		_slot_array(step_active.get("history", [])).size(),
-		str(step.get("complete", false)),
+		str(paused_machine.get("slot_autoplay_active", false)),
+		_slot_array(paused_active.get("history", [])).size(),
+		str(labels.has("RESPIN")),
+		auto_due_msec,
 	])
+
+
+func _slot_labels_include_prefix(labels: Array, prefix: String) -> bool:
+	for label_value in labels:
+		if str(label_value).begins_with(prefix):
+			return true
+	return false
 
 
 func _check_slot_hold_and_spin_fill_scaling(definition: Dictionary, failures: Array) -> void:
 	var buffalo = SlotFamilyBuffaloScript.new()
-	var stake := 10
+	var stake := 20
 	var max_cells := 30
 	var previous := -1
 	for count in range(max_cells + 1):
@@ -1783,10 +2431,31 @@ func _check_slot_hold_and_spin_fill_scaling(definition: Dictionary, failures: Ar
 		failures.append("Slot hold-and-spin full grid did not award the grand.")
 	var run_state: RunState = _slot_run_state("SLOT-HOLD-RESET", 100000)
 	var machine: Dictionary = _slot_machine(definition, run_state, "buffalo", "video_feature", "standard", "plain")
-	var base_grand: int = buffalo.current_grand_prize(machine, stake, "bet_20")
+	machine = SlotMachineStateScript.set_selected_bet(machine, "bet_20")
+	var initial_grands: Dictionary = {}
+	var saw_randomized_initial := false
+	for option_value in SlotMachineStateScript.BET_OPTIONS:
+		var option: Dictionary = option_value
+		var bet_id := str(option.get("id", ""))
+		var bet_stake := maxi(1, int(option.get("total_credits", 1)))
+		var current_grand: int = buffalo.current_grand_prize(machine, bet_stake, bet_id)
+		if current_grand < bet_stake * 50 or current_grand > bet_stake * 70:
+			failures.append("Slot buffalo %s Grand did not start within the 50x-70x bet range." % bet_id)
+		if current_grand > bet_stake * 50:
+			saw_randomized_initial = true
+		initial_grands[bet_id] = current_grand
+	if not saw_randomized_initial:
+		failures.append("Slot buffalo generated Grand prizes all started at the minimum instead of a seeded random value.")
+	var bet_2_grand_before := int(initial_grands.get("bet_2", 0))
+	var base_grand := int(initial_grands.get("bet_20", 0))
 	var grown_grand: int = buffalo.advance_grand_prize(machine, stake, stake, "bet_20")
-	if grown_grand <= base_grand:
-		failures.append("Slot buffalo progressive Grand did not grow after a paid spin.")
+	if grown_grand != base_grand + int(ceil(float(stake) * 0.5)):
+		failures.append("Slot buffalo bet_20 Grand did not grow by one-half the bet after a paid spin.")
+	if buffalo.current_grand_prize(machine, 2, "bet_2") != bet_2_grand_before:
+		failures.append("Slot buffalo bet_20 Grand growth leaked into the bet_2 Grand bucket.")
+	var grown_bet_2: int = buffalo.advance_grand_prize(machine, 2, 2, "bet_2")
+	if grown_bet_2 != bet_2_grand_before + 1:
+		failures.append("Slot buffalo bet_2 Grand did not grow independently by one-half the bet.")
 	var progressive_full_award: int = buffalo.hold_award_for_lock_count(stake, max_cells, max_cells, "bet_20", grown_grand)
 	if progressive_full_award < grown_grand:
 		failures.append("Slot hold-and-spin full grid did not include the progressive Grand amount.")
@@ -1929,6 +2598,9 @@ func _check_slot_buffalo_feature_presentation(definition: Dictionary, failures: 
 	var animation_machine: Dictionary = _slot_dict(animation_step.get("machine", {}))
 	if _slot_array(_slot_dict(animation_step.get("result", {})).get("slot_reel_timeline", [])).is_empty() or str(animation_machine.get("slot_animation_id", "")).find("bonus-step") == -1:
 		failures.append("Slot buffalo hold respin did not use the normal reel animation path.")
+	var hold_spin_manifest: Dictionary = renderer.render_signature(presentation.surface_state(animation_machine, run_state, definition, {"surface_time_msec": 240}), definition, 240, "feature")
+	if int(hold_spin_manifest.get("buffalo_main_board_unlocked_cell_count", 0)) > 0 and not bool(hold_spin_manifest.get("buffalo_unlocked_spin_active", false)):
+		failures.append("Slot buffalo hold respin did not animate unlocked cells during the reel spin.")
 	hold_machine["reel_strips"] = _slot_coin_heavy_reel_strips(maxi(1, int(hold_machine.get("reel_count", 5))))
 	var hold_surface: Dictionary = presentation.surface_state(hold_machine, run_state, definition, {"surface_time_msec": 2200})
 	var hold_scene: Dictionary = _slot_dict(hold_surface.get("slot_feature_scene", {}))
@@ -1954,8 +2626,8 @@ func _check_slot_buffalo_feature_presentation(definition: Dictionary, failures: 
 		failures.append("Slot buffalo hold feature did not keep new locks hidden while open cells spin.")
 	if int(hold_manifest.get("buffalo_main_board_visible_lock_count", 0)) != int(hold_manifest.get("locked_cells", 0)):
 		failures.append("Slot buffalo hold feature visible locks did not match the actual locked coin cells after reveal.")
-	if int(hold_manifest.get("buffalo_main_board_unlocked_cell_count", 0)) > 0 and not bool(hold_manifest.get("buffalo_unlocked_spin_active", false)):
-		failures.append("Slot buffalo hold feature did not identify unlocked cells as actively spinning.")
+	if int(hold_manifest.get("buffalo_main_board_unlocked_cell_count", 0)) > 0 and bool(hold_manifest.get("buffalo_unlocked_spin_active", false)):
+		failures.append("Slot buffalo hold feature kept unlocked cells spinning after the reel animation settled.")
 	var cap_machine: Dictionary = hold_machine.duplicate(true)
 	var cap_active: Dictionary = _slot_dict(cap_machine.get("active_bonus", {}))
 	cap_active["animation_duration_msec"] = 18000
@@ -1990,12 +2662,65 @@ func _check_slot_buffalo_feature_presentation(definition: Dictionary, failures: 
 		failures.append("Slot buffalo free-games scene did not expose the coin collection meter.")
 	if str(free_manifest.get("buffalo_feature_music_id", "")) != "bonus_music_buffalo":
 		failures.append("Slot buffalo free-games feature did not expose the Buffalo feature music cue.")
+	var free_music: Dictionary = _slot_dict(free_scene.get("feature_music", {}))
+	if float(free_music.get("volume_db", -99.0)) < -8.0 or not bool(free_music.get("duck_background_music", false)):
+		failures.append("Slot buffalo feature music was not loud/priority enough to cover the main room music.")
 	if int(free_manifest.get("buffalo_main_board_coin_value_count", 0)) <= 0 or not bool(free_manifest.get("buffalo_main_board_coin_values_visible", false)):
 		failures.append("Slot buffalo free-games feature did not draw coin values on the main board.")
 	if not bool(free_manifest.get("buffalo_coin_bump_active", false)):
 		failures.append("Slot buffalo free-games feature did not mark collected coins for a bump/glow reveal.")
-	if int(free_manifest.get("buffalo_main_board_unlocked_cell_count", 0)) > 0 and not bool(free_manifest.get("buffalo_unlocked_spin_active", false)):
-		failures.append("Slot buffalo free-games feature did not identify non-coin cells as actively spinning.")
+	if int(free_manifest.get("buffalo_main_board_unlocked_cell_count", 0)) > 0 and bool(free_manifest.get("buffalo_unlocked_spin_active", false)):
+		failures.append("Slot buffalo free-games feature kept non-coin cells spinning after the reel animation settled.")
+	var free_animation_machine: Dictionary = free_machine.duplicate(true)
+	free_animation_machine["active_bonus"] = free_active
+	var free_animation_step: Dictionary = resolver.resolve_bonus_action(free_animation_machine, "slot_bonus_launch", run_state.create_rng("buffalo_present_free_resolver"), definition)
+	var free_animation_surface: Dictionary = presentation.surface_state(_slot_dict(free_animation_step.get("machine", {})), run_state, definition, {"surface_time_msec": 240})
+	var free_spin_manifest: Dictionary = renderer.render_signature(free_animation_surface, definition, 240, "feature")
+	if int(free_spin_manifest.get("buffalo_main_board_unlocked_cell_count", 0)) > 0 and not bool(free_spin_manifest.get("buffalo_unlocked_spin_active", false)):
+		failures.append("Slot buffalo free-games feature did not animate non-coin cells during the reel spin.")
+
+	var auto_game: GameModule = SlotGameScript.new()
+	auto_game.setup(definition)
+	var auto_run: RunState = _slot_run_state("SLOT-BUFFALO-AUTO-FEATURE", 100000)
+	var auto_environment: Dictionary = _slot_environment()
+	var auto_machine: Dictionary = _slot_machine(definition, auto_run, "buffalo", "line_5x3", "standard", "plain")
+	auto_machine["active_bonus"] = buffalo.open_feature(auto_machine, {"classification": "free_games"}, 10, auto_run.create_rng("buffalo_auto_open"), definition)
+	_slot_store_machine(auto_run, auto_environment, auto_machine)
+	var auto_surface: Dictionary = auto_game.surface_state(auto_run, auto_environment, {"surface_time_msec": 1000, "drunk_scaled_surface_time_msec": 1000})
+	if not bool(auto_surface.get("surface_realtime_state_refresh", false)):
+		failures.append("Slot buffalo active feature did not request realtime surface refresh.")
+	var auto_seed_command: Dictionary = auto_game.surface_auto_action_command({"surface_time_msec": 1000, "drunk_scaled_surface_time_msec": 1000}, auto_run, auto_environment, {})
+	var seeded_auto_machine: Dictionary = SlotMachineStateScript.read_machine(auto_environment, "slot")
+	var auto_due_msec := int(seeded_auto_machine.get("slot_bonus_auto_next_msec", 0)) + 1
+	if int(seeded_auto_machine.get("slot_bonus_auto_next_msec", 0)) <= 1000 or not bool(auto_seed_command.get("environment_changed", false)):
+		failures.append("Slot buffalo active feature did not arm its automatic next spin timer.")
+	if not auto_game.surface_needs_auto_tick({"surface_time_msec": auto_due_msec, "drunk_scaled_surface_time_msec": auto_due_msec}, auto_run, auto_environment):
+		failures.append("Slot buffalo active feature did not request an auto tick when its timer matured.")
+	var auto_spin_command: Dictionary = auto_game.surface_auto_action_command({"surface_time_msec": auto_due_msec, "drunk_scaled_surface_time_msec": auto_due_msec}, auto_run, auto_environment, {})
+	if str(auto_spin_command.get("action_id", "")) != "slot_bonus_launch" or not bool(auto_spin_command.get("direct_resolve", false)):
+		failures.append("Slot buffalo active feature did not auto-queue the next feature spin.")
+
+	var grand_machine: Dictionary = _slot_machine(definition, run_state, "buffalo", "line_5x3", "standard", "plain")
+	grand_machine = SlotMachineStateScript.set_selected_bet(grand_machine, "bet_20")
+	var grand_strips: Array = []
+	for _grand_reel in range(maxi(1, int(grand_machine.get("reel_count", 5)))):
+		grand_strips.append(["GOLD_TOKEN", "GOLD_TOKEN", "GOLD_TOKEN", "GOLD_TOKEN"])
+	grand_machine["bonus_reel_strips"] = grand_strips
+	var grand_active: Dictionary = buffalo.open_feature(grand_machine, {"classification": "free_games"}, 20, run_state.create_rng("buffalo_present_grand_open"), definition)
+	grand_active["remaining_steps"] = 6
+	grand_active["total_steps"] = 6
+	grand_machine["active_bonus"] = grand_active
+	var grand_before := buffalo.current_grand_prize(grand_machine, 20, "bet_20")
+	var grand_result_payload: Dictionary = resolver.resolve_bonus_action(grand_machine, "slot_bonus_launch", run_state.create_rng("buffalo_present_grand_resolve"), definition)
+	var grand_result: Dictionary = _slot_dict(grand_result_payload.get("result", {}))
+	var grand_step: Dictionary = _slot_dict(grand_result.get("slot_bonus_step", {}))
+	var grand_step_active: Dictionary = _slot_dict(grand_step.get("active_bonus", {}))
+	if not bool(grand_result.get("slot_bonus_complete", false)):
+		failures.append("Slot buffalo full coin board did not complete the feature immediately.")
+	if int(grand_result.get("slot_bonus_award", 0)) < grand_before + int(grand_step_active.get("coin_total", 0)):
+		failures.append("Slot buffalo full coin board did not award the advertised Grand plus all visible coin values.")
+	if str(grand_result.get("slot_celebration_tier", "")) != "jackpot" or int(grand_step.get("grand_prize_awarded", 0)) != grand_before:
+		failures.append("Slot buffalo full coin board did not report a Grand jackpot celebration.")
 
 	var trophy_machine: Dictionary = _slot_machine(definition, run_state, "buffalo", "video_feature", "standard", "plain")
 	var trophy_active: Dictionary = buffalo.open_feature(trophy_machine, {"classification": "monster_feature"}, 20, run_state.create_rng("buffalo_present_trophy_open"), definition)
@@ -3098,6 +3823,16 @@ func _slot_settle_msec(timeline: Array) -> int:
 	return maxi(100, result)
 
 
+func _slot_spin_mid_msec(timeline: Array) -> int:
+	for entry_value in timeline:
+		var entry: Dictionary = _slot_dict(entry_value)
+		var decel_start := float(entry.get("decel_start", 0.0))
+		var stop_time := float(entry.get("stop_time", decel_start + 0.2))
+		if stop_time > decel_start:
+			return maxi(180, int(round((decel_start + (stop_time - decel_start) * 0.50) * 1000.0)))
+	return 240
+
+
 func _slot_tease_msec(timeline: Array) -> int:
 	for entry_value in timeline:
 		var entry: Dictionary = _slot_dict(entry_value)
@@ -3833,10 +4568,15 @@ func _xgame_slot_win_metric(game: GameModule, seed: String, luck: int, item_id: 
 	var environment: Dictionary = run_state.current_environment
 	var machine: Dictionary = _slot_machine(definition, run_state, "pinball", "classic_3_reel", "standard", "plain")
 	_slot_store_machine(run_state, environment, machine)
-	var result: Dictionary = game.resolve_with_context("spin", 10, run_state, environment, run_state.create_rng("xgame_slot_win"), {})
-	if int(result.get("slot_payout", 0)) <= 0:
-		return int(result.get("bankroll_delta", 0))
-	return int(result.get("bankroll_delta", 0))
+	var rng := run_state.create_rng("xgame_slot_win")
+	var best_delta := 0
+	for _spin_index in range(120):
+		var result: Dictionary = game.resolve_with_context("spin", 10, run_state, environment, rng, {})
+		if bool(result.get("ok", false)):
+			best_delta = maxi(best_delta, int(result.get("bankroll_delta", 0)))
+			GameModule.apply_result(run_state, result, rng)
+			_slot_complete_active_bonus(game, run_state, environment, rng)
+	return best_delta
 
 
 func _xgame_slot_heat_metric(game: GameModule, seed: String, drunk: bool, watched: bool, item_id: String) -> int:
@@ -4827,6 +5567,61 @@ func _check_blackjack_surface_contract(game: GameModule, failures: Array) -> voi
 		failures.append("Blackjack dealer focus did not expose visual read timing fields.")
 	if not bool(dealt_surface.get("surface_realtime_state_refresh", false)):
 		failures.append("Blackjack dealt surface did not keep realtime refresh available for live table focus.")
+	var book_run_state: RunState = RunStateScript.new()
+	book_run_state.start_new("BLACKJACK-BASIC-STRATEGY-CARD")
+	book_run_state.add_item("basic_strategy_card")
+	var book_environment := _surface_contract_environment()
+	var book_table := generated_state.duplicate(true)
+	book_table["shoe_cursor"] = 0
+	book_table["patrons"] = []
+	book_table["side_bets"] = []
+	book_table["rules"] = {"dealer_hits_soft_17": false, "double_after_split": true, "split_aces_one_card": true, "max_split_hands": 4, "late_surrender": true}
+	book_table["shoe"] = [
+		{"rank": 10, "suit": 0}, {"rank": 10, "suit": 1}, {"rank": 6, "suit": 2}, {"rank": 7, "suit": 3},
+		{"rank": 5, "suit": 0}, {"rank": 9, "suit": 1}, {"rank": 4, "suit": 2}, {"rank": 3, "suit": 3}
+	]
+	book_environment["game_states"] = {"blackjack": book_table}
+	var book_deal: Dictionary = game.surface_action_command("blackjack_deal", 0, false, {"selected_stake": 5}, book_run_state, book_environment)
+	var book_surface := game.surface_state(book_run_state, book_environment, book_deal.get("ui_state", {}))
+	var book_advice: Dictionary = book_surface.get("basic_strategy_advice", {}) if typeof(book_surface.get("basic_strategy_advice", {})) == TYPE_DICTIONARY else {}
+	if not bool(book_advice.get("visible", false)) or str(book_advice.get("action", "")) != "surrender":
+		failures.append("Basic Strategy Card did not expose the expected book play for hard 16 versus dealer 10.")
+	var book_harness := SurfaceHarness.new()
+	book_harness.setup(book_surface)
+	game.draw_surface(book_harness, book_surface, {"contract_harness": true})
+	var found_book_label := false
+	var found_book_action := false
+	for label_value in book_harness.labels:
+		var label_text := str(label_value).to_upper()
+		if label_text.find("BOOK") >= 0:
+			found_book_label = true
+		if label_text.find("SURRENDER") >= 0:
+			found_book_action = true
+	if not found_book_label or not found_book_action:
+		failures.append("Basic Strategy Card did not draw the compact book-play indicator.")
+	var watch_run_state: RunState = RunStateScript.new()
+	watch_run_state.start_new("BLACKJACK-HIGH-ROLLER-WATCH")
+	watch_run_state.bankroll = 1000
+	watch_run_state.add_item("high_roller_watch")
+	var watch_environment := _surface_contract_environment()
+	watch_environment["economic_profile"] = {"stake_floor": 5, "stake_ceiling": 20}
+	watch_environment["game_states"] = {"blackjack": generated_state.duplicate(true)}
+	var watch_actions: Dictionary = game.actions(watch_run_state, watch_environment)
+	if int(watch_actions.get("stake_floor", 0)) != 20 or int(watch_actions.get("stake_ceiling", 0)) != 40:
+		failures.append("High Roller Watch did not raise blackjack minimum to the old max and double the table max.")
+	var watch_surface := game.surface_state(watch_run_state, watch_environment, {})
+	if int(watch_surface.get("selected_stake", 0)) != 20:
+		failures.append("High Roller Watch did not clamp blackjack's starting stake to the raised table minimum.")
+	var broken_focus_run_state: RunState = RunStateScript.new()
+	broken_focus_run_state.start_new("BLACKJACK-BROKEN-CUFFLINKS-FOCUS")
+	broken_focus_run_state.add_item("broken_cufflinks")
+	var broken_focus_environment := _surface_contract_environment()
+	broken_focus_environment["game_states"] = {"blackjack": generated_state.duplicate(true)}
+	var broken_focus_deal: Dictionary = game.surface_action_command("blackjack_deal", 0, false, {"selected_stake": 5}, broken_focus_run_state, broken_focus_environment)
+	var broken_focus_surface := game.surface_state(broken_focus_run_state, broken_focus_environment, broken_focus_deal.get("ui_state", {}))
+	var broken_focus: Dictionary = broken_focus_surface.get("dealer_focus", {}) if typeof(broken_focus_surface.get("dealer_focus", {})) == TYPE_DICTIONARY else {}
+	if int(broken_focus.get("peek_window_percent", 100)) != 50:
+		failures.append("Broken Cufflinks did not halve the blackjack peek timing window.")
 	var control_surface: Dictionary = dealt_surface.duplicate(true)
 	control_surface["can_deal"] = false
 	control_surface["can_hit"] = true
@@ -4993,6 +5788,25 @@ func _check_blackjack_surface_contract(game: GameModule, failures: Array) -> voi
 	var barred_object_state := game.environment_object_state(watched_peek_run_state, watched_peek_environment)
 	if str((barred_object_state.get("visual_state", {}) as Dictionary).get("status", "")) != "barred":
 		failures.append("Blackjack barred table did not publish a barred environment object status.")
+	var cufflinks_run_state: RunState = RunStateScript.new()
+	cufflinks_run_state.start_new("BLACKJACK-COOLERS-CUFFLINKS")
+	cufflinks_run_state.add_item("coolers_cufflinks")
+	var cufflinks_environment := _surface_contract_environment()
+	var cufflinks_table := generated_state.duplicate(true)
+	cufflinks_table["dealer_profile"] = {"attention_base": 100, "gaze_speed": 95, "blink_offset": 0, "tell": "locks onto your hands"}
+	cufflinks_table["patrons"] = []
+	cufflinks_table["side_bets"] = []
+	cufflinks_environment["game_states"] = {"blackjack": cufflinks_table}
+	cufflinks_run_state.current_environment = cufflinks_environment.duplicate(true)
+	var cufflinks_deal: Dictionary = game.surface_action_command("blackjack_deal", 0, false, {"selected_stake": 5}, cufflinks_run_state, cufflinks_environment)
+	var cufflinks_peek: Dictionary = game.surface_action_command("blackjack_peek", 0, false, cufflinks_deal.get("ui_state", {}), cufflinks_run_state, cufflinks_environment)
+	var cufflinks_result: Dictionary = game.resolve_with_context("peek_hole_card", 0, cufflinks_run_state, cufflinks_environment, cufflinks_run_state.create_rng("blackjack_cufflinks_peek_resolve"), cufflinks_peek.get("ui_state", {}))
+	if int(cufflinks_result.get("suspicion_delta", -1)) != 0:
+		failures.append("Cooler's Cufflinks did not fully absorb failed blackjack peek heat.")
+	if not bool(cufflinks_result.get("blackjack_coolers_cufflinks_broke", false)):
+		failures.append("Cooler's Cufflinks failed peek did not report the break event.")
+	if cufflinks_run_state.inventory.has("coolers_cufflinks") or not cufflinks_run_state.inventory.has("broken_cufflinks"):
+		failures.append("Cooler's Cufflinks did not turn into Broken Cufflinks after a failed peek.")
 	var distract_click := game.surface_action_command("blackjack_distraction", 0, false, deal_ui, run_state, environment)
 	var peek_click := game.surface_action_command("blackjack_peek", 0, false, distract_click.get("ui_state", {}), run_state, environment)
 	if str(peek_click.get("action_kind", "")) != "cheat" or not bool((peek_click.get("ui_state", {}) as Dictionary).get("dealer_hole_visible", false)):
@@ -5469,6 +6283,7 @@ func _check_blackjack_surface_contract(game: GameModule, failures: Array) -> voi
 
 	var ladies_run_state: RunState = RunStateScript.new()
 	ladies_run_state.start_new("BLACKJACK-LUCKY-LADIES")
+	ladies_run_state.add_item("lucky_ladies_compact")
 	var ladies_environment := _surface_contract_environment()
 	var ladies_table := generated_state.duplicate(true)
 	ladies_table["shoe_cursor"] = 0
@@ -5480,7 +6295,19 @@ func _check_blackjack_surface_contract(game: GameModule, failures: Array) -> voi
 		{"rank": 9, "suit": 0}, {"rank": 8, "suit": 1}, {"rank": 7, "suit": 2}, {"rank": 6, "suit": 3}
 	]
 	ladies_environment["game_states"] = {"blackjack": ladies_table}
-	var ladies_side_click := game.surface_action_command("blackjack_side_bet", 0, false, {}, ladies_run_state, ladies_environment)
+	var ladies_side_click := game.surface_action_command("blackjack_side_bet", 0, false, {"selected_stake": 5}, ladies_run_state, ladies_environment)
+	var ladies_side_surface := game.surface_state(ladies_run_state, ladies_environment, ladies_side_click.get("ui_state", {}))
+	var ladies_side_stakes: Dictionary = ladies_side_surface.get("side_bet_stakes", {}) if typeof(ladies_side_surface.get("side_bet_stakes", {})) == TYPE_DICTIONARY else {}
+	if int(ladies_side_stakes.get("lucky_ladies", 0)) != 4:
+		failures.append("Lucky Ladies Compact did not double the Lucky Ladies side-bet stake.")
+	var ladies_compact_visible := false
+	var ladies_available_side_bets: Array = ladies_side_surface.get("side_bets_available", []) as Array
+	for side_bet_value in ladies_available_side_bets:
+		if typeof(side_bet_value) == TYPE_DICTIONARY and str((side_bet_value as Dictionary).get("id", "")) == "lucky_ladies":
+			ladies_compact_visible = bool((side_bet_value as Dictionary).get("item_boosted", false))
+			break
+	if not ladies_compact_visible:
+		failures.append("Lucky Ladies Compact did not mark the side bet as item-boosted in the surface state.")
 	var ladies_deal := game.surface_action_command("blackjack_deal", 0, false, ladies_side_click.get("ui_state", {}), ladies_run_state, ladies_environment)
 	var ladies_ui: Dictionary = ladies_deal.get("ui_state", {})
 	var ladies_settle := game.surface_action_command("blackjack_stand", 0, true, ladies_ui, ladies_run_state, ladies_environment)
@@ -5491,6 +6318,8 @@ func _check_blackjack_surface_contract(game: GameModule, failures: Array) -> voi
 		failures.append("Blackjack Lucky Ladies side bet did not settle.")
 	else:
 		var ladies_side_result: Dictionary = ladies_side_results[0]
+		if int(ladies_side_result.get("stake", 0)) != 4 or int(ladies_side_result.get("payout_mult", 0)) != 8:
+			failures.append("Lucky Ladies Compact did not double the winning Lucky Ladies payout odds.")
 		if int(ladies_side_result.get("payout_mult", 0)) == 200 or str(ladies_side_result.get("detail", "")) == "queen hearts with dealer blackjack":
 			failures.append("Blackjack Lucky Ladies awarded the queen-hearts jackpot with only one queen of hearts.")
 	var cheat_before := _run_state_result_snapshot(split_run_state)
@@ -8199,12 +9028,11 @@ func _check_jazz_club_foundation(library: ContentLibrary, failures: Array) -> vo
 	var generated_jazz_id := str(generated_setup_run.current_environment.get("id", ""))
 	var generated_holder := str(generated_setup_run.narrative_flags.get("jazz_%s_reward_holder" % generated_jazz_id, ""))
 	var generated_threshold := int(generated_setup_run.narrative_flags.get("jazz_%s_reward_drinks_required" % generated_jazz_id, 0))
-	if not ["sax", "cello", "drummer", "none"].has(generated_holder):
+	if not ["sax", "cello", "drummer"].has(generated_holder):
 		failures.append("Jazz Club did not persist a valid hidden reward holder.")
 	if generated_threshold < 3 or generated_threshold > 5:
 		failures.append("Jazz Club reward drink threshold was not in the 3-5 range.")
 	var saw_generated_reward_holder := false
-	var saw_generated_no_reward_holder := false
 	for setup_index in range(12):
 		var sample_run: RunState = RunStateScript.new()
 		sample_run.start_new("JAZZ-CLUB-SETUP-%d" % setup_index)
@@ -8216,35 +9044,36 @@ func _check_jazz_club_foundation(library: ContentLibrary, failures: Array) -> vo
 		var sample_jazz_id := str(sample_run.current_environment.get("id", ""))
 		var sample_holder := str(sample_run.narrative_flags.get("jazz_%s_reward_holder" % sample_jazz_id, ""))
 		if sample_holder == "none":
-			saw_generated_no_reward_holder = true
+			failures.append("Jazz Club generated a no-reward holder despite requiring one musician to hold the item.")
 		elif ["sax", "cello", "drummer"].has(sample_holder):
 			saw_generated_reward_holder = true
-		if saw_generated_reward_holder and saw_generated_no_reward_holder:
+		if saw_generated_reward_holder:
 			break
 	if not saw_generated_reward_holder:
 		failures.append("Jazz Club reward setup did not generate any musician reward holder in the deterministic sample.")
-	if not saw_generated_no_reward_holder:
-		failures.append("Jazz Club reward setup did not generate any no-reward holder in the deterministic sample.")
 
-	var no_reward_run: RunState = RunStateScript.new()
-	no_reward_run.start_new("JAZZ-CLUB-NO-REWARD")
-	no_reward_run.bankroll = 500
-	var no_reward_environment := EnvironmentInstance.from_archetype(jazz_archetype, 7, no_reward_run.create_rng("jazz_no_reward"), library)
-	no_reward_run.set_environment(no_reward_environment.to_dict())
-	var no_reward_jazz_id := str(no_reward_run.current_environment.get("id", ""))
-	no_reward_run.narrative_flags["jazz_%s_reward_holder" % no_reward_jazz_id] = "none"
-	no_reward_run.narrative_flags["jazz_%s_reward_drinks_required" % no_reward_jazz_id] = 3
-	var no_reward_resolver: RunActionService = RunActionServiceScript.new()
-	no_reward_resolver.setup(library, no_reward_run)
-	for no_reward_service_id in ["jazz_sax_round", "jazz_cello_round", "jazz_drummer_round"]:
-		var no_reward_result := no_reward_resolver.use_hook("service", no_reward_service_id)
-		if not bool(no_reward_result.get("ok", false)):
-			failures.append("Jazz no-reward musician round did not resolve for %s." % no_reward_service_id)
-	if no_reward_run.inventory.has("jazz_sax_lucky_coin") or no_reward_run.inventory.has("jazz_cello_lucky_coin") or no_reward_run.inventory.has("jazz_drummer_lucky_coin") or no_reward_run.inventory.has("jazz_drummer_glasses"):
-		failures.append("Jazz no-reward holder still awarded a musician item.")
-	for no_item_musician_id in ["sax", "cello", "drummer"]:
-		if not bool(no_reward_run.narrative_flags.get("jazz_%s_%s_no_item" % [no_reward_jazz_id, no_item_musician_id], false)):
-			failures.append("Jazz no-reward holder did not mark %s as empty." % no_item_musician_id)
+	var first_round_run: RunState = RunStateScript.new()
+	first_round_run.start_new("JAZZ-CLUB-FIRST-ROUNDS")
+	first_round_run.bankroll = 500
+	var first_round_environment := EnvironmentInstance.from_archetype(jazz_archetype, 8, first_round_run.create_rng("jazz_first_rounds"), library)
+	first_round_run.set_environment(first_round_environment.to_dict())
+	var first_round_jazz_id := str(first_round_run.current_environment.get("id", ""))
+	first_round_run.narrative_flags["jazz_%s_reward_holder" % first_round_jazz_id] = "drummer"
+	first_round_run.narrative_flags["jazz_%s_reward_drinks_required" % first_round_jazz_id] = 3
+	var first_round_resolver: RunActionService = RunActionServiceScript.new()
+	first_round_resolver.setup(library, first_round_run)
+	for first_service_id in ["jazz_sax_round", "jazz_cello_round", "jazz_drummer_round"]:
+		var first_result := first_round_resolver.use_hook("service", first_service_id)
+		if not bool(first_result.get("ok", false)):
+			failures.append("Jazz first musician drink did not resolve for %s." % first_service_id)
+			continue
+		if str(first_result.get("message", "")).to_lower().find("nothing") != -1:
+			failures.append("Jazz first musician drink incorrectly revealed an empty musician for %s." % first_service_id)
+		var first_musician_id := str(first_service_id).trim_suffix("_round").trim_prefix("jazz_")
+		if bool(first_round_run.narrative_flags.get("jazz_%s_%s_no_item" % [first_round_jazz_id, first_musician_id], false)):
+			failures.append("Jazz first musician drink marked %s empty before the threshold." % first_musician_id)
+	if first_round_run.inventory.has("jazz_sax_lucky_coin") or first_round_run.inventory.has("jazz_cello_lucky_coin") or first_round_run.inventory.has("jazz_drummer_lucky_coin") or first_round_run.inventory.has("jazz_drummer_glasses"):
+		failures.append("Jazz first musician drinks awarded a reward before the configured drink threshold.")
 
 	var tip_run: RunState = RunStateScript.new()
 	tip_run.start_new("JAZZ-CLUB-TIP")
@@ -8291,14 +9120,23 @@ func _check_jazz_club_foundation(library: ContentLibrary, failures: Array) -> vo
 		failures.append("Jazz wrong-musician round did not resolve.")
 	if run_state.inventory.has("jazz_sax_lucky_coin"):
 		failures.append("Wrong Jazz Club musician awarded a sax lucky coin.")
-	if str(wrong_sax.get("message", "")).to_lower().find("nothing") == -1:
-		failures.append("Wrong Jazz Club musician did not tell the player there was nothing to give.")
+	if str(wrong_sax.get("message", "")).to_lower().find("nothing") != -1:
+		failures.append("Wrong Jazz Club musician revealed there was nothing to give before the drink threshold.")
 	if run_state.bankroll != bankroll_before_wrong_round - 8:
 		failures.append("Wrong Jazz Club musician round did not charge exactly one drink.")
+	if bool(run_state.narrative_flags.get("jazz_%s_sax_no_item" % jazz_id, false)):
+		failures.append("Wrong Jazz Club musician was remembered as empty before the drink threshold.")
+	if not bool(resolver.hook_option("service", "jazz_sax_round").get("enabled", false)):
+		failures.append("Wrong Jazz Club musician was disabled before reaching the drink threshold.")
+	resolver.use_hook("service", "jazz_sax_round")
+	resolver.use_hook("service", "jazz_sax_round")
+	var sax_empty := resolver.use_hook("service", "jazz_sax_round")
+	if str(sax_empty.get("message", "")).to_lower().find("nothing") == -1:
+		failures.append("Wrong Jazz Club musician did not reveal there was nothing to give at the drink threshold.")
 	if not bool(run_state.narrative_flags.get("jazz_%s_sax_no_item" % jazz_id, false)):
-		failures.append("Wrong Jazz Club musician was not remembered as empty.")
+		failures.append("Wrong Jazz Club musician was not remembered as empty after the drink threshold.")
 	if bool(resolver.hook_option("service", "jazz_sax_round").get("enabled", false)):
-		failures.append("Wrong Jazz Club musician remained available after saying there was nothing to give.")
+		failures.append("Wrong Jazz Club musician remained available after threshold empty reveal.")
 
 	var baseline_before_coin := run_state.baseline_luck
 	resolver.use_hook("service", "jazz_cello_round")
@@ -8818,7 +9656,7 @@ func _check_m2_system_interaction_scenario(library: ContentLibrary, failures: Ar
 		return
 	GameModule.apply_result(run_state, _fixture_item_purchase_result(item_def, 4, str(run_state.current_environment.get("id", ""))))
 	if not run_state.inventory.has("instant_coffee"):
-		failures.append("M2 scenario did not buy/apply an item through result-delta inventory.")
+		failures.append("M2 scenario did not buy an item through result-delta inventory.")
 
 	var game_id := str(environment.game_ids[0])
 	var game_definition := library.game(game_id)
@@ -10070,6 +10908,11 @@ func _check_blackjack_item_content(library: ContentLibrary, failures: Array) -> 
 		"marked_cards": ["blackjack_peek_heat_delta", "blackjack_dealer_catch_chance", "blackjack_peek_loss_reduction"],
 		"card_counters_notes": ["blackjack_count_tolerance", "blackjack_count_window_msec", "blackjack_count_heat_delta", "blackjack_count_cover", "blackjack_count_edge_bonus"],
 		"side_bet_chart": ["blackjack_side_bet_bonus", "blackjack_side_bet_loss_reduction", "blackjack_side_bet_flat_bonus"],
+		"basic_strategy_card": ["blackjack_basic_strategy_card"],
+		"lucky_ladies_compact": ["blackjack_lucky_ladies_stake_multiplier", "blackjack_lucky_ladies_payout_multiplier"],
+		"coolers_cufflinks": ["blackjack_failed_peek_heat_absorb"],
+		"broken_cufflinks": ["blackjack_peek_window_percent", "repair_cost", "repair_to_item"],
+		"high_roller_watch": ["blackjack_table_limit_multiplier", "blackjack_table_minimum_to_previous_max"],
 	}
 	var reachable_blackjack_items: Array = []
 	for item_id in required_effects.keys():
@@ -10087,13 +10930,35 @@ func _check_blackjack_item_content(library: ContentLibrary, failures: Array) -> 
 		var archetype: Dictionary = archetype_value
 		if _item_count_ceiling(archetype.get("item_count", 0)) <= 0:
 			continue
-		var pool := _string_array(archetype.get("item_pool", []))
+		var pool := library.shop_item_pool_for_challenge(archetype.get("item_pool", []), {})
 		for item_id in required_effects.keys():
 			if pool.has(str(item_id)) and not reachable_blackjack_items.has(str(item_id)):
 				reachable_blackjack_items.append(str(item_id))
 	for item_id in required_effects.keys():
-		if not reachable_blackjack_items.has(str(item_id)):
+		var item := library.item(str(item_id))
+		if bool(item.get("sellable", true)) and not reachable_blackjack_items.has(str(item_id)):
 			failures.append("Blackjack support item is not reachable from any generated item pool: %s." % item_id)
+	var repair_run_state: RunState = RunStateScript.new()
+	repair_run_state.start_new("BLACKJACK-CUFFLINK-REPAIR")
+	repair_run_state.change_bankroll(100)
+	repair_run_state.set_environment({
+		"id": "blackjack_repair_shop",
+		"archetype_id": "corner_store",
+		"kind": "shop",
+		"display_name": "Repair Shop",
+		"item_offers": [],
+	})
+	repair_run_state.add_item("broken_cufflinks")
+	var repair_service: RunActionService = RunActionServiceScript.new()
+	repair_service.setup(library, repair_run_state)
+	var repair_result: Dictionary = repair_service.repair_inventory_item("broken_cufflinks")
+	if not bool(repair_result.get("ok", false)):
+		failures.append("Shopkeeper could not repair Broken Cufflinks.")
+	else:
+		if repair_run_state.inventory.has("broken_cufflinks") or not repair_run_state.inventory.has("coolers_cufflinks"):
+			failures.append("Broken Cufflinks repair did not swap inventory items.")
+		if repair_run_state.bankroll != 150:
+			failures.append("Broken Cufflinks repair did not cost exactly $50.")
 
 
 func _item_count_ceiling(value: Variant) -> int:

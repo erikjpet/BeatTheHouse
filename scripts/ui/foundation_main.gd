@@ -39,6 +39,9 @@ const GAME_SURFACE_REALTIME_REFRESH_INTERVAL_MSEC := 16
 const RESULT_FEEDBACK_WIDTH := 340.0
 const RESULT_FEEDBACK_HEIGHT := 46.0
 const RESULT_FEEDBACK_MAX_CHARS := 64
+const MAIN_MENU_COLLAPSED_SIZE := Vector2(780, 520)
+const MAIN_MENU_EXPANDED_SIZE := Vector2(940, 380)
+const MAIN_MENU_VIEWPORT_MARGIN := Vector2(32, 24)
 const ACCESSIBILITY_BASE_FONT_META := "accessibility_base_font_size"
 const ACCESSIBILITY_BASE_MIN_SIZE_META := "accessibility_base_min_size"
 const ACCESSIBILITY_BASE_COLOR_META := "accessibility_base_font_color"
@@ -49,6 +52,7 @@ const ProfileInventoryScript := preload("res://scripts/core/profile_inventory.gd
 const SettingsMenuScript := preload("res://scripts/ui/settings_menu.gd")
 const PixelSceneCanvasScript := preload("res://scripts/ui/pixel_scene_canvas.gd")
 const GameSurfaceCanvasScript := preload("res://scripts/ui/game_surface_canvas.gd")
+const SfxPlayerScript := preload("res://scripts/ui/sfx_player.gd")
 const ProceduralMusicPlayerScript := preload("res://scripts/ui/procedural_music_player.gd")
 const RunTerminalEvaluatorScript := preload("res://scripts/core/run_terminal_evaluator.gd")
 const RunActionServiceScript := preload("res://scripts/core/run_action_service.gd")
@@ -63,6 +67,7 @@ var platform_services: PlatformServices
 var run_action_service: RunActionService
 var current_game: GameModule
 var last_game_result: Dictionary = {}
+var last_environment_runtime_result: Dictionary = {}
 var selected_action_id: String = ""
 var selected_action_kind: String = ""
 var selected_action_label: String = ""
@@ -102,6 +107,8 @@ var pending_wager_confirm_action_id: String = ""
 var pending_wager_confirm_skip_stake_validation := false
 var pending_wager_confirm_preserve_surface_ui_state := false
 var pending_wager_confirm_stake: int = 0
+var pending_wager_confirm_source_game_id: String = ""
+var pending_all_in_result_terminal_check := false
 var pending_active_item_id: String = ""
 var run_inventory_popup_mode: String = ""
 var travel_transition_active := false
@@ -109,6 +116,7 @@ var travel_transition_target_id: String = ""
 var travel_transition_target_label: String = ""
 var game_surface_auto_resolving := false
 var last_game_surface_realtime_refresh_msec := 0
+var surface_feature_music_ducking := false
 var drunk_time_anchor_real_msec := 0
 var drunk_time_anchor_scaled_msec := 0
 var drunk_time_last_scale := 1.0
@@ -118,6 +126,7 @@ var autosave_slot_id := AUTOSAVE_SLOT
 
 var start_screen: Control
 var run_screen: Control
+var main_menu_panel: PanelContainer
 var start_menu_controls: VBoxContainer
 var start_menu_intro: VBoxContainer
 var release_framing_label: Label
@@ -140,6 +149,13 @@ var profile_chip_texture: Texture2D
 var run_item_icon_texture_cache: Dictionary = {}
 var seed_input: LineEdit
 var main_menu_seed_counter: int = 0
+var content_group_config_button: Button
+var content_group_panel: PanelContainer
+var content_group_status_label: Label
+var content_group_list: GridContainer
+var content_group_toggles: Dictionary = {}
+var selected_content_group_ids: Array = []
+var start_menu_action_controls: Array[Control] = []
 var start_status_label: Label
 var new_run_button: Button
 var daily_run_button: Button
@@ -163,6 +179,7 @@ var run_menu_main_menu_button: Button
 var settings_overlay: Control
 var settings_menu: SettingsMenu
 var procedural_music_player: ProceduralMusicPlayer
+var environment_sfx_player: Node
 var event_choice_popup_overlay: Control
 var event_choice_popup_panel: PanelContainer
 var event_choice_popup_title_label: Label
@@ -248,6 +265,9 @@ func uses_foundation_runtime() -> bool:
 func start_foundation_run(seed_text: String = DEFAULT_SEED, challenge_config: Dictionary = {}) -> void:
 	if library == null:
 		_initialize_foundation()
+	pending_all_in_result_terminal_check = false
+	last_environment_runtime_result = {}
+	close_content_group_config()
 	_hide_run_menu()
 	_hide_run_journal_popup()
 	_hide_travel_transition()
@@ -359,6 +379,8 @@ func enter_game(game_id: String) -> void:
 
 
 func back_to_environment() -> void:
+	if _resolve_pending_all_in_terminal_result():
+		return
 	_reset_game_surface_runtime_state()
 	current_game = null
 	last_game_result = {}
@@ -514,6 +536,8 @@ func _set_surface_stake_to_bound(bound_name: String) -> bool:
 func _advance_game_surface_automation() -> void:
 	if game_surface_auto_resolving or run_state == null or current_game == null:
 		return
+	if _blocking_decision_popup_is_visible():
+		return
 	var ui_state := _current_game_surface_ui_state()
 	if not current_game.surface_needs_auto_tick(ui_state, run_state, run_state.current_environment):
 		return
@@ -527,6 +551,8 @@ func _advance_game_surface_automation() -> void:
 
 func _advance_game_surface_realtime_state() -> void:
 	if game_surface_auto_resolving or run_state == null or current_game == null or game_surface_canvas == null:
+		return
+	if _blocking_decision_popup_is_visible():
 		return
 	if current_screen != SCREEN_GAME or not game_surface_canvas.visible or not game_surface_canvas.is_visible_in_tree():
 		return
@@ -542,6 +568,8 @@ func _advance_game_surface_realtime_state() -> void:
 func _advance_environment_game_runtime() -> void:
 	if game_surface_auto_resolving or run_state == null or library == null or run_state.is_terminal():
 		return
+	if _blocking_decision_popup_is_visible():
+		return
 	var now_msec := Time.get_ticks_msec()
 	for game_id in _string_array(run_state.current_environment.get("game_ids", [])):
 		if current_game != null and game_id == current_game.get_id():
@@ -551,20 +579,34 @@ func _advance_environment_game_runtime() -> void:
 			continue
 		if not game.environment_runtime_needs_tick(run_state, run_state.current_environment, now_msec):
 			continue
+		var runtime_wager_cost := maxi(0, game.wager_cost_for_context("spin", 0, run_state, run_state.current_environment, {}))
+		if _wager_needs_final_bankroll_confirmation(runtime_wager_cost):
+			_pause_environment_runtime_for_wager_confirmation(game, game_id)
+			_show_wager_confirmation_popup("spin", runtime_wager_cost, runtime_wager_cost, true, false, game_id)
+			_show_message("%s autoplay needs your approval before risking your last cash." % game.get_display_name())
+			_refresh_runtime_environment_views()
+			return
 		var rng := run_state.create_rng()
 		var command := game.environment_runtime_tick(run_state, run_state.current_environment, rng, now_msec)
 		if command.is_empty() or not bool(command.get("handled", false)):
 			continue
+		var audio_cue := str(command.get("audio_cue", ""))
+		if not audio_cue.is_empty():
+			_play_environment_audio_cue(audio_cue)
 		var result: Dictionary = command.get("result", {})
 		if not result.is_empty():
 			if bool(result.get("ok", false)):
 				run_state.advance_environment_turns(1)
 				if bool(result.get("host_apply_result", false)):
 					GameModule.apply_result(run_state, result, rng)
-			last_game_result = result.duplicate(true)
-			last_item_result = {}
-			last_hook_result = {}
-			_show_message(str(result.get("message", "")))
+			last_environment_runtime_result = result.duplicate(true)
+			if current_game == null:
+				last_game_result = result.duplicate(true)
+				last_item_result = {}
+				last_hook_result = {}
+				_show_message(str(result.get("message", "")))
+			elif bool(command.get("attention", false)) or bool(result.get("slot_pending_feature", false)):
+				_show_message(str(result.get("message", command.get("message", ""))))
 			_autosave_foundation_run("Autosaved.")
 		elif command.has("message"):
 			_show_message(str(command.get("message", "")))
@@ -583,6 +625,8 @@ func _advance_alcohol_absorption() -> void:
 
 func _advance_deferred_bankroll_failure() -> void:
 	if run_state == null or library == null or run_state.is_terminal() or run_state.bankroll > 0:
+		return
+	if _all_in_result_terminal_check_is_pending():
 		return
 	var terminal_result := RunTerminalEvaluatorScript.evaluate(run_state, library)
 	if bool(terminal_result.get("bankroll_zero_deferred", false)):
@@ -618,6 +662,7 @@ func _current_game_surface_status() -> Dictionary:
 func _reset_game_surface_runtime_state() -> void:
 	if game_surface_canvas != null:
 		game_surface_canvas.stop_surface_audio()
+	_set_surface_feature_music_ducking(false)
 	game_surface_ui_state = {}
 	game_surface_auto_resolving = false
 	last_game_surface_realtime_refresh_msec = 0
@@ -1007,6 +1052,28 @@ func sell_inventory_item(item_id: String) -> bool:
 	return true
 
 
+func repair_inventory_item(item_id: String) -> bool:
+	if run_state == null or library == null:
+		return false
+	_refresh_run_action_service()
+	var resolved := run_action_service.repair_inventory_item(item_id)
+	if not bool(resolved.get("ok", false)):
+		_show_message(str(resolved.get("message", "That item cannot be repaired.")))
+		_refresh()
+		return false
+	var result: Dictionary = resolved.get("result", {})
+	last_item_result = result.duplicate(true)
+	last_game_result = {}
+	last_hook_result = {}
+	_set_current_screen(SCREEN_RESULT)
+	_show_message(str(result.get("message", "")))
+	_autosave_foundation_run("Autosaved.")
+	_refresh()
+	if _run_inventory_popup_is_visible():
+		_open_run_inventory_popup("merchant_sale")
+	return true
+
+
 # Selects a service hook without mutating simulation state.
 func select_service_hook(service_id: String) -> bool:
 	var option := _service_hook(service_id)
@@ -1258,6 +1325,7 @@ func _load_foundation_run_from_slot(return_to_start_on_missing: bool) -> bool:
 			_refresh_run_menu()
 		return false
 	_reset_game_surface_runtime_state()
+	pending_all_in_result_terminal_check = false
 	run_state = loaded
 	dev_game_test_mode = false
 	_refresh_run_action_service()
@@ -1586,22 +1654,28 @@ func _build_start_screen() -> void:
 	main_menu_background.mouse_filter = Control.MOUSE_FILTER_IGNORE
 
 	var menu_panel := _panel_container(Color("#050611", 0.96), VisualStyle.PURPLE_2)
-	menu_panel.custom_minimum_size = Vector2(780, 560)
+	main_menu_panel = menu_panel
 	menu_panel.anchor_left = 0.5
 	menu_panel.anchor_top = 0.5
 	menu_panel.anchor_right = 0.5
 	menu_panel.anchor_bottom = 0.5
-	menu_panel.offset_left = -390
-	menu_panel.offset_top = -280
-	menu_panel.offset_right = 390
-	menu_panel.offset_bottom = 280
+	_apply_main_menu_panel_size(MAIN_MENU_COLLAPSED_SIZE)
 	start_screen.add_child(menu_panel)
+
+	var menu_margin := MarginContainer.new()
+	menu_margin.add_theme_constant_override("margin_left", 18)
+	menu_margin.add_theme_constant_override("margin_top", 16)
+	menu_margin.add_theme_constant_override("margin_right", 18)
+	menu_margin.add_theme_constant_override("margin_bottom", 16)
+	menu_margin.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	menu_margin.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	menu_panel.add_child(menu_margin)
 
 	var stack := VBoxContainer.new()
 	stack.add_theme_constant_override("separation", 12)
 	stack.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	stack.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	menu_panel.add_child(stack)
+	stack.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
+	menu_margin.add_child(stack)
 
 	start_menu_intro = VBoxContainer.new()
 	start_menu_intro.add_theme_constant_override("separation", 12)
@@ -1636,18 +1710,16 @@ func _build_start_screen() -> void:
 	_set_control_font_color(start_status_label, VisualStyle.YELLOW)
 	start_menu_intro.add_child(start_status_label)
 
-	var pillars := HBoxContainer.new()
-	pillars.add_theme_constant_override("separation", 10)
-	pillars.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	start_menu_intro.add_child(pillars)
-	pillars.add_child(_menu_pillar("READ", "Venues have tells, watchers, and routes."))
-	pillars.add_child(_menu_pillar("BUILD", "Items shape clean play, cheating, debt, or scouting."))
-	pillars.add_child(_menu_pillar("ESCAPE", "Pressure blocks actions until you answer it."))
-
 	start_menu_controls = VBoxContainer.new()
 	start_menu_controls.add_theme_constant_override("separation", 12)
 	start_menu_controls.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	start_menu_controls.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
 	stack.add_child(start_menu_controls)
+
+	var seed_row := HBoxContainer.new()
+	seed_row.add_theme_constant_override("separation", 8)
+	seed_row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	start_menu_controls.add_child(seed_row)
 
 	seed_input = LineEdit.new()
 	seed_input.text = _generate_menu_seed_text()
@@ -1658,11 +1730,27 @@ func _build_start_screen() -> void:
 	_set_control_font_color(seed_input, VisualStyle.WHITE)
 	seed_input.add_theme_stylebox_override("normal", VisualStyle.pixel_box(Color("#080817", 0.98), VisualStyle.TEAL, 2))
 	seed_input.add_theme_stylebox_override("focus", VisualStyle.pixel_box(Color("#111024", 0.98), VisualStyle.CYAN, 2))
-	start_menu_controls.add_child(seed_input)
+	seed_row.add_child(seed_input)
+
+	content_group_config_button = Button.new()
+	content_group_config_button.text = "⚙"
+	content_group_config_button.tooltip_text = "Configure run content."
+	content_group_config_button.custom_minimum_size = Vector2(54, 54)
+	content_group_config_button.size_flags_horizontal = Control.SIZE_SHRINK_END
+	_set_control_font_color(content_group_config_button, VisualStyle.WHITE)
+	_set_control_font_size(content_group_config_button, 22)
+	content_group_config_button.add_theme_stylebox_override("normal", VisualStyle.pixel_box(Color("#080817", 0.98), VisualStyle.CYAN_2, 2))
+	content_group_config_button.add_theme_stylebox_override("hover", VisualStyle.pixel_box(Color("#13142c", 0.98), VisualStyle.CYAN, 2))
+	content_group_config_button.add_theme_stylebox_override("pressed", VisualStyle.pixel_box(Color("#271538", 1.0), VisualStyle.YELLOW, 2))
+	content_group_config_button.pressed.connect(toggle_content_group_config)
+	seed_row.add_child(content_group_config_button)
+
+	_build_content_group_controls(start_menu_controls)
 
 	var run_row := HBoxContainer.new()
 	run_row.add_theme_constant_override("separation", 12)
 	start_menu_controls.add_child(run_row)
+	start_menu_action_controls.append(run_row)
 	new_run_button = _main_menu_button("New Run", "Start a seeded climb", Callable(self, "_on_start_pressed"))
 	run_row.add_child(new_run_button)
 	daily_run_button = _main_menu_button("Daily Run", "Start today's hidden-seed challenge", Callable(self, "start_daily_challenge_run"))
@@ -1673,6 +1761,7 @@ func _build_start_screen() -> void:
 	var utility_row := HBoxContainer.new()
 	utility_row.add_theme_constant_override("separation", 12)
 	start_menu_controls.add_child(utility_row)
+	start_menu_action_controls.append(utility_row)
 	settings_button = _main_menu_button("Settings", "Resolution and sound", Callable(self, "open_settings_menu"))
 	utility_row.add_child(settings_button)
 	inventory_button = _main_menu_button("Inventory", "Profile stash", Callable(self, "open_inventory_page"))
@@ -1683,10 +1772,229 @@ func _build_start_screen() -> void:
 
 	exit_game_button = _main_menu_button("Exit Game", "Close the game window", Callable(self, "exit_game"))
 	start_menu_controls.add_child(exit_game_button)
+	start_menu_action_controls.append(exit_game_button)
 
 	_build_inventory_page(stack)
 	if show_game_library_launcher:
 		_build_game_test_menu(stack)
+
+
+func _build_content_group_controls(parent: VBoxContainer) -> void:
+	_ensure_menu_content_groups_initialized()
+	var panel := _panel_container(Color("#070916", 0.92), VisualStyle.CYAN_2)
+	panel.visible = false
+	panel.custom_minimum_size = Vector2(0, 230)
+	panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	panel.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
+	parent.add_child(panel)
+	content_group_panel = panel
+	var panel_margin := MarginContainer.new()
+	panel_margin.add_theme_constant_override("margin_left", 12)
+	panel_margin.add_theme_constant_override("margin_top", 10)
+	panel_margin.add_theme_constant_override("margin_right", 12)
+	panel_margin.add_theme_constant_override("margin_bottom", 10)
+	panel_margin.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	panel_margin.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	panel.add_child(panel_margin)
+	var stack := VBoxContainer.new()
+	stack.add_theme_constant_override("separation", 8)
+	stack.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	stack.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	panel_margin.add_child(stack)
+	var heading_row := HBoxContainer.new()
+	heading_row.add_theme_constant_override("separation", 8)
+	heading_row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	heading_row.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
+	heading_row.custom_minimum_size = Vector2(0, 34)
+	stack.add_child(heading_row)
+	var heading := _label("Run Content", 14)
+	heading.custom_minimum_size = Vector2(132, 28)
+	heading.autowrap_mode = TextServer.AUTOWRAP_OFF
+	heading.clip_text = true
+	_set_control_font_color(heading, VisualStyle.YELLOW)
+	heading_row.add_child(heading)
+	content_group_status_label = _label("", 11)
+	content_group_status_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	content_group_status_label.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	content_group_status_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	content_group_status_label.clip_text = true
+	_set_control_font_color(content_group_status_label, VisualStyle.CYAN_2)
+	heading_row.add_child(content_group_status_label)
+	var done_button := _button("Done", Callable(self, "close_content_group_config"))
+	done_button.custom_minimum_size = Vector2(88, 30)
+	done_button.size_flags_horizontal = Control.SIZE_SHRINK_END
+	done_button.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	_set_control_font_size(done_button, 12)
+	heading_row.add_child(done_button)
+	var scroll := ScrollContainer.new()
+	scroll.custom_minimum_size = Vector2(0, 164)
+	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_AUTO
+	scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	scroll.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
+	stack.add_child(scroll)
+	content_group_list = GridContainer.new()
+	content_group_list.columns = 3
+	content_group_list.add_theme_constant_override("h_separation", 10)
+	content_group_list.add_theme_constant_override("v_separation", 6)
+	content_group_list.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	scroll.add_child(content_group_list)
+	_rebuild_content_group_toggles()
+	_refresh_content_group_controls()
+
+
+func _apply_main_menu_panel_size(size: Vector2) -> void:
+	if main_menu_panel == null:
+		return
+	var viewport_size := get_viewport_rect().size
+	var max_size := Vector2(
+		maxf(320.0, viewport_size.x - MAIN_MENU_VIEWPORT_MARGIN.x * 2.0),
+		maxf(420.0, viewport_size.y - MAIN_MENU_VIEWPORT_MARGIN.y * 2.0)
+	)
+	var applied_size := Vector2(minf(size.x, max_size.x), minf(size.y, max_size.y))
+	var centered_top := -applied_size.y * 0.5
+	var min_top := -viewport_size.y * 0.5 + MAIN_MENU_VIEWPORT_MARGIN.y
+	var max_top := viewport_size.y * 0.5 - MAIN_MENU_VIEWPORT_MARGIN.y - applied_size.y
+	var top_offset := centered_top
+	if max_top >= min_top:
+		top_offset = clampf(centered_top, min_top, max_top)
+	else:
+		top_offset = min_top
+	main_menu_panel.custom_minimum_size = applied_size
+	main_menu_panel.offset_left = -applied_size.x * 0.5
+	main_menu_panel.offset_top = top_offset
+	main_menu_panel.offset_right = applied_size.x * 0.5
+	main_menu_panel.offset_bottom = top_offset + applied_size.y
+
+
+func toggle_content_group_config() -> void:
+	if content_group_panel == null:
+		return
+	if content_group_panel.visible:
+		close_content_group_config()
+	else:
+		open_content_group_config()
+
+
+func open_content_group_config() -> void:
+	if content_group_panel == null:
+		return
+	_ensure_menu_content_groups_initialized()
+	_refresh_content_group_controls()
+	if start_menu_intro != null:
+		start_menu_intro.visible = false
+	_set_start_menu_action_controls_visible(false)
+	content_group_panel.visible = true
+	_apply_main_menu_panel_size(MAIN_MENU_EXPANDED_SIZE)
+
+
+func close_content_group_config() -> void:
+	if content_group_panel != null:
+		content_group_panel.visible = false
+	if start_menu_intro != null:
+		start_menu_intro.visible = true
+	_set_start_menu_action_controls_visible(true)
+	_apply_main_menu_panel_size(MAIN_MENU_COLLAPSED_SIZE)
+
+
+func _set_start_menu_action_controls_visible(is_visible: bool) -> void:
+	for control in start_menu_action_controls:
+		if is_instance_valid(control):
+			control.visible = is_visible
+
+
+func _rebuild_content_group_toggles() -> void:
+	if content_group_list == null:
+		return
+	for child in content_group_list.get_children():
+		child.queue_free()
+	content_group_toggles = {}
+	if library == null:
+		return
+	for option_value in library.content_group_options(selected_content_group_ids):
+		if typeof(option_value) != TYPE_DICTIONARY:
+			continue
+		var option: Dictionary = option_value
+		var group_id := str(option.get("id", ""))
+		if group_id.is_empty():
+			continue
+		var check := CheckBox.new()
+		check.text = str(option.get("display_name", group_id.capitalize()))
+		check.tooltip_text = str(option.get("description", ""))
+		check.button_pressed = bool(option.get("selected", false))
+		check.custom_minimum_size = Vector2(0, 30)
+		check.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		_set_control_font_color(check, VisualStyle.WHITE)
+		_set_control_font_size(check, 11)
+		check.toggled.connect(Callable(self, "_on_content_group_toggled").bind(group_id))
+		content_group_list.add_child(check)
+		content_group_toggles[group_id] = check
+
+
+func _ensure_menu_content_groups_initialized() -> void:
+	if library == null:
+		return
+	if selected_content_group_ids.is_empty():
+		selected_content_group_ids = library.default_content_group_ids()
+
+
+func _on_content_group_toggled(pressed: bool, group_id: String) -> void:
+	if library == null or group_id.is_empty():
+		return
+	var selected := _selected_content_group_set()
+	if pressed:
+		selected[group_id] = true
+	else:
+		selected.erase(group_id)
+	selected_content_group_ids = library.normalize_content_group_ids(selected.keys())
+	_refresh_content_group_controls()
+
+
+func _refresh_content_group_controls() -> void:
+	if library == null:
+		return
+	selected_content_group_ids = library.normalize_content_group_ids(selected_content_group_ids)
+	var selected := _selected_content_group_set()
+	for group_id in content_group_toggles.keys():
+		var check := content_group_toggles[group_id] as CheckBox
+		if check == null:
+			continue
+		var should_press := bool(selected.get(str(group_id), false))
+		if check.button_pressed != should_press:
+			check.set_pressed_no_signal(should_press)
+	if content_group_status_label != null:
+		var selected_count := selected_content_group_ids.size()
+		var total_count := library.content_groups.size()
+		content_group_status_label.text = "%d of %d groups enabled" % [selected_count, total_count]
+
+
+func _selected_content_group_set() -> Dictionary:
+	var result: Dictionary = {}
+	for group_id in _selected_content_groups_for_new_run():
+		result[str(group_id)] = true
+	return result
+
+
+func _selected_content_groups_for_new_run() -> Array:
+	if library == null:
+		return []
+	return library.normalize_content_group_ids(selected_content_group_ids)
+
+
+func _content_group_option_snapshot() -> Array:
+	if library == null:
+		return []
+	return library.content_group_options(_selected_content_groups_for_new_run())
+
+
+func _content_group_challenge_for_seed(seed_text: String) -> Dictionary:
+	if library == null:
+		return RunState.standard_challenge(seed_text)
+	var selected := _selected_content_groups_for_new_run()
+	var defaults := library.default_content_group_ids()
+	if JSON.stringify(selected) == JSON.stringify(defaults):
+		return RunState.standard_challenge(seed_text)
+	return RunState.custom_challenge("content_groups", seed_text, {"content_groups": selected})
 
 
 func _build_settings_overlay() -> void:
@@ -2589,6 +2897,9 @@ func _set_current_screen(screen_id: String) -> void:
 func _update_procedural_music() -> void:
 	if procedural_music_player == null:
 		return
+	if surface_feature_music_ducking:
+		procedural_music_player.stop()
+		return
 	if run_state == null or current_screen == SCREEN_START:
 		procedural_music_player.stop()
 		return
@@ -2598,6 +2909,23 @@ func _update_procedural_music() -> void:
 func _stop_procedural_music() -> void:
 	if procedural_music_player != null:
 		procedural_music_player.stop()
+
+
+func _sync_surface_feature_music_ducking(surface_state: Dictionary) -> void:
+	var feature_scene: Dictionary = _copy_dict(surface_state.get("slot_feature_scene", {}))
+	var music: Dictionary = _copy_dict(feature_scene.get("feature_music", {}))
+	var should_duck := bool(feature_scene.get("active", false)) and bool(music.get("duck_background_music", false))
+	_set_surface_feature_music_ducking(should_duck)
+
+
+func _set_surface_feature_music_ducking(enabled: bool) -> void:
+	if surface_feature_music_ducking == enabled:
+		return
+	surface_feature_music_ducking = enabled
+	if enabled:
+		_stop_procedural_music()
+	else:
+		_update_procedural_music()
 
 
 func _is_game_focus_mode() -> bool:
@@ -2989,7 +3317,7 @@ func _add_context_item_actions(card: VBoxContainer, item_id: String) -> void:
 		card.add_child(_muted_label("That offer is no longer available.", 13))
 		return
 	if selected_item_offer_id == item_id:
-		_add_card_button(card, "Buy / apply for %d" % int(offer.get("price", 0)), Callable(self, "confirm_selected_item_offer"), false, true)
+		_add_card_button(card, "Buy", Callable(self, "confirm_selected_item_offer"), false, true)
 	else:
 		_add_card_button(card, "Select item", Callable(self, "select_item_offer").bind(item_id))
 
@@ -3259,10 +3587,16 @@ func _resolve_game_action(action_id: String, skip_stake_validation: bool = false
 		return
 	var wager_cost := _wager_cost_for_action(action_id, stake)
 	if not wager_confirmed and _wager_needs_final_bankroll_confirmation(wager_cost):
+		_pause_repeating_surface_action_for_wager_confirmation()
 		_show_wager_confirmation_popup(action_id, stake, wager_cost, skip_stake_validation, preserve_surface_ui_state)
 		return
+	var confirmed_all_in_wager := wager_confirmed and _wager_needs_final_bankroll_confirmation(wager_cost)
+	if confirmed_all_in_wager:
+		run_state.begin_deferred_bankroll_zero_resolution()
 	var rng := run_state.create_rng()
 	var result := current_game.resolve_with_context(action_id, stake, run_state, run_state.current_environment, rng, _current_game_surface_ui_state())
+	if confirmed_all_in_wager:
+		result["defer_bankroll_zero_failure"] = true
 	var result_updates_surface_ui := result.has("ui_state") and typeof(result.get("ui_state")) == TYPE_DICTIONARY
 	if result_updates_surface_ui:
 		_store_current_game_surface_ui_state(result.get("ui_state", {}) as Dictionary)
@@ -3276,8 +3610,13 @@ func _resolve_game_action(action_id: String, skip_stake_validation: bool = false
 			GameModule.apply_result(run_state, result, rng)
 		elif runtime_tick_in_progress:
 			run_state.save_rng(rng)
+	elif confirmed_all_in_wager:
+		run_state.clear_deferred_bankroll_zero_resolution()
+	if confirmed_all_in_wager and run_state.defer_next_bankroll_zero_failure:
+		run_state.clear_deferred_bankroll_zero_resolution()
 	var embeds_result_feedback := _current_game_embeds_result_feedback()
 	last_game_result = result.duplicate(true)
+	pending_all_in_result_terminal_check = confirmed_all_in_wager and bool(result.get("ok", false)) and run_state != null and run_state.bankroll <= 0 and not bool(result.get("won", false))
 	if runtime_tick_in_progress:
 		if game_surface_canvas != null and current_screen == SCREEN_GAME:
 			game_surface_canvas.render_game_snapshot(_game_view_snapshot())
@@ -3301,9 +3640,13 @@ func confirm_pending_wager_action() -> void:
 	var action_id := pending_wager_confirm_action_id
 	var skip_stake_validation := pending_wager_confirm_skip_stake_validation
 	var preserve_surface_ui_state := pending_wager_confirm_preserve_surface_ui_state
+	var source_game_id := pending_wager_confirm_source_game_id
 	_clear_pending_wager_confirmation()
 	_hide_event_choice_popup()
-	_resolve_game_action(action_id, skip_stake_validation, preserve_surface_ui_state, true)
+	if not source_game_id.is_empty() and (current_game == null or source_game_id != current_game.get_id()):
+		_resolve_environment_runtime_wager_action(source_game_id, action_id, true)
+	else:
+		_resolve_game_action(action_id, skip_stake_validation, preserve_surface_ui_state, true)
 
 
 func cancel_pending_wager_confirmation() -> void:
@@ -3325,7 +3668,98 @@ func _wager_needs_final_bankroll_confirmation(wager_cost: int) -> bool:
 	return run_state.bankroll > 0 and run_state.bankroll - wager_cost <= 0
 
 
-func _show_wager_confirmation_popup(action_id: String, stake: int, wager_cost: int, skip_stake_validation: bool, preserve_surface_ui_state: bool) -> void:
+func _pause_environment_runtime_for_wager_confirmation(game: GameModule, _game_id: String) -> void:
+	if game == null or run_state == null:
+		return
+	var command := game.surface_pause_repeating_action_for_confirmation({}, run_state, run_state.current_environment)
+	if not command.is_empty() and bool(command.get("handled", false)):
+		_show_message(str(command.get("message", "Autoplay paused for confirmation.")))
+
+
+func _resolve_environment_runtime_wager_action(game_id: String, action_id: String, wager_confirmed: bool = false) -> void:
+	if run_state == null or library == null or game_id.is_empty():
+		return
+	var game := _game_module_for_id(game_id)
+	if game == null:
+		_show_message("That background game is no longer available.")
+		_refresh()
+		return
+	var wager_cost := maxi(0, game.wager_cost_for_context(action_id, 0, run_state, run_state.current_environment, {}))
+	var confirmed_all_in_wager := wager_confirmed and _wager_needs_final_bankroll_confirmation(wager_cost)
+	if confirmed_all_in_wager:
+		run_state.begin_deferred_bankroll_zero_resolution()
+	var rng := run_state.create_rng()
+	var result := game.resolve_with_context(action_id, 0, run_state, run_state.current_environment, rng, {})
+	if confirmed_all_in_wager:
+		result["defer_bankroll_zero_failure"] = true
+	if bool(result.get("ok", false)):
+		run_state.advance_environment_turns(1)
+		if bool(result.get("host_apply_result", false)):
+			GameModule.apply_result(run_state, result, rng)
+	elif confirmed_all_in_wager:
+		run_state.clear_deferred_bankroll_zero_resolution()
+	if confirmed_all_in_wager and run_state.defer_next_bankroll_zero_failure:
+		run_state.clear_deferred_bankroll_zero_resolution()
+	last_environment_runtime_result = result.duplicate(true)
+	if current_game == null:
+		last_game_result = result.duplicate(true)
+	pending_all_in_result_terminal_check = confirmed_all_in_wager and bool(result.get("ok", false)) and run_state != null and run_state.bankroll <= 0 and not bool(result.get("won", false))
+	var runtime_state := game.environment_runtime_state(run_state, run_state.current_environment)
+	if bool(runtime_state.get("slot_pending_feature", false)):
+		_play_environment_audio_cue(_slot_runtime_feature_audio_cue(runtime_state))
+		_show_message("%s feature is ready. Open the machine to play it." % game.get_display_name())
+	else:
+		_show_message(str(result.get("message", "")))
+	_autosave_foundation_run("Autosaved.")
+	_refresh_runtime_environment_views()
+
+
+func _blocking_decision_popup_is_visible() -> bool:
+	if not _event_choice_popup_is_visible():
+		return false
+	return bool(pending_event_choice_popup_snapshot.get("blocking", true))
+
+
+func _pause_repeating_surface_action_for_wager_confirmation() -> void:
+	if current_game == null or run_state == null:
+		return
+	var command := current_game.surface_pause_repeating_action_for_confirmation(_current_game_surface_ui_state(), run_state, run_state.current_environment)
+	if not command.is_empty() and bool(command.get("handled", false)):
+		_show_message(str(command.get("message", "Repeating play paused for confirmation.")))
+
+
+func _wager_confirmation_action_label(action_id: String, source_game_id: String = "") -> String:
+	if not source_game_id.is_empty():
+		var source_game := _game_module_for_id(source_game_id)
+		if source_game != null:
+			return "%s autoplay spin" % source_game.get_display_name()
+	var action := _available_game_action(action_id, selected_action_kind)
+	if action.is_empty():
+		action = _available_game_action(action_id, "legal")
+	if action.is_empty():
+		action = _available_game_action(action_id, "cheat")
+	return _action_label(action) if not action.is_empty() else action_id
+
+
+func _play_environment_audio_cue(cue_id: String) -> void:
+	var normalized_cue := cue_id.strip_edges()
+	if normalized_cue.is_empty():
+		return
+	if environment_sfx_player == null:
+		environment_sfx_player = SfxPlayerScript.new()
+		add_child(environment_sfx_player)
+	if normalized_cue.begins_with("bonus_start") and environment_sfx_player.has_method("play_slot_event"):
+		environment_sfx_player.call("play_slot_event", normalized_cue, -1.0, 1.0)
+	elif environment_sfx_player.has_method("play_surface_cue"):
+		environment_sfx_player.call("play_surface_cue", normalized_cue, {"route": "slot_button", "action": normalized_cue}, {})
+
+
+func _slot_runtime_feature_audio_cue(runtime_state: Dictionary) -> String:
+	var cue := str(runtime_state.get("slot_feature_audio_cue", ""))
+	return cue if not cue.is_empty() else "bonus_start"
+
+
+func _show_wager_confirmation_popup(action_id: String, stake: int, wager_cost: int, skip_stake_validation: bool, preserve_surface_ui_state: bool, source_game_id: String = "") -> void:
 	if event_choice_popup_overlay == null or event_choice_popup_choices_list == null:
 		_show_message("This bet risks your last cash. Click again to confirm.")
 		return
@@ -3333,12 +3767,8 @@ func _show_wager_confirmation_popup(action_id: String, stake: int, wager_cost: i
 	pending_wager_confirm_skip_stake_validation = skip_stake_validation
 	pending_wager_confirm_preserve_surface_ui_state = preserve_surface_ui_state
 	pending_wager_confirm_stake = stake
-	var action := _available_game_action(action_id, selected_action_kind)
-	if action.is_empty():
-		action = _available_game_action(action_id, "legal")
-	if action.is_empty():
-		action = _available_game_action(action_id, "cheat")
-	var action_label := _action_label(action) if not action.is_empty() else action_id
+	pending_wager_confirm_source_game_id = source_game_id
+	var action_label := _wager_confirmation_action_label(action_id, source_game_id)
 	var summary := "Betting $%d risks your last cash. If this play loses, the run ends after the result finishes resolving." % wager_cost
 	pending_event_choice_popup_event_id = ""
 	pending_event_choice_popup_focus_choice_id = ""
@@ -3398,6 +3828,7 @@ func _clear_pending_wager_confirmation() -> void:
 	pending_wager_confirm_skip_stake_validation = false
 	pending_wager_confirm_preserve_surface_ui_state = false
 	pending_wager_confirm_stake = 0
+	pending_wager_confirm_source_game_id = ""
 
 
 func serialized_run_state() -> Dictionary:
@@ -3450,6 +3881,7 @@ func current_screen_snapshot() -> Dictionary:
 		"screen": current_screen,
 		"selected_category": selected_action_category,
 		"has_run": run_state != null,
+		"start_menu": current_start_menu_snapshot(),
 		"has_game": current_game != null,
 		"run_menu_visible": _run_menu_is_visible(),
 		"run_menu": current_run_menu_snapshot(),
@@ -3460,6 +3892,17 @@ func current_screen_snapshot() -> Dictionary:
 		"travel_transition_target_id": travel_transition_target_id,
 		"travel_transition_target_label": travel_transition_target_label,
 		"accessibility": current_accessibility_snapshot(),
+	}
+
+
+func current_start_menu_snapshot() -> Dictionary:
+	return {
+		"seed_text": seed_input.text if seed_input != null else "",
+		"content_groups": _content_group_option_snapshot(),
+		"selected_content_groups": _selected_content_groups_for_new_run(),
+		"content_group_status": content_group_status_label.text if content_group_status_label != null else "",
+		"content_group_config_visible": content_group_panel.visible if content_group_panel != null else false,
+		"menu_panel_size": main_menu_panel.custom_minimum_size if main_menu_panel != null else Vector2.ZERO,
 	}
 
 
@@ -3925,7 +4368,7 @@ func _interactable_object_view_list() -> Array:
 			"short_description": str(offer.get("description", "")),
 			"enabled": affordable,
 			"disabled_reason": "" if affordable else failed_reason if run_failed_without_recovery else "Not enough bankroll.",
-			"action_summary": "Double-click to buy or apply this item." if affordable else "Needs more bankroll before it can be used.",
+			"action_summary": "Buy this item." if affordable else "Needs more bankroll before it can be used.",
 			"effect_summary": str(offer.get("effect_summary", "")),
 			"risk_summary": "",
 			"cost_summary": "Cost: %d" % int(offer.get("price", 0)),
@@ -3934,7 +4377,7 @@ func _interactable_object_view_list() -> Array:
 			"surface": str(offer.get("surface", "counter")),
 			"icon_key": str(offer.get("icon_key", item_id)),
 			"asset_path": str(offer.get("asset_path", "")),
-			"available_actions": [{"id": "buy_item", "label": "Buy / apply"}] if affordable else [],
+			"available_actions": [{"id": "buy_item", "label": "Buy"}] if affordable else [],
 			"confirm_action_id": "buy_item" if affordable else "",
 			"focus_rect": _interaction_rect_for_object(item_object_id, CONTEXT_MODE_ITEM, index),
 		}))
@@ -4384,6 +4827,7 @@ func _game_view_snapshot() -> Dictionary:
 		module_surface_state = current_game.surface_state(run_state, run_state.current_environment, _current_game_surface_ui_state())
 		if typeof(module_surface_state) != TYPE_DICTIONARY:
 			module_surface_state = {}
+		_sync_surface_feature_music_ducking(module_surface_state)
 		if module_surface_state.has("surface_renderer"):
 			surface_renderer = str(module_surface_state.get("surface_renderer", surface_renderer))
 			surface_life = _surface_life_for_renderer(surface_renderer)
@@ -4392,7 +4836,7 @@ func _game_view_snapshot() -> Dictionary:
 			surface_life = str(module_surface_state.get("surface_life", surface_life))
 		if module_surface_state.has("surface_cast"):
 			surface_cast = str(module_surface_state.get("surface_cast", surface_cast))
-	var result := last_game_result.duplicate(true)
+	var result := _current_game_result_snapshot()
 	if current_game == null and not result.is_empty():
 		display_name = str(result.get("display_name", "Saved game summary"))
 		game_id = str(result.get("game_id", ""))
@@ -4471,6 +4915,17 @@ func _current_game_surface_ui_state() -> Dictionary:
 	ui_state["selected_stake"] = _current_selected_stake()
 	ui_state["surface_runtime_status"] = _current_game_surface_status()
 	return _apply_game_surface_time_fields(ui_state)
+
+
+func _current_game_result_snapshot() -> Dictionary:
+	if last_game_result.is_empty():
+		return {}
+	if current_game == null:
+		return last_game_result.duplicate(true)
+	var result_game_id := str(last_game_result.get("game_id", last_game_result.get("source_id", "")))
+	if result_game_id.is_empty() or result_game_id == current_game.get_id():
+		return last_game_result.duplicate(true)
+	return {}
 
 
 func _current_game_embeds_result_feedback() -> bool:
@@ -5310,6 +5765,8 @@ func _recent_result_snapshot() -> Dictionary:
 		return last_item_result.duplicate(true)
 	if not last_game_result.is_empty():
 		return last_game_result.duplicate(true)
+	if current_game == null and not last_environment_runtime_result.is_empty():
+		return last_environment_runtime_result.duplicate(true)
 	return _result_from_story_log(run_state.story_log)
 
 
@@ -5543,20 +6000,30 @@ func _on_start_pressed() -> void:
 	if seed_text.is_empty():
 		seed_text = _generate_menu_seed_text()
 		seed_input.text = seed_text
-	start_foundation_run(seed_text)
+	start_foundation_run(seed_text, _content_group_challenge_for_seed(seed_text))
 
 
 func start_generated_foundation_run() -> void:
 	var seed_text := _generate_menu_seed_text()
 	if seed_input != null:
 		seed_input.text = seed_text
-	start_foundation_run(seed_text)
+	start_foundation_run(seed_text, _content_group_challenge_for_seed(seed_text))
 
 
 func return_to_main_menu() -> void:
+	if _all_in_result_terminal_check_is_pending():
+		_evaluate_run_terminal_state(true)
+	if run_state != null and not dev_game_test_mode:
+		_autosave_foundation_run("Autosaved before main menu.")
+	pending_all_in_result_terminal_check = false
 	_reset_game_surface_runtime_state()
 	current_game = null
 	game_surface_ui_state = {}
+	last_environment_runtime_result = {}
+	run_state = null
+	dev_game_test_mode = false
+	_refresh_run_action_service()
+	close_content_group_config()
 	_hide_run_menu()
 	_hide_event_choice_popup()
 	_hide_run_inventory_popup()
@@ -5593,6 +6060,7 @@ func exit_game() -> void:
 func open_settings_menu() -> void:
 	if settings_menu == null or settings_overlay == null:
 		return
+	close_content_group_config()
 	if start_menu_controls != null:
 		start_menu_controls.visible = false
 	if inventory_page != null:
@@ -5647,6 +6115,7 @@ func _high_contrast_enabled() -> bool:
 func open_inventory_page() -> void:
 	if inventory_page == null:
 		return
+	close_content_group_config()
 	if settings_menu != null:
 		settings_menu.visible = false
 	if start_menu_intro != null:
@@ -5674,6 +6143,7 @@ func open_game_test_menu() -> void:
 		return
 	if game_test_menu == null:
 		return
+	close_content_group_config()
 	if settings_menu != null:
 		settings_menu.visible = false
 	if inventory_page != null:
@@ -5718,6 +6188,7 @@ func start_game_test_session(game_id: String) -> void:
 	run_state.set_environment(environment)
 	current_game = null
 	last_game_result = {}
+	last_environment_runtime_result = {}
 	last_item_result = {}
 	last_hook_result = {}
 	selected_action_category = ACTION_CATEGORY_GAMES
@@ -5800,6 +6271,7 @@ func _refresh_start_screen() -> void:
 		continue_button.disabled = not has_save
 		continue_button.text = "Continue"
 		continue_button.tooltip_text = "Load the saved run." if has_save else "No saved run yet."
+	_refresh_content_group_controls()
 
 
 func _generate_menu_seed_text() -> String:
@@ -6494,6 +6966,8 @@ func _run_pressure_view() -> Dictionary:
 
 
 func _has_deferred_bankroll_zero_failure() -> bool:
+	if _all_in_result_terminal_check_is_pending():
+		return true
 	if run_state == null or library == null or run_state.bankroll > 0 or run_state.current_environment.is_empty():
 		return false
 	for game_id in _string_array(run_state.current_environment.get("game_ids", [])):
@@ -6506,16 +6980,47 @@ func _has_deferred_bankroll_zero_failure() -> bool:
 	return false
 
 
-func _evaluate_run_terminal_state() -> Dictionary:
+func _evaluate_run_terminal_state(force: bool = false) -> Dictionary:
 	if run_state == null:
 		return {}
+	if _all_in_result_terminal_check_is_pending() and not force:
+		return {
+			"failed": false,
+			"terminal": false,
+			"reason": RunState.FAILURE_NONE,
+			"message": "Your all-in wager result is still on the table.",
+			"recovery_available": true,
+			"bankroll_zero_deferred": true,
+		}
+	if force:
+		pending_all_in_result_terminal_check = false
 	var result := RunTerminalEvaluatorScript.evaluate_and_apply(run_state, library)
 	_route_ended_run_if_needed(result)
 	_route_failed_run_if_needed(result)
 	return result
 
 
+func _all_in_result_terminal_check_is_pending() -> bool:
+	return pending_all_in_result_terminal_check \
+		and run_state != null \
+		and run_state.run_status != RunState.RUN_STATUS_FAILED \
+		and run_state.run_status != RunState.RUN_STATUS_ENDED \
+		and run_state.bankroll <= 0
+
+
+func _resolve_pending_all_in_terminal_result() -> bool:
+	if not pending_all_in_result_terminal_check:
+		return false
+	if not _all_in_result_terminal_check_is_pending():
+		pending_all_in_result_terminal_check = false
+		return false
+	_evaluate_run_terminal_state(true)
+	_refresh()
+	return true
+
+
 func _clear_terminal_interaction_state() -> void:
+	pending_all_in_result_terminal_check = false
 	_reset_game_surface_runtime_state()
 	current_game = null
 	game_surface_ui_state = {}
@@ -7029,12 +7534,13 @@ func _selected_action_summary() -> String:
 
 
 func _game_recent_outcome_text() -> String:
-	if last_game_result.is_empty():
+	var result := _current_game_result_snapshot()
+	if result.is_empty():
 		return "No game outcome yet."
-	var message := _player_facing_text(str(last_game_result.get("message", "")))
-	var deltas: Dictionary = last_game_result.get("deltas", {})
-	var bankroll_delta := int(last_game_result.get("bankroll_delta", deltas.get("bankroll_delta", 0)))
-	var suspicion_delta := int(last_game_result.get("suspicion_delta", deltas.get("suspicion_delta", 0)))
+	var message := _player_facing_text(str(result.get("message", "")))
+	var deltas: Dictionary = result.get("deltas", {})
+	var bankroll_delta := int(result.get("bankroll_delta", deltas.get("bankroll_delta", 0)))
+	var suspicion_delta := int(result.get("suspicion_delta", deltas.get("suspicion_delta", 0)))
 	return "%s Bankroll %+d, heat %+d." % [
 		message if not message.is_empty() else "Recent play resolved.",
 		bankroll_delta,
@@ -7475,17 +7981,21 @@ func _add_inventory_item_card(item: Dictionary, merchant_mode: bool = false) -> 
 	if not effect_summary.is_empty():
 		stack.add_child(_muted_label("Effect: %s" % effect_summary, 12))
 	if merchant_mode:
+		if bool(item.get("repairable", false)):
+			_add_card_button(stack, "Repair for %d" % int(item.get("repair_cost", 0)), Callable(self, "repair_inventory_item").bind(str(item.get("id", ""))), false, true)
 		if sellable:
 			_add_card_button(stack, "Sell for %d" % int(item.get("sale_price", 0)), Callable(self, "sell_inventory_item").bind(str(item.get("id", ""))), false, true)
-		else:
+		elif not bool(item.get("repairable", false)):
 			stack.add_child(_muted_label("This item cannot be sold.", 12))
 	else:
 		if bool(item.get("active_item", false)):
 			var selected := bool(item.get("active_selected", false))
 			_add_card_button(stack, "Active Item" if selected else "Set Active", Callable(self, "select_active_inventory_item").bind(str(item.get("id", ""))), selected, selected)
+		if bool(item.get("repairable", false)):
+			stack.add_child(_muted_label("Repairable with a shopkeeper.", 12))
 		if sellable:
 			stack.add_child(_muted_label("Sellable with a merchant.", 12))
-		else:
+		elif not bool(item.get("repairable", false)):
 			stack.add_child(_muted_label("Not sellable.", 12))
 
 
@@ -8324,27 +8834,6 @@ func _hud_nav_button(text: String, callback: Callable) -> Button:
 	return button
 
 
-func _menu_pillar(title: String, text: String) -> PanelContainer:
-	var panel := _panel_container(Color("#050611", 0.78), VisualStyle.CYAN)
-	panel.custom_minimum_size = Vector2(0, 48)
-	panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	var stack := VBoxContainer.new()
-	stack.add_theme_constant_override("separation", 3)
-	stack.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	panel.add_child(stack)
-	var heading := _label(title, 15)
-	heading.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	_set_control_font_color(heading, VisualStyle.YELLOW)
-	stack.add_child(heading)
-	var body := _label(text, 11)
-	body.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	body.max_lines_visible = 2
-	body.clip_text = true
-	_set_control_font_color(body, VisualStyle.SOFT)
-	stack.add_child(body)
-	return panel
-
-
 func _main_menu_button(title: String, subtitle: String, callback: Callable) -> Button:
 	var button := _button(title, callback)
 	button.tooltip_text = subtitle
@@ -8388,16 +8877,24 @@ func _profile_chip_texture() -> Texture2D:
 
 
 func _run_item_texture_for_asset_path(asset_path: String) -> Texture2D:
+	return _texture_for_image_asset_path(asset_path)
+
+
+func _texture_for_image_asset_path(asset_path: String) -> Texture2D:
 	var path := asset_path.strip_edges()
 	if path.is_empty():
 		return null
 	if run_item_icon_texture_cache.has(path):
 		return run_item_icon_texture_cache[path] as Texture2D
 	if not ResourceLoader.exists(path):
-		run_item_icon_texture_cache[path] = null
-		return null
-	var resource := load(path)
-	var texture := resource as Texture2D
+		var image := Image.new()
+		if image.load(path) != OK:
+			run_item_icon_texture_cache[path] = null
+			return null
+		var image_texture := ImageTexture.create_from_image(image)
+		run_item_icon_texture_cache[path] = image_texture
+		return image_texture
+	var texture := load(path) as Texture2D
 	run_item_icon_texture_cache[path] = texture
 	return texture
 

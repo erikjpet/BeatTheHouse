@@ -36,6 +36,7 @@ func build_machine_from_ids(definition: Dictionary, ids: Dictionary, rng: RngStr
 	var strips: Array = _configured_strips(definition, family_id, format_id, reel_count)
 	var stops: Array = MathScript.pick_reel_stops(strips, rng)
 	var grid: Array = MathScript.project_grid(strips, stops, reel_count, row_count)
+	var bonus_state: Dictionary = StateScript.seeded_buffalo_bonus_state(rng) if family_id == "buffalo" else {}
 	var machine := {
 		"schema_version": StateScript.SCHEMA_VERSION,
 		"format_id": format_id,
@@ -74,7 +75,7 @@ func build_machine_from_ids(definition: Dictionary, ids: Dictionary, rng: RngStr
 		"last_tease_events": [],
 		"last_nudge_offer": {},
 		"active_bonus": {"active": false, "complete": true},
-		"bonus_state": {},
+		"bonus_state": bonus_state,
 		"bet_ladder": {"selected_id": "bet_2"},
 		"pinball_feature_state": {
 			"skill_target_power": rng.randi_range(35, 65),

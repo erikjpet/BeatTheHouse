@@ -151,6 +151,7 @@ func sync_surface_state(surface_state: Dictionary, sync_spec: Dictionary, timing
 		"reel_machine_state":
 			var channel_id := str(sync_spec.get("animation_channel", ""))
 			var feature_channel_id := str(sync_spec.get("feature_animation_channel", "slot_feature"))
+			var nudge_chain_channel_id := str(sync_spec.get("nudge_chain_channel", "slot_nudge_chain"))
 			var slot_state := surface_state.duplicate(false)
 			slot_state["_surface_audio_timing"] = {
 				"spin_elapsed": _timing_elapsed(timing, "animation_channel"),
@@ -159,10 +160,19 @@ func sync_surface_state(surface_state: Dictionary, sync_spec: Dictionary, timing
 				"feature_elapsed": _timing_elapsed(timing, "feature_animation_channel"),
 				"feature_active": _timing_active(timing, "feature_animation_channel"),
 				"feature_active_id": _timing_active_id(timing, "feature_animation_channel"),
+				"nudge_chain_elapsed": _timing_elapsed(timing, "nudge_chain_channel"),
+				"nudge_chain_active": _timing_active(timing, "nudge_chain_channel"),
+				"nudge_chain_active_id": _timing_active_id(timing, "nudge_chain_channel"),
 				"spin_channel_id": channel_id,
 				"feature_channel_id": feature_channel_id,
+				"nudge_chain_channel_id": nudge_chain_channel_id,
 			}
-			sync_slot_state(slot_state, _timing_elapsed(timing, "animation_channel"), _timing_active(timing, "animation_channel"))
+			var slot_elapsed := _timing_elapsed(timing, "animation_channel")
+			var slot_active := _timing_active(timing, "animation_channel")
+			if bool(surface_state.get("slot_nudge_chain_active", false)):
+				slot_elapsed = _timing_elapsed(timing, "nudge_chain_channel")
+				slot_active = _timing_active(timing, "nudge_chain_channel")
+			sync_slot_state(slot_state, slot_elapsed, slot_active)
 		"pull_tab_dispense_state":
 			sync_pull_tab_dispense(
 				surface_state,
@@ -618,6 +628,12 @@ func debug_normalized_event_id(event_id: String) -> String:
 
 
 func _active_slot_audio_id(slot_state: Dictionary, feature_scene: Dictionary, timing: Dictionary) -> String:
+	if bool(slot_state.get("slot_nudge_chain_active", false)):
+		var chain_id := str(timing.get("nudge_chain_active_id", ""))
+		if chain_id.strip_edges().is_empty():
+			chain_id = str(slot_state.get("slot_nudge_chain_event_id", ""))
+		if not chain_id.strip_edges().is_empty():
+			return chain_id
 	var incoming_id := str(slot_state.get("slot_animation_id", timing.get("spin_active_id", "")))
 	if incoming_id.strip_edges().is_empty():
 		incoming_id = str(timing.get("spin_active_id", ""))

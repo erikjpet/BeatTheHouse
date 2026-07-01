@@ -11,6 +11,7 @@ const PINBALL_START_CHOICES := 11
 const PINBALL_POWER_CHOICES := 11
 
 var catalog
+var background_textures: Dictionary = {}
 
 
 func _init() -> void:
@@ -111,6 +112,10 @@ func render_signature(surface_state: Dictionary, _definition: Dictionary, time_m
 	var buffalo_board_manifest: Dictionary = _buffalo_main_board_manifest(surface_state, time_msec)
 	for key_value in buffalo_board_manifest.keys():
 		signature[key_value] = buffalo_board_manifest[key_value]
+	var nudge_chain_msec := int(surface_state.get("slot_nudge_chain_elapsed_msec", time_msec))
+	var nudge_chain_manifest: Dictionary = _nudge_chain_manifest(surface_state, nudge_chain_msec)
+	for key_value in nudge_chain_manifest.keys():
+		signature[key_value] = nudge_chain_manifest[key_value]
 	return signature
 
 
@@ -133,12 +138,20 @@ func draw(surface, surface_state: Dictionary, definition: Dictionary) -> bool:
 	var feature_elapsed_msec := int(round(surface.surface_elapsed("slot_feature") * 1000.0))
 	if feature_elapsed_msec <= 0 or feature_elapsed_msec > 900000:
 		feature_elapsed_msec = int(surface_state.get("slot_visual_time_msec", 0))
+	var nudge_chain_elapsed_msec := int(round(surface.surface_elapsed("slot_nudge_chain") * 1000.0))
+	if nudge_chain_elapsed_msec <= 0 or nudge_chain_elapsed_msec > 900000:
+		nudge_chain_elapsed_msec = int(surface_state.get("slot_nudge_chain_elapsed_msec", 0))
 	var signature: Dictionary = render_signature(surface_state, definition, elapsed_msec)
 	var pinball_takeover := _pinball_takeover_active(surface_state)
+	var background_texture := _slot_background_texture(skin)
+	var has_background_art := background_texture != null
 	surface.draw_rect(Rect2(Vector2.ZERO, DESIGN_SIZE), shadow)
-	_draw_floor(surface, secondary, trim, int(signature.get("time_bucket", 0)))
-	_draw_cabinet(surface, skin, primary, secondary, accent, light, trim, glass, int(signature.get("time_bucket", 0)))
-	_draw_topper(surface, surface_state, skin, accent, light, trim, int(signature.get("time_bucket", 0)))
+	if has_background_art:
+		surface.draw_texture_rect(background_texture, Rect2(Vector2.ZERO, DESIGN_SIZE), false)
+	else:
+		_draw_floor(surface, secondary, trim, int(signature.get("time_bucket", 0)))
+		_draw_cabinet(surface, skin, primary, secondary, accent, light, trim, glass, int(signature.get("time_bucket", 0)))
+	_draw_topper(surface, surface_state, skin, accent, light, trim, int(signature.get("time_bucket", 0)), not has_background_art)
 	if pinball_takeover:
 		_draw_pinball_takeover(surface, surface_state, skin, accent, light, trim, int(signature.get("time_bucket", 0)), feature_elapsed_msec)
 		_draw_pinball_takeover_controls(surface, surface_state, accent, light, trim)
@@ -146,6 +159,7 @@ func draw(surface, surface_state: Dictionary, definition: Dictionary) -> bool:
 		return true
 	else:
 		_draw_reels(surface, surface_state, definition, skin, accent, light, glass, signature, elapsed_msec)
+		_draw_nudge_chain_overlay(surface, surface_state, skin, accent, light, trim, nudge_chain_elapsed_msec)
 		_draw_feature_area(surface, surface_state, definition, skin, accent, light, trim, glass, int(signature.get("time_bucket", 0)), feature_elapsed_msec, elapsed_msec)
 	_draw_status_panel(surface, surface_state, skin, accent, light, trim)
 	_draw_result_strip(surface, surface_state, skin, accent, light, elapsed_msec)
@@ -153,6 +167,21 @@ func draw(surface, surface_state: Dictionary, definition: Dictionary) -> bool:
 	_draw_controls(surface, surface_state, skin, accent, light, trim)
 	_draw_back_control(surface, accent, light)
 	return true
+
+
+func _slot_background_texture(skin: Dictionary) -> Texture2D:
+	var path := str(skin.get("background_path", ""))
+	if path.is_empty():
+		return null
+	if background_textures.has(path):
+		return background_textures[path] as Texture2D
+	if not ResourceLoader.exists(path):
+		background_textures[path] = null
+		return null
+	var resource := load(path)
+	var texture := resource as Texture2D
+	background_textures[path] = texture
+	return texture
 
 
 func _reel_motion(entry: Dictionary, time_msec: int) -> Dictionary:
@@ -328,52 +357,53 @@ func _draw_cabinet(surface, skin: Dictionary, primary: Color, secondary: Color, 
 	surface.draw_rect(tray, Color(glass.r, glass.g, glass.b, 0.14), false, 1)
 
 
-func _draw_topper(surface, state: Dictionary, skin: Dictionary, accent: Color, light: Color, trim: Color, bucket: int) -> void:
+func _draw_topper(surface, state: Dictionary, skin: Dictionary, accent: Color, light: Color, trim: Color, bucket: int, draw_frame: bool = true) -> void:
 	var rect := _rect_from_dict(skin.get("topper_rect", {}))
 	var style := str(skin.get("topper_style", ""))
-	surface.draw_rect(rect, Color(0.0, 0.0, 0.0, 0.46))
-	surface.draw_rect(rect, Color(accent.r, accent.g, accent.b, 0.24), false, 2)
-	if style == "brass_buffalo_head":
-		var center := rect.position + rect.size * 0.5
-		var reaction: String = _buffalo_topper_reaction(state)
-		var head_drop := 8.0 if reaction == "snort" else 3.0 + float(bucket % 4)
-		surface.draw_circle(center + Vector2(0, head_drop), rect.size.y * 0.28, trim)
-		surface.draw_circle(center + Vector2(-36, head_drop - 4), 13, accent)
-		surface.draw_circle(center + Vector2(36, head_drop - 4), 13, accent)
-		surface.draw_line(center + Vector2(-18, head_drop + 8), center + Vector2(-46, head_drop + 18), Color("#f8fafc"), 3)
-		surface.draw_line(center + Vector2(18, head_drop + 8), center + Vector2(46, head_drop + 18), Color("#f8fafc"), 3)
-		if reaction == "snort":
-			for puff in range(4):
-				var puff_center := center + Vector2(-18 + float(puff) * 12.0, -4 - float((bucket + puff) % 5) * 2.0)
-				surface.draw_circle(puff_center, 4.0 + float(puff % 2), Color(0.9, 0.9, 0.82, 0.24))
-	elif style == "jackpot_ladder_wheel":
-		var center := rect.position + Vector2(rect.size.x - 94, rect.size.y * 0.5)
-		for i in range(10):
-			var angle := float(i) * TAU / 10.0 + float(bucket) * 0.08
-			surface.draw_line(center, center + Vector2(cos(angle), sin(angle)) * 28.0, light, 2)
-		surface.draw_circle(center, 32, Color(trim.r, trim.g, trim.b, 0.20), false, 2)
-		_draw_buffalo_ladder(surface, Rect2(rect.position + Vector2(14, 8), Vector2(300, rect.size.y - 16)), _copy_dict(_copy_dict(state.get("slot_active_bonus", {})).get("jackpot_ladder", {})), accent, light, trim, bucket)
-	elif style == "day_dusk_backbox":
-		var phase_alpha := _buffalo_sunset_shift(state, bucket)
-		surface.draw_rect(rect.grow(-6), Color("#ef6a24").lerp(Color("#1f153d"), phase_alpha))
-		for herd in range(7):
-			var x := rect.position.x + fposmod(float(bucket * 9 + herd * 83), rect.size.x)
-			var y := rect.position.y + rect.size.y * (0.50 + 0.12 * float(herd % 2))
-			_draw_buffalo_silhouette(surface, Vector2(x, y), 0.55, Color(0.0, 0.0, 0.0, 0.28 + phase_alpha * 0.20))
-	elif style == "rgb_lcd_crown":
-		for i in range(9):
-			var x := rect.position.x + 18.0 + float(i) * 92.0
-			var alpha := 0.12 + 0.18 * float(posmod(bucket + i, 5) == 0)
-			surface.draw_rect(Rect2(x, rect.position.y + 8, 44, rect.size.y - 16), Color(light.r, accent.g, accent.b, alpha))
-	elif style == "orange_dmd":
-		for x in range(18):
-			for y in range(3):
-				var lit := posmod(bucket + x + y, 5) == 0
-				surface.draw_circle(rect.position + Vector2(18 + x * 8, 16 + y * 10), 2.0, Color(trim.r, trim.g, trim.b, 0.72 if lit else 0.18))
-	else:
-		for i in range(12):
-			var alpha := 0.20 + 0.18 * float(posmod(bucket + i, 4) == 0)
-			surface.draw_circle(rect.position + Vector2(24 + i * (rect.size.x - 48.0) / 11.0, rect.size.y * 0.5), 5.0, Color(light.r, light.g, light.b, alpha))
+	if draw_frame:
+		surface.draw_rect(rect, Color(0.0, 0.0, 0.0, 0.46))
+		surface.draw_rect(rect, Color(accent.r, accent.g, accent.b, 0.24), false, 2)
+		if style == "brass_buffalo_head":
+			var center := rect.position + rect.size * 0.5
+			var reaction: String = _buffalo_topper_reaction(state)
+			var head_drop := 8.0 if reaction == "snort" else 3.0 + float(bucket % 4)
+			surface.draw_circle(center + Vector2(0, head_drop), rect.size.y * 0.28, trim)
+			surface.draw_circle(center + Vector2(-36, head_drop - 4), 13, accent)
+			surface.draw_circle(center + Vector2(36, head_drop - 4), 13, accent)
+			surface.draw_line(center + Vector2(-18, head_drop + 8), center + Vector2(-46, head_drop + 18), Color("#f8fafc"), 3)
+			surface.draw_line(center + Vector2(18, head_drop + 8), center + Vector2(46, head_drop + 18), Color("#f8fafc"), 3)
+			if reaction == "snort":
+				for puff in range(4):
+					var puff_center := center + Vector2(-18 + float(puff) * 12.0, -4 - float((bucket + puff) % 5) * 2.0)
+					surface.draw_circle(puff_center, 4.0 + float(puff % 2), Color(0.9, 0.9, 0.82, 0.24))
+		elif style == "jackpot_ladder_wheel":
+			var center := rect.position + Vector2(rect.size.x - 94, rect.size.y * 0.5)
+			for i in range(10):
+				var angle := float(i) * TAU / 10.0 + float(bucket) * 0.08
+				surface.draw_line(center, center + Vector2(cos(angle), sin(angle)) * 28.0, light, 2)
+			surface.draw_circle(center, 32, Color(trim.r, trim.g, trim.b, 0.20), false, 2)
+			_draw_buffalo_ladder(surface, Rect2(rect.position + Vector2(14, 8), Vector2(300, rect.size.y - 16)), _copy_dict(_copy_dict(state.get("slot_active_bonus", {})).get("jackpot_ladder", {})), accent, light, trim, bucket)
+		elif style == "day_dusk_backbox":
+			var phase_alpha := _buffalo_sunset_shift(state, bucket)
+			surface.draw_rect(rect.grow(-6), Color("#ef6a24").lerp(Color("#1f153d"), phase_alpha))
+			for herd in range(7):
+				var x := rect.position.x + fposmod(float(bucket * 9 + herd * 83), rect.size.x)
+				var y := rect.position.y + rect.size.y * (0.50 + 0.12 * float(herd % 2))
+				_draw_buffalo_silhouette(surface, Vector2(x, y), 0.55, Color(0.0, 0.0, 0.0, 0.28 + phase_alpha * 0.20))
+		elif style == "rgb_lcd_crown":
+			for i in range(9):
+				var x := rect.position.x + 18.0 + float(i) * 92.0
+				var alpha := 0.12 + 0.18 * float(posmod(bucket + i, 5) == 0)
+				surface.draw_rect(Rect2(x, rect.position.y + 8, 44, rect.size.y - 16), Color(light.r, accent.g, accent.b, alpha))
+		elif style == "orange_dmd":
+			for x in range(18):
+				for y in range(3):
+					var lit := posmod(bucket + x + y, 5) == 0
+					surface.draw_circle(rect.position + Vector2(18 + x * 8, 16 + y * 10), 2.0, Color(trim.r, trim.g, trim.b, 0.72 if lit else 0.18))
+		else:
+			for i in range(12):
+				var alpha := 0.20 + 0.18 * float(posmod(bucket + i, 4) == 0)
+				surface.draw_circle(rect.position + Vector2(24 + i * (rect.size.x - 48.0) / 11.0, rect.size.y * 0.5), 5.0, Color(light.r, light.g, light.b, alpha))
 	var grand_prize := int(state.get("slot_buffalo_grand_prize", 0))
 	if str(state.get("slot_type_id", "")) == "buffalo" and grand_prize > 0:
 		var grand_rect := Rect2(rect.position + Vector2(rect.size.x * 0.34, 5), Vector2(rect.size.x * 0.32, 28))
@@ -426,7 +456,7 @@ func _draw_reels(surface, state: Dictionary, definition: Dictionary, skin: Dicti
 			var landing_slot := phase == "decel" or phase == "tease_slow_roll" or phase == "settle" or phase == "settled"
 			var source_row := visual_row + whole_offset
 			var symbol := _visible_symbol(strips, stops, grid, reel_index, source_row, row_count, landing_slot)
-			symbol = _buffalo_display_symbol(family, symbol, grid, reel_index, source_row, landing_slot, time_msec)
+			symbol = _buffalo_display_symbol(family, symbol, grid, reel_index, source_row, landing_slot, time_msec, phase != "settle" and phase != "settled")
 			_draw_symbol(surface, definition, family, symbol, visible_cell, blur > 0.12)
 			if family == "buffalo" and symbol == "GOLD_TOKEN" and (bool(motion.get("tease", false)) or bool(signature.get("gold_tease_active", false))):
 				var coin_pulse := 0.48 + 0.24 * sin(float(time_msec) * 0.018 + float(reel_index))
@@ -461,6 +491,119 @@ func _draw_reels(surface, state: Dictionary, definition: Dictionary, skin: Dicti
 		surface.draw_rect(rect.grow(15), Color(accent.r, accent.g, accent.b, 0.44), false, 4)
 
 
+func _nudge_chain_manifest(surface_state: Dictionary, time_msec: int) -> Dictionary:
+	var chain: Dictionary = _read_dict(surface_state.get("slot_nudge_chain", {}))
+	if chain.is_empty() or not bool(surface_state.get("slot_nudge_chain_active", false)):
+		return {
+			"nudge_chain_active": false,
+			"nudge_chain_coin_count": 0,
+			"nudge_chain_zone_visible": false,
+			"nudge_chain_window_active": false,
+		}
+	var coins: Array = _read_array(chain.get("coins", surface_state.get("slot_nudge_chain_coins", [])))
+	var active_index := clampi(int(chain.get("active_index", surface_state.get("slot_nudge_chain_active_index", 0))), 0, maxi(0, coins.size() - 1))
+	var active_coin: Dictionary = _read_dict(coins[active_index]) if active_index < coins.size() else {}
+	var phase: Dictionary = _nudge_chain_coin_phase(chain, active_coin, time_msec)
+	var window: Dictionary = _read_dict(chain.get("active_window_msec", surface_state.get("slot_nudge_tease_window_msec", {})))
+	return {
+		"nudge_chain_active": true,
+		"nudge_chain_coin_count": coins.size(),
+		"nudge_chain_active_index": active_index,
+		"nudge_chain_collected_count": int(chain.get("collected_count", surface_state.get("slot_nudge_chain_collected_count", 0))),
+		"nudge_chain_banked_payout": int(chain.get("banked_payout", surface_state.get("slot_nudge_chain_banked_payout", 0))),
+		"nudge_chain_zone_visible": not active_coin.is_empty(),
+		"nudge_chain_window_active": bool(chain.get("window_active", surface_state.get("slot_nudge_tease_window_active", false))),
+		"nudge_chain_peek_amount": float(phase.get("peek_amount", 0.0)),
+		"nudge_chain_apex_msec": int(window.get("perfect", 0)),
+		"nudge_chain_last_grade": str(surface_state.get("slot_nudge_chain_last_grade", chain.get("last_grade", ""))),
+	}
+
+
+func _draw_nudge_chain_overlay(surface, state: Dictionary, skin: Dictionary, accent: Color, light: Color, trim: Color, time_msec: int) -> void:
+	if not bool(state.get("slot_nudge_chain_active", false)):
+		return
+	var chain: Dictionary = _copy_dict(state.get("slot_nudge_chain", {}))
+	if chain.is_empty():
+		return
+	var coins: Array = _copy_array(chain.get("coins", state.get("slot_nudge_chain_coins", [])))
+	if coins.is_empty():
+		return
+	var rect := _rect_from_dict(skin.get("reel_window", {}))
+	var row_count := maxi(1, int(state.get("slot_row_count", 1)))
+	var gap := maxf(4.0, minf(rect.size.x, rect.size.y) * 0.026)
+	var cell_h := (rect.size.y - gap * float(row_count + 1)) / float(row_count)
+	var active_index := clampi(int(chain.get("active_index", state.get("slot_nudge_chain_active_index", 0))), 0, maxi(0, coins.size() - 1))
+	var collected_count := maxi(0, int(chain.get("collected_count", state.get("slot_nudge_chain_collected_count", 0))))
+	var banked := maxi(0, int(chain.get("banked_payout", state.get("slot_nudge_chain_banked_payout", 0))))
+	var window: Dictionary = _copy_dict(chain.get("active_window_msec", state.get("slot_nudge_tease_window_msec", {})))
+	for coin_value in coins:
+		var coin: Dictionary = _copy_dict(coin_value)
+		var coin_index := int(coin.get("index", 0))
+		var row := clampi(int(coin.get("row", coin_index)), 0, row_count - 1)
+		var row_center_y := rect.position.y + gap + float(row) * (cell_h + gap) + cell_h * 0.5
+		var radius := clampf(cell_h * 0.24, 7.0, 20.0)
+		var phase: Dictionary = _nudge_chain_coin_phase(chain, coin, time_msec)
+		var peek := float(phase.get("peek_amount", 0.0))
+		var side := str(coin.get("side", "left"))
+		var active := coin_index == active_index
+		var collected := bool(coin.get("collected", false))
+		var edge_x := rect.position.x if side == "left" else rect.end.x
+		var x := edge_x - radius * 0.88 + peek * radius * 2.2 if side == "left" else edge_x + radius * 0.88 - peek * radius * 2.2
+		var center := Vector2(x, row_center_y)
+		var coin_color := trim if not collected else Color("#f8fafc")
+		var coin_alpha := 0.30 if int(coin.get("ready_msec", -1)) < 0 and not collected else 0.78
+		if active:
+			var distance := absi(time_msec - int(window.get("perfect", time_msec)))
+			var good_width := maxi(1, int(chain.get("skill_good_msec", chain.get("skill_close_msec", 210))))
+			var zone_power := 1.0 - clampf(float(distance) / float(good_width), 0.0, 1.0)
+			var zone_rect := Rect2(Vector2(rect.position.x - radius * 1.35, row_center_y - radius * 1.55), Vector2(radius * 3.2, radius * 3.1)) if side == "left" else Rect2(Vector2(rect.end.x - radius * 1.85, row_center_y - radius * 1.55), Vector2(radius * 3.2, radius * 3.1))
+			surface.draw_rect(zone_rect, Color(trim.r, trim.g, trim.b, 0.14 + zone_power * 0.30), false, 3)
+			surface.draw_rect(zone_rect.grow(5.0), Color(accent.r, accent.g, accent.b, 0.08 + zone_power * 0.18), false, 2)
+			surface.draw_line(Vector2(edge_x, row_center_y), Vector2(center.x, center.y), Color(light.r, light.g, light.b, 0.30 + zone_power * 0.38), 3)
+		surface.draw_circle(center + Vector2(2, 3), radius + 1.0, Color(0.0, 0.0, 0.0, 0.36))
+		surface.draw_circle(center, radius, Color(coin_color.r, coin_color.g, coin_color.b, coin_alpha))
+		surface.draw_circle(center + Vector2(-radius * 0.32, -radius * 0.30), radius * 0.34, Color(1.0, 1.0, 1.0, 0.50))
+		surface.draw_circle(center, radius * 0.72, Color(accent.r, accent.g, accent.b, 0.26), false, 2)
+		if active:
+			surface.draw_circle(center, radius + 5.0 + peek * 3.0, Color(light.r, light.g, light.b, 0.26 + peek * 0.30), false, 2)
+		if collected:
+			surface.surface_label_centered("OK", Rect2(center - Vector2(radius, radius * 0.55), Vector2(radius * 2.0, radius * 1.1)), 8, Color("#091017"))
+	var banner := Rect2(rect.position + Vector2(10, -34), Vector2(minf(rect.size.x - 20, 330), 26))
+	surface.draw_rect(banner, Color(0.0, 0.0, 0.0, 0.58))
+	surface.draw_rect(banner, Color(trim.r, trim.g, trim.b, 0.24), false, 1)
+	var label := "CHAIN %d/%d  BANK $%d" % [collected_count, coins.size(), banked]
+	var last_grade := str(chain.get("last_grade", state.get("slot_nudge_chain_last_grade", "")))
+	if last_grade == "perfect":
+		label = "PERFECT  " + label
+	elif last_grade == "good":
+		label = "GOOD  " + label
+	surface.surface_label(label.left(34), banner.position + Vector2(10, 18), 12, trim if last_grade != "perfect" else light)
+	if last_grade == "perfect" or last_grade == "good":
+		var burst_count := 8 + collected_count * 3
+		var burst_center := rect.position + Vector2(rect.size.x * 0.5, rect.size.y * 0.12)
+		for i in range(burst_count):
+			var angle := float(i) * TAU / float(maxi(1, burst_count)) + float(time_msec) * 0.004
+			var dist := 20.0 + float(i % 4) * 8.0
+			surface.draw_circle(burst_center + Vector2(cos(angle), sin(angle)) * dist, 2.0 + float(i % 3), Color(light.r, light.g, light.b, 0.18))
+
+
+func _nudge_chain_coin_phase(chain: Dictionary, coin: Dictionary, time_msec: int) -> Dictionary:
+	var ready_msec := int(coin.get("ready_msec", -1))
+	if ready_msec < 0:
+		return {"peek_amount": 0.08, "cycle_elapsed_msec": 0, "apex_msec": -1}
+	var cycle := maxi(1, int(chain.get("peek_cycle_msec", 1200)))
+	var phase_offset := int(coin.get("phase_offset_msec", 0))
+	var local := maxi(0, time_msec - ready_msec + phase_offset)
+	var cycle_elapsed := posmod(local, cycle)
+	var progress := float(cycle_elapsed) / float(cycle)
+	var peek := sin(progress * PI)
+	return {
+		"peek_amount": clampf(peek, 0.0, 1.0),
+		"cycle_elapsed_msec": cycle_elapsed,
+		"apex_msec": time_msec - cycle_elapsed + cycle / 2,
+	}
+
+
 func _buffalo_main_board_manifest(surface_state: Dictionary, time_msec: int) -> Dictionary:
 	var active: Dictionary = _read_dict(surface_state.get("slot_active_bonus", {}))
 	if str(active.get("family", surface_state.get("slot_type_id", ""))) != "buffalo":
@@ -472,6 +615,7 @@ func _buffalo_main_board_manifest(surface_state: Dictionary, time_msec: int) -> 
 	var music: Dictionary = _read_dict(scene.get("feature_music", {}))
 	return {
 		"buffalo_feature_music_id": str(music.get("cue_id", "")),
+		"buffalo_feature_reels_spinning": bool(payload.get("reels_spinning", false)),
 		"buffalo_main_board_coin_value_count": int(payload.get("value_count", 0)),
 		"buffalo_main_board_coin_values_visible": int(payload.get("value_count", 0)) > 0,
 		"buffalo_main_board_cell_capacity": int(payload.get("cell_capacity", 0)),
@@ -516,6 +660,8 @@ func _draw_buffalo_main_board_overlay(surface, state: Dictionary, definition: Di
 		if reel < 0 or reel >= reel_count or row < 0 or row >= row_count:
 			continue
 		var cell_rect := _main_reel_cell_rect(reel_rect, reel, row, gap, cell_w, cell_h)
+		surface.draw_rect(cell_rect.grow(1), Color("#130907"))
+		surface.draw_rect(cell_rect.grow(1), Color(glass.r, glass.g, glass.b, 0.22), false, 1)
 		var revealed := bool(coin.get("revealed", true))
 		var slam := bool(coin.get("recent", false)) or bool(coin.get("just_revealed", false))
 		_draw_buffalo_coin_cell(surface, cell_rect.grow(-2), coin, true, slam, accent, light, Color("#f5bd35"), revealed)
@@ -588,7 +734,8 @@ func _buffalo_main_board_payload(state: Dictionary, time_msec: int) -> Dictionar
 	var mode_has_respin := mode == "hold_and_spin" or mode == "free_games"
 	var cell_capacity := reel_count * row_count
 	var unlocked_cell_count := maxi(0, cell_capacity - coins.size())
-	var unlocked_spin_active := mode_has_respin and _buffalo_stampede_phase(time_msec, active) != "celebration" and unlocked_cell_count > 0
+	var reels_spinning := _slot_reels_spinning(state, time_msec)
+	var unlocked_spin_active := mode_has_respin and reels_spinning and _buffalo_stampede_phase(time_msec, active) != "celebration" and unlocked_cell_count > 0
 	return {
 		"coins": coins,
 		"value_count": value_count,
@@ -599,6 +746,7 @@ func _buffalo_main_board_payload(state: Dictionary, time_msec: int) -> Dictionar
 		"recent_lock_count": recent_lock_count,
 		"bump_active": bump_active,
 		"unlocked_spin_active": unlocked_spin_active,
+		"reels_spinning": reels_spinning,
 	}
 
 
@@ -609,12 +757,17 @@ func _buffalo_feature_spin_symbol(reel_index: int, row_index: int, time_msec: in
 	return str(cycle[step])
 
 
-func _buffalo_display_symbol(family: String, symbol: String, grid: Array, reel_index: int, row_index: int, landing_slot: bool, time_msec: int) -> String:
+func _buffalo_static_open_symbol(reel_index: int, row_index: int) -> String:
+	var cycle: Array = ["BUFFALO", "EAGLE", "WOLF", "HORSE", "ELK", "SUNSET", "A", "K", "Q", "J", "10"]
+	return str(cycle[posmod(reel_index * 3 + row_index, cycle.size())])
+
+
+func _buffalo_display_symbol(family: String, symbol: String, grid: Array, reel_index: int, row_index: int, landing_slot: bool, time_msec: int, moving: bool = false) -> String:
 	if family != "buffalo" or symbol != "GOLD_TOKEN":
 		return symbol
 	if _buffalo_gold_symbol_is_intentional(grid, reel_index, row_index, landing_slot):
 		return symbol
-	return _buffalo_feature_spin_symbol(reel_index, row_index, time_msec)
+	return _buffalo_feature_spin_symbol(reel_index, row_index, time_msec) if moving else _buffalo_static_open_symbol(reel_index, row_index)
 
 
 func _buffalo_gold_symbol_is_intentional(grid: Array, reel_index: int, row_index: int, landing_slot: bool) -> bool:
@@ -647,7 +800,7 @@ func _buffalo_unintentional_gold_visible(surface_state: Dictionary, time_msec: i
 		for visual_row in range(-1, row_count + 2):
 			var source_row := visual_row + whole_offset
 			var raw_symbol := _visible_symbol(strips, stops, grid, reel_index, source_row, row_count, landing_slot)
-			var display_symbol := _buffalo_display_symbol("buffalo", raw_symbol, grid, reel_index, source_row, landing_slot, time_msec)
+			var display_symbol := _buffalo_display_symbol("buffalo", raw_symbol, grid, reel_index, source_row, landing_slot, time_msec, phase != "settle" and phase != "settled")
 			if display_symbol == "GOLD_TOKEN" and not _buffalo_gold_symbol_is_intentional(grid, reel_index, source_row, landing_slot):
 				return true
 	return false
@@ -763,6 +916,20 @@ func _all_reels_landed(motions: Array) -> bool:
 		if phase != "settle" and phase != "settled":
 			return false
 	return true
+
+
+func _slot_reels_spinning(state: Dictionary, time_msec: int) -> bool:
+	if str(state.get("slot_animation_id", "")).is_empty():
+		return false
+	var timeline: Array = _copy_array(state.get("slot_reel_timeline", []))
+	if timeline.is_empty():
+		return false
+	for entry_value in timeline:
+		var motion: Dictionary = _reel_motion(_copy_dict(entry_value), time_msec)
+		var phase := str(motion.get("phase", "settled"))
+		if phase != "settle" and phase != "settled":
+			return true
+	return false
 
 
 func _draw_feature_area(surface, state: Dictionary, definition: Dictionary, skin: Dictionary, accent: Color, light: Color, trim: Color, glass: Color, bucket: int, feature_msec: int, spin_msec: int) -> void:
@@ -1610,7 +1777,7 @@ func _draw_buffalo_feature(surface, rect: Rect2, state: Dictionary, definition: 
 	surface.draw_rect(rect, Color(trim.r, trim.g, trim.b, 0.20), false, 2)
 	_draw_buffalo_stampede(surface, rect, phase, bucket, accent, trim)
 	if mode == "hold_and_spin":
-		_draw_buffalo_hold_and_spin(surface, rect.grow(-8), active, definition, accent, light, trim, bucket, feature_msec)
+		_draw_buffalo_hold_and_spin(surface, rect.grow(-8), state, active, definition, accent, light, trim, bucket, feature_msec, spin_msec)
 	elif mode == "wheel":
 		_draw_buffalo_wheel_trophy(surface, rect.grow(-8), active, accent, light, trim, bucket, feature_msec)
 	else:
@@ -1716,6 +1883,7 @@ func _draw_buffalo_free_games_reel_grid(surface, rect: Rect2, state: Dictionary,
 	var gap := 4.0
 	var cell_w := (rect.size.x - gap * float(reel_count + 1)) / float(reel_count)
 	var cell_h := (rect.size.y - gap * float(row_count + 1)) / float(row_count)
+	var locked_coin_lookup: Dictionary = _buffalo_coin_lookup(_copy_array(active.get("collected_coins", [])))
 	for reel_index in range(reel_count):
 		var motion: Dictionary = _copy_dict(motions[reel_index])
 		var phase := str(motion.get("phase", "settled"))
@@ -1731,6 +1899,10 @@ func _draw_buffalo_free_games_reel_grid(surface, rect: Rect2, state: Dictionary,
 			cell.position.y -= fractional * (cell_h + gap)
 			var visible_cell := _rect_intersection(cell, rect)
 			if visible_cell.size.x <= 0.0 or visible_cell.size.y <= 0.0:
+				continue
+			if visual_row >= 0 and visual_row < row_count and locked_coin_lookup.has(_cell_key(reel_index, visual_row)):
+				surface.draw_rect(visible_cell, Color("#130907"))
+				surface.draw_rect(visible_cell, Color(trim.r, trim.g, trim.b, 0.28), false, 1)
 				continue
 			var landing_slot := phase == "decel" or phase == "tease_slow_roll" or phase == "settle" or phase == "settled"
 			var symbol := _visible_symbol(strips, stops, grid, reel_index, visual_row + whole_offset, row_count, landing_slot)
@@ -1812,7 +1984,7 @@ func _draw_buffalo_coin_cell(surface, cell_rect: Rect2, coin: Dictionary, has_co
 		surface.draw_circle(center, minf(cell_rect.size.x, cell_rect.size.y) * 0.58, Color(accent.r, accent.g, accent.b, 0.28), false, 2)
 
 
-func _draw_buffalo_hold_and_spin(surface, rect: Rect2, active: Dictionary, definition: Dictionary, accent: Color, light: Color, trim: Color, bucket: int, feature_msec: int) -> void:
+func _draw_buffalo_hold_and_spin(surface, rect: Rect2, state: Dictionary, active: Dictionary, definition: Dictionary, accent: Color, light: Color, trim: Color, bucket: int, feature_msec: int, spin_msec: int) -> void:
 	var max_cells := maxi(1, int(active.get("max_cells", 15)))
 	var cols := maxi(1, int(active.get("reel_count", 6 if max_cells >= 30 else 5)))
 	var rows := maxi(1, int(active.get("row_count", ceil(float(max_cells) / float(cols)))))
@@ -1820,6 +1992,7 @@ func _draw_buffalo_hold_and_spin(surface, rect: Rect2, active: Dictionary, defin
 	var cell_w := grid_rect.size.x / float(cols)
 	var cell_h := grid_rect.size.y / float(rows)
 	var locks: Array = _copy_array(active.get("locks", []))
+	var reels_spinning := _slot_reels_spinning(state, spin_msec)
 	var recent: Dictionary = {}
 	for lock_value in _copy_array(active.get("last_lock_events", [])):
 		var recent_lock: Dictionary = _copy_dict(lock_value)
@@ -1839,8 +2012,9 @@ func _draw_buffalo_hold_and_spin(surface, rect: Rect2, active: Dictionary, defin
 		var slam := has_lock and (recent.has(cell) or _buffalo_lock_just_revealed(lock, feature_msec))
 		if not has_lock:
 			surface.draw_rect(cell_rect, Color(trim.r, trim.g, trim.b, 0.10))
-			_draw_symbol(surface, definition, "buffalo", _buffalo_feature_spin_symbol(x, y, feature_msec), cell_rect.grow(-4), true)
-			var shimmer := 0.08 + 0.05 * sin(float(feature_msec + x * 89 + y * 41) * 0.014)
+			var open_symbol := _buffalo_feature_spin_symbol(x, y, feature_msec) if reels_spinning else _buffalo_static_open_symbol(x, y)
+			_draw_symbol(surface, definition, "buffalo", open_symbol, cell_rect.grow(-4), reels_spinning)
+			var shimmer := 0.08 + 0.05 * sin(float(feature_msec + x * 89 + y * 41) * 0.014) if reels_spinning else 0.05
 			surface.draw_rect(cell_rect.grow(-2), Color(light.r, light.g, light.b, shimmer), false, 1)
 			continue
 		_draw_buffalo_coin_cell(surface, cell_rect, lock, true, slam, accent, light, trim)
@@ -1990,9 +2164,15 @@ func _draw_status_panel(surface, state: Dictionary, skin: Dictionary, accent: Co
 	surface.surface_label("HEAT %d" % int(state.get("suspicion_level", 0)), left.position + Vector2(14, 80), 13, accent)
 	surface.surface_label("BET $%d" % int(state.get("slot_selected_bet", 10)), left.position + Vector2(14, 106), 13, trim)
 	if bool(state.get("slot_nudge_available", false)):
-		var nudge_label := "NUDGE WINDOW" if bool(state.get("slot_nudge_tease_window_active", false)) else "NUDGE"
+		var nudge_label := "COIN CHAIN" if bool(state.get("slot_nudge_chain_active", false)) else "NUDGE WINDOW" if bool(state.get("slot_nudge_tease_window_active", false)) else "NUDGE"
 		surface.surface_label(nudge_label, left.position + Vector2(14, 134), 13, Color("#ff3f75"))
 		var hint := str(state.get("slot_nudge_tease_outcome_hint", ""))
+		if bool(state.get("slot_nudge_chain_active", false)):
+			hint = "%d/%d BANK $%d" % [
+				int(state.get("slot_nudge_chain_collected_count", 0)),
+				_copy_array(state.get("slot_nudge_chain_coins", [])).size(),
+				int(state.get("slot_nudge_chain_banked_payout", 0)),
+			]
 		if not hint.is_empty():
 			surface.surface_label(hint.to_upper().left(16), left.position + Vector2(14, 154), 10, trim)
 	_draw_panel(surface, right, "FEATURE", light)
@@ -2131,7 +2311,8 @@ func _draw_controls(surface, state: Dictionary, skin: Dictionary, accent: Color,
 		_draw_button(surface, bet_rect, "$%d" % int(option.get("total_credits", 0)), "slot_bet", index, light if selected else trim, selected)
 	_draw_button(surface, control_layout.get("spin_rect", Rect2()), "SPIN", "slot_spin", 0, light)
 	if bool(state.get("slot_nudge_available", false)):
-		_draw_button(surface, control_layout.get("nudge_rect", Rect2()), "NUDGE!", "slot_nudge", 0, accent)
+		var nudge_text := "COLLECT" if bool(state.get("slot_nudge_chain_active", false)) else "NUDGE!"
+		_draw_button(surface, control_layout.get("nudge_rect", Rect2()), nudge_text, "slot_nudge", 0, accent)
 	_draw_button(surface, control_layout.get("auto_rect", Rect2()), "AUTO" if not bool(state.get("slot_autoplay_active", false)) else "AUTO ON", "slot_auto_toggle", 0, trim, bool(state.get("slot_autoplay_active", false)))
 
 

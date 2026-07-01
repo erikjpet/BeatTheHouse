@@ -9,10 +9,77 @@ const VisualStyleScript := preload("res://scripts/ui/visual_style.gd")
 const PixelSceneCanvasScript := preload("res://scripts/ui/pixel_scene_canvas.gd")
 const GameSurfaceCanvasScript := preload("res://scripts/ui/game_surface_canvas.gd")
 const SfxPlayerScript := preload("res://scripts/ui/sfx_player.gd")
+const SlotMachineStateScript := preload("res://scripts/games/slots/slot_machine_state.gd")
 const RunStateScript := preload("res://scripts/core/run_state.gd")
 const EventModuleScript := preload("res://scripts/core/event_module.gd")
 const UserSettingsScript := preload("res://scripts/core/user_settings.gd")
 const TEST_SETTINGS_PATH := "user://settings_ui_scene_compile_check.json"
+
+
+class AllInLosingFixtureGame:
+	extends GameModule
+
+	func _init() -> void:
+		setup({
+			"id": "all_in_losing_fixture",
+			"display_name": "All-In Fixture",
+			"family": "fixture",
+			"legal_actions": [{
+				"id": "all_in_loss",
+				"label": "All-in loss",
+				"summary": "Guaranteed losing all-in wager.",
+			}],
+			"cheat_actions": [],
+		})
+
+	func actions(run_state: RunState, environment: Dictionary) -> Dictionary:
+		return {
+			"ok": true,
+			"type": "game_actions",
+			"game_id": get_id(),
+			"legal_actions": legal_actions(run_state, environment),
+			"cheat_actions": [],
+			"stake_floor": 1,
+			"stake_ceiling": maxi(1, run_state.bankroll),
+			"base_stake_ceiling": maxi(1, run_state.bankroll),
+			"economy_stake_ceiling": maxi(1, run_state.bankroll),
+			"economy_state": run_state.economy(),
+			"economy_pressure_applied": false,
+		}
+
+	func wager_cost_for_context(_action_id: String, stake: int, _run_state: RunState, _environment: Dictionary, _ui_state: Dictionary = {}) -> int:
+		return maxi(0, stake)
+
+	func resolve_with_context(action_id: String, stake: int, _run_state: RunState, environment: Dictionary, _rng: RngStream, _ui_state: Dictionary = {}) -> Dictionary:
+		var deltas := GameModule.empty_result_deltas()
+		deltas["bankroll_delta"] = -maxi(1, stake)
+		deltas["messages"] = ["Fixture all-in wager lost after the bet resolved."]
+		deltas["story_log"] = [{
+			"type": "game_action",
+			"game_id": get_id(),
+			"action_id": action_id,
+			"won": false,
+			"stake_cost": maxi(1, stake),
+			"bankroll_delta": -maxi(1, stake),
+			"suspicion_delta": 0,
+			"environment_id": str(environment.get("id", "")),
+		}]
+		var result := GameModule.build_action_result({
+			"ok": true,
+			"type": "game_action",
+			"source_id": get_id(),
+			"game_id": get_id(),
+			"action_id": action_id,
+			"action_kind": "legal",
+			"stake": maxi(1, stake),
+			"bankroll_delta": -maxi(1, stake),
+			"deltas": deltas,
+			"won": false,
+			"environment_id": str(environment.get("id", "")),
+			"message": "Fixture all-in wager lost after the bet resolved.",
+		})
+		result["host_apply_result"] = true
+		return result
 
 
 func _init() -> void:
@@ -173,6 +240,18 @@ func _run() -> void:
 	await process_frame
 	if game_library_page.visible or not start_menu_controls.visible:
 		push_error("Games page Back did not return to the main menu controls.")
+		quit(1)
+		return
+	if not await _check_all_in_wager_confirmation_recovery(app):
+		quit(1)
+		return
+	if not await _check_confirmed_all_in_wager_result_then_failure(app):
+		quit(1)
+		return
+	if not await _check_background_slot_autoplay_isolated_from_active_game(app):
+		quit(1)
+		return
+	if not await _check_background_slot_all_in_confirmation(app):
 		quit(1)
 		return
 	if settings_menu.visible:
@@ -364,6 +443,107 @@ func _run() -> void:
 		push_error("Main menu did not regenerate the random seed on repeated access.")
 		quit(1)
 		return
+	var start_menu_snapshot: Dictionary = app.call("current_start_menu_snapshot")
+	if _has_visible_text(app, "READ") or _has_visible_text(app, "BUILD") or _has_visible_text(app, "ESCAPE"):
+		push_error("Main menu still shows the old READ / BUILD / ESCAPE pillar boxes.")
+		quit(1)
+		return
+	var collapsed_panel_size: Vector2 = start_menu_snapshot.get("menu_panel_size", Vector2.ZERO)
+	if collapsed_panel_size.x > 800.0 or collapsed_panel_size.y > 560.0:
+		push_error("Main menu panel did not shrink to fit the collapsed internal controls.")
+		quit(1)
+		return
+	var content_group_options: Array = start_menu_snapshot.get("content_groups", [])
+	if content_group_options.size() < 8:
+		push_error("Main menu did not expose modular run content groups.")
+		quit(1)
+		return
+	var content_group_config_button: Button = app.get("content_group_config_button")
+	var content_group_panel: Control = app.get("content_group_panel")
+	if content_group_config_button == null or content_group_panel == null:
+		push_error("Main menu did not expose the seed-box content gear and panel.")
+		quit(1)
+		return
+	if content_group_config_button.text != "⚙" or content_group_config_button.icon != null:
+		push_error("Main menu content configuration button did not use the seed-box gear icon.")
+		quit(1)
+		return
+	if not content_group_config_button.visible or content_group_panel.visible:
+		push_error("Main menu content configuration should start collapsed behind the seed-box gear.")
+		quit(1)
+		return
+	content_group_config_button.emit_signal("pressed")
+	await process_frame
+	await process_frame
+	start_menu_snapshot = app.call("current_start_menu_snapshot")
+	if not content_group_panel.visible or not bool(start_menu_snapshot.get("content_group_config_visible", false)):
+		push_error("Seed-box content gear did not open the run content configuration panel.")
+		quit(1)
+		return
+	var expanded_panel_size: Vector2 = start_menu_snapshot.get("menu_panel_size", Vector2.ZERO)
+	if expanded_panel_size.x < 880.0 or expanded_panel_size.y < 340.0 or expanded_panel_size.y > 520.0:
+		push_error("Main menu panel did not resize cleanly around the opened run content controls.")
+		quit(1)
+		return
+	var viewport_size := root.get_visible_rect().size
+	var menu_panel: Control = app.get("main_menu_panel")
+	var menu_rect := menu_panel.get_global_rect() if menu_panel != null else Rect2()
+	var content_panel_rect := content_group_panel.get_global_rect()
+	if menu_rect.position.y < 16.0 or menu_rect.end.y > viewport_size.y - 16.0:
+		push_error("Expanded main menu panel did not remain inside the viewport with a readable margin.")
+		quit(1)
+		return
+	if content_panel_rect.size.x < 700.0 or content_panel_rect.size.y < 200.0:
+		push_error("Run Content drawer is too small to present the content groups cleanly.")
+		quit(1)
+		return
+	if content_panel_rect.position.x < menu_rect.position.x or content_panel_rect.end.x > menu_rect.end.x or content_panel_rect.end.y > menu_rect.end.y:
+		push_error("Run Content drawer does not fit inside the expanded main menu panel.")
+		quit(1)
+		return
+	var content_group_toggles: Dictionary = app.get("content_group_toggles")
+	var pull_tabs_toggle := content_group_toggles.get("pull_tabs_pack", null) as CheckBox
+	if pull_tabs_toggle == null:
+		push_error("Main menu did not expose a pull-tabs content group toggle.")
+		quit(1)
+		return
+	for toggle_value in content_group_toggles.values():
+		var toggle := toggle_value as CheckBox
+		if toggle == null:
+			continue
+		var toggle_rect := toggle.get_global_rect()
+		if toggle_rect.size.x < 260.0 or toggle_rect.size.y < 28.0 or not content_panel_rect.encloses(toggle_rect):
+			push_error("Run Content group toggle layout is cramped or outside the drawer.")
+			quit(1)
+			return
+	pull_tabs_toggle.button_pressed = false
+	await process_frame
+	seed_input.text = "UI-CONTENT-GROUP-SEED"
+	new_run_button.emit_signal("pressed")
+	await process_frame
+	var grouped_run_state: RunState = app.get("run_state")
+	if grouped_run_state == null:
+		push_error("New Run with content groups did not create a RunState.")
+		quit(1)
+		return
+	var group_modifiers: Dictionary = grouped_run_state.challenge_config.get("modifiers", {})
+	var enabled_groups: Array = group_modifiers.get("content_groups", [])
+	if enabled_groups.has("pull_tabs_pack") or enabled_groups.is_empty():
+		push_error("New Run did not preserve the disabled pull-tabs content group selection.")
+		quit(1)
+		return
+	var grouped_environment: Dictionary = app.call("current_environment_view_snapshot")
+	for offer_value in (grouped_environment.get("item_offers", []) as Array):
+		if typeof(offer_value) == TYPE_DICTIONARY and str((offer_value as Dictionary).get("id", "")) == "xray_glasses":
+			push_error("Disabled pull-tabs group still surfaced a pull-tab item in the first shop.")
+			quit(1)
+			return
+	app.call("return_to_main_menu")
+	await process_frame
+	pull_tabs_toggle = (app.get("content_group_toggles") as Dictionary).get("pull_tabs_pack", null) as CheckBox
+	if pull_tabs_toggle != null:
+		pull_tabs_toggle.button_pressed = true
+		await process_frame
 	seed_input.text = "UI-COMPILE-SEED"
 	new_run_button.emit_signal("pressed")
 	await process_frame
@@ -2135,8 +2315,8 @@ func _run() -> void:
 		push_error("Foundation screen router left ITEMS during item offer selection.")
 		quit(1)
 		return
-	if not _has_visible_text(actions_list, "Buy / apply"):
-		push_error("Item card did not show a buy/apply action after selection.")
+	if not _has_visible_text(actions_list, "Buy"):
+		push_error("Item card did not show a buy action after selection.")
 		quit(1)
 		return
 	var item_canvas_after_selection: Dictionary = (app.get("environment_canvas") as Control).call("current_view_snapshot")
@@ -3284,6 +3464,272 @@ func _travel_to_target_and_check_games(app: Control, target_id: String) -> bool:
 	if typeof(traveled_game_ids_value) == TYPE_ARRAY:
 		traveled_game_ids = traveled_game_ids_value
 	return not traveled_game_ids.is_empty()
+
+
+func _check_all_in_wager_confirmation_recovery(app: Control) -> bool:
+	var original_run_state: Variant = app.get("run_state")
+	var original_dev_game_test_mode := bool(app.get("dev_game_test_mode"))
+	app.call("start_game_test_session", "slot")
+	await process_frame
+	await process_frame
+	var run_state: RunState = app.get("run_state")
+	if run_state == null or app.get("current_game") == null:
+		push_error("All-in confirmation fixture could not start the slot test session.")
+		return false
+	run_state.bankroll = 2
+	app.call("_refresh")
+	await process_frame
+	if not bool(app.call("_handle_module_surface_action", "select_bet_option:bet_2", 0, true)):
+		push_error("All-in confirmation fixture could not select the minimum slot bet.")
+		return false
+	if not bool(app.call("_handle_module_surface_action", "slot_auto_toggle", 0, false)):
+		push_error("All-in confirmation fixture could not enable slot autoplay.")
+		return false
+	for _index in range(5):
+		await process_frame
+	var popup: Dictionary = app.call("current_event_choice_popup_snapshot")
+	if not bool(popup.get("visible", false)) or str(popup.get("popup_type", "")) != "wager_confirmation":
+		push_error("All-in slot autoplay did not open the wager confirmation popup.")
+		return false
+	if int(run_state.bankroll) != 2:
+		push_error("All-in confirmation mutated bankroll before the player confirmed the wager.")
+		return false
+	var game_snapshot: Dictionary = app.call("current_game_view_snapshot")
+	if bool(game_snapshot.get("slot_autoplay_active", false)):
+		push_error("All-in confirmation did not pause slot autoplay while waiting for the player.")
+		return false
+	app.call("cancel_pending_wager_confirmation")
+	for _index in range(5):
+		await process_frame
+	popup = app.call("current_event_choice_popup_snapshot")
+	if bool(popup.get("visible", false)) or bool(popup.get("blocking", false)):
+		push_error("Canceling the all-in confirmation left the blocking popup active.")
+		return false
+	game_snapshot = app.call("current_game_view_snapshot")
+	if bool(game_snapshot.get("slot_autoplay_active", false)):
+		push_error("Canceling the all-in confirmation restarted slot autoplay and re-trapped the run.")
+		return false
+	if int(run_state.bankroll) != 2:
+		push_error("Canceling the all-in confirmation changed bankroll.")
+		return false
+	app.call("return_to_main_menu")
+	await process_frame
+	app.set("run_state", original_run_state)
+	app.set("dev_game_test_mode", original_dev_game_test_mode)
+	app.call("_refresh_run_action_service")
+	app.call("_refresh_start_screen")
+	await process_frame
+	return true
+
+
+func _check_confirmed_all_in_wager_result_then_failure(app: Control) -> bool:
+	var original_run_state: Variant = app.get("run_state")
+	var original_dev_game_test_mode := bool(app.get("dev_game_test_mode"))
+	app.call("start_foundation_run", "UI-ALL-IN-RESULT")
+	await process_frame
+	var run_state: RunState = app.get("run_state")
+	if run_state == null:
+		push_error("Confirmed all-in fixture could not start a foundation run.")
+		return false
+	run_state.bankroll = 2
+	var environment := run_state.current_environment.duplicate(true)
+	environment["economic_profile"] = {
+		"stake_floor": 1,
+		"stake_ceiling": 2,
+	}
+	run_state.current_environment = environment
+	app.set("current_game", AllInLosingFixtureGame.new())
+	app.set("selected_stake", 2)
+	app.call("_set_current_screen", "GAME")
+	app.call("_refresh")
+	await process_frame
+	app.call("_resolve_game_action", "all_in_loss", false, false, false)
+	await process_frame
+	var popup: Dictionary = app.call("current_event_choice_popup_snapshot")
+	if not bool(popup.get("visible", false)) or str(popup.get("popup_type", "")) != "wager_confirmation":
+		push_error("Confirmed all-in fixture did not open the wager confirmation popup.")
+		return false
+	if int(run_state.bankroll) != 2:
+		push_error("Confirmed all-in fixture changed bankroll before confirmation.")
+		return false
+	app.call("confirm_pending_wager_action")
+	await process_frame
+	await process_frame
+	var screen_snapshot: Dictionary = app.call("current_screen_snapshot")
+	if str(screen_snapshot.get("screen", "")) == "FAILURE":
+		push_error("Confirmed losing all-in routed to failure before showing the wager result.")
+		return false
+	if run_state.run_status != RunState.RUN_STATUS_ACTIVE:
+		push_error("Confirmed losing all-in marked the run terminal before the result was acknowledged.")
+		return false
+	if int(run_state.bankroll) != 0:
+		push_error("Confirmed losing all-in did not finish applying the wager result.")
+		return false
+	var game_snapshot: Dictionary = app.call("current_game_view_snapshot")
+	if str(game_snapshot.get("result_message", "")).find("Fixture all-in wager lost") == -1:
+		push_error("Confirmed losing all-in did not keep the resolved wager message visible.")
+		return false
+	if int(game_snapshot.get("result_stake", 0)) != 2 or int(game_snapshot.get("bankroll_delta", 0)) != -2 or bool(game_snapshot.get("won", true)):
+		push_error("Confirmed losing all-in result did not report the settled stake, loss, and non-win.")
+		return false
+	app.call("back_to_environment")
+	await process_frame
+	screen_snapshot = app.call("current_screen_snapshot")
+	if str(screen_snapshot.get("screen", "")) != "FAILURE" or run_state.run_status != RunState.RUN_STATUS_FAILED:
+		push_error("Acknowledging a resolved losing all-in did not end the run.")
+		return false
+	var failure_summary: Dictionary = app.call("current_failure_summary_snapshot")
+	if str(failure_summary.get("reason", "")) != RunState.FAILURE_BANKROLL_ZERO:
+		push_error("Resolved losing all-in did not fail for bankroll zero.")
+		return false
+	var recent_lines: Array = failure_summary.get("recent_result_lines", [])
+	if JSON.stringify(recent_lines).find("Fixture all-in wager lost") == -1:
+		push_error("Resolved losing all-in failure summary lost the wager result context.")
+		return false
+	app.call("return_to_main_menu")
+	await process_frame
+	app.set("run_state", original_run_state)
+	app.set("dev_game_test_mode", original_dev_game_test_mode)
+	app.call("_refresh_run_action_service")
+	app.call("_refresh_start_screen")
+	await process_frame
+	return true
+
+
+func _check_background_slot_autoplay_isolated_from_active_game(app: Control) -> bool:
+	var original_run_state: Variant = app.get("run_state")
+	var original_dev_game_test_mode := bool(app.get("dev_game_test_mode"))
+	app.call("start_game_test_session", "bar_dice")
+	await process_frame
+	await process_frame
+	var run_state: RunState = app.get("run_state")
+	if run_state == null or app.get("current_game") == null:
+		push_error("Background slot isolation fixture could not start bar dice.")
+		return false
+	if not _install_background_slot_autoplay(app, run_state, "bet_2", 1):
+		return false
+	var before_snapshot: Dictionary = app.call("current_game_view_snapshot")
+	if str(before_snapshot.get("game_id", "")) != "bar_dice":
+		push_error("Background slot isolation fixture did not keep bar dice in the foreground.")
+		return false
+	for _index in range(6):
+		await process_frame
+	var runtime_result_value: Variant = app.get("last_environment_runtime_result")
+	var runtime_result: Dictionary = {}
+	if typeof(runtime_result_value) == TYPE_DICTIONARY:
+		runtime_result = runtime_result_value as Dictionary
+	if runtime_result.is_empty() or str(runtime_result.get("game_id", runtime_result.get("source_id", ""))) != "slot":
+		push_error("Background slot autoplay did not resolve through the environment runtime result channel.")
+		return false
+	var foreground_result_value: Variant = app.get("last_game_result")
+	var foreground_result: Dictionary = {}
+	if typeof(foreground_result_value) == TYPE_DICTIONARY:
+		foreground_result = foreground_result_value as Dictionary
+	if str(foreground_result.get("game_id", foreground_result.get("source_id", ""))) == "slot":
+		push_error("Background slot autoplay overwrote the foreground game result.")
+		return false
+	var after_snapshot: Dictionary = app.call("current_game_view_snapshot")
+	if str(after_snapshot.get("game_id", "")) != "bar_dice":
+		push_error("Background slot autoplay changed the active game snapshot.")
+		return false
+	if str(after_snapshot.get("result_message", "")).find("Autoplay") != -1 or str(after_snapshot.get("summary_source", "")) == "slot":
+		push_error("Background slot autoplay leaked its result text into the bar dice surface.")
+		return false
+	app.call("return_to_main_menu")
+	await process_frame
+	app.set("run_state", original_run_state)
+	app.set("dev_game_test_mode", original_dev_game_test_mode)
+	app.call("_refresh_run_action_service")
+	app.call("_refresh_start_screen")
+	await process_frame
+	return true
+
+
+func _check_background_slot_all_in_confirmation(app: Control) -> bool:
+	var original_run_state: Variant = app.get("run_state")
+	var original_dev_game_test_mode := bool(app.get("dev_game_test_mode"))
+	app.call("start_game_test_session", "bar_dice")
+	await process_frame
+	await process_frame
+	var run_state: RunState = app.get("run_state")
+	if run_state == null or app.get("current_game") == null:
+		push_error("Background slot all-in fixture could not start bar dice.")
+		return false
+	run_state.bankroll = 2
+	if not _install_background_slot_autoplay(app, run_state, "bet_2", 1):
+		return false
+	for _index in range(6):
+		await process_frame
+	var popup: Dictionary = app.call("current_event_choice_popup_snapshot")
+	if not bool(popup.get("visible", false)) or str(popup.get("popup_type", "")) != "wager_confirmation":
+		push_error("Background slot all-in autoplay did not open the wager confirmation popup.")
+		return false
+	if str(popup.get("action_label", "")).find("Slot") == -1:
+		push_error("Background slot all-in popup did not identify the source slot autoplay.")
+		return false
+	if int(run_state.bankroll) != 2:
+		push_error("Background slot all-in confirmation mutated bankroll before confirmation.")
+		return false
+	var slot_machine: Dictionary = SlotMachineStateScript.read_machine(run_state.current_environment, "slot")
+	if bool(slot_machine.get("slot_autoplay_active", false)):
+		push_error("Background slot all-in confirmation did not pause slot autoplay.")
+		return false
+	var game_snapshot: Dictionary = app.call("current_game_view_snapshot")
+	if str(game_snapshot.get("game_id", "")) != "bar_dice":
+		push_error("Background slot all-in confirmation changed the active game.")
+		return false
+	app.call("cancel_pending_wager_confirmation")
+	for _index in range(3):
+		await process_frame
+	popup = app.call("current_event_choice_popup_snapshot")
+	if bool(popup.get("visible", false)) or bool(popup.get("blocking", false)):
+		push_error("Canceling background slot all-in confirmation left the popup active.")
+		return false
+	app.call("return_to_main_menu")
+	await process_frame
+	app.set("run_state", original_run_state)
+	app.set("dev_game_test_mode", original_dev_game_test_mode)
+	app.call("_refresh_run_action_service")
+	app.call("_refresh_start_screen")
+	await process_frame
+	return true
+
+
+func _install_background_slot_autoplay(app: Control, run_state: RunState, bet_id: String, next_msec: int) -> bool:
+	var slot_game_value: Variant = app.call("_game_module_for_id", "slot")
+	if not slot_game_value is GameModule:
+		push_error("Background slot fixture could not load the slot module.")
+		return false
+	var slot_game: GameModule = slot_game_value
+	var environment := run_state.current_environment.duplicate(true)
+	var game_ids: Array = []
+	for game_id_value in environment.get("game_ids", []):
+		var game_id := str(game_id_value)
+		if not game_id.is_empty() and not game_ids.has(game_id):
+			game_ids.append(game_id)
+	if not game_ids.has("bar_dice"):
+		game_ids.insert(0, "bar_dice")
+	if not game_ids.has("slot"):
+		game_ids.append("slot")
+	environment["game_ids"] = game_ids
+	var states_value: Variant = environment.get("game_states", {})
+	var states: Dictionary = {}
+	if typeof(states_value) == TYPE_DICTIONARY:
+		states = states_value as Dictionary
+	if not states.has("slot"):
+		states["slot"] = slot_game.generate_environment_state(run_state, environment, run_state.create_rng("ui_background_slot_state"))
+	environment["game_states"] = states
+	run_state.set_environment(environment)
+	var machine: Dictionary = SlotMachineStateScript.read_machine(run_state.current_environment, "slot")
+	if machine.is_empty():
+		push_error("Background slot fixture could not create slot machine state.")
+		return false
+	machine = SlotMachineStateScript.set_selected_bet(machine, bet_id)
+	machine["slot_autoplay_active"] = true
+	machine["slot_autoplay_next_msec"] = next_msec
+	SlotMachineStateScript.write_machine(run_state.current_environment, "slot", machine)
+	app.call("_refresh")
+	return true
 
 
 func _game_surface_action_binding(app: Control, kind: String) -> Dictionary:

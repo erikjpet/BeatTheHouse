@@ -18,7 +18,7 @@ func next_environment(run_state: RunState, target_archetype_id: String = "") -> 
 	if not run_state.current_environment.is_empty():
 		depth += 1
 	var archetype := _pick_archetype(run_state, depth, rng, target_archetype_id)
-	var environment := EnvironmentInstance.from_archetype(archetype, depth, rng, library)
+	var environment := EnvironmentInstance.from_archetype(archetype, depth, rng, library, run_state.challenge_config)
 	environment.game_states = _generated_game_states(run_state, environment.to_dict(), rng)
 	var environment_data := environment.to_dict()
 	environment.layout = EnvironmentInstance.ensure_generated_layout(environment_data)
@@ -31,16 +31,16 @@ func next_environment(run_state: RunState, target_archetype_id: String = "") -> 
 func _pick_archetype(run_state: RunState, depth: int, rng: RngStream, target_archetype_id: String = "") -> Dictionary:
 	if depth == 0:
 		var starts := _start_archetypes()
-		var shop_starts := _archetypes_with_shop_items(starts)
+		var shop_starts := _archetypes_with_shop_items(starts, true, run_state.challenge_config)
 		if not shop_starts.is_empty():
 			return rng.pick(shop_starts, {})
-		var shop_tier_one := _archetypes_with_shop_items(library.archetypes_for(1), false)
+		var shop_tier_one := _archetypes_with_shop_items(library.archetypes_for(1), false, run_state.challenge_config)
 		if not shop_tier_one.is_empty():
 			return rng.pick(shop_tier_one, {})
-		var playable_starts := _archetypes_with_games(starts)
+		var playable_starts := _archetypes_with_games(starts, true, run_state.challenge_config)
 		if not playable_starts.is_empty():
 			return rng.pick(playable_starts, {})
-		var playable_tier_one := _archetypes_with_games(library.archetypes_for(1), false)
+		var playable_tier_one := _archetypes_with_games(library.archetypes_for(1), false, run_state.challenge_config)
 		if not playable_tier_one.is_empty():
 			return rng.pick(playable_tier_one, {})
 		if not starts.is_empty():
@@ -70,7 +70,7 @@ func _start_archetypes() -> Array:
 
 
 # Returns shop archetypes that can offer items before the first wager.
-func _archetypes_with_shop_items(archetypes: Array, include_rare: bool = true) -> Array:
+func _archetypes_with_shop_items(archetypes: Array, include_rare: bool = true, challenge_config: Dictionary = {}) -> Array:
 	var matches: Array = []
 	for archetype in archetypes:
 		if typeof(archetype) != TYPE_DICTIONARY:
@@ -78,7 +78,8 @@ func _archetypes_with_shop_items(archetypes: Array, include_rare: bool = true) -
 		var data: Dictionary = archetype
 		if str(data.get("kind", "")) != "shop":
 			continue
-		if data.get("item_pool", []).is_empty():
+		var filtered_item_pool := library.shop_item_pool_for_challenge(data.get("item_pool", []), challenge_config) if library != null else _string_array(data.get("item_pool", []))
+		if filtered_item_pool.is_empty():
 			continue
 		if _count_ceiling(data.get("item_count", 0)) <= 0:
 			continue
@@ -89,13 +90,14 @@ func _archetypes_with_shop_items(archetypes: Array, include_rare: bool = true) -
 
 
 # Returns archetypes with at least one game option.
-func _archetypes_with_games(archetypes: Array, include_rare: bool = true) -> Array:
+func _archetypes_with_games(archetypes: Array, include_rare: bool = true, challenge_config: Dictionary = {}) -> Array:
 	var matches: Array = []
 	for archetype in archetypes:
 		if typeof(archetype) != TYPE_DICTIONARY:
 			continue
 		var data: Dictionary = archetype
-		if data.get("game_pool", []).is_empty():
+		var filtered_game_pool := library.filter_game_ids_for_challenge(data.get("game_pool", []), challenge_config) if library != null else _string_array(data.get("game_pool", []))
+		if filtered_game_pool.is_empty():
 			continue
 		if not include_rare and str(data.get("rarity", "")).to_lower() == "rare":
 			continue

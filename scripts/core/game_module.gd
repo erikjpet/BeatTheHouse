@@ -150,6 +150,12 @@ func surface_auto_action_command(_ui_state: Dictionary, _run_state: RunState, _e
 	return {"handled": false}
 
 
+# Optional hook for stopping repeating surface actions before the shared UI opens
+# a blocking decision popup such as an all-in wager confirmation.
+func surface_pause_repeating_action_for_confirmation(_ui_state: Dictionary, _run_state: RunState, _environment: Dictionary) -> Dictionary:
+	return {"handled": false}
+
+
 # Optional environment-level runtime state. Games use this for persistent
 # machine/table activity that should continue while the detailed surface is
 # closed, such as an autoplaying slot cabinet.
@@ -463,14 +469,20 @@ static func set_result_message(result: Dictionary, message: String) -> Dictionar
 
 # Applies structured module changes through RunState.
 static func apply_result(run_state: RunState, result: Dictionary, rng: RngStream = null) -> void:
-	if run_state == null or not bool(result.get("ok", false)):
+	if run_state == null:
+		return
+	if not bool(result.get("ok", false)):
+		run_state.clear_deferred_bankroll_zero_resolution()
 		return
 	normalize_skill_cheat_contract(result)
 	var deltas := _normalize_result_deltas(result.get("deltas", {}))
 	run_state.record_score_spending_from_result(result, deltas)
+	var defer_bankroll_zero := bool(result.get("defer_bankroll_zero_failure", false)) or run_state.defer_next_bankroll_zero_failure
+	if defer_bankroll_zero:
+		result["defer_bankroll_zero_failure"] = true
 	var bankroll_delta := int(deltas.get("bankroll_delta", 0))
 	if bankroll_delta != 0:
-		run_state.change_bankroll(bankroll_delta, bool(result.get("defer_bankroll_zero_failure", false)))
+		run_state.change_bankroll(bankroll_delta, defer_bankroll_zero)
 	var suspicion_delta := int(deltas.get("suspicion_delta", 0))
 	if suspicion_delta != 0:
 		var suspicion_context := {"environment_id": result.get("environment_id", "")}
@@ -482,7 +494,7 @@ static func apply_result(run_state: RunState, result: Dictionary, rng: RngStream
 			"behavior",
 			false,
 			suspicion_context,
-			bool(result.get("defer_bankroll_zero_failure", false))
+			defer_bankroll_zero
 		)
 		if applied_suspicion_delta != suspicion_delta:
 			deltas["base_suspicion_delta"] = suspicion_delta
@@ -535,7 +547,7 @@ static func apply_result(run_state: RunState, result: Dictionary, rng: RngStream
 		run_state.run_failure_reason = RunState.FAILURE_NONE
 		run_state.run_failure_message = ""
 	else:
-		run_state.evaluate_immediate_terminal_state(bool(result.get("defer_bankroll_zero_failure", false)))
+		run_state.evaluate_immediate_terminal_state(defer_bankroll_zero)
 		if run_state.run_status != RunState.RUN_STATUS_FAILED:
 			run_state.evaluate_environment_objective_state()
 			if bool(run_state.narrative_flags.get("demo_victory", false)):
@@ -561,6 +573,7 @@ static func apply_result(run_state: RunState, result: Dictionary, rng: RngStream
 		result["state"] = RESULT_ENDED
 	if rng != null:
 		run_state.save_rng(rng)
+	run_state.clear_deferred_bankroll_zero_resolution()
 
 
 # Resolves one action with data-driven odds and item modifiers.

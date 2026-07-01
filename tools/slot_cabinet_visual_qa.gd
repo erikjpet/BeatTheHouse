@@ -230,20 +230,23 @@ func _check_near_miss_manifest(definition: Dictionary, generator, resolver, pres
 	var buffalo_offer: Dictionary = _dict(buffalo_machine.get("last_nudge_offer", {}))
 	var buffalo_window: Dictionary = _dict(buffalo_offer.get("skill_window_msec", {}))
 	var buffalo_time := int(buffalo_window.get("perfect", _tease_msec(_array(_dict(buffalo_sample.get("result", {})).get("slot_reel_timeline", [])))))
-	var buffalo_surface: Dictionary = presentation.surface_state(buffalo_machine, buffalo_run_state, definition, {"slot_tease_input_msec": buffalo_time})
-	var buffalo_manifest: Dictionary = renderer.render_signature(buffalo_surface, definition, buffalo_time, "spin")
+	var buffalo_surface: Dictionary = presentation.surface_state(buffalo_machine, buffalo_run_state, definition, {"slot_nudge_chain_input_msec": buffalo_time})
+	var buffalo_manifest: Dictionary = renderer.render_signature(buffalo_surface, definition, buffalo_time, "nudge_chain")
 	var buffalo_cues: Array = []
 	for cue_value in _array(buffalo_surface.get("slot_audio_cues", [])):
 		var cue: Dictionary = _dict(cue_value)
 		buffalo_cues.append(str(cue.get("cue_id", "")))
-	if not bool(buffalo_manifest.get("gold_tease_active", false)) or int(buffalo_manifest.get("gold_tease_level", 0)) <= 0:
-		failures.append("Visual QA buffalo near_miss did not expose gold coin tease state.")
+	if not bool(buffalo_manifest.get("nudge_chain_active", false)) or not bool(buffalo_manifest.get("nudge_chain_zone_visible", false)):
+		failures.append("Visual QA buffalo near_miss did not expose coin-chain peek/zone state.")
+	if float(buffalo_manifest.get("nudge_chain_peek_amount", 0.0)) <= 0.0:
+		failures.append("Visual QA buffalo near_miss did not render a peeking coin.")
 	if not bool(buffalo_surface.get("slot_nudge_available", false)):
 		failures.append("Visual QA buffalo near_miss did not expose timed nudge availability.")
 	if not buffalo_cues.has("gold_coin_tease"):
 		failures.append("Visual QA buffalo near_miss did not schedule the gold coin tease cue.")
-	print("VISUAL_QA_BUFFALO_TEASE level=%d nudge=%s window=%s cues=%s" % [
-		int(buffalo_manifest.get("gold_tease_level", 0)),
+	print("VISUAL_QA_BUFFALO_COIN_CHAIN coins=%d peek=%.3f nudge=%s window=%s cues=%s" % [
+		int(buffalo_manifest.get("nudge_chain_coin_count", 0)),
+		float(buffalo_manifest.get("nudge_chain_peek_amount", 0.0)),
 		str(buffalo_surface.get("slot_nudge_available", false)),
 		JSON.stringify(buffalo_window),
 		",".join(_string_array(buffalo_cues)),
@@ -500,8 +503,8 @@ func _check_buffalo_feature_manifests(definition: Dictionary, presentation, rend
 			failures.append("Visual QA buffalo free games did not expose main-board coin values.")
 		if str(active.get("mode", "")) == "free_games" and not bool(manifest_play.get("buffalo_coin_bump_active", false)):
 			failures.append("Visual QA buffalo free games did not expose the coin-reveal bump/glow marker.")
-		if str(active.get("mode", "")) != "wheel" and int(manifest_play.get("buffalo_main_board_unlocked_cell_count", 0)) > 0 and not bool(manifest_play.get("buffalo_unlocked_spin_active", false)):
-			failures.append("Visual QA buffalo %s did not expose unlocked feature cells as spinning." % str(scenario.get("label", "")))
+		if str(active.get("mode", "")) != "wheel" and int(manifest_play.get("buffalo_main_board_unlocked_cell_count", 0)) > 0 and bool(manifest_play.get("buffalo_unlocked_spin_active", false)):
+			failures.append("Visual QA buffalo %s kept unlocked feature cells spinning after the reel animation settled." % str(scenario.get("label", "")))
 		if str(active.get("mode", "")) == "wheel" and not bool(manifest_play.get("trophy_pick_active", false)):
 			failures.append("Visual QA buffalo link arena did not expose trophy pick.")
 		print("VISUAL_QA_BUFFALO_FEATURE machine=buffalo_%s transition=%s play=%s ladder=%s locked=%d fill=%.3f trophy=%s coins=%d coin_total=%d board_values=%d open_cells=%d music=%s bump=%s spinning=%s topper=%s" % [
@@ -525,6 +528,13 @@ func _check_buffalo_feature_manifests(definition: Dictionary, presentation, rend
 
 func _coin_heavy_reel_strips(reel_count: int) -> Array:
 	var strips: Array = []
+	if reel_count <= 3:
+		for reel_index in range(maxi(1, reel_count)):
+			if reel_index == 0:
+				strips.append(["GOLD_TOKEN", "GOLD_TOKEN", "GOLD_TOKEN", "GOLD_TOKEN"])
+			else:
+				strips.append(["BUFFALO", "SUNSET", "WOLF", "ELK"])
+		return strips
 	for _reel in range(maxi(1, reel_count)):
 		strips.append(["GOLD_TOKEN", "BUFFALO", "GOLD_TOKEN", "SUNSET", "GOLD_TOKEN", "WOLF"])
 	return strips

@@ -13,8 +13,10 @@ const FREE_GAMES_RETRIGGER_THRESHOLD := 3
 const FREE_GAMES_RETRIGGER_GRANT := 8
 const FREE_GAMES_MAX_TOTAL_STEPS := 60
 const GRAND_PRIZE_STATE_KEY := "buffalo_grand_prize"
-const GRAND_PRIZE_BASE_MULTIPLIER := 1200
-const GRAND_PRIZE_INCREMENT_RATE := 0.10
+const GRAND_PRIZE_INITIAL_MULTIPLIER_KEY := "buffalo_grand_prize_initial_multiplier"
+const GRAND_PRIZE_SPINS_KEY := "buffalo_grand_prize_spins"
+const GRAND_PRIZE_BASE_MULTIPLIER := 50
+const GRAND_PRIZE_INCREMENT_RATE := 0.50
 const FILL_REEL_SYMBOLS := [
 	["A", "K", "BUFFALO", "WOLF", "BLANK"],
 	["Q", "J", "CASH", "ELK", "BLANK"],
@@ -221,6 +223,7 @@ func step_bonus(machine: Dictionary, action_id: String, rng: RngStream, _definit
 	var active: Dictionary = _copy_dict(machine.get("active_bonus", {}))
 	if active.is_empty() or not bool(active.get("active", false)):
 		return _bonus_step_result(false, 0, "No buffalo feature is active.", active)
+	active["slot_item_effects"] = _copy_dict(_ui_state.get("slot_item_effects", {}))
 	var mode := str(active.get("mode", ""))
 	if mode == "wheel":
 		return _step_wheel(machine, active, action_id, rng)
@@ -488,19 +491,19 @@ func _actual_forced_ways_symbol(grid: Array, cells: Array, original_symbol: Stri
 func eligible_jackpot_tiers(bet_id: String) -> Array:
 	match bet_id:
 		"bet_2":
-			return ["mini"]
+			return ["mini", "grand"]
 		"bet_5", "bet_10":
-			return ["mini", "minor"]
+			return ["mini", "minor", "grand"]
 		"bet_15":
-			return ["mini", "minor", "major"]
+			return ["mini", "minor", "major", "grand"]
 		"bet_20":
 			return ["mini", "minor", "major", "grand"]
 		_:
-			return ["mini"]
+			return ["mini", "grand"]
 
 
 func jackpot_award_for_bet(bet_id: String, stake: int, desired_tier: String = "grand") -> Dictionary:
-	var tiers: Dictionary = {"mini": 25, "minor": 75, "major": 250, "grand": 1200}
+	var tiers: Dictionary = {"mini": 25, "minor": 75, "major": 250, "grand": GRAND_PRIZE_BASE_MULTIPLIER}
 	var eligible: Array = eligible_jackpot_tiers(bet_id)
 	var tier := desired_tier
 	if not eligible.has(tier):
@@ -513,8 +516,8 @@ func base_grand_prize(stake: int, _bet_id: String = "bet_10") -> int:
 
 
 func current_grand_prize(machine: Dictionary, stake: int, bet_id: String = "bet_10") -> int:
-	var bonus_state: Dictionary = _copy_dict(machine.get("bonus_state", {}))
-	var stored := maxi(0, int(bonus_state.get(GRAND_PRIZE_STATE_KEY, 0)))
+	var bucket: Dictionary = _grand_prize_bucket(machine, bet_id)
+	var stored := maxi(0, int(bucket.get(GRAND_PRIZE_STATE_KEY, 0)))
 	if stored > 0:
 		return stored
 	return base_grand_prize(stake, bet_id)
@@ -522,20 +525,41 @@ func current_grand_prize(machine: Dictionary, stake: int, bet_id: String = "bet_
 
 func advance_grand_prize(machine: Dictionary, stake_cost: int, stake: int, bet_id: String = "bet_10") -> int:
 	var bonus_state: Dictionary = _copy_dict(machine.get("bonus_state", {}))
-	var current := maxi(0, int(bonus_state.get(GRAND_PRIZE_STATE_KEY, 0)))
+	var buckets: Dictionary = _copy_dict(bonus_state.get("per_bet", {}))
+	var bucket: Dictionary = _copy_dict(buckets.get(bet_id, {}))
+	var current := maxi(0, int(bucket.get(GRAND_PRIZE_STATE_KEY, 0)))
 	if current <= 0:
 		current = base_grand_prize(stake, bet_id)
 	var increment := maxi(1, int(ceil(float(maxi(1, stake_cost)) * GRAND_PRIZE_INCREMENT_RATE)))
 	current += increment
-	bonus_state[GRAND_PRIZE_STATE_KEY] = current
+	bucket[GRAND_PRIZE_STATE_KEY] = current
+	if int(bucket.get(GRAND_PRIZE_INITIAL_MULTIPLIER_KEY, 0)) <= 0:
+		bucket[GRAND_PRIZE_INITIAL_MULTIPLIER_KEY] = GRAND_PRIZE_BASE_MULTIPLIER
+	bucket[GRAND_PRIZE_SPINS_KEY] = maxi(0, int(bucket.get(GRAND_PRIZE_SPINS_KEY, 0))) + 1
+	buckets[bet_id] = bucket
+	bonus_state["per_bet"] = buckets
+	bonus_state.erase(GRAND_PRIZE_STATE_KEY)
 	machine["bonus_state"] = bonus_state
 	return current
 
 
 func reset_grand_prize(machine: Dictionary, stake: int, bet_id: String = "bet_10") -> void:
 	var bonus_state: Dictionary = _copy_dict(machine.get("bonus_state", {}))
-	bonus_state[GRAND_PRIZE_STATE_KEY] = base_grand_prize(stake, bet_id)
+	var buckets: Dictionary = _copy_dict(bonus_state.get("per_bet", {}))
+	var bucket: Dictionary = _copy_dict(buckets.get(bet_id, {}))
+	bucket[GRAND_PRIZE_STATE_KEY] = base_grand_prize(stake, bet_id)
+	bucket[GRAND_PRIZE_INITIAL_MULTIPLIER_KEY] = GRAND_PRIZE_BASE_MULTIPLIER
+	bucket[GRAND_PRIZE_SPINS_KEY] = 0
+	buckets[bet_id] = bucket
+	bonus_state["per_bet"] = buckets
+	bonus_state.erase(GRAND_PRIZE_STATE_KEY)
 	machine["bonus_state"] = bonus_state
+
+
+func _grand_prize_bucket(machine: Dictionary, bet_id: String) -> Dictionary:
+	var bonus_state: Dictionary = _copy_dict(machine.get("bonus_state", {}))
+	var buckets: Dictionary = _copy_dict(bonus_state.get("per_bet", {}))
+	return _copy_dict(buckets.get(bet_id, {}))
 
 
 func hold_award_for_lock_count(stake: int, lock_count: int, max_cells: int, bet_id: String = "bet_10", grand_prize: int = -1) -> int:
@@ -551,16 +575,18 @@ func hold_award_for_lock_count(stake: int, lock_count: int, max_cells: int, bet_
 
 func _free_games_feature(machine: Dictionary, stake: int, feature_scale: float, scatter_count: int, step_bonus: int) -> Dictionary:
 	var bet_id := str(_copy_dict(machine.get("bet_ladder", {})).get("selected_id", "bet_2"))
+	var grand_prize := current_grand_prize(machine, stake, bet_id)
 	var spins := 8
 	if scatter_count >= 5:
 		spins = 20
 	elif scatter_count >= 4:
 		spins = 15
 	spins += step_bonus
-	var cap_multiplier := 72
-	if str(machine.get("format_id", "")) == "line_5x3":
-		cap_multiplier = 55
-	elif str(machine.get("format_id", "")) == "classic_3_reel":
+	var format_id := str(machine.get("format_id", ""))
+	var cap_multiplier := 74
+	if format_id == "line_5x3":
+		cap_multiplier = 58
+	elif format_id == "classic_3_reel":
 		cap_multiplier = 120
 	return {
 		"active": true,
@@ -592,8 +618,11 @@ func _free_games_feature(machine: Dictionary, stake: int, feature_scale: float, 
 		"feature_phase": "transition",
 		"collection_meter": {"value": 0, "threshold": FREE_GAMES_RETRIGGER_THRESHOLD, "cycle": 0, "total": 0, "next_retrigger": FREE_GAMES_RETRIGGER_THRESHOLD},
 		"jackpot_ladder": _jackpot_ladder_state(bet_id, stake, "", machine),
+		"grand_prize": grand_prize,
+		"grand_prize_awarded": 0,
+		"jackpot_tier": "",
 		"choices": [],
-		"session_cap": stake * cap_multiplier,
+		"session_cap": maxi(1, stake * cap_multiplier),
 		"feature_scale": feature_scale,
 	}
 
@@ -605,9 +634,10 @@ func _hold_feature(machine: Dictionary, stake: int, feature_scale: float, step_b
 	var max_cells := maxi(1, reel_count * row_count)
 	var bet_id := str(_copy_dict(machine.get("bet_ladder", {})).get("selected_id", "bet_2"))
 	var grand_prize := current_grand_prize(machine, stake, bet_id)
-	var full_screen_award := _full_screen_jackpot_award(bet_id, stake, grand_prize)
-	var session_cap := maxi(stake * 55, full_screen_award + stake * max_cells)
+	var session_cap := maxi(1, stake * 55)
 	var current_total := _hold_lock_total(locks, stake, max_cells, bet_id, grand_prize)
+	if locks.size() >= max_cells:
+		session_cap = maxi(session_cap, current_total)
 	current_total = mini(current_total, session_cap)
 	return {
 		"active": true,
@@ -738,20 +768,21 @@ func _step_hold(machine: Dictionary, active: Dictionary, rng: RngStream) -> Dict
 	var stake := maxi(1, int(active.get("stake", 1)))
 	var bet_id := str(active.get("bet_id", "bet_2"))
 	var grand_prize := maxi(current_grand_prize(machine, stake, bet_id), int(active.get("grand_prize", 0)))
-	var full_screen_award := _full_screen_jackpot_award(bet_id, stake, grand_prize)
 	var added_count := 0
 	var new_lock_events: Array = []
 	var open_cells := max_cells - locks.size()
 	if open_cells > 0:
 		var chance := clampi(46 - locks.size(), 16, 48)
+		if max_cells <= 20:
+			chance = clampi(22 - locks.size(), 3, 24)
 		var attempts := 1
-		if str(active.get("display_mode", "")) == "gold_stampede_lock" and locks.size() >= max_cells / 2:
+		if str(active.get("display_mode", "")) == "gold_stampede_lock" and max_cells > 20 and locks.size() >= max_cells / 2:
 			attempts = 2
 		for _attempt in range(attempts):
 			if open_cells <= 0:
 				break
 			if rng.randi_range(1, 100) <= chance:
-				var lock: Dictionary = _new_lock(locks, max_cells, stake, row_count, rng)
+				var lock: Dictionary = _new_lock(locks, max_cells, stake, row_count, rng, _copy_dict(active.get("slot_item_effects", {})))
 				lock["source"] = "respin"
 				lock["reveal_start_msec"] = 1700 + added_count * 180
 				lock["reveal_duration_msec"] = 360
@@ -761,9 +792,10 @@ func _step_hold(machine: Dictionary, active: Dictionary, rng: RngStream) -> Dict
 				open_cells -= 1
 	var full_screen := locks.size() >= max_cells
 	var session_cap := maxi(1, int(active.get("session_cap", stake * 55)))
+	var raw_feature_total := _hold_lock_total(locks, stake, max_cells, bet_id, grand_prize)
 	if full_screen:
-		session_cap = maxi(session_cap, full_screen_award)
-	var feature_total := mini(session_cap, _hold_lock_total(locks, stake, max_cells, bet_id, grand_prize))
+		session_cap = maxi(session_cap, raw_feature_total)
+	var feature_total := mini(session_cap, raw_feature_total)
 	active["locks"] = locks
 	active["feature_total"] = feature_total
 	active["pending_award"] = feature_total
@@ -797,6 +829,8 @@ func _step_hold(machine: Dictionary, active: Dictionary, rng: RngStream) -> Dict
 		machine["active_bonus"] = {"active": false, "complete": true}
 		var complete_message := "Grand Stampede pays $%d." % feature_total if full_screen and _grand_prize_eligible(bet_id) else "Gold Stampede pays $%d." % feature_total
 		var complete_step := _bonus_step_result(true, feature_total, complete_message, active)
+		complete_step["grand_prize_awarded"] = int(active.get("grand_prize_awarded", 0))
+		complete_step["jackpot_tier"] = str(active.get("jackpot_tier", ""))
 		complete_step.merge(display, true)
 		return complete_step
 	machine["active_bonus"] = active
@@ -808,11 +842,12 @@ func _step_hold(machine: Dictionary, active: Dictionary, rng: RngStream) -> Dict
 func _step_free_games(machine: Dictionary, active: Dictionary, rng: RngStream) -> Dictionary:
 	var history: Array = _dictionary_array(active.get("history", []))
 	var stake := maxi(1, int(active.get("stake", 1)))
+	var bet_id := str(active.get("bet_id", _copy_dict(machine.get("bet_ladder", {})).get("selected_id", "bet_2")))
+	var reel_count := maxi(1, int(machine.get("reel_count", 5)))
+	var row_count := maxi(1, int(machine.get("row_count", 4)))
 	var reel_strips: Array = _copy_array(machine.get("bonus_reel_strips", machine.get("reel_strips", [])))
 	if reel_strips.is_empty():
 		reel_strips = _copy_array(machine.get("reel_strips", []))
-	var reel_count := maxi(1, int(machine.get("reel_count", 5)))
-	var row_count := maxi(1, int(machine.get("row_count", 4)))
 	var stops: Array = MathScript.pick_reel_stops(reel_strips, rng)
 	var grid: Array = MathScript.project_grid(reel_strips, stops, reel_count, row_count)
 	var coin_result: Dictionary = _collect_free_game_coins(active, grid, stake, float(active.get("feature_scale", 1.0)), rng)
@@ -855,9 +890,15 @@ func _step_free_games(machine: Dictionary, active: Dictionary, rng: RngStream) -
 	var classification := "true_win" if spin_award > stake else "ldw" if spin_award > 0 else "zero_loss"
 	history.append({"id": "stampede_free_spin", "step": int(active.get("step_index", 0)), "gold_tokens": new_coins.size(), "coin_hits": new_coins.duplicate(true), "coins_collected": coins_collected, "coins_since_retrigger": coins_since_retrigger, "coin_award": int(coin_result.get("coin_award", 0)), "coin_total": coin_total, "retrigger": retrigger, "retrigger_events": retrigger_events, "grid_award": grid_award, "award": spin_award, "running_total": spin_win_total, "grid": grid.duplicate(true), "reel_stops": stops.duplicate(true), "classification": classification})
 	active["history"] = history
+	var cell_capacity := maxi(1, reel_count * row_count)
+	var full_screen := MathScript.count_symbol(grid, "GOLD_TOKEN") >= cell_capacity
+	if full_screen:
+		active["remaining_steps"] = 0
 	if int(active.get("remaining_steps", 0)) <= 0:
-		var final_total := mini(maxi(1, int(active.get("session_cap", stake * 70))), spin_win_total + coin_total)
-		var coin_reveals: Array = _coin_reveal_sequence(collected_coins, mini(coin_total, final_total))
+		var grand_prize := maxi(current_grand_prize(machine, stake, bet_id), int(active.get("grand_prize", 0)))
+		var grand_award := _full_screen_jackpot_award(bet_id, stake, grand_prize) if full_screen else 0
+		var final_total := spin_win_total + coin_total + grand_award if full_screen else mini(maxi(1, int(active.get("session_cap", stake * 70))), spin_win_total + coin_total)
+		var coin_reveals: Array = _coin_reveal_sequence(collected_coins, coin_total if full_screen else mini(coin_total, final_total))
 		var credited_coin_total := _coin_reveal_total(coin_reveals)
 		var credited_spin_total := maxi(0, final_total - credited_coin_total)
 		active["spin_win_total"] = credited_spin_total
@@ -872,15 +913,25 @@ func _step_free_games(machine: Dictionary, active: Dictionary, rng: RngStream) -
 		active["feature_phase"] = "coin_collect"
 		active["awarded"] = final_total
 		active["collection_meter"] = _coin_collection_meter(active)
+		active["full_screen_grand"] = full_screen
+		active["grand_prize"] = grand_prize
+		active["grand_prize_awarded"] = grand_award
+		if full_screen:
+			active["jackpot_tier"] = "grand" if _grand_prize_eligible(bet_id) else str(jackpot_award_for_bet(bet_id, stake, "grand").get("tier", "mini"))
+			active["feature_phase"] = "grand_jackpot"
+			active["jackpot_ladder"] = _jackpot_ladder_state(bet_id, stake, str(active.get("jackpot_tier", "")), machine)
 		machine["last_bonus_replay"] = active.duplicate(true)
 		machine["active_bonus"] = {"active": false, "complete": true}
-		var complete_step := _bonus_step_result(true, final_total, "Stampede free games pay $%d, including $%d in coins." % [final_total, credited_coin_total], active)
+		var complete_message := "Grand Stampede jackpot pays $%d, including Grand $%d and $%d in coins." % [final_total, grand_award, credited_coin_total] if full_screen else "Stampede free games pay $%d, including $%d in coins." % [final_total, credited_coin_total]
+		var complete_step := _bonus_step_result(true, final_total, complete_message, active)
 		complete_step["id"] = "stampede_free_spin"
 		complete_step["grid"] = grid.duplicate(true)
 		complete_step["reel_stops"] = stops.duplicate(true)
 		complete_step["classification"] = classification
 		complete_step["spin_award"] = spin_award
 		complete_step["coin_collect_total"] = credited_coin_total
+		complete_step["grand_prize_awarded"] = grand_award
+		complete_step["jackpot_tier"] = str(active.get("jackpot_tier", ""))
 		return complete_step
 	machine["active_bonus"] = active
 	var step := _bonus_step_result(false, 0, "Stampede free spin adds $%d and banks $%d in coins." % [spin_award, int(coin_result.get("coin_award", 0))], active)
@@ -908,7 +959,7 @@ func _collect_free_game_coins(active: Dictionary, grid: Array, stake: int, featu
 		for row_index in range(column.size()):
 			if str(column[row_index]) != "GOLD_TOKEN":
 				continue
-			var value_info: Dictionary = _free_game_coin_value(stake, feature_scale, rng)
+			var value_info: Dictionary = _free_game_coin_value(stake, feature_scale, rng, _copy_dict(active.get("slot_item_effects", {})))
 			var value := maxi(1, int(value_info.get("value", stake)))
 			var key := _coin_cell_key(reel_index, row_index)
 			var coin: Dictionary = {
@@ -1003,7 +1054,7 @@ func _coin_reveal_total(reveals: Array) -> int:
 	return total
 
 
-func _free_game_coin_value(stake: int, feature_scale: float, rng: RngStream) -> Dictionary:
+func _free_game_coin_value(stake: int, feature_scale: float, rng: RngStream, item_effects: Dictionary = {}) -> Dictionary:
 	var roll := rng.randi_range(1, 1000)
 	var value := stake
 	var tier := ""
@@ -1022,6 +1073,12 @@ func _free_game_coin_value(stake: int, feature_scale: float, rng: RngStream) -> 
 		value = stake * 3
 	else:
 		value = stake * rng.randi_range(1, 2)
+	var upgrade_chance := clampi(int(item_effects.get("slot_gold_tooth_coin_upgrade_chance", 0)), 0, 100)
+	if upgrade_chance > 0 and rng.randi_range(1, 100) <= upgrade_chance:
+		var multiplier := maxi(2, int(item_effects.get("slot_gold_tooth_coin_multiplier", 2)))
+		value *= multiplier
+		if tier.is_empty():
+			tier = "bright"
 	return {"value": maxi(1, int(round(float(value) * maxf(0.25, feature_scale)))), "tier": tier}
 
 
@@ -1102,7 +1159,7 @@ func _jackpot_ladder_state(bet_id: String, stake: int, lit_tier: String, machine
 	}
 
 
-func _new_lock(existing_locks: Array, max_cells: int, stake: int, row_count: int, rng: RngStream) -> Dictionary:
+func _new_lock(existing_locks: Array, max_cells: int, stake: int, row_count: int, rng: RngStream, item_effects: Dictionary = {}) -> Dictionary:
 	var occupied: Dictionary = {}
 	for lock_value in existing_locks:
 		var lock: Dictionary = _copy_dict(lock_value)
@@ -1137,6 +1194,13 @@ func _new_lock(existing_locks: Array, max_cells: int, stake: int, row_count: int
 		value = stake * 2
 	else:
 		value = stake * rng.randi_range(1, 3)
+	var upgrade_chance := clampi(int(item_effects.get("slot_gold_tooth_coin_upgrade_chance", 0)), 0, 100)
+	if upgrade_chance > 0 and rng.randi_range(1, 100) <= upgrade_chance:
+		var tooth_multiplier := maxi(2, int(item_effects.get("slot_gold_tooth_coin_multiplier", 2)))
+		value *= tooth_multiplier
+		if tier.is_empty():
+			tier = "bright"
+		symbol = "CASH"
 	var safe_rows := maxi(1, row_count)
 	return {"cell": cell, "reel": int(cell / safe_rows), "row": cell % safe_rows, "symbol": symbol, "value": value, "multiplier": multiplier, "tier": tier}
 

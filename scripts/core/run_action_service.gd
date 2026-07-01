@@ -63,6 +63,8 @@ func item_offer_view_list(selected_item_id: String = "") -> Array:
 		var item_definition := library.item(item_id)
 		if item_definition.is_empty():
 			continue
+		if not _item_enabled_for_run(item_id):
+			continue
 		var display_name := str(offer_data.get("display_name", item_definition.get("display_name", item_id)))
 		var price := int(offer_data.get("price", item_definition.get("price_min", 0)))
 		var effect: Dictionary = item_definition.get("effect", {}) if typeof(item_definition.get("effect", {})) == TYPE_DICTIONARY else {}
@@ -100,6 +102,8 @@ func buy_item_offer(item_id: String) -> Dictionary:
 	var item_definition := library.item(item_id)
 	if item_definition.is_empty():
 		return _service_error("Item definition is missing.")
+	if not _item_enabled_for_run(item_id):
+		return _service_error("That item is not part of this run.")
 	var price := int(offer.get("price", 0))
 	if price < 0:
 		return _service_error("Item price is invalid.")
@@ -209,7 +213,77 @@ func inventory_item_detail(item_id: String) -> Dictionary:
 		"active_mode": str(effect.get("active_mode", "")),
 		"active_target": str(effect.get("active_target", "")),
 		"active_selected": is_active and item_id == selected_id,
+		"repairable": _item_repairable(effect),
+		"repair_cost": maxi(0, int(effect.get("repair_cost", 0))),
+		"repair_to_item": str(effect.get("repair_to_item", "")),
 	}
+
+
+func repair_inventory_item(item_id: String) -> Dictionary:
+	if not is_ready():
+		return _service_error("Inventory is not available.")
+	if not shopkeeper_available():
+		return _service_error("You need a shopkeeper to repair gear.")
+	if not run_state.inventory.has(item_id):
+		return _service_error("That item is not in your inventory.")
+	var item := inventory_item_detail(item_id)
+	if item.is_empty():
+		return _service_error("Item definition is missing.")
+	if not bool(item.get("repairable", false)):
+		return _service_error("%s cannot be repaired." % str(item.get("display_name", item_id)))
+	var repair_cost := maxi(0, int(item.get("repair_cost", 0)))
+	if run_state.bankroll < repair_cost:
+		return _service_error("Repairs cost %d." % repair_cost)
+	var repaired_id := str(item.get("repair_to_item", ""))
+	var repaired_definition := library.item(repaired_id)
+	if repaired_id.is_empty() or repaired_definition.is_empty():
+		return _service_error("Repair target is missing.")
+	var display_name := str(item.get("display_name", item_id))
+	var repaired_name := str(repaired_definition.get("display_name", repaired_id))
+	var message := "Paid %d to repair %s into %s." % [repair_cost, display_name, repaired_name]
+	var deltas := GameModule.empty_result_deltas()
+	deltas["bankroll_delta"] = -repair_cost
+	deltas["inventory_remove"] = [item_id]
+	deltas["inventory_add"] = [repaired_id]
+	deltas["messages"] = [message]
+	deltas["story_log"] = [{
+		"type": "item_repair",
+		"item_id": item_id,
+		"repaired_item_id": repaired_id,
+		"repair_cost": repair_cost,
+		"environment_id": str(run_state.current_environment.get("id", "")),
+		"message": message,
+	}]
+	var result := GameModule.build_action_result({
+		"ok": true,
+		"type": "item_repair",
+		"source_id": "shopkeeper",
+		"item_id": item_id,
+		"action_id": "repair_item",
+		"action_kind": "merchant",
+		"bankroll_delta": -repair_cost,
+		"suspicion_delta": 0,
+		"deltas": deltas,
+		"environment_id": str(run_state.current_environment.get("id", "")),
+		"message": message,
+	})
+	result["repair_cost"] = repair_cost
+	result["item_id"] = item_id
+	result["repaired_item_id"] = repaired_id
+	GameModule.apply_result(run_state, result)
+	return _service_success(result)
+
+
+func _item_repairable(effect: Dictionary) -> bool:
+	return not str(effect.get("repair_to_item", "")).is_empty() and int(effect.get("repair_cost", 0)) > 0
+
+
+func _item_enabled_for_run(item_id: String) -> bool:
+	if library == null:
+		return false
+	if run_state == null:
+		return not library.item(item_id).is_empty()
+	return library.item_enabled_for_challenge(item_id, run_state.challenge_config)
 
 
 # Returns true for item definitions that can be placed in the active item slot.
@@ -1002,15 +1076,18 @@ func _jazz_try_reward_from_round(musician_id: String, favor_count: int, flags: D
 	var setup := _jazz_reward_setup(flags)
 	var holder_id := str(setup.get("holder", ""))
 	var drinks_required := clampi(int(setup.get("drinks_required", JAZZ_REWARD_MIN_DRINKS)), JAZZ_REWARD_MIN_DRINKS, JAZZ_REWARD_MAX_DRINKS)
-	if holder_id == JAZZ_NO_REWARD_HOLDER or musician_id != holder_id:
-		flags[_jazz_no_item_flag(musician_id)] = true
-		messages.append(_jazz_no_item_message(musician_id))
-		return 0
 	if favor_count < drinks_required:
 		messages.append(_jazz_progress_message(musician_id))
 		return 0
+	if musician_id != holder_id:
+		flags[_jazz_no_item_flag(musician_id)] = true
+		messages.append(_jazz_no_item_message(musician_id))
+		return 0
 	flags[_jazz_local_flag("reward_claimed")] = true
 	var item_id := _jazz_reward_item_for_musician(musician_id, flags)
+	if not item_id.is_empty() and not _item_enabled_for_run(item_id):
+		messages.append("%s has nothing for this run's table." % _jazz_musician_name(musician_id))
+		return 0
 	if item_id.is_empty() or run_state.inventory.has(item_id) or inventory_add.has(item_id):
 		messages.append("%s has nothing else to put in your hand tonight." % _jazz_musician_name(musician_id))
 		return 0
@@ -1072,7 +1149,7 @@ func _jazz_musician_ids() -> Array:
 
 
 func _jazz_reward_holder_ids() -> Array:
-	return [JAZZ_MUSICIAN_SAX, JAZZ_MUSICIAN_CELLO, JAZZ_MUSICIAN_DRUMMER, JAZZ_NO_REWARD_HOLDER]
+	return [JAZZ_MUSICIAN_SAX, JAZZ_MUSICIAN_CELLO, JAZZ_MUSICIAN_DRUMMER]
 
 
 func _jazz_reward_holder_pool() -> Array:
@@ -1080,8 +1157,6 @@ func _jazz_reward_holder_pool() -> Array:
 		JAZZ_MUSICIAN_SAX,
 		JAZZ_MUSICIAN_CELLO,
 		JAZZ_MUSICIAN_DRUMMER,
-		JAZZ_NO_REWARD_HOLDER,
-		JAZZ_NO_REWARD_HOLDER,
 	]
 
 

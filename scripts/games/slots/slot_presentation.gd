@@ -3,7 +3,7 @@ extends RefCounted
 
 const StateScript := preload("res://scripts/games/slots/slot_machine_state.gd")
 const CatalogScript := preload("res://scripts/games/slots/slot_catalog.gd")
-const BUFFALO_GRAND_BASE_MULTIPLIER := 1200
+const BUFFALO_GRAND_BASE_MULTIPLIER := 50
 const BUFFALO_BONUS_MAX_ANIMATION_MSEC := 10000
 
 var catalog
@@ -44,8 +44,19 @@ func surface_state(machine: Dictionary, run_state: RunState, definition: Diction
 	var skin: Dictionary = catalog.skin_for_machine(machine, definition)
 	var timeline: Array = _reel_timeline(machine)
 	var nudge_offer: Dictionary = _copy_dict(machine.get("last_nudge_offer", {}))
-	var nudge_timing: Dictionary = _nudge_timing_state(nudge_offer, ui_state)
+	var nudge_timing: Dictionary = _nudge_chain_timing_state(nudge_offer, ui_state)
 	var nudge_available := not nudge_offer.is_empty() and bool(nudge_timing.get("available", false))
+	var nudge_chain_id := str(nudge_offer.get("event_id", "")) if str(nudge_offer.get("type", "")) == "coin_chain" else ""
+	var nudge_chain_channel := GameModule.surface_animation_channel(
+		"slot_nudge_chain",
+		nudge_chain_id,
+		int(nudge_offer.get("duration_msec", 0)),
+		0,
+		{"metadata": {
+			"active_index": int(nudge_offer.get("active_index", 0)),
+			"collected_count": int(nudge_offer.get("collected_count", 0)),
+		}}
+	)
 	var result_message := _surface_message(machine, active_bonus)
 	if str(active_bonus.get("family", "")) == "pinball" and bool(active_bonus.get("active", false)):
 		active_bonus["pinball_launch_meter"] = _pinball_launch_meter(active_bonus, surface_time_msec)
@@ -58,7 +69,7 @@ func surface_state(machine: Dictionary, run_state: RunState, definition: Diction
 		"surface_fixed_price_actions": true,
 		"surface_stake_controls_required": false,
 		"surface_animates_idle": true,
-		"surface_realtime_state_refresh": feature_active and str(active_bonus.get("family", "")) == "pinball",
+		"surface_realtime_state_refresh": nudge_available or (feature_active and (str(active_bonus.get("family", "")) == "pinball" or str(active_bonus.get("family", "")) == "buffalo")),
 		"surface_embeds_outcomes": true,
 		"surface_suppresses_game_result_burst": true,
 		"surface_action_bindings": {
@@ -66,7 +77,7 @@ func surface_state(machine: Dictionary, run_state: RunState, definition: Diction
 			"cheat": {"action": "slot_nudge", "index": 0},
 		},
 		"native_selected_surface_actions": _selected_actions(ui_state),
-		"surface_animation_channels": [spin_channel, feature_channel],
+		"surface_animation_channels": [spin_channel, feature_channel, nudge_chain_channel],
 		"surface_action_blocks": [
 			{"actions": ["slot_spin"], "while_animation": "slot_spin"},
 		],
@@ -87,6 +98,7 @@ func surface_state(machine: Dictionary, run_state: RunState, definition: Diction
 				"method": "reel_machine_state",
 				"animation_channel": "slot_spin",
 				"feature_animation_channel": "slot_feature",
+				"nudge_chain_channel": "slot_nudge_chain",
 			},
 		}),
 		"machine_key": str(machine.get("machine_key", "")),
@@ -148,9 +160,20 @@ func surface_state(machine: Dictionary, run_state: RunState, definition: Diction
 		"slot_nudge_tease_window_active": bool(nudge_timing.get("window_active", false)),
 		"slot_nudge_tease_window_msec": _copy_dict(nudge_timing.get("window_msec", {})),
 		"slot_nudge_tease_input_msec": int(nudge_timing.get("input_msec", -1)),
-		"slot_nudge_tease_level": int(nudge_offer.get("visible_coin_count", 0)),
+		"slot_nudge_tease_level": int(nudge_offer.get("coin_count", nudge_offer.get("visible_coin_count", 0))),
 		"slot_nudge_tease_outcome_hint": str(nudge_timing.get("hint", "")),
 		"slot_nudge_applied": _last_tease_was_nudge(machine),
+		"slot_nudge_chain": _copy_dict(nudge_timing.get("chain", {})),
+		"slot_nudge_chain_active": nudge_available and str(nudge_offer.get("type", "")) == "coin_chain",
+		"slot_nudge_chain_event_id": nudge_chain_id,
+		"slot_nudge_chain_elapsed_msec": int(nudge_timing.get("input_msec", -1)),
+		"slot_nudge_chain_active_index": int(nudge_offer.get("active_index", 0)),
+		"slot_nudge_chain_collected_count": int(nudge_offer.get("collected_count", 0)),
+		"slot_nudge_chain_banked_payout": int(nudge_offer.get("banked_payout", 0)),
+		"slot_nudge_chain_coins": _copy_array(nudge_offer.get("coins", [])),
+		"slot_nudge_chain_last_grade": str(nudge_offer.get("last_grade", "")),
+		"slot_nudge_chain_last_award": int(nudge_offer.get("last_award", 0)),
+		"slot_nudge_chain_last_spawned": bool(nudge_offer.get("last_spawned", false)),
 		"slot_autoplay_active": bool(machine.get("slot_autoplay_active", false)),
 		"slot_free_spins": int(machine.get("free_spins", 0)),
 		"slot_active_bonus": active_bonus.duplicate(true),
@@ -246,6 +269,78 @@ func _selected_actions(ui_state: Dictionary) -> Array:
 	if action_id == "nudge":
 		return ["slot_nudge"]
 	return []
+
+
+func _nudge_chain_timing_state(offer: Dictionary, ui_state: Dictionary) -> Dictionary:
+	if offer.is_empty():
+		return {"available": false, "window_active": false, "input_msec": -1, "window_msec": {}, "hint": "", "chain": {}}
+	if str(offer.get("type", "")) != "coin_chain":
+		var legacy := _nudge_timing_state(offer, ui_state)
+		legacy["chain"] = {}
+		return legacy
+	var coins: Array = _copy_array(offer.get("coins", []))
+	var active_index := clampi(int(offer.get("active_index", 0)), 0, maxi(0, coins.size() - 1))
+	var active_coin: Dictionary = _copy_dict(coins[active_index]) if active_index < coins.size() else {}
+	var input_msec := _surface_nudge_chain_elapsed_msec(ui_state)
+	var window: Dictionary = _nudge_chain_window_for_surface(offer, active_coin, input_msec)
+	var distance := int(window.get("distance_msec", 9999))
+	var perfect_width := maxi(1, int(offer.get("skill_perfect_msec", 75)))
+	var good_width := maxi(perfect_width, int(offer.get("skill_good_msec", offer.get("skill_close_msec", 210))))
+	var ready_msec := maxi(0, int(active_coin.get("ready_msec", 0)))
+	var window_active := input_msec >= int(window.get("start", 0)) and input_msec <= int(window.get("end", 0))
+	var hint := "watch the coin"
+	if input_msec < ready_msec:
+		hint = "coin incoming"
+	elif window_active:
+		hint = "perfect timing" if distance <= perfect_width else "good timing" if distance <= good_width else "line it up"
+	else:
+		hint = "line it up"
+	var chain := offer.duplicate(true)
+	chain["active_coin"] = active_coin
+	chain["active_window_msec"] = window
+	chain["input_msec"] = input_msec
+	chain["window_active"] = window_active
+	chain["hint"] = hint
+	return {
+		"available": true,
+		"window_active": window_active,
+		"input_msec": input_msec,
+		"window_msec": window,
+		"hint": hint,
+		"chain": chain,
+	}
+
+
+func _surface_nudge_chain_elapsed_msec(ui_state: Dictionary) -> int:
+	if int(ui_state.get("slot_nudge_chain_input_msec", -1)) >= 0:
+		return int(ui_state.get("slot_nudge_chain_input_msec", -1))
+	var runtime: Dictionary = _copy_dict(ui_state.get("surface_runtime_status", {}))
+	var animations: Dictionary = _copy_dict(runtime.get("surface_animations", {}))
+	var chain: Dictionary = _copy_dict(animations.get("slot_nudge_chain", {}))
+	if not chain.is_empty():
+		return maxi(0, int(round(float(chain.get("elapsed", 0.0)) * 1000.0)))
+	if int(ui_state.get("slot_tease_input_msec", -1)) >= 0:
+		return int(ui_state.get("slot_tease_input_msec", -1))
+	return maxi(0, int(ui_state.get("surface_time_msec", ui_state.get("drunk_scaled_surface_time_msec", 0))))
+
+
+func _nudge_chain_window_for_surface(offer: Dictionary, coin: Dictionary, input_msec: int) -> Dictionary:
+	var ready_msec := maxi(0, int(coin.get("ready_msec", 0)))
+	var cycle := maxi(1, int(offer.get("peek_cycle_msec", 1200)))
+	var good_width := maxi(1, int(offer.get("skill_good_msec", offer.get("skill_close_msec", 210))))
+	var local := input_msec - ready_msec
+	var cycle_index := maxi(0, int(floor(float(maxi(0, local)) / float(cycle))))
+	var apex := ready_msec + cycle_index * cycle + cycle / 2
+	var next_apex := apex + cycle
+	if absi(input_msec - next_apex) < absi(input_msec - apex):
+		apex = next_apex
+	return {
+		"start": apex - good_width,
+		"perfect": apex,
+		"end": apex + good_width,
+		"distance_msec": absi(input_msec - apex),
+		"cycle_msec": cycle,
+	}
 
 
 func _nudge_timing_state(offer: Dictionary, ui_state: Dictionary) -> Dictionary:
@@ -402,7 +497,10 @@ func _buffalo_grand_prize(machine: Dictionary, active_bonus: Dictionary, selecte
 	if active_grand > 0:
 		return active_grand
 	var bonus_state: Dictionary = _copy_dict(machine.get("bonus_state", {}))
-	var stored := maxi(0, int(bonus_state.get("buffalo_grand_prize", 0)))
+	var buckets: Dictionary = _copy_dict(bonus_state.get("per_bet", {}))
+	var bet_id := str(selected_bet.get("id", active_bonus.get("bet_id", "bet_2")))
+	var bucket: Dictionary = _copy_dict(buckets.get(bet_id, {}))
+	var stored := maxi(0, int(bucket.get("buffalo_grand_prize", 0)))
 	if stored > 0:
 		return stored
 	var ladder: Dictionary = _copy_dict(active_bonus.get("jackpot_ladder", {}))
@@ -434,6 +532,26 @@ func _audio_cues(machine: Dictionary) -> Array:
 			var second_reel := clampi(int(plan.get("tease_second_coin_reel", first_reel + 1)), 0, maxi(0, stops.size() - 1))
 			var second_time := float(stops[second_reel]) if second_reel >= 0 and second_reel < stops.size() else first_time + 0.42
 			cues.append({"phase": "double_gold_coin_tease", "cue_id": "double_gold_coin_tease", "time_sec": second_time, "marker": "double_gold_coin_tease", "volume_db": 2.0, "pitch": 1.03})
+	var chain_offer: Dictionary = _copy_dict(machine.get("last_nudge_offer", {}))
+	if str(chain_offer.get("type", "")) == "coin_chain":
+		var active_index := int(chain_offer.get("active_index", 0))
+		var coins: Array = _copy_array(chain_offer.get("coins", []))
+		var active_coin: Dictionary = _copy_dict(coins[active_index]) if active_index >= 0 and active_index < coins.size() else {}
+		var cycle := maxi(1, int(chain_offer.get("peek_cycle_msec", 1200)))
+		var ready_msec := maxi(0, int(active_coin.get("ready_msec", chain_offer.get("first_ready_msec", 0))))
+		var apex_sec := float(ready_msec + cycle / 2) / 1000.0
+		cues.append({"phase": "nudge_chain_peek", "cue_id": "gold_coin_tease", "time_sec": maxf(0.0, apex_sec - 0.16), "marker": "nudge_chain_peek_%d" % active_index, "volume_db": 1.0 + float(active_index) * 0.25, "pitch": 0.96 + float(active_index) * 0.035})
+		var last_grade := str(chain_offer.get("last_grade", ""))
+		if last_grade == "perfect" or last_grade == "good":
+			var collect_sec := float(maxi(0, int(chain_offer.get("last_input_msec", 0)))) / 1000.0
+			cues.append({"phase": "nudge_chain_collect", "cue_id": "bonus_step_buffalo" if str(machine.get("type_id", "")) == "buffalo" else "bumper", "time_sec": collect_sec, "marker": "nudge_chain_collect_%d_%s" % [int(chain_offer.get("collected_count", 0)), last_grade], "volume_db": 0.8, "pitch": 1.0 + float(int(chain_offer.get("collected_count", 0))) * 0.045})
+			if bool(chain_offer.get("last_spawned", false)):
+				cues.append({"phase": "nudge_chain_spawn", "cue_id": "double_gold_coin_tease", "time_sec": collect_sec + 0.08, "marker": "nudge_chain_spawn_%d" % active_index, "volume_db": 1.4, "pitch": 1.06 + float(active_index) * 0.035})
+	else:
+		for event_value in _copy_array(machine.get("last_tease_events", [])):
+			var event: Dictionary = _copy_dict(event_value)
+			if str(event.get("type", "")) == "nudge_coin_chain" and str(event.get("skill_outcome", "")) == "clean_miss":
+				cues.append({"phase": "nudge_chain_break", "cue_id": "lose", "time_sec": 0.0, "marker": "nudge_chain_break_%d" % int(event.get("coin_index", 0)), "volume_db": -3.0, "pitch": 0.86})
 	var classification := str(machine.get("last_classification", ""))
 	var final_time := (float(stops[stops.size() - 1]) if not stops.is_empty() else 0.8) + 0.30
 	if classification == "near_miss":
@@ -575,7 +693,9 @@ func _buffalo_feature_scene(active_bonus: Dictionary) -> Dictionary:
 			"cue_id": "bonus_music_buffalo",
 			"loop": true,
 			"style": "stampede_bonus",
-			"volume_db": -15.5,
+			"volume_db": -5.0,
+			"priority": "feature",
+			"duck_background_music": true,
 			"pitch": 1.0 + clampf(float(step_index) / float(total_steps + 1), 0.0, 0.12),
 		},
 		"stampede": {"active": true, "intensity": clampf(float(step_index + 1) / float(total_steps + 1), 0.0, 1.0)},
@@ -640,7 +760,7 @@ func _buffalo_fill_ratio(active_bonus: Dictionary) -> float:
 
 func _last_tease_was_nudge(machine: Dictionary) -> bool:
 	for event_value in _copy_array(machine.get("last_tease_events", [])):
-		if typeof(event_value) == TYPE_DICTIONARY and str((event_value as Dictionary).get("type", "")) == "nudge_shift":
+		if typeof(event_value) == TYPE_DICTIONARY and (str((event_value as Dictionary).get("type", "")) == "nudge_shift" or str((event_value as Dictionary).get("type", "")) == "nudge_coin_chain"):
 			return true
 	return false
 
