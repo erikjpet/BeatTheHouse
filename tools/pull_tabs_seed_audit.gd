@@ -105,14 +105,18 @@ func _audit_generated_machine(machine: Dictionary, label: String, failures: Arra
 		var deal: Dictionary = deals[deal_index]
 		var sleeve: Array = deal.get("ticket_sleeve", [])
 		var prizes: Array = deal.get("prizes", [])
-		if int(deal.get("ticket_count", 0)) != 540:
-			failures.append("%s: column %d is not a 540-ticket unit." % [label, deal_index])
+		var ticket_count := int(deal.get("ticket_count", 0))
+		var initial_removed_count := int(deal.get("initial_removed_count", 0))
+		if ticket_count <= 0:
+			failures.append("%s: column %d has no generated ticket count." % [label, deal_index])
 		if sleeve.is_empty():
 			failures.append("%s: column %d has no fixed ticket sleeve." % [label, deal_index])
 		if int(deal.get("remaining", -1)) != sleeve.size():
 			failures.append("%s: column %d remaining count does not match sleeve." % [label, deal_index])
-		if int(deal.get("initial_removed_count", 0)) <= 0:
+		if initial_removed_count <= 0:
 			failures.append("%s: column %d did not remove an opening run." % [label, deal_index])
+		if initial_removed_count + sleeve.size() != ticket_count:
+			failures.append("%s: column %d opening burn plus sleeve does not match generated ticket count." % [label, deal_index])
 		if prizes.size() < 6:
 			failures.append("%s: column %d does not expose the full prize ladder." % [label, deal_index])
 		remaining_levels[str(deal.get("remaining", 0))] = true

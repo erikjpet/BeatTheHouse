@@ -301,7 +301,17 @@ func _audit_spin(game: GameModule, run_state: RunState, environment: Dictionary,
 	for action_id in ["roulette_spin", "roulette_clear"]:
 		if not _has_hit(ready_harness, action_id):
 			failures.append("Seed %d roulette ready renderer omitted hit action %s." % [index, action_id])
-	var spin_command: Dictionary = game.surface_action_command("roulette_spin", 0, false, ui, run_state, environment)
+	var arm_command: Dictionary = game.surface_action_command("roulette_spin", 0, false, ui, run_state, environment)
+	if not bool(arm_command.get("handled", false)) or str(arm_command.get("action_id", "")) != "spin_roulette":
+		failures.append("Seed %d roulette spin command was not handled." % index)
+		return
+	var spin_command := arm_command.duplicate(true)
+	if not bool(spin_command.get("resolve", false)):
+		var armed_ui: Dictionary = _dict(spin_command.get("ui_state", ui))
+		if not bool(armed_ui.get("roulette_spin_armed", false)):
+			failures.append("Seed %d roulette spin command did not arm confirmation." % index)
+			return
+		spin_command = game.surface_action_command("roulette_spin", 0, true, armed_ui, run_state, environment)
 	if not bool(spin_command.get("resolve", false)) or str(spin_command.get("action_id", "")) != "spin_roulette":
 		failures.append("Seed %d roulette spin command did not request legal resolution." % index)
 		return
