@@ -15,7 +15,7 @@ from pathlib import Path
 import random
 
 import numpy as np
-from PIL import Image, ImageDraw, ImageFilter, ImageFont, ImageOps
+from PIL import Image, ImageDraw, ImageFilter, ImageFont, ImageOps, ImageEnhance
 
 ROOT = Path(__file__).resolve().parents[1]
 ART = ROOT / "assets" / "art"
@@ -132,21 +132,19 @@ def neon_rule(width, length, color=PINK):
     return Image.alpha_composite(layer.filter(ImageFilter.GaussianBlur(4)), layer)
 
 
-def scene_bg(w, h):
+def scene_bg(w, h, name="grand_casino", darken=0.42):
+    """Real environment scene art, scaled to cover w x h, darkened + vignette."""
+    im = Image.open(ART / "environments" / f"{name}.png").convert("RGB")
+    s = max(w / im.width, h / im.height)
+    im = im.resize((int(im.width * s + 0.999), int(im.height * s + 0.999)), Image.NEAREST)
+    left, top = (im.width - w) // 2, (im.height - h) // 2
+    im = ImageEnhance.Brightness(im.crop((left, top, left + w, top + h))).enhance(darken)
     yy, xx = np.mgrid[0:h, 0:w].astype(np.float32)
-    d = np.sqrt((xx - w * 0.5) ** 2 + (yy - h * 0.42) ** 2)
+    d = np.sqrt((xx - w * 0.5) ** 2 + (yy - h * 0.5) ** 2)
     d /= d.max()
-    t = np.clip(d ** 1.3, 0, 1)[..., None]
-    arr = np.array(rgb("#10152a"), np.float32) * (1 - t) + np.array(rgb("#05060a"), np.float32) * t
-    img = Image.fromarray(np.clip(arr, 0, 255).astype(np.uint8), "RGB").convert("RGBA")
-    bok = Image.new("RGBA", (w, h), (0, 0, 0, 0))
-    bd = ImageDraw.Draw(bok)
-    rnd = random.Random(4)
-    for _ in range(int(w * h / 9000)):
-        x, y = rnd.randint(0, w), rnd.randint(0, h)
-        r = rnd.randint(4, 16)
-        bd.ellipse([x - r, y - r, x + r, y + r], fill=rnd.choice(NEONS) + (rnd.randint(30, 80),))
-    return Image.alpha_composite(img, bok.filter(ImageFilter.GaussianBlur(6)))
+    vig = (1 - 0.5 * np.clip(d ** 1.4, 0, 1))[..., None]
+    arr = np.asarray(im).astype(np.float32) * vig
+    return Image.fromarray(np.clip(arr, 0, 255).astype(np.uint8), "RGB").convert("RGBA")
 
 
 def compose(emblem, wordmark, width):
@@ -171,6 +169,10 @@ def main():
 
     cw, ch = 630, 500
     cover = scene_bg(cw, ch)
+    scrim = Image.new("RGBA", (cw, ch), (0, 0, 0, 0))
+    ImageDraw.Draw(scrim).ellipse([cw * 0.5 - 360, ch * 0.5 - 240, cw * 0.5 + 360, ch * 0.5 + 240],
+                                  fill=(4, 5, 11, 155))
+    cover = Image.alpha_composite(cover, scrim.filter(ImageFilter.GaussianBlur(55)))
     em_c = build_emblem(k_side=3, k_center=4, gap=12)
     lockup = compose(em_c, make_wordmark(min(cw - 40, em_c.width), title_px=64), max(em_c.width, cw - 40))
     scale = min((cw - 40) / lockup.width, (ch - 40) / lockup.height, 1.0)

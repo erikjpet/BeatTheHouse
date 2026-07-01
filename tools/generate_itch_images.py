@@ -11,9 +11,10 @@ from pathlib import Path
 import random
 
 import numpy as np
-from PIL import Image, ImageDraw, ImageFilter, ImageFont
+from PIL import Image, ImageDraw, ImageFilter, ImageFont, ImageEnhance
 
 ROOT = Path(__file__).resolve().parents[1]
+ART = ROOT / "assets" / "art"
 OUT = ROOT / "builds" / "itch" / "images"
 OUT.mkdir(parents=True, exist_ok=True)
 
@@ -96,18 +97,29 @@ def draw_tracked(draw, pos, text, font, fill, tracking):
         x += font.getlength(ch) + tracking
 
 
+def game_scene(name, w, h, darken=0.5):
+    """Load a real environment scene, scale to cover w x h, darken + vignette."""
+    im = Image.open(ART / "environments" / f"{name}.png").convert("RGB")
+    scale = max(w / im.width, h / im.height)
+    im = im.resize((int(im.width * scale + 0.999), int(im.height * scale + 0.999)), Image.NEAREST)
+    left, top = (im.width - w) // 2, (im.height - h) // 2
+    im = ImageEnhance.Brightness(im.crop((left, top, left + w, top + h))).enhance(darken)
+    vig = radial_base(w, h, (255, 255, 255), (58, 58, 70), power=1.5) / 255.0
+    arr = np.asarray(im).astype(np.float32) * vig
+    return Image.fromarray(np.clip(arr, 0, 255).astype(np.uint8), "RGB").convert("RGBA")
+
+
 def make_banner():
     w, h = 1920, 480
-    img = to_img(radial_base(w, h, CORE, BG, cy=0.42, power=1.15))
-    img = Image.alpha_composite(img, bokeh((w, h), 46, (6, 26), (30, 95), seed=3))
+    img = game_scene("grand_casino", w, h, darken=0.55)
     img = Image.alpha_composite(img, glow_layer(
-        (w, h), [lambda d: d.ellipse([-200, h - 30, w + 200, h + 190], fill=CYAN + (38,))], 70))
+        (w, h), [lambda d: d.rounded_rectangle([w / 2 - 620, h * 0.20, w / 2 + 620, h * 0.80],
+                                               radius=60, fill=(4, 5, 11, 205))], 55))
 
-    title_font = ImageFont.truetype(FONT_BOLD, 128)
-    sub_font = ImageFont.truetype(FONT_BOLD, 30)
-    title, tr = "BEAT THE HOUSE", 10
+    title_font = ImageFont.truetype(FONT_BOLD, 132)
+    title, tr = "BEAT THE HOUSE", 12
     tw = tracked_width(title_font, title, tr)
-    tx, ty = (w - tw) / 2, h * 0.28
+    tx, ty = (w - tw) / 2, h * 0.30
 
     img = Image.alpha_composite(img, glow_layer(
         (w, h), [lambda d: draw_tracked(d, (tx, ty), title, title_font, CYAN + (150,), tr)], 34))
@@ -116,15 +128,13 @@ def make_banner():
     d = ImageDraw.Draw(img)
     draw_tracked(d, (tx, ty), title, title_font, SOFT + (255,), tr)
 
-    sub, sr = "A SEEDABLE CASINO ROGUELIKE", 8
-    sw = tracked_width(sub_font, sub, sr)
-    sx, sy = (w - sw) / 2, ty + 158
-    draw_tracked(d, (sx, sy), sub, sub_font, CYAN + (235,), sr)
-
-    ry = sy + 54
+    ry = ty + 170
     img = Image.alpha_composite(img, glow_layer(
-        (w, h), [lambda dd: dd.line([(w / 2 - 250, ry), (w / 2 + 250, ry)], fill=PINK + (255,), width=4)], 4))
-    ImageDraw.Draw(img).line([(w / 2 - 250, ry), (w / 2 + 250, ry)], fill=PINK + (255,), width=2)
+        (w, h), [lambda dd: dd.line([(w / 2 - 240, ry), (w / 2 + 240, ry)], fill=PINK + (255,), width=4)], 5))
+    d = ImageDraw.Draw(img)
+    d.line([(w / 2 - 240, ry), (w / 2 + 240, ry)], fill=PINK + (255,), width=2)
+    d.ellipse([w / 2 - 246, ry - 5, w / 2 - 236, ry + 5], fill=CYAN + (255,))
+    d.ellipse([w / 2 + 236, ry - 5, w / 2 + 246, ry + 5], fill=CYAN + (255,))
 
     add_noise(img.convert("RGB")).save(OUT / "banner.png")
 
