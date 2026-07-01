@@ -149,7 +149,101 @@ Beat the House Godot checks passed. Suite=Smoke
 
 ## Phase 2 - Runtime Integration
 
-Status: NOT STARTED
+Status: COMPLETE
+Completed: 2026-07-01
+
+Files changed:
+- `scripts/games/slots/pinball/pinball_feature.gd`
+- `scripts/games/slots/slot_family_pinball.gd`
+- `scripts/games/slot.gd`
+- `scripts/games/slots/slot_machine_state.gd`
+- `scripts/games/slots/slot_presentation.gd`
+- `scripts/games/slots/slot_renderer.gd`
+- `scripts/games/slots/slot_resolver.gd`
+- `scripts/tests/foundation_check.gd`
+- `tools/slot_pinball_physics_audit.gd`
+- `tools/slot_pinball_performance_probe.gd`
+- Deleted `scripts/games/slots/slot_pinball_table.gd`
+- Deleted `scripts/games/slots/slot_pinball_table.gd.uid`
+
+Integration notes:
+- Slot family reel/payline contracts were restored to the prior tested shape,
+  while `open_feature`, `step_bonus`, and preview now delegate to the new
+  `PinballFeature` adapter.
+- Surface refresh advances live visual pinball state through `pinball_view`
+  instead of dispatching `slot_bonus_tick`.
+- Renderer, state normalization, resolver metrics, foundation checks, and audit
+  tools now read compact `pinball_view`/`pinball_summary` payloads instead of
+  round-tripping `pinball_session`.
+- `scripts/tools` grep is clean for `pinball_session`, `slot_pinball_table`,
+  `slot_bonus_tick`, and `SlotPinballTable`.
+- Current visual perf guardrails pass; the stricter order-of-magnitude final
+  budget remains Phase 6 work.
+
+Verification commands:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File tools\check_godot.ps1 -Suite Smoke -NoImport -TimeoutSec 180
+```
+
+Output:
+
+```text
+validate_project                PASS     1299ms
+gdscript_load_check             PASS     6155ms
+foundation_smoke                PASS    32900ms
+ui_scene_compile                PASS    28924ms
+roulette_audio_audit            PASS     1592ms
+Report: D:\Projects\Beat-The-House\.tmp\test_reports\20260701_182654_smoke\summary.json
+Beat the House Godot checks passed. Suite=Smoke
+```
+
+```powershell
+& 'D:\Projects\Beat-The-House\.tools\godot-4.6-stable\Godot_v4.6-stable_win64_console.exe' --headless --path 'D:\Projects\Beat-The-House' --script 'res://tools/pinball_sim_probe.gd' -- 48
+```
+
+Output:
+
+```text
+Godot Engine v4.6.stable.official.89cea1439 - https://godotengine.org
+
+PINBALL_SIM_DETERMINISM seeds=48 status=PASS
+PINBALL_SIM_DRAIN board=bumper_alley seeds=48 drained=48 avg_ticks=230.85 avg_events=15.17 avg_award=39.94 max_events_tick=2 event_types=["1","9","8","4","5","2","3","6","12","11","7"]
+PINBALL_SIM_PERF ticks=2400 avg_tick_us=50.502 sim_reported_avg_us=48.857 max_tick_us=993 object_delta=0 max_active=4 status=PASS
+PINBALL_SIM_PROBE_OVERALL status=PASS failures=0
+```
+
+```powershell
+& 'D:\Projects\Beat-The-House\.tools\godot-4.6-stable\Godot_v4.6-stable_win64_console.exe' --headless --path 'D:\Projects\Beat-The-House' --script 'res://tools/slot_pinball_physics_audit.gd' -- 48
+```
+
+Output:
+
+```text
+Godot Engine v4.6.stable.official.89cea1439 - https://godotengine.org
+
+PINBALL_SIM_AUDIT_DIRECT runs=48 drained=48 avg=47.21 max=195 avg_ticks=960.00 max_active=1 events_tick=2 event_types=["1","2","3","4","5","12","8","6","13","7"]
+PINBALL_SIM_AUDIT_FEATURE mode=em_bumper_drop runs=48 complete=48 avg=134.60 max=162 max_active=1
+PINBALL_SIM_AUDIT_FEATURE mode=lane_multiball runs=48 complete=48 avg=135.10 max=144 max_active=3
+PINBALL_SIM_AUDIT_FEATURE mode=video_feature runs=48 complete=48 avg=85.23 max=90 max_active=1
+PINBALL_SIM_AUDIT_ITEMS effects=["slot_pinball_rubber_pegs"]
+PINBALL_SIM_AUDIT_OVERALL status=PASS failures=0
+```
+
+```powershell
+& 'D:\Projects\Beat-The-House\.tools\godot-4.6-stable\Godot_v4.6-stable_win64_console.exe' --headless --path 'D:\Projects\Beat-The-House' --script 'res://tools/slot_pinball_performance_probe.gd' -- 120
+```
+
+Output:
+
+```text
+Godot Engine v4.6.stable.official.89cea1439 - https://godotengine.org
+
+PINBALL_PERF_VISUAL mode=em_bumper_drop frames=120 avg_surface_us=1358.142 avg_signature_us=664.508 avg_draw_us=1605.175 avg_total_us=3627.825 max_draw_calls=383 max_label_calls=24 max_hit_calls=5
+PINBALL_PERF_VISUAL mode=lane_multiball frames=120 avg_surface_us=1407.425 avg_signature_us=724.192 avg_draw_us=1718.250 avg_total_us=3849.867 max_draw_calls=414 max_label_calls=24 max_hit_calls=5
+PINBALL_PERF_VISUAL mode=video_feature frames=120 avg_surface_us=1268.167 avg_signature_us=676.150 avg_draw_us=1600.550 avg_total_us=3544.867 max_draw_calls=383 max_label_calls=23 max_hit_calls=5
+PINBALL_PERF_OVERALL status=PASS failures=0
+```
 
 ## Phase 3 - Sequencer + Boards B/C
 

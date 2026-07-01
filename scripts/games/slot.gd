@@ -228,7 +228,7 @@ func surface_action_command(surface_action: String, index: int, confirm_requeste
 				"environment_changed": true,
 				"message": "Autoplay on." if bool(machine.get("slot_autoplay_active", false)) else "Autoplay off.",
 			})
-		"launch", "left", "right", "soft", "hard", "power_down", "power_up", "tilt", "tick", "slot_bonus_launch", "slot_bonus_left", "slot_bonus_right", "slot_bonus_power_down", "slot_bonus_power_up", "slot_bonus_soft", "slot_bonus_hard", "slot_bonus_tilt", "slot_bonus_tick":
+		"launch", "left", "right", "soft", "hard", "power_down", "power_up", "tilt", "slot_bonus_launch", "slot_bonus_left", "slot_bonus_right", "slot_bonus_power_down", "slot_bonus_power_up", "slot_bonus_soft", "slot_bonus_hard", "slot_bonus_tilt":
 			return GameModule.surface_command({
 				"handled": true,
 				"action_id": _normalize_bonus_action(surface_action),
@@ -244,9 +244,6 @@ func surface_action_command(surface_action: String, index: int, confirm_requeste
 
 func surface_needs_auto_tick(ui_state: Dictionary, run_state: RunState, environment: Dictionary) -> bool:
 	var machine: Dictionary = StateScript.read_machine(environment, get_id())
-	var pinball_time := _pinball_surface_timing_msec(ui_state)
-	if _pinball_bonus_runtime_tick_due(machine, pinball_time):
-		return true
 	var buffalo_bonus_action := _buffalo_bonus_auto_action(machine)
 	if not buffalo_bonus_action.is_empty():
 		var bonus_surface_time := _surface_timing_msec(ui_state)
@@ -264,19 +261,6 @@ func surface_auto_action_command(ui_state: Dictionary, _run_state: RunState, env
 	if machine.is_empty():
 		return {"handled": false}
 	var surface_time := _surface_timing_msec(ui_state)
-	var pinball_time := _pinball_surface_timing_msec(ui_state)
-	if _pinball_bonus_runtime_tick_due(machine, pinball_time):
-		machine["slot_pinball_next_tick_msec"] = pinball_time + _slot_pinball_tick_interval_msec(machine)
-		StateScript.write_machine(environment, get_id(), machine)
-		return GameModule.surface_command({
-			"handled": true,
-			"action_id": "slot_bonus_tick",
-			"action_kind": "bonus",
-			"direct_resolve": true,
-			"skip_stake_validation": true,
-			"preserve_surface_ui_state": true,
-			"message": "Pinball physics tick.",
-		})
 	var buffalo_bonus_action := _buffalo_bonus_auto_action(machine)
 	if not buffalo_bonus_action.is_empty():
 		if surface_time <= 0:
@@ -897,8 +881,6 @@ func _normalize_bonus_action(action_id: String) -> String:
 			return "slot_bonus_power_up"
 		"tilt":
 			return "slot_bonus_tilt"
-		"tick":
-			return "slot_bonus_tick"
 		_:
 			return action_id
 
@@ -985,36 +967,9 @@ func _surface_timing_msec(ui_state: Dictionary) -> int:
 	return maxi(0, int(ui_state.get("drunk_scaled_surface_time_msec", ui_state.get("surface_time_msec", 0))))
 
 
-func _pinball_surface_timing_msec(ui_state: Dictionary) -> int:
-	return maxi(0, int(ui_state.get("surface_time_msec", _surface_timing_msec(ui_state))))
-
-
-func _pinball_bonus_runtime_tick_due(machine: Dictionary, surface_time_msec: int) -> bool:
-	if machine.is_empty():
-		return false
-	var active: Dictionary = _slot_copy_dict(machine.get("active_bonus", {}))
-	if str(active.get("family", machine.get("type_id", ""))) != "pinball":
-		return false
-	if not bool(active.get("active", false)) or bool(active.get("complete", false)):
-		return false
-	if not bool(active.get("launch_in_progress", false)):
-		return false
-	var next_msec := int(machine.get("slot_pinball_next_tick_msec", 0))
-	if surface_time_msec <= 0:
-		return next_msec <= 0
-	return next_msec <= 0 or surface_time_msec >= next_msec
-
-
 func _slot_active_bonus_family(machine: Dictionary) -> String:
 	var active: Dictionary = _slot_copy_dict(machine.get("active_bonus", {}))
 	return str(active.get("family", machine.get("type_id", "")))
-
-
-func _slot_pinball_tick_interval_msec(machine: Dictionary) -> int:
-	var active: Dictionary = _slot_copy_dict(machine.get("active_bonus", {}))
-	if str(active.get("family", machine.get("type_id", ""))) != "pinball":
-		return 16
-	return 16
 
 
 func _slot_cross_game_item_effects(run_state: RunState, machine: Dictionary, is_cheat: bool) -> Dictionary:
@@ -1035,6 +990,21 @@ func _slot_cross_game_item_effects(run_state: RunState, machine: Dictionary, is_
 		"slot_first_bonus_bonus_cap": _item_bonus("slot_first_bonus_bonus_cap", run_state, false),
 		"slot_feature_weight_bonus_percent": _item_bonus("slot_feature_weight_bonus_percent", run_state, false),
 		"slot_reel_win_weight_percent": _item_bonus("slot_reel_win_weight_percent", run_state, false),
+		"slot_pinball_drain_cleaner_uses": _item_bonus("slot_pinball_drain_cleaner_uses", run_state, false),
+		"slot_pinball_drain_cleaner_floor_percent": _item_bonus("slot_pinball_drain_cleaner_floor_percent", run_state, false),
+		"slot_pinball_drain_cleaner_award_percent": _item_bonus("slot_pinball_drain_cleaner_award_percent", run_state, false),
+		"slot_pinball_jackpot_magnet_uses": _item_bonus("slot_pinball_jackpot_magnet_uses", run_state, false),
+		"slot_pinball_jackpot_magnet_award_percent": _item_bonus("slot_pinball_jackpot_magnet_award_percent", run_state, false),
+		"slot_pinball_jackpot_magnet_progress_bonus": _item_bonus("slot_pinball_jackpot_magnet_progress_bonus", run_state, false),
+		"slot_pinball_splitter_token_uses": _item_bonus("slot_pinball_splitter_token_uses", run_state, false),
+		"slot_pinball_splitter_token_extra_balls": _item_bonus("slot_pinball_splitter_token_extra_balls", run_state, false),
+		"slot_pinball_return_spring_uses": _item_bonus("slot_pinball_return_spring_uses", run_state, false),
+		"slot_pinball_return_spring_impulse": _item_bonus("slot_pinball_return_spring_impulse", run_state, false),
+		"slot_pinball_tilt_dampener_percent": _item_bonus("slot_pinball_tilt_dampener_percent", run_state, false),
+		"slot_pinball_bumper_battery_hits": _item_bonus("slot_pinball_bumper_battery_hits", run_state, false),
+		"slot_pinball_bumper_battery_award_percent": _item_bonus("slot_pinball_bumper_battery_award_percent", run_state, false),
+		"slot_pinball_bumper_battery_kick_percent": _item_bonus("slot_pinball_bumper_battery_kick_percent", run_state, false),
+		"slot_pinball_bumper_battery_up_impulse": _item_bonus("slot_pinball_bumper_battery_up_impulse", run_state, false),
 		"slot_cold_quarter_heat_reduction": int(item_state.get("cold_quarter_heat_reduction", _item_bonus("slot_cold_quarter_heat_reduction", run_state, is_cheat))),
 		"slot_split_reel_note_perfect_msec_bonus": int(item_state.get("split_reel_note_perfect_msec_bonus", _item_bonus("slot_split_reel_note_perfect_msec_bonus", run_state, is_cheat))),
 		"slot_split_reel_note_close_msec_bonus": int(item_state.get("split_reel_note_close_msec_bonus", _item_bonus("slot_split_reel_note_close_msec_bonus", run_state, is_cheat))),

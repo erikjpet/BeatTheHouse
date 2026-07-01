@@ -18,7 +18,10 @@ const SlotResolverScript := preload("res://scripts/games/slots/slot_resolver.gd"
 const SlotCatalogScript := preload("res://scripts/games/slots/slot_catalog.gd")
 const SlotFamilyBuffaloScript := preload("res://scripts/games/slots/slot_family_buffalo.gd")
 const SlotFamilyPinballScript := preload("res://scripts/games/slots/slot_family_pinball.gd")
-const SlotPinballTableScript := preload("res://scripts/games/slots/slot_pinball_table.gd")
+const PinballBoardsScript := preload("res://scripts/games/slots/pinball/pinball_boards.gd")
+const PinballBoardScript := preload("res://scripts/games/slots/pinball/pinball_board.gd")
+const PinballFeatureScript := preload("res://scripts/games/slots/pinball/pinball_feature.gd")
+const PinballSimScript := preload("res://scripts/games/slots/pinball/pinball_sim.gd")
 const SlotPresentationScript := preload("res://scripts/games/slots/slot_presentation.gd")
 const SlotRendererScript := preload("res://scripts/games/slots/slot_renderer.gd")
 
@@ -859,8 +862,8 @@ func _check_slot_contract_smoke(library: ContentLibrary, failures: Array) -> voi
 	_check_slot_hold_and_spin_fill_scaling(definition, failures)
 	print("SLOT_CONTRACT_SMOKE free_games_carryover")
 	_check_slot_free_games_carryover(definition, failures)
-	print("SLOT_CONTRACT_SMOKE pinball_table_physics")
-	_check_slot_pinball_table_physics(definition, failures)
+	print("SLOT_CONTRACT_SMOKE pinball_sim_physics")
+	_check_slot_pinball_sim_physics(definition, failures)
 	print("SLOT_CONTRACT_SMOKE economy_rng_discipline")
 	_check_slot_economy_rng_discipline(failures)
 
@@ -926,8 +929,8 @@ func _check_slot_acceptance(library: ContentLibrary, failures: Array) -> void:
 	_check_slot_video_pinball_feature_event(definition, failures)
 	print("SLOT_ACCEPTANCE pinball_feature_visual_manifest")
 	_check_slot_pinball_feature_visual_manifest(definition, failures)
-	print("SLOT_ACCEPTANCE pinball_table_physics")
-	_check_slot_pinball_table_physics(definition, failures)
+	print("SLOT_ACCEPTANCE pinball_sim_physics")
+	_check_slot_pinball_sim_physics(definition, failures)
 	print("SLOT_ACCEPTANCE economy_rng_discipline")
 	_check_slot_economy_rng_discipline(failures)
 	print("SLOT_ACCEPTANCE feature_subsimulation")
@@ -1685,8 +1688,24 @@ func _check_slot_item_pack_effects(library: ContentLibrary, definition: Dictiona
 		"neon_players_charm",
 		"split_reel_note",
 		"feature_magnet",
+		"drain_cleaner",
+		"jackpot_magnet",
+		"splitter_token",
+		"return_spring",
+		"tilt_dampener",
+		"bumper_battery",
+	]
+	var pinball_item_ids := [
+		"drain_cleaner",
+		"jackpot_magnet",
+		"splitter_token",
+		"return_spring",
+		"tilt_dampener",
+		"bumper_battery",
 	]
 	var only_pull_tabs_challenge := RunState.custom_challenge("only_pull_tabs", "SLOT-ITEMS", {"content_groups": ["pull_tabs_pack"]})
+	var seen_icon_keys: Dictionary = {}
+	var seen_asset_paths: Dictionary = {}
 	for item_id_value in slot_item_ids:
 		var item_id := str(item_id_value)
 		var item: Dictionary = library.item(item_id)
@@ -1699,6 +1718,46 @@ func _check_slot_item_pack_effects(library: ContentLibrary, definition: Dictiona
 			failures.append("Default content groups did not enable slot item %s." % item_id)
 		if library.item_enabled_for_challenge(item_id, only_pull_tabs_challenge):
 			failures.append("Pull-tab-only challenge still enabled slot item %s." % item_id)
+		var icon_key := str(item.get("icon_key", "")).strip_edges()
+		if icon_key.is_empty():
+			failures.append("Slot item %s is missing an icon key." % item_id)
+		elif seen_icon_keys.has(icon_key):
+			failures.append("Slot items %s and %s share icon key %s." % [str(seen_icon_keys.get(icon_key, "")), item_id, icon_key])
+		else:
+			seen_icon_keys[icon_key] = item_id
+		var asset_path := str(item.get("asset_path", "")).strip_edges()
+		if asset_path.is_empty():
+			failures.append("Slot item %s is missing an asset path." % item_id)
+		elif seen_asset_paths.has(asset_path):
+			failures.append("Slot items %s and %s share asset path %s." % [str(seen_asset_paths.get(asset_path, "")), item_id, asset_path])
+		else:
+			seen_asset_paths[asset_path] = item_id
+
+	var shop_archetype := _first_shop_archetype(library)
+	if shop_archetype.is_empty():
+		failures.append("No shop archetype exists for slot item shop-spawn validation.")
+	else:
+		var slot_only_challenge := RunState.custom_challenge("only_slot_items", "SLOT-ITEMS", {"content_groups": ["slot_pack"]})
+		var slot_shop_pool := library.shop_item_pool_for_challenge(shop_archetype.get("item_pool", []), slot_only_challenge)
+		for item_id_value in pinball_item_ids:
+			var item_id := str(item_id_value)
+			if not slot_shop_pool.has(item_id):
+				failures.append("Slot-only shop pool did not include pinball item %s." % item_id)
+		var exhaustive_shop := shop_archetype.duplicate(true)
+		exhaustive_shop["item_count"] = [slot_shop_pool.size(), slot_shop_pool.size()]
+		var shop_run_state: RunState = RunStateScript.new()
+		shop_run_state.start_new("SLOT-PINBALL-SHOP-SPAWN", slot_only_challenge)
+		var shop_environment := EnvironmentInstance.from_archetype(exhaustive_shop, 0, shop_run_state.create_rng("pinball_item_shop"), library, shop_run_state.challenge_config)
+		var offered_item_ids: Array = []
+		for offer_value in shop_environment.item_offers:
+			if typeof(offer_value) != TYPE_DICTIONARY:
+				continue
+			var offer: Dictionary = offer_value
+			offered_item_ids.append(str(offer.get("id", "")))
+		for item_id_value in pinball_item_ids:
+			var item_id := str(item_id_value)
+			if not offered_item_ids.has(item_id):
+				failures.append("Generated slot-only shop did not offer pinball item %s when the full pool was available." % item_id)
 
 	var game: GameModule = _slot_game(library, failures)
 	if game == null:
@@ -2786,7 +2845,7 @@ func _check_slot_pinball_escalation(definition: Dictionary, failures: Array) -> 
 	var step: Dictionary = pinball.step_bonus(video, "slot_bonus_left", run_state.create_rng("slot_pin_video_left"), definition)
 	var after_physics := JSON.stringify(_slot_dict(_slot_dict(step.get("active_bonus", {})).get("physics", {})))
 	if before_physics == after_physics:
-		failures.append("Slot pinball video flipper input did not change ball state.")
+		failures.append("Slot pinball video nudge input did not change ball state.")
 	var short_total: int = pinball.preview_feature_award(video.duplicate(true), 10, definition, run_state.create_rng("slot_pin_video_short"), ["slot_bonus_launch"])
 	var keepalive_total: int = pinball.preview_feature_award(video.duplicate(true), 10, definition, run_state.create_rng("slot_pin_video_keep"), ["slot_bonus_left", "slot_bonus_right", "slot_bonus_left", "slot_bonus_launch", "slot_bonus_right", "slot_bonus_launch"])
 	if keepalive_total <= short_total:
@@ -2855,8 +2914,8 @@ func _check_slot_pinball_feature_physics(definition: Dictionary, failures: Array
 		failures.append("Slot lane_multiball physics did not reach active multiball count > 1.")
 	if not bool(line_active.get("multiball_started", false)):
 		failures.append("Slot lane_multiball physics did not start multiball from lock events.")
-	if not _slot_events_have_awarded_type(_slot_array(line_active.get("event_log", [])), "ramp"):
-		failures.append("Slot lane_multiball jackpot/lock value did not come from awarded ramp events.")
+	if not _slot_events_have_awarded_type(_slot_array(line_active.get("event_log", [])), "gate") and not _slot_events_have_awarded_type(_slot_array(line_active.get("event_log", [])), "launcher"):
+		failures.append("Slot lane_multiball plinko value did not come from awarded gate/launcher events.")
 	var causality: Dictionary = _slot_pinball_causality_comparison(definition)
 	if int(causality.get("em_base", 0)) == int(causality.get("em_nudge", 0)):
 		failures.append("Slot EM pinball nudge inputs did not shift award distribution over fixed seeds.")
@@ -2882,15 +2941,15 @@ func _check_slot_video_pinball_feature_event(definition: Dictionary, failures: A
 		failures.append("Slot video pinball feature event did not complete.")
 		return
 	var events: Array = _slot_array(active.get("event_log", []))
-	for required_type in ["bumper", "ramp", "drop_target", "pocket"]:
+	for required_type in ["peg", "bumper", "target", "launcher", "jackpot"]:
 		if not _slot_events_have_awarded_type(events, str(required_type)):
 			failures.append("Slot video pinball feature did not log awarded %s hits." % str(required_type))
 	if int(active.get("max_active_count", 0)) <= 1:
 		failures.append("Slot video pinball feature did not reach multiball active count > 1.")
 	if int(active.get("lane_locks", 0)) < 2:
-		failures.append("Slot video pinball feature did not persist enough ramp locks for multiball.")
+		failures.append("Slot video pinball feature did not persist enough launcher locks for cascade multiball.")
 	if int(active.get("video_super_jackpots", 0)) <= 0 or not _slot_events_have_awarded_type(events, "super_jackpot"):
-		failures.append("Slot video pinball feature did not pay a super jackpot from a qualifying physics shot.")
+		failures.append("Slot video pinball feature did not pay a super jackpot from a qualifying plinko trigger.")
 	if int(active.get("video_completed_banks", 0)) <= 0:
 		failures.append("Slot video pinball feature did not complete the target bank.")
 	var snapshots: Array = _slot_array(sample.get("launch_snapshots", []))
@@ -2956,6 +3015,10 @@ func _check_slot_pinball_feature_visual_manifest(definition: Dictionary, failure
 		failures.append("Slot pinball prelaunch visual manifest did not expose controlled power meter state.")
 	if float(prelaunch_manifest.get("pinball_launch_start_y", 1.0)) > 0.20:
 		failures.append("Slot pinball launch point was not moved to the top of the board.")
+	if str(prelaunch_manifest.get("pinball_board_style", "")) != "plinko":
+		failures.append("Slot pinball prelaunch visual manifest did not expose plinko board style.")
+	if int(prelaunch_manifest.get("pinball_peg_count", 0)) <= 0 or int(prelaunch_manifest.get("pinball_trigger_count", 0)) <= 0:
+		failures.append("Slot pinball prelaunch visual manifest did not expose peg and trigger counts.")
 	var angled_machine: Dictionary = _slot_machine(definition, prelaunch_run, "pinball", "video_feature", "standard", "plain")
 	angled_machine["active_bonus"] = pinball.open_feature(angled_machine, 10, prelaunch_run.create_rng("slot_pin_angle_open"), definition)
 	var angle_step: Dictionary = pinball.step_bonus(angled_machine, "slot_bonus_left", prelaunch_run.create_rng("slot_pin_angle_left"), definition)
@@ -2975,15 +3038,15 @@ func _check_slot_pinball_feature_visual_manifest(definition: Dictionary, failure
 		failures.append("Slot pinball live feature used a fast-forward physics tick budget instead of realtime-sized ticks.")
 	var control_machine: Dictionary = _slot_machine(definition, prelaunch_run, "pinball", "video_feature", "standard", "plain")
 	control_machine["active_bonus"] = pinball.open_feature(control_machine, 10, prelaunch_run.create_rng("slot_pin_control_open"), definition)
-	var start_step: Dictionary = pinball.step_bonus(control_machine, "slot_bonus_start_10", prelaunch_run.create_rng("slot_pin_control_start"), definition)
+	var start_step: Dictionary = pinball.step_bonus(control_machine, "slot_bonus_start_24", prelaunch_run.create_rng("slot_pin_control_start"), definition)
 	control_machine["active_bonus"] = _slot_dict(start_step.get("active_bonus", {}))
 	var aim_step: Dictionary = pinball.step_bonus(control_machine, "slot_bonus_aim_00", prelaunch_run.create_rng("slot_pin_control_aim"), definition)
 	control_machine["active_bonus"] = _slot_dict(aim_step.get("active_bonus", {}))
-	var power_step: Dictionary = pinball.step_bonus(control_machine, "slot_bonus_power_10", prelaunch_run.create_rng("slot_pin_control_power"), definition)
+	var power_step: Dictionary = pinball.step_bonus(control_machine, "slot_bonus_power_20", prelaunch_run.create_rng("slot_pin_control_power"), definition)
 	control_machine["active_bonus"] = _slot_dict(power_step.get("active_bonus", {}))
 	var control_surface: Dictionary = presentation.surface_state(control_machine, prelaunch_run, definition, {"surface_time_msec": 340})
 	var control_manifest: Dictionary = renderer.render_signature(control_surface, definition, 340, "feature")
-	if int(control_manifest.get("pinball_start_choice_count", 0)) < 11 or int(control_manifest.get("pinball_aim_choice_count", 0)) < 13:
+	if int(control_manifest.get("pinball_start_choice_count", 0)) < 25 or int(control_manifest.get("pinball_aim_choice_count", 0)) < 25:
 		failures.append("Slot pinball feature did not expose direct start/aim control choices.")
 	if float(control_manifest.get("pinball_launch_start_x", 0.0)) < 0.90:
 		failures.append("Slot pinball direct start control did not move the launch point across the top rail.")
@@ -2996,22 +3059,21 @@ func _check_slot_pinball_feature_visual_manifest(definition: Dictionary, failure
 	var realtime_launch: Dictionary = pinball.step_bonus(realtime_machine, "slot_bonus_launch", prelaunch_run.create_rng("slot_pin_realtime_launch"), definition, {"surface_time_msec": 1000, "drunk_scaled_surface_time_msec": 1000})
 	realtime_machine["active_bonus"] = _slot_dict(realtime_launch.get("active_bonus", {}))
 	var realtime_before: Dictionary = _slot_dict(realtime_machine.get("active_bonus", {}))
-	var before_session: Dictionary = _slot_dict(realtime_before.get("pinball_session", {}))
-	var before_tick: int = int(before_session.get("tick", 0))
-	var before_positions: String = JSON.stringify(_slot_array(before_session.get("balls", [])))
-	var realtime_tick: Dictionary = pinball.step_bonus(realtime_machine, "slot_bonus_tick", prelaunch_run.create_rng("slot_pin_realtime_tick"), definition, {"surface_time_msec": 1064, "drunk_scaled_surface_time_msec": 1008})
-	realtime_machine["active_bonus"] = _slot_dict(realtime_tick.get("active_bonus", {}))
+	var before_view: Dictionary = _slot_dict(realtime_before.get("pinball_view", {}))
+	var before_time: float = float(before_view.get("time", 0.0))
+	var before_positions: String = JSON.stringify(_slot_array(before_view.get("balls", [])))
+	realtime_machine["active_bonus"] = PinballFeatureScript.surface_refresh(realtime_before, 1064)
 	var realtime_after: Dictionary = _slot_dict(realtime_machine.get("active_bonus", {}))
-	var after_session: Dictionary = _slot_dict(realtime_after.get("pinball_session", {}))
+	var after_view: Dictionary = _slot_dict(realtime_after.get("pinball_view", {}))
 	var tick_budget: int = int(realtime_after.get("physics_tick_budget", 0))
-	if tick_budget < 2 or tick_budget > 8:
-		failures.append("Slot pinball realtime catch-up tick budget escaped the capped realtime range.")
-	if int(after_session.get("tick", 0)) <= before_tick:
-		failures.append("Slot pinball realtime tick did not advance physics ticks.")
-	if JSON.stringify(_slot_array(after_session.get("balls", []))) == before_positions:
-		failures.append("Slot pinball realtime tick did not move live ball state.")
+	if tick_budget > 3:
+		failures.append("Slot pinball live launch used a fast-forward physics tick budget.")
+	if float(after_view.get("time", 0.0)) <= before_time:
+		failures.append("Slot pinball surface refresh did not advance physics time.")
+	if JSON.stringify(_slot_array(after_view.get("balls", []))) == before_positions:
+		failures.append("Slot pinball surface refresh did not move live ball state.")
 	if int(realtime_after.get("last_physics_real_msec", 0)) != 1064:
-		failures.append("Slot pinball realtime tick did not track real surface time.")
+		failures.append("Slot pinball surface refresh did not track real surface time.")
 	var prelaunch_cues: Array = []
 	for cue_value in _slot_array(prelaunch_scene.get("audio_cues", [])):
 		var cue: Dictionary = _slot_dict(cue_value)
@@ -3037,9 +3099,9 @@ func _check_slot_pinball_feature_visual_manifest(definition: Dictionary, failure
 		",".join(_slot_string_array(prelaunch_cues)),
 	])
 	var scenarios: Array = [
-		{"format": "classic_3_reel", "mode": "em_bumper_drop", "inputs": ["slot_bonus_left", "slot_bonus_launch"], "bumpers": 4, "ramps": 0},
-		{"format": "line_5x3", "mode": "lane_multiball", "inputs": ["slot_bonus_left", "slot_bonus_launch", "slot_bonus_right", "slot_bonus_launch", "slot_bonus_right", "slot_bonus_launch"], "bumpers": 3, "ramps": 2},
-		{"format": "video_feature", "mode": "video_feature", "inputs": ["slot_bonus_left", "slot_bonus_launch", "slot_bonus_right", "slot_bonus_launch", "slot_bonus_right", "slot_bonus_launch", "slot_bonus_left", "slot_bonus_launch"], "bumpers": 4, "ramps": 5},
+		{"format": "classic_3_reel", "mode": "em_bumper_drop", "inputs": ["slot_bonus_left", "slot_bonus_launch"], "bumpers": 2, "pegs": 40, "triggers": 5},
+		{"format": "line_5x3", "mode": "lane_multiball", "inputs": ["slot_bonus_left", "slot_bonus_launch", "slot_bonus_right", "slot_bonus_launch", "slot_bonus_right", "slot_bonus_launch"], "bumpers": 3, "pegs": 60, "triggers": 8},
+		{"format": "video_feature", "mode": "video_feature", "inputs": ["slot_bonus_left", "slot_bonus_launch", "slot_bonus_right", "slot_bonus_launch", "slot_bonus_right", "slot_bonus_launch", "slot_bonus_left", "slot_bonus_launch"], "bumpers": 4, "pegs": 75, "triggers": 10},
 	]
 	for scenario_value in scenarios:
 		var scenario: Dictionary = _slot_dict(scenario_value)
@@ -3068,16 +3130,35 @@ func _check_slot_pinball_feature_visual_manifest(definition: Dictionary, failure
 		var positions_mid := JSON.stringify(manifest_mid.get("pinball_ball_positions", []))
 		if int(manifest_a.get("bumper_count", 0)) < int(scenario.get("bumpers", 0)):
 			failures.append("Slot pinball visual manifest did not expose expected bumpers for %s." % str(scenario.get("mode", "")))
-		if int(manifest_a.get("ramp_count", 0)) < int(scenario.get("ramps", 0)):
-			failures.append("Slot pinball visual manifest did not expose expected ramps/orbits for %s." % str(scenario.get("mode", "")))
-		if int(manifest_a.get("ball_count", 0)) < 1 or int(manifest_b.get("ball_count", 0)) < 1:
-			failures.append("Slot pinball visual manifest did not expose a playback ball for %s." % str(scenario.get("mode", "")))
-		if positions_a == positions_b:
+		if int(manifest_a.get("pinball_peg_count", 0)) < int(scenario.get("pegs", 0)):
+			failures.append("Slot pinball visual manifest did not expose expected pegs for %s." % str(scenario.get("mode", "")))
+		if int(manifest_a.get("pinball_trigger_count", 0)) < int(scenario.get("triggers", 0)):
+			failures.append("Slot pinball visual manifest did not expose expected plinko triggers for %s." % str(scenario.get("mode", "")))
+		var balls_a := int(manifest_a.get("ball_count", 0))
+		var balls_b := int(manifest_b.get("ball_count", 0))
+		var balls_mid := int(manifest_mid.get("ball_count", 0))
+		if balls_a < 1:
+			failures.append("Slot pinball visual manifest did not expose an early playback ball for %s." % str(scenario.get("mode", "")))
+		if balls_b > 0 and positions_a == positions_b:
 			failures.append("Slot pinball visual manifest ball position did not move for %s." % str(scenario.get("mode", "")))
-		if positions_mid == positions_a or positions_mid == positions_b:
+		if balls_mid > 0 and balls_b > 0 and (positions_mid == positions_a or positions_mid == positions_b):
 			failures.append("Slot pinball visual manifest did not interpolate ball position between samples for %s." % str(scenario.get("mode", "")))
 		if not bool(manifest_a.get("dmd_active", false)):
 			failures.append("Slot pinball visual manifest did not expose cabinet display state for %s." % str(scenario.get("mode", "")))
+		var completed_active: Dictionary = active.duplicate(true)
+		completed_active["active"] = false
+		completed_active["complete"] = true
+		completed_active["active_ball_count"] = 0
+		completed_active["balls_remaining"] = 0
+		completed_active["launch_in_progress"] = false
+		completed_active["visual_replay"] = false
+		var completed_surface: Dictionary = surface_b.duplicate(true)
+		completed_surface["slot_active_bonus"] = completed_active
+		completed_surface["slot_active_bonus_active"] = false
+		var completed_time := maxi(time_b, int(completed_active.get("animation_duration_msec", time_b)) + 240)
+		var completed_manifest: Dictionary = renderer.render_signature(completed_surface, definition, completed_time, "feature")
+		if int(completed_manifest.get("ball_count", 0)) != 0 or not _slot_array(completed_manifest.get("pinball_ball_positions", [])).is_empty():
+			failures.append("Slot pinball visual manifest kept drawing balls after completion for %s." % str(scenario.get("mode", "")))
 		if str(scenario.get("mode", "")) == "video_feature":
 			var multiball_time := _slot_pinball_multiball_manifest_time(trajectory)
 			var surface_multi: Dictionary = presentation.surface_state(machine, run_state, definition, {"surface_time_msec": multiball_time})
@@ -3089,13 +3170,14 @@ func _check_slot_pinball_feature_visual_manifest(definition: Dictionary, failure
 				multiball_time,
 				JSON.stringify(manifest_multi.get("pinball_ball_positions", [])),
 			])
-		print("SLOT_PINBALL_FEATURE_VISUAL mode=%s bumpers=%d ramps=%d lit=%d balls_a=%d balls_b=%d transition_a=%s transition_b=%s pos_a=%s pos_b=%s" % [
+		print("SLOT_PINBALL_FEATURE_VISUAL mode=%s bumpers=%d pegs=%d triggers=%d lit=%d balls_a=%d balls_b=%d transition_a=%s transition_b=%s pos_a=%s pos_b=%s" % [
 			str(scenario.get("mode", "")),
 			int(manifest_a.get("bumper_count", 0)),
-			int(manifest_a.get("ramp_count", 0)),
+			int(manifest_a.get("pinball_peg_count", 0)),
+			int(manifest_a.get("pinball_trigger_count", 0)),
 			int(manifest_b.get("lit_inserts", 0)),
-			int(manifest_a.get("ball_count", 0)),
-			int(manifest_b.get("ball_count", 0)),
+			balls_a,
+			balls_b,
 			str(manifest_a.get("transition_phase", "")),
 			str(manifest_b.get("transition_phase", "")),
 			positions_a,
@@ -3130,7 +3212,7 @@ func _slot_pinball_visual_sample(definition: Dictionary, format_id: String, inpu
 
 func _slot_pinball_manifest_time_pair(trajectory: Array) -> Array:
 	var visual_start_msec := 520
-	var playback_speed := 1.45
+	var playback_speed := 1.75
 	var distinct_times: Array = _slot_pinball_distinct_times(trajectory)
 	if distinct_times.size() < 2:
 		return [visual_start_msec + 40, visual_start_msec + 240]
@@ -3160,7 +3242,7 @@ func _slot_pinball_point_position(point: Dictionary) -> Vector2:
 
 func _slot_pinball_multiball_manifest_time(trajectory: Array) -> int:
 	var visual_start_msec := 520
-	var playback_speed := 1.45
+	var playback_speed := 1.75
 	var current_time := -1.0
 	var balls: Dictionary = {}
 	for point_value in trajectory:
@@ -3239,10 +3321,10 @@ func _slot_video_pinball_event_sample(definition: Dictionary, seed: String, inpu
 		active = _slot_dict(step.get("active_bonus", {}))
 		machine["active_bonus"] = active
 		if action_id == "slot_bonus_launch":
-			var session: Dictionary = _slot_dict(active.get("pinball_session", {}))
+			var view: Dictionary = _slot_dict(active.get("pinball_view", {}))
 			snapshots.append({
 				"locks": int(active.get("lane_locks", 0)),
-				"lit_count": _slot_true_value_count(_slot_dict(session.get("lit", {}))),
+				"lit_count": _slot_true_value_count(_slot_dict(view.get("lit", {}))),
 				"targets": _slot_true_value_count(_slot_dict(active.get("video_targets", {}))),
 				"super": int(active.get("video_super_jackpots", 0)),
 				"max_active": int(active.get("max_active_count", 0)),
@@ -3367,120 +3449,95 @@ func _slot_event_award_summary(events: Array, limit: int = 10) -> String:
 	return ", ".join(parts)
 
 
-func _check_slot_pinball_table_physics(_definition: Dictionary, failures: Array) -> void:
-	var table: SlotPinballTable = SlotPinballTableScript.new()
-	var run_state: RunState = _slot_run_state("SLOT-PINBALL-TABLE", 100000)
-	var em_layout: Dictionary = table.new_table("em_bumper_drop")
-	var em_rng: RngStream = run_state.create_rng("slot_pinball_table_bumper")
-	var em_session: Dictionary = table.begin_session(em_layout, em_rng, {"ball_budget": 1, "cap": 500})
-	table.launch_ball(em_session, em_rng, {"power": 0.78, "lane": "center"})
-	var em_result: Dictionary = table.run_ball_to_drain(em_session, em_rng, {"mode": "none", "max_ticks": 2400})
-	var em_events: Array = _slot_array(em_result.get("events", []))
-	var bumper_hits := 0
+func _check_slot_pinball_sim_physics(_definition: Dictionary, failures: Array) -> void:
+	var compiled: Dictionary = _slot_pinball_compiled_board("bumper_alley")
+	var sim = PinballSimScript.new()
+	sim.configure(compiled, 421337, {"cap": 500})
+	sim.launch_ball({"power": 0.82, "aim": 0.0})
+	sim.advance_ticks(960)
+	var events: Array = sim.event_log_since(0)
+	var peg_hits := 0
 	var positive_award_events := 0
-	for event_value in em_events:
+	for event_value in events:
 		var event: Dictionary = _slot_dict(event_value)
-		if str(event.get("element_type", "")) == "bumper":
-			bumper_hits += 1
+		if str(event.get("element_type", "")) == "peg":
+			peg_hits += 1
 		if int(event.get("award", 0)) > 0:
 			positive_award_events += 1
-	if bumper_hits < 1:
-		failures.append("Slot pinball table launched ball did not record a bumper collision.")
-	if positive_award_events < 1 or table.session_award(em_session) <= 0:
-		failures.append("Slot pinball table did not gain award from logged physical element hits.")
-	var summed_award: int = _slot_pinball_logged_award(em_events)
-	var capped_award := mini(summed_award, int(em_session.get("cap", 0)))
-	if table.session_award(em_session) != capped_award or int(em_session.get("total", 0)) != capped_award:
-		failures.append("Slot pinball table award did not equal the capped sum of logged element awards.")
+	if peg_hits < 1:
+		failures.append("Slot pinball sim launched ball did not record peg collisions.")
+	if positive_award_events < 1 or int(sim.total_awarded) <= 0:
+		failures.append("Slot pinball sim did not gain award from logged physical element hits.")
+	var summed_award: int = _slot_pinball_logged_award(events)
+	var capped_award := mini(summed_award, int(sim.session_cap))
+	if int(sim.total_awarded) != capped_award:
+		failures.append("Slot pinball sim award did not equal the capped sum of logged element awards.")
 
-	var det_a: Dictionary = _slot_pinball_table_deterministic_sample("SLOT-PINBALL-TABLE-DETERMINISM")
-	var det_b: Dictionary = _slot_pinball_table_deterministic_sample("SLOT-PINBALL-TABLE-DETERMINISM")
+	var det_a: Dictionary = _slot_pinball_sim_deterministic_sample(7331)
+	var det_b: Dictionary = _slot_pinball_sim_deterministic_sample(7331)
 	var det_events_a := JSON.stringify(det_a.get("event_log", []))
 	var det_events_b := JSON.stringify(det_b.get("event_log", []))
 	var determinism_ok := det_events_a == det_events_b and int(det_a.get("award", -1)) == int(det_b.get("award", -2))
 	if not determinism_ok:
-		failures.append("Slot pinball table same seed and same inputs did not reproduce byte-equal event logs and final award.")
+		failures.append("Slot pinball sim same seed and same inputs did not reproduce byte-equal event logs and final award.")
 
-	var video_layout: Dictionary = table.new_table("video_feature")
-	var flip_rng: RngStream = run_state.create_rng("slot_pinball_table_flipper")
-	var flip_session: Dictionary = table.begin_session(video_layout, flip_rng, {"ball_budget": 1, "cap": 500})
-	table.launch_ball(flip_session, flip_rng, {"power": 0.50, "force": true})
-	var flip_balls: Array = _slot_array(flip_session.get("balls", []))
-	if flip_balls.is_empty():
-		failures.append("Slot pinball table flipper test could not launch a ball.")
-	else:
-		var contact_ball: Dictionary = _slot_dict(flip_balls[0])
-		contact_ball["position"] = Vector2(0.34, 0.825)
-		contact_ball["velocity"] = Vector2(0.0, 0.10)
-		flip_balls[0] = contact_ball
-		flip_session["balls"] = flip_balls
-		var before_velocity: Vector2 = contact_ball.get("velocity", Vector2.ZERO)
-		table.set_input(flip_session, {"flipper_left": true})
-		table.step(flip_session, flip_rng)
-		var after_balls: Array = _slot_array(flip_session.get("balls", []))
-		var after_ball: Dictionary = _slot_dict(after_balls[0])
-		var after_velocity: Vector2 = after_ball.get("velocity", Vector2.ZERO)
-		if after_velocity.y >= before_velocity.y:
-			failures.append("Slot pinball table flipper impulse did not affect a ball in contact.")
-		table.set_input(flip_session, {"nudge": Vector2(3.2, 0.0)})
-		var tilt_step: Dictionary = table.step(flip_session, flip_rng)
-		if not bool(flip_session.get("tilt", false)) or int(tilt_step.get("active_count", 0)) != 0:
-			failures.append("Slot pinball table over-nudge did not set tilt and drain active balls.")
+	var nudge_sim = PinballSimScript.new()
+	nudge_sim.configure(compiled, 9891, {"cap": 500})
+	nudge_sim.launch_ball({"power": 0.70, "aim": 0.0})
+	var before_nudge_events := int(nudge_sim.event_total_count)
+	nudge_sim.set_controls(0.7, 0.0, false, false)
+	nudge_sim.step_tick()
+	var nudge_events: Array = nudge_sim.event_log_since(before_nudge_events)
+	var nudge_seen := false
+	for nudge_event_value in nudge_events:
+		var nudge_event: Dictionary = _slot_dict(nudge_event_value)
+		if str(nudge_event.get("element_type", "")) == "nudge":
+			nudge_seen = true
+	if not nudge_seen or float(nudge_sim.compact_snapshot().get("tilt_meter", 0.0)) <= 0.0:
+		failures.append("Slot pinball sim nudge did not affect tilt meter or event log.")
+	for _tilt_index in range(3):
+		nudge_sim.set_controls(1.0, 1.0, true, true)
+		nudge_sim.step_tick()
+	if not bool(nudge_sim.compact_snapshot().get("tilted", false)) or nudge_sim.active_ball_count() != 0:
+		failures.append("Slot pinball sim over-nudge did not set tilt and drain active balls.")
 
-	var multi_rng: RngStream = run_state.create_rng("slot_pinball_table_multiball")
-	var multi_session: Dictionary = table.begin_session(table.new_table("lane_multiball"), multi_rng, {"ball_budget": 3, "cap": 600})
-	table.launch_ball(multi_session, multi_rng, {"power": 0.62, "lane": "left"})
-	table.launch_ball(multi_session, multi_rng, {"power": 0.66, "lane": "center"})
-	table.launch_ball(multi_session, multi_rng, {"power": 0.70, "lane": "right"})
-	if table.active_ball_count(multi_session) != 3:
-		failures.append("Slot pinball table multiball did not keep three launched balls active.")
-	_slot_pinball_force_ball_to_drain(table, multi_session, multi_rng, 0)
-	if table.active_ball_count(multi_session) != 2:
-		failures.append("Slot pinball table first multiball drain did not leave the other balls active.")
-	_slot_pinball_force_ball_to_drain(table, multi_session, multi_rng, 1)
-	if table.active_ball_count(multi_session) != 1:
-		failures.append("Slot pinball table second multiball drain did not drain independently.")
+	var multi_sim = PinballSimScript.new()
+	multi_sim.configure(compiled, 4401, {"cap": 600})
+	multi_sim.launch_ball({"power": 0.62, "aim": -0.35})
+	multi_sim.launch_ball({"power": 0.66, "aim": 0.0})
+	multi_sim.launch_ball({"power": 0.70, "aim": 0.35})
+	if multi_sim.active_ball_count() != 3:
+		failures.append("Slot pinball sim multiball did not keep three launched balls active.")
 
 	var evidence_parts: Array = []
-	for event_value in em_events:
+	for event_value in events:
 		var event: Dictionary = _slot_dict(event_value)
 		var award := int(event.get("award", 0))
 		if award > 0:
 			evidence_parts.append("%s:%d" % [str(event.get("element_type", "")), award])
 		if evidence_parts.size() >= 8:
 			break
-	print("SLOT_PINBALL_TABLE sample_event_log=%s total=%d determinism_byte_equal=%s" % [
+	print("SLOT_PINBALL_SIM sample_event_log=%s total=%d determinism_byte_equal=%s" % [
 		", ".join(evidence_parts),
-		table.session_award(em_session),
+		int(sim.total_awarded),
 		str(determinism_ok),
 	])
 
 
-func _slot_pinball_table_deterministic_sample(seed: String) -> Dictionary:
-	var table: SlotPinballTable = SlotPinballTableScript.new()
-	var run_state: RunState = _slot_run_state(seed, 100000)
-	var rng: RngStream = run_state.create_rng("slot_pinball_table_deterministic")
-	var session: Dictionary = table.begin_session(table.new_table("em_bumper_drop"), rng, {"ball_budget": 1, "cap": 500})
-	table.launch_ball(session, rng, {"power": 0.78, "lane": "center"})
-	table.run_ball_to_drain(session, rng, {"mode": "none", "max_ticks": 2400})
+func _slot_pinball_compiled_board(board_id: String) -> Dictionary:
+	var compiler = PinballBoardScript.new()
+	return compiler.compile(PinballBoardsScript.by_id(board_id))
+
+
+func _slot_pinball_sim_deterministic_sample(seed_value: int) -> Dictionary:
+	var sim = PinballSimScript.new()
+	sim.configure(_slot_pinball_compiled_board("bumper_alley"), seed_value, {"cap": 500})
+	sim.launch_ball({"power": 0.82, "aim": 0.0})
+	sim.advance_ticks(960)
 	return {
-		"event_log": _slot_array(session.get("event_log", [])),
-		"award": table.session_award(session),
+		"event_log": sim.event_log_since(0),
+		"award": int(sim.total_awarded),
 	}
-
-
-func _slot_pinball_force_ball_to_drain(table: SlotPinballTable, session: Dictionary, rng: RngStream, ball_index: int) -> void:
-	var balls: Array = _slot_array(session.get("balls", []))
-	if ball_index < 0 or ball_index >= balls.size():
-		return
-	var ball: Dictionary = _slot_dict(balls[ball_index])
-	ball["position"] = Vector2(0.50, 0.99)
-	ball["velocity"] = Vector2.ZERO
-	ball["alive"] = true
-	balls[ball_index] = ball
-	session["balls"] = balls
-	table.set_input(session, {})
-	table.step(session, rng)
 
 
 func _slot_pinball_logged_award(events: Array) -> int:
@@ -3497,7 +3554,8 @@ func _check_slot_economy_rng_discipline(failures: Array) -> void:
 		"res://scripts/games/slots/slot_resolver.gd",
 		"res://scripts/games/slots/slot_family_pinball.gd",
 		"res://scripts/games/slots/slot_family_buffalo.gd",
-		"res://scripts/games/slots/slot_pinball_table.gd",
+		"res://scripts/games/slots/pinball/pinball_feature.gd",
+		"res://scripts/games/slots/pinball/pinball_sim.gd",
 	]
 	for path in slot_sources:
 		var text := FileAccess.get_file_as_string(path)
@@ -10837,6 +10895,8 @@ func _check_offer_prices(offers: Array, library: ContentLibrary, failures: Array
 
 # Checks that room-facing items and events have replaceable art metadata.
 func _check_content_art_presentation(library: ContentLibrary, failures: Array) -> void:
+	var item_icon_keys: Dictionary = {}
+	var item_asset_paths: Dictionary = {}
 	for item in library.items:
 		if typeof(item) != TYPE_DICTIONARY:
 			continue
@@ -10846,6 +10906,18 @@ func _check_content_art_presentation(library: ContentLibrary, failures: Array) -
 		for key in ["icon_key", "environment_prop", "surface"]:
 			if str(item_data.get(key, "")).strip_edges().is_empty():
 				failures.append("items %s is missing %s for room/inventory presentation." % [item_id, key])
+		var icon_key := str(item_data.get("icon_key", "")).strip_edges()
+		if not icon_key.is_empty():
+			if item_icon_keys.has(icon_key):
+				failures.append("items %s and %s share icon_key %s." % [str(item_icon_keys.get(icon_key, "")), item_id, icon_key])
+			else:
+				item_icon_keys[icon_key] = item_id
+		var asset_path := str(item_data.get("asset_path", "")).strip_edges()
+		if not asset_path.is_empty():
+			if item_asset_paths.has(asset_path):
+				failures.append("items %s and %s share asset_path %s." % [str(item_asset_paths.get(asset_path, "")), item_id, asset_path])
+			else:
+				item_asset_paths[asset_path] = item_id
 	for event in library.events:
 		if typeof(event) != TYPE_DICTIONARY:
 			continue

@@ -317,6 +317,56 @@ func result_signature() -> Dictionary:
 	}
 
 
+func event_log_since(start_total_count: int = 0) -> Array:
+	var result: Array = []
+	var available := mini(event_total_count, event_ring_size)
+	var first_count := event_total_count - available
+	var begin_count := clampi(start_total_count, first_count, event_total_count)
+	for absolute_count in range(begin_count, event_total_count):
+		var ring_index := posmod(event_write_index - (event_total_count - absolute_count), event_ring_size)
+		result.append({
+			"element_id": _event_element_id(int(event_types[ring_index]), int(event_elements[ring_index])),
+			"element_type": _event_type_name(int(event_types[ring_index])),
+			"position": _point_payload(event_positions[ring_index]),
+			"award": int(event_awards[ring_index]),
+			"time": snappedf(float(event_ticks[ring_index]) * FIXED_DT, 0.0001),
+			"ball_index": int(event_balls[ring_index]),
+		})
+	return result
+
+
+func active_position_log(local_time: float = -1.0) -> Array:
+	var result: Array = []
+	var time_value := snappedf(float(tick) * FIXED_DT, 0.0001) if local_time < 0.0 else snappedf(local_time, 0.0001)
+	for ball_index in range(max_balls):
+		if active_flags[ball_index] == 0:
+			continue
+		result.append({
+			"time": time_value,
+			"ball_index": ball_index,
+			"position": _point_payload(positions[ball_index]),
+		})
+	return result
+
+
+func compact_snapshot() -> Dictionary:
+	return {
+		"tick": tick,
+		"total_awarded": total_awarded,
+		"balls_launched": balls_launched,
+		"active_ball_count": active_ball_count(),
+		"drain_count": drain_count,
+		"tilt_meter": snappedf(tilt_meter, 0.001),
+		"tilted": tilted,
+		"session_multiplier": session_multiplier,
+		"event_total_count": event_total_count,
+		"max_active_seen": max_active_seen,
+		"avg_tick_usec": float(accumulated_tick_usec) / float(maxi(1, measured_ticks)),
+		"max_tick_usec": max_tick_usec,
+		"max_events_per_tick": max_events_seen,
+	}
+
+
 func run_headless(seed_value: int, compiled_board: Dictionary, input_script: Array, params: Dictionary = {}) -> Dictionary:
 	configure(compiled_board, seed_value, params)
 	var launch_params: Variant = params.get("launch", {"power": 0.68, "aim": 0.0})
@@ -642,3 +692,56 @@ static func _vector2(value: Variant, fallback: Vector2) -> Vector2:
 static func _clear_int_array(values: PackedInt32Array) -> void:
 	for index in range(values.size()):
 		values[index] = 0
+
+
+static func _point_payload(point: Vector2) -> Dictionary:
+	return {
+		"x": snappedf(point.x, 0.0001),
+		"y": snappedf(point.y, 0.0001),
+	}
+
+
+static func _event_type_name(event_type: int) -> String:
+	match event_type:
+		EVENT_PEG:
+			return "peg"
+		EVENT_BUMPER:
+			return "bumper"
+		EVENT_WALL:
+			return "wall"
+		EVENT_POCKET:
+			return "pocket"
+		EVENT_DRAIN:
+			return "drain"
+		EVENT_SKILL:
+			return "skill_shot"
+		EVENT_SLINGSHOT:
+			return "slingshot"
+		EVENT_LAUNCHER:
+			return "launcher"
+		EVENT_NUDGE:
+			return "nudge"
+		EVENT_TILT:
+			return "tilt"
+		EVENT_FLIPPER:
+			return "flipper"
+		EVENT_MULTIPLIER:
+			return "multiplier"
+		EVENT_TIMEOUT:
+			return "drain"
+		_:
+			return "event"
+
+
+static func _event_element_id(event_type: int, element_index: int) -> String:
+	if element_index >= 4000:
+		return "flipper_%d" % (element_index - 4000)
+	if element_index >= 3000:
+		return "slot_%d" % (element_index - 3000)
+	if element_index >= 2000:
+		return "sensor_%d" % (element_index - 2000)
+	if element_index >= 1000:
+		return "bumper_%d" % (element_index - 1000)
+	if element_index >= 0:
+		return "peg_%d" % element_index
+	return _event_type_name(event_type)

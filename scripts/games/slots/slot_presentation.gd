@@ -3,6 +3,7 @@ extends RefCounted
 
 const StateScript := preload("res://scripts/games/slots/slot_machine_state.gd")
 const CatalogScript := preload("res://scripts/games/slots/slot_catalog.gd")
+const PinballFeatureScript := preload("res://scripts/games/slots/pinball/pinball_feature.gd")
 const BUFFALO_GRAND_BASE_MULTIPLIER := 50
 const BUFFALO_BONUS_MAX_ANIMATION_MSEC := 10000
 
@@ -14,13 +15,13 @@ func _init() -> void:
 
 
 func surface_state(machine: Dictionary, run_state: RunState, definition: Dictionary, ui_state: Dictionary = {}) -> Dictionary:
-	machine = StateScript.normalize(machine)
+	machine = _surface_machine_view(machine)
 	var selected_bet: Dictionary = StateScript.selected_bet(machine)
 	var stored_active_bonus: Dictionary = machine.get("active_bonus", {}) if typeof(machine.get("active_bonus", {})) == TYPE_DICTIONARY else {}
-	var active_bonus: Dictionary = _display_active_bonus(machine, stored_active_bonus)
 	var animation_duration := maxi(0, int(machine.get("slot_animation_duration_msec", 0)))
 	var animation_id := str(machine.get("slot_animation_id", ""))
 	var surface_time_msec := maxi(0, int(ui_state.get("drunk_scaled_surface_time_msec", ui_state.get("surface_time_msec", 0))))
+	var active_bonus: Dictionary = _display_active_bonus(machine, stored_active_bonus, surface_time_msec)
 	var spin_channel := GameModule.surface_animation_channel(
 		"slot_spin",
 		animation_id,
@@ -61,7 +62,7 @@ func surface_state(machine: Dictionary, run_state: RunState, definition: Diction
 	if str(active_bonus.get("family", "")) == "pinball" and bool(active_bonus.get("active", false)):
 		active_bonus["pinball_launch_meter"] = _pinball_launch_meter(active_bonus, surface_time_msec)
 	var bet_options: Array = _bet_options(selected_bet)
-	return GameModule.surface_spec({
+	return _slot_surface_spec({
 		"surface_renderer": "slot_machine",
 		"surface_life": "reel_machine",
 		"surface_cast": "machine",
@@ -132,7 +133,7 @@ func surface_state(machine: Dictionary, run_state: RunState, definition: Diction
 		"slot_bonus_start_time": _bonus_start_time(machine),
 		"slot_audio_cues": _audio_cues(machine),
 		"slot_feature_scene": _feature_scene(active_bonus),
-		"slot_bonus_steps": _copy_array(active_bonus.get("history", [])),
+		"slot_bonus_steps": _surface_bonus_steps(active_bonus),
 		"slot_bonus_total": int(active_bonus.get("feature_total", active_bonus.get("pending_award", machine.get("last_bonus_total", 0)))),
 		"slot_payout": int(machine.get("last_payout", 0)),
 		"slot_stake_cost": int(machine.get("last_stake_cost", 0)),
@@ -233,19 +234,19 @@ func _result_message(classification: String, payout: int, net: int, reason: Stri
 	return "%s, net %+d." % [classification.replace("_", " ").capitalize(), net]
 
 
-func _display_active_bonus(machine: Dictionary, active_bonus: Dictionary) -> Dictionary:
-	var live: Dictionary = active_bonus.duplicate(true)
+func _display_active_bonus(machine: Dictionary, active_bonus: Dictionary, surface_time_msec: int = 0) -> Dictionary:
+	var live: Dictionary = _copy_dict_shallow(active_bonus)
 	if bool(live.get("active", false)) and not bool(live.get("complete", false)):
-		return live
+		return _pinball_display_bonus(live, surface_time_msec)
 	if not str(machine.get("slot_animation_id", "")).begins_with("bonus:"):
-		return live
-	var replay: Dictionary = _copy_dict(machine.get("last_bonus_replay", {}))
+		return _pinball_display_bonus(live, surface_time_msec)
+	var replay: Dictionary = _copy_dict_shallow(machine.get("last_bonus_replay", {}))
 	if replay.is_empty() or not ["pinball", "buffalo"].has(str(replay.get("family", ""))):
-		return live
+		return _pinball_display_bonus(live, surface_time_msec)
 	var plan: Dictionary = _copy_dict(machine.get("slot_animation_plan", {}))
 	var plan_duration := maxi(0, int(plan.get("feature_duration_msec", 0)))
 	if plan_duration <= 0:
-		return live
+		return _pinball_display_bonus(live, surface_time_msec)
 	replay["active"] = true
 	replay["complete"] = true
 	replay["visual_replay"] = true
@@ -253,7 +254,13 @@ func _display_active_bonus(machine: Dictionary, active_bonus: Dictionary) -> Dic
 	if str(replay.get("family", "")) == "buffalo":
 		replay_duration = mini(replay_duration, BUFFALO_BONUS_MAX_ANIMATION_MSEC)
 	replay["animation_duration_msec"] = replay_duration
-	return replay
+	return _pinball_display_bonus(replay, surface_time_msec)
+
+
+func _pinball_display_bonus(active_bonus: Dictionary, surface_time_msec: int) -> Dictionary:
+	if str(active_bonus.get("family", "")) != "pinball":
+		return active_bonus
+	return PinballFeatureScript.surface_refresh(active_bonus, surface_time_msec)
 
 
 func _bonus_visible_on_surface(active_bonus: Dictionary) -> bool:
@@ -576,7 +583,7 @@ func _feature_scene(active_bonus: Dictionary) -> Dictionary:
 		"feature_total": int(active_bonus.get("feature_total", active_bonus.get("pending_award", 0))),
 		"display_mode": str(active_bonus.get("display_mode", active_bonus.get("mode", ""))),
 		"choices": _copy_array(active_bonus.get("choices", [])),
-		"history": _copy_array(active_bonus.get("history", [])),
+		"history": [] if str(active_bonus.get("family", "")) == "pinball" else _copy_array(active_bonus.get("history", [])),
 		"audio_cues": [
 			{"phase": "feature_transition", "cue_id": "slot_bonus_transition", "time_sec": 0.1, "marker": "feature_transition"},
 		],
@@ -606,7 +613,7 @@ func _pinball_feature_scene(active_bonus: Dictionary) -> Dictionary:
 		"feature_music": {
 			"cue_id": "bonus_music_pinball",
 			"loop": true,
-			"style": "kinetic_pinball_feature",
+			"style": "kinetic_plinko_feature",
 			"volume_db": -15.0,
 			"pitch": 1.0 + clampf(float(step_index) / float(total_steps + 2), 0.0, 0.10),
 		},
@@ -763,6 +770,44 @@ func _last_tease_was_nudge(machine: Dictionary) -> bool:
 		if typeof(event_value) == TYPE_DICTIONARY and (str((event_value as Dictionary).get("type", "")) == "nudge_shift" or str((event_value as Dictionary).get("type", "")) == "nudge_coin_chain"):
 			return true
 	return false
+
+
+func _surface_machine_view(machine: Dictionary) -> Dictionary:
+	return machine.duplicate(false)
+
+
+func _slot_surface_spec(payload: Dictionary = {}) -> Dictionary:
+	var spec := payload.duplicate(false)
+	spec["surface_renderer"] = str(spec.get("surface_renderer", spec.get("renderer", "result")))
+	spec["surface_life"] = str(spec.get("surface_life", spec.get("surface_renderer", "result")))
+	spec["surface_cast"] = str(spec.get("surface_cast", "none"))
+	spec["surface_controls_native"] = bool(spec.get("surface_controls_native", false))
+	spec["surface_fixed_price_actions"] = bool(spec.get("surface_fixed_price_actions", false))
+	spec["surface_stake_controls_required"] = bool(spec.get("surface_stake_controls_required", true))
+	spec["surface_animates_idle"] = bool(spec.get("surface_animates_idle", false))
+	spec["surface_realtime_state_refresh"] = bool(spec.get("surface_realtime_state_refresh", false))
+	spec["surface_embeds_outcomes"] = bool(spec.get("surface_embeds_outcomes", false))
+	spec["surface_suppresses_game_result_burst"] = bool(spec.get("surface_suppresses_game_result_burst", false))
+	spec["surface_action_bindings"] = _copy_dict(spec.get("surface_action_bindings", {}))
+	spec["native_selected_surface_actions"] = _copy_array(spec.get("native_selected_surface_actions", []))
+	spec["surface_animation_channels"] = GameModule._normalize_surface_animation_channels(spec.get("surface_animation_channels", []))
+	spec["surface_audio"] = _copy_dict(spec.get("surface_audio", {}))
+	spec["surface_action_blocks"] = _copy_array(spec.get("surface_action_blocks", []))
+	spec["surface_state_labels"] = _copy_array(spec.get("surface_state_labels", []))
+	spec["surface_result_display"] = _copy_dict(spec.get("surface_result_display", {}))
+	return spec
+
+
+func _surface_bonus_steps(active_bonus: Dictionary) -> Array:
+	if str(active_bonus.get("family", "")) == "pinball":
+		return []
+	return _copy_array(active_bonus.get("history", []))
+
+
+func _copy_dict_shallow(value: Variant) -> Dictionary:
+	if typeof(value) != TYPE_DICTIONARY:
+		return {}
+	return (value as Dictionary).duplicate(false)
 
 
 func _copy_array(value: Variant) -> Array:

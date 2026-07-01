@@ -118,7 +118,7 @@ func resolve_spin(machine: Dictionary, action_id: String, selected_bet: Dictiona
 		if not preserved_bonus.is_empty():
 			active_bonus = preserved_bonus
 		elif family_id == "pinball":
-			active_bonus = family.open_feature(machine, stake, rng, definition)
+			active_bonus = family.open_feature(machine, stake, rng, definition, resolved_item_effects)
 		else:
 			active_bonus = family.open_feature(machine, entry, stake, rng, definition)
 		machine["active_bonus"] = active_bonus
@@ -311,7 +311,6 @@ func resolve_bonus_action(machine: Dictionary, action_id: String, rng: RngStream
 	result["slot_bonus_step"] = step
 	result["slot_bonus_complete"] = complete
 	result["slot_bonus_award"] = award
-	result["slot_runtime_tick"] = action_id == "slot_bonus_tick"
 	result["slot_animation_id"] = str(machine.get("slot_animation_id", ""))
 	result["slot_animation_duration_msec"] = int(machine.get("slot_animation_duration_msec", 0))
 	result["slot_reel_timeline"] = _copy_array(machine.get("slot_reel_timeline", []))
@@ -336,10 +335,6 @@ func complete_active_bonus_for_metrics(machine: Dictionary, rng: RngStream, defi
 		metric_active["headless"] = true
 		if str(metric_active.get("mode", "")) == "video_feature":
 			metric_active["reference_policy"] = true
-		var metric_session: Dictionary = _copy_dict(metric_active.get("pinball_session", {}))
-		if not metric_session.is_empty():
-			metric_session["record_trajectory"] = false
-			metric_active["pinball_session"] = metric_session
 		machine["active_bonus"] = metric_active
 	while StateScript.active_bonus_incomplete(machine) and guard < 80:
 		var action_id := "slot_bonus_launch"

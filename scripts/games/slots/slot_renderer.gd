@@ -2,13 +2,12 @@ class_name SlotRenderer
 extends RefCounted
 
 const CatalogScript := preload("res://scripts/games/slots/slot_catalog.gd")
-const PinballTableScript := preload("res://scripts/games/slots/slot_pinball_table.gd")
 const DESIGN_SIZE := Vector2(960, 540)
 const PINBALL_AIM_MIN_DEGREES := -60
 const PINBALL_AIM_MAX_DEGREES := 60
-const PINBALL_AIM_CHOICES := 13
-const PINBALL_START_CHOICES := 11
-const PINBALL_POWER_CHOICES := 11
+const PINBALL_AIM_CHOICES := 25
+const PINBALL_START_CHOICES := 25
+const PINBALL_POWER_CHOICES := 21
 
 var catalog
 var background_textures: Dictionary = {}
@@ -629,7 +628,7 @@ func _buffalo_main_board_manifest(surface_state: Dictionary, time_msec: int) -> 
 
 
 func _draw_buffalo_main_board_overlay(surface, state: Dictionary, definition: Dictionary, reel_rect: Rect2, reel_count: int, row_count: int, gap: float, cell_w: float, cell_h: float, time_msec: int, accent: Color, light: Color, glass: Color) -> void:
-	var active: Dictionary = _copy_dict(state.get("slot_active_bonus", {}))
+	var active: Dictionary = _read_dict(state.get("slot_active_bonus", {}))
 	if str(active.get("family", state.get("slot_type_id", ""))) != "buffalo":
 		return
 	if active.is_empty() or not bool(state.get("slot_active_bonus_active", false)):
@@ -934,7 +933,7 @@ func _slot_reels_spinning(state: Dictionary, time_msec: int) -> bool:
 
 func _draw_feature_area(surface, state: Dictionary, definition: Dictionary, skin: Dictionary, accent: Color, light: Color, trim: Color, glass: Color, bucket: int, feature_msec: int, spin_msec: int) -> void:
 	var rect := _rect_from_dict(skin.get("playfield_rect", skin.get("feature_panel", {})))
-	var active: Dictionary = _copy_dict(state.get("slot_active_bonus", {}))
+	var active: Dictionary = _read_dict(state.get("slot_active_bonus", {}))
 	surface.draw_rect(rect, Color(0.0, 0.0, 0.0, 0.34))
 	surface.draw_rect(rect, Color(glass.r, glass.g, glass.b, 0.18), false, 1)
 	var family := str(active.get("family", state.get("slot_type_id", "pinball"))) if bool(active.get("active", false)) else str(state.get("slot_type_id", "pinball"))
@@ -956,14 +955,14 @@ func _pinball_takeover_rect() -> Rect2:
 
 
 func _draw_pinball_takeover(surface, state: Dictionary, _skin: Dictionary, accent: Color, light: Color, trim: Color, bucket: int, feature_msec: int) -> void:
-	var active: Dictionary = _copy_dict(state.get("slot_active_bonus", {}))
+	var active: Dictionary = _read_dict(state.get("slot_active_bonus", {}))
 	var rect := _pinball_takeover_rect()
 	surface.draw_rect(rect, Color("#04080f"))
 	_draw_pinball_playfield(surface, rect, state, active, accent, light, trim, bucket, feature_msec)
 
 
 func _draw_pinball_takeover_controls(surface, state: Dictionary, accent: Color, light: Color, trim: Color) -> void:
-	var active: Dictionary = _copy_dict(state.get("slot_active_bonus", {}))
+	var active: Dictionary = _read_dict(state.get("slot_active_bonus", {}))
 	var panel := Rect2(60, 444, 840, 82)
 	surface.draw_rect(panel, Color(0.0, 0.0, 0.0, 0.56))
 	surface.draw_rect(panel, Color(light.r, light.g, light.b, 0.20), false, 1)
@@ -1042,14 +1041,19 @@ func _draw_pinball_playfield(surface, rect: Rect2, state: Dictionary, active: Di
 	var playback_sec: float = _pinball_playback_time(feature_msec)
 	var events: Array = _pinball_events(active)
 	var recent_ids: Dictionary = _pinball_recent_event_ids(events, playback_sec, 0.24)
-	var trajectory: Array = _pinball_trajectory(active)
-	var positions: Array = _pinball_live_positions(active)
-	if positions.is_empty():
-		positions = _pinball_positions_at_time(trajectory, feature_msec)
-	if positions.size() <= 1 and int(active.get("max_active_count", 0)) > 1:
+	var live_feature_active := _pinball_live_feature_active(active)
+	var feature_active := live_feature_active or _pinball_visual_replay_active(active, feature_msec)
+	var trajectory: Array = []
+	var positions: Array = []
+	if feature_active:
+		trajectory = _pinball_trajectory(active)
+		positions = _pinball_live_positions(active)
+		if positions.is_empty():
+			positions = _pinball_positions_at_time(trajectory, feature_msec)
+	if feature_active and int(active.get("active_ball_count", 0)) > 1 and positions.size() <= 1 and int(active.get("max_active_count", 0)) > 1:
 		positions = _pinball_multiball_fallback_positions(feature_msec)
 	var lit_state: Dictionary = _pinball_lit_state(active)
-	if positions.is_empty():
+	if live_feature_active and int(active.get("active_ball_count", 0)) > 0 and positions.is_empty():
 		var physics: Dictionary = _copy_dict(active.get("physics", {}))
 		positions.append({"ball_index": 0, "position": Vector2(clampf(float(physics.get("ball_x", 0.5)), 0.0, 1.0), clampf(float(physics.get("ball_y", 0.5)), 0.0, 1.0))})
 	surface.draw_rect(play_rect, Color("#08101a"))
@@ -1083,7 +1087,7 @@ func _draw_pinball_playfield(surface, rect: Rect2, state: Dictionary, active: Di
 		surface.draw_circle(p, radius, Color("#e9edf5"))
 		surface.draw_circle(p + Vector2(-radius * 0.36, -radius * 0.34), radius * 0.34, Color(1.0, 1.0, 1.0, 0.70))
 		surface.draw_circle(p + Vector2(radius * 0.28, radius * 0.30), radius * 0.24, Color(0.35, 0.42, 0.50, 0.36))
-	var unlaunched_count := maxi(0, int(active.get("balls_remaining", 0)))
+	var unlaunched_count := maxi(0, int(active.get("balls_remaining", 0))) if feature_active else 0
 	surface.surface_label("LEFT %d  LIVE %d" % [unlaunched_count, positions.size()], play_rect.position + Vector2(12, play_rect.size.y - 10), 11, light)
 	_draw_pinball_callout(surface, play_rect, active, events, playback_sec, identity, accent, light, trim)
 
@@ -1104,10 +1108,14 @@ func _pinball_feature_manifest(surface_state: Dictionary, time_msec: int, mode: 
 		meter = _read_dict(scene.get("launch_meter", {}))
 	var lane := str(active.get("selected_lane", "center"))
 	var launch_start: Vector2 = _pinball_launch_start(active, layout, lane)
-	var positions: Array = _pinball_positions_at_time(_pinball_trajectory(active), time_msec)
-	if positions.is_empty():
-		positions = _pinball_live_positions(active)
-	if positions.size() <= 1 and int(active.get("max_active_count", 0)) > 1:
+	var live_feature_active := _pinball_live_feature_active(active)
+	var feature_active := live_feature_active or _pinball_visual_replay_active(active, time_msec)
+	var positions: Array = []
+	if feature_active:
+		positions = _pinball_positions_at_time(_pinball_trajectory(active), time_msec)
+		if positions.is_empty():
+			positions = _pinball_live_positions(active)
+	if feature_active and int(active.get("active_ball_count", 0)) > 1 and positions.size() <= 1 and int(active.get("max_active_count", 0)) > 1:
 		positions = _pinball_multiball_fallback_positions(time_msec)
 	var manifest: Dictionary = {
 		"ball_count": positions.size(),
@@ -1117,7 +1125,13 @@ func _pinball_feature_manifest(surface_state: Dictionary, time_msec: int, mode: 
 		"dmd_active": true,
 		"transition_phase": _pinball_transition_phase(time_msec),
 		"pinball_layout": str(layout.get("id", active.get("mode", ""))),
+		"pinball_board_style": str(layout.get("board_style", "pinball")),
+		"pinball_board_archetype": str(layout.get("archetype", "")),
+		"pinball_board_title": str(layout.get("board_title", "")),
 		"pinball_ball_positions": _pinball_position_payloads(positions),
+		"pinball_active_ball_count": int(active.get("active_ball_count", positions.size())) if live_feature_active else 0,
+		"pinball_peg_count": int(counts.get("peg", 0)),
+		"pinball_trigger_count": int(counts.get("trigger", 0)),
 		"pinball_event_flash_count": _pinball_recent_event_ids(_pinball_events(active), _pinball_playback_time(time_msec), 0.24).size(),
 		"pinball_feature_music_id": str(music.get("cue_id", "")),
 		"pinball_guideline_active": _pinball_guideline_active(active),
@@ -1139,26 +1153,41 @@ func _pinball_feature_manifest(surface_state: Dictionary, time_msec: int, mode: 
 		"pinball_last_physics_real_msec": int(active.get("last_physics_real_msec", 0)),
 		"pinball_playback_speed": _pinball_playback_speed(),
 		"pinball_gravity_y": snappedf(_vector2_from_payload(layout.get("gravity", Vector2.ZERO), Vector2.ZERO).y, 0.001),
+		"pinball_combo_route": str(_read_dict(active.get("combo_state", {})).get("route_id", "")),
+		"pinball_combo_label": str(_read_dict(active.get("combo_state", {})).get("label", "")),
+		"pinball_combo_step": int(_read_dict(active.get("combo_state", {})).get("step", 0)),
+		"pinball_combo_multiplier": int(_read_dict(active.get("combo_state", {})).get("multiplier", 1)),
+		"pinball_multiplier": int(_read_dict(active.get("combo_state", {})).get("multiplier", 1)),
+		"pinball_jackpot_progress": int(_pinball_view(active).get("jackpot_progress", active.get("lit_jackpots", 0))),
+		"pinball_spawn_count": int(_read_dict(active.get("pinball_debug", {})).get("spawn_count", 0)),
+		"pinball_collision_count": int(_read_dict(active.get("pinball_debug", {})).get("collision_count", 0)),
+		"pinball_max_substeps": int(_read_dict(active.get("pinball_debug", {})).get("max_substeps", 0)),
+		"pinball_ball_save_count": int(_read_dict(active.get("pinball_debug", {})).get("ball_save_count", 0)),
 	}
 	return manifest
 
 
+func _pinball_view(active: Dictionary) -> Dictionary:
+	return _read_dict(active.get("pinball_view", {}))
+
+
 func _pinball_layout_from_active(active: Dictionary) -> Dictionary:
-	var session: Dictionary = {}
-	var session_value: Variant = active.get("pinball_session", {})
-	if typeof(session_value) == TYPE_DICTIONARY:
-		session = session_value
-	var layout: Dictionary = {}
-	var layout_value: Variant = session.get("layout", {})
-	if typeof(layout_value) == TYPE_DICTIONARY:
-		layout = layout_value
+	var layout: Dictionary = _read_dict(_pinball_view(active).get("layout", {}))
 	if not layout.is_empty():
 		return layout
-	var layout_id := str(session.get("layout_id", ""))
-	if layout_id.is_empty():
-		layout_id = _pinball_layout_id(str(active.get("mode", "")))
-	var table: SlotPinballTable = PinballTableScript.new()
-	return table.new_table(layout_id)
+	var mode := str(active.get("mode", "em_bumper_drop"))
+	return {
+		"id": _pinball_layout_id(mode),
+		"board_style": "plinko",
+		"archetype": mode,
+		"board_title": mode.replace("_", " ").to_upper(),
+		"gravity": Vector2(0.0, 3.15),
+		"launch_speed_min": 0.55,
+		"launch_speed_max": 1.85,
+		"lane_starts": {"left": Vector2(0.20, 0.075), "center": Vector2(0.50, 0.075), "right": Vector2(0.80, 0.075)},
+		"lane_directions": {"left": Vector2(-0.22, 1.0), "center": Vector2(0.0, 1.0), "right": Vector2(0.22, 1.0)},
+		"elements": [],
+	}
 
 
 func _pinball_layout_id(mode: String) -> String:
@@ -1180,11 +1209,22 @@ func _pinball_geometry_counts(layout: Dictionary) -> Dictionary:
 		"pocket": 0,
 		"slingshot": 0,
 		"flipper": 0,
+		"peg": 0,
+		"trigger": 0,
+		"launcher": 0,
+		"spawner": 0,
+		"teleporter": 0,
+		"multiplier": 0,
+		"gate": 0,
+		"target": 0,
+		"jackpot": 0,
 	}
 	for element_value in _read_array(layout.get("elements", [])):
 		var element: Dictionary = _read_dict(element_value)
 		var element_type := str(element.get("type", ""))
 		counts[element_type] = int(counts.get(element_type, 0)) + 1
+		if str(element.get("shape", "")) == "sensor_circle" or str(element.get("shape", "")) == "slot_rect":
+			counts["trigger"] = int(counts.get("trigger", 0)) + 1
 	return counts
 
 
@@ -1214,14 +1254,7 @@ func _pinball_lit_insert_count(active: Dictionary) -> int:
 
 
 func _pinball_lit_state(active: Dictionary) -> Dictionary:
-	var session: Dictionary = {}
-	var session_value: Variant = active.get("pinball_session", {})
-	if typeof(session_value) == TYPE_DICTIONARY:
-		session = session_value
-	var lit: Dictionary = {}
-	var lit_value: Variant = session.get("lit", {})
-	if typeof(lit_value) == TYPE_DICTIONARY:
-		lit = lit_value
+	var lit: Dictionary = _read_dict(_pinball_view(active).get("lit", {}))
 	var targets: Dictionary = {}
 	var targets_value: Variant = active.get("video_targets", {})
 	if typeof(targets_value) == TYPE_DICTIONARY:
@@ -1253,7 +1286,24 @@ func _pinball_playback_time(time_msec: int) -> float:
 
 
 func _pinball_playback_speed() -> float:
-	return 1.45
+	return 1.75
+
+
+func _pinball_live_feature_active(active: Dictionary) -> bool:
+	return bool(active.get("active", false)) and not bool(active.get("complete", false))
+
+
+func _pinball_visual_replay_active(active: Dictionary, time_msec: int) -> bool:
+	var duration := maxi(0, int(active.get("animation_duration_msec", 0)))
+	if bool(active.get("visual_replay", false)):
+		if not bool(active.get("active", false)):
+			return false
+		return duration <= 0 or maxi(0, time_msec) <= duration
+	if not bool(active.get("complete", false)):
+		return false
+	if _pinball_trajectory(active).is_empty():
+		return false
+	return duration > 0 and maxi(0, time_msec) <= duration
 
 
 func _pinball_events(active: Dictionary) -> Array:
@@ -1326,19 +1376,15 @@ func _pinball_trajectory_time_span(trajectory: Array) -> float:
 func _pinball_live_positions(active: Dictionary) -> Array:
 	if bool(active.get("visual_replay", false)):
 		return []
-	var session: Dictionary = _read_dict(active.get("pinball_session", {}))
-	if session.is_empty():
-		return []
-	var balls: Array = _read_array(session.get("balls", []))
+	var view: Dictionary = _pinball_view(active)
+	var balls: Array = _read_array(view.get("balls", []))
 	var result: Array = []
 	for ball_index in range(balls.size()):
 		var ball: Dictionary = _read_dict(balls[ball_index])
-		if not bool(ball.get("alive", false)):
-			continue
 		result.append({
-			"ball_index": ball_index,
+			"ball_index": int(ball.get("ball_index", ball_index)),
 			"position": _vector2_from_payload(ball.get("position", Vector2(0.5, 0.5)), Vector2(0.5, 0.5)),
-			"time": float(session.get("time", 0.0)),
+			"time": float(ball.get("time", view.get("time", 0.0))),
 		})
 	return result
 
@@ -1350,9 +1396,7 @@ func _pinball_positions_at_time(trajectory: Array, time_msec: int) -> Array:
 	var playback_sec: float = _pinball_playback_time(time_msec)
 	var duration_sec: float = _pinball_trajectory_time_span(trajectory)
 	if duration_sec > 0.035 and playback_sec > duration_sec:
-		playback_sec = fposmod(playback_sec, duration_sec)
-		if playback_sec < 0.012:
-			playback_sec = minf(duration_sec, 0.012)
+		return result
 	var previous_by_ball: Dictionary = {}
 	var next_by_ball: Dictionary = {}
 	for point_value in trajectory:
@@ -1460,23 +1504,31 @@ func _pinball_latest_event(events: Array, playback_sec: float) -> Dictionary:
 func _draw_pinball_backglass(surface, rect: Rect2, active: Dictionary, identity: String, accent: Color, light: Color, trim: Color, bucket: int) -> void:
 	var panel := Rect2(rect.position + Vector2(12, 8), Vector2(rect.size.x - 24, 28))
 	var mode := str(active.get("mode", "pinball"))
+	var combo_label := _pinball_combo_status(active)
+	var layout: Dictionary = _pinball_layout_from_active(active)
+	var title := str(layout.get("board_title", mode.replace("_", " ").to_upper()))
+	var multiplier := maxi(1, int(_read_dict(active.get("combo_state", {})).get("multiplier", 1)))
 	if identity == "em_bumper_drop":
 		surface.draw_rect(panel, Color(trim.r, trim.g, trim.b, 0.10))
-		for reel in range(5):
-			var reel_rect := Rect2(panel.position + Vector2(12 + reel * 32, 5), Vector2(24, 18))
-			surface.draw_rect(reel_rect, Color(0.0, 0.0, 0.0, 0.48))
-			surface.draw_rect(reel_rect, Color(trim.r, trim.g, trim.b, 0.40), false, 1)
-		surface.surface_label("SCORE %d" % int(active.get("feature_total", active.get("awarded", 0))), panel.position + Vector2(panel.size.x - 150, 20), 12, trim)
+		surface.surface_label("%s  X%d" % [title.to_upper().left(18), multiplier], panel.position + Vector2(16, 20), 12, trim)
+		surface.surface_label("BANK %d" % int(active.get("feature_total", active.get("awarded", 0))), panel.position + Vector2(panel.size.x - 150, 20), 12, trim)
+		if not combo_label.is_empty():
+			surface.surface_label(combo_label.left(22), panel.position + Vector2(210, 20), 10, light)
 	elif identity == "lane_multiball":
 		surface.draw_rect(panel, Color("#1d0c04"))
 		for x in range(32):
 			var lit := posmod(bucket + x, 5) == 0
 			surface.draw_circle(panel.position + Vector2(8 + x * 7, 14), 1.8, Color(trim.r, trim.g, trim.b, 0.68 if lit else 0.18))
-		surface.surface_label("LOCKS %d  $%d" % [int(active.get("lane_locks", 0)), int(active.get("feature_total", active.get("awarded", 0)))], panel.position + Vector2(254, 20), 12, trim)
+		surface.surface_label("%s  LOCK %d  X%d" % [title.to_upper().left(14), int(active.get("lane_locks", 0)), multiplier], panel.position + Vector2(176, 20), 12, trim)
+		surface.surface_label("$%d" % int(active.get("feature_total", active.get("awarded", 0))), panel.position + Vector2(panel.size.x - 90, 20), 12, trim)
+		if not combo_label.is_empty():
+			surface.surface_label(combo_label.left(22), panel.position + Vector2(430, 20), 10, light)
 	else:
 		surface.draw_rect(panel, Color("#07192d"))
 		surface.draw_rect(panel, Color(accent.r, light.g, light.b, 0.18), false, 2)
-		surface.surface_label("%s  $%d" % [mode.replace("_", " ").to_upper().left(18), int(active.get("feature_total", active.get("awarded", 0)))], panel.position + Vector2(12, 20), 12, light)
+		surface.surface_label("%s  X%d  $%d" % [title.to_upper().left(16), multiplier, int(active.get("feature_total", active.get("awarded", 0)))], panel.position + Vector2(12, 20), 12, light)
+		if not combo_label.is_empty():
+			surface.surface_label(combo_label.left(26), panel.position + Vector2(panel.size.x - 220, 20), 10, trim)
 
 
 func _draw_pinball_element(surface, rect: Rect2, element: Dictionary, active: Dictionary, lit_state: Dictionary, recent_ids: Dictionary, accent: Color, light: Color, trim: Color, bucket: int, playback_sec: float) -> void:
@@ -1487,8 +1539,9 @@ func _draw_pinball_element(surface, rect: Rect2, element: Dictionary, active: Di
 	var lit := _pinball_element_lit(lit_state, element)
 	var flash_alpha := 0.38 if hit else 0.0
 	if shape == "segment":
-		var a: Vector2 = _pinball_point(rect, element.get("a", Vector2.ZERO))
-		var b: Vector2 = _pinball_point(rect, element.get("b", Vector2.ZERO))
+		var segment_points: Dictionary = _pinball_segment_endpoints(active, element)
+		var a: Vector2 = _pinball_point(rect, segment_points.get("a", Vector2.ZERO))
+		var b: Vector2 = _pinball_point(rect, segment_points.get("b", Vector2.ZERO))
 		if element_type == "flipper" and hit:
 			var direction: Vector2 = b - a
 			var kick_angle := -0.22 if a.x < rect.position.x + rect.size.x * 0.5 else 0.22
@@ -1517,21 +1570,66 @@ func _draw_pinball_element(surface, rect: Rect2, element: Dictionary, active: Di
 				var y := lerpf(a.y, b.y, float(spring + 1) / 6.0)
 				surface.draw_line(Vector2(a.x - 8, y), Vector2(a.x + 8, y + 4), Color(trim.r, trim.g, trim.b, 0.42), 1)
 		return
-	if shape == "drain_rect":
-		var drain: Rect2 = _rect2_from_payload(element.get("rect", Rect2()))
-		var drain_rect := Rect2(rect.position + Vector2(drain.position.x * rect.size.x, drain.position.y * rect.size.y), Vector2(drain.size.x * rect.size.x, drain.size.y * rect.size.y))
-		surface.draw_rect(drain_rect, Color("#2a0610"))
-		surface.draw_rect(drain_rect, Color(accent.r, accent.g, accent.b, 0.45), false, 2)
+	if shape == "drain_rect" or shape == "slot_rect":
+		var slot: Rect2 = _rect2_from_payload(element.get("rect", Rect2()))
+		var slot_rect := Rect2(rect.position + Vector2(slot.position.x * rect.size.x, slot.position.y * rect.size.y), Vector2(slot.size.x * rect.size.x, slot.size.y * rect.size.y))
+		var fill := Color("#2a0610")
+		var outline := Color(accent.r, accent.g, accent.b, 0.45)
+		if element_type == "pocket":
+			fill = Color("#06141f")
+			outline = Color(trim.r, trim.g, trim.b, 0.68 + flash_alpha)
+		elif element_type == "jackpot":
+			fill = Color("#201004")
+			outline = Color(light.r, trim.g, accent.b, 0.82 + flash_alpha)
+		surface.draw_rect(slot_rect, fill)
+		surface.draw_rect(slot_rect, outline, false, 2)
+		var slot_label := str(element.get("label", "DRAIN" if element_type == "drain" else "%d" % int(element.get("award", 0))))
+		if element_type != "drain":
+			surface.surface_label_centered(slot_label.left(10), slot_rect.grow(-2), 8, outline)
 		return
 	var center: Vector2 = _pinball_point(rect, element.get("position", Vector2(0.5, 0.5)))
 	var radius := maxf(4.0, float(element.get("radius", 0.04)) * minf(rect.size.x, rect.size.y))
 	var base_alpha := 0.22 + (0.20 if lit else 0.0) + flash_alpha
 	match element_type:
+		"peg":
+			surface.draw_circle(center, radius + 1.8, Color(0.0, 0.0, 0.0, 0.25))
+			surface.draw_circle(center, radius, Color("#e2e8f0") if not hit else Color("#ffffff"))
+			surface.draw_circle(center, radius * 0.45, Color(light.r, light.g, light.b, 0.26 + flash_alpha))
 		"bumper":
 			surface.draw_circle(center, radius + 5.0, Color(accent.r, accent.g, accent.b, base_alpha))
 			surface.draw_circle(center, radius, Color("#e6edf7"))
 			surface.draw_circle(center, radius * 0.58, Color(light.r, light.g, light.b, 0.72))
-			surface.surface_label_centered("%d" % int(element.get("award", 0)), Rect2(center - Vector2(radius, radius * 0.62), Vector2(radius * 2.0, radius * 1.24)), 9, Color("#07111d"))
+			var bumper_label := str(element.get("label", "%d" % int(element.get("award", 0))))
+			surface.surface_label_centered(bumper_label.left(5), Rect2(center - Vector2(radius, radius * 0.62), Vector2(radius * 2.0, radius * 1.24)), 9, Color("#07111d"))
+		"launcher":
+			var route: Vector2 = _vector2_from_payload(element.get("route", Vector2(0.0, -1.0)), Vector2(0.0, -1.0)).normalized()
+			var end := center + Vector2(route.x * radius * 1.7, route.y * radius * 1.7)
+			surface.draw_circle(center, radius + 4.0, Color(light.r, light.g, light.b, 0.18 + base_alpha))
+			surface.draw_circle(center, radius, Color("#0f172a"))
+			surface.draw_line(center - route * radius * 0.8, end, trim if not hit else Color("#f8fafc"), 4)
+			surface.draw_circle(end, 4.0, trim)
+			surface.surface_label_centered(str(element.get("label", "UP")).left(4), Rect2(center - Vector2(radius, radius * 0.45), Vector2(radius * 2.0, radius * 0.9)), 7, light)
+		"spawner":
+			surface.draw_circle(center, radius + 5.0, Color(accent.r, accent.g, accent.b, 0.20 + base_alpha))
+			surface.draw_circle(center, radius, Color("#111827"))
+			surface.draw_circle(center + Vector2(-radius * 0.30, -radius * 0.10), radius * 0.30, trim)
+			surface.draw_circle(center + Vector2(radius * 0.30, radius * 0.10), radius * 0.30, light)
+			surface.surface_label_centered(str(element.get("label", "SPLIT")).left(6), Rect2(center - Vector2(radius * 1.7, radius * 0.48), Vector2(radius * 3.4, radius * 0.96)), 7, trim)
+		"teleporter":
+			surface.draw_circle(center, radius + 5.0, Color(trim.r, trim.g, trim.b, 0.18 + base_alpha))
+			surface.draw_circle(center, radius, Color("#100b2a"))
+			surface.draw_circle(center, radius * 0.62, Color(accent.r, accent.g, accent.b, 0.34 + flash_alpha), false, 3)
+			surface.surface_label_centered(str(element.get("label", "PORT")).left(6), Rect2(center - Vector2(radius * 1.7, radius * 0.48), Vector2(radius * 3.4, radius * 0.96)), 7, trim)
+		"multiplier", "gate":
+			var gate_color := trim if element_type == "multiplier" else light
+			surface.draw_circle(center, radius, Color(gate_color.r, gate_color.g, gate_color.b, 0.18 + base_alpha), false, 4)
+			surface.draw_circle(center, radius * 0.48, Color(gate_color.r, gate_color.g, gate_color.b, 0.34 + base_alpha))
+			surface.surface_label_centered(str(element.get("label", "+X")).left(7), Rect2(center - Vector2(radius * 1.8, radius * 0.50), Vector2(radius * 3.6, radius)), 8, gate_color)
+		"target":
+			var target_rect := Rect2(center - Vector2(radius * 0.62, radius * 0.84), Vector2(radius * 1.24, radius * 1.68))
+			surface.draw_rect(target_rect, Color(accent.r, accent.g, accent.b, 0.24 + base_alpha))
+			surface.draw_rect(target_rect, Color("#f8fafc") if lit or hit else accent, false, 2)
+			surface.surface_label_centered(str(element.get("label", "")).left(2), target_rect.grow(-1), 8, Color("#f8fafc") if lit or hit else accent)
 		"slingshot":
 			surface.draw_circle(center, radius, Color(accent.r, accent.g, accent.b, 0.42 + flash_alpha))
 		"ramp", "orbit":
@@ -1540,24 +1638,58 @@ func _draw_pinball_element(surface, rect: Rect2, element: Dictionary, active: Di
 			var lane_color := light if element_type == "orbit" else trim
 			surface.draw_line(center, end, Color(lane_color.r, lane_color.g, lane_color.b, 0.34 + base_alpha), 5)
 			surface.draw_circle(center, radius, Color(lane_color.r, lane_color.g, lane_color.b, 0.22 + base_alpha), false, 3)
-			surface.surface_label_centered("LOCK" if bool(element.get("lock", false)) else element_type.to_upper(), Rect2(center - Vector2(radius * 1.8, radius * 0.6), Vector2(radius * 3.6, radius * 1.2)), 8, lane_color)
+			var route_label := str(element.get("label", "LOCK" if bool(element.get("lock", false)) else element_type.to_upper()))
+			surface.surface_label_centered(route_label.left(8), Rect2(center - Vector2(radius * 2.0, radius * 0.6), Vector2(radius * 4.0, radius * 1.2)), 8, lane_color)
 		"lane":
 			surface.draw_circle(center, radius, Color(light.r, light.g, light.b, 0.18 + base_alpha), false, 3)
 			surface.draw_circle(center, radius * 0.48, Color(light.r, light.g, light.b, 0.34 + base_alpha))
+			surface.surface_label_centered(str(element.get("label", "LANE")).left(8), Rect2(center - Vector2(radius * 1.7, radius * 0.45), Vector2(radius * 3.4, radius * 0.9)), 7, light)
 		"pocket":
 			surface.draw_circle(center, radius + 4.0, Color(trim.r, trim.g, trim.b, 0.20 + base_alpha))
 			surface.draw_circle(center, radius, Color(0.0, 0.0, 0.0, 0.64))
 			surface.draw_circle(center, radius * 0.66, Color(trim.r, trim.g, trim.b, 0.18), false, 2)
+			surface.surface_label_centered(str(element.get("label", "%d" % int(element.get("award", 0)))).left(8), Rect2(center - Vector2(radius * 1.8, radius * 0.46), Vector2(radius * 3.6, radius * 0.92)), 7, trim)
 		"drop_target":
 			var target_rect := Rect2(center - Vector2(radius * 0.58, radius * 0.84), Vector2(radius * 1.16, radius * 1.68))
 			surface.draw_rect(target_rect, Color(accent.r, accent.g, accent.b, 0.22 + base_alpha))
 			surface.draw_rect(target_rect, Color("#f8fafc") if lit or hit else accent, false, 2)
+			surface.surface_label_centered(str(element.get("label", "")).left(2), target_rect.grow(-1), 8, Color("#f8fafc") if lit or hit else accent)
 		"spinner":
 			surface.draw_line(center + Vector2(-radius, 0), center + Vector2(radius, 0), trim, 3)
 			surface.draw_line(center + Vector2(0, -radius), center + Vector2(0, radius), light, 3)
 			surface.draw_circle(center, radius * 0.26, Color(trim.r, trim.g, trim.b, 0.62 + flash_alpha))
 		_:
 			surface.draw_circle(center, radius, Color(light.r, light.g, light.b, 0.18 + base_alpha), false, 2)
+
+
+func _pinball_segment_endpoints(active: Dictionary, element: Dictionary) -> Dictionary:
+	if str(element.get("type", "")) != "flipper":
+		return {"a": element.get("a", Vector2.ZERO), "b": element.get("b", Vector2.ZERO)}
+	var pivot: Vector2 = _vector2_from_payload(element.get("pivot", element.get("a", Vector2.ZERO)), Vector2.ZERO)
+	var rest_tip: Vector2 = _vector2_from_payload(element.get("rest_tip", element.get("b", Vector2.ZERO)), Vector2.ZERO)
+	var active_tip: Vector2 = _vector2_from_payload(element.get("active_tip", rest_tip), rest_tip)
+	var t := 0.0
+	var live_input: Dictionary = _read_dict(active.get("live_input", {}))
+	var element_id := str(element.get("id", ""))
+	if element_id.find("left") >= 0 and bool(live_input.get("flipper_left", false)):
+		t = 1.0
+	elif element_id.find("right") >= 0 and bool(live_input.get("flipper_right", false)):
+		t = 1.0
+	return {"a": pivot, "b": rest_tip.lerp(active_tip, t)}
+
+
+func _pinball_combo_status(active: Dictionary) -> String:
+	var combo: Dictionary = _read_dict(active.get("combo_state", {}))
+	var route_id := str(combo.get("route_id", ""))
+	var label := str(combo.get("label", ""))
+	var multiplier := maxi(1, int(combo.get("multiplier", 1)))
+	if not route_id.is_empty() and int(combo.get("step", 0)) > 0:
+		return "COMBO %s %dX" % [(label if not label.is_empty() else route_id.replace("_", " ").to_upper()).left(14), multiplier]
+	if multiplier > 1:
+		return "CASCADE %dX" % multiplier
+	if bool(active.get("video_multiball_ready", false)):
+		return "CASCADE READY"
+	return ""
 
 
 func _pinball_element_lit(lit_state: Dictionary, element: Dictionary) -> bool:
@@ -1605,12 +1737,18 @@ func _draw_pinball_callout(surface, rect: Rect2, active: Dictionary, events: Arr
 	var color := trim if identity == "em_bumper_drop" else light if identity == "lane_multiball" else accent
 	surface.draw_rect(panel, Color(0.0, 0.0, 0.0, 0.46))
 	surface.draw_rect(panel, Color(color.r, color.g, color.b, 0.22), false, 1)
-	var text := "LAUNCH AND WATCH"
+	var text := "DROP AND CASCADE"
 	if not latest.is_empty():
 		var award := int(latest.get("award", 0))
 		text = "%s +$%d" % [str(latest.get("element_type", "hit")).replace("_", " ").to_upper(), award]
 	if bool(active.get("video_super_jackpot_lit", false)):
 		text = "SUPER JACKPOT LIT"
+	var jackpot_progress := int(_pinball_view(active).get("jackpot_progress", active.get("lit_jackpots", 0)))
+	if latest.is_empty() and jackpot_progress > 0:
+		text = "JACKPOT LAB %d" % jackpot_progress
+	var combo_text := _pinball_combo_status(active)
+	if not combo_text.is_empty():
+		text = combo_text
 	surface.surface_label_centered(text.left(34), panel.grow(-3), 12, color)
 
 
@@ -1645,6 +1783,10 @@ func _draw_pinball_launch_guideline(surface, rect: Rect2, active: Dictionary, la
 		surface.draw_line(points[point_index - 1], points[point_index], Color(trim.r, trim.g, trim.b, alpha * 0.38), 7)
 	var start_point: Vector2 = _pinball_point(rect, start_norm)
 	var end_point: Vector2 = points[points.size() - 1]
+	var cone_left := _pinball_point(rect, start_norm + direction.rotated(-0.16) * 0.22)
+	var cone_right := _pinball_point(rect, start_norm + direction.rotated(0.16) * 0.22)
+	surface.draw_line(start_point, cone_left, Color(trim.r, trim.g, trim.b, 0.18), 2)
+	surface.draw_line(start_point, cone_right, Color(trim.r, trim.g, trim.b, 0.18), 2)
 	surface.draw_circle(start_point, 6.0, Color("#f8fafc"))
 	surface.draw_circle(end_point, 9.0 + pulse * 2.5, Color(trim.r, trim.g, trim.b, 0.30), false, 2)
 	var angle_label := str(angle_degrees)
@@ -1653,20 +1795,20 @@ func _draw_pinball_launch_guideline(surface, rect: Rect2, active: Dictionary, la
 	surface.surface_label_centered("A%s P%d" % [angle_label, sampled_power], Rect2(start_point + Vector2(-34, 10), Vector2(68, 18)), 10, trim)
 
 
-func _draw_pinball_launch_start_rail(surface, rect: Rect2, active: Dictionary, _layout: Dictionary, trim: Color) -> void:
+func _draw_pinball_launch_start_rail(surface, rect: Rect2, active: Dictionary, layout: Dictionary, trim: Color) -> void:
 	var mode := str(active.get("mode", "em_bumper_drop"))
 	var selected_index := _pinball_start_choice_index(active)
-	var y_norm := 0.10
-	var min_x := 0.16
-	var max_x := 0.84
+	var y_norm := float(layout.get("plunger_start", Vector2(0.5, 0.08)).y) if typeof(layout.get("plunger_start", Vector2(0.5, 0.08))) == TYPE_VECTOR2 else 0.08
+	var min_x := float(layout.get("launch_x_min", 0.10))
+	var max_x := float(layout.get("launch_x_max", 0.90))
 	if mode == "lane_multiball":
-		min_x = 0.14
-		max_x = 0.86
-		y_norm = 0.09
+		min_x = float(layout.get("launch_x_min", 0.08))
+		max_x = float(layout.get("launch_x_max", 0.92))
+		y_norm = float(_vector2_from_payload(layout.get("plunger_start", Vector2(0.5, 0.075)), Vector2(0.5, 0.075)).y)
 	elif mode == "video_feature":
-		min_x = 0.54
-		max_x = 0.94
-		y_norm = 0.08
+		min_x = float(layout.get("launch_x_min", 0.06))
+		max_x = float(layout.get("launch_x_max", 0.94))
+		y_norm = float(_vector2_from_payload(layout.get("plunger_start", Vector2(0.5, 0.07)), Vector2(0.5, 0.07)).y)
 	var rail_a := _pinball_point(rect, Vector2(min_x, y_norm))
 	var rail_b := _pinball_point(rect, Vector2(max_x, y_norm))
 	surface.draw_line(rail_a, rail_b, Color(trim.r, trim.g, trim.b, 0.30), 3)
@@ -1710,7 +1852,7 @@ func _pinball_lane_start(layout: Dictionary, lane: String) -> Vector2:
 	var starts: Dictionary = _read_dict(layout.get("lane_starts", {}))
 	if starts.has(lane):
 		return _vector2_from_payload(starts.get(lane, start), start)
-	start.x = clampf(start.x + _pinball_lane_offset(layout, lane), 0.08, 0.92)
+	start.x = clampf(start.x + _pinball_lane_offset(layout, lane), float(layout.get("launch_x_min", 0.08)), float(layout.get("launch_x_max", 0.92)))
 	return start
 
 
@@ -2126,7 +2268,7 @@ func _buffalo_collection_ratio(active: Dictionary) -> float:
 func _buffalo_topper_reaction(state: Dictionary) -> String:
 	if str(state.get("slot_type_id", "")) != "buffalo":
 		return "idle"
-	var active: Dictionary = _copy_dict(state.get("slot_active_bonus", {}))
+	var active: Dictionary = _read_dict(state.get("slot_active_bonus", {}))
 	if bool(active.get("active", false)) and int(active.get("feature_total", 0)) > 0:
 		return "snort"
 	var tier := str(state.get("slot_celebration_tier", "none"))
@@ -2136,7 +2278,7 @@ func _buffalo_topper_reaction(state: Dictionary) -> String:
 
 
 func _buffalo_sunset_shift(state: Dictionary, bucket: int) -> float:
-	var active: Dictionary = _copy_dict(state.get("slot_active_bonus", {}))
+	var active: Dictionary = _read_dict(state.get("slot_active_bonus", {}))
 	var feature_ratio := 0.0
 	if bool(active.get("active", false)):
 		var total_steps := maxi(1, int(active.get("total_steps", active.get("remaining_steps", 1))))
@@ -2176,7 +2318,7 @@ func _draw_status_panel(surface, state: Dictionary, skin: Dictionary, accent: Co
 		if not hint.is_empty():
 			surface.surface_label(hint.to_upper().left(16), left.position + Vector2(14, 154), 10, trim)
 	_draw_panel(surface, right, "FEATURE", light)
-	var active: Dictionary = _copy_dict(state.get("slot_active_bonus", {}))
+	var active: Dictionary = _read_dict(state.get("slot_active_bonus", {}))
 	if bool(active.get("active", false)) and not bool(active.get("complete", false)):
 		surface.surface_label(str(active.get("display_mode", active.get("mode", "bonus"))).replace("_", " ").to_upper().left(18), right.position + Vector2(14, 50), 12, light)
 		surface.surface_label("$%d" % int(active.get("feature_total", active.get("pending_award", 0))), right.position + Vector2(14, 78), 18, trim)
@@ -2280,7 +2422,7 @@ func _draw_controls(surface, state: Dictionary, skin: Dictionary, accent: Color,
 	surface.draw_rect(rect, Color(0.0, 0.0, 0.0, 0.35))
 	var active_bonus := bool(state.get("slot_active_bonus_active", false))
 	if active_bonus:
-		var active: Dictionary = _copy_dict(state.get("slot_active_bonus", {}))
+		var active: Dictionary = _read_dict(state.get("slot_active_bonus", {}))
 		var family := str(active.get("family", state.get("slot_type_id", "pinball")))
 		var mode := str(active.get("mode", ""))
 		if family == "buffalo":
