@@ -1831,7 +1831,8 @@ func _draw_pinball_power_meter(surface, rect: Rect2, active: Dictionary, light: 
 	var track := Rect2(rect.position + Vector2(8, 9), Vector2(rect.size.x - 16, 8))
 	surface.draw_rect(track, Color(light.r, light.g, light.b, 0.16))
 	surface.draw_rect(Rect2(track.position, Vector2(track.size.x * value, track.size.y)), Color(light.r, light.g, light.b, 0.42))
-	var sweet_x := track.position.x + track.size.x * 0.82
+	var sweet_meter := clampf(float(meter.get("sweet_meter", 0.775)), 0.0, 1.0)
+	var sweet_x := track.position.x + track.size.x * sweet_meter
 	surface.draw_rect(Rect2(Vector2(sweet_x - 3, track.position.y - 2), Vector2(6, track.size.y + 4)), Color(trim.r, trim.g, trim.b, 0.42))
 	var marker_x := track.position.x + track.size.x * value
 	surface.draw_line(Vector2(marker_x, track.position.y - 4), Vector2(marker_x, track.end.y + 4), Color("#f8fafc"), 2)

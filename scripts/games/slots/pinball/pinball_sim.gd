@@ -81,6 +81,7 @@ var flipper_radii := PackedFloat32Array()
 var flipper_sides := PackedInt32Array()
 var flipper_kicks := PackedVector2Array()
 var flipper_ready_tick := PackedInt32Array()
+var flipper_window_until_tick := PackedInt32Array()
 
 var positions := PackedVector2Array()
 var previous_positions := PackedVector2Array()
@@ -120,6 +121,9 @@ var measured_ticks := 0
 var nudge_x := 0.0
 var nudge_y := 0.0
 var nudge_pending := false
+var nudge_count := 0
+var flipper_window_count := 0
+var flipper_rescue_count := 0
 var flipper_left_pressed := false
 var flipper_right_pressed := false
 
@@ -193,6 +197,9 @@ func reset_round() -> void:
 	accumulated_tick_usec = 0
 	measured_ticks = 0
 	nudge_pending = false
+	nudge_count = 0
+	flipper_window_count = 0
+	flipper_rescue_count = 0
 	flipper_left_pressed = false
 	flipper_right_pressed = false
 	event_write_index = 0
@@ -203,6 +210,7 @@ func reset_round() -> void:
 	_clear_int_array(bumper_ready_tick)
 	_clear_int_array(sensor_ready_tick)
 	_clear_int_array(flipper_ready_tick)
+	_clear_int_array(flipper_window_until_tick)
 
 
 func launch_ball(params: Dictionary = {}) -> int:
@@ -311,6 +319,9 @@ func result_signature() -> Dictionary:
 		"event_type_counts": type_counts,
 		"max_active": max_active_seen,
 		"max_events_per_tick": max_events_seen,
+		"nudge_count": nudge_count,
+		"flipper_window_count": flipper_window_count,
+		"flipper_rescue_count": flipper_rescue_count,
 		"avg_tick_usec": float(accumulated_tick_usec) / float(maxi(1, measured_ticks)),
 		"max_tick_usec": max_tick_usec,
 		"rng_state": rng_state,
@@ -361,6 +372,9 @@ func compact_snapshot() -> Dictionary:
 		"session_multiplier": session_multiplier,
 		"event_total_count": event_total_count,
 		"max_active_seen": max_active_seen,
+		"nudge_count": nudge_count,
+		"flipper_window_count": flipper_window_count,
+		"flipper_rescue_count": flipper_rescue_count,
 		"avg_tick_usec": float(accumulated_tick_usec) / float(maxi(1, measured_ticks)),
 		"max_tick_usec": max_tick_usec,
 		"max_events_per_tick": max_events_seen,
@@ -400,6 +414,7 @@ func _resize_runtime_arrays() -> void:
 	bumper_ready_tick.resize(bumper_positions.size())
 	sensor_ready_tick.resize(sensor_positions.size())
 	flipper_ready_tick.resize(flipper_positions.size())
+	flipper_window_until_tick.resize(flipper_positions.size())
 	event_ticks.resize(event_ring_size)
 	event_types.resize(event_ring_size)
 	event_elements.resize(event_ring_size)
@@ -548,6 +563,7 @@ func _resolve_rects(ball_index: int, pos: Vector2) -> void:
 
 
 func _resolve_flippers(ball_index: int, pos: Vector2, vel: Vector2) -> void:
+	_update_flipper_windows(pos, vel)
 	if not flipper_left_pressed and not flipper_right_pressed:
 		return
 	for index in range(flipper_positions.size()):
@@ -560,24 +576,54 @@ func _resolve_flippers(ball_index: int, pos: Vector2, vel: Vector2) -> void:
 			continue
 		var delta := pos - flipper_positions[index]
 		var min_dist := ball_radius + float(flipper_radii[index])
-		if delta.length_squared() >= min_dist * min_dist:
+		var within_window := tick <= int(flipper_window_until_tick[index]) and _in_flipper_approach(pos, vel, side)
+		if delta.length_squared() >= min_dist * min_dist and not within_window:
 			continue
+		if within_window and delta.length_squared() >= min_dist * min_dist:
+			pos = flipper_positions[index] + Vector2(float(-side) * 0.035, -0.020)
 		vel = flipper_kicks[index] + Vector2(float(-side) * 0.15, 0.0)
 		flipper_ready_tick[index] = tick + 18
 		positions[ball_index] = pos
 		velocities[ball_index] = _clamped_velocity(vel)
+		flipper_rescue_count += 1
 		_register_event(EVENT_FLIPPER, 4000 + index, ball_index, 0, pos)
+
+
+func _update_flipper_windows(pos: Vector2, vel: Vector2) -> void:
+	if vel.y < 0.12:
+		return
+	for index in range(flipper_positions.size()):
+		var side := int(flipper_sides[index])
+		if not _in_flipper_approach(pos, vel, side):
+			continue
+		if tick > int(flipper_window_until_tick[index]):
+			flipper_window_count += 1
+		flipper_window_until_tick[index] = maxi(int(flipper_window_until_tick[index]), tick + 18)
+
+
+func _in_flipper_approach(pos: Vector2, _vel: Vector2, side: int) -> bool:
+	if pos.y < 0.760 or pos.y > 0.965:
+		return false
+	if side < 0:
+		return pos.x <= 0.300
+	if side > 0:
+		return pos.x >= 0.700
+	return false
 
 
 func _apply_nudge() -> void:
 	if not nudge_pending or tilted:
 		return
 	var impulse := Vector2(nudge_x * 0.52, -maxf(0.0, nudge_y) * 0.16)
+	var nudged_any := false
 	for ball_index in range(max_balls):
 		if active_flags[ball_index] == 0:
 			continue
 		velocities[ball_index] = _clamped_velocity(velocities[ball_index] + impulse)
 		_register_event(EVENT_NUDGE, -2, ball_index, 0, positions[ball_index])
+		nudged_any = true
+	if nudged_any:
+		nudge_count += 1
 	tilt_meter += tilt_per_nudge * maxf(0.35, absf(nudge_x) + absf(nudge_y))
 	nudge_pending = false
 	if tilt_meter > tilt_threshold:

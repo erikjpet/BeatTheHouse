@@ -337,7 +337,108 @@ PINBALL_SIM_PROBE_OVERALL status=PASS failures=0
 
 ## Phase 4 - Skill Layer
 
-Status: NOT STARTED
+Status: COMPLETE
+Completed: 2026-07-01
+
+Files changed:
+- `scripts/games/slots/pinball/pinball_feature.gd`
+- `scripts/games/slots/pinball/pinball_sim.gd`
+- `scripts/games/slots/slot_presentation.gd`
+- `scripts/games/slots/slot_renderer.gd`
+- `scripts/tests/foundation_check.gd`
+- `tools/slot_pinball_skill_probe.gd`
+- `docs/plans/pinball_rework_progress.md`
+
+Feel reference citations:
+- `docs/plans/pinball_feel_reference.md` target "Launch skill-shot timing":
+  the plunger now samples a deterministic 1.1s oscillating meter at launch
+  time, with per-board sweet targets from compiled board data.
+- `docs/plans/pinball_feel_reference.md` target "Skill edge": the full probe
+  measured perfect policy +18.80% over random across 1000 seeds, inside the
+  +15-25% band.
+- `docs/plans/pinball_feel_reference.md` target "Nudge budget" and "Flipper
+  rescue timing": the sim now records nudge/tilt counters and opens an
+  18-tick (~150ms) rescue window on outlane approaches before flipper input.
+
+Implementation notes:
+- Launch power is no longer a static snapshot. `PinballFeature` stores a
+  deterministic meter phase and samples the live plunger meter on launch; the
+  sampled power feeds the actual `PinballSim.launch_ball()` params.
+- `slot_presentation.gd` uses the same launch-meter helper as the runtime, and
+  the renderer draws each board's actual sweet spot.
+- `PinballSim` now tracks nudge count, flipper rescue windows, and successful
+  flipper rescues. Flipper rescue can relaunch a ball during a short approach
+  window instead of requiring exact single-frame overlap.
+- Added `tools/slot_pinball_skill_probe.gd` for timed launch, nudge/tilt,
+  flipper rescue, and 1000-seed perfect-vs-random policy edge checks.
+
+Verification commands:
+
+```powershell
+& 'D:\Projects\Beat-The-House\.tools\godot-4.6-stable\Godot_v4.6-stable_win64_console.exe' --headless --path 'D:\Projects\Beat-The-House' --script 'res://tools/slot_pinball_skill_probe.gd' -- 1000
+```
+
+Output:
+
+```text
+Godot Engine v4.6.stable.official.89cea1439 - https://godotengine.org
+
+PINBALL_SKILL_LAUNCH sweet_time=350 sweet_power=82 sweet_rating=sweet wild_time=1 wild_power=25 wild_rating=wild later_power=100
+PINBALL_SKILL_POLICY seeds=1000 random_avg=51.729 perfect_avg=61.452 edge_pct=18.80 cap_ok=true
+PINBALL_SKILL_CONTROLS nudge_seen=true nudge_count=3 tilt_ok=true flipper_seen=true flipper_windows=1 flipper_rescues=1 active_after_rescue=1
+PINBALL_SKILL_OVERALL status=PASS failures=0
+```
+
+```powershell
+& 'D:\Projects\Beat-The-House\.tools\godot-4.6-stable\Godot_v4.6-stable_win64_console.exe' --headless --path 'D:\Projects\Beat-The-House' --script 'res://tools/slot_pinball_physics_audit.gd' -- 48
+```
+
+Output:
+
+```text
+Godot Engine v4.6.stable.official.89cea1439 - https://godotengine.org
+
+PINBALL_SIM_AUDIT_DIRECT runs=48 drained=48 avg=47.21 max=195 avg_ticks=960.00 max_active=1 events_tick=2 event_types=["1","2","3","4","5","12","8","6","13","7"]
+PINBALL_SIM_AUDIT_FEATURE mode=em_bumper_drop runs=48 complete=48 avg=144.60 max=162 max_active=1
+PINBALL_SIM_AUDIT_FEATURE mode=lane_multiball runs=48 complete=48 avg=143.77 max=144 max_active=5
+PINBALL_SIM_AUDIT_FEATURE mode=video_feature runs=48 complete=48 avg=90.00 max=90 max_active=3
+PINBALL_SIM_AUDIT_SEQUENCES board=bumper_alley award=140 hits={"alley_loop":1,"bumper_streak":1,"skill_shot":1}
+PINBALL_SIM_AUDIT_SEQUENCES board=lock_cascade award=300 hits={"cascade":1,"jackpot":1,"locks_multiball":1,"portal_combo":1}
+PINBALL_SIM_AUDIT_SEQUENCES board=jackpot_works award=370 hits={"jackpot_works":1,"qualify_super":2,"super_jackpot":1,"video_multiball":1}
+PINBALL_SIM_AUDIT_ITEMS effects=["slot_pinball_rubber_pegs"]
+PINBALL_SIM_AUDIT_OVERALL status=PASS failures=0
+```
+
+```powershell
+& 'D:\Projects\Beat-The-House\.tools\godot-4.6-stable\Godot_v4.6-stable_win64_console.exe' --headless --path 'D:\Projects\Beat-The-House' --script 'res://tools/pinball_sim_probe.gd' -- 48
+```
+
+Output:
+
+```text
+Godot Engine v4.6.stable.official.89cea1439 - https://godotengine.org
+
+PINBALL_SIM_DETERMINISM seeds=48 status=PASS
+PINBALL_SIM_DRAIN board=bumper_alley seeds=48 drained=48 avg_ticks=232.67 avg_events=15.46 avg_award=42.04 max_events_tick=2 event_types=["1","9","8","4","5","2","3","6","12","11","7"]
+PINBALL_SIM_PERF ticks=2400 avg_tick_us=46.075 sim_reported_avg_us=44.722 max_tick_us=174 object_delta=0 max_active=4 status=PASS
+PINBALL_SIM_PROBE_OVERALL status=PASS failures=0
+```
+
+```powershell
+powershell -ExecutionPolicy Bypass -File tools\check_godot.ps1 -Suite Smoke -NoImport -TimeoutSec 180
+```
+
+Output:
+
+```text
+validate_project                PASS     1401ms
+gdscript_load_check             PASS     7077ms
+foundation_smoke                PASS    32243ms
+ui_scene_compile                PASS    27523ms
+roulette_audio_audit            PASS     2616ms
+Report: D:\Projects\Beat-The-House\.tmp\test_reports\20260701_185150_smoke\summary.json
+Beat the House Godot checks passed. Suite=Smoke
+```
 
 ## Phase 5 - Items
 

@@ -12,6 +12,13 @@ const AIM_STEP := 2
 const DIRECT_AIM_STEPS := 24
 const DIRECT_START_STEPS := 24
 const DIRECT_POWER_STEPS := 20
+const LAUNCH_METER_PERIOD_MSEC := 1100
+const LAUNCH_METER_MIN_POWER := 20
+const LAUNCH_METER_MAX_POWER := 100
+const LAUNCH_METER_DEFAULT_SWEET_POWER := 82
+const LAUNCH_METER_SWEET_WIDTH := 3
+const LAUNCH_METER_GOOD_WIDTH := 8
+const LAUNCH_METER_WILD_WIDTH := 22
 
 static var _sessions: Dictionary = {}
 static var _layouts: Dictionary = {}
@@ -56,6 +63,9 @@ func open(machine: Dictionary, mode: String, stake: int, rng: RngStream, params:
 		"launch_angle_degrees": 0,
 		"launch_start": _point_payload(_launch_start_for_angle(mode, 0)),
 		"launch_start_manual": false,
+		"launch_meter_offset_msec": session_seed % LAUNCH_METER_PERIOD_MSEC,
+		"skill_power_target": clampi(int(round(float(compiled.get("skill_power", 0.82)) * 100.0)), LAUNCH_METER_MIN_POWER, LAUNCH_METER_MAX_POWER),
+		"skill_power_width": maxi(LAUNCH_METER_SWEET_WIDTH, int(round(float(compiled.get("skill_width", 0.03)) * 100.0))),
 		"selected_lane": "center",
 		"selected_path": "center",
 		"launch_in_progress": false,
@@ -85,9 +95,10 @@ func open(machine: Dictionary, mode: String, stake: int, rng: RngStream, params:
 		"physics_tick_budget": 0,
 		"physics_frame_index": 0,
 		"last_launch_skill": {},
-		"launch_skill": _launch_skill_snapshot({}, mode, 0, int(params.get("launch_power", 70)), false),
+		"launch_skill": {},
 		"animation_duration_msec": 1600,
 	}
+	_refresh_launch_state(active, mode, false, {})
 	_refresh_active(active, sim, [], [])
 	return active
 
@@ -115,6 +126,7 @@ func step(machine: Dictionary, action_id: String, rng: RngStream, _definition: D
 		return _bonus_step_result(false, 0, "Launch point set.", active)
 	if action_id.begins_with("slot_bonus_power_") and action_id != "slot_bonus_power_down" and action_id != "slot_bonus_power_up":
 		_apply_direct_power(active, action_id)
+		_refresh_launch_state(active, mode, false, ui_state)
 		machine["active_bonus"] = active
 		return _bonus_step_result(false, 0, "Launch power set.", active)
 	if action_id == "slot_bonus_power_down":
@@ -381,35 +393,52 @@ func _refresh_launch_state(active: Dictionary, mode: String, sampled: bool, ui_s
 		active["last_launch_skill"] = skill.duplicate(true)
 
 
-func _launch_skill_snapshot(active: Dictionary, mode: String, time_msec: int, power: int, sampled: bool) -> Dictionary:
-	var safe_power := clampi(power, 20, 100)
-	var sweet := 82
-	var error := absi(safe_power - sweet)
+static func launch_meter_snapshot(active: Dictionary, time_msec: int, sampled: bool = false) -> Dictionary:
+	return _launch_skill_snapshot(active, str(active.get("mode", "em_bumper_drop")), time_msec, int(active.get("launch_power", 70)), sampled)
+
+
+static func _launch_skill_snapshot(active: Dictionary, mode: String, time_msec: int, power: int, sampled: bool) -> Dictionary:
+	var target_power := clampi(power, LAUNCH_METER_MIN_POWER, LAUNCH_METER_MAX_POWER)
+	var sampled_power := _launch_meter_power(active, time_msec, target_power)
+	var sweet := clampi(int(active.get("skill_power_target", LAUNCH_METER_DEFAULT_SWEET_POWER)), LAUNCH_METER_MIN_POWER, LAUNCH_METER_MAX_POWER)
+	var sweet_width := maxi(LAUNCH_METER_SWEET_WIDTH, int(active.get("skill_power_width", LAUNCH_METER_SWEET_WIDTH)))
+	var error := absi(sampled_power - sweet)
 	var rating := "clean"
-	if error <= 4:
+	if error <= sweet_width:
 		rating = "sweet"
-	elif error <= 10:
+	elif error <= LAUNCH_METER_GOOD_WIDTH:
 		rating = "good"
-	elif error >= 24:
+	elif error >= LAUNCH_METER_WILD_WIDTH:
 		rating = "wild"
 	return {
 		"sampled": sampled,
 		"time_msec": maxi(0, time_msec),
-		"target_power": safe_power,
-		"power": safe_power,
-		"meter": snappedf(float(safe_power) / 100.0, 0.001),
+		"target_power": target_power,
+		"power": sampled_power,
+		"meter": snappedf(_power_to_meter(sampled_power), 0.001),
 		"sweet_spot": sweet,
+		"sweet_meter": snappedf(_power_to_meter(sweet), 0.001),
+		"error": error,
 		"rating": rating,
 		"angle_degrees": int(active.get("launch_angle_degrees", 0)),
 		"launch_start": _point_payload(_launch_start_for_angle(mode, int(active.get("launch_angle_degrees", 0)))),
 		"controlled": true,
+		"timed": true,
 	}
 
 
 func _launch_params(active: Dictionary, mode: String) -> Dictionary:
+	var skill: Dictionary = _dict(active.get("last_launch_skill", active.get("launch_skill", {})))
+	var sampled_power := int(skill.get("power", active.get("launch_power", 70)))
+	var aim := clampf(float(int(active.get("launch_angle_degrees", 0))) / 60.0, -1.0, 1.0)
+	if str(skill.get("rating", "")) == "wild":
+		var sweet := int(skill.get("sweet_spot", LAUNCH_METER_DEFAULT_SWEET_POWER))
+		aim = clampf(aim + clampf(float(sampled_power - sweet) / 120.0, -0.22, 0.22), -1.0, 1.0)
+	elif str(skill.get("rating", "")) == "sweet":
+		aim = clampf(aim * 0.78, -1.0, 1.0)
 	return {
-		"power": clampf(float(int(active.get("launch_power", 70))) / 100.0, 0.0, 1.0),
-		"aim": clampf(float(int(active.get("launch_angle_degrees", 0))) / 60.0, -1.0, 1.0),
+		"power": clampf(float(sampled_power) / 100.0, 0.0, 1.0),
+		"aim": aim,
 		"position": _vector2(active.get("launch_start", _launch_start_for_angle(mode, 0)), _launch_start_for_angle(mode, 0)),
 	}
 
@@ -549,6 +578,23 @@ func _input_bonus(inputs: Array, stake: int, mode: String) -> int:
 	return maxi(0, score * maxi(1, stake) / 2)
 
 
+static func _launch_meter_power(active: Dictionary, time_msec: int, target_power: int) -> int:
+	var resolved_time := maxi(0, time_msec)
+	if resolved_time <= 0:
+		resolved_time = 173 + int(active.get("step_index", 0)) * 137 + int(active.get("balls_remaining", 0)) * 83
+	var offset := int(active.get("launch_meter_offset_msec", 0))
+	var cycle := fposmod(float(resolved_time + offset), float(LAUNCH_METER_PERIOD_MSEC)) / float(LAUNCH_METER_PERIOD_MSEC)
+	var triangle := 1.0 - absf(cycle * 2.0 - 1.0)
+	var eased := 0.5 - cos(triangle * PI) * 0.5
+	var bias := clampf((float(target_power) - 60.0) / 160.0, -0.12, 0.12)
+	var value := clampf(eased + bias, 0.0, 1.0)
+	return clampi(int(round(lerpf(float(LAUNCH_METER_MIN_POWER), float(LAUNCH_METER_MAX_POWER), value))), LAUNCH_METER_MIN_POWER, LAUNCH_METER_MAX_POWER)
+
+
+static func _power_to_meter(power: int) -> float:
+	return clampf(float(power - LAUNCH_METER_MIN_POWER) / float(LAUNCH_METER_MAX_POWER - LAUNCH_METER_MIN_POWER), 0.0, 1.0)
+
+
 func _lane_for_angle(angle: int) -> String:
 	if angle <= -8:
 		return "left"
@@ -557,7 +603,7 @@ func _lane_for_angle(angle: int) -> String:
 	return "center"
 
 
-func _launch_start_for_angle(_mode: String, angle_degrees: int) -> Vector2:
+static func _launch_start_for_angle(_mode: String, angle_degrees: int) -> Vector2:
 	var ratio := clampf(float(angle_degrees - AIM_MIN) / float(AIM_MAX - AIM_MIN), 0.0, 1.0)
 	return Vector2(lerpf(0.10, 0.90, ratio), 0.075)
 

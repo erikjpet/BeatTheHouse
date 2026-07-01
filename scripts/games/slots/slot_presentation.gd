@@ -642,32 +642,11 @@ func _pinball_feature_audio_cues(active_bonus: Dictionary, phase: String) -> Arr
 
 
 func _pinball_launch_meter(active_bonus: Dictionary, surface_time_msec: int) -> Dictionary:
-	var target_power := clampi(int(active_bonus.get("launch_power", 70)), 20, 100)
-	var time_msec := maxi(0, surface_time_msec)
-	if time_msec <= 0:
-		time_msec = 173 + int(active_bonus.get("step_index", 0)) * 137 + int(active_bonus.get("balls_remaining", 0)) * 83
-	var meter := clampf(float(target_power) / 100.0, 0.0, 1.0)
-	var sampled_power := target_power
-	var sweet_spot := 82
-	var error := absi(sampled_power - sweet_spot)
-	var rating := "clean"
-	if error <= 4:
-		rating = "sweet"
-	elif error <= 10:
-		rating = "good"
-	elif error >= 24:
-		rating = "wild"
-	return {
-		"target_power": target_power,
-		"sampled_power": sampled_power,
-		"meter": snappedf(meter, 0.001),
-		"sweet_spot": sweet_spot,
-		"rating": rating,
-		"time_msec": time_msec,
-		"lane": str(active_bonus.get("selected_lane", "center")),
-		"angle_degrees": clampi(int(active_bonus.get("launch_angle_degrees", 0)), -60, 60),
-		"controlled": true,
-	}
+	var meter: Dictionary = PinballFeatureScript.launch_meter_snapshot(active_bonus, surface_time_msec, false)
+	meter["sampled_power"] = int(meter.get("power", active_bonus.get("launch_power", 70)))
+	meter["lane"] = str(active_bonus.get("selected_lane", "center"))
+	meter["angle_degrees"] = clampi(int(active_bonus.get("launch_angle_degrees", 0)), -60, 60)
+	return meter
 
 
 func _buffalo_feature_scene(active_bonus: Dictionary) -> Dictionary:

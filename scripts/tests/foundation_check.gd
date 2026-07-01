@@ -2874,10 +2874,12 @@ func _check_slot_pinball_escalation(definition: Dictionary, failures: Array) -> 
 	var launch_b: Dictionary = pinball.step_bonus(skill_machine_b, "slot_bonus_launch", run_state.create_rng("slot_pin_skill_launch_b"), definition, {"surface_time_msec": 780})
 	var launch_skill_b: Dictionary = _slot_dict(_slot_dict(launch_b.get("active_bonus", {})).get("last_launch_skill", {}))
 	var sampled_b := int(launch_skill_b.get("power", 0))
-	if sampled_a != int(angled_active.get("launch_power", 0)) or not bool(launch_skill_a.get("controlled", false)):
-		failures.append("Slot pinball launch did not use the player-controlled power meter.")
-	if sampled_b != int(skill_active_b.get("launch_power", 0)) or not bool(launch_skill_b.get("controlled", false)):
-		failures.append("Slot pinball launch power varied by hidden timing instead of controlled input.")
+	if sampled_a < 20 or sampled_a > 100 or not bool(launch_skill_a.get("controlled", false)) or not bool(launch_skill_a.get("timed", false)):
+		failures.append("Slot pinball launch did not use the timed player-controlled power meter.")
+	if sampled_b < 20 or sampled_b > 100 or not bool(launch_skill_b.get("controlled", false)) or not bool(launch_skill_b.get("timed", false)):
+		failures.append("Slot pinball launch timing sample was not recorded as controlled/timed.")
+	if sampled_a == sampled_b:
+		failures.append("Slot pinball launch meter did not sample different powers at different press times.")
 
 
 func _check_slot_pinball_feature_physics(definition: Dictionary, failures: Array) -> void:
