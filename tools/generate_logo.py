@@ -159,8 +159,27 @@ def compose(emblem, wordmark, width):
     return canvas
 
 
+def make_youtube_banner():
+    """2560x1440 channel art; logo kept inside the 1546x423 safe area."""
+    w, h = 2560, 1440
+    bg = scene_bg(w, h, darken=0.40)
+    scrim = Image.new("RGBA", (w, h), (0, 0, 0, 0))
+    ImageDraw.Draw(scrim).ellipse([w / 2 - 1000, h / 2 - 360, w / 2 + 1000, h / 2 + 360],
+                                  fill=(4, 5, 11, 150))
+    bg = Image.alpha_composite(bg, scrim.filter(ImageFilter.GaussianBlur(120)))
+
+    emblem = build_emblem(k_side=5, k_center=6, gap=18)
+    lockup = compose(emblem, make_wordmark(emblem.width, title_px=150), emblem.width)
+    safe_w, safe_h = 1546, 423
+    s = min(safe_w * 0.96 / lockup.width, safe_h * 0.98 / lockup.height)
+    lockup = lockup.resize((int(lockup.width * s), int(lockup.height * s)), Image.LANCZOS)
+    bg.alpha_composite(lockup, ((w - lockup.width) // 2, (h - lockup.height) // 2))
+    bg.convert("RGB").save(OUT / "youtube_banner.png")
+
+
 def main():
     build_mark(1024).save(OUT / "logo_mark.png")
+    make_youtube_banner()
 
     emblem = build_emblem(k_side=7, k_center=9, gap=26)
     W = emblem.width
@@ -181,7 +200,7 @@ def main():
     cover.alpha_composite(lockup, ((cw - lockup.width) // 2, (ch - lockup.height) // 2))
     cover.convert("RGB").save(OUT / "cover.png")
 
-    for p in sorted(OUT.glob("logo_*.png")) + [OUT / "cover.png"]:
+    for p in sorted(OUT.glob("logo_*.png")) + [OUT / "cover.png", OUT / "youtube_banner.png"]:
         im = Image.open(p)
         print(f"  {p.relative_to(ROOT)}  {im.size}  ({p.stat().st_size // 1024} KB)")
 
