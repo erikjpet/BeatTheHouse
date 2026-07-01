@@ -8,6 +8,7 @@ const PinballScript := preload("res://scripts/games/slots/slot_family_pinball.gd
 const BoardsScript := preload("res://scripts/games/slots/pinball/pinball_boards.gd")
 const BoardScript := preload("res://scripts/games/slots/pinball/pinball_board.gd")
 const SimScript := preload("res://scripts/games/slots/pinball/pinball_sim.gd")
+const SequencerScript := preload("res://scripts/games/slots/pinball/pinball_sequencer.gd")
 
 const FEATURE_SCENARIOS := [
 	{"format": "classic_3_reel", "mode": "em_bumper_drop", "inputs": ["slot_bonus_launch", "slot_bonus_left"]},
@@ -26,6 +27,7 @@ func _init() -> void:
 	var board: Dictionary = compiler.compile(BoardsScript.by_id("bumper_alley"))
 	_run_direct_sim_audit(board, runs, failures)
 	_run_feature_audit(runs, failures)
+	_run_sequence_reachability_audit(failures)
 	_run_item_effect_audit(failures)
 	if failures.is_empty():
 		print("PINBALL_SIM_AUDIT_OVERALL status=PASS failures=0")
@@ -139,6 +141,61 @@ func _run_item_effect_audit(failures: Array) -> void:
 	print("PINBALL_SIM_AUDIT_ITEMS effects=%s" % JSON.stringify(effects.keys()))
 
 
+func _run_sequence_reachability_audit(failures: Array) -> void:
+	var cases := [
+		{"board": "bumper_alley", "mode": "em_bumper_drop", "expected": ["skill_shot", "bumper_streak", "alley_loop"], "events": ["skill_shot", "bumper", "bumper", "bumper", "bumper", "launcher", "pocket"]},
+		{"board": "lock_cascade", "mode": "lane_multiball", "expected": ["locks_multiball", "cascade", "jackpot", "portal_combo"], "events": ["launcher", "launcher", "launcher", "skill_shot", "pocket", "multiplier"]},
+		{"board": "jackpot_works", "mode": "video_feature", "expected": ["qualify_super", "super_jackpot", "video_multiball", "jackpot_works"], "events": ["bumper", "skill_shot", "multiplier", "pocket", "launcher", "launcher", "bumper", "skill_shot", "multiplier"]},
+	]
+	for case_value in cases:
+		var test_case: Dictionary = _dict(case_value)
+		var result: Dictionary = _sequence_case_result(test_case)
+		var hits: Dictionary = _dict(result.get("hits", {}))
+		for expected_value in _array(test_case.get("expected", [])):
+			var expected := str(expected_value)
+			if int(hits.get(expected, 0)) <= 0:
+				failures.append("%s sequence %s was not reachable through scripted events" % [str(test_case.get("board", "")), expected])
+		if int(result.get("award", 0)) <= 0:
+			failures.append("%s sequence script did not pay any sequencer awards" % str(test_case.get("board", "")))
+		print("PINBALL_SIM_AUDIT_SEQUENCES board=%s award=%d hits=%s" % [
+			str(test_case.get("board", "")),
+			int(result.get("award", 0)),
+			JSON.stringify(hits),
+		])
+
+
+func _sequence_case_result(test_case: Dictionary) -> Dictionary:
+	var compiler := BoardScript.new()
+	var board: Dictionary = compiler.compile(BoardsScript.by_id(str(test_case.get("board", ""))))
+	var sim := SimScript.new()
+	sim.configure(board, 31003, {"cap": 10000})
+	var mode := str(test_case.get("mode", "em_bumper_drop"))
+	var sequencer := SequencerScript.new()
+	var active := {
+		"stake": 10,
+		"session_cap": 10000,
+		"board_id": str(test_case.get("board", "")),
+		"sequencer_state": sequencer.initial_state(str(test_case.get("board", "")), mode),
+	}
+	var events: Array = []
+	var event_index := 0
+	for event_type_value in _array(test_case.get("events", [])):
+		events.append({
+			"element_type": str(event_type_value),
+			"element_id": "%s_%02d" % [str(event_type_value), event_index],
+			"award": 0,
+			"time": float(event_index) * 0.1,
+			"ball_index": 0,
+		})
+		event_index += 1
+	sequencer.apply(active, sim, mode, events)
+	var state: Dictionary = _dict(active.get("sequencer_state", {}))
+	return {
+		"award": int(state.get("sequence_award_total", 0)),
+		"hits": _dict(state.get("sequence_hits", {})),
+	}
+
+
 func _direct_signature(board: Dictionary, run_index: int) -> Dictionary:
 	var sim := SimScript.new()
 	sim.configure(board, 10000 + run_index, {"cap": 500})
@@ -167,7 +224,7 @@ func _feature_signature(definition: Dictionary, generator, pinball, scenario: Di
 	machine["active_bonus"] = active
 	var inputs: Array = _array(scenario.get("inputs", ["slot_bonus_launch"]))
 	var guard := 0
-	while bool(_dict(machine.get("active_bonus", {})).get("active", false)) and guard < 48:
+	while bool(_dict(machine.get("active_bonus", {})).get("active", false)) and guard < 96:
 		var action_id := str(inputs[posmod(guard, inputs.size())])
 		var step: Dictionary = pinball.step_bonus(machine, action_id, rng, definition)
 		machine["active_bonus"] = _dict(step.get("active_bonus", machine.get("active_bonus", {})))

@@ -4,6 +4,7 @@ extends RefCounted
 const BoardsScript := preload("res://scripts/games/slots/pinball/pinball_boards.gd")
 const BoardScript := preload("res://scripts/games/slots/pinball/pinball_board.gd")
 const SimScript := preload("res://scripts/games/slots/pinball/pinball_sim.gd")
+const SequencerScript := preload("res://scripts/games/slots/pinball/pinball_sequencer.gd")
 
 const AIM_MIN := -60
 const AIM_MAX := 60
@@ -22,12 +23,6 @@ func open(machine: Dictionary, mode: String, stake: int, rng: RngStream, params:
 	var session_id := "pinball:%s:%s:%d" % [str(machine.get("format_id", "")), mode, session_seed]
 	var layout: Dictionary = BoardsScript.by_id(_board_id_for_mode(mode))
 	layout["mode"] = mode
-	if mode == "lane_multiball":
-		layout["title"] = "Lock & Cascade"
-		layout["id"] = "lock_cascade"
-	elif mode == "video_feature":
-		layout["title"] = "Jackpot Works"
-		layout["id"] = "jackpot_works"
 	var compiler := BoardScript.new()
 	var compiled: Dictionary = compiler.compile(layout, _compile_modifiers(params))
 	var sim := SimScript.new()
@@ -74,6 +69,7 @@ func open(machine: Dictionary, mode: String, stake: int, rng: RngStream, params:
 		"display_trajectory": [],
 		"last_event_count": 0,
 		"combo_state": {"route_id": "", "step": 0, "multiplier": 1, "timer_ticks": 0, "label": ""},
+		"sequencer_state": SequencerScript.new().initial_state(str(layout.get("id", "")), mode),
 		"pinball_debug": {},
 		"lane_locks": 0,
 		"lit_jackpots": 0,
@@ -170,7 +166,8 @@ func step(machine: Dictionary, action_id: String, rng: RngStream, _definition: D
 		active["physics_tick_budget"] = ticks_to_run
 		_run_ticks_with_trajectory(sim, ticks_to_run, local_trajectory, live_display)
 	if not live_display:
-		while sim.active_ball_count() > 0 and int(sim.tick) < int(sim.max_ticks):
+		var drain_deadline_tick := int(sim.tick) + int(sim.max_ticks)
+		while sim.active_ball_count() > 0 and int(sim.tick) < drain_deadline_tick:
 			_run_ticks_with_trajectory(sim, 6, local_trajectory, false)
 	_apply_mode_progress(active, sim, mode)
 	local_events = sim.event_log_since(before_events)
@@ -303,28 +300,10 @@ func _run_ticks_with_trajectory(sim, ticks_to_run: int, trajectory: Array, local
 
 func _apply_mode_progress(active: Dictionary, sim, mode: String) -> void:
 	var events: Array = sim.event_log_since(maxi(0, int(active.get("last_event_count", 0))))
-	var bumper_hits := 0
-	for event_value in events:
-		var event: Dictionary = _dict(event_value)
-		match str(event.get("element_type", "")):
-			"bumper", "slingshot":
-				bumper_hits += 1
-			"launcher":
-				active["lane_locks"] = maxi(int(active.get("lane_locks", 0)), 1)
-			"skill_shot":
-				active["lit_jackpots"] = maxi(1, int(active.get("lit_jackpots", 0)))
-	if bumper_hits >= 4:
-		active["combo_state"] = {"route_id": "bumper_streak", "step": 4, "multiplier": 2, "timer_ticks": 120, "label": "BUMPER STREAK"}
-	if mode == "lane_multiball" and int(active.get("lane_locks", 0)) >= 1 and not bool(active.get("multiball_started", false)):
-		active["multiball_started"] = true
-		for aim in [-0.35, 0.0, 0.35]:
-			sim.launch_ball({"power": 0.70, "aim": aim})
-		active["lane_locks"] = 3
-	if mode == "video_feature":
-		active["video_completed_banks"] = maxi(1, int(active.get("video_completed_banks", 0)))
-		active["video_super_jackpot_lit"] = true
-		if int(active.get("lane_locks", 0)) >= 1:
-			active["video_super_jackpots"] = maxi(1, int(active.get("video_super_jackpots", 0)))
+	if events.is_empty():
+		return
+	var sequencer := SequencerScript.new()
+	sequencer.apply(active, sim, mode, events)
 
 
 func _view_for(active: Dictionary, sim, local_events: Array, local_trajectory: Array) -> Dictionary:
@@ -354,6 +333,7 @@ func _summary_for(active: Dictionary, sim) -> Dictionary:
 			"locks": int(active.get("lane_locks", 0)),
 			"multiball": bool(active.get("multiball_started", false)),
 			"combo": _dict(active.get("combo_state", {})),
+			"state": _dict(active.get("sequencer_state", {})),
 		},
 		"input_log": _array(active.get("input_log", [])),
 	}
@@ -522,7 +502,11 @@ func _mode_for_machine(machine: Dictionary) -> String:
 			return "em_bumper_drop"
 
 
-func _board_id_for_mode(_mode: String) -> String:
+func _board_id_for_mode(mode: String) -> String:
+	if mode == "lane_multiball":
+		return "lock_cascade"
+	if mode == "video_feature":
+		return "jackpot_works"
 	return "bumper_alley"
 
 

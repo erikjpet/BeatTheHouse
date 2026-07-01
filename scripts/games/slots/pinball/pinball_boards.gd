@@ -63,10 +63,135 @@ static func bumper_alley() -> Dictionary:
 	}
 
 
+static func lock_cascade() -> Dictionary:
+	var pegs: Array = []
+	_add_peg_pyramid(pegs, "cascade_peg", 9, 6, 11, 0.145, 0.073, 0.13, 0.87, 1, 0.0125)
+	return {
+		"id": "lock_cascade",
+		"mode": "lane_multiball",
+		"title": "Lock & Cascade",
+		"summary": "Dense modern board with two lock gates, a splitter, multiplier gate, portal re-entry, and jackpot cup.",
+		"gravity": 3.05,
+		"ball_radius": 0.013,
+		"peg_restitution": 0.60,
+		"wall_restitution": 0.44,
+		"linear_damping": 0.999,
+		"max_speed": 9.4,
+		"max_ticks": 1320,
+		"max_balls": 12,
+		"active_ball_cap": 8,
+		"event_ring_size": 640,
+		"max_events_per_tick": 14,
+		"tilt_threshold": 1.05,
+		"tilt_decay_per_tick": 0.006,
+		"tilt_per_nudge": 0.34,
+		"launch_position": Vector2(0.50, 0.075),
+		"launch_min_speed": 0.60,
+		"launch_max_speed": 1.95,
+		"launch_spread": 0.040,
+		"skill_power": 0.72,
+		"skill_width": 0.035,
+		"pegs": pegs,
+		"bumpers": [
+			_circle("left_pop", Vector2(0.31, 0.43), 0.045, 5, {"kick": Vector2(1.15, -2.25), "restitution": 0.82, "cooldown_ticks": 7}),
+			_circle("top_pop", Vector2(0.50, 0.36), 0.046, 6, {"kick": Vector2(0.0, -2.65), "restitution": 0.86, "cooldown_ticks": 7}),
+			_circle("right_pop", Vector2(0.69, 0.43), 0.045, 5, {"kick": Vector2(-1.15, -2.25), "restitution": 0.82, "cooldown_ticks": 7}),
+		],
+		"sensors": [
+			_sensor("left_lock", "launcher", Vector2(0.22, 0.59), 0.052, 10, {"kick": Vector2(0.95, -2.40), "cooldown_ticks": 20}),
+			_sensor("right_lock", "launcher", Vector2(0.78, 0.59), 0.052, 10, {"kick": Vector2(-0.95, -2.40), "cooldown_ticks": 20}),
+			_sensor("splitter", "skill", Vector2(0.50, 0.245), 0.052, 14, {"kick": Vector2(0.0, 1.55), "cooldown_ticks": 18}),
+			_sensor("multiplier_gate", "multiplier", Vector2(0.50, 0.705), 0.046, 6, {"kick": Vector2(0.0, -1.65), "cooldown_ticks": 22}),
+			_sensor("portal_return", "launcher", Vector2(0.86, 0.785), 0.045, 8, {"kick": Vector2(-1.25, -3.05), "cooldown_ticks": 26}),
+			_sensor("left_sling", "slingshot", Vector2(0.25, 0.78), 0.052, 4, {"kick": Vector2(1.80, -2.00), "cooldown_ticks": 10}),
+			_sensor("right_sling", "slingshot", Vector2(0.75, 0.78), 0.052, 4, {"kick": Vector2(-1.80, -2.00), "cooldown_ticks": 10}),
+		],
+		"rects": [
+			_rect("left_outlane", "drain", Rect2(Vector2(0.00, 0.915), Vector2(0.070, 0.110)), 0),
+			_rect("left_pocket", "pocket", Rect2(Vector2(0.070, 0.925), Vector2(0.180, 0.090)), 14),
+			_rect("left_mid_pocket", "pocket", Rect2(Vector2(0.250, 0.925), Vector2(0.180, 0.090)), 20),
+			_rect("jackpot_cup", "pocket", Rect2(Vector2(0.430, 0.925), Vector2(0.140, 0.090)), 28),
+			_rect("right_mid_pocket", "pocket", Rect2(Vector2(0.570, 0.925), Vector2(0.180, 0.090)), 20),
+			_rect("right_pocket", "pocket", Rect2(Vector2(0.750, 0.925), Vector2(0.180, 0.090)), 14),
+			_rect("right_outlane", "drain", Rect2(Vector2(0.930, 0.915), Vector2(0.070, 0.110)), 0),
+		],
+		"flippers": [
+			{"id": "left_flipper", "side": -1, "position": Vector2(0.15, 0.850), "radius": 0.098, "kick": Vector2(1.55, -3.35)},
+			{"id": "right_flipper", "side": 1, "position": Vector2(0.85, 0.850), "radius": 0.098, "kick": Vector2(-1.55, -3.35)},
+		],
+		"sequences": ["locks_multiball", "cascade", "jackpot", "portal_combo"],
+	}
+
+
+static func jackpot_works() -> Dictionary:
+	var pegs: Array = []
+	_add_peg_pyramid(pegs, "works_peg", 10, 6, 12, 0.130, 0.066, 0.12, 0.88, 1, 0.012)
+	return {
+		"id": "jackpot_works",
+		"mode": "video_feature",
+		"title": "Jackpot Works",
+		"summary": "High-volatility lab board with A-B-C target bank, launchers, spinner lane, super lane, and risk cup.",
+		"gravity": 3.00,
+		"ball_radius": 0.013,
+		"peg_restitution": 0.58,
+		"wall_restitution": 0.46,
+		"linear_damping": 0.999,
+		"max_speed": 9.8,
+		"max_ticks": 1500,
+		"max_balls": 12,
+		"active_ball_cap": 8,
+		"event_ring_size": 768,
+		"max_events_per_tick": 16,
+		"tilt_threshold": 1.0,
+		"tilt_decay_per_tick": 0.005,
+		"tilt_per_nudge": 0.35,
+		"launch_position": Vector2(0.76, 0.075),
+		"launch_min_speed": 0.64,
+		"launch_max_speed": 2.05,
+		"launch_spread": 0.045,
+		"skill_power": 0.86,
+		"skill_width": 0.028,
+		"pegs": pegs,
+		"bumpers": [
+			_circle("alpha_pop", Vector2(0.30, 0.39), 0.043, 5, {"kick": Vector2(1.25, -2.20), "restitution": 0.82, "cooldown_ticks": 7}),
+			_circle("beta_pop", Vector2(0.48, 0.32), 0.044, 6, {"kick": Vector2(0.35, -2.75), "restitution": 0.86, "cooldown_ticks": 7}),
+			_circle("gamma_pop", Vector2(0.66, 0.39), 0.043, 5, {"kick": Vector2(-1.25, -2.20), "restitution": 0.82, "cooldown_ticks": 7}),
+			_circle("risk_pop", Vector2(0.78, 0.235), 0.040, 8, {"kick": Vector2(-0.95, 1.75), "restitution": 0.88, "cooldown_ticks": 10}),
+		],
+		"sensors": [
+			_sensor("target_a", "skill", Vector2(0.40, 0.505), 0.040, 10, {"kick": Vector2(-0.45, 1.25), "cooldown_ticks": 18}),
+			_sensor("target_b", "skill", Vector2(0.50, 0.535), 0.040, 10, {"kick": Vector2(0.0, 1.35), "cooldown_ticks": 18}),
+			_sensor("target_c", "multiplier", Vector2(0.60, 0.505), 0.040, 10, {"kick": Vector2(0.45, 1.25), "cooldown_ticks": 18}),
+			_sensor("left_launcher", "launcher", Vector2(0.20, 0.735), 0.052, 12, {"kick": Vector2(1.10, -3.10), "cooldown_ticks": 22}),
+			_sensor("right_launcher", "launcher", Vector2(0.80, 0.735), 0.052, 12, {"kick": Vector2(-1.10, -3.10), "cooldown_ticks": 22}),
+			_sensor("spinner_lane", "multiplier", Vector2(0.16, 0.470), 0.035, 4, {"kick": Vector2(0.75, 0.65), "cooldown_ticks": 8}),
+			_sensor("super_lane", "launcher", Vector2(0.68, 0.635), 0.046, 18, {"kick": Vector2(-0.50, -2.90), "cooldown_ticks": 28}),
+		],
+		"rects": [
+			_rect("left_outlane", "drain", Rect2(Vector2(0.00, 0.915), Vector2(0.070, 0.110)), 0),
+			_rect("left_pocket", "pocket", Rect2(Vector2(0.070, 0.925), Vector2(0.180, 0.090)), 12),
+			_rect("left_mid_pocket", "pocket", Rect2(Vector2(0.250, 0.925), Vector2(0.180, 0.090)), 18),
+			_rect("center_pocket", "pocket", Rect2(Vector2(0.430, 0.925), Vector2(0.140, 0.090)), 24),
+			_rect("right_mid_pocket", "pocket", Rect2(Vector2(0.570, 0.925), Vector2(0.180, 0.090)), 18),
+			_rect("risk_cup", "pocket", Rect2(Vector2(0.750, 0.890), Vector2(0.180, 0.125)), 72),
+			_rect("right_outlane", "drain", Rect2(Vector2(0.930, 0.915), Vector2(0.070, 0.110)), 0),
+		],
+		"flippers": [
+			{"id": "left_flipper", "side": -1, "position": Vector2(0.15, 0.850), "radius": 0.100, "kick": Vector2(1.65, -3.45)},
+			{"id": "right_flipper", "side": 1, "position": Vector2(0.85, 0.850), "radius": 0.100, "kick": Vector2(-1.65, -3.45)},
+		],
+		"sequences": ["qualify_super", "super_jackpot", "video_multiball", "jackpot_works"],
+	}
+
+
 static func by_id(board_id: String) -> Dictionary:
 	match board_id:
 		"bumper_alley", "em_bumper_drop", "":
 			return bumper_alley()
+		"lock_cascade", "lane_multiball":
+			return lock_cascade()
+		"jackpot_works", "video_feature":
+			return jackpot_works()
 		_:
 			return bumper_alley()
 

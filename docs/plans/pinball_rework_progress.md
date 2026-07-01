@@ -247,7 +247,93 @@ PINBALL_PERF_OVERALL status=PASS failures=0
 
 ## Phase 3 - Sequencer + Boards B/C
 
-Status: NOT STARTED
+Status: COMPLETE
+Completed: 2026-07-01
+
+Files changed:
+- `scripts/games/slots/pinball/pinball_boards.gd`
+- `scripts/games/slots/pinball/pinball_feature.gd`
+- `scripts/games/slots/pinball/pinball_sequencer.gd`
+- `scripts/games/slots/slot_machine_state.gd`
+- `tools/slot_pinball_physics_audit.gd`
+- `docs/plans/pinball_rework_progress.md`
+
+Feel reference citations:
+- `docs/plans/pinball_feel_reference.md` target "Full feature duration by
+  board": Board B and C max-tick/active-ball settings are bounded for quick
+  headless completion while allowing 3-ball multiball.
+- `docs/plans/pinball_feel_reference.md` target "Visible event density":
+  Board B/C use dense peg fields, pop bumpers, launchers, splitter/multiplier
+  sensors, and pockets to maintain frequent readable cause/effect events.
+- `docs/plans/pinball_feel_reference.md` target "Trigger-chain clarity":
+  sequencer state now carries named sequence hits, lit inserts, locks,
+  multiball state, and jackpot/super state as compact summary data.
+
+Implementation notes:
+- Added Board B `Lock & Cascade` and Board C `Jackpot Works` as real compiled
+  board layouts mapped to `lane_multiball` and `video_feature`.
+- Added `pinball_sequencer.gd` for Board A/B/C named sequence state:
+  `skill_shot`, `bumper_streak`, `alley_loop`, `locks_multiball`, `cascade`,
+  `jackpot`, `portal_combo`, `qualify_super`, `super_jackpot`,
+  `video_multiball`, and `jackpot_works`.
+- Runtime summaries now include sequencer state, lit inserts, sequence events,
+  locks, multiball, and jackpot state without restoring the old per-tick
+  session payload.
+- Physics audit now includes scripted sequence reachability evidence for all
+  three boards.
+
+Verification commands:
+
+```powershell
+& 'D:\Projects\Beat-The-House\.tools\godot-4.6-stable\Godot_v4.6-stable_win64_console.exe' --headless --path 'D:\Projects\Beat-The-House' --script 'res://tools/slot_pinball_physics_audit.gd' -- 48
+```
+
+Output:
+
+```text
+Godot Engine v4.6.stable.official.89cea1439 - https://godotengine.org
+
+PINBALL_SIM_AUDIT_DIRECT runs=48 drained=48 avg=47.21 max=195 avg_ticks=960.00 max_active=1 events_tick=2 event_types=["1","2","3","4","5","12","8","6","13","7"]
+PINBALL_SIM_AUDIT_FEATURE mode=em_bumper_drop runs=48 complete=48 avg=141.27 max=162 max_active=1
+PINBALL_SIM_AUDIT_FEATURE mode=lane_multiball runs=48 complete=48 avg=141.73 max=144 max_active=3
+PINBALL_SIM_AUDIT_FEATURE mode=video_feature runs=48 complete=48 avg=89.98 max=90 max_active=3
+PINBALL_SIM_AUDIT_SEQUENCES board=bumper_alley award=140 hits={"alley_loop":1,"bumper_streak":1,"skill_shot":1}
+PINBALL_SIM_AUDIT_SEQUENCES board=lock_cascade award=300 hits={"cascade":1,"jackpot":1,"locks_multiball":1,"portal_combo":1}
+PINBALL_SIM_AUDIT_SEQUENCES board=jackpot_works award=370 hits={"jackpot_works":1,"qualify_super":2,"super_jackpot":1,"video_multiball":1}
+PINBALL_SIM_AUDIT_ITEMS effects=["slot_pinball_rubber_pegs"]
+PINBALL_SIM_AUDIT_OVERALL status=PASS failures=0
+```
+
+```powershell
+powershell -ExecutionPolicy Bypass -File tools\check_godot.ps1 -Suite Smoke -NoImport -TimeoutSec 180
+```
+
+Output:
+
+```text
+validate_project                PASS     1407ms
+gdscript_load_check             PASS     7354ms
+foundation_smoke                PASS    34498ms
+ui_scene_compile                PASS    29350ms
+roulette_audio_audit            PASS     2771ms
+Report: D:\Projects\Beat-The-House\.tmp\test_reports\20260701_184149_smoke\summary.json
+Beat the House Godot checks passed. Suite=Smoke
+```
+
+```powershell
+& 'D:\Projects\Beat-The-House\.tools\godot-4.6-stable\Godot_v4.6-stable_win64_console.exe' --headless --path 'D:\Projects\Beat-The-House' --script 'res://tools/pinball_sim_probe.gd' -- 48
+```
+
+Output:
+
+```text
+Godot Engine v4.6.stable.official.89cea1439 - https://godotengine.org
+
+PINBALL_SIM_DETERMINISM seeds=48 status=PASS
+PINBALL_SIM_DRAIN board=bumper_alley seeds=48 drained=48 avg_ticks=230.85 avg_events=15.17 avg_award=39.94 max_events_tick=2 event_types=["1","9","8","4","5","2","3","6","12","11","7"]
+PINBALL_SIM_PERF ticks=2400 avg_tick_us=51.187 sim_reported_avg_us=49.527 max_tick_us=698 object_delta=0 max_active=4 status=PASS
+PINBALL_SIM_PROBE_OVERALL status=PASS failures=0
+```
 
 ## Phase 4 - Skill Layer
 
