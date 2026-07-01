@@ -94,7 +94,58 @@ Baseline metrics for final comparison:
 
 ## Phase 1 - Sim Core
 
-Status: NOT STARTED
+Status: COMPLETE
+Completed: 2026-07-01
+
+Files changed:
+- `scripts/games/slots/pinball/pinball_boards.gd`
+- `scripts/games/slots/pinball/pinball_board.gd`
+- `scripts/games/slots/pinball/pinball_sim.gd`
+- `tools/pinball_sim_probe.gd`
+- `docs/plans/pinball_rework_progress.md`
+
+Feel reference citations:
+- `docs/plans/pinball_feel_reference.md` target "Untouched top-to-bottom
+  fall" and "Normal single-ball playout": Phase 1 Board A uses fast gravity,
+  peg contacts, bumpers, launcher, and flipper rescue to produce quick
+  253.22-tick average headless drains.
+- `docs/plans/pinball_feel_reference.md` target "Sim tick budget": Phase 1
+  probe measured 41.394us average at four active balls.
+- `docs/plans/pinball_feel_reference.md` target "Hot-loop allocation budget":
+  Phase 1 probe measured object_delta=0 around the hot tick loop.
+
+Verification commands:
+
+```powershell
+& 'D:\Projects\Beat-The-House\.tools\godot-4.6-stable\Godot_v4.6-stable_win64_console.exe' --headless --path 'D:\Projects\Beat-The-House' --script 'res://tools/pinball_sim_probe.gd' -- 100
+```
+
+Output:
+
+```text
+Godot Engine v4.6.stable.official.89cea1439 - https://godotengine.org
+
+PINBALL_SIM_DETERMINISM seeds=100 status=PASS
+PINBALL_SIM_DRAIN board=bumper_alley seeds=100 drained=100 avg_ticks=253.22 avg_events=16.88 avg_award=49.14 max_events_tick=3 event_types=["1","9","8","4","5","2","3","6","12","11","7"]
+PINBALL_SIM_PERF ticks=2400 avg_tick_us=41.394 sim_reported_avg_us=40.102 max_tick_us=80 object_delta=0 max_active=4 status=PASS
+PINBALL_SIM_PROBE_OVERALL status=PASS failures=0
+```
+
+```powershell
+powershell -ExecutionPolicy Bypass -File tools\check_godot.ps1 -Suite Smoke -NoImport
+```
+
+Output:
+
+```text
+validate_project                PASS     1313ms
+gdscript_load_check             PASS     7253ms
+foundation_smoke                PASS    32294ms
+ui_scene_compile                PASS    27759ms
+roulette_audio_audit            PASS     2615ms
+Report: D:\Projects\Beat-The-House\.tmp\test_reports\20260701_180003_smoke\summary.json
+Beat the House Godot checks passed. Suite=Smoke
+```
 
 ## Phase 2 - Runtime Integration
 
