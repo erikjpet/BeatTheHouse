@@ -1,5 +1,10 @@
 # Beat the House - Demo Release Finalization Prompt Board
 
+> **Historical board:** The 0.2.0 demo shipped. This file is retained as
+> historical context only; use `docs/plans/act_one_feature_complete_task_board.md`
+> as the active planning board. Its section 13 Status Ledger records the T0.1
+> verification pass for every task A0-F6 below.
+
 Updated: 2026-06-26
 
 > **Status accuracy note (revised 2026-06-29):** This board's per-task statuses

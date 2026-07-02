@@ -7,9 +7,12 @@ play full simulations of Pull Tabs, Slots, Bar Dice, Blackjack, Baccarat,
 Roulette, and Video Poker. Every win, cheat, drink, loan, and bad exit pushes
 the run state forward.
 
-This is a runnable 0.2.0 demo candidate, not a real-money gambling product. It
-has no real-money wagering, cash prizes, gambling monetization, or store
-credentials checked into the repository.
+The runnable 0.2.0 demo candidate has shipped. Current development targets the
+Act 1 feature-complete scope: the full street-to-Grand-Casino arc, deeper
+mid-game content, cross-game skill cheating, polished feature events, complete
+presentation/audio, and a clean Act 2 handoff. Beat the House is not a
+real-money gambling product. It has no real-money wagering, cash prizes,
+gambling monetization, or store credentials checked into the repository.
 
 ## 0.2.0 Demo Highlights
 
@@ -31,14 +34,15 @@ credentials checked into the repository.
 | Engine | Godot 4.x project with Godot 4.6 project feature metadata |
 | Main scene | `res://scenes/main.tscn` |
 | Main UI shell | `res://scripts/ui/foundation_main.gd` |
-| Release target | 0.2.0 demo release candidate |
+| Shipped baseline | 0.2.0 demo release candidate |
+| Active planning target | Act 1 feature-complete |
 | Viewport | 1280x720, non-resizable, canvas stretch with kept aspect |
 | Renderer | Godot mobile renderer |
 | Input model | Single pointer interaction with mouse/touch parity |
 | Target exports | Web/itch.io, Windows desktop, Android, iOS |
 | Run model | Seeded deterministic run state with forked RNG streams |
 | Current win target | Reach the Grand Casino, then win either clean (net +$200 while staying low-heat for a Players Card) or by surviving Pit Boss Rourke's back-room showdown |
-| Prestige content | Code path exists, but `data/prestige/purchases.json` is currently empty |
+| Prestige content | Act 1 keeps prestige dormant: the code path exists, but empty `data/prestige/purchases.json` hides all prestige UI/objects |
 
 The player starts in a generated low-stakes environment, buys or uses items,
 plays full-simulation casino games, takes services or lender offers when needed,
@@ -50,14 +54,15 @@ bankroll, heat, police capture, or being stranded without a useful recovery path
 1. `FoundationMain` loads content through `ContentLibrary`.
 2. `RunGenerator` creates a seeded run and an initial environment.
 3. `EnvironmentInstance` turns archetype data into visible objects: games, items,
-   events, services, lenders, travel hooks, and prestige hooks.
+   events, services, lenders, travel hooks, and prestige hooks when prestige
+   data exists.
 4. The player interacts with objects through the shared UI shell.
-5. Game modules, item effects, services, lenders, events, travel, and prestige
-   targets return result dictionaries.
+5. Game modules, item effects, services, lenders, events, travel, and any
+   authored prestige targets return result dictionaries.
 6. `GameModule.apply_result()` and `RunActionService` apply those results to
    `RunState`.
 7. `RunTerminalEvaluator` and `RunState` determine whether the run continues,
-   fails, or ends in demo/prestige victory.
+   fails, or ends in demo victory or a future data-enabled prestige victory.
 8. `SaveService` persists the active run through the autosave slot.
 
 ## Content Packs
@@ -66,16 +71,16 @@ Production content is JSON under `data/`.
 
 | Pack | Count | Path | Notes |
 | --- | ---: | --- | --- |
-| Environments | 8 | `data/environments/archetypes.json` | Shops, casinos, the jazz club, and the Grand Casino boss destination |
+| Environments | 10 | `data/environments/archetypes.json` | Shops, tier-1 casinos, tier-2 venues, the jazz club, and the Grand Casino boss destination |
 | Games | 7 | `data/games/games.json` | All current games are full-simulation modules |
-| Items | 32 | `data/items/items.json` | Permanent, temporary, consumable, contraband, active, game, security, and travel effects |
+| Items | 59 | `data/items/items.json` | Permanent, temporary, consumable, contraband, active, game, security, travel, slot, pinball, and build-synergy effects |
 | Content groups | 9 | `data/content_groups/groups.json` | Modular run packs that enable/disable games and their related item pools |
-| Events | 15 | `data/events/events.json` | Scoped room events with choices and consequences, including the boss-floor `the_house_calls` and `high_roller_cashout` |
-| Services | 8 | `data/services/services.json` | `cashier_tip`, `house_drink`, plus jazz-club round/tip/show services |
-| Lenders | 2 | `data/debt/lenders.json` | `street_lender`, `motel_friend` |
-| Travel routes | 8 | `data/travel/routes.json` | Routes into shops, casinos, the jazz club, the underground casino, and the Grand Casino |
-| Prestige purchases | 0 | `data/prestige/purchases.json` | Empty data pack with live code support |
-| Challenges | 0 | `data/challenges/challenges.json` | Future optional pack; path is known but no file is present |
+| Events | 31 | `data/events/events.json` | Scoped room events with choices and consequences, including unavoidable pressure events and the boss-floor `the_house_calls` and `high_roller_cashout` |
+| Services | 12 | `data/services/services.json` | `cashier_tip`, `house_drink`, `call_brother_in_law`, jazz-club round/tip/show services, and tier-2 lounge/riverboat services |
+| Lenders | 5 | `data/debt/lenders.json` | `street_lender`, `motel_friend`, `the_crew`, `brother_in_law`, `sals_pawn_counter` |
+| Travel routes | 10 | `data/travel/routes.json` | Routes into shops, casinos, tier-2 venues, the jazz club, the underground casino, and the Grand Casino, with costs, unlocks, scouting previews, travel locks, and route-risk events |
+| Prestige purchases | 0 | `data/prestige/purchases.json` | Empty Act 1 data pack; HUD, menu, room, and victory hooks stay hidden |
+| Challenges | 7 | `data/challenges/challenges.json` | Act 1 authored challenge runs with profile completion flags |
 
 `data/art/art_manifest.json` maps art identities used by environments, events,
 items, games, and the UI. Asset files live under `assets/`.
@@ -84,6 +89,13 @@ Run content groups are selected through the start-menu seed settings and stored
 in `RunState.challenge_config.modifiers.content_groups`. Standard runs enable
 all default groups; custom challenge work can remove a game pack to remove both
 that game from generated rooms and its game-specific items from shop pools.
+
+Authored challenges are selected from the start menu when
+`data/challenges/challenges.json` loads. They reuse the same
+`RunState.challenge_config` modifier contract for starting bankroll, heat, luck,
+debt, content groups, service availability/prices, cheat suppression, and Grand
+Casino target tuning. Completing a challenge records its `completion_flag` in the
+profile inventory file; challenges do not add meta-currency or Act 2 unlocks.
 
 ## Environments
 
@@ -98,6 +110,8 @@ The current environment pack contains:
 | `gas_station_casino` | casino | 1 | Low-stakes gambling room |
 | `jazz_club` | shop | 1 | Rare late-1960s music room with trio services, no games, and rare musician rewards |
 | `small_underground_casino` | casino | 1 | Larger room with Grand Casino route access |
+| `kitty_cat_lounge` | casino | 2 | Velvet-rope lounge with a house wheel, champagne pressure, and paid heat management |
+| `delta_queen` | casino | 2 | Riverboat mid-stakes rung with scheduled boarding and temporary travel lock |
 | `grand_casino` | boss | 3 | Demo objective destination |
 
 Environment archetypes define name parts, visual context, layout points,
@@ -136,9 +150,9 @@ to older slot file names; the live implementation is:
 | `scripts/games/slots/slot_machine_generator.gd` | Deterministic machine generation from run/environment RNG |
 | `scripts/games/slots/slot_machine_state.gd` | Machine schema, fixed bet ladder, selected bet, active bonus, persistence helpers |
 | `scripts/games/slots/slot_resolver.gd` | Spin/nudge resolution, payout attribution, economy deltas, feature open/step, animation plans |
-| `scripts/games/slots/slot_family_pinball.gd` | Pinball reel behavior, payouts, feature open/step logic |
+| `scripts/games/slots/slot_family_pinball.gd` | Pinball reel behavior, payouts, and delegation to the pinball feature runtime |
 | `scripts/games/slots/slot_family_buffalo.gd` | Buffalo reel/ways behavior, free games, Hold and Spin, wheel, Gold Buffalo, jackpots |
-| `scripts/games/slots/slot_pinball_table.gd` | Deterministic pinball table physics for feature play |
+| `scripts/games/slots/pinball/` | Pinball feature sim, board compiler/data, sequencer, item hooks, and feature adapter |
 | `scripts/games/slots/slot_presentation.gd` | Surface-state payload normalization |
 | `scripts/games/slots/slot_renderer.gd` | Procedural cabinet, reel, feature, and celebration drawing |
 | `scripts/games/slots/slot_rng_math.gd` | Weighted picks and deterministic reel/grid math helpers |
@@ -155,7 +169,9 @@ Live slot data exposes:
 - Fixed bet options: `$2`, `$5`, `$10`, `$15`, `$20`.
 
 Pinball supports classic, 5x3, and video feature identities with live feature
-actions. Buffalo supports free games, Hold and Spin, wheel/monster feature paths,
+actions through the reworked runtime under `scripts/games/slots/pinball/`.
+Acceptance follow-up for the post-rework slot stack is tracked in the active Act
+1 board. Buffalo supports free games, Hold and Spin, wheel/monster feature paths,
 Gold Buffalo collection/conversion, must-hit meter data, and jackpot tiers.
 
 ## Runtime Architecture
@@ -215,15 +231,16 @@ shared state, autosave, and terminal presentation.
   `pit_boss_showdown` (`the_house_calls`) back-room route. See
   `docs/plans/grand_casino_endgame_design.md` for the authoritative endgame
   contract.
-- Prestige victory is implemented as a code path through `RunActionService`, but
-  no prestige purchases are currently present in data.
+- Prestige victory is implemented as a future code path through
+  `RunActionService`, but Act 1 keeps `data/prestige/purchases.json` empty and
+  the empty pack produces no menu, HUD, environment, or victory-screen hooks.
 
 ## Repository Layout
 
 ```text
 assets/                  PNG art used by environment, event, item, game, and UI presentation
 data/                    JSON content packs and art manifest
-docs/plans/              Active planning docs: demo release task board and Grand Casino endgame design lock
+docs/plans/              Active Act 1 board, release ledgers, design locks, and historical plans
 scenes/main.tscn          Active Godot scene wired to FoundationMain
 scripts/core/             Runtime state, content loading, generation, result application, save/load
 scripts/games/            Full-simulation game modules
@@ -308,25 +325,36 @@ slot deep audit, roulette rule/audio/interface checks, baccarat interface captur
 pull-tab seed audit, and GDScript load checks. Reports are written under `.tmp/`
 or Godot `user://` paths and should not be committed as source documentation.
 
-For the 0.2.0 release gate, use the tracked checklist at
-`docs/plans/0.2_release_checklist.md` as the command-evidence ledger.
+For shipped 0.2.0 release evidence, use the tracked checklist at
+`docs/plans/0.2_release_checklist.md` as the command-evidence ledger. For active
+Act 1 work, use `docs/plans/act_one_feature_complete_task_board.md`.
 
 ## Documentation
 
 The README is the current top-level implementation spec. The `docs/plans/`
-folder holds active release and planning documents:
+folder holds active planning documents, shipped-release ledgers, and historical
+context:
 
-- `docs/plans/0.2_release_checklist.md` - the current 0.2.0 release readiness
-  checklist, including validation evidence and known blockers.
-- `docs/plans/demo_release_task_board.md` - the executable finalization task
-  board for taking the project from its runnable foundation to a polished demo
-  release. This is the active planning entry point.
+- `docs/plans/act_one_feature_complete_task_board.md` - the active planning
+  entry point for Act 1 feature-complete work, including the T0.1 status ledger
+  and current gap table.
+- `docs/plans/pinball_feature_rework_plan.md`,
+  `docs/plans/pinball_feel_reference.md`, and
+  `docs/plans/pinball_rework_progress.md` - the pinball feature rework spec,
+  feel targets, progress, and acceptance evidence. Use these with the live slot
+  stack when touching pinball or shared slot release work.
 - `docs/plans/grand_casino_endgame_design.md` - the authoritative Grand Casino
   endgame design lock (dual victory routes, showdown structure, state machine,
   and canonical ids).
+- `docs/plans/0.2_release_checklist.md` - the shipped 0.2.0 release readiness
+  checklist, including validation evidence and known blockers.
+- `docs/plans/demo_release_task_board.md` - historical 0.2.0 demo finalization
+  board. Its prompts remain useful context, but it is not the active planning
+  entry point.
 
 For current slot implementation work, use the slot stack listed in this README
-rather than any older file names referenced inside historical plan text.
+and the pinball rework docs above rather than older file names referenced inside
+historical plan text.
 
 ## Export Targets
 
