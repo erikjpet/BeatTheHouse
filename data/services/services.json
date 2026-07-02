@@ -7,7 +7,10 @@
 		"cost": 4,
 		"effect": {
 			"suspicion_delta": -1,
-			"messages": ["The room feels a little easier to read."]
+			"flags_set": {
+				"route_scouting_active": true
+			},
+			"messages": ["The room feels a little easier to read, and the cashier marks the safer exits."]
 		}
 	},
 	{
@@ -21,6 +24,20 @@
 			"alcohol_intake": 16,
 			"suspicion_delta": 1,
 			"messages": ["The drink warms your nerve and loosens your timing."]
+		}
+	},
+	{
+		"id": "call_brother_in_law",
+		"display_name": "Call Brother-in-Law",
+		"category": "family",
+		"description": "One family phone call that opens a fair loan with loud strings.",
+		"cost": 0,
+		"message": "You make the family call and hear the strings before the cash.",
+		"effect": {
+			"flags_set": {
+				"brother_in_law_phone_ready": true
+			},
+			"messages": ["The line clicks dead; your brother-in-law will answer the ask now."]
 		}
 	},
 	{
@@ -87,6 +104,47 @@
 		"message": "The glasses make people rethink what they saw.",
 		"effect": {
 			"messages": ["Local heat drops away under the drummer's name."]
+		}
+	},
+	{
+		"id": "kitty_champagne",
+		"display_name": "Champagne Tray",
+		"category": "alcohol",
+		"description": "Expensive nerve and luck; the bubbles push your timing.",
+		"cost": 18,
+		"message": "The lounge sends over champagne and the room softens at the edges.",
+		"effect": {
+			"alcohol_intake": 22,
+			"baseline_luck_delta": 2,
+			"suspicion_delta": -1,
+			"messages": ["Champagne buys a little grace, but not a steady hand."]
+		}
+	},
+	{
+		"id": "kitty_burlesque_show",
+		"display_name": "Burlesque Show",
+		"category": "nightlife",
+		"description": "A costly show that turns attention away from the tables.",
+		"cost": 28,
+		"message": "The lights hit the stage and half the room forgets to watch you.",
+		"effect": {
+			"alcohol_intake": 8,
+			"baseline_luck_delta": 1,
+			"suspicion_delta": -5,
+			"messages": ["The show gives your heat somewhere else to go."]
+		}
+	},
+	{
+		"id": "riverboat_deck_walk",
+		"display_name": "Walk the Deck",
+		"category": "recovery",
+		"description": "Step into river air and let the room reset a little.",
+		"cost": 10,
+		"message": "Cold river air clears your head while the dock stays out of reach.",
+		"effect": {
+			"suspicion_delta": -2,
+			"drunk_delta": -6,
+			"messages": ["The river air cools attention without ending the ride."]
 		}
 	}
 ]

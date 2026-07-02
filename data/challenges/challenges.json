@@ -1,0 +1,100 @@
+[
+	{
+		"id": "dry_run",
+		"title": "Dry Run",
+		"description": "No drink services, lower opening luck, and slower table nerve.",
+		"completion_flag": "challenge_dry_run_complete",
+		"modifiers": {
+			"blocked_service_categories": ["alcohol"],
+			"baseline_luck_delta": -4,
+			"starting_bankroll_delta": 10
+		}
+	},
+	{
+		"id": "debt_spiral",
+		"title": "Debt Spiral",
+		"description": "Start with a shark note already on your back and a little extra cash in hand.",
+		"completion_flag": "challenge_debt_spiral_complete",
+		"modifiers": {
+			"starting_bankroll_delta": 35,
+			"starting_debt": [
+				{
+					"id": "debt_spiral_note",
+					"lender_id": "street_lender",
+					"balance": 80,
+					"status": "active",
+					"deadline_turns": 2,
+					"interest_rate": 0.2
+				}
+			]
+		}
+	},
+	{
+		"id": "pacifist",
+		"title": "Pacifist",
+		"description": "No cheat actions are available, and the clean Players Card target is lighter.",
+		"completion_flag": "challenge_pacifist_complete",
+		"modifiers": {
+			"disable_cheat_actions": true,
+			"grand_casino_high_roller_net_delta": -75,
+			"grand_casino_high_roller_max_heat_delta": 5
+		}
+	},
+	{
+		"id": "one_machine",
+		"title": "One Machine",
+		"description": "Slots and universal gear only, with a smaller stake cushion.",
+		"completion_flag": "challenge_one_machine_complete",
+		"modifiers": {
+			"content_groups": [
+				"universal_passive_items",
+				"universal_active_items",
+				"slot_pack"
+			],
+			"starting_bankroll_delta": -20,
+			"baseline_luck_delta": 2
+		}
+	},
+	{
+		"id": "heat_wave",
+		"title": "Heat Wave",
+		"description": "Begin warm, cool off more slowly, and get cheaper tips from non-drink services.",
+		"completion_flag": "challenge_heat_wave_complete",
+		"modifiers": {
+			"starting_heat": 14,
+			"local_risk_decay_percent_delta": -10,
+			"local_heat_turn_decay_interval_delta": 2,
+			"service_cost_multipliers": {
+				"information": 0.5,
+				"security": 0.5,
+				"music": 0.5
+			}
+		}
+	},
+	{
+		"id": "thin_wallet",
+		"title": "Thin Wallet",
+		"description": "Half a bankroll, sharper opening luck, and every enabled table still in play.",
+		"completion_flag": "challenge_thin_wallet_complete",
+		"modifiers": {
+			"starting_bankroll": 50,
+			"baseline_luck_delta": 3
+		}
+	},
+	{
+		"id": "card_sharp",
+		"title": "Card Sharp",
+		"description": "Cards-only rooms and shared card tools, with the Grand Casino clean target raised.",
+		"completion_flag": "challenge_card_sharp_complete",
+		"modifiers": {
+			"content_groups": [
+				"universal_passive_items",
+				"universal_active_items",
+				"blackjack_pack",
+				"baccarat_pack",
+				"video_poker_pack"
+			],
+			"grand_casino_high_roller_net_delta": 50
+		}
+	}
+]

@@ -408,7 +408,12 @@ func service_hook_view_list(selected_service_id: String = "") -> Array:
 	if _jazz_glasses_service_visible() and not service_ids.has(JAZZ_SHOW_GLASSES_SERVICE_ID):
 		service_ids.append(JAZZ_SHOW_GLASSES_SERVICE_ID)
 	for service_id in service_ids:
-		options.append(hook_option("service", service_id, selected_service_id))
+		var definition := hook_definition("service", service_id)
+		if _service_blocked_by_challenge(definition):
+			continue
+		var option := hook_option("service", service_id, selected_service_id)
+		if not bool(option.get("hidden", false)):
+			options.append(option)
 	return options
 
 
@@ -418,7 +423,9 @@ func lender_hook_view_list(selected_lender_id: String = "") -> Array:
 		return []
 	var options: Array = []
 	for lender_id in _string_array(run_state.current_environment.get("lender_hooks", [])):
-		options.append(hook_option("lender", lender_id, selected_lender_id))
+		var option := hook_option("lender", lender_id, selected_lender_id)
+		if not bool(option.get("hidden", false)):
+			options.append(option)
 	return options
 
 
@@ -439,7 +446,8 @@ func hook_option(kind: String, hook_id: String, selected_hook_id: String = "") -
 	var summary := str(definition.get("description", definition.get("summary", ""))) if not definition.is_empty() else ""
 	var hook_status := hook_run_status(kind, definition)
 	var deltas := hook_result_deltas(definition, kind, hook_status)
-	var supported := not definition.is_empty() and (result_deltas_have_mutation(deltas) or (kind == "service" and _is_jazz_custom_service(hook_id)))
+	var supported := not definition.is_empty() and (result_deltas_have_mutation(deltas) or (kind == "service" and _is_jazz_custom_service(hook_id)) or (kind == "lender" and _lender_has_dynamic_contract(definition)))
+	var availability_class := _hook_availability_class(kind, hook_id, definition, hook_status, supported)
 	var enabled := supported and bool(hook_status.get("available", true))
 	var disabled_reason := ""
 	if not supported:
@@ -456,11 +464,29 @@ func hook_option(kind: String, hook_id: String, selected_hook_id: String = "") -
 		"status": status,
 		"mutation_supported": supported,
 		"enabled": enabled,
+		"availability_class": availability_class,
+		"hidden": availability_class == RunState.AVAILABILITY_CATEGORICAL_UNAVAILABLE,
 		"disabled_reason": disabled_reason,
 		"cost": int(hook_status.get("cost", definition.get("cost", 0))),
 		"delta_summary": delta_summary(deltas) if supported else "",
 		"selected": hook_id == selected_hook_id,
 	}
+
+
+func _hook_availability_class(kind: String, hook_id: String, definition: Dictionary, hook_status: Dictionary, supported: bool) -> String:
+	if definition.is_empty() or not supported:
+		return RunState.AVAILABILITY_CATEGORICAL_UNAVAILABLE
+	var status_class := str(hook_status.get("availability_class", RunState.AVAILABILITY_AVAILABLE))
+	if status_class == RunState.AVAILABILITY_CATEGORICAL_UNAVAILABLE or status_class == RunState.AVAILABILITY_TRANSIENT_BLOCKED:
+		return status_class
+	if bool(hook_status.get("available", true)):
+		return RunState.AVAILABILITY_AVAILABLE
+	var reason := str(hook_status.get("disabled_reason", "")).to_lower()
+	if reason.find("not enough") != -1 or reason.find("too drunk") != -1 or reason.find("already owe") != -1 or reason.find("sellable item") != -1 or reason.find("no local heat") != -1 or reason.find("already cooled") != -1:
+		return RunState.AVAILABILITY_TRANSIENT_BLOCKED
+	if kind == "service" and _is_jazz_custom_service(hook_id) and reason.find("not here") != -1:
+		return RunState.AVAILABILITY_CATEGORICAL_UNAVAILABLE
+	return RunState.AVAILABILITY_CATEGORICAL_UNAVAILABLE
 
 
 # Applies a service or lender hook through shared result deltas.
@@ -477,6 +503,11 @@ func use_hook(kind: String, hook_id: String) -> Dictionary:
 	var result := hook_result(kind, hook_id)
 	if result.is_empty():
 		return _service_error("This %s is only informational right now." % kind)
+	if kind == "service" and hook_id == JAZZ_SHOW_GLASSES_SERVICE_ID:
+		GameModule.apply_result(run_state, result)
+		run_state.advance_environment_turns(1)
+		return _service_success(result)
+	run_state.advance_environment_turns(1)
 	GameModule.apply_result(run_state, result)
 	return _service_success(result)
 
@@ -547,6 +578,8 @@ func purchase_item_result(effect_result: Dictionary, item_definition: Dictionary
 	var price := int(offer.get("price", 0))
 	var result := effect_result.duplicate(true)
 	var deltas := copy_result_deltas(effect_result.get("deltas", {}))
+	if _definition_is_active_item(item_definition):
+		_clear_active_purchase_use_deltas(deltas)
 	deltas["bankroll_delta"] = int(deltas.get("bankroll_delta", 0)) - price
 	var inventory_add: Array = deltas.get("inventory_add", [])
 	if not inventory_add.has(item_id):
@@ -588,12 +621,32 @@ func purchase_item_result(effect_result: Dictionary, item_definition: Dictionary
 	return result
 
 
+func _clear_active_purchase_use_deltas(deltas: Dictionary) -> void:
+	for key in [
+		"alcohol_intake",
+		"drunk_delta",
+		"pending_drunk_absorption_delta",
+		"drunk_distortion_suppression_turns",
+		"alcoholic_delta",
+		"baseline_luck_delta",
+		"suspicion_delta",
+	]:
+		deltas[key] = 0
+	for key in ["debt_changes", "inventory_add", "inventory_remove", "travel_hooks_add", "story_log", "messages", "event_hooks"]:
+		deltas[key] = []
+	for key in ["flags_set", "travel_changes"]:
+		deltas[key] = {}
+	deltas["ended"] = false
+
+
 # Builds a service/lender result without applying it.
 func hook_result(kind: String, hook_id: String) -> Dictionary:
 	var definition := hook_definition(kind, hook_id)
 	if definition.is_empty():
 		return {}
 	var status := hook_run_status(kind, definition)
+	if kind == "lender" and _lender_has_dynamic_contract(definition):
+		return _dynamic_lender_result(hook_id, definition, status)
 	if kind == "service" and _is_jazz_custom_service(hook_id):
 		return _jazz_service_result(hook_id, definition, status)
 	var deltas := hook_result_deltas(definition, kind, status)
@@ -669,6 +722,8 @@ func prestige_purchase_result(definition: Dictionary, option: Dictionary) -> Dic
 
 # Extracts result deltas from service/lender definitions.
 func hook_result_deltas(definition: Dictionary, kind: String = "", status: Dictionary = {}) -> Dictionary:
+	if kind == "lender" and _lender_has_dynamic_contract(definition):
+		return _dynamic_lender_deltas(definition, status)
 	var source := {}
 	for key in ["deltas", "result_delta", "result_deltas", "effect"]:
 		var candidate: Variant = definition.get(key, {})
@@ -705,7 +760,7 @@ func copy_result_deltas(value: Variant) -> Dictionary:
 func result_deltas_have_mutation(deltas: Dictionary) -> bool:
 	if int(deltas.get("bankroll_delta", 0)) != 0 or int(deltas.get("suspicion_delta", 0)) != 0:
 		return true
-	for key in ["alcohol_intake", "drunk_delta", "alcoholic_delta", "baseline_luck_delta"]:
+	for key in ["alcohol_intake", "drunk_delta", "pending_drunk_absorption_delta", "drunk_distortion_suppression_turns", "alcoholic_delta", "baseline_luck_delta"]:
 		if int(deltas.get(key, 0)) != 0:
 			return true
 	if bool(deltas.get("ended", false)):
@@ -735,6 +790,12 @@ func delta_summary(deltas: Dictionary) -> String:
 	var drunk_delta := int(deltas.get("drunk_delta", 0))
 	if drunk_delta != 0:
 		parts.append("drunk %+d" % drunk_delta)
+	var pending_drunk_absorption_delta := int(deltas.get("pending_drunk_absorption_delta", 0))
+	if pending_drunk_absorption_delta != 0:
+		parts.append("pending drink %+d" % pending_drunk_absorption_delta)
+	var drunk_distortion_suppression_turns := int(deltas.get("drunk_distortion_suppression_turns", 0))
+	if drunk_distortion_suppression_turns > 0:
+		parts.append("steady vision %d" % drunk_distortion_suppression_turns)
 	var alcoholic_delta := int(deltas.get("alcoholic_delta", 0))
 	if alcoholic_delta != 0:
 		parts.append("need %+d" % alcoholic_delta)
@@ -765,6 +826,8 @@ func effect_summary(effect: Dictionary) -> String:
 	for key in effect.keys():
 		var key_text := str(key)
 		if key_text == "asset_path":
+			continue
+		if key_text == "synergies":
 			continue
 		var value: Variant = effect[key]
 		if key_text == "families" and typeof(value) == TYPE_DICTIONARY:
@@ -798,6 +861,10 @@ func effect_summary_label(key: String) -> String:
 			return "drink"
 		"drunk_delta":
 			return "drunk"
+		"pending_drunk_absorption_delta":
+			return "pending drink"
+		"drunk_distortion_suppression_turns":
+			return "steady vision"
 		"alcoholic_delta":
 			return "need"
 		"baseline_luck_delta":
@@ -810,6 +877,10 @@ func effect_summary_label(key: String) -> String:
 			return "cash"
 		"debt_changes":
 			return "debt pressure"
+		"debt_grace_turns":
+			return "debt grace"
+		"debt_default_heat_delta":
+			return "default heat"
 		"inventory_add":
 			return "adds"
 		"inventory_remove":
@@ -820,6 +891,8 @@ func effect_summary_label(key: String) -> String:
 			return "new routes"
 		"travel_changes":
 			return "travel shift"
+		"travel_scouting_level":
+			return "route scouting"
 		"item_hooks":
 			return "item effect"
 		"event_hooks":
@@ -870,6 +943,12 @@ func hook_run_status(kind: String, definition: Dictionary) -> Dictionary:
 		return {"available": true, "disabled_reason": "", "cost": int(definition.get("cost", 0))}
 	if kind == "service":
 		var service_id := str(definition.get("id", ""))
+		if _service_blocked_by_challenge(definition):
+			return {
+				"available": false,
+				"disabled_reason": "This challenge blocks that service.",
+				"cost": int(definition.get("cost", 0)),
+			}
 		if _is_jazz_custom_service(service_id):
 			return _jazz_service_status(service_id, definition)
 		var service_definition := definition.duplicate(true)
@@ -877,8 +956,232 @@ func hook_run_status(kind: String, definition: Dictionary) -> Dictionary:
 			service_definition["cost"] = 0
 		return run_state.service_hook_status(service_definition)
 	if kind == "lender":
-		return run_state.lender_hook_status(definition)
+		var lender_status := run_state.lender_hook_status(definition)
+		return _dynamic_lender_status(definition, lender_status)
 	return {"available": true, "disabled_reason": "", "cost": int(definition.get("cost", 0))}
+
+
+func _dynamic_lender_result(lender_id: String, definition: Dictionary, status: Dictionary) -> Dictionary:
+	if not bool(status.get("available", false)):
+		return {}
+	var deltas := _dynamic_lender_deltas(definition, status)
+	if not result_deltas_have_mutation(deltas):
+		return {}
+	var display_name := hook_display_name("lender", lender_id, definition)
+	var message := str(definition.get("message", "Borrowed from %s." % display_name))
+	var messages := _copy_array(deltas.get("messages", []))
+	if messages.is_empty():
+		messages.append(message)
+	deltas["messages"] = messages
+	var story_log := _copy_array(deltas.get("story_log", []))
+	if story_log.is_empty():
+		story_log.append({
+			"type": "lender_hook",
+			"id": lender_id,
+			"label": display_name,
+			"environment_id": str(run_state.current_environment.get("id", "")),
+			"environment_archetype_id": str(run_state.current_environment.get("archetype_id", "")),
+			"bankroll_delta": int(deltas.get("bankroll_delta", 0)),
+			"suspicion_delta": int(deltas.get("suspicion_delta", 0)),
+			"debt_changes": _copy_array(deltas.get("debt_changes", [])),
+			"message": message,
+		})
+	deltas["story_log"] = story_log
+	return GameModule.build_action_result({
+		"ok": true,
+		"type": "lender_hook",
+		"source_id": lender_id,
+		"action_id": "borrow",
+		"action_kind": "lender",
+		"environment_id": str(run_state.current_environment.get("id", "")),
+		"environment_archetype_id": str(run_state.current_environment.get("archetype_id", "")),
+		"deltas": deltas,
+		"message": message,
+	})
+
+
+func _dynamic_lender_status(definition: Dictionary, base_status: Dictionary) -> Dictionary:
+	var status := base_status.duplicate(true)
+	if not bool(status.get("available", true)):
+		return status
+	var lender_type := str(definition.get("lender_type", ""))
+	if lender_type == "pawn":
+		var profile := _copy_dict(definition.get("debt_profile", {}))
+		var collateral := _pawn_collateral_option(profile)
+		if collateral.is_empty():
+			status["available"] = false
+			status["disabled_reason"] = "Sal needs a sellable item as collateral."
+			status["availability_class"] = RunState.AVAILABILITY_TRANSIENT_BLOCKED
+		else:
+			status["collateral_item_id"] = str(collateral.get("item_id", ""))
+			status["collateral_item_name"] = str(collateral.get("item_name", ""))
+			status["loan_amount"] = int(collateral.get("loan_amount", 0))
+	return status
+
+
+func _dynamic_lender_deltas(definition: Dictionary, status: Dictionary) -> Dictionary:
+	var deltas := GameModule.empty_result_deltas()
+	if not bool(status.get("available", true)):
+		return deltas
+	var lender_id := str(definition.get("id", ""))
+	var lender_type := str(definition.get("lender_type", ""))
+	var profile := _copy_dict(definition.get("debt_profile", {}))
+	match lender_type:
+		"favor_crew":
+			return _crew_lender_deltas(definition, profile)
+		"family_phone":
+			return _family_lender_deltas(definition, profile)
+		"pawn":
+			return _pawn_lender_deltas(definition, profile, status)
+		_:
+			if lender_id.is_empty():
+				return deltas
+	return deltas
+
+
+func _crew_lender_deltas(definition: Dictionary, profile: Dictionary) -> Dictionary:
+	var lender_id := str(definition.get("id", "the_crew"))
+	var loan_amount := _profile_loan_amount(profile)
+	var favor_count := maxi(1, int(profile.get("favor_count", 2)))
+	var deadline_turns := maxi(0, int(profile.get("deadline_turns", 2)))
+	var debt_change := {
+		"id": "%s_marker" % lender_id,
+		"lender_id": lender_id,
+		"balance": favor_count,
+		"status": "active",
+		"debt_kind": "favor",
+		"deadline_turns": deadline_turns,
+		"turns_remaining": deadline_turns,
+		"interest_rate": 0.0,
+		"default_consequence": str(profile.get("default_consequence", "crew_favor_due")),
+		"refuse_consequence": str(profile.get("refuse_consequence", "crew_convert_to_cash")),
+		"cash_conversion_balance_per_favor": maxi(1, int(profile.get("cash_conversion_balance_per_favor", 45))),
+		"cash_conversion_interest_rate": maxf(0.0, float(profile.get("cash_conversion_interest_rate", 0.35))),
+	}
+	return _dynamic_lender_delta_payload(definition, loan_amount, [debt_change], {
+		"crew_marker_open": true,
+	}, ["The Crew wants favors, not interest."])
+
+
+func _family_lender_deltas(definition: Dictionary, profile: Dictionary) -> Dictionary:
+	var lender_id := str(definition.get("id", "brother_in_law"))
+	var loan_amount := _profile_loan_amount(profile)
+	var interest_rate := maxf(0.0, float(profile.get("interest_rate", 0.0)))
+	var balance := maxi(loan_amount, int(ceil(float(loan_amount) * (1.0 + interest_rate))))
+	var deadline_turns := maxi(0, int(profile.get("deadline_turns", 6)))
+	var debt_change := {
+		"id": "%s_note" % lender_id,
+		"lender_id": lender_id,
+		"balance": balance,
+		"status": "active",
+		"debt_kind": "cash",
+		"deadline_turns": deadline_turns,
+		"turns_remaining": deadline_turns,
+		"interest_rate": interest_rate,
+		"default_consequence": str(profile.get("default_consequence", "family_nag")),
+		"early_repay_flag": str(profile.get("early_repay_flag", "brother_in_law_goodwill")),
+		"late_scar_flag": str(profile.get("late_scar_flag", "brother_in_law_story_scar")),
+		"nag_interval_turns": maxi(1, int(profile.get("nag_interval_turns", 3))),
+	}
+	var availability := _copy_dict(definition.get("availability", {}))
+	var single_use_flag := str(availability.get("single_use_flag", "brother_in_law_loan_used"))
+	var flags := {}
+	if not single_use_flag.is_empty():
+		flags[single_use_flag] = true
+	flags["brother_in_law_phone_ready"] = false
+	return _dynamic_lender_delta_payload(definition, loan_amount, [debt_change], flags, ["Fair money, family pressure."])
+
+
+func _pawn_lender_deltas(definition: Dictionary, profile: Dictionary, status: Dictionary) -> Dictionary:
+	var collateral := _pawn_collateral_option(profile)
+	if collateral.is_empty():
+		return GameModule.empty_result_deltas()
+	var lender_id := str(definition.get("id", "sals_pawn_counter"))
+	var loan_amount := int(collateral.get("loan_amount", status.get("loan_amount", 0)))
+	var deadline_turns := maxi(0, int(profile.get("deadline_turns", 5)))
+	var item_id := str(collateral.get("item_id", ""))
+	var item_name := str(collateral.get("item_name", item_id))
+	var debt_change := {
+		"id": "%s_%s_ticket" % [lender_id, item_id],
+		"lender_id": lender_id,
+		"balance": loan_amount,
+		"status": "active",
+		"debt_kind": "pawn",
+		"deadline_turns": deadline_turns,
+		"turns_remaining": deadline_turns,
+		"interest_rate": 0.0,
+		"default_consequence": str(profile.get("default_consequence", "collateral_forfeit")),
+		"collateral_item_id": item_id,
+		"collateral_item_name": item_name,
+	}
+	var deltas := _dynamic_lender_delta_payload(definition, loan_amount, [debt_change], {
+		"sals_pawn_open": true,
+	}, ["%s is in Sal's envelope until you redeem it." % item_name])
+	deltas["inventory_remove"] = [item_id]
+	return deltas
+
+
+func _dynamic_lender_delta_payload(definition: Dictionary, bankroll_delta: int, debt_changes: Array, flags: Dictionary, messages: Array) -> Dictionary:
+	var deltas := GameModule.empty_result_deltas()
+	var lender_id := str(definition.get("id", ""))
+	var display_name := str(definition.get("display_name", lender_id))
+	var message := str(definition.get("message", "Borrowed from %s." % display_name))
+	deltas["bankroll_delta"] = bankroll_delta
+	deltas["debt_changes"] = debt_changes.duplicate(true)
+	deltas["flags_set"] = flags.duplicate(true)
+	deltas["messages"] = messages.duplicate(true)
+	if (deltas.get("messages", []) as Array).is_empty():
+		deltas["messages"] = [message]
+	deltas["story_log"] = [{
+		"type": "lender_hook",
+		"id": lender_id,
+		"label": display_name,
+		"environment_id": str(run_state.current_environment.get("id", "")),
+		"environment_archetype_id": str(run_state.current_environment.get("archetype_id", "")),
+		"bankroll_delta": bankroll_delta,
+		"debt_changes": debt_changes.duplicate(true),
+		"message": message,
+	}]
+	return deltas
+
+
+func _profile_loan_amount(profile: Dictionary) -> int:
+	var minimum := maxi(0, int(profile.get("principal_min", 0)))
+	var maximum := maxi(minimum, int(profile.get("principal_max", minimum)))
+	var configured := int(profile.get("loan_amount", minimum))
+	return clampi(configured, minimum, maximum)
+
+
+func _pawn_collateral_option(profile: Dictionary) -> Dictionary:
+	if run_state == null or library == null:
+		return {}
+	var minimum := maxi(0, int(profile.get("principal_min", 0)))
+	var maximum := maxi(minimum, int(profile.get("principal_max", minimum)))
+	var multiplier := maxi(1, int(profile.get("loan_to_sale_price_multiplier", 2)))
+	for item_value in _copy_array(run_state.inventory):
+		var item_id := str(item_value)
+		if item_id.is_empty():
+			continue
+		var detail := inventory_item_detail(item_id)
+		if detail.is_empty() or not bool(detail.get("sellable", false)):
+			continue
+		var sale_price := maxi(0, int(detail.get("sale_price", 0)))
+		if sale_price <= 0:
+			continue
+		var loan_amount := clampi(sale_price * multiplier, minimum, maximum)
+		if loan_amount <= 0:
+			continue
+		return {
+			"item_id": item_id,
+			"item_name": str(detail.get("display_name", item_id)),
+			"sale_price": sale_price,
+			"loan_amount": loan_amount,
+		}
+	return {}
+
+
+func _lender_has_dynamic_contract(definition: Dictionary) -> bool:
+	return ["favor_crew", "family_phone", "pawn"].has(str(definition.get("lender_type", "")))
 
 
 func hook_definition(kind: String, hook_id: String) -> Dictionary:
@@ -903,6 +1206,12 @@ func display_only_hook_status(_kind: String, definition: Dictionary) -> String:
 	if definition.is_empty():
 		return "Not available here yet."
 	return "Not usable yet."
+
+
+func _service_blocked_by_challenge(definition: Dictionary) -> bool:
+	if run_state == null or definition.is_empty():
+		return false
+	return run_state.challenge_service_category_blocked(str(definition.get("category", "")))
 
 
 func _is_jazz_custom_service(service_id: String) -> bool:
@@ -937,30 +1246,35 @@ func _has_jazz_reward_item() -> bool:
 
 
 func _jazz_service_status(service_id: String, definition: Dictionary) -> Dictionary:
-	var cost := maxi(0, int(definition.get("cost", 0)))
+	var cost := maxi(0, int(round(float(definition.get("cost", 0)) * run_state.challenge_service_cost_multiplier(definition))))
 	var status := {
 		"available": true,
 		"disabled_reason": "",
 		"cost": cost,
+		"availability_class": RunState.AVAILABILITY_AVAILABLE,
 	}
 	if service_id == JAZZ_SHOW_GLASSES_SERVICE_ID:
 		status["cost"] = 0
 		if not run_state.inventory.has(JAZZ_DRUMMER_GLASSES_ITEM_ID):
 			status["available"] = false
 			status["disabled_reason"] = "You do not have the drummer's glasses."
+			status["availability_class"] = RunState.AVAILABILITY_CATEGORICAL_UNAVAILABLE
 			return status
 		var location_id := run_state.current_suspicion_location_id()
 		if bool(run_state.narrative_flags.get(_jazz_glasses_used_flag(location_id), false)):
 			status["available"] = false
 			status["disabled_reason"] = "The glasses have already cooled heat here tonight."
+			status["availability_class"] = RunState.AVAILABILITY_TRANSIENT_BLOCKED
 			return status
 		if run_state.suspicion_level() <= 0:
 			status["available"] = false
 			status["disabled_reason"] = "No local heat needs cooling."
+			status["availability_class"] = RunState.AVAILABILITY_TRANSIENT_BLOCKED
 		return status
 	if not _is_jazz_club_environment():
 		status["available"] = false
 		status["disabled_reason"] = "That jazz contact is not here."
+		status["availability_class"] = RunState.AVAILABILITY_CATEGORICAL_UNAVAILABLE
 		return status
 	if _has_jazz_reward_item() and service_id != JAZZ_TIP_JAR_SERVICE_ID:
 		status["cost"] = 0
@@ -969,18 +1283,23 @@ func _jazz_service_status(service_id: String, definition: Dictionary) -> Diction
 	if service_id == JAZZ_TIP_JAR_SERVICE_ID and reward_claimed:
 		status["available"] = false
 		status["disabled_reason"] = "The trio has given all it can tonight."
+		status["availability_class"] = RunState.AVAILABILITY_TRANSIENT_BLOCKED
 	elif not musician_id.is_empty() and reward_claimed:
 		status["available"] = false
 		status["disabled_reason"] = "The trio has given all it can tonight."
+		status["availability_class"] = RunState.AVAILABILITY_TRANSIENT_BLOCKED
 	elif not musician_id.is_empty() and bool(run_state.narrative_flags.get(_jazz_no_item_flag(musician_id), false)):
 		status["available"] = false
 		status["disabled_reason"] = "%s has already told you there is nothing to give." % _jazz_musician_name(musician_id)
+		status["availability_class"] = RunState.AVAILABILITY_TRANSIENT_BLOCKED
 	elif not musician_id.is_empty() and run_state.inventory.has(_jazz_item_for_musician(musician_id)):
 		status["available"] = false
 		status["disabled_reason"] = "You already carry that musician's keepsake."
+		status["availability_class"] = RunState.AVAILABILITY_TRANSIENT_BLOCKED
 	elif int(status.get("cost", 0)) > run_state.bankroll:
 		status["available"] = false
 		status["disabled_reason"] = "Not enough bankroll for this round."
+		status["availability_class"] = RunState.AVAILABILITY_TRANSIENT_BLOCKED
 	return status
 
 
@@ -1320,6 +1639,12 @@ static func _copy_array(value: Variant) -> Array:
 	if typeof(value) != TYPE_ARRAY:
 		return []
 	return (value as Array).duplicate(true)
+
+
+static func _copy_dict(value: Variant) -> Dictionary:
+	if typeof(value) != TYPE_DICTIONARY:
+		return {}
+	return (value as Dictionary).duplicate(true)
 
 
 static func _string_array(value: Variant) -> Array:

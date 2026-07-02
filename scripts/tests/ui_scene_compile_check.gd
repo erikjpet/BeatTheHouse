@@ -193,10 +193,97 @@ func _run() -> void:
 		push_error("Release main menu did not expose the Daily Run challenge button.")
 		quit(1)
 		return
-	if _has_visible_text(app, "Custom Challenge"):
-		push_error("Release main menu exposed Custom Challenge before that challenge content is complete.")
-		quit(1)
-		return
+	var challenge_select_button: Button = app.get("challenge_select_button")
+	var challenge_new_run_button: Button = app.get("new_run_button")
+	var challenge_seed_input: LineEdit = app.get("seed_input")
+	var menu_library: ContentLibrary = app.get("library")
+	var challenge_snapshot: Dictionary = app.call("current_start_menu_snapshot")
+	var menu_challenges: Array = challenge_snapshot.get("challenges", [])
+	if menu_library == null or menu_library.challenges.is_empty():
+		if challenge_select_button != null and challenge_select_button.visible:
+			push_error("Main menu showed challenge selection without a loaded challenge pack.")
+			quit(1)
+			return
+	else:
+		if challenge_select_button == null or challenge_new_run_button == null or challenge_seed_input == null or not challenge_select_button.visible or challenge_select_button.disabled or menu_challenges.size() < 6:
+			push_error("Main menu did not expose loaded challenge content.")
+			quit(1)
+			return
+		var original_challenges: Array = menu_library.challenges.duplicate(true)
+		menu_library.challenges = []
+		app.call("_refresh_start_screen")
+		await process_frame
+		challenge_snapshot = app.call("current_start_menu_snapshot")
+		if challenge_select_button.visible or not (challenge_snapshot.get("challenges", []) as Array).is_empty():
+			push_error("Main menu showed challenges after the pack was empty.")
+			quit(1)
+			return
+		menu_library.challenges = original_challenges
+		app.call("_rebuild_challenge_options")
+		app.call("_refresh_start_screen")
+		await process_frame
+		if not challenge_select_button.visible:
+			push_error("Main menu did not restore challenge selection after the pack reloaded.")
+			quit(1)
+			return
+		challenge_select_button.emit_signal("pressed")
+		await process_frame
+		challenge_snapshot = app.call("current_start_menu_snapshot")
+		if not bool(challenge_snapshot.get("challenge_config_visible", false)):
+			push_error("Challenge selector did not open from the main menu.")
+			quit(1)
+			return
+		var challenge_buttons: Dictionary = app.get("challenge_buttons")
+		var dry_run_button := challenge_buttons.get("dry_run", null) as Button
+		if dry_run_button == null or not dry_run_button.visible:
+			push_error("Challenge selector did not list Dry Run.")
+			quit(1)
+			return
+		dry_run_button.emit_signal("pressed")
+		await process_frame
+		challenge_snapshot = app.call("current_start_menu_snapshot")
+		if str(challenge_snapshot.get("selected_challenge_id", "")) != "dry_run":
+			push_error("Challenge selector did not store the selected challenge id.")
+			quit(1)
+			return
+		challenge_seed_input.text = "UI-DRY-RUN-SEED"
+		challenge_new_run_button.emit_signal("pressed")
+		await process_frame
+		var dry_run_state: RunState = app.get("run_state")
+		if dry_run_state == null or str(dry_run_state.challenge_config.get("id", "")) != "dry_run":
+			push_error("New Run did not launch the selected authored challenge.")
+			quit(1)
+			return
+		if bool(dry_run_state.service_hook_status(menu_library.service("house_drink")).get("available", true)):
+			push_error("Dry Run challenge did not apply its alcohol service modifier in UI launch.")
+			quit(1)
+			return
+		dry_run_state.run_status = RunState.RUN_STATUS_ENDED
+		dry_run_state.narrative_flags["demo_victory"] = true
+		dry_run_state.narrative_flags["demo_victory_message"] = "Demo Victory: challenge compile check."
+		app.call("_route_ended_run_if_needed", {"message": "Challenge complete."})
+		await process_frame
+		var challenge_profile: ProfileInventory = app.get("profile_inventory")
+		if challenge_profile == null or not challenge_profile.has_challenge_completion("challenge_dry_run_complete"):
+			push_error("Challenge victory did not record the completion flag to the profile.")
+			quit(1)
+			return
+		app.call("return_to_main_menu")
+		await process_frame
+		challenge_select_button = app.get("challenge_select_button")
+		challenge_select_button.emit_signal("pressed")
+		await process_frame
+		challenge_buttons = app.get("challenge_buttons")
+		var standard_button := challenge_buttons.get("", null) as Button
+		if standard_button != null:
+			standard_button.emit_signal("pressed")
+			await process_frame
+			app.call("close_challenge_selection")
+			await process_frame
+		if str((app.call("current_start_menu_snapshot") as Dictionary).get("selected_challenge_id", "")) != "":
+			push_error("Challenge selector did not return to Standard Run.")
+			quit(1)
+			return
 	var settings_button: Button = app.get("settings_button")
 	var inventory_button: Button = app.get("inventory_button")
 	var exit_game_button: Button = app.get("exit_game_button")
@@ -273,6 +360,7 @@ func _run() -> void:
 	var drunk_effect_option: OptionButton = settings_menu.get("drunk_effect")
 	var high_contrast_check: CheckBox = settings_menu.get("high_contrast")
 	var reduce_motion_check: CheckBox = settings_menu.get("reduce_motion")
+	var audio_calm_check: CheckBox = settings_menu.get("audio_calm")
 	var ui_scale_slider: HSlider = settings_menu.get("ui")
 	var text_size_option: OptionButton = settings_menu.get("text_size")
 	if resolution_option.item_count < 2 or mode_option.item_count < 1:
@@ -283,7 +371,7 @@ func _run() -> void:
 		push_error("Settings menu did not populate the drunk visual mode choices.")
 		quit(1)
 		return
-	if high_contrast_check == null or reduce_motion_check == null or ui_scale_slider == null or text_size_option == null:
+	if high_contrast_check == null or reduce_motion_check == null or audio_calm_check == null or ui_scale_slider == null or text_size_option == null:
 		push_error("Settings menu did not expose release accessibility controls.")
 		quit(1)
 		return
@@ -302,6 +390,8 @@ func _run() -> void:
 	high_contrast_check.toggled.emit(target_high_contrast)
 	reduce_motion_check.button_pressed = true
 	reduce_motion_check.toggled.emit(true)
+	audio_calm_check.button_pressed = true
+	audio_calm_check.toggled.emit(true)
 	ui_scale_slider.value = 130
 	ui_scale_slider.value_changed.emit(130)
 	text_size_option.select(2)
@@ -316,6 +406,10 @@ func _run() -> void:
 			return
 		if not bool(user_settings.reduce_motion):
 			push_error("Settings apply did not persist reduce motion.")
+			quit(1)
+			return
+		if not bool(user_settings.audio_calm):
+			push_error("Settings apply did not persist calmer music.")
 			quit(1)
 			return
 		if str(user_settings.text_size) != "large" or absf(float(user_settings.ui_scale) - 1.3) > 0.001:
@@ -336,7 +430,7 @@ func _run() -> void:
 		return
 	var reloaded_settings: UserSettings = UserSettingsScript.new()
 	reloaded_settings.load()
-	if bool(reloaded_settings.high_contrast) != target_high_contrast or not bool(reloaded_settings.reduce_motion) or str(reloaded_settings.text_size) != "large":
+	if bool(reloaded_settings.high_contrast) != target_high_contrast or not bool(reloaded_settings.reduce_motion) or not bool(reloaded_settings.audio_calm) or str(reloaded_settings.text_size) != "large":
 		push_error("Settings save/load did not preserve accessibility settings after restart.")
 		quit(1)
 		return
@@ -446,6 +540,10 @@ func _run() -> void:
 	var start_menu_snapshot: Dictionary = app.call("current_start_menu_snapshot")
 	if _has_visible_text(app, "READ") or _has_visible_text(app, "BUILD") or _has_visible_text(app, "ESCAPE"):
 		push_error("Main menu still shows the old READ / BUILD / ESCAPE pillar boxes.")
+		quit(1)
+		return
+	if _has_visible_text(app, "Prestige") or _has_visible_text(app, "Down Payment on Act 2"):
+		push_error("Main menu exposed an Act 2 prestige hook while prestige data is empty.")
 		quit(1)
 		return
 	var collapsed_panel_size: Vector2 = start_menu_snapshot.get("menu_panel_size", Vector2.ZERO)
@@ -608,6 +706,14 @@ func _run() -> void:
 		push_error("Generated environment music did not expose a reusable melodic motif.")
 		quit(1)
 		return
+	if str(music_theory.get("arrangement_form", "")) != "AABA" or float(music_theory.get("swing_amount", -1.0)) < 0.0:
+		push_error("Procedural music theory snapshot did not expose swing and AABA form.")
+		quit(1)
+		return
+	if (music_theory.get("voicing_inversions", []) as Array).is_empty() or (music_theory.get("instrument_palette", {}) as Dictionary).is_empty():
+		push_error("Procedural music theory snapshot did not expose voice-led inversions and palette fields.")
+		quit(1)
+		return
 	var music_latency: Dictionary = procedural_music_player.call("music_generation_latency_snapshot_for_environment", app.get("run_state").current_environment, 70)
 	if music_latency.is_empty():
 		push_error("Procedural music player did not expose staged generation timing.")
@@ -640,6 +746,55 @@ func _run() -> void:
 		return
 	if int(transition_policy.get("break_steps", 0)) < 4 or float(transition_policy.get("break_seconds", 0.0)) <= 0.0:
 		push_error("Procedural music transitions should wait for a musical break point.")
+		quit(1)
+		return
+	var music_fx_state: Dictionary = app.call("music_fx_state_snapshot")
+	var music_fx_snapshot: Dictionary = procedural_music_player.call("music_fx_snapshot", music_fx_state)
+	var music_fx_graph: Dictionary = music_fx_snapshot.get("graph", {}) as Dictionary
+	var music_fx_target: Dictionary = music_fx_snapshot.get("target", {}) as Dictionary
+	if int(music_fx_graph.get("effect_count", 0)) != 6:
+		push_error("Procedural music FX graph did not expose the six-effect Music bus chain.")
+		quit(1)
+		return
+	if float(music_fx_target.get("reverb_size", 0.0)) <= 0.0 or not music_fx_target.has("lowpass_cutoff_hz"):
+		push_error("Procedural music FX snapshot did not expose mapped DSP parameters.")
+		quit(1)
+		return
+	if bool(music_fx_snapshot.get("player_instantiated", true)):
+		push_error("Headless UI should not instantiate procedural music playback.")
+		quit(1)
+		return
+	var music_stem_manifest: Dictionary = procedural_music_player.call("music_stem_manifest_snapshot_for_environment", app.get("run_state").current_environment, 70)
+	if music_stem_manifest.is_empty() or not bool(music_stem_manifest.get("sync_ok", false)):
+		push_error("Procedural music stem manifest did not expose synchronized loop metadata.")
+		quit(1)
+		return
+	if str(music_stem_manifest.get("source", "")) == "authored" and not bool(music_stem_manifest.get("sparse", false)):
+		push_error("Authored sparse music fixture should expose absent roles as silent.")
+		quit(1)
+		return
+	var music_mix_snapshot: Dictionary = procedural_music_player.call("music_mix_snapshot", music_fx_state)
+	var music_mix_target: Dictionary = music_mix_snapshot.get("target", {}) as Dictionary
+	if not music_mix_target.has("drums_high") or not music_mix_target.has("tension") or not music_mix_target.has("bass_dark"):
+		push_error("MusicDirector mix snapshot did not expose stem gain targets.")
+		quit(1)
+		return
+	if bool(music_mix_snapshot.get("player_instantiated", true)):
+		push_error("Headless UI should not instantiate stem music playback.")
+		quit(1)
+		return
+	var feature_music_snapshot: Dictionary = procedural_music_player.call("music_feature_snapshot", {
+		"active": true,
+		"cue_id": "bonus_music_fixture",
+		"feature_music": {"cue_id": "bonus_music_fixture", "duck_background_music": true},
+	}, 0.25)
+	var feature_music_target: Dictionary = feature_music_snapshot.get("target", {}) as Dictionary
+	if float(feature_music_target.get("feature", 0.0)) <= 0.0 or float(feature_music_target.get("venue_duck", 0.0)) <= 0.0:
+		push_error("MusicDirector feature snapshot did not expose feature layer and duck targets.")
+		quit(1)
+		return
+	if bool(feature_music_snapshot.get("player_instantiated", true)):
+		push_error("Headless UI should not instantiate feature music playback.")
 		quit(1)
 		return
 	var slot_sfx := SfxPlayerScript.new()
@@ -725,6 +880,15 @@ func _run() -> void:
 		push_error("M1.6 spatial interaction model did not expose travel objects from foundation state.")
 		quit(1)
 		return
+	if not _interactable_by_type(spatial_objects, "prestige").is_empty() or _interactable_object_id_with_prefix(spatial_objects, "prestige:"):
+		push_error("Empty prestige data produced a room interactable object.")
+		quit(1)
+		return
+	var prestige_category_snapshot: Dictionary = app.call("current_action_category_snapshot")
+	if _category_has_fragment(prestige_category_snapshot.get("categories", []), "prestige"):
+		push_error("Run action categories exposed a prestige menu while prestige data is empty.")
+		quit(1)
+		return
 	var first_interactable: Dictionary = spatial_objects[0]
 	for field in ["object_id", "object_type", "source_id", "label", "enabled", "normalized_rect", "focus_point", "available_actions"]:
 		if not first_interactable.has(field):
@@ -808,6 +972,10 @@ func _run() -> void:
 	var canvas_object := _canvas_object_by_id(canvas_snapshot.get("objects", []), focus_object_id)
 	if canvas_object.is_empty():
 		push_error("M1.6 canvas did not receive InteractableObject records for visible hotspots.")
+		quit(1)
+		return
+	if _canvas_has_object_type(canvas_snapshot.get("objects", []), "prestige") or _canvas_object_id_with_prefix(canvas_snapshot.get("objects", []), "prestige:"):
+		push_error("Empty prestige data produced a canvas room object.")
 		quit(1)
 		return
 	if not _canvas_preserves_art_aspect(canvas_snapshot, "live environment canvas"):
@@ -939,6 +1107,12 @@ func _run() -> void:
 	var objective_snapshot: Dictionary = app.call("current_objective_hud_snapshot")
 	if str(objective_snapshot.get("text", "")) != objective_label.text:
 		push_error("M2-FUN objective HUD snapshot did not match visible objective text.")
+		quit(1)
+		return
+	var empty_prestige: Dictionary = objective_snapshot.get("prestige", {}) if typeof(objective_snapshot.get("prestige", {})) == TYPE_DICTIONARY else {}
+	var next_objective: Dictionary = objective_snapshot.get("next_objective", {}) if typeof(objective_snapshot.get("next_objective", {})) == TYPE_DICTIONARY else {}
+	if not empty_prestige.is_empty() or str(next_objective.get("object_type", "")) == "prestige" or str(objective_snapshot.get("text", "")).findn("prestige") != -1 or str(objective_snapshot.get("text", "")).find("Down Payment on Act 2") != -1:
+		push_error("Objective HUD exposed prestige while prestige data is empty.")
 		quit(1)
 		return
 	var run_hud_snapshot: Dictionary = app.call("current_run_status_hud_snapshot")
@@ -2076,6 +2250,13 @@ func _run() -> void:
 		quit(1)
 		return
 	var event_choice: Dictionary = event_choices[0]
+	for candidate_value in event_choices:
+		if typeof(candidate_value) != TYPE_DICTIONARY:
+			continue
+		var candidate_choice: Dictionary = candidate_value
+		if not _event_choice_has_trigger_event(event_definition, str(candidate_choice.get("id", ""))):
+			event_choice = candidate_choice
+			break
 	var event_choice_id := str(event_choice.get("id", ""))
 	if not _has_visible_text(actions_list, str(event_choice.get("label", ""))):
 		push_error("Event card did not show the available event choice.")
@@ -2147,6 +2328,27 @@ func _run() -> void:
 		push_error("Foundation screen router left EVENT during event choice selection.")
 		quit(1)
 		return
+	for popup_attempt in range(6):
+		var blocking_popup_before_activation: Dictionary = app.call("current_event_choice_popup_snapshot")
+		if not bool(blocking_popup_before_activation.get("visible", false)) or not bool(blocking_popup_before_activation.get("blocking", false)):
+			break
+		if bool(app.call("activate_interactable_object", "event:%s" % event_id)):
+			push_error("Triggered event popup did not block other room-object activation.")
+			quit(1)
+			return
+		var blocking_choices: Array = blocking_popup_before_activation.get("choices", [])
+		if blocking_choices.is_empty():
+			push_error("Triggered event popup did not expose a required resolution choice.")
+			quit(1)
+			return
+		var blocking_choice: Dictionary = blocking_choices[0]
+		app.call("resolve_event_choice", str(blocking_popup_before_activation.get("event_id", "")), str(blocking_choice.get("id", "")))
+		await process_frame
+	var unresolved_popup: Dictionary = app.call("current_event_choice_popup_snapshot")
+	if bool(unresolved_popup.get("visible", false)) and bool(unresolved_popup.get("blocking", false)):
+		push_error("Triggered event popup queue did not clear after repeated required resolutions.")
+		quit(1)
+		return
 	var serialized_before_event_activation := JSON.stringify(app.call("serialized_run_state"))
 	if not bool(app.call("activate_interactable_object", "event:%s" % event_id)):
 		push_error("Foundation UI did not activate a visible event object.")
@@ -2154,8 +2356,8 @@ func _run() -> void:
 		return
 	await process_frame
 	var popup_snapshot: Dictionary = app.call("current_event_choice_popup_snapshot")
-	if bool(popup_snapshot.get("visible", false)) or bool(popup_snapshot.get("blocking", false)):
-		push_error("Activating an event should keep responses inline instead of opening a blocking popup.")
+	if not bool(popup_snapshot.get("visible", false)) or bool(popup_snapshot.get("blocking", true)) or not bool(popup_snapshot.get("dismissible", false)):
+		push_error("Activating an interactable event should open a dismissible non-blocking popup.")
 		quit(1)
 		return
 	if serialized_before_event_activation != JSON.stringify(app.call("serialized_run_state")):
@@ -2163,16 +2365,7 @@ func _run() -> void:
 		quit(1)
 		return
 	var serialized_before_event_resolve := JSON.stringify(app.call("serialized_run_state"))
-	var event_response_position: Vector2 = (app.get("environment_canvas") as Control).call("local_position_for_selected_info_action_button")
-	if event_response_position.x < 0.0 or event_response_position.y < 0.0:
-		push_error("Expanded event card did not expose a valid canvas click position for the response option.")
-		quit(1)
-		return
-	var event_response_click := InputEventMouseButton.new()
-	event_response_click.button_index = MOUSE_BUTTON_LEFT
-	event_response_click.pressed = true
-	event_response_click.position = event_response_position
-	(app.get("environment_canvas") as Control).call("_gui_input", event_response_click)
+	app.call("resolve_event_choice", event_id, event_choice_id)
 	await process_frame
 	var event_run_state: Dictionary = app.call("serialized_run_state")
 	if JSON.stringify(event_run_state) == serialized_before_event_resolve:
@@ -2201,14 +2394,40 @@ func _run() -> void:
 	app.call("load_foundation_run")
 	await process_frame
 	var loaded_event_run_state: Dictionary = app.call("serialized_run_state")
-	if JSON.stringify(loaded_event_run_state.get("story_log", [])) != JSON.stringify(event_run_state.get("story_log", [])):
-		push_error("Event story result did not survive SaveService save/load.")
+	var expected_event_story: Array = event_run_state.get("story_log", [])
+	var loaded_event_story: Array = loaded_event_run_state.get("story_log", [])
+	if JSON.stringify(_normalize_json_numbers(loaded_event_story)) != JSON.stringify(_normalize_json_numbers(expected_event_story)):
+		push_error("Event story result did not survive SaveService save/load. expected=%d loaded=%d expected_last=%s loaded_last=%s" % [
+			expected_event_story.size(),
+			loaded_event_story.size(),
+			JSON.stringify(_normalize_json_numbers(expected_event_story[expected_event_story.size() - 1])) if not expected_event_story.is_empty() else "{}",
+			JSON.stringify(_normalize_json_numbers(loaded_event_story[loaded_event_story.size() - 1])) if not loaded_event_story.is_empty() else "{}",
+		])
 		quit(1)
 		return
 	if JSON.stringify(loaded_event_run_state.get("current_environment", {}).get("resolved_event_ids", [])) != JSON.stringify(resolved_events):
 		push_error("Resolved event state did not survive SaveService save/load.")
 		quit(1)
 		return
+	var ui_settings: UserSettings = app.get("user_settings")
+	var previous_reduce_motion := false
+	if ui_settings != null:
+		previous_reduce_motion = ui_settings.reduce_motion
+		ui_settings.reduce_motion = true
+	app.call("_start_conclusion_animation", {
+		"ok": true,
+		"conclusion_animation": "bankroll_transfer",
+		"bankroll_delta": 30,
+		"deltas": {"bankroll_delta": 30},
+	}, Rect2(Vector2(120, 120), Vector2(220, 160)))
+	await process_frame
+	var reduced_conclusion_snapshot: Dictionary = app.call("current_conclusion_animation_snapshot")
+	if not bool(reduced_conclusion_snapshot.get("reduce_motion", false)) or bool(reduced_conclusion_snapshot.get("active", true)) or not bool(reduced_conclusion_snapshot.get("pulse", false)):
+		push_error("bankroll_transfer conclusion animation did not honor reduce-motion snapshot state.")
+		quit(1)
+		return
+	if ui_settings != null:
+		ui_settings.reduce_motion = previous_reduce_motion
 
 	app.call("start_foundation_run", "UI-ITEM-SEED")
 	await process_frame
@@ -2521,13 +2740,26 @@ func _run() -> void:
 			"flags_set": {"fixture_ui_service_used": true},
 		},
 	}]
+	hook_run_state.current_environment["kind"] = "fixture_room"
+	hook_run_state.current_environment["object_fixtures"] = ["shopkeeper:merchant"]
 	hook_run_state.current_environment["service_ids"] = ["fixture_ui_service"]
 	hook_run_state.current_environment["lender_hooks"] = ["fixture_missing_lender"]
+	hook_run_state.current_environment["item_offers"] = []
+	hook_run_state.current_environment["layout"] = EnvironmentInstance.ensure_generated_layout(hook_run_state.current_environment)
 	var hook_spatial_snapshot: Dictionary = app.call("current_spatial_interaction_snapshot")
 	var service_interactable := _interactable_by_type(hook_spatial_snapshot.get("objects", []), "service")
 	var lender_interactable := _interactable_by_type(hook_spatial_snapshot.get("objects", []), "lender")
-	if service_interactable.is_empty() or lender_interactable.is_empty():
-		push_error("M1.6 spatial model did not expose service and lender hooks as interactable objects.")
+	var shopkeeper_fixture := _interactable_by_type(hook_spatial_snapshot.get("objects", []), "shopkeeper")
+	if service_interactable.is_empty():
+		push_error("M1.6 spatial model did not expose a supported service hook as an interactable object.")
+		quit(1)
+		return
+	if not lender_interactable.is_empty():
+		push_error("T6.7 spatial model exposed a missing lender hook instead of hiding it.")
+		quit(1)
+		return
+	if shopkeeper_fixture.is_empty() or bool(shopkeeper_fixture.get("enabled", true)) or bool(shopkeeper_fixture.get("interactive", true)):
+		push_error("T6.7 unavailable shopkeeper fixture did not render as a noninteractive fixture.")
 		quit(1)
 		return
 	app.call("focus_interactable_object", str(service_interactable.get("object_id", "")))
@@ -2536,16 +2768,18 @@ func _run() -> void:
 		push_error("Focused service context did not show the supported service hook.")
 		quit(1)
 		return
-	app.call("focus_interactable_object", str(lender_interactable.get("object_id", "")))
-	await process_frame
-	if not _has_visible_text(actions_list, "Not usable yet") and not _has_visible_text(actions_list, "Not available here yet"):
-		push_error("Focused lender context did not show unsupported lender status in player-facing language.")
-		quit(1)
-		return
 	var service_snapshot: Dictionary = app.call("current_environment_view_snapshot")
 	var service_options: Array = service_snapshot.get("service_options", [])
 	if service_options.is_empty():
 		push_error("Foundation UI did not expose service hooks when present.")
+		quit(1)
+		return
+	if not (service_snapshot.get("lender_options", []) as Array).is_empty():
+		push_error("T6.7 Foundation UI exposed a missing lender option.")
+		quit(1)
+		return
+	if bool(app.call("select_lender_hook", "fixture_missing_lender")):
+		push_error("T6.7 Foundation UI allowed selection of a hidden missing lender.")
 		quit(1)
 		return
 	var service_option: Dictionary = service_options[0]
@@ -2582,35 +2816,6 @@ func _run() -> void:
 		quit(1)
 		return
 
-	var lender_snapshot: Dictionary = app.call("current_environment_view_snapshot")
-	var lender_options: Array = lender_snapshot.get("lender_options", [])
-	if lender_options.is_empty():
-		push_error("Foundation UI did not expose lender hooks when present.")
-		quit(1)
-		return
-	var unsupported_lender: Dictionary = lender_options[0]
-	var unsupported_lender_id := str(unsupported_lender.get("id", ""))
-	if bool(unsupported_lender.get("mutation_supported", true)):
-		push_error("Missing lender definition should remain display-only.")
-		quit(1)
-		return
-	var serialized_before_unsupported_lender := JSON.stringify(app.call("serialized_run_state"))
-	if not bool(app.call("select_lender_hook", unsupported_lender_id)):
-		push_error("Foundation UI rejected a display-only lender hook.")
-		quit(1)
-		return
-	await process_frame
-	if bool(app.call("confirm_selected_lender_hook")):
-		push_error("Foundation UI allowed an unsupported lender hook to mutate.")
-		quit(1)
-		return
-	await process_frame
-	var serialized_after_unsupported_lender := JSON.stringify(app.call("serialized_run_state"))
-	if serialized_before_unsupported_lender != serialized_after_unsupported_lender:
-		push_error("Unsupported lender hook mutated serialized RunState.")
-		quit(1)
-		return
-
 	hook_library.lenders = [{
 		"id": "fixture_ui_lender",
 		"display_name": "Fixture Lender",
@@ -2620,6 +2825,7 @@ func _run() -> void:
 		},
 	}]
 	hook_run_state.current_environment["lender_hooks"] = ["fixture_ui_lender"]
+	hook_run_state.current_environment["layout"] = EnvironmentInstance.ensure_generated_layout(hook_run_state.current_environment)
 	var supported_lender_snapshot: Dictionary = app.call("current_environment_view_snapshot")
 	var supported_lenders: Array = supported_lender_snapshot.get("lender_options", [])
 	if supported_lenders.is_empty() or not bool((supported_lenders[0] as Dictionary).get("mutation_supported", false)):
@@ -2690,6 +2896,56 @@ func _run() -> void:
 		push_error("Travel card did not show the destination label.")
 		quit(1)
 		return
+	var spatial_travel_objects: Array = app.call("current_spatial_interaction_snapshot").get("objects", [])
+	var leave_object_found := false
+	for object_value in spatial_travel_objects:
+		if typeof(object_value) != TYPE_DICTIONARY:
+			continue
+		var object_data: Dictionary = object_value
+		if str(object_data.get("object_type", "")) != "travel":
+			continue
+		if str(object_data.get("object_id", "")) == "travel:leave":
+			leave_object_found = true
+		elif str(object_data.get("object_id", "")).begins_with("travel:"):
+			push_error("World-map travel should expose only travel:leave as a room object.")
+			quit(1)
+			return
+	if not leave_object_found:
+		push_error("World-map travel did not expose the Leave room object.")
+		quit(1)
+		return
+	var serialized_before_map_open := JSON.stringify(app.call("serialized_run_state"))
+	if not bool(app.call("activate_interactable_object", "travel:leave")):
+		push_error("Double-clicking Leave did not open the world map.")
+		quit(1)
+		return
+	await process_frame
+	if serialized_before_map_open != JSON.stringify(app.call("serialized_run_state")):
+		push_error("Opening the world map mutated serialized RunState.")
+		quit(1)
+		return
+	var map_screen: Dictionary = app.call("current_screen_snapshot")
+	if not bool(map_screen.get("world_map_overlay_visible", false)):
+		push_error("Leave did not show the modal world map overlay.")
+		quit(1)
+		return
+	var map_snapshot: Dictionary = map_screen.get("world_map", {}) if typeof(map_screen.get("world_map", {})) == TYPE_DICTIONARY else {}
+	if (map_snapshot.get("nodes", []) as Array).size() < 2:
+		push_error("World map overlay did not render the current node and revealed neighbors.")
+		quit(1)
+		return
+	var serialized_before_map_select := JSON.stringify(app.call("serialized_run_state"))
+	if not bool(app.call("select_world_map_node", travel_target_id)):
+		push_error("World map rejected an enabled revealed travel node.")
+		quit(1)
+		return
+	await process_frame
+	if serialized_before_map_select != JSON.stringify(app.call("serialized_run_state")):
+		push_error("Selecting a world-map node mutated serialized RunState before confirmation.")
+		quit(1)
+		return
+	app.call("close_world_map")
+	await process_frame
 	var serialized_before_travel_selection := JSON.stringify(app.call("serialized_run_state"))
 	if not bool(app.call("select_travel_option", travel_target_id)):
 		push_error("Foundation UI rejected an available travel choice.")
@@ -2863,6 +3119,7 @@ func _run() -> void:
 	victory_fixture_run.bankroll = 540
 	victory_fixture_run.record_score_spending(21, "ui_victory_fixture")
 	var expected_victory_score_spending := victory_fixture_run.run_spending_score
+	victory_fixture_run.suspicion = {"level": 0, "cues": [], "local_levels": {}}
 	victory_fixture_run.add_suspicion("ui_victory_heat", 18, "behavior", true, {"environment_id": str(victory_fixture_run.current_environment.get("id", ""))})
 	victory_fixture_run.log_story({
 		"type": "demo_victory",
@@ -2900,6 +3157,10 @@ func _run() -> void:
 	var victory_summary: Dictionary = app.call("current_victory_summary_snapshot")
 	if str(victory_summary.get("route", "")) != "high_roller_cashout":
 		push_error("Victory summary did not preserve the route id.")
+		quit(1)
+		return
+	if str(victory_summary.get("route", "")).findn("prestige") != -1 or str(victory_summary.get("message", "")).findn("prestige") != -1 or _has_visible_text(app, "Prestige") or _has_visible_text(app, "Down Payment on Act 2"):
+		push_error("Victory screen exposed a prestige hook while prestige data is empty.")
 		quit(1)
 		return
 	if str(victory_summary.get("seed", "")) != "UI-VICTORY-SEED" or int(victory_summary.get("bankroll", 0)) != 540 or int(victory_summary.get("heat", 0)) != 18:
@@ -4348,6 +4609,13 @@ func _interactable_by_type(objects: Array, object_type: String) -> Dictionary:
 	return {}
 
 
+func _interactable_object_id_with_prefix(objects: Array, prefix: String) -> bool:
+	for object_data in objects:
+		if typeof(object_data) == TYPE_DICTIONARY and str((object_data as Dictionary).get("object_id", "")).begins_with(prefix):
+			return true
+	return false
+
+
 func _canvas_object_by_id(objects: Array, object_id: String) -> Dictionary:
 	for object_data in objects:
 		if typeof(object_data) == TYPE_DICTIONARY and str((object_data as Dictionary).get("id", "")) == object_id:
@@ -4365,6 +4633,29 @@ func _canvas_has_object_type(objects: Array, object_type: String) -> bool:
 func _canvas_object_id_with_prefix(objects: Array, prefix: String) -> bool:
 	for object_data in objects:
 		if typeof(object_data) == TYPE_DICTIONARY and str((object_data as Dictionary).get("id", "")).begins_with(prefix):
+			return true
+	return false
+
+
+func _event_choice_has_trigger_event(event_definition: Dictionary, choice_id: String) -> bool:
+	var payload: Dictionary = event_definition.get("payload", {}) if typeof(event_definition.get("payload", {})) == TYPE_DICTIONARY else {}
+	for choice_value in payload.get("choices", []):
+		if typeof(choice_value) != TYPE_DICTIONARY:
+			continue
+		var choice_data: Dictionary = choice_value
+		if str(choice_data.get("id", "")) != choice_id:
+			continue
+		var consequences: Dictionary = choice_data.get("consequences", {}) if typeof(choice_data.get("consequences", {})) == TYPE_DICTIONARY else {}
+		return consequences.has("trigger_event")
+	return false
+
+
+func _category_has_fragment(categories: Array, fragment: String) -> bool:
+	for category in categories:
+		if typeof(category) != TYPE_DICTIONARY:
+			continue
+		var category_data: Dictionary = category
+		if str(category_data.get("id", "")).findn(fragment) != -1 or str(category_data.get("title", "")).findn(fragment) != -1:
 			return true
 	return false
 

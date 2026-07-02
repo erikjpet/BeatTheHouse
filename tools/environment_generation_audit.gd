@@ -5,6 +5,7 @@ extends SceneTree
 const ContentLibraryScript := preload("res://scripts/core/content_library.gd")
 const RunGeneratorScript := preload("res://scripts/core/run_generator.gd")
 const RunStateScript := preload("res://scripts/core/run_state.gd")
+const WorldMapScript := preload("res://scripts/core/world_map.gd")
 
 const DEFAULT_RUN_COUNT := 100
 const DEFAULT_VISITS_PER_RUN := 6
@@ -129,6 +130,7 @@ func _simulate_run(run_index: int, seed: String, visits_per_run: int) -> void:
 		"end_suspicion": run_state.suspicion_level(),
 		"events_resolved": 0,
 		"travel_count": 0,
+		"travel_lock_wait_actions": 0,
 	}
 
 	for visit_index in range(visits_per_run):
@@ -160,6 +162,12 @@ func _simulate_run(run_index: int, seed: String, visits_per_run: int) -> void:
 		if visit_index >= visits_per_run - 1:
 			break
 		var choice := _pick_travel_choice(run_state, path_rng)
+		if choice.is_empty():
+			var wait_actions := _current_travel_lock_remaining(run_state)
+			if wait_actions > 0:
+				run_state.advance_environment_turns(wait_actions)
+				run_summary["travel_lock_wait_actions"] = int(run_summary.get("travel_lock_wait_actions", 0)) + wait_actions
+				choice = _pick_travel_choice(run_state, path_rng)
 		if choice.is_empty():
 			run_summary["stopped_reason"] = "no_enabled_travel"
 			break
@@ -214,6 +222,7 @@ func _record_environment(run_state: RunState, run_index: int, seed: String, visi
 		"next_archetypes_initial": _string_array(environment.get("next_archetypes", [])),
 		"travel_hooks_initial": _string_array(environment.get("travel_hooks", [])),
 		"travel_initial": _travel_choices(run_state, true),
+		"travel_lock_remaining": int(environment.get("travel_lock_remaining", 0)),
 		"turns": int(environment.get("turns", 0)),
 		"bankroll_on_entry": run_state.bankroll,
 		"suspicion_on_entry": run_state.suspicion_level(),
@@ -437,7 +446,7 @@ func _enabled_travel_choices(run_state: RunState) -> Array:
 func _travel_choices(run_state: RunState, include_hidden: bool) -> Array:
 	var choices: Array = []
 	for target_id in _travel_target_ids(run_state):
-		var route := library.route(target_id)
+		var route := generator.world_route_for_target(run_state, target_id)
 		var archetype := _archetype(target_id)
 		var status := run_state.travel_route_status(route)
 		if bool(status.get("hidden", false)) and not include_hidden:
@@ -455,22 +464,34 @@ func _travel_choices(run_state: RunState, include_hidden: bool) -> Array:
 			"distance": str(status.get("distance", route.get("distance", ""))),
 			"risk_decay": int(status.get("risk_decay", route.get("risk_decay", 0))),
 			"suspicion_delta": int(status.get("suspicion_delta", route.get("suspicion_delta", 0))),
+			"risk_text": str(status.get("risk_text", "")),
+			"risk_event": _copy_dict(status.get("risk_event", {})),
+			"unlock_conditions": _copy_array(status.get("unlock_conditions", [])),
+			"travel_lock_remaining": int(status.get("travel_lock_remaining", 0)),
+			"availability_turn": int(status.get("availability_turn", -1)),
 		}
 		choices.append(choice)
 	return choices
 
 
+func _current_travel_lock_remaining(run_state: RunState) -> int:
+	if run_state == null or run_state.current_environment.is_empty():
+		return 0
+	return maxi(0, int(run_state.current_environment.get("travel_lock_remaining", 0)))
+
+
 func _travel_to(run_state: RunState, choice: Dictionary) -> Dictionary:
 	var target_id := str(choice.get("id", ""))
-	var route := library.route(target_id)
+	var route := generator.world_route_for_target(run_state, target_id)
 	var previous_environment := run_state.current_environment.duplicate(true)
 	var previous_bankroll := run_state.bankroll
 	var previous_heat := run_state.suspicion_level()
+	var route_risk := run_state.travel_route_risk(route, target_id)
 	var travel_heat := run_state.begin_travel_suspicion_decay(route, target_id)
 	generator.next_environment(run_state, target_id)
 	var travel_decay := run_state.finish_travel_suspicion_decay(travel_heat)
 	var destination_name := str(run_state.current_environment.get("display_name", target_id))
-	var result := _travel_result(run_state, target_id, destination_name, route, previous_environment, run_state.current_environment, travel_decay)
+	var result := _travel_result(run_state, target_id, destination_name, route, previous_environment, run_state.current_environment, travel_decay, route_risk)
 	GameModule.apply_result(run_state, result)
 	return {
 		"target_id": target_id,
@@ -485,14 +506,17 @@ func _travel_to(run_state: RunState, choice: Dictionary) -> Dictionary:
 		"suspicion_before": previous_heat,
 		"suspicion_after": run_state.suspicion_level(),
 		"travel_decay": travel_decay,
+		"route_risk": route_risk,
 		"message": str(result.get("message", "")),
 	}
 
 
-func _travel_result(run_state: RunState, target_id: String, destination_name: String, route: Dictionary, previous_environment: Dictionary, destination_environment: Dictionary, travel_decay: Dictionary) -> Dictionary:
+func _travel_result(run_state: RunState, target_id: String, destination_name: String, route: Dictionary, previous_environment: Dictionary, destination_environment: Dictionary, travel_decay: Dictionary, route_risk: Dictionary) -> Dictionary:
 	var route_status := run_state.travel_route_status(route)
 	var cost := int(route_status.get("cost", 0))
 	var suspicion_delta := int(route_status.get("suspicion_delta", 0))
+	var risk_bankroll_delta := int(route_risk.get("bankroll_delta", 0)) if bool(route_risk.get("triggered", false)) else 0
+	var risk_suspicion_delta := int(route_risk.get("suspicion_delta", 0)) if bool(route_risk.get("triggered", false)) else 0
 	var cooled := int(travel_decay.get("cooled", 0))
 	var risk_decay := int(travel_decay.get("risk_decay", route_status.get("risk_decay", 0)))
 	var message := "Traveled to %s." % destination_name
@@ -506,8 +530,18 @@ func _travel_result(run_state: RunState, target_id: String, destination_name: St
 		detail_parts.append("travel sobers you %+d" % drunk_delta)
 	if suspicion_delta > 0:
 		detail_parts.append("risk +%d" % suspicion_delta)
+	if risk_bankroll_delta != 0 or risk_suspicion_delta != 0:
+		var risk_label := str(route_risk.get("label", "route risk"))
+		var risk_detail := "%s" % risk_label
+		if risk_bankroll_delta != 0:
+			risk_detail += " %+d" % risk_bankroll_delta
+		if risk_suspicion_delta > 0:
+			risk_detail += ", heat +%d" % risk_suspicion_delta
+		detail_parts.append(risk_detail)
 	if not detail_parts.is_empty():
 		message = "%s %s." % [message, ", ".join(detail_parts)]
+	var total_bankroll_delta := -cost + risk_bankroll_delta
+	var total_suspicion_delta := suspicion_delta + risk_suspicion_delta
 	var story_entry := {
 		"type": "travel",
 		"id": target_id,
@@ -517,19 +551,35 @@ func _travel_result(run_state: RunState, target_id: String, destination_name: St
 		"to_archetype_id": target_id,
 		"to_environment_id": str(destination_environment.get("id", "")),
 		"to_environment_name": destination_name,
-		"bankroll_delta": -cost,
-		"suspicion_delta": suspicion_delta,
+		"bankroll_delta": total_bankroll_delta,
+		"route_cost": cost,
+		"suspicion_delta": total_suspicion_delta,
+		"route_suspicion_delta": suspicion_delta,
 		"travel_distance": str(travel_decay.get("distance", route_status.get("distance", ""))),
 		"risk_decay": risk_decay,
 		"risk_cooled": cooled,
+		"route_risk": route_risk.duplicate(true),
 		"drunk_delta": drunk_delta,
 		"drunk_after": int(travel_decay.get("drunk_after", run_state.drunk_level)),
 		"message": message,
 	}
+	var story_entries: Array = [story_entry]
+	if bool(route_risk.get("triggered", false)):
+		story_entries.append({
+			"type": "travel_risk_event",
+			"id": str(route_risk.get("id", "travel_risk")),
+			"route_id": target_id,
+			"label": str(route_risk.get("label", "Route risk")),
+			"roll": int(route_risk.get("roll", 0)),
+			"chance_percent": int(route_risk.get("chance_percent", 0)),
+			"bankroll_delta": risk_bankroll_delta,
+			"suspicion_delta": risk_suspicion_delta,
+			"message": str(route_risk.get("message", "The route risk catches you.")),
+		})
 	var deltas := GameModule.empty_result_deltas()
-	deltas["bankroll_delta"] = -cost
-	deltas["suspicion_delta"] = suspicion_delta
-	deltas["story_log"] = [story_entry]
+	deltas["bankroll_delta"] = total_bankroll_delta
+	deltas["suspicion_delta"] = total_suspicion_delta
+	deltas["story_log"] = story_entries
 	deltas["messages"] = [message]
 	return GameModule.build_action_result({
 		"ok": true,
@@ -539,14 +589,18 @@ func _travel_result(run_state: RunState, target_id: String, destination_name: St
 		"action_kind": "travel",
 		"environment_id": str(destination_environment.get("id", "")),
 		"environment_archetype_id": target_id,
-		"bankroll_delta": -cost,
-		"suspicion_delta": suspicion_delta,
+		"bankroll_delta": total_bankroll_delta,
+		"suspicion_delta": total_suspicion_delta,
+		"route_cost": cost,
+		"route_risk": route_risk.duplicate(true),
 		"deltas": deltas,
 		"message": message,
 	})
 
 
 func _travel_target_ids(run_state: RunState) -> Array:
+	if run_state.has_world_map():
+		return WorldMapScript.neighbor_ids(run_state.world_map, run_state.current_world_node_id(), true)
 	var result: Array = []
 	for source in [
 		run_state.current_environment.get("next_archetypes", []),
@@ -582,6 +636,7 @@ func _build_aggregate(run_count: int, visits_per_run: int, seed_prefix: String) 
 		"travel_targets_available": {},
 		"travel_targets_locked": {},
 		"travel_targets_selected": {},
+		"travel_risk_events": {},
 		"overall_objects": {},
 		"archetype_content": {},
 		"run_presence": {},
@@ -633,12 +688,15 @@ func _build_aggregate(run_count: int, visits_per_run: int, seed_prefix: String) 
 			_count_key(aggregate["overall_objects"], "lender:%s" % lender_id)
 			_mark_presence(run_presence["lenders"], run_index, lender_id)
 			_count_archetype_content(aggregate, archetype_id, "lenders", lender_id)
+		var recorded_travel_object := false
 		for choice in _copy_array(data.get("travel_after_events", [])):
 			if typeof(choice) != TYPE_DICTIONARY:
 				continue
 			var target_id := str((choice as Dictionary).get("id", ""))
 			_count_key(aggregate["travel_targets_generated"], target_id)
-			_count_key(aggregate["overall_objects"], "travel:%s" % target_id)
+			if not recorded_travel_object:
+				_count_key(aggregate["overall_objects"], "travel:leave")
+				recorded_travel_object = true
 			if bool((choice as Dictionary).get("enabled", false)):
 				_count_key(aggregate["travel_targets_available"], target_id)
 			else:
@@ -653,7 +711,11 @@ func _build_aggregate(run_count: int, visits_per_run: int, seed_prefix: String) 
 	for travel in travel_records:
 		if typeof(travel) != TYPE_DICTIONARY:
 			continue
-		_count_key(aggregate["travel_targets_selected"], str((travel as Dictionary).get("target_id", "")))
+		var travel_data: Dictionary = travel
+		_count_key(aggregate["travel_targets_selected"], str(travel_data.get("target_id", "")))
+		var route_risk := _copy_dict(travel_data.get("route_risk", {}))
+		if bool(route_risk.get("triggered", false)):
+			_count_key(aggregate["travel_risk_events"], str(route_risk.get("id", "travel_risk")))
 	aggregate["run_presence"] = _presence_counts(run_presence)
 	_finalize_price_stats(aggregate["item_prices"])
 	return aggregate
@@ -705,6 +767,7 @@ func _build_markdown(report: Dictionary) -> String:
 	lines.append("| Target location visits per run | %d |" % int(report.get("visits_per_run_target", 0)))
 	lines.append("| Generated location samples | %d |" % int(aggregate.get("environment_visit_count", 0)))
 	lines.append("| Travel transitions | %d |" % int(aggregate.get("travel_count", 0)))
+	lines.append("| Travel risk events | %d |" % _count_total(aggregate.get("travel_risk_events", {})))
 	lines.append("| Event choices resolved for travel | %d |" % int(aggregate.get("events_resolved_for_travel", 0)))
 	lines.append("| Failures | %d |" % int(report.get("failure_count", 0)))
 	lines.append("| Warnings | %d |" % int(report.get("warning_count", 0)))
@@ -759,6 +822,10 @@ func _build_markdown(report: Dictionary) -> String:
 	lines.append("### Selected Routes")
 	lines.append("")
 	lines.append(_simple_count_table(aggregate.get("travel_targets_selected", {}), maxi(1, int(aggregate.get("travel_count", 0))), "Route"))
+	lines.append("")
+	lines.append("### Travel Risk Events")
+	lines.append("")
+	lines.append(_simple_count_table(aggregate.get("travel_risk_events", {}), maxi(1, _count_total(aggregate.get("travel_risk_events", {}))), "Risk event"))
 	lines.append("")
 	lines.append("## Most Common Objects Overall")
 	lines.append("")
@@ -815,6 +882,14 @@ func _simple_count_table(counts_value: Variant, denominator: int, label: String,
 		var rate := float(count) / float(maxi(1, denominator))
 		lines.append("| `%s` | %d | %s | `%s` |" % [str(pair.get("key", "")), count, _percent(rate), _bar(rate)])
 	return "\n".join(lines)
+
+
+func _count_total(counts_value: Variant) -> int:
+	var counts := _copy_dict(counts_value)
+	var total := 0
+	for key in counts.keys():
+		total += int(counts.get(key, 0))
+	return total
 
 
 func _item_table(aggregate: Dictionary, env_count: int, run_count: int) -> String:
@@ -892,6 +967,7 @@ func _method_notes() -> Array:
 		"No game is entered or resolved; game state is only generated by the environment generator.",
 		"No items, services, or lenders are purchased or used.",
 		"Event policy resolves only choices that add/replace travel targets, set the underground travel flag, or restore bankroll when no route is otherwise enabled.",
+		"Travel-locked venues advance their lock countdown when no route is enabled, simulating non-game ride actions for audit continuity.",
 		"Travel uses the same route status, route cost, suspicion decay, and travel result application path as the Foundation UI.",
 	]
 

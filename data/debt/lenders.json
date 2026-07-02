@@ -7,6 +7,7 @@
 		"debt_profile": {
 			"principal_min": 25,
 			"principal_max": 60,
+			"loan_amount": 25,
 			"interest_rate": 0.15,
 			"deadline_turns": 3,
 			"default_consequence": "forced_repayment"
@@ -22,8 +23,11 @@
 					"lender_id": "street_lender",
 					"balance": 30,
 					"status": "active",
+					"debt_kind": "cash",
 					"deadline_turns": 3,
-					"interest_rate": 0.15
+					"turns_remaining": 3,
+					"interest_rate": 0.15,
+					"default_consequence": "forced_repayment"
 				}
 			],
 			"flags_set": {
@@ -40,11 +44,98 @@
 		"debt_profile": {
 			"principal_min": 15,
 			"principal_max": 40,
+			"loan_amount": 20,
 			"interest_rate": 0.05,
 			"deadline_turns": 4,
 			"default_consequence": "favor_owed"
 		},
 		"consequences": ["favor_owed", "story_pressure"],
+		"message": "Your motel friend spots you enough cash to get moving.",
+		"effect": {
+			"bankroll_delta": 20,
+			"suspicion_delta": 0,
+			"debt_changes": [
+				{
+					"id": "motel_friend_note",
+					"lender_id": "motel_friend",
+					"balance": 24,
+					"status": "active",
+					"debt_kind": "cash",
+					"deadline_turns": 4,
+					"turns_remaining": 4,
+					"interest_rate": 0.05,
+					"default_consequence": "favor_owed"
+				}
+			],
+			"flags_set": {
+				"motel_friend_debt": true
+			},
+			"messages": ["The cash is soft; the next awkward favor will not be."]
+		}
+	},
+	{
+		"id": "the_crew",
+		"display_name": "The Crew",
+		"lender_type": "favor_crew",
+		"description": "Free cash from people whose favors arrive on their schedule.",
+		"debt_profile": {
+			"principal_min": 35,
+			"principal_max": 55,
+			"loan_amount": 45,
+			"interest_rate": 0.0,
+			"deadline_turns": 2,
+			"favor_count": 2,
+			"default_consequence": "crew_favor_due",
+			"refuse_consequence": "crew_convert_to_cash",
+			"cash_conversion_balance_per_favor": 45,
+			"cash_conversion_interest_rate": 0.35
+		},
+		"consequences": ["scheduled_favors", "cash_conversion"],
+		"message": "The Crew hands over cash like it was already yours.",
+		"effect": {}
+	},
+	{
+		"id": "brother_in_law",
+		"display_name": "Your Brother-in-Law",
+		"lender_type": "family_phone",
+		"description": "One family phone-call loan per run, fair terms and loud strings.",
+		"availability": {
+			"requires_flags": {
+				"brother_in_law_phone_ready": true
+			},
+			"single_use_flag": "brother_in_law_loan_used"
+		},
+		"debt_profile": {
+			"principal_min": 30,
+			"principal_max": 30,
+			"loan_amount": 30,
+			"interest_rate": 0.06,
+			"deadline_turns": 6,
+			"default_consequence": "family_nag",
+			"early_repay_flag": "brother_in_law_goodwill",
+			"late_scar_flag": "brother_in_law_story_scar",
+			"nag_interval_turns": 3
+		},
+		"consequences": ["recurring_nag", "story_scar"],
+		"message": "He says family helps family, then reminds you who married whom.",
+		"effect": {}
+	},
+	{
+		"id": "sals_pawn_counter",
+		"display_name": "Sal's Pawn Counter",
+		"lender_type": "pawn",
+		"description": "Collateral, not credit. Sal holds an item until you redeem it.",
+		"debt_profile": {
+			"principal_min": 10,
+			"principal_max": 70,
+			"interest_rate": 0.0,
+			"deadline_turns": 5,
+			"default_consequence": "collateral_forfeit",
+			"collateral_required": true,
+			"loan_to_sale_price_multiplier": 2
+		},
+		"consequences": ["collateral_escrow", "collateral_forfeit"],
+		"message": "Sal bags the collateral and slides cash across the counter.",
 		"effect": {}
 	}
 ]

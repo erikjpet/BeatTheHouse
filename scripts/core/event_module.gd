@@ -4,11 +4,13 @@ extends RefCounted
 # Data-backed event contract for conditional run consequences.
 
 var definition: Dictionary = {}
+var content_library: ContentLibrary = null
 
 
 # Stores the event definition used by this module.
-func setup(p_definition: Dictionary) -> void:
+func setup(p_definition: Dictionary, p_library: ContentLibrary = null) -> void:
 	definition = p_definition.duplicate(true)
+	content_library = p_library
 
 
 # Returns this event id.
@@ -26,6 +28,11 @@ func get_event_type() -> String:
 	return str(definition.get("type", ""))
 
 
+# Returns the event interaction mode.
+func get_interaction_mode() -> String:
+	return str(definition.get("interaction_mode", "interactable"))
+
+
 # Returns available event choices.
 func choices(run_state: RunState = null, environment: Dictionary = {}) -> Array:
 	var payload := _copy_dict(definition.get("payload", {}))
@@ -33,7 +40,14 @@ func choices(run_state: RunState = null, environment: Dictionary = {}) -> Array:
 		return _grand_casino_showdown_choices(payload, run_state, environment)
 	if str(payload.get("kind", "")) == "grand_casino_high_roller_cashout":
 		return _grand_casino_high_roller_choices(payload, run_state, environment)
-	return _copy_array(payload.get("choices", []))
+	var result: Array = []
+	for choice_value in _copy_array(payload.get("choices", [])):
+		if typeof(choice_value) != TYPE_DICTIONARY:
+			continue
+		var choice_data: Dictionary = (choice_value as Dictionary).duplicate(true)
+		if _choice_conditions_allow(choice_data, run_state, environment):
+			result.append(choice_data)
+	return result
 
 
 # Finds one event choice by id.
@@ -53,7 +67,7 @@ func can_trigger(run_state: RunState, environment: Dictionary, context: Dictiona
 	if int(environment.get("tier", 1)) < tier_min:
 		return false
 	var event_ids := _copy_array(environment.get("event_ids", []))
-	if not event_ids.is_empty() and not event_ids.has(get_id()):
+	if get_interaction_mode() != "triggered" and not event_ids.is_empty() and not event_ids.has(get_id()):
 		return false
 	var resolved := _copy_array(environment.get("resolved_event_ids", []))
 	if resolved.has(get_id()):
@@ -77,10 +91,14 @@ func resolve(run_state: RunState, environment: Dictionary, choice_id: String = "
 	if not choice_id.is_empty() and selected_choice.is_empty():
 		return _empty_result(choice_id, environment, "Event choice is not available.")
 	var consequences := _consequences(selected_choice)
+	consequences = _resolved_checked_consequences(run_state, environment, selected_choice, consequences)
+	consequences = _resolved_lender_hook_consequences(run_state, consequences)
 	var bankroll_delta := int(consequences.get("bankroll_delta", 0))
 	var suspicion_delta := int(consequences.get("suspicion_delta", 0))
 	var alcohol_intake := int(consequences.get("alcohol_intake", 0))
 	var drunk_delta := int(consequences.get("drunk_delta", 0))
+	var pending_drunk_absorption_delta := int(consequences.get("pending_drunk_absorption_delta", 0))
+	var drunk_distortion_suppression_turns := int(consequences.get("drunk_distortion_suppression_turns", 0))
 	var alcoholic_delta := int(consequences.get("alcoholic_delta", 0))
 	var baseline_luck_delta := int(consequences.get("baseline_luck_delta", 0))
 	var choice_key := str(selected_choice.get("id", choice_id))
@@ -94,6 +112,8 @@ func resolve(run_state: RunState, environment: Dictionary, choice_id: String = "
 		"suspicion_delta": suspicion_delta,
 		"alcohol_intake": alcohol_intake,
 		"drunk_delta": drunk_delta,
+		"pending_drunk_absorption_delta": pending_drunk_absorption_delta,
+		"drunk_distortion_suppression_turns": drunk_distortion_suppression_turns,
 		"alcoholic_delta": alcoholic_delta,
 		"baseline_luck_delta": baseline_luck_delta,
 	}
@@ -112,6 +132,8 @@ func resolve(run_state: RunState, environment: Dictionary, choice_id: String = "
 	})
 	result["event_id"] = get_id()
 	result["choice_id"] = choice_key
+	result["interaction_mode"] = get_interaction_mode()
+	result["conclusion_animation"] = str(selected_choice.get("conclusion_animation", consequences.get("conclusion_animation", "")))
 	apply_event_result(run_state, result)
 	return result
 
@@ -126,8 +148,11 @@ static func apply_event_result(run_state: RunState, result: Dictionary) -> void:
 		if typeof(hook) != TYPE_DICTIONARY:
 			continue
 		var hook_data := _copy_dict(hook)
-		if str(hook_data.get("type", "")) == "resolve_event":
-			run_state.resolve_event(str(hook_data.get("event_id", "")))
+		match str(hook_data.get("type", "")):
+			"resolve_event":
+				run_state.resolve_event(str(hook_data.get("event_id", "")))
+			"trigger_event":
+				_apply_trigger_event_hook(run_state, result, hook_data)
 
 
 # Returns a no-op event result for invalid choices.
@@ -153,12 +178,16 @@ func _consequence_deltas(consequences: Dictionary, story_entry: Dictionary, mess
 	deltas["suspicion_delta"] = int(consequences.get("suspicion_delta", 0))
 	deltas["alcohol_intake"] = int(consequences.get("alcohol_intake", 0))
 	deltas["drunk_delta"] = int(consequences.get("drunk_delta", 0))
+	deltas["pending_drunk_absorption_delta"] = int(consequences.get("pending_drunk_absorption_delta", 0))
+	deltas["drunk_distortion_suppression_turns"] = int(consequences.get("drunk_distortion_suppression_turns", 0))
 	deltas["alcoholic_delta"] = int(consequences.get("alcoholic_delta", 0))
 	deltas["baseline_luck_delta"] = int(consequences.get("baseline_luck_delta", 0))
 	if consequences.has("debt"):
 		deltas["debt_changes"] = [_copy_dict(consequences.get("debt", {}))]
 	else:
 		deltas["debt_changes"] = _copy_array(consequences.get("debt_changes", []))
+	deltas["inventory_add"] = _copy_array(consequences.get("inventory_add", []))
+	deltas["inventory_remove"] = _copy_array(consequences.get("inventory_remove", []))
 	deltas["flags_set"] = _copy_dict(consequences.get("flags", consequences.get("flags_set", {})))
 	deltas["travel_hooks_add"] = _copy_array(consequences.get("travel_hooks_add", []))
 	var travel_changes := _copy_dict(consequences.get("travel_changes", {}))
@@ -167,8 +196,13 @@ func _consequence_deltas(consequences: Dictionary, story_entry: Dictionary, mess
 	if consequences.has("add_next_archetypes"):
 		travel_changes["add_next_archetypes"] = _copy_array(consequences.get("add_next_archetypes", []))
 	deltas["travel_changes"] = travel_changes
-	deltas["story_log"] = [story_entry]
-	deltas["messages"] = [] if message.is_empty() else [message]
+	var story_entries := [story_entry]
+	story_entries.append_array(_copy_array(consequences.get("story_log", [])))
+	deltas["story_log"] = story_entries
+	var messages := _copy_array(consequences.get("messages", []))
+	if not message.is_empty():
+		messages.push_front(message)
+	deltas["messages"] = messages
 	deltas["event_hooks"] = _copy_array(consequences.get("event_hooks", []))
 	deltas["demo_finale"] = _copy_dict(consequences.get("demo_finale", {}))
 	if bool(consequences.get("resolve_event", false)):
@@ -176,7 +210,93 @@ func _consequence_deltas(consequences: Dictionary, story_entry: Dictionary, mess
 			"type": "resolve_event",
 			"event_id": get_id(),
 		})
+	var trigger_event := _copy_dict(consequences.get("trigger_event", {}))
+	if not trigger_event.is_empty():
+		trigger_event["type"] = "trigger_event"
+		trigger_event["source_event_id"] = get_id()
+		trigger_event["source_choice_id"] = str(story_entry.get("choice_id", ""))
+		deltas["event_hooks"].append(trigger_event)
 	return deltas
+
+
+func _resolved_lender_hook_consequences(run_state: RunState, consequences: Dictionary) -> Dictionary:
+	var lender_id := str(consequences.get("lender_hook", "")).strip_edges()
+	if lender_id.is_empty() or run_state == null or content_library == null:
+		return consequences
+	var resolver := RunActionService.new()
+	resolver.setup(content_library, run_state)
+	var lender_result := resolver.hook_result("lender", lender_id)
+	if lender_result.is_empty() or not bool(lender_result.get("ok", false)):
+		return consequences
+	var lender_deltas := _copy_dict(lender_result.get("deltas", {}))
+	var resolved := consequences.duplicate(true)
+	for key in ["bankroll_delta", "suspicion_delta", "alcohol_intake", "drunk_delta", "pending_drunk_absorption_delta", "drunk_distortion_suppression_turns", "alcoholic_delta", "baseline_luck_delta"]:
+		resolved[key] = int(resolved.get(key, 0)) + int(lender_deltas.get(key, 0))
+	var debt_changes := _copy_array(resolved.get("debt_changes", []))
+	debt_changes.append_array(_copy_array(lender_deltas.get("debt_changes", [])))
+	resolved["debt_changes"] = debt_changes
+	var flags := _copy_dict(resolved.get("flags_set", resolved.get("flags", {})))
+	var lender_flags := _copy_dict(lender_deltas.get("flags_set", {}))
+	for flag_key in lender_flags.keys():
+		flags[str(flag_key)] = lender_flags[flag_key]
+	resolved["flags_set"] = flags
+	var story_log := _copy_array(resolved.get("story_log", []))
+	story_log.append_array(_copy_array(lender_deltas.get("story_log", [])))
+	resolved["story_log"] = story_log
+	var messages := _copy_array(resolved.get("messages", []))
+	messages.append_array(_copy_array(lender_deltas.get("messages", [])))
+	resolved["messages"] = messages
+	return resolved
+
+
+# Applies a chain hook after the source event result has already mutated the run.
+static func _apply_trigger_event_hook(run_state: RunState, source_result: Dictionary, hook_data: Dictionary) -> void:
+	var target_id := str(hook_data.get("event_id", "")).strip_edges()
+	if run_state == null or target_id.is_empty():
+		return
+	var chance := clampf(float(hook_data.get("chance", 1.0)), 0.0, 1.0)
+	var threshold := clampi(int(round(chance * 10000.0)), 0, 10000)
+	var rng := run_state.create_rng()
+	var roll := rng.randi_range(0, 9999)
+	run_state.save_rng(rng)
+	var success := roll < threshold
+	_apply_trigger_hook_flags(run_state, _copy_dict(hook_data.get("success_flags" if success else "failure_flags", {})))
+	_apply_trigger_hook_story(run_state, _copy_array(hook_data.get("success_story_log" if success else "failure_story_log", [])))
+	if success:
+		var context := _copy_dict(hook_data.get("context", {}))
+		context["trigger"] = "chain"
+		context["type"] = "chain"
+		context["source_event_id"] = str(hook_data.get("source_event_id", source_result.get("event_id", "")))
+		context["source_choice_id"] = str(hook_data.get("source_choice_id", source_result.get("choice_id", "")))
+		context["chance"] = chance
+		context["roll"] = roll
+		run_state.enqueue_triggered_event(target_id, "event_chain", context)
+	else:
+		run_state.log_story({
+			"type": "event_chain_miss",
+			"event_id": str(hook_data.get("source_event_id", source_result.get("event_id", ""))),
+			"choice_id": str(hook_data.get("source_choice_id", source_result.get("choice_id", ""))),
+			"target_event_id": target_id,
+			"chance": chance,
+			"roll": roll,
+			"message": str(hook_data.get("failure_message", "The follow-up does not land.")),
+		})
+
+
+static func _apply_trigger_hook_flags(run_state: RunState, flags: Dictionary) -> void:
+	if run_state == null:
+		return
+	for flag_key in flags.keys():
+		run_state.narrative_flags[str(flag_key)] = flags[flag_key]
+
+
+static func _apply_trigger_hook_story(run_state: RunState, entries: Array) -> void:
+	if run_state == null:
+		return
+	for entry_value in entries:
+		if typeof(entry_value) != TYPE_DICTIONARY:
+			continue
+		run_state.log_story(entry_value as Dictionary)
 
 
 # Checks the event trigger payload.
@@ -191,13 +311,18 @@ func _trigger_allows(environment: Dictionary, context: Dictionary = {}) -> bool:
 			return turns >= int(trigger.get("turns", 0))
 		"travel":
 			return str(context.get("trigger", context.get("type", ""))) == "travel"
+		"random":
+			if str(context.get("trigger", context.get("type", ""))) != "action":
+				return false
+			var turns := int(context.get("turns", environment.get("turns", 0)))
+			return turns >= int(trigger.get("turns", trigger.get("min_turns", 0)))
 		_:
 			return false
 
 
 # Checks optional run-state/system conditions without mutating the run.
 func _conditions_allow(run_state: RunState, environment: Dictionary, context: Dictionary = {}) -> bool:
-	var conditions := _copy_dict(definition.get("conditions", {}))
+	var conditions := _copy_dict(context.get("conditions_override", definition.get("conditions", {})))
 	if conditions.is_empty():
 		return true
 	if run_state == null:
@@ -217,6 +342,10 @@ func _conditions_allow(run_state: RunState, environment: Dictionary, context: Di
 	if conditions.has("min_alcoholic") and run_state.alcoholic_level < int(conditions.get("min_alcoholic", 0)):
 		return false
 	if conditions.has("max_alcoholic") and run_state.alcoholic_level > int(conditions.get("max_alcoholic", 0)):
+		return false
+	if conditions.has("min_tier") and int(environment.get("tier", 1)) < int(conditions.get("min_tier", 1)):
+		return false
+	if conditions.has("max_tier") and int(environment.get("tier", 1)) > int(conditions.get("max_tier", 99)):
 		return false
 	if conditions.has("min_luck") and run_state.effective_luck() < int(conditions.get("min_luck", 0)):
 		return false
@@ -241,10 +370,24 @@ func _conditions_allow(run_state: RunState, environment: Dictionary, context: Di
 	for item_id in _string_array(conditions.get("blocked_by_items", [])):
 		if run_state.inventory.has(item_id):
 			return false
+	var archetype_ids := _string_array(conditions.get("archetype_ids", []))
+	if not archetype_ids.is_empty() and not archetype_ids.has(str(environment.get("archetype_id", ""))):
+		return false
+	for archetype_id in _string_array(conditions.get("blocked_archetype_ids", [])):
+		if str(environment.get("archetype_id", "")) == archetype_id:
+			return false
+	var requires_games := _string_array(conditions.get("requires_games", []))
+	if not requires_games.is_empty():
+		var environment_games := _string_array(environment.get("game_ids", []))
+		for game_id in requires_games:
+			if not environment_games.has(game_id):
+				return false
 	if conditions.has("requires_debt"):
 		var requires_debt := bool(conditions.get("requires_debt", false))
 		if requires_debt != (run_state.debt.size() > 0):
 			return false
+	if conditions.has("requires_overdue_debt") and bool(conditions.get("requires_overdue_debt", false)) != _has_debt_with_status(run_state, ["overdue", "favor_due"]):
+		return false
 	var lender_ids := _string_array(conditions.get("requires_lender_debt", []))
 	if not lender_ids.is_empty() and not _has_lender_debt(run_state, lender_ids):
 		return false
@@ -284,11 +427,61 @@ func _has_lender_debt(run_state: RunState, lender_ids: Array) -> bool:
 	return false
 
 
+func _has_debt_with_status(run_state: RunState, statuses: Array) -> bool:
+	for debt_entry in run_state.debt:
+		if typeof(debt_entry) != TYPE_DICTIONARY:
+			continue
+		var debt_data := debt_entry as Dictionary
+		if statuses.has(str(debt_data.get("status", "active"))):
+			return true
+	return false
+
+
+func _choice_conditions_allow(choice_data: Dictionary, run_state: RunState, environment: Dictionary) -> bool:
+	var choice_conditions := _copy_dict(choice_data.get("conditions", {}))
+	if choice_conditions.is_empty():
+		return true
+	return _conditions_allow(run_state, environment, {"choice_conditions": true, "conditions_override": choice_conditions})
+
+
 # Returns consequences from a selected choice or legacy top-level event data.
 func _consequences(selected_choice: Dictionary) -> Dictionary:
 	if not selected_choice.is_empty():
 		return _copy_dict(selected_choice.get("consequences", {}))
 	return _copy_dict(definition.get("consequences", {}))
+
+
+func _resolved_checked_consequences(run_state: RunState, environment: Dictionary, selected_choice: Dictionary, consequences: Dictionary) -> Dictionary:
+	var check := _copy_dict(consequences.get("check", {}))
+	if check.is_empty() or run_state == null:
+		return consequences
+	var chance := clampi(int(check.get("chance_percent", 50)), 0, 100)
+	var item_bonus := _copy_dict(check.get("item_success_bonus", {}))
+	for item_id_value in item_bonus.keys():
+		if run_state.inventory.has(str(item_id_value)):
+			chance += int(item_bonus[item_id_value])
+	chance = clampi(chance, int(check.get("min_chance", 0)), int(check.get("max_chance", 100)))
+	var rng := run_state.create_rng()
+	var roll := rng.randi_range(1, 100)
+	run_state.save_rng(rng)
+	var outcome_key := "success_consequences" if roll <= chance else "failure_consequences"
+	var resolved := consequences.duplicate(true)
+	resolved.erase("check")
+	var outcome := _copy_dict(check.get(outcome_key, {}))
+	for key in outcome.keys():
+		resolved[key] = outcome[key]
+	var story := _copy_array(resolved.get("story_log", []))
+	story.append({
+		"type": "event_check",
+		"event_id": get_id(),
+		"choice_id": str(selected_choice.get("id", "")),
+		"environment_id": str(environment.get("id", "")),
+		"chance_percent": chance,
+		"roll": roll,
+		"success": roll <= chance,
+	})
+	resolved["story_log"] = story
+	return resolved
 
 
 # Returns the player-facing event resolution text.

@@ -11,6 +11,8 @@ const EMPTY_MUSIC_NOTE := -999
 
 var id: String = ""
 var archetype_id: String = ""
+var world_node_id: String = ""
+var world_map_travel: bool = false
 var kind: String = ""
 var display_name: String = ""
 var tier: int = 1
@@ -32,10 +34,13 @@ var lender_hooks: Array = []
 var suspicion_cues: Array = []
 var travel_hooks: Array = []
 var next_archetypes: Array = []
+var object_fixtures: Array = []
 var local_narrative_flags: Dictionary = {}
 var mood: String = ""
 var turns: int = 0
 var resolved_event_ids: Array = []
+var travel_locked_actions: int = 0
+var travel_lock_remaining: int = 0
 
 
 # Builds one environment from an archetype and content library.
@@ -66,10 +71,13 @@ static func from_archetype(archetype: Dictionary, p_depth: int, rng: RngStream, 
 	environment.suspicion_cues = _copy_array(archetype.get("suspicion_cues", environment.security_profile.get("visible_cues", [])))
 	environment.travel_hooks = _copy_array(archetype.get("travel_hooks", []))
 	environment.next_archetypes = _copy_array(archetype.get("next_archetypes", []))
+	environment.object_fixtures = _copy_array(archetype.get("object_fixtures", []))
 	var rare_route_rng := rng.fork("rare_next:%s" % environment.id)
 	_append_rare_archetypes(environment.next_archetypes, archetype, rare_route_rng)
 	environment.local_narrative_flags = _copy_dict(archetype.get("local_narrative_flags", {}))
 	environment.mood = rng.pick(archetype.get("moods", ["watchful"]), "watchful")
+	environment.travel_locked_actions = maxi(0, int(archetype.get("travel_locked_actions", 0)))
+	environment.travel_lock_remaining = environment.travel_locked_actions
 	environment.layout = ensure_generated_layout(environment.to_dict())
 	return environment
 
@@ -79,6 +87,8 @@ static func from_dict(data: Dictionary) -> EnvironmentInstance:
 	var environment := EnvironmentInstance.new()
 	environment.id = str(data.get("id", ""))
 	environment.archetype_id = str(data.get("archetype_id", ""))
+	environment.world_node_id = str(data.get("world_node_id", environment.archetype_id)).strip_edges()
+	environment.world_map_travel = bool(data.get("world_map_travel", false))
 	environment.kind = str(data.get("kind", ""))
 	environment.display_name = str(data.get("display_name", ""))
 	environment.tier = int(data.get("tier", 1))
@@ -100,10 +110,13 @@ static func from_dict(data: Dictionary) -> EnvironmentInstance:
 	environment.suspicion_cues = _copy_array(data.get("suspicion_cues", []))
 	environment.travel_hooks = _copy_array(data.get("travel_hooks", []))
 	environment.next_archetypes = _copy_array(data.get("next_archetypes", []))
+	environment.object_fixtures = _copy_array(data.get("object_fixtures", []))
 	environment.local_narrative_flags = _copy_dict(data.get("local_narrative_flags", {}))
 	environment.mood = str(data.get("mood", ""))
 	environment.turns = int(data.get("turns", 0))
 	environment.resolved_event_ids = _copy_array(data.get("resolved_event_ids", []))
+	environment.travel_locked_actions = maxi(0, int(data.get("travel_locked_actions", 0)))
+	environment.travel_lock_remaining = maxi(0, int(data.get("travel_lock_remaining", environment.travel_locked_actions)))
 	return environment
 
 
@@ -112,6 +125,8 @@ func to_dict() -> Dictionary:
 	return {
 		"id": id,
 		"archetype_id": archetype_id,
+		"world_node_id": world_node_id,
+		"world_map_travel": world_map_travel,
 		"kind": kind,
 		"display_name": display_name,
 		"tier": tier,
@@ -133,10 +148,13 @@ func to_dict() -> Dictionary:
 		"suspicion_cues": suspicion_cues.duplicate(true),
 		"travel_hooks": travel_hooks.duplicate(true),
 		"next_archetypes": next_archetypes.duplicate(true),
+		"object_fixtures": object_fixtures.duplicate(true),
 		"local_narrative_flags": local_narrative_flags.duplicate(true),
 		"mood": mood,
 		"turns": turns,
 		"resolved_event_ids": resolved_event_ids.duplicate(true),
+		"travel_locked_actions": travel_locked_actions,
+		"travel_lock_remaining": travel_lock_remaining,
 	}
 
 
@@ -146,18 +164,28 @@ static func ensure_generated_layout(environment_data: Dictionary) -> Dictionary:
 	var object_rects := _copy_dict(layout.get("object_rects", {}))
 	if int(layout.get("generated_object_rect_version", 0)) != GENERATED_LAYOUT_VERSION:
 		object_rects = {}
+	var include_route_travel_rects := not bool(environment_data.get("world_map_travel", false))
 	var active_entries := _active_object_layout_entries(environment_data)
 	var active_object_ids := _active_object_ids_from_entries(active_entries)
+	var prioritize_services := bool(layout.get("prioritize_service_spots", false))
 	_prune_inactive_object_rects(object_rects, active_object_ids)
 	_assign_string_object_rects(object_rects, layout, "game", _copy_array(environment_data.get("game_ids", [])), "game_spots", active_object_ids)
 	_assign_string_object_rects(object_rects, layout, "event", _copy_array(environment_data.get("event_ids", [])), "event_spots", active_object_ids)
-	_assign_item_offer_rects(object_rects, layout, _copy_array(environment_data.get("item_offers", [])), active_object_ids)
+	if not prioritize_services:
+		_assign_item_offer_rects(object_rects, layout, _copy_array(environment_data.get("item_offers", [])), active_object_ids)
 	_assign_single_object_rect(object_rects, layout, "shopkeeper:merchant", "shopkeeper", 0, "shopkeeper_spots", _shopkeeper_should_exist(environment_data), active_object_ids)
-	_assign_string_object_rects(object_rects, layout, "travel", _travel_target_ids(environment_data), "travel_spots", active_object_ids)
+	_assign_single_object_rect(object_rects, layout, "travel:leave", "travel", 0, "travel_spots", not _travel_target_ids(environment_data).is_empty(), active_object_ids)
 	_assign_string_object_rects(object_rects, layout, "service", _copy_array(environment_data.get("service_ids", [])), "service_spots", active_object_ids)
 	_assign_string_object_rects(object_rects, layout, "lender", _copy_array(environment_data.get("lender_hooks", [])), "lender_spots", active_object_ids)
 	_assign_string_object_rects(object_rects, layout, "game_hook", _game_hook_ids(environment_data), "game_hook_spots", active_object_ids)
+	if prioritize_services:
+		_assign_item_offer_rects(object_rects, layout, _copy_array(environment_data.get("item_offers", [])), active_object_ids)
 	_resolve_active_object_rect_collisions(object_rects, layout, active_entries)
+	if include_route_travel_rects:
+		var route_active_ids := active_object_ids.duplicate(true)
+		for target_id in _travel_target_ids(environment_data):
+			route_active_ids["travel:%s" % target_id] = true
+		_assign_string_object_rects(object_rects, layout, "travel", _travel_target_ids(environment_data), "travel_spots", route_active_ids)
 	layout["object_rects"] = object_rects
 	layout["generated_object_rect_version"] = GENERATED_LAYOUT_VERSION
 	return layout
@@ -307,11 +335,17 @@ static func _pick_events(archetype: Dictionary, rng: RngStream, library: Content
 		var event_id: String = event.get("id", "")
 		if event_id.is_empty():
 			continue
+		if str(event.get("interaction_mode", "interactable")) != "interactable":
+			continue
 		if not pool.is_empty() and not pool.has(event_id):
 			continue
 		if _event_fits(event, scopes):
 			candidates.append(event_id)
-	return _pick_ids(candidates, archetype.get("event_count", 1), rng)
+	var required_events: Array = []
+	for required_id in _string_array(archetype.get("required_event_ids", [])):
+		if candidates.has(required_id):
+			required_events.append(required_id)
+	return _pick_ids_with_required(candidates, archetype.get("event_count", 1), required_events, rng)
 
 
 # Checks whether an event can appear in the environment scopes.
@@ -608,13 +642,19 @@ static func _active_object_layout_entries(environment_data: Dictionary) -> Array
 	var entries: Array = []
 	_append_string_layout_entries(entries, "game", _copy_array(environment_data.get("game_ids", [])), "game_spots")
 	_append_string_layout_entries(entries, "event", _copy_array(environment_data.get("event_ids", [])), "event_spots")
-	_append_item_offer_layout_entries(entries, _copy_array(environment_data.get("item_offers", [])))
+	var layout := _copy_dict(environment_data.get("layout", {}))
+	var prioritize_services := bool(layout.get("prioritize_service_spots", false))
+	if not prioritize_services:
+		_append_item_offer_layout_entries(entries, _copy_array(environment_data.get("item_offers", [])))
 	if _shopkeeper_should_exist(environment_data):
 		entries.append({"object_id": "shopkeeper:merchant", "object_type": "shopkeeper", "index": 0, "spot_field": "shopkeeper_spots"})
-	_append_string_layout_entries(entries, "travel", _travel_target_ids(environment_data), "travel_spots")
+	if not _travel_target_ids(environment_data).is_empty():
+		entries.append({"object_id": "travel:leave", "object_type": "travel", "index": 0, "spot_field": "travel_spots"})
 	_append_string_layout_entries(entries, "service", _copy_array(environment_data.get("service_ids", [])), "service_spots")
 	_append_string_layout_entries(entries, "lender", _copy_array(environment_data.get("lender_hooks", [])), "lender_spots")
 	_append_string_layout_entries(entries, "game_hook", _game_hook_ids(environment_data), "game_hook_spots")
+	if prioritize_services:
+		_append_item_offer_layout_entries(entries, _copy_array(environment_data.get("item_offers", [])))
 	return entries
 
 
@@ -671,8 +711,8 @@ static func _active_object_ids(environment_data: Dictionary) -> Dictionary:
 			result["item:%s" % item_id] = true
 	if _shopkeeper_should_exist(environment_data):
 		result["shopkeeper:merchant"] = true
-	for target_id in _travel_target_ids(environment_data):
-		result["travel:%s" % target_id] = true
+	if not _travel_target_ids(environment_data).is_empty():
+		result["travel:leave"] = true
 	for service_id in _string_array(environment_data.get("service_ids", [])):
 		result["service:%s" % service_id] = true
 	for lender_id in _string_array(environment_data.get("lender_hooks", [])):
@@ -690,7 +730,7 @@ static func _prune_inactive_object_rects(object_rects: Dictionary, active_object
 
 
 static func _is_managed_object_id(object_id: String) -> bool:
-	for prefix in ["game:", "event:", "item:", "shopkeeper:", "travel:", "service:", "lender:", "game_hook:"]:
+	for prefix in ["game:", "event:", "item:", "shopkeeper:", "travel:", "service:", "lender:", "game_hook:", "prestige:"]:
 		if object_id.begins_with(prefix):
 			return true
 	return false
@@ -727,9 +767,20 @@ static func _game_hook_ids(environment_data: Dictionary) -> Array:
 
 # Returns whether this environment should expose a merchant prop.
 static func _shopkeeper_should_exist(environment_data: Dictionary) -> bool:
+	if _object_fixture_declared(environment_data, "shopkeeper:merchant"):
+		return true
 	if not _copy_array(environment_data.get("item_offers", [])).is_empty():
 		return true
 	return str(environment_data.get("kind", "")) == "shop"
+
+
+static func _object_fixture_declared(environment_data: Dictionary, object_id: String) -> bool:
+	if object_id.is_empty():
+		return false
+	for fixture_id in _string_array(environment_data.get("object_fixtures", [])):
+		if fixture_id == object_id:
+			return true
+	return false
 
 
 # Safely duplicates array content.

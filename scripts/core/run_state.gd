@@ -63,6 +63,12 @@ const GRAND_CASINO_SHOWDOWN_DEFAULT_FAILURE_MESSAGE := "The story falls apart in
 const GRAND_CASINO_HIGH_ROLLER_DEFAULT_SUCCESS_MESSAGE := "The host issues you a Grand Casino Players Card and lets you leave with your winnings. The next act is not implemented yet."
 const TERMINAL_SCORE_VICTORY_MULTIPLIER := 3
 const ITEM_DEFINITIONS_PATH := "res://data/items/items.json"
+const AVAILABILITY_AVAILABLE := "available"
+const AVAILABILITY_TRANSIENT_BLOCKED := "transient_blocked"
+const AVAILABILITY_CATEGORICAL_UNAVAILABLE := "categorically_unavailable"
+const EVENT_CADENCE_GLOBAL_GAP_ACTIONS := 6
+const EVENT_CADENCE_BREATHER_ACTIONS := 1
+const EVENT_CADENCE_VISIT_EVENT_CHANCE_PERCENT := 45
 
 var seed_text: String = ""
 var seed_value: int = 1
@@ -79,7 +85,12 @@ var baseline_luck: int = 0
 var drunk_level: int = 0
 var alcoholic_level: int = 0
 var pending_drunk_absorption: Array = []
+var drunk_distortion_suppression_turns: int = 0
 var current_environment: Dictionary = {}
+var world_map: Dictionary = {}
+var pending_triggered_events: Array = []
+var active_triggered_event: Dictionary = {}
+var event_cadence: Dictionary = {}
 var environment_history: Array = []
 var unlocked_travel: Array = []
 var narrative_flags: Dictionary = {}
@@ -114,7 +125,12 @@ func start_new(p_seed_text: String = "FOUNDATION-SEED", p_challenge_config: Dict
 	drunk_level = 0
 	alcoholic_level = 0
 	pending_drunk_absorption = []
+	drunk_distortion_suppression_turns = 0
 	current_environment = {}
+	world_map = {}
+	pending_triggered_events = []
+	active_triggered_event = {}
+	_reset_event_cadence_state()
 	environment_history = []
 	unlocked_travel = []
 	narrative_flags = {}
@@ -124,6 +140,7 @@ func start_new(p_seed_text: String = "FOUNDATION-SEED", p_challenge_config: Dict
 	run_failure_message = ""
 	run_spending_score = 0
 	defer_next_bankroll_zero_failure = false
+	_apply_starting_challenge_modifiers()
 
 
 # Creates an RNG stream from the saved run RNG state.
@@ -143,6 +160,173 @@ func save_rng(rng: RngStream) -> void:
 	rng_state = rng.state_value
 
 
+# Creates the saved RNG stream reserved for world-event cadence decisions.
+func create_event_cadence_rng() -> RngStream:
+	_ensure_event_cadence()
+	var rng := RngStream.new()
+	rng.configure(int(event_cadence.get("rng_seed", seed_value)), int(event_cadence.get("rng_state", seed_value)))
+	return rng
+
+
+# Saves the cadence stream without advancing the general run RNG.
+func save_event_cadence_rng(rng: RngStream) -> void:
+	if rng == null:
+		return
+	_ensure_event_cadence()
+	event_cadence["rng_seed"] = rng.seed_value
+	event_cadence["rng_state"] = rng.state_value
+
+
+# Starts a new visit budget and quiet/event roll for the current room.
+func event_cadence_begin_visit(environment_data: Dictionary) -> void:
+	_ensure_event_cadence()
+	var visit_key := _event_cadence_visit_key(environment_data)
+	if visit_key.is_empty() or visit_key == str(event_cadence.get("visit_key", "")):
+		return
+	var rng := create_event_cadence_rng()
+	var fires_this_visit := rng.randi_range(1, 100) <= EVENT_CADENCE_VISIT_EVENT_CHANCE_PERCENT
+	var action_index := int(event_cadence.get("action_index", 0))
+	event_cadence["visit_key"] = visit_key
+	event_cadence["visit_should_fire"] = fires_this_visit
+	event_cadence["visit_min_action"] = action_index + rng.randi_range(1, 3)
+	event_cadence["visit_event_count"] = 0
+	event_cadence["visit_event_ids"] = []
+	event_cadence["visit_count"] = int(event_cadence.get("visit_count", 0)) + 1
+	if not fires_this_visit:
+		event_cadence["quiet_visit_count"] = int(event_cadence.get("quiet_visit_count", 0)) + 1
+	save_event_cadence_rng(rng)
+
+
+# Advances the cadence action clock alongside player-facing room actions.
+func event_cadence_advance_actions(amount: int = 1) -> void:
+	_ensure_event_cadence()
+	event_cadence["action_index"] = maxi(0, int(event_cadence.get("action_index", 0)) + maxi(0, amount))
+
+
+# Returns whether a world-initiated event can be queued under the room budget.
+func event_cadence_allows_world_event(event_id: String, trigger_type: String, source: String, event_definition: Dictionary = {}) -> bool:
+	_ensure_event_cadence()
+	if not event_cadence_can_open_modal():
+		return false
+	if event_cadence_event_bypasses_budget(event_id, trigger_type, source, event_definition):
+		return true
+	var action_index := int(event_cadence.get("action_index", 0))
+	if not bool(event_cadence.get("visit_should_fire", false)):
+		return false
+	if int(event_cadence.get("visit_event_count", 0)) >= 1:
+		return false
+	if action_index < int(event_cadence.get("visit_min_action", 0)):
+		return false
+	if action_index - int(event_cadence.get("last_world_event_action", -9999)) < EVENT_CADENCE_GLOBAL_GAP_ACTIONS:
+		return false
+	if _copy_array(event_cadence.get("visit_event_ids", [])).has(event_id):
+		return false
+	return true
+
+
+# Debt collectors, showdown calls, and explicit chains can jump the quiet-visit budget.
+func event_cadence_event_bypasses_budget(event_id: String, trigger_type: String, source: String, event_definition: Dictionary = {}) -> bool:
+	var normalized_id := event_id.strip_edges()
+	if [GRAND_CASINO_SHOWDOWN_EVENT_ID, GRAND_CASINO_HIGH_ROLLER_EVENT_ID, "the_collector", "family_loan"].has(normalized_id):
+		return true
+	if ["event_chain", "debt", "lender", "showdown", "prestige"].has(source):
+		return true
+	var conditions := _copy_dict(event_definition.get("conditions", {}))
+	if bool(conditions.get("requires_overdue_debt", false)):
+		return true
+	return trigger_type == "manual" and source == "event"
+
+
+# Returns lower weights for events already seen this run without forbidding them.
+func event_cadence_weight_for_event(event_id: String) -> int:
+	_ensure_event_cadence()
+	var seen_counts := _copy_dict(event_cadence.get("seen_event_counts", {}))
+	return 25 if int(seen_counts.get(event_id, 0)) > 0 else 100
+
+
+# Records a queued triggered event for repeat suppression and, optionally, room budget.
+func event_cadence_note_event_enqueued(event_id: String, world_budgeted: bool = true) -> void:
+	var normalized_id := event_id.strip_edges()
+	if normalized_id.is_empty():
+		return
+	_ensure_event_cadence()
+	var action_index := int(event_cadence.get("action_index", 0))
+	var seen_counts := _copy_dict(event_cadence.get("seen_event_counts", {}))
+	seen_counts[normalized_id] = int(seen_counts.get(normalized_id, 0)) + 1
+	event_cadence["seen_event_counts"] = seen_counts
+	if not world_budgeted:
+		return
+	var visit_event_ids := _copy_array(event_cadence.get("visit_event_ids", []))
+	if not visit_event_ids.has(normalized_id):
+		visit_event_ids.append(normalized_id)
+	event_cadence["visit_event_ids"] = visit_event_ids
+	event_cadence["visit_event_count"] = int(event_cadence.get("visit_event_count", 0)) + 1
+	event_cadence["last_world_event_action"] = action_index
+
+
+# A closed modal must get at least one player action before another auto-popup opens.
+func event_cadence_can_open_modal() -> bool:
+	_ensure_event_cadence()
+	var action_index := int(event_cadence.get("action_index", 0))
+	var last_closed := int(event_cadence.get("last_modal_closed_action", -9999))
+	return action_index - last_closed >= EVENT_CADENCE_BREATHER_ACTIONS
+
+
+func event_cadence_note_modal_closed() -> void:
+	_ensure_event_cadence()
+	event_cadence["last_modal_closed_action"] = int(event_cadence.get("action_index", 0))
+
+
+func event_cadence_summary() -> Dictionary:
+	_ensure_event_cadence()
+	return {
+		"action_index": int(event_cadence.get("action_index", 0)),
+		"visit_key": str(event_cadence.get("visit_key", "")),
+		"visit_should_fire": bool(event_cadence.get("visit_should_fire", false)),
+		"visit_event_count": int(event_cadence.get("visit_event_count", 0)),
+		"quiet_visit_count": int(event_cadence.get("quiet_visit_count", 0)),
+		"visit_count": int(event_cadence.get("visit_count", 0)),
+		"last_world_event_action": int(event_cadence.get("last_world_event_action", -9999)),
+	}
+
+
+func _ensure_event_cadence() -> void:
+	if event_cadence.is_empty():
+		_reset_event_cadence_state()
+		return
+	event_cadence = _normalize_event_cadence(event_cadence)
+
+
+func _reset_event_cadence_state() -> void:
+	var base_rng := RngStream.new()
+	base_rng.configure(seed_value, seed_value)
+	var cadence_rng := base_rng.fork("event_cadence")
+	event_cadence = {
+		"rng_seed": cadence_rng.seed_value,
+		"rng_state": cadence_rng.state_value,
+		"action_index": 0,
+		"last_world_event_action": -9999,
+		"last_modal_closed_action": -9999,
+		"visit_key": "",
+		"visit_should_fire": false,
+		"visit_min_action": 0,
+		"visit_event_count": 0,
+		"visit_event_ids": [],
+		"seen_event_counts": {},
+		"visit_count": 0,
+		"quiet_visit_count": 0,
+	}
+
+
+func _event_cadence_visit_key(environment_data: Dictionary) -> String:
+	var environment_id := str(environment_data.get("id", "")).strip_edges()
+	if environment_id.is_empty():
+		environment_id = str(environment_data.get("world_node_id", environment_data.get("archetype_id", ""))).strip_edges()
+	if environment_id.is_empty():
+		return ""
+	return "%s#%d" % [environment_id, environment_history.size()]
+
+
 # Sets the current environment and records the previous one.
 func set_environment(environment_data: Dictionary) -> void:
 	var previous_was_grand_casino := _is_grand_casino_environment(current_environment)
@@ -151,18 +335,115 @@ func set_environment(environment_data: Dictionary) -> void:
 		environment_history.append(current_environment.duplicate(true))
 	current_environment = _normalize_environment(environment_data)
 	var next_environment := current_environment
-	unlocked_travel = _copy_array(next_environment.get("travel_hooks", []))
+	unlocked_travel = _unique_strings(
+		_copy_array(next_environment.get("travel_hooks", [])) + _copy_array(next_environment.get("next_archetypes", []))
+	)
 	_activate_current_local_suspicion(false)
 	if previous_was_grand_casino and not _is_grand_casino_environment(current_environment):
 		_clear_grand_casino_clean_cashout_ready()
+	event_cadence_begin_visit(current_environment)
 	_initialize_grand_casino_objective_runtime()
 	_evaluate_immediate_terminal_state()
+
+
+func set_world_map(map_data: Dictionary) -> void:
+	world_map = WorldMap.normalize(map_data)
+
+
+func has_world_map() -> bool:
+	return not world_map.is_empty()
+
+
+func current_world_node_id() -> String:
+	if world_map.is_empty():
+		return str(current_environment.get("world_node_id", current_environment.get("archetype_id", ""))).strip_edges()
+	return WorldMap.current_node_id(world_map)
+
+
+func store_current_world_node_environment() -> void:
+	if world_map.is_empty() or current_environment.is_empty():
+		return
+	var node_id := str(current_environment.get("world_node_id", current_world_node_id())).strip_edges()
+	if node_id.is_empty():
+		node_id = str(current_environment.get("archetype_id", "")).strip_edges()
+	if node_id.is_empty():
+		return
+	world_map = WorldMap.store_environment(world_map, node_id, current_environment)
+
+
+func enter_world_node(node_id: String, environment_data: Dictionary) -> void:
+	if world_map.is_empty() or node_id.strip_edges().is_empty():
+		return
+	world_map = WorldMap.enter_node(world_map, node_id, environment_data)
 
 
 # Changes bankroll and refreshes economy state.
 func change_bankroll(delta: int, defer_bankroll_zero: bool = false) -> void:
 	bankroll += delta
 	_refresh_economy(defer_bankroll_zero)
+
+
+func challenge_modifiers() -> Dictionary:
+	return _copy_dict(challenge_config.get("modifiers", {}))
+
+
+func challenge_completion_flag() -> String:
+	return str(challenge_config.get("completion_flag", "")).strip_edges()
+
+
+func challenge_cheat_actions_disabled() -> bool:
+	return bool(challenge_modifiers().get("disable_cheat_actions", false))
+
+
+func challenge_service_category_blocked(category: String) -> bool:
+	var normalized_category := category.strip_edges().to_lower()
+	if normalized_category.is_empty():
+		return false
+	for blocked_value in _copy_array(challenge_modifiers().get("blocked_service_categories", [])):
+		if str(blocked_value).strip_edges().to_lower() == normalized_category:
+			return true
+	return false
+
+
+func challenge_service_cost_multiplier(service_data: Dictionary) -> float:
+	var category := str(service_data.get("category", "")).strip_edges().to_lower()
+	if category.is_empty():
+		return 1.0
+	var modifiers := challenge_modifiers()
+	var multipliers := _copy_dict(modifiers.get("service_cost_multipliers", {}))
+	if not multipliers.has(category):
+		return 1.0
+	return maxf(0.0, float(multipliers.get(category, 1.0)))
+
+
+func _apply_starting_challenge_modifiers() -> void:
+	var modifiers := challenge_modifiers()
+	if modifiers.is_empty():
+		return
+	if modifiers.has("starting_bankroll"):
+		bankroll = maxi(1, int(modifiers.get("starting_bankroll", DEFAULT_BANKROLL)))
+	if modifiers.has("starting_bankroll_delta"):
+		bankroll = maxi(1, bankroll + int(modifiers.get("starting_bankroll_delta", 0)))
+	if modifiers.has("baseline_luck_delta"):
+		baseline_luck = clampi(baseline_luck + int(modifiers.get("baseline_luck_delta", 0)), BASELINE_LUCK_MIN, BASELINE_LUCK_MAX)
+	var starting_heat := clampi(int(modifiers.get("starting_heat", 0)), 0, 100)
+	if starting_heat > 0:
+		suspicion["level"] = starting_heat
+		suspicion["cues"] = [{
+			"id": "challenge_start_heat",
+			"amount": starting_heat,
+			"base_amount": starting_heat,
+			"alcohol_heat_multiplier": 1.0,
+			"visibility": "challenge",
+			"revealed_meter": true,
+			"context": {
+				"challenge_id": str(challenge_config.get("id", "")),
+			},
+		}]
+	for debt_value in _copy_array(modifiers.get("starting_debt", [])):
+		if typeof(debt_value) == TYPE_DICTIONARY:
+			add_debt(debt_value)
+	_refresh_economy()
 
 
 func begin_deferred_bankroll_zero_resolution() -> void:
@@ -277,6 +558,38 @@ func change_drunk(delta: int) -> void:
 	if delta < 0 and has_pending_drunk_absorption():
 		return
 	drunk_level = clampi(drunk_level + delta, 0, ALCOHOL_MAX)
+
+
+func change_pending_drunk_absorption(delta: int) -> void:
+	if delta >= 0:
+		if delta > 0:
+			_queue_drunk_absorption(delta)
+		return
+	var remaining_reduction := maxi(0, -delta)
+	if remaining_reduction <= 0 or pending_drunk_absorption.is_empty():
+		return
+	var next_queue: Array = []
+	for entry_value in pending_drunk_absorption:
+		if typeof(entry_value) != TYPE_DICTIONARY:
+			continue
+		var entry: Dictionary = (entry_value as Dictionary).duplicate(true)
+		var remaining := maxi(0, int(entry.get("remaining", 0)))
+		if remaining_reduction > 0:
+			var removed := mini(remaining, remaining_reduction)
+			remaining -= removed
+			remaining_reduction -= removed
+		if remaining > 0:
+			entry["remaining"] = remaining
+			next_queue.append(entry)
+	pending_drunk_absorption = next_queue
+
+
+func suppress_drunk_distortion(turns: int) -> void:
+	drunk_distortion_suppression_turns = maxi(drunk_distortion_suppression_turns, maxi(0, turns))
+
+
+func drunk_distortion_suppressed() -> bool:
+	return drunk_distortion_suppression_turns > 0
 
 
 # Applies delayed drink absorption at one drunk point per drink every interval.
@@ -475,17 +788,20 @@ func security_risk_bonus(action_kind: String = "cheat") -> int:
 	if action_kind != "cheat" and action_kind != "risky" and action_kind != "advantage":
 		return 0
 	var level := suspicion_level()
+	var bonus := 0
 	if level >= 85:
-		return 10
-	if level >= 65:
-		return 7
-	if level >= 50:
-		return 5
-	if level >= 25:
-		return 2
-	if level >= 10:
-		return 1
-	return 0
+		bonus = 10
+	elif level >= 65:
+		bonus = 7
+	elif level >= 50:
+		bonus = 5
+	elif level >= 25:
+		bonus = 2
+	elif level >= 10:
+		bonus = 1
+	if int(narrative_flags.get("shift_change_rookie_actions", 0)) > 0:
+		bonus = maxi(0, bonus - 3)
+	return bonus
 
 
 # Returns the extra consequence applied when a risky action pushes heat high.
@@ -1473,8 +1789,26 @@ func pit_boss_watch_status(environment: Dictionary = {}) -> Dictionary:
 	var watched := phase < watched_turns
 	var label := str(boss.get("label", "Pit boss"))
 	var base_bonus := maxi(0, int(boss.get("cheat_heat_bonus", 25)))
-	var bonus := base_bonus if watched else 0
+	if int(narrative_flags.get("lights_out_unwatched_actions", 0)) > 0:
+		return {
+			"active": true,
+			"label": label,
+			"watched": false,
+			"phase": phase,
+			"cycle_length": cycle_length,
+			"watched_turns": watched_turns,
+			"cheat_heat_bonus": 0,
+			"base_cheat_heat_bonus": base_bonus,
+			"summary": "The lights are out; staff cannot watch this action.",
+			"temporary_modifier": "lights_out",
+			"remaining_actions": int(narrative_flags.get("lights_out_unwatched_actions", 0)),
+		}
+	var shift_actions := maxi(0, int(narrative_flags.get("shift_change_rookie_actions", 0)))
+	var effective_base_bonus := maxi(0, base_bonus - (12 if shift_actions > 0 else 0))
+	var bonus := effective_base_bonus if watched else 0
 	var summary := str(boss.get("watched_text", "%s is watching." % label)) if watched else str(boss.get("clear_text", "%s is turned away." % label))
+	if shift_actions > 0:
+		summary = "%s A rookie is on handoff; cheat heat is softened for %d actions." % [summary, shift_actions]
 	return {
 		"active": true,
 		"label": label,
@@ -1484,7 +1818,10 @@ func pit_boss_watch_status(environment: Dictionary = {}) -> Dictionary:
 		"watched_turns": watched_turns,
 		"cheat_heat_bonus": bonus,
 		"base_cheat_heat_bonus": base_bonus,
+		"effective_base_cheat_heat_bonus": effective_base_bonus,
 		"summary": summary,
+		"temporary_modifier": "shift_change" if shift_actions > 0 else "",
+		"remaining_actions": shift_actions,
 	}
 
 
@@ -1576,12 +1913,15 @@ func _grand_casino_active_security_event_sources(environment: Dictionary) -> Arr
 func _grand_casino_objective_config(objective: Dictionary) -> Dictionary:
 	var target_bankroll := maxi(0, int(objective.get("target_bankroll", objective.get("high_roller_target_bankroll", 0))))
 	var high_roller_target := maxi(0, int(objective.get("high_roller_target_bankroll", target_bankroll)))
+	var modifiers := challenge_modifiers()
+	var high_roller_net := maxi(0, int(objective.get("high_roller_net_winnings", 0)) + int(modifiers.get("grand_casino_high_roller_net_delta", 0)))
+	var high_roller_max_heat := clampi(int(objective.get("high_roller_max_heat", 100)) + int(modifiers.get("grand_casino_high_roller_max_heat_delta", 0)), 0, 100)
 	return {
 		"target_bankroll": target_bankroll,
 		"high_roller_target_bankroll": high_roller_target,
-		"high_roller_net_winnings": maxi(0, int(objective.get("high_roller_net_winnings", 0))),
+		"high_roller_net_winnings": high_roller_net,
 		"high_roller_min_grand_casino_games": maxi(0, int(objective.get("high_roller_min_grand_casino_games", 0))),
-		"high_roller_max_heat": clampi(int(objective.get("high_roller_max_heat", 100)), 0, 100),
+		"high_roller_max_heat": high_roller_max_heat,
 		"showdown_heat_threshold": clampi(int(objective.get("showdown_heat_threshold", 70)), 0, 100),
 		"forced_showdown_heat_threshold": clampi(int(objective.get("forced_showdown_heat_threshold", 95)), 0, 100),
 		"showdown_event_id": str(objective.get("showdown_event_id", objective.get("finale_event_id", GRAND_CASINO_SHOWDOWN_EVENT_ID))).strip_edges(),
@@ -1688,14 +2028,16 @@ func set_active_item(item_id: String) -> void:
 
 
 # Sums passive numeric item effects for owned run inventory.
-func item_effect_total(key: String, game_family: String = "") -> int:
+func item_effect_total(key: String, game_family: String = "", action_kind: String = "") -> int:
 	var effect_key := key.strip_edges()
 	if effect_key.is_empty():
 		return 0
 	var family_key := game_family.strip_edges()
+	var action_key := action_kind.strip_edges()
 	var effects_by_id := _item_effect_index()
 	if effects_by_id.is_empty():
 		return 0
+	var owned_lookup := _owned_item_lookup()
 	var total := 0
 	for inventory_entry in inventory:
 		var item_id := _inventory_item_id(inventory_entry)
@@ -1705,10 +2047,58 @@ func item_effect_total(key: String, game_family: String = "") -> int:
 		if effect.is_empty():
 			continue
 		total += _numeric_effect_value(effect, effect_key)
+		if action_key == "cheat":
+			total += _numeric_effect_value(effect, "cheat_%s" % effect_key)
+		elif action_key == "legal":
+			total += _numeric_effect_value(effect, "legal_%s" % effect_key)
 		if not family_key.is_empty():
 			var families := _copy_dict(effect.get("families", {}))
 			total += _numeric_effect_value(_copy_dict(families.get(family_key, {})), effect_key)
+		total += _synergy_effect_total(effect, effect_key, family_key, action_key, owned_lookup)
 	return total
+
+
+func _owned_item_lookup() -> Dictionary:
+	var result := {}
+	for inventory_entry in inventory:
+		var item_id := _inventory_item_id(inventory_entry)
+		if not item_id.is_empty():
+			result[item_id] = true
+	return result
+
+
+func _synergy_effect_total(effect: Dictionary, effect_key: String, family_key: String, action_key: String, owned_lookup: Dictionary) -> int:
+	var total := 0
+	for synergy_value in _copy_array(effect.get("synergies", [])):
+		if typeof(synergy_value) != TYPE_DICTIONARY:
+			continue
+		var synergy: Dictionary = synergy_value
+		if not _synergy_requirements_met(synergy, owned_lookup):
+			continue
+		var synergy_effects := _copy_dict(synergy.get("effects", {}))
+		total += _numeric_effect_value(synergy_effects, effect_key)
+		if action_key == "cheat":
+			total += _numeric_effect_value(synergy_effects, "cheat_%s" % effect_key)
+		elif action_key == "legal":
+			total += _numeric_effect_value(synergy_effects, "legal_%s" % effect_key)
+		if not family_key.is_empty():
+			var families := _copy_dict(synergy.get("families", {}))
+			var family_effect := _copy_dict(families.get(family_key, {}))
+			total += _numeric_effect_value(family_effect, effect_key)
+	return total
+
+
+static func _synergy_requirements_met(synergy: Dictionary, owned_lookup: Dictionary) -> bool:
+	for item_id in _string_array(_copy_array(synergy.get("requires_all", []))):
+		if not owned_lookup.has(str(item_id)):
+			return false
+	var required_any := _string_array(_copy_array(synergy.get("requires_any", [])))
+	if required_any.is_empty():
+		return true
+	for item_id in required_any:
+		if owned_lookup.has(str(item_id)):
+			return true
+	return false
 
 
 # Removes an item offer from the current environment.
@@ -1726,8 +2116,125 @@ func add_debt(debt_data: Dictionary) -> void:
 	var normalized := _normalize_debt_entries([debt_data])
 	if normalized.is_empty():
 		return
-	debt.append(normalized[0])
+	var debt_entry: Dictionary = normalized[0]
+	_apply_debt_item_modifiers_to_new_debt(debt_entry)
+	debt.append(debt_entry)
 	_refresh_economy()
+
+
+func repay_debt(debt_id: String, amount: int = -1) -> Dictionary:
+	var index := _debt_index(debt_id)
+	if index < 0:
+		return {"ok": false, "message": "Debt is not active."}
+	var debt_data := (debt[index] as Dictionary).duplicate(true)
+	var balance := maxi(0, int(debt_data.get("balance", 0)))
+	if balance <= 0:
+		debt.remove_at(index)
+		_refresh_economy()
+		return {"ok": true, "message": "Debt already cleared.", "debt_id": debt_id}
+	var payment := balance if amount < 0 else clampi(amount, 1, balance)
+	if payment > bankroll:
+		return {"ok": false, "message": "Not enough bankroll to repay this debt.", "debt_id": debt_id}
+	change_bankroll(-payment)
+	balance -= payment
+	debt_data["balance"] = balance
+	var paid_off := balance <= 0
+	var message := "Paid %d toward %s." % [payment, _debt_lender_label(debt_data)]
+	if paid_off:
+		message = _settle_paid_debt(index, debt_data, payment)
+	else:
+		debt[index] = debt_data
+		log_story({
+			"type": "debt_payment",
+			"debt_id": str(debt_data.get("id", debt_id)),
+			"lender_id": str(debt_data.get("lender_id", "")),
+			"bankroll_delta": -payment,
+			"balance": balance,
+			"message": message,
+		})
+	_refresh_economy()
+	return {
+		"ok": true,
+		"message": message,
+		"debt_id": debt_id,
+		"paid_off": paid_off,
+		"payment": payment,
+		"balance": balance,
+	}
+
+
+func complete_debt_favor(debt_id: String) -> Dictionary:
+	var index := _debt_index(debt_id)
+	if index < 0:
+		return {"ok": false, "message": "Favor debt is not active."}
+	var debt_data := (debt[index] as Dictionary).duplicate(true)
+	if str(debt_data.get("debt_kind", "")) != "favor":
+		return {"ok": false, "message": "This debt is not favor-based.", "debt_id": debt_id}
+	var favor_balance := maxi(0, int(debt_data.get("balance", 0)))
+	if favor_balance <= 0:
+		debt.remove_at(index)
+		_refresh_economy()
+		return {"ok": true, "message": "The marker is already clear.", "debt_id": debt_id}
+	favor_balance -= 1
+	debt_data["balance"] = favor_balance
+	debt_data["status"] = "active" if favor_balance > 0 else "paid"
+	debt_data["turns_remaining"] = maxi(0, int(debt_data.get("deadline_turns", 0)))
+	narrative_flags["crew_favor_pending"] = false
+	var message := "You do the Crew's favor and knock one marker off the slate."
+	if favor_balance <= 0:
+		debt.remove_at(index)
+		narrative_flags["crew_marker_clear"] = true
+		message = "You finish the Crew's last favor and clear the marker."
+	else:
+		debt[index] = debt_data
+	log_story({
+		"type": "debt_favor_completed",
+		"debt_id": str(debt_data.get("id", debt_id)),
+		"lender_id": str(debt_data.get("lender_id", "")),
+		"balance": favor_balance,
+		"message": message,
+	})
+	_refresh_economy()
+	return {"ok": true, "message": message, "debt_id": debt_id, "balance": favor_balance}
+
+
+func refuse_debt_favor(debt_id: String) -> Dictionary:
+	var index := _debt_index(debt_id)
+	if index < 0:
+		return {"ok": false, "message": "Favor debt is not active."}
+	var debt_data := (debt[index] as Dictionary).duplicate(true)
+	if str(debt_data.get("debt_kind", "")) != "favor":
+		return {"ok": false, "message": "This debt is not favor-based.", "debt_id": debt_id}
+	var favor_balance := maxi(1, int(debt_data.get("balance", 1)))
+	var cash_per_favor := maxi(1, int(debt_data.get("cash_conversion_balance_per_favor", 45)))
+	var cash_balance := favor_balance * cash_per_favor
+	debt_data["balance"] = cash_balance
+	debt_data["debt_kind"] = "cash"
+	debt_data["status"] = "active"
+	debt_data["interest_rate"] = maxf(0.0, float(debt_data.get("cash_conversion_interest_rate", 0.35)))
+	debt_data["default_consequence"] = "forced_repayment"
+	debt_data["deadline_turns"] = 3
+	debt_data["turns_remaining"] = 3
+	narrative_flags["crew_favor_pending"] = false
+	narrative_flags["crew_marker_converted_to_cash"] = true
+	debt[index] = debt_data
+	var message := "You refuse the Crew's favor; the marker becomes cash at brutal rates."
+	log_story({
+		"type": "debt_favor_refused",
+		"debt_id": str(debt_data.get("id", debt_id)),
+		"lender_id": str(debt_data.get("lender_id", "")),
+		"balance": cash_balance,
+		"message": message,
+	})
+	_refresh_economy()
+	return {"ok": true, "message": message, "debt_id": debt_id, "balance": cash_balance}
+
+
+func default_debt(debt_id: String) -> Dictionary:
+	var index := _debt_index(debt_id)
+	if index < 0:
+		return {"ok": false, "message": "Debt is not active."}
+	return _apply_debt_default(index, true)
 
 
 # Returns the current economy label.
@@ -1751,35 +2258,310 @@ func travel_route_status(route_data: Dictionary) -> Dictionary:
 		"requires_travel_count_min": maxi(0, int(route_data.get("requires_travel_count_min", 0))),
 		"travel_count": environment_history.size(),
 	}
+	var lock_remaining := current_travel_lock_remaining()
+	if lock_remaining > 0:
+		status["available"] = false
+		status["disabled_reason"] = _travel_lock_disabled_reason(lock_remaining)
+		status["travel_lock_remaining"] = lock_remaining
+		return _finalize_travel_route_status(status, route_data)
 	var required_travel_count := int(status.get("requires_travel_count_min", 0))
 	if required_travel_count > environment_history.size():
 		status["available"] = false
 		status["hidden"] = bool(route_data.get("hide_until_travel_count_met", false))
 		status["disabled_reason"] = str(route_data.get("travel_count_condition_text", route_data.get("condition_text", "Travel farther before this route appears.")))
-		return status
+		return _finalize_travel_route_status(status, route_data)
+	var route_window := _route_availability_status(route_data)
+	if not bool(route_window.get("available", true)):
+		status["available"] = false
+		status["disabled_reason"] = str(route_window.get("disabled_reason", "This route is closed right now."))
+		status["availability_window"] = _copy_dict(route_window.get("availability_window", {}))
+		status["availability_turn"] = int(route_window.get("availability_turn", 0))
+		return _finalize_travel_route_status(status, route_data)
 	var required_flags := _copy_dict(route_data.get("requires_flags", {}))
 	for key in required_flags.keys():
 		if narrative_flags.get(str(key), null) != required_flags[key]:
 			status["available"] = false
 			status["disabled_reason"] = str(route_data.get("condition_text", "A route condition is not met."))
-			return status
+			return _finalize_travel_route_status(status, route_data)
 	for flag_id in _copy_array(route_data.get("blocked_by_flags", [])):
 		if bool(narrative_flags.get(str(flag_id), false)):
 			status["available"] = false
 			status["disabled_reason"] = "This route is closed for now."
-			return status
+			return _finalize_travel_route_status(status, route_data)
 	if cost > bankroll:
 		status["available"] = false
 		status["disabled_reason"] = "Not enough bankroll for this route."
-	return status
+	return _finalize_travel_route_status(status, route_data)
+
+
+# Returns whether the run has enough scouting help to see exact route previews.
+func travel_scouting_level() -> int:
+	var item_level := maxi(0, item_effect_total("travel_scouting_level", "travel"))
+	var service_level := 1 if bool(narrative_flags.get("route_scouting_active", false)) else 0
+	return maxi(item_level, service_level)
+
+
+# Builds player-facing preview metadata for a route destination.
+func travel_route_preview(route_data: Dictionary, destination_archetype: Dictionary, destination_environment: Dictionary = {}, full_preview: bool = false) -> Dictionary:
+	var archetype_id := str(destination_archetype.get("id", route_data.get("destination_archetype", ""))).strip_edges()
+	var tier := int(destination_archetype.get("tier", destination_environment.get("tier", 1)))
+	var kind := str(destination_archetype.get("kind", destination_environment.get("kind", "")))
+	var preview := {
+		"level": "full" if full_preview else "partial",
+		"destination_archetype": archetype_id,
+		"kind": kind,
+		"tier": tier,
+		"lines": [],
+	}
+	var source_environment := destination_environment if full_preview and not destination_environment.is_empty() else {}
+	var game_ids := _string_array(_copy_array(source_environment.get("game_ids", [])))
+	var service_ids := _string_array(_copy_array(source_environment.get("service_ids", [])))
+	var lender_ids := _string_array(_copy_array(source_environment.get("lender_hooks", [])))
+	var item_ids := _travel_item_offer_ids(_copy_array(source_environment.get("item_offers", [])))
+	if game_ids.is_empty():
+		game_ids = _unique_strings(_copy_array(destination_archetype.get("required_game_ids", [])) + _copy_array(destination_archetype.get("game_pool", [])))
+	if service_ids.is_empty():
+		service_ids = _string_array(_copy_array(destination_archetype.get("service_pool", [])))
+	if lender_ids.is_empty():
+		lender_ids = _string_array(_copy_array(destination_archetype.get("lender_hooks", [])))
+	if item_ids.is_empty():
+		item_ids = _string_array(_copy_array(destination_archetype.get("item_pool", [])))
+	var game_range := _travel_count_range(destination_archetype.get("game_count", game_ids.size()), game_ids.size())
+	var item_range := _travel_count_range(destination_archetype.get("item_count", item_ids.size()), item_ids.size())
+	preview["game_count_min"] = int(game_range[0])
+	preview["game_count_max"] = int(game_range[1])
+	preview["item_count_min"] = int(item_range[0])
+	preview["item_count_max"] = int(item_range[1])
+	preview["service_count"] = service_ids.size()
+	preview["lender_count"] = lender_ids.size()
+	preview["travel_locked_actions"] = maxi(0, int(destination_archetype.get("travel_locked_actions", destination_environment.get("travel_locked_actions", 0))))
+	var lines: Array = []
+	lines.append("Preview: tier %d %s." % [tier, kind])
+	if full_preview:
+		preview["game_ids"] = game_ids.duplicate(true)
+		preview["service_ids"] = service_ids.duplicate(true)
+		preview["lender_ids"] = lender_ids.duplicate(true)
+		preview["item_ids"] = item_ids.duplicate(true)
+		lines.append("Scout: games %s." % _travel_id_list_text(game_ids, "none"))
+		if not service_ids.is_empty() or not lender_ids.is_empty():
+			lines.append("Scout: services %s; lenders %s." % [_travel_id_list_text(service_ids, "none"), _travel_id_list_text(lender_ids, "none")])
+		if not item_ids.is_empty():
+			lines.append("Scout: shop can show %s." % _travel_id_list_text(item_ids.slice(0, 4), "no items"))
+	else:
+		lines.append("Likely: %s, %s." % [_travel_count_range_label("game", game_range), _travel_count_range_label("item", item_range)])
+		if service_ids.size() > 0 or lender_ids.size() > 0:
+			lines.append("Known hooks: %d service(s), %d lender(s)." % [service_ids.size(), lender_ids.size()])
+	var locked_actions := int(preview.get("travel_locked_actions", 0))
+	if locked_actions > 0:
+		lines.append("Boarding locks travel for %d action(s)." % locked_actions)
+	preview["lines"] = lines
+	return preview
+
+
+# Returns non-mutating risk-event metadata for a route.
+func travel_route_risk_preview(route_data: Dictionary) -> Dictionary:
+	var risk_event := _copy_dict(route_data.get("risk_event", {}))
+	if risk_event.is_empty():
+		return {}
+	var chance := clampi(int(risk_event.get("chance_percent", 0)), 0, 100)
+	if chance <= 0:
+		return {}
+	var event_id := str(risk_event.get("id", "travel_risk")).strip_edges()
+	return {
+		"id": event_id,
+		"label": str(risk_event.get("label", event_id.replace("_", " ").capitalize())),
+		"chance_percent": chance,
+		"bankroll_delta": int(risk_event.get("bankroll_delta", 0)),
+		"suspicion_delta": int(risk_event.get("suspicion_delta", 0)),
+		"message": str(risk_event.get("message", "")),
+	}
+
+
+# Resolves a route risk event without mutating the run.
+func travel_route_risk(route_data: Dictionary, route_id: String = "") -> Dictionary:
+	var risk := travel_route_risk_preview(route_data)
+	if risk.is_empty():
+		return {"triggered": false, "chance_percent": 0, "roll": 0}
+	var resolved_route_id := route_id.strip_edges()
+	if resolved_route_id.is_empty():
+		resolved_route_id = str(route_data.get("id", route_data.get("destination_archetype", ""))).strip_edges()
+	var source_environment_id := str(current_environment.get("id", "")).strip_edges()
+	var seed_source := "%s|%d|%s|%s|%d" % [
+		seed_text,
+		seed_value,
+		source_environment_id,
+		resolved_route_id,
+		environment_history.size(),
+	]
+	var roll := (text_to_seed(seed_source) % 100) + 1
+	var triggered := roll <= int(risk.get("chance_percent", 0))
+	risk["roll"] = roll
+	risk["triggered"] = triggered
+	if not triggered:
+		risk["bankroll_delta"] = 0
+		risk["suspicion_delta"] = 0
+		risk["message"] = ""
+	return risk
+
+
+# Returns the number of action beats before this room allows travel again.
+func current_travel_lock_remaining() -> int:
+	if current_environment.is_empty():
+		return 0
+	return maxi(0, int(current_environment.get("travel_lock_remaining", 0)))
+
+
+func _travel_lock_disabled_reason(lock_remaining: int) -> String:
+	var actions := maxi(0, lock_remaining)
+	var noun := "action" if actions == 1 else "actions"
+	var archetype_id := str(current_environment.get("archetype_id", ""))
+	if archetype_id == "delta_queen":
+		return "The Delta Queen is out on the river for %d more %s." % [actions, noun]
+	return "Travel unlocks after %d more %s." % [actions, noun]
+
+
+func _route_availability_status(route_data: Dictionary) -> Dictionary:
+	var window := _copy_dict(route_data.get("availability_window", {}))
+	if window.is_empty():
+		return {"available": true}
+	var period := maxi(1, int(window.get("period", 1)))
+	var open_turns := _int_array(window.get("open_turns", []))
+	if open_turns.is_empty():
+		return {"available": true}
+	var current_turn := int(current_environment.get("turns", 0)) % period
+	if open_turns.has(current_turn):
+		return {
+			"available": true,
+			"availability_window": window,
+			"availability_turn": current_turn,
+		}
+	return {
+		"available": false,
+		"disabled_reason": str(window.get("closed_text", "This route is closed right now.")),
+		"availability_window": window,
+		"availability_turn": current_turn,
+	}
+
+
+func _finalize_travel_route_status(status: Dictionary, route_data: Dictionary) -> Dictionary:
+	var finalized := status.duplicate(true)
+	var risk_preview := travel_route_risk_preview(route_data)
+	if not risk_preview.is_empty():
+		finalized["risk_event"] = risk_preview
+	var risk_text := str(route_data.get("risk_text", "")).strip_edges()
+	if not risk_text.is_empty():
+		finalized["risk_text"] = risk_text
+	var unlock_conditions := _travel_unlock_conditions(route_data, finalized)
+	finalized["unlock_conditions"] = unlock_conditions
+	var disabled_reason := str(finalized.get("disabled_reason", "")).strip_edges()
+	if not disabled_reason.is_empty():
+		finalized["unlock_summary"] = disabled_reason
+	elif not unlock_conditions.is_empty():
+		finalized["unlock_summary"] = "; ".join(unlock_conditions)
+	else:
+		finalized["unlock_summary"] = ""
+	return finalized
+
+
+func _travel_unlock_conditions(route_data: Dictionary, status: Dictionary) -> Array:
+	var conditions: Array = []
+	var condition_text := str(route_data.get("condition_text", "")).strip_edges()
+	if not condition_text.is_empty():
+		conditions.append(condition_text)
+	var required_travel_count := maxi(0, int(route_data.get("requires_travel_count_min", 0)))
+	if required_travel_count > 0:
+		conditions.append("Travel count %d/%d." % [environment_history.size(), required_travel_count])
+	var lock_remaining := maxi(0, int(status.get("travel_lock_remaining", 0)))
+	if lock_remaining > 0:
+		conditions.append(_travel_lock_disabled_reason(lock_remaining))
+	var window := _copy_dict(route_data.get("availability_window", {}))
+	if not window.is_empty():
+		var period := maxi(1, int(window.get("period", 1)))
+		var open_turns := _int_array(window.get("open_turns", []))
+		if not open_turns.is_empty():
+			conditions.append("Open on schedule turns %s of %d." % [", ".join(_int_text_array(open_turns)), period])
+	var required_flags := _copy_dict(route_data.get("requires_flags", {}))
+	if not required_flags.is_empty() and condition_text.is_empty():
+		conditions.append("Needs route intel.")
+	var blocked_flags := _copy_array(route_data.get("blocked_by_flags", []))
+	if not blocked_flags.is_empty():
+		conditions.append("Can close after story choices.")
+	var cost := maxi(0, int(status.get("cost", route_data.get("cost", 0))))
+	if cost > bankroll:
+		conditions.append("Needs %d bankroll." % cost)
+	return conditions
+
+
+func _travel_item_offer_ids(item_offers: Array) -> Array:
+	var ids: Array = []
+	for offer_value in item_offers:
+		if typeof(offer_value) == TYPE_DICTIONARY:
+			var item_id := str((offer_value as Dictionary).get("id", "")).strip_edges()
+			if not item_id.is_empty() and not ids.has(item_id):
+				ids.append(item_id)
+	return ids
+
+
+func _travel_count_range(value: Variant, fallback_count: int) -> Array:
+	if typeof(value) == TYPE_ARRAY:
+		var values := _int_array(value)
+		if values.is_empty():
+			return [maxi(0, fallback_count), maxi(0, fallback_count)]
+		var min_count: int = int(values[0])
+		var max_count: int = int(values[0])
+		for count_value in values:
+			min_count = mini(min_count, int(count_value))
+			max_count = maxi(max_count, int(count_value))
+		return [maxi(0, min_count), maxi(0, max_count)]
+	var count := maxi(0, int(value))
+	if count <= 0 and fallback_count > 0:
+		count = fallback_count
+	return [count, count]
+
+
+func _travel_count_range_label(noun: String, count_range: Array) -> String:
+	var min_count := int(count_range[0]) if count_range.size() > 0 else 0
+	var max_count := int(count_range[1]) if count_range.size() > 1 else min_count
+	var plural := "%ss" % noun
+	if min_count == max_count:
+		return "%d %s" % [min_count, noun if min_count == 1 else plural]
+	return "%d-%d %s" % [min_count, max_count, plural]
+
+
+func _travel_id_list_text(ids: Array, empty_text: String) -> String:
+	var labels: Array = []
+	for id_value in _string_array(ids):
+		labels.append(str(id_value).replace("_", " "))
+	if labels.is_empty():
+		return empty_text
+	return ", ".join(labels)
+
+
+func _unique_strings(values: Array) -> Array:
+	var result: Array = []
+	for value in _string_array(values):
+		if not result.has(value):
+			result.append(value)
+	return result
+
+
+func _int_text_array(values: Array) -> Array:
+	var result: Array = []
+	for value in values:
+		result.append(str(int(value)))
+	return result
 
 
 # Returns how much local heat a route sheds before arrival.
 func travel_risk_decay(route_data: Dictionary) -> int:
+	var base_decay := 0
 	if route_data.has("risk_decay"):
-		return clampi(int(route_data.get("risk_decay", 0)), 0, 100)
-	var distance := str(route_data.get("distance", "near")).to_lower()
-	return clampi(int(LOCAL_RISK_DECAY_BY_DISTANCE.get(distance, LOCAL_RISK_DECAY_BY_DISTANCE["near"])), 0, 100)
+		base_decay = clampi(int(route_data.get("risk_decay", 0)), 0, 100)
+	else:
+		var distance := str(route_data.get("distance", "near")).to_lower()
+		base_decay = clampi(int(LOCAL_RISK_DECAY_BY_DISTANCE.get(distance, LOCAL_RISK_DECAY_BY_DISTANCE["near"])), 0, 100)
+	var modifier := int(challenge_modifiers().get("local_risk_decay_percent_delta", 0))
+	return clampi(base_decay + modifier, 0, 100)
 
 
 # Stores source heat and calculates carried heat before the new environment is generated.
@@ -1853,24 +2635,33 @@ func finish_travel_suspicion_decay(travel_heat: Dictionary) -> Dictionary:
 
 # Returns whether a service hook can currently be used without mutating state.
 func service_hook_status(service_data: Dictionary) -> Dictionary:
-	var cost := maxi(0, int(service_data.get("cost", 0)))
+	var cost := maxi(0, int(round(float(service_data.get("cost", 0)) * challenge_service_cost_multiplier(service_data))))
 	var status := {
 		"available": true,
 		"disabled_reason": "",
 		"cost": cost,
+		"availability_class": AVAILABILITY_AVAILABLE,
 	}
 	if service_data.is_empty():
 		status["available"] = false
 		status["disabled_reason"] = "Service is not available here."
+		status["availability_class"] = AVAILABILITY_CATEGORICAL_UNAVAILABLE
+		return status
+	if challenge_service_category_blocked(str(service_data.get("category", ""))):
+		status["available"] = false
+		status["disabled_reason"] = "This challenge blocks that service."
+		status["availability_class"] = AVAILABILITY_CATEGORICAL_UNAVAILABLE
 		return status
 	if cost > bankroll:
 		status["available"] = false
 		status["disabled_reason"] = "Not enough bankroll for this service."
+		status["availability_class"] = AVAILABILITY_TRANSIENT_BLOCKED
 		return status
 	var effect := _copy_dict(service_data.get("effect", {}))
 	if int(effect.get("alcohol_intake", 0)) > 0 and drunk_level + pending_drunk_absorption_amount() >= ALCOHOL_MAX:
 		status["available"] = false
 		status["disabled_reason"] = "Too drunk to make another drink help."
+		status["availability_class"] = AVAILABILITY_TRANSIENT_BLOCKED
 	return status
 
 
@@ -1881,11 +2672,39 @@ func lender_hook_status(lender_data: Dictionary) -> Dictionary:
 		"available": true,
 		"disabled_reason": "",
 		"active_debt": false,
+		"availability_class": AVAILABILITY_AVAILABLE,
 	}
 	if lender_data.is_empty() or lender_id.is_empty():
 		status["available"] = false
 		status["disabled_reason"] = "Lender is not available here."
+		status["availability_class"] = AVAILABILITY_CATEGORICAL_UNAVAILABLE
 		return status
+	var availability := _copy_dict(lender_data.get("availability", {}))
+	var single_use_flag := str(availability.get("single_use_flag", ""))
+	if not single_use_flag.is_empty() and bool(narrative_flags.get(single_use_flag, false)):
+		status["available"] = false
+		status["disabled_reason"] = "That one-time lender has already helped this run."
+		status["availability_class"] = AVAILABILITY_CATEGORICAL_UNAVAILABLE
+		return status
+	var tier_min := maxi(0, int(availability.get("tier_min", availability.get("min_tier", 0))))
+	if tier_min > 0 and int(current_environment.get("tier", 1)) < tier_min:
+		status["available"] = false
+		status["disabled_reason"] = "This lender only works higher up the circuit."
+		status["availability_class"] = AVAILABILITY_CATEGORICAL_UNAVAILABLE
+		return status
+	var required_flags := _copy_dict(availability.get("requires_flags", {}))
+	for key in required_flags.keys():
+		if narrative_flags.get(str(key), null) != required_flags[key]:
+			status["available"] = false
+			status["disabled_reason"] = str(availability.get("condition_text", "A condition for this lender is not met."))
+			status["availability_class"] = AVAILABILITY_CATEGORICAL_UNAVAILABLE
+			return status
+	for flag_id in _copy_array(availability.get("blocked_by_flags", [])):
+		if bool(narrative_flags.get(str(flag_id), false)):
+			status["available"] = false
+			status["disabled_reason"] = "This lender will not answer again."
+			status["availability_class"] = AVAILABILITY_CATEGORICAL_UNAVAILABLE
+			return status
 	for debt_entry in debt:
 		if typeof(debt_entry) != TYPE_DICTIONARY:
 			continue
@@ -1897,6 +2716,7 @@ func lender_hook_status(lender_data: Dictionary) -> Dictionary:
 			status["available"] = false
 			status["disabled_reason"] = "You already owe this lender."
 			status["active_debt"] = true
+			status["availability_class"] = AVAILABILITY_TRANSIENT_BLOCKED
 			return status
 	return status
 
@@ -2036,15 +2856,235 @@ func log_story(event_data: Dictionary) -> void:
 func advance_environment_turns(amount: int = 1) -> void:
 	if current_environment.is_empty() or is_terminal():
 		return
+	event_cadence_advance_actions(amount)
 	var alcohol_decay := maxi(0, amount) * DRUNK_TURN_DECAY
 	if alcohol_decay > 0:
 		change_drunk(-alcohol_decay)
 	var previous_turns := int(current_environment.get("turns", 0))
 	var next_turns := previous_turns + maxi(0, amount)
 	current_environment["turns"] = next_turns
-	var previous_decay_step := int(floor(float(previous_turns) / float(LOCAL_RISK_TURN_DECAY_INTERVAL)))
-	var next_decay_step := int(floor(float(next_turns) / float(LOCAL_RISK_TURN_DECAY_INTERVAL)))
+	_advance_travel_lock(maxi(0, amount))
+	_advance_narrative_action_timers(maxi(0, amount))
+	drunk_distortion_suppression_turns = maxi(0, drunk_distortion_suppression_turns - maxi(0, amount))
+	var decay_interval := maxi(1, LOCAL_RISK_TURN_DECAY_INTERVAL + int(challenge_modifiers().get("local_heat_turn_decay_interval_delta", 0)))
+	var previous_decay_step := int(floor(float(previous_turns) / float(decay_interval)))
+	var next_decay_step := int(floor(float(next_turns) / float(decay_interval)))
 	_decrease_current_suspicion(next_decay_step - previous_decay_step)
+	_advance_debt_clocks(maxi(0, amount))
+
+
+func _advance_travel_lock(amount: int) -> void:
+	if amount <= 0 or current_environment.is_empty():
+		return
+	var remaining := maxi(0, int(current_environment.get("travel_lock_remaining", 0)))
+	if remaining <= 0:
+		return
+	current_environment["travel_lock_remaining"] = maxi(0, remaining - amount)
+
+
+func _advance_narrative_action_timers(amount: int) -> void:
+	if amount <= 0:
+		return
+	for key in ["shift_change_rookie_actions", "lights_out_unwatched_actions"]:
+		if narrative_flags.has(key):
+			narrative_flags[key] = maxi(0, int(narrative_flags.get(key, 0)) - amount)
+
+
+func _advance_debt_clocks(amount: int) -> void:
+	if amount <= 0 or debt.is_empty():
+		return
+	for index in range(debt.size() - 1, -1, -1):
+		if index >= debt.size() or typeof(debt[index]) != TYPE_DICTIONARY:
+			continue
+		var debt_data := (debt[index] as Dictionary).duplicate(true)
+		var status := str(debt_data.get("status", "active"))
+		if status == "active":
+			var remaining := int(debt_data.get("turns_remaining", debt_data.get("deadline_turns", 0)))
+			if remaining <= 0:
+				_apply_debt_default(index, false)
+				continue
+			remaining = maxi(0, remaining - amount)
+			debt_data["turns_remaining"] = remaining
+			debt[index] = debt_data
+			if remaining <= 0:
+				_apply_debt_default(index, false)
+		elif status == "overdue" or status == "favor_due":
+			_tick_recurring_debt_pressure(index, debt_data, amount)
+
+
+func _tick_recurring_debt_pressure(index: int, debt_data: Dictionary, amount: int) -> void:
+	var next_pressure := int(debt_data.get("next_pressure_turns", debt_data.get("nag_interval_turns", 3)))
+	next_pressure -= amount
+	if next_pressure > 0:
+		debt_data["next_pressure_turns"] = next_pressure
+		debt[index] = debt_data
+		return
+	var consequence := str(debt_data.get("default_consequence", ""))
+	var interval := maxi(1, int(debt_data.get("nag_interval_turns", 3)))
+	debt_data["next_pressure_turns"] = interval
+	debt[index] = debt_data
+	match consequence:
+		"family_nag":
+			narrative_flags["brother_in_law_recurring_nag"] = int(narrative_flags.get("brother_in_law_recurring_nag", 0)) + 1
+			log_story({
+				"type": "debt_default_pressure",
+				"debt_id": str(debt_data.get("id", "")),
+				"lender_id": str(debt_data.get("lender_id", "")),
+				"message": "Your brother-in-law calls again. The family version of interest compounds out loud.",
+			})
+		"crew_favor_due":
+			narrative_flags["crew_favor_pending"] = true
+			log_story({
+				"type": "debt_favor_due",
+				"debt_id": str(debt_data.get("id", "")),
+				"lender_id": str(debt_data.get("lender_id", "")),
+				"message": "The Crew's favor is still waiting on their clock.",
+			})
+		_:
+			log_story({
+				"type": "debt_default_pressure",
+				"debt_id": str(debt_data.get("id", "")),
+				"lender_id": str(debt_data.get("lender_id", "")),
+				"message": "%s keeps pressing the debt." % _debt_lender_label(debt_data),
+			})
+
+
+func _apply_debt_item_modifiers_to_new_debt(debt_data: Dictionary) -> void:
+	if str(debt_data.get("status", "active")) != "active":
+		return
+	var grace_bonus := item_effect_total("debt_grace_turns")
+	if grace_bonus <= 0:
+		return
+	var deadline := maxi(0, int(debt_data.get("deadline_turns", 0)))
+	var remaining := maxi(0, int(debt_data.get("turns_remaining", deadline)))
+	if deadline <= 0 and remaining <= 0:
+		return
+	debt_data["deadline_turns"] = maxi(0, deadline + grace_bonus)
+	debt_data["turns_remaining"] = maxi(0, remaining + grace_bonus)
+
+
+func _apply_debt_default(index: int, manual: bool = false) -> Dictionary:
+	if index < 0 or index >= debt.size() or typeof(debt[index]) != TYPE_DICTIONARY:
+		return {"ok": false, "message": "Debt is not active."}
+	var debt_data := (debt[index] as Dictionary).duplicate(true)
+	var consequence := str(debt_data.get("default_consequence", "favor_owed"))
+	var message := ""
+	match consequence:
+		"collateral_forfeit":
+			var item_name := str(debt_data.get("collateral_item_name", debt_data.get("collateral_item_id", "the collateral")))
+			narrative_flags["sals_pawn_defaulted"] = true
+			debt.remove_at(index)
+			message = "Sal keeps %s. The loan is over." % item_name
+			log_story(_debt_story_entry("debt_default", debt_data, message))
+		"crew_favor_due":
+			debt_data["status"] = "favor_due"
+			debt_data["turns_remaining"] = 0
+			debt_data["next_pressure_turns"] = maxi(1, int(debt_data.get("nag_interval_turns", 2)))
+			narrative_flags["crew_favor_pending"] = true
+			debt[index] = debt_data
+			message = "The Crew calls in a favor. Their clock, their terms."
+			log_story(_debt_story_entry("debt_favor_due", debt_data, message))
+		"family_nag":
+			debt_data["status"] = "overdue"
+			debt_data["turns_remaining"] = 0
+			debt_data["next_pressure_turns"] = maxi(1, int(debt_data.get("nag_interval_turns", 3)))
+			narrative_flags["brother_in_law_late"] = true
+			var scar_flag := str(debt_data.get("late_scar_flag", "brother_in_law_story_scar"))
+			if not scar_flag.is_empty():
+				narrative_flags[scar_flag] = true
+			debt[index] = debt_data
+			message = "Your brother-in-law starts calling it family history instead of a loan."
+			log_story(_debt_story_entry("debt_default", debt_data, message))
+		"forced_repayment":
+			var balance := maxi(0, int(debt_data.get("balance", 0)))
+			var forced_payment := mini(balance, maxi(0, int(floor(float(bankroll) / 3.0))))
+			if forced_payment > 0:
+				change_bankroll(-forced_payment, true)
+				balance -= forced_payment
+			var heat_delta := maxi(0, (6 if manual else 4) + item_effect_total("debt_default_heat_delta"))
+			add_suspicion("debt_default:%s" % str(debt_data.get("lender_id", "")), heat_delta, "debt", true, {"environment_id": str(current_environment.get("id", ""))}, true)
+			if balance <= 0:
+				debt.remove_at(index)
+				message = "%s takes a forced payment and clears the note." % _debt_lender_label(debt_data)
+			else:
+				debt_data["balance"] = balance
+				debt_data["status"] = "overdue"
+				debt_data["turns_remaining"] = 0
+				debt_data["next_pressure_turns"] = 2
+				debt[index] = debt_data
+				message = "%s forces a payment and leaves the rest hanging." % _debt_lender_label(debt_data)
+			log_story(_debt_story_entry("debt_default", debt_data, message, -forced_payment, heat_delta))
+		_:
+			debt_data["status"] = "overdue"
+			debt_data["turns_remaining"] = 0
+			narrative_flags["debt_favor_owed"] = true
+			debt[index] = debt_data
+			message = "%s turns the late note into a favor owed." % _debt_lender_label(debt_data)
+			log_story(_debt_story_entry("debt_default", debt_data, message))
+	_refresh_economy(true)
+	return {
+		"ok": true,
+		"message": message,
+		"debt_id": str(debt_data.get("id", "")),
+		"consequence": consequence,
+	}
+
+
+func _settle_paid_debt(index: int, debt_data: Dictionary, payment: int) -> String:
+	var lender_id := str(debt_data.get("lender_id", ""))
+	var message := "Paid off %s." % _debt_lender_label(debt_data)
+	var debt_kind := str(debt_data.get("debt_kind", "cash"))
+	if debt_kind == "pawn":
+		var collateral_item_id := str(debt_data.get("collateral_item_id", ""))
+		var collateral_item_name := str(debt_data.get("collateral_item_name", collateral_item_id))
+		if not collateral_item_id.is_empty():
+			add_item(collateral_item_id)
+		message = "Redeemed %s from Sal's pawn envelope." % collateral_item_name
+	elif lender_id == "brother_in_law" and int(debt_data.get("turns_remaining", 0)) > 0:
+		var goodwill_flag := str(debt_data.get("early_repay_flag", "brother_in_law_goodwill"))
+		if not goodwill_flag.is_empty():
+			narrative_flags[goodwill_flag] = true
+		message = "Paid your brother-in-law early enough to become a story he tells nicely."
+	debt.remove_at(index)
+	log_story({
+		"type": "debt_paid",
+		"debt_id": str(debt_data.get("id", "")),
+		"lender_id": lender_id,
+		"bankroll_delta": -payment,
+		"collateral_item_id": str(debt_data.get("collateral_item_id", "")),
+		"message": message,
+	})
+	return message
+
+
+func _debt_index(debt_id: String) -> int:
+	var target_id := debt_id.strip_edges()
+	if target_id.is_empty():
+		return -1
+	for index in range(debt.size()):
+		if typeof(debt[index]) != TYPE_DICTIONARY:
+			continue
+		var debt_data := debt[index] as Dictionary
+		if str(debt_data.get("id", "")) == target_id:
+			return index
+	return -1
+
+
+func _debt_lender_label(debt_data: Dictionary) -> String:
+	return str(debt_data.get("lender_id", debt_data.get("id", "debt"))).replace("_", " ").capitalize()
+
+
+func _debt_story_entry(entry_type: String, debt_data: Dictionary, message: String, bankroll_delta: int = 0, suspicion_delta: int = 0) -> Dictionary:
+	return {
+		"type": entry_type,
+		"debt_id": str(debt_data.get("id", "")),
+		"lender_id": str(debt_data.get("lender_id", "")),
+		"debt_kind": str(debt_data.get("debt_kind", "")),
+		"balance": int(debt_data.get("balance", 0)),
+		"bankroll_delta": bankroll_delta,
+		"suspicion_delta": suspicion_delta,
+		"message": message,
+	}
 
 
 # Marks an environment event as resolved.
@@ -2055,6 +3095,68 @@ func resolve_event(event_id: String) -> void:
 	if not resolved.has(event_id):
 		resolved.append(event_id)
 	current_environment["resolved_event_ids"] = resolved
+
+
+# Enqueues a world-acting event for modal resolution.
+func enqueue_triggered_event(event_id: String, source: String = "", context: Dictionary = {}) -> bool:
+	var normalized_id := event_id.strip_edges()
+	if normalized_id.is_empty():
+		return false
+	if str(active_triggered_event.get("event_id", "")) == normalized_id:
+		return false
+	for entry_value in pending_triggered_events:
+		if typeof(entry_value) != TYPE_DICTIONARY:
+			continue
+		var entry: Dictionary = entry_value
+		if str(entry.get("event_id", "")) == normalized_id:
+			return false
+	var queued_context := context.duplicate(true)
+	pending_triggered_events.append({
+		"event_id": normalized_id,
+		"source": source,
+		"context": queued_context,
+		"environment_id": str(current_environment.get("id", "")),
+		"environment_turns": int(current_environment.get("turns", 0)),
+	})
+	return true
+
+
+# Returns the next queued triggered event without consuming it.
+func next_pending_triggered_event() -> Dictionary:
+	if pending_triggered_events.is_empty():
+		return {}
+	var first: Variant = pending_triggered_events[0]
+	return _normalize_triggered_event_entry(first)
+
+
+# Moves a queued triggered event into active modal resolution.
+func begin_triggered_event_resolution(entry: Dictionary) -> Dictionary:
+	var normalized := _normalize_triggered_event_entry(entry)
+	if normalized.is_empty():
+		return {}
+	if not pending_triggered_events.is_empty():
+		for index in range(pending_triggered_events.size()):
+			var pending := _normalize_triggered_event_entry(pending_triggered_events[index])
+			if str(pending.get("event_id", "")) == str(normalized.get("event_id", "")):
+				pending_triggered_events.remove_at(index)
+				break
+	normalized["active"] = true
+	active_triggered_event = normalized
+	return active_triggered_event.duplicate(true)
+
+
+# Clears the active triggered event after its choice is resolved.
+func complete_triggered_event_resolution(event_id: String = "") -> void:
+	if active_triggered_event.is_empty():
+		return
+	var expected_id := event_id.strip_edges()
+	if not expected_id.is_empty() and str(active_triggered_event.get("event_id", "")) != expected_id:
+		return
+	active_triggered_event = {}
+
+
+func triggered_event_resolution_active() -> bool:
+	return not active_triggered_event.is_empty()
 
 
 # Adds travel targets to the current environment.
@@ -2364,7 +3466,12 @@ func to_dict() -> Dictionary:
 		"drunk_level": drunk_level,
 		"alcoholic_level": alcoholic_level,
 		"pending_drunk_absorption": pending_drunk_absorption.duplicate(true),
+		"drunk_distortion_suppression_turns": drunk_distortion_suppression_turns,
 		"current_environment": current_environment.duplicate(true),
+		"world_map": WorldMap.normalize(world_map),
+		"pending_triggered_events": pending_triggered_events.duplicate(true),
+		"active_triggered_event": active_triggered_event.duplicate(true),
+		"event_cadence": _normalize_event_cadence(event_cadence),
 		"environment_history": environment_history.duplicate(true),
 		"unlocked_travel": unlocked_travel.duplicate(true),
 		"narrative_flags": narrative_flags.duplicate(true),
@@ -2395,7 +3502,12 @@ func from_dict(data: Dictionary) -> void:
 	drunk_level = clampi(int(data.get("drunk_level", 0)), 0, ALCOHOL_MAX)
 	alcoholic_level = clampi(int(data.get("alcoholic_level", 0)), 0, ALCOHOL_MAX)
 	pending_drunk_absorption = _normalize_pending_drunk_absorption(_copy_array(data.get("pending_drunk_absorption", [])))
+	drunk_distortion_suppression_turns = maxi(0, int(data.get("drunk_distortion_suppression_turns", 0)))
 	current_environment = _normalize_environment(_copy_dict(data.get("current_environment", {})))
+	world_map = WorldMap.normalize(_copy_dict(data.get("world_map", {})))
+	pending_triggered_events = _normalize_triggered_event_queue(_copy_array(data.get("pending_triggered_events", [])))
+	active_triggered_event = _normalize_triggered_event_entry(data.get("active_triggered_event", {}))
+	event_cadence = _normalize_event_cadence(_copy_dict(data.get("event_cadence", {})))
 	environment_history = _normalize_environment_history(_copy_array(data.get("environment_history", [])))
 	unlocked_travel = _copy_array(data.get("unlocked_travel", current_environment.get("travel_hooks", [])))
 	narrative_flags = _copy_dict(data.get("narrative_flags", {}))
@@ -2512,6 +3624,15 @@ static func _copy_array(value: Variant) -> Array:
 	return (value as Array).duplicate(true)
 
 
+static func _int_array(value: Variant) -> Array:
+	var result: Array = []
+	if typeof(value) != TYPE_ARRAY:
+		return result
+	for entry in value:
+		result.append(int(entry))
+	return result
+
+
 # Safely duplicates dictionary content.
 static func _copy_dict(value: Variant) -> Dictionary:
 	if typeof(value) != TYPE_DICTIONARY:
@@ -2588,8 +3709,30 @@ static func _normalize_debt_entries(entries: Array) -> Array:
 		if typeof(entry) != TYPE_DICTIONARY:
 			continue
 		var debt_entry := (entry as Dictionary).duplicate(true)
+		debt_entry["id"] = str(debt_entry.get("id", "debt_%d" % result.size()))
+		debt_entry["lender_id"] = str(debt_entry.get("lender_id", debt_entry.get("id", "")))
+		debt_entry["status"] = str(debt_entry.get("status", "active"))
+		debt_entry["debt_kind"] = str(debt_entry.get("debt_kind", "cash"))
 		if debt_entry.has("balance"):
 			debt_entry["balance"] = int(debt_entry.get("balance", 0))
+		else:
+			debt_entry["balance"] = 0
+		debt_entry["deadline_turns"] = maxi(0, int(debt_entry.get("deadline_turns", 0)))
+		if debt_entry.has("turns_remaining"):
+			debt_entry["turns_remaining"] = maxi(0, int(debt_entry.get("turns_remaining", 0)))
+		else:
+			debt_entry["turns_remaining"] = int(debt_entry.get("deadline_turns", 0))
+		if debt_entry.has("next_pressure_turns"):
+			debt_entry["next_pressure_turns"] = maxi(0, int(debt_entry.get("next_pressure_turns", 0)))
+		if debt_entry.has("nag_interval_turns"):
+			debt_entry["nag_interval_turns"] = maxi(1, int(debt_entry.get("nag_interval_turns", 1)))
+		if debt_entry.has("interest_rate"):
+			debt_entry["interest_rate"] = maxf(0.0, float(debt_entry.get("interest_rate", 0.0)))
+		if debt_entry.has("cash_conversion_interest_rate"):
+			debt_entry["cash_conversion_interest_rate"] = maxf(0.0, float(debt_entry.get("cash_conversion_interest_rate", 0.0)))
+		if debt_entry.has("cash_conversion_balance_per_favor"):
+			debt_entry["cash_conversion_balance_per_favor"] = maxi(1, int(debt_entry.get("cash_conversion_balance_per_favor", 1)))
+		debt_entry["default_consequence"] = str(debt_entry.get("default_consequence", "favor_owed"))
 		result.append(debt_entry)
 	return result
 
@@ -2651,6 +3794,33 @@ static func _normalize_pending_drunk_absorption(entries: Array) -> Array:
 	return result
 
 
+static func _normalize_triggered_event_queue(entries: Array) -> Array:
+	var result: Array = []
+	for entry_value in entries:
+		var entry := _normalize_triggered_event_entry(entry_value)
+		if not entry.is_empty():
+			result.append(entry)
+	return result
+
+
+static func _normalize_triggered_event_entry(value: Variant) -> Dictionary:
+	if typeof(value) != TYPE_DICTIONARY:
+		return {}
+	var source: Dictionary = value as Dictionary
+	var event_id := str(source.get("event_id", source.get("id", ""))).strip_edges()
+	if event_id.is_empty():
+		return {}
+	var context := _copy_dict(source.get("context", {}))
+	return {
+		"event_id": event_id,
+		"source": str(source.get("source", "")),
+		"context": context,
+		"environment_id": str(source.get("environment_id", "")),
+		"environment_turns": maxi(0, int(source.get("environment_turns", source.get("queued_turn", 0)))),
+		"active": bool(source.get("active", false)),
+	}
+
+
 static func _alcohol_now_msec() -> int:
 	return int(Time.get_unix_time_from_system() * 1000.0)
 
@@ -2691,6 +3861,9 @@ static func _normalize_environment(data: Dictionary) -> Dictionary:
 	environment["depth"] = int(environment.get("depth", 0))
 	environment["tier"] = int(environment.get("tier", 1))
 	environment["turns"] = int(environment.get("turns", 0))
+	environment["world_node_id"] = str(environment.get("world_node_id", environment.get("archetype_id", environment.get("id", "")))).strip_edges()
+	environment["travel_locked_actions"] = maxi(0, int(environment.get("travel_locked_actions", 0)))
+	environment["travel_lock_remaining"] = maxi(0, int(environment.get("travel_lock_remaining", environment["travel_locked_actions"])))
 	environment["resolved_event_ids"] = _copy_array(environment.get("resolved_event_ids", []))
 	environment["game_ids"] = _copy_array(environment.get("game_ids", []))
 	environment["event_ids"] = _copy_array(environment.get("event_ids", []))
@@ -2700,6 +3873,7 @@ static func _normalize_environment(data: Dictionary) -> Dictionary:
 	environment["suspicion_cues"] = _copy_array(environment.get("suspicion_cues", []))
 	environment["travel_hooks"] = _copy_array(environment.get("travel_hooks", []))
 	environment["next_archetypes"] = _copy_array(environment.get("next_archetypes", []))
+	environment["object_fixtures"] = _copy_array(environment.get("object_fixtures", []))
 	environment["local_narrative_flags"] = _copy_dict(environment.get("local_narrative_flags", {}))
 	environment["game_states"] = _normalize_game_states(_copy_dict(environment.get("game_states", {})))
 	environment["visual_context"] = _copy_dict(environment.get("visual_context", {}))
@@ -2709,6 +3883,44 @@ static func _normalize_environment(data: Dictionary) -> Dictionary:
 	environment["objective_hint"] = str(environment.get("objective_hint", ""))
 	environment["demo_objective"] = _copy_dict(environment.get("demo_objective", {}))
 	return environment
+
+
+# Normalizes saved cadence state after load or older saves.
+func _normalize_event_cadence(data: Dictionary) -> Dictionary:
+	if data.is_empty():
+		var base_rng := RngStream.new()
+		base_rng.configure(seed_value, seed_value)
+		var cadence_rng := base_rng.fork("event_cadence")
+		return {
+			"rng_seed": cadence_rng.seed_value,
+			"rng_state": cadence_rng.state_value,
+			"action_index": 0,
+			"last_world_event_action": -9999,
+			"last_modal_closed_action": -9999,
+			"visit_key": "",
+			"visit_should_fire": false,
+			"visit_min_action": 0,
+			"visit_event_count": 0,
+			"visit_event_ids": [],
+			"seen_event_counts": {},
+			"visit_count": 0,
+			"quiet_visit_count": 0,
+		}
+	var normalized := data.duplicate(true)
+	normalized["rng_seed"] = maxi(1, int(normalized.get("rng_seed", seed_value)))
+	normalized["rng_state"] = maxi(1, int(normalized.get("rng_state", normalized.get("rng_seed", seed_value))))
+	normalized["action_index"] = maxi(0, int(normalized.get("action_index", 0)))
+	normalized["last_world_event_action"] = int(normalized.get("last_world_event_action", -9999))
+	normalized["last_modal_closed_action"] = int(normalized.get("last_modal_closed_action", -9999))
+	normalized["visit_key"] = str(normalized.get("visit_key", ""))
+	normalized["visit_should_fire"] = bool(normalized.get("visit_should_fire", false))
+	normalized["visit_min_action"] = maxi(0, int(normalized.get("visit_min_action", 0)))
+	normalized["visit_event_count"] = maxi(0, int(normalized.get("visit_event_count", 0)))
+	normalized["visit_event_ids"] = _copy_array(normalized.get("visit_event_ids", []))
+	normalized["seen_event_counts"] = _copy_dict(normalized.get("seen_event_counts", {}))
+	normalized["visit_count"] = maxi(0, int(normalized.get("visit_count", 0)))
+	normalized["quiet_visit_count"] = maxi(0, int(normalized.get("quiet_visit_count", 0)))
+	return normalized
 
 
 # Normalizes generated item offers after JSON save/load.

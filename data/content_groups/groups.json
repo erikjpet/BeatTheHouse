@@ -8,9 +8,14 @@
 		"item_ids": [
 			"creased_luck_card",
 			"instant_coffee",
+			"ledger_pencil",
+			"cashout_envelope",
 			"cheap_sunglasses",
 			"lucky_keychain",
+			"lucky_bar_napkin",
 			"roadside_map",
+			"payment_calendar",
+			"pawn_receipt_sleeve",
 			"jazz_sax_lucky_coin",
 			"jazz_cello_lucky_coin",
 			"jazz_drummer_lucky_coin",
@@ -23,7 +28,11 @@
 		"description": "Active-use items that can be enabled independently of game-specific item packs.",
 		"default_enabled": true,
 		"game_ids": [],
-		"item_ids": []
+		"item_ids": [
+			"thermos_black_coffee",
+			"thermos_black_coffee_half",
+			"pickled_olive_jar"
+		]
 	},
 	{
 		"id": "pull_tabs_pack",
@@ -73,7 +82,7 @@
 		"description": "Bar dice tables plus dice-weighting gear.",
 		"default_enabled": true,
 		"game_ids": ["bar_dice"],
-		"item_ids": ["weighted_keyring"]
+		"item_ids": ["weighted_keyring", "dice_calipers", "false_bottom_cup"]
 	},
 	{
 		"id": "blackjack_pack",
@@ -84,6 +93,8 @@
 		"item_ids": [
 			"marked_cards",
 			"scratch_pad",
+			"odds_notebook",
+			"shoe_cut_marker",
 			"card_counters_notes",
 			"side_bet_chart",
 			"basic_strategy_card",
@@ -99,7 +110,7 @@
 		"description": "Baccarat tables plus shared card-note support.",
 		"default_enabled": true,
 		"game_ids": ["baccarat"],
-		"item_ids": ["scratch_pad"]
+		"item_ids": ["scratch_pad", "odds_notebook", "shoe_cut_marker", "marked_cards", "edge_sort_loupe"]
 	},
 	{
 		"id": "roulette_pack",
@@ -107,7 +118,7 @@
 		"description": "Roulette tables and wheel-pressure play.",
 		"default_enabled": true,
 		"game_ids": ["roulette"],
-		"item_ids": []
+		"item_ids": ["foil_sleeve", "chip_slide_wax", "sleeve_rig"]
 	},
 	{
 		"id": "video_poker_pack",
@@ -115,6 +126,6 @@
 		"description": "Video poker machines plus shared card-note support.",
 		"default_enabled": true,
 		"game_ids": ["video_poker"],
-		"item_ids": ["scratch_pad"]
+		"item_ids": ["scratch_pad", "odds_notebook", "holdout_wax", "sleeve_rig"]
 	}
 ]

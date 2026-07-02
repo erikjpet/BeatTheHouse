@@ -8,6 +8,8 @@ const DIRECT_DELTA_KEYS := [
 	"suspicion_delta",
 	"alcohol_intake",
 	"drunk_delta",
+	"pending_drunk_absorption_delta",
+	"drunk_distortion_suppression_turns",
 	"alcoholic_delta",
 	"baseline_luck_delta",
 	"debt_changes",
@@ -25,6 +27,7 @@ const DIRECT_DELTA_KEYS := [
 
 const EFFECT_METADATA_KEYS := [
 	"families",
+	"synergies",
 ]
 
 var definition: Dictionary = {}
@@ -131,6 +134,8 @@ func _result_deltas(context: Dictionary, modifiers: Dictionary, applied: bool) -
 	deltas["suspicion_delta"] = int(effect.get("suspicion_delta", 0))
 	deltas["alcohol_intake"] = int(effect.get("alcohol_intake", 0))
 	deltas["drunk_delta"] = int(effect.get("drunk_delta", 0))
+	deltas["pending_drunk_absorption_delta"] = int(effect.get("pending_drunk_absorption_delta", 0))
+	deltas["drunk_distortion_suppression_turns"] = int(effect.get("drunk_distortion_suppression_turns", 0))
 	deltas["alcoholic_delta"] = int(effect.get("alcoholic_delta", 0))
 	deltas["baseline_luck_delta"] = int(effect.get("baseline_luck_delta", 0))
 	deltas["debt_changes"] = _copy_array(effect.get("debt_changes", []))

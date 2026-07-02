@@ -13,6 +13,8 @@ const LENDERS_PATH := "res://data/debt/lenders.json"
 const SERVICES_PATH := "res://data/services/services.json"
 const TRAVEL_ROUTES_PATH := "res://data/travel/routes.json"
 const PRESTIGE_PURCHASES_PATH := "res://data/prestige/purchases.json"
+const MUSIC_MANIFEST_PATH := "res://data/audio/music_manifest.json"
+const MUSIC_ASSET_ROOT := "res://assets/audio/music"
 
 var environment_archetypes: Array = []
 var games: Array = []
@@ -24,6 +26,7 @@ var lenders: Array = []
 var services: Array = []
 var travel_routes: Array = []
 var prestige_purchases: Array = []
+var music_tracks: Array = []
 var validation_errors: Array = []
 var validation_warnings: Array = []
 var _load_errors: Array = []
@@ -49,6 +52,7 @@ static func future_pack_paths() -> Dictionary:
 		"services": SERVICES_PATH,
 		"travel_routes": TRAVEL_ROUTES_PATH,
 		"prestige_purchases": PRESTIGE_PURCHASES_PATH,
+		"music_tracks": MUSIC_MANIFEST_PATH,
 	}
 
 
@@ -65,6 +69,7 @@ func load() -> Dictionary:
 	services = _load_array(SERVICES_PATH, false)
 	travel_routes = _load_array(TRAVEL_ROUTES_PATH, false)
 	prestige_purchases = _load_array(PRESTIGE_PURCHASES_PATH, false)
+	music_tracks = _load_array(MUSIC_MANIFEST_PATH, false)
 	_rebuild_indexes()
 	validate()
 	return {
@@ -78,6 +83,7 @@ func load() -> Dictionary:
 		"services": services,
 		"travel_routes": travel_routes,
 		"prestige_purchases": prestige_purchases,
+		"music_tracks": music_tracks,
 	}
 
 
@@ -139,7 +145,13 @@ func validate() -> Array:
 		"trigger",
 		"payload",
 	])
-	_validate_collection("challenges", challenges, ["id"])
+	_validate_collection("challenges", challenges, [
+		"id",
+		"title",
+		"description",
+		"modifiers",
+		"completion_flag",
+	])
 	_validate_collection("lenders", lenders, [
 		"id",
 		"display_name",
@@ -173,14 +185,23 @@ func validate() -> Array:
 		"requirements",
 		"effect",
 	])
+	_validate_collection("music_tracks", music_tracks, [
+		"id",
+		"bpm",
+		"bars",
+		"loop_frames",
+		"stems",
+	])
 	_validate_game_definitions()
 	_validate_item_definitions()
 	_validate_content_group_definitions()
+	_validate_challenge_definitions()
 	_validate_event_definitions()
 	_validate_lender_definitions()
 	_validate_service_definitions()
 	_validate_travel_route_definitions()
 	_validate_prestige_purchase_definitions()
+	_validate_music_manifest_definitions()
 	_validate_environment_references()
 	return validation_errors.duplicate(true)
 
@@ -333,6 +354,39 @@ func challenge(challenge_id: String) -> Dictionary:
 	return _lookup("challenges", challenges, challenge_id)
 
 
+# Builds UI-ready challenge options without hardcoding ids in FoundationMain.
+func challenge_options(selected_challenge_id: String = "") -> Array:
+	var result: Array = []
+	for challenge_value in challenges:
+		if typeof(challenge_value) != TYPE_DICTIONARY:
+			continue
+		var challenge_def: Dictionary = challenge_value
+		var challenge_id := str(challenge_def.get("id", "")).strip_edges()
+		if challenge_id.is_empty():
+			continue
+		result.append({
+			"id": challenge_id,
+			"title": str(challenge_def.get("title", challenge_id.capitalize())),
+			"description": str(challenge_def.get("description", "")),
+			"completion_flag": str(challenge_def.get("completion_flag", "")),
+			"modifiers": _as_dict(challenge_def.get("modifiers", {})),
+			"selected": challenge_id == selected_challenge_id,
+		})
+	return result
+
+
+# Converts a challenge definition into the RunState custom-challenge contract.
+func challenge_config_for(challenge_id: String, seed_text: String) -> Dictionary:
+	var challenge_def := challenge(challenge_id)
+	if challenge_def.is_empty():
+		return RunState.standard_challenge(seed_text)
+	var config := RunState.custom_challenge(challenge_id, seed_text, _as_dict(challenge_def.get("modifiers", {})))
+	config["title"] = str(challenge_def.get("title", challenge_id.capitalize()))
+	config["description"] = str(challenge_def.get("description", ""))
+	config["completion_flag"] = str(challenge_def.get("completion_flag", ""))
+	return config
+
+
 # Finds a lender definition by id.
 func lender(lender_id: String) -> Dictionary:
 	return _lookup("lenders", lenders, lender_id)
@@ -351,6 +405,11 @@ func route(route_id: String) -> Dictionary:
 # Finds a prestige purchase definition by id.
 func prestige(purchase_id: String) -> Dictionary:
 	return _lookup("prestige_purchases", prestige_purchases, purchase_id)
+
+
+# Finds an authored music track manifest entry by id.
+func music_track(track_id: String) -> Dictionary:
+	return _lookup("music_tracks", music_tracks, track_id)
 
 
 # Reads one JSON array content pack from disk.
@@ -380,6 +439,7 @@ func _rebuild_indexes() -> void:
 		"services": _index_by_id(services),
 		"travel_routes": _index_by_id(travel_routes),
 		"prestige_purchases": _index_by_id(prestige_purchases),
+		"music_tracks": _index_by_id(music_tracks),
 	}
 
 
@@ -509,23 +569,155 @@ func _validate_content_group_tags(label: String, ids: Variant, valid_ids: Dictio
 	_validate_id_references(label, group_ids, valid_ids)
 
 
+# Validates challenge definitions and the modifier vocabulary consumed by RunState.
+func _validate_challenge_definitions() -> void:
+	var group_ids := _ids_for(content_groups)
+	for challenge_value in challenges:
+		if typeof(challenge_value) != TYPE_DICTIONARY:
+			continue
+		var challenge_def: Dictionary = challenge_value
+		var challenge_id := str(challenge_def.get("id", "")).strip_edges()
+		var completion_flag := str(challenge_def.get("completion_flag", "")).strip_edges()
+		if completion_flag.is_empty():
+			validation_errors.append("challenges %s completion_flag must be non-empty." % challenge_id)
+		if str(challenge_def.get("title", "")).strip_edges().is_empty():
+			validation_errors.append("challenges %s title must be non-empty." % challenge_id)
+		if str(challenge_def.get("description", "")).strip_edges().is_empty():
+			validation_errors.append("challenges %s description must be non-empty." % challenge_id)
+		var modifiers_value: Variant = challenge_def.get("modifiers", {})
+		if typeof(modifiers_value) != TYPE_DICTIONARY:
+			validation_errors.append("challenges %s modifiers must be a dictionary." % challenge_id)
+			continue
+		var modifiers: Dictionary = modifiers_value
+		if modifiers.is_empty():
+			validation_errors.append("challenges %s modifiers must not be empty." % challenge_id)
+			continue
+		_validate_challenge_modifiers(challenge_id, modifiers, group_ids)
+
+
+func _validate_challenge_modifiers(challenge_id: String, modifiers: Dictionary, group_ids: Dictionary) -> void:
+	var known_keys := {
+		"content_groups": true,
+		"starting_bankroll": true,
+		"starting_bankroll_delta": true,
+		"baseline_luck_delta": true,
+		"starting_heat": true,
+		"starting_debt": true,
+		"blocked_service_categories": true,
+		"service_cost_multipliers": true,
+		"disable_cheat_actions": true,
+		"local_risk_decay_percent_delta": true,
+		"local_heat_turn_decay_interval_delta": true,
+		"grand_casino_high_roller_net_delta": true,
+		"grand_casino_high_roller_max_heat_delta": true,
+	}
+	for key_value in modifiers.keys():
+		var key := str(key_value)
+		if not bool(known_keys.get(key, false)):
+			validation_errors.append("challenges %s modifiers has unknown key: %s" % [challenge_id, key])
+	if modifiers.has("content_groups"):
+		_validate_id_references("challenges %s modifiers.content_groups" % challenge_id, modifiers.get("content_groups", []), group_ids)
+	for key in ["starting_bankroll", "starting_bankroll_delta", "baseline_luck_delta", "starting_heat", "local_risk_decay_percent_delta", "local_heat_turn_decay_interval_delta", "grand_casino_high_roller_net_delta", "grand_casino_high_roller_max_heat_delta"]:
+		if modifiers.has(key) and not _variant_is_number(modifiers.get(key, 0)):
+			validation_errors.append("challenges %s modifiers.%s must be numeric." % [challenge_id, key])
+	if modifiers.has("starting_bankroll") and int(modifiers.get("starting_bankroll", 0)) <= 0:
+		validation_errors.append("challenges %s modifiers.starting_bankroll must be positive." % challenge_id)
+	if modifiers.has("starting_heat"):
+		var heat := int(modifiers.get("starting_heat", 0))
+		if heat < 0 or heat > 100:
+			validation_errors.append("challenges %s modifiers.starting_heat must be between 0 and 100." % challenge_id)
+	if modifiers.has("starting_debt"):
+		_validate_challenge_starting_debt(challenge_id, modifiers.get("starting_debt", []))
+	if modifiers.has("blocked_service_categories"):
+		_validate_non_empty_string_array("challenges %s modifiers.blocked_service_categories" % challenge_id, modifiers.get("blocked_service_categories", []))
+	if modifiers.has("service_cost_multipliers"):
+		_validate_challenge_service_cost_multipliers(challenge_id, modifiers.get("service_cost_multipliers", {}))
+	if modifiers.has("disable_cheat_actions") and typeof(modifiers.get("disable_cheat_actions", false)) != TYPE_BOOL:
+		validation_errors.append("challenges %s modifiers.disable_cheat_actions must be a boolean." % challenge_id)
+
+
+func _validate_challenge_starting_debt(challenge_id: String, debts: Variant) -> void:
+	if typeof(debts) != TYPE_ARRAY:
+		validation_errors.append("challenges %s modifiers.starting_debt must be an array." % challenge_id)
+		return
+	for index in range((debts as Array).size()):
+		var debt_value: Variant = (debts as Array)[index]
+		if typeof(debt_value) != TYPE_DICTIONARY:
+			validation_errors.append("challenges %s starting_debt[%d] must be a dictionary." % [challenge_id, index])
+			continue
+		var debt: Dictionary = debt_value
+		if str(debt.get("id", "")).strip_edges().is_empty():
+			validation_errors.append("challenges %s starting_debt[%d] is missing id." % [challenge_id, index])
+		if str(debt.get("lender_id", "")).strip_edges().is_empty():
+			validation_errors.append("challenges %s starting_debt[%d] is missing lender_id." % [challenge_id, index])
+		if int(debt.get("balance", 0)) <= 0:
+			validation_errors.append("challenges %s starting_debt[%d] balance must be positive." % [challenge_id, index])
+
+
+func _validate_challenge_service_cost_multipliers(challenge_id: String, value: Variant) -> void:
+	if typeof(value) != TYPE_DICTIONARY:
+		validation_errors.append("challenges %s modifiers.service_cost_multipliers must be a dictionary." % challenge_id)
+		return
+	var multipliers: Dictionary = value
+	for key_value in multipliers.keys():
+		var key := str(key_value).strip_edges()
+		if key.is_empty():
+			validation_errors.append("challenges %s modifiers.service_cost_multipliers contains an empty category." % challenge_id)
+		var multiplier_value: Variant = multipliers.get(key_value, 1.0)
+		if not _variant_is_number(multiplier_value):
+			validation_errors.append("challenges %s service cost multiplier %s must be numeric." % [challenge_id, key])
+			continue
+		if float(multiplier_value) < 0.0:
+			validation_errors.append("challenges %s service cost multiplier %s must be non-negative." % [challenge_id, key])
+
+
+func _validate_non_empty_string_array(label: String, value: Variant) -> void:
+	if typeof(value) != TYPE_ARRAY:
+		validation_errors.append("%s must be an array." % label)
+		return
+	for index in range((value as Array).size()):
+		var text := str((value as Array)[index]).strip_edges()
+		if text.is_empty():
+			validation_errors.append("%s[%d] must be non-empty." % [label, index])
+
+
 # Validates event choice payloads and route references inside consequences.
 func _validate_event_definitions() -> void:
 	var archetype_ids := _ids_for(environment_archetypes)
+	var event_ids := _ids_for(events)
+	var event_modes := {}
+	for event_value in events:
+		if typeof(event_value) == TYPE_DICTIONARY:
+			var event_data: Dictionary = event_value
+			var mode_id := str(event_data.get("id", "")).strip_edges()
+			if not mode_id.is_empty():
+				event_modes[mode_id] = str(event_data.get("interaction_mode", "")).strip_edges()
 	for event_def in events:
 		if typeof(event_def) != TYPE_DICTIONARY:
 			continue
 		var event_id := str(event_def.get("id", "")).strip_edges()
 		_validate_art_asset("events %s" % event_id, event_def)
+		var interaction_mode := str(event_def.get("interaction_mode", "")).strip_edges()
+		if interaction_mode.is_empty():
+			validation_errors.append("events %s is missing interaction_mode." % event_id)
+		elif not ["interactable", "triggered"].has(interaction_mode):
+			validation_errors.append("events %s has unknown interaction_mode: %s" % [event_id, interaction_mode])
 		var icon_key := str(event_def.get("icon_key", "")).strip_edges()
-		if icon_key.is_empty():
-			validation_errors.append("events %s is missing icon_key." % event_id)
-		elif icon_key == "event":
-			validation_errors.append("events %s must not use the generic event icon_key." % event_id)
-		if str(event_def.get("environment_prop", "")).strip_edges().is_empty():
-			validation_errors.append("events %s is missing environment_prop." % event_id)
-		if str(event_def.get("start_summary", "")).strip_edges().is_empty():
-			validation_errors.append("events %s is missing start_summary." % event_id)
+		var environment_prop := str(event_def.get("environment_prop", "")).strip_edges()
+		if interaction_mode == "triggered":
+			if not icon_key.is_empty():
+				validation_errors.append("events %s is triggered and must not declare icon_key." % event_id)
+			if not environment_prop.is_empty():
+				validation_errors.append("events %s is triggered and must not declare environment_prop." % event_id)
+		else:
+			if icon_key.is_empty():
+				validation_errors.append("events %s is missing icon_key." % event_id)
+			elif icon_key == "event":
+				validation_errors.append("events %s must not use the generic event icon_key." % event_id)
+			if environment_prop.is_empty():
+				validation_errors.append("events %s is missing environment_prop." % event_id)
+			if str(event_def.get("start_summary", "")).strip_edges().is_empty():
+				validation_errors.append("events %s is missing start_summary." % event_id)
 		var payload: Variant = event_def.get("payload", {})
 		if typeof(payload) != TYPE_DICTIONARY:
 			validation_errors.append("events %s payload must be a dictionary." % event_id)
@@ -552,6 +744,22 @@ func _validate_event_definitions() -> void:
 			var consequences: Dictionary = _as_dict(choice.get("consequences", {}))
 			_validate_id_references("events %s choice %s set_next_archetypes" % [event_id, choice_id], consequences.get("set_next_archetypes", []), archetype_ids)
 			_validate_id_references("events %s choice %s add_next_archetypes" % [event_id, choice_id], consequences.get("add_next_archetypes", []), archetype_ids)
+			var trigger_event := _as_dict(consequences.get("trigger_event", {}))
+			if not trigger_event.is_empty():
+				var trigger_event_id := str(trigger_event.get("event_id", "")).strip_edges()
+				if trigger_event_id.is_empty():
+					validation_errors.append("events %s choice %s trigger_event is missing event_id." % [event_id, choice_id])
+				elif not bool(event_ids.get(trigger_event_id, false)):
+					validation_errors.append("events %s choice %s trigger_event references unknown event: %s" % [event_id, choice_id, trigger_event_id])
+				elif str(event_modes.get(trigger_event_id, "")) != "triggered":
+					validation_errors.append("events %s choice %s trigger_event target must be triggered: %s" % [event_id, choice_id, trigger_event_id])
+				var chance_value: Variant = trigger_event.get("chance", 1.0)
+				if not _variant_is_number(chance_value):
+					validation_errors.append("events %s choice %s trigger_event chance must be numeric." % [event_id, choice_id])
+				else:
+					var chance := float(chance_value)
+					if chance < 0.0 or chance > 1.0:
+						validation_errors.append("events %s choice %s trigger_event chance must be between 0 and 1." % [event_id, choice_id])
 
 
 # Validates replaceable art metadata used by environment object presentation.
@@ -618,6 +826,17 @@ func _validate_travel_route_definitions() -> void:
 			var risk_decay := int(route_def.get("risk_decay", 0))
 			if risk_decay < 0 or risk_decay > 100:
 				validation_errors.append("travel_routes %s risk_decay must be between 0 and 100." % route_id)
+		if route_def.has("risk_event"):
+			var risk_event: Variant = route_def.get("risk_event", {})
+			if typeof(risk_event) != TYPE_DICTIONARY:
+				validation_errors.append("travel_routes %s risk_event must be a dictionary." % route_id)
+			else:
+				var risk_event_data: Dictionary = risk_event
+				var chance := int(risk_event_data.get("chance_percent", 0))
+				if chance < 0 or chance > 100:
+					validation_errors.append("travel_routes %s risk_event chance_percent must be between 0 and 100." % route_id)
+				if str(risk_event_data.get("id", "")).strip_edges().is_empty():
+					validation_errors.append("travel_routes %s risk_event is missing id." % route_id)
 		if route_def.has("requires_travel_count_min") and int(route_def.get("requires_travel_count_min", 0)) < 0:
 			validation_errors.append("travel_routes %s requires_travel_count_min must be non-negative." % route_id)
 		if route_def.has("hide_until_travel_count_met") and typeof(route_def.get("hide_until_travel_count_met", false)) != TYPE_BOOL:
@@ -641,6 +860,78 @@ func _validate_prestige_purchase_definitions() -> void:
 			validation_errors.append("prestige_purchases %s requirements must be a dictionary." % purchase_id)
 		if typeof(purchase_def.get("effect", {})) != TYPE_DICTIONARY:
 			validation_errors.append("prestige_purchases %s effect must be a dictionary." % purchase_id)
+
+
+# Validates authored music stem manifests without requiring every venue to use one.
+func _validate_music_manifest_definitions() -> void:
+	var allowed_roles := {
+		"pad": true,
+		"bass": true,
+		"bass_dark": true,
+		"lead": true,
+		"drums_low": true,
+		"drums_high": true,
+		"drums_high_double": true,
+		"tension": true,
+		"texture": true,
+	}
+	for track_value in music_tracks:
+		if typeof(track_value) != TYPE_DICTIONARY:
+			continue
+		var track: Dictionary = track_value
+		var track_id := str(track.get("id", "")).strip_edges()
+		if float(track.get("bpm", 0.0)) <= 0.0:
+			validation_errors.append("music_tracks %s bpm must be positive." % track_id)
+		if int(track.get("bars", 0)) <= 0:
+			validation_errors.append("music_tracks %s bars must be positive." % track_id)
+		if int(track.get("loop_frames", 0)) <= 0:
+			validation_errors.append("music_tracks %s loop_frames must be positive." % track_id)
+		var stems_value: Variant = track.get("stems", {})
+		if typeof(stems_value) != TYPE_DICTIONARY:
+			validation_errors.append("music_tracks %s stems must be a dictionary." % track_id)
+			continue
+		var stems: Dictionary = stems_value
+		if stems.is_empty():
+			validation_errors.append("music_tracks %s must declare at least one stem." % track_id)
+		for role_value in stems.keys():
+			var role := str(role_value).strip_edges()
+			if not bool(allowed_roles.get(role, false)):
+				validation_errors.append("music_tracks %s has unknown stem role: %s." % [track_id, role])
+				continue
+			_validate_music_asset_file("music_tracks %s stem %s" % [track_id, role], track_id, _music_file_name(stems.get(role_value)))
+		var stingers_value: Variant = track.get("stingers", {})
+		if typeof(stingers_value) == TYPE_DICTIONARY:
+			var stingers: Dictionary = stingers_value
+			for cue_value in stingers.keys():
+				var cue_id := str(cue_value).strip_edges()
+				if cue_id.is_empty():
+					validation_errors.append("music_tracks %s contains an empty stinger cue." % track_id)
+					continue
+				_validate_music_asset_file("music_tracks %s stinger %s" % [track_id, cue_id], track_id, _music_file_name(stingers.get(cue_value)))
+		elif typeof(stingers_value) != TYPE_NIL:
+			validation_errors.append("music_tracks %s stingers must be a dictionary when present." % track_id)
+
+
+func _validate_music_asset_file(label: String, track_id: String, filename: String) -> void:
+	if filename.is_empty():
+		validation_errors.append("%s is missing file." % label)
+		return
+	if filename.find("..") >= 0 or filename.find("/") >= 0 or filename.find("\\") >= 0:
+		validation_errors.append("%s file must stay inside its track folder." % label)
+		return
+	var lowered := filename.to_lower()
+	if not lowered.ends_with(".wav") and not lowered.ends_with(".ogg"):
+		validation_errors.append("%s file must be WAV or OGG: %s." % [label, filename])
+		return
+	var path := "%s/%s/%s" % [MUSIC_ASSET_ROOT, track_id, filename]
+	if not FileAccess.file_exists(path):
+		validation_errors.append("%s references missing file: %s." % [label, path])
+
+
+static func _music_file_name(value: Variant) -> String:
+	if typeof(value) == TYPE_DICTIONARY:
+		return str((value as Dictionary).get("file", "")).strip_edges()
+	return str(value).strip_edges()
 
 
 # Validates references from environments into active foundation packs.
@@ -667,6 +958,10 @@ func _validate_environment_references() -> void:
 		if not route_ids.is_empty():
 			_validate_id_references("environment %s travel_hooks route metadata" % archetype_id, archetype.get("travel_hooks", []), route_ids)
 		_validate_id_references("environment %s next_archetypes" % archetype_id, archetype.get("next_archetypes", []), archetype_ids)
+		var music_profile: Dictionary = _as_dict(archetype.get("music_profile", {}))
+		var authored_track_id := str(music_profile.get("authored_track_id", "")).strip_edges()
+		if not authored_track_id.is_empty() and music_track(authored_track_id).is_empty():
+			validation_warnings.append("environment %s references unavailable authored_track_id %s; procedural music will be used." % [archetype_id, authored_track_id])
 
 
 func _validate_required_game_pool(archetype_id: String, archetype: Dictionary) -> void:
@@ -731,6 +1026,10 @@ static func _definition_enabled_for_groups(definition: Dictionary, enabled_group
 		if bool(enabled.get(group_id, false)):
 			return true
 	return false
+
+
+static func _variant_is_number(value: Variant) -> bool:
+	return typeof(value) == TYPE_INT or typeof(value) == TYPE_FLOAT
 
 
 # Safely returns dictionary values.

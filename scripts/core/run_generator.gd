@@ -14,6 +14,8 @@ func _init(p_library: ContentLibrary) -> void:
 # Builds and assigns the next environment for a run.
 func next_environment(run_state: RunState, target_archetype_id: String = "") -> EnvironmentInstance:
 	var rng := run_state.create_rng()
+	if run_state.has_world_map() or run_state.current_environment.is_empty():
+		return _next_world_environment(run_state, target_archetype_id, rng)
 	var depth := run_state.environment_history.size()
 	if not run_state.current_environment.is_empty():
 		depth += 1
@@ -25,6 +27,110 @@ func next_environment(run_state: RunState, target_archetype_id: String = "") -> 
 	run_state.save_rng(rng)
 	run_state.set_environment(environment.to_dict())
 	return environment
+
+
+# Builds the next environment from a cloned run so route previews do not mutate state.
+func preview_environment(run_state: RunState, target_archetype_id: String = "") -> Dictionary:
+	if run_state == null:
+		return {}
+	var preview_state := RunState.new()
+	preview_state.from_dict(run_state.to_dict())
+	var environment := next_environment(preview_state, target_archetype_id)
+	return environment.to_dict()
+
+
+func world_route_for_target(run_state: RunState, target_archetype_id: String) -> Dictionary:
+	if run_state == null or not run_state.has_world_map():
+		return library.route(target_archetype_id) if library != null else {}
+	var map := WorldMap.new(library)
+	return map.route_for_target(run_state.world_map, run_state.current_world_node_id(), target_archetype_id)
+
+
+func world_map_snapshot(run_state: RunState, selected_id: String = "") -> Dictionary:
+	if run_state == null:
+		return {}
+	return WorldMap.snapshot(run_state.world_map, selected_id)
+
+
+func _next_world_environment(run_state: RunState, target_archetype_id: String, rng: RngStream) -> EnvironmentInstance:
+	var map := WorldMap.new(library)
+	if not run_state.has_world_map():
+		run_state.set_world_map(map.build(run_state, rng.fork("world_map")))
+	if run_state.has_world_map() and not run_state.current_environment.is_empty():
+		run_state.store_current_world_node_environment()
+	var map_data := run_state.world_map
+	var target_id := target_archetype_id.strip_edges()
+	if run_state.current_environment.is_empty() and target_id.is_empty():
+		target_id = WorldMap.current_node_id(map_data)
+	elif not target_id.is_empty() and not WorldMap.are_neighbors(map_data, run_state.current_world_node_id(), target_id):
+		target_id = _fallback_world_neighbor(map_data, run_state.current_world_node_id())
+	elif target_id.is_empty():
+		target_id = _fallback_world_neighbor(map_data, run_state.current_world_node_id())
+	if target_id.is_empty():
+		return _legacy_next_environment(run_state, target_archetype_id, rng)
+	var node := WorldMap.node_by_id(map_data, target_id)
+	if node.is_empty():
+		return _legacy_next_environment(run_state, target_archetype_id, rng)
+	var environment_data := _world_environment_data_for_node(run_state, map_data, node, rng)
+	run_state.set_environment(environment_data)
+	run_state.enter_world_node(target_id, run_state.current_environment)
+	run_state.save_rng(rng)
+	return EnvironmentInstance.from_dict(run_state.current_environment)
+
+
+func _legacy_next_environment(run_state: RunState, target_archetype_id: String, rng: RngStream) -> EnvironmentInstance:
+	var depth := run_state.environment_history.size()
+	if not run_state.current_environment.is_empty():
+		depth += 1
+	var archetype := _pick_archetype(run_state, depth, rng, target_archetype_id)
+	var environment := EnvironmentInstance.from_archetype(archetype, depth, rng, library, run_state.challenge_config)
+	environment.game_states = _generated_game_states(run_state, environment.to_dict(), rng)
+	var environment_data := environment.to_dict()
+	environment.layout = EnvironmentInstance.ensure_generated_layout(environment_data)
+	run_state.save_rng(rng)
+	run_state.set_environment(environment.to_dict())
+	return environment
+
+
+func _world_environment_data_for_node(run_state: RunState, map_data: Dictionary, node: Dictionary, rng: RngStream) -> Dictionary:
+	var node_id := str(node.get("id", "")).strip_edges()
+	var stored_environment: Dictionary = node.get("environment", {}) if typeof(node.get("environment", {})) == TYPE_DICTIONARY else {}
+	if not stored_environment.is_empty() and str(node.get("state", "")) == WorldMap.STATE_VISITED:
+		var restored := stored_environment.duplicate(true)
+		_apply_world_travel_targets(restored, map_data, node_id)
+		restored["world_node_id"] = node_id
+		restored["layout"] = EnvironmentInstance.ensure_generated_layout(restored)
+		return restored
+	var depth := run_state.environment_history.size()
+	if not run_state.current_environment.is_empty():
+		depth += 1
+	var archetype := _archetype_by_id(node_id)
+	if archetype.is_empty():
+		archetype = _pick_archetype(run_state, depth, rng, node_id)
+	var environment := EnvironmentInstance.from_archetype(archetype, depth, rng, library, run_state.challenge_config)
+	environment.game_states = _generated_game_states(run_state, environment.to_dict(), rng)
+	var environment_data := environment.to_dict()
+	environment_data["world_node_id"] = node_id
+	_apply_world_travel_targets(environment_data, map_data, node_id)
+	environment_data["layout"] = EnvironmentInstance.ensure_generated_layout(environment_data)
+	return environment_data
+
+
+func _apply_world_travel_targets(environment_data: Dictionary, map_data: Dictionary, node_id: String) -> void:
+	var targets := WorldMap.neighbor_ids(map_data, node_id, false)
+	environment_data["next_archetypes"] = targets.duplicate(true)
+	environment_data["travel_hooks"] = targets.duplicate(true)
+	environment_data["world_map_travel"] = true
+
+
+func _fallback_world_neighbor(map_data: Dictionary, source_id: String) -> String:
+	var visible_neighbors := WorldMap.neighbor_ids(map_data, source_id, true)
+	if not visible_neighbors.is_empty():
+		return str(visible_neighbors[0])
+	var all_neighbors := WorldMap.neighbor_ids(map_data, source_id, false)
+	if not all_neighbors.is_empty():
+		return str(all_neighbors[0])
+	return ""
 
 
 # Picks the starting, routed, or tier fallback archetype.

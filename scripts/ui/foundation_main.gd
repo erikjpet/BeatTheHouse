@@ -52,10 +52,13 @@ const ProfileInventoryScript := preload("res://scripts/core/profile_inventory.gd
 const SettingsMenuScript := preload("res://scripts/ui/settings_menu.gd")
 const PixelSceneCanvasScript := preload("res://scripts/ui/pixel_scene_canvas.gd")
 const GameSurfaceCanvasScript := preload("res://scripts/ui/game_surface_canvas.gd")
+const WorldMapCanvasScript := preload("res://scripts/ui/world_map_canvas.gd")
 const SfxPlayerScript := preload("res://scripts/ui/sfx_player.gd")
 const ProceduralMusicPlayerScript := preload("res://scripts/ui/procedural_music_player.gd")
 const RunTerminalEvaluatorScript := preload("res://scripts/core/run_terminal_evaluator.gd")
 const RunActionServiceScript := preload("res://scripts/core/run_action_service.gd")
+const ItemEffectScript := preload("res://scripts/core/item_effect.gd")
+const WorldMapScript := preload("res://scripts/core/world_map.gd")
 
 var user_settings: UserSettings
 var profile_inventory: ProfileInventory
@@ -155,6 +158,12 @@ var content_group_status_label: Label
 var content_group_list: GridContainer
 var content_group_toggles: Dictionary = {}
 var selected_content_group_ids: Array = []
+var challenge_select_button: Button
+var challenge_panel: PanelContainer
+var challenge_status_label: Label
+var challenge_list: VBoxContainer
+var challenge_buttons: Dictionary = {}
+var selected_challenge_id: String = ""
 var start_menu_action_controls: Array[Control] = []
 var start_status_label: Label
 var new_run_button: Button
@@ -185,6 +194,8 @@ var event_choice_popup_panel: PanelContainer
 var event_choice_popup_title_label: Label
 var event_choice_popup_summary_label: Label
 var event_choice_popup_choices_list: VBoxContainer
+var conclusion_animation_overlay: Control
+var conclusion_animation_snapshot: Dictionary = {}
 var run_inventory_overlay: Control
 var run_inventory_panel: PanelContainer
 var run_inventory_title_label: Label
@@ -198,6 +209,13 @@ var travel_transition_overlay: Control
 var travel_transition_panel: PanelContainer
 var travel_transition_title_label: Label
 var travel_transition_body_label: Label
+var world_map_overlay: Control
+var world_map_panel: PanelContainer
+var world_map_nodes_layer: Control
+var world_map_title_label: Label
+var world_map_detail_label: Label
+var world_map_confirm_button: Button
+var selected_world_map_node_id: String = ""
 var run_hud_panel: Panel
 var visual_panel_container: PanelContainer
 var title_label: Label
@@ -268,6 +286,7 @@ func start_foundation_run(seed_text: String = DEFAULT_SEED, challenge_config: Di
 	pending_all_in_result_terminal_check = false
 	last_environment_runtime_result = {}
 	close_content_group_config()
+	close_challenge_selection()
 	_hide_run_menu()
 	_hide_run_journal_popup()
 	_hide_travel_transition()
@@ -743,14 +762,17 @@ func select_travel_option(target_id: String) -> bool:
 	selected_action_category = ACTION_CATEGORY_TRAVEL
 	_set_current_screen(SCREEN_TRAVEL)
 	var choice_target_id := str(choice.get("id", ""))
-	focus_interactable_object("travel:%s" % choice_target_id)
+	focus_interactable_object("travel:leave")
+	selected_world_map_node_id = choice_target_id
 	if not bool(choice.get("enabled", true)):
 		_show_message(str(choice.get("disabled_reason", "That route is not available right now.")))
+		_refresh_world_map_overlay()
 		_refresh()
 		return false
 	selected_travel_target_id = choice_target_id
 	selected_travel_label = str(choice.get("label", selected_travel_target_id))
 	_show_message("Selected travel: %s." % selected_travel_label)
+	_refresh_world_map_overlay()
 	_refresh()
 	return true
 
@@ -776,6 +798,79 @@ func confirm_selected_travel() -> void:
 		_refresh()
 		return
 	_travel_to(str(choice.get("id", "")), str(choice.get("label", choice.get("id", ""))), choice)
+
+
+func open_world_map() -> bool:
+	if run_state == null:
+		return false
+	selected_action_category = ACTION_CATEGORY_TRAVEL
+	_set_current_screen(SCREEN_TRAVEL)
+	if selected_world_map_node_id.is_empty():
+		var first_choice := _first_enabled_travel_choice()
+		if first_choice.is_empty():
+			first_choice = _first_disabled_travel_choice()
+		selected_world_map_node_id = str(first_choice.get("id", ""))
+	if world_map_overlay != null:
+		world_map_overlay.visible = true
+		world_map_overlay.move_to_front()
+	_refresh_world_map_overlay()
+	call_deferred("_refresh_world_map_overlay")
+	_refresh()
+	return true
+
+
+func close_world_map() -> void:
+	if world_map_overlay != null:
+		world_map_overlay.visible = false
+	if current_screen == SCREEN_TRAVEL:
+		_set_current_screen(SCREEN_ENVIRONMENT)
+	_refresh()
+
+
+func select_world_map_node(node_id: String) -> bool:
+	var clean_id := node_id.strip_edges()
+	if clean_id.is_empty():
+		return false
+	selected_world_map_node_id = clean_id
+	var choice := _travel_choice(clean_id)
+	if choice.is_empty():
+		selected_travel_target_id = ""
+		selected_travel_label = ""
+		_show_message("No direct route from here.")
+		_refresh_world_map_overlay()
+		return false
+	selected_travel_target_id = clean_id if bool(choice.get("enabled", true)) else ""
+	selected_travel_label = str(choice.get("label", clean_id)) if bool(choice.get("enabled", true)) else ""
+	if bool(choice.get("enabled", true)):
+		_show_message("Selected travel: %s." % str(choice.get("label", clean_id)))
+	else:
+		_show_message(str(choice.get("disabled_reason", "That route is not available right now.")))
+	_refresh_world_map_overlay()
+	_refresh()
+	return bool(choice.get("enabled", true))
+
+
+func confirm_world_map_travel() -> void:
+	if _event_choice_popup_is_visible():
+		_show_message("Choose a response before traveling.")
+		return
+	if selected_world_map_node_id.is_empty():
+		_show_message("Select a map stop first.")
+		return
+	var choice := _travel_choice(selected_world_map_node_id)
+	if choice.is_empty():
+		_show_message("No direct route from here.")
+		_refresh_world_map_overlay()
+		return
+	if not bool(choice.get("enabled", true)):
+		_show_message(str(choice.get("disabled_reason", "That route is not available right now.")))
+		_refresh_world_map_overlay()
+		return
+	selected_travel_target_id = str(choice.get("id", ""))
+	selected_travel_label = str(choice.get("label", selected_travel_target_id))
+	if world_map_overlay != null:
+		world_map_overlay.visible = false
+	confirm_selected_travel()
 
 
 # Selects an event choice without mutating simulation state.
@@ -815,11 +910,21 @@ func resolve_event_choice(event_id: String, choice_id: String) -> void:
 		_show_message("Event definition is missing.")
 		return
 	var event_module := EventModule.new()
-	event_module.setup(event_definition)
-	if not event_module.can_trigger(run_state, run_state.current_environment):
+	event_module.setup(event_definition, library)
+	var event_context := _pending_event_trigger_context(event_id)
+	var event_environment := _event_environment_for_context(event_context)
+	if not event_module.can_trigger(run_state, event_environment, event_context):
 		_show_message("Event cannot trigger right now.")
 		return
-	var result := event_module.resolve(run_state, run_state.current_environment, choice_id)
+	var popup_rect := event_choice_popup_panel.get_global_rect() if event_choice_popup_panel != null else Rect2()
+	var had_event_popup := bool(pending_event_choice_popup_snapshot.get("visible", false))
+	var was_triggered_popup := str(pending_event_choice_popup_snapshot.get("popup_type", "")) == "triggered_event"
+	var result := event_module.resolve(run_state, event_environment, choice_id)
+	_start_conclusion_animation(result, popup_rect)
+	if was_triggered_popup and run_state != null:
+		run_state.complete_triggered_event_resolution(event_id)
+	if had_event_popup and run_state != null:
+		run_state.event_cadence_note_modal_closed()
 	_hide_event_choice_popup()
 	_hide_run_inventory_popup()
 	_hide_run_journal_popup()
@@ -828,6 +933,220 @@ func resolve_event_choice(event_id: String, choice_id: String) -> void:
 	_show_message(str(result.get("message", "")))
 	_autosave_foundation_run("Autosaved.")
 	_refresh()
+
+
+func _apply_post_action_environment_interrupt(source: String) -> bool:
+	if run_state == null or library == null or run_state.is_terminal():
+		return false
+	if _apply_forced_environment_travel(source):
+		return true
+	return _maybe_trigger_unavoidable_event(source)
+
+
+func _apply_forced_environment_travel(_source: String) -> bool:
+	var closing_actions := int(run_state.narrative_flags.get("health_inspector_closing_actions", 0))
+	if closing_actions <= 0:
+		return false
+	closing_actions -= 1
+	run_state.narrative_flags["health_inspector_closing_actions"] = closing_actions
+	if closing_actions > 0:
+		return false
+	var choices := _travel_choice_view_list()
+	for choice_value in choices:
+		if typeof(choice_value) != TYPE_DICTIONARY:
+			continue
+		var choice: Dictionary = choice_value
+		if bool(choice.get("enabled", false)):
+			run_state.narrative_flags["health_inspector_forced_travel"] = true
+			_show_message("The Health Inspector shuts the room down. You have to move.")
+			_travel_to(str(choice.get("id", "")), str(choice.get("label", choice.get("id", ""))), choice)
+			return true
+	run_state.narrative_flags["health_inspector_closing_actions"] = 1
+	return false
+
+
+func _maybe_trigger_unavoidable_event(source: String) -> bool:
+	if _event_choice_popup_is_visible() or run_state == null or library == null:
+		return false
+	if _show_next_pending_triggered_event():
+		return true
+	var context := _event_action_trigger_context(source)
+	if _enqueue_triggered_events_for_context(source, context, run_state.current_environment):
+		_autosave_foundation_run("Autosaved.")
+		return _show_next_pending_triggered_event()
+	return false
+
+
+func _enqueue_triggered_events_for_context(source: String, context: Dictionary, environment: Dictionary) -> bool:
+	if run_state == null or library == null:
+		return false
+	var candidates: Array = []
+	var enqueued := false
+	var cadence_rng := run_state.create_event_cadence_rng()
+	for event_definition_value in library.events:
+		if typeof(event_definition_value) != TYPE_DICTIONARY:
+			continue
+		var event_definition: Dictionary = event_definition_value
+		if str(event_definition.get("interaction_mode", "interactable")) != "triggered":
+			continue
+		var event_id := str(event_definition.get("id", ""))
+		var trigger: Dictionary = event_definition.get("trigger", {}) if typeof(event_definition.get("trigger", {})) == TYPE_DICTIONARY else {}
+		var trigger_type := str(trigger.get("type", "manual"))
+		var event_module := EventModule.new()
+		event_module.setup(event_definition, library)
+		if not event_module.can_trigger(run_state, environment, context):
+			continue
+		if not run_state.event_cadence_allows_world_event(event_id, trigger_type, source, event_definition):
+			continue
+		if trigger_type == "random":
+			candidates.append({"id": event_id, "trigger": trigger, "event": event_definition})
+		elif ["timed", "travel"].has(trigger_type):
+			if run_state.enqueue_triggered_event(event_id, source, _event_context_with_environment(context, environment)):
+				run_state.event_cadence_note_event_enqueued(event_id, not run_state.event_cadence_event_bypasses_budget(event_id, trigger_type, source, event_definition))
+				enqueued = true
+				break
+	if enqueued:
+		candidates.clear()
+	if not candidates.is_empty():
+		var rolled: Array = []
+		for candidate_value in candidates:
+			var candidate: Dictionary = candidate_value
+			var trigger: Dictionary = candidate.get("trigger", {})
+			var chance := clampi(int(trigger.get("chance_percent", 100)), 0, 100)
+			var roll := cadence_rng.randi_range(1, 100)
+			if roll <= chance:
+				rolled.append(candidate)
+		if not rolled.is_empty():
+			var picked := _weighted_triggered_event_pick(rolled, cadence_rng)
+			var picked_id := str(picked.get("id", ""))
+			var picked_event: Dictionary = picked.get("event", {}) if typeof(picked.get("event", {})) == TYPE_DICTIONARY else {}
+			if run_state.enqueue_triggered_event(picked_id, source, _event_context_with_environment(context, environment)):
+				run_state.event_cadence_note_event_enqueued(picked_id, not run_state.event_cadence_event_bypasses_budget(picked_id, "random", source, picked_event))
+				enqueued = true
+	run_state.save_event_cadence_rng(cadence_rng)
+	return enqueued
+
+
+func _weighted_triggered_event_pick(candidates: Array, rng: RngStream) -> Dictionary:
+	if candidates.is_empty():
+		return {}
+	var total_weight := 0
+	for candidate_value in candidates:
+		if typeof(candidate_value) != TYPE_DICTIONARY:
+			continue
+		var candidate: Dictionary = candidate_value
+		total_weight += maxi(1, run_state.event_cadence_weight_for_event(str(candidate.get("id", ""))))
+	if total_weight <= 0:
+		return (candidates[0] as Dictionary).duplicate(true)
+	var roll := rng.randi_range(1, total_weight)
+	var cursor := 0
+	for candidate_value in candidates:
+		if typeof(candidate_value) != TYPE_DICTIONARY:
+			continue
+		var candidate: Dictionary = candidate_value
+		cursor += maxi(1, run_state.event_cadence_weight_for_event(str(candidate.get("id", ""))))
+		if roll <= cursor:
+			return candidate
+	return (candidates[candidates.size() - 1] as Dictionary).duplicate(true)
+
+
+func _event_context_with_environment(context: Dictionary, environment: Dictionary) -> Dictionary:
+	var queued_context := context.duplicate(true)
+	queued_context["environment_snapshot"] = environment.duplicate(true)
+	return queued_context
+
+
+func _event_environment_for_context(context: Dictionary) -> Dictionary:
+	if typeof(context.get("environment_snapshot", {})) == TYPE_DICTIONARY:
+		var environment: Dictionary = context.get("environment_snapshot", {}) as Dictionary
+		if not environment.is_empty():
+			return environment.duplicate(true)
+	return run_state.current_environment if run_state != null else {}
+
+
+func _show_next_pending_triggered_event() -> bool:
+	if _event_choice_popup_is_visible() or run_state == null or library == null:
+		return false
+	if not run_state.event_cadence_can_open_modal():
+		return false
+	var entry := run_state.active_triggered_event.duplicate(true)
+	if entry.is_empty():
+		entry = run_state.next_pending_triggered_event()
+		if entry.is_empty():
+			return false
+		entry = run_state.begin_triggered_event_resolution(entry)
+	if entry.is_empty():
+		return false
+	return _show_triggered_event_popup(entry)
+
+
+func _show_triggered_event_popup(entry: Dictionary) -> bool:
+	var event_id := str(entry.get("event_id", ""))
+	var event_definition := library.event(event_id)
+	if event_definition.is_empty() or event_choice_popup_overlay == null or event_choice_popup_choices_list == null:
+		return false
+	var event_module := EventModule.new()
+	event_module.setup(event_definition, library)
+	var context: Dictionary = entry.get("context", {}) if typeof(entry.get("context", {})) == TYPE_DICTIONARY else {}
+	var event_environment := _event_environment_for_context(context)
+	if not event_module.can_trigger(run_state, event_environment, context):
+		run_state.complete_triggered_event_resolution(event_id)
+		return false
+	var event_option := _eligible_event_option_with_context(event_id, context, event_environment)
+	if event_option.is_empty():
+		run_state.complete_triggered_event_resolution(event_id)
+		return false
+	pending_event_choice_popup_event_id = event_id
+	pending_event_choice_popup_focus_choice_id = ""
+	pending_event_choice_popup_snapshot = {
+		"visible": true,
+		"blocking": true,
+		"popup_type": "triggered_event",
+		"interaction_kind": "event",
+		"dismissible": false,
+		"event_id": event_id,
+		"trigger_context": context,
+		"summary": str(event_option.get("summary", "")),
+		"choices": _copy_array(event_option.get("choices", [])),
+	}
+	if event_choice_popup_title_label != null:
+		event_choice_popup_title_label.text = str(event_option.get("display_name", event_id))
+	if event_choice_popup_summary_label != null:
+		event_choice_popup_summary_label.text = str(event_option.get("summary", "Something interrupts the room."))
+	_clear(event_choice_popup_choices_list)
+	for choice_value in _copy_array(event_option.get("choices", [])):
+		if typeof(choice_value) != TYPE_DICTIONARY:
+			continue
+		var choice: Dictionary = choice_value
+		_add_wager_confirmation_card(
+			str(choice.get("label", choice.get("id", ""))),
+			str(choice.get("text", "")),
+			str(choice.get("consequence_summary", "")),
+			Callable(self, "resolve_event_choice").bind(event_id, str(choice.get("id", ""))),
+			false
+		)
+	event_choice_popup_overlay.visible = true
+	event_choice_popup_overlay.move_to_front()
+	_position_event_choice_popup()
+	call_deferred("_position_event_choice_popup")
+	return true
+
+
+func _event_action_trigger_context(source: String) -> Dictionary:
+	return {
+		"trigger": "action",
+		"type": "action",
+		"source": source,
+		"turns": int(run_state.current_environment.get("turns", 0)) if run_state != null else 0,
+	}
+
+
+func _pending_event_trigger_context(event_id: String) -> Dictionary:
+	var popup_type := str(pending_event_choice_popup_snapshot.get("popup_type", ""))
+	if ["triggered_event", "unavoidable_event"].has(popup_type) and str(pending_event_choice_popup_snapshot.get("event_id", "")) == event_id:
+		var context: Dictionary = pending_event_choice_popup_snapshot.get("trigger_context", {}) if typeof(pending_event_choice_popup_snapshot.get("trigger_context", {})) == TYPE_DICTIONARY else {}
+		return context.duplicate(true)
+	return {}
 
 
 # Selects an item offer without mutating simulation state.
@@ -870,6 +1189,9 @@ func apply_item_offer(item_id: String) -> bool:
 	_set_current_screen(SCREEN_RESULT)
 	_show_message(str(result.get("message", "")))
 	_autosave_foundation_run("Autosaved.")
+	if _apply_post_action_environment_interrupt("item_purchase"):
+		_refresh()
+		return true
 	_refresh()
 	return true
 
@@ -897,8 +1219,8 @@ func close_run_journal() -> void:
 
 
 func use_active_item_slot() -> bool:
-	if run_state == null or current_game == null:
-		_show_message("Active items can be used from a game surface.")
+	if run_state == null:
+		_show_message("No active run.")
 		return false
 	_refresh_run_action_service()
 	var item := run_action_service.active_item_detail()
@@ -943,14 +1265,20 @@ func cancel_pending_active_item_use() -> void:
 
 
 func _use_active_item(item_id: String) -> bool:
-	if run_state == null or current_game == null:
-		_show_message("Active items can be used from a game surface.")
+	if run_state == null:
+		_show_message("No active run.")
 		return false
 	_refresh_run_action_service()
 	var detail := run_action_service.inventory_item_detail(item_id)
 	if detail.is_empty() or not bool(detail.get("active_item", false)):
 		_show_message("That active item is no longer available.")
 		_refresh()
+		return false
+	var active_target := str(detail.get("active_target", ""))
+	if active_target == "global" or active_target == "run":
+		return _use_global_active_item(item_id, detail)
+	if current_game == null:
+		_show_message("That active item needs a game surface.")
 		return false
 	var command: Dictionary = current_game.active_item_command(item_id, run_state, run_state.current_environment, run_state.create_rng("active_item:%s" % item_id))
 	if not bool(command.get("handled", false)):
@@ -969,8 +1297,53 @@ func _use_active_item(item_id: String) -> bool:
 	if not message.is_empty():
 		_show_message(message)
 	_set_current_screen(SCREEN_GAME)
+	_apply_post_action_environment_interrupt("active_item")
 	_refresh()
 	return true
+
+
+func _use_global_active_item(item_id: String, detail: Dictionary) -> bool:
+	var definition := library.item(item_id) if library != null else {}
+	if definition.is_empty():
+		_show_message("Item definition is missing.")
+		_refresh()
+		return false
+	run_state.advance_environment_turns(1)
+	var item_effect := ItemEffectScript.new()
+	item_effect.setup(definition)
+	var result := item_effect.apply({
+		"domain": str(definition.get("domain", "global")),
+		"domains": [str(definition.get("domain", "global")), "global"],
+		"environment_id": str(run_state.current_environment.get("id", "")),
+		"action_id": "use_active_item",
+		"action_kind": "item",
+	}, run_state)
+	last_item_result = result.duplicate(true)
+	last_game_result = {}
+	last_hook_result = {}
+	_select_first_active_item_from_result(result)
+	var display_name := str(detail.get("display_name", item_id))
+	var message := str(result.get("message", ""))
+	if message.is_empty():
+		var messages := _copy_array(result.get("messages", result.get("deltas", {}).get("messages", [])))
+		message = str(messages[0]) if not messages.is_empty() else "%s used." % display_name
+	_show_message(message)
+	_set_current_screen(SCREEN_RESULT)
+	_autosave_foundation_run("Autosaved.")
+	_apply_post_action_environment_interrupt("active_item")
+	_refresh()
+	return true
+
+
+func _select_first_active_item_from_result(result: Dictionary) -> void:
+	if run_state == null or run_action_service == null:
+		return
+	var deltas: Dictionary = result.get("deltas", {}) if typeof(result.get("deltas", {})) == TYPE_DICTIONARY else {}
+	for item_id in _string_array(deltas.get("inventory_add", [])):
+		var detail := run_action_service.inventory_item_detail(item_id)
+		if not detail.is_empty() and bool(detail.get("active_item", false)):
+			run_state.set_active_item(item_id)
+			return
 
 
 func _show_active_item_confirmation_popup(item: Dictionary) -> void:
@@ -1124,6 +1497,9 @@ func use_service_hook(service_id: String) -> bool:
 	_set_current_screen(SCREEN_RESULT)
 	_show_message(str(result.get("message", "")))
 	_autosave_foundation_run("Autosaved.")
+	if _apply_post_action_environment_interrupt("service"):
+		_refresh()
+		return true
 	_refresh()
 	return true
 
@@ -1178,6 +1554,9 @@ func use_lender_hook(lender_id: String) -> bool:
 	_set_current_screen(SCREEN_RESULT)
 	_show_message(str(result.get("message", "")))
 	_autosave_foundation_run("Autosaved.")
+	if _apply_post_action_environment_interrupt("lender"):
+		_refresh()
+		return true
 	_refresh()
 	return true
 
@@ -1217,6 +1596,9 @@ func use_game_environment_hook(game_id: String, hook_id: String, action_id: Stri
 	_set_current_screen(SCREEN_RESULT)
 	_show_message(str(result.get("message", "")))
 	_autosave_foundation_run("Autosaved.")
+	if bool(result.get("ok", false)) and _apply_post_action_environment_interrupt("game_hook"):
+		_refresh()
+		return true
 	_refresh()
 	return true
 
@@ -1351,6 +1733,8 @@ func _load_foundation_run_from_slot(return_to_start_on_missing: bool) -> bool:
 	_show_message("Run loaded: %s." % str(run_state.current_environment.get("display_name", "Environment")))
 	_hide_run_menu()
 	_refresh()
+	if _show_next_pending_triggered_event():
+		_refresh()
 	return true
 
 
@@ -1409,13 +1793,19 @@ func _travel_to(target_id: String, target_label: String, choice_data: Dictionary
 	if travel_transition_active:
 		return
 	var previous_environment := run_state.current_environment.duplicate(true)
-	var route := library.route(target_id) if library != null else {}
 	if choice_data.is_empty():
 		choice_data = _travel_choice(target_id)
+	var route := _copy_dict(choice_data.get("route", {}))
+	if route.is_empty():
+		route = _world_route_for_target(target_id)
+	if route.is_empty():
+		route = library.route(target_id) if library != null else {}
 	if not bool(choice_data.get("enabled", true)):
 		_show_message(str(choice_data.get("disabled_reason", "That route is not available right now.")))
 		_refresh()
 		return
+	if world_map_overlay != null:
+		world_map_overlay.visible = false
 	_show_travel_transition(target_id, target_label, "Leaving %s..." % str(previous_environment.get("display_name", "this room")))
 	_hide_event_choice_popup()
 	_hide_run_inventory_popup()
@@ -1424,6 +1814,7 @@ func _travel_to(target_id: String, target_label: String, choice_data: Dictionary
 	_refresh()
 	if _should_yield_for_travel_transition():
 		await get_tree().process_frame
+	var route_risk := run_state.travel_route_risk(route, target_id)
 	var travel_heat := run_state.begin_travel_suspicion_decay(route, target_id)
 	generator.next_environment(run_state, target_id)
 	var travel_decay := run_state.finish_travel_suspicion_decay(travel_heat)
@@ -1443,7 +1834,7 @@ func _travel_to(target_id: String, target_label: String, choice_data: Dictionary
 	_clear_selected_prestige_purchase()
 	clear_interaction_focus()
 	var destination_name := str(run_state.current_environment.get("display_name", target_label))
-	var travel_result := _travel_result(target_id, destination_name, route, previous_environment, run_state.current_environment, travel_decay)
+	var travel_result := _travel_result(target_id, destination_name, route, previous_environment, run_state.current_environment, travel_decay, route_risk)
 	GameModule.apply_result(run_state, travel_result)
 	last_hook_result = travel_result.duplicate(true)
 	_set_current_screen(SCREEN_RESULT)
@@ -1455,12 +1846,25 @@ func _travel_to(target_id: String, target_label: String, choice_data: Dictionary
 		if _should_yield_for_travel_transition():
 			await get_tree().process_frame
 	_hide_travel_transition()
+	var travel_context := {
+		"trigger": "travel",
+		"type": "travel",
+		"source": "travel",
+		"target_id": target_id,
+		"turns": int(previous_environment.get("turns", 0)),
+	}
+	if _enqueue_triggered_events_for_context("travel", travel_context, previous_environment):
+		_autosave_foundation_run("Autosaved.")
+		if _show_next_pending_triggered_event():
+			_refresh()
 
 
-func _travel_result(target_id: String, destination_name: String, route: Dictionary, previous_environment: Dictionary, destination_environment: Dictionary, travel_decay: Dictionary = {}) -> Dictionary:
+func _travel_result(target_id: String, destination_name: String, route: Dictionary, previous_environment: Dictionary, destination_environment: Dictionary, travel_decay: Dictionary = {}, route_risk: Dictionary = {}) -> Dictionary:
 	var route_status := run_state.travel_route_status(route)
 	var cost := int(route_status.get("cost", 0))
 	var suspicion_delta := int(route_status.get("suspicion_delta", 0))
+	var risk_bankroll_delta := int(route_risk.get("bankroll_delta", 0)) if bool(route_risk.get("triggered", false)) else 0
+	var risk_suspicion_delta := int(route_risk.get("suspicion_delta", 0)) if bool(route_risk.get("triggered", false)) else 0
 	var cooled := int(travel_decay.get("cooled", 0))
 	var risk_decay := int(travel_decay.get("risk_decay", route_status.get("risk_decay", 0)))
 	var message := "Traveled to %s." % destination_name
@@ -1474,8 +1878,18 @@ func _travel_result(target_id: String, destination_name: String, route: Dictiona
 		detail_parts.append("travel sobers you %+d" % drunk_delta)
 	if suspicion_delta > 0:
 		detail_parts.append("risk +%d" % suspicion_delta)
+	if risk_bankroll_delta != 0 or risk_suspicion_delta != 0:
+		var risk_label := str(route_risk.get("label", "route risk"))
+		var risk_detail := "%s" % risk_label
+		if risk_bankroll_delta != 0:
+			risk_detail += " %+d" % risk_bankroll_delta
+		if risk_suspicion_delta > 0:
+			risk_detail += ", heat +%d" % risk_suspicion_delta
+		detail_parts.append(risk_detail)
 	if not detail_parts.is_empty():
 		message = "%s %s." % [message, ", ".join(detail_parts)]
+	var total_bankroll_delta := -cost + risk_bankroll_delta
+	var total_suspicion_delta := suspicion_delta + risk_suspicion_delta
 	var story_entry := {
 		"type": "travel",
 		"id": target_id,
@@ -1485,19 +1899,36 @@ func _travel_result(target_id: String, destination_name: String, route: Dictiona
 		"to_archetype_id": target_id,
 		"to_environment_id": str(destination_environment.get("id", "")),
 		"to_environment_name": destination_name,
-		"bankroll_delta": -cost,
-		"suspicion_delta": suspicion_delta,
+		"bankroll_delta": total_bankroll_delta,
+		"route_cost": cost,
+		"suspicion_delta": total_suspicion_delta,
+		"route_suspicion_delta": suspicion_delta,
 		"travel_distance": str(travel_decay.get("distance", route_status.get("distance", ""))),
 		"risk_decay": risk_decay,
 		"risk_cooled": cooled,
+		"route_risk": route_risk.duplicate(true),
 		"drunk_delta": drunk_delta,
 		"drunk_after": int(travel_decay.get("drunk_after", run_state.drunk_level)),
 		"message": message,
 	}
+	var story_entries: Array = [story_entry]
+	if bool(route_risk.get("triggered", false)):
+		var risk_message := str(route_risk.get("message", "The route risk catches you."))
+		story_entries.append({
+			"type": "travel_risk_event",
+			"id": str(route_risk.get("id", "travel_risk")),
+			"route_id": target_id,
+			"label": str(route_risk.get("label", "Route risk")),
+			"roll": int(route_risk.get("roll", 0)),
+			"chance_percent": int(route_risk.get("chance_percent", 0)),
+			"bankroll_delta": risk_bankroll_delta,
+			"suspicion_delta": risk_suspicion_delta,
+			"message": risk_message,
+		})
 	var deltas := GameModule.empty_result_deltas()
-	deltas["bankroll_delta"] = -cost
-	deltas["suspicion_delta"] = suspicion_delta
-	deltas["story_log"] = [story_entry]
+	deltas["bankroll_delta"] = total_bankroll_delta
+	deltas["suspicion_delta"] = total_suspicion_delta
+	deltas["story_log"] = story_entries
 	deltas["messages"] = [message]
 	return GameModule.build_action_result({
 		"ok": true,
@@ -1507,8 +1938,10 @@ func _travel_result(target_id: String, destination_name: String, route: Dictiona
 		"action_kind": "travel",
 		"environment_id": str(destination_environment.get("id", "")),
 		"environment_archetype_id": target_id,
-		"bankroll_delta": -cost,
-		"suspicion_delta": suspicion_delta,
+		"bankroll_delta": total_bankroll_delta,
+		"suspicion_delta": total_suspicion_delta,
+		"route_cost": cost,
+		"route_risk": route_risk.duplicate(true),
 		"deltas": deltas,
 		"message": message,
 	})
@@ -1596,6 +2029,7 @@ func _initialize_profile_inventory() -> void:
 
 func _initialize_procedural_music() -> void:
 	procedural_music_player = ProceduralMusicPlayerScript.new()
+	procedural_music_player.audio_calm = user_settings != null and bool(user_settings.audio_calm)
 	add_child(procedural_music_player)
 
 
@@ -1638,9 +2072,11 @@ func _build_ui() -> void:
 	_build_run_menu_overlay()
 	_build_settings_overlay()
 	_build_event_choice_popup_overlay()
+	_build_conclusion_animation_overlay()
 	_build_run_inventory_overlay()
 	_build_run_journal_overlay()
 	_build_travel_transition_overlay()
+	_build_world_map_overlay()
 	_apply_accessibility_settings()
 
 
@@ -1745,7 +2181,14 @@ func _build_start_screen() -> void:
 	content_group_config_button.pressed.connect(toggle_content_group_config)
 	seed_row.add_child(content_group_config_button)
 
+	challenge_select_button = _main_menu_button("Challenges", "Pick an authored challenge run", Callable(self, "toggle_challenge_selection"))
+	challenge_select_button.custom_minimum_size = Vector2(136, 54)
+	challenge_select_button.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+	_set_control_font_size(challenge_select_button, 13)
+	seed_row.add_child(challenge_select_button)
+
 	_build_content_group_controls(start_menu_controls)
+	_build_challenge_controls(start_menu_controls)
 
 	var run_row := HBoxContainer.new()
 	run_row.add_theme_constant_override("separation", 12)
@@ -1843,6 +2286,67 @@ func _build_content_group_controls(parent: VBoxContainer) -> void:
 	_refresh_content_group_controls()
 
 
+func _build_challenge_controls(parent: VBoxContainer) -> void:
+	var panel := _panel_container(Color("#070916", 0.92), VisualStyle.PINK_2)
+	panel.visible = false
+	panel.custom_minimum_size = Vector2(0, 230)
+	panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	panel.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
+	parent.add_child(panel)
+	challenge_panel = panel
+	var panel_margin := MarginContainer.new()
+	panel_margin.add_theme_constant_override("margin_left", 12)
+	panel_margin.add_theme_constant_override("margin_top", 10)
+	panel_margin.add_theme_constant_override("margin_right", 12)
+	panel_margin.add_theme_constant_override("margin_bottom", 10)
+	panel_margin.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	panel_margin.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	panel.add_child(panel_margin)
+	var stack := VBoxContainer.new()
+	stack.add_theme_constant_override("separation", 8)
+	stack.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	stack.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	panel_margin.add_child(stack)
+	var heading_row := HBoxContainer.new()
+	heading_row.add_theme_constant_override("separation", 8)
+	heading_row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	heading_row.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
+	heading_row.custom_minimum_size = Vector2(0, 34)
+	stack.add_child(heading_row)
+	var heading := _label("Challenges", 14)
+	heading.custom_minimum_size = Vector2(132, 28)
+	heading.autowrap_mode = TextServer.AUTOWRAP_OFF
+	heading.clip_text = true
+	_set_control_font_color(heading, VisualStyle.YELLOW)
+	heading_row.add_child(heading)
+	challenge_status_label = _label("", 11)
+	challenge_status_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	challenge_status_label.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	challenge_status_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	challenge_status_label.clip_text = true
+	_set_control_font_color(challenge_status_label, VisualStyle.CYAN_2)
+	heading_row.add_child(challenge_status_label)
+	var done_button := _button("Done", Callable(self, "close_challenge_selection"))
+	done_button.custom_minimum_size = Vector2(88, 30)
+	done_button.size_flags_horizontal = Control.SIZE_SHRINK_END
+	done_button.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	_set_control_font_size(done_button, 12)
+	heading_row.add_child(done_button)
+	var scroll := ScrollContainer.new()
+	scroll.custom_minimum_size = Vector2(0, 164)
+	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_AUTO
+	scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	scroll.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
+	stack.add_child(scroll)
+	challenge_list = VBoxContainer.new()
+	challenge_list.add_theme_constant_override("separation", 6)
+	challenge_list.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	scroll.add_child(challenge_list)
+	_rebuild_challenge_options()
+	_refresh_challenge_controls()
+
+
 func _apply_main_menu_panel_size(size: Vector2) -> void:
 	if main_menu_panel == null:
 		return
@@ -1879,6 +2383,8 @@ func toggle_content_group_config() -> void:
 func open_content_group_config() -> void:
 	if content_group_panel == null:
 		return
+	if challenge_panel != null:
+		challenge_panel.visible = false
 	_ensure_menu_content_groups_initialized()
 	_refresh_content_group_controls()
 	if start_menu_intro != null:
@@ -1891,6 +2397,42 @@ func open_content_group_config() -> void:
 func close_content_group_config() -> void:
 	if content_group_panel != null:
 		content_group_panel.visible = false
+	if challenge_panel != null and challenge_panel.visible:
+		return
+	if start_menu_intro != null:
+		start_menu_intro.visible = true
+	_set_start_menu_action_controls_visible(true)
+	_apply_main_menu_panel_size(MAIN_MENU_COLLAPSED_SIZE)
+
+
+func toggle_challenge_selection() -> void:
+	if challenge_panel == null or not _challenge_pack_loaded():
+		return
+	if challenge_panel.visible:
+		close_challenge_selection()
+	else:
+		open_challenge_selection()
+
+
+func open_challenge_selection() -> void:
+	if challenge_panel == null or not _challenge_pack_loaded():
+		return
+	if content_group_panel != null:
+		content_group_panel.visible = false
+	_rebuild_challenge_options()
+	_refresh_challenge_controls()
+	if start_menu_intro != null:
+		start_menu_intro.visible = false
+	_set_start_menu_action_controls_visible(false)
+	challenge_panel.visible = true
+	_apply_main_menu_panel_size(MAIN_MENU_EXPANDED_SIZE)
+
+
+func close_challenge_selection() -> void:
+	if challenge_panel != null:
+		challenge_panel.visible = false
+	if content_group_panel != null and content_group_panel.visible:
+		return
 	if start_menu_intro != null:
 		start_menu_intro.visible = true
 	_set_start_menu_action_controls_visible(true)
@@ -1968,6 +2510,101 @@ func _refresh_content_group_controls() -> void:
 		content_group_status_label.text = "%d of %d groups enabled" % [selected_count, total_count]
 
 
+func _challenge_pack_loaded() -> bool:
+	return library != null and not library.challenges.is_empty()
+
+
+func _rebuild_challenge_options() -> void:
+	if challenge_list == null:
+		return
+	for child in challenge_list.get_children():
+		child.queue_free()
+	challenge_buttons = {}
+	if not _challenge_pack_loaded():
+		return
+	var standard_button := _challenge_option_button("Standard Run", "Use the seed and run content settings.", "")
+	challenge_list.add_child(standard_button)
+	challenge_buttons[""] = standard_button
+	for option_value in library.challenge_options(selected_challenge_id):
+		if typeof(option_value) != TYPE_DICTIONARY:
+			continue
+		var option: Dictionary = option_value
+		var challenge_id := str(option.get("id", "")).strip_edges()
+		if challenge_id.is_empty():
+			continue
+		var title := str(option.get("title", challenge_id.capitalize()))
+		var description := str(option.get("description", ""))
+		var completion_flag := str(option.get("completion_flag", ""))
+		var completed := profile_inventory != null and profile_inventory.has_challenge_completion(completion_flag)
+		var button_title := "%s (Complete)" % title if completed else title
+		var button := _challenge_option_button(button_title, description, challenge_id)
+		challenge_list.add_child(button)
+		challenge_buttons[challenge_id] = button
+	_refresh_challenge_controls()
+
+
+func _challenge_option_button(title: String, description: String, challenge_id: String) -> Button:
+	var button := _button(title, Callable(self, "_on_challenge_selected").bind(challenge_id))
+	button.tooltip_text = description
+	button.custom_minimum_size = Vector2(0, 34)
+	button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	button.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+	_set_control_font_size(button, 12)
+	return button
+
+
+func _on_challenge_selected(challenge_id: String) -> void:
+	selected_challenge_id = challenge_id.strip_edges()
+	if not selected_challenge_id.is_empty() and library.challenge(selected_challenge_id).is_empty():
+		selected_challenge_id = ""
+	_refresh_challenge_controls()
+	close_challenge_selection()
+
+
+func _refresh_challenge_controls() -> void:
+	var has_challenges := _challenge_pack_loaded()
+	if challenge_select_button != null:
+		challenge_select_button.visible = has_challenges
+		challenge_select_button.disabled = not has_challenges
+	if not has_challenges:
+		selected_challenge_id = ""
+		if challenge_panel != null:
+			challenge_panel.visible = false
+		if challenge_status_label != null:
+			challenge_status_label.text = ""
+		return
+	if not selected_challenge_id.is_empty() and library.challenge(selected_challenge_id).is_empty():
+		selected_challenge_id = ""
+	for challenge_id in challenge_buttons.keys():
+		var button := challenge_buttons[challenge_id] as Button
+		if button == null:
+			continue
+		if str(challenge_id) == selected_challenge_id:
+			_style_selected_button(button)
+		else:
+			button.add_theme_stylebox_override("normal", VisualStyle.pixel_box(VisualStyle.DARK_2, VisualStyle.CYAN_2, 1))
+			button.add_theme_stylebox_override("hover", VisualStyle.pixel_box(VisualStyle.DARK_3, VisualStyle.CYAN, 1))
+			button.add_theme_stylebox_override("pressed", VisualStyle.pixel_box(VisualStyle.BLUE, VisualStyle.YELLOW, 1))
+	if challenge_status_label != null:
+		challenge_status_label.text = _selected_challenge_status_text()
+	if challenge_select_button != null:
+		challenge_select_button.text = "Challenges" if selected_challenge_id.is_empty() else "Challenge: %s" % str(library.challenge(selected_challenge_id).get("title", selected_challenge_id))
+		challenge_select_button.tooltip_text = _selected_challenge_status_text()
+
+
+func _selected_challenge_status_text() -> String:
+	if not _challenge_pack_loaded():
+		return ""
+	if selected_challenge_id.is_empty():
+		return "%d challenges loaded; standard run selected" % library.challenges.size()
+	var challenge_def := library.challenge(selected_challenge_id)
+	var title := str(challenge_def.get("title", selected_challenge_id.capitalize()))
+	var completion_flag := str(challenge_def.get("completion_flag", ""))
+	var completed := profile_inventory != null and profile_inventory.has_challenge_completion(completion_flag)
+	var suffix := "complete" if completed else "not complete"
+	return "%s selected; %s" % [title, suffix]
+
+
 func _selected_content_group_set() -> Dictionary:
 	var result: Dictionary = {}
 	for group_id in _selected_content_groups_for_new_run():
@@ -1987,6 +2624,12 @@ func _content_group_option_snapshot() -> Array:
 	return library.content_group_options(_selected_content_groups_for_new_run())
 
 
+func _challenge_option_snapshot() -> Array:
+	if not _challenge_pack_loaded():
+		return []
+	return library.challenge_options(selected_challenge_id)
+
+
 func _content_group_challenge_for_seed(seed_text: String) -> Dictionary:
 	if library == null:
 		return RunState.standard_challenge(seed_text)
@@ -1995,6 +2638,12 @@ func _content_group_challenge_for_seed(seed_text: String) -> Dictionary:
 	if JSON.stringify(selected) == JSON.stringify(defaults):
 		return RunState.standard_challenge(seed_text)
 	return RunState.custom_challenge("content_groups", seed_text, {"content_groups": selected})
+
+
+func _new_run_challenge_for_seed(seed_text: String) -> Dictionary:
+	if _challenge_pack_loaded() and not selected_challenge_id.is_empty():
+		return library.challenge_config_for(selected_challenge_id, seed_text)
+	return _content_group_challenge_for_seed(seed_text)
 
 
 func _build_settings_overlay() -> void:
@@ -2070,6 +2719,14 @@ func _build_event_choice_popup_overlay() -> void:
 	event_choice_popup_choices_list.add_theme_constant_override("separation", 8)
 	event_choice_popup_choices_list.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	scroll.add_child(event_choice_popup_choices_list)
+
+
+func _build_conclusion_animation_overlay() -> void:
+	conclusion_animation_overlay = Control.new()
+	conclusion_animation_overlay.visible = false
+	conclusion_animation_overlay.set_anchors_preset(Control.PRESET_FULL_RECT)
+	conclusion_animation_overlay.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_child(conclusion_animation_overlay)
 
 
 func _build_run_inventory_overlay() -> void:
@@ -2217,6 +2874,84 @@ func _build_travel_transition_overlay() -> void:
 	pulse.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_set_control_font_color(pulse, VisualStyle.SOFT)
 	stack.add_child(pulse)
+
+
+func _build_world_map_overlay() -> void:
+	world_map_overlay = Control.new()
+	world_map_overlay.name = "WorldMapOverlay"
+	world_map_overlay.visible = false
+	world_map_overlay.set_anchors_preset(Control.PRESET_FULL_RECT)
+	world_map_overlay.mouse_filter = Control.MOUSE_FILTER_STOP
+	add_child(world_map_overlay)
+
+	var dim := ColorRect.new()
+	dim.color = Color(0.0, 0.0, 0.0, 0.58)
+	dim.set_anchors_preset(Control.PRESET_FULL_RECT)
+	world_map_overlay.add_child(dim)
+
+	world_map_panel = _panel_container(Color("#050611", 0.98), VisualStyle.PURPLE_2)
+	world_map_panel.custom_minimum_size = Vector2(820, 540)
+	world_map_panel.anchor_left = 0.5
+	world_map_panel.anchor_top = 0.5
+	world_map_panel.anchor_right = 0.5
+	world_map_panel.anchor_bottom = 0.5
+	world_map_panel.offset_left = -410
+	world_map_panel.offset_top = -270
+	world_map_panel.offset_right = 410
+	world_map_panel.offset_bottom = 270
+	world_map_overlay.add_child(world_map_panel)
+
+	var root := VBoxContainer.new()
+	root.add_theme_constant_override("separation", 10)
+	root.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	root.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	world_map_panel.add_child(root)
+
+	var header := HBoxContainer.new()
+	header.add_theme_constant_override("separation", 10)
+	root.add_child(header)
+
+	world_map_title_label = _label("World Map", 22)
+	world_map_title_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_set_control_font_color(world_map_title_label, VisualStyle.YELLOW)
+	header.add_child(world_map_title_label)
+
+	var close_button := _button("Close", Callable(self, "close_world_map"))
+	close_button.custom_minimum_size = Vector2(96, 34)
+	header.add_child(close_button)
+
+	var body := HBoxContainer.new()
+	body.add_theme_constant_override("separation", 12)
+	body.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	body.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	root.add_child(body)
+
+	var map_holder := Control.new()
+	map_holder.custom_minimum_size = Vector2(540, 390)
+	map_holder.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	map_holder.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	body.add_child(map_holder)
+
+	world_map_nodes_layer = WorldMapCanvasScript.new()
+	world_map_nodes_layer.set_anchors_preset(Control.PRESET_FULL_RECT)
+	world_map_nodes_layer.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	map_holder.add_child(world_map_nodes_layer)
+
+	var side := VBoxContainer.new()
+	side.add_theme_constant_override("separation", 8)
+	side.custom_minimum_size = Vector2(230, 390)
+	side.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	body.add_child(side)
+
+	world_map_detail_label = _label("Select a revealed stop.", 13)
+	world_map_detail_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	world_map_detail_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	world_map_detail_label.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	side.add_child(world_map_detail_label)
+
+	world_map_confirm_button = _button("Travel", Callable(self, "confirm_world_map_travel"))
+	world_map_confirm_button.custom_minimum_size = Vector2(180, 36)
+	side.add_child(world_map_confirm_button)
 
 
 func _build_inventory_page(parent: Node) -> void:
@@ -2539,6 +3274,7 @@ func _build_run_screen() -> void:
 	game_surface_canvas.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	game_surface_canvas.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	game_surface_canvas.surface_action.connect(_on_game_surface_action)
+	game_surface_canvas.surface_music_cue.connect(_on_game_surface_music_cue)
 	visual_stack.add_child(game_surface_canvas)
 
 	action_panel_container = _panel_container(VisualStyle.DARK_3, VisualStyle.PINK)
@@ -2827,6 +3563,7 @@ func _render_environment_screen() -> void:
 	_render_result_panel()
 	_render_foundation_snapshots()
 	_render_action_panel()
+	_refresh_world_map_overlay()
 	_update_procedural_music()
 
 
@@ -2897,13 +3634,161 @@ func _set_current_screen(screen_id: String) -> void:
 func _update_procedural_music() -> void:
 	if procedural_music_player == null:
 		return
-	if surface_feature_music_ducking:
-		procedural_music_player.stop()
-		return
 	if run_state == null or current_screen == SCREEN_START:
 		procedural_music_player.stop()
 		return
-	procedural_music_player.play_for_environment(run_state.current_environment, run_state.suspicion_level())
+	procedural_music_player.play_for_environment_state(run_state.current_environment, run_state.suspicion_level(), music_fx_state_snapshot())
+
+
+func music_fx_state_snapshot() -> Dictionary:
+	if run_state == null:
+		return {}
+	var environment := run_state.current_environment
+	var visual_context: Dictionary = _copy_dict(environment.get("visual_context", {}))
+	var watch_status: Dictionary = run_state.pit_boss_watch_status(environment)
+	var objective_status: Dictionary = run_state.demo_objective_status(environment)
+	var forced_threshold := clampi(int(objective_status.get("forced_showdown_heat_threshold", 95)), 0, 100)
+	var staff_attention: Dictionary = run_state.grand_casino_staff_attention_status(environment, forced_threshold)
+	var scene_type := str(visual_context.get("scene_type", environment.get("kind", ""))).strip_edges()
+	var boss_floor := str(environment.get("kind", "")).strip_edges() == "boss" or scene_type == "boss"
+	var debt_status := _music_debt_pressure_snapshot()
+	var win_status := _music_win_momentum_snapshot()
+	return {
+		"heat": run_state.suspicion_level(),
+		"suspicion_level": run_state.suspicion_level(),
+		"drunk_level": run_state.drunk_level,
+		"alcoholic_level": run_state.alcoholic_level,
+		"alcohol_tier": _music_alcohol_tier(run_state.drunk_level),
+		"pit_boss_watch": watch_status,
+		"watch_active": bool(watch_status.get("active", false)),
+		"watched": bool(watch_status.get("watched", false)),
+		"staff_attention": staff_attention,
+		"staff_attention_active": bool(staff_attention.get("active", false)),
+		"showdown_pending": bool(objective_status.get("showdown_pending", false)),
+		"showdown_active": bool(objective_status.get("showdown_active", false)),
+		"boss_floor": boss_floor,
+		"environment": environment.duplicate(true),
+		"visual_context": visual_context,
+		"scene_type": scene_type,
+		"room_scale": _music_room_scale_for_visual_context(visual_context, environment),
+		"bankroll": run_state.bankroll,
+		"economy": run_state.economy(),
+		"bankroll_pressure": _music_bankroll_pressure_amount(),
+		"debt": debt_status.get("debt", []),
+		"debt_count": int(debt_status.get("debt_count", 0)),
+		"overdue_debt_count": int(debt_status.get("overdue_debt_count", 0)),
+		"overdue_debt": bool(debt_status.get("overdue_debt", false)),
+		"win_streak": int(win_status.get("win_streak", 0)),
+		"big_win": bool(win_status.get("big_win", false)),
+		"big_win_bars_remaining": int(win_status.get("big_win_bars_remaining", 0)),
+		"last_bankroll_delta": int(win_status.get("last_bankroll_delta", 0)),
+	}
+
+
+func _music_alcohol_tier(drunk_level: int) -> int:
+	if drunk_level >= 71:
+		return 3
+	if drunk_level >= 46:
+		return 2
+	if drunk_level >= 12:
+		return 1
+	return 0
+
+
+func _music_room_scale_for_visual_context(visual_context: Dictionary, environment: Dictionary) -> float:
+	if visual_context.has("room_scale"):
+		return clampf(float(visual_context.get("room_scale", 0.35)), 0.0, 1.0)
+	if visual_context.has("scale"):
+		return clampf(float(visual_context.get("scale", 0.35)), 0.0, 1.0)
+	var tier := clampi(int(environment.get("tier", 1)), 0, 3)
+	var kind := str(environment.get("kind", "")).strip_edges().to_lower()
+	var room_scale := 0.26 + (float(tier) * 0.14)
+	if kind.find("casino") != -1:
+		room_scale += 0.08
+	if kind.find("club") != -1:
+		room_scale += 0.06
+	if kind.find("shop") != -1:
+		room_scale -= 0.08
+	if kind.find("boss") != -1:
+		room_scale = maxf(room_scale, 0.82)
+	return clampf(room_scale, 0.18, 0.90)
+
+
+func _music_bankroll_pressure_amount() -> float:
+	if run_state == null:
+		return 0.0
+	var bankroll := maxi(0, run_state.bankroll)
+	var cash_pressure := clampf(float(70 - bankroll) / 70.0, 0.0, 1.0)
+	var economy := run_state.economy()
+	if economy == "insolvent":
+		return 1.0
+	if economy == "distressed":
+		return maxf(cash_pressure, 0.78)
+	if economy == "volatile":
+		return maxf(cash_pressure, 0.55)
+	return cash_pressure
+
+
+func _music_debt_pressure_snapshot() -> Dictionary:
+	var active_count := 0
+	var overdue_count := 0
+	var debt_entries: Array = []
+	if run_state == null:
+		return {"debt": debt_entries, "debt_count": active_count, "overdue_debt_count": overdue_count, "overdue_debt": false}
+	for debt_value in _copy_array(run_state.debt):
+		if typeof(debt_value) != TYPE_DICTIONARY:
+			continue
+		var debt_data: Dictionary = debt_value
+		var status := str(debt_data.get("status", "active")).strip_edges().to_lower()
+		if status == "paid":
+			continue
+		active_count += 1
+		if status == "overdue" or status == "favor_due":
+			overdue_count += 1
+		debt_entries.append({
+			"id": str(debt_data.get("id", "")),
+			"lender_id": str(debt_data.get("lender_id", "")),
+			"status": status,
+			"balance": int(debt_data.get("balance", 0)),
+		})
+	return {
+		"debt": debt_entries,
+		"debt_count": active_count,
+		"overdue_debt_count": overdue_count,
+		"overdue_debt": overdue_count > 0,
+	}
+
+
+func _music_win_momentum_snapshot() -> Dictionary:
+	var result := {
+		"win_streak": 0,
+		"big_win": false,
+		"big_win_bars_remaining": 0,
+		"last_bankroll_delta": 0,
+	}
+	if run_state == null:
+		return result
+	var streak := 0
+	var captured_latest := false
+	for index in range(run_state.story_log.size() - 1, -1, -1):
+		var entry_value: Variant = run_state.story_log[index]
+		if typeof(entry_value) != TYPE_DICTIONARY:
+			continue
+		var entry: Dictionary = entry_value
+		if str(entry.get("type", "")) != "game_action":
+			continue
+		var delta := int(entry.get("bankroll_delta", 0))
+		if not captured_latest:
+			result["last_bankroll_delta"] = delta
+			result["big_win"] = delta >= 50
+			result["big_win_bars_remaining"] = 4 if delta >= 50 else 0
+			captured_latest = true
+		if delta > 0:
+			streak += 1
+			continue
+		break
+	result["win_streak"] = streak
+	return result
 
 
 func _stop_procedural_music() -> void:
@@ -2915,6 +3800,12 @@ func _sync_surface_feature_music_ducking(surface_state: Dictionary) -> void:
 	var feature_scene: Dictionary = _copy_dict(surface_state.get("slot_feature_scene", {}))
 	var music: Dictionary = _copy_dict(feature_scene.get("feature_music", {}))
 	var should_duck := bool(feature_scene.get("active", false)) and bool(music.get("duck_background_music", false))
+	if procedural_music_player != null:
+		procedural_music_player.update_feature_music_state({
+			"active": should_duck,
+			"feature_scene": feature_scene,
+			"feature_music": music,
+		})
 	_set_surface_feature_music_ducking(should_duck)
 
 
@@ -2922,9 +3813,9 @@ func _set_surface_feature_music_ducking(enabled: bool) -> void:
 	if surface_feature_music_ducking == enabled:
 		return
 	surface_feature_music_ducking = enabled
-	if enabled:
-		_stop_procedural_music()
-	else:
+	if procedural_music_player != null and not enabled:
+		procedural_music_player.update_feature_music_state({"active": false})
+	if not enabled:
 		_update_procedural_music()
 
 
@@ -3181,6 +4072,14 @@ func _render_selected_object_context(object_data: Dictionary) -> void:
 	var risk := str(object_data.get("risk_summary", ""))
 	if not risk.is_empty():
 		card.add_child(_label("Risk: %s" % risk, 13))
+	if object_type == CONTEXT_MODE_TRAVEL:
+		for preview_line in _copy_array(object_data.get("preview_lines", [])).slice(0, 4):
+			var preview_text := str(preview_line).strip_edges()
+			if not preview_text.is_empty():
+				card.add_child(_muted_label(preview_text, 12))
+		var unlock_lines := _copy_array(object_data.get("unlock_conditions", []))
+		if not unlock_lines.is_empty():
+			card.add_child(_muted_label("Unlock: %s" % "; ".join(unlock_lines.slice(0, 2)), 12))
 	var effect := str(object_data.get("effect_summary", ""))
 	if not effect.is_empty():
 		card.add_child(_label("Effect: %s" % effect, 13))
@@ -3341,10 +4240,38 @@ func _add_context_game_hook_actions(card: VBoxContainer, object_data: Dictionary
 
 
 func _add_context_travel_actions(card: VBoxContainer, target_id: String) -> void:
+	if target_id == "leave":
+		var choices := _travel_choice_view_list()
+		for choice_value in choices.slice(0, 4):
+			if typeof(choice_value) != TYPE_DICTIONARY:
+				continue
+			var choice: Dictionary = choice_value
+			var line := "%s - %s, cost %d" % [
+				str(choice.get("label", choice.get("id", "Route"))),
+				str(choice.get("distance", "near")),
+				int(choice.get("cost", 0)),
+			]
+			if not bool(choice.get("enabled", true)):
+				line += " (locked)"
+			card.add_child(_muted_label(line, 12))
+		if not selected_travel_target_id.is_empty():
+			_add_card_button(card, "Travel to %s" % selected_travel_label, Callable(self, "confirm_selected_travel"), false, true)
+		_add_card_button(card, "Open Map", Callable(self, "open_world_map"), selected_travel_target_id.is_empty(), selected_travel_target_id.is_empty())
+		return
 	var choice := _travel_choice(target_id)
 	if choice.is_empty():
 		card.add_child(_muted_label("That route is no longer available.", 13))
 		return
+	for preview_line in _copy_array(choice.get("preview_lines", [])).slice(0, 4):
+		var preview_text := str(preview_line).strip_edges()
+		if not preview_text.is_empty():
+			card.add_child(_muted_label(preview_text, 12))
+	var risk_summary := _travel_risk_summary(choice)
+	if not risk_summary.is_empty():
+		card.add_child(_label("Risk: %s" % risk_summary, 13))
+	var unlock_lines := _copy_array(choice.get("unlock_conditions", []))
+	if not unlock_lines.is_empty():
+		card.add_child(_muted_label("Unlock: %s" % "; ".join(unlock_lines.slice(0, 2)), 12))
 	if not bool(choice.get("enabled", true)):
 		card.add_child(_muted_label(str(choice.get("disabled_reason", "That route is not available right now.")), 13))
 		return
@@ -3630,6 +4557,9 @@ func _resolve_game_action(action_id: String, skip_stake_validation: bool = false
 		_set_current_screen(SCREEN_RESULT)
 	_show_message(str(result.get("message", "")))
 	_autosave_foundation_run("Autosaved.")
+	if bool(result.get("ok", false)) and _apply_post_action_environment_interrupt("game_action"):
+		_refresh()
+		return
 	_refresh()
 
 
@@ -3711,6 +4641,9 @@ func _resolve_environment_runtime_wager_action(game_id: String, action_id: Strin
 	else:
 		_show_message(str(result.get("message", "")))
 	_autosave_foundation_run("Autosaved.")
+	if bool(result.get("ok", false)) and _apply_post_action_environment_interrupt("environment_game"):
+		_refresh_runtime_environment_views()
+		return
 	_refresh_runtime_environment_views()
 
 
@@ -3752,6 +4685,25 @@ func _play_environment_audio_cue(cue_id: String) -> void:
 		environment_sfx_player.call("play_slot_event", normalized_cue, -1.0, 1.0)
 	elif environment_sfx_player.has_method("play_surface_cue"):
 		environment_sfx_player.call("play_surface_cue", normalized_cue, {"route": "slot_button", "action": normalized_cue}, {})
+
+
+func _on_game_surface_music_cue(cue_id: String, context: Dictionary) -> void:
+	if procedural_music_player == null:
+		return
+	var normalized_cue := cue_id.strip_edges()
+	if normalized_cue.is_empty():
+		return
+	if normalized_cue.begins_with("bonus_music"):
+		var feature_scene: Dictionary = _copy_dict(context.get("feature_scene", {}))
+		var feature_music: Dictionary = _copy_dict(context.get("feature_music", feature_scene.get("feature_music", {})))
+		procedural_music_player.update_feature_music_state({
+			"active": true,
+			"feature_scene": feature_scene,
+			"feature_music": feature_music,
+			"cue_id": normalized_cue,
+		})
+		return
+	procedural_music_player.play_feature_stinger(normalized_cue, context)
 
 
 func _slot_runtime_feature_audio_cue(runtime_state: Dictionary) -> String:
@@ -3891,6 +4843,10 @@ func current_screen_snapshot() -> Dictionary:
 		"travel_transition_active": travel_transition_active,
 		"travel_transition_target_id": travel_transition_target_id,
 		"travel_transition_target_label": travel_transition_target_label,
+		"world_map_overlay_visible": world_map_overlay != null and world_map_overlay.visible,
+		"selected_world_map_node_id": selected_world_map_node_id,
+		"world_map": _world_map_snapshot() if run_state != null else {},
+		"conclusion_animation": current_conclusion_animation_snapshot(),
 		"accessibility": current_accessibility_snapshot(),
 	}
 
@@ -3902,6 +4858,10 @@ func current_start_menu_snapshot() -> Dictionary:
 		"selected_content_groups": _selected_content_groups_for_new_run(),
 		"content_group_status": content_group_status_label.text if content_group_status_label != null else "",
 		"content_group_config_visible": content_group_panel.visible if content_group_panel != null else false,
+		"challenges": _challenge_option_snapshot(),
+		"selected_challenge_id": selected_challenge_id,
+		"challenge_status": challenge_status_label.text if challenge_status_label != null else "",
+		"challenge_config_visible": challenge_panel.visible if challenge_panel != null else false,
 		"menu_panel_size": main_menu_panel.custom_minimum_size if main_menu_panel != null else Vector2.ZERO,
 	}
 
@@ -3911,6 +4871,7 @@ func current_accessibility_snapshot() -> Dictionary:
 		return {
 			"high_contrast": false,
 			"reduce_motion": false,
+			"audio_calm": false,
 			"visual_style": VisualStyle.accessibility_snapshot(),
 			"haptics_supported": false,
 			"haptics_cut_reason": UserSettingsScript.HAPTICS_CUT_REASON,
@@ -3934,14 +4895,22 @@ func current_event_choice_popup_snapshot() -> Dictionary:
 	if _event_choice_popup_is_visible():
 		_position_event_choice_popup()
 		snapshot["anchor"] = "screen_center"
-		snapshot["interaction_kind"] = "blocking_decision"
-		snapshot["dismissible"] = false
+		snapshot["interaction_kind"] = str(snapshot.get("interaction_kind", "blocking_decision"))
+		snapshot["dismissible"] = bool(snapshot.get("dismissible", false))
 		if event_choice_popup_panel != null:
 			snapshot["popup_rect"] = _rect_to_dict(event_choice_popup_panel.get_global_rect())
 		if event_choice_popup_overlay != null:
 			snapshot["screen_rect"] = _rect_to_dict(event_choice_popup_overlay.get_global_rect())
 		if environment_canvas != null:
 			snapshot["environment_rect"] = _rect_to_dict(environment_canvas.get_global_rect())
+	return snapshot
+
+
+func current_conclusion_animation_snapshot() -> Dictionary:
+	var snapshot := conclusion_animation_snapshot.duplicate(true)
+	if not snapshot.has("active"):
+		snapshot["active"] = false
+	snapshot["reduce_motion"] = _reduce_motion_enabled()
 	return snapshot
 
 
@@ -4084,6 +5053,22 @@ func focus_interactable_object(object_id: String) -> bool:
 
 
 func activate_interactable_object(object_id: String) -> bool:
+	if object_id == "travel:leave":
+		var leave_object := _interactable_object(object_id)
+		if leave_object.is_empty():
+			if not _travel_choice_view_list().is_empty() and not _run_failed_without_recovery():
+				selected_object_id = object_id
+				focus_target_id = object_id
+				current_context_mode = CONTEXT_MODE_TRAVEL
+				return open_world_map()
+			return false
+		if not bool(leave_object.get("enabled", true)):
+			var leave_disabled_reason := str(leave_object.get("disabled_reason", "Not available right now."))
+			_show_message(leave_disabled_reason)
+			_refresh()
+			return false
+		focus_interactable_object(object_id)
+		return open_world_map()
 	if _event_choice_popup_is_visible():
 		_show_message("Choose a response before doing anything else.")
 		return false
@@ -4093,6 +5078,13 @@ func activate_interactable_object(object_id: String) -> bool:
 		return false
 	var object_data := _interactable_object(object_id)
 	if object_data.is_empty():
+		return false
+	if not bool(object_data.get("interactive", bool(object_data.get("enabled", true)))):
+		var fixture_reason := str(object_data.get("disabled_reason", "Nothing to do here right now."))
+		if fixture_reason.strip_edges().is_empty():
+			fixture_reason = "Nothing to do here right now."
+		_show_message(fixture_reason)
+		_refresh()
 		return false
 	if not bool(object_data.get("enabled", true)):
 		var disabled_reason := str(object_data.get("disabled_reason", "Not available right now."))
@@ -4118,6 +5110,8 @@ func activate_interactable_object(object_id: String) -> bool:
 		CONTEXT_MODE_GAME_HOOK:
 			return use_game_environment_hook(str(object_data.get("parent_id", "")), source_id, str(object_data.get("confirm_action_id", "")))
 		CONTEXT_MODE_TRAVEL:
+			if source_id == "leave":
+				return open_world_map()
 			if select_travel_option(source_id):
 				confirm_selected_travel()
 				return true
@@ -4171,9 +5165,131 @@ func _activate_event_object(event_id: String) -> bool:
 	selected_event_choice_label = ""
 	selected_action_category = ACTION_CATEGORY_EVENTS
 	_set_current_screen(SCREEN_EVENT)
-	_show_message("Choose a response for %s in the event panel." % selected_event_label)
+	if not _show_interactable_event_popup(event_id):
+		_show_message("Choose a response for %s in the event panel." % selected_event_label)
 	_refresh()
 	return true
+
+
+func _show_interactable_event_popup(event_id: String) -> bool:
+	var event_option := _eligible_event_option(event_id)
+	if event_option.is_empty() or event_choice_popup_overlay == null or event_choice_popup_choices_list == null:
+		return false
+	pending_event_choice_popup_event_id = event_id
+	pending_event_choice_popup_focus_choice_id = ""
+	pending_event_choice_popup_snapshot = {
+		"visible": true,
+		"blocking": false,
+		"popup_type": "interactable_event",
+		"interaction_kind": "event",
+		"dismissible": true,
+		"event_id": event_id,
+		"trigger_context": {},
+		"summary": str(event_option.get("summary", "")),
+		"choices": _copy_array(event_option.get("choices", [])),
+	}
+	if event_choice_popup_title_label != null:
+		event_choice_popup_title_label.text = str(event_option.get("display_name", event_id))
+	if event_choice_popup_summary_label != null:
+		event_choice_popup_summary_label.text = str(event_option.get("summary", "Something is available here."))
+	_clear(event_choice_popup_choices_list)
+	var has_explicit_dismissal := false
+	for choice_value in _copy_array(event_option.get("choices", [])):
+		if typeof(choice_value) != TYPE_DICTIONARY:
+			continue
+		var choice: Dictionary = choice_value
+		has_explicit_dismissal = has_explicit_dismissal or bool(choice.get("dismissal", false))
+		_add_wager_confirmation_card(
+			str(choice.get("label", choice.get("id", ""))),
+			str(choice.get("text", "")),
+			str(choice.get("consequence_summary", "")),
+			Callable(self, "resolve_event_choice").bind(event_id, str(choice.get("id", ""))),
+			false
+		)
+	if not has_explicit_dismissal:
+		_add_wager_confirmation_card(
+			"Leave It",
+			"Walk away without changing the run.",
+			"No consequence.",
+			Callable(self, "_dismiss_interactable_event_popup"),
+			false
+		)
+	event_choice_popup_overlay.visible = true
+	event_choice_popup_overlay.move_to_front()
+	_position_event_choice_popup()
+	call_deferred("_position_event_choice_popup")
+	return true
+
+
+func _dismiss_interactable_event_popup() -> void:
+	if str(pending_event_choice_popup_snapshot.get("popup_type", "")) != "interactable_event":
+		return
+	_hide_event_choice_popup()
+	_clear_selected_event_choice()
+	_show_message("You leave it alone.")
+	_refresh()
+
+
+func _start_conclusion_animation(result: Dictionary, popup_rect: Rect2) -> void:
+	var animation_id := str(result.get("conclusion_animation", "")).strip_edges()
+	if animation_id != "bankroll_transfer" or not bool(result.get("ok", false)):
+		return
+	var deltas: Dictionary = result.get("deltas", {}) if typeof(result.get("deltas", {})) == TYPE_DICTIONARY else {}
+	var bankroll_delta := int(result.get("bankroll_delta", deltas.get("bankroll_delta", 0)))
+	if bankroll_delta <= 0:
+		return
+	var reduce_motion := _reduce_motion_enabled()
+	var bill_count := clampi(5 + (bankroll_delta % 4), 5, 8)
+	conclusion_animation_snapshot = {
+		"kind": animation_id,
+		"active": not reduce_motion,
+		"reduce_motion": reduce_motion,
+		"pulse": reduce_motion,
+		"bill_count": 0 if reduce_motion else bill_count,
+		"bankroll_delta": bankroll_delta,
+		"duration_msec": 0 if reduce_motion else 900,
+	}
+	if reduce_motion or conclusion_animation_overlay == null:
+		if conclusion_animation_overlay != null:
+			conclusion_animation_overlay.visible = false
+		return
+	_clear(conclusion_animation_overlay)
+	conclusion_animation_overlay.visible = true
+	conclusion_animation_overlay.move_to_front()
+	var overlay_rect := conclusion_animation_overlay.get_global_rect()
+	var start := popup_rect.get_center()
+	if popup_rect.size == Vector2.ZERO:
+		start = overlay_rect.get_center()
+	var end := Vector2(96, 24)
+	if status_label != null:
+		end = status_label.get_global_rect().get_center()
+	start -= overlay_rect.position
+	end -= overlay_rect.position
+	for index in range(bill_count):
+		var bill := Label.new()
+		bill.text = "$"
+		bill.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		bill.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+		bill.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		bill.custom_minimum_size = Vector2(18, 18)
+		bill.position = start + Vector2(float(index % 3) * 5.0, float(index / 3) * 4.0)
+		_set_control_font_color(bill, Color("#69f0ae"))
+		conclusion_animation_overlay.add_child(bill)
+		var tween := create_tween()
+		var delay := float(index) * 0.045
+		var duration := 0.62 + float(index % 3) * 0.06
+		tween.tween_property(bill, "position", end + Vector2(float(index % 2) * 3.0, 0.0), duration).set_delay(delay)
+		tween.parallel().tween_property(bill, "modulate:a", 0.0, duration * 0.45).set_delay(delay + duration * 0.55)
+	var cleanup := create_tween()
+	cleanup.tween_interval(0.94)
+	cleanup.tween_callback(Callable(self, "_finish_conclusion_animation"))
+
+
+func _finish_conclusion_animation() -> void:
+	if conclusion_animation_overlay != null:
+		_clear(conclusion_animation_overlay)
+		conclusion_animation_overlay.visible = false
+	conclusion_animation_snapshot["active"] = false
 
 
 func clear_interaction_focus(animate_camera_return: bool = false) -> void:
@@ -4227,6 +5343,7 @@ func _environment_view_snapshot() -> Dictionary:
 	snapshot["drunk_time_scale_percent"] = run_state.drunk_time_scale_percent()
 	snapshot["drunk_world_speed_percent"] = run_state.drunk_time_scale_percent()
 	snapshot["pending_drunk_absorption"] = run_state.pending_drunk_absorption_amount()
+	snapshot["drunk_distortion_suppression_turns"] = run_state.drunk_distortion_suppression_turns
 	snapshot["drunk_effect_mode"] = _drunk_effect_mode()
 	snapshot["reduce_motion"] = _reduce_motion_enabled()
 	snapshot["high_contrast"] = _high_contrast_enabled()
@@ -4240,6 +5357,9 @@ func _environment_view_snapshot() -> Dictionary:
 	snapshot["travel_choices"] = _travel_choice_view_list()
 	snapshot["selected_travel_target_id"] = selected_travel_target_id
 	snapshot["selected_travel_label"] = selected_travel_label
+	snapshot["world_map"] = _world_map_snapshot()
+	snapshot["event_cadence"] = run_state.event_cadence_summary()
+	snapshot["world_map_overlay_visible"] = world_map_overlay != null and world_map_overlay.visible
 	snapshot["event_options"] = _eligible_event_option_view_list()
 	snapshot["selected_event_id"] = selected_event_id
 	snapshot["selected_event_choice_id"] = selected_event_choice_id
@@ -4301,6 +5421,7 @@ func _interactable_object_view_list() -> Array:
 			"source_id": game_id,
 			"label": label,
 			"short_description": description,
+			"presence": "fixture",
 			"enabled": enabled,
 			"disabled_reason": "" if enabled else failed_reason if run_failed_without_recovery else "Game definition is missing.",
 			"action_summary": "Double-click this machine to enter." if enabled else "This game is unavailable.",
@@ -4336,6 +5457,7 @@ func _interactable_object_view_list() -> Array:
 			"source_id": event_id,
 			"label": str(event_data.get("display_name", _label_from_id(event_id))),
 			"short_description": str(event_data.get("summary", "Something is happening here.")),
+			"presence": "dynamic",
 			"enabled": event_enabled,
 			"disabled_reason": "" if event_enabled else failed_reason if run_failed_without_recovery else "No event choice is currently available.",
 			"action_summary": str(event_data.get("start_summary", "Choose a response.")) if event_enabled else "No response is available right now.",
@@ -4366,6 +5488,7 @@ func _interactable_object_view_list() -> Array:
 			"source_id": item_id,
 			"label": str(offer.get("display_name", _label_from_id(item_id))),
 			"short_description": str(offer.get("description", "")),
+			"presence": "dynamic",
 			"enabled": affordable,
 			"disabled_reason": "" if affordable else failed_reason if run_failed_without_recovery else "Not enough bankroll.",
 			"action_summary": "Buy this item." if affordable else "Needs more bankroll before it can be used.",
@@ -4381,9 +5504,9 @@ func _interactable_object_view_list() -> Array:
 			"confirm_action_id": "buy_item" if affordable else "",
 			"focus_rect": _interaction_rect_for_object(item_object_id, CONTEXT_MODE_ITEM, index),
 		}))
-	if _shopkeeper_available():
-		var shopkeeper_enabled := not run_failed_without_recovery
-		var disabled_reason := "" if shopkeeper_enabled else failed_reason
+	if _shopkeeper_should_draw():
+		var shopkeeper_enabled := _shopkeeper_available() and not run_failed_without_recovery
+		var disabled_reason := "" if shopkeeper_enabled else failed_reason if run_failed_without_recovery else "The counter is quiet right now."
 		var shopkeeper_object_id := "shopkeeper:merchant"
 		objects.append(_make_interactable_object({
 			"object_id": shopkeeper_object_id,
@@ -4391,6 +5514,8 @@ func _interactable_object_view_list() -> Array:
 			"source_id": "merchant",
 			"label": _shopkeeper_label(),
 			"short_description": _shop_description(),
+			"presence": "fixture",
+			"interactive": shopkeeper_enabled,
 			"enabled": shopkeeper_enabled,
 			"disabled_reason": disabled_reason,
 			"action_summary": "Double-click to sell gear." if shopkeeper_enabled else disabled_reason,
@@ -4405,36 +5530,48 @@ func _interactable_object_view_list() -> Array:
 		}))
 	objects.append_array(_game_hook_interactable_objects())
 	var travel_choices := _travel_choice_view_list()
-	for index in range(travel_choices.size()):
-		if typeof(travel_choices[index]) != TYPE_DICTIONARY:
-			continue
-		var choice: Dictionary = travel_choices[index]
-		var target_id := str(choice.get("id", ""))
-		if target_id.is_empty():
-			continue
-		var travel_object_id := "travel:%s" % target_id
-		var travel_enabled := bool(choice.get("enabled", true)) and not run_failed_without_recovery
-		var travel_disabled_reason := str(choice.get("disabled_reason", ""))
+	if not travel_choices.is_empty():
+		var first_choice: Dictionary = travel_choices[0] if typeof(travel_choices[0]) == TYPE_DICTIONARY else {}
+		var any_enabled := false
+		for choice_value in travel_choices:
+			if typeof(choice_value) == TYPE_DICTIONARY and bool((choice_value as Dictionary).get("enabled", true)):
+				any_enabled = true
+				break
+		var travel_object_id := "travel:leave"
+		var travel_enabled := not run_failed_without_recovery
+		var travel_disabled_reason := ""
 		if run_failed_without_recovery:
 			travel_disabled_reason = failed_reason
-		if not travel_enabled and travel_disabled_reason.strip_edges().is_empty():
-			travel_disabled_reason = "This route is locked for now."
+		var preview_lines: Array = []
+		for choice_value in travel_choices.slice(0, 3):
+			if typeof(choice_value) != TYPE_DICTIONARY:
+				continue
+			var choice: Dictionary = choice_value
+			preview_lines.append("%s: %s, cost %d" % [
+				str(choice.get("label", choice.get("id", "Route"))),
+				str(choice.get("distance", "near")),
+				int(choice.get("cost", 0)),
+			])
 		objects.append(_make_interactable_object({
 			"object_id": travel_object_id,
 			"object_type": CONTEXT_MODE_TRAVEL,
-			"source_id": target_id,
-			"label": str(choice.get("label", _label_from_id(target_id))),
-			"short_description": str(choice.get("description", "Leave for a different place.")),
+			"source_id": "leave",
+			"label": "Leave",
+			"short_description": "Open the city map and choose a revealed stop.",
 			"enabled": travel_enabled,
 			"disabled_reason": travel_disabled_reason,
-			"action_summary": "Choose where to go next. Double-click to travel." if travel_enabled else "Route locked.",
-			"risk_summary": _travel_risk_summary(choice),
-			"cost_summary": "Cost: %d" % int(choice.get("cost", 0)) if choice.has("cost") else "",
-			"visual_key": str(choice.get("kind", "travel")),
+			"action_summary": "Double-click to open the map." if any_enabled else "Open the map to inspect locked routes.",
+			"risk_summary": _travel_risk_summary(first_choice),
+			"impact_summary": _travel_preview_summary(first_choice),
+			"cost_summary": "%d route(s)" % travel_choices.size(),
+			"preview_lines": preview_lines,
+			"unlock_conditions": [],
+			"visual_key": "travel",
+			"prop": "door",
 			"icon_key": "travel",
-			"available_actions": [{"id": "select_travel", "label": "Choose route"}] if travel_enabled else [],
-			"confirm_action_id": "confirm_travel" if travel_enabled else "",
-			"focus_rect": _interaction_rect_for_object(travel_object_id, CONTEXT_MODE_TRAVEL, index),
+			"available_actions": [{"id": "open_map", "label": "Open Map"}] if travel_enabled else [],
+			"confirm_action_id": "open_map" if travel_enabled else "",
+			"focus_rect": _interaction_rect_for_object(travel_object_id, CONTEXT_MODE_TRAVEL, 0),
 		}))
 	objects.append_array(_hook_interactable_objects(CONTEXT_MODE_SERVICE, _service_hook_view_list()))
 	objects.append_array(_hook_interactable_objects(CONTEXT_MODE_LENDER, _lender_hook_view_list()))
@@ -4536,10 +5673,14 @@ func _hook_interactable_objects(object_type: String, options: Array) -> Array:
 		var hook_id := str(option.get("id", ""))
 		if hook_id.is_empty():
 			continue
+		var object_id := "%s:%s" % [object_type, hook_id]
+		var presence := "fixture" if _object_fixture_declared(object_id) else "dynamic"
+		if bool(option.get("hidden", false)) and presence != "fixture":
+			continue
 		var supported := bool(option.get("mutation_supported", false))
 		var enabled := bool(option.get("enabled", supported)) and not run_failed_without_recovery
 		var disabled_reason := "" if enabled else failed_reason if run_failed_without_recovery else str(option.get("disabled_reason", option.get("status", "Display-only.")))
-		var object_id := "%s:%s" % [object_type, hook_id]
+		var availability_class := str(option.get("availability_class", RunState.AVAILABILITY_AVAILABLE))
 		var category := str(option.get("category", ""))
 		var visual_type := "drink" if object_type == CONTEXT_MODE_SERVICE and category == "alcohol" else object_type
 		objects.append(_make_interactable_object({
@@ -4549,6 +5690,8 @@ func _hook_interactable_objects(object_type: String, options: Array) -> Array:
 			"source_id": hook_id,
 			"label": str(option.get("display_name", _label_from_id(hook_id))),
 			"short_description": str(option.get("summary", "")),
+			"presence": presence,
+			"interactive": enabled or availability_class == RunState.AVAILABILITY_TRANSIENT_BLOCKED,
 			"enabled": enabled,
 			"disabled_reason": disabled_reason,
 			"action_summary": "Double-click to use." if enabled else "",
@@ -4567,7 +5710,55 @@ func _interactable_object(object_id: String) -> Dictionary:
 	for object_data in _interactable_object_view_list():
 		if typeof(object_data) == TYPE_DICTIONARY and str((object_data as Dictionary).get("object_id", "")) == object_id:
 			return (object_data as Dictionary).duplicate(true)
+	if object_id == "travel:leave":
+		return _travel_leave_interactable_object()
 	return {}
+
+
+func _travel_leave_interactable_object() -> Dictionary:
+	if run_state == null:
+		return {}
+	var travel_choices := _travel_choice_view_list()
+	if travel_choices.is_empty():
+		return {}
+	var first_choice: Dictionary = travel_choices[0] if typeof(travel_choices[0]) == TYPE_DICTIONARY else {}
+	var any_enabled := false
+	for choice_value in travel_choices:
+		if typeof(choice_value) == TYPE_DICTIONARY and bool((choice_value as Dictionary).get("enabled", true)):
+			any_enabled = true
+			break
+	var travel_enabled := not _run_failed_without_recovery()
+	var preview_lines: Array = []
+	for choice_value in travel_choices.slice(0, 3):
+		if typeof(choice_value) != TYPE_DICTIONARY:
+			continue
+		var choice: Dictionary = choice_value
+		preview_lines.append("%s: %s, cost %d" % [
+			str(choice.get("label", choice.get("id", "Route"))),
+			str(choice.get("distance", "near")),
+			int(choice.get("cost", 0)),
+		])
+	return _make_interactable_object({
+		"object_id": "travel:leave",
+		"object_type": CONTEXT_MODE_TRAVEL,
+		"source_id": "leave",
+		"label": "Leave",
+		"short_description": "Open the city map and choose a revealed stop.",
+		"enabled": travel_enabled,
+		"disabled_reason": _pressure_status_text(_run_pressure_view()) if not travel_enabled else "",
+		"action_summary": "Double-click to open the map." if any_enabled else "Open the map to inspect locked routes.",
+		"risk_summary": _travel_risk_summary(first_choice),
+		"impact_summary": _travel_preview_summary(first_choice),
+		"cost_summary": "%d route(s)" % travel_choices.size(),
+		"preview_lines": preview_lines,
+		"unlock_conditions": [],
+		"visual_key": "travel",
+		"prop": "door",
+		"icon_key": "travel",
+		"available_actions": [{"id": "open_map", "label": "Open Map"}] if travel_enabled else [],
+		"confirm_action_id": "open_map" if travel_enabled else "",
+		"focus_rect": _interaction_rect_for_object("travel:leave", CONTEXT_MODE_TRAVEL, 0),
+	})
 
 
 func _environment_game_runtime_state(game_id: String) -> Dictionary:
@@ -4590,10 +5781,14 @@ func _make_interactable_object(source: Dictionary) -> Dictionary:
 	var focus_rect := _rect_from_dict(source.get("focus_rect", {}))
 	var focus_point := focus_rect.position + focus_rect.size * 0.5
 	var enabled := bool(source.get("enabled", true))
+	var interactive := bool(source.get("interactive", true))
 	return {
 		"object_id": str(source.get("object_id", "")),
 		"object_type": str(source.get("object_type", "info")),
 		"visual_type": str(source.get("visual_type", source.get("object_type", "info"))),
+		"presence": str(source.get("presence", "dynamic")),
+		"interactive": interactive,
+		"decorative": not interactive,
 		"source_id": str(source.get("source_id", "")),
 		"parent_id": str(source.get("parent_id", "")),
 		"label": str(source.get("label", "")),
@@ -4883,6 +6078,7 @@ func _game_view_snapshot() -> Dictionary:
 		"drunk_time_scale_percent": drunk_world_speed_percent,
 		"drunk_world_speed_percent": drunk_world_speed_percent,
 		"pending_drunk_absorption": run_state.pending_drunk_absorption_amount(),
+		"drunk_distortion_suppression_turns": run_state.drunk_distortion_suppression_turns,
 		"drunk_effect_mode": _drunk_effect_mode(),
 		"reduce_motion": _reduce_motion_enabled(),
 		"high_contrast": _high_contrast_enabled(),
@@ -5847,11 +7043,35 @@ func _debt_view_list() -> Array:
 		if typeof(debt_entry) != TYPE_DICTIONARY:
 			continue
 		var debt_data := debt_entry as Dictionary
-		var label := str(debt_data.get("lender_id", debt_data.get("id", "debt")))
-		var balance := int(debt_data.get("balance", 0))
-		var status := str(debt_data.get("status", "active"))
-		result.append("%s owes %d (%s)" % [_label_from_id(label), balance, _label_from_id(status)])
+		result.append(_debt_entry_view_line(debt_data))
 	return result
+
+
+func _debt_entry_view_line(debt_data: Dictionary) -> String:
+	var label := _label_from_id(str(debt_data.get("lender_id", debt_data.get("id", "debt"))))
+	var balance := int(debt_data.get("balance", 0))
+	var status := _label_from_id(str(debt_data.get("status", "active")))
+	var schedule := _debt_schedule_text(debt_data)
+	var kind := str(debt_data.get("debt_kind", "cash"))
+	if kind == "favor":
+		return "%s wants %d favor%s, %s (%s)" % [label, balance, "" if balance == 1 else "s", schedule, status]
+	if kind == "pawn":
+		var item_name := str(debt_data.get("collateral_item_name", debt_data.get("collateral_item_id", "collateral")))
+		return "%s holds %s for %d, %s (%s)" % [label, item_name, balance, schedule, status]
+	return "%s balance %d, %s (%s)" % [label, balance, schedule, status]
+
+
+func _debt_schedule_text(debt_data: Dictionary) -> String:
+	var status := str(debt_data.get("status", "active"))
+	if status == "favor_due":
+		return "favor due now"
+	if status == "overdue":
+		var pressure := int(debt_data.get("next_pressure_turns", 0))
+		return "next pressure in %d turn%s" % [pressure, "" if pressure == 1 else "s"] if pressure > 0 else "overdue now"
+	var turns := int(debt_data.get("turns_remaining", debt_data.get("deadline_turns", 0)))
+	if turns <= 0:
+		return "due now"
+	return "due in %d turn%s" % [turns, "" if turns == 1 else "s"]
 
 
 func _flag_view_list() -> Array:
@@ -6000,14 +7220,14 @@ func _on_start_pressed() -> void:
 	if seed_text.is_empty():
 		seed_text = _generate_menu_seed_text()
 		seed_input.text = seed_text
-	start_foundation_run(seed_text, _content_group_challenge_for_seed(seed_text))
+	start_foundation_run(seed_text, _new_run_challenge_for_seed(seed_text))
 
 
 func start_generated_foundation_run() -> void:
 	var seed_text := _generate_menu_seed_text()
 	if seed_input != null:
 		seed_input.text = seed_text
-	start_foundation_run(seed_text, _content_group_challenge_for_seed(seed_text))
+	start_foundation_run(seed_text, _new_run_challenge_for_seed(seed_text))
 
 
 func return_to_main_menu() -> void:
@@ -6024,6 +7244,7 @@ func return_to_main_menu() -> void:
 	dev_game_test_mode = false
 	_refresh_run_action_service()
 	close_content_group_config()
+	close_challenge_selection()
 	_hide_run_menu()
 	_hide_event_choice_popup()
 	_hide_run_inventory_popup()
@@ -6061,6 +7282,7 @@ func open_settings_menu() -> void:
 	if settings_menu == null or settings_overlay == null:
 		return
 	close_content_group_config()
+	close_challenge_selection()
 	if start_menu_controls != null:
 		start_menu_controls.visible = false
 	if inventory_page != null:
@@ -6091,12 +7313,17 @@ func close_settings_menu() -> void:
 
 func _on_settings_applied() -> void:
 	_apply_accessibility_settings()
+	if procedural_music_player != null and user_settings != null:
+		procedural_music_player.audio_calm = bool(user_settings.audio_calm)
+		_update_procedural_music()
 	if run_state != null:
 		_render_foundation_snapshots()
 		_refresh_world_header()
 
 
 func _drunk_effect_mode() -> String:
+	if run_state != null and run_state.drunk_distortion_suppressed():
+		return "classic"
 	if user_settings == null:
 		return "distortion"
 	if user_settings.reduce_motion:
@@ -6116,6 +7343,7 @@ func open_inventory_page() -> void:
 	if inventory_page == null:
 		return
 	close_content_group_config()
+	close_challenge_selection()
 	if settings_menu != null:
 		settings_menu.visible = false
 	if start_menu_intro != null:
@@ -6144,6 +7372,7 @@ func open_game_test_menu() -> void:
 	if game_test_menu == null:
 		return
 	close_content_group_config()
+	close_challenge_selection()
 	if settings_menu != null:
 		settings_menu.visible = false
 	if inventory_page != null:
@@ -6272,6 +7501,7 @@ func _refresh_start_screen() -> void:
 		continue_button.text = "Continue"
 		continue_button.tooltip_text = "Load the saved run." if has_save else "No saved run yet."
 	_refresh_content_group_controls()
+	_refresh_challenge_controls()
 
 
 func _generate_menu_seed_text() -> String:
@@ -7053,6 +8283,7 @@ func _route_ended_run_if_needed(terminal_result: Dictionary = {}) -> bool:
 		return false
 	_clear_terminal_interaction_state()
 	_set_current_screen(SCREEN_VICTORY)
+	_record_challenge_completion_if_needed()
 	var message := str(terminal_result.get("message", "")).strip_edges()
 	if message.is_empty():
 		message = str(_victory_summary_snapshot().get("message", "The run is complete."))
@@ -7070,6 +8301,24 @@ func _route_failed_run_if_needed(terminal_result: Dictionary = {}) -> bool:
 		message = str(terminal_result.get("message", "The run is over."))
 	_show_message(message)
 	return true
+
+
+func _record_challenge_completion_if_needed() -> void:
+	if run_state == null or run_state.run_status != RunState.RUN_STATUS_ENDED:
+		return
+	var completion_flag := run_state.challenge_completion_flag()
+	if completion_flag.is_empty():
+		return
+	if profile_inventory == null:
+		_initialize_profile_inventory()
+	if profile_inventory.has_challenge_completion(completion_flag):
+		return
+	var challenge_id := str(run_state.challenge_config.get("id", "")).strip_edges()
+	var challenge_title := str(run_state.challenge_config.get("title", challenge_id.capitalize())).strip_edges()
+	profile_inventory.mark_challenge_completed(completion_flag, challenge_id, challenge_title)
+	var error := profile_inventory.save()
+	if error == OK:
+		save_status_message = "Challenge complete."
 
 
 func _pressure_status_text(pressure: Dictionary) -> String:
@@ -7777,19 +9026,26 @@ func _eligible_event_option_view_list() -> Array:
 		var option := _eligible_event_option(event_id)
 		if option.is_empty():
 			continue
+		if str(option.get("interaction_mode", "interactable")) != "interactable":
+			continue
 		options.append(option)
 	return options
 
 
 func _eligible_event_option(event_id: String) -> Dictionary:
+	return _eligible_event_option_with_context(event_id, {})
+
+
+func _eligible_event_option_with_context(event_id: String, context: Dictionary = {}, environment_override: Dictionary = {}) -> Dictionary:
 	var event_definition := library.event(event_id)
 	if event_definition.is_empty():
 		return {}
 	var event_module := EventModule.new()
-	event_module.setup(event_definition)
-	if not event_module.can_trigger(run_state, run_state.current_environment):
+	event_module.setup(event_definition, library)
+	var event_environment := environment_override if not environment_override.is_empty() else run_state.current_environment
+	if not event_module.can_trigger(run_state, event_environment, context):
 		return {}
-	var choices: Array = event_module.choices(run_state, run_state.current_environment)
+	var choices: Array = event_module.choices(run_state, event_environment)
 	if choices.is_empty():
 		return {}
 	var payload: Dictionary = event_definition.get("payload", {})
@@ -7814,6 +9070,7 @@ func _eligible_event_option(event_id: String) -> Dictionary:
 		"id": event_id,
 		"display_name": event_module.get_display_name(),
 		"type": event_module.get_event_type(),
+		"interaction_mode": event_module.get_interaction_mode(),
 		"summary": str(payload.get("summary", "")),
 		"asset_path": str(event_definition.get("asset_path", "")),
 		"visual_key": str(event_definition.get("visual_key", event_definition.get("type", "event"))),
@@ -8405,6 +9662,25 @@ func _shopkeeper_available() -> bool:
 	return run_action_service.shopkeeper_available()
 
 
+func _shopkeeper_should_draw() -> bool:
+	if run_state == null:
+		return false
+	if _shopkeeper_available():
+		return true
+	if str(run_state.current_environment.get("kind", "")) == "shop":
+		return true
+	return _object_fixture_declared("shopkeeper:merchant")
+
+
+func _object_fixture_declared(object_id: String) -> bool:
+	if run_state == null or object_id.is_empty():
+		return false
+	for fixture_id in _string_array(run_state.current_environment.get("object_fixtures", [])):
+		if fixture_id == object_id:
+			return true
+	return false
+
+
 func _shopkeeper_label() -> String:
 	_refresh_run_action_service()
 	return run_action_service.shopkeeper_label()
@@ -8512,6 +9788,123 @@ func _clear_selected_prestige_purchase() -> void:
 	selected_prestige_purchase_label = ""
 
 
+func _refresh_world_map_overlay() -> void:
+	if world_map_overlay == null or not world_map_overlay.visible:
+		return
+	var snapshot := _world_map_snapshot()
+	if world_map_nodes_layer != null and world_map_nodes_layer.has_method("set_map_snapshot"):
+		world_map_nodes_layer.call("set_map_snapshot", snapshot)
+		_clear_world_map_node_buttons()
+		_add_world_map_node_buttons(snapshot)
+	var current_label := str(run_state.current_environment.get("display_name", "Current room")) if run_state != null else "Current room"
+	if world_map_title_label != null:
+		world_map_title_label.text = "%s / World Map" % current_label
+	_refresh_world_map_detail()
+
+
+func _clear_world_map_node_buttons() -> void:
+	if world_map_nodes_layer == null:
+		return
+	for child in world_map_nodes_layer.get_children():
+		if child is Button:
+			world_map_nodes_layer.remove_child(child)
+			child.queue_free()
+
+
+func _add_world_map_node_buttons(snapshot: Dictionary) -> void:
+	if world_map_nodes_layer == null:
+		return
+	var layer_size := world_map_nodes_layer.size
+	if layer_size.x <= 0.0 or layer_size.y <= 0.0:
+		layer_size = Vector2(540, 390)
+	var inset := Vector2(32.0, 28.0)
+	var drawable := Vector2(maxf(1.0, layer_size.x - inset.x * 2.0), maxf(1.0, layer_size.y - inset.y * 2.0))
+	var current_id := str(snapshot.get("current_node_id", ""))
+	for node_value in _copy_array(snapshot.get("nodes", [])):
+		if typeof(node_value) != TYPE_DICTIONARY:
+			continue
+		var node: Dictionary = node_value
+		var node_id := str(node.get("id", ""))
+		if node_id.is_empty():
+			continue
+		var position: Dictionary = node.get("position", {}) if typeof(node.get("position", {})) == TYPE_DICTIONARY else {}
+		var center := inset + Vector2(clampf(float(position.get("x", 0.5)), 0.0, 1.0), clampf(float(position.get("y", 0.5)), 0.0, 1.0)) * drawable
+		var button := _button(str(node.get("label", node_id)).left(16), Callable(self, "select_world_map_node").bind(node_id))
+		button.custom_minimum_size = Vector2(92, 30)
+		button.size = Vector2(92, 30)
+		button.position = center - button.size * 0.5
+		button.disabled = node_id == current_id
+		button.tooltip_text = str(node.get("label", node_id))
+		if node_id == selected_world_map_node_id:
+			_style_selected_button(button)
+		world_map_nodes_layer.add_child(button)
+
+
+func _refresh_world_map_detail() -> void:
+	if world_map_detail_label == null or run_state == null:
+		return
+	var lock_remaining := run_state.current_travel_lock_remaining()
+	var lines: Array = []
+	if lock_remaining > 0:
+		lines.append(str(run_state.travel_route_status({}).get("disabled_reason", "Travel is locked for now.")))
+	if selected_world_map_node_id.is_empty():
+		lines.append("Select a revealed stop.")
+		_set_world_map_confirm_enabled(false)
+		world_map_detail_label.text = "\n".join(lines)
+		return
+	var current_id := run_state.current_world_node_id()
+	var node: Dictionary = WorldMapScript.node_by_id(run_state.world_map, selected_world_map_node_id)
+	if node.is_empty():
+		lines.append("That stop is not visible from here.")
+		_set_world_map_confirm_enabled(false)
+		world_map_detail_label.text = "\n".join(lines)
+		return
+	if selected_world_map_node_id == current_id:
+		lines.append("You are here.")
+		_set_world_map_confirm_enabled(false)
+		world_map_detail_label.text = "\n".join(lines)
+		return
+	var choice := _travel_choice(selected_world_map_node_id)
+	lines.append(str(node.get("label", selected_world_map_node_id)))
+	if choice.is_empty():
+		lines.append("No direct route from here.")
+		_set_world_map_confirm_enabled(false)
+		world_map_detail_label.text = "\n".join(lines)
+		return
+	lines.append("Distance: %s, cost %d." % [str(choice.get("distance", "near")).capitalize(), int(choice.get("cost", 0))])
+	var risk := _travel_risk_summary(choice)
+	if not risk.is_empty():
+		lines.append("Risk: %s" % risk)
+	for preview_line in _copy_array(choice.get("preview_lines", [])).slice(0, 3):
+		var preview_text := str(preview_line).strip_edges()
+		if not preview_text.is_empty():
+			lines.append(preview_text)
+	if not bool(choice.get("enabled", true)):
+		lines.append(str(choice.get("disabled_reason", "That route is not available right now.")))
+	_set_world_map_confirm_enabled(bool(choice.get("enabled", true)))
+	world_map_detail_label.text = "\n".join(lines)
+
+
+func _set_world_map_confirm_enabled(enabled: bool) -> void:
+	if world_map_confirm_button == null:
+		return
+	world_map_confirm_button.disabled = not enabled
+
+
+func _world_map_snapshot() -> Dictionary:
+	if run_state == null:
+		return {}
+	if generator != null:
+		return generator.world_map_snapshot(run_state, selected_world_map_node_id)
+	return WorldMapScript.snapshot(run_state.world_map, selected_world_map_node_id)
+
+
+func _world_route_for_target(target_id: String) -> Dictionary:
+	if run_state != null and generator != null and run_state.has_world_map():
+		return generator.world_route_for_target(run_state, target_id)
+	return library.route(target_id) if library != null else {}
+
+
 func _travel_choice_view_list() -> Array:
 	if run_state == null:
 		return []
@@ -8529,7 +9922,7 @@ func _travel_choice_view_list() -> Array:
 func _travel_choice(target_id: String) -> Dictionary:
 	if target_id.is_empty() or not _travel_target_ids().has(target_id):
 		return {}
-	var route := library.route(target_id) if library != null else {}
+	var route := _world_route_for_target(target_id)
 	var archetype := _environment_archetype(target_id)
 	var label := str(route.get("label", archetype.get("display_name", "")))
 	if label.is_empty():
@@ -8540,6 +9933,7 @@ func _travel_choice(target_id: String) -> Dictionary:
 		"kind": str(archetype.get("kind", "")),
 		"tier": int(archetype.get("tier", 1)),
 		"description": str(route.get("description", "")),
+		"route": route.duplicate(true),
 	}
 	if route.has("cost"):
 		choice["cost"] = int(route.get("cost", 0))
@@ -8558,6 +9952,22 @@ func _travel_choice(target_id: String) -> Dictionary:
 		return {}
 	choice["distance"] = str(status.get("distance", choice.get("distance", "")))
 	choice["risk_decay"] = int(status.get("risk_decay", choice.get("risk_decay", 0)))
+	choice["risk_text"] = str(status.get("risk_text", ""))
+	choice["risk_event"] = _copy_dict(status.get("risk_event", {}))
+	choice["unlock_conditions"] = _copy_array(status.get("unlock_conditions", []))
+	choice["unlock_summary"] = str(status.get("unlock_summary", ""))
+	if status.has("availability_turn"):
+		choice["availability_turn"] = int(status.get("availability_turn", 0))
+	if status.has("travel_lock_remaining"):
+		choice["travel_lock_remaining"] = int(status.get("travel_lock_remaining", 0))
+	var full_preview := _travel_full_preview_enabled()
+	var preview_environment := {}
+	if full_preview and generator != null:
+		preview_environment = generator.preview_environment(run_state, target_id)
+	var preview := run_state.travel_route_preview(route, archetype, preview_environment, full_preview)
+	choice["preview"] = preview
+	choice["preview_level"] = str(preview.get("level", "partial"))
+	choice["preview_lines"] = _copy_array(preview.get("lines", []))
 	var enabled := bool(status.get("available", true))
 	var disabled_reason := str(status.get("disabled_reason", ""))
 	if not enabled and disabled_reason.strip_edges().is_empty():
@@ -8572,6 +9982,8 @@ func _travel_choice(target_id: String) -> Dictionary:
 func _travel_target_ids() -> Array:
 	if run_state == null:
 		return []
+	if run_state.has_world_map():
+		return WorldMapScript.neighbor_ids(run_state.world_map, run_state.current_world_node_id(), true)
 	var result: Array = []
 	for source in [
 		run_state.current_environment.get("next_archetypes", []),
@@ -8599,6 +10011,24 @@ func _travel_label_from_archetype(archetype: Dictionary, fallback_id: String) ->
 	return fallback_id.replace("_", " ").capitalize()
 
 
+func _travel_full_preview_enabled() -> bool:
+	if run_state == null:
+		return false
+	return run_state.travel_scouting_level() > 0
+
+
+func _travel_preview_summary(choice: Dictionary) -> String:
+	var preview_lines := _copy_array(choice.get("preview_lines", []))
+	if preview_lines.is_empty():
+		return ""
+	var level := str(choice.get("preview_level", "partial"))
+	var prefix := "Scout" if level == "full" else "Preview"
+	var first_line := str(preview_lines[0]).strip_edges()
+	if first_line.begins_with("Preview:"):
+		first_line = first_line.substr("Preview:".length()).strip_edges()
+	return "%s: %s" % [prefix, first_line]
+
+
 func _travel_risk_summary(choice: Dictionary) -> String:
 	var parts: Array = []
 	var risk := str(choice.get("risk", ""))
@@ -8615,12 +10045,30 @@ func _travel_risk_summary(choice: Dictionary) -> String:
 	var suspicion_delta := int(choice.get("suspicion_delta", 0))
 	if suspicion_delta > 0:
 		parts.append("heat +%d" % suspicion_delta)
+	var risk_text := str(choice.get("risk_text", "")).strip_edges()
+	if not risk_text.is_empty():
+		parts.append(risk_text)
+	var risk_event := _copy_dict(choice.get("risk_event", {}))
+	if not risk_event.is_empty():
+		var chance := int(risk_event.get("chance_percent", 0))
+		var event_bits: Array = []
+		var bankroll_delta := int(risk_event.get("bankroll_delta", 0))
+		var event_heat := int(risk_event.get("suspicion_delta", 0))
+		if bankroll_delta != 0:
+			event_bits.append("%+d cash" % bankroll_delta)
+		if event_heat > 0:
+			event_bits.append("heat +%d" % event_heat)
+		var consequence := ", ".join(event_bits)
+		if consequence.is_empty():
+			consequence = str(risk_event.get("label", "route event"))
+		parts.append("%d%% %s" % [chance, consequence])
 	return ", ".join(parts)
 
 
 func _clear_selected_travel() -> void:
 	selected_travel_target_id = ""
 	selected_travel_label = ""
+	selected_world_map_node_id = ""
 
 
 func _panel_container(fill: Color, border: Color) -> PanelContainer:

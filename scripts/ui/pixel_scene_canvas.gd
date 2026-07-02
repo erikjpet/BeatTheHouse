@@ -193,6 +193,8 @@ func object_id_at_local_position(local_position: Vector2) -> String:
 	var objects := _active_scene_objects()
 	for index in range(objects.size() - 1, -1, -1):
 		var object_data: Dictionary = objects[index]
+		if not bool(object_data.get("interactive", true)):
+			continue
 		if _board_rect_for_object(object_data).has_point(board_position):
 			return str(object_data.get("id", ""))
 	return ""
@@ -351,6 +353,10 @@ func _draw() -> void:
 				_draw_bar()
 			"jazz_club":
 				_draw_jazz_club()
+			"kitty_cat_lounge":
+				_draw_kitty_cat_lounge()
+			"delta_queen":
+				_draw_delta_queen()
 			"gas_station_casino":
 				_draw_gas_station()
 			"small_underground_casino":
@@ -601,6 +607,75 @@ func _draw_jazz_player(foot: Vector2, scale_value: float, instrument: String) ->
 			draw_line(foot + Vector2(28, -50) * scale_value, foot + Vector2(44, -66) * scale_value, C_SOFT, maxf(1.0, 2.0 * scale_value))
 
 
+func _draw_kitty_cat_lounge() -> void:
+	# Velvet lounge with a stage, champagne bar, house wheel, and forgiving staff.
+	draw_rect(Rect2(0, 0, 900, 246), Color("#130918"))
+	for x in range(0, 900, 60):
+		var panel := Color("#241022") if int(x / 60) % 2 == 0 else Color("#1a0d1d")
+		draw_rect(Rect2(x, 0, 60, 246), panel)
+	draw_rect(Rect2(0, 0, 900, 32), Color("#09060c"))
+	draw_rect(Rect2(0, 32, 900, 6), C_PINK_2)
+	draw_rect(Rect2(62, 58, 470, 184), Color("#24101a"))
+	draw_rect(Rect2(82, 78, 430, 126), Color("#10080e"))
+	draw_rect(Rect2(94, 196, 406, 38), Color("#3a1818"))
+	_draw_light_cone(Vector2(180, 34), Vector2(-42, 190), C_PINK, 0.12)
+	_draw_light_cone(Vector2(318, 34), Vector2(0, 190), C_AMBER, 0.10)
+	_draw_light_cone(Vector2(456, 34), Vector2(42, 190), C_CYAN, 0.11)
+	_neon_text("KITTY CAT", Vector2(126, 62), 26, C_PINK)
+	_neon_text("LOUNGE", Vector2(354, 66), 22, C_YELLOW)
+	for x in [142, 250, 358]:
+		_silhouette(Vector2(x, 205), 0.72, Color("#05050a"))
+		draw_rect(Rect2(x - 14, 164, 28, 5), C_AMBER)
+	draw_rect(Rect2(584, 72, 260, 124), Color("#170b12"))
+	draw_rect(Rect2(602, 88, 222, 64), Color("#2a1118"))
+	for x in range(620, 808, 28):
+		draw_rect(Rect2(x, 104, 10, 34), _cycle_color(x).darkened(0.18))
+		draw_rect(Rect2(x + 2, 94, 6, 8), C_AMBER)
+	draw_rect(Rect2(584, 190, 268, 48), Color("#3d1b14"))
+	draw_line(Vector2(596, 199), Vector2(840, 199), Color(C_YELLOW.r, C_YELLOW.g, C_YELLOW.b, 0.46), 3)
+	draw_circle(Vector2(704, 274), 48, Color("#2a1220"))
+	draw_circle(Vector2(704, 274), 38, Color(C_PINK.r, C_PINK.g, C_PINK.b, 0.26))
+	for i in range(8):
+		var angle := float(i) * TAU / 8.0 + flicker * 0.08
+		draw_line(Vector2(704, 274), Vector2(704, 274) + Vector2(cos(angle), sin(angle)) * 42.0, _cycle_color(i * 19), 2)
+	draw_circle(Vector2(704, 274), 9, C_YELLOW)
+	for table_x in [130, 300, 472]:
+		draw_rect(Rect2(table_x - 42, 308, 84, 14), Color("#251015"))
+		draw_rect(Rect2(table_x - 20, 298, 12, 20), C_AMBER)
+		draw_rect(Rect2(table_x + 12, 300, 10, 18), C_PINK_2)
+	_floor_reflections()
+
+
+func _draw_delta_queen() -> void:
+	# Riverboat casino deck with brass rails, mid-stakes tables, and dock lights out the windows.
+	draw_rect(Rect2(0, 0, 900, 246), Color("#071018"))
+	for x in range(0, 900, 72):
+		draw_rect(Rect2(x, 0, 72, 246), Color("#0d1822") if int(x / 72) % 2 == 0 else Color("#101b26"))
+	draw_rect(Rect2(0, 28, 900, 8), C_AMBER)
+	for x in range(42, 846, 92):
+		draw_rect(Rect2(x, 54, 58, 112), Color("#071421"))
+		draw_rect(Rect2(x + 6, 62, 46, 86), Color("#132b3a"))
+		draw_line(Vector2(x + 4, 132), Vector2(x + 54, 104), Color(C_CYAN.r, C_CYAN.g, C_CYAN.b, 0.28), 2)
+	_neon_text("DELTA QUEEN", Vector2(266, 62), 28, C_YELLOW)
+	draw_rect(Rect2(64, 178, 238, 84), Color("#123f30"))
+	draw_rect(Rect2(84, 194, 198, 46), Color("#1a7755"))
+	draw_rect(Rect2(360, 170, 212, 92), Color("#143b31"))
+	draw_rect(Rect2(378, 188, 176, 48), Color("#1b7555"))
+	for x in [122, 172, 222, 410, 460, 510]:
+		_card_back(Rect2(x, 154 + (x % 3) * 4, 26, 36))
+	_slot_machine(Rect2(626, 132, 76, 124), C_CYAN)
+	_slot_machine(Rect2(724, 132, 76, 124), C_PINK)
+	draw_rect(Rect2(0, 292, 900, 16), Color("#493116"))
+	for x in range(0, 900, 60):
+		draw_line(Vector2(x, 278), Vector2(x + 28, 328), C_AMBER, 3)
+	draw_line(Vector2(0, 278), Vector2(900, 278), C_AMBER, 4)
+	draw_line(Vector2(0, 328), Vector2(900, 328), C_AMBER, 3)
+	for i in range(7):
+		var y := 352 + i * 9 + int(sin(flicker * 1.4 + i) * 3.0)
+		draw_line(Vector2(0, y), Vector2(900, y + 10), Color(C_CYAN.r, C_CYAN.g, C_CYAN.b, 0.13), 2)
+	_floor_reflections()
+
+
 func _draw_gas_station() -> void:
 	# Converted gas station with canopy, highway window, slot row, cage, camera, and fluorescents.
 	draw_rect(Rect2(0, 0, 900, 248), Color("#101122"))
@@ -737,6 +812,23 @@ func _draw_scene_life() -> void:
 			draw_circle(Vector2(466, 168), 15, Color(C_AMBER.r, C_AMBER.g, C_AMBER.b, cymbal_alpha))
 			draw_rect(Rect2(718, 184, 48, 18), Color(C_CYAN.r, C_CYAN.g, C_CYAN.b, 0.18 + absf(sin(flicker * 5.2)) * 0.16))
 			_draw_sparkles([Vector2(184, 118), Vector2(322, 116), Vector2(466, 118), Vector2(704, 196)], C_YELLOW, 0.18)
+		"kitty_cat_lounge":
+			_draw_sign_pulse(Rect2(116, 46, 404, 48), C_PINK, 0.18, 3.8)
+			_draw_smoke_bands(70, 820, 92, C_PINK, 0.044)
+			_draw_smoke_bands(120, 760, 138, C_CYAN, 0.026)
+			draw_circle(Vector2(704, 274), 40, Color(C_PINK.r, C_PINK.g, C_PINK.b, 0.10 + absf(sin(flicker * 3.0)) * 0.14))
+			for x in [122, 292, 464, 622, 762]:
+				draw_rect(Rect2(x, 302 + int(sin(flicker * 2.0 + x) * 2.0), 16, 4), Color(C_YELLOW.r, C_YELLOW.g, C_YELLOW.b, 0.30))
+			_draw_sparkles([Vector2(168, 166), Vector2(318, 164), Vector2(456, 166), Vector2(704, 236)], C_YELLOW, 0.20)
+		"delta_queen":
+			_draw_sign_pulse(Rect2(254, 46, 372, 52), C_YELLOW, 0.14, 3.5)
+			for i in range(7):
+				var y := 354 + i * 10 + int(sin(flicker * 1.7 + i) * 4.0)
+				draw_line(Vector2(0, y), Vector2(900, y + 9), Color(C_CYAN.r, C_CYAN.g, C_CYAN.b, 0.10), 2)
+			var dock_x := int(fmod(flicker * 28.0, 960.0)) - 60
+			draw_rect(Rect2(dock_x, 108, 52, 8), Color(C_AMBER.r, C_AMBER.g, C_AMBER.b, 0.32))
+			draw_rect(Rect2(dock_x + 8, 116, 6, 42), Color(C_AMBER.r, C_AMBER.g, C_AMBER.b, 0.22))
+			_draw_sparkles([Vector2(128, 96), Vector2(448, 96), Vector2(744, 96)], C_CYAN, 0.16)
 		"gas_station_casino":
 			var sweep := 724 + int(abs(sin(flicker * 1.8)) * 72.0)
 			var hot := sin(flicker * 1.8) > 0.25
@@ -794,6 +886,12 @@ func _draw_familiar_characters() -> void:
 		"jazz_club":
 			_draw_named_character("rafi", Vector2(824, 206), 0.66, "bartender")
 			_draw_named_character("dot", Vector2(614, 248), 0.52, "regular")
+		"kitty_cat_lounge":
+			_draw_named_character("iris", Vector2(618, 204), 0.70, "host")
+			_draw_named_character("dot", Vector2(304, 236), 0.58, "regular")
+		"delta_queen":
+			_draw_named_character("sable", Vector2(436, 176), 0.70, "dealer")
+			_draw_named_character("ox", Vector2(790, 210), 0.86, "deck_boss")
 		"gas_station_casino":
 			_draw_named_character("nell", Vector2(746, 190), 0.76, "attendant")
 			_draw_watch_camera(Vector2(744, 72), C_PINK)
@@ -1212,11 +1310,13 @@ func _objects_from_foundation_snapshot(snapshot: Dictionary) -> Array:
 	var travel_targets := _string_array(snapshot.get("next_archetypes", []))
 	if travel_targets.is_empty():
 		travel_targets = _string_array(snapshot.get("travel_hooks", []))
-	for index in range(travel_targets.size()):
+	if not travel_targets.is_empty():
 		objects.append({
-			"id": "travel:%s" % travel_targets[index],
+			"id": "travel:leave",
 			"type": "travel",
-			"position": Vector2(0.78, 0.64 + float(index) * 0.12),
+			"label": "Leave",
+			"prop": "door",
+			"position": Vector2(0.78, 0.64),
 			"size": Vector2(118, 64),
 		})
 	return objects
@@ -1243,6 +1343,9 @@ func _objects_from_interactable_records(records: Array) -> Array:
 			"label": str(record.get("label", "")),
 			"description": str(record.get("short_description", "")),
 			"identity_summary": str(record.get("identity_summary", "")),
+			"presence": str(record.get("presence", "dynamic")),
+			"interactive": bool(record.get("interactive", true)),
+			"decorative": bool(record.get("decorative", not bool(record.get("interactive", true)))),
 			"position": focus_point,
 			"size": Vector2(
 				maxf(normalized_rect.size.x * float(BOARD_SIZE.x), 72.0),
@@ -2492,8 +2595,13 @@ func _texture_for_asset_path(asset_path: String) -> Texture2D:
 	if item_icon_texture_cache.has(path):
 		return item_icon_texture_cache[path] as Texture2D
 	if not ResourceLoader.exists(path):
-		item_icon_texture_cache[path] = null
-		return null
+		var image := Image.new()
+		if image.load(path) != OK:
+			item_icon_texture_cache[path] = null
+			return null
+		var image_texture := ImageTexture.create_from_image(image)
+		item_icon_texture_cache[path] = image_texture
+		return image_texture
 	var resource := load(path)
 	var texture := resource as Texture2D
 	item_icon_texture_cache[path] = texture
@@ -2671,6 +2779,8 @@ func _draw_travel_arrow(rect: Rect2, accent: Color) -> void:
 
 func _fallback_event_prop(visual_key: String, icon_key: String) -> String:
 	var key := ("%s %s" % [visual_key, icon_key]).to_lower()
+	if key.find("phone") != -1:
+		return "payphone"
 	if key.find("camera") != -1 or key.find("sky") != -1:
 		return "security_camera"
 	if key.find("security") != -1 or key.find("heat") != -1:
@@ -2711,6 +2821,8 @@ func _draw_event_prop(rect: Rect2, object_data: Dictionary, selected: bool) -> v
 			_draw_event_host_prop(rect, accent)
 		"rowdy_patron":
 			_draw_event_patron_prop(rect, accent, 0.64, false, true)
+		"payphone", "counter_phone":
+			_draw_travel_payphone(rect, accent)
 		_:
 			_draw_event_patron_prop(rect, accent)
 	var icon_texture := _texture_for_asset_path(str(object_data.get("asset_path", "")))
@@ -2723,7 +2835,7 @@ func _event_prop_accent(prop: String, selected: bool) -> Color:
 		return C_YELLOW
 	if prop in ["security_exit", "security_camera", "pit_boss", "jammed_machine"]:
 		return C_PINK
-	if prop in ["paper_note", "side_door", "motel_door"]:
+	if prop in ["paper_note", "side_door", "motel_door", "payphone", "counter_phone"]:
 		return C_ORANGE
 	return C_PURPLE_2
 
@@ -2738,6 +2850,8 @@ func _event_icon_rect(rect: Rect2, prop: String) -> Rect2:
 			return _centered_icon_rect(rect, 30.0, Vector2(22, -10))
 		"jammed_machine":
 			return _centered_icon_rect(rect, 30.0, Vector2(22, -18))
+		"payphone", "counter_phone":
+			return _centered_icon_rect(rect, 26.0, Vector2(24, -10))
 	return _centered_icon_rect(rect, 34.0, Vector2(24, -18))
 
 

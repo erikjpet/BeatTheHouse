@@ -34,6 +34,164 @@
 		"effect": {"legal_win_chance": 3, "loss_reduction": 1, "cheat_suspicion_delta": 1}
 	},
 	{
+		"id": "ledger_pencil",
+		"display_name": "Ledger Pencil",
+		"class": "permanent",
+		"domain": "global",
+		"content_groups": ["universal_passive_items"],
+		"build_tags": ["clean_grinder"],
+		"sellable": true,
+		"sale_price": 8,
+		"price_min": 12,
+		"price_max": 20,
+		"asset_path": "res://assets/art/items/ledger_pencil.png",
+		"icon_key": "ledger_pencil",
+		"environment_prop": "notepad",
+		"surface": "store_shelf",
+		"description": "Pairs with Instant Coffee for cleaner wins.",
+		"effect": {
+			"win_chance": 1,
+			"loss_reduction": 1,
+			"synergies": [
+				{"requires_any": ["instant_coffee"], "effects": {"win_chance": 1}},
+				{"requires_any": ["cashout_envelope"], "effects": {"loss_reduction": 1}}
+			]
+		}
+	},
+	{
+		"id": "cashout_envelope",
+		"display_name": "Cashout Envelope",
+		"class": "permanent",
+		"domain": "global",
+		"content_groups": ["universal_passive_items"],
+		"build_tags": ["clean_grinder", "debt_surfer"],
+		"sellable": true,
+		"sale_price": 9,
+		"price_min": 14,
+		"price_max": 24,
+		"asset_path": "res://assets/art/items/cashout_envelope.png",
+		"icon_key": "cashout_envelope",
+		"environment_prop": "map",
+		"surface": "store_shelf",
+		"description": "Pairs with Luck Card or Ledger for steadier cash.",
+		"effect": {
+			"win_bonus": 1,
+			"loss_reduction": 1,
+			"synergies": [
+				{"requires_any": ["creased_luck_card"], "effects": {"win_bonus": 1}},
+				{"requires_any": ["ledger_pencil"], "effects": {"loss_reduction": 1}}
+			]
+		}
+	},
+	{
+		"id": "thermos_black_coffee",
+		"display_name": "Thermos of Black Coffee",
+		"class": "consumable",
+		"domain": "global",
+		"content_groups": ["universal_active_items"],
+		"sellable": true,
+		"sale_price": 8,
+		"price_min": 14,
+		"price_max": 24,
+		"asset_path": "res://assets/art/items/thermos_black_coffee.png",
+		"icon_key": "thermos_black_coffee",
+		"environment_prop": "coffee",
+		"surface": "store_shelf",
+		"description": "Two strong pours that cut the buzz and steady your sight.",
+		"effect": {
+			"active_item": true,
+			"active_mode": "consumable",
+			"active_target": "global",
+			"drunk_delta": -28,
+			"pending_drunk_absorption_delta": -28,
+			"drunk_distortion_suppression_turns": 3,
+			"inventory_remove": ["thermos_black_coffee"],
+			"inventory_add": ["thermos_black_coffee_half"],
+			"messages": ["Black coffee pulls the room back into focus."]
+		}
+	},
+	{
+		"id": "thermos_black_coffee_half",
+		"display_name": "Half Thermos",
+		"class": "consumable",
+		"domain": "global",
+		"content_groups": ["universal_active_items"],
+		"sellable": false,
+		"sale_price": 0,
+		"price_min": 0,
+		"price_max": 0,
+		"asset_path": "res://assets/art/items/thermos_black_coffee_half.png",
+		"icon_key": "thermos_black_coffee_half",
+		"environment_prop": "coffee",
+		"surface": "store_shelf",
+		"description": "The last pour from a thermos of black coffee.",
+		"effect": {
+			"active_item": true,
+			"active_mode": "consumable",
+			"active_target": "global",
+			"drunk_delta": -24,
+			"pending_drunk_absorption_delta": -24,
+			"drunk_distortion_suppression_turns": 2,
+			"inventory_remove": ["thermos_black_coffee_half"],
+			"messages": ["The last coffee steadies your hands."]
+		}
+	},
+	{
+		"id": "pickled_olive_jar",
+		"display_name": "Pickled Olive Jar",
+		"class": "consumable",
+		"domain": "global",
+		"content_groups": ["universal_active_items"],
+		"build_tags": ["drunk_gambler"],
+		"sellable": true,
+		"sale_price": 6,
+		"price_min": 9,
+		"price_max": 16,
+		"asset_path": "res://assets/art/items/flask_of_courage.png",
+		"icon_key": "pickled_olive_jar",
+		"environment_prop": "coffee",
+		"surface": "counter_case",
+		"description": "A boozy bite; pairs with Bar Napkin for luck.",
+		"effect": {
+			"active_item": true,
+			"active_mode": "consumable",
+			"active_target": "global",
+			"alcohol_intake": 8,
+			"baseline_luck_delta": 1,
+			"win_bonus": 1,
+			"inventory_remove": ["pickled_olive_jar"],
+			"messages": ["The olives hit sharp and lucky."],
+			"synergies": [
+				{"requires_any": ["lucky_bar_napkin"], "effects": {"win_chance": 1}}
+			]
+		}
+	},
+	{
+		"id": "lucky_bar_napkin",
+		"display_name": "Lucky Bar Napkin",
+		"class": "permanent",
+		"domain": "global",
+		"content_groups": ["universal_passive_items"],
+		"build_tags": ["drunk_gambler", "clean_grinder"],
+		"sellable": true,
+		"sale_price": 6,
+		"price_min": 8,
+		"price_max": 15,
+		"asset_path": "res://assets/art/items/lucky_charm.png",
+		"icon_key": "lucky_bar_napkin",
+		"environment_prop": "loose_card",
+		"surface": "felt_table",
+		"description": "Pairs with olives or coffee for steadier drunk play.",
+		"effect": {
+			"win_chance": 1,
+			"loss_reduction": 1,
+			"synergies": [
+				{"requires_any": ["pickled_olive_jar"], "effects": {"win_bonus": 1}},
+				{"requires_any": ["thermos_black_coffee", "thermos_black_coffee_half", "instant_coffee"], "effects": {"loss_reduction": 1}}
+			]
+		}
+	},
+	{
 		"id": "cheap_sunglasses",
 		"display_name": "Cheap Sunglasses",
 		"class": "temporary",
@@ -55,7 +213,7 @@
 		"display_name": "Marked Cards",
 		"class": "contraband",
 		"domain": "games",
-		"content_groups": ["blackjack_pack"],
+		"content_groups": ["blackjack_pack", "baccarat_pack"],
 		"sellable": true,
 		"sale_price": 13,
 		"price_min": 18,
@@ -65,7 +223,24 @@
 		"environment_prop": "loose_card",
 		"surface": "felt_table",
 		"description": "Edge marks help hole-card peeks, but the deck looks hot.",
-		"effect": {"blackjack_peek_heat_delta": -3, "blackjack_dealer_catch_chance": -8, "blackjack_peek_loss_reduction": 2, "cheat_suspicion_delta": 1}
+		"effect": {"blackjack_peek_heat_delta": -3, "blackjack_dealer_catch_chance": -8, "blackjack_peek_loss_reduction": 2, "baccarat_edge_sort_cue_count": -1, "cheat_suspicion_delta": 1}
+	},
+	{
+		"id": "edge_sort_loupe",
+		"display_name": "Edge-Sort Loupe",
+		"class": "contraband",
+		"domain": "games",
+		"content_groups": ["baccarat_pack"],
+		"sellable": true,
+		"sale_price": 22,
+		"price_min": 36,
+		"price_max": 64,
+		"asset_path": "res://assets/art/items/edge_sort_loupe.png",
+		"icon_key": "edge_sort_loupe",
+		"environment_prop": "loose_card",
+		"surface": "counter_case",
+		"description": "A pocket lens for reading card-back asymmetry.",
+		"effect": {"baccarat_edge_sort_cue_count": -1, "baccarat_edge_sort_memory_tolerance": 1, "baccarat_edge_sort_heat_delta": -2, "skill_cheat_drunk_memory_offset": 1, "cheat_suspicion_delta": 1}
 	},
 	{
 		"id": "scratch_pad",
@@ -82,7 +257,59 @@
 		"environment_prop": "notepad",
 		"surface": "folding_table",
 		"description": "Tiny notes, counts, and odds.",
-		"effect": {"families": {"cards": {"win_chance": 5}}}
+		"effect": {"baccarat_edge_sort_memory_tolerance": 1, "families": {"cards": {"win_chance": 5}}}
+	},
+	{
+		"id": "odds_notebook",
+		"display_name": "Odds Notebook",
+		"class": "permanent",
+		"domain": "games",
+		"content_groups": ["blackjack_pack", "baccarat_pack", "video_poker_pack"],
+		"build_tags": ["advantage_player"],
+		"sellable": true,
+		"sale_price": 12,
+		"price_min": 18,
+		"price_max": 32,
+		"asset_path": "res://assets/art/items/odds_notebook.png",
+		"icon_key": "odds_notebook",
+		"environment_prop": "notepad",
+		"surface": "folding_table",
+		"description": "Pairs with Counter Notes or Scratch Pad.",
+		"effect": {
+			"blackjack_count_tolerance": 1,
+			"blackjack_count_edge_bonus": 1,
+			"baccarat_edge_sort_memory_tolerance": 1,
+			"families": {"cards": {"win_chance": 2}},
+			"synergies": [
+				{"requires_any": ["card_counters_notes"], "effects": {"blackjack_count_window_msec": 120}},
+				{"requires_any": ["scratch_pad"], "effects": {"baccarat_edge_sort_memory_tolerance": 1}}
+			]
+		}
+	},
+	{
+		"id": "shoe_cut_marker",
+		"display_name": "Shoe-Cut Marker",
+		"class": "permanent",
+		"domain": "games",
+		"content_groups": ["blackjack_pack", "baccarat_pack"],
+		"build_tags": ["advantage_player"],
+		"sellable": true,
+		"sale_price": 14,
+		"price_min": 22,
+		"price_max": 38,
+		"asset_path": "res://assets/art/items/shoe_cut_marker.png",
+		"icon_key": "shoe_cut_marker",
+		"environment_prop": "loose_card",
+		"surface": "felt_table",
+		"description": "Pairs with Loupe and Notebook for sharper reads.",
+		"effect": {
+			"blackjack_count_cover": 2,
+			"baccarat_edge_sort_memory_tolerance": 1,
+			"synergies": [
+				{"requires_any": ["edge_sort_loupe"], "effects": {"baccarat_edge_sort_cue_count": -1}},
+				{"requires_any": ["odds_notebook"], "effects": {"blackjack_count_edge_bonus": 1}}
+			]
+		}
 	},
 	{
 		"id": "card_counters_notes",
@@ -99,7 +326,7 @@
 		"environment_prop": "notepad",
 		"surface": "folding_table",
 		"description": "A cramped Hi-Lo crib sheet for cleaner count checks.",
-		"effect": {"blackjack_count_tolerance": 1, "blackjack_count_window_msec": 90, "blackjack_count_heat_delta": -2, "blackjack_count_cover": 4, "blackjack_count_edge_bonus": 2}
+		"effect": {"blackjack_count_tolerance": 1, "blackjack_count_window_msec": 90, "blackjack_count_heat_delta": -2, "blackjack_count_cover": 4, "blackjack_count_edge_bonus": 2, "baccarat_edge_sort_memory_tolerance": 1}
 	},
 	{
 		"id": "side_bet_chart",
@@ -225,7 +452,7 @@
 		"display_name": "Foil Sleeve",
 		"class": "contraband",
 		"domain": "games",
-		"content_groups": ["slot_pack"],
+		"content_groups": ["slot_pack", "roulette_pack"],
 		"sellable": true,
 		"sale_price": 10,
 		"price_min": 14,
@@ -235,7 +462,68 @@
 		"environment_prop": "foil_sleeve",
 		"surface": "box_stack",
 		"description": "A machine trick; strong near cabinets, risky elsewhere.",
-		"effect": {"families": {"slots": {"win_chance": 6}}, "cheat_suspicion_delta": 2}
+		"effect": {"families": {"slots": {"win_chance": 6}, "wheel": {"roulette_past_post_perfect_msec": 20, "roulette_past_post_good_msec": 35, "roulette_past_post_window_msec": 80, "roulette_past_post_base_heat": -3}}, "cheat_suspicion_delta": 2}
+	},
+	{
+		"id": "holdout_wax",
+		"display_name": "Holdout Wax",
+		"class": "contraband",
+		"domain": "games",
+		"content_groups": ["video_poker_pack"],
+		"sellable": true,
+		"sale_price": 17,
+		"price_min": 26,
+		"price_max": 44,
+		"asset_path": "res://assets/art/items/holdout_wax.png",
+		"icon_key": "holdout_wax",
+		"environment_prop": "foil_sleeve",
+		"surface": "counter_case",
+		"description": "Card tack for a cleaner palm-and-swap window.",
+		"effect": {"video_poker_holdout_perfect_msec": 28, "video_poker_holdout_good_msec": 55, "video_poker_holdout_close_msec": 80, "video_poker_holdout_heat_delta": -2, "skill_cheat_drunk_window_offset_msec": 8, "cheat_suspicion_delta": 1}
+	},
+	{
+		"id": "chip_slide_wax",
+		"display_name": "Chip-Slide Wax",
+		"class": "contraband",
+		"domain": "games",
+		"content_groups": ["roulette_pack"],
+		"sellable": true,
+		"sale_price": 19,
+		"price_min": 30,
+		"price_max": 52,
+		"asset_path": "res://assets/art/items/chip_slide_wax.png",
+		"icon_key": "chip_slide_wax",
+		"environment_prop": "foil_sleeve",
+		"surface": "counter_case",
+		"description": "A felt slick for sliding one late roulette chip.",
+		"effect": {"families": {"wheel": {"roulette_past_post_perfect_msec": 35, "roulette_past_post_good_msec": 65, "roulette_past_post_window_msec": 130, "roulette_past_post_base_heat": -3}}, "skill_cheat_drunk_window_offset_msec": 8, "cheat_suspicion_delta": 1}
+	},
+	{
+		"id": "sleeve_rig",
+		"display_name": "Sleeve Rig",
+		"class": "contraband",
+		"domain": "games",
+		"content_groups": ["video_poker_pack", "roulette_pack"],
+		"build_tags": ["cheat_specialist"],
+		"sellable": true,
+		"sale_price": 24,
+		"price_min": 38,
+		"price_max": 64,
+		"asset_path": "res://assets/art/items/holdout_rig.png",
+		"icon_key": "sleeve_rig",
+		"environment_prop": "foil_sleeve",
+		"surface": "counter_case",
+		"description": "Pairs with Holdout Wax and Chip-Slide Wax.",
+		"effect": {
+			"video_poker_holdout_good_msec": 20,
+			"video_poker_holdout_close_msec": 35,
+			"families": {"wheel": {"roulette_past_post_window_msec": 35}},
+			"cheat_suspicion_delta": 2,
+			"synergies": [
+				{"requires_any": ["holdout_wax"], "effects": {"video_poker_holdout_perfect_msec": 12}},
+				{"requires_any": ["chip_slide_wax"], "families": {"wheel": {"roulette_past_post_good_msec": 20}}}
+			]
+		}
 	},
 	{
 		"id": "coin_return_shim",
@@ -592,7 +880,50 @@
 		"environment_prop": "weighted_keyring",
 		"surface": "folding_table",
 		"description": "A dice-game weight; useful, obvious if abused.",
-		"effect": {"families": {"dice": {"win_chance": 7}}, "cheat_suspicion_delta": 2}
+		"effect": {"families": {"dice": {"win_chance": 7, "bar_dice_controlled_roll_perfect_msec": 20, "bar_dice_controlled_roll_good_msec": 45, "bar_dice_controlled_roll_close_msec": 65, "bar_dice_controlled_roll_meter_period_msec": 80, "bar_dice_controlled_roll_base_heat": -1}}, "cheat_suspicion_delta": 2}
+	},
+	{
+		"id": "dice_calipers",
+		"display_name": "Dice Calipers",
+		"class": "contraband",
+		"domain": "games",
+		"content_groups": ["bar_dice_pack"],
+		"sellable": true,
+		"sale_price": 18,
+		"price_min": 28,
+		"price_max": 48,
+		"asset_path": "res://assets/art/items/dice_calipers.png",
+		"icon_key": "dice_calipers",
+		"environment_prop": "weighted_keyring",
+		"surface": "folding_table",
+		"description": "A pocket gauge for setting a controlled dice release.",
+		"effect": {"families": {"dice": {"bar_dice_controlled_roll_perfect_msec": 35, "bar_dice_controlled_roll_good_msec": 70, "bar_dice_controlled_roll_close_msec": 95, "bar_dice_controlled_roll_meter_period_msec": 120, "bar_dice_controlled_roll_base_heat": -2}}, "skill_cheat_drunk_window_offset_msec": 6, "cheat_suspicion_delta": 1}
+	},
+	{
+		"id": "false_bottom_cup",
+		"display_name": "False-Bottom Cup",
+		"class": "contraband",
+		"domain": "games",
+		"content_groups": ["bar_dice_pack"],
+		"build_tags": ["cheat_specialist"],
+		"sellable": true,
+		"sale_price": 18,
+		"price_min": 28,
+		"price_max": 48,
+		"asset_path": "res://assets/art/items/loaded_dice.png",
+		"icon_key": "false_bottom_cup",
+		"environment_prop": "weighted_keyring",
+		"surface": "folding_table",
+		"description": "Dice cup pairs with Keyring or Calipers.",
+		"effect": {
+			"families": {"dice": {"bar_dice_controlled_roll_good_msec": 35, "bar_dice_controlled_roll_close_msec": 50, "bar_dice_controlled_roll_base_heat": -1}},
+			"skill_cheat_drunk_window_offset_msec": 4,
+			"cheat_suspicion_delta": 2,
+			"synergies": [
+				{"requires_any": ["weighted_keyring"], "families": {"dice": {"bar_dice_controlled_roll_perfect_msec": 15}}},
+				{"requires_any": ["dice_calipers"], "families": {"dice": {"bar_dice_controlled_roll_meter_period_msec": 80}}}
+			]
+		}
 	},
 	{
 		"id": "roadside_map",
@@ -608,8 +939,58 @@
 		"icon_key": "roadside_map",
 		"environment_prop": "map",
 		"surface": "folding_table",
-		"description": "Marked-up routes make moving on less blind.",
-		"effect": {"win_bonus": 1}
+		"description": "Marked-up routes reveal exact stops before you pay.",
+		"effect": {"win_bonus": 1, "travel_scouting_level": 1}
+	},
+	{
+		"id": "payment_calendar",
+		"display_name": "Payment Calendar",
+		"class": "permanent",
+		"domain": "global",
+		"content_groups": ["universal_passive_items"],
+		"build_tags": ["debt_surfer"],
+		"sellable": true,
+		"sale_price": 8,
+		"price_min": 12,
+		"price_max": 22,
+		"asset_path": "res://assets/art/items/payment_calendar.png",
+		"icon_key": "payment_calendar",
+		"environment_prop": "notepad",
+		"surface": "store_shelf",
+		"description": "Pairs with Pawn Sleeve for another debt grace.",
+		"effect": {
+			"debt_grace_turns": 1,
+			"loss_reduction": 1,
+			"synergies": [
+				{"requires_any": ["pawn_receipt_sleeve"], "effects": {"debt_grace_turns": 1}},
+				{"requires_any": ["cashout_envelope"], "effects": {"loss_reduction": 1}}
+			]
+		}
+	},
+	{
+		"id": "pawn_receipt_sleeve",
+		"display_name": "Pawn Receipt Sleeve",
+		"class": "permanent",
+		"domain": "security",
+		"content_groups": ["universal_passive_items"],
+		"build_tags": ["debt_surfer"],
+		"sellable": true,
+		"sale_price": 10,
+		"price_min": 16,
+		"price_max": 28,
+		"asset_path": "res://assets/art/items/pawn_receipt_sleeve.png",
+		"icon_key": "pawn_receipt_sleeve",
+		"environment_prop": "notepad",
+		"surface": "counter_case",
+		"description": "Pairs with Calendar or Envelope on late notes.",
+		"effect": {
+			"debt_default_heat_delta": -2,
+			"loss_reduction": 1,
+			"synergies": [
+				{"requires_any": ["payment_calendar"], "effects": {"debt_default_heat_delta": -2}},
+				{"requires_any": ["cashout_envelope"], "effects": {"debt_grace_turns": 1}}
+			]
+		}
 	},
 	{
 		"id": "xray_glasses",

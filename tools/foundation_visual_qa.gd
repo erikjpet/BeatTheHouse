@@ -77,6 +77,9 @@ var report := {
 		"service_object_double_click": false,
 		"lender_card": false,
 		"lender_object_double_click": false,
+		"t6_7_fixture_visible_noninteractive": false,
+		"t6_7_hidden_object_absent": false,
+		"t6_7_event_cadence_snapshot": false,
 		"travel_card": false,
 		"travel_object_double_click": false,
 		"heat_risky_action_raises": false,
@@ -146,6 +149,7 @@ func _run() -> void:
 	_record_state("environment_screen", "Seeded run with generated EnvironmentInstance and a focused object context panel.")
 	_cover("environment_screen")
 	_assert_environment_canvas_contained("environment screen")
+	_assert_no_triggered_event_objects("environment screen")
 	_assert_objective_hud("start of run")
 	_require(_has_visible_text(app, "double-click glowing props to act"), "Environment screen does not prompt the player to inspect and activate world objects.")
 	_require(not _is_control_visible("action_panel_container"), "The old room-object side panel is still visible in normal play.")
@@ -331,6 +335,7 @@ func _run() -> void:
 	_assert_screen_click_only_gameplay_events()
 	_cover("screen_click_only_gameplay")
 
+	await _resolve_blocking_event_popups()
 	_return_to_room_view()
 	await _settle()
 	_require(_environment_canvas_is_primary(), "Back to room did not restore the environment canvas as the primary surface.")
@@ -360,6 +365,7 @@ func _run() -> void:
 	await _verify_grand_casino_high_roller_cashout_snapshot()
 	await _verify_grand_casino_showdown_event_snapshot()
 	await _verify_terminal_victory_summary_snapshot()
+	await _verify_t4_7_event_visual_model()
 
 	_write_report()
 	quit(0)
@@ -452,8 +458,20 @@ func _try_travel_object_flow(context_label: String, objective: Dictionary = {}) 
 	_cover("travel_card")
 	_cover("travel_object_double_click")
 	await _settle()
-	_require(serialized_before_travel_activation != _serialized_run_text(), "Double-clicking travel did not update serialized RunState through the existing travel confirmation path.")
-	_set_optional_hook_status("travel", "passed", "Confirmed a visible travel destination.", travel_object)
+	_require(serialized_before_travel_activation == _serialized_run_text(), "Opening the world map should not mutate serialized RunState before route confirmation.")
+	_require(bool(app.call("current_screen_snapshot").get("world_map_overlay_visible", false)), "Double-clicking Leave did not open the world map overlay.")
+	var travel_choices: Array = app.call("current_environment_view_snapshot").get("travel_choices", [])
+	var choice := _first_enabled_travel_choice(travel_choices)
+	_require(not choice.is_empty(), "World map opened but no enabled revealed travel node was available.")
+	var target_id := str(choice.get("id", ""))
+	var serialized_before_map_select := _serialized_run_text()
+	_require(bool(app.call("select_world_map_node", target_id)), "World map did not accept the enabled travel node.")
+	await _settle()
+	_require(serialized_before_map_select == _serialized_run_text(), "Selecting a world-map node mutated RunState before route confirmation.")
+	app.call("confirm_world_map_travel")
+	await _settle()
+	_require(serialized_before_travel_activation != _serialized_run_text(), "Confirming map travel did not update serialized RunState through the existing travel confirmation path.")
+	_set_optional_hook_status("travel", "passed", "Confirmed a visible world-map destination.", travel_object)
 	_record_state("travel_result_screen", "Confirmed visible travel choice and generated the next environment.")
 	_assert_objective_hud("travel result")
 	_assert_m2_player_feedback_clarity("travel result")
@@ -461,6 +479,7 @@ func _try_travel_object_flow(context_label: String, objective: Dictionary = {}) 
 
 
 func _try_event_card_flow() -> void:
+	await _resolve_blocking_event_popups()
 	_return_to_room_view()
 	await _settle()
 	_record_state("event_screen", "Focused event object after normal UI navigation.")
@@ -483,41 +502,130 @@ func _try_event_card_flow() -> void:
 	var event_id := event_object_id.trim_prefix("event:")
 	var event_option := _event_option_by_id(event_id)
 	var event_choices: Array = event_option.get("choices", [])
-	_require(not event_choices.is_empty(), "Focused event did not expose inline response choices.")
+	_require(not event_choices.is_empty(), "Focused event did not expose response choices.")
 	var first_choice: Dictionary = event_choices[0]
 	var choice_label := str(first_choice.get("label", ""))
 	var choice_text := str(first_choice.get("text", ""))
 	var choice_impact := str(first_choice.get("consequence_summary", ""))
 	var selected_info: Dictionary = canvas_snapshot.get("selected_info", {})
 	var inline_actions: Array = selected_info.get("actions", [])
-	_require(not inline_actions.is_empty(), "Event response panel did not expose inline canvas choices.")
-	var first_action: Dictionary = inline_actions[0]
-	var first_action_detail := str(first_action.get("detail", ""))
-	var expected_emit_id := "event_response:%s:%s" % [event_id, str(first_choice.get("id", ""))]
-	_require(not choice_label.is_empty() and str(first_action.get("label", "")) == choice_label, "Event response panel did not show the choice label.")
-	_require(not choice_text.is_empty() and first_action_detail.find(choice_text) != -1, "Event response panel did not show the choice effect text.")
-	_require(not choice_impact.is_empty() and first_action_detail.find(choice_impact) != -1, "Event response panel did not show the choice impact text.")
-	_require(str(first_action.get("emit_object_id", "")) == expected_emit_id, "Event response panel did not route the response through an inline canvas action.")
-	_require(not bool(app.call("current_event_choice_popup_snapshot").get("visible", false)), "Event response opened a blocking popup instead of staying inline.")
+	if not inline_actions.is_empty():
+		var first_action: Dictionary = inline_actions[0]
+		var first_action_detail := str(first_action.get("detail", ""))
+		var expected_emit_id := "event_response:%s:%s" % [event_id, str(first_choice.get("id", ""))]
+		_require(not choice_label.is_empty() and str(first_action.get("label", "")) == choice_label, "Event response panel did not show the choice label.")
+		_require(not choice_text.is_empty() and first_action_detail.find(choice_text) != -1, "Event response panel did not show the choice effect text.")
+		_require(not choice_impact.is_empty() and first_action_detail.find(choice_impact) != -1, "Event response panel did not show the choice impact text.")
+		_require(str(first_action.get("emit_object_id", "")) == expected_emit_id, "Event response panel did not route the response through an inline canvas action.")
+	if not bool(app.call("current_event_choice_popup_snapshot").get("visible", false)):
+		_require(bool(app.call("activate_interactable_object", event_object_id)), "Event prop did not open its response popup.")
+		await _settle()
+	var interactable_popup: Dictionary = app.call("current_event_choice_popup_snapshot")
+	_require(bool(interactable_popup.get("visible", false)) and not bool(interactable_popup.get("blocking", true)) and bool(interactable_popup.get("dismissible", false)), "Interactable event did not open a dismissible non-blocking popup.")
 	var serialized_before_event_resolve := _serialized_run_text()
-	var local_position: Vector2 = canvas.call("local_position_for_selected_info_action_button")
-	_require(local_position.x >= 0.0 and local_position.y >= 0.0, "Could not find a clickable inline event response choice.")
-	var global_position := canvas.get_global_rect().position + local_position
-	_push_mouse_motion(global_position)
-	_push_mouse_button(global_position, true)
-	_push_mouse_button(global_position, false)
 	_record_input_event({
-		"kind": "canvas_event_response",
+		"kind": "event_popup_response",
 		"label": choice_label,
-		"object_id": expected_emit_id,
+		"object_id": "event:%s" % event_id,
 	})
+	app.call("resolve_event_choice", event_id, str(first_choice.get("id", "")))
 	await _settle()
 	_require(serialized_before_event_resolve != _serialized_run_text(), "Resolving an event choice did not update serialized RunState.")
-	_require(not bool(app.call("current_event_choice_popup_snapshot").get("visible", true)), "Event response popup stayed open after resolving a choice.")
-	_set_optional_hook_status("event", "passed", "Resolved a visible event choice through the inline event panel.")
-	_record_state("event_result_screen", "Resolved a visible event response through the inline panel path.")
+	await _resolve_blocking_event_popups()
+	_require(not bool(app.call("current_event_choice_popup_snapshot").get("visible", false)), "Event response popup stayed open after resolving a choice.")
+	_set_optional_hook_status("event", "passed", "Resolved a visible event choice through the event popup.")
+	_record_state("event_result_screen", "Resolved a visible event response through the popup path.")
 	_assert_objective_hud("event result")
 	_assert_m2_player_feedback_clarity("event result")
+
+
+func _assert_no_triggered_event_objects(label: String) -> void:
+	var library := app.get("library") as ContentLibrary
+	if library == null:
+		return
+	var snapshot: Dictionary = app.call("current_environment_view_snapshot")
+	for object_value in snapshot.get("interactable_objects", []):
+		if typeof(object_value) != TYPE_DICTIONARY:
+			continue
+		var object_data: Dictionary = object_value
+		if str(object_data.get("object_type", "")) != "event":
+			continue
+		var event_id := str(object_data.get("source_id", "")).strip_edges()
+		if event_id.is_empty():
+			event_id = str(object_data.get("object_id", "")).trim_prefix("event:")
+		var event_def := library.event(event_id)
+		_require(str(event_def.get("interaction_mode", "interactable")) != "triggered", "%s placed triggered event object %s in the room." % [label, event_id])
+
+
+func _verify_t4_7_event_visual_model() -> void:
+	await _open_fresh_app()
+	_set_seed_text("FOUNDATION-PHONE-VISUAL-QA")
+	_require(not _click_button_exact("New Run").is_empty(), "Could not start phone-prop visual QA run.")
+	await _settle()
+	var run_state := app.get("run_state") as RunState
+	var library := app.get("library") as ContentLibrary
+	_require(run_state != null and library != null, "Phone-prop visual QA could not access foundation runtime state.")
+	var motel_archetype: Dictionary = {}
+	for archetype_value in library.environment_archetypes:
+		if typeof(archetype_value) != TYPE_DICTIONARY:
+			continue
+		var archetype_data: Dictionary = archetype_value
+		if str(archetype_data.get("id", "")) == "motel":
+			motel_archetype = archetype_data.duplicate(true)
+			break
+	_require(not motel_archetype.is_empty(), "Phone-prop visual QA could not find motel archetype.")
+	var phone_environment := EnvironmentInstance.from_archetype(motel_archetype, 0, run_state.create_rng("phone_prop_visual"), library).to_dict()
+	phone_environment["event_ids"] = ["call_brother_in_law"]
+	phone_environment["resolved_event_ids"] = []
+	phone_environment["layout"] = EnvironmentInstance.ensure_generated_layout(phone_environment)
+	run_state.set_environment(phone_environment)
+	app.call("_refresh")
+	await _settle()
+	_assert_no_triggered_event_objects("phone-prop fixture")
+	var snapshot: Dictionary = app.call("current_environment_view_snapshot")
+	var phone_visible := false
+	for object_value in snapshot.get("interactable_objects", []):
+		if typeof(object_value) != TYPE_DICTIONARY:
+			continue
+		var object_data: Dictionary = object_value
+		if str(object_data.get("object_id", "")) == "event:call_brother_in_law" and str(object_data.get("prop", "")) == "payphone":
+			phone_visible = true
+			break
+	_require(phone_visible, "Brother-in-law phone event did not render as a payphone room prop.")
+
+	var fixture_environment := phone_environment.duplicate(true)
+	fixture_environment["id"] = "t67_fixture_visual"
+	fixture_environment["archetype_id"] = "t67_fixture_visual"
+	fixture_environment["kind"] = "fixture_room"
+	fixture_environment["event_ids"] = []
+	fixture_environment["item_offers"] = []
+	fixture_environment["service_ids"] = []
+	fixture_environment["lender_hooks"] = ["brother_in_law"]
+	fixture_environment["object_fixtures"] = ["shopkeeper:merchant"]
+	fixture_environment["layout"] = EnvironmentInstance.ensure_generated_layout(fixture_environment)
+	run_state.set_environment(fixture_environment)
+	app.call("_refresh")
+	await _settle()
+	var fixture_snapshot: Dictionary = app.call("current_environment_view_snapshot")
+	var fixture_spatial: Dictionary = app.call("current_spatial_interaction_snapshot")
+	var shopkeeper_visible_noninteractive := false
+	var hidden_lender_absent := true
+	for object_value in fixture_snapshot.get("interactable_objects", []):
+		if typeof(object_value) != TYPE_DICTIONARY:
+			continue
+		var object_data: Dictionary = object_value
+		if str(object_data.get("object_id", "")) == "shopkeeper:merchant":
+			shopkeeper_visible_noninteractive = not bool(object_data.get("enabled", true)) and not bool(object_data.get("interactive", true))
+		if str(object_data.get("object_id", "")) == "lender:brother_in_law":
+			hidden_lender_absent = false
+	_require(shopkeeper_visible_noninteractive, "T6.7 fixture shopkeeper did not render as a visible noninteractive object.")
+	_require(hidden_lender_absent, "T6.7 flag-gated lender appeared as a room object.")
+	_require(not _snapshot_has_object_type(fixture_spatial.get("objects", []), "lender"), "T6.7 hidden lender appeared in the spatial object snapshot.")
+	var cadence_snapshot: Dictionary = fixture_snapshot.get("event_cadence", {}) if typeof(fixture_snapshot.get("event_cadence", {})) == TYPE_DICTIONARY else {}
+	_require(cadence_snapshot.has("action_index") and cadence_snapshot.has("visit_count"), "T6.7 cadence snapshot was not exposed in environment view data.")
+	_cover("t6_7_fixture_visible_noninteractive")
+	_cover("t6_7_hidden_object_absent")
+	_cover("t6_7_event_cadence_snapshot")
 
 
 func _verify_grand_casino_showdown_event_snapshot() -> void:
@@ -692,6 +800,7 @@ func _verify_terminal_victory_summary_snapshot() -> void:
 
 
 func _try_item_card_flow() -> void:
+	await _resolve_blocking_event_popups()
 	_return_to_room_view()
 	await _settle()
 	_record_state("item_screen", "Focused and activated a visible item object through the mouse-only room path.")
@@ -990,6 +1099,7 @@ func _activate_prestige_victory_object(canvas: Control, prestige_object: Diction
 
 
 func _try_service_hook_flow() -> void:
+	await _resolve_blocking_event_popups()
 	_return_to_room_view()
 	await _settle()
 	_record_state("service_screen", "Double-clicked a visible service object when one was available.")
@@ -1022,6 +1132,7 @@ func _try_service_hook_flow() -> void:
 
 
 func _try_lender_hook_flow() -> void:
+	await _resolve_blocking_event_popups()
 	_return_to_room_view()
 	await _settle()
 	var canvas := app.get("environment_canvas") as Control
@@ -1041,6 +1152,7 @@ func _try_lender_hook_flow() -> void:
 	_cover("travel_card")
 	_cover("travel_object_double_click")
 	await _settle()
+	await _resolve_blocking_event_popups()
 	_require(serialized_before_lender_travel != _serialized_run_text(), "Traveling to a lender environment did not update serialized RunState.")
 	_set_optional_hook_status("travel", "passed", "Traveled through visible controls to a room with lender pressure.")
 	_record_state("lender_travel_result_screen", "Traveled through visible controls to a room with lender pressure.")
@@ -1060,6 +1172,7 @@ func _try_lender_hook_flow() -> void:
 
 
 func _try_lender_object_in_current_room(lender_object: Dictionary) -> void:
+	await _resolve_blocking_event_popups()
 	var object_enabled := not bool(lender_object.get("disabled", false))
 	if not object_enabled:
 		await _verify_disabled_or_absent_optional_object("lender", "Lender object is present but not usable right now.")
@@ -1188,6 +1301,19 @@ func _open_fresh_app() -> void:
 func _settle() -> void:
 	await process_frame
 	await process_frame
+
+
+func _resolve_blocking_event_popups(max_count: int = 8) -> void:
+	for _index in range(max_count):
+		var popup: Dictionary = app.call("current_event_choice_popup_snapshot")
+		if not bool(popup.get("visible", false)) or not bool(popup.get("blocking", false)):
+			return
+		var choices: Array = popup.get("choices", [])
+		if choices.is_empty():
+			return
+		var choice: Dictionary = choices[0]
+		app.call("resolve_event_choice", str(popup.get("event_id", "")), str(choice.get("id", "")))
+		await _settle()
 
 
 func _wait_for_room_camera(max_frames: int = 18) -> void:
@@ -1351,18 +1477,38 @@ func _run_state_restore_summary(serialized: Dictionary) -> Dictionary:
 		"seed_text": str(serialized.get("seed_text", "")),
 		"seed_value": int(serialized.get("seed_value", 0)),
 		"rng_state": int(serialized.get("rng_state", 0)),
-		"challenge_config": serialized.get("challenge_config", {}),
+		"challenge_config": _restore_summary_value(serialized.get("challenge_config", {})),
 		"bankroll": int(serialized.get("bankroll", 0)),
 		"economic_state": str(serialized.get("economic_state", "")),
-		"inventory": serialized.get("inventory", []),
-		"debt": serialized.get("debt", []),
+		"inventory": _restore_summary_value(serialized.get("inventory", [])),
+		"debt": _restore_summary_value(serialized.get("debt", [])),
 		"suspicion_level": int(suspicion.get("level", 0)),
 		"environment_id": str(current_environment.get("id", "")),
-		"unlocked_travel": serialized.get("unlocked_travel", []),
-		"narrative_flags": serialized.get("narrative_flags", {}),
+		"unlocked_travel": _restore_summary_value(serialized.get("unlocked_travel", [])),
+		"narrative_flags": _restore_summary_value(serialized.get("narrative_flags", {})),
 		"story_count": _array_size(serialized.get("story_log", [])),
 		"run_status": str(serialized.get("run_status", "")),
 	}
+
+
+func _restore_summary_value(value: Variant) -> Variant:
+	match typeof(value):
+		TYPE_DICTIONARY:
+			var normalized_dict: Dictionary = {}
+			for key in (value as Dictionary).keys():
+				normalized_dict[key] = _restore_summary_value((value as Dictionary).get(key))
+			return normalized_dict
+		TYPE_ARRAY:
+			var normalized_array: Array = []
+			for item in value as Array:
+				normalized_array.append(_restore_summary_value(item))
+			return normalized_array
+		TYPE_FLOAT:
+			var rounded := roundf(float(value))
+			if is_equal_approx(float(value), rounded):
+				return int(rounded)
+			return value
+	return value
 
 
 func _visible_text(root_node: Node) -> Array:
@@ -1711,20 +1857,33 @@ func _double_click_first_travel_to_lender_environment() -> String:
 	var canvas := app.get("environment_canvas") as Control
 	if canvas == null or not canvas.visible or not canvas.has_method("current_view_snapshot"):
 		return ""
-	var snapshot: Dictionary = canvas.call("current_view_snapshot")
-	var objects: Array = snapshot.get("objects", [])
-	for item in objects:
-		if typeof(item) != TYPE_DICTIONARY:
+	var travel_object := _canvas_object_by_id(canvas, "travel:leave")
+	if travel_object.is_empty():
+		travel_object = _first_clickable_canvas_object_type_enabled(canvas, "travel", true)
+	if travel_object.is_empty():
+		return ""
+	var environment_snapshot: Dictionary = app.call("current_environment_view_snapshot")
+	var travel_choices: Array = environment_snapshot.get("travel_choices", [])
+	for choice_value in travel_choices:
+		if typeof(choice_value) != TYPE_DICTIONARY:
 			continue
-		var object_data: Dictionary = item
-		if _object_type_value(object_data) != "travel":
+		var choice: Dictionary = choice_value
+		var target_id := str(choice.get("id", ""))
+		if target_id.is_empty() or not bool(choice.get("enabled", true)):
 			continue
-		if bool(object_data.get("disabled", false)):
+		if not _travel_destination_has_lender(target_id):
 			continue
-		if not _canvas_object_center_hits(canvas, object_data):
-			continue
-		if _travel_destination_has_lender(str(object_data.get("source_id", ""))):
-			return await _double_click_canvas_object_data(canvas, object_data, "travel")
+		var travel_button := await _double_click_canvas_object_data(canvas, travel_object, "travel")
+		if travel_button.is_empty():
+			return ""
+		await _settle()
+		if not bool(app.call("current_screen_snapshot").get("world_map_overlay_visible", false)):
+			return ""
+		if not bool(app.call("select_world_map_node", target_id)):
+			return ""
+		app.call("confirm_world_map_travel")
+		await _settle()
+		return travel_button
 	return ""
 
 
@@ -2225,6 +2384,16 @@ func _event_option_by_id(event_id: String) -> Dictionary:
 		var option: Dictionary = item
 		if str(option.get("id", "")) == event_id:
 			return option.duplicate(true)
+	return {}
+
+
+func _first_enabled_travel_choice(choices: Array) -> Dictionary:
+	for choice_value in choices:
+		if typeof(choice_value) != TYPE_DICTIONARY:
+			continue
+		var choice: Dictionary = choice_value
+		if bool(choice.get("enabled", true)):
+			return choice.duplicate(true)
 	return {}
 
 

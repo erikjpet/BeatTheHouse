@@ -5,6 +5,7 @@ extends Control
 # GameModule; this canvas only owns scaling, hit regions, overlays, and input.
 
 signal surface_action(action: String, index: int, confirm_requested: bool)
+signal surface_music_cue(cue_id: String, context: Dictionary)
 
 const VisualStyleScript := preload("res://scripts/ui/visual_style.gd")
 const SfxPlayerScript := preload("res://scripts/ui/sfx_player.gd")
@@ -481,7 +482,13 @@ func _ensure_surface_sfx_player() -> void:
 	if surface_sfx_player != null:
 		return
 	surface_sfx_player = SfxPlayerScript.new()
+	if surface_sfx_player.has_signal("music_cue_requested"):
+		surface_sfx_player.music_cue_requested.connect(_on_surface_sfx_music_cue)
 	add_child(surface_sfx_player)
+
+
+func _on_surface_sfx_music_cue(cue_id: String, context: Dictionary) -> void:
+	surface_music_cue.emit(cue_id, context)
 
 
 func _ensure_drunk_distortion_overlay() -> void:

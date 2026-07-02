@@ -18,7 +18,16 @@
 		"risk": "high",
 		"distance": "near",
 		"risk_decay": 12,
-		"suspicion_delta": 1
+		"suspicion_delta": 1,
+		"risk_text": "Cheap shortcut, but a shakedown can hit before you clear the block.",
+		"risk_event": {
+			"id": "travel_shakedown",
+			"label": "Shortcut Shakedown",
+			"chance_percent": 35,
+			"bankroll_delta": -8,
+			"suspicion_delta": 4,
+			"message": "A corner crew leans on you before the shortcut opens back up."
+		}
 	},
 	{
 		"id": "motel",
@@ -75,6 +84,40 @@
 			"underground_tip": true
 		},
 		"condition_text": "Requires a local tip."
+	},
+	{
+		"id": "kitty_cat_lounge",
+		"label": "Kitty Cat Lounge",
+		"destination_archetype": "kitty_cat_lounge",
+		"description": "A velvet-rope tier-2 lounge with costly ways to manage heat.",
+		"cost": 12,
+		"risk": "medium",
+		"distance": "far",
+		"risk_decay": 58,
+		"suspicion_delta": 2,
+		"requires_travel_count_min": 1,
+		"condition_text": "Requires a little cash for the rope."
+	},
+	{
+		"id": "delta_queen",
+		"label": "The Delta Queen",
+		"destination_archetype": "delta_queen",
+		"description": "Mid-stakes riverboat; leaving waits on the dock call.",
+		"cost": 15,
+		"risk": "medium",
+		"distance": "far",
+		"risk_decay": 62,
+		"suspicion_delta": 2,
+		"requires_travel_count_min": 1,
+		"availability_window": {
+			"period": 4,
+			"open_turns": [
+				0,
+				1
+			],
+			"closed_text": "The Delta Queen is away from the dock."
+		},
+		"condition_text": "Boarding opens on the riverboat schedule."
 	},
 	{
 		"id": "grand_casino",

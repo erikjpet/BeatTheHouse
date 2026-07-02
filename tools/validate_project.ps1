@@ -596,6 +596,8 @@ $resultDeltaKeys = @(
     "suspicion_delta",
     "alcohol_intake",
     "drunk_delta",
+    "pending_drunk_absorption_delta",
+    "drunk_distortion_suppression_turns",
     "alcoholic_delta",
     "baseline_luck_delta",
     "debt_changes",
@@ -614,9 +616,13 @@ $resultDeltaKeys = @(
 $eventConsequenceKeys = $resultDeltaKeys + @(
     "debt",
     "flags",
+    "flags_set",
     "set_next_archetypes",
     "add_next_archetypes",
-    "resolve_event"
+    "check",
+    "resolve_event",
+    "trigger_event",
+    "lender_hook"
 )
 $objectInfoTextLimit = 64
 
@@ -850,18 +856,36 @@ elseif ([int](Get-JsonProperty $grandRoute "cost") -lt 100) {
 foreach ($event in (Read-JsonArray "data/events/events.json")) {
     $eventId = [string](Get-JsonProperty $event "id")
     Assert-ArtAssetPath "events $eventId" $event
+    $eventInteractionMode = [string](Get-JsonProperty $event "interaction_mode")
+    if ([string]::IsNullOrWhiteSpace($eventInteractionMode)) {
+        $failures.Add("events $eventId must define interaction_mode.")
+    }
+    elseif (($eventInteractionMode -ne "interactable") -and ($eventInteractionMode -ne "triggered")) {
+        $failures.Add("events $eventId has unknown interaction_mode: $eventInteractionMode.")
+    }
     $eventIconKey = [string](Get-JsonProperty $event "icon_key")
-    if ([string]::IsNullOrWhiteSpace($eventIconKey)) {
-        $failures.Add("events $eventId must define icon_key for room art.")
+    $eventEnvironmentProp = [string](Get-JsonProperty $event "environment_prop")
+    if ($eventInteractionMode -eq "triggered") {
+        if (-not [string]::IsNullOrWhiteSpace($eventIconKey)) {
+            $failures.Add("events $eventId is triggered and must not define icon_key.")
+        }
+        if (-not [string]::IsNullOrWhiteSpace($eventEnvironmentProp)) {
+            $failures.Add("events $eventId is triggered and must not define environment_prop.")
+        }
     }
-    elseif ($eventIconKey -eq "event") {
-        $failures.Add("events $eventId must not use the generic event icon_key.")
-    }
-    if ([string]::IsNullOrWhiteSpace([string](Get-JsonProperty $event "environment_prop"))) {
-        $failures.Add("events $eventId must define environment_prop such as patron_talk, paper_note, side_door, or security_camera.")
-    }
-    if ([string]::IsNullOrWhiteSpace([string](Get-JsonProperty $event "start_summary"))) {
-        $failures.Add("events $eventId must define start_summary for the player-facing interaction starter.")
+    else {
+        if ([string]::IsNullOrWhiteSpace($eventIconKey)) {
+            $failures.Add("events $eventId must define icon_key for room art.")
+        }
+        elseif ($eventIconKey -eq "event") {
+            $failures.Add("events $eventId must not use the generic event icon_key.")
+        }
+        if ([string]::IsNullOrWhiteSpace($eventEnvironmentProp)) {
+            $failures.Add("events $eventId must define environment_prop such as patron_talk, paper_note, side_door, or security_camera.")
+        }
+        if ([string]::IsNullOrWhiteSpace([string](Get-JsonProperty $event "start_summary"))) {
+            $failures.Add("events $eventId must define start_summary for the player-facing interaction starter.")
+        }
     }
     $payload = Get-JsonProperty $event "payload"
     Assert-ObjectInfoTextLength "events $eventId payload.summary" ([string](Get-JsonProperty $payload "summary"))
