@@ -3163,12 +3163,15 @@ func triggered_event_resolution_active() -> bool:
 func add_next_archetypes(archetype_ids: Array) -> void:
 	if current_environment.is_empty():
 		return
+	var clean_ids := _string_array(archetype_ids)
 	var next_ids: Array = current_environment.get("next_archetypes", [])
-	for archetype_id in archetype_ids:
-		var id := str(archetype_id)
+	for id in clean_ids:
 		if not id.is_empty() and not next_ids.has(id):
 			next_ids.append(id)
 	current_environment["next_archetypes"] = next_ids
+	unlocked_travel = _unique_strings(unlocked_travel + clean_ids)
+	if has_world_map():
+		world_map = WorldMap.unlock_nodes(world_map, clean_ids, WorldMap.DISCOVERY_SOURCE_EVENT)
 	current_environment["layout"] = EnvironmentInstance.ensure_generated_layout(current_environment)
 
 
@@ -3176,7 +3179,11 @@ func add_next_archetypes(archetype_ids: Array) -> void:
 func set_next_archetypes(archetype_ids: Array) -> void:
 	if current_environment.is_empty():
 		return
-	current_environment["next_archetypes"] = _string_array(archetype_ids)
+	var clean_ids := _string_array(archetype_ids)
+	current_environment["next_archetypes"] = clean_ids
+	unlocked_travel = _unique_strings(unlocked_travel + clean_ids)
+	if has_world_map():
+		world_map = WorldMap.unlock_nodes(world_map, clean_ids, WorldMap.DISCOVERY_SOURCE_EVENT)
 	current_environment["layout"] = EnvironmentInstance.ensure_generated_layout(current_environment)
 
 

@@ -82,6 +82,9 @@ var report := {
 		"t6_7_event_cadence_snapshot": false,
 		"travel_card": false,
 		"travel_object_double_click": false,
+		"world_map_open": false,
+		"world_map_icons": false,
+		"world_map_info_panel": false,
 		"heat_risky_action_raises": false,
 		"high_heat_changes_risk": false,
 		"high_heat_consequence": false,
@@ -459,7 +462,24 @@ func _try_travel_object_flow(context_label: String, objective: Dictionary = {}) 
 	_cover("travel_object_double_click")
 	await _settle()
 	_require(serialized_before_travel_activation == _serialized_run_text(), "Opening the world map should not mutate serialized RunState before route confirmation.")
-	_require(bool(app.call("current_screen_snapshot").get("world_map_overlay_visible", false)), "Double-clicking Leave did not open the world map overlay.")
+	var map_open_screen: Dictionary = app.call("current_screen_snapshot")
+	_require(bool(map_open_screen.get("world_map_overlay_visible", false)), "Double-clicking Leave did not open the world map overlay.")
+	_cover("world_map_open")
+	var map_snapshot: Dictionary = map_open_screen.get("world_map", {}) if typeof(map_open_screen.get("world_map", {})) == TYPE_DICTIONARY else {}
+	var map_nodes: Array = map_snapshot.get("nodes", []) if typeof(map_snapshot.get("nodes", [])) == TYPE_ARRAY else []
+	var icons_ready := not map_nodes.is_empty()
+	for node_value in map_nodes:
+		if typeof(node_value) != TYPE_DICTIONARY:
+			icons_ready = false
+			continue
+		var node_data: Dictionary = node_value
+		if str(node_data.get("icon_path", "")).strip_edges().is_empty():
+			icons_ready = false
+		var position: Dictionary = node_data.get("position", {}) if typeof(node_data.get("position", {})) == TYPE_DICTIONARY else {}
+		if position.is_empty():
+			icons_ready = false
+	_require(icons_ready, "World map opened without generated icon metadata at node positions.")
+	_cover("world_map_icons")
 	var travel_choices: Array = app.call("current_environment_view_snapshot").get("travel_choices", [])
 	var choice := _first_enabled_travel_choice(travel_choices)
 	_require(not choice.is_empty(), "World map opened but no enabled revealed travel node was available.")
@@ -467,6 +487,10 @@ func _try_travel_object_flow(context_label: String, objective: Dictionary = {}) 
 	var serialized_before_map_select := _serialized_run_text()
 	_require(bool(app.call("select_world_map_node", target_id)), "World map did not accept the enabled travel node.")
 	await _settle()
+	var selected_map_screen: Dictionary = app.call("current_screen_snapshot")
+	var detail_text := str(selected_map_screen.get("world_map_detail_text", ""))
+	_require(detail_text.contains("Travel:") and detail_text.contains("Distance:") and detail_text.contains("Cost:"), "World map info panel did not show route method, distance, and cost.")
+	_cover("world_map_info_panel")
 	_require(serialized_before_map_select == _serialized_run_text(), "Selecting a world-map node mutated RunState before route confirmation.")
 	app.call("confirm_world_map_travel")
 	await _settle()

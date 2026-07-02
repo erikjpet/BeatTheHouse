@@ -1555,6 +1555,8 @@ func _check_slot_contract_smoke(library: ContentLibrary, failures: Array) -> voi
 	_check_slot_hold_and_spin_fill_scaling(definition, failures)
 	print("SLOT_CONTRACT_SMOKE free_games_carryover")
 	_check_slot_free_games_carryover(definition, failures)
+	print("SLOT_CONTRACT_SMOKE bonus_completion_recovery")
+	_check_slot_bonus_completion_recovery(library, definition, failures)
 	print("SLOT_CONTRACT_SMOKE pinball_sim_physics")
 	_check_slot_pinball_sim_physics(definition, failures)
 	print("SLOT_CONTRACT_SMOKE economy_rng_discipline")
@@ -1608,6 +1610,8 @@ func _check_slot_acceptance(library: ContentLibrary, failures: Array) -> void:
 	_check_slot_attract_mode(library, definition, failures)
 	print("SLOT_ACCEPTANCE live_features")
 	_check_slot_live_generated_features(library, definition, failures)
+	print("SLOT_ACCEPTANCE bonus_completion_recovery")
+	_check_slot_bonus_completion_recovery(library, definition, failures)
 	print("SLOT_ACCEPTANCE hold_fill_scaling")
 	_check_slot_hold_and_spin_fill_scaling(definition, failures)
 	print("SLOT_ACCEPTANCE free_games_carryover")
@@ -3093,6 +3097,187 @@ func _check_slot_live_generated_features(library: ContentLibrary, definition: Di
 	if total_input_alt == total_a:
 		failures.append("Slot live feature total did not respond to different player inputs.")
 	_check_slot_buffalo_feature_pauses_autoplay(game, definition, failures)
+
+
+func _check_slot_bonus_completion_recovery(library: ContentLibrary, definition: Dictionary, failures: Array) -> void:
+	var game: GameModule = _slot_game(library, failures)
+	if game == null:
+		return
+	_check_slot_pinball_cap_completion(game, definition, failures)
+	_check_slot_pinball_pending_animation_watchdog(game, definition, failures)
+	_check_slot_pinball_save_load_watchdog(game, definition, failures)
+	_check_slot_buffalo_zero_respin_completion(game, definition, failures)
+	_check_slot_buffalo_save_load_completion(game, definition, failures)
+
+
+func _check_slot_pinball_cap_completion(game: GameModule, definition: Dictionary, failures: Array) -> void:
+	var pinball = SlotFamilyPinballScript.new()
+	var run_state: RunState = _slot_run_state("SLOT-R8-PINBALL-CAP", 100000)
+	var environment: Dictionary = _slot_environment()
+	var machine: Dictionary = _slot_machine(definition, run_state, "pinball", "classic_3_reel", "standard", "plain")
+	var active: Dictionary = pinball.open_feature(machine, 10, run_state.create_rng("r8_pinball_cap_open"), definition)
+	active["headless"] = true
+	active["total_steps"] = 1
+	active["balls_remaining"] = 1
+	active["remaining_steps"] = 1
+	active["session_cap"] = 1
+	machine["active_bonus"] = active
+	_slot_store_machine(run_state, environment, machine)
+	PinballFeatureScript.clear_runtime_session_cache()
+	var rng: RngStream = run_state.create_rng("r8_pinball_cap_launch")
+	var result: Dictionary = game.resolve_with_context("slot_bonus_launch", 0, run_state, environment, rng, {})
+	if bool(result.get("ok", false)):
+		GameModule.apply_result(run_state, result, rng)
+	if not bool(result.get("slot_bonus_complete", false)):
+		failures.append("Slot pinball session-cap fixture did not complete on the final headless ball.")
+	if int(result.get("slot_bonus_award", 0)) > 1:
+		failures.append("Slot pinball session-cap fixture paid above the exact cap.")
+	_assert_slot_bonus_base_state(game, run_state, environment, "Pinball cap completion", failures)
+
+
+func _check_slot_pinball_pending_animation_watchdog(game: GameModule, definition: Dictionary, failures: Array) -> void:
+	var pinball = SlotFamilyPinballScript.new()
+	var run_state: RunState = _slot_run_state("SLOT-R8-PINBALL-PENDING-ANIM", 100000)
+	var environment: Dictionary = _slot_environment()
+	var machine: Dictionary = _slot_machine(definition, run_state, "pinball", "line_5x3", "standard", "plain")
+	var active: Dictionary = pinball.open_feature(machine, 10, run_state.create_rng("r8_pinball_pending_open"), definition)
+	active["total_steps"] = 1
+	active["balls_remaining"] = 0
+	active["remaining_steps"] = 0
+	active["active_ball_count"] = 0
+	active["feature_total"] = 37
+	active["pending_award"] = 37
+	machine["active_bonus"] = active
+	machine["slot_animation_id"] = "bonus:r8_pending"
+	machine["slot_animation_duration_msec"] = 3000
+	machine["slot_animation_plan"] = {"id": "bonus:r8_pending", "duration_msec": 3000, "feature_duration_msec": 3000}
+	_slot_store_machine(run_state, environment, machine)
+	PinballFeatureScript.clear_runtime_session_cache()
+	if game.surface_needs_auto_tick({"surface_time_msec": 1200, "drunk_scaled_surface_time_msec": 1200}, run_state, environment):
+		failures.append("Slot pinball watchdog fired while a bonus award animation was still pending.")
+	var seeded: Dictionary = game.surface_auto_action_command({"surface_time_msec": 3200, "drunk_scaled_surface_time_msec": 3200}, run_state, environment, {})
+	if not bool(seeded.get("environment_changed", false)):
+		failures.append("Slot pinball watchdog did not arm after the pending award animation ended.")
+	var due_time := 5600
+	var command: Dictionary = game.surface_auto_action_command({"surface_time_msec": due_time, "drunk_scaled_surface_time_msec": due_time}, run_state, environment, {})
+	if str(command.get("action_id", "")) != "slot_bonus_watchdog":
+		failures.append("Slot pinball watchdog did not route through the watchdog bonus action after the grace window.")
+	else:
+		var rng: RngStream = run_state.create_rng("r8_pinball_pending_watchdog")
+		var result: Dictionary = game.resolve_with_context(str(command.get("action_id", "")), 0, run_state, environment, rng, _slot_dict(command.get("ui_state", {})))
+		if bool(result.get("ok", false)):
+			GameModule.apply_result(run_state, result, rng)
+		if int(result.get("slot_bonus_award", 0)) < 37:
+			failures.append("Slot pinball watchdog did not preserve the pending feature award.")
+	_assert_slot_bonus_base_state(game, run_state, environment, "Pinball pending-animation watchdog", failures)
+
+
+func _check_slot_pinball_save_load_watchdog(game: GameModule, definition: Dictionary, failures: Array) -> void:
+	var pinball = SlotFamilyPinballScript.new()
+	var run_state: RunState = _slot_run_state("SLOT-R8-PINBALL-SAVELOAD", 100000)
+	var environment: Dictionary = _slot_environment()
+	var machine: Dictionary = _slot_machine(definition, run_state, "pinball", "classic_3_reel", "standard", "plain")
+	var active: Dictionary = pinball.open_feature(machine, 10, run_state.create_rng("r8_pinball_save_open"), definition)
+	active["total_steps"] = 1
+	active["balls_remaining"] = 1
+	active["remaining_steps"] = 1
+	machine["active_bonus"] = active
+	_slot_store_machine(run_state, environment, machine)
+	var launch_rng: RngStream = run_state.create_rng("r8_pinball_save_launch")
+	var launch_result: Dictionary = game.resolve_with_context("slot_bonus_launch", 0, run_state, environment, launch_rng, {"surface_time_msec": 100, "drunk_scaled_surface_time_msec": 100})
+	if bool(launch_result.get("ok", false)):
+		GameModule.apply_result(run_state, launch_result, launch_rng)
+	var launched_machine: Dictionary = SlotMachineStateScript.read_machine(environment, "slot")
+	var launched_active: Dictionary = _slot_dict(launched_machine.get("active_bonus", {}))
+	launched_active["feature_total"] = maxi(29, int(launched_active.get("feature_total", 0)))
+	launched_active["pending_award"] = maxi(29, int(launched_active.get("pending_award", 0)))
+	launched_machine["active_bonus"] = launched_active
+	SlotMachineStateScript.write_machine(environment, "slot", launched_machine)
+	PinballFeatureScript.clear_runtime_session_cache()
+	var restored: RunState = RunStateScript.new()
+	restored.from_dict(run_state.to_dict())
+	var restored_environment: Dictionary = _slot_dict(restored.current_environment)
+	restored.current_environment = restored_environment
+	var seed_time := 5000
+	if not game.surface_needs_auto_tick({"surface_time_msec": seed_time, "drunk_scaled_surface_time_msec": seed_time}, restored, restored_environment):
+		failures.append("Slot pinball save/load fixture did not request a watchdog seed after losing its runtime session.")
+	var seed_command: Dictionary = game.surface_auto_action_command({"surface_time_msec": seed_time, "drunk_scaled_surface_time_msec": seed_time}, restored, restored_environment, {})
+	if not bool(seed_command.get("environment_changed", false)):
+		failures.append("Slot pinball save/load watchdog seed did not update the restored machine.")
+	var due_time := 7600
+	var command: Dictionary = game.surface_auto_action_command({"surface_time_msec": due_time, "drunk_scaled_surface_time_msec": due_time}, restored, restored_environment, {})
+	if str(command.get("action_id", "")) != "slot_bonus_watchdog":
+		failures.append("Slot pinball save/load fixture did not route the stale feature through the watchdog.")
+	else:
+		var rng: RngStream = restored.create_rng("r8_pinball_save_watchdog")
+		var result: Dictionary = game.resolve_with_context(str(command.get("action_id", "")), 0, restored, restored_environment, rng, _slot_dict(command.get("ui_state", {})))
+		if bool(result.get("ok", false)):
+			GameModule.apply_result(restored, result, rng)
+		if int(result.get("slot_bonus_award", 0)) < 29:
+			failures.append("Slot pinball save/load watchdog lost the saved feature award.")
+	_assert_slot_bonus_base_state(game, restored, restored_environment, "Pinball save/load watchdog", failures)
+
+
+func _check_slot_buffalo_zero_respin_completion(game: GameModule, definition: Dictionary, failures: Array) -> void:
+	var buffalo = SlotFamilyBuffaloScript.new()
+	var run_state: RunState = _slot_run_state("SLOT-R8-BUFFALO-ZERO", 100000)
+	var environment: Dictionary = _slot_environment()
+	var machine: Dictionary = _slot_machine(definition, run_state, "buffalo", "video_feature", "standard", "plain")
+	var active: Dictionary = buffalo.open_feature(machine, {"classification": "hold_and_spin"}, 10, run_state.create_rng("r8_buffalo_zero_open"), definition)
+	active["remaining_steps"] = 0
+	active["respins_remaining"] = 0
+	active["feature_total"] = maxi(25, int(active.get("feature_total", 0)))
+	active["pending_award"] = maxi(25, int(active.get("pending_award", 0)))
+	machine["active_bonus"] = active
+	_slot_store_machine(run_state, environment, machine)
+	var rng: RngStream = run_state.create_rng("r8_buffalo_zero_launch")
+	var result: Dictionary = game.resolve_with_context("slot_bonus_launch", 0, run_state, environment, rng, {})
+	if bool(result.get("ok", false)):
+		GameModule.apply_result(run_state, result, rng)
+	if not bool(result.get("slot_bonus_complete", false)):
+		failures.append("Slot buffalo hold-and-spin zero-respin fixture did not complete immediately.")
+	if int(result.get("slot_bonus_award", 0)) < 25:
+		failures.append("Slot buffalo hold-and-spin zero-respin fixture did not preserve the pending award.")
+	_assert_slot_bonus_base_state(game, run_state, environment, "Buffalo zero-respin completion", failures)
+
+
+func _check_slot_buffalo_save_load_completion(game: GameModule, definition: Dictionary, failures: Array) -> void:
+	var buffalo = SlotFamilyBuffaloScript.new()
+	var run_state: RunState = _slot_run_state("SLOT-R8-BUFFALO-SAVELOAD", 100000)
+	var environment: Dictionary = _slot_environment()
+	var machine: Dictionary = _slot_machine(definition, run_state, "buffalo", "line_5x3", "standard", "retrigger")
+	machine["bonus_reel_strips"] = _slot_coin_heavy_reel_strips(maxi(1, int(machine.get("reel_count", 5))))
+	var active: Dictionary = buffalo.open_feature(machine, {"classification": "free_games"}, 10, run_state.create_rng("r8_buffalo_save_open"), definition)
+	active["remaining_steps"] = 1
+	active["total_steps"] = 1
+	active["coins_since_retrigger"] = 2
+	machine["active_bonus"] = active
+	_slot_store_machine(run_state, environment, machine)
+	var restored: RunState = RunStateScript.new()
+	restored.from_dict(run_state.to_dict())
+	var restored_environment: Dictionary = _slot_dict(restored.current_environment)
+	restored.current_environment = restored_environment
+	var rng: RngStream = restored.create_rng("r8_buffalo_save_steps")
+	_slot_complete_active_bonus(game, restored, restored_environment, rng)
+	_assert_slot_bonus_base_state(game, restored, restored_environment, "Buffalo save/load completion", failures)
+	var completed_machine: Dictionary = SlotMachineStateScript.read_machine(restored_environment, "slot")
+	var replay: Dictionary = _slot_dict(completed_machine.get("last_bonus_replay", {}))
+	if int(replay.get("retrigger_count", 0)) <= 0 and int(replay.get("last_retrigger_grant", 0)) <= 0:
+		failures.append("Slot buffalo save/load fixture did not exercise the free-games retrigger edge.")
+
+
+func _assert_slot_bonus_base_state(game: GameModule, run_state: RunState, environment: Dictionary, label: String, failures: Array) -> void:
+	var machine: Dictionary = SlotMachineStateScript.read_machine(environment, "slot")
+	var active: Dictionary = _slot_dict(machine.get("active_bonus", {}))
+	if SlotMachineStateScript.active_bonus_incomplete(machine):
+		failures.append("%s left active_bonus_incomplete true." % label)
+	if bool(active.get("active", false)) or not bool(active.get("complete", true)):
+		failures.append("%s did not clear active_bonus to the completed sentinel." % label)
+	var elapsed_msec := maxi(0, int(machine.get("slot_animation_duration_msec", 0))) + 600
+	var surface: Dictionary = game.surface_state(run_state, environment, {"surface_time_msec": elapsed_msec, "drunk_scaled_surface_time_msec": elapsed_msec})
+	var scene: Dictionary = _slot_dict(surface.get("slot_feature_scene", {}))
+	if bool(surface.get("slot_active_bonus_active", false)) or bool(scene.get("active", false)):
+		failures.append("%s did not return the surface to the base slot state after the bonus replay elapsed." % label)
 
 
 func _check_slot_buffalo_feature_pauses_autoplay(game: GameModule, definition: Dictionary, failures: Array) -> void:
@@ -11819,9 +12004,16 @@ func _check_world_map_foundation(library: ContentLibrary, failures: Array) -> vo
 	var snapshot := WorldMapScript.snapshot(run_a.world_map)
 	var visible_ids := _string_array(snapshot.get("visible_node_ids", []))
 	if visible_ids.size() < 2:
-		failures.append("World map should reveal at least one neighbor from the start node.")
+		failures.append("World map should spawn-discover at least one travelable stop from the start node.")
 	if _world_map_hidden_count(run_a.world_map) <= 0:
 		failures.append("World map should keep distant nodes hidden before discovery.")
+	if not _world_map_visible_ids_have_sources(run_a.world_map):
+		failures.append("World map visible nodes must be visited, event-unlocked, or discovered at spawn.")
+	var initial_leaks := _world_map_snapshot_hidden_leaks(run_a.world_map, snapshot)
+	if not initial_leaks.is_empty():
+		failures.append("World map snapshot leaked hidden node data at start: %s." % ", ".join(initial_leaks))
+	if not _world_map_snapshot_icons_match_positions(run_a.world_map, snapshot):
+		failures.append("World map snapshot icons did not preserve generated node positions.")
 	var neighbors := WorldMapScript.neighbor_ids(run_a.world_map, start_node_id, true)
 	if _string_array(run_a.current_environment.get("travel_hooks", [])) != neighbors or _string_array(run_a.current_environment.get("next_archetypes", [])) != neighbors:
 		failures.append("Current environment travel hooks should mirror visible world-map neighbors.")
@@ -11844,6 +12036,34 @@ func _check_world_map_foundation(library: ContentLibrary, failures: Array) -> vo
 	generator.next_environment(run_c)
 	if JSON.stringify(_world_map_positions(run_a.world_map)) == JSON.stringify(_world_map_positions(run_c.world_map)):
 		failures.append("World map node layout should vary across different seeds.")
+
+	for leak_seed_index in range(20):
+		var leak_run: RunState = RunStateScript.new()
+		leak_run.start_new("WORLD-MAP-FOG-%02d" % leak_seed_index)
+		generator.next_environment(leak_run)
+		var hidden_selected_id := _first_hidden_world_node_id(leak_run.world_map)
+		var leak_snapshot := WorldMapScript.snapshot(leak_run.world_map, hidden_selected_id)
+		var leaked_ids := _world_map_snapshot_hidden_leaks(leak_run.world_map, leak_snapshot)
+		if not hidden_selected_id.is_empty() and str(leak_snapshot.get("selected_node_id", "")) == hidden_selected_id:
+			leaked_ids.append("selected:%s" % hidden_selected_id)
+		if not leaked_ids.is_empty():
+			failures.append("World map fog leak for seed %02d: %s." % [leak_seed_index, ", ".join(leaked_ids)])
+			break
+
+	var hidden_unlock_id := _first_hidden_world_node_id(run_a.world_map)
+	if hidden_unlock_id.is_empty():
+		failures.append("World map event-unlock fixture could not find a hidden node.")
+	else:
+		var before_unlock_snapshot := WorldMapScript.snapshot(run_a.world_map)
+		if _string_array(before_unlock_snapshot.get("visible_node_ids", [])).has(hidden_unlock_id):
+			failures.append("World map event-unlock fixture started with the hidden target visible.")
+		run_a.add_next_archetypes([hidden_unlock_id])
+		var after_unlock_snapshot := WorldMapScript.snapshot(run_a.world_map)
+		if not _string_array(after_unlock_snapshot.get("visible_node_ids", [])).has(hidden_unlock_id):
+			failures.append("World map event grant did not reveal %s without re-entering the map." % hidden_unlock_id)
+		var unlocked_node := WorldMapScript.node_by_id(run_a.world_map, hidden_unlock_id)
+		if not bool(unlocked_node.get("unlocked", false)) or str(unlocked_node.get("discovery_source", "")) != WorldMapScript.DISCOVERY_SOURCE_EVENT:
+			failures.append("World map event grant did not mark %s with event discovery metadata." % hidden_unlock_id)
 
 	for seed_index in range(50):
 		var reach_run: RunState = RunStateScript.new()
@@ -11868,9 +12088,14 @@ func _check_world_map_foundation(library: ContentLibrary, failures: Array) -> vo
 	run_a.current_environment["game_states"] = _copy_dict(run_a.current_environment.get("game_states", {}))
 	run_a.current_environment["game_states"]["world_map_fixture"] = {"remaining": 1, "top_prize_claimed": false}
 	var return_route := generator.world_route_for_target(run_a, start_node_id)
+	var return_cost := int(return_route.get("cost", 0))
+	var bankroll_before_return := run_a.bankroll
 	var return_heat := run_a.begin_travel_suspicion_decay(return_route, start_node_id)
 	generator.next_environment(run_a, start_node_id)
 	run_a.finish_travel_suspicion_decay(return_heat)
+	GameModule.apply_result(run_a, _world_map_travel_charge_result(start_node_id, return_cost))
+	if run_a.bankroll != bankroll_before_return - return_cost:
+		failures.append("Return world-map travel did not charge the generated edge cost.")
 	var revisit_route := generator.world_route_for_target(run_a, visited_node_id)
 	var revisit_heat := run_a.begin_travel_suspicion_decay(revisit_route, visited_node_id)
 	generator.next_environment(run_a, visited_node_id)
@@ -11892,6 +12117,97 @@ func _world_map_hidden_count(map_data: Dictionary) -> int:
 		if typeof(node_value) == TYPE_DICTIONARY and str((node_value as Dictionary).get("state", "")) == WorldMapScript.STATE_HIDDEN:
 			count += 1
 	return count
+
+
+func _world_map_visible_ids_have_sources(map_data: Dictionary) -> bool:
+	for node_id in WorldMapScript.visible_node_ids(map_data):
+		var node := WorldMapScript.node_by_id(map_data, str(node_id))
+		if str(node.get("state", "")) == WorldMapScript.STATE_VISITED:
+			continue
+		var source := str(node.get("discovery_source", "")).strip_edges()
+		if bool(node.get("discovered_at_spawn", false)) or bool(node.get("unlocked", false)) or source == WorldMapScript.DISCOVERY_SOURCE_SPAWN or source == WorldMapScript.DISCOVERY_SOURCE_EVENT:
+			continue
+		return false
+	return true
+
+
+func _world_map_snapshot_hidden_leaks(map_data: Dictionary, snapshot: Dictionary) -> Array:
+	var hidden_ids := _world_map_hidden_ids(map_data)
+	var leaks: Array = []
+	for node_value in _copy_array(snapshot.get("nodes", [])):
+		if typeof(node_value) != TYPE_DICTIONARY:
+			continue
+		var node: Dictionary = node_value
+		var node_id := str(node.get("id", ""))
+		if hidden_ids.has(node_id) and not leaks.has(node_id):
+			leaks.append(node_id)
+		if node.has("environment") and not leaks.has("%s:environment" % node_id):
+			leaks.append("%s:environment" % node_id)
+	for edge_value in _copy_array(snapshot.get("edges", [])):
+		if typeof(edge_value) != TYPE_DICTIONARY:
+			continue
+		var edge: Dictionary = edge_value
+		var a := str(edge.get("a", ""))
+		var b := str(edge.get("b", ""))
+		if hidden_ids.has(a) and not leaks.has("edge:%s" % a):
+			leaks.append("edge:%s" % a)
+		if hidden_ids.has(b) and not leaks.has("edge:%s" % b):
+			leaks.append("edge:%s" % b)
+	var selected_id := str(snapshot.get("selected_node_id", ""))
+	if hidden_ids.has(selected_id) and not leaks.has("selected:%s" % selected_id):
+		leaks.append("selected:%s" % selected_id)
+	return leaks
+
+
+func _world_map_hidden_ids(map_data: Dictionary) -> Array:
+	var hidden_ids: Array = []
+	for node_value in _copy_array(map_data.get("nodes", [])):
+		if typeof(node_value) != TYPE_DICTIONARY:
+			continue
+		var node: Dictionary = node_value
+		var node_id := str(node.get("id", ""))
+		if not node_id.is_empty() and not WorldMapScript.is_node_visible(map_data, node_id):
+			hidden_ids.append(node_id)
+	return hidden_ids
+
+
+func _first_hidden_world_node_id(map_data: Dictionary) -> String:
+	var hidden_ids := _world_map_hidden_ids(map_data)
+	if hidden_ids.is_empty():
+		return ""
+	return str(hidden_ids[0])
+
+
+func _world_map_snapshot_icons_match_positions(map_data: Dictionary, snapshot: Dictionary) -> bool:
+	for node_value in _copy_array(snapshot.get("nodes", [])):
+		if typeof(node_value) != TYPE_DICTIONARY:
+			return false
+		var snapshot_node: Dictionary = node_value
+		var node_id := str(snapshot_node.get("id", ""))
+		var map_node := WorldMapScript.node_by_id(map_data, node_id)
+		if map_node.is_empty():
+			return false
+		if JSON.stringify(snapshot_node.get("position", {})) != JSON.stringify(map_node.get("position", {})):
+			return false
+		var icon_path := str(snapshot_node.get("icon_path", "")).strip_edges()
+		if icon_path != "res://assets/art/map_icons/%s.png" % node_id:
+			return false
+	return true
+
+
+func _world_map_travel_charge_result(target_id: String, cost: int) -> Dictionary:
+	var deltas := GameModule.empty_result_deltas()
+	deltas["bankroll_delta"] = -maxi(0, cost)
+	return GameModule.build_action_result({
+		"ok": true,
+		"type": "travel",
+		"source_id": target_id,
+		"action_id": "confirm_travel",
+		"action_kind": "travel",
+		"bankroll_delta": -maxi(0, cost),
+		"deltas": deltas,
+		"message": "Travel charge fixture.",
+	})
 
 
 func _copy_dict(value: Variant) -> Dictionary:

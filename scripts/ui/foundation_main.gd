@@ -805,11 +805,13 @@ func open_world_map() -> bool:
 		return false
 	selected_action_category = ACTION_CATEGORY_TRAVEL
 	_set_current_screen(SCREEN_TRAVEL)
-	if selected_world_map_node_id.is_empty():
+	if selected_world_map_node_id.is_empty() or (run_state.has_world_map() and not WorldMapScript.is_node_visible(run_state.world_map, selected_world_map_node_id)):
 		var first_choice := _first_enabled_travel_choice()
 		if first_choice.is_empty():
 			first_choice = _first_disabled_travel_choice()
 		selected_world_map_node_id = str(first_choice.get("id", ""))
+		if selected_world_map_node_id.is_empty() and run_state.has_world_map():
+			selected_world_map_node_id = run_state.current_world_node_id()
 	if world_map_overlay != null:
 		world_map_overlay.visible = true
 		world_map_overlay.move_to_front()
@@ -831,7 +833,18 @@ func select_world_map_node(node_id: String) -> bool:
 	var clean_id := node_id.strip_edges()
 	if clean_id.is_empty():
 		return false
+	if run_state != null and run_state.has_world_map() and not WorldMapScript.is_node_visible(run_state.world_map, clean_id):
+		_show_message("That stop is not on your map yet.")
+		_refresh_world_map_overlay()
+		return false
 	selected_world_map_node_id = clean_id
+	if run_state != null and clean_id == run_state.current_world_node_id():
+		selected_travel_target_id = ""
+		selected_travel_label = ""
+		_show_message("You are here.")
+		_refresh_world_map_overlay()
+		_refresh()
+		return true
 	var choice := _travel_choice(clean_id)
 	if choice.is_empty():
 		selected_travel_target_id = ""
@@ -4845,6 +4858,8 @@ func current_screen_snapshot() -> Dictionary:
 		"travel_transition_target_label": travel_transition_target_label,
 		"world_map_overlay_visible": world_map_overlay != null and world_map_overlay.visible,
 		"selected_world_map_node_id": selected_world_map_node_id,
+		"world_map_detail_text": world_map_detail_label.text if world_map_detail_label != null else "",
+		"world_map_confirm_enabled": world_map_confirm_button != null and not world_map_confirm_button.disabled,
 		"world_map": _world_map_snapshot() if run_state != null else {},
 		"conclusion_animation": current_conclusion_animation_snapshot(),
 		"accessibility": current_accessibility_snapshot(),
@@ -9819,7 +9834,6 @@ func _add_world_map_node_buttons(snapshot: Dictionary) -> void:
 		layer_size = Vector2(540, 390)
 	var inset := Vector2(32.0, 28.0)
 	var drawable := Vector2(maxf(1.0, layer_size.x - inset.x * 2.0), maxf(1.0, layer_size.y - inset.y * 2.0))
-	var current_id := str(snapshot.get("current_node_id", ""))
 	for node_value in _copy_array(snapshot.get("nodes", [])):
 		if typeof(node_value) != TYPE_DICTIONARY:
 			continue
@@ -9829,14 +9843,12 @@ func _add_world_map_node_buttons(snapshot: Dictionary) -> void:
 			continue
 		var position: Dictionary = node.get("position", {}) if typeof(node.get("position", {})) == TYPE_DICTIONARY else {}
 		var center := inset + Vector2(clampf(float(position.get("x", 0.5)), 0.0, 1.0), clampf(float(position.get("y", 0.5)), 0.0, 1.0)) * drawable
-		var button := _button(str(node.get("label", node_id)).left(16), Callable(self, "select_world_map_node").bind(node_id))
-		button.custom_minimum_size = Vector2(92, 30)
-		button.size = Vector2(92, 30)
+		var button := _world_map_hit_button(Callable(self, "select_world_map_node").bind(node_id))
+		button.custom_minimum_size = Vector2(46, 46)
+		button.size = Vector2(46, 46)
 		button.position = center - button.size * 0.5
-		button.disabled = node_id == current_id
 		button.tooltip_text = str(node.get("label", node_id))
-		if node_id == selected_world_map_node_id:
-			_style_selected_button(button)
+		button.name = "WorldMapNode_%s" % node_id
 		world_map_nodes_layer.add_child(button)
 
 
@@ -9854,27 +9866,41 @@ func _refresh_world_map_detail() -> void:
 		return
 	var current_id := run_state.current_world_node_id()
 	var node: Dictionary = WorldMapScript.node_by_id(run_state.world_map, selected_world_map_node_id)
-	if node.is_empty():
+	if node.is_empty() or not WorldMapScript.is_node_visible(run_state.world_map, selected_world_map_node_id):
 		lines.append("That stop is not visible from here.")
-		_set_world_map_confirm_enabled(false)
-		world_map_detail_label.text = "\n".join(lines)
-		return
-	if selected_world_map_node_id == current_id:
-		lines.append("You are here.")
 		_set_world_map_confirm_enabled(false)
 		world_map_detail_label.text = "\n".join(lines)
 		return
 	var choice := _travel_choice(selected_world_map_node_id)
 	lines.append(str(node.get("label", selected_world_map_node_id)))
+	var flavor := _world_map_node_flavor(node)
+	if not flavor.is_empty():
+		lines.append(flavor)
+	if selected_world_map_node_id == current_id:
+		lines.append("You are here.")
+		_set_world_map_confirm_enabled(false)
+		world_map_detail_label.text = "\n".join(lines)
+		return
 	if choice.is_empty():
 		lines.append("No direct route from here.")
 		_set_world_map_confirm_enabled(false)
 		world_map_detail_label.text = "\n".join(lines)
 		return
-	lines.append("Distance: %s, cost %d." % [str(choice.get("distance", "near")).capitalize(), int(choice.get("cost", 0))])
+	lines.append("Travel: %s." % _world_map_travel_method(choice))
+	var distance_blocks := int(choice.get("distance_blocks", 0))
+	var distance_text := str(choice.get("distance", "near")).capitalize()
+	if distance_blocks > 0:
+		distance_text = "%s, %d block(s)" % [distance_text, distance_blocks]
+	lines.append("Distance: %s." % distance_text)
+	lines.append("Cost: %d." % int(choice.get("cost", 0)))
 	var risk := _travel_risk_summary(choice)
 	if not risk.is_empty():
 		lines.append("Risk: %s" % risk)
+	var unlock_summary := str(choice.get("unlock_summary", "")).strip_edges()
+	if not bool(choice.get("enabled", true)) and not unlock_summary.is_empty():
+		lines.append("Lock: %s" % unlock_summary)
+	elif bool(choice.get("enabled", true)):
+		lines.append("Route open.")
 	for preview_line in _copy_array(choice.get("preview_lines", [])).slice(0, 3):
 		var preview_text := str(preview_line).strip_edges()
 		if not preview_text.is_empty():
@@ -9883,6 +9909,52 @@ func _refresh_world_map_detail() -> void:
 		lines.append(str(choice.get("disabled_reason", "That route is not available right now.")))
 	_set_world_map_confirm_enabled(bool(choice.get("enabled", true)))
 	world_map_detail_label.text = "\n".join(lines)
+
+
+func _world_map_hit_button(callback: Callable) -> Button:
+	var button := Button.new()
+	button.text = ""
+	button.flat = true
+	button.focus_mode = Control.FOCUS_NONE
+	button.mouse_filter = Control.MOUSE_FILTER_STOP
+	button.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	button.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	var empty := StyleBoxEmpty.new()
+	button.add_theme_stylebox_override("normal", empty)
+	button.add_theme_stylebox_override("hover", empty)
+	button.add_theme_stylebox_override("pressed", empty)
+	button.add_theme_stylebox_override("disabled", empty)
+	button.pressed.connect(callback)
+	return button
+
+
+func _world_map_node_flavor(node: Dictionary) -> String:
+	var flavor := str(node.get("flavor", "")).strip_edges()
+	if not flavor.is_empty():
+		return flavor
+	var archetype := _environment_archetype(str(node.get("archetype_id", node.get("id", ""))))
+	var visual_context: Dictionary = archetype.get("visual_context", {}) if typeof(archetype.get("visual_context", {})) == TYPE_DICTIONARY else {}
+	flavor = str(visual_context.get("description", "")).strip_edges()
+	if not flavor.is_empty():
+		return flavor
+	var kind := str(node.get("kind", archetype.get("kind", ""))).strip_edges()
+	return "A %s stop on the city map." % kind if not kind.is_empty() else ""
+
+
+func _world_map_travel_method(choice: Dictionary) -> String:
+	var route: Dictionary = choice.get("route", {}) if typeof(choice.get("route", {})) == TYPE_DICTIONARY else {}
+	var method := str(route.get("method", "")).strip_edges()
+	if not method.is_empty():
+		return method
+	match str(choice.get("distance", "near")).strip_edges().to_lower():
+		"near":
+			return "Walk"
+		"local":
+			return "Cab"
+		"far":
+			return "Bus"
+		_:
+			return "Hired ride"
 
 
 func _set_world_map_confirm_enabled(enabled: bool) -> void:
@@ -9943,6 +10015,10 @@ func _travel_choice(target_id: String) -> Dictionary:
 		choice["suspicion_delta"] = int(route.get("suspicion_delta", 0))
 	if route.has("distance"):
 		choice["distance"] = str(route.get("distance", ""))
+	if route.has("distance_blocks"):
+		choice["distance_blocks"] = int(route.get("distance_blocks", 0))
+	if route.has("world_edge_id"):
+		choice["world_edge_id"] = str(route.get("world_edge_id", ""))
 	if route.has("risk_decay"):
 		choice["risk_decay"] = int(route.get("risk_decay", 0))
 	if route.has("condition_text"):
@@ -9960,7 +10036,7 @@ func _travel_choice(target_id: String) -> Dictionary:
 		choice["availability_turn"] = int(status.get("availability_turn", 0))
 	if status.has("travel_lock_remaining"):
 		choice["travel_lock_remaining"] = int(status.get("travel_lock_remaining", 0))
-	var full_preview := _travel_full_preview_enabled()
+	var full_preview := _travel_full_preview_enabled_for(target_id)
 	var preview_environment := {}
 	if full_preview and generator != null:
 		preview_environment = generator.preview_environment(run_state, target_id)
@@ -10015,6 +10091,15 @@ func _travel_full_preview_enabled() -> bool:
 	if run_state == null:
 		return false
 	return run_state.travel_scouting_level() > 0
+
+
+func _travel_full_preview_enabled_for(target_id: String) -> bool:
+	if _travel_full_preview_enabled():
+		return true
+	if run_state == null or not run_state.has_world_map():
+		return false
+	var node: Dictionary = WorldMapScript.node_by_id(run_state.world_map, target_id)
+	return bool(node.get("scouted", false))
 
 
 func _travel_preview_summary(choice: Dictionary) -> String:

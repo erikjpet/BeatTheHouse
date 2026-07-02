@@ -252,6 +252,11 @@ static func surface_refresh(active: Dictionary, surface_time_msec: int) -> Dicti
 		result["display_event_log"] = _tail_array_shallow(result.get("display_event_log", []), 8)
 		result["display_trajectory"] = _tail_array_shallow(result.get("display_trajectory", []), 24)
 		result["history"] = []
+	elif sim == null and bool(result.get("active", false)):
+		var balls_remaining := maxi(0, int(result.get("balls_remaining", result.get("remaining_steps", 0))))
+		result["active_ball_count"] = 0
+		result["launch_in_progress"] = false
+		result["remaining_steps"] = balls_remaining
 	return result
 
 
@@ -430,6 +435,7 @@ func _session_for(active: Dictionary):
 	var compiled: Dictionary = compiler.compile(layout, ItemsScript.compile_modifiers(_dict(active.get("pinball_item_effects", {}))))
 	var sim := SimScript.new()
 	sim.configure(compiled, int(active.get("runtime_seed", 1)), {"cap": int(active.get("session_cap", 500))})
+	_restore_session_progress(active, sim)
 	_store_session(session_id, sim, layout, compiled)
 	return sim
 
@@ -461,9 +467,32 @@ static func _erase_session(session_id: String) -> void:
 	_session_order.erase(session_id)
 
 
+static func clear_runtime_session_cache() -> void:
+	_sessions.clear()
+	_layouts.clear()
+	_compiled_boards.clear()
+	_surface_refresh_msec.clear()
+	_session_order.clear()
+
+
 static func _prune_session_cache() -> void:
 	while _session_order.size() > MAX_RUNTIME_SESSIONS:
 		_erase_session(str(_session_order[0]))
+
+
+static func _restore_session_progress(active: Dictionary, sim) -> void:
+	var cap := maxi(1, int(active.get("session_cap", sim.session_cap)))
+	var restored_total := maxi(maxi(maxi(0, int(active.get("feature_total", 0))), int(active.get("pending_award", 0))), int(active.get("awarded", 0)))
+	sim.total_awarded = mini(cap, restored_total)
+	var total_steps := maxi(0, int(active.get("total_steps", active.get("balls_remaining", 0))))
+	var balls_remaining := clampi(int(active.get("balls_remaining", total_steps)), 0, total_steps)
+	var debug: Dictionary = _dict_static(active.get("pinball_debug", {}))
+	var launched := clampi(total_steps - balls_remaining, 0, total_steps)
+	launched = maxi(launched, int(active.get("step_index", 0)))
+	launched = maxi(launched, int(debug.get("balls_launched", 0)))
+	sim.balls_launched = clampi(launched, 0, maxi(total_steps, launched))
+	sim.drain_count = clampi(maxi(int(active.get("step_index", 0)), int(debug.get("drain_count", 0))), 0, maxi(sim.balls_launched, 0))
+	sim.max_active_seen = maxi(int(active.get("max_active_count", 0)), int(debug.get("max_active_seen", 0)))
 
 
 func _run_ticks_with_trajectory(sim, ticks_to_run: int, trajectory: Array, local_time: bool) -> void:

@@ -368,6 +368,8 @@ func _display_active_bonus(machine: Dictionary, active_bonus: Dictionary, surfac
 	var plan_duration := maxi(0, int(plan.get("feature_duration_msec", 0)))
 	if plan_duration <= 0:
 		return _pinball_display_bonus(live, surface_time_msec)
+	if surface_time_msec > plan_duration:
+		return _pinball_display_bonus(live, surface_time_msec)
 	replay["active"] = true
 	replay["complete"] = true
 	replay["visual_replay"] = true

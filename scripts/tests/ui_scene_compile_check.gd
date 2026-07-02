@@ -2931,7 +2931,38 @@ func _run() -> void:
 		return
 	var map_snapshot: Dictionary = map_screen.get("world_map", {}) if typeof(map_screen.get("world_map", {})) == TYPE_DICTIONARY else {}
 	if (map_snapshot.get("nodes", []) as Array).size() < 2:
-		push_error("World map overlay did not render the current node and revealed neighbors.")
+		push_error("World map overlay did not render the current node and discovered stops.")
+		quit(1)
+		return
+	var full_map: Dictionary = app.call("serialized_run_state").get("world_map", {}) if typeof(app.call("serialized_run_state").get("world_map", {})) == TYPE_DICTIONARY else {}
+	var hidden_map_ids := _hidden_world_map_ids(full_map)
+	for node_value in (map_snapshot.get("nodes", []) as Array):
+		if typeof(node_value) != TYPE_DICTIONARY:
+			continue
+		var node_data: Dictionary = node_value
+		var node_id := str(node_data.get("id", ""))
+		if hidden_map_ids.has(node_id):
+			push_error("World map snapshot leaked hidden node %s." % node_id)
+			quit(1)
+			return
+		if str(node_data.get("icon_path", "")).strip_edges().is_empty():
+			push_error("World map node %s did not expose generated icon metadata." % node_id)
+			quit(1)
+			return
+		var full_node := _world_map_node_by_id(full_map, node_id)
+		if JSON.stringify(node_data.get("position", {})) != JSON.stringify(full_node.get("position", {})):
+			push_error("World map icon position for %s moved away from the generated node position." % node_id)
+			quit(1)
+			return
+	var current_map_id := str(map_snapshot.get("current_node_id", ""))
+	if not bool(app.call("select_world_map_node", current_map_id)):
+		push_error("World map did not allow selecting the current node.")
+		quit(1)
+		return
+	await process_frame
+	var current_node_screen: Dictionary = app.call("current_screen_snapshot")
+	if not str(current_node_screen.get("world_map_detail_text", "")).contains("You are here."):
+		push_error("Selecting the current world-map node did not show the You are here state.")
 		quit(1)
 		return
 	var serialized_before_map_select := JSON.stringify(app.call("serialized_run_state"))
@@ -2940,6 +2971,12 @@ func _run() -> void:
 		quit(1)
 		return
 	await process_frame
+	var selected_map_screen: Dictionary = app.call("current_screen_snapshot")
+	var detail_text := str(selected_map_screen.get("world_map_detail_text", ""))
+	if not detail_text.contains("Travel:") or not detail_text.contains("Distance:") or not detail_text.contains("Cost:"):
+		push_error("World map selection panel did not show travel method, distance, and cost.")
+		quit(1)
+		return
 	if serialized_before_map_select != JSON.stringify(app.call("serialized_run_state")):
 		push_error("Selecting a world-map node mutated serialized RunState before confirmation.")
 		quit(1)
@@ -4635,6 +4672,28 @@ func _canvas_object_id_with_prefix(objects: Array, prefix: String) -> bool:
 		if typeof(object_data) == TYPE_DICTIONARY and str((object_data as Dictionary).get("id", "")).begins_with(prefix):
 			return true
 	return false
+
+
+func _hidden_world_map_ids(map_data: Dictionary) -> Array:
+	var hidden_ids: Array = []
+	for node_value in _copy_array(map_data.get("nodes", [])):
+		if typeof(node_value) != TYPE_DICTIONARY:
+			continue
+		var node: Dictionary = node_value
+		var node_id := str(node.get("id", ""))
+		var state := str(node.get("state", "hidden"))
+		var source := str(node.get("discovery_source", "")).strip_edges()
+		var visible := state == "visited" or (state == "revealed" and (bool(node.get("discovered_at_spawn", false)) or bool(node.get("unlocked", false)) or source == "spawn" or source == "event"))
+		if not node_id.is_empty() and not visible:
+			hidden_ids.append(node_id)
+	return hidden_ids
+
+
+func _world_map_node_by_id(map_data: Dictionary, node_id: String) -> Dictionary:
+	for node_value in _copy_array(map_data.get("nodes", [])):
+		if typeof(node_value) == TYPE_DICTIONARY and str((node_value as Dictionary).get("id", "")) == node_id:
+			return (node_value as Dictionary).duplicate(true)
+	return {}
 
 
 func _event_choice_has_trigger_event(event_definition: Dictionary, choice_id: String) -> bool:

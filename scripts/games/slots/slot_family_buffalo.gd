@@ -228,7 +228,11 @@ func step_bonus(machine: Dictionary, action_id: String, rng: RngStream, _definit
 	if mode == "wheel":
 		return _step_wheel(machine, active, action_id, rng)
 	if mode == "hold_and_spin":
+		if _hold_has_no_respins(active):
+			return _complete_stalled_feature(machine, active, "Gold Stampede pays $%d.")
 		return _step_hold(machine, active, rng)
+	if int(active.get("remaining_steps", 0)) <= 0:
+		return _complete_stalled_feature(machine, active, "Stampede free games pay $%d.")
 	return _step_free_games(machine, active, rng)
 
 
@@ -758,6 +762,50 @@ func _step_wheel(machine: Dictionary, active: Dictionary, action_id: String, rng
 	active["jackpot_ladder"] = _jackpot_ladder_state(str(active.get("bet_id", "bet_2")), int(active.get("stake", 0)), str(jackpot.get("tier", "mini")), machine)
 	machine["active_bonus"] = {"active": false, "complete": true}
 	return _bonus_step_result(true, award, "Wheel jackpot pays $%d." % award, active)
+
+
+func _hold_has_no_respins(active: Dictionary) -> bool:
+	return int(active.get("remaining_steps", active.get("respins_remaining", 0))) <= 0 or int(active.get("respins_remaining", active.get("remaining_steps", 0))) <= 0
+
+
+func _complete_stalled_feature(machine: Dictionary, active: Dictionary, message_template: String) -> Dictionary:
+	var completed: Dictionary = active.duplicate(true)
+	var mode := str(completed.get("mode", ""))
+	var stake := maxi(1, int(completed.get("stake", 1)))
+	var bet_id := str(completed.get("bet_id", _copy_dict(machine.get("bet_ladder", {})).get("selected_id", "bet_2")))
+	var locks: Array = _dictionary_array(completed.get("locks", []))
+	var max_cells := maxi(1, int(completed.get("max_cells", maxi(1, locks.size()))))
+	var grand_prize := maxi(current_grand_prize(machine, stake, bet_id), int(completed.get("grand_prize", 0)))
+	var final_total := maxi(maxi(maxi(0, int(completed.get("feature_total", 0))), int(completed.get("pending_award", 0))), int(completed.get("awarded", 0)))
+	var full_screen := mode == "hold_and_spin" and locks.size() >= max_cells
+	if mode == "hold_and_spin" and not locks.is_empty():
+		var raw_hold_total := _hold_lock_total(locks, stake, max_cells, bet_id, grand_prize)
+		if full_screen:
+			completed["jackpot_tier"] = "grand" if _grand_prize_eligible(bet_id) else str(jackpot_award_for_bet(bet_id, stake, "grand").get("tier", "mini"))
+			completed["grand_prize_awarded"] = grand_prize if _grand_prize_eligible(bet_id) else 0
+		final_total = maxi(final_total, raw_hold_total)
+	else:
+		final_total = maxi(final_total, maxi(0, int(completed.get("spin_win_total", 0))) + maxi(0, int(completed.get("coin_total", 0))))
+	var session_cap := maxi(1, int(completed.get("session_cap", final_total if final_total > 0 else stake * 70)))
+	if full_screen:
+		session_cap = maxi(session_cap, final_total)
+	final_total = mini(session_cap, final_total)
+	completed["active"] = false
+	completed["complete"] = true
+	completed["feature_phase"] = "coin_collect" if mode == "free_games" and int(completed.get("coin_total", 0)) > 0 else "celebration"
+	completed["awarded"] = final_total
+	completed["feature_total"] = final_total
+	completed["pending_award"] = final_total
+	completed["remaining_steps"] = 0
+	completed["respins_remaining"] = 0
+	completed["grand_prize"] = grand_prize
+	completed["collection_meter"] = _coin_collection_meter(completed) if mode == "free_games" else _copy_dict(completed.get("collection_meter", {}))
+	machine["last_bonus_replay"] = completed.duplicate(true)
+	machine["active_bonus"] = {"active": false, "complete": true}
+	var step := _bonus_step_result(true, final_total, message_template % final_total, completed)
+	step["grand_prize_awarded"] = int(completed.get("grand_prize_awarded", 0))
+	step["jackpot_tier"] = str(completed.get("jackpot_tier", ""))
+	return step
 
 
 func _step_hold(machine: Dictionary, active: Dictionary, rng: RngStream) -> Dictionary:

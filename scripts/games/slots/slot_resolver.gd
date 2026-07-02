@@ -8,6 +8,7 @@ const BuffaloScript := preload("res://scripts/games/slots/slot_family_buffalo.gd
 
 const SPIN_ACTION := "spin"
 const NUDGE_ACTION := "nudge"
+const BONUS_WATCHDOG_ACTION := "slot_bonus_watchdog"
 const HOST_APPLY_FLAG := "host_apply_result"
 const WIN_REVEAL_BEAT_SEC := 0.18
 const BUFFALO_BONUS_MAX_ANIMATION_MSEC := 10000
@@ -204,6 +205,7 @@ func resolve_spin(machine: Dictionary, action_id: String, selected_bet: Dictiona
 
 func resolve_bonus_action(machine: Dictionary, action_id: String, rng: RngStream, definition: Dictionary, environment: Dictionary = {}, run_state: RunState = null, item_effects: Dictionary = {}, ui_state: Dictionary = {}) -> Dictionary:
 	machine = StateScript.normalize(machine)
+	var normalized_action := _normalize_bonus_action(action_id)
 	var active_before: Dictionary = _copy_dict(machine.get("active_bonus", {}))
 	if active_before.is_empty() or not bool(active_before.get("active", false)):
 		return {
@@ -219,9 +221,14 @@ func resolve_bonus_action(machine: Dictionary, action_id: String, rng: RngStream
 		}
 	var bonus_ui_state: Dictionary = ui_state.duplicate(true)
 	bonus_ui_state["slot_item_effects"] = item_effects.duplicate(true)
-	var step: Dictionary = family.step_bonus(machine, _normalize_bonus_action(action_id), rng, definition, bonus_ui_state)
+	var step: Dictionary = family.step_bonus(machine, normalized_action, rng, definition, bonus_ui_state)
 	_apply_bonus_step_display(machine, family_id, active_before, step)
+	var complete := bool(step.get("complete", false))
 	var award := maxi(0, int(step.get("award", 0)))
+	if complete and award <= 0:
+		award = _bonus_completion_award_from_step(step)
+		if award > 0:
+			step["award"] = award
 	var luck_payout_bonus := 0
 	var item_payout_bonus := 0
 	var first_bonus_item_award := 0
@@ -239,7 +246,6 @@ func resolve_bonus_action(machine: Dictionary, action_id: String, rng: RngStream
 			award += first_bonus_item_award
 			step["award"] = award
 			step["slot_first_bonus_item_award"] = first_bonus_item_award
-	var complete := bool(step.get("complete", false))
 	if complete:
 		machine["coin_out"] = maxi(0, int(machine.get("coin_out", 0))) + award
 		machine["last_bonus_complete"] = true
@@ -270,7 +276,7 @@ func resolve_bonus_action(machine: Dictionary, action_id: String, rng: RngStream
 		buckets[bet_id] = bucket
 		bonus_state["per_bet"] = buckets
 		machine["bonus_state"] = bonus_state
-		var completed_active: Dictionary = _copy_dict(step.get("active_bonus", {}))
+		var completed_active: Dictionary = _finalize_bonus_completion_state(machine, active_before, step, award)
 		if family_id == "buffalo" and int(completed_active.get("grand_prize_awarded", 0)) > 0:
 			buffalo.reset_grand_prize(machine, maxi(1, int(active_before.get("stake", 1))), bet_id)
 	var message := str(step.get("message", "Bonus advances."))
@@ -285,6 +291,7 @@ func resolve_bonus_action(machine: Dictionary, action_id: String, rng: RngStream
 		"action_id": action_id,
 		"mode": str(active_before.get("mode", "")),
 		"complete": complete,
+		"watchdog": normalized_action == BONUS_WATCHDOG_ACTION,
 		"payout": award,
 		"luck_payout_bonus": luck_payout_bonus,
 		"item_payout_bonus": item_payout_bonus,
@@ -319,9 +326,42 @@ func resolve_bonus_action(machine: Dictionary, action_id: String, rng: RngStream
 	result["slot_item_payout_bonus"] = item_payout_bonus
 	result["slot_first_bonus_item_award"] = first_bonus_item_award
 	result["slot_luck_win_chance_ignored"] = true
+	result["slot_bonus_watchdog"] = normalized_action == BONUS_WATCHDOG_ACTION
 	if complete:
 		result.merge(_result_win_fields(machine), true)
 	return {"machine": StateScript.normalize(machine), "result": result}
+
+
+func _bonus_completion_award_from_step(step: Dictionary) -> int:
+	var active: Dictionary = _copy_dict(step.get("active_bonus", {}))
+	return maxi(maxi(maxi(0, int(active.get("awarded", 0))), int(active.get("feature_total", 0))), int(active.get("pending_award", 0)))
+
+
+func _finalize_bonus_completion_state(machine: Dictionary, active_before: Dictionary, step: Dictionary, award: int) -> Dictionary:
+	var completed_active: Dictionary = _copy_dict(step.get("active_bonus", {}))
+	if completed_active.is_empty():
+		completed_active = active_before.duplicate(true)
+	var visual_total := maxi(maxi(maxi(0, award), int(completed_active.get("awarded", 0))), maxi(int(completed_active.get("feature_total", 0)), int(completed_active.get("pending_award", 0))))
+	completed_active["active"] = false
+	completed_active["complete"] = true
+	completed_active["visual_replay"] = false
+	completed_active["awarded"] = visual_total
+	completed_active["feature_total"] = visual_total
+	completed_active["pending_award"] = visual_total
+	completed_active["remaining_steps"] = 0
+	completed_active["balls_remaining"] = 0
+	completed_active["active_ball_count"] = 0
+	completed_active["launch_in_progress"] = false
+	completed_active["respins_remaining"] = 0
+	machine["last_bonus_replay"] = completed_active.duplicate(true)
+	machine["last_bonus_total"] = visual_total
+	machine["last_bonus_mode"] = str(completed_active.get("mode", active_before.get("mode", "")))
+	machine["active_bonus"] = {"active": false, "complete": true}
+	machine["slot_pending_feature_alert"] = false
+	machine.erase("slot_pending_feature_alert_msec")
+	machine.erase("slot_bonus_watchdog_since_msec")
+	step["active_bonus"] = completed_active.duplicate(true)
+	return completed_active
 
 
 func complete_active_bonus_for_metrics(machine: Dictionary, rng: RngStream, definition: Dictionary) -> int:

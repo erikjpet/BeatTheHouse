@@ -6,6 +6,7 @@ from PIL import Image, ImageDraw
 ROOT = Path(__file__).resolve().parents[1]
 ITEM_DIR = ROOT / "assets" / "art" / "items"
 GAME_DIR = ROOT / "assets" / "art" / "games"
+MAP_ICON_DIR = ROOT / "assets" / "art" / "map_icons"
 SIZE = 32
 
 
@@ -1015,6 +1016,123 @@ def draw_dice_calipers():
     return image
 
 
+def draw_corner_store_map():
+    image, d = new_icon()
+    rect(d, (7, 10, 25, 24), BLUE)
+    d.rectangle((9, 13, 23, 15), fill=CYAN)
+    d.rectangle((11, 17, 17, 24), fill=PINK)
+    d.rectangle((19, 17, 23, 21), fill=YELLOW)
+    line(d, (6, 10, 16, 5), AMBER, 2)
+    line(d, (16, 5, 26, 10), AMBER, 2)
+    glint(d, 24, 7)
+    return image
+
+
+def draw_back_alley_map():
+    image, d = new_icon()
+    rect(d, (8, 8, 13, 26), BLUE)
+    rect(d, (20, 6, 25, 26), SHADOW)
+    d.rectangle((14, 22, 21, 24), fill=rgba("#102b30"))
+    line(d, (6, 25, 26, 18), CYAN, 1)
+    line(d, (17, 7, 17, 20), PINK, 2)
+    d.rectangle((15, 18, 20, 20), fill=YELLOW)
+    tiny_smoke(d, [(11, 9, 4), (23, 8, 5)])
+    return image
+
+
+def draw_motel_map():
+    image, d = new_icon()
+    rect(d, (6, 13, 25, 24), BLUE)
+    d.rectangle((9, 16, 13, 20), fill=CYAN)
+    d.rectangle((16, 16, 20, 20), fill=CYAN)
+    d.rectangle((21, 17, 24, 24), fill=PINK)
+    rect(d, (10, 7, 22, 12), PINK)
+    d.rectangle((12, 9, 20, 10), fill=YELLOW)
+    line(d, (16, 12, 16, 16), METAL, 1)
+    return image
+
+
+def draw_bar_map():
+    image, d = new_icon()
+    rect(d, (7, 9, 25, 24), BROWN)
+    d.rectangle((9, 11, 23, 13), fill=AMBER)
+    d.rectangle((9, 17, 23, 22), fill=rgba("#211017"))
+    for x, color in ((11, CYAN), (15, PINK), (19, YELLOW)):
+        d.rectangle((x, 14, x + 2, 19), fill=color)
+    line(d, (5, 25, 27, 25), CYAN, 1)
+    return image
+
+
+def draw_gas_station_casino_map():
+    image, d = new_icon()
+    rect(d, (7, 11, 24, 24), BLUE)
+    rect(d, (5, 7, 18, 11), AMBER)
+    d.rectangle((8, 14, 14, 20), fill=CYAN)
+    d.rectangle((17, 15, 22, 22), fill=PINK)
+    line(d, (24, 10, 27, 10), METAL, 2)
+    line(d, (27, 10, 27, 23), METAL, 2)
+    d.rectangle((25, 15, 29, 18), fill=YELLOW)
+    return image
+
+
+def draw_small_underground_casino_map():
+    image, d = new_icon()
+    rect(d, (8, 11, 24, 25), SHADOW)
+    d.rectangle((10, 13, 22, 15), fill=TEAL)
+    d.rectangle((11, 20, 21, 23), fill=rgba("#0f5b45"))
+    line(d, (8, 10, 24, 10), PINK, 2)
+    d.rectangle((12, 6, 20, 9), fill=METAL)
+    chip(d, 19, 17, AMBER)
+    return image
+
+
+def draw_jazz_club_map():
+    image, d = new_icon()
+    rect(d, (7, 10, 25, 24), rgba("#281629"))
+    d.rectangle((9, 12, 23, 14), fill=AMBER)
+    music_note(d, 11, 8, CYAN)
+    music_note(d, 18, 12, PINK)
+    d.rectangle((10, 22, 22, 24), fill=BROWN)
+    glint(d, 24, 8, YELLOW)
+    return image
+
+
+def draw_kitty_cat_lounge_map():
+    image, d = new_icon()
+    rect(d, (7, 10, 25, 25), rgba("#23142f"))
+    d.rectangle((9, 13, 23, 15), fill=PINK)
+    d.rectangle((11, 18, 21, 22), fill=rgba("#0f5b45"))
+    chip(d, 18, 17, AMBER)
+    line(d, (8, 9, 13, 5), CYAN, 1)
+    line(d, (24, 9, 19, 5), CYAN, 1)
+    d.rectangle((13, 7, 19, 9), fill=YELLOW)
+    return image
+
+
+def draw_delta_queen_map():
+    image, d = new_icon()
+    poly(d, [(5, 19), (25, 19), (21, 25), (9, 25)], BROWN)
+    rect(d, (8, 12, 23, 19), BLUE)
+    d.rectangle((10, 14, 21, 15), fill=CYAN)
+    d.rectangle((11, 17, 14, 19), fill=PINK)
+    d.rectangle((17, 17, 20, 19), fill=YELLOW)
+    line(d, (7, 26, 26, 26), CYAN, 1)
+    tiny_smoke(d, [(21, 6, 5), (24, 8, 4)])
+    return image
+
+
+def draw_grand_casino_map():
+    image, d = new_icon()
+    rect(d, (6, 12, 26, 25), BLUE)
+    d.rectangle((8, 15, 24, 17), fill=AMBER)
+    for x in (9, 14, 19):
+        d.rectangle((x, 18, x + 2, 25), fill=METAL)
+    poly(d, [(5, 12), (16, 5), (27, 12)], PINK)
+    d.rectangle((13, 8, 19, 11), fill=YELLOW)
+    glint(d, 25, 7, WHITE)
+    return image
+
+
 ITEM_ICONS = {
     "basic_strategy_card": draw_basic_strategy_card,
     "broken_cufflinks": draw_broken_cufflinks,
@@ -1096,13 +1214,28 @@ GAME_ICONS = {
     "vpoker": draw_vpoker,
 }
 
+MAP_ICONS = {
+    "back_alley": draw_back_alley_map,
+    "bar": draw_bar_map,
+    "corner_store": draw_corner_store_map,
+    "delta_queen": draw_delta_queen_map,
+    "gas_station_casino": draw_gas_station_casino_map,
+    "grand_casino": draw_grand_casino_map,
+    "jazz_club": draw_jazz_club_map,
+    "kitty_cat_lounge": draw_kitty_cat_lounge_map,
+    "motel": draw_motel_map,
+    "small_underground_casino": draw_small_underground_casino_map,
+}
+
 
 def main():
     for name, draw_func in ITEM_ICONS.items():
         save(draw_func(), ITEM_DIR / f"{name}.png")
     for name, draw_func in GAME_ICONS.items():
         save(draw_func(), GAME_DIR / f"{name}.png")
-    print(f"Wrote {len(ITEM_ICONS)} item icons and {len(GAME_ICONS)} game icons.")
+    for name, draw_func in MAP_ICONS.items():
+        save(draw_func(), MAP_ICON_DIR / f"{name}.png")
+    print(f"Wrote {len(ITEM_ICONS)} item icons, {len(GAME_ICONS)} game icons, and {len(MAP_ICONS)} map icons.")
 
 
 if __name__ == "__main__":

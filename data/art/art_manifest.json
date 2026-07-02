@@ -147,6 +147,16 @@
     "travel_door": {"path": "res://assets/art/ui/travel_door.png"},
     "travel_phone": {"path": "res://assets/art/ui/travel_phone.png"},
     "travel_ride": {"path": "res://assets/art/ui/travel_ride.png"},
+    "map_back_alley": {"path": "res://assets/art/map_icons/back_alley.png"},
+    "map_bar": {"path": "res://assets/art/map_icons/bar.png"},
+    "map_corner_store": {"path": "res://assets/art/map_icons/corner_store.png"},
+    "map_delta_queen": {"path": "res://assets/art/map_icons/delta_queen.png"},
+    "map_gas_station_casino": {"path": "res://assets/art/map_icons/gas_station_casino.png"},
+    "map_grand_casino": {"path": "res://assets/art/map_icons/grand_casino.png"},
+    "map_jazz_club": {"path": "res://assets/art/map_icons/jazz_club.png"},
+    "map_kitty_cat_lounge": {"path": "res://assets/art/map_icons/kitty_cat_lounge.png"},
+    "map_motel": {"path": "res://assets/art/map_icons/motel.png"},
+    "map_small_underground_casino": {"path": "res://assets/art/map_icons/small_underground_casino.png"},
     "audio": {"path": "res://assets/art/ui/audio.png"},
     "drink": {"path": "res://assets/art/ui/drink.png"}
   }

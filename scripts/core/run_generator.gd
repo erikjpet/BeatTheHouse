@@ -117,7 +117,7 @@ func _world_environment_data_for_node(run_state: RunState, map_data: Dictionary,
 
 
 func _apply_world_travel_targets(environment_data: Dictionary, map_data: Dictionary, node_id: String) -> void:
-	var targets := WorldMap.neighbor_ids(map_data, node_id, false)
+	var targets := WorldMap.neighbor_ids(map_data, node_id, true)
 	environment_data["next_archetypes"] = targets.duplicate(true)
 	environment_data["travel_hooks"] = targets.duplicate(true)
 	environment_data["world_map_travel"] = true
