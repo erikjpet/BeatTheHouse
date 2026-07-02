@@ -1,6 +1,8 @@
 class_name PinballSequencer
 extends RefCounted
 
+const ItemsScript := preload("res://scripts/games/slots/pinball/pinball_items.gd")
+
 
 func initial_state(board_id: String, mode: String) -> Dictionary:
 	return {
@@ -77,7 +79,7 @@ func _apply_bumper_alley(active: Dictionary, sim, state: Dictionary, event_type:
 
 func _apply_lock_cascade(active: Dictionary, sim, state: Dictionary, event_type: String, sequence_events: Array) -> void:
 	if event_type == "launcher":
-		state["locks"] = clampi(int(state.get("locks", 0)) + 1, 0, 3)
+		state["locks"] = clampi(int(state.get("locks", 0)) + ItemsScript.lock_gain(active, state), 0, 3)
 		_light(state, "lock_%d" % int(state.get("locks", 0)), true)
 		if int(state.get("locks", 0)) >= 3 and not bool(state.get("multiball", false)):
 			state["multiball"] = true

@@ -1694,6 +1694,11 @@ func _check_slot_item_pack_effects(library: ContentLibrary, definition: Dictiona
 		"return_spring",
 		"tilt_dampener",
 		"bumper_battery",
+		"rubber_pegs",
+		"magnet_cup",
+		"extra_ball_token",
+		"plunger_tuner",
+		"lock_jammer",
 	]
 	var pinball_item_ids := [
 		"drain_cleaner",
@@ -1702,6 +1707,11 @@ func _check_slot_item_pack_effects(library: ContentLibrary, definition: Dictiona
 		"return_spring",
 		"tilt_dampener",
 		"bumper_battery",
+		"rubber_pegs",
+		"magnet_cup",
+		"extra_ball_token",
+		"plunger_tuner",
+		"lock_jammer",
 	]
 	var only_pull_tabs_challenge := RunState.custom_challenge("only_pull_tabs", "SLOT-ITEMS", {"content_groups": ["pull_tabs_pack"]})
 	var seen_icon_keys: Dictionary = {}

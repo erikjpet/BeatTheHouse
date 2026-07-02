@@ -64,6 +64,9 @@ func compile(layout: Dictionary, modifiers: Dictionary = {}) -> Dictionary:
 	for rect_value in _array(layout.get("rects", [])):
 		var rect_element := _dict(rect_value)
 		var rect := _rect2(rect_element.get("rect", Rect2()))
+		var rect_id := str(rect_element.get("id", ""))
+		if _magnet_cup_rect(rect_id):
+			rect = _expanded_board_rect(rect, clampi(int(modifiers.get("magnet_cup_radius_percent", 0)), 0, 100))
 		rect_positions.append(rect.position)
 		rect_sizes.append(rect.size)
 		rect_types.append(_rect_type_id(str(rect_element.get("type", ""))))
@@ -101,7 +104,7 @@ func compile(layout: Dictionary, modifiers: Dictionary = {}) -> Dictionary:
 		"max_events_per_tick": maxi(1, int(layout.get("max_events_per_tick", 12))),
 		"tilt_threshold": float(layout.get("tilt_threshold", 1.0)),
 		"tilt_decay_per_tick": float(layout.get("tilt_decay_per_tick", 0.006)),
-		"tilt_per_nudge": float(layout.get("tilt_per_nudge", 0.34)),
+		"tilt_per_nudge": float(layout.get("tilt_per_nudge", 0.34)) * maxf(0.10, 1.0 - float(clampi(int(modifiers.get("tilt_dampener_percent", 0)), 0, 90)) / 100.0),
 		"launch_position": _vector2(layout.get("launch_position", Vector2(0.5, 0.075)), Vector2(0.5, 0.075)),
 		"launch_min_speed": float(layout.get("launch_min_speed", 0.55)),
 		"launch_max_speed": float(layout.get("launch_max_speed", 1.85)),
@@ -134,6 +137,11 @@ func compile(layout: Dictionary, modifiers: Dictionary = {}) -> Dictionary:
 		"flipper_sides": flipper_sides,
 		"flipper_kicks": flipper_kicks,
 		"sequence_names": sequence_names,
+		"bumper_battery_hits": maxi(0, int(modifiers.get("bumper_battery_hits", 0))),
+		"bumper_battery_award_percent": maxi(0, int(modifiers.get("bumper_battery_award_percent", 0))),
+		"bumper_battery_kick_percent": maxi(0, int(modifiers.get("bumper_battery_kick_percent", 100))),
+		"return_spring_uses": maxi(0, int(modifiers.get("return_spring_uses", 0))),
+		"return_spring_impulse": maxi(0, int(modifiers.get("return_spring_impulse", 0))),
 		"peg_count": peg_positions.size(),
 		"bumper_count": bumper_positions.size(),
 		"sensor_count": sensor_positions.size(),
@@ -200,3 +208,16 @@ static func _rect2(value: Variant) -> Rect2:
 			return Rect2(_vector2(dict.get("position", Vector2.ZERO), Vector2.ZERO), _vector2(dict.get("size", Vector2.ZERO), Vector2.ZERO))
 		return Rect2(Vector2(float(dict.get("x", 0.0)), float(dict.get("y", 0.0))), Vector2(float(dict.get("w", 0.0)), float(dict.get("h", 0.0))))
 	return Rect2()
+
+
+static func _magnet_cup_rect(rect_id: String) -> bool:
+	return rect_id.find("jackpot") >= 0 or rect_id.find("risk") >= 0
+
+
+static func _expanded_board_rect(rect: Rect2, percent: int) -> Rect2:
+	if percent <= 0:
+		return rect
+	var grow := clampf(float(percent) / 100.0 * 0.020, 0.0, 0.080)
+	var min_point := Vector2(maxf(0.0, rect.position.x - grow), maxf(0.0, rect.position.y - grow))
+	var max_point := Vector2(minf(1.0, rect.end.x + grow), minf(1.030, rect.end.y + grow))
+	return Rect2(min_point, max_point - min_point)

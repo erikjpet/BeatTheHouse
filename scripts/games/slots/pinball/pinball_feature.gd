@@ -5,6 +5,7 @@ const BoardsScript := preload("res://scripts/games/slots/pinball/pinball_boards.
 const BoardScript := preload("res://scripts/games/slots/pinball/pinball_board.gd")
 const SimScript := preload("res://scripts/games/slots/pinball/pinball_sim.gd")
 const SequencerScript := preload("res://scripts/games/slots/pinball/pinball_sequencer.gd")
+const ItemsScript := preload("res://scripts/games/slots/pinball/pinball_items.gd")
 
 const AIM_MIN := -60
 const AIM_MAX := 60
@@ -30,15 +31,18 @@ func open(machine: Dictionary, mode: String, stake: int, rng: RngStream, params:
 	var session_id := "pinball:%s:%s:%d" % [str(machine.get("format_id", "")), mode, session_seed]
 	var layout: Dictionary = BoardsScript.by_id(_board_id_for_mode(mode))
 	layout["mode"] = mode
+	var item_effects: Dictionary = _dict(params.get("item_effects", {}))
 	var compiler := BoardScript.new()
-	var compiled: Dictionary = compiler.compile(layout, _compile_modifiers(params))
+	var compiled: Dictionary = compiler.compile(layout, ItemsScript.compile_modifiers(item_effects))
 	var sim := SimScript.new()
 	var cap := maxi(1, int(params.get("cap", stake * 12)))
 	sim.configure(compiled, session_seed, {"cap": cap})
 	_sessions[session_id] = sim
 	_layouts[session_id] = _layout_view(layout)
 	_compiled_boards[session_id] = compiled
-	var total_balls := maxi(1, int(params.get("ball_budget", _ball_budget_for_mode(mode, stake))))
+	var total_balls := maxi(1, int(params.get("ball_budget", _ball_budget_for_mode(mode, stake))) + ItemsScript.ball_budget_bonus(item_effects))
+	var skill_width := maxi(LAUNCH_METER_SWEET_WIDTH, int(round(float(compiled.get("skill_width", 0.03)) * 100.0)))
+	skill_width = maxi(LAUNCH_METER_SWEET_WIDTH, int(round(float(skill_width * ItemsScript.skill_width_percent(item_effects)) / 100.0)))
 	var active := {
 		"active": true,
 		"complete": false,
@@ -65,13 +69,14 @@ func open(machine: Dictionary, mode: String, stake: int, rng: RngStream, params:
 		"launch_start_manual": false,
 		"launch_meter_offset_msec": session_seed % LAUNCH_METER_PERIOD_MSEC,
 		"skill_power_target": clampi(int(round(float(compiled.get("skill_power", 0.82)) * 100.0)), LAUNCH_METER_MIN_POWER, LAUNCH_METER_MAX_POWER),
-		"skill_power_width": maxi(LAUNCH_METER_SWEET_WIDTH, int(round(float(compiled.get("skill_width", 0.03)) * 100.0))),
+		"skill_power_width": skill_width,
 		"selected_lane": "center",
 		"selected_path": "center",
 		"launch_in_progress": false,
 		"pinball_summary": {},
 		"pinball_view": {},
-		"pinball_item_effects": _dict(params.get("item_effects", {})),
+		"pinball_item_effects": item_effects,
+		"pinball_item_hooks": [],
 		"input_log": [],
 		"event_log": [],
 		"trajectory": [],
@@ -259,6 +264,7 @@ func _refresh_active(active: Dictionary, sim, local_events: Array, local_traject
 
 
 func _finish(machine: Dictionary, active: Dictionary, sim, message: String) -> Dictionary:
+	ItemsScript.apply_drain_cleaner(active, sim)
 	var minimum := _minimum_award(active)
 	if int(sim.total_awarded) < minimum:
 		sim.total_awarded = minimum
@@ -287,7 +293,7 @@ func _session_for(active: Dictionary):
 		return _sessions[session_id]
 	var compiler := BoardScript.new()
 	var layout: Dictionary = BoardsScript.by_id(_board_id_for_mode(str(active.get("mode", ""))))
-	var compiled: Dictionary = compiler.compile(layout)
+	var compiled: Dictionary = compiler.compile(layout, ItemsScript.compile_modifiers(_dict(active.get("pinball_item_effects", {}))))
 	var sim := SimScript.new()
 	sim.configure(compiled, int(active.get("runtime_seed", 1)), {"cap": int(active.get("session_cap", 500))})
 	_sessions[session_id] = sim
@@ -316,6 +322,7 @@ func _apply_mode_progress(active: Dictionary, sim, mode: String) -> void:
 		return
 	var sequencer := SequencerScript.new()
 	sequencer.apply(active, sim, mode, events)
+	ItemsScript.apply_event_hooks(active, sim, mode, events)
 
 
 func _view_for(active: Dictionary, sim, local_events: Array, local_trajectory: Array) -> Dictionary:
@@ -347,6 +354,7 @@ func _summary_for(active: Dictionary, sim) -> Dictionary:
 			"combo": _dict(active.get("combo_state", {})),
 			"state": _dict(active.get("sequencer_state", {})),
 		},
+		"item_hooks": _array(active.get("pinball_item_hooks", [])),
 		"input_log": _array(active.get("input_log", [])),
 	}
 
@@ -558,9 +566,7 @@ func _session_cap(stake: int, mode: String, feature_scale: float) -> int:
 
 func _compile_modifiers(params: Dictionary) -> Dictionary:
 	var item_effects: Dictionary = _dict(params.get("item_effects", {}))
-	return {
-		"rubber_pegs": item_effects.has("slot_pinball_rubber_pegs"),
-	}
+	return ItemsScript.compile_modifiers(item_effects)
 
 
 func _input_bonus(inputs: Array, stake: int, mode: String) -> int:

@@ -442,7 +442,124 @@ Beat the House Godot checks passed. Suite=Smoke
 
 ## Phase 5 - Items
 
-Status: NOT STARTED
+Status: COMPLETE
+Completed: 2026-07-01
+
+Files changed:
+- `data/items/items.json`
+- `data/content_groups/groups.json`
+- `assets/art/items/drain_cleaner.png`
+- `assets/art/items/jackpot_magnet.png`
+- `assets/art/items/splitter_token.png`
+- `assets/art/items/return_spring.png`
+- `assets/art/items/tilt_dampener.png`
+- `assets/art/items/bumper_battery.png`
+- `assets/art/items/rubber_pegs.png`
+- `assets/art/items/magnet_cup.png`
+- `assets/art/items/extra_ball_token.png`
+- `assets/art/items/plunger_tuner.png`
+- `assets/art/items/lock_jammer.png`
+- Item `.png.import` sidecars for the 11 pinball item icons above
+- `scripts/games/slot.gd`
+- `scripts/games/slots/pinball/pinball_board.gd`
+- `scripts/games/slots/pinball/pinball_feature.gd`
+- `scripts/games/slots/pinball/pinball_items.gd`
+- `scripts/games/slots/pinball/pinball_sequencer.gd`
+- `scripts/games/slots/pinball/pinball_sim.gd`
+- `scripts/games/slots/slot_machine_state.gd`
+- `scripts/tests/foundation_check.gd`
+- `tools/slot_pinball_items_probe.gd`
+- `docs/plans/pinball_rework_progress.md`
+
+Feel reference citations:
+- `docs/plans/pinball_feel_reference.md` target "Items telegraph board
+  interactions": item hooks now mutate visible board physics/sequence state
+  rather than only payout totals.
+- `docs/plans/pinball_feel_reference.md` target "Nudge budget": Tilt Dampener
+  reduces compiled tilt gain and is covered by probe assertions.
+- `docs/plans/pinball_feel_reference.md` target "Skill edge": Plunger Tuner
+  widens the timed launch sweet band, while Extra Ball Token and Lock Jammer
+  add bounded, cap-respecting feature edge.
+
+Implementation notes:
+- Added `pinball_items.gd` registry and routed item compile/open/event/finish
+  hooks through it.
+- Existing six pinball items are verified active in the new sim:
+  Drain Cleaner, Jackpot Magnet, Splitter Token, Return Spring, Tilt Dampener,
+  and Bumper Battery.
+- Added five new slot-pack pinball items: Rubber Pegs, Magnet Cup,
+  Extra Ball Token, Plunger Tuner, and Lock Jammer.
+- Added compact 32x32 art assets for the new items and imported pinball item
+  icons so `ResourceLoader.exists()` resolves them in no-import Smoke.
+
+Verification commands:
+
+```powershell
+& 'D:\Projects\Beat-The-House\.tools\godot-4.6-stable\Godot_v4.6-stable_win64_console.exe' --headless --path 'D:\Projects\Beat-The-House' --script 'res://tools/slot_pinball_items_probe.gd'
+```
+
+Output:
+
+```text
+Godot Engine v4.6.stable.official.89cea1439 - https://godotengine.org
+
+PINBALL_ITEMS_DATA existing=["drain_cleaner","jackpot_magnet","splitter_token","return_spring","tilt_dampener","bumper_battery"] new=["rubber_pegs","magnet_cup","extra_ball_token","plunger_tuner","lock_jammer"] registry_keys=["slot_pinball_drain_cleaner_uses","slot_pinball_jackpot_magnet_uses","slot_pinball_splitter_token_uses","slot_pinball_return_spring_uses","slot_pinball_tilt_dampener_percent","slot_pinball_bumper_battery_hits","slot_pinball_rubber_pegs","slot_pinball_magnet_cup_radius_percent","slot_pinball_extra_ball_token","slot_pinball_plunger_tuner_width_percent","slot_pinball_lock_jammer_uses"]
+PINBALL_ITEMS_COMPILE rubber_rest=0.560->0.644 tilt=0.350->0.193 max_rect_area=0.0225->0.0247 bumper_hits=3 return_uses=1
+PINBALL_ITEMS_FEATURE_OPEN balls=4 skill_width=6 item_effect_count=20
+PINBALL_ITEMS_RUNTIME drain_total=20 drain_hooks=["slot_pinball_drain_cleaner"] return_remaining=0 bumper_remaining=2 sequence_hooks=["slot_pinball_lock_jammer","slot_pinball_splitter_token","slot_pinball_jackpot_magnet"] active_balls=5
+PINBALL_ITEMS_OVERALL status=PASS failures=0
+```
+
+```powershell
+& 'D:\Projects\Beat-The-House\.tools\godot-4.6-stable\Godot_v4.6-stable_win64_console.exe' --headless --path 'D:\Projects\Beat-The-House' --script 'res://tools/slot_pinball_physics_audit.gd' -- 48
+```
+
+Output:
+
+```text
+Godot Engine v4.6.stable.official.89cea1439 - https://godotengine.org
+
+PINBALL_SIM_AUDIT_DIRECT runs=48 drained=48 avg=47.21 max=195 avg_ticks=960.00 max_active=1 events_tick=2 event_types=["1","2","3","4","5","12","8","6","13","7"]
+PINBALL_SIM_AUDIT_FEATURE mode=em_bumper_drop runs=48 complete=48 avg=144.60 max=162 max_active=1
+PINBALL_SIM_AUDIT_FEATURE mode=lane_multiball runs=48 complete=48 avg=143.77 max=144 max_active=5
+PINBALL_SIM_AUDIT_FEATURE mode=video_feature runs=48 complete=48 avg=90.00 max=90 max_active=3
+PINBALL_SIM_AUDIT_SEQUENCES board=bumper_alley award=140 hits={"alley_loop":1,"bumper_streak":1,"skill_shot":1}
+PINBALL_SIM_AUDIT_SEQUENCES board=lock_cascade award=300 hits={"cascade":1,"jackpot":1,"locks_multiball":1,"portal_combo":1}
+PINBALL_SIM_AUDIT_SEQUENCES board=jackpot_works award=370 hits={"jackpot_works":1,"qualify_super":2,"super_jackpot":1,"video_multiball":1}
+PINBALL_SIM_AUDIT_ITEMS effects=["slot_pinball_rubber_pegs"]
+PINBALL_SIM_AUDIT_OVERALL status=PASS failures=0
+```
+
+```powershell
+& 'D:\Projects\Beat-The-House\.tools\godot-4.6-stable\Godot_v4.6-stable_win64_console.exe' --headless --path 'D:\Projects\Beat-The-House' --script 'res://tools/pinball_sim_probe.gd' -- 48
+```
+
+Output:
+
+```text
+Godot Engine v4.6.stable.official.89cea1439 - https://godotengine.org
+
+PINBALL_SIM_DETERMINISM seeds=48 status=PASS
+PINBALL_SIM_DRAIN board=bumper_alley seeds=48 drained=48 avg_ticks=232.67 avg_events=15.46 avg_award=42.04 max_events_tick=2 event_types=["1","9","8","4","5","2","3","6","12","11","7"]
+PINBALL_SIM_PERF ticks=2400 avg_tick_us=52.409 sim_reported_avg_us=50.983 max_tick_us=160 object_delta=0 max_active=4 status=PASS
+PINBALL_SIM_PROBE_OVERALL status=PASS failures=0
+```
+
+```powershell
+powershell -ExecutionPolicy Bypass -File tools\check_godot.ps1 -Suite Smoke -NoImport -TimeoutSec 180
+```
+
+Output:
+
+```text
+validate_project                PASS     1258ms
+gdscript_load_check             PASS     7058ms
+foundation_smoke                PASS    31653ms
+ui_scene_compile                PASS    26406ms
+roulette_audio_audit            PASS     2510ms
+Report: D:\Projects\Beat-The-House\.tmp\test_reports\20260701_190646_smoke\summary.json
+Beat the House Godot checks passed. Suite=Smoke
+```
 
 ## Phase 6 - Juice + Polish
 

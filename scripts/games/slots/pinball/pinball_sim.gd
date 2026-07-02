@@ -126,6 +126,13 @@ var flipper_window_count := 0
 var flipper_rescue_count := 0
 var flipper_left_pressed := false
 var flipper_right_pressed := false
+var bumper_battery_hits_config := 0
+var bumper_battery_hits_remaining := 0
+var bumper_battery_award_percent := 0
+var bumper_battery_kick_percent := 100
+var return_spring_uses_config := 0
+var return_spring_remaining := 0
+var return_spring_impulse := 0
 
 
 func configure(compiled_board: Dictionary, seed_value: int, params: Dictionary = {}) -> void:
@@ -176,6 +183,11 @@ func configure(compiled_board: Dictionary, seed_value: int, params: Dictionary =
 	flipper_radii = compiled_board.get("flipper_radii", PackedFloat32Array())
 	flipper_sides = compiled_board.get("flipper_sides", PackedInt32Array())
 	flipper_kicks = compiled_board.get("flipper_kicks", PackedVector2Array())
+	bumper_battery_hits_config = maxi(0, int(compiled_board.get("bumper_battery_hits", 0)))
+	bumper_battery_award_percent = maxi(0, int(compiled_board.get("bumper_battery_award_percent", 0)))
+	bumper_battery_kick_percent = maxi(0, int(compiled_board.get("bumper_battery_kick_percent", 100)))
+	return_spring_uses_config = maxi(0, int(compiled_board.get("return_spring_uses", 0)))
+	return_spring_impulse = maxi(0, int(compiled_board.get("return_spring_impulse", 0)))
 	_resize_runtime_arrays()
 	rng_seed = _normalize_seed(seed_value)
 	rng_state = rng_seed
@@ -200,6 +212,8 @@ func reset_round() -> void:
 	nudge_count = 0
 	flipper_window_count = 0
 	flipper_rescue_count = 0
+	bumper_battery_hits_remaining = bumper_battery_hits_config
+	return_spring_remaining = return_spring_uses_config
 	flipper_left_pressed = false
 	flipper_right_pressed = false
 	event_write_index = 0
@@ -322,6 +336,8 @@ func result_signature() -> Dictionary:
 		"nudge_count": nudge_count,
 		"flipper_window_count": flipper_window_count,
 		"flipper_rescue_count": flipper_rescue_count,
+		"bumper_battery_hits_remaining": bumper_battery_hits_remaining,
+		"return_spring_remaining": return_spring_remaining,
 		"avg_tick_usec": float(accumulated_tick_usec) / float(maxi(1, measured_ticks)),
 		"max_tick_usec": max_tick_usec,
 		"rng_state": rng_state,
@@ -375,6 +391,8 @@ func compact_snapshot() -> Dictionary:
 		"nudge_count": nudge_count,
 		"flipper_window_count": flipper_window_count,
 		"flipper_rescue_count": flipper_rescue_count,
+		"bumper_battery_hits_remaining": bumper_battery_hits_remaining,
+		"return_spring_remaining": return_spring_remaining,
 		"avg_tick_usec": float(accumulated_tick_usec) / float(maxi(1, measured_ticks)),
 		"max_tick_usec": max_tick_usec,
 		"max_events_per_tick": max_events_seen,
@@ -430,6 +448,11 @@ func _step_ball(ball_index: int) -> void:
 	vel.y += gravity * FIXED_DT
 	vel *= linear_damping
 	vel = _clamped_velocity(vel)
+	positions[ball_index] = pos
+	velocities[ball_index] = vel
+	_try_return_spring(ball_index)
+	pos = positions[ball_index]
+	vel = velocities[ball_index]
 	var substeps := clampi(int(ceil(vel.length() / 2.25)), 1, 4)
 	var sub_dt := FIXED_DT / float(substeps)
 	for _substep in range(substeps):
@@ -454,6 +477,7 @@ func _step_ball(ball_index: int) -> void:
 			return
 		pos = positions[ball_index]
 		vel = velocities[ball_index]
+	_try_return_spring(ball_index)
 	age_ticks[ball_index] = age_ticks[ball_index] + 1
 	if age_ticks[ball_index] >= max_ticks:
 		timeout_count += 1
@@ -485,6 +509,24 @@ func _resolve_walls(ball_index: int, pos: Vector2, vel: Vector2) -> void:
 		_register_event(EVENT_WALL, -1, ball_index, 0, pos)
 
 
+func _try_return_spring(ball_index: int) -> void:
+	if return_spring_remaining <= 0 or active_flags[ball_index] == 0:
+		return
+	var pos := positions[ball_index]
+	var vel := velocities[ball_index]
+	if pos.y < 0.700 or pos.y > 0.950:
+		return
+	if vel.y < 0.05 or vel.length() > 0.92:
+		return
+	var impulse := maxf(0.60, float(return_spring_impulse) / 100.0)
+	vel += Vector2(0.0, -impulse)
+	pos.y = maxf(ball_radius, pos.y - 0.006)
+	return_spring_remaining -= 1
+	positions[ball_index] = pos
+	velocities[ball_index] = _clamped_velocity(vel)
+	_register_event(EVENT_LAUNCHER, -4, ball_index, 0, pos)
+
+
 func _resolve_pegs(ball_index: int, pos: Vector2, vel: Vector2) -> void:
 	for index in range(peg_positions.size()):
 		var peg_pos := peg_positions[index]
@@ -513,12 +555,18 @@ func _resolve_bumpers(ball_index: int, pos: Vector2, vel: Vector2) -> void:
 		var dist := sqrt(dist_sq)
 		var normal := delta / dist
 		pos = bumper_pos + normal * (min_dist + 0.0003)
-		vel = _bounce_velocity(ball_index, vel, normal, float(bumper_restitution[index]), 0.0) + bumper_kicks[index]
+		var kick := bumper_kicks[index]
+		var award := int(bumper_awards[index])
+		if bumper_battery_hits_remaining > 0:
+			kick *= maxf(1.0, float(bumper_battery_kick_percent) / 100.0)
+			award += maxi(1, int(round(float(maxi(1, award) * bumper_battery_award_percent) / 100.0)))
+			bumper_battery_hits_remaining -= 1
+		vel = _bounce_velocity(ball_index, vel, normal, float(bumper_restitution[index]), 0.0) + kick
 		positions[ball_index] = pos
 		velocities[ball_index] = _clamped_velocity(vel)
 		if tick >= int(bumper_ready_tick[index]):
 			bumper_ready_tick[index] = tick + int(bumper_cooldowns[index])
-			_register_event(EVENT_BUMPER, 1000 + index, ball_index, int(bumper_awards[index]), pos)
+			_register_event(EVENT_BUMPER, 1000 + index, ball_index, award, pos)
 
 
 func _resolve_sensors(ball_index: int, pos: Vector2, vel: Vector2) -> void:
