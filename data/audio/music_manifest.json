@@ -1,0 +1,15 @@
+[
+  {
+    "id": "corner_store_sparse_fixture",
+    "display_name": "Corner Store Sparse Fixture",
+    "bpm": 120,
+    "bars": 1,
+    "loop_frames": 44100,
+    "palette_id": "fluorescent_sparse",
+    "stems": {
+      "pad": "pad.wav",
+      "tension": "tension.wav"
+    },
+    "stingers": {}
+  }
+]

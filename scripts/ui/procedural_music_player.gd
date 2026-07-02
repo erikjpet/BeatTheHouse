@@ -6,10 +6,13 @@ extends Node
 # cached per room/heat profile, played through the Music bus.
 
 const MUSIC_BUS := "Music"
-const AMBIENT_VERSION := 7
+const AMBIENT_VERSION := 9
+const MUSIC_FX_GRAPH_VERSION := 1
+const MUSIC_STEM_CONTRACT_VERSION := 1
 const SAMPLE_RATE := 22050
 const EMPTY_NOTE := -999.0
 const BASE_PHRASE_STEPS := 32
+const STEPS_PER_BAR := 8
 const PRIMER_STEPS := 8
 const INSTANT_BED_SECONDS := 1.25
 const DEFAULT_ARRANGEMENT_PHRASES := 4
@@ -18,9 +21,60 @@ const MAX_ARRANGEMENT_PHRASES := 6
 const TRANSITION_BREAK_STEPS := 8
 const TRANSITION_BREAK_WINDOW_SECONDS := 0.10
 const PCM_BYTES_PER_FRAME := 2
+const AMBIENT_RENDER_STRIDE_FRAMES := 4
 const GENERATION_CANCEL_CHECK_FRAMES := 4096
 const AMBIENT_STAGE_PRIMER := "primer"
 const AMBIENT_STAGE_FULL := "full"
+const MUSIC_FX_ATTACK_SECONDS := 0.25
+const MUSIC_FX_RELEASE_SECONDS := 2.0
+const MUSIC_MIX_ATTACK_SECONDS := 0.25
+const MUSIC_MIX_RELEASE_SECONDS := 2.0
+const MUSIC_FX_RESOURCE_PREFIX := "BTHMusicFx"
+const MUSIC_STEM_BUS_PREFIX := "MusicStem"
+const MUSIC_FX_EFFECT_ORDER := ["low_pass", "chorus", "distortion", "reverb", "compressor", "limiter"]
+const MUSIC_FX_EFFECT_TYPES := {
+	"low_pass": "AudioEffectLowPassFilter",
+	"chorus": "AudioEffectChorus",
+	"distortion": "AudioEffectDistortion",
+	"reverb": "AudioEffectReverb",
+	"compressor": "AudioEffectCompressor",
+	"limiter": "AudioEffectLimiter",
+}
+const MUSIC_FX_LERP_KEYS := [
+	"lowpass_amount",
+	"chorus_depth",
+	"pitch_wobble_cents",
+	"distortion_drive",
+	"watch_tinge",
+	"reverb_size",
+	"reverb_damping",
+	"reverb_wet",
+	"compressor_pump",
+	"room_scale",
+]
+const MUSIC_STEM_ROLES := ["pad", "bass", "lead", "drums_low", "drums_high", "tension", "texture"]
+const MUSIC_STEM_VARIANT_ROLES := ["bass_dark", "drums_high_double"]
+const MUSIC_STEM_PLAYBACK_ROLES := ["pad", "bass", "bass_dark", "lead", "drums_low", "drums_high", "drums_high_double", "tension", "texture"]
+const MUSIC_MIX_LERP_KEYS := ["pad", "bass", "bass_dark", "lead", "drums_low", "drums_high", "drums_high_double", "tension", "texture"]
+const MUSIC_MIX_QUANTIZED_KEYS := ["bass", "bass_dark", "lead", "drums_high_double", "tension"]
+const MUSIC_FEATURE_LERP_KEYS := ["feature", "venue_duck"]
+const MUSIC_FEATURE_ROLE_WEIGHTS := {
+	"pad": 0.42,
+	"bass": 0.48,
+	"bass_dark": 0.16,
+	"lead": 0.86,
+	"drums_low": 0.78,
+	"drums_high": 0.92,
+	"drums_high_double": 0.24,
+	"tension": 0.72,
+	"texture": 0.30,
+}
+const MUSIC_STINGER_PLAYER_COUNT := 4
+const MUSIC_FEATURE_ATTACK_SECONDS := 0.25
+const MUSIC_FEATURE_RELEASE_SECONDS := 2.0
+const MUSIC_AUTHORED_MANIFEST_PATH := "res://data/audio/music_manifest.json"
+const MUSIC_AUTHORED_ROOT := "res://assets/audio/music"
+const MUSIC_MIN_VOLUME_DB := -80.0
 const SCALE_MINOR := [0, 2, 3, 5, 7, 8, 10]
 const SCALE_DORIAN := [0, 2, 3, 5, 7, 9, 10]
 const SCALE_PHRYGIAN := [0, 1, 3, 5, 7, 8, 10]
@@ -29,6 +83,7 @@ const DEFAULT_PROGRESSION := [0, 5, 2, 6]
 const DEFAULT_MOTIF := [0, EMPTY_NOTE, 2, EMPTY_NOTE, 4, EMPTY_NOTE, 2, EMPTY_NOTE, 0, EMPTY_NOTE, 3, EMPTY_NOTE, 4, EMPTY_NOTE, 2, EMPTY_NOTE]
 
 var audio_enabled: bool = true
+var audio_calm: bool = false
 
 var _ambient_player: AudioStreamPlayer
 var _ambient_stream_cache: Dictionary = {}
@@ -43,6 +98,7 @@ var _transition_target_cache_key: String = ""
 var _transition_target_profile: Dictionary = {}
 var _deferred_transition_cache_key: String = ""
 var _deferred_transition_stream: AudioStreamWAV
+var _deferred_transition_stem_set: Dictionary = {}
 var _generation_token: int = 0
 var _generation_mutex: Mutex = Mutex.new()
 var _generation_thread: Thread
@@ -52,16 +108,55 @@ var _thread_stage: String = ""
 var _queued_generation_profile: Dictionary = {}
 var _queued_generation_cache_key: String = ""
 var _queued_generation_token: int = 0
+var _music_fx_target: Dictionary = {}
+var _music_fx_live: Dictionary = {}
+var _music_fx_input_snapshot: Dictionary = {}
+var _stem_players: Dictionary = {}
+var _current_stem_set: Dictionary = {}
+var _current_stem_stage: String = ""
+var _music_mix_target: Dictionary = {}
+var _music_mix_live: Dictionary = {}
+var _music_mix_applied_target: Dictionary = {}
+var _music_mix_pending: Dictionary = {}
+var _music_mix_input_snapshot: Dictionary = {}
+var _authored_manifest_cache: Dictionary = {}
+var _feature_stem_players: Dictionary = {}
+var _feature_stinger_players: Array = []
+var _feature_stem_cache: Dictionary = {}
+var _current_feature_stem_set: Dictionary = {}
+var _current_feature_music_id: String = ""
+var _feature_mix_target: Dictionary = {}
+var _feature_mix_live: Dictionary = {}
+var _feature_mix_applied_target: Dictionary = {}
+var _feature_mix_pending: Dictionary = {}
+var _feature_input_snapshot: Dictionary = {}
+var _feature_stinger_pending: Array = []
+var _feature_stinger_history: Array = []
 
 
 func _ready() -> void:
+	ensure_music_fx_bus_graph()
+	_ensure_music_stem_buses()
+	_music_fx_target = _neutral_music_fx_vector()
+	_music_fx_live = _neutral_music_fx_vector()
+	_music_mix_target = _neutral_music_mix_vector()
+	_music_mix_live = _neutral_music_mix_vector()
+	_music_mix_applied_target = _music_mix_target.duplicate(true)
+	_feature_mix_target = _neutral_feature_mix_vector()
+	_feature_mix_live = _neutral_feature_mix_vector()
+	_feature_mix_applied_target = _feature_mix_target.duplicate(true)
+	_apply_music_fx_vector(_music_fx_live, true)
 	if not _running_headless():
-		_ensure_player()
+		_ensure_stem_players()
 
 
-func _process(_delta: float) -> void:
+func _process(delta: float) -> void:
 	_poll_generation_thread()
 	_poll_breakpoint_transition()
+	_advance_music_fx(delta)
+	_advance_music_mix(delta)
+	_advance_feature_mix(delta)
+	_poll_feature_stingers()
 
 
 func _exit_tree() -> void:
@@ -71,32 +166,47 @@ func _exit_tree() -> void:
 	_ambient_primer_cache.clear()
 	_ambient_instant_cache.clear()
 	_ambient_profile_cache.clear()
+	_authored_manifest_cache.clear()
 
 
 # Starts or updates the generated theme for the current environment.
 func play_for_environment(environment: Dictionary, heat_level: int) -> void:
+	play_for_environment_state(environment, heat_level, {})
+
+
+# Starts or updates the generated theme and live FX from one run-state snapshot.
+func play_for_environment_state(environment: Dictionary, heat_level: int, music_state: Dictionary) -> void:
+	var snapshot := _music_fx_state_from_environment(environment, heat_level, music_state)
+	update_music_state(snapshot)
 	if not audio_enabled or environment.is_empty() or _running_headless():
 		stop()
 		return
-	_ensure_player()
+	_ensure_stem_players()
 	var profile := _music_profile_from_environment(environment, heat_level)
 	var cache_key := _ambient_cache_key(profile)
 	_remember_profile(cache_key, profile)
-	if cache_key == _current_cache_key and _ambient_player.playing and not _current_stream_is_primer:
+	var authored_stem_set := _authored_stem_set_from_profile(profile)
+	if not authored_stem_set.is_empty():
+		_ambient_stream_cache[cache_key] = authored_stem_set
+		if cache_key == _current_cache_key and _music_is_playing() and not _current_stream_is_primer:
+			return
+		_accept_full_stem_set(cache_key, authored_stem_set)
+		return
+	if cache_key == _current_cache_key and _music_is_playing() and not _current_stream_is_primer:
 		return
 	if _should_defer_music_change(cache_key):
 		_schedule_breakpoint_music_change(profile, cache_key)
 		return
 	if _ambient_stream_cache.has(cache_key):
-		_play_full_stream(cache_key, _ambient_stream_cache[cache_key])
+		_play_full_stem_set(cache_key, _ambient_stream_cache[cache_key])
 		return
 	if _pending_cache_key == cache_key:
 		if _current_cache_key != cache_key and _ambient_instant_cache.has(cache_key):
-			_play_primer_stream(cache_key, _ambient_instant_cache[cache_key])
+			_play_primer_stem_set(cache_key, _ambient_instant_cache[cache_key])
 		return
 	_pending_cache_key = cache_key
 	var token := _advance_generation_token()
-	_play_instant_bed(profile, cache_key)
+	_play_instant_stem_bed(profile, cache_key)
 	_request_ambient_generation(profile, cache_key, token)
 
 
@@ -109,15 +219,42 @@ func stop() -> void:
 	_transition_target_profile = {}
 	_deferred_transition_cache_key = ""
 	_deferred_transition_stream = null
+	_deferred_transition_stem_set = {}
 	_advance_generation_token()
 	_queued_generation_profile = {}
 	_queued_generation_cache_key = ""
 	_queued_generation_token = 0
-	if _ambient_player == null:
-		return
-	_ambient_player.stop()
-	_ambient_player.stream = null
+	for player_value in _stem_players.values():
+		if player_value is AudioStreamPlayer:
+			var player := player_value as AudioStreamPlayer
+			player.stop()
+			player.stream = null
+			player.pitch_scale = 1.0
+	for player_value in _feature_stem_players.values():
+		if player_value is AudioStreamPlayer:
+			var feature_player := player_value as AudioStreamPlayer
+			feature_player.stop()
+			feature_player.stream = null
+			feature_player.pitch_scale = 1.0
+	for player_value in _feature_stinger_players:
+		if player_value is AudioStreamPlayer:
+			var stinger_player := player_value as AudioStreamPlayer
+			stinger_player.stop()
+			stinger_player.stream = null
+	if _ambient_player != null:
+		_ambient_player.stop()
+		_ambient_player.stream = null
+		_ambient_player.pitch_scale = 1.0
 	_current_music_context = {}
+	_current_stem_set = {}
+	_current_stem_stage = ""
+	_current_feature_stem_set = {}
+	_current_feature_music_id = ""
+	_feature_stinger_pending = []
+	_feature_stinger_history = []
+	_reset_music_fx()
+	_reset_music_mix()
+	_reset_feature_mix()
 
 
 # Builds a stream without starting playback; used by headless validation.
@@ -138,8 +275,16 @@ func music_theory_snapshot_for_environment(environment: Dictionary, heat_level: 
 		"progression_degrees": (context.get("progression_degrees", []) as Array).duplicate(true),
 		"chord_roots": (context.get("chord_roots", []) as Array).duplicate(true),
 		"chord_intervals": (context.get("chord_intervals", []) as Array).duplicate(true),
+		"chord_voicings": (context.get("chord_voicings", []) as Array).duplicate(true),
+		"voicing_inversions": (context.get("voicing_inversions", []) as Array).duplicate(true),
 		"motif": (context.get("motif", []) as Array).duplicate(true),
 		"phrase_count": int(context.get("phrase_count", 0)),
+		"swing_amount": snappedf(float(context.get("swing_amount", 0.0)), 0.0001),
+		"arrangement_form": str(context.get("arrangement_form", "")),
+		"bridge_phrase_index": int(context.get("bridge_phrase_index", 0)),
+		"answer_transform": str(context.get("answer_transform", "")),
+		"instrument_palette": _copy_dict(context.get("instrument_palette", {})),
+		"palette_id": str(context.get("palette_id", "")),
 	}
 
 
@@ -163,6 +308,113 @@ func music_generation_latency_snapshot_for_environment(environment: Dictionary, 
 	}
 
 
+func music_stem_manifest_snapshot_for_environment(environment: Dictionary, heat_level: int, music_state: Dictionary = {}, bake: bool = false) -> Dictionary:
+	if environment.is_empty():
+		return {}
+	var profile := _music_profile_from_environment(environment, heat_level)
+	var cache_key := _ambient_cache_key(profile)
+	var authored := _authored_stem_set_from_profile(profile)
+	if not authored.is_empty():
+		var authored_manifest := _stem_manifest_from_contract(authored)
+		authored_manifest["cache_key"] = cache_key
+		authored_manifest["cache_key_uses_heat"] = false
+		authored_manifest["music_state"] = _normalize_music_mix_input(_music_fx_state_from_environment(environment, heat_level, music_state))
+		return authored_manifest
+	var context := _ambient_generation_context(profile)
+	var stem_set := _procedural_stem_set_from_context(profile, context, AMBIENT_STAGE_FULL, -1) if bake else _procedural_stem_contract_from_context(profile, context, AMBIENT_STAGE_FULL)
+	var manifest := _stem_manifest_from_contract(stem_set)
+	manifest["cache_key"] = cache_key
+	manifest["cache_key_uses_heat"] = false
+	manifest["music_state"] = _normalize_music_mix_input(_music_fx_state_from_environment(environment, heat_level, music_state))
+	return manifest
+
+
+func music_mix_snapshot(music_state: Dictionary = {}, playback_position: float = -1.0) -> Dictionary:
+	if playback_position >= 0.0:
+		_apply_music_mix_pending_for_position(playback_position)
+	var input := _music_mix_input_snapshot.duplicate(true)
+	var target := _music_mix_target.duplicate(true)
+	if not music_state.is_empty():
+		input = _normalize_music_mix_input(music_state)
+		target = _music_mix_vector_from_input(input)
+		if audio_calm:
+			target = _calm_music_mix_vector(target)
+	return {
+		"input": input,
+		"target": _music_mix_public_vector(target),
+		"live": _music_mix_public_vector(_music_mix_live if not _music_mix_live.is_empty() else _neutral_music_mix_vector()),
+		"applied_target": _music_mix_public_vector(_music_mix_applied_target if not _music_mix_applied_target.is_empty() else _neutral_music_mix_vector()),
+		"pending": _copy_dict(_music_mix_pending),
+		"source": str(_current_stem_set.get("source", "procedural" if _current_stem_set.is_empty() else "")),
+		"stage": _current_stem_stage,
+		"cache_key": _current_cache_key,
+		"bar_seconds": _music_director_bar_seconds(),
+		"attack_seconds": MUSIC_MIX_ATTACK_SECONDS,
+		"release_seconds": MUSIC_MIX_RELEASE_SECONDS,
+		"headless": _running_headless(),
+		"player_instantiated": _any_audio_player_instantiated(),
+		"stem_manifest": _stem_manifest_from_contract(_current_stem_set),
+		"feature": music_feature_snapshot({}, playback_position),
+		"audio_calm": audio_calm,
+	}
+
+
+func update_feature_music_state(feature_state: Dictionary) -> void:
+	var input := _normalize_feature_music_input(feature_state)
+	_update_feature_mix_state(input)
+	if bool(input.get("active", false)):
+		var music_id := str(input.get("music_id", ""))
+		if music_id != _current_feature_music_id:
+			_current_feature_music_id = music_id
+			if audio_enabled and not _running_headless():
+				_ensure_feature_stem_players()
+				_play_feature_stem_set(_feature_stem_set_for_input(input), 0.0)
+	else:
+		_current_feature_music_id = ""
+
+
+func play_feature_stinger(cue_id: String, context: Dictionary = {}) -> void:
+	var normalized := cue_id.strip_edges()
+	if normalized.is_empty():
+		return
+	var step_period := _music_director_step_seconds()
+	var position := _director_playback_position()
+	var target_step := ceili((position + 0.0001) / maxf(0.001, step_period))
+	var pending := {
+		"cue_id": normalized,
+		"context": context.duplicate(true),
+		"target_position": snappedf(float(target_step) * step_period, 0.0001),
+		"step_seconds": snappedf(step_period, 0.0001),
+	}
+	_feature_stinger_pending.append(pending)
+
+
+func music_feature_snapshot(feature_state: Dictionary = {}, playback_position: float = -1.0) -> Dictionary:
+	if playback_position >= 0.0:
+		_apply_feature_mix_pending_for_position(playback_position)
+		_apply_feature_stingers_for_position(playback_position, false)
+	var input := _feature_input_snapshot.duplicate(true)
+	var target := _feature_mix_target.duplicate(true)
+	if not feature_state.is_empty():
+		input = _normalize_feature_music_input(feature_state)
+		target = _feature_mix_vector_from_input(input)
+	return {
+		"input": input,
+		"target": _feature_mix_public_vector(target),
+		"live": _feature_mix_public_vector(_feature_mix_live if not _feature_mix_live.is_empty() else _neutral_feature_mix_vector()),
+		"applied_target": _feature_mix_public_vector(_feature_mix_applied_target if not _feature_mix_applied_target.is_empty() else _neutral_feature_mix_vector()),
+		"pending": _copy_dict(_feature_mix_pending),
+		"active_music_id": _current_feature_music_id,
+		"stem_manifest": _stem_manifest_from_contract(_current_feature_stem_set),
+		"pending_stingers": _copy_array(_feature_stinger_pending),
+		"stinger_history": _copy_array(_feature_stinger_history),
+		"bar_seconds": _music_director_bar_seconds(),
+		"beat_seconds": _music_director_step_seconds(),
+		"headless": _running_headless(),
+		"player_instantiated": _any_audio_player_instantiated(),
+	}
+
+
 # Exposes the live transition policy for validation and tuning.
 func music_transition_policy_snapshot_for_environment(environment: Dictionary, heat_level: int) -> Dictionary:
 	if environment.is_empty():
@@ -177,16 +429,766 @@ func music_transition_policy_snapshot_for_environment(environment: Dictionary, h
 	}
 
 
-func _ensure_player() -> void:
-	if _ambient_player != null:
+# Updates live DSP targets from a run-state music snapshot. This does not start
+# audio playback, so headless tests can drive the mapping safely.
+func update_music_state(music_state: Dictionary) -> void:
+	_music_fx_input_snapshot = _normalize_music_fx_input(music_state)
+	_music_fx_target = _music_fx_vector_from_input(_music_fx_input_snapshot)
+	if audio_calm:
+		_music_fx_target = _calm_music_fx_vector(_music_fx_target)
+	if _music_fx_live.is_empty():
+		_music_fx_live = _music_fx_target.duplicate(true)
+	_update_music_mix_state(music_state)
+
+
+func music_fx_snapshot(music_state: Dictionary = {}) -> Dictionary:
+	var input := _music_fx_input_snapshot.duplicate(true)
+	var target := _music_fx_target.duplicate(true)
+	if not music_state.is_empty():
+		input = _normalize_music_fx_input(music_state)
+		target = _music_fx_vector_from_input(input)
+		if audio_calm:
+			target = _calm_music_fx_vector(target)
+	return {
+		"graph": music_fx_bus_graph_snapshot(),
+		"input": input,
+		"target": _music_fx_public_vector(target),
+		"live": _music_fx_public_vector(_music_fx_live if not _music_fx_live.is_empty() else _neutral_music_fx_vector()),
+		"attack_seconds": MUSIC_FX_ATTACK_SECONDS,
+		"release_seconds": MUSIC_FX_RELEASE_SECONDS,
+		"headless": _running_headless(),
+		"player_instantiated": _any_audio_player_instantiated(),
+		"audio_calm": audio_calm,
+	}
+
+
+static func ensure_music_fx_bus_graph() -> Dictionary:
+	var bus_index := _ensure_audio_bus(MUSIC_BUS)
+	if not _music_fx_graph_matches(bus_index):
+		while AudioServer.get_bus_effect_count(bus_index) > 0:
+			AudioServer.remove_bus_effect(bus_index, AudioServer.get_bus_effect_count(bus_index) - 1)
+		for key_value in MUSIC_FX_EFFECT_ORDER:
+			var key := str(key_value)
+			var effect := _new_music_fx_effect(key)
+			effect.resource_name = _music_fx_resource_name(key)
+			_configure_music_fx_effect(key, effect)
+			AudioServer.add_bus_effect(bus_index, effect)
+		_set_music_fx_startup_enabled(bus_index)
+	else:
+		_set_music_fx_safety_enabled(bus_index)
+	return music_fx_bus_graph_snapshot()
+
+
+static func music_fx_bus_graph_snapshot() -> Dictionary:
+	var bus_index := AudioServer.get_bus_index(MUSIC_BUS)
+	var effects: Array = []
+	if bus_index >= 0:
+		for index in range(AudioServer.get_bus_effect_count(bus_index)):
+			var effect := AudioServer.get_bus_effect(bus_index, index)
+			effects.append({
+				"index": index,
+				"resource_name": effect.resource_name if effect != null else "",
+				"type": effect.get_class() if effect != null else "",
+				"enabled": AudioServer.is_bus_effect_enabled(bus_index, index),
+			})
+	return {
+		"version": MUSIC_FX_GRAPH_VERSION,
+		"bus": MUSIC_BUS,
+		"bus_index": bus_index,
+		"effect_count": effects.size(),
+		"effects": effects,
+		"effect_order": MUSIC_FX_EFFECT_ORDER.duplicate(true),
+		"idempotent": bus_index >= 0 and _music_fx_graph_matches(bus_index),
+	}
+
+
+static func ensure_music_stem_bus_graph() -> Dictionary:
+	_ensure_music_stem_buses()
+	return music_stem_bus_graph_snapshot()
+
+
+func _ensure_stem_players() -> void:
+	_ensure_music_stem_buses()
+	for role_value in MUSIC_STEM_PLAYBACK_ROLES:
+		var role := str(role_value)
+		if _stem_players.has(role) and _stem_players[role] is AudioStreamPlayer:
+			continue
+		var player := AudioStreamPlayer.new()
+		player.name = "MusicStem_%s" % role
+		player.bus = _music_stem_bus_name(role)
+		player.volume_db = MUSIC_MIN_VOLUME_DB
+		add_child(player)
+		_stem_players[role] = player
+	if _ambient_player == null and _stem_players.has("pad"):
+		_ambient_player = _stem_players["pad"] as AudioStreamPlayer
+
+
+func _ensure_feature_stem_players() -> void:
+	_ensure_music_stem_buses()
+	for role_value in MUSIC_STEM_PLAYBACK_ROLES:
+		var role := str(role_value)
+		if _feature_stem_players.has(role) and _feature_stem_players[role] is AudioStreamPlayer:
+			continue
+		var player := AudioStreamPlayer.new()
+		player.name = "FeatureMusicStem_%s" % role
+		player.bus = _music_stem_bus_name(role)
+		player.volume_db = MUSIC_MIN_VOLUME_DB
+		add_child(player)
+		_feature_stem_players[role] = player
+
+
+func _ensure_feature_stinger_players() -> void:
+	if not _feature_stinger_players.is_empty():
 		return
-	_ambient_player = AudioStreamPlayer.new()
-	_ambient_player.bus = MUSIC_BUS
-	add_child(_ambient_player)
+	for index in range(MUSIC_STINGER_PLAYER_COUNT):
+		var player := AudioStreamPlayer.new()
+		player.name = "MusicFeatureStinger_%d" % index
+		player.bus = MUSIC_BUS
+		player.volume_db = -2.5
+		add_child(player)
+		_feature_stinger_players.append(player)
+
+
+func _any_audio_player_instantiated() -> bool:
+	if _ambient_player != null:
+		return true
+	for player_value in _stem_players.values():
+		if player_value is AudioStreamPlayer:
+			return true
+	for player_value in _feature_stem_players.values():
+		if player_value is AudioStreamPlayer:
+			return true
+	for player_value in _feature_stinger_players:
+		if player_value is AudioStreamPlayer:
+			return true
+	return false
 
 
 func _running_headless() -> bool:
 	return DisplayServer.get_name().to_lower() == "headless"
+
+
+func _reset_music_fx() -> void:
+	_music_fx_input_snapshot = _normalize_music_fx_input({})
+	_music_fx_target = _neutral_music_fx_vector()
+	_music_fx_live = _neutral_music_fx_vector()
+	_apply_music_fx_vector(_music_fx_live, true)
+
+
+func _reset_music_mix() -> void:
+	_music_mix_input_snapshot = _normalize_music_mix_input({})
+	_music_mix_target = _neutral_music_mix_vector()
+	_music_mix_live = _neutral_music_mix_vector()
+	_music_mix_applied_target = _music_mix_target.duplicate(true)
+	_music_mix_pending = {}
+	_apply_music_mix_vector(_music_mix_live, true)
+
+
+func _reset_feature_mix() -> void:
+	_feature_input_snapshot = _normalize_feature_music_input({})
+	_feature_mix_target = _neutral_feature_mix_vector()
+	_feature_mix_live = _neutral_feature_mix_vector()
+	_feature_mix_applied_target = _feature_mix_target.duplicate(true)
+	_feature_mix_pending = {}
+	_apply_feature_mix_vector(_feature_mix_live, true)
+
+
+func _advance_music_fx(delta: float) -> void:
+	if _music_fx_target.is_empty():
+		_music_fx_target = _neutral_music_fx_vector()
+	if _music_fx_live.is_empty():
+		_music_fx_live = _neutral_music_fx_vector()
+	var safe_delta := maxf(0.0, delta)
+	for key_value in MUSIC_FX_LERP_KEYS:
+		var key := str(key_value)
+		var live_value := float(_music_fx_live.get(key, 0.0))
+		var target_value := float(_music_fx_target.get(key, 0.0))
+		var time_constant := MUSIC_FX_ATTACK_SECONDS if target_value > live_value else MUSIC_FX_RELEASE_SECONDS
+		var amount := 1.0 if safe_delta <= 0.0 else clampf(safe_delta / maxf(0.001, time_constant), 0.0, 1.0)
+		_music_fx_live[key] = lerpf(live_value, target_value, amount)
+	_music_fx_live["heat"] = float(_music_fx_target.get("heat", 0.0))
+	_music_fx_live["alcohol_tier"] = int(_music_fx_target.get("alcohol_tier", 0))
+	_music_fx_live["boss_floor"] = bool(_music_fx_target.get("boss_floor", false))
+	_music_fx_live["showdown"] = bool(_music_fx_target.get("showdown", false))
+	_music_fx_live["watched"] = bool(_music_fx_target.get("watched", false))
+	_apply_music_fx_vector(_music_fx_live, false)
+
+
+func _advance_music_mix(delta: float) -> void:
+	if _music_mix_target.is_empty():
+		_music_mix_target = _neutral_music_mix_vector()
+	if _music_mix_live.is_empty():
+		_music_mix_live = _neutral_music_mix_vector()
+	_apply_music_mix_pending_for_position(_director_playback_position())
+	var safe_delta := maxf(0.0, delta)
+	for key_value in MUSIC_MIX_LERP_KEYS:
+		var key := str(key_value)
+		var live_value := float(_music_mix_live.get(key, 0.0))
+		var target_value := float(_music_mix_target.get(key, 0.0))
+		var time_constant := MUSIC_MIX_ATTACK_SECONDS if target_value > live_value else MUSIC_MIX_RELEASE_SECONDS
+		var amount := 1.0 if safe_delta <= 0.0 else clampf(safe_delta / maxf(0.001, time_constant), 0.0, 1.0)
+		_music_mix_live[key] = lerpf(live_value, target_value, amount)
+	_apply_music_mix_vector(_music_mix_live, false)
+
+
+func _apply_music_mix_vector(vector: Dictionary, _force: bool) -> void:
+	var duck := clampf(float(_feature_mix_live.get("venue_duck", 0.0)), 0.0, 0.82)
+	for role_value in MUSIC_STEM_PLAYBACK_ROLES:
+		var role := str(role_value)
+		var player: AudioStreamPlayer = _stem_players.get(role, null)
+		if player == null:
+			continue
+		var gain := clampf(float(vector.get(role, 0.0)), 0.0, 1.35)
+		if role == "pad":
+			gain *= lerpf(1.0, 0.42, duck)
+		elif role == "lead" or role == "texture":
+			gain *= lerpf(1.0, 0.62, duck)
+		elif role == "bass" or role == "bass_dark":
+			gain *= lerpf(1.0, 0.78, duck)
+		player.volume_db = _gain_to_db(gain)
+
+
+func _update_music_mix_state(music_state: Dictionary) -> void:
+	_music_mix_input_snapshot = _normalize_music_mix_input(music_state)
+	var next_target := _music_mix_vector_from_input(_music_mix_input_snapshot)
+	if audio_calm:
+		next_target = _calm_music_mix_vector(next_target)
+	if _music_mix_target.is_empty() or _music_mix_live.is_empty():
+		_music_mix_target = next_target.duplicate(true)
+		_music_mix_live = next_target.duplicate(true)
+		_music_mix_applied_target = next_target.duplicate(true)
+		_music_mix_pending = {}
+		return
+	_schedule_or_apply_music_mix_target(next_target, _director_playback_position())
+
+
+func _schedule_or_apply_music_mix_target(next_target: Dictionary, playback_position: float) -> void:
+	var bar_seconds := _music_director_bar_seconds()
+	var current_bar := floori(maxf(0.0, playback_position) / maxf(0.001, bar_seconds))
+	var target_bar := current_bar + 1
+	var pending_changes := {}
+	for key_value in MUSIC_MIX_QUANTIZED_KEYS:
+		var key := str(key_value)
+		var old_value := float(_music_mix_target.get(key, 0.0))
+		var new_value := float(next_target.get(key, 0.0))
+		if absf(old_value - new_value) > 0.001:
+			pending_changes[key] = snappedf(new_value, 0.0001)
+	for key_value in MUSIC_MIX_LERP_KEYS:
+		var key := str(key_value)
+		if bool(pending_changes.has(key)):
+			continue
+		_music_mix_target[key] = float(next_target.get(key, 0.0))
+	if pending_changes.is_empty():
+		_music_mix_pending = {}
+		_music_mix_applied_target = _music_mix_target.duplicate(true)
+		return
+	_music_mix_pending = {
+		"changes": pending_changes,
+		"target_bar": target_bar,
+		"target_position": snappedf(float(target_bar) * bar_seconds, 0.0001),
+		"bar_seconds": snappedf(bar_seconds, 0.0001),
+	}
+	_music_mix_applied_target = _music_mix_target.duplicate(true)
+
+
+func _apply_music_mix_pending_for_position(playback_position: float) -> void:
+	if _music_mix_pending.is_empty():
+		return
+	var target_position := float(_music_mix_pending.get("target_position", 0.0))
+	if playback_position + 0.0001 < target_position:
+		return
+	var changes: Dictionary = _music_mix_pending.get("changes", {}) as Dictionary
+	for key_value in changes.keys():
+		var key := str(key_value)
+		_music_mix_target[key] = float(changes.get(key_value, 0.0))
+	_music_mix_pending = {}
+	_music_mix_applied_target = _music_mix_target.duplicate(true)
+
+
+func _advance_feature_mix(delta: float) -> void:
+	if _feature_mix_target.is_empty():
+		_feature_mix_target = _neutral_feature_mix_vector()
+	if _feature_mix_live.is_empty():
+		_feature_mix_live = _neutral_feature_mix_vector()
+	_apply_feature_mix_pending_for_position(_director_playback_position())
+	var safe_delta := maxf(0.0, delta)
+	for key_value in MUSIC_FEATURE_LERP_KEYS:
+		var key := str(key_value)
+		var live_value := float(_feature_mix_live.get(key, 0.0))
+		var target_value := float(_feature_mix_target.get(key, 0.0))
+		var time_constant := MUSIC_FEATURE_ATTACK_SECONDS if target_value > live_value else MUSIC_FEATURE_RELEASE_SECONDS
+		var amount := 1.0 if safe_delta <= 0.0 else clampf(safe_delta / maxf(0.001, time_constant), 0.0, 1.0)
+		_feature_mix_live[key] = lerpf(live_value, target_value, amount)
+	_apply_feature_mix_vector(_feature_mix_live, false)
+	_apply_music_mix_vector(_music_mix_live if not _music_mix_live.is_empty() else _neutral_music_mix_vector(), false)
+	if float(_feature_mix_target.get("feature", 0.0)) <= 0.001 and float(_feature_mix_live.get("feature", 0.0)) <= 0.002:
+		_stop_feature_stem_players()
+
+
+func _apply_feature_mix_vector(vector: Dictionary, _force: bool) -> void:
+	var feature_gain := clampf(float(vector.get("feature", 0.0)), 0.0, 1.2)
+	for role_value in MUSIC_STEM_PLAYBACK_ROLES:
+		var role := str(role_value)
+		var player: AudioStreamPlayer = _feature_stem_players.get(role, null)
+		if player == null:
+			continue
+		var role_weight := clampf(float(MUSIC_FEATURE_ROLE_WEIGHTS.get(role, 0.0)), 0.0, 1.0)
+		player.volume_db = _gain_to_db(feature_gain * role_weight)
+
+
+func _update_feature_mix_state(feature_state: Dictionary) -> void:
+	_feature_input_snapshot = _normalize_feature_music_input(feature_state)
+	var next_target := _feature_mix_vector_from_input(_feature_input_snapshot)
+	_schedule_or_apply_feature_mix_target(next_target, _director_playback_position())
+
+
+func _schedule_or_apply_feature_mix_target(next_target: Dictionary, playback_position: float) -> void:
+	var bar_seconds := _music_director_bar_seconds()
+	var current_bar := floori(maxf(0.0, playback_position) / maxf(0.001, bar_seconds))
+	var target_bar := current_bar + 1
+	var pending_changes := {}
+	for key_value in MUSIC_FEATURE_LERP_KEYS:
+		var key := str(key_value)
+		var old_value := float(_feature_mix_target.get(key, 0.0))
+		var new_value := float(next_target.get(key, 0.0))
+		if absf(old_value - new_value) > 0.001:
+			pending_changes[key] = snappedf(new_value, 0.0001)
+	if pending_changes.is_empty():
+		_feature_mix_pending = {}
+		_feature_mix_applied_target = _feature_mix_target.duplicate(true)
+		return
+	_feature_mix_pending = {
+		"changes": pending_changes,
+		"target_bar": target_bar,
+		"target_position": snappedf(float(target_bar) * bar_seconds, 0.0001),
+		"bar_seconds": snappedf(bar_seconds, 0.0001),
+	}
+	_feature_mix_applied_target = _feature_mix_target.duplicate(true)
+
+
+func _apply_feature_mix_pending_for_position(playback_position: float) -> void:
+	if _feature_mix_pending.is_empty():
+		return
+	var target_position := float(_feature_mix_pending.get("target_position", 0.0))
+	if playback_position + 0.0001 < target_position:
+		return
+	var changes: Dictionary = _feature_mix_pending.get("changes", {}) as Dictionary
+	for key_value in changes.keys():
+		var key := str(key_value)
+		_feature_mix_target[key] = float(changes.get(key_value, 0.0))
+	_feature_mix_pending = {}
+	_feature_mix_applied_target = _feature_mix_target.duplicate(true)
+
+
+func _apply_music_fx_vector(vector: Dictionary, _force: bool) -> void:
+	var graph := ensure_music_fx_bus_graph()
+	var bus_index := int(graph.get("bus_index", -1))
+	if bus_index < 0:
+		return
+	var low_pass_index := _music_fx_effect_index(bus_index, "low_pass")
+	var chorus_index := _music_fx_effect_index(bus_index, "chorus")
+	var distortion_index := _music_fx_effect_index(bus_index, "distortion")
+	var reverb_index := _music_fx_effect_index(bus_index, "reverb")
+	var compressor_index := _music_fx_effect_index(bus_index, "compressor")
+	var limiter_index := _music_fx_effect_index(bus_index, "limiter")
+	var public_vector := _music_fx_public_vector(vector)
+	var lowpass_amount := clampf(float(vector.get("lowpass_amount", 0.0)), 0.0, 1.0)
+	var chorus_depth := clampf(float(vector.get("chorus_depth", 0.0)), 0.0, 1.0)
+	var distortion_drive := clampf(float(vector.get("distortion_drive", 0.0)), 0.0, 1.0)
+	var reverb_wet := clampf(float(vector.get("reverb_wet", 0.0)), 0.0, 1.0)
+	if low_pass_index >= 0:
+		var effect := AudioServer.get_bus_effect(bus_index, low_pass_index)
+		_set_effect_property(effect, "cutoff_hz", float(public_vector.get("lowpass_cutoff_hz", 18000.0)))
+		_set_effect_property(effect, "resonance", float(public_vector.get("lowpass_resonance", 0.18)))
+		AudioServer.set_bus_effect_enabled(bus_index, low_pass_index, lowpass_amount > 0.012 or float(vector.get("watch_tinge", 0.0)) > 0.01)
+	if chorus_index >= 0:
+		var effect := AudioServer.get_bus_effect(bus_index, chorus_index)
+		_set_effect_property(effect, "dry", 1.0)
+		_set_effect_property(effect, "wet", clampf(chorus_depth * 0.34, 0.0, 0.34))
+		_set_effect_property(effect, "voice_count", 2)
+		_set_effect_property(effect, "voice/1/rate_hz", 0.18)
+		_set_effect_property(effect, "voice/1/depth_ms", 2.0 + chorus_depth * 12.0)
+		_set_effect_property(effect, "voice/1/level_db", -18.0 + chorus_depth * 8.0)
+		_set_effect_property(effect, "voice/2/rate_hz", 0.11)
+		_set_effect_property(effect, "voice/2/depth_ms", 1.0 + chorus_depth * 7.0)
+		_set_effect_property(effect, "voice/2/level_db", -22.0 + chorus_depth * 7.0)
+		AudioServer.set_bus_effect_enabled(bus_index, chorus_index, chorus_depth > 0.012)
+	if distortion_index >= 0:
+		var effect := AudioServer.get_bus_effect(bus_index, distortion_index)
+		_set_effect_property(effect, "drive", distortion_drive)
+		_set_effect_property(effect, "pre_gain", 0.0)
+		_set_effect_property(effect, "post_gain", -4.0 * distortion_drive)
+		_set_effect_property(effect, "keep_hf_hz", 7200.0)
+		AudioServer.set_bus_effect_enabled(bus_index, distortion_index, distortion_drive > 0.012)
+	if reverb_index >= 0:
+		var effect := AudioServer.get_bus_effect(bus_index, reverb_index)
+		_set_effect_property(effect, "room_size", float(public_vector.get("reverb_size", 0.22)))
+		_set_effect_property(effect, "damping", float(public_vector.get("reverb_damping", 0.72)))
+		_set_effect_property(effect, "wet", reverb_wet)
+		_set_effect_property(effect, "dry", 1.0)
+		_set_effect_property(effect, "spread", 0.42)
+		AudioServer.set_bus_effect_enabled(bus_index, reverb_index, reverb_wet > 0.008)
+	if compressor_index >= 0:
+		var effect := AudioServer.get_bus_effect(bus_index, compressor_index)
+		_set_effect_property(effect, "threshold", float(public_vector.get("compressor_threshold_db", -6.0)))
+		_set_effect_property(effect, "ratio", float(public_vector.get("compressor_ratio", 2.0)))
+		_set_effect_property(effect, "gain", float(public_vector.get("compressor_gain_db", 0.0)))
+		_set_effect_property(effect, "attack_us", 8500.0)
+		_set_effect_property(effect, "release_ms", 220.0)
+		_set_effect_property(effect, "mix", 1.0)
+		AudioServer.set_bus_effect_enabled(bus_index, compressor_index, true)
+	if limiter_index >= 0:
+		var effect := AudioServer.get_bus_effect(bus_index, limiter_index)
+		_set_effect_property(effect, "ceiling_db", -0.5)
+		_set_effect_property(effect, "threshold_db", -0.7)
+		_set_effect_property(effect, "soft_clip_db", 1.0)
+		_set_effect_property(effect, "soft_clip_ratio", 8.0)
+		AudioServer.set_bus_effect_enabled(bus_index, limiter_index, true)
+	var wobble_cents := clampf(float(vector.get("pitch_wobble_cents", 0.0)), 0.0, 18.0)
+	var pitch_scale := 1.0
+	if wobble_cents > 0.001:
+		var wobble := sin(TAU * 0.18 * (float(Time.get_ticks_msec()) / 1000.0))
+		pitch_scale = pow(2.0, (wobble_cents * wobble) / 1200.0)
+	for player_value in _stem_players.values():
+		if player_value is AudioStreamPlayer:
+			(player_value as AudioStreamPlayer).pitch_scale = pitch_scale
+	for player_value in _feature_stem_players.values():
+		if player_value is AudioStreamPlayer:
+			(player_value as AudioStreamPlayer).pitch_scale = pitch_scale
+	if _ambient_player != null:
+		_ambient_player.pitch_scale = pitch_scale
+
+
+static func _music_fx_state_from_environment(environment: Dictionary, heat_level: int, music_state: Dictionary) -> Dictionary:
+	var result := music_state.duplicate(true)
+	result["heat"] = clampi(int(result.get("heat", result.get("heat_level", heat_level))), 0, 100)
+	if not environment.is_empty():
+		result["environment"] = environment.duplicate(true)
+		if not result.has("visual_context"):
+			result["visual_context"] = _copy_dict_static(environment.get("visual_context", {}))
+		if not result.has("boss_floor"):
+			result["boss_floor"] = str(environment.get("kind", "")) == "boss" or str(_copy_dict_static(environment.get("visual_context", {})).get("scene_type", "")) == "boss"
+	return result
+
+
+static func _normalize_music_fx_input(music_state: Dictionary) -> Dictionary:
+	var environment := _copy_dict_static(music_state.get("environment", {}))
+	var visual := _copy_dict_static(music_state.get("visual_context", environment.get("visual_context", {})))
+	var watch := _copy_dict_static(music_state.get("pit_boss_watch", music_state.get("watch", {})))
+	var staff := _copy_dict_static(music_state.get("staff_attention", {}))
+	var objective := _copy_dict_static(music_state.get("demo_objective", music_state.get("objective", {})))
+	var heat := clampf(float(music_state.get("heat", music_state.get("heat_level", music_state.get("suspicion_level", 0)))), 0.0, 100.0)
+	var drunk_level := clampi(int(music_state.get("drunk_level", music_state.get("alcohol_level", 0))), 0, 100)
+	var alcohol_tier := clampi(int(music_state.get("alcohol_tier", _alcohol_tier_for_level(drunk_level))), 0, 3)
+	var watched := bool(music_state.get("watched", false)) or bool(watch.get("watched", false))
+	var watch_active := bool(music_state.get("watch_active", false)) or bool(watch.get("active", false))
+	var staff_attention := bool(music_state.get("staff_attention_active", false)) or bool(staff.get("active", false))
+	var showdown_pending := bool(music_state.get("showdown_pending", false)) or bool(objective.get("showdown_pending", false))
+	var showdown_active := bool(music_state.get("showdown_active", false)) or bool(objective.get("showdown_active", false))
+	var scene_type := str(visual.get("scene_type", environment.get("kind", ""))).strip_edges().to_lower()
+	var boss_floor := bool(music_state.get("boss_floor", false)) or str(environment.get("kind", "")).strip_edges() == "boss" or scene_type == "boss"
+	var room_scale := clampf(float(music_state.get("room_scale", _room_scale_from_visual_context(visual, environment))), 0.0, 1.0)
+	return {
+		"heat": heat,
+		"drunk_level": drunk_level,
+		"alcohol_tier": alcohol_tier,
+		"watch_active": watch_active,
+		"watched": watched,
+		"staff_attention": staff_attention,
+		"showdown_pending": showdown_pending,
+		"showdown_active": showdown_active,
+		"showdown": showdown_pending or showdown_active,
+		"boss_floor": boss_floor,
+		"room_scale": room_scale,
+		"scene_type": scene_type,
+		"environment_id": str(environment.get("id", "")),
+		"archetype_id": str(environment.get("archetype_id", "")),
+	}
+
+
+static func _music_fx_vector_from_input(input: Dictionary) -> Dictionary:
+	var heat := clampf(float(input.get("heat", 0.0)), 0.0, 100.0)
+	var alcohol_tier := clampi(int(input.get("alcohol_tier", 0)), 0, 3)
+	var drunk_level := clampi(int(input.get("drunk_level", 0)), 0, 100)
+	var drunk_overlay_amount := pow(clampf(float(drunk_level - 12) / 88.0, 0.0, 1.0), 1.35)
+	var drunk_amount := maxf(float(alcohol_tier) / 3.0, drunk_overlay_amount)
+	var heat_drive := pow(clampf((heat - 70.0) / 30.0, 0.0, 1.0), 1.35) * 0.16
+	var watched := bool(input.get("watched", false))
+	var staff_attention := bool(input.get("staff_attention", false))
+	var watch_tinge := 0.20 if watched else 0.12 if staff_attention else 0.0
+	var showdown := bool(input.get("showdown", false))
+	var boss_floor := bool(input.get("boss_floor", false))
+	var showdown_amount := 1.0 if showdown else 0.45 if boss_floor else 0.0
+	var room_scale := clampf(float(input.get("room_scale", 0.35)), 0.0, 1.0)
+	var lowpass_amount := clampf(maxf(drunk_amount * 0.62, watch_tinge * 0.18), 0.0, 0.82)
+	var distortion_drive := clampf(maxf(maxf(heat_drive, showdown_amount * 0.42), watch_tinge * 0.035), 0.0, 0.58)
+	var compressor_pump := clampf(showdown_amount * 0.82, 0.0, 0.92)
+	return {
+		"heat": heat,
+		"alcohol_tier": alcohol_tier,
+		"lowpass_amount": lowpass_amount,
+		"chorus_depth": clampf(drunk_amount * 0.48, 0.0, 0.62),
+		"pitch_wobble_cents": clampf(drunk_amount * 13.0, 0.0, 16.0),
+		"distortion_drive": distortion_drive,
+		"watch_tinge": watch_tinge,
+		"reverb_size": lerpf(0.20, 0.88, room_scale),
+		"reverb_damping": lerpf(0.72, 0.34, room_scale),
+		"reverb_wet": clampf(0.012 + room_scale * 0.105 + showdown_amount * 0.018, 0.0, 0.16),
+		"compressor_pump": compressor_pump,
+		"room_scale": room_scale,
+		"boss_floor": boss_floor,
+		"showdown": showdown,
+		"watched": watched,
+	}
+
+
+static func _music_fx_public_vector(vector: Dictionary) -> Dictionary:
+	var result := vector.duplicate(true)
+	var lowpass_amount := clampf(float(result.get("lowpass_amount", 0.0)), 0.0, 1.0)
+	var watch_tinge := clampf(float(result.get("watch_tinge", 0.0)), 0.0, 1.0)
+	var compressor_pump := clampf(float(result.get("compressor_pump", 0.0)), 0.0, 1.0)
+	result["lowpass_cutoff_hz"] = snappedf(lerpf(18000.0, 4200.0, lowpass_amount), 0.01)
+	result["lowpass_resonance"] = snappedf(0.18 + watch_tinge * 1.20, 0.001)
+	result["watch_bandpass_amount"] = snappedf(watch_tinge, 0.001)
+	result["compressor_threshold_db"] = snappedf(lerpf(-6.0, -22.0, compressor_pump), 0.001)
+	result["compressor_ratio"] = snappedf(lerpf(2.0, 5.2, compressor_pump), 0.001)
+	result["compressor_gain_db"] = snappedf(lerpf(0.0, 2.2, compressor_pump), 0.001)
+	for key_value in MUSIC_FX_LERP_KEYS:
+		var key := str(key_value)
+		if result.has(key):
+			result[key] = snappedf(float(result.get(key, 0.0)), 0.0001)
+	return result
+
+
+static func _neutral_music_fx_vector() -> Dictionary:
+	return {
+		"heat": 0.0,
+		"alcohol_tier": 0,
+		"lowpass_amount": 0.0,
+		"chorus_depth": 0.0,
+		"pitch_wobble_cents": 0.0,
+		"distortion_drive": 0.0,
+		"watch_tinge": 0.0,
+		"reverb_size": 0.20,
+		"reverb_damping": 0.72,
+		"reverb_wet": 0.0,
+		"compressor_pump": 0.0,
+		"room_scale": 0.0,
+		"boss_floor": false,
+		"showdown": false,
+		"watched": false,
+	}
+
+
+static func _normalize_music_mix_input(music_state: Dictionary) -> Dictionary:
+	var fx_input := _normalize_music_fx_input(music_state)
+	var debt_items := _copy_array_static(music_state.get("debt", music_state.get("debt_items", [])))
+	var overdue_count := int(music_state.get("overdue_debt_count", 0))
+	var active_debt_count := int(music_state.get("debt_count", debt_items.size()))
+	for debt_value in debt_items:
+		if typeof(debt_value) != TYPE_DICTIONARY:
+			continue
+		var debt_data: Dictionary = debt_value
+		var status := str(debt_data.get("status", "")).strip_edges().to_lower()
+		if status == "overdue" or status == "favor_due":
+			overdue_count += 1
+	var bankroll := int(music_state.get("bankroll", 100))
+	var bankroll_pressure_amount := clampf(float(music_state.get("bankroll_pressure", 1.0 if bankroll < 50 else 0.0)), 0.0, 1.0)
+	var economy := str(music_state.get("economy", "")).strip_edges().to_lower()
+	if economy == "distressed" or economy == "volatile" or economy == "insolvent":
+		bankroll_pressure_amount = maxf(bankroll_pressure_amount, 0.72 if economy == "distressed" else 0.55)
+	var last_bankroll_delta := int(music_state.get("last_bankroll_delta", 0))
+	var big_win := bool(music_state.get("big_win", false)) or last_bankroll_delta >= int(music_state.get("big_win_threshold", 50))
+	var win_streak := maxi(0, int(music_state.get("win_streak", 0)))
+	var big_win_bars := maxi(0, int(music_state.get("big_win_bars_remaining", 4 if big_win else 0)))
+	return {
+		"heat": float(fx_input.get("heat", 0.0)),
+		"watched": bool(fx_input.get("watched", false)),
+		"watch_active": bool(fx_input.get("watch_active", false)),
+		"staff_attention": bool(fx_input.get("staff_attention", false)),
+		"showdown": bool(fx_input.get("showdown", false)),
+		"showdown_pending": bool(fx_input.get("showdown_pending", false)),
+		"showdown_active": bool(fx_input.get("showdown_active", false)),
+		"boss_floor": bool(fx_input.get("boss_floor", false)),
+		"alcohol_tier": int(fx_input.get("alcohol_tier", 0)),
+		"bankroll": bankroll,
+		"bankroll_pressure": bankroll_pressure_amount,
+		"debt_count": maxi(0, active_debt_count),
+		"overdue_debt_count": maxi(0, overdue_count),
+		"overdue_debt": overdue_count > 0,
+		"economy": economy,
+		"win_streak": win_streak,
+		"big_win": big_win,
+		"big_win_bars_remaining": big_win_bars,
+		"source_environment_id": str(fx_input.get("environment_id", "")),
+	}
+
+
+static func _music_mix_vector_from_input(input: Dictionary) -> Dictionary:
+	var heat := clampf(float(input.get("heat", 0.0)), 0.0, 100.0)
+	var heat_amount := heat / 100.0
+	var high_heat := pow(clampf((heat - 55.0) / 45.0, 0.0, 1.0), 1.15)
+	var watched := bool(input.get("watched", false))
+	var staff_attention := bool(input.get("staff_attention", false))
+	var watch_amount := 1.0 if watched else 0.58 if staff_attention else 0.0
+	var showdown := bool(input.get("showdown", false))
+	var boss_floor := bool(input.get("boss_floor", false))
+	var danger_amount := 1.0 if showdown else 0.45 if boss_floor else 0.0
+	var bankroll_pressure := clampf(float(input.get("bankroll_pressure", 0.0)), 0.0, 1.0)
+	var debt_pressure := 1.0 if bool(input.get("overdue_debt", false)) else clampf(float(int(input.get("debt_count", 0))) / 3.0, 0.0, 0.75)
+	var pressure := clampf(maxf(bankroll_pressure, debt_pressure), 0.0, 1.0)
+	var big_win_bars := maxi(0, int(input.get("big_win_bars_remaining", 0)))
+	var win_boost := clampf((float(maxi(0, int(input.get("win_streak", 0)))) * 0.12) + (0.34 if big_win_bars > 0 or bool(input.get("big_win", false)) else 0.0), 0.0, 0.50)
+	if showdown:
+		return {
+			"pad": 0.08,
+			"bass": 0.0,
+			"bass_dark": 0.56,
+			"lead": 0.04,
+			"drums_low": 0.78,
+			"drums_high": 0.58,
+			"drums_high_double": 0.22,
+			"tension": 1.0,
+			"texture": 0.28,
+		}
+	return {
+		"pad": clampf(0.76 - pressure * 0.30 - danger_amount * 0.20, 0.18, 0.86),
+		"bass": clampf(0.62 - pressure * 0.48, 0.0, 0.72),
+		"bass_dark": clampf(pressure * 0.70 + danger_amount * 0.18, 0.0, 0.78),
+		"lead": clampf(0.48 + win_boost - watch_amount * 0.30 - danger_amount * 0.20, 0.06, 0.95),
+		"drums_low": clampf(0.42 + high_heat * 0.18 + danger_amount * 0.16, 0.22, 0.78),
+		"drums_high": clampf(0.16 + high_heat * 0.58 + win_boost * 0.55, 0.05, 0.92),
+		"drums_high_double": clampf(pow(clampf((heat - 78.0) / 22.0, 0.0, 1.0), 1.2) * 0.42 + win_boost * 0.24, 0.0, 0.62),
+		"tension": clampf(pow(clampf((heat - 60.0) / 40.0, 0.0, 1.0), 1.3) * 0.38 + watch_amount * 0.62 + danger_amount * 0.32, 0.0, 0.95),
+		"texture": clampf(0.48 + (1.0 - heat_amount) * 0.10 - danger_amount * 0.16, 0.18, 0.62),
+	}
+
+
+static func _music_mix_public_vector(vector: Dictionary) -> Dictionary:
+	var result := {}
+	for key_value in MUSIC_MIX_LERP_KEYS:
+		var key := str(key_value)
+		result[key] = snappedf(clampf(float(vector.get(key, 0.0)), 0.0, 1.35), 0.0001)
+	return result
+
+
+static func _feature_mix_public_vector(vector: Dictionary) -> Dictionary:
+	var result := {}
+	for key_value in MUSIC_FEATURE_LERP_KEYS:
+		var key := str(key_value)
+		result[key] = snappedf(clampf(float(vector.get(key, 0.0)), 0.0, 1.2), 0.0001)
+	return result
+
+
+static func _neutral_music_mix_vector() -> Dictionary:
+	return {
+		"pad": 0.76,
+		"bass": 0.62,
+		"bass_dark": 0.0,
+		"lead": 0.48,
+		"drums_low": 0.42,
+		"drums_high": 0.16,
+		"drums_high_double": 0.0,
+		"tension": 0.0,
+		"texture": 0.58,
+	}
+
+
+static func _neutral_feature_mix_vector() -> Dictionary:
+	return {
+		"feature": 0.0,
+		"venue_duck": 0.0,
+	}
+
+
+static func _calm_music_fx_vector(vector: Dictionary) -> Dictionary:
+	var result := vector.duplicate(true)
+	result["lowpass_amount"] = float(result.get("lowpass_amount", 0.0)) * 0.78
+	result["chorus_depth"] = float(result.get("chorus_depth", 0.0)) * 0.66
+	result["pitch_wobble_cents"] = float(result.get("pitch_wobble_cents", 0.0)) * 0.58
+	result["distortion_drive"] = float(result.get("distortion_drive", 0.0)) * 0.54
+	result["watch_tinge"] = float(result.get("watch_tinge", 0.0)) * 0.64
+	result["reverb_wet"] = float(result.get("reverb_wet", 0.0)) * 0.74
+	result["compressor_pump"] = float(result.get("compressor_pump", 0.0)) * 0.50
+	return result
+
+
+static func _calm_music_mix_vector(vector: Dictionary) -> Dictionary:
+	var result := vector.duplicate(true)
+	result["lead"] = float(result.get("lead", 0.0)) * 0.86
+	result["drums_high"] = float(result.get("drums_high", 0.0)) * 0.72
+	result["drums_high_double"] = float(result.get("drums_high_double", 0.0)) * 0.52
+	result["tension"] = float(result.get("tension", 0.0)) * 0.62
+	result["texture"] = float(result.get("texture", 0.0)) * 0.88
+	result["pad"] = minf(0.86, float(result.get("pad", 0.0)) + 0.06)
+	return result
+
+
+static func _normalize_feature_music_input(feature_state: Dictionary) -> Dictionary:
+	var scene := _copy_dict_static(feature_state.get("feature_scene", feature_state.get("scene", {})))
+	var music := _copy_dict_static(feature_state.get("feature_music", feature_state.get("music", scene.get("feature_music", {}))))
+	var active := bool(feature_state.get("active", scene.get("active", false)))
+	var cue_id := str(feature_state.get("cue_id", music.get("cue_id", "feature_music"))).strip_edges()
+	if cue_id.is_empty():
+		cue_id = "feature_music"
+	var scene_id := str(scene.get("scene_id", scene.get("mode", feature_state.get("scene_id", "")))).strip_edges()
+	var music_id := "%s|%s" % [scene_id, cue_id]
+	if scene_id.is_empty():
+		music_id = cue_id
+	return {
+		"active": active,
+		"cue_id": cue_id,
+		"music_id": music_id,
+		"scene_id": scene_id,
+		"duck_background_music": bool(music.get("duck_background_music", feature_state.get("duck_background_music", active))),
+		"volume_db": float(music.get("volume_db", feature_state.get("volume_db", -10.0))),
+		"pitch": float(music.get("pitch", feature_state.get("pitch", 1.0))),
+		"feature_scene": scene,
+	}
+
+
+static func _feature_mix_vector_from_input(input: Dictionary) -> Dictionary:
+	if not bool(input.get("active", false)):
+		return _neutral_feature_mix_vector()
+	var volume_db := clampf(float(input.get("volume_db", -10.0)), -24.0, -2.0)
+	var normalized_volume := clampf(db_to_linear(volume_db + 10.0), 0.35, 1.15)
+	var duck_amount := 0.58 if bool(input.get("duck_background_music", true)) else 0.20
+	return {
+		"feature": clampf(0.86 * normalized_volume, 0.30, 1.05),
+		"venue_duck": duck_amount,
+	}
+
+
+static func _alcohol_tier_for_level(level: int) -> int:
+	if level >= 71:
+		return 3
+	if level >= 46:
+		return 2
+	if level >= 12:
+		return 1
+	return 0
+
+
+static func _room_scale_from_visual_context(visual: Dictionary, environment: Dictionary) -> float:
+	if visual.has("room_scale"):
+		return clampf(float(visual.get("room_scale", 0.35)), 0.0, 1.0)
+	if visual.has("scale"):
+		return clampf(float(visual.get("scale", 0.35)), 0.0, 1.0)
+	var scene_type := str(visual.get("scene_type", environment.get("kind", ""))).strip_edges().to_lower()
+	var kind := str(environment.get("kind", "")).strip_edges().to_lower()
+	var tier := clampi(int(environment.get("tier", 1)), 0, 3)
+	var room_scale := 0.26 + float(tier) * 0.14
+	if kind == "boss" or scene_type.find("boss") >= 0:
+		room_scale = maxf(room_scale, 0.86)
+	elif scene_type.find("river") >= 0 or scene_type.find("queen") >= 0:
+		room_scale = maxf(room_scale, 0.72)
+	elif scene_type.find("jazz") >= 0 or scene_type.find("club") >= 0:
+		room_scale = maxf(room_scale, 0.62)
+	elif kind.find("casino") >= 0 or scene_type.find("bar") >= 0:
+		room_scale = maxf(room_scale, 0.48)
+	elif kind == "shop":
+		room_scale -= 0.08
+	return clampf(room_scale, 0.18, 0.90)
 
 
 func _music_profile_from_environment(environment: Dictionary, heat_level: int) -> Dictionary:
@@ -202,24 +1204,25 @@ func _music_profile_from_environment(environment: Dictionary, heat_level: int) -
 	if theme.is_empty():
 		theme = str(visual.get("scene_type", visual.get("art_key", "neon")))
 
-	var heat := clampi(heat_level, 0, 100)
-	var heat_pressure := float(heat) / 100.0
-	var heat_band := clampi(int(floor(float(heat) / 10.0)), 0, 10)
 	var base_safety := clampf(float(source.get("safety", _safety_from_security(security))), 0.0, 1.0)
-	var effective_safety := clampf(base_safety - heat_pressure * 0.42, 0.02, 0.98)
+	var effective_safety := base_safety
 	var base_bpm := float(source.get("bpm", _theme_bpm(theme)))
-	var bpm := clampf(base_bpm + heat_pressure * 10.0 + (1.0 - base_safety) * 3.0, 58.0, 112.0)
-	var seed := _stable_hash("%s:%s:%s:%d" % [
-		str(environment.get("id", "")),
+	var bpm := clampf(base_bpm + (1.0 - base_safety) * 3.0, 58.0, 112.0)
+	var palette_id := str(source.get("palette_id", _theme_texture(theme))).strip_edges()
+	if palette_id.is_empty():
+		palette_id = _theme_texture(theme)
+	var seed := _stable_hash("%s:%s:%d" % [
 		str(environment.get("archetype_id", "")),
 		theme,
-		heat_band,
+		_stable_hash(palette_id),
 	])
 
 	var profile := {
 		"environment_id": str(environment.get("id", "")),
 		"archetype_id": str(environment.get("archetype_id", "")),
 		"theme": theme,
+		"palette_id": palette_id,
+		"authored_track_id": str(source.get("authored_track_id", "")).strip_edges(),
 		"mood": mood,
 		"mode": str(source.get("mode", _theme_mode(theme))).to_lower(),
 		"texture": str(source.get("texture", _theme_texture(theme))),
@@ -230,8 +1233,8 @@ func _music_profile_from_environment(environment: Dictionary, heat_level: int) -
 		"base_safety": base_safety,
 		"safety": effective_safety,
 		"ambience": clampf(float(source.get("ambience", _theme_ambience(theme))), 0.0, 1.0),
-		"heat_pressure": heat_pressure,
-		"heat_band": heat_band,
+		"heat_pressure": 0.0,
+		"heat_band": 0,
 		"volume": float(source.get("volume", 0.26)),
 		"arrangement_phrases": clampi(int(source.get("arrangement_phrases", DEFAULT_ARRANGEMENT_PHRASES)), MIN_ARRANGEMENT_PHRASES, MAX_ARRANGEMENT_PHRASES),
 	}
@@ -241,17 +1244,13 @@ func _music_profile_from_environment(environment: Dictionary, heat_level: int) -
 
 
 func _ambient_cache_key(profile: Dictionary) -> String:
-	return "ambient:%d:%s:%s:%s:%s:%d:%d:%d:%s:%s" % [
+	var authored_track_id := str(profile.get("authored_track_id", ""))
+	return "stem:%d:%s:%s:%s:%s" % [
 		AMBIENT_VERSION,
-		str(profile.get("environment_id", "")),
 		str(profile.get("archetype_id", "")),
 		str(profile.get("theme", "")),
-		str(profile.get("mode", "")),
-		int(profile.get("heat_band", 0)),
-		int(profile.get("root_midi", 0)),
-		int(profile.get("arrangement_phrases", DEFAULT_ARRANGEMENT_PHRASES)),
-		JSON.stringify(profile.get("progression", [])),
-		JSON.stringify(profile.get("motif", [])),
+		str(profile.get("palette_id", "")),
+		authored_track_id if not authored_track_id.is_empty() else "procedural",
 	]
 
 
@@ -266,13 +1265,13 @@ func _request_ambient_generation(profile: Dictionary, cache_key: String, token: 
 	_remember_profile(cache_key, profile)
 	if _generation_thread != null:
 		if _ambient_primer_cache.has(cache_key):
-			_play_primer_stream(cache_key, _ambient_primer_cache[cache_key])
+			_play_primer_stem_set(cache_key, _ambient_primer_cache[cache_key])
 		_queued_generation_profile = profile.duplicate(true)
 		_queued_generation_cache_key = cache_key
 		_queued_generation_token = token
 		return
 	if _ambient_primer_cache.has(cache_key):
-		_play_primer_stream(cache_key, _ambient_primer_cache[cache_key])
+		_play_primer_stem_set(cache_key, _ambient_primer_cache[cache_key])
 		_start_ambient_generation(profile, cache_key, token, AMBIENT_STAGE_FULL)
 		return
 	_start_ambient_generation(profile, cache_key, token, AMBIENT_STAGE_PRIMER)
@@ -311,7 +1310,7 @@ func _generate_ambient_data_thread(profile: Dictionary, cache_key: String, token
 			"stage": stage,
 			"token": token,
 		}
-	var data := _ambient_pcm_data(context, token)
+	var stem_set := _procedural_stem_set_from_context(profile, context, stage, token)
 	if _generation_was_cancelled(token):
 		return {
 			"cancelled": true,
@@ -326,7 +1325,7 @@ func _generate_ambient_data_thread(profile: Dictionary, cache_key: String, token
 		"stage": stage,
 		"profile": profile,
 		"frames": frames,
-		"data": data,
+		"stem_set": stem_set,
 	}
 
 
@@ -367,7 +1366,7 @@ func _start_queued_generation() -> void:
 	if token != _current_generation_token() or cache_key != _pending_cache_key:
 		return
 	if _ambient_stream_cache.has(cache_key):
-		_accept_full_stream(cache_key, _ambient_stream_cache[cache_key])
+		_accept_full_stem_set(cache_key, _ambient_stream_cache[cache_key])
 		return
 	_request_ambient_generation(profile, cache_key, token)
 
@@ -379,24 +1378,22 @@ func _apply_generated_ambient_data(result: Dictionary) -> void:
 	var token := int(result.get("token", 0))
 	if cache_key.is_empty() or token != _current_generation_token() or cache_key != _pending_cache_key:
 		return
-	var frames := int(result.get("frames", 0))
-	var data: PackedByteArray = result.get("data", PackedByteArray())
-	if frames <= 0 or data.is_empty():
+	var stem_set: Dictionary = result.get("stem_set", {}) as Dictionary
+	if not _stem_set_contract_valid(stem_set):
 		_pending_cache_key = ""
 		return
 	var stage := str(result.get("stage", AMBIENT_STAGE_FULL))
-	var stream := _ambient_stream_from_data(data, frames)
 	if stage == AMBIENT_STAGE_PRIMER:
-		_ambient_primer_cache[cache_key] = stream
-		_play_primer_stream(cache_key, stream)
+		_ambient_primer_cache[cache_key] = stem_set
+		_play_primer_stem_set(cache_key, stem_set)
 		var profile: Dictionary = result.get("profile", {})
 		if profile.is_empty():
 			_pending_cache_key = ""
 			return
 		_start_ambient_generation(profile, cache_key, token, AMBIENT_STAGE_FULL)
 		return
-	_ambient_stream_cache[cache_key] = stream
-	_accept_full_stream(cache_key, stream)
+	_ambient_stream_cache[cache_key] = stem_set
+	_accept_full_stem_set(cache_key, stem_set)
 
 
 func _ambient_pcm_data(context: Dictionary, token: int = -1) -> PackedByteArray:
@@ -410,6 +1407,158 @@ func _ambient_pcm_data(context: Dictionary, token: int = -1) -> PackedByteArray:
 	return data
 
 
+func _procedural_stem_contract_from_context(profile: Dictionary, context: Dictionary, stage: String) -> Dictionary:
+	var frames := int(context.get("frames", 0))
+	var stems := {}
+	for role_value in MUSIC_STEM_PLAYBACK_ROLES:
+		var role := str(role_value)
+		stems[role] = {
+			"planned": true,
+			"loop_begin": 0,
+			"loop_end": frames,
+			"frames": frames,
+		}
+	var contract := _stem_set_contract("procedural", stems, float(context.get("bpm", profile.get("bpm", 82.0))), int(context.get("bars", 1)), frames, str(profile.get("palette_id", "")), {}, stage)
+	contract["step_period"] = float(context.get("step_period", 0.36))
+	contract["profile"] = profile.duplicate(true)
+	return contract
+
+
+func _procedural_stem_set_from_context(profile: Dictionary, context: Dictionary, stage: String, token: int = -1) -> Dictionary:
+	var frames := int(context.get("frames", 0))
+	if frames <= 0:
+		return {}
+	var stem_data := _ambient_stem_pcm_data(context, token)
+	if stem_data.is_empty():
+		return {}
+	var stems := _streams_from_stem_data(stem_data, frames)
+	var contract := _stem_set_contract("procedural", stems, float(context.get("bpm", profile.get("bpm", 82.0))), int(context.get("bars", 1)), frames, str(profile.get("palette_id", "")), {}, stage)
+	contract["step_period"] = float(context.get("step_period", 0.36))
+	contract["profile"] = profile.duplicate(true)
+	return contract
+
+
+func _ambient_stem_pcm_data(context: Dictionary, token: int = -1) -> Dictionary:
+	var frames := int(context.get("frames", 0))
+	var pad_data := _empty_pcm(frames)
+	var bass_data := _empty_pcm(frames)
+	var bass_dark_data := _empty_pcm(frames)
+	var lead_data := _empty_pcm(frames)
+	var drums_low_data := _empty_pcm(frames)
+	var drums_high_data := _empty_pcm(frames)
+	var drums_high_double_data := _empty_pcm(frames)
+	var tension_data := _empty_pcm(frames)
+	var texture_data := _empty_pcm(frames)
+	var step_period := float(context.get("step_period", 0.36))
+	var beat_period := float(context.get("beat_period", 0.72))
+	var phrase_steps := int(context.get("phrase_steps", BASE_PHRASE_STEPS))
+	var phrase_count := int(context.get("phrase_count", DEFAULT_ARRANGEMENT_PHRASES))
+	var total_steps := int(context.get("total_steps", 32))
+	var duration := float(context.get("duration", step_period * float(total_steps)))
+	var root_midi := int(context.get("root_midi", 45))
+	var danger := float(context.get("danger", 0.5))
+	var volume := float(context.get("volume", 0.22))
+	var pad_gain := float(context.get("pad_gain", 0.38))
+	var bass_gain := float(context.get("bass_gain", 0.20))
+	var lead_gain := float(context.get("lead_gain", 0.08))
+	var drum_gain := float(context.get("drum_gain", 0.07))
+	var texture_gain := float(context.get("texture_gain", 0.45))
+	var heartbeat_gain := float(context.get("heartbeat_gain", 0.02))
+	var siren_gain := float(context.get("siren_gain", 0.0))
+	var scale: Array = context.get("scale", SCALE_MINOR)
+	var progression_degrees: Array = context.get("progression_degrees", DEFAULT_PROGRESSION)
+	var chord_roots: Array = context.get("chord_roots", [0])
+	var chord_voicings: Array = context.get("chord_voicings", [])
+	var motif: Array = context.get("motif", DEFAULT_MOTIF)
+	var palette: Dictionary = context.get("instrument_palette", {}) as Dictionary
+	var swing_amount := float(context.get("swing_amount", 0.0))
+	var answer_transform := str(context.get("answer_transform", "inversion"))
+	var bridge_phrase_index := int(context.get("bridge_phrase_index", 2))
+	var texture_kind := str(context.get("texture_kind", "fluorescent"))
+	var texture_rate := float(context.get("texture_rate", 0.33))
+	var texture_seed := int(context.get("texture_seed", 0))
+	var variation_seed := int(context.get("variation_seed", texture_seed))
+	var humanize_seed := int(context.get("humanize_seed", variation_seed))
+	var render_stride := maxi(1, AMBIENT_RENDER_STRIDE_FRAMES)
+	var i := 0
+	while i < frames:
+		if token > 0 and i % GENERATION_CANCEL_CHECK_FRAMES == 0 and _generation_was_cancelled(token):
+			return {}
+		var t := float(i) / float(SAMPLE_RATE)
+		var step_index := int(t / step_period) % total_steps
+		var step_local := fposmod(t, step_period)
+		var phrase_index := int(step_index / phrase_steps) % maxi(1, phrase_count)
+		var phrase_step := step_index % phrase_steps
+		var bar_index := int(phrase_step / STEPS_PER_BAR) % maxi(1, chord_roots.size())
+		var beat_step := phrase_step % STEPS_PER_BAR
+		var chord_root := root_midi + int(chord_roots[bar_index])
+		var chord_voicing: Array = []
+		if not chord_voicings.is_empty():
+			chord_voicing = chord_voicings[bar_index % chord_voicings.size()] as Array
+		var phrase_energy := _phrase_energy(phrase_index, phrase_count, danger)
+		var fill_amount := _phrase_fill_amount(phrase_step, phrase_index, phrase_count, phrase_energy)
+		var loop_edge := _loop_edge_envelope(t, duration)
+		var stem_scale := volume * loop_edge
+		var pad := _music_pad_voiced(root_midi, chord_voicing, chord_root, t, palette) * pad_gain * lerpf(0.94, 1.06, phrase_energy) * stem_scale
+		var bass := 0.0
+		var bass_dark := 0.0
+		var bass_offset := _bass_offset_for_step(scale, progression_degrees, chord_roots, bar_index, beat_step, phrase_index, phrase_count, variation_seed)
+		if bass_offset > -900:
+			var bass_freq := _midi_freq(root_midi + bass_offset)
+			var bass_note := _music_bass(bass_freq, step_local) * bass_gain * lerpf(0.92, 1.13, phrase_energy) * _palette_value(palette, "bass_weight", 1.0)
+			bass = bass_note * stem_scale
+			bass_dark = _music_dark_bass(bass_freq, step_local) * bass_gain * 1.08 * lerpf(0.95, 1.18, phrase_energy) * stem_scale
+		var lead := 0.0
+		var lead_offset := _lead_offset_for_step(scale, progression_degrees, motif, bar_index, phrase_step, phrase_index, phrase_count, variation_seed, answer_transform, bridge_phrase_index)
+		if lead_offset > -900:
+			var lead_local := _swing_step_local(beat_step, step_local, step_period, swing_amount)
+			var lead_velocity := _step_humanization(humanize_seed, phrase_step, phrase_index, 0.08)
+			lead = _music_lead(_midi_freq(root_midi + lead_offset), lead_local, palette) * lead_gain * lerpf(0.70, 1.28, phrase_energy) * lead_velocity * stem_scale
+		var drum_frame := i + texture_seed
+		var drum_local := _swing_step_local(beat_step, step_local, step_period, swing_amount)
+		var hat_velocity := _step_humanization(humanize_seed + 29, phrase_step, phrase_index, 0.10)
+		var drums_low := _music_drums_low(beat_step, drum_local, drum_frame, phrase_index, phrase_count, variation_seed, fill_amount, palette) * drum_gain * stem_scale
+		var drums_high := _music_drums_high(beat_step, drum_local, step_period, drum_frame, phrase_index, phrase_count, variation_seed, fill_amount, palette) * drum_gain * hat_velocity * stem_scale
+		var drums_high_double := _music_drums_high_double(beat_step, drum_local, step_period, drum_frame + 17, phrase_index, phrase_count, variation_seed, fill_amount, palette) * drum_gain * 0.82 * hat_velocity * stem_scale
+		var heartbeat := _heartbeat_shape(fposmod(t, beat_period), beat_period) * heartbeat_gain
+		var siren := _music_siren(t) * siren_gain
+		var tension := (heartbeat + siren) * stem_scale
+		var texture := _ambient_texture_sample(texture_kind, texture_rate, t, i, texture_seed) * texture_gain * stem_scale
+		var pad_sample := _soft_limit(pad)
+		var bass_sample := _soft_limit(bass)
+		var bass_dark_sample := _soft_limit(bass_dark)
+		var lead_sample := _soft_limit(lead)
+		var drums_low_sample := _soft_limit(drums_low)
+		var drums_high_sample := _soft_limit(drums_high)
+		var drums_high_double_sample := _soft_limit(drums_high_double)
+		var tension_sample := _soft_limit(tension)
+		var texture_sample := _soft_limit(texture)
+		var repeat_count := mini(render_stride, frames - i)
+		for repeat_index in range(repeat_count):
+			var byte_index := (i + repeat_index) * PCM_BYTES_PER_FRAME
+			_write_i16(pad_data, byte_index, pad_sample)
+			_write_i16(bass_data, byte_index, bass_sample)
+			_write_i16(bass_dark_data, byte_index, bass_dark_sample)
+			_write_i16(lead_data, byte_index, lead_sample)
+			_write_i16(drums_low_data, byte_index, drums_low_sample)
+			_write_i16(drums_high_data, byte_index, drums_high_sample)
+			_write_i16(drums_high_double_data, byte_index, drums_high_double_sample)
+			_write_i16(tension_data, byte_index, tension_sample)
+			_write_i16(texture_data, byte_index, texture_sample)
+		i += render_stride
+	return {
+		"pad": pad_data,
+		"bass": bass_data,
+		"bass_dark": bass_dark_data,
+		"lead": lead_data,
+		"drums_low": drums_low_data,
+		"drums_high": drums_high_data,
+		"drums_high_double": drums_high_double_data,
+		"tension": tension_data,
+		"texture": texture_data,
+	}
+
+
 func _remember_profile(cache_key: String, profile: Dictionary) -> void:
 	if cache_key.is_empty() or profile.is_empty():
 		return
@@ -419,7 +1568,7 @@ func _remember_profile(cache_key: String, profile: Dictionary) -> void:
 func _should_defer_music_change(cache_key: String) -> bool:
 	if cache_key.is_empty() or cache_key == _current_cache_key:
 		return false
-	if _ambient_player == null or not _ambient_player.playing:
+	if not _music_is_playing():
 		return false
 	return not _current_cache_key.is_empty()
 
@@ -430,7 +1579,7 @@ func _schedule_breakpoint_music_change(profile: Dictionary, cache_key: String) -
 	_remember_profile(cache_key, profile)
 	if cache_key == _transition_target_cache_key:
 		if _ambient_stream_cache.has(cache_key):
-			_set_deferred_transition_stream(cache_key, _ambient_stream_cache[cache_key])
+			_set_deferred_transition_stem_set(cache_key, _ambient_stream_cache[cache_key])
 		return
 	_transition_target_cache_key = cache_key
 	_transition_target_profile = profile.duplicate(true)
@@ -439,47 +1588,48 @@ func _schedule_breakpoint_music_change(profile: Dictionary, cache_key: String) -
 	_pending_cache_key = cache_key
 	var token := _advance_generation_token()
 	if _ambient_stream_cache.has(cache_key):
-		_set_deferred_transition_stream(cache_key, _ambient_stream_cache[cache_key])
+		_set_deferred_transition_stem_set(cache_key, _ambient_stream_cache[cache_key])
 		return
 	_start_ambient_generation(profile, cache_key, token, AMBIENT_STAGE_FULL)
 
 
-func _accept_full_stream(cache_key: String, stream: AudioStreamWAV) -> void:
+func _accept_full_stem_set(cache_key: String, stem_set: Dictionary) -> void:
 	if cache_key == _transition_target_cache_key and _should_defer_music_change(cache_key):
-		_set_deferred_transition_stream(cache_key, stream)
+		_set_deferred_transition_stem_set(cache_key, stem_set)
 		return
-	_play_full_stream(cache_key, stream)
+	_play_full_stem_set(cache_key, stem_set)
 
 
-func _set_deferred_transition_stream(cache_key: String, stream: AudioStreamWAV) -> void:
-	if stream == null:
+func _set_deferred_transition_stem_set(cache_key: String, stem_set: Dictionary) -> void:
+	if not _stem_set_contract_valid(stem_set):
 		return
 	_deferred_transition_cache_key = cache_key
-	_deferred_transition_stream = stream
+	_deferred_transition_stem_set = stem_set.duplicate(true)
 
 
 func _poll_breakpoint_transition() -> void:
-	if _deferred_transition_cache_key.is_empty() or _deferred_transition_stream == null:
+	if _deferred_transition_cache_key.is_empty() or _deferred_transition_stem_set.is_empty():
 		return
 	if not _ready_for_music_breakpoint():
 		return
 	var cache_key := _deferred_transition_cache_key
-	var stream := _deferred_transition_stream
+	var stem_set := _deferred_transition_stem_set.duplicate(true)
 	_deferred_transition_cache_key = ""
 	_deferred_transition_stream = null
+	_deferred_transition_stem_set = {}
 	_transition_target_cache_key = ""
 	_transition_target_profile = {}
-	_play_full_stream(cache_key, stream)
+	_play_full_stem_set(cache_key, stem_set)
 
 
 func _ready_for_music_breakpoint() -> bool:
-	if _ambient_player == null or not _ambient_player.playing:
+	if not _music_is_playing():
 		return true
 	if _current_music_context.is_empty():
 		return true
 	var step_period := float(_current_music_context.get("step_period", 0.36))
 	var break_period := maxf(0.25, step_period * float(TRANSITION_BREAK_STEPS))
-	var position := _ambient_player.get_playback_position()
+	var position := _director_playback_position()
 	var phase := fposmod(position, break_period)
 	return phase <= TRANSITION_BREAK_WINDOW_SECONDS or phase >= break_period - TRANSITION_BREAK_WINDOW_SECONDS
 
@@ -492,12 +1642,12 @@ func _remember_current_music_context(cache_key: String) -> void:
 	_current_music_context = _ambient_generation_context(profile)
 
 
-func _play_instant_bed(profile: Dictionary, cache_key: String) -> void:
-	if _ambient_player == null:
+func _play_instant_stem_bed(profile: Dictionary, cache_key: String) -> void:
+	if _stem_players.is_empty():
 		return
 	if not _ambient_instant_cache.has(cache_key):
-		_ambient_instant_cache[cache_key] = _instant_bed_stream(profile)
-	_play_primer_stream(cache_key, _ambient_instant_cache[cache_key])
+		_ambient_instant_cache[cache_key] = _instant_bed_stem_set(profile)
+	_play_primer_stem_set(cache_key, _ambient_instant_cache[cache_key])
 
 
 func _instant_bed_stream(profile: Dictionary) -> AudioStreamWAV:
@@ -507,12 +1657,28 @@ func _instant_bed_stream(profile: Dictionary) -> AudioStreamWAV:
 	return _ambient_stream_from_data(data, frames)
 
 
+func _instant_bed_stem_set(profile: Dictionary) -> Dictionary:
+	var context := _ambient_generation_context(profile)
+	var frames := maxi(1, int(INSTANT_BED_SECONDS * float(SAMPLE_RATE)))
+	var stem_data := _instant_bed_stem_pcm_data(context, frames)
+	var stems := _streams_from_stem_data(stem_data, frames)
+	var contract := _stem_set_contract("procedural", stems, float(context.get("bpm", profile.get("bpm", 82.0))), 1, frames, str(profile.get("palette_id", "")), {}, AMBIENT_STAGE_PRIMER)
+	contract["step_period"] = float(context.get("step_period", 0.36))
+	contract["profile"] = profile.duplicate(true)
+	return contract
+
+
 func _instant_bed_pcm_data(context: Dictionary, frames: int) -> PackedByteArray:
 	var root_midi := int(context.get("root_midi", 45))
 	var chord_roots: Array = context.get("chord_roots", [0])
+	var chord_voicings: Array = context.get("chord_voicings", [])
+	var palette: Dictionary = context.get("instrument_palette", {}) as Dictionary
 	var chord_root := root_midi
 	if not chord_roots.is_empty():
 		chord_root += int(chord_roots[0])
+	var chord_voicing: Array = []
+	if not chord_voicings.is_empty():
+		chord_voicing = chord_voicings[0] as Array
 	var volume := float(context.get("volume", 0.22)) * 0.82
 	var pad_gain := float(context.get("pad_gain", 0.38))
 	var texture_gain := float(context.get("texture_gain", 0.45)) * 0.72
@@ -524,10 +1690,42 @@ func _instant_bed_pcm_data(context: Dictionary, frames: int) -> PackedByteArray:
 	for i in range(frames):
 		var t := float(i) / float(SAMPLE_RATE)
 		var loop_edge := _loop_edge_envelope(t, INSTANT_BED_SECONDS)
-		var pad := _music_pad(chord_root, t) * pad_gain
+		var pad := _music_pad_voiced(root_midi, chord_voicing, chord_root, t, palette) * pad_gain
 		var texture := _ambient_texture_sample(texture_kind, texture_rate, t, i, texture_seed) * texture_gain
 		_write_i16(data, i * PCM_BYTES_PER_FRAME, _soft_limit((pad + texture) * volume * loop_edge))
 	return data
+
+
+func _instant_bed_stem_pcm_data(context: Dictionary, frames: int) -> Dictionary:
+	var root_midi := int(context.get("root_midi", 45))
+	var chord_roots: Array = context.get("chord_roots", [0])
+	var chord_voicings: Array = context.get("chord_voicings", [])
+	var palette: Dictionary = context.get("instrument_palette", {}) as Dictionary
+	var chord_root := root_midi
+	if not chord_roots.is_empty():
+		chord_root += int(chord_roots[0])
+	var chord_voicing: Array = []
+	if not chord_voicings.is_empty():
+		chord_voicing = chord_voicings[0] as Array
+	var volume := float(context.get("volume", 0.22)) * 0.82
+	var pad_gain := float(context.get("pad_gain", 0.38))
+	var texture_gain := float(context.get("texture_gain", 0.45)) * 0.72
+	var texture_kind := str(context.get("texture_kind", "fluorescent"))
+	var texture_rate := float(context.get("texture_rate", 0.33))
+	var texture_seed := int(context.get("texture_seed", 0))
+	var pad_data := _empty_pcm(frames)
+	var texture_data := _empty_pcm(frames)
+	for i in range(frames):
+		var t := float(i) / float(SAMPLE_RATE)
+		var loop_edge := _loop_edge_envelope(t, INSTANT_BED_SECONDS)
+		var pad := _music_pad_voiced(root_midi, chord_voicing, chord_root, t, palette) * pad_gain * volume * loop_edge
+		var texture := _ambient_texture_sample(texture_kind, texture_rate, t, i, texture_seed) * texture_gain * volume * loop_edge
+		_write_i16(pad_data, i * PCM_BYTES_PER_FRAME, _soft_limit(pad))
+		_write_i16(texture_data, i * PCM_BYTES_PER_FRAME, _soft_limit(texture))
+	return {
+		"pad": pad_data,
+		"texture": texture_data,
+	}
 
 
 func _primer_context(context: Dictionary) -> Dictionary:
@@ -540,28 +1738,26 @@ func _primer_context(context: Dictionary) -> Dictionary:
 	return primer
 
 
-func _play_primer_stream(cache_key: String, stream: AudioStreamWAV) -> void:
-	if _ambient_player == null:
+func _play_primer_stem_set(cache_key: String, stem_set: Dictionary) -> void:
+	if _stem_players.is_empty() or not _stem_set_contract_valid(stem_set):
 		return
 	_current_cache_key = cache_key
 	_current_stream_is_primer = true
 	_remember_current_music_context(cache_key)
-	_ambient_player.stream = stream
-	_ambient_player.play()
+	_play_stem_set(stem_set, 0.0, AMBIENT_STAGE_PRIMER)
 
 
-func _play_full_stream(cache_key: String, stream: AudioStreamWAV) -> void:
+func _play_full_stem_set(cache_key: String, stem_set: Dictionary) -> void:
 	_pending_cache_key = ""
 	var resume_position := 0.0
-	if _ambient_player != null and _ambient_player.playing and _current_cache_key == cache_key and _current_stream_is_primer:
-		resume_position = maxf(0.0, _ambient_player.get_playback_position())
-	if _ambient_player == null:
+	if _music_is_playing() and _current_cache_key == cache_key and _current_stream_is_primer:
+		resume_position = maxf(0.0, _director_playback_position())
+	if _stem_players.is_empty() or not _stem_set_contract_valid(stem_set):
 		return
 	_current_cache_key = cache_key
 	_current_stream_is_primer = false
 	_remember_current_music_context(cache_key)
-	_ambient_player.stream = stream
-	_ambient_player.play(resume_position)
+	_play_stem_set(stem_set, resume_position, AMBIENT_STAGE_FULL)
 
 
 func _advance_generation_token() -> int:
@@ -613,12 +1809,17 @@ func _ambient_generation_context(profile: Dictionary) -> Dictionary:
 	var texture_kind := str(profile.get("texture", "fluorescent"))
 	var texture_rate := float(profile.get("texture_rate", 0.33))
 	var texture_seed := int(profile.get("texture_seed", 0))
-	var variation_seed := int(profile.get("texture_seed", 0)) + int(profile.get("heat_band", 0)) * 37 + _stable_hash(str(profile.get("theme", ""))) % 4099
+	var variation_seed := int(profile.get("texture_seed", 0)) + _stable_hash("%s:%s" % [str(profile.get("theme", "")), str(profile.get("palette_id", ""))]) % 4099
+	var theme := str(profile.get("theme", texture_kind))
+	var palette := _theme_instrument_palette(theme)
+	var swing_amount := clampf(float(profile.get("swing_amount", _theme_swing_amount(theme))), 0.0, 0.22)
 	return {
+		"bpm": bpm,
 		"beat_period": beat_period,
 		"step_period": step_period,
 		"phrase_steps": phrase_steps,
 		"phrase_count": phrase_count,
+		"bars": maxi(1, int(ceil(float(total_steps) / float(STEPS_PER_BAR)))),
 		"total_steps": total_steps,
 		"duration": duration,
 		"frames": frames,
@@ -638,7 +1839,16 @@ func _ambient_generation_context(profile: Dictionary) -> Dictionary:
 		"progression_degrees": progression,
 		"chord_roots": harmony.get("roots", []),
 		"chord_intervals": harmony.get("intervals", []),
+		"chord_voicings": harmony.get("voicings", []),
+		"voicing_inversions": harmony.get("inversions", []),
 		"motif": motif,
+		"arrangement_form": "AABA",
+		"bridge_phrase_index": mini(2, maxi(0, phrase_count - 1)),
+		"answer_transform": "inversion" if int(abs(variation_seed)) % 2 == 0 else "transposition",
+		"swing_amount": swing_amount,
+		"humanize_seed": variation_seed + 193,
+		"instrument_palette": palette,
+		"palette_id": str(palette.get("id", profile.get("palette_id", ""))),
 		"texture_kind": texture_kind,
 		"texture_rate": texture_rate,
 		"texture_seed": texture_seed,
@@ -666,11 +1876,17 @@ func _write_ambient_frame(data: PackedByteArray, context: Dictionary, frame_inde
 	var scale: Array = context.get("scale", SCALE_MINOR)
 	var progression_degrees: Array = context.get("progression_degrees", DEFAULT_PROGRESSION)
 	var chord_roots: Array = context.get("chord_roots", [0])
+	var chord_voicings: Array = context.get("chord_voicings", [])
 	var motif: Array = context.get("motif", DEFAULT_MOTIF)
+	var palette: Dictionary = context.get("instrument_palette", {}) as Dictionary
+	var swing_amount := float(context.get("swing_amount", 0.0))
+	var answer_transform := str(context.get("answer_transform", "inversion"))
+	var bridge_phrase_index := int(context.get("bridge_phrase_index", 2))
 	var texture_kind := str(context.get("texture_kind", "fluorescent"))
 	var texture_rate := float(context.get("texture_rate", 0.33))
 	var texture_seed := int(context.get("texture_seed", 0))
 	var variation_seed := int(context.get("variation_seed", texture_seed))
+	var humanize_seed := int(context.get("humanize_seed", variation_seed))
 	var t := float(frame_index) / float(SAMPLE_RATE)
 	var step_index := int(t / step_period) % total_steps
 	var step_local := fposmod(t, step_period)
@@ -679,17 +1895,23 @@ func _write_ambient_frame(data: PackedByteArray, context: Dictionary, frame_inde
 	var bar_index := int(phrase_step / 8) % maxi(1, chord_roots.size())
 	var beat_step := phrase_step % 8
 	var chord_root := root_midi + int(chord_roots[bar_index])
+	var chord_voicing: Array = []
+	if not chord_voicings.is_empty():
+		chord_voicing = chord_voicings[bar_index % chord_voicings.size()] as Array
 	var phrase_energy := _phrase_energy(phrase_index, phrase_count, danger)
-	var pad := _music_pad(chord_root, t) * pad_gain * lerpf(0.94, 1.06, phrase_energy)
+	var fill_amount := _phrase_fill_amount(phrase_step, phrase_index, phrase_count, phrase_energy)
+	var pad := _music_pad_voiced(root_midi, chord_voicing, chord_root, t, palette) * pad_gain * lerpf(0.94, 1.06, phrase_energy)
 	var bass := 0.0
 	var bass_offset := _bass_offset_for_step(scale, progression_degrees, chord_roots, bar_index, beat_step, phrase_index, phrase_count, variation_seed)
 	if bass_offset > -900:
-		bass = _music_bass(_midi_freq(root_midi + bass_offset), step_local) * bass_gain * lerpf(0.92, 1.13, phrase_energy)
+		bass = _music_bass(_midi_freq(root_midi + bass_offset), step_local) * bass_gain * lerpf(0.92, 1.13, phrase_energy) * _palette_value(palette, "bass_weight", 1.0)
 	var lead := 0.0
-	var lead_offset := _lead_offset_for_step(scale, progression_degrees, motif, bar_index, phrase_step, phrase_index, phrase_count, variation_seed)
+	var lead_offset := _lead_offset_for_step(scale, progression_degrees, motif, bar_index, phrase_step, phrase_index, phrase_count, variation_seed, answer_transform, bridge_phrase_index)
 	if lead_offset > -900:
-		lead = _music_lead(_midi_freq(root_midi + lead_offset), step_local) * lead_gain * lerpf(0.70, 1.28, phrase_energy)
-	var drums := _music_drums(beat_step, step_local, step_period, frame_index + texture_seed, phrase_index, phrase_count, variation_seed) * drum_gain
+		var lead_local := _swing_step_local(beat_step, step_local, step_period, swing_amount)
+		lead = _music_lead(_midi_freq(root_midi + lead_offset), lead_local, palette) * lead_gain * lerpf(0.70, 1.28, phrase_energy) * _step_humanization(humanize_seed, phrase_step, phrase_index, 0.08)
+	var drum_local := _swing_step_local(beat_step, step_local, step_period, swing_amount)
+	var drums := _music_drums(beat_step, drum_local, step_period, frame_index + texture_seed, phrase_index, phrase_count, variation_seed, fill_amount, palette) * drum_gain * _step_humanization(humanize_seed + 29, phrase_step, phrase_index, 0.10)
 	var heartbeat := _heartbeat_shape(fposmod(t, beat_period), beat_period) * heartbeat_gain
 	var texture := _ambient_texture_sample(texture_kind, texture_rate, t, frame_index, texture_seed) * texture_gain
 	var siren := _music_siren(t) * siren_gain
@@ -710,6 +1932,593 @@ func _ambient_stream_from_data(data: PackedByteArray, frames: int) -> AudioStrea
 	return stream
 
 
+func _empty_pcm(frames: int) -> PackedByteArray:
+	var data := PackedByteArray()
+	data.resize(maxi(0, frames * PCM_BYTES_PER_FRAME))
+	return data
+
+
+func _streams_from_stem_data(stem_data: Dictionary, frames: int) -> Dictionary:
+	var stems := {}
+	for role_value in MUSIC_STEM_PLAYBACK_ROLES:
+		var role := str(role_value)
+		var data: PackedByteArray = stem_data.get(role, PackedByteArray())
+		if data.is_empty():
+			data = _empty_pcm(frames)
+		stems[role] = _ambient_stream_from_data(data, frames)
+	return stems
+
+
+func _feature_stem_set_for_input(input: Dictionary) -> Dictionary:
+	var cue_id := str(input.get("cue_id", "feature_music"))
+	var base_profile: Dictionary = _current_stem_set.get("profile", {}) as Dictionary
+	var bpm := float(_current_stem_set.get("bpm", base_profile.get("bpm", 96.0)))
+	if bpm <= 1.0:
+		bpm = 96.0
+	var style := _feature_music_style(cue_id)
+	var palette_id := "%s_feature" % style
+	var cache_key := "feature:%d:%s:%s:%0.2f" % [AMBIENT_VERSION, cue_id, str(base_profile.get("palette_id", "")), bpm]
+	if _feature_stem_cache.has(cache_key):
+		return (_feature_stem_cache.get(cache_key, {}) as Dictionary).duplicate(true)
+	var bars := 2
+	var step_period := _step_period_from_bpm(bpm)
+	var frames := maxi(1, int(step_period * float(STEPS_PER_BAR * bars) * float(SAMPLE_RATE)))
+	var root_midi := int(base_profile.get("root_midi", 45))
+	if root_midi <= 0:
+		root_midi = 43 if style == "buffalo" else 52
+	var stem_data := _feature_stem_pcm_data(style, root_midi, bpm, frames, bars)
+	var stems := _streams_from_stem_data(stem_data, frames)
+	var stingers := _feature_stinger_streams_for_style(style, bpm)
+	var contract := _stem_set_contract("procedural", stems, bpm, bars, frames, palette_id, stingers, AMBIENT_STAGE_FULL)
+	contract["step_period"] = step_period
+	contract["profile"] = {
+		"theme": str(base_profile.get("theme", style)),
+		"palette_id": palette_id,
+		"root_midi": root_midi,
+	}
+	_feature_stem_cache[cache_key] = contract.duplicate(true)
+	return contract
+
+
+func _play_feature_stem_set(stem_set: Dictionary, resume_position: float) -> void:
+	if _feature_stem_players.is_empty() or not _stem_set_contract_valid(stem_set):
+		return
+	var stems: Dictionary = stem_set.get("stems", {}) as Dictionary
+	var safe_position := maxf(0.0, resume_position)
+	for role_value in MUSIC_STEM_PLAYBACK_ROLES:
+		var role := str(role_value)
+		var player: AudioStreamPlayer = _feature_stem_players.get(role, null)
+		if player == null:
+			continue
+		var stream: AudioStream = stems.get(role, null)
+		if stream == null:
+			player.stop()
+			player.stream = null
+			player.volume_db = MUSIC_MIN_VOLUME_DB
+			continue
+		player.stream = stream
+		player.volume_db = _gain_to_db(float(_feature_mix_live.get("feature", 0.0)) * float(MUSIC_FEATURE_ROLE_WEIGHTS.get(role, 0.0)))
+	for role_value in MUSIC_STEM_PLAYBACK_ROLES:
+		var role := str(role_value)
+		var player: AudioStreamPlayer = _feature_stem_players.get(role, null)
+		if player == null or player.stream == null:
+			continue
+		player.play(safe_position)
+	_current_feature_stem_set = stem_set.duplicate(true)
+	_apply_feature_mix_vector(_feature_mix_live if not _feature_mix_live.is_empty() else _neutral_feature_mix_vector(), true)
+
+
+func _stop_feature_stem_players() -> void:
+	for player_value in _feature_stem_players.values():
+		if player_value is AudioStreamPlayer:
+			var player := player_value as AudioStreamPlayer
+			if player.playing:
+				player.stop()
+
+
+func _feature_stem_pcm_data(style: String, root_midi: int, bpm: float, frames: int, bars: int) -> Dictionary:
+	var pad_data := _empty_pcm(frames)
+	var bass_data := _empty_pcm(frames)
+	var lead_data := _empty_pcm(frames)
+	var drums_low_data := _empty_pcm(frames)
+	var drums_high_data := _empty_pcm(frames)
+	var tension_data := _empty_pcm(frames)
+	var texture_data := _empty_pcm(frames)
+	var step_period := _step_period_from_bpm(bpm)
+	var total_steps := maxi(1, STEPS_PER_BAR * bars)
+	var duration := float(frames) / float(SAMPLE_RATE)
+	var root_freq := _midi_freq(root_midi)
+	for i in range(frames):
+		var t := float(i) / float(SAMPLE_RATE)
+		var step_index := int(t / step_period) % total_steps
+		var step_local := fposmod(t, step_period)
+		var beat_step := step_index % STEPS_PER_BAR
+		var loop_edge := _loop_edge_envelope(t, duration)
+		var pulse := _pulse_window(step_local, 0.0, minf(0.10, step_period * 0.28))
+		var pad := _music_pad(root_midi, t) * 0.10 * loop_edge
+		var bass := 0.0
+		if beat_step == 0 or beat_step == 4:
+			bass = _music_bass(root_freq * 0.5, step_local) * (0.20 if style == "buffalo" else 0.12) * loop_edge
+		var lead := 0.0
+		if beat_step == 1 or beat_step == 3 or beat_step == 6:
+			var arp_freq := root_freq * (1.5 if beat_step == 3 else 1.25 if beat_step == 6 else 2.0)
+			lead = _music_lead(arp_freq, step_local) * (0.20 if style != "buffalo" else 0.12) * loop_edge
+		var drums_low := _music_kick(step_local) * (0.16 if beat_step == 0 else 0.08 if beat_step == 4 else 0.0) * loop_edge
+		if style == "buffalo" and beat_step == 6:
+			drums_low += _music_snare(step_local, i + 71) * 0.11 * loop_edge
+		var drums_high := _music_hat(step_local, step_period, i + 131) * (0.08 if beat_step % 2 == 1 else 0.032) * loop_edge
+		var tension := sin(TAU * (root_freq * 2.0) * t) * pulse * 0.045 * loop_edge
+		var texture := _soft_noise(i, 401 if style == "buffalo" else 409) * pulse * 0.020 * loop_edge
+		_write_i16(pad_data, i * PCM_BYTES_PER_FRAME, _soft_limit(pad))
+		_write_i16(bass_data, i * PCM_BYTES_PER_FRAME, _soft_limit(bass))
+		_write_i16(lead_data, i * PCM_BYTES_PER_FRAME, _soft_limit(lead))
+		_write_i16(drums_low_data, i * PCM_BYTES_PER_FRAME, _soft_limit(drums_low))
+		_write_i16(drums_high_data, i * PCM_BYTES_PER_FRAME, _soft_limit(drums_high))
+		_write_i16(tension_data, i * PCM_BYTES_PER_FRAME, _soft_limit(tension))
+		_write_i16(texture_data, i * PCM_BYTES_PER_FRAME, _soft_limit(texture))
+	return {
+		"pad": pad_data,
+		"bass": bass_data,
+		"lead": lead_data,
+		"drums_low": drums_low_data,
+		"drums_high": drums_high_data,
+		"tension": tension_data,
+		"texture": texture_data,
+	}
+
+
+func _feature_stinger_streams_for_style(style: String, bpm: float) -> Dictionary:
+	var result := {}
+	for cue_id in [
+		"feature_intro",
+		"multiball",
+		"jackpot",
+		"super_jackpot",
+		"feature_total",
+		"pinball_feature_intro",
+		"pinball_multiball",
+		"pinball_jackpot_lane",
+		"pinball_super_jackpot",
+		"jackpot_buffalo",
+		"jackpot_hit_buffalo",
+		"bonus_total_buffalo",
+	]:
+		var cue := str(cue_id)
+		result[cue] = _feature_stinger_stream(cue, style, bpm)
+	return result
+
+
+func _feature_stinger_stream(cue_id: String, style: String, bpm: float) -> AudioStreamWAV:
+	var lowered := cue_id.to_lower()
+	var seconds := 0.58
+	if lowered.find("super") >= 0 or lowered.find("jackpot") >= 0:
+		seconds = 0.92
+	elif lowered.find("total") >= 0:
+		seconds = 1.12
+	var frames := maxi(1, int(seconds * float(SAMPLE_RATE)))
+	var data := PackedByteArray()
+	data.resize(frames * PCM_BYTES_PER_FRAME)
+	var root := 196.0 if style == "buffalo" else 261.63
+	for i in range(frames):
+		var t := float(i) / float(SAMPLE_RATE)
+		var env := _loop_edge_envelope(t, seconds) * exp(-t / maxf(0.12, seconds * 0.52))
+		var rise := clampf(t / maxf(0.001, seconds), 0.0, 1.0)
+		var sweep := sin(TAU * lerpf(root, root * (3.0 if lowered.find("jackpot") >= 0 else 2.0), rise) * t) * 0.24
+		var bell := sin(TAU * root * 4.0 * t) * _pulse_window(t, 0.0, minf(0.16, seconds * 0.28)) * 0.22
+		var hit := _music_kick(t) * (0.34 if lowered.find("jackpot") >= 0 else 0.20)
+		var sparkle := _soft_noise(i, 503 + cue_id.length()) * _pulse_train(t, 18.0, 0.48) * 0.045
+		_write_i16(data, i * PCM_BYTES_PER_FRAME, _soft_limit((sweep + bell + hit + sparkle) * env))
+	return _ambient_stream_from_data(data, frames)
+
+
+func _feature_stinger_stream_for_cue(cue_id: String) -> AudioStream:
+	var stingers: Dictionary = _current_feature_stem_set.get("stingers", {}) as Dictionary
+	if stingers.has(cue_id) and stingers[cue_id] is AudioStream:
+		return stingers[cue_id] as AudioStream
+	var current_stingers: Dictionary = _current_stem_set.get("stingers", {}) as Dictionary
+	if current_stingers.has(cue_id) and current_stingers[cue_id] is AudioStream:
+		return current_stingers[cue_id] as AudioStream
+	var style := _feature_music_style(cue_id)
+	return _feature_stinger_stream(cue_id, style, float(_current_stem_set.get("bpm", 96.0)))
+
+
+func _poll_feature_stingers() -> void:
+	if _feature_stinger_pending.is_empty():
+		return
+	_apply_feature_stingers_for_position(_director_playback_position(), true)
+
+
+func _apply_feature_stingers_for_position(playback_position: float, play_audio: bool) -> void:
+	if _feature_stinger_pending.is_empty():
+		return
+	var remaining: Array = []
+	for pending_value in _feature_stinger_pending:
+		if typeof(pending_value) != TYPE_DICTIONARY:
+			continue
+		var pending: Dictionary = pending_value
+		if playback_position + 0.0001 < float(pending.get("target_position", 0.0)):
+			remaining.append(pending)
+			continue
+		_feature_stinger_history.append({
+			"cue_id": str(pending.get("cue_id", "")),
+			"played_position": snappedf(playback_position, 0.0001),
+			"target_position": snappedf(float(pending.get("target_position", 0.0)), 0.0001),
+		})
+		if _feature_stinger_history.size() > 16:
+			_feature_stinger_history.pop_front()
+		if play_audio and audio_enabled and not _running_headless():
+			_play_feature_stinger_now(str(pending.get("cue_id", "")))
+	_feature_stinger_pending = remaining
+
+
+func _play_feature_stinger_now(cue_id: String) -> void:
+	_ensure_feature_stinger_players()
+	var stream := _feature_stinger_stream_for_cue(cue_id)
+	if stream == null:
+		return
+	for player_value in _feature_stinger_players:
+		if player_value is AudioStreamPlayer and not (player_value as AudioStreamPlayer).playing:
+			var player := player_value as AudioStreamPlayer
+			player.stream = stream
+			player.volume_db = -2.0
+			player.play()
+			return
+	if _feature_stinger_players[0] is AudioStreamPlayer:
+		var fallback := _feature_stinger_players[0] as AudioStreamPlayer
+		fallback.stop()
+		fallback.stream = stream
+		fallback.volume_db = -2.0
+		fallback.play()
+
+
+func _feature_music_style(cue_id: String) -> String:
+	var lowered := cue_id.to_lower()
+	if lowered.find("buffalo") >= 0 or lowered.find("stampede") >= 0:
+		return "buffalo"
+	return "arcade"
+
+
+func _stem_set_contract(source: String, stems: Dictionary, bpm: float, bars: int, loop_frames: int, palette_id: String, stingers: Dictionary, stage: String) -> Dictionary:
+	return {
+		"version": MUSIC_STEM_CONTRACT_VERSION,
+		"source": source,
+		"stems": stems.duplicate(true),
+		"bpm": clampf(bpm, 1.0, 260.0),
+		"bars": maxi(1, bars),
+		"loop_frames": maxi(1, loop_frames),
+		"palette_id": palette_id,
+		"stingers": stingers.duplicate(true),
+		"stage": stage,
+	}
+
+
+func _stem_set_contract_valid(stem_set: Dictionary) -> bool:
+	if stem_set.is_empty():
+		return false
+	if int(stem_set.get("loop_frames", 0)) <= 0:
+		return false
+	if float(stem_set.get("bpm", 0.0)) <= 0.0:
+		return false
+	if typeof(stem_set.get("stems", {})) != TYPE_DICTIONARY:
+		return false
+	var stems: Dictionary = stem_set.get("stems", {})
+	for role_value in stems.keys():
+		var value: Variant = stems.get(role_value)
+		if value is AudioStream:
+			continue
+		if typeof(value) == TYPE_DICTIONARY and bool((value as Dictionary).get("planned", false)):
+			continue
+		return false
+	return true
+
+
+func _stem_manifest_from_contract(stem_set: Dictionary) -> Dictionary:
+	if stem_set.is_empty():
+		return {
+			"source": "",
+			"roles": {},
+			"present_roles": [],
+			"missing_roles": MUSIC_STEM_PLAYBACK_ROLES.duplicate(true),
+			"sync_ok": false,
+			"sparse": true,
+			"loop_frames": 0,
+			"bpm": 0.0,
+			"bars": 0,
+			"palette_id": "",
+			"player_count": _stem_players.size(),
+		}
+	var loop_frames := int(stem_set.get("loop_frames", 0))
+	var stems: Dictionary = stem_set.get("stems", {})
+	var roles := {}
+	var present_roles: Array = []
+	var missing_roles: Array = []
+	var sync_ok := loop_frames > 0
+	for role_value in MUSIC_STEM_PLAYBACK_ROLES:
+		var role := str(role_value)
+		var value: Variant = stems.get(role)
+		var present := value is AudioStream or (typeof(value) == TYPE_DICTIONARY and bool((value as Dictionary).get("planned", false)))
+		var frames := 0
+		var loop_begin := 0
+		var loop_end := 0
+		if value is AudioStreamWAV:
+			var stream := value as AudioStreamWAV
+			frames = int(stream.loop_end)
+			loop_begin = int(stream.loop_begin)
+			loop_end = int(stream.loop_end)
+		elif typeof(value) == TYPE_DICTIONARY:
+			var planned := value as Dictionary
+			frames = int(planned.get("frames", planned.get("loop_end", loop_frames)))
+			loop_begin = int(planned.get("loop_begin", 0))
+			loop_end = int(planned.get("loop_end", loop_frames))
+		elif value is AudioStream:
+			frames = loop_frames
+			loop_begin = 0
+			loop_end = loop_frames
+		if present:
+			present_roles.append(role)
+			if loop_begin != 0 or loop_end != loop_frames or frames != loop_frames:
+				sync_ok = false
+		else:
+			missing_roles.append(role)
+		roles[role] = {
+			"present": present,
+			"frames": frames,
+			"loop_begin": loop_begin,
+			"loop_end": loop_end,
+			"bus": _music_stem_bus_name(role),
+		}
+	return {
+		"version": int(stem_set.get("version", 0)),
+		"source": str(stem_set.get("source", "")),
+		"stage": str(stem_set.get("stage", "")),
+		"roles": roles,
+		"present_roles": present_roles,
+		"missing_roles": missing_roles,
+		"sync_ok": sync_ok,
+		"sparse": not missing_roles.is_empty(),
+		"loop_frames": loop_frames,
+		"bpm": snappedf(float(stem_set.get("bpm", 0.0)), 0.001),
+		"bars": int(stem_set.get("bars", 0)),
+		"palette_id": str(stem_set.get("palette_id", "")),
+		"step_period": snappedf(float(stem_set.get("step_period", _step_period_from_bpm(float(stem_set.get("bpm", 82.0))))), 0.0001),
+		"player_count": _stem_players.size(),
+	}
+
+
+func _play_stem_set(stem_set: Dictionary, resume_position: float, stage: String) -> void:
+	if _stem_players.is_empty() or not _stem_set_contract_valid(stem_set):
+		return
+	var stems: Dictionary = stem_set.get("stems", {})
+	var safe_position := maxf(0.0, resume_position)
+	var started_frame := Engine.get_process_frames()
+	for role_value in MUSIC_STEM_PLAYBACK_ROLES:
+		var role := str(role_value)
+		var player: AudioStreamPlayer = _stem_players.get(role, null)
+		if player == null:
+			continue
+		var stream: AudioStream = stems.get(role, null)
+		if stream == null:
+			player.stop()
+			player.stream = null
+			player.volume_db = MUSIC_MIN_VOLUME_DB
+			continue
+		player.stream = stream
+		player.volume_db = _gain_to_db(float(_music_mix_live.get(role, 0.0)))
+	for role_value in MUSIC_STEM_PLAYBACK_ROLES:
+		var role := str(role_value)
+		var player: AudioStreamPlayer = _stem_players.get(role, null)
+		if player == null or player.stream == null:
+			continue
+		player.play(safe_position)
+	_current_stem_set = stem_set.duplicate(true)
+	_current_stem_stage = stage
+	_current_stem_set["started_frame"] = started_frame
+	_current_stem_set["started_position"] = safe_position
+	_current_music_context = _context_from_stem_set(stem_set)
+	_apply_music_mix_vector(_music_mix_live if not _music_mix_live.is_empty() else _neutral_music_mix_vector(), true)
+
+
+func _context_from_stem_set(stem_set: Dictionary) -> Dictionary:
+	return {
+		"step_period": float(stem_set.get("step_period", _step_period_from_bpm(float(stem_set.get("bpm", 82.0))))),
+		"frames": int(stem_set.get("loop_frames", 0)),
+		"bpm": float(stem_set.get("bpm", 82.0)),
+		"bars": int(stem_set.get("bars", 1)),
+	}
+
+
+func _authored_stem_set_from_profile(profile: Dictionary) -> Dictionary:
+	var track_id := str(profile.get("authored_track_id", "")).strip_edges()
+	if track_id.is_empty():
+		return {}
+	var cache_key := "authored:%s" % track_id
+	if _authored_manifest_cache.has(cache_key):
+		return (_authored_manifest_cache.get(cache_key, {}) as Dictionary).duplicate(true)
+	var entry := _authored_track_entry(track_id)
+	if entry.is_empty() or not _authored_track_entry_valid(entry):
+		return {}
+	var stems_value: Variant = entry.get("stems", {})
+	if typeof(stems_value) != TYPE_DICTIONARY:
+		return {}
+	var stems_data: Dictionary = stems_value
+	var loop_frames := int(entry.get("loop_frames", 0))
+	var stems := {}
+	for role_value in stems_data.keys():
+		var role := str(role_value).strip_edges()
+		if not MUSIC_STEM_PLAYBACK_ROLES.has(role):
+			continue
+		var filename := _authored_stem_filename(stems_data.get(role_value))
+		if filename.is_empty():
+			continue
+		var path := _authored_music_path(track_id, filename)
+		var stream: AudioStream = _load_authored_audio_stream(path, loop_frames)
+		if stream == null:
+			return {}
+		stems[role] = stream
+	if stems.is_empty():
+		return {}
+	var stingers := _authored_stingers(track_id, entry, loop_frames)
+	var contract := _stem_set_contract("authored", stems, float(entry.get("bpm", 82.0)), int(entry.get("bars", 1)), loop_frames, str(entry.get("palette_id", track_id)), stingers, AMBIENT_STAGE_FULL)
+	contract["track_id"] = track_id
+	contract["step_period"] = _step_period_from_bpm(float(contract.get("bpm", 82.0)))
+	_authored_manifest_cache[cache_key] = contract.duplicate(true)
+	return contract
+
+
+func _authored_track_entry(track_id: String) -> Dictionary:
+	var manifest := _authored_manifest_entries()
+	for entry_value in manifest:
+		if typeof(entry_value) != TYPE_DICTIONARY:
+			continue
+		var entry: Dictionary = entry_value
+		if str(entry.get("id", "")).strip_edges() == track_id:
+			return entry.duplicate(true)
+	return {}
+
+
+func _authored_manifest_entries() -> Array:
+	if _authored_manifest_cache.has("manifest_entries"):
+		return (_authored_manifest_cache.get("manifest_entries", []) as Array).duplicate(true)
+	if not FileAccess.file_exists(MUSIC_AUTHORED_MANIFEST_PATH):
+		_authored_manifest_cache["manifest_entries"] = []
+		return []
+	var text := FileAccess.get_file_as_string(MUSIC_AUTHORED_MANIFEST_PATH)
+	var parsed: Variant = JSON.parse_string(text)
+	if typeof(parsed) != TYPE_ARRAY:
+		_authored_manifest_cache["manifest_entries"] = []
+		return []
+	_authored_manifest_cache["manifest_entries"] = (parsed as Array).duplicate(true)
+	return (parsed as Array).duplicate(true)
+
+
+func _authored_track_entry_valid(entry: Dictionary) -> bool:
+	var track_id := str(entry.get("id", "")).strip_edges()
+	if track_id.is_empty():
+		return false
+	if float(entry.get("bpm", 0.0)) <= 0.0:
+		return false
+	if int(entry.get("bars", 0)) <= 0:
+		return false
+	var loop_frames := int(entry.get("loop_frames", 0))
+	if loop_frames <= 0:
+		return false
+	var stems_value: Variant = entry.get("stems", {})
+	if typeof(stems_value) != TYPE_DICTIONARY:
+		return false
+	var stems: Dictionary = stems_value
+	if stems.is_empty():
+		return false
+	for role_value in stems.keys():
+		var role := str(role_value).strip_edges()
+		if not MUSIC_STEM_PLAYBACK_ROLES.has(role):
+			return false
+		var filename := _authored_stem_filename(stems.get(role_value))
+		if filename.is_empty() or not FileAccess.file_exists(_authored_music_path(track_id, filename)):
+			return false
+	return true
+
+
+func _authored_stem_filename(value: Variant) -> String:
+	if typeof(value) == TYPE_DICTIONARY:
+		return str((value as Dictionary).get("file", "")).strip_edges()
+	return str(value).strip_edges()
+
+
+func _authored_stingers(track_id: String, entry: Dictionary, loop_frames: int) -> Dictionary:
+	var result := {}
+	var stingers_value: Variant = entry.get("stingers", {})
+	if typeof(stingers_value) != TYPE_DICTIONARY:
+		return result
+	var stingers: Dictionary = stingers_value
+	for cue_value in stingers.keys():
+		var cue_id := str(cue_value).strip_edges()
+		var filename := _authored_stem_filename(stingers.get(cue_value))
+		if cue_id.is_empty() or filename.is_empty():
+			continue
+		var stream: AudioStream = _load_authored_audio_stream(_authored_music_path(track_id, filename), loop_frames)
+		if stream != null:
+			result[cue_id] = stream
+	return result
+
+
+func _authored_music_path(track_id: String, filename: String) -> String:
+	return "%s/%s/%s" % [MUSIC_AUTHORED_ROOT, track_id, filename]
+
+
+func _load_authored_audio_stream(path: String, loop_frames: int):
+	var lowered := path.to_lower()
+	if lowered.ends_with(".wav"):
+		return _load_authored_wav_stream(path, loop_frames)
+	var loaded: Resource = load(path)
+	if loaded is AudioStream:
+		return loaded
+	return null
+
+
+func _load_authored_wav_stream(path: String, loop_frames: int):
+	if not FileAccess.file_exists(path):
+		return null
+	var bytes := FileAccess.get_file_as_bytes(path)
+	if bytes.size() < 44:
+		return null
+	if _ascii_from_bytes(bytes, 0, 4) != "RIFF" or _ascii_from_bytes(bytes, 8, 4) != "WAVE":
+		return null
+	var offset := 12
+	var channels := 1
+	var sample_rate := SAMPLE_RATE
+	var bits_per_sample := 16
+	var data_start := -1
+	var data_size := 0
+	while offset + 8 <= bytes.size():
+		var chunk_id := _ascii_from_bytes(bytes, offset, 4)
+		var chunk_size := _u32_le(bytes, offset + 4)
+		var chunk_data := offset + 8
+		if chunk_id == "fmt " and chunk_data + 16 <= bytes.size():
+			channels = maxi(1, _u16_le(bytes, chunk_data + 2))
+			sample_rate = maxi(1, _u32_le(bytes, chunk_data + 4))
+			bits_per_sample = _u16_le(bytes, chunk_data + 14)
+		elif chunk_id == "data":
+			data_start = chunk_data
+			data_size = mini(chunk_size, bytes.size() - chunk_data)
+			break
+		offset = chunk_data + chunk_size + (chunk_size % 2)
+	if data_start < 0 or data_size <= 0 or bits_per_sample != 16:
+		return null
+	var data := PackedByteArray()
+	data.resize(data_size)
+	for index in range(data_size):
+		data[index] = bytes[data_start + index]
+	var stream := AudioStreamWAV.new()
+	stream.format = AudioStreamWAV.FORMAT_16_BITS
+	stream.mix_rate = sample_rate
+	stream.stereo = channels > 1
+	stream.data = data
+	stream.loop_mode = AudioStreamWAV.LOOP_FORWARD
+	stream.loop_begin = 0
+	stream.loop_end = loop_frames
+	return stream
+
+
+static func _ascii_from_bytes(bytes: PackedByteArray, offset: int, length: int) -> String:
+	var chars := PackedByteArray()
+	chars.resize(length)
+	for index in range(length):
+		chars[index] = bytes[offset + index] if offset + index < bytes.size() else 0
+	return chars.get_string_from_ascii()
+
+
+static func _u16_le(bytes: PackedByteArray, offset: int) -> int:
+	if offset + 1 >= bytes.size():
+		return 0
+	return int(bytes[offset]) | (int(bytes[offset + 1]) << 8)
+
+
+static func _u32_le(bytes: PackedByteArray, offset: int) -> int:
+	if offset + 3 >= bytes.size():
+		return 0
+	return int(bytes[offset]) | (int(bytes[offset + 1]) << 8) | (int(bytes[offset + 2]) << 16) | (int(bytes[offset + 3]) << 24)
+
+
 func _midi_freq(midi_note: int) -> float:
 	return 440.0 * pow(2.0, float(midi_note - 69) / 12.0)
 
@@ -721,6 +2530,29 @@ func _phrase_energy(phrase_index: int, phrase_count: int, danger: float) -> floa
 	var wave := 0.5 + 0.5 * sin(PI * progress)
 	var heat_lift := clampf(danger, 0.0, 1.0) * 0.22
 	return clampf(progress * 0.58 + wave * 0.32 + heat_lift, 0.0, 1.0)
+
+
+func _phrase_fill_amount(phrase_step: int, phrase_index: int, phrase_count: int, phrase_energy: float) -> float:
+	if phrase_step < BASE_PHRASE_STEPS - 6:
+		return 0.0
+	var phrase_pressure := clampf(float(phrase_index + 1) / float(maxi(1, phrase_count)), 0.0, 1.0)
+	return clampf(phrase_energy * phrase_pressure, 0.0, 1.0)
+
+
+func _swing_step_local(beat_step: int, local_t: float, step_period: float, swing_amount: float) -> float:
+	if swing_amount <= 0.001 or beat_step % 2 == 0:
+		return local_t
+	return maxf(0.0, local_t - step_period * clampf(swing_amount, 0.0, 0.22))
+
+
+func _step_humanization(seed: int, phrase_step: int, phrase_index: int, amount: float) -> float:
+	var raw := int(abs(seed + phrase_step * 37 + phrase_index * 101)) % 2001
+	var centered := (float(raw) / 1000.0) - 1.0
+	return clampf(1.0 + centered * clampf(amount, 0.0, 0.18), 0.72, 1.24)
+
+
+static func _palette_value(palette: Dictionary, key: String, fallback: float) -> float:
+	return float(palette.get(key, fallback))
 
 
 func _mode_scale(mode: String) -> Array:
@@ -738,16 +2570,66 @@ func _mode_scale(mode: String) -> Array:
 func _harmony_plan(scale: Array, progression: Array) -> Dictionary:
 	var roots: Array = []
 	var intervals: Array = []
+	var voicings: Array = []
+	var inversions: Array = []
 	var usable_progression := progression
 	if usable_progression.is_empty():
 		usable_progression = DEFAULT_PROGRESSION
+	var previous_center := 0
+	var has_previous := false
 	for degree_value in usable_progression:
 		var degree := int(degree_value)
-		roots.append(_scale_degree_offset(degree, scale))
-		intervals.append(_chord_intervals_for_degree(degree, scale))
+		var root_offset := _scale_degree_offset(degree, scale)
+		var chord_intervals := _chord_intervals_for_degree(degree, scale)
+		roots.append(root_offset)
+		intervals.append(chord_intervals)
+		var voiced := _nearest_chord_voicing(root_offset, chord_intervals, previous_center if has_previous else root_offset + 9)
+		voicings.append(voiced.get("notes", []))
+		inversions.append(int(voiced.get("inversion", 0)))
+		var notes: Array = voiced.get("notes", [])
+		if not notes.is_empty():
+			var total := 0
+			for note_value in notes:
+				total += int(note_value)
+			previous_center = int(round(float(total) / float(notes.size())))
+			has_previous = true
 	return {
 		"roots": roots,
 		"intervals": intervals,
+		"voicings": voicings,
+		"inversions": inversions,
+	}
+
+
+func _nearest_chord_voicing(root_offset: int, intervals: Array, previous_center: int) -> Dictionary:
+	var best_notes: Array = []
+	var best_inversion := 0
+	var best_distance := 999999
+	for inversion in range(maxi(1, intervals.size())):
+		var notes: Array = []
+		for index in range(intervals.size()):
+			var interval_index := (index + inversion) % intervals.size()
+			var note := root_offset + int(intervals[interval_index])
+			if interval_index < inversion:
+				note += 12
+			while note < -2:
+				note += 12
+			while note > 24:
+				note -= 12
+			notes.append(note)
+		notes.sort()
+		var total := 0
+		for note_value in notes:
+			total += int(note_value)
+		var center := int(round(float(total) / float(maxi(1, notes.size()))))
+		var distance := absi(center - previous_center)
+		if distance < best_distance:
+			best_notes = notes.duplicate(true)
+			best_inversion = inversion
+			best_distance = distance
+	return {
+		"notes": best_notes,
+		"inversion": best_inversion,
 	}
 
 
@@ -793,7 +2675,7 @@ func _bass_offset_for_step(scale: Array, progression: Array, chord_roots: Array,
 	return int(EMPTY_NOTE)
 
 
-func _lead_offset_for_step(scale: Array, progression: Array, motif: Array, bar_index: int, phrase_step: int, phrase_index: int, phrase_count: int, seed: int) -> int:
+func _lead_offset_for_step(scale: Array, progression: Array, motif: Array, bar_index: int, phrase_step: int, phrase_index: int, phrase_count: int, seed: int, answer_transform: String = "inversion", bridge_phrase_index: int = 2) -> int:
 	if progression.is_empty() or motif.is_empty():
 		return int(EMPTY_NOTE)
 	var beat_step := phrase_step % 8
@@ -812,6 +2694,14 @@ func _lead_offset_for_step(scale: Array, progression: Array, motif: Array, bar_i
 			degree = next_degree + 1
 	else:
 		degree = int(round(motif_value))
+
+	if phrase_index == bridge_phrase_index:
+		degree += 3 if (bar % 2 == 0) else 2
+	elif phrase_step >= 16:
+		if answer_transform == "inversion":
+			degree = -degree + int(progression[bar])
+		else:
+			degree += 2
 
 	if beat_step == 0 or beat_step == 4:
 		degree = _nearest_chord_tone_degree(degree, chord_degree)
@@ -884,20 +2774,53 @@ func _music_pad(root_midi: int, t: float) -> float:
 	return sample * tremolo
 
 
+func _music_pad_voiced(root_midi: int, voicing: Array, fallback_root_midi: int, t: float, palette: Dictionary = {}) -> float:
+	if voicing.is_empty():
+		return _music_pad(fallback_root_midi, t) * _palette_value(palette, "pad_warmth", 1.0)
+	var sample := 0.0
+	var warmth := _palette_value(palette, "pad_warmth", 1.0)
+	var phaser := _palette_value(palette, "pad_phaser", 0.0)
+	for i in range(voicing.size()):
+		var freq := _midi_freq(root_midi + int(voicing[i]))
+		var phase := TAU * freq * t
+		var partial := sin(phase) * 0.74 + sin(phase * 2.0) * 0.06 * warmth
+		if phaser > 0.001:
+			partial *= 0.84 + sin(TAU * (0.08 + phaser * 0.08) * t + float(i)) * 0.16 * phaser
+		sample += partial / float(voicing.size())
+	var tremolo := 0.74 + 0.16 * sin(TAU * 0.25 * t) + 0.08 * sin(TAU * 0.43 * t)
+	return sample * tremolo * warmth
+
+
 func _music_bass(freq: float, local_t: float) -> float:
 	var env := _note_decay(local_t, 0.020, 0.54)
 	var phase := TAU * freq * local_t
 	return (sin(phase) * 0.78 + sin(phase * 2.0) * 0.10 + sin(phase * 0.5) * 0.14) * env
 
 
-func _music_lead(freq: float, local_t: float) -> float:
+func _music_dark_bass(freq: float, local_t: float) -> float:
+	var env := _note_decay(local_t, 0.028, 0.72)
+	var phase := TAU * freq * local_t
+	return (sin(phase * 0.5) * 0.38 + sin(phase) * 0.58 + sin(phase * 2.0) * 0.05) * env
+
+
+func _music_lead(freq: float, local_t: float, palette: Dictionary = {}) -> float:
 	var env := _note_decay(local_t, 0.018, 0.30)
 	var phase := TAU * freq * local_t
+	var detune := _palette_value(palette, "lead_detune", 0.0)
+	var vib := _palette_value(palette, "vibraphone", 0.0)
 	var soft_square := sin(phase) * 0.82 + sin(phase * 3.0) * 0.08 + sin(phase * 5.0) * 0.03
+	if detune > 0.001:
+		soft_square += sin(phase * (1.0 + detune * 0.012)) * 0.16 * detune
+	if vib > 0.001:
+		soft_square = soft_square * (0.82 + 0.18 * sin(TAU * 5.8 * local_t)) + sin(phase * 2.0) * 0.05 * vib
 	return soft_square * env
 
 
-func _music_drums(beat_step: int, local_t: float, step_period: float, frame: int, phrase_index: int, phrase_count: int, seed: int) -> float:
+func _music_drums(beat_step: int, local_t: float, step_period: float, frame: int, phrase_index: int, phrase_count: int, seed: int, fill_amount: float = 0.0, palette: Dictionary = {}) -> float:
+	return _music_drums_low(beat_step, local_t, frame, phrase_index, phrase_count, seed, fill_amount, palette) + _music_drums_high(beat_step, local_t, step_period, frame, phrase_index, phrase_count, seed, fill_amount, palette)
+
+
+func _music_drums_low(beat_step: int, local_t: float, frame: int, phrase_index: int, phrase_count: int, seed: int, fill_amount: float = 0.0, _palette: Dictionary = {}) -> float:
 	var drums := 0.0
 	if beat_step == 0:
 		drums += _music_kick(local_t) * 0.62
@@ -907,10 +2830,28 @@ func _music_drums(beat_step: int, local_t: float, step_period: float, frame: int
 		drums += _music_snare(local_t, frame) * 0.18
 	if phrase_index > 0 and beat_step == 6 and ((seed + phrase_index) % 2 == 0):
 		drums += _music_snare(local_t, frame + seed) * 0.10
+	if fill_amount > 0.001 and (beat_step == 6 or beat_step == 7):
+		drums += _music_snare(local_t, frame + seed + beat_step * 31) * 0.18 * fill_amount
+	return drums
+
+
+func _music_drums_high(beat_step: int, local_t: float, step_period: float, frame: int, phrase_index: int, phrase_count: int, seed: int, fill_amount: float = 0.0, palette: Dictionary = {}) -> float:
+	var drums := 0.0
 	if phrase_index == phrase_count - 1 and beat_step == 7:
 		drums += _music_hat(local_t, step_period, frame + seed) * 0.13
 	if beat_step % 2 == 1:
-		drums += _music_hat(local_t, step_period, frame) * 0.07
+		drums += _music_hat(local_t, step_period, frame) * 0.07 * _palette_value(palette, "hat_softness", 1.0)
+	if fill_amount > 0.001 and beat_step >= 5:
+		drums += _music_hat(fposmod(local_t + step_period * 0.33, step_period), step_period * 0.66, frame + seed + 17) * 0.10 * fill_amount
+	return drums
+
+
+func _music_drums_high_double(beat_step: int, local_t: float, step_period: float, frame: int, phrase_index: int, phrase_count: int, seed: int, fill_amount: float = 0.0, palette: Dictionary = {}) -> float:
+	var drums := _music_drums_high(beat_step, local_t, step_period, frame, phrase_index, phrase_count, seed, fill_amount, palette)
+	if beat_step % 2 == 0:
+		drums += _music_hat(local_t, step_period * 0.5, frame + seed + beat_step * 13) * 0.045
+	if phrase_index >= maxi(0, phrase_count - 2):
+		drums += _music_hat(fposmod(local_t + step_period * 0.5, step_period), step_period * 0.5, frame + seed + 37) * 0.035
 	return drums
 
 
@@ -953,6 +2894,13 @@ func _pulse_window(phase: float, start: float, length: float) -> float:
 		return 0.0
 	var x := (phase - start) / length
 	return sin(PI * x) * (1.0 - x * 0.35)
+
+
+func _pulse_train(t: float, rate: float, width: float) -> float:
+	var phase := fposmod(t * rate, 1.0)
+	if phase > width:
+		return 0.0
+	return 1.0 - phase / maxf(width, 0.0001)
 
 
 func _ambient_texture_sample(kind: String, rate: float, t: float, frame: int, seed: int) -> float:
@@ -1039,7 +2987,7 @@ func _theme_texture(theme: String) -> String:
 		return "bar"
 	if lowered.find("jazz") != -1 or lowered.find("sax") != -1 or lowered.find("funk") != -1:
 		return "jazz"
-	if lowered.find("motel") != -1 or lowered.find("quiet") != -1:
+	if lowered.find("quiet") != -1:
 		return "static"
 	if lowered.find("gas") != -1 or lowered.find("highway") != -1:
 		return "highway"
@@ -1070,6 +3018,74 @@ func _theme_texture_rate(theme: String) -> float:
 			return 0.15
 		_:
 			return 0.23
+
+
+func _theme_swing_amount(theme: String) -> float:
+	match _theme_texture(theme):
+		"jazz":
+			return 0.16
+		"funk_jazz":
+			return 0.12
+		"bar":
+			return 0.07
+		"static":
+			return 0.04
+		_:
+			return 0.0
+
+
+func _theme_instrument_palette(theme: String) -> Dictionary:
+	match _theme_texture(theme):
+		"jazz", "funk_jazz":
+			return {
+				"id": "jazz_brushes_upright",
+				"pad_warmth": 1.14,
+				"pad_phaser": 0.06,
+				"lead_detune": 0.05,
+				"hat_softness": 0.72,
+				"bass_weight": 1.12,
+				"vibraphone": 0.18,
+			}
+		"boss":
+			return {
+				"id": "grand_casino_strings_vibes",
+				"pad_warmth": 1.22,
+				"pad_phaser": 0.02,
+				"lead_detune": 0.02,
+				"hat_softness": 0.86,
+				"bass_weight": 1.04,
+				"vibraphone": 0.42,
+			}
+		"bar", "basement":
+			return {
+				"id": "dive_dual_osc",
+				"pad_warmth": 0.94,
+				"pad_phaser": 0.18,
+				"lead_detune": 0.32,
+				"hat_softness": 0.92,
+				"bass_weight": 1.08,
+				"vibraphone": 0.04,
+			}
+		"static":
+			return {
+				"id": "motel_sparse_phaser",
+				"pad_warmth": 0.82,
+				"pad_phaser": 0.44,
+				"lead_detune": 0.12,
+				"hat_softness": 0.66,
+				"bass_weight": 0.88,
+				"vibraphone": 0.0,
+			}
+		_:
+			return {
+				"id": "casino_floor_straight",
+				"pad_warmth": 1.0,
+				"pad_phaser": 0.04,
+				"lead_detune": 0.04,
+				"hat_softness": 1.0,
+				"bass_weight": 1.0,
+				"vibraphone": 0.08,
+			}
 
 
 func _theme_bpm(theme: String) -> float:
@@ -1212,9 +3228,230 @@ func _number_array(value: Variant, fallback: Array = []) -> Array:
 	return result
 
 
+static func _ensure_audio_bus(bus_name: String) -> int:
+	var bus_index := AudioServer.get_bus_index(bus_name)
+	if bus_index >= 0:
+		return bus_index
+	AudioServer.add_bus(AudioServer.get_bus_count())
+	bus_index = AudioServer.get_bus_count() - 1
+	AudioServer.set_bus_name(bus_index, bus_name)
+	return bus_index
+
+
+static func _ensure_music_stem_buses() -> Dictionary:
+	var music_index := _ensure_audio_bus(MUSIC_BUS)
+	var result := {}
+	for role_value in MUSIC_STEM_PLAYBACK_ROLES:
+		var role := str(role_value)
+		var bus_name := _music_stem_bus_name(role)
+		var bus_index := _ensure_audio_bus(bus_name)
+		AudioServer.set_bus_send(bus_index, MUSIC_BUS)
+		result[role] = {
+			"bus": bus_name,
+			"bus_index": bus_index,
+			"send": MUSIC_BUS,
+			"music_bus_index": music_index,
+		}
+	return result
+
+
+static func music_stem_bus_graph_snapshot() -> Dictionary:
+	var buses := {}
+	for role_value in MUSIC_STEM_PLAYBACK_ROLES:
+		var role := str(role_value)
+		var bus_name := _music_stem_bus_name(role)
+		var bus_index := AudioServer.get_bus_index(bus_name)
+		buses[role] = {
+			"bus": bus_name,
+			"bus_index": bus_index,
+			"send": AudioServer.get_bus_send(bus_index) if bus_index >= 0 else "",
+		}
+	return {
+		"music_bus": MUSIC_BUS,
+		"roles": MUSIC_STEM_PLAYBACK_ROLES.duplicate(true),
+		"buses": buses,
+	}
+
+
+static func _music_fx_graph_matches(bus_index: int) -> bool:
+	if bus_index < 0:
+		return false
+	if AudioServer.get_bus_effect_count(bus_index) != MUSIC_FX_EFFECT_ORDER.size():
+		return false
+	for index in range(MUSIC_FX_EFFECT_ORDER.size()):
+		var effect := AudioServer.get_bus_effect(bus_index, index)
+		if effect == null:
+			return false
+		var key := str(MUSIC_FX_EFFECT_ORDER[index])
+		if effect.resource_name != _music_fx_resource_name(key):
+			return false
+		if effect.get_class() != str(MUSIC_FX_EFFECT_TYPES.get(key, "")):
+			return false
+	return true
+
+
+static func _new_music_fx_effect(key: String) -> AudioEffect:
+	match key:
+		"low_pass":
+			return AudioEffectLowPassFilter.new()
+		"chorus":
+			return AudioEffectChorus.new()
+		"distortion":
+			return AudioEffectDistortion.new()
+		"reverb":
+			return AudioEffectReverb.new()
+		"compressor":
+			return AudioEffectCompressor.new()
+		"limiter":
+			return AudioEffectLimiter.new()
+		_:
+			return AudioEffectLimiter.new()
+
+
+static func _configure_music_fx_effect(key: String, effect: AudioEffect) -> void:
+	match key:
+		"low_pass":
+			_set_effect_property(effect, "cutoff_hz", 18000.0)
+			_set_effect_property(effect, "resonance", 0.18)
+		"chorus":
+			_set_effect_property(effect, "dry", 1.0)
+			_set_effect_property(effect, "wet", 0.0)
+			_set_effect_property(effect, "voice_count", 2)
+			_set_effect_property(effect, "voice/1/depth_ms", 0.0)
+			_set_effect_property(effect, "voice/2/depth_ms", 0.0)
+		"distortion":
+			_set_effect_property(effect, "drive", 0.0)
+			_set_effect_property(effect, "pre_gain", 0.0)
+			_set_effect_property(effect, "post_gain", 0.0)
+			_set_effect_property(effect, "keep_hf_hz", 7200.0)
+		"reverb":
+			_set_effect_property(effect, "room_size", 0.20)
+			_set_effect_property(effect, "damping", 0.72)
+			_set_effect_property(effect, "wet", 0.0)
+			_set_effect_property(effect, "dry", 1.0)
+		"compressor":
+			_set_effect_property(effect, "threshold", -6.0)
+			_set_effect_property(effect, "ratio", 2.0)
+			_set_effect_property(effect, "gain", 0.0)
+			_set_effect_property(effect, "attack_us", 8500.0)
+			_set_effect_property(effect, "release_ms", 220.0)
+			_set_effect_property(effect, "mix", 1.0)
+		"limiter":
+			_set_effect_property(effect, "ceiling_db", -0.5)
+			_set_effect_property(effect, "threshold_db", -0.7)
+			_set_effect_property(effect, "soft_clip_db", 1.0)
+			_set_effect_property(effect, "soft_clip_ratio", 8.0)
+
+
+static func _set_music_fx_startup_enabled(bus_index: int) -> void:
+	for index in range(MUSIC_FX_EFFECT_ORDER.size()):
+		var key := str(MUSIC_FX_EFFECT_ORDER[index])
+		AudioServer.set_bus_effect_enabled(bus_index, index, key == "compressor" or key == "limiter")
+
+
+static func _set_music_fx_safety_enabled(bus_index: int) -> void:
+	var compressor_index := _music_fx_effect_index(bus_index, "compressor")
+	var limiter_index := _music_fx_effect_index(bus_index, "limiter")
+	if compressor_index >= 0:
+		AudioServer.set_bus_effect_enabled(bus_index, compressor_index, true)
+	if limiter_index >= 0:
+		AudioServer.set_bus_effect_enabled(bus_index, limiter_index, true)
+
+
+static func _music_fx_effect_index(bus_index: int, key: String) -> int:
+	if bus_index < 0:
+		return -1
+	var target_name := _music_fx_resource_name(key)
+	for index in range(AudioServer.get_bus_effect_count(bus_index)):
+		var effect := AudioServer.get_bus_effect(bus_index, index)
+		if effect != null and effect.resource_name == target_name:
+			return index
+	return -1
+
+
+static func _music_fx_resource_name(key: String) -> String:
+	return "%s:%s:v%d" % [MUSIC_FX_RESOURCE_PREFIX, key, MUSIC_FX_GRAPH_VERSION]
+
+
+static func _music_stem_bus_name(role: String) -> String:
+	return "%s_%s" % [MUSIC_STEM_BUS_PREFIX, role]
+
+
+static func _step_period_from_bpm(bpm: float) -> float:
+	return 60.0 / maxf(1.0, bpm) * 0.5
+
+
+func _music_director_bar_seconds() -> float:
+	if not _current_music_context.is_empty():
+		return maxf(0.001, float(_current_music_context.get("step_period", 0.36)) * float(STEPS_PER_BAR))
+	if not _current_stem_set.is_empty():
+		return maxf(0.001, _step_period_from_bpm(float(_current_stem_set.get("bpm", 82.0))) * float(STEPS_PER_BAR))
+	return _step_period_from_bpm(82.0) * float(STEPS_PER_BAR)
+
+
+func _music_director_step_seconds() -> float:
+	if not _current_music_context.is_empty():
+		return maxf(0.001, float(_current_music_context.get("step_period", 0.36)))
+	if not _current_stem_set.is_empty():
+		return maxf(0.001, _step_period_from_bpm(float(_current_stem_set.get("bpm", 82.0))))
+	return _step_period_from_bpm(82.0)
+
+
+func _music_is_playing() -> bool:
+	for player_value in _stem_players.values():
+		if player_value is AudioStreamPlayer and (player_value as AudioStreamPlayer).playing:
+			return true
+	return _ambient_player != null and _ambient_player.playing
+
+
+func _director_playback_position() -> float:
+	for role_value in MUSIC_STEM_PLAYBACK_ROLES:
+		var role := str(role_value)
+		var player: AudioStreamPlayer = _stem_players.get(role, null)
+		if player != null and player.playing:
+			return maxf(0.0, player.get_playback_position())
+	if _ambient_player != null and _ambient_player.playing:
+		return maxf(0.0, _ambient_player.get_playback_position())
+	return 0.0
+
+
+static func _gain_to_db(gain: float) -> float:
+	var safe_gain := maxf(0.0, gain)
+	if safe_gain <= 0.0001:
+		return MUSIC_MIN_VOLUME_DB
+	return clampf(linear_to_db(safe_gain), MUSIC_MIN_VOLUME_DB, 6.0)
+
+
+static func _set_effect_property(effect: AudioEffect, property_name: String, value: Variant) -> void:
+	if effect == null:
+		return
+	for property_value in effect.get_property_list():
+		if typeof(property_value) == TYPE_DICTIONARY and str((property_value as Dictionary).get("name", "")) == property_name:
+			effect.set(property_name, value)
+			return
+
+
+static func _copy_dict_static(value: Variant) -> Dictionary:
+	if typeof(value) != TYPE_DICTIONARY:
+		return {}
+	return (value as Dictionary).duplicate(true)
+
+
+static func _copy_array_static(value: Variant) -> Array:
+	if typeof(value) != TYPE_ARRAY:
+		return []
+	return (value as Array).duplicate(true)
+
+
 func _copy_dict(value: Variant) -> Dictionary:
 	if typeof(value) != TYPE_DICTIONARY:
 		return {}
+	return value.duplicate(true)
+
+
+func _copy_array(value: Variant) -> Array:
+	if typeof(value) != TYPE_ARRAY:
+		return []
 	return value.duplicate(true)
 
 

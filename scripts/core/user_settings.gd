@@ -24,6 +24,7 @@ var vsync_enabled: bool = true
 var master_volume: float = 1.0
 var music_volume: float = 0.8
 var sfx_volume: float = 0.8
+var audio_calm: bool = false
 var ui_scale: float = 1.0
 var text_size: String = "normal"
 var reduce_motion: bool = false
@@ -39,6 +40,7 @@ func reset() -> void:
 	master_volume = 1.0
 	music_volume = 0.8
 	sfx_volume = 0.8
+	audio_calm = false
 	ui_scale = 1.0
 	text_size = "normal"
 	reduce_motion = false
@@ -87,6 +89,7 @@ func to_dict() -> Dictionary:
 		"master_volume": master_volume,
 		"music_volume": music_volume,
 		"sfx_volume": sfx_volume,
+		"audio_calm": audio_calm,
 		"ui_scale": ui_scale,
 		"text_size": text_size,
 		"reduce_motion": reduce_motion,
@@ -110,6 +113,7 @@ func from_dict(data: Dictionary) -> void:
 	master_volume = _volume(data.get("master_volume", master_volume))
 	music_volume = _volume(data.get("music_volume", music_volume))
 	sfx_volume = _volume(data.get("sfx_volume", sfx_volume))
+	audio_calm = bool(data.get("audio_calm", audio_calm))
 	ui_scale = clampf(float(data.get("ui_scale", ui_scale)), 0.85, 1.3)
 	text_size = data.get("text_size", text_size)
 	if not TEXT_SIZES.has(text_size):
@@ -177,6 +181,7 @@ func accessibility_snapshot() -> Dictionary:
 		"text_size": text_size,
 		"text_scale": text_scale(),
 		"reduce_motion": reduce_motion,
+		"audio_calm": audio_calm,
 		"drunk_effect_mode": drunk_effect_mode,
 		"high_contrast": high_contrast,
 		"haptics_supported": false,

@@ -8,6 +8,8 @@ extends Node
 # app-facing cue ids stable and update this file's cue routes, event aliases, or
 # procedural samples in one place.
 
+signal music_cue_requested(cue_id: String, context: Dictionary)
+
 const SFX_BUS := "SFX"
 const SAMPLE_RATE := 22050
 const PCM_BYTES_PER_FRAME := 2
@@ -41,6 +43,21 @@ const ROULETTE_PREWARM_EVENTS := [
 	"roulette_dolly_tap",
 	"roulette_payout",
 ]
+const MUSIC_DIRECTOR_CUES := {
+	"bonus_music_buffalo": true,
+	"bonus_music_pinball": true,
+	"pinball_feature_intro": true,
+	"pinball_multiball": true,
+	"pinball_jackpot_lane": true,
+	"pinball_super_jackpot": true,
+	"jackpot_buffalo": true,
+	"jackpot_hit_buffalo": true,
+	"bonus_total_buffalo": true,
+	"buffalo_gateway_jackpot_boost": true,
+	"buffalo_grand_escalation": true,
+	"buffalo_retrigger": true,
+	"buffalo_spin_reset": true,
+}
 const SURFACE_CUE_ROUTES := {
 	"machine_button": "slot_button",
 	"ticket_dispenser": "pull_tab",
@@ -115,6 +132,8 @@ func play_surface_cue(cue_id: String, context: Dictionary = {}, surface_state: D
 		return
 	var normalized_cue := cue_id.strip_edges()
 	if normalized_cue.is_empty():
+		return
+	if _emit_music_director_cue(normalized_cue, context):
 		return
 	_ensure_players()
 	var action := str(context.get("action", normalized_cue))
@@ -245,6 +264,20 @@ func _is_known_event(event_id: String) -> bool:
 	return _normalized_event_id(event_id) == event_id
 
 
+func _emit_music_director_cue(cue_id: String, context: Dictionary = {}) -> bool:
+	var raw_cue := cue_id.strip_edges()
+	if raw_cue.is_empty():
+		return false
+	var normalized := _normalized_event_id(raw_cue)
+	if not bool(MUSIC_DIRECTOR_CUES.get(raw_cue, false)) and not bool(MUSIC_DIRECTOR_CUES.get(normalized, false)):
+		return false
+	var payload := context.duplicate(true)
+	payload["cue_id"] = raw_cue
+	payload["normalized_event_id"] = normalized
+	music_cue_requested.emit(raw_cue, payload)
+	return true
+
+
 func sync_slot_state(slot_state: Dictionary, elapsed: float, animation_active: bool) -> void:
 	if not audio_enabled or _running_headless():
 		return
@@ -305,7 +338,6 @@ func sync_slot_state(slot_state: Dictionary, elapsed: float, animation_active: b
 		return
 	if not _feature_music_id.is_empty():
 		_feature_music_id = ""
-		_stop_reel_loop()
 
 	var bonus_steps := _dictionary_array(slot_state.get("slot_bonus_steps", []))
 	if cue_stream.is_empty() and not bonus_steps.is_empty():
@@ -338,6 +370,8 @@ func play_slot_button(action: String = "", slot_state: Dictionary = {}) -> void:
 
 func play_slot_event(event_id: String, volume_db: float = -3.0, pitch: float = 1.0) -> void:
 	if not audio_enabled or _running_headless():
+		return
+	if _emit_music_director_cue(event_id, {"volume_db": volume_db, "pitch": pitch}):
 		return
 	_ensure_players()
 	_play(event_id, volume_db, pitch)
@@ -627,6 +661,14 @@ func debug_normalized_event_id(event_id: String) -> String:
 	return _normalized_event_id(event_id)
 
 
+func debug_music_director_cue_ids() -> Array:
+	var result: Array = []
+	for cue_value in MUSIC_DIRECTOR_CUES.keys():
+		result.append(str(cue_value))
+	result.sort()
+	return result
+
+
 func _active_slot_audio_id(slot_state: Dictionary, feature_scene: Dictionary, timing: Dictionary) -> String:
 	if bool(slot_state.get("slot_nudge_chain_active", false)):
 		var chain_id := str(timing.get("nudge_chain_active_id", ""))
@@ -836,6 +878,8 @@ func _trigger(marker: String, condition: bool, event_id: String, volume_db: floa
 	if not condition or bool(_played_markers.get(marker, false)):
 		return
 	_played_markers[marker] = true
+	if _emit_music_director_cue(event_id, {"marker": marker, "volume_db": volume_db, "pitch": pitch}):
+		return
 	_play(event_id, volume_db, pitch)
 
 
@@ -861,14 +905,19 @@ func _sync_feature_music(feature_scene: Dictionary, profile: Dictionary) -> void
 	if music.is_empty() or not bool(music.get("loop", false)):
 		if not _feature_music_id.is_empty():
 			_feature_music_id = ""
-			_stop_reel_loop()
 		return
 	var event_id := str(music.get("cue_id", "bonus_music_buffalo"))
 	var music_id := "%s|%s" % [str(feature_scene.get("scene_id", feature_scene.get("mode", ""))), event_id]
-	if music_id == _feature_music_id and _loop_player != null and _loop_player.playing:
+	if music_id == _feature_music_id:
 		return
 	_feature_music_id = music_id
-	_start_reel_loop(event_id, float(music.get("volume_db", profile.get("loop_volume_db", -13.0))), float(music.get("pitch", profile.get("bonus_pitch", 1.0))))
+	_emit_music_director_cue(event_id, {
+		"feature_scene": feature_scene.duplicate(true),
+		"feature_music": music.duplicate(true),
+		"profile": profile.duplicate(true),
+		"volume_db": float(music.get("volume_db", profile.get("loop_volume_db", -13.0))),
+		"pitch": float(music.get("pitch", profile.get("bonus_pitch", 1.0))),
+	})
 
 
 func _sync_feature_scene_cues(slot_state: Dictionary, profile: Dictionary, fallback_elapsed: float) -> void:
@@ -986,7 +1035,7 @@ func _event_stream(event_id: String) -> AudioStreamWAV:
 	stream.format = AudioStreamWAV.FORMAT_16_BITS
 	stream.mix_rate = SAMPLE_RATE
 	stream.data = data
-	stream.loop_mode = AudioStreamWAV.LOOP_FORWARD if normalized.begins_with("reel_loop") or normalized == "roulette_ball_loop" or normalized == "bonus_music_buffalo" or normalized == "bonus_music_pinball" else AudioStreamWAV.LOOP_DISABLED
+	stream.loop_mode = AudioStreamWAV.LOOP_FORWARD if normalized.begins_with("reel_loop") or normalized == "roulette_ball_loop" else AudioStreamWAV.LOOP_DISABLED
 	stream.loop_begin = 0
 	stream.loop_end = frames
 	_stream_cache[normalized] = stream
@@ -1068,7 +1117,7 @@ func _normalized_event_id(event_id: String) -> String:
 			"loss": "lose",
 		})
 	match family_event:
-		"button", "button_pinball", "button_buffalo", "button_digital", "lever", "lever_buffalo", "lever_digital", "nudge", "nudge_pinball", "nudge_buffalo", "nudge_digital", "reel_loop", "reel_loop_pinball", "reel_loop_buffalo", "reel_loop_digital", "reel_stop", "reel_stop_pinball", "reel_stop_buffalo", "reel_stop_digital", "gold_coin_tease", "double_gold_coin_tease", "bonus_start", "bonus_start_pinball", "bonus_start_buffalo", "bonus_start_digital", "bonus_music_buffalo", "bonus_music_pinball", "bumper", "bonus_step_buffalo", "bonus_step_digital", "jackpot_hit", "jackpot_hit_buffalo", "jackpot_hit_digital", "payout", "payout_digital", "bonus_total", "bonus_total_buffalo", "bonus_total_digital", "jackpot", "jackpot_buffalo", "jackpot_digital", "lose", "pull_tab_click", "pull_tab_thump", "paper_peek", "paper_peel", "blackjack_card", "blackjack_chip", "blackjack_felt", "blackjack_payout", "blackjack_bust", "blackjack_peek", "blackjack_count", "blackjack_distraction", "roulette_chip_select", "roulette_chip_place", "roulette_chip_lift", "roulette_chip_stack", "roulette_chip_sweep", "roulette_rotor_launch", "roulette_ball_loop", "roulette_ball_rim_tick", "roulette_ball_roll", "roulette_ball_drop", "roulette_ball_scatter", "roulette_ball_bounce", "roulette_ball_pocket", "roulette_dolly_tap", "roulette_payout":
+		"button", "button_pinball", "button_buffalo", "button_digital", "lever", "lever_buffalo", "lever_digital", "nudge", "nudge_pinball", "nudge_buffalo", "nudge_digital", "reel_loop", "reel_loop_pinball", "reel_loop_buffalo", "reel_loop_digital", "reel_stop", "reel_stop_pinball", "reel_stop_buffalo", "reel_stop_digital", "gold_coin_tease", "double_gold_coin_tease", "bonus_start", "bonus_start_pinball", "bonus_start_buffalo", "bonus_start_digital", "bumper", "bonus_step_buffalo", "bonus_step_digital", "jackpot_hit", "jackpot_hit_buffalo", "jackpot_hit_digital", "payout", "payout_digital", "bonus_total", "bonus_total_buffalo", "bonus_total_digital", "jackpot", "jackpot_buffalo", "jackpot_digital", "lose", "pull_tab_click", "pull_tab_thump", "paper_peek", "paper_peel", "blackjack_card", "blackjack_chip", "blackjack_felt", "blackjack_payout", "blackjack_bust", "blackjack_peek", "blackjack_count", "blackjack_distraction", "roulette_chip_select", "roulette_chip_place", "roulette_chip_lift", "roulette_chip_stack", "roulette_chip_sweep", "roulette_rotor_launch", "roulette_ball_loop", "roulette_ball_rim_tick", "roulette_ball_roll", "roulette_ball_drop", "roulette_ball_scatter", "roulette_ball_bounce", "roulette_ball_pocket", "roulette_dolly_tap", "roulette_payout":
 			return event_id
 		"slot_reel_spin_loop":
 			return "reel_loop"
@@ -1082,11 +1131,13 @@ func _normalized_event_id(event_id: String) -> String:
 			return "jackpot"
 		"pinball_plunger", "pinball_plunger_charge", "pinball_feature_intro", "pinball_bonus_trigger":
 			return "bonus_start_pinball"
-		"pinball_flipper", "pinball_cup_hit", "pinball_shot_counter", "pinball_lane_lit", "pinball_history_tick":
+		"pinball_flipper", "pinball_cup_hit", "pinball_shot_counter", "pinball_lane_lit", "pinball_history_tick", "pinball_peg_tick", "pinball_bumper_pop", "pinball_target_hit", "pinball_gate_chime":
 			return "bumper"
-		"pinball_tilt":
+		"pinball_launcher_fire", "pinball_multiball":
+			return "bonus_start_pinball"
+		"pinball_tilt", "pinball_drain":
 			return "nudge_pinball"
-		"pinball_jackpot_lane":
+		"pinball_jackpot_lane", "pinball_super_jackpot":
 			return "jackpot_hit"
 		"buffalo_start_feature", "buffalo_bonus_trigger", "buffalo_free_games_intro", "buffalo_hold_spin_intro", "buffalo_meter_feature", "buffalo_gateway_wheel_spin":
 			return "bonus_start_buffalo"
@@ -1126,10 +1177,6 @@ func _event_seconds(event_id: String) -> float:
 			return 0.68
 		"bonus_start", "bonus_start_pinball", "bonus_start_buffalo", "bonus_start_digital":
 			return 0.44
-		"bonus_music_buffalo":
-			return 1.84
-		"bonus_music_pinball":
-			return 1.64
 		"bumper", "bonus_step_buffalo", "bonus_step_digital":
 			return 0.22
 		"jackpot_hit", "jackpot_hit_buffalo", "jackpot_hit_digital":
@@ -1240,10 +1287,6 @@ func _event_sample(event_id: String, t: float, frame: int, seconds: float) -> fl
 			return _sample_bonus_start(t, frame, seconds)
 		"bonus_start_buffalo":
 			return _sample_bonus_start_buffalo(t, frame, seconds)
-		"bonus_music_buffalo":
-			return _sample_bonus_music_buffalo(t, frame, seconds)
-		"bonus_music_pinball":
-			return _sample_bonus_music_pinball(t, frame, seconds)
 		"bonus_start_digital":
 			return _sample_bonus_start_digital(t, frame, seconds)
 		"bumper":
@@ -1433,53 +1476,6 @@ func _sample_bonus_start_buffalo(t: float, frame: int, seconds: float) -> float:
 	var stampede := _pulse_train(t, 12.0, 0.58) * (sin(TAU * 82.0 * t) * 0.16 + _noise(frame, 271) * 0.09) * _decay_env(t, seconds, 0.010, 0.380)
 	var token := sin(TAU * 720.0 * t) * 0.08 * _pulse_window(t, 0.22, 0.12)
 	return horn + stampede + token
-
-
-func _sample_bonus_music_buffalo(t: float, frame: int, seconds: float) -> float:
-	var loop_t := fposmod(t, maxf(0.01, seconds))
-	var beat := fposmod(loop_t * 2.0, 1.0)
-	var offbeat := fposmod(beat + 0.5, 1.0)
-	var bar := loop_t / maxf(0.01, seconds)
-	var root := 196.0
-	if bar >= 0.75:
-		root = 329.63
-	elif bar >= 0.50:
-		root = 293.66
-	elif bar >= 0.25:
-		root = 246.94
-	var kick := exp(-beat * 18.0) * sin(TAU * 58.0 * t) * 0.34
-	var tom := exp(-offbeat * 14.0) * sin(TAU * (92.0 - offbeat * 24.0) * t) * 0.22
-	var brass_env := 0.40 + 0.16 * sin(TAU * 2.0 * loop_t)
-	var brass := sin(TAU * root * t + sin(TAU * 3.0 * loop_t) * 0.35) * brass_env * 0.18
-	var shimmer := sin(TAU * 1318.5 * t + sin(TAU * 5.0 * loop_t) * 0.8) * (0.07 + 0.05 * sin(TAU * 8.0 * loop_t))
-	var hat_phase := fposmod(loop_t * 8.0, 1.0)
-	var hat := ((1.0 if posmod(frame, 11) < 2 else -0.4) * exp(-hat_phase * 10.0)) * 0.035
-	return kick + tom + brass + shimmer + hat
-
-
-func _sample_bonus_music_pinball(t: float, frame: int, seconds: float) -> float:
-	var loop_t := fposmod(t, maxf(0.01, seconds))
-	var beat := fposmod(loop_t * 3.0, 1.0)
-	var eighth := fposmod(loop_t * 6.0, 1.0)
-	var bar := loop_t / maxf(0.01, seconds)
-	var root := 220.0
-	if bar >= 0.75:
-		root = 329.63
-	elif bar >= 0.50:
-		root = 277.18
-	elif bar >= 0.25:
-		root = 246.94
-	var plunger := exp(-beat * 18.0) * sin(TAU * lerpf(96.0, 52.0, beat) * t) * 0.24
-	var bumper_tick := exp(-eighth * 24.0) * (sin(TAU * 1320.0 * t) * 0.08 + _noise(frame, 409) * 0.035)
-	var arp := 0.0
-	var notes := [root, root * 1.25, root * 1.5, root * 2.0]
-	for index in range(notes.size()):
-		var local := fposmod(loop_t - float(index) * 0.105, seconds)
-		var env := exp(-fposmod(local * 5.0, 1.0) * 7.0)
-		arp += sin(TAU * float(notes[index]) * t + sin(TAU * 4.0 * loop_t) * 0.18) * 0.050 * env
-	var bass := sin(TAU * root * 0.5 * t) * 0.070 * (0.72 + 0.28 * sin(TAU * 1.5 * loop_t))
-	var cabinet := _noise(frame, 421) * 0.022 * _pulse_train(t, 32.0, 0.46)
-	return plunger + bumper_tick + arp + bass + cabinet
 
 
 func _sample_bonus_start_digital(t: float, frame: int, seconds: float) -> float:

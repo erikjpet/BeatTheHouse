@@ -30,6 +30,7 @@ var music: HSlider
 var music_text: Label
 var sfx: HSlider
 var sfx_text: Label
+var audio_calm: CheckBox
 var ui: HSlider
 var ui_text: Label
 var text_size: OptionButton
@@ -98,6 +99,8 @@ func _build() -> void:
 	sfx = sfx_row["slider"]
 	sfx_text = sfx_row["text"]
 	sfx.value_changed.connect(_on_sfx)
+	audio_calm = _check(box, "Calmer Music")
+	audio_calm.toggled.connect(_on_audio_calm)
 
 	_section(box, "Interface")
 	var ui_row := _slider(box, "UI Scale", 85, 130, 5)
@@ -230,6 +233,7 @@ func _sync() -> void:
 	master.value = roundi(draft.master_volume * 100.0)
 	music.value = roundi(draft.music_volume * 100.0)
 	sfx.value = roundi(draft.sfx_volume * 100.0)
+	audio_calm.button_pressed = draft.audio_calm
 	ui.value = roundi(draft.ui_scale * 100.0)
 	text_size.select(draft.text_index())
 	high_contrast.button_pressed = draft.high_contrast
@@ -301,6 +305,10 @@ func _on_sfx(value: float) -> void:
 	_set_percent("sfx_volume", value)
 
 
+func _on_audio_calm(enabled: bool) -> void:
+	draft.audio_calm = enabled
+
+
 # Updates draft UI scale.
 func _on_ui(value: float) -> void:
 	_set_percent("ui_scale", value)
@@ -343,6 +351,7 @@ func current_settings_snapshot() -> Dictionary:
 		"text_size": str(active_settings.text_size),
 		"text_scale": float(active_settings.text_scale()),
 		"reduce_motion": bool(active_settings.reduce_motion),
+		"audio_calm": bool(active_settings.audio_calm),
 		"drunk_effect_mode": str(active_settings.drunk_effect_mode),
 		"high_contrast": bool(active_settings.high_contrast),
 		"haptics_supported": false,
