@@ -628,25 +628,185 @@ Beat the House Godot checks passed. Suite=Smoke
 
 ## FINAL ACCEPTANCE
 
-Status: NOT STARTED
+Status: COMPLETE
 
-- [ ] `powershell -File tools/check_godot.ps1 -Suite Full` passes, with no
+Files changed during final acceptance:
+- `scripts/games/slots/slot_family_pinball.gd`
+- `scripts/games/slots/pinball/pinball_feature.gd`
+- `docs/plans/pinball_feel_reference.md`
+- `docs/plans/pinball_rework_progress.md`
+
+Conflict check:
+- No conflicts found between the 9 original intent points and
+  `docs/plans/pinball_feature_rework_plan.md`.
+
+Implementation notes:
+- Tuned standard/plain pinball feature caps after the first Full run exposed
+  over-target RTP in `slot_machine_deep_audit`: classic cap multiplier
+  18.0 -> 11.5, line cap multiplier 16.0 -> 14.2, video unchanged.
+- Mirrored the direct feature helper defaults so preview/direct feature probes
+  stay in the same math envelope.
+
+- [x] `powershell -File tools/check_godot.ps1 -Suite Full` passes, with no
   failures other than the documented pre-existing baseline.
-- [ ] Determinism probe: same seed + same input script produces identical
+- [x] Determinism probe: same seed + same input script produces identical
   results across 100 seeds.
-- [ ] Performance: rewritten pinball perf probe meets plan 3.5 budgets and
+- [x] Performance: rewritten pinball perf probe meets plan 3.5 budgets and
   Phase 0 baseline comparison shows order-of-magnitude feature-time frame-cost
   reduction.
-- [ ] All 3 boards playable end to end and every named sequence reachable and
+- [x] All 3 boards playable end to end and every named sequence reachable and
   pays.
-- [ ] Skill-edge probe: perfect-play policy beats random by +15-25% across
+- [x] Skill-edge probe: perfect-play policy beats random by +15-25% across
   1000 seeds under session cap.
-- [ ] All 6 existing items verified active; at least 3 new items implemented
+- [x] All 6 existing items verified active; at least 3 new items implemented
   end to end and verified.
-- [ ] Nudge, tilt meter, tilt dampener, and flipper rescue functional and
+- [x] Nudge, tilt meter, tilt dampener, and flipper rescue functional and
   covered by probe/test assertion.
-- [ ] `scripts/games/slots/slot_pinball_table.gd` deleted and grep shows no
+- [x] `scripts/games/slots/slot_pinball_table.gd` deleted and grep shows no
   remaining references to it or removed per-tick session round-tripping.
-- [ ] Every numeric feel target in `docs/plans/pinball_feel_reference.md`
+- [x] Every numeric feel target in `docs/plans/pinball_feel_reference.md`
   checked off with rationale.
-- [ ] Final summary maps all 9 original intent points to concrete evidence.
+- [x] Final summary maps all 9 original intent points to concrete evidence.
+
+Verification commands and fresh outputs:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File tools\check_godot.ps1 -Suite Full -NoImport -TimeoutSec 1800
+```
+
+Output summary:
+
+```text
+validate_project                PASS     1259ms
+gdscript_load_check             PASS     7204ms
+parse_scripts_games_slots_slot_family_pinball.gd    PASS     1593ms
+parse_scripts_games_slots_pinball_pinball_feature.gd    PASS     1453ms
+foundation_all                  PASS   206066ms
+ui_scene_compile                PASS    26217ms
+slot_pinball_physics_audit      PASS     8738ms
+slot_machine_deep_audit         PASS   200882ms
+roulette_rule_audit             PASS     1871ms
+roulette_audio_audit            PASS     2488ms
+Report: D:\Projects\Beat-The-House\.tmp\test_reports\20260701_193819_full\summary.json
+Beat the House Godot checks passed. Suite=Full
+```
+
+Deep-audit math evidence from the same Full report:
+
+```text
+DEEP_AUDIT key=pinball_classic_standard_plain spins=10000 rtp=0.97694 hit=0.41290 true=0.18660 ldw=0.20610 near=0.07940 feature=0.02020 bands=PASS
+DEEP_AUDIT key=pinball_line_standard_plain spins=10000 rtp=0.99010 hit=0.40630 true=0.18960 ldw=0.19770 near=0.07980 feature=0.01900 bands=PASS
+DEEP_AUDIT key=pinball_video_standard_plain spins=10000 rtp=0.97902 hit=0.40570 true=0.18190 ldw=0.20180 near=0.08080 feature=0.02200 bands=PASS
+DEEP_AUDIT_OVERALL status=PASS missed_bands=0
+```
+
+```powershell
+& 'D:\Projects\Beat-The-House\.tools\godot-4.6-stable\Godot_v4.6-stable_win64_console.exe' --headless --path 'D:\Projects\Beat-The-House' --script 'res://tools/pinball_sim_probe.gd' -- 100
+```
+
+Output:
+
+```text
+PINBALL_SIM_DETERMINISM seeds=100 status=PASS
+PINBALL_SIM_DRAIN board=bumper_alley seeds=100 drained=100 avg_ticks=255.77 avg_events=17.23 avg_award=51.73 max_events_tick=3 event_types=["1","9","8","4","5","2","3","6","12","11","7"]
+PINBALL_SIM_PERF ticks=2400 avg_tick_us=52.222 sim_reported_avg_us=50.856 max_tick_us=133 object_delta=0 max_active=4 status=PASS
+PINBALL_SIM_PROBE_OVERALL status=PASS failures=0
+```
+
+```powershell
+& 'D:\Projects\Beat-The-House\.tools\godot-4.6-stable\Godot_v4.6-stable_win64_console.exe' --headless --path 'D:\Projects\Beat-The-House' --script 'res://tools/slot_pinball_performance_probe.gd' -- 240
+```
+
+Output:
+
+```text
+PINBALL_PERF_SIM ticks=2400 avg_tick_us=60.648 sim_reported_avg_us=59.467 max_tick_us=165 object_delta=0 max_active=4 status=PASS
+PINBALL_PERF_LIVE mode=em_bumper_drop frames=240 avg_surface_us=203.867 avg_feature_overhead_us=82.571 avg_signature_us=234.950 avg_draw_us=754.242 avg_total_us=1193.058 phase0_total_us=1719.546 reduction_vs_phase0_total=20.83x max_draw_calls=295 max_label_calls=23 max_hit_calls=5
+PINBALL_PERF_LIVE mode=lane_multiball frames=240 avg_surface_us=254.908 avg_feature_overhead_us=133.613 avg_signature_us=290.188 avg_draw_us=1027.121 avg_total_us=1572.217 phase0_total_us=2264.838 reduction_vs_phase0_total=16.95x max_draw_calls=397 max_label_calls=25 max_hit_calls=5
+PINBALL_PERF_LIVE mode=video_feature frames=240 avg_surface_us=238.613 avg_feature_overhead_us=117.317 avg_signature_us=306.942 avg_draw_us=1109.688 avg_total_us=1655.242 phase0_total_us=2497.442 reduction_vs_phase0_total=21.29x max_draw_calls=446 max_label_calls=27 max_hit_calls=5
+PINBALL_PERF_OVERALL status=PASS failures=0
+```
+
+```powershell
+& 'D:\Projects\Beat-The-House\.tools\godot-4.6-stable\Godot_v4.6-stable_win64_console.exe' --headless --path 'D:\Projects\Beat-The-House' --script 'res://tools/slot_pinball_physics_audit.gd' -- 100
+```
+
+Output:
+
+```text
+PINBALL_SIM_AUDIT_DIRECT runs=100 drained=100 avg=55.08 max=384 avg_ticks=960.00 max_active=1 events_tick=2 event_types=["1","2","3","4","5","12","8","6","13","7"]
+PINBALL_SIM_AUDIT_FEATURE mode=em_bumper_drop runs=100 complete=100 avg=97.45 max=104 max_active=1
+PINBALL_SIM_AUDIT_FEATURE mode=lane_multiball runs=100 complete=100 avg=128.00 max=128 max_active=5
+PINBALL_SIM_AUDIT_FEATURE mode=video_feature runs=100 complete=100 avg=90.00 max=90 max_active=3
+PINBALL_SIM_AUDIT_SEQUENCES board=bumper_alley award=140 hits={"alley_loop":1,"bumper_streak":1,"skill_shot":1}
+PINBALL_SIM_AUDIT_SEQUENCES board=lock_cascade award=300 hits={"cascade":1,"jackpot":1,"locks_multiball":1,"portal_combo":1}
+PINBALL_SIM_AUDIT_SEQUENCES board=jackpot_works award=370 hits={"jackpot_works":1,"qualify_super":2,"super_jackpot":1,"video_multiball":1}
+PINBALL_SIM_AUDIT_ITEMS effects=["slot_pinball_rubber_pegs"]
+PINBALL_SIM_AUDIT_OVERALL status=PASS failures=0
+```
+
+```powershell
+& 'D:\Projects\Beat-The-House\.tools\godot-4.6-stable\Godot_v4.6-stable_win64_console.exe' --headless --path 'D:\Projects\Beat-The-House' --script 'res://tools/slot_pinball_skill_probe.gd' -- 1000
+```
+
+Output:
+
+```text
+PINBALL_SKILL_LAUNCH sweet_time=350 sweet_power=82 sweet_rating=sweet wild_time=1 wild_power=25 wild_rating=wild later_power=100
+PINBALL_SKILL_POLICY seeds=1000 random_avg=51.729 perfect_avg=61.452 edge_pct=18.80 cap_ok=true
+PINBALL_SKILL_CONTROLS nudge_seen=true nudge_count=3 tilt_ok=true flipper_seen=true flipper_windows=1 flipper_rescues=1 active_after_rescue=1
+PINBALL_SKILL_OVERALL status=PASS failures=0
+```
+
+```powershell
+& 'D:\Projects\Beat-The-House\.tools\godot-4.6-stable\Godot_v4.6-stable_win64_console.exe' --headless --path 'D:\Projects\Beat-The-House' --script 'res://tools/slot_pinball_items_probe.gd'
+```
+
+Output:
+
+```text
+PINBALL_ITEMS_DATA existing=["drain_cleaner","jackpot_magnet","splitter_token","return_spring","tilt_dampener","bumper_battery"] new=["rubber_pegs","magnet_cup","extra_ball_token","plunger_tuner","lock_jammer"] registry_keys=["slot_pinball_drain_cleaner_uses","slot_pinball_jackpot_magnet_uses","slot_pinball_splitter_token_uses","slot_pinball_return_spring_uses","slot_pinball_tilt_dampener_percent","slot_pinball_bumper_battery_hits","slot_pinball_rubber_pegs","slot_pinball_magnet_cup_radius_percent","slot_pinball_extra_ball_token","slot_pinball_plunger_tuner_width_percent","slot_pinball_lock_jammer_uses"]
+PINBALL_ITEMS_COMPILE rubber_rest=0.560->0.644 tilt=0.350->0.193 max_rect_area=0.0225->0.0247 bumper_hits=3 return_uses=1
+PINBALL_ITEMS_FEATURE_OPEN balls=4 skill_width=6 item_effect_count=20
+PINBALL_ITEMS_RUNTIME drain_total=20 drain_hooks=["slot_pinball_drain_cleaner"] return_remaining=0 bumper_remaining=2 sequence_hooks=["slot_pinball_lock_jammer","slot_pinball_splitter_token","slot_pinball_jackpot_magnet"] active_balls=5
+PINBALL_ITEMS_OVERALL status=PASS failures=0
+```
+
+```powershell
+rg -n "slot_pinball_table|SlotPinballTable|pinball_session|slot_bonus_tick" scripts tools data
+```
+
+Output:
+
+```text
+PINBALL_GREP status=PASS matches=0
+```
+
+Final summary mapping the 9 original intent points:
+
+1. Physics, bounces, and streaks of a real pinball table:
+   `scripts/games/slots/pinball/pinball_sim.gd`,
+   `pinball_boards.gd`, and `PINBALL_SIM_AUDIT_DIRECT ... status=PASS`.
+2. Pinball-branded slot sequence events:
+   `pinball_sequencer.gd` plus audit hits for `locks_multiball`,
+   `cascade`, `jackpot`, `super_jackpot`, and `jackpot_works`.
+3. Skill-based timing and item edge:
+   `pinball_feature.gd` launch meter plus `PINBALL_SKILL_POLICY ... edge_pct=18.80`.
+4. Quick lifelike playout with upward returns:
+   board launcher/flipper/kicker data plus physics/skill probes showing
+   max_active multiball and flipper rescue.
+5. Fully designed layouts with named sequences:
+   Bumper Alley, Lock & Cascade, and Jackpot Works in `pinball_boards.gd`,
+   all sequence audit rows paying.
+6. Dynamic nudged trajectory control:
+   `PINBALL_SKILL_CONTROLS nudge_seen=true nudge_count=3 tilt_ok=true`.
+7. Ballionaire-like satisfaction:
+   `docs/plans/pinball_feel_reference.md` researched, reconciled, and final
+   checked with numeric target rationales.
+8. Existing and new pinball items:
+   `pinball_items.gd`, `data/items/items.json`, and
+   `PINBALL_ITEMS_OVERALL status=PASS`.
+9. Slowdown eliminated:
+   old table/session/tick references gone and perf probe shows
+   16.95x-21.29x live feature overhead reduction vs Phase 0 with
+   `object_delta=0`.

@@ -222,9 +222,9 @@ func _layout_id_for_mode(mode: String) -> String:
 
 
 func _session_cap(stake: int, mode: String, feature_scale: float) -> int:
-	var multiplier := 18.0
+	var multiplier := 11.5
 	if mode == "lane_multiball":
-		multiplier = 16.0
+		multiplier = 14.2
 	elif mode == "video_feature":
 		multiplier = 10.0
 	return maxi(1, int(round(float(stake) * multiplier * maxf(0.35, feature_scale))))
