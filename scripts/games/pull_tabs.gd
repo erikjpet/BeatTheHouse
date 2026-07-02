@@ -69,6 +69,9 @@ const TAROT_CARD_ITEM_ID := "tarot_card"
 const XRAY_TARGET_COUNT := 2
 const TAB_DETECTOR_BASE_HEAT := 4
 const TAROT_READING_COUNT := 5
+const PULL_TAB_LOW_TICKET_RATIO := 0.12
+const PULL_TAB_THIN_TICKET_RATIO := 0.25
+const PULL_TAB_LAST_TICKET_COUNT := 12
 
 
 # Creates the entry message from the deal machine already generated with the room.
@@ -374,6 +377,7 @@ func _resolve_tab_detector_scan(run_state: RunState, environment: Dictionary, rn
 		"bankroll_delta": bankroll_delta,
 		"suspicion_delta": suspicion_delta,
 		"base_heat": base_heat,
+		"base_suspicion_delta": int(heat.get("base_suspicion_delta", base_heat)),
 		"pit_boss_watched": bool(heat.get("pit_boss_watched", false)),
 		"pit_boss_heat_bonus": int(heat.get("pit_boss_heat_bonus", 0)),
 		"environment_id": str(environment.get("id", "")),
@@ -476,6 +480,10 @@ func surface_action_command(surface_action: String, index: int, _confirm_request
 				return {"handled": true, "message": "That deal row is empty."}
 			var deal: Dictionary = deals[index]
 			var price := int(deal.get("price", 1))
+			if int(deal.get("remaining", 0)) <= 0:
+				return {"handled": true, "message": "%s is sold out." % str(deal.get("display_name", "That deal"))}
+			if run_state != null and run_state.bankroll < price:
+				return {"handled": true, "message": "Not enough bankroll for a %s ticket." % str(deal.get("display_name", "pull-tab"))}
 			return {
 				"handled": true,
 				"ui_state": _deal_ui_state(ui_state, index),
@@ -1135,7 +1143,7 @@ func _generate_machine_state(_run_state: RunState, environment: Dictionary, rng_
 	if machine_rng == null:
 		machine_rng = _seeded_rng("pull_tabs:%s" % environment_id)
 	var deals: Array = []
-	var templates := _deal_templates()
+	var templates := _selected_deal_templates(_deal_templates(), environment)
 	for index in range(templates.size()):
 		var template: Dictionary = (templates[index] as Dictionary).duplicate(true)
 		var count := _generated_deal_ticket_count(template)
@@ -1167,8 +1175,9 @@ func _generate_machine_state(_run_state: RunState, environment: Dictionary, rng_
 	return {
 		"schema": "pull_tab_machine_state",
 		"version": 1,
-		"machine_name": "Lucky Jar Pull-Tab Box",
+		"machine_name": _machine_name_for_environment(environment),
 		"deals": deals,
+		"deal_template_count": _deal_templates().size(),
 		"item_state": item_state,
 		"environment_hooks": [{
 			"id": REDEEM_HOOK_ID,
@@ -1188,6 +1197,65 @@ func _generate_machine_state(_run_state: RunState, environment: Dictionary, rng_
 
 func _deal_templates() -> Array:
 	return _dictionary_array(definition.get("pull_tab_deals", []))
+
+
+func _selected_deal_templates(templates: Array, environment: Dictionary) -> Array:
+	var source := _dictionary_array(templates)
+	if source.size() <= PULL_TAB_MACHINE_COLUMN_COUNT:
+		return source
+	var start_index := _deal_template_rotation_start(environment, source.size())
+	var result: Array = []
+	for offset in range(source.size()):
+		var source_index := (start_index + offset) % source.size()
+		result.append((source[source_index] as Dictionary).duplicate(true))
+		if result.size() >= PULL_TAB_MACHINE_COLUMN_COUNT:
+			break
+	return result
+
+
+func _deal_template_rotation_start(environment: Dictionary, template_count: int) -> int:
+	if template_count <= 0:
+		return 0
+	var scene_type := str(_pt_copy_dict(environment.get("visual_context", {})).get("scene_type", "")).strip_edges()
+	var archetype_id := str(environment.get("archetype_id", "")).strip_edges()
+	match scene_type:
+		"bar":
+			return 0
+		"gas_station_casino":
+			return mini(2, template_count - 1)
+		"jazz_club":
+			return mini(4, template_count - 1)
+		"kitty_cat_lounge":
+			return mini(5, template_count - 1)
+		"riverboat", "delta_queen":
+			return mini(6, template_count - 1)
+	if archetype_id == "delta_queen":
+		return mini(6, template_count - 1)
+	if archetype_id == "kitty_cat_lounge":
+		return mini(5, template_count - 1)
+	var seed_text := "%s:%s" % [archetype_id, scene_type]
+	return int(posmod(RunState.text_to_seed(seed_text), template_count))
+
+
+func _machine_name_for_environment(environment: Dictionary) -> String:
+	var scene_type := str(_pt_copy_dict(environment.get("visual_context", {})).get("scene_type", "")).strip_edges()
+	var archetype_id := str(environment.get("archetype_id", "")).strip_edges()
+	match scene_type:
+		"bar":
+			return "Lucky Jar Pull-Tab Box"
+		"gas_station_casino":
+			return "Cooler-Case Pull-Tab Rack"
+		"jazz_club":
+			return "After-Hours Pull-Tab Box"
+		"kitty_cat_lounge":
+			return "Velvet Rope Pull-Tab Rack"
+		"riverboat", "delta_queen":
+			return "Riverboat Pull-Tab Window"
+	if archetype_id == "delta_queen":
+		return "Riverboat Pull-Tab Window"
+	if archetype_id == "kitty_cat_lounge":
+		return "Velvet Rope Pull-Tab Rack"
+	return "Lucky Jar Pull-Tab Box"
 
 
 func _ensure_machine_state(run_state: RunState, environment: Dictionary, persist: bool) -> Dictionary:
@@ -1905,7 +1973,9 @@ func _deal_view_list(machine: Dictionary, run_state: RunState, item_surface: Dic
 		var price := int(deal.get("price", 1))
 		var remaining := int(deal.get("remaining", 0))
 		var prizes := _dictionary_array(deal.get("prizes", []))
-		result.append({
+		var top_prize := _deal_top_prize_summary(deal)
+		var tension := _deal_tension_state(deal)
+		var view: Dictionary = {
 			"id": str(deal.get("id", "")),
 			"index": index,
 			"display_name": str(deal.get("display_name", "")),
@@ -1915,6 +1985,8 @@ func _deal_view_list(machine: Dictionary, run_state: RunState, item_surface: Dic
 			"price": price,
 			"ticket_count": int(deal.get("ticket_count", remaining)),
 			"remaining": remaining,
+			"sold": int(deal.get("sold", 0)),
+			"initial_removed_count": int(deal.get("initial_removed_count", 0)),
 			"enabled": run_state != null and run_state.bankroll >= price and remaining > 0,
 			"prize_rows": _prize_rows_for_view(prizes),
 			"palette": _pt_copy_dict(deal.get("palette", {})),
@@ -1922,8 +1994,76 @@ func _deal_view_list(machine: Dictionary, run_state: RunState, item_surface: Dic
 			"tab_detector_highlight": bool(item_surface.get("tab_detector_active", false)) and index == detector_highlight_index,
 			"tab_detector_active": bool(item_surface.get("tab_detector_active", false)),
 			"tab_detector_next_heat": int(item_surface.get("tab_detector_next_heat", TAB_DETECTOR_BASE_HEAT)),
-		})
+		}
+		for key in top_prize.keys():
+			view[key] = top_prize[key]
+		for key in tension.keys():
+			view[key] = tension[key]
+		result.append(view)
 	return result
+
+
+func _deal_top_prize_summary(deal: Dictionary) -> Dictionary:
+	var prizes := _dictionary_array(deal.get("prizes", []))
+	var best: Dictionary = {}
+	var best_payout := -1
+	for prize_value in prizes:
+		var prize: Dictionary = prize_value
+		var payout := maxi(0, int(prize.get("payout", 0)))
+		if payout <= best_payout:
+			continue
+		best = prize.duplicate(true)
+		best_payout = payout
+	if best.is_empty():
+		return {
+			"top_prize_label": "",
+			"top_prize_payout": 0,
+			"top_prize_count": 0,
+			"top_prize_remaining": 0,
+			"top_prize_available": false,
+		}
+	var remaining := maxi(0, int(best.get("remaining", best.get("count", 0))))
+	return {
+		"top_prize_label": str(best.get("label", "")),
+		"top_prize_payout": maxi(0, int(best.get("payout", 0))),
+		"top_prize_count": maxi(0, int(best.get("count", 0))),
+		"top_prize_remaining": remaining,
+		"top_prize_available": remaining > 0,
+	}
+
+
+func _deal_tension_state(deal: Dictionary) -> Dictionary:
+	var ticket_count := maxi(1, int(deal.get("ticket_count", DEFAULT_DEAL_COUNT)))
+	var remaining := clampi(int(deal.get("remaining", 0)), 0, ticket_count)
+	var remaining_percent := int(round(100.0 * float(remaining) / float(ticket_count)))
+	if remaining <= 0:
+		return {
+			"tension_state": "sold_out",
+			"tension_label": "SOLD OUT",
+			"last_tickets": false,
+			"remaining_percent": 0,
+		}
+	var last_threshold := maxi(3, mini(PULL_TAB_LAST_TICKET_COUNT, int(round(float(ticket_count) * PULL_TAB_LOW_TICKET_RATIO))))
+	if remaining <= last_threshold:
+		return {
+			"tension_state": "last_tickets",
+			"tension_label": "LAST %d" % remaining,
+			"last_tickets": true,
+			"remaining_percent": remaining_percent,
+		}
+	if float(remaining) / float(ticket_count) <= PULL_TAB_THIN_TICKET_RATIO:
+		return {
+			"tension_state": "thin",
+			"tension_label": "%d LEFT" % remaining,
+			"last_tickets": false,
+			"remaining_percent": remaining_percent,
+		}
+	return {
+		"tension_state": "stocked",
+		"tension_label": "%d LEFT" % remaining,
+		"last_tickets": false,
+		"remaining_percent": remaining_percent,
+	}
 
 
 func _ticket_stack_view(machine: Dictionary, ui_state: Dictionary) -> Array:
@@ -2231,6 +2371,7 @@ func _pull_tab_cheat_heat(base_heat: int, stake: int, run_state: RunState, envir
 	if base_heat <= 0:
 		return {
 			"suspicion_delta": 0,
+			"base_suspicion_delta": 0,
 			"bankroll_delta": 0,
 			"security_message": "",
 			"ended": false,
@@ -2240,6 +2381,7 @@ func _pull_tab_cheat_heat(base_heat: int, stake: int, run_state: RunState, envir
 	if run_state == null:
 		return {
 			"suspicion_delta": maxi(0, base_heat),
+			"base_suspicion_delta": maxi(0, base_heat),
 			"bankroll_delta": 0,
 			"security_message": "",
 			"ended": false,
@@ -2258,6 +2400,7 @@ func _pull_tab_cheat_heat(base_heat: int, stake: int, run_state: RunState, envir
 		security_message = security_message.strip_edges()
 	return {
 		"suspicion_delta": suspicion_delta,
+		"base_suspicion_delta": maxi(0, base_heat),
 		"bankroll_delta": int(pressure.get("bankroll_delta", 0)),
 		"security_message": security_message,
 		"ended": bool(pressure.get("ended", false)),
@@ -2639,6 +2782,7 @@ func _draw_pull_tab_column_stack(surface, rect: Rect2, deal: Dictionary, index: 
 	surface.draw_rect(rect, Color("#2e3440"), false, 1)
 	if remaining <= 0:
 		surface.draw_line(rect.position + Vector2(6, rect.size.y * 0.5), rect.end - Vector2(6, rect.size.y * 0.5), Color(C_PINK.r, C_PINK.g, C_PINK.b, 0.60), 2)
+		surface.surface_label("OUT", rect.position + Vector2(8, rect.size.y - 6), 7, C_PINK)
 		return
 	for row in range(0, int(stack_height), 7):
 		var y := stack_rect.end.y - float(row)
@@ -2660,6 +2804,18 @@ func _draw_pull_tab_column_stack(surface, rect: Rect2, deal: Dictionary, index: 
 		surface.surface_label("$%d" % int(xray_target.get("payout", 0)), glow_rect.position + Vector2(4, 8), 7, C_YELLOW)
 	if bool(surface.surface_animation_active(PULL_TAB_DISPENSE_CHANNEL)) and bool(_dispense_column_active(surface_state, index)):
 		surface.draw_rect(rect.grow(2), Color(C_YELLOW.r, C_YELLOW.g, C_YELLOW.b, 0.22), false, 2)
+	var tension_state := str(deal.get("tension_state", "stocked"))
+	if tension_state == "last_tickets":
+		var label_rect := Rect2(rect.position + Vector2(-3, 2), Vector2(rect.size.x + 6, 11))
+		surface.draw_rect(label_rect, Color(C_PINK.r, C_PINK.g, C_PINK.b, 0.76))
+		surface.surface_label_centered("LAST", label_rect.grow(-1.0), 6, C_WHITE)
+	elif tension_state == "thin":
+		var thin_rect := Rect2(rect.position + Vector2(2, 2), Vector2(rect.size.x - 4, 8))
+		surface.draw_rect(thin_rect, Color(C_AMBER.r, C_AMBER.g, C_AMBER.b, 0.42))
+	elif not bool(deal.get("top_prize_available", true)):
+		var top_gone_rect := Rect2(rect.position + Vector2(2, rect.size.y - 11), Vector2(rect.size.x - 4, 8))
+		surface.draw_rect(top_gone_rect, Color(C_DARK.r, C_DARK.g, C_DARK.b, 0.68))
+		surface.surface_label_centered("TOP", top_gone_rect.grow(-1.0), 5, C_SOFT)
 
 
 func _draw_pull_tab_control_panel(surface, rect: Rect2, deals: Array) -> void:
@@ -2694,6 +2850,13 @@ func _draw_pull_tab_column_button(surface, deal: Dictionary, index: int, rect: R
 	var text_color := Color("#171217") if enabled else C_SOFT
 	surface.surface_label_centered("%d" % (index + 1), Rect2(rect.position + Vector2(3, 2), Vector2(rect.size.x - 6, 10)), 8, text_color)
 	surface.surface_label_centered("$%d" % price, Rect2(rect.position + Vector2(3, rect.size.y - 13), Vector2(rect.size.x - 6, 10)), 8, text_color)
+	var tension_state := str(deal.get("tension_state", "stocked"))
+	if tension_state == "last_tickets":
+		surface.surface_label_centered("LOW", Rect2(rect.position + Vector2(3, 11), Vector2(rect.size.x - 6, 8)), 6, C_PINK)
+	elif tension_state == "sold_out":
+		surface.surface_label_centered("OUT", Rect2(rect.position + Vector2(3, 11), Vector2(rect.size.x - 6, 8)), 6, C_SOFT)
+	elif not bool(deal.get("top_prize_available", true)):
+		surface.surface_label_centered("TOP-", Rect2(rect.position + Vector2(3, 11), Vector2(rect.size.x - 6, 8)), 6, C_SOFT)
 	if enabled:
 		surface.surface_add_exact_invisible_hit(rect.grow(5), "pull_tab_buy", index)
 

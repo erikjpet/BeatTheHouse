@@ -2,6 +2,9 @@ extends SceneTree
 
 const ContentLibraryScript := preload("res://scripts/core/content_library.gd")
 const RunStateScript := preload("res://scripts/core/run_state.gd")
+const PAYOUT_DRIFT_HANDS := 1000
+const PAYOUT_DRIFT_MIN_EDGE := -0.35
+const PAYOUT_DRIFT_MAX_EDGE := 0.20
 
 var failures: Array = []
 var warnings: Array = []
@@ -43,7 +46,12 @@ func _run() -> void:
 		"double_fixture_passes": 0,
 		"surrender_fixture_passes": 0,
 		"natural_fixture_passes": 0,
+		"payout_drift_hands": 0,
+		"payout_drift_total_wager": 0,
+		"payout_drift_main_delta": 0,
+		"payout_drift_edge": 0.0,
 		"outcomes": {},
+		"payout_drift_outcomes": {},
 		"deck_counts": {},
 		"side_bets": {},
 		"rules": {},
@@ -67,6 +75,7 @@ func _run() -> void:
 
 	_run_forced_rule_fixtures(game)
 	_run_cheat_fixtures(game)
+	_run_payout_drift_probe(game)
 	_write_report(output_path, seed_count)
 	_print_summary()
 	await _finish(0 if failures.is_empty() else 1)
@@ -420,6 +429,52 @@ func _run_cheat_fixtures(game: GameModule) -> void:
 	_force_patron_peek_adjustment(game)
 
 
+func _run_payout_drift_probe(game: GameModule) -> void:
+	var run_state: RunState = RunStateScript.new()
+	run_state.start_new("BLACKJACK-AUDIT-PAYOUT-DRIFT")
+	run_state.bankroll = 100000
+	var environment := _audit_environment(30000)
+	var table: Dictionary = game.generate_environment_state(run_state, environment, run_state.create_rng("payout_drift_table"))
+	table["side_bets"] = []
+	table["patrons"] = []
+	table["rules"] = {"dealer_hits_soft_17": false, "double_after_split": true, "split_aces_one_card": true, "max_split_hands": 4, "late_surrender": true}
+	environment["game_states"] = {"blackjack": table}
+	run_state.current_environment = environment
+	var total_wager := 0
+	var main_delta := 0
+	var resolved := 0
+	for i in range(PAYOUT_DRIFT_HANDS):
+		var deal := game.surface_action_command("blackjack_deal", 0, false, {"selected_stake": 5}, run_state, environment)
+		if not bool(deal.get("handled", false)):
+			failures.append("Payout drift probe could not deal hand %d." % i)
+			break
+		var result := _play_to_resolve(game, run_state, environment, deal.get("ui_state", {}), "payout_drift_%04d" % i)
+		if result.is_empty():
+			failures.append("Payout drift probe could not resolve hand %d." % i)
+			break
+		var hand_wager := 0
+		for hand_value in result.get("blackjack_hand_results", []) as Array:
+			if typeof(hand_value) != TYPE_DICTIONARY:
+				continue
+			var hand: Dictionary = hand_value
+			hand_wager += maxi(1, int(hand.get("wager", 5)))
+			_count_key("payout_drift_outcomes", str(hand.get("outcome", "")))
+		total_wager += maxi(1, hand_wager)
+		main_delta += int(result.get("blackjack_main_delta", 0))
+		resolved += 1
+	stats["payout_drift_hands"] = resolved
+	stats["payout_drift_total_wager"] = total_wager
+	stats["payout_drift_main_delta"] = main_delta
+	var edge := 0.0
+	if total_wager > 0:
+		edge = float(main_delta) / float(total_wager)
+	stats["payout_drift_edge"] = edge
+	if resolved != PAYOUT_DRIFT_HANDS:
+		failures.append("Payout drift probe resolved %d/%d hands." % [resolved, PAYOUT_DRIFT_HANDS])
+	elif edge < PAYOUT_DRIFT_MIN_EDGE or edge > PAYOUT_DRIFT_MAX_EDGE:
+		failures.append("Payout drift edge %.4f is outside the sanity range %.2f..%.2f over %d hands." % [edge, PAYOUT_DRIFT_MIN_EDGE, PAYOUT_DRIFT_MAX_EDGE, PAYOUT_DRIFT_HANDS])
+
+
 func _force_safe_peek(game: GameModule) -> void:
 	var data := _fixture_env("safe_peek")
 	var table: Dictionary = data.table
@@ -647,6 +702,12 @@ func _print_summary() -> void:
 		int(stats.get("safe_peeks", 0)),
 		int(stats.get("watched_peek_ejections", 0)),
 		int(stats.get("strategy_confrontations", 0)),
+	])
+	print("Payout drift: %d hands, main %+d / wager %d = %.4f" % [
+		int(stats.get("payout_drift_hands", 0)),
+		int(stats.get("payout_drift_main_delta", 0)),
+		int(stats.get("payout_drift_total_wager", 0)),
+		float(stats.get("payout_drift_edge", 0.0)),
 	])
 	if failures.is_empty():
 		print("Blackjack seed audit passed.")

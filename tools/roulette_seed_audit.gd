@@ -211,8 +211,8 @@ func _audit_generated_table(table: Dictionary, index: int) -> void:
 	if sequence.size() != 38 or not sequence.has("0") or not sequence.has("00"):
 		failures.append("Seed %d did not generate a standard American wheel sequence." % index)
 	var rules: Dictionary = _dict(table.get("rules", {}))
-	if int(rules.get("zero_count", 0)) != 2:
-		failures.append("Seed %d did not expose double-zero roulette rules." % index)
+	if str(table.get("variant", "")) != "american_double_zero" or int(rules.get("zero_count", 0)) != 2:
+		failures.append("Seed %d did not expose explicit American double-zero roulette rules." % index)
 	var profile: Dictionary = _dict(table.get("physics_profile", {}))
 	for key in ["ball_initial_omega_min", "ball_initial_omega_max", "ball_angular_decel_min", "ball_angular_decel_max", "rotor_initial_omega_min", "rotor_initial_omega_max", "diamond_count", "diamond_scatter_degrees", "pocket_depth", "micro_scatter"]:
 		if not profile.has(key):
@@ -234,6 +234,8 @@ func _audit_surface(game: GameModule, surface: Dictionary, index: int) -> void:
 	var targets := _dictionary_array(surface.get("bet_targets", []))
 	if targets.size() < 140:
 		failures.append("Seed %d exposed too few roulette bet targets: %d." % [index, targets.size()])
+	if not _dictionary_array(surface.get("recent_numbers", [])).is_empty():
+		failures.append("Seed %d fresh roulette surface should have no recent numbers." % index)
 	for target in targets:
 		_count_key("target_types", str((target as Dictionary).get("type", "")))
 	for target_type in ["straight", "split", "street", "corner", "six_line", "trio", "top_line", "dozen", "column", "red", "black", "odd", "even", "low", "high"]:
@@ -249,6 +251,8 @@ func _audit_surface(game: GameModule, surface: Dictionary, index: int) -> void:
 		failures.append("Seed %d roulette draw_surface returned false." % index)
 	else:
 		stats["draw_checks"] = int(stats.get("draw_checks", 0)) + 1
+	if not harness.labels.has("RECENT"):
+		failures.append("Seed %d roulette renderer omitted the recent-number display." % index)
 	if _hit_count(harness, "roulette_bet") < targets.size():
 		failures.append("Seed %d roulette renderer did not expose every bet target as a hit region." % index)
 	for action_id in ["roulette_read_wheel", "roulette_chip"]:
@@ -335,26 +339,46 @@ func _audit_spin(game: GameModule, run_state: RunState, environment: Dictionary,
 		if not spin_physics.has(key):
 			failures.append("Seed %d spin physics missing %s." % [index, key])
 	_count_key("outcomes", str(result.get("roulette_winning_number", "")))
+	var result_surface := game.surface_state(run_state, environment, {"surface_time_msec": Time.get_ticks_msec() + 8000})
+	var recent := _dictionary_array(result_surface.get("recent_numbers", []))
+	if recent.is_empty() or str((recent[0] as Dictionary).get("number", "")) != str(result.get("roulette_winning_number", "")):
+		failures.append("Seed %d roulette recent numbers did not record the resolved spin." % index)
+	var rebet_command: Dictionary = game.surface_action_command("roulette_rebet", 0, false, {}, run_state, environment)
+	var rebet_state: Dictionary = _dict(rebet_command.get("ui_state", {}))
+	var rebet_bets: Array = _array(rebet_state.get("roulette_bets", []))
+	var table: Dictionary = ((environment.get("game_states", {}) as Dictionary).get("roulette", {}) as Dictionary)
+	if JSON.stringify(rebet_bets) != JSON.stringify(_array(table.get("last_bets", []))):
+		failures.append("Seed %d roulette rebet did not restore the previous layout." % index)
 	stats["spin_resolves"] = int(stats.get("spin_resolves", 0)) + 1
 
 
 func _run_forced_payout_fixtures(game: GameModule) -> void:
 	var table := {"rules": {"zero_count": 2, "la_partage": false}}
-	var bets := [
-		{"id": "straight", "type": "straight", "label": "17", "numbers": ["17"], "stake": 2, "payout": 35, "family": "inside"},
-		{"id": "split", "type": "split", "label": "17/20", "numbers": ["17", "20"], "stake": 2, "payout": 17, "family": "inside"},
-		{"id": "street", "type": "street", "label": "16-18", "numbers": ["16", "17", "18"], "stake": 2, "payout": 11, "family": "inside"},
-		{"id": "corner", "type": "corner", "label": "14/15/17/18", "numbers": ["14", "15", "17", "18"], "stake": 2, "payout": 8, "family": "inside"},
-		{"id": "six", "type": "six_line", "label": "13-18", "numbers": ["13", "14", "15", "16", "17", "18"], "stake": 2, "payout": 5, "family": "inside"},
-		{"id": "black", "type": "black", "label": "BLACK", "numbers": ["2", "4", "6", "8", "10", "11", "13", "15", "17", "20", "22", "24", "26", "28", "29", "31", "33", "35"], "stake": 2, "payout": 1, "family": "outside"},
+	var payout_cases := [
+		{"name": "straight", "win": "17", "bet": {"id": "straight", "type": "straight", "label": "17", "numbers": ["17"], "stake": 2, "payout": 35, "family": "inside"}, "delta": 70},
+		{"name": "split", "win": "17", "bet": {"id": "split", "type": "split", "label": "17/20", "numbers": ["17", "20"], "stake": 2, "payout": 17, "family": "inside"}, "delta": 34},
+		{"name": "street", "win": "17", "bet": {"id": "street", "type": "street", "label": "16-18", "numbers": ["16", "17", "18"], "stake": 2, "payout": 11, "family": "inside"}, "delta": 22},
+		{"name": "corner", "win": "17", "bet": {"id": "corner", "type": "corner", "label": "14/15/17/18", "numbers": ["14", "15", "17", "18"], "stake": 2, "payout": 8, "family": "inside"}, "delta": 16},
+		{"name": "six_line", "win": "17", "bet": {"id": "six", "type": "six_line", "label": "13-18", "numbers": ["13", "14", "15", "16", "17", "18"], "stake": 2, "payout": 5, "family": "inside"}, "delta": 10},
+		{"name": "trio", "win": "2", "bet": {"id": "trio", "type": "trio", "label": "0/1/2", "numbers": ["0", "1", "2"], "stake": 2, "payout": 11, "family": "inside"}, "delta": 22},
+		{"name": "top_line", "win": "2", "bet": {"id": "top_line", "type": "top_line", "label": "0/00/1/2/3", "numbers": ["0", "00", "1", "2", "3"], "stake": 2, "payout": 6, "family": "inside"}, "delta": 12},
+		{"name": "dozen", "win": "17", "bet": {"id": "dozen", "type": "dozen", "label": "2nd 12", "numbers": _range_strings(13, 24), "stake": 2, "payout": 2, "family": "outside"}, "delta": 4},
+		{"name": "column", "win": "17", "bet": {"id": "column", "type": "column", "label": "2 TO 1", "numbers": ["2", "5", "8", "11", "14", "17", "20", "23", "26", "29", "32", "35"], "stake": 2, "payout": 2, "family": "outside"}, "delta": 4},
+		{"name": "black", "win": "17", "bet": {"id": "black", "type": "black", "label": "BLACK", "numbers": ["2", "4", "6", "8", "10", "11", "13", "15", "17", "20", "22", "24", "26", "28", "29", "31", "33", "35"], "stake": 2, "payout": 1, "family": "outside"}, "delta": 2},
+		{"name": "red loss", "win": "17", "bet": {"id": "red", "type": "red", "label": "RED", "numbers": ["1", "3", "5", "7", "9", "12", "14", "16", "18", "19", "21", "23", "25", "27", "30", "32", "34", "36"], "stake": 2, "payout": 1, "family": "outside"}, "delta": -2},
+		{"name": "odd", "win": "17", "bet": {"id": "odd", "type": "odd", "label": "ODD", "numbers": _odd_strings(), "stake": 2, "payout": 1, "family": "outside"}, "delta": 2},
+		{"name": "even", "win": "18", "bet": {"id": "even", "type": "even", "label": "EVEN", "numbers": _even_strings(), "stake": 2, "payout": 1, "family": "outside"}, "delta": 2},
+		{"name": "low", "win": "17", "bet": {"id": "low", "type": "low", "label": "1-18", "numbers": _range_strings(1, 18), "stake": 2, "payout": 1, "family": "outside"}, "delta": 2},
+		{"name": "high", "win": "20", "bet": {"id": "high", "type": "high", "label": "19-36", "numbers": _range_strings(19, 36), "stake": 2, "payout": 1, "family": "outside"}, "delta": 2},
 	]
-	var settled := _array(game.call("_settle_roulette_bets", "17", bets, table))
-	var expected := {"straight": 70, "split": 34, "street": 22, "corner": 16, "six_line": 10, "black": 2}
-	for result_value in settled:
-		var result: Dictionary = _dict(result_value)
-		var result_type := str(result.get("type", ""))
-		if int(result.get("bankroll_delta", 0)) != int(expected.get(result_type, 999999)):
-			failures.append("Fixture payout for %s was %d." % [result_type, int(result.get("bankroll_delta", 0))])
+	for case_value in payout_cases:
+		var payout_case: Dictionary = case_value
+		var settled := _array(game.call("_settle_roulette_bets", str(payout_case.get("win", "")), [payout_case.get("bet", {})], table))
+		if settled.is_empty() or int(_dict(settled[0]).get("bankroll_delta", 999999)) != int(payout_case.get("delta", 0)):
+			failures.append("Fixture payout for %s was %d." % [str(payout_case.get("name", "")), int(_dict(settled[0]).get("bankroll_delta", 999999)) if not settled.is_empty() else 999999])
+			return
+		if int(payout_case.get("delta", 0)) > 0 and int(_dict(settled[0]).get("celebration_score", 0)) <= 0:
+			failures.append("Fixture payout for %s did not expose celebration metadata." % str(payout_case.get("name", "")))
 			return
 	var partage_table := {"rules": {"zero_count": 2, "la_partage": true}}
 	var zero_bet := {"id": "red_half", "type": "red", "label": "RED", "numbers": ["1", "3"], "stake": 4, "payout": 1, "family": "outside"}
@@ -363,6 +387,27 @@ func _run_forced_payout_fixtures(game: GameModule) -> void:
 		failures.append("Fixture La Partage zero loss did not halve the even-money bet.")
 		return
 	stats["fixture_passes"] = int(stats.get("fixture_passes", 0)) + 1
+
+
+func _range_strings(first: int, last: int) -> Array:
+	var result: Array = []
+	for value in range(first, last + 1):
+		result.append(str(value))
+	return result
+
+
+func _even_strings() -> Array:
+	var result: Array = []
+	for value in range(2, 37, 2):
+		result.append(str(value))
+	return result
+
+
+func _odd_strings() -> Array:
+	var result: Array = []
+	for value in range(1, 36, 2):
+		result.append(str(value))
+	return result
 
 
 func _target_index(targets: Array, target_type: String, offset: int = 0) -> int:

@@ -33,6 +33,8 @@ func _init() -> void:
 		_audit_single_column_spam_budget(library, definition, failures)
 		_audit_bankroll_zero_deferred_ticket_flow(library, definition, failures)
 		_audit_active_item_mechanics(library, definition, failures)
+		_audit_venue_deal_variety(library, definition, failures)
+		_audit_full_deal_integrity(library, definition, failures)
 	if failures.is_empty():
 		print("Pull Tabs seed audit passed across %d generated machines." % SEED_COUNT)
 		quit(0)
@@ -205,6 +207,122 @@ func _audit_active_item_mechanics(library: ContentLibrary, definition: Dictionar
 		failures.append("%s: tarot-converted ticket should pay $0." % label)
 	if (tarot_ticket.get("tarot_reading", []) as Array).size() != 5:
 		failures.append("%s: tarot ticket did not show five future results." % label)
+
+
+func _audit_venue_deal_variety(library: ContentLibrary, definition: Dictionary, failures: Array) -> void:
+	var label := "PULL-TABS-VENUE-VARIETY"
+	var module_script = load(str(definition.get("module_path", "")))
+	if module_script == null:
+		failures.append("%s: pull-tab module failed to load." % label)
+		return
+	var game = module_script.new()
+	if not game is GameModule:
+		failures.append("%s: pull-tab module does not extend GameModule." % label)
+		return
+	game.setup(definition, library)
+	var bar_run: RunState = RunStateScript.new()
+	bar_run.start_new("%s-BAR" % label)
+	var bar_environment := _fixture_environment("%s-bar" % label.to_lower(), "bar", "bar")
+	var bar_machine: Dictionary = game.generate_environment_state(bar_run, bar_environment, bar_run.create_rng("venue_bar"))
+	var gas_run: RunState = RunStateScript.new()
+	gas_run.start_new("%s-GAS" % label)
+	var gas_environment := _fixture_environment("%s-gas" % label.to_lower(), "gas_station_casino", "gas_station_casino")
+	var gas_machine: Dictionary = game.generate_environment_state(gas_run, gas_environment, gas_run.create_rng("venue_gas"))
+	var jazz_run: RunState = RunStateScript.new()
+	jazz_run.start_new("%s-JAZZ" % label)
+	var jazz_environment := _fixture_environment("%s-jazz" % label.to_lower(), "jazz_club", "jazz_club")
+	var jazz_machine: Dictionary = game.generate_environment_state(jazz_run, jazz_environment, jazz_run.create_rng("venue_jazz"))
+	var bar_ids := _deal_ids(bar_machine)
+	var gas_ids := _deal_ids(gas_machine)
+	var jazz_ids := _deal_ids(jazz_machine)
+	for ids_value in [bar_ids, gas_ids, jazz_ids]:
+		var ids: Array = ids_value as Array
+		if ids.size() != 4:
+			failures.append("%s: generated %d deal windows instead of 4." % [label, ids.size()])
+	if JSON.stringify(bar_ids) == JSON.stringify(gas_ids) or JSON.stringify(bar_ids) == JSON.stringify(jazz_ids) or JSON.stringify(gas_ids) == JSON.stringify(jazz_ids):
+		failures.append("%s: deal window lineup did not vary across venues." % label)
+	if str(bar_machine.get("machine_name", "")) == str(gas_machine.get("machine_name", "")):
+		failures.append("%s: machine name did not vary across venue types." % label)
+
+
+func _audit_full_deal_integrity(library: ContentLibrary, definition: Dictionary, failures: Array) -> void:
+	var label := "PULL-TABS-FULL-DEAL"
+	var module_script = load(str(definition.get("module_path", "")))
+	if module_script == null:
+		failures.append("%s: pull-tab module failed to load." % label)
+		return
+	var game = module_script.new()
+	if not game is GameModule:
+		failures.append("%s: pull-tab module does not extend GameModule." % label)
+		return
+	game.setup(definition, library)
+	var run_state: RunState = RunStateScript.new()
+	run_state.start_new(label)
+	run_state.bankroll = 100000
+	var environment := _fixture_environment(label.to_lower(), "bar", "bar")
+	environment["game_states"] = {"pull_tabs": game.generate_environment_state(run_state, environment, run_state.create_rng("full_deal_machine"))}
+	run_state.set_environment(environment)
+	var active_environment: Dictionary = run_state.current_environment
+	var machine: Dictionary = _machine(active_environment)
+	var deals: Array = machine.get("deals", [])
+	if deals.is_empty():
+		failures.append("%s: generated machine has no deals." % label)
+		return
+	var deal_index := 0
+	var initial_deal: Dictionary = deals[deal_index]
+	var initial_remaining := int(initial_deal.get("remaining", 0))
+	var expected_counts := _remaining_prize_counts(initial_deal)
+	var observed_counts: Dictionary = {}
+	var saw_last_tickets := false
+	var restored_mid_deal := false
+	for draw_index in range(initial_remaining):
+		var command: Dictionary = game.surface_action_command("pull_tab_buy", deal_index, false, {}, run_state, active_environment)
+		if str(command.get("action_id", "")) != "buy_tab":
+			failures.append("%s: buy command disappeared before sellout at ticket %d." % [label, draw_index])
+			return
+		var result: Dictionary = game.resolve_with_context("buy_tab", int(command.get("set_stake", 1)), run_state, active_environment, run_state.create_rng("full_deal_%03d" % draw_index), command.get("ui_state", {}))
+		var ticket: Dictionary = result.get("pull_tab_ticket", {})
+		if int(ticket.get("payout", 0)) > 0:
+			var prize_key := _prize_key(ticket)
+			observed_counts[prize_key] = int(observed_counts.get(prize_key, 0)) + 1
+		var surface: Dictionary = game.surface_state(run_state, active_environment, {})
+		var deal_view := _deal_view(surface, deal_index)
+		var expected_remaining := initial_remaining - draw_index - 1
+		if int(deal_view.get("remaining", -1)) != expected_remaining:
+			failures.append("%s: deal remaining mismatch after ticket %d." % [label, draw_index + 1])
+			return
+		if expected_remaining > 0 and bool(deal_view.get("last_tickets", false)):
+			saw_last_tickets = true
+		if expected_remaining > 0 and expected_remaining <= 12 and not bool(deal_view.get("last_tickets", false)):
+			failures.append("%s: last-tickets state was not visible near sellout." % label)
+		if not restored_mid_deal and draw_index >= int(initial_remaining / 2):
+			run_state.set_environment(active_environment)
+			var restored: RunState = RunStateScript.new()
+			restored.from_dict(run_state.to_dict())
+			run_state = restored
+			active_environment = run_state.current_environment
+			restored_mid_deal = true
+	if not restored_mid_deal:
+		failures.append("%s: save/load was not exercised mid-deal." % label)
+	var final_machine: Dictionary = _machine(active_environment)
+	var final_deals: Array = final_machine.get("deals", [])
+	var final_deal: Dictionary = final_deals[deal_index] if deal_index < final_deals.size() and typeof(final_deals[deal_index]) == TYPE_DICTIONARY else {}
+	if int(final_deal.get("remaining", -1)) != 0 or not (final_deal.get("ticket_sleeve", []) as Array).is_empty():
+		failures.append("%s: finite sleeve did not exhaust cleanly." % label)
+	if int(final_deal.get("sold", 0)) != int(initial_deal.get("sold", 0)) + initial_remaining:
+		failures.append("%s: sold count did not match consumed tickets." % label)
+	_assert_prize_counts(expected_counts, observed_counts, label, failures)
+	var sold_surface: Dictionary = game.surface_state(run_state, active_environment, {})
+	var sold_view := _deal_view(sold_surface, deal_index)
+	if str(sold_view.get("tension_state", "")) != "sold_out" or bool(sold_view.get("enabled", true)):
+		failures.append("%s: sold-out deal did not expose disabled sold_out state." % label)
+	if int(sold_view.get("top_prize_remaining", -1)) != 0 or bool(sold_view.get("top_prize_available", true)):
+		failures.append("%s: top prize still appeared available after full deal exhaustion." % label)
+	var sold_command: Dictionary = game.surface_action_command("pull_tab_buy", deal_index, false, {}, run_state, active_environment)
+	if str(sold_command.get("action_id", "")) == "buy_tab":
+		failures.append("%s: sold-out row still mapped to buy_tab." % label)
+	if not saw_last_tickets:
+		failures.append("%s: full-deal run never observed last-tickets tension." % label)
 
 
 func _audit_xray_target_consumption(game: GameModule, run_state: RunState, environment: Dictionary, target: Dictionary, label: String, failures: Array) -> void:
@@ -617,3 +735,54 @@ func _surface_blocks_action_while(surface_state: Dictionary, action_id: String, 
 
 func _machine(environment: Dictionary) -> Dictionary:
 	return ((environment.get("game_states", {}) as Dictionary).get("pull_tabs", {}) as Dictionary)
+
+
+func _fixture_environment(environment_id: String, archetype_id: String, scene_type: String) -> Dictionary:
+	return {
+		"id": environment_id,
+		"archetype_id": archetype_id,
+		"visual_context": {"scene_type": scene_type},
+		"game_states": {},
+	}
+
+
+func _deal_ids(machine: Dictionary) -> Array:
+	var result: Array = []
+	for deal_value in machine.get("deals", []):
+		if typeof(deal_value) == TYPE_DICTIONARY:
+			result.append(str((deal_value as Dictionary).get("id", "")))
+	return result
+
+
+func _remaining_prize_counts(deal: Dictionary) -> Dictionary:
+	var result: Dictionary = {}
+	for prize_value in deal.get("prizes", []):
+		if typeof(prize_value) != TYPE_DICTIONARY:
+			continue
+		var prize: Dictionary = prize_value
+		var remaining := maxi(0, int(prize.get("remaining", prize.get("count", 0))))
+		if remaining > 0:
+			result[_prize_key(prize)] = remaining
+	return result
+
+
+func _prize_key(source: Dictionary) -> String:
+	return "%s|%d" % [str(source.get("prize_label", source.get("label", ""))), maxi(0, int(source.get("payout", 0)))]
+
+
+func _deal_view(surface: Dictionary, deal_index: int) -> Dictionary:
+	for deal_value in surface.get("pull_tab_deals", []):
+		if typeof(deal_value) == TYPE_DICTIONARY and int((deal_value as Dictionary).get("index", -1)) == deal_index:
+			return (deal_value as Dictionary).duplicate(true)
+	return {}
+
+
+func _assert_prize_counts(expected: Dictionary, observed: Dictionary, label: String, failures: Array) -> void:
+	for key in expected.keys():
+		if int(observed.get(key, -1)) != int(expected.get(key, 0)):
+			failures.append("%s: observed prize count for %s was %d, expected %d." % [label, str(key), int(observed.get(key, -1)), int(expected.get(key, 0))])
+			return
+	for key in observed.keys():
+		if not expected.has(key):
+			failures.append("%s: observed unexpected prize key %s." % [label, str(key)])
+			return

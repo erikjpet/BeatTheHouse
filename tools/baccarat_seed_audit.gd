@@ -207,6 +207,13 @@ func _audit_generated_table(table: Dictionary) -> void:
 		failures.append("Generated baccarat table omitted patrons.")
 	if _dict(table.get("dealer_profile", {})).is_empty():
 		failures.append("Generated baccarat table omitted dealer profile.")
+	var rules := _dict(table.get("rules", {}))
+	if str(rules.get("variant", "")) != "mini_baccarat":
+		failures.append("Generated baccarat table did not declare mini-baccarat rules.")
+	if not is_equal_approx(float(rules.get("banker_commission_rate", 0.0)), 0.05):
+		failures.append("Generated baccarat table did not declare 5% Banker commission.")
+	if int(rules.get("tie_payout", 0)) != 8 or int(rules.get("player_pair_payout", 0)) != 11 or int(rules.get("banker_pair_payout", 0)) != 11:
+		failures.append("Generated baccarat table did not expose standard Tie/Pair odds.")
 
 
 func _audit_surface(game: GameModule, run_state: RunState, environment: Dictionary) -> void:
@@ -219,6 +226,12 @@ func _audit_surface(game: GameModule, run_state: RunState, environment: Dictiona
 	var targets := _dictionary_array(surface.get("bet_targets", []))
 	if targets.size() < 5:
 		failures.append("Baccarat surface exposed too few bet targets.")
+	var road := _dict(surface.get("baccarat_road", {}))
+	if str(road.get("type", "")) != "bead_plate" or int(road.get("rows", 0)) <= 0:
+		failures.append("Baccarat surface omitted bead-plate road state.")
+	var penetration := _dict(surface.get("shoe_penetration", {}))
+	if int(penetration.get("total_cards", 0)) < 416 or int(penetration.get("remaining", 0)) <= 0:
+		failures.append("Baccarat surface omitted shoe penetration state.")
 	var harness := SurfaceHarness.new()
 	harness.setup(surface)
 	if not bool(game.draw_surface(harness, surface, {"contract_harness": true})):
@@ -230,6 +243,8 @@ func _audit_surface(game: GameModule, run_state: RunState, environment: Dictiona
 	for action_id in ["baccarat_chip", "baccarat_read_shoe"]:
 		if not _has_hit(harness, action_id):
 			failures.append("Baccarat renderer omitted hit action %s." % action_id)
+	if not harness.labels.has("BEAD PLATE"):
+		failures.append("Baccarat renderer omitted the bead-plate label.")
 
 
 func _run_hand(game: GameModule, run_state: RunState, environment: Dictionary, index: int) -> void:
@@ -263,9 +278,13 @@ func _run_hand(game: GameModule, run_state: RunState, environment: Dictionary, i
 	stats["cards_used"] = int(stats.get("cards_used", 0)) + int(hand.get("cards_used", 0))
 	stats["bankroll_delta_flat_banker"] = int(stats.get("bankroll_delta_flat_banker", 0)) + int(result.get("bankroll_delta", 0))
 	_check_hand_cards_unique(hand, index)
+	_audit_hand_tableau(hand, index)
 	var table: Dictionary = ((environment.get("game_states", {}) as Dictionary).get("baccarat", {}) as Dictionary)
 	if int(table.get("shoe_remaining", 0)) < 0:
 		failures.append("Hand %d produced negative shoe remaining." % index)
+	var road := _dict(game.surface_state(run_state, environment, {"surface_time_msec": Time.get_ticks_msec() + 7000}).get("baccarat_road", {}))
+	if int(road.get("visible_count", 0)) <= 0:
+		failures.append("Hand %d did not publish road history after settlement." % index)
 	var after_reshuffle := int(table.get("reshuffle_count", 0))
 	if after_reshuffle > before_reshuffle:
 		stats["reshuffles"] = int(stats.get("reshuffles", 0)) + (after_reshuffle - before_reshuffle)
@@ -292,6 +311,53 @@ func _check_hand_cards_unique(hand: Dictionary, index: int) -> void:
 		seen[key] = true
 
 
+func _audit_hand_tableau(hand: Dictionary, index: int) -> void:
+	var player_initial := int(hand.get("player_initial_total", -1))
+	var banker_initial := int(hand.get("banker_initial_total", -1))
+	var natural := player_initial >= 8 or banker_initial >= 8
+	if bool(hand.get("natural", false)) != natural:
+		failures.append("Hand %d natural flag did not match initial totals." % index)
+	var expected_player_draw := not natural and player_initial <= 5
+	if bool(hand.get("player_drew", false)) != expected_player_draw:
+		failures.append("Hand %d Player draw flag did not match mini-baccarat tableau." % index)
+	var expected_banker_draw := false
+	if not natural:
+		expected_banker_draw = _expected_banker_draw(
+			banker_initial,
+			int(hand.get("player_third_value", -1)),
+			not bool(hand.get("player_drew", false))
+		)
+	if bool(hand.get("banker_drew", false)) != expected_banker_draw:
+		failures.append("Hand %d Banker draw flag did not match mini-baccarat tableau." % index)
+	var events := _dictionary_array(hand.get("animation_events", []))
+	if not natural and abs(int(hand.get("player_total", 0)) - int(hand.get("banker_total", 0))) <= 1:
+		var found_squeeze := false
+		for event_value in events:
+			var event: Dictionary = event_value
+			if str(event.get("type", "")) == "squeeze":
+				found_squeeze = true
+		if not found_squeeze:
+			failures.append("Hand %d was close but did not include a squeeze reveal event." % index)
+
+
+func _expected_banker_draw(banker_total: int, player_third_value: int, player_stood: bool) -> bool:
+	if player_stood:
+		return banker_total <= 5
+	match banker_total:
+		0, 1, 2:
+			return true
+		3:
+			return player_third_value != 8
+		4:
+			return player_third_value >= 2 and player_third_value <= 7
+		5:
+			return player_third_value >= 4 and player_third_value <= 7
+		6:
+			return player_third_value == 6 or player_third_value == 7
+		_:
+			return false
+
+
 func _finalize_rates() -> void:
 	var hands := maxi(1, int(stats.get("resolved_hands", 0)))
 	var outcomes: Dictionary = stats.get("outcomes", {})
@@ -309,6 +375,23 @@ func _finalize_rates() -> void:
 		"player": 0.4462,
 		"tie": 0.0952,
 	}
+	var rates: Dictionary = stats.get("rates", {})
+	var bounds := {
+		"banker": [0.36, 0.56],
+		"player": [0.34, 0.54],
+		"tie": [0.03, 0.17],
+		"player_pair": [0.01, 0.14],
+		"banker_pair": [0.01, 0.14],
+		"natural": [0.18, 0.42],
+	}
+	for key in bounds.keys():
+		var range_values: Array = bounds.get(key, [])
+		var rate := float(rates.get(key, 0.0))
+		if rate < float(range_values[0]) or rate > float(range_values[1]):
+			failures.append("Baccarat %s rate %.3f outside audit bounds %.3f..%.3f." % [str(key), rate, float(range_values[0]), float(range_values[1])])
+	var flat_banker_delta := int(stats.get("bankroll_delta_flat_banker", 0))
+	if flat_banker_delta > 2000 or flat_banker_delta < -5000:
+		failures.append("Flat Banker bankroll delta %+d was outside expected 400-hand drift bounds." % flat_banker_delta)
 
 
 func _write_report(output_path: String) -> void:

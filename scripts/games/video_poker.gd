@@ -59,6 +59,22 @@ const DOUBLE_UP_CAP := 5
 const PROGRESSIVE_BASE := 240
 const SEQUENTIAL_ROYAL_BONUS := 400
 const DRAW_CASCADE_CHANNEL := "video_poker_cascade"
+const HOLDOUT_PROMPT_BASE_MSEC := 520
+const HOLDOUT_PERFECT_WINDOW_MSEC := 80
+const HOLDOUT_GOOD_WINDOW_MSEC := 210
+const HOLDOUT_CLOSE_WINDOW_MSEC := 340
+const HOLDOUT_BASE_HEAT := 14
+const HOLDOUT_PERFECT_HEAT_REDUCTION := 4
+const HOLDOUT_PARTIAL_HEAT_BONUS := 3
+const HOLDOUT_MISS_HEAT_BONUS := 6
+const HOLDOUT_BLOWN_HEAT_BONUS := 10
+const HOLDOUT_ITEM_EFFECT_KEYS := [
+	"video_poker_holdout_perfect_msec",
+	"video_poker_holdout_good_msec",
+	"video_poker_holdout_close_msec",
+	"video_poker_holdout_heat_delta",
+	"skill_cheat_drunk_window_offset_msec",
+]
 
 const COIN_DENOMINATION_SETS := [
 	[
@@ -337,11 +353,14 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 
 	var suggested: Array = _suggested_holds(hand, variant) if phase == "hold" else []
 	var marked := bool(ui.get("marked", false)) and phase == "hold"
+	var holdout_challenge: Dictionary = _normalized_holdout_challenge(ui.get("holdout_challenge", {})) if marked else {}
+	var holdout_meter: Dictionary = _holdout_meter(holdout_challenge, ui) if not holdout_challenge.is_empty() else {}
 	var win_credits := int(last_result.get("win_credits", 0)) if (phase == "settled" or phase == "double_up") else 0
 	var pending_double := 0 if result_collected else _pending_double_credits(last_result)
 	var double_view: Dictionary = _double_up_view(run_state, state, ui, last_result) if phase == "double_up" else {}
 	var flip: Dictionary = _active_flip(ui, last_result, hand_active)
 	var pit_boss: Dictionary = run_state.pit_boss_watch_status(environment)
+	var holdout_item_modifiers := skill_item_modifier_badges(run_state, HOLDOUT_ITEM_EFFECT_KEYS)
 
 	var spec: Dictionary = GameModule.surface_spec({
 		"surface_renderer": "card_machine",
@@ -352,7 +371,7 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 		"surface_stake_controls_required": false,
 		"surface_embeds_outcomes": true,
 		"surface_animates_idle": false,
-		"surface_realtime_state_refresh": false,
+		"surface_realtime_state_refresh": marked and str(holdout_challenge.get("skill_grade", "")).is_empty(),
 		"phase": phase,
 		"machine_name": str(state.get("machine_name", "Video Poker")),
 		"cabinet_key": str(state.get("cabinet_key", "")),
@@ -382,12 +401,20 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 		"scoring_indices": scoring_indices,
 		"drawn_indices": drawn_indices,
 		"marked": marked,
+		"holdout_challenge": holdout_challenge,
+		"holdout_meter": holdout_meter,
+		"holdout_grade": str(holdout_challenge.get("skill_grade", "")),
+		"holdout_ready": marked and not holdout_challenge.is_empty(),
+		"holdout_item_modifiers": holdout_item_modifiers,
 		"paytable_rows": _paytable_rows(variant),
+		"paytable_bets": BET_LADDER,
 		"paytable_columns": BET_LADDER.size(),
+		"active_paytable_column": bet_level,
+		"highlight_bet_column": bet_level,
 		"result_pay_key": category,
 		"result_pay_label": pay_label,
 		"payout_mult": pay_mult,
-		"info_text": _info_text(phase, hand, holds, last_result, marked, variant),
+		"info_text": _info_text(phase, hand, holds, last_result, marked, variant, holdout_challenge),
 		"result_message": str(last_result.get("summary", "")) if showing_result or double_phase else "",
 		"result_bankroll_delta": int(last_result.get("bankroll_delta", 0)) if phase == "settled" else 0,
 		"result_suspicion_delta": int(last_result.get("suspicion_delta", 0)) if phase == "settled" else 0,
@@ -397,7 +424,7 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 		"pit_boss_watched": bool(pit_boss.get("watched", false)) if bool(pit_boss.get("active", false)) else false,
 		"pit_boss_summary": str(pit_boss.get("summary", "")) if bool(pit_boss.get("active", false)) else "",
 		"hands_played": int(state.get("hands_played", 0)),
-		"native_selected_surface_actions": [],
+		"native_selected_surface_actions": _selected_surface_actions(ui),
 		"surface_animation_channels": [
 			GameModule.surface_animation_channel(
 				FLIP_CHANNEL,
@@ -419,6 +446,7 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 				"video_poker_hold": "machine_button",
 				"video_poker_draw": "machine_button",
 				"video_poker_mark": "machine_button",
+				"video_poker_palm": "machine_button",
 				"video_poker_deal": "machine_button",
 				"video_poker_bet_one": "machine_button",
 				"video_poker_bet_max": "machine_button",
@@ -449,6 +477,7 @@ func draw_surface(surface, surface_state: Dictionary, _render_context: Dictionar
 	_draw_machine(surface, surface_state)
 	_draw_paytable_grid(surface, surface_state)
 	_draw_meters(surface, surface_state)
+	_draw_holdout_meter(surface, surface_state)
 	if phase == "double_up":
 		_draw_double_up(surface, surface_state)
 	else:
@@ -506,6 +535,7 @@ func surface_action_command(surface_action: String, index: int, confirm_requeste
 			holds.sort()
 			next["holds"] = holds
 			next["marked"] = false
+			next.erase("holdout_challenge")
 			return GameModule.surface_command({
 				"handled": true,
 				"ui_state": next,
@@ -517,7 +547,10 @@ func surface_action_command(surface_action: String, index: int, confirm_requeste
 			if not bool(next.get("hand_active", false)):
 				return _message_command(next, "Deal a hand first.")
 			next["hand_active"] = true
+			if bool(next.get("marked", false)) and not _normalized_holdout_challenge(next.get("holdout_challenge", {})).is_empty():
+				return _action_command("mark_holds", "cheat", confirm_requested, next, index, _wager_for(state, next), "Draw with the holdout. Click again to risk the palm.")
 			next["marked"] = false
+			next.erase("holdout_challenge")
 			return _action_command("draw", "legal", confirm_requested, next, index, _wager_for(state, next), "Draw ready. Click again to replace the un-held cards.")
 		"video_poker_mark":
 			if not bool(next.get("hand_active", false)):
@@ -525,7 +558,29 @@ func surface_action_command(surface_action: String, index: int, confirm_requeste
 			next["hand_active"] = true
 			next["holds"] = _suggested_holds(_opening_hand(run_state, state), variant)
 			next["marked"] = true
-			return _action_command("mark_holds", "cheat", confirm_requested, next, index, _wager_for(state, next), "Holdout armed. Click again to palm in a card and draw.")
+			next["holdout_challenge"] = _start_holdout_challenge(next, run_state, state, variant, environment)
+			return _action_command("mark_holds", "cheat", false, next, index, _wager_for(state, next), "Holdout window armed. Tap PALM in the gap, then draw.")
+		"video_poker_palm":
+			if not bool(next.get("hand_active", false)):
+				return _message_command(next, "Deal a hand first.")
+			var palm_challenge: Dictionary = _normalized_holdout_challenge(next.get("holdout_challenge", {}))
+			if palm_challenge.is_empty():
+				return _message_command(next, "Mark the holds before trying the palm.")
+			var input_msec := int(next.get("holdout_input_msec", _surface_time_msec(next)))
+			palm_challenge["input_msec"] = input_msec
+			palm_challenge = _grade_holdout_challenge(palm_challenge)
+			next["marked"] = true
+			next["holdout_challenge"] = palm_challenge
+			next.erase("holdout_input_msec")
+			var grade_label := str(palm_challenge.get("skill_grade", "miss")).replace("_", " ").capitalize()
+			return GameModule.surface_command({
+				"handled": true,
+				"ui_state": next,
+				"selected_index": index,
+				"preserve_surface_ui_state": true,
+				"set_stake": _wager_for(state, next),
+				"message": "Palm timing locked: %s." % grade_label,
+			})
 		"video_poker_collect":
 			next = {
 				"hand_active": false,
@@ -601,6 +656,19 @@ func _resolve_draw(action_id: String, run_state: RunState, environment: Dictiona
 	var deck: Array = _deal_deck(run_state, state)
 	var opening: Array = _slice_cards(deck, 0, HAND_SIZE)
 	var holds: Array = _index_array(ui.get("holds", []))
+	var holdout_challenge: Dictionary = {}
+	var holdout_grade := ""
+	var holdout_accuracy := 0
+	var holdout_margin := 0
+	var holdout_applied := false
+	var holdout_outcome := ""
+	if is_cheat:
+		holdout_challenge = _finalize_holdout_challenge(ui, run_state, state, variant, environment)
+		holdout_grade = str(holdout_challenge.get("skill_grade", "miss"))
+		holdout_accuracy = clampi(int(holdout_challenge.get("skill_accuracy", 0)), 0, 100)
+		holdout_margin = int(holdout_challenge.get("margin_msec", 0))
+		holdout_applied = _holdout_grade_applies(holdout_grade)
+		holdout_outcome = _holdout_skill_outcome(holdout_grade)
 	var draw_base: Array = _deck_without_cards(_base_deck(variant), opening)
 	var final_hands: Array = []
 	var hand_results: Array = []
@@ -621,7 +689,7 @@ func _resolve_draw(action_id: String, run_state: RunState, environment: Dictiona
 					final_hand[i] = (pool[pool_cursor] as Dictionary).duplicate(true)
 					pool_cursor += 1
 					drawn_indices.append(i)
-		if is_cheat and hand_index == 0:
+		if is_cheat and hand_index == 0 and holdout_applied:
 			final_hand = _apply_holdout(final_hand, holds, variant)
 		var descriptor: Dictionary = _evaluate(final_hand, _wild_ranks(variant))
 		var pay_row: Dictionary = _pay_for(descriptor, variant)
@@ -673,14 +741,15 @@ func _resolve_draw(action_id: String, run_state: RunState, environment: Dictiona
 	var pit_boss_summary := ""
 	var pit_boss_watched := false
 	var pit_boss_heat_bonus := 0
+	var base_suspicion_delta := 0
 	var ended := false
 	if is_cheat:
-		var cheat_def: Dictionary = _cheat_action_def()
-		var base_heat := int(cheat_def.get("suspicion_delta", 14))
 		var pit_boss_status: Dictionary = run_state.pit_boss_watch_status(environment)
 		pit_boss_heat_bonus = int(pit_boss_status.get("cheat_heat_bonus", 0)) if bool(pit_boss_status.get("active", false)) else 0
 		pit_boss_watched = bool(pit_boss_status.get("watched", false))
-		var raw_heat := maxi(1, base_heat + _item_bonus("cheat_suspicion_delta", run_state, true) + run_state.security_risk_bonus("cheat") + pit_boss_heat_bonus)
+		var grade_heat := _holdout_grade_heat_modifier(holdout_grade)
+		base_suspicion_delta = maxi(1, int(holdout_challenge.get("base_heat", _holdout_base_heat(run_state))) + _item_bonus("cheat_suspicion_delta", run_state, true) + grade_heat)
+		var raw_heat := maxi(1, base_suspicion_delta + run_state.security_risk_bonus("cheat") + pit_boss_heat_bonus)
 		suspicion_delta = run_state.alcohol_adjusted_suspicion_delta(raw_heat)
 		if bool(pit_boss_status.get("active", false)):
 			pit_boss_summary = str(pit_boss_status.get("summary", ""))
@@ -694,7 +763,7 @@ func _resolve_draw(action_id: String, run_state: RunState, environment: Dictiona
 	var blurb := _hand_blurb(primary_descriptor, pay_row, variant)
 	if hand_count > 1:
 		blurb = "%s x%d hands" % [blurb, hand_count]
-	var message := _outcome_message(blurb, pay_row, gross_payout, bankroll_delta, suspicion_delta, is_cheat, pit_boss_summary, security_message)
+	var message := _outcome_message(blurb, pay_row, gross_payout, bankroll_delta, suspicion_delta, is_cheat, pit_boss_summary, security_message, holdout_grade, holdout_applied)
 	# Only a clean (non-cheated) paying win can be gambled on the double-up.
 	var win_credits := maxi(0, bankroll_delta) if won else 0
 
@@ -726,6 +795,10 @@ func _resolve_draw(action_id: String, run_state: RunState, environment: Dictiona
 		"bankroll_delta": bankroll_delta,
 		"suspicion_delta": suspicion_delta,
 		"cheated": is_cheat,
+		"holdout_challenge": holdout_challenge if is_cheat else {},
+		"holdout_grade": holdout_grade,
+		"holdout_applied": holdout_applied,
+		"holdout_margin_msec": holdout_margin,
 		"summary": message,
 		"flip_id": "draw_%d" % resolved_at,
 		"resolved_at_msec": resolved_at,
@@ -737,6 +810,7 @@ func _resolve_draw(action_id: String, run_state: RunState, environment: Dictiona
 		"type": "game_action",
 		"game_id": get_id(),
 		"action_id": action_id,
+		"action_kind": "cheat" if is_cheat else "legal",
 		"won": won,
 		"variant": str(state.get("variant_id", "")),
 		"paytable_tier": str(state.get("paytable_tier_id", "")),
@@ -751,7 +825,12 @@ func _resolve_draw(action_id: String, run_state: RunState, environment: Dictiona
 		"suspicion_delta": suspicion_delta,
 		"cheated": is_cheat,
 		"held_count": holds.size(),
-		"skill_outcome": "holdout_card" if is_cheat else "",
+		"holdout_applied": holdout_applied,
+		"skill_outcome": holdout_outcome if is_cheat else "",
+		"skill_grade": holdout_grade,
+		"skill_accuracy": holdout_accuracy,
+		"skill_margin_msec": holdout_margin,
+		"base_suspicion_delta": base_suspicion_delta,
 		"pit_boss_watched": pit_boss_watched,
 		"pit_boss_heat_bonus": pit_boss_heat_bonus,
 		"pit_boss_summary": pit_boss_summary,
@@ -759,6 +838,25 @@ func _resolve_draw(action_id: String, run_state: RunState, environment: Dictiona
 		"skill_security_pressure_checked": is_cheat,
 		"environment_id": environment.get("id", ""),
 	}
+	if is_cheat:
+		story_entry["skill_story_context"] = {
+			"game_id": get_id(),
+			"action_id": action_id,
+			"action_kind": "cheat",
+			"skill_outcome": holdout_outcome,
+			"skill_grade": holdout_grade,
+			"skill_accuracy": holdout_accuracy,
+			"skill_margin_msec": holdout_margin,
+			"suspicion_delta": suspicion_delta,
+			"base_suspicion_delta": base_suspicion_delta,
+			"bankroll_delta": bankroll_delta,
+			"watched": pit_boss_watched,
+			"pit_boss_heat_bonus": pit_boss_heat_bonus,
+			"security_pressure_checked": true,
+			"target_slot": int(holdout_challenge.get("target_slot", -1)),
+			"target_card": _copy_dict(holdout_challenge.get("target_card", {})),
+			"holdout_applied": holdout_applied,
+		}
 	var result := _build_result(action_id, "cheat" if is_cheat else "legal", bet_credits, bankroll_delta, suspicion_delta, ended, message, story_entry, environment)
 	result["video_poker_hand"] = final_hand
 	result["video_poker_hands"] = final_hands
@@ -781,7 +879,23 @@ func _resolve_draw(action_id: String, run_state: RunState, environment: Dictiona
 	if is_cheat:
 		result["video_poker_pit_boss_watched"] = pit_boss_watched
 		result["video_poker_pit_boss_heat_bonus"] = pit_boss_heat_bonus
-		result["skill_outcome"] = "holdout_card"
+		result["video_poker_holdout_challenge"] = holdout_challenge
+		result["video_poker_holdout_grade"] = holdout_grade
+		result["video_poker_holdout_accuracy"] = holdout_accuracy
+		result["video_poker_holdout_margin_msec"] = holdout_margin
+		result["video_poker_holdout_applied"] = holdout_applied
+		result["skill_outcome"] = holdout_outcome
+		result["skill_grade"] = holdout_grade
+		result["skill_accuracy"] = holdout_accuracy
+		result["skill_margin_msec"] = holdout_margin
+		result["base_suspicion_delta"] = base_suspicion_delta
+		result["pit_boss_watched"] = pit_boss_watched
+		result["pit_boss_heat_bonus"] = pit_boss_heat_bonus
+		result["skill_security_pressure_checked"] = true
+		if not security_message.is_empty():
+			result["security_message"] = security_message
+		result["skill_story_context"] = _copy_dict(story_entry.get("skill_story_context", {}))
+		GameModule.normalize_skill_cheat_contract(result, result)
 	GameModule.apply_result(run_state, result, rng)
 	return result
 
@@ -926,7 +1040,210 @@ func _normalized_ui_state(ui_state: Dictionary) -> Dictionary:
 	next["marked"] = bool(next.get("marked", false))
 	next["bet_level"] = clampi(int(next.get("bet_level", MAX_BET_LEVEL)), 0, MAX_BET_LEVEL)
 	next["denomination_index"] = maxi(0, int(next.get("denomination_index", 0)))
+	var holdout_challenge: Dictionary = _normalized_holdout_challenge(next.get("holdout_challenge", {}))
+	if holdout_challenge.is_empty():
+		next.erase("holdout_challenge")
+	elif bool(next.get("hand_active", false)):
+		next["holdout_challenge"] = holdout_challenge
+	else:
+		next.erase("holdout_challenge")
+		next["marked"] = false
 	return next
+
+
+func _normalized_holdout_challenge(value: Variant) -> Dictionary:
+	if typeof(value) != TYPE_DICTIONARY:
+		return {}
+	var source: Dictionary = (value as Dictionary).duplicate(true)
+	var challenge_id := str(source.get("challenge_id", "")).strip_edges()
+	if challenge_id.is_empty():
+		return {}
+	var started := maxi(0, int(source.get("started_msec", 0)))
+	var perfect_msec := maxi(started, int(source.get("perfect_msec", started + HOLDOUT_PROMPT_BASE_MSEC)))
+	var perfect_window := maxi(20, int(source.get("perfect_window_msec", HOLDOUT_PERFECT_WINDOW_MSEC)))
+	var good_window := maxi(perfect_window, int(source.get("good_window_msec", HOLDOUT_GOOD_WINDOW_MSEC)))
+	var close_window := maxi(good_window, int(source.get("close_window_msec", HOLDOUT_CLOSE_WINDOW_MSEC)))
+	var normalized := {
+		"challenge_id": challenge_id,
+		"opening_hand": CardShoeScript.card_array(source.get("opening_hand", [])),
+		"holds": _index_array(source.get("holds", [])),
+		"target_card": _copy_dict(source.get("target_card", {})),
+		"target_slot": clampi(int(source.get("target_slot", -1)), -1, HAND_SIZE - 1),
+		"started_msec": started,
+		"perfect_msec": perfect_msec,
+		"perfect_window_msec": perfect_window,
+		"good_window_msec": good_window,
+		"close_window_msec": close_window,
+		"pit_boss_watched_start": bool(source.get("pit_boss_watched_start", false)),
+		"base_heat": maxi(1, int(source.get("base_heat", HOLDOUT_BASE_HEAT))),
+		"item_modifiers": _copy_array(source.get("item_modifiers", [])),
+	}
+	if source.has("input_msec"):
+		normalized["input_msec"] = maxi(0, int(source.get("input_msec", 0)))
+	normalized["margin_msec"] = int(source.get("margin_msec", 0))
+	var grade := str(source.get("skill_grade", ""))
+	if ["perfect", "good", "partial", "miss", "blown"].has(grade):
+		normalized["skill_grade"] = grade
+	if source.has("skill_accuracy"):
+		normalized["skill_accuracy"] = clampi(int(source.get("skill_accuracy", 0)), 0, 100)
+	return normalized
+
+
+func _surface_time_msec(ui_state: Dictionary) -> int:
+	if ui_state.has("surface_time_msec"):
+		return maxi(0, int(ui_state.get("surface_time_msec", 0)))
+	return Time.get_ticks_msec()
+
+
+func _holdout_windows(run_state: RunState) -> Dictionary:
+	var perfect := HOLDOUT_PERFECT_WINDOW_MSEC + _item_bonus("video_poker_holdout_perfect_msec", run_state, true)
+	var good := HOLDOUT_GOOD_WINDOW_MSEC + _item_bonus("video_poker_holdout_good_msec", run_state, true)
+	var close := HOLDOUT_CLOSE_WINDOW_MSEC + _item_bonus("video_poker_holdout_close_msec", run_state, true)
+	var impairment := clampi(int(run_state.drunk_level / 4), 0, 28) if run_state != null else 0
+	impairment = maxi(0, impairment - _item_bonus("skill_cheat_drunk_window_offset_msec", run_state, true))
+	perfect = maxi(36, perfect - impairment)
+	good = maxi(perfect + 48, good - impairment * 2)
+	close = maxi(good + 48, close - impairment * 3)
+	return {
+		"perfect": perfect,
+		"good": good,
+		"close": close,
+	}
+
+
+func _holdout_base_heat(run_state: RunState) -> int:
+	var cheat_def: Dictionary = _cheat_action_def()
+	var base_heat := int(cheat_def.get("suspicion_delta", HOLDOUT_BASE_HEAT))
+	if run_state != null:
+		base_heat += _item_bonus("video_poker_holdout_heat_delta", run_state, true)
+	return maxi(1, base_heat)
+
+
+func _start_holdout_challenge(ui_state: Dictionary, run_state: RunState, state: Dictionary, variant: Dictionary, environment: Dictionary) -> Dictionary:
+	var opening: Array = _opening_hand(run_state, state)
+	var holds: Array = _index_array(ui_state.get("holds", []))
+	var target: Dictionary = _holdout_target(opening, holds, variant)
+	var now_msec := _surface_time_msec(ui_state)
+	var seed := "%s:%s:%d:%s:%d" % [
+		str(state.get("cabinet_key", "")),
+		str(run_state.seed_text if run_state != null else ""),
+		int(state.get("hands_played", 0)),
+		JSON.stringify(holds),
+		int(ui_state.get("bet_level", MAX_BET_LEVEL)),
+	]
+	var prompt_offset := HOLDOUT_PROMPT_BASE_MSEC + (_stable_hash(seed) % 141) - 70
+	var windows: Dictionary = _holdout_windows(run_state)
+	var pit_boss: Dictionary = run_state.pit_boss_watch_status(environment) if run_state != null else {}
+	return {
+		"challenge_id": "vp_holdout_%d" % _stable_hash(seed),
+		"opening_hand": opening.duplicate(true),
+		"holds": holds,
+		"target_card": _copy_dict(target.get("card", {})),
+		"target_slot": int(target.get("slot", -1)),
+		"started_msec": now_msec,
+		"perfect_msec": now_msec + prompt_offset,
+		"perfect_window_msec": int(windows.get("perfect", HOLDOUT_PERFECT_WINDOW_MSEC)),
+		"good_window_msec": int(windows.get("good", HOLDOUT_GOOD_WINDOW_MSEC)),
+		"close_window_msec": int(windows.get("close", HOLDOUT_CLOSE_WINDOW_MSEC)),
+		"pit_boss_watched_start": bool(pit_boss.get("watched", false)) if bool(pit_boss.get("active", false)) else false,
+		"base_heat": _holdout_base_heat(run_state),
+		"item_modifiers": skill_item_modifier_badges(run_state, HOLDOUT_ITEM_EFFECT_KEYS),
+	}
+
+
+func _holdout_target(hand: Array, holds: Array, variant: Dictionary) -> Dictionary:
+	var improved: Array = _apply_holdout(hand, holds, variant)
+	for i in range(HAND_SIZE):
+		if holds.has(i):
+			continue
+		var original: Dictionary = hand[i] if i < hand.size() and typeof(hand[i]) == TYPE_DICTIONARY else {}
+		var replacement: Dictionary = improved[i] if i < improved.size() and typeof(improved[i]) == TYPE_DICTIONARY else {}
+		if JSON.stringify(original) != JSON.stringify(replacement):
+			return {"slot": i, "card": replacement.duplicate(true)}
+	for i in range(HAND_SIZE):
+		if not holds.has(i):
+			var card: Dictionary = hand[i] if i < hand.size() and typeof(hand[i]) == TYPE_DICTIONARY else {}
+			return {"slot": i, "card": card.duplicate(true)}
+	return {"slot": -1, "card": {}}
+
+
+func _grade_holdout_challenge(challenge: Dictionary) -> Dictionary:
+	var graded: Dictionary = _normalized_holdout_challenge(challenge)
+	if graded.is_empty():
+		return {}
+	if not graded.has("input_msec") or int(graded.get("input_msec", 0)) <= 0:
+		graded["skill_grade"] = "miss"
+		graded["margin_msec"] = 0
+		graded["skill_accuracy"] = 0
+		return graded
+	var margin := int(graded.get("input_msec", 0)) - int(graded.get("perfect_msec", 0))
+	var abs_margin := absi(margin)
+	var perfect_window := maxi(1, int(graded.get("perfect_window_msec", HOLDOUT_PERFECT_WINDOW_MSEC)))
+	var good_window := maxi(perfect_window, int(graded.get("good_window_msec", HOLDOUT_GOOD_WINDOW_MSEC)))
+	var close_window := maxi(good_window, int(graded.get("close_window_msec", HOLDOUT_CLOSE_WINDOW_MSEC)))
+	var grade := "blown"
+	if abs_margin <= perfect_window:
+		grade = "perfect"
+	elif abs_margin <= good_window:
+		grade = "good"
+	elif abs_margin <= close_window:
+		grade = "partial"
+	graded["skill_grade"] = grade
+	graded["margin_msec"] = margin
+	graded["skill_accuracy"] = clampi(100 - int(round(float(abs_margin) / float(close_window) * 100.0)), 0, 100)
+	return graded
+
+
+func _finalize_holdout_challenge(ui: Dictionary, run_state: RunState, state: Dictionary, variant: Dictionary, environment: Dictionary) -> Dictionary:
+	var challenge: Dictionary = _normalized_holdout_challenge(ui.get("holdout_challenge", {}))
+	if challenge.is_empty():
+		challenge = _start_holdout_challenge(ui, run_state, state, variant, environment)
+	if ui.has("holdout_input_msec") and not challenge.has("input_msec"):
+		challenge["input_msec"] = maxi(0, int(ui.get("holdout_input_msec", 0)))
+	return _grade_holdout_challenge(challenge)
+
+
+func _holdout_grade_applies(grade: String) -> bool:
+	return grade == "perfect" or grade == "good" or grade == "partial"
+
+
+func _holdout_grade_heat_modifier(grade: String) -> int:
+	match grade:
+		"perfect":
+			return -HOLDOUT_PERFECT_HEAT_REDUCTION
+		"partial":
+			return HOLDOUT_PARTIAL_HEAT_BONUS
+		"miss":
+			return HOLDOUT_MISS_HEAT_BONUS
+		"blown":
+			return HOLDOUT_BLOWN_HEAT_BONUS
+	return 0
+
+
+func _holdout_skill_outcome(grade: String) -> String:
+	if grade.is_empty():
+		return "holdout_miss"
+	return "holdout_%s" % grade
+
+
+func _holdout_meter(challenge: Dictionary, ui_state: Dictionary) -> Dictionary:
+	var current_msec := _surface_time_msec(ui_state)
+	var started := int(challenge.get("started_msec", current_msec))
+	var perfect := int(challenge.get("perfect_msec", started + HOLDOUT_PROMPT_BASE_MSEC))
+	var close_window := maxi(1, int(challenge.get("close_window_msec", HOLDOUT_CLOSE_WINDOW_MSEC)))
+	var span := maxi(1, (perfect - started) + close_window)
+	var progress := clampf(float(current_msec - started) / float(span), 0.0, 1.0)
+	var target := clampf(float(perfect - started) / float(span), 0.0, 1.0)
+	var input_progress := -1.0
+	if challenge.has("input_msec"):
+		input_progress = clampf(float(int(challenge.get("input_msec", 0)) - started) / float(span), 0.0, 1.0)
+	return {
+		"active": true,
+		"progress": progress,
+		"target": target,
+		"input": input_progress,
+		"skill_grade": str(challenge.get("skill_grade", "")),
+	}
 
 
 func _variant(state: Dictionary) -> Dictionary:
@@ -1831,10 +2148,16 @@ func _high_two_pair(rank_counts: Dictionary, high: bool) -> int:
 	return int(pairs[pairs.size() - 1]) if high else int(pairs[0])
 
 
-func _outcome_message(blurb: String, pay_row: Dictionary, coin_pay: int, bankroll_delta: int, suspicion_delta: int, is_cheat: bool, pit_boss_summary: String, security_message: String) -> String:
+func _outcome_message(blurb: String, pay_row: Dictionary, coin_pay: int, bankroll_delta: int, suspicion_delta: int, is_cheat: bool, pit_boss_summary: String, security_message: String, holdout_grade: String = "", holdout_applied: bool = false) -> String:
 	var lead := "You draw %s." % blurb
 	if is_cheat:
-		lead = "Holdout palms in %s." % blurb
+		var grade_text := holdout_grade.replace("_", " ").capitalize()
+		if holdout_applied:
+			lead = "Holdout %s palm swaps in %s." % [grade_text, blurb]
+		elif holdout_grade == "miss":
+			lead = "Holdout misses the palm window; you draw %s." % blurb
+		else:
+			lead = "Holdout flashes late; you draw %s." % blurb
 	var pay_text := "No pay"
 	if coin_pay > 0:
 		pay_text = "Pays %d credits" % coin_pay if int(pay_row.get("mult", 0)) >= 1 else "No pay"
@@ -1842,7 +2165,7 @@ func _outcome_message(blurb: String, pay_row: Dictionary, coin_pay: int, bankrol
 		pay_text = "Pushes (bet returned)"
 	var message := "%s %s. Bankroll %+d." % [lead, pay_text, bankroll_delta]
 	if suspicion_delta > 0:
-		message += " Suspicion pressure rises."
+		message += " Heat rises +%d." % suspicion_delta
 	if not pit_boss_summary.is_empty():
 		message += " %s" % pit_boss_summary
 	if not security_message.is_empty():
@@ -1850,7 +2173,7 @@ func _outcome_message(blurb: String, pay_row: Dictionary, coin_pay: int, bankrol
 	return message
 
 
-func _info_text(phase: String, hand: Array, holds: Array, last_result: Dictionary, marked: bool, variant: Dictionary) -> String:
+func _info_text(phase: String, hand: Array, holds: Array, last_result: Dictionary, marked: bool, variant: Dictionary, holdout_challenge: Dictionary = {}) -> String:
 	if phase == "idle":
 		return "Deal ready."
 	if phase == "double_up":
@@ -1863,7 +2186,10 @@ func _info_text(phase: String, hand: Array, holds: Array, last_result: Dictionar
 			return "%s — pays %dx (bet %d)" % [blurb, mult, bet]
 		return "%s — no pay" % blurb
 	if marked:
-		return "Holdout armed. Draw to palm in the missing card."
+		var grade := str(holdout_challenge.get("skill_grade", ""))
+		if not grade.is_empty():
+			return "Holdout %s locked. Draw to finish the swap." % grade.replace("_", " ").capitalize()
+		return "Holdout armed. Tap PALM in the gap, then draw."
 	var descriptor: Dictionary = _evaluate(hand, _wild_ranks(variant))
 	var pay_row: Dictionary = _pay_for(descriptor, variant)
 	var holding := str(pay_row.get("label", "No Pay")) if int(pay_row.get("mult", 0)) > 0 else "no pay yet"
@@ -1963,7 +2289,7 @@ func _selected_surface_actions(ui_state: Dictionary) -> Array:
 	if action_id == "draw" and action_kind == "legal":
 		return ["video_poker_draw"]
 	if action_id == "mark_holds" and action_kind == "cheat":
-		return ["video_poker_mark"]
+		return ["video_poker_mark", "video_poker_palm", "video_poker_draw"]
 	if action_id == "double_up" and action_kind == "legal":
 		return ["video_poker_double_pick"]
 	return []
@@ -2028,11 +2354,15 @@ func _draw_paytable_grid(surface, surface_state: Dictionary) -> void:
 	var level := int(surface_state.get("bet_level", MAX_BET_LEVEL))
 	var coin_count := maxi(1, int(surface_state.get("coin_count", 1)))
 	var coin_value := maxi(1, int(surface_state.get("coin_value", 1)))
+	var pay_bets: Array = surface_state.get("paytable_bets", BET_LADDER)
+	if pay_bets.is_empty():
+		pay_bets = BET_LADDER
+	var active_column := clampi(int(surface_state.get("active_paytable_column", level)), 0, maxi(0, pay_bets.size() - 1))
 	var win_key := str(surface_state.get("result_pay_key", ""))
 	var grid := PAYTABLE_RECT
 	surface.draw_rect(grid, Color("#0b1020"))
 	surface.draw_rect(grid, Color(C_PINK.r, C_PINK.g, C_PINK.b, 0.32), false, 2)
-	surface.surface_label_centered("PAY TABLE - %s - %d COIN %s" % [
+	surface.surface_label_centered("PAY TABLE - %s - BET %d COIN %s" % [
 		str(surface_state.get("variant_label", "Video Poker")).to_upper().left(24),
 		coin_count,
 		str(surface_state.get("coin_label", "1c")).to_upper(),
@@ -2053,9 +2383,19 @@ func _draw_paytable_grid(surface, surface_state: Dictionary) -> void:
 		if is_win:
 			surface.draw_rect(row_rect, Color(C_TEAL.r, C_TEAL.g, C_TEAL.b, 0.18))
 			surface.draw_rect(row_rect, Color(C_TEAL.r, C_TEAL.g, C_TEAL.b, 0.54), false, 1)
-		var pay := _row_pay(row, coin_count, level >= MAX_BET_LEVEL) * coin_value
-		surface.surface_label(str(row.get("label", "")).left(24), Vector2(row_rect.position.x + 6, row_rect.position.y + row_h * 0.66), 9, C_TEAL if is_win else C_SOFT)
-		surface.surface_label(str(pay), Vector2(row_rect.end.x - 44, row_rect.position.y + row_h * 0.66), 9, C_YELLOW if is_win else Color(C_SOFT.r, C_SOFT.g, C_SOFT.b, 0.80))
+		var label_width := minf(156.0, row_rect.size.x * 0.45)
+		var pay_area_x := row_rect.position.x + label_width + 8.0
+		var pay_area_width := maxf(32.0, row_rect.end.x - pay_area_x)
+		var cell_width := pay_area_width / float(maxi(1, pay_bets.size()))
+		surface.surface_label(str(row.get("label", "")).left(20), Vector2(row_rect.position.x + 6, row_rect.position.y + row_h * 0.66), 9, C_TEAL if is_win else C_SOFT)
+		for col_index in range(pay_bets.size()):
+			var cell_rect := Rect2(pay_area_x + float(col_index) * cell_width, row_rect.position.y + 1.0, cell_width - 2.0, row_rect.size.y - 2.0)
+			var is_active := col_index == active_column
+			var pay := _row_pay(row, int(pay_bets[col_index]), col_index >= pay_bets.size() - 1) * coin_value
+			if is_active:
+				surface.draw_rect(cell_rect, Color(C_YELLOW.r, C_YELLOW.g, C_YELLOW.b, 0.16))
+				surface.draw_rect(cell_rect, Color(C_YELLOW.r, C_YELLOW.g, C_YELLOW.b, 0.54), false, 1)
+			surface.surface_label_centered(str(pay), cell_rect, 8, C_YELLOW if is_active or is_win else Color(C_SOFT.r, C_SOFT.g, C_SOFT.b, 0.80))
 
 
 func _grid_cell_pay(row: Dictionary, col_index: int, bet_options: Array) -> int:
@@ -2083,6 +2423,27 @@ func _draw_meter(surface, pos: Vector2, size: Vector2, label: String, value: int
 	surface.draw_rect(rect, Color(color.r, color.g, color.b, 0.35), false, 1)
 	surface.surface_label(label, pos + Vector2(6, 11), 8, Color(color.r, color.g, color.b, 0.70))
 	surface.surface_label(str(value).left(8), pos + Vector2(6, 25), 13, color)
+
+
+func _draw_holdout_meter(surface, surface_state: Dictionary) -> void:
+	if not bool(surface_state.get("holdout_ready", false)):
+		return
+	var meter: Dictionary = surface_state.get("holdout_meter", {}) if typeof(surface_state.get("holdout_meter", {})) == TYPE_DICTIONARY else {}
+	var panel := STATUS_PANEL_RECT
+	var bar := Rect2(panel.position + Vector2(16, 142), Vector2(panel.size.x - 32, 8))
+	surface.surface_label("PALM WINDOW", panel.position + Vector2(16, 134), 8, C_PINK)
+	surface.draw_rect(bar, Color("#04060c"))
+	surface.draw_rect(bar, Color(C_PINK.r, C_PINK.g, C_PINK.b, 0.35), false, 1)
+	var progress_x := bar.position.x + bar.size.x * clampf(float(meter.get("progress", 0.0)), 0.0, 1.0)
+	var target_x := bar.position.x + bar.size.x * clampf(float(meter.get("target", 0.5)), 0.0, 1.0)
+	surface.draw_rect(Rect2(target_x - 1.0, bar.position.y - 3.0, 2.0, bar.size.y + 6.0), C_YELLOW)
+	surface.draw_rect(Rect2(bar.position.x, bar.position.y, maxf(0.0, progress_x - bar.position.x), bar.size.y), Color(C_TEAL.r, C_TEAL.g, C_TEAL.b, 0.28))
+	var input := float(meter.get("input", -1.0))
+	if input >= 0.0:
+		var input_x := bar.position.x + bar.size.x * clampf(input, 0.0, 1.0)
+		surface.draw_rect(Rect2(input_x - 1.0, bar.position.y - 4.0, 2.0, bar.size.y + 8.0), C_CYAN)
+		var grade := str(meter.get("skill_grade", "")).replace("_", " ").to_upper()
+		surface.surface_label(grade.left(18), panel.position + Vector2(106, 134), 8, C_CYAN)
 
 
 func _draw_card_row(surface, surface_state: Dictionary, phase: String) -> void:
@@ -2270,11 +2631,26 @@ func _draw_controls(surface, surface_state: Dictionary, phase: String) -> void:
 		return
 	var win_pending := phase == "settled" and bool(surface_state.get("double_up_available", false))
 	var betting_enabled := phase == "idle" or phase == "settled"
+	var holdout_ready := phase == "hold" and bool(surface_state.get("holdout_ready", false))
+	var cheat_button_label := "DOUBLE"
+	var cheat_button_action := "video_poker_double"
+	var cheat_button_accent := C_AMBER
+	var cheat_button_enabled := win_pending
+	if holdout_ready:
+		cheat_button_label = "PALM"
+		cheat_button_action = "video_poker_palm"
+		cheat_button_accent = C_PINK
+		cheat_button_enabled = true
+	elif phase == "hold":
+		cheat_button_label = "MARK"
+		cheat_button_action = "video_poker_mark"
+		cheat_button_accent = C_PINK
+		cheat_button_enabled = true
 	_draw_cabinet_button(surface, Rect2(30, 374, 92, 36), "BET ONE", "video_poker_bet_one", 0, C_YELLOW, betting_enabled)
 	_draw_cabinet_button(surface, Rect2(130, 374, 92, 36), "BET MAX", "video_poker_bet_max", 0, C_YELLOW, betting_enabled)
 	_draw_cabinet_button(surface, Rect2(230, 374, 92, 36), str(surface_state.get("coin_label", "DENOM")).to_upper(), "video_poker_denom", 0, C_AMBER, betting_enabled)
 	_draw_cabinet_button(surface, Rect2(338, 370, 116, 44), "DRAW" if phase == "hold" else "DEAL", "video_poker_draw" if phase == "hold" else "video_poker_deal", 0, C_TEAL, true)
-	_draw_cabinet_button(surface, Rect2(470, 374, 104, 36), "DOUBLE", "video_poker_double", 0, C_AMBER, win_pending)
+	_draw_cabinet_button(surface, Rect2(470, 374, 104, 36), cheat_button_label, cheat_button_action, 0, cheat_button_accent, cheat_button_enabled)
 	_draw_cabinet_button(surface, Rect2(582, 374, 104, 36), "COLLECT", "video_poker_collect", 0, C_TEAL, phase == "settled")
 	if phase == "settled":
 		var delta := int(surface_state.get("result_bankroll_delta", 0))

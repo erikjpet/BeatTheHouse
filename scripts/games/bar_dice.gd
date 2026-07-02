@@ -27,6 +27,23 @@ const STATE_VERSION := 3
 const TUMBLE_CHANNEL := "bar_dice_tumble"
 const TUMBLE_DURATION_MSEC := 900
 const PRESS_CAP := 3
+const CONTROLLED_ROLL_PERFECT_WINDOW_MSEC := 90
+const CONTROLLED_ROLL_GOOD_WINDOW_MSEC := 230
+const CONTROLLED_ROLL_CLOSE_WINDOW_MSEC := 380
+const CONTROLLED_ROLL_METER_PERIOD_MSEC := 1300
+const CONTROLLED_ROLL_BASE_HEAT := 10
+const CONTROLLED_ROLL_PERFECT_HEAT_REDUCTION := 3
+const CONTROLLED_ROLL_PARTIAL_HEAT_BONUS := 3
+const CONTROLLED_ROLL_MISS_HEAT_BONUS := 5
+const CONTROLLED_ROLL_BLOWN_HEAT_BONUS := 12
+const CONTROLLED_ROLL_ITEM_EFFECT_KEYS := [
+	"bar_dice_controlled_roll_perfect_msec",
+	"bar_dice_controlled_roll_good_msec",
+	"bar_dice_controlled_roll_close_msec",
+	"bar_dice_controlled_roll_meter_period_msec",
+	"bar_dice_controlled_roll_base_heat",
+	"skill_cheat_drunk_window_offset_msec",
+]
 const CONSOLE_Y := 344.0
 const RULES_PANEL_RECT := Rect2(556, 218, 300, 58)
 const PAYTABLE_PANEL_RECT := Rect2(556, 282, 190, 50)
@@ -107,6 +124,33 @@ const CATEGORY_LABEL := {
 }
 const DIE_WORD := {1: "One", 2: "Two", 3: "Three", 4: "Four", 5: "Five", 6: "Six"}
 const DIE_WORD_PLURAL := {1: "Ones", 2: "Twos", 3: "Threes", 4: "Fours", 5: "Fives", 6: "Sixes"}
+const MEMORABLE_REGULAR := {
+	"id": "knucklebones_nell",
+	"name": "Knucklebones Nell",
+	"seat": 0,
+	"mood": "wry",
+	"personality": "Rail regular who names every die before it lands.",
+	"preferred_bet": "cargo",
+	"cosmetic_bet": 20,
+	"rapport": 58,
+	"snitch_risk": 28,
+	"chip_stack": 96,
+	"chip_color": "yellow",
+	"watching": true,
+	"silhouette": "rings",
+	"tell": "names every die",
+	"temper": "sharp",
+	"seat_style": "rings",
+	"animation_offset": 420,
+	"snitch_threshold": 34,
+	"last_reaction": "neutral",
+	"banter_lines": [
+		"Ship first, sweetheart.",
+		"Captain before cargo.",
+		"Pot rides if cargo ties.",
+	],
+	"accent": {"name": "yellow"},
+}
 
 
 func enter(run_state: RunState, environment: Dictionary) -> Dictionary:
@@ -201,6 +245,8 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 	var remaining_shakes := _remaining_shakes(ui) if phase == "select" else 0
 	var loaded_armed := bool(ui.get("loaded_armed", false)) and phase == "select"
 	var palm_armed := bool(ui.get("palm_armed", false)) and phase == "select"
+	var controlled_roll: Dictionary = _normalized_controlled_roll(ui.get("controlled_roll", {})) if loaded_armed else {}
+	var controlled_roll_meter: Dictionary = _controlled_roll_meter(controlled_roll, ui) if not controlled_roll.is_empty() else {}
 	var loaded_value := int(ui.get("loaded_value", 0))
 	if loaded_armed and loaded_value <= 0:
 		loaded_value = _loaded_value_for_ruleset(player_dice, "ship_captain_crew")
@@ -211,6 +257,7 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 	var pit_boss := run_state.pit_boss_watch_status(environment) if run_state != null else {}
 	var press_offer := _copy_dict(last_result.get("press_offer", {}))
 	var press_available := phase == "settled" and bool(press_offer.get("available", false))
+	var controlled_roll_item_modifiers := skill_item_modifier_badges(run_state, CONTROLLED_ROLL_ITEM_EFFECT_KEYS)
 	var explainer := _bar_dice_explainer(phase, player_score, last_result, active_stake, working_pot, rake, participants, round_timer)
 	var turn_guide := _bar_dice_turn_guide(phase, player_score, reroll, suggested, remaining_shakes, active_stake, working_pot, round_timer, last_result)
 	var rules_lines := _bar_dice_rules_panel_lines(phase, turn_guide, explainer)
@@ -221,7 +268,9 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 		suggested,
 		phase == "select" and remaining_shakes > 0 and not suggested.is_empty(),
 		press_available,
-		int(press_offer.get("risk", 0))
+		int(press_offer.get("risk", 0)),
+		loaded_armed,
+		controlled_roll
 	)
 	var opponent_rows := _surface_opponent_rows(state, last_result, phase)
 
@@ -285,6 +334,11 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 		"loaded_armed": loaded_armed,
 		"palm_armed": palm_armed,
 		"loaded_value": loaded_value,
+		"controlled_roll": controlled_roll,
+		"controlled_roll_meter": controlled_roll_meter,
+		"controlled_roll_grade": str(controlled_roll.get("skill_grade", "")),
+		"controlled_roll_ready": loaded_armed and not controlled_roll.is_empty(),
+		"controlled_roll_item_modifiers": controlled_roll_item_modifiers,
 		"player_score": player_score,
 		"player_blurb": _hand_blurb(player_score),
 		"house_blurb": _hand_blurb(opponent_score),
@@ -299,6 +353,12 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 		"surface_ui_protected_regions": _bar_dice_text_panel_regions(),
 		"bar_dice_action_buttons": action_buttons,
 		"dice_legend": _bar_dice_legend(),
+		"table_regular_id": str(MEMORABLE_REGULAR.get("id", "knucklebones_nell")),
+		"bar_dice_pacing": {
+			"patron_turn_model": "simultaneous_cups",
+			"patron_dead_wait_msec": 0,
+			"opponent_rows_visible": opponent_rows.size(),
+		},
 		"info_text": str(explainer.get("summary", "")),
 		"result_message": str(last_result.get("summary", "")) if showing_result else "",
 		"result_bankroll_delta": int(last_result.get("bankroll_delta", 0)) if showing_result else 0,
@@ -321,6 +381,7 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 		"surface_action_bindings": {
 			"legal": {"action": "bar_dice_resolve", "index": 0},
 			"cheat": {"action": "bar_dice_load", "index": 0},
+			"bar_dice_release": {"action": "bar_dice_release", "index": 0},
 			"bar_dice_palm": {"action": "bar_dice_palm", "index": 0},
 			"bar_dice_press": {"action": "bar_dice_press", "index": 0},
 			"bar_dice_stake": {"action": "bar_dice_stake", "index": 0},
@@ -333,6 +394,7 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 				"bar_dice_shake": "machine_button",
 				"bar_dice_resolve": "machine_button",
 				"bar_dice_load": "machine_button",
+				"bar_dice_release": "machine_button",
 				"bar_dice_palm": "machine_button",
 				"bar_dice_press": "machine_button",
 				"bar_dice_select": "machine_button",
@@ -391,6 +453,7 @@ func surface_action_command(surface_action: String, index: int, confirm_requeste
 			next["reroll"] = []
 			next["loaded_armed"] = false
 			next["palm_armed"] = false
+			next.erase("controlled_roll")
 			next.erase("loaded_value")
 			next["last_rerolled"] = _all_die_indices()
 			_set_tumble(next, "open", _all_die_indices())
@@ -442,6 +505,7 @@ func surface_action_command(surface_action: String, index: int, confirm_requeste
 			next["reroll"] = marks
 			next["loaded_armed"] = false
 			next["palm_armed"] = false
+			next.erase("controlled_roll")
 			next["last_rerolled"] = []
 			next.erase("loaded_value")
 			var select_message := "No dice marked. SHAKE AMBER rerolls suggested dice; SETTLE keeps the cup as shown." if marks.is_empty() else "Pink dice %s will reroll on SHAKE. Plain dice stay exactly where they are." % _reroll_summary(marks)
@@ -453,8 +517,11 @@ func surface_action_command(surface_action: String, index: int, confirm_requeste
 				"message": select_message,
 			})
 		"bar_dice_resolve":
+			if bool(next.get("loaded_armed", false)) and not _normalized_controlled_roll(next.get("controlled_roll", {})).is_empty():
+				return _action_command("loaded_toss", "cheat", confirm_requested, next, index, _resolve_prompt(next, "loaded_toss"))
 			next["loaded_armed"] = false
 			next["palm_armed"] = false
+			next.erase("controlled_roll")
 			next.erase("loaded_value")
 			return _action_command("roll", "legal", confirm_requested, next, index, _resolve_prompt(next, "roll"))
 		"bar_dice_load":
@@ -467,6 +534,21 @@ func surface_action_command(surface_action: String, index: int, confirm_requeste
 			next["loaded_armed"] = true
 			next["palm_armed"] = false
 			next["loaded_value"] = _loaded_value_for_ruleset(_int_dice(next.get("dice", [])), "ship_captain_crew")
+			next["controlled_roll"] = _start_controlled_roll(next, run_state, state)
+			return _action_command("loaded_toss", "cheat", false, next, index, _resolve_prompt(next, "loaded_toss"))
+		"bar_dice_release":
+			if not bool(next.get("rolled", false)):
+				return _message_command(next, "Roll the cup before timing a loaded toss.")
+			var controlled: Dictionary = _normalized_controlled_roll(next.get("controlled_roll", {}))
+			if controlled.is_empty():
+				controlled = _start_controlled_roll(next, run_state, state)
+			controlled["input_msec"] = int(next.get("controlled_roll_input_msec", _surface_time_msec(next)))
+			controlled = _grade_controlled_roll(controlled)
+			next["loaded_armed"] = true
+			next["palm_armed"] = false
+			next["loaded_value"] = int(controlled.get("desired_face", _loaded_value_for_ruleset(_int_dice(next.get("dice", [])), "ship_captain_crew")))
+			next["controlled_roll"] = controlled
+			next.erase("controlled_roll_input_msec")
 			return _action_command("loaded_toss", "cheat", confirm_requested, next, index, _resolve_prompt(next, "loaded_toss"))
 		"bar_dice_palm":
 			if not bool(next.get("rolled", false)):
@@ -477,6 +559,7 @@ func surface_action_command(surface_action: String, index: int, confirm_requeste
 				_set_tumble(next, "open", _all_die_indices())
 			next["loaded_armed"] = false
 			next["palm_armed"] = true
+			next.erase("controlled_roll")
 			next.erase("loaded_value")
 			return _action_command("palmed_swap", "cheat", confirm_requested, next, index, _resolve_prompt(next, "palmed_swap"))
 		"bar_dice_press":
@@ -536,18 +619,38 @@ func resolve_with_context(action_id: String, stake: int, run_state: RunState, en
 	var pit_boss_summary := ""
 	var pit_boss_watched := false
 	var pit_boss_heat_bonus := 0
+	var base_suspicion_delta := 0
 	var ended := false
 	var skill_outcome := ""
+	var skill_grade := ""
+	var skill_accuracy := 0
+	var skill_margin_msec := 0
+	var controlled_roll: Dictionary = _copy_dict(table_result.get("controlled_roll", {}))
+	var patron_snitch_pressure := 0
+	var patron_snitch_heat_bonus := 0
 	if is_cheat:
-		var heat := _cheat_heat(action_id, adjusted_stake, run_state, environment)
+		if action_id == "loaded_toss":
+			skill_grade = str(controlled_roll.get("skill_grade", "miss"))
+			skill_accuracy = clampi(int(controlled_roll.get("skill_accuracy", 0)), 0, 100)
+			skill_margin_msec = int(controlled_roll.get("skill_margin_msec", 0))
+			skill_outcome = _controlled_roll_skill_outcome(skill_grade)
+			patron_snitch_pressure = int(controlled_roll.get("patron_snitch_pressure", 0))
+		else:
+			skill_grade = "swap"
+			skill_accuracy = 100
+			skill_margin_msec = 0
+			skill_outcome = "palmed_swap"
+		var heat := _cheat_heat(action_id, adjusted_stake, run_state, environment, controlled_roll)
 		suspicion_delta = int(heat.get("suspicion_delta", 0))
+		base_suspicion_delta = int(heat.get("base_suspicion_delta", 0))
 		security_message = str(heat.get("security_message", ""))
 		pit_boss_summary = str(heat.get("pit_boss_summary", ""))
 		pit_boss_watched = bool(heat.get("pit_boss_watched", false))
 		pit_boss_heat_bonus = int(heat.get("pit_boss_heat_bonus", 0))
+		patron_snitch_pressure = int(heat.get("patron_snitch_pressure", patron_snitch_pressure))
+		patron_snitch_heat_bonus = int(heat.get("patron_snitch_heat_bonus", 0))
 		ended = bool(heat.get("ended", false))
 		bankroll_delta += int(heat.get("bankroll_delta", 0))
-		skill_outcome = "loaded_die" if action_id == "loaded_toss" else "palmed_swap"
 
 	var carryover_pot := int(table_result.get("carryover_pot", 0))
 	state["carryover_pot"] = carryover_pot
@@ -593,6 +696,11 @@ func resolve_with_context(action_id: String, stake: int, run_state: RunState, en
 		"loaded": action_id == "loaded_toss",
 		"palmed": action_id == "palmed_swap",
 		"loaded_value": int(table_result.get("loaded_value", 0)),
+		"controlled_roll": controlled_roll if action_id == "loaded_toss" else {},
+		"controlled_roll_grade": skill_grade if action_id == "loaded_toss" else "",
+		"controlled_roll_margin_msec": skill_margin_msec if action_id == "loaded_toss" else 0,
+		"patron_snitch_pressure": patron_snitch_pressure,
+		"patron_snitch_heat_bonus": patron_snitch_heat_bonus,
 		"match_legs": _copy_array(table_result.get("opponent_results", [])),
 		"match_summary": _match_summary(table_result),
 		"summary": summary,
@@ -624,6 +732,13 @@ func resolve_with_context(action_id: String, stake: int, run_state: RunState, en
 		"loaded": action_id == "loaded_toss",
 		"palmed": action_id == "palmed_swap",
 		"skill_outcome": skill_outcome,
+		"skill_grade": skill_grade,
+		"skill_accuracy": skill_accuracy,
+		"skill_margin_msec": skill_margin_msec,
+		"base_suspicion_delta": base_suspicion_delta,
+		"controlled_roll": controlled_roll if action_id == "loaded_toss" else {},
+		"patron_snitch_pressure": patron_snitch_pressure,
+		"patron_snitch_heat_bonus": patron_snitch_heat_bonus,
 		"pit_boss_watched": pit_boss_watched,
 		"pit_boss_heat_bonus": pit_boss_heat_bonus,
 		"pit_boss_summary": pit_boss_summary,
@@ -663,7 +778,20 @@ func resolve_with_context(action_id: String, stake: int, run_state: RunState, en
 			"action_kind": "cheat" if is_cheat else "legal",
 			"ruleset": "ship_captain_crew",
 			"player_cargo": int(player_score.get("cargo", 0)),
+			"skill_outcome": skill_outcome,
+			"skill_grade": skill_grade,
+			"skill_accuracy": skill_accuracy,
+			"skill_margin_msec": skill_margin_msec,
+			"suspicion_delta": suspicion_delta,
+			"base_suspicion_delta": base_suspicion_delta,
+			"bankroll_delta": bankroll_delta,
 			"watched": pit_boss_watched,
+			"pit_boss_heat_bonus": pit_boss_heat_bonus,
+			"security_pressure_checked": is_cheat,
+			"desired_face": int(controlled_roll.get("desired_face", 0)),
+			"desired_die_index": int(controlled_roll.get("desired_die_index", -1)),
+			"patron_snitch_pressure": patron_snitch_pressure,
+			"patron_snitch_heat_bonus": patron_snitch_heat_bonus,
 		},
 	}
 	var result := GameModule.build_action_result(payload)
@@ -676,6 +804,13 @@ func resolve_with_context(action_id: String, stake: int, run_state: RunState, en
 	result["bar_dice_loaded"] = action_id == "loaded_toss"
 	result["bar_dice_palmed"] = action_id == "palmed_swap"
 	result["bar_dice_loaded_value"] = int(table_result.get("loaded_value", 0))
+	result["bar_dice_controlled_roll"] = controlled_roll if action_id == "loaded_toss" else {}
+	result["bar_dice_controlled_roll_grade"] = skill_grade if action_id == "loaded_toss" else ""
+	result["bar_dice_controlled_roll_accuracy"] = skill_accuracy if action_id == "loaded_toss" else 0
+	result["bar_dice_controlled_roll_margin_msec"] = skill_margin_msec if action_id == "loaded_toss" else 0
+	result["bar_dice_controlled_roll_applied"] = action_id == "loaded_toss" and _controlled_roll_applies(skill_grade)
+	result["bar_dice_patron_snitch_pressure"] = patron_snitch_pressure
+	result["bar_dice_patron_snitch_heat_bonus"] = patron_snitch_heat_bonus
 	result["bar_dice_match_legs"] = _copy_array(table_result.get("opponent_results", []))
 	result["bar_dice_player_legs"] = 1 if won else 0
 	result["bar_dice_house_legs"] = 0 if won else 1
@@ -694,6 +829,18 @@ func resolve_with_context(action_id: String, stake: int, run_state: RunState, en
 	if is_cheat:
 		result["bar_dice_pit_boss_watched"] = pit_boss_watched
 		result["bar_dice_pit_boss_heat_bonus"] = pit_boss_heat_bonus
+		result["skill_outcome"] = skill_outcome
+		result["skill_grade"] = skill_grade
+		result["skill_accuracy"] = skill_accuracy
+		result["skill_margin_msec"] = skill_margin_msec
+		result["base_suspicion_delta"] = base_suspicion_delta
+		result["pit_boss_watched"] = pit_boss_watched
+		result["pit_boss_heat_bonus"] = pit_boss_heat_bonus
+		result["skill_security_pressure_checked"] = true
+		result["skill_story_context"] = _copy_dict(payload.get("skill_story_context", {}))
+		if not security_message.is_empty():
+			result["security_message"] = security_message
+		GameModule.normalize_skill_cheat_contract(result, result)
 	GameModule.apply_result(run_state, result, rng)
 	return result
 
@@ -725,8 +872,11 @@ func environment_object_state(run_state: RunState, environment: Dictionary) -> D
 func _resolve_table_round(action_id: String, stake: int, run_state: RunState, state: Dictionary, rng: RngStream, ui_state: Dictionary) -> Dictionary:
 	var player_dice := _player_final_dice(action_id, run_state, state, rng, ui_state)
 	var loaded_value := int(_loaded_value_for_ruleset(player_dice, "ship_captain_crew")) if action_id == "loaded_toss" else 0
+	var controlled_roll: Dictionary = {}
 	if action_id == "loaded_toss":
-		player_dice = _apply_loaded_die(player_dice, loaded_value)
+		controlled_roll = _finalize_controlled_roll(ui_state, run_state, state)
+		loaded_value = int(controlled_roll.get("desired_face", loaded_value))
+		player_dice = _apply_controlled_roll(player_dice, controlled_roll)
 	elif action_id == "palmed_swap":
 		player_dice = _apply_palmed_swap(player_dice, "ship_captain_crew")
 	var player_score := _score_ship(player_dice)
@@ -777,6 +927,7 @@ func _resolve_table_round(action_id: String, stake: int, run_state: RunState, st
 		"gross_payout": gross_payout,
 		"carryover_pot": carryover,
 		"loaded_value": loaded_value,
+		"controlled_roll": controlled_roll,
 	}
 
 
@@ -804,17 +955,25 @@ func _opponent_results(state: Dictionary, rng: RngStream) -> Array:
 		result.append({
 			"id": str(patron.get("id", "patron_%d" % i)),
 			"name": str(patron.get("name", "Patron")),
+			"personality": str(patron.get("personality", "")),
+			"banter": _patron_banter_line(patron, i + int(state.get("rounds_played", 0)), "roll"),
 			"dice": dice,
 			"score": _score_ship(dice),
 			"seat": i,
+			"turn_order": i,
+			"turn_wait_msec": 0,
 		})
 	var house_dice := _auto_play_ship_hand(rng)
 	result.append({
 		"id": "house",
 		"name": str(state.get("dealer_name", "House")),
+		"personality": "House caller",
+		"banter": "Dealer calls the cargo.",
 		"dice": house_dice,
 		"score": _score_ship(house_dice),
 		"seat": patrons.size(),
+		"turn_order": patrons.size(),
+		"turn_wait_msec": 0,
 	})
 	return result
 
@@ -936,21 +1095,33 @@ func _resolve_press(stake: int, run_state: RunState, environment: Dictionary, rn
 	return result
 
 
-func _cheat_heat(action_id: String, adjusted_stake: int, run_state: RunState, environment: Dictionary) -> Dictionary:
+func _cheat_heat(action_id: String, adjusted_stake: int, run_state: RunState, environment: Dictionary, controlled_roll: Dictionary = {}) -> Dictionary:
 	var cheat_def := _action_def(action_id)
 	var base_heat := int(cheat_def.get("suspicion_delta", 10))
+	var grade := ""
+	var patron_pressure := 0
+	var patron_heat_bonus := 0
+	if action_id == "loaded_toss":
+		base_heat = int(controlled_roll.get("base_heat", _controlled_roll_base_heat(run_state)))
+		grade = str(controlled_roll.get("skill_grade", "miss"))
+		patron_pressure = int(controlled_roll.get("patron_snitch_pressure", 0))
+		patron_heat_bonus = _patron_snitch_heat_bonus(patron_pressure, grade)
 	var pit_boss_status := run_state.pit_boss_watch_status(environment)
 	var pit_boss_bonus := int(pit_boss_status.get("cheat_heat_bonus", 0)) if bool(pit_boss_status.get("active", false)) else 0
-	var raw_heat := maxi(1, base_heat + _item_effect_total("cheat_suspicion_delta", run_state) + run_state.security_risk_bonus("cheat") + pit_boss_bonus)
+	var base_suspicion_delta := maxi(1, base_heat + _item_effect_total("cheat_suspicion_delta", run_state) + _controlled_roll_grade_heat_modifier(grade) + patron_heat_bonus)
+	var raw_heat := maxi(1, base_suspicion_delta + run_state.security_risk_bonus("cheat") + pit_boss_bonus)
 	var suspicion_delta := run_state.alcohol_adjusted_suspicion_delta(raw_heat)
 	var security_pressure := run_state.security_action_pressure("cheat", adjusted_stake, run_state.suspicion_level() + suspicion_delta)
 	return {
 		"suspicion_delta": suspicion_delta,
+		"base_suspicion_delta": base_suspicion_delta,
 		"bankroll_delta": int(security_pressure.get("bankroll_delta", 0)),
 		"security_message": str(security_pressure.get("message", "")),
 		"pit_boss_summary": str(pit_boss_status.get("summary", "")) if bool(pit_boss_status.get("active", false)) else "",
 		"pit_boss_watched": bool(pit_boss_status.get("watched", false)),
 		"pit_boss_heat_bonus": pit_boss_bonus,
+		"patron_snitch_pressure": patron_pressure,
+		"patron_snitch_heat_bonus": patron_heat_bonus,
 		"ended": bool(security_pressure.get("ended", false)),
 	}
 
@@ -1032,7 +1203,256 @@ func _normalized_ui_state(run_state: RunState, _environment: Dictionary, ui_stat
 		next["tumble_indices"] = []
 	next["loaded_armed"] = bool(next.get("loaded_armed", false))
 	next["palm_armed"] = bool(next.get("palm_armed", false))
+	var controlled_roll: Dictionary = _normalized_controlled_roll(next.get("controlled_roll", {}))
+	if controlled_roll.is_empty() or not bool(next.get("rolled", false)) or not bool(next.get("loaded_armed", false)):
+		next.erase("controlled_roll")
+	elif bool(next.get("loaded_armed", false)):
+		next["controlled_roll"] = controlled_roll
 	return next
+
+
+func _normalized_controlled_roll(value: Variant) -> Dictionary:
+	if typeof(value) != TYPE_DICTIONARY:
+		return {}
+	var source: Dictionary = (value as Dictionary).duplicate(true)
+	var challenge_id := str(source.get("challenge_id", "")).strip_edges()
+	if challenge_id.is_empty():
+		return {}
+	var started := maxi(0, int(source.get("meter_started_msec", 0)))
+	var period := maxi(300, int(source.get("meter_period_msec", CONTROLLED_ROLL_METER_PERIOD_MSEC)))
+	var perfect_window := maxi(20, int(source.get("perfect_window_msec", CONTROLLED_ROLL_PERFECT_WINDOW_MSEC)))
+	var good_window := maxi(perfect_window, int(source.get("good_window_msec", CONTROLLED_ROLL_GOOD_WINDOW_MSEC)))
+	var close_window := maxi(good_window, int(source.get("close_window_msec", CONTROLLED_ROLL_CLOSE_WINDOW_MSEC)))
+	var normalized := {
+		"challenge_id": challenge_id,
+		"desired_face": clampi(int(source.get("desired_face", 6)), 1, DIE_FACES),
+		"desired_die_index": clampi(int(source.get("desired_die_index", -1)), -1, DICE_COUNT - 1),
+		"dice_before": _int_dice(source.get("dice_before", [])),
+		"meter_started_msec": started,
+		"meter_period_msec": period,
+		"target_msec": maxi(started, int(source.get("target_msec", started))),
+		"perfect_window_msec": perfect_window,
+		"good_window_msec": good_window,
+		"close_window_msec": close_window,
+		"base_heat": maxi(1, int(source.get("base_heat", CONTROLLED_ROLL_BASE_HEAT))),
+		"patron_snitch_pressure": maxi(0, int(source.get("patron_snitch_pressure", 0))),
+		"patron_watch_count": maxi(0, int(source.get("patron_watch_count", 0))),
+		"item_modifiers": _copy_array(source.get("item_modifiers", [])),
+	}
+	if source.has("input_msec"):
+		normalized["input_msec"] = maxi(0, int(source.get("input_msec", 0)))
+	normalized["skill_margin_msec"] = int(source.get("skill_margin_msec", 0))
+	normalized["face_result"] = clampi(int(source.get("face_result", 0)), 0, DIE_FACES)
+	var grade := str(source.get("skill_grade", ""))
+	if ["perfect", "good", "partial", "miss", "blown"].has(grade):
+		normalized["skill_grade"] = grade
+	if source.has("skill_accuracy"):
+		normalized["skill_accuracy"] = clampi(int(source.get("skill_accuracy", 0)), 0, 100)
+	return normalized
+
+
+func _surface_time_msec(ui_state: Dictionary) -> int:
+	if ui_state.has("surface_time_msec"):
+		return maxi(0, int(ui_state.get("surface_time_msec", 0)))
+	return Time.get_ticks_msec()
+
+
+func _controlled_roll_windows(run_state: RunState) -> Dictionary:
+	var perfect := CONTROLLED_ROLL_PERFECT_WINDOW_MSEC + _item_effect_total("bar_dice_controlled_roll_perfect_msec", run_state)
+	var good := CONTROLLED_ROLL_GOOD_WINDOW_MSEC + _item_effect_total("bar_dice_controlled_roll_good_msec", run_state)
+	var close := CONTROLLED_ROLL_CLOSE_WINDOW_MSEC + _item_effect_total("bar_dice_controlled_roll_close_msec", run_state)
+	var period := CONTROLLED_ROLL_METER_PERIOD_MSEC + _item_effect_total("bar_dice_controlled_roll_meter_period_msec", run_state)
+	var impairment := clampi(int(run_state.drunk_level / 4), 0, 30) if run_state != null else 0
+	impairment = maxi(0, impairment - _item_effect_total("skill_cheat_drunk_window_offset_msec", run_state))
+	perfect = maxi(36, perfect - impairment)
+	good = maxi(perfect + 48, good - impairment * 2)
+	close = maxi(good + 48, close - impairment * 3)
+	return {
+		"perfect": perfect,
+		"good": good,
+		"close": close,
+		"period": maxi(600, period),
+	}
+
+
+func _controlled_roll_base_heat(run_state: RunState) -> int:
+	var action := _action_def("loaded_toss")
+	var base := int(action.get("suspicion_delta", CONTROLLED_ROLL_BASE_HEAT))
+	base += _item_effect_total("bar_dice_controlled_roll_base_heat", run_state)
+	return maxi(1, base)
+
+
+func _start_controlled_roll(ui_state: Dictionary, run_state: RunState, state: Dictionary) -> Dictionary:
+	var dice := _int_dice(ui_state.get("dice", []))
+	if dice.size() != DICE_COUNT:
+		dice = _generate_opening(run_state, state)
+	var target := _controlled_roll_target(dice)
+	var desired_face := int(target.get("face", _loaded_value_for_ruleset(dice, "ship_captain_crew")))
+	var desired_index := int(target.get("index", -1))
+	var now_msec := _surface_time_msec(ui_state)
+	var windows := _controlled_roll_windows(run_state)
+	var period := int(windows.get("period", CONTROLLED_ROLL_METER_PERIOD_MSEC))
+	var target_phase := int(round((float(desired_face) - 0.5) * float(period) / float(DIE_FACES)))
+	var seed := "%s:%s:%d:%s:%d" % [
+		str(state.get("table_key", "")),
+		str(run_state.seed_text if run_state != null else ""),
+		int(state.get("rounds_played", 0)),
+		JSON.stringify(dice),
+		int(ui_state.get("shake_number", 1)),
+	]
+	var started := now_msec - int(_stable_hash(seed) % period)
+	var watch_info := _patron_watch_info(state)
+	return {
+		"challenge_id": "bar_control_%d" % _stable_hash(seed),
+		"desired_face": desired_face,
+		"desired_die_index": desired_index,
+		"dice_before": dice.duplicate(),
+		"meter_started_msec": started,
+		"meter_period_msec": period,
+		"target_msec": started + target_phase,
+		"perfect_window_msec": int(windows.get("perfect", CONTROLLED_ROLL_PERFECT_WINDOW_MSEC)),
+		"good_window_msec": int(windows.get("good", CONTROLLED_ROLL_GOOD_WINDOW_MSEC)),
+		"close_window_msec": int(windows.get("close", CONTROLLED_ROLL_CLOSE_WINDOW_MSEC)),
+		"base_heat": _controlled_roll_base_heat(run_state),
+		"patron_snitch_pressure": int(watch_info.get("pressure", 0)),
+		"patron_watch_count": int(watch_info.get("watch_count", 0)),
+		"item_modifiers": skill_item_modifier_badges(run_state, CONTROLLED_ROLL_ITEM_EFFECT_KEYS),
+	}
+
+
+func _controlled_roll_target(dice: Array) -> Dictionary:
+	var locks := _ship_lock_indices(dice)
+	var face := _loaded_value_for_ruleset(dice, "ship_captain_crew")
+	for i in range(dice.size()):
+		if not locks.has(i):
+			return {"index": i, "face": face}
+	return {"index": 0, "face": face}
+
+
+func _grade_controlled_roll(challenge: Dictionary) -> Dictionary:
+	var graded := _normalized_controlled_roll(challenge)
+	if graded.is_empty():
+		return {}
+	if not graded.has("input_msec") or int(graded.get("input_msec", 0)) <= 0:
+		graded["skill_grade"] = "miss"
+		graded["skill_margin_msec"] = 0
+		graded["skill_accuracy"] = 0
+		graded["face_result"] = 0
+		return graded
+	var period := maxi(1, int(graded.get("meter_period_msec", CONTROLLED_ROLL_METER_PERIOD_MSEC)))
+	var input_phase := (int(graded.get("input_msec", 0)) - int(graded.get("meter_started_msec", 0))) % period
+	if input_phase < 0:
+		input_phase += period
+	var target_phase := (int(graded.get("target_msec", 0)) - int(graded.get("meter_started_msec", 0))) % period
+	if target_phase < 0:
+		target_phase += period
+	var margin := _circular_meter_margin(input_phase, target_phase, period)
+	var distance := absi(margin)
+	var perfect_window := maxi(1, int(graded.get("perfect_window_msec", CONTROLLED_ROLL_PERFECT_WINDOW_MSEC)))
+	var good_window := maxi(perfect_window, int(graded.get("good_window_msec", CONTROLLED_ROLL_GOOD_WINDOW_MSEC)))
+	var close_window := maxi(good_window, int(graded.get("close_window_msec", CONTROLLED_ROLL_CLOSE_WINDOW_MSEC)))
+	var grade := "blown"
+	if distance <= perfect_window:
+		grade = "perfect"
+	elif distance <= good_window:
+		grade = "good"
+	elif distance <= close_window:
+		grade = "partial"
+	graded["skill_grade"] = grade
+	graded["skill_margin_msec"] = margin
+	graded["skill_accuracy"] = clampi(100 - int(round(float(distance) / float(close_window) * 100.0)), 0, 100)
+	graded["face_result"] = int(graded.get("desired_face", 6)) if grade != "blown" else 0
+	return graded
+
+
+func _circular_meter_margin(input_phase: int, target_phase: int, period: int) -> int:
+	var margin := input_phase - target_phase
+	var half_period := int(period / 2)
+	if margin > half_period:
+		margin -= period
+	elif margin < -half_period:
+		margin += period
+	return margin
+
+
+func _finalize_controlled_roll(ui_state: Dictionary, run_state: RunState, state: Dictionary) -> Dictionary:
+	var challenge := _normalized_controlled_roll(ui_state.get("controlled_roll", {}))
+	if challenge.is_empty():
+		challenge = _start_controlled_roll(ui_state, run_state, state)
+	if ui_state.has("controlled_roll_input_msec") and not challenge.has("input_msec"):
+		challenge["input_msec"] = maxi(0, int(ui_state.get("controlled_roll_input_msec", 0)))
+	return _grade_controlled_roll(challenge)
+
+
+func _controlled_roll_applies(grade: String) -> bool:
+	return grade == "perfect" or grade == "good" or grade == "partial"
+
+
+func _controlled_roll_grade_heat_modifier(grade: String) -> int:
+	match grade:
+		"perfect":
+			return -CONTROLLED_ROLL_PERFECT_HEAT_REDUCTION
+		"partial":
+			return CONTROLLED_ROLL_PARTIAL_HEAT_BONUS
+		"miss":
+			return CONTROLLED_ROLL_MISS_HEAT_BONUS
+		"blown":
+			return CONTROLLED_ROLL_BLOWN_HEAT_BONUS
+	return 0
+
+
+func _controlled_roll_skill_outcome(grade: String) -> String:
+	return "controlled_roll_%s" % (grade if not grade.is_empty() else "miss")
+
+
+func _controlled_roll_meter(challenge: Dictionary, ui_state: Dictionary) -> Dictionary:
+	var now_msec := _surface_time_msec(ui_state)
+	var started := int(challenge.get("meter_started_msec", now_msec))
+	var period := maxi(1, int(challenge.get("meter_period_msec", CONTROLLED_ROLL_METER_PERIOD_MSEC)))
+	var phase := (now_msec - started) % period
+	if phase < 0:
+		phase += period
+	var target := (int(challenge.get("target_msec", started)) - started) % period
+	if target < 0:
+		target += period
+	var input_progress := -1.0
+	if challenge.has("input_msec"):
+		var input_phase := (int(challenge.get("input_msec", 0)) - started) % period
+		if input_phase < 0:
+			input_phase += period
+		input_progress = float(input_phase) / float(period)
+	return {
+		"active": true,
+		"progress": float(phase) / float(period),
+		"target": float(target) / float(period),
+		"input": input_progress,
+		"desired_face": int(challenge.get("desired_face", 0)),
+		"skill_grade": str(challenge.get("skill_grade", "")),
+	}
+
+
+func _patron_watch_info(state: Dictionary) -> Dictionary:
+	var patrons := _normalize_patrons(state.get("patrons", []))
+	var pressure := 0
+	var watch_count := 0
+	for patron_value in patrons:
+		var patron: Dictionary = patron_value
+		if bool(patron.get("watching", true)):
+			watch_count += 1
+			pressure += int(patron.get("snitch_risk", 0)) + 8
+	return {
+		"pressure": pressure,
+		"watch_count": watch_count,
+	}
+
+
+func _patron_snitch_heat_bonus(pressure: int, grade: String) -> int:
+	var bonus := int(ceil(float(maxi(0, pressure)) / 34.0))
+	if grade == "blown":
+		bonus += 4
+	elif grade == "miss":
+		bonus += 2
+	return bonus
 
 
 func _generated_stake_ladder(environment: Dictionary, rng: RngStream) -> Array:
@@ -1095,12 +1515,17 @@ func _generate_patrons(rng: RngStream, depth: int) -> Array:
 	var tells := ["calls cargo", "leans on rail", "guards chips", "watches cup", "taps glass"]
 	var result: Array = []
 	var count := clampi(2 + depth % 3, 2, 4)
-	for i in range(count):
+	result.append(MEMORABLE_REGULAR.duplicate(true))
+	for i in range(maxi(0, count - 1)):
+		var mood := str(rng.pick(["loose", "watchful", "loud", "quiet"], "loose"))
+		var tell := str(rng.pick(tells, tells[0]))
+		var temper := str(rng.pick(["nosy", "careless", "loyal", "sharp"], "careless"))
 		result.append({
-			"id": "bar_patron_%d" % i,
+			"id": "bar_patron_%d" % (i + 1),
 			"name": str(rng.pick(names, names[0])),
-			"seat": i,
-			"mood": str(rng.pick(["loose", "watchful", "loud", "quiet"], "loose")),
+			"seat": i + 1,
+			"mood": mood,
+			"personality": _generated_patron_personality(mood, tell, temper),
 			"preferred_bet": "cargo",
 			"cosmetic_bet": int(rng.pick([5, 10, 20, 25, 40], 10)),
 			"rapport": rng.randi_range(42, 62),
@@ -1109,15 +1534,28 @@ func _generate_patrons(rng: RngStream, depth: int) -> Array:
 			"chip_color": str(rng.pick(["cyan", "teal", "yellow", "pink", "orange"], "cyan")),
 			"watching": rng.randi_range(0, 100) >= 42,
 			"silhouette": str(rng.pick(["cap", "glasses", "coat", "rings"], "cap")),
-			"tell": str(rng.pick(tells, tells[0])),
-			"temper": str(rng.pick(["nosy", "careless", "loyal", "sharp"], "careless")),
+			"tell": tell,
+			"temper": temper,
 			"seat_style": str(rng.pick(["vest", "jacket", "open"], "open")),
 			"animation_offset": rng.randi_range(0, 3600),
 			"snitch_threshold": rng.randi_range(18, 52),
 			"last_reaction": "neutral",
+			"banter_lines": _generated_patron_banter(mood, tell, temper),
 			"accent": _color_name(str(rng.pick(["cyan", "teal", "yellow", "pink", "orange"], "cyan"))),
 		})
 	return result
+
+
+func _generated_patron_personality(mood: String, tell: String, temper: String) -> String:
+	return "%s rail player; %s, %s when the pot grows." % [mood.capitalize(), tell, temper]
+
+
+func _generated_patron_banter(mood: String, tell: String, temper: String) -> Array:
+	return [
+		"%s says ride the cargo." % mood.capitalize(),
+		"%s, then count cargo." % tell.capitalize(),
+		"%s eyes on the cup." % temper.capitalize(),
+	]
 
 
 func _normalize_patrons(value: Variant) -> Array:
@@ -1132,6 +1570,7 @@ func _normalize_patrons(value: Variant) -> Array:
 		patron["name"] = str(patron.get("name", "Rail %d" % (i + 1)))
 		patron["seat"] = int(patron.get("seat", i))
 		patron["mood"] = str(patron.get("mood", "loose"))
+		patron["personality"] = str(patron.get("personality", _generated_patron_personality(str(patron.get("mood", "loose")), str(patron.get("tell", "calls cargo")), str(patron.get("temper", "careless")))))
 		patron["preferred_bet"] = str(patron.get("preferred_bet", "cargo"))
 		patron["cosmetic_bet"] = maxi(1, int(patron.get("cosmetic_bet", 10)))
 		patron["rapport"] = clampi(int(patron.get("rapport", 50)), 0, 100)
@@ -1145,6 +1584,10 @@ func _normalize_patrons(value: Variant) -> Array:
 		patron["seat_style"] = str(patron.get("seat_style", "open"))
 		patron["animation_offset"] = maxi(0, int(patron.get("animation_offset", i * 620)))
 		patron["snitch_threshold"] = clampi(int(patron.get("snitch_threshold", 30)), 4, 70)
+		var banter_lines := _string_array(patron.get("banter_lines", []))
+		if banter_lines.size() < 2:
+			banter_lines = _generated_patron_banter(str(patron.get("mood", "loose")), str(patron.get("tell", "calls cargo")), str(patron.get("temper", "careless")))
+		patron["banter_lines"] = banter_lines
 		if not patron.has("accent"):
 			patron["accent"] = _color_name("cyan")
 		patrons[i] = patron
@@ -1169,14 +1612,18 @@ func _patrons_for_surface(state: Dictionary, last_result: Dictionary, active_sta
 		if winner_name == str(patron.get("name", "")):
 			patron["last_reaction"] = "won"
 			patron["behavior"] = "took pot"
+			patron["banter"] = _patron_banter_line(patron, i + active_stake, "win")
 		elif outcome == "win":
 			patron["last_reaction"] = "lost"
 			patron["behavior"] = "pays up"
+			patron["banter"] = _patron_banter_line(patron, i + active_stake, "lose")
 		elif outcome == "carry":
 			patron["last_reaction"] = "push"
 			patron["behavior"] = "pot rides"
+			patron["banter"] = _patron_banter_line(patron, i + active_stake, "carry")
 		else:
-			patron["behavior"] = str(patron.get("mood", "loose"))
+			patron["banter"] = _patron_banter_line(patron, i + active_stake, "")
+			patron["behavior"] = str(patron.get("banter", patron.get("mood", "loose"))).left(12)
 		patrons[i] = patron
 	return patrons
 
@@ -1301,6 +1748,7 @@ func _shake_again(ui_state: Dictionary, run_state: RunState, state: Dictionary, 
 	next["loaded_armed"] = false
 	next["palm_armed"] = false
 	next["last_rerolled"] = marks
+	next.erase("controlled_roll")
 	next.erase("loaded_value")
 	_set_tumble(next, "shake_%d" % shake_number, marks)
 	return next
@@ -1397,6 +1845,27 @@ func _apply_loaded_die(dice_value: Variant, loaded_value: int) -> Array:
 			break
 	if target_index >= 0:
 		dice[target_index] = loaded_value
+	return dice
+
+
+func _apply_controlled_roll(dice_value: Variant, controlled_roll: Dictionary) -> Array:
+	var dice := _int_dice(dice_value)
+	if dice.size() != DICE_COUNT:
+		return dice
+	var grade := str(controlled_roll.get("skill_grade", "miss"))
+	if not _controlled_roll_applies(grade):
+		return dice
+	var desired_face := clampi(int(controlled_roll.get("desired_face", 0)), 1, DIE_FACES)
+	var desired_index := clampi(int(controlled_roll.get("desired_die_index", -1)), -1, DICE_COUNT - 1)
+	if desired_index < 0:
+		desired_index = int(_controlled_roll_target(dice).get("index", -1))
+	if desired_index < 0 or desired_index >= dice.size():
+		return dice
+	if grade == "partial":
+		var hash_text := "%s:%s:%s" % [str(controlled_roll.get("challenge_id", "")), JSON.stringify(dice), str(desired_face)]
+		if int(_stable_hash(hash_text) % 100) >= 70:
+			return dice
+	dice[desired_index] = desired_face
 	return dice
 
 
@@ -1615,7 +2084,7 @@ func _bar_dice_legend() -> Array:
 	]
 
 
-func _bar_dice_action_buttons(phase: String, remaining_shakes: int, reroll: Array, suggested: Array, can_shake: bool, press_available: bool, press_risk: int) -> Array:
+func _bar_dice_action_buttons(phase: String, remaining_shakes: int, reroll: Array, suggested: Array, can_shake: bool, press_available: bool, press_risk: int, loaded_armed: bool = false, controlled_roll: Dictionary = {}) -> Array:
 	var buttons: Array = []
 	if phase == "select":
 		var suggested_count := suggested.size()
@@ -1640,11 +2109,18 @@ func _bar_dice_action_buttons(phase: String, remaining_shakes: int, reroll: Arra
 			"accent": "yellow",
 			"enabled": true,
 		})
+		var load_action := "bar_dice_release" if loaded_armed else "bar_dice_load"
+		var load_label := "RELEASE THROW" if loaded_armed else "CHEAT LOAD DIE"
+		var load_detail := "Hit %s band" % _word_single(int(controlled_roll.get("desired_face", 6))) if loaded_armed else "Time controlled roll"
+		var grade := str(controlled_roll.get("skill_grade", ""))
+		if loaded_armed and not grade.is_empty():
+			load_label = "ROLL LOCKED"
+			load_detail = grade.replace("_", " ").capitalize()
 		buttons.append({
-			"action": "bar_dice_load",
+			"action": load_action,
 			"index": 0,
-			"label": "CHEAT LOAD DIE",
-			"detail": "Force next face",
+			"label": load_label,
+			"detail": load_detail,
 			"accent": "pink",
 			"enabled": true,
 		})
@@ -1712,12 +2188,17 @@ func _surface_opponent_rows(state: Dictionary, last_result: Dictionary, phase: S
 		rows.append({
 			"id": str(patron.get("id", "bar_patron_%d" % i)),
 			"name": str(patron.get("name", "Rail %d" % (i + 1))),
+			"personality": str(patron.get("personality", "")),
+			"banter": _patron_banter_line(patron, i + int(state.get("rounds_played", 0)), ""),
 			"dice": dice,
 			"score": score,
 			"scoring_indices": _index_array(score.get("scoring_indices", [])),
 			"blurb": _hand_blurb(score),
 			"winning": false,
 			"preview": true,
+			"roll_visible": true,
+			"turn_order": i,
+			"turn_wait_msec": 0,
 		})
 	return rows
 
@@ -1730,12 +2211,17 @@ func _surface_opponent_row_from_leg(leg: Dictionary, winning: bool) -> Dictionar
 	return {
 		"id": str(leg.get("id", "")),
 		"name": str(leg.get("name", "Rail")),
+		"personality": str(leg.get("personality", "")),
+		"banter": str(leg.get("banter", "")),
 		"dice": dice,
 		"score": score,
 		"scoring_indices": _index_array(score.get("scoring_indices", [])),
 		"blurb": _hand_blurb(score),
 		"winning": winning,
 		"preview": false,
+		"roll_visible": true,
+		"turn_order": int(leg.get("turn_order", leg.get("seat", 0))),
+		"turn_wait_msec": int(leg.get("turn_wait_msec", 0)),
 	}
 
 
@@ -1760,7 +2246,7 @@ func _opponent_preview_dice(state: Dictionary, patron_index: int) -> Array:
 
 func _tumble_action_blocks() -> Array:
 	return [
-		{"actions": ["bar_dice_roll", "bar_dice_shake", "bar_dice_select", "bar_dice_resolve", "bar_dice_load", "bar_dice_palm", "bar_dice_press", "bar_dice_stake", "bar_dice_rail_bet"], "while_animation": TUMBLE_CHANNEL},
+		{"actions": ["bar_dice_roll", "bar_dice_shake", "bar_dice_select", "bar_dice_resolve", "bar_dice_load", "bar_dice_release", "bar_dice_palm", "bar_dice_press", "bar_dice_stake", "bar_dice_rail_bet"], "while_animation": TUMBLE_CHANNEL},
 	]
 
 
@@ -1803,7 +2289,9 @@ func _outcome_message(table_result: Dictionary, outcome: String, bankroll_delta:
 	else:
 		text = "Bar dice: %s beats your %s and takes the $%d pot. Bankroll %+d." % [winner_name, _hand_blurb(player_score), pot, bankroll_delta]
 	if action_id == "loaded_toss":
-		text += " Loaded die risk is visible."
+		var controlled := _copy_dict(table_result.get("controlled_roll", {}))
+		var grade := str(controlled.get("skill_grade", "miss")).replace("_", " ").capitalize()
+		text += " Controlled roll %s; loaded die risk is visible." % grade
 	elif action_id == "palmed_swap":
 		text += " Palmed swap risk is visible."
 	if suspicion_delta > 0:
@@ -1830,7 +2318,13 @@ func _match_summary(table_result: Dictionary) -> String:
 func _resolve_prompt(ui_state: Dictionary, action_id: String) -> String:
 	match action_id:
 		"loaded_toss":
-			return "Loaded die armed. Click again to force the next needed face and take heat."
+			var controlled := _normalized_controlled_roll(ui_state.get("controlled_roll", {}))
+			if controlled.is_empty():
+				return "Controlled roll armed. Release on the target face, then settle the cup."
+			var grade := str(controlled.get("skill_grade", ""))
+			if grade.is_empty():
+				return "Controlled roll armed for %s. Hit RELEASE in the target band." % _word_single(int(controlled.get("desired_face", 6)))
+			return "Controlled roll %s locked. Settle the cup to risk the throw." % grade.replace("_", " ").capitalize()
 		"palmed_swap":
 			return "Palmed swap armed. Click again to improve one die and take heat."
 		_:
@@ -1869,7 +2363,7 @@ func _selected_surface_actions(ui_state: Dictionary) -> Array:
 	if action_id == "roll" and action_kind == "legal":
 		return ["bar_dice_resolve"]
 	if action_id == "loaded_toss" and action_kind == "cheat":
-		return ["bar_dice_load"]
+		return ["bar_dice_load", "bar_dice_release", "bar_dice_resolve"]
 	if action_id == "palmed_swap" and action_kind == "cheat":
 		return ["bar_dice_palm"]
 	if action_id == "press" and action_kind == "legal":
@@ -1926,9 +2420,34 @@ func _draw_dice_rows(surface, state: Dictionary) -> void:
 		_draw_dice_goal_strip(surface, state, Vector2(262, 266))
 	_draw_legend_row(surface, state, Vector2(262, 306))
 	if bool(state.get("loaded_armed", false)):
-		surface.surface_label("Loaded face: %s" % _word_single(int(state.get("loaded_value", 0))), Vector2(262, 286), 12, C_PINK_2)
+		_draw_controlled_roll_meter(surface, state, Vector2(262, 282))
 	if bool(state.get("palm_armed", false)):
 		surface.surface_label("Palmed swap ready", Vector2(262, 286), 12, C_PINK_2)
+
+
+func _draw_controlled_roll_meter(surface, state: Dictionary, pos: Vector2) -> void:
+	var challenge: Dictionary = state.get("controlled_roll", {}) if typeof(state.get("controlled_roll", {})) == TYPE_DICTIONARY else {}
+	var meter: Dictionary = state.get("controlled_roll_meter", {}) if typeof(state.get("controlled_roll_meter", {})) == TYPE_DICTIONARY else {}
+	if challenge.is_empty():
+		surface.surface_label("Loaded face: %s" % _word_single(int(state.get("loaded_value", 0))), pos + Vector2(0, 4), 12, C_PINK_2)
+		return
+	var bar := Rect2(pos + Vector2(0, 12), Vector2(276, 10))
+	surface.surface_label("CONTROL THROW: %s" % _word_single(int(challenge.get("desired_face", state.get("loaded_value", 6)))).to_upper(), pos, 8, C_PINK_2)
+	surface.draw_rect(bar, Color("#070812"))
+	surface.draw_rect(bar, Color(C_PINK.r, C_PINK.g, C_PINK.b, 0.38), false, 1)
+	for face in range(1, DIE_FACES + 1):
+		var x := bar.position.x + (float(face) - 0.5) * bar.size.x / float(DIE_FACES)
+		var color := C_YELLOW if face == int(challenge.get("desired_face", 0)) else Color(C_SOFT.r, C_SOFT.g, C_SOFT.b, 0.32)
+		surface.draw_rect(Rect2(x - 1.0, bar.position.y - 3.0, 2.0, bar.size.y + 6.0), color)
+	var progress_x := bar.position.x + bar.size.x * clampf(float(meter.get("progress", 0.0)), 0.0, 1.0)
+	surface.draw_rect(Rect2(bar.position.x, bar.position.y, maxf(0.0, progress_x - bar.position.x), bar.size.y), Color(C_TEAL.r, C_TEAL.g, C_TEAL.b, 0.24))
+	surface.draw_rect(Rect2(progress_x - 2.0, bar.position.y - 5.0, 4.0, bar.size.y + 10.0), C_CYAN)
+	var input := float(meter.get("input", -1.0))
+	if input >= 0.0:
+		var input_x := bar.position.x + bar.size.x * clampf(input, 0.0, 1.0)
+		surface.draw_rect(Rect2(input_x - 1.0, bar.position.y - 6.0, 2.0, bar.size.y + 12.0), C_WHITE)
+		var grade := str(meter.get("skill_grade", "")).replace("_", " ").to_upper()
+		surface.surface_label(grade.left(18), pos + Vector2(154, 0), 8, C_CYAN)
 
 
 func _draw_opponent_dice_rows(surface, state: Dictionary) -> void:
@@ -1945,6 +2464,8 @@ func _draw_opponent_dice_rows(surface, state: Dictionary) -> void:
 		surface.draw_rect(panel, Color(accent.r, accent.g, accent.b, 0.18), false, 1)
 		surface.surface_label(str(row.get("name", "Rail")).to_upper().left(10), origin + Vector2(0, -5), 7, accent)
 		surface.surface_label(str(row.get("blurb", "Cup ready")).left(18), origin + Vector2(88, -5), 7, C_SOFT)
+		if not str(row.get("banter", "")).is_empty():
+			surface.surface_label(str(row.get("banter", "")).left(28), origin + Vector2(0, 34), 6, C_AMBER)
 		_draw_dice_row(surface, _int_dice(row.get("dice", [])), origin + Vector2(0, 7), [], [], _index_array(row.get("scoring_indices", [])), false, OPPONENT_DIE_SIZE, OPPONENT_DIE_SPACING, [], false, true)
 
 
@@ -2341,6 +2862,19 @@ func _word_plural(value: int) -> String:
 	return str(DIE_WORD_PLURAL.get(value, "%ss" % value))
 
 
+func _patron_banter_line(patron: Dictionary, selector: int, outcome: String) -> String:
+	if outcome == "win":
+		return "That cargo talks."
+	if outcome == "lose":
+		return "Pay the rail."
+	if outcome == "carry":
+		return "Let the pot ride."
+	var lines := _string_array(patron.get("banter_lines", []))
+	if lines.is_empty():
+		return str(patron.get("mood", "Rail")).capitalize()
+	return str(lines[absi(selector) % lines.size()])
+
+
 func _int_dice(value: Variant) -> Array:
 	var result: Array = []
 	if typeof(value) != TYPE_ARRAY:
@@ -2384,6 +2918,17 @@ func _index_array_raw(value: Variant) -> Array:
 		return result
 	for entry in value:
 		result.append(int(entry))
+	return result
+
+
+func _string_array(value: Variant) -> Array:
+	var result: Array = []
+	if typeof(value) != TYPE_ARRAY:
+		return result
+	for entry in value:
+		var text := str(entry).strip_edges()
+		if not text.is_empty():
+			result.append(text)
 	return result
 
 

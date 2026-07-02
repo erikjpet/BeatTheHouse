@@ -37,6 +37,7 @@ const PATRON_DECISION_STEP_DELAY_MSEC := 220
 const PATRON_HIT_CARD_DELAY_MSEC := 110
 const PATRON_DECISION_HIGHLIGHT_MSEC := 840
 const BLACKJACK_MAX_SIDE_BETS := 2
+const BLACKJACK_PAYOUT_LABEL := "3:2"
 const STRATEGY_DEVIATION_MAX_HEAT := 24
 const STRATEGY_DEVIATION_MAX_WATCH := 45
 const COOLERS_CUFFLINKS_ITEM_ID := "coolers_cufflinks"
@@ -58,9 +59,10 @@ func enter(run_state: RunState, environment: Dictionary) -> Dictionary:
 		return result
 	var side_bets: Array = _side_bet_labels(_available_side_bets(table))
 	var rules: Dictionary = _table_rules(table)
-	result["message"] = "%s watches the shoe. Side bets: %s. Blackjack pays 3:2; dealer %s soft 17." % [
+	result["message"] = "%s watches the shoe. Side bets: %s. Blackjack pays %s; dealer %s soft 17; insurance opens on an ace." % [
 		str(table.get("dealer_name", "The dealer")),
 		", ".join(side_bets) if not side_bets.is_empty() else "none",
+		BLACKJACK_PAYOUT_LABEL,
 		"hits" if bool(rules.get("dealer_hits_soft_17", false)) else "stands on",
 	]
 	return result
@@ -93,6 +95,8 @@ func generate_environment_state(_run_state: RunState, environment: Dictionary, r
 	var deck_count: int = int(rng.pick(deck_count_options, 6))
 	var shoe: Array = _build_shoe(deck_count, rng)
 	var cut_remaining := CardShoeScript.cut_card_remaining(deck_count)
+	# Act 1 tables intentionally model common shoe variants: S17/H17, DAS/no
+	# DAS, split to 3-4 hands, one-card split aces, and late surrender.
 	var rule_variants: Array = [
 		{"dealer_hits_soft_17": false, "double_after_split": true, "split_aces_one_card": true, "max_split_hands": 4, "late_surrender": true},
 		{"dealer_hits_soft_17": true, "double_after_split": true, "split_aces_one_card": true, "max_split_hands": 3, "late_surrender": false},
@@ -467,22 +471,39 @@ func draw_surface(surface, surface_state: Dictionary, _render_context: Dictionar
 
 
 func surface_needs_auto_tick(ui_state: Dictionary, run_state: RunState, environment: Dictionary) -> bool:
-	var table: Dictionary = _table_state(run_state, environment)
-	var session: Dictionary = _normalized_session(run_state, environment, ui_state, table)
-	var challenge: Dictionary = _local_copy_dict(session.get("count_challenge", {}))
-	if not challenge.is_empty() and not bool(session.get("count_answered", false)):
+	# Per-frame check: operate on the live stored table (zero-copy) and only
+	# build the full normalized session when a count challenge is actually
+	# pending. Stored table state is already normalized by every mutation path;
+	# the timer auto-start field persists directly on the stored dictionary.
+	var table: Dictionary = _peek_table_state(environment)
+	if table.is_empty():
+		return false
+	var raw_challenge: Variant = ui_state.get("count_challenge", {})
+	if typeof(raw_challenge) == TYPE_DICTIONARY and not (raw_challenge as Dictionary).is_empty() and not bool(ui_state.get("count_answered", false)):
+		var session: Dictionary = _normalized_session(run_state, environment, ui_state, table)
 		_sync_count_challenge_icons(session, run_state)
-		challenge = _local_copy_dict(session.get("count_challenge", {}))
+		var challenge: Dictionary = _local_copy_dict(session.get("count_challenge", {}))
 		if _count_has_new_misses(challenge, Time.get_ticks_msec()):
 			return true
-	if _has_dealt_hand(session) or bool(table.get("barred", false)):
+	if _has_dealt_hand(ui_state) or bool(table.get("barred", false)):
 		return false
 	var now_msec := int(ui_state.get("surface_time_msec", Time.get_ticks_msec()))
 	if _blackjack_table_motion_active(table, now_msec):
 		return false
 	var timer := GameModule.table_round_timer_status(table, now_msec, "Next hand")
-	_update_environment_table(environment, table)
 	return bool(timer.get("due", false))
+
+
+func _peek_table_state(environment: Dictionary) -> Dictionary:
+	# Zero-copy view of the stored table for read-mostly per-frame checks.
+	# Callers must not restructure it; timer auto-start writes are intended.
+	var states: Variant = environment.get("game_states", {})
+	if typeof(states) != TYPE_DICTIONARY:
+		return {}
+	var table: Variant = (states as Dictionary).get(get_id(), {})
+	if typeof(table) != TYPE_DICTIONARY or (table as Dictionary).is_empty():
+		return {}
+	return table as Dictionary
 
 
 func surface_auto_action_command(ui_state: Dictionary, run_state: RunState, environment: Dictionary, _surface_status: Dictionary = {}) -> Dictionary:
@@ -923,6 +944,9 @@ func _resolve_cheat_only(action_id: String, run_state: RunState, environment: Di
 	var raw_suspicion_delta: int = maxi(1, int(cheat.get("suspicion_delta", 0))) if action_id == "peek_hole_card" else maxi(0, int(cheat.get("suspicion_delta", 0)))
 	if cufflinks_broke:
 		raw_suspicion_delta = 0
+	var pit_boss_status := run_state.pit_boss_watch_status(environment) if run_state != null else {}
+	var pit_boss_watched := bool(cheat.get("pit_boss_watched", pit_boss_status.get("watched", false)))
+	var pit_boss_heat_bonus := int(cheat.get("pit_boss_heat_bonus", pit_boss_status.get("cheat_heat_bonus", 0)))
 	var suspicion_delta: int = run_state.alcohol_adjusted_suspicion_delta(raw_suspicion_delta) if raw_suspicion_delta > 0 else raw_suspicion_delta
 	var security_pressure: Dictionary = run_state.security_action_pressure("cheat", maxi(1, int(ui_state.get("selected_stake", 1))), run_state.suspicion_level() + suspicion_delta) if suspicion_delta > 0 else {}
 	var bankroll_delta := int(security_pressure.get("bankroll_delta", 0))
@@ -946,10 +970,11 @@ func _resolve_cheat_only(action_id: String, run_state: RunState, environment: Di
 		"action_kind": "cheat",
 		"bankroll_delta": bankroll_delta,
 		"suspicion_delta": suspicion_delta,
+		"base_suspicion_delta": raw_suspicion_delta,
 		"dealer_caught_cheat": bool(cheat.get("caught", false)),
 		"environment_id": environment.get("id", ""),
-		"pit_boss_watched": bool(cheat.get("pit_boss_watched", false)),
-		"pit_boss_heat_bonus": int(cheat.get("pit_boss_heat_bonus", 0)),
+		"pit_boss_watched": pit_boss_watched,
+		"pit_boss_heat_bonus": pit_boss_heat_bonus,
 		"coolers_cufflinks_broke": cufflinks_broke,
 		"security_message": security_message,
 	}]
@@ -969,14 +994,17 @@ func _resolve_cheat_only(action_id: String, run_state: RunState, environment: Di
 		"environment_id": environment.get("id", ""),
 		"environment_archetype_id": environment.get("archetype_id", ""),
 		"message": message,
+		"pit_boss_watched": pit_boss_watched,
+		"pit_boss_heat_bonus": pit_boss_heat_bonus,
+		"base_suspicion_delta": raw_suspicion_delta,
 	})
 	if action_id == "count_cards":
-		result["ui_state"] = _compact_session_for_ui(session.duplicate(true))
-		result["preserve_surface_ui_state"] = true
 		result["blackjack_count_answered"] = bool(session.get("count_answered", false))
 		result["blackjack_count_delta"] = int(session.get("count_delta", 0))
-	result["blackjack_pit_boss_watched"] = bool(cheat.get("pit_boss_watched", false))
-	result["blackjack_pit_boss_heat_bonus"] = int(cheat.get("pit_boss_heat_bonus", 0))
+		result["preserve_surface_ui_state"] = true
+		result["blackjack_surface_ui_state"] = session.duplicate(true)
+	result["blackjack_pit_boss_watched"] = pit_boss_watched
+	result["blackjack_pit_boss_heat_bonus"] = pit_boss_heat_bonus
 	result["blackjack_coolers_cufflinks_broke"] = cufflinks_broke
 	GameModule.apply_result(run_state, result, rng)
 	return result
@@ -990,8 +1018,14 @@ func _resolve_watched_peek_confrontation(table: Dictionary, session: Dictionary,
 	var desired_applied_heat := maxi(0, mini(raw_heat, 95 - current_heat))
 	var heat_delta := _base_suspicion_for_applied_cap(desired_applied_heat, run_state)
 	var applied_heat_preview := run_state.alcohol_adjusted_suspicion_delta(heat_delta) if run_state != null else heat_delta
+	var pit_boss_status := run_state.pit_boss_watch_status(environment) if run_state != null else {}
+	var pit_boss_watched := bool(pit_boss_status.get("watched", false))
+	var pit_boss_heat_bonus := int(pit_boss_status.get("cheat_heat_bonus", 0)) if bool(pit_boss_status.get("active", false)) else 0
 	var dealer_name := str(table.get("dealer_name", "The dealer"))
 	var message := "%s catches the peek cold, sweeps your bet, and tells you the blackjack table is closed to you for cheating." % dealer_name
+	var pit_boss_summary := str(pit_boss_status.get("summary", "")) if bool(pit_boss_status.get("active", false)) else ""
+	if not pit_boss_summary.is_empty():
+		message = "%s %s" % [message, pit_boss_summary]
 	var cufflinks_broke := run_state != null and run_state.inventory.has(COOLERS_CUFFLINKS_ITEM_ID)
 	if cufflinks_broke:
 		heat_delta = 0
@@ -1027,9 +1061,12 @@ func _resolve_watched_peek_confrontation(table: Dictionary, session: Dictionary,
 		"total_wager": confiscated_bet,
 		"bankroll_delta": -confiscated_bet,
 		"suspicion_delta": applied_heat_preview,
+		"base_suspicion_delta": heat_delta,
 		"dealer_caught_cheat": true,
 		"blackjack_table_barred": true,
 		"coolers_cufflinks_broke": cufflinks_broke,
+		"pit_boss_watched": pit_boss_watched,
+		"pit_boss_heat_bonus": pit_boss_heat_bonus,
 		"environment_id": environment.get("id", ""),
 		"environment_archetype_id": environment.get("archetype_id", ""),
 	}
@@ -1056,11 +1093,16 @@ func _resolve_watched_peek_confrontation(table: Dictionary, session: Dictionary,
 		"environment_id": environment.get("id", ""),
 		"environment_archetype_id": environment.get("archetype_id", ""),
 		"message": message,
+		"pit_boss_watched": pit_boss_watched,
+		"pit_boss_heat_bonus": pit_boss_heat_bonus,
+		"base_suspicion_delta": heat_delta,
 	})
 	result["blackjack_table_barred"] = true
 	result["blackjack_watched_peek"] = true
 	result["blackjack_confiscated_bet"] = confiscated_bet
 	result["blackjack_coolers_cufflinks_broke"] = cufflinks_broke
+	result["blackjack_pit_boss_watched"] = pit_boss_watched
+	result["blackjack_pit_boss_heat_bonus"] = pit_boss_heat_bonus
 	result["dealer_caught_cheat"] = true
 	result["defer_bankroll_zero_failure"] = true
 	GameModule.apply_result(run_state, result, rng)
@@ -2860,6 +2902,7 @@ func _autostand_split_aces(session: Dictionary, table: Dictionary) -> void:
 	var rules: Dictionary = _table_rules(table)
 	if not bool(rules.get("split_aces_one_card", true)):
 		return
+	# Split aces are deliberately one-card hands and cannot be re-split or hit.
 	var hands: Array = _hand_array(session.get("player_hands", []))
 	for i in range(hands.size()):
 		var hand: Dictionary = hands[i]
@@ -2942,6 +2985,7 @@ func _dealer_final_cards(session: Dictionary, table: Dictionary) -> Array:
 		var info: Dictionary = _hand_total_info(dealer_cards)
 		var total: int = int(info.get("total", 0))
 		var soft: bool = bool(info.get("soft", false))
+		# Dealer line is table-driven: S17 stops here, H17 takes one more card.
 		var should_hit := total < 17 or (total == 17 and soft and bool(rules.get("dealer_hits_soft_17", false)))
 		if not should_hit:
 			break
@@ -3146,6 +3190,8 @@ func _settle_hand(hand: Dictionary, dealer_cards: Array, base_stake: int) -> Dic
 		outcome = "push"
 	elif player_blackjack:
 		outcome = "blackjack"
+		# Naturals pay 3:2 in this sim. Bankroll is whole-dollar, so odd chip
+		# wagers floor the half-dollar instead of switching to a 6:5 table.
 		delta = maxi(1, int(floor(float(wager) * 1.5)))
 	elif dealer_blackjack:
 		outcome = "dealer_blackjack"
@@ -4605,6 +4651,7 @@ func _can_double(session: Dictionary, table: Dictionary, stake: int = 1, run_sta
 
 func _can_split(session: Dictionary, table: Dictionary, stake: int = 1, run_state: RunState = null) -> bool:
 	var hands: Array = _hand_array(session.get("player_hands", []))
+	# Re-splitting non-ace pairs is allowed until the table's max hand count.
 	if hands.size() >= int(_table_rules(table).get("max_split_hands", 4)):
 		return false
 	var hand: Dictionary = _active_hand(session)
@@ -4617,6 +4664,8 @@ func _can_split(session: Dictionary, table: Dictionary, stake: int = 1, run_stat
 func _can_surrender(session: Dictionary, table: Dictionary) -> bool:
 	if not bool(_table_rules(table).get("late_surrender", true)):
 		return false
+	# Surrender is late surrender only: the opening hand before any other move,
+	# unavailable after splits/doubles/hits and after a dealer blackjack check.
 	if bool(session.get("moves_made", false)) or int(session.get("split_count", 0)) > 0:
 		return false
 	var hands: Array = _hand_array(session.get("player_hands", []))
@@ -4766,6 +4815,8 @@ func _available_side_bets_for_session(table: Dictionary, session: Dictionary) ->
 		var bet: Dictionary = bet_value
 		if _side_bet_currently_available(bet, session):
 			result.append(bet)
+	if _insurance_offer_available(session) and _side_bet_index_in_list(result, "insurance") < 0:
+		result.append(_side_bet_definition("insurance"))
 	return result
 
 
@@ -4787,9 +4838,13 @@ func _item_adjusted_side_bet_for_surface(bet: Dictionary, run_state: RunState) -
 func _side_bet_currently_available(bet: Dictionary, session: Dictionary) -> bool:
 	var bet_id := str(bet.get("id", ""))
 	if bet_id == "insurance":
-		var dealer_cards: Array = _card_array(session.get("initial_dealer_cards", session.get("dealer_cards", [])))
-		return not dealer_cards.is_empty() and _card_rank_value(dealer_cards[0]) == RANK_ACE
+		return _insurance_offer_available(session)
 	return true
+
+
+func _insurance_offer_available(session: Dictionary) -> bool:
+	var dealer_cards: Array = _card_array(session.get("initial_dealer_cards", session.get("dealer_cards", [])))
+	return not dealer_cards.is_empty() and _card_rank_value(dealer_cards[0]) == RANK_ACE
 
 
 func _valid_side_bet_ids_for_session(ids: Array, table: Dictionary, session: Dictionary) -> Array:
@@ -4889,15 +4944,19 @@ func _table_rules(table: Dictionary) -> Dictionary:
 		"split_aces_one_card": bool(rules.get("split_aces_one_card", true)),
 		"max_split_hands": clampi(int(rules.get("max_split_hands", 4)), 2, 4),
 		"late_surrender": bool(rules.get("late_surrender", true)),
-		"blackjack_payout": "3:2",
+		"blackjack_payout": BLACKJACK_PAYOUT_LABEL,
+		"insurance_policy": "offered_on_dealer_ace",
 	}
 
 
 func _table_summary(table: Dictionary) -> String:
 	var rules: Dictionary = _table_rules(table)
-	return "3:2 blackjack, %s, count %s, dealer %s soft 17%s." % [
+	return "%s blackjack, %s, count %s, %s, split to %d, aces one-card, dealer %s soft 17%s, insurance on ace." % [
+		BLACKJACK_PAYOUT_LABEL,
 		str(table.get("shoe_label", CardShoeScript.shoe_label(int(table.get("deck_count", 6))))),
 		str(table.get("count_efficiency", CardShoeScript.count_efficiency_label(int(table.get("deck_count", 6))))),
+		"DAS" if bool(rules.get("double_after_split", true)) else "no DAS",
+		int(rules.get("max_split_hands", 4)),
 		"hits" if bool(rules.get("dealer_hits_soft_17", false)) else "stands on",
 		", surrender" if bool(rules.get("late_surrender", true)) else "",
 	]
@@ -4905,8 +4964,11 @@ func _table_summary(table: Dictionary) -> String:
 
 func _table_rules_text(surface_state: Dictionary) -> String:
 	var rules: Dictionary = surface_state.get("rules", {}) if typeof(surface_state.get("rules", {})) == TYPE_DICTIONARY else {}
-	return "Pays 3:2 / %s%s / Risk $%d / %s %d" % [
+	return "%s %s %s split%d A1%s Ins / Risk $%d / %s %d" % [
+		str(rules.get("blackjack_payout", BLACKJACK_PAYOUT_LABEL)),
 		"H17" if bool(rules.get("dealer_hits_soft_17", false)) else "S17",
+		"DAS" if bool(rules.get("double_after_split", true)) else "noDAS",
+		int(rules.get("max_split_hands", 4)),
 		" / LS" if bool(rules.get("late_surrender", true)) else "",
 		int(surface_state.get("total_wager_cost", 0)),
 		str(surface_state.get("shoe_label", "shoe")),
@@ -5151,22 +5213,21 @@ func _true_count_for_surface(table: Dictionary, session: Dictionary) -> int:
 
 
 func _blackjack_result_message(hand_results: Array, side_results: Array, main_delta: int, side_delta: int, cheat: Dictionary, item_adjustment: Dictionary, security_message: String) -> String:
-	var outcomes: Array = []
+	var hand_details: Array = []
 	var dealer_total := 0
 	for hand_value in hand_results:
 		var hand: Dictionary = hand_value
 		dealer_total = int(hand.get("dealer_total", dealer_total))
-		outcomes.append("H%d %s %d" % [outcomes.size() + 1, str(hand.get("outcome", "push")).replace("_", " "), int(hand.get("player_total", 0))])
-	var side_wins: Array = []
+		hand_details.append(_blackjack_hand_result_detail(hand, hand_details.size()))
+	var side_details: Array = []
 	for side_value in side_results:
 		var side: Dictionary = side_value
-		if bool(side.get("won", false)):
-			side_wins.append("%s %s" % [str(side.get("label", "")), str(side.get("detail", ""))])
-	var message := "Dealer %d vs %s. Main %+d" % [dealer_total, ", ".join(outcomes), main_delta]
+		side_details.append(_blackjack_side_result_detail(side))
+	var message := "Dealer %d. %s. Main %+d" % [dealer_total, "; ".join(hand_details), main_delta]
 	if side_delta != 0:
-		message += ", side bets %+d" % side_delta
-	if not side_wins.is_empty():
-		message += " (%s)" % ", ".join(side_wins).left(70)
+		message += ". Side %+d" % side_delta
+	if not side_details.is_empty():
+		message += " (%s)" % "; ".join(side_details).left(96)
 	if bool(cheat.get("strategy_confronted", false)):
 		message += ". Dealer challenges the off-book line."
 	elif bool(cheat.get("caught", false)):
@@ -5179,6 +5240,39 @@ func _blackjack_result_message(hand_results: Array, side_results: Array, main_de
 	if not security_message.is_empty():
 		message += " %s" % security_message
 	return message
+
+
+func _blackjack_hand_result_detail(hand: Dictionary, hand_index: int) -> String:
+	var outcome := str(hand.get("outcome", "push"))
+	var player_total := int(hand.get("player_total", 0))
+	var dealer_total := int(hand.get("dealer_total", 0))
+	var wager := maxi(1, int(hand.get("wager", 1)))
+	var delta := int(hand.get("bankroll_delta", 0))
+	var prefix := "H%d" % (hand_index + 1)
+	match outcome:
+		"blackjack":
+			return "%s blackjack pays %s on $%d (%+d)" % [prefix, BLACKJACK_PAYOUT_LABEL, wager, delta]
+		"dealer_blackjack":
+			return "%s dealer blackjack beats %d (%+d)" % [prefix, player_total, delta]
+		"bust":
+			return "%s busts at %d (%+d)" % [prefix, player_total, delta]
+		"dealer_bust":
+			return "%s dealer bust pays %d (%+d)" % [prefix, player_total, delta]
+		"win":
+			return "%s %d beats %d (%+d)" % [prefix, player_total, dealer_total, delta]
+		"lose":
+			return "%s %d loses to %d (%+d)" % [prefix, player_total, dealer_total, delta]
+		"surrender":
+			return "%s late surrender returns half of $%d (%+d)" % [prefix, wager, delta]
+		_:
+			return "%s push %d-%d (%+d)" % [prefix, player_total, dealer_total, delta]
+
+
+func _blackjack_side_result_detail(side: Dictionary) -> String:
+	var label := str(side.get("label", side.get("id", "Side bet")))
+	var detail := str(side.get("detail", "settled"))
+	var delta := int(side.get("bankroll_delta", 0))
+	return "%s %s %+d" % [label, detail, delta]
 
 
 func _blackjack_last_result_payload(message: String, hand_results: Array, side_results: Array, main_delta: int, side_delta: int, bankroll_delta: int, suspicion_delta: int, dealer_cards: Array, player_hands: Array, patron_hands: Array, patron_action_events: Array, cheat: Dictionary) -> Dictionary:

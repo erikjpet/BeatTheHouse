@@ -66,6 +66,8 @@ func legal_actions(_run_state: RunState, _environment: Dictionary) -> Array:
 
 # Returns cheat actions from the game definition.
 func cheat_actions(run_state: RunState, environment: Dictionary) -> Array:
+	if run_state != null and run_state.challenge_cheat_actions_disabled():
+		return []
 	var actions := _copy_array(definition.get("cheat_actions", []))
 	var result: Array = []
 	var security_bonus := run_state.security_risk_bonus("cheat") if run_state != null else 0
@@ -213,6 +215,8 @@ static func empty_result_deltas() -> Dictionary:
 		"suspicion_delta": 0,
 		"alcohol_intake": 0,
 		"drunk_delta": 0,
+		"pending_drunk_absorption_delta": 0,
+		"drunk_distortion_suppression_turns": 0,
 		"alcoholic_delta": 0,
 		"baseline_luck_delta": 0,
 		"debt_changes": [],
@@ -349,7 +353,7 @@ static func surface_animation_status(surface_status: Dictionary, channel_id: Str
 # Builds a normalized ActionResult dictionary from module payload data.
 static func build_action_result(payload: Dictionary = {}) -> Dictionary:
 	var source_deltas := _copy_dict(payload.get("deltas", {}))
-	for key in ["bankroll_delta", "suspicion_delta", "alcohol_intake", "drunk_delta", "alcoholic_delta", "baseline_luck_delta", "ended"]:
+	for key in ["bankroll_delta", "suspicion_delta", "alcohol_intake", "drunk_delta", "pending_drunk_absorption_delta", "drunk_distortion_suppression_turns", "alcoholic_delta", "baseline_luck_delta", "ended"]:
 		if payload.has(key) and not source_deltas.has(key):
 			source_deltas[key] = payload[key]
 	if payload.has("messages") and not source_deltas.has("messages"):
@@ -397,11 +401,26 @@ static func normalize_skill_cheat_contract(result: Dictionary, payload: Dictiona
 	var bankroll_delta := int(result.get("bankroll_delta", deltas.get("bankroll_delta", 0)))
 	var watched := _skill_bool_value("pit_boss_watched", result, payload, story_context, false)
 	var pit_boss_heat_bonus := _skill_int_value("pit_boss_heat_bonus", result, payload, story_context, 0)
-	var pressure_checked_default := suspicion_delta > 0
+	var pressure_checked_default := true
 	var pressure_checked := _skill_bool_value("skill_security_pressure_checked", result, payload, story_context, pressure_checked_default)
 	var skill_outcome := _skill_string_value("skill_outcome", result, payload, story_context, "")
 	if skill_outcome.is_empty():
 		skill_outcome = _default_skill_outcome(action_kind, bool(result.get("won", false)), suspicion_delta, bankroll_delta)
+	var skill_grade := _skill_string_value("skill_grade", result, payload, story_context, "")
+	if skill_grade.is_empty():
+		skill_grade = _default_skill_grade(skill_outcome, action_kind, bool(result.get("won", false)), suspicion_delta, bankroll_delta)
+	var skill_accuracy := clampi(_skill_int_value("skill_accuracy", result, payload, story_context, _default_skill_accuracy(skill_grade, action_kind, bool(result.get("won", false)), suspicion_delta, bankroll_delta)), 0, 100)
+	var skill_margin_msec := maxi(0, _skill_int_value("skill_margin_msec", result, payload, story_context, 0))
+	var base_suspicion_delta := _skill_int_value("base_suspicion_delta", result, payload, story_context, -1)
+	if base_suspicion_delta < 0 and deltas.has("base_suspicion_delta"):
+		base_suspicion_delta = int(deltas.get("base_suspicion_delta", -1))
+	if base_suspicion_delta < 0:
+		base_suspicion_delta = _skill_int_value("base_heat", result, payload, story_context, -1)
+	if base_suspicion_delta < 0:
+		base_suspicion_delta = _skill_int_value("tab_detector_base_heat", result, payload, story_context, -1)
+	if base_suspicion_delta < 0:
+		base_suspicion_delta = suspicion_delta
+	base_suspicion_delta = maxi(0, base_suspicion_delta)
 	var security_message := _skill_string_value("security_message", result, payload, story_context, "")
 	var skill_context := _copy_dict(payload.get("skill_story_context", story_context.get("skill_story_context", {})))
 	if skill_context.is_empty():
@@ -412,7 +431,11 @@ static func normalize_skill_cheat_contract(result: Dictionary, payload: Dictiona
 			"environment_id": str(result.get("environment_id", "")),
 		}
 	skill_context["skill_outcome"] = skill_outcome
+	skill_context["skill_grade"] = skill_grade
+	skill_context["skill_accuracy"] = skill_accuracy
+	skill_context["skill_margin_msec"] = skill_margin_msec
 	skill_context["suspicion_delta"] = suspicion_delta
+	skill_context["base_suspicion_delta"] = base_suspicion_delta
 	skill_context["bankroll_delta"] = bankroll_delta
 	skill_context["watched"] = watched
 	skill_context["pit_boss_heat_bonus"] = pit_boss_heat_bonus
@@ -420,11 +443,15 @@ static func normalize_skill_cheat_contract(result: Dictionary, payload: Dictiona
 
 	result["skill_cheat_contract"] = true
 	result["skill_outcome"] = skill_outcome
+	result["skill_grade"] = skill_grade
+	result["skill_accuracy"] = skill_accuracy
+	result["skill_margin_msec"] = skill_margin_msec
 	result["skill_watched"] = watched
 	result["watched"] = watched
 	result["pit_boss_watched"] = watched
 	result["pit_boss_heat_bonus"] = pit_boss_heat_bonus
 	result["skill_suspicion_delta"] = suspicion_delta
+	result["base_suspicion_delta"] = base_suspicion_delta
 	result["skill_payoff_delta"] = bankroll_delta
 	result["skill_security_pressure_checked"] = pressure_checked
 	result["skill_story_context"] = skill_context.duplicate(true)
@@ -440,7 +467,11 @@ static func normalize_skill_cheat_contract(result: Dictionary, payload: Dictiona
 		if _story_entry_matches_result(entry, result):
 			entry["action_kind"] = str(entry.get("action_kind", action_kind))
 			entry["skill_outcome"] = skill_outcome
+			entry["skill_grade"] = skill_grade
+			entry["skill_accuracy"] = skill_accuracy
+			entry["skill_margin_msec"] = skill_margin_msec
 			entry["suspicion_delta"] = suspicion_delta
+			entry["base_suspicion_delta"] = base_suspicion_delta
 			entry["bankroll_delta"] = bankroll_delta
 			entry["skill_watched"] = watched
 			entry["watched"] = watched
@@ -507,9 +538,15 @@ static func apply_result(run_state: RunState, result: Dictionary, rng: RngStream
 	var alcohol_intake := int(deltas.get("alcohol_intake", 0))
 	if alcohol_intake != 0:
 		run_state.drink_alcohol(alcohol_intake)
+	var pending_drunk_absorption_delta := int(deltas.get("pending_drunk_absorption_delta", 0))
+	if pending_drunk_absorption_delta != 0:
+		run_state.change_pending_drunk_absorption(pending_drunk_absorption_delta)
 	var drunk_delta := int(deltas.get("drunk_delta", 0))
 	if drunk_delta != 0:
 		run_state.change_drunk(drunk_delta)
+	var drunk_distortion_suppression_turns := int(deltas.get("drunk_distortion_suppression_turns", 0))
+	if drunk_distortion_suppression_turns > 0:
+		run_state.suppress_drunk_distortion(drunk_distortion_suppression_turns)
 	var alcoholic_delta := int(deltas.get("alcoholic_delta", 0))
 	if alcoholic_delta != 0:
 		run_state.change_alcoholic(alcoholic_delta)
@@ -710,8 +747,11 @@ func _is_cheat_action(action_id: String) -> bool:
 
 # Sums matching item bonuses for this game context.
 func _item_bonus(key: String, run_state: RunState, is_cheat: bool) -> int:
-	if library == null:
+	if run_state == null or library == null:
 		return 0
+	if run_state.has_method("item_effect_total"):
+		var action_kind := "cheat" if is_cheat else "legal"
+		return int(run_state.item_effect_total(key, get_family(), action_kind))
 	var total := 0
 	for inventory_entry in run_state.inventory:
 		var item_id := _inventory_item_id(inventory_entry)
@@ -730,6 +770,67 @@ func _item_bonus(key: String, run_state: RunState, is_cheat: bool) -> int:
 		var family_effect := _copy_dict(families.get(get_family(), {}))
 		total += int(family_effect.get(key, 0))
 	return total
+
+
+# Returns UI-ready item badges for skill-cheat modifiers on the current game.
+func skill_item_modifier_badges(run_state: RunState, effect_keys: Array) -> Array:
+	if run_state == null or library == null:
+		return []
+	var wanted := {}
+	for key_value in effect_keys:
+		var key := str(key_value).strip_edges()
+		if not key.is_empty():
+			wanted[key] = true
+	if wanted.is_empty():
+		return []
+	var badges: Array = []
+	for inventory_entry in run_state.inventory:
+		var item_id := _inventory_item_id(inventory_entry).strip_edges()
+		if item_id.is_empty():
+			continue
+		var item := library.item(item_id)
+		if item.is_empty():
+			continue
+		var effect := _copy_dict(item.get("effect", {}))
+		var modifiers := _skill_item_modifier_values(effect, wanted, get_family())
+		if modifiers.is_empty():
+			continue
+		badges.append({
+			"item_id": item_id,
+			"label": str(item.get("display_name", item_id)),
+			"icon_key": str(item.get("icon_key", item_id)),
+			"item_class": str(item.get("class", "")),
+			"modifiers": modifiers,
+		})
+	return badges
+
+
+func _skill_item_modifier_values(effect: Dictionary, wanted: Dictionary, family_id: String) -> Dictionary:
+	var values := {}
+	_merge_skill_item_modifier_values(values, effect, wanted)
+	var families := _copy_dict(effect.get("families", {}))
+	var family_effect := _copy_dict(families.get(family_id, {}))
+	_merge_skill_item_modifier_values(values, family_effect, wanted)
+	return values
+
+
+func _merge_skill_item_modifier_values(target: Dictionary, source: Dictionary, wanted: Dictionary) -> void:
+	if source.is_empty():
+		return
+	for key_value in wanted.keys():
+		var key := str(key_value)
+		var value := _numeric_item_modifier_value(source.get(key, 0))
+		if value == 0:
+			continue
+		target[key] = int(target.get(key, 0)) + value
+
+
+func _numeric_item_modifier_value(value: Variant) -> int:
+	if typeof(value) == TYPE_INT:
+		return int(value)
+	if typeof(value) == TYPE_FLOAT:
+		return int(round(float(value)))
+	return 0
 
 
 # Builds the player-facing result message.
@@ -890,6 +991,48 @@ static func _default_skill_outcome(action_kind: String, won: bool, suspicion_del
 	return "cheat_resolved"
 
 
+static func _default_skill_grade(skill_outcome: String, action_kind: String, won: bool, suspicion_delta: int, bankroll_delta: int) -> String:
+	var outcome := skill_outcome.to_lower()
+	if outcome.find("perfect") >= 0:
+		return "perfect"
+	if outcome.find("good") >= 0:
+		return "good"
+	if outcome.find("partial") >= 0 or outcome.find("close") >= 0:
+		return "partial"
+	if outcome.find("blown") >= 0 or outcome.find("caught") >= 0:
+		return "blown"
+	if outcome.find("miss") >= 0:
+		return "miss"
+	if action_kind == "advantage":
+		return "edge"
+	if action_kind == "risky":
+		return "risk"
+	if won or bankroll_delta > 0:
+		return "success"
+	if suspicion_delta > 0:
+		return "heat"
+	return "resolved"
+
+
+static func _default_skill_accuracy(skill_grade: String, action_kind: String, won: bool, suspicion_delta: int, bankroll_delta: int) -> int:
+	match skill_grade:
+		"perfect":
+			return 100
+		"good", "success", "edge":
+			return 75
+		"partial", "close", "risk":
+			return 50
+		"miss", "blown", "clean_miss":
+			return 0
+	if won or bankroll_delta > 0:
+		return 75
+	if action_kind == "advantage":
+		return 75
+	if suspicion_delta > 0:
+		return 25
+	return 50
+
+
 # Normalizes legacy or partial result-delta dictionaries into the shared shape.
 static func _normalize_result_deltas(value: Variant) -> Dictionary:
 	var source := _copy_dict(value)
@@ -919,7 +1062,7 @@ static func _normalize_result_deltas(value: Variant) -> Dictionary:
 	for key in result.keys():
 		if not source.has(key):
 			continue
-		if key == "bankroll_delta" or key == "suspicion_delta" or key == "alcohol_intake" or key == "drunk_delta" or key == "alcoholic_delta" or key == "baseline_luck_delta":
+		if key == "bankroll_delta" or key == "suspicion_delta" or key == "alcohol_intake" or key == "drunk_delta" or key == "pending_drunk_absorption_delta" or key == "drunk_distortion_suppression_turns" or key == "alcoholic_delta" or key == "baseline_luck_delta":
 			result[key] = int(source[key])
 		elif key == "ended":
 			result[key] = bool(source[key])

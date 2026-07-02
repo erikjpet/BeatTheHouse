@@ -145,6 +145,10 @@ func _run() -> void:
 	run_state.current_environment = environment.duplicate(true)
 	var surface := game.surface_state(run_state, environment, {})
 	var targets := _dictionary_array(surface.get("bet_targets", []))
+	if str(surface.get("variant", "")) != "american_double_zero":
+		failures.append("Roulette surface did not expose the explicit American double-zero variant.")
+	if not _dictionary_array(surface.get("recent_numbers", [])).is_empty():
+		failures.append("Roulette rule audit surface should start with empty recent-number history.")
 	stats["target_count"] = targets.size()
 	_audit_target_counts(targets)
 	_audit_hitbox_priority(game, surface, targets)
@@ -200,6 +204,8 @@ func _audit_every_target_settles(game: GameModule, table: Dictionary, targets: A
 		var expected_delta := 2 * int(target.get("payout", 0))
 		if int(result.get("bankroll_delta", 0)) != expected_delta:
 			failures.append("Roulette target %s paid %d on %s, expected %d." % [str(target.get("id", i)), int(result.get("bankroll_delta", 0)), numbers[0], expected_delta])
+		if int(result.get("celebration_score", 0)) <= 0:
+			failures.append("Roulette target %s won without proportional celebration metadata." % str(target.get("id", i)))
 		stats["payout_targets_checked"] = int(stats.get("payout_targets_checked", 0)) + 1
 
 
@@ -209,6 +215,8 @@ func _audit_hitbox_priority(game: GameModule, surface: Dictionary, targets: Arra
 	if not bool(game.draw_surface(harness, surface, {"contract_harness": true})):
 		failures.append("Roulette draw_surface failed during hitbox audit.")
 		return
+	if not harness.labels.has("RECENT"):
+		failures.append("Roulette renderer did not draw a recent-number panel.")
 	var board := Rect2(Vector2.ZERO, Vector2(900, 430))
 	var bet_hits: Dictionary = {}
 	for hit_value in harness.hit_regions:

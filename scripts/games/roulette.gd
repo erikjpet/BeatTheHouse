@@ -37,6 +37,22 @@ const CONSOLE_H := 76.0
 const HISTORY_LIMIT := 12
 const TRAJECTORY_KEYFRAMES := 96
 const MAX_VISIBLE_PATRONS := 3
+const PAST_POST_ACTION_ID := "past_post"
+const PAST_POST_PERFECT_MSEC := 120
+const PAST_POST_GOOD_MSEC := 260
+const PAST_POST_WINDOW_MSEC := 700
+const PAST_POST_BASE_HEAT := 18
+const PAST_POST_BLOWN_HEAT_BONUS := 16
+const PAST_POST_PARTIAL_HEAT_BONUS := 4
+const PAST_POST_MISS_HEAT_BONUS := 8
+const PAST_POST_PERFECT_HEAT_REDUCTION := 4
+const PAST_POST_ITEM_EFFECT_KEYS := [
+	"roulette_past_post_perfect_msec",
+	"roulette_past_post_good_msec",
+	"roulette_past_post_window_msec",
+	"roulette_past_post_base_heat",
+	"skill_cheat_drunk_window_offset_msec",
+]
 
 const AMERICAN_SEQUENCE := [
 	"0", "28", "9", "26", "30", "11", "7", "20", "32", "17", "5", "22", "34", "15", "3", "24", "36", "13", "1", "00", "27", "10", "25", "29", "12", "8", "19", "31", "18", "6", "21", "33", "16", "4", "23", "35", "14", "2"
@@ -129,17 +145,25 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 	var spin_elapsed_msec := now_msec - int(last_result.get("resolved_at_msec", 0))
 	var spin_active := not last_result.is_empty() and spin_elapsed_msec >= 0 and spin_elapsed_msec < SPIN_ANIMATION_DURATION_MSEC
 	var payout_active := not last_result.is_empty() and spin_elapsed_msec >= SPIN_ANIMATION_DURATION_MSEC and spin_elapsed_msec < SPIN_ANIMATION_DURATION_MSEC + PAYOUT_ANIMATION_DURATION_MSEC
+	var past_post_window := _past_post_window_status(table, session, last_result, now_msec, run_state)
+	var past_post_challenge := _normalized_past_post_challenge(session.get("past_post_challenge", {}))
+	var past_post_available := bool(past_post_window.get("available", false))
 	var rules := _table_rules(table)
 	var barred := bool(table.get("table_barred", false))
+	var recent_numbers := _roulette_recent_numbers(table)
 	var timer_active := not barred and not spin_active and not payout_active
 	var round_timer := GameModule.table_round_timer_status(table, now_msec, "Next spin") if timer_active else {}
 	if timer_active:
 		_update_environment_table(environment, table)
 	var table_notice := _table_notice(table, session, last_result, spin_active, payout_active, round_timer)
+	if past_post_available:
+		table_notice = "The payout lock is open. A late chip could still slide."
 	if barred:
 		table_notice = str(table.get("barred_reason", "The roulette wheel is closed to you."))
 	var surface_patrons := _patrons_for_surface(table, last_result)
 	var patron_layout := _roulette_patron_layout(surface_patrons)
+	var cheat_binding_action := "roulette_past_post" if past_post_available else "roulette_nudge"
+	var past_post_item_modifiers := skill_item_modifier_badges(run_state, PAST_POST_ITEM_EFFECT_KEYS)
 	return GameModule.surface_spec({
 		"surface_renderer": "roulette",
 		"surface_life": "immersive_table",
@@ -206,6 +230,12 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 		"can_rebet": not barred and not _bet_array(session.get("roulette_rebet", table.get("last_bets", []))).is_empty(),
 		"last_result": last_result,
 		"last_results": _dictionary_array(table.get("last_results", [])),
+		"recent_numbers": recent_numbers,
+		"roulette_recent_numbers": recent_numbers,
+		"past_post_available": past_post_available,
+		"past_post_window": past_post_window,
+		"past_post_challenge": past_post_challenge,
+		"past_post_item_modifiers": past_post_item_modifiers,
 		"result_message": str(last_result.get("summary", "")) if not spin_active else "",
 		"table_notice": table_notice,
 		"table_round_timer": round_timer,
@@ -214,7 +244,7 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 		"native_selected_surface_actions": _selected_surface_actions(session),
 		"surface_action_bindings": {
 			"legal": {"action": "roulette_spin", "index": 0},
-			"cheat": {"action": "roulette_nudge", "index": 0},
+			"cheat": {"action": cheat_binding_action, "index": 0},
 			"surface_stake_down": {"action": "roulette_clear", "index": 0},
 			"surface_stake_up": {"action": "roulette_chip", "index": 0},
 			"surface_stake_max": {"action": "roulette_max_bet", "index": 0},
@@ -233,6 +263,7 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 				"roulette_spin": "roulette_spin",
 				"roulette_read_wheel": "roulette_read_wheel",
 				"roulette_nudge": "roulette_read_wheel",
+				"roulette_past_post": "roulette_chip_place",
 				"surface_stake_up": "roulette_chip_select",
 				"surface_stake_down": "roulette_chip_lift",
 				"surface_stake_max": "roulette_chip_stack",
@@ -255,6 +286,7 @@ func draw_surface(surface, surface_state: Dictionary, _render_context: Dictionar
 	_draw_roulette_wheel(surface, surface_state)
 	_draw_table_patrons(surface, surface_state)
 	_draw_croupier_station(surface, surface_state)
+	_draw_recent_numbers(surface, surface_state)
 	_draw_betting_layout(surface, surface_state)
 	_draw_bet_chips(surface, surface_state)
 	_draw_table_notice(surface, surface_state)
@@ -268,18 +300,30 @@ func draw_surface(surface, surface_state: Dictionary, _render_context: Dictionar
 
 
 func surface_needs_auto_tick(ui_state: Dictionary, run_state: RunState, environment: Dictionary) -> bool:
-	var table := _table_state(run_state, environment)
-	if bool(table.get("table_barred", false)):
-		return false
-	var session := _normalized_session(run_state, environment, ui_state, table)
-	if _surface_locked(session):
+	# Per-frame check: operate on the live stored table (zero-copy) instead of
+	# normalize -> deep copy -> write-back every frame. Stored state is already
+	# normalized by every mutation path; the timer auto-start field persists
+	# directly on the stored dictionary.
+	var table := _peek_table_state(environment)
+	if table.is_empty() or bool(table.get("table_barred", false)):
 		return false
 	var now_msec := int(ui_state.get("surface_time_msec", Time.get_ticks_msec()))
 	var timer := GameModule.table_round_timer_status(table, now_msec, "Next spin")
 	if _roulette_motion_active(table, now_msec) and not bool(timer.get("due", false)):
 		return false
-	_update_environment_table(environment, table)
 	return bool(timer.get("due", false))
+
+
+func _peek_table_state(environment: Dictionary) -> Dictionary:
+	# Zero-copy view of the stored table for read-mostly per-frame checks.
+	# Callers must not restructure it; timer auto-start writes are intended.
+	var states: Variant = environment.get("game_states", {})
+	if typeof(states) != TYPE_DICTIONARY:
+		return {}
+	var table: Variant = (states as Dictionary).get(get_id(), {})
+	if typeof(table) != TYPE_DICTIONARY or (table as Dictionary).is_empty():
+		return {}
+	return table as Dictionary
 
 
 func surface_auto_action_command(ui_state: Dictionary, run_state: RunState, environment: Dictionary, _surface_status: Dictionary = {}) -> Dictionary:
@@ -312,6 +356,8 @@ func surface_action_command(surface_action: String, index: int, confirm_requeste
 	var next_state := _normalized_session(run_state, environment, ui_state, table)
 	if bool(table.get("table_barred", false)):
 		return _message_command(next_state, str(table.get("barred_reason", "The croupier closes the roulette table to you.")))
+	if surface_action == "roulette_past_post":
+		return _past_post_command(index, next_state, table, run_state, environment, confirm_requested)
 	if _surface_locked(next_state):
 		return _message_command(next_state, "No more bets while the wheel is moving.")
 	match surface_action:
@@ -349,6 +395,8 @@ func resolve(action_id: String, stake: int, run_state: RunState, environment: Di
 func resolve_with_context(action_id: String, stake: int, run_state: RunState, environment: Dictionary, rng: RngStream, ui_state: Dictionary = {}) -> Dictionary:
 	if action_id == "read_wheel_bias":
 		return _resolve_read_wheel(action_id, run_state, environment, rng, ui_state)
+	if action_id == PAST_POST_ACTION_ID:
+		return _resolve_past_post(action_id, run_state, environment, rng, ui_state)
 	if action_id != "spin_roulette":
 		return _empty_roulette_result(action_id, stake, environment, "That roulette action is not available.")
 	var table := _table_state(run_state, environment)
@@ -464,6 +512,471 @@ func resolve_with_context(action_id: String, stake: int, run_state: RunState, en
 	result["roulette_table_pressure"] = table_pressure
 	GameModule.apply_result(run_state, result, rng)
 	return result
+
+
+func _past_post_command(index: int, state: Dictionary, table: Dictionary, run_state: RunState, environment: Dictionary, confirm_requested: bool) -> Dictionary:
+	var last_result := _copy_dict(table.get("last_result", {}))
+	var now_msec := _surface_time_msec(state)
+	var window := _past_post_window_status(table, state, last_result, now_msec, run_state)
+	if not bool(window.get("available", false)):
+		return _message_command(state, str(window.get("message", "The croupier has locked this payout.")))
+	var challenge := _normalized_past_post_challenge(state.get("past_post_challenge", {}))
+	if challenge.is_empty() or str(challenge.get("spin_id", "")) != str(last_result.get("spin_id", "")):
+		challenge = _start_past_post_challenge(state, run_state, table, environment, last_result)
+	var already_armed := bool(state.get("past_post_armed", false)) or (str(state.get("selected_action_id", "")) == PAST_POST_ACTION_ID and str(state.get("selected_action_kind", "")) == "cheat")
+	var resolving := confirm_requested or already_armed
+	if resolving:
+		challenge["input_msec"] = maxi(0, int(state.get("past_post_input_msec", now_msec)))
+		challenge["input_target"] = _past_post_target_from_input(state, table, str(challenge.get("winning_number", "0")), index)
+		challenge = _grade_past_post_challenge(challenge)
+		state.erase("past_post_input_msec")
+		state.erase("past_post_input_target")
+		state.erase("past_post_input_target_index")
+	state["past_post_challenge"] = challenge
+	state["past_post_armed"] = not resolving
+	return GameModule.surface_command({
+		"handled": true,
+		"ui_state": state,
+		"action_id": PAST_POST_ACTION_ID,
+		"action_kind": "cheat",
+		"resolve": resolving,
+		"selected_index": index,
+		"preserve_surface_ui_state": not resolving,
+		"message": "Late chip selected. Click again before the payout lock." if not resolving else "Late-chip timing locked: %s." % str(challenge.get("skill_grade", "miss")).replace("_", " "),
+	})
+
+
+func _resolve_past_post(action_id: String, run_state: RunState, environment: Dictionary, rng: RngStream, ui_state: Dictionary) -> Dictionary:
+	var table := _table_state(run_state, environment)
+	var last_result := _copy_dict(table.get("last_result", {}))
+	if last_result.is_empty():
+		return _empty_roulette_result(action_id, 0, environment, "There is no settled roulette number to past-post.")
+	if bool(last_result.get("past_post_resolved", false)):
+		return _empty_roulette_result(action_id, 0, environment, "The croupier has already locked that payout.")
+	var challenge := _finalize_past_post_challenge(ui_state, run_state, table, environment, last_result)
+	if challenge.is_empty() or str(challenge.get("spin_id", "")) != str(last_result.get("spin_id", "")):
+		return _empty_roulette_result(action_id, 0, environment, "The late-chip window is gone.")
+	var grade := str(challenge.get("skill_grade", "miss"))
+	var applied := _past_post_grade_applies(grade)
+	var chip_value := maxi(1, int(challenge.get("chip_value", ui_state.get("selected_chip", 1))))
+	var target := _past_post_target_for_grade(challenge, table)
+	var payout_mult := _past_post_payout_mult_for_grade(grade, target)
+	var bankroll_delta := chip_value * payout_mult if applied else 0
+	if grade == "blown":
+		bankroll_delta = -chip_value
+	var watch := _roulette_table_watch_status(table, run_state, environment)
+	var pit_boss_status := run_state.pit_boss_watch_status(environment) if run_state != null else {}
+	var pit_boss_active := bool(pit_boss_status.get("active", false))
+	var pit_boss_watched := (pit_boss_active and bool(pit_boss_status.get("watched", false))) or bool(watch.get("watched", false)) or bool(challenge.get("watched_start", false))
+	var pit_boss_bonus := int(pit_boss_status.get("cheat_heat_bonus", 0)) if pit_boss_active else 0
+	var base_suspicion_delta := maxi(1, int(challenge.get("base_heat", _past_post_base_heat(run_state))) + _item_effect_total("cheat_suspicion_delta", run_state) + _past_post_grade_heat_modifier(grade))
+	var raw_heat := base_suspicion_delta
+	if run_state != null:
+		raw_heat += run_state.security_risk_bonus("cheat") + pit_boss_bonus
+	var suspicion_delta := run_state.alcohol_adjusted_suspicion_delta(raw_heat) if run_state != null else raw_heat
+	var security_pressure: Dictionary = run_state.security_action_pressure("cheat", chip_value, run_state.suspicion_level() + suspicion_delta) if run_state != null else {}
+	var security_bankroll_delta := int(security_pressure.get("bankroll_delta", 0))
+	if security_bankroll_delta != 0:
+		bankroll_delta += security_bankroll_delta
+	var security_message := str(security_pressure.get("message", ""))
+	var skill_outcome := _past_post_skill_outcome(grade)
+	var table_pressure := _roulette_pressure_message(table, pit_boss_status)
+	var message := _past_post_message(grade, chip_value, target, bankroll_delta, suspicion_delta, table_pressure, security_message)
+	_record_past_post_table_result(table, last_result, challenge, target, bankroll_delta, suspicion_delta, message)
+	_update_environment_table(environment, table)
+	var skill_context := {
+		"game_id": get_id(),
+		"action_id": action_id,
+		"action_kind": "cheat",
+		"skill_outcome": skill_outcome,
+		"skill_grade": grade,
+		"skill_accuracy": clampi(int(challenge.get("skill_accuracy", 0)), 0, 100),
+		"skill_margin_msec": int(challenge.get("skill_margin_msec", 0)),
+		"suspicion_delta": suspicion_delta,
+		"base_suspicion_delta": base_suspicion_delta,
+		"bankroll_delta": bankroll_delta,
+		"watched": pit_boss_watched,
+		"pit_boss_heat_bonus": pit_boss_bonus,
+		"security_pressure_checked": true,
+		"winning_number": str(challenge.get("winning_number", "")),
+		"chip_value": chip_value,
+		"input_target": target.duplicate(true),
+	}
+	var story_entry := {
+		"type": "game_action",
+		"game_id": get_id(),
+		"action_id": action_id,
+		"action_kind": "cheat",
+		"stake": chip_value,
+		"bankroll_delta": bankroll_delta,
+		"suspicion_delta": suspicion_delta,
+		"cheated": true,
+		"winning_number": str(challenge.get("winning_number", "")),
+		"skill_outcome": skill_outcome,
+		"skill_grade": grade,
+		"skill_accuracy": clampi(int(challenge.get("skill_accuracy", 0)), 0, 100),
+		"skill_margin_msec": int(challenge.get("skill_margin_msec", 0)),
+		"base_suspicion_delta": base_suspicion_delta,
+		"pit_boss_watched": pit_boss_watched,
+		"pit_boss_heat_bonus": pit_boss_bonus,
+		"table_pressure": table_pressure,
+		"security_message": security_message,
+		"skill_security_pressure_checked": true,
+		"environment_id": environment.get("id", ""),
+		"skill_story_context": skill_context.duplicate(true),
+	}
+	var deltas := GameModule.empty_result_deltas()
+	deltas["bankroll_delta"] = bankroll_delta
+	deltas["suspicion_delta"] = suspicion_delta
+	deltas["messages"] = [message]
+	deltas["story_log"] = [story_entry]
+	deltas["ended"] = bool(security_pressure.get("ended", false))
+	var result := GameModule.build_action_result({
+		"ok": true,
+		"type": "game_action",
+		"source_id": get_id(),
+		"game_id": get_id(),
+		"action_id": action_id,
+		"action_kind": "cheat",
+		"stake": chip_value,
+		"bankroll_delta": bankroll_delta,
+		"suspicion_delta": suspicion_delta,
+		"deltas": deltas,
+		"won": bankroll_delta > 0,
+		"environment_id": environment.get("id", ""),
+		"environment_archetype_id": environment.get("archetype_id", ""),
+		"message": message,
+		"pit_boss_watched": pit_boss_watched,
+		"pit_boss_heat_bonus": pit_boss_bonus,
+		"skill_outcome": skill_outcome,
+		"skill_security_pressure_checked": true,
+		"security_message": security_message,
+		"skill_story_context": skill_context,
+	})
+	result["roulette_past_post"] = true
+	result["roulette_past_post_applied"] = applied
+	result["roulette_past_post_challenge"] = challenge
+	result["roulette_past_post_grade"] = grade
+	result["roulette_past_post_accuracy"] = clampi(int(challenge.get("skill_accuracy", 0)), 0, 100)
+	result["roulette_past_post_margin_msec"] = int(challenge.get("skill_margin_msec", 0))
+	result["roulette_past_post_bet"] = target
+	result["roulette_past_post_payout_mult"] = payout_mult
+	result["roulette_past_post_chip_value"] = chip_value
+	result["roulette_winning_number"] = str(challenge.get("winning_number", ""))
+	result["roulette_pit_boss_watched"] = pit_boss_watched
+	result["roulette_pit_boss_heat_bonus"] = pit_boss_bonus
+	result["roulette_table_pressure"] = table_pressure
+	result["skill_grade"] = grade
+	result["skill_accuracy"] = clampi(int(challenge.get("skill_accuracy", 0)), 0, 100)
+	result["skill_margin_msec"] = int(challenge.get("skill_margin_msec", 0))
+	result["base_suspicion_delta"] = base_suspicion_delta
+	GameModule.normalize_skill_cheat_contract(result, result)
+	GameModule.apply_result(run_state, result, rng)
+	return result
+
+
+func _surface_time_msec(ui_state: Dictionary) -> int:
+	if ui_state.has("surface_time_msec"):
+		return maxi(0, int(ui_state.get("surface_time_msec", 0)))
+	return Time.get_ticks_msec()
+
+
+func _past_post_windows(run_state: RunState) -> Dictionary:
+	var perfect := PAST_POST_PERFECT_MSEC + _item_effect_total("roulette_past_post_perfect_msec", run_state)
+	var good := PAST_POST_GOOD_MSEC + _item_effect_total("roulette_past_post_good_msec", run_state)
+	var window := PAST_POST_WINDOW_MSEC + _item_effect_total("roulette_past_post_window_msec", run_state)
+	var impairment := clampi(int(run_state.drunk_level / 4), 0, 40) if run_state != null else 0
+	impairment = maxi(0, impairment - _item_effect_total("skill_cheat_drunk_window_offset_msec", run_state))
+	perfect = maxi(36, perfect - impairment)
+	good = maxi(perfect + 48, good - impairment * 2)
+	window = maxi(good + 120, window - impairment * 4)
+	return {"perfect": perfect, "good": good, "window": window}
+
+
+func _past_post_base_heat(run_state: RunState) -> int:
+	var base_heat := PAST_POST_BASE_HEAT + _item_effect_total("roulette_past_post_base_heat", run_state)
+	return maxi(1, base_heat)
+
+
+func _past_post_window_status(_table: Dictionary, _session: Dictionary, last_result: Dictionary, now_msec: int, run_state: RunState) -> Dictionary:
+	if last_result.is_empty():
+		return {"available": false, "message": "No settled number is on the layout."}
+	if bool(last_result.get("past_post_resolved", false)):
+		return {"available": false, "message": "The croupier has already locked that payout."}
+	var resolved_at := int(last_result.get("resolved_at_msec", 0))
+	var windows := _past_post_windows(run_state)
+	var window_start := resolved_at + SPIN_ANIMATION_DURATION_MSEC
+	var window_end := mini(window_start + int(windows.get("window", PAST_POST_WINDOW_MSEC)), resolved_at + SPIN_ANIMATION_DURATION_MSEC + PAYOUT_ANIMATION_DURATION_MSEC)
+	var payout_end := resolved_at + SPIN_ANIMATION_DURATION_MSEC + PAYOUT_ANIMATION_DURATION_MSEC
+	var available := now_msec >= window_start and now_msec <= window_end
+	var message := ""
+	if now_msec < window_start:
+		message = "The ball has not settled enough for a late chip."
+	elif now_msec > payout_end:
+		message = "The payout is locked."
+	elif now_msec > window_end:
+		message = "The dealer's dolly is already over the number."
+	return {
+		"available": available,
+		"message": message,
+		"spin_id": str(last_result.get("spin_id", "")),
+		"winning_number": str(last_result.get("winning_number", "0")),
+		"window_start_msec": window_start,
+		"window_end_msec": window_end,
+		"payout_end_msec": payout_end,
+		"remaining_msec": maxi(0, window_end - now_msec),
+		"item_modifiers": skill_item_modifier_badges(run_state, PAST_POST_ITEM_EFFECT_KEYS),
+	}
+
+
+func _start_past_post_challenge(ui_state: Dictionary, run_state: RunState, table: Dictionary, environment: Dictionary, last_result: Dictionary) -> Dictionary:
+	var winning_number := str(last_result.get("winning_number", "0"))
+	var now_msec := _surface_time_msec(ui_state)
+	var resolved_at := int(last_result.get("resolved_at_msec", now_msec))
+	var windows := _past_post_windows(run_state)
+	var window_start := resolved_at + SPIN_ANIMATION_DURATION_MSEC
+	var window_end := window_start + int(windows.get("window", PAST_POST_WINDOW_MSEC))
+	var spin_id := str(last_result.get("spin_id", "roulette"))
+	var seed := "%s:%s:%s:%d" % [get_id(), spin_id, str(run_state.seed_text if run_state != null else ""), now_msec]
+	var watch := _roulette_table_watch_status(table, run_state, environment)
+	var target := _past_post_target_from_input(ui_state, table, winning_number, -1)
+	return {
+		"challenge_id": "roulette_past_%d" % _stable_hash(seed),
+		"spin_id": spin_id,
+		"winning_number": winning_number,
+		"allowed_targets": _past_post_allowed_targets(table, winning_number),
+		"no_more_bets_msec": resolved_at,
+		"window_start_msec": window_start,
+		"window_end_msec": window_end,
+		"perfect_window_msec": int(windows.get("perfect", PAST_POST_PERFECT_MSEC)),
+		"good_window_msec": int(windows.get("good", PAST_POST_GOOD_MSEC)),
+		"window_msec": int(windows.get("window", PAST_POST_WINDOW_MSEC)),
+		"input_target": target,
+		"chip_value": maxi(1, int(ui_state.get("selected_chip", _chip_denominations(table)[0]))),
+		"base_heat": _past_post_base_heat(run_state),
+		"watched_start": bool(watch.get("watched", false)),
+		"dealer_attention": int(watch.get("dealer_attention", 0)),
+		"patron_pressure": int(watch.get("patron_pressure", 0)),
+		"item_modifiers": skill_item_modifier_badges(run_state, PAST_POST_ITEM_EFFECT_KEYS),
+	}
+
+
+func _normalized_past_post_challenge(value: Variant) -> Dictionary:
+	if typeof(value) != TYPE_DICTIONARY:
+		return {}
+	var source: Dictionary = value
+	if str(source.get("challenge_id", "")).strip_edges().is_empty():
+		return {}
+	var result := source.duplicate(true)
+	result["challenge_id"] = str(result.get("challenge_id", ""))
+	result["spin_id"] = str(result.get("spin_id", ""))
+	result["winning_number"] = str(result.get("winning_number", "0"))
+	result["allowed_targets"] = _string_array(result.get("allowed_targets", []))
+	result["no_more_bets_msec"] = maxi(0, int(result.get("no_more_bets_msec", 0)))
+	result["window_start_msec"] = maxi(0, int(result.get("window_start_msec", 0)))
+	result["window_end_msec"] = maxi(int(result.get("window_start_msec", 0)), int(result.get("window_end_msec", 0)))
+	result["perfect_window_msec"] = maxi(1, int(result.get("perfect_window_msec", PAST_POST_PERFECT_MSEC)))
+	result["good_window_msec"] = maxi(int(result.get("perfect_window_msec", PAST_POST_PERFECT_MSEC)), int(result.get("good_window_msec", PAST_POST_GOOD_MSEC)))
+	result["window_msec"] = maxi(int(result.get("good_window_msec", PAST_POST_GOOD_MSEC)), int(result.get("window_msec", PAST_POST_WINDOW_MSEC)))
+	result["chip_value"] = maxi(1, int(result.get("chip_value", 1)))
+	result["base_heat"] = maxi(1, int(result.get("base_heat", PAST_POST_BASE_HEAT)))
+	if typeof(result.get("input_target", {})) == TYPE_DICTIONARY:
+		result["input_target"] = _copy_dict(result.get("input_target", {}))
+	else:
+		result["input_target"] = {}
+	if result.has("input_msec"):
+		result["input_msec"] = maxi(0, int(result.get("input_msec", 0)))
+	if result.has("skill_grade"):
+		result["skill_grade"] = str(result.get("skill_grade", ""))
+	if result.has("skill_accuracy"):
+		result["skill_accuracy"] = clampi(int(result.get("skill_accuracy", 0)), 0, 100)
+	if result.has("skill_margin_msec"):
+		result["skill_margin_msec"] = int(result.get("skill_margin_msec", 0))
+	return result
+
+
+func _finalize_past_post_challenge(ui_state: Dictionary, run_state: RunState, table: Dictionary, environment: Dictionary, last_result: Dictionary) -> Dictionary:
+	var challenge := _normalized_past_post_challenge(ui_state.get("past_post_challenge", {}))
+	if challenge.is_empty():
+		challenge = _start_past_post_challenge(ui_state, run_state, table, environment, last_result)
+	if ui_state.has("past_post_input_msec") and not challenge.has("input_msec"):
+		challenge["input_msec"] = maxi(0, int(ui_state.get("past_post_input_msec", 0)))
+	if not challenge.has("input_msec"):
+		challenge["input_msec"] = _surface_time_msec(ui_state)
+	challenge["input_target"] = _past_post_target_from_input(ui_state, table, str(challenge.get("winning_number", "0")), -1)
+	return _grade_past_post_challenge(challenge)
+
+
+func _grade_past_post_challenge(challenge: Dictionary) -> Dictionary:
+	var graded := _normalized_past_post_challenge(challenge)
+	if graded.is_empty():
+		return {}
+	if not graded.has("input_msec") or int(graded.get("input_msec", 0)) <= 0:
+		graded["skill_grade"] = "miss"
+		graded["skill_margin_msec"] = 0
+		graded["reaction_msec"] = 0
+		graded["skill_accuracy"] = 0
+		return graded
+	var window_start := int(graded.get("window_start_msec", 0))
+	var reaction := int(graded.get("input_msec", 0)) - window_start
+	var perfect_window := maxi(1, int(graded.get("perfect_window_msec", PAST_POST_PERFECT_MSEC)))
+	var good_window := maxi(perfect_window, int(graded.get("good_window_msec", PAST_POST_GOOD_MSEC)))
+	var full_window := maxi(good_window, int(graded.get("window_msec", PAST_POST_WINDOW_MSEC)))
+	var grade := "blown"
+	if reaction < 0:
+		grade = "blown"
+	elif reaction <= perfect_window:
+		grade = "perfect"
+	elif reaction <= good_window:
+		grade = "good"
+	elif reaction <= full_window:
+		grade = "partial"
+	graded["skill_grade"] = grade
+	graded["reaction_msec"] = reaction
+	graded["skill_margin_msec"] = reaction
+	graded["skill_accuracy"] = clampi(100 - int(round(float(maxi(0, reaction)) / float(full_window) * 100.0)), 0, 100) if grade != "blown" else 0
+	return graded
+
+
+func _past_post_grade_applies(grade: String) -> bool:
+	return grade == "perfect" or grade == "good" or grade == "partial"
+
+
+func _past_post_grade_heat_modifier(grade: String) -> int:
+	match grade:
+		"perfect":
+			return -PAST_POST_PERFECT_HEAT_REDUCTION
+		"partial":
+			return PAST_POST_PARTIAL_HEAT_BONUS
+		"miss":
+			return PAST_POST_MISS_HEAT_BONUS
+		"blown":
+			return PAST_POST_BLOWN_HEAT_BONUS
+	return 0
+
+
+func _past_post_skill_outcome(grade: String) -> String:
+	return "past_post_%s" % (grade if not grade.is_empty() else "miss")
+
+
+func _past_post_payout_mult_for_grade(grade: String, target: Dictionary) -> int:
+	if grade == "perfect":
+		return int(target.get("payout", 35))
+	if grade == "good":
+		return mini(int(target.get("payout", 17)), 17)
+	if grade == "partial":
+		return 1
+	return 0
+
+
+func _past_post_target_from_input(ui_state: Dictionary, table: Dictionary, winning_number: String, index: int = -1) -> Dictionary:
+	if typeof(ui_state.get("past_post_input_target", {})) == TYPE_DICTIONARY:
+		var explicit_target := _copy_dict(ui_state.get("past_post_input_target", {}))
+		if not explicit_target.is_empty():
+			return _normalize_past_post_target(explicit_target)
+	var target_index := index
+	if target_index < 0 and ui_state.has("past_post_input_target_index"):
+		target_index = int(ui_state.get("past_post_input_target_index", -1))
+	var targets := _roulette_bet_targets(table)
+	if target_index >= 0 and target_index < targets.size():
+		return _normalize_past_post_target(targets[target_index])
+	var exact := _roulette_target_for_type_numbers(targets, "straight", [winning_number])
+	if not exact.is_empty():
+		return _normalize_past_post_target(exact)
+	return _normalize_past_post_target(_default_smoke_bet(1))
+
+
+func _past_post_target_for_grade(challenge: Dictionary, table: Dictionary) -> Dictionary:
+	var winning_number := str(challenge.get("winning_number", "0"))
+	var target := _copy_dict(challenge.get("input_target", {}))
+	if str(challenge.get("skill_grade", "")) == "partial":
+		var outside := _past_post_outside_target(table, winning_number)
+		if not outside.is_empty():
+			return outside
+	if target.is_empty():
+		return _past_post_target_from_input({}, table, winning_number, -1)
+	return _normalize_past_post_target(target)
+
+
+func _past_post_outside_target(table: Dictionary, winning_number: String) -> Dictionary:
+	var targets := _roulette_bet_targets(table)
+	var color := _roulette_color(winning_number)
+	if color == "red":
+		return _normalize_past_post_target(_roulette_target_for_type_numbers(targets, "red", RED_NUMBERS))
+	if color == "black":
+		return _normalize_past_post_target(_roulette_target_for_type_numbers(targets, "black", BLACK_NUMBERS))
+	var low := _roulette_target_for_type_numbers(targets, "low", _range_strings(1, 18))
+	return _normalize_past_post_target(low)
+
+
+func _normalize_past_post_target(value: Variant) -> Dictionary:
+	var target := _copy_dict(value)
+	if target.is_empty():
+		return {}
+	target["type"] = str(target.get("type", "straight"))
+	target["numbers"] = _string_array(target.get("numbers", []))
+	target["payout"] = maxi(0, int(target.get("payout", 0)))
+	target["label"] = str(target.get("label", ",".join(_string_array(target.get("numbers", [])))))
+	target["family"] = str(target.get("family", "inside"))
+	if not target.has("id"):
+		target["id"] = _canonical_bet_id(str(target.get("type", "straight")), _string_array(target.get("numbers", [])))
+	target["stake"] = maxi(1, int(target.get("stake", 1)))
+	if not target.has("placement"):
+		target["placement"] = _vector_to_dict(Vector2(490, 190))
+	return target
+
+
+func _past_post_allowed_targets(table: Dictionary, winning_number: String) -> Array:
+	var targets := _roulette_bet_targets(table)
+	var allowed: Array = []
+	var exact := _roulette_target_for_type_numbers(targets, "straight", [winning_number])
+	if not exact.is_empty():
+		allowed.append(str(exact.get("id", "")))
+	var sequence := _wheel_sequence(table)
+	var index := sequence.find(winning_number)
+	if index >= 0:
+		for offset in [-1, 1]:
+			var neighbor := str(sequence[posmod(index + int(offset), sequence.size())])
+			var neighbor_target := _roulette_target_for_type_numbers(targets, "straight", [neighbor])
+			if not neighbor_target.is_empty():
+				allowed.append(str(neighbor_target.get("id", "")))
+	var outside := _past_post_outside_target(table, winning_number)
+	if not outside.is_empty():
+		allowed.append(str(outside.get("id", "")))
+	return allowed
+
+
+func _past_post_message(grade: String, chip_value: int, target: Dictionary, bankroll_delta: int, suspicion_delta: int, table_pressure: String, security_message: String) -> String:
+	var label := str(target.get("label", "the layout"))
+	var message := ""
+	match grade:
+		"perfect":
+			message = "Perfect late chip: $%d lands on %s before the dolly. Bankroll %+d; heat %+d." % [chip_value, label, bankroll_delta, suspicion_delta]
+		"good":
+			message = "Good late chip: the slide catches %s with a capped payoff. Bankroll %+d; heat %+d." % [label, bankroll_delta, suspicion_delta]
+		"partial":
+			message = "Partial late chip: you only reach an outside cover bet. Bankroll %+d; heat %+d." % [bankroll_delta, suspicion_delta]
+		"blown":
+			message = "Blown late chip: the croupier catches the move and voids the chip. Bankroll %+d; heat %+d." % [bankroll_delta, suspicion_delta]
+		_:
+			message = "Missed late chip: your hand hangs over the felt. Bankroll %+d; heat %+d." % [bankroll_delta, suspicion_delta]
+	if not table_pressure.is_empty():
+		message = "%s %s" % [message, table_pressure]
+	if not security_message.is_empty():
+		message = "%s %s" % [message, security_message]
+	return message
+
+
+func _record_past_post_table_result(table: Dictionary, last_result: Dictionary, challenge: Dictionary, target: Dictionary, bankroll_delta: int, suspicion_delta: int, message: String) -> void:
+	last_result["past_post_resolved"] = true
+	last_result["past_post_challenge_id"] = str(challenge.get("challenge_id", ""))
+	last_result["past_post_grade"] = str(challenge.get("skill_grade", "miss"))
+	last_result["past_post_bankroll_delta"] = bankroll_delta
+	last_result["past_post_suspicion_delta"] = suspicion_delta
+	last_result["past_post_bet"] = target.duplicate(true)
+	last_result["past_post_summary"] = message
+	last_result["summary"] = message
+	table["last_result"] = last_result
 
 
 func wager_cost_for_context(action_id: String, stake: int, run_state: RunState, environment: Dictionary, ui_state: Dictionary = {}) -> int:
@@ -835,6 +1348,7 @@ func _settle_roulette_bets(winning_number: String, bets: Array, table: Dictionar
 		var bankroll_delta := stake * payout if won else -stake
 		if not won and _is_zero(winning_number) and _la_partage_applies(bet, table):
 			bankroll_delta = -int(ceil(float(stake) * 0.5))
+		var celebration_score := _roulette_celebration_score(bet, won)
 		results.append({
 			"id": str(bet.get("id", "")),
 			"type": str(bet.get("type", "")),
@@ -846,6 +1360,7 @@ func _settle_roulette_bets(winning_number: String, bets: Array, table: Dictionar
 			"winning_number": winning_number,
 			"winning_color": color,
 			"bankroll_delta": bankroll_delta,
+			"celebration_score": celebration_score,
 			"detail": "wins %d to 1" % payout if won else "zero half-loss" if bankroll_delta > -stake else "loses",
 		})
 	return results
@@ -857,6 +1372,14 @@ func _la_partage_applies(bet: Dictionary, table: Dictionary) -> bool:
 	if str(bet.get("family", "")) != "outside":
 		return false
 	return int(bet.get("payout", 0)) == 1
+
+
+func _roulette_celebration_score(bet: Dictionary, won: bool) -> int:
+	if not won:
+		return 0
+	var payout := maxi(0, int(bet.get("payout", 0)))
+	var stake := maxi(1, int(bet.get("stake", 1)))
+	return clampi(payout * 2 + int(round(log(float(stake) + 1.0) / log(2.0))), 1, 100)
 
 
 func _select_chip_command(index: int, state: Dictionary, table: Dictionary) -> Dictionary:
@@ -1458,6 +1981,26 @@ func _draw_croupier_station(surface, surface_state: Dictionary) -> void:
 	TableVisualsScript.draw_dealer_station(surface, surface_state)
 
 
+func _draw_recent_numbers(surface, surface_state: Dictionary) -> void:
+	var recent := _dictionary_array(surface_state.get("recent_numbers", surface_state.get("roulette_recent_numbers", [])))
+	var rect := Rect2(246, 84, 492, 28)
+	_draw_neon_panel(surface, rect, C_CYAN, 0.08)
+	surface.surface_label("RECENT", rect.position + Vector2(8, 18), 8, C_SOFT)
+	if recent.is_empty():
+		surface.surface_label_centered("NO SPINS YET", Rect2(rect.position + Vector2(78, 8), Vector2(120, 12)), 8, C_SOFT)
+		return
+	var max_slots := mini(10, recent.size())
+	for i in range(max_slots):
+		var entry: Dictionary = recent[i]
+		var number := str(entry.get("number", ""))
+		var center := rect.position + Vector2(82 + float(i) * 38.0, 14)
+		var accent := _pocket_color(number)
+		var radius := 10.0 + minf(4.0, float(int(entry.get("celebration_score", 0))) / 20.0)
+		surface.draw_circle(center, radius, Color(accent.r, accent.g, accent.b, 0.94))
+		surface.draw_circle(center, radius + 1.5, Color(C_YELLOW.r, C_YELLOW.g, C_YELLOW.b, 0.22), false, 1)
+		surface.surface_label_centered(number.left(2), Rect2(center - Vector2(12, 5), Vector2(24, 10)), 7, _wheel_label_color(number))
+
+
 func _draw_betting_layout(surface, surface_state: Dictionary) -> void:
 	var red_numbers := _string_array(surface_state.get("red_numbers", RED_NUMBERS))
 	surface.draw_rect(ZERO_RECT, Color("#0b7b4e"))
@@ -1589,6 +2132,18 @@ func _draw_table_actions(surface, surface_state: Dictionary) -> void:
 		surface.surface_label("TABLE CLOSED", panel.position + Vector2(14, 42), 15, C_PINK)
 		return
 	var selected_actions := _string_array(surface_state.get("native_selected_surface_actions", []))
+	var phase := str(surface_state.get("phase", "betting"))
+	if phase == "payout":
+		var past_post_selected := selected_actions.has("roulette_past_post")
+		var available := bool(surface_state.get("past_post_available", false))
+		_draw_table_button(surface, Rect2(panel.position.x + 12, panel.position.y + 25, 102, 30), "SLIDE CHIP" if past_post_selected else "LATE CHIP", "roulette_past_post", 0, C_PINK, available, past_post_selected)
+		var window := _copy_dict(surface_state.get("past_post_window", {}))
+		var detail := "%d ms" % int(window.get("remaining_msec", 0)) if available else "LOCKED"
+		surface.surface_label("Payout window %s" % detail, panel.position + Vector2(126, 45), 10, C_SOFT)
+		return
+	if phase == "spinning":
+		surface.surface_label("NO MORE BETS", panel.position + Vector2(14, 46), 14, C_YELLOW)
+		return
 	var spin_selected := selected_actions.has("roulette_spin")
 	var spin_label := "CONFIRM" if spin_selected else "SIT OUT" if int(surface_state.get("total_wager_cost", 0)) <= 0 else "SPIN"
 	_draw_table_button(surface, Rect2(panel.position.x + 12, panel.position.y + 24, 86, 30), spin_label, "roulette_spin", 0, C_YELLOW, bool(surface_state.get("can_spin", false)), spin_selected)
@@ -1652,7 +2207,10 @@ func _draw_payout_animation(surface, surface_state: Dictionary) -> void:
 			continue
 		var target := _vector_from_dict(win.get("placement", {}), Vector2(490, 190)) + Vector2(18, -16 - index * 3)
 		var pos := start.lerp(target, clampf(progress * 1.25 - float(index) * 0.08, 0.0, 1.0))
-		_draw_casino_chip(surface, pos, int(win.get("bankroll_delta", 0)), 9, 0.92, true)
+		var score := clampi(int(win.get("celebration_score", 0)), 1, 100)
+		var radius := 8.0 + minf(8.0, float(score) / 12.0)
+		surface.draw_circle(pos, radius + 6.0, Color(C_YELLOW.r, C_YELLOW.g, C_YELLOW.b, clampf(float(score) / 140.0, 0.18, 0.72)), false, 2)
+		_draw_casino_chip(surface, pos, int(win.get("bankroll_delta", 0)), radius, 0.92, true)
 		index += 1
 
 
@@ -1802,6 +2360,11 @@ func _normalized_session(_run_state: RunState, _environment: Dictionary, ui_stat
 		session["roulette_undo_stack"] = []
 	if typeof(session.get("cheats_used", {})) != TYPE_DICTIONARY:
 		session["cheats_used"] = {}
+	var past_post_challenge := _normalized_past_post_challenge(session.get("past_post_challenge", {}))
+	if past_post_challenge.is_empty():
+		session.erase("past_post_challenge")
+	else:
+		session["past_post_challenge"] = past_post_challenge
 	return session
 
 
@@ -1810,6 +2373,7 @@ func _update_table_after_spin(table: Dictionary, bets: Array, bet_results: Array
 	GameModule.reset_table_round_timer(table)
 	var summary := _roulette_result_message(str(spin.get("winning_number", "0")), spin, bet_results, bankroll_delta, "")
 	var result_bets: Array = []
+	var celebration_score := 0
 	for result_value in bet_results:
 		if typeof(result_value) != TYPE_DICTIONARY:
 			continue
@@ -1817,6 +2381,7 @@ func _update_table_after_spin(table: Dictionary, bets: Array, bet_results: Array
 		var matching := _bet_for_result_id(bets, str(result.get("id", "")))
 		if not matching.is_empty():
 			result["placement"] = _copy_dict(matching.get("placement", {}))
+		celebration_score = maxi(celebration_score, int(result.get("celebration_score", 0)))
 		result_bets.append(result)
 	var last_result := {
 		"spin_id": str(spin.get("spin_id", "")),
@@ -1826,6 +2391,7 @@ func _update_table_after_spin(table: Dictionary, bets: Array, bet_results: Array
 		"winning_index": int(spin.get("winning_index", 0)),
 		"bankroll_delta": bankroll_delta,
 		"suspicion_delta": suspicion_delta,
+		"celebration_score": celebration_score,
 		"summary": summary,
 		"bets": bets.duplicate(true),
 		"bet_results": result_bets,
@@ -1841,6 +2407,7 @@ func _update_table_after_spin(table: Dictionary, bets: Array, bet_results: Array
 		"winning_number": str(spin.get("winning_number", "0")),
 		"winning_color": str(spin.get("winning_color", "")),
 		"bankroll_delta": bankroll_delta,
+		"celebration_score": celebration_score,
 		"spin_id": str(spin.get("spin_id", "")),
 	})
 	while history.size() > HISTORY_LIMIT:
@@ -1878,6 +2445,25 @@ func _roulette_result_message(winning_number: String, spin: Dictionary, bet_resu
 	if not security_message.is_empty():
 		base = "%s %s" % [base, security_message]
 	return base
+
+
+func _roulette_recent_numbers(table: Dictionary) -> Array:
+	var result: Array = []
+	for history_value in _dictionary_array(table.get("last_results", [])):
+		var history: Dictionary = history_value
+		var number := str(history.get("winning_number", ""))
+		if number.is_empty():
+			continue
+		result.append({
+			"number": number,
+			"color": str(history.get("winning_color", _roulette_color(number))),
+			"bankroll_delta": int(history.get("bankroll_delta", 0)),
+			"celebration_score": clampi(int(history.get("celebration_score", 0)), 0, 100),
+			"spin_id": str(history.get("spin_id", "")),
+		})
+		if result.size() >= HISTORY_LIMIT:
+			break
+	return result
 
 
 func _roulette_pressure_message(table: Dictionary, pit_boss_status: Dictionary) -> String:
@@ -1929,6 +2515,8 @@ func _selected_surface_actions(session: Dictionary) -> Array:
 		result.append("roulette_spin")
 	if bool(session.get("roulette_nudge_ready", false)) or bool(_copy_dict(session.get("cheats_used", {})).get("wheel_nudge", false)):
 		result.append("roulette_nudge")
+	if bool(session.get("past_post_armed", false)) or (str(session.get("selected_action_id", "")) == PAST_POST_ACTION_ID and str(session.get("selected_action_kind", "")) == "cheat"):
+		result.append("roulette_past_post")
 	if int(session.get("focused_patron_index", -1)) >= 0:
 		result.append("roulette_patron_focus")
 	return result
@@ -2450,6 +3038,12 @@ func _default_table_rng(table: Dictionary, suffix: String) -> RngStream:
 	var rng := RngStream.new()
 	rng.configure(_stable_hash("%s:%s:%s" % [get_id(), str(table.get("table_name", "roulette")), suffix]))
 	return rng
+
+
+func _item_effect_total(key: String, run_state: RunState) -> int:
+	if run_state == null:
+		return 0
+	return run_state.item_effect_total(key, get_family()) if run_state.has_method("item_effect_total") else 0
 
 
 func _stable_hash(text: String) -> int:

@@ -71,6 +71,66 @@
 					{"id": "bar_row", "label": "3 BAR", "symbols": ["BAR", "BAR", "BAR"], "payout": 24, "count": 2},
 					{"id": "seven_row", "label": "3 7", "symbols": ["7", "7", "7"], "payout": 75, "count": 1}
 				]
+			},
+			{
+				"id": "moonlight_jars",
+				"display_name": "Moonlight Jars",
+				"theme": "blue night jar",
+				"form": "MJ-512",
+				"price": 2,
+				"ticket_count": 150,
+				"palette": {"paper": "#edf4ff", "ink": "#18213d", "accent": "#7c9cff", "trim": "#f8e86a"},
+				"prizes": [
+					{"id": "cherry_row", "label": "3 CHERRY", "symbols": ["CHERRY", "CHERRY", "CHERRY"], "payout": 4, "count": 12},
+					{"id": "lemon_row", "label": "3 LEMON", "symbols": ["LEMON", "LEMON", "LEMON"], "payout": 8, "count": 6},
+					{"id": "bar_row", "label": "3 BAR", "symbols": ["BAR", "BAR", "BAR"], "payout": 20, "count": 2},
+					{"id": "crown_row", "label": "3 CROWN", "symbols": ["CROWN", "CROWN", "CROWN"], "payout": 120, "count": 1}
+				]
+			},
+			{
+				"id": "velvet_kiss",
+				"display_name": "Velvet Kiss",
+				"theme": "lounge lipstick flare",
+				"form": "VK-717",
+				"price": 2,
+				"ticket_count": 150,
+				"palette": {"paper": "#fff1f5", "ink": "#341120", "accent": "#ff4fb3", "trim": "#f7c845"},
+				"prizes": [
+					{"id": "cherry_row", "label": "3 CHERRY", "symbols": ["CHERRY", "CHERRY", "CHERRY"], "payout": 4, "count": 12},
+					{"id": "bell_row", "label": "3 BELL", "symbols": ["BELL", "BELL", "BELL"], "payout": 10, "count": 5},
+					{"id": "seven_row", "label": "3 7", "symbols": ["7", "7", "7"], "payout": 40, "count": 2},
+					{"id": "crown_row", "label": "3 CROWN", "symbols": ["CROWN", "CROWN", "CROWN"], "payout": 120, "count": 1}
+				]
+			},
+			{
+				"id": "delta_crown",
+				"display_name": "Delta Crown",
+				"theme": "riverboat fare card",
+				"form": "DC-618",
+				"price": 3,
+				"ticket_count": 150,
+				"palette": {"paper": "#f4fbff", "ink": "#152842", "accent": "#35e0ff", "trim": "#ffd35a"},
+				"prizes": [
+					{"id": "lemon_row", "label": "3 LEMON", "symbols": ["LEMON", "LEMON", "LEMON"], "payout": 6, "count": 9},
+					{"id": "bell_row", "label": "3 BELL", "symbols": ["BELL", "BELL", "BELL"], "payout": 15, "count": 5},
+					{"id": "bar_row", "label": "3 BAR", "symbols": ["BAR", "BAR", "BAR"], "payout": 30, "count": 2},
+					{"id": "crown_row", "label": "3 CROWN", "symbols": ["CROWN", "CROWN", "CROWN"], "payout": 180, "count": 1}
+				]
+			},
+			{
+				"id": "cooler_cash",
+				"display_name": "Cooler Cash",
+				"theme": "gas station icebox ticket",
+				"form": "CC-224",
+				"price": 1,
+				"ticket_count": 150,
+				"palette": {"paper": "#e9fff7", "ink": "#102822", "accent": "#45ffd0", "trim": "#ff6f3c"},
+				"prizes": [
+					{"id": "lemon_row", "label": "3 LEMON", "symbols": ["LEMON", "LEMON", "LEMON"], "payout": 2, "count": 18},
+					{"id": "cherry_row", "label": "3 CHERRY", "symbols": ["CHERRY", "CHERRY", "CHERRY"], "payout": 4, "count": 8},
+					{"id": "seven_row", "label": "3 7", "symbols": ["7", "7", "7"], "payout": 30, "count": 1},
+					{"id": "crown_row", "label": "3 CROWN", "symbols": ["CROWN", "CROWN", "CROWN"], "payout": 60, "count": 1}
+				]
 			}
 		],
 		"legal_actions": [
@@ -349,7 +409,7 @@
 					{"id": "zero_loss", "weight": 6290, "classification": "zero_loss", "payout": 0},
 					{"id": "near_miss", "weight": 800, "classification": "near_miss", "payout": 0},
 					{"id": "ldw", "weight": 1800, "classification": "ldw", "payout": -1},
-					{"id": "true_win", "weight": 1050, "classification": "true_win", "payout_multiplier": 1.90},
+					{"id": "true_win", "weight": 1030, "classification": "true_win", "payout_multiplier": 1.90},
 					{"id": "free_games", "weight": 30, "classification": "free_games", "payout_multiplier": 0.0},
 					{"id": "monster_feature", "weight": 12, "classification": "monster_feature", "payout_multiplier": 0.0},
 					{"id": "hold_and_spin", "weight": 28, "classification": "hold_and_spin", "payout_multiplier": 0.0}
@@ -453,7 +513,8 @@
 			{"id": "deal_baccarat", "label": "Deal", "summary": "Place Player, Banker, Tie, or pair chips before the croupier deals from the shoe.", "win_chance": 0, "payout_mult": 0}
 		],
 		"cheat_actions": [
-			{"id": "read_baccarat_shoe", "label": "Read Shoe", "summary": "Try to read shoe tempo and burn-card information before betting; raises heat", "win_chance": 0, "payout_mult": 0, "suspicion_delta": 8}
+			{"id": "read_baccarat_shoe", "label": "Read Shoe", "summary": "Try to read shoe tempo and burn-card information before betting; raises heat", "win_chance": 0, "payout_mult": 0, "suspicion_delta": 8},
+			{"id": "edge_sort", "label": "Edge Sort", "summary": "Track card-back cues across hands for a short betting edge; watched failures raise heat", "win_chance": 0, "payout_mult": 0, "suspicion_delta": 8}
 		]
 	},
 	{
@@ -472,7 +533,8 @@
 			{"id": "spin_roulette", "label": "Spin", "summary": "Place roulette chips across the layout, then spin the wheel.", "win_chance": 0, "payout_mult": 0}
 		],
 		"cheat_actions": [
-			{"id": "read_wheel_bias", "label": "Read Wheel", "summary": "Try to read the wheel's physical bias before betting; raises heat", "win_chance": 0, "payout_mult": 0, "suspicion_delta": 8}
+			{"id": "read_wheel_bias", "label": "Read Wheel", "summary": "Try to read the wheel's physical bias before betting; raises heat", "win_chance": 0, "payout_mult": 0, "suspicion_delta": 8},
+			{"id": "past_post", "label": "Past-Post", "summary": "Slide one late chip after the ball settles; timing can pay, but caught moves spike heat", "win_chance": 0, "payout_mult": 0, "suspicion_delta": 18}
 		]
 	},
 	{

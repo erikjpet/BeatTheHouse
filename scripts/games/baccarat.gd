@@ -25,7 +25,9 @@ const BACCARAT_DEAL_CHANNEL := "baccarat_deal"
 const BACCARAT_PAYOUT_CHANNEL := "baccarat_payout"
 const DEAL_ANIMATION_DURATION_MSEC := 4200
 const PAYOUT_ANIMATION_DURATION_MSEC := 1600
-const HISTORY_LIMIT := 18
+const HISTORY_LIMIT := 72
+const BACCARAT_ROAD_ROWS := 6
+const BACCARAT_ROAD_COLUMNS := 12
 const CARD_SHOE_POS := Vector2(748, 104)
 const PLAYER_CARD_BASE := Vector2(304, 230)
 const BANKER_CARD_BASE := Vector2(526, 166)
@@ -38,6 +40,22 @@ const BET_TARGETS := [
 	{"id": "player", "label": "PLAYER", "short": "PLAYER", "type": "main", "family": "main", "payout_key": "player_payout", "rect": Rect2(226, 248, 178, 76)},
 	{"id": "tie", "label": "TIE", "short": "TIE", "type": "main", "family": "main", "payout_key": "tie_payout", "rect": Rect2(418, 236, 64, 88)},
 	{"id": "banker", "label": "BANKER", "short": "BANKER", "type": "main", "family": "main", "payout_key": "banker_payout", "rect": Rect2(496, 248, 178, 76)},
+]
+
+const EDGE_SORT_ACTION_ID := "edge_sort"
+const EDGE_SORT_CUE_COUNT := 4
+const EDGE_SORT_MIN_HANDS := 2
+const EDGE_SORT_EDGE_HANDS := 3
+const EDGE_SORT_BASE_HEAT := 8
+const EDGE_SORT_PERFECT_HEAT_REDUCTION := 3
+const EDGE_SORT_PARTIAL_HEAT_BONUS := 4
+const EDGE_SORT_MISS_HEAT_BONUS := 6
+const EDGE_SORT_BLOWN_HEAT_BONUS := 10
+const EDGE_SORT_ITEM_EFFECT_KEYS := [
+	"baccarat_edge_sort_cue_count",
+	"baccarat_edge_sort_memory_tolerance",
+	"baccarat_edge_sort_heat_delta",
+	"skill_cheat_drunk_memory_offset",
 ]
 
 
@@ -130,6 +148,13 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 	var targets := _baccarat_bet_targets(table)
 	var surface_patrons := _patrons_for_surface(table, last_result)
 	var hand_explainer := _baccarat_hand_explainer(session, last_result, deal_active, payout_active, round_timer)
+	var edge_challenge := _normalized_edge_sort_challenge(table.get("edge_sort_challenge", {}))
+	var edge := _normalized_edge_sort_edge(table.get("edge_sort_edge", {}), table)
+	var edge_status := _edge_sort_surface_status(table, edge_challenge, edge, session)
+	var edge_sort_item_modifiers := skill_item_modifier_badges(run_state, EDGE_SORT_ITEM_EFFECT_KEYS)
+	var road_state := _baccarat_road_state(table.get("hand_history", []))
+	var shoe_penetration := _baccarat_shoe_penetration(table)
+	var squeeze_state := _baccarat_squeeze_state(last_result)
 	return GameModule.surface_spec({
 		"surface_renderer": "baccarat",
 		"surface_life": "immersive_table",
@@ -188,19 +213,33 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 		"shoe_remaining": int(table.get("shoe_remaining", 0)),
 		"shoe_label": str(table.get("shoe_label", "")),
 		"cut_card_remaining": int(table.get("cut_card_remaining", 0)),
+		"shoe_penetration": shoe_penetration,
 		"reshuffle_pending": bool(table.get("reshuffle_pending", false)),
 		"last_result": last_result,
 		"last_hand": _copy_dict(table.get("last_hand", {})),
 		"hand_history": _dictionary_array(table.get("hand_history", [])),
+		"baccarat_road": road_state,
+		"baccarat_scoreboard": road_state,
+		"baccarat_squeeze_reveal": squeeze_state,
 		"deal_animation_events": _dictionary_array(last_result.get("animation_events", [])),
 		"baccarat_explainer": hand_explainer,
+		"baccarat_edge_sort_challenge": edge_challenge.duplicate(true),
+		"baccarat_edge_sort_edge": edge.duplicate(true),
+		"baccarat_edge_sort_status": edge_status.duplicate(true),
+		"baccarat_edge_sort_item_modifiers": edge_sort_item_modifiers,
+		"edge_sort_challenge": edge_challenge.duplicate(true),
+		"edge_sort_edge": edge.duplicate(true),
+		"edge_sort_status": edge_status.duplicate(true),
+		"edge_sort_ready": bool(edge_status.get("ready", false)),
+		"edge_sort_active": bool(edge_status.get("active", false)),
+		"edge_sort_item_modifiers": edge_sort_item_modifiers,
 		"result_message": str(last_result.get("summary", "")) if not deal_active else "",
 		"table_notice": table_notice,
 		"table_round_timer": round_timer,
 		"native_selected_surface_actions": _selected_surface_actions(bets),
 		"surface_action_bindings": {
 			"legal": {"action": "baccarat_deal", "index": 0},
-			"cheat": {"action": "baccarat_read_shoe", "index": 0},
+			"cheat": {"action": "baccarat_edge_sort", "index": 0},
 			"surface_stake_down": {"action": "baccarat_clear", "index": 0},
 			"surface_stake_up": {"action": "baccarat_chip", "index": 0},
 			"surface_stake_max": {"action": "baccarat_max_bet", "index": 0},
@@ -216,6 +255,8 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 				"baccarat_rebet": "baccarat_chip",
 				"baccarat_deal": "baccarat_deal",
 				"baccarat_read_shoe": "baccarat_read_shoe",
+				"baccarat_edge_sort": "baccarat_edge_sort",
+				"baccarat_edge_sort_answer": "baccarat_chip",
 				"surface_stake_up": "baccarat_chip",
 				"surface_stake_down": "baccarat_chip",
 				"surface_stake_max": "baccarat_chip",
@@ -242,6 +283,8 @@ func draw_surface(surface, surface_state: Dictionary, _render_context: Dictionar
 	_draw_card_areas(surface, surface_state)
 	_draw_bet_chips(surface, surface_state)
 	_draw_shoe_and_discard(surface, surface_state)
+	_draw_baccarat_road(surface, surface_state)
+	_draw_edge_sort_panel(surface, surface_state)
 	_draw_table_notice(surface, surface_state)
 	_draw_round_timer(surface, surface_state)
 	_draw_chip_rack(surface, surface_state)
@@ -251,14 +294,33 @@ func draw_surface(surface, surface_state: Dictionary, _render_context: Dictionar
 
 
 func surface_needs_auto_tick(ui_state: Dictionary, run_state: RunState, environment: Dictionary) -> bool:
-	var table := _table_state(run_state, environment)
-	var session := _normalized_session(run_state, environment, ui_state, table)
-	if _surface_locked(table, session):
+	# Per-frame check: operate on the live stored table (zero-copy) instead of
+	# normalize -> deep copy -> write-back every frame. Stored state is already
+	# normalized by every mutation path; the timer auto-start field persists
+	# directly on the stored dictionary.
+	var table := _peek_table_state(environment)
+	if table.is_empty():
 		return false
 	var now_msec := int(ui_state.get("surface_time_msec", Time.get_ticks_msec()))
+	var last_result: Variant = table.get("last_result", {})
+	if typeof(last_result) == TYPE_DICTIONARY and not (last_result as Dictionary).is_empty():
+		var elapsed_msec := now_msec - int((last_result as Dictionary).get("resolved_at_msec", 0))
+		if elapsed_msec >= 0 and elapsed_msec < DEAL_ANIMATION_DURATION_MSEC + PAYOUT_ANIMATION_DURATION_MSEC:
+			return false
 	var timer := GameModule.table_round_timer_status(table, now_msec, "Next hand")
-	_update_environment_table(environment, table)
 	return bool(timer.get("due", false))
+
+
+func _peek_table_state(environment: Dictionary) -> Dictionary:
+	# Zero-copy view of the stored table for read-mostly per-frame checks.
+	# Callers must not restructure it; timer auto-start writes are intended.
+	var states: Variant = environment.get("game_states", {})
+	if typeof(states) != TYPE_DICTIONARY:
+		return {}
+	var table: Variant = (states as Dictionary).get(get_id(), (states as Dictionary).get("baccarat", {}))
+	if typeof(table) != TYPE_DICTIONARY or str((table as Dictionary).get("schema", "")) != "baccarat_table_state":
+		return {}
+	return table as Dictionary
 
 
 func surface_auto_action_command(ui_state: Dictionary, run_state: RunState, environment: Dictionary, _surface_status: Dictionary = {}) -> Dictionary:
@@ -336,6 +398,10 @@ func surface_action_command(surface_action: String, index: int, _confirm_request
 				"skip_stake_validation": true,
 				"message": str((session["shoe_read"] as Dictionary).get("message", "You study the shoe.")),
 			})
+		"baccarat_edge_sort":
+			return _edge_sort_command(session, run_state, environment, table)
+		"baccarat_edge_sort_answer":
+			return _edge_sort_answer_command(index, session, table)
 		_:
 			return {"handled": false}
 
@@ -349,6 +415,8 @@ func wager_cost_for_context(action_id: String, stake: int, _run_state: RunState,
 func resolve_with_context(action_id: String, stake: int, run_state: RunState, environment: Dictionary, rng: RngStream, ui_state: Dictionary = {}) -> Dictionary:
 	if action_id == "read_baccarat_shoe":
 		return _resolve_read_shoe(action_id, stake, run_state, environment, rng, ui_state)
+	if action_id == EDGE_SORT_ACTION_ID:
+		return _resolve_edge_sort(action_id, run_state, environment, rng, ui_state)
 	if action_id != "deal_baccarat":
 		return super.resolve_with_context(action_id, stake, run_state, environment, rng, ui_state)
 	var table := _table_state(run_state, environment)
@@ -366,13 +434,18 @@ func resolve_with_context(action_id: String, stake: int, run_state: RunState, en
 	if total_wager > 0 and total_wager < min_total:
 		return _empty_baccarat_result(action_id, total_wager, environment, "Baccarat table minimum is $%d." % min_total)
 
+	var edge_before := _normalized_edge_sort_edge(table.get("edge_sort_edge", {}), table)
+	var edge_used := _edge_sort_edge_used(edge_before, bets)
 	var hand := _resolve_baccarat_hand(table, rng)
 	var settlement := _settle_baccarat_bets(bets, hand, _table_rules(table))
 	var bankroll_delta := int(settlement.get("bankroll_delta", 0))
 	var message := _baccarat_result_message(hand, settlement, bankroll_delta)
+	if edge_used:
+		message = "%s Edge-sort lean called %s." % [message, _winner_display(str(edge_before.get("predicted_bet", "")))]
 	if sit_out:
 		message = "You sit out the baccarat hand. %s" % message
 	_update_table_after_hand(table, bets, hand, settlement, bankroll_delta, rng)
+	_consume_edge_sort_edge(table, edge_before)
 	_apply_patron_rapport_after_baccarat(table, session, bets, str(hand.get("winner", "")))
 	_update_environment_table(environment, table)
 	var deltas := GameModule.empty_result_deltas()
@@ -412,6 +485,11 @@ func resolve_with_context(action_id: String, stake: int, run_state: RunState, en
 	result["baccarat_sat_out"] = sit_out
 	result["baccarat_commission"] = int(settlement.get("commission", 0))
 	result["baccarat_animation_events"] = _dictionary_array(hand.get("animation_events", []))
+	result["baccarat_edge_sort_edge_used"] = edge_used
+	result["baccarat_edge_sort_prediction"] = edge_before.duplicate(true)
+	result["baccarat_edge_sort_edge_remaining"] = int(_copy_dict(table.get("edge_sort_edge", {})).get("hands_remaining", 0))
+	result["baccarat_road"] = _baccarat_road_state(table.get("hand_history", []))
+	result["baccarat_shoe_penetration"] = _baccarat_shoe_penetration(table)
 	GameModule.apply_result(run_state, result, rng)
 	return result
 
@@ -681,6 +759,7 @@ func _update_table_after_hand(table: Dictionary, bets: Dictionary, hand: Diction
 	while shoe_history.size() > HISTORY_LIMIT:
 		shoe_history.pop_back()
 	table["shoe_history"] = shoe_history
+	_update_edge_sort_after_hand(table, hand)
 
 
 func _baccarat_deal_events(player_cards: Array, banker_cards: Array, natural: bool, player_drew: bool, banker_drew: bool, winner: String) -> Array:
@@ -708,14 +787,108 @@ func _baccarat_deal_events(player_cards: Array, banker_cards: Array, natural: bo
 			"duration_msec": 520,
 			"label": str(entry.get("label", "")),
 		})
+	var player_total := _hand_total(player_cards)
+	var banker_total := _hand_total(banker_cards)
+	var marker_delay := 3600
+	if _hand_needs_squeeze(natural, player_total, banker_total):
+		events.append({
+			"type": "squeeze",
+			"label": "Squeeze reveal",
+			"winner": winner,
+			"player_total": player_total,
+			"banker_total": banker_total,
+			"player_drew": player_drew,
+			"banker_drew": banker_drew,
+			"delay_msec": 3380,
+			"duration_msec": 520,
+		})
+		marker_delay = 3880
 	events.append({
 		"type": "marker",
 		"marker": "natural" if natural else "third-card" if player_drew or banker_drew else "stand",
 		"winner": winner,
-		"delay_msec": 3600,
+		"delay_msec": marker_delay,
 		"duration_msec": 500,
 	})
 	return events
+
+
+func _hand_needs_squeeze(natural: bool, player_total: int, banker_total: int) -> bool:
+	return not natural and abs(player_total - banker_total) <= 1
+
+
+func _baccarat_squeeze_state(last_result: Dictionary) -> Dictionary:
+	for event_value in _dictionary_array(last_result.get("animation_events", [])):
+		var event: Dictionary = event_value
+		if str(event.get("type", "")) == "squeeze":
+			return {
+				"active": true,
+				"label": str(event.get("label", "Squeeze reveal")),
+				"winner": str(event.get("winner", "")),
+				"player_total": int(event.get("player_total", 0)),
+				"banker_total": int(event.get("banker_total", 0)),
+				"delay_msec": int(event.get("delay_msec", 0)),
+				"duration_msec": int(event.get("duration_msec", 0)),
+			}
+	return {}
+
+
+func _baccarat_road_state(history_value: Variant) -> Dictionary:
+	var history := _dictionary_array(history_value)
+	var ordered: Array = []
+	for i in range(history.size() - 1, -1, -1):
+		ordered.append(history[i])
+	var max_beads := BACCARAT_ROAD_ROWS * BACCARAT_ROAD_COLUMNS
+	var start := maxi(0, ordered.size() - max_beads)
+	var beads: Array = []
+	var counts := {"player": 0, "banker": 0, "tie": 0}
+	for i in range(start, ordered.size()):
+		var hand: Dictionary = ordered[i]
+		var winner := str(hand.get("winner", ""))
+		if not counts.has(winner):
+			continue
+		counts[winner] = int(counts.get(winner, 0)) + 1
+		var bead_index := beads.size()
+		beads.append({
+			"row": bead_index % BACCARAT_ROAD_ROWS,
+			"column": int(bead_index / BACCARAT_ROAD_ROWS),
+			"winner": winner,
+			"player_total": int(hand.get("player_total", 0)),
+			"banker_total": int(hand.get("banker_total", 0)),
+			"natural": bool(hand.get("natural", false)),
+			"hand_id": str(hand.get("hand_id", "")),
+		})
+	return {
+		"type": "bead_plate",
+		"rows": BACCARAT_ROAD_ROWS,
+		"columns": BACCARAT_ROAD_COLUMNS,
+		"beads": beads,
+		"history_count": history.size(),
+		"visible_count": beads.size(),
+		"player_count": int(counts.get("player", 0)),
+		"banker_count": int(counts.get("banker", 0)),
+		"tie_count": int(counts.get("tie", 0)),
+		"summary": "P%d B%d T%d" % [int(counts.get("player", 0)), int(counts.get("banker", 0)), int(counts.get("tie", 0))],
+	}
+
+
+func _baccarat_shoe_penetration(table: Dictionary) -> Dictionary:
+	var deck_count := maxi(1, int(table.get("deck_count", 8)))
+	var total_cards := deck_count * CardShoeScript.CARDS_PER_DECK
+	var remaining := clampi(int(table.get("shoe_remaining", CardShoeScript.remaining_count(table.get("shoe", [])))), 0, total_cards)
+	var used := clampi(total_cards - remaining, 0, total_cards)
+	var cut_card_remaining := clampi(int(table.get("cut_card_remaining", CardShoeScript.cut_card_remaining(deck_count, float(_table_rules(table).get("cut_card_penetration", 0.72))))), 0, total_cards)
+	var penetration_percent := int(round((float(used) / float(total_cards)) * 100.0))
+	return {
+		"total_cards": total_cards,
+		"remaining": remaining,
+		"used": used,
+		"discard_count": _card_array(table.get("discard", [])).size(),
+		"burn_count": _card_array(table.get("burn_cards", [])).size(),
+		"cut_card_remaining": cut_card_remaining,
+		"penetration_percent": penetration_percent,
+		"reshuffle_pending": bool(table.get("reshuffle_pending", false)),
+	}
 
 
 func _player_card_target(index: int) -> Vector2:
@@ -737,7 +910,9 @@ func _fresh_shoe_state(deck_count: int, rules: Dictionary, rng: RngStream) -> Di
 			if shoe.is_empty():
 				break
 			burn_cards.append(_draw_one(shoe))
+	var shoe_id := _shoe_state_id(deck_count, shoe, burn_cards)
 	return {
+		"shoe_id": shoe_id,
 		"shoe": shoe,
 		"discard": [],
 		"burn_cards": burn_cards,
@@ -747,6 +922,8 @@ func _fresh_shoe_state(deck_count: int, rules: Dictionary, rng: RngStream) -> Di
 		"shoe_composition": CardShoeScript.remaining_composition(shoe),
 		"shoe_label": CardShoeScript.shoe_label(deck_count),
 		"reshuffle_pending": false,
+		"edge_sort_challenge": {},
+		"edge_sort_edge": {},
 	}
 
 
@@ -1082,12 +1259,657 @@ func _shoe_read_context(table: Dictionary) -> Dictionary:
 	}
 
 
+func _edge_sort_command(session: Dictionary, run_state: RunState, environment: Dictionary, table: Dictionary) -> Dictionary:
+	var challenge := _normalized_edge_sort_challenge(table.get("edge_sort_challenge", {}))
+	if challenge.is_empty() or bool(challenge.get("resolved", false)):
+		challenge = _start_edge_sort_challenge(table, run_state, environment)
+		table["edge_sort_challenge"] = challenge.duplicate(true)
+		_update_environment_table(environment, table)
+		session["edge_sort_challenge"] = challenge.duplicate(true)
+		session["edge_sort_answers"] = []
+		session["table_notice"] = "Edge-sort read started; watch the next two hands."
+		return GameModule.surface_command({
+			"handled": true,
+			"ui_state": session,
+			"preserve_surface_ui_state": true,
+			"message": "You start tracking tiny card-back tells from the shoe.",
+		})
+	session["edge_sort_challenge"] = challenge.duplicate(true)
+	if not _edge_sort_challenge_ready(challenge):
+		var observed := _dictionary_array(challenge.get("observed_cues", [])).size()
+		var required := int(challenge.get("required_cue_count", EDGE_SORT_CUE_COUNT))
+		session["table_notice"] = "Edge-sort read: %d/%d backs logged." % [observed, required]
+		return GameModule.surface_command({
+			"handled": true,
+			"ui_state": session,
+			"preserve_surface_ui_state": true,
+			"message": "Keep watching the shoe; the pattern is not settled yet.",
+		})
+	var answers := _string_array(session.get("edge_sort_answers", []))
+	var expected := _string_array(challenge.get("hidden_answer", []))
+	if answers.size() < expected.size() and not session.has("edge_sort_answer_mode"):
+		session["table_notice"] = "Set the edge-sort memory sequence before committing."
+		return GameModule.surface_command({
+			"handled": true,
+			"ui_state": session,
+			"preserve_surface_ui_state": true,
+			"message": "You still need to lock in the remembered back sequence.",
+		})
+	return GameModule.surface_command({
+		"handled": true,
+		"ui_state": session,
+		"action_id": EDGE_SORT_ACTION_ID,
+		"action_kind": "cheat",
+		"resolve": true,
+		"skip_stake_validation": true,
+		"preserve_surface_ui_state": true,
+		"message": "You commit the edge-sort read.",
+	})
+
+
+func _edge_sort_answer_command(index: int, session: Dictionary, table: Dictionary) -> Dictionary:
+	var challenge := _normalized_edge_sort_challenge(table.get("edge_sort_challenge", session.get("edge_sort_challenge", {})))
+	if challenge.is_empty() or not _edge_sort_challenge_ready(challenge):
+		return _message_command(session, "No edge-sort memory prompt is ready.")
+	var answer_options := ["high", "low", "neutral"]
+	var cue_index := clampi(index, 0, answer_options.size() - 1)
+	var answers := _string_array(session.get("edge_sort_answers", []))
+	var expected := _string_array(challenge.get("hidden_answer", []))
+	if answers.size() >= expected.size():
+		answers.clear()
+	answers.append(str(answer_options[cue_index]))
+	session["edge_sort_answers"] = answers
+	session["edge_sort_challenge"] = challenge.duplicate(true)
+	var label := _edge_sort_cue_icon(str(answer_options[cue_index]))
+	return GameModule.surface_command({
+		"handled": true,
+		"ui_state": session,
+		"preserve_surface_ui_state": true,
+		"message": "Edge-sort cue %s logged (%d/%d)." % [label, answers.size(), expected.size()],
+	})
+
+
+func _resolve_edge_sort(action_id: String, run_state: RunState, environment: Dictionary, rng: RngStream, ui_state: Dictionary) -> Dictionary:
+	var table := _table_state(run_state, environment)
+	var challenge := _finalize_edge_sort_challenge(ui_state, run_state, table, environment)
+	if challenge.is_empty():
+		return _empty_baccarat_result(action_id, 0, environment, "There is no edge-sort read to resolve.")
+	var grade := str(challenge.get("skill_grade", "miss"))
+	var applied := _edge_sort_grade_applies(grade)
+	var edge := _copy_dict(challenge.get("edge_prediction", {}))
+	if applied and not edge.is_empty():
+		table["edge_sort_edge"] = edge.duplicate(true)
+	else:
+		table["edge_sort_edge"] = {}
+	table["edge_sort_challenge"] = {}
+	_update_environment_table(environment, table)
+
+	var pit_boss_status := run_state.pit_boss_watch_status(environment) if run_state != null else {}
+	var pit_boss_active := bool(pit_boss_status.get("active", false))
+	var pit_boss_watched := (pit_boss_active and bool(pit_boss_status.get("watched", false))) or bool(challenge.get("pit_boss_watched_start", false)) or _edge_sort_table_watched(table)
+	var pit_bonus := int(pit_boss_status.get("cheat_heat_bonus", 0)) if pit_boss_active else 0
+	var action := _action(action_id)
+	var action_heat := int(action.get("suspicion_delta", EDGE_SORT_BASE_HEAT))
+	var base_suspicion_delta := maxi(1, action_heat + _item_effect_total("cheat_suspicion_delta", run_state) + _edge_sort_grade_heat_modifier(grade))
+	var raw_heat := base_suspicion_delta
+	if run_state != null:
+		raw_heat += run_state.security_risk_bonus("cheat") + pit_bonus
+	var suspicion_delta := run_state.alcohol_adjusted_suspicion_delta(raw_heat) if run_state != null and raw_heat > 0 else raw_heat
+	var security_pressure: Dictionary = run_state.security_action_pressure("cheat", int(table.get("table_minimum", 20)), run_state.suspicion_level() + suspicion_delta) if run_state != null and suspicion_delta > 0 else {}
+	var bankroll_delta := int(security_pressure.get("bankroll_delta", 0))
+	var security_message := str(security_pressure.get("message", ""))
+	var table_pressure := _edge_sort_pressure_message(table, pit_boss_status)
+	var skill_outcome := _edge_sort_skill_outcome(grade)
+	var message := _edge_sort_message(grade, edge, suspicion_delta, table_pressure, security_message)
+	var skill_context := {
+		"game_id": get_id(),
+		"action_id": action_id,
+		"action_kind": "cheat",
+		"skill_outcome": skill_outcome,
+		"skill_grade": grade,
+		"skill_accuracy": clampi(int(challenge.get("skill_accuracy", 0)), 0, 100),
+		"skill_margin_msec": int(challenge.get("skill_margin_msec", 0)),
+		"suspicion_delta": suspicion_delta,
+		"base_suspicion_delta": base_suspicion_delta,
+		"bankroll_delta": bankroll_delta,
+		"watched": pit_boss_watched,
+		"pit_boss_heat_bonus": pit_bonus,
+		"security_pressure_checked": true,
+		"shoe_id": str(challenge.get("shoe_id", "")),
+		"correct_count": int(challenge.get("correct_count", 0)),
+		"miss_count": int(challenge.get("miss_count", 0)),
+		"edge_prediction": edge.duplicate(true),
+	}
+	var story_entry := {
+		"type": "game_action",
+		"game_id": get_id(),
+		"action_id": action_id,
+		"action_kind": "cheat",
+		"stake": 0,
+		"bankroll_delta": bankroll_delta,
+		"suspicion_delta": suspicion_delta,
+		"cheated": true,
+		"skill_outcome": skill_outcome,
+		"skill_grade": grade,
+		"skill_accuracy": clampi(int(challenge.get("skill_accuracy", 0)), 0, 100),
+		"skill_margin_msec": int(challenge.get("skill_margin_msec", 0)),
+		"base_suspicion_delta": base_suspicion_delta,
+		"pit_boss_watched": pit_boss_watched,
+		"pit_boss_heat_bonus": pit_bonus,
+		"table_pressure": table_pressure,
+		"security_message": security_message,
+		"skill_security_pressure_checked": true,
+		"environment_id": environment.get("id", ""),
+		"skill_story_context": skill_context.duplicate(true),
+	}
+	var deltas := GameModule.empty_result_deltas()
+	deltas["bankroll_delta"] = bankroll_delta
+	deltas["suspicion_delta"] = suspicion_delta
+	deltas["messages"] = [message]
+	deltas["story_log"] = [story_entry]
+	deltas["ended"] = bool(security_pressure.get("ended", false))
+	var result := GameModule.build_action_result({
+		"ok": true,
+		"type": "game_action",
+		"source_id": get_id(),
+		"game_id": get_id(),
+		"action_id": action_id,
+		"action_kind": "cheat",
+		"stake": 0,
+		"bankroll_delta": bankroll_delta,
+		"suspicion_delta": suspicion_delta,
+		"deltas": deltas,
+		"won": applied,
+		"environment_id": environment.get("id", ""),
+		"environment_archetype_id": environment.get("archetype_id", ""),
+		"message": message,
+		"pit_boss_watched": pit_boss_watched,
+		"pit_boss_heat_bonus": pit_bonus,
+		"skill_outcome": skill_outcome,
+		"skill_security_pressure_checked": true,
+		"security_message": security_message,
+		"skill_story_context": skill_context,
+	})
+	result["baccarat_edge_sort"] = true
+	result["baccarat_edge_sort_applied"] = applied
+	result["baccarat_edge_sort_challenge"] = challenge.duplicate(true)
+	result["baccarat_edge_sort_edge"] = edge.duplicate(true)
+	result["baccarat_edge_sort_grade"] = grade
+	result["baccarat_edge_sort_accuracy"] = clampi(int(challenge.get("skill_accuracy", 0)), 0, 100)
+	result["baccarat_edge_sort_correct_count"] = int(challenge.get("correct_count", 0))
+	result["baccarat_edge_sort_miss_count"] = int(challenge.get("miss_count", 0))
+	result["baccarat_pit_boss_watched"] = pit_boss_watched
+	result["baccarat_pit_boss_heat_bonus"] = pit_bonus
+	result["baccarat_table_pressure"] = table_pressure
+	result["skill_grade"] = grade
+	result["skill_accuracy"] = clampi(int(challenge.get("skill_accuracy", 0)), 0, 100)
+	result["skill_margin_msec"] = int(challenge.get("skill_margin_msec", 0))
+	result["base_suspicion_delta"] = base_suspicion_delta
+	GameModule.normalize_skill_cheat_contract(result, result)
+	GameModule.apply_result(run_state, result, rng)
+	return result
+
+
+func _start_edge_sort_challenge(table: Dictionary, run_state: RunState, environment: Dictionary) -> Dictionary:
+	var shoe_id := str(table.get("shoe_id", ""))
+	if shoe_id.is_empty():
+		shoe_id = _shoe_state_id(int(table.get("deck_count", 8)), table.get("shoe", []), table.get("burn_cards", []))
+		table["shoe_id"] = shoe_id
+	var seed := "%s:%s:%s:%d:%d" % [
+		get_id(),
+		str(run_state.seed_text if run_state != null else ""),
+		shoe_id,
+		int(table.get("hands_played", 0)),
+		int(table.get("reshuffle_count", 0)),
+	]
+	var pit_boss := run_state.pit_boss_watch_status(environment) if run_state != null else {}
+	return {
+		"challenge_id": "bac_edge_%d" % _stable_hash(seed),
+		"shoe_id": shoe_id,
+		"hand_index_start": int(table.get("hands_played", 0)) + 1,
+		"observed_cues": [],
+		"cue_icons": [],
+		"observed_hand_indexes": [],
+		"hidden_answer": [],
+		"memory_prompt": "Watch two hands, then recall the card-back cues.",
+		"answers": [],
+		"correct_count": 0,
+		"miss_count": 0,
+		"edge_prediction": {},
+		"confidence": 0,
+		"skill_grade": "",
+		"skill_accuracy": 0,
+		"skill_margin_msec": 0,
+		"required_cue_count": _edge_sort_required_cue_count(run_state),
+		"min_hands": EDGE_SORT_MIN_HANDS,
+		"memory_tolerance": _edge_sort_memory_tolerance(run_state),
+		"base_heat": _edge_sort_base_heat(run_state),
+		"pit_boss_watched_start": bool(pit_boss.get("watched", false)) if bool(pit_boss.get("active", false)) else false,
+		"item_modifiers": skill_item_modifier_badges(run_state, EDGE_SORT_ITEM_EFFECT_KEYS),
+		"ready": false,
+		"resolved": false,
+	}
+
+
+func _update_edge_sort_after_hand(table: Dictionary, hand: Dictionary) -> void:
+	var challenge := _normalized_edge_sort_challenge(table.get("edge_sort_challenge", {}))
+	if challenge.is_empty() or bool(challenge.get("resolved", false)):
+		return
+	if str(challenge.get("shoe_id", "")) != str(table.get("shoe_id", "")):
+		table["edge_sort_challenge"] = {}
+		return
+	var required := int(challenge.get("required_cue_count", EDGE_SORT_CUE_COUNT))
+	var hidden := _string_array(challenge.get("hidden_answer", []))
+	if hidden.size() >= required:
+		challenge["ready"] = _edge_sort_challenge_ready(challenge)
+		table["edge_sort_challenge"] = challenge
+		return
+	var observed_hands := _int_array(challenge.get("observed_hand_indexes", []))
+	var hand_index := int(table.get("hands_played", 0))
+	if observed_hands.has(hand_index):
+		table["edge_sort_challenge"] = challenge
+		return
+	var observed := _dictionary_array(challenge.get("observed_cues", []))
+	var icons := _dictionary_array(challenge.get("cue_icons", []))
+	var cues := _edge_sort_cues_for_hand(hand, hand_index)
+	var added := 0
+	for cue_value in cues:
+		if added >= 2 or hidden.size() >= required:
+			break
+		var cue: Dictionary = cue_value
+		observed.append(cue.duplicate(true))
+		hidden.append(str(cue.get("cue", "neutral")))
+		icons.append({
+			"hand_index": hand_index,
+			"icon": _edge_sort_cue_icon(str(cue.get("cue", "neutral"))),
+			"zone": str(cue.get("zone", "")),
+			"slot": int(cue.get("slot", 0)),
+		})
+		added += 1
+	if added > 0:
+		observed_hands.append(hand_index)
+	challenge["observed_cues"] = observed
+	challenge["cue_icons"] = icons
+	challenge["hidden_answer"] = hidden
+	challenge["observed_hand_indexes"] = observed_hands
+	challenge["memory_prompt"] = "Recall %d card-back cues from %d hands." % [required, int(challenge.get("min_hands", EDGE_SORT_MIN_HANDS))]
+	challenge["ready"] = _edge_sort_challenge_ready(challenge)
+	table["edge_sort_challenge"] = challenge
+
+
+func _finalize_edge_sort_challenge(ui_state: Dictionary, run_state: RunState, table: Dictionary, environment: Dictionary) -> Dictionary:
+	var challenge := _normalized_edge_sort_challenge(ui_state.get("edge_sort_challenge", table.get("edge_sort_challenge", {})))
+	if challenge.is_empty():
+		challenge = _normalized_edge_sort_challenge(table.get("edge_sort_challenge", {}))
+	if challenge.is_empty() or str(challenge.get("shoe_id", "")) != str(table.get("shoe_id", "")):
+		return {}
+	var hidden := _string_array(challenge.get("hidden_answer", []))
+	var answers := _edge_sort_answers_for_ui(ui_state, challenge)
+	var correct := 0
+	for i in range(hidden.size()):
+		if i < answers.size() and str(answers[i]) == str(hidden[i]):
+			correct += 1
+	var miss_count := maxi(0, hidden.size() - correct)
+	var watched_now := _edge_sort_table_watched(table)
+	var mode := str(ui_state.get("edge_sort_answer_mode", "")).strip_edges()
+	var tolerance := clampi(int(challenge.get("memory_tolerance", _edge_sort_memory_tolerance(run_state))), 0, hidden.size())
+	var grade := "miss"
+	if mode == "blown" or (watched_now and miss_count >= hidden.size() and hidden.size() > 0):
+		grade = "blown"
+	elif miss_count == 0 and _edge_sort_challenge_ready(challenge):
+		grade = "perfect"
+	elif miss_count <= tolerance and _edge_sort_challenge_ready(challenge):
+		grade = "good"
+	elif correct >= maxi(1, int(ceil(float(hidden.size()) * 0.5))) and _edge_sort_challenge_ready(challenge):
+		grade = "partial"
+	var accuracy := 0
+	if hidden.size() > 0:
+		accuracy = clampi(int(round(float(correct) / float(hidden.size()) * 100.0)), 0, 100)
+	var prediction := _edge_sort_prediction_for_grade(table, grade)
+	challenge["answers"] = answers
+	challenge["correct_count"] = correct
+	challenge["miss_count"] = miss_count
+	challenge["skill_grade"] = grade
+	challenge["skill_accuracy"] = accuracy
+	challenge["skill_margin_msec"] = 0
+	challenge["confidence"] = int(prediction.get("confidence", 0))
+	challenge["edge_prediction"] = prediction
+	challenge["resolved"] = true
+	challenge["ready"] = false
+	challenge["pit_boss_watched_start"] = bool(challenge.get("pit_boss_watched_start", false)) or bool((run_state.pit_boss_watch_status(environment) if run_state != null else {}).get("watched", false))
+	return challenge
+
+
+func _normalized_edge_sort_challenge(value: Variant) -> Dictionary:
+	if typeof(value) != TYPE_DICTIONARY:
+		return {}
+	var source: Dictionary = (value as Dictionary).duplicate(true)
+	var challenge_id := str(source.get("challenge_id", "")).strip_edges()
+	if challenge_id.is_empty():
+		return {}
+	var grade := str(source.get("skill_grade", ""))
+	if not ["", "perfect", "good", "partial", "miss", "blown"].has(grade):
+		grade = ""
+	var normalized := {
+		"challenge_id": challenge_id,
+		"shoe_id": str(source.get("shoe_id", "")),
+		"hand_index_start": maxi(0, int(source.get("hand_index_start", 0))),
+		"observed_cues": _dictionary_array(source.get("observed_cues", [])),
+		"cue_icons": _dictionary_array(source.get("cue_icons", [])),
+		"observed_hand_indexes": _int_array(source.get("observed_hand_indexes", [])),
+		"hidden_answer": _string_array(source.get("hidden_answer", [])),
+		"memory_prompt": str(source.get("memory_prompt", "")),
+		"answers": _string_array(source.get("answers", [])),
+		"correct_count": maxi(0, int(source.get("correct_count", 0))),
+		"miss_count": maxi(0, int(source.get("miss_count", 0))),
+		"edge_prediction": _copy_dict(source.get("edge_prediction", {})),
+		"confidence": clampi(int(source.get("confidence", 0)), 0, 100),
+		"skill_grade": grade,
+		"skill_accuracy": clampi(int(source.get("skill_accuracy", 0)), 0, 100),
+		"skill_margin_msec": int(source.get("skill_margin_msec", 0)),
+		"required_cue_count": clampi(int(source.get("required_cue_count", EDGE_SORT_CUE_COUNT)), 3, 6),
+		"min_hands": clampi(int(source.get("min_hands", EDGE_SORT_MIN_HANDS)), 1, 4),
+		"memory_tolerance": clampi(int(source.get("memory_tolerance", 0)), 0, 3),
+		"base_heat": maxi(1, int(source.get("base_heat", EDGE_SORT_BASE_HEAT))),
+		"pit_boss_watched_start": bool(source.get("pit_boss_watched_start", false)),
+		"resolved": bool(source.get("resolved", false)),
+		"item_modifiers": _copy_array(source.get("item_modifiers", [])),
+	}
+	normalized["ready"] = bool(source.get("ready", false)) or _edge_sort_challenge_ready(normalized)
+	return normalized
+
+
+func _normalized_edge_sort_edge(value: Variant, table: Dictionary) -> Dictionary:
+	if typeof(value) != TYPE_DICTIONARY:
+		return {}
+	var edge := (value as Dictionary).duplicate(true)
+	var predicted := str(edge.get("predicted_bet", ""))
+	if not ["player", "banker", "tie"].has(predicted):
+		return {}
+	if str(edge.get("shoe_id", "")) != str(table.get("shoe_id", "")):
+		return {}
+	var hands_remaining := maxi(0, int(edge.get("hands_remaining", 0)))
+	if hands_remaining <= 0:
+		return {}
+	return {
+		"active": true,
+		"shoe_id": str(edge.get("shoe_id", "")),
+		"predicted_bet": predicted,
+		"confidence": clampi(int(edge.get("confidence", 0)), 0, 100),
+		"hands_remaining": hands_remaining,
+		"expires_after_hand": maxi(0, int(edge.get("expires_after_hand", int(table.get("hands_played", 0)) + hands_remaining))),
+		"skill_grade": str(edge.get("skill_grade", "")),
+		"side_bet_hint": str(edge.get("side_bet_hint", "")),
+	}
+
+
+func _edge_sort_surface_status(table: Dictionary, challenge: Dictionary, edge: Dictionary, session: Dictionary) -> Dictionary:
+	var answers := _string_array(session.get("edge_sort_answers", []))
+	var observed := _dictionary_array(challenge.get("observed_cues", []))
+	var required := int(challenge.get("required_cue_count", EDGE_SORT_CUE_COUNT)) if not challenge.is_empty() else EDGE_SORT_CUE_COUNT
+	return {
+		"active": not challenge.is_empty(),
+		"ready": _edge_sort_challenge_ready(challenge),
+		"resolved": bool(challenge.get("resolved", false)),
+		"cue_count": observed.size(),
+		"required_cue_count": required,
+		"observed_hands": _int_array(challenge.get("observed_hand_indexes", [])).size(),
+		"required_hands": int(challenge.get("min_hands", EDGE_SORT_MIN_HANDS)) if not challenge.is_empty() else EDGE_SORT_MIN_HANDS,
+		"answer_count": answers.size(),
+		"memory_prompt": str(challenge.get("memory_prompt", "")),
+		"edge_active": not edge.is_empty(),
+		"predicted_bet": str(edge.get("predicted_bet", "")),
+		"confidence": int(edge.get("confidence", 0)),
+		"hands_remaining": int(edge.get("hands_remaining", 0)),
+		"shoe_id": str(table.get("shoe_id", "")),
+	}
+
+
+func _edge_sort_challenge_ready(challenge: Dictionary) -> bool:
+	if challenge.is_empty() or bool(challenge.get("resolved", false)):
+		return false
+	return _string_array(challenge.get("hidden_answer", [])).size() >= int(challenge.get("required_cue_count", EDGE_SORT_CUE_COUNT)) and _int_array(challenge.get("observed_hand_indexes", [])).size() >= int(challenge.get("min_hands", EDGE_SORT_MIN_HANDS))
+
+
+func _edge_sort_cues_for_hand(hand: Dictionary, hand_index: int) -> Array:
+	var result: Array = []
+	var zones := [
+		{"id": "player", "cards": _card_array(hand.get("player_cards", []))},
+		{"id": "banker", "cards": _card_array(hand.get("banker_cards", []))},
+	]
+	for zone_value in zones:
+		var zone: Dictionary = zone_value
+		var cards: Array = zone.get("cards", [])
+		for i in range(cards.size()):
+			var card: Dictionary = cards[i]
+			var cue := _edge_sort_card_cue(card)
+			result.append({
+				"hand_index": hand_index,
+				"zone": str(zone.get("id", "")),
+				"slot": i,
+				"cue": cue,
+				"icon": _edge_sort_cue_icon(cue),
+				"rank": int(card.get("rank", 2)),
+				"suit": int(card.get("suit", 0)),
+			})
+	return result
+
+
+func _edge_sort_card_cue(card: Dictionary) -> String:
+	var rank := int(card.get("rank", 2))
+	if rank == 14 or rank >= 10:
+		return "high"
+	if rank <= 6:
+		return "low"
+	return "neutral"
+
+
+func _edge_sort_cue_icon(cue: String) -> String:
+	match cue:
+		"high":
+			return "H"
+		"low":
+			return "L"
+		_:
+			return "N"
+
+
+func _edge_sort_answers_for_ui(ui_state: Dictionary, challenge: Dictionary) -> Array:
+	var explicit := _string_array(ui_state.get("edge_sort_answers", []))
+	if not explicit.is_empty():
+		return explicit
+	var hidden := _string_array(challenge.get("hidden_answer", []))
+	var mode := str(ui_state.get("edge_sort_answer_mode", "")).strip_edges()
+	if mode == "perfect":
+		return hidden
+	if mode == "partial":
+		var partial: Array = []
+		var split := int(ceil(float(hidden.size()) * 0.5))
+		for i in range(hidden.size()):
+			partial.append(str(hidden[i]) if i < split else _wrong_edge_sort_answer(str(hidden[i])))
+		return partial
+	if mode == "miss" or mode == "blown":
+		var misses: Array = []
+		for answer in hidden:
+			misses.append(_wrong_edge_sort_answer(str(answer)))
+		return misses
+	return explicit
+
+
+func _wrong_edge_sort_answer(answer: String) -> String:
+	match answer:
+		"high":
+			return "low"
+		"low":
+			return "neutral"
+		_:
+			return "high"
+
+
+func _edge_sort_prediction_for_grade(table: Dictionary, grade: String) -> Dictionary:
+	if not _edge_sort_grade_applies(grade):
+		return {}
+	var preview_table := table.duplicate(true)
+	var preview_rng := _default_table_rng(table, "edge_sort_preview")
+	var preview_hand := _resolve_baccarat_hand(preview_table, preview_rng)
+	var predicted := str(preview_hand.get("winner", "banker"))
+	var confidence := 48
+	match grade:
+		"perfect":
+			confidence = 90
+		"good":
+			confidence = 72
+		"partial":
+			confidence = 52
+	var side_hint := _edge_sort_side_bet_hint(preview_hand) if grade == "perfect" else ""
+	return {
+		"active": true,
+		"shoe_id": str(table.get("shoe_id", "")),
+		"predicted_bet": predicted,
+		"confidence": confidence,
+		"hands_remaining": EDGE_SORT_EDGE_HANDS,
+		"expires_after_hand": int(table.get("hands_played", 0)) + EDGE_SORT_EDGE_HANDS,
+		"skill_grade": grade,
+		"side_bet_hint": side_hint,
+	}
+
+
+func _edge_sort_side_bet_hint(hand: Dictionary) -> String:
+	var player := _card_array(hand.get("player_cards", []))
+	var banker := _card_array(hand.get("banker_cards", []))
+	if player.size() >= 2 and int((player[0] as Dictionary).get("rank", 0)) == int((player[1] as Dictionary).get("rank", -1)):
+		return "player_pair"
+	if banker.size() >= 2 and int((banker[0] as Dictionary).get("rank", 0)) == int((banker[1] as Dictionary).get("rank", -1)):
+		return "banker_pair"
+	return ""
+
+
+func _edge_sort_edge_used(edge: Dictionary, bets: Dictionary) -> bool:
+	if edge.is_empty():
+		return false
+	var predicted := str(edge.get("predicted_bet", ""))
+	return int(bets.get(predicted, 0)) > 0
+
+
+func _consume_edge_sort_edge(table: Dictionary, edge_before: Dictionary) -> void:
+	if edge_before.is_empty():
+		table["edge_sort_edge"] = _normalized_edge_sort_edge(table.get("edge_sort_edge", {}), table)
+		return
+	if str(edge_before.get("shoe_id", "")) != str(table.get("shoe_id", "")):
+		table["edge_sort_edge"] = {}
+		return
+	var remaining := int(edge_before.get("hands_remaining", 0)) - 1
+	if remaining <= 0:
+		table["edge_sort_edge"] = {}
+		return
+	var next_edge := _edge_sort_prediction_for_grade(table, str(edge_before.get("skill_grade", "partial")))
+	if next_edge.is_empty():
+		table["edge_sort_edge"] = {}
+		return
+	next_edge["hands_remaining"] = remaining
+	next_edge["expires_after_hand"] = int(table.get("hands_played", 0)) + remaining
+	table["edge_sort_edge"] = next_edge
+
+
+func _edge_sort_grade_applies(grade: String) -> bool:
+	return grade == "perfect" or grade == "good" or grade == "partial"
+
+
+func _edge_sort_grade_heat_modifier(grade: String) -> int:
+	match grade:
+		"perfect":
+			return -EDGE_SORT_PERFECT_HEAT_REDUCTION
+		"partial":
+			return EDGE_SORT_PARTIAL_HEAT_BONUS
+		"miss":
+			return EDGE_SORT_MISS_HEAT_BONUS
+		"blown":
+			return EDGE_SORT_BLOWN_HEAT_BONUS
+	return 0
+
+
+func _edge_sort_skill_outcome(grade: String) -> String:
+	if grade.is_empty():
+		return "edge_sort_miss"
+	return "edge_sort_%s" % grade
+
+
+func _edge_sort_required_cue_count(run_state: RunState) -> int:
+	var count := EDGE_SORT_CUE_COUNT + _item_effect_total("baccarat_edge_sort_cue_count", run_state)
+	var drunk_extra := 1 if run_state != null and run_state.drunk_level >= 45 else 0
+	if drunk_extra > 0:
+		drunk_extra = maxi(0, drunk_extra - _item_effect_total("skill_cheat_drunk_memory_offset", run_state))
+	count += drunk_extra
+	return clampi(count, 3, 6)
+
+
+func _edge_sort_memory_tolerance(run_state: RunState) -> int:
+	return clampi(_item_effect_total("baccarat_edge_sort_memory_tolerance", run_state), 0, 3)
+
+
+func _edge_sort_base_heat(run_state: RunState) -> int:
+	return maxi(1, EDGE_SORT_BASE_HEAT + _item_effect_total("baccarat_edge_sort_heat_delta", run_state))
+
+
+func _edge_sort_table_watched(table: Dictionary) -> bool:
+	for patron_value in _dictionary_array(table.get("patrons", [])):
+		var patron: Dictionary = patron_value
+		if bool(patron.get("watching", patron.get("watching_player", false))):
+			return true
+	return false
+
+
+func _edge_sort_pressure_message(table: Dictionary, pit_boss_status: Dictionary) -> String:
+	if bool(pit_boss_status.get("watched", false)):
+		return "The pit boss watches your edge-sort read from the rail."
+	for patron_value in _dictionary_array(table.get("patrons", [])):
+		var patron: Dictionary = patron_value
+		if bool(patron.get("watching", false)):
+			return "A patron follows your eyes from the shoe to the felt."
+	return ""
+
+
+func _edge_sort_message(grade: String, edge: Dictionary, suspicion_delta: int, table_pressure: String, security_message: String) -> String:
+	var summary := "Your edge-sort read slips."
+	if grade == "perfect":
+		summary = "The card backs line up cleanly: lean %s at %d%% confidence for %d hands." % [
+			_winner_display(str(edge.get("predicted_bet", ""))),
+			int(edge.get("confidence", 0)),
+			int(edge.get("hands_remaining", 0)),
+		]
+	elif grade == "good":
+		summary = "The edge-sort read is usable: lean %s at %d%% confidence." % [
+			_winner_display(str(edge.get("predicted_bet", ""))),
+			int(edge.get("confidence", 0)),
+		]
+	elif grade == "partial":
+		summary = "The pattern is shaky, but it still points toward %s." % _winner_display(str(edge.get("predicted_bet", "")))
+	elif grade == "blown":
+		summary = "The croupier clocks the stare before you can use the backs."
+	var message := "%s Heat %+d." % [summary, suspicion_delta]
+	if not table_pressure.is_empty():
+		message = "%s %s" % [message, table_pressure]
+	if not security_message.is_empty():
+		message = "%s %s" % [message, security_message]
+	return message
+
+
+func _shoe_state_id(deck_count: int, shoe_value: Variant, burn_value: Variant) -> String:
+	var shoe := CardShoeScript.card_array(shoe_value)
+	var burns := _card_array(burn_value)
+	var sample: Array = []
+	for i in range(mini(12, shoe.size())):
+		sample.append(_copy_dict(shoe[i]))
+	var fingerprint := JSON.stringify({"shoe": sample, "burn": burns})
+	return "shoe_%d_%d_%d" % [deck_count, shoe.size(), _stable_hash(fingerprint)]
+
+
 func _message_command(ui_state: Dictionary, message: String) -> Dictionary:
 	return GameModule.surface_command({"handled": true, "ui_state": ui_state, "message": message})
 
 
 func _surface_action_blocks() -> Array:
-	var actions := ["baccarat_bet", "baccarat_patron_bet", "baccarat_chip", "baccarat_clear", "baccarat_undo", "baccarat_rebet", "baccarat_deal", "baccarat_read_shoe", "baccarat_max_bet"]
+	var actions := ["baccarat_bet", "baccarat_patron_bet", "baccarat_chip", "baccarat_clear", "baccarat_undo", "baccarat_rebet", "baccarat_deal", "baccarat_read_shoe", "baccarat_edge_sort", "baccarat_edge_sort_answer", "baccarat_max_bet"]
 	return [
 		{"actions": actions, "while_animation": BACCARAT_DEAL_CHANNEL, "reason": "No more bets while the hand is being dealt."},
 		{"actions": actions, "while_animation": BACCARAT_PAYOUT_CHANNEL, "reason": "The croupier is settling the hand."},
@@ -1115,6 +1937,14 @@ func _table_notice(table: Dictionary, session: Dictionary, last_result: Dictiona
 		return "%s is settling. Winning chips are marked." % winner_text if not winner_text.is_empty() else "The croupier marks winners and collects commission."
 	if not str(session.get("table_notice", "")).is_empty():
 		return str(session.get("table_notice", ""))
+	var edge := _normalized_edge_sort_edge(table.get("edge_sort_edge", {}), table)
+	if not edge.is_empty():
+		return "Edge-sort lean: %s at %d%% for %d hands." % [_winner_display(str(edge.get("predicted_bet", ""))), int(edge.get("confidence", 0)), int(edge.get("hands_remaining", 0))]
+	var challenge := _normalized_edge_sort_challenge(table.get("edge_sort_challenge", {}))
+	if not challenge.is_empty():
+		var observed := _dictionary_array(challenge.get("observed_cues", [])).size()
+		var required := int(challenge.get("required_cue_count", EDGE_SORT_CUE_COUNT))
+		return "Edge-sort read: %d/%d backs logged." % [observed, required] if not _edge_sort_challenge_ready(challenge) else "Edge-sort sequence ready."
 	var bets := _bet_dict(session.get("baccarat_bets", {}))
 	if bets.is_empty():
 		if bool(table.get("reshuffle_pending", false)):
@@ -1353,6 +2183,9 @@ func _normalize_table_state(value: Variant, environment: Dictionary) -> Dictiona
 	table["shoe_remaining"] = CardShoeScript.remaining_count(table.get("shoe", []))
 	table["shoe_composition"] = CardShoeScript.remaining_composition(table.get("shoe", []))
 	table["shoe_label"] = str(table.get("shoe_label", CardShoeScript.shoe_label(int(table.get("deck_count", 8)))))
+	table["shoe_id"] = str(table.get("shoe_id", ""))
+	if str(table.get("shoe_id", "")).is_empty():
+		table["shoe_id"] = _shoe_state_id(int(table.get("deck_count", 8)), table.get("shoe", []), table.get("burn_cards", []))
 	table["cut_card_remaining"] = maxi(8, int(table.get("cut_card_remaining", CardShoeScript.cut_card_remaining(int(table.get("deck_count", 8)), float(_table_rules(table).get("cut_card_penetration", 0.72))))))
 	table["dealer_profile"] = _normalize_dealer_profile(table.get("dealer_profile", {}), table)
 	table["patrons"] = _normalize_patrons(table.get("patrons", []), table)
@@ -1364,6 +2197,11 @@ func _normalize_table_state(value: Variant, environment: Dictionary) -> Dictiona
 	table["last_hand"] = _copy_dict(table.get("last_hand", {}))
 	table["hand_history"] = _dictionary_array(table.get("hand_history", []))
 	table["shoe_history"] = _dictionary_array(table.get("shoe_history", []))
+	var challenge := _normalized_edge_sort_challenge(table.get("edge_sort_challenge", {}))
+	if not challenge.is_empty() and str(challenge.get("shoe_id", "")) != str(table.get("shoe_id", "")):
+		challenge = {}
+	table["edge_sort_challenge"] = challenge
+	table["edge_sort_edge"] = _normalized_edge_sort_edge(table.get("edge_sort_edge", {}), table)
 	table["table_round_timer_started_msec"] = int(table.get("table_round_timer_started_msec", 0))
 	return table
 
@@ -1380,6 +2218,8 @@ func _normalized_session(_run_state: RunState, _environment: Dictionary, ui_stat
 	session["baccarat_rebet"] = _bet_dict(session.get("baccarat_rebet", table.get("last_bets", {})))
 	if typeof(session.get("baccarat_undo_stack", [])) != TYPE_ARRAY:
 		session["baccarat_undo_stack"] = []
+	session["edge_sort_answers"] = _string_array(session.get("edge_sort_answers", []))
+	session["edge_sort_challenge"] = _normalized_edge_sort_challenge(session.get("edge_sort_challenge", table.get("edge_sort_challenge", {})))
 	return session
 
 
@@ -1572,6 +2412,12 @@ func _default_table_rng(table: Dictionary, suffix: String) -> RngStream:
 	return rng
 
 
+func _item_effect_total(key: String, run_state: RunState) -> int:
+	if run_state == null:
+		return 0
+	return run_state.item_effect_total(key, get_family()) if run_state.has_method("item_effect_total") else 0
+
+
 func _stable_hash(text: String) -> int:
 	var value := 216613626
 	for index in range(text.length()):
@@ -1645,6 +2491,9 @@ func _draw_card_areas(surface, state: Dictionary) -> void:
 		for event in visible_cards:
 			var card_event: Dictionary = event
 			_draw_card(surface, card_event.get("card", {}), card_event.get("position", Vector2.ZERO), 1.0)
+		var squeeze_event := _active_squeeze_event(surface, state)
+		if not squeeze_event.is_empty():
+			_draw_squeeze_badge(surface, squeeze_event)
 	else:
 		for i in range(player_cards.size()):
 			_draw_card(surface, player_cards[i], _player_card_target(i), 1.0)
@@ -1662,6 +2511,27 @@ func _draw_card_areas(surface, state: Dictionary) -> void:
 		surface.draw_rect(marker, _target_color(winner), false, 2)
 		surface.surface_label_centered(_winner_title(winner).left(16), marker, 14, C_WHITE)
 		surface.surface_label_centered(_baccarat_winner_reason(winner, int(last_hand.get("player_total", 0)), int(last_hand.get("banker_total", 0)), bool(last_hand.get("natural", false))).left(38), Rect2(314, 224, 272, 14), 9, C_YELLOW)
+
+
+func _active_squeeze_event(surface, state: Dictionary) -> Dictionary:
+	var progress_elapsed: float = float(surface.surface_elapsed(BACCARAT_DEAL_CHANNEL))
+	for event_value in _dictionary_array(state.get("deal_animation_events", [])):
+		var event: Dictionary = event_value
+		if str(event.get("type", "")) != "squeeze":
+			continue
+		var delay := float(int(event.get("delay_msec", 0))) / 1000.0
+		var duration := maxf(0.001, float(int(event.get("duration_msec", 520))) / 1000.0)
+		if progress_elapsed >= delay and progress_elapsed <= delay + duration + 0.8:
+			return event
+	return {}
+
+
+func _draw_squeeze_badge(surface, event: Dictionary) -> void:
+	var rect := Rect2(382, 190, 136, 34)
+	var accent := _target_color(str(event.get("winner", "")))
+	_draw_neon_panel(surface, rect, accent, 0.24)
+	surface.surface_label_centered("SQUEEZE", Rect2(rect.position + Vector2(6, 4), Vector2(rect.size.x - 12, 12)), 12, C_WHITE)
+	surface.surface_label_centered("P%d  B%d" % [int(event.get("player_total", 0)), int(event.get("banker_total", 0))], Rect2(rect.position + Vector2(6, 18), Vector2(rect.size.x - 12, 10)), 8, C_YELLOW)
 
 
 func _draw_total_badge(surface, rect: Rect2, label: String, total: int, accent: Color) -> void:
@@ -1757,6 +2627,9 @@ func _draw_shoe_and_discard(surface, state: Dictionary) -> void:
 		surface.draw_rect(Rect2(shoe.position + Vector2(12 + i * 7, 12 - i), Vector2(30, 24)), Color(0.94, 0.90, 0.78, 0.85))
 	surface.draw_rect(shoe, C_YELLOW, false, 1)
 	surface.surface_label_centered("%d LEFT" % int(state.get("shoe_remaining", 0)), Rect2(716, 140, 90, 14), 8, C_YELLOW)
+	var penetration := _copy_dict(state.get("shoe_penetration", {}))
+	if not penetration.is_empty():
+		surface.surface_label_centered("%d%% USED" % int(penetration.get("penetration_percent", 0)), Rect2(716, 154, 90, 12), 7, C_SOFT)
 	var discard := Rect2(102, 86, 78, 42)
 	surface.draw_rect(discard, Color("#0d111a"))
 	surface.draw_rect(discard, C_CYAN, false, 1)
@@ -1765,6 +2638,85 @@ func _draw_shoe_and_discard(surface, state: Dictionary) -> void:
 	surface.surface_label_centered("DISCARD", Rect2(100, 132, 82, 12), 8, C_SOFT)
 	if bool(state.get("reshuffle_pending", false)):
 		surface.surface_label_centered("CUT CARD OUT", Rect2(640, 68, 116, 14), 9, C_ORANGE)
+
+
+func _draw_baccarat_road(surface, state: Dictionary) -> void:
+	var road := _copy_dict(state.get("baccarat_road", {}))
+	if road.is_empty():
+		return
+	var rect := Rect2(18, 150, 146, 94)
+	_draw_neon_panel(surface, rect, C_CYAN, 0.10)
+	surface.surface_label("BEAD PLATE", rect.position + Vector2(8, 10), 9, C_CYAN)
+	surface.surface_label_centered(str(road.get("summary", "")).left(18), Rect2(rect.position + Vector2(70, 5), Vector2(66, 12)), 7, C_SOFT)
+	var rows := maxi(1, int(road.get("rows", BACCARAT_ROAD_ROWS)))
+	var columns := maxi(1, int(road.get("columns", BACCARAT_ROAD_COLUMNS)))
+	var beads := _dictionary_array(road.get("beads", []))
+	var cell := 9.6
+	var origin := rect.position + Vector2(10, 26)
+	for column_index in range(columns):
+		for row_index in range(rows):
+			var dot_center := origin + Vector2(float(column_index) * cell + 4.8, float(row_index) * cell + 4.8)
+			surface.draw_circle(dot_center, 3.8, Color(C_SOFT.r, C_SOFT.g, C_SOFT.b, 0.14))
+	for bead_value in beads:
+		var bead: Dictionary = bead_value
+		var bead_column := int(bead.get("column", 0))
+		var bead_row := int(bead.get("row", 0))
+		if bead_column < 0 or bead_column >= columns or bead_row < 0 or bead_row >= rows:
+			continue
+		var winner := str(bead.get("winner", ""))
+		var center := origin + Vector2(float(bead_column) * cell + 4.8, float(bead_row) * cell + 4.8)
+		var accent := _target_color(winner)
+		surface.draw_circle(center, 4.1, Color(accent.r, accent.g, accent.b, 0.96))
+		surface.surface_label_centered(_road_winner_mark(winner), Rect2(center - Vector2(4.0, 4.6), Vector2(8, 9)), 6, C_DARK)
+	if int(road.get("visible_count", 0)) <= 0:
+		surface.surface_label_centered("NO HANDS", Rect2(rect.position + Vector2(8, 62), Vector2(rect.size.x - 16, 10)), 7, C_SOFT)
+
+
+func _road_winner_mark(winner: String) -> String:
+	match winner:
+		"player":
+			return "P"
+		"banker":
+			return "B"
+		"tie":
+			return "T"
+		_:
+			return ""
+
+
+func _draw_edge_sort_panel(surface, state: Dictionary) -> void:
+	var status := _copy_dict(state.get("edge_sort_status", state.get("baccarat_edge_sort_status", {})))
+	var challenge := _copy_dict(state.get("edge_sort_challenge", state.get("baccarat_edge_sort_challenge", {})))
+	var edge := _copy_dict(state.get("edge_sort_edge", state.get("baccarat_edge_sort_edge", {})))
+	if challenge.is_empty() and edge.is_empty():
+		return
+	var rect := Rect2(202, 72, 492, 28)
+	var accent := C_PINK_2 if bool(status.get("ready", false)) else C_TEAL
+	if not edge.is_empty():
+		accent = C_YELLOW
+	_draw_neon_panel(surface, rect, accent, 0.14)
+	var detail := ""
+	if not edge.is_empty():
+		detail = "%s %d%%  %d HANDS" % [_winner_display(str(edge.get("predicted_bet", ""))).to_upper(), int(edge.get("confidence", 0)), int(edge.get("hands_remaining", 0))]
+	elif bool(status.get("ready", false)):
+		detail = "SEQUENCE READY"
+	else:
+		detail = "%d/%d CUES  %d/%d HANDS" % [
+			int(status.get("cue_count", 0)),
+			int(status.get("required_cue_count", EDGE_SORT_CUE_COUNT)),
+			int(status.get("observed_hands", 0)),
+			int(status.get("required_hands", EDGE_SORT_MIN_HANDS)),
+		]
+	surface.surface_label("EDGE", rect.position + Vector2(8, 8), 10, accent)
+	surface.surface_label_centered(detail.left(44), Rect2(rect.position + Vector2(50, 6), Vector2(238, 14)), 9, C_WHITE)
+	if bool(status.get("ready", false)):
+		var labels := ["H", "L", "N"]
+		for i in range(labels.size()):
+			var cue_rect := Rect2(rect.position + Vector2(302 + i * 34, 5), Vector2(28, 18))
+			_draw_table_button(surface, cue_rect, str(labels[i]), "baccarat_edge_sort_answer", i, accent, true)
+		_draw_table_button(surface, Rect2(rect.position + Vector2(408, 5), Vector2(70, 18)), "COMMIT", "baccarat_edge_sort", 0, C_YELLOW, true)
+	else:
+		_draw_table_button(surface, Rect2(rect.position + Vector2(396, 5), Vector2(82, 18)), "EDGE", "baccarat_edge_sort", 0, accent, true)
 
 
 func _draw_table_notice(surface, state: Dictionary) -> void:
@@ -1799,8 +2751,9 @@ func _draw_action_console(surface, state: Dictionary) -> void:
 	_draw_table_button(surface, Rect2(520, CONSOLE_Y + 15, 62, 42), "CLEAR", "baccarat_clear", 0, C_ORANGE, bool(state.get("can_clear", false)))
 	_draw_table_button(surface, Rect2(590, CONSOLE_Y + 15, 62, 42), "UNDO", "baccarat_undo", 0, C_CYAN, bool(state.get("can_undo", false)))
 	_draw_table_button(surface, Rect2(660, CONSOLE_Y + 15, 70, 42), "REBET", "baccarat_rebet", 0, C_TEAL, bool(state.get("can_rebet", false)))
-	_draw_table_button(surface, Rect2(738, CONSOLE_Y + 15, 86, 42), "DEAL", "baccarat_deal", 0, C_YELLOW, bool(state.get("can_deal", false)), bool(state.get("can_deal", false)))
-	_draw_table_button(surface, Rect2(832, CONSOLE_Y + 15, 42, 42), "READ", "baccarat_read_shoe", 0, C_PINK_2, true)
+	_draw_table_button(surface, Rect2(738, CONSOLE_Y + 15, 64, 42), "DEAL", "baccarat_deal", 0, C_YELLOW, bool(state.get("can_deal", false)), bool(state.get("can_deal", false)))
+	_draw_table_button(surface, Rect2(810, CONSOLE_Y + 15, 38, 42), "READ", "baccarat_read_shoe", 0, C_PINK_2, true)
+	_draw_table_button(surface, Rect2(856, CONSOLE_Y + 15, 38, 42), "EDGE", "baccarat_edge_sort", 0, C_TEAL, true)
 
 
 func _draw_card(surface, card_value: Variant, pos: Vector2, scale: float = 1.0) -> void:
@@ -2068,6 +3021,17 @@ func _int_array(value: Variant) -> Array:
 		return result
 	for entry in value:
 		result.append(int(entry))
+	return result
+
+
+func _string_array(value: Variant) -> Array:
+	var result: Array = []
+	if typeof(value) != TYPE_ARRAY:
+		return result
+	for entry in value:
+		var text := str(entry).strip_edges()
+		if not text.is_empty():
+			result.append(text)
 	return result
 
 
