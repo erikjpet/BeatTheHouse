@@ -3,7 +3,11 @@ extends Control
 
 # Lightweight persistent travel-map renderer.
 
+const ICON_SIZE := Vector2(28.0, 28.0)
+const MARKER_RADIUS := 17.0
+
 var snapshot: Dictionary = {}
+var icon_texture_cache: Dictionary = {}
 
 
 func set_map_snapshot(map_snapshot: Dictionary) -> void:
@@ -12,7 +16,21 @@ func set_map_snapshot(map_snapshot: Dictionary) -> void:
 
 
 func current_view_snapshot() -> Dictionary:
-	return snapshot.duplicate(true)
+	var view := snapshot.duplicate(true)
+	var markers: Array = []
+	for node_value in _copy_array(snapshot.get("nodes", [])):
+		if typeof(node_value) != TYPE_DICTIONARY:
+			continue
+		var node: Dictionary = node_value
+		var center := _normalized_position(_copy_dict(node.get("position", {})))
+		markers.append({
+			"id": str(node.get("id", "")),
+			"position": _copy_dict(node.get("position", {})),
+			"screen_center": {"x": center.x, "y": center.y},
+			"icon_path": str(node.get("icon_path", "")),
+		})
+	view["icon_markers"] = markers
+	return view
 
 
 func _draw() -> void:
@@ -62,18 +80,28 @@ func _draw_nodes() -> void:
 		var node_id := str(node.get("id", ""))
 		var pos := _normalized_position(_copy_dict(node.get("position", {})))
 		var state := str(node.get("state", "hidden"))
-		var radius := 8.0
+		var radius := MARKER_RADIUS
 		var color := Color("#89dceb")
+		var fill := Color("#101832", 0.92)
 		if state == "visited":
 			color = Color("#ffd36a")
-			radius = 10.0
+			fill = Color("#4a3c1d", 0.96)
 		if node_id == current_id:
 			color = Color("#5df2a2")
-			radius = 12.0
+			fill = Color("#173927", 0.98)
 		if node_id == selected_id:
-			draw_circle(pos, radius + 6.0, Color("#f27fb3", 0.32))
-		draw_circle(pos, radius, color if state == "visited" or node_id == current_id else Color(color.r, color.g, color.b, 0.18))
+			draw_circle(pos, radius + 7.0, Color("#f27fb3", 0.36))
+		draw_circle(pos, radius, fill)
 		draw_circle(pos, radius, color, false, 2.0)
+		var texture := _texture_for_node(node)
+		if texture != null:
+			var icon_rect := Rect2(pos - ICON_SIZE * 0.5, ICON_SIZE)
+			var tint := Color(1.0, 1.0, 1.0, 1.0 if state == "visited" or node_id == current_id else 0.86)
+			draw_texture_rect(texture, icon_rect, false, tint)
+		else:
+			draw_circle(pos, 7.0, color if state == "visited" or node_id == current_id else Color(color.r, color.g, color.b, 0.62))
+		if node_id == current_id:
+			draw_circle(pos, radius + 3.0, Color("#5df2a2", 0.22), false, 2.0)
 
 
 func _nodes_by_id() -> Dictionary:
@@ -99,6 +127,27 @@ func _normalized_position(position: Dictionary) -> Vector2:
 	var inset := Vector2(32.0, 28.0)
 	var drawable := Vector2(maxf(1.0, size.x - inset.x * 2.0), maxf(1.0, size.y - inset.y * 2.0))
 	return inset + Vector2(clampf(float(position.get("x", 0.5)), 0.0, 1.0), clampf(float(position.get("y", 0.5)), 0.0, 1.0)) * drawable
+
+
+func _texture_for_node(node: Dictionary) -> Texture2D:
+	var path := str(node.get("icon_path", "")).strip_edges()
+	if path.is_empty():
+		path = "res://assets/art/map_icons/%s.png" % str(node.get("archetype_id", node.get("id", "")))
+	if path.is_empty():
+		return null
+	if icon_texture_cache.has(path):
+		return icon_texture_cache[path] as Texture2D
+	if not ResourceLoader.exists(path):
+		var image := Image.new()
+		if image.load(path) != OK:
+			icon_texture_cache[path] = null
+			return null
+		var image_texture := ImageTexture.create_from_image(image)
+		icon_texture_cache[path] = image_texture
+		return image_texture
+	var texture := load(path) as Texture2D
+	icon_texture_cache[path] = texture
+	return texture
 
 
 static func _copy_array(value: Variant) -> Array:

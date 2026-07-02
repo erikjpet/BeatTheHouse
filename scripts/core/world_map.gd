@@ -9,6 +9,9 @@ const UNDERGROUND_SHORTCUT_ID := "small_underground_casino"
 const STATE_HIDDEN := "hidden"
 const STATE_REVEALED := "revealed"
 const STATE_VISITED := "visited"
+const DISCOVERY_SOURCE_NONE := ""
+const DISCOVERY_SOURCE_SPAWN := "spawn"
+const DISCOVERY_SOURCE_EVENT := "event"
 const DISTANCE_NEAR := "near"
 const DISTANCE_LOCAL := "local"
 const DISTANCE_FAR := "far"
@@ -39,10 +42,13 @@ func build(run_state: RunState, rng: RngStream) -> Dictionary:
 	var start_id := _pick_start_id(archetypes_by_id, rng)
 	var nodes: Array = []
 	var positions := _layout_positions(ids, archetypes_by_id, start_id, rng.fork("world_map_layout"))
+	var edges := _build_edges(ids, archetypes_by_id, positions)
+	var discovered_at_spawn_ids := _initial_discovered_ids(ids, start_id, edges, archetypes_by_id, rng.fork("world_map_discovery"))
 	for id_value in ids:
 		var archetype_id := str(id_value)
 		var archetype: Dictionary = archetypes_by_id.get(archetype_id, {})
 		var position: Dictionary = positions.get(archetype_id, {"x": 0.5, "y": 0.5})
+		var discovered_at_spawn := discovered_at_spawn_ids.has(archetype_id)
 		nodes.append({
 			"id": archetype_id,
 			"archetype_id": archetype_id,
@@ -50,11 +56,14 @@ func build(run_state: RunState, rng: RngStream) -> Dictionary:
 			"kind": str(archetype.get("kind", "")),
 			"tier": int(archetype.get("tier", 1)),
 			"position": position.duplicate(true),
-			"state": STATE_HIDDEN,
+			"state": STATE_REVEALED if discovered_at_spawn else STATE_HIDDEN,
+			"discovered_at_spawn": discovered_at_spawn,
+			"discovery_source": DISCOVERY_SOURCE_SPAWN if discovered_at_spawn else DISCOVERY_SOURCE_NONE,
+			"icon_path": _map_icon_path(archetype_id),
+			"flavor": _archetype_flavor(archetype),
 			"scouted": false,
 			"environment": {},
 		})
-	var edges := _build_edges(ids, archetypes_by_id, positions)
 	var map_data := normalize({
 		"version": VERSION,
 		"seed_text": run_state.seed_text,
@@ -153,11 +162,17 @@ static func visible_node_ids(map_data: Dictionary) -> Array:
 		if typeof(node_value) != TYPE_DICTIONARY:
 			continue
 		var node: Dictionary = node_value
-		var state := str(node.get("state", STATE_HIDDEN))
 		var node_id := str(node.get("id", ""))
-		if not node_id.is_empty() and [STATE_REVEALED, STATE_VISITED].has(state):
+		if not node_id.is_empty() and _node_is_visible(node):
 			result.append(node_id)
 	return result
+
+
+static func is_node_visible(map_data: Dictionary, node_id: String) -> bool:
+	var node := node_by_id(map_data, node_id)
+	if node.is_empty():
+		return false
+	return _node_is_visible(node)
 
 
 static func neighbor_ids(map_data: Dictionary, node_id: String, visible_only: bool = false) -> Array:
@@ -236,10 +251,6 @@ static func enter_node(map_data: Dictionary, node_id: String, environment_data: 
 			if not environment_data.is_empty():
 				node["environment"] = environment_data.duplicate(true)
 			nodes[index] = node
-			continue
-		if are_neighbors(normalized, target_id, str(node.get("id", ""))) and str(node.get("state", STATE_HIDDEN)) == STATE_HIDDEN:
-			node["state"] = STATE_REVEALED
-			nodes[index] = node
 	normalized["nodes"] = nodes
 	var path: Array = _string_array(normalized.get("visited_path", []))
 	if path.is_empty() or str(path[path.size() - 1]) != target_id:
@@ -266,6 +277,34 @@ static func mark_scouted(map_data: Dictionary, node_id: String) -> Dictionary:
 	return normalized
 
 
+static func unlock_nodes(map_data: Dictionary, node_ids: Array, source: String = DISCOVERY_SOURCE_EVENT) -> Dictionary:
+	if node_ids.is_empty():
+		return normalize(map_data)
+	var normalized := normalize(map_data)
+	var unlock_ids := _string_array(node_ids)
+	var clean_source := source.strip_edges().to_lower()
+	if clean_source.is_empty():
+		clean_source = DISCOVERY_SOURCE_EVENT
+	var nodes: Array = normalized.get("nodes", [])
+	for index in range(nodes.size()):
+		if typeof(nodes[index]) != TYPE_DICTIONARY:
+			continue
+		var node: Dictionary = nodes[index]
+		var node_id := str(node.get("id", ""))
+		if not unlock_ids.has(node_id):
+			continue
+		if str(node.get("state", STATE_HIDDEN)) != STATE_VISITED:
+			node["state"] = STATE_REVEALED
+		if clean_source == DISCOVERY_SOURCE_SPAWN:
+			node["discovered_at_spawn"] = true
+		else:
+			node["unlocked"] = true
+		node["discovery_source"] = clean_source
+		nodes[index] = node
+	normalized["nodes"] = nodes
+	return normalized
+
+
 static func snapshot(map_data: Dictionary, selected_id: String = "") -> Dictionary:
 	var normalized := normalize(map_data)
 	var visible_ids := visible_node_ids(normalized)
@@ -275,7 +314,7 @@ static func snapshot(map_data: Dictionary, selected_id: String = "") -> Dictiona
 			continue
 		var node: Dictionary = node_value
 		if visible_ids.has(str(node.get("id", ""))):
-			visible_nodes.append(node.duplicate(true))
+			visible_nodes.append(_snapshot_node(node))
 	var visible_edges: Array = []
 	for edge_value in _copy_array(normalized.get("edges", [])):
 		if typeof(edge_value) != TYPE_DICTIONARY:
@@ -283,10 +322,13 @@ static func snapshot(map_data: Dictionary, selected_id: String = "") -> Dictiona
 		var edge: Dictionary = edge_value
 		if visible_ids.has(str(edge.get("a", ""))) and visible_ids.has(str(edge.get("b", ""))):
 			visible_edges.append(edge.duplicate(true))
+	var clean_selected_id := selected_id.strip_edges()
+	if not visible_ids.has(clean_selected_id):
+		clean_selected_id = ""
 	return {
 		"version": VERSION,
 		"current_node_id": current_node_id(normalized),
-		"selected_node_id": selected_id,
+		"selected_node_id": clean_selected_id,
 		"visible_node_ids": visible_ids,
 		"nodes": visible_nodes,
 		"edges": visible_edges,
@@ -530,6 +572,72 @@ func _node_label(archetype: Dictionary) -> String:
 	return str(archetype.get("id", "Unknown")).replace("_", " ").capitalize()
 
 
+func _archetype_flavor(archetype: Dictionary) -> String:
+	var visual_context: Dictionary = archetype.get("visual_context", {}) if typeof(archetype.get("visual_context", {})) == TYPE_DICTIONARY else {}
+	var description := str(visual_context.get("description", "")).strip_edges()
+	if not description.is_empty():
+		return description
+	var objective_hint := str(archetype.get("objective_hint", "")).strip_edges()
+	if not objective_hint.is_empty():
+		return objective_hint
+	var kind := str(archetype.get("kind", "")).strip_edges()
+	if not kind.is_empty():
+		return "A %s stop on the city map." % kind
+	return "A stop on the city map."
+
+
+func _initial_discovered_ids(ids: Array, start_id: String, edges: Array, archetypes_by_id: Dictionary, rng: RngStream) -> Array:
+	var discovered: Array = [start_id]
+	var start_neighbors := _edge_neighbor_ids(edges, start_id)
+	var guaranteed_count := mini(2, start_neighbors.size())
+	if guaranteed_count > 0:
+		for picked_id in rng.pick_many(start_neighbors, guaranteed_count):
+			var picked_text := str(picked_id)
+			if not discovered.has(picked_text):
+				discovered.append(picked_text)
+	for id_value in ids:
+		var id := str(id_value)
+		if discovered.has(id):
+			continue
+		var archetype: Dictionary = archetypes_by_id.get(id, {})
+		var tier := clampi(int(archetype.get("tier", 1)), 1, 4)
+		var roll := rng.randi_range(1, 100)
+		var chance := 18 if tier <= 1 else 10 if tier == 2 else 0
+		if str(archetype.get("rarity", "")).to_lower() == "rare":
+			chance = mini(chance, 8)
+		if id == GRAND_CASINO_ID:
+			chance = 0
+		if roll <= chance:
+			discovered.append(id)
+	return discovered
+
+
+func _edge_neighbor_ids(edges: Array, source_id: String) -> Array:
+	var result: Array = []
+	for edge_value in edges:
+		if typeof(edge_value) != TYPE_DICTIONARY:
+			continue
+		var edge: Dictionary = edge_value
+		var a := str(edge.get("a", ""))
+		var b := str(edge.get("b", ""))
+		var other := ""
+		if a == source_id:
+			other = b
+		elif b == source_id:
+			other = a
+		if not other.is_empty() and not result.has(other):
+			result.append(other)
+	result.sort()
+	return result
+
+
+static func _map_icon_path(archetype_id: String) -> String:
+	var clean_id := archetype_id.strip_edges()
+	if clean_id.is_empty():
+		return ""
+	return "res://assets/art/map_icons/%s.png" % clean_id
+
+
 static func _normalize_nodes(nodes: Array) -> Array:
 	var result: Array = []
 	for node_value in nodes:
@@ -540,6 +648,13 @@ static func _normalize_nodes(nodes: Array) -> Array:
 		if id.is_empty():
 			continue
 		var position := _copy_dict(source.get("position", {}))
+		var discovery_source := str(source.get("discovery_source", source.get("unlock_source", ""))).strip_edges().to_lower()
+		var discovered_at_spawn := bool(source.get("discovered_at_spawn", false))
+		var unlocked := bool(source.get("unlocked", false))
+		if discovered_at_spawn and discovery_source.is_empty():
+			discovery_source = DISCOVERY_SOURCE_SPAWN
+		elif unlocked and discovery_source.is_empty():
+			discovery_source = DISCOVERY_SOURCE_EVENT
 		result.append({
 			"id": id,
 			"archetype_id": str(source.get("archetype_id", id)),
@@ -551,6 +666,11 @@ static func _normalize_nodes(nodes: Array) -> Array:
 				"y": clampf(float(position.get("y", 0.5)), 0.0, 1.0),
 			},
 			"state": _normalized_state(str(source.get("state", STATE_HIDDEN))),
+			"discovered_at_spawn": discovered_at_spawn,
+			"unlocked": unlocked,
+			"discovery_source": discovery_source,
+			"icon_path": str(source.get("icon_path", _map_icon_path(id))),
+			"flavor": str(source.get("flavor", "")),
 			"scouted": bool(source.get("scouted", false)),
 			"environment": _copy_dict(source.get("environment", {})),
 		})
@@ -593,6 +713,34 @@ static func _normalized_state(state: String) -> String:
 	if [STATE_HIDDEN, STATE_REVEALED, STATE_VISITED].has(normalized):
 		return normalized
 	return STATE_HIDDEN
+
+
+static func _node_is_visible(node: Dictionary) -> bool:
+	var state := str(node.get("state", STATE_HIDDEN))
+	if state == STATE_VISITED:
+		return true
+	if state != STATE_REVEALED:
+		return false
+	var discovery_source := str(node.get("discovery_source", node.get("unlock_source", ""))).strip_edges().to_lower()
+	return bool(node.get("discovered_at_spawn", false)) or bool(node.get("unlocked", false)) or discovery_source == DISCOVERY_SOURCE_SPAWN or discovery_source == DISCOVERY_SOURCE_EVENT
+
+
+static func _snapshot_node(node: Dictionary) -> Dictionary:
+	return {
+		"id": str(node.get("id", "")),
+		"archetype_id": str(node.get("archetype_id", node.get("id", ""))),
+		"label": str(node.get("label", "")),
+		"kind": str(node.get("kind", "")),
+		"tier": int(node.get("tier", 1)),
+		"position": _copy_dict(node.get("position", {})),
+		"state": str(node.get("state", STATE_HIDDEN)),
+		"discovered_at_spawn": bool(node.get("discovered_at_spawn", false)),
+		"unlocked": bool(node.get("unlocked", false)),
+		"discovery_source": str(node.get("discovery_source", "")),
+		"scouted": bool(node.get("scouted", false)),
+		"icon_path": str(node.get("icon_path", _map_icon_path(str(node.get("archetype_id", node.get("id", "")))))),
+		"flavor": str(node.get("flavor", "")),
+	}
 
 
 static func _distance_band(blocks: int) -> String:
