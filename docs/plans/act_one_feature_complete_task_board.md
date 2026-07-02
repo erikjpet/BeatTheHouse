@@ -1764,7 +1764,7 @@ the final summary); every DONE task's evidence line carries a commit hash;
 baseline gate report attached to the summary.
 ```
 
-Evidence 2026-07-02: baseline `validate_project.ps1` PASS and `check_godot.ps1 -RequireGodot` PASS (`.tmp/test_reports/20260702_152250_smoke`). Partition commits: hygiene d44582a, pinball e430c99, T2/T3 casino games 0970ab4, T4/T5 world/challenges 3695d64, T6 music d59f93e, icon pipeline 889f956. Post-commit gates stayed no worse than baseline; final docs and branding commits complete the partition.
+Evidence 2026-07-02: baseline `validate_project.ps1` PASS and `check_godot.ps1 -RequireGodot` PASS (`.tmp/test_reports/20260702_152250_smoke`). Partition commits: hygiene d44582a, pinball e430c99, T2/T3 casino games 0970ab4, T4/T5 world/challenges 3695d64, T6 music d59f93e, icon pipeline 889f956, docs/board 205dade, branding a7a3a7f. Post-commit gates stayed no worse than baseline; final status was clean.
 
 **R2 — Gate Truth / Red-Bar-Zero Pass** — P0 — deps: R1 — status: BACKLOG
 
