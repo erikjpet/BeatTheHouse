@@ -141,14 +141,13 @@ def draw_card_counters_notes():
 
 def draw_cheap_sunglasses():
     image, d = new_icon()
-    rect(d, (7, 12, 13, 17), rgba("#07141c"))
-    rect(d, (18, 12, 24, 17), rgba("#07141c"))
-    d.rectangle((8, 13, 12, 15), fill=CYAN)
-    d.rectangle((19, 13, 23, 15), fill=CYAN)
-    d.rectangle((13, 14, 18, 15), fill=PINK)
-    line(d, (5, 15, 7, 14), PINK)
-    line(d, (24, 14, 27, 16), PINK)
-    glint(d, 24, 8)
+    rect(d, (6, 12, 13, 18), rgba("#07141c"))
+    rect(d, (19, 12, 26, 18), rgba("#07141c"))
+    d.rectangle((13, 13, 18, 15), fill=WHITE)
+    line(d, (4, 16, 6, 13), PINK)
+    line(d, (26, 13, 28, 16), PINK)
+    line(d, (20, 13, 24, 17), rgba("#274652"), 1)
+    d.rectangle((8, 13, 9, 14), fill=rgba("#274652"))
     return image
 
 
@@ -249,12 +248,13 @@ def draw_loaded_dice():
 
 def draw_lucky_charm():
     image, d = new_icon()
-    ellipse(d, (7, 8, 24, 25), AMBER)
-    d.rectangle((12, 12, 18, 18), fill=TEAL)
-    d.rectangle((10, 14, 20, 16), fill=TEAL)
-    d.rectangle((14, 10, 16, 20), fill=TEAL)
-    d.rectangle((15, 15, 17, 17), fill=FIELD)
-    glint(d, 23, 8)
+    ellipse(d, (9, 6, 16, 13), TEAL)
+    ellipse(d, (16, 6, 23, 13), TEAL)
+    ellipse(d, (9, 13, 16, 20), TEAL)
+    ellipse(d, (16, 13, 23, 20), TEAL)
+    d.rectangle((15, 12, 17, 14), fill=rgba("#04705f"))
+    line(d, (16, 20, 19, 26), rgba("#04705f"), 2)
+    glint(d, 24, 7)
     return image
 
 
@@ -351,18 +351,19 @@ def draw_tip_sheet():
 
 def draw_xray_glasses():
     image, d = new_icon()
-    rect(d, (6, 11, 14, 18), rgba("#07141c"))
-    rect(d, (18, 11, 26, 18), rgba("#07141c"))
-    d.rectangle((8, 13, 12, 16), fill=CYAN)
-    d.rectangle((20, 13, 24, 16), fill=CYAN)
-    d.rectangle((14, 14, 18, 15), fill=YELLOW)
-    line(d, (4, 15, 6, 14), PINK)
-    line(d, (26, 14, 29, 16), PINK)
-    d.rectangle((9, 8, 11, 9), fill=YELLOW)
-    d.rectangle((21, 8, 23, 9), fill=YELLOW)
-    line(d, (10, 19, 8, 24), CYAN)
-    line(d, (22, 19, 24, 24), CYAN)
-    glint(d, 27, 8)
+    rect(d, (5, 11, 14, 19), rgba("#170a24"))
+    rect(d, (18, 11, 27, 19), rgba("#170a24"))
+    d.rectangle((14, 14, 18, 15), fill=METAL)
+    d.ellipse((6, 12, 13, 18), outline=PINK)
+    d.ellipse((19, 12, 26, 18), outline=PINK)
+    d.rectangle((9, 14, 10, 15), fill=PURPLE_2)
+    d.rectangle((22, 14, 23, 15), fill=PURPLE_2)
+    line(d, (8, 8, 9, 10), YELLOW)
+    line(d, (11, 7, 11, 10), YELLOW)
+    line(d, (21, 7, 21, 10), YELLOW)
+    line(d, (24, 8, 23, 10), YELLOW)
+    line(d, (3, 16, 5, 13), PINK)
+    line(d, (27, 13, 29, 16), PINK)
     return image
 
 
@@ -488,13 +489,11 @@ def draw_timing_bracelet():
 
 def draw_gold_tooth_token():
     image, d = new_icon()
-    coin(d, 7, 8, AMBER, PINK)
-    poly(d, [(13, 13), (19, 12), (21, 17), (18, 23), (14, 23), (11, 17)], WHITE)
-    d.rectangle((15, 14, 16, 21), fill=YELLOW)
-    d.rectangle((18, 14, 19, 21), fill=YELLOW)
-    d.arc((5, 6, 15, 17), 180, 315, fill=CYAN, width=2)
-    d.arc((17, 6, 28, 17), 225, 360, fill=CYAN, width=2)
-    glint(d, 23, 9)
+    poly(d, [(10, 8), (22, 8), (24, 14), (22, 17), (22, 23), (19, 19), (16, 23), (13, 19), (10, 23), (10, 17), (8, 14)], AMBER)
+    d.rectangle((12, 10, 20, 12), fill=YELLOW)
+    glint(d, 19, 14, WHITE)
+    pip(d, 25, 6, CYAN)
+    pip(d, 6, 20, CYAN)
     return image
 
 
@@ -558,6 +557,75 @@ def draw_feature_magnet():
     d.rectangle((20, 11, 23, 15), fill=CYAN)
     d.rectangle((14, 23, 18, 25), fill=BLACK)
     poly(d, [(16, 4), (18, 9), (24, 9), (19, 12), (21, 18), (16, 14), (11, 18), (13, 12), (8, 9), (14, 9)], YELLOW)
+    return image
+
+
+def draw_drain_cleaner():
+    image, d = new_icon()
+    rect(d, (8, 7, 23, 12), METAL)
+    rect(d, (9, 17, 24, 23), METAL)
+    line(d, (10, 12, 10, 19), CYAN, 2)
+    line(d, (22, 12, 22, 19), CYAN, 2)
+    d.rectangle((12, 18, 21, 20), fill=rgba("#022f36"))
+    d.rectangle((13, 21, 20, 22), fill=TEAL)
+    glint(d, 24, 7, WHITE)
+    return image
+
+
+def draw_jackpot_magnet():
+    image, d = new_icon()
+    d.arc((5, 6, 27, 27), 205, 335, fill=PINK, width=5)
+    rect(d, (4, 17, 10, 24), CYAN)
+    rect(d, (22, 17, 28, 24), CYAN)
+    chip(d, 12, 13, YELLOW)
+    d.rectangle((13, 10, 20, 11), fill=AMBER)
+    d.rectangle((15, 16, 17, 21), fill=PINK_2)
+    glint(d, 24, 9)
+    return image
+
+
+def draw_splitter_token():
+    image, d = new_icon()
+    coin(d, 8, 8, AMBER, PINK)
+    line(d, (16, 12, 9, 22), CYAN, 2)
+    line(d, (16, 12, 23, 22), CYAN, 2)
+    poly(d, [(8, 22), (12, 20), (12, 25)], CYAN)
+    poly(d, [(24, 22), (20, 20), (20, 25)], CYAN)
+    d.rectangle((15, 7, 17, 22), fill=BLACK)
+    return image
+
+
+def draw_return_spring():
+    image, d = new_icon()
+    for y in (10, 13, 16, 19, 22):
+        d.arc((9, y - 3, 23, y + 4), 0, 180, fill=CYAN, width=2)
+    line(d, (16, 24, 16, 8), PINK, 2)
+    poly(d, [(16, 5), (11, 11), (21, 11)], PINK)
+    rect(d, (8, 24, 24, 26), METAL)
+    return image
+
+
+def draw_tilt_dampener():
+    image, d = new_icon()
+    rect(d, (7, 16, 25, 24), BLUE)
+    d.arc((8, 7, 24, 23), 200, 340, fill=CYAN, width=2)
+    line(d, (16, 20, 22, 12), YELLOW, 2)
+    ellipse(d, (14, 18, 18, 22), PINK)
+    d.rectangle((9, 24, 23, 25), fill=METAL)
+    d.rectangle((10, 10, 12, 12), fill=TEAL)
+    d.rectangle((20, 10, 22, 12), fill=TEAL)
+    return image
+
+
+def draw_bumper_battery():
+    image, d = new_icon()
+    rect(d, (8, 11, 23, 24), BLUE)
+    d.rectangle((12, 8, 19, 10), fill=METAL)
+    d.rectangle((11, 14, 20, 16), fill=TEAL)
+    ellipse(d, (18, 5, 27, 14), PINK)
+    d.rectangle((21, 8, 24, 11), fill=YELLOW)
+    line(d, (12, 20, 19, 20), YELLOW, 2)
+    line(d, (16, 17, 16, 23), YELLOW, 2)
     return image
 
 
@@ -632,25 +700,29 @@ def draw_tab_detector():
 
 def draw_tarot_card():
     image, d = new_icon()
-    poly(d, [(8, 5), (23, 7), (25, 26), (9, 25)], PAPER)
-    d.polygon([(10, 8), (22, 9), (23, 23), (11, 23)], fill=rgba("#241027"))
-    ellipse(d, (13, 11, 20, 18), CYAN)
-    d.ellipse((15, 13, 18, 16), fill=BLACK)
-    poly(d, [(12, 21), (14, 17), (16, 20), (18, 16), (20, 21)], YELLOW)
-    line(d, (9, 6, 24, 25), PINK)
-    d.rectangle((6, 21, 10, 24), fill=AMBER)
+    poly(d, [(9, 5), (23, 6), (24, 26), (10, 25)], PAPER)
+    d.polygon([(11, 8), (22, 9), (22, 23), (12, 23)], fill=rgba("#241027"))
+    d.ellipse((13, 10, 20, 17), fill=CYAN)
+    d.ellipse((15, 9, 22, 16), fill=rgba("#241027"))
+    poly(d, [(16, 17), (18, 20), (16, 23), (14, 20)], YELLOW)
+    pip(d, 13, 11, YELLOW)
+    pip(d, 19, 20, PINK)
     glint(d, 24, 7)
     return image
 
 
 def draw_weighted_keyring():
     image, d = new_icon()
-    ellipse(d, (7, 5, 21, 19), METAL)
-    d.ellipse((11, 9, 17, 15), fill=FIELD)
-    line(d, (16, 17, 25, 25), AMBER, 2)
-    d.rectangle((22, 24, 28, 26), fill=AMBER)
-    ellipse(d, (5, 17, 14, 26), rgba("#53616b"))
-    d.rectangle((8, 20, 11, 23), fill=BLUE)
+    ellipse(d, (10, 5, 20, 15), METAL)
+    d.ellipse((12, 7, 18, 13), fill=FIELD)
+    line(d, (12, 14, 12, 22), AMBER, 2)
+    d.rectangle((10, 22, 14, 24), fill=AMBER)
+    d.rectangle((13, 18, 15, 19), fill=AMBER)
+    line(d, (17, 14, 17, 19), SOFT, 2)
+    d.rectangle((15, 19, 19, 21), fill=SOFT)
+    poly(d, [(21, 14), (27, 14), (28, 19), (24, 25), (20, 19)], BLUE)
+    d.rectangle((23, 16, 25, 18), fill=CYAN)
+    glint(d, 24, 6)
     return image
 
 
@@ -828,6 +900,121 @@ def draw_vpoker():
     return image
 
 
+def draw_plunger_tuner():
+    image, d = new_icon()
+    rect(d, (21, 6, 24, 25), METAL)
+    d.rectangle((22, 8, 23, 23), fill=SOFT)
+    rect(d, (20, 4, 25, 7), PINK)
+    for y in (10, 14, 18, 22):
+        line(d, (19, y, 26, y), CYAN, 1)
+    rect(d, (7, 6, 12, 25), BLUE)
+    d.rectangle((8, 7, 11, 10), fill=PINK)
+    d.rectangle((8, 11, 11, 20), fill=TEAL)
+    d.rectangle((8, 21, 11, 24), fill=PINK)
+    line(d, (13, 15, 17, 15), YELLOW, 2)
+    poly(d, [(17, 13), (20, 15), (17, 18)], YELLOW)
+    glint(d, 25, 5, WHITE)
+    return image
+
+
+def draw_rubber_pegs():
+    image, d = new_icon()
+    ellipse(d, (13, 6, 19, 12), PINK)
+    d.ellipse((15, 8, 17, 10), fill=PINK_2)
+    ellipse(d, (7, 16, 13, 22), TEAL)
+    d.ellipse((9, 18, 11, 20), fill=CYAN)
+    ellipse(d, (19, 16, 25, 22), TEAL)
+    d.ellipse((21, 18, 23, 20), fill=CYAN)
+    d.arc((6, 4, 20, 16), 210, 330, fill=YELLOW, width=2)
+    d.arc((14, 12, 26, 24), 200, 320, fill=YELLOW, width=2)
+    ellipse(d, (23, 8, 27, 12), METAL)
+    glint(d, 24, 8, WHITE)
+    return image
+
+
+def draw_extra_ball_token():
+    image, d = new_icon()
+    coin(d, 6, 9, AMBER, PINK)
+    ellipse(d, (17, 13, 26, 22), METAL)
+    d.ellipse((19, 15, 22, 18), fill=SOFT)
+    glint(d, 20, 15, WHITE)
+    rect(d, (20, 5, 22, 11), CYAN)
+    rect(d, (18, 7, 24, 9), CYAN)
+    return image
+
+
+def draw_lock_jammer():
+    image, d = new_icon()
+    d.arc((10, 5, 22, 17), 180, 360, fill=METAL, width=3)
+    rect(d, (8, 12, 24, 24), BLUE)
+    d.rectangle((14, 16, 17, 21), fill=YELLOW)
+    line(d, (4, 22, 15, 13), PINK, 2)
+    poly(d, [(4, 22), (8, 20), (7, 24)], PINK_2)
+    line(d, (20, 8, 24, 5), ORANGE, 1)
+    glint(d, 24, 6, PINK_2)
+    return image
+
+
+def draw_magnet_cup():
+    image, d = new_icon()
+    poly(d, [(9, 9), (23, 9), (20, 18), (12, 18)], AMBER)
+    d.rectangle((14, 18, 17, 21), fill=AMBER)
+    rect(d, (11, 22, 21, 24), YELLOW)
+    d.rectangle((12, 11, 15, 13), fill=YELLOW)
+    d.arc((3, 6, 15, 20), 110, 250, fill=CYAN, width=2)
+    d.arc((17, 6, 29, 20), 290, 70, fill=CYAN, width=2)
+    ellipse(d, (23, 4, 27, 8), METAL)
+    glint(d, 24, 4, WHITE)
+    return image
+
+
+def draw_chip_slide_wax():
+    image, d = new_icon()
+    ellipse(d, (5, 18, 14, 26), AMBER)
+    d.ellipse((7, 20, 12, 23), fill=YELLOW)
+    chip(d, 17, 8, PINK)
+    line(d, (6, 10, 14, 10), CYAN, 1)
+    line(d, (4, 13, 13, 13), CYAN, 1)
+    line(d, (8, 7, 15, 7), CYAN, 1)
+    glint(d, 25, 20, WHITE)
+    return image
+
+
+def draw_holdout_wax():
+    image, d = new_icon()
+    card(d, 13, 5, 9, 13, SOFT, PINK)
+    d.rectangle((18, 15, 21, 18), fill=AMBER)
+    ellipse(d, (6, 17, 16, 26), AMBER)
+    d.ellipse((8, 19, 13, 23), fill=rgba("#b57614"))
+    glint(d, 25, 21, WHITE)
+    return image
+
+
+def draw_edge_sort_loupe():
+    image, d = new_icon()
+    card(d, 6, 6, 10, 14, BLUE, CYAN)
+    d.rectangle((8, 11, 14, 12), fill=CYAN)
+    d.rectangle((8, 14, 11, 15), fill=CYAN)
+    ellipse(d, (13, 12, 25, 24), METAL)
+    d.ellipse((15, 14, 23, 22), fill=rgba("#0e2f3c"))
+    d.rectangle((17, 17, 21, 18), fill=PINK)
+    line(d, (24, 23, 28, 27), METAL, 2)
+    glint(d, 17, 15, WHITE)
+    return image
+
+
+def draw_dice_calipers():
+    image, d = new_icon()
+    rect(d, (22, 5, 25, 26), METAL)
+    rect(d, (10, 5, 25, 8), METAL)
+    rect(d, (10, 20, 25, 23), METAL)
+    dice(d, 11, 10, SOFT, BLACK)
+    d.rectangle((23, 10, 24, 18), fill=CYAN)
+    pip(d, 23, 12, PINK)
+    glint(d, 7, 7)
+    return image
+
+
 ITEM_ICONS = {
     "basic_strategy_card": draw_basic_strategy_card,
     "broken_cufflinks": draw_broken_cufflinks,
@@ -837,6 +1024,7 @@ ITEM_ICONS = {
     "cold_quarters": draw_cold_quarters,
     "coolers_cufflinks": draw_coolers_cufflinks,
     "creased_luck_card": draw_creased_luck_card,
+    "drain_cleaner": draw_drain_cleaner,
     "feature_magnet": draw_feature_magnet,
     "flask_of_courage": draw_flask_of_courage,
     "foil_sleeve": draw_foil_sleeve,
@@ -847,6 +1035,7 @@ ITEM_ICONS = {
     "hot_streak_token": draw_hot_streak_token,
     "inside_man": draw_inside_man,
     "instant_coffee": draw_instant_coffee,
+    "jackpot_magnet": draw_jackpot_magnet,
     "jazz_cello_lucky_coin": draw_jazz_cello_lucky_coin,
     "jazz_drummer_glasses": draw_jazz_drummer_glasses,
     "jazz_drummer_lucky_coin": draw_jazz_drummer_lucky_coin,
@@ -858,6 +1047,16 @@ ITEM_ICONS = {
     "lucky_ladies_compact": draw_lucky_ladies_compact,
     "lucky_reel_grease": draw_lucky_reel_grease,
     "marked_cards": draw_marked_cards,
+    "bumper_battery": draw_bumper_battery,
+    "plunger_tuner": draw_plunger_tuner,
+    "rubber_pegs": draw_rubber_pegs,
+    "extra_ball_token": draw_extra_ball_token,
+    "lock_jammer": draw_lock_jammer,
+    "magnet_cup": draw_magnet_cup,
+    "chip_slide_wax": draw_chip_slide_wax,
+    "holdout_wax": draw_holdout_wax,
+    "edge_sort_loupe": draw_edge_sort_loupe,
+    "dice_calipers": draw_dice_calipers,
     "neon_players_charm": draw_neon_players_charm,
     "payout_pamphlet": draw_payout_pamphlet,
     "police_scanner": draw_police_scanner,
@@ -866,10 +1065,13 @@ ITEM_ICONS = {
     "scratch_pad": draw_scratch_pad,
     "side_bet_chart": draw_side_bet_chart,
     "split_reel_note": draw_split_reel_note,
+    "splitter_token": draw_splitter_token,
     "tab_detector": draw_tab_detector,
     "tarot_card": draw_tarot_card,
     "timing_bracelet": draw_timing_bracelet,
+    "tilt_dampener": draw_tilt_dampener,
     "tip_sheet": draw_tip_sheet,
+    "return_spring": draw_return_spring,
     "weighted_keyring": draw_weighted_keyring,
     "xray_glasses": draw_xray_glasses,
 }
