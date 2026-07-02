@@ -4,33 +4,119 @@ Started: 2026-07-01
 Spec: `docs/plans/pinball_feature_rework_plan.md`
 Feel reference: `docs/plans/pinball_feel_reference.md`
 
-## Binding Working Rules
+## Binding Build Prompt Contract
 
-- Resume from the first phase that is not marked complete with recorded
-  verification evidence.
-- After every phase, record status, files changed, verification commands, and
-  actual output or a faithful summary with the pass/fail line verbatim.
-- Do not mark a phase complete with a failing gate.
-- Commit at each phase boundary with a message naming the phase.
-- Final acceptance must be recorded under `FINAL ACCEPTANCE` with fresh command
-  output.
+This section restates Prompt A from
+`docs/plans/pinball_rework_agent_prompts.md` so resume sessions can use this
+checkpoint directly.
 
-Known baseline note from the prompt: `foundation_performance_probe`
-slot-autoplay failures are pre-existing and must not be chased unless new
-failures are introduced.
+Read `docs/plans/pinball_feature_rework_plan.md` in full before doing anything
+else. It is the binding spec for this task. Execute the complete clean-room
+rework of the pinball slot feature event described there, through all phases
+0-6, and do not declare the work complete until every acceptance criterion is
+verified with fresh command output.
 
 ## Original Intent Checklist
 
+The plan implements this list. If the plan and this list ever conflict, this
+list wins and the conflict must be flagged in this progress doc.
+
 1. Physics, bounces, and streaks of a real pinball table.
-2. Feature sequence events like an actual pinball-branded slot machine feature.
-3. Skill-based, timing-based shot system with player/item edge.
-4. Quick playout with lifelike physics and upward bumps from bumpers, flippers,
-   and launchers.
-5. Fully designed machine layouts with named hittable sequences.
-6. Dynamic plinko/pinball board interactable through nudges.
-7. Ballionaire-like satisfaction and smoothness.
-8. Six existing pinball items work in the new system, plus new items.
-9. Game-wide slowdown during the feature eliminated.
+2. Feature sequence events like an actual pinball-branded slot machine feature
+   with locks, multiball, jackpot ladders, and lit inserts.
+3. A skill-based, timing-based shot system where a skilled player or a player
+   with an edge through items can reach large bonuses.
+4. Quick playout with lifelike physics: plinko-board smoothness, with the ball
+   able to be bumped back up the board by bumpers, flippers, and launchers.
+5. Fully designed machine layouts with named sequences that can be hit within
+   each layout.
+6. A dynamic plinko/pinball board interactable through nudges that adjust
+   trajectory to reach higher-paying areas.
+7. The end result must play like a round of Ballionaire, with similar
+   satisfaction and smoothness. Ballionaire is the explicit reference game and
+   Phase 0 requires researching it before any code is written.
+8. The 6 implemented pinball items (`drain_cleaner`, `jackpot_magnet`,
+   `splitter_token`, `return_spring`, `tilt_dampener`, `bumper_battery`) must
+   all work in the new system, and new items must be added.
+9. The rework must eliminate the game-wide slowdown during the feature. The
+   root cause and fix are specified in plan sections 1 and 3.2.
+
+## Working Rules
+
+- Maintain `docs/plans/pinball_rework_progress.md` as the checkpoint file.
+  After every phase, record phase status, files changed, every verification
+  command that ran, and a paste of its actual output or a faithful summary with
+  the pass/fail line verbatim. On startup, if this file already exists, resume
+  from the first incomplete phase. Never redo completed phases and never trust
+  a phase marked complete without evidence recorded next to it.
+- Phase 0 is mandatory and comes first: research Ballionaire using web search
+  (store page, gameplay videos/reviews, design writeups or developer
+  interviews) and write `docs/plans/pinball_feel_reference.md` per plan section
+  9 Phase 0. Extract numeric feel targets (seconds per drop, events per second,
+  bounce feel, tally presentation) and reconcile them against plan section 3.4,
+  updating section 3.4 where they disagree. Every feel decision in later phases
+  must cite this doc.
+- Also in Phase 0: record a performance baseline of the current pinball feature
+  by running `tools/slot_pinball_performance_probe.gd` via the pattern in
+  `tools/check_godot.ps1`, so final acceptance can prove the slowdown is gone
+  by comparison.
+- Commit at each phase boundary with a message naming the phase. Per-phase
+  commits are authorized for this task. Do not push unless asked.
+- Verification gates per phase are defined in plan sections 9 and 3.5. Run them
+  with `tools/check_godot.ps1`; see the suite definitions inside it for how
+  probes are invoked headlessly. Known baseline:
+  `foundation_performance_probe` slot-autoplay failures are pre-existing
+  (`project_perf_probe_pre_existing`) and must not be chased, but no new
+  failures may be introduced anywhere in the suite.
+- If a gate fails: diagnose and fix, then rerun. Do not skip a gate, weaken a
+  threshold, delete a failing assertion, or mark a phase done with a failing
+  gate. If genuinely blocked after 3 distinct fix approaches, record the
+  blocker with evidence here, continue with independent work, and return to it
+  before final acceptance.
+- Never claim a criterion passes without the command output recorded here.
+  "It should work" is not evidence.
+- Do not stop because the session is long, the context compacted, or a step
+  failed. The only valid stopping points are: all final acceptance criteria
+  pass, or a blocker requires a decision only the user can make. In that case,
+  state the blocker precisely and what is needed.
+
+## Final Acceptance Checklist
+
+Run everything in one final pass with fresh outputs and record under a
+`FINAL ACCEPTANCE` heading in this progress doc.
+
+- [ ] `powershell -File tools/check_godot.ps1 -Suite Full` passes, with no
+  failures other than the documented pre-existing baseline.
+- [ ] Determinism probe: same seed + same input script produces identical
+  results across 100 seeds.
+- [ ] Performance: rewritten pinball perf probe meets plan section 3.5 budgets
+  (sim tick <= 150us avg at 4 balls, zero allocations per tick), and the Phase
+  0 baseline comparison shows the feature-time frame cost reduced by an order
+  of magnitude, so the slowdown is demonstrably gone.
+- [ ] All 3 boards (Bumper Alley, Lock & Cascade, Jackpot Works) are playable
+  end to end, and every named sequence in plan section 4 is reachable and pays:
+  skill shot, bumper streak, locks -> multiball, cascade, jackpot, super
+  jackpot, wizard mode. Prove via scripted headless runs that hit each
+  sequence.
+- [ ] Skill-edge probe: perfect-play policy beats random policy by the tuned
+  margin in plan section 5.4 (+15-25%) across 1000 seeds, always under session
+  cap.
+- [ ] All 6 existing items are verified active in the new sim via probe
+  assertions; at least 3 new items from plan section 6.2 are implemented end to
+  end (`items.json`, hooks, verified in probe).
+- [ ] Nudge, tilt meter, tilt dampener, and flipper rescue are all functional
+  and covered by a test or probe assertion.
+- [ ] `scripts/games/slots/slot_pinball_table.gd` is deleted and grep shows no
+  remaining references to it or to the removed per-tick session round-tripping
+  (`pinball_session` deep copies, `slot_bonus_tick` catch-up).
+- [ ] Every numeric feel target in
+  `docs/plans/pinball_feel_reference.md` is checked off with a one-line
+  rationale (met or consciously deviated with why).
+- [ ] Write a final summary in this progress doc mapping each of the 9 original
+  intent points above to concrete evidence (file + probe output).
+
+Only after every box is checked with evidence is the rework done. The final
+message must state each acceptance item with its result.
 
 ## Phase 0 - Ballionaire Research Capture
 
