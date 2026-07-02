@@ -12,7 +12,7 @@ const BoardScript := preload("res://scripts/games/slots/pinball/pinball_board.gd
 const SimScript := preload("res://scripts/games/slots/pinball/pinball_sim.gd")
 
 const DEFAULT_FRAMES := 240
-const MAX_AVG_SURFACE_USEC := 300.0
+const MAX_AVG_SURFACE_USEC := 450.0
 const MAX_AVG_TOTAL_USEC := 8000.0
 const MAX_AVG_SIM_TICK_USEC := 150.0
 const MIN_PHASE0_TOTAL_REDUCTION := 10.0

@@ -891,6 +891,8 @@ func _nudge_chain_result(machine: Dictionary, event: Dictionary, grade: String, 
 	var active_index := int(event.get("coin_index", -1))
 	var collected_total := int(next_offer.get("collected_count", active_index + 1 if payout > 0 else active_index))
 	var banked := int(next_offer.get("banked_payout", int(event.get("banked_before", 0)) + payout))
+	var skill_accuracy := _nudge_skill_accuracy(grade)
+	var base_suspicion_delta := maxi(0, int(cross_effects.get("base_suspicion_delta", suspicion_delta)))
 	var message := ""
 	if grade == "perfect":
 		message = "Perfect coin collect. Chain %d banks $%d." % [collected_total, banked]
@@ -917,6 +919,10 @@ func _nudge_chain_result(machine: Dictionary, event: Dictionary, grade: String, 
 		"family": str(machine.get("type_id", "")),
 		"format_id": str(machine.get("format_id", "")),
 		"skill_outcome": grade,
+		"skill_grade": grade,
+		"skill_accuracy": skill_accuracy,
+		"skill_margin_msec": 0,
+		"base_suspicion_delta": base_suspicion_delta,
 		"coin_index": active_index,
 		"chain_collected": collected_total,
 		"banked_payout": banked,
@@ -940,6 +946,13 @@ func _nudge_chain_result(machine: Dictionary, event: Dictionary, grade: String, 
 		"won": payout > 0,
 		"environment_id": str(environment.get("id", "")),
 		"message": message,
+		"skill_outcome": grade,
+		"skill_grade": grade,
+		"skill_accuracy": skill_accuracy,
+		"skill_margin_msec": 0,
+		"base_suspicion_delta": base_suspicion_delta,
+		"skill_security_pressure_checked": true,
+		"security_message": security_message,
 	})
 	result[HOST_APPLY_FLAG] = true
 	result["slot_outcome_id"] = str(machine.get("last_outcome_id", "nudge_chain"))
@@ -1535,6 +1548,7 @@ func _slot_cheat_heat(action_id: String, stake: int, run_state: RunState, defini
 	if run_state == null:
 		return {
 			"suspicion_delta": maxi(0, base_heat),
+			"base_suspicion_delta": maxi(0, base_heat),
 			"security_bankroll_delta": 0,
 			"security_message": "",
 			"security_ended": false,
@@ -1553,6 +1567,7 @@ func _slot_cheat_heat(action_id: String, stake: int, run_state: RunState, defini
 		security_message = security_message.strip_edges()
 	return {
 		"suspicion_delta": suspicion_delta,
+		"base_suspicion_delta": maxi(0, base_heat),
 		"security_bankroll_delta": int(security_pressure.get("bankroll_delta", 0)),
 		"security_message": security_message,
 		"security_ended": bool(security_pressure.get("ended", false)),
@@ -1574,6 +1589,11 @@ func _cheat_action_def(definition: Dictionary, action_id: String) -> Dictionary:
 
 func _spin_result(machine: Dictionary, entry: Dictionary, action_id: String, stake: int, stake_cost: int, payout: int, bankroll_delta: int, suspicion_delta: int, environment: Dictionary, animation_plan: Dictionary, feature_triggered: bool, active_bonus: Dictionary, side_effects: Dictionary, free_spin: bool, nudge_applied: bool, cross_effects: Dictionary = {}) -> Dictionary:
 	var classification := str(machine.get("last_classification", "zero_loss"))
+	var nudge_skill_outcome := _last_nudge_skill_outcome(machine) if action_id == NUDGE_ACTION else ""
+	if action_id == NUDGE_ACTION and nudge_skill_outcome.is_empty():
+		nudge_skill_outcome = "nudge_resolved"
+	var nudge_skill_accuracy := _nudge_skill_accuracy(nudge_skill_outcome)
+	var base_suspicion_delta := maxi(0, int(cross_effects.get("base_suspicion_delta", suspicion_delta)))
 	var message := _message_for_spin(classification, payout, stake_cost, feature_triggered, active_bonus, nudge_applied)
 	var slot_loss_refund := int(cross_effects.get("slot_loss_refund", 0))
 	if slot_loss_refund > 0:
@@ -1611,6 +1631,11 @@ func _spin_result(machine: Dictionary, entry: Dictionary, action_id: String, sta
 		"slot_cold_quarter_used": bool(cross_effects.get("slot_cold_quarter_used", false)),
 		"slot_grease_failed_nudge_heat_bonus": grease_heat_bonus,
 		"security_bankroll_delta": int(cross_effects.get("security_bankroll_delta", 0)),
+		"skill_outcome": nudge_skill_outcome,
+		"skill_grade": nudge_skill_outcome,
+		"skill_accuracy": nudge_skill_accuracy,
+		"skill_margin_msec": 0,
+		"base_suspicion_delta": base_suspicion_delta,
 		"pit_boss_watched": bool(cross_effects.get("pit_boss_watched", false)),
 		"pit_boss_heat_bonus": int(cross_effects.get("pit_boss_heat_bonus", 0)),
 		"environment_id": str(environment.get("id", "")),
@@ -1627,6 +1652,13 @@ func _spin_result(machine: Dictionary, entry: Dictionary, action_id: String, sta
 		"won": payout > stake_cost or feature_triggered,
 		"environment_id": str(environment.get("id", "")),
 		"message": message,
+		"skill_outcome": nudge_skill_outcome,
+		"skill_grade": nudge_skill_outcome,
+		"skill_accuracy": nudge_skill_accuracy,
+		"skill_margin_msec": 0,
+		"base_suspicion_delta": base_suspicion_delta,
+		"skill_security_pressure_checked": action_id == NUDGE_ACTION,
+		"security_message": security_message,
 	})
 	result[HOST_APPLY_FLAG] = true
 	result["slot_outcome_id"] = str(entry.get("id", ""))
@@ -1637,7 +1669,7 @@ func _spin_result(machine: Dictionary, entry: Dictionary, action_id: String, sta
 	result["slot_net"] = bankroll_delta
 	result["slot_free_spin"] = free_spin
 	result["slot_nudge_applied"] = nudge_applied
-	result["slot_nudge_skill_outcome"] = _last_nudge_skill_outcome(machine)
+	result["slot_nudge_skill_outcome"] = nudge_skill_outcome
 	result["slot_feature_triggered"] = feature_triggered
 	result["slot_active_bonus"] = active_bonus.duplicate(true)
 	result["slot_grid"] = _copy_array(machine.get("last_grid", []))
@@ -1692,6 +1724,19 @@ func _last_nudge_skill_outcome(machine: Dictionary) -> String:
 		if str(event.get("type", "")) == "nudge_shift" or str(event.get("type", "")) == "nudge_coin_chain":
 			return str(event.get("skill_outcome", "legacy"))
 	return ""
+
+
+func _nudge_skill_accuracy(skill_outcome: String) -> int:
+	var outcome := skill_outcome.to_lower()
+	if outcome.find("perfect") >= 0:
+		return 100
+	if outcome.find("good") >= 0:
+		return 75
+	if outcome.find("close") >= 0 or outcome.find("partial") >= 0:
+		return 50
+	if outcome.find("miss") >= 0 or outcome.find("break") >= 0:
+		return 0
+	return 50
 
 
 func _win_attribution(machine: Dictionary, grid: Array, family_id: String, classification: String, payout: int, stake: int, stake_cost: int, feature_triggered: bool, active_bonus: Dictionary, side_effects: Dictionary, entry: Dictionary = {}) -> Dictionary:

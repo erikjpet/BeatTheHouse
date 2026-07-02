@@ -19,11 +19,26 @@ const BUFFALO_GRAND_MAX_INITIAL_MULTIPLIER := 70
 
 
 static func read_machine(environment: Dictionary, game_id: String) -> Dictionary:
-	var states: Dictionary = _copy_dict(environment.get("game_states", {}))
-	var machine: Variant = states.get(game_id, {})
+	var machine: Variant = _stored_machine(environment, game_id)
 	if typeof(machine) != TYPE_DICTIONARY:
 		return {}
 	return (machine as Dictionary).duplicate(true)
+
+
+# Zero-copy read for per-frame checks. The returned dictionary is the live
+# stored state: callers MUST NOT mutate it or hold it across writes.
+static func peek_machine(environment: Dictionary, game_id: String) -> Dictionary:
+	var machine: Variant = _stored_machine(environment, game_id)
+	if typeof(machine) != TYPE_DICTIONARY:
+		return {}
+	return machine as Dictionary
+
+
+static func _stored_machine(environment: Dictionary, game_id: String) -> Variant:
+	var states: Variant = environment.get("game_states", {})
+	if typeof(states) != TYPE_DICTIONARY:
+		return {}
+	return (states as Dictionary).get(game_id, {})
 
 
 static func write_machine(environment: Dictionary, game_id: String, machine: Dictionary) -> void:

@@ -123,6 +123,9 @@ function Get-StageTimeout {
     if ($TimeoutSec -gt 0) {
         return $TimeoutSec
     }
+    if ($Name -eq "foundation_contracts" -and $foundationSuiteKey -eq "contracts") {
+        return 300
+    }
     if ($Name -eq "foundation_slot_acceptance") {
         return 900
     }
@@ -358,6 +361,7 @@ switch ($suiteKey) {
         Invoke-GodotScript -Name "roulette_audio_audit" -ScriptPath "res://tools/roulette_audio_audit.gd" -StageTimeoutSec 120
     }
     "audit" {
+        Invoke-GodotScript -Name "slot_pinball_physics_audit" -ScriptPath "res://tools/slot_pinball_physics_audit.gd" -UserArgs @("48") -StageTimeoutSec 240
         Invoke-GodotScript -Name "slot_machine_deep_audit" -ScriptPath "res://tools/slot_machine_deep_audit.gd" -UserArgs @("10000") -StageTimeoutSec 900
         Invoke-GodotScript -Name "roulette_rule_audit" -ScriptPath "res://tools/roulette_rule_audit.gd" -StageTimeoutSec 180
         Invoke-GodotScript -Name "roulette_audio_audit" -ScriptPath "res://tools/roulette_audio_audit.gd" -StageTimeoutSec 120
@@ -365,6 +369,7 @@ switch ($suiteKey) {
     "full" {
         Invoke-FoundationSuite -FoundationSuite "all" -StageTimeoutSec (Get-StageTimeout "foundation_all")
         Invoke-GodotScript -Name "ui_scene_compile" -ScriptPath "res://scripts/tests/ui_scene_compile_check.gd" -StageTimeoutSec 300
+        Invoke-GodotScript -Name "slot_pinball_physics_audit" -ScriptPath "res://tools/slot_pinball_physics_audit.gd" -UserArgs @("48") -StageTimeoutSec 240
         Invoke-GodotScript -Name "slot_machine_deep_audit" -ScriptPath "res://tools/slot_machine_deep_audit.gd" -UserArgs @("10000") -StageTimeoutSec 900
         Invoke-GodotScript -Name "roulette_rule_audit" -ScriptPath "res://tools/roulette_rule_audit.gd" -StageTimeoutSec 180
         Invoke-GodotScript -Name "roulette_audio_audit" -ScriptPath "res://tools/roulette_audio_audit.gd" -StageTimeoutSec 120

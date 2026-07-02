@@ -281,7 +281,11 @@ func _check_pinball_feature_manifests(definition: Dictionary, presentation, rend
 		failures.append("Visual QA pinball prelaunch launch point was not at the top of the board.")
 	if float(prelaunch_manifest.get("pinball_playback_speed", 0.0)) <= 1.0:
 		failures.append("Visual QA pinball playback speed was not upgraded.")
-	print("VISUAL_QA_PINBALL_PRELAUNCH music=%s guideline=%s lane=%s angle=%d start_y=%.2f power=%d controlled=%s rating=%s speed=%.2f gravity=%.2f" % [
+	if str(prelaunch_manifest.get("pinball_board_style", "")) != "plinko":
+		failures.append("Visual QA pinball prelaunch did not expose plinko board style.")
+	if int(prelaunch_manifest.get("pinball_trigger_count", 0)) <= 0 or int(prelaunch_manifest.get("pinball_peg_count", 0)) <= 0:
+		failures.append("Visual QA pinball prelaunch did not expose plinko pegs and triggers.")
+	print("VISUAL_QA_PINBALL_PRELAUNCH music=%s guideline=%s lane=%s angle=%d start_y=%.2f power=%d controlled=%s rating=%s speed=%.2f gravity=%.2f style=%s pegs=%d triggers=%d" % [
 		str(prelaunch_manifest.get("pinball_feature_music_id", "")),
 		str(prelaunch_manifest.get("pinball_guideline_active", false)),
 		str(prelaunch_manifest.get("pinball_aim_lane", "")),
@@ -292,11 +296,14 @@ func _check_pinball_feature_manifests(definition: Dictionary, presentation, rend
 		str(prelaunch_manifest.get("pinball_power_rating", "")),
 		float(prelaunch_manifest.get("pinball_playback_speed", 0.0)),
 		float(prelaunch_manifest.get("pinball_gravity_y", 0.0)),
+		str(prelaunch_manifest.get("pinball_board_style", "")),
+		int(prelaunch_manifest.get("pinball_peg_count", 0)),
+		int(prelaunch_manifest.get("pinball_trigger_count", 0)),
 	])
 	var scenarios: Array = [
-		{"format": "classic_3_reel", "mode": "em_bumper_drop", "inputs": ["slot_bonus_left", "slot_bonus_launch"], "bumpers": 4, "ramps": 0},
-		{"format": "line_5x3", "mode": "lane_multiball", "inputs": ["slot_bonus_left", "slot_bonus_launch", "slot_bonus_right", "slot_bonus_launch", "slot_bonus_right", "slot_bonus_launch"], "bumpers": 3, "ramps": 2},
-		{"format": "video_feature", "mode": "video_feature", "inputs": ["slot_bonus_left", "slot_bonus_launch", "slot_bonus_right", "slot_bonus_launch", "slot_bonus_right", "slot_bonus_launch", "slot_bonus_left", "slot_bonus_launch"], "bumpers": 4, "ramps": 5},
+		{"format": "classic_3_reel", "mode": "em_bumper_drop", "inputs": ["slot_bonus_left", "slot_bonus_launch"], "bumpers": 2, "pegs": 40, "triggers": 5},
+		{"format": "line_5x3", "mode": "lane_multiball", "inputs": ["slot_bonus_left", "slot_bonus_launch", "slot_bonus_right", "slot_bonus_launch", "slot_bonus_right", "slot_bonus_launch"], "bumpers": 3, "pegs": 60, "triggers": 8},
+		{"format": "video_feature", "mode": "video_feature", "inputs": ["slot_bonus_left", "slot_bonus_launch", "slot_bonus_right", "slot_bonus_launch", "slot_bonus_right", "slot_bonus_launch", "slot_bonus_left", "slot_bonus_launch"], "bumpers": 4, "pegs": 75, "triggers": 10},
 	]
 	for scenario_value in scenarios:
 		var scenario: Dictionary = _dict(scenario_value)
@@ -320,14 +327,32 @@ func _check_pinball_feature_manifests(definition: Dictionary, presentation, rend
 			failures.append("Visual QA pinball feature did not expose push-in transition for %s." % str(scenario.get("mode", "")))
 		if int(manifest_a.get("bumper_count", 0)) < int(scenario.get("bumpers", 0)):
 			failures.append("Visual QA pinball feature missing bumper geometry for %s." % str(scenario.get("mode", "")))
-		if int(manifest_a.get("ramp_count", 0)) < int(scenario.get("ramps", 0)):
-			failures.append("Visual QA pinball feature missing ramp/orbit geometry for %s." % str(scenario.get("mode", "")))
-		if int(manifest_a.get("ball_count", 0)) < 1 or int(manifest_b.get("ball_count", 0)) < 1:
-			failures.append("Visual QA pinball feature did not expose a moving playback ball for %s." % str(scenario.get("mode", "")))
-		if pos_a == pos_b:
+		if int(manifest_a.get("pinball_peg_count", 0)) < int(scenario.get("pegs", 0)):
+			failures.append("Visual QA pinball feature missing peg geometry for %s." % str(scenario.get("mode", "")))
+		if int(manifest_a.get("pinball_trigger_count", 0)) < int(scenario.get("triggers", 0)):
+			failures.append("Visual QA pinball feature missing plinko trigger geometry for %s." % str(scenario.get("mode", "")))
+		var balls_a := int(manifest_a.get("ball_count", 0))
+		var balls_b := int(manifest_b.get("ball_count", 0))
+		if balls_a < 1:
+			failures.append("Visual QA pinball feature did not expose an early playback ball for %s." % str(scenario.get("mode", "")))
+		if balls_b > 0 and pos_a == pos_b:
 			failures.append("Visual QA pinball feature ball position did not move for %s." % str(scenario.get("mode", "")))
 		if not bool(manifest_a.get("dmd_active", false)):
 			failures.append("Visual QA pinball feature did not expose cabinet display state for %s." % str(scenario.get("mode", "")))
+		var completed_active: Dictionary = active.duplicate(true)
+		completed_active["active"] = false
+		completed_active["complete"] = true
+		completed_active["active_ball_count"] = 0
+		completed_active["balls_remaining"] = 0
+		completed_active["launch_in_progress"] = false
+		completed_active["visual_replay"] = false
+		var completed_time := maxi(time_b, int(completed_active.get("animation_duration_msec", time_b)) + 240)
+		var completed_surface: Dictionary = presentation.surface_state(machine, run_state, definition, {"surface_time_msec": completed_time})
+		completed_surface["slot_active_bonus"] = completed_active
+		completed_surface["slot_active_bonus_active"] = false
+		var completed_manifest: Dictionary = renderer.render_signature(completed_surface, definition, completed_time, "feature")
+		if int(completed_manifest.get("ball_count", 0)) != 0 or not _array(completed_manifest.get("pinball_ball_positions", [])).is_empty():
+			failures.append("Visual QA pinball feature kept drawing balls after completion for %s." % str(scenario.get("mode", "")))
 		if str(scenario.get("mode", "")) == "video_feature":
 			var multiball_time := _pinball_multiball_manifest_time(trajectory)
 			var manifest_multi: Dictionary = renderer.render_signature(presentation.surface_state(machine, run_state, definition, {"surface_time_msec": multiball_time}), definition, multiball_time, "feature")
@@ -338,16 +363,17 @@ func _check_pinball_feature_manifests(definition: Dictionary, presentation, rend
 				multiball_time,
 				JSON.stringify(manifest_multi.get("pinball_ball_positions", [])),
 			])
-		print("VISUAL_QA_PINBALL_FEATURE machine=pinball_%s push=%s play=%s bumpers=%d ramps=%d lit=%d dmd=%s balls=%d/%d pos_a=%s pos_b=%s" % [
+		print("VISUAL_QA_PINBALL_FEATURE machine=pinball_%s push=%s play=%s bumpers=%d pegs=%d triggers=%d lit=%d dmd=%s balls=%d/%d pos_a=%s pos_b=%s" % [
 			str(scenario.get("format", "")),
 			str(manifest_push.get("transition_phase", "")),
 			str(manifest_b.get("transition_phase", "")),
 			int(manifest_a.get("bumper_count", 0)),
-			int(manifest_a.get("ramp_count", 0)),
+			int(manifest_a.get("pinball_peg_count", 0)),
+			int(manifest_a.get("pinball_trigger_count", 0)),
 			int(manifest_b.get("lit_inserts", 0)),
 			str(manifest_a.get("dmd_active", false)),
-			int(manifest_a.get("ball_count", 0)),
-			int(manifest_b.get("ball_count", 0)),
+			balls_a,
+			balls_b,
 			pos_a,
 			pos_b,
 		])
@@ -390,7 +416,7 @@ func _pinball_visual_sample(definition: Dictionary, format_id: String, inputs: A
 
 func _pinball_manifest_time_pair(trajectory: Array) -> Array:
 	var visual_start_msec := 520
-	var playback_speed := 1.45
+	var playback_speed := 1.75
 	var distinct_times: Array = _pinball_distinct_times(trajectory)
 	if distinct_times.size() < 2:
 		return [visual_start_msec + 40, visual_start_msec + 240]
@@ -403,7 +429,7 @@ func _pinball_manifest_time_pair(trajectory: Array) -> Array:
 
 func _pinball_multiball_manifest_time(trajectory: Array) -> int:
 	var visual_start_msec := 520
-	var playback_speed := 1.45
+	var playback_speed := 1.75
 	var current_time := -1.0
 	var balls: Dictionary = {}
 	for point_value in trajectory:

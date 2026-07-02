@@ -19,14 +19,26 @@ const EVENT_TILT := 10
 const EVENT_FLIPPER := 11
 const EVENT_MULTIPLIER := 12
 const EVENT_TIMEOUT := 13
+const EVENT_TARGET := 14
+const EVENT_GATE := 15
+const EVENT_JACKPOT := 16
+const EVENT_SUPER_JACKPOT := 17
+const EVENT_SPAWNER := 18
 
 const SENSOR_SKILL := 1
 const SENSOR_SLINGSHOT := 2
 const SENSOR_LAUNCHER := 3
 const SENSOR_MULTIPLIER := 4
+const SENSOR_TARGET := 5
+const SENSOR_GATE := 6
+const SENSOR_JACKPOT := 7
+const SENSOR_SUPER_JACKPOT := 8
+const SENSOR_SPAWNER := 9
 
 const RECT_DRAIN := 1
 const RECT_POCKET := 2
+const RECT_JACKPOT := 3
+const RECT_SUPER_JACKPOT := 4
 
 var board_id := ""
 var board_title := ""
@@ -54,6 +66,7 @@ var peg_radii := PackedFloat32Array()
 var peg_awards := PackedInt32Array()
 var peg_restitution := PackedFloat32Array()
 var peg_bias := PackedFloat32Array()
+var peg_ids := PackedStringArray()
 
 var bumper_positions := PackedVector2Array()
 var bumper_radii := PackedFloat32Array()
@@ -62,6 +75,7 @@ var bumper_restitution := PackedFloat32Array()
 var bumper_kicks := PackedVector2Array()
 var bumper_cooldowns := PackedInt32Array()
 var bumper_ready_tick := PackedInt32Array()
+var bumper_ids := PackedStringArray()
 
 var sensor_positions := PackedVector2Array()
 var sensor_radii := PackedFloat32Array()
@@ -70,11 +84,13 @@ var sensor_awards := PackedInt32Array()
 var sensor_kicks := PackedVector2Array()
 var sensor_cooldowns := PackedInt32Array()
 var sensor_ready_tick := PackedInt32Array()
+var sensor_ids := PackedStringArray()
 
 var rect_positions := PackedVector2Array()
 var rect_sizes := PackedVector2Array()
 var rect_types := PackedInt32Array()
 var rect_awards := PackedInt32Array()
+var rect_ids := PackedStringArray()
 
 var flipper_positions := PackedVector2Array()
 var flipper_radii := PackedFloat32Array()
@@ -82,6 +98,7 @@ var flipper_sides := PackedInt32Array()
 var flipper_kicks := PackedVector2Array()
 var flipper_ready_tick := PackedInt32Array()
 var flipper_window_until_tick := PackedInt32Array()
+var flipper_ids := PackedStringArray()
 
 var positions := PackedVector2Array()
 var previous_positions := PackedVector2Array()
@@ -90,6 +107,8 @@ var spins := PackedFloat32Array()
 var active_flags := PackedInt32Array()
 var age_ticks := PackedInt32Array()
 var ball_sequence := PackedInt32Array()
+var progress_y := PackedFloat32Array()
+var stuck_ticks := PackedInt32Array()
 
 var event_ticks := PackedInt32Array()
 var event_types := PackedInt32Array()
@@ -118,6 +137,10 @@ var max_events_seen := 0
 var max_tick_usec := 0
 var accumulated_tick_usec := 0
 var measured_ticks := 0
+var spawn_count := 0
+var collision_count := 0
+var max_substeps_seen := 0
+var ball_save_count := 0
 var nudge_x := 0.0
 var nudge_y := 0.0
 var nudge_pending := false
@@ -163,26 +186,31 @@ func configure(compiled_board: Dictionary, seed_value: int, params: Dictionary =
 	peg_awards = compiled_board.get("peg_awards", PackedInt32Array())
 	peg_restitution = compiled_board.get("peg_restitution", PackedFloat32Array())
 	peg_bias = compiled_board.get("peg_bias", PackedFloat32Array())
+	peg_ids = compiled_board.get("peg_ids", PackedStringArray())
 	bumper_positions = compiled_board.get("bumper_positions", PackedVector2Array())
 	bumper_radii = compiled_board.get("bumper_radii", PackedFloat32Array())
 	bumper_awards = compiled_board.get("bumper_awards", PackedInt32Array())
 	bumper_restitution = compiled_board.get("bumper_restitution", PackedFloat32Array())
 	bumper_kicks = compiled_board.get("bumper_kicks", PackedVector2Array())
 	bumper_cooldowns = compiled_board.get("bumper_cooldowns", PackedInt32Array())
+	bumper_ids = compiled_board.get("bumper_ids", PackedStringArray())
 	sensor_positions = compiled_board.get("sensor_positions", PackedVector2Array())
 	sensor_radii = compiled_board.get("sensor_radii", PackedFloat32Array())
 	sensor_types = compiled_board.get("sensor_types", PackedInt32Array())
 	sensor_awards = compiled_board.get("sensor_awards", PackedInt32Array())
 	sensor_kicks = compiled_board.get("sensor_kicks", PackedVector2Array())
 	sensor_cooldowns = compiled_board.get("sensor_cooldowns", PackedInt32Array())
+	sensor_ids = compiled_board.get("sensor_ids", PackedStringArray())
 	rect_positions = compiled_board.get("rect_positions", PackedVector2Array())
 	rect_sizes = compiled_board.get("rect_sizes", PackedVector2Array())
 	rect_types = compiled_board.get("rect_types", PackedInt32Array())
 	rect_awards = compiled_board.get("rect_awards", PackedInt32Array())
+	rect_ids = compiled_board.get("rect_ids", PackedStringArray())
 	flipper_positions = compiled_board.get("flipper_positions", PackedVector2Array())
 	flipper_radii = compiled_board.get("flipper_radii", PackedFloat32Array())
 	flipper_sides = compiled_board.get("flipper_sides", PackedInt32Array())
 	flipper_kicks = compiled_board.get("flipper_kicks", PackedVector2Array())
+	flipper_ids = compiled_board.get("flipper_ids", PackedStringArray())
 	bumper_battery_hits_config = maxi(0, int(compiled_board.get("bumper_battery_hits", 0)))
 	bumper_battery_award_percent = maxi(0, int(compiled_board.get("bumper_battery_award_percent", 0)))
 	bumper_battery_kick_percent = maxi(0, int(compiled_board.get("bumper_battery_kick_percent", 100)))
@@ -208,6 +236,10 @@ func reset_round() -> void:
 	max_tick_usec = 0
 	accumulated_tick_usec = 0
 	measured_ticks = 0
+	spawn_count = 0
+	collision_count = 0
+	max_substeps_seen = 0
+	ball_save_count = 0
 	nudge_pending = false
 	nudge_count = 0
 	flipper_window_count = 0
@@ -221,6 +253,8 @@ func reset_round() -> void:
 	_clear_int_array(active_flags)
 	_clear_int_array(age_ticks)
 	_clear_int_array(ball_sequence)
+	_clear_float_array(progress_y)
+	_clear_int_array(stuck_ticks)
 	_clear_int_array(bumper_ready_tick)
 	_clear_int_array(sensor_ready_tick)
 	_clear_int_array(flipper_ready_tick)
@@ -246,7 +280,10 @@ func launch_ball(params: Dictionary = {}) -> int:
 	active_flags[index] = 1
 	age_ticks[index] = 0
 	ball_sequence[index] = balls_launched
+	progress_y[index] = start.y
+	stuck_ticks[index] = 0
 	balls_launched += 1
+	spawn_count += 1
 	if absf(power - skill_power) <= skill_width:
 		_register_event(EVENT_SKILL, 2000, index, 8, start)
 		velocities[index] = velocities[index] + Vector2(0.70, -0.30)
@@ -338,6 +375,10 @@ func result_signature() -> Dictionary:
 		"flipper_rescue_count": flipper_rescue_count,
 		"bumper_battery_hits_remaining": bumper_battery_hits_remaining,
 		"return_spring_remaining": return_spring_remaining,
+		"spawn_count": spawn_count,
+		"collision_count": collision_count,
+		"max_substeps": max_substeps_seen,
+		"ball_save_count": ball_save_count,
 		"avg_tick_usec": float(accumulated_tick_usec) / float(maxi(1, measured_ticks)),
 		"max_tick_usec": max_tick_usec,
 		"rng_state": rng_state,
@@ -393,6 +434,10 @@ func compact_snapshot() -> Dictionary:
 		"flipper_rescue_count": flipper_rescue_count,
 		"bumper_battery_hits_remaining": bumper_battery_hits_remaining,
 		"return_spring_remaining": return_spring_remaining,
+		"spawn_count": spawn_count,
+		"collision_count": collision_count,
+		"max_substeps": max_substeps_seen,
+		"ball_save_count": ball_save_count,
 		"avg_tick_usec": float(accumulated_tick_usec) / float(maxi(1, measured_ticks)),
 		"max_tick_usec": max_tick_usec,
 		"max_events_per_tick": max_events_seen,
@@ -429,6 +474,8 @@ func _resize_runtime_arrays() -> void:
 	active_flags.resize(max_balls)
 	age_ticks.resize(max_balls)
 	ball_sequence.resize(max_balls)
+	progress_y.resize(max_balls)
+	stuck_ticks.resize(max_balls)
 	bumper_ready_tick.resize(bumper_positions.size())
 	sensor_ready_tick.resize(sensor_positions.size())
 	flipper_ready_tick.resize(flipper_positions.size())
@@ -453,7 +500,8 @@ func _step_ball(ball_index: int) -> void:
 	_try_return_spring(ball_index)
 	pos = positions[ball_index]
 	vel = velocities[ball_index]
-	var substeps := clampi(int(ceil(vel.length() / 2.25)), 1, 4)
+	var substeps := clampi(int(ceil(vel.length() / 3.15)), 1, 3)
+	max_substeps_seen = maxi(max_substeps_seen, substeps)
 	var sub_dt := FIXED_DT / float(substeps)
 	for _substep in range(substeps):
 		pos += vel * sub_dt
@@ -478,6 +526,7 @@ func _step_ball(ball_index: int) -> void:
 		pos = positions[ball_index]
 		vel = velocities[ball_index]
 	_try_return_spring(ball_index)
+	_prevent_stuck_loop(ball_index)
 	age_ticks[ball_index] = age_ticks[ball_index] + 1
 	if age_ticks[ball_index] >= max_ticks:
 		timeout_count += 1
@@ -527,6 +576,34 @@ func _try_return_spring(ball_index: int) -> void:
 	_register_event(EVENT_LAUNCHER, -4, ball_index, 0, pos)
 
 
+func _prevent_stuck_loop(ball_index: int) -> void:
+	if active_flags[ball_index] == 0:
+		return
+	var pos := positions[ball_index]
+	var vel := velocities[ball_index]
+	if pos.y > float(progress_y[ball_index]) + 0.006:
+		progress_y[ball_index] = pos.y
+		stuck_ticks[ball_index] = 0
+		return
+	if age_ticks[ball_index] < 90:
+		return
+	if vel.length() > 0.42 and vel.y > -0.22:
+		return
+	stuck_ticks[ball_index] = int(stuck_ticks[ball_index]) + 1
+	if int(stuck_ticks[ball_index]) < 72:
+		return
+	if pos.y >= 0.880:
+		_drain_ball(ball_index, EVENT_TIMEOUT, 3999, pos)
+		return
+	var shove := Vector2(_rand_signed() * 0.22, 1.45 + _rand_unit() * 0.35)
+	positions[ball_index] = Vector2(clampf(pos.x + _rand_signed() * 0.010, ball_radius, 1.0 - ball_radius), minf(0.900, pos.y + 0.020))
+	velocities[ball_index] = _clamped_velocity(vel * 0.25 + shove)
+	progress_y[ball_index] = positions[ball_index].y
+	stuck_ticks[ball_index] = 0
+	ball_save_count += 1
+	_register_event(EVENT_NUDGE, -5, ball_index, 0, positions[ball_index])
+
+
 func _resolve_pegs(ball_index: int, pos: Vector2, vel: Vector2) -> void:
 	for index in range(peg_positions.size()):
 		var peg_pos := peg_positions[index]
@@ -541,6 +618,7 @@ func _resolve_pegs(ball_index: int, pos: Vector2, vel: Vector2) -> void:
 		vel = _bounce_velocity(ball_index, vel, normal, float(peg_restitution[index]), float(peg_bias[index]))
 		positions[ball_index] = pos
 		velocities[ball_index] = _clamped_velocity(vel)
+		collision_count += 1
 		_register_event(EVENT_PEG, index, ball_index, int(peg_awards[index]), pos)
 
 
@@ -564,6 +642,7 @@ func _resolve_bumpers(ball_index: int, pos: Vector2, vel: Vector2) -> void:
 		vel = _bounce_velocity(ball_index, vel, normal, float(bumper_restitution[index]), 0.0) + kick
 		positions[ball_index] = pos
 		velocities[ball_index] = _clamped_velocity(vel)
+		collision_count += 1
 		if tick >= int(bumper_ready_tick[index]):
 			bumper_ready_tick[index] = tick + int(bumper_cooldowns[index])
 			_register_event(EVENT_BUMPER, 1000 + index, ball_index, award, pos)
@@ -588,9 +667,21 @@ func _resolve_sensors(ball_index: int, pos: Vector2, vel: Vector2) -> void:
 		elif sensor_type == SENSOR_MULTIPLIER:
 			event_type = EVENT_MULTIPLIER
 			session_multiplier = mini(3, session_multiplier + 1)
+		elif sensor_type == SENSOR_TARGET:
+			event_type = EVENT_TARGET
+		elif sensor_type == SENSOR_GATE:
+			event_type = EVENT_GATE
+			session_multiplier = mini(3, session_multiplier + 1)
+		elif sensor_type == SENSOR_JACKPOT:
+			event_type = EVENT_JACKPOT
+		elif sensor_type == SENSOR_SUPER_JACKPOT:
+			event_type = EVENT_SUPER_JACKPOT
+		elif sensor_type == SENSOR_SPAWNER:
+			event_type = EVENT_SPAWNER
 		vel += sensor_kicks[index]
 		positions[ball_index] = pos
 		velocities[ball_index] = _clamped_velocity(vel)
+		collision_count += 1
 		_register_event(event_type, 2000 + index, ball_index, int(sensor_awards[index]), pos)
 
 
@@ -604,8 +695,13 @@ func _resolve_rects(ball_index: int, pos: Vector2) -> void:
 		if rect_type == RECT_DRAIN:
 			_drain_ball(ball_index, EVENT_DRAIN, 3000 + index, pos)
 			return
-		if rect_type == RECT_POCKET:
-			_register_event(EVENT_POCKET, 3000 + index, ball_index, int(rect_awards[index]), pos)
+		if rect_type == RECT_POCKET or rect_type == RECT_JACKPOT or rect_type == RECT_SUPER_JACKPOT:
+			var event_type := EVENT_POCKET
+			if rect_type == RECT_JACKPOT:
+				event_type = EVENT_JACKPOT
+			elif rect_type == RECT_SUPER_JACKPOT:
+				event_type = EVENT_SUPER_JACKPOT
+			_register_event(event_type, 3000 + index, ball_index, int(rect_awards[index]), pos)
 			_drain_ball(ball_index, EVENT_DRAIN, 3000 + index, pos)
 			return
 
@@ -634,6 +730,7 @@ func _resolve_flippers(ball_index: int, pos: Vector2, vel: Vector2) -> void:
 		positions[ball_index] = pos
 		velocities[ball_index] = _clamped_velocity(vel)
 		flipper_rescue_count += 1
+		collision_count += 1
 		_register_event(EVENT_FLIPPER, 4000 + index, ball_index, 0, pos)
 
 
@@ -788,6 +885,11 @@ static func _clear_int_array(values: PackedInt32Array) -> void:
 		values[index] = 0
 
 
+static func _clear_float_array(values: PackedFloat32Array) -> void:
+	for index in range(values.size()):
+		values[index] = 0.0
+
+
 static func _point_payload(point: Vector2) -> Dictionary:
 	return {
 		"x": snappedf(point.x, 0.0001),
@@ -823,19 +925,33 @@ static func _event_type_name(event_type: int) -> String:
 			return "multiplier"
 		EVENT_TIMEOUT:
 			return "drain"
+		EVENT_TARGET:
+			return "target"
+		EVENT_GATE:
+			return "gate"
+		EVENT_JACKPOT:
+			return "jackpot"
+		EVENT_SUPER_JACKPOT:
+			return "super_jackpot"
+		EVENT_SPAWNER:
+			return "spawner"
 		_:
 			return "event"
 
 
-static func _event_element_id(event_type: int, element_index: int) -> String:
+func _event_element_id(event_type: int, element_index: int) -> String:
 	if element_index >= 4000:
-		return "flipper_%d" % (element_index - 4000)
+		var flipper_index := element_index - 4000
+		return str(flipper_ids[flipper_index]) if flipper_index >= 0 and flipper_index < flipper_ids.size() else "flipper_%d" % flipper_index
 	if element_index >= 3000:
-		return "slot_%d" % (element_index - 3000)
+		var rect_index := element_index - 3000
+		return str(rect_ids[rect_index]) if rect_index >= 0 and rect_index < rect_ids.size() else "slot_%d" % rect_index
 	if element_index >= 2000:
-		return "sensor_%d" % (element_index - 2000)
+		var sensor_index := element_index - 2000
+		return str(sensor_ids[sensor_index]) if sensor_index >= 0 and sensor_index < sensor_ids.size() else "sensor_%d" % sensor_index
 	if element_index >= 1000:
-		return "bumper_%d" % (element_index - 1000)
+		var bumper_index := element_index - 1000
+		return str(bumper_ids[bumper_index]) if bumper_index >= 0 and bumper_index < bumper_ids.size() else "bumper_%d" % bumper_index
 	if element_index >= 0:
-		return "peg_%d" % element_index
+		return str(peg_ids[element_index]) if element_index < peg_ids.size() else "peg_%d" % element_index
 	return _event_type_name(event_type)

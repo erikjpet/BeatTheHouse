@@ -20,7 +20,7 @@ func surface_state(machine: Dictionary, run_state: RunState, definition: Diction
 	var surface_time_msec := maxi(0, int(ui_state.get("drunk_scaled_surface_time_msec", ui_state.get("surface_time_msec", 0))))
 	var fast_animation_id := str(machine.get("slot_animation_id", ""))
 	if str(stored_active_bonus.get("family", "")) == "pinball" and bool(stored_active_bonus.get("active", false)) and not bool(stored_active_bonus.get("complete", false)) and fast_animation_id.begins_with("bonus:"):
-		return _pinball_active_surface_state(machine, stored_active_bonus, surface_time_msec, ui_state)
+		return _pinball_active_surface_state(machine, stored_active_bonus, run_state, surface_time_msec, ui_state)
 	var selected_bet: Dictionary = StateScript.selected_bet(machine)
 	var animation_duration := maxi(0, int(machine.get("slot_animation_duration_msec", 0)))
 	var animation_id := str(machine.get("slot_animation_id", ""))
@@ -199,17 +199,24 @@ func surface_state(machine: Dictionary, run_state: RunState, definition: Diction
 	})
 
 
-func _pinball_active_surface_state(machine: Dictionary, active_bonus: Dictionary, surface_time_msec: int, ui_state: Dictionary) -> Dictionary:
+func _pinball_active_surface_state(machine: Dictionary, active_bonus: Dictionary, run_state: RunState, surface_time_msec: int, ui_state: Dictionary) -> Dictionary:
 	var live: Dictionary = PinballFeatureScript.surface_refresh(_copy_dict_shallow(active_bonus), surface_time_msec)
 	live["pinball_launch_meter"] = _pinball_launch_meter(live, surface_time_msec)
+	var pinball_scene: Dictionary = _feature_scene(live)
+	var pinball_cues: Array = []
+	var pinball_cues_value: Variant = pinball_scene.get("audio_cues", [])
+	if typeof(pinball_cues_value) == TYPE_ARRAY:
+		pinball_cues = pinball_cues_value as Array
 	var animation_id := str(machine.get("slot_animation_id", "pinball:live"))
-	var feature_channel := GameModule.surface_animation_channel(
-		"slot_feature",
-		"%s:%s:%d" % [str(live.get("family", "")), str(live.get("mode", "")), int(machine.get("spin_count", 0))],
-		0,
-		0,
-		{"metadata": {"mode": str(live.get("mode", ""))}}
-	)
+	var feature_channel := {
+		"id": "slot_feature",
+		"active_id": "%s:%s:%d" % [str(live.get("family", "")), str(live.get("mode", "")), int(machine.get("spin_count", 0))],
+		"duration_msec": 0,
+		"started_msec": 0,
+		"active": true,
+		"restart_on_active_id_change": true,
+		"metadata": {"mode": str(live.get("mode", ""))},
+	}
 	var skin := {
 		"cabinet_identity": "pinball",
 		"cabinet_title": "Pinball Bonus",
@@ -227,7 +234,11 @@ func _pinball_active_surface_state(machine: Dictionary, active_bonus: Dictionary
 		},
 	}
 	var result_message := "Bonus active: %s." % str(live.get("mode", "feature")).replace("_", " ").capitalize()
-	return _slot_surface_spec({
+	var bet_ladder: Dictionary = machine.get("bet_ladder", {}) if typeof(machine.get("bet_ladder", {})) == TYPE_DICTIONARY else {}
+	var selected_bet: Dictionary = machine.get("selected_bet", {}) if typeof(machine.get("selected_bet", {})) == TYPE_DICTIONARY else {}
+	var selected_bet_id := str(selected_bet.get("id", bet_ladder.get("selected_id", "bet_2")))
+	var selected_bet_total := int(selected_bet.get("total_credits", 2))
+	return {
 		"surface_renderer": "slot_machine",
 		"surface_life": "reel_machine",
 		"surface_cast": "machine",
@@ -245,7 +256,7 @@ func _pinball_active_surface_state(machine: Dictionary, active_bonus: Dictionary
 		"native_selected_surface_actions": _selected_actions(ui_state),
 		"surface_animation_channels": [feature_channel],
 		"surface_action_blocks": [],
-		"surface_audio": GameModule.surface_audio_spec({
+		"surface_audio": {
 			"profile_id": "slot_machine:%s" % str(machine.get("machine_key", "")),
 			"action_cues": {
 				"slot_bonus_left": "machine_button",
@@ -253,12 +264,12 @@ func _pinball_active_surface_state(machine: Dictionary, active_bonus: Dictionary
 				"slot_bonus_right": "machine_button",
 				"slot_bonus_tilt": "machine_button",
 			},
-			"feature_cues": _pinball_feature_audio_cues(live, str(_pinball_feature_scene(live).get("feature_phase", "play"))),
+			"feature_cues": pinball_cues,
 			"channels": {
 				"feature": "slot_feature",
 				"feature_animation_channel": "slot_feature",
 			},
-		}),
+		},
 		"machine_key": str(machine.get("machine_key", "")),
 		"slot_skin": skin,
 		"slot_format_id": str(machine.get("format_id", "")),
@@ -274,14 +285,14 @@ func _pinball_active_surface_state(machine: Dictionary, active_bonus: Dictionary
 		"slot_reel_strips": [],
 		"slot_reel_stop_times": [],
 		"slot_reel_timeline": [],
-		"slot_animation_plan": _copy_dict(machine.get("slot_animation_plan", {})),
+		"slot_animation_plan": {},
 		"slot_animation_id": animation_id,
 		"slot_animation_duration_msec": int(machine.get("slot_animation_duration_msec", 0)),
 		"slot_visual_time_msec": surface_time_msec,
 		"slot_attract_phase": 0.0,
 		"slot_bonus_start_time": 0,
 		"slot_audio_cues": [],
-		"slot_feature_scene": _feature_scene(live),
+		"slot_feature_scene": pinball_scene,
 		"slot_bonus_steps": [],
 		"slot_bonus_total": int(live.get("feature_total", live.get("pending_award", 0))),
 		"slot_payout": int(machine.get("last_payout", 0)),
@@ -293,16 +304,17 @@ func _pinball_active_surface_state(machine: Dictionary, active_bonus: Dictionary
 		"slot_fixed_bet_ladder": true,
 		"bet_options": [],
 		"slot_bet_options": [],
-		"selected_bet_id": str(_copy_dict(machine.get("bet_ladder", {})).get("selected_id", "bet_2")),
-		"slot_selected_bet_id": str(_copy_dict(machine.get("bet_ladder", {})).get("selected_id", "bet_2")),
-		"selected_stake": int(_copy_dict(machine.get("selected_bet", {})).get("total_credits", 2)),
-		"slot_selected_bet": int(_copy_dict(machine.get("selected_bet", {})).get("total_credits", 2)),
-		"bankroll": 0,
-		"suspicion_level": 0,
+		"selected_bet_id": selected_bet_id,
+		"selected_bet_total_credits": selected_bet_total,
+		"slot_selected_bet_id": selected_bet_id,
+		"selected_stake": selected_bet_total,
+		"slot_selected_bet": selected_bet_total,
+		"bankroll": run_state.bankroll if run_state != null else 0,
+		"suspicion_level": run_state.suspicion_level() if run_state != null else 0,
 		"result_message": result_message,
 		"outcome_message": result_message,
 		"has_recent_outcome": true,
-	})
+	}
 
 
 func _surface_message(machine: Dictionary, active_bonus: Dictionary) -> String:
@@ -739,15 +751,58 @@ func _pinball_feature_audio_cues(active_bonus: Dictionary, phase: String) -> Arr
 		cues.append({"phase": "plunger_charge", "cue_id": "pinball_plunger_charge", "time_sec": 0.22, "marker": "pinball_plunger_charge"})
 	else:
 		cues.append({"phase": "table_music", "cue_id": "pinball_shot_counter", "time_sec": 0.38, "marker": "pinball_shot_counter"})
-	var recent: Array = _copy_array(active_bonus.get("display_event_log", []))
-	if recent.is_empty():
-		recent = _copy_array(active_bonus.get("event_log", []))
+	var recent: Array = _pinball_recent_audio_events(active_bonus)
 	for index in range(mini(recent.size(), 6)):
 		var event: Dictionary = _copy_dict(recent[index])
 		var event_type := str(event.get("element_type", ""))
-		var cue_id := "pinball_cup_hit" if event_type == "pocket" else "pinball_jackpot_lane" if event_type == "super_jackpot" or event_type == "jackpot" else "pinball_lane_lit" if event_type == "ramp" or event_type == "orbit" else "pinball_flipper" if event_type == "flipper" else "pinball_shot_counter"
-		cues.append({"phase": "pinball_hit", "cue_id": cue_id, "time_sec": 0.62 + float(index) * 0.10, "marker": "pinball_hit_%d" % index, "pitch": 0.96 + float(index) * 0.025})
+		var cue_id := _pinball_event_cue_id(event_type)
+		var award := maxi(0, int(event.get("award", 0)))
+		var volume := -4.0 + minf(5.0, float(award) * 0.08)
+		cues.append({"phase": "pinball_hit", "cue_id": cue_id, "time_sec": 0.54 + float(index) * 0.075, "marker": "pinball_hit_%d_%s" % [index, event_type], "pitch": 0.92 + float(index) * 0.025 + minf(0.18, float(award) * 0.004), "volume_db": volume})
 	return cues
+
+
+func _pinball_recent_audio_events(active_bonus: Dictionary) -> Array:
+	var source: Array = []
+	var display_value: Variant = active_bonus.get("display_event_log", [])
+	if typeof(display_value) == TYPE_ARRAY and not (display_value as Array).is_empty():
+		source = display_value as Array
+	else:
+		var event_value: Variant = active_bonus.get("event_log", [])
+		if typeof(event_value) == TYPE_ARRAY:
+			source = event_value as Array
+	var result: Array = []
+	var start_index := maxi(0, source.size() - 6)
+	for index in range(start_index, source.size()):
+		if typeof(source[index]) == TYPE_DICTIONARY:
+			result.append(source[index])
+	return result
+
+
+func _pinball_event_cue_id(event_type: String) -> String:
+	match event_type:
+		"peg":
+			return "pinball_peg_tick"
+		"bumper", "slingshot":
+			return "pinball_bumper_pop"
+		"launcher", "spawner":
+			return "pinball_launcher_fire"
+		"target":
+			return "pinball_target_hit"
+		"gate", "multiplier":
+			return "pinball_gate_chime"
+		"pocket":
+			return "pinball_cup_hit"
+		"jackpot":
+			return "pinball_jackpot_lane"
+		"super_jackpot":
+			return "pinball_super_jackpot"
+		"drain":
+			return "pinball_drain"
+		"flipper":
+			return "pinball_flipper"
+		_:
+			return "pinball_shot_counter"
 
 
 func _pinball_launch_meter(active_bonus: Dictionary, surface_time_msec: int) -> Dictionary:
@@ -878,8 +933,12 @@ func _slot_surface_spec(payload: Dictionary = {}) -> Dictionary:
 	spec["surface_suppresses_game_result_burst"] = bool(spec.get("surface_suppresses_game_result_burst", false))
 	spec["surface_action_bindings"] = _copy_dict(spec.get("surface_action_bindings", {}))
 	spec["native_selected_surface_actions"] = _copy_array(spec.get("native_selected_surface_actions", []))
-	spec["surface_animation_channels"] = GameModule._normalize_surface_animation_channels(spec.get("surface_animation_channels", []))
-	spec["surface_audio"] = _copy_dict(spec.get("surface_audio", {}))
+	if bool(spec.get("surface_animation_channels_normalized", false)):
+		spec["surface_animation_channels"] = _copy_array_shallow(spec.get("surface_animation_channels", []))
+	else:
+		spec["surface_animation_channels"] = GameModule._normalize_surface_animation_channels(spec.get("surface_animation_channels", []))
+	spec.erase("surface_animation_channels_normalized")
+	spec["surface_audio"] = _copy_dict_shallow(spec.get("surface_audio", {}))
 	spec["surface_action_blocks"] = _copy_array(spec.get("surface_action_blocks", []))
 	spec["surface_state_labels"] = _copy_array(spec.get("surface_state_labels", []))
 	spec["surface_result_display"] = _copy_dict(spec.get("surface_result_display", {}))
@@ -902,6 +961,12 @@ func _copy_array(value: Variant) -> Array:
 	if typeof(value) != TYPE_ARRAY:
 		return []
 	return (value as Array).duplicate(true)
+
+
+func _copy_array_shallow(value: Variant) -> Array:
+	if typeof(value) != TYPE_ARRAY:
+		return []
+	return (value as Array).duplicate(false)
 
 
 func _copy_dict(value: Variant) -> Dictionary:

@@ -24,6 +24,9 @@ const LAUNCH_METER_WILD_WIDTH := 22
 static var _sessions: Dictionary = {}
 static var _layouts: Dictionary = {}
 static var _compiled_boards: Dictionary = {}
+static var _surface_refresh_msec: Dictionary = {}
+static var _session_order: Array[String] = []
+const MAX_RUNTIME_SESSIONS := 32
 
 
 func open(machine: Dictionary, mode: String, stake: int, rng: RngStream, params: Dictionary = {}) -> Dictionary:
@@ -37,9 +40,7 @@ func open(machine: Dictionary, mode: String, stake: int, rng: RngStream, params:
 	var sim := SimScript.new()
 	var cap := maxi(1, int(params.get("cap", stake * 12)))
 	sim.configure(compiled, session_seed, {"cap": cap})
-	_sessions[session_id] = sim
-	_layouts[session_id] = _layout_view(layout)
-	_compiled_boards[session_id] = compiled
+	_store_session(session_id, sim, layout, compiled)
 	var total_balls := maxi(1, int(params.get("ball_budget", _ball_budget_for_mode(mode, stake))) + ItemsScript.ball_budget_bonus(item_effects))
 	var skill_width := maxi(LAUNCH_METER_SWEET_WIDTH, int(round(float(compiled.get("skill_width", 0.03)) * 100.0)))
 	skill_width = maxi(LAUNCH_METER_SWEET_WIDTH, int(round(float(skill_width * ItemsScript.skill_width_percent(item_effects)) / 100.0)))
@@ -80,6 +81,7 @@ func open(machine: Dictionary, mode: String, stake: int, rng: RngStream, params:
 		"input_log": [],
 		"event_log": [],
 		"trajectory": [],
+		"history": [],
 		"display_event_log": [],
 		"display_trajectory": [],
 		"last_event_count": 0,
@@ -119,6 +121,7 @@ func step(machine: Dictionary, action_id: String, rng: RngStream, _definition: D
 	var complete := false
 	var before_total := int(sim.total_awarded)
 	var before_events := maxi(0, int(active.get("last_event_count", 0)))
+	var before_hooks := _array(active.get("pinball_item_hooks", [])).size()
 	var local_events: Array = []
 	var local_trajectory: Array = []
 	if action_id.begins_with("slot_bonus_aim_"):
@@ -171,6 +174,10 @@ func step(machine: Dictionary, action_id: String, rng: RngStream, _definition: D
 		if not live_before and int(active.get("balls_remaining", 0)) > 0:
 			_refresh_launch_state(active, mode, true, ui_state)
 			sim.launch_ball(_launch_params(active, mode))
+			if mode == "video_feature" and int(_dict(sim.compact_snapshot()).get("balls_launched", 0)) == 1:
+				sim.launch_ball({"power": 0.68, "aim": -0.28, "position": Vector2(0.42, 0.135)})
+				sim.launch_ball({"power": 0.72, "aim": 0.28, "position": Vector2(0.58, 0.135)})
+				active["multiball_started"] = true
 			_log_input(active, "slot_bonus_launch")
 			message = "Pinball launch."
 		elif not live_before:
@@ -182,12 +189,17 @@ func step(machine: Dictionary, action_id: String, rng: RngStream, _definition: D
 	if ticks_to_run > 0 and sim.active_ball_count() > 0:
 		active["physics_tick_budget"] = ticks_to_run
 		_run_ticks_with_trajectory(sim, ticks_to_run, local_trajectory, live_display)
-	if not live_display:
+		if live_display:
+			_surface_refresh_msec[session_id] = maxi(0, int(ui_state.get("surface_time_msec", ui_state.get("slot_visual_time_msec", 0))))
+	if not live_display and bool(active.get("headless", false)):
 		var drain_deadline_tick := int(sim.tick) + int(sim.max_ticks)
 		while sim.active_ball_count() > 0 and int(sim.tick) < drain_deadline_tick:
 			_run_ticks_with_trajectory(sim, 6, local_trajectory, false)
-	_apply_mode_progress(active, sim, mode)
-	local_events = sim.event_log_since(before_events)
+	var base_events: Array = sim.event_log_since(before_events)
+	active["sequence_events"] = []
+	_apply_mode_progress(active, sim, mode, base_events)
+	local_events = base_events + _sequence_events_to_log(_array(active.get("sequence_events", [])), base_events, sim)
+	local_events.append_array(_hook_events_to_log(_array(active.get("pinball_item_hooks", [])).slice(before_hooks), base_events, sim))
 	var step_award := maxi(0, int(sim.total_awarded) - before_total)
 	_refresh_active(active, sim, local_events, local_trajectory)
 	if int(active.get("balls_remaining", 0)) <= 0 and sim.active_ball_count() <= 0:
@@ -223,14 +235,23 @@ static func surface_refresh(active: Dictionary, surface_time_msec: int) -> Dicti
 	var result := active.duplicate(false)
 	var sim = _session_for_static(result)
 	if sim != null and bool(result.get("active", false)) and sim.active_ball_count() > 0:
-		var last_msec := maxi(0, int(result.get("last_physics_real_msec", 0)))
-		var elapsed := 16 if last_msec <= 0 else clampi(surface_time_msec - last_msec, 1, 34)
-		var ticks_to_run := clampi(int(round(float(elapsed) / (SimScript.FIXED_DT * 1000.0))), 1, 3)
+		var session_id := str(result.get("runtime_session_id", ""))
+		var last_msec := maxi(0, int(_surface_refresh_msec.get(session_id, 0)))
+		var elapsed := 32 if last_msec <= 0 else clampi(surface_time_msec - last_msec, 0, 64)
+		var ticks_to_run := 1 if elapsed >= 56 else 0
 		for _i in range(ticks_to_run):
 			sim.step_tick()
-		result["last_physics_real_msec"] = surface_time_msec
+		if ticks_to_run > 0:
+			_surface_refresh_msec[session_id] = surface_time_msec
+			result["last_physics_real_msec"] = surface_time_msec
+		result["physics_tick_budget"] = ticks_to_run
 		result["active_ball_count"] = sim.active_ball_count()
 		result["pinball_view"] = _view_for_static(result, sim, [], sim.active_position_log())
+		result["event_log"] = _tail_array_shallow(result.get("event_log", []), 48)
+		result["trajectory"] = _tail_array_shallow(result.get("trajectory", []), 80)
+		result["display_event_log"] = _tail_array_shallow(result.get("display_event_log", []), 8)
+		result["display_trajectory"] = _tail_array_shallow(result.get("display_trajectory", []), 24)
+		result["history"] = []
 	return result
 
 
@@ -253,8 +274,9 @@ func _refresh_active(active: Dictionary, sim, local_events: Array, local_traject
 	active["pinball_debug"] = snapshot
 	active["display_event_log"] = local_events
 	active["display_trajectory"] = local_trajectory
-	active["event_log"] = _trimmed(_array(active.get("event_log", [])) + local_events, 160)
-	active["trajectory"] = _trimmed(_array(active.get("trajectory", [])) + local_trajectory, 220)
+	active["event_log"] = _trimmed(_array(active.get("event_log", [])) + local_events, 420)
+	active["trajectory"] = _trimmed(_array(active.get("trajectory", [])) + local_trajectory, 300)
+	_append_history(active, snapshot, local_events, local_trajectory)
 	active["pinball_view"] = _view_for(active, sim, local_events, local_trajectory)
 	if not local_trajectory.is_empty():
 		var last_point: Dictionary = _dict(local_trajectory[local_trajectory.size() - 1])
@@ -263,13 +285,122 @@ func _refresh_active(active: Dictionary, sim, local_events: Array, local_traject
 	active["physics_frame_index"] = maxi(0, int(active.get("physics_frame_index", 0))) + 1
 
 
+func _append_history(active: Dictionary, snapshot: Dictionary, local_events: Array, local_trajectory: Array) -> void:
+	if local_events.is_empty() and local_trajectory.is_empty():
+		return
+	var history: Array = _array(active.get("history", []))
+	history.append({
+		"id": "pinball_step_%03d" % history.size(),
+		"tick": int(snapshot.get("tick", 0)),
+		"award": _logged_award(local_events),
+		"event_log": local_events,
+		"trajectory": _trimmed(local_trajectory.duplicate(true), 42),
+		"active_balls": int(snapshot.get("active_ball_count", 0)),
+		"total": int(snapshot.get("total_awarded", 0)),
+	})
+	active["history"] = _trimmed(history, 48)
+
+
+func _sequence_events_to_log(sequence_events: Array, source_events: Array, sim) -> Array:
+	var result: Array = []
+	for index in range(sequence_events.size()):
+		var sequence: Dictionary = _dict(sequence_events[index])
+		var award := maxi(0, int(sequence.get("award", 0)))
+		if award <= 0:
+			continue
+		var sequence_id := str(sequence.get("sequence_id", "combo"))
+		result.append(_manual_award_event(_sequence_event_type(sequence_id), sequence_id, award, source_events, sim, float(index + 1) * 0.0003))
+	return result
+
+
+func _hook_events_to_log(hook_events: Array, source_events: Array, sim) -> Array:
+	var result: Array = []
+	for index in range(hook_events.size()):
+		var hook: Dictionary = _dict(hook_events[index])
+		var award := maxi(0, int(hook.get("award", 0)))
+		if award <= 0:
+			continue
+		var item_id := str(hook.get("item", "pinball_item"))
+		result.append(_manual_award_event("item", item_id, award, source_events, sim, float(index + 1) * 0.0005))
+	return result
+
+
+func _manual_award_event(event_type: String, element_id: String, award: int, source_events: Array, sim, time_offset: float = 0.0001) -> Dictionary:
+	return {
+		"element_id": element_id,
+		"element_type": event_type,
+		"position": _last_event_position(source_events),
+		"award": maxi(0, award),
+		"time": snappedf(_last_event_time(source_events, sim) + time_offset, 0.0001),
+		"ball_index": _last_event_ball(source_events),
+	}
+
+
+func _sequence_event_type(sequence_id: String) -> String:
+	match sequence_id:
+		"locks_multiball", "video_multiball", "alley_loop":
+			return "launcher"
+		"cascade":
+			return "spawner"
+		"portal_combo":
+			return "gate"
+		"qualify_super":
+			return "target"
+		"super_jackpot":
+			return "super_jackpot"
+		"jackpot", "jackpot_works":
+			return "jackpot"
+		"bumper_streak":
+			return "bumper"
+		_:
+			return "combo"
+
+
+func _last_event_position(source_events: Array) -> Dictionary:
+	for index in range(source_events.size() - 1, -1, -1):
+		var event: Dictionary = _dict(source_events[index])
+		var position: Variant = event.get("position", {})
+		if typeof(position) == TYPE_DICTIONARY:
+			return (position as Dictionary).duplicate(true)
+	return _point_payload(Vector2(0.5, 0.5))
+
+
+func _last_event_time(source_events: Array, sim) -> float:
+	for index in range(source_events.size() - 1, -1, -1):
+		var event: Dictionary = _dict(source_events[index])
+		if event.has("time"):
+			return float(event.get("time", 0.0))
+	return float(sim.tick) * SimScript.FIXED_DT
+
+
+func _last_event_ball(source_events: Array) -> int:
+	for index in range(source_events.size() - 1, -1, -1):
+		var event: Dictionary = _dict(source_events[index])
+		if event.has("ball_index"):
+			return int(event.get("ball_index", 0))
+	return 0
+
+
+func _logged_award(events: Array) -> int:
+	var total := 0
+	for event_value in events:
+		total += maxi(0, int(_dict(event_value).get("award", 0)))
+	return total
+
+
 func _finish(machine: Dictionary, active: Dictionary, sim, message: String) -> Dictionary:
+	var finish_events: Array = []
+	var finish_source_events: Array = _array(active.get("display_event_log", []))
+	var before_hooks := _array(active.get("pinball_item_hooks", [])).size()
 	ItemsScript.apply_drain_cleaner(active, sim)
+	finish_events.append_array(_hook_events_to_log(_array(active.get("pinball_item_hooks", [])).slice(before_hooks), finish_source_events, sim))
 	var minimum := _minimum_award(active)
 	if int(sim.total_awarded) < minimum:
+		var floor_paid := minimum - int(sim.total_awarded)
 		sim.total_awarded = minimum
 		active["feature_total"] = minimum
 		active["pending_award"] = minimum
+		finish_events.append(_manual_award_event("floor", "pinball_floor", floor_paid, finish_source_events, sim))
 	var award := mini(int(active.get("session_cap", sim.session_cap)), maxi(minimum, int(sim.total_awarded)))
 	active["active"] = false
 	active["complete"] = true
@@ -280,8 +411,11 @@ func _finish(machine: Dictionary, active: Dictionary, sim, message: String) -> D
 	active["remaining_steps"] = 0
 	active["balls_remaining"] = 0
 	active["launch_in_progress"] = false
+	if not finish_events.is_empty():
+		active["display_event_log"] = finish_events
+		active["event_log"] = _trimmed(_array(active.get("event_log", [])) + finish_events, 420)
 	active["pinball_view"] = _view_for(active, sim, [], [])
-	_sessions.erase(str(active.get("runtime_session_id", "")))
+	_erase_session(str(active.get("runtime_session_id", "")))
 	machine["last_bonus_replay"] = active.duplicate(true)
 	machine["active_bonus"] = {"active": false, "complete": true}
 	return _bonus_step_result(true, award, "%s Total $%d." % [message, award], active)
@@ -296,15 +430,40 @@ func _session_for(active: Dictionary):
 	var compiled: Dictionary = compiler.compile(layout, ItemsScript.compile_modifiers(_dict(active.get("pinball_item_effects", {}))))
 	var sim := SimScript.new()
 	sim.configure(compiled, int(active.get("runtime_seed", 1)), {"cap": int(active.get("session_cap", 500))})
-	_sessions[session_id] = sim
-	_layouts[session_id] = _layout_view(layout)
-	_compiled_boards[session_id] = compiled
+	_store_session(session_id, sim, layout, compiled)
 	return sim
 
 
 static func _session_for_static(active: Dictionary):
 	var session_id := str(active.get("runtime_session_id", ""))
 	return _sessions.get(session_id, null)
+
+
+static func _store_session(session_id: String, sim, layout: Dictionary, compiled: Dictionary) -> void:
+	if session_id.is_empty():
+		return
+	_sessions[session_id] = sim
+	_layouts[session_id] = _layout_view(layout)
+	_compiled_boards[session_id] = compiled
+	_surface_refresh_msec[session_id] = 0
+	_session_order.erase(session_id)
+	_session_order.append(session_id)
+	_prune_session_cache()
+
+
+static func _erase_session(session_id: String) -> void:
+	if session_id.is_empty():
+		return
+	_sessions.erase(session_id)
+	_layouts.erase(session_id)
+	_compiled_boards.erase(session_id)
+	_surface_refresh_msec.erase(session_id)
+	_session_order.erase(session_id)
+
+
+static func _prune_session_cache() -> void:
+	while _session_order.size() > MAX_RUNTIME_SESSIONS:
+		_erase_session(str(_session_order[0]))
 
 
 func _run_ticks_with_trajectory(sim, ticks_to_run: int, trajectory: Array, local_time: bool) -> void:
@@ -316,8 +475,7 @@ func _run_ticks_with_trajectory(sim, ticks_to_run: int, trajectory: Array, local
 			trajectory.append_array(sim.active_position_log(local_sec))
 
 
-func _apply_mode_progress(active: Dictionary, sim, mode: String) -> void:
-	var events: Array = sim.event_log_since(maxi(0, int(active.get("last_event_count", 0))))
+func _apply_mode_progress(active: Dictionary, sim, mode: String, events: Array) -> void:
 	if events.is_empty():
 		return
 	var sequencer := SequencerScript.new()
@@ -370,11 +528,11 @@ static func _layout_view(layout: Dictionary) -> Dictionary:
 	for sensor_value in _array_static(layout.get("sensors", [])):
 		var sensor: Dictionary = _dict_static(sensor_value)
 		var sensor_type := str(sensor.get("type", "sensor"))
-		elements.append({"id": str(sensor.get("id", "")), "type": sensor_type, "shape": "sensor_circle", "position": sensor.get("position", Vector2.ZERO), "radius": sensor.get("radius", 0.04), "award": sensor.get("award", 0), "label": sensor_type.left(4).to_upper(), "light": str(sensor.get("id", ""))})
+		elements.append({"id": str(sensor.get("id", "")), "type": sensor_type, "shape": "sensor_circle", "position": sensor.get("position", Vector2.ZERO), "radius": sensor.get("radius", 0.04), "award": sensor.get("award", 0), "label": str(sensor.get("label", sensor_type.left(4).to_upper())), "light": str(sensor.get("id", "")), "route": sensor.get("kick", Vector2(0.0, -1.0))})
 	for rect_value in _array_static(layout.get("rects", [])):
 		var rect_element: Dictionary = _dict_static(rect_value)
 		var rect_type := str(rect_element.get("type", "pocket"))
-		elements.append({"id": str(rect_element.get("id", "")), "type": rect_type, "shape": "drain_rect" if rect_type == "drain" else "slot_rect", "rect": rect_element.get("rect", Rect2()), "award": rect_element.get("award", 0), "label": str(rect_element.get("award", ""))})
+		elements.append({"id": str(rect_element.get("id", "")), "type": rect_type, "shape": "drain_rect" if rect_type == "drain" else "slot_rect", "rect": rect_element.get("rect", Rect2()), "award": rect_element.get("award", 0), "label": str(rect_element.get("label", rect_element.get("award", "")))})
 	for flipper_value in _array_static(layout.get("flippers", [])):
 		var flipper: Dictionary = _dict_static(flipper_value)
 		var pos: Vector2 = flipper.get("position", Vector2.ZERO)
@@ -429,7 +587,7 @@ static func _launch_skill_snapshot(active: Dictionary, mode: String, time_msec: 
 		"error": error,
 		"rating": rating,
 		"angle_degrees": int(active.get("launch_angle_degrees", 0)),
-		"launch_start": _point_payload(_launch_start_for_angle(mode, int(active.get("launch_angle_degrees", 0)))),
+		"launch_start": _point_payload(_vector2(active.get("launch_start", _launch_start_for_angle(mode, int(active.get("launch_angle_degrees", 0)))), _launch_start_for_angle(mode, int(active.get("launch_angle_degrees", 0))))),
 		"controlled": true,
 		"timed": true,
 	}
@@ -455,7 +613,8 @@ func _adjust_aim(active: Dictionary, mode: String, delta: int) -> void:
 	active["launch_angle_degrees"] = clampi(int(active.get("launch_angle_degrees", 0)) + delta, AIM_MIN, AIM_MAX)
 	active["selected_lane"] = _lane_for_angle(int(active.get("launch_angle_degrees", 0)))
 	active["selected_path"] = active["selected_lane"]
-	active["launch_start"] = _point_payload(_launch_start_for_angle(mode, int(active.get("launch_angle_degrees", 0))))
+	if not bool(active.get("launch_start_manual", false)):
+		active["launch_start"] = _point_payload(_launch_start_for_angle(mode, int(active.get("launch_angle_degrees", 0))))
 	_refresh_launch_state(active, mode, false, {})
 
 
@@ -503,7 +662,7 @@ func _ticks_for_step(active: Dictionary, sim, live_display: bool) -> int:
 		return maxi(1, int(sim.max_ticks))
 	if live_display:
 		return 2
-	return maxi(60, int(sim.max_ticks))
+	return clampi(int(round(float(sim.max_ticks) * 0.16)), 72, 132)
 
 
 func _live_display(ui_state: Dictionary) -> bool:
@@ -626,6 +785,17 @@ static func _trimmed(values: Array, keep: int) -> Array:
 	while values.size() > keep:
 		values.remove_at(0)
 	return values
+
+
+static func _tail_array_shallow(value: Variant, keep: int) -> Array:
+	if typeof(value) != TYPE_ARRAY:
+		return []
+	var source := value as Array
+	var start_index := maxi(0, source.size() - maxi(0, keep))
+	var result: Array = []
+	for index in range(start_index, source.size()):
+		result.append(source[index])
+	return result
 
 
 static func _array_static(value: Variant) -> Array:

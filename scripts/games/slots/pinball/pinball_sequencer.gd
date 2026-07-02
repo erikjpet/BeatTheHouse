@@ -45,6 +45,7 @@ func apply(active: Dictionary, sim, mode: String, events: Array) -> Dictionary:
 	active["multiball_started"] = bool(state.get("multiball", false))
 	active["video_super_jackpot_lit"] = bool(state.get("super_lit", false))
 	active["video_multiball_ready"] = mode == "video_feature" and int(state.get("locks", 0)) >= 2 and not bool(state.get("multiball", false))
+	active["video_targets"] = _dict(state.get("targets", {}))
 	active["combo_state"] = {
 		"route_id": str(state.get("last_label", "")).to_lower().replace(" ", "_"),
 		"step": maxi(0, int(state.get("bumper_streak", 0))),
@@ -93,18 +94,24 @@ func _apply_lock_cascade(active: Dictionary, sim, state: Dictionary, event_type:
 	if bool(state.get("multiball", false)) and event_type == "pocket":
 		_award(active, sim, state, "jackpot", "JACKPOT", _stake(active) * 6, sequence_events)
 		_light(state, "jackpot", false)
-	if event_type == "multiplier":
+	if event_type == "multiplier" or event_type == "gate":
 		state["multiplier"] = mini(4, int(state.get("multiplier", 1)) + 1)
 		_award(active, sim, state, "portal_combo", "PORTAL COMBO", _stake(active) * 2, sequence_events)
 
 
 func _apply_jackpot_works(active: Dictionary, sim, state: Dictionary, event_type: String, sequence_events: Array) -> void:
-	if event_type == "bumper" or event_type == "skill_shot" or event_type == "multiplier":
+	if event_type == "bumper" or event_type == "target" or event_type == "gate" or event_type == "multiplier" or event_type == "skill_shot":
 		state["target_bank"] = clampi(int(state.get("target_bank", 0)) + 1, 0, 6)
+		var targets: Dictionary = _dict(state.get("targets", {}))
+		targets["target_%d" % int(state.get("target_bank", 0))] = true
+		state["targets"] = targets
 		_light(state, "target_%d" % int(state.get("target_bank", 0)), true)
 		if int(state.get("target_bank", 0)) >= 3 and not bool(state.get("super_lit", false)):
 			state["super_lit"] = true
 			_award(active, sim, state, "qualify_super", "SUPER LIT", _stake(active) * 2, sequence_events)
+		if int(state.get("target_bank", 0)) >= 6 and not bool(state.get("bank_completed", false)):
+			state["bank_completed"] = true
+			active["video_completed_banks"] = int(active.get("video_completed_banks", 0)) + 1
 	if event_type == "launcher":
 		state["locks"] = clampi(int(state.get("locks", 0)) + 1, 0, 2)
 		_light(state, "video_lock_%d" % int(state.get("locks", 0)), true)
@@ -112,13 +119,15 @@ func _apply_jackpot_works(active: Dictionary, sim, state: Dictionary, event_type
 			state["multiball"] = true
 			_launch_extra_balls(sim, 3)
 			_award(active, sim, state, "video_multiball", "VIDEO MULTIBALL", _stake(active) * 4, sequence_events)
-	if bool(state.get("super_lit", false)) and event_type == "pocket":
+	if bool(state.get("super_lit", false)) and (event_type == "pocket" or event_type == "jackpot" or event_type == "super_jackpot"):
 		state["super_lit"] = false
 		active["video_super_jackpots"] = int(active.get("video_super_jackpots", 0)) + 1
+		active["video_jackpots"] = int(active.get("video_jackpots", 0)) + 1
 		_award(active, sim, state, "super_jackpot", "SUPER JACKPOT", _stake(active) * 9, sequence_events)
 	if bool(state.get("multiball", false)) and int(state.get("target_bank", 0)) >= 6 and not bool(state.get("wizard", false)):
 		state["wizard"] = true
 		state["multiplier"] = mini(5, maxi(2, int(state.get("multiplier", 1)) + 1))
+		active["video_jackpots"] = int(active.get("video_jackpots", 0)) + 1
 		_award(active, sim, state, "jackpot_works", "JACKPOT WORKS", _stake(active) * 10, sequence_events)
 
 
@@ -143,7 +152,8 @@ func _launch_extra_balls(sim, count: int) -> void:
 		if sim.active_ball_count() >= 8:
 			return
 		var aim := -0.35 + float(index % 3) * 0.35
-		sim.launch_ball({"power": 0.68, "aim": aim})
+		var start := Vector2(0.38 + float(index % 3) * 0.12, 0.16 + float(index / 3) * 0.04)
+		sim.launch_ball({"power": 0.72, "aim": aim, "position": start})
 
 
 func _decay_combo_state(state: Dictionary, event_type: String) -> void:

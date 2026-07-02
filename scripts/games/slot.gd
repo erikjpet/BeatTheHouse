@@ -243,7 +243,8 @@ func surface_action_command(surface_action: String, index: int, confirm_requeste
 
 
 func surface_needs_auto_tick(ui_state: Dictionary, run_state: RunState, environment: Dictionary) -> bool:
-	var machine: Dictionary = StateScript.read_machine(environment, get_id())
+	# Per-frame check: peek (zero-copy, read-only) instead of deep-copying the machine.
+	var machine: Dictionary = StateScript.peek_machine(environment, get_id())
 	var buffalo_bonus_action := _buffalo_bonus_auto_action(machine)
 	if not buffalo_bonus_action.is_empty():
 		var bonus_surface_time := _surface_timing_msec(ui_state)
@@ -328,7 +329,8 @@ func surface_pause_repeating_action_for_confirmation(_ui_state: Dictionary, _run
 
 
 func environment_runtime_needs_tick(_run_state: RunState, environment: Dictionary, now_msec: int) -> bool:
-	var machine: Dictionary = StateScript.read_machine(environment, get_id())
+	# Per-frame check: peek (zero-copy, read-only) instead of deep-copying the machine.
+	var machine: Dictionary = StateScript.peek_machine(environment, get_id())
 	if machine.is_empty() or not bool(machine.get("slot_autoplay_active", false)):
 		return false
 	var next_msec := int(machine.get("slot_autoplay_next_msec", 0))

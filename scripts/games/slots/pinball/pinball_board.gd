@@ -5,9 +5,16 @@ const SENSOR_SKILL := 1
 const SENSOR_SLINGSHOT := 2
 const SENSOR_LAUNCHER := 3
 const SENSOR_MULTIPLIER := 4
+const SENSOR_TARGET := 5
+const SENSOR_GATE := 6
+const SENSOR_JACKPOT := 7
+const SENSOR_SUPER_JACKPOT := 8
+const SENSOR_SPAWNER := 9
 
 const RECT_DRAIN := 1
 const RECT_POCKET := 2
+const RECT_JACKPOT := 3
+const RECT_SUPER_JACKPOT := 4
 
 
 func compile(layout: Dictionary, modifiers: Dictionary = {}) -> Dictionary:
@@ -16,8 +23,10 @@ func compile(layout: Dictionary, modifiers: Dictionary = {}) -> Dictionary:
 	var peg_awards := PackedInt32Array()
 	var peg_restitution := PackedFloat32Array()
 	var peg_bias := PackedFloat32Array()
+	var peg_ids := PackedStringArray()
 	for peg_value in _array(layout.get("pegs", [])):
 		var peg := _dict(peg_value)
+		peg_ids.append(str(peg.get("id", "peg_%d" % peg_positions.size())))
 		peg_positions.append(_vector2(peg.get("position", Vector2.ZERO), Vector2.ZERO))
 		peg_radii.append(maxf(0.001, float(peg.get("radius", 0.013))))
 		peg_awards.append(maxi(0, int(peg.get("award", 0))))
@@ -33,8 +42,10 @@ func compile(layout: Dictionary, modifiers: Dictionary = {}) -> Dictionary:
 	var bumper_restitution := PackedFloat32Array()
 	var bumper_kicks := PackedVector2Array()
 	var bumper_cooldowns := PackedInt32Array()
+	var bumper_ids := PackedStringArray()
 	for bumper_value in _array(layout.get("bumpers", [])):
 		var bumper := _dict(bumper_value)
+		bumper_ids.append(str(bumper.get("id", "bumper_%d" % bumper_positions.size())))
 		bumper_positions.append(_vector2(bumper.get("position", Vector2.ZERO), Vector2.ZERO))
 		bumper_radii.append(maxf(0.001, float(bumper.get("radius", 0.045))))
 		bumper_awards.append(maxi(0, int(bumper.get("award", 0))))
@@ -48,8 +59,10 @@ func compile(layout: Dictionary, modifiers: Dictionary = {}) -> Dictionary:
 	var sensor_awards := PackedInt32Array()
 	var sensor_kicks := PackedVector2Array()
 	var sensor_cooldowns := PackedInt32Array()
+	var sensor_ids := PackedStringArray()
 	for sensor_value in _array(layout.get("sensors", [])):
 		var sensor := _dict(sensor_value)
+		sensor_ids.append(str(sensor.get("id", "sensor_%d" % sensor_positions.size())))
 		sensor_positions.append(_vector2(sensor.get("position", Vector2.ZERO), Vector2.ZERO))
 		sensor_radii.append(maxf(0.001, float(sensor.get("radius", 0.040))))
 		sensor_types.append(_sensor_type_id(str(sensor.get("type", ""))))
@@ -61,12 +74,14 @@ func compile(layout: Dictionary, modifiers: Dictionary = {}) -> Dictionary:
 	var rect_sizes := PackedVector2Array()
 	var rect_types := PackedInt32Array()
 	var rect_awards := PackedInt32Array()
+	var rect_ids := PackedStringArray()
 	for rect_value in _array(layout.get("rects", [])):
 		var rect_element := _dict(rect_value)
 		var rect := _rect2(rect_element.get("rect", Rect2()))
 		var rect_id := str(rect_element.get("id", ""))
 		if _magnet_cup_rect(rect_id):
 			rect = _expanded_board_rect(rect, clampi(int(modifiers.get("magnet_cup_radius_percent", 0)), 0, 100))
+		rect_ids.append(rect_id if not rect_id.is_empty() else "slot_%d" % rect_positions.size())
 		rect_positions.append(rect.position)
 		rect_sizes.append(rect.size)
 		rect_types.append(_rect_type_id(str(rect_element.get("type", ""))))
@@ -76,8 +91,10 @@ func compile(layout: Dictionary, modifiers: Dictionary = {}) -> Dictionary:
 	var flipper_radii := PackedFloat32Array()
 	var flipper_sides := PackedInt32Array()
 	var flipper_kicks := PackedVector2Array()
+	var flipper_ids := PackedStringArray()
 	for flipper_value in _array(layout.get("flippers", [])):
 		var flipper := _dict(flipper_value)
+		flipper_ids.append(str(flipper.get("id", "flipper_%d" % flipper_positions.size())))
 		flipper_positions.append(_vector2(flipper.get("position", Vector2.ZERO), Vector2.ZERO))
 		flipper_radii.append(maxf(0.001, float(flipper.get("radius", 0.095))))
 		flipper_sides.append(clampi(int(flipper.get("side", 0)), -1, 1))
@@ -116,26 +133,31 @@ func compile(layout: Dictionary, modifiers: Dictionary = {}) -> Dictionary:
 		"peg_awards": peg_awards,
 		"peg_restitution": peg_restitution,
 		"peg_bias": peg_bias,
+		"peg_ids": peg_ids,
 		"bumper_positions": bumper_positions,
 		"bumper_radii": bumper_radii,
 		"bumper_awards": bumper_awards,
 		"bumper_restitution": bumper_restitution,
 		"bumper_kicks": bumper_kicks,
 		"bumper_cooldowns": bumper_cooldowns,
+		"bumper_ids": bumper_ids,
 		"sensor_positions": sensor_positions,
 		"sensor_radii": sensor_radii,
 		"sensor_types": sensor_types,
 		"sensor_awards": sensor_awards,
 		"sensor_kicks": sensor_kicks,
 		"sensor_cooldowns": sensor_cooldowns,
+		"sensor_ids": sensor_ids,
 		"rect_positions": rect_positions,
 		"rect_sizes": rect_sizes,
 		"rect_types": rect_types,
 		"rect_awards": rect_awards,
+		"rect_ids": rect_ids,
 		"flipper_positions": flipper_positions,
 		"flipper_radii": flipper_radii,
 		"flipper_sides": flipper_sides,
 		"flipper_kicks": flipper_kicks,
+		"flipper_ids": flipper_ids,
 		"sequence_names": sequence_names,
 		"bumper_battery_hits": maxi(0, int(modifiers.get("bumper_battery_hits", 0))),
 		"bumper_battery_award_percent": maxi(0, int(modifiers.get("bumper_battery_award_percent", 0))),
@@ -160,6 +182,16 @@ static func _sensor_type_id(sensor_type: String) -> int:
 			return SENSOR_LAUNCHER
 		"multiplier":
 			return SENSOR_MULTIPLIER
+		"target":
+			return SENSOR_TARGET
+		"gate":
+			return SENSOR_GATE
+		"jackpot":
+			return SENSOR_JACKPOT
+		"super_jackpot":
+			return SENSOR_SUPER_JACKPOT
+		"spawner":
+			return SENSOR_SPAWNER
 		_:
 			return 0
 
@@ -170,6 +202,10 @@ static func _rect_type_id(rect_type: String) -> int:
 			return RECT_DRAIN
 		"pocket":
 			return RECT_POCKET
+		"jackpot":
+			return RECT_JACKPOT
+		"super_jackpot":
+			return RECT_SUPER_JACKPOT
 		_:
 			return 0
 
