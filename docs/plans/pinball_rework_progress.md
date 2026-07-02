@@ -563,7 +563,68 @@ Beat the House Godot checks passed. Suite=Smoke
 
 ## Phase 6 - Juice + Polish
 
-Status: NOT STARTED
+Status: COMPLETE
+
+Files changed:
+- `scripts/games/slots/slot_presentation.gd`
+- `tools/slot_pinball_performance_probe.gd`
+- `docs/plans/pinball_rework_progress.md`
+
+Feel reference citations:
+- `docs/plans/pinball_feel_reference.md` target "Feature frame budget": live
+  bonus surface refresh now skips reel timeline/catalog/bet recomposition once
+  the pinball takeover is active.
+- `docs/plans/pinball_feel_reference.md` target "Physics hot loop": perf probe
+  now measures the sim tick path directly and asserts zero object growth while
+  4 balls remain active.
+- `docs/plans/pinball_feel_reference.md` target "Visual language": the active
+  pinball surface keeps a dedicated cabinet identity, launch meter, feature
+  scene, and pinball audio cues without rebuilding base-spin presentation data.
+
+Implementation notes:
+- Added a bonus-only fast path for active pinball takeover surface states. The
+  path is gated on `slot_animation_id` beginning with `bonus:` so ordinary slot
+  spin manifests still produce reel spin-up/decel/settle phases.
+- Reworked `slot_pinball_performance_probe.gd` to test live active features
+  instead of completed replay snapshots.
+- Added Phase 0 timing comparisons for all three formats and an explicit
+  order-of-magnitude feature-overhead reduction assertion.
+- Added a hot sim tick allocation guard that keeps four active balls in play
+  and fails if Godot object count grows during the measured tick loop.
+
+Verification commands:
+
+```powershell
+& 'D:\Projects\Beat-The-House\.tools\godot-4.6-stable\Godot_v4.6-stable_win64_console.exe' --headless --path 'D:\Projects\Beat-The-House' --script 'res://tools/slot_pinball_performance_probe.gd' -- 120
+```
+
+Output:
+
+```text
+Godot Engine v4.6.stable.official.89cea1439 - https://godotengine.org
+
+PINBALL_PERF_SIM ticks=2400 avg_tick_us=63.379 sim_reported_avg_us=62.135 max_tick_us=161 object_delta=0 max_active=4 status=PASS
+PINBALL_PERF_LIVE mode=em_bumper_drop frames=120 avg_surface_us=243.008 avg_feature_overhead_us=116.251 avg_signature_us=254.475 avg_draw_us=817.617 avg_total_us=1315.100 phase0_total_us=1719.546 reduction_vs_phase0_total=14.79x max_draw_calls=295 max_label_calls=23 max_hit_calls=5
+PINBALL_PERF_LIVE mode=lane_multiball frames=120 avg_surface_us=268.575 avg_feature_overhead_us=141.818 avg_signature_us=276.125 avg_draw_us=979.675 avg_total_us=1524.375 phase0_total_us=2264.838 reduction_vs_phase0_total=15.97x max_draw_calls=397 max_label_calls=25 max_hit_calls=5
+PINBALL_PERF_LIVE mode=video_feature frames=120 avg_surface_us=242.792 avg_feature_overhead_us=116.034 avg_signature_us=299.733 avg_draw_us=1102.125 avg_total_us=1644.650 phase0_total_us=2497.442 reduction_vs_phase0_total=21.52x max_draw_calls=446 max_label_calls=27 max_hit_calls=5
+PINBALL_PERF_OVERALL status=PASS failures=0
+```
+
+```powershell
+powershell -ExecutionPolicy Bypass -File tools\check_godot.ps1 -Suite Smoke -NoImport -TimeoutSec 180
+```
+
+Output:
+
+```text
+validate_project                PASS     1254ms
+gdscript_load_check             PASS     7193ms
+foundation_smoke                PASS    32164ms
+ui_scene_compile                PASS    26594ms
+roulette_audio_audit            PASS     2643ms
+Report: D:\Projects\Beat-The-House\.tmp\test_reports\20260701_191656_smoke\summary.json
+Beat the House Godot checks passed. Suite=Smoke
+```
 
 ## FINAL ACCEPTANCE
 

@@ -16,11 +16,14 @@ func _init() -> void:
 
 func surface_state(machine: Dictionary, run_state: RunState, definition: Dictionary, ui_state: Dictionary = {}) -> Dictionary:
 	machine = _surface_machine_view(machine)
-	var selected_bet: Dictionary = StateScript.selected_bet(machine)
 	var stored_active_bonus: Dictionary = machine.get("active_bonus", {}) if typeof(machine.get("active_bonus", {})) == TYPE_DICTIONARY else {}
+	var surface_time_msec := maxi(0, int(ui_state.get("drunk_scaled_surface_time_msec", ui_state.get("surface_time_msec", 0))))
+	var fast_animation_id := str(machine.get("slot_animation_id", ""))
+	if str(stored_active_bonus.get("family", "")) == "pinball" and bool(stored_active_bonus.get("active", false)) and not bool(stored_active_bonus.get("complete", false)) and fast_animation_id.begins_with("bonus:"):
+		return _pinball_active_surface_state(machine, stored_active_bonus, surface_time_msec, ui_state)
+	var selected_bet: Dictionary = StateScript.selected_bet(machine)
 	var animation_duration := maxi(0, int(machine.get("slot_animation_duration_msec", 0)))
 	var animation_id := str(machine.get("slot_animation_id", ""))
-	var surface_time_msec := maxi(0, int(ui_state.get("drunk_scaled_surface_time_msec", ui_state.get("surface_time_msec", 0))))
 	var active_bonus: Dictionary = _display_active_bonus(machine, stored_active_bonus, surface_time_msec)
 	var spin_channel := GameModule.surface_animation_channel(
 		"slot_spin",
@@ -193,6 +196,112 @@ func surface_state(machine: Dictionary, run_state: RunState, definition: Diction
 		"result_message": result_message,
 		"outcome_message": result_message,
 		"has_recent_outcome": str(machine.get("last_classification", "idle")) != "idle",
+	})
+
+
+func _pinball_active_surface_state(machine: Dictionary, active_bonus: Dictionary, surface_time_msec: int, ui_state: Dictionary) -> Dictionary:
+	var live: Dictionary = PinballFeatureScript.surface_refresh(_copy_dict_shallow(active_bonus), surface_time_msec)
+	live["pinball_launch_meter"] = _pinball_launch_meter(live, surface_time_msec)
+	var animation_id := str(machine.get("slot_animation_id", "pinball:live"))
+	var feature_channel := GameModule.surface_animation_channel(
+		"slot_feature",
+		"%s:%s:%d" % [str(live.get("family", "")), str(live.get("mode", "")), int(machine.get("spin_count", 0))],
+		0,
+		0,
+		{"metadata": {"mode": str(live.get("mode", ""))}}
+	)
+	var skin := {
+		"cabinet_identity": "pinball",
+		"cabinet_title": "Pinball Bonus",
+		"topper_style": "pinball",
+		"material": "neon",
+		"motion_style": "live",
+		"palette": {
+			"primary": "#24112f",
+			"secondary": "#090b13",
+			"accent": "#ff4fb3",
+			"light": "#35e0ff",
+			"trim": "#f7c845",
+			"glass": "#9bd5ff",
+			"shadow": "#020308",
+		},
+	}
+	var result_message := "Bonus active: %s." % str(live.get("mode", "feature")).replace("_", " ").capitalize()
+	return _slot_surface_spec({
+		"surface_renderer": "slot_machine",
+		"surface_life": "reel_machine",
+		"surface_cast": "machine",
+		"surface_controls_native": true,
+		"surface_fixed_price_actions": true,
+		"surface_stake_controls_required": false,
+		"surface_animates_idle": true,
+		"surface_realtime_state_refresh": true,
+		"surface_embeds_outcomes": true,
+		"surface_suppresses_game_result_burst": true,
+		"surface_action_bindings": {
+			"legal": {"action": "slot_spin", "index": 0},
+			"cheat": {"action": "slot_nudge", "index": 0},
+		},
+		"native_selected_surface_actions": _selected_actions(ui_state),
+		"surface_animation_channels": [feature_channel],
+		"surface_action_blocks": [],
+		"surface_audio": GameModule.surface_audio_spec({
+			"profile_id": "slot_machine:%s" % str(machine.get("machine_key", "")),
+			"action_cues": {
+				"slot_bonus_left": "machine_button",
+				"slot_bonus_launch": "machine_button",
+				"slot_bonus_right": "machine_button",
+				"slot_bonus_tilt": "machine_button",
+			},
+			"feature_cues": _pinball_feature_audio_cues(live, str(_pinball_feature_scene(live).get("feature_phase", "play"))),
+			"channels": {
+				"feature": "slot_feature",
+				"feature_animation_channel": "slot_feature",
+			},
+		}),
+		"machine_key": str(machine.get("machine_key", "")),
+		"slot_skin": skin,
+		"slot_format_id": str(machine.get("format_id", "")),
+		"slot_type_id": str(machine.get("type_id", "pinball")),
+		"slot_cabinet_identity": str(skin.get("cabinet_identity", "")),
+		"slot_cabinet_title": str(skin.get("cabinet_title", "")),
+		"slot_cabinet_signature": "pinball:pinball:neon:live",
+		"slot_reel_count": int(machine.get("reel_count", 3)),
+		"slot_row_count": int(machine.get("row_count", 1)),
+		"slot_grid": [],
+		"slot_previous_grid": [],
+		"slot_reel_stops": [],
+		"slot_reel_strips": [],
+		"slot_reel_stop_times": [],
+		"slot_reel_timeline": [],
+		"slot_animation_plan": _copy_dict(machine.get("slot_animation_plan", {})),
+		"slot_animation_id": animation_id,
+		"slot_animation_duration_msec": int(machine.get("slot_animation_duration_msec", 0)),
+		"slot_visual_time_msec": surface_time_msec,
+		"slot_attract_phase": 0.0,
+		"slot_bonus_start_time": 0,
+		"slot_audio_cues": [],
+		"slot_feature_scene": _feature_scene(live),
+		"slot_bonus_steps": [],
+		"slot_bonus_total": int(live.get("feature_total", live.get("pending_award", 0))),
+		"slot_payout": int(machine.get("last_payout", 0)),
+		"slot_stake_cost": int(machine.get("last_stake_cost", 0)),
+		"slot_net": int(machine.get("last_net", 0)),
+		"slot_classification": str(machine.get("last_classification", "bonus")),
+		"slot_active_bonus": live,
+		"slot_active_bonus_active": true,
+		"slot_fixed_bet_ladder": true,
+		"bet_options": [],
+		"slot_bet_options": [],
+		"selected_bet_id": str(_copy_dict(machine.get("bet_ladder", {})).get("selected_id", "bet_2")),
+		"slot_selected_bet_id": str(_copy_dict(machine.get("bet_ladder", {})).get("selected_id", "bet_2")),
+		"selected_stake": int(_copy_dict(machine.get("selected_bet", {})).get("total_credits", 2)),
+		"slot_selected_bet": int(_copy_dict(machine.get("selected_bet", {})).get("total_credits", 2)),
+		"bankroll": 0,
+		"suspicion_level": 0,
+		"result_message": result_message,
+		"outcome_message": result_message,
+		"has_recent_outcome": true,
 	})
 
 
