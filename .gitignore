@@ -1,0 +1,23 @@
+# Godot generated files
+.godot/
+*.translation
+*.uid
+*.import
+.tmp/
+tmp/
+
+# Local tool installs and builds
+.tools/
+builds/
+
+# OS/editor noise
+.DS_Store
+Thumbs.db
+*.tmp
+*.log
+
+# Secrets and signing
+*.keystore
+*.p12
+*.mobileprovision
+secrets/
