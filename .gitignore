@@ -8,6 +8,7 @@ tmp/
 
 # Local tool installs and builds
 .tools/
+tools/__pycache__/
 builds/
 
 # OS/editor noise
