@@ -1997,7 +1997,7 @@ their status is PARKED(0.3) so they are not picked up by accident.
 
 | Item | Release role |
 | --- | --- |
-| Epic 9 release passes | R1, R2, R5, R6, R7, and R8 are DONE; R3 freezes scope here; R4's nine cleanup items are folded into R9; R9 and R10 remain ship blockers. |
+| Epic 9 release passes | R1, R2, R5, R6, R7, and R8 are DONE; R3 freezes scope here; R4's nine cleanup items are folded into R9; R9 and R10 are DONE after R11 evidence closure. |
 | T7.3 Act 1 Balance Gauntlet | P0 and scheduled immediately after R3 because all listed deps are DONE and the R6/R7 mechanics are now fixed. |
 | T7.2 Visual QA Optional-Route Warnings Elimination | Required release polish; drive known optional-route warnings to zero or document a non-red exclusion. |
 | T6.3 Full Text/Layout/Touch Collision Pass | Required final layout/touch sweep across Act 1 screens. |
