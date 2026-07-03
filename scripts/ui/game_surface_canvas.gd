@@ -65,6 +65,8 @@ var drunk_time_scale := 1.0
 
 
 func set_game_module(game_module: GameModule) -> void:
+	if surface_game_module == game_module:
+		return
 	surface_game_module = game_module
 	queue_redraw()
 
@@ -158,6 +160,7 @@ func performance_counters() -> Dictionary:
 		"draw_frame_usec_samples": perf_draw_frame_usec_samples.duplicate(),
 		"draw_avg_ms": _draw_average_ms(),
 		"draw_p95_ms": _draw_percentile_ms(0.95),
+		"draw_max_ms": _draw_max_ms(),
 	}
 
 
@@ -184,6 +187,13 @@ func _draw_percentile_ms(percentile: float) -> float:
 	sorted_samples.sort()
 	var index := clampi(int(ceil(percentile * float(sorted_samples.size()))) - 1, 0, sorted_samples.size() - 1)
 	return float(int(sorted_samples[index])) / 1000.0
+
+
+func _draw_max_ms() -> float:
+	var max_usec := 0
+	for sample_value in perf_draw_frame_usec_samples:
+		max_usec = maxi(max_usec, int(sample_value))
+	return float(max_usec) / 1000.0
 
 
 func stop_surface_audio() -> void:

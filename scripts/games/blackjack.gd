@@ -216,7 +216,6 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 	var count_active := not count_challenge.is_empty() and not bool(session.get("count_answered", false))
 	var round_complete := dealt and _all_hands_complete(session)
 	var dealer_blackjack_pending := dealt and _dealer_has_blackjack(dealer_cards)
-	var blackjack_live_redraw_active := not barred and (dealt or count_active)
 	var dealer_focus_runtime: Dictionary = {
 		"dealer_lookaway_started_msec": attention_started_msec,
 		"dealer_lookaway_duration_msec": attention_duration_msec,
@@ -231,6 +230,7 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 	var payout_started_msec := int(last_result.get("resolved_at_msec", last_result.get("timestamp_msec", 0)))
 	var deal_animation_active := not deal_active_id.is_empty() and deal_started_msec > 0 and now_msec - deal_started_msec >= 0 and now_msec - deal_started_msec < deal_duration_msec
 	var payout_animation_active := not payout_active_id.is_empty() and payout_started_msec > 0 and now_msec - payout_started_msec >= 0 and now_msec - payout_started_msec < PAYOUT_ANIMATION_DURATION_MSEC
+	var blackjack_live_redraw_active := not barred and (deal_animation_active or payout_animation_active or count_active or distraction_active)
 	var timer_active := not dealt and not barred and not deal_animation_active and not payout_animation_active
 	var round_timer := GameModule.table_round_timer_status(table, now_msec, "Next hand") if timer_active else {}
 	if timer_active:
@@ -262,7 +262,7 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 		"surface_stake_controls_required": true,
 		"surface_embeds_outcomes": true,
 		"surface_animates_idle": blackjack_live_redraw_active,
-		"surface_realtime_state_refresh": false,
+		"surface_realtime_state_refresh": blackjack_live_redraw_active,
 		"surface_ui_protected_regions": _blackjack_ui_protected_regions(count_challenge),
 		"surface_hover_ui_protected_regions": [
 			_blackjack_ui_rect(236, 202, 428, 108, "blackjack_side_bet"),

@@ -10,6 +10,7 @@ const DEFAULT_SEED_PREFIX := "FOUNDATION-PERF"
 const DEFAULT_RUN_COUNT := 8
 const DEFAULT_FRAMES_PER_SURFACE := 120
 const MAX_SURFACE_DRAW_P95_MS := 16.0
+const MAX_IDLE_SURFACE_DRAW_P95_MS := 2.0
 const MAX_SEVERE_IDLE_AVG_MS := 45.0
 const MAX_SEVERE_FOCUS_AVG_MS := 45.0
 const FOCUS_PROBE_FRAMES := 18
@@ -157,7 +158,6 @@ func _probe_game(seed: String, run_index: int, environment_id: String, game_id: 
 		canvas.call("reset_performance_counters")
 	var start_usec := Time.get_ticks_usec()
 	for _frame_index in range(frames_per_surface):
-		canvas.queue_redraw()
 		await process_frame
 	var elapsed_usec := Time.get_ticks_usec() - start_usec
 	var counters := _canvas_counters(canvas)
@@ -176,9 +176,11 @@ func _probe_game(seed: String, run_index: int, environment_id: String, game_id: 
 		"avg_frame_ms": avg_ms,
 		"draw_avg_ms": float(counters.get("draw_avg_ms", 0.0)),
 		"draw_p95_ms": draw_p95_ms,
+		"draw_max_ms": float(counters.get("draw_max_ms", 0.0)),
 		"draw_samples": draw_samples,
 		"full_snapshot_calls": int(counters.get("full_snapshot_calls", 0)),
 		"runtime_status_calls": int(counters.get("runtime_status_calls", 0)),
+		"idle_draw_budget_ms": MAX_IDLE_SURFACE_DRAW_P95_MS,
 	})
 	if int(counters.get("full_snapshot_calls", 0)) > 0:
 		failures.append("Idle %s surface rebuilt full snapshots %d times." % [renderer, int(counters.get("full_snapshot_calls", 0))])
@@ -187,7 +189,7 @@ func _probe_game(seed: String, run_index: int, environment_id: String, game_id: 
 	# only full snapshot rebuilds indicate the expensive regression T7.1 guards.
 	if avg_ms > MAX_SEVERE_IDLE_AVG_MS:
 		failures.append("Idle %s surface averaged %.2f ms per frame, above %.2f ms." % [renderer, avg_ms, MAX_SEVERE_IDLE_AVG_MS])
-	_assert_draw_budget("Idle %s surface" % renderer, draw_p95_ms, draw_samples)
+	_assert_idle_draw_budget("Idle %s surface" % renderer, draw_p95_ms)
 	if renderer == "slot_machine" and not slot_autoplay_checked:
 		await _probe_slot_autoplay(seed, run_index, environment_id, game_id, canvas)
 	app.call("back_to_environment")
@@ -225,6 +227,7 @@ func _probe_slot_autoplay(seed: String, run_index: int, environment_id: String, 
 		"avg_frame_ms": avg_ms,
 		"draw_avg_ms": float(counters.get("draw_avg_ms", 0.0)),
 		"draw_p95_ms": draw_p95_ms,
+		"draw_max_ms": float(counters.get("draw_max_ms", 0.0)),
 		"draw_samples": draw_samples,
 		"full_snapshot_calls": int(counters.get("full_snapshot_calls", 0)),
 		"runtime_status_calls": int(counters.get("runtime_status_calls", 0)),
@@ -345,6 +348,11 @@ func _assert_draw_budget(label: String, draw_p95_ms: float, draw_samples: int) -
 		failures.append("%s did not record draw performance samples." % label)
 	elif draw_p95_ms > MAX_SURFACE_DRAW_P95_MS:
 		failures.append("%s draw p95 %.2f ms exceeded %.2f ms." % [label, draw_p95_ms, MAX_SURFACE_DRAW_P95_MS])
+
+
+func _assert_idle_draw_budget(label: String, draw_p95_ms: float) -> void:
+	if draw_p95_ms > MAX_IDLE_SURFACE_DRAW_P95_MS:
+		failures.append("%s idle draw p95 %.2f ms exceeded %.2f ms." % [label, draw_p95_ms, MAX_IDLE_SURFACE_DRAW_P95_MS])
 
 
 func _slot_machine_state(run_state: RunState, game_id: String) -> Dictionary:

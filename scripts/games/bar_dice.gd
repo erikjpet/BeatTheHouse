@@ -247,6 +247,7 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 	var palm_armed := bool(ui.get("palm_armed", false)) and phase == "select"
 	var controlled_roll: Dictionary = _normalized_controlled_roll(ui.get("controlled_roll", {})) if loaded_armed else {}
 	var controlled_roll_meter: Dictionary = _controlled_roll_meter(controlled_roll, ui) if not controlled_roll.is_empty() else {}
+	var controlled_roll_meter_active := not controlled_roll_meter.is_empty() and str(controlled_roll.get("skill_grade", "")).is_empty()
 	var loaded_value := int(ui.get("loaded_value", 0))
 	if loaded_armed and loaded_value <= 0:
 		loaded_value = _loaded_value_for_ruleset(player_dice, "ship_captain_crew")
@@ -254,6 +255,8 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 	var animated_dice_indices := _index_array(tumble.get("indices", []))
 	if rolled and not str(tumble.get("id", "")).is_empty() and animated_dice_indices.is_empty():
 		animated_dice_indices = _all_die_indices()
+	var tumble_active := not str(tumble.get("id", "")).is_empty()
+	var surface_motion_active := tumble_active or controlled_roll_meter_active
 	var pit_boss := run_state.pit_boss_watch_status(environment) if run_state != null else {}
 	var press_offer := _copy_dict(last_result.get("press_offer", {}))
 	var press_available := phase == "settled" and bool(press_offer.get("available", false))
@@ -282,8 +285,8 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 		"surface_stake_controls_required": false,
 		"surface_embeds_outcomes": true,
 		"surface_suppresses_game_result_burst": true,
-		"surface_animates_idle": true,
-		"surface_realtime_state_refresh": true,
+		"surface_animates_idle": surface_motion_active,
+		"surface_realtime_state_refresh": surface_motion_active,
 		"phase": phase,
 		"table_key": str(state.get("table_key", "")),
 		"ruleset_family": "ship_captain_crew",

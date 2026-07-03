@@ -139,6 +139,7 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 	var elapsed_msec := now_msec - int(last_result.get("resolved_at_msec", 0))
 	var deal_active := not last_result.is_empty() and elapsed_msec >= 0 and elapsed_msec < DEAL_ANIMATION_DURATION_MSEC
 	var payout_active := not last_result.is_empty() and elapsed_msec >= DEAL_ANIMATION_DURATION_MSEC and elapsed_msec < DEAL_ANIMATION_DURATION_MSEC + PAYOUT_ANIMATION_DURATION_MSEC
+	var surface_motion_active := deal_active or payout_active
 	var min_ready := total_wager >= int(table.get("table_minimum", 20))
 	var timer_active := not deal_active and not payout_active
 	var round_timer := GameModule.table_round_timer_status(table, now_msec, "Next hand") if timer_active else {}
@@ -164,8 +165,8 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 		"surface_stake_controls_required": true,
 		"surface_embeds_outcomes": true,
 		"surface_suppresses_game_result_burst": true,
-		"surface_animates_idle": true,
-		"surface_realtime_state_refresh": true,
+		"surface_animates_idle": surface_motion_active,
+		"surface_realtime_state_refresh": surface_motion_active,
 		"surface_state_labels": [
 			{"label": "Wager", "value": "$%d" % total_wager},
 			{"label": "Shoe", "value": str(table.get("shoe_label", "8-deck shoe"))},

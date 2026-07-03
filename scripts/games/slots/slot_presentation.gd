@@ -29,6 +29,7 @@ func surface_state(machine: Dictionary, run_state: RunState, definition: Diction
 	var animation_id := str(machine.get("slot_animation_id", ""))
 	var active_bonus: Dictionary = _display_active_bonus(machine, stored_active_bonus, surface_time_msec)
 	active_bonus = _with_pinball_alert_metadata(active_bonus, machine)
+	var spin_motion_active := not animation_id.is_empty() and animation_duration > 0
 	var spin_channel := GameModule.surface_animation_channel(
 		"slot_spin",
 		animation_id,
@@ -69,6 +70,7 @@ func surface_state(machine: Dictionary, run_state: RunState, definition: Diction
 	if str(active_bonus.get("family", "")) == "pinball" and bool(active_bonus.get("active", false)):
 		active_bonus["pinball_launch_meter"] = _pinball_launch_meter(active_bonus, surface_time_msec)
 	var bet_options: Array = _bet_options(selected_bet)
+	var surface_motion_active := spin_motion_active or feature_active or nudge_available
 	return _slot_surface_spec({
 		"surface_renderer": "slot_machine",
 		"surface_life": "reel_machine",
@@ -76,7 +78,7 @@ func surface_state(machine: Dictionary, run_state: RunState, definition: Diction
 		"surface_controls_native": true,
 		"surface_fixed_price_actions": true,
 		"surface_stake_controls_required": false,
-		"surface_animates_idle": true,
+		"surface_animates_idle": surface_motion_active,
 		"surface_realtime_state_refresh": nudge_available or (feature_active and (str(active_bonus.get("family", "")) == "pinball" or str(active_bonus.get("family", "")) == "buffalo")),
 		"surface_embeds_outcomes": true,
 		"surface_suppresses_game_result_burst": true,

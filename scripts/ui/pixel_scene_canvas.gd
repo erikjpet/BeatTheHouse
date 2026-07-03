@@ -312,12 +312,17 @@ func _touch_duplicates_recent_mouse_press(position: Vector2) -> bool:
 func _process(delta: float) -> void:
 	if not is_visible_in_tree():
 		return
+	var previous_zoom := camera_zoom
+	var previous_offset := camera_offset
+	var was_info_animating := info_card_animating
 	if reduce_motion:
 		flicker = 0.0
 		_update_camera_target_if_needed()
 		camera_zoom = target_camera_zoom
 		camera_offset = target_camera_offset
 		_snap_info_card_to_target()
+		if absf(previous_zoom - camera_zoom) > CAMERA_ZOOM_SNAP_EPSILON or previous_offset.distance_squared_to(camera_offset) > CAMERA_OFFSET_SNAP_EPSILON * CAMERA_OFFSET_SNAP_EPSILON or was_info_animating:
+			queue_redraw()
 		return
 	var scaled_delta := delta * drunk_time_scale
 	flicker += scaled_delta
@@ -331,7 +336,17 @@ func _process(delta: float) -> void:
 		camera_zoom = target_camera_zoom
 	if camera_offset.distance_squared_to(target_camera_offset) <= CAMERA_OFFSET_SNAP_EPSILON * CAMERA_OFFSET_SNAP_EPSILON:
 		camera_offset = target_camera_offset
-	queue_redraw()
+	var camera_changed := absf(previous_zoom - camera_zoom) > CAMERA_ZOOM_SNAP_EPSILON or previous_offset.distance_squared_to(camera_offset) > CAMERA_OFFSET_SNAP_EPSILON * CAMERA_OFFSET_SNAP_EPSILON
+	if camera_changed or info_card_animating or was_info_animating or _needs_continuous_scene_redraw():
+		queue_redraw()
+
+
+func _needs_continuous_scene_redraw() -> bool:
+	if suspicion_level > 0:
+		return true
+	if drunk_effect_mode == "classic" and drunk_level >= 12:
+		return true
+	return drunk_distortion_overlay != null and drunk_distortion_overlay.visible
 
 
 # Selects the active venue drawing routine.
