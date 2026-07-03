@@ -329,6 +329,15 @@ roulette rule/audio checks, pull-tab seed audit, and GDScript load checks.
 Reports are written under `.tmp/` or Godot `user://` paths and should not be
 committed as source documentation.
 
+Do not overlap headless Godot gates against the same workspace. `check_godot.ps1`
+now stops early if another Godot process is already running for this project;
+use `-AllowConcurrentGodot` only for an intentional isolated run. Long suites
+also need an outer command timeout longer than the harness timeout: the slot
+acceptance gate reserves up to 900 seconds and has passed at about 889 seconds,
+while the full suite reserves up to 1800 seconds. Killing the parent PowerShell
+early can leave Godot children writing `user://` logs, which has reproduced
+Windows native access-violation dialogs on later runs.
+
 For shipped 0.2.0 release evidence, use the tracked checklist at
 `docs/plans/0.2_release_checklist.md`. For the current 0.3 readiness ledger, use
 `docs/plans/0.3_release_checklist.md`. For active Act 1 work, use

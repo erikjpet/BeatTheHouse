@@ -8,7 +8,8 @@ param(
     [switch]$NoImport,
     [switch]$VerboseStages,
     [switch]$ExhaustiveParse,
-    [string]$FoundationSuite = ""
+    [string]$FoundationSuite = "",
+    [switch]$AllowConcurrentGodot
 )
 
 $ErrorActionPreference = "Stop"
@@ -93,6 +94,33 @@ function Find-Godot {
 
 function Get-GodotProcesses {
     return @(Get-Process -ErrorAction SilentlyContinue | Where-Object { $_.ProcessName -like "*Godot*" })
+}
+
+function Get-ProjectGodotProcessDetails {
+    $trimChars = [char[]]@([char]'\', [char]'/')
+    $rootPath = [System.IO.Path]::GetFullPath($root).TrimEnd($trimChars)
+    $toolsPath = [System.IO.Path]::GetFullPath((Join-Path $root ".tools")).TrimEnd($trimChars)
+    $rootNeedle = $rootPath.Replace("/", "\").ToLowerInvariant()
+    $toolsNeedle = $toolsPath.Replace("/", "\").ToLowerInvariant()
+    $details = @()
+    foreach ($process in @(Get-CimInstance Win32_Process -ErrorAction SilentlyContinue | Where-Object { $_.Name -like "Godot*" })) {
+        $commandLine = [string]$process.CommandLine
+        if ([string]::IsNullOrWhiteSpace($commandLine)) {
+            continue
+        }
+        $normalizedCommand = $commandLine.Replace("/", "\").ToLowerInvariant()
+        $usesProjectPath = $normalizedCommand.Contains($rootNeedle)
+        $usesProjectGodot = $normalizedCommand.Contains($toolsNeedle)
+        $usesRelativePath = $normalizedCommand -match '(^|\s)--path\s+\.($|\s)'
+        if ($usesProjectPath -or ($usesProjectGodot -and $usesRelativePath)) {
+            $details += [pscustomobject]@{
+                Id = [int]$process.ProcessId
+                Name = [string]$process.Name
+                CommandLine = $commandLine
+            }
+        }
+    }
+    return $details
 }
 
 function Stop-NewGodotProcesses {
@@ -272,6 +300,36 @@ function Write-TestSummary {
     Write-Host "Report: $summaryPath"
 }
 
+function Assert-NoConcurrentProjectGodot {
+    if ($AllowConcurrentGodot) {
+        return
+    }
+    $running = @(Get-ProjectGodotProcessDetails)
+    if ($running.Count -eq 0) {
+        return
+    }
+    $processLines = @()
+    foreach ($process in $running) {
+        $processLines += ("PID {0} {1}: {2}" -f $process.Id, $process.Name, $process.CommandLine)
+    }
+    $message = "Another Godot process is already running for this workspace. Stop it before running check_godot, or rerun with -AllowConcurrentGodot only when intentional. Overlapping headless Godot jobs can leave orphaned children, corrupt user:// logs, and reproduce native access-violation dialogs after aborted long gates. " + ($processLines -join " | ")
+    $script:StageResults.Add([pscustomobject][ordered]@{
+        name = "concurrent_godot_guard"
+        command = "Get-CimInstance Win32_Process"
+        arguments = @()
+        exit_code = 125
+        timed_out = $false
+        duration_msec = 0
+        stdout = ""
+        stderr = ""
+        error = $message
+    })
+    Write-Host ("{0,-28} {1,7} {2,8}ms" -f "concurrent_godot_guard", "FAIL", 0)
+    Write-Warning $message
+    Write-TestSummary
+    exit 125
+}
+
 function Invoke-GodotScript {
     param(
         [string]$Name,
@@ -323,6 +381,8 @@ if (-not $script:Godot) {
     Write-TestSummary
     exit 0
 }
+
+Assert-NoConcurrentProjectGodot
 
 if (-not $NoImport) {
     Invoke-GodotImport
