@@ -2421,7 +2421,7 @@ challenges 7. Fresh gates: `tools/validate_project.ps1` PASS;
 (`.tmp/test_reports/20260703_023820_full/summary.json`);
 `endgame_metrics_probe.gd --seed-prefix=T73-TUNED12 --seeds-per-scenario=2`
 PASS. T7.2-FIX subsequently reran `foundation_visual_qa.ps1 -RequireGodot`
-green with `warnings=[]`. Commit: pending R11 evidence-closure commit.
+green with `warnings=[]`. Commit: `f9e9b9e`.
 
 ---
 
