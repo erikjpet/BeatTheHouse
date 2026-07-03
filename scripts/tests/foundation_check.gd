@@ -412,6 +412,7 @@ func _check_content(library: ContentLibrary, failures: Array) -> void:
 	_check_t4_4_item_pack(library, failures)
 	_check_content_group_modularity(library, failures)
 	_check_challenge_pack_content(library, failures)
+	_check_s0_2_baseline_regression_fixtures(library, failures)
 
 	var run_state: RunState = RunStateScript.new()
 	run_state.start_new("CONTENT-CHECK")
@@ -430,6 +431,56 @@ func _check_content(library: ContentLibrary, failures: Array) -> void:
 	_check_environment_instance_shape(second_environment, false, failures)
 	if second_environment.id == first_environment.id:
 		failures.append("Travel did not generate a distinct second environment.")
+
+
+func _check_s0_2_baseline_regression_fixtures(library: ContentLibrary, failures: Array) -> void:
+	_check_s0_2_tool_harness_contracts(failures)
+	_check_s0_2_kitty_lounge_mixed_hook_layout(library, failures)
+
+
+func _check_s0_2_tool_harness_contracts(failures: Array) -> void:
+	var roulette_audit_text := FileAccess.get_file_as_string("res://tools/roulette_seed_audit.gd")
+	for method_name in ["surface_label_plain", "surface_label_centered_plain"]:
+		if roulette_audit_text.find("func %s" % method_name) == -1:
+			failures.append("S0.2 roulette seed audit harness is missing %s." % method_name)
+	var visual_qa_text := FileAccess.get_file_as_string("res://tools/foundation_visual_qa.gd")
+	for helper_name in ["_visible_risky_heat_delta", "_canvas_selected_info_contains", "_first_nonterminal_item_object"]:
+		if visual_qa_text.find("func %s" % helper_name) == -1:
+			failures.append("S0.2 visual QA harness is missing %s." % helper_name)
+
+
+func _check_s0_2_kitty_lounge_mixed_hook_layout(library: ContentLibrary, failures: Array) -> void:
+	var archetype := _archetype_by_id(library, "kitty_cat_lounge")
+	if archetype.is_empty():
+		failures.append("S0.2 Kitty Cat Lounge layout fixture could not find the archetype.")
+		return
+	var run_state: RunState = RunStateScript.new()
+	run_state.start_new("S02-KITTY-LAYOUT")
+	var environment: Dictionary = EnvironmentInstance.from_archetype(archetype, 3, run_state.create_rng("s02_kitty_layout"), library).to_dict()
+	environment["service_ids"] = ["kitty_champagne", "kitty_burlesque_show", "house_drink"]
+	environment["lender_hooks"] = ["the_crew", "sals_pawn_counter"]
+	environment["travel_hooks"] = ["bar", "jazz_club", "corner_store"]
+	environment["next_archetypes"] = ["bar", "jazz_club", "corner_store"]
+	environment["world_map_travel"] = true
+	environment["layout"] = EnvironmentInstance.ensure_generated_layout(environment)
+	var layout: Dictionary = environment.get("layout", {}) if typeof(environment.get("layout", {})) == TYPE_DICTIONARY else {}
+	var object_rects: Dictionary = layout.get("object_rects", {}) if typeof(layout.get("object_rects", {})) == TYPE_DICTIONARY else {}
+	for object_id in ["service:kitty_champagne", "lender:sals_pawn_counter"]:
+		if not object_rects.has(object_id):
+			failures.append("S0.2 Kitty Cat Lounge layout fixture is missing %s." % object_id)
+	var keys: Array = object_rects.keys()
+	for index in range(keys.size()):
+		var key := str(keys[index])
+		var rect := _layout_rect_from_dict(object_rects.get(key, {}))
+		if rect.size.x <= 0.0 or rect.size.y <= 0.0:
+			continue
+		for other_index in range(index + 1, keys.size()):
+			var other_key := str(keys[other_index])
+			var other_rect := _layout_rect_from_dict(object_rects.get(other_key, {}))
+			if other_rect.size.x <= 0.0 or other_rect.size.y <= 0.0:
+				continue
+			if _layout_rects_overlap_with_gap(rect, other_rect):
+				failures.append("S0.2 Kitty Cat Lounge generated layout overlaps: %s and %s." % [key, other_key])
 
 
 func _check_start_shop_environment(environment: EnvironmentInstance, failures: Array) -> void:

@@ -289,6 +289,7 @@ func _run() -> void:
 	var has_cheat_surface_action := int(post_legal_snapshot.get("cheat_action_count", 0)) > 0
 	var cheat_binding := _game_surface_action_binding("cheat")
 	var cheat_action := ""
+	var first_visible_risky_heat_delta := 0
 	var serialized_before_cheat_click := _serialized_run_text()
 	if fixed_price_surface:
 		cheat_binding = await _prepare_fixed_price_cheat_binding()
@@ -305,6 +306,7 @@ func _run() -> void:
 			_require(serialized_before_cheat_click == _serialized_run_text(), "Selecting a cheat/advantage action mutated serialized RunState.")
 		else:
 			_cover("cheat_action_selection")
+		first_visible_risky_heat_delta = _visible_risky_heat_delta(app.call("current_game_view_snapshot"))
 		var serialized_before_cheat_resolve := _serialized_run_text()
 		var risky_unavailable_reason := ""
 		if fixed_price_surface:
@@ -326,6 +328,7 @@ func _run() -> void:
 		var resolved_cheat_snapshot: Dictionary = app.call("current_game_view_snapshot")
 		var first_risky_heat_delta := int(resolved_cheat_snapshot.get("suspicion_delta", 0))
 		_require(first_risky_heat_delta > legal_heat_delta, "Risky action did not create more heat pressure than the legal action.")
+		_require(first_visible_risky_heat_delta > legal_heat_delta, "Visible risky action did not show more heat pressure than the legal action.")
 		_set_game_surface_status("risky", "passed", "Selected and resolved a risky action from the visible game surface.", resolved_cheat_snapshot)
 		_cover("heat_risky_action_raises")
 		_record_state("result_screen_cheat", "Resolved a cheat/advantage action and kept risk feedback in HUD/in-scene state.")
@@ -334,7 +337,7 @@ func _run() -> void:
 		_require(not _has_visible_text(app, "Recent consequence"), "Cheat/advantage action revealed the old Recent consequence panel.")
 		_require(not (risky_consequence_snapshot.get("cards", []) as Array).is_empty(), "Cheat/advantage action did not produce consequence snapshot data.")
 		_assert_m2_player_feedback_clarity("risky result")
-		var reached_high_heat := await _drive_risky_surface_until_heat(65, 8, first_risky_heat_delta)
+		var reached_high_heat := await _drive_risky_surface_until_heat(65, 8, first_visible_risky_heat_delta)
 		_require(reached_high_heat, "Mouse-only risky play did not reach high heat pressure after deterministic risky-action setup.")
 		_record_state("high_heat_result_screen", "Repeated visible risky actions until high heat changed the consequence pressure.")
 		_assert_objective_hud("high heat result")
@@ -1039,13 +1042,13 @@ func _try_item_card_flow(prepared_fixture: bool = false) -> void:
 			return
 		_require(false, "Prepared item visual QA fixture did not expose the environment canvas.")
 		return
-	var item_object := _first_clickable_canvas_object_type_enabled(canvas, "item", true)
+	var item_object := _first_nonterminal_item_object(canvas)
 	if item_object.is_empty():
 		if not prepared_fixture:
 			await _prepare_item_visual_qa_fixture()
 			await _try_item_card_flow(true)
 			return
-		_require(false, "Prepared item visual QA fixture did not expose an affordable item offer card.")
+		_require(false, "Prepared item visual QA fixture did not expose a non-terminal affordable item offer card.")
 		return
 	var item_source_id := str(item_object.get("source_id", ""))
 	var item_label := str(item_object.get("label", item_source_id))
@@ -1087,13 +1090,71 @@ func _try_item_card_flow(prepared_fixture: bool = false) -> void:
 	if canvas != null and canvas.visible and canvas.has_method("current_view_snapshot"):
 		var disabled_item := _first_clickable_canvas_object_type_enabled(canvas, "item", false)
 		if not disabled_item.is_empty():
+			var disabled_reason := str(disabled_item.get("disabled_reason", "Not enough bankroll.")).strip_edges()
+			if disabled_reason.is_empty():
+				disabled_reason = "Not enough bankroll."
+			var serialized_before_disabled_focus := _serialized_run_text()
+			var disabled_focus := await _click_canvas_object_data(canvas, disabled_item, "item")
+			_require(not disabled_focus.is_empty(), "Could not focus a disabled item object.")
+			await _settle()
+			_require(serialized_before_disabled_focus == _serialized_run_text(), "Focusing a disabled item mutated serialized RunState.")
+			_require(_disabled_reason_is_visible(disabled_reason), "Disabled item focus did not show a visible rejection reason.")
+			canvas = app.get("environment_canvas") as Control
+			_require(canvas != null and canvas.visible and canvas.has_method("current_view_snapshot"), "Environment canvas disappeared before disabled item activation.")
+			if canvas == null:
+				return
+			if canvas != null and canvas.visible and canvas.has_method("current_view_snapshot"):
+				var refreshed_disabled_item := _canvas_object_by_id(canvas, str(disabled_item.get("id", "")))
+				if not refreshed_disabled_item.is_empty():
+					disabled_item = refreshed_disabled_item
 			var serialized_before_disabled_item := _serialized_run_text()
 			var disabled_click := await _double_click_canvas_object_data(canvas, disabled_item, "item")
 			_require(not disabled_click.is_empty(), "Could not double-click a disabled item object.")
 			await _settle()
 			_require(serialized_before_disabled_item == _serialized_run_text(), "Double-clicking a disabled item mutated serialized RunState.")
-			_require(_has_visible_text(app, "Not enough bankroll") or _has_visible_text(app, "not available"), "Disabled item did not show a visible rejection reason.")
+			_require(_disabled_reason_is_visible(disabled_reason), "Disabled item did not show a visible rejection reason.")
 			_cover("unaffordable_item_rejects")
+
+
+func _first_nonterminal_item_object(canvas: Control) -> Dictionary:
+	var bankroll := int(_run_state_restore_summary(app.call("serialized_run_state")).get("bankroll", 0))
+	var snapshot: Dictionary = canvas.call("current_view_snapshot")
+	var objects: Array = snapshot.get("objects", []) if typeof(snapshot.get("objects", [])) == TYPE_ARRAY else []
+	for item in objects:
+		if typeof(item) != TYPE_DICTIONARY:
+			continue
+		var object_data: Dictionary = item
+		if _object_type_value(object_data) != "item" or bool(object_data.get("disabled", false)):
+			continue
+		var price := _item_offer_price(str(object_data.get("source_id", "")), object_data)
+		if price > 0 and price < bankroll and _canvas_object_center_hits(canvas, object_data):
+			return object_data.duplicate(true)
+	return {}
+
+
+func _item_offer_price(item_id: String, object_data: Dictionary) -> int:
+	var serialized: Dictionary = app.call("serialized_run_state")
+	var current_environment: Dictionary = serialized.get("current_environment", {}) if typeof(serialized.get("current_environment", {})) == TYPE_DICTIONARY else {}
+	var offers: Array = current_environment.get("item_offers", []) if typeof(current_environment.get("item_offers", [])) == TYPE_ARRAY else []
+	for offer_value in offers:
+		if typeof(offer_value) != TYPE_DICTIONARY:
+			continue
+		var offer: Dictionary = offer_value
+		if str(offer.get("id", "")) == item_id:
+			return int(offer.get("price", 0))
+	return _first_int_in_text(str(object_data.get("cost_summary", "")))
+
+
+func _first_int_in_text(text: String) -> int:
+	var digits := ""
+	for index in range(text.length()):
+		var character := text.substr(index, 1)
+		var code := character.unicode_at(0)
+		if code >= 48 and code <= 57:
+			digits += character
+		elif not digits.is_empty():
+			return int(digits)
+	return int(digits) if not digits.is_empty() else 0
 
 
 func _verify_disabled_or_absent_optional_object(object_type: String, absent_reason: String) -> bool:
@@ -1134,12 +1195,39 @@ func _disabled_reason_is_visible(disabled_reason: String) -> bool:
 		return false
 	if _has_visible_text(app, reason):
 		return true
+	if _canvas_selected_info_contains(reason):
+		return true
 	var reason_words := reason.split(" ", false)
 	for word in reason_words:
 		var cleaned := str(word).strip_edges().replace("(", "").replace(")", "").replace(".", "").replace(",", "")
-		if cleaned.length() >= 5 and _has_visible_text(app, cleaned):
+		if cleaned.length() >= 5 and (_has_visible_text(app, cleaned) or _canvas_selected_info_contains(cleaned)):
 			return true
-	return _has_visible_text(app, "locked") or _has_visible_text(app, "not available") or _has_visible_text(app, "Not enough")
+	return _has_visible_text(app, "locked") or _has_visible_text(app, "not available") or _has_visible_text(app, "Not enough") or _canvas_selected_info_contains("locked") or _canvas_selected_info_contains("not available") or _canvas_selected_info_contains("Not enough")
+
+
+func _canvas_selected_info_contains(text: String) -> bool:
+	var needle := text.strip_edges().to_lower()
+	if needle.is_empty():
+		return false
+	var canvas := app.get("environment_canvas") as Control
+	if canvas == null or not canvas.visible or not canvas.has_method("current_view_snapshot"):
+		return false
+	var snapshot: Dictionary = canvas.call("current_view_snapshot")
+	var selected_info_value: Variant = snapshot.get("selected_info", snapshot.get("selected_object_info", {}))
+	var selected_info: Dictionary = selected_info_value if typeof(selected_info_value) == TYPE_DICTIONARY else {}
+	if selected_info.is_empty() or not bool(selected_info.get("visible", false)):
+		return false
+	var parts: Array = [str(selected_info.get("title", "")), str(selected_info.get("action_label", ""))]
+	var lines: Array = selected_info.get("lines", []) if typeof(selected_info.get("lines", [])) == TYPE_ARRAY else []
+	parts.append_array(lines)
+	var actions: Array = selected_info.get("actions", []) if typeof(selected_info.get("actions", [])) == TYPE_ARRAY else []
+	for action_value in actions:
+		if typeof(action_value) != TYPE_DICTIONARY:
+			continue
+		var action: Dictionary = action_value
+		parts.append(str(action.get("label", "")))
+		parts.append(str(action.get("detail", "")))
+	return " ".join(parts).to_lower().find(needle) != -1
 
 
 func _set_optional_hook_status(object_type: String, status: String, reason: String, object_data: Dictionary = {}) -> void:
@@ -1646,6 +1734,17 @@ func _game_summary(snapshot: Dictionary) -> Dictionary:
 	}
 
 
+func _visible_risky_heat_delta(snapshot: Dictionary) -> int:
+	var highest := 0
+	var cheat_actions: Array = snapshot.get("cheat_actions", []) if typeof(snapshot.get("cheat_actions", [])) == TYPE_ARRAY else []
+	for action_value in cheat_actions:
+		if typeof(action_value) != TYPE_DICTIONARY:
+			continue
+		var action: Dictionary = action_value
+		highest = maxi(highest, int(action.get("suspicion_delta", 0)))
+	return highest
+
+
 func _consequence_summary(snapshot: Dictionary) -> Dictionary:
 	if snapshot.is_empty():
 		return {}
@@ -2000,14 +2099,14 @@ func _set_game_surface_stake_to_lowest_value() -> int:
 	return min_stake
 
 
-func _drive_risky_surface_until_heat(min_heat: int, max_attempts: int, first_risky_heat_delta: int) -> bool:
+func _drive_risky_surface_until_heat(min_heat: int, max_attempts: int, first_visible_risky_heat_delta: int) -> bool:
 	var snapshot: Dictionary = app.call("current_game_view_snapshot")
 	var fixed_price_surface := bool(snapshot.get("surface_fixed_price_actions", false)) or not bool(snapshot.get("surface_stake_controls_required", true))
 	if not fixed_price_surface:
 		var min_stake := await _set_game_surface_stake_to_lowest_value()
 		_require(min_stake >= 0, "Could not set game surface stake to the minimum for high-heat QA.")
 	var attempts := 0
-	var highest_risk_delta := first_risky_heat_delta
+	var highest_visible_risk_delta := first_visible_risky_heat_delta
 	while _current_serialized_heat() < min_heat and attempts < max_attempts:
 		if fixed_price_surface:
 			await _reset_fixed_price_surface_for_risky_action()
@@ -2021,6 +2120,10 @@ func _drive_risky_surface_until_heat(min_heat: int, max_attempts: int, first_ris
 			await _settle()
 			_require(serialized_before_select == _serialized_run_text(), "Selecting a high-heat risky action mutated serialized RunState.")
 			serialized_before_resolve = _serialized_run_text()
+		var visible_risk_delta := _visible_risky_heat_delta(app.call("current_game_view_snapshot"))
+		if visible_risk_delta > highest_visible_risk_delta:
+			_cover("high_heat_changes_risk")
+			highest_visible_risk_delta = visible_risk_delta
 		if fixed_price_surface:
 			if not await _resolve_visible_fixed_price_risky_action(serialized_before_resolve):
 				_require(false, "Could not resolve a high-heat risky action from the visible game surface.")
@@ -2035,10 +2138,6 @@ func _drive_risky_surface_until_heat(min_heat: int, max_attempts: int, first_ris
 			_require(false, "Resolving a high-heat risky action did not update serialized RunState.")
 			return false
 		var game_snapshot: Dictionary = app.call("current_game_view_snapshot")
-		var risk_delta := int(game_snapshot.get("suspicion_delta", 0))
-		if risk_delta > highest_risk_delta:
-			_cover("high_heat_changes_risk")
-			highest_risk_delta = risk_delta
 		var visible_text := " ".join(_visible_text(app)).to_lower()
 		var consequence_text := JSON.stringify(app.call("current_consequence_view_snapshot")).to_lower()
 		var game_text := JSON.stringify(game_snapshot).to_lower()
