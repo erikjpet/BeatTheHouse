@@ -6,6 +6,9 @@ const CatalogScript := preload("res://scripts/games/slots/slot_catalog.gd")
 const PinballFeatureScript := preload("res://scripts/games/slots/pinball/pinball_feature.gd")
 const BUFFALO_GRAND_BASE_MULTIPLIER := 50
 const BUFFALO_BONUS_MAX_ANIMATION_MSEC := 10000
+const PINBALL_BONUS_ALERT_DURATION_MSEC := 2000
+const PINBALL_BONUS_ALERT_VOLUME_DB := -21.0
+const PINBALL_BONUS_ALERT_STINGER_VOLUME_DB := -8.5
 
 var catalog
 
@@ -25,6 +28,7 @@ func surface_state(machine: Dictionary, run_state: RunState, definition: Diction
 	var animation_duration := maxi(0, int(machine.get("slot_animation_duration_msec", 0)))
 	var animation_id := str(machine.get("slot_animation_id", ""))
 	var active_bonus: Dictionary = _display_active_bonus(machine, stored_active_bonus, surface_time_msec)
+	active_bonus = _with_pinball_alert_metadata(active_bonus, machine)
 	var spin_channel := GameModule.surface_animation_channel(
 		"slot_spin",
 		animation_id,
@@ -201,6 +205,7 @@ func surface_state(machine: Dictionary, run_state: RunState, definition: Diction
 
 func _pinball_active_surface_state(machine: Dictionary, active_bonus: Dictionary, run_state: RunState, surface_time_msec: int, ui_state: Dictionary) -> Dictionary:
 	var live: Dictionary = PinballFeatureScript.surface_refresh(_copy_dict_shallow(active_bonus), surface_time_msec)
+	live = _with_pinball_alert_metadata(live, machine)
 	live["pinball_launch_meter"] = _pinball_launch_meter(live, surface_time_msec)
 	var pinball_scene: Dictionary = _feature_scene(live)
 	var pinball_cues: Array = []
@@ -726,33 +731,37 @@ func _pinball_feature_scene(active_bonus: Dictionary) -> Dictionary:
 	var mode := str(active_bonus.get("mode", "pinball"))
 	var total_steps := maxi(1, int(active_bonus.get("total_steps", active_bonus.get("remaining_steps", 1))))
 	var step_index := maxi(0, int(active_bonus.get("step_index", 0)))
+	var alert_active := _pinball_bonus_alert_active(active_bonus)
 	var phase := "launch"
 	if bool(active_bonus.get("complete", false)):
 		phase = "celebration"
 	elif bool(active_bonus.get("launch_in_progress", false)):
 		phase = "play"
-	return {
-		"feature_phase": phase,
-		"feature_music": {
+	var feature_music: Dictionary = {}
+	if alert_active:
+		feature_music = {
 			"cue_id": "bonus_music_pinball",
 			"loop": true,
 			"style": "kinetic_plinko_feature",
-			"volume_db": -15.0,
+			"volume_db": PINBALL_BONUS_ALERT_VOLUME_DB,
 			"pitch": 1.0 + clampf(float(step_index) / float(total_steps + 2), 0.0, 0.10),
-		},
+		}
+	return {
+		"feature_phase": phase,
+		"feature_music": feature_music,
 		"launch_meter": _copy_dict(active_bonus.get("pinball_launch_meter", {})),
-		"audio_cues": _pinball_feature_audio_cues(active_bonus, phase),
+		"audio_cues": _pinball_feature_audio_cues(active_bonus, phase, alert_active),
 	}
 
 
-func _pinball_feature_audio_cues(active_bonus: Dictionary, phase: String) -> Array:
-	var cues: Array = [
-		{"phase": "feature_transition", "cue_id": "pinball_feature_intro", "time_sec": 0.08, "marker": "pinball_feature_intro"},
-	]
-	if phase == "launch":
-		cues.append({"phase": "plunger_charge", "cue_id": "pinball_plunger_charge", "time_sec": 0.22, "marker": "pinball_plunger_charge"})
-	else:
-		cues.append({"phase": "table_music", "cue_id": "pinball_shot_counter", "time_sec": 0.38, "marker": "pinball_shot_counter"})
+func _pinball_feature_audio_cues(active_bonus: Dictionary, phase: String, alert_active: bool) -> Array:
+	var cues: Array = []
+	if alert_active:
+		cues.append({"phase": "feature_transition", "cue_id": "pinball_feature_intro", "time_sec": 0.08, "marker": "pinball_feature_intro", "volume_db": PINBALL_BONUS_ALERT_STINGER_VOLUME_DB})
+		if phase == "launch":
+			cues.append({"phase": "plunger_charge", "cue_id": "pinball_plunger_charge", "time_sec": 0.22, "marker": "pinball_plunger_charge", "volume_db": PINBALL_BONUS_ALERT_STINGER_VOLUME_DB})
+		else:
+			cues.append({"phase": "table_music", "cue_id": "pinball_shot_counter", "time_sec": 0.38, "marker": "pinball_shot_counter", "volume_db": PINBALL_BONUS_ALERT_STINGER_VOLUME_DB})
 	var recent: Array = _pinball_recent_audio_events(active_bonus)
 	for index in range(mini(recent.size(), 6)):
 		var event: Dictionary = _copy_dict(recent[index])
@@ -762,6 +771,25 @@ func _pinball_feature_audio_cues(active_bonus: Dictionary, phase: String) -> Arr
 		var volume := -4.0 + minf(5.0, float(award) * 0.08)
 		cues.append({"phase": "pinball_hit", "cue_id": cue_id, "time_sec": 0.54 + float(index) * 0.075, "marker": "pinball_hit_%d_%s" % [index, event_type], "pitch": 0.92 + float(index) * 0.025 + minf(0.18, float(award) * 0.004), "volume_db": volume})
 	return cues
+
+
+func _with_pinball_alert_metadata(active_bonus: Dictionary, machine: Dictionary) -> Dictionary:
+	if str(active_bonus.get("family", "")) != "pinball":
+		return active_bonus
+	var result: Dictionary = active_bonus.duplicate(true)
+	result["slot_pending_feature_alert"] = bool(machine.get("slot_pending_feature_alert", false))
+	result["slot_pending_feature_alert_msec"] = maxi(0, int(machine.get("slot_pending_feature_alert_msec", 0)))
+	return result
+
+
+func _pinball_bonus_alert_active(active_bonus: Dictionary) -> bool:
+	if not bool(active_bonus.get("slot_pending_feature_alert", false)):
+		return false
+	var alert_msec := maxi(0, int(active_bonus.get("slot_pending_feature_alert_msec", 0)))
+	if alert_msec <= 0:
+		return false
+	var age_msec := maxi(0, Time.get_ticks_msec() - alert_msec)
+	return age_msec <= PINBALL_BONUS_ALERT_DURATION_MSEC
 
 
 func _pinball_recent_audio_events(active_bonus: Dictionary) -> Array:

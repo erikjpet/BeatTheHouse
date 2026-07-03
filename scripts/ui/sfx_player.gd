@@ -952,7 +952,8 @@ func _sync_feature_scene_cues(slot_state: Dictionary, profile: Dictionary, fallb
 		var cue_id := str(cue.get("cue_id", cue.get("id", "")))
 		var marker := _cue_marker(_animation_id, cue)
 		var pitch := float(profile.get("bonus_pitch", 1.0)) + float(maxi(0, stage_index % 4)) * 0.035
-		_trigger(marker, elapsed >= cue_time, cue_id, -2.5, pitch)
+		var volume_db := float(cue.get("volume_db", -2.5))
+		_trigger(marker, elapsed >= cue_time, cue_id, volume_db, pitch)
 
 
 func _start_reel_loop(event_id: String = "reel_loop", volume_db: float = -13.0, pitch: float = 1.0) -> void:

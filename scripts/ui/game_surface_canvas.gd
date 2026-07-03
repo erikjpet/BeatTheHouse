@@ -71,7 +71,7 @@ func set_game_module(game_module: GameModule) -> void:
 
 func render_game_snapshot(snapshot: Dictionary) -> void:
 	uses_foundation_snapshot = true
-	view_data = snapshot.duplicate(true)
+	view_data = snapshot.duplicate(false)
 	game_id = str(view_data.get("game_id", game_id))
 	state = view_data
 	reduce_motion = bool(state.get("reduce_motion", false))

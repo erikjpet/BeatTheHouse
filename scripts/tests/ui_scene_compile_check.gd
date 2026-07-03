@@ -780,6 +780,11 @@ func _run() -> void:
 		quit(1)
 		return
 	var music_fx_state: Dictionary = app.call("music_fx_state_snapshot")
+	var music_fx_environment: Dictionary = music_fx_state.get("environment", {}) as Dictionary
+	if music_fx_environment.has("game_states"):
+		push_error("Music FX snapshot leaked environment game_states into the live refresh payload.")
+		quit(1)
+		return
 	var music_fx_snapshot: Dictionary = procedural_music_player.call("music_fx_snapshot", music_fx_state)
 	var music_fx_graph: Dictionary = music_fx_snapshot.get("graph", {}) as Dictionary
 	var music_fx_target: Dictionary = music_fx_snapshot.get("target", {}) as Dictionary
@@ -795,7 +800,17 @@ func _run() -> void:
 		push_error("Headless UI should not instantiate procedural music playback.")
 		quit(1)
 		return
-	var music_stem_manifest: Dictionary = procedural_music_player.call("music_stem_manifest_snapshot_for_environment", app.get("run_state").current_environment, 70)
+	var music_manifest_environment: Dictionary = (app.get("run_state").current_environment as Dictionary).duplicate(true)
+	var music_manifest_game_states: Dictionary = music_manifest_environment.get("game_states", {}) if typeof(music_manifest_environment.get("game_states", {})) == TYPE_DICTIONARY else {}
+	music_manifest_game_states["ui_compile_perf_fixture"] = {"large_runtime_state": ["not_for_music_payloads"]}
+	music_manifest_environment["game_states"] = music_manifest_game_states
+	var music_stem_manifest: Dictionary = procedural_music_player.call("music_stem_manifest_snapshot_for_environment", music_manifest_environment, 70)
+	var manifest_music_state: Dictionary = music_stem_manifest.get("music_state", {}) as Dictionary
+	var manifest_environment: Dictionary = manifest_music_state.get("environment", {}) as Dictionary
+	if manifest_environment.has("game_states"):
+		push_error("Procedural music environment snapshots should strip game_states before normalization.")
+		quit(1)
+		return
 	if music_stem_manifest.is_empty() or not bool(music_stem_manifest.get("sync_ok", false)):
 		push_error("Procedural music stem manifest did not expose synchronized loop metadata.")
 		quit(1)
@@ -840,7 +855,7 @@ func _run() -> void:
 		"feature_music": {
 			"cue_id": "bonus_music_pinball",
 			"loop": true,
-			"volume_db": -15.0,
+			"volume_db": -21.0,
 		},
 	})
 	var pinball_feature_snapshot: Dictionary = procedural_music_player.call("music_feature_snapshot", {}, 0.05)
@@ -853,6 +868,11 @@ func _run() -> void:
 		push_error("Pinball feature music should not depend on background ducking to stay active.")
 		quit(1)
 		return
+	if float(pinball_feature_input.get("volume_db", 0.0)) > -20.5:
+		push_error("Pinball feature music should use the quieter release alert volume.")
+		quit(1)
+		return
+	procedural_music_player.call("play_feature_stinger", "pinball_feature_intro", {"volume_db": -8.5})
 	app.call("_sync_surface_feature_music_state", {
 		"slot_feature_scene": {
 			"active": false,
@@ -861,6 +881,10 @@ func _run() -> void:
 	var stopped_feature_snapshot: Dictionary = procedural_music_player.call("music_feature_snapshot", {}, 0.05)
 	if not str(stopped_feature_snapshot.get("active_music_id", "")).is_empty():
 		push_error("Slot feature music did not clear when the surface bonus scene ended.")
+		quit(1)
+		return
+	if not (stopped_feature_snapshot.get("pending_stingers", []) as Array).is_empty():
+		push_error("Slot feature stingers did not clear when feature music was force-stopped.")
 		quit(1)
 		return
 	var slot_sfx := SfxPlayerScript.new()
@@ -1565,6 +1589,15 @@ func _run() -> void:
 		push_error("World-first game surface did not expose a visible back-to-environment hit region.")
 		quit(1)
 		return
+	if not bool(app.call("_autosave_foundation_run", "Queued animation autosave.")):
+		push_error("Game-mode autosave could not be queued for deferred flush.")
+		quit(1)
+		return
+	var queued_autosave_status: Dictionary = app.call("save_status_snapshot")
+	if not bool(queued_autosave_status.get("pending_autosave", false)):
+		push_error("Game-mode autosave wrote immediately instead of waiting for the surface to settle.")
+		quit(1)
+		return
 	var serialized_before_back := JSON.stringify(app.call("serialized_run_state"))
 	var surface_back_event := InputEventMouseButton.new()
 	surface_back_event.button_index = MOUSE_BUTTON_LEFT
@@ -1572,6 +1605,11 @@ func _run() -> void:
 	surface_back_event.position = surface_back_position
 	focused_game_surface.call("_gui_input", surface_back_event)
 	await process_frame
+	var flushed_autosave_status: Dictionary = app.call("save_status_snapshot")
+	if bool(flushed_autosave_status.get("pending_autosave", false)):
+		push_error("Deferred game-mode autosave did not flush after leaving the game surface.")
+		quit(1)
+		return
 	if serialized_before_back != JSON.stringify(app.call("serialized_run_state")):
 		push_error("Surface back to environment mutated serialized RunState.")
 		quit(1)

@@ -236,11 +236,7 @@ func stop() -> void:
 			feature_player.stop()
 			feature_player.stream = null
 			feature_player.pitch_scale = 1.0
-	for player_value in _feature_stinger_players:
-		if player_value is AudioStreamPlayer:
-			var stinger_player := player_value as AudioStreamPlayer
-			stinger_player.stop()
-			stinger_player.stream = null
+	_stop_feature_stinger_players()
 	if _ambient_player != null:
 		_ambient_player.stop()
 		_ambient_player.stream = null
@@ -373,6 +369,16 @@ func update_feature_music_state(feature_state: Dictionary) -> void:
 		_current_feature_music_id = ""
 
 
+func stop_feature_music() -> void:
+	_current_feature_music_id = ""
+	_current_feature_stem_set = {}
+	_feature_stinger_pending = []
+	_feature_stinger_history = []
+	_reset_feature_mix()
+	_stop_feature_stem_players()
+	_stop_feature_stinger_players()
+
+
 func play_feature_stinger(cue_id: String, context: Dictionary = {}) -> void:
 	var normalized := cue_id.strip_edges()
 	if normalized.is_empty():
@@ -385,6 +391,7 @@ func play_feature_stinger(cue_id: String, context: Dictionary = {}) -> void:
 		"context": context.duplicate(true),
 		"target_position": snappedf(float(target_step) * step_period, 0.0001),
 		"step_seconds": snappedf(step_period, 0.0001),
+		"volume_db": clampf(float(context.get("volume_db", -2.0)), -24.0, 3.0),
 	}
 	_feature_stinger_pending.append(pending)
 
@@ -863,12 +870,27 @@ static func _music_fx_state_from_environment(environment: Dictionary, heat_level
 	var result := music_state.duplicate(true)
 	result["heat"] = clampi(int(result.get("heat", result.get("heat_level", heat_level))), 0, 100)
 	if not environment.is_empty():
-		result["environment"] = environment.duplicate(true)
+		result["environment"] = _music_environment_payload_static(environment)
 		if not result.has("visual_context"):
 			result["visual_context"] = _copy_dict_static(environment.get("visual_context", {}))
 		if not result.has("boss_floor"):
 			result["boss_floor"] = str(environment.get("kind", "")) == "boss" or str(_copy_dict_static(environment.get("visual_context", {})).get("scene_type", "")) == "boss"
 	return result
+
+
+static func _music_environment_payload_static(environment: Dictionary) -> Dictionary:
+	return {
+		"id": str(environment.get("id", "")),
+		"name": str(environment.get("name", "")),
+		"display_name": str(environment.get("display_name", environment.get("name", ""))),
+		"archetype_id": str(environment.get("archetype_id", "")),
+		"kind": str(environment.get("kind", "")),
+		"tier": str(environment.get("tier", "")),
+		"mood": str(environment.get("mood", "")),
+		"visual_context": _copy_dict_static(environment.get("visual_context", {})),
+		"music_profile": _copy_dict_static(environment.get("music_profile", {})),
+		"security_profile": _copy_dict_static(environment.get("security_profile", {})),
+	}
 
 
 static func _normalize_music_fx_input(music_state: Dictionary) -> Dictionary:
@@ -2016,6 +2038,14 @@ func _stop_feature_stem_players() -> void:
 				player.stop()
 
 
+func _stop_feature_stinger_players() -> void:
+	for player_value in _feature_stinger_players:
+		if player_value is AudioStreamPlayer:
+			var player := player_value as AudioStreamPlayer
+			player.stop()
+			player.stream = null
+
+
 func _feature_stem_pcm_data(style: String, root_midi: int, bpm: float, frames: int, bars: int) -> Dictionary:
 	var pad_data := _empty_pcm(frames)
 	var bass_data := _empty_pcm(frames)
@@ -2147,11 +2177,11 @@ func _apply_feature_stingers_for_position(playback_position: float, play_audio: 
 		if _feature_stinger_history.size() > 16:
 			_feature_stinger_history.pop_front()
 		if play_audio and audio_enabled and not _running_headless():
-			_play_feature_stinger_now(str(pending.get("cue_id", "")))
+			_play_feature_stinger_now(str(pending.get("cue_id", "")), float(pending.get("volume_db", -2.0)))
 	_feature_stinger_pending = remaining
 
 
-func _play_feature_stinger_now(cue_id: String) -> void:
+func _play_feature_stinger_now(cue_id: String, volume_db: float = -2.0) -> void:
 	_ensure_feature_stinger_players()
 	var stream := _feature_stinger_stream_for_cue(cue_id)
 	if stream == null:
@@ -2160,14 +2190,14 @@ func _play_feature_stinger_now(cue_id: String) -> void:
 		if player_value is AudioStreamPlayer and not (player_value as AudioStreamPlayer).playing:
 			var player := player_value as AudioStreamPlayer
 			player.stream = stream
-			player.volume_db = -2.0
+			player.volume_db = volume_db
 			player.play()
 			return
 	if _feature_stinger_players[0] is AudioStreamPlayer:
 		var fallback := _feature_stinger_players[0] as AudioStreamPlayer
 		fallback.stop()
 		fallback.stream = stream
-		fallback.volume_db = -2.0
+		fallback.volume_db = volume_db
 		fallback.play()
 
 
