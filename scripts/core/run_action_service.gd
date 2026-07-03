@@ -898,7 +898,26 @@ func effect_summary_label(key: String) -> String:
 		"event_hooks":
 			return "event effect"
 		_:
-			return label_from_id(key)
+			return _fallback_effect_summary_label(key)
+
+
+func _fallback_effect_summary_label(key: String) -> String:
+	var clean_key := key.strip_edges()
+	if clean_key.ends_with("_delta"):
+		clean_key = clean_key.trim_suffix("_delta")
+	if clean_key.ends_with("_msec"):
+		clean_key = clean_key.trim_suffix("_msec")
+	clean_key = clean_key.replace("suspicion", "heat")
+	clean_key = clean_key.replace("skill_cheat", "skill check")
+	clean_key = clean_key.replace("window_offset", "window margin")
+	clean_key = clean_key.replace("memory_offset", "memory margin")
+	clean_key = clean_key.replace("base_heat", "base heat")
+	clean_key = clean_key.replace("catch_chance", "catch chance")
+	clean_key = clean_key.replace("cue_count", "cue count")
+	clean_key = clean_key.replace("memory_tolerance", "memory tolerance")
+	clean_key = clean_key.replace("loss_reduction", "loss cushion")
+	clean_key = clean_key.replace("win_chance", "better odds")
+	return label_from_id(clean_key)
 
 
 func effect_summary_value(value: Variant) -> String:

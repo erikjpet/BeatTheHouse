@@ -90,7 +90,7 @@
 		"label": "Kitty Cat Lounge",
 		"destination_archetype": "kitty_cat_lounge",
 		"description": "A velvet-rope tier-2 lounge with costly ways to manage heat.",
-		"cost": 12,
+		"cost": 10,
 		"risk": "medium",
 		"distance": "far",
 		"risk_decay": 58,
@@ -100,10 +100,10 @@
 	},
 	{
 		"id": "delta_queen",
-		"label": "The Delta Queen",
+		"label": "The River Queen",
 		"destination_archetype": "delta_queen",
 		"description": "Mid-stakes riverboat; leaving waits on the dock call.",
-		"cost": 15,
+		"cost": 12,
 		"risk": "medium",
 		"distance": "far",
 		"risk_decay": 62,
@@ -115,7 +115,7 @@
 				0,
 				1
 			],
-			"closed_text": "The Delta Queen is away from the dock."
+			"closed_text": "The River Queen is away from the dock."
 		},
 		"condition_text": "Boarding opens on the riverboat schedule."
 	},
@@ -123,8 +123,8 @@
 		"id": "grand_casino",
 		"label": "Grand Casino",
 		"destination_archetype": "grand_casino",
-		"description": "A $100 ride to the watched boss floor.",
-		"cost": 100,
+		"description": "A $70 ride to the watched boss floor.",
+		"cost": 70,
 		"risk": "boss",
 		"distance": "remote",
 		"risk_decay": 95,
@@ -132,6 +132,6 @@
 		"requires_travel_count_min": 1,
 		"hide_until_travel_count_met": true,
 		"travel_count_condition_text": "Travel once before this route appears.",
-		"condition_text": "Requires $100 bankroll."
+		"condition_text": "Requires a serious bankroll."
 	}
 ]

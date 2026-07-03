@@ -6,7 +6,7 @@ extends RefCounted
 const ArtContractsScript := preload("res://scripts/core/art_contracts.gd")
 
 const ENVIRONMENT_BOARD_SIZE := Vector2(ArtContractsScript.ENVIRONMENT_BOARD_SIZE)
-const GENERATED_LAYOUT_VERSION := 6
+const GENERATED_LAYOUT_VERSION := 7
 const EMPTY_MUSIC_NOTE := -999
 
 var id: String = ""
@@ -439,6 +439,10 @@ static func _first_available_object_rect(object_rects: Dictionary, active_object
 		var candidate := _object_rect_from_layout(layout, object_type, slot_index, spot_field)
 		if not _object_rect_collides_with_active(object_rects, active_object_ids, object_id, candidate):
 			return candidate
+	for candidate_value in _fallback_grid_object_rects(object_type, index, desired_rect):
+		var candidate: Rect2 = candidate_value
+		if not _object_rect_collides_with_active(object_rects, active_object_ids, object_id, candidate):
+			return candidate
 	return desired_rect
 
 
@@ -625,6 +629,10 @@ static func _first_noncolliding_object_rect(placed_rects: Dictionary, layout: Di
 		var candidate := _object_rect_from_layout(layout, object_type, slot_index, spot_field)
 		if not _object_rect_collides_with_any(placed_rects, candidate):
 			return candidate
+	for candidate_value in _fallback_grid_object_rects(object_type, index, desired_rect):
+		var candidate: Rect2 = candidate_value
+		if not _object_rect_collides_with_any(placed_rects, candidate):
+			return candidate
 	return desired_rect
 
 
@@ -636,6 +644,80 @@ static func _object_rect_collides_with_any(placed_rects: Dictionary, rect: Rect2
 		if _rects_overlap_with_layout_gap(existing_rect, rect):
 			return true
 	return false
+
+
+static func _fallback_grid_object_rects(object_type: String, index: int, desired_rect: Rect2) -> Array:
+	var size := _fallback_object_rect(object_type, index).size
+	var desired_center := desired_rect.position + desired_rect.size * 0.5
+	var centers := [
+		Vector2(0.12, 0.20),
+		Vector2(0.28, 0.20),
+		Vector2(0.44, 0.20),
+		Vector2(0.60, 0.20),
+		Vector2(0.76, 0.20),
+		Vector2(0.88, 0.20),
+		Vector2(0.12, 0.34),
+		Vector2(0.28, 0.34),
+		Vector2(0.44, 0.34),
+		Vector2(0.60, 0.34),
+		Vector2(0.76, 0.34),
+		Vector2(0.88, 0.34),
+		Vector2(0.12, 0.48),
+		Vector2(0.28, 0.48),
+		Vector2(0.44, 0.48),
+		Vector2(0.60, 0.48),
+		Vector2(0.76, 0.48),
+		Vector2(0.88, 0.48),
+		Vector2(0.12, 0.62),
+		Vector2(0.28, 0.62),
+		Vector2(0.44, 0.62),
+		Vector2(0.60, 0.62),
+		Vector2(0.76, 0.62),
+		Vector2(0.88, 0.62),
+		Vector2(0.12, 0.76),
+		Vector2(0.28, 0.76),
+		Vector2(0.44, 0.76),
+		Vector2(0.60, 0.76),
+		Vector2(0.76, 0.76),
+		Vector2(0.88, 0.76),
+		Vector2(0.12, 0.88),
+		Vector2(0.28, 0.88),
+		Vector2(0.44, 0.88),
+		Vector2(0.60, 0.88),
+		Vector2(0.76, 0.88),
+		Vector2(0.88, 0.88),
+	]
+	var scored: Array = []
+	for center_value in centers:
+		var center: Vector2 = center_value
+		var rect := _clamped_rect_from_center(center, size)
+		var candidate_center := rect.position + rect.size * 0.5
+		scored.append({
+			"rect": rect,
+			"score": desired_center.distance_squared_to(candidate_center),
+		})
+	scored.sort_custom(func(a: Variant, b: Variant) -> bool:
+		return _sort_layout_rect_candidate(a, b)
+	)
+	var result: Array = []
+	for entry_value in scored:
+		var entry: Dictionary = entry_value
+		result.append(entry.get("rect", Rect2()))
+	return result
+
+
+static func _sort_layout_rect_candidate(a: Variant, b: Variant) -> bool:
+	var entry_a: Dictionary = a
+	var entry_b: Dictionary = b
+	var score_a := float(entry_a.get("score", 0.0))
+	var score_b := float(entry_b.get("score", 0.0))
+	if score_a == score_b:
+		var rect_a: Rect2 = entry_a.get("rect", Rect2())
+		var rect_b: Rect2 = entry_b.get("rect", Rect2())
+		if rect_a.position.y == rect_b.position.y:
+			return rect_a.position.x < rect_b.position.x
+		return rect_a.position.y < rect_b.position.y
+	return score_a < score_b
 
 
 static func _active_object_layout_entries(environment_data: Dictionary) -> Array:

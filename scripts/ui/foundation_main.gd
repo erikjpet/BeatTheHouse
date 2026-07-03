@@ -31,7 +31,7 @@ const CONTEXT_MODE_SHOPKEEPER := "shopkeeper"
 const CONTEXT_MODE_GAME_HOOK := "game_hook"
 const RUN_INFO_BAND_RATIO := 0.15
 const RUN_SURFACE_BAND_RATIO := 0.85
-const RUN_INFO_MIN_HEIGHT := 96.0
+const RUN_INFO_MIN_HEIGHT := 144.0
 const ENVIRONMENT_CANVAS_MIN_SIZE := Vector2.ZERO
 const GAME_SURFACE_FOCUSED_MIN_SIZE := Vector2.ZERO
 const GAME_SURFACE_PREVIEW_MIN_SIZE := Vector2.ZERO
@@ -47,6 +47,7 @@ const ACCESSIBILITY_BASE_MIN_SIZE_META := "accessibility_base_min_size"
 const ACCESSIBILITY_BASE_COLOR_META := "accessibility_base_font_color"
 const ACCESSIBILITY_STYLEBOX_META_PREFIX := "accessibility_base_stylebox_"
 const DEFAULT_CONTROL_FONT_SIZE := 13
+const MIN_NATIVE_TOUCH_TARGET_HEIGHT := 40.0
 const UserSettingsScript := preload("res://scripts/core/user_settings.gd")
 const ProfileInventoryScript := preload("res://scripts/core/profile_inventory.gd")
 const SettingsMenuScript := preload("res://scripts/ui/settings_menu.gd")
@@ -119,6 +120,7 @@ var travel_transition_target_id: String = ""
 var travel_transition_target_label: String = ""
 var game_surface_auto_resolving := false
 var last_game_surface_realtime_refresh_msec := 0
+var surface_feature_music_active := false
 var surface_feature_music_ducking := false
 var drunk_time_anchor_real_msec := 0
 var drunk_time_anchor_scaled_msec := 0
@@ -133,6 +135,7 @@ var main_menu_panel: PanelContainer
 var start_menu_controls: VBoxContainer
 var start_menu_intro: VBoxContainer
 var release_framing_label: Label
+var release_version_label: Label
 var main_menu_background: Control
 var inventory_page: VBoxContainer
 var inventory_status_label: Label
@@ -216,6 +219,17 @@ var world_map_title_label: Label
 var world_map_detail_label: Label
 var world_map_confirm_button: Button
 var selected_world_map_node_id: String = ""
+var world_map_button_ids: Array = []
+var world_map_button_layout_size := Vector2(-1.0, -1.0)
+var world_map_button_relayout_deferred := false
+var travel_target_ids_cache_key: String = ""
+var travel_target_ids_cache: Array = []
+var travel_choice_cache_key: String = ""
+var travel_choice_cache: Array = []
+var world_route_cache_key: String = ""
+var world_route_cache: Dictionary = {}
+var world_map_snapshot_cache_key: String = ""
+var world_map_snapshot_cache: Dictionary = {}
 var run_hud_panel: Panel
 var visual_panel_container: PanelContainer
 var title_label: Label
@@ -249,6 +263,8 @@ var stake_input: SpinBox
 var actions_list: VBoxContainer
 var environment_canvas: PixelSceneCanvas
 var game_surface_canvas: GameSurfaceCanvas
+var run_layout_dirty := true
+var run_layout_last_screen_size := Vector2(-1.0, -1.0)
 
 
 func _ready() -> void:
@@ -262,7 +278,6 @@ func _ready() -> void:
 
 func _process(_delta: float) -> void:
 	_apply_run_screen_layout()
-	_advance_alcohol_absorption()
 	_advance_game_surface_automation()
 	_advance_game_surface_realtime_state()
 	_advance_environment_game_runtime()
@@ -271,6 +286,7 @@ func _process(_delta: float) -> void:
 
 func _notification(what: int) -> void:
 	if what == NOTIFICATION_RESIZED:
+		_invalidate_run_screen_layout()
 		_apply_run_screen_layout()
 
 
@@ -390,11 +406,13 @@ func enter_game(game_id: String) -> void:
 	_set_current_screen(SCREEN_GAME)
 	focus_interactable_object("game:%s" % game_id)
 	_clear_selected_game_action()
-	_reset_selected_stake()
 	var result := current_game.enter(run_state, run_state.current_environment)
 	last_game_result = result.duplicate(true)
+	_reset_selected_stake()
 	_show_message(str(result.get("message", "")))
 	_refresh()
+	_clear_selected_stake()
+	_refresh_stake_input()
 
 
 func back_to_environment() -> void:
@@ -626,6 +644,7 @@ func _advance_environment_game_runtime() -> void:
 				_show_message(str(result.get("message", "")))
 			elif bool(command.get("attention", false)) or bool(result.get("slot_pending_feature", false)):
 				_show_message(str(result.get("message", command.get("message", ""))))
+			_advance_alcohol_absorption()
 			_autosave_foundation_run("Autosaved.")
 		elif command.has("message"):
 			_show_message(str(command.get("message", "")))
@@ -681,7 +700,7 @@ func _current_game_surface_status() -> Dictionary:
 func _reset_game_surface_runtime_state() -> void:
 	if game_surface_canvas != null:
 		game_surface_canvas.stop_surface_audio()
-	_set_surface_feature_music_ducking(false)
+	_stop_surface_feature_music()
 	game_surface_ui_state = {}
 	game_surface_auto_resolving = false
 	last_game_surface_realtime_refresh_msec = 0
@@ -805,16 +824,17 @@ func open_world_map() -> bool:
 		return false
 	selected_action_category = ACTION_CATEGORY_TRAVEL
 	_set_current_screen(SCREEN_TRAVEL)
-	if selected_world_map_node_id.is_empty():
+	if selected_world_map_node_id.is_empty() or (run_state.has_world_map() and not WorldMapScript.is_node_visible(run_state.world_map, selected_world_map_node_id)):
 		var first_choice := _first_enabled_travel_choice()
 		if first_choice.is_empty():
 			first_choice = _first_disabled_travel_choice()
 		selected_world_map_node_id = str(first_choice.get("id", ""))
+		if selected_world_map_node_id.is_empty() and run_state.has_world_map():
+			selected_world_map_node_id = run_state.current_world_node_id()
 	if world_map_overlay != null:
 		world_map_overlay.visible = true
 		world_map_overlay.move_to_front()
-	_refresh_world_map_overlay()
-	call_deferred("_refresh_world_map_overlay")
+	_request_world_map_button_relayout()
 	_refresh()
 	return true
 
@@ -831,14 +851,24 @@ func select_world_map_node(node_id: String) -> bool:
 	var clean_id := node_id.strip_edges()
 	if clean_id.is_empty():
 		return false
+	if run_state != null and run_state.has_world_map() and not WorldMapScript.is_node_visible(run_state.world_map, clean_id):
+		_show_message("That stop is not on your map yet.")
+		_refresh_world_map_overlay()
+		return false
 	selected_world_map_node_id = clean_id
+	if run_state != null and clean_id == run_state.current_world_node_id():
+		selected_travel_target_id = ""
+		selected_travel_label = ""
+		_show_message("You are here.")
+		_refresh_world_map_overlay()
+		return true
 	var choice := _travel_choice(clean_id)
 	if choice.is_empty():
 		selected_travel_target_id = ""
 		selected_travel_label = ""
-		_show_message("No direct route from here.")
+		_show_message("That stop is not available from here right now.")
 		_refresh_world_map_overlay()
-		return false
+		return true
 	selected_travel_target_id = clean_id if bool(choice.get("enabled", true)) else ""
 	selected_travel_label = str(choice.get("label", clean_id)) if bool(choice.get("enabled", true)) else ""
 	if bool(choice.get("enabled", true)):
@@ -846,7 +876,6 @@ func select_world_map_node(node_id: String) -> bool:
 	else:
 		_show_message(str(choice.get("disabled_reason", "That route is not available right now.")))
 	_refresh_world_map_overlay()
-	_refresh()
 	return bool(choice.get("enabled", true))
 
 
@@ -859,7 +888,7 @@ func confirm_world_map_travel() -> void:
 		return
 	var choice := _travel_choice(selected_world_map_node_id)
 	if choice.is_empty():
-		_show_message("No direct route from here.")
+		_show_message("That stop is not available from here right now.")
 		_refresh_world_map_overlay()
 		return
 	if not bool(choice.get("enabled", true)):
@@ -931,6 +960,7 @@ func resolve_event_choice(event_id: String, choice_id: String) -> void:
 	_clear_selected_event_choice()
 	_set_current_screen(SCREEN_RESULT)
 	_show_message(str(result.get("message", "")))
+	_advance_alcohol_absorption()
 	_autosave_foundation_run("Autosaved.")
 	_refresh()
 
@@ -1188,6 +1218,7 @@ func apply_item_offer(item_id: String) -> bool:
 	_clear_selected_item_offer()
 	_set_current_screen(SCREEN_RESULT)
 	_show_message(str(result.get("message", "")))
+	_advance_alcohol_absorption()
 	_autosave_foundation_run("Autosaved.")
 	if _apply_post_action_environment_interrupt("item_purchase"):
 		_refresh()
@@ -1292,6 +1323,7 @@ func _use_active_item(item_id: String) -> bool:
 		last_game_result = {}
 		last_hook_result = {}
 	if bool(command.get("environment_changed", false)) or not result.is_empty():
+		_advance_alcohol_absorption()
 		_autosave_foundation_run("Autosaved.")
 	var message := str(command.get("message", result.get("message", "Active item used.")))
 	if not message.is_empty():
@@ -1329,6 +1361,7 @@ func _use_global_active_item(item_id: String, detail: Dictionary) -> bool:
 		message = str(messages[0]) if not messages.is_empty() else "%s used." % display_name
 	_show_message(message)
 	_set_current_screen(SCREEN_RESULT)
+	_advance_alcohol_absorption()
 	_autosave_foundation_run("Autosaved.")
 	_apply_post_action_environment_interrupt("active_item")
 	_refresh()
@@ -1418,6 +1451,7 @@ func sell_inventory_item(item_id: String) -> bool:
 	last_hook_result = {}
 	_set_current_screen(SCREEN_RESULT)
 	_show_message(str(result.get("message", "")))
+	_advance_alcohol_absorption()
 	_autosave_foundation_run("Autosaved.")
 	_refresh()
 	if _run_inventory_popup_is_visible():
@@ -1440,6 +1474,7 @@ func repair_inventory_item(item_id: String) -> bool:
 	last_hook_result = {}
 	_set_current_screen(SCREEN_RESULT)
 	_show_message(str(result.get("message", "")))
+	_advance_alcohol_absorption()
 	_autosave_foundation_run("Autosaved.")
 	_refresh()
 	if _run_inventory_popup_is_visible():
@@ -1496,6 +1531,7 @@ func use_service_hook(service_id: String) -> bool:
 	_clear_selected_service_hook()
 	_set_current_screen(SCREEN_RESULT)
 	_show_message(str(result.get("message", "")))
+	_advance_alcohol_absorption()
 	_autosave_foundation_run("Autosaved.")
 	if _apply_post_action_environment_interrupt("service"):
 		_refresh()
@@ -1553,6 +1589,7 @@ func use_lender_hook(lender_id: String) -> bool:
 	_clear_selected_lender_hook()
 	_set_current_screen(SCREEN_RESULT)
 	_show_message(str(result.get("message", "")))
+	_advance_alcohol_absorption()
 	_autosave_foundation_run("Autosaved.")
 	if _apply_post_action_environment_interrupt("lender"):
 		_refresh()
@@ -1590,6 +1627,7 @@ func use_game_environment_hook(game_id: String, hook_id: String, action_id: Stri
 	if bool(result.get("ok", false)):
 		run_state.advance_environment_turns(1)
 		GameModule.apply_result(run_state, result, rng)
+		_advance_alcohol_absorption()
 	last_hook_result = result.duplicate(true)
 	last_game_result = {}
 	last_item_result = {}
@@ -1651,6 +1689,7 @@ func buy_prestige_purchase(purchase_id: String) -> bool:
 	clear_interaction_focus()
 	_set_current_screen(SCREEN_RESULT)
 	_show_message(str(result.get("message", "")))
+	_advance_alcohol_absorption()
 	_autosave_foundation_run("Autosaved.")
 	_refresh()
 	return true
@@ -1839,6 +1878,7 @@ func _travel_to(target_id: String, target_label: String, choice_data: Dictionary
 	last_hook_result = travel_result.duplicate(true)
 	_set_current_screen(SCREEN_RESULT)
 	_show_message(str(travel_result.get("message", "Travel complete: %s." % destination_name)))
+	_advance_alcohol_absorption()
 	_autosave_foundation_run("Autosaved.")
 	_refresh()
 	if travel_transition_active:
@@ -2128,6 +2168,11 @@ func _build_start_screen() -> void:
 	_set_control_font_color(heading, VisualStyle.PINK)
 	start_menu_intro.add_child(heading)
 
+	release_version_label = _label(_release_version_text(), 12)
+	release_version_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_set_control_font_color(release_version_label, VisualStyle.CYAN_2)
+	start_menu_intro.add_child(release_version_label)
+
 	var copy := _label("Start in cheap rooms, borrow badly, read crooked tables, and climb toward the Grand Casino before the house learns your shape.", 16)
 	copy.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_set_control_font_color(copy, VisualStyle.SOFT)
@@ -2264,7 +2309,7 @@ func _build_content_group_controls(parent: VBoxContainer) -> void:
 	_set_control_font_color(content_group_status_label, VisualStyle.CYAN_2)
 	heading_row.add_child(content_group_status_label)
 	var done_button := _button("Done", Callable(self, "close_content_group_config"))
-	done_button.custom_minimum_size = Vector2(88, 30)
+	done_button.custom_minimum_size = Vector2(88, MIN_NATIVE_TOUCH_TARGET_HEIGHT)
 	done_button.size_flags_horizontal = Control.SIZE_SHRINK_END
 	done_button.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	_set_control_font_size(done_button, 12)
@@ -2327,7 +2372,7 @@ func _build_challenge_controls(parent: VBoxContainer) -> void:
 	_set_control_font_color(challenge_status_label, VisualStyle.CYAN_2)
 	heading_row.add_child(challenge_status_label)
 	var done_button := _button("Done", Callable(self, "close_challenge_selection"))
-	done_button.custom_minimum_size = Vector2(88, 30)
+	done_button.custom_minimum_size = Vector2(88, MIN_NATIVE_TOUCH_TARGET_HEIGHT)
 	done_button.size_flags_horizontal = Control.SIZE_SHRINK_END
 	done_button.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	_set_control_font_size(done_button, 12)
@@ -2546,7 +2591,7 @@ func _rebuild_challenge_options() -> void:
 func _challenge_option_button(title: String, description: String, challenge_id: String) -> Button:
 	var button := _button(title, Callable(self, "_on_challenge_selected").bind(challenge_id))
 	button.tooltip_text = description
-	button.custom_minimum_size = Vector2(0, 34)
+	button.custom_minimum_size = Vector2(0, MIN_NATIVE_TOUCH_TARGET_HEIGHT)
 	button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	button.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
 	_set_control_font_size(button, 12)
@@ -2755,7 +2800,7 @@ func _build_run_inventory_overlay() -> void:
 	run_inventory_title_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	header.add_child(run_inventory_title_label)
 	var close_button := _button("Close", Callable(self, "close_run_inventory"))
-	close_button.custom_minimum_size = Vector2(88, 28)
+	close_button.custom_minimum_size = Vector2(88, MIN_NATIVE_TOUCH_TARGET_HEIGHT)
 	header.add_child(close_button)
 
 	run_inventory_summary_label = _label("", 12)
@@ -2808,7 +2853,7 @@ func _build_run_journal_overlay() -> void:
 	title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	header.add_child(title)
 	var close_button := _button("Close", Callable(self, "close_run_journal"))
-	close_button.custom_minimum_size = Vector2(96, 32)
+	close_button.custom_minimum_size = Vector2(96, MIN_NATIVE_TOUCH_TARGET_HEIGHT)
 	header.add_child(close_button)
 
 	run_journal_summary_label = _label("", 12)
@@ -2917,7 +2962,7 @@ func _build_world_map_overlay() -> void:
 	header.add_child(world_map_title_label)
 
 	var close_button := _button("Close", Callable(self, "close_world_map"))
-	close_button.custom_minimum_size = Vector2(96, 34)
+	close_button.custom_minimum_size = Vector2(96, MIN_NATIVE_TOUCH_TARGET_HEIGHT)
 	header.add_child(close_button)
 
 	var body := HBoxContainer.new()
@@ -2935,6 +2980,8 @@ func _build_world_map_overlay() -> void:
 	world_map_nodes_layer = WorldMapCanvasScript.new()
 	world_map_nodes_layer.set_anchors_preset(Control.PRESET_FULL_RECT)
 	world_map_nodes_layer.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	if world_map_nodes_layer.has_signal("layout_changed"):
+		world_map_nodes_layer.connect("layout_changed", Callable(self, "_on_world_map_canvas_layout_changed"))
 	map_holder.add_child(world_map_nodes_layer)
 
 	var side := VBoxContainer.new()
@@ -2950,7 +2997,7 @@ func _build_world_map_overlay() -> void:
 	side.add_child(world_map_detail_label)
 
 	world_map_confirm_button = _button("Travel", Callable(self, "confirm_world_map_travel"))
-	world_map_confirm_button.custom_minimum_size = Vector2(180, 36)
+	world_map_confirm_button.custom_minimum_size = Vector2(180, MIN_NATIVE_TOUCH_TARGET_HEIGHT)
 	side.add_child(world_map_confirm_button)
 
 
@@ -2970,7 +3017,7 @@ func _build_inventory_page(parent: Node) -> void:
 	heading.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	header_row.add_child(heading)
 	var back_button := _button("Back", Callable(self, "close_inventory_page"))
-	back_button.custom_minimum_size = Vector2(110, 34)
+	back_button.custom_minimum_size = Vector2(110, MIN_NATIVE_TOUCH_TARGET_HEIGHT)
 	header_row.add_child(back_button)
 
 	var description := _label("Items here live outside a single run. This is the long-term stash structure; it does not change RunState.", 13)
@@ -3026,7 +3073,7 @@ func _build_game_test_menu(parent: Node) -> void:
 	heading.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	header_row.add_child(heading)
 	var back_button := _button("Back", Callable(self, "close_game_test_menu"))
-	back_button.custom_minimum_size = Vector2(96, 30)
+	back_button.custom_minimum_size = Vector2(96, MIN_NATIVE_TOUCH_TARGET_HEIGHT)
 	header_row.add_child(back_button)
 
 	var description := _label("Practice any available table with its real interface. Practice sessions do not autosave.", 12)
@@ -3121,7 +3168,7 @@ func _build_game_test_menu(parent: Node) -> void:
 		var description_text := str(definition.get("description", ""))
 		var button := _button(display_name, Callable(self, "start_game_test_session").bind(game_id))
 		button.tooltip_text = description_text
-		button.custom_minimum_size = Vector2(0, 38)
+		button.custom_minimum_size = Vector2(0, MIN_NATIVE_TOUCH_TARGET_HEIGHT)
 		list.add_child(button)
 
 
@@ -3186,7 +3233,7 @@ func _build_run_screen() -> void:
 	top_settings_button = _hud_nav_button("Settings", Callable(self, "open_settings_menu"))
 	hud_row.add_child(top_settings_button)
 	top_inventory_button = _hud_nav_button("Inventory", Callable(self, "open_run_inventory"))
-	top_inventory_button.custom_minimum_size = Vector2(118, 30)
+	top_inventory_button.custom_minimum_size = Vector2(118, MIN_NATIVE_TOUCH_TARGET_HEIGHT)
 	top_inventory_button.tooltip_text = "Inspect current run items."
 	hud_row.add_child(top_inventory_button)
 	status_label = _label("", 14)
@@ -3201,7 +3248,7 @@ func _build_run_screen() -> void:
 	save_status_label.custom_minimum_size = Vector2(260, 0)
 	hud_row.add_child(save_status_label)
 	active_item_button = _hud_nav_button("Active: Empty", Callable(self, "use_active_item_slot"))
-	active_item_button.custom_minimum_size = Vector2(148, 30)
+	active_item_button.custom_minimum_size = Vector2(148, MIN_NATIVE_TOUCH_TARGET_HEIGHT)
 	active_item_button.tooltip_text = "Use the equipped active item."
 	hud_row.add_child(active_item_button)
 
@@ -3465,10 +3512,10 @@ func _build_failure_summary_panel(parent: BoxContainer) -> void:
 	button_row.add_theme_constant_override("separation", 10)
 	stack.add_child(button_row)
 	var menu_button := _button("Main Menu", Callable(self, "return_to_main_menu"))
-	menu_button.custom_minimum_size = Vector2(160, 36)
+	menu_button.custom_minimum_size = Vector2(160, MIN_NATIVE_TOUCH_TARGET_HEIGHT)
 	button_row.add_child(menu_button)
 	var fresh_button := _button("New Run", Callable(self, "start_generated_foundation_run"))
-	fresh_button.custom_minimum_size = Vector2(160, 36)
+	fresh_button.custom_minimum_size = Vector2(160, MIN_NATIVE_TOUCH_TARGET_HEIGHT)
 	button_row.add_child(fresh_button)
 
 
@@ -3510,14 +3557,16 @@ func _build_victory_summary_panel(parent: BoxContainer) -> void:
 	button_row.add_theme_constant_override("separation", 10)
 	stack.add_child(button_row)
 	var menu_button := _button("Main Menu", Callable(self, "return_to_main_menu"))
-	menu_button.custom_minimum_size = Vector2(160, 36)
+	menu_button.custom_minimum_size = Vector2(160, MIN_NATIVE_TOUCH_TARGET_HEIGHT)
 	button_row.add_child(menu_button)
 	var fresh_button := _button("New Run", Callable(self, "start_generated_foundation_run"))
-	fresh_button.custom_minimum_size = Vector2(160, 36)
+	fresh_button.custom_minimum_size = Vector2(160, MIN_NATIVE_TOUCH_TARGET_HEIGHT)
 	button_row.add_child(fresh_button)
 
 
 func _refresh() -> void:
+	_invalidate_run_screen_layout()
+	_invalidate_travel_view_cache()
 	var has_run := run_state != null
 	if not has_run or current_screen == SCREEN_START:
 		_hide_run_menu()
@@ -3796,26 +3845,41 @@ func _stop_procedural_music() -> void:
 		procedural_music_player.stop()
 
 
-func _sync_surface_feature_music_ducking(surface_state: Dictionary) -> void:
+func _sync_surface_feature_music_state(surface_state: Dictionary) -> void:
 	var feature_scene: Dictionary = _copy_dict(surface_state.get("slot_feature_scene", {}))
 	var music: Dictionary = _copy_dict(feature_scene.get("feature_music", {}))
-	var should_duck := bool(feature_scene.get("active", false)) and bool(music.get("duck_background_music", false))
+	var feature_music_active := bool(feature_scene.get("active", false)) and not music.is_empty() and bool(music.get("loop", false))
+	var should_duck := feature_music_active and bool(music.get("duck_background_music", false))
 	if procedural_music_player != null:
 		procedural_music_player.update_feature_music_state({
-			"active": should_duck,
+			"active": feature_music_active,
 			"feature_scene": feature_scene,
 			"feature_music": music,
+			"duck_background_music": should_duck,
 		})
-	_set_surface_feature_music_ducking(should_duck)
+	_set_surface_feature_music_state(feature_music_active, should_duck)
 
 
-func _set_surface_feature_music_ducking(enabled: bool) -> void:
-	if surface_feature_music_ducking == enabled:
+func _set_surface_feature_music_state(active: bool, ducking: bool) -> void:
+	var was_active := surface_feature_music_active
+	var was_ducking := surface_feature_music_ducking
+	if was_active == active and was_ducking == ducking:
 		return
-	surface_feature_music_ducking = enabled
-	if procedural_music_player != null and not enabled:
+	surface_feature_music_active = active
+	surface_feature_music_ducking = ducking
+	if procedural_music_player != null and was_active and not active:
 		procedural_music_player.update_feature_music_state({"active": false})
-	if not enabled:
+	if was_ducking and not ducking:
+		_update_procedural_music()
+
+
+func _stop_surface_feature_music() -> void:
+	var was_ducking := surface_feature_music_ducking
+	surface_feature_music_active = false
+	surface_feature_music_ducking = false
+	if procedural_music_player != null:
+		procedural_music_player.update_feature_music_state({"active": false})
+	if was_ducking:
 		_update_procedural_music()
 
 
@@ -3860,8 +3924,12 @@ func _apply_run_screen_layout() -> void:
 		screen_size = get_viewport_rect().size
 	if screen_size.x <= 0.0 or screen_size.y <= 0.0:
 		return
-	var info_height := maxf(RUN_INFO_MIN_HEIGHT, floor(screen_size.y * RUN_INFO_BAND_RATIO))
-	var surface_height := maxf(1.0, screen_size.y - info_height)
+	if not run_layout_dirty and run_layout_last_screen_size == screen_size:
+		return
+	var proportional_info_height: float = floor(screen_size.y * RUN_INFO_BAND_RATIO)
+	var hud_content_height: float = ceil(run_hud_panel.get_combined_minimum_size().y)
+	var max_info_height: float = floor(screen_size.y * 0.35)
+	var info_height := minf(maxf(maxf(RUN_INFO_MIN_HEIGHT, proportional_info_height), hud_content_height), max_info_height)
 	run_hud_panel.set_anchors_preset(Control.PRESET_FULL_RECT)
 	run_hud_panel.offset_left = 0.0
 	run_hud_panel.offset_top = 0.0
@@ -3877,9 +3945,15 @@ func _apply_run_screen_layout() -> void:
 	visual_panel_container.custom_minimum_size = Vector2.ZERO
 	visual_panel_container.size_flags_vertical = Control.SIZE_FILL
 	if environment_canvas != null:
-		environment_canvas.custom_minimum_size = Vector2(0.0, surface_height)
+		environment_canvas.custom_minimum_size = ENVIRONMENT_CANVAS_MIN_SIZE
 	if game_surface_canvas != null:
-		game_surface_canvas.custom_minimum_size = Vector2(0.0, surface_height)
+		game_surface_canvas.custom_minimum_size = GAME_SURFACE_FOCUSED_MIN_SIZE
+	run_layout_last_screen_size = screen_size
+	run_layout_dirty = false
+
+
+func _invalidate_run_screen_layout() -> void:
+	run_layout_dirty = true
 
 
 func _render_failure_summary() -> void:
@@ -4166,7 +4240,7 @@ func _add_event_choice_action_option(stack: VBoxContainer, event_id: String, cho
 	var selected := event_id == selected_event_id and choice_id == selected_event_choice_id
 	var label := str(choice_data.get("label", choice_id))
 	var button := _add_card_button(stack, label, Callable(self, "resolve_event_choice").bind(event_id, choice_id), false, selected)
-	button.custom_minimum_size = Vector2(0, 38)
+	button.custom_minimum_size = Vector2(0, MIN_NATIVE_TOUCH_TARGET_HEIGHT)
 	_set_control_font_size(button, 16)
 	var detail := _event_choice_action_detail(choice_data)
 	if not detail.is_empty():
@@ -4556,6 +4630,8 @@ func _resolve_game_action(action_id: String, skip_stake_validation: bool = false
 	else:
 		_set_current_screen(SCREEN_RESULT)
 	_show_message(str(result.get("message", "")))
+	if bool(result.get("ok", false)):
+		_advance_alcohol_absorption()
 	_autosave_foundation_run("Autosaved.")
 	if bool(result.get("ok", false)) and _apply_post_action_environment_interrupt("game_action"):
 		_refresh()
@@ -4640,6 +4716,8 @@ func _resolve_environment_runtime_wager_action(game_id: String, action_id: Strin
 		_show_message("%s feature is ready. Open the machine to play it." % game.get_display_name())
 	else:
 		_show_message(str(result.get("message", "")))
+	if bool(result.get("ok", false)):
+		_advance_alcohol_absorption()
 	_autosave_foundation_run("Autosaved.")
 	if bool(result.get("ok", false)) and _apply_post_action_environment_interrupt("environment_game"):
 		_refresh_runtime_environment_views()
@@ -4696,12 +4774,15 @@ func _on_game_surface_music_cue(cue_id: String, context: Dictionary) -> void:
 	if normalized_cue.begins_with("bonus_music"):
 		var feature_scene: Dictionary = _copy_dict(context.get("feature_scene", {}))
 		var feature_music: Dictionary = _copy_dict(context.get("feature_music", feature_scene.get("feature_music", {})))
+		var should_duck := bool(feature_music.get("duck_background_music", false))
 		procedural_music_player.update_feature_music_state({
 			"active": true,
 			"feature_scene": feature_scene,
 			"feature_music": feature_music,
 			"cue_id": normalized_cue,
+			"duck_background_music": should_duck,
 		})
+		_set_surface_feature_music_state(true, should_duck)
 		return
 	procedural_music_player.play_feature_stinger(normalized_cue, context)
 
@@ -4845,6 +4926,8 @@ func current_screen_snapshot() -> Dictionary:
 		"travel_transition_target_label": travel_transition_target_label,
 		"world_map_overlay_visible": world_map_overlay != null and world_map_overlay.visible,
 		"selected_world_map_node_id": selected_world_map_node_id,
+		"world_map_detail_text": world_map_detail_label.text if world_map_detail_label != null else "",
+		"world_map_confirm_enabled": world_map_confirm_button != null and not world_map_confirm_button.disabled,
 		"world_map": _world_map_snapshot() if run_state != null else {},
 		"conclusion_animation": current_conclusion_animation_snapshot(),
 		"accessibility": current_accessibility_snapshot(),
@@ -5357,9 +5440,9 @@ func _environment_view_snapshot() -> Dictionary:
 	snapshot["travel_choices"] = _travel_choice_view_list()
 	snapshot["selected_travel_target_id"] = selected_travel_target_id
 	snapshot["selected_travel_label"] = selected_travel_label
-	snapshot["world_map"] = _world_map_snapshot()
 	snapshot["event_cadence"] = run_state.event_cadence_summary()
 	snapshot["world_map_overlay_visible"] = world_map_overlay != null and world_map_overlay.visible
+	snapshot["world_map"] = _world_map_snapshot() if bool(snapshot["world_map_overlay_visible"]) else {}
 	snapshot["event_options"] = _eligible_event_option_view_list()
 	snapshot["selected_event_id"] = selected_event_id
 	snapshot["selected_event_choice_id"] = selected_event_choice_id
@@ -6022,7 +6105,7 @@ func _game_view_snapshot() -> Dictionary:
 		module_surface_state = current_game.surface_state(run_state, run_state.current_environment, _current_game_surface_ui_state())
 		if typeof(module_surface_state) != TYPE_DICTIONARY:
 			module_surface_state = {}
-		_sync_surface_feature_music_ducking(module_surface_state)
+		_sync_surface_feature_music_state(module_surface_state)
 		if module_surface_state.has("surface_renderer"):
 			surface_renderer = str(module_surface_state.get("surface_renderer", surface_renderer))
 			surface_life = _surface_life_for_renderer(surface_renderer)
@@ -6045,6 +6128,8 @@ func _game_view_snapshot() -> Dictionary:
 			result_message = _player_facing_text(message_label.text)
 	var drunk_time_scale := run_state.drunk_time_scale()
 	var drunk_world_speed_percent := run_state.drunk_time_scale_percent()
+	var stake_range := _stake_range()
+	var snapshot_selected_stake := _selected_stake_for_range(stake_range)
 	var snapshot := {
 		"game_id": game_id,
 		"display_name": display_name,
@@ -6054,10 +6139,10 @@ func _game_view_snapshot() -> Dictionary:
 		"cheat_actions": cheat_actions,
 		"legal_action_count": legal_actions.size(),
 		"cheat_action_count": cheat_actions.size(),
-		"stake_min": int(_stake_range().get("min", 1)),
-		"stake_max": int(_stake_range().get("max", 1)),
-		"selected_stake": _current_selected_stake(),
-		"has_valid_stake": bool(_stake_range().get("has_valid", false)),
+		"stake_min": int(stake_range.get("min", 1)),
+		"stake_max": int(stake_range.get("max", 1)),
+		"selected_stake": snapshot_selected_stake,
+		"has_valid_stake": bool(stake_range.get("has_valid", false)),
 		"selected_action_id": selected_action_id,
 		"selected_action_kind": selected_action_kind,
 		"selected_action_label": selected_action_label,
@@ -6097,6 +6182,10 @@ func _game_view_snapshot() -> Dictionary:
 	}
 	for key in module_surface_state.keys():
 		snapshot[key] = module_surface_state[key]
+	snapshot["stake_min"] = int(stake_range.get("min", 1))
+	snapshot["stake_max"] = int(stake_range.get("max", 1))
+	snapshot["selected_stake"] = snapshot_selected_stake
+	snapshot["has_valid_stake"] = bool(stake_range.get("has_valid", false))
 	for key in result.keys():
 		var result_key := str(key)
 		if not snapshot.has(result_key):
@@ -7490,6 +7579,8 @@ func _refresh_profile_inventory_page() -> void:
 
 
 func _refresh_start_screen() -> void:
+	if release_version_label != null:
+		release_version_label.text = _release_version_text()
 	var has_save := _has_foundation_save()
 	if start_status_label != null:
 		if has_save:
@@ -7502,6 +7593,13 @@ func _refresh_start_screen() -> void:
 		continue_button.tooltip_text = "Load the saved run." if has_save else "No saved run yet."
 	_refresh_content_group_controls()
 	_refresh_challenge_controls()
+
+
+func _release_version_text() -> String:
+	var release_version := str(ProjectSettings.get_setting("application/config/version", "0.3.0")).strip_edges()
+	if release_version.is_empty():
+		release_version = "0.3.0"
+	return "Version %s" % release_version
 
 
 func _generate_menu_seed_text() -> String:
@@ -8840,7 +8938,7 @@ func _add_stake_controls(action_view: Dictionary) -> void:
 	stake_input.step = 1.0
 	stake_input.rounded = true
 	stake_input.value = _current_selected_stake(action_view)
-	stake_input.custom_minimum_size = Vector2(0, 30)
+	stake_input.custom_minimum_size = Vector2(0, MIN_NATIVE_TOUCH_TARGET_HEIGHT)
 	stake_input.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	stake_input.value_changed.connect(_on_stake_value_changed)
 	actions_list.add_child(stake_input)
@@ -8864,6 +8962,10 @@ func _reset_selected_stake() -> void:
 
 func _current_selected_stake(action_view: Dictionary = {}) -> int:
 	var range := _stake_range(action_view)
+	return _selected_stake_for_range(range)
+
+
+func _selected_stake_for_range(range: Dictionary) -> int:
 	if not bool(range.get("has_valid", false)):
 		return 0
 	if selected_stake <= 0:
@@ -9794,12 +9896,33 @@ func _refresh_world_map_overlay() -> void:
 	var snapshot := _world_map_snapshot()
 	if world_map_nodes_layer != null and world_map_nodes_layer.has_method("set_map_snapshot"):
 		world_map_nodes_layer.call("set_map_snapshot", snapshot)
-		_clear_world_map_node_buttons()
-		_add_world_map_node_buttons(snapshot)
+		_sync_world_map_node_buttons(snapshot)
 	var current_label := str(run_state.current_environment.get("display_name", "Current room")) if run_state != null else "Current room"
 	if world_map_title_label != null:
 		world_map_title_label.text = "%s / World Map" % current_label
 	_refresh_world_map_detail()
+
+
+func _on_world_map_canvas_layout_changed() -> void:
+	if world_map_overlay == null or not world_map_overlay.visible:
+		return
+	_request_world_map_button_relayout()
+
+
+func _request_world_map_button_relayout() -> void:
+	world_map_button_layout_size = Vector2(-1.0, -1.0)
+	if world_map_button_relayout_deferred:
+		return
+	world_map_button_relayout_deferred = true
+	call_deferred("_refresh_world_map_overlay_after_layout")
+
+
+func _refresh_world_map_overlay_after_layout() -> void:
+	world_map_button_relayout_deferred = false
+	if world_map_overlay == null or not world_map_overlay.visible:
+		return
+	world_map_button_layout_size = Vector2(-1.0, -1.0)
+	_refresh_world_map_overlay()
 
 
 func _clear_world_map_node_buttons() -> void:
@@ -9809,17 +9932,48 @@ func _clear_world_map_node_buttons() -> void:
 		if child is Button:
 			world_map_nodes_layer.remove_child(child)
 			child.queue_free()
+	world_map_button_ids = []
+	world_map_button_layout_size = Vector2(-1.0, -1.0)
+
+
+func _sync_world_map_node_buttons(snapshot: Dictionary) -> void:
+	if world_map_nodes_layer == null:
+		return
+	var node_ids := _world_map_node_ids(snapshot)
+	var layer_size := _world_map_layer_size()
+	if node_ids != world_map_button_ids or layer_size != world_map_button_layout_size:
+		_clear_world_map_node_buttons()
+		_add_world_map_node_buttons(snapshot)
+		world_map_button_ids = node_ids.duplicate()
+		world_map_button_layout_size = layer_size
+	else:
+		_position_world_map_node_buttons(snapshot)
+
+
+func _world_map_node_ids(snapshot: Dictionary) -> Array:
+	var ids: Array = []
+	for node_value in _copy_array(snapshot.get("nodes", [])):
+		if typeof(node_value) != TYPE_DICTIONARY:
+			continue
+		var node: Dictionary = node_value
+		var node_id := str(node.get("id", ""))
+		if not node_id.is_empty():
+			ids.append(node_id)
+	return ids
+
+
+func _world_map_layer_size() -> Vector2:
+	if world_map_nodes_layer == null:
+		return Vector2(540, 390)
+	var layer_size := world_map_nodes_layer.size
+	if layer_size.x <= 0.0 or layer_size.y <= 0.0:
+		return Vector2(540, 390)
+	return layer_size
 
 
 func _add_world_map_node_buttons(snapshot: Dictionary) -> void:
 	if world_map_nodes_layer == null:
 		return
-	var layer_size := world_map_nodes_layer.size
-	if layer_size.x <= 0.0 or layer_size.y <= 0.0:
-		layer_size = Vector2(540, 390)
-	var inset := Vector2(32.0, 28.0)
-	var drawable := Vector2(maxf(1.0, layer_size.x - inset.x * 2.0), maxf(1.0, layer_size.y - inset.y * 2.0))
-	var current_id := str(snapshot.get("current_node_id", ""))
 	for node_value in _copy_array(snapshot.get("nodes", [])):
 		if typeof(node_value) != TYPE_DICTIONARY:
 			continue
@@ -9827,17 +9981,41 @@ func _add_world_map_node_buttons(snapshot: Dictionary) -> void:
 		var node_id := str(node.get("id", ""))
 		if node_id.is_empty():
 			continue
-		var position: Dictionary = node.get("position", {}) if typeof(node.get("position", {})) == TYPE_DICTIONARY else {}
-		var center := inset + Vector2(clampf(float(position.get("x", 0.5)), 0.0, 1.0), clampf(float(position.get("y", 0.5)), 0.0, 1.0)) * drawable
-		var button := _button(str(node.get("label", node_id)).left(16), Callable(self, "select_world_map_node").bind(node_id))
-		button.custom_minimum_size = Vector2(92, 30)
-		button.size = Vector2(92, 30)
-		button.position = center - button.size * 0.5
-		button.disabled = node_id == current_id
+		var button := _world_map_hit_button(Callable(self, "select_world_map_node").bind(node_id))
+		button.custom_minimum_size = Vector2(46, 46)
+		button.size = Vector2(46, 46)
+		button.position = _world_map_node_button_position(node_id, node) - button.size * 0.5
 		button.tooltip_text = str(node.get("label", node_id))
-		if node_id == selected_world_map_node_id:
-			_style_selected_button(button)
+		button.name = "WorldMapNode_%s" % node_id
 		world_map_nodes_layer.add_child(button)
+
+
+func _position_world_map_node_buttons(snapshot: Dictionary) -> void:
+	if world_map_nodes_layer == null:
+		return
+	for node_value in _copy_array(snapshot.get("nodes", [])):
+		if typeof(node_value) != TYPE_DICTIONARY:
+			continue
+		var node: Dictionary = node_value
+		var node_id := str(node.get("id", ""))
+		if node_id.is_empty():
+			continue
+		var button := world_map_nodes_layer.get_node_or_null("WorldMapNode_%s" % node_id) as Button
+		if button == null:
+			continue
+		button.position = _world_map_node_button_position(node_id, node) - button.size * 0.5
+		button.tooltip_text = str(node.get("label", node_id))
+
+
+func _world_map_node_button_position(node_id: String, node: Dictionary) -> Vector2:
+	var layer_size := _world_map_layer_size()
+	var inset := Vector2(32.0, 28.0)
+	var drawable := Vector2(maxf(1.0, layer_size.x - inset.x * 2.0), maxf(1.0, layer_size.y - inset.y * 2.0))
+	var position: Dictionary = node.get("position", {}) if typeof(node.get("position", {})) == TYPE_DICTIONARY else {}
+	var center := inset + Vector2(clampf(float(position.get("x", 0.5)), 0.0, 1.0), clampf(float(position.get("y", 0.5)), 0.0, 1.0)) * drawable
+	if world_map_nodes_layer != null and world_map_nodes_layer.size.x > 0.0 and world_map_nodes_layer.size.y > 0.0 and world_map_nodes_layer.has_method("local_position_for_node"):
+		center = world_map_nodes_layer.call("local_position_for_node", node_id) as Vector2
+	return center
 
 
 func _refresh_world_map_detail() -> void:
@@ -9854,27 +10032,45 @@ func _refresh_world_map_detail() -> void:
 		return
 	var current_id := run_state.current_world_node_id()
 	var node: Dictionary = WorldMapScript.node_by_id(run_state.world_map, selected_world_map_node_id)
-	if node.is_empty():
+	if node.is_empty() or not WorldMapScript.is_node_visible(run_state.world_map, selected_world_map_node_id):
 		lines.append("That stop is not visible from here.")
-		_set_world_map_confirm_enabled(false)
-		world_map_detail_label.text = "\n".join(lines)
-		return
-	if selected_world_map_node_id == current_id:
-		lines.append("You are here.")
 		_set_world_map_confirm_enabled(false)
 		world_map_detail_label.text = "\n".join(lines)
 		return
 	var choice := _travel_choice(selected_world_map_node_id)
 	lines.append(str(node.get("label", selected_world_map_node_id)))
-	if choice.is_empty():
-		lines.append("No direct route from here.")
+	var flavor := _world_map_node_flavor(node)
+	if not flavor.is_empty():
+		lines.append(flavor)
+	if selected_world_map_node_id == current_id:
+		lines.append("You are here.")
 		_set_world_map_confirm_enabled(false)
 		world_map_detail_label.text = "\n".join(lines)
 		return
-	lines.append("Distance: %s, cost %d." % [str(choice.get("distance", "near")).capitalize(), int(choice.get("cost", 0))])
+	if choice.is_empty():
+		var path := WorldMapScript.path_between(run_state.world_map, current_id, selected_world_map_node_id, true)
+		if path.size() >= 2:
+			lines.append("Not on the route list from here right now.")
+		else:
+			lines.append("No known path from here.")
+		_set_world_map_confirm_enabled(false)
+		world_map_detail_label.text = "\n".join(lines)
+		return
+	lines.append("Travel: %s." % _world_map_travel_method(choice))
+	var distance_blocks := int(choice.get("distance_blocks", 0))
+	var distance_text := str(choice.get("distance", "near")).capitalize()
+	if distance_blocks > 0:
+		distance_text = "%s, %d block(s)" % [distance_text, distance_blocks]
+	lines.append("Distance: %s." % distance_text)
+	lines.append("Cost: %d." % int(choice.get("cost", 0)))
 	var risk := _travel_risk_summary(choice)
 	if not risk.is_empty():
 		lines.append("Risk: %s" % risk)
+	var unlock_summary := str(choice.get("unlock_summary", "")).strip_edges()
+	if not bool(choice.get("enabled", true)) and not unlock_summary.is_empty():
+		lines.append("Lock: %s" % unlock_summary)
+	elif bool(choice.get("enabled", true)):
+		lines.append("Route open.")
 	for preview_line in _copy_array(choice.get("preview_lines", [])).slice(0, 3):
 		var preview_text := str(preview_line).strip_edges()
 		if not preview_text.is_empty():
@@ -9883,6 +10079,55 @@ func _refresh_world_map_detail() -> void:
 		lines.append(str(choice.get("disabled_reason", "That route is not available right now.")))
 	_set_world_map_confirm_enabled(bool(choice.get("enabled", true)))
 	world_map_detail_label.text = "\n".join(lines)
+
+
+func _world_map_hit_button(callback: Callable) -> Button:
+	var button := Button.new()
+	button.text = ""
+	button.flat = true
+	button.focus_mode = Control.FOCUS_NONE
+	button.mouse_filter = Control.MOUSE_FILTER_STOP
+	button.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	button.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	var empty := StyleBoxEmpty.new()
+	button.add_theme_stylebox_override("normal", empty)
+	button.add_theme_stylebox_override("hover", empty)
+	button.add_theme_stylebox_override("pressed", empty)
+	button.add_theme_stylebox_override("disabled", empty)
+	button.pressed.connect(callback)
+	return button
+
+
+func _world_map_node_flavor(node: Dictionary) -> String:
+	var flavor := str(node.get("flavor", "")).strip_edges()
+	if not flavor.is_empty():
+		return flavor
+	var archetype := _environment_archetype(str(node.get("archetype_id", node.get("id", ""))))
+	var visual_context: Dictionary = archetype.get("visual_context", {}) if typeof(archetype.get("visual_context", {})) == TYPE_DICTIONARY else {}
+	flavor = str(visual_context.get("description", "")).strip_edges()
+	if not flavor.is_empty():
+		return flavor
+	var kind := str(node.get("kind", archetype.get("kind", ""))).strip_edges()
+	return "A %s stop on the city map." % kind if not kind.is_empty() else ""
+
+
+func _world_map_travel_method(choice: Dictionary) -> String:
+	var route: Dictionary = choice.get("route", {}) if typeof(choice.get("route", {})) == TYPE_DICTIONARY else {}
+	var travel_method := str(route.get("travel_method", choice.get("travel_method", ""))).strip_edges()
+	if not travel_method.is_empty():
+		return travel_method
+	var method := str(route.get("method", "")).strip_edges()
+	if not method.is_empty():
+		return method
+	match str(choice.get("distance", "near")).strip_edges().to_lower():
+		"near":
+			return "Walk"
+		"local":
+			return "Bus ticket"
+		"far":
+			return "Taxi ride"
+		_:
+			return "Night cab"
 
 
 func _set_world_map_confirm_enabled(enabled: bool) -> void:
@@ -9894,33 +10139,116 @@ func _set_world_map_confirm_enabled(enabled: bool) -> void:
 func _world_map_snapshot() -> Dictionary:
 	if run_state == null:
 		return {}
+	var cache_key := "%s|map:%s" % [_travel_base_cache_key(), selected_world_map_node_id]
+	if world_map_snapshot_cache_key == cache_key:
+		return world_map_snapshot_cache.duplicate(true)
+	var snapshot := {}
 	if generator != null:
-		return generator.world_map_snapshot(run_state, selected_world_map_node_id)
-	return WorldMapScript.snapshot(run_state.world_map, selected_world_map_node_id)
+		snapshot = generator.world_map_snapshot(run_state, selected_world_map_node_id)
+	else:
+		snapshot = WorldMapScript.snapshot(run_state.world_map, selected_world_map_node_id)
+	var enriched := _enriched_world_map_snapshot(snapshot)
+	world_map_snapshot_cache_key = cache_key
+	world_map_snapshot_cache = enriched.duplicate(true)
+	return enriched
+
+
+func _enriched_world_map_snapshot(snapshot: Dictionary) -> Dictionary:
+	if run_state == null or not run_state.has_world_map():
+		return snapshot
+	var enriched := snapshot.duplicate(true)
+	var current_id := run_state.current_world_node_id()
+	var target_ids := _travel_target_ids()
+	var travel_enabled_ids: Array = []
+	var travel_disabled_ids: Array = []
+	var travel_paths: Array = []
+	var nodes: Array = []
+	for node_value in _copy_array(enriched.get("nodes", [])):
+		if typeof(node_value) != TYPE_DICTIONARY:
+			continue
+		var node: Dictionary = (node_value as Dictionary).duplicate(true)
+		var node_id := str(node.get("id", "")).strip_edges()
+		var is_current := node_id == current_id
+		var is_target := target_ids.has(node_id)
+		var route := _world_route_for_target(node_id) if is_target and not is_current else {}
+		var status := run_state.travel_route_status(route) if not route.is_empty() else {}
+		var route_hidden := bool(status.get("hidden", false))
+		var enabled := is_target and not is_current and not route.is_empty() and not route_hidden and bool(status.get("available", true))
+		node["current"] = is_current
+		node["travel_target"] = is_target and not is_current and not route_hidden
+		node["travel_enabled"] = enabled
+		node["travel_disabled_reason"] = ""
+		if bool(node.get("travel_target", false)):
+			node["travel_method"] = _world_map_travel_method({"route": route, "distance": str(status.get("distance", route.get("distance", "near")))})
+			node["distance"] = str(status.get("distance", route.get("distance", "")))
+			node["distance_blocks"] = int(route.get("distance_blocks", 0))
+			node["cost"] = int(status.get("cost", route.get("cost", 0)))
+			node["risk_decay"] = int(status.get("risk_decay", route.get("risk_decay", 0)))
+			if enabled:
+				travel_enabled_ids.append(node_id)
+			else:
+				var disabled_reason := str(status.get("disabled_reason", "That route is not available right now."))
+				node["travel_disabled_reason"] = disabled_reason
+				travel_disabled_ids.append(node_id)
+			var route_path := _string_array(route.get("world_path", []))
+			if route_path.size() >= 2:
+				travel_paths.append({
+					"target_id": node_id,
+					"path": route_path,
+					"enabled": enabled,
+				})
+		elif not is_current:
+			node["travel_disabled_reason"] = "Not on the route list from here right now."
+		nodes.append(node)
+	enriched["nodes"] = nodes
+	enriched["travel_target_ids"] = target_ids
+	enriched["travel_enabled_node_ids"] = travel_enabled_ids
+	enriched["travel_disabled_node_ids"] = travel_disabled_ids
+	enriched["travel_paths"] = travel_paths
+	if str(enriched.get("background_path", "")).strip_edges().is_empty():
+		enriched["background_path"] = WorldMapScript.MAP_BACKGROUND_PATH
+	return enriched
 
 
 func _world_route_for_target(target_id: String) -> Dictionary:
+	var cache_key := _travel_base_cache_key()
+	if world_route_cache_key != cache_key:
+		world_route_cache_key = cache_key
+		world_route_cache = {}
+	if world_route_cache.has(target_id):
+		var cached_route: Dictionary = world_route_cache.get(target_id, {})
+		return cached_route.duplicate(true)
+	var route := {}
 	if run_state != null and generator != null and run_state.has_world_map():
-		return generator.world_route_for_target(run_state, target_id)
-	return library.route(target_id) if library != null else {}
+		route = generator.world_route_for_target(run_state, target_id)
+	else:
+		route = library.route(target_id) if library != null else {}
+	world_route_cache[target_id] = route.duplicate(true)
+	return route
 
 
 func _travel_choice_view_list() -> Array:
 	if run_state == null:
 		return []
+	var cache_key := "%s|selected:%s" % [_travel_base_cache_key(), selected_travel_target_id]
+	if travel_choice_cache_key == cache_key:
+		return travel_choice_cache.duplicate(true)
 	var ids := _travel_target_ids()
 	var choices: Array = []
 	for target_id in ids:
-		var choice := _travel_choice(target_id)
+		var choice := _travel_choice(target_id, ids)
 		if choice.is_empty():
 			continue
 		choice["selected"] = target_id == selected_travel_target_id
 		choices.append(choice)
+	travel_choice_cache_key = cache_key
+	travel_choice_cache = choices.duplicate(true)
 	return choices
 
 
-func _travel_choice(target_id: String) -> Dictionary:
-	if target_id.is_empty() or not _travel_target_ids().has(target_id):
+func _travel_choice(target_id: String, known_target_ids: Array = []) -> Dictionary:
+	var target_ids := known_target_ids if not known_target_ids.is_empty() else _travel_target_ids()
+	if target_id.is_empty() or not target_ids.has(target_id):
 		return {}
 	var route := _world_route_for_target(target_id)
 	var archetype := _environment_archetype(target_id)
@@ -9943,6 +10271,10 @@ func _travel_choice(target_id: String) -> Dictionary:
 		choice["suspicion_delta"] = int(route.get("suspicion_delta", 0))
 	if route.has("distance"):
 		choice["distance"] = str(route.get("distance", ""))
+	if route.has("distance_blocks"):
+		choice["distance_blocks"] = int(route.get("distance_blocks", 0))
+	if route.has("world_edge_id"):
+		choice["world_edge_id"] = str(route.get("world_edge_id", ""))
 	if route.has("risk_decay"):
 		choice["risk_decay"] = int(route.get("risk_decay", 0))
 	if route.has("condition_text"):
@@ -9960,7 +10292,7 @@ func _travel_choice(target_id: String) -> Dictionary:
 		choice["availability_turn"] = int(status.get("availability_turn", 0))
 	if status.has("travel_lock_remaining"):
 		choice["travel_lock_remaining"] = int(status.get("travel_lock_remaining", 0))
-	var full_preview := _travel_full_preview_enabled()
+	var full_preview := _travel_full_preview_enabled_for(target_id)
 	var preview_environment := {}
 	if full_preview and generator != null:
 		preview_environment = generator.preview_environment(run_state, target_id)
@@ -9982,16 +10314,80 @@ func _travel_choice(target_id: String) -> Dictionary:
 func _travel_target_ids() -> Array:
 	if run_state == null:
 		return []
-	if run_state.has_world_map():
-		return WorldMapScript.neighbor_ids(run_state.world_map, run_state.current_world_node_id(), true)
+	var cache_key := _travel_base_cache_key()
+	if travel_target_ids_cache_key == cache_key:
+		return travel_target_ids_cache.duplicate()
 	var result: Array = []
-	for source in [
-		run_state.current_environment.get("next_archetypes", []),
-		run_state.current_environment.get("travel_hooks", []),
-	]:
-		for target_id in _string_array(source):
-			if not result.has(target_id):
-				result.append(target_id)
+	if run_state.has_world_map():
+		var source_id := run_state.current_world_node_id()
+		result = WorldMapScript.travel_target_ids(run_state.world_map, source_id, WorldMapScript.TRAVEL_NEW_TARGET_LIMIT, WorldMapScript.TRAVEL_TOTAL_TARGET_LIMIT, _enabled_world_route_ids(source_id))
+	else:
+		for source in [
+			run_state.current_environment.get("next_archetypes", []),
+			run_state.current_environment.get("travel_hooks", []),
+		]:
+			for target_id in _string_array(source):
+				if not result.has(target_id):
+					result.append(target_id)
+	travel_target_ids_cache_key = cache_key
+	travel_target_ids_cache = result.duplicate()
+	return result
+
+
+func _travel_base_cache_key() -> String:
+	if run_state == null:
+		return "no-run"
+	var map_current_id := run_state.current_world_node_id() if run_state.has_world_map() else ""
+	var map_visited_count := 0
+	var map_node_count := 0
+	if run_state.has_world_map():
+		map_visited_count = _copy_array(run_state.world_map.get("visited_path", [])).size()
+		map_node_count = _copy_array(run_state.world_map.get("nodes", [])).size()
+	return "%s|%s|%s|%d|%d|%d|%d|%d|%d|%d|%d|%d|%s" % [
+		current_screen,
+		str(run_state.current_environment.get("id", "")),
+		map_current_id,
+		run_state.environment_history.size(),
+		map_visited_count,
+		map_node_count,
+		run_state.bankroll,
+		run_state.suspicion_level(),
+		run_state.current_travel_lock_remaining(),
+		run_state.unlocked_travel.size(),
+		run_state.narrative_flags.size(),
+		run_state.inventory.size(),
+		str(run_state.current_environment.get("travel_lock_remaining", "")),
+	]
+
+
+func _invalidate_travel_view_cache() -> void:
+	travel_target_ids_cache_key = ""
+	travel_target_ids_cache = []
+	travel_choice_cache_key = ""
+	travel_choice_cache = []
+	world_route_cache_key = ""
+	world_route_cache = {}
+	world_map_snapshot_cache_key = ""
+	world_map_snapshot_cache = {}
+
+
+func _enabled_world_route_ids(source_id: String) -> Array:
+	var result: Array = []
+	if run_state == null or not run_state.has_world_map():
+		return result
+	var clean_source_id := source_id.strip_edges()
+	if clean_source_id.is_empty():
+		clean_source_id = run_state.current_world_node_id()
+	for target_id_value in WorldMapScript.visible_node_ids(run_state.world_map):
+		var target_id := str(target_id_value)
+		if target_id == clean_source_id or not WorldMapScript.has_path(run_state.world_map, clean_source_id, target_id, true):
+			continue
+		var route := _world_route_for_target(target_id)
+		if route.is_empty():
+			continue
+		var status := run_state.travel_route_status(route)
+		if not bool(status.get("hidden", false)) and bool(status.get("available", true)):
+			result.append(target_id)
 	return result
 
 
@@ -10015,6 +10411,15 @@ func _travel_full_preview_enabled() -> bool:
 	if run_state == null:
 		return false
 	return run_state.travel_scouting_level() > 0
+
+
+func _travel_full_preview_enabled_for(target_id: String) -> bool:
+	if _travel_full_preview_enabled():
+		return true
+	if run_state == null or not run_state.has_world_map():
+		return false
+	var node: Dictionary = WorldMapScript.node_by_id(run_state.world_map, target_id)
+	return bool(node.get("scouted", false))
 
 
 func _travel_preview_summary(choice: Dictionary) -> String:
@@ -10261,7 +10666,7 @@ func _section(text: String) -> Label:
 func _button(text: String, callback: Callable) -> Button:
 	var button := Button.new()
 	button.text = text
-	button.custom_minimum_size = Vector2(0, 30)
+	button.custom_minimum_size = Vector2(0, MIN_NATIVE_TOUCH_TARGET_HEIGHT)
 	button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_set_control_font_color(button, VisualStyle.WHITE)
 	_set_control_font_size(button, DEFAULT_CONTROL_FONT_SIZE)
@@ -10275,7 +10680,7 @@ func _button(text: String, callback: Callable) -> Button:
 
 func _hud_nav_button(text: String, callback: Callable) -> Button:
 	var button := _button(text, callback)
-	button.custom_minimum_size = Vector2(92, 30)
+	button.custom_minimum_size = Vector2(92, MIN_NATIVE_TOUCH_TARGET_HEIGHT)
 	button.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
 	_set_control_font_size(button, 12)
 	button.tooltip_text = "Open the run menu." if text == "Menu" else "Open settings."
