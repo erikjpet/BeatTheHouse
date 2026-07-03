@@ -72,7 +72,13 @@ class SurfaceHarness:
 	func surface_label(text: String, _pos: Vector2, _font_size: int, _color: Color) -> void:
 		labels.append(text)
 
+	func surface_label_plain(text: String, _pos: Vector2, _font_size: int, _color: Color) -> void:
+		labels.append(text)
+
 	func surface_label_centered(text: String, _rect: Rect2, _font_size: int, _color: Color) -> void:
+		labels.append(text)
+
+	func surface_label_centered_plain(text: String, _rect: Rect2, _font_size: int, _color: Color) -> void:
 		labels.append(text)
 
 	func surface_title(text: String, _pos: Vector2, _color: Color) -> void:
