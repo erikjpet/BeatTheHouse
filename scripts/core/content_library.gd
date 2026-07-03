@@ -15,6 +15,7 @@ const TRAVEL_ROUTES_PATH := "res://data/travel/routes.json"
 const PRESTIGE_PURCHASES_PATH := "res://data/prestige/purchases.json"
 const MUSIC_MANIFEST_PATH := "res://data/audio/music_manifest.json"
 const MUSIC_ASSET_ROOT := "res://assets/audio/music"
+const MIN_AUTHORED_MUSIC_LOOP_SECONDS := 12.0
 
 var environment_archetypes: Array = []
 var games: Array = []
@@ -898,7 +899,9 @@ func _validate_music_manifest_definitions() -> void:
 			if not bool(allowed_roles.get(role, false)):
 				validation_errors.append("music_tracks %s has unknown stem role: %s." % [track_id, role])
 				continue
-			_validate_music_asset_file("music_tracks %s stem %s" % [track_id, role], track_id, _music_file_name(stems.get(role_value)))
+			var stem_filename := _music_file_name(stems.get(role_value))
+			_validate_music_asset_file("music_tracks %s stem %s" % [track_id, role], track_id, stem_filename)
+			_validate_music_loop_asset("music_tracks %s stem %s" % [track_id, role], track_id, stem_filename, int(track.get("loop_frames", 0)))
 		var stingers_value: Variant = track.get("stingers", {})
 		if typeof(stingers_value) == TYPE_DICTIONARY:
 			var stingers: Dictionary = stingers_value
@@ -926,6 +929,83 @@ func _validate_music_asset_file(label: String, track_id: String, filename: Strin
 	var path := "%s/%s/%s" % [MUSIC_ASSET_ROOT, track_id, filename]
 	if not FileAccess.file_exists(path):
 		validation_errors.append("%s references missing file: %s." % [label, path])
+
+
+func _validate_music_loop_asset(label: String, track_id: String, filename: String, loop_frames: int) -> void:
+	if filename.is_empty() or filename.find("..") >= 0 or filename.find("/") >= 0 or filename.find("\\") >= 0:
+		return
+	if not filename.to_lower().ends_with(".wav"):
+		return
+	var path := "%s/%s/%s" % [MUSIC_ASSET_ROOT, track_id, filename]
+	var info := _wav_info(path)
+	if info.is_empty():
+		return
+	var sample_rate := int(info.get("sample_rate", 0))
+	var data_frames := int(info.get("frames", 0))
+	if sample_rate <= 0 or data_frames <= 0:
+		return
+	if loop_frames > data_frames:
+		validation_errors.append("%s loop_frames %d exceeds WAV frame count %d." % [label, loop_frames, data_frames])
+	var min_loop_frames := int(float(sample_rate) * MIN_AUTHORED_MUSIC_LOOP_SECONDS)
+	if loop_frames < min_loop_frames:
+		validation_errors.append("%s loop is %.1fs; authored room music must be at least %.1fs." % [label, float(loop_frames) / float(sample_rate), MIN_AUTHORED_MUSIC_LOOP_SECONDS])
+
+
+static func _wav_info(path: String) -> Dictionary:
+	if not FileAccess.file_exists(path):
+		return {}
+	var bytes := FileAccess.get_file_as_bytes(path)
+	if bytes.size() < 44:
+		return {}
+	if _ascii_from_bytes(bytes, 0, 4) != "RIFF" or _ascii_from_bytes(bytes, 8, 4) != "WAVE":
+		return {}
+	var offset := 12
+	var channels := 1
+	var sample_rate := 0
+	var bits_per_sample := 0
+	var data_size := 0
+	while offset + 8 <= bytes.size():
+		var chunk_id := _ascii_from_bytes(bytes, offset, 4)
+		var chunk_size := _u32_le(bytes, offset + 4)
+		var chunk_data := offset + 8
+		if chunk_id == "fmt " and chunk_data + 16 <= bytes.size():
+			channels = maxi(1, _u16_le(bytes, chunk_data + 2))
+			sample_rate = maxi(1, _u32_le(bytes, chunk_data + 4))
+			bits_per_sample = _u16_le(bytes, chunk_data + 14)
+		elif chunk_id == "data":
+			data_size = mini(chunk_size, bytes.size() - chunk_data)
+			break
+		offset = chunk_data + chunk_size + (chunk_size % 2)
+	if sample_rate <= 0 or bits_per_sample <= 0 or data_size <= 0:
+		return {}
+	var bytes_per_sample := maxi(1, int(bits_per_sample / 8))
+	var frame_bytes := maxi(1, channels * bytes_per_sample)
+	return {
+		"sample_rate": sample_rate,
+		"channels": channels,
+		"bits_per_sample": bits_per_sample,
+		"frames": int(data_size / frame_bytes),
+	}
+
+
+static func _ascii_from_bytes(bytes: PackedByteArray, offset: int, length: int) -> String:
+	var chars := PackedByteArray()
+	chars.resize(length)
+	for index in range(length):
+		chars[index] = bytes[offset + index] if offset + index < bytes.size() else 0
+	return chars.get_string_from_ascii()
+
+
+static func _u16_le(bytes: PackedByteArray, offset: int) -> int:
+	if offset + 1 >= bytes.size():
+		return 0
+	return int(bytes[offset]) | (int(bytes[offset + 1]) << 8)
+
+
+static func _u32_le(bytes: PackedByteArray, offset: int) -> int:
+	if offset + 3 >= bytes.size():
+		return 0
+	return int(bytes[offset]) | (int(bytes[offset + 1]) << 8) | (int(bytes[offset + 2]) << 16) | (int(bytes[offset + 3]) << 24)
 
 
 static func _music_file_name(value: Variant) -> String:
