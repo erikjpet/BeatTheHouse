@@ -60,12 +60,13 @@ func _next_world_environment(run_state: RunState, target_archetype_id: String, r
 		run_state.store_current_world_node_environment()
 	var map_data := run_state.world_map
 	var target_id := target_archetype_id.strip_edges()
+	var current_node_id := run_state.current_world_node_id()
 	if run_state.current_environment.is_empty() and target_id.is_empty():
 		target_id = WorldMap.current_node_id(map_data)
-	elif not target_id.is_empty() and not WorldMap.are_neighbors(map_data, run_state.current_world_node_id(), target_id):
-		target_id = _fallback_world_neighbor(map_data, run_state.current_world_node_id())
+	elif not target_id.is_empty() and not _world_travel_target_ids(run_state, map_data, current_node_id).has(target_id):
+		target_id = _fallback_world_neighbor(run_state, map_data, current_node_id)
 	elif target_id.is_empty():
-		target_id = _fallback_world_neighbor(map_data, run_state.current_world_node_id())
+		target_id = _fallback_world_neighbor(run_state, map_data, current_node_id)
 	if target_id.is_empty():
 		return _legacy_next_environment(run_state, target_archetype_id, rng)
 	var node := WorldMap.node_by_id(map_data, target_id)
@@ -97,7 +98,7 @@ func _world_environment_data_for_node(run_state: RunState, map_data: Dictionary,
 	var stored_environment: Dictionary = node.get("environment", {}) if typeof(node.get("environment", {})) == TYPE_DICTIONARY else {}
 	if not stored_environment.is_empty() and str(node.get("state", "")) == WorldMap.STATE_VISITED:
 		var restored := stored_environment.duplicate(true)
-		_apply_world_travel_targets(restored, map_data, node_id)
+		_apply_world_travel_targets(restored, run_state, map_data, node_id)
 		restored["world_node_id"] = node_id
 		restored["layout"] = EnvironmentInstance.ensure_generated_layout(restored)
 		return restored
@@ -111,19 +112,22 @@ func _world_environment_data_for_node(run_state: RunState, map_data: Dictionary,
 	environment.game_states = _generated_game_states(run_state, environment.to_dict(), rng)
 	var environment_data := environment.to_dict()
 	environment_data["world_node_id"] = node_id
-	_apply_world_travel_targets(environment_data, map_data, node_id)
+	_apply_world_travel_targets(environment_data, run_state, map_data, node_id)
 	environment_data["layout"] = EnvironmentInstance.ensure_generated_layout(environment_data)
 	return environment_data
 
 
-func _apply_world_travel_targets(environment_data: Dictionary, map_data: Dictionary, node_id: String) -> void:
-	var targets := WorldMap.neighbor_ids(map_data, node_id, false)
+func _apply_world_travel_targets(environment_data: Dictionary, run_state: RunState, map_data: Dictionary, node_id: String) -> void:
+	var targets := _world_travel_target_ids(run_state, map_data, node_id)
 	environment_data["next_archetypes"] = targets.duplicate(true)
 	environment_data["travel_hooks"] = targets.duplicate(true)
 	environment_data["world_map_travel"] = true
 
 
-func _fallback_world_neighbor(map_data: Dictionary, source_id: String) -> String:
+func _fallback_world_neighbor(run_state: RunState, map_data: Dictionary, source_id: String) -> String:
+	var travel_targets := _world_travel_target_ids(run_state, map_data, source_id)
+	if not travel_targets.is_empty():
+		return str(travel_targets[0])
 	var visible_neighbors := WorldMap.neighbor_ids(map_data, source_id, true)
 	if not visible_neighbors.is_empty():
 		return str(visible_neighbors[0])
@@ -131,6 +135,28 @@ func _fallback_world_neighbor(map_data: Dictionary, source_id: String) -> String
 	if not all_neighbors.is_empty():
 		return str(all_neighbors[0])
 	return ""
+
+
+func _world_travel_target_ids(run_state: RunState, map_data: Dictionary, source_id: String) -> Array:
+	return WorldMap.travel_target_ids(map_data, source_id, WorldMap.TRAVEL_NEW_TARGET_LIMIT, WorldMap.TRAVEL_TOTAL_TARGET_LIMIT, _enabled_world_route_ids(run_state, map_data, source_id))
+
+
+func _enabled_world_route_ids(run_state: RunState, map_data: Dictionary, source_id: String) -> Array:
+	var result: Array = []
+	if run_state == null:
+		return result
+	var map := WorldMap.new(library)
+	for target_id_value in WorldMap.visible_node_ids(map_data):
+		var target_id := str(target_id_value)
+		if target_id == source_id or not WorldMap.has_path(map_data, source_id, target_id, true):
+			continue
+		var route := map.route_for_target(map_data, source_id, target_id)
+		if route.is_empty():
+			continue
+		var status := run_state.travel_route_status(route)
+		if not bool(status.get("hidden", false)) and bool(status.get("available", true)):
+			result.append(target_id)
+	return result
 
 
 # Picks the starting, routed, or tier fallback archetype.

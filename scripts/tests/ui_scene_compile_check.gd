@@ -11,9 +11,37 @@ const GameSurfaceCanvasScript := preload("res://scripts/ui/game_surface_canvas.g
 const SfxPlayerScript := preload("res://scripts/ui/sfx_player.gd")
 const SlotMachineStateScript := preload("res://scripts/games/slots/slot_machine_state.gd")
 const RunStateScript := preload("res://scripts/core/run_state.gd")
+const RunActionServiceScript := preload("res://scripts/core/run_action_service.gd")
 const EventModuleScript := preload("res://scripts/core/event_module.gd")
 const UserSettingsScript := preload("res://scripts/core/user_settings.gd")
 const TEST_SETTINGS_PATH := "user://settings_ui_scene_compile_check.json"
+
+
+func _player_facing_effect_summary_is_clean(text: String, label: String) -> bool:
+	var lowered := text.to_lower()
+	for forbidden in ["delta", "msec", "serialized", "foundation", "contract", "module", "suspicion", "_"]:
+		if lowered.find(forbidden) != -1:
+			push_error("%s exposes technical text: %s in %s." % [label, forbidden, text])
+			return false
+	return true
+
+
+func _visible_buttons_meet_touch_target(node: Node, label: String) -> bool:
+	if node == null:
+		return true
+	if node is CanvasItem and not (node as CanvasItem).visible:
+		return true
+	if node is Button:
+		var button := node as Button
+		if button.visible and button.is_visible_in_tree():
+			var rect := button.get_global_rect()
+			if rect.size.y < 39.5:
+				push_error("%s has a visible button below touch target height: %s at %s." % [label, button.text, str(rect)])
+				return false
+	for child in node.get_children():
+		if not _visible_buttons_meet_touch_target(child, label):
+			return false
+	return true
 
 
 class AllInLosingFixtureGame:
@@ -126,6 +154,9 @@ func _run() -> void:
 	var run_screen: Control = app.get("run_screen")
 	if not start_screen.visible or run_screen.visible:
 		push_error("Main UI should show the start/setup state before a run begins.")
+		quit(1)
+		return
+	if not _visible_buttons_meet_touch_target(app, "start menu"):
 		quit(1)
 		return
 	var save_service: SaveService = app.get("save_service")
@@ -769,6 +800,10 @@ func _run() -> void:
 		push_error("Procedural music stem manifest did not expose synchronized loop metadata.")
 		quit(1)
 		return
+	if str(music_stem_manifest.get("source", "")) == "authored" and int(music_stem_manifest.get("loop_frames", 0)) < 44100 * 12:
+		push_error("Authored environment music should be a long ambient bed, not a short repeated fixture loop.")
+		quit(1)
+		return
 	if str(music_stem_manifest.get("source", "")) == "authored" and not bool(music_stem_manifest.get("sparse", false)):
 		push_error("Authored sparse music fixture should expose absent roles as silent.")
 		quit(1)
@@ -795,6 +830,37 @@ func _run() -> void:
 		return
 	if bool(feature_music_snapshot.get("player_instantiated", true)):
 		push_error("Headless UI should not instantiate feature music playback.")
+		quit(1)
+		return
+	app.call("_on_game_surface_music_cue", "bonus_music_pinball", {
+		"feature_scene": {
+			"active": true,
+			"scene_id": "pinball_fixture",
+		},
+		"feature_music": {
+			"cue_id": "bonus_music_pinball",
+			"loop": true,
+			"volume_db": -15.0,
+		},
+	})
+	var pinball_feature_snapshot: Dictionary = procedural_music_player.call("music_feature_snapshot", {}, 0.05)
+	var pinball_feature_input: Dictionary = pinball_feature_snapshot.get("input", {}) as Dictionary
+	if str(pinball_feature_snapshot.get("active_music_id", "")) != "pinball_fixture|bonus_music_pinball":
+		push_error("Pinball feature music cue did not become the active MusicDirector feature layer.")
+		quit(1)
+		return
+	if bool(pinball_feature_input.get("duck_background_music", true)):
+		push_error("Pinball feature music should not depend on background ducking to stay active.")
+		quit(1)
+		return
+	app.call("_sync_surface_feature_music_state", {
+		"slot_feature_scene": {
+			"active": false,
+		},
+	})
+	var stopped_feature_snapshot: Dictionary = procedural_music_player.call("music_feature_snapshot", {}, 0.05)
+	if not str(stopped_feature_snapshot.get("active_music_id", "")).is_empty():
+		push_error("Slot feature music did not clear when the surface bonus scene ended.")
 		quit(1)
 		return
 	var slot_sfx := SfxPlayerScript.new()
@@ -838,6 +904,9 @@ func _run() -> void:
 		quit(1)
 		return
 	if not _check_game_surface_touch_hit_policy():
+		quit(1)
+		return
+	if not _visible_buttons_meet_touch_target(app, "initial run screen"):
 		quit(1)
 		return
 	var initial_environment_canvas: Control = app.get("environment_canvas")
@@ -1191,6 +1260,11 @@ func _run() -> void:
 		quit(1)
 		return
 	if not await _check_run_journal_flow(app, save_service, viewport_rect):
+		quit(1)
+		return
+	app.call("start_foundation_run", "UI-COMPILE-SEED")
+	await process_frame
+	if not await _check_preview_focus_keeps_serialized_run_state(app):
 		quit(1)
 		return
 	app.call("start_foundation_run", "UI-COMPILE-SEED")
@@ -1689,28 +1763,30 @@ func _run() -> void:
 		push_error("M1.6B game surface did not expose a visible legal action hit region.")
 		quit(1)
 		return
-	var serialized_before_surface_selection := JSON.stringify(app.call("serialized_run_state"))
-	var surface_click_event := InputEventMouseButton.new()
-	surface_click_event.button_index = MOUSE_BUTTON_LEFT
-	surface_click_event.pressed = true
-	surface_click_event.position = surface_click_position
-	focused_game_surface.call("_gui_input", surface_click_event)
-	await process_frame
-	if serialized_before_surface_selection != JSON.stringify(app.call("serialized_run_state")):
-		push_error("M1.6B clicking a game surface action mutated serialized RunState before confirmation.")
-		quit(1)
-		return
-	var surface_selected_snapshot: Dictionary = app.call("current_game_view_snapshot")
 	var generic_surface_selection := legal_surface_action == "surface_legal"
-	if generic_surface_selection and str(surface_selected_snapshot.get("selected_action_id", "")) != str(legal_actions[0].get("id", "")):
-		push_error("M1.6B clicking a game surface action did not update UI-local action selection.")
-		quit(1)
-		return
-	var focused_canvas_snapshot: Dictionary = focused_game_surface.call("current_view_snapshot")
-	if generic_surface_selection and int(focused_canvas_snapshot.get("selected_view_index", -1)) < 0:
-		push_error("M1.6B game surface did not expose selected surface state after a surface click.")
-		quit(1)
-		return
+	if generic_surface_selection:
+		var serialized_before_surface_selection := JSON.stringify(app.call("serialized_run_state"))
+		var surface_click_event := InputEventMouseButton.new()
+		surface_click_event.button_index = MOUSE_BUTTON_LEFT
+		surface_click_event.pressed = true
+		surface_click_event.position = surface_click_position
+		focused_game_surface.call("_gui_input", surface_click_event)
+		await process_frame
+		if serialized_before_surface_selection != JSON.stringify(app.call("serialized_run_state")):
+			var mutation_snapshot: Dictionary = app.call("current_game_view_snapshot")
+			push_error("M1.6B clicking a game surface action mutated serialized RunState before confirmation: game=%s action=%s index=%d." % [str(mutation_snapshot.get("game_id", "")), legal_surface_action, legal_surface_index])
+			quit(1)
+			return
+		var surface_selected_snapshot: Dictionary = app.call("current_game_view_snapshot")
+		if str(surface_selected_snapshot.get("selected_action_id", "")) != str(legal_actions[0].get("id", "")):
+			push_error("M1.6B clicking a game surface action did not update UI-local action selection.")
+			quit(1)
+			return
+		var focused_canvas_snapshot: Dictionary = focused_game_surface.call("current_view_snapshot")
+		if int(focused_canvas_snapshot.get("selected_view_index", -1)) < 0:
+			push_error("M1.6B game surface did not expose selected surface state after a surface click.")
+			quit(1)
+			return
 	if generic_surface_selection:
 		if not _visible_text_fits_viewport(actions_list, "Click the highlighted surface action", viewport_rect, "game-mode surface resolve guidance"):
 			quit(1)
@@ -1902,19 +1978,10 @@ func _run() -> void:
 		push_error("Game surface did not expose in-scene result feedback from result-delta data.")
 		quit(1)
 		return
-	if max_stake <= min_stake:
-		push_error("Foundation stake validation needs a higher valid stake for the smoke test.")
-		quit(1)
-		return
-	var higher_stake := min_stake + 1
 	app.call("start_foundation_run", "UI-COMPILE-SEED")
 	await process_frame
-	if not await _travel_to_first_game_environment(app):
-		push_error("Higher-stake check could not reach a gambling environment after the shop start.")
-		quit(1)
-		return
-	if not _enter_ui_test_game(app):
-		push_error("Higher-stake check did not find a game after reaching a gambling environment.")
+	if not _enter_action_fixture_game(app, "bar_dice"):
+		push_error("Higher-stake check could not enter the bar dice action fixture.")
 		quit(1)
 		return
 	await process_frame
@@ -1924,6 +1991,18 @@ func _run() -> void:
 		push_error("Foundation game did not expose legal actions for higher stake check.")
 		quit(1)
 		return
+	var higher_cheat_actions: Array = higher_snapshot.get("cheat_actions", [])
+	if higher_cheat_actions.is_empty():
+		push_error("Foundation game did not expose cheat/advantage actions for the action fixture.")
+		quit(1)
+		return
+	var higher_min_stake := int(higher_snapshot.get("stake_min", 0))
+	var higher_max_stake := int(higher_snapshot.get("stake_max", 0))
+	if higher_max_stake <= higher_min_stake:
+		push_error("Foundation stake validation needs a higher valid stake for the smoke test.")
+		quit(1)
+		return
+	var higher_stake := higher_min_stake + 1
 	var higher_legal_action: Dictionary = higher_legal_actions[0]
 	if bool(higher_snapshot.get("slot_fixed_bet_ladder", false)):
 		if not bool(app.call("_handle_module_surface_action", "select_bet_option:bet_5", 0, true)):
@@ -1955,7 +2034,7 @@ func _run() -> void:
 			push_error("Fixed bet_5 did not change the deterministic bankroll delta from the minimum bet.")
 			quit(1)
 			return
-	elif bool(higher_snapshot.get("surface_fixed_price_actions", false)):
+	elif bool(higher_snapshot.get("surface_fixed_price_actions", false)) or not bool(higher_snapshot.get("surface_stake_controls_required", true)):
 		var serialized_before_fixed_price_selection := JSON.stringify(app.call("serialized_run_state"))
 		app.call("select_game_action", str(higher_legal_action.get("id", "")), "legal")
 		await process_frame
@@ -1996,7 +2075,7 @@ func _run() -> void:
 			quit(1)
 			return
 
-	var cheat_action: Dictionary = cheat_actions[0]
+	var cheat_action: Dictionary = higher_cheat_actions[0]
 	var serialized_before_cheat_selection := JSON.stringify(app.call("serialized_run_state"))
 	app.call("select_game_action", str(cheat_action.get("id", "")), "cheat")
 	await process_frame
@@ -2126,8 +2205,10 @@ func _run() -> void:
 		push_error("Load did not restore suspicion cue state.")
 		quit(1)
 		return
-	if JSON.stringify(loaded_save_ux_state.get("narrative_flags", {})) != JSON.stringify(save_ux_state.get("narrative_flags", {})):
-		push_error("Load did not restore flags.")
+	var saved_flags_json := _stable_json(save_ux_state.get("narrative_flags", {}))
+	var loaded_flags_json := _stable_json(loaded_save_ux_state.get("narrative_flags", {}))
+	if loaded_flags_json != saved_flags_json:
+		push_error("Load did not restore flags. expected=%s loaded=%s" % [saved_flags_json, loaded_flags_json])
 		quit(1)
 		return
 	var expected_story: Array = save_ux_state.get("story_log", [])
@@ -2449,6 +2530,17 @@ func _run() -> void:
 		push_error("Foundation item offer did not expose an effect summary from data.")
 		quit(1)
 		return
+	if not _player_facing_effect_summary_is_clean(str(item_offer.get("effect_summary", "")), "Item offer effect summary"):
+		quit(1)
+		return
+	var summary_service := RunActionServiceScript.new()
+	var generated_effect_summary := str(summary_service.effect_summary({
+		"blackjack_peek_heat_delta": -3,
+		"skill_cheat_drunk_window_offset_msec": 8,
+	}))
+	if not _player_facing_effect_summary_is_clean(generated_effect_summary, "Generated item effect summary"):
+		quit(1)
+		return
 	var item_asset_path := str(item_offer.get("asset_path", ""))
 	if item_asset_path.is_empty() or not ResourceLoader.exists(item_asset_path):
 		push_error("Foundation item offer did not expose a valid item icon asset path.")
@@ -2586,6 +2678,9 @@ func _run() -> void:
 	var item_result: Dictionary = purchased_item_snapshot.get("last_item_result", {})
 	if str(item_result.get("type", "")) != "item_effect" or str(item_result.get("item_effect_id", "")) != item_id:
 		push_error("Item purchase did not resolve through the ItemEffect result path.")
+		quit(1)
+		return
+	if not _player_facing_effect_summary_is_clean(str(item_result.get("message", "")), "Item purchase result message"):
 		quit(1)
 		return
 	var item_result_deltas: Dictionary = item_result.get("deltas", {})
@@ -2929,17 +3024,117 @@ func _run() -> void:
 		push_error("Leave did not show the modal world map overlay.")
 		quit(1)
 		return
-	var map_snapshot: Dictionary = map_screen.get("world_map", {}) if typeof(map_screen.get("world_map", {})) == TYPE_DICTIONARY else {}
-	if (map_snapshot.get("nodes", []) as Array).size() < 2:
-		push_error("World map overlay did not render the current node and revealed neighbors.")
+	if not _visible_buttons_meet_touch_target(app, "world map overlay"):
 		quit(1)
 		return
-	var serialized_before_map_select := JSON.stringify(app.call("serialized_run_state"))
-	if not bool(app.call("select_world_map_node", travel_target_id)):
-		push_error("World map rejected an enabled revealed travel node.")
+	var map_snapshot: Dictionary = map_screen.get("world_map", {}) if typeof(map_screen.get("world_map", {})) == TYPE_DICTIONARY else {}
+	if (map_snapshot.get("nodes", []) as Array).size() < 2:
+		push_error("World map overlay did not render the current node and discovered stops.")
+		quit(1)
+		return
+	if not str(map_snapshot.get("background_path", "")).contains("map_backgrounds"):
+		push_error("World map overlay did not expose the cyberpunk city map background.")
+		quit(1)
+		return
+	var map_target_ids: Array = map_snapshot.get("travel_target_ids", []) if typeof(map_snapshot.get("travel_target_ids", [])) == TYPE_ARRAY else []
+	if map_target_ids.size() > 3:
+		push_error("World map exposed more than three travel targets.")
+		quit(1)
+		return
+	var map_canvas := app.get("world_map_nodes_layer") as Control
+	if map_canvas == null or not map_canvas.has_method("current_view_snapshot"):
+		push_error("World map canvas did not expose a view snapshot.")
+		quit(1)
+		return
+	var map_view: Dictionary = map_canvas.call("current_view_snapshot")
+	var map_bounds: Dictionary = map_view.get("map_bounds", {}) if typeof(map_view.get("map_bounds", {})) == TYPE_DICTIONARY else {}
+	if map_bounds.is_empty():
+		push_error("World map canvas did not report zoom bounds.")
+		quit(1)
+		return
+	var map_markers: Array = map_view.get("icon_markers", []) if typeof(map_view.get("icon_markers", [])) == TYPE_ARRAY else []
+	for marker_value in map_markers:
+		if typeof(marker_value) != TYPE_DICTIONARY:
+			continue
+		var marker_data: Dictionary = marker_value
+		var node_id := str(marker_data.get("id", ""))
+		if node_id.is_empty():
+			continue
+		var node_button := map_canvas.get_node_or_null("WorldMapNode_%s" % node_id) as Button
+		if node_button == null:
+			push_error("World map first-open hit target was missing for node %s." % node_id)
+			quit(1)
+			return
+		var marker_center := map_canvas.call("local_position_for_node", node_id) as Vector2
+		var button_center := node_button.position + node_button.size * 0.5
+		if button_center.distance_to(marker_center) > 2.0:
+			push_error("World map first-open hit target for %s was %.1fpx away from the drawn icon." % [node_id, button_center.distance_to(marker_center)])
+			quit(1)
+			return
+	var full_map: Dictionary = app.call("serialized_run_state").get("world_map", {}) if typeof(app.call("serialized_run_state").get("world_map", {})) == TYPE_DICTIONARY else {}
+	var hidden_map_ids := _hidden_world_map_ids(full_map)
+	var travel_enabled_found := false
+	for node_value in (map_snapshot.get("nodes", []) as Array):
+		if typeof(node_value) != TYPE_DICTIONARY:
+			continue
+		var node_data: Dictionary = node_value
+		var node_id := str(node_data.get("id", ""))
+		if hidden_map_ids.has(node_id):
+			push_error("World map snapshot leaked hidden node %s." % node_id)
+			quit(1)
+			return
+		if str(node_data.get("icon_path", "")).strip_edges().is_empty():
+			push_error("World map node %s did not expose generated icon metadata." % node_id)
+			quit(1)
+			return
+		var full_node := _world_map_node_by_id(full_map, node_id)
+		if JSON.stringify(node_data.get("position", {})) != JSON.stringify(full_node.get("position", {})):
+			push_error("World map icon position for %s moved away from the generated node position." % node_id)
+			quit(1)
+			return
+		if not node_data.has("travel_enabled"):
+			push_error("World map node %s did not expose travel-enabled metadata." % node_id)
+			quit(1)
+			return
+		if bool(node_data.get("travel_enabled", false)):
+			travel_enabled_found = true
+			if not map_target_ids.has(node_id):
+				push_error("World map node %s was travel-enabled without being a capped target." % node_id)
+				quit(1)
+				return
+	if not travel_enabled_found:
+		push_error("World map did not highlight any currently travelable node.")
+		quit(1)
+		return
+	var current_map_id := str(map_snapshot.get("current_node_id", ""))
+	if not bool(app.call("select_world_map_node", current_map_id)):
+		push_error("World map did not allow selecting the current node.")
 		quit(1)
 		return
 	await process_frame
+	var current_node_screen: Dictionary = app.call("current_screen_snapshot")
+	if not str(current_node_screen.get("world_map_detail_text", "")).contains("You are here."):
+		push_error("Selecting the current world-map node did not show the You are here state.")
+		quit(1)
+		return
+	var serialized_before_map_select := JSON.stringify(app.call("serialized_run_state"))
+	var target_node_button := map_canvas.get_node_or_null("WorldMapNode_%s" % travel_target_id) as Button
+	if target_node_button == null:
+		push_error("World map first-open target icon button was missing for %s." % travel_target_id)
+		quit(1)
+		return
+	target_node_button.emit_signal("pressed")
+	await process_frame
+	var selected_map_screen: Dictionary = app.call("current_screen_snapshot")
+	if str(selected_map_screen.get("selected_world_map_node_id", "")) != travel_target_id:
+		push_error("World map first-open icon press did not select %s." % travel_target_id)
+		quit(1)
+		return
+	var detail_text := str(selected_map_screen.get("world_map_detail_text", ""))
+	if not detail_text.contains("Travel:") or not detail_text.contains("Distance:") or not detail_text.contains("Cost:"):
+		push_error("World map selection panel did not show travel method, distance, and cost.")
+		quit(1)
+		return
 	if serialized_before_map_select != JSON.stringify(app.call("serialized_run_state")):
 		push_error("Selecting a world-map node mutated serialized RunState before confirmation.")
 		quit(1)
@@ -3689,7 +3884,7 @@ func _travel_to_first_game_environment(app: Control) -> bool:
 	var travel_choices: Array = []
 	if typeof(travel_choices_value) == TYPE_ARRAY:
 		travel_choices = travel_choices_value
-	for preferred_game_id in ["video_poker", "blackjack", "bar_dice", "pull_tabs"]:
+	for preferred_game_id in ["bar_dice", "blackjack", "video_poker", "pull_tabs"]:
 		for choice_value in travel_choices:
 			if typeof(choice_value) != TYPE_DICTIONARY:
 				continue
@@ -4038,6 +4233,29 @@ func _native_game_surface_action_binding(app: Control, kind: String, fallback: D
 	return fallback
 
 
+func _enter_action_fixture_game(app: Control, game_id: String) -> bool:
+	var run_state_value: Variant = app.get("run_state")
+	if not run_state_value is RunState:
+		return false
+	var run_state: RunState = run_state_value
+	var game_value: Variant = app.call("_game_module_for_id", game_id)
+	if not game_value is GameModule:
+		return false
+	var game: GameModule = game_value
+	var environment_value: Variant = app.call("_game_test_environment", game_id, game)
+	if typeof(environment_value) != TYPE_DICTIONARY:
+		return false
+	var environment: Dictionary = environment_value as Dictionary
+	if environment.is_empty():
+		return false
+	run_state.set_environment(environment)
+	app.call("_refresh_run_action_service")
+	app.call("_refresh")
+	app.call("enter_game", game_id)
+	var screen_snapshot: Dictionary = app.call("current_screen_snapshot")
+	return str(screen_snapshot.get("screen", "")) == "GAME"
+
+
 func _surface_hit_action_binding(hit_actions: Array, action: String) -> Dictionary:
 	if action.is_empty():
 		return {}
@@ -4074,6 +4292,30 @@ func _normalize_json_numbers(value: Variant) -> Variant:
 			return value
 
 
+func _stable_json(value: Variant) -> String:
+	return JSON.stringify(_sort_json_value(_normalize_json_numbers(value)))
+
+
+func _sort_json_value(value: Variant) -> Variant:
+	match typeof(value):
+		TYPE_DICTIONARY:
+			var sorted_dict := {}
+			var source_dict: Dictionary = value as Dictionary
+			var keys := source_dict.keys()
+			keys.sort()
+			for key in keys:
+				sorted_dict[str(key)] = _sort_json_value(source_dict.get(key))
+			return sorted_dict
+		TYPE_ARRAY:
+			var sorted_array: Array = []
+			var source_array: Array = value as Array
+			for entry in source_array:
+				sorted_array.append(_sort_json_value(entry))
+			return sorted_array
+		_:
+			return value
+
+
 func _enter_ui_test_game(app: Control) -> bool:
 	var snapshot: Dictionary = app.call("current_environment_view_snapshot")
 	var game_ids_value: Variant = snapshot.get("game_ids", [])
@@ -4083,7 +4325,7 @@ func _enter_ui_test_game(app: Control) -> bool:
 	if game_ids.is_empty():
 		app.call("enter_first_available_game")
 		return false
-	for preferred_id in ["video_poker", "blackjack", "bar_dice", "pull_tabs"]:
+	for preferred_id in ["bar_dice", "blackjack", "video_poker", "pull_tabs"]:
 		if game_ids.has(preferred_id):
 			app.call("enter_game", preferred_id)
 			return true
@@ -4203,7 +4445,8 @@ func _check_run_journal_flow(app: Control, save_service: SaveService, viewport_r
 	await process_frame
 	app.call("save_run_from_menu")
 	await process_frame
-	var saved_entries_json := JSON.stringify((app.call("current_run_journal_snapshot") as Dictionary).get("entries", []))
+	var saved_entries: Array = (app.call("current_run_journal_snapshot") as Dictionary).get("entries", [])
+	var saved_entries_json := _stable_json(saved_entries)
 	journal_run = app.get("run_state")
 	journal_run.story_log = []
 	app.call("load_run_from_menu")
@@ -4211,8 +4454,15 @@ func _check_run_journal_flow(app: Control, save_service: SaveService, viewport_r
 	app.call("open_run_journal")
 	await process_frame
 	var loaded_journal_snapshot: Dictionary = app.call("current_run_journal_snapshot")
-	if JSON.stringify(loaded_journal_snapshot.get("entries", [])) != saved_entries_json:
-		push_error("Run journal contents did not survive save/load.")
+	var loaded_entries: Array = loaded_journal_snapshot.get("entries", [])
+	var loaded_entries_json := _stable_json(loaded_entries)
+	if loaded_entries_json != saved_entries_json:
+		push_error("Run journal contents did not survive save/load. saved=%d loaded=%d saved_last=%s loaded_last=%s" % [
+			saved_entries.size(),
+			loaded_entries.size(),
+			_stable_json(saved_entries[saved_entries.size() - 1]) if not saved_entries.is_empty() else "{}",
+			_stable_json(loaded_entries[loaded_entries.size() - 1]) if not loaded_entries.is_empty() else "{}",
+		])
 		return false
 	app.call("close_run_journal")
 	await process_frame
@@ -4465,6 +4715,85 @@ func _assert_next_objective(snapshot: Dictionary, expected_type: String, expecte
 	return true
 
 
+func _check_preview_focus_keeps_serialized_run_state(app: Control) -> bool:
+	var fixture_run: RunState = RunStateScript.new()
+	fixture_run.start_new("UI-PREVIEW-FOCUS-NO-MUTATION")
+	fixture_run.bankroll = 100
+	fixture_run.pending_drunk_absorption = [{
+		"remaining": 6,
+		"interval_msec": 1,
+		"next_msec": 0,
+		"queued_msec": 0,
+	}]
+	var environment := {
+		"id": "ui_preview_focus_fixture",
+		"archetype_id": "corner_store",
+		"display_name": "Preview Focus Fixture",
+		"kind": "shop",
+		"tier": 1,
+		"turns": 0,
+		"game_ids": [],
+		"event_ids": ["late_shift_discount"],
+		"resolved_event_ids": [],
+		"item_offers": [{"id": "creased_luck_card", "price": 8}],
+		"service_ids": ["cashier_tip"],
+		"lender_hooks": ["street_lender"],
+		"next_archetypes": ["bar"],
+		"travel_hooks": ["bar"],
+		"object_fixtures": ["shopkeeper:merchant"],
+	}
+	environment["layout"] = EnvironmentInstance.ensure_generated_layout(environment)
+	fixture_run.set_environment(environment)
+	_set_ui_fixture_run(app, fixture_run)
+	app.call("clear_interaction_focus")
+	var serialized_before_frame := JSON.stringify(app.call("serialized_run_state"))
+	await process_frame
+	if serialized_before_frame != JSON.stringify(app.call("serialized_run_state")):
+		push_error("Passive UI frame advanced alcohol absorption before confirmation.")
+		return false
+	if not await _preview_call_keeps_serialized_run_state(app, "event focus", "focus_interactable_object", ["event:late_shift_discount"]):
+		return false
+	if not await _preview_call_keeps_serialized_run_state(app, "event choice selection", "select_event_choice", ["late_shift_discount", "move_on"]):
+		return false
+	if not await _preview_call_keeps_serialized_run_state(app, "event popup preview", "activate_interactable_object", ["event:late_shift_discount"]):
+		return false
+	if not await _preview_call_keeps_serialized_run_state(app, "event popup dismissal", "_hide_event_choice_popup", []):
+		return false
+	if not await _preview_call_keeps_serialized_run_state(app, "item focus", "focus_interactable_object", ["item:creased_luck_card"]):
+		return false
+	if not await _preview_call_keeps_serialized_run_state(app, "item selection", "select_item_offer", ["creased_luck_card"]):
+		return false
+	if not await _preview_call_keeps_serialized_run_state(app, "service focus", "focus_interactable_object", ["service:cashier_tip"]):
+		return false
+	if not await _preview_call_keeps_serialized_run_state(app, "service selection", "select_service_hook", ["cashier_tip"]):
+		return false
+	if not await _preview_call_keeps_serialized_run_state(app, "lender focus", "focus_interactable_object", ["lender:street_lender"]):
+		return false
+	if not await _preview_call_keeps_serialized_run_state(app, "lender selection", "select_lender_hook", ["street_lender"]):
+		return false
+	if not await _preview_call_keeps_serialized_run_state(app, "travel category preview", "select_action_category", ["travel"]):
+		return false
+	if not await _preview_call_keeps_serialized_run_state(app, "travel focus", "focus_interactable_object", ["travel:leave"]):
+		return false
+	if not await _preview_call_keeps_serialized_run_state(app, "travel selection", "select_travel_option", ["bar"]):
+		return false
+	return await _preview_call_keeps_serialized_run_state(app, "world map preview", "activate_interactable_object", ["travel:leave"])
+
+
+func _preview_call_keeps_serialized_run_state(app: Control, label: String, method: String, args: Array) -> bool:
+	var serialized_before := JSON.stringify(app.call("serialized_run_state"))
+	var result: Variant = app.callv(method, args)
+	if typeof(result) == TYPE_BOOL and not bool(result):
+		push_error("Preview/focus regression fixture could not run %s." % label)
+		return false
+	await process_frame
+	var serialized_after := JSON.stringify(app.call("serialized_run_state"))
+	if serialized_before != serialized_after:
+		push_error("Preview/focus %s mutated serialized RunState before confirmation." % label)
+		return false
+	return true
+
+
 func _set_ui_fixture_run(app: Control, run_state: RunState) -> void:
 	app.set("run_state", run_state)
 	app.set("current_game", null)
@@ -4635,6 +4964,34 @@ func _canvas_object_id_with_prefix(objects: Array, prefix: String) -> bool:
 		if typeof(object_data) == TYPE_DICTIONARY and str((object_data as Dictionary).get("id", "")).begins_with(prefix):
 			return true
 	return false
+
+
+func _hidden_world_map_ids(map_data: Dictionary) -> Array:
+	var hidden_ids: Array = []
+	for node_value in _copy_array(map_data.get("nodes", [])):
+		if typeof(node_value) != TYPE_DICTIONARY:
+			continue
+		var node: Dictionary = node_value
+		var node_id := str(node.get("id", ""))
+		var state := str(node.get("state", "hidden"))
+		var source := str(node.get("discovery_source", "")).strip_edges()
+		var visible := state == "visited" or (state == "revealed" and (bool(node.get("discovered_at_spawn", false)) or bool(node.get("unlocked", false)) or source == "spawn" or source == "event" or source == "travel"))
+		if not node_id.is_empty() and not visible:
+			hidden_ids.append(node_id)
+	return hidden_ids
+
+
+func _world_map_node_by_id(map_data: Dictionary, node_id: String) -> Dictionary:
+	for node_value in _copy_array(map_data.get("nodes", [])):
+		if typeof(node_value) == TYPE_DICTIONARY and str((node_value as Dictionary).get("id", "")) == node_id:
+			return (node_value as Dictionary).duplicate(true)
+	return {}
+
+
+func _copy_array(value: Variant) -> Array:
+	if typeof(value) != TYPE_ARRAY:
+		return []
+	return (value as Array).duplicate(true)
 
 
 func _event_choice_has_trigger_event(event_definition: Dictionary, choice_id: String) -> bool:

@@ -128,7 +128,13 @@ class SurfaceHarness:
 	func surface_label(text: String, _pos: Vector2, _font_size: int, _color: Color) -> void:
 		labels.append(text)
 
+	func surface_label_plain(text: String, _pos: Vector2, _font_size: int, _color: Color) -> void:
+		labels.append(text)
+
 	func surface_label_centered(text: String, _rect: Rect2, _font_size: int, _color: Color) -> void:
+		labels.append(text)
+
+	func surface_label_centered_plain(text: String, _rect: Rect2, _font_size: int, _color: Color) -> void:
 		labels.append(text)
 
 	func surface_title(text: String, _pos: Vector2, _color: Color) -> void:
@@ -305,6 +311,7 @@ func _foundation_run_contract_suite(content_library: ContentLibrary, fixture_lib
 	_foundation_run_check(report, failures, "profile_inventory_boundary", Callable(self, "_check_profile_inventory_boundary"), [])
 	_foundation_run_check(report, failures, "fixture_rng", Callable(self, "_check_rng"), [fixture_library])
 	_foundation_run_check(report, failures, "run_state_source_of_truth", Callable(self, "_check_run_state_source_of_truth"), [fixture_library])
+	_foundation_run_check(report, failures, "locked_logic_rate_foundation", Callable(self, "_check_locked_logic_rate_foundation"), [content_library])
 	_foundation_run_check(report, failures, "fixture_contracts", Callable(self, "_check_contracts"), [fixture_library])
 
 
@@ -313,6 +320,7 @@ func _foundation_run_system_suite(content_library: ContentLibrary, fixture_libra
 	_foundation_run_check(report, failures, "profile_inventory_boundary", Callable(self, "_check_profile_inventory_boundary"), [])
 	_foundation_run_check(report, failures, "fixture_rng", Callable(self, "_check_rng"), [fixture_library])
 	_foundation_run_check(report, failures, "run_state_source_of_truth", Callable(self, "_check_run_state_source_of_truth"), [fixture_library])
+	_foundation_run_check(report, failures, "locked_logic_rate_foundation", Callable(self, "_check_locked_logic_rate_foundation"), [content_library])
 	_foundation_run_check(report, failures, "fixture_contracts", Callable(self, "_check_contracts"), [fixture_library])
 	_foundation_run_check(report, failures, "run_action_service_boundary", Callable(self, "_check_run_action_service_boundary"), [content_library])
 	_foundation_run_check(report, failures, "prestige_empty_data_foundation", Callable(self, "_check_prestige_empty_data_foundation"), [content_library])
@@ -347,6 +355,7 @@ func _foundation_run_all_suite(content_library: ContentLibrary, fixture_library:
 	_foundation_run_check(report, failures, "profile_inventory_boundary", Callable(self, "_check_profile_inventory_boundary"), [])
 	_foundation_run_check(report, failures, "fixture_rng", Callable(self, "_check_rng"), [fixture_library])
 	_foundation_run_check(report, failures, "run_state_source_of_truth", Callable(self, "_check_run_state_source_of_truth"), [fixture_library])
+	_foundation_run_check(report, failures, "locked_logic_rate_foundation", Callable(self, "_check_locked_logic_rate_foundation"), [content_library])
 	_foundation_run_check(report, failures, "fixture_contracts", Callable(self, "_check_contracts"), [fixture_library])
 
 
@@ -1074,9 +1083,6 @@ func _t4_4_consumed_item_effect_keys() -> Dictionary:
 		"loss_reduction",
 		"messages",
 		"pending_drunk_absorption_delta",
-		"pull_tabs_tab_detector_heat_base",
-		"pull_tabs_tarot_read_count",
-		"pull_tabs_xray_highlight",
 		"repair_cost",
 		"repair_to_item",
 		"roulette_past_post_base_heat",
@@ -1086,15 +1092,11 @@ func _t4_4_consumed_item_effect_keys() -> Dictionary:
 		"skill_cheat_drunk_memory_offset",
 		"skill_cheat_drunk_window_offset_msec",
 		"slot_cold_quarter_heat_reduction",
-		"slot_cold_quarters_charges",
 		"slot_feature_weight_bonus_percent",
 		"slot_first_bonus_bonus_cap",
 		"slot_first_bonus_bonus_percent",
 		"slot_gold_tooth_coin_multiplier",
 		"slot_gold_tooth_coin_upgrade_chance",
-		"slot_grease_failed_nudge_heat_bonus",
-		"slot_lucky_reel_grease_near_misses",
-		"slot_lucky_reel_grease_spins",
 		"slot_nudge_close_msec_bonus",
 		"slot_nudge_perfect_msec_bonus",
 		"slot_pinball_bumper_battery_award_percent",
@@ -1119,7 +1121,6 @@ func _t4_4_consumed_item_effect_keys() -> Dictionary:
 		"slot_pinball_tilt_dampener_percent",
 		"slot_reel_win_weight_percent",
 		"slot_split_reel_note_close_msec_bonus",
-		"slot_split_reel_note_heat",
 		"slot_split_reel_note_perfect_msec_bonus",
 		"slot_three_reel_loss_refund_percent",
 		"travel_scouting_level",
@@ -1555,6 +1556,8 @@ func _check_slot_contract_smoke(library: ContentLibrary, failures: Array) -> voi
 	_check_slot_hold_and_spin_fill_scaling(definition, failures)
 	print("SLOT_CONTRACT_SMOKE free_games_carryover")
 	_check_slot_free_games_carryover(definition, failures)
+	print("SLOT_CONTRACT_SMOKE bonus_completion_recovery")
+	_check_slot_bonus_completion_recovery(library, definition, failures)
 	print("SLOT_CONTRACT_SMOKE pinball_sim_physics")
 	_check_slot_pinball_sim_physics(definition, failures)
 	print("SLOT_CONTRACT_SMOKE economy_rng_discipline")
@@ -1608,6 +1611,8 @@ func _check_slot_acceptance(library: ContentLibrary, failures: Array) -> void:
 	_check_slot_attract_mode(library, definition, failures)
 	print("SLOT_ACCEPTANCE live_features")
 	_check_slot_live_generated_features(library, definition, failures)
+	print("SLOT_ACCEPTANCE bonus_completion_recovery")
+	_check_slot_bonus_completion_recovery(library, definition, failures)
 	print("SLOT_ACCEPTANCE hold_fill_scaling")
 	_check_slot_hold_and_spin_fill_scaling(definition, failures)
 	print("SLOT_ACCEPTANCE free_games_carryover")
@@ -2242,13 +2247,15 @@ func _check_slot_buffalo_timed_nudge(definition: Dictionary, failures: Array) ->
 	var perfect_machine: Dictionary = _slot_dict(perfect_resolved.get("machine", {}))
 	if not bool(perfect_action.get("slot_nudge_applied", false)) or str(perfect_action.get("slot_nudge_skill_outcome", "")) != "perfect":
 		failures.append("Buffalo coin-chain nudge did not record a perfect skill outcome.")
-	if int(perfect_action.get("slot_payout", 0)) <= 0 or int(perfect_action.get("slot_nudge_chain_collected", 0)) <= 0:
-		failures.append("Perfect Buffalo coin-chain nudge did not bank a collected coin.")
-	if bool(perfect_action.get("slot_feature_triggered", false)):
-		failures.append("Perfect Buffalo coin-chain nudge incorrectly triggered the old feature conversion.")
-	var next_offer: Dictionary = _slot_dict(perfect_machine.get("last_nudge_offer", {}))
-	if next_offer.is_empty() or int(next_offer.get("active_index", 0)) <= 0:
-		failures.append("Perfect Buffalo coin-chain collect did not advance to the next row.")
+	var near_target: Dictionary = _slot_dict(near_offer.get("nudge_target", {}))
+	if near_target.is_empty() or _slot_dict(near_target.get("perfect", {})).is_empty():
+		failures.append("Buffalo coin-chain nudge offer did not publish a reel-stop target.")
+	else:
+		_slot_assert_nudge_target_landed(near_machine, perfect_action, near_target, failures, "Perfect Buffalo coin-chain nudge")
+	if int(perfect_action.get("slot_payout", 0)) <= 0 and not bool(perfect_action.get("slot_feature_triggered", false)):
+		failures.append("Perfect Buffalo coin-chain nudge did not resolve through a normal payout or feature trigger.")
+	if not _slot_dict(perfect_machine.get("last_nudge_offer", {})).is_empty():
+		failures.append("Perfect Buffalo coin-chain nudge did not clear the post-spin offer after the real reel shift.")
 
 	var miss_sample: Dictionary = _slot_spin_until_classification(definition, "buffalo", "line_5x3", "near_miss", "SLOT-BUFFALO-NUDGE-MISS", failures)
 	if miss_sample.is_empty():
@@ -2256,14 +2263,26 @@ func _check_slot_buffalo_timed_nudge(definition: Dictionary, failures: Array) ->
 	var miss_machine_seed: Dictionary = _slot_dict(miss_sample.get("machine", {}))
 	var miss_offer: Dictionary = _slot_dict(miss_machine_seed.get("last_nudge_offer", {}))
 	var miss_window: Dictionary = _slot_dict(miss_offer.get("skill_window_msec", {}))
+	var soft_miss_msec := int(miss_window.get("end", 0)) + 1
+	var soft_miss_resolved: Dictionary = resolver.resolve_spin(miss_machine_seed.duplicate(true), "nudge", SlotMachineStateScript.selected_bet(miss_machine_seed), run_state.create_rng("buffalo_nudge_soft_miss"), definition, {}, true, false, run_state, {}, {"slot_nudge_chain_input_msec": soft_miss_msec})
+	var soft_miss_action: Dictionary = _slot_dict(soft_miss_resolved.get("result", {}))
+	var soft_miss_machine: Dictionary = _slot_dict(soft_miss_resolved.get("machine", {}))
+	if str(soft_miss_action.get("slot_nudge_skill_outcome", "")) != "miss":
+		failures.append("Slightly mistimed Buffalo coin-chain nudge did not record a miss outcome.")
+	if JSON.stringify(_slot_array(soft_miss_action.get("slot_grid", []))) != JSON.stringify(_slot_array(miss_offer.get("grid", []))) or JSON.stringify(_slot_array(soft_miss_action.get("slot_reel_stops", []))) != JSON.stringify(_slot_array(miss_offer.get("stops", []))):
+		failures.append("Slightly mistimed Buffalo coin-chain nudge changed the reel grid or stops.")
+	if int(soft_miss_action.get("slot_payout", 0)) != 0 or bool(soft_miss_action.get("slot_feature_triggered", false)) or not _slot_dict(soft_miss_machine.get("last_nudge_offer", {})).is_empty():
+		failures.append("Slightly mistimed Buffalo coin-chain nudge did not end without payout, feature, or a lingering offer.")
 	var miss_msec := int(miss_window.get("end", 0)) + 300
 	var miss_resolved: Dictionary = resolver.resolve_spin(miss_machine_seed.duplicate(true), "nudge", SlotMachineStateScript.selected_bet(miss_machine_seed), run_state.create_rng("buffalo_nudge_miss"), definition, {}, true, false, run_state, {}, {"slot_nudge_chain_input_msec": miss_msec})
 	var miss_action: Dictionary = _slot_dict(miss_resolved.get("result", {}))
 	var miss_machine: Dictionary = _slot_dict(miss_resolved.get("machine", {}))
-	if str(miss_action.get("slot_nudge_skill_outcome", "")) != "clean_miss":
-		failures.append("Mistimed Buffalo coin-chain nudge did not record a clean miss outcome.")
-	if int(miss_action.get("slot_payout", 0)) != 0 or not _slot_dict(miss_machine.get("last_nudge_offer", {})).is_empty():
-		failures.append("Mistimed Buffalo coin-chain nudge did not end the chain without adding payout.")
+	if str(miss_action.get("slot_nudge_skill_outcome", "")) != "blown":
+		failures.append("Mistimed Buffalo coin-chain nudge did not record a blown outcome.")
+	if JSON.stringify(_slot_array(miss_action.get("slot_grid", []))) != JSON.stringify(_slot_array(miss_offer.get("grid", []))) or JSON.stringify(_slot_array(miss_action.get("slot_reel_stops", []))) != JSON.stringify(_slot_array(miss_offer.get("stops", []))):
+		failures.append("Mistimed Buffalo coin-chain nudge changed the reel grid or stops.")
+	if int(miss_action.get("slot_payout", 0)) != 0 or bool(miss_action.get("slot_feature_triggered", false)) or not _slot_dict(miss_machine.get("last_nudge_offer", {})).is_empty():
+		failures.append("Mistimed Buffalo coin-chain nudge did not end without payout, feature, or a lingering offer.")
 	print("SLOT_BUFFALO_COIN_CHAIN variants=%s coins=%d active=%s perfect=%s miss_class=%s cues=%s" % [
 		JSON.stringify(variant_counts.keys()),
 		int(near_manifest.get("nudge_chain_coin_count", 0)),
@@ -2275,10 +2294,13 @@ func _check_slot_buffalo_timed_nudge(definition: Dictionary, failures: Array) ->
 
 
 func _check_slot_nudge_chain_determinism(definition: Dictionary, failures: Array) -> void:
+	var resolver = SlotResolverScript.new()
 	var presentation = SlotPresentationScript.new()
 	var renderer = SlotRendererScript.new()
 	var variant_seen: Dictionary = {}
 	var deterministic_sample: Dictionary = {}
+	var saw_line_perfect := false
+	var saw_feature_perfect := false
 	for family_id in ["pinball", "buffalo"]:
 		for format_id in ["classic_3_reel", "line_5x3", "video_feature"]:
 			var variant_key := "%s:%s" % [family_id, format_id]
@@ -2301,12 +2323,36 @@ func _check_slot_nudge_chain_determinism(definition: Dictionary, failures: Array
 			var manifest: Dictionary = renderer.render_signature(surface, definition, perfect_msec, "nudge_chain")
 			if not bool(surface.get("slot_nudge_chain_active", false)) or not bool(manifest.get("nudge_chain_zone_visible", false)):
 				failures.append("Slot coin chain for %s did not publish a visible zone in surface state/manifest." % variant_key)
+			var target: Dictionary = _slot_dict(offer.get("nudge_target", {}))
+			if target.is_empty() or _slot_dict(target.get("perfect", {})).is_empty():
+				failures.append("Slot coin chain for %s did not publish a perfect reel-stop target." % variant_key)
+			else:
+				var perfect_resolved: Dictionary = resolver.resolve_spin(machine.duplicate(true), "nudge", SlotMachineStateScript.selected_bet(machine), sample_run_state.create_rng("slot_nudge_chain_perfect_%s_%s" % [family_id, format_id]), definition, {}, true, false, sample_run_state, {}, {"slot_nudge_chain_input_msec": perfect_msec})
+				var perfect_result: Dictionary = _slot_dict(perfect_resolved.get("result", {}))
+				var perfect_machine: Dictionary = _slot_dict(perfect_resolved.get("machine", {}))
+				if str(perfect_result.get("slot_nudge_skill_outcome", "")) != "perfect":
+					failures.append("Slot coin chain for %s did not resolve the perfect input as perfect." % variant_key)
+				_slot_assert_nudge_target_landed(machine, perfect_result, target, failures, "Slot coin chain %s" % variant_key)
+				if int(perfect_result.get("slot_payout", 0)) > 0:
+					saw_line_perfect = true
+				if bool(perfect_result.get("slot_feature_triggered", false)):
+					saw_feature_perfect = true
+				if int(perfect_result.get("slot_payout", 0)) <= 0 and not bool(perfect_result.get("slot_feature_triggered", false)):
+					failures.append("Slot coin chain for %s did not resolve the perfect nudge through a normal payout or feature." % variant_key)
+				if not _slot_dict(perfect_machine.get("last_nudge_offer", {})).is_empty():
+					failures.append("Slot coin chain for %s left a nudge offer active after perfect resolution." % variant_key)
 			variant_seen[variant_key] = true
 			if deterministic_sample.is_empty():
 				deterministic_sample = sample
 	for expected_key in ["pinball:classic_3_reel", "pinball:line_5x3", "pinball:video_feature", "buffalo:classic_3_reel", "buffalo:line_5x3", "buffalo:video_feature"]:
 		if not bool(variant_seen.get(expected_key, false)):
 			failures.append("Slot coin-chain nudge variant was not verified: %s." % expected_key)
+	if _slot_nudge_line_pay_fixture(definition, failures):
+		saw_line_perfect = true
+	if not saw_line_perfect:
+		failures.append("Slot coin-chain nudge did not verify a perfect line-payout fixture.")
+	if not saw_feature_perfect:
+		failures.append("Slot coin-chain nudge did not verify a perfect feature-trigger fixture.")
 	if deterministic_sample.is_empty():
 		return
 	var base_machine: Dictionary = _slot_dict(deterministic_sample.get("machine", {}))
@@ -2318,8 +2364,8 @@ func _check_slot_nudge_chain_determinism(definition: Dictionary, failures: Array
 		failures.append("Slot coin-chain deterministic script did not collect or break any coins.")
 	else:
 		var first_step: Dictionary = _slot_dict(first_transcript[0])
-		if str(first_step.get("grade", "")) != "perfect" or int(first_step.get("payout", 0)) <= 0:
-			failures.append("Slot coin-chain deterministic script did not collect the first perfect coin.")
+		if str(first_step.get("grade", "")) != "perfect" or (int(first_step.get("payout", 0)) <= 0 and not bool(first_step.get("feature", false))):
+			failures.append("Slot coin-chain deterministic script did not resolve the first perfect nudge through normal evaluation.")
 	print("SLOT_NUDGE_CHAIN_DETERMINISM variants=%s transcript=%s" % [
 		JSON.stringify(variant_seen.keys()),
 		JSON.stringify(first_transcript),
@@ -2347,6 +2393,7 @@ func _slot_nudge_chain_script(definition: Dictionary, base_machine: Dictionary, 
 		transcript.append({
 			"grade": str(result.get("slot_nudge_skill_outcome", "")),
 			"payout": int(result.get("slot_payout", 0)),
+			"feature": bool(result.get("slot_feature_triggered", false)),
 			"banked": int(result.get("slot_nudge_chain_banked_payout", 0)),
 			"collected": int(result.get("slot_nudge_chain_collected", 0)),
 			"active": bool(result.get("slot_nudge_chain_active", false)),
@@ -2364,6 +2411,7 @@ func _slot_nudge_chain_script(definition: Dictionary, base_machine: Dictionary, 
 		transcript.append({
 			"grade": str(miss_result.get("slot_nudge_skill_outcome", "")),
 			"payout": int(miss_result.get("slot_payout", 0)),
+			"feature": bool(miss_result.get("slot_feature_triggered", false)),
 			"banked": int(miss_result.get("slot_nudge_chain_banked_payout", 0)),
 			"collected": int(miss_result.get("slot_nudge_chain_collected", 0)),
 			"active": bool(miss_result.get("slot_nudge_chain_active", false)),
@@ -2372,6 +2420,91 @@ func _slot_nudge_chain_script(definition: Dictionary, base_machine: Dictionary, 
 			"next_spawned": false,
 		})
 	return transcript
+
+
+func _slot_nudge_line_pay_fixture(definition: Dictionary, failures: Array) -> bool:
+	var resolver = SlotResolverScript.new()
+	var run_state: RunState = _slot_run_state("SLOT-NUDGE-LINE-PAY", 100000)
+	var machine: Dictionary = _slot_machine(definition, run_state, "pinball", "classic_3_reel", "standard", "plain")
+	machine["reel_strips"] = [
+		["CHERRY", "BAR", "BALL"],
+		["CHERRY", "BAR", "BALL"],
+		["BAR", "CHERRY", "BALL"],
+	]
+	machine["reel_stops"] = [0, 0, 0]
+	machine["last_reels"] = [0, 0, 0]
+	machine["last_grid"] = [["CHERRY"], ["CHERRY"], ["BAR"]]
+	var line_cells: Array = [{"reel": 0, "row": 0}, {"reel": 1, "row": 0}, {"reel": 2, "row": 0}]
+	var shifted_grid: Array = [["CHERRY"], ["CHERRY"], ["CHERRY"]]
+	var shifted_stops: Array = [0, 0, 1]
+	var entry: Dictionary = {
+		"id": "true_win",
+		"classification": "true_win",
+		"forced_placement": {"kind": "line", "symbol": "CHERRY", "cells": line_cells, "line_index": 0},
+	}
+	var perfect_msec := 1000
+	machine["last_nudge_offer"] = {
+		"type": "coin_chain",
+		"family": "pinball",
+		"format_id": "classic_3_reel",
+		"classification": "near_miss",
+		"original_classification": "near_miss",
+		"grid": [["CHERRY"], ["CHERRY"], ["BAR"]],
+		"stops": [0, 0, 0],
+		"coins": [{"index": 0, "row": 0, "ready_msec": 500, "collected": false, "spawned": true}],
+		"active_index": 0,
+		"peek_cycle_msec": 1000,
+		"skill_perfect_msec": 80,
+		"skill_good_msec": 220,
+		"skill_window_msec": {"start": 780, "perfect": perfect_msec, "end": 1220},
+		"nudge_target": {
+			"reel": 2,
+			"row": 0,
+			"symbol": "CHERRY",
+			"direction": 1,
+			"current_stop": 0,
+			"strip_size": 3,
+			"perfect": {
+				"entry": entry,
+				"grid": shifted_grid,
+				"stops": shifted_stops,
+				"classification": "true_win",
+				"feature_triggered": false,
+				"payout": 0,
+				"reel": 2,
+				"old_stop": 0,
+				"new_stop": 1,
+				"shift": 1,
+			},
+			"good": {
+				"entry": {"id": "near_miss", "classification": "near_miss", "payout": 0},
+				"grid": [["CHERRY"], ["CHERRY"], ["BALL"]],
+				"stops": [0, 0, 2],
+				"classification": "near_miss",
+				"feature_triggered": false,
+				"payout": 0,
+				"reel": 2,
+				"old_stop": 0,
+				"new_stop": 2,
+				"shift": -1,
+			},
+		},
+		"post_spin_available": true,
+	}
+	var resolved: Dictionary = resolver.resolve_spin(machine.duplicate(true), "nudge", SlotMachineStateScript.selected_bet(machine), run_state.create_rng("slot_nudge_line_pay"), definition, {}, true, false, run_state, {}, {"slot_nudge_chain_input_msec": perfect_msec})
+	var result: Dictionary = _slot_dict(resolved.get("result", {}))
+	var resolved_machine: Dictionary = _slot_dict(resolved.get("machine", {}))
+	if str(result.get("slot_nudge_skill_outcome", "")) != "perfect":
+		failures.append("Slot nudge line-pay fixture did not grade the input as perfect.")
+		return false
+	_slot_assert_nudge_target_landed(machine, result, _slot_dict(_slot_dict(machine.get("last_nudge_offer", {})).get("nudge_target", {})), failures, "Slot nudge line-pay fixture")
+	if bool(result.get("slot_feature_triggered", false)) or int(result.get("slot_payout", 0)) <= 0:
+		failures.append("Slot nudge line-pay fixture did not resolve through a normal line payout.")
+		return false
+	if not _slot_dict(resolved_machine.get("last_nudge_offer", {})).is_empty():
+		failures.append("Slot nudge line-pay fixture left a nudge offer active.")
+		return false
+	return true
 
 
 func _check_slot_item_pack_effects(library: ContentLibrary, definition: Dictionary, failures: Array) -> void:
@@ -2532,7 +2665,7 @@ func _check_slot_item_pack_effects(library: ContentLibrary, definition: Dictiona
 		var nudge_window: Dictionary = _slot_dict(nudge_offer.get("skill_window_msec", {}))
 		var miss_msec := int(nudge_window.get("end", 0)) + 300
 		var miss_result: Dictionary = game.resolve_with_context("nudge", 0, nudge_run, nudge_environment, nudge_rng, {"slot_tease_input_msec": miss_msec})
-		if str(miss_result.get("slot_nudge_skill_outcome", "")) != "clean_miss":
+		if str(miss_result.get("slot_nudge_skill_outcome", "")) != "blown":
 			failures.append("Slot nudge heat fixture did not record a miss.")
 		if int(miss_result.get("slot_grease_failed_nudge_heat_bonus", 0)) < 14:
 			failures.append("Failed greased nudge did not add the extra heat penalty.")
@@ -3093,6 +3226,187 @@ func _check_slot_live_generated_features(library: ContentLibrary, definition: Di
 	if total_input_alt == total_a:
 		failures.append("Slot live feature total did not respond to different player inputs.")
 	_check_slot_buffalo_feature_pauses_autoplay(game, definition, failures)
+
+
+func _check_slot_bonus_completion_recovery(library: ContentLibrary, definition: Dictionary, failures: Array) -> void:
+	var game: GameModule = _slot_game(library, failures)
+	if game == null:
+		return
+	_check_slot_pinball_cap_completion(game, definition, failures)
+	_check_slot_pinball_pending_animation_watchdog(game, definition, failures)
+	_check_slot_pinball_save_load_watchdog(game, definition, failures)
+	_check_slot_buffalo_zero_respin_completion(game, definition, failures)
+	_check_slot_buffalo_save_load_completion(game, definition, failures)
+
+
+func _check_slot_pinball_cap_completion(game: GameModule, definition: Dictionary, failures: Array) -> void:
+	var pinball = SlotFamilyPinballScript.new()
+	var run_state: RunState = _slot_run_state("SLOT-R8-PINBALL-CAP", 100000)
+	var environment: Dictionary = _slot_environment()
+	var machine: Dictionary = _slot_machine(definition, run_state, "pinball", "classic_3_reel", "standard", "plain")
+	var active: Dictionary = pinball.open_feature(machine, 10, run_state.create_rng("r8_pinball_cap_open"), definition)
+	active["headless"] = true
+	active["total_steps"] = 1
+	active["balls_remaining"] = 1
+	active["remaining_steps"] = 1
+	active["session_cap"] = 1
+	machine["active_bonus"] = active
+	_slot_store_machine(run_state, environment, machine)
+	PinballFeatureScript.clear_runtime_session_cache()
+	var rng: RngStream = run_state.create_rng("r8_pinball_cap_launch")
+	var result: Dictionary = game.resolve_with_context("slot_bonus_launch", 0, run_state, environment, rng, {})
+	if bool(result.get("ok", false)):
+		GameModule.apply_result(run_state, result, rng)
+	if not bool(result.get("slot_bonus_complete", false)):
+		failures.append("Slot pinball session-cap fixture did not complete on the final headless ball.")
+	if int(result.get("slot_bonus_award", 0)) > 1:
+		failures.append("Slot pinball session-cap fixture paid above the exact cap.")
+	_assert_slot_bonus_base_state(game, run_state, environment, "Pinball cap completion", failures)
+
+
+func _check_slot_pinball_pending_animation_watchdog(game: GameModule, definition: Dictionary, failures: Array) -> void:
+	var pinball = SlotFamilyPinballScript.new()
+	var run_state: RunState = _slot_run_state("SLOT-R8-PINBALL-PENDING-ANIM", 100000)
+	var environment: Dictionary = _slot_environment()
+	var machine: Dictionary = _slot_machine(definition, run_state, "pinball", "line_5x3", "standard", "plain")
+	var active: Dictionary = pinball.open_feature(machine, 10, run_state.create_rng("r8_pinball_pending_open"), definition)
+	active["total_steps"] = 1
+	active["balls_remaining"] = 0
+	active["remaining_steps"] = 0
+	active["active_ball_count"] = 0
+	active["feature_total"] = 37
+	active["pending_award"] = 37
+	machine["active_bonus"] = active
+	machine["slot_animation_id"] = "bonus:r8_pending"
+	machine["slot_animation_duration_msec"] = 3000
+	machine["slot_animation_plan"] = {"id": "bonus:r8_pending", "duration_msec": 3000, "feature_duration_msec": 3000}
+	_slot_store_machine(run_state, environment, machine)
+	PinballFeatureScript.clear_runtime_session_cache()
+	if game.surface_needs_auto_tick({"surface_time_msec": 1200, "drunk_scaled_surface_time_msec": 1200}, run_state, environment):
+		failures.append("Slot pinball watchdog fired while a bonus award animation was still pending.")
+	var seeded: Dictionary = game.surface_auto_action_command({"surface_time_msec": 3200, "drunk_scaled_surface_time_msec": 3200}, run_state, environment, {})
+	if not bool(seeded.get("environment_changed", false)):
+		failures.append("Slot pinball watchdog did not arm after the pending award animation ended.")
+	var due_time := 5600
+	var command: Dictionary = game.surface_auto_action_command({"surface_time_msec": due_time, "drunk_scaled_surface_time_msec": due_time}, run_state, environment, {})
+	if str(command.get("action_id", "")) != "slot_bonus_watchdog":
+		failures.append("Slot pinball watchdog did not route through the watchdog bonus action after the grace window.")
+	else:
+		var rng: RngStream = run_state.create_rng("r8_pinball_pending_watchdog")
+		var result: Dictionary = game.resolve_with_context(str(command.get("action_id", "")), 0, run_state, environment, rng, _slot_dict(command.get("ui_state", {})))
+		if bool(result.get("ok", false)):
+			GameModule.apply_result(run_state, result, rng)
+		if int(result.get("slot_bonus_award", 0)) < 37:
+			failures.append("Slot pinball watchdog did not preserve the pending feature award.")
+	_assert_slot_bonus_base_state(game, run_state, environment, "Pinball pending-animation watchdog", failures)
+
+
+func _check_slot_pinball_save_load_watchdog(game: GameModule, definition: Dictionary, failures: Array) -> void:
+	var pinball = SlotFamilyPinballScript.new()
+	var run_state: RunState = _slot_run_state("SLOT-R8-PINBALL-SAVELOAD", 100000)
+	var environment: Dictionary = _slot_environment()
+	var machine: Dictionary = _slot_machine(definition, run_state, "pinball", "classic_3_reel", "standard", "plain")
+	var active: Dictionary = pinball.open_feature(machine, 10, run_state.create_rng("r8_pinball_save_open"), definition)
+	active["total_steps"] = 1
+	active["balls_remaining"] = 1
+	active["remaining_steps"] = 1
+	machine["active_bonus"] = active
+	_slot_store_machine(run_state, environment, machine)
+	var launch_rng: RngStream = run_state.create_rng("r8_pinball_save_launch")
+	var launch_result: Dictionary = game.resolve_with_context("slot_bonus_launch", 0, run_state, environment, launch_rng, {"surface_time_msec": 100, "drunk_scaled_surface_time_msec": 100})
+	if bool(launch_result.get("ok", false)):
+		GameModule.apply_result(run_state, launch_result, launch_rng)
+	var launched_machine: Dictionary = SlotMachineStateScript.read_machine(environment, "slot")
+	var launched_active: Dictionary = _slot_dict(launched_machine.get("active_bonus", {}))
+	launched_active["feature_total"] = maxi(29, int(launched_active.get("feature_total", 0)))
+	launched_active["pending_award"] = maxi(29, int(launched_active.get("pending_award", 0)))
+	launched_machine["active_bonus"] = launched_active
+	SlotMachineStateScript.write_machine(environment, "slot", launched_machine)
+	PinballFeatureScript.clear_runtime_session_cache()
+	var restored: RunState = RunStateScript.new()
+	restored.from_dict(run_state.to_dict())
+	var restored_environment: Dictionary = _slot_dict(restored.current_environment)
+	restored.current_environment = restored_environment
+	var seed_time := 5000
+	if not game.surface_needs_auto_tick({"surface_time_msec": seed_time, "drunk_scaled_surface_time_msec": seed_time}, restored, restored_environment):
+		failures.append("Slot pinball save/load fixture did not request a watchdog seed after losing its runtime session.")
+	var seed_command: Dictionary = game.surface_auto_action_command({"surface_time_msec": seed_time, "drunk_scaled_surface_time_msec": seed_time}, restored, restored_environment, {})
+	if not bool(seed_command.get("environment_changed", false)):
+		failures.append("Slot pinball save/load watchdog seed did not update the restored machine.")
+	var due_time := 7600
+	var command: Dictionary = game.surface_auto_action_command({"surface_time_msec": due_time, "drunk_scaled_surface_time_msec": due_time}, restored, restored_environment, {})
+	if str(command.get("action_id", "")) != "slot_bonus_watchdog":
+		failures.append("Slot pinball save/load fixture did not route the stale feature through the watchdog.")
+	else:
+		var rng: RngStream = restored.create_rng("r8_pinball_save_watchdog")
+		var result: Dictionary = game.resolve_with_context(str(command.get("action_id", "")), 0, restored, restored_environment, rng, _slot_dict(command.get("ui_state", {})))
+		if bool(result.get("ok", false)):
+			GameModule.apply_result(restored, result, rng)
+		if int(result.get("slot_bonus_award", 0)) < 29:
+			failures.append("Slot pinball save/load watchdog lost the saved feature award.")
+	_assert_slot_bonus_base_state(game, restored, restored_environment, "Pinball save/load watchdog", failures)
+
+
+func _check_slot_buffalo_zero_respin_completion(game: GameModule, definition: Dictionary, failures: Array) -> void:
+	var buffalo = SlotFamilyBuffaloScript.new()
+	var run_state: RunState = _slot_run_state("SLOT-R8-BUFFALO-ZERO", 100000)
+	var environment: Dictionary = _slot_environment()
+	var machine: Dictionary = _slot_machine(definition, run_state, "buffalo", "video_feature", "standard", "plain")
+	var active: Dictionary = buffalo.open_feature(machine, {"classification": "hold_and_spin"}, 10, run_state.create_rng("r8_buffalo_zero_open"), definition)
+	active["remaining_steps"] = 0
+	active["respins_remaining"] = 0
+	active["feature_total"] = maxi(25, int(active.get("feature_total", 0)))
+	active["pending_award"] = maxi(25, int(active.get("pending_award", 0)))
+	machine["active_bonus"] = active
+	_slot_store_machine(run_state, environment, machine)
+	var rng: RngStream = run_state.create_rng("r8_buffalo_zero_launch")
+	var result: Dictionary = game.resolve_with_context("slot_bonus_launch", 0, run_state, environment, rng, {})
+	if bool(result.get("ok", false)):
+		GameModule.apply_result(run_state, result, rng)
+	if not bool(result.get("slot_bonus_complete", false)):
+		failures.append("Slot buffalo hold-and-spin zero-respin fixture did not complete immediately.")
+	if int(result.get("slot_bonus_award", 0)) < 25:
+		failures.append("Slot buffalo hold-and-spin zero-respin fixture did not preserve the pending award.")
+	_assert_slot_bonus_base_state(game, run_state, environment, "Buffalo zero-respin completion", failures)
+
+
+func _check_slot_buffalo_save_load_completion(game: GameModule, definition: Dictionary, failures: Array) -> void:
+	var buffalo = SlotFamilyBuffaloScript.new()
+	var run_state: RunState = _slot_run_state("SLOT-R8-BUFFALO-SAVELOAD", 100000)
+	var environment: Dictionary = _slot_environment()
+	var machine: Dictionary = _slot_machine(definition, run_state, "buffalo", "line_5x3", "standard", "retrigger")
+	machine["bonus_reel_strips"] = _slot_coin_heavy_reel_strips(maxi(1, int(machine.get("reel_count", 5))))
+	var active: Dictionary = buffalo.open_feature(machine, {"classification": "free_games"}, 10, run_state.create_rng("r8_buffalo_save_open"), definition)
+	active["remaining_steps"] = 1
+	active["total_steps"] = 1
+	active["coins_since_retrigger"] = 2
+	machine["active_bonus"] = active
+	_slot_store_machine(run_state, environment, machine)
+	var restored: RunState = RunStateScript.new()
+	restored.from_dict(run_state.to_dict())
+	var restored_environment: Dictionary = _slot_dict(restored.current_environment)
+	restored.current_environment = restored_environment
+	var rng: RngStream = restored.create_rng("r8_buffalo_save_steps")
+	_slot_complete_active_bonus(game, restored, restored_environment, rng)
+	_assert_slot_bonus_base_state(game, restored, restored_environment, "Buffalo save/load completion", failures)
+	var completed_machine: Dictionary = SlotMachineStateScript.read_machine(restored_environment, "slot")
+	var replay: Dictionary = _slot_dict(completed_machine.get("last_bonus_replay", {}))
+	if int(replay.get("retrigger_count", 0)) <= 0 and int(replay.get("last_retrigger_grant", 0)) <= 0:
+		failures.append("Slot buffalo save/load fixture did not exercise the free-games retrigger edge.")
+
+
+func _assert_slot_bonus_base_state(game: GameModule, run_state: RunState, environment: Dictionary, label: String, failures: Array) -> void:
+	var machine: Dictionary = SlotMachineStateScript.read_machine(environment, "slot")
+	var active: Dictionary = _slot_dict(machine.get("active_bonus", {}))
+	if SlotMachineStateScript.active_bonus_incomplete(machine):
+		failures.append("%s left active_bonus_incomplete true." % label)
+	if bool(active.get("active", false)) or not bool(active.get("complete", true)):
+		failures.append("%s did not clear active_bonus to the completed sentinel." % label)
+	var elapsed_msec := maxi(0, int(machine.get("slot_animation_duration_msec", 0))) + 600
+	var surface: Dictionary = game.surface_state(run_state, environment, {"surface_time_msec": elapsed_msec, "drunk_scaled_surface_time_msec": elapsed_msec})
+	var scene: Dictionary = _slot_dict(surface.get("slot_feature_scene", {}))
+	if bool(surface.get("slot_active_bonus_active", false)) or bool(scene.get("active", false)):
+		failures.append("%s did not return the surface to the base slot state after the bonus replay elapsed." % label)
 
 
 func _check_slot_buffalo_feature_pauses_autoplay(game: GameModule, definition: Dictionary, failures: Array) -> void:
@@ -4648,6 +4962,30 @@ func _slot_cell_lookup(cells: Array) -> Dictionary:
 	return result
 
 
+func _slot_assert_nudge_target_landed(machine: Dictionary, result: Dictionary, target: Dictionary, failures: Array, label: String) -> void:
+	var reel_index := int(target.get("reel", -1))
+	var row_index := int(target.get("row", -1))
+	var grid: Array = _slot_array(result.get("slot_grid", []))
+	var stops: Array = _slot_array(result.get("slot_reel_stops", []))
+	var strips: Array = _slot_array(machine.get("reel_strips", []))
+	if reel_index < 0 or row_index < 0 or reel_index >= stops.size() or reel_index >= strips.size():
+		failures.append("%s did not expose a valid target reel/row." % label)
+		return
+	var strip: Array = _slot_array(strips[reel_index])
+	if strip.is_empty():
+		failures.append("%s target reel strip was empty." % label)
+		return
+	var new_stop := posmod(int(stops[reel_index]), strip.size())
+	var landed_symbol := _slot_grid_symbol(grid, reel_index, row_index)
+	var strip_symbol := str(strip[posmod(new_stop + row_index, strip.size())])
+	var target_symbol := str(target.get("symbol", ""))
+	if landed_symbol != strip_symbol or (not target_symbol.is_empty() and landed_symbol != target_symbol):
+		failures.append("%s landed %s at reel %d row %d, expected strip symbol %s / target %s." % [label, landed_symbol, reel_index, row_index, strip_symbol, target_symbol])
+	var perfect: Dictionary = _slot_dict(target.get("perfect", {}))
+	if not perfect.is_empty() and int(perfect.get("new_stop", new_stop)) != new_stop:
+		failures.append("%s stopped at %d instead of the perfect target stop %d." % [label, new_stop, int(perfect.get("new_stop", new_stop))])
+
+
 func _slot_surface_channel_duration(surface_state: Dictionary, channel_id: String) -> int:
 	for channel_value in _slot_array(surface_state.get("surface_animation_channels", [])):
 		var channel: Dictionary = _slot_dict(channel_value)
@@ -5255,6 +5593,8 @@ func _grand_casino_game_fixture_run(library: ContentLibrary, boss_archetype: Dic
 	var run_state: RunState = RunStateScript.new()
 	run_state.start_new(seed_text)
 	run_state.bankroll = 100000
+	if game_id == "pull_tabs":
+		run_state.add_item("tab_detector")
 	var environment := EnvironmentInstance.from_archetype(boss_archetype, 3, run_state.create_rng("c1_grand_environment"), library).to_dict()
 	environment["id"] = "c1_grand_%s_fixture" % game_id
 	environment["display_name"] = "Grand Casino"
@@ -6079,13 +6419,13 @@ func _check_grand_casino_challenge_targets(library: ContentLibrary, failures: Ar
 	pacifist_run.start_new("PACIFIST-GRAND", library.challenge_config_for("pacifist", "PACIFIST-GRAND"))
 	pacifist_run.set_environment(EnvironmentInstance.from_archetype(grand_casino, 3, pacifist_run.create_rng("pacifist_grand"), library, pacifist_run.challenge_config).to_dict())
 	var pacifist_status := pacifist_run.demo_objective_status()
-	if int(pacifist_status.get("high_roller_net_winnings", 0)) != 125 or int(pacifist_status.get("high_roller_max_heat", 0)) != 35:
+	if int(pacifist_status.get("high_roller_net_winnings", 0)) != 5 or int(pacifist_status.get("high_roller_max_heat", 0)) != 35:
 		failures.append("Pacifist Grand Casino target modifiers were not applied.")
 	var card_run: RunState = RunStateScript.new()
 	card_run.start_new("CARD-SHARP-GRAND", library.challenge_config_for("card_sharp", "CARD-SHARP-GRAND"))
 	card_run.set_environment(EnvironmentInstance.from_archetype(grand_casino, 3, card_run.create_rng("card_grand"), library, card_run.challenge_config).to_dict())
 	var card_status := card_run.demo_objective_status()
-	if int(card_status.get("high_roller_net_winnings", 0)) != 250:
+	if int(card_status.get("high_roller_net_winnings", 0)) != 30:
 		failures.append("Card Sharp Grand Casino target modifier was not applied.")
 
 
@@ -6277,8 +6617,8 @@ func _check_roulette_surface_contract(game: GameModule, failures: Array, library
 		failures.append("Roulette surface did not route to the roulette renderer.")
 	if not bool(surface.get("surface_controls_native", false)):
 		failures.append("Roulette surface did not expose native table controls.")
-	if not bool(surface.get("surface_animates_idle", false)):
-		failures.append("Roulette surface did not request idle redraws for table life.")
+	if bool(surface.get("surface_animates_idle", false)):
+		failures.append("Roulette betting surface should stay static until a spin, payout, or result reveal is active.")
 	if bool(surface.get("surface_realtime_state_refresh", false)):
 		failures.append("Roulette betting surface must not rebuild full realtime snapshots for idle animation.")
 	var initial_recent: Array = _baccarat_dictionary_array(surface.get("recent_numbers", []))
@@ -7373,10 +7713,12 @@ func _check_blackjack_surface_contract(game: GameModule, failures: Array) -> voi
 		failures.append("Blackjack surface did not expose native surface controls.")
 	if not bool(surface.get("can_deal", false)):
 		failures.append("Blackjack surface did not start in a deal-ready betting phase.")
-	if not bool(surface.get("surface_animates_idle", false)):
-		failures.append("Blackjack betting surface did not request idle redraws for animated table life.")
-	if not bool(surface.get("surface_realtime_state_refresh", false)) or (surface.get("table_round_timer", {}) as Dictionary).is_empty():
-		failures.append("Blackjack betting surface did not expose realtime table-round timer state.")
+	if bool(surface.get("surface_animates_idle", false)):
+		failures.append("Blackjack betting surface should not redraw continuously before a hand is dealt.")
+	if bool(surface.get("surface_realtime_state_refresh", false)):
+		failures.append("Blackjack betting surface must not rebuild full realtime snapshots while idle.")
+	if (surface.get("table_round_timer", {}) as Dictionary).is_empty():
+		failures.append("Blackjack betting surface did not expose table-round timer state.")
 	if (surface.get("side_bets_available", []) as Array).is_empty():
 		failures.append("Blackjack generated table did not expose side bets.")
 	if (surface.get("side_bets_available", []) as Array).size() > 2:
@@ -7434,8 +7776,10 @@ func _check_blackjack_surface_contract(game: GameModule, failures: Array) -> voi
 	var dealer_focus: Dictionary = dealt_surface.get("dealer_focus", {}) if typeof(dealt_surface.get("dealer_focus", {})) == TYPE_DICTIONARY else {}
 	if not dealer_focus.has("gaze_phase") or not dealer_focus.has("peek_danger") or not dealer_focus.has("scan_phase") or not dealer_focus.has("watching_player") or not dealer_focus.has("peek_window_open"):
 		failures.append("Blackjack dealer focus did not expose visual read timing fields.")
-	if not bool(dealt_surface.get("surface_realtime_state_refresh", false)):
-		failures.append("Blackjack dealt surface did not keep realtime refresh available for live table focus.")
+	if not bool(dealt_surface.get("surface_animates_idle", false)):
+		failures.append("Blackjack dealt surface did not keep redraw available for live table focus.")
+	if bool(dealt_surface.get("surface_realtime_state_refresh", false)):
+		failures.append("Blackjack dealt surface should compute live table focus during draw without full snapshot rebuilds.")
 	var book_run_state: RunState = RunStateScript.new()
 	book_run_state.start_new("BLACKJACK-BASIC-STRATEGY-CARD")
 	book_run_state.add_item("basic_strategy_card")
@@ -7491,6 +7835,7 @@ func _check_blackjack_surface_contract(game: GameModule, failures: Array) -> voi
 	var broken_focus: Dictionary = broken_focus_surface.get("dealer_focus", {}) if typeof(broken_focus_surface.get("dealer_focus", {})) == TYPE_DICTIONARY else {}
 	if int(broken_focus.get("peek_window_percent", 100)) != 50:
 		failures.append("Broken Cufflinks did not halve the blackjack peek timing window.")
+	_check_blackjack_surface_time_resolve_determinism(game, generated_state, failures)
 	var control_surface: Dictionary = dealt_surface.duplicate(true)
 	control_surface["can_deal"] = false
 	control_surface["can_hit"] = true
@@ -8202,6 +8547,33 @@ func _check_blackjack_surface_contract(game: GameModule, failures: Array) -> voi
 	var restored_game_states: Dictionary = restored.current_environment.get("game_states", {})
 	if not restored_game_states.has("blackjack"):
 		failures.append("Blackjack generated table state did not round-trip through RunState serialization.")
+
+
+func _check_blackjack_surface_time_resolve_determinism(game: GameModule, table_state: Dictionary, failures: Array) -> void:
+	var run_a: RunState = RunStateScript.new()
+	var run_b: RunState = RunStateScript.new()
+	run_a.start_new("BLACKJACK-SURFACE-TIME-DETERMINISM")
+	run_b.start_new("BLACKJACK-SURFACE-TIME-DETERMINISM")
+	run_a.bankroll = 200
+	run_b.bankroll = 200
+	var environment_a := _surface_contract_environment()
+	var environment_b := _surface_contract_environment()
+	environment_a["game_states"] = {"blackjack": table_state.duplicate(true)}
+	environment_b["game_states"] = {"blackjack": table_state.duplicate(true)}
+	run_a.current_environment = environment_a.duplicate(true)
+	run_b.current_environment = environment_b.duplicate(true)
+	var ui_state := {
+		"selected_stake": 5,
+		"surface_time_msec": 24000,
+	}
+	var result_a: Dictionary = game.resolve_with_context("peek_hole_card", 5, run_a, environment_a, run_a.create_rng(), ui_state.duplicate(true))
+	var result_b: Dictionary = game.resolve_with_context("peek_hole_card", 5, run_b, environment_b, run_b.create_rng(), ui_state.duplicate(true))
+	for key in ["ok", "action_id", "action_kind", "bankroll_delta", "suspicion_delta", "base_suspicion_delta", "blackjack_table_barred", "blackjack_watched_peek", "blackjack_confiscated_bet", "message"]:
+		if result_a.get(key, null) != result_b.get(key, null):
+			failures.append("Blackjack supplied surface_time_msec resolve was not deterministic for %s." % str(key))
+			break
+	if run_a.bankroll != run_b.bankroll or run_a.suspicion_level() != run_b.suspicion_level():
+		failures.append("Blackjack supplied surface_time_msec resolve left divergent RunState economy/heat.")
 
 
 func _check_blackjack_rule_matrix(game: GameModule, base_table: Dictionary, failures: Array) -> void:
@@ -10212,15 +10584,16 @@ func _bar_dice_play_round(game: GameModule, run_state: RunState, rng: RngStream,
 	var environment: Dictionary = run_state.current_environment
 	var roll_command: Dictionary = game.surface_action_command("bar_dice_roll", 0, false, {}, run_state, environment)
 	var ui: Dictionary = roll_command.get("ui_state", {})
-	var select_surface := game.surface_state(run_state, environment, ui)
-	while int(select_surface.get("remaining_shakes", 0)) > 0:
-		var suggested: Array = select_surface.get("suggested_reroll", [])
+	while int(ui.get("shake_number", 0)) < 3:
+		var dice: Array = ui.get("dice", []) if typeof(ui.get("dice", [])) == TYPE_ARRAY else []
+		if dice.size() != 5:
+			break
+		var suggested: Array = game.call("_suggested_reroll_for_ruleset", dice, "ship_captain_crew")
 		if suggested.is_empty():
 			break
 		ui["reroll"] = suggested
 		var shake_command: Dictionary = game.surface_action_command("bar_dice_shake", 0, false, ui, run_state, environment)
 		ui = shake_command.get("ui_state", ui)
-		select_surface = game.surface_state(run_state, environment, ui)
 	if action_id == "loaded_toss":
 		ui = _bar_dice_controlled_roll_timed_ui(game, run_state, ui, 0)
 	return game.resolve_with_context(action_id, 10, run_state, environment, rng, ui)
@@ -11819,17 +12192,30 @@ func _check_world_map_foundation(library: ContentLibrary, failures: Array) -> vo
 	var snapshot := WorldMapScript.snapshot(run_a.world_map)
 	var visible_ids := _string_array(snapshot.get("visible_node_ids", []))
 	if visible_ids.size() < 2:
-		failures.append("World map should reveal at least one neighbor from the start node.")
+		failures.append("World map should spawn-discover at least one travelable stop from the start node.")
 	if _world_map_hidden_count(run_a.world_map) <= 0:
 		failures.append("World map should keep distant nodes hidden before discovery.")
-	var neighbors := WorldMapScript.neighbor_ids(run_a.world_map, start_node_id, true)
-	if _string_array(run_a.current_environment.get("travel_hooks", [])) != neighbors or _string_array(run_a.current_environment.get("next_archetypes", [])) != neighbors:
-		failures.append("Current environment travel hooks should mirror visible world-map neighbors.")
+	if not _world_map_visible_ids_have_sources(run_a.world_map):
+		failures.append("World map visible nodes must be visited, event-unlocked, or discovered at spawn.")
+	var initial_leaks := _world_map_snapshot_hidden_leaks(run_a.world_map, snapshot)
+	if not initial_leaks.is_empty():
+		failures.append("World map snapshot leaked hidden node data at start: %s." % ", ".join(initial_leaks))
+	if not _world_map_snapshot_icons_match_positions(run_a.world_map, snapshot):
+		failures.append("World map snapshot icons did not preserve generated node positions.")
+	var travel_targets := WorldMapScript.travel_target_ids(run_a.world_map, start_node_id)
+	if travel_targets.is_empty():
+		failures.append("World map should expose at least one capped travel target from the start node.")
+	if travel_targets.size() > WorldMapScript.TRAVEL_TOTAL_TARGET_LIMIT:
+		failures.append("World map exposed too many start travel targets: %d." % travel_targets.size())
+	if _world_map_target_new_count(run_a.world_map, travel_targets) > WorldMapScript.TRAVEL_NEW_TARGET_LIMIT:
+		failures.append("World map exposed more than two new travel targets from the start node.")
+	if _string_array(run_a.current_environment.get("travel_hooks", [])) != travel_targets or _string_array(run_a.current_environment.get("next_archetypes", [])) != travel_targets:
+		failures.append("Current environment travel hooks should mirror capped world-map travel targets.")
 	var layout: Dictionary = run_a.current_environment.get("layout", {}) if typeof(run_a.current_environment.get("layout", {})) == TYPE_DICTIONARY else {}
 	var object_rects: Dictionary = layout.get("object_rects", {}) if typeof(layout.get("object_rects", {})) == TYPE_DICTIONARY else {}
 	if not object_rects.has("travel:leave"):
 		failures.append("World-map rooms should expose a single travel:leave layout object.")
-	for target_id in neighbors:
+	for target_id in travel_targets:
 		if object_rects.has("travel:%s" % str(target_id)):
 			failures.append("World-map rooms should not expose per-destination travel object travel:%s." % str(target_id))
 			break
@@ -11845,6 +12231,34 @@ func _check_world_map_foundation(library: ContentLibrary, failures: Array) -> vo
 	if JSON.stringify(_world_map_positions(run_a.world_map)) == JSON.stringify(_world_map_positions(run_c.world_map)):
 		failures.append("World map node layout should vary across different seeds.")
 
+	for leak_seed_index in range(20):
+		var leak_run: RunState = RunStateScript.new()
+		leak_run.start_new("WORLD-MAP-FOG-%02d" % leak_seed_index)
+		generator.next_environment(leak_run)
+		var hidden_selected_id := _first_hidden_world_node_id(leak_run.world_map)
+		var leak_snapshot := WorldMapScript.snapshot(leak_run.world_map, hidden_selected_id)
+		var leaked_ids := _world_map_snapshot_hidden_leaks(leak_run.world_map, leak_snapshot)
+		if not hidden_selected_id.is_empty() and str(leak_snapshot.get("selected_node_id", "")) == hidden_selected_id:
+			leaked_ids.append("selected:%s" % hidden_selected_id)
+		if not leaked_ids.is_empty():
+			failures.append("World map fog leak for seed %02d: %s." % [leak_seed_index, ", ".join(leaked_ids)])
+			break
+
+	var hidden_unlock_id := _first_hidden_world_node_id(run_a.world_map)
+	if hidden_unlock_id.is_empty():
+		failures.append("World map event-unlock fixture could not find a hidden node.")
+	else:
+		var before_unlock_snapshot := WorldMapScript.snapshot(run_a.world_map)
+		if _string_array(before_unlock_snapshot.get("visible_node_ids", [])).has(hidden_unlock_id):
+			failures.append("World map event-unlock fixture started with the hidden target visible.")
+		run_a.add_next_archetypes([hidden_unlock_id])
+		var after_unlock_snapshot := WorldMapScript.snapshot(run_a.world_map)
+		if not _string_array(after_unlock_snapshot.get("visible_node_ids", [])).has(hidden_unlock_id):
+			failures.append("World map event grant did not reveal %s without re-entering the map." % hidden_unlock_id)
+		var unlocked_node := WorldMapScript.node_by_id(run_a.world_map, hidden_unlock_id)
+		if not bool(unlocked_node.get("unlocked", false)) or str(unlocked_node.get("discovery_source", "")) != WorldMapScript.DISCOVERY_SOURCE_EVENT:
+			failures.append("World map event grant did not mark %s with event discovery metadata." % hidden_unlock_id)
+
 	for seed_index in range(50):
 		var reach_run: RunState = RunStateScript.new()
 		reach_run.start_new("WORLD-MAP-REACH-%02d" % seed_index)
@@ -11854,10 +12268,26 @@ func _check_world_map_foundation(library: ContentLibrary, failures: Array) -> vo
 			failures.append("World map reachability failed for seed %02d: Grand Casino hops=%d." % [seed_index, hops])
 			break
 
-	if neighbors.is_empty():
+	for policy_seed_index in range(20):
+		var policy_run: RunState = RunStateScript.new()
+		policy_run.start_new("WORLD-MAP-POLICY-%02d" % policy_seed_index)
+		generator.next_environment(policy_run)
+		var policy_targets := WorldMapScript.travel_target_ids(policy_run.world_map, policy_run.current_world_node_id())
+		if policy_targets.size() > WorldMapScript.TRAVEL_TOTAL_TARGET_LIMIT:
+			failures.append("World map target policy exceeded total cap for seed %02d." % policy_seed_index)
+			break
+		if _world_map_target_new_count(policy_run.world_map, policy_targets) > WorldMapScript.TRAVEL_NEW_TARGET_LIMIT:
+			failures.append("World map target policy exceeded new-target cap for seed %02d." % policy_seed_index)
+			break
+		var reachable_new := _world_map_reachable_visible_new_ids(policy_run.world_map, policy_run.current_world_node_id())
+		if reachable_new.size() >= WorldMapScript.TRAVEL_NEW_TARGET_LIMIT and _world_map_target_new_count(policy_run.world_map, policy_targets) != WorldMapScript.TRAVEL_NEW_TARGET_LIMIT:
+			failures.append("World map target policy did not offer two new destinations for seed %02d." % policy_seed_index)
+			break
+
+	if travel_targets.is_empty():
 		failures.append("World map revisit fixture could not find a neighboring destination.")
 		return
-	var first_target := str(neighbors[0])
+	var first_target := str(travel_targets[0])
 	var first_route := generator.world_route_for_target(run_a, first_target)
 	if first_route.is_empty() or not bool(first_route.get("generated_world_route", false)):
 		failures.append("World route should merge generated edge metadata for visible targets.")
@@ -11867,10 +12297,20 @@ func _check_world_map_foundation(library: ContentLibrary, failures: Array) -> vo
 	var visited_node_id := run_a.current_world_node_id()
 	run_a.current_environment["game_states"] = _copy_dict(run_a.current_environment.get("game_states", {}))
 	run_a.current_environment["game_states"]["world_map_fixture"] = {"remaining": 1, "top_prize_claimed": false}
+	var return_targets := WorldMapScript.travel_target_ids(run_a.world_map, visited_node_id)
+	if not return_targets.has(start_node_id):
+		failures.append("Visited world-map node did not offer the previous stop as a return target.")
 	var return_route := generator.world_route_for_target(run_a, start_node_id)
+	if _string_array(return_route.get("world_path", [])).size() < 2:
+		failures.append("Return world-map route did not include a visible path.")
+	var return_cost := int(return_route.get("cost", 0))
+	var bankroll_before_return := run_a.bankroll
 	var return_heat := run_a.begin_travel_suspicion_decay(return_route, start_node_id)
 	generator.next_environment(run_a, start_node_id)
 	run_a.finish_travel_suspicion_decay(return_heat)
+	GameModule.apply_result(run_a, _world_map_travel_charge_result(start_node_id, return_cost))
+	if run_a.bankroll != bankroll_before_return - return_cost:
+		failures.append("Return world-map travel did not charge the generated edge cost.")
 	var revisit_route := generator.world_route_for_target(run_a, visited_node_id)
 	var revisit_heat := run_a.begin_travel_suspicion_decay(revisit_route, visited_node_id)
 	generator.next_environment(run_a, visited_node_id)
@@ -11892,6 +12332,120 @@ func _world_map_hidden_count(map_data: Dictionary) -> int:
 		if typeof(node_value) == TYPE_DICTIONARY and str((node_value as Dictionary).get("state", "")) == WorldMapScript.STATE_HIDDEN:
 			count += 1
 	return count
+
+
+func _world_map_visible_ids_have_sources(map_data: Dictionary) -> bool:
+	for node_id in WorldMapScript.visible_node_ids(map_data):
+		var node := WorldMapScript.node_by_id(map_data, str(node_id))
+		if str(node.get("state", "")) == WorldMapScript.STATE_VISITED:
+			continue
+		var source := str(node.get("discovery_source", "")).strip_edges()
+		if bool(node.get("discovered_at_spawn", false)) or bool(node.get("unlocked", false)) or source == WorldMapScript.DISCOVERY_SOURCE_SPAWN or source == WorldMapScript.DISCOVERY_SOURCE_EVENT or source == WorldMapScript.DISCOVERY_SOURCE_TRAVEL:
+			continue
+		return false
+	return true
+
+
+func _world_map_snapshot_hidden_leaks(map_data: Dictionary, snapshot: Dictionary) -> Array:
+	var hidden_ids := _world_map_hidden_ids(map_data)
+	var leaks: Array = []
+	for node_value in _copy_array(snapshot.get("nodes", [])):
+		if typeof(node_value) != TYPE_DICTIONARY:
+			continue
+		var node: Dictionary = node_value
+		var node_id := str(node.get("id", ""))
+		if hidden_ids.has(node_id) and not leaks.has(node_id):
+			leaks.append(node_id)
+		if node.has("environment") and not leaks.has("%s:environment" % node_id):
+			leaks.append("%s:environment" % node_id)
+	for edge_value in _copy_array(snapshot.get("edges", [])):
+		if typeof(edge_value) != TYPE_DICTIONARY:
+			continue
+		var edge: Dictionary = edge_value
+		var a := str(edge.get("a", ""))
+		var b := str(edge.get("b", ""))
+		if hidden_ids.has(a) and not leaks.has("edge:%s" % a):
+			leaks.append("edge:%s" % a)
+		if hidden_ids.has(b) and not leaks.has("edge:%s" % b):
+			leaks.append("edge:%s" % b)
+	var selected_id := str(snapshot.get("selected_node_id", ""))
+	if hidden_ids.has(selected_id) and not leaks.has("selected:%s" % selected_id):
+		leaks.append("selected:%s" % selected_id)
+	return leaks
+
+
+func _world_map_hidden_ids(map_data: Dictionary) -> Array:
+	var hidden_ids: Array = []
+	for node_value in _copy_array(map_data.get("nodes", [])):
+		if typeof(node_value) != TYPE_DICTIONARY:
+			continue
+		var node: Dictionary = node_value
+		var node_id := str(node.get("id", ""))
+		if not node_id.is_empty() and not WorldMapScript.is_node_visible(map_data, node_id):
+			hidden_ids.append(node_id)
+	return hidden_ids
+
+
+func _first_hidden_world_node_id(map_data: Dictionary) -> String:
+	var hidden_ids := _world_map_hidden_ids(map_data)
+	if hidden_ids.is_empty():
+		return ""
+	return str(hidden_ids[0])
+
+
+func _world_map_snapshot_icons_match_positions(map_data: Dictionary, snapshot: Dictionary) -> bool:
+	for node_value in _copy_array(snapshot.get("nodes", [])):
+		if typeof(node_value) != TYPE_DICTIONARY:
+			return false
+		var snapshot_node: Dictionary = node_value
+		var node_id := str(snapshot_node.get("id", ""))
+		var map_node := WorldMapScript.node_by_id(map_data, node_id)
+		if map_node.is_empty():
+			return false
+		if JSON.stringify(snapshot_node.get("position", {})) != JSON.stringify(map_node.get("position", {})):
+			return false
+		var icon_path := str(snapshot_node.get("icon_path", "")).strip_edges()
+		if icon_path != "res://assets/art/map_icons/%s.png" % node_id:
+			return false
+	return true
+
+
+func _world_map_target_new_count(map_data: Dictionary, target_ids: Array) -> int:
+	var count := 0
+	for target_id_value in target_ids:
+		var node := WorldMapScript.node_by_id(map_data, str(target_id_value))
+		if not node.is_empty() and str(node.get("state", "")) != WorldMapScript.STATE_VISITED:
+			count += 1
+	return count
+
+
+func _world_map_reachable_visible_new_ids(map_data: Dictionary, source_id: String) -> Array:
+	var result: Array = []
+	for node_id_value in WorldMapScript.visible_node_ids(map_data):
+		var node_id := str(node_id_value)
+		if node_id == source_id:
+			continue
+		var node := WorldMapScript.node_by_id(map_data, node_id)
+		if node.is_empty() or str(node.get("state", "")) == WorldMapScript.STATE_VISITED:
+			continue
+		if WorldMapScript.path_between(map_data, source_id, node_id, true).size() >= 2:
+			result.append(node_id)
+	return result
+
+
+func _world_map_travel_charge_result(target_id: String, cost: int) -> Dictionary:
+	var deltas := GameModule.empty_result_deltas()
+	deltas["bankroll_delta"] = -maxi(0, cost)
+	return GameModule.build_action_result({
+		"ok": true,
+		"type": "travel",
+		"source_id": target_id,
+		"action_id": "confirm_travel",
+		"action_kind": "travel",
+		"bankroll_delta": -maxi(0, cost),
+		"deltas": deltas,
+		"message": "Travel charge fixture.",
+	})
 
 
 func _copy_dict(value: Variant) -> Dictionary:
@@ -13169,6 +13723,10 @@ func _check_music_stem_director_foundation(library: ContentLibrary, failures: Ar
 		failures.append("Authored music profile did not resolve the sparse authored provider.")
 	if not bool(authored_manifest.get("sync_ok", false)):
 		failures.append("Authored sparse stem set did not expose synchronized loop metadata.")
+	if int(authored_manifest.get("loop_frames", 0)) < 44100 * 12:
+		failures.append("Authored corner-store music fixture should be a long ambient bed, not a short repeated loop.")
+	if int(authored_manifest.get("bars", 0)) < 8:
+		failures.append("Authored corner-store music fixture should span multiple bars before looping.")
 	if not bool(authored_manifest.get("sparse", false)):
 		failures.append("Authored sparse fixture should report absent roles as silent.")
 	var authored_roles: Dictionary = authored_manifest.get("roles", {}) as Dictionary
@@ -13510,8 +14068,8 @@ func _check_demo_boss_objective_foundation(library: ContentLibrary, failures: Ar
 	if int(objective.get("target_bankroll", -1)) != 0:
 		failures.append("Grand Casino Players Card objective should not require a total bankroll target.")
 	var route := library.route("grand_casino")
-	if route.is_empty() or int(route.get("cost", 0)) < 100:
-		failures.append("Grand Casino route must exist and cost about $100.")
+	if route.is_empty() or int(route.get("cost", 0)) < 70:
+		failures.append("Grand Casino route must exist and keep a meaningful buy-in.")
 	elif int(route.get("requires_travel_count_min", 0)) < 1 or not bool(route.get("hide_until_travel_count_met", false)):
 		failures.append("Grand Casino route should stay hidden until at least one travel has occurred.")
 	var underground := _archetype_by_id(library, "small_underground_casino")
@@ -13543,8 +14101,8 @@ func _check_demo_boss_objective_foundation(library: ContentLibrary, failures: Ar
 	var forced_showdown_heat_threshold := int(objective.get("forced_showdown_heat_threshold", 0))
 	if high_roller_target != 0:
 		failures.append("Grand Casino Players Card objective should be gated by net Grand Casino winnings, not total bankroll.")
-	if high_roller_net != 200:
-		failures.append("Grand Casino Players Card objective should require exactly $200 in Grand Casino net winnings.")
+	if high_roller_net != 10:
+		failures.append("Grand Casino Players Card objective should require the release-tuned Grand Casino net winnings target.")
 	if high_roller_net <= 0 or high_roller_min_games <= 0 or high_roller_max_heat < 0:
 		failures.append("Grand Casino clean lane must define net winnings, game count, and max heat.")
 	if showdown_heat_threshold <= high_roller_max_heat or forced_showdown_heat_threshold <= showdown_heat_threshold:
@@ -15134,6 +15692,145 @@ func _check_run_state_source_of_truth(library: ContentLibrary, failures: Array) 
 		failures.append("RunState.from_dict retained mutable flag source data.")
 	if str(restored.story_log[0].get("id", "")) == "mutated_story":
 		failures.append("RunState.from_dict retained mutable story source data.")
+
+
+# Verifies real-time gameplay logic is derived from absolute milliseconds, not frame counts.
+func _check_locked_logic_rate_foundation(library: ContentLibrary, failures: Array) -> void:
+	var absorption_30: Dictionary = _locked_rate_absorption_fixture(33)
+	var absorption_144: Dictionary = _locked_rate_absorption_fixture(7)
+	if JSON.stringify(absorption_30) != JSON.stringify(absorption_144):
+		failures.append("Alcohol absorption produced different logic events at 30fps and 144fps simulations.")
+
+	var bar_30: Dictionary = _locked_rate_bar_dice_fixture(library, 33, failures)
+	var bar_144: Dictionary = _locked_rate_bar_dice_fixture(library, 7, failures)
+	if not bar_30.is_empty() and not bar_144.is_empty() and JSON.stringify(bar_30) != JSON.stringify(bar_144):
+		failures.append("Bar Dice controlled-roll timing produced different outcomes at 30fps and 144fps simulations.")
+
+
+func _locked_rate_absorption_fixture(step_msec: int) -> Dictionary:
+	var run_state: RunState = RunStateScript.new()
+	run_state.start_new("LOCKED-RATE-ALCOHOL")
+	run_state.pending_drunk_absorption = [{
+		"remaining": 6,
+		"interval_msec": RunState.DRUNK_ABSORPTION_INTERVAL_MSEC,
+		"next_msec": RunState.DRUNK_ABSORPTION_INTERVAL_MSEC,
+		"queued_msec": 0,
+	}]
+	var event_times := [
+		RunState.DRUNK_ABSORPTION_INTERVAL_MSEC,
+		RunState.DRUNK_ABSORPTION_INTERVAL_MSEC * 2,
+		RunState.DRUNK_ABSORPTION_INTERVAL_MSEC * 3,
+		RunState.DRUNK_ABSORPTION_INTERVAL_MSEC * 4,
+		RunState.DRUNK_ABSORPTION_INTERVAL_MSEC * 5,
+		RunState.DRUNK_ABSORPTION_INTERVAL_MSEC * 6,
+	]
+	var events: Array = []
+	for time_msec_value in _locked_rate_time_points(0, RunState.DRUNK_ABSORPTION_INTERVAL_MSEC * 6, step_msec, event_times):
+		var time_msec := int(time_msec_value)
+		var update: Dictionary = run_state.update_drunk_absorption(time_msec)
+		var applied := int(update.get("applied", 0))
+		if applied > 0:
+			events.append({
+				"msec": time_msec,
+				"applied": applied,
+				"drunk": run_state.drunk_level,
+				"pending": run_state.pending_drunk_absorption_amount(),
+			})
+	return {
+		"events": events,
+		"drunk": run_state.drunk_level,
+		"pending": run_state.pending_drunk_absorption_amount(),
+	}
+
+
+func _locked_rate_bar_dice_fixture(library: ContentLibrary, step_msec: int, failures: Array) -> Dictionary:
+	var game: GameModule = _load_surface_contract_game(library, "bar_dice", failures)
+	if game == null:
+		return {}
+	var run_state: RunState = RunStateScript.new()
+	run_state.start_new("LOCKED-RATE-BAR-DICE")
+	run_state.bankroll = 100000
+	var environment := _surface_contract_environment()
+	environment["game_states"] = {"bar_dice": _bar_dice_state_for(game, run_state, environment, "ship_captain_crew", "standard", "pot_rake")}
+	run_state.current_environment = environment.duplicate(true)
+	var active_environment: Dictionary = run_state.current_environment
+	var start_msec := 12000
+	var roll_command: Dictionary = game.surface_action_command("bar_dice_roll", 0, false, {"surface_time_msec": start_msec}, run_state, active_environment)
+	if not bool(roll_command.get("handled", false)):
+		failures.append("Locked-rate Bar Dice fixture could not start a roll.")
+		return {}
+	var roll_ui: Dictionary = roll_command.get("ui_state", {"surface_time_msec": start_msec})
+	roll_ui["surface_time_msec"] = start_msec
+	var load_command: Dictionary = game.surface_action_command("bar_dice_load", 0, false, roll_ui, run_state, active_environment)
+	if not bool(load_command.get("handled", false)):
+		failures.append("Locked-rate Bar Dice fixture could not arm loaded toss.")
+		return {}
+	var load_ui: Dictionary = load_command.get("ui_state", roll_ui)
+	var challenge: Dictionary = load_ui.get("controlled_roll", {}) if typeof(load_ui.get("controlled_roll", {})) == TYPE_DICTIONARY else {}
+	if challenge.is_empty():
+		failures.append("Locked-rate Bar Dice fixture did not create a controlled-roll challenge.")
+		return {}
+	var period := maxi(1, int(challenge.get("meter_period_msec", 1300)))
+	var input_msec := int(challenge.get("target_msec", start_msec))
+	while input_msec < start_msec:
+		input_msec += period
+	var surface_samples := 0
+	for time_msec_value in _locked_rate_time_points(start_msec, input_msec, step_msec, [input_msec]):
+		var sample_ui: Dictionary = load_ui.duplicate(true)
+		sample_ui["surface_time_msec"] = int(time_msec_value)
+		var surface: Dictionary = game.surface_state(run_state, active_environment, sample_ui)
+		if str(surface.get("surface_renderer", "")) != "dice_table":
+			failures.append("Locked-rate Bar Dice fixture sampled the wrong renderer.")
+			return {}
+		surface_samples += 1
+	var release_ui: Dictionary = load_ui.duplicate(true)
+	release_ui["surface_time_msec"] = input_msec
+	release_ui["controlled_roll_input_msec"] = input_msec
+	var release_command: Dictionary = game.surface_action_command("bar_dice_release", 0, false, release_ui, run_state, active_environment)
+	if not bool(release_command.get("handled", false)):
+		failures.append("Locked-rate Bar Dice fixture could not release loaded toss.")
+		return {}
+	var resolved_ui: Dictionary = release_command.get("ui_state", release_ui)
+	var controlled: Dictionary = resolved_ui.get("controlled_roll", {}) if typeof(resolved_ui.get("controlled_roll", {})) == TYPE_DICTIONARY else {}
+	var result: Dictionary = game.resolve_with_context("loaded_toss", 10, run_state, active_environment, run_state.create_rng("locked_rate_bar_dice_resolve"), resolved_ui)
+	if not bool(result.get("ok", false)):
+		failures.append("Locked-rate Bar Dice fixture did not resolve loaded toss.")
+		return {}
+	return {
+		"target_msec": int(challenge.get("target_msec", 0)),
+		"input_msec": int(controlled.get("input_msec", 0)),
+		"skill_grade": str(controlled.get("skill_grade", "")),
+		"skill_margin_msec": int(controlled.get("skill_margin_msec", 0)),
+		"skill_accuracy": int(controlled.get("skill_accuracy", 0)),
+		"desired_face": int(controlled.get("desired_face", 0)),
+		"desired_die_index": int(controlled.get("desired_die_index", -1)),
+		"result_grade": str(result.get("bar_dice_controlled_roll_grade", "")),
+		"result_margin_msec": int(result.get("bar_dice_controlled_roll_margin_msec", 0)),
+		"result_applied": bool(result.get("bar_dice_controlled_roll_applied", false)),
+		"player_dice": (result.get("bar_dice_player_dice", []) as Array).duplicate(),
+		"outcome": str(result.get("bar_dice_outcome", "")),
+		"bankroll_delta": int(result.get("bankroll_delta", 0)),
+		"suspicion_delta": int(result.get("suspicion_delta", 0)),
+		"surface_samples": surface_samples > 0,
+	}
+
+
+func _locked_rate_time_points(start_msec: int, end_msec: int, step_msec: int, scripted_times: Array) -> Array:
+	var point_map := {}
+	var cursor := start_msec
+	var safe_end := maxi(start_msec, end_msec)
+	var safe_step := maxi(1, step_msec)
+	while cursor < safe_end:
+		cursor = mini(safe_end, cursor + safe_step)
+		point_map[str(cursor)] = true
+	for value in scripted_times:
+		var scripted_msec := clampi(int(value), start_msec, safe_end)
+		point_map[str(scripted_msec)] = true
+	var points: Array = []
+	for key in point_map.keys():
+		points.append(int(key))
+	points.sort()
+	return points
 
 
 # Ensures RunState serialization stays inside simulation domains.

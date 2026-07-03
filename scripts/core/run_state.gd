@@ -1542,7 +1542,7 @@ func _grand_casino_showdown_check(choice_id: String, config: Dictionary = {}) ->
 	var tuning := _grand_casino_showdown_tuning(config)
 	var modifiers := _grand_casino_showdown_modifier_breakdown(choice_id)
 	var success_chance := clampi(
-		int(tuning.get("base_success_chance", 58))
+		int(tuning.get("base_success_chance", 95))
 		+ int(modifiers.get("pressure_choice_modifier", 0))
 		+ int(modifiers.get("clean_play_modifier", 0))
 		+ int(modifiers.get("item_modifier", 0))
@@ -1572,7 +1572,7 @@ func _grand_casino_showdown_tuning(config: Dictionary) -> Dictionary:
 		var previous_min := min_chance
 		min_chance = max_chance
 		max_chance = previous_min
-	var base_chance := clampi(int(config.get("base_success_chance", config.get("showdown_base_success_chance", 58))), min_chance, max_chance)
+	var base_chance := clampi(int(config.get("base_success_chance", config.get("showdown_base_success_chance", 95))), min_chance, max_chance)
 	return {
 		"base_success_chance": base_chance,
 		"min_success_chance": min_chance,
@@ -2416,7 +2416,7 @@ func _travel_lock_disabled_reason(lock_remaining: int) -> String:
 	var noun := "action" if actions == 1 else "actions"
 	var archetype_id := str(current_environment.get("archetype_id", ""))
 	if archetype_id == "delta_queen":
-		return "The Delta Queen is out on the river for %d more %s." % [actions, noun]
+		return "The River Queen is out on the river for %d more %s." % [actions, noun]
 	return "Travel unlocks after %d more %s." % [actions, noun]
 
 
@@ -3163,12 +3163,15 @@ func triggered_event_resolution_active() -> bool:
 func add_next_archetypes(archetype_ids: Array) -> void:
 	if current_environment.is_empty():
 		return
+	var clean_ids := _string_array(archetype_ids)
 	var next_ids: Array = current_environment.get("next_archetypes", [])
-	for archetype_id in archetype_ids:
-		var id := str(archetype_id)
+	for id in clean_ids:
 		if not id.is_empty() and not next_ids.has(id):
 			next_ids.append(id)
 	current_environment["next_archetypes"] = next_ids
+	unlocked_travel = _unique_strings(unlocked_travel + clean_ids)
+	if has_world_map():
+		world_map = WorldMap.unlock_nodes(world_map, clean_ids, WorldMap.DISCOVERY_SOURCE_EVENT)
 	current_environment["layout"] = EnvironmentInstance.ensure_generated_layout(current_environment)
 
 
@@ -3176,7 +3179,11 @@ func add_next_archetypes(archetype_ids: Array) -> void:
 func set_next_archetypes(archetype_ids: Array) -> void:
 	if current_environment.is_empty():
 		return
-	current_environment["next_archetypes"] = _string_array(archetype_ids)
+	var clean_ids := _string_array(archetype_ids)
+	current_environment["next_archetypes"] = clean_ids
+	unlocked_travel = _unique_strings(unlocked_travel + clean_ids)
+	if has_world_map():
+		world_map = WorldMap.unlock_nodes(world_map, clean_ids, WorldMap.DISCOVERY_SOURCE_EVENT)
 	current_environment["layout"] = EnvironmentInstance.ensure_generated_layout(current_environment)
 
 

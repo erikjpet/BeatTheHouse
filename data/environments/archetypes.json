@@ -25,7 +25,7 @@
       "asset_path": "res://assets/art/environments/corner_store.png",
       "description": "A fluorescent corner store with pink shadows, narrow shelves, and a clerk half-awake behind the register."
     },
-    "objective_hint": "Build $100 to buy into the Grand Casino.",
+    "objective_hint": "Build enough cash to buy into the Grand Casino.",
     "object_fixtures": [
       "shopkeeper:merchant"
     ],
@@ -257,7 +257,7 @@
       "asset_path": "res://assets/art/environments/back_alley.png",
       "description": "A rain-slick alley glowing magenta and cyan around a folding table of questionable tools."
     },
-    "objective_hint": "Build $100 to buy into the Grand Casino.",
+    "objective_hint": "Build enough cash to buy into the Grand Casino.",
     "object_fixtures": [
       "shopkeeper:merchant"
     ],
@@ -472,7 +472,7 @@
       "asset_path": "res://assets/art/environments/motel.png",
       "description": "A cheap motel room with venetian shadows, a vibrating sign outside, and supplies spread on a bedspread."
     },
-    "objective_hint": "Build $100 to buy into the Grand Casino.",
+    "objective_hint": "Build enough cash to buy into the Grand Casino.",
     "object_fixtures": [
       "shopkeeper:merchant"
     ],
@@ -688,7 +688,7 @@
       "asset_path": "res://assets/art/environments/bar.png",
       "description": "A low-stakes bar with pull-tab slips, a dice cup, and old machines glowing against teal walls."
     },
-    "objective_hint": "Build $100 to buy into the Grand Casino.",
+    "objective_hint": "Build enough cash to buy into the Grand Casino.",
     "layout": {
       "game_spots": [
         [
@@ -880,7 +880,7 @@
       "asset_path": "res://assets/art/environments/gas_station_casino.png",
       "description": "A gas station game corner with buzzing coolers, pull tabs, and video machines under violent neon."
     },
-    "objective_hint": "Build $100 to buy into the Grand Casino.",
+    "objective_hint": "Build enough cash to buy into the Grand Casino.",
     "layout": {
       "game_spots": [
         [
@@ -1071,7 +1071,7 @@
       "asset_path": "res://assets/art/environments/small_underground_casino.png",
       "description": "A cramped underground room where cyan light catches felt tables, dice, and guarded side glances."
     },
-    "objective_hint": "Win enough for the $100 Grand Casino entry.",
+    "objective_hint": "Win enough for the Grand Casino entry.",
     "layout": {
       "game_spots": [
         [
@@ -1722,7 +1722,7 @@
     "tier": 2,
     "travel_locked_actions": 2,
     "name_prefixes": [
-      "Delta Queen"
+      "River Queen"
     ],
     "name_nouns": [
       "Riverboat Casino"
@@ -1969,7 +1969,7 @@
       "asset_path": "res://assets/art/environments/grand_casino.png",
       "description": "A polished boss casino floor with velvet ropes, camera domes, high-limit tables, and a pit boss watching for cheating."
     },
-    "objective_hint": "Win $200 on the Grand Casino floor for a Players Card.",
+    "objective_hint": "Win $10 on the Grand Casino floor for a Players Card.",
     "demo_objective": {
       "id": "grand_casino_demo_bankroll",
       "type": "bankroll_target",
@@ -1977,7 +1977,7 @@
       "summary": "Earn the Players Card clean or survive Rourke's back-room call.",
       "target_bankroll": 0,
       "high_roller_target_bankroll": 0,
-      "high_roller_net_winnings": 200,
+      "high_roller_net_winnings": 10,
       "high_roller_min_grand_casino_games": 3,
       "high_roller_max_heat": 30,
       "showdown_heat_threshold": 70,
@@ -2109,8 +2109,8 @@
       "volume": 0.28
     },
     "economic_profile": {
-      "stake_floor": 10,
-      "stake_ceiling": 60,
+      "stake_floor": 5,
+      "stake_ceiling": 35,
       "cashout_tone": "cage"
     },
     "game_pool": [

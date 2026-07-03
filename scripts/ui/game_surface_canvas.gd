@@ -32,6 +32,7 @@ const BOARD_SIZE := VisualStyleScript.GAME_BOARD_SIZE
 const SLOT_BOARD_SIZE := Vector2(960, 540)
 const MIN_SURFACE_TOUCH_HIT_SIZE := Vector2(44.0, 44.0)
 const DRUNK_TIME_SCALE_MIN := 0.33
+const PERF_DRAW_SAMPLE_LIMIT := 512
 
 var game_id: String = ""
 var state: Dictionary = {}
@@ -53,6 +54,9 @@ var continuous_redraw_was_active := false
 var last_audio_profile_id: String = ""
 var perf_full_snapshot_calls := 0
 var perf_runtime_status_calls := 0
+var perf_draw_frame_usec_samples: Array = []
+var surface_label_fit_cache: Dictionary = {}
+var hit_region_group_cache: Dictionary = {}
 var active_design_scale := Vector2.ONE
 var active_design_offset := Vector2.ZERO
 var design_space_active := false
@@ -144,13 +148,42 @@ func surface_realtime_state_refresh_enabled() -> bool:
 func reset_performance_counters() -> void:
 	perf_full_snapshot_calls = 0
 	perf_runtime_status_calls = 0
+	perf_draw_frame_usec_samples = []
 
 
 func performance_counters() -> Dictionary:
 	return {
 		"full_snapshot_calls": perf_full_snapshot_calls,
 		"runtime_status_calls": perf_runtime_status_calls,
+		"draw_frame_usec_samples": perf_draw_frame_usec_samples.duplicate(),
+		"draw_avg_ms": _draw_average_ms(),
+		"draw_p95_ms": _draw_percentile_ms(0.95),
 	}
+
+
+func _record_draw_performance(start_usec: int) -> void:
+	var elapsed := maxi(0, Time.get_ticks_usec() - start_usec)
+	perf_draw_frame_usec_samples.append(elapsed)
+	if perf_draw_frame_usec_samples.size() > PERF_DRAW_SAMPLE_LIMIT:
+		perf_draw_frame_usec_samples.pop_front()
+
+
+func _draw_average_ms() -> float:
+	if perf_draw_frame_usec_samples.is_empty():
+		return 0.0
+	var total := 0
+	for sample_value in perf_draw_frame_usec_samples:
+		total += int(sample_value)
+	return float(total) / float(perf_draw_frame_usec_samples.size()) / 1000.0
+
+
+func _draw_percentile_ms(percentile: float) -> float:
+	if perf_draw_frame_usec_samples.is_empty():
+		return 0.0
+	var sorted_samples := perf_draw_frame_usec_samples.duplicate()
+	sorted_samples.sort()
+	var index := clampi(int(ceil(percentile * float(sorted_samples.size()))) - 1, 0, sorted_samples.size() - 1)
+	return float(int(sorted_samples[index])) / 1000.0
 
 
 func stop_surface_audio() -> void:
@@ -303,12 +336,32 @@ func surface_add_exact_hit(rect: Rect2, action: String, index: int = -1) -> void
 	surface_add_hit(rect, action, index, false)
 
 
+func surface_add_cached_exact_hits(cache_key: String, rect_sources: Array, action: String) -> void:
+	if cache_key.is_empty() or action.is_empty():
+		return
+	if not hit_region_group_cache.has(cache_key):
+		var cached_regions: Array = []
+		for index in range(rect_sources.size()):
+			var rect := _hit_rect_from_source(rect_sources[index])
+			if rect.size.x <= 0.0 or rect.size.y <= 0.0:
+				continue
+			cached_regions.append({"rect": rect, "action": action, "index": index})
+		if hit_region_group_cache.size() > 64:
+			hit_region_group_cache.clear()
+		hit_region_group_cache[cache_key] = cached_regions
+	hit_regions.append_array(hit_region_group_cache.get(cache_key, []))
+
+
 func surface_add_exact_invisible_hit(rect: Rect2, action: String, index: int = -1) -> void:
 	surface_add_invisible_hit(rect, action, index, false)
 
 
 func surface_region_hovered(action: String, index: int = -1) -> bool:
 	return hovered_surface_action == action and (index < 0 or hovered_surface_index == index)
+
+
+func surface_hovered_index(action: String) -> int:
+	return hovered_surface_index if hovered_surface_action == action else -1
 
 
 func surface_action_is_blocked(action: String) -> bool:
@@ -328,8 +381,34 @@ func surface_label(text: String, pos: Vector2, font_size: int, color: Color) -> 
 	draw_string(get_theme_default_font(), pos, text, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size, color)
 
 
+func surface_label_plain(text: String, pos: Vector2, font_size: int, color: Color) -> void:
+	draw_string(get_theme_default_font(), pos, text, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size, color)
+
+
 func surface_label_centered(text: String, rect: Rect2, font_size: int, color: Color) -> void:
 	var font := get_theme_default_font()
+	var fitted_size := _centered_label_fit_size(font, text, rect, font_size)
+	var ascent := font.get_ascent(fitted_size)
+	var descent := font.get_descent(fitted_size)
+	var baseline_y := rect.position.y + (rect.size.y - ascent - descent) * 0.5 + ascent
+	var shadow := Color(0.0, 0.0, 0.0, 0.62)
+	draw_string(font, Vector2(rect.position.x + 1.0, baseline_y + 1.0), text, HORIZONTAL_ALIGNMENT_CENTER, rect.size.x, fitted_size, shadow)
+	draw_string(font, Vector2(rect.position.x, baseline_y), text, HORIZONTAL_ALIGNMENT_CENTER, rect.size.x, fitted_size, color)
+
+
+func surface_label_centered_plain(text: String, rect: Rect2, font_size: int, color: Color) -> void:
+	var font := get_theme_default_font()
+	var fitted_size := _centered_label_fit_size(font, text, rect, font_size)
+	var ascent := font.get_ascent(fitted_size)
+	var descent := font.get_descent(fitted_size)
+	var baseline_y := rect.position.y + (rect.size.y - ascent - descent) * 0.5 + ascent
+	draw_string(font, Vector2(rect.position.x, baseline_y), text, HORIZONTAL_ALIGNMENT_CENTER, rect.size.x, fitted_size, color)
+
+
+func _centered_label_fit_size(font: Font, text: String, rect: Rect2, font_size: int) -> int:
+	var cache_key := "%s|%.1f|%.1f|%d" % [text, rect.size.x, rect.size.y, font_size]
+	if surface_label_fit_cache.has(cache_key):
+		return int(surface_label_fit_cache.get(cache_key, font_size))
 	var fitted_size := maxi(1, font_size)
 	while fitted_size > 6:
 		var text_size := font.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1, fitted_size)
@@ -337,12 +416,10 @@ func surface_label_centered(text: String, rect: Rect2, font_size: int, color: Co
 		if text_size.x <= rect.size.x and line_height <= rect.size.y:
 			break
 		fitted_size -= 1
-	var ascent := font.get_ascent(fitted_size)
-	var descent := font.get_descent(fitted_size)
-	var baseline_y := rect.position.y + (rect.size.y - ascent - descent) * 0.5 + ascent
-	var shadow := Color(0.0, 0.0, 0.0, 0.62)
-	draw_string(font, Vector2(rect.position.x + 1.0, baseline_y + 1.0), text, HORIZONTAL_ALIGNMENT_CENTER, rect.size.x, fitted_size, shadow)
-	draw_string(font, Vector2(rect.position.x, baseline_y), text, HORIZONTAL_ALIGNMENT_CENTER, rect.size.x, fitted_size, color)
+	if surface_label_fit_cache.size() > 512:
+		surface_label_fit_cache.clear()
+	surface_label_fit_cache[cache_key] = fitted_size
+	return fitted_size
 
 
 func surface_title(text: String, pos: Vector2, color: Color) -> void:
@@ -447,6 +524,7 @@ func _process(delta: float) -> void:
 
 
 func _draw() -> void:
+	var draw_started_usec := Time.get_ticks_usec()
 	hit_regions = []
 	active_design_scale = Vector2.ONE
 	active_design_offset = Vector2.ZERO
@@ -476,6 +554,7 @@ func _draw() -> void:
 	draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
 	_update_drunk_distortion_protected_rects()
 	_ensure_snapshot_proxy_hit_regions()
+	_record_draw_performance(draw_started_usec)
 
 
 func _ensure_surface_sfx_player() -> void:
@@ -645,6 +724,26 @@ func _touch_hit_rect(rect: Rect2, expand_touch_hit: bool) -> Rect2:
 	next_pos.x = clampf(next_pos.x, 0.0, maxf(0.0, board_size.x - next_size.x))
 	next_pos.y = clampf(next_pos.y, 0.0, maxf(0.0, board_size.y - next_size.y))
 	return Rect2(next_pos, next_size)
+
+
+func _hit_rect_from_source(source: Variant) -> Rect2:
+	var rect_value: Variant = source
+	if typeof(source) == TYPE_DICTIONARY:
+		rect_value = (source as Dictionary).get("rect", {})
+	if typeof(rect_value) == TYPE_RECT2:
+		return _design_rect_to_board(rect_value as Rect2)
+	if typeof(rect_value) != TYPE_DICTIONARY:
+		return Rect2()
+	var data: Dictionary = rect_value
+	var x := float(data.get("x", data.get("left", 0.0)))
+	var y := float(data.get("y", data.get("top", 0.0)))
+	var width := float(data.get("w", data.get("width", -1.0)))
+	var height := float(data.get("h", data.get("height", -1.0)))
+	if width < 0.0 and data.has("right"):
+		width = float(data.get("right", x)) - x
+	if height < 0.0 and data.has("bottom"):
+		height = float(data.get("bottom", y)) - y
+	return _design_rect_to_board(Rect2(Vector2(x, y), Vector2(maxf(0.0, width), maxf(0.0, height))))
 
 
 func _screen_to_board(point: Vector2) -> Vector2:

@@ -82,6 +82,11 @@ var report := {
 		"t6_7_event_cadence_snapshot": false,
 		"travel_card": false,
 		"travel_object_double_click": false,
+		"world_map_open": false,
+		"world_map_icons": false,
+		"world_map_background": false,
+		"world_map_travel_highlight": false,
+		"world_map_info_panel": false,
 		"heat_risky_action_raises": false,
 		"high_heat_changes_risk": false,
 		"high_heat_consequence": false,
@@ -167,6 +172,8 @@ func _run() -> void:
 	_return_to_room_view()
 	await _settle()
 	await _verify_all_visible_game_objects_clickable()
+	await _prepare_risky_game_visual_qa_fixture()
+	_record_state("risky_game_fixture_screen", "Focused deterministic game-surface fixture with immediate risky-action coverage.")
 
 	var serialized_before_game_focus := _serialized_run_text()
 	var game_focus := await _click_first_canvas_object_type("game")
@@ -210,11 +217,8 @@ func _run() -> void:
 
 	_record_state("game_action_screen", "Player-facing game surface with visible stake and action regions.")
 	var fixed_price_surface := bool(entered_game_snapshot.get("surface_fixed_price_actions", false)) or not bool(entered_game_snapshot.get("surface_stake_controls_required", true))
-	var has_cheat_surface_action := int(entered_game_snapshot.get("cheat_action_count", 0)) > 0
 	_require(fixed_price_surface or bool(entered_game_snapshot.get("has_valid_stake", false)), "Game surface does not expose stake selection.")
 	_require(int(entered_game_snapshot.get("legal_action_count", 0)) > 0, "Game surface does not expose legal actions.")
-	if not has_cheat_surface_action:
-		_add_warning("Game surface does not expose cheat/advantage actions in the selected test game.")
 	strict_game_surface_only_active = true
 	var selected_surface_stake := 0
 	if fixed_price_surface:
@@ -279,19 +283,21 @@ func _run() -> void:
 	_assert_m2_player_feedback_clarity("legal result")
 	_cover("consequence_result_card")
 
+	if fixed_price_surface:
+		await _reset_fixed_price_surface_for_risky_action()
+	var post_legal_snapshot: Dictionary = app.call("current_game_view_snapshot")
+	var has_cheat_surface_action := int(post_legal_snapshot.get("cheat_action_count", 0)) > 0
 	var cheat_binding := _game_surface_action_binding("cheat")
 	var cheat_action := ""
 	var serialized_before_cheat_click := _serialized_run_text()
-	if has_cheat_surface_action:
-		if fixed_price_surface:
-			cheat_binding = await _prepare_fixed_price_cheat_binding()
-			if _surface_action_binding_available(cheat_binding):
-				cheat_action = str(cheat_binding.get("action", "surface_cheat"))
-		else:
-			cheat_action = await _click_game_surface_action(str(cheat_binding.get("action", "surface_cheat")), int(cheat_binding.get("index", 0)))
+	if fixed_price_surface:
+		cheat_binding = await _prepare_fixed_price_cheat_binding()
+		if _surface_action_binding_available(cheat_binding):
+			cheat_action = str(cheat_binding.get("action", "surface_cheat"))
+	elif has_cheat_surface_action:
+		cheat_action = await _click_game_surface_action(str(cheat_binding.get("action", "surface_cheat")), int(cheat_binding.get("index", 0)))
 	if cheat_action.is_empty():
-		_add_warning("No visible cheat/advantage action was available in the selected GameModule.")
-		_set_game_surface_status("risky", "skipped_unavailable", "The selected GameModule exposed no visible risky action on the game surface.", app.call("current_game_view_snapshot"))
+		_require(false, "No visible cheat/advantage action was available after deterministic surface setup.")
 	else:
 		if not fixed_price_surface:
 			_cover("cheat_action_selection")
@@ -300,19 +306,23 @@ func _run() -> void:
 		else:
 			_cover("cheat_action_selection")
 		var serialized_before_cheat_resolve := _serialized_run_text()
+		var risky_unavailable_reason := ""
 		if fixed_price_surface:
 			var fixed_cheat_attempts := 0
 			while serialized_before_cheat_resolve == _serialized_run_text() and fixed_cheat_attempts < 4:
-				cheat_binding = _game_surface_action_binding("cheat")
-				_require(_surface_action_binding_available(cheat_binding), "Could not find a visible fixed-price cheat/advantage region.")
-				_require(await _confirm_game_surface_action(str(cheat_binding.get("action", "surface_cheat")), int(cheat_binding.get("index", 0))), "Could not resolve the cheat/advantage action from a visible game surface region.")
+				if not await _resolve_visible_fixed_price_risky_action(serialized_before_cheat_resolve):
+					risky_unavailable_reason = "Could not resolve the cheat/advantage action from a visible game surface region."
+					break
 				await _settle()
 				fixed_cheat_attempts += 1
 		else:
 			_require(await _confirm_game_surface_action(str(cheat_binding.get("action", "surface_cheat")), int(cheat_binding.get("index", 0))), "Could not resolve the cheat/advantage action from a visible game surface region.")
 		_cover("game_surface_resolve_click")
 		await _settle()
-		_require(serialized_before_cheat_resolve != _serialized_run_text(), "Resolving a cheat/advantage action did not update serialized RunState.")
+		if serialized_before_cheat_resolve == _serialized_run_text() and fixed_price_surface and not risky_unavailable_reason.is_empty():
+			_require(false, risky_unavailable_reason)
+		else:
+			_require(serialized_before_cheat_resolve != _serialized_run_text(), "Resolving a cheat/advantage action did not update serialized RunState.")
 		var resolved_cheat_snapshot: Dictionary = app.call("current_game_view_snapshot")
 		var first_risky_heat_delta := int(resolved_cheat_snapshot.get("suspicion_delta", 0))
 		_require(first_risky_heat_delta > legal_heat_delta, "Risky action did not create more heat pressure than the legal action.")
@@ -325,12 +335,10 @@ func _run() -> void:
 		_require(not (risky_consequence_snapshot.get("cards", []) as Array).is_empty(), "Cheat/advantage action did not produce consequence snapshot data.")
 		_assert_m2_player_feedback_clarity("risky result")
 		var reached_high_heat := await _drive_risky_surface_until_heat(65, 8, first_risky_heat_delta)
-		if reached_high_heat:
-			_record_state("high_heat_result_screen", "Repeated visible risky actions until high heat changed the consequence pressure.")
-			_assert_objective_hud("high heat result")
-			_assert_m2_player_feedback_clarity("high heat result")
-		else:
-			_add_warning("Mouse-only risky play did not reach high heat pressure in this seed; continuing route and optional-hook QA.")
+		_require(reached_high_heat, "Mouse-only risky play did not reach high heat pressure after deterministic risky-action setup.")
+		_record_state("high_heat_result_screen", "Repeated visible risky actions until high heat changed the consequence pressure.")
+		_assert_objective_hud("high heat result")
+		_assert_m2_player_feedback_clarity("high heat result")
 	strict_game_surface_only_active = false
 	_assert_screen_click_only_gameplay_events()
 	_cover("screen_click_only_gameplay")
@@ -459,14 +467,44 @@ func _try_travel_object_flow(context_label: String, objective: Dictionary = {}) 
 	_cover("travel_object_double_click")
 	await _settle()
 	_require(serialized_before_travel_activation == _serialized_run_text(), "Opening the world map should not mutate serialized RunState before route confirmation.")
-	_require(bool(app.call("current_screen_snapshot").get("world_map_overlay_visible", false)), "Double-clicking Leave did not open the world map overlay.")
+	var map_open_screen: Dictionary = app.call("current_screen_snapshot")
+	_require(bool(map_open_screen.get("world_map_overlay_visible", false)), "Double-clicking Leave did not open the world map overlay.")
+	_cover("world_map_open")
+	var map_snapshot: Dictionary = map_open_screen.get("world_map", {}) if typeof(map_open_screen.get("world_map", {})) == TYPE_DICTIONARY else {}
+	var map_nodes: Array = map_snapshot.get("nodes", []) if typeof(map_snapshot.get("nodes", [])) == TYPE_ARRAY else []
+	_require(str(map_snapshot.get("background_path", "")).contains("map_backgrounds"), "World map opened without the cyberpunk city background metadata.")
+	_cover("world_map_background")
+	var map_target_ids: Array = map_snapshot.get("travel_target_ids", []) if typeof(map_snapshot.get("travel_target_ids", [])) == TYPE_ARRAY else []
+	_require(map_target_ids.size() <= 3, "World map opened with too many capped travel targets.")
+	var icons_ready := not map_nodes.is_empty()
+	var travel_highlight_ready := false
+	for node_value in map_nodes:
+		if typeof(node_value) != TYPE_DICTIONARY:
+			icons_ready = false
+			continue
+		var node_data: Dictionary = node_value
+		if str(node_data.get("icon_path", "")).strip_edges().is_empty():
+			icons_ready = false
+		var position: Dictionary = node_data.get("position", {}) if typeof(node_data.get("position", {})) == TYPE_DICTIONARY else {}
+		if position.is_empty():
+			icons_ready = false
+		if bool(node_data.get("travel_enabled", false)) and map_target_ids.has(str(node_data.get("id", ""))):
+			travel_highlight_ready = true
+	_require(icons_ready, "World map opened without generated icon metadata at node positions.")
+	_cover("world_map_icons")
+	_require(travel_highlight_ready, "World map opened without a highlighted enabled travel node.")
+	_cover("world_map_travel_highlight")
 	var travel_choices: Array = app.call("current_environment_view_snapshot").get("travel_choices", [])
-	var choice := _first_enabled_travel_choice(travel_choices)
+	var choice := _preferred_enabled_travel_choice(travel_choices)
 	_require(not choice.is_empty(), "World map opened but no enabled revealed travel node was available.")
 	var target_id := str(choice.get("id", ""))
 	var serialized_before_map_select := _serialized_run_text()
 	_require(bool(app.call("select_world_map_node", target_id)), "World map did not accept the enabled travel node.")
 	await _settle()
+	var selected_map_screen: Dictionary = app.call("current_screen_snapshot")
+	var detail_text := str(selected_map_screen.get("world_map_detail_text", ""))
+	_require(detail_text.contains("Travel:") and detail_text.contains("Distance:") and detail_text.contains("Cost:"), "World map info panel did not show route method, distance, and cost.")
+	_cover("world_map_info_panel")
 	_require(serialized_before_map_select == _serialized_run_text(), "Selecting a world-map node mutated RunState before route confirmation.")
 	app.call("confirm_world_map_travel")
 	await _settle()
@@ -478,7 +516,7 @@ func _try_travel_object_flow(context_label: String, objective: Dictionary = {}) 
 	return true
 
 
-func _try_event_card_flow() -> void:
+func _try_event_card_flow(prepared_fixture: bool = false) -> void:
 	await _resolve_blocking_event_popups()
 	_return_to_room_view()
 	await _settle()
@@ -486,13 +524,17 @@ func _try_event_card_flow() -> void:
 	var serialized_before_event_focus := _serialized_run_text()
 	var event_button := await _click_first_play_object_type("event")
 	if event_button.is_empty():
-		_set_optional_hook_status("event", "skipped_unavailable", "No eligible event card was available for visual QA.")
-		_add_warning("No eligible event card was available for visual QA.")
+		if not prepared_fixture:
+			await _prepare_event_visual_qa_fixture()
+			await _try_event_card_flow(true)
+			return
+		_require(false, "Prepared event visual QA fixture did not expose an eligible event card.")
 		return
 	_cover("event_card")
 	_set_optional_hook_status("event", "present", "Focused a visible event object.")
 	await _settle()
-	_require(serialized_before_event_focus == _serialized_run_text(), "Focusing an event object mutated serialized RunState before confirmation.")
+	var serialized_after_event_focus := _serialized_run_text()
+	_require(serialized_before_event_focus == serialized_after_event_focus, "Focusing an event object mutated serialized RunState before confirmation. %s" % _serialized_diff_summary(serialized_before_event_focus, serialized_after_event_focus))
 	_require(_focused_object_type() == "event", "Clicking the visible event object did not shift focus to an event.")
 	var canvas := app.get("environment_canvas") as Control
 	_require(canvas != null and canvas.visible and canvas.has_method("current_view_snapshot"), "Environment canvas was not available for event response QA.")
@@ -799,22 +841,211 @@ func _verify_terminal_victory_summary_snapshot() -> void:
 	_record_state("terminal_victory_summary_screen", "Demo victory terminal summary shows route, run totals, story context, and next-act messaging.")
 
 
-func _try_item_card_flow() -> void:
+func _prepare_event_visual_qa_fixture() -> void:
+	await _prepare_visual_qa_fixture_environment("corner_store", "visual_event_fixture", {
+		"event_ids": ["late_shift_discount"],
+		"resolved_event_ids": [],
+		"item_offers": [],
+		"service_ids": [],
+		"lender_hooks": [],
+		"object_fixtures": ["shopkeeper:merchant"],
+	})
+	await _prime_visible_object_focus_state("event")
+
+
+func _prepare_item_visual_qa_fixture() -> void:
+	await _prepare_visual_qa_fixture_environment("corner_store", "visual_item_fixture", {
+		"event_ids": [],
+		"resolved_event_ids": [],
+		"item_offers": [{"id": "instant_coffee", "price": 1, "display_name": "Instant Coffee"}],
+		"service_ids": [],
+		"lender_hooks": [],
+		"object_fixtures": ["shopkeeper:merchant"],
+	}, 100)
+
+
+func _prepare_service_visual_qa_fixture() -> void:
+	await _prepare_visual_qa_fixture_environment("corner_store", "visual_service_fixture", {
+		"event_ids": [],
+		"resolved_event_ids": [],
+		"item_offers": [],
+		"service_ids": ["house_drink"],
+		"lender_hooks": [],
+		"object_fixtures": ["shopkeeper:merchant"],
+	}, 100)
+
+
+func _prepare_risky_game_visual_qa_fixture() -> void:
+	await _prepare_visual_qa_fixture_environment("small_underground_casino", "visual_risky_game_fixture", {
+		"game_ids": ["bar_dice"],
+		"event_ids": [],
+		"resolved_event_ids": [],
+		"item_offers": [],
+		"service_ids": [],
+		"lender_hooks": [],
+		"object_fixtures": [],
+	}, 100)
+
+
+func _reset_fixed_price_surface_for_risky_action() -> void:
+	_return_to_room_view()
+	await _settle()
+	await _prepare_risky_game_visual_qa_fixture()
+	_record_state("risky_game_fixture_risky_reset", "Reopened deterministic fixed-price game surface for visible risky-action coverage.")
+	var entered_label := await _double_click_first_play_object_type("game")
+	_require(not entered_label.is_empty(), "Could not re-enter deterministic fixed-price game surface for risky-action QA.")
+	await _settle()
+	await _refresh_game_surface_hit_regions()
+	var game_snapshot: Dictionary = app.call("current_game_view_snapshot")
+	var surface_canvas := app.get("game_surface_canvas") as Control
+	if surface_canvas != null and surface_canvas.visible and surface_canvas.has_method("current_view_snapshot"):
+		var surface_snapshot: Dictionary = surface_canvas.call("current_view_snapshot")
+		game_snapshot["surface_hit_actions"] = (surface_snapshot.get("surface_hit_actions", []) as Array).duplicate(true) if typeof(surface_snapshot.get("surface_hit_actions", [])) == TYPE_ARRAY else []
+	_require(str(game_snapshot.get("surface_renderer", "")) != "" and str(game_snapshot.get("surface_renderer", "")) != "result", "Re-entered fixed-price fixture did not expose a game surface for risky-action QA.")
+	_set_game_surface_status("risky_entry", "passed", "Reopened the deterministic game surface before resolving a risky fixed-price action.", game_snapshot)
+
+
+func _refresh_game_surface_hit_regions() -> void:
+	var surface_canvas := app.get("game_surface_canvas") as Control
+	if surface_canvas == null or not surface_canvas.visible:
+		return
+	surface_canvas.queue_redraw()
+	await _settle()
+	if surface_canvas.has_method("current_view_snapshot"):
+		surface_canvas.call("current_view_snapshot")
+
+
+func _prepare_lender_pressure_visual_qa_fixture() -> void:
+	await _prepare_visual_qa_fixture_environment("back_alley", "visual_lender_pressure_fixture", {
+		"event_ids": [],
+		"resolved_event_ids": [],
+		"item_offers": [],
+		"service_ids": [],
+		"lender_hooks": ["street_lender"],
+		"object_fixtures": [],
+	}, 30)
+
+
+func _prepare_visual_qa_fixture_environment(archetype_id: String, fixture_id: String, overrides: Dictionary, bankroll_override: int = -1) -> void:
+	var fixture_run := app.get("run_state") as RunState
+	var fixture_library := app.get("library") as ContentLibrary
+	_require(fixture_run != null and fixture_library != null, "Visual QA fixture could not access foundation runtime state.")
+	var archetype := _visual_qa_archetype(archetype_id, fixture_library)
+	_require(not archetype.is_empty(), "Visual QA fixture could not find environment archetype: %s." % archetype_id)
+	var fixture_environment := EnvironmentInstance.from_archetype(archetype, 0, fixture_run.create_rng("visual_fixture:%s" % fixture_id), fixture_library).to_dict()
+	fixture_environment["id"] = fixture_id
+	fixture_environment["archetype_id"] = archetype_id
+	for key_value in overrides.keys():
+		var key := str(key_value)
+		var value: Variant = overrides[key_value]
+		if typeof(value) == TYPE_DICTIONARY:
+			fixture_environment[key] = (value as Dictionary).duplicate(true)
+		elif typeof(value) == TYPE_ARRAY:
+			fixture_environment[key] = (value as Array).duplicate(true)
+		else:
+			fixture_environment[key] = value
+	_populate_visual_fixture_game_states(fixture_environment, fixture_run, fixture_library, fixture_id)
+	fixture_environment["layout"] = EnvironmentInstance.ensure_generated_layout(fixture_environment)
+	fixture_run.set_environment(fixture_environment)
+	if bankroll_override >= 0:
+		fixture_run.bankroll = bankroll_override
+	fixture_run.drunk_level = 0
+	fixture_run.pending_drunk_absorption = []
+	if app.has_method("back_to_environment"):
+		app.call("back_to_environment")
+	app.call("_refresh")
+	await _settle()
+	if app.has_method("current_environment_view_snapshot"):
+		app.call("current_environment_view_snapshot")
+	if app.has_method("current_spatial_interaction_snapshot"):
+		app.call("current_spatial_interaction_snapshot")
+	await _settle()
+
+
+func _prime_visible_object_focus_state(object_type: String) -> void:
+	var canvas := app.get("environment_canvas") as Control
+	if canvas == null or not canvas.visible or not canvas.has_method("current_view_snapshot"):
+		return
+	var object_data := _first_clickable_canvas_object_type_enabled(canvas, object_type, true)
+	if object_data.is_empty():
+		return
+	var object_id := str(object_data.get("id", ""))
+	if object_id.is_empty() or not app.has_method("focus_interactable_object"):
+		return
+	app.call("focus_interactable_object", object_id)
+	await _settle()
+	if app.has_method("clear_interaction_focus"):
+		app.call("clear_interaction_focus", true)
+	await _settle()
+
+
+func _populate_visual_fixture_game_states(fixture_environment: Dictionary, fixture_run: RunState, fixture_library: ContentLibrary, fixture_id: String) -> void:
+	var states: Dictionary = fixture_environment.get("game_states", {}) if typeof(fixture_environment.get("game_states", {})) == TYPE_DICTIONARY else {}
+	for game_id_value in fixture_environment.get("game_ids", []):
+		var game_id := str(game_id_value).strip_edges()
+		if game_id.is_empty() or states.has(game_id):
+			continue
+		var definition := fixture_library.game(game_id)
+		if definition.is_empty():
+			continue
+		if not app.has_method("_create_game_module"):
+			continue
+		var module_instance: Variant = app.call("_create_game_module", definition)
+		if module_instance == null or not module_instance is GameModule:
+			continue
+		var game: GameModule = module_instance
+		var rng := fixture_run.create_rng("visual_fixture:%s:game_state:%s" % [fixture_id, game_id])
+		var generated: Dictionary = game.generate_environment_state(fixture_run, fixture_environment, rng)
+		if not generated.is_empty():
+			states[game_id] = generated.duplicate(true)
+	fixture_environment["game_states"] = states
+
+
+func _visual_qa_archetype(archetype_id: String, fixture_library: ContentLibrary) -> Dictionary:
+	for archetype_value in fixture_library.environment_archetypes:
+		if typeof(archetype_value) != TYPE_DICTIONARY:
+			continue
+		var archetype_data: Dictionary = archetype_value
+		if str(archetype_data.get("id", "")) == archetype_id:
+			return archetype_data.duplicate(true)
+	return {}
+
+
+func _lender_pressure_shift_visible(serialized: Dictionary, consequence: Dictionary) -> bool:
+	var economy := str(serialized.get("economic_state", ""))
+	if economy == "volatile" or economy == "distressed" or economy == "insolvent":
+		return true
+	var state_text := str(consequence.get("current_state_text", ""))
+	if state_text.find("Distressed") != -1 or state_text.find("Volatile") != -1:
+		return true
+	var pressure_value: Variant = consequence.get("pressure", {})
+	if typeof(pressure_value) == TYPE_DICTIONARY:
+		var pressure: Dictionary = pressure_value
+		var pressure_state := str(pressure.get("state", ""))
+		return pressure_state == "volatile" or pressure_state == "distressed" or pressure_state == "recovery"
+	return false
+
+
+func _try_item_card_flow(prepared_fixture: bool = false) -> void:
 	await _resolve_blocking_event_popups()
 	_return_to_room_view()
 	await _settle()
 	_record_state("item_screen", "Focused and activated a visible item object through the mouse-only room path.")
 	var canvas := app.get("environment_canvas") as Control
 	if canvas == null or not canvas.visible or not canvas.has_method("current_view_snapshot"):
-		_set_optional_hook_status("item", "skipped_unavailable", "Environment canvas was not available for item visual QA.")
-		_add_warning("Environment canvas was not available for item visual QA.")
+		if not prepared_fixture:
+			await _prepare_item_visual_qa_fixture()
+			await _try_item_card_flow(true)
+			return
+		_require(false, "Prepared item visual QA fixture did not expose the environment canvas.")
 		return
 	var item_object := _first_clickable_canvas_object_type_enabled(canvas, "item", true)
 	if item_object.is_empty():
-		if await _verify_disabled_or_absent_optional_object("item", "No affordable item offer card was available for visual QA."):
+		if not prepared_fixture:
+			await _prepare_item_visual_qa_fixture()
+			await _try_item_card_flow(true)
 			return
-		_set_optional_hook_status("item", "skipped_unavailable", "No affordable item offer card was available for visual QA.")
-		_add_warning("No affordable item offer card was available for visual QA.")
+		_require(false, "Prepared item visual QA fixture did not expose an affordable item offer card.")
 		return
 	var item_source_id := str(item_object.get("source_id", ""))
 	var item_label := str(item_object.get("label", item_source_id))
@@ -828,7 +1059,7 @@ func _try_item_card_flow() -> void:
 	_cover("item_focus_no_mutation")
 	item_object = _canvas_object_by_id(canvas, str(item_object.get("id", "")))
 	if item_object.is_empty():
-		_add_warning("Focused item moved out of the current canvas snapshot before activation.")
+		_require(false, "Focused item moved out of the current canvas snapshot before activation.")
 		return
 	var serialized_before_item_activation := _serialized_run_text()
 	var item_summary_before := _run_state_restore_summary(app.call("serialized_run_state"))
@@ -1050,12 +1281,14 @@ func _record_demo_victory_not_yet_reachable() -> void:
 			_cover("demo_victory")
 			_record_state("demo_victory_screen", "The visible demo objective reached a completed state.")
 			return
-		_add_warning("Demo objective not yet reached in this visual route: %s" % str(objective.get("summary", "")))
+		_set_optional_hook_status("demo_objective", "covered_by_focused_fixtures", "Main route has not completed the demo objective; focused Grand Casino route fixtures assert the release routes.", objective)
+		_record_state("demo_objective_route_fixture_pending", "Main generated route has not completed the demo objective; focused Grand Casino route fixtures cover release objective routes.")
 		_cover("demo_objective_visible")
 		return
 	var goal := str(hud.get("goal", ""))
 	if not goal.strip_edges().is_empty():
-		_add_warning("Demo objective remains route-dependent in this visual pass: %s" % goal)
+		_set_optional_hook_status("demo_objective", "covered_by_focused_fixtures", "Focused Grand Casino route fixtures assert route-dependent objective coverage.", {"label": goal})
+		_record_state("demo_objective_route_fixture_pending", "Focused Grand Casino route fixtures cover release objective routes outside the generated seed path.")
 		_cover("demo_objective_visible")
 
 
@@ -1098,7 +1331,7 @@ func _activate_prestige_victory_object(canvas: Control, prestige_object: Diction
 	_assert_m2_player_feedback_clarity("prestige victory")
 
 
-func _try_service_hook_flow() -> void:
+func _try_service_hook_flow(prepared_fixture: bool = false) -> void:
 	await _resolve_blocking_event_popups()
 	_return_to_room_view()
 	await _settle()
@@ -1106,15 +1339,19 @@ func _try_service_hook_flow() -> void:
 	var serialized_before_service_activation := _serialized_run_text()
 	var canvas := app.get("environment_canvas") as Control
 	if canvas == null or not canvas.visible or not canvas.has_method("current_view_snapshot"):
-		_set_optional_hook_status("service", "skipped_unavailable", "Environment canvas was not available for service visual QA.")
-		_add_warning("Environment canvas was not available for service visual QA.")
+		if not prepared_fixture:
+			await _prepare_service_visual_qa_fixture()
+			await _try_service_hook_flow(true)
+			return
+		_require(false, "Prepared service visual QA fixture did not expose the environment canvas.")
 		return
 	var service_object := _first_clickable_canvas_object_type_enabled(canvas, "service", true)
 	if service_object.is_empty():
-		if await _verify_disabled_or_absent_optional_object("service", "No service object was available for visual QA."):
+		if not prepared_fixture:
+			await _prepare_service_visual_qa_fixture()
+			await _try_service_hook_flow(true)
 			return
-		_set_optional_hook_status("service", "skipped_unavailable", "No service object was available for visual QA.")
-		_add_warning("No service object was available for visual QA.")
+		_require(false, "Prepared service visual QA fixture did not expose an enabled service object.")
 		return
 	var service_button := await _double_click_canvas_object_data(canvas, service_object, "service")
 	_require(not service_button.is_empty(), "Could not double-click a visible service object.")
@@ -1122,8 +1359,11 @@ func _try_service_hook_flow() -> void:
 	_cover("service_object_double_click")
 	await _settle()
 	if serialized_before_service_activation == _serialized_run_text():
-		_set_optional_hook_status("service", "skipped_unavailable", "Visible service did not mutate this route; classified as optional for this seed.", service_object)
-		_add_warning("Visible service did not mutate this route; continuing optional-hook QA.")
+		if not prepared_fixture:
+			await _prepare_service_visual_qa_fixture()
+			await _try_service_hook_flow(true)
+			return
+		_require(false, "Prepared service visual QA fixture did not mutate RunState.")
 		return
 	_set_optional_hook_status("service", "passed", "Used a supported visible service.", service_object)
 	_record_state("service_result_screen", "Used a visible service through environment double-click activation.")
@@ -1131,7 +1371,7 @@ func _try_service_hook_flow() -> void:
 	_assert_m2_player_feedback_clarity("service result")
 
 
-func _try_lender_hook_flow() -> void:
+func _try_lender_hook_flow(prepared_fixture: bool = false) -> void:
 	await _resolve_blocking_event_popups()
 	_return_to_room_view()
 	await _settle()
@@ -1141,13 +1381,16 @@ func _try_lender_hook_flow() -> void:
 		if current_lender.is_empty():
 			current_lender = _first_clickable_canvas_object_type_enabled(canvas, "lender", false)
 		if not current_lender.is_empty():
-			await _try_lender_object_in_current_room(current_lender)
+			await _try_lender_object_in_current_room(current_lender, prepared_fixture)
 			return
 	var serialized_before_lender_travel := _serialized_run_text()
 	var lender_route := await _double_click_first_travel_to_lender_environment()
 	if lender_route.is_empty():
-		_set_optional_hook_status("lender", "skipped_unavailable", "No visible route to a lender environment was available for visual QA.")
-		_add_warning("No visible route to a lender environment was available for visual QA.")
+		if not prepared_fixture:
+			await _prepare_lender_pressure_visual_qa_fixture()
+			await _try_lender_hook_flow(true)
+			return
+		_require(false, "Prepared lender visual QA fixture did not expose a visible route or lender object.")
 		return
 	_cover("travel_card")
 	_cover("travel_object_double_click")
@@ -1158,24 +1401,32 @@ func _try_lender_hook_flow() -> void:
 	_record_state("lender_travel_result_screen", "Traveled through visible controls to a room with lender pressure.")
 	canvas = app.get("environment_canvas") as Control
 	if canvas == null or not canvas.visible or not canvas.has_method("current_view_snapshot"):
-		_set_optional_hook_status("lender", "skipped_unavailable", "Environment canvas was not available after traveling to a lender environment.")
-		_add_warning("Environment canvas was not available after traveling to a lender environment.")
+		if not prepared_fixture:
+			await _prepare_lender_pressure_visual_qa_fixture()
+			await _try_lender_hook_flow(true)
+			return
+		_require(false, "Prepared lender visual QA fixture did not expose the environment canvas.")
 		return
 	var lender_object := _first_clickable_canvas_object_type_enabled(canvas, "lender", true)
 	if lender_object.is_empty():
-		if await _verify_disabled_or_absent_optional_object("lender", "No lender object was available after traveling to a lender environment."):
+		if not prepared_fixture:
+			await _prepare_lender_pressure_visual_qa_fixture()
+			await _try_lender_hook_flow(true)
 			return
-		_set_optional_hook_status("lender", "skipped_unavailable", "No lender object was available after traveling to a lender environment.")
-		_add_warning("No lender object was available after traveling to a lender environment.")
+		_require(false, "Prepared lender visual QA fixture did not expose an enabled lender object.")
 		return
-	await _try_lender_object_in_current_room(lender_object)
+	await _try_lender_object_in_current_room(lender_object, prepared_fixture)
 
 
-func _try_lender_object_in_current_room(lender_object: Dictionary) -> void:
+func _try_lender_object_in_current_room(lender_object: Dictionary, prepared_fixture: bool = false) -> void:
 	await _resolve_blocking_event_popups()
 	var object_enabled := not bool(lender_object.get("disabled", false))
 	if not object_enabled:
-		await _verify_disabled_or_absent_optional_object("lender", "Lender object is present but not usable right now.")
+		if not prepared_fixture:
+			await _prepare_lender_pressure_visual_qa_fixture()
+			await _try_lender_hook_flow(true)
+			return
+		_require(false, "Prepared lender visual QA fixture exposed a disabled lender object.")
 		return
 	var serialized_before_lender := _serialized_run_text()
 	var canvas := app.get("environment_canvas") as Control
@@ -1193,12 +1444,14 @@ func _try_lender_object_in_current_room(lender_object: Dictionary) -> void:
 	_assert_objective_hud("lender result")
 	_assert_m2_player_feedback_clarity("lender result")
 	var consequence: Dictionary = app.call("current_consequence_view_snapshot")
-	var state_text := str(consequence.get("current_state_text", ""))
-	var economy := str(serialized.get("economic_state", ""))
-	if economy == "volatile" or economy == "distressed" or economy == "insolvent" or state_text.find("Distressed") != -1 or state_text.find("Volatile") != -1:
+	if _lender_pressure_shift_visible(serialized, consequence):
 		_cover("economy_pressure_shift")
 	else:
-		_add_warning("Visible route did not reach a stronger economy pressure label after lender interaction.")
+		if not prepared_fixture:
+			await _prepare_lender_pressure_visual_qa_fixture()
+			await _try_lender_hook_flow(true)
+			return
+		_require(false, "Prepared lender visual QA fixture did not reach a stronger economy pressure label after lender interaction.")
 
 
 func _verify_mouse_only_recovery_pressure_flow() -> void:
@@ -1756,6 +2009,8 @@ func _drive_risky_surface_until_heat(min_heat: int, max_attempts: int, first_ris
 	var attempts := 0
 	var highest_risk_delta := first_risky_heat_delta
 	while _current_serialized_heat() < min_heat and attempts < max_attempts:
+		if fixed_price_surface:
+			await _reset_fixed_price_surface_for_risky_action()
 		var cheat_binding := _game_surface_action_binding("cheat")
 		var serialized_before_resolve := _serialized_run_text()
 		if not fixed_price_surface:
@@ -1766,23 +2021,18 @@ func _drive_risky_surface_until_heat(min_heat: int, max_attempts: int, first_ris
 			await _settle()
 			_require(serialized_before_select == _serialized_run_text(), "Selecting a high-heat risky action mutated serialized RunState.")
 			serialized_before_resolve = _serialized_run_text()
-		if not (await _confirm_game_surface_action(str(cheat_binding.get("action", "surface_cheat")), int(cheat_binding.get("index", 0)))):
-			_add_warning("Could not resolve a high-heat risky action from the visible game surface.")
-			return false
-		await _settle()
-		if fixed_price_surface and serialized_before_resolve == _serialized_run_text():
-			var selected_fixed_snapshot: Dictionary = app.call("current_game_view_snapshot")
-			var selected_id := str(selected_fixed_snapshot.get("selected_action_id", ""))
-			var selected_kind := str(selected_fixed_snapshot.get("selected_action_kind", ""))
-			if selected_kind != "cheat" or selected_id.is_empty():
-				_add_warning("Fixed-price high-heat risky action was neither resolved nor selected from the visible game surface.")
+		if fixed_price_surface:
+			if not await _resolve_visible_fixed_price_risky_action(serialized_before_resolve):
+				_require(false, "Could not resolve a high-heat risky action from the visible game surface.")
 				return false
+			await _settle()
+		else:
 			if not (await _confirm_game_surface_action(str(cheat_binding.get("action", "surface_cheat")), int(cheat_binding.get("index", 0)))):
-				_add_warning("Could not confirm the selected high-heat risky action from the visible game surface.")
+				_require(false, "Could not resolve a high-heat risky action from the visible game surface.")
 				return false
 			await _settle()
 		if serialized_before_resolve == _serialized_run_text():
-			_add_warning("Resolving a high-heat risky action did not update serialized RunState.")
+			_require(false, "Resolving a high-heat risky action did not update serialized RunState.")
 			return false
 		var game_snapshot: Dictionary = app.call("current_game_view_snapshot")
 		var risk_delta := int(game_snapshot.get("suspicion_delta", 0))
@@ -1791,14 +2041,15 @@ func _drive_risky_surface_until_heat(min_heat: int, max_attempts: int, first_ris
 			highest_risk_delta = risk_delta
 		var visible_text := " ".join(_visible_text(app)).to_lower()
 		var consequence_text := JSON.stringify(app.call("current_consequence_view_snapshot")).to_lower()
-		var pressure_text := "%s %s" % [visible_text, consequence_text]
+		var game_text := JSON.stringify(game_snapshot).to_lower()
+		var pressure_text := "%s %s %s" % [visible_text, consequence_text, game_text]
 		if pressure_text.find("shakedown") != -1 or pressure_text.find("costly exit") != -1 or pressure_text.find("risky moves now bring") != -1:
 			_cover("high_heat_consequence")
 		attempts += 1
 	if not bool(report["coverage"].get("high_heat_changes_risk", false)):
-		_add_warning("High heat did not increase visible risky-action heat.")
+		_require(false, "High heat did not increase visible risky-action heat.")
 	if not bool(report["coverage"].get("high_heat_consequence", false)):
-		_add_warning("High heat did not create a visible security consequence.")
+		_require(false, "High heat did not create a visible security consequence.")
 	return _current_serialized_heat() >= min_heat
 
 
@@ -1850,6 +2101,12 @@ func _click_first_play_object_type(object_type: String) -> String:
 
 
 func _double_click_first_play_object_type(object_type: String) -> String:
+	if object_type == "game":
+		var canvas := app.get("environment_canvas") as Control
+		if canvas != null and canvas.visible and canvas.has_method("current_view_snapshot"):
+			var preferred_game := _preferred_canvas_game_object(canvas)
+			if not preferred_game.is_empty():
+				return await _double_click_canvas_object_data(canvas, preferred_game, object_type)
 	return await _double_click_first_canvas_object_type(object_type)
 
 
@@ -2095,6 +2352,10 @@ func _environment_canvas_is_primary() -> bool:
 func _game_surface_action_binding(kind: String) -> Dictionary:
 	var fallback_action := "surface_legal" if kind == "legal" else "surface_cheat"
 	var fallback := {"action": fallback_action, "index": 0}
+	if kind == "cheat":
+		var native_cheat := _native_game_surface_action_binding(kind, {})
+		if not native_cheat.is_empty():
+			return native_cheat
 	var snapshot: Dictionary = app.call("current_game_view_snapshot")
 	var bindings: Dictionary = snapshot.get("surface_action_bindings", {})
 	var binding_value: Variant = bindings.get(kind, {})
@@ -2121,8 +2382,10 @@ func _native_game_surface_action_binding(kind: String, fallback: Dictionary) -> 
 	var preferred_actions := []
 	if kind == "legal":
 		preferred_actions = ["video_poker_draw", "video_poker_deal", "video_poker_collect", "slot_spin", "bar_dice_roll"]
+	elif kind == "cheat_setup":
+		preferred_actions = ["bar_dice_roll", "video_poker_deal", "pull_tab_buy"]
 	else:
-		preferred_actions = ["video_poker_mark", "blackjack_peek", "bar_dice_load", "roulette_late_bet", "baccarat_palm"]
+		preferred_actions = ["video_poker_mark", "blackjack_peek", "bar_dice_release", "bar_dice_load", "bar_dice_palm", "roulette_late_bet", "baccarat_palm"]
 	for preferred_action in preferred_actions:
 		var preferred_binding := _surface_hit_action_binding(hit_actions, str(preferred_action))
 		if not preferred_binding.is_empty():
@@ -2167,13 +2430,72 @@ func _prepare_fixed_price_cheat_binding() -> Dictionary:
 		var cheat_binding := _game_surface_action_binding("cheat")
 		if _surface_action_binding_available(cheat_binding):
 			return cheat_binding
-		var setup_binding := _game_surface_action_binding("legal")
+		var setup_binding := _fixed_price_cheat_setup_binding()
 		if not _surface_action_binding_available(setup_binding):
 			return cheat_binding
-		if not await _confirm_game_surface_action(str(setup_binding.get("action", "surface_legal")), int(setup_binding.get("index", 0))):
+		if not await _push_game_surface_action(str(setup_binding.get("action", "surface_legal")), int(setup_binding.get("index", 0))):
 			return cheat_binding
 		await _settle()
 	return _game_surface_action_binding("cheat")
+
+
+func _fixed_price_cheat_setup_binding() -> Dictionary:
+	var setup_binding := _native_game_surface_action_binding("cheat_setup", {})
+	if not setup_binding.is_empty():
+		return setup_binding
+	return _game_surface_action_binding("legal")
+
+
+func _resolve_visible_fixed_price_risky_action(serialized_before: String) -> bool:
+	var game_snapshot: Dictionary = app.call("current_game_view_snapshot")
+	var game_id := str(game_snapshot.get("game_id", ""))
+	if game_id == "bar_dice":
+		if not _surface_action_available("bar_dice_load") and _surface_action_available("bar_dice_roll"):
+			if not await _push_game_surface_action("bar_dice_roll", 0):
+				return false
+			await _settle()
+		if _surface_action_available("bar_dice_load"):
+			if not await _confirm_game_surface_action("bar_dice_load", 0):
+				return false
+			await _settle()
+			if serialized_before != _serialized_run_text():
+				return true
+		if _surface_action_available("bar_dice_release"):
+			if not await _confirm_game_surface_action("bar_dice_release", 0):
+				return false
+			await _settle()
+			return serialized_before != _serialized_run_text()
+		if _surface_action_available("bar_dice_palm"):
+			if not await _confirm_game_surface_action("bar_dice_palm", 0):
+				return false
+			await _settle()
+			if serialized_before != _serialized_run_text():
+				return true
+			if not await _confirm_game_surface_action("bar_dice_resolve", 0):
+				return false
+			await _settle()
+			return serialized_before != _serialized_run_text()
+		return false
+	for _step in range(4):
+		var cheat_binding := _game_surface_action_binding("cheat")
+		if not _surface_action_binding_available(cheat_binding):
+			var setup_binding := _fixed_price_cheat_setup_binding()
+			if not _surface_action_binding_available(setup_binding):
+				return false
+			if not await _push_game_surface_action(str(setup_binding.get("action", "surface_legal")), int(setup_binding.get("index", 0))):
+				return false
+			await _settle()
+			continue
+		if not await _confirm_game_surface_action(str(cheat_binding.get("action", "surface_cheat")), int(cheat_binding.get("index", 0))):
+			return false
+		await _settle()
+		if serialized_before != _serialized_run_text():
+			return true
+	return false
+
+
+func _surface_action_available(action: String, index: int = 0) -> bool:
+	return _surface_action_binding_available({"action": action, "index": index})
 
 
 func _click_game_surface_action(action: String, index: int) -> String:
@@ -2359,8 +2681,34 @@ func _first_canvas_object_type(canvas: Control, object_type: String) -> Dictiona
 	return {}
 
 
+func _preferred_canvas_game_object(canvas: Control) -> Dictionary:
+	var snapshot: Dictionary = canvas.call("current_view_snapshot")
+	var objects: Array = snapshot.get("objects", [])
+	var game_objects: Array = []
+	for item in objects:
+		if typeof(item) != TYPE_DICTIONARY:
+			continue
+		var object_data: Dictionary = item
+		if _object_type_value(object_data) != "game":
+			continue
+		if bool(object_data.get("disabled", false)) or not _canvas_object_center_hits(canvas, object_data):
+			continue
+		game_objects.append(object_data.duplicate(true))
+	if game_objects.is_empty():
+		return {}
+	for preferred_id in ["blackjack", "video_poker", "roulette", "baccarat", "slot", "pull_tabs", "bar_dice"]:
+		for item in game_objects:
+			var game_object: Dictionary = item
+			var source_id := str(game_object.get("source_id", "")).strip_edges()
+			var object_id := str(game_object.get("id", "")).strip_edges()
+			if source_id == preferred_id or object_id == "game:%s" % preferred_id:
+				return game_object.duplicate(true)
+	var first_game: Dictionary = game_objects[0]
+	return first_game.duplicate(true)
+
+
 func _object_type_value(object_data: Dictionary) -> String:
-	return str(object_data.get("type", object_data.get("object_type", "")))
+	return str(object_data.get("interaction_type", object_data.get("type", object_data.get("object_type", ""))))
 
 
 func _snapshot_has_object_type(objects: Array, object_type: String) -> bool:
@@ -2395,6 +2743,75 @@ func _first_enabled_travel_choice(choices: Array) -> Dictionary:
 		if bool(choice.get("enabled", true)):
 			return choice.duplicate(true)
 	return {}
+
+
+func _preferred_enabled_travel_choice(choices: Array) -> Dictionary:
+	var best_choice: Dictionary = {}
+	var best_score := -1
+	for choice_value in choices:
+		if typeof(choice_value) != TYPE_DICTIONARY:
+			continue
+		var choice: Dictionary = choice_value
+		if not bool(choice.get("enabled", true)):
+			continue
+		var target_id := str(choice.get("id", "")).strip_edges()
+		var score := _visual_qa_travel_choice_score(target_id)
+		if best_choice.is_empty() or score > best_score:
+			best_choice = choice.duplicate(true)
+			best_score = score
+	if not best_choice.is_empty():
+		return best_choice
+	return _first_enabled_travel_choice(choices)
+
+
+func _visual_qa_travel_choice_score(archetype_id: String) -> int:
+	if archetype_id.is_empty():
+		return 0
+	var fixture_library := app.get("library") as ContentLibrary
+	if fixture_library == null:
+		return 0
+	var archetype := _visual_qa_archetype(archetype_id, fixture_library)
+	if archetype.is_empty():
+		return 0
+	var score := 0
+	if str(archetype.get("kind", "")) == "casino":
+		score += 10
+	for game_id in _visual_qa_archetype_game_ids(archetype):
+		score = maxi(score, 10 + _visual_qa_game_preference_score(str(game_id)))
+	return score
+
+
+func _visual_qa_archetype_game_ids(archetype: Dictionary) -> Array:
+	var result: Array = []
+	for field in ["required_game_ids", "game_pool", "game_ids"]:
+		var value: Variant = archetype.get(str(field), [])
+		if typeof(value) != TYPE_ARRAY:
+			continue
+		for item in value as Array:
+			var game_id := str(item).strip_edges()
+			if not game_id.is_empty() and not result.has(game_id):
+				result.append(game_id)
+	return result
+
+
+func _visual_qa_game_preference_score(game_id: String) -> int:
+	match game_id:
+		"blackjack":
+			return 100
+		"video_poker":
+			return 90
+		"roulette":
+			return 80
+		"baccarat":
+			return 70
+		"slot":
+			return 60
+		"pull_tabs":
+			return 30
+		"bar_dice":
+			return 10
+		_:
+			return 0
 
 
 func _first_clickable_canvas_object_type_enabled(canvas: Control, object_type: String, enabled: bool) -> Dictionary:
@@ -2653,6 +3070,27 @@ func _configured_visual_qa_seed() -> String:
 
 func _serialized_run_text() -> String:
 	return JSON.stringify(app.call("serialized_run_state"))
+
+
+func _serialized_diff_summary(before_text: String, after_text: String) -> String:
+	var before_value: Variant = JSON.parse_string(before_text)
+	var after_value: Variant = JSON.parse_string(after_text)
+	if typeof(before_value) != TYPE_DICTIONARY or typeof(after_value) != TYPE_DICTIONARY:
+		return "Diff unavailable."
+	var before: Dictionary = before_value
+	var after: Dictionary = after_value
+	var changed: Array[String] = []
+	for key_value in after.keys():
+		var key := str(key_value)
+		if JSON.stringify(before.get(key_value, null)) != JSON.stringify(after.get(key_value, null)):
+			changed.append(key)
+	for key_value in before.keys():
+		var key := str(key_value)
+		if not after.has(key_value) and not changed.has(key):
+			changed.append(key)
+	if changed.is_empty():
+		return "No top-level diff found."
+	return "Changed: %s." % ", ".join(changed)
 
 
 func _current_serialized_heat() -> int:
