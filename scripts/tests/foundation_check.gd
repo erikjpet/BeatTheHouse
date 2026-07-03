@@ -3460,6 +3460,8 @@ func _check_slot_buffalo_feature_pauses_autoplay(game: GameModule, definition: D
 		failures.append("Slot autoplay did not pause on an active buffalo bonus.")
 	if not bool(tick.get("attention", false)) or str(tick.get("audio_cue", "")) != "bonus_start_buffalo":
 		failures.append("Slot autoplay pause did not report a buffalo feature alert cue.")
+	if float(tick.get("audio_cue_volume_db", 0.0)) < -1.5:
+		failures.append("Slot buffalo autoplay pause used the reduced pinball alert volume.")
 	if not bool(paused_machine.get("slot_pending_feature_alert", false)):
 		failures.append("Slot autoplay pause did not mark the machine as a pending feature.")
 	var paused_runtime: Dictionary = game.environment_runtime_state(run_state, environment)
@@ -3479,6 +3481,23 @@ func _check_slot_buffalo_feature_pauses_autoplay(game: GameModule, definition: D
 	var capped_delay := int(game.call("_slot_autoplay_delay_msec", capped_machine))
 	if capped_delay > 10000:
 		failures.append("Slot buffalo autoplay delay exceeded the 10 second cap after a large bonus.")
+
+	var pinball = SlotFamilyPinballScript.new()
+	var pinball_run: RunState = _slot_run_state("SLOT-PINBALL-AUTO-BONUS", 100000)
+	var pinball_environment: Dictionary = _slot_environment()
+	var pinball_machine: Dictionary = _slot_machine(definition, pinball_run, "pinball", "video_feature", "standard", "plain")
+	pinball_machine["active_bonus"] = pinball.open_feature(pinball_machine, 10, pinball_run.create_rng("pinball_auto_open"), definition)
+	pinball_machine["slot_autoplay_active"] = true
+	pinball_machine["slot_autoplay_next_msec"] = 1
+	_slot_store_machine(pinball_run, pinball_environment, pinball_machine)
+	var pinball_tick: Dictionary = game.environment_runtime_tick(pinball_run, pinball_environment, pinball_run.create_rng("pinball_auto_tick"), 2000)
+	if str(pinball_tick.get("audio_cue", "")) != "bonus_start_pinball":
+		failures.append("Slot pinball autoplay pause did not report the pinball feature alert cue.")
+	if float(pinball_tick.get("audio_cue_volume_db", 0.0)) > -6.5:
+		failures.append("Slot pinball autoplay pause did not use the reduced feature alert volume.")
+	var pinball_runtime: Dictionary = game.environment_runtime_state(pinball_run, pinball_environment)
+	if float(pinball_runtime.get("slot_feature_audio_volume_db", 0.0)) > -6.5:
+		failures.append("Slot pinball runtime state did not expose the reduced feature alert volume.")
 	print("SLOT_BUFFALO_FEATURE_AUTO_SEQUENCE handled=%s autoplay=%s history=%d respin_control=%s auto_due=%d" % [
 		str(tick.get("handled", false)),
 		str(paused_machine.get("slot_autoplay_active", false)),
@@ -4021,11 +4040,16 @@ func _check_slot_pinball_feature_visual_manifest(definition: Dictionary, failure
 	var prelaunch_run: RunState = _slot_run_state("SLOT-PINBALL-PRELAUNCH-VISUAL", 100000)
 	var prelaunch_machine: Dictionary = _slot_machine(definition, prelaunch_run, "pinball", "video_feature", "standard", "plain")
 	prelaunch_machine["active_bonus"] = pinball.open_feature(prelaunch_machine, 10, prelaunch_run.create_rng("slot_pin_prelaunch_open"), definition)
+	prelaunch_machine["slot_pending_feature_alert"] = true
+	prelaunch_machine["slot_pending_feature_alert_msec"] = Time.get_ticks_msec()
 	var prelaunch_surface: Dictionary = presentation.surface_state(prelaunch_machine, prelaunch_run, definition, {"surface_time_msec": 240})
 	var prelaunch_manifest: Dictionary = renderer.render_signature(prelaunch_surface, definition, 240, "feature")
 	var prelaunch_scene: Dictionary = _slot_dict(prelaunch_surface.get("slot_feature_scene", {}))
+	var prelaunch_music: Dictionary = _slot_dict(prelaunch_scene.get("feature_music", {}))
 	if str(prelaunch_manifest.get("pinball_feature_music_id", "")) != "bonus_music_pinball":
 		failures.append("Slot pinball prelaunch visual manifest did not expose pinball feature music.")
+	if float(prelaunch_music.get("volume_db", 0.0)) > -20.5:
+		failures.append("Slot pinball bonus alert music was not reduced to the quieter release volume.")
 	if not bool(prelaunch_manifest.get("pinball_guideline_active", false)):
 		failures.append("Slot pinball prelaunch visual manifest did not expose launch guideline.")
 	if float(prelaunch_manifest.get("pinball_playback_speed", 0.0)) <= 1.0:
@@ -4103,6 +4127,19 @@ func _check_slot_pinball_feature_visual_manifest(definition: Dictionary, failure
 		prelaunch_cues.append(str(cue.get("cue_id", "")))
 	if not prelaunch_cues.has("pinball_feature_intro") or not prelaunch_cues.has("pinball_plunger_charge"):
 		failures.append("Slot pinball feature scene did not schedule intro/plunger audio cues.")
+	var expired_machine: Dictionary = prelaunch_machine.duplicate(true)
+	expired_machine["slot_pending_feature_alert_msec"] = Time.get_ticks_msec() - 3000
+	var expired_surface: Dictionary = presentation.surface_state(expired_machine, prelaunch_run, definition, {"surface_time_msec": 240})
+	var expired_scene: Dictionary = _slot_dict(expired_surface.get("slot_feature_scene", {}))
+	var expired_music: Dictionary = _slot_dict(expired_scene.get("feature_music", {}))
+	if not expired_music.is_empty():
+		failures.append("Slot pinball bonus alert music continued after the trigger window expired.")
+	var expired_cues: Array = []
+	for cue_value in _slot_array(expired_scene.get("audio_cues", [])):
+		var cue: Dictionary = _slot_dict(cue_value)
+		expired_cues.append(str(cue.get("cue_id", "")))
+	if expired_cues.has("pinball_feature_intro") or expired_cues.has("pinball_plunger_charge"):
+		failures.append("Slot pinball entry alert cues replayed after the trigger window expired.")
 	print("SLOT_PINBALL_PRELAUNCH_VISUAL music=%s guideline=%s lane=%s angle=%d start_y=%.2f angled_x=%.3f live_tick_budget=%d control_angle=%d control_start_x=%.3f realtime_tick_budget=%d power=%d controlled=%s rating=%s speed=%.2f gravity=%.2f cues=%s" % [
 		str(prelaunch_manifest.get("pinball_feature_music_id", "")),
 		str(prelaunch_manifest.get("pinball_guideline_active", false)),
@@ -9444,8 +9481,8 @@ func _check_pull_tabs_surface_contract(game: GameModule, failures: Array) -> voi
 		failures.append("Pull Tabs surface did not route to the pull-tab machine renderer.")
 	if not bool(surface.get("surface_controls_native", false)):
 		failures.append("Pull Tabs surface did not expose native surface controls.")
-	if not bool(surface.get("surface_animates_idle", false)):
-		failures.append("Pull Tabs surface did not request idle redraws for marquee animation.")
+	if bool(surface.get("surface_animates_idle", false)):
+		failures.append("Pull Tabs surface should stay static until dispense, reveal, or file animation is active.")
 	if not bool(surface.get("surface_embeds_outcomes", false)):
 		failures.append("Pull Tabs surface did not declare ticket-embedded outcomes.")
 	if _surface_blocks_action_while(surface, "pull_tab_buy", "pull_tab_dispense") or _surface_blocks_action_while(surface, "pull_tab_buy_all", "pull_tab_dispense"):
@@ -9492,8 +9529,17 @@ func _check_pull_tabs_surface_contract(game: GameModule, failures: Array) -> voi
 		failures.append("Pull Tabs surface did not leave the dispensed ticket in the machine tray.")
 	if int(tray_surface.get("pull_tab_stack_count", 0)) != 0:
 		failures.append("Pull Tabs buy moved a ticket directly into the play pile instead of the tray.")
-	if (tray_surface.get("pull_tab_dispense_events", []) as Array).is_empty():
+	if bool(tray_surface.get("surface_animates_idle", false)):
+		failures.append("Pull Tabs surface re-enabled idle redraws after a ticket purchase.")
+	var dispense_events: Array = tray_surface.get("pull_tab_dispense_events", []) as Array
+	if dispense_events.is_empty():
 		failures.append("Pull Tabs buy did not expose tray-drop dispense animation events.")
+	else:
+		var first_event: Dictionary = dispense_events[0] as Dictionary
+		var animation_ticket_value: Variant = first_event.get("ticket", {})
+		var animation_ticket: Dictionary = animation_ticket_value as Dictionary if typeof(animation_ticket_value) == TYPE_DICTIONARY else {}
+		if animation_ticket.has("rows") or animation_ticket.has("prize_rows") or animation_ticket.has("payout"):
+			failures.append("Pull Tabs dispense animation event carried full ticket outcome payload.")
 	if str(tray_surface.get("pull_tab_last_ticket_id", "")).is_empty() or not tray_surface.has("pull_tab_stack_cursor"):
 		failures.append("Pull Tabs surface did not expose dispenser animation and stack cursor state.")
 	var collect_click := game.surface_action_command("pull_tab_collect_tray", 0, false, {}, run_state, environment)

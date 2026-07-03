@@ -385,6 +385,7 @@ func environment_runtime_tick(run_state: RunState, environment: Dictionary, rng:
 			"message": "Autoplay paused for %s bonus." % paused_family.capitalize(),
 			"attention": true,
 			"audio_cue": _slot_feature_audio_cue(machine),
+			"audio_cue_volume_db": _slot_feature_audio_volume_db(machine),
 		}
 	machine["slot_autoplay_next_msec"] = now_msec + _slot_autoplay_delay_msec(machine)
 	StateScript.write_machine(environment, get_id(), machine)
@@ -407,6 +408,7 @@ func environment_runtime_tick(run_state: RunState, environment: Dictionary, rng:
 		"message": "Slot feature ready. Open the machine to play it.",
 		"attention": feature_pending,
 		"audio_cue": _slot_feature_audio_cue(resolved_machine) if feature_pending else "",
+		"audio_cue_volume_db": _slot_feature_audio_volume_db(resolved_machine) if feature_pending else -1.0,
 	}
 
 
@@ -456,6 +458,7 @@ func _slot_environment_runtime_state_for_machine(machine: Dictionary, preview: D
 		"slot_pending_feature_alert": bool(machine.get("slot_pending_feature_alert", false)),
 		"slot_bonus_family": str(bonus_preview.get("family", active_bonus.get("family", ""))),
 		"slot_feature_audio_cue": _slot_feature_audio_cue(machine) if bool(preview.get("pending_feature", bonus_active)) else "",
+		"slot_feature_audio_volume_db": _slot_feature_audio_volume_db(machine) if bool(preview.get("pending_feature", bonus_active)) else -1.0,
 		"slot_free_spins": int(machine.get("free_spins", 0)),
 		"slot_last_payout": int(machine.get("last_payout", 0)),
 		"slot_last_classification": str(machine.get("last_classification", "idle")),
@@ -766,6 +769,10 @@ func _slot_feature_audio_cue(machine: Dictionary) -> String:
 	if family == "pinball":
 		return "bonus_start_pinball"
 	return "bonus_start"
+
+
+func _slot_feature_audio_volume_db(machine: Dictionary) -> float:
+	return -7.0 if _slot_active_bonus_family(machine) == "pinball" else -1.0
 
 
 func _arm_lucky_reel_grease(machine: Dictionary, environment: Dictionary) -> Dictionary:

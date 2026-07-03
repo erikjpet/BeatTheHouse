@@ -128,7 +128,7 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 		"surface_controls_native": true,
 		"surface_fixed_price_actions": true,
 		"surface_stake_controls_required": false,
-		"surface_animates_idle": true,
+		"surface_animates_idle": false,
 		"surface_embeds_outcomes": true,
 		"machine_name": str(machine.get("machine_name", "Bar Pull-Tab Dispenser")),
 		"pull_tab_rules": "Buy a ticket, then peel its three windows top to bottom. Match three symbols on a row to win.",
@@ -2199,7 +2199,7 @@ func _dispense_events_for_tickets(tickets: Array, deal_indices: Array, base_star
 		var start_msec := maxi(0, base_start_msec) + index * PULL_TAB_DISPENSE_STAGGER_MSEC
 		events.append({
 			"ticket_id": str(ticket.get("id", "")),
-			"ticket": ticket.duplicate(true),
+			"ticket": _ticket_animation_payload(ticket),
 			"deal_index": clampi(deal_index, 0, PULL_TAB_MACHINE_COLUMN_COUNT - 1),
 			"sequence_index": sequence_offset + index,
 			"start_msec": start_msec,
@@ -2207,6 +2207,15 @@ func _dispense_events_for_tickets(tickets: Array, deal_indices: Array, base_star
 			"drop_duration_msec": PULL_TAB_DISPENSE_DROP_DURATION_MSEC,
 		})
 	return events
+
+
+func _ticket_animation_payload(ticket: Dictionary) -> Dictionary:
+	var palette := _pt_copy_dict(ticket.get("palette", {}))
+	return {
+		"id": str(ticket.get("id", "")),
+		"ticket_number": str(ticket.get("ticket_number", "")),
+		"palette": palette,
+	}
 
 
 func _dispense_event_view_list(machine: Dictionary) -> Array:
@@ -2671,7 +2680,7 @@ func _dispense_event_array(value: Variant) -> Array:
 	for event in _dictionary_array(value):
 		var data: Dictionary = event.duplicate(true)
 		data["ticket_id"] = str(data.get("ticket_id", ""))
-		data["ticket"] = _ticket_dict(data.get("ticket", {}))
+		data["ticket"] = _ticket_animation_payload(_pt_copy_dict(data.get("ticket", {})))
 		data["deal_index"] = clampi(int(data.get("deal_index", 0)), 0, PULL_TAB_MACHINE_COLUMN_COUNT - 1)
 		data["sequence_index"] = maxi(0, int(data.get("sequence_index", result.size())))
 		data["start_msec"] = maxi(0, int(data.get("start_msec", int(data.get("sequence_index", result.size())) * PULL_TAB_DISPENSE_STAGGER_MSEC)))
@@ -3053,13 +3062,16 @@ func _draw_pull_tab_mini_ticket(surface, ticket: Dictionary, rect: Rect2, alpha:
 func _draw_pull_tab_dispense_animation(surface, surface_state: Dictionary, cabinet: Rect2) -> void:
 	var elapsed_msec := int(surface.surface_elapsed(PULL_TAB_DISPENSE_CHANNEL) * 1000.0)
 	var tray_stack := _dictionary_view_array(surface_state.get("pull_tab_tray_stack", []))
-	var events := _dispense_event_array(surface_state.get("pull_tab_dispense_events", []))
+	var events := _dictionary_view_array(surface_state.get("pull_tab_dispense_events", []))
 	for event_value in events:
 		var event: Dictionary = event_value
 		var local_msec := elapsed_msec - int(event.get("start_msec", 0))
 		if local_msec < 0 or local_msec > PULL_TAB_DISPENSE_EVENT_DURATION_MSEC:
 			continue
-		var ticket := _ticket_dict(event.get("ticket", {}))
+		var ticket: Dictionary = {}
+		var ticket_value: Variant = event.get("ticket", {})
+		if typeof(ticket_value) == TYPE_DICTIONARY:
+			ticket = ticket_value as Dictionary
 		if ticket.is_empty():
 			ticket = _pull_tab_find_ticket(tray_stack, str(event.get("ticket_id", "")))
 		if ticket.is_empty():
@@ -3101,7 +3113,7 @@ func _pull_tab_column_tray_target(cabinet: Rect2, deal_index: int) -> Vector2:
 
 
 func _dispense_column_active(surface_state: Dictionary, deal_index: int) -> bool:
-	var events := _dispense_event_array(surface_state.get("pull_tab_dispense_events", []))
+	var events := _dictionary_view_array(surface_state.get("pull_tab_dispense_events", []))
 	if events.is_empty():
 		return false
 	for event in events:
@@ -3115,7 +3127,7 @@ func _active_dispense_hidden_ticket_ids(surface, surface_state: Dictionary) -> D
 	if not bool(surface.surface_animation_active(PULL_TAB_DISPENSE_CHANNEL)):
 		return hidden
 	var elapsed_msec := int(surface.surface_elapsed(PULL_TAB_DISPENSE_CHANNEL) * 1000.0)
-	for event_value in _dispense_event_array(surface_state.get("pull_tab_dispense_events", [])):
+	for event_value in _dictionary_view_array(surface_state.get("pull_tab_dispense_events", [])):
 		var event: Dictionary = event_value
 		var local_msec := elapsed_msec - int(event.get("start_msec", 0))
 		var reveal_msec := int(event.get("drop_start_msec", PULL_TAB_DISPENSE_DROP_START_MSEC)) + int(event.get("drop_duration_msec", PULL_TAB_DISPENSE_DROP_DURATION_MSEC))

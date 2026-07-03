@@ -128,6 +128,8 @@ var drunk_time_last_scale := 1.0
 var dev_game_test_mode := false
 var show_game_library_launcher := true
 var autosave_slot_id := AUTOSAVE_SLOT
+var pending_autosave := false
+var pending_autosave_status_text := "Autosaved."
 
 var start_screen: Control
 var run_screen: Control
@@ -282,6 +284,7 @@ func _process(_delta: float) -> void:
 	_advance_game_surface_realtime_state()
 	_advance_environment_game_runtime()
 	_advance_deferred_bankroll_failure()
+	_flush_pending_autosave_if_ready()
 
 
 func _notification(what: int) -> void:
@@ -300,6 +303,8 @@ func start_foundation_run(seed_text: String = DEFAULT_SEED, challenge_config: Di
 	if library == null:
 		_initialize_foundation()
 	pending_all_in_result_terminal_check = false
+	pending_autosave = false
+	pending_autosave_status_text = "Autosaved."
 	last_environment_runtime_result = {}
 	close_content_group_config()
 	close_challenge_selection()
@@ -573,6 +578,8 @@ func _set_surface_stake_to_bound(bound_name: String) -> bool:
 func _advance_game_surface_automation() -> void:
 	if game_surface_auto_resolving or run_state == null or current_game == null:
 		return
+	if _run_menu_is_visible():
+		return
 	if _blocking_decision_popup_is_visible():
 		return
 	var ui_state := _current_game_surface_ui_state()
@@ -588,6 +595,8 @@ func _advance_game_surface_automation() -> void:
 
 func _advance_game_surface_realtime_state() -> void:
 	if game_surface_auto_resolving or run_state == null or current_game == null or game_surface_canvas == null:
+		return
+	if _run_menu_is_visible():
 		return
 	if _blocking_decision_popup_is_visible():
 		return
@@ -629,7 +638,7 @@ func _advance_environment_game_runtime() -> void:
 			continue
 		var audio_cue := str(command.get("audio_cue", ""))
 		if not audio_cue.is_empty():
-			_play_environment_audio_cue(audio_cue)
+			_play_environment_audio_cue(audio_cue, float(command.get("audio_cue_volume_db", -1.0)))
 		var result: Dictionary = command.get("result", {})
 		if not result.is_empty():
 			if bool(result.get("ok", false)):
@@ -1697,17 +1706,28 @@ func buy_prestige_purchase(purchase_id: String) -> bool:
 
 # Saves the current foundation run.
 func save_foundation_run() -> void:
-	_autosave_foundation_run("Saved run.")
+	_autosave_foundation_run("Saved run.", true)
 	_refresh_run_menu()
 	_refresh_start_screen()
 	_refresh()
 
 
-func _autosave_foundation_run(status_text: String = "Autosaved.") -> bool:
+func _autosave_foundation_run(status_text: String = "Autosaved.", force: bool = false) -> bool:
 	if run_state == null:
 		return false
 	if dev_game_test_mode:
 		save_status_message = "Practice sessions are not autosaved."
+		return false
+	if not force and _should_defer_autosave_for_game_surface():
+		pending_autosave = true
+		pending_autosave_status_text = status_text
+		save_status_message = "Autosave pending."
+		return true
+	return _write_foundation_run_save(status_text)
+
+
+func _write_foundation_run_save(status_text: String = "Autosaved.") -> bool:
+	if run_state == null:
 		return false
 	_evaluate_run_terminal_state()
 	if save_service == null:
@@ -1715,10 +1735,40 @@ func _autosave_foundation_run(status_text: String = "Autosaved.") -> bool:
 		return false
 	var error := save_service.save_run(run_state, autosave_slot_id)
 	if error == OK:
+		pending_autosave = false
+		pending_autosave_status_text = "Autosaved."
 		save_status_message = status_text
 		_refresh_start_screen()
 		return true
 	save_status_message = "Autosave failed."
+	return false
+
+
+func _flush_pending_autosave_if_ready() -> void:
+	if not pending_autosave:
+		return
+	if _game_surface_autosave_blocked():
+		return
+	_write_foundation_run_save(pending_autosave_status_text)
+
+
+func _should_defer_autosave_for_game_surface() -> bool:
+	return current_screen == SCREEN_GAME and current_game != null and not _run_menu_is_visible()
+
+
+func _game_surface_autosave_blocked() -> bool:
+	if not _should_defer_autosave_for_game_surface():
+		return false
+	if game_surface_canvas == null:
+		return false
+	var runtime_status := game_surface_canvas.surface_runtime_status()
+	var animations: Dictionary = runtime_status.get("surface_animations", {}) if typeof(runtime_status.get("surface_animations", {})) == TYPE_DICTIONARY else {}
+	for channel_value in animations.values():
+		if typeof(channel_value) != TYPE_DICTIONARY:
+			continue
+		var channel: Dictionary = channel_value
+		if bool(channel.get("active", false)):
+			return true
 	return false
 
 
@@ -1747,6 +1797,8 @@ func _load_foundation_run_from_slot(return_to_start_on_missing: bool) -> bool:
 		return false
 	_reset_game_surface_runtime_state()
 	pending_all_in_result_terminal_check = false
+	pending_autosave = false
+	pending_autosave_status_text = "Autosaved."
 	run_state = loaded
 	dev_game_test_mode = false
 	_refresh_run_action_service()
@@ -1780,6 +1832,7 @@ func _load_foundation_run_from_slot(return_to_start_on_missing: bool) -> bool:
 func open_run_menu() -> void:
 	if run_menu_overlay == null or current_screen == SCREEN_START:
 		return
+	_stop_surface_feature_music()
 	_refresh_run_menu()
 	run_menu_overlay.visible = true
 	run_menu_overlay.move_to_front()
@@ -1796,7 +1849,7 @@ func save_run_from_menu() -> void:
 		_show_message("No active run to save.")
 		_refresh_run_menu()
 		return
-	_autosave_foundation_run("Saved to Resume Slot.")
+	_autosave_foundation_run("Saved to Resume Slot.", true)
 	_refresh_run_menu()
 	_refresh()
 
@@ -3716,7 +3769,7 @@ func music_fx_state_snapshot() -> Dictionary:
 		"showdown_pending": bool(objective_status.get("showdown_pending", false)),
 		"showdown_active": bool(objective_status.get("showdown_active", false)),
 		"boss_floor": boss_floor,
-		"environment": environment.duplicate(true),
+		"environment": _music_environment_payload(environment),
 		"visual_context": visual_context,
 		"scene_type": scene_type,
 		"room_scale": _music_room_scale_for_visual_context(visual_context, environment),
@@ -3731,6 +3784,21 @@ func music_fx_state_snapshot() -> Dictionary:
 		"big_win": bool(win_status.get("big_win", false)),
 		"big_win_bars_remaining": int(win_status.get("big_win_bars_remaining", 0)),
 		"last_bankroll_delta": int(win_status.get("last_bankroll_delta", 0)),
+}
+
+
+func _music_environment_payload(environment: Dictionary) -> Dictionary:
+	return {
+		"id": str(environment.get("id", "")),
+		"name": str(environment.get("name", "")),
+		"display_name": str(environment.get("display_name", environment.get("name", ""))),
+		"archetype_id": str(environment.get("archetype_id", "")),
+		"kind": str(environment.get("kind", "")),
+		"tier": str(environment.get("tier", "")),
+		"mood": str(environment.get("mood", "")),
+		"visual_context": _copy_dict(environment.get("visual_context", {})),
+		"music_profile": _copy_dict(environment.get("music_profile", {})),
+		"security_profile": _copy_dict(environment.get("security_profile", {})),
 	}
 
 
@@ -3868,7 +3936,7 @@ func _set_surface_feature_music_state(active: bool, ducking: bool) -> void:
 	surface_feature_music_active = active
 	surface_feature_music_ducking = ducking
 	if procedural_music_player != null and was_active and not active:
-		procedural_music_player.update_feature_music_state({"active": false})
+		procedural_music_player.stop_feature_music()
 	if was_ducking and not ducking:
 		_update_procedural_music()
 
@@ -3878,7 +3946,7 @@ func _stop_surface_feature_music() -> void:
 	surface_feature_music_active = false
 	surface_feature_music_ducking = false
 	if procedural_music_player != null:
-		procedural_music_player.update_feature_music_state({"active": false})
+		procedural_music_player.stop_feature_music()
 	if was_ducking:
 		_update_procedural_music()
 
@@ -4712,7 +4780,7 @@ func _resolve_environment_runtime_wager_action(game_id: String, action_id: Strin
 	pending_all_in_result_terminal_check = confirmed_all_in_wager and bool(result.get("ok", false)) and run_state != null and run_state.bankroll <= 0 and not bool(result.get("won", false))
 	var runtime_state := game.environment_runtime_state(run_state, run_state.current_environment)
 	if bool(runtime_state.get("slot_pending_feature", false)):
-		_play_environment_audio_cue(_slot_runtime_feature_audio_cue(runtime_state))
+		_play_environment_audio_cue(_slot_runtime_feature_audio_cue(runtime_state), float(runtime_state.get("slot_feature_audio_volume_db", -1.0)))
 		_show_message("%s feature is ready. Open the machine to play it." % game.get_display_name())
 	else:
 		_show_message(str(result.get("message", "")))
@@ -4752,7 +4820,7 @@ func _wager_confirmation_action_label(action_id: String, source_game_id: String 
 	return _action_label(action) if not action.is_empty() else action_id
 
 
-func _play_environment_audio_cue(cue_id: String) -> void:
+func _play_environment_audio_cue(cue_id: String, volume_db: float = -1.0) -> void:
 	var normalized_cue := cue_id.strip_edges()
 	if normalized_cue.is_empty():
 		return
@@ -4760,9 +4828,9 @@ func _play_environment_audio_cue(cue_id: String) -> void:
 		environment_sfx_player = SfxPlayerScript.new()
 		add_child(environment_sfx_player)
 	if normalized_cue.begins_with("bonus_start") and environment_sfx_player.has_method("play_slot_event"):
-		environment_sfx_player.call("play_slot_event", normalized_cue, -1.0, 1.0)
+		environment_sfx_player.call("play_slot_event", normalized_cue, volume_db, 1.0)
 	elif environment_sfx_player.has_method("play_surface_cue"):
-		environment_sfx_player.call("play_surface_cue", normalized_cue, {"route": "slot_button", "action": normalized_cue}, {})
+		environment_sfx_player.call("play_surface_cue", normalized_cue, {"route": "slot_button", "action": normalized_cue, "volume_db": volume_db}, {})
 
 
 func _on_game_surface_music_cue(cue_id: String, context: Dictionary) -> void:
@@ -5409,11 +5477,14 @@ func select_environment_view_object(index: int = 0) -> void:
 
 
 func _render_foundation_snapshots() -> void:
-	if environment_canvas != null:
+	var environment_visible := current_screen != SCREEN_GAME or current_game == null
+	var game_visible := current_screen == SCREEN_GAME and current_game != null
+	if environment_canvas != null and environment_visible:
 		environment_canvas.render_environment_snapshot(_environment_view_snapshot())
 	if game_surface_canvas != null:
 		game_surface_canvas.set_game_module(current_game)
-		game_surface_canvas.render_game_snapshot(_game_view_snapshot())
+		if game_visible:
+			game_surface_canvas.render_game_snapshot(_game_view_snapshot())
 
 
 func _environment_view_snapshot() -> Dictionary:
@@ -7323,7 +7394,7 @@ func return_to_main_menu() -> void:
 	if _all_in_result_terminal_check_is_pending():
 		_evaluate_run_terminal_state(true)
 	if run_state != null and not dev_game_test_mode:
-		_autosave_foundation_run("Autosaved before main menu.")
+		_autosave_foundation_run("Autosaved before main menu.", true)
 	pending_all_in_result_terminal_check = false
 	_reset_game_surface_runtime_state()
 	current_game = null
@@ -7363,7 +7434,7 @@ func return_to_main_menu() -> void:
 func exit_game() -> void:
 	_reset_game_surface_runtime_state()
 	if run_state != null:
-		_autosave_foundation_run("Autosaved before exit.")
+		_autosave_foundation_run("Autosaved before exit.", true)
 	get_tree().quit()
 
 
@@ -7626,6 +7697,7 @@ func save_status_snapshot() -> Dictionary:
 		"load_available": _has_foundation_save(),
 		"save_path": save_service.run_save_path(autosave_slot_id) if save_service != null else "",
 		"status_text": _save_status_text(),
+		"pending_autosave": pending_autosave,
 		"active_summary": _run_summary_text(run_state) if run_state != null else "",
 		"visible_objective": _objective_hud_text() if run_state != null else "",
 		"visible_bankroll": run_state.bankroll if run_state != null else 0,
