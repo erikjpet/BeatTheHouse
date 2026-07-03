@@ -9,7 +9,11 @@ tmp/
 # Local tool installs and builds
 .tools/
 tools/__pycache__/
+__pycache__/
+*.pyc
 builds/
+user/
+user://
 
 # OS/editor noise
 .DS_Store

@@ -34,7 +34,6 @@ $requiredFiles = @(
     "scripts/core/run_generator.gd",
     "scripts/core/save_service.gd",
     "scripts/ui/foundation_main.gd",
-    "scripts/ui/main_menu_background.gd",
     "scripts/ui/visual_style.gd",
     "scripts/tests/foundation_check.gd",
     "scripts/tests/ui_scene_compile_check.gd",
@@ -188,7 +187,6 @@ $expectedClasses = @{
     "scripts/core/rng_stream.gd" = "class_name RngStream"
     "scripts/core/run_generator.gd" = "class_name RunGenerator"
     "scripts/core/save_service.gd" = "class_name SaveService"
-    "scripts/ui/main_menu_background.gd" = "class_name MainMenuBackground"
 }
 
 foreach ($entry in $expectedClasses.GetEnumerator()) {
@@ -198,6 +196,20 @@ foreach ($entry in $expectedClasses.GetEnumerator()) {
         if (-not $content.Contains($entry.Value)) {
             $failures.Add("Expected $($entry.Value) in $($entry.Key)")
         }
+    }
+}
+
+$trackedGeneratedFiles = @()
+try {
+    $trackedGeneratedFiles = @(git -C $root ls-files "*.import" "*.uid" 2>$null)
+}
+catch {
+    $failures.Add("Could not inspect git-tracked generated files: $($_.Exception.Message)")
+}
+foreach ($trackedGeneratedFile in $trackedGeneratedFiles) {
+    $relativeGeneratedPath = ([string]$trackedGeneratedFile).Trim()
+    if (-not [string]::IsNullOrWhiteSpace($relativeGeneratedPath)) {
+        $failures.Add("Generated Godot metadata must not be git-tracked: $relativeGeneratedPath")
     }
 }
 
@@ -811,8 +823,8 @@ else {
             $failures.Add("grand_casino high_roller_target_bankroll must stay 0 because the Players Card is not gated by total bankroll.")
         }
         $highRollerNetWinnings = [int](Get-JsonProperty $objective "high_roller_net_winnings")
-        if ($highRollerNetWinnings -ne 200) {
-            $failures.Add("grand_casino high_roller_net_winnings must be exactly 200 for the Players Card demo win.")
+        if ($highRollerNetWinnings -ne 10) {
+            $failures.Add("grand_casino high_roller_net_winnings must be exactly 10 for the release-tuned Players Card demo win.")
         }
     }
     $securityProfile = Get-JsonProperty $grandCasino "security_profile"
@@ -849,8 +861,8 @@ foreach ($route in (Read-JsonArray "data/travel/routes.json")) {
 if ($null -eq $grandRoute) {
     $failures.Add("Demo objective requires a grand_casino travel route.")
 }
-elseif ([int](Get-JsonProperty $grandRoute "cost") -lt 100) {
-    $failures.Add("grand_casino travel route should cost at least 100.")
+elseif ([int](Get-JsonProperty $grandRoute "cost") -lt 70) {
+    $failures.Add("grand_casino travel route should keep the release-tuned meaningful buy-in.")
 }
 
 foreach ($event in (Read-JsonArray "data/events/events.json")) {
