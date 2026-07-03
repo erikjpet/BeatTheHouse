@@ -5,6 +5,7 @@ const RunStateScript := preload("res://scripts/core/run_state.gd")
 
 var failures: Array = []
 var stats: Dictionary = {}
+var resolve_ms_samples: Array = []
 
 
 class SurfaceHarness:
@@ -120,7 +121,13 @@ func _run() -> void:
 		"surface_checks": 0,
 		"draw_checks": 0,
 		"resolved_hands": 0,
+		"avg_resolve_ms": 0.0,
+		"p95_resolve_ms": 0.0,
 		"max_resolve_ms": 0.0,
+		"surface_state_calls": 0,
+		"surface_state_avg_ms": 0.0,
+		"surface_state_p95_ms": 0.0,
+		"surface_state_max_ms": 0.0,
 		"outcomes": {"player": 0, "banker": 0, "tie": 0},
 		"player_pairs": 0,
 		"banker_pairs": 0,
@@ -152,6 +159,7 @@ func _run() -> void:
 	stats["generated_tables"] = 1
 	_audit_generated_table(table)
 	_audit_surface(game, run_state, environment)
+	_audit_surface_state_timing(game, run_state, environment)
 
 	for i in range(hands):
 		_run_hand(game, run_state, environment, i)
@@ -259,6 +267,7 @@ func _run_hand(game: GameModule, run_state: RunState, environment: Dictionary, i
 		{"selected_chip": 20, "baccarat_bets": {"banker": 20}}
 	)
 	var elapsed_ms := float(Time.get_ticks_usec() - started) / 1000.0
+	resolve_ms_samples.append(elapsed_ms)
 	stats["max_resolve_ms"] = maxf(float(stats.get("max_resolve_ms", 0.0)), elapsed_ms)
 	if not bool(result.get("ok", false)):
 		failures.append("Hand %d failed to resolve: %s" % [index, str(result.get("message", ""))])
@@ -360,6 +369,8 @@ func _expected_banker_draw(banker_total: int, player_third_value: int, player_st
 
 func _finalize_rates() -> void:
 	var hands := maxi(1, int(stats.get("resolved_hands", 0)))
+	stats["avg_resolve_ms"] = _average(resolve_ms_samples)
+	stats["p95_resolve_ms"] = _percentile(resolve_ms_samples, 0.95)
 	var outcomes: Dictionary = stats.get("outcomes", {})
 	stats["rates"] = {
 		"player": float(outcomes.get("player", 0)) / float(hands),
@@ -394,6 +405,47 @@ func _finalize_rates() -> void:
 		failures.append("Flat Banker bankroll delta %+d was outside expected 400-hand drift bounds." % flat_banker_delta)
 
 
+func _audit_surface_state_timing(game: GameModule, run_state: RunState, environment: Dictionary) -> void:
+	var samples: Array = []
+	var calls := 1000
+	for index in range(calls):
+		var started := Time.get_ticks_usec()
+		var surface := game.surface_state(run_state, environment, {"surface_time_msec": 100000 + index * 17})
+		samples.append(float(Time.get_ticks_usec() - started) / 1000.0)
+		if str(surface.get("surface_renderer", "")) != "baccarat":
+			failures.append("Baccarat surface timing call returned the wrong renderer.")
+			break
+	stats["surface_state_calls"] = samples.size()
+	stats["surface_state_avg_ms"] = _average(samples)
+	stats["surface_state_p95_ms"] = _percentile(samples, 0.95)
+	stats["surface_state_max_ms"] = _max_value(samples)
+
+
+func _average(values: Array) -> float:
+	if values.is_empty():
+		return 0.0
+	var total := 0.0
+	for value in values:
+		total += float(value)
+	return total / float(values.size())
+
+
+func _percentile(values: Array, percentile: float) -> float:
+	if values.is_empty():
+		return 0.0
+	var sorted_values := values.duplicate()
+	sorted_values.sort()
+	var index := clampi(int(ceil(percentile * float(sorted_values.size()))) - 1, 0, sorted_values.size() - 1)
+	return float(sorted_values[index])
+
+
+func _max_value(values: Array) -> float:
+	var result := 0.0
+	for value in values:
+		result = maxf(result, float(value))
+	return result
+
+
 func _write_report(output_path: String) -> void:
 	var report := {
 		"ok": failures.is_empty(),
@@ -408,7 +460,17 @@ func _write_report(output_path: String) -> void:
 
 
 func _print_summary() -> void:
-	print("Baccarat seed audit: %d hands, failures %d, max resolve %.3f ms." % [int(stats.get("resolved_hands", 0)), failures.size(), float(stats.get("max_resolve_ms", 0.0))])
+	print("Baccarat seed audit: %d hands, failures %d, resolve avg/p95/max %.3f/%.3f/%.3f ms, surface_state avg/p95/max %.4f/%.4f/%.4f ms over %d calls." % [
+		int(stats.get("resolved_hands", 0)),
+		failures.size(),
+		float(stats.get("avg_resolve_ms", 0.0)),
+		float(stats.get("p95_resolve_ms", 0.0)),
+		float(stats.get("max_resolve_ms", 0.0)),
+		float(stats.get("surface_state_avg_ms", 0.0)),
+		float(stats.get("surface_state_p95_ms", 0.0)),
+		float(stats.get("surface_state_max_ms", 0.0)),
+		int(stats.get("surface_state_calls", 0)),
+	])
 	var rates: Dictionary = stats.get("rates", {})
 	if not rates.is_empty():
 		print("Rates: Banker %.3f Player %.3f Tie %.3f. Flat banker delta %+d." % [

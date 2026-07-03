@@ -125,6 +125,7 @@ var tick := 0
 var rng_seed := 1
 var rng_state := 1
 var total_awarded := 0
+var gross_awarded := 0
 var session_cap := 500
 var session_multiplier := 1
 var balls_launched := 0
@@ -225,6 +226,7 @@ func configure(compiled_board: Dictionary, seed_value: int, params: Dictionary =
 func reset_round() -> void:
 	tick = 0
 	total_awarded = 0
+	gross_awarded = 0
 	session_multiplier = 1
 	balls_launched = 0
 	drain_count = 0
@@ -360,6 +362,7 @@ func result_signature() -> Dictionary:
 		"seed": rng_seed,
 		"ticks": tick,
 		"award": total_awarded,
+		"gross_award": gross_awarded,
 		"cap": session_cap,
 		"balls_launched": balls_launched,
 		"drains": drain_count,
@@ -421,6 +424,7 @@ func compact_snapshot() -> Dictionary:
 	return {
 		"tick": tick,
 		"total_awarded": total_awarded,
+		"gross_awarded": gross_awarded,
 		"balls_launched": balls_launched,
 		"active_ball_count": active_ball_count(),
 		"drain_count": drain_count,
@@ -810,9 +814,14 @@ func _register_event(event_type: int, element_index: int, ball_index: int, award
 	if events_this_tick >= max_events_per_tick:
 		return
 	var effective_award := 0
+	var gross_award := 0
 	if award > 0 and total_awarded < session_cap:
-		effective_award = mini(session_cap - total_awarded, maxi(0, award * session_multiplier))
+		gross_award = maxi(0, award * session_multiplier)
+		effective_award = mini(session_cap - total_awarded, gross_award)
 		total_awarded += effective_award
+	elif award > 0:
+		gross_award = maxi(0, award * session_multiplier)
+	gross_awarded += gross_award
 	event_ticks[event_write_index] = tick
 	event_types[event_write_index] = event_type
 	event_elements[event_write_index] = element_index

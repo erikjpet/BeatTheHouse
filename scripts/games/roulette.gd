@@ -22,6 +22,7 @@ const ROULETTE_SPIN_CHANNEL := "roulette_spin"
 const ROULETTE_PAYOUT_CHANNEL := "roulette_payout"
 const SPIN_ANIMATION_DURATION_MSEC := 5600
 const PAYOUT_ANIMATION_DURATION_MSEC := 1800
+const ROULETTE_RESULT_REVEAL_MSEC := 1600
 const WHEEL_CENTER := Vector2(150, 182)
 const WHEEL_RADIUS := 108.0
 const GRID_RECT := Rect2(332, 156, 360, 108)
@@ -145,9 +146,11 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 	var spin_elapsed_msec := now_msec - int(last_result.get("resolved_at_msec", 0))
 	var spin_active := not last_result.is_empty() and spin_elapsed_msec >= 0 and spin_elapsed_msec < SPIN_ANIMATION_DURATION_MSEC
 	var payout_active := not last_result.is_empty() and spin_elapsed_msec >= SPIN_ANIMATION_DURATION_MSEC and spin_elapsed_msec < SPIN_ANIMATION_DURATION_MSEC + PAYOUT_ANIMATION_DURATION_MSEC
+	var result_reveal_active := _roulette_result_reveal_active(last_result, spin_elapsed_msec)
 	var past_post_window := _past_post_window_status(table, session, last_result, now_msec, run_state)
 	var past_post_challenge := _normalized_past_post_challenge(session.get("past_post_challenge", {}))
 	var past_post_available := bool(past_post_window.get("available", false))
+	var roulette_motion_active := spin_active or payout_active or result_reveal_active or past_post_available
 	var rules := _table_rules(table)
 	var barred := bool(table.get("table_barred", false))
 	var recent_numbers := _roulette_recent_numbers(table)
@@ -172,8 +175,8 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 		"surface_stake_controls_required": true,
 		"surface_embeds_outcomes": true,
 		"surface_suppresses_game_result_burst": true,
-		"surface_animates_idle": not barred,
-		"surface_realtime_state_refresh": spin_active or payout_active,
+		"surface_animates_idle": roulette_motion_active,
+		"surface_realtime_state_refresh": roulette_motion_active,
 		"surface_state_labels": [
 			{"label": "Wager", "value": "$%d" % total_wager},
 			{"label": "Wheel", "value": "00" if int(rules.get("zero_count", 2)) == 2 else "0"},
@@ -236,6 +239,8 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 		"past_post_window": past_post_window,
 		"past_post_challenge": past_post_challenge,
 		"past_post_item_modifiers": past_post_item_modifiers,
+		"result_reveal_active": result_reveal_active,
+		"roulette_motion_active": roulette_motion_active,
 		"result_message": str(last_result.get("summary", "")) if not spin_active else "",
 		"table_notice": table_notice,
 		"table_round_timer": round_timer,
@@ -280,12 +285,17 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 func draw_surface(surface, surface_state: Dictionary, _render_context: Dictionary = {}) -> bool:
 	if str(surface_state.get("surface_renderer", "")) != "roulette":
 		return false
+	var static_betting := _roulette_static_betting_view(surface, surface_state)
 	surface.surface_begin_design_space(surface.surface_board_size())
 	_draw_roulette_room(surface, surface_state)
 	_draw_roulette_table(surface, surface_state)
 	_draw_roulette_wheel(surface, surface_state)
-	_draw_table_patrons(surface, surface_state)
-	_draw_croupier_station(surface, surface_state)
+	if static_betting:
+		_draw_static_table_patrons(surface, surface_state)
+		_draw_static_croupier_station(surface, surface_state)
+	else:
+		_draw_table_patrons(surface, surface_state)
+		_draw_croupier_station(surface, surface_state)
 	_draw_recent_numbers(surface, surface_state)
 	_draw_betting_layout(surface, surface_state)
 	_draw_bet_chips(surface, surface_state)
@@ -297,6 +307,14 @@ func draw_surface(surface, surface_state: Dictionary, _render_context: Dictionar
 	_draw_rule_hover_overlay(surface, surface_state)
 	_draw_payout_animation(surface, surface_state)
 	return true
+
+
+func _roulette_static_betting_view(surface, surface_state: Dictionary) -> bool:
+	if str(surface_state.get("phase", "betting")) != "betting":
+		return false
+	if bool(surface_state.get("result_reveal_active", false)):
+		return false
+	return not bool(surface.surface_animation_active(ROULETTE_SPIN_CHANNEL)) and not bool(surface.surface_animation_active(ROULETTE_PAYOUT_CHANNEL))
 
 
 func surface_needs_auto_tick(ui_state: Dictionary, run_state: RunState, environment: Dictionary) -> bool:
@@ -1824,44 +1842,57 @@ func _draw_roulette_wheel(surface, surface_state: Dictionary) -> void:
 	var spin_active: bool = bool(surface.surface_animation_active(ROULETTE_SPIN_CHANNEL))
 	var progress: float = surface.surface_animation_progress(ROULETTE_SPIN_CHANNEL) if spin_active else 1.0
 	var keyframe := _trajectory_keyframe(trajectory, progress)
-	var wheel_angle := float(keyframe.get("wheel_angle", _surface_clock(surface) * -0.5))
+	var wheel_default_angle := _surface_clock(surface) * -0.5 if spin_active else 0.0
+	var wheel_angle := float(keyframe.get("wheel_angle", wheel_default_angle))
 	var last_result := _copy_dict(surface_state.get("last_result", {}))
 	var winning_index := int(last_result.get("winning_index", -1))
 	var settled_spin := not spin_active and not last_result.is_empty()
-	var settled_elapsed := maxf(0.0, float(int(surface_state.get("surface_time_msec", Time.get_ticks_msec())) - int(last_result.get("resolved_at_msec", 0)) - SPIN_ANIMATION_DURATION_MSEC) / 1000.0) if settled_spin else 0.0
-	var settled_drift := fposmod(settled_elapsed * -0.18, TAU) if settled_spin else 0.0
-	if settled_spin:
+	var reveal_result := settled_spin and bool(surface_state.get("result_reveal_active", false))
+	var settled_elapsed := maxf(0.0, float(int(surface_state.get("surface_time_msec", Time.get_ticks_msec())) - int(last_result.get("resolved_at_msec", 0)) - SPIN_ANIMATION_DURATION_MSEC) / 1000.0) if reveal_result else 0.0
+	var settled_drift := fposmod(settled_elapsed * -0.18, TAU) if reveal_result else 0.0
+	if reveal_result:
 		wheel_angle = fposmod(wheel_angle + settled_drift, TAU)
-	var reveal_result := settled_spin
+	var detailed_wheel := spin_active or reveal_result
+	var draw_pocket_labels := detailed_wheel
 	surface.draw_circle(WHEEL_CENTER, WHEEL_RADIUS + 10, Color("#1b0d16"))
 	surface.draw_circle(WHEEL_CENTER, WHEEL_RADIUS + 4, Color(C_YELLOW.r, C_YELLOW.g, C_YELLOW.b, 0.28), false, 2)
 	surface.draw_circle(WHEEL_CENTER, WHEEL_RADIUS, Color("#0b1118"))
 	var count := maxi(1, sequence.size())
-	for i in range(count):
-		var a0 := wheel_angle + float(i) / float(count) * TAU
-		var a1 := wheel_angle + float(i + 1) / float(count) * TAU
-		var mid := (a0 + a1) * 0.5
-		var number := str(sequence[i])
-		var color := _pocket_color(number)
-		var p0 := WHEEL_CENTER + Vector2(cos(a0), sin(a0)) * (WHEEL_RADIUS - 2.0)
-		var p1 := WHEEL_CENTER + Vector2(cos(a1), sin(a1)) * (WHEEL_RADIUS - 2.0)
-		var inner := WHEEL_CENTER + Vector2(cos(mid), sin(mid)) * 48.0
-		surface.draw_polygon([WHEEL_CENTER, p0, p1, inner], [color])
-		var spoke_start := WHEEL_CENTER + Vector2(cos(a0), sin(a0)) * 52.0
-		var spoke_end := WHEEL_CENTER + Vector2(cos(a0), sin(a0)) * (WHEEL_RADIUS - 3.0)
-		surface.draw_line(spoke_start, spoke_end, Color(C_SOFT.r, C_SOFT.g, C_SOFT.b, 0.16), 1)
-	for i in range(count):
-		var a0 := wheel_angle + float(i) / float(count) * TAU
-		var a1 := wheel_angle + float(i + 1) / float(count) * TAU
-		var mid := (a0 + a1) * 0.5
-		var number := str(sequence[i])
-		var pocket_color := _pocket_color(number)
-		var label_size := Vector2(19, 10) if number.length() > 1 else Vector2(15, 10)
-		var label_pos := WHEEL_CENTER + Vector2(cos(mid), sin(mid)) * (WHEEL_RADIUS + 17.0)
-		var label_rect := Rect2(label_pos - label_size * 0.5, label_size)
-		surface.draw_rect(label_rect.grow(1.0), Color(0.01, 0.02, 0.04, 0.86))
-		surface.draw_rect(label_rect.grow(1.0), Color(pocket_color.r, pocket_color.g, pocket_color.b, 0.92), false, 1)
-		surface.surface_label_centered(number, label_rect, 6 if number.length() > 1 else 7, _wheel_label_color(number))
+	if detailed_wheel:
+		for i in range(count):
+			var a0 := wheel_angle + float(i) / float(count) * TAU
+			var a1 := wheel_angle + float(i + 1) / float(count) * TAU
+			var mid := (a0 + a1) * 0.5
+			var number := str(sequence[i])
+			var color := _pocket_color(number)
+			var p0 := WHEEL_CENTER + Vector2(cos(a0), sin(a0)) * (WHEEL_RADIUS - 2.0)
+			var p1 := WHEEL_CENTER + Vector2(cos(a1), sin(a1)) * (WHEEL_RADIUS - 2.0)
+			var inner := WHEEL_CENTER + Vector2(cos(mid), sin(mid)) * 48.0
+			surface.draw_polygon([WHEEL_CENTER, p0, p1, inner], [color])
+			var spoke_start := WHEEL_CENTER + Vector2(cos(a0), sin(a0)) * 52.0
+			var spoke_end := WHEEL_CENTER + Vector2(cos(a0), sin(a0)) * (WHEEL_RADIUS - 3.0)
+			surface.draw_line(spoke_start, spoke_end, Color(C_SOFT.r, C_SOFT.g, C_SOFT.b, 0.16), 1)
+	else:
+		for i in range(12):
+			var angle := wheel_angle + float(i) / 12.0 * TAU
+			var color := Color("#8e1026") if i % 2 == 0 else Color("#111922")
+			var spoke_start := WHEEL_CENTER + Vector2(cos(angle), sin(angle)) * 50.0
+			var spoke_end := WHEEL_CENTER + Vector2(cos(angle), sin(angle)) * (WHEEL_RADIUS - 4.0)
+			surface.draw_line(spoke_start, spoke_end, Color(C_SOFT.r, C_SOFT.g, C_SOFT.b, 0.14), 1)
+			surface.draw_circle(WHEEL_CENTER + Vector2(cos(angle + 0.12), sin(angle + 0.12)) * 76.0, 4.0, Color(color.r, color.g, color.b, 0.78))
+	if draw_pocket_labels:
+		for i in range(count):
+			var a0 := wheel_angle + float(i) / float(count) * TAU
+			var a1 := wheel_angle + float(i + 1) / float(count) * TAU
+			var mid := (a0 + a1) * 0.5
+			var number := str(sequence[i])
+			var pocket_color := _pocket_color(number)
+			var label_size := Vector2(19, 10) if number.length() > 1 else Vector2(15, 10)
+			var label_pos := WHEEL_CENTER + Vector2(cos(mid), sin(mid)) * (WHEEL_RADIUS + 17.0)
+			var label_rect := Rect2(label_pos - label_size * 0.5, label_size)
+			surface.draw_rect(label_rect.grow(1.0), Color(0.01, 0.02, 0.04, 0.86))
+			surface.draw_rect(label_rect.grow(1.0), Color(pocket_color.r, pocket_color.g, pocket_color.b, 0.92), false, 1)
+			surface.surface_label_centered(number, label_rect, 6 if number.length() > 1 else 7, _wheel_label_color(number))
 	if reveal_result and winning_index >= 0 and winning_index < count:
 		var win_a0 := wheel_angle + float(winning_index) / float(count) * TAU
 		var win_a1 := wheel_angle + float(winning_index + 1) / float(count) * TAU
@@ -1879,14 +1910,71 @@ func _draw_roulette_wheel(surface, surface_state: Dictionary) -> void:
 		surface.surface_label_centered(result_label, result_rect, 8, C_YELLOW)
 	surface.draw_circle(WHEEL_CENTER, 44, Color("#241427"))
 	surface.draw_circle(WHEEL_CENTER, 24, Color(C_YELLOW.r, C_YELLOW.g, C_YELLOW.b, 0.32))
-	var ball_angle := float(keyframe.get("ball_angle", _surface_clock(surface) * 2.0))
-	if settled_spin:
+	var ball_default_angle := _surface_clock(surface) * 2.0 if spin_active or reveal_result else -0.72
+	var ball_angle := float(keyframe.get("ball_angle", ball_default_angle))
+	if reveal_result:
 		ball_angle = fposmod(ball_angle + settled_drift, TAU)
 	var ball_radius := float(keyframe.get("ball_radius", WHEEL_RADIUS - 9.0))
 	var bounce := float(keyframe.get("bounce", 0.0))
 	var ball_pos := WHEEL_CENTER + Vector2(cos(ball_angle), sin(ball_angle)) * (ball_radius + bounce)
 	surface.draw_circle(ball_pos, 6.0, Color("#e9f2f2"))
 	surface.draw_circle(ball_pos + Vector2(-2, -2), 2.0, C_WHITE)
+
+
+func _draw_static_croupier_station(surface, surface_state: Dictionary) -> void:
+	var focus: Dictionary = TableVisualsScript.dealer_focus_for_state(surface_state)
+	var rect := Rect2(352, 54, 196, 104)
+	var danger := clampi(int(focus.get("peek_danger", 0)), 0, 100)
+	var attention := clampi(int(focus.get("attention_meter", 0)), 0, 100)
+	var accent := C_PINK if danger >= 70 else C_YELLOW if danger >= 42 else C_TEAL
+	surface.draw_rect(rect, Color("#0b0d16"))
+	surface.draw_rect(rect, Color(accent.r, accent.g, accent.b, 0.18), false, 1)
+	surface.draw_rect(Rect2(rect.position + Vector2(26, 26), Vector2(44, 54)), Color("#111827"))
+	surface.draw_rect(Rect2(rect.position + Vector2(34, 12), Vector2(28, 26)), Color("#c49371"))
+	surface.draw_rect(Rect2(rect.position + Vector2(34, 12), Vector2(28, 8)), Color("#2a1a25"))
+	surface.draw_rect(Rect2(rect.position + Vector2(40, 25), Vector2(5, 3)), C_DARK)
+	surface.draw_rect(Rect2(rect.position + Vector2(52, 25), Vector2(5, 3)), C_DARK)
+	surface.surface_label(str(surface_state.get("dealer_name", "Croupier")).to_upper().left(14), rect.position + Vector2(84, 26), 10, C_WHITE)
+	surface.surface_label(str(focus.get("status", "watching")).left(18), rect.position + Vector2(84, 43), 8, accent)
+	var meter := Rect2(rect.position + Vector2(84, 54), Vector2(86, 6))
+	surface.draw_rect(meter, Color("#070810"))
+	surface.draw_rect(Rect2(meter.position, Vector2(meter.size.x * float(attention) / 100.0, meter.size.y)), accent)
+	surface.surface_label(str(focus.get("body_language", "tracks the felt")).left(23), rect.position + Vector2(84, 75), 8, C_SOFT)
+
+
+func _draw_static_table_patrons(surface, surface_state: Dictionary) -> void:
+	var patrons := _dictionary_array(surface_state.get("patrons", []))
+	var layout := _dictionary_array(surface_state.get("patron_layout", []))
+	if layout.size() < patrons.size():
+		layout = _roulette_patron_layout(patrons)
+	var focused_index := _focused_patron_index(surface_state, patrons)
+	for i in range(patrons.size()):
+		if i >= layout.size():
+			break
+		var patron: Dictionary = patrons[i]
+		var slot: Dictionary = layout[i]
+		var rect := _rect_from_dict(slot.get("rect", {}))
+		var foot := _vector_from_dict(slot.get("foot", {}), _patron_seat_position(i))
+		var watching := bool(patron.get("watching_player", false))
+		var covered := bool(patron.get("covered", false))
+		var risk := int(patron.get("active_snitch_risk", patron.get("snitch_risk", 0)))
+		var accent := C_PINK if watching else C_TEAL if covered else C_SOFT
+		var selected := focused_index == i
+		if selected or bool(surface.surface_region_hovered("roulette_patron_focus", i)):
+			_draw_neon_panel(surface, rect.grow(3), accent, 0.14 if selected else 0.08)
+		surface.draw_rect(Rect2(foot.x - 22, foot.y - 58, 44, 54), Color("#05060a"))
+		surface.draw_rect(Rect2(foot.x - 16, foot.y - 48, 32, 42), Color("#172633" if covered else "#251930"))
+		surface.draw_rect(Rect2(foot.x - 12, foot.y - 66, 24, 22), Color("#c49371"))
+		surface.draw_rect(Rect2(foot.x - 12, foot.y - 66, 24, 7), _patron_hair_color(patron))
+		surface.draw_rect(Rect2(foot.x - 6, foot.y - 57, 4, 3), C_DARK)
+		surface.draw_rect(Rect2(foot.x + 6, foot.y - 57, 4, 3), C_DARK)
+		surface.draw_rect(Rect2(foot.x - 22, foot.y - 2, 44, 4), Color(0, 0, 0, 0.28))
+		surface.draw_rect(Rect2(rect.position.x + 8, rect.end.y - 22, 54, 4), Color("#040509"))
+		surface.draw_rect(Rect2(rect.position.x + 8, rect.end.y - 22, clampf(float(risk) / 60.0, 0.0, 1.0) * 54.0, 4), accent)
+		surface.surface_label(str(patron.get("behavior", str(patron.get("mood", "watching")))).left(13), rect.position + Vector2(8, rect.size.y - 8), 8, accent)
+		surface.draw_circle(foot + Vector2(30, -8), 6.0, _chip_color_name(str(patron.get("chip_color", "cyan"))))
+		surface.surface_add_exact_hit(rect, "roulette_patron_focus", i)
+	_draw_focused_patron_panel(surface, surface_state, patrons, focused_index)
 
 
 func _draw_table_patrons(surface, surface_state: Dictionary) -> void:
@@ -1974,7 +2062,7 @@ func _draw_small_color_chip(surface, center: Vector2, color: Color, value: int) 
 	surface.draw_circle(center, 8.0, Color(C_DARK.r, C_DARK.g, C_DARK.b, 0.92))
 	surface.draw_circle(center, 6.4, color)
 	surface.draw_circle(center, 2.6, Color("#f8f4dc"))
-	surface.surface_label_centered("%d" % value, Rect2(center + Vector2(-8, 7), Vector2(16, 8)), 6, color)
+	surface.surface_label_centered_plain("%d" % value, Rect2(center + Vector2(-8, 7), Vector2(16, 8)), 6, color)
 
 
 func _draw_croupier_station(surface, surface_state: Dictionary) -> void:
@@ -1987,7 +2075,7 @@ func _draw_recent_numbers(surface, surface_state: Dictionary) -> void:
 	_draw_neon_panel(surface, rect, C_CYAN, 0.08)
 	surface.surface_label("RECENT", rect.position + Vector2(8, 18), 8, C_SOFT)
 	if recent.is_empty():
-		surface.surface_label_centered("NO SPINS YET", Rect2(rect.position + Vector2(78, 8), Vector2(120, 12)), 8, C_SOFT)
+		surface.surface_label_centered_plain("NO SPINS YET", Rect2(rect.position + Vector2(78, 8), Vector2(120, 12)), 8, C_SOFT)
 		return
 	var max_slots := mini(10, recent.size())
 	for i in range(max_slots):
@@ -1998,35 +2086,48 @@ func _draw_recent_numbers(surface, surface_state: Dictionary) -> void:
 		var radius := 10.0 + minf(4.0, float(int(entry.get("celebration_score", 0))) / 20.0)
 		surface.draw_circle(center, radius, Color(accent.r, accent.g, accent.b, 0.94))
 		surface.draw_circle(center, radius + 1.5, Color(C_YELLOW.r, C_YELLOW.g, C_YELLOW.b, 0.22), false, 1)
-		surface.surface_label_centered(number.left(2), Rect2(center - Vector2(12, 5), Vector2(24, 10)), 7, _wheel_label_color(number))
+		surface.surface_label_centered_plain(number.left(2), Rect2(center - Vector2(12, 5), Vector2(24, 10)), 7, _wheel_label_color(number))
 
 
 func _draw_betting_layout(surface, surface_state: Dictionary) -> void:
 	var red_numbers := _string_array(surface_state.get("red_numbers", RED_NUMBERS))
 	surface.draw_rect(ZERO_RECT, Color("#0b7b4e"))
 	surface.draw_rect(ZERO_RECT, C_YELLOW, false, 1)
-	surface.surface_label_centered("0", ZERO_RECT, 18, C_WHITE)
+	surface.surface_label_centered_plain("0", ZERO_RECT, 18, C_WHITE)
 	if int(_copy_dict(surface_state.get("rules", {})).get("zero_count", 2)) == 2:
 		surface.draw_rect(DOUBLE_ZERO_RECT, Color("#0b7b4e"))
 		surface.draw_rect(DOUBLE_ZERO_RECT, C_YELLOW, false, 1)
-		surface.surface_label_centered("00", DOUBLE_ZERO_RECT, 16, C_WHITE)
+		surface.surface_label_centered_plain("00", DOUBLE_ZERO_RECT, 16, C_WHITE)
 	for n in range(1, 37):
 		var rect := _number_cell(n)
 		var number_text := str(n)
 		var color := Color("#8e1026") if red_numbers.has(number_text) else Color("#111922")
 		surface.draw_rect(rect, color)
 		surface.draw_rect(rect, Color(C_SOFT.r, C_SOFT.g, C_SOFT.b, 0.28), false, 1)
-		surface.surface_label_centered(number_text, rect, 12, C_WHITE)
+		surface.surface_label_centered_plain(number_text, rect, 12, C_WHITE)
 	_draw_outside_labels(surface)
 	var targets := _dictionary_array(surface_state.get("bet_targets", []))
-	for i in range(targets.size()):
-		var target: Dictionary = targets[i]
-		var rect := _rect_from_dict(target.get("rect", {}))
-		var hovered: bool = bool(surface.surface_region_hovered("roulette_bet", i))
-		if hovered:
-			surface.draw_rect(rect.grow(2), Color(C_YELLOW.r, C_YELLOW.g, C_YELLOW.b, 0.22))
-			surface.draw_rect(rect.grow(2), C_YELLOW, false, 1)
-		surface.surface_add_exact_hit(rect, "roulette_bet", i)
+	var hovered_index: int = surface.surface_hovered_index("roulette_bet") if surface.has_method("surface_hovered_index") else -1
+	if hovered_index >= 0 and hovered_index < targets.size():
+		var hovered_target: Dictionary = targets[hovered_index]
+		var hovered_rect := _rect_from_dict(hovered_target.get("rect", {}))
+		surface.draw_rect(hovered_rect.grow(2), Color(C_YELLOW.r, C_YELLOW.g, C_YELLOW.b, 0.22))
+		surface.draw_rect(hovered_rect.grow(2), C_YELLOW, false, 1)
+	if surface.has_method("surface_add_cached_exact_hits"):
+		surface.surface_add_cached_exact_hits(_roulette_bet_hit_cache_key(surface_state, targets), targets, "roulette_bet")
+	else:
+		for i in range(targets.size()):
+			var target: Dictionary = targets[i]
+			surface.surface_add_exact_hit(_rect_from_dict(target.get("rect", {})), "roulette_bet", i)
+
+
+func _roulette_bet_hit_cache_key(surface_state: Dictionary, targets: Array) -> String:
+	var rules: Dictionary = surface_state.get("rules", {}) if typeof(surface_state.get("rules", {})) == TYPE_DICTIONARY else {}
+	return "roulette_bets:%s:%d:%d" % [
+		str(surface_state.get("variant", surface_state.get("table_layout", "roulette"))),
+		int(rules.get("zero_count", 2)),
+		targets.size(),
+	]
 
 
 func _draw_outside_labels(surface) -> void:
@@ -2047,7 +2148,7 @@ func _draw_outside_labels(surface) -> void:
 		var rect: Rect2 = label_data.get("rect", Rect2())
 		surface.draw_rect(rect, label_data.get("fill", Color("#063f35")))
 		surface.draw_rect(rect, Color(C_YELLOW.r, C_YELLOW.g, C_YELLOW.b, 0.26), false, 1)
-		surface.surface_label_centered(str(label_data.get("label", "")), rect, 10, C_WHITE)
+		surface.surface_label_centered_plain(str(label_data.get("label", "")), rect, 10, C_WHITE)
 
 
 func _draw_bet_chips(surface, surface_state: Dictionary) -> void:
@@ -2058,7 +2159,7 @@ func _draw_bet_chips(surface, surface_state: Dictionary) -> void:
 		var placement := _vector_from_dict(bet.get("placement", {}), Vector2(490, 190))
 		_draw_casino_chip(surface, placement, int(bet.get("stake", 0)), 12, 1.0, false)
 		surface.draw_rect(Rect2(placement - Vector2(16, 16), Vector2(32, 36)), Color(C_CYAN.r, C_CYAN.g, C_CYAN.b, 0.72), false, 1)
-		surface.surface_label_centered("YOU", Rect2(placement + Vector2(-15, 13), Vector2(30, 9)), 6, C_CYAN)
+		surface.surface_label_centered_plain("YOU", Rect2(placement + Vector2(-15, 13), Vector2(30, 9)), 6, C_CYAN)
 	var last_result := _copy_dict(surface_state.get("last_result", {}))
 	var spin_done: bool = not bool(surface.surface_animation_active(ROULETTE_SPIN_CHANNEL))
 	if not last_result.is_empty() and spin_done:
@@ -2086,7 +2187,7 @@ func _draw_patron_roulette_chips(surface, surface_state: Dictionary) -> void:
 		surface.draw_circle(center, 7.6, Color(C_DARK.r, C_DARK.g, C_DARK.b, 0.92))
 		surface.draw_circle(center, 6.0, color)
 		surface.draw_circle(center, 2.5, Color("#f8f4dc"))
-		surface.surface_label_centered("THEM", Rect2(center + Vector2(-15, 6), Vector2(30, 8)), 6, color)
+		surface.surface_label_centered_plain("THEM", Rect2(center + Vector2(-15, 6), Vector2(30, 8)), 6, color)
 
 
 func _roulette_surface_target_by_id(targets: Array, id: String) -> Dictionary:
@@ -2104,7 +2205,7 @@ func _draw_table_notice(surface, surface_state: Dictionary) -> void:
 	var rect := Rect2(244, 314, 420, 24)
 	var accent := C_YELLOW if str(surface_state.get("phase", "")) == "spinning" else C_TEAL
 	_draw_neon_panel(surface, rect, accent, 0.18)
-	surface.surface_label_centered(notice.left(72), rect.grow(-4), 10, accent)
+	surface.surface_label_centered_plain(notice.left(72), rect.grow(-4), 10, accent)
 
 
 func _draw_round_timer(surface, surface_state: Dictionary) -> void:
@@ -2863,7 +2964,14 @@ func _roulette_motion_active(table: Dictionary, now_msec: int) -> bool:
 	if last_result.is_empty():
 		return false
 	var elapsed := now_msec - int(last_result.get("resolved_at_msec", 0))
-	return elapsed >= 0 and elapsed < SPIN_ANIMATION_DURATION_MSEC + PAYOUT_ANIMATION_DURATION_MSEC
+	return elapsed >= 0 and elapsed < SPIN_ANIMATION_DURATION_MSEC + PAYOUT_ANIMATION_DURATION_MSEC + ROULETTE_RESULT_REVEAL_MSEC
+
+
+func _roulette_result_reveal_active(last_result: Dictionary, elapsed_msec: int) -> bool:
+	if last_result.is_empty():
+		return false
+	var reveal_start := SPIN_ANIMATION_DURATION_MSEC + PAYOUT_ANIMATION_DURATION_MSEC
+	return elapsed_msec >= reveal_start and elapsed_msec < reveal_start + ROULETTE_RESULT_REVEAL_MSEC
 
 
 func _apply_nudged_spin(spin: Dictionary, table: Dictionary, bets: Array) -> Dictionary:
@@ -3093,7 +3201,7 @@ func _draw_table_button(surface, rect: Rect2, label: String, action: String, ind
 	surface.draw_rect(rect, color, false, 1)
 	if selected:
 		surface.draw_rect(rect.grow(2), Color(color.r, color.g, color.b, 0.32), false, 2)
-	surface.surface_label_centered(label.left(13), rect.grow(-2), 8 if rect.size.y < 24 else 10, color)
+	surface.surface_label_centered_plain(label.left(13), rect.grow(-2), 8 if rect.size.y < 24 else 10, color)
 	if enabled:
 		surface.surface_add_exact_hit(rect, action, index)
 
@@ -3118,7 +3226,7 @@ func _draw_casino_chip(surface, center: Vector2, value: int, radius: float, alph
 	surface.draw_circle(center, radius + (2.0 if selected else 0.0), Color(C_YELLOW.r, C_YELLOW.g, C_YELLOW.b, 0.58 if selected else 0.20))
 	surface.draw_circle(center, radius, Color(color.r, color.g, color.b, alpha))
 	surface.draw_circle(center, radius * 0.55, Color("#f8f4dc"))
-	surface.surface_label_centered("%d" % value, Rect2(center - Vector2(radius, 5), Vector2(radius * 2.0, 10)), 7, C_DARK)
+	surface.surface_label_centered_plain("%d" % value, Rect2(center - Vector2(radius, 5), Vector2(radius * 2.0, 10)), 7, C_DARK)
 
 
 func _chip_color(value: int) -> Color:

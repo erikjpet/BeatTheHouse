@@ -948,8 +948,10 @@ func _player_final_dice(_action_id: String, run_state: RunState, state: Dictiona
 
 func _opponent_results(state: Dictionary, rng: RngStream) -> Array:
 	var result: Array = []
-	var patrons := _normalize_patrons(state.get("patrons", []))
+	var patrons: Array = state.get("patrons", []) if typeof(state.get("patrons", [])) == TYPE_ARRAY else []
 	for i in range(patrons.size()):
+		if typeof(patrons[i]) != TYPE_DICTIONARY:
+			continue
 		var patron: Dictionary = patrons[i]
 		var dice := _auto_play_ship_hand(rng)
 		result.append({
@@ -1131,7 +1133,15 @@ func _dice_state(run_state: RunState, environment: Dictionary) -> Dictionary:
 	var state: Dictionary = game_states.get(get_id(), {}) if typeof(game_states.get(get_id(), {})) == TYPE_DICTIONARY else {}
 	if state.is_empty():
 		state = _fallback_state(run_state, environment)
-	return _normalize_state(state)
+		game_states[get_id()] = state
+		environment["game_states"] = game_states
+		return state
+	if _state_is_current(state):
+		return state
+	var normalized := _normalize_state(state)
+	game_states[get_id()] = normalized
+	environment["game_states"] = game_states
+	return normalized
 
 
 func _fallback_state(run_state: RunState, environment: Dictionary) -> Dictionary:
@@ -1173,12 +1183,18 @@ func _normalize_state(state: Dictionary) -> Dictionary:
 	normalized["rounds_played"] = maxi(0, int(normalized.get("rounds_played", 0)))
 	normalized["last_result"] = _copy_dict(normalized.get("last_result", {}))
 	normalized["table_round_timer_started_msec"] = int(normalized.get("table_round_timer_started_msec", 0))
+	normalized["normalized_version"] = STATE_VERSION
 	return normalized
+
+
+func _state_is_current(state: Dictionary) -> bool:
+	return str(state.get("schema", "")) == STATE_SCHEMA and int(state.get("version", 0)) == STATE_VERSION and int(state.get("normalized_version", 0)) == STATE_VERSION
 
 
 func _update_environment_state(environment: Dictionary, state: Dictionary) -> void:
 	var game_states: Dictionary = environment.get("game_states", {}) if typeof(environment.get("game_states", {})) == TYPE_DICTIONARY else {}
-	game_states[get_id()] = _normalize_state(state)
+	state["normalized_version"] = STATE_VERSION
+	game_states[get_id()] = state if _state_is_current(state) else _normalize_state(state)
 	environment["game_states"] = game_states
 
 

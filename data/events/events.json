@@ -1556,7 +1556,7 @@
       "success_message": "Rourke cannot prove enough to hold you. The casino lets you walk with your winnings; the next act is not implemented yet.",
       "failure_message": "The story falls apart in the back room. The casino takes you out back and the run ends.",
       "showdown_tuning": {
-        "base_success_chance": 58,
+        "base_success_chance": 95,
         "min_success_chance": 5,
         "max_success_chance": 95
       },

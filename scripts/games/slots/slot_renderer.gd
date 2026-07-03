@@ -11,13 +11,14 @@ const PINBALL_POWER_CHOICES := 21
 
 var catalog
 var background_textures: Dictionary = {}
+var symbol_draw_metadata_cache: Dictionary = {}
 
 
 func _init() -> void:
 	catalog = CatalogScript.new()
 
 
-func render_signature(surface_state: Dictionary, _definition: Dictionary, time_msec: int = 0, phase_id: String = "") -> Dictionary:
+func render_signature(surface_state: Dictionary, _definition: Dictionary, time_msec: int = 0, phase_id: String = "", include_layout_strings: bool = true) -> Dictionary:
 	var skin: Dictionary = _read_dict(surface_state.get("slot_skin", {}))
 	var active_bonus: Dictionary = _read_dict(surface_state.get("slot_active_bonus", {}))
 	var plan: Dictionary = _read_dict(surface_state.get("slot_animation_plan", {}))
@@ -93,15 +94,16 @@ func render_signature(surface_state: Dictionary, _definition: Dictionary, time_m
 		"color_cycle_hue": _color_cycle_hue(tier, time_msec, plan),
 		"border_color_phase": _color_cycle_phase(tier, time_msec, plan),
 		"feature": feature_hash,
-		"reel_rect": JSON.stringify(skin.get("reel_window", {})),
-		"playfield_rect": JSON.stringify(skin.get("playfield_rect", {})),
 		"pinball_takeover_active": _pinball_takeover_active(surface_state),
 		"reels_suppressed": _pinball_takeover_active(surface_state),
 		"status_panel_suppressed": _pinball_takeover_active(surface_state),
 		"result_strip_suppressed": _pinball_takeover_active(surface_state),
 		"default_controls_suppressed": _pinball_takeover_active(surface_state),
-		"pinball_takeover_rect": JSON.stringify(_rect_payload(_pinball_takeover_rect())),
 	}
+	if include_layout_strings:
+		signature["reel_rect"] = JSON.stringify(skin.get("reel_window", {}))
+		signature["playfield_rect"] = JSON.stringify(skin.get("playfield_rect", {}))
+		signature["pinball_takeover_rect"] = JSON.stringify(_rect_payload(_pinball_takeover_rect()))
 	var pinball_manifest: Dictionary = _pinball_feature_manifest(surface_state, time_msec, mode)
 	for key_value in pinball_manifest.keys():
 		signature[key_value] = pinball_manifest[key_value]
@@ -122,8 +124,8 @@ func draw(surface, surface_state: Dictionary, definition: Dictionary) -> bool:
 	if str(surface_state.get("surface_renderer", "")) != "slot_machine":
 		return false
 	surface.surface_begin_design_space_inset(DESIGN_SIZE, Vector2.ZERO)
-	var skin: Dictionary = _copy_dict(surface_state.get("slot_skin", {}))
-	var palette: Dictionary = _copy_dict(skin.get("palette", {}))
+	var skin: Dictionary = _read_dict(surface_state.get("slot_skin", {}))
+	var palette: Dictionary = _read_dict(skin.get("palette", {}))
 	var primary := Color(str(palette.get("primary", "#24112f")))
 	var secondary := Color(str(palette.get("secondary", "#090b13")))
 	var accent := Color(str(palette.get("accent", "#ff4fb3")))
@@ -140,7 +142,7 @@ func draw(surface, surface_state: Dictionary, definition: Dictionary) -> bool:
 	var nudge_chain_elapsed_msec := int(round(surface.surface_elapsed("slot_nudge_chain") * 1000.0))
 	if nudge_chain_elapsed_msec <= 0 or nudge_chain_elapsed_msec > 900000:
 		nudge_chain_elapsed_msec = int(surface_state.get("slot_nudge_chain_elapsed_msec", 0))
-	var signature: Dictionary = render_signature(surface_state, definition, elapsed_msec)
+	var signature: Dictionary = render_signature(surface_state, definition, elapsed_msec, "", false)
 	var pinball_takeover := _pinball_takeover_active(surface_state)
 	var background_texture := _slot_background_texture(skin)
 	var has_background_art := background_texture != null
@@ -335,11 +337,11 @@ func _draw_floor(surface, secondary: Color, trim: Color, bucket: int) -> void:
 
 
 func _draw_cabinet(surface, skin: Dictionary, primary: Color, secondary: Color, accent: Color, light: Color, trim: Color, glass: Color, bucket: int) -> void:
-	var body := _rect_from_dict(_copy_dict(skin.get("silhouette", {"x": 26, "y": 16, "w": 908, "h": 500})))
+	var body := _rect_from_dict(_read_dict(skin.get("silhouette", {"x": 26, "y": 16, "w": 908, "h": 500})))
 	surface.draw_rect(body.grow(10), Color(0.0, 0.0, 0.0, 0.52))
 	surface.draw_rect(body, primary)
 	surface.draw_rect(body.grow(-8), secondary)
-	var lean := float(_copy_dict(skin.get("silhouette", {})).get("lean", 0.0))
+	var lean := float(_read_dict(skin.get("silhouette", {})).get("lean", 0.0))
 	if absf(lean) > 0.1:
 		surface.draw_rect(body.grow(-18), Color(primary.r, primary.g, primary.b, 0.18), false, 4)
 	for i in range(18):
@@ -415,9 +417,9 @@ func _draw_topper(surface, state: Dictionary, skin: Dictionary, accent: Color, l
 
 func _draw_reels(surface, state: Dictionary, definition: Dictionary, skin: Dictionary, accent: Color, light: Color, glass: Color, signature: Dictionary, time_msec: int) -> void:
 	var rect := _rect_from_dict(skin.get("reel_window", {}))
-	var grid: Array = _copy_array(state.get("slot_grid", []))
-	var strips: Array = _copy_array(state.get("slot_reel_strips", []))
-	var stops: Array = _copy_array(state.get("slot_reel_stops", []))
+	var grid: Array = _read_array(state.get("slot_grid", []))
+	var strips: Array = _read_array(state.get("slot_reel_strips", []))
+	var stops: Array = _read_array(state.get("slot_reel_stops", []))
 	var reel_count := maxi(1, int(state.get("slot_reel_count", 3)))
 	var row_count := maxi(1, int(state.get("slot_row_count", 1)))
 	surface.draw_rect(rect.grow(12), Color(0.0, 0.0, 0.0, 0.52))
@@ -427,13 +429,13 @@ func _draw_reels(surface, state: Dictionary, definition: Dictionary, skin: Dicti
 	var cell_w := (rect.size.x - gap * float(reel_count + 1)) / float(reel_count)
 	var cell_h := (rect.size.y - gap * float(row_count + 1)) / float(row_count)
 	var family := str(state.get("slot_type_id", "pinball"))
-	var motions: Array = _copy_array(signature.get("reel_motion", []))
-	var win_cells: Array = _copy_array(state.get("slot_win_cells", []))
+	var motions: Array = _read_array(signature.get("reel_motion", []))
+	var win_cells: Array = _read_array(state.get("slot_win_cells", []))
 	var win_lookup: Dictionary = _win_cell_lookup(win_cells)
 	var show_wins := win_cells.size() > 0 and _all_reels_landed(motions) and _result_reveal_ready(state, time_msec)
 	var win_centers: Dictionary = {}
 	for reel_index in range(reel_count):
-		var motion: Dictionary = _copy_dict(motions[reel_index]) if reel_index < motions.size() else {"phase": "settled", "scroll_cells": 0.0, "blur": 0.0}
+		var motion: Dictionary = _read_dict(motions[reel_index]) if reel_index < motions.size() else {"phase": "settled", "scroll_cells": 0.0, "blur": 0.0}
 		var phase := str(motion.get("phase", "settled"))
 		var scroll_cells := float(motion.get("scroll_cells", 0.0))
 		var blur := float(motion.get("blur", 0.0))
@@ -478,7 +480,7 @@ func _draw_reels(surface, state: Dictionary, definition: Dictionary, skin: Dicti
 	if bool(signature.get("win_line_drawn", false)) and show_wins:
 		var points: Array = []
 		for cell_value in win_cells:
-			var win_cell: Dictionary = _copy_dict(cell_value)
+			var win_cell: Dictionary = _read_dict(cell_value)
 			var center_key := _cell_key(int(win_cell.get("reel", 0)), int(win_cell.get("row", 0)))
 			if win_centers.has(center_key):
 				points.append(win_centers[center_key])
@@ -521,10 +523,10 @@ func _nudge_chain_manifest(surface_state: Dictionary, time_msec: int) -> Diction
 func _draw_nudge_chain_overlay(surface, state: Dictionary, skin: Dictionary, accent: Color, light: Color, trim: Color, time_msec: int) -> void:
 	if not bool(state.get("slot_nudge_chain_active", false)):
 		return
-	var chain: Dictionary = _copy_dict(state.get("slot_nudge_chain", {}))
+	var chain: Dictionary = _read_dict(state.get("slot_nudge_chain", {}))
 	if chain.is_empty():
 		return
-	var coins: Array = _copy_array(chain.get("coins", state.get("slot_nudge_chain_coins", [])))
+	var coins: Array = _read_array(chain.get("coins", state.get("slot_nudge_chain_coins", [])))
 	if coins.is_empty():
 		return
 	var rect := _rect_from_dict(skin.get("reel_window", {}))
@@ -534,9 +536,9 @@ func _draw_nudge_chain_overlay(surface, state: Dictionary, skin: Dictionary, acc
 	var active_index := clampi(int(chain.get("active_index", state.get("slot_nudge_chain_active_index", 0))), 0, maxi(0, coins.size() - 1))
 	var collected_count := maxi(0, int(chain.get("collected_count", state.get("slot_nudge_chain_collected_count", 0))))
 	var banked := maxi(0, int(chain.get("banked_payout", state.get("slot_nudge_chain_banked_payout", 0))))
-	var window: Dictionary = _copy_dict(chain.get("active_window_msec", state.get("slot_nudge_tease_window_msec", {})))
+	var window: Dictionary = _read_dict(chain.get("active_window_msec", state.get("slot_nudge_tease_window_msec", {})))
 	for coin_value in coins:
-		var coin: Dictionary = _copy_dict(coin_value)
+		var coin: Dictionary = _read_dict(coin_value)
 		var coin_index := int(coin.get("index", 0))
 		var row := clampi(int(coin.get("row", coin_index)), 0, row_count - 1)
 		var row_center_y := rect.position.y + gap + float(row) * (cell_h + gap) + cell_h * 0.5
@@ -634,10 +636,10 @@ func _draw_buffalo_main_board_overlay(surface, state: Dictionary, definition: Di
 	if active.is_empty() or not bool(state.get("slot_active_bonus_active", false)):
 		return
 	var payload: Dictionary = _buffalo_main_board_payload(state, time_msec)
-	var coins: Array = _copy_array(payload.get("coins", []))
+	var coins: Array = _read_array(payload.get("coins", []))
 	var coin_lookup: Dictionary = {}
 	for coin_value in coins:
-		var coin: Dictionary = _copy_dict(coin_value)
+		var coin: Dictionary = _read_dict(coin_value)
 		coin_lookup[_cell_key(int(coin.get("reel", -1)), int(coin.get("row", -1)))] = true
 	if bool(payload.get("unlocked_spin_active", false)):
 		for reel_index in range(reel_count):
@@ -653,7 +655,7 @@ func _draw_buffalo_main_board_overlay(surface, state: Dictionary, definition: Di
 				var sweep_y := cell_rect.position.y + fposmod(float(time_msec) * 0.11 + float(reel_index * 17 + row_index * 9), maxf(1.0, cell_rect.size.y))
 				surface.draw_line(Vector2(cell_rect.position.x + 6, sweep_y), Vector2(cell_rect.end.x - 6, sweep_y - 10), Color(glass.r, glass.g, glass.b, 0.28), 2)
 	for coin_value in coins:
-		var coin: Dictionary = _copy_dict(coin_value)
+		var coin: Dictionary = _read_dict(coin_value)
 		var reel := int(coin.get("reel", -1))
 		var row := int(coin.get("row", -1))
 		if reel < 0 or reel >= reel_count or row < 0 or row >= row_count:
@@ -832,8 +834,8 @@ func _main_reel_cell_rect(rect: Rect2, reel: int, row: int, gap: float, cell_w: 
 
 
 func _draw_symbol(surface, definition: Dictionary, family: String, symbol: String, rect: Rect2, blurred: bool) -> void:
-	var meta: Dictionary = catalog.symbol_metadata(definition, family, symbol)
-	var colors: Array = _copy_array(meta.get("colors", []))
+	var meta: Dictionary = _symbol_draw_metadata(definition, family, symbol)
+	var colors: Array = _read_array(meta.get("colors", []))
 	var primary := Color(str(colors[0] if colors.size() > 0 else "#1b2230"))
 	var secondary := Color(str(colors[1] if colors.size() > 1 else "#3f5269"))
 	var glow := Color(str(colors[2] if colors.size() > 2 else colors[0] if colors.size() > 0 else "#6d88a8"))
@@ -875,6 +877,19 @@ func _draw_symbol(surface, definition: Dictionary, family: String, symbol: Strin
 	surface.surface_label_centered(label, rect.grow(-3), int(clampf(rect.size.y * 0.30, 8.0, 20.0)), Color("#f8fafc"))
 
 
+func _symbol_draw_metadata(definition: Dictionary, family: String, symbol: String) -> Dictionary:
+	var key := "%s:%s" % [family, symbol]
+	if symbol_draw_metadata_cache.has(key):
+		return _read_dict(symbol_draw_metadata_cache.get(key, {}))
+	var meta: Dictionary = catalog.symbol_metadata(definition, family, symbol)
+	var cached := {
+		"shape": str(meta.get("shape", "backplate")),
+		"colors": _read_array(meta.get("colors", [])).duplicate(false),
+	}
+	symbol_draw_metadata_cache[key] = cached
+	return cached
+
+
 func _visible_symbol(strips: Array, stops: Array, grid: Array, reel_index: int, row_index: int, row_count: int, landing_slot: bool) -> String:
 	if landing_slot and row_index >= 0 and row_index < row_count:
 		if reel_index >= 0 and reel_index < grid.size() and typeof(grid[reel_index]) == TYPE_ARRAY:
@@ -890,14 +905,14 @@ func _visible_symbol(strips: Array, stops: Array, grid: Array, reel_index: int, 
 
 func _strip_for_reel(strips: Array, reel_index: int) -> Array:
 	if reel_index >= 0 and reel_index < strips.size() and typeof(strips[reel_index]) == TYPE_ARRAY:
-		return (strips[reel_index] as Array).duplicate(true)
+		return strips[reel_index] as Array
 	return ["BLANK"]
 
 
 func _win_cell_lookup(cells: Array) -> Dictionary:
 	var result: Dictionary = {}
 	for cell_value in cells:
-		var cell: Dictionary = _copy_dict(cell_value)
+		var cell: Dictionary = _read_dict(cell_value)
 		result[_cell_key(int(cell.get("reel", 0)), int(cell.get("row", 0)))] = true
 	return result
 
@@ -910,7 +925,7 @@ func _all_reels_landed(motions: Array) -> bool:
 	if motions.is_empty():
 		return false
 	for motion_value in motions:
-		var motion: Dictionary = _copy_dict(motion_value)
+		var motion: Dictionary = _read_dict(motion_value)
 		var phase := str(motion.get("phase", "settled"))
 		if phase != "settle" and phase != "settled":
 			return false
@@ -920,11 +935,11 @@ func _all_reels_landed(motions: Array) -> bool:
 func _slot_reels_spinning(state: Dictionary, time_msec: int) -> bool:
 	if str(state.get("slot_animation_id", "")).is_empty():
 		return false
-	var timeline: Array = _copy_array(state.get("slot_reel_timeline", []))
+	var timeline: Array = _read_array(state.get("slot_reel_timeline", []))
 	if timeline.is_empty():
 		return false
 	for entry_value in timeline:
-		var motion: Dictionary = _reel_motion(_copy_dict(entry_value), time_msec)
+		var motion: Dictionary = _reel_motion(_read_dict(entry_value), time_msec)
 		var phase := str(motion.get("phase", "settled"))
 		if phase != "settle" and phase != "settled":
 			return true
@@ -1987,7 +2002,7 @@ func _draw_buffalo_free_games(surface, rect: Rect2, state: Dictionary, definitio
 	surface.draw_rect(header_rect, Color(light.r, light.g, light.b, 0.22), false, 1)
 	surface.surface_label("FREE %d  RETRIG %d" % [int(active.get("remaining_steps", 0)), int(active.get("retrigger_count", 0))], header_rect.position + Vector2(8, 19), 12, light)
 	var coin_header := "COINS HELD %d" % int(active.get("coins_collected", 0))
-	if str(active.get("feature_phase", "")) == "coin_collect" or _copy_array(active.get("coin_reveals", [])).size() > 0:
+	if str(active.get("feature_phase", "")) == "coin_collect" or _array_read_size(active.get("coin_reveals", [])) > 0:
 		coin_header = "REVEAL $%d" % int(active.get("coin_reveal_total", active.get("coin_collect_total", 0)))
 	surface.surface_label("$%d + %s" % [int(active.get("spin_win_total", active.get("feature_total", 0))), coin_header], header_rect.position + Vector2(header_rect.size.x - 210, 19), 12, trim)
 	var grid_rect := Rect2(rect.position + Vector2(8, 42), Vector2(rect.size.x - 16, rect.size.y - 92))
@@ -2009,26 +2024,26 @@ func _draw_buffalo_free_games(surface, rect: Rect2, state: Dictionary, definitio
 
 
 func _draw_buffalo_free_games_reel_grid(surface, rect: Rect2, state: Dictionary, definition: Dictionary, active: Dictionary, accent: Color, light: Color, trim: Color, time_msec: int, feature_msec: int) -> void:
-	var grid: Array = _copy_array(state.get("slot_grid", []))
-	var strips: Array = _copy_array(state.get("slot_reel_strips", []))
-	var stops: Array = _copy_array(state.get("slot_reel_stops", []))
+	var grid: Array = _read_array(state.get("slot_grid", []))
+	var strips: Array = _read_array(state.get("slot_reel_strips", []))
+	var stops: Array = _read_array(state.get("slot_reel_stops", []))
 	var reel_count := maxi(1, int(state.get("slot_reel_count", maxi(1, grid.size()))))
 	var row_count := maxi(1, int(state.get("slot_row_count", 3)))
-	var timeline: Array = _copy_array(state.get("slot_reel_timeline", []))
+	var timeline: Array = _read_array(state.get("slot_reel_timeline", []))
 	var motions: Array = []
 	for reel_index in range(reel_count):
 		var motion: Dictionary = {"phase": "settled", "scroll_cells": 0.0, "blur": 0.0}
 		if reel_index < timeline.size():
-			motion = _reel_motion(_copy_dict(timeline[reel_index]), time_msec)
+			motion = _reel_motion(_read_dict(timeline[reel_index]), time_msec)
 		motions.append(motion)
 	surface.draw_rect(rect, Color("#130907"))
 	surface.draw_rect(rect, Color(trim.r, trim.g, trim.b, 0.26), false, 2)
 	var gap := 4.0
 	var cell_w := (rect.size.x - gap * float(reel_count + 1)) / float(reel_count)
 	var cell_h := (rect.size.y - gap * float(row_count + 1)) / float(row_count)
-	var locked_coin_lookup: Dictionary = _buffalo_coin_lookup(_copy_array(active.get("collected_coins", [])))
+	var locked_coin_lookup: Dictionary = _buffalo_coin_lookup(_read_array(active.get("collected_coins", [])))
 	for reel_index in range(reel_count):
-		var motion: Dictionary = _copy_dict(motions[reel_index])
+		var motion: Dictionary = _read_dict(motions[reel_index])
 		var phase := str(motion.get("phase", "settled"))
 		var scroll_cells := float(motion.get("scroll_cells", 0.0))
 		var blur := float(motion.get("blur", 0.0))
@@ -2052,12 +2067,12 @@ func _draw_buffalo_free_games_reel_grid(surface, rect: Rect2, state: Dictionary,
 			_draw_symbol(surface, definition, "buffalo", symbol, visible_cell, blur > 0.12)
 			if blur > 0.38:
 				surface.draw_rect(_rect_intersection(visible_cell.grow(-4), rect), Color(light.r, light.g, light.b, minf(0.18, blur * 0.22)))
-	var recent := _buffalo_coin_lookup(_copy_array(active.get("last_collected_coins", [])))
-	var coins := _buffalo_coin_lookup(_copy_array(active.get("collected_coins", [])))
+	var recent := _buffalo_coin_lookup(_read_array(active.get("last_collected_coins", [])))
+	var coins := _buffalo_coin_lookup(_read_array(active.get("collected_coins", [])))
 	var reveal_lookup := _buffalo_coin_reveal_lookup(active, feature_msec)
 	for key_value in coins.keys():
 		var key := str(key_value)
-		var coin: Dictionary = _copy_dict(coins.get(key_value, {}))
+		var coin: Dictionary = _read_dict(coins.get(key_value, {}))
 		var reel := int(coin.get("reel", 0))
 		var row := int(coin.get("row", 0))
 		if reel < 0 or reel >= reel_count or row < 0 or row >= row_count:
@@ -2080,15 +2095,15 @@ func _buffalo_free_game_cell_rect(rect: Rect2, reel: int, row: int, reel_count: 
 func _buffalo_coin_lookup(coins: Array) -> Dictionary:
 	var result: Dictionary = {}
 	for coin_value in coins:
-		var coin: Dictionary = _copy_dict(coin_value)
+		var coin: Dictionary = _read_dict(coin_value)
 		result[_cell_key(int(coin.get("reel", 0)), int(coin.get("row", 0)))] = coin
 	return result
 
 
 func _buffalo_coin_reveal_lookup(active: Dictionary, feature_msec: int) -> Dictionary:
 	var result: Dictionary = {}
-	for reveal_value in _copy_array(active.get("coin_reveals", [])):
-		var reveal: Dictionary = _copy_dict(reveal_value)
+	for reveal_value in _read_array(active.get("coin_reveals", [])):
+		var reveal: Dictionary = _read_dict(reveal_value).duplicate(true)
 		var key := _cell_key(int(reveal.get("reel", 0)), int(reveal.get("row", 0)))
 		var start_msec := int(reveal.get("reveal_start_msec", 0))
 		var duration_msec := maxi(1, int(reveal.get("reveal_duration_msec", 320)))
@@ -2100,8 +2115,8 @@ func _buffalo_coin_reveal_lookup(active: Dictionary, feature_msec: int) -> Dicti
 
 func _buffalo_revealed_coin_total(active: Dictionary, feature_msec: int) -> int:
 	var total := 0
-	for reveal_value in _copy_array(active.get("coin_reveals", [])):
-		var reveal: Dictionary = _copy_dict(reveal_value)
+	for reveal_value in _read_array(active.get("coin_reveals", [])):
+		var reveal: Dictionary = _read_dict(reveal_value)
 		if feature_msec >= int(reveal.get("reveal_start_msec", 0)):
 			total += maxi(0, int(reveal.get("value", 0)))
 	return total
@@ -2374,12 +2389,12 @@ func _result_strip_payload(state: Dictionary, time_msec: int) -> Dictionary:
 func _result_reveal_ready(state: Dictionary, time_msec: int) -> bool:
 	if str(state.get("slot_animation_id", "")).is_empty():
 		return true
-	var timeline: Array = _copy_array(state.get("slot_reel_timeline", []))
+	var timeline: Array = _read_array(state.get("slot_reel_timeline", []))
 	if timeline.is_empty():
 		return true
 	var last_settle_sec := 0.0
 	for entry_value in timeline:
-		var entry: Dictionary = _copy_dict(entry_value)
+		var entry: Dictionary = _read_dict(entry_value)
 		last_settle_sec = maxf(last_settle_sec, float(entry.get("settle_end", entry.get("stop_time", 0.0))))
 	var reveal_msec := int(ceil(last_settle_sec * 1000.0)) + 180
 	return time_msec >= reveal_msec
@@ -2441,10 +2456,10 @@ func _draw_controls(surface, state: Dictionary, skin: Dictionary, accent: Color,
 		_draw_button(surface, Rect2(rect.position.x + 438, rect.position.y + 18, 132, 42), "RIGHT", "slot_bonus_right", 0, accent)
 		_draw_button(surface, Rect2(rect.position.x + 600, rect.position.y + 18, 132, 42), "TILT", "slot_bonus_tilt", 0, trim)
 		return
-	var options: Array = _copy_array(state.get("slot_bet_options", []))
+	var options: Array = _read_array(state.get("slot_bet_options", []))
 	var selected_id := str(state.get("slot_selected_bet_id", "bet_2"))
 	var control_layout: Dictionary = _slot_control_layout(rect, options.size(), bool(state.get("slot_nudge_available", false)))
-	var bet_rects: Array = _copy_array(control_layout.get("bet_rects", []))
+	var bet_rects: Array = _read_array(control_layout.get("bet_rects", []))
 	for index in range(options.size()):
 		var option: Dictionary = options[index]
 		if index >= bet_rects.size():

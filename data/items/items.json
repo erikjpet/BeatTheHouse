@@ -556,8 +556,8 @@
 		"icon_key": "lucky_reel_grease",
 		"environment_prop": "token",
 		"surface": "counter_case",
-		"description": "Arms ten slot spins with extra near-miss chances.",
-		"effect": {"active_item": true, "active_mode": "consumable", "active_target": "slot", "slot_lucky_reel_grease_spins": 10, "slot_lucky_reel_grease_near_misses": 3, "slot_grease_failed_nudge_heat_bonus": 14}
+		"description": "Arms a short run of slot spins with extra near-miss chances.",
+		"effect": {"active_item": true, "active_mode": "consumable", "active_target": "slot"}
 	},
 	{
 		"id": "timing_bracelet",
@@ -624,8 +624,8 @@
 		"icon_key": "cold_quarters",
 		"environment_prop": "coin",
 		"surface": "counter_case",
-		"description": "A six-coin stack that chills nudge heat.",
-		"effect": {"active_item": true, "active_mode": "consumable", "active_target": "slot", "slot_cold_quarters_charges": 6, "slot_cold_quarter_heat_reduction": 6}
+		"description": "A chilled coin stack that softens nudge heat.",
+		"effect": {"active_item": true, "active_mode": "consumable", "active_target": "slot", "slot_cold_quarter_heat_reduction": 6}
 	},
 	{
 		"id": "neon_players_charm",
@@ -659,7 +659,7 @@
 		"environment_prop": "notepad",
 		"surface": "counter_case",
 		"description": "Arms a clearer Buffalo nudge cue, with watch risk.",
-		"effect": {"active_item": true, "active_mode": "consumable", "active_target": "slot", "slot_split_reel_note_perfect_msec_bonus": 55, "slot_split_reel_note_close_msec_bonus": 90, "slot_split_reel_note_heat": 6}
+		"effect": {"active_item": true, "active_mode": "consumable", "active_target": "slot", "slot_split_reel_note_perfect_msec_bonus": 55, "slot_split_reel_note_close_msec_bonus": 90}
 	},
 	{
 		"id": "feature_magnet",
@@ -1007,7 +1007,7 @@
 		"environment_prop": "glasses",
 		"surface": "counter_case",
 		"description": "Marks one buried pull-tab winner per generated machine.",
-		"effect": {"pull_tabs_xray_highlight": 1}
+		"effect": {}
 	},
 	{
 		"id": "tab_detector",
@@ -1024,7 +1024,7 @@
 		"environment_prop": "scanner",
 		"surface": "counter_case",
 		"description": "Points at the closest pull-tab winner, then draws rising heat.",
-		"effect": {"active_item": true, "active_mode": "toggle", "active_target": "pull_tabs", "pull_tabs_tab_detector_heat_base": 4}
+		"effect": {"active_item": true, "active_mode": "toggle", "active_target": "pull_tabs"}
 	},
 	{
 		"id": "tarot_card",
@@ -1040,8 +1040,8 @@
 		"icon_key": "tarot_card",
 		"environment_prop": "loose_card",
 		"surface": "felt_table",
-		"description": "Burns the next bought ticket and prints five future results.",
-		"effect": {"active_item": true, "active_mode": "consumable", "active_target": "pull_tabs", "pull_tabs_tarot_read_count": 5}
+		"description": "Burns the next bought ticket and prints future results.",
+		"effect": {"active_item": true, "active_mode": "consumable", "active_target": "pull_tabs"}
 	},
 	{
 		"id": "jazz_sax_lucky_coin",

@@ -9,6 +9,9 @@ const PAYOUT_DRIFT_MAX_EDGE := 0.20
 var failures: Array = []
 var warnings: Array = []
 var stats: Dictionary = {}
+var resolve_ms_samples: Array = []
+var action_command_ms_samples: Array = []
+var surface_state_ms_samples: Array = []
 
 
 func _init() -> void:
@@ -25,6 +28,9 @@ func _run() -> void:
 		elif text.begins_with("--output="):
 			output_path = text.trim_prefix("--output=")
 
+	resolve_ms_samples = []
+	action_command_ms_samples = []
+	surface_state_ms_samples = []
 	stats = {
 		"seed_count": seed_count,
 		"generated_tables": 0,
@@ -41,7 +47,17 @@ func _run() -> void:
 		"side_bet_resolves": 0,
 		"compact_ui_states": 0,
 		"action_command_samples": 0,
+		"avg_action_command_ms": 0.0,
+		"p95_action_command_ms": 0.0,
 		"max_action_command_ms": 0.0,
+		"resolve_samples": 0,
+		"avg_resolve_ms": 0.0,
+		"p95_resolve_ms": 0.0,
+		"max_resolve_ms": 0.0,
+		"surface_state_calls": 0,
+		"surface_state_avg_ms": 0.0,
+		"surface_state_p95_ms": 0.0,
+		"surface_state_max_ms": 0.0,
 		"split_fixture_passes": 0,
 		"double_fixture_passes": 0,
 		"surrender_fixture_passes": 0,
@@ -73,9 +89,11 @@ func _run() -> void:
 	for i in range(seed_count):
 		_run_generated_seed(game, i)
 
+	_audit_surface_state_timing(game)
 	_run_forced_rule_fixtures(game)
 	_run_cheat_fixtures(game)
 	_run_payout_drift_probe(game)
+	_finalize_timing_stats()
 	_write_report(output_path, seed_count)
 	_print_summary()
 	await _finish(0 if failures.is_empty() else 1)
@@ -291,7 +309,7 @@ func _play_to_resolve(game: GameModule, run_state: RunState, environment: Dictio
 			ui = settle.get("ui_state", {})
 			_audit_compact_ui_state(ui, "settle command")
 			if bool(settle.get("resolve", false)):
-				return game.resolve_with_context(str(settle.get("action_id", "play_basic")), int(ui.get("locked_stake", ui.get("selected_stake", 5))), run_state, environment, rng, ui)
+				return _resolve_and_record(game, str(settle.get("action_id", "play_basic")), int(ui.get("locked_stake", ui.get("selected_stake", 5))), run_state, environment, rng, ui)
 			continue
 		var action := _choose_clean_action(surface, rng)
 		var command_start_usec := Time.get_ticks_usec()
@@ -304,7 +322,7 @@ func _play_to_resolve(game: GameModule, run_state: RunState, environment: Dictio
 		ui = command.get("ui_state", {})
 		_audit_compact_ui_state(ui, "hand command %s" % action)
 		if bool(command.get("resolve", false)):
-			return game.resolve_with_context(str(command.get("action_id", "play_basic")), int(ui.get("locked_stake", ui.get("selected_stake", 5))), run_state, environment, rng, ui)
+			return _resolve_and_record(game, str(command.get("action_id", "play_basic")), int(ui.get("locked_stake", ui.get("selected_stake", 5))), run_state, environment, rng, ui)
 	return {}
 
 
@@ -319,8 +337,74 @@ func _audit_compact_ui_state(ui: Dictionary, label: String) -> void:
 
 func _record_action_command_time(start_usec: int) -> void:
 	var elapsed_ms := float(Time.get_ticks_usec() - start_usec) / 1000.0
+	action_command_ms_samples.append(elapsed_ms)
 	stats["action_command_samples"] = int(stats.get("action_command_samples", 0)) + 1
 	stats["max_action_command_ms"] = maxf(float(stats.get("max_action_command_ms", 0.0)), elapsed_ms)
+
+
+func _resolve_and_record(game: GameModule, action_id: String, stake: int, run_state: RunState, environment: Dictionary, rng: RngStream, ui: Dictionary) -> Dictionary:
+	var started := Time.get_ticks_usec()
+	var result: Dictionary = game.resolve_with_context(action_id, stake, run_state, environment, rng, ui)
+	var elapsed_ms := float(Time.get_ticks_usec() - started) / 1000.0
+	resolve_ms_samples.append(elapsed_ms)
+	stats["resolve_samples"] = resolve_ms_samples.size()
+	stats["max_resolve_ms"] = maxf(float(stats.get("max_resolve_ms", 0.0)), elapsed_ms)
+	return result
+
+
+func _audit_surface_state_timing(game: GameModule) -> void:
+	var run_state: RunState = RunStateScript.new()
+	run_state.start_new("BLACKJACK-SURFACE-TIMING")
+	run_state.bankroll = 100000
+	var environment := _audit_environment(99000)
+	var table: Dictionary = game.generate_environment_state(run_state, environment, run_state.create_rng("blackjack_surface_timing_table"))
+	environment["game_states"] = {"blackjack": table}
+	run_state.current_environment = environment
+	surface_state_ms_samples = []
+	for index in range(1000):
+		var started := Time.get_ticks_usec()
+		var surface: Dictionary = game.surface_state(run_state, environment, {"surface_time_msec": 100000 + index * 17})
+		surface_state_ms_samples.append(float(Time.get_ticks_usec() - started) / 1000.0)
+		if str(surface.get("surface_renderer", "")) != "blackjack":
+			failures.append("Blackjack surface_state timing fixture returned the wrong renderer.")
+			break
+
+
+func _finalize_timing_stats() -> void:
+	stats["avg_action_command_ms"] = _average(action_command_ms_samples)
+	stats["p95_action_command_ms"] = _percentile(action_command_ms_samples, 0.95)
+	stats["avg_resolve_ms"] = _average(resolve_ms_samples)
+	stats["p95_resolve_ms"] = _percentile(resolve_ms_samples, 0.95)
+	stats["max_resolve_ms"] = _max_value(resolve_ms_samples)
+	stats["surface_state_calls"] = surface_state_ms_samples.size()
+	stats["surface_state_avg_ms"] = _average(surface_state_ms_samples)
+	stats["surface_state_p95_ms"] = _percentile(surface_state_ms_samples, 0.95)
+	stats["surface_state_max_ms"] = _max_value(surface_state_ms_samples)
+
+
+func _average(values: Array) -> float:
+	if values.is_empty():
+		return 0.0
+	var total := 0.0
+	for value in values:
+		total += float(value)
+	return total / float(values.size())
+
+
+func _percentile(values: Array, percentile: float) -> float:
+	if values.is_empty():
+		return 0.0
+	var sorted_values := values.duplicate()
+	sorted_values.sort()
+	var index := clampi(int(ceil(float(sorted_values.size()) * clampf(percentile, 0.0, 1.0))) - 1, 0, sorted_values.size() - 1)
+	return float(sorted_values[index])
+
+
+func _max_value(values: Array) -> float:
+	var result := 0.0
+	for value in values:
+		result = maxf(result, float(value))
+	return result
 
 
 func _choose_clean_action(surface: Dictionary, rng: RngStream) -> String:
@@ -692,6 +776,18 @@ func _print_summary() -> void:
 	print("Blackjack action command samples: %d, max %.3f ms" % [
 		int(stats.get("action_command_samples", 0)),
 		float(stats.get("max_action_command_ms", 0.0)),
+	])
+	print("Blackjack resolve samples: %d, avg/p95/max %.3f/%.3f/%.3f ms" % [
+		int(stats.get("resolve_samples", 0)),
+		float(stats.get("avg_resolve_ms", 0.0)),
+		float(stats.get("p95_resolve_ms", 0.0)),
+		float(stats.get("max_resolve_ms", 0.0)),
+	])
+	print("Blackjack surface_state avg/p95/max %.4f/%.4f/%.4f ms over %d calls" % [
+		float(stats.get("surface_state_avg_ms", 0.0)),
+		float(stats.get("surface_state_p95_ms", 0.0)),
+		float(stats.get("surface_state_max_ms", 0.0)),
+		int(stats.get("surface_state_calls", 0)),
 	])
 	print("Count hands: %d, count icons: %d, zero icons: %d" % [
 		int(stats.get("count_hands", 0)),

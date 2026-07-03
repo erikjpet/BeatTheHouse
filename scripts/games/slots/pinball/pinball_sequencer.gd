@@ -39,6 +39,8 @@ func apply(active: Dictionary, sim, mode: String, events: Array) -> Dictionary:
 			_:
 				_apply_bumper_alley(active, sim, state, event_type, sequence_events)
 		_decay_combo_state(state, event_type)
+	if mode == "video_feature" and bool(active.get("video_auto_multiball_armed", false)):
+		_apply_video_auto_multiball(active, sim, state, sequence_events)
 	active["sequencer_state"] = state
 	active["lane_locks"] = int(state.get("locks", 0))
 	active["lit_jackpots"] = _lit_count(_dict(state.get("lit", {})))
@@ -82,7 +84,7 @@ func _apply_lock_cascade(active: Dictionary, sim, state: Dictionary, event_type:
 	if event_type == "launcher":
 		state["locks"] = clampi(int(state.get("locks", 0)) + ItemsScript.lock_gain(active, state), 0, 3)
 		_light(state, "lock_%d" % int(state.get("locks", 0)), true)
-		if int(state.get("locks", 0)) >= 3 and not bool(state.get("multiball", false)):
+		if int(state.get("locks", 0)) >= 2 and not bool(state.get("multiball", false)):
 			state["multiball"] = true
 			state["multiplier"] = maxi(2, int(state.get("multiplier", 1)))
 			_launch_extra_balls(sim, 3)
@@ -108,8 +110,8 @@ func _apply_jackpot_works(active: Dictionary, sim, state: Dictionary, event_type
 		_light(state, "target_%d" % int(state.get("target_bank", 0)), true)
 		if int(state.get("target_bank", 0)) >= 3 and not bool(state.get("super_lit", false)):
 			state["super_lit"] = true
-			_award(active, sim, state, "qualify_super", "SUPER LIT", _stake(active) * 2, sequence_events)
-		if int(state.get("target_bank", 0)) >= 6 and not bool(state.get("bank_completed", false)):
+			_award(active, sim, state, "qualify_super", "SUPER LIT", _stake(active), sequence_events)
+		if int(state.get("target_bank", 0)) >= 3 and not bool(state.get("bank_completed", false)):
 			state["bank_completed"] = true
 			active["video_completed_banks"] = int(active.get("video_completed_banks", 0)) + 1
 	if event_type == "launcher":
@@ -118,22 +120,36 @@ func _apply_jackpot_works(active: Dictionary, sim, state: Dictionary, event_type
 		if int(state.get("locks", 0)) >= 2 and not bool(state.get("multiball", false)):
 			state["multiball"] = true
 			_launch_extra_balls(sim, 3)
-			_award(active, sim, state, "video_multiball", "VIDEO MULTIBALL", _stake(active) * 4, sequence_events)
+			_award(active, sim, state, "video_multiball", "VIDEO MULTIBALL", _stake(active) * 2, sequence_events)
 	if bool(state.get("super_lit", false)) and (event_type == "pocket" or event_type == "jackpot" or event_type == "super_jackpot"):
 		state["super_lit"] = false
 		active["video_super_jackpots"] = int(active.get("video_super_jackpots", 0)) + 1
 		active["video_jackpots"] = int(active.get("video_jackpots", 0)) + 1
-		_award(active, sim, state, "super_jackpot", "SUPER JACKPOT", _stake(active) * 9, sequence_events)
-	if bool(state.get("multiball", false)) and int(state.get("target_bank", 0)) >= 6 and not bool(state.get("wizard", false)):
+		_award(active, sim, state, "super_jackpot", "SUPER JACKPOT", _stake(active) * 3, sequence_events)
+	if bool(state.get("multiball", false)) and int(state.get("target_bank", 0)) >= 3 and int(active.get("video_super_jackpots", 0)) > 0 and not bool(state.get("wizard", false)):
 		state["wizard"] = true
 		state["multiplier"] = mini(5, maxi(2, int(state.get("multiplier", 1)) + 1))
 		active["video_jackpots"] = int(active.get("video_jackpots", 0)) + 1
-		_award(active, sim, state, "jackpot_works", "JACKPOT WORKS", _stake(active) * 10, sequence_events)
+		_award(active, sim, state, "jackpot_works", "JACKPOT WORKS", _stake(active) * 4, sequence_events)
+
+
+func _apply_video_auto_multiball(active: Dictionary, sim, state: Dictionary, sequence_events: Array) -> void:
+	active["video_auto_multiball_armed"] = false
+	if bool(state.get("video_auto_multiball_awarded", false)):
+		return
+	state["locks"] = maxi(2, int(state.get("locks", 0)))
+	_light(state, "video_lock_1", true)
+	_light(state, "video_lock_2", true)
+	if not bool(state.get("multiball", false)):
+		state["multiball"] = true
+	state["video_auto_multiball_awarded"] = true
+	_award(active, sim, state, "video_multiball", "VIDEO MULTIBALL", _stake(active) * 2, sequence_events)
 
 
 func _award(active: Dictionary, sim, state: Dictionary, sequence_id: String, label: String, amount: int, sequence_events: Array) -> void:
 	var hits: Dictionary = _dict(state.get("sequence_hits", {}))
 	var award := maxi(1, amount * maxi(1, int(state.get("multiplier", 1))))
+	sim.gross_awarded += award
 	var cap := maxi(1, int(active.get("session_cap", sim.session_cap)))
 	var room := maxi(0, cap - int(sim.total_awarded))
 	var paid := mini(room, award)

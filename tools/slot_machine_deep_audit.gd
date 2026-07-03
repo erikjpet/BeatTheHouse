@@ -9,9 +9,14 @@ const ResolverScript := preload("res://scripts/games/slots/slot_resolver.gd")
 
 func _init() -> void:
 	var spins := 10000
+	var script_nudges := false
 	var args: Array = OS.get_cmdline_user_args()
-	if not args.is_empty():
-		spins = maxi(1, int(args[0]))
+	for arg_value in args:
+		var arg := str(arg_value)
+		if arg == "--script-nudges":
+			script_nudges = true
+		elif arg.is_valid_int():
+			spins = maxi(1, int(arg))
 	var library: ContentLibrary = ContentLibraryScript.new()
 	library.load()
 	var definition: Dictionary = library.game("slot")
@@ -28,13 +33,15 @@ func _init() -> void:
 	var missed: Array = []
 	for scenario_value in scenarios:
 		var scenario: Dictionary = scenario_value
-		var metrics: Dictionary = _scenario_metrics(definition, generator, resolver, scenario, spins)
+		var metrics: Dictionary = _scenario_metrics(definition, generator, resolver, scenario, spins, script_nudges)
 		var failures: Array = _target_failures(definition, scenario, metrics)
 		for failure in failures:
 			missed.append("%s:%s" % [str(scenario.get("key", "")), str(failure)])
-		print("DEEP_AUDIT key=%s spins=%d rtp=%.5f hit=%.5f true=%.5f ldw=%.5f near=%.5f feature=%.5f bands=%s" % [
+		print("DEEP_AUDIT key=%s spins=%d scripted_nudges=%s nudges=%d rtp=%.5f hit=%.5f true=%.5f ldw=%.5f near=%.5f feature=%.5f bands=%s" % [
 			str(scenario.get("key", "")),
 			spins,
+			str(script_nudges),
+			int(metrics.get("nudge_count", 0)),
 			float(metrics.get("rtp", 0.0)),
 			float(metrics.get("hit_frequency", 0.0)),
 			float(metrics.get("true_win_frequency", 0.0)),
@@ -51,7 +58,7 @@ func _init() -> void:
 	quit(1)
 
 
-func _scenario_metrics(definition: Dictionary, generator, resolver, scenario: Dictionary, spins: int) -> Dictionary:
+func _scenario_metrics(definition: Dictionary, generator, resolver, scenario: Dictionary, spins: int, script_nudges: bool) -> Dictionary:
 	var run_state: RunState = RunStateScript.new()
 	run_state.start_new("SLOT-DEEP-AUDIT-%s" % str(scenario.get("key", "")))
 	var machine: Dictionary = generator.build_machine_from_ids(definition, {
@@ -71,18 +78,32 @@ func _scenario_metrics(definition: Dictionary, generator, resolver, scenario: Di
 	var ldw_count := 0
 	var near_miss_count := 0
 	var feature_count := 0
-	for _spin_index in range(spins):
+	var nudge_count := 0
+	for spin_index in range(spins):
 		if StateScript.active_bonus_incomplete(machine):
 			machine["active_bonus"] = {"active": false, "complete": true}
 		var resolved: Dictionary = resolver.resolve_spin(machine, "spin", bet, rng, definition, {}, false, true)
 		machine = _dict(resolved.get("machine", machine))
 		var result: Dictionary = _dict(resolved.get("result", {}))
 		var stake_cost := maxi(0, int(result.get("slot_stake_cost", 10)))
-		var payout := maxi(0, int(result.get("slot_payout", 0)))
-		var classification := str(result.get("slot_classification", ""))
 		total_delta += int(result.get("bankroll_delta", 0))
 		total_stake += stake_cost
-		if payout > 0 or bool(result.get("slot_feature_triggered", false)):
+		var terminal_result: Dictionary = result
+		if script_nudges and str(result.get("slot_classification", "")) == "near_miss":
+			var offer: Dictionary = _dict(machine.get("last_nudge_offer", {}))
+			var window: Dictionary = _dict(offer.get("skill_window_msec", {}))
+			if not window.is_empty():
+				var input_msec := _scripted_nudge_input_msec(offer, nudge_count + 1)
+				var nudge_resolved: Dictionary = resolver.resolve_spin(machine, "nudge", bet, rng, definition, {}, false, false, run_state, {}, {"slot_nudge_chain_input_msec": input_msec})
+				machine = _dict(nudge_resolved.get("machine", machine))
+				var nudge_result: Dictionary = _dict(nudge_resolved.get("result", {}))
+				total_delta += int(nudge_result.get("bankroll_delta", 0))
+				terminal_result = nudge_result
+				nudge_count += 1
+		var payout := maxi(0, int(terminal_result.get("slot_payout", 0)))
+		var classification := str(terminal_result.get("slot_classification", ""))
+		var feature_triggered := bool(terminal_result.get("slot_feature_triggered", false))
+		if payout > 0 or feature_triggered:
 			hit_count += 1
 		if classification == "true_win":
 			true_win_count += 1
@@ -90,11 +111,17 @@ func _scenario_metrics(definition: Dictionary, generator, resolver, scenario: Di
 			ldw_count += 1
 		elif classification == "near_miss":
 			near_miss_count += 1
-		if bool(result.get("slot_feature_triggered", false)):
+		if feature_triggered:
 			feature_count += 1
 			var feature_award: int = int(resolver.complete_active_bonus_for_metrics(machine, rng, definition))
 			total_delta += feature_award
 			machine["active_bonus"] = {"active": false, "complete": true}
+		if spins >= 1000 and (spin_index + 1) % 1000 == 0:
+			print("DEEP_AUDIT_PROGRESS key=%s spins=%d features=%d" % [
+				str(scenario.get("key", "")),
+				spin_index + 1,
+				feature_count,
+			])
 	var safe_spins := maxi(1, spins)
 	var safe_stake := maxi(1, total_stake)
 	return {
@@ -104,7 +131,19 @@ func _scenario_metrics(definition: Dictionary, generator, resolver, scenario: Di
 		"ldw_frequency": float(ldw_count) / float(safe_spins),
 		"near_miss_frequency": float(near_miss_count) / float(safe_spins),
 		"feature_frequency": float(feature_count) / float(safe_spins),
+		"nudge_count": nudge_count,
 	}
+
+
+func _scripted_nudge_input_msec(offer: Dictionary, attempt_index: int) -> int:
+	var window: Dictionary = _dict(offer.get("skill_window_msec", {}))
+	var perfect_msec := int(window.get("perfect", 0))
+	if str(offer.get("family", "")) == "buffalo" and attempt_index == 1:
+		return perfect_msec
+	var end_msec := int(window.get("end", perfect_msec))
+	if attempt_index == 2:
+		return end_msec + 1
+	return end_msec + 300
 
 
 func _target_failures(definition: Dictionary, scenario: Dictionary, metrics: Dictionary) -> Array:

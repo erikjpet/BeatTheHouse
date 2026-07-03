@@ -350,20 +350,27 @@ func active_item_command(item_id: String, run_state: RunState, environment: Dict
 
 func _resolve_tab_detector_scan(run_state: RunState, environment: Dictionary, rng: RngStream) -> Dictionary:
 	var machine := _ensure_machine_state(run_state, environment, true)
-	if run_state == null or not run_state.inventory.has(TAB_DETECTOR_ITEM_ID):
-		return _empty_result("tab_detector_scan", 0, environment, "You do not have the Tab Detector.")
 	var item_state := _pull_tab_item_state(machine)
-	var next_active := not bool(item_state.get("tab_detector_active", false))
-	item_state["tab_detector_active"] = next_active
-	machine["item_state"] = item_state
-	_write_machine_state(environment, machine)
 	var action_def: Dictionary = _action("tab_detector_scan")
-	var base_heat := int(action_def.get("suspicion_delta", TAB_DETECTOR_BASE_HEAT)) if next_active else 0
+	var has_detector := _run_has_item(run_state, TAB_DETECTOR_ITEM_ID)
+	var next_active := false
+	if has_detector:
+		next_active = not bool(item_state.get("tab_detector_active", false))
+		item_state["tab_detector_active"] = next_active
+		machine["item_state"] = item_state
+		_write_machine_state(environment, machine)
+	var base_heat := int(action_def.get("suspicion_delta", TAB_DETECTOR_BASE_HEAT))
+	if has_detector and not next_active:
+		base_heat = 0
 	var heat: Dictionary = _pull_tab_cheat_heat(base_heat, 1, run_state, environment)
 	var suspicion_delta := int(heat.get("suspicion_delta", 0))
 	var bankroll_delta := int(heat.get("bankroll_delta", 0))
 	var security_message := str(heat.get("security_message", ""))
-	var message := "Tab Detector switched on. Winning buys will draw rising heat." if next_active else "Tab Detector switched off."
+	var message := ""
+	if has_detector:
+		message = "Tab Detector switched on. Winning buys will draw rising heat." if next_active else "Tab Detector switched off."
+	else:
+		message = "You hand-scan the flare chart for loose prizes while the clerk watches."
 	if suspicion_delta > 0:
 		message += " Heat rises +%d." % suspicion_delta
 	if not security_message.is_empty():
@@ -373,6 +380,7 @@ func _resolve_tab_detector_scan(run_state: RunState, environment: Dictionary, rn
 		"game_id": get_id(),
 		"action_id": "tab_detector_scan",
 		"item_id": TAB_DETECTOR_ITEM_ID,
+		"item_owned": has_detector,
 		"active": next_active,
 		"bankroll_delta": bankroll_delta,
 		"suspicion_delta": suspicion_delta,

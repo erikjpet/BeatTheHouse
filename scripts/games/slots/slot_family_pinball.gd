@@ -226,7 +226,7 @@ func _session_cap(stake: int, mode: String, feature_scale: float) -> int:
 	if mode == "lane_multiball":
 		multiplier = 14.2
 	elif mode == "video_feature":
-		multiplier = 10.0
+		multiplier = 30.0
 	return maxi(1, int(round(float(stake) * multiplier * maxf(0.35, feature_scale))))
 
 

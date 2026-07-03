@@ -287,6 +287,7 @@ func sync_slot_state(slot_state: Dictionary, elapsed: float, animation_active: b
 	var incoming_id := _active_slot_audio_id(slot_state, feature_scene, timing)
 	if incoming_id.is_empty():
 		_stop_reel_loop()
+		_stop_one_shot_loops()
 		_animation_id = ""
 		_feature_scene_audio_id = ""
 		_feature_music_id = ""
@@ -299,6 +300,9 @@ func sync_slot_state(slot_state: Dictionary, elapsed: float, animation_active: b
 	var last_stop_time := float(reel_stop_times[reel_stop_times.size() - 1]) if not reel_stop_times.is_empty() else 0.0
 	var bonus_start_time := float(slot_state.get("slot_bonus_start_time", last_stop_time + SLOT_POST_REEL_BONUS_DELAY))
 	var spin_audio_active := animation_active or bool(timing.get("spin_active", false))
+	if feature_active:
+		_stop_reel_loop()
+		_stop_one_shot_loops()
 	if incoming_id != _animation_id:
 		_animation_id = incoming_id
 		_played_markers.clear()

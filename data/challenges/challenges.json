@@ -36,7 +36,7 @@
 		"completion_flag": "challenge_pacifist_complete",
 		"modifiers": {
 			"disable_cheat_actions": true,
-			"grand_casino_high_roller_net_delta": -75,
+			"grand_casino_high_roller_net_delta": -5,
 			"grand_casino_high_roller_max_heat_delta": 5
 		}
 	},
@@ -94,7 +94,7 @@
 				"baccarat_pack",
 				"video_poker_pack"
 			],
-			"grand_casino_high_roller_net_delta": 50
+			"grand_casino_high_roller_net_delta": 20
 		}
 	}
 ]

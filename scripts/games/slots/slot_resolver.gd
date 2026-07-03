@@ -8,22 +8,16 @@ const BuffaloScript := preload("res://scripts/games/slots/slot_family_buffalo.gd
 
 const SPIN_ACTION := "spin"
 const NUDGE_ACTION := "nudge"
+const BONUS_WATCHDOG_ACTION := "slot_bonus_watchdog"
 const HOST_APPLY_FLAG := "host_apply_result"
 const WIN_REVEAL_BEAT_SEC := 0.18
 const BUFFALO_BONUS_MAX_ANIMATION_MSEC := 10000
 const NUDGE_CHAIN_MAX_COINS := 5
 const NUDGE_CHAIN_PEEK_CYCLE_MSEC := 1200
 const NUDGE_CHAIN_FIRST_READY_PADDING_MSEC := 340
-const NUDGE_CHAIN_NEXT_READY_DELAY_MSEC := 360
 const NUDGE_CHAIN_PERFECT_MSEC := 75
 const NUDGE_CHAIN_GOOD_MSEC := 210
-const NUDGE_CHAIN_BASE_REWARD_PERCENT := 60
-const NUDGE_CHAIN_REWARD_STEP_PERCENT := 35
-const NUDGE_CHAIN_PERFECT_BONUS_PERCENT := 50
-const NUDGE_CHAIN_SPAWN_BASE_PERCENT := 62
-const NUDGE_CHAIN_SPAWN_STEP_DELTA_PERCENT := -6
-const NUDGE_CHAIN_SPAWN_PERFECT_BONUS_PERCENT := 8
-const NUDGE_CHAIN_SPAWN_MIN_PERCENT := 40
+const NUDGE_CHAIN_MISS_GRACE_MSEC := 140
 const NUDGE_CHAIN_EXTRA_ATTEMPTS := 1
 
 var pinball
@@ -46,8 +40,6 @@ func resolve_spin(machine: Dictionary, action_id: String, selected_bet: Dictiona
 	var bet_id := str(selected_bet.get("id", "bet_2"))
 	var is_cheat := normalized_action == NUDGE_ACTION
 	var had_offer := is_cheat and not _copy_dict(machine.get("last_nudge_offer", {})).is_empty()
-	if had_offer and str(_copy_dict(machine.get("last_nudge_offer", {})).get("type", "")) == "coin_chain":
-		return _resolve_nudge_chain_offer(machine, _copy_dict(machine.get("last_nudge_offer", {})), selected_bet, rng, definition, environment, normalize_machine, run_state, resolved_item_effects, ui_state)
 	if StateScript.active_bonus_incomplete(machine) and not had_offer:
 		return _blocked_result(machine, normalized_action, stake, environment, "Finish the active bonus first.")
 	var free_spin := int(machine.get("free_spins", 0)) > 0 and normalized_action == SPIN_ACTION
@@ -63,18 +55,12 @@ func resolve_spin(machine: Dictionary, action_id: String, selected_bet: Dictiona
 	var nudge_event: Dictionary = {}
 	if had_offer:
 		var offer: Dictionary = _copy_dict(machine.get("last_nudge_offer", {}))
-		if family_id == "buffalo":
-			var timed_nudge: Dictionary = _resolve_buffalo_nudge_offer(machine, family, offer, definition, ui_state)
-			entry = _copy_dict(timed_nudge.get("entry", {}))
-			grid = _copy_array(timed_nudge.get("grid", []))
-			nudge_event = _copy_dict(timed_nudge.get("tease_event", {}))
-		else:
-			entry = family.nudge_entry(machine, definition)
-			var shifted: Dictionary = family.apply_nudge_to_grid(machine, _copy_array(offer.get("grid", machine.get("last_grid", []))))
-			grid = _copy_array(shifted.get("grid", []))
-			nudge_event = _copy_dict(shifted.get("tease_event", {}))
+		var resolved_nudge: Dictionary = _resolve_reel_shift_nudge_offer(machine, family, offer, selected_bet, definition, ui_state)
+		entry = _copy_dict(resolved_nudge.get("entry", {}))
+		grid = _copy_array(resolved_nudge.get("grid", []))
+		stops = _copy_array(resolved_nudge.get("stops", []))
+		nudge_event = _copy_dict(resolved_nudge.get("tease_event", {}))
 		nudge_applied = true
-		stops = _copy_array(offer.get("stops", machine.get("reel_stops", [])))
 	else:
 		entry = _select_entry(machine, family, definition, rng, free_spin, resolved_item_effects)
 		entry = _apply_lucky_reel_grease_entry(machine, family, definition, rng, entry, normalized_action, stake_cost)
@@ -95,6 +81,11 @@ func resolve_spin(machine: Dictionary, action_id: String, selected_bet: Dictiona
 				int(machine.get("row_count", 1))
 			)
 		grid = family.force_outcome_symbols(machine, grid, entry, rng, definition)
+		if str(entry.get("classification", "")) == "near_miss":
+			var prepared_nudge: Dictionary = _prepare_near_miss_nudge_target(machine, family, entry, grid, stops, selected_bet, definition)
+			entry = _copy_dict(prepared_nudge.get("entry", entry))
+			grid = _copy_array(prepared_nudge.get("grid", grid))
+			stops = _copy_array(prepared_nudge.get("stops", stops))
 		if is_cheat and str(entry.get("classification", "")) == "near_miss":
 			var shifted_live: Dictionary = family.apply_nudge_to_grid(machine, grid)
 			grid = _copy_array(shifted_live.get("grid", grid))
@@ -170,6 +161,7 @@ func resolve_spin(machine: Dictionary, action_id: String, selected_bet: Dictiona
 	machine["last_classification"] = finalized_classification
 	machine["last_outcome_id"] = str(entry.get("id", classification))
 	if audit_metrics_mode:
+		machine["last_nudge_offer"] = _nudge_offer(machine, family, entry, grid, stops, classification, nudge_applied, selected_bet, definition, resolved_item_effects)
 		return {
 			"machine": machine,
 			"result": {
@@ -186,7 +178,7 @@ func resolve_spin(machine: Dictionary, action_id: String, selected_bet: Dictiona
 			},
 		}
 	machine["last_tease_events"] = _tease_events(classification, nudge_applied, nudge_event)
-	machine["last_nudge_offer"] = _nudge_offer(machine, entry, grid, stops, classification, nudge_applied, resolved_item_effects)
+	machine["last_nudge_offer"] = _nudge_offer(machine, family, entry, grid, stops, classification, nudge_applied, selected_bet, definition, resolved_item_effects)
 	var animation_plan: Dictionary = _animation_plan(machine, finalized_classification, active_bonus, win_attribution)
 	if feature_triggered:
 		active_bonus["animation_duration_msec"] = int(animation_plan.get("feature_duration_msec", 0))
@@ -204,6 +196,7 @@ func resolve_spin(machine: Dictionary, action_id: String, selected_bet: Dictiona
 
 func resolve_bonus_action(machine: Dictionary, action_id: String, rng: RngStream, definition: Dictionary, environment: Dictionary = {}, run_state: RunState = null, item_effects: Dictionary = {}, ui_state: Dictionary = {}) -> Dictionary:
 	machine = StateScript.normalize(machine)
+	var normalized_action := _normalize_bonus_action(action_id)
 	var active_before: Dictionary = _copy_dict(machine.get("active_bonus", {}))
 	if active_before.is_empty() or not bool(active_before.get("active", false)):
 		return {
@@ -219,9 +212,14 @@ func resolve_bonus_action(machine: Dictionary, action_id: String, rng: RngStream
 		}
 	var bonus_ui_state: Dictionary = ui_state.duplicate(true)
 	bonus_ui_state["slot_item_effects"] = item_effects.duplicate(true)
-	var step: Dictionary = family.step_bonus(machine, _normalize_bonus_action(action_id), rng, definition, bonus_ui_state)
+	var step: Dictionary = family.step_bonus(machine, normalized_action, rng, definition, bonus_ui_state)
 	_apply_bonus_step_display(machine, family_id, active_before, step)
+	var complete := bool(step.get("complete", false))
 	var award := maxi(0, int(step.get("award", 0)))
+	if complete and award <= 0:
+		award = _bonus_completion_award_from_step(step)
+		if award > 0:
+			step["award"] = award
 	var luck_payout_bonus := 0
 	var item_payout_bonus := 0
 	var first_bonus_item_award := 0
@@ -239,7 +237,6 @@ func resolve_bonus_action(machine: Dictionary, action_id: String, rng: RngStream
 			award += first_bonus_item_award
 			step["award"] = award
 			step["slot_first_bonus_item_award"] = first_bonus_item_award
-	var complete := bool(step.get("complete", false))
 	if complete:
 		machine["coin_out"] = maxi(0, int(machine.get("coin_out", 0))) + award
 		machine["last_bonus_complete"] = true
@@ -270,7 +267,7 @@ func resolve_bonus_action(machine: Dictionary, action_id: String, rng: RngStream
 		buckets[bet_id] = bucket
 		bonus_state["per_bet"] = buckets
 		machine["bonus_state"] = bonus_state
-		var completed_active: Dictionary = _copy_dict(step.get("active_bonus", {}))
+		var completed_active: Dictionary = _finalize_bonus_completion_state(machine, active_before, step, award)
 		if family_id == "buffalo" and int(completed_active.get("grand_prize_awarded", 0)) > 0:
 			buffalo.reset_grand_prize(machine, maxi(1, int(active_before.get("stake", 1))), bet_id)
 	var message := str(step.get("message", "Bonus advances."))
@@ -285,6 +282,7 @@ func resolve_bonus_action(machine: Dictionary, action_id: String, rng: RngStream
 		"action_id": action_id,
 		"mode": str(active_before.get("mode", "")),
 		"complete": complete,
+		"watchdog": normalized_action == BONUS_WATCHDOG_ACTION,
 		"payout": award,
 		"luck_payout_bonus": luck_payout_bonus,
 		"item_payout_bonus": item_payout_bonus,
@@ -319,9 +317,42 @@ func resolve_bonus_action(machine: Dictionary, action_id: String, rng: RngStream
 	result["slot_item_payout_bonus"] = item_payout_bonus
 	result["slot_first_bonus_item_award"] = first_bonus_item_award
 	result["slot_luck_win_chance_ignored"] = true
+	result["slot_bonus_watchdog"] = normalized_action == BONUS_WATCHDOG_ACTION
 	if complete:
 		result.merge(_result_win_fields(machine), true)
 	return {"machine": StateScript.normalize(machine), "result": result}
+
+
+func _bonus_completion_award_from_step(step: Dictionary) -> int:
+	var active: Dictionary = _copy_dict(step.get("active_bonus", {}))
+	return maxi(maxi(maxi(0, int(active.get("awarded", 0))), int(active.get("feature_total", 0))), int(active.get("pending_award", 0)))
+
+
+func _finalize_bonus_completion_state(machine: Dictionary, active_before: Dictionary, step: Dictionary, award: int) -> Dictionary:
+	var completed_active: Dictionary = _copy_dict(step.get("active_bonus", {}))
+	if completed_active.is_empty():
+		completed_active = active_before.duplicate(true)
+	var visual_total := maxi(maxi(maxi(0, award), int(completed_active.get("awarded", 0))), maxi(int(completed_active.get("feature_total", 0)), int(completed_active.get("pending_award", 0))))
+	completed_active["active"] = false
+	completed_active["complete"] = true
+	completed_active["visual_replay"] = false
+	completed_active["awarded"] = visual_total
+	completed_active["feature_total"] = visual_total
+	completed_active["pending_award"] = visual_total
+	completed_active["remaining_steps"] = 0
+	completed_active["balls_remaining"] = 0
+	completed_active["active_ball_count"] = 0
+	completed_active["launch_in_progress"] = false
+	completed_active["respins_remaining"] = 0
+	machine["last_bonus_replay"] = completed_active.duplicate(true)
+	machine["last_bonus_total"] = visual_total
+	machine["last_bonus_mode"] = str(completed_active.get("mode", active_before.get("mode", "")))
+	machine["active_bonus"] = {"active": false, "complete": true}
+	machine["slot_pending_feature_alert"] = false
+	machine.erase("slot_pending_feature_alert_msec")
+	machine.erase("slot_bonus_watchdog_since_msec")
+	step["active_bonus"] = completed_active.duplicate(true)
+	return completed_active
 
 
 func complete_active_bonus_for_metrics(machine: Dictionary, rng: RngStream, definition: Dictionary) -> int:
@@ -552,7 +583,7 @@ func _apply_slot_nudge_item_heat_state(machine: Dictionary, item_effects: Dictio
 				item_state["cold_quarters_charges"] = cold_charges
 			item_effects["slot_cold_quarters_remaining"] = cold_charges
 	var skill_outcome := str(nudge_event.get("skill_outcome", ""))
-	if bool(nudge_event.get("lucky_reel_grease_active", false)) and (skill_outcome == "miss" or skill_outcome == "clean_miss"):
+	if bool(nudge_event.get("lucky_reel_grease_active", false)) and (skill_outcome == "clean_miss" or skill_outcome == "blown"):
 		var heat_bonus := maxi(0, int(item_state.get("lucky_reel_grease_failed_nudge_heat_bonus", 14)))
 		item_effects["cheat_suspicion_delta"] = int(item_effects.get("cheat_suspicion_delta", 0)) + heat_bonus
 		item_effects["slot_grease_failed_nudge_heat_bonus_applied"] = heat_bonus
@@ -592,15 +623,15 @@ func _tease_events(classification: String, nudge_applied: bool, nudge_event: Dic
 	return []
 
 
-func _nudge_offer(machine: Dictionary, entry: Dictionary, grid: Array, stops: Array, classification: String, nudge_applied: bool, item_effects: Dictionary = {}) -> Dictionary:
+func _nudge_offer(machine: Dictionary, family, entry: Dictionary, grid: Array, stops: Array, classification: String, nudge_applied: bool, selected_bet: Dictionary = {}, definition: Dictionary = {}, item_effects: Dictionary = {}) -> Dictionary:
 	if nudge_applied:
 		return {}
 	if classification != "near_miss":
 		return {}
-	return _coin_chain_offer(machine, entry, grid, stops, classification, item_effects)
+	return _coin_chain_offer(machine, family, entry, grid, stops, classification, selected_bet, definition, item_effects)
 
 
-func _coin_chain_offer(machine: Dictionary, entry: Dictionary, grid: Array, stops: Array, classification: String, item_effects: Dictionary = {}) -> Dictionary:
+func _coin_chain_offer(machine: Dictionary, family, entry: Dictionary, grid: Array, stops: Array, classification: String, selected_bet: Dictionary = {}, definition: Dictionary = {}, item_effects: Dictionary = {}) -> Dictionary:
 	var row_count := maxi(1, int(machine.get("row_count", 1)))
 	var coin_count := clampi(row_count, 1, NUDGE_CHAIN_MAX_COINS)
 	var stop_times := _rough_stop_times_for_machine(machine)
@@ -635,6 +666,7 @@ func _coin_chain_offer(machine: Dictionary, entry: Dictionary, grid: Array, stop
 	var first_apex := first_ready + NUDGE_CHAIN_PEEK_CYCLE_MSEC / 2
 	var max_attempts := coin_count + NUDGE_CHAIN_EXTRA_ATTEMPTS
 	var duration := first_ready + NUDGE_CHAIN_PEEK_CYCLE_MSEC * (coin_count + NUDGE_CHAIN_EXTRA_ATTEMPTS + 1)
+	var nudge_target: Dictionary = _nudge_target_payload(machine, family, entry, grid, stops, selected_bet, definition)
 	return {
 		"type": "coin_chain",
 		"outcome_id": str(entry.get("id", "")),
@@ -665,142 +697,391 @@ func _coin_chain_offer(machine: Dictionary, entry: Dictionary, grid: Array, stop
 			"perfect": first_apex,
 			"end": first_apex + good_width,
 		},
-		"reward_base_percent": NUDGE_CHAIN_BASE_REWARD_PERCENT,
-		"reward_step_percent": NUDGE_CHAIN_REWARD_STEP_PERCENT,
-		"perfect_bonus_percent": NUDGE_CHAIN_PERFECT_BONUS_PERCENT,
-		"spawn_base_percent": NUDGE_CHAIN_SPAWN_BASE_PERCENT,
-		"spawn_step_delta_percent": NUDGE_CHAIN_SPAWN_STEP_DELTA_PERCENT,
-		"spawn_min_percent": NUDGE_CHAIN_SPAWN_MIN_PERCENT,
-		"spawn_perfect_bonus_percent": NUDGE_CHAIN_SPAWN_PERFECT_BONUS_PERCENT,
+		"nudge_target": nudge_target,
 		"lucky_reel_grease_active": bool(item_state.get("lucky_reel_grease_last_tease", false)) or bool(entry.get("lucky_reel_grease_active", false)),
 		"split_reel_note": split_note_armed,
 		"post_spin_available": true,
 	}
 
 
-func _resolve_nudge_chain_offer(machine: Dictionary, offer: Dictionary, selected_bet: Dictionary, rng: RngStream, definition: Dictionary, environment: Dictionary, normalize_machine: bool, run_state: RunState, item_effects: Dictionary, ui_state: Dictionary) -> Dictionary:
-	var stake := maxi(1, int(selected_bet.get("total_credits", 2)))
+func _prepare_near_miss_nudge_target(machine: Dictionary, family, entry: Dictionary, grid: Array, stops: Array, selected_bet: Dictionary, definition: Dictionary) -> Dictionary:
+	var prepared_entry: Dictionary = entry.duplicate(true)
+	var prepared_grid: Array = MathScript.clone_grid(grid)
+	var prepared_stops: Array = _normalized_stops(stops, maxi(1, int(machine.get("reel_count", 3))))
+	var context: Dictionary = _nudge_context_from_entry(machine, prepared_entry)
+	if context.is_empty():
+		return {"entry": prepared_entry, "grid": prepared_grid, "stops": prepared_stops}
+	var missing_cells: Array = _copy_array(context.get("missing_cells", []))
+	if missing_cells.is_empty():
+		missing_cells = _copy_array(context.get("skill_line_cells", []))
+	var symbol := str(context.get("symbol", ""))
+	if symbol.is_empty():
+		return {"entry": prepared_entry, "grid": prepared_grid, "stops": prepared_stops}
+	var reel_count := maxi(1, int(machine.get("reel_count", 3)))
+	var row_count := maxi(1, int(machine.get("row_count", 1)))
+	var strips: Array = _copy_array(machine.get("reel_strips", []))
+	for cell_value in missing_cells:
+		var cell: Dictionary = _copy_dict(cell_value)
+		var reel_index := clampi(int(cell.get("reel", 0)), 0, reel_count - 1)
+		var row_index := clampi(int(cell.get("row", 0)), 0, row_count - 1)
+		var strip: Array = _reel_strip(strips, reel_index)
+		if strip.is_empty():
+			continue
+		for direction_value in [1, -1]:
+			var direction := int(direction_value)
+			for symbol_index in range(strip.size()):
+				if str(strip[symbol_index]) != symbol:
+					continue
+				var target_stop := posmod(symbol_index - row_index, strip.size())
+				var current_stop := posmod(target_stop - direction, strip.size())
+				if current_stop == target_stop:
+					continue
+				var candidate_stops: Array = prepared_stops.duplicate(true)
+				candidate_stops[reel_index] = current_stop
+				var candidate_grid: Array = MathScript.project_grid(strips, candidate_stops, reel_count, row_count)
+				_preserve_nudge_context_cells(candidate_grid, prepared_grid, context, reel_index, row_index)
+				if _cell_symbol(candidate_grid, reel_index, row_index) == symbol:
+					continue
+				_scrub_unprotected_nudge_symbols(candidate_grid, machine, context, reel_index, row_index)
+				var base_eval: Dictionary = _evaluate_nudge_grid(machine, family, candidate_grid, selected_bet, definition)
+				if bool(base_eval.get("feature_triggered", false)) or int(base_eval.get("payout", 0)) > 0:
+					continue
+				prepared_entry["nudge_target"] = {
+					"reel": reel_index,
+					"row": row_index,
+					"symbol": symbol,
+					"direction": direction,
+					"current_stop": current_stop,
+					"target_stop": target_stop,
+				}
+				return {"entry": prepared_entry, "grid": candidate_grid, "stops": candidate_stops}
+	return {"entry": prepared_entry, "grid": prepared_grid, "stops": prepared_stops}
+
+
+func _nudge_context_from_entry(machine: Dictionary, entry: Dictionary) -> Dictionary:
+	var placement: Dictionary = _copy_dict(entry.get("forced_placement", {}))
+	var symbol := str(placement.get("symbol", ""))
+	if symbol.is_empty():
+		symbol = "GOLD_TOKEN" if str(machine.get("type_id", "")) == "buffalo" else "PINBALL"
+	var present_cells: Array = _copy_array(placement.get("cells", []))
+	var skill_line_cells: Array = _copy_array(placement.get("skill_line_cells", []))
+	if skill_line_cells.is_empty() and not present_cells.is_empty():
+		skill_line_cells = _infer_nudge_skill_line(machine, placement, present_cells)
+	if skill_line_cells.is_empty():
+		return {}
+	var present_lookup: Dictionary = _cell_lookup_for_nudge(present_cells)
+	var missing_cells: Array = []
+	for cell_value in skill_line_cells:
+		var cell: Dictionary = _copy_dict(cell_value)
+		if not bool(present_lookup.get(_nudge_cell_key(int(cell.get("reel", -1)), int(cell.get("row", -1))), false)):
+			missing_cells.append(cell)
+	return {
+		"symbol": symbol,
+		"present_cells": present_cells,
+		"skill_line_cells": skill_line_cells,
+		"missing_cells": missing_cells,
+	}
+
+
+func _infer_nudge_skill_line(machine: Dictionary, placement: Dictionary, present_cells: Array) -> Array:
+	var reel_count := maxi(1, int(machine.get("reel_count", 3)))
+	var row_count := maxi(1, int(machine.get("row_count", 1)))
+	var sorted_cells: Array = _cells_sorted_by_reel(present_cells)
+	var first_cell: Dictionary = _copy_dict(sorted_cells[0]) if not sorted_cells.is_empty() else {}
+	var start_reel := clampi(int(first_cell.get("reel", 0)), 0, reel_count - 1)
+	var line_index := int(placement.get("line_index", int(first_cell.get("row", row_count / 2))))
+	var target_count := mini(3, reel_count - start_reel)
+	if target_count < mini(3, reel_count):
+		start_reel = maxi(0, reel_count - mini(3, reel_count))
+		target_count = mini(3, reel_count)
+	return MathScript.payline_cells_from(reel_count, row_count, line_index, start_reel, target_count)
+
+
+func _preserve_nudge_context_cells(target_grid: Array, source_grid: Array, context: Dictionary, target_reel: int, target_row: int) -> void:
+	var symbol := str(context.get("symbol", ""))
+	var present_lookup: Dictionary = {}
+	for cell_value in _copy_array(context.get("present_cells", [])):
+		var cell: Dictionary = _copy_dict(cell_value)
+		var reel_index := int(cell.get("reel", -1))
+		var row_index := int(cell.get("row", -1))
+		if reel_index == target_reel and row_index == target_row:
+			continue
+		present_lookup[_nudge_cell_key(reel_index, row_index)] = true
+		MathScript.set_cell(target_grid, reel_index, row_index, _cell_symbol(source_grid, reel_index, row_index))
+	if symbol.is_empty():
+		return
+	for cell_value in _copy_array(context.get("skill_line_cells", [])):
+		var cell: Dictionary = _copy_dict(cell_value)
+		var reel_index := int(cell.get("reel", -1))
+		var row_index := int(cell.get("row", -1))
+		if reel_index == target_reel and row_index == target_row:
+			continue
+		if bool(present_lookup.get(_nudge_cell_key(reel_index, row_index), false)):
+			continue
+		MathScript.set_cell(target_grid, reel_index, row_index, symbol)
+
+
+func _scrub_unprotected_nudge_symbols(grid: Array, machine: Dictionary, context: Dictionary, target_reel: int, target_row: int) -> void:
+	var symbol := str(context.get("symbol", ""))
+	if symbol.is_empty():
+		return
+	var protected: Dictionary = {}
+	for cell_value in _copy_array(context.get("skill_line_cells", [])):
+		var cell: Dictionary = _copy_dict(cell_value)
+		var reel_index := int(cell.get("reel", -1))
+		var row_index := int(cell.get("row", -1))
+		if reel_index == target_reel and row_index == target_row:
+			continue
+		protected[_nudge_cell_key(reel_index, row_index)] = true
+	for cell_value in _copy_array(context.get("present_cells", [])):
+		var cell: Dictionary = _copy_dict(cell_value)
+		protected[_nudge_cell_key(int(cell.get("reel", -1)), int(cell.get("row", -1)))] = true
+	for reel_index in range(grid.size()):
+		if typeof(grid[reel_index]) != TYPE_ARRAY:
+			continue
+		var column: Array = grid[reel_index] as Array
+		for row_index in range(column.size()):
+			if str(column[row_index]) == symbol and not bool(protected.get(_nudge_cell_key(reel_index, row_index), false)):
+				column[row_index] = _fallback_nudge_symbol(machine, reel_index, row_index, symbol)
+		grid[reel_index] = column
+
+
+func _fallback_nudge_symbol(machine: Dictionary, reel_index: int, row_index: int, avoid_symbol: String) -> String:
+	var family_id := str(machine.get("type_id", "pinball"))
+	var symbols := ["BUMPER", "CHERRY", "BALL", "BAR", "SPINNER", "7"]
+	if family_id == "buffalo":
+		symbols = ["A", "K", "Q", "J", "10", "WOLF", "ELK"]
+	for offset in range(symbols.size()):
+		var symbol := str(symbols[posmod(reel_index * 3 + row_index + offset, symbols.size())])
+		if symbol != avoid_symbol:
+			return symbol
+	return "BLANK"
+
+
+func _nudge_target_payload(machine: Dictionary, family, entry: Dictionary, grid: Array, stops: Array, selected_bet: Dictionary, definition: Dictionary) -> Dictionary:
+	var target: Dictionary = _copy_dict(entry.get("nudge_target", {}))
+	if target.is_empty():
+		return {}
+	var reel_count := maxi(1, int(machine.get("reel_count", 3)))
+	var reel_index := clampi(int(target.get("reel", 0)), 0, reel_count - 1)
+	var row_index := clampi(int(target.get("row", 0)), 0, maxi(0, int(machine.get("row_count", 1)) - 1))
+	var direction := int(target.get("direction", 1))
+	var strips: Array = _copy_array(machine.get("reel_strips", []))
+	var strip: Array = _reel_strip(strips, reel_index)
+	if strip.is_empty():
+		return {}
+	var original_stops: Array = _normalized_stops(stops, reel_count)
+	var current_stop := clampi(int(target.get("current_stop", original_stops[reel_index])), 0, strip.size() - 1)
+	original_stops[reel_index] = current_stop
+	var target_stop := posmod(int(target.get("target_stop", current_stop + direction)), strip.size())
+	var good_stop := posmod(target_stop + direction, strip.size())
+	var perfect_grid: Array = _grid_with_reel_stop(machine, grid, reel_index, target_stop)
+	var symbol := str(target.get("symbol", _cell_symbol(perfect_grid, reel_index, row_index)))
+	if not symbol.is_empty() and _cell_symbol(perfect_grid, reel_index, row_index) != symbol:
+		return {}
+	var good_grid: Array = _grid_with_reel_stop(machine, grid, reel_index, good_stop)
+	var perfect_stops: Array = original_stops.duplicate(true)
+	perfect_stops[reel_index] = target_stop
+	var good_stops: Array = original_stops.duplicate(true)
+	good_stops[reel_index] = good_stop
+	var perfect_eval: Dictionary = _evaluate_nudge_grid(machine, family, perfect_grid, selected_bet, definition)
+	var good_eval: Dictionary = _evaluate_nudge_grid(machine, family, good_grid, selected_bet, definition)
+	return {
+		"reel": reel_index,
+		"row": row_index,
+		"symbol": symbol,
+		"direction": direction,
+		"current_stop": current_stop,
+		"strip_size": strip.size(),
+		"perfect": _nudge_candidate_payload(perfect_eval, perfect_grid, perfect_stops, reel_index, current_stop, target_stop, strip.size()),
+		"good": _nudge_candidate_payload(good_eval, good_grid, good_stops, reel_index, current_stop, good_stop, strip.size()),
+	}
+
+
+func _nudge_candidate_payload(evaluation: Dictionary, grid: Array, stops: Array, reel_index: int, old_stop: int, new_stop: int, strip_size: int) -> Dictionary:
+	return {
+		"entry": _copy_dict(evaluation.get("entry", {})),
+		"grid": MathScript.clone_grid(grid),
+		"stops": stops.duplicate(true),
+		"classification": str(evaluation.get("classification", "zero_loss")),
+		"feature_triggered": bool(evaluation.get("feature_triggered", false)),
+		"payout": maxi(0, int(evaluation.get("payout", 0))),
+		"reel": reel_index,
+		"old_stop": old_stop,
+		"new_stop": new_stop,
+		"shift": _signed_stop_delta(old_stop, new_stop, strip_size),
+	}
+
+
+func _resolve_reel_shift_nudge_offer(machine: Dictionary, family, offer: Dictionary, selected_bet: Dictionary, definition: Dictionary, ui_state: Dictionary) -> Dictionary:
 	var coins: Array = _copy_array(offer.get("coins", []))
 	var active_index := clampi(int(offer.get("active_index", 0)), 0, maxi(0, coins.size() - 1))
-	if coins.is_empty() or active_index >= coins.size():
-		machine["last_nudge_offer"] = {}
-		return {
-			"machine": StateScript.normalize(machine) if normalize_machine else machine,
-			"result": _nudge_chain_result(machine, {}, "clean_miss", 0, 0, 0, 0, environment, {}, {"message": "No coin chain is active."}),
-		}
-	var active_coin: Dictionary = _copy_dict(coins[active_index])
+	var active_coin: Dictionary = _copy_dict(coins[active_index]) if active_index < coins.size() else {}
 	var skill: Dictionary = _nudge_chain_skill_result(offer, active_coin, ui_state)
-	var grade := str(skill.get("grade", "clean_miss"))
-	var success := grade == "perfect" or grade == "good"
-	var input_msec := int(skill.get("input_msec", -1))
-	var attempts := maxi(0, int(offer.get("attempt_count", 0))) + 1
-	var banked_before := maxi(0, int(offer.get("banked_payout", 0)))
-	var award := _nudge_chain_collect_award(offer, stake, active_index, grade) if success else 0
-	var event := {
-		"type": "nudge_coin_chain",
+	var grade := str(skill.get("grade", "blown"))
+	var original_grid: Array = MathScript.clone_grid(_copy_array(offer.get("grid", machine.get("last_grid", []))))
+	var original_stops: Array = _normalized_stops(_copy_array(offer.get("stops", machine.get("reel_stops", []))), maxi(1, int(machine.get("reel_count", 3))))
+	var target: Dictionary = _copy_dict(offer.get("nudge_target", {}))
+	var candidate: Dictionary = {}
+	if grade == "perfect":
+		candidate = _copy_dict(target.get("perfect", {}))
+	elif grade == "good":
+		candidate = _copy_dict(target.get("good", {}))
+	if candidate.is_empty():
+		candidate = _nudge_candidate_payload(
+			_evaluate_nudge_grid(machine, family, original_grid, selected_bet, definition),
+			original_grid,
+			original_stops,
+			int(target.get("reel", 0)),
+			int(target.get("current_stop", 0)),
+			int(target.get("current_stop", 0)),
+			maxi(1, int(target.get("strip_size", 1)))
+		)
+	var entry: Dictionary = _copy_dict(candidate.get("entry", {}))
+	if entry.is_empty():
+		entry = _entry_for_classification(machine, family, definition, str(candidate.get("classification", offer.get("classification", "near_miss"))))
+	var event: Dictionary = {
+		"type": "nudge_shift",
 		"family": str(offer.get("family", machine.get("type_id", ""))),
 		"skill_outcome": grade,
 		"chain_grade": grade,
-		"input_msec": input_msec,
+		"input_msec": int(skill.get("input_msec", -1)),
 		"perfect_msec": int(skill.get("perfect_msec", -1)),
 		"distance_msec": int(skill.get("distance_msec", 9999)),
-		"coin_index": active_index,
-		"row": int(active_coin.get("row", active_index)),
-		"award": award,
-		"banked_before": banked_before,
+		"reel_index": int(candidate.get("reel", target.get("reel", 0))),
+		"row": int(target.get("row", active_coin.get("row", active_index))),
+		"shift": int(candidate.get("shift", 0)) if grade == "perfect" or grade == "good" else 0,
+		"old_stop": int(candidate.get("old_stop", target.get("current_stop", 0))),
+		"new_stop": int(candidate.get("new_stop", target.get("current_stop", 0))),
+		"target_symbol": str(target.get("symbol", "")),
+		"converted_to": str(candidate.get("classification", "near_miss")),
+		"normal_payout": maxi(0, int(candidate.get("payout", 0))),
+		"feature_triggered": bool(candidate.get("feature_triggered", false)),
 		"lucky_reel_grease_active": bool(offer.get("lucky_reel_grease_active", false)),
 		"split_reel_note": bool(offer.get("split_reel_note", false)),
 	}
-	var next_offer: Dictionary = {}
-	var chain_complete := false
-	var chain_break := false
-	if success:
-		active_coin["collected"] = true
-		active_coin["grade"] = grade
-		active_coin["award"] = award
-		active_coin["input_msec"] = input_msec
-		coins[active_index] = active_coin
-		var collected: Array = _copy_array(offer.get("collected", []))
-		collected.append({
-			"index": active_index,
-			"row": int(active_coin.get("row", active_index)),
-			"grade": grade,
-			"award": award,
-			"input_msec": input_msec,
-		})
-		var next_index := active_index + 1
-		if next_index < coins.size() and attempts < maxi(1, int(offer.get("max_attempts", coins.size() + 1))):
-			var chance := _nudge_chain_spawn_chance(offer, collected.size(), grade)
-			var spawned := rng.randi_range(1, 100) <= chance
-			var next_coin: Dictionary = _copy_dict(coins[next_index])
-			var cycle := maxi(1, int(offer.get("peek_cycle_msec", NUDGE_CHAIN_PEEK_CYCLE_MSEC)))
-			var next_ready := maxi(0, input_msec - cycle / 2) if spawned else maxi(0, input_msec + NUDGE_CHAIN_NEXT_READY_DELAY_MSEC)
-			next_coin["ready_msec"] = next_ready
-			next_coin["spawned"] = spawned
-			next_coin["spawn_chance_percent"] = chance
-			coins[next_index] = next_coin
-			next_offer = offer.duplicate(true)
-			next_offer["coins"] = coins
-			next_offer["active_index"] = next_index
-			next_offer["attempt_count"] = attempts
-			next_offer["collected"] = collected
-			next_offer["collected_count"] = collected.size()
-			next_offer["banked_payout"] = banked_before + award
-			next_offer["last_grade"] = grade
-			next_offer["last_input_msec"] = input_msec
-			next_offer["last_award"] = award
-			next_offer["last_spawned"] = spawned
-			next_offer["last_spawn_chance_percent"] = chance
-			next_offer["skill_window_msec"] = _nudge_chain_window_for_coin(next_offer, next_coin)
-			event["chain_continues"] = true
-			event["next_coin_index"] = next_index
-			event["next_spawned"] = spawned
-			event["next_spawn_chance_percent"] = chance
-		else:
-			chain_complete = true
-			event["chain_complete"] = true
+	return {
+		"entry": entry,
+		"grid": _copy_array(candidate.get("grid", original_grid)),
+		"stops": _copy_array(candidate.get("stops", original_stops)),
+		"tease_event": event,
+	}
+
+
+func _evaluate_nudge_grid(machine: Dictionary, family, grid: Array, selected_bet: Dictionary, definition: Dictionary) -> Dictionary:
+	var family_id := str(machine.get("type_id", "pinball"))
+	var stake := maxi(1, int(selected_bet.get("total_credits", 2)))
+	var feature_classification := _feature_classification_for_grid(machine, family_id, grid, definition)
+	if not feature_classification.is_empty():
+		var feature_entry: Dictionary = _entry_for_classification(machine, family, definition, feature_classification)
+		feature_entry["forced_placement"] = _feature_placement_for_grid(machine, family_id, grid, feature_classification, definition)
+		return {
+			"classification": feature_classification,
+			"feature_triggered": true,
+			"payout": 0,
+			"entry": feature_entry,
+		}
+	var line_entry: Dictionary = _entry_for_classification(machine, family, definition, "true_win")
+	var payout := _grid_payout_for_family(family, grid, stake, 0, machine, definition, line_entry)
+	if payout > 0:
+		return {
+			"classification": "true_win",
+			"feature_triggered": false,
+			"payout": payout,
+			"entry": line_entry,
+		}
+	var miss_entry: Dictionary = _entry_for_classification(machine, family, definition, "near_miss")
+	return {
+		"classification": "near_miss",
+		"feature_triggered": false,
+		"payout": 0,
+		"entry": miss_entry,
+	}
+
+
+func _feature_classification_for_grid(machine: Dictionary, family_id: String, grid: Array, definition: Dictionary) -> String:
+	if family_id == "pinball":
+		return "bonus" if MathScript.count_symbol(grid, "PINBALL") >= 3 else ""
+	var gold_count := MathScript.count_symbol(grid, "GOLD_TOKEN")
+	if gold_count <= 0:
+		return ""
+	var config: Dictionary = _copy_dict(definition.get("slot_buffalo_config", {}))
+	var hold_config: Dictionary = _copy_dict(config.get("hold_and_spin", {}))
+	var hold_trigger := clampi(int(hold_config.get("lock_trigger_count", 8)), 3, maxi(3, int(machine.get("reel_count", 3)) * int(machine.get("row_count", 1))))
+	if str(machine.get("format_id", "")) != "classic_3_reel" and gold_count >= hold_trigger:
+		return "hold_and_spin"
+	if gold_count >= 6 and MathScript.count_symbol(grid, "BUFFALO") > 0:
+		return "monster_feature"
+	if gold_count >= 3:
+		return "free_games"
+	return ""
+
+
+func _feature_placement_for_grid(machine: Dictionary, family_id: String, grid: Array, classification: String, _definition: Dictionary) -> Dictionary:
+	var symbol := "GOLD_TOKEN" if family_id == "buffalo" else "PINBALL"
+	var cells: Array = _symbol_cells(grid, symbol)
+	if family_id == "buffalo" and classification == "monster_feature":
+		cells = cells.slice(0, mini(6, cells.size()))
+	elif classification == "hold_and_spin":
+		cells = cells.slice(0, mini(maxi(3, int(machine.get("reel_count", 3))), cells.size()))
 	else:
-		chain_break = true
-		event["chain_break"] = true
-	var base_bankroll_delta := award
-	_apply_slot_nudge_item_heat_state(machine, item_effects, event)
-	var cross_effects := _slot_resolve_cross_effects(award, stake, 0, base_bankroll_delta, true, NUDGE_ACTION, run_state, definition, environment, machine, item_effects)
-	var luck_payout_bonus := int(cross_effects.get("luck_payout_bonus", 0))
-	var item_payout_bonus := int(cross_effects.get("item_payout_bonus", 0))
-	var immediate_payout := award
-	if immediate_payout > 0 and luck_payout_bonus + item_payout_bonus > 0:
-		immediate_payout = maxi(1, immediate_payout + luck_payout_bonus + item_payout_bonus)
-	var bankroll_delta := immediate_payout
-	var suspicion_delta := int(cross_effects.get("suspicion_delta", 0))
-	var security_bankroll_delta := int(cross_effects.get("security_bankroll_delta", 0))
-	if security_bankroll_delta != 0:
-		bankroll_delta += security_bankroll_delta
-	_capture_previous_result(machine)
-	machine["coin_out"] = maxi(0, int(machine.get("coin_out", 0))) + immediate_payout
-	machine["last_payout"] = immediate_payout
-	machine["last_net"] = bankroll_delta
-	machine["last_stake_cost"] = 0
-	machine["last_line_payout"] = 0
-	machine["last_classification"] = "nudge_chain_collect" if success else "nudge_chain_break"
-	machine["last_outcome_id"] = "nudge_chain_%s" % grade
-	machine["last_tease_events"] = [event]
-	machine["last_nudge_offer"] = next_offer
-	_apply_win_attribution(machine, {
-		"cells": [],
-		"symbol": "COIN",
-		"count": active_index + 1 if success else active_index,
-		"kind": "nudge_chain",
-		"line_index": int(active_coin.get("row", active_index)),
-		"multiplier": active_index + 1,
-		"amount": immediate_payout,
-		"reason": "Coin chain %s" % grade.replace("_", " "),
-		"tier": "line" if success else "none",
-	})
-	var result := _nudge_chain_result(machine, event, grade, stake, immediate_payout, bankroll_delta, suspicion_delta, environment, next_offer, cross_effects)
-	result["slot_nudge_chain_complete"] = chain_complete
-	result["slot_nudge_chain_break"] = chain_break
-	result["slot_nudge_chain_active"] = not next_offer.is_empty()
-	return {"machine": StateScript.normalize(machine) if normalize_machine else machine, "result": result}
+		cells = cells.slice(0, mini(3, cells.size()))
+	return {
+		"kind": "feature",
+		"symbol": symbol,
+		"cells": cells,
+		"line_index": -1,
+	}
+
+
+func _grid_with_reel_stop(machine: Dictionary, base_grid: Array, reel_index: int, new_stop: int) -> Array:
+	var result: Array = MathScript.clone_grid(base_grid)
+	var strips: Array = _copy_array(machine.get("reel_strips", []))
+	var strip: Array = _reel_strip(strips, reel_index)
+	if strip.is_empty() or reel_index < 0 or reel_index >= result.size():
+		return result
+	var row_count := maxi(1, int(machine.get("row_count", 1)))
+	var column: Array = []
+	for row_index in range(row_count):
+		column.append(str(strip[posmod(new_stop + row_index, strip.size())]))
+	result[reel_index] = column
+	return result
+
+
+func _normalized_stops(stops: Array, reel_count: int) -> Array:
+	var result: Array = []
+	for reel_index in range(maxi(1, reel_count)):
+		result.append(int(stops[reel_index]) if reel_index < stops.size() else 0)
+	return result
+
+
+func _reel_strip(strips: Array, reel_index: int) -> Array:
+	if reel_index < 0 or reel_index >= strips.size() or typeof(strips[reel_index]) != TYPE_ARRAY:
+		return []
+	var result: Array = []
+	var strip: Array = strips[reel_index] as Array
+	for symbol_value in strip:
+		result.append(str(symbol_value))
+	return result
+
+
+func _cell_lookup_for_nudge(cells: Array) -> Dictionary:
+	var result: Dictionary = {}
+	for cell_value in cells:
+		var cell: Dictionary = _copy_dict(cell_value)
+		result[_nudge_cell_key(int(cell.get("reel", -1)), int(cell.get("row", -1)))] = true
+	return result
+
+
+func _nudge_cell_key(reel_index: int, row_index: int) -> String:
+	return "%d:%d" % [reel_index, row_index]
+
+
+func _signed_stop_delta(old_stop: int, new_stop: int, strip_size: int) -> int:
+	var size := maxi(1, strip_size)
+	var forward := posmod(new_stop - old_stop, size)
+	var backward := posmod(old_stop - new_stop, size)
+	return forward if forward <= backward else -backward
 
 
 func _nudge_chain_skill_result(offer: Dictionary, coin: Dictionary, ui_state: Dictionary) -> Dictionary:
@@ -817,8 +1098,10 @@ func _nudge_chain_skill_result(offer: Dictionary, coin: Dictionary, ui_state: Di
 		var window_end := int(published_window.get("end", ready_msec + cycle))
 		var window_perfect := int(published_window.get("perfect", ready_msec + cycle / 2))
 		if input_msec < window_start or input_msec > window_end:
+			var miss_grace := maxi(0, int(offer.get("skill_miss_grace_msec", NUDGE_CHAIN_MISS_GRACE_MSEC)))
+			var near_miss := input_msec >= window_start - miss_grace and input_msec <= window_end + miss_grace
 			return {
-				"grade": "clean_miss",
+				"grade": "miss" if near_miss else "blown",
 				"input_msec": input_msec,
 				"perfect_msec": window_perfect,
 				"distance_msec": absi(input_msec - window_perfect),
@@ -830,7 +1113,7 @@ func _nudge_chain_skill_result(offer: Dictionary, coin: Dictionary, ui_state: Di
 	if local >= 0 and cycle_elapsed > apex_offset + cycle / 2:
 		perfect_msec += cycle
 	var distance := absi(input_msec - perfect_msec)
-	var grade := "clean_miss"
+	var grade := "miss"
 	if local >= 0 and distance <= perfect_width:
 		grade = "perfect"
 	elif local >= 0 and distance <= good_width:
@@ -856,260 +1139,6 @@ func _nudge_chain_input_msec(ui_state: Dictionary) -> int:
 	return -1
 
 
-func _nudge_chain_window_for_coin(offer: Dictionary, coin: Dictionary) -> Dictionary:
-	var ready_msec := maxi(0, int(coin.get("ready_msec", 0)))
-	var cycle := maxi(1, int(offer.get("peek_cycle_msec", NUDGE_CHAIN_PEEK_CYCLE_MSEC)))
-	var good_width := maxi(1, int(offer.get("skill_good_msec", offer.get("skill_close_msec", NUDGE_CHAIN_GOOD_MSEC))))
-	var perfect_msec := ready_msec + cycle / 2
-	return {
-		"start": perfect_msec - good_width,
-		"perfect": perfect_msec,
-		"end": perfect_msec + good_width,
-	}
-
-
-func _nudge_chain_collect_award(offer: Dictionary, stake: int, active_index: int, grade: String) -> int:
-	if grade != "perfect" and grade != "good":
-		return 0
-	var base_percent := maxi(1, int(offer.get("reward_base_percent", NUDGE_CHAIN_BASE_REWARD_PERCENT)))
-	var step_percent := maxi(0, int(offer.get("reward_step_percent", NUDGE_CHAIN_REWARD_STEP_PERCENT)))
-	var percent := base_percent + step_percent * maxi(0, active_index)
-	if grade == "perfect":
-		percent += maxi(0, int(offer.get("perfect_bonus_percent", NUDGE_CHAIN_PERFECT_BONUS_PERCENT)))
-	return maxi(1, int(round(float(maxi(1, stake)) * float(percent) / 100.0)))
-
-
-func _nudge_chain_spawn_chance(offer: Dictionary, collected_count: int, grade: String) -> int:
-	var chance := int(offer.get("spawn_base_percent", NUDGE_CHAIN_SPAWN_BASE_PERCENT))
-	chance += int(offer.get("spawn_step_delta_percent", NUDGE_CHAIN_SPAWN_STEP_DELTA_PERCENT)) * maxi(0, collected_count - 1)
-	if grade == "perfect":
-		chance += int(offer.get("spawn_perfect_bonus_percent", NUDGE_CHAIN_SPAWN_PERFECT_BONUS_PERCENT))
-	return clampi(chance, maxi(0, int(offer.get("spawn_min_percent", NUDGE_CHAIN_SPAWN_MIN_PERCENT))), 95)
-
-
-func _nudge_chain_result(machine: Dictionary, event: Dictionary, grade: String, stake: int, payout: int, bankroll_delta: int, suspicion_delta: int, environment: Dictionary, next_offer: Dictionary, cross_effects: Dictionary = {}) -> Dictionary:
-	var active_index := int(event.get("coin_index", -1))
-	var collected_total := int(next_offer.get("collected_count", active_index + 1 if payout > 0 else active_index))
-	var banked := int(next_offer.get("banked_payout", int(event.get("banked_before", 0)) + payout))
-	var skill_accuracy := _nudge_skill_accuracy(grade)
-	var base_suspicion_delta := maxi(0, int(cross_effects.get("base_suspicion_delta", suspicion_delta)))
-	var message := ""
-	if grade == "perfect":
-		message = "Perfect coin collect. Chain %d banks $%d." % [collected_total, banked]
-	elif grade == "good":
-		message = "Good coin collect. Chain %d banks $%d." % [collected_total, banked]
-	else:
-		message = "Clean miss. Banked coin chain holds at $%d." % int(event.get("banked_before", 0))
-	var grease_heat_bonus := int(cross_effects.get("slot_grease_failed_nudge_heat_bonus_applied", 0))
-	if grease_heat_bonus > 0:
-		message = "%s Grease makes the blown nudge draw extra heat." % message
-	var security_message := str(cross_effects.get("security_message", ""))
-	if not security_message.is_empty():
-		message = "%s %s" % [message, security_message]
-	var deltas := GameModule.empty_result_deltas()
-	deltas["bankroll_delta"] = bankroll_delta
-	deltas["suspicion_delta"] = suspicion_delta
-	deltas["messages"] = [message]
-	deltas["ended"] = bool(cross_effects.get("security_ended", false))
-	deltas["story_log"] = [{
-		"type": "game_action",
-		"slot_event": "slot_nudge_chain",
-		"game_id": "slot",
-		"action_id": NUDGE_ACTION,
-		"family": str(machine.get("type_id", "")),
-		"format_id": str(machine.get("format_id", "")),
-		"skill_outcome": grade,
-		"skill_grade": grade,
-		"skill_accuracy": skill_accuracy,
-		"skill_margin_msec": 0,
-		"base_suspicion_delta": base_suspicion_delta,
-		"coin_index": active_index,
-		"chain_collected": collected_total,
-		"banked_payout": banked,
-		"payout": payout,
-		"bankroll_delta": bankroll_delta,
-		"suspicion_delta": suspicion_delta,
-		"slot_grease_failed_nudge_heat_bonus": grease_heat_bonus,
-		"pit_boss_watched": bool(cross_effects.get("pit_boss_watched", false)),
-		"pit_boss_heat_bonus": int(cross_effects.get("pit_boss_heat_bonus", 0)),
-		"environment_id": str(environment.get("id", "")),
-	}]
-	var result := GameModule.build_action_result({
-		"ok": true,
-		"type": "game_action",
-		"source_id": "slot",
-		"game_id": "slot",
-		"action_id": NUDGE_ACTION,
-		"action_kind": "cheat",
-		"stake": stake,
-		"deltas": deltas,
-		"won": payout > 0,
-		"environment_id": str(environment.get("id", "")),
-		"message": message,
-		"skill_outcome": grade,
-		"skill_grade": grade,
-		"skill_accuracy": skill_accuracy,
-		"skill_margin_msec": 0,
-		"base_suspicion_delta": base_suspicion_delta,
-		"skill_security_pressure_checked": true,
-		"security_message": security_message,
-	})
-	result[HOST_APPLY_FLAG] = true
-	result["slot_outcome_id"] = str(machine.get("last_outcome_id", "nudge_chain"))
-	result["slot_classification"] = str(machine.get("last_classification", "nudge_chain_break"))
-	result["slot_payout"] = payout
-	result["slot_stake"] = stake
-	result["slot_stake_cost"] = 0
-	result["slot_net"] = bankroll_delta
-	result["slot_nudge_applied"] = true
-	result["slot_nudge_skill_outcome"] = grade
-	result["slot_nudge_chain_result"] = event.duplicate(true)
-	result["slot_nudge_chain_collected"] = collected_total
-	result["slot_nudge_chain_banked_payout"] = banked
-	result["slot_nudge_chain_next_offer"] = next_offer.duplicate(true)
-	result["slot_feature_triggered"] = false
-	result["slot_active_bonus"] = _copy_dict(machine.get("active_bonus", {}))
-	result["slot_grid"] = _copy_array(machine.get("last_grid", []))
-	result["slot_reel_stops"] = _copy_array(machine.get("reel_stops", []))
-	result["slot_animation_plan"] = _copy_dict(machine.get("slot_animation_plan", {}))
-	result["slot_animation_id"] = str(machine.get("slot_animation_id", ""))
-	result["slot_animation_duration_msec"] = int(machine.get("slot_animation_duration_msec", 0))
-	result["slot_reel_stop_times"] = _copy_array(machine.get("slot_reel_stop_times", []))
-	result["slot_reel_timeline"] = _copy_array(machine.get("slot_reel_timeline", []))
-	result["slot_bonus_start_time"] = float(machine.get("slot_bonus_start_time", 0.0))
-	result["slot_grease_failed_nudge_heat_bonus"] = grease_heat_bonus
-	result["slot_cold_quarter_used"] = bool(cross_effects.get("slot_cold_quarter_used", false))
-	result["slot_cold_quarters_remaining"] = int(cross_effects.get("slot_cold_quarters_remaining", 0))
-	result["slot_security_bankroll_delta"] = int(cross_effects.get("security_bankroll_delta", 0))
-	result["slot_pit_boss_watched"] = bool(cross_effects.get("pit_boss_watched", false))
-	result["slot_pit_boss_heat_bonus"] = int(cross_effects.get("pit_boss_heat_bonus", 0))
-	result["slot_luck_win_chance_ignored"] = true
-	result.merge(_result_win_fields(machine), true)
-	return result
-
-
-func _buffalo_nudge_offer(machine: Dictionary, entry: Dictionary, grid: Array, stops: Array, classification: String, item_effects: Dictionary = {}) -> Dictionary:
-	if not ["near_miss", "free_games", "monster_feature"].has(classification):
-		return {}
-	var placement: Dictionary = _copy_dict(entry.get("forced_placement", {}))
-	var cells: Array = _buffalo_offer_cells(grid, placement, classification)
-	if cells.is_empty():
-		return {}
-	var sorted_cells: Array = _cells_sorted_by_reel(cells)
-	var visible_count := mini(3, sorted_cells.size())
-	var reel_count := maxi(1, int(machine.get("reel_count", 3)))
-	var first_cell: Dictionary = _copy_dict(sorted_cells[0])
-	var first_reel := clampi(int(first_cell.get("reel", 0)), 0, reel_count - 1)
-	var second_reel := mini(reel_count - 1, first_reel + 1)
-	if sorted_cells.size() > 1:
-		var second_cell: Dictionary = _copy_dict(sorted_cells[1])
-		second_reel = clampi(int(second_cell.get("reel", second_reel)), 0, reel_count - 1)
-	var skill_line_cells: Array = _copy_array(placement.get("skill_line_cells", []))
-	if skill_line_cells.is_empty():
-		skill_line_cells = _skill_line_cells_from_tease(machine, sorted_cells)
-	var window: Dictionary = _skill_window_for_reels(_rough_stop_times_for_machine(machine), first_reel, second_reel, visible_count)
-	var item_state: Dictionary = _copy_dict(machine.get("slot_item_state", {}))
-	var split_note_armed := bool(item_state.get("split_reel_note_armed", false))
-	var perfect_bonus := maxi(0, int(item_effects.get("slot_nudge_perfect_msec_bonus", 0)))
-	var close_bonus := maxi(0, int(item_effects.get("slot_nudge_close_msec_bonus", 0)))
-	if split_note_armed:
-		perfect_bonus += maxi(0, int(item_effects.get("slot_split_reel_note_perfect_msec_bonus", 55)))
-		close_bonus += maxi(0, int(item_effects.get("slot_split_reel_note_close_msec_bonus", 90)))
-		item_state["split_reel_note_armed"] = false
-		machine["slot_item_state"] = item_state
-	var offer: Dictionary = {
-		"outcome_id": str(entry.get("id", "")),
-		"classification": classification,
-		"original_classification": classification,
-		"grid": MathScript.clone_grid(grid),
-		"stops": stops.duplicate(true),
-		"spin_count": int(machine.get("spin_count", 0)),
-		"visible_coin_count": visible_count,
-		"coin_cells": sorted_cells,
-		"skill_line_cells": skill_line_cells,
-		"first_coin_reel": first_reel,
-		"second_coin_reel": second_reel,
-		"skill_window_msec": window,
-		"skill_perfect_msec": 75 + perfect_bonus,
-		"skill_close_msec": 210 + close_bonus,
-		"lucky_reel_grease_active": bool(item_state.get("lucky_reel_grease_last_tease", false)) or bool(entry.get("lucky_reel_grease_active", false)),
-		"split_reel_note": split_note_armed,
-		"post_spin_available": false,
-	}
-	if ["free_games", "monster_feature"].has(classification):
-		offer["preserve_active_bonus"] = _copy_dict(machine.get("active_bonus", {}))
-	return offer
-
-
-func _resolve_buffalo_nudge_offer(machine: Dictionary, family, offer: Dictionary, definition: Dictionary, ui_state: Dictionary) -> Dictionary:
-	var original_classification := str(offer.get("original_classification", offer.get("classification", "near_miss")))
-	var skill: Dictionary = _nudge_skill_result(offer, ui_state)
-	var outcome := str(skill.get("outcome", "miss"))
-	var target_classification := "zero_loss"
-	if outcome == "perfect":
-		target_classification = original_classification if ["free_games", "monster_feature"].has(original_classification) else str(family.nudge_entry(machine, definition).get("classification", "free_games"))
-	elif outcome == "close":
-		target_classification = "near_miss"
-	var entry: Dictionary = _entry_for_classification(machine, family, definition, target_classification)
-	var grid: Array = _buffalo_nudge_grid_for_outcome(machine, offer, target_classification, outcome)
-	entry["forced_placement"] = _buffalo_nudge_placement(machine, offer, target_classification, outcome, grid)
-	if outcome == "perfect" and ["free_games", "monster_feature"].has(original_classification):
-		var preserved: Dictionary = _copy_dict(offer.get("preserve_active_bonus", {}))
-		if not preserved.is_empty():
-			entry["preserve_active_bonus"] = preserved
-	var event: Dictionary = {
-		"type": "nudge_shift",
-		"family": "buffalo",
-		"skill_outcome": outcome,
-		"input_msec": int(skill.get("input_msec", -1)),
-		"perfect_msec": int(skill.get("perfect_msec", -1)),
-		"distance_msec": int(skill.get("distance_msec", 9999)),
-		"converted_to": target_classification,
-		"original_classification": original_classification,
-		"visible_coin_count": int(offer.get("visible_coin_count", 0)),
-		"lucky_reel_grease_active": bool(offer.get("lucky_reel_grease_active", false)),
-		"split_reel_note": bool(offer.get("split_reel_note", false)),
-	}
-	return {"entry": entry, "grid": grid, "tease_event": event}
-
-
-func _nudge_skill_result(offer: Dictionary, ui_state: Dictionary) -> Dictionary:
-	var window: Dictionary = _copy_dict(offer.get("skill_window_msec", {}))
-	var start_msec := maxi(0, int(window.get("start", 0)))
-	var end_msec := maxi(start_msec, int(window.get("end", start_msec + 1)))
-	var perfect_msec := clampi(int(window.get("perfect", start_msec)), start_msec, end_msec)
-	var input_msec := _nudge_input_msec(ui_state)
-	if input_msec < 0:
-		input_msec = end_msec + 999
-	var distance := absi(input_msec - perfect_msec)
-	var perfect_width := maxi(1, int(offer.get("skill_perfect_msec", 75)))
-	var close_width := maxi(perfect_width, int(offer.get("skill_close_msec", 210)))
-	var outcome := "miss"
-	if input_msec >= start_msec and input_msec <= end_msec and distance <= perfect_width:
-		outcome = "perfect"
-	elif input_msec >= start_msec and input_msec <= end_msec and distance <= close_width:
-		outcome = "close"
-	return {
-		"outcome": outcome,
-		"input_msec": input_msec,
-		"perfect_msec": perfect_msec,
-		"distance_msec": distance,
-	}
-
-
-func _nudge_input_msec(ui_state: Dictionary) -> int:
-	if int(ui_state.get("slot_tease_input_msec", -1)) >= 0:
-		return int(ui_state.get("slot_tease_input_msec", -1))
-	if int(ui_state.get("slot_spin_elapsed_msec", -1)) >= 0:
-		return int(ui_state.get("slot_spin_elapsed_msec", -1))
-	var runtime: Dictionary = _copy_dict(ui_state.get("surface_runtime_status", {}))
-	var animations: Dictionary = _copy_dict(runtime.get("surface_animations", {}))
-	var spin: Dictionary = _copy_dict(animations.get("slot_spin", {}))
-	if spin.is_empty():
-		return -1
-	return maxi(0, int(round(float(spin.get("elapsed", 0.0)) * 1000.0)))
-
-
 func _entry_for_classification(machine: Dictionary, family, definition: Dictionary, classification: String) -> Dictionary:
 	var table: Array = family.outcome_table(machine, definition, false)
 	for entry_value in table:
@@ -1117,66 +1146,6 @@ func _entry_for_classification(machine: Dictionary, family, definition: Dictiona
 		if str(entry.get("classification", "")) == classification or str(entry.get("id", "")) == classification:
 			return entry.duplicate(true)
 	return {"id": classification, "classification": classification, "weight": 1, "payout": 0, "payout_multiplier": 0.0}
-
-
-func _buffalo_nudge_grid_for_outcome(machine: Dictionary, offer: Dictionary, target_classification: String, outcome: String) -> Array:
-	var grid: Array = MathScript.clone_grid(_copy_array(offer.get("grid", [])))
-	var target_cells: Array = _copy_array(offer.get("skill_line_cells", []))
-	var visible_count := mini(3, int(offer.get("visible_coin_count", 0)))
-	var target_coin_count := 0
-	if target_classification == "free_games" or target_classification == "monster_feature":
-		target_coin_count = 3
-	elif target_classification == "near_miss":
-		target_coin_count = mini(2, maxi(visible_count, 2 if outcome == "close" else visible_count))
-	if target_cells.is_empty():
-		target_cells = _skill_line_cells_from_tease(machine, _copy_array(offer.get("coin_cells", [])))
-	for index in range(target_cells.size()):
-		var cell: Dictionary = _copy_dict(target_cells[index])
-		var reel_index := int(cell.get("reel", 0))
-		var row_index := int(cell.get("row", 0))
-		if index < target_coin_count:
-			MathScript.set_cell(grid, reel_index, row_index, "GOLD_TOKEN")
-		else:
-			MathScript.set_cell(grid, reel_index, row_index, _fallback_non_gold_symbol(reel_index, row_index))
-	_scrub_unprotected_gold_tokens(grid, target_cells.slice(0, target_coin_count))
-	return grid
-
-
-func _buffalo_nudge_placement(machine: Dictionary, offer: Dictionary, target_classification: String, outcome: String, grid: Array) -> Dictionary:
-	var target_cells: Array = _copy_array(offer.get("skill_line_cells", []))
-	if target_cells.is_empty():
-		target_cells = _skill_line_cells_from_tease(machine, _copy_array(offer.get("coin_cells", [])))
-	var placed: Array = []
-	for cell_value in target_cells:
-		var cell: Dictionary = _copy_dict(cell_value)
-		if _cell_symbol(grid, int(cell.get("reel", -1)), int(cell.get("row", -1))) == "GOLD_TOKEN":
-			placed.append(cell)
-	var line_index := 0
-	if not placed.is_empty():
-		line_index = int((placed[0] as Dictionary).get("row", 0))
-	var kind := "feature" if target_classification == "free_games" or target_classification == "monster_feature" else "tease" if target_classification == "near_miss" else "miss"
-	return {
-		"kind": kind,
-		"symbol": "GOLD_TOKEN",
-		"cells": placed,
-		"skill_line_cells": target_cells,
-		"line_index": line_index,
-		"nudge_skill_outcome": outcome,
-	}
-
-
-func _buffalo_offer_cells(grid: Array, placement: Dictionary, classification: String) -> Array:
-	var cells: Array = _copy_array(placement.get("cells", []))
-	var result: Array = []
-	for cell_value in cells:
-		var cell: Dictionary = _copy_dict(cell_value)
-		if _cell_symbol(grid, int(cell.get("reel", -1)), int(cell.get("row", -1))) == "GOLD_TOKEN":
-			result.append(cell)
-	if result.is_empty() and classification == "near_miss":
-		result = _symbol_cells(grid, "GOLD_TOKEN")
-	if result.size() > 3:
-		result = result.slice(0, 3)
-	return result
 
 
 func _gold_tease_profile(machine: Dictionary, classification: String, win_attribution: Dictionary, base: float, step: float) -> Dictionary:
@@ -1247,22 +1216,6 @@ func _rough_stop_times_for_machine(machine: Dictionary) -> Array:
 	return result
 
 
-func _skill_line_cells_from_tease(machine: Dictionary, cells: Array) -> Array:
-	var reel_count := maxi(1, int(machine.get("reel_count", 3)))
-	var row_count := maxi(1, int(machine.get("row_count", 1)))
-	var row := clampi(row_count / 2, 0, row_count - 1)
-	var start_reel := 0
-	if not cells.is_empty():
-		var first_cell: Dictionary = _copy_dict(_cells_sorted_by_reel(cells)[0])
-		start_reel = clampi(int(first_cell.get("reel", 0)), 0, maxi(0, reel_count - 1))
-		row = clampi(int(first_cell.get("row", row)), 0, row_count - 1)
-	var target_count := mini(3, reel_count - start_reel)
-	if target_count < mini(3, reel_count):
-		start_reel = maxi(0, reel_count - mini(3, reel_count))
-		target_count = mini(3, reel_count)
-	return MathScript.line_cells_from(reel_count, row_count, row, start_reel, target_count)
-
-
 func _cells_sorted_by_reel(cells: Array) -> Array:
 	var result: Array = _copy_array(cells)
 	result.sort_custom(func(a: Variant, b: Variant) -> bool:
@@ -1275,26 +1228,6 @@ func _cells_sorted_by_reel(cells: Array) -> Array:
 		return reel_a < reel_b
 	)
 	return result
-
-
-func _fallback_non_gold_symbol(reel_index: int, row_index: int) -> String:
-	var symbols := ["A", "K", "Q", "J", "10", "WOLF", "ELK"]
-	return str(symbols[posmod(reel_index * 3 + row_index, symbols.size())])
-
-
-func _scrub_unprotected_gold_tokens(grid: Array, protected_cells: Array) -> void:
-	var protected: Dictionary = {}
-	for cell_value in protected_cells:
-		var cell: Dictionary = _copy_dict(cell_value)
-		protected["%d:%d" % [int(cell.get("reel", -1)), int(cell.get("row", -1))]] = true
-	for reel_index in range(grid.size()):
-		if typeof(grid[reel_index]) != TYPE_ARRAY:
-			continue
-		var column: Array = grid[reel_index] as Array
-		for row_index in range(column.size()):
-			if str(column[row_index]) == "GOLD_TOKEN" and not bool(protected.get("%d:%d" % [reel_index, row_index], false)):
-				column[row_index] = _fallback_non_gold_symbol(reel_index, row_index)
-		grid[reel_index] = column
 
 
 func _animation_plan(machine: Dictionary, classification: String, active_bonus: Dictionary, win_attribution: Dictionary) -> Dictionary:

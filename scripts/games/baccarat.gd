@@ -61,7 +61,7 @@ const EDGE_SORT_ITEM_EFFECT_KEYS := [
 
 func enter(run_state: RunState, environment: Dictionary) -> Dictionary:
 	var result: Dictionary = super.enter(run_state, environment)
-	var table := _table_state(run_state, environment)
+	var table := _table_state_preview(run_state, environment)
 	var rules := _table_rules(table)
 	result["message"] = "%s steadies the shoe at %s. Table minimum $%d; Banker commission %.0f%%." % [
 		str(table.get("dealer_name", "The croupier")),
@@ -122,6 +122,7 @@ func generate_environment_state(_run_state: RunState, environment: Dictionary, r
 		"shoe_history": [],
 		"dealer_catch_base": catch_base,
 		"table_round_timer_started_msec": 0,
+		"normalized_version": 1,
 	}
 	table.merge(shoe_state, true)
 	return table
@@ -585,7 +586,7 @@ func _resolve_baccarat_hand(table: Dictionary, rng: RngStream) -> Dictionary:
 		for key in fresh.keys():
 			table[key] = fresh[key]
 		table["reshuffle_count"] = int(table.get("reshuffle_count", 0)) + 1
-	var shoe := CardShoeScript.card_array(table.get("shoe", []))
+	var shoe: Array = table.get("shoe", []) if typeof(table.get("shoe", [])) == TYPE_ARRAY else []
 	var player: Array = []
 	var banker: Array = []
 	player.append(_draw_one(shoe))
@@ -621,12 +622,12 @@ func _resolve_baccarat_hand(table: Dictionary, rng: RngStream) -> Dictionary:
 	var used_cards: Array = []
 	used_cards.append_array(_card_array(player))
 	used_cards.append_array(_card_array(banker))
-	var discard := _card_array(table.get("discard", []))
+	var discard: Array = table.get("discard", []) if typeof(table.get("discard", [])) == TYPE_ARRAY else []
 	discard.append_array(used_cards)
 	table["shoe"] = shoe
 	table["discard"] = discard
 	table["shoe_remaining"] = shoe.size()
-	table["shoe_composition"] = CardShoeScript.remaining_composition(shoe)
+	table["shoe_composition_count"] = -1
 	table["reshuffle_pending"] = shoe.size() <= int(table.get("cut_card_remaining", 84))
 	return {
 		"hand_id": "baccarat_%d_%d" % [int(table.get("hands_played", 0)) + 1, Time.get_ticks_msec()],
@@ -920,6 +921,7 @@ func _fresh_shoe_state(deck_count: int, rules: Dictionary, rng: RngStream) -> Di
 		"cut_card_at": maxi(0, deck_count * CardShoeScript.CARDS_PER_DECK - CardShoeScript.cut_card_remaining(deck_count, float(rules.get("cut_card_penetration", 0.72)))),
 		"shoe_remaining": shoe.size(),
 		"shoe_composition": CardShoeScript.remaining_composition(shoe),
+		"shoe_composition_count": shoe.size(),
 		"shoe_label": CardShoeScript.shoe_label(deck_count),
 		"reshuffle_pending": false,
 		"edge_sort_challenge": {},
@@ -928,7 +930,8 @@ func _fresh_shoe_state(deck_count: int, rules: Dictionary, rng: RngStream) -> Di
 
 
 func _needs_new_shoe(table: Dictionary) -> bool:
-	var shoe_size := CardShoeScript.remaining_count(table.get("shoe", []))
+	var shoe: Array = table.get("shoe", []) if typeof(table.get("shoe", [])) == TYPE_ARRAY else []
+	var shoe_size := shoe.size()
 	if shoe_size < 12:
 		return true
 	return bool(table.get("reshuffle_pending", false)) and int(table.get("hands_played", 0)) > 0
@@ -942,7 +945,9 @@ func _draw_one(shoe: Array) -> Dictionary:
 
 
 func _baccarat_card_value(card_value: Variant) -> int:
-	var card := _copy_dict(card_value)
+	if typeof(card_value) != TYPE_DICTIONARY:
+		return 0
+	var card: Dictionary = card_value
 	var rank := int(card.get("rank", 2))
 	if rank == 14:
 		return 1
@@ -952,7 +957,9 @@ func _baccarat_card_value(card_value: Variant) -> int:
 
 
 func _baccarat_burn_value(card_value: Variant) -> int:
-	var card := _copy_dict(card_value)
+	if typeof(card_value) != TYPE_DICTIONARY:
+		return 0
+	var card: Dictionary = card_value
 	var rank := int(card.get("rank", 2))
 	if rank == 14:
 		return 1
@@ -1004,7 +1011,11 @@ func _banker_commission(stake: int, rules: Dictionary) -> int:
 func _same_rank(cards: Array) -> bool:
 	if cards.size() < 2:
 		return false
-	return int(_copy_dict(cards[0]).get("rank", -1)) == int(_copy_dict(cards[1]).get("rank", -2))
+	if typeof(cards[0]) != TYPE_DICTIONARY or typeof(cards[1]) != TYPE_DICTIONARY:
+		return false
+	var first: Dictionary = cards[0]
+	var second: Dictionary = cards[1]
+	return int(first.get("rank", -1)) == int(second.get("rank", -2))
 
 
 func _default_rules(deck_count: int) -> Dictionary:
@@ -1243,6 +1254,7 @@ func _max_bet_command(session: Dictionary, run_state: RunState, table: Dictionar
 
 
 func _shoe_read_context(table: Dictionary) -> Dictionary:
+	_refresh_shoe_cached_metadata(table)
 	var composition := _copy_dict(table.get("shoe_composition", {}))
 	var bias := int(composition.get("hi_lo_remaining_bias", 0))
 	var remaining := int(table.get("shoe_remaining", 0))
@@ -2160,13 +2172,48 @@ func _empty_baccarat_result(action_id: String, stake: int, environment: Dictiona
 func _table_state(run_state: RunState, environment: Dictionary) -> Dictionary:
 	var states: Dictionary = environment.get("game_states", {}) if typeof(environment.get("game_states", {})) == TYPE_DICTIONARY else {}
 	if states.has(get_id()) and typeof(states.get(get_id(), {})) == TYPE_DICTIONARY:
-		return _normalize_table_state(states.get(get_id(), {}), environment)
+		return _stored_table_state(states, get_id(), environment)
 	if states.has("baccarat") and typeof(states.get("baccarat", {})) == TYPE_DICTIONARY:
-		return _normalize_table_state(states.get("baccarat", {}), environment)
+		return _stored_table_state(states, "baccarat", environment)
 	var rng := run_state.create_rng("baccarat_table_fallback") if run_state != null else _default_table_rng({}, "fallback")
 	var generated := generate_environment_state(run_state, environment, rng)
 	_update_environment_table(environment, generated)
 	return generated
+
+
+func _table_state_preview(run_state: RunState, environment: Dictionary) -> Dictionary:
+	var states: Dictionary = environment.get("game_states", {}) if typeof(environment.get("game_states", {})) == TYPE_DICTIONARY else {}
+	if states.has(get_id()) and typeof(states.get(get_id(), {})) == TYPE_DICTIONARY:
+		return _normalize_table_state(states.get(get_id(), {}), environment)
+	if states.has("baccarat") and typeof(states.get("baccarat", {})) == TYPE_DICTIONARY:
+		return _normalize_table_state(states.get("baccarat", {}), environment)
+	var rng := run_state.create_rng("baccarat_table_preview") if run_state != null else _default_table_rng({}, "preview")
+	return generate_environment_state(run_state, environment, rng)
+
+
+func _stored_table_state(states: Dictionary, key: String, environment: Dictionary) -> Dictionary:
+	var table_value: Variant = states.get(key, {})
+	if typeof(table_value) != TYPE_DICTIONARY:
+		return {}
+	var table: Dictionary = table_value
+	if _table_state_is_current(table):
+		if int(table.get("storage_version", 0)) >= 1:
+			_refresh_shoe_remaining_metadata(table)
+			return table
+		var stored := table.duplicate(true)
+		stored["storage_version"] = 1
+		_refresh_shoe_remaining_metadata(stored)
+		states[key] = stored
+		environment["game_states"] = states
+		return stored
+	var normalized := _normalize_table_state(table, environment)
+	states[key] = normalized
+	environment["game_states"] = states
+	return normalized
+
+
+func _table_state_is_current(table: Dictionary) -> bool:
+	return str(table.get("schema", "")) == "baccarat_table_state" and int(table.get("normalized_version", 0)) >= 1
 
 
 func _normalize_table_state(value: Variant, environment: Dictionary) -> Dictionary:
@@ -2180,8 +2227,7 @@ func _normalize_table_state(value: Variant, environment: Dictionary) -> Dictiona
 	table["shoe"] = CardShoeScript.card_array(table.get("shoe", []))
 	table["discard"] = _card_array(table.get("discard", []))
 	table["burn_cards"] = _card_array(table.get("burn_cards", []))
-	table["shoe_remaining"] = CardShoeScript.remaining_count(table.get("shoe", []))
-	table["shoe_composition"] = CardShoeScript.remaining_composition(table.get("shoe", []))
+	_refresh_shoe_cached_metadata(table)
 	table["shoe_label"] = str(table.get("shoe_label", CardShoeScript.shoe_label(int(table.get("deck_count", 8)))))
 	table["shoe_id"] = str(table.get("shoe_id", ""))
 	if str(table.get("shoe_id", "")).is_empty():
@@ -2203,7 +2249,25 @@ func _normalize_table_state(value: Variant, environment: Dictionary) -> Dictiona
 	table["edge_sort_challenge"] = challenge
 	table["edge_sort_edge"] = _normalized_edge_sort_edge(table.get("edge_sort_edge", {}), table)
 	table["table_round_timer_started_msec"] = int(table.get("table_round_timer_started_msec", 0))
+	table["normalized_version"] = 1
+	table["storage_version"] = 1
 	return table
+
+
+func _refresh_shoe_cached_metadata(table: Dictionary) -> void:
+	var shoe: Array = table.get("shoe", []) if typeof(table.get("shoe", [])) == TYPE_ARRAY else []
+	var remaining := shoe.size()
+	table["shoe_remaining"] = remaining
+	var composition_value: Variant = table.get("shoe_composition", {})
+	var cached_count := int(table.get("shoe_composition_count", -1))
+	if typeof(composition_value) != TYPE_DICTIONARY or cached_count != remaining:
+		table["shoe_composition"] = CardShoeScript.remaining_composition(shoe)
+		table["shoe_composition_count"] = remaining
+
+
+func _refresh_shoe_remaining_metadata(table: Dictionary) -> void:
+	var shoe: Array = table.get("shoe", []) if typeof(table.get("shoe", [])) == TYPE_ARRAY else []
+	table["shoe_remaining"] = shoe.size()
 
 
 func _normalized_session(_run_state: RunState, _environment: Dictionary, ui_state: Dictionary, table: Dictionary) -> Dictionary:
@@ -2225,7 +2289,10 @@ func _normalized_session(_run_state: RunState, _environment: Dictionary, ui_stat
 
 func _update_environment_table(environment: Dictionary, table: Dictionary) -> void:
 	var game_states: Dictionary = environment.get("game_states", {}) if typeof(environment.get("game_states", {})) == TYPE_DICTIONARY else {}
-	game_states[get_id()] = table.duplicate(true)
+	table["normalized_version"] = 1
+	table["storage_version"] = 1
+	_refresh_shoe_remaining_metadata(table)
+	game_states[get_id()] = table
 	environment["game_states"] = game_states
 
 

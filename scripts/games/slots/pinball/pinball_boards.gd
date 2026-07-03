@@ -39,7 +39,7 @@ static func bumper_alley() -> Dictionary:
 			_circle("right_pop", Vector2(0.68, 0.51), 0.046, 5, {"kick": Vector2(-1.05, -2.05), "restitution": 0.76, "cooldown_ticks": 7}),
 		],
 		"sensors": [
-			_sensor("skill_saucer", "skill", Vector2(0.84, 0.225), 0.056, 24, {"kick": Vector2(-0.80, 1.10), "cooldown_ticks": 24, "label": "SKILL"}),
+			_sensor("skill_saucer", "skill", Vector2(0.84, 0.225), 0.056, 18, {"kick": Vector2(-0.80, 1.10), "cooldown_ticks": 24, "label": "SKILL"}),
 			_sensor("left_sling", "slingshot", Vector2(0.24, 0.74), 0.056, 4, {"kick": Vector2(1.70, -1.55), "cooldown_ticks": 10, "label": "SLING"}),
 			_sensor("right_sling", "slingshot", Vector2(0.76, 0.74), 0.056, 4, {"kick": Vector2(-1.70, -1.55), "cooldown_ticks": 10, "label": "SLING"}),
 			_sensor("return_launcher", "launcher", Vector2(0.50, 0.805), 0.054, 6, {"kick": Vector2(0.25, -2.35), "cooldown_ticks": 18, "label": "UP"}),
@@ -165,15 +165,15 @@ static func jackpot_works() -> Dictionary:
 			_sensor("left_launcher", "launcher", Vector2(0.20, 0.735), 0.062, 12, {"kick": Vector2(1.10, -2.45), "cooldown_ticks": 20, "label": "LOCK"}),
 			_sensor("right_launcher", "launcher", Vector2(0.80, 0.735), 0.062, 12, {"kick": Vector2(-1.10, -2.45), "cooldown_ticks": 20, "label": "LOCK"}),
 			_sensor("spinner_lane", "gate", Vector2(0.16, 0.470), 0.044, 4, {"kick": Vector2(0.75, 0.55), "cooldown_ticks": 8, "label": "SPIN"}),
-			_sensor("super_lane", "jackpot", Vector2(0.68, 0.635), 0.052, 18, {"kick": Vector2(-0.50, -2.25), "cooldown_ticks": 24, "label": "JACK"}),
+			_sensor("super_lane", "jackpot", Vector2(0.68, 0.635), 0.052, 4, {"kick": Vector2(-0.50, -2.25), "cooldown_ticks": 24, "label": "JACK"}),
 		],
 		"rects": [
 			_rect("left_outlane", "drain", Rect2(Vector2(0.00, 0.915), Vector2(0.070, 0.110)), 0),
 			_rect("left_pocket", "pocket", Rect2(Vector2(0.070, 0.925), Vector2(0.180, 0.090)), 12),
 			_rect("left_mid_pocket", "pocket", Rect2(Vector2(0.250, 0.925), Vector2(0.180, 0.090)), 18),
-			_rect("center_pocket", "jackpot", Rect2(Vector2(0.430, 0.925), Vector2(0.140, 0.090)), 24, {"label": "JACK"}),
+			_rect("center_pocket", "jackpot", Rect2(Vector2(0.430, 0.925), Vector2(0.140, 0.090)), 8, {"label": "JACK"}),
 			_rect("right_mid_pocket", "pocket", Rect2(Vector2(0.570, 0.925), Vector2(0.180, 0.090)), 18),
-			_rect("risk_cup", "super_jackpot", Rect2(Vector2(0.750, 0.890), Vector2(0.180, 0.125)), 72, {"label": "SUPER"}),
+			_rect("risk_cup", "super_jackpot", Rect2(Vector2(0.750, 0.890), Vector2(0.180, 0.125)), 24, {"label": "SUPER"}),
 			_rect("right_outlane", "drain", Rect2(Vector2(0.930, 0.915), Vector2(0.070, 0.110)), 0),
 		],
 		"flippers": [

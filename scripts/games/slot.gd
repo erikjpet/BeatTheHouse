@@ -9,7 +9,10 @@ const GeneratorScript := preload("res://scripts/games/slots/slot_machine_generat
 const ResolverScript := preload("res://scripts/games/slots/slot_resolver.gd")
 const PresentationScript := preload("res://scripts/games/slots/slot_presentation.gd")
 const RendererScript := preload("res://scripts/games/slots/slot_renderer.gd")
+const PinballFeatureScript := preload("res://scripts/games/slots/pinball/pinball_feature.gd")
 const SELECT_BET_PREFIX := "select_bet_option:"
+const SLOT_BONUS_WATCHDOG_ACTION := "slot_bonus_watchdog"
+const SLOT_BONUS_WATCHDOG_GRACE_MSEC := 2200
 const SLOT_AUTOPLAY_LOSS_HOLD_MSEC := 100
 const SLOT_AUTOPLAY_WIN_HOLD_MSEC := 500
 const SLOT_RESULT_REVEAL_BEAT_MSEC := 180
@@ -125,6 +128,8 @@ func resolve_with_context(action_id: String, _stake: int, run_state: RunState, e
 	if normalized_action.begins_with("slot_bonus_"):
 		var bonus_resolved: Dictionary = resolver.resolve_bonus_action(machine, normalized_action, rng, definition, environment, run_state, _slot_cross_game_item_effects(run_state, machine, false), _ui_state)
 		var bonus_machine: Dictionary = _slot_copy_dict(bonus_resolved.get("machine", machine))
+		if not StateScript.active_bonus_incomplete(bonus_machine):
+			bonus_machine.erase("slot_bonus_watchdog_since_msec")
 		if bool(bonus_machine.get("slot_autoplay_active", false)):
 			bonus_machine["slot_autoplay_next_msec"] = _slot_autoplay_next_msec(bonus_machine, _ui_state)
 		if _buffalo_bonus_auto_action(bonus_machine).is_empty():
@@ -250,6 +255,9 @@ func surface_needs_auto_tick(ui_state: Dictionary, run_state: RunState, environm
 		var bonus_surface_time := _surface_timing_msec(ui_state)
 		var next_msec := int(machine.get("slot_bonus_auto_next_msec", 0))
 		return bonus_surface_time <= 0 or next_msec <= 0 or bonus_surface_time >= next_msec
+	var watchdog: Dictionary = _slot_bonus_watchdog_status(machine, ui_state)
+	if bool(watchdog.get("needs_tick", false)):
+		return true
 	var surface_time := _surface_timing_msec(ui_state)
 	if machine.is_empty() or not bool(machine.get("slot_autoplay_active", false)):
 		return false
@@ -289,6 +297,33 @@ func surface_auto_action_command(ui_state: Dictionary, _run_state: RunState, env
 				"drunk_scaled_surface_time_msec": surface_time,
 			},
 			"message": "Buffalo feature auto spin.",
+		})
+	var watchdog: Dictionary = _slot_bonus_watchdog_status(machine, ui_state)
+	if bool(watchdog.get("needs_seed", false)):
+		if surface_time <= 0:
+			surface_time = Time.get_ticks_msec()
+		machine["slot_bonus_watchdog_since_msec"] = surface_time
+		StateScript.write_machine(environment, get_id(), machine)
+		return GameModule.surface_command({
+			"handled": true,
+			"environment_changed": true,
+			"message": "Bonus recovery check armed.",
+		})
+	if bool(watchdog.get("due", false)):
+		if surface_time <= 0:
+			surface_time = Time.get_ticks_msec()
+		return GameModule.surface_command({
+			"handled": true,
+			"action_id": SLOT_BONUS_WATCHDOG_ACTION,
+			"action_kind": "bonus",
+			"direct_resolve": true,
+			"skip_stake_validation": true,
+			"preserve_surface_ui_state": true,
+			"ui_state": {
+				"surface_time_msec": int(ui_state.get("surface_time_msec", surface_time)),
+				"drunk_scaled_surface_time_msec": surface_time,
+			},
+			"message": "Bonus recovery tick.",
 		})
 	if StateScript.active_bonus_incomplete(machine):
 		var paused_family := _slot_active_bonus_family(machine)
@@ -950,6 +985,70 @@ func _slot_bonus_auto_next_msec(machine: Dictionary, ui_state: Dictionary) -> in
 
 func _slot_bonus_auto_delay_msec(machine: Dictionary) -> int:
 	return mini(BUFFALO_AUTOPLAY_MAX_DELAY_MSEC, maxi(900, _slot_autoplay_delay_msec(machine)))
+
+
+func _slot_bonus_watchdog_status(machine: Dictionary, ui_state: Dictionary) -> Dictionary:
+	var active: Dictionary = _slot_copy_dict(machine.get("active_bonus", {}))
+	var status := {
+		"eligible": false,
+		"needs_seed": false,
+		"due": false,
+		"needs_tick": false,
+	}
+	if active.is_empty() or not bool(active.get("active", false)) or bool(active.get("complete", false)):
+		return status
+	if not _slot_bonus_has_no_live_work(active, ui_state):
+		return status
+	if _slot_bonus_completion_animation_pending(machine, ui_state):
+		return status
+	status["eligible"] = true
+	var surface_time := _surface_timing_msec(ui_state)
+	var since_msec := maxi(0, int(machine.get("slot_bonus_watchdog_since_msec", 0)))
+	if surface_time <= 0 or since_msec <= 0 or surface_time < since_msec:
+		status["needs_seed"] = true
+		status["needs_tick"] = true
+		return status
+	if surface_time - since_msec >= SLOT_BONUS_WATCHDOG_GRACE_MSEC:
+		status["due"] = true
+		status["needs_tick"] = true
+	return status
+
+
+func _slot_bonus_has_no_live_work(active: Dictionary, ui_state: Dictionary) -> bool:
+	var family := str(active.get("family", ""))
+	if family == "pinball":
+		var live: Dictionary = _slot_copy_dict(active)
+		var surface_time := _surface_timing_msec(ui_state)
+		if surface_time > 0:
+			live = PinballFeatureScript.surface_refresh(live, surface_time)
+		var summary: Dictionary = _slot_copy_dict(live.get("pinball_summary", {}))
+		var active_count := maxi(0, int(live.get("active_ball_count", summary.get("active_ball_count", summary.get("active", 0)))))
+		var balls_remaining := maxi(0, int(live.get("balls_remaining", live.get("remaining_steps", 0))))
+		var remaining_steps := maxi(0, int(live.get("remaining_steps", balls_remaining + active_count)))
+		return balls_remaining <= 0 and active_count <= 0 and remaining_steps <= 0
+	if family == "buffalo":
+		var mode := str(active.get("mode", ""))
+		if mode == "hold_and_spin":
+			var locks: Array = _slot_copy_array(active.get("locks", []))
+			var max_cells := maxi(0, int(active.get("max_cells", 0)))
+			return int(active.get("remaining_steps", active.get("respins_remaining", 0))) <= 0 or int(active.get("respins_remaining", active.get("remaining_steps", 0))) <= 0 or (max_cells > 0 and locks.size() >= max_cells)
+		if mode == "free_games":
+			return int(active.get("remaining_steps", 0)) <= 0
+		if mode == "wheel":
+			return not bool(active.get("trophy_pick_active", false)) and int(active.get("remaining_steps", 0)) <= 0
+	return int(active.get("remaining_steps", 0)) <= 0
+
+
+func _slot_bonus_completion_animation_pending(machine: Dictionary, ui_state: Dictionary) -> bool:
+	if not str(machine.get("slot_animation_id", "")).begins_with("bonus:"):
+		return false
+	var surface_time := _surface_timing_msec(ui_state)
+	if surface_time <= 0:
+		return false
+	var plan: Dictionary = _slot_copy_dict(machine.get("slot_animation_plan", {}))
+	var duration := maxi(maxi(0, int(machine.get("slot_animation_duration_msec", 0))), int(plan.get("duration_msec", 0)))
+	duration = maxi(duration, int(plan.get("feature_duration_msec", 0)))
+	return surface_time <= duration
 
 
 func _buffalo_bonus_auto_action(machine: Dictionary) -> String:

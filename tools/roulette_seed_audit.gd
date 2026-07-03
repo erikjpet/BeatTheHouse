@@ -6,6 +6,9 @@ const RunStateScript := preload("res://scripts/core/run_state.gd")
 var failures: Array = []
 var warnings: Array = []
 var stats: Dictionary = {}
+var resolve_ms_samples: Array = []
+var command_ms_samples: Array = []
+var surface_state_ms_samples: Array = []
 
 
 class SurfaceHarness:
@@ -111,6 +114,9 @@ func _run() -> void:
 		elif text.begins_with("--output="):
 			output_path = text.trim_prefix("--output=")
 
+	resolve_ms_samples = []
+	command_ms_samples = []
+	surface_state_ms_samples = []
 	stats = {
 		"seed_count": seed_count,
 		"generated_tables": 0,
@@ -119,8 +125,16 @@ func _run() -> void:
 		"read_wheel_checks": 0,
 		"draw_checks": 0,
 		"fixture_passes": 0,
+		"avg_resolve_ms": 0.0,
+		"p95_resolve_ms": 0.0,
 		"max_resolve_ms": 0.0,
+		"avg_command_ms": 0.0,
+		"p95_command_ms": 0.0,
 		"max_command_ms": 0.0,
+		"surface_state_calls": 0,
+		"surface_state_avg_ms": 0.0,
+		"surface_state_p95_ms": 0.0,
+		"surface_state_max_ms": 0.0,
 		"min_trajectory_frames": 999999,
 		"max_trajectory_frames": 0,
 		"outcomes": {},
@@ -142,7 +156,9 @@ func _run() -> void:
 
 	for i in range(seed_count):
 		_run_generated_seed(game, i)
+	_audit_surface_state_timing(game)
 	_run_forced_payout_fixtures(game)
+	_finalize_timing_stats()
 
 	_write_report(output_path, seed_count)
 	_print_summary()
@@ -293,6 +309,7 @@ func _audit_spin(game: GameModule, run_state: RunState, environment: Dictionary,
 		var before_command := Time.get_ticks_usec()
 		var command: Dictionary = game.surface_action_command("roulette_bet", target_index, false, ui, run_state, environment)
 		var command_ms := float(Time.get_ticks_usec() - before_command) / 1000.0
+		command_ms_samples.append(command_ms)
 		stats["max_command_ms"] = maxf(float(stats.get("max_command_ms", 0.0)), command_ms)
 		if not bool(command.get("handled", false)):
 			failures.append("Seed %d roulette bet command failed for %s." % [index, str(placement.get("type", ""))])
@@ -323,6 +340,7 @@ func _audit_spin(game: GameModule, run_state: RunState, environment: Dictionary,
 	var before_resolve := Time.get_ticks_usec()
 	var result: Dictionary = game.resolve_with_context("spin_roulette", int(spin_command.get("set_stake", 1)), run_state, environment, run_state.create_rng("roulette_spin_%03d" % index), spin_command.get("ui_state", {}))
 	var resolve_ms := float(Time.get_ticks_usec() - before_resolve) / 1000.0
+	resolve_ms_samples.append(resolve_ms)
 	stats["max_resolve_ms"] = maxf(float(stats.get("max_resolve_ms", 0.0)), resolve_ms)
 	if not bool(result.get("ok", false)):
 		failures.append("Seed %d roulette spin resolve failed: %s." % [index, str(result.get("message", ""))])
@@ -438,6 +456,62 @@ func _count_range(group: String, key: String, value: float) -> void:
 	stats[group] = ranges
 
 
+func _audit_surface_state_timing(game: GameModule) -> void:
+	var run_state: RunState = RunStateScript.new()
+	run_state.start_new("ROULETTE-SURFACE-TIMING")
+	run_state.bankroll = 100000
+	var environment := _audit_environment(99000)
+	var table: Dictionary = game.generate_environment_state(run_state, environment, run_state.create_rng("roulette_surface_timing_table"))
+	environment["game_states"] = {"roulette": table}
+	run_state.current_environment = environment
+	surface_state_ms_samples = []
+	for index in range(1000):
+		var started := Time.get_ticks_usec()
+		var surface: Dictionary = game.surface_state(run_state, environment, {"surface_time_msec": 100000 + index * 17})
+		surface_state_ms_samples.append(float(Time.get_ticks_usec() - started) / 1000.0)
+		if str(surface.get("surface_renderer", "")) != "roulette":
+			failures.append("Roulette surface_state timing fixture returned the wrong renderer.")
+			break
+
+
+func _finalize_timing_stats() -> void:
+	stats["avg_resolve_ms"] = _average(resolve_ms_samples)
+	stats["p95_resolve_ms"] = _percentile(resolve_ms_samples, 0.95)
+	stats["max_resolve_ms"] = _max_value(resolve_ms_samples)
+	stats["avg_command_ms"] = _average(command_ms_samples)
+	stats["p95_command_ms"] = _percentile(command_ms_samples, 0.95)
+	stats["max_command_ms"] = _max_value(command_ms_samples)
+	stats["surface_state_calls"] = surface_state_ms_samples.size()
+	stats["surface_state_avg_ms"] = _average(surface_state_ms_samples)
+	stats["surface_state_p95_ms"] = _percentile(surface_state_ms_samples, 0.95)
+	stats["surface_state_max_ms"] = _max_value(surface_state_ms_samples)
+
+
+func _average(values: Array) -> float:
+	if values.is_empty():
+		return 0.0
+	var total := 0.0
+	for value in values:
+		total += float(value)
+	return total / float(values.size())
+
+
+func _percentile(values: Array, percentile: float) -> float:
+	if values.is_empty():
+		return 0.0
+	var sorted_values := values.duplicate()
+	sorted_values.sort()
+	var index := clampi(int(ceil(float(sorted_values.size()) * clampf(percentile, 0.0, 1.0))) - 1, 0, sorted_values.size() - 1)
+	return float(sorted_values[index])
+
+
+func _max_value(values: Array) -> float:
+	var result := 0.0
+	for value in values:
+		result = maxf(result, float(value))
+	return result
+
+
 func _hit_count(harness: SurfaceHarness, action_prefix: String) -> int:
 	var count := 0
 	for hit_value in harness.hit_regions:
@@ -478,9 +552,19 @@ func _print_summary() -> void:
 	print("Surface checks: %d" % int(stats.get("surface_checks", 0)))
 	print("Draw checks: %d" % int(stats.get("draw_checks", 0)))
 	print("Spin resolves: %d" % int(stats.get("spin_resolves", 0)))
-	print("Resolve max %.3f ms, command max %.3f ms" % [
+	print("Resolve avg/p95/max %.3f/%.3f/%.3f ms, command avg/p95/max %.3f/%.3f/%.3f ms" % [
+		float(stats.get("avg_resolve_ms", 0.0)),
+		float(stats.get("p95_resolve_ms", 0.0)),
 		float(stats.get("max_resolve_ms", 0.0)),
+		float(stats.get("avg_command_ms", 0.0)),
+		float(stats.get("p95_command_ms", 0.0)),
 		float(stats.get("max_command_ms", 0.0)),
+	])
+	print("Surface_state avg/p95/max %.4f/%.4f/%.4f ms over %d calls" % [
+		float(stats.get("surface_state_avg_ms", 0.0)),
+		float(stats.get("surface_state_p95_ms", 0.0)),
+		float(stats.get("surface_state_max_ms", 0.0)),
+		int(stats.get("surface_state_calls", 0)),
 	])
 	print("Trajectory frames min=%d max=%d" % [
 		int(stats.get("min_trajectory_frames", 0)),

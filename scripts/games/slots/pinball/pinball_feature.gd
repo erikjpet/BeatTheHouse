@@ -9,7 +9,7 @@ const ItemsScript := preload("res://scripts/games/slots/pinball/pinball_items.gd
 
 const AIM_MIN := -60
 const AIM_MAX := 60
-const AIM_STEP := 2
+const AIM_STEP := 12
 const DIRECT_AIM_STEPS := 24
 const DIRECT_START_STEPS := 24
 const DIRECT_POWER_STEPS := 20
@@ -58,6 +58,7 @@ func open(machine: Dictionary, mode: String, stake: int, rng: RngStream, params:
 		"session_cap": cap,
 		"pending_award": 0,
 		"feature_total": 0,
+		"feature_score": 0,
 		"awarded": 0,
 		"remaining_steps": total_balls,
 		"total_steps": total_balls,
@@ -177,6 +178,7 @@ func step(machine: Dictionary, action_id: String, rng: RngStream, _definition: D
 			if mode == "video_feature" and int(_dict(sim.compact_snapshot()).get("balls_launched", 0)) == 1:
 				sim.launch_ball({"power": 0.68, "aim": -0.28, "position": Vector2(0.42, 0.135)})
 				sim.launch_ball({"power": 0.72, "aim": 0.28, "position": Vector2(0.58, 0.135)})
+				active["video_auto_multiball_armed"] = true
 				active["multiball_started"] = true
 			_log_input(active, "slot_bonus_launch")
 			message = "Pinball launch."
@@ -217,18 +219,20 @@ func preview(machine: Dictionary, stake: int, definition: Dictionary, rng: RngSt
 	})
 	active["headless"] = true
 	machine["active_bonus"] = active
-	var total := 0
 	var guard := 0
 	while bool(active.get("active", false)) and guard < 24:
 		var action_id := "slot_bonus_launch"
 		if guard < inputs.size():
 			action_id = str(inputs[guard])
 		var result: Dictionary = step(machine, action_id, rng, definition, {})
-		total += int(result.get("award", 0))
 		active = _dict(result.get("active_bonus", machine.get("active_bonus", {})))
 		machine["active_bonus"] = active
 		guard += 1
-	return maxi(total, int(active.get("awarded", active.get("feature_total", 0)))) + _input_bonus(inputs, stake, str(active.get("mode", "")))
+	var forecast := maxi(
+		int(active.get("feature_score", 0)),
+		int(active.get("awarded", active.get("feature_total", 0)))
+	)
+	return forecast + _input_bonus(inputs, stake, str(active.get("mode", "")))
 
 
 static func surface_refresh(active: Dictionary, surface_time_msec: int) -> Dictionary:
@@ -252,6 +256,11 @@ static func surface_refresh(active: Dictionary, surface_time_msec: int) -> Dicti
 		result["display_event_log"] = _tail_array_shallow(result.get("display_event_log", []), 8)
 		result["display_trajectory"] = _tail_array_shallow(result.get("display_trajectory", []), 24)
 		result["history"] = []
+	elif sim == null and bool(result.get("active", false)):
+		var balls_remaining := maxi(0, int(result.get("balls_remaining", result.get("remaining_steps", 0))))
+		result["active_ball_count"] = 0
+		result["launch_in_progress"] = false
+		result["remaining_steps"] = balls_remaining
 	return result
 
 
@@ -263,6 +272,7 @@ func _refresh_active(active: Dictionary, sim, local_events: Array, local_traject
 	var balls_remaining := maxi(0, total_steps - launched)
 	active["feature_total"] = int(snapshot.get("total_awarded", 0))
 	active["pending_award"] = int(snapshot.get("total_awarded", 0))
+	active["feature_score"] = int(snapshot.get("gross_awarded", snapshot.get("total_awarded", 0)))
 	active["balls_remaining"] = balls_remaining
 	active["remaining_steps"] = balls_remaining + live_count
 	active["active_ball_count"] = live_count
@@ -401,12 +411,16 @@ func _finish(machine: Dictionary, active: Dictionary, sim, message: String) -> D
 		active["feature_total"] = minimum
 		active["pending_award"] = minimum
 		finish_events.append(_manual_award_event("floor", "pinball_floor", floor_paid, finish_source_events, sim))
-	var award := mini(int(active.get("session_cap", sim.session_cap)), maxi(minimum, int(sim.total_awarded)))
+	var award_cap := int(active.get("session_cap", sim.session_cap))
+	if bool(active.get("reference_policy", false)):
+		award_cap = mini(award_cap, _reference_policy_cap(active))
+	var award := mini(award_cap, maxi(minimum, int(sim.total_awarded)))
 	active["active"] = false
 	active["complete"] = true
 	active["awarded"] = award
 	active["feature_total"] = award
 	active["pending_award"] = award
+	active["feature_score"] = maxi(int(active.get("feature_score", 0)), int(sim.gross_awarded))
 	active["active_ball_count"] = 0
 	active["remaining_steps"] = 0
 	active["balls_remaining"] = 0
@@ -430,6 +444,7 @@ func _session_for(active: Dictionary):
 	var compiled: Dictionary = compiler.compile(layout, ItemsScript.compile_modifiers(_dict(active.get("pinball_item_effects", {}))))
 	var sim := SimScript.new()
 	sim.configure(compiled, int(active.get("runtime_seed", 1)), {"cap": int(active.get("session_cap", 500))})
+	_restore_session_progress(active, sim)
 	_store_session(session_id, sim, layout, compiled)
 	return sim
 
@@ -461,9 +476,33 @@ static func _erase_session(session_id: String) -> void:
 	_session_order.erase(session_id)
 
 
+static func clear_runtime_session_cache() -> void:
+	_sessions.clear()
+	_layouts.clear()
+	_compiled_boards.clear()
+	_surface_refresh_msec.clear()
+	_session_order.clear()
+
+
 static func _prune_session_cache() -> void:
 	while _session_order.size() > MAX_RUNTIME_SESSIONS:
 		_erase_session(str(_session_order[0]))
+
+
+static func _restore_session_progress(active: Dictionary, sim) -> void:
+	var cap := maxi(1, int(active.get("session_cap", sim.session_cap)))
+	var restored_total := maxi(maxi(maxi(0, int(active.get("feature_total", 0))), int(active.get("pending_award", 0))), int(active.get("awarded", 0)))
+	sim.total_awarded = mini(cap, restored_total)
+	sim.gross_awarded = maxi(sim.total_awarded, int(active.get("feature_score", restored_total)))
+	var total_steps := maxi(0, int(active.get("total_steps", active.get("balls_remaining", 0))))
+	var balls_remaining := clampi(int(active.get("balls_remaining", total_steps)), 0, total_steps)
+	var debug: Dictionary = _dict_static(active.get("pinball_debug", {}))
+	var launched := clampi(total_steps - balls_remaining, 0, total_steps)
+	launched = maxi(launched, int(active.get("step_index", 0)))
+	launched = maxi(launched, int(debug.get("balls_launched", 0)))
+	sim.balls_launched = clampi(launched, 0, maxi(total_steps, launched))
+	sim.drain_count = clampi(maxi(int(active.get("step_index", 0)), int(debug.get("drain_count", 0))), 0, maxi(sim.balls_launched, 0))
+	sim.max_active_seen = maxi(int(active.get("max_active_count", 0)), int(debug.get("max_active_seen", 0)))
 
 
 func _run_ticks_with_trajectory(sim, ticks_to_run: int, trajectory: Array, local_time: bool) -> void:
@@ -615,6 +654,7 @@ func _adjust_aim(active: Dictionary, mode: String, delta: int) -> void:
 	active["selected_path"] = active["selected_lane"]
 	if not bool(active.get("launch_start_manual", false)):
 		active["launch_start"] = _point_payload(_launch_start_for_angle(mode, int(active.get("launch_angle_degrees", 0))))
+	active["physics"] = _physics_from_point(_vector2(active.get("launch_start", _launch_start_for_angle(mode, int(active.get("launch_angle_degrees", 0)))), _launch_start_for_angle(mode, int(active.get("launch_angle_degrees", 0)))), "plunger")
 	_refresh_launch_state(active, mode, false, {})
 
 
@@ -633,6 +673,7 @@ func _apply_direct_start(active: Dictionary, mode: String, action_id: String) ->
 	active["launch_start_manual"] = true
 	active["selected_lane"] = "left" if ratio < 0.34 else "right" if ratio > 0.66 else "center"
 	active["selected_path"] = active["selected_lane"]
+	active["physics"] = _physics_from_point(start, "plunger")
 	_refresh_launch_state(active, mode, false, {})
 
 
@@ -688,6 +729,14 @@ func _minimum_award(active: Dictionary) -> int:
 			return stake * 2
 
 
+func _reference_policy_cap(active: Dictionary) -> int:
+	var stake := maxi(1, int(active.get("stake", 1)))
+	var feature_scale := maxf(0.35, float(active.get("feature_scale", 1.0)))
+	if str(active.get("mode", "")) == "video_feature":
+		return maxi(1, int(round(float(stake) * 10.0 * feature_scale)))
+	return maxi(1, int(active.get("session_cap", stake)))
+
+
 func _mode_for_machine(machine: Dictionary) -> String:
 	match str(machine.get("format_id", "classic_3_reel")):
 		"line_5x3":
@@ -719,7 +768,7 @@ func _session_cap(stake: int, mode: String, feature_scale: float) -> int:
 	if mode == "lane_multiball":
 		multiplier = 14.2
 	elif mode == "video_feature":
-		multiplier = 10.5
+		multiplier = 30.0
 	return maxi(1, int(round(float(stake) * multiplier * maxf(0.35, feature_scale))))
 
 
@@ -739,7 +788,7 @@ func _input_bonus(inputs: Array, stake: int, mode: String) -> int:
 		elif action == "slot_bonus_launch":
 			score += 2
 	if mode == "video_feature":
-		score *= 2
+		score *= 20
 	return maxi(0, score * maxi(1, stake) / 2)
 
 

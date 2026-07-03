@@ -16,9 +16,25 @@ const MAX_RENDERED_STACK_TICKETS := 9
 const MAX_ACTIVE_DISPENSE_EVENTS := 48
 const MAX_EVENT_LOCAL_DROP_START_MSEC := 300
 
+var stats: Dictionary = {}
+var resolve_ms_samples: Array = []
+var surface_state_ms_samples: Array = []
+
 
 func _init() -> void:
 	var failures: Array = []
+	resolve_ms_samples = []
+	surface_state_ms_samples = []
+	stats = {
+		"resolve_samples": 0,
+		"avg_resolve_ms": 0.0,
+		"p95_resolve_ms": 0.0,
+		"max_resolve_ms": 0.0,
+		"surface_state_calls": 0,
+		"surface_state_avg_ms": 0.0,
+		"surface_state_p95_ms": 0.0,
+		"surface_state_max_ms": 0.0,
+	}
 	var library: ContentLibrary = ContentLibraryScript.new()
 	library.load()
 	if not library.validation_errors.is_empty():
@@ -35,8 +51,19 @@ func _init() -> void:
 		_audit_active_item_mechanics(library, definition, failures)
 		_audit_venue_deal_variety(library, definition, failures)
 		_audit_full_deal_integrity(library, definition, failures)
+		_audit_surface_state_timing(library, definition, failures)
+	_finalize_timing_stats()
 	if failures.is_empty():
-		print("Pull Tabs seed audit passed across %d generated machines." % SEED_COUNT)
+		print("Pull Tabs seed audit passed across %d generated machines. Resolve avg/p95/max %.3f/%.3f/%.3f ms, surface_state avg/p95/max %.4f/%.4f/%.4f ms over %d calls." % [
+			SEED_COUNT,
+			float(stats.get("avg_resolve_ms", 0.0)),
+			float(stats.get("p95_resolve_ms", 0.0)),
+			float(stats.get("max_resolve_ms", 0.0)),
+			float(stats.get("surface_state_avg_ms", 0.0)),
+			float(stats.get("surface_state_p95_ms", 0.0)),
+			float(stats.get("surface_state_max_ms", 0.0)),
+			int(stats.get("surface_state_calls", 0)),
+		])
 		quit(0)
 	else:
 		for failure in failures:
@@ -280,7 +307,7 @@ func _audit_full_deal_integrity(library: ContentLibrary, definition: Dictionary,
 		if str(command.get("action_id", "")) != "buy_tab":
 			failures.append("%s: buy command disappeared before sellout at ticket %d." % [label, draw_index])
 			return
-		var result: Dictionary = game.resolve_with_context("buy_tab", int(command.get("set_stake", 1)), run_state, active_environment, run_state.create_rng("full_deal_%03d" % draw_index), command.get("ui_state", {}))
+		var result: Dictionary = _resolve_and_record(game, "buy_tab", int(command.get("set_stake", 1)), run_state, active_environment, run_state.create_rng("full_deal_%03d" % draw_index), command.get("ui_state", {}))
 		var ticket: Dictionary = result.get("pull_tab_ticket", {})
 		if int(ticket.get("payout", 0)) > 0:
 			var prize_key := _prize_key(ticket)
@@ -395,7 +422,7 @@ func _buy_one(game: GameModule, run_state: RunState, environment: Dictionary, co
 	if not bool(command.get("handled", false)) or str(command.get("action_id", "")) != "buy_tab":
 		failures.append("%s: buy command was not handled for column %d." % [label, column])
 		return {}
-	var result: Dictionary = game.resolve_with_context("buy_tab", int(command.get("set_stake", 1)), run_state, environment, run_state.create_rng(stream_key), command.get("ui_state", {}))
+	var result: Dictionary = _resolve_and_record(game, "buy_tab", int(command.get("set_stake", 1)), run_state, environment, run_state.create_rng(stream_key), command.get("ui_state", {}))
 	if not bool(result.get("ok", false)):
 		failures.append("%s: buy resolve failed for column %d." % [label, column])
 	if int(result.get("pull_tab_payout", -1)) != expected_payout:
@@ -412,7 +439,7 @@ func _buy_one_without_expected_payout(game: GameModule, run_state: RunState, env
 	if not bool(command.get("handled", false)) or str(command.get("action_id", "")) != "buy_tab":
 		failures.append("%s: buy command was not handled for column %d." % [label, column])
 		return {}
-	var result: Dictionary = game.resolve_with_context("buy_tab", int(command.get("set_stake", 1)), run_state, environment, run_state.create_rng(stream_key), command.get("ui_state", {}))
+	var result: Dictionary = _resolve_and_record(game, "buy_tab", int(command.get("set_stake", 1)), run_state, environment, run_state.create_rng(stream_key), command.get("ui_state", {}))
 	if not bool(result.get("ok", false)):
 		failures.append("%s: buy resolve failed for column %d." % [label, column])
 	return result
@@ -441,7 +468,7 @@ func _buy_all(game: GameModule, run_state: RunState, environment: Dictionary, la
 	if not bool(command.get("handled", false)) or str(command.get("action_id", "")) != "buy_tab_set":
 		failures.append("%s: buy-all command was not handled." % label)
 		return {}
-	var result: Dictionary = game.resolve_with_context("buy_tab_set", int(command.get("set_stake", 1)), run_state, environment, run_state.create_rng(stream_key), command.get("ui_state", {}))
+	var result: Dictionary = _resolve_and_record(game, "buy_tab_set", int(command.get("set_stake", 1)), run_state, environment, run_state.create_rng(stream_key), command.get("ui_state", {}))
 	if not bool(result.get("ok", false)) or int(result.get("pull_tab_ticket_count", 0)) <= 0:
 		failures.append("%s: buy-all resolve did not produce tickets." % label)
 	return result
@@ -464,7 +491,7 @@ func _reveal_file_next(game: GameModule, run_state: RunState, environment: Dicti
 	if not bool(file_command.get("handled", false)) or str(file_command.get("action_id", "")) != "sort_tab_ticket":
 		failures.append("%s: file command did not request ticket sort." % label)
 		return false
-	var sort_result: Dictionary = game.resolve_with_context("sort_tab_ticket", 0, run_state, environment, run_state.create_rng("sort_%02d" % index), file_command.get("ui_state", reveal_state))
+	var sort_result: Dictionary = _resolve_and_record(game, "sort_tab_ticket", 0, run_state, environment, run_state.create_rng("sort_%02d" % index), file_command.get("ui_state", reveal_state))
 	if not bool(sort_result.get("ok", false)) or int(sort_result.get("bankroll_delta", -1)) != 0:
 		failures.append("%s: ticket sort failed or paid immediately." % label)
 		return false
@@ -628,7 +655,7 @@ func _audit_bankroll_zero_deferred_ticket_flow(library: ContentLibrary, definiti
 	var price := maxi(1, int((deals[0] as Dictionary).get("price", 1)))
 	run_state.bankroll = price
 	var buy_command: Dictionary = game.surface_action_command("pull_tab_buy", 0, false, {}, run_state, run_state.current_environment)
-	var buy_result: Dictionary = game.resolve_with_context("buy_tab", price, run_state, run_state.current_environment, run_state.create_rng("zero_buy"), buy_command.get("ui_state", {}))
+	var buy_result: Dictionary = _resolve_and_record(game, "buy_tab", price, run_state, run_state.current_environment, run_state.create_rng("zero_buy"), buy_command.get("ui_state", {}))
 	if run_state.bankroll != 0:
 		failures.append("%s: all-in pull-tab purchase did not spend the last cash." % label)
 	if run_state.run_status == RunState.RUN_STATUS_FAILED:
@@ -649,7 +676,7 @@ func _audit_bankroll_zero_deferred_ticket_flow(library: ContentLibrary, definiti
 	if str(file_command.get("action_id", "")) != "sort_tab_ticket":
 		failures.append("%s: opened ticket did not produce a file/sort command." % label)
 		return
-	var sort_result: Dictionary = game.resolve_with_context("sort_tab_ticket", 0, run_state, run_state.current_environment, run_state.create_rng("zero_sort"), file_command.get("ui_state", {}))
+	var sort_result: Dictionary = _resolve_and_record(game, "sort_tab_ticket", 0, run_state, run_state.current_environment, run_state.create_rng("zero_sort"), file_command.get("ui_state", {}))
 	var post_sort_terminal: Dictionary = RunTerminalEvaluatorScript.evaluate(run_state, library)
 	if int(sort_result.get("pull_tab_payout", 0)) > 0:
 		if not bool(post_sort_terminal.get("bankroll_zero_deferred", false)):
@@ -707,6 +734,78 @@ func _assert_dispense_events_include(machine: Dictionary, ticket_ids: Array, lab
 		if not event_ids.has(str(ticket_id)):
 			failures.append("%s: active dispense batch dropped ticket event %s." % [label, str(ticket_id)])
 			return
+
+
+func _resolve_and_record(game: GameModule, action_id: String, stake: int, run_state: RunState, environment: Dictionary, rng: RngStream, ui_state: Dictionary) -> Dictionary:
+	var started := Time.get_ticks_usec()
+	var result: Dictionary = game.resolve_with_context(action_id, stake, run_state, environment, rng, ui_state)
+	var elapsed_ms := float(Time.get_ticks_usec() - started) / 1000.0
+	resolve_ms_samples.append(elapsed_ms)
+	stats["resolve_samples"] = resolve_ms_samples.size()
+	stats["max_resolve_ms"] = maxf(float(stats.get("max_resolve_ms", 0.0)), elapsed_ms)
+	return result
+
+
+func _audit_surface_state_timing(library: ContentLibrary, definition: Dictionary, failures: Array) -> void:
+	var label := "PULL-TABS-SURFACE-TIMING"
+	var module_script = load(str(definition.get("module_path", "")))
+	if module_script == null:
+		failures.append("%s: pull-tab module failed to load." % label)
+		return
+	var game = module_script.new()
+	if not game is GameModule:
+		failures.append("%s: pull-tab module does not extend GameModule." % label)
+		return
+	game.setup(definition, library)
+	var run_state: RunState = RunStateScript.new()
+	run_state.start_new(label)
+	run_state.bankroll = 100000
+	var environment := _fixture_environment(label.to_lower(), "bar", "bar")
+	environment["game_states"] = {"pull_tabs": game.generate_environment_state(run_state, environment, run_state.create_rng("pull_tab_surface_timing_machine"))}
+	run_state.set_environment(environment)
+	surface_state_ms_samples = []
+	for index in range(1000):
+		var started := Time.get_ticks_usec()
+		var surface: Dictionary = game.surface_state(run_state, run_state.current_environment, {"surface_time_msec": 100000 + index * 17})
+		surface_state_ms_samples.append(float(Time.get_ticks_usec() - started) / 1000.0)
+		if str(surface.get("surface_renderer", "")) != "pull_tab_machine":
+			failures.append("%s: surface_state timing fixture returned the wrong renderer." % label)
+			break
+
+
+func _finalize_timing_stats() -> void:
+	stats["avg_resolve_ms"] = _average(resolve_ms_samples)
+	stats["p95_resolve_ms"] = _percentile(resolve_ms_samples, 0.95)
+	stats["max_resolve_ms"] = _max_value(resolve_ms_samples)
+	stats["surface_state_calls"] = surface_state_ms_samples.size()
+	stats["surface_state_avg_ms"] = _average(surface_state_ms_samples)
+	stats["surface_state_p95_ms"] = _percentile(surface_state_ms_samples, 0.95)
+	stats["surface_state_max_ms"] = _max_value(surface_state_ms_samples)
+
+
+func _average(values: Array) -> float:
+	if values.is_empty():
+		return 0.0
+	var total := 0.0
+	for value in values:
+		total += float(value)
+	return total / float(values.size())
+
+
+func _percentile(values: Array, percentile: float) -> float:
+	if values.is_empty():
+		return 0.0
+	var sorted_values := values.duplicate()
+	sorted_values.sort()
+	var index := clampi(int(ceil(float(sorted_values.size()) * clampf(percentile, 0.0, 1.0))) - 1, 0, sorted_values.size() - 1)
+	return float(sorted_values[index])
+
+
+func _max_value(values: Array) -> float:
+	var result := 0.0
+	for value in values:
+		result = maxf(result, float(value))
+	return result
 
 
 func _sleeve_entry_payout(deal: Dictionary, sleeve_entry: int) -> int:

@@ -160,6 +160,7 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 	var table: Dictionary = _table_state(run_state, environment)
 	var session: Dictionary = _normalized_session(run_state, environment, ui_state, table)
 	var now_msec := int(ui_state.get("surface_time_msec", Time.get_ticks_msec()))
+	session["surface_time_msec"] = now_msec
 	var hands: Array = _hand_array(session.get("player_hands", []))
 	var active_index: int = clampi(int(session.get("active_hand_index", 0)), 0, maxi(0, hands.size() - 1))
 	var active_hand: Dictionary = hands[active_index] if active_index >= 0 and active_index < hands.size() else {}
@@ -215,7 +216,7 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 	var count_active := not count_challenge.is_empty() and not bool(session.get("count_answered", false))
 	var round_complete := dealt and _all_hands_complete(session)
 	var dealer_blackjack_pending := dealt and _dealer_has_blackjack(dealer_cards)
-	var live_table_motion := not barred
+	var blackjack_live_redraw_active := not barred and (dealt or count_active)
 	var dealer_focus_runtime: Dictionary = {
 		"dealer_lookaway_started_msec": attention_started_msec,
 		"dealer_lookaway_duration_msec": attention_duration_msec,
@@ -260,8 +261,8 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 		"surface_controls_native": true,
 		"surface_stake_controls_required": true,
 		"surface_embeds_outcomes": true,
-		"surface_animates_idle": live_table_motion,
-		"surface_realtime_state_refresh": true,
+		"surface_animates_idle": blackjack_live_redraw_active,
+		"surface_realtime_state_refresh": false,
 		"surface_ui_protected_regions": _blackjack_ui_protected_regions(count_challenge),
 		"surface_hover_ui_protected_regions": [
 			_blackjack_ui_rect(236, 202, 428, 108, "blackjack_side_bet"),
@@ -4976,12 +4977,18 @@ func _table_rules_text(surface_state: Dictionary) -> String:
 	]
 
 
+func _session_time_msec(session: Dictionary) -> int:
+	if session.has("surface_time_msec"):
+		return maxi(0, int(session.get("surface_time_msec", 0)))
+	return Time.get_ticks_msec()
+
+
 func _dealer_lookaway_active(session: Dictionary) -> bool:
 	var started := int(session.get("dealer_lookaway_started_msec", 0))
 	var duration := int(session.get("dealer_lookaway_duration_msec", 0))
 	if started <= 0 or duration <= 0:
 		return false
-	return Time.get_ticks_msec() <= started + duration
+	return _session_time_msec(session) <= started + duration
 
 
 func _dealer_peek_window_open(table: Dictionary, session: Dictionary, run_state: RunState) -> bool:
@@ -4994,7 +5001,7 @@ func _dealer_focus_state(table: Dictionary, session: Dictionary, run_state: RunS
 	var heat: int = run_state.suspicion_level() if run_state != null else 0
 	var started := int(session.get("dealer_lookaway_started_msec", 0))
 	var duration := int(session.get("dealer_lookaway_duration_msec", 0))
-	var now := Time.get_ticks_msec()
+	var now := _session_time_msec(session)
 	var active := started > 0 and duration > 0 and now <= started + duration
 	var remaining := maxi(0, started + duration - now) if active else 0
 	var cycle_msec := maxi(900, int(320000 / maxi(45, int(profile.get("gaze_speed", 95)))))
@@ -5047,7 +5054,7 @@ func _dealer_focus_state(table: Dictionary, session: Dictionary, run_state: RunS
 func _ambient_table_event(table: Dictionary, session: Dictionary) -> Dictionary:
 	if not _has_dealt_hand(session):
 		return {}
-	var now := Time.get_ticks_msec()
+	var now := _session_time_msec(session)
 	var cycle_msec := 4200
 	var phase := float(now % cycle_msec) / float(cycle_msec)
 	if phase > 0.42:
@@ -5081,7 +5088,7 @@ func _patron_cover_active(session: Dictionary, patron_id: String) -> bool:
 		return false
 	var started := int(entry.get("started_msec", 0))
 	var duration := int(entry.get("duration_msec", 0))
-	return started > 0 and duration > 0 and Time.get_ticks_msec() <= started + duration
+	return started > 0 and duration > 0 and _session_time_msec(session) <= started + duration
 
 
 func _patron_cover_amount(session: Dictionary, patron_id: String) -> int:
@@ -5095,7 +5102,7 @@ func _patron_cover_amount(session: Dictionary, patron_id: String) -> int:
 func _patrons_for_surface(table: Dictionary, session: Dictionary) -> Array:
 	var patrons: Array = []
 	var distraction_cover: int = _active_distraction_cover(session)
-	var now := Time.get_ticks_msec()
+	var now := _session_time_msec(session)
 	var patron_hands: Array = _hand_array(session.get("patron_hands", []))
 	var source_patrons: Array = _dictionary_array(table.get("patrons", []))
 	for patron_index in range(source_patrons.size()):
