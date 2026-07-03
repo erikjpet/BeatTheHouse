@@ -62,12 +62,12 @@ D7 may retune values, but they must keep the ids and rule meanings.
 | Field | Initial value | Meaning |
 | --- | ---: | --- |
 | `high_roller_target_bankroll` | 0 | Legacy compatibility field; the clean route is no longer gated by total bankroll. |
-| `high_roller_net_winnings` | 200 | Minimum net bankroll gained after entering the Grand Casino, measured after the Grand Casino travel buy-in is paid. |
+| `high_roller_net_winnings` | 10 | 0.3 release-tuned minimum net bankroll gained after entering the Grand Casino, measured after the Grand Casino travel buy-in is paid. |
 | `high_roller_min_grand_casino_games` | 3 | Minimum settled wagered game results on the Grand Casino floor. |
 | `high_roller_max_heat` | 30 | Maximum Grand Casino heat for clean cashout. |
 | `showdown_heat_threshold` | 70 | Heat that triggers showdown when staff attention is present. |
 | `forced_showdown_heat_threshold` | 95 | Heat that forces showdown even if no other attention source is currently true. |
-| `showdown_base_success_chance` | 58 | Starting chance for the final showdown check. |
+| `showdown_base_success_chance` | 95 | 0.3 release-tuned starting chance for the final showdown check before heat/evidence/debt penalties. |
 | `showdown_min_success_chance` | 5 | Lower clamp for the final check. |
 | `showdown_max_success_chance` | 95 | Upper clamp for the final check. |
 

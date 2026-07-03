@@ -7,12 +7,14 @@ play full simulations of Pull Tabs, Slots, Bar Dice, Blackjack, Baccarat,
 Roulette, and Video Poker. Every win, cheat, drink, loan, and bad exit pushes
 the run state forward.
 
-The runnable 0.2.0 demo candidate has shipped. Current development targets the
-Act 1 feature-complete scope: the full street-to-Grand-Casino arc, deeper
-mid-game content, cross-game skill cheating, polished feature events, complete
-presentation/audio, and a clean Act 2 handoff. Beat the House is not a
-real-money gambling product. It has no real-money wagering, cash prizes,
-gambling monetization, or store credentials checked into the repository.
+The runnable 0.2.0 demo candidate has shipped. Current development is the
+0.3 source release-candidate line: release-prep work is partitioned into
+auditable commits, and the remaining non-code release actions are manual itch.io
+publishing plus Android/iOS signing credentials. Broader jazz-club,
+profile-completion, music-rework, mobile-runbook, and Act 2 seam work is parked
+until after 0.3. Beat the House is not a real-money gambling product. It has no
+real-money wagering, cash prizes, gambling monetization, or store credentials
+checked into the repository.
 
 ## 0.2.0 Demo Highlights
 
@@ -35,13 +37,14 @@ gambling monetization, or store credentials checked into the repository.
 | Main scene | `res://scenes/main.tscn` |
 | Main UI shell | `res://scripts/ui/foundation_main.gd` |
 | Shipped baseline | 0.2.0 demo release candidate |
-| Active planning target | Act 1 feature-complete |
+| Active planning target | 0.3 release cut line, version-stamped as 0.3.0 |
+| Current release readiness | R11 commit hygiene is complete; validation, UI, slot, visual QA, full-suite, and fast 3-run balance gates are tracked in `docs/plans/0.3_release_checklist.md` |
 | Viewport | 1280x720, non-resizable, canvas stretch with kept aspect |
 | Renderer | Godot mobile renderer |
 | Input model | Single pointer interaction with mouse/touch parity |
-| Target exports | Web/itch.io, Windows desktop, Android, iOS |
+| Target exports | 0.3 ships Web/itch.io and Windows desktop; Android/iOS presets remain credential-blocked |
 | Run model | Seeded deterministic run state with forked RNG streams |
-| Current win target | Reach the Grand Casino, then win either clean (net +$200 while staying low-heat for a Players Card) or by surviving Pit Boss Rourke's back-room showdown |
+| Current win target | Reach the Grand Casino, then win either clean (net +$10 while staying low-heat for a Players Card) or by surviving Pit Boss Rourke's back-room showdown |
 | Prestige content | Act 1 keeps prestige dormant: the code path exists, but empty `data/prestige/purchases.json` hides all prestige UI/objects |
 
 The player starts in a generated low-stakes environment, buys or uses items,
@@ -54,8 +57,8 @@ bankroll, heat, police capture, or being stranded without a useful recovery path
 1. `FoundationMain` loads content through `ContentLibrary`.
 2. `RunGenerator` creates a seeded run and an initial environment.
 3. `EnvironmentInstance` turns archetype data into visible objects: games, items,
-   events, services, lenders, travel hooks, and prestige hooks when prestige
-   data exists.
+   events, services, lenders, world-map travel exits, and prestige hooks when
+   prestige data exists.
 4. The player interacts with objects through the shared UI shell.
 5. Game modules, item effects, services, lenders, events, travel, and any
    authored prestige targets return result dictionaries.
@@ -75,10 +78,10 @@ Production content is JSON under `data/`.
 | Games | 7 | `data/games/games.json` | All current games are full-simulation modules |
 | Items | 59 | `data/items/items.json` | Permanent, temporary, consumable, contraband, active, game, security, travel, slot, pinball, and build-synergy effects |
 | Content groups | 9 | `data/content_groups/groups.json` | Modular run packs that enable/disable games and their related item pools |
-| Events | 31 | `data/events/events.json` | Scoped room events with choices and consequences, including unavoidable pressure events and the boss-floor `the_house_calls` and `high_roller_cashout` |
+| Events | 33 | `data/events/events.json` | Scoped room events with choices and consequences, including unavoidable pressure events, triggered follow-ups, and the boss-floor `the_house_calls` and `high_roller_cashout` |
 | Services | 12 | `data/services/services.json` | `cashier_tip`, `house_drink`, `call_brother_in_law`, jazz-club round/tip/show services, and tier-2 lounge/riverboat services |
 | Lenders | 5 | `data/debt/lenders.json` | `street_lender`, `motel_friend`, `the_crew`, `brother_in_law`, `sals_pawn_counter` |
-| Travel routes | 10 | `data/travel/routes.json` | Routes into shops, casinos, tier-2 venues, the jazz club, the underground casino, and the Grand Casino, with costs, unlocks, scouting previews, travel locks, and route-risk events |
+| Travel route templates | 10 | `data/travel/routes.json` | Destination templates for shops, casinos, tier-2 venues, the jazz club, the underground casino, and the Grand Casino; `WorldMap` turns them into seeded graph paths with costs, unlocks, scouting previews, travel locks, and route-risk events |
 | Prestige purchases | 0 | `data/prestige/purchases.json` | Empty Act 1 data pack; HUD, menu, room, and victory hooks stay hidden |
 | Challenges | 7 | `data/challenges/challenges.json` | Act 1 authored challenge runs with profile completion flags |
 
@@ -108,7 +111,7 @@ The current environment pack contains:
 | `motel` | shop | 1 | Start-capable recovery and lender stop |
 | `bar` | casino | 1 | Low-stakes gambling room |
 | `gas_station_casino` | casino | 1 | Low-stakes gambling room |
-| `jazz_club` | shop | 1 | Rare late-1960s music room with trio services, no games, and rare musician rewards |
+| `jazz_club` | shop | 1 | Rare late-1960s music room with trio services, pull tabs, and rare musician rewards |
 | `small_underground_casino` | casino | 1 | Larger room with Grand Casino route access |
 | `kitty_cat_lounge` | casino | 2 | Velvet-rope lounge with a house wheel, champagne pressure, and paid heat management |
 | `delta_queen` | casino | 2 | Riverboat mid-stakes rung with scheduled boarding and temporary travel lock |
@@ -117,8 +120,24 @@ The current environment pack contains:
 Environment archetypes define name parts, visual context, layout points,
 security/economic/music profiles, object pools, route hooks, local narrative
 flags, and demo objective data. The Grand Casino objective is
-`grand_casino_demo_bankroll`: win `$200` on that floor, stay clean enough for
+`grand_casino_demo_bankroll`: win `$10` on that floor, stay clean enough for
 the host to issue a Players Card, or survive Rourke's back-room showdown.
+
+## World Map And Travel
+
+The current travel system is a seeded `WorldMap`, not a flat room-to-room hook
+list. Environment archetypes name likely neighbors and route hooks; route
+templates in `data/travel/routes.json` define destination identity, cost, risk,
+unlock rules, route-risk events, availability windows, and scouting text.
+`WorldMap` lays out the graph, records discovered/visited nodes, stores each
+node's generated environment, and exposes a modal map through
+`scripts/ui/world_map_canvas.gd`.
+
+Travel can reveal tier-2 rungs, scout likely games/items/services/lenders,
+apply heat decay and suspicion deltas, trigger route-risk consequences, and lock
+the player temporarily in venues such as `delta_queen`. The Grand Casino route
+is hidden until the travel-count condition is met and costs `$70` before any
+graph path modifiers.
 
 ## Games
 
@@ -126,15 +145,15 @@ Game definitions live in `data/games/games.json`. Each game module extends the
 shared `GameModule` contract and owns its own surface state, action routing, and
 rendering details.
 
-| Game | Family | Module | Current behavior |
-| --- | --- | --- | --- |
-| Pull Tabs | novelty | `scripts/games/pull_tabs.gd` | Finite pull-tab deals, ticket windows, row/deal state, detector and tarot item interactions |
-| Slot | slots | `scripts/games/slot.gd` | Generated Pinball/Buffalo machines, fixed bet ladder, nudge, autoplay, feature bonuses |
-| Bar Dice | dice | `scripts/games/bar_dice.gd` | Ship, Captain, Crew as a bar-top table game with patrons, cargo scoring, carryover pots, and loaded/palmed cheat actions |
-| Blackjack | cards | `scripts/games/blackjack.gd` | Shoe blackjack with hit/stand/split/double, side bets, count challenge, hole-card peek heat |
-| Baccarat | cards | `scripts/games/baccarat.gd` | Mini-baccarat with Player/Banker/Tie/pair bets, commission, and shoe state |
-| Roulette | wheel | `scripts/games/roulette.gd` | Full roulette layout with inside/outside bets, chip placement, wheel spin, and payout animation |
-| Video Poker | cards | `scripts/games/video_poker.gd` | Multi-game video poker with bet, hold, draw, double-up, and mark-hold cheat action |
+| Game | Family | Module | Cheat actions | Current behavior |
+| --- | --- | --- | --- | --- |
+| Pull Tabs | novelty | `scripts/games/pull_tabs.gd` | `tab_detector_scan` | Finite pull-tab deals, ticket windows, row/deal state, detector and tarot item interactions |
+| Slot | slots | `scripts/games/slot.gd` | `nudge` | Generated Pinball/Buffalo machines, fixed bet ladder, reel-shift nudge, autoplay, feature bonuses, and bonus-stuck watchdog coverage |
+| Bar Dice | dice | `scripts/games/bar_dice.gd` | `loaded_toss`, `palmed_swap` | Ship, Captain, Crew as a bar-top table game with patrons, cargo scoring, carryover pots, and skill-timed dice cheats |
+| Blackjack | cards | `scripts/games/blackjack.gd` | `peek_hole_card`, `count_cards` | Shoe blackjack with hit/stand/split/double, side bets, count challenge, and hole-card peek heat |
+| Baccarat | cards | `scripts/games/baccarat.gd` | `read_baccarat_shoe`, `edge_sort` | Mini-baccarat with Player/Banker/Tie/pair bets, commission, shoe state, read-shoe, and edge-sort play |
+| Roulette | wheel | `scripts/games/roulette.gd` | `read_wheel_bias`, `past_post` | Full roulette layout with inside/outside bets, chip placement, wheel spin, payout animation, wheel-read, and past-post timing |
+| Video Poker | cards | `scripts/games/video_poker.gd` | `mark_holds` | Multi-game video poker with bet, hold, draw, double-up, and mark-hold cheat action |
 
 Shared table-game visuals live in `scripts/games/table_game_visuals.gd`.
 
@@ -170,9 +189,8 @@ Live slot data exposes:
 
 Pinball supports classic, 5x3, and video feature identities with live feature
 actions through the reworked runtime under `scripts/games/slots/pinball/`.
-Acceptance follow-up for the post-rework slot stack is tracked in the active Act
-1 board. Buffalo supports free games, Hold and Spin, wheel/monster feature paths,
-Gold Buffalo collection/conversion, must-hit meter data, and jackpot tiers.
+Buffalo supports free games, Hold and Spin, wheel/monster feature paths, Gold
+Buffalo collection/conversion, must-hit meter data, and jackpot tiers.
 
 ## Runtime Architecture
 
@@ -183,6 +201,7 @@ Gold Buffalo collection/conversion, must-hit meter data, and jackpot tiers.
 | `scripts/core/content_library.gd` | Loads and validates JSON content packs |
 | `scripts/core/environment_instance.gd` | Builds generated environment instances from archetypes |
 | `scripts/core/run_generator.gd` | Chooses starting and next environments |
+| `scripts/core/world_map.gd` | Builds and normalizes the seeded travel graph, node discovery, stored environments, and route paths |
 | `scripts/core/game_module.gd` | Base game contract and shared result application |
 | `scripts/core/item_effect.gd` | Item purchase/use/sale effect resolution |
 | `scripts/core/event_module.gd` | Event condition and choice resolution |
@@ -207,7 +226,6 @@ return data; the shared result path mutates the run.
 | `scripts/ui/pixel_scene_canvas.gd` | Procedural environment/object scene rendering |
 | `scripts/ui/sfx_player.gd` | Procedural and shared sound effect playback |
 | `scripts/ui/procedural_music_player.gd` | Procedural room music |
-| `scripts/ui/main_menu_background.gd` | Main menu animated background |
 | `scripts/ui/settings_menu.gd` | Settings UI |
 | `scripts/ui/drunk_distortion_overlay.gd` | Drunk/alcohol visual effect |
 | `scripts/ui/icon_sprite_renderer.gd` | Icon rendering helper |
@@ -265,25 +283,12 @@ Generated and local paths are intentionally not source:
 
 ## Running The Project
 
-From PowerShell:
+`tools/run_godot.ps1` launches the app, and `tools/run_godot.ps1 -Editor`
+opens the editor. These are interactive developer commands rather than
+headless release gates. `tools/install_godot.ps1` installs a local Godot binary
+into `.tools/` when Godot is not already available.
 
-```powershell
-.\tools\run_godot.ps1
-```
-
-Open the editor:
-
-```powershell
-.\tools\run_godot.ps1 -Editor
-```
-
-Install a local Godot binary into `.tools/`:
-
-```powershell
-.\tools\install_godot.ps1
-```
-
-`run_godot.ps1` resolves Godot in this order:
+The wrappers resolve Godot in this order:
 
 1. `GODOT_BIN`
 2. `.tools\`
@@ -291,43 +296,43 @@ Install a local Godot binary into `.tools/`:
 
 ## Validation
 
-Fast repository validation:
+The current 0.3 readiness ledger is `docs/plans/0.3_release_checklist.md`.
+Headless commands verified during the R10 truth pass:
 
 ```powershell
-.\tools\validate_project.ps1
+powershell -ExecutionPolicy Bypass -File tools\validate_project.ps1
+powershell -ExecutionPolicy Bypass -File tools\check_godot.ps1 -RequireGodot -Suite Full -TimeoutSec 1800
 ```
 
-Godot-backed suites:
+Fresh R10 supplemental probes:
 
 ```powershell
-.\tools\check_godot.ps1 -Suite Smoke
-.\tools\check_godot.ps1 -Suite Contract
-.\tools\check_godot.ps1 -Suite Audit
-.\tools\check_godot.ps1 -Suite Full
+powershell -ExecutionPolicy Bypass -File tools\foundation_visual_qa.ps1 -RequireGodot
+.\.tools\godot-4.6-stable\Godot_v4.6-stable_win64_console.exe --headless --path . --script res://tools/endgame_metrics_probe.gd -- --seed-prefix=T73-TUNED12 --seeds-per-scenario=2
 ```
 
-Useful targeted tools:
+Current results:
 
-```powershell
-.\tools\slot_cabinet_visual_qa.ps1
-.\tools\environment_generation_audit.ps1
-.\tools\foundation_visual_qa.ps1
-.\tools\foundation_mouse_playtest.ps1
-.\tools\foundation_mouse_batch_playtest.ps1
-.\tools\foundation_performance_probe.ps1
-.\tools\blackjack_seed_audit.ps1
-.\tools\run_baccarat_seed_audit.ps1
-.\tools\roulette_seed_audit.ps1
-```
+- `validate_project.ps1` passes.
+- `check_godot.ps1 -RequireGodot -Suite Full -TimeoutSec 1800` passes with
+  report paths recorded in `docs/plans/0.3_release_checklist.md`.
+- `endgame_metrics_probe.gd` passes the fixed 10-run `T73-TUNED12` seed set.
+- `foundation_visual_qa.ps1 -RequireGodot` passes with `warnings=[]`.
+- `foundation_mouse_batch_playtest.ps1 -RunCount 3 -RequireGodot
+  -AllowRunFailures` passes with `0` true failures; this explicitly supersedes
+  the original 60-run statistical balance batch for the 0.3 cut.
 
-Additional GDScript audit/probe files live in `tools/`, including slot metrics,
-slot deep audit, roulette rule/audio/interface checks, baccarat interface capture,
-pull-tab seed audit, and GDScript load checks. Reports are written under `.tmp/`
-or Godot `user://` paths and should not be committed as source documentation.
+Other targeted wrappers live in `tools/`: slot cabinet visual QA, environment
+generation audit, performance probe, mouse playtests, and game seed audits.
+Additional GDScript audit/probe files include slot metrics, slot deep audit,
+roulette rule/audio checks, pull-tab seed audit, and GDScript load checks.
+Reports are written under `.tmp/` or Godot `user://` paths and should not be
+committed as source documentation.
 
 For shipped 0.2.0 release evidence, use the tracked checklist at
-`docs/plans/0.2_release_checklist.md` as the command-evidence ledger. For active
-Act 1 work, use `docs/plans/act_one_feature_complete_task_board.md`.
+`docs/plans/0.2_release_checklist.md`. For the current 0.3 readiness ledger, use
+`docs/plans/0.3_release_checklist.md`. For active Act 1 work, use
+`docs/plans/act_one_feature_complete_task_board.md`.
 
 ## Documentation
 
@@ -339,22 +344,29 @@ context:
   entry point for Act 1 feature-complete work, including the T0.1 status ledger
   and current gap table.
 - `docs/plans/pinball_feature_rework_plan.md`,
-  `docs/plans/pinball_feel_reference.md`, and
-  `docs/plans/pinball_rework_progress.md` - the pinball feature rework spec,
-  feel targets, progress, and acceptance evidence. Use these with the live slot
-  stack when touching pinball or shared slot release work.
+  `docs/plans/pinball_feel_reference.md` - the shipped pinball feature
+  contract and feel targets. Use these with the live slot stack when touching
+  pinball or shared slot release work.
 - `docs/plans/grand_casino_endgame_design.md` - the authoritative Grand Casino
   endgame design lock (dual victory routes, showdown structure, state machine,
   and canonical ids).
+- `docs/plans/dead_code_audit_report.md` - the release cleanup audit and
+  protect list for code and tooling that looks dead but is live.
+- `docs/plans/skill_based_cheating_methods_plan.md` - the shared
+  skill-cheat design contract and cross-game method matrix.
+- `docs/plans/world_map_design.md` - the world-map route/progression design
+  lock.
+- `docs/plans/music_system_rework_plan.md` and
+  `docs/plans/music_listening_pass.md` - parked post-0.3 music planning and
+  listening-check context.
 - `docs/plans/0.2_release_checklist.md` - the shipped 0.2.0 release readiness
   checklist, including validation evidence and known blockers.
-- `docs/plans/demo_release_task_board.md` - historical 0.2.0 demo finalization
-  board. Its prompts remain useful context, but it is not the active planning
-  entry point.
+- `docs/plans/0.3_release_checklist.md` - the current 0.3 readiness ledger,
+  including fresh validation evidence and open release blockers.
 
 For current slot implementation work, use the slot stack listed in this README
-and the pinball rework docs above rather than older file names referenced inside
-historical plan text.
+and the pinball docs above rather than older file names referenced inside
+historical release evidence.
 
 ## Export Targets
 
@@ -366,9 +378,21 @@ historical plan text.
 | iOS | iOS | `builds/ios/BeatTheHouse.zip` |
 
 `tools/export_itch.ps1` packages the Web and Windows presets for itch.io upload
-after Godot export templates are installed. Android signing and iOS
-team/signature values still require real project credentials before store
-submission.
+after Godot export templates are installed. Project and export preset versions
+are stamped `0.3.0`; the start screen reads the same project version. The tool
+supports `-Push -DryRun` for butler command verification and non-dry-run
+publishing after the user has installed butler and run `butler login` once.
+Fresh 0.3 Web/Windows package hashes and smoke evidence live in
+`docs/plans/0.3_release_checklist.md`. Android signing and iOS team/signature
+values still require real project credentials before store submission.
+
+## Known 0.3 Release Limitations
+
+- The accepted balance gate for this cut is the fast 3-run release-smoke batch,
+  not the original 60-run statistical batch.
+- itch.io publishing remains a user action: install/login with butler and push
+  the Web and Windows packages from `tools/export_itch.ps1`.
+- Android and iOS store submission require real signing/team credentials.
 
 ## Design Rules
 
