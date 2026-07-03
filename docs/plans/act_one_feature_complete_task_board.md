@@ -113,6 +113,17 @@ VALIDATION LOOP: inspect -> implement -> add/update tests (foundation_check.gd
 for systems, ui_scene_compile_check.gd for UI) -> run the narrowest test ->
 run the task DONE gate -> fix root causes until green.
 
+VALIDATION PROCESS HYGIENE:
+- Do not overlap headless Godot gates against this workspace. `check_godot.ps1`
+  fails early when another project Godot process is active; do not bypass with
+  `-AllowConcurrentGodot` for release evidence unless the run is truly isolated.
+- External command timeouts must exceed the harness timeout. `slot_acceptance`
+  can use nearly its full 900-second stage budget, and `-Suite Full` reserves
+  1800 seconds. Killing the parent PowerShell early can leave Godot children
+  writing `user://` logs and has reproduced Windows native access-violation
+  dialogs on later runs. Stop lingering `Godot_v4.6-stable_win64*` processes
+  before retrying an aborted gate.
+
 RELEASE HYGIENE:
 - New item icons MUST be draw functions in tools/generate_icon_art.py. Never
   hand-place, copy, or commit one-off item PNGs outside the generator pipeline.
@@ -1747,7 +1758,7 @@ failures (`.tmp/foundation_mouse_batch/aggregate_summary.json`). Gate
 evidence: `check_godot.ps1 -RequireGodot` PASS
 (`.tmp/test_reports/20260703_123656_smoke/summary.json`). Commits:
 `9a171d4` (gameplay, tools, data tuning) and `d22a24d` (UI/regression
-coverage).
+coverage). R11 audit-harness follow-up commit: `944f0f7`.
 
 **T7.4 — Itch Publish Pipeline** — P1 — deps: T7.3 — status: DONE
 
