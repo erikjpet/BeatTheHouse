@@ -269,6 +269,26 @@ var run_layout_dirty := true
 var run_layout_last_screen_size := Vector2(-1.0, -1.0)
 
 
+# UI overlay state machine contract:
+# - Start-menu configuration panels are start-only and never coexist with run overlays.
+# - In-run base screens are ENVIRONMENT, GAME, RESULT, EVENT, ITEMS, TRAVEL,
+#   FAILURE, and VICTORY. These are screens, not modal overlays.
+# - Blocking decision popups use event_choice_popup_overlay for triggered events,
+#   unavoidable events, all-in wager confirmation, and active-item confirmation.
+#   While visible, they are exclusive: no travel, map, inventory, journal, run menu,
+#   background room activation, or game resolve may run. Their own confirm/cancel
+#   handlers are the only mutating exits.
+# - Interactable-event popups also use event_choice_popup_overlay. They are
+#   dismissible but still exclusive until a response or dismissal closes them.
+# - world_map_overlay, run_inventory_overlay, and run_journal_overlay are mutually
+#   exclusive with decision popups and with each other. The run menu may remain
+#   behind the read-only journal because it owns that button, but gameplay input
+#   is still blocked while the journal is open.
+# - travel_transition_overlay is transient and exclusive. It blocks all player
+#   input until _hide_travel_transition clears travel_transition_active.
+# - settings_overlay may stack over the run menu only; it must not stack over
+#   travel, world map, inventory, journal, or decision popups.
+
 func _ready() -> void:
 	_initialize_user_settings()
 	_initialize_procedural_music()
@@ -309,6 +329,7 @@ func start_foundation_run(seed_text: String = DEFAULT_SEED, challenge_config: Di
 	close_content_group_config()
 	close_challenge_selection()
 	_hide_run_menu()
+	_hide_world_map_overlay()
 	_hide_run_journal_popup()
 	_hide_travel_transition()
 	_reset_game_surface_runtime_state()
@@ -330,6 +351,7 @@ func start_foundation_run(seed_text: String = DEFAULT_SEED, challenge_config: Di
 	_hide_event_choice_popup()
 	_hide_run_inventory_popup()
 	_hide_run_journal_popup()
+	_hide_world_map_overlay()
 	_hide_travel_transition()
 	_clear_selected_game_action()
 	_clear_selected_stake()
@@ -374,6 +396,8 @@ func _daily_challenge_id_for_datetime(datetime: Dictionary) -> String:
 
 # Selects which player-facing action category is expanded without changing simulation state.
 func select_action_category(category_id: String) -> bool:
+	if _guard_player_input_route():
+		return false
 	var category := _action_category(category_id)
 	if category.is_empty():
 		return false
@@ -397,6 +421,8 @@ func enter_first_available_game() -> void:
 
 # Enters a game through its data-routed GameModule.
 func enter_game(game_id: String) -> void:
+	if _guard_player_input_route():
+		return
 	var definition := library.game(game_id)
 	if definition.is_empty():
 		_show_message("Game definition is missing.")
@@ -423,6 +449,8 @@ func enter_game(game_id: String) -> void:
 func back_to_environment() -> void:
 	if _resolve_pending_all_in_terminal_result():
 		return
+	if _guard_blocking_decision_or_transition():
+		return
 	_reset_game_surface_runtime_state()
 	current_game = null
 	last_game_result = {}
@@ -430,6 +458,7 @@ func back_to_environment() -> void:
 	_hide_event_choice_popup()
 	_hide_run_inventory_popup()
 	_hide_run_journal_popup()
+	_hide_world_map_overlay()
 	_hide_travel_transition()
 	_clear_selected_game_action()
 	_clear_selected_stake()
@@ -442,6 +471,8 @@ func back_to_environment() -> void:
 func select_game_action(action_id: String, action_kind: String) -> void:
 	if current_game == null:
 		_show_message("Enter a game before choosing an action.")
+		return
+	if _guard_player_input_route():
 		return
 	var action := _available_game_action(action_id, action_kind)
 	if action.is_empty():
@@ -459,6 +490,8 @@ func _on_game_surface_action(action: String, index: int, confirm_requested: bool
 	if current_game == null:
 		_show_message("Choose a game first.")
 		_refresh()
+		return
+	if _guard_player_input_route():
 		return
 	match action:
 		"surface_back":
@@ -502,6 +535,8 @@ func _handle_module_surface_action(action: String, index: int, confirm_requested
 func _apply_game_surface_command(command: Dictionary, index: int = -1, confirm_requested: bool = false) -> bool:
 	if command.is_empty() or not bool(command.get("handled", false)):
 		return false
+	if not game_surface_auto_resolving and _guard_player_input_route():
+		return true
 	if command.has("ui_state") and typeof(command.get("ui_state")) == TYPE_DICTIONARY:
 		_store_current_game_surface_ui_state(command.get("ui_state", {}) as Dictionary)
 	if command.has("selected_index") and game_surface_canvas != null:
@@ -578,9 +613,7 @@ func _set_surface_stake_to_bound(bound_name: String) -> bool:
 func _advance_game_surface_automation() -> void:
 	if game_surface_auto_resolving or run_state == null or current_game == null:
 		return
-	if _run_menu_is_visible():
-		return
-	if _blocking_decision_popup_is_visible():
+	if _modal_contract_blocks_player_input():
 		return
 	var ui_state := _current_game_surface_ui_state()
 	if not current_game.surface_needs_auto_tick(ui_state, run_state, run_state.current_environment):
@@ -596,9 +629,7 @@ func _advance_game_surface_automation() -> void:
 func _advance_game_surface_realtime_state() -> void:
 	if game_surface_auto_resolving or run_state == null or current_game == null or game_surface_canvas == null:
 		return
-	if _run_menu_is_visible():
-		return
-	if _blocking_decision_popup_is_visible():
+	if _modal_contract_blocks_player_input():
 		return
 	if current_screen != SCREEN_GAME or not game_surface_canvas.visible or not game_surface_canvas.is_visible_in_tree():
 		return
@@ -614,7 +645,7 @@ func _advance_game_surface_realtime_state() -> void:
 func _advance_environment_game_runtime() -> void:
 	if game_surface_auto_resolving or run_state == null or library == null or run_state.is_terminal():
 		return
-	if _blocking_decision_popup_is_visible():
+	if _modal_contract_blocks_player_input():
 		return
 	var now_msec := Time.get_ticks_msec()
 	for game_id in _string_array(run_state.current_environment.get("game_ids", [])):
@@ -759,11 +790,15 @@ func resolve_selected_game_action() -> void:
 	if selected_action_id.is_empty():
 		_show_message("Select a game action first.")
 		return
+	if _guard_player_input_route():
+		return
 	_resolve_game_action(selected_action_id)
 
 
 # Selects a stake as UI-local input without mutating simulation state.
 func set_selected_stake(stake: int) -> bool:
+	if _guard_player_input_route():
+		return false
 	var range := _stake_range()
 	if not bool(range.get("has_valid", false)):
 		_show_message("No valid stake is available.")
@@ -783,6 +818,8 @@ func set_selected_stake(stake: int) -> bool:
 
 # Selects a travel destination/hook without mutating simulation state.
 func select_travel_option(target_id: String) -> bool:
+	if _guard_player_input_route():
+		return false
 	var choice := _travel_choice(target_id)
 	if choice.is_empty():
 		_show_message("Travel option is not available.")
@@ -809,6 +846,8 @@ func select_travel_option(target_id: String) -> bool:
 func confirm_selected_travel() -> void:
 	if run_state == null:
 		return
+	if _guard_player_input_route():
+		return
 	if selected_travel_target_id.is_empty():
 		_show_message("Select a travel destination first.")
 		return
@@ -830,6 +869,8 @@ func confirm_selected_travel() -> void:
 
 func open_world_map() -> bool:
 	if run_state == null:
+		return false
+	if _guard_player_input_route():
 		return false
 	selected_action_category = ACTION_CATEGORY_TRAVEL
 	_set_current_screen(SCREEN_TRAVEL)
@@ -853,10 +894,17 @@ func close_world_map() -> void:
 		world_map_overlay.visible = false
 	if current_screen == SCREEN_TRAVEL:
 		_set_current_screen(SCREEN_ENVIRONMENT)
-	_refresh()
+		_refresh()
+
+
+func _hide_world_map_overlay() -> void:
+	if world_map_overlay != null:
+		world_map_overlay.visible = false
 
 
 func select_world_map_node(node_id: String) -> bool:
+	if _guard_blocking_decision_or_transition():
+		return false
 	var clean_id := node_id.strip_edges()
 	if clean_id.is_empty():
 		return false
@@ -889,8 +937,7 @@ func select_world_map_node(node_id: String) -> bool:
 
 
 func confirm_world_map_travel() -> void:
-	if _event_choice_popup_is_visible():
-		_show_message("Choose a response before traveling.")
+	if _guard_blocking_decision_or_transition():
 		return
 	if selected_world_map_node_id.is_empty():
 		_show_message("Select a map stop first.")
@@ -913,6 +960,8 @@ func confirm_world_map_travel() -> void:
 
 # Selects an event choice without mutating simulation state.
 func select_event_choice(event_id: String, choice_id: String) -> bool:
+	if _guard_player_input_route():
+		return false
 	var event_option := _eligible_event_option(event_id)
 	if event_option.is_empty():
 		_show_message("Event is not available.")
@@ -943,6 +992,16 @@ func confirm_selected_event_choice() -> void:
 
 # Resolves one selected event choice through EventModule.
 func resolve_event_choice(event_id: String, choice_id: String) -> void:
+	if travel_transition_active:
+		_show_message("Travel is already in progress.")
+		_refresh_modal_contract_owner()
+		return
+	if _event_choice_popup_is_visible() and not _event_choice_popup_allows_event_resolution(event_id):
+		_show_message("Finish the current prompt first.")
+		_refresh_modal_contract_owner()
+		return
+	if not _event_choice_popup_is_visible() and _guard_player_input_route():
+		return
 	var event_definition := library.event(event_id)
 	if event_definition.is_empty():
 		_show_message("Event definition is missing.")
@@ -1190,6 +1249,8 @@ func _pending_event_trigger_context(event_id: String) -> Dictionary:
 
 # Selects an item offer without mutating simulation state.
 func select_item_offer(item_id: String) -> bool:
+	if _guard_player_input_route():
+		return false
 	var offer := _item_offer(item_id)
 	if offer.is_empty():
 		_show_message("Item offer is not available.")
@@ -1215,6 +1276,8 @@ func confirm_selected_item_offer() -> bool:
 
 # Buys one item offer and applies it through ItemEffect.
 func apply_item_offer(item_id: String) -> bool:
+	if _guard_player_input_route():
+		return false
 	_refresh_run_action_service()
 	var resolved := run_action_service.buy_item_offer(item_id)
 	if not bool(resolved.get("ok", false)):
@@ -1237,6 +1300,11 @@ func apply_item_offer(item_id: String) -> bool:
 
 
 func open_run_inventory() -> void:
+	if run_state == null:
+		_show_message("No active run to inspect.")
+		return
+	if _guard_player_input_route():
+		return
 	_reset_game_surface_runtime_state()
 	_hide_run_journal_popup()
 	_open_run_inventory_popup("inspect")
@@ -1250,6 +1318,12 @@ func open_run_journal() -> void:
 	if run_state == null:
 		_show_message("No active run to review.")
 		return
+	if _guard_blocking_decision_or_transition():
+		return
+	if _world_map_overlay_is_visible() or _run_inventory_popup_is_visible():
+		_show_message(_blocking_modal_message())
+		_refresh_modal_contract_owner()
+		return
 	_hide_run_inventory_popup()
 	_open_run_journal_popup()
 
@@ -1261,6 +1335,8 @@ func close_run_journal() -> void:
 func use_active_item_slot() -> bool:
 	if run_state == null:
 		_show_message("No active run.")
+		return false
+	if _guard_player_input_route():
 		return false
 	_refresh_run_action_service()
 	var item := run_action_service.active_item_detail()
@@ -1493,6 +1569,8 @@ func repair_inventory_item(item_id: String) -> bool:
 
 # Selects a service hook without mutating simulation state.
 func select_service_hook(service_id: String) -> bool:
+	if _guard_player_input_route():
+		return false
 	var option := _service_hook(service_id)
 	if option.is_empty():
 		_show_message("That service is not available.")
@@ -1517,6 +1595,8 @@ func confirm_selected_service_hook() -> bool:
 
 # Applies a supported service hook through the shared result-delta path.
 func use_service_hook(service_id: String) -> bool:
+	if _guard_player_input_route():
+		return false
 	var option := _service_hook(service_id)
 	if option.is_empty():
 		_show_message("That service is not available.")
@@ -1551,6 +1631,8 @@ func use_service_hook(service_id: String) -> bool:
 
 # Selects a lender hook without mutating simulation state.
 func select_lender_hook(lender_id: String) -> bool:
+	if _guard_player_input_route():
+		return false
 	var option := _lender_hook(lender_id)
 	if option.is_empty():
 		_show_message("That lender is not available.")
@@ -1575,6 +1657,8 @@ func confirm_selected_lender_hook() -> bool:
 
 # Applies a supported lender hook through the shared result-delta path.
 func use_lender_hook(lender_id: String) -> bool:
+	if _guard_player_input_route():
+		return false
 	var option := _lender_hook(lender_id)
 	if option.is_empty():
 		_show_message("That lender is not available.")
@@ -1609,6 +1693,8 @@ func use_lender_hook(lender_id: String) -> bool:
 
 func use_game_environment_hook(game_id: String, hook_id: String, action_id: String = "") -> bool:
 	if run_state == null or library == null:
+		return false
+	if _guard_player_input_route():
 		return false
 	var game := _game_module_for_id(game_id)
 	if game == null:
@@ -1652,6 +1738,8 @@ func use_game_environment_hook(game_id: String, hook_id: String, action_id: Stri
 
 # Selects a prestige target without mutating simulation state.
 func select_prestige_purchase(purchase_id: String) -> bool:
+	if _guard_player_input_route():
+		return false
 	var option := _prestige_purchase_option(purchase_id)
 	if option.is_empty():
 		_show_message("Prestige target is not available.")
@@ -1674,6 +1762,8 @@ func confirm_selected_prestige_purchase() -> bool:
 
 # Buys one prestige target and lets RunState hold the resulting run status.
 func buy_prestige_purchase(purchase_id: String) -> bool:
+	if _guard_player_input_route():
+		return false
 	var option := _prestige_purchase_option(purchase_id)
 	if option.is_empty():
 		_show_message("Prestige target is not available.")
@@ -1809,6 +1899,7 @@ func _load_foundation_run_from_slot(return_to_start_on_missing: bool) -> bool:
 	_hide_event_choice_popup()
 	_hide_run_inventory_popup()
 	_hide_run_journal_popup()
+	_hide_world_map_overlay()
 	_hide_travel_transition()
 	_clear_selected_game_action()
 	_clear_selected_stake()
@@ -1831,6 +1922,12 @@ func _load_foundation_run_from_slot(return_to_start_on_missing: bool) -> bool:
 
 func open_run_menu() -> void:
 	if run_menu_overlay == null or current_screen == SCREEN_START:
+		return
+	if _guard_blocking_decision_or_transition():
+		return
+	if _world_map_overlay_is_visible() or _run_inventory_popup_is_visible() or _run_journal_popup_is_visible():
+		_show_message(_blocking_modal_message())
+		_refresh_modal_contract_owner()
 		return
 	_stop_surface_feature_music()
 	_refresh_run_menu()
@@ -2267,7 +2364,7 @@ func _build_start_screen() -> void:
 	seed_row.add_child(seed_input)
 
 	content_group_config_button = Button.new()
-	content_group_config_button.text = "⚙"
+	content_group_config_button.text = "âš™"
 	content_group_config_button.tooltip_text = "Configure run content."
 	content_group_config_button.custom_minimum_size = Vector2(54, 54)
 	content_group_config_button.size_flags_horizontal = Control.SIZE_SHRINK_END
@@ -4646,6 +4743,8 @@ func _add_current_game_panel(environment: Dictionary) -> void:
 func _resolve_game_action(action_id: String, skip_stake_validation: bool = false, preserve_surface_ui_state: bool = false, wager_confirmed: bool = false) -> void:
 	if action_id.is_empty() or current_game == null:
 		return
+	if not wager_confirmed and _guard_player_input_route():
+		return
 	var stake := selected_stake
 	if stake <= 0:
 		stake = _default_stake()
@@ -4797,6 +4896,140 @@ func _blocking_decision_popup_is_visible() -> bool:
 	if not _event_choice_popup_is_visible():
 		return false
 	return bool(pending_event_choice_popup_snapshot.get("blocking", true))
+
+
+func _modal_contract_blocks_player_input() -> bool:
+	return travel_transition_active or _event_choice_popup_is_visible() or _run_inventory_popup_is_visible() or _run_journal_popup_is_visible() or _world_map_overlay_is_visible() or _run_menu_is_visible()
+
+
+func _blocking_modal_message() -> String:
+	if travel_transition_active:
+		return "Travel is already in progress."
+	if _event_choice_popup_is_visible():
+		return "Choose a response before doing anything else."
+	if _world_map_overlay_is_visible():
+		return "Close the map before doing anything else."
+	if _run_inventory_popup_is_visible():
+		return "Close inventory before doing anything else."
+	if _run_journal_popup_is_visible():
+		return "Close the journal before doing anything else."
+	if _run_menu_is_visible():
+		return "Close the menu before doing anything else."
+	return ""
+
+
+func _guard_player_input_route() -> bool:
+	var message := _blocking_modal_message()
+	if message.is_empty():
+		return false
+	_show_message(message)
+	_refresh_modal_contract_owner()
+	return true
+
+
+func _guard_blocking_decision_or_transition() -> bool:
+	if travel_transition_active:
+		_show_message("Travel is already in progress.")
+		_refresh_modal_contract_owner()
+		return true
+	if _event_choice_popup_is_visible():
+		_show_message("Choose a response before doing anything else.")
+		_refresh_modal_contract_owner()
+		return true
+	return false
+
+
+func _refresh_modal_contract_owner() -> void:
+	if run_state != null and current_screen != SCREEN_START:
+		_refresh_world_header()
+		_render_foundation_snapshots()
+	if _world_map_overlay_is_visible():
+		_refresh_world_map_overlay()
+	if _run_inventory_popup_is_visible():
+		_render_run_inventory_popup_contents()
+	if _run_journal_popup_is_visible():
+		_render_run_journal_contents()
+	if _run_menu_is_visible():
+		_refresh_run_menu()
+
+
+func _event_choice_popup_allows_event_resolution(event_id: String) -> bool:
+	if not _event_choice_popup_is_visible():
+		return true
+	var popup_type := str(pending_event_choice_popup_snapshot.get("popup_type", ""))
+	if not ["triggered_event", "unavoidable_event", "interactable_event"].has(popup_type):
+		return false
+	var popup_event_id := str(pending_event_choice_popup_snapshot.get("event_id", ""))
+	return popup_event_id.is_empty() or popup_event_id == event_id
+
+
+func _world_map_overlay_is_visible() -> bool:
+	return world_map_overlay != null and world_map_overlay.visible
+
+
+func current_overlay_state_snapshot() -> Dictionary:
+	var snapshot := {
+		"screen": current_screen,
+		"event_choice_popup_visible": _event_choice_popup_is_visible(),
+		"event_choice_popup_type": str(pending_event_choice_popup_snapshot.get("popup_type", "")),
+		"event_choice_popup_blocking": _blocking_decision_popup_is_visible(),
+		"world_map_visible": _world_map_overlay_is_visible(),
+		"run_inventory_visible": _run_inventory_popup_is_visible(),
+		"run_inventory_mode": run_inventory_popup_mode,
+		"run_journal_visible": _run_journal_popup_is_visible(),
+		"run_menu_visible": _run_menu_is_visible(),
+		"settings_visible": settings_overlay != null and settings_overlay.visible,
+		"travel_transition_active": travel_transition_active,
+		"travel_transition_target_id": travel_transition_target_id,
+	}
+	var violations := _overlay_state_contract_violations(snapshot)
+	snapshot["violations"] = violations
+	snapshot["contract_valid"] = violations.is_empty()
+	return snapshot
+
+
+func _overlay_state_contract_violations(snapshot: Dictionary = {}) -> Array:
+	if snapshot.is_empty():
+		snapshot = {
+			"screen": current_screen,
+			"event_choice_popup_visible": _event_choice_popup_is_visible(),
+			"event_choice_popup_type": str(pending_event_choice_popup_snapshot.get("popup_type", "")),
+			"world_map_visible": _world_map_overlay_is_visible(),
+			"run_inventory_visible": _run_inventory_popup_is_visible(),
+			"run_journal_visible": _run_journal_popup_is_visible(),
+			"run_menu_visible": _run_menu_is_visible(),
+			"settings_visible": settings_overlay != null and settings_overlay.visible,
+			"travel_transition_active": travel_transition_active,
+		}
+	var violations: Array = []
+	var event_visible := bool(snapshot.get("event_choice_popup_visible", false))
+	var world_map_visible := bool(snapshot.get("world_map_visible", false))
+	var inventory_visible := bool(snapshot.get("run_inventory_visible", false))
+	var journal_visible := bool(snapshot.get("run_journal_visible", false))
+	var settings_visible := bool(snapshot.get("settings_visible", false))
+	var run_menu_visible := bool(snapshot.get("run_menu_visible", false))
+	var travel_visible := bool(snapshot.get("travel_transition_active", false))
+	if travel_visible:
+		for label in ["event_choice_popup_visible", "world_map_visible", "run_inventory_visible", "run_journal_visible", "run_menu_visible", "settings_visible"]:
+			if bool(snapshot.get(label, false)):
+				violations.append("travel_transition overlaps %s" % label)
+	if event_visible:
+		for label in ["world_map_visible", "run_inventory_visible", "run_journal_visible", "run_menu_visible", "settings_visible"]:
+			if bool(snapshot.get(label, false)):
+				violations.append("decision_popup overlaps %s" % label)
+	if world_map_visible:
+		for label in ["run_inventory_visible", "run_journal_visible", "run_menu_visible", "settings_visible"]:
+			if bool(snapshot.get(label, false)):
+				violations.append("world_map overlaps %s" % label)
+	if inventory_visible and journal_visible:
+		violations.append("inventory overlaps journal")
+	if inventory_visible and settings_visible:
+		violations.append("inventory overlaps settings")
+	if journal_visible and settings_visible:
+		violations.append("journal overlaps settings")
+	if settings_visible and not run_menu_visible and current_screen != SCREEN_START:
+		violations.append("in-run settings opened without run menu")
+	return violations
 
 
 func _pause_repeating_surface_action_for_wager_confirmation() -> void:
@@ -4987,6 +5220,7 @@ func current_screen_snapshot() -> Dictionary:
 		"run_menu_visible": _run_menu_is_visible(),
 		"run_menu": current_run_menu_snapshot(),
 		"run_journal_visible": _run_journal_popup_is_visible(),
+		"overlay_state": current_overlay_state_snapshot(),
 		"failure_summary": _failure_summary_snapshot() if run_state != null and run_state.run_status == RunState.RUN_STATUS_FAILED else {},
 		"victory_summary": _victory_summary_snapshot() if run_state != null and run_state.run_status == RunState.RUN_STATUS_ENDED else {},
 		"travel_transition_active": travel_transition_active,
@@ -5204,6 +5438,8 @@ func focus_interactable_object(object_id: String) -> bool:
 
 
 func activate_interactable_object(object_id: String) -> bool:
+	if _guard_player_input_route():
+		return false
 	if object_id == "travel:leave":
 		var leave_object := _interactable_object(object_id)
 		if leave_object.is_empty():
@@ -5220,9 +5456,6 @@ func activate_interactable_object(object_id: String) -> bool:
 			return false
 		focus_interactable_object(object_id)
 		return open_world_map()
-	if _event_choice_popup_is_visible():
-		_show_message("Choose a response before doing anything else.")
-		return false
 	if object_id.begins_with("event_response:"):
 		return _activate_event_response_action(object_id)
 	if not focus_interactable_object(object_id):
@@ -7411,6 +7644,7 @@ func return_to_main_menu() -> void:
 	_hide_event_choice_popup()
 	_hide_run_inventory_popup()
 	_hide_run_journal_popup()
+	_hide_world_map_overlay()
 	_hide_travel_transition()
 	_clear_selected_game_action()
 	_clear_selected_stake()

@@ -891,9 +891,11 @@ func _prepare_risky_game_visual_qa_fixture() -> void:
 
 
 func _reset_fixed_price_surface_for_risky_action() -> void:
+	await _resolve_blocking_event_popups()
 	_return_to_room_view()
 	await _settle()
 	await _prepare_risky_game_visual_qa_fixture()
+	await _resolve_blocking_event_popups()
 	_record_state("risky_game_fixture_risky_reset", "Reopened deterministic fixed-price game surface for visible risky-action coverage.")
 	var entered_label := await _double_click_first_play_object_type("game")
 	_require(not entered_label.is_empty(), "Could not re-enter deterministic fixed-price game surface for risky-action QA.")
@@ -2137,6 +2139,7 @@ func _drive_risky_surface_until_heat(min_heat: int, max_attempts: int, first_vis
 		if serialized_before_resolve == _serialized_run_text():
 			_require(false, "Resolving a high-heat risky action did not update serialized RunState.")
 			return false
+		await _resolve_blocking_event_popups(2)
 		var game_snapshot: Dictionary = app.call("current_game_view_snapshot")
 		var visible_text := " ".join(_visible_text(app)).to_lower()
 		var consequence_text := JSON.stringify(app.call("current_consequence_view_snapshot")).to_lower()

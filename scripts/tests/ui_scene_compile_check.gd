@@ -2131,6 +2131,9 @@ func _run() -> void:
 			quit(1)
 			return
 
+	if not await _resolve_visible_event_popup(app, "before cheat/advantage action selection"):
+		quit(1)
+		return
 	var cheat_action: Dictionary = higher_cheat_actions[0]
 	var serialized_before_cheat_selection := JSON.stringify(app.call("serialized_run_state"))
 	app.call("select_game_action", str(cheat_action.get("id", "")), "cheat")
@@ -3024,6 +3027,9 @@ func _run() -> void:
 		quit(1)
 		return
 
+	if not await _resolve_visible_event_popup(app, "before travel card category routing"):
+		quit(1)
+		return
 	var loaded_environment_snapshot: Dictionary = app.call("current_environment_view_snapshot")
 	var travel_choices: Array = loaded_environment_snapshot.get("travel_choices", [])
 	if travel_choices.is_empty():
@@ -4914,6 +4920,28 @@ func _remove_save_slot(save_service: SaveService, slot_id: String) -> Error:
 	return user_dir.remove(relative_path)
 
 
+func _resolve_visible_event_popup(app: Control, label: String) -> bool:
+	var popup: Dictionary = app.call("current_event_choice_popup_snapshot")
+	if not bool(popup.get("visible", false)):
+		return true
+	var popup_type := str(popup.get("popup_type", ""))
+	if not ["triggered_event", "unavoidable_event", "interactable_event"].has(popup_type):
+		push_error("Unexpected blocking popup type during %s: %s." % [label, popup_type])
+		return false
+	var choices: Array = popup.get("choices", [])
+	if choices.is_empty() or typeof(choices[0]) != TYPE_DICTIONARY:
+		push_error("Visible event popup during %s had no resolution choice." % label)
+		return false
+	var choice: Dictionary = choices[0]
+	app.call("resolve_event_choice", str(popup.get("event_id", "")), str(choice.get("id", "")))
+	await process_frame
+	var after: Dictionary = app.call("current_event_choice_popup_snapshot")
+	if bool(after.get("visible", false)) and bool(after.get("blocking", false)):
+		push_error("Visible event popup did not resolve during %s." % label)
+		return false
+	return true
+
+
 func _check_game_surface_touch_hit_policy() -> bool:
 	var touch_canvas: Control = GameSurfaceCanvasScript.new()
 	touch_canvas.size = Vector2(900, 320)
@@ -4924,12 +4952,31 @@ func _check_game_surface_touch_hit_policy() -> bool:
 	var regions: Array = snapshot.get("surface_hit_actions", [])
 	var control_rect := _surface_hit_rect(regions, "surface_stake_up")
 	var dense_rect := _surface_hit_rect(regions, "dense_board_probe")
+	var touch_activation := {"count": 0, "action": "", "confirm_requested": false}
+	touch_canvas.connect("surface_action", func(action: String, _index: int, confirm_requested: bool) -> void:
+		touch_activation["count"] = int(touch_activation.get("count", 0)) + 1
+		touch_activation["action"] = action
+		touch_activation["confirm_requested"] = confirm_requested
+	)
+	var touch_position: Vector2 = touch_canvas.call("local_position_for_surface_action", "surface_stake_up", -1)
+	if touch_position.x < 0.0 or touch_position.y < 0.0:
+		touch_canvas.queue_free()
+		push_error("Game surface touch route could not expose a local hit position.")
+		return false
+	var touch_event := InputEventScreenTouch.new()
+	touch_event.pressed = true
+	touch_event.double_tap = true
+	touch_event.position = touch_position
+	touch_canvas.call("_gui_input", touch_event)
 	touch_canvas.queue_free()
 	if control_rect.size.x < 44.0 or control_rect.size.y < 44.0:
 		push_error("Game surface touch controls should expand small hit regions to at least 44x44.")
 		return false
 	if absf(dense_rect.size.x - 12.0) > 0.001 or absf(dense_rect.size.y - 16.0) > 0.001:
 		push_error("Dense game-board hit regions should keep exact geometry to avoid overlapping betting grids.")
+		return false
+	if int(touch_activation.get("count", 0)) != 1 or str(touch_activation.get("action", "")) != "surface_stake_up" or not bool(touch_activation.get("confirm_requested", false)):
+		push_error("Game surface touch input did not activate the expected hit region exactly once.")
 		return false
 	return true
 

@@ -33,6 +33,8 @@ const SLOT_BOARD_SIZE := Vector2(960, 540)
 const MIN_SURFACE_TOUCH_HIT_SIZE := Vector2(44.0, 44.0)
 const DRUNK_TIME_SCALE_MIN := 0.33
 const PERF_DRAW_SAMPLE_LIMIT := 512
+const EMULATED_TOUCH_SUPPRESS_MS := 120
+const EMULATED_TOUCH_SUPPRESS_DISTANCE := 6.0
 
 var game_id: String = ""
 var state: Dictionary = {}
@@ -62,6 +64,8 @@ var active_design_offset := Vector2.ZERO
 var design_space_active := false
 var reduce_motion := false
 var drunk_time_scale := 1.0
+var last_mouse_press_msec: int = -100000
+var last_mouse_press_position := Vector2(-100000.0, -100000.0)
 
 
 func set_game_module(game_module: GameModule) -> void:
@@ -495,9 +499,35 @@ func _gui_input(event: InputEvent) -> void:
 		_set_hovered_surface_region(motion_event.position)
 		return
 	var mouse_event := event as InputEventMouseButton
-	if mouse_event == null or not mouse_event.pressed or mouse_event.button_index != MOUSE_BUTTON_LEFT:
+	if mouse_event != null:
+		if mouse_event.pressed and mouse_event.button_index == MOUSE_BUTTON_LEFT:
+			_remember_mouse_press(mouse_event.position)
+			_activate_surface_at_position(mouse_event.position, mouse_event.double_click)
 		return
-	var board_point := _screen_to_board(mouse_event.position)
+	var touch_event := event as InputEventScreenTouch
+	if touch_event != null:
+		if touch_event.pressed:
+			if _touch_duplicates_recent_mouse_press(touch_event.position):
+				accept_event()
+				return
+			_activate_surface_at_position(touch_event.position, touch_event.double_tap)
+		return
+
+
+func _remember_mouse_press(position: Vector2) -> void:
+	last_mouse_press_msec = Time.get_ticks_msec()
+	last_mouse_press_position = position
+
+
+func _touch_duplicates_recent_mouse_press(position: Vector2) -> bool:
+	var elapsed := Time.get_ticks_msec() - last_mouse_press_msec
+	if elapsed < 0 or elapsed > EMULATED_TOUCH_SUPPRESS_MS:
+		return false
+	return position.distance_to(last_mouse_press_position) <= EMULATED_TOUCH_SUPPRESS_DISTANCE
+
+
+func _activate_surface_at_position(position: Vector2, confirm_requested: bool) -> void:
+	var board_point := _screen_to_board(position)
 	for i in range(hit_regions.size() - 1, -1, -1):
 		var region: Dictionary = hit_regions[i]
 		var rect: Rect2 = region.get("rect", Rect2())
@@ -513,7 +543,7 @@ func _gui_input(event: InputEvent) -> void:
 					"action": hovered_surface_action,
 					"index": int(region.get("index", -1)),
 				})
-			surface_action.emit(str(region.get("action", "")), int(region.get("index", -1)), mouse_event.double_click)
+			surface_action.emit(str(region.get("action", "")), int(region.get("index", -1)), confirm_requested)
 			accept_event()
 			return
 

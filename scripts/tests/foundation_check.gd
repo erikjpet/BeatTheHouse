@@ -28,6 +28,7 @@ const PinballFeatureScript := preload("res://scripts/games/slots/pinball/pinball
 const PinballSimScript := preload("res://scripts/games/slots/pinball/pinball_sim.gd")
 const SlotPresentationScript := preload("res://scripts/games/slots/slot_presentation.gd")
 const SlotRendererScript := preload("res://scripts/games/slots/slot_renderer.gd")
+const MainScene := preload("res://scenes/main.tscn")
 
 const FOUNDATION_DEFAULT_REPORT_PATH := "res://.tmp/foundation_check/report.json"
 const SAVE_COMPAT_030_FIXTURE_PATH := "res://scripts/tests/fixtures/run_state_0_3_0_save.json"
@@ -38,6 +39,8 @@ const SAVE_LOAD_FUZZ_ACTIONS_PER_SEED := 5
 const SAVE_LOAD_FUZZ_CONTINUATION_STEPS := 5
 const SAVE_LOAD_CANONICAL_FLOAT_STEP := 0.000000001
 const SAVE_LOAD_CANONICAL_INTEGER_EPSILON := 0.000000001
+const UI_STATE_FUZZ_SEEDS := 3
+const UI_STATE_FUZZ_STEPS_PER_SEED := 12
 const FOUNDATION_SUITE_ALIASES := {
 	"contract": "contracts",
 	"full": "all",
@@ -188,6 +191,51 @@ class SurfaceHarness:
 		pass
 
 
+class HostileInputAllInFixtureGame:
+	extends GameModule
+
+	func _init() -> void:
+		setup({
+			"id": "sb4_all_in_fixture",
+			"display_name": "SB4 All-In Fixture",
+			"family": "fixture",
+			"legal_actions": [{
+				"id": "all_in_loss",
+				"label": "All-in loss",
+				"summary": "Loses exactly the selected stake.",
+			}],
+			"cheat_actions": [],
+		})
+
+	func actions(run_state: RunState, environment: Dictionary) -> Dictionary:
+		return {
+			"ok": true,
+			"type": "game_actions",
+			"game_id": get_id(),
+			"legal_actions": legal_actions(run_state, environment),
+			"cheat_actions": [],
+			"stake_floor": 1,
+			"stake_ceiling": 2,
+		}
+
+	func wager_cost_for_context(_action_id: String, stake: int, _run_state: RunState, _environment: Dictionary, _ui_state: Dictionary = {}) -> int:
+		return maxi(0, stake)
+
+	func resolve(_action_id: String, stake: int, _run_state: RunState, _environment: Dictionary, _rng: RngStream) -> Dictionary:
+		return {
+			"ok": true,
+			"type": "game_result",
+			"game_id": get_id(),
+			"stake": stake,
+			"won": false,
+			"host_apply_result": true,
+			"deltas": {
+				"bankroll_delta": -stake,
+			},
+			"message": "Fixture all-in loss.",
+		}
+
+
 # Runs fixture checks and exits with a process code.
 func _init() -> void:
 	var options := _foundation_options()
@@ -330,6 +378,7 @@ func _foundation_run_system_suite(content_library: ContentLibrary, fixture_libra
 	_foundation_run_check(report, failures, "fixture_contracts", Callable(self, "_check_contracts"), [fixture_library])
 	_foundation_run_check(report, failures, "run_action_service_boundary", Callable(self, "_check_run_action_service_boundary"), [content_library])
 	_foundation_run_check(report, failures, "mutation_firewall_foundation", Callable(self, "_check_mutation_firewall_foundation"), [content_library])
+	_foundation_run_check(report, failures, "ui_state_machine_input_fuzz_foundation", Callable(self, "_check_ui_state_machine_input_fuzz_foundation"), [content_library])
 	_foundation_run_check(report, failures, "prestige_empty_data_foundation", Callable(self, "_check_prestige_empty_data_foundation"), [content_library])
 	_foundation_run_check(report, failures, "challenge_pack_foundation", Callable(self, "_check_challenge_pack_foundation"), [content_library])
 	_foundation_run_check(report, failures, "item_effect_foundation", Callable(self, "_check_item_effect_foundation"), [content_library])
@@ -366,6 +415,7 @@ func _foundation_run_all_suite(content_library: ContentLibrary, fixture_library:
 	_foundation_run_check(report, failures, "run_state_source_of_truth", Callable(self, "_check_run_state_source_of_truth"), [fixture_library])
 	_foundation_run_check(report, failures, "locked_logic_rate_foundation", Callable(self, "_check_locked_logic_rate_foundation"), [content_library])
 	_foundation_run_check(report, failures, "fixture_contracts", Callable(self, "_check_contracts"), [fixture_library])
+	_foundation_run_check(report, failures, "ui_state_machine_input_fuzz_foundation", Callable(self, "_check_ui_state_machine_input_fuzz_foundation"), [content_library])
 
 
 func _foundation_run_check(report: Dictionary, failures: Array, check_id: String, callable: Callable, args: Array) -> void:
@@ -6482,6 +6532,277 @@ func _check_mutation_firewall_foundation(library: ContentLibrary, failures: Arra
 	_check_world_map_read_path_mutation_firewall(library, failures)
 	_check_run_action_service_read_path_mutation_firewall(library, failures)
 	_check_event_choice_read_path_mutation_firewall(library, failures)
+
+
+func _check_ui_state_machine_input_fuzz_foundation(library: ContentLibrary, failures: Array) -> void:
+	var app_value: Variant = MainScene.instantiate()
+	if not app_value is Control:
+		failures.append("SB.4 input fuzz could not instantiate the FoundationMain scene.")
+		return
+	var app: Control = app_value
+	root.add_child(app)
+	if not bool(app.call("uses_foundation_runtime")):
+		app.call("_ready")
+	if not bool(app.call("uses_foundation_runtime")):
+		failures.append("SB.4 input fuzz scene is not using the foundation runtime.")
+		_sb4_dispose_app(app)
+		return
+	_sb4_assert_overlay_contract(app, "initial scene", failures)
+	_sb4_check_event_modal_routes(library, app, failures)
+	_sb4_check_wager_modal_routes(library, app, failures)
+	_sb4_check_travel_transition_routes(app, failures)
+	_sb4_check_seeded_menu_canvas_routes(app, failures)
+	_sb4_dispose_app(app)
+
+
+func _sb4_dispose_app(app: Control) -> void:
+	if app == null:
+		return
+	if app.get_parent() != null:
+		app.get_parent().remove_child(app)
+	app.free()
+
+
+func _sb4_check_event_modal_routes(library: ContentLibrary, app: Control, failures: Array) -> void:
+	var popup := _sb4_open_triggered_event_popup(library, app, "SB4-EVENT-MODAL", failures)
+	if popup.is_empty():
+		return
+	var before := _sb4_serialized_run(app)
+	_sb4_assert_blocked_route(app, "event popup open_world_map", "open_world_map", [], before, failures)
+	_sb4_assert_blocked_route(app, "event popup activate travel", "activate_interactable_object", ["travel:leave"], before, failures)
+	_sb4_assert_blocked_route(app, "event popup open inventory", "open_run_inventory", [], before, failures)
+	_sb4_assert_blocked_route(app, "event popup open menu", "open_run_menu", [], before, failures)
+	_sb4_assert_blocked_route(app, "event popup select travel category", "select_action_category", ["travel"], before, failures)
+	_sb4_assert_blocked_route(app, "event popup select travel option", "select_travel_option", ["sb4_missing_route"], before, failures)
+	var after_popup: Dictionary = app.call("current_event_choice_popup_snapshot")
+	if not bool(after_popup.get("visible", false)):
+		failures.append("SB.4 event modal hostile input dismissed the popup without a choice.")
+	_sb4_assert_overlay_contract(app, "event popup hostile routes", failures)
+
+
+func _sb4_open_triggered_event_popup(library: ContentLibrary, app: Control, seed_text: String, failures: Array) -> Dictionary:
+	app.call("start_foundation_run", seed_text)
+	var run_state: RunState = app.get("run_state")
+	if run_state == null:
+		failures.append("SB.4 could not start a run for triggered-event modal coverage.")
+		return {}
+	var trigger_context := _sb4_trigger_context()
+	var event_id := _sb4_first_triggerable_event_id(library, run_state, trigger_context)
+	if event_id.is_empty():
+		failures.append("SB.4 triggered-event modal coverage could not find triggerable event content.")
+		return {}
+	if not run_state.enqueue_triggered_event(event_id, "sb4_input_fuzz", trigger_context):
+		failures.append("SB.4 triggered-event modal coverage could not enqueue %s." % event_id)
+		return {}
+	if not bool(app.call("_show_next_pending_triggered_event")):
+		failures.append("SB.4 triggered-event modal coverage could not open %s." % event_id)
+		return {}
+	var popup: Dictionary = app.call("current_event_choice_popup_snapshot")
+	if not bool(popup.get("visible", false)) or str(popup.get("popup_type", "")) != "triggered_event":
+		failures.append("SB.4 triggered-event modal did not expose the expected popup snapshot: %s" % JSON.stringify(popup))
+		return {}
+	_sb4_assert_overlay_contract(app, "triggered-event popup open", failures)
+	return popup
+
+
+func _sb4_trigger_context() -> Dictionary:
+	return {
+		"trigger": "action",
+		"type": "action",
+		"source": "sb4_input_fuzz",
+		"turns": 99,
+	}
+
+
+func _sb4_first_triggerable_event_id(library: ContentLibrary, run_state: RunState, context: Dictionary) -> String:
+	if library == null or run_state == null:
+		return ""
+	for event_value in library.events:
+		if typeof(event_value) != TYPE_DICTIONARY:
+			continue
+		var event_definition: Dictionary = event_value
+		if str(event_definition.get("interaction_mode", "interactable")) != "triggered":
+			continue
+		var event_id := str(event_definition.get("id", ""))
+		if event_id.is_empty():
+			continue
+		var event_module := EventModule.new()
+		event_module.setup(event_definition, library)
+		if event_module.can_trigger(run_state, run_state.current_environment, context):
+			return event_id
+	return ""
+
+
+func _sb4_check_wager_modal_routes(library: ContentLibrary, app: Control, failures: Array) -> void:
+	app.call("start_foundation_run", "SB4-WAGER-MODAL")
+	var run_state: RunState = app.get("run_state")
+	if run_state == null:
+		failures.append("SB.4 all-in wager modal coverage could not start a run.")
+		return
+	run_state.bankroll = 2
+	var environment := run_state.current_environment.duplicate(true)
+	environment["economic_profile"] = {
+		"stake_floor": 1,
+		"stake_ceiling": 2,
+	}
+	run_state.current_environment = environment
+	app.set("current_game", HostileInputAllInFixtureGame.new())
+	app.set("selected_stake", 2)
+	app.call("_set_current_screen", "GAME")
+	app.call("_refresh")
+	app.call("_resolve_game_action", "all_in_loss", false, false, false)
+	var popup: Dictionary = app.call("current_event_choice_popup_snapshot")
+	if not bool(popup.get("visible", false)) or str(popup.get("popup_type", "")) != "wager_confirmation":
+		failures.append("SB.4 all-in wager did not open a wager confirmation popup.")
+		return
+	if run_state.bankroll != 2:
+		failures.append("SB.4 all-in wager changed bankroll before confirmation.")
+	var before := _sb4_serialized_run(app)
+	_sb4_assert_blocked_route(app, "wager popup open_world_map", "open_world_map", [], before, failures)
+	_sb4_assert_blocked_route(app, "wager popup activate travel", "activate_interactable_object", ["travel:leave"], before, failures)
+	_sb4_assert_blocked_route(app, "wager popup open inventory", "open_run_inventory", [], before, failures)
+	_sb4_assert_blocked_route(app, "wager popup open menu", "open_run_menu", [], before, failures)
+	_sb4_assert_blocked_route(app, "wager popup resolve stale event", "resolve_event_choice", [_save_load_first_event_id(library), "accept"], before, failures)
+	_sb4_assert_blocked_route(app, "wager popup game resolve", "_resolve_game_action", ["all_in_loss", false, false, false], before, failures)
+	app.call("confirm_pending_wager_action")
+	var after_confirm := _sb4_serialized_run(app)
+	if run_state.bankroll != 0:
+		failures.append("SB.4 confirmed all-in fixture should charge exactly once; bankroll=%d." % run_state.bankroll)
+	app.call("confirm_pending_wager_action")
+	if _sb4_serialized_run(app) != after_confirm:
+		failures.append("SB.4 repeated all-in confirmation mutated RunState a second time.")
+	_sb4_assert_overlay_contract(app, "all-in wager confirmed", failures)
+
+
+func _sb4_check_travel_transition_routes(app: Control, failures: Array) -> void:
+	app.call("start_foundation_run", "SB4-TRAVEL-TRANSITION")
+	app.call("_show_travel_transition", "sb4_target", "SB4 Target", "Fixture travel in progress.")
+	var before := _sb4_serialized_run(app)
+	_sb4_assert_blocked_route(app, "travel transition open_world_map", "open_world_map", [], before, failures)
+	_sb4_assert_blocked_route(app, "travel transition activate travel", "activate_interactable_object", ["travel:leave"], before, failures)
+	_sb4_assert_blocked_route(app, "travel transition open inventory", "open_run_inventory", [], before, failures)
+	_sb4_assert_blocked_route(app, "travel transition open journal", "open_run_journal", [], before, failures)
+	_sb4_assert_blocked_route(app, "travel transition open menu", "open_run_menu", [], before, failures)
+	_sb4_assert_blocked_route(app, "travel transition enter game", "enter_game", ["slot"], before, failures)
+	_sb4_assert_blocked_route(app, "travel transition select category", "select_action_category", ["games"], before, failures)
+	app.call("_hide_travel_transition")
+	_sb4_assert_overlay_contract(app, "travel transition hidden", failures)
+
+
+func _sb4_check_seeded_menu_canvas_routes(app: Control, failures: Array) -> void:
+	for seed_index in range(UI_STATE_FUZZ_SEEDS):
+		app.call("start_foundation_run", "SB4-MENU-FUZZ-%d" % seed_index)
+		var run_state: RunState = app.get("run_state")
+		if run_state == null:
+			failures.append("SB.4 seeded menu fuzz could not start run %d." % seed_index)
+			continue
+		var rng := run_state.create_rng("sb4_input_fuzz")
+		for step_index in range(UI_STATE_FUZZ_STEPS_PER_SEED):
+			var bankroll_before := run_state.bankroll
+			match rng.randi_range(0, 9):
+				0:
+					app.call("open_run_inventory")
+				1:
+					app.call("close_run_inventory")
+				2:
+					app.call("open_run_journal")
+				3:
+					app.call("close_run_journal")
+				4:
+					app.call("open_run_menu")
+				5:
+					app.call("close_run_menu")
+				6:
+					app.call("open_world_map")
+				7:
+					app.call("close_world_map")
+				8:
+					app.call("activate_interactable_object", "travel:leave")
+				_:
+					app.call("back_to_environment")
+			if run_state.bankroll != bankroll_before:
+				failures.append("SB.4 seeded menu fuzz changed bankroll on non-resolve input seed=%d step=%d." % [seed_index, step_index])
+			_sb4_assert_overlay_contract(app, "seeded menu fuzz seed=%d step=%d" % [seed_index, step_index], failures)
+		app.call("close_run_inventory")
+		app.call("close_run_journal")
+		app.call("close_run_menu")
+		app.call("close_world_map")
+	_sb4_check_game_surface_touch_route(app, failures)
+
+
+func _sb4_check_game_surface_touch_route(app: Control, failures: Array) -> void:
+	app.call("start_game_test_session", "slot")
+	var run_state: RunState = app.get("run_state")
+	var game_canvas: Control = app.get("game_surface_canvas")
+	if run_state == null or game_canvas == null or not game_canvas.visible:
+		failures.append("SB.4 game-surface touch route could not enter a slot surface.")
+		return
+	var hit := _sb4_surface_hit_for(game_canvas, ["surface_stake_up", "surface_stake_down", "surface_back"])
+	if hit.is_empty():
+		hit = {
+			"action": "blank",
+			"index": -1,
+			"position": Vector2(12.0, 12.0),
+		}
+	app.call("_show_travel_transition", "sb4_touch_block", "SB4 Touch Block", "Fixture touch block.")
+	var before := _sb4_serialized_run(app)
+	var touch_event := InputEventScreenTouch.new()
+	touch_event.pressed = true
+	touch_event.double_tap = true
+	touch_event.position = hit.get("position", Vector2.ZERO)
+	game_canvas.call("_gui_input", touch_event)
+	app.call("_hide_travel_transition")
+	if _sb4_serialized_run(app) != before:
+		failures.append("SB.4 game-surface touch safe-route mutated serialized RunState.")
+	_sb4_assert_overlay_contract(app, "game-surface touch route", failures)
+
+
+func _sb4_surface_hit_for(game_canvas: Control, preferred_actions: Array) -> Dictionary:
+	var snapshot: Dictionary = game_canvas.call("current_view_snapshot")
+	var hits: Array = snapshot.get("surface_hit_actions", [])
+	for action_value in preferred_actions:
+		var action := str(action_value)
+		for hit_value in hits:
+			if typeof(hit_value) != TYPE_DICTIONARY:
+				continue
+			var hit_data: Dictionary = hit_value
+			if str(hit_data.get("action", "")) != action:
+				continue
+			var index := int(hit_data.get("index", -1))
+			var position: Vector2 = game_canvas.call("local_position_for_surface_action", action, index)
+			if position.x >= 0.0 and position.y >= 0.0:
+				return {
+					"action": action,
+					"index": index,
+					"position": position,
+				}
+	return {}
+
+
+func _sb4_assert_blocked_route(app: Control, label: String, method_name: String, args: Array, before_serialized: String, failures: Array) -> void:
+	app.callv(method_name, args)
+	_sb4_assert_run_state_unchanged(app, before_serialized, label, failures)
+	_sb4_assert_overlay_contract(app, label, failures)
+
+
+func _sb4_assert_run_state_unchanged(app: Control, before_serialized: String, label: String, failures: Array) -> void:
+	var after_serialized := _sb4_serialized_run(app)
+	if after_serialized != before_serialized:
+		failures.append("SB.4 %s mutated serialized RunState during hostile input." % label)
+
+
+func _sb4_assert_overlay_contract(app: Control, label: String, failures: Array) -> void:
+	var overlay_value: Variant = app.call("current_overlay_state_snapshot")
+	if typeof(overlay_value) != TYPE_DICTIONARY:
+		failures.append("SB.4 %s did not return an overlay-state snapshot." % label)
+		return
+	var overlay: Dictionary = overlay_value
+	if not bool(overlay.get("contract_valid", false)):
+		failures.append("SB.4 overlay contract violation after %s: %s" % [label, JSON.stringify(overlay.get("violations", []))])
+
+
+func _sb4_serialized_run(app: Control) -> String:
+	return JSON.stringify(app.call("serialized_run_state"))
 
 
 func _check_game_read_path_mutation_firewall(library: ContentLibrary, game: GameModule, game_id: String, failures: Array) -> void:
