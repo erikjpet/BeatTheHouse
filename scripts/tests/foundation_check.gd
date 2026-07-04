@@ -30,8 +30,14 @@ const SlotPresentationScript := preload("res://scripts/games/slots/slot_presenta
 const SlotRendererScript := preload("res://scripts/games/slots/slot_renderer.gd")
 
 const FOUNDATION_DEFAULT_REPORT_PATH := "res://.tmp/foundation_check/report.json"
+const SAVE_COMPAT_030_FIXTURE_PATH := "res://scripts/tests/fixtures/run_state_0_3_0_save.json"
 const SLOT_ACCEPTANCE_MONTE_CARLO_SPINS := 10000
 const SLOT_FEATURE_SUBSIMULATION_SAMPLES := 96
+const SAVE_LOAD_FUZZ_SEEDS := 4
+const SAVE_LOAD_FUZZ_ACTIONS_PER_SEED := 5
+const SAVE_LOAD_FUZZ_CONTINUATION_STEPS := 5
+const SAVE_LOAD_CANONICAL_FLOAT_STEP := 0.000000001
+const SAVE_LOAD_CANONICAL_INTEGER_EPSILON := 0.000000001
 const FOUNDATION_SUITE_ALIASES := {
 	"contract": "contracts",
 	"full": "all",
@@ -333,6 +339,7 @@ func _foundation_run_system_suite(content_library: ContentLibrary, fixture_libra
 	_foundation_run_check(report, failures, "t4_7_event_interaction_model", Callable(self, "_check_t4_7_event_interaction_model"), [content_library])
 	_foundation_run_check(report, failures, "t6_7_visibility_event_cadence", Callable(self, "_check_t6_7_visibility_event_cadence"), [content_library])
 	_foundation_run_check(report, failures, "save_service_foundation_round_trip", Callable(self, "_check_save_service_foundation_round_trip"), [content_library])
+	_foundation_run_check(report, failures, "save_load_interrupt_fuzz_foundation", Callable(self, "_check_save_load_interrupt_fuzz_foundation"), [content_library])
 	_foundation_run_check(report, failures, "platform_services_foundation", Callable(self, "_check_platform_services_foundation"), [])
 	_foundation_run_check(report, failures, "economy_pressure_foundation", Callable(self, "_check_economy_pressure_foundation"), [content_library])
 	_foundation_run_check(report, failures, "travel_route_foundation", Callable(self, "_check_travel_route_foundation"), [content_library])
@@ -16186,6 +16193,642 @@ func _check_run_state_source_of_truth(library: ContentLibrary, failures: Array) 
 		failures.append("RunState.from_dict retained mutable flag source data.")
 	if str(restored.story_log[0].get("id", "")) == "mutated_story":
 		failures.append("RunState.from_dict retained mutable story source data.")
+
+
+func _check_save_load_interrupt_fuzz_foundation(library: ContentLibrary, failures: Array) -> void:
+	_check_save_load_seed_sweep(library, failures)
+	_check_save_load_targeted_midstates(library, failures)
+	_check_save_load_030_compat_fixture(library, failures)
+
+
+func _check_save_load_seed_sweep(library: ContentLibrary, failures: Array) -> void:
+	for seed_index in range(SAVE_LOAD_FUZZ_SEEDS):
+		var seed_text := "SB3-FUZZ-%02d" % seed_index
+		var challenge := RunState.custom_challenge("sb3_save_fuzz", seed_text, {
+			"starting_bankroll": 4500,
+			"baseline_luck_delta": 1 if seed_index % 2 == 0 else 0,
+			"starting_heat": 4 if seed_index % 3 == 0 else 0,
+			"hidden_seed": true,
+		})
+		var run_state: RunState = RunStateScript.new()
+		run_state.start_new(seed_text, challenge)
+		var generator: RunGenerator = RunGeneratorScript.new(library)
+		generator.next_environment(run_state)
+		for action_index in range(SAVE_LOAD_FUZZ_ACTIONS_PER_SEED):
+			var label := "%s/action_%02d" % [seed_text, action_index]
+			var advanced := _save_load_fuzz_drive_action(library, generator, run_state, action_index, label, failures)
+			if not advanced and not run_state.is_terminal():
+				failures.append("SB.3 save/load fuzz could not find a legal continuation at %s." % label)
+				break
+			var restored := _save_load_checkpoint(library, run_state, label, true, failures)
+			if restored != null:
+				run_state = restored
+			if run_state.is_terminal():
+				break
+
+
+func _save_load_fuzz_drive_action(library: ContentLibrary, generator: RunGenerator, run_state: RunState, action_index: int, label: String, failures: Array) -> bool:
+	if run_state == null or run_state.is_terminal():
+		return false
+	if run_state.current_environment.is_empty():
+		generator.next_environment(run_state)
+	if _save_load_fuzz_resolve_triggered_event(library, run_state, label, failures):
+		return true
+	if action_index % 7 == 3 and _save_load_fuzz_use_service_item_or_lender(library, run_state):
+		return true
+	if action_index % 5 == 4 and _save_load_fuzz_travel(generator, run_state):
+		return true
+	if _save_load_fuzz_play_game(library, run_state, action_index, label, failures):
+		return true
+	if _save_load_fuzz_use_service_item_or_lender(library, run_state):
+		return true
+	return _save_load_fuzz_travel(generator, run_state)
+
+
+func _save_load_fuzz_resolve_triggered_event(library: ContentLibrary, run_state: RunState, label: String, failures: Array) -> bool:
+	var entry := _copy_dict(run_state.active_triggered_event)
+	if entry.is_empty():
+		entry = run_state.next_pending_triggered_event()
+		if entry.is_empty():
+			return false
+		entry = run_state.begin_triggered_event_resolution(entry)
+	var event_id := str(entry.get("event_id", "")).strip_edges()
+	if event_id.is_empty():
+		run_state.complete_triggered_event_resolution()
+		return true
+	var definition := library.event(event_id)
+	if definition.is_empty():
+		failures.append("SB.3 save/load fuzz found unknown triggered event %s at %s." % [event_id, label])
+		run_state.complete_triggered_event_resolution(event_id)
+		return true
+	var event := EventModule.new()
+	event.setup(definition, library)
+	var choices := event.choices(run_state, run_state.current_environment)
+	if choices.is_empty():
+		run_state.complete_triggered_event_resolution(event_id)
+		return true
+	var choice: Dictionary = choices[0] if typeof(choices[0]) == TYPE_DICTIONARY else {}
+	var choice_id := str(choice.get("id", "")).strip_edges()
+	if choice_id.is_empty():
+		run_state.complete_triggered_event_resolution(event_id)
+		return true
+	event.resolve(run_state, run_state.current_environment, choice_id)
+	run_state.complete_triggered_event_resolution(event_id)
+	return true
+
+
+func _save_load_fuzz_use_service_item_or_lender(library: ContentLibrary, run_state: RunState) -> bool:
+	var resolver: RunActionService = RunActionServiceScript.new()
+	resolver.setup(library, run_state)
+	for service_value in resolver.service_hook_view_list():
+		if typeof(service_value) != TYPE_DICTIONARY:
+			continue
+		var service: Dictionary = service_value
+		if bool(service.get("enabled", false)) and bool(service.get("mutation_supported", false)):
+			var service_result := resolver.use_hook("service", str(service.get("id", "")))
+			return bool(service_result.get("ok", false))
+	for lender_value in resolver.lender_hook_view_list():
+		if typeof(lender_value) != TYPE_DICTIONARY:
+			continue
+		var lender: Dictionary = lender_value
+		if bool(lender.get("enabled", false)) and bool(lender.get("mutation_supported", false)):
+			var lender_result := resolver.use_hook("lender", str(lender.get("id", "")))
+			return bool(lender_result.get("ok", false))
+	for offer_value in resolver.item_offer_view_list():
+		if typeof(offer_value) != TYPE_DICTIONARY:
+			continue
+		var offer: Dictionary = offer_value
+		if bool(offer.get("affordable", false)):
+			var item_result := resolver.buy_item_offer(str(offer.get("id", "")))
+			return bool(item_result.get("ok", false))
+	return false
+
+
+func _save_load_fuzz_travel(generator: RunGenerator, run_state: RunState) -> bool:
+	if run_state == null or generator == null or not run_state.has_world_map():
+		return false
+	var current_node_id := run_state.current_world_node_id()
+	for target_value in WorldMapScript.travel_target_ids(run_state.world_map, current_node_id):
+		var target_id := str(target_value)
+		if target_id.is_empty() or target_id == current_node_id:
+			continue
+		var route := generator.world_route_for_target(run_state, target_id)
+		if route.is_empty():
+			continue
+		var status := run_state.travel_route_status(route)
+		if not bool(status.get("available", false)):
+			continue
+		var cost := maxi(0, int(status.get("cost", route.get("cost", 0))))
+		var travel_heat := run_state.begin_travel_suspicion_decay(route, target_id)
+		generator.next_environment(run_state, target_id)
+		run_state.finish_travel_suspicion_decay(travel_heat)
+		if cost > 0:
+			GameModule.apply_result(run_state, _world_map_travel_charge_result(target_id, cost))
+		return true
+	return false
+
+
+func _save_load_fuzz_play_game(library: ContentLibrary, run_state: RunState, action_index: int, _label: String, failures: Array) -> bool:
+	var game_ids := _string_array(run_state.current_environment.get("game_ids", []))
+	if game_ids.is_empty():
+		return false
+	var start_index := posmod(action_index, game_ids.size())
+	for offset in range(game_ids.size()):
+		var game_id := str(game_ids[posmod(start_index + offset, game_ids.size())])
+		var game: GameModule = _load_surface_contract_game(library, game_id, failures)
+		if game == null:
+			continue
+		if game_id == "slot" and _save_load_fuzz_play_slot_bonus(game, run_state, action_index):
+			return true
+		var actions: Dictionary = game.actions(run_state, run_state.current_environment)
+		var legal_actions: Array = actions.get("legal_actions", []) if typeof(actions.get("legal_actions", [])) == TYPE_ARRAY else []
+		var combined_actions: Array = []
+		combined_actions.append_array(legal_actions)
+		var cheat_actions: Array = actions.get("cheat_actions", []) if typeof(actions.get("cheat_actions", [])) == TYPE_ARRAY else []
+		combined_actions.append_array(cheat_actions)
+		var stake_floor := maxi(1, int(actions.get("stake_floor", 1)))
+		var stake_ceiling := maxi(stake_floor, int(actions.get("stake_ceiling", stake_floor)))
+		var stake := clampi(10, stake_floor, stake_ceiling)
+		for action_value in combined_actions:
+			if typeof(action_value) != TYPE_DICTIONARY:
+				continue
+			var action: Dictionary = action_value
+			if not bool(action.get("enabled", true)):
+				continue
+			var action_id := str(action.get("id", "")).strip_edges()
+			if action_id.is_empty():
+				continue
+			var rng := run_state.create_rng("sb3_fuzz_%s_%s_%02d" % [game_id, action_id, action_index])
+			var result: Dictionary = game.resolve_with_context(action_id, stake, run_state, run_state.current_environment, rng, {})
+			if bool(result.get("ok", false)):
+				GameModule.apply_result(run_state, result, rng)
+				return true
+	return false
+
+
+func _save_load_fuzz_play_slot_bonus(game: GameModule, run_state: RunState, action_index: int) -> bool:
+	var machine: Dictionary = SlotMachineStateScript.read_machine(run_state.current_environment, "slot")
+	if machine.is_empty() or not SlotMachineStateScript.active_bonus_incomplete(machine):
+		return false
+	var active: Dictionary = machine.get("active_bonus", {}) if typeof(machine.get("active_bonus", {})) == TYPE_DICTIONARY else {}
+	var family := str(active.get("family", machine.get("type_id", "")))
+	var mode := str(active.get("mode", ""))
+	var candidates := ["slot_bonus_launch"]
+	if family == "pinball":
+		match action_index % 3:
+			1:
+				candidates = ["slot_bonus_left", "slot_bonus_launch"]
+			2:
+				candidates = ["slot_bonus_right", "slot_bonus_launch"]
+			_:
+				candidates = ["slot_bonus_launch"]
+		candidates.append("slot_bonus_watchdog")
+	elif family == "buffalo" and mode == "wheel":
+		candidates = ["slot_bonus_right", "slot_bonus_launch"]
+	var ui_state := {
+		"surface_time_msec": 4000 + action_index * 500,
+		"drunk_scaled_surface_time_msec": 4000 + action_index * 500,
+	}
+	if family == "pinball":
+		ui_state = {}
+	for action_id in candidates:
+		var rng := run_state.create_rng("sb3_fuzz_slot_bonus_%s_%02d" % [action_id, action_index])
+		var result: Dictionary = game.resolve_with_context(str(action_id), 0, run_state, run_state.current_environment, rng, ui_state)
+		if bool(result.get("ok", false)):
+			GameModule.apply_result(run_state, result, rng)
+			return true
+	return false
+
+
+func _save_load_checkpoint(library: ContentLibrary, run_state: RunState, label: String, assert_continuation: bool, failures: Array) -> RunState:
+	var before_signature := _save_load_action_signature(library, run_state, failures)
+	var before_snapshot := _save_load_canonical_run_snapshot(run_state.to_dict())
+	var before_json := JSON.stringify(before_snapshot)
+	var parsed: Variant = JSON.parse_string(before_json)
+	if typeof(parsed) != TYPE_DICTIONARY:
+		failures.append("SB.3 %s RunState snapshot did not JSON-parse." % label)
+		return null
+	var restored: RunState = RunStateScript.new()
+	restored.from_dict(parsed as Dictionary)
+	var after_snapshot := _save_load_canonical_run_snapshot(restored.to_dict())
+	var after_json := JSON.stringify(after_snapshot)
+	if after_json != before_json:
+		failures.append("SB.3 %s RunState to_dict -> from_dict -> to_dict was not byte-identical at %s." % [label, _save_load_first_mismatch(before_snapshot, after_snapshot)])
+	var second: RunState = RunStateScript.new()
+	second.from_dict(after_snapshot)
+	if JSON.stringify(_save_load_canonical_run_snapshot(second.to_dict())) != after_json:
+		failures.append("SB.3 %s RunState normalization was not idempotent on the second load." % label)
+	var after_signature := _save_load_action_signature(library, restored, failures)
+	if JSON.stringify(before_signature) != JSON.stringify(after_signature):
+		failures.append("SB.3 %s legal action signature changed after save/load." % label)
+	if assert_continuation and not restored.is_terminal():
+		var continuation: RunState = RunStateScript.new()
+		continuation.from_dict(restored.to_dict())
+		var continuation_generator: RunGenerator = RunGeneratorScript.new(library)
+		for step in range(SAVE_LOAD_FUZZ_CONTINUATION_STEPS):
+			if continuation.is_terminal():
+				break
+			if not _save_load_fuzz_drive_action(library, continuation_generator, continuation, step, "%s/continue_%02d" % [label, step], failures):
+				failures.append("SB.3 %s restored clone could not continue for step %d." % [label, step])
+				break
+	return restored
+
+
+func _save_load_canonical_run_snapshot(snapshot: Dictionary) -> Dictionary:
+	var result: Dictionary = _save_load_canonical_value(snapshot) as Dictionary
+	var pending_events: Array = result.get("pending_triggered_events", []) if typeof(result.get("pending_triggered_events", [])) == TYPE_ARRAY else []
+	if not pending_events.is_empty():
+		result["pending_triggered_events"] = _save_load_canonical_triggered_event_entries(pending_events)
+	var active_event: Dictionary = result.get("active_triggered_event", {}) if typeof(result.get("active_triggered_event", {})) == TYPE_DICTIONARY else {}
+	if not active_event.is_empty() and not active_event.has("active"):
+		active_event["active"] = true
+		result["active_triggered_event"] = active_event
+	var environment: Dictionary = result.get("current_environment", {}) if typeof(result.get("current_environment", {})) == TYPE_DICTIONARY else {}
+	var suspicion: Dictionary = result.get("suspicion", {}) if typeof(result.get("suspicion", {})) == TYPE_DICTIONARY else {}
+	if environment.is_empty() or suspicion.is_empty():
+		return result
+	var location_id := _save_load_suspicion_location_id(environment)
+	if location_id.is_empty():
+		return result
+	var local_levels: Dictionary = suspicion.get("local_levels", {}) if typeof(suspicion.get("local_levels", {})) == TYPE_DICTIONARY else {}
+	if not local_levels.has(location_id):
+		local_levels[location_id] = clampi(int(suspicion.get("level", 0)), 0, 100)
+		suspicion["local_levels"] = local_levels
+		result["suspicion"] = suspicion
+	return result
+
+
+func _save_load_canonical_triggered_event_entries(entries: Array) -> Array:
+	var result: Array = []
+	for entry_value in entries:
+		if typeof(entry_value) != TYPE_DICTIONARY:
+			continue
+		var entry: Dictionary = entry_value
+		if str(entry.get("event_id", entry.get("id", ""))).strip_edges().is_empty():
+			continue
+		if not entry.has("active"):
+			entry["active"] = false
+		result.append(entry)
+	return result
+
+
+func _save_load_suspicion_location_id(environment: Dictionary) -> String:
+	var archetype_id := str(environment.get("archetype_id", "")).strip_edges()
+	if not archetype_id.is_empty():
+		return archetype_id
+	var environment_id := str(environment.get("id", "")).strip_edges()
+	var separator := environment_id.rfind("_")
+	if separator > 0 and separator < environment_id.length() - 1:
+		var suffix := environment_id.substr(separator + 1)
+		if suffix.is_valid_int():
+			return environment_id.substr(0, separator)
+	return environment_id
+
+
+func _save_load_canonical_value(value: Variant) -> Variant:
+	match typeof(value):
+		TYPE_DICTIONARY:
+			var source: Dictionary = value
+			var result: Dictionary = {}
+			for key in source.keys():
+				result[key] = _save_load_canonical_value(source[key])
+			return result
+		TYPE_ARRAY:
+			var source_array: Array = value
+			var result_array: Array = []
+			for entry in source_array:
+				result_array.append(_save_load_canonical_value(entry))
+			return result_array
+		TYPE_FLOAT:
+			return _save_load_canonical_float(float(value))
+		TYPE_VECTOR2:
+			var point: Vector2 = value
+			return {
+				"x": _save_load_canonical_float(point.x),
+				"y": _save_load_canonical_float(point.y),
+			}
+		TYPE_VECTOR2I:
+			var point_i: Vector2i = value
+			return {
+				"x": point_i.x,
+				"y": point_i.y,
+			}
+		TYPE_RECT2:
+			var rect: Rect2 = value
+			return {
+				"x": _save_load_canonical_float(rect.position.x),
+				"y": _save_load_canonical_float(rect.position.y),
+				"w": _save_load_canonical_float(rect.size.x),
+				"h": _save_load_canonical_float(rect.size.y),
+			}
+		TYPE_RECT2I:
+			var rect_i: Rect2i = value
+			return {
+				"x": rect_i.position.x,
+				"y": rect_i.position.y,
+				"w": rect_i.size.x,
+				"h": rect_i.size.y,
+			}
+		_:
+			return value
+
+
+func _save_load_canonical_float(value: float) -> Variant:
+	var rounded_integer: float = round(value)
+	if absf(value - rounded_integer) <= SAVE_LOAD_CANONICAL_INTEGER_EPSILON:
+		return int(rounded_integer)
+	return snappedf(value, SAVE_LOAD_CANONICAL_FLOAT_STEP)
+
+
+func _save_load_action_signature(library: ContentLibrary, run_state: RunState, failures: Array) -> Dictionary:
+	var signature := {
+		"terminal": run_state.run_status if run_state != null else "missing",
+		"environment_id": "",
+		"world_node_id": "",
+		"games": [],
+		"travel_targets": [],
+		"pending_triggered_count": 0,
+		"active_triggered_event": "",
+	}
+	if run_state == null:
+		return signature
+	signature["environment_id"] = str(run_state.current_environment.get("id", ""))
+	signature["world_node_id"] = run_state.current_world_node_id()
+	signature["pending_triggered_count"] = run_state.pending_triggered_events.size()
+	signature["active_triggered_event"] = str(run_state.active_triggered_event.get("event_id", ""))
+	if run_state.has_world_map():
+		signature["travel_targets"] = _string_array(WorldMapScript.travel_target_ids(run_state.world_map, run_state.current_world_node_id()))
+	var game_signatures: Array = []
+	for game_id_value in _string_array(run_state.current_environment.get("game_ids", [])):
+		var game_id := str(game_id_value)
+		var game: GameModule = _load_surface_contract_game(library, game_id, failures)
+		if game == null:
+			continue
+		var actions: Dictionary = game.actions(run_state, run_state.current_environment)
+		game_signatures.append({
+			"id": game_id,
+			"stake_floor": int(actions.get("stake_floor", 0)),
+			"stake_ceiling": int(actions.get("stake_ceiling", 0)),
+			"legal": _save_load_action_id_signature(actions.get("legal_actions", [])),
+			"cheat": _save_load_action_id_signature(actions.get("cheat_actions", [])),
+		})
+	signature["games"] = game_signatures
+	return signature
+
+
+func _save_load_action_id_signature(actions_value: Variant) -> Array:
+	var result: Array = []
+	if typeof(actions_value) != TYPE_ARRAY:
+		return result
+	for action_value in actions_value:
+		if typeof(action_value) != TYPE_DICTIONARY:
+			continue
+		var action: Dictionary = action_value
+		result.append({
+			"id": str(action.get("id", "")),
+			"enabled": bool(action.get("enabled", true)),
+			"kind": str(action.get("kind", action.get("action_kind", ""))),
+			"cost": int(action.get("cost", action.get("stake", 0))),
+		})
+	return result
+
+
+func _save_load_first_mismatch(expected: Variant, actual: Variant, path: String = "$") -> String:
+	if typeof(expected) != typeof(actual):
+		return "%s type %d != %d" % [path, typeof(expected), typeof(actual)]
+	if typeof(expected) == TYPE_DICTIONARY:
+		var expected_dict: Dictionary = expected
+		var actual_dict: Dictionary = actual
+		for key in expected_dict.keys():
+			if not actual_dict.has(key):
+				return "%s.%s missing" % [path, str(key)]
+			var nested := _save_load_first_mismatch(expected_dict[key], actual_dict[key], "%s.%s" % [path, str(key)])
+			if not nested.is_empty():
+				return nested
+		for key in actual_dict.keys():
+			if not expected_dict.has(key):
+				return "%s.%s added" % [path, str(key)]
+		return ""
+	if typeof(expected) == TYPE_ARRAY:
+		var expected_array: Array = expected
+		var actual_array: Array = actual
+		if expected_array.size() != actual_array.size():
+			return "%s size %d != %d" % [path, expected_array.size(), actual_array.size()]
+		for index in range(expected_array.size()):
+			var nested := _save_load_first_mismatch(expected_array[index], actual_array[index], "%s[%d]" % [path, index])
+			if not nested.is_empty():
+				return nested
+		return ""
+	if expected != actual:
+		return "%s %s != %s" % [path, str(expected), str(actual)]
+	return ""
+
+
+func _check_save_load_targeted_midstates(library: ContentLibrary, failures: Array) -> void:
+	var slot_game: GameModule = _slot_game(library, failures)
+	if slot_game != null:
+		_check_save_load_slot_midstates(library, slot_game, failures)
+	_check_save_load_skill_challenge_midstates(library, failures)
+	_check_save_load_world_event_lender_midstates(library, failures)
+
+
+func _check_save_load_slot_midstates(library: ContentLibrary, slot_game: GameModule, failures: Array) -> void:
+	var definition := library.game("slot")
+	var pinball = SlotFamilyPinballScript.new()
+	var pinball_run: RunState = _slot_run_state("SB3-PINBALL-LIVE", 100000)
+	var pinball_environment: Dictionary = _slot_environment()
+	var pinball_machine: Dictionary = _slot_machine(definition, pinball_run, "pinball", "classic_3_reel", "standard", "plain")
+	pinball_machine["active_bonus"] = pinball.open_feature(pinball_machine, 10, pinball_run.create_rng("sb3_pinball_open"), definition)
+	_slot_store_machine(pinball_run, pinball_environment, pinball_machine)
+	var launch_rng := pinball_run.create_rng("sb3_pinball_launch")
+	var launch_result: Dictionary = slot_game.resolve_with_context("slot_bonus_launch", 0, pinball_run, pinball_environment, launch_rng, {"surface_time_msec": 1000, "drunk_scaled_surface_time_msec": 1000})
+	if bool(launch_result.get("ok", false)):
+		GameModule.apply_result(pinball_run, launch_result, launch_rng)
+	_save_load_checkpoint(library, _save_load_canonical_run(pinball_run), "target/pinball_live_balls", true, failures)
+
+	var buffalo = SlotFamilyBuffaloScript.new()
+	var buffalo_run: RunState = _slot_run_state("SB3-BUFFALO-HOLD", 100000)
+	var buffalo_environment: Dictionary = _slot_environment()
+	var buffalo_machine: Dictionary = _slot_machine(definition, buffalo_run, "buffalo", "video_feature", "standard", "plain")
+	buffalo_machine["active_bonus"] = buffalo.open_feature(buffalo_machine, {"classification": "hold_and_spin"}, 10, buffalo_run.create_rng("sb3_buffalo_hold_open"), definition)
+	_slot_store_machine(buffalo_run, buffalo_environment, buffalo_machine)
+	_save_load_checkpoint(library, _save_load_canonical_run(buffalo_run), "target/buffalo_hold_and_spin", true, failures)
+
+	var nudge_sample := _slot_spin_until_classification(definition, "pinball", "line_5x3", "near_miss", "SB3-NUDGE-PENDING", failures)
+	if not nudge_sample.is_empty():
+		var nudge_run: RunState = nudge_sample.get("run_state", null)
+		var nudge_environment: Dictionary = _slot_environment()
+		_slot_store_machine(nudge_run, nudge_environment, _slot_dict(nudge_sample.get("machine", {})))
+		_save_load_checkpoint(library, _save_load_canonical_run(nudge_run), "target/nudge_offer_pending", true, failures)
+
+	var autoplay_run: RunState = _slot_run_state("SB3-SLOT-AUTOPLAY", 100000)
+	var autoplay_environment: Dictionary = _slot_environment()
+	var autoplay_machine: Dictionary = _slot_machine(definition, autoplay_run, "pinball", "line_5x3", "standard", "plain")
+	autoplay_machine["slot_autoplay_active"] = true
+	autoplay_machine["slot_autoplay_next_msec"] = 1500
+	_slot_store_machine(autoplay_run, autoplay_environment, autoplay_machine)
+	_save_load_checkpoint(library, _save_load_canonical_run(autoplay_run), "target/slot_autoplay_active", true, failures)
+
+
+func _check_save_load_skill_challenge_midstates(library: ContentLibrary, failures: Array) -> void:
+	var blackjack: GameModule = _load_surface_contract_game(library, "blackjack", failures)
+	if blackjack != null:
+		var blackjack_run: RunState = _mutation_firewall_game_run_state(library, blackjack, "blackjack")
+		var deal_command: Dictionary = blackjack.surface_action_command("blackjack_deal", 0, false, {"selected_stake": 5}, blackjack_run, blackjack_run.current_environment)
+		var count_command: Dictionary = blackjack.surface_action_command("blackjack_count_toggle", 0, false, deal_command.get("ui_state", {}), blackjack_run, blackjack_run.current_environment)
+		var count_ui: Dictionary = count_command.get("ui_state", {}) if typeof(count_command.get("ui_state", {})) == TYPE_DICTIONARY else {}
+		if _copy_dict(count_ui.get("count_challenge", {})).is_empty():
+			failures.append("SB.3 blackjack count mid-state fixture did not start count_challenge.")
+		_save_load_checkpoint(library, _save_load_canonical_run(blackjack_run), "target/blackjack_count_midstep", true, failures)
+
+	var video_poker: GameModule = _load_surface_contract_game(library, "video_poker", failures)
+	if video_poker != null:
+		var poker_fixture := _video_poker_holdout_item_fixture(video_poker, "")
+		var poker_run := poker_fixture.get("run_state", null) as RunState
+		if poker_run == null or _copy_dict(poker_fixture.get("challenge", {})).is_empty():
+			failures.append("SB.3 video poker holdout mid-state fixture did not start holdout_challenge.")
+		else:
+			poker_run.current_environment["game_ids"] = ["video_poker"]
+			_save_load_checkpoint(library, _save_load_canonical_run(poker_run), "target/video_poker_holdout_midstep", true, failures)
+
+	var bar_dice: GameModule = _load_surface_contract_game(library, "bar_dice", failures)
+	if bar_dice != null:
+		var dice_fixture := _bar_dice_controlled_roll_item_fixture(bar_dice, "")
+		var dice_run := dice_fixture.get("run_state", null) as RunState
+		if dice_run == null or _copy_dict(dice_fixture.get("challenge", {})).is_empty():
+			failures.append("SB.3 bar dice controlled-roll mid-state fixture did not start controlled_roll.")
+		else:
+			_save_load_checkpoint(library, _save_load_canonical_run(dice_run), "target/bar_dice_controlled_roll_midstep", true, failures)
+
+	var roulette: GameModule = _load_surface_contract_game(library, "roulette", failures)
+	if roulette != null:
+		var roulette_fixture := _roulette_past_post_item_fixture(roulette, library, "")
+		var roulette_run := roulette_fixture.get("run_state", null) as RunState
+		if roulette_run == null or _copy_dict(roulette_fixture.get("challenge", {})).is_empty():
+			failures.append("SB.3 roulette past-post mid-state fixture did not start past_post_challenge.")
+		else:
+			_save_load_checkpoint(library, _save_load_canonical_run(roulette_run), "target/roulette_past_post_midstep", true, failures)
+
+	var baccarat: GameModule = _load_surface_contract_game(library, "baccarat", failures)
+	if baccarat != null:
+		var baccarat_fixture := _baccarat_edge_sort_item_fixture(baccarat, "")
+		var baccarat_run := baccarat_fixture.get("run_state", null) as RunState
+		if baccarat_run == null or _copy_dict(baccarat_fixture.get("challenge", {})).is_empty():
+			failures.append("SB.3 baccarat edge-sort mid-state fixture did not start edge_sort_challenge.")
+		else:
+			_save_load_checkpoint(library, _save_load_canonical_run(baccarat_run), "target/baccarat_edge_sort_midstep", true, failures)
+
+
+func _check_save_load_world_event_lender_midstates(library: ContentLibrary, failures: Array) -> void:
+	var world_run: RunState = RunStateScript.new()
+	world_run.start_new("SB3-WORLD-MAP-OPEN", RunState.custom_challenge("sb3_world", "SB3-WORLD-MAP-OPEN", {"starting_bankroll": 3000}))
+	var generator: RunGenerator = RunGeneratorScript.new(library)
+	generator.next_environment(world_run)
+	WorldMapScript.snapshot(world_run.world_map, world_run.current_world_node_id())
+	_save_load_checkpoint(library, world_run, "target/world_map_open_snapshot", true, failures)
+
+	var travel_lock_run: RunState = RunStateScript.new()
+	travel_lock_run.start_new("SB3-TRAVEL-LOCK", RunState.custom_challenge("sb3_travel_lock", "SB3-TRAVEL-LOCK", {"starting_bankroll": 3000}))
+	generator.next_environment(travel_lock_run)
+	travel_lock_run.current_environment["travel_locked_actions"] = 3
+	travel_lock_run.current_environment["travel_lock_remaining"] = 2
+	_save_load_checkpoint(library, travel_lock_run, "target/travel_lock_active", true, failures)
+
+	var event_run: RunState = RunStateScript.new()
+	event_run.start_new("SB3-TRIGGERED-EVENT")
+	generator.next_environment(event_run)
+	var event_id := _save_load_first_event_id(library)
+	if event_id.is_empty() or not event_run.enqueue_triggered_event(event_id, "sb3_fixture", {"trigger": "save_load"}):
+		failures.append("SB.3 triggered-event queue fixture could not enqueue an event.")
+	else:
+		_save_load_checkpoint(library, event_run, "target/triggered_event_pending", true, failures)
+		event_run.begin_triggered_event_resolution(event_run.next_pending_triggered_event())
+		_save_load_checkpoint(library, event_run, "target/triggered_event_active", true, failures)
+
+	var lender_definition := _first_definition(library.lenders)
+	if lender_definition.is_empty():
+		failures.append("SB.3 lender mid-schedule fixture could not find lender content.")
+	else:
+		var lender_run: RunState = RunStateScript.new()
+		lender_run.start_new("SB3-LENDER-MID", RunState.custom_challenge("sb3_lender", "SB3-LENDER-MID", {"starting_bankroll": 500}))
+		lender_run.set_environment({
+			"id": "sb3_lender_room",
+			"display_name": "SB3 Lender Room",
+			"kind": "casino",
+			"archetype_id": "sb3_lender_fixture",
+			"game_ids": ["video_poker"],
+			"game_states": {},
+			"economic_profile": {"stake_floor": 1, "stake_ceiling": 20},
+			"security_profile": {},
+			"lender_hooks": [str(lender_definition.get("id", ""))],
+			"layout": {},
+		})
+		var video_poker_game: GameModule = _load_surface_contract_game(library, "video_poker", failures)
+		if video_poker_game != null:
+			var game_states := _copy_dict(lender_run.current_environment.get("game_states", {}))
+			game_states["video_poker"] = video_poker_game.generate_environment_state(lender_run, lender_run.current_environment, lender_run.create_rng("sb3_lender_video_poker_state"))
+			lender_run.current_environment["game_states"] = game_states
+		var resolver: RunActionService = RunActionServiceScript.new()
+		resolver.setup(library, lender_run)
+		var lender_result := resolver.use_hook("lender", str(lender_definition.get("id", "")))
+		if not bool(lender_result.get("ok", false)) or lender_run.debt.is_empty():
+			failures.append("SB.3 lender mid-schedule fixture could not open debt.")
+		else:
+			lender_run.advance_environment_turns(1)
+			_save_load_checkpoint(library, lender_run, "target/lender_mid_schedule", true, failures)
+
+	var challenge_run: RunState = RunStateScript.new()
+	challenge_run.start_new("SB3-CHALLENGE-MOD", RunState.custom_challenge("sb3_mid_modifier", "SB3-CHALLENGE-MOD", {
+		"starting_bankroll": 777,
+		"starting_heat": 12,
+		"baseline_luck_delta": 2,
+		"local_heat_turn_decay_interval_delta": -1,
+	}))
+	generator.next_environment(challenge_run)
+	challenge_run.advance_environment_turns(2)
+	_save_load_checkpoint(library, challenge_run, "target/challenge_mid_modifier", true, failures)
+
+
+func _save_load_first_event_id(library: ContentLibrary) -> String:
+	if not library.event("family_loan").is_empty():
+		return "family_loan"
+	var definition := _first_definition(library.events)
+	return str(definition.get("id", ""))
+
+
+func _save_load_canonical_run(run_state: RunState) -> RunState:
+	var restored: RunState = RunStateScript.new()
+	restored.from_dict(run_state.to_dict())
+	return restored
+
+
+func _check_save_load_030_compat_fixture(library: ContentLibrary, failures: Array) -> void:
+	if not FileAccess.file_exists(SAVE_COMPAT_030_FIXTURE_PATH):
+		failures.append("SB.3 missing 0.3.0 save compatibility fixture: %s." % SAVE_COMPAT_030_FIXTURE_PATH)
+		return
+	var parsed: Variant = JSON.parse_string(FileAccess.get_file_as_string(SAVE_COMPAT_030_FIXTURE_PATH))
+	if typeof(parsed) != TYPE_DICTIONARY:
+		failures.append("SB.3 0.3.0 save compatibility fixture did not parse as a dictionary.")
+		return
+	var payload: Dictionary = parsed
+	var save_service: SaveService = SaveServiceScript.new()
+	var run_data_value: Variant = save_service.call("_run_data_from_payload", payload)
+	if typeof(run_data_value) != TYPE_DICTIONARY:
+		failures.append("SB.3 0.3.0 save compatibility fixture did not produce RunState data.")
+		return
+	var run_data: Dictionary = run_data_value
+	if not run_data.has("legacy_unknown_root"):
+		failures.append("SB.3 0.3.0 save fixture no longer covers unknown root-key tolerance.")
+	var restored: RunState = RunStateScript.new()
+	restored.from_dict(run_data)
+	var normalized := restored.to_dict()
+	if normalized.has("legacy_unknown_root"):
+		failures.append("SB.3 0.3.0 save compatibility kept an unknown RunState root key.")
+	var second: RunState = RunStateScript.new()
+	second.from_dict(normalized)
+	if JSON.stringify(second.to_dict()) != JSON.stringify(normalized):
+		failures.append("SB.3 0.3.0 save compatibility fixture was not idempotent after normalization.")
+	_save_load_checkpoint(library, restored, "compat/0_3_0_fixture", true, failures)
 
 
 # Verifies real-time gameplay logic is derived from absolute milliseconds, not frame counts.

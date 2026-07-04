@@ -1,0 +1,133 @@
+{
+	"schema": "beat_the_house.foundation_run",
+	"version": 1,
+	"slot_id": "sb3_030_compat",
+	"legacy_unknown_envelope": "drop_me",
+	"run_state": {
+		"seed_text": "SB3-030-COMPAT",
+		"seed_value": 191932984,
+		"rng_seed": 191932984,
+		"rng_state": 191933111,
+		"challenge_config": {
+			"mode": "custom",
+			"id": "sb3_030_compat",
+			"seed_text": "SB3-030-COMPAT",
+			"daily_id": "",
+			"modifiers": {
+				"starting_bankroll": 1200,
+				"starting_heat": 6
+			},
+			"hidden_seed": false
+		},
+		"bankroll": 1188,
+		"economic_state": "stable",
+		"inventory": ["cheap_sunglasses"],
+		"active_item_id": "cheap_sunglasses",
+		"debt": [{
+			"id": "legacy_debt",
+			"lender_id": "street_lender",
+			"status": "active",
+			"debt_kind": "cash",
+			"balance": 42,
+			"deadline_turns": 5,
+			"turns_remaining": 4,
+			"default_consequence": "favor_owed"
+		}],
+		"suspicion": {
+			"level": 6,
+			"cues": [],
+			"local_levels": {
+				"bar": 6
+			}
+		},
+		"baseline_luck": 1,
+		"drunk_level": 0,
+		"alcoholic_level": 0,
+		"pending_drunk_absorption": [],
+		"drunk_distortion_suppression_turns": 0,
+		"current_environment": {
+			"id": "bar_001",
+			"archetype_id": "bar",
+			"world_node_id": "bar",
+			"world_map_travel": true,
+			"kind": "casino",
+			"display_name": "Compatibility Bar",
+			"tier": 1,
+			"depth": 0,
+			"art_key": "bar",
+			"visual_context": {},
+			"layout": {},
+			"security_profile": {
+				"strictness": "low"
+			},
+			"music_profile": {},
+			"economic_profile": {
+				"stake_floor": 1,
+				"stake_ceiling": 80
+			},
+			"objective_hint": "",
+			"demo_objective": {},
+			"game_ids": ["slot"],
+			"game_states": {},
+			"event_ids": ["family_loan"],
+			"item_offers": [],
+			"service_ids": [],
+			"lender_hooks": ["street_lender"],
+			"suspicion_cues": [],
+			"travel_hooks": ["corner_store"],
+			"next_archetypes": ["corner_store"],
+			"object_fixtures": [],
+			"local_narrative_flags": {},
+			"mood": "watchful",
+			"turns": 2,
+			"resolved_event_ids": [],
+			"travel_locked_actions": 0,
+			"travel_lock_remaining": 0
+		},
+		"world_map": {},
+		"pending_triggered_events": [{
+			"event_id": "family_loan",
+			"source": "compat_fixture",
+			"context": {
+				"trigger": "legacy"
+			},
+			"environment_id": "bar_001",
+			"environment_turns": 2,
+			"active": false
+		}],
+		"active_triggered_event": {},
+		"event_cadence": {
+			"rng_seed": 191932985,
+			"rng_state": 191932986,
+			"action_index": 3,
+			"last_world_event_action": -9999,
+			"last_modal_closed_action": -9999,
+			"visit_key": "bar_001#0",
+			"visit_should_fire": false,
+			"visit_min_action": 0,
+			"visit_event_count": 0,
+			"visit_event_ids": [],
+			"seen_event_counts": {},
+			"visit_count": 1,
+			"quiet_visit_count": 0
+		},
+		"environment_history": [],
+		"environment_history_archive_count": 0,
+		"unlocked_travel": ["corner_store"],
+		"narrative_flags": {
+			"compat_fixture": true
+		},
+		"story_log": [{
+			"type": "fixture",
+			"id": "compat_story",
+			"environment_id": "bar_001",
+			"message": "0.3.0 compatibility fixture"
+		}],
+		"story_log_archive_count": 0,
+		"run_status": "active",
+		"run_failure_reason": "",
+		"run_failure_message": "",
+		"run_spending_score": 12,
+		"legacy_unknown_root": "drop_me"
+	}
+}
