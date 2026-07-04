@@ -597,7 +597,7 @@ func _sa_2_scan_per_frame_allocations(path: String, source: String, failures: Ar
 			continue
 		if _sa_2_line_has_valid_waiver(line):
 			continue
-		failures.append("SA.2 per-frame allocation tripwire: %s:%d %s contains duplicate()/JSON.stringify without SA2_PER_FRAME_OK reason." % [path, index + 1, current_function])
+		failures.append("SA.2 per-frame cost tripwire: %s:%d %s contains duplicate()/JSON.stringify/OS.delay_* without SA2_PER_FRAME_OK reason." % [path, index + 1, current_function])
 
 
 func _sa_2_scan_peek_contract(path: String, source: String, failures: Array) -> void:
@@ -651,7 +651,10 @@ func _sa_2_is_per_frame_function(function_name: String) -> bool:
 
 
 func _sa_2_line_has_banned_allocation(line: String) -> bool:
-	return line.find("duplicate(") != -1 or line.find("JSON.stringify") != -1
+	return line.find("duplicate(") != -1 \
+		or line.find("JSON.stringify") != -1 \
+		or line.find("OS.delay_msec(") != -1 \
+		or line.find("OS.delay_usec(") != -1
 
 
 func _sa_2_line_has_valid_waiver(line: String) -> bool:

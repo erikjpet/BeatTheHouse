@@ -9,13 +9,13 @@ const REPORT_PATH := "user://foundation_performance_probe_report.json"
 const DEFAULT_SEED_PREFIX := "FOUNDATION-PERF"
 const DEFAULT_RUN_COUNT := 8
 const DEFAULT_FRAMES_PER_SURFACE := 120
+const DEFAULT_RESOLVE_SAMPLE_COUNT := 48
 const MAX_SURFACE_DRAW_P95_MS := 16.0
 const MAX_IDLE_SURFACE_DRAW_P95_MS := 2.0
 const MAX_SEVERE_IDLE_AVG_MS := 45.0
 const MAX_SEVERE_FOCUS_AVG_MS := 45.0
 const FOCUS_PROBE_FRAMES := 18
 const MAX_FOCUS_OBJECTS_PER_SEED := 4
-const RESOLVE_SAMPLE_COUNT := 48
 const REQUIRED_GAME_IDS := [
 	"pull_tabs",
 	"slot",
@@ -56,6 +56,7 @@ var slot_autoplay_checked := false
 var casino_slot_preview_checked := false
 var run_count := DEFAULT_RUN_COUNT
 var frames_per_surface := DEFAULT_FRAMES_PER_SURFACE
+var resolve_sample_count := DEFAULT_RESOLVE_SAMPLE_COUNT
 var seed_prefix := DEFAULT_SEED_PREFIX
 
 
@@ -64,8 +65,9 @@ func _init() -> void:
 
 
 func _run() -> void:
-	run_count = _configured_int("BTH_PERF_RUNS", DEFAULT_RUN_COUNT)
+	run_count = _configured_non_negative_int("BTH_PERF_RUNS", DEFAULT_RUN_COUNT)
 	frames_per_surface = _configured_int("BTH_PERF_FRAMES", DEFAULT_FRAMES_PER_SURFACE)
+	resolve_sample_count = _configured_int("BTH_PERF_RESOLVE_SAMPLES", DEFAULT_RESOLVE_SAMPLE_COUNT)
 	seed_prefix = OS.get_environment("BTH_PERF_SEED_PREFIX")
 	if seed_prefix.strip_edges().is_empty():
 		seed_prefix = DEFAULT_SEED_PREFIX
@@ -377,7 +379,7 @@ func _probe_game_resolve_budgets() -> void:
 		var baseline_suspicion: Dictionary = run_state.suspicion.duplicate(true)
 		var samples: Array = []
 		var ok_count := 0
-		for sample_index in range(RESOLVE_SAMPLE_COUNT):
+		for sample_index in range(resolve_sample_count):
 			_prepare_run_for_resolve_probe(run_state, baseline_environment, baseline_rng_seed, baseline_rng_state, baseline_suspicion)
 			var rng := run_state.create_rng("perf_resolve:%s:%d" % [game_id, sample_index])
 			var environment: Dictionary = run_state.current_environment
@@ -534,6 +536,13 @@ func _configured_int(env_name: String, fallback: int) -> int:
 	return maxi(1, int(raw))
 
 
+func _configured_non_negative_int(env_name: String, fallback: int) -> int:
+	var raw := OS.get_environment(env_name).strip_edges()
+	if raw.is_empty() or not raw.is_valid_int():
+		return fallback
+	return maxi(0, int(raw))
+
+
 func _string_array(value: Variant) -> Array:
 	var result: Array = []
 	if typeof(value) != TYPE_ARRAY:
@@ -589,7 +598,7 @@ func _write_report() -> void:
 		"casino_slot_preview_checked": casino_slot_preview_checked,
 		"observations": observations,
 		"resolve_observations": resolve_observations,
-		"resolve_sample_count": RESOLVE_SAMPLE_COUNT,
+		"resolve_sample_count": resolve_sample_count,
 		"resolve_budgets": RESOLVE_BUDGETS,
 		"warnings": warnings,
 		"failures": failures,

@@ -1,6 +1,7 @@
 param(
     [int]$RunCount = 8,
     [int]$FramesPerSurface = 120,
+    [int]$ResolveSampleCount = 48,
     [string]$SeedPrefix = "FOUNDATION-PERF",
     [switch]$RequireGodot
 )
@@ -52,10 +53,12 @@ if (-not $godot) {
 
 $oldRuns = $env:BTH_PERF_RUNS
 $oldFrames = $env:BTH_PERF_FRAMES
+$oldResolveSamples = $env:BTH_PERF_RESOLVE_SAMPLES
 $oldSeedPrefix = $env:BTH_PERF_SEED_PREFIX
 try {
     $env:BTH_PERF_RUNS = [string]$RunCount
     $env:BTH_PERF_FRAMES = [string]$FramesPerSurface
+    $env:BTH_PERF_RESOLVE_SAMPLES = [string]$ResolveSampleCount
     $env:BTH_PERF_SEED_PREFIX = $SeedPrefix
     $consoleGodot = Use-ConsoleGodot $godot
     & $consoleGodot --headless --path $root --script "res://tools/foundation_performance_probe.gd"
@@ -64,5 +67,6 @@ try {
 finally {
     $env:BTH_PERF_RUNS = $oldRuns
     $env:BTH_PERF_FRAMES = $oldFrames
+    $env:BTH_PERF_RESOLVE_SAMPLES = $oldResolveSamples
     $env:BTH_PERF_SEED_PREFIX = $oldSeedPrefix
 }

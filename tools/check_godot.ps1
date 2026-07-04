@@ -411,6 +411,26 @@ function Invoke-FoundationSuite {
     Invoke-GodotScript -Name ("foundation_{0}" -f $FoundationSuite) -ScriptPath "res://scripts/tests/foundation_check.gd" -UserArgs @("--suite=$FoundationSuite", "--report=$report") -StageTimeoutSec $StageTimeoutSec
 }
 
+function Invoke-FoundationPerfSmoke {
+    $oldRuns = $env:BTH_PERF_RUNS
+    $oldFrames = $env:BTH_PERF_FRAMES
+    $oldResolveSamples = $env:BTH_PERF_RESOLVE_SAMPLES
+    $oldSeedPrefix = $env:BTH_PERF_SEED_PREFIX
+    try {
+        $env:BTH_PERF_RUNS = "0"
+        $env:BTH_PERF_FRAMES = "16"
+        $env:BTH_PERF_RESOLVE_SAMPLES = "8"
+        $env:BTH_PERF_SEED_PREFIX = "CHECK-GODOT-PERF"
+        Invoke-GodotScript -Name "foundation_perf_smoke" -ScriptPath "res://tools/foundation_performance_probe.gd" -StageTimeoutSec 60
+    }
+    finally {
+        $env:BTH_PERF_RUNS = $oldRuns
+        $env:BTH_PERF_FRAMES = $oldFrames
+        $env:BTH_PERF_RESOLVE_SAMPLES = $oldResolveSamples
+        $env:BTH_PERF_SEED_PREFIX = $oldSeedPrefix
+    }
+}
+
 function Invoke-ExhaustiveParse {
     $scripts = @(Get-ChildItem -LiteralPath (Join-Path $root "scripts") -Filter "*.gd" -Recurse -File) + @(Get-ChildItem -LiteralPath (Join-Path $root "tools") -Filter "*.gd" -Recurse -File)
     foreach ($script in $scripts) {
@@ -465,6 +485,7 @@ switch ($suiteKey) {
         Invoke-FoundationSuite -FoundationSuite "smoke" -StageTimeoutSec 180
         Invoke-GodotScript -Name "ui_scene_compile" -ScriptPath "res://scripts/tests/ui_scene_compile_check.gd" -StageTimeoutSec 240
         Invoke-GodotScript -Name "roulette_audio_audit" -ScriptPath "res://tools/roulette_audio_audit.gd" -StageTimeoutSec 120
+        Invoke-FoundationPerfSmoke
     }
     "contract" {
         Invoke-FoundationSuite -FoundationSuite "contracts" -StageTimeoutSec 360
@@ -480,6 +501,7 @@ switch ($suiteKey) {
     "full" {
         Invoke-FoundationSuite -FoundationSuite "all" -StageTimeoutSec (Get-StageTimeout "foundation_all")
         Invoke-GodotScript -Name "ui_scene_compile" -ScriptPath "res://scripts/tests/ui_scene_compile_check.gd" -StageTimeoutSec 300
+        Invoke-FoundationPerfSmoke
         Invoke-GodotScript -Name "slot_pinball_physics_audit" -ScriptPath "res://tools/slot_pinball_physics_audit.gd" -UserArgs @("48") -StageTimeoutSec 240
         Invoke-GodotScript -Name "slot_machine_deep_audit" -ScriptPath "res://tools/slot_machine_deep_audit.gd" -UserArgs @("10000") -StageTimeoutSec 900
         Invoke-GodotScript -Name "roulette_rule_audit" -ScriptPath "res://tools/roulette_rule_audit.gd" -StageTimeoutSec 180
