@@ -56,6 +56,7 @@ const GameSurfaceCanvasScript := preload("res://scripts/ui/game_surface_canvas.g
 const WorldMapCanvasScript := preload("res://scripts/ui/world_map_canvas.gd")
 const SfxPlayerScript := preload("res://scripts/ui/sfx_player.gd")
 const ProceduralMusicPlayerScript := preload("res://scripts/ui/procedural_music_player.gd")
+const PerfTelemetryOverlayScript := preload("res://scripts/ui/perf_telemetry_overlay.gd")
 const RunTerminalEvaluatorScript := preload("res://scripts/core/run_terminal_evaluator.gd")
 const RunActionServiceScript := preload("res://scripts/core/run_action_service.gd")
 const ItemEffectScript := preload("res://scripts/core/item_effect.gd")
@@ -194,6 +195,7 @@ var settings_overlay: Control
 var settings_menu: SettingsMenu
 var procedural_music_player: ProceduralMusicPlayer
 var environment_sfx_player: Node
+var perf_telemetry_overlay: PerfTelemetryOverlay
 var event_choice_popup_overlay: Control
 var event_choice_popup_panel: PanelContainer
 var event_choice_popup_title_label: Label
@@ -300,6 +302,7 @@ func _ready() -> void:
 	_initialize_foundation()
 	_build_ui()
 	_refresh()
+	_initialize_perf_telemetry()
 
 
 func _process(_delta: float) -> void:
@@ -322,6 +325,14 @@ func _notification(what: int) -> void:
 	if what == NOTIFICATION_RESIZED:
 		_invalidate_run_screen_layout()
 		_apply_run_screen_layout()
+
+
+func _initialize_perf_telemetry() -> void:
+	if perf_telemetry_overlay != null or not PerfTelemetryOverlayScript.runtime_enabled():
+		return
+	perf_telemetry_overlay = PerfTelemetryOverlayScript.new()
+	add_child(perf_telemetry_overlay)
+	perf_telemetry_overlay.configure(self)
 
 
 # Compile checks use this to verify the active scene is on the foundation path.
