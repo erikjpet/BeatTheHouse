@@ -320,6 +320,14 @@ static func reset_table_round_timer(table: Dictionary, now_msec: int = 0) -> voi
 		table["table_round_timer_started_msec"] = 0
 
 
+static func deterministic_time_msec(run_state: RunState, ui_state: Dictionary = {}) -> int:
+	if ui_state.has("surface_time_msec"):
+		return maxi(1, int(ui_state.get("surface_time_msec", 0)))
+	if run_state != null:
+		return maxi(1, run_state.simulation_time_msec())
+	return 1
+
+
 static func _is_skill_action_kind(action_kind: String) -> bool:
 	return action_kind == "cheat" or action_kind == "risky" or action_kind == "advantage"
 

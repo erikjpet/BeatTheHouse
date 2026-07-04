@@ -131,11 +131,11 @@ func resolve_with_context(action_id: String, _stake: int, run_state: RunState, e
 		if not StateScript.active_bonus_incomplete(bonus_machine):
 			bonus_machine.erase("slot_bonus_watchdog_since_msec")
 		if bool(bonus_machine.get("slot_autoplay_active", false)):
-			bonus_machine["slot_autoplay_next_msec"] = _slot_autoplay_next_msec(bonus_machine, _ui_state)
+			bonus_machine["slot_autoplay_next_msec"] = _slot_autoplay_next_msec(bonus_machine, _ui_state, run_state)
 		if _buffalo_bonus_auto_action(bonus_machine).is_empty():
 			bonus_machine.erase("slot_bonus_auto_next_msec")
 		else:
-			bonus_machine["slot_bonus_auto_next_msec"] = _slot_bonus_auto_next_msec(bonus_machine, _ui_state)
+			bonus_machine["slot_bonus_auto_next_msec"] = _slot_bonus_auto_next_msec(bonus_machine, _ui_state, run_state)
 		StateScript.write_machine(environment, get_id(), bonus_machine)
 		return _slot_copy_dict(bonus_resolved.get("result", {}))
 	if normalized_action != "spin" and normalized_action != "nudge":
@@ -144,13 +144,13 @@ func resolve_with_context(action_id: String, _stake: int, run_state: RunState, e
 	var resolved: Dictionary = resolver.resolve_spin(machine, normalized_action, selected_bet, rng, definition, environment, true, false, run_state, _slot_cross_game_item_effects(run_state, machine, normalized_action == "nudge"), _ui_state)
 	var resolved_machine: Dictionary = _slot_copy_dict(resolved.get("machine", machine))
 	if _slot_feature_pending(resolved_machine):
-		resolved_machine = _mark_slot_feature_pending(resolved_machine, Time.get_ticks_msec())
+		resolved_machine = _mark_slot_feature_pending(resolved_machine, GameModule.deterministic_time_msec(run_state, _ui_state))
 	elif bool(resolved_machine.get("slot_autoplay_active", false)):
-		resolved_machine["slot_autoplay_next_msec"] = _slot_autoplay_next_msec(resolved_machine, _ui_state)
+		resolved_machine["slot_autoplay_next_msec"] = _slot_autoplay_next_msec(resolved_machine, _ui_state, run_state)
 	if _buffalo_bonus_auto_action(resolved_machine).is_empty():
 		resolved_machine.erase("slot_bonus_auto_next_msec")
 	else:
-		resolved_machine["slot_bonus_auto_next_msec"] = _slot_bonus_auto_next_msec(resolved_machine, _ui_state)
+		resolved_machine["slot_bonus_auto_next_msec"] = _slot_bonus_auto_next_msec(resolved_machine, _ui_state, run_state)
 	StateScript.write_machine(environment, get_id(), resolved_machine)
 	return _slot_copy_dict(resolved.get("result", {}))
 
@@ -976,17 +976,17 @@ func _slot_autoplay_outcome_hold_msec(machine: Dictionary) -> int:
 	return SLOT_AUTOPLAY_LOSS_HOLD_MSEC
 
 
-func _slot_autoplay_next_msec(machine: Dictionary, ui_state: Dictionary) -> int:
+func _slot_autoplay_next_msec(machine: Dictionary, ui_state: Dictionary, run_state: RunState = null) -> int:
 	var base_msec := _surface_timing_msec(ui_state)
 	if base_msec <= 0:
-		base_msec = Time.get_ticks_msec()
+		base_msec = GameModule.deterministic_time_msec(run_state, ui_state)
 	return base_msec + _slot_autoplay_delay_msec(machine)
 
 
-func _slot_bonus_auto_next_msec(machine: Dictionary, ui_state: Dictionary) -> int:
+func _slot_bonus_auto_next_msec(machine: Dictionary, ui_state: Dictionary, run_state: RunState = null) -> int:
 	var base_msec := _surface_timing_msec(ui_state)
 	if base_msec <= 0:
-		base_msec = Time.get_ticks_msec()
+		base_msec = GameModule.deterministic_time_msec(run_state, ui_state)
 	return base_msec + _slot_bonus_auto_delay_msec(machine)
 
 

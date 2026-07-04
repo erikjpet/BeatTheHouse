@@ -18,6 +18,7 @@ const DRUNK_TIME_SCALE_MIN := 0.33
 const DRUNK_TIME_SCALE_EXPONENT := 1.63
 const DRUNK_ABSORPTION_INTERVAL_MSEC := 3000
 const DRUNK_ABSORPTION_STACK_GRACE_MSEC := 250
+const SIMULATION_ACTION_MSEC := DRUNK_ABSORPTION_INTERVAL_MSEC
 const BASELINE_LUCK_MIN := -20
 const BASELINE_LUCK_MAX := 20
 const EFFECTIVE_LUCK_MIN := -8
@@ -102,6 +103,7 @@ var unlocked_travel: Array = []
 var narrative_flags: Dictionary = {}
 var story_log: Array = []
 var story_log_archive_count: int = 0
+var simulation_msec: int = 0
 var run_status: String = RUN_STATUS_ACTIVE
 var run_failure_reason: String = FAILURE_NONE
 var run_failure_message: String = ""
@@ -144,6 +146,7 @@ func start_new(p_seed_text: String = "FOUNDATION-SEED", p_challenge_config: Dict
 	narrative_flags = {}
 	story_log = []
 	story_log_archive_count = 0
+	simulation_msec = 0
 	run_status = RUN_STATUS_ACTIVE
 	run_failure_reason = FAILURE_NONE
 	run_failure_message = ""
@@ -167,6 +170,11 @@ func save_rng(rng: RngStream) -> void:
 		return
 	rng_seed = rng.seed_value
 	rng_state = rng.state_value
+
+
+# Returns the deterministic simulation clock used by gameplay systems.
+func simulation_time_msec() -> int:
+	return maxi(0, simulation_msec)
 
 
 # Creates the saved RNG stream reserved for world-event cadence decisions.
@@ -623,7 +631,7 @@ func update_drunk_absorption(now_msec: int = -1) -> Dictionary:
 			"active": false,
 		}
 	if now_msec < 0:
-		now_msec = _alcohol_now_msec()
+		now_msec = simulation_time_msec()
 	var applied := 0
 	var next_queue: Array = []
 	for entry_value in pending_drunk_absorption:
@@ -673,7 +681,7 @@ func _queue_drunk_absorption(amount: int) -> void:
 	var queued := mini(maxi(0, amount), capacity)
 	if queued <= 0:
 		return
-	var now_msec := _alcohol_now_msec()
+	var now_msec := simulation_time_msec()
 	var next_msec := now_msec + DRUNK_ABSORPTION_INTERVAL_MSEC
 	for entry_value in pending_drunk_absorption:
 		if typeof(entry_value) != TYPE_DICTIONARY:
@@ -2910,21 +2918,23 @@ func _remember_story_seen_flags(story_entry: Dictionary) -> void:
 func advance_environment_turns(amount: int = 1) -> void:
 	if current_environment.is_empty() or is_terminal():
 		return
-	event_cadence_advance_actions(amount)
-	var alcohol_decay := maxi(0, amount) * DRUNK_TURN_DECAY
+	var safe_amount := maxi(0, amount)
+	simulation_msec = maxi(0, simulation_msec + safe_amount * SIMULATION_ACTION_MSEC)
+	event_cadence_advance_actions(safe_amount)
+	var alcohol_decay := safe_amount * DRUNK_TURN_DECAY
 	if alcohol_decay > 0:
 		change_drunk(-alcohol_decay)
 	var previous_turns := int(current_environment.get("turns", 0))
-	var next_turns := previous_turns + maxi(0, amount)
+	var next_turns := previous_turns + safe_amount
 	current_environment["turns"] = next_turns
-	_advance_travel_lock(maxi(0, amount))
-	_advance_narrative_action_timers(maxi(0, amount))
-	drunk_distortion_suppression_turns = maxi(0, drunk_distortion_suppression_turns - maxi(0, amount))
+	_advance_travel_lock(safe_amount)
+	_advance_narrative_action_timers(safe_amount)
+	drunk_distortion_suppression_turns = maxi(0, drunk_distortion_suppression_turns - safe_amount)
 	var decay_interval := maxi(1, LOCAL_RISK_TURN_DECAY_INTERVAL + int(challenge_modifiers().get("local_heat_turn_decay_interval_delta", 0)))
 	var previous_decay_step := int(floor(float(previous_turns) / float(decay_interval)))
 	var next_decay_step := int(floor(float(next_turns) / float(decay_interval)))
 	_decrease_current_suspicion(next_decay_step - previous_decay_step)
-	_advance_debt_clocks(maxi(0, amount))
+	_advance_debt_clocks(safe_amount)
 
 
 func _advance_travel_lock(amount: int) -> void:
@@ -3552,6 +3562,7 @@ func to_dict() -> Dictionary:
 		"narrative_flags": narrative_flags.duplicate(true),
 		"story_log": _normalize_story_log(story_log),
 		"story_log_archive_count": story_log_archive_count,
+		"simulation_msec": simulation_msec,
 		"run_status": run_status,
 		"run_failure_reason": run_failure_reason,
 		"run_failure_message": run_failure_message,
@@ -3595,6 +3606,7 @@ func from_dict(data: Dictionary) -> void:
 		if typeof(story_entry_value) == TYPE_DICTIONARY:
 			_remember_story_seen_flags(story_entry_value as Dictionary)
 	_compact_story_log()
+	simulation_msec = maxi(0, int(data.get("simulation_msec", int(_copy_dict(data.get("event_cadence", {})).get("action_index", 0)) * SIMULATION_ACTION_MSEC)))
 	var saved_run_status := str(data.get("run_status", RUN_STATUS_ACTIVE))
 	run_status = saved_run_status
 	run_failure_reason = str(data.get("run_failure_reason", FAILURE_NONE))
@@ -3853,7 +3865,7 @@ static func _normalize_story_numeric_fields(story_entry: Dictionary) -> void:
 
 static func _normalize_pending_drunk_absorption(entries: Array) -> Array:
 	var result: Array = []
-	var now_msec := _alcohol_now_msec()
+	var now_msec := 0
 	for entry_value in entries:
 		if typeof(entry_value) != TYPE_DICTIONARY:
 			continue
@@ -3902,10 +3914,6 @@ static func _normalize_triggered_event_entry(value: Variant) -> Dictionary:
 		"environment_turns": maxi(0, int(source.get("environment_turns", source.get("queued_turn", 0)))),
 		"active": bool(source.get("active", false)),
 	}
-
-
-static func _alcohol_now_msec() -> int:
-	return int(Time.get_unix_time_from_system() * 1000.0)
 
 
 func _drunk_luck_bonus() -> int:

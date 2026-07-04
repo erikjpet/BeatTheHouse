@@ -109,7 +109,7 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 	var stack_count := _array_size(machine.get("ticket_stack", []))
 	var tray_count := _array_size(machine.get("tray_stack", []))
 	var winner_count := _array_size(machine.get("winner_pile", []))
-	var dispense_events := _dispense_event_view_list(machine)
+	var dispense_events := _dispense_event_view_list(machine, ui_state)
 	var dispense_duration_msec := _dispense_animation_duration_msec(dispense_events)
 	var last_dispense_id := str(machine.get("last_dispense_id", machine.get("last_ticket_id", "")))
 	if dispense_events.is_empty():
@@ -606,7 +606,7 @@ func resolve_with_context(action_id: String, _stake: int, run_state: RunState, e
 	machine["tickets_sold"] = int(machine.get("tickets_sold", 0)) + 1
 	machine["last_ticket_id"] = str(ticket.get("id", ""))
 	machine["last_deal_id"] = str(deal.get("id", ""))
-	_queue_dispense_events(machine, [ticket], [deal_index])
+	_queue_dispense_events(machine, [ticket], [deal_index], GameModule.deterministic_time_msec(run_state, ui_state))
 	_write_machine_state(environment, machine)
 
 	var payout := int(ticket.get("payout", 0))
@@ -733,7 +733,7 @@ func _resolve_ticket_set_purchase(run_state: RunState, environment: Dictionary, 
 	machine["tickets_sold"] = int(machine.get("tickets_sold", 0)) + tickets.size()
 	machine["last_ticket_id"] = str((tickets[tickets.size() - 1] as Dictionary).get("id", ""))
 	machine["last_deal_id"] = str((ticket_deals[ticket_deals.size() - 1] as Dictionary).get("id", ""))
-	_queue_dispense_events(machine, tickets, deal_indices)
+	_queue_dispense_events(machine, tickets, deal_indices, GameModule.deterministic_time_msec(run_state, ui_state))
 	_write_machine_state(environment, machine)
 
 	var story_log: Array = []
@@ -2172,8 +2172,9 @@ func _deal_index_for_ticket(machine: Dictionary, ticket: Dictionary) -> int:
 	return 0
 
 
-func _queue_dispense_events(machine: Dictionary, tickets: Array, deal_indices: Array) -> void:
-	var now_msec := Time.get_ticks_msec()
+func _queue_dispense_events(machine: Dictionary, tickets: Array, deal_indices: Array, now_msec: int = -1) -> void:
+	if now_msec < 0:
+		now_msec = Time.get_ticks_msec()
 	var started_msec := int(machine.get("dispense_started_msec", 0))
 	var active_events := _active_dispense_events(machine, now_msec)
 	if started_msec <= 0 or active_events.is_empty():
@@ -2218,7 +2219,12 @@ func _ticket_animation_payload(ticket: Dictionary) -> Dictionary:
 	}
 
 
-func _dispense_event_view_list(machine: Dictionary) -> Array:
+func _dispense_event_view_list(machine: Dictionary, ui_state: Dictionary = {}) -> Array:
+	if ui_state.has("surface_time_msec"):
+		return _active_dispense_events(machine, maxi(1, int(ui_state.get("surface_time_msec", 0))))
+	var started_msec := int(machine.get("dispense_started_msec", 0))
+	if started_msec > 0:
+		return _active_dispense_events(machine, started_msec)
 	return _active_dispense_events(machine, Time.get_ticks_msec())
 
 

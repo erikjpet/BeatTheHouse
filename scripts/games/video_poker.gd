@@ -767,7 +767,7 @@ func _resolve_draw(action_id: String, run_state: RunState, environment: Dictiona
 	# Only a clean (non-cheated) paying win can be gambled on the double-up.
 	var win_credits := maxi(0, bankroll_delta) if won else 0
 
-	var resolved_at := Time.get_ticks_msec()
+	var resolved_at := GameModule.deterministic_time_msec(run_state, ui)
 	state["progressive_meter"] = PROGRESSIVE_BASE if total_progressive_bonus > 0 else int(state.get("progressive_meter", PROGRESSIVE_BASE)) + maxi(1, int(bet_credits / 30))
 	state["last_result"] = {
 		"hand": final_hand,
@@ -934,7 +934,7 @@ func _resolve_double_up(run_state: RunState, environment: Dictionary, rng: RngSt
 	last_result["double_dealer_rank"] = dealer_rank
 	last_result["double_pick_rank"] = pick_rank
 	last_result["double_outcome"] = outcome
-	last_result["resolved_at_msec"] = Time.get_ticks_msec()
+	last_result["resolved_at_msec"] = GameModule.deterministic_time_msec(run_state, ui)
 	state["last_result"] = last_result
 	_update_environment_state(environment, state)
 

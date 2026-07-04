@@ -418,6 +418,7 @@ func resolve_with_context(action_id: String, stake: int, run_state: RunState, en
 		return _resolve_edge_sort(action_id, run_state, environment, rng, ui_state)
 	if action_id != "deal_baccarat":
 		return super.resolve_with_context(action_id, stake, run_state, environment, rng, ui_state)
+	var result_msec := GameModule.deterministic_time_msec(run_state, ui_state)
 	var table := _table_state(run_state, environment)
 	var session := _normalized_session(run_state, environment, ui_state, table)
 	var bets := _bet_dict(session.get("baccarat_bets", {}))
@@ -435,7 +436,7 @@ func resolve_with_context(action_id: String, stake: int, run_state: RunState, en
 
 	var edge_before := _normalized_edge_sort_edge(table.get("edge_sort_edge", {}), table)
 	var edge_used := _edge_sort_edge_used(edge_before, bets)
-	var hand := _resolve_baccarat_hand(table, rng)
+	var hand := _resolve_baccarat_hand(table, rng, result_msec)
 	var settlement := _settle_baccarat_bets(bets, hand, _table_rules(table))
 	var bankroll_delta := int(settlement.get("bankroll_delta", 0))
 	var message := _baccarat_result_message(hand, settlement, bankroll_delta)
@@ -443,7 +444,7 @@ func resolve_with_context(action_id: String, stake: int, run_state: RunState, en
 		message = "%s Edge-sort lean called %s." % [message, _winner_display(str(edge_before.get("predicted_bet", "")))]
 	if sit_out:
 		message = "You sit out the baccarat hand. %s" % message
-	_update_table_after_hand(table, bets, hand, settlement, bankroll_delta, rng)
+	_update_table_after_hand(table, bets, hand, settlement, bankroll_delta, rng, result_msec)
 	_consume_edge_sort_edge(table, edge_before)
 	_apply_patron_rapport_after_baccarat(table, session, bets, str(hand.get("winner", "")))
 	_update_environment_table(environment, table)
@@ -577,7 +578,7 @@ func _resolve_read_shoe(action_id: String, stake: int, run_state: RunState, envi
 	return result
 
 
-func _resolve_baccarat_hand(table: Dictionary, rng: RngStream) -> Dictionary:
+func _resolve_baccarat_hand(table: Dictionary, rng: RngStream, result_msec: int = 0) -> Dictionary:
 	var rules := _table_rules(table)
 	if _needs_new_shoe(table):
 		var fresh := _fresh_shoe_state(int(table.get("deck_count", 8)), rules, rng)
@@ -628,7 +629,7 @@ func _resolve_baccarat_hand(table: Dictionary, rng: RngStream) -> Dictionary:
 	table["shoe_composition_count"] = -1
 	table["reshuffle_pending"] = shoe.size() <= int(table.get("cut_card_remaining", 84))
 	return {
-		"hand_id": "baccarat_%d_%d" % [int(table.get("hands_played", 0)) + 1, Time.get_ticks_msec()],
+		"hand_id": "baccarat_%d_%d" % [int(table.get("hands_played", 0)) + 1, maxi(0, result_msec)],
 		"player_cards": _card_array(player),
 		"banker_cards": _card_array(banker),
 		"player_initial_total": player_initial,
@@ -711,7 +712,7 @@ func _settle_baccarat_bets(bets_value: Variant, hand: Dictionary, rules: Diction
 	}
 
 
-func _update_table_after_hand(table: Dictionary, bets: Dictionary, hand: Dictionary, settlement: Dictionary, bankroll_delta: int, rng: RngStream) -> void:
+func _update_table_after_hand(table: Dictionary, bets: Dictionary, hand: Dictionary, settlement: Dictionary, bankroll_delta: int, rng: RngStream, result_msec: int = 0) -> void:
 	table["hands_played"] = int(table.get("hands_played", 0)) + 1
 	GameModule.reset_table_round_timer(table)
 	table["last_bets"] = bets.duplicate(true)
@@ -733,7 +734,7 @@ func _update_table_after_hand(table: Dictionary, bets: Dictionary, hand: Diction
 		"bet_results": _dictionary_array(settlement.get("bet_results", [])),
 		"hand": hand.duplicate(true),
 		"animation_events": _dictionary_array(hand.get("animation_events", [])),
-		"resolved_at_msec": Time.get_ticks_msec(),
+		"resolved_at_msec": maxi(0, result_msec),
 		"rng_state": rng.snapshot() if rng != null else {},
 	}
 	table["last_result"] = result

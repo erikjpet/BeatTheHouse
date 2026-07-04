@@ -414,6 +414,7 @@ func resolve_with_context(action_id: String, stake: int, run_state: RunState, en
 		return _resolve_past_post(action_id, run_state, environment, rng, ui_state)
 	if action_id != "spin_roulette":
 		return _empty_roulette_result(action_id, stake, environment, "That roulette action is not available.")
+	var result_msec := GameModule.deterministic_time_msec(run_state, ui_state)
 	var table := _table_state(run_state, environment)
 	if bool(table.get("table_barred", false)):
 		return _empty_roulette_result(action_id, stake, environment, str(table.get("barred_reason", "The croupier refuses more roulette action at this wheel.")))
@@ -462,7 +463,7 @@ func resolve_with_context(action_id: String, stake: int, run_state: RunState, en
 	if not table_pressure.is_empty():
 		message = "%s %s" % [message, table_pressure]
 	var result_action_kind := "cheat" if used_cheat or suspicion_delta > 0 else "legal"
-	_update_table_after_spin(table, bets, bet_results, spin, bankroll_delta, suspicion_delta, rng)
+	_update_table_after_spin(table, bets, bet_results, spin, bankroll_delta, suspicion_delta, rng, result_msec)
 	_apply_patron_rapport_after_roulette(table, session, bets, winning_number)
 	_update_environment_table(environment, table)
 	var story_entry := {
@@ -2480,7 +2481,7 @@ func _normalized_session(_run_state: RunState, _environment: Dictionary, ui_stat
 	return session
 
 
-func _update_table_after_spin(table: Dictionary, bets: Array, bet_results: Array, spin: Dictionary, bankroll_delta: int, suspicion_delta: int, rng: RngStream) -> void:
+func _update_table_after_spin(table: Dictionary, bets: Array, bet_results: Array, spin: Dictionary, bankroll_delta: int, suspicion_delta: int, rng: RngStream, result_msec: int = 0) -> void:
 	table["spin_count"] = int(table.get("spin_count", 0)) + 1
 	GameModule.reset_table_round_timer(table)
 	var summary := _roulette_result_message(str(spin.get("winning_number", "0")), spin, bet_results, bankroll_delta, "")
@@ -2509,7 +2510,7 @@ func _update_table_after_spin(table: Dictionary, bets: Array, bet_results: Array
 		"bet_results": result_bets,
 		"physics": _copy_dict(spin.get("physics", {})),
 		"trajectory": _dictionary_array(spin.get("trajectory", [])),
-		"resolved_at_msec": Time.get_ticks_msec(),
+		"resolved_at_msec": maxi(0, result_msec),
 		"rng_state": rng.snapshot() if rng != null else {},
 	}
 	table["last_result"] = last_result

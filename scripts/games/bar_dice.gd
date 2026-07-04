@@ -659,7 +659,7 @@ func resolve_with_context(action_id: String, stake: int, run_state: RunState, en
 	state["carryover_pot"] = carryover_pot
 	state["rounds_played"] = int(state.get("rounds_played", 0)) + 1
 	GameModule.reset_table_round_timer(state)
-	var resolved_at := Time.get_ticks_msec()
+	var resolved_at := GameModule.deterministic_time_msec(run_state, ui_state)
 	var summary := _outcome_message(table_result, outcome, bankroll_delta, suspicion_delta, action_id, pit_boss_summary, security_message, state)
 	_apply_patron_rapport_after_round(state, ui, outcome)
 	var press_offer := {}
