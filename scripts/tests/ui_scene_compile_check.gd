@@ -1482,6 +1482,18 @@ func _run() -> void:
 		push_error("Environment room-life animation did not schedule idle redraws without input.")
 		quit(1)
 		return
+	if int(round(float(idle_animation_end_snapshot.get("scene_idle_animation_fps", 0.0)))) != 60:
+		push_error("Environment room-life animation target should be 60 FPS.")
+		quit(1)
+		return
+	var manual_idle_redraw_start := int(idle_animation_end_snapshot.get("scene_idle_animation_redraw_count", 0))
+	for _manual_idle_animation_frame in range(6):
+		environment_canvas.call("_process", 1.0 / 60.0)
+	var manual_idle_snapshot: Dictionary = environment_canvas.call("current_view_snapshot")
+	if int(manual_idle_snapshot.get("scene_idle_animation_redraw_count", 0)) - manual_idle_redraw_start < 6:
+		push_error("Environment room-life animation did not maintain a 60 FPS redraw cadence.")
+		quit(1)
+		return
 	var reduced_motion_game_canvas: Control = GameSurfaceCanvasScript.new()
 	root.add_child(reduced_motion_game_canvas)
 	reduced_motion_game_canvas.call("render_game_snapshot", {
@@ -1500,6 +1512,37 @@ func _run() -> void:
 	var reduced_motion_channel: Dictionary = reduced_motion_animations.get("test_channel", {})
 	if not bool(reduced_motion_game_snapshot.get("reduce_motion", false)) or bool(reduced_motion_channel.get("active", true)) or float(reduced_motion_channel.get("progress", 0.0)) < 1.0:
 		push_error("Reduced motion should complete game-surface animation channels immediately.")
+		quit(1)
+		return
+	var active_game_canvas: Control = GameSurfaceCanvasScript.new()
+	root.add_child(active_game_canvas)
+	active_game_canvas.call("render_game_snapshot", {
+		"game_id": "active_surface_animation",
+		"reduce_motion": false,
+		"surface_animates_idle": true,
+		"surface_animation_channels": [{
+			"id": "test_channel",
+			"active_id": "animating",
+			"active": true,
+			"duration_msec": 5000,
+		}],
+	})
+	await process_frame
+	var active_game_start_snapshot: Dictionary = active_game_canvas.call("current_view_snapshot")
+	if int(round(float(active_game_start_snapshot.get("surface_animation_target_fps", 0.0)))) != 60:
+		push_error("Game surface animation target should be 60 FPS.")
+		quit(1)
+		return
+	if not bool(active_game_start_snapshot.get("surface_continuous_redraw_active", false)):
+		push_error("Game surface did not recognize active animation redraw demand.")
+		quit(1)
+		return
+	var active_game_redraw_start := int(active_game_start_snapshot.get("surface_animation_redraw_count", 0))
+	for _active_game_animation_frame in range(6):
+		active_game_canvas.call("_process", 1.0 / 60.0)
+	var active_game_end_snapshot: Dictionary = active_game_canvas.call("current_view_snapshot")
+	if int(active_game_end_snapshot.get("surface_animation_redraw_count", 0)) - active_game_redraw_start < 6:
+		push_error("Game surface animation did not maintain a 60 FPS redraw cadence.")
 		quit(1)
 		return
 	var duplicate_input_canvas: Control = PixelSceneCanvasScript.new()

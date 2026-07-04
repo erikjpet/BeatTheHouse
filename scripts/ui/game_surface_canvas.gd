@@ -35,6 +35,8 @@ const DRUNK_TIME_SCALE_MIN := 0.33
 const PERF_DRAW_SAMPLE_LIMIT := 512
 const EMULATED_TOUCH_SUPPRESS_MS := 120
 const EMULATED_TOUCH_SUPPRESS_DISTANCE := 6.0
+const SURFACE_ANIMATION_FPS := 60.0
+const SURFACE_ANIMATION_INTERVAL_SEC := 1.0 / SURFACE_ANIMATION_FPS
 
 var game_id: String = ""
 var state: Dictionary = {}
@@ -66,6 +68,8 @@ var reduce_motion := false
 var drunk_time_scale := 1.0
 var last_mouse_press_msec: int = -100000
 var last_mouse_press_position := Vector2(-100000.0, -100000.0)
+var surface_animation_redraw_accumulator := 0.0
+var surface_animation_redraw_count := 0
 
 
 func set_game_module(game_module: GameModule) -> void:
@@ -118,6 +122,9 @@ func current_view_snapshot() -> Dictionary:
 		"drunk_distortion_visible": drunk_distortion_overlay != null and drunk_distortion_overlay.visible,
 		"drunk_distortion_debug": drunk_distortion_overlay.debug_snapshot() if drunk_distortion_overlay != null else {},
 		"surface_animations": _surface_animation_status_snapshot(),
+		"surface_animation_target_fps": SURFACE_ANIMATION_FPS,
+		"surface_animation_redraw_count": surface_animation_redraw_count,
+		"surface_continuous_redraw_active": _needs_continuous_redraw(),
 	}
 
 
@@ -144,6 +151,9 @@ func surface_runtime_status() -> Dictionary:
 		"drunk_distortion_visible": drunk_distortion_overlay != null and drunk_distortion_overlay.visible,
 		"drunk_distortion_debug": drunk_distortion_overlay.debug_snapshot() if drunk_distortion_overlay != null else {},
 		"surface_animations": _surface_animation_status_snapshot(),
+		"surface_animation_target_fps": SURFACE_ANIMATION_FPS,
+		"surface_animation_redraw_count": surface_animation_redraw_count,
+		"surface_continuous_redraw_active": _needs_continuous_redraw(),
 	}
 
 
@@ -554,12 +564,18 @@ func _process(delta: float) -> void:
 	if reduce_motion:
 		flicker = 0.0
 		continuous_redraw_was_active = false
+		surface_animation_redraw_accumulator = 0.0
 		return
 	flicker += delta
 	_sync_surface_audio()
 	var continuous_redraw := _needs_continuous_redraw()
-	if continuous_redraw or continuous_redraw_was_active:
+	if continuous_redraw and _surface_animation_redraw_due(delta):
 		queue_redraw()
+	elif continuous_redraw_was_active:
+		surface_animation_redraw_accumulator = 0.0
+		queue_redraw()
+	else:
+		surface_animation_redraw_accumulator = 0.0
 	continuous_redraw_was_active = continuous_redraw
 
 
@@ -711,6 +727,18 @@ func _needs_continuous_redraw() -> bool:
 	if drunk_effect_mode == "classic" and int(state.get("drunk_level", 0)) >= 12:
 		return true
 	return bool(state.get("surface_animates_idle", false))
+
+
+func _surface_animation_redraw_due(delta: float) -> bool:
+	surface_animation_redraw_accumulator += maxf(0.0, delta)
+	if surface_animation_redraw_accumulator < SURFACE_ANIMATION_INTERVAL_SEC:
+		return false
+	surface_animation_redraw_accumulator = minf(
+		surface_animation_redraw_accumulator - SURFACE_ANIMATION_INTERVAL_SEC,
+		SURFACE_ANIMATION_INTERVAL_SEC
+	)
+	surface_animation_redraw_count += 1
+	return true
 
 
 func _scale_canvas() -> void:
