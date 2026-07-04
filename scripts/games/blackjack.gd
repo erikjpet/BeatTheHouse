@@ -235,15 +235,13 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 	var payout_animation_active := not payout_active_id.is_empty() and payout_started_msec > 0 and now_msec - payout_started_msec >= 0 and now_msec - payout_started_msec < PAYOUT_ANIMATION_DURATION_MSEC
 	var blackjack_live_redraw_active := not barred and (deal_animation_active or payout_animation_active or count_active or distraction_active)
 	var timer_active := not dealt and not barred and not deal_animation_active and not payout_animation_active
-	var round_timer := GameModule.table_round_timer_status(table, now_msec, "Next hand") if timer_active else {}
-	if timer_active:
-		_update_environment_table(environment, table)
-		if table_notice == "Slide chips, choose side bets, then press DEAL.":
-			var timer_seconds := int(round_timer.get("remaining_seconds", 0))
-			if timer_seconds > 0:
-				table_notice = "Place chips or watch; next hand in %ds." % timer_seconds
-			else:
-				table_notice = "Place chips or watch the next hand."
+	var round_timer := GameModule.table_round_timer_status_peek(table, now_msec, "Next hand") if timer_active else {}
+	if timer_active and bool(round_timer.get("active", false)) and table_notice == "Slide chips, choose side bets, then press DEAL.":
+		var timer_seconds := int(round_timer.get("remaining_seconds", 0))
+		if timer_seconds > 0:
+			table_notice = "Place chips or watch; next hand in %ds." % timer_seconds
+		else:
+			table_notice = "Place chips or watch the next hand."
 	var chip_denominations: Array = _chip_denominations(table)
 	if table_notice.is_empty():
 		table_notice = _table_notice_for_session(session, table)
@@ -504,7 +502,7 @@ func surface_needs_auto_tick(ui_state: Dictionary, run_state: RunState, environm
 	if _blackjack_table_motion_active(table, now_msec):
 		return false
 	var timer := GameModule.table_round_timer_status_peek(table, now_msec, "Next hand")
-	return bool(timer.get("due", false))
+	return not bool(timer.get("active", false)) or bool(timer.get("due", false))
 
 
 func _peek_table_state(environment: Dictionary) -> Dictionary:

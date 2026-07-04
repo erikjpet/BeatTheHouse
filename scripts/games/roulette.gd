@@ -155,9 +155,7 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 	var barred := bool(table.get("table_barred", false))
 	var recent_numbers := _roulette_recent_numbers(table)
 	var timer_active := not barred and not spin_active and not payout_active
-	var round_timer := GameModule.table_round_timer_status(table, now_msec, "Next spin") if timer_active else {}
-	if timer_active:
-		_update_environment_table(environment, table)
+	var round_timer := GameModule.table_round_timer_status_peek(table, now_msec, "Next spin") if timer_active else {}
 	var table_notice := _table_notice(table, session, last_result, spin_active, payout_active, round_timer)
 	if past_post_available:
 		table_notice = "The payout lock is open. A late chip could still slide."
@@ -328,7 +326,7 @@ func surface_needs_auto_tick(ui_state: Dictionary, run_state: RunState, environm
 	var timer := GameModule.table_round_timer_status_peek(table, now_msec, "Next spin")
 	if _roulette_motion_active(table, now_msec) and not bool(timer.get("due", false)):
 		return false
-	return bool(timer.get("due", false))
+	return not bool(timer.get("active", false)) or bool(timer.get("due", false))
 
 
 func _peek_table_state(environment: Dictionary) -> Dictionary:

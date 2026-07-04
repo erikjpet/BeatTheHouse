@@ -6176,6 +6176,8 @@ func _game_view_snapshot() -> Dictionary:
 		module_surface_state = current_game.surface_state(run_state, run_state.current_environment, _current_game_surface_ui_state())
 		if typeof(module_surface_state) != TYPE_DICTIONARY:
 			module_surface_state = {}
+		else:
+			module_surface_state = module_surface_state.duplicate(true)
 		_sync_surface_feature_music_state(module_surface_state)
 		if module_surface_state.has("surface_renderer"):
 			surface_renderer = str(module_surface_state.get("surface_renderer", surface_renderer))
@@ -6252,7 +6254,7 @@ func _game_view_snapshot() -> Dictionary:
 		"summary_source": str(result.get("summary_source", "active_game" if current_game != null else "")),
 	}
 	for key in module_surface_state.keys():
-		snapshot[key] = module_surface_state[key]
+		snapshot[key] = _snapshot_copy_value(module_surface_state[key])
 	snapshot["stake_min"] = int(stake_range.get("min", 1))
 	snapshot["stake_max"] = int(stake_range.get("max", 1))
 	snapshot["selected_stake"] = snapshot_selected_stake
@@ -6260,7 +6262,7 @@ func _game_view_snapshot() -> Dictionary:
 	for key in result.keys():
 		var result_key := str(key)
 		if not snapshot.has(result_key):
-			snapshot[result_key] = result[key]
+			snapshot[result_key] = _snapshot_copy_value(result[key])
 	return snapshot
 
 
@@ -10856,3 +10858,11 @@ func _copy_dict(value: Variant) -> Dictionary:
 	if typeof(value) != TYPE_DICTIONARY:
 		return {}
 	return (value as Dictionary).duplicate(true)
+
+
+func _snapshot_copy_value(value: Variant) -> Variant:
+	if typeof(value) == TYPE_DICTIONARY:
+		return (value as Dictionary).duplicate(true)
+	if typeof(value) == TYPE_ARRAY:
+		return (value as Array).duplicate(true)
+	return value

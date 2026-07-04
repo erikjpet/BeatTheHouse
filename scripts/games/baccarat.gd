@@ -129,7 +129,7 @@ func generate_environment_state(_run_state: RunState, environment: Dictionary, r
 
 
 func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dictionary = {}) -> Dictionary:
-	var table := _table_state(run_state, environment)
+	var table := _table_state_preview(run_state, environment)
 	var session := _normalized_session(run_state, environment, ui_state, table)
 	var bets := _bet_dict(session.get("baccarat_bets", {}))
 	var selected_chip := int(session.get("selected_chip", _chip_denominations(table)[0]))
@@ -142,9 +142,7 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 	var surface_motion_active := deal_active or payout_active
 	var min_ready := total_wager >= int(table.get("table_minimum", 20))
 	var timer_active := not deal_active and not payout_active
-	var round_timer := GameModule.table_round_timer_status(table, now_msec, "Next hand") if timer_active else {}
-	if timer_active:
-		_update_environment_table(environment, table)
+	var round_timer := GameModule.table_round_timer_status_peek(table, now_msec, "Next hand") if timer_active else {}
 	var table_notice := _table_notice(table, session, last_result, deal_active, payout_active, round_timer)
 	var rules := _table_rules(table)
 	var targets := _baccarat_bet_targets(table)
@@ -309,7 +307,7 @@ func surface_needs_auto_tick(ui_state: Dictionary, run_state: RunState, environm
 		if elapsed_msec >= 0 and elapsed_msec < DEAL_ANIMATION_DURATION_MSEC + PAYOUT_ANIMATION_DURATION_MSEC:
 			return false
 	var timer := GameModule.table_round_timer_status_peek(table, now_msec, "Next hand")
-	return bool(timer.get("due", false))
+	return not bool(timer.get("active", false)) or bool(timer.get("due", false))
 
 
 func _peek_table_state(environment: Dictionary) -> Dictionary:
@@ -496,7 +494,7 @@ func resolve_with_context(action_id: String, stake: int, run_state: RunState, en
 
 
 func environment_object_state(_run_state: RunState, environment: Dictionary) -> Dictionary:
-	var table := _table_state(null, environment)
+	var table := _table_state_preview(null, environment)
 	var last_result := _copy_dict(table.get("last_result", {}))
 	var winner := str(last_result.get("winner", "")).capitalize()
 	return {

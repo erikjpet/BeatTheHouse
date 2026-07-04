@@ -323,6 +323,7 @@ func _foundation_run_system_suite(content_library: ContentLibrary, fixture_libra
 	_foundation_run_check(report, failures, "locked_logic_rate_foundation", Callable(self, "_check_locked_logic_rate_foundation"), [content_library])
 	_foundation_run_check(report, failures, "fixture_contracts", Callable(self, "_check_contracts"), [fixture_library])
 	_foundation_run_check(report, failures, "run_action_service_boundary", Callable(self, "_check_run_action_service_boundary"), [content_library])
+	_foundation_run_check(report, failures, "mutation_firewall_foundation", Callable(self, "_check_mutation_firewall_foundation"), [content_library])
 	_foundation_run_check(report, failures, "prestige_empty_data_foundation", Callable(self, "_check_prestige_empty_data_foundation"), [content_library])
 	_foundation_run_check(report, failures, "challenge_pack_foundation", Callable(self, "_check_challenge_pack_foundation"), [content_library])
 	_foundation_run_check(report, failures, "item_effect_foundation", Callable(self, "_check_item_effect_foundation"), [content_library])
@@ -6461,6 +6462,227 @@ func _check_run_action_service_boundary(library: ContentLibrary, failures: Array
 	var lender_result := resolver.use_hook("lender", lender_id)
 	if bool(resolver.hook_option("lender", lender_id).get("mutation_supported", false)) and not bool(lender_result.get("ok", false)):
 		failures.append("RunActionService did not resolve a supported lender hook: %s" % str(lender_result.get("message", "")))
+
+
+func _check_mutation_firewall_foundation(library: ContentLibrary, failures: Array) -> void:
+	var game_ids := ["pull_tabs", "slot", "bar_dice", "blackjack", "baccarat", "roulette", "video_poker"]
+	for game_id_value in game_ids:
+		var game_id := str(game_id_value)
+		var game: GameModule = _load_surface_contract_game(library, game_id, failures)
+		if game == null:
+			continue
+		_check_game_read_path_mutation_firewall(library, game, game_id, failures)
+	_check_world_map_read_path_mutation_firewall(library, failures)
+	_check_run_action_service_read_path_mutation_firewall(library, failures)
+	_check_event_choice_read_path_mutation_firewall(library, failures)
+
+
+func _check_game_read_path_mutation_firewall(library: ContentLibrary, game: GameModule, game_id: String, failures: Array) -> void:
+	var run_state := _mutation_firewall_game_run_state(library, game, game_id)
+	var ui_state := {
+		"surface_time_msec": 1200,
+		"drunk_scaled_surface_time_msec": 1200,
+	}
+	var enter_before := _mutation_firewall_snapshot(run_state)
+	var enter_payload := game.enter(run_state, run_state.current_environment)
+	_mutation_firewall_probe_payload(game_id, "enter", run_state, failures, enter_before, enter_payload)
+	var actions_before := _mutation_firewall_snapshot(run_state)
+	var actions_payload := game.actions(run_state, run_state.current_environment)
+	_mutation_firewall_probe_payload(game_id, "actions", run_state, failures, actions_before, actions_payload)
+	var legal_before := _mutation_firewall_snapshot(run_state)
+	var legal_payload := game.legal_actions(run_state, run_state.current_environment)
+	_mutation_firewall_probe_payload(game_id, "legal_actions", run_state, failures, legal_before, legal_payload)
+	var cheat_before := _mutation_firewall_snapshot(run_state)
+	var cheat_payload := game.cheat_actions(run_state, run_state.current_environment)
+	_mutation_firewall_probe_payload(game_id, "cheat_actions", run_state, failures, cheat_before, cheat_payload)
+	var surface_before := _mutation_firewall_snapshot(run_state)
+	var surface := game.surface_state(run_state, run_state.current_environment, ui_state)
+	_mutation_firewall_assert_unchanged(run_state, surface_before, "%s surface_state read" % game_id, failures)
+	if not surface.is_empty():
+		var draw_before := _mutation_firewall_snapshot(run_state)
+		var harness := SurfaceHarness.new()
+		harness.setup(surface)
+		game.draw_surface(harness, surface, {"mutation_firewall": true})
+		_mutation_firewall_assert_unchanged(run_state, draw_before, "%s draw_surface read" % game_id, failures)
+	_mutation_firewall_mutate_payload(surface)
+	_mutation_firewall_assert_unchanged(run_state, surface_before, "%s surface_state payload" % game_id, failures)
+	var auto_tick_before := _mutation_firewall_snapshot(run_state)
+	game.surface_needs_auto_tick(ui_state, run_state, run_state.current_environment)
+	_mutation_firewall_assert_unchanged(run_state, auto_tick_before, "%s surface_needs_auto_tick read" % game_id, failures)
+	var runtime_needed_before := _mutation_firewall_snapshot(run_state)
+	game.environment_runtime_needs_tick(run_state, run_state.current_environment, 1200)
+	_mutation_firewall_assert_unchanged(run_state, runtime_needed_before, "%s environment_runtime_needs_tick read" % game_id, failures)
+	var runtime_before := _mutation_firewall_snapshot(run_state)
+	var runtime_payload := game.environment_runtime_state(run_state, run_state.current_environment)
+	_mutation_firewall_probe_payload(game_id, "environment_runtime_state", run_state, failures, runtime_before, runtime_payload)
+	var object_before := _mutation_firewall_snapshot(run_state)
+	var object_payload := game.environment_object_state(run_state, run_state.current_environment)
+	_mutation_firewall_probe_payload(game_id, "environment_object_state", run_state, failures, object_before, object_payload)
+	var interactable_before := _mutation_firewall_snapshot(run_state)
+	var interactable_payload := game.environment_interactable_objects(run_state, run_state.current_environment)
+	_mutation_firewall_probe_payload(game_id, "environment_interactable_objects", run_state, failures, interactable_before, interactable_payload)
+
+
+func _mutation_firewall_game_run_state(library: ContentLibrary, game: GameModule, game_id: String) -> RunState:
+	var run_state: RunState = RunStateScript.new()
+	run_state.start_new("MUTATION-FIREWALL-%s" % game_id.to_upper())
+	run_state.bankroll = 1000
+	var archetype := _first_archetype_with_game(library, game_id)
+	var environment: Dictionary = {}
+	if archetype.is_empty():
+		environment = _surface_contract_environment()
+	else:
+		environment = EnvironmentInstance.from_archetype(archetype, 1, run_state.create_rng("mutation_firewall_env_%s" % game_id), library, run_state.challenge_config).to_dict()
+	environment["game_ids"] = [game_id]
+	environment["economic_profile"] = {
+		"stake_floor": 1,
+		"stake_ceiling": 200,
+	}
+	var game_states := _copy_dict(environment.get("game_states", {}))
+	var generated_state := game.generate_environment_state(run_state, environment, run_state.create_rng("mutation_firewall_state_%s" % game_id))
+	if not generated_state.is_empty():
+		game_states[game_id] = generated_state.duplicate(true)
+	environment["game_states"] = game_states
+	environment["layout"] = EnvironmentInstance.ensure_generated_layout(environment)
+	run_state.set_environment(environment)
+	return run_state
+
+
+func _check_world_map_read_path_mutation_firewall(library: ContentLibrary, failures: Array) -> void:
+	var run_state: RunState = RunStateScript.new()
+	run_state.start_new("MUTATION-FIREWALL-WORLD-MAP")
+	var generator: RunGenerator = RunGeneratorScript.new(library)
+	generator.next_environment(run_state)
+	var current_node_id := run_state.current_world_node_id()
+	var before := _mutation_firewall_snapshot(run_state)
+	var generator_snapshot := generator.world_map_snapshot(run_state, current_node_id)
+	_mutation_firewall_assert_unchanged(run_state, before, "world_map generator snapshot read", failures)
+	_mutation_firewall_mutate_payload(generator_snapshot)
+	_mutation_firewall_assert_unchanged(run_state, before, "world_map generator snapshot payload", failures)
+	var static_before := _mutation_firewall_snapshot(run_state)
+	var static_snapshot := WorldMapScript.snapshot(run_state.world_map, current_node_id)
+	_mutation_firewall_assert_unchanged(run_state, static_before, "world_map static snapshot read", failures)
+	_mutation_firewall_mutate_payload(static_snapshot)
+	_mutation_firewall_assert_unchanged(run_state, static_before, "world_map static snapshot payload", failures)
+
+
+func _check_run_action_service_read_path_mutation_firewall(library: ContentLibrary, failures: Array) -> void:
+	var item_definition := _first_definition(library.items)
+	var service_definition := _first_definition(library.services)
+	var lender_definition := _first_definition(library.lenders)
+	if item_definition.is_empty() or service_definition.is_empty() or lender_definition.is_empty():
+		failures.append("Mutation firewall RunActionService fixture needs item, service, and lender definitions.")
+		return
+	var item_id := str(item_definition.get("id", ""))
+	var service_id := str(service_definition.get("id", ""))
+	var lender_id := str(lender_definition.get("id", ""))
+	var run_state: RunState = RunStateScript.new()
+	run_state.start_new("MUTATION-FIREWALL-ACTIONS")
+	run_state.bankroll = 200
+	run_state.inventory = [item_id]
+	run_state.set_environment({
+		"id": "mutation_firewall_action_room",
+		"display_name": "Mutation Firewall Action Room",
+		"kind": "shop",
+		"archetype_id": "mutation_firewall_action_fixture",
+		"item_offers": [{
+			"id": item_id,
+			"display_name": str(item_definition.get("display_name", item_id)),
+			"price": 1,
+		}],
+		"service_ids": [service_id],
+		"lender_hooks": [lender_id],
+		"layout": {},
+	})
+	var resolver: RunActionService = RunActionServiceScript.new()
+	resolver.setup(library, run_state)
+	var offers_before := _mutation_firewall_snapshot(run_state)
+	var offers_payload := resolver.item_offer_view_list(item_id)
+	_mutation_firewall_probe_payload("run_action_service", "item_offer_view_list", run_state, failures, offers_before, offers_payload)
+	var offer_before := _mutation_firewall_snapshot(run_state)
+	var offer_payload := resolver.item_offer(item_id, item_id)
+	_mutation_firewall_probe_payload("run_action_service", "item_offer", run_state, failures, offer_before, offer_payload)
+	var inventory_before := _mutation_firewall_snapshot(run_state)
+	var inventory_payload := resolver.inventory_item_view_list()
+	_mutation_firewall_probe_payload("run_action_service", "inventory_item_view_list", run_state, failures, inventory_before, inventory_payload)
+	var services_before := _mutation_firewall_snapshot(run_state)
+	var services_payload := resolver.service_hook_view_list(service_id)
+	_mutation_firewall_probe_payload("run_action_service", "service_hook_view_list", run_state, failures, services_before, services_payload)
+	var service_before := _mutation_firewall_snapshot(run_state)
+	var service_payload := resolver.service_hook(service_id, service_id)
+	_mutation_firewall_probe_payload("run_action_service", "service_hook", run_state, failures, service_before, service_payload)
+	var lenders_before := _mutation_firewall_snapshot(run_state)
+	var lenders_payload := resolver.lender_hook_view_list(lender_id)
+	_mutation_firewall_probe_payload("run_action_service", "lender_hook_view_list", run_state, failures, lenders_before, lenders_payload)
+	var lender_before := _mutation_firewall_snapshot(run_state)
+	var lender_payload := resolver.lender_hook(lender_id, lender_id)
+	_mutation_firewall_probe_payload("run_action_service", "lender_hook", run_state, failures, lender_before, lender_payload)
+	var prestige_before := _mutation_firewall_snapshot(run_state)
+	var prestige_payload := resolver.prestige_purchase_view_list()
+	_mutation_firewall_probe_payload("run_action_service", "prestige_purchase_view_list", run_state, failures, prestige_before, prestige_payload)
+
+
+func _check_event_choice_read_path_mutation_firewall(library: ContentLibrary, failures: Array) -> void:
+	var event_definition := _first_definition(library.events)
+	if event_definition.is_empty():
+		failures.append("Mutation firewall EventModule fixture needs an event definition.")
+		return
+	var run_state: RunState = RunStateScript.new()
+	run_state.start_new("MUTATION-FIREWALL-EVENT")
+	run_state.set_environment({
+		"id": "mutation_firewall_event_room",
+		"display_name": "Mutation Firewall Event Room",
+		"kind": "bar",
+		"archetype_id": "mutation_firewall_event_fixture",
+		"tier": maxi(1, int(event_definition.get("tier_min", 1))),
+		"event_ids": [str(event_definition.get("id", ""))],
+		"layout": {},
+	})
+	var event_module := EventModule.new()
+	event_module.setup(event_definition, library)
+	var choices_before := _mutation_firewall_snapshot(run_state)
+	var choices_payload := event_module.choices(run_state, run_state.current_environment)
+	_mutation_firewall_probe_payload("event_module", "choices", run_state, failures, choices_before, choices_payload)
+	if not choices_payload.is_empty() and typeof(choices_payload[0]) == TYPE_DICTIONARY:
+		var choice_id := str((choices_payload[0] as Dictionary).get("id", ""))
+		var choice_before := _mutation_firewall_snapshot(run_state)
+		var choice_payload := event_module.choice(choice_id, run_state, run_state.current_environment)
+		_mutation_firewall_probe_payload("event_module", "choice", run_state, failures, choice_before, choice_payload)
+
+
+func _mutation_firewall_probe_payload(owner_id: String, boundary_id: String, run_state: RunState, failures: Array, before: String, payload: Variant) -> void:
+	_mutation_firewall_assert_unchanged(run_state, before, "%s %s read" % [owner_id, boundary_id], failures)
+	_mutation_firewall_mutate_payload(payload)
+	_mutation_firewall_assert_unchanged(run_state, before, "%s %s payload" % [owner_id, boundary_id], failures)
+
+
+func _mutation_firewall_snapshot(run_state: RunState) -> String:
+	return JSON.stringify({
+		"run_state": run_state.to_dict(),
+		"current_environment": run_state.current_environment,
+	})
+
+
+func _mutation_firewall_assert_unchanged(run_state: RunState, before: String, label: String, failures: Array) -> void:
+	if _mutation_firewall_snapshot(run_state) != before:
+		failures.append("Mutation firewall failed: %s changed RunState/current_environment during a read or leaked payload mutation." % label)
+
+
+func _mutation_firewall_mutate_payload(payload: Variant, depth: int = 0) -> void:
+	if depth > 6:
+		return
+	if typeof(payload) == TYPE_DICTIONARY:
+		var data: Dictionary = payload
+		var keys := data.keys()
+		data["__mutation_firewall_probe"] = "mutated"
+		for key in keys:
+			_mutation_firewall_mutate_payload(data[key], depth + 1)
+	elif typeof(payload) == TYPE_ARRAY:
+		var values: Array = payload
+		var original_size := values.size()
+		values.append({"__mutation_firewall_probe": "mutated"})
+		for index in range(original_size):
+			_mutation_firewall_mutate_payload(values[index], depth + 1)
 
 
 func _check_prestige_empty_data_foundation(library: ContentLibrary, failures: Array) -> void:
