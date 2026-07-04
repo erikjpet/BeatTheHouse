@@ -1,6 +1,8 @@
 class_name ProceduralMusicPlayer
 extends Node
 
+const WebAudioBridgeScript := preload("res://scripts/ui/web_audio_bridge.gd")
+
 # Procedural background music for the foundation UI.
 # The synth shape is ported from the old baseline: generated PCM WAV themes,
 # cached per room/heat profile, played through the Music bus.
@@ -146,7 +148,9 @@ func _ready() -> void:
 	_feature_mix_live = _neutral_feature_mix_vector()
 	_feature_mix_applied_target = _feature_mix_target.duplicate(true)
 	_apply_music_fx_vector(_music_fx_live, true)
-	if not _running_headless():
+	if WebAudioBridgeScript.available():
+		WebAudioBridgeScript.ensure()
+	if not _running_headless() and not WebAudioBridgeScript.available():
 		_ensure_stem_players()
 
 
@@ -181,6 +185,9 @@ func play_for_environment_state(environment: Dictionary, heat_level: int, music_
 	if not audio_enabled or environment.is_empty() or _running_headless():
 		stop()
 		return
+	if WebAudioBridgeScript.available():
+		WebAudioBridgeScript.play_music(_music_profile_from_environment(environment, heat_level), snapshot)
+		return
 	_ensure_stem_players()
 	var profile := _music_profile_from_environment(environment, heat_level)
 	var cache_key := _ambient_cache_key(profile)
@@ -210,8 +217,39 @@ func play_for_environment_state(environment: Dictionary, heat_level: int, music_
 	_request_ambient_generation(profile, cache_key, token)
 
 
+# Web browsers resume the audio graph from a user gesture. If streams were
+# started during the same frame as that gesture, replay them once the graph is
+# running so the worklet receives live samples instead of persistent silence.
+func refresh_after_web_audio_unlock(environment: Dictionary, heat_level: int, music_state: Dictionary) -> void:
+	if not audio_enabled or environment.is_empty() or _running_headless():
+		return
+	if WebAudioBridgeScript.available():
+		WebAudioBridgeScript.unlock()
+		play_for_environment_state(environment, heat_level, music_state)
+		return
+	var snapshot := _music_fx_state_from_environment(environment, heat_level, music_state)
+	update_music_state(snapshot)
+	_ensure_stem_players()
+	if not _current_stem_set.is_empty() and _stem_set_contract_valid(_current_stem_set):
+		var resume_position := _director_playback_position()
+		var stem_set := _current_stem_set.duplicate(true)
+		var stage := _current_stem_stage
+		if stage.is_empty():
+			stage = str(stem_set.get("stage", AMBIENT_STAGE_FULL))
+		_play_stem_set(stem_set, resume_position, stage)
+		return
+	play_for_environment_state(environment, heat_level, music_state)
+
+
+func web_audio_user_gesture() -> void:
+	if WebAudioBridgeScript.available() and audio_enabled:
+		WebAudioBridgeScript.unlock()
+
+
 # Stops current music without clearing generated stream cache.
 func stop() -> void:
+	if WebAudioBridgeScript.available():
+		WebAudioBridgeScript.stop_music()
 	_current_cache_key = ""
 	_current_stream_is_primer = false
 	_pending_cache_key = ""
@@ -382,6 +420,9 @@ func stop_feature_music() -> void:
 func play_feature_stinger(cue_id: String, context: Dictionary = {}) -> void:
 	var normalized := cue_id.strip_edges()
 	if normalized.is_empty():
+		return
+	if WebAudioBridgeScript.available():
+		WebAudioBridgeScript.play_sfx(normalized, float(context.get("volume_db", -2.0)), float(context.get("pitch", 1.0)))
 		return
 	var step_period := _music_director_step_seconds()
 	var position := _director_playback_position()
@@ -2476,13 +2517,24 @@ func _authored_music_path(track_id: String, filename: String) -> String:
 
 
 func _load_authored_audio_stream(path: String, loop_frames: int):
+	var loaded: Resource = load(path)
+	if loaded is AudioStreamWAV:
+		var wav_stream := (loaded as AudioStreamWAV).duplicate(true) as AudioStreamWAV
+		_configure_wav_loop(wav_stream, loop_frames)
+		return wav_stream
+	if loaded is AudioStream:
+		return loaded
 	var lowered := path.to_lower()
 	if lowered.ends_with(".wav"):
 		return _load_authored_wav_stream(path, loop_frames)
-	var loaded: Resource = load(path)
-	if loaded is AudioStream:
-		return loaded
 	return null
+
+
+func _configure_wav_loop(stream: AudioStreamWAV, loop_frames: int) -> void:
+	stream.loop_mode = AudioStreamWAV.LOOP_FORWARD
+	stream.loop_begin = 0
+	if loop_frames > 0:
+		stream.loop_end = loop_frames
 
 
 func _load_authored_wav_stream(path: String, loop_frames: int):
@@ -2523,9 +2575,7 @@ func _load_authored_wav_stream(path: String, loop_frames: int):
 	stream.mix_rate = sample_rate
 	stream.stereo = channels > 1
 	stream.data = data
-	stream.loop_mode = AudioStreamWAV.LOOP_FORWARD
-	stream.loop_begin = 0
-	stream.loop_end = loop_frames
+	_configure_wav_loop(stream, loop_frames)
 	return stream
 
 

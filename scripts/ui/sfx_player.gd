@@ -1,6 +1,8 @@
 class_name SfxPlayer
 extends Node
 
+const WebAudioBridgeScript := preload("res://scripts/ui/web_audio_bridge.gd")
+
 # Central procedural SFX router for game surfaces and environment UI.
 #
 # The rest of the app should call the generic play/sync methods below and pass
@@ -122,6 +124,8 @@ var _played_markers: Dictionary = {}
 
 
 func _ready() -> void:
+	if WebAudioBridgeScript.available():
+		WebAudioBridgeScript.ensure()
 	if not _running_headless():
 		_ensure_players()
 		call_deferred("_prewarm_table_streams")
@@ -957,6 +961,9 @@ func _sync_feature_scene_cues(slot_state: Dictionary, profile: Dictionary, fallb
 
 
 func _start_reel_loop(event_id: String = "reel_loop", volume_db: float = -13.0, pitch: float = 1.0) -> void:
+	if WebAudioBridgeScript.available():
+		WebAudioBridgeScript.play_sfx(event_id, volume_db, pitch)
+		return
 	if _loop_player == null:
 		return
 	_loop_player.stream = _event_stream(event_id)
@@ -983,6 +990,9 @@ func _stop_one_shot_loops() -> void:
 
 
 func _play(event_id: String, volume_db: float = 0.0, pitch: float = 1.0) -> void:
+	if WebAudioBridgeScript.available():
+		WebAudioBridgeScript.play_sfx(event_id, volume_db, pitch)
+		return
 	var player := _next_player()
 	if player == null:
 		return

@@ -267,7 +267,11 @@ var environment_canvas: PixelSceneCanvas
 var game_surface_canvas: GameSurfaceCanvas
 var run_layout_dirty := true
 var run_layout_last_screen_size := Vector2(-1.0, -1.0)
+var web_audio_unlock_refresh_scheduled := false
+var web_audio_unlock_refresh_count := 0
 
+const WEB_AUDIO_UNLOCK_REFRESH_ATTEMPTS := 4
+const WEB_AUDIO_UNLOCK_REFRESH_DELAY_SECONDS := 0.20
 
 # UI overlay state machine contract:
 # - Start-menu configuration panels are start-only and never coexist with run overlays.
@@ -305,6 +309,13 @@ func _process(_delta: float) -> void:
 	_advance_environment_game_runtime()
 	_advance_deferred_bankroll_failure()
 	_flush_pending_autosave_if_ready()
+
+
+func _input(event: InputEvent) -> void:
+	if _is_web_audio_unlock_gesture(event):
+		if procedural_music_player != null and procedural_music_player.has_method("web_audio_user_gesture"):
+			procedural_music_player.web_audio_user_gesture()
+		_schedule_web_audio_unlock_refresh()
 
 
 func _notification(what: int) -> void:
@@ -2364,7 +2375,7 @@ func _build_start_screen() -> void:
 	seed_row.add_child(seed_input)
 
 	content_group_config_button = Button.new()
-	content_group_config_button.text = "âš™"
+	content_group_config_button.text = "⚙"
 	content_group_config_button.tooltip_text = "Configure run content."
 	content_group_config_button.custom_minimum_size = Vector2(54, 54)
 	content_group_config_button.size_flags_horizontal = Control.SIZE_SHRINK_END
@@ -3837,6 +3848,47 @@ func _update_procedural_music() -> void:
 		procedural_music_player.stop()
 		return
 	procedural_music_player.play_for_environment_state(run_state.current_environment, run_state.suspicion_level(), music_fx_state_snapshot())
+
+
+func _is_web_audio_unlock_gesture(event: InputEvent) -> bool:
+	if not OS.has_feature("web"):
+		return false
+	var mouse_event := event as InputEventMouseButton
+	if mouse_event != null:
+		return mouse_event.pressed and mouse_event.button_index == MOUSE_BUTTON_LEFT
+	var touch_event := event as InputEventScreenTouch
+	if touch_event != null:
+		return touch_event.pressed
+	var key_event := event as InputEventKey
+	if key_event != null:
+		return key_event.pressed and not key_event.echo
+	return false
+
+
+func _schedule_web_audio_unlock_refresh() -> void:
+	if web_audio_unlock_refresh_scheduled:
+		return
+	web_audio_unlock_refresh_scheduled = true
+	web_audio_unlock_refresh_count = 0
+	call_deferred("_run_web_audio_unlock_refresh")
+
+
+func _run_web_audio_unlock_refresh() -> void:
+	if not OS.has_feature("web"):
+		web_audio_unlock_refresh_scheduled = false
+		return
+	if procedural_music_player != null and run_state != null and current_screen != SCREEN_START:
+		procedural_music_player.refresh_after_web_audio_unlock(run_state.current_environment, run_state.suspicion_level(), music_fx_state_snapshot())
+	web_audio_unlock_refresh_count += 1
+	if web_audio_unlock_refresh_count >= WEB_AUDIO_UNLOCK_REFRESH_ATTEMPTS:
+		web_audio_unlock_refresh_scheduled = false
+		return
+	var tree := get_tree()
+	if tree == null:
+		web_audio_unlock_refresh_scheduled = false
+		return
+	var timer := tree.create_timer(WEB_AUDIO_UNLOCK_REFRESH_DELAY_SECONDS)
+	timer.timeout.connect(Callable(self, "_run_web_audio_unlock_refresh"), CONNECT_ONE_SHOT)
 
 
 func music_fx_state_snapshot() -> Dictionary:
