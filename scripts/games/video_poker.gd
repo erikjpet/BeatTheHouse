@@ -1060,9 +1060,12 @@ func _normalized_holdout_challenge(value: Variant) -> Dictionary:
 		return {}
 	var started := maxi(0, int(source.get("started_msec", 0)))
 	var perfect_msec := maxi(started, int(source.get("perfect_msec", started + HOLDOUT_PROMPT_BASE_MSEC)))
-	var perfect_window := maxi(20, int(source.get("perfect_window_msec", HOLDOUT_PERFECT_WINDOW_MSEC)))
-	var good_window := maxi(perfect_window, int(source.get("good_window_msec", HOLDOUT_GOOD_WINDOW_MSEC)))
-	var close_window := maxi(good_window, int(source.get("close_window_msec", HOLDOUT_CLOSE_WINDOW_MSEC)))
+	var windows := GameModule.normalize_skill_timing_windows(
+		int(source.get("perfect_window_msec", HOLDOUT_PERFECT_WINDOW_MSEC)),
+		int(source.get("good_window_msec", HOLDOUT_GOOD_WINDOW_MSEC)),
+		int(source.get("close_window_msec", HOLDOUT_CLOSE_WINDOW_MSEC)),
+		20
+	)
 	var normalized := {
 		"challenge_id": challenge_id,
 		"opening_hand": CardShoeScript.card_array(source.get("opening_hand", [])),
@@ -1071,9 +1074,9 @@ func _normalized_holdout_challenge(value: Variant) -> Dictionary:
 		"target_slot": clampi(int(source.get("target_slot", -1)), -1, HAND_SIZE - 1),
 		"started_msec": started,
 		"perfect_msec": perfect_msec,
-		"perfect_window_msec": perfect_window,
-		"good_window_msec": good_window,
-		"close_window_msec": close_window,
+		"perfect_window_msec": int(windows.get("perfect_window_msec", HOLDOUT_PERFECT_WINDOW_MSEC)),
+		"good_window_msec": int(windows.get("good_window_msec", HOLDOUT_GOOD_WINDOW_MSEC)),
+		"close_window_msec": int(windows.get("close_window_msec", HOLDOUT_CLOSE_WINDOW_MSEC)),
 		"pit_boss_watched_start": bool(source.get("pit_boss_watched_start", false)),
 		"base_heat": maxi(1, int(source.get("base_heat", HOLDOUT_BASE_HEAT))),
 		"item_modifiers": _copy_array(source.get("item_modifiers", [])),
@@ -1178,19 +1181,16 @@ func _grade_holdout_challenge(challenge: Dictionary) -> Dictionary:
 		return graded
 	var margin := int(graded.get("input_msec", 0)) - int(graded.get("perfect_msec", 0))
 	var abs_margin := absi(margin)
-	var perfect_window := maxi(1, int(graded.get("perfect_window_msec", HOLDOUT_PERFECT_WINDOW_MSEC)))
-	var good_window := maxi(perfect_window, int(graded.get("good_window_msec", HOLDOUT_GOOD_WINDOW_MSEC)))
-	var close_window := maxi(good_window, int(graded.get("close_window_msec", HOLDOUT_CLOSE_WINDOW_MSEC)))
-	var grade := "blown"
-	if abs_margin <= perfect_window:
-		grade = "perfect"
-	elif abs_margin <= good_window:
-		grade = "good"
-	elif abs_margin <= close_window:
-		grade = "partial"
-	graded["skill_grade"] = grade
+	var timing := GameModule.skill_timing_grade_from_distance(
+		abs_margin,
+		int(graded.get("perfect_window_msec", HOLDOUT_PERFECT_WINDOW_MSEC)),
+		int(graded.get("good_window_msec", HOLDOUT_GOOD_WINDOW_MSEC)),
+		int(graded.get("close_window_msec", HOLDOUT_CLOSE_WINDOW_MSEC)),
+		20
+	)
+	graded["skill_grade"] = str(timing.get("skill_grade", "blown"))
 	graded["margin_msec"] = margin
-	graded["skill_accuracy"] = clampi(100 - int(round(float(abs_margin) / float(close_window) * 100.0)), 0, 100)
+	graded["skill_accuracy"] = clampi(int(timing.get("skill_accuracy", 0)), 0, 100)
 	return graded
 
 
@@ -1204,7 +1204,7 @@ func _finalize_holdout_challenge(ui: Dictionary, run_state: RunState, state: Dic
 
 
 func _holdout_grade_applies(grade: String) -> bool:
-	return grade == "perfect" or grade == "good" or grade == "partial"
+	return GameModule.skill_grade_applies(grade)
 
 
 func _holdout_grade_heat_modifier(grade: String) -> int:
@@ -1221,9 +1221,7 @@ func _holdout_grade_heat_modifier(grade: String) -> int:
 
 
 func _holdout_skill_outcome(grade: String) -> String:
-	if grade.is_empty():
-		return "holdout_miss"
-	return "holdout_%s" % grade
+	return GameModule.skill_outcome_for_grade("holdout", grade)
 
 
 func _holdout_meter(challenge: Dictionary, ui_state: Dictionary) -> Dictionary:
@@ -1430,6 +1428,8 @@ func _coin_count_for_level(level: int) -> int:
 
 
 func _wager_for(state: Dictionary, ui: Dictionary) -> int:
+	# Video poker wagers are deliberately denomination * coin count * hand count,
+	# not the table-stake clamp used by chip games.
 	var level := _bet_level(ui)
 	var coin_count := _coin_count_for_level(level)
 	var coin_value := _coin_value(state, _denomination_index(ui, state))

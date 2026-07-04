@@ -1549,6 +1549,8 @@ func _update_edge_sort_after_hand(table: Dictionary, hand: Dictionary) -> void:
 	table["edge_sort_challenge"] = challenge
 
 
+# Edge sort stays local by design: it grades observed cue memory and answer sets,
+# not the scalar timing window shared by holdout, controlled roll, and past-post.
 func _finalize_edge_sort_challenge(ui_state: Dictionary, run_state: RunState, table: Dictionary, environment: Dictionary) -> Dictionary:
 	var challenge := _normalized_edge_sort_challenge(ui_state.get("edge_sort_challenge", table.get("edge_sort_challenge", {})))
 	if challenge.is_empty():

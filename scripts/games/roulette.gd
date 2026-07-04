@@ -792,9 +792,14 @@ func _normalized_past_post_challenge(value: Variant) -> Dictionary:
 	result["no_more_bets_msec"] = maxi(0, int(result.get("no_more_bets_msec", 0)))
 	result["window_start_msec"] = maxi(0, int(result.get("window_start_msec", 0)))
 	result["window_end_msec"] = maxi(int(result.get("window_start_msec", 0)), int(result.get("window_end_msec", 0)))
-	result["perfect_window_msec"] = maxi(1, int(result.get("perfect_window_msec", PAST_POST_PERFECT_MSEC)))
-	result["good_window_msec"] = maxi(int(result.get("perfect_window_msec", PAST_POST_PERFECT_MSEC)), int(result.get("good_window_msec", PAST_POST_GOOD_MSEC)))
-	result["window_msec"] = maxi(int(result.get("good_window_msec", PAST_POST_GOOD_MSEC)), int(result.get("window_msec", PAST_POST_WINDOW_MSEC)))
+	var timing_windows := GameModule.normalize_skill_timing_windows(
+		int(result.get("perfect_window_msec", PAST_POST_PERFECT_MSEC)),
+		int(result.get("good_window_msec", PAST_POST_GOOD_MSEC)),
+		int(result.get("window_msec", PAST_POST_WINDOW_MSEC))
+	)
+	result["perfect_window_msec"] = int(timing_windows.get("perfect_window_msec", PAST_POST_PERFECT_MSEC))
+	result["good_window_msec"] = int(timing_windows.get("good_window_msec", PAST_POST_GOOD_MSEC))
+	result["window_msec"] = int(timing_windows.get("close_window_msec", PAST_POST_WINDOW_MSEC))
 	result["chip_value"] = maxi(1, int(result.get("chip_value", 1)))
 	result["base_heat"] = maxi(1, int(result.get("base_heat", PAST_POST_BASE_HEAT)))
 	if typeof(result.get("input_target", {})) == TYPE_DICTIONARY:
@@ -836,27 +841,26 @@ func _grade_past_post_challenge(challenge: Dictionary) -> Dictionary:
 		return graded
 	var window_start := int(graded.get("window_start_msec", 0))
 	var reaction := int(graded.get("input_msec", 0)) - window_start
-	var perfect_window := maxi(1, int(graded.get("perfect_window_msec", PAST_POST_PERFECT_MSEC)))
-	var good_window := maxi(perfect_window, int(graded.get("good_window_msec", PAST_POST_GOOD_MSEC)))
-	var full_window := maxi(good_window, int(graded.get("window_msec", PAST_POST_WINDOW_MSEC)))
 	var grade := "blown"
-	if reaction < 0:
-		grade = "blown"
-	elif reaction <= perfect_window:
-		grade = "perfect"
-	elif reaction <= good_window:
-		grade = "good"
-	elif reaction <= full_window:
-		grade = "partial"
+	var accuracy := 0
+	if reaction >= 0:
+		var timing := GameModule.skill_timing_grade_from_distance(
+			reaction,
+			int(graded.get("perfect_window_msec", PAST_POST_PERFECT_MSEC)),
+			int(graded.get("good_window_msec", PAST_POST_GOOD_MSEC)),
+			int(graded.get("window_msec", PAST_POST_WINDOW_MSEC))
+		)
+		grade = str(timing.get("skill_grade", "blown"))
+		accuracy = clampi(int(timing.get("skill_accuracy", 0)), 0, 100)
 	graded["skill_grade"] = grade
 	graded["reaction_msec"] = reaction
 	graded["skill_margin_msec"] = reaction
-	graded["skill_accuracy"] = clampi(100 - int(round(float(maxi(0, reaction)) / float(full_window) * 100.0)), 0, 100) if grade != "blown" else 0
+	graded["skill_accuracy"] = accuracy
 	return graded
 
 
 func _past_post_grade_applies(grade: String) -> bool:
-	return grade == "perfect" or grade == "good" or grade == "partial"
+	return GameModule.skill_grade_applies(grade)
 
 
 func _past_post_grade_heat_modifier(grade: String) -> int:
@@ -873,7 +877,7 @@ func _past_post_grade_heat_modifier(grade: String) -> int:
 
 
 func _past_post_skill_outcome(grade: String) -> String:
-	return "past_post_%s" % (grade if not grade.is_empty() else "miss")
+	return GameModule.skill_outcome_for_grade("past_post", grade)
 
 
 func _past_post_payout_mult_for_grade(grade: String, target: Dictionary) -> int:

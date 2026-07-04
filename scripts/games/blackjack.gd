@@ -4246,6 +4246,8 @@ func _toggle_side_bet_command(index: int, ui_state: Dictionary, table: Dictionar
 	return _message_command(ui_state, "%s %s. Total risk $%d." % [str(bet.get("label", bet_id)), "removed" if not active.has(bet_id) else "added", cost])
 
 
+# Count stays local by design: it is a multi-icon card-identity state machine,
+# not the scalar timing window shared by holdout, controlled roll, and past-post.
 func _start_count_challenge(ui_state: Dictionary, table: Dictionary, run_state: RunState) -> void:
 	var cards: Array = _visible_count_challenge_cards(ui_state)
 	var icons: Array = []
@@ -4749,6 +4751,8 @@ func _main_wager_cost(stake: int, session: Dictionary) -> int:
 
 
 func _wager_cost_from_session(stake: int, session: Dictionary, table: Dictionary, run_state: RunState) -> int:
+	# Blackjack wager cost is deliberately session-derived because splits,
+	# doubles, insurance, and side bets change risk after the initial stake.
 	var cost: int = _main_wager_cost(stake, session)
 	var active_ids: Array = _string_array(session.get("blackjack_side_bets", []))
 	for bet in _available_side_bets_for_session(table, session):

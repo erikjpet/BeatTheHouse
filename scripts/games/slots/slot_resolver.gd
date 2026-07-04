@@ -475,6 +475,8 @@ func _metric_average_feature_award(source_machine: Dictionary, source_active: Di
 
 
 func _grid_payout_for_family(family, grid: Array, stake: int, stake_cost: int, machine: Dictionary, definition: Dictionary, entry: Dictionary) -> int:
+	# Slot family payout dispatch stays polymorphic by design: buffalo ways,
+	# pinball lines, and catalog fallback attribute wins differently.
 	if family != null and family.has_method("grid_payout_for_entry"):
 		return maxi(0, int(family.grid_payout_for_entry(grid, stake, stake_cost, machine, definition, entry)))
 	if family != null and family.has_method("grid_payout"):

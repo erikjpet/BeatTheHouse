@@ -1239,9 +1239,12 @@ func _normalized_controlled_roll(value: Variant) -> Dictionary:
 		return {}
 	var started := maxi(0, int(source.get("meter_started_msec", 0)))
 	var period := maxi(300, int(source.get("meter_period_msec", CONTROLLED_ROLL_METER_PERIOD_MSEC)))
-	var perfect_window := maxi(20, int(source.get("perfect_window_msec", CONTROLLED_ROLL_PERFECT_WINDOW_MSEC)))
-	var good_window := maxi(perfect_window, int(source.get("good_window_msec", CONTROLLED_ROLL_GOOD_WINDOW_MSEC)))
-	var close_window := maxi(good_window, int(source.get("close_window_msec", CONTROLLED_ROLL_CLOSE_WINDOW_MSEC)))
+	var windows := GameModule.normalize_skill_timing_windows(
+		int(source.get("perfect_window_msec", CONTROLLED_ROLL_PERFECT_WINDOW_MSEC)),
+		int(source.get("good_window_msec", CONTROLLED_ROLL_GOOD_WINDOW_MSEC)),
+		int(source.get("close_window_msec", CONTROLLED_ROLL_CLOSE_WINDOW_MSEC)),
+		20
+	)
 	var normalized := {
 		"challenge_id": challenge_id,
 		"desired_face": clampi(int(source.get("desired_face", 6)), 1, DIE_FACES),
@@ -1250,9 +1253,9 @@ func _normalized_controlled_roll(value: Variant) -> Dictionary:
 		"meter_started_msec": started,
 		"meter_period_msec": period,
 		"target_msec": maxi(started, int(source.get("target_msec", started))),
-		"perfect_window_msec": perfect_window,
-		"good_window_msec": good_window,
-		"close_window_msec": close_window,
+		"perfect_window_msec": int(windows.get("perfect_window_msec", CONTROLLED_ROLL_PERFECT_WINDOW_MSEC)),
+		"good_window_msec": int(windows.get("good_window_msec", CONTROLLED_ROLL_GOOD_WINDOW_MSEC)),
+		"close_window_msec": int(windows.get("close_window_msec", CONTROLLED_ROLL_CLOSE_WINDOW_MSEC)),
 		"base_heat": maxi(1, int(source.get("base_heat", CONTROLLED_ROLL_BASE_HEAT))),
 		"patron_snitch_pressure": maxi(0, int(source.get("patron_snitch_pressure", 0))),
 		"patron_watch_count": maxi(0, int(source.get("patron_watch_count", 0))),
@@ -1367,19 +1370,17 @@ func _grade_controlled_roll(challenge: Dictionary) -> Dictionary:
 		target_phase += period
 	var margin := _circular_meter_margin(input_phase, target_phase, period)
 	var distance := absi(margin)
-	var perfect_window := maxi(1, int(graded.get("perfect_window_msec", CONTROLLED_ROLL_PERFECT_WINDOW_MSEC)))
-	var good_window := maxi(perfect_window, int(graded.get("good_window_msec", CONTROLLED_ROLL_GOOD_WINDOW_MSEC)))
-	var close_window := maxi(good_window, int(graded.get("close_window_msec", CONTROLLED_ROLL_CLOSE_WINDOW_MSEC)))
-	var grade := "blown"
-	if distance <= perfect_window:
-		grade = "perfect"
-	elif distance <= good_window:
-		grade = "good"
-	elif distance <= close_window:
-		grade = "partial"
+	var timing := GameModule.skill_timing_grade_from_distance(
+		distance,
+		int(graded.get("perfect_window_msec", CONTROLLED_ROLL_PERFECT_WINDOW_MSEC)),
+		int(graded.get("good_window_msec", CONTROLLED_ROLL_GOOD_WINDOW_MSEC)),
+		int(graded.get("close_window_msec", CONTROLLED_ROLL_CLOSE_WINDOW_MSEC)),
+		20
+	)
+	var grade := str(timing.get("skill_grade", "blown"))
 	graded["skill_grade"] = grade
 	graded["skill_margin_msec"] = margin
-	graded["skill_accuracy"] = clampi(100 - int(round(float(distance) / float(close_window) * 100.0)), 0, 100)
+	graded["skill_accuracy"] = clampi(int(timing.get("skill_accuracy", 0)), 0, 100)
 	graded["face_result"] = int(graded.get("desired_face", 6)) if grade != "blown" else 0
 	return graded
 
@@ -1404,7 +1405,7 @@ func _finalize_controlled_roll(ui_state: Dictionary, run_state: RunState, state:
 
 
 func _controlled_roll_applies(grade: String) -> bool:
-	return grade == "perfect" or grade == "good" or grade == "partial"
+	return GameModule.skill_grade_applies(grade)
 
 
 func _controlled_roll_grade_heat_modifier(grade: String) -> int:
@@ -1421,7 +1422,7 @@ func _controlled_roll_grade_heat_modifier(grade: String) -> int:
 
 
 func _controlled_roll_skill_outcome(grade: String) -> String:
-	return "controlled_roll_%s" % (grade if not grade.is_empty() else "miss")
+	return GameModule.skill_outcome_for_grade("controlled_roll", grade)
 
 
 func _controlled_roll_meter(challenge: Dictionary, ui_state: Dictionary) -> Dictionary:

@@ -343,6 +343,7 @@ func _foundation_run_system_suite(content_library: ContentLibrary, fixture_libra
 	_foundation_run_check(report, failures, "music_fx_foundation", Callable(self, "_check_music_fx_foundation"), [content_library])
 	_foundation_run_check(report, failures, "music_stem_director_foundation", Callable(self, "_check_music_stem_director_foundation"), [content_library])
 	_foundation_run_check(report, failures, "skill_cheat_contract_foundation", Callable(self, "_check_skill_cheat_contract_foundation"), [content_library])
+	_foundation_run_check(report, failures, "skill_timing_helper_foundation", Callable(self, "_check_skill_timing_helper_foundation"), [content_library])
 	_foundation_run_check(report, failures, "skill_cheat_item_modifier_foundation", Callable(self, "_check_skill_cheat_item_modifier_foundation"), [content_library])
 	_foundation_run_check(report, failures, "m2_system_interaction_scenario", Callable(self, "_check_m2_system_interaction_scenario"), [content_library])
 	_foundation_run_check(report, failures, "demo_boss_objective_foundation", Callable(self, "_check_demo_boss_objective_foundation"), [content_library])
@@ -5352,6 +5353,28 @@ func _check_skill_cheat_contract_foundation(library: ContentLibrary, failures: A
 			if int(clean_status.get("grand_casino_open_cheat_actions", 0)) != 0 or bool(clean_status.get("cheat_evidence", false)) or bool(clean_status.get("watched_cheat_evidence", false)):
 				failures.append("Skill-cheat %s clean play marked Grand Casino cheat evidence." % game_id)
 	print("SKILL_CHEAT_CONTRACT_MATRIX %s" % ", ".join(summaries))
+
+
+func _check_skill_timing_helper_foundation(_library: ContentLibrary, failures: Array) -> void:
+	var clamped_windows := GameModule.normalize_skill_timing_windows(-5, 4, 3, 20)
+	_assert_equal(int(clamped_windows.get("perfect_window_msec", 0)), 20, "Skill timing helper did not clamp the perfect window to the strict minimum.", failures)
+	_assert_equal(int(clamped_windows.get("good_window_msec", 0)), 20, "Skill timing helper did not keep good >= perfect.", failures)
+	_assert_equal(int(clamped_windows.get("close_window_msec", 0)), 20, "Skill timing helper did not keep close >= good.", failures)
+
+	var perfect := GameModule.skill_timing_grade_from_distance(0, 40, 80, 120, 20)
+	_assert_equal(str(perfect.get("skill_grade", "")), "perfect", "Skill timing helper did not grade zero distance as perfect.", failures)
+	_assert_equal(int(perfect.get("skill_accuracy", -1)), 100, "Skill timing helper did not grade zero distance as 100 accuracy.", failures)
+
+	var partial := GameModule.skill_timing_grade_from_distance(90, 40, 80, 120, 20)
+	_assert_equal(str(partial.get("skill_grade", "")), "partial", "Skill timing helper did not grade close-window distance as partial.", failures)
+	_assert_equal(int(partial.get("skill_accuracy", -1)), 25, "Skill timing helper did not preserve the shared distance accuracy formula.", failures)
+
+	var blown := GameModule.skill_timing_grade_from_distance(121, 40, 80, 120, 20)
+	_assert_equal(str(blown.get("skill_grade", "")), "blown", "Skill timing helper did not grade beyond close-window distance as blown.", failures)
+	_assert_equal(int(blown.get("skill_accuracy", -1)), 0, "Skill timing helper did not zero accuracy for blown timing.", failures)
+	if not GameModule.skill_grade_applies("good") or GameModule.skill_grade_applies("blown"):
+		failures.append("Skill timing helper applies predicate did not match cheat grade contract.")
+	_assert_equal(GameModule.skill_outcome_for_grade("holdout", ""), "holdout_miss", "Skill timing helper did not use miss fallback outcome.", failures)
 
 
 func _check_skill_cheat_item_modifier_foundation(library: ContentLibrary, failures: Array) -> void:

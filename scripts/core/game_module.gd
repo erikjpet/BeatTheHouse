@@ -358,6 +358,50 @@ static func surface_animation_status(surface_status: Dictionary, channel_id: Str
 	return status
 
 
+static func normalize_skill_timing_windows(perfect_msec: int, good_msec: int, close_msec: int, min_perfect_msec: int = 1) -> Dictionary:
+	var perfect := maxi(maxi(1, min_perfect_msec), perfect_msec)
+	var good := maxi(perfect, good_msec)
+	var close := maxi(good, close_msec)
+	return {
+		"perfect_window_msec": perfect,
+		"good_window_msec": good,
+		"close_window_msec": close,
+	}
+
+
+static func skill_timing_grade_from_distance(distance_msec: int, perfect_msec: int, good_msec: int, close_msec: int, min_perfect_msec: int = 1) -> Dictionary:
+	var windows := normalize_skill_timing_windows(perfect_msec, good_msec, close_msec, min_perfect_msec)
+	var distance := maxi(0, distance_msec)
+	var perfect := int(windows.get("perfect_window_msec", 1))
+	var good := int(windows.get("good_window_msec", perfect))
+	var close := int(windows.get("close_window_msec", good))
+	var grade := "blown"
+	if distance <= perfect:
+		grade = "perfect"
+	elif distance <= good:
+		grade = "good"
+	elif distance <= close:
+		grade = "partial"
+	var accuracy := 0
+	if grade != "blown":
+		accuracy = clampi(100 - int(round(float(distance) / float(close) * 100.0)), 0, 100)
+	return {
+		"skill_grade": grade,
+		"skill_accuracy": accuracy,
+		"skill_distance_msec": distance,
+		"windows": windows,
+	}
+
+
+static func skill_grade_applies(grade: String) -> bool:
+	return grade == "perfect" or grade == "good" or grade == "partial"
+
+
+static func skill_outcome_for_grade(prefix: String, grade: String, fallback_grade: String = "miss") -> String:
+	var resolved_grade := grade if not grade.is_empty() else fallback_grade
+	return "%s_%s" % [prefix, resolved_grade]
+
+
 # Builds a normalized ActionResult dictionary from module payload data.
 static func build_action_result(payload: Dictionary = {}) -> Dictionary:
 	var source_deltas := _copy_dict(payload.get("deltas", {}))
