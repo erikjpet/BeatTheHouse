@@ -12,6 +12,14 @@ const PINBALL_POWER_CHOICES := 21
 var catalog
 var background_textures: Dictionary = {}
 var symbol_draw_metadata_cache: Dictionary = {}
+var symbol_label_cache: Dictionary = {}
+const BUFFALO_FEATURE_SPIN_SYMBOLS := ["BUFFALO", "EAGLE", "WOLF", "HORSE", "ELK", "SUNSET", "A", "K", "Q", "J", "10"]
+const DEFAULT_BUFFALO_LADDER_TIERS := [
+	{"id": "mini", "eligible": true, "lit": false},
+	{"id": "minor", "eligible": true, "lit": false},
+	{"id": "major", "eligible": false, "lit": false},
+	{"id": "grand", "eligible": false, "lit": false},
+]
 
 
 func _init() -> void:
@@ -53,6 +61,7 @@ func render_signature(surface_state: Dictionary, _definition: Dictionary, time_m
 	var count_up_active: bool = _count_up_active(plan, time_msec, tier)
 	var particle_count: int = _particle_count_for_tier(tier, time_msec, plan)
 	var strip_payload: Dictionary = _result_strip_payload(surface_state, time_msec)
+	var scan_unintentional_gold := include_layout_strings
 	var signature: Dictionary = {
 		"cabinet": str(surface_state.get("slot_cabinet_signature", skin.get("cabinet_identity", ""))),
 		"identity": str(skin.get("cabinet_identity", "")),
@@ -76,7 +85,7 @@ func render_signature(surface_state: Dictionary, _definition: Dictionary, time_m
 		"gold_tease_level": int(plan.get("tease_coin_count", 0)),
 		"gold_tease_reels": _read_array(plan.get("tease_reels", [])),
 		"gold_tease_window_active": bool(surface_state.get("slot_nudge_tease_window_active", false)),
-		"buffalo_unintentional_gold_visible": _buffalo_unintentional_gold_visible(surface_state, time_msec, reel_motion),
+		"buffalo_unintentional_gold_visible": _buffalo_unintentional_gold_visible(surface_state, time_msec, reel_motion) if scan_unintentional_gold else false,
 		"win_cells_highlighted": win_cells.size(),
 		"win_line_drawn": win_cells.size() >= 2 and win_kind == "line",
 		"win_reason_text": str(surface_state.get("slot_win_reason", "")),
@@ -100,17 +109,24 @@ func render_signature(surface_state: Dictionary, _definition: Dictionary, time_m
 		"result_strip_suppressed": _pinball_takeover_active(surface_state),
 		"default_controls_suppressed": _pinball_takeover_active(surface_state),
 	}
+	if not include_layout_strings:
+		signature["result_strip_payload"] = strip_payload
 	if include_layout_strings:
 		signature["reel_rect"] = JSON.stringify(skin.get("reel_window", {}))
 		signature["playfield_rect"] = JSON.stringify(skin.get("playfield_rect", {}))
 		signature["pinball_takeover_rect"] = JSON.stringify(_rect_payload(_pinball_takeover_rect()))
+	var buffalo_board_payload: Dictionary = {}
+	if str(active_bonus.get("family", surface_state.get("slot_type_id", ""))) == "buffalo" and not active_bonus.is_empty() and bool(surface_state.get("slot_active_bonus_active", false)):
+		buffalo_board_payload = _buffalo_main_board_payload(surface_state, time_msec)
+		if not include_layout_strings:
+			signature["buffalo_main_board_payload"] = buffalo_board_payload
 	var pinball_manifest: Dictionary = _pinball_feature_manifest(surface_state, time_msec, mode)
 	for key_value in pinball_manifest.keys():
 		signature[key_value] = pinball_manifest[key_value]
-	var buffalo_manifest: Dictionary = _buffalo_feature_manifest(surface_state, time_msec, mode)
+	var buffalo_manifest: Dictionary = _buffalo_feature_manifest(surface_state, time_msec, mode, buffalo_board_payload)
 	for key_value in buffalo_manifest.keys():
 		signature[key_value] = buffalo_manifest[key_value]
-	var buffalo_board_manifest: Dictionary = _buffalo_main_board_manifest(surface_state, time_msec)
+	var buffalo_board_manifest: Dictionary = _buffalo_main_board_manifest(surface_state, buffalo_board_payload)
 	for key_value in buffalo_board_manifest.keys():
 		signature[key_value] = buffalo_board_manifest[key_value]
 	var nudge_chain_msec := int(surface_state.get("slot_nudge_chain_elapsed_msec", time_msec))
@@ -163,7 +179,7 @@ func draw(surface, surface_state: Dictionary, definition: Dictionary) -> bool:
 		_draw_nudge_chain_overlay(surface, surface_state, skin, accent, light, trim, nudge_chain_elapsed_msec)
 		_draw_feature_area(surface, surface_state, definition, skin, accent, light, trim, glass, int(signature.get("time_bucket", 0)), feature_elapsed_msec, elapsed_msec)
 	_draw_status_panel(surface, surface_state, skin, accent, light, trim)
-	_draw_result_strip(surface, surface_state, skin, accent, light, elapsed_msec)
+	_draw_result_strip(surface, surface_state, skin, accent, light, elapsed_msec, _read_dict(signature.get("result_strip_payload", {})))
 	_draw_celebration_overlay(surface, surface_state, skin, signature, accent, light, trim)
 	_draw_controls(surface, surface_state, skin, accent, light, trim)
 	_draw_back_control(surface, accent, light)
@@ -383,7 +399,8 @@ func _draw_topper(surface, state: Dictionary, skin: Dictionary, accent: Color, l
 				var angle := float(i) * TAU / 10.0 + float(bucket) * 0.08
 				surface.draw_line(center, center + Vector2(cos(angle), sin(angle)) * 28.0, light, 2)
 			surface.draw_circle(center, 32, Color(trim.r, trim.g, trim.b, 0.20), false, 2)
-			_draw_buffalo_ladder(surface, Rect2(rect.position + Vector2(14, 8), Vector2(300, rect.size.y - 16)), _copy_dict(_copy_dict(state.get("slot_active_bonus", {})).get("jackpot_ladder", {})), accent, light, trim, bucket)
+			var active_bonus: Dictionary = _read_dict(state.get("slot_active_bonus", {}))
+			_draw_buffalo_ladder(surface, Rect2(rect.position + Vector2(14, 8), Vector2(300, rect.size.y - 16)), _read_dict(active_bonus.get("jackpot_ladder", {})), accent, light, trim, bucket)
 		elif style == "day_dusk_backbox":
 			var phase_alpha := _buffalo_sunset_shift(state, bucket)
 			surface.draw_rect(rect.grow(-6), Color("#ef6a24").lerp(Color("#1f153d"), phase_alpha))
@@ -432,7 +449,10 @@ func _draw_reels(surface, state: Dictionary, definition: Dictionary, skin: Dicti
 	var motions: Array = _read_array(signature.get("reel_motion", []))
 	var win_cells: Array = _read_array(state.get("slot_win_cells", []))
 	var win_lookup: Dictionary = _win_cell_lookup(win_cells)
-	var show_wins := win_cells.size() > 0 and _all_reels_landed(motions) and _result_reveal_ready(state, time_msec)
+	var reveal_ready := bool(signature.get("result_reveal_ready", false))
+	if not signature.has("result_reveal_ready"):
+		reveal_ready = _result_reveal_ready(state, time_msec)
+	var show_wins := win_cells.size() > 0 and _all_reels_landed(motions) and reveal_ready
 	var win_centers: Dictionary = {}
 	for reel_index in range(reel_count):
 		var motion: Dictionary = _read_dict(motions[reel_index]) if reel_index < motions.size() else {"phase": "settled", "scroll_cells": 0.0, "blur": 0.0}
@@ -487,7 +507,7 @@ func _draw_reels(surface, state: Dictionary, definition: Dictionary, skin: Dicti
 		for point_index in range(maxi(0, points.size() - 1)):
 			surface.draw_line(points[point_index], points[point_index + 1], Color(light.r, light.g, light.b, 0.92), 4)
 			surface.draw_line(points[point_index], points[point_index + 1], Color(accent.r, accent.g, accent.b, 0.48), 8)
-	_draw_buffalo_main_board_overlay(surface, state, definition, rect, reel_count, row_count, gap, cell_w, cell_h, time_msec, accent, light, glass)
+	_draw_buffalo_main_board_overlay(surface, state, definition, rect, reel_count, row_count, gap, cell_w, cell_h, time_msec, accent, light, glass, _read_dict(signature.get("buffalo_main_board_payload", {})))
 	if bool(signature.get("tease_overlay_visible", false)):
 		surface.draw_rect(rect.grow(15), Color(accent.r, accent.g, accent.b, 0.44), false, 4)
 
@@ -605,13 +625,12 @@ func _nudge_chain_coin_phase(chain: Dictionary, coin: Dictionary, time_msec: int
 	}
 
 
-func _buffalo_main_board_manifest(surface_state: Dictionary, time_msec: int) -> Dictionary:
+func _buffalo_main_board_manifest(surface_state: Dictionary, payload: Dictionary) -> Dictionary:
 	var active: Dictionary = _read_dict(surface_state.get("slot_active_bonus", {}))
 	if str(active.get("family", surface_state.get("slot_type_id", ""))) != "buffalo":
 		return {}
 	if active.is_empty() or not bool(surface_state.get("slot_active_bonus_active", false)):
 		return {}
-	var payload: Dictionary = _buffalo_main_board_payload(surface_state, time_msec)
 	var scene: Dictionary = _read_dict(surface_state.get("slot_feature_scene", {}))
 	var music: Dictionary = _read_dict(scene.get("feature_music", {}))
 	return {
@@ -629,13 +648,14 @@ func _buffalo_main_board_manifest(surface_state: Dictionary, time_msec: int) -> 
 	}
 
 
-func _draw_buffalo_main_board_overlay(surface, state: Dictionary, definition: Dictionary, reel_rect: Rect2, reel_count: int, row_count: int, gap: float, cell_w: float, cell_h: float, time_msec: int, accent: Color, light: Color, glass: Color) -> void:
+func _draw_buffalo_main_board_overlay(surface, state: Dictionary, definition: Dictionary, reel_rect: Rect2, reel_count: int, row_count: int, gap: float, cell_w: float, cell_h: float, time_msec: int, accent: Color, light: Color, glass: Color, payload: Dictionary = {}) -> void:
 	var active: Dictionary = _read_dict(state.get("slot_active_bonus", {}))
 	if str(active.get("family", state.get("slot_type_id", ""))) != "buffalo":
 		return
 	if active.is_empty() or not bool(state.get("slot_active_bonus_active", false)):
 		return
-	var payload: Dictionary = _buffalo_main_board_payload(state, time_msec)
+	if payload.is_empty():
+		payload = _buffalo_main_board_payload(state, time_msec)
 	var coins: Array = _read_array(payload.get("coins", []))
 	var coin_lookup: Dictionary = {}
 	for coin_value in coins:
@@ -752,14 +772,14 @@ func _buffalo_main_board_payload(state: Dictionary, time_msec: int) -> Dictionar
 
 
 func _buffalo_feature_spin_symbol(reel_index: int, row_index: int, time_msec: int) -> String:
-	var cycle: Array = ["BUFFALO", "EAGLE", "WOLF", "HORSE", "ELK", "SUNSET", "A", "K", "Q", "J", "10"]
+	var cycle: Array = BUFFALO_FEATURE_SPIN_SYMBOLS
 	var strip_offset := reel_index * 3 + row_index
 	var step := posmod((time_msec / 72) + strip_offset, cycle.size())
 	return str(cycle[step])
 
 
 func _buffalo_static_open_symbol(reel_index: int, row_index: int) -> String:
-	var cycle: Array = ["BUFFALO", "EAGLE", "WOLF", "HORSE", "ELK", "SUNSET", "A", "K", "Q", "J", "10"]
+	var cycle: Array = BUFFALO_FEATURE_SPIN_SYMBOLS
 	return str(cycle[posmod(reel_index * 3 + row_index, cycle.size())])
 
 
@@ -1942,7 +1962,7 @@ func _draw_buffalo_feature(surface, rect: Rect2, state: Dictionary, definition: 
 		_draw_buffalo_free_games(surface, rect.grow(-8), state, definition, active, accent, light, trim, bucket, feature_msec, spin_msec)
 
 
-func _buffalo_feature_manifest(surface_state: Dictionary, time_msec: int, mode: String) -> Dictionary:
+func _buffalo_feature_manifest(surface_state: Dictionary, time_msec: int, mode: String, board_payload: Dictionary = {}) -> Dictionary:
 	var active: Dictionary = _read_dict(surface_state.get("slot_active_bonus", {}))
 	var family := str(active.get("family", surface_state.get("slot_type_id", "")))
 	if family != "buffalo":
@@ -1954,7 +1974,8 @@ func _buffalo_feature_manifest(surface_state: Dictionary, time_msec: int, mode: 
 	var locked_cells := int(meter.get("locked", locks.size()))
 	var fill_ratio := clampf(float(meter.get("ratio", 0.0)), 0.0, 1.0)
 	var ladder: Dictionary = _read_dict(active.get("jackpot_ladder", {}))
-	var board_payload: Dictionary = _buffalo_main_board_payload(surface_state, time_msec)
+	if board_payload.is_empty():
+		board_payload = _buffalo_main_board_payload(surface_state, time_msec)
 	return {
 		"ladder_visible": _buffalo_ladder_visible(active),
 		"locked_cells": locked_cells,
@@ -2007,7 +2028,7 @@ func _draw_buffalo_free_games(surface, rect: Rect2, state: Dictionary, definitio
 	surface.surface_label("$%d + %s" % [int(active.get("spin_win_total", active.get("feature_total", 0))), coin_header], header_rect.position + Vector2(header_rect.size.x - 210, 19), 12, trim)
 	var grid_rect := Rect2(rect.position + Vector2(8, 42), Vector2(rect.size.x - 16, rect.size.y - 92))
 	_draw_buffalo_free_games_reel_grid(surface, grid_rect, state, definition, active, accent, light, trim, spin_msec, feature_msec)
-	var meter: Dictionary = _copy_dict(active.get("collection_meter", {}))
+	var meter: Dictionary = _read_dict(active.get("collection_meter", {}))
 	var cycle := maxi(0, int(meter.get("cycle", active.get("coins_since_retrigger", 0))))
 	var threshold := maxi(1, int(meter.get("threshold", 3)))
 	var meter_rect := Rect2(rect.position + Vector2(10, rect.size.y - 34), Vector2(rect.size.x - 20, 14))
@@ -2078,7 +2099,7 @@ func _draw_buffalo_free_games_reel_grid(surface, rect: Rect2, state: Dictionary,
 		if reel < 0 or reel >= reel_count or row < 0 or row >= row_count:
 			continue
 		var cell_rect := _buffalo_free_game_cell_rect(rect, reel, row, reel_count, row_count, gap, cell_w, cell_h)
-		var reveal: Dictionary = _copy_dict(reveal_lookup.get(key, {}))
+		var reveal: Dictionary = _read_dict(reveal_lookup.get(key, {}))
 		var revealed := reveal.is_empty() or bool(reveal.get("revealed", false))
 		if not reveal.is_empty():
 			coin = reveal
@@ -2149,23 +2170,23 @@ func _draw_buffalo_hold_and_spin(surface, rect: Rect2, state: Dictionary, active
 	var grid_rect := Rect2(rect.position + Vector2(8, 34), Vector2(rect.size.x - 16, rect.size.y - 76))
 	var cell_w := grid_rect.size.x / float(cols)
 	var cell_h := grid_rect.size.y / float(rows)
-	var locks: Array = _copy_array(active.get("locks", []))
+	var locks: Array = _read_array(active.get("locks", []))
 	var reels_spinning := _slot_reels_spinning(state, spin_msec)
 	var recent: Dictionary = {}
-	for lock_value in _copy_array(active.get("last_lock_events", [])):
-		var recent_lock: Dictionary = _copy_dict(lock_value)
+	for lock_value in _read_array(active.get("last_lock_events", [])):
+		var recent_lock: Dictionary = _read_dict(lock_value)
 		var recent_cell: Dictionary = _buffalo_lock_cell(recent_lock, rows)
 		recent[int(recent_cell.get("reel", -1)) * rows + int(recent_cell.get("row", -1))] = true
 	var locked: Dictionary = {}
 	for lock_value in locks:
-		var lock: Dictionary = _copy_dict(lock_value)
+		var lock: Dictionary = _read_dict(lock_value)
 		var lock_cell: Dictionary = _buffalo_lock_cell(lock, rows)
 		locked[int(lock_cell.get("reel", -1)) * rows + int(lock_cell.get("row", -1))] = lock
 	for cell in range(max_cells):
 		var x := cell / rows
 		var y := cell % rows
 		var cell_rect := Rect2(grid_rect.position + Vector2(float(x) * cell_w + 2.0, float(y) * cell_h + 2.0), Vector2(cell_w - 4.0, cell_h - 4.0))
-		var lock: Dictionary = _copy_dict(locked.get(cell, {}))
+		var lock: Dictionary = _read_dict(locked.get(cell, {}))
 		var has_lock := locked.has(cell) and _buffalo_lock_revealed(lock, feature_msec)
 		var slam := has_lock and (recent.has(cell) or _buffalo_lock_just_revealed(lock, feature_msec))
 		if not has_lock:
@@ -2177,7 +2198,7 @@ func _draw_buffalo_hold_and_spin(surface, rect: Rect2, state: Dictionary, active
 			continue
 		_draw_buffalo_coin_cell(surface, cell_rect, lock, true, slam, accent, light, trim)
 	_draw_buffalo_meter(surface, Rect2(rect.position + Vector2(10, rect.size.y - 28), Vector2(rect.size.x - 20, 13)), clampf(float(locks.size()) / float(max_cells), 0.0, 1.0), trim, light, "FILL %d/%d" % [locks.size(), max_cells])
-	_draw_buffalo_ladder(surface, Rect2(rect.position + Vector2(8, 8), Vector2(rect.size.x - 16, 20)), _copy_dict(active.get("jackpot_ladder", {})), accent, light, trim, bucket)
+	_draw_buffalo_ladder(surface, Rect2(rect.position + Vector2(8, 8), Vector2(rect.size.x - 16, 20)), _read_dict(active.get("jackpot_ladder", {})), accent, light, trim, bucket)
 	surface.surface_label("RESPINS %d" % int(active.get("respins_remaining", active.get("remaining_steps", 0))), rect.position + Vector2(10, rect.size.y - 42), 10, light)
 
 
@@ -2194,14 +2215,14 @@ func _draw_buffalo_wheel_trophy(surface, rect: Rect2, active: Dictionary, accent
 	surface.draw_circle(center, radius * 0.18, trim)
 	var pointer := center + Vector2(0, -radius - 8)
 	surface.draw_polygon([pointer, pointer + Vector2(-8, -16), pointer + Vector2(8, -16)], [Color("#f8fafc")])
-	var trophies: Array = _copy_array(active.get("trophy_choices", active.get("choices", [])))
-	var reveals: Array = _copy_array(active.get("trophy_reveals", []))
+	var trophies: Array = _read_array(active.get("trophy_choices", active.get("choices", [])))
+	var reveals: Array = _read_array(active.get("trophy_reveals", []))
 	for index in range(mini(3, trophies.size())):
-		var trophy: Dictionary = _copy_dict(trophies[index])
+		var trophy: Dictionary = _read_dict(trophies[index])
 		var card_rect := Rect2(rect.position + Vector2(8 + index * (rect.size.x - 16) / 3.0, rect.size.y - 58), Vector2((rect.size.x - 22) / 3.0, 44))
 		var revealed := false
 		for reveal_value in reveals:
-			var reveal: Dictionary = _copy_dict(reveal_value)
+			var reveal: Dictionary = _read_dict(reveal_value)
 			if int(reveal.get("index", -1)) == index:
 				trophy = reveal
 				revealed = true
@@ -2211,7 +2232,7 @@ func _draw_buffalo_wheel_trophy(surface, rect: Rect2, active: Dictionary, accent
 		if revealed:
 			label = str(trophy.get("label", trophy.get("route", ""))).to_upper().left(9)
 		surface.surface_label_centered(label, card_rect.grow(-3), 9, Color("#f8fafc"))
-	_draw_buffalo_ladder(surface, Rect2(rect.position + Vector2(8, 8), Vector2(rect.size.x - 16, 22)), _copy_dict(active.get("jackpot_ladder", {})), accent, light, trim, bucket)
+	_draw_buffalo_ladder(surface, Rect2(rect.position + Vector2(8, 8), Vector2(rect.size.x - 16, 22)), _read_dict(active.get("jackpot_ladder", {})), accent, light, trim, bucket)
 
 
 func _draw_buffalo_meter(surface, rect: Rect2, ratio: float, color: Color, light: Color, label: String) -> void:
@@ -2223,17 +2244,12 @@ func _draw_buffalo_meter(surface, rect: Rect2, ratio: float, color: Color, light
 
 
 func _draw_buffalo_ladder(surface, rect: Rect2, ladder: Dictionary, accent: Color, light: Color, trim: Color, bucket: int) -> void:
-	var tiers: Array = _copy_array(ladder.get("tiers", []))
+	var tiers: Array = _read_array(ladder.get("tiers", []))
 	if tiers.is_empty():
-		tiers = [
-			{"id": "mini", "eligible": true, "lit": false},
-			{"id": "minor", "eligible": true, "lit": false},
-			{"id": "major", "eligible": false, "lit": false},
-			{"id": "grand", "eligible": false, "lit": false},
-		]
+		tiers = DEFAULT_BUFFALO_LADDER_TIERS
 	var cell_w := rect.size.x / float(maxi(1, tiers.size()))
 	for index in range(tiers.size()):
-		var tier: Dictionary = _copy_dict(tiers[index])
+		var tier: Dictionary = _read_dict(tiers[index])
 		var tier_rect := Rect2(rect.position + Vector2(float(index) * cell_w + 1.0, 1.0), Vector2(cell_w - 2.0, rect.size.y - 2.0))
 		var lit := bool(tier.get("lit", false))
 		var eligible := bool(tier.get("eligible", false))
@@ -2255,10 +2271,10 @@ func _buffalo_stampede_phase(time_msec: int, active: Dictionary) -> String:
 
 
 func _buffalo_fill_meter(active: Dictionary) -> Dictionary:
-	var meter: Dictionary = _copy_dict(active.get("fill_meter", {}))
+	var meter: Dictionary = _read_dict(active.get("fill_meter", {}))
 	if not meter.is_empty():
 		return meter
-	var locks: Array = _copy_array(active.get("locks", []))
+	var locks: Array = _read_array(active.get("locks", []))
 	var max_cells := maxi(1, int(active.get("max_cells", maxi(1, locks.size()))))
 	return {
 		"locked": locks.size(),
@@ -2270,12 +2286,12 @@ func _buffalo_fill_meter(active: Dictionary) -> Dictionary:
 func _buffalo_ladder_visible(active: Dictionary) -> bool:
 	if str(active.get("mode", "")) == "hold_and_spin" or str(active.get("mode", "")) == "wheel":
 		return true
-	var ladder: Dictionary = _copy_dict(active.get("jackpot_ladder", {}))
+	var ladder: Dictionary = _read_dict(active.get("jackpot_ladder", {}))
 	return bool(ladder.get("visible", false))
 
 
 func _buffalo_collection_ratio(active: Dictionary) -> float:
-	var meter: Dictionary = _copy_dict(active.get("collection_meter", {}))
+	var meter: Dictionary = _read_dict(active.get("collection_meter", {}))
 	var value := maxi(0, int(meter.get("cycle", meter.get("value", active.get("coins_since_retrigger", 0)))))
 	var threshold := maxi(1, int(meter.get("threshold", 3)))
 	return clampf(float(value) / float(threshold), 0.0, 1.0)
@@ -2328,7 +2344,7 @@ func _draw_status_panel(surface, state: Dictionary, skin: Dictionary, accent: Co
 		if bool(state.get("slot_nudge_chain_active", false)):
 			hint = "%d/%d BANK $%d" % [
 				int(state.get("slot_nudge_chain_collected_count", 0)),
-				_copy_array(state.get("slot_nudge_chain_coins", [])).size(),
+				_array_read_size(state.get("slot_nudge_chain_coins", [])),
 				int(state.get("slot_nudge_chain_banked_payout", 0)),
 			]
 		if not hint.is_empty():
@@ -2350,11 +2366,12 @@ func _draw_panel(surface, rect: Rect2, title: String, color: Color) -> void:
 	surface.surface_label(title, rect.position + Vector2(12, 22), 13, color)
 
 
-func _draw_result_strip(surface, state: Dictionary, skin: Dictionary, accent: Color, light: Color, time_msec: int) -> void:
+func _draw_result_strip(surface, state: Dictionary, skin: Dictionary, accent: Color, light: Color, time_msec: int, payload: Dictionary = {}) -> void:
 	var rect := _rect_from_dict(skin.get("result_strip", {}))
 	surface.draw_rect(rect, Color(0.0, 0.0, 0.0, 0.55))
 	surface.draw_rect(rect, Color(light.r, light.g, light.b, 0.28), false, 1)
-	var payload := _result_strip_payload(state, time_msec)
+	if payload.is_empty():
+		payload = _result_strip_payload(state, time_msec)
 	var message := str(payload.get("message", "Pick a bet and spin."))
 	var net := int(payload.get("net", 0))
 	surface.surface_label(message.left(74), rect.position + Vector2(14, 28), 15, Color("#f8fafc"))
@@ -2531,17 +2548,21 @@ func _draw_back_control(surface, accent: Color, light: Color) -> void:
 
 
 func _symbol_label(symbol: String) -> String:
+	if symbol_label_cache.has(symbol):
+		return str(symbol_label_cache.get(symbol, symbol))
+	var label := symbol
 	if symbol == "GOLD_TOKEN":
-		return "G"
-	if symbol == "DOUBLE_7":
-		return "D7"
-	if symbol == "SUNSET_2X":
-		return "2X"
-	if symbol == "SUNSET_3X":
-		return "3X"
-	if symbol.length() > 4:
-		return symbol.left(2)
-	return symbol
+		label = "G"
+	elif symbol == "DOUBLE_7":
+		label = "D7"
+	elif symbol == "SUNSET_2X":
+		label = "2X"
+	elif symbol == "SUNSET_3X":
+		label = "3X"
+	elif symbol.length() > 4:
+		label = symbol.left(2)
+	symbol_label_cache[symbol] = label
+	return label
 
 
 func _rect_from_dict(value: Variant) -> Rect2:
