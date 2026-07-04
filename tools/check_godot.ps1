@@ -189,6 +189,30 @@ $script:ReportRoot = [System.IO.Path]::GetFullPath($ReportDir)
 New-Item -ItemType Directory -Force -Path $script:ReportRoot | Out-Null
 
 $script:StageResults = New-Object System.Collections.Generic.List[object]
+$FoundationSuiteBudgetMultiplier = 1.25
+$FoundationSuiteStageBaselinesSec = @{
+    "foundation_all" = 151.156
+    "foundation_systems" = 21.352
+    "ui_scene_compile" = 51.998
+    "foundation_contracts" = 150.727
+    "foundation_games" = 150.015
+    "foundation_slot" = 21.710
+    "foundation_slot_acceptance" = 701.889
+    "foundation_blackjack" = 6.004
+    "foundation_roulette" = 6.126
+    "foundation_baccarat" = 5.712
+    "foundation_video_poker" = 65.390
+    "foundation_bar_dice" = 38.103
+    "foundation_pull_tabs" = 6.386
+}
+
+function Get-FoundationSuiteStageBaselineSec {
+    param([string]$Name)
+    if ($FoundationSuiteStageBaselinesSec.ContainsKey($Name)) {
+        return [double]$FoundationSuiteStageBaselinesSec[$Name]
+    }
+    return 0.0
+}
 
 function Invoke-ProcessStage {
     param(
@@ -250,6 +274,23 @@ function Invoke-ProcessStage {
         $exitCode = 1
     }
     $sw.Stop()
+    $durationSec = [Math]::Round($sw.Elapsed.TotalSeconds, 3)
+    $suiteTimeBaselineSec = Get-FoundationSuiteStageBaselineSec $Name
+    $suiteTimeBudgetSec = if ($suiteTimeBaselineSec -gt 0.0) { [Math]::Round($suiteTimeBaselineSec * $FoundationSuiteBudgetMultiplier, 3) } else { 0.0 }
+    $suiteTimeBudgetExceeded = $false
+    if ($suiteTimeBudgetSec -gt 0.0 -and $sw.Elapsed.TotalSeconds -gt $suiteTimeBudgetSec) {
+        $suiteTimeBudgetExceeded = $true
+        $budgetError = ("Stage {0} took {1:N3}s, exceeding the S0.1 suite-time budget {2:N3}s (baseline {3:N3}s * {4:N2})." -f $Name, $sw.Elapsed.TotalSeconds, $suiteTimeBudgetSec, $suiteTimeBaselineSec, $FoundationSuiteBudgetMultiplier)
+        if ([string]::IsNullOrWhiteSpace($errorText)) {
+            $errorText = $budgetError
+        }
+        else {
+            $errorText = "$errorText $budgetError"
+        }
+        if ($exitCode -eq 0) {
+            $exitCode = 126
+        }
+    }
     $result = [ordered]@{
         name = $Name
         command = $FilePath
@@ -257,6 +298,10 @@ function Invoke-ProcessStage {
         exit_code = $exitCode
         timed_out = $timedOut
         duration_msec = [int]$sw.ElapsedMilliseconds
+        duration_sec = $durationSec
+        suite_time_baseline_sec = $suiteTimeBaselineSec
+        suite_time_budget_sec = $suiteTimeBudgetSec
+        suite_time_budget_exceeded = $suiteTimeBudgetExceeded
         stdout = $stdout
         stderr = $stderr
         error = $errorText
@@ -282,6 +327,10 @@ function Write-TestSummary {
             exit_code = $stage.exit_code
             timed_out = $stage.timed_out
             duration_msec = $stage.duration_msec
+            duration_sec = $stage.duration_sec
+            suite_time_baseline_sec = $stage.suite_time_baseline_sec
+            suite_time_budget_sec = $stage.suite_time_budget_sec
+            suite_time_budget_exceeded = $stage.suite_time_budget_exceeded
             stdout = $stage.stdout
             stderr = $stage.stderr
             error = $stage.error
@@ -293,6 +342,8 @@ function Write-TestSummary {
         passed = ($failed.Count -eq 0)
         failure_count = $failed.Count
         report_dir = $script:ReportRoot
+        suite_time_budget_multiplier = $FoundationSuiteBudgetMultiplier
+        suite_time_stage_baselines_sec = $FoundationSuiteStageBaselinesSec
         stages = $stages
     }
     $summaryPath = Join-Path $script:ReportRoot "summary.json"

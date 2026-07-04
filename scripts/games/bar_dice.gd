@@ -1451,10 +1451,12 @@ func _controlled_roll_meter(challenge: Dictionary, ui_state: Dictionary) -> Dict
 
 
 func _patron_watch_info(state: Dictionary) -> Dictionary:
-	var patrons := _normalize_patrons(state.get("patrons", []))
 	var pressure := 0
 	var watch_count := 0
+	var patrons: Array = state.get("patrons", []) if typeof(state.get("patrons", [])) == TYPE_ARRAY else []
 	for patron_value in patrons:
+		if typeof(patron_value) != TYPE_DICTIONARY:
+			continue
 		var patron: Dictionary = patron_value
 		if bool(patron.get("watching", true)):
 			watch_count += 1
@@ -1691,7 +1693,16 @@ func _apply_patron_rapport_after_round(state: Dictionary, ui_state: Dictionary, 
 
 
 func _participant_count(state: Dictionary) -> int:
-	return 1 + _normalize_patrons(state.get("patrons", [])).size() + 1
+	return 1 + _patron_count(state) + 1
+
+
+func _patron_count(state: Dictionary) -> int:
+	var patrons: Array = state.get("patrons", []) if typeof(state.get("patrons", [])) == TYPE_ARRAY else []
+	var count := 0
+	for patron_value in patrons:
+		if typeof(patron_value) == TYPE_DICTIONARY:
+			count += 1
+	return count
 
 
 func _working_pot(stake: int, state: Dictionary) -> int:

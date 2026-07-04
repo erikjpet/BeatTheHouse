@@ -1214,23 +1214,33 @@ func _build_spin_trajectory(launch: Dictionary, drop: Dictionary, deflect: Dicti
 	var result: Array = []
 	var drop_time := maxf(0.1, float(drop.get("time", 8.0)))
 	var settle_time := drop_time + 1.2 + float(capture.get("settle_time", 0.8))
+	var ball_angle0 := float(launch.get("ball_angle0", 0.0))
+	var rotor_angle0 := float(launch.get("rotor_angle0", 0.0))
+	var ball_omega0 := float(launch.get("ball_omega0", 20.0))
+	var rotor_omega0 := float(launch.get("rotor_omega0", -2.6))
+	var ball_decel := float(launch.get("ball_decel", 1.0))
+	var rotor_decel := float(launch.get("rotor_decel", 0.018))
+	var rotor_sign := -1.0 if rotor_omega0 < 0.0 else 1.0
+	var drop_ball_angle := float(drop.get("ball_angle", 0.0))
+	var drop_rotor_angle := float(drop.get("rotor_angle", 0.0))
+	var final_ball_angle := float(capture.get("final_ball_angle", drop_ball_angle))
+	var final_rotor_angle := float(capture.get("final_rotor_angle", drop_rotor_angle))
+	var scatter_angle := float(deflect.get("scatter_angle", 0.0))
 	for i in range(TRAJECTORY_KEYFRAMES):
 		var p := float(i) / float(maxi(1, TRAJECTORY_KEYFRAMES - 1))
 		var t := p * settle_time
-		var state := _state_at_time(launch, profile, minf(t, drop_time))
+		var sim_t := minf(t, drop_time)
 		var phase := "rim"
 		var radius := WHEEL_RADIUS - 8.0
 		var bounce := 0.0
-		var ball_angle := float(state.get("ball_angle", 0.0))
-		var wheel_angle := float(state.get("rotor_angle", 0.0))
+		var ball_angle := fposmod(ball_angle0 + ball_omega0 * sim_t - 0.5 * ball_decel * sim_t * sim_t, TAU)
+		var wheel_angle := fposmod(rotor_angle0 + rotor_omega0 * sim_t - 0.5 * rotor_sign * rotor_decel * sim_t * sim_t, TAU)
 		if t > drop_time:
 			var local := clampf((t - drop_time) / maxf(0.1, settle_time - drop_time), 0.0, 1.0)
 			phase = "capture" if local > 0.76 else "scatter" if local > 0.38 else "deflect"
 			radius = lerpf(WHEEL_RADIUS - 8.0, WHEEL_RADIUS * 0.58, local)
-			var final_angle := float(capture.get("final_ball_angle", ball_angle))
-			var scatter := float(deflect.get("scatter_angle", 0.0))
-			ball_angle = fposmod(lerp_angle(float(drop.get("ball_angle", ball_angle)) + scatter, final_angle, local), TAU)
-			wheel_angle = fposmod(lerp_angle(float(drop.get("rotor_angle", wheel_angle)), float(capture.get("final_rotor_angle", wheel_angle)), local), TAU)
+			ball_angle = fposmod(lerp_angle(drop_ball_angle + scatter_angle, final_ball_angle, local), TAU)
+			wheel_angle = fposmod(lerp_angle(drop_rotor_angle, final_rotor_angle, local), TAU)
 			bounce = sin(local * PI * 9.0) * (1.0 - local) * 8.0
 		result.append({
 			"t": p,

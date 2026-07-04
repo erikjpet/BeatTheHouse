@@ -15,6 +15,7 @@ const MAX_SEVERE_IDLE_AVG_MS := 45.0
 const MAX_SEVERE_FOCUS_AVG_MS := 45.0
 const FOCUS_PROBE_FRAMES := 18
 const MAX_FOCUS_OBJECTS_PER_SEED := 4
+const RESOLVE_SAMPLE_COUNT := 48
 const REQUIRED_GAME_IDS := [
 	"pull_tabs",
 	"slot",
@@ -24,13 +25,33 @@ const REQUIRED_GAME_IDS := [
 	"roulette",
 	"video_poker",
 ]
+const RESOLVE_PROBE_CONFIGS := {
+	"pull_tabs": {"action_id": "buy_tab", "stake": 1},
+	"slot": {"action_id": "spin", "stake": 10},
+	"bar_dice": {"action_id": "roll", "stake": 10},
+	"blackjack": {"action_id": "play_basic", "stake": 10},
+	"baccarat": {"action_id": "deal_baccarat", "stake": 20},
+	"roulette": {"action_id": "spin_roulette", "stake": 10},
+	"video_poker": {"action_id": "draw", "stake": 5},
+}
+const RESOLVE_BUDGETS := {
+	"pull_tabs": {"avg_ms": 4.0, "p95_ms": 7.0, "max_ms": 12.0},
+	"slot": {"avg_ms": 8.0, "p95_ms": 12.0, "max_ms": 18.0},
+	"bar_dice": {"avg_ms": 2.0, "p95_ms": 4.0, "max_ms": 8.0},
+	"blackjack": {"avg_ms": 7.0, "p95_ms": 10.0, "max_ms": 16.0},
+	"baccarat": {"avg_ms": 3.0, "p95_ms": 5.0, "max_ms": 8.0},
+	"roulette": {"avg_ms": 16.0, "p95_ms": 18.0, "max_ms": 20.0},
+	"video_poker": {"avg_ms": 3.0, "p95_ms": 5.0, "max_ms": 8.0},
+}
 
 var app: Control
 var failures: Array = []
 var warnings: Array = []
 var observations: Array = []
+var resolve_observations: Array = []
 var renderer_coverage := {}
 var game_surface_coverage := {}
+var resolve_coverage := {}
 var slot_autoplay_checked := false
 var casino_slot_preview_checked := false
 var run_count := DEFAULT_RUN_COUNT
@@ -53,7 +74,9 @@ func _run() -> void:
 		await _probe_seed("%s-%02d" % [seed_prefix, run_index + 1], run_index)
 	await _probe_practice_game_surface_coverage()
 	await _probe_casino_slot_preview_coverage()
+	await _probe_game_resolve_budgets()
 	_assert_required_game_surface_coverage()
+	_assert_required_resolve_coverage()
 	_write_report()
 	_print_summary()
 	if not failures.is_empty():
@@ -332,6 +355,82 @@ func _probe_casino_slot_preview_coverage() -> void:
 		warnings.append("Slot preview practice room kind was %s, expected casino-like coverage." % kind)
 
 
+func _probe_game_resolve_budgets() -> void:
+	for game_id_value in REQUIRED_GAME_IDS:
+		var game_id := str(game_id_value)
+		var config := _dict(RESOLVE_PROBE_CONFIGS.get(game_id, {}))
+		var action_id := str(config.get("action_id", ""))
+		if action_id.is_empty():
+			failures.append("Resolve performance probe has no action configured for %s." % game_id)
+			continue
+		app.call("start_game_test_session", game_id)
+		await _settle(4)
+		var run_state: RunState = app.get("run_state")
+		var game: GameModule = app.get("current_game") as GameModule
+		if run_state == null or game == null:
+			failures.append("Resolve performance probe could not enter %s." % game_id)
+			continue
+		var stake := int(config.get("stake", 1))
+		var baseline_environment: Dictionary = run_state.current_environment.duplicate(true)
+		var baseline_rng_seed := int(run_state.rng_seed)
+		var baseline_rng_state := int(run_state.rng_state)
+		var baseline_suspicion: Dictionary = run_state.suspicion.duplicate(true)
+		var samples: Array = []
+		var ok_count := 0
+		for sample_index in range(RESOLVE_SAMPLE_COUNT):
+			_prepare_run_for_resolve_probe(run_state, baseline_environment, baseline_rng_seed, baseline_rng_state, baseline_suspicion)
+			var rng := run_state.create_rng("perf_resolve:%s:%d" % [game_id, sample_index])
+			var environment: Dictionary = run_state.current_environment
+			var ui_state := _resolve_probe_ui_state(game_id, sample_index)
+			var start_usec := Time.get_ticks_usec()
+			var result: Dictionary = game.resolve_with_context(action_id, stake, run_state, environment, rng, ui_state)
+			var elapsed_usec := Time.get_ticks_usec() - start_usec
+			samples.append(float(elapsed_usec) / 1000.0)
+			if bool(result.get("ok", false)):
+				ok_count += 1
+		var stats := _timing_stats(samples)
+		var budget := _dict(RESOLVE_BUDGETS.get(game_id, {}))
+		stats["seed"] = "practice:%s" % game_id
+		stats["run_index"] = -1
+		stats["game_id"] = game_id
+		stats["action_id"] = action_id
+		stats["mode"] = "resolve_path"
+		stats["sample_count"] = samples.size()
+		stats["ok_count"] = ok_count
+		stats["budget"] = budget
+		resolve_observations.append(stats)
+		observations.append(stats)
+		resolve_coverage[game_id] = int(resolve_coverage.get(game_id, 0)) + 1
+		if ok_count <= 0:
+			failures.append("Resolve performance probe did not get a successful %s result." % game_id)
+		elif ok_count < samples.size():
+			failures.append("Resolve performance probe only got %d/%d successful %s results." % [ok_count, samples.size(), game_id])
+		_assert_resolve_budget(game_id, stats, budget)
+
+
+func _prepare_run_for_resolve_probe(run_state: RunState, baseline_environment: Dictionary, baseline_rng_seed: int, baseline_rng_state: int, baseline_suspicion: Dictionary) -> void:
+	run_state.bankroll = 100000
+	run_state.current_environment = baseline_environment.duplicate(true)
+	run_state.rng_seed = baseline_rng_seed
+	run_state.rng_state = baseline_rng_state
+	run_state.suspicion = baseline_suspicion.duplicate(true)
+	run_state.story_log = []
+	run_state.run_status = RunState.RUN_STATUS_ACTIVE
+	run_state.run_failure_reason = RunState.FAILURE_NONE
+	run_state.run_failure_message = ""
+	run_state.defer_next_bankroll_zero_failure = false
+
+
+func _resolve_probe_ui_state(game_id: String, sample_index: int) -> Dictionary:
+	match game_id:
+		"pull_tabs":
+			return {"pull_tab_deal_index": sample_index % 4}
+		"video_poker":
+			return {"bet_level": 1}
+		_:
+			return {}
+
+
 func _assert_required_game_surface_coverage() -> void:
 	for game_id_value in REQUIRED_GAME_IDS:
 		var game_id := str(game_id_value)
@@ -341,6 +440,13 @@ func _assert_required_game_surface_coverage() -> void:
 		failures.append("Performance probe did not exercise slot autoplay.")
 	if not casino_slot_preview_checked:
 		failures.append("Performance probe did not exercise casino slot preview coverage.")
+
+
+func _assert_required_resolve_coverage() -> void:
+	for game_id_value in REQUIRED_GAME_IDS:
+		var game_id := str(game_id_value)
+		if int(resolve_coverage.get(game_id, 0)) <= 0:
+			failures.append("Performance probe did not cover resolve path %s." % game_id)
 
 
 func _assert_draw_budget(label: String, draw_p95_ms: float, draw_samples: int) -> void:
@@ -353,6 +459,24 @@ func _assert_draw_budget(label: String, draw_p95_ms: float, draw_samples: int) -
 func _assert_idle_draw_budget(label: String, draw_p95_ms: float) -> void:
 	if draw_p95_ms > MAX_IDLE_SURFACE_DRAW_P95_MS:
 		failures.append("%s idle draw p95 %.2f ms exceeded %.2f ms." % [label, draw_p95_ms, MAX_IDLE_SURFACE_DRAW_P95_MS])
+
+
+func _assert_resolve_budget(game_id: String, stats: Dictionary, budget: Dictionary) -> void:
+	if budget.is_empty():
+		failures.append("Resolve performance probe has no budget for %s." % game_id)
+		return
+	var avg_budget := float(budget.get("avg_ms", 0.0))
+	var p95_budget := float(budget.get("p95_ms", 0.0))
+	var max_budget := float(budget.get("max_ms", 0.0))
+	var avg_ms := float(stats.get("avg_ms", 0.0))
+	var p95_ms := float(stats.get("p95_ms", 0.0))
+	var max_ms := float(stats.get("max_ms", 0.0))
+	if avg_budget > 0.0 and avg_ms > avg_budget:
+		failures.append("%s resolve avg %.3f ms exceeded %.3f ms." % [game_id, avg_ms, avg_budget])
+	if p95_budget > 0.0 and p95_ms > p95_budget:
+		failures.append("%s resolve p95 %.3f ms exceeded %.3f ms." % [game_id, p95_ms, p95_budget])
+	if max_budget > 0.0 and max_ms > max_budget:
+		failures.append("%s resolve max %.3f ms exceeded %.3f ms." % [game_id, max_ms, max_budget])
 
 
 func _slot_machine_state(run_state: RunState, game_id: String) -> Dictionary:
@@ -425,6 +549,33 @@ func _array_size(value: Variant) -> int:
 	return (value as Array).size() if typeof(value) == TYPE_ARRAY else 0
 
 
+func _dict(value: Variant) -> Dictionary:
+	return (value as Dictionary).duplicate(true) if typeof(value) == TYPE_DICTIONARY else {}
+
+
+func _timing_stats(samples: Array) -> Dictionary:
+	var sorted: Array = samples.duplicate()
+	sorted.sort()
+	var total := 0.0
+	for sample_value in sorted:
+		total += float(sample_value)
+	var count := sorted.size()
+	var avg := total / float(maxi(1, count))
+	return {
+		"avg_ms": avg,
+		"p95_ms": _percentile(sorted, 0.95),
+		"max_ms": float(sorted[count - 1]) if count > 0 else 0.0,
+	}
+
+
+func _percentile(sorted_samples: Array, percentile: float) -> float:
+	if sorted_samples.is_empty():
+		return 0.0
+	var raw_index := int(ceil(float(sorted_samples.size()) * clampf(percentile, 0.0, 1.0))) - 1
+	var index := clampi(raw_index, 0, sorted_samples.size() - 1)
+	return float(sorted_samples[index])
+
+
 func _write_report() -> void:
 	var report := {
 		"tool": "foundation_performance_probe",
@@ -433,9 +584,13 @@ func _write_report() -> void:
 		"seed_prefix": seed_prefix,
 		"renderer_coverage": renderer_coverage,
 		"game_surface_coverage": game_surface_coverage,
+		"resolve_coverage": resolve_coverage,
 		"slot_autoplay_checked": slot_autoplay_checked,
 		"casino_slot_preview_checked": casino_slot_preview_checked,
 		"observations": observations,
+		"resolve_observations": resolve_observations,
+		"resolve_sample_count": RESOLVE_SAMPLE_COUNT,
+		"resolve_budgets": RESOLVE_BUDGETS,
 		"warnings": warnings,
 		"failures": failures,
 	}
@@ -454,6 +609,7 @@ func _print_summary() -> void:
 	print("Foundation performance probe checked %d observations across %d seed(s)." % [surface_count, run_count])
 	print("Renderer coverage: %s" % JSON.stringify(renderer_coverage))
 	print("Game surface coverage: %s" % JSON.stringify(game_surface_coverage))
+	print("Resolve coverage: %s" % JSON.stringify(resolve_coverage))
 	if failures.is_empty():
 		print("Foundation performance probe passed.")
 	else:
