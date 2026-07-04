@@ -86,6 +86,29 @@ function Get-OptionalSkipReasons {
     return @($skips | Sort-Object -Unique)
 }
 
+function Get-PercentileValue {
+    param(
+        [double[]]$Values,
+        [double]$Percentile
+    )
+    if ($null -eq $Values -or $Values.Count -le 0) {
+        return 0
+    }
+    $sorted = @($Values | Sort-Object)
+    if ($sorted.Count -eq 1) {
+        return [math]::Round([double]$sorted[0], 3)
+    }
+    $rank = ($Percentile / 100.0) * ($sorted.Count - 1)
+    $lower = [int][math]::Floor($rank)
+    $upper = [int][math]::Ceiling($rank)
+    if ($lower -eq $upper) {
+        return [math]::Round([double]$sorted[$lower], 3)
+    }
+    $weight = $rank - $lower
+    $value = ([double]$sorted[$lower] * (1.0 - $weight)) + ([double]$sorted[$upper] * $weight)
+    return [math]::Round($value, 3)
+}
+
 function Get-RunFailureReason {
     param(
         [int]$ExitCode,
@@ -134,7 +157,8 @@ function New-RunAnalysis {
         [int]$RunIndex,
         [string]$Seed,
         [int]$ExitCode,
-        [string[]]$RunnerOutput
+        [string[]]$RunnerOutput,
+        [int64]$DurationMs = 0
     )
 
     $coverage = Get-JsonProp -Object $Report -Name "coverage" -Default ([pscustomobject]@{})
@@ -312,6 +336,8 @@ function New-RunAnalysis {
         seed = $Seed
         result = [string](Get-JsonProp -Object $Report -Name "result" -Default ($(if ($ExitCode -eq 0) { "PASS" } else { "FAIL" })))
         exit_code = $ExitCode
+        run_duration_ms = $DurationMs
+        run_duration_sec = [math]::Round(([double]$DurationMs / 1000.0), 3)
         playable_loop_passed = $ExitCode -eq 0
         failure_scope = $failureScope
         failure_reason = $failureReason
@@ -396,6 +422,7 @@ New-Item -ItemType Directory -Force -Path $analysisDir | Out-Null
 New-Item -ItemType Directory -Force -Path $rawDir | Out-Null
 
 $analyses = @()
+$batchStopwatch = [System.Diagnostics.Stopwatch]::StartNew()
 for ($i = 1; $i -le $RunCount; $i++) {
     $runId = "{0:D3}" -f $i
     $seed = "$SeedPrefix-$runId"
@@ -414,7 +441,10 @@ for ($i = 1; $i -le $RunCount; $i++) {
     }
     $previousErrorActionPreference = $ErrorActionPreference
     $ErrorActionPreference = "Continue"
+    $runStopwatch = [System.Diagnostics.Stopwatch]::StartNew()
     $runnerOutput = @(powershell @args 2>&1 | ForEach-Object { [string]$_ })
+    $runStopwatch.Stop()
+    $runDurationMs = [int64]$runStopwatch.ElapsedMilliseconds
     $exitCode = $LASTEXITCODE
     $ErrorActionPreference = $previousErrorActionPreference
     $rawPath = Join-Path $rawDir $reportName
@@ -431,11 +461,12 @@ for ($i = 1; $i -le $RunCount; $i++) {
     if (Test-Path -LiteralPath $rawPath) {
         $report = Get-Content -LiteralPath $rawPath -Raw | ConvertFrom-Json
     }
-    $analysis = New-RunAnalysis -Report $report -RunIndex $i -Seed $seed -ExitCode $exitCode -RunnerOutput $runnerOutput
+    $analysis = New-RunAnalysis -Report $report -RunIndex $i -Seed $seed -ExitCode $exitCode -RunnerOutput $runnerOutput -DurationMs $runDurationMs
     $analysisPath = Join-Path $analysisDir ("run_{0}_analysis.json" -f $runId)
     ($analysis | ConvertTo-Json -Depth 100) | Set-Content -LiteralPath $analysisPath -Encoding UTF8
     $analyses += [pscustomobject]$analysis
 }
+$batchStopwatch.Stop()
 
 $passed = @($analyses | Where-Object { $_.playable_loop_passed })
 $r100UiPassed = @($analyses | Where-Object { $_.r100_ui_regression_passed })
@@ -512,6 +543,13 @@ foreach ($gameName in ($allGameStats.Keys | Sort-Object)) {
     $aggregateGameStats += $stats
 }
 
+$runDurationsMs = @($analyses | ForEach-Object { [double](Get-JsonProp -Object $_ -Name "run_duration_ms" -Default 0) })
+$durationTotalMs = 0.0
+foreach ($durationMs in $runDurationsMs) {
+    $durationTotalMs += [double]$durationMs
+}
+$durationAverageMs = if ($runDurationsMs.Count -gt 0) { $durationTotalMs / $runDurationsMs.Count } else { 0.0 }
+
 $aggregate = [ordered]@{
     tool = "foundation_mouse_batch_playtest"
     gate = "r100_stab_mouse_only"
@@ -520,6 +558,24 @@ $aggregate = [ordered]@{
     allow_run_failures = [bool]$AllowRunFailures
     run_count_requested = $RunCount
     run_count_completed = $analyses.Count
+    batch_wall_ms = [int64]$batchStopwatch.ElapsedMilliseconds
+    batch_wall_sec = [math]::Round(([double]$batchStopwatch.ElapsedMilliseconds / 1000.0), 3)
+    run_duration_ms = [ordered]@{
+        min = Get-PercentileValue -Values $runDurationsMs -Percentile 0
+        avg = [math]::Round($durationAverageMs, 3)
+        p50 = Get-PercentileValue -Values $runDurationsMs -Percentile 50
+        p75 = Get-PercentileValue -Values $runDurationsMs -Percentile 75
+        p95 = Get-PercentileValue -Values $runDurationsMs -Percentile 95
+        max = Get-PercentileValue -Values $runDurationsMs -Percentile 100
+    }
+    run_duration_sec = [ordered]@{
+        min = [math]::Round((Get-PercentileValue -Values $runDurationsMs -Percentile 0) / 1000.0, 3)
+        avg = [math]::Round($durationAverageMs / 1000.0, 3)
+        p50 = [math]::Round((Get-PercentileValue -Values $runDurationsMs -Percentile 50) / 1000.0, 3)
+        p75 = [math]::Round((Get-PercentileValue -Values $runDurationsMs -Percentile 75) / 1000.0, 3)
+        p95 = [math]::Round((Get-PercentileValue -Values $runDurationsMs -Percentile 95) / 1000.0, 3)
+        max = [math]::Round((Get-PercentileValue -Values $runDurationsMs -Percentile 100) / 1000.0, 3)
+    }
     output_root = (Resolve-Path -LiteralPath $OutputRoot).Path
     analysis_dir = (Resolve-Path -LiteralPath $analysisDir).Path
     raw_report_dir = (Resolve-Path -LiteralPath $rawDir).Path
@@ -575,6 +631,8 @@ $aggregate = [ordered]@{
             run_index = $_.run_index
             seed = $_.seed
             result = $_.result
+            run_duration_ms = $_.run_duration_ms
+            run_duration_sec = $_.run_duration_sec
             failure_scope = $_.failure_scope
             failure_reason = $_.failure_reason
             won = $_.won
@@ -605,6 +663,8 @@ $lines += "- Strict gate passed: $($aggregate.strict_gate_passed)"
 $lines += "- Allow run failures: $($aggregate.allow_run_failures)"
 $lines += "- Runs requested: $RunCount"
 $lines += "- Runs completed: $($analyses.Count)"
+$lines += "- Batch wall time: $($aggregate.batch_wall_sec)s"
+$lines += "- Run duration seconds: min $($aggregate.run_duration_sec.min), avg $($aggregate.run_duration_sec.avg), p50 $($aggregate.run_duration_sec.p50), p75 $($aggregate.run_duration_sec.p75), p95 $($aggregate.run_duration_sec.p95), max $($aggregate.run_duration_sec.max)"
 $lines += "- Playable-loop passes: $($passed.Count) ($($aggregate.playable_loop_pass_percentage)%)"
 $lines += "- Playable-loop failures: $($analyses.Count - $passed.Count)"
 $lines += "- R100 UI regression passes: $($r100UiPassed.Count) ($($aggregate.r100_ui_regression_pass_percentage)%)"
@@ -672,10 +732,10 @@ foreach ($game in $aggregateGameStats) {
 $lines += ""
 $lines += "## Per-Run Summary"
 $lines += ""
-$lines += "| Run | Seed | Result | Scope | Failure Reason | R100 UI | Won | Lost | Completion Balance | Final Balance | Final Heat | Missing Coverage | Wagered | Game Delta | Warnings |"
-$lines += "|---:|---|---|---|---|---|---|---|---:|---:|---:|---:|---:|---:|---:|"
+$lines += "| Run | Seed | Duration Sec | Result | Scope | Failure Reason | R100 UI | Won | Lost | Completion Balance | Final Balance | Final Heat | Missing Coverage | Wagered | Game Delta | Warnings |"
+$lines += "|---:|---|---:|---|---|---|---|---|---|---:|---:|---:|---:|---:|---:|---:|"
 foreach ($analysis in $analyses) {
-    $lines += "| $($analysis.run_index) | $($analysis.seed) | $($analysis.result) | $($analysis.failure_scope) | $($analysis.failure_reason) | $($analysis.r100_ui_regression_passed) | $($analysis.won) | $($analysis.lost) | $($analysis.completion_balance) | $($analysis.final_recorded_balance) | $($analysis.final_recorded_heat) | $((ConvertTo-Array $analysis.missing_coverage).Count) | $($analysis.total_wagered) | $($analysis.net_game_bankroll_delta) | $((ConvertTo-Array $analysis.warnings).Count) |"
+    $lines += "| $($analysis.run_index) | $($analysis.seed) | $($analysis.run_duration_sec) | $($analysis.result) | $($analysis.failure_scope) | $($analysis.failure_reason) | $($analysis.r100_ui_regression_passed) | $($analysis.won) | $($analysis.lost) | $($analysis.completion_balance) | $($analysis.final_recorded_balance) | $($analysis.final_recorded_heat) | $((ConvertTo-Array $analysis.missing_coverage).Count) | $($analysis.total_wagered) | $($analysis.net_game_bankroll_delta) | $((ConvertTo-Array $analysis.warnings).Count) |"
 }
 $lines | Set-Content -LiteralPath $markdownPath -Encoding UTF8
 
@@ -689,6 +749,8 @@ Write-Output ("Playable-loop pass rate: {0}%" -f $aggregate.playable_loop_pass_p
 Write-Output ("R100 UI regression pass count: {0}/{1}" -f $r100UiPassed.Count, $analyses.Count)
 Write-Output ("R100 UI regression pass rate: {0}%" -f $aggregate.r100_ui_regression_pass_percentage)
 Write-Output ("Victory count: {0}/{1}" -f $won.Count, $analyses.Count)
+Write-Output ("Batch wall time: {0}s" -f $aggregate.batch_wall_sec)
+Write-Output ("Run duration seconds: min {0}, avg {1}, p50 {2}, p75 {3}, p95 {4}, max {5}" -f $aggregate.run_duration_sec.min, $aggregate.run_duration_sec.avg, $aggregate.run_duration_sec.p50, $aggregate.run_duration_sec.p75, $aggregate.run_duration_sec.p95, $aggregate.run_duration_sec.max)
 Write-Output ("True failure count: {0}" -f $aggregate.true_failure_count)
 Write-Output ("Gate mode: {0}" -f $aggregate.gate_mode)
 Write-Output ("Strict gate passed: {0}" -f $aggregate.strict_gate_passed)
