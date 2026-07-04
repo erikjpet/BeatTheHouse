@@ -7710,7 +7710,7 @@ func save_status_snapshot() -> Dictionary:
 		"visible_debt": str(consequence.get("debt_summary", "")),
 		"visible_story": str(consequence.get("story_text", "")),
 		"visible_travel": str(consequence.get("travel_summary", "")),
-		"story_count": run_state.story_log.size() if run_state != null else 0,
+		"story_count": run_state.story_log_entry_count() if run_state != null else 0,
 		"flag_count": run_state.narrative_flags.size() if run_state != null else 0,
 		"travel_count": _travel_target_ids().size() if run_state != null else 0,
 	}
@@ -8602,7 +8602,7 @@ func _run_summary_text(state: RunState) -> String:
 		state.bankroll,
 		pressure_text,
 		state.suspicion_level(),
-		state.story_log.size(),
+		state.story_log_entry_count(),
 		state.narrative_flags.size(),
 		travel_count,
 	]
@@ -10419,7 +10419,7 @@ func _travel_base_cache_key() -> String:
 		current_screen,
 		str(run_state.current_environment.get("id", "")),
 		map_current_id,
-		run_state.environment_history.size(),
+		run_state.environment_travel_count(),
 		map_visited_count,
 		map_node_count,
 		run_state.bankroll,

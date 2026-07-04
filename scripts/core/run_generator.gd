@@ -16,7 +16,7 @@ func next_environment(run_state: RunState, target_archetype_id: String = "") -> 
 	var rng := run_state.create_rng()
 	if run_state.has_world_map() or run_state.current_environment.is_empty():
 		return _next_world_environment(run_state, target_archetype_id, rng)
-	var depth := run_state.environment_history.size()
+	var depth := run_state.environment_travel_count()
 	if not run_state.current_environment.is_empty():
 		depth += 1
 	var archetype := _pick_archetype(run_state, depth, rng, target_archetype_id)
@@ -80,7 +80,7 @@ func _next_world_environment(run_state: RunState, target_archetype_id: String, r
 
 
 func _legacy_next_environment(run_state: RunState, target_archetype_id: String, rng: RngStream) -> EnvironmentInstance:
-	var depth := run_state.environment_history.size()
+	var depth := run_state.environment_travel_count()
 	if not run_state.current_environment.is_empty():
 		depth += 1
 	var archetype := _pick_archetype(run_state, depth, rng, target_archetype_id)
@@ -102,7 +102,7 @@ func _world_environment_data_for_node(run_state: RunState, map_data: Dictionary,
 		restored["world_node_id"] = node_id
 		restored["layout"] = EnvironmentInstance.ensure_generated_layout(restored)
 		return restored
-	var depth := run_state.environment_history.size()
+	var depth := run_state.environment_travel_count()
 	if not run_state.current_environment.is_empty():
 		depth += 1
 	var archetype := _archetype_by_id(node_id)

@@ -69,6 +69,11 @@ const AVAILABILITY_CATEGORICAL_UNAVAILABLE := "categorically_unavailable"
 const EVENT_CADENCE_GLOBAL_GAP_ACTIONS := 6
 const EVENT_CADENCE_BREATHER_ACTIONS := 1
 const EVENT_CADENCE_VISIT_EVENT_CHANCE_PERCENT := 45
+const MAX_ENVIRONMENT_HISTORY_ENTRIES := 48
+const MAX_STORY_LOG_ENTRIES := 240
+const STORY_SEEN_TYPE_FLAG_PREFIX := "_story_seen:"
+const STORY_SEEN_EVENT_FLAG_PREFIX := "_story_seen_event:"
+const STORY_SEEN_OBJECTIVE_FLAG_PREFIX := "_story_seen_objective:"
 
 var seed_text: String = ""
 var seed_value: int = 1
@@ -92,9 +97,11 @@ var pending_triggered_events: Array = []
 var active_triggered_event: Dictionary = {}
 var event_cadence: Dictionary = {}
 var environment_history: Array = []
+var environment_history_archive_count: int = 0
 var unlocked_travel: Array = []
 var narrative_flags: Dictionary = {}
 var story_log: Array = []
+var story_log_archive_count: int = 0
 var run_status: String = RUN_STATUS_ACTIVE
 var run_failure_reason: String = FAILURE_NONE
 var run_failure_message: String = ""
@@ -132,9 +139,11 @@ func start_new(p_seed_text: String = "FOUNDATION-SEED", p_challenge_config: Dict
 	active_triggered_event = {}
 	_reset_event_cadence_state()
 	environment_history = []
+	environment_history_archive_count = 0
 	unlocked_travel = []
 	narrative_flags = {}
 	story_log = []
+	story_log_archive_count = 0
 	run_status = RUN_STATUS_ACTIVE
 	run_failure_reason = FAILURE_NONE
 	run_failure_message = ""
@@ -324,7 +333,7 @@ func _event_cadence_visit_key(environment_data: Dictionary) -> String:
 		environment_id = str(environment_data.get("world_node_id", environment_data.get("archetype_id", ""))).strip_edges()
 	if environment_id.is_empty():
 		return ""
-	return "%s#%d" % [environment_id, environment_history.size()]
+	return "%s#%d" % [environment_id, environment_travel_count()]
 
 
 # Sets the current environment and records the previous one.
@@ -333,6 +342,7 @@ func set_environment(environment_data: Dictionary) -> void:
 	if not current_environment.is_empty():
 		_store_current_local_suspicion()
 		environment_history.append(current_environment.duplicate(true))
+		_compact_environment_history()
 	current_environment = _normalize_environment(environment_data)
 	var next_environment := current_environment
 	unlocked_travel = _unique_strings(
@@ -375,6 +385,18 @@ func enter_world_node(node_id: String, environment_data: Dictionary) -> void:
 	if world_map.is_empty() or node_id.strip_edges().is_empty():
 		return
 	world_map = WorldMap.enter_node(world_map, node_id, environment_data)
+
+
+func environment_travel_count() -> int:
+	return maxi(0, environment_history_archive_count) + environment_history.size()
+
+
+func visited_environment_count() -> int:
+	return environment_travel_count() + (0 if current_environment.is_empty() else 1)
+
+
+func story_log_entry_count() -> int:
+	return maxi(0, story_log_archive_count) + story_log.size()
 
 
 # Changes bankroll and refreshes economy state.
@@ -864,10 +886,10 @@ func prestige_purchase_status(definition: Dictionary) -> Dictionary:
 	if suspicion_level() > max_heat:
 		available = false
 		reasons.append("Heat must be %d or lower." % max_heat)
-	var visited_environment_count := environment_history.size() + (0 if current_environment.is_empty() else 1)
-	if visited_environment_count < environment_count_min:
+	var visited_count := visited_environment_count()
+	if visited_count < environment_count_min:
 		available = false
-		var remaining := environment_count_min - visited_environment_count
+		var remaining := environment_count_min - visited_count
 		reasons.append("Visit %d more place%s." % [remaining, "" if remaining == 1 else "s"])
 	var required_flags := _copy_dict(requirements.get("flags", requirements.get("required_flags", {})))
 	for flag_key in required_flags.keys():
@@ -2256,7 +2278,7 @@ func travel_route_status(route_data: Dictionary) -> Dictionary:
 		"condition_text": str(route_data.get("condition_text", "")),
 		"hidden": false,
 		"requires_travel_count_min": maxi(0, int(route_data.get("requires_travel_count_min", 0))),
-		"travel_count": environment_history.size(),
+		"travel_count": environment_travel_count(),
 	}
 	var lock_remaining := current_travel_lock_remaining()
 	if lock_remaining > 0:
@@ -2265,7 +2287,7 @@ func travel_route_status(route_data: Dictionary) -> Dictionary:
 		status["travel_lock_remaining"] = lock_remaining
 		return _finalize_travel_route_status(status, route_data)
 	var required_travel_count := int(status.get("requires_travel_count_min", 0))
-	if required_travel_count > environment_history.size():
+	if required_travel_count > environment_travel_count():
 		status["available"] = false
 		status["hidden"] = bool(route_data.get("hide_until_travel_count_met", false))
 		status["disabled_reason"] = str(route_data.get("travel_count_condition_text", route_data.get("condition_text", "Travel farther before this route appears.")))
@@ -2391,7 +2413,7 @@ func travel_route_risk(route_data: Dictionary, route_id: String = "") -> Diction
 		seed_value,
 		source_environment_id,
 		resolved_route_id,
-		environment_history.size(),
+		environment_travel_count(),
 	]
 	var roll := (text_to_seed(seed_source) % 100) + 1
 	var triggered := roll <= int(risk.get("chance_percent", 0))
@@ -2470,7 +2492,7 @@ func _travel_unlock_conditions(route_data: Dictionary, status: Dictionary) -> Ar
 		conditions.append(condition_text)
 	var required_travel_count := maxi(0, int(route_data.get("requires_travel_count_min", 0)))
 	if required_travel_count > 0:
-		conditions.append("Travel count %d/%d." % [environment_history.size(), required_travel_count])
+		conditions.append("Travel count %d/%d." % [environment_travel_count(), required_travel_count])
 	var lock_remaining := maxi(0, int(status.get("travel_lock_remaining", 0)))
 	if lock_remaining > 0:
 		conditions.append(_travel_lock_disabled_reason(lock_remaining))
@@ -2849,7 +2871,39 @@ func recovery_pressure_status(recovery_available: bool = false, bankroll_zero_de
 
 # Adds a story entry to the run log.
 func log_story(event_data: Dictionary) -> void:
-	story_log.append(event_data.duplicate(true))
+	var story_entry := event_data.duplicate(true)
+	story_log.append(story_entry)
+	_remember_story_seen_flags(story_entry)
+	_compact_story_log()
+
+
+func _compact_environment_history() -> void:
+	var overflow := environment_history.size() - MAX_ENVIRONMENT_HISTORY_ENTRIES
+	if overflow <= 0:
+		return
+	environment_history = environment_history.slice(overflow, environment_history.size())
+	environment_history_archive_count = maxi(0, environment_history_archive_count) + overflow
+
+
+func _compact_story_log() -> void:
+	var overflow := story_log.size() - MAX_STORY_LOG_ENTRIES
+	if overflow <= 0:
+		return
+	story_log = story_log.slice(overflow, story_log.size())
+	story_log_archive_count = maxi(0, story_log_archive_count) + overflow
+
+
+func _remember_story_seen_flags(story_entry: Dictionary) -> void:
+	var entry_type := str(story_entry.get("type", "")).strip_edges()
+	if entry_type.is_empty():
+		return
+	narrative_flags["%s%s" % [STORY_SEEN_TYPE_FLAG_PREFIX, entry_type]] = true
+	var event_id := str(story_entry.get("event_id", "")).strip_edges()
+	if not event_id.is_empty():
+		narrative_flags["%s%s:%s" % [STORY_SEEN_EVENT_FLAG_PREFIX, entry_type, event_id]] = true
+	var objective_id := str(story_entry.get("objective_id", "")).strip_edges()
+	if not objective_id.is_empty():
+		narrative_flags["%s%s:%s" % [STORY_SEEN_OBJECTIVE_FLAG_PREFIX, entry_type, objective_id]] = true
 
 
 # Advances the current environment clock.
@@ -3385,25 +3439,38 @@ func _decrease_current_suspicion(amount: int) -> void:
 
 
 func _story_log_has_demo_victory(objective_id: String) -> bool:
+	var normalized_objective := objective_id.strip_edges()
+	if normalized_objective.is_empty() and bool(narrative_flags.get("%sdemo_victory" % STORY_SEEN_TYPE_FLAG_PREFIX, false)):
+		return true
+	if not normalized_objective.is_empty() and bool(narrative_flags.get("%sdemo_victory:%s" % [STORY_SEEN_OBJECTIVE_FLAG_PREFIX, normalized_objective], false)):
+		return true
 	for entry in story_log:
 		if typeof(entry) != TYPE_DICTIONARY:
 			continue
 		var story_entry := entry as Dictionary
 		if str(story_entry.get("type", "")) != "demo_victory":
 			continue
-		if objective_id.is_empty() or str(story_entry.get("objective_id", "")) == objective_id:
+		if normalized_objective.is_empty() or str(story_entry.get("objective_id", "")) == normalized_objective:
 			return true
 	return false
 
 
 func _story_log_has_type(entry_type: String, event_id: String = "") -> bool:
+	var normalized_type := entry_type.strip_edges()
+	var normalized_event := event_id.strip_edges()
+	if normalized_type.is_empty():
+		return false
+	if normalized_event.is_empty() and bool(narrative_flags.get("%s%s" % [STORY_SEEN_TYPE_FLAG_PREFIX, normalized_type], false)):
+		return true
+	if not normalized_event.is_empty() and bool(narrative_flags.get("%s%s:%s" % [STORY_SEEN_EVENT_FLAG_PREFIX, normalized_type, normalized_event], false)):
+		return true
 	for entry in story_log:
 		if typeof(entry) != TYPE_DICTIONARY:
 			continue
 		var story_entry := entry as Dictionary
-		if str(story_entry.get("type", "")) != entry_type:
+		if str(story_entry.get("type", "")) != normalized_type:
 			continue
-		if event_id.is_empty() or str(story_entry.get("event_id", "")) == event_id:
+		if normalized_event.is_empty() or str(story_entry.get("event_id", "")) == normalized_event:
 			return true
 	return false
 
@@ -3480,9 +3547,11 @@ func to_dict() -> Dictionary:
 		"active_triggered_event": active_triggered_event.duplicate(true),
 		"event_cadence": _normalize_event_cadence(event_cadence),
 		"environment_history": environment_history.duplicate(true),
+		"environment_history_archive_count": environment_history_archive_count,
 		"unlocked_travel": unlocked_travel.duplicate(true),
 		"narrative_flags": narrative_flags.duplicate(true),
 		"story_log": _normalize_story_log(story_log),
+		"story_log_archive_count": story_log_archive_count,
 		"run_status": run_status,
 		"run_failure_reason": run_failure_reason,
 		"run_failure_message": run_failure_message,
@@ -3515,10 +3584,17 @@ func from_dict(data: Dictionary) -> void:
 	pending_triggered_events = _normalize_triggered_event_queue(_copy_array(data.get("pending_triggered_events", [])))
 	active_triggered_event = _normalize_triggered_event_entry(data.get("active_triggered_event", {}))
 	event_cadence = _normalize_event_cadence(_copy_dict(data.get("event_cadence", {})))
+	environment_history_archive_count = maxi(0, int(data.get("environment_history_archive_count", 0)))
 	environment_history = _normalize_environment_history(_copy_array(data.get("environment_history", [])))
+	_compact_environment_history()
 	unlocked_travel = _copy_array(data.get("unlocked_travel", current_environment.get("travel_hooks", [])))
 	narrative_flags = _copy_dict(data.get("narrative_flags", {}))
+	story_log_archive_count = maxi(0, int(data.get("story_log_archive_count", 0)))
 	story_log = _normalize_story_log(_copy_array(data.get("story_log", [])))
+	for story_entry_value in story_log:
+		if typeof(story_entry_value) == TYPE_DICTIONARY:
+			_remember_story_seen_flags(story_entry_value as Dictionary)
+	_compact_story_log()
 	var saved_run_status := str(data.get("run_status", RUN_STATUS_ACTIVE))
 	run_status = saved_run_status
 	run_failure_reason = str(data.get("run_failure_reason", FAILURE_NONE))

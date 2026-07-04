@@ -484,6 +484,10 @@ static func clear_runtime_session_cache() -> void:
 	_session_order.clear()
 
 
+static func runtime_session_cache_size() -> int:
+	return _session_order.size()
+
+
 static func _prune_session_cache() -> void:
 	while _session_order.size() > MAX_RUNTIME_SESSIONS:
 		_erase_session(str(_session_order[0]))

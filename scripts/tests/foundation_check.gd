@@ -16313,6 +16313,51 @@ func _check_contracts(library: ContentLibrary, failures: Array) -> void:
 	if restored_run.inventory.has("late_mutation"):
 		failures.append("RunState.from_dict retained mutable source arrays.")
 
+	var capped_run: RunState = RunStateScript.new()
+	capped_run.start_new("SA4-COMPACTION")
+	var environment_iterations := RunStateScript.MAX_ENVIRONMENT_HISTORY_ENTRIES + 9
+	for history_index in range(environment_iterations):
+		capped_run.set_environment({
+			"id": "sa4_env_%03d" % history_index,
+			"kind": "bar",
+			"archetype_id": "corner_bar",
+			"display_name": "SA4 Env %03d" % history_index,
+			"game_ids": ["blackjack"],
+			"travel_hooks": ["corner_store"],
+		})
+	var expected_travel_count := environment_iterations - 1
+	if capped_run.environment_history.size() > RunStateScript.MAX_ENVIRONMENT_HISTORY_ENTRIES:
+		failures.append("RunState environment history exceeded its SA.4 cap.")
+	if capped_run.environment_travel_count() != expected_travel_count:
+		failures.append("RunState environment lifetime count changed during compaction.")
+	var story_iterations := RunStateScript.MAX_STORY_LOG_ENTRIES + 13
+	for story_index in range(story_iterations):
+		var entry_type := "sa4_archived_story" if story_index == 0 else "sa4_story"
+		capped_run.log_story({
+			"type": entry_type,
+			"event_id": "sa4_event_%03d" % story_index,
+			"environment_id": "sa4_env_%03d" % maxi(0, environment_iterations - 1),
+			"message": "SA4 story %03d" % story_index,
+		})
+	if capped_run.story_log.size() > RunStateScript.MAX_STORY_LOG_ENTRIES:
+		failures.append("RunState story log exceeded its SA.4 cap.")
+	if capped_run.story_log_entry_count() != story_iterations:
+		failures.append("RunState story lifetime count changed during compaction.")
+	if not bool(capped_run.narrative_flags.get("_story_seen:sa4_archived_story", false)):
+		failures.append("RunState did not preserve archived story type flags during compaction.")
+	var capped_restored: RunState = RunStateScript.new()
+	capped_restored.from_dict(capped_run.to_dict())
+	if capped_restored.environment_history.size() > RunStateScript.MAX_ENVIRONMENT_HISTORY_ENTRIES:
+		failures.append("RunState compacted environment history cap did not survive save/load.")
+	if capped_restored.environment_travel_count() != capped_run.environment_travel_count():
+		failures.append("RunState compacted environment lifetime count did not survive save/load.")
+	if capped_restored.story_log.size() > RunStateScript.MAX_STORY_LOG_ENTRIES:
+		failures.append("RunState compacted story log cap did not survive save/load.")
+	if capped_restored.story_log_entry_count() != capped_run.story_log_entry_count():
+		failures.append("RunState compacted story lifetime count did not survive save/load.")
+	if not bool(capped_restored.narrative_flags.get("_story_seen:sa4_archived_story", false)):
+		failures.append("RunState archived story flags did not survive save/load.")
+
 	var save_service: SaveService = SaveServiceScript.new()
 	var save_error: Error = save_service.save_run(run_state, "foundation_check")
 	if save_error != OK:
