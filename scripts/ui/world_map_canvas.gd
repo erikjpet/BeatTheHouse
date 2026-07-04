@@ -70,7 +70,6 @@ func _notification(what: int) -> void:
 
 
 func _draw() -> void:
-	OS.delay_msec(5)
 	_ensure_layout_cache()
 	var rect := Rect2(Vector2.ZERO, size)
 	_draw_background(rect)
