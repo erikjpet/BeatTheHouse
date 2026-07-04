@@ -64,6 +64,8 @@ const EUROPEAN_SEQUENCE := [
 const RED_NUMBERS := ["1", "3", "5", "7", "9", "12", "14", "16", "18", "19", "21", "23", "25", "27", "30", "32", "34", "36"]
 const BLACK_NUMBERS := ["2", "4", "6", "8", "10", "11", "13", "15", "17", "20", "22", "24", "26", "28", "29", "31", "33", "35"]
 
+var bet_targets_cache: Dictionary = {}
+
 
 func enter(run_state: RunState, environment: Dictionary) -> Dictionary:
 	var result: Dictionary = super.enter(run_state, environment)
@@ -99,6 +101,7 @@ func generate_environment_state(_run_state: RunState, environment: Dictionary, r
 	return {
 		"schema": "roulette_table_state",
 		"version": 1,
+		"normalized_version": 1,
 		"table_name": str(rng.pick(names, names[0])),
 		"dealer_name": str(rng.pick(["Vega", "Mara", "Rook", "June", "Sal"], "Vega")),
 		"variant": variant,
@@ -141,7 +144,8 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 	var total_wager := _total_wager(bets)
 	var inside_total := _wager_total_for_family(bets, "inside")
 	var outside_total := _wager_total_for_family(bets, "outside")
-	var last_result := _copy_dict(table.get("last_result", {}))
+	var last_result_source := _last_result_source(table)
+	var last_result := _surface_last_result(last_result_source)
 	var now_msec := int(ui_state.get("surface_time_msec", Time.get_ticks_msec()))
 	var spin_elapsed_msec := now_msec - int(last_result.get("resolved_at_msec", 0))
 	var spin_active := not last_result.is_empty() and spin_elapsed_msec >= 0 and spin_elapsed_msec < SPIN_ANIMATION_DURATION_MSEC
@@ -161,7 +165,7 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 		table_notice = "The payout lock is open. A late chip could still slide."
 	if barred:
 		table_notice = str(table.get("barred_reason", "The roulette wheel is closed to you."))
-	var surface_patrons := _patrons_for_surface(table, last_result)
+	var surface_patrons := _patrons_for_surface(table, last_result, now_msec)
 	var patron_layout := _roulette_patron_layout(surface_patrons)
 	var cheat_binding_action := "roulette_past_post" if past_post_available else "roulette_nudge"
 	var past_post_item_modifiers := skill_item_modifier_badges(run_state, PAST_POST_ITEM_EFFECT_KEYS)
@@ -242,7 +246,7 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 		"result_message": str(last_result.get("summary", "")) if not spin_active else "",
 		"table_notice": table_notice,
 		"table_round_timer": round_timer,
-		"spin_trajectory": _dictionary_array(last_result.get("trajectory", [])),
+		"spin_trajectory": _dictionary_array(last_result_source.get("trajectory", [])),
 		"spin_elapsed_msec": spin_elapsed_msec,
 		"native_selected_surface_actions": _selected_surface_actions(session),
 		"surface_action_bindings": {
@@ -897,7 +901,7 @@ func _past_post_target_from_input(ui_state: Dictionary, table: Dictionary, winni
 	var target_index := index
 	if target_index < 0 and ui_state.has("past_post_input_target_index"):
 		target_index = int(ui_state.get("past_post_input_target_index", -1))
-	var targets := _roulette_bet_targets(table)
+	var targets := _roulette_bet_targets_cached(table)
 	if target_index >= 0 and target_index < targets.size():
 		return _normalize_past_post_target(targets[target_index])
 	var exact := _roulette_target_for_type_numbers(targets, "straight", [winning_number])
@@ -919,7 +923,7 @@ func _past_post_target_for_grade(challenge: Dictionary, table: Dictionary) -> Di
 
 
 func _past_post_outside_target(table: Dictionary, winning_number: String) -> Dictionary:
-	var targets := _roulette_bet_targets(table)
+	var targets := _roulette_bet_targets_cached(table)
 	var color := _roulette_color(winning_number)
 	if color == "red":
 		return _normalize_past_post_target(_roulette_target_for_type_numbers(targets, "red", RED_NUMBERS))
@@ -947,7 +951,7 @@ func _normalize_past_post_target(value: Variant) -> Dictionary:
 
 
 func _past_post_allowed_targets(table: Dictionary, winning_number: String) -> Array:
-	var targets := _roulette_bet_targets(table)
+	var targets := _roulette_bet_targets_cached(table)
 	var allowed: Array = []
 	var exact := _roulette_target_for_type_numbers(targets, "straight", [winning_number])
 	if not exact.is_empty():
@@ -1257,8 +1261,28 @@ func _build_spin_trajectory(launch: Dictionary, drop: Dictionary, deflect: Dicti
 
 
 func _roulette_bet_targets(table: Dictionary) -> Array:
+	return _copy_bet_targets(_roulette_bet_targets_cached(table))
+
+
+func _roulette_bet_targets_cached(table: Dictionary) -> Array:
+	var key := _roulette_bet_target_cache_key(table)
+	if not bet_targets_cache.has(key):
+		bet_targets_cache[key] = _build_roulette_bet_targets(key == "american_double_zero:2")
+	return bet_targets_cache.get(key, [])
+
+
+func _roulette_bet_target_cache_key(table: Dictionary) -> String:
+	var rules_value: Variant = table.get("rules", {})
+	var zero_count := 2
+	if typeof(rules_value) == TYPE_DICTIONARY:
+		zero_count = 1 if str(table.get("variant", "american_double_zero")) == "european_single_zero" else int((rules_value as Dictionary).get("zero_count", 2))
+	if str(table.get("variant", "american_double_zero")) == "european_single_zero":
+		zero_count = 1
+	return "%s:%d" % [str(table.get("variant", "american_double_zero")), zero_count]
+
+
+func _build_roulette_bet_targets(american: bool) -> Array:
 	var targets: Array = []
-	var american := int(_table_rules(table).get("zero_count", 2)) == 2
 	targets.append(_bet_target("straight", ["0"], 35, "0", ZERO_RECT.grow(-5), "inside"))
 	if american:
 		targets.append(_bet_target("straight", ["00"], 35, "00", DOUBLE_ZERO_RECT.grow(-5), "inside"))
@@ -1295,6 +1319,14 @@ func _roulette_bet_targets(table: Dictionary) -> Array:
 		targets.append(_bet_target("first_four", ["0", "1", "2", "3"], 8, "0/1/2/3", Rect2(286, LINE_BET_Y, 44, LINE_BET_H), "inside"))
 	_add_outside_targets(targets)
 	return targets
+
+
+func _copy_bet_targets(targets: Array) -> Array:
+	var result: Array = []
+	for target_value in targets:
+		if typeof(target_value) == TYPE_DICTIONARY:
+			result.append((target_value as Dictionary).duplicate(true))
+	return result
 
 
 func _add_outside_targets(targets: Array) -> void:
@@ -1367,16 +1399,18 @@ func _validate_roulette_bets(bets: Array, table: Dictionary, run_state: RunState
 func _settle_roulette_bets(winning_number: String, bets: Array, table: Dictionary) -> Array:
 	var results: Array = []
 	var color := _roulette_color(winning_number)
+	var rules := _table_rules(table)
+	var la_partage_enabled := bool(rules.get("la_partage", false))
 	for bet_value in bets:
 		if typeof(bet_value) != TYPE_DICTIONARY:
 			continue
-		var bet: Dictionary = (bet_value as Dictionary).duplicate(true)
+		var bet: Dictionary = bet_value
 		var numbers := _string_array(bet.get("numbers", []))
 		var stake := maxi(0, int(bet.get("stake", 0)))
 		var payout := maxi(0, int(bet.get("payout", 0)))
 		var won := numbers.has(winning_number)
 		var bankroll_delta := stake * payout if won else -stake
-		if not won and _is_zero(winning_number) and _la_partage_applies(bet, table):
+		if not won and _is_zero(winning_number) and la_partage_enabled and str(bet.get("family", "")) == "outside" and payout == 1:
 			bankroll_delta = -int(ceil(float(stake) * 0.5))
 		var celebration_score := _roulette_celebration_score(bet, won)
 		results.append({
@@ -1427,7 +1461,7 @@ func _select_chip_command(index: int, state: Dictionary, table: Dictionary) -> D
 
 
 func _place_bet_command(index: int, state: Dictionary, table: Dictionary, run_state: RunState, environment: Dictionary) -> Dictionary:
-	var targets := _roulette_bet_targets(table)
+	var targets := _roulette_bet_targets_cached(table)
 	if index < 0 or index >= targets.size():
 		return _message_command(state, "That roulette space is not available.")
 	var target: Dictionary = targets[index]
@@ -1546,7 +1580,7 @@ func _patron_bet_command(index: int, state: Dictionary, table: Dictionary, run_s
 
 
 func _patron_roulette_wager(patron: Dictionary, table: Dictionary, seat_index: int = 0) -> Dictionary:
-	var targets := _roulette_bet_targets(table)
+	var targets := _roulette_bet_targets_cached(table)
 	var style := str(patron.get("bet_style", "outside_red"))
 	var target := {}
 	match style:
@@ -1571,7 +1605,7 @@ func _patron_roulette_wager(patron: Dictionary, table: Dictionary, seat_index: i
 
 
 func _roulette_fade_target(source_target: Dictionary, table: Dictionary, seat_index: int = 0) -> Dictionary:
-	var targets := _roulette_bet_targets(table)
+	var targets := _roulette_bet_targets_cached(table)
 	var source_type := str(source_target.get("type", ""))
 	match source_type:
 		"red":
@@ -2366,6 +2400,8 @@ func _table_state(run_state: RunState, environment: Dictionary) -> Dictionary:
 	var table: Dictionary = game_states.get(get_id(), {}) if typeof(game_states.get(get_id(), {})) == TYPE_DICTIONARY else {}
 	if table.is_empty():
 		table = _fallback_table_state(run_state, environment)
+	if _table_state_is_current(table):
+		return table
 	return _normalize_table_state(table)
 
 
@@ -2379,6 +2415,7 @@ func _normalize_table_state(table: Dictionary) -> Dictionary:
 	var normalized := table.duplicate(true)
 	normalized["schema"] = str(normalized.get("schema", "roulette_table_state"))
 	normalized["version"] = maxi(1, int(normalized.get("version", 1)))
+	normalized["normalized_version"] = 1
 	var variant := str(normalized.get("variant", "american_double_zero"))
 	if not ["american_double_zero", "european_single_zero"].has(variant):
 		variant = "american_double_zero"
@@ -2414,6 +2451,10 @@ func _normalize_table_state(table: Dictionary) -> Dictionary:
 	normalized["barred_reason"] = str(normalized.get("barred_reason", ""))
 	normalized["table_round_timer_started_msec"] = int(normalized.get("table_round_timer_started_msec", 0))
 	return normalized
+
+
+func _table_state_is_current(table: Dictionary) -> bool:
+	return str(table.get("schema", "")) == "roulette_table_state" and int(table.get("normalized_version", 0)) >= 1
 
 
 func _normalize_physics_profile(value: Variant) -> Dictionary:
@@ -2509,7 +2550,7 @@ func _update_table_after_spin(table: Dictionary, bets: Array, bet_results: Array
 		"bets": bets.duplicate(true),
 		"bet_results": result_bets,
 		"physics": _copy_dict(spin.get("physics", {})),
-		"trajectory": _dictionary_array(spin.get("trajectory", [])),
+		"trajectory": spin.get("trajectory", []) if typeof(spin.get("trajectory", [])) == TYPE_ARRAY else [],
 		"resolved_at_msec": maxi(0, result_msec),
 		"rng_state": rng.snapshot() if rng != null else {},
 	}
@@ -2531,7 +2572,7 @@ func _update_table_after_spin(table: Dictionary, bets: Array, bet_results: Array
 
 func _update_environment_table(environment: Dictionary, table: Dictionary) -> void:
 	var game_states: Dictionary = environment.get("game_states", {}) if typeof(environment.get("game_states", {})) == TYPE_DICTIONARY else {}
-	game_states[get_id()] = table.duplicate(true)
+	game_states[get_id()] = table
 	environment["game_states"] = game_states
 
 
@@ -2558,6 +2599,35 @@ func _roulette_result_message(winning_number: String, spin: Dictionary, bet_resu
 	if not security_message.is_empty():
 		base = "%s %s" % [base, security_message]
 	return base
+
+
+func _last_result_source(table: Dictionary) -> Dictionary:
+	var value: Variant = table.get("last_result", {})
+	if typeof(value) != TYPE_DICTIONARY:
+		return {}
+	return value
+
+
+func _surface_last_result(value: Variant) -> Dictionary:
+	if typeof(value) != TYPE_DICTIONARY:
+		return {}
+	var source: Dictionary = value
+	if source.is_empty():
+		return {}
+	var result: Dictionary = {}
+	for key_value in source.keys():
+		var key := str(key_value)
+		if key == "trajectory" or key == "physics" or key == "rng_state":
+			continue
+		var entry: Variant = source.get(key_value)
+		match typeof(entry):
+			TYPE_DICTIONARY:
+				result[key] = (entry as Dictionary).duplicate(true)
+			TYPE_ARRAY:
+				result[key] = (entry as Array).duplicate(true)
+			_:
+				result[key] = entry
+	return result
 
 
 func _roulette_recent_numbers(table: Dictionary) -> Array:
@@ -2916,9 +2986,9 @@ func _normalize_patrons(value: Variant, table: Dictionary) -> Array:
 	return result
 
 
-func _patrons_for_surface(table: Dictionary, last_result: Dictionary) -> Array:
+func _patrons_for_surface(table: Dictionary, last_result: Dictionary, now_msec: int = -1) -> Array:
 	var patrons := _dictionary_array(table.get("patrons", []))
-	var now := Time.get_ticks_msec()
+	var now := now_msec if now_msec >= 0 else Time.get_ticks_msec()
 	var visible_count := mini(patrons.size(), MAX_VISIBLE_PATRONS)
 	var visible_patrons: Array = []
 	for i in range(visible_count):

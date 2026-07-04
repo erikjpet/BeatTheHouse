@@ -40,7 +40,7 @@ const RESOLVE_BUDGETS := {
 	"bar_dice": {"avg_ms": 2.0, "p95_ms": 4.0, "max_ms": 8.0},
 	"blackjack": {"avg_ms": 7.0, "p95_ms": 10.0, "max_ms": 16.0},
 	"baccarat": {"avg_ms": 3.0, "p95_ms": 5.0, "max_ms": 8.0},
-	"roulette": {"avg_ms": 16.0, "p95_ms": 18.0, "max_ms": 20.0},
+	"roulette": {"avg_ms": 4.0, "p95_ms": 6.0, "max_ms": 12.0},
 	"video_poker": {"avg_ms": 3.0, "p95_ms": 5.0, "max_ms": 8.0},
 }
 
