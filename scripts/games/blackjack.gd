@@ -50,6 +50,9 @@ const BJ_CONSOLE_H := 84.0
 const BJ_TABLE_BOTTOM := 334.0
 const DRAW_DEAL_EVENTS_CACHE_KEY := "_blackjack_draw_deal_events"
 
+var draw_deal_events_cache_id := ""
+var draw_deal_events_cache: Array = []
+
 
 func enter(run_state: RunState, environment: Dictionary) -> Dictionary:
 	var result: Dictionary = super.enter(run_state, environment)
@@ -262,7 +265,7 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 		"surface_stake_controls_required": true,
 		"surface_embeds_outcomes": true,
 		"surface_animates_idle": blackjack_live_redraw_active,
-		"surface_realtime_state_refresh": blackjack_live_redraw_active,
+		"surface_realtime_state_refresh": false,
 		"surface_ui_protected_regions": _blackjack_ui_protected_regions(count_challenge),
 		"surface_hover_ui_protected_regions": [
 			_blackjack_ui_rect(236, 202, 428, 108, "blackjack_side_bet"),
@@ -447,35 +450,44 @@ func _blackjack_ui_rect(x: float, y: float, width: float, height: float, hover_a
 func draw_surface(surface, surface_state: Dictionary, _render_context: Dictionary = {}) -> bool:
 	if str(surface_state.get("surface_renderer", "")) != "blackjack":
 		return false
-	var draw_state := surface_state
 	if surface.surface_animation_active(DEAL_ANIMATION_CHANNEL):
-		draw_state = surface_state.duplicate(false)
-		draw_state[DRAW_DEAL_EVENTS_CACHE_KEY] = _deal_animation_event_array(surface_state.get("deal_animation_events", []))
+		_prepare_draw_deal_events_cache(surface_state)
 	surface.surface_begin_design_space(surface.surface_board_size())
-	_draw_blackjack_room(surface, draw_state)
-	_draw_blackjack_table(surface, draw_state)
-	_draw_table_patrons(surface, draw_state)
-	_draw_dealer_station(surface, draw_state)
-	_draw_player_station(surface, draw_state)
-	_draw_blackjack_table_notice(surface, draw_state)
-	_draw_blackjack_round_timer(surface, draw_state)
-	_draw_blackjack_ambient_event(surface, draw_state)
-	_draw_chip_rack(surface, draw_state)
-	_draw_table_actions(surface, draw_state)
-	_draw_basic_strategy_advice(surface, draw_state)
-	_draw_blackjack_result_board(surface, draw_state)
-	_draw_side_bet_rule_overlay(surface, draw_state)
-	_draw_deal_animation(surface, draw_state)
-	_draw_chip_payout_animation(surface, draw_state)
-	_draw_count_challenge(surface, draw_state)
+	_draw_blackjack_room(surface, surface_state)
+	_draw_blackjack_table(surface, surface_state)
+	_draw_table_patrons(surface, surface_state)
+	_draw_dealer_station(surface, surface_state)
+	_draw_player_station(surface, surface_state)
+	_draw_blackjack_table_notice(surface, surface_state)
+	_draw_blackjack_round_timer(surface, surface_state)
+	_draw_blackjack_ambient_event(surface, surface_state)
+	_draw_chip_rack(surface, surface_state)
+	_draw_table_actions(surface, surface_state)
+	_draw_basic_strategy_advice(surface, surface_state)
+	_draw_blackjack_result_board(surface, surface_state)
+	_draw_side_bet_rule_overlay(surface, surface_state)
+	_draw_deal_animation(surface, surface_state)
+	_draw_chip_payout_animation(surface, surface_state)
+	_draw_count_challenge(surface, surface_state)
 	return true
+
+
+func _prepare_draw_deal_events_cache(surface_state: Dictionary) -> void:
+	var deal_active_id := str(surface_state.get("deal_animation_id", ""))
+	if deal_active_id.is_empty():
+		draw_deal_events_cache_id = ""
+		draw_deal_events_cache = []
+		return
+	if draw_deal_events_cache_id == deal_active_id:
+		return
+	draw_deal_events_cache_id = deal_active_id
+	draw_deal_events_cache = _deal_animation_event_array(surface_state.get("deal_animation_events", []))
 
 
 func surface_needs_auto_tick(ui_state: Dictionary, run_state: RunState, environment: Dictionary) -> bool:
 	# Per-frame check: operate on the live stored table (zero-copy) and only
 	# build the full normalized session when a count challenge is actually
-	# pending. Stored table state is already normalized by every mutation path;
-	# the timer auto-start field persists directly on the stored dictionary.
+	# pending. Stored table state is already normalized by every mutation path.
 	var table: Dictionary = _peek_table_state(environment)
 	if table.is_empty():
 		return false
@@ -491,13 +503,13 @@ func surface_needs_auto_tick(ui_state: Dictionary, run_state: RunState, environm
 	var now_msec := int(ui_state.get("surface_time_msec", Time.get_ticks_msec()))
 	if _blackjack_table_motion_active(table, now_msec):
 		return false
-	var timer := GameModule.table_round_timer_status(table, now_msec, "Next hand")
+	var timer := GameModule.table_round_timer_status_peek(table, now_msec, "Next hand")
 	return bool(timer.get("due", false))
 
 
 func _peek_table_state(environment: Dictionary) -> Dictionary:
 	# Zero-copy view of the stored table for read-mostly per-frame checks.
-	# Callers must not restructure it; timer auto-start writes are intended.
+	# Callers must not mutate it or hold it across writes.
 	var states: Variant = environment.get("game_states", {})
 	if typeof(states) != TYPE_DICTIONARY:
 		return {}
@@ -2495,7 +2507,7 @@ func _draw_card_from_session(session: Dictionary, table: Dictionary) -> Dictiona
 	var cards: Array = _draw_cards_from_session(session, table, 1)
 	if cards.is_empty():
 		return {"rank": 2, "suit": 0, "deck": 0}
-	return (cards[0] as Dictionary).duplicate(true)
+	return (cards[0] as Dictionary).duplicate(true) # SA2_PER_FRAME_OK: shoe mutation helper, not rendering/per-frame.
 
 
 func _draw_cards_from_session(session: Dictionary, table: Dictionary, count: int) -> Array:
@@ -2535,7 +2547,7 @@ func _draw_cards_from_table_cursor(session: Dictionary, table: Dictionary, targe
 		var card_value: Variant = table_shoe[cursor]
 		cursor += 1
 		if typeof(card_value) == TYPE_DICTIONARY:
-			drawn.append((card_value as Dictionary).duplicate(true))
+			drawn.append((card_value as Dictionary).duplicate(true)) # SA2_PER_FRAME_OK: shoe mutation helper, not rendering/per-frame.
 	session["cards_consumed"] = cursor
 	session["shoe_remaining"] = maxi(0, table_shoe.size() - cursor)
 	return drawn.size() >= target_count
@@ -2621,6 +2633,8 @@ func _deal_animation_event_array(value: Variant) -> Array:
 
 
 func _surface_deal_animation_events(surface_state: Dictionary) -> Array:
+	if str(surface_state.get("deal_animation_id", "")) == draw_deal_events_cache_id:
+		return draw_deal_events_cache
 	var cached_value: Variant = surface_state.get(DRAW_DEAL_EVENTS_CACHE_KEY, [])
 	if typeof(cached_value) == TYPE_ARRAY:
 		var cached_events: Array = cached_value as Array

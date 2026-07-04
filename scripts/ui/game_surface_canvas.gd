@@ -183,7 +183,7 @@ func _draw_average_ms() -> float:
 func _draw_percentile_ms(percentile: float) -> float:
 	if perf_draw_frame_usec_samples.is_empty():
 		return 0.0
-	var sorted_samples := perf_draw_frame_usec_samples.duplicate()
+	var sorted_samples := perf_draw_frame_usec_samples.duplicate() # SA2_PER_FRAME_OK: performance counter read, not rendering/per-frame.
 	sorted_samples.sort()
 	var index := clampi(int(ceil(percentile * float(sorted_samples.size()))) - 1, 0, sorted_samples.size() - 1)
 	return float(int(sorted_samples[index])) / 1000.0

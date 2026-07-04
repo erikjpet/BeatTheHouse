@@ -320,13 +320,12 @@ func _roulette_static_betting_view(surface, surface_state: Dictionary) -> bool:
 func surface_needs_auto_tick(ui_state: Dictionary, run_state: RunState, environment: Dictionary) -> bool:
 	# Per-frame check: operate on the live stored table (zero-copy) instead of
 	# normalize -> deep copy -> write-back every frame. Stored state is already
-	# normalized by every mutation path; the timer auto-start field persists
-	# directly on the stored dictionary.
+	# normalized by every mutation path.
 	var table := _peek_table_state(environment)
 	if table.is_empty() or bool(table.get("table_barred", false)):
 		return false
 	var now_msec := int(ui_state.get("surface_time_msec", Time.get_ticks_msec()))
-	var timer := GameModule.table_round_timer_status(table, now_msec, "Next spin")
+	var timer := GameModule.table_round_timer_status_peek(table, now_msec, "Next spin")
 	if _roulette_motion_active(table, now_msec) and not bool(timer.get("due", false)):
 		return false
 	return bool(timer.get("due", false))
@@ -334,7 +333,7 @@ func surface_needs_auto_tick(ui_state: Dictionary, run_state: RunState, environm
 
 func _peek_table_state(environment: Dictionary) -> Dictionary:
 	# Zero-copy view of the stored table for read-mostly per-frame checks.
-	# Callers must not restructure it; timer auto-start writes are intended.
+	# Callers must not mutate it or hold it across writes.
 	var states: Variant = environment.get("game_states", {})
 	if typeof(states) != TYPE_DICTIONARY:
 		return {}

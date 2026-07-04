@@ -1136,10 +1136,8 @@ func _draw_selected_object_info() -> void:
 		draw_string(font, Vector2(card.position.x + OBJECT_INFO_PADDING_X, y), _fit_draw_text(str(line), font, 9, card.size.x - OBJECT_INFO_PADDING_X * 2.0), HORIZONTAL_ALIGNMENT_LEFT, card.size.x - OBJECT_INFO_PADDING_X * 2.0, 9, C_SOFT)
 		y += OBJECT_INFO_LINE_HEIGHT
 	if _selected_info_has_action_button(object_data):
-		var visual_info := info.duplicate(true)
-		visual_info["rect"] = card
 		var mouse_board_position := _local_to_board_position(get_local_mouse_position())
-		for entry in _selected_info_action_entries_from_info(visual_info):
+		for entry in _selected_info_action_entries_for_rect(info, card):
 			var button_rect: Rect2 = entry.get("button_rect", Rect2())
 			if button_rect.size.x <= 0.0 or button_rect.size.y <= 0.0:
 				continue
@@ -1809,9 +1807,7 @@ func _selected_info_action_button_rect() -> Rect2:
 	var info := _selected_object_info()
 	if info.is_empty():
 		return Rect2()
-	var visual_info := info.duplicate(true)
-	visual_info["rect"] = _animated_info_card_rect(info)
-	return _selected_info_action_button_rect_from_info(visual_info)
+	return _selected_info_action_button_rect_from_entries(_selected_info_action_entries_for_rect(info, _animated_info_card_rect(info)))
 
 
 func _selected_info_action_button_rect_from_info(info: Dictionary) -> Rect2:
@@ -1828,10 +1824,17 @@ func _selected_info_action_button_rect_from_entries(entries: Array) -> Rect2:
 func _selected_info_action_entries_from_info(info: Dictionary) -> Array:
 	if info.is_empty():
 		return []
+	var rect_value: Variant = info.get("rect", Rect2())
+	var card: Rect2 = rect_value if typeof(rect_value) == TYPE_RECT2 else Rect2()
+	return _selected_info_action_entries_for_rect(info, card)
+
+
+func _selected_info_action_entries_for_rect(info: Dictionary, card: Rect2) -> Array:
+	if info.is_empty():
+		return []
 	var object_data: Dictionary = info.get("object", {})
 	if not _selected_info_has_action_button(object_data):
 		return []
-	var card: Rect2 = info.get("rect", Rect2())
 	if card.size.x <= 0.0 or card.size.y <= 0.0:
 		return []
 	var width := card.size.x - OBJECT_INFO_PADDING_X * 2.0

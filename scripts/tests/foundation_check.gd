@@ -413,6 +413,7 @@ func _check_content(library: ContentLibrary, failures: Array) -> void:
 	_check_content_group_modularity(library, failures)
 	_check_challenge_pack_content(library, failures)
 	_check_s0_2_baseline_regression_fixtures(library, failures)
+	_check_sa_2_per_frame_contracts(failures)
 
 	var run_state: RunState = RunStateScript.new()
 	run_state.start_new("CONTENT-CHECK")
@@ -481,6 +482,151 @@ func _check_s0_2_kitty_lounge_mixed_hook_layout(library: ContentLibrary, failure
 				continue
 			if _layout_rects_overlap_with_gap(rect, other_rect):
 				failures.append("S0.2 Kitty Cat Lounge generated layout overlaps: %s and %s." % [key, other_key])
+
+
+func _check_sa_2_per_frame_contracts(failures: Array) -> void:
+	var script_paths := _sa_2_runtime_script_paths("res://scripts")
+	for path_value in script_paths:
+		var path := str(path_value)
+		var source := FileAccess.get_file_as_string(path)
+		if source.is_empty():
+			continue
+		_sa_2_scan_per_frame_allocations(path, source, failures)
+		_sa_2_scan_peek_contract(path, source, failures)
+
+
+func _sa_2_runtime_script_paths(root_path: String) -> Array:
+	var paths: Array = []
+	_sa_2_collect_runtime_scripts(root_path, paths)
+	paths.sort()
+	return paths
+
+
+func _sa_2_collect_runtime_scripts(dir_path: String, paths: Array) -> void:
+	if dir_path == "res://scripts/tests":
+		return
+	var dir := DirAccess.open(dir_path)
+	if dir == null:
+		return
+	dir.list_dir_begin()
+	var entry := dir.get_next()
+	while not entry.is_empty():
+		var child_path := "%s/%s" % [dir_path, entry]
+		if dir.current_is_dir():
+			if child_path != "res://scripts/tests":
+				_sa_2_collect_runtime_scripts(child_path, paths)
+		elif entry.ends_with(".gd"):
+			paths.append(child_path)
+		entry = dir.get_next()
+	dir.list_dir_end()
+
+
+func _sa_2_scan_per_frame_allocations(path: String, source: String, failures: Array) -> void:
+	var current_function := ""
+	var current_per_frame := false
+	var lines := source.split("\n")
+	for index in range(lines.size()):
+		var line := str(lines[index])
+		var stripped := line.strip_edges()
+		var function_name := _sa_2_function_name_from_line(stripped)
+		if not function_name.is_empty():
+			current_function = function_name
+			current_per_frame = _sa_2_is_per_frame_function(function_name)
+		if not current_per_frame:
+			continue
+		if not _sa_2_line_has_banned_allocation(line):
+			continue
+		if _sa_2_line_has_valid_waiver(line):
+			continue
+		failures.append("SA.2 per-frame allocation tripwire: %s:%d %s contains duplicate()/JSON.stringify without SA2_PER_FRAME_OK reason." % [path, index + 1, current_function])
+
+
+func _sa_2_scan_peek_contract(path: String, source: String, failures: Array) -> void:
+	var current_function := ""
+	var peek_vars: Array = []
+	var lines := source.split("\n")
+	for index in range(lines.size()):
+		var line := str(lines[index])
+		var stripped := line.strip_edges()
+		var function_name := _sa_2_function_name_from_line(stripped)
+		if not function_name.is_empty():
+			current_function = function_name
+			peek_vars = []
+		var peek_var := _sa_2_peek_assignment_name(stripped)
+		if not peek_var.is_empty() and not peek_vars.has(peek_var):
+			peek_vars.append(peek_var)
+		if peek_vars.is_empty() or stripped.begins_with("#"):
+			continue
+		if stripped.find("table_round_timer_status(") != -1 and stripped.find("table_round_timer_status_peek(") == -1:
+			failures.append("SA.2 peek contract tripwire: %s:%d %s passes a live peek into mutating table_round_timer_status()." % [path, index + 1, current_function])
+		if stripped.find("StateScript.write_machine(") != -1:
+			failures.append("SA.2 peek contract tripwire: %s:%d %s writes slot state after live peek; use read_machine() for mutation paths." % [path, index + 1, current_function])
+		for var_name_value in peek_vars:
+			var var_name := str(var_name_value)
+			if _sa_2_line_mutates_peek_var(stripped, var_name):
+				failures.append("SA.2 peek contract tripwire: %s:%d %s mutates live peek variable '%s'." % [path, index + 1, current_function, var_name])
+
+
+func _sa_2_function_name_from_line(stripped_line: String) -> String:
+	var line := stripped_line
+	if line.begins_with("static func "):
+		line = line.substr("static ".length())
+	if not line.begins_with("func "):
+		return ""
+	var after_func := line.substr("func ".length())
+	var paren_index := after_func.find("(")
+	if paren_index == -1:
+		return ""
+	return after_func.substr(0, paren_index).strip_edges()
+
+
+func _sa_2_is_per_frame_function(function_name: String) -> bool:
+	return function_name == "_process" \
+		or function_name == "_physics_process" \
+		or function_name == "_draw" \
+		or function_name == "draw_surface" \
+		or function_name.begins_with("_draw_") \
+		or function_name.ends_with("_per_frame") \
+		or function_name.ends_with("_needs_auto_tick") \
+		or function_name.ends_with("_runtime_needs_tick")
+
+
+func _sa_2_line_has_banned_allocation(line: String) -> bool:
+	return line.find("duplicate(") != -1 or line.find("JSON.stringify") != -1
+
+
+func _sa_2_line_has_valid_waiver(line: String) -> bool:
+	var marker := "SA2_PER_FRAME_OK:"
+	var marker_index := line.find(marker)
+	if marker_index == -1:
+		return false
+	return line.substr(marker_index + marker.length()).strip_edges().length() >= 8
+
+
+func _sa_2_peek_assignment_name(stripped_line: String) -> String:
+	if stripped_line.find("_peek_table_state(") == -1 and stripped_line.find("StateScript.peek_machine(") == -1:
+		return ""
+	var assignment_index := stripped_line.find("=")
+	if assignment_index == -1:
+		return ""
+	var left_side := stripped_line.substr(0, assignment_index).strip_edges()
+	if left_side.begins_with("var "):
+		left_side = left_side.substr("var ".length()).strip_edges()
+	var colon_index := left_side.find(":")
+	if colon_index != -1:
+		left_side = left_side.substr(0, colon_index).strip_edges()
+	return left_side
+
+
+func _sa_2_line_mutates_peek_var(stripped_line: String, var_name: String) -> bool:
+	if var_name.is_empty():
+		return false
+	if stripped_line.begins_with("%s[" % var_name) and stripped_line.find("=") != -1:
+		return true
+	for method_name in [".set(", ".erase(", ".clear(", ".merge(", ".assign("]:
+		if stripped_line.begins_with("%s%s" % [var_name, method_name]):
+			return true
+	return false
 
 
 func _check_start_shop_environment(environment: EnvironmentInstance, failures: Array) -> void:
@@ -7250,8 +7396,11 @@ func _check_baccarat_surface_contract(game: GameModule, failures: Array, library
 		failures.append("Baccarat surface did not expose immersive dealer-table metadata.")
 	if not bool(surface.get("surface_controls_native", false)):
 		failures.append("Baccarat surface did not expose native table controls.")
-	if not bool(surface.get("surface_realtime_state_refresh", false)) or (surface.get("table_round_timer", {}) as Dictionary).is_empty():
+	var baccarat_round_timer: Dictionary = surface.get("table_round_timer", {}) if typeof(surface.get("table_round_timer", {})) == TYPE_DICTIONARY else {}
+	if baccarat_round_timer.is_empty():
 		failures.append("Baccarat betting surface did not expose realtime table-round timer state.")
+	if bool(surface.get("surface_realtime_state_refresh", false)):
+		failures.append("Baccarat static betting surface should not request full snapshot refreshes.")
 	var guide_explainer: Dictionary = surface.get("baccarat_explainer", {}) if typeof(surface.get("baccarat_explainer", {})) == TYPE_DICTIONARY else {}
 	if str(guide_explainer.get("mode", "")) != "guide" or str(guide_explainer.get("primary", "")).find("Bet Player") < 0:
 		failures.append("Baccarat betting surface did not expose a beginner-readable guide explainer.")
@@ -10072,8 +10221,11 @@ func _check_bar_dice_surface_contract(game: GameModule, failures: Array) -> void
 		failures.append("Bar Dice surface did not expose native surface controls.")
 	if not bool(surface.get("surface_embeds_outcomes", false)):
 		failures.append("Bar Dice surface did not declare embedded outcomes.")
-	if not bool(surface.get("surface_realtime_state_refresh", false)):
-		failures.append("Bar Dice table surface did not request timer/patron state refreshes.")
+	var bar_dice_round_timer: Dictionary = surface.get("table_round_timer", {}) if typeof(surface.get("table_round_timer", {})) == TYPE_DICTIONARY else {}
+	if bar_dice_round_timer.is_empty() or (surface.get("patrons", []) as Array).is_empty():
+		failures.append("Bar Dice table surface did not expose timer/patron state.")
+	if bool(surface.get("surface_realtime_state_refresh", false)):
+		failures.append("Bar Dice static table surface should not request full snapshot refreshes.")
 	if bool(surface.get("surface_stake_controls_required", true)):
 		failures.append("Bar Dice should use its generated chip ladder instead of host stake controls.")
 	if (surface.get("player", []) as Array).size() != 5:

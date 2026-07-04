@@ -284,9 +284,17 @@ static func surface_audio_spec(payload: Dictionary = {}) -> Dictionary:
 
 
 static func table_round_timer_status(table: Dictionary, now_msec: int, label: String = "Next round", duration_msec: int = TABLE_ROUND_START_DELAY_MSEC, auto_start: bool = true) -> Dictionary:
+	return _table_round_timer_status_impl(table, now_msec, label, duration_msec, auto_start, true)
+
+
+static func table_round_timer_status_peek(table: Dictionary, now_msec: int, label: String = "Next round", duration_msec: int = TABLE_ROUND_START_DELAY_MSEC, auto_start: bool = true) -> Dictionary:
+	return _table_round_timer_status_impl(table, now_msec, label, duration_msec, auto_start, false)
+
+
+static func _table_round_timer_status_impl(table: Dictionary, now_msec: int, label: String, duration_msec: int, auto_start: bool, mutate_start: bool) -> Dictionary:
 	var safe_duration := maxi(1000, duration_msec)
 	var started := int(table.get("table_round_timer_started_msec", 0))
-	if auto_start and started == 0:
+	if auto_start and mutate_start and started == 0:
 		started = now_msec
 		table["table_round_timer_started_msec"] = started
 	var elapsed := maxi(0, now_msec - started) if started != 0 else 0

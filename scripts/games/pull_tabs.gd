@@ -1869,7 +1869,7 @@ func _draw_ticket_from_deal(deal: Dictionary, _machine: Dictionary, is_cheat: bo
 	var prizes := _dictionary_array(deal.get("prizes", []))
 	var winning_prize := {}
 	if prize_index >= 0 and prize_index < prizes.size():
-		winning_prize = (prizes[prize_index] as Dictionary).duplicate(true)
+		winning_prize = (prizes[prize_index] as Dictionary).duplicate(true) # SA2_PER_FRAME_OK: ticket-sale state mutation helper, not rendering/per-frame.
 		winning_prize["remaining"] = maxi(0, int(winning_prize.get("remaining", 0)) - 1)
 		prizes[prize_index] = winning_prize
 		deal["prizes"] = _normalize_prizes(prizes)
@@ -2318,7 +2318,7 @@ func _suspicious_ticket_count(tickets: Array) -> int:
 	for ticket_value in tickets:
 		if typeof(ticket_value) != TYPE_DICTIONARY:
 			continue
-		var ticket: Dictionary = ticket_value
+		var ticket: Dictionary = ticket_value as Dictionary
 		if bool(ticket.get("tainted", false)) or bool(ticket.get("fake", false)):
 			count += 1
 	return count
@@ -2473,7 +2473,7 @@ func _high_value_ticket_count(tickets: Array) -> int:
 	for ticket_value in tickets:
 		if typeof(ticket_value) != TYPE_DICTIONARY:
 			continue
-		var ticket: Dictionary = ticket_value
+		var ticket: Dictionary = ticket_value as Dictionary
 		if int(ticket.get("payout", 0)) >= CASHOUT_HIGH_VALUE_TICKET_THRESHOLD:
 			count += 1
 	return count
@@ -2994,13 +2994,17 @@ func _draw_pull_tab_stack_panel(surface, rect: Rect2, surface_state: Dictionary,
 	var pending_payout := int(surface_state.get("pull_tab_pending_payout", 0))
 	var active_rect := Rect2(rect.position + Vector2(42, 46), Vector2(310, 172))
 	var pile_rect := Rect2(rect.position + Vector2(20, 236), Vector2(rect.size.x - 40, 138))
-	var drawn_winner_pile := winner_pile.duplicate(false)
-	var drawn_loser_pile := loser_pile.duplicate(false)
+	var filing_ticket_id := ""
+	var filing_pile := ""
 	if bool(surface.surface_animation_active(PULL_TAB_FILE_CHANNEL)):
-		var filing_ticket := _pt_copy_dict(surface_state.get("pull_tab_file_animation_ticket", {}))
-		var filing_ticket_id := str(filing_ticket.get("id", ""))
-		drawn_winner_pile = _tickets_without_id(drawn_winner_pile, filing_ticket_id)
-		drawn_loser_pile = _tickets_without_id(drawn_loser_pile, filing_ticket_id)
+		var filing_ticket_value: Variant = surface_state.get("pull_tab_file_animation_ticket", {})
+		var filing_ticket: Dictionary = filing_ticket_value if typeof(filing_ticket_value) == TYPE_DICTIONARY else {}
+		filing_ticket_id = str(filing_ticket.get("id", ""))
+		filing_pile = str(surface_state.get("pull_tab_file_animation_pile", ""))
+		if filing_pile.is_empty() and not filing_ticket_id.is_empty():
+			filing_pile = "winner_pile" if int(filing_ticket.get("payout", 0)) > 0 else "loser_pile"
+	var winner_excluded_id := filing_ticket_id if filing_pile == "winner_pile" else ""
+	var loser_excluded_id := filing_ticket_id if filing_pile == "loser_pile" else ""
 	surface.surface_label("TICKET PILE", rect.position + Vector2(14, 22), 18, C_CYAN)
 	surface.surface_label("%d/%d" % [mini(cursor + 1, maxi(1, count)), count], rect.position + Vector2(118, 22), 14, C_SOFT)
 	if pending_payout > 0:
@@ -3008,22 +3012,23 @@ func _draw_pull_tab_stack_panel(surface, rect: Rect2, surface_state: Dictionary,
 	_draw_pull_tab_nav_button(surface, Rect2(rect.position + Vector2(170, 8), Vector2(32, 24)), "<", "pull_tab_prev", count > 1 and cursor > 0)
 	_draw_pull_tab_nav_button(surface, Rect2(rect.position + Vector2(208, 8), Vector2(32, 24)), ">", "pull_tab_next", count > 1 and cursor < count - 1)
 	_draw_pull_tab_nav_button(surface, Rect2(rect.position + Vector2(246, 8), Vector2(54, 24)), "OPEN", "pull_tab_next_unopened", count > 0)
-	var display_stack := stack.duplicate(false)
-	if bool(surface.surface_animation_active(PULL_TAB_DISPENSE_CHANNEL)) and not display_stack.is_empty():
-		var arriving: Dictionary = display_stack[0]
+	var display_start_index := 0
+	if bool(surface.surface_animation_active(PULL_TAB_DISPENSE_CHANNEL)) and not stack.is_empty():
+		var arriving: Dictionary = stack[0] as Dictionary
 		if str(arriving.get("id", "")) == str(surface.surface_animation_active_id(PULL_TAB_DISPENSE_CHANNEL)):
-			display_stack.remove_at(0)
-	if display_stack.is_empty():
+			display_start_index = 1
+	var display_count := maxi(0, stack.size() - display_start_index)
+	if display_count <= 0:
 		_draw_pull_tab_empty_pile(surface, Rect2(rect.position + Vector2(38, 56), Vector2(316, 148)), int(surface_state.get("pull_tab_tray_count", 0)))
-		_draw_pull_tab_sorted_piles(surface, pile_rect, drawn_winner_pile, drawn_loser_pile)
+		_draw_pull_tab_sorted_piles(surface, pile_rect, winner_pile, loser_pile, winner_excluded_id, loser_excluded_id)
 		_draw_pull_tab_file_animation(surface, surface_state, active_rect, pile_rect)
 		return
-	for view_index in range(mini(display_stack.size() - 1, 5), 0, -1):
-		var ticket: Dictionary = display_stack[view_index]
+	for view_index in range(mini(display_count - 1, 5), 0, -1):
+		var ticket: Dictionary = stack[display_start_index + view_index] as Dictionary
 		_draw_pull_tab_mini_ticket(surface, ticket, Rect2(rect.position + Vector2(68 + view_index * 10, 56 + view_index * 5), Vector2(238, 138)), 0.18 + float(view_index) * 0.02)
-	var active: Dictionary = display_stack[0]
+	var active: Dictionary = stack[display_start_index] as Dictionary
 	_draw_pull_tab_ticket(surface, active, active_rect, true)
-	_draw_pull_tab_sorted_piles(surface, pile_rect, drawn_winner_pile, drawn_loser_pile)
+	_draw_pull_tab_sorted_piles(surface, pile_rect, winner_pile, loser_pile, winner_excluded_id, loser_excluded_id)
 	_draw_pull_tab_file_animation(surface, surface_state, active_rect, pile_rect)
 
 
@@ -3333,70 +3338,125 @@ func _draw_pull_tab_row(surface, ticket: Dictionary, row_index: int, row_rect: R
 		surface.surface_add_exact_invisible_hit(row_rect, "pull_tab_reveal_next", row_index)
 
 
-func _draw_pull_tab_sorted_piles(surface, rect: Rect2, winner_pile: Array, loser_pile: Array) -> void:
+func _draw_pull_tab_sorted_piles(surface, rect: Rect2, winner_pile: Array, loser_pile: Array, winner_excluded_id: String = "", loser_excluded_id: String = "") -> void:
 	var gap := 8.0
 	var pile_width := (rect.size.x - gap) * 0.5
-	_draw_pull_tab_ordered_winner_pile(surface, Rect2(rect.position, Vector2(pile_width, rect.size.y)), winner_pile)
-	_draw_pull_tab_messy_loser_pile(surface, Rect2(rect.position + Vector2(pile_width + gap, 0), Vector2(pile_width, rect.size.y)), loser_pile)
+	_draw_pull_tab_ordered_winner_pile(surface, Rect2(rect.position, Vector2(pile_width, rect.size.y)), winner_pile, winner_excluded_id, not winner_excluded_id.is_empty())
+	_draw_pull_tab_messy_loser_pile(surface, Rect2(rect.position + Vector2(pile_width + gap, 0), Vector2(pile_width, rect.size.y)), loser_pile, loser_excluded_id, not loser_excluded_id.is_empty())
 
 
-func _draw_pull_tab_ordered_winner_pile(surface, rect: Rect2, ripped_tabs: Array) -> void:
+func _draw_pull_tab_ordered_winner_pile(surface, rect: Rect2, ripped_tabs: Array, excluded_ticket_id: String = "", excluded_ticket_present: bool = false) -> void:
 	var accent := C_TEAL
 	surface.draw_rect(rect, Color("#05080b"))
 	surface.draw_rect(rect, Color(accent.r, accent.g, accent.b, 0.22), false, 1)
 	surface.surface_label("WINNERS", rect.position + Vector2(7, 13), 9, accent)
-	surface.surface_label(str(ripped_tabs.size()), rect.position + Vector2(rect.size.x - 18, 13), 9, accent)
-	if ripped_tabs.is_empty():
+	var filtered_count := _pile_filtered_count(ripped_tabs, excluded_ticket_id, excluded_ticket_present)
+	surface.surface_label(str(filtered_count), rect.position + Vector2(rect.size.x - 18, 13), 9, accent)
+	if filtered_count <= 0:
 		_draw_pull_tab_empty_stack_ghost(surface, rect, accent)
 		return
-	var visible := _visible_pile_tail(ripped_tabs, 7)
-	var buried_count := maxi(0, _pile_depth_index(visible[0], 0))
-	var buried_lift := minf(10.0, float(buried_count) * 1.2)
+	var visible_count := mini(filtered_count, 7)
 	var ticket_size := Vector2(rect.size.x - 34, 28)
 	var bottom_y := rect.position.y + rect.size.y - ticket_size.y - 8.0
-	if buried_count > 0:
-		for shadow_index in range(mini(buried_count, 5)):
-			var shadow_rect := Rect2(rect.position + Vector2(16 + shadow_index, rect.size.y - 36 - shadow_index * 2), ticket_size)
-			surface.draw_rect(shadow_rect, Color(1.0, 0.94, 0.80, 0.06))
-			surface.draw_rect(shadow_rect, Color(accent.r, accent.g, accent.b, 0.12), false, 1)
-	for index in range(visible.size()):
-		var ticket: Dictionary = visible[index]
-		var offset := Vector2(16 + mini(index, 4) * 2, bottom_y - rect.position.y - buried_lift - float(index) * 8.0)
+	var source_start_index := _pile_visible_source_start(ripped_tabs, visible_count, excluded_ticket_id)
+	var draw_index := 0
+	var buried_lift := 0.0
+	var shadows_drawn := false
+	for source_index in range(source_start_index, ripped_tabs.size()):
+		var ticket_value: Variant = ripped_tabs[source_index]
+		if _pile_ticket_excluded(ticket_value, excluded_ticket_id):
+			continue
+		var ticket: Dictionary = ticket_value as Dictionary
+		if not shadows_drawn:
+			var buried_count := maxi(0, _pile_depth_index(ticket, 0))
+			buried_lift = minf(10.0, float(buried_count) * 1.2)
+			if buried_count > 0:
+				for shadow_index in range(mini(buried_count, 5)):
+					var shadow_rect := Rect2(rect.position + Vector2(16 + shadow_index, rect.size.y - 36 - shadow_index * 2), ticket_size)
+					surface.draw_rect(shadow_rect, Color(1.0, 0.94, 0.80, 0.06))
+					surface.draw_rect(shadow_rect, Color(accent.r, accent.g, accent.b, 0.12), false, 1)
+			shadows_drawn = true
+		var offset := Vector2(16 + mini(draw_index, 4) * 2, bottom_y - rect.position.y - buried_lift - float(draw_index) * 8.0)
 		var ticket_rect := Rect2(rect.position + offset, ticket_size)
-		_draw_pull_tab_pile_ticket(surface, ticket, ticket_rect, index, true)
+		_draw_pull_tab_pile_ticket(surface, ticket, ticket_rect, draw_index, true)
+		draw_index += 1
 
 
-func _draw_pull_tab_messy_loser_pile(surface, rect: Rect2, ripped_tabs: Array) -> void:
+func _draw_pull_tab_messy_loser_pile(surface, rect: Rect2, ripped_tabs: Array, excluded_ticket_id: String = "", excluded_ticket_present: bool = false) -> void:
 	var accent := C_AMBER
 	surface.draw_rect(rect, Color("#080607"))
 	surface.draw_rect(rect, Color(accent.r, accent.g, accent.b, 0.24), false, 1)
 	surface.surface_label("LOSERS", rect.position + Vector2(7, 13), 9, accent)
-	surface.surface_label(str(ripped_tabs.size()), rect.position + Vector2(rect.size.x - 18, 13), 9, accent)
-	if ripped_tabs.is_empty():
+	var filtered_count := _pile_filtered_count(ripped_tabs, excluded_ticket_id, excluded_ticket_present)
+	surface.surface_label(str(filtered_count), rect.position + Vector2(rect.size.x - 18, 13), 9, accent)
+	if filtered_count <= 0:
 		_draw_pull_tab_empty_stack_ghost(surface, rect, accent)
 		return
-	var visible := _visible_pile_tail(ripped_tabs, 10)
-	var buried_count := maxi(0, _pile_depth_index(visible[0], 0))
-	var buried_lift := minf(12.0, float(buried_count) * 1.1)
+	var visible_count := mini(filtered_count, 10)
 	var bottom_y := rect.position.y + rect.size.y - 31.0
-	if buried_count > 0:
-		for shadow_index in range(mini(buried_count, 6)):
-			var shadow_rect := Rect2(rect.position + Vector2(18 + shadow_index * 2, rect.size.y - 35 - shadow_index * 2), Vector2(rect.size.x - 38, 24))
-			surface.draw_rect(shadow_rect, Color(1.0, 0.94, 0.80, 0.05))
-			surface.draw_rect(shadow_rect, Color(accent.r, accent.g, accent.b, 0.10), false, 1)
-	for index in range(visible.size()):
-		var ticket: Dictionary = visible[index]
-		var age_index := _pile_depth_index(ticket, index)
+	var source_start_index := _pile_visible_source_start(ripped_tabs, visible_count, excluded_ticket_id)
+	var draw_index := 0
+	var buried_lift := 0.0
+	var shadows_drawn := false
+	for source_index in range(source_start_index, ripped_tabs.size()):
+		var ticket_value: Variant = ripped_tabs[source_index]
+		if _pile_ticket_excluded(ticket_value, excluded_ticket_id):
+			continue
+		var ticket: Dictionary = ticket_value as Dictionary
+		if not shadows_drawn:
+			var buried_count := maxi(0, _pile_depth_index(ticket, 0))
+			buried_lift = minf(12.0, float(buried_count) * 1.1)
+			if buried_count > 0:
+				for shadow_index in range(mini(buried_count, 6)):
+					var shadow_rect := Rect2(rect.position + Vector2(18 + shadow_index * 2, rect.size.y - 35 - shadow_index * 2), Vector2(rect.size.x - 38, 24))
+					surface.draw_rect(shadow_rect, Color(1.0, 0.94, 0.80, 0.05))
+					surface.draw_rect(shadow_rect, Color(accent.r, accent.g, accent.b, 0.10), false, 1)
+			shadows_drawn = true
+		var age_index := _pile_depth_index(ticket, draw_index)
 		var jitter := Vector2(float((age_index * 17) % 13) - 6.0, float((age_index * 11) % 9) - 4.0)
-		var pos := Vector2(rect.position.x + 22.0 + float((age_index % 3) * 4), bottom_y - buried_lift - float(index) * 7.0) + jitter
+		var pos := Vector2(rect.position.x + 22.0 + float((age_index % 3) * 4), bottom_y - buried_lift - float(draw_index) * 7.0) + jitter
 		var size := Vector2(rect.size.x - 46.0 + float((age_index * 7) % 8), 23 + float((age_index * 5) % 5))
-		_draw_pull_tab_pile_ticket(surface, ticket, Rect2(pos, size), index, false)
+		_draw_pull_tab_pile_ticket(surface, ticket, Rect2(pos, size), draw_index, false)
+		draw_index += 1
 
 
-func _visible_pile_tail(tickets: Array, limit: int) -> Array:
-	if tickets.size() <= limit:
-		return tickets.duplicate(false)
-	return tickets.slice(tickets.size() - limit, tickets.size())
+func _pile_filtered_count(tickets: Array, excluded_ticket_id: String, excluded_ticket_present: bool = false) -> int:
+	if excluded_ticket_id.is_empty():
+		return tickets.size()
+	if excluded_ticket_present:
+		return maxi(0, tickets.size() - 1)
+	var count := 0
+	for ticket_value in tickets:
+		if _pile_ticket_excluded(ticket_value, excluded_ticket_id):
+			continue
+		count += 1
+	return count
+
+
+func _pile_visible_source_start(tickets: Array, visible_count: int, excluded_ticket_id: String) -> int:
+	if tickets.is_empty() or visible_count <= 0:
+		return 0
+	if excluded_ticket_id.is_empty():
+		return maxi(0, tickets.size() - visible_count)
+	var seen := 0
+	var source_start_index := tickets.size()
+	for source_index in range(tickets.size() - 1, -1, -1):
+		var ticket_value: Variant = tickets[source_index]
+		if _pile_ticket_excluded(ticket_value, excluded_ticket_id):
+			continue
+		source_start_index = source_index
+		seen += 1
+		if seen >= visible_count:
+			break
+	if source_start_index >= tickets.size():
+		return 0
+	return source_start_index
+
+
+func _pile_ticket_excluded(ticket_value: Variant, excluded_ticket_id: String) -> bool:
+	if typeof(ticket_value) != TYPE_DICTIONARY:
+		return true
+	return not excluded_ticket_id.is_empty() and str((ticket_value as Dictionary).get("id", "")) == excluded_ticket_id
 
 
 func _pile_depth_index(ticket_value: Variant, fallback: int) -> int:
@@ -3507,20 +3567,6 @@ func _pull_tab_find_ticket(stack: Array, ticket_id: String) -> Dictionary:
 		if str(ticket.get("id", "")) == ticket_id:
 			return ticket
 	return {}
-
-
-func _tickets_without_id(tickets: Array, ticket_id: String) -> Array:
-	if ticket_id.is_empty():
-		return tickets.duplicate(false)
-	var result: Array = []
-	for value in tickets:
-		if typeof(value) != TYPE_DICTIONARY:
-			continue
-		var ticket: Dictionary = value
-		if str(ticket.get("id", "")) == ticket_id:
-			continue
-		result.append(ticket)
-	return result
 
 
 func _ease_out_cubic(t: float) -> float:

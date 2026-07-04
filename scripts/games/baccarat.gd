@@ -298,8 +298,7 @@ func draw_surface(surface, surface_state: Dictionary, _render_context: Dictionar
 func surface_needs_auto_tick(ui_state: Dictionary, run_state: RunState, environment: Dictionary) -> bool:
 	# Per-frame check: operate on the live stored table (zero-copy) instead of
 	# normalize -> deep copy -> write-back every frame. Stored state is already
-	# normalized by every mutation path; the timer auto-start field persists
-	# directly on the stored dictionary.
+	# normalized by every mutation path.
 	var table := _peek_table_state(environment)
 	if table.is_empty():
 		return false
@@ -309,13 +308,13 @@ func surface_needs_auto_tick(ui_state: Dictionary, run_state: RunState, environm
 		var elapsed_msec := now_msec - int((last_result as Dictionary).get("resolved_at_msec", 0))
 		if elapsed_msec >= 0 and elapsed_msec < DEAL_ANIMATION_DURATION_MSEC + PAYOUT_ANIMATION_DURATION_MSEC:
 			return false
-	var timer := GameModule.table_round_timer_status(table, now_msec, "Next hand")
+	var timer := GameModule.table_round_timer_status_peek(table, now_msec, "Next hand")
 	return bool(timer.get("due", false))
 
 
 func _peek_table_state(environment: Dictionary) -> Dictionary:
 	# Zero-copy view of the stored table for read-mostly per-frame checks.
-	# Callers must not restructure it; timer auto-start writes are intended.
+	# Callers must not mutate it or hold it across writes.
 	var states: Variant = environment.get("game_states", {})
 	if typeof(states) != TYPE_DICTIONARY:
 		return {}
