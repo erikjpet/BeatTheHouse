@@ -1464,6 +1464,24 @@ func _run() -> void:
 		return
 	environment_canvas.call("render_environment_snapshot", environment_snapshot)
 	await process_frame
+	var idle_animation_start_snapshot: Dictionary = environment_canvas.call("current_view_snapshot")
+	var idle_animation_start_time := float(idle_animation_start_snapshot.get("scene_animation_time", 0.0))
+	var idle_animation_start_redraw_count := int(idle_animation_start_snapshot.get("scene_idle_animation_redraw_count", 0))
+	for _idle_animation_frame in range(12):
+		await process_frame
+	var idle_animation_end_snapshot: Dictionary = environment_canvas.call("current_view_snapshot")
+	if not bool(idle_animation_end_snapshot.get("scene_idle_animation_active", false)):
+		push_error("Environment canvas should keep room-life animation active outside reduced-motion mode.")
+		quit(1)
+		return
+	if float(idle_animation_end_snapshot.get("scene_animation_time", 0.0)) <= idle_animation_start_time:
+		push_error("Environment room-life animation time did not advance while idle.")
+		quit(1)
+		return
+	if int(idle_animation_end_snapshot.get("scene_idle_animation_redraw_count", 0)) <= idle_animation_start_redraw_count:
+		push_error("Environment room-life animation did not schedule idle redraws without input.")
+		quit(1)
+		return
 	var reduced_motion_game_canvas: Control = GameSurfaceCanvasScript.new()
 	root.add_child(reduced_motion_game_canvas)
 	reduced_motion_game_canvas.call("render_game_snapshot", {

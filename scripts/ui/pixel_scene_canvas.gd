@@ -71,6 +71,8 @@ const OBJECT_LABEL_GAP := 4.0
 const EMULATED_TOUCH_SUPPRESS_MS := 120
 const EMULATED_TOUCH_SUPPRESS_DISTANCE := 6.0
 const DRUNK_TIME_SCALE_MIN := 0.33
+const SCENE_IDLE_ANIMATION_FPS := 24.0
+const SCENE_IDLE_ANIMATION_INTERVAL_SEC := 1.0 / SCENE_IDLE_ANIMATION_FPS
 
 var environment_id: String = "corner_store"
 var environment_name: String = "Corner Store"
@@ -103,6 +105,8 @@ var info_card_visual_rect: Rect2 = Rect2()
 var info_card_visual_object_id: String = ""
 var info_card_animating := false
 var reduce_motion := false
+var scene_idle_animation_redraw_accumulator := 0.0
+var scene_idle_animation_redraw_count := 0
 
 
 func _ready() -> void:
@@ -215,6 +219,10 @@ func current_view_snapshot() -> Dictionary:
 		"drunk_time_scale_percent": int(round(drunk_time_scale * 100.0)),
 		"hovered_object_id": hovered_object_id,
 		"selected_object_id": selected_object_id,
+		"scene_animation_time": flicker,
+		"scene_idle_animation_active": _scene_idle_animation_active(),
+		"scene_idle_animation_fps": SCENE_IDLE_ANIMATION_FPS,
+		"scene_idle_animation_redraw_count": scene_idle_animation_redraw_count,
 		"camera_focus_active": camera_focus_active,
 		"camera_focus_point": camera_focus_point,
 		"camera_offset": camera_offset,
@@ -337,7 +345,7 @@ func _process(delta: float) -> void:
 	if camera_offset.distance_squared_to(target_camera_offset) <= CAMERA_OFFSET_SNAP_EPSILON * CAMERA_OFFSET_SNAP_EPSILON:
 		camera_offset = target_camera_offset
 	var camera_changed := absf(previous_zoom - camera_zoom) > CAMERA_ZOOM_SNAP_EPSILON or previous_offset.distance_squared_to(camera_offset) > CAMERA_OFFSET_SNAP_EPSILON * CAMERA_OFFSET_SNAP_EPSILON
-	if camera_changed or info_card_animating or was_info_animating or _needs_continuous_scene_redraw():
+	if camera_changed or info_card_animating or was_info_animating or _needs_continuous_scene_redraw() or _scene_idle_animation_redraw_due(scaled_delta):
 		queue_redraw()
 
 
@@ -347,6 +355,25 @@ func _needs_continuous_scene_redraw() -> bool:
 	if drunk_effect_mode == "classic" and drunk_level >= 12:
 		return true
 	return drunk_distortion_overlay != null and drunk_distortion_overlay.visible
+
+
+func _scene_idle_animation_active() -> bool:
+	return not reduce_motion
+
+
+func _scene_idle_animation_redraw_due(delta: float) -> bool:
+	if not _scene_idle_animation_active():
+		scene_idle_animation_redraw_accumulator = 0.0
+		return false
+	scene_idle_animation_redraw_accumulator += maxf(0.0, delta)
+	if scene_idle_animation_redraw_accumulator < SCENE_IDLE_ANIMATION_INTERVAL_SEC:
+		return false
+	scene_idle_animation_redraw_accumulator = minf(
+		scene_idle_animation_redraw_accumulator - SCENE_IDLE_ANIMATION_INTERVAL_SEC,
+		SCENE_IDLE_ANIMATION_INTERVAL_SEC
+	)
+	scene_idle_animation_redraw_count += 1
+	return true
 
 
 # Selects the active venue drawing routine.
