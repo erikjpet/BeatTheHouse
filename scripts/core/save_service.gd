@@ -27,8 +27,7 @@ func save_run(run_state: RunState, slot_id: String = "autosave") -> Error:
 	var file := FileAccess.open(run_save_path(clean_slot), FileAccess.WRITE)
 	if file == null:
 		return FileAccess.get_open_error()
-	file.store_string(JSON.stringify(_save_payload(run_state, clean_slot), "\t"))
-	file.flush()
+	file.store_string(JSON.stringify(_save_payload(run_state, clean_slot)))
 	file.close()
 	return OK
 

@@ -131,6 +131,7 @@ var show_game_library_launcher := true
 var autosave_slot_id := AUTOSAVE_SLOT
 var pending_autosave := false
 var pending_autosave_status_text := "Autosaved."
+var pending_autosave_after_frame := -1
 
 var start_screen: Control
 var run_screen: Control
@@ -347,6 +348,7 @@ func start_foundation_run(seed_text: String = DEFAULT_SEED, challenge_config: Di
 	pending_all_in_result_terminal_check = false
 	pending_autosave = false
 	pending_autosave_status_text = "Autosaved."
+	pending_autosave_after_frame = -1
 	last_environment_runtime_result = {}
 	close_content_group_config()
 	close_challenge_selection()
@@ -1831,9 +1833,10 @@ func _autosave_foundation_run(status_text: String = "Autosaved.", force: bool = 
 		save_status_message = "Practice sessions are not autosaved."
 		return false
 	if not force and _should_defer_autosave_for_game_surface():
-		pending_autosave = true
-		pending_autosave_status_text = status_text
-		save_status_message = "Autosave pending."
+		_queue_pending_autosave(status_text, 0)
+		return true
+	if not force and _should_defer_autosave_for_web():
+		_queue_pending_autosave(status_text, 1)
 		return true
 	return _write_foundation_run_save(status_text)
 
@@ -1849,6 +1852,7 @@ func _write_foundation_run_save(status_text: String = "Autosaved.") -> bool:
 	if error == OK:
 		pending_autosave = false
 		pending_autosave_status_text = "Autosaved."
+		pending_autosave_after_frame = -1
 		save_status_message = status_text
 		_refresh_start_screen()
 		return true
@@ -1859,13 +1863,26 @@ func _write_foundation_run_save(status_text: String = "Autosaved.") -> bool:
 func _flush_pending_autosave_if_ready() -> void:
 	if not pending_autosave:
 		return
+	if pending_autosave_after_frame >= 0 and Engine.get_process_frames() < pending_autosave_after_frame:
+		return
 	if _game_surface_autosave_blocked():
 		return
 	_write_foundation_run_save(pending_autosave_status_text)
 
 
+func _queue_pending_autosave(status_text: String, defer_frames: int) -> void:
+	pending_autosave = true
+	pending_autosave_status_text = status_text
+	pending_autosave_after_frame = maxi(pending_autosave_after_frame, Engine.get_process_frames() + maxi(0, defer_frames))
+	save_status_message = "Autosave pending."
+
+
 func _should_defer_autosave_for_game_surface() -> bool:
 	return current_screen == SCREEN_GAME and current_game != null and not _run_menu_is_visible()
+
+
+func _should_defer_autosave_for_web() -> bool:
+	return OS.has_feature("web")
 
 
 func _game_surface_autosave_blocked() -> bool:
@@ -1911,6 +1928,7 @@ func _load_foundation_run_from_slot(return_to_start_on_missing: bool) -> bool:
 	pending_all_in_result_terminal_check = false
 	pending_autosave = false
 	pending_autosave_status_text = "Autosaved."
+	pending_autosave_after_frame = -1
 	run_state = loaded
 	dev_game_test_mode = false
 	_refresh_run_action_service()

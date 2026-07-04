@@ -93,12 +93,13 @@ func route_for_target(map_data: Dictionary, current_id: String, target_id: Strin
 	if path.size() < 2:
 		return {}
 	var route := library.route(destination_id).duplicate(true) if library != null else {}
-	var distance_blocks := _path_distance_blocks(normalized, path)
+	var edge_lookup := _edge_lookup(normalized)
+	var distance_blocks := _path_distance_blocks_prepared(edge_lookup, path)
 	var band := _distance_band(distance_blocks)
-	var base_cost := _path_base_cost(normalized, path)
-	var generated_cost := _path_cost(normalized, path)
-	var risk_decay := _path_risk_decay(normalized, path, band)
-	var edge_id := _route_edge_id(normalized, path)
+	var base_cost := _path_base_cost_prepared(edge_lookup, path)
+	var generated_cost := _path_cost_prepared(edge_lookup, path)
+	var risk_decay := _path_risk_decay_prepared(edge_lookup, path, band)
+	var edge_id := _route_edge_id_prepared(edge_lookup, path)
 	if route.is_empty():
 		route = {
 			"id": destination_id,
@@ -163,7 +164,10 @@ static func node_by_id(map_data: Dictionary, node_id: String) -> Dictionary:
 	var wanted_id := node_id.strip_edges()
 	if wanted_id.is_empty():
 		return {}
-	for node_value in _copy_array(map_data.get("nodes", [])):
+	var nodes_value: Variant = map_data.get("nodes", [])
+	if typeof(nodes_value) != TYPE_ARRAY:
+		return {}
+	for node_value in nodes_value:
 		if typeof(node_value) != TYPE_DICTIONARY:
 			continue
 		var node: Dictionary = node_value
@@ -179,7 +183,10 @@ static func node_state(map_data: Dictionary, node_id: String) -> String:
 
 static func visible_node_ids(map_data: Dictionary) -> Array:
 	var result: Array = []
-	for node_value in _copy_array(map_data.get("nodes", [])):
+	var nodes_value: Variant = map_data.get("nodes", [])
+	if typeof(nodes_value) != TYPE_ARRAY:
+		return result
+	for node_value in nodes_value:
 		if typeof(node_value) != TYPE_DICTIONARY:
 			continue
 		var node: Dictionary = node_value
@@ -206,7 +213,10 @@ static func _neighbor_ids_with_visible_lookup(map_data: Dictionary, node_id: Str
 	var source_id := node_id.strip_edges()
 	if source_id.is_empty():
 		return result
-	for edge_value in _copy_array(map_data.get("edges", [])):
+	var edges_value: Variant = map_data.get("edges", [])
+	if typeof(edges_value) != TYPE_ARRAY:
+		return result
+	for edge_value in edges_value:
 		if typeof(edge_value) != TYPE_DICTIONARY:
 			continue
 		var edge: Dictionary = edge_value
@@ -234,6 +244,54 @@ static func _visible_node_lookup(map_data: Dictionary) -> Dictionary:
 	return result
 
 
+static func _visible_ids_and_lookup(map_data: Dictionary) -> Dictionary:
+	var ids: Array = []
+	var lookup: Dictionary = {}
+	var nodes_value: Variant = map_data.get("nodes", [])
+	if typeof(nodes_value) != TYPE_ARRAY:
+		return {"ids": ids, "lookup": lookup}
+	for node_value in nodes_value:
+		if typeof(node_value) != TYPE_DICTIONARY:
+			continue
+		var node: Dictionary = node_value
+		var node_id := str(node.get("id", ""))
+		if node_id.is_empty() or not _node_is_visible(node):
+			continue
+		ids.append(node_id)
+		lookup[node_id] = true
+	return {"ids": ids, "lookup": lookup}
+
+
+static func _node_lookup(map_data: Dictionary) -> Dictionary:
+	var result: Dictionary = {}
+	var nodes_value: Variant = map_data.get("nodes", [])
+	if typeof(nodes_value) != TYPE_ARRAY:
+		return result
+	for node_value in nodes_value:
+		if typeof(node_value) != TYPE_DICTIONARY:
+			continue
+		var node: Dictionary = node_value
+		var node_id := str(node.get("id", ""))
+		if not node_id.is_empty():
+			result[node_id] = node
+	return result
+
+
+static func _edge_lookup(map_data: Dictionary) -> Dictionary:
+	var result: Dictionary = {}
+	var edges_value: Variant = map_data.get("edges", [])
+	if typeof(edges_value) != TYPE_ARRAY:
+		return result
+	for edge_value in edges_value:
+		if typeof(edge_value) != TYPE_DICTIONARY:
+			continue
+		var edge: Dictionary = edge_value
+		var edge_id := str(edge.get("id", ""))
+		if not edge_id.is_empty():
+			result[edge_id] = edge
+	return result
+
+
 static func are_neighbors(map_data: Dictionary, a: String, b: String) -> bool:
 	return not edge_between(map_data, a, b).is_empty()
 
@@ -248,6 +306,11 @@ static func path_between(map_data: Dictionary, a: String, b: String, visible_onl
 
 
 static func _path_between_normalized(normalized: Dictionary, a: String, b: String, visible_only: bool = true) -> Array:
+	var visible_lookup: Dictionary = _visible_node_lookup(normalized) if visible_only else {}
+	return _path_between_prepared(normalized, a, b, visible_only, visible_lookup)
+
+
+static func _path_between_prepared(map_data: Dictionary, a: String, b: String, visible_only: bool, visible_lookup: Dictionary) -> Array:
 	var source_id := a.strip_edges()
 	var target_id := b.strip_edges()
 	var result: Array = []
@@ -256,9 +319,7 @@ static func _path_between_normalized(normalized: Dictionary, a: String, b: Strin
 	if source_id == target_id:
 		result.append(source_id)
 		return result
-	var visible_lookup: Dictionary = {}
 	if visible_only:
-		visible_lookup = _visible_node_lookup(normalized)
 		if not visible_lookup.has(source_id) or not visible_lookup.has(target_id):
 			return result
 	var queue: Array = [source_id]
@@ -268,7 +329,7 @@ static func _path_between_normalized(normalized: Dictionary, a: String, b: Strin
 	while head < queue.size():
 		var current_id := str(queue[head])
 		head += 1
-		for neighbor_value in _neighbor_ids_with_visible_lookup(normalized, current_id, visible_only, visible_lookup):
+		for neighbor_value in _neighbor_ids_with_visible_lookup(map_data, current_id, visible_only, visible_lookup):
 			var neighbor_id := str(neighbor_value)
 			if previous_by_id.has(neighbor_id):
 				continue
@@ -283,7 +344,10 @@ static func edge_between(map_data: Dictionary, a: String, b: String) -> Dictiona
 	var edge_id := _edge_id(a, b)
 	if edge_id.is_empty():
 		return {}
-	for edge_value in _copy_array(map_data.get("edges", [])):
+	var edges_value: Variant = map_data.get("edges", [])
+	if typeof(edges_value) != TYPE_ARRAY:
+		return {}
+	for edge_value in edges_value:
 		if typeof(edge_value) != TYPE_DICTIONARY:
 			continue
 		var edge: Dictionary = edge_value
@@ -298,13 +362,19 @@ static func travel_target_ids(map_data: Dictionary, node_id: String = "", max_ne
 	if source_id.is_empty():
 		source_id = current_node_id(normalized)
 	var result: Array = []
-	if source_id.is_empty() or not is_node_visible(normalized, source_id):
+	var visible_data := _visible_ids_and_lookup(normalized)
+	var visible_ids: Array = visible_data.get("ids", [])
+	var visible_lookup: Dictionary = visible_data.get("lookup", {})
+	if source_id.is_empty() or not visible_lookup.has(source_id):
 		return result
 	var total_limit := maxi(0, max_total)
 	var new_limit := mini(maxi(0, max_new), total_limit)
 	var enabled_lookup := _enabled_target_lookup(enabled_target_ids)
-	var new_candidates := _travel_candidate_entries(normalized, source_id, false, enabled_lookup)
-	var old_candidates := _travel_candidate_entries(normalized, source_id, true, enabled_lookup)
+	var node_lookup := _node_lookup(normalized)
+	var edge_lookup := _edge_lookup(normalized)
+	var visited_path := _string_array(normalized.get("visited_path", []))
+	var new_candidates := _travel_candidate_entries_prepared(normalized, source_id, false, enabled_lookup, visible_ids, visible_lookup, node_lookup, edge_lookup, visited_path)
+	var old_candidates := _travel_candidate_entries_prepared(normalized, source_id, true, enabled_lookup, visible_ids, visible_lookup, node_lookup, edge_lookup, visited_path)
 	var enabled_new_candidates := _filter_candidates_by_enabled(new_candidates, true)
 	var fallback_new_candidates := _filter_candidates_by_enabled(new_candidates, false)
 	var enabled_old_candidates := _filter_candidates_by_enabled(old_candidates, true)
@@ -450,23 +520,30 @@ static func unlock_nodes(map_data: Dictionary, node_ids: Array, source: String =
 
 static func snapshot(map_data: Dictionary, selected_id: String = "") -> Dictionary:
 	var normalized := normalize(map_data)
-	var visible_ids := visible_node_ids(normalized)
+	var visible_ids: Array = []
+	var visible_lookup: Dictionary = {}
 	var visible_nodes: Array = []
-	for node_value in _copy_array(normalized.get("nodes", [])):
+	var nodes: Array = normalized.get("nodes", [])
+	for node_value in nodes:
 		if typeof(node_value) != TYPE_DICTIONARY:
 			continue
 		var node: Dictionary = node_value
-		if visible_ids.has(str(node.get("id", ""))):
-			visible_nodes.append(_snapshot_node(node))
+		var node_id := str(node.get("id", ""))
+		if node_id.is_empty() or not _node_is_visible(node):
+			continue
+		visible_ids.append(node_id)
+		visible_lookup[node_id] = true
+		visible_nodes.append(_snapshot_node(node))
 	var visible_edges: Array = []
-	for edge_value in _copy_array(normalized.get("edges", [])):
+	var edges: Array = normalized.get("edges", [])
+	for edge_value in edges:
 		if typeof(edge_value) != TYPE_DICTIONARY:
 			continue
 		var edge: Dictionary = edge_value
-		if visible_ids.has(str(edge.get("a", ""))) and visible_ids.has(str(edge.get("b", ""))):
+		if visible_lookup.has(str(edge.get("a", ""))) and visible_lookup.has(str(edge.get("b", ""))):
 			visible_edges.append(edge.duplicate(true))
 	var clean_selected_id := selected_id.strip_edges()
-	if not visible_ids.has(clean_selected_id):
+	if not visible_lookup.has(clean_selected_id):
 		clean_selected_id = ""
 	return {
 		"version": VERSION,
@@ -1161,23 +1238,33 @@ static func _ensure_priority_target(result: Array, candidates: Array, target_id:
 
 
 static func _travel_candidate_entries(map_data: Dictionary, source_id: String, visited_only: bool, enabled_lookup: Dictionary = {}) -> Array:
+	var visible_data := _visible_ids_and_lookup(map_data)
+	var visible_ids: Array = visible_data.get("ids", [])
+	var visible_lookup: Dictionary = visible_data.get("lookup", {})
+	var node_lookup := _node_lookup(map_data)
+	var edge_lookup := _edge_lookup(map_data)
+	var visited_path := _string_array(map_data.get("visited_path", []))
+	return _travel_candidate_entries_prepared(map_data, source_id, visited_only, enabled_lookup, visible_ids, visible_lookup, node_lookup, edge_lookup, visited_path)
+
+
+static func _travel_candidate_entries_prepared(map_data: Dictionary, source_id: String, visited_only: bool, enabled_lookup: Dictionary, visible_ids: Array, visible_lookup: Dictionary, node_lookup: Dictionary, edge_lookup: Dictionary, visited_path: Array) -> Array:
 	var entries: Array = []
-	for target_id_value in visible_node_ids(map_data):
+	for target_id_value in visible_ids:
 		var target_id := str(target_id_value)
 		if target_id == source_id:
 			continue
-		var node := node_by_id(map_data, target_id)
+		var node: Dictionary = node_lookup.get(target_id, {})
 		if node.is_empty():
 			continue
 		var is_visited := str(node.get("state", STATE_HIDDEN)) == STATE_VISITED
 		if is_visited != visited_only:
 			continue
-		var path := path_between(map_data, source_id, target_id, true)
+		var path := _path_between_prepared(map_data, source_id, target_id, true, visible_lookup)
 		if path.size() < 2:
 			continue
-		var blocks := _path_distance_blocks(map_data, path)
-		var cost := _path_cost(map_data, path)
-		var last_visit_index := _last_index_of(_string_array(map_data.get("visited_path", [])), target_id)
+		var blocks := _path_distance_blocks_prepared(edge_lookup, path)
+		var cost := _path_cost_prepared(edge_lookup, path)
+		var last_visit_index := _last_index_of(visited_path, target_id)
 		var enabled_hint := _candidate_enabled_hint(node, target_id, enabled_lookup)
 		var score := float(blocks) + float(cost) * 0.08 + float(int(node.get("tier", 1))) * 0.18
 		if visited_only:
@@ -1282,6 +1369,54 @@ static func _path_edges(map_data: Dictionary, path: Array) -> Array:
 			return []
 		edges.append(edge)
 	return edges
+
+
+static func _path_distance_blocks_prepared(edge_lookup: Dictionary, path: Array) -> int:
+	var blocks := 0
+	for index in range(path.size() - 1):
+		var edge: Dictionary = edge_lookup.get(_edge_id(str(path[index]), str(path[index + 1])), {})
+		if edge.is_empty():
+			return 1
+		blocks += maxi(1, int(edge.get("distance_blocks", 1)))
+	return maxi(1, blocks)
+
+
+static func _path_base_cost_prepared(edge_lookup: Dictionary, path: Array) -> int:
+	var total := 0
+	for index in range(path.size() - 1):
+		var edge: Dictionary = edge_lookup.get(_edge_id(str(path[index]), str(path[index + 1])), {})
+		if edge.is_empty():
+			return 0
+		total += maxi(0, int(edge.get("base_cost", edge.get("cost", 0))))
+	return total
+
+
+static func _path_cost_prepared(edge_lookup: Dictionary, path: Array) -> int:
+	var total := 0
+	for index in range(path.size() - 1):
+		var edge: Dictionary = edge_lookup.get(_edge_id(str(path[index]), str(path[index + 1])), {})
+		if edge.is_empty():
+			return 0
+		total += maxi(0, int(edge.get("cost", edge.get("base_cost", 0))))
+	return total
+
+
+static func _path_risk_decay_prepared(edge_lookup: Dictionary, path: Array, band: String) -> int:
+	var risk_decay := _risk_decay_for_band(band)
+	for index in range(path.size() - 1):
+		var edge: Dictionary = edge_lookup.get(_edge_id(str(path[index]), str(path[index + 1])), {})
+		if edge.is_empty():
+			return clampi(risk_decay, 0, 100)
+		risk_decay = maxi(risk_decay, int(edge.get("risk_decay", 0)))
+	return clampi(risk_decay, 0, 100)
+
+
+static func _route_edge_id_prepared(edge_lookup: Dictionary, path: Array) -> String:
+	if path.size() == 2:
+		var edge: Dictionary = edge_lookup.get(_edge_id(str(path[0]), str(path[1])), {})
+		if not edge.is_empty():
+			return str(edge.get("id", _edge_id(str(path[0]), str(path[1]))))
+	return "path:%s" % "->".join(path)
 
 
 static func _last_index_of(values: Array, target_id: String) -> int:

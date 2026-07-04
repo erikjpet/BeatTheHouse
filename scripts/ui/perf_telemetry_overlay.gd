@@ -112,6 +112,8 @@ func configure(owner: FoundationMain) -> void:
 	})
 	if plan_id == "l02":
 		call_deferred("_run_l02_plan")
+	elif plan_id == "la1":
+		call_deferred("_run_la1_plan")
 
 
 func _process(delta: float) -> void:
@@ -180,6 +182,61 @@ func _run_l02_plan() -> void:
 	await _measure_pinball_feature()
 	await _measure_world_map()
 	await _measure_scripted_memory()
+	l02_driver_complete = true
+	dump_report()
+	if auto_quit:
+		get_tree().quit()
+
+
+func _run_la1_plan() -> void:
+	if l02_driver_started:
+		return
+	l02_driver_started = true
+	await _wait_frames(8)
+	_end_scenario()
+	if app == null:
+		mark_event("la1_missing_app")
+		dump_report()
+		if auto_quit:
+			get_tree().quit()
+		return
+	app.start_foundation_run("LA1-WEB-CORE")
+	await _wait_frames(20)
+	var open_started_usec := Time.get_ticks_usec()
+	var opened := app.open_world_map()
+	var open_usec := maxi(0, Time.get_ticks_usec() - open_started_usec)
+	mark_event("la1_world_map_open", {
+		"opened": opened,
+		"duration_ms": float(open_usec) / 1000.0,
+	})
+	await _wait_frames(8)
+	await _measure_scenario("la1_world_map_idle", {"surface": "world_map", "mode": "idle"}, scenario_frames)
+	app.close_world_map()
+	await _wait_frames(8)
+	var autosave_started_usec := Time.get_ticks_usec()
+	var autosave_accepted := bool(app.call("_autosave_foundation_run", "LA1 Autosave.", false))
+	var autosave_request_usec := maxi(0, Time.get_ticks_usec() - autosave_started_usec)
+	mark_event("la1_app_autosave_request", {
+		"duration_ms": float(autosave_request_usec) / 1000.0,
+		"accepted": autosave_accepted,
+		"pending": bool(app.get("pending_autosave")),
+	})
+	await _wait_frames(4)
+	mark_event("la1_app_autosave_after_flush", {
+		"pending": bool(app.get("pending_autosave")),
+	})
+	var save_service: SaveService = app.get("save_service") as SaveService
+	var run_state: RunState = app.get("run_state") as RunState
+	if save_service == null or run_state == null:
+		mark_event("la1_save_unavailable")
+	else:
+		var save_started_usec := Time.get_ticks_usec()
+		var save_error := save_service.save_run(run_state, "la1_web_probe")
+		var save_usec := maxi(0, Time.get_ticks_usec() - save_started_usec)
+		mark_event("la1_save_run", {
+			"duration_ms": float(save_usec) / 1000.0,
+			"error": int(save_error),
+		})
 	l02_driver_complete = true
 	dump_report()
 	if auto_quit:

@@ -39,13 +39,18 @@ static func shuffle_cards(cards_value: Variant, rng: RngStream) -> Array:
 
 
 static func draw_cards(shoe_value: Variant, count: int) -> Dictionary:
-	var shoe: Array = card_array(shoe_value)
 	var drawn: Array = []
-	var draw_count := mini(maxi(0, count), shoe.size())
-	for _i in range(draw_count):
-		var card: Variant = shoe.pop_front()
-		if typeof(card) == TYPE_DICTIONARY:
-			drawn.append((card as Dictionary).duplicate(true))
+	var shoe: Array = []
+	var draw_count := maxi(0, count)
+	if typeof(shoe_value) == TYPE_ARRAY:
+		for card_value in shoe_value:
+			if typeof(card_value) != TYPE_DICTIONARY:
+				continue
+			var card: Dictionary = card_value
+			if drawn.size() < draw_count:
+				drawn.append(card.duplicate(true))
+			else:
+				shoe.append(card.duplicate(true))
 	return {
 		"cards": drawn,
 		"shoe": shoe,
@@ -64,7 +69,13 @@ static func card_array(value: Variant) -> Array:
 
 
 static func remaining_count(shoe_value: Variant) -> int:
-	return card_array(shoe_value).size()
+	if typeof(shoe_value) != TYPE_ARRAY:
+		return 0
+	var count := 0
+	for card_value in shoe_value:
+		if typeof(card_value) == TYPE_DICTIONARY:
+			count += 1
+	return count
 
 
 static func cut_card_remaining(deck_count: int, penetration: float = 0.72) -> int:
@@ -74,14 +85,27 @@ static func cut_card_remaining(deck_count: int, penetration: float = 0.72) -> in
 
 
 static func remaining_composition(shoe_value: Variant) -> Dictionary:
-	var cards: Array = card_array(shoe_value)
 	var by_rank: Dictionary = {}
 	var by_suit: Dictionary = {}
 	var by_deck: Dictionary = {}
 	var high_cards := 0
 	var low_cards := 0
 	var neutral_cards := 0
-	for card_value in cards:
+	var total := 0
+	if typeof(shoe_value) != TYPE_ARRAY:
+		return {
+			"total": total,
+			"by_rank": by_rank,
+			"by_suit": by_suit,
+			"by_deck": by_deck,
+			"high_cards": high_cards,
+			"low_cards": low_cards,
+			"neutral_cards": neutral_cards,
+			"hi_lo_remaining_bias": low_cards - high_cards,
+		}
+	for card_value in shoe_value:
+		if typeof(card_value) != TYPE_DICTIONARY:
+			continue
 		var card: Dictionary = card_value
 		var rank := int(card.get("rank", RANK_MIN))
 		var suit := int(card.get("suit", 0))
@@ -98,8 +122,9 @@ static func remaining_composition(shoe_value: Variant) -> Dictionary:
 			high_cards += 1
 		else:
 			neutral_cards += 1
+		total += 1
 	return {
-		"total": cards.size(),
+		"total": total,
 		"by_rank": by_rank,
 		"by_suit": by_suit,
 		"by_deck": by_deck,

@@ -8,6 +8,7 @@ const RunGeneratorScript := preload("res://scripts/core/run_generator.gd")
 const SaveServiceScript := preload("res://scripts/core/save_service.gd")
 const PlatformServicesScript := preload("res://scripts/core/platform_services.gd")
 const WorldMapScript := preload("res://scripts/core/world_map.gd")
+const CardShoeScript := preload("res://scripts/core/card_shoe.gd")
 const ProfileInventoryScript := preload("res://scripts/core/profile_inventory.gd")
 const RunTerminalEvaluatorScript := preload("res://scripts/core/run_terminal_evaluator.gd")
 const RunActionServiceScript := preload("res://scripts/core/run_action_service.gd")
@@ -364,6 +365,7 @@ func _foundation_run_contract_suite(content_library: ContentLibrary, fixture_lib
 	_foundation_run_check(report, failures, "foundation_contracts", Callable(self, "_check_foundation_contract_smoke_for_suite"), [content_library])
 	_foundation_run_check(report, failures, "profile_inventory_boundary", Callable(self, "_check_profile_inventory_boundary"), [])
 	_foundation_run_check(report, failures, "fixture_rng", Callable(self, "_check_rng"), [fixture_library])
+	_foundation_run_check(report, failures, "card_shoe_core_primitives", Callable(self, "_check_card_shoe_core_primitives"), [])
 	_foundation_run_check(report, failures, "run_state_source_of_truth", Callable(self, "_check_run_state_source_of_truth"), [fixture_library])
 	_foundation_run_check(report, failures, "locked_logic_rate_foundation", Callable(self, "_check_locked_logic_rate_foundation"), [content_library])
 	_foundation_run_check(report, failures, "fixture_contracts", Callable(self, "_check_contracts"), [fixture_library])
@@ -16341,6 +16343,37 @@ func _fixture_library() -> ContentLibrary:
 		},
 	]
 	return library
+
+
+func _check_card_shoe_core_primitives(failures: Array) -> void:
+	var shoe: Array = [
+		{"rank": 14, "suit": 0, "deck": 0},
+		"bad-card",
+		{"rank": 10, "suit": 1, "deck": 0},
+		{"rank": 5, "suit": 2, "deck": 0},
+		{"rank": 7, "suit": 3, "deck": 1},
+	]
+	var original_json := JSON.stringify(shoe)
+	var draw: Dictionary = CardShoeScript.draw_cards(shoe, 2)
+	var drawn_cards: Array = draw.get("cards", [])
+	var remaining_shoe: Array = draw.get("shoe", [])
+	if JSON.stringify(shoe) != original_json:
+		failures.append("CardShoe.draw_cards mutated the source shoe.")
+	if drawn_cards.size() != 2 or remaining_shoe.size() != 2 or int(draw.get("remaining", -1)) != 2:
+		failures.append("CardShoe.draw_cards did not preserve draw/remaining counts while filtering malformed cards.")
+	else:
+		var first_drawn: Dictionary = drawn_cards[0]
+		var second_drawn: Dictionary = drawn_cards[1]
+		var first_remaining: Dictionary = remaining_shoe[0]
+		if int(first_drawn.get("rank", 0)) != 14 or int(second_drawn.get("rank", 0)) != 10 or int(first_remaining.get("rank", 0)) != 5:
+			failures.append("CardShoe.draw_cards changed deterministic card order.")
+	var composition: Dictionary = CardShoeScript.remaining_composition(shoe)
+	if JSON.stringify(shoe) != original_json:
+		failures.append("CardShoe.remaining_composition mutated the source shoe.")
+	if CardShoeScript.remaining_count(shoe) != 4 or int(composition.get("total", 0)) != 4:
+		failures.append("CardShoe remaining helpers did not ignore malformed card entries.")
+	if int(composition.get("high_cards", 0)) != 2 or int(composition.get("low_cards", 0)) != 1 or int(composition.get("neutral_cards", 0)) != 1:
+		failures.append("CardShoe.remaining_composition changed hi-lo bucket counts.")
 
 
 # Checks seed and generation determinism.
