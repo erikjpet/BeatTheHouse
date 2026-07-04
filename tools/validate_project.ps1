@@ -38,6 +38,7 @@ $requiredFiles = @(
     "scripts/tests/foundation_check.gd",
     "scripts/tests/ui_scene_compile_check.gd",
     "tools/check_godot.ps1",
+    "tools/function_census.ps1",
     "tools/gdscript_load_check.gd",
     "tools/foundation_visual_qa.ps1",
     "tools/foundation_visual_qa.gd",
@@ -50,6 +51,8 @@ $requiredFiles = @(
     "data/services/services.json",
     "data/travel/routes.json",
     "data/prestige/purchases.json",
+    "docs/plans/0.3.2_function_census.json",
+    "docs/plans/0.3.2_function_census.md",
     "scripts/games/slot.gd",
     "scripts/games/pull_tabs.gd",
     "scripts/games/bar_dice.gd",
@@ -211,6 +214,24 @@ foreach ($trackedGeneratedFile in $trackedGeneratedFiles) {
     if (-not [string]::IsNullOrWhiteSpace($relativeGeneratedPath)) {
         $failures.Add("Generated Godot metadata must not be git-tracked: $relativeGeneratedPath")
     }
+}
+
+try {
+    $censusScript = Join-Path $root "tools/function_census.ps1"
+    if (Test-Path -LiteralPath $censusScript) {
+        $censusOutput = & powershell -NoProfile -ExecutionPolicy Bypass -File $censusScript -Check -Quiet 2>&1
+        $censusExitCode = $LASTEXITCODE
+        if ($censusExitCode -ne 0) {
+            $message = ($censusOutput | ForEach-Object { [string]$_ }) -join " "
+            if ([string]::IsNullOrWhiteSpace($message)) {
+                $message = "tools/function_census.ps1 exited with code $censusExitCode."
+            }
+            $failures.Add("Function census freshness check failed: $message")
+        }
+    }
+}
+catch {
+    $failures.Add("Function census freshness check failed: $($_.Exception.Message)")
 }
 
 function Get-ProjectText {
