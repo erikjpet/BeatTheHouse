@@ -599,7 +599,7 @@ func _sa_2_scan_per_frame_allocations(path: String, source: String, failures: Ar
 			continue
 		if _sa_2_line_has_valid_waiver(line):
 			continue
-		failures.append("SA.2 per-frame cost tripwire: %s:%d %s contains duplicate()/JSON.stringify/OS.delay_* without SA2_PER_FRAME_OK reason." % [path, index + 1, current_function])
+		failures.append("SA.2/LB.2 per-frame cost tripwire: %s:%d %s contains duplicate()/JSON.stringify/OS.delay_*/Callable/PackedArray/Vector2-array/draw_string %% formatting without SA2_PER_FRAME_OK reason." % [path, index + 1, current_function])
 
 
 func _sa_2_scan_peek_contract(path: String, source: String, failures: Array) -> void:
@@ -656,7 +656,36 @@ func _sa_2_line_has_banned_allocation(line: String) -> bool:
 	return line.find("duplicate(") != -1 \
 		or line.find("JSON.stringify") != -1 \
 		or line.find("OS.delay_msec(") != -1 \
-		or line.find("OS.delay_usec(") != -1
+		or line.find("OS.delay_usec(") != -1 \
+		or line.find("Callable(") != -1 \
+		or _sa_2_line_has_packed_array_construct(line) \
+		or _sa_2_line_has_vector2_array_literal(line) \
+		or _sa_2_line_has_draw_string_percent_format(line)
+
+
+func _sa_2_line_has_packed_array_construct(line: String) -> bool:
+	return line.find("PackedByteArray(") != -1 \
+		or line.find("PackedColorArray(") != -1 \
+		or line.find("PackedFloat32Array(") != -1 \
+		or line.find("PackedFloat64Array(") != -1 \
+		or line.find("PackedInt32Array(") != -1 \
+		or line.find("PackedInt64Array(") != -1 \
+		or line.find("PackedStringArray(") != -1 \
+		or line.find("PackedVector2Array(") != -1 \
+		or line.find("PackedVector3Array(") != -1
+
+
+func _sa_2_line_has_vector2_array_literal(line: String) -> bool:
+	return line.find("[Vector2(") != -1 or line.find("[ Vector2(") != -1
+
+
+func _sa_2_line_has_draw_string_percent_format(line: String) -> bool:
+	if line.find("draw_string(") == -1:
+		return false
+	return line.find("\" %") != -1 \
+		or line.find("\") %") != -1 \
+		or line.find("\"] %") != -1 \
+		or line.find("\"%") != -1 and line.find("% [") != -1
 
 
 func _sa_2_line_has_valid_waiver(line: String) -> bool:

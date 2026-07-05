@@ -45,6 +45,8 @@ const CONTROLLED_ROLL_ITEM_EFFECT_KEYS := [
 	"skill_cheat_drunk_window_offset_msec",
 ]
 const CONSOLE_Y := 344.0
+const CONSOLE_SELECT_BUTTON_WIDTHS := [108.0, 108.0, 100.0, 100.0]
+const CONSOLE_ROLL_BUTTON_WIDTHS := [108.0, 124.0, 116.0]
 const RULES_PANEL_RECT := Rect2(556, 218, 300, 58)
 const PAYTABLE_PANEL_RECT := Rect2(556, 282, 190, 50)
 const ROUND_TIMER_RECT := Rect2(752, 282, 116, 50)
@@ -2600,27 +2602,39 @@ func _draw_die_cup(surface, rect: Rect2) -> void:
 
 
 func _draw_pips(surface, rect: Rect2, value: int) -> void:
-	var w := rect.size.x
-	var h := rect.size.y
-	var points := [
-		rect.position + Vector2(w * 0.28, h * 0.28),
-		rect.position + Vector2(w * 0.50, h * 0.50),
-		rect.position + Vector2(w * 0.72, h * 0.72),
-		rect.position + Vector2(w * 0.72, h * 0.28),
-		rect.position + Vector2(w * 0.28, h * 0.72),
-		rect.position + Vector2(w * 0.28, h * 0.50),
-		rect.position + Vector2(w * 0.72, h * 0.50),
-	]
-	var indices := {
-		1: [1],
-		2: [0, 2],
-		3: [0, 1, 2],
-		4: [0, 2, 3, 4],
-		5: [0, 1, 2, 3, 4],
-		6: [0, 2, 3, 4, 5, 6],
-	}
-	for idx in indices.get(value, []):
-		surface.draw_circle(points[int(idx)], clampf(minf(w, h) * 0.085, 1.6, 3.5), C_DARK)
+	match clampi(value, 1, 6):
+		1:
+			_draw_die_pip(surface, rect, 0.50, 0.50)
+		2:
+			_draw_die_pip(surface, rect, 0.28, 0.28)
+			_draw_die_pip(surface, rect, 0.72, 0.72)
+		3:
+			_draw_die_pip(surface, rect, 0.28, 0.28)
+			_draw_die_pip(surface, rect, 0.50, 0.50)
+			_draw_die_pip(surface, rect, 0.72, 0.72)
+		4:
+			_draw_die_pip(surface, rect, 0.28, 0.28)
+			_draw_die_pip(surface, rect, 0.72, 0.72)
+			_draw_die_pip(surface, rect, 0.72, 0.28)
+			_draw_die_pip(surface, rect, 0.28, 0.72)
+		5:
+			_draw_die_pip(surface, rect, 0.28, 0.28)
+			_draw_die_pip(surface, rect, 0.50, 0.50)
+			_draw_die_pip(surface, rect, 0.72, 0.72)
+			_draw_die_pip(surface, rect, 0.72, 0.28)
+			_draw_die_pip(surface, rect, 0.28, 0.72)
+		6:
+			_draw_die_pip(surface, rect, 0.28, 0.28)
+			_draw_die_pip(surface, rect, 0.72, 0.72)
+			_draw_die_pip(surface, rect, 0.72, 0.28)
+			_draw_die_pip(surface, rect, 0.28, 0.72)
+			_draw_die_pip(surface, rect, 0.28, 0.50)
+			_draw_die_pip(surface, rect, 0.72, 0.50)
+
+
+func _draw_die_pip(surface, rect: Rect2, x_ratio: float, y_ratio: float) -> void:
+	var radius := clampf(minf(rect.size.x, rect.size.y) * 0.085, 1.6, 3.5)
+	surface.draw_circle(rect.position + Vector2(rect.size.x * x_ratio, rect.size.y * y_ratio), radius, C_DARK)
 
 
 func _draw_explainer(surface, state: Dictionary) -> void:
@@ -2680,7 +2694,7 @@ func _draw_console(surface, state: Dictionary) -> void:
 	surface.surface_label("POT $%d" % int(state.get("pot_meter", 0)), Vector2(330, CONSOLE_Y + 44), 12, C_TEAL)
 	surface.surface_label("CARRY $%d" % int(state.get("carryover_pot", 0)), Vector2(330, CONSOLE_Y + 64), 11, C_SOFT)
 	var buttons := _dictionary_array(state.get("bar_dice_action_buttons", []))
-	var widths := [108.0, 108.0, 100.0, 100.0] if phase == "select" else [108.0, 124.0, 116.0]
+	var widths := CONSOLE_SELECT_BUTTON_WIDTHS if phase == "select" else CONSOLE_ROLL_BUTTON_WIDTHS
 	var x := 428.0
 	for i in range(mini(buttons.size(), widths.size())):
 		var button: Dictionary = buttons[i]

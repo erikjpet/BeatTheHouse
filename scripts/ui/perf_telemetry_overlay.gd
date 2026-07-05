@@ -62,9 +62,20 @@ var draw_call_samples: Array = []
 var render_object_samples: Array = []
 var primitive_samples: Array = []
 var memory_samples: Array = []
+var memory_delta_samples: Array = []
+var memory_positive_delta_samples: Array = []
+var memory_negative_delta_samples: Array = []
 var object_count_samples: Array = []
+var object_count_delta_samples: Array = []
+var object_count_positive_delta_samples: Array = []
+var object_count_negative_delta_samples: Array = []
 var node_count_samples: Array = []
+var node_count_delta_samples: Array = []
 var orphan_node_count_samples: Array = []
+var monitor_sample_count := 0
+var last_sample_memory_bytes := 0
+var last_sample_object_count := 0
+var last_sample_node_count := 0
 var scenario_records: Array = []
 var telemetry_events: Array = []
 var overhead_frame_count := 0
@@ -419,9 +430,20 @@ func _begin_scenario(name: String, tags: Dictionary = {}) -> void:
 	render_object_samples = []
 	primitive_samples = []
 	memory_samples = []
+	memory_delta_samples = []
+	memory_positive_delta_samples = []
+	memory_negative_delta_samples = []
 	object_count_samples = []
+	object_count_delta_samples = []
+	object_count_positive_delta_samples = []
+	object_count_negative_delta_samples = []
 	node_count_samples = []
+	node_count_delta_samples = []
 	orphan_node_count_samples = []
+	monitor_sample_count = 0
+	last_sample_memory_bytes = current_start_memory_bytes
+	last_sample_object_count = int(Performance.get_monitor(Performance.OBJECT_COUNT))
+	last_sample_node_count = int(Performance.get_monitor(Performance.OBJECT_NODE_COUNT))
 	scenario_active = true
 	_sample_monitors()
 
@@ -453,6 +475,21 @@ func _end_scenario() -> void:
 		"object_count": _int_stats(object_count_samples),
 		"node_count": _int_stats(node_count_samples),
 		"orphan_node_count": _int_stats(orphan_node_count_samples),
+		"allocation_proxy": {
+			"sample_count": monitor_sample_count,
+			"sample_stride_frames": sample_stride_frames,
+			"static_memory_delta_bytes": _int_stats(memory_delta_samples),
+			"static_memory_positive_delta_bytes": _int_stats(memory_positive_delta_samples),
+			"static_memory_positive_delta_total": _sum_int(memory_positive_delta_samples),
+			"static_memory_negative_delta_bytes": _int_stats(memory_negative_delta_samples),
+			"static_memory_negative_delta_total": _sum_int(memory_negative_delta_samples),
+			"object_count_delta": _int_stats(object_count_delta_samples),
+			"object_count_positive_delta": _int_stats(object_count_positive_delta_samples),
+			"object_count_positive_delta_total": _sum_int(object_count_positive_delta_samples),
+			"object_count_negative_delta": _int_stats(object_count_negative_delta_samples),
+			"object_count_negative_delta_total": _sum_int(object_count_negative_delta_samples),
+			"node_count_delta": _int_stats(node_count_delta_samples),
+		},
 	}
 	scenario_records.append(record)
 	scenario_active = false
@@ -468,8 +505,18 @@ func _sample_monitors() -> void:
 	var memory_bytes := _current_memory_bytes()
 	current_last_memory_bytes = memory_bytes
 	memory_samples.append(memory_bytes)
-	object_count_samples.append(int(Performance.get_monitor(Performance.OBJECT_COUNT)))
-	node_count_samples.append(int(Performance.get_monitor(Performance.OBJECT_NODE_COUNT)))
+	var object_count := int(Performance.get_monitor(Performance.OBJECT_COUNT))
+	var node_count := int(Performance.get_monitor(Performance.OBJECT_NODE_COUNT))
+	if monitor_sample_count > 0:
+		_record_signed_delta(memory_delta_samples, memory_positive_delta_samples, memory_negative_delta_samples, memory_bytes - last_sample_memory_bytes)
+		_record_signed_delta(object_count_delta_samples, object_count_positive_delta_samples, object_count_negative_delta_samples, object_count - last_sample_object_count)
+		node_count_delta_samples.append(node_count - last_sample_node_count)
+	last_sample_memory_bytes = memory_bytes
+	last_sample_object_count = object_count
+	last_sample_node_count = node_count
+	monitor_sample_count += 1
+	object_count_samples.append(object_count)
+	node_count_samples.append(node_count)
 	orphan_node_count_samples.append(int(Performance.get_monitor(Performance.OBJECT_ORPHAN_NODE_COUNT)))
 
 
@@ -665,6 +712,21 @@ func _int_stats(samples: Array) -> Dictionary:
 		"p95": int(_percentile(sorted, 0.95)),
 		"max": int(sorted[sorted.size() - 1]),
 	}
+
+
+func _sum_int(samples: Array) -> int:
+	var total := 0
+	for sample_value in samples:
+		total += int(sample_value)
+	return total
+
+
+func _record_signed_delta(all_samples: Array, positive_samples: Array, negative_samples: Array, delta: int) -> void:
+	all_samples.append(delta)
+	if delta > 0:
+		positive_samples.append(delta)
+	elif delta < 0:
+		negative_samples.append(abs(delta))
 
 
 func _percentile(sorted_samples: Array, percentile: float) -> float:

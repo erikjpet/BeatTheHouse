@@ -49,9 +49,31 @@ const BJ_CONSOLE_Y := 342.0
 const BJ_CONSOLE_H := 84.0
 const BJ_TABLE_BOTTOM := 334.0
 const DRAW_DEAL_EVENTS_CACHE_KEY := "_blackjack_draw_deal_events"
+const BJ_RAIL_POINTS := [
+	Vector2(46, 142), Vector2(156, 92), Vector2(334, 76), Vector2(566, 76),
+	Vector2(744, 92), Vector2(854, 142), Vector2(822, BJ_TABLE_BOTTOM), Vector2(78, BJ_TABLE_BOTTOM),
+]
+const BJ_RAIL_COLORS := [Color("#170d17")]
+const BJ_OUTER_FELT_POINTS := [
+	Vector2(58, 148), Vector2(170, 102), Vector2(342, 86), Vector2(558, 86),
+	Vector2(730, 102), Vector2(842, 148), Vector2(808, BJ_TABLE_BOTTOM - 12.0), Vector2(92, BJ_TABLE_BOTTOM - 12.0),
+]
+const BJ_OUTER_FELT_COLORS := [Color("#3a1830")]
+const BJ_FELT_POINTS := [
+	Vector2(84, 154), Vector2(190, 116), Vector2(358, 102), Vector2(542, 102),
+	Vector2(710, 116), Vector2(816, 154), Vector2(766, 314), Vector2(134, 314),
+]
+const BJ_FELT_COLORS := [Color("#0a5a48")]
+const BJ_CENTER_FELT_POINTS := [
+	Vector2(126, 166), Vector2(226, 136), Vector2(372, 120), Vector2(528, 120),
+	Vector2(674, 136), Vector2(774, 166), Vector2(736, 292), Vector2(164, 292),
+]
+const BJ_CENTER_FELT_COLORS := [Color("#063f35")]
 
 var draw_deal_events_cache_id := ""
 var draw_deal_events_cache: Array = []
+var draw_dealer_character_style: Dictionary = {}
+var draw_patron_character_style: Dictionary = {}
 
 
 func enter(run_state: RunState, environment: Dictionary) -> Dictionary:
@@ -1158,24 +1180,10 @@ func _draw_blackjack_room(surface, surface_state: Dictionary) -> void:
 
 func _draw_blackjack_table(surface, surface_state: Dictionary) -> void:
 	var clock := _surface_clock(surface)
-	var rail_points := [
-		Vector2(46, 142), Vector2(156, 92), Vector2(334, 76), Vector2(566, 76),
-		Vector2(744, 92), Vector2(854, 142), Vector2(822, BJ_TABLE_BOTTOM), Vector2(78, BJ_TABLE_BOTTOM),
-	]
-	surface.draw_polygon(rail_points, [Color("#170d17")])
-	surface.draw_polygon([
-		Vector2(58, 148), Vector2(170, 102), Vector2(342, 86), Vector2(558, 86),
-		Vector2(730, 102), Vector2(842, 148), Vector2(808, BJ_TABLE_BOTTOM - 12.0), Vector2(92, BJ_TABLE_BOTTOM - 12.0),
-	], [Color("#3a1830")])
-	var felt_points := [
-		Vector2(84, 154), Vector2(190, 116), Vector2(358, 102), Vector2(542, 102),
-		Vector2(710, 116), Vector2(816, 154), Vector2(766, 314), Vector2(134, 314),
-	]
-	surface.draw_polygon(felt_points, [Color("#0a5a48")])
-	surface.draw_polygon([
-		Vector2(126, 166), Vector2(226, 136), Vector2(372, 120), Vector2(528, 120),
-		Vector2(674, 136), Vector2(774, 166), Vector2(736, 292), Vector2(164, 292),
-	], [Color("#063f35")])
+	surface.draw_polygon(BJ_RAIL_POINTS, BJ_RAIL_COLORS)
+	surface.draw_polygon(BJ_OUTER_FELT_POINTS, BJ_OUTER_FELT_COLORS)
+	surface.draw_polygon(BJ_FELT_POINTS, BJ_FELT_COLORS)
+	surface.draw_polygon(BJ_CENTER_FELT_POINTS, BJ_CENTER_FELT_COLORS)
 	for i in range(7):
 		var y := 134 + i * 20
 		surface.draw_line(Vector2(144 + i * 5, y), Vector2(756 - i * 5, y + 3), Color(C_TEAL.r, C_TEAL.g, C_TEAL.b, 0.035), 1)
@@ -1193,7 +1201,7 @@ func _draw_blackjack_table(surface, surface_state: Dictionary) -> void:
 
 func _draw_dealer_station(surface, surface_state: Dictionary) -> void:
 	var focus: Dictionary = _dealer_focus_for_surface_state(surface_state)
-	var profile: Dictionary = _local_copy_dict(surface_state.get("dealer_profile", {}))
+	var profile: Dictionary = surface_state.get("dealer_profile", {}) if typeof(surface_state.get("dealer_profile", {})) == TYPE_DICTIONARY else {}
 	var looking_away := bool(focus.get("lookaway_active", false))
 	var peek_window := bool(focus.get("peek_window_open", looking_away))
 	var blink := bool(focus.get("blink", false))
@@ -1203,19 +1211,19 @@ func _draw_dealer_station(surface, surface_state: Dictionary) -> void:
 	surface.draw_rect(Rect2(352, 54, 196, 104), Color("#0b0d16"))
 	surface.draw_rect(Rect2(352, 54, 196, 104), Color(C_CYAN.r, C_CYAN.g, C_CYAN.b, 0.18), false, 1)
 	_draw_dealer_gaze(surface, focus, Vector2(450, 91))
-	_draw_table_character(surface, {
-		"name": str(surface_state.get("dealer_name", "Dealer")),
-		"skin": Color("#d8b18a"),
-		"hair": Color("#2a1a25"),
-		"jacket": Color("#1b2230"),
-		"accent": attention_color,
-		"role": "dealer",
-		"pose": "lookaway" if peek_window else "watching",
-		"eye_offset": eye_offset,
-		"blink": blink,
-		"holding_card": surface.surface_animation_active(DEAL_ANIMATION_CHANNEL),
-		"uniform_accent": str(profile.get("uniform_accent", "")),
-	}, Vector2(450, 156), 1.06, idle)
+	draw_dealer_character_style.clear()
+	draw_dealer_character_style["name"] = str(surface_state.get("dealer_name", "Dealer"))
+	draw_dealer_character_style["skin"] = Color("#d8b18a")
+	draw_dealer_character_style["hair"] = Color("#2a1a25")
+	draw_dealer_character_style["jacket"] = Color("#1b2230")
+	draw_dealer_character_style["accent"] = attention_color
+	draw_dealer_character_style["role"] = "dealer"
+	draw_dealer_character_style["pose"] = "lookaway" if peek_window else "watching"
+	draw_dealer_character_style["eye_offset"] = eye_offset
+	draw_dealer_character_style["blink"] = blink
+	draw_dealer_character_style["holding_card"] = surface.surface_animation_active(DEAL_ANIMATION_CHANNEL)
+	draw_dealer_character_style["uniform_accent"] = str(profile.get("uniform_accent", ""))
+	_draw_table_character(surface, draw_dealer_character_style, Vector2(450, 156), 1.06, idle)
 	var meter := clampi(int(focus.get("attention_meter", 0)), 0, 100)
 	_draw_status_meter(surface, Rect2(566, 92, 118, 9), meter, "dealer %s" % str(focus.get("status", "watching")), C_PINK if meter >= 70 else C_YELLOW if meter >= 42 else C_TEAL)
 	_draw_status_meter(surface, Rect2(566, 116, 118, 6), int(focus.get("peek_danger", 0)), str(focus.get("gaze_phase", "read")).left(20), attention_color)
@@ -1231,8 +1239,10 @@ func _draw_dealer_station(surface, surface_state: Dictionary) -> void:
 
 
 func _draw_table_patrons(surface, surface_state: Dictionary) -> void:
-	var patrons: Array = _dictionary_array(surface_state.get("patrons", []))
+	var patrons: Array = surface_state.get("patrons", []) if typeof(surface_state.get("patrons", [])) == TYPE_ARRAY else []
 	for i in range(patrons.size()):
+		if typeof(patrons[i]) != TYPE_DICTIONARY:
+			continue
 		var patron: Dictionary = patrons[i]
 		var base_pos := _patron_seat_position(i)
 		var phase := fmod((_surface_clock(surface) + float(int(patron.get("animation_offset", 0))) / 1000.0) / 2.2, 1.0)
@@ -1246,19 +1256,19 @@ func _draw_table_patrons(surface, surface_state: Dictionary) -> void:
 		var tell_active := watching and (risk >= threshold or (phase > 0.58 and phase < 0.82))
 		var accent := C_PINK if watching else C_TEAL if covered else C_SOFT
 		var character_clock := _surface_clock(surface) + float(int(patron.get("animation_offset", 0))) / 1000.0
-		_draw_table_character(surface, {
-			"name": str(patron.get("name", "Seat")),
-			"skin": Color("#c49371"),
-			"hair": _patron_hair_color(patron),
-			"jacket": _patron_jacket_color(patron),
-			"accent": accent,
-			"role": "patron",
-			"pose": "covered" if covered else "snitch" if watching else "idle",
-			"eye_offset": -2.0 if covered else 2.0 if watching else 0.0,
-			"blink": phase > 0.92,
-			"holding_card": false,
-			"silhouette": str(patron.get("silhouette", "coat")),
-		}, pos + Vector2(0, 52), 0.86, character_clock)
+		draw_patron_character_style.clear()
+		draw_patron_character_style["name"] = str(patron.get("name", "Seat"))
+		draw_patron_character_style["skin"] = Color("#c49371")
+		draw_patron_character_style["hair"] = _patron_hair_color(patron)
+		draw_patron_character_style["jacket"] = _patron_jacket_color(patron)
+		draw_patron_character_style["accent"] = accent
+		draw_patron_character_style["role"] = "patron"
+		draw_patron_character_style["pose"] = "covered" if covered else "snitch" if watching else "idle"
+		draw_patron_character_style["eye_offset"] = -2.0 if covered else 2.0 if watching else 0.0
+		draw_patron_character_style["blink"] = phase > 0.92
+		draw_patron_character_style["holding_card"] = false
+		draw_patron_character_style["silhouette"] = str(patron.get("silhouette", "coat"))
+		_draw_table_character(surface, draw_patron_character_style, pos + Vector2(0, 52), 0.86, character_clock)
 		if tell_active:
 			_draw_neon_panel(surface, Rect2(pos.x - 36, pos.y - 46, 72, 20), accent, 0.22)
 			surface.surface_label(str(patron.get("tell", "watching")).left(11), pos + Vector2(-30, -32), 8, accent)
@@ -1267,7 +1277,9 @@ func _draw_table_patrons(surface, surface_state: Dictionary) -> void:
 		surface.draw_rect(Rect2(pos.x - 28, pos.y + 61, 56, 5), Color("#070810"))
 		surface.draw_rect(Rect2(pos.x - 28, pos.y + 61, risk_width, 5), accent)
 		surface.surface_label(str(patron.get("behavior", ("%d" % risk) if watching else "busy" if covered else str(patron.get("mood", "")).left(7))).left(12), pos + Vector2(-30, 78), 9, accent)
-		_draw_chip_stack(surface, pos + Vector2(30, 42), [{"value": 5, "count": clampi(int(patron.get("chip_stack", 0)) / 20, 1, 4)}], 0.42)
+		var patron_chip_count := clampi(int(patron.get("chip_stack", 0)) / 20, 1, 4)
+		for chip_index in range(patron_chip_count):
+			_draw_casino_chip(surface, pos + Vector2(30, 42 - float(chip_index) * 3.0 * 0.42), 5, 11.0 * 0.42, 0.92, false)
 		TableVisualsScript.draw_patron_wager_badge(surface, surface_state, patron, pos, i)
 		var patron_cards: Array = _card_array(patron.get("cards", []))
 		if not patron_cards.is_empty():
@@ -1720,10 +1732,10 @@ func _surface_clock(surface) -> float:
 
 
 func _dealer_focus_for_surface_state(surface_state: Dictionary) -> Dictionary:
-	var runtime: Dictionary = _local_copy_dict(surface_state.get("dealer_focus_runtime", {}))
+	var runtime: Dictionary = surface_state.get("dealer_focus_runtime", {}) if typeof(surface_state.get("dealer_focus_runtime", {})) == TYPE_DICTIONARY else {}
 	if runtime.is_empty():
-		return _local_copy_dict(surface_state.get("dealer_focus", {}))
-	var profile: Dictionary = _local_copy_dict(surface_state.get("dealer_profile", {}))
+		return surface_state.get("dealer_focus", {}) if typeof(surface_state.get("dealer_focus", {})) == TYPE_DICTIONARY else {}
+	var profile: Dictionary = surface_state.get("dealer_profile", {}) if typeof(surface_state.get("dealer_profile", {})) == TYPE_DICTIONARY else {}
 	var base_attention: int = int(profile.get("attention_base", 24))
 	var heat: int = int(surface_state.get("suspicion_level", 0))
 	var started := int(runtime.get("dealer_lookaway_started_msec", 0))
@@ -1742,7 +1754,7 @@ func _dealer_focus_for_surface_state(surface_state: Dictionary) -> Dictionary:
 		attention = clampi(attention - 44 - int(runtime.get("dealer_distraction_cover", 0)), 0, 100)
 	var blink := phase > 0.94 and phase < 0.985
 	var watching_player := not active and phase >= 0.18 and phase <= 0.46
-	var focus_snapshot: Dictionary = _local_copy_dict(surface_state.get("dealer_focus", {}))
+	var focus_snapshot: Dictionary = surface_state.get("dealer_focus", {}) if typeof(surface_state.get("dealer_focus", {})) == TYPE_DICTIONARY else {}
 	var peek_window_percent := clampi(int(focus_snapshot.get("peek_window_percent", 100)), 10, 100)
 	var window_half_width := 0.08 * (float(peek_window_percent) / 100.0)
 	var read_start := 0.62 - window_half_width
@@ -2034,9 +2046,11 @@ func _draw_chip_button(surface, center: Vector2, value: int, action: String, ind
 
 
 func _draw_chip_stack(surface, pos: Vector2, stack_value: Variant, scale: float = 1.0) -> void:
-	var stack: Array = _dictionary_array(stack_value)
+	var stack: Array = stack_value if typeof(stack_value) == TYPE_ARRAY else []
 	var y := 0.0
 	for entry_value in stack:
+		if typeof(entry_value) != TYPE_DICTIONARY:
+			continue
 		var entry: Dictionary = entry_value
 		var value := int(entry.get("value", 1))
 		var count := clampi(int(entry.get("count", 1)), 1, 8)

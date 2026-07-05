@@ -74,6 +74,16 @@ const DRUNK_TIME_SCALE_MIN := 0.33
 const SCENE_IDLE_ANIMATION_FPS := 60.0
 const SCENE_IDLE_ANIMATION_INTERVAL_SEC := 1.0 / SCENE_IDLE_ANIMATION_FPS
 const ITEM_ICON_TEXTURE_CACHE_LIMIT := 32
+const SCENE_SPARKLES_CORNER_STORE := [Vector2(384, 220), Vector2(478, 224), Vector2(668, 138), Vector2(746, 144)]
+const SCENE_PUDDLES_BACK_ALLEY := [Vector2(180, 304), Vector2(420, 292), Vector2(710, 312)]
+const SCENE_SPARKLES_BACK_ALLEY := [Vector2(112, 172), Vector2(792, 174)]
+const SCENE_SPARKLES_MOTEL := [Vector2(420, 148), Vector2(524, 154), Vector2(746, 194)]
+const SCENE_SPARKLES_BAR := [Vector2(98, 92), Vector2(190, 86), Vector2(362, 92), Vector2(780, 166)]
+const SCENE_SPARKLES_JAZZ_CLUB := [Vector2(184, 118), Vector2(322, 116), Vector2(466, 118), Vector2(704, 196)]
+const SCENE_SPARKLES_KITTY_CAT := [Vector2(168, 166), Vector2(318, 164), Vector2(456, 166), Vector2(704, 236)]
+const SCENE_SPARKLES_DELTA_QUEEN := [Vector2(128, 96), Vector2(448, 96), Vector2(744, 96)]
+const SCENE_SPARKLES_UNDERGROUND := [Vector2(154, 134), Vector2(505, 136), Vector2(772, 142)]
+const SCENE_SPARKLES_GRAND_CASINO := [Vector2(132, 118), Vector2(728, 118), Vector2(444, 154)]
 
 var environment_id: String = "corner_store"
 var environment_name: String = "Corner Store"
@@ -850,7 +860,7 @@ func _draw_scene_life() -> void:
 			var scan_x := 372 + int(abs(sin(flicker * 3.0)) * 164.0)
 			draw_rect(Rect2(scan_x, 206, 22, 5), Color(C_TEAL.r, C_TEAL.g, C_TEAL.b, 0.72))
 			draw_rect(Rect2(452, 114 + int(sin(flicker * 2.0) * 2.0), 16, 4), C_SOFT)
-			_draw_sparkles([Vector2(384, 220), Vector2(478, 224), Vector2(668, 138), Vector2(746, 144)], C_TEAL, 0.18)
+			_draw_sparkles(SCENE_SPARKLES_CORNER_STORE, C_TEAL, 0.18)
 		"back_alley":
 			var bulb_alpha: float = 0.18 + absf(sin(flicker * 4.0)) * 0.18
 			draw_rect(Rect2(374, 124, 152, 102), Color(1.0, 0.85, 0.28, bulb_alpha))
@@ -859,8 +869,8 @@ func _draw_scene_life() -> void:
 			for i in range(8):
 				var x := int(fmod(flicker * 90.0 + float(i * 113), float(BOARD_SIZE.x)))
 				draw_rect(Rect2(x, 282 + i % 3 * 12, 34, 2), Color(C_CYAN.r, C_CYAN.g, C_CYAN.b, 0.28))
-			_draw_puddle_ripples([Vector2(180, 304), Vector2(420, 292), Vector2(710, 312)], C_CYAN)
-			_draw_sparkles([Vector2(112, 172), Vector2(792, 174)], C_ORANGE, 0.30)
+			_draw_puddle_ripples(SCENE_PUDDLES_BACK_ALLEY, C_CYAN)
+			_draw_sparkles(SCENE_SPARKLES_BACK_ALLEY, C_ORANGE, 0.30)
 		"motel":
 			_draw_sign_pulse(Rect2(62, 72, 202, 116), C_PINK, 0.16, 5.0)
 			for i in range(10):
@@ -868,7 +878,7 @@ func _draw_scene_life() -> void:
 				draw_rect(Rect2(684, y, 106, 2), Color(C_SOFT.r, C_SOFT.g, C_SOFT.b, 0.12 + fmod(flicker + i, 1.0) * 0.18))
 			draw_rect(Rect2(82, 118, 150, 8), Color(C_PINK.r, C_PINK.g, C_PINK.b, 0.22 + abs(sin(flicker * 5.0)) * 0.18))
 			_draw_scan_bands(680, 790, 126, 188, C_SOFT, 0.16, 8.0)
-			_draw_sparkles([Vector2(420, 148), Vector2(524, 154), Vector2(746, 194)], C_CYAN, 0.16)
+			_draw_sparkles(SCENE_SPARKLES_MOTEL, C_CYAN, 0.16)
 		"bar":
 			_draw_sign_pulse(Rect2(616, 52, 122, 40), C_PINK, 0.22, 4.0)
 			_draw_sign_pulse(Rect2(596, 102, 172, 34), C_CYAN, 0.17, 5.4)
@@ -876,7 +886,7 @@ func _draw_scene_life() -> void:
 			draw_circle(Vector2(756 + cos(flicker * 1.7) * 5.0, 232), 4, C_WHITE)
 			draw_rect(Rect2(780, 158, 58, 48), Color(C_PURPLE.r, C_PURPLE.g, C_PURPLE.b, 0.20 + abs(sin(flicker * 6.0)) * 0.18))
 			_draw_smoke_bands(96, 520, 72, C_CYAN, 0.035)
-			_draw_sparkles([Vector2(98, 92), Vector2(190, 86), Vector2(362, 92), Vector2(780, 166)], C_YELLOW, 0.20)
+			_draw_sparkles(SCENE_SPARKLES_BAR, C_YELLOW, 0.20)
 		"jazz_club":
 			_draw_sign_pulse(Rect2(116, 38, 302, 54), C_AMBER, 0.16, 3.6)
 			_draw_sign_pulse(Rect2(696, 146, 124, 34), C_PINK, 0.20, 4.8)
@@ -885,7 +895,7 @@ func _draw_scene_life() -> void:
 			var cymbal_alpha := 0.22 + absf(sin(flicker * 8.0)) * 0.24
 			draw_circle(Vector2(466, 168), 15, Color(C_AMBER.r, C_AMBER.g, C_AMBER.b, cymbal_alpha))
 			draw_rect(Rect2(718, 184, 48, 18), Color(C_CYAN.r, C_CYAN.g, C_CYAN.b, 0.18 + absf(sin(flicker * 5.2)) * 0.16))
-			_draw_sparkles([Vector2(184, 118), Vector2(322, 116), Vector2(466, 118), Vector2(704, 196)], C_YELLOW, 0.18)
+			_draw_sparkles(SCENE_SPARKLES_JAZZ_CLUB, C_YELLOW, 0.18)
 		"kitty_cat_lounge":
 			_draw_sign_pulse(Rect2(116, 46, 404, 48), C_PINK, 0.18, 3.8)
 			_draw_smoke_bands(70, 820, 92, C_PINK, 0.044)
@@ -893,7 +903,7 @@ func _draw_scene_life() -> void:
 			draw_circle(Vector2(704, 274), 40, Color(C_PINK.r, C_PINK.g, C_PINK.b, 0.10 + absf(sin(flicker * 3.0)) * 0.14))
 			for x in [122, 292, 464, 622, 762]:
 				draw_rect(Rect2(x, 302 + int(sin(flicker * 2.0 + x) * 2.0), 16, 4), Color(C_YELLOW.r, C_YELLOW.g, C_YELLOW.b, 0.30))
-			_draw_sparkles([Vector2(168, 166), Vector2(318, 164), Vector2(456, 166), Vector2(704, 236)], C_YELLOW, 0.20)
+			_draw_sparkles(SCENE_SPARKLES_KITTY_CAT, C_YELLOW, 0.20)
 		"delta_queen":
 			_draw_sign_pulse(Rect2(254, 46, 372, 52), C_YELLOW, 0.14, 3.5)
 			for i in range(7):
@@ -902,7 +912,7 @@ func _draw_scene_life() -> void:
 			var dock_x := int(fmod(flicker * 28.0, 960.0)) - 60
 			draw_rect(Rect2(dock_x, 108, 52, 8), Color(C_AMBER.r, C_AMBER.g, C_AMBER.b, 0.32))
 			draw_rect(Rect2(dock_x + 8, 116, 6, 42), Color(C_AMBER.r, C_AMBER.g, C_AMBER.b, 0.22))
-			_draw_sparkles([Vector2(128, 96), Vector2(448, 96), Vector2(744, 96)], C_CYAN, 0.16)
+			_draw_sparkles(SCENE_SPARKLES_DELTA_QUEEN, C_CYAN, 0.16)
 		"gas_station_casino":
 			var sweep := 724 + int(abs(sin(flicker * 1.8)) * 72.0)
 			var hot := sin(flicker * 1.8) > 0.25
@@ -920,7 +930,7 @@ func _draw_scene_life() -> void:
 			draw_rect(Rect2(770, 140, 38, 5), Color(C_PINK.r, C_PINK.g, C_PINK.b, 0.28 + abs(sin(flicker * 3.0)) * 0.18))
 			_draw_smoke_bands(24, 840, 92, C_PINK, 0.05)
 			_draw_string_lights()
-			_draw_sparkles([Vector2(154, 134), Vector2(505, 136), Vector2(772, 142)], C_TEAL, 0.16)
+			_draw_sparkles(SCENE_SPARKLES_UNDERGROUND, C_TEAL, 0.16)
 		"grand_casino":
 			for i in range(5):
 				var x := 250 + i * 100
@@ -940,7 +950,7 @@ func _draw_scene_life() -> void:
 			draw_rect(Rect2(392, 154, 116, 5), Color(badge_color.r, badge_color.g, badge_color.b, 0.34 + abs(sin(flicker * 2.4)) * 0.28))
 			_neon_text("WATCHED" if watched else "CLEAR", Vector2(414, 164), 12, badge_color)
 			_draw_sign_pulse(Rect2(336, 58, 226, 54), C_YELLOW, 0.14, 3.8)
-			_draw_sparkles([Vector2(132, 118), Vector2(728, 118), Vector2(444, 154)], C_YELLOW, 0.18)
+			_draw_sparkles(SCENE_SPARKLES_GRAND_CASINO, C_YELLOW, 0.18)
 
 
 func _draw_familiar_characters() -> void:
@@ -3759,7 +3769,8 @@ func _draw_slot_prop_feature_panel(panel: Rect2, profile: Dictionary, pulse: flo
 	if bonus_active:
 		var remaining := int(bonus.get("remaining_steps", bonus.get("free_spins", 0)))
 		var font := get_theme_default_font()
-		draw_string(font, panel.position + Vector2(1.0, panel.size.y - 5.0), _fit_draw_text("B%d" % remaining, font, 7, panel.size.x - 2.0), HORIZONTAL_ALIGNMENT_CENTER, panel.size.x - 2.0, 7, trim_color)
+		var bonus_text := "B" + str(remaining)
+		draw_string(font, panel.position + Vector2(1.0, panel.size.y - 5.0), _fit_draw_text(bonus_text, font, 7, panel.size.x - 2.0), HORIZONTAL_ALIGNMENT_CENTER, panel.size.x - 2.0, 7, trim_color)
 
 
 func _draw_slot_prop_nudge_chain_overlay(screen: Rect2, preview: Dictionary, profile: Dictionary, phase: float, pulse: float) -> void:
@@ -3788,7 +3799,8 @@ func _draw_slot_prop_nudge_chain_overlay(screen: Rect2, preview: Dictionary, pro
 	var collected := int(chain.get("collected_count", 0))
 	if collected > 0:
 		var font := get_theme_default_font()
-		draw_string(font, screen.position + Vector2(2.0, screen.size.y - 3.0), _fit_draw_text("%d/$%d" % [collected, int(chain.get("banked_payout", 0))], font, 7, screen.size.x - 4.0), HORIZONTAL_ALIGNMENT_CENTER, screen.size.x - 4.0, 7, light_color)
+		var chain_text := str(collected) + "/$" + str(int(chain.get("banked_payout", 0)))
+		draw_string(font, screen.position + Vector2(2.0, screen.size.y - 3.0), _fit_draw_text(chain_text, font, 7, screen.size.x - 4.0), HORIZONTAL_ALIGNMENT_CENTER, screen.size.x - 4.0, 7, light_color)
 
 
 func _draw_slot_prop_runtime_marker(body: Rect2, deck: Rect2, runtime: Dictionary, profile: Dictionary, pulse: float, preview: Dictionary = {}) -> void:
