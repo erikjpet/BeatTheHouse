@@ -277,6 +277,11 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 	var hand_count_delta := int(session.get("count_delta", 0))
 	var live_recorded_count := _recorded_count_for_surface(table, session)
 	var live_true_count := _true_count_for_surface(table, session)
+	var rules_for_surface: Dictionary = _table_rules(table)
+	var main_wager_cost := _main_wager_cost(selected_stake, session)
+	var total_wager_cost := _wager_cost_from_session(selected_stake, session, table, run_state)
+	var shoe_remaining_value := _shoe_remaining(table)
+	var shoe_label_value := str(table.get("shoe_label", CardShoeScript.shoe_label(int(table.get("deck_count", 6)))))
 	return GameModule.surface_spec({
 		"surface_renderer": "blackjack",
 		"surface_life": "immersive_table",
@@ -349,7 +354,8 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 		"chip_denominations": chip_denominations,
 		"selected_stake": selected_stake,
 		"chip_stack": _chip_stack_for_stake(selected_stake, chip_denominations),
-		"rules": _table_rules(table),
+		"rules": rules_for_surface,
+		"table_rules_text": _table_rules_text_from_values(rules_for_surface, total_wager_cost, shoe_label_value, shoe_remaining_value),
 		"player_hands": hands,
 		"dealer": dealer_view,
 		"dealer_cards": display_dealer_cards,
@@ -364,8 +370,8 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 		"side_bets_available": available_side_bets,
 		"side_bets_active": active_side_bets,
 		"side_bet_stakes": side_bet_stakes,
-		"main_wager_cost": _main_wager_cost(selected_stake, session),
-		"total_wager_cost": _wager_cost_from_session(selected_stake, session, table, run_state),
+		"main_wager_cost": main_wager_cost,
+		"total_wager_cost": total_wager_cost,
 		"can_deal": not dealt and not barred,
 		"can_hit": _can_hit(session) and not barred,
 		"can_stand": _can_stand(session) and not barred,
@@ -391,8 +397,8 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 		"recorded_running_count": live_recorded_count,
 		"persisted_running_count": int(table.get("running_count", 0)),
 		"running_count": live_true_count,
-		"shoe_remaining": _shoe_remaining(table),
-		"shoe_label": str(table.get("shoe_label", CardShoeScript.shoe_label(int(table.get("deck_count", 6))))),
+		"shoe_remaining": shoe_remaining_value,
+		"shoe_label": shoe_label_value,
 		"deck_count": int(table.get("deck_count", 6)),
 		"cut_card_remaining": int(table.get("cut_card_remaining", CardShoeScript.cut_card_remaining(int(table.get("deck_count", 6))))),
 		"count_efficiency": str(table.get("count_efficiency", CardShoeScript.count_efficiency_label(int(table.get("deck_count", 6))))),
@@ -1171,7 +1177,10 @@ func _draw_blackjack_room(surface, surface_state: Dictionary) -> void:
 	_draw_security_mirror(surface, Rect2(606, 16, 68, 50), C_PINK)
 	_draw_watch_camera_surface(surface, Vector2(584, 42), C_PINK)
 	surface.surface_title(str(surface_state.get("table_name", "Blackjack")).to_upper().left(18), Vector2(36, 42), C_CYAN)
-	surface.surface_label(_table_rules_text(surface_state).left(42), Vector2(42, 62), 10, C_SOFT)
+	var rules_text := str(surface_state.get("table_rules_text", ""))
+	if rules_text.is_empty():
+		rules_text = _table_rules_text(surface_state)
+	surface.surface_label(rules_text.left(42), Vector2(42, 62), 10, C_SOFT)
 	surface.surface_label("shoe %d   count %+d" % [
 		int(surface_state.get("shoe_remaining", 0)),
 		int(surface_state.get("recorded_running_count", 0)),
@@ -1240,12 +1249,14 @@ func _draw_dealer_station(surface, surface_state: Dictionary) -> void:
 
 func _draw_table_patrons(surface, surface_state: Dictionary) -> void:
 	var patrons: Array = surface_state.get("patrons", []) if typeof(surface_state.get("patrons", [])) == TYPE_ARRAY else []
+	var clock := _surface_clock(surface)
 	for i in range(patrons.size()):
 		if typeof(patrons[i]) != TYPE_DICTIONARY:
 			continue
 		var patron: Dictionary = patrons[i]
 		var base_pos := _patron_seat_position(i)
-		var phase := fmod((_surface_clock(surface) + float(int(patron.get("animation_offset", 0))) / 1000.0) / 2.2, 1.0)
+		var patron_clock := clock + float(int(patron.get("animation_offset", 0))) / 1000.0
+		var phase := fmod(patron_clock / 2.2, 1.0)
 		var bob := sin(phase * PI * 2.0) * (2.0 if bool(patron.get("watching_player", false)) else 1.0)
 		var lean := float(patron.get("lean", 0.0))
 		var pos := base_pos + Vector2(lean, bob)
@@ -1255,7 +1266,6 @@ func _draw_table_patrons(surface, surface_state: Dictionary) -> void:
 		var threshold := int(patron.get("snitch_threshold", 30))
 		var tell_active := watching and (risk >= threshold or (phase > 0.58 and phase < 0.82))
 		var accent := C_PINK if watching else C_TEAL if covered else C_SOFT
-		var character_clock := _surface_clock(surface) + float(int(patron.get("animation_offset", 0))) / 1000.0
 		draw_patron_character_style.clear()
 		draw_patron_character_style["name"] = str(patron.get("name", "Seat"))
 		draw_patron_character_style["skin"] = Color("#c49371")
@@ -1268,7 +1278,7 @@ func _draw_table_patrons(surface, surface_state: Dictionary) -> void:
 		draw_patron_character_style["blink"] = phase > 0.92
 		draw_patron_character_style["holding_card"] = false
 		draw_patron_character_style["silhouette"] = str(patron.get("silhouette", "coat"))
-		_draw_table_character(surface, draw_patron_character_style, pos + Vector2(0, 52), 0.86, character_clock)
+		_draw_table_character(surface, draw_patron_character_style, pos + Vector2(0, 52), 0.86, patron_clock)
 		if tell_active:
 			_draw_neon_panel(surface, Rect2(pos.x - 36, pos.y - 46, 72, 20), accent, 0.22)
 			surface.surface_label(str(patron.get("tell", "watching")).left(11), pos + Vector2(-30, -32), 8, accent)
@@ -5006,15 +5016,24 @@ func _table_summary(table: Dictionary) -> String:
 
 func _table_rules_text(surface_state: Dictionary) -> String:
 	var rules: Dictionary = surface_state.get("rules", {}) if typeof(surface_state.get("rules", {})) == TYPE_DICTIONARY else {}
+	return _table_rules_text_from_values(
+		rules,
+		int(surface_state.get("total_wager_cost", 0)),
+		str(surface_state.get("shoe_label", "shoe")),
+		int(surface_state.get("shoe_remaining", 0))
+	)
+
+
+func _table_rules_text_from_values(rules: Dictionary, total_wager_cost: int, shoe_label: String, shoe_remaining: int) -> String:
 	return "%s %s %s split%d A1%s Ins / Risk $%d / %s %d" % [
 		str(rules.get("blackjack_payout", BLACKJACK_PAYOUT_LABEL)),
 		"H17" if bool(rules.get("dealer_hits_soft_17", false)) else "S17",
 		"DAS" if bool(rules.get("double_after_split", true)) else "noDAS",
 		int(rules.get("max_split_hands", 4)),
 		" / LS" if bool(rules.get("late_surrender", true)) else "",
-		int(surface_state.get("total_wager_cost", 0)),
-		str(surface_state.get("shoe_label", "shoe")),
-		int(surface_state.get("shoe_remaining", 0)),
+		total_wager_cost,
+		shoe_label,
+		shoe_remaining,
 	]
 
 

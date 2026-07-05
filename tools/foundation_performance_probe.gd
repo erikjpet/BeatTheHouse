@@ -10,8 +10,17 @@ const DEFAULT_SEED_PREFIX := "FOUNDATION-PERF"
 const DEFAULT_RUN_COUNT := 8
 const DEFAULT_FRAMES_PER_SURFACE := 120
 const DEFAULT_RESOLVE_SAMPLE_COUNT := 48
-const MAX_SURFACE_DRAW_P95_MS := 16.0
-const MAX_IDLE_SURFACE_DRAW_P95_MS := 2.0
+const LOW_END_SCALE_FACTOR := 10.2
+const LOW_END_FRAME_BUDGET_MS := 16.6
+const MAX_SURFACE_DRAW_P95_MS := 5.0
+const MAX_IDLE_SURFACE_DRAW_P95_MS := 1.5
+const IDLE_SURFACE_DRAW_WAIVERS := {
+	"Idle blackjack surface": {
+		"p95_ms": 1.9,
+		"reason": "Blackjack keeps dealer and patron ambient animation live while idle. This is above the 10.2x scaled headroom target but below the prior 0.3.1 2.0ms dev-box idle cap; LD.1 gates the exported path with the blackjack_idle web smoke row.",
+		"web_gate": "tools/web_perf_smoke.ps1 blackjack_idle frame p95 budget",
+	},
+}
 const MAX_SEVERE_IDLE_AVG_MS := 45.0
 const MAX_SEVERE_FOCUS_AVG_MS := 45.0
 const FOCUS_PROBE_FRAMES := 18
@@ -35,13 +44,23 @@ const RESOLVE_PROBE_CONFIGS := {
 	"video_poker": {"action_id": "draw", "stake": 5},
 }
 const RESOLVE_BUDGETS := {
-	"pull_tabs": {"avg_ms": 4.0, "p95_ms": 7.0, "max_ms": 12.0},
-	"slot": {"avg_ms": 8.0, "p95_ms": 12.0, "max_ms": 18.0},
-	"bar_dice": {"avg_ms": 2.0, "p95_ms": 4.0, "max_ms": 8.0},
-	"blackjack": {"avg_ms": 7.0, "p95_ms": 10.0, "max_ms": 16.0},
-	"baccarat": {"avg_ms": 3.0, "p95_ms": 5.0, "max_ms": 8.0},
-	"roulette": {"avg_ms": 4.0, "p95_ms": 6.0, "max_ms": 12.0},
-	"video_poker": {"avg_ms": 3.0, "p95_ms": 5.0, "max_ms": 8.0},
+	"pull_tabs": {"avg_ms": 1.5, "p95_ms": 2.5, "max_ms": 4.0},
+	"slot": {"avg_ms": 6.0, "p95_ms": 8.0, "max_ms": 10.0},
+	"bar_dice": {"avg_ms": 1.5, "p95_ms": 3.0, "max_ms": 4.0},
+	"blackjack": {"avg_ms": 4.5, "p95_ms": 5.5, "max_ms": 7.0},
+	"baccarat": {"avg_ms": 1.25, "p95_ms": 1.75, "max_ms": 3.0},
+	"roulette": {"avg_ms": 2.0, "p95_ms": 3.0, "max_ms": 4.0},
+	"video_poker": {"avg_ms": 2.5, "p95_ms": 4.5, "max_ms": 5.0},
+}
+const LOW_END_HEADROOM_WAIVERS := {
+	"blackjack_idle_surface_draw_p95": {
+		"reason": "Blackjack keeps dealer and patron ambient animation live while idle. The dev-box waiver is capped at 1.9ms p95, and the LD.1 web smoke gates the exported WebGL path directly with the blackjack_idle scenario.",
+		"web_gate": "tools/web_perf_smoke.ps1 blackjack_idle frame p95 budget",
+	},
+	"slot_autoplay_draw_p95": {
+		"reason": "Active slot autoplay renderer is still above the 10.2x min-spec proxy headroom on the dev-box draw timer. The LD.1 web smoke gates the exported WebGL path directly while LD.2 keeps this as a release-gate row.",
+		"web_gate": "tools/web_perf_smoke.ps1 slot_autoplay_active frame p95 budget",
+	},
 }
 
 var app: Control
@@ -49,6 +68,7 @@ var failures: Array = []
 var warnings: Array = []
 var observations: Array = []
 var resolve_observations: Array = []
+var budget_headroom_checks: Array = []
 var renderer_coverage := {}
 var game_surface_coverage := {}
 var resolve_coverage := {}
@@ -79,6 +99,7 @@ func _run() -> void:
 	await _probe_game_resolve_budgets()
 	_assert_required_game_surface_coverage()
 	_assert_required_resolve_coverage()
+	_assert_low_end_budget_headroom()
 	_write_report()
 	_print_summary()
 	if not failures.is_empty():
@@ -459,8 +480,20 @@ func _assert_draw_budget(label: String, draw_p95_ms: float, draw_samples: int) -
 
 
 func _assert_idle_draw_budget(label: String, draw_p95_ms: float) -> void:
-	if draw_p95_ms > MAX_IDLE_SURFACE_DRAW_P95_MS:
-		failures.append("%s idle draw p95 %.2f ms exceeded %.2f ms." % [label, draw_p95_ms, MAX_IDLE_SURFACE_DRAW_P95_MS])
+	if draw_p95_ms <= MAX_IDLE_SURFACE_DRAW_P95_MS:
+		return
+	var waiver: Dictionary = _dict(IDLE_SURFACE_DRAW_WAIVERS.get(label, {}))
+	var waiver_budget := float(waiver.get("p95_ms", 0.0))
+	if waiver_budget > 0.0 and draw_p95_ms <= waiver_budget:
+		warnings.append("%s idle draw p95 %.2f ms exceeded scaled-headroom budget %.2f ms but stayed within waiver %.2f ms (%s)." % [
+			label,
+			draw_p95_ms,
+			MAX_IDLE_SURFACE_DRAW_P95_MS,
+			waiver_budget,
+			str(waiver.get("reason", "")),
+		])
+		return
+	failures.append("%s idle draw p95 %.2f ms exceeded %.2f ms." % [label, draw_p95_ms, MAX_IDLE_SURFACE_DRAW_P95_MS])
 
 
 func _assert_resolve_budget(game_id: String, stats: Dictionary, budget: Dictionary) -> void:
@@ -479,6 +512,39 @@ func _assert_resolve_budget(game_id: String, stats: Dictionary, budget: Dictiona
 		failures.append("%s resolve p95 %.3f ms exceeded %.3f ms." % [game_id, p95_ms, p95_budget])
 	if max_budget > 0.0 and max_ms > max_budget:
 		failures.append("%s resolve max %.3f ms exceeded %.3f ms." % [game_id, max_ms, max_budget])
+
+
+func _assert_low_end_budget_headroom() -> void:
+	_record_low_end_headroom("idle_surface_draw_p95", "Idle surface draw p95", MAX_IDLE_SURFACE_DRAW_P95_MS, false)
+	_record_low_end_headroom("blackjack_idle_surface_draw_p95", "Blackjack idle surface draw p95", float(_dict(IDLE_SURFACE_DRAW_WAIVERS.get("Idle blackjack surface", {})).get("p95_ms", MAX_IDLE_SURFACE_DRAW_P95_MS)), true)
+	_record_low_end_headroom("slot_autoplay_draw_p95", "Slot autoplay active draw p95", MAX_SURFACE_DRAW_P95_MS, true)
+
+
+func _record_low_end_headroom(metric_id: String, label: String, budget_ms: float, waiver_allowed: bool) -> void:
+	var scaled_ms := budget_ms * LOW_END_SCALE_FACTOR
+	var waiver: Dictionary = _dict(LOW_END_HEADROOM_WAIVERS.get(metric_id, {}))
+	var waived := waiver_allowed and not waiver.is_empty()
+	var under_budget := scaled_ms <= LOW_END_FRAME_BUDGET_MS
+	budget_headroom_checks.append({
+		"metric_id": metric_id,
+		"label": label,
+		"dev_budget_ms": budget_ms,
+		"low_end_scale_factor": LOW_END_SCALE_FACTOR,
+		"scaled_budget_ms": scaled_ms,
+		"low_end_frame_budget_ms": LOW_END_FRAME_BUDGET_MS,
+		"under_scaled_budget": under_budget,
+		"waived": waived,
+		"waiver_reason": str(waiver.get("reason", "")) if waived else "",
+		"waiver_web_gate": str(waiver.get("web_gate", "")) if waived else "",
+	})
+	if not under_budget and not waived:
+		failures.append("%s dev budget %.3f ms scales to %.3f ms at %.1fx, exceeding %.3f ms." % [
+			label,
+			budget_ms,
+			scaled_ms,
+			LOW_END_SCALE_FACTOR,
+			LOW_END_FRAME_BUDGET_MS,
+		])
 
 
 func _slot_machine_state(run_state: RunState, game_id: String) -> Dictionary:
@@ -600,6 +666,9 @@ func _write_report() -> void:
 		"resolve_observations": resolve_observations,
 		"resolve_sample_count": resolve_sample_count,
 		"resolve_budgets": RESOLVE_BUDGETS,
+		"low_end_scale_factor": LOW_END_SCALE_FACTOR,
+		"low_end_frame_budget_ms": LOW_END_FRAME_BUDGET_MS,
+		"budget_headroom_checks": budget_headroom_checks,
 		"warnings": warnings,
 		"failures": failures,
 	}
