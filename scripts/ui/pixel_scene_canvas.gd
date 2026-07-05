@@ -68,8 +68,9 @@ const OBJECT_INFO_RECT_SNAP_EPSILON := 0.25
 const OBJECT_LABEL_MAX_WIDTH := 126.0
 const OBJECT_LABEL_HEIGHT := 15.0
 const OBJECT_LABEL_GAP := 4.0
-const EMULATED_TOUCH_SUPPRESS_MS := 120
-const EMULATED_TOUCH_SUPPRESS_DISTANCE := 6.0
+# Godot can deliver touch plus emulated mouse after a stalled frame.
+const EMULATED_TOUCH_SUPPRESS_MS := 750
+const EMULATED_TOUCH_SUPPRESS_DISTANCE := 18.0
 const DRUNK_TIME_SCALE_MIN := 0.33
 const SCENE_IDLE_ANIMATION_FPS := 60.0
 const SCENE_IDLE_ANIMATION_INTERVAL_SEC := 1.0 / SCENE_IDLE_ANIMATION_FPS
@@ -322,10 +323,10 @@ func _gui_input(event: InputEvent) -> void:
 			if _mouse_duplicates_recent_touch_press(mouse_event.position):
 				accept_event()
 				return
+			_remember_mouse_press(mouse_event.position)
 			if _activate_selected_info_action_at_local_position(mouse_event.position):
 				accept_event()
 				return
-			_remember_mouse_press(mouse_event.position)
 			if mouse_event.double_click:
 				_activate_object_at_local_position(mouse_event.position)
 			else:

@@ -1649,6 +1649,7 @@ func _run() -> void:
 	duplicate_mouse_event.double_click = true
 	duplicate_mouse_event.position = duplicate_click_position
 	duplicate_input_canvas.call("_gui_input", duplicate_mouse_event)
+	duplicate_input_canvas.set("last_mouse_press_msec", Time.get_ticks_msec() - 500)
 	var duplicate_touch_event := InputEventScreenTouch.new()
 	duplicate_touch_event.pressed = true
 	duplicate_touch_event.double_tap = true
@@ -1686,6 +1687,7 @@ func _run() -> void:
 	duplicate_reverse_touch_event.double_tap = true
 	duplicate_reverse_touch_event.position = duplicate_click_position
 	duplicate_reverse_canvas.call("_gui_input", duplicate_reverse_touch_event)
+	duplicate_reverse_canvas.set("last_touch_press_msec", Time.get_ticks_msec() - 500)
 	var duplicate_reverse_mouse_event := InputEventMouseButton.new()
 	duplicate_reverse_mouse_event.button_index = MOUSE_BUTTON_LEFT
 	duplicate_reverse_mouse_event.pressed = true
@@ -4173,6 +4175,7 @@ func _check_pull_tab_buy_button_single_activation(app: Control) -> bool:
 	touch_event.pressed = true
 	touch_event.position = click_position
 	canvas.call("_gui_input", touch_event)
+	canvas.set("last_touch_press_msec", Time.get_ticks_msec() - 500)
 	var mouse_event := InputEventMouseButton.new()
 	mouse_event.button_index = MOUSE_BUTTON_LEFT
 	mouse_event.pressed = true
@@ -5239,6 +5242,12 @@ func _check_game_surface_touch_hit_policy() -> bool:
 	touch_event.double_tap = true
 	touch_event.position = touch_position
 	touch_canvas.call("_gui_input", touch_event)
+	touch_canvas.set("last_touch_press_msec", Time.get_ticks_msec() - 500)
+	var delayed_mouse_event := InputEventMouseButton.new()
+	delayed_mouse_event.button_index = MOUSE_BUTTON_LEFT
+	delayed_mouse_event.pressed = true
+	delayed_mouse_event.position = touch_position
+	touch_canvas.call("_gui_input", delayed_mouse_event)
 	touch_canvas.queue_free()
 	if control_rect.size.x < 44.0 or control_rect.size.y < 44.0:
 		push_error("Game surface touch controls should expand small hit regions to at least 44x44.")
