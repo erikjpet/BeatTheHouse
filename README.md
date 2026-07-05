@@ -37,12 +37,12 @@ checked into the repository.
 | Main scene | `res://scenes/main.tscn` |
 | Main UI shell | `res://scripts/ui/foundation_main.gd` |
 | Shipped baseline | 0.3.0 Act 1 feature-complete release |
-| Active planning target | 0.3.1 hardening release, version-stamped as 0.3.1 |
-| Current release readiness | SC.3 release closure is complete; full-suite, per-suite, performance, soak, determinism, stuck-state, 60-run mouse, seed-audit, and export evidence are tracked in `docs/plans/0.3.1_release_checklist.md` |
+| Active planning target | 0.3.2 low-end and web cleanup release, version-stamped as 0.3.2 |
+| Current release readiness | LD.2 release closure is complete; full-suite, per-suite, performance, soak, determinism, stuck-state, 60-run mouse, seed-audit, web-smoke, and export evidence are tracked in `docs/plans/0.3.2_release_checklist.md` |
 | Viewport | 1280x720, non-resizable, canvas stretch with kept aspect |
 | Renderer | Godot mobile renderer |
 | Input model | Single pointer interaction with mouse/touch parity |
-| Target exports | 0.3.1 ships Web/itch.io and Windows desktop; Android/iOS presets remain credential-blocked |
+| Target exports | 0.3.2 ships Web/itch.io and Windows desktop; Android/iOS presets remain credential-blocked |
 | Run model | Seeded deterministic run state with forked RNG streams |
 | Current win target | Reach the Grand Casino, then win either clean (net +$10 while staying low-heat for a Players Card) or by surviving Pit Boss Rourke's back-room showdown |
 | Prestige content | Act 1 keeps prestige dormant: the code path exists, but empty `data/prestige/purchases.json` hides all prestige UI/objects |
@@ -296,16 +296,16 @@ The wrappers resolve Godot in this order:
 
 ## Validation
 
-The current 0.3.1 readiness ledger is
-`docs/plans/0.3.1_release_checklist.md`. Headless commands verified during the
-SC.3 release closure:
+The current 0.3.2 readiness ledger is
+`docs/plans/0.3.2_release_checklist.md`. Headless commands verified during the
+LD.2 release closure:
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File tools\validate_project.ps1
 powershell -ExecutionPolicy Bypass -File tools\check_godot.ps1 -RequireGodot -Suite Full -TimeoutSec 1800
 ```
 
-Fresh SC.3 supplemental probes:
+Fresh LD.2 supplemental probes:
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File tools\foundation_performance_probe.ps1 -RequireGodot
@@ -319,7 +319,7 @@ Current results:
 
 - `validate_project.ps1` passes.
 - `check_godot.ps1 -RequireGodot -Suite Full -TimeoutSec 1800` passes with
-  report paths recorded in `docs/plans/0.3.1_release_checklist.md`.
+  report paths recorded in `docs/plans/0.3.2_release_checklist.md`.
 - Every FoundationSuite passes, including systems, ui, contracts, games, slot,
   slot_acceptance, each per-game suite, and audit.
 - `foundation_performance_probe.ps1 -RequireGodot` passes idle draw, active
@@ -353,9 +353,10 @@ Windows native access-violation dialogs on later runs.
 
 For shipped 0.2.0 release evidence, use the tracked checklist at
 `docs/plans/0.2_release_checklist.md`. For shipped 0.3.0 evidence, use
-`docs/plans/0.3_release_checklist.md`. For the current 0.3.1 readiness ledger,
-use `docs/plans/0.3.1_release_checklist.md`. For Act 1 historical work, use
-`docs/plans/act_one_feature_complete_task_board.md`.
+`docs/plans/0.3_release_checklist.md`. For shipped 0.3.1 evidence, use
+`docs/plans/0.3.1_release_checklist.md`. For the current 0.3.2 readiness
+ledger, use `docs/plans/0.3.2_release_checklist.md`. For Act 1 historical work,
+use `docs/plans/act_one_feature_complete_task_board.md`.
 
 ## Documentation
 
@@ -385,8 +386,10 @@ context:
 - `docs/plans/0.2_release_checklist.md` - the shipped 0.2.0 release readiness
   checklist, including validation evidence and known blockers.
 - `docs/plans/0.3_release_checklist.md` - the shipped 0.3.0 readiness ledger.
-- `docs/plans/0.3.1_release_checklist.md` - the current 0.3.1 hardening
+- `docs/plans/0.3.1_release_checklist.md` - the shipped 0.3.1 hardening
   release ledger, including performance/stability evidence and package hashes.
+- `docs/plans/0.3.2_release_checklist.md` - the current 0.3.2 low-end/web
+  cleanup release ledger, including gate evidence and package hashes.
 
 For current slot implementation work, use the slot stack listed in this README
 and the pinball docs above rather than older file names referenced inside
@@ -403,14 +406,14 @@ historical release evidence.
 
 `tools/export_itch.ps1` packages the Web and Windows presets for itch.io upload
 after Godot export templates are installed. Project and export preset versions
-are stamped `0.3.1`; the start screen reads the same project version. The tool
+are stamped `0.3.2`; the start screen reads the same project version. The tool
 supports `-Push -DryRun` for butler command verification and non-dry-run
 publishing after the user has installed butler and run `butler login` once.
-Fresh 0.3.1 Web/Windows package hashes and gate evidence live in
-`docs/plans/0.3.1_release_checklist.md`. Android signing and iOS team/signature
+Fresh 0.3.2 Web/Windows package hashes and gate evidence live in
+`docs/plans/0.3.2_release_checklist.md`. Android signing and iOS team/signature
 values still require real project credentials before store submission.
 
-## Known 0.3.1 Release Limitations
+## Known 0.3.2 Release Limitations
 
 - itch.io publishing remains a user action: install/login with butler and push
   the Web and Windows packages from `tools/export_itch.ps1`, or upload through
