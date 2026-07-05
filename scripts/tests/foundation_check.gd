@@ -7507,9 +7507,9 @@ func _check_roulette_surface_contract(game: GameModule, failures: Array, library
 	if not bool(surface.get("surface_controls_native", false)):
 		failures.append("Roulette surface did not expose native table controls.")
 	if bool(surface.get("surface_animates_idle", false)):
-		failures.append("Roulette betting surface must not redraw the full betting layout for idle animation.")
-	if str(surface.get("surface_ambient_overlay", "")) != "roulette_idle":
-		failures.append("Roulette betting surface did not request the low-cost idle wheel/player overlay.")
+		failures.append("Roulette betting surface must not redraw the static betting layout for idle animation.")
+	if str(surface.get("surface_ambient_overlay", "")) != "roulette_full_idle":
+		failures.append("Roulette betting surface must use the full-wheel idle motion layer, not the simplified roulette_idle overlay.")
 	if bool(surface.get("surface_realtime_state_refresh", false)):
 		failures.append("Roulette betting surface must not rebuild full realtime snapshots for idle animation.")
 	var initial_recent: Array = _baccarat_dictionary_array(surface.get("recent_numbers", []))

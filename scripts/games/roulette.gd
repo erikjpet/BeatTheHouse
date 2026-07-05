@@ -157,7 +157,7 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 	var roulette_motion_active := spin_active or payout_active or result_reveal_active or past_post_available
 	var rules := _table_rules(table)
 	var barred := bool(table.get("table_barred", false))
-	var roulette_ambient_overlay := "roulette_idle" if not barred else ""
+	var roulette_ambient_overlay := "roulette_full_idle" if not barred else ""
 	var recent_numbers := _roulette_recent_numbers(table)
 	var timer_active := not barred and not spin_active and not payout_active
 	var round_timer := GameModule.table_round_timer_status_peek(table, now_msec, "Next spin") if timer_active else {}
@@ -2022,7 +2022,7 @@ func _draw_table_patrons(surface, surface_state: Dictionary) -> void:
 		var risk := int(patron.get("active_snitch_risk", patron.get("snitch_risk", 0)))
 		var accent := C_PINK if watching else C_TEAL if covered else C_SOFT
 		var selected := focused_index == i
-		var phase := float(patron.get("behavior_phase", 0.0))
+		var phase := fmod((_surface_clock(surface) + float(int(patron.get("animation_offset", i * 217))) / 1000.0) / 2.2, 1.0)
 		var bob := sin(phase * PI * 2.0) * (2.0 if watching else 1.0)
 		var lean := float(patron.get("lean", 0.0))
 		var model_foot := foot + Vector2(lean, bob)

@@ -37,18 +37,11 @@ const EMULATED_TOUCH_SUPPRESS_MS := 120
 const EMULATED_TOUCH_SUPPRESS_DISTANCE := 6.0
 const SURFACE_ANIMATION_FPS := 60.0
 const SURFACE_ANIMATION_INTERVAL_SEC := 1.0 / SURFACE_ANIMATION_FPS
-const ROULETTE_WHEEL_CENTER := Vector2(150, 182)
-const ROULETTE_WHEEL_RADIUS := 108.0
-const ROULETTE_IDLE_DEFAULT_SEQUENCE := ["0", "28", "9", "26", "30", "11", "7", "20", "32", "17", "5", "22", "34", "15", "3", "24", "36", "13", "1", "00", "27", "10", "25", "29", "12", "8", "19", "31", "18", "6", "21", "33", "16", "4", "23", "35", "14", "2"]
 const IDLE_PANEL_BG := Color("#070810")
 const IDLE_STATION_BG := Color("#0b0d16")
 const IDLE_CHARACTER_SKIN := Color("#c49371")
 const IDLE_DEALER_JACKET := Color("#1b2230")
 const IDLE_DEALER_HAIR := Color("#2a1a25")
-const IDLE_WHEEL_OUTER := Color("#1b0d16")
-const IDLE_WHEEL_FELT := Color("#0b1118")
-const IDLE_WHEEL_HUB := Color("#241427")
-const IDLE_BALL := Color("#e9f2f2")
 const TABLE_IDLE_PATRON_POSITIONS := [
 	Vector2(128, 176),
 	Vector2(272, 130),
@@ -61,11 +54,6 @@ const DICE_IDLE_PATRON_POSITIONS := [
 	Vector2(660, 70),
 	Vector2(808, 84),
 ]
-const ROULETTE_RED_NUMBERS := {
-	"1": true, "3": true, "5": true, "7": true, "9": true, "12": true, "14": true, "16": true, "18": true,
-	"19": true, "21": true, "23": true, "25": true, "27": true, "30": true, "32": true, "34": true, "36": true,
-}
-
 class AmbientSurfaceOverlay:
 	extends Control
 
@@ -77,6 +65,58 @@ class AmbientSurfaceOverlay:
 	func _draw() -> void:
 		if host != null:
 			host._draw_ambient_surface_overlay(self)
+
+	func surface_board_size() -> Vector2:
+		return host.surface_board_size() if host != null and host.has_method("surface_board_size") else VisualStyleScript.GAME_BOARD_SIZE
+
+	func surface_flicker() -> float:
+		return float(host.surface_flicker()) if host != null and host.has_method("surface_flicker") else float(Time.get_ticks_msec()) / 1000.0
+
+	func surface_animation_active(channel_id: String) -> bool:
+		return bool(host.surface_animation_active(channel_id)) if host != null and host.has_method("surface_animation_active") else false
+
+	func surface_animation_progress(channel_id: String) -> float:
+		return float(host.surface_animation_progress(channel_id)) if host != null and host.has_method("surface_animation_progress") else 1.0
+
+	func surface_region_hovered(action: String, index: int = -1) -> bool:
+		return bool(host.surface_region_hovered(action, index)) if host != null and host.has_method("surface_region_hovered") else false
+
+	func surface_add_exact_hit(_rect: Rect2, _action: String, _index: int = -1) -> void:
+		pass
+
+	func surface_add_hit(_rect: Rect2, _action: String, _index: int = -1) -> void:
+		pass
+
+	func surface_label(text: String, pos: Vector2, font_size: int, color: Color) -> void:
+		var font := get_theme_default_font()
+		draw_string(font, pos + Vector2(1, 1), text, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size, Color(0.0, 0.0, 0.0, 0.62))
+		draw_string(font, pos, text, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size, color)
+
+	func surface_label_plain(text: String, pos: Vector2, font_size: int, color: Color) -> void:
+		draw_string(get_theme_default_font(), pos, text, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size, color)
+
+	func surface_label_centered(text: String, rect: Rect2, font_size: int, color: Color) -> void:
+		var font := get_theme_default_font()
+		var fitted_size := _centered_label_fit_size(font, text, rect, font_size)
+		var ascent := font.get_ascent(fitted_size)
+		var descent := font.get_descent(fitted_size)
+		var baseline_y := rect.position.y + (rect.size.y - ascent - descent) * 0.5 + ascent
+		var shadow := Color(0.0, 0.0, 0.0, 0.62)
+		draw_string(font, Vector2(rect.position.x + 1.0, baseline_y + 1.0), text, HORIZONTAL_ALIGNMENT_CENTER, rect.size.x, fitted_size, shadow)
+		draw_string(font, Vector2(rect.position.x, baseline_y), text, HORIZONTAL_ALIGNMENT_CENTER, rect.size.x, fitted_size, color)
+
+	func surface_label_centered_plain(text: String, rect: Rect2, font_size: int, color: Color) -> void:
+		var font := get_theme_default_font()
+		var fitted_size := _centered_label_fit_size(font, text, rect, font_size)
+		var ascent := font.get_ascent(fitted_size)
+		var descent := font.get_descent(fitted_size)
+		var baseline_y := rect.position.y + (rect.size.y - ascent - descent) * 0.5 + ascent
+		draw_string(font, Vector2(rect.position.x, baseline_y), text, HORIZONTAL_ALIGNMENT_CENTER, rect.size.x, fitted_size, color)
+
+	func _centered_label_fit_size(font: Font, text: String, rect: Rect2, font_size: int) -> int:
+		if host != null and host.has_method("_centered_label_fit_size"):
+			return int(host._centered_label_fit_size(font, text, rect, font_size))
+		return font_size
 
 var game_id: String = ""
 var state: Dictionary = {}
@@ -103,11 +143,7 @@ var perf_draw_frame_usec_samples: Array = []
 var surface_label_fit_cache: Dictionary = {}
 var hit_region_group_cache: Dictionary = {}
 var ambient_table_patron_cache: Array = []
-var ambient_roulette_patron_cache: Array = []
 var ambient_table_dealer_cache: Dictionary = {}
-var roulette_idle_wheel_sequence_key := ""
-var roulette_idle_wheel_segments: Array = []
-var roulette_idle_wheel_dividers: Array = []
 var active_design_scale := Vector2.ONE
 var active_design_offset := Vector2.ZERO
 var design_space_active := false
@@ -739,7 +775,6 @@ func _update_ambient_surface_overlay() -> void:
 
 func _rebuild_ambient_surface_cache() -> void:
 	ambient_table_patron_cache = []
-	ambient_roulette_patron_cache = []
 	ambient_table_dealer_cache = {}
 	var profile_value: Variant = state.get("dealer_profile", {})
 	var profile: Dictionary = profile_value as Dictionary if typeof(profile_value) == TYPE_DICTIONARY else {}
@@ -747,8 +782,6 @@ func _rebuild_ambient_surface_cache() -> void:
 		"attention_base": int(profile.get("attention_base", 24)),
 	}
 	_rebuild_table_idle_patron_cache()
-	_rebuild_roulette_idle_patron_cache()
-	_rebuild_roulette_idle_wheel_cache()
 
 
 func _rebuild_table_idle_patron_cache() -> void:
@@ -774,61 +807,11 @@ func _rebuild_table_idle_patron_cache() -> void:
 		})
 
 
-func _rebuild_roulette_idle_patron_cache() -> void:
-	var patrons := _dictionary_array(state.get("patrons", []))
-	var layout := _dictionary_array(state.get("patron_layout", []))
-	for i in range(mini(patrons.size(), 3)):
-		var patron: Dictionary = patrons[i]
-		var foot := Vector2(832, 112 + i * 98)
-		if i < layout.size():
-			var slot: Dictionary = layout[i]
-			foot = _vector_from_dict(slot.get("foot", {}), foot)
-		var watching := bool(patron.get("watching_player", false))
-		ambient_roulette_patron_cache.append({
-			"foot": foot,
-			"watching": watching,
-			"risk": clampf(float(int(patron.get("active_snitch_risk", patron.get("snitch_risk", 0)))) / 60.0, 0.0, 1.0),
-			"accent": C_PINK if watching else C_TEAL,
-			"jacket": _overlay_patron_jacket_color(patron),
-			"hair": _overlay_patron_hair_color(patron),
-		})
-
-
-func _rebuild_roulette_idle_wheel_cache() -> void:
-	var sequence := _string_array(state.get("wheel_sequence", []))
-	if sequence.is_empty():
-		sequence = ROULETTE_IDLE_DEFAULT_SEQUENCE.duplicate()
-	var sequence_key := "|".join(sequence)
-	if sequence_key == roulette_idle_wheel_sequence_key and not roulette_idle_wheel_segments.is_empty():
-		return
-	roulette_idle_wheel_sequence_key = sequence_key
-	roulette_idle_wheel_segments = []
-	roulette_idle_wheel_dividers = []
-	var count := maxi(1, sequence.size())
-	for i in range(count):
-		var a0 := float(i) / float(count) * TAU
-		var a1 := float(i + 1) / float(count) * TAU
-		var mid := (a0 + a1) * 0.5
-		var number := str(sequence[i])
-		var color := _roulette_pocket_color(number)
-		var p0 := Vector2(cos(a0), sin(a0)) * (ROULETTE_WHEEL_RADIUS - 2.0)
-		var p1 := Vector2(cos(a1), sin(a1)) * (ROULETTE_WHEEL_RADIUS - 2.0)
-		var inner := Vector2(cos(mid), sin(mid)) * 48.0
-		roulette_idle_wheel_segments.append({
-			"points": PackedVector2Array([Vector2.ZERO, p0, p1, inner]),
-			"colors": PackedColorArray([color, color, color, color]),
-		})
-		roulette_idle_wheel_dividers.append({
-			"start": Vector2(cos(a0), sin(a0)) * 52.0,
-			"end": Vector2(cos(a0), sin(a0)) * (ROULETTE_WHEEL_RADIUS - 3.0),
-		})
-
-
 func _ambient_surface_overlay_active() -> bool:
 	if reduce_motion:
 		return false
 	var overlay_id := str(state.get("surface_ambient_overlay", ""))
-	if overlay_id != "roulette_idle" and overlay_id != "table_idle":
+	if overlay_id != "table_idle" and overlay_id != "roulette_full_idle":
 		return false
 	for channel_id in surface_animation_channels.keys():
 		if surface_animation_active(str(channel_id)):
@@ -845,8 +828,8 @@ func _draw_ambient_surface_overlay(canvas: Control) -> void:
 	var scale := _board_scale()
 	canvas.draw_set_transform(_board_offset(scale), 0.0, Vector2(scale, scale))
 	match str(state.get("surface_ambient_overlay", "")):
-		"roulette_idle":
-			_draw_roulette_idle_overlay(canvas)
+		"roulette_full_idle":
+			_draw_roulette_full_idle_overlay(canvas)
 		"table_idle":
 			_draw_table_idle_overlay(canvas)
 	_draw_pressure_overlay_on(canvas)
@@ -855,73 +838,18 @@ func _draw_ambient_surface_overlay(canvas: Control) -> void:
 	_record_draw_performance(draw_started_usec)
 
 
-func _draw_roulette_idle_overlay(canvas: Control) -> void:
-	_draw_roulette_idle_wheel(canvas)
-	_draw_roulette_idle_croupier(canvas)
-	_draw_roulette_idle_patrons(canvas)
-	_draw_roulette_idle_timer(canvas)
-
-
-func _draw_roulette_idle_wheel(canvas: Control) -> void:
-	if roulette_idle_wheel_segments.is_empty():
-		_rebuild_roulette_idle_wheel_cache()
-	var angle := fposmod(flicker * -0.16, TAU)
-	canvas.draw_circle(ROULETTE_WHEEL_CENTER, ROULETTE_WHEEL_RADIUS + 12.0, IDLE_WHEEL_OUTER)
-	canvas.draw_circle(ROULETTE_WHEEL_CENTER, ROULETTE_WHEEL_RADIUS + 4.0, Color(C_YELLOW.r, C_YELLOW.g, C_YELLOW.b, 0.28), false, 2.0)
-	canvas.draw_circle(ROULETTE_WHEEL_CENTER, ROULETTE_WHEEL_RADIUS, IDLE_WHEEL_FELT)
-	var board_scale := _board_scale()
-	var board_offset := _board_offset(board_scale)
-	canvas.draw_set_transform(board_offset + ROULETTE_WHEEL_CENTER * board_scale, angle, Vector2(board_scale, board_scale))
-	for segment_value in roulette_idle_wheel_segments:
-		if typeof(segment_value) != TYPE_DICTIONARY:
-			continue
-		var segment: Dictionary = segment_value
-		var points_value: Variant = segment.get("points")
-		var colors_value: Variant = segment.get("colors")
-		if typeof(points_value) != TYPE_PACKED_VECTOR2_ARRAY or typeof(colors_value) != TYPE_PACKED_COLOR_ARRAY:
-			continue
-		var points: PackedVector2Array = points_value
-		var colors: PackedColorArray = colors_value
-		canvas.draw_polygon(points, colors)
-	for divider_value in roulette_idle_wheel_dividers:
-		if typeof(divider_value) != TYPE_DICTIONARY:
-			continue
-		var divider: Dictionary = divider_value
-		canvas.draw_line(_cache_vector2(divider, "start", Vector2.ZERO), _cache_vector2(divider, "end", Vector2.ZERO), Color(C_SOFT.r, C_SOFT.g, C_SOFT.b, 0.16), 1.0)
-	canvas.draw_set_transform(board_offset, 0.0, Vector2(board_scale, board_scale))
-	canvas.draw_circle(ROULETTE_WHEEL_CENTER, 44.0, IDLE_WHEEL_HUB)
-	canvas.draw_circle(ROULETTE_WHEEL_CENTER, 24.0, Color(C_YELLOW.r, C_YELLOW.g, C_YELLOW.b, 0.32))
-	var ball_angle := flicker * 0.22 - 0.72
-	var ball_pos := ROULETTE_WHEEL_CENTER + Vector2(cos(ball_angle), sin(ball_angle)) * (ROULETTE_WHEEL_RADIUS - 9.0)
-	canvas.draw_circle(ball_pos, 6.0, IDLE_BALL)
-	canvas.draw_circle(ball_pos + Vector2(-2.0, -2.0), 2.0, C_WHITE)
-
-
-func _draw_roulette_idle_croupier(canvas: Control) -> void:
-	var rect := Rect2(352, 54, 196, 104)
-	var phase := 0.5 + 0.5 * sin(flicker * 2.2)
-	var attention := clampf(0.45 + phase * 0.35, 0.0, 1.0)
-	canvas.draw_rect(Rect2(rect.position + Vector2(22, 8), Vector2(58, 76)), IDLE_STATION_BG)
-	canvas.draw_rect(Rect2(rect.position + Vector2(26, 26), Vector2(44, 54)), Color("#111827"))
-	canvas.draw_rect(Rect2(rect.position + Vector2(34, 12 + sin(flicker * 3.1) * 1.2), Vector2(28, 26)), Color("#c49371"))
-	canvas.draw_rect(Rect2(rect.position + Vector2(34, 12 + sin(flicker * 3.1) * 1.2), Vector2(28, 8)), Color("#2a1a25"))
-	canvas.draw_rect(Rect2(rect.position + Vector2(40, 25), Vector2(5, 3)), C_DARK)
-	canvas.draw_rect(Rect2(rect.position + Vector2(52, 25), Vector2(5, 3)), C_DARK)
-	var meter := Rect2(rect.position + Vector2(84, 54), Vector2(86, 6))
-	canvas.draw_rect(meter, IDLE_PANEL_BG)
-	canvas.draw_rect(Rect2(meter.position, Vector2(meter.size.x * attention, meter.size.y)), C_TEAL)
-
-
-func _draw_roulette_idle_patrons(canvas: Control) -> void:
-	for i in range(ambient_roulette_patron_cache.size()):
-		var patron: Dictionary = ambient_roulette_patron_cache[i]
-		var foot := _cache_vector2(patron, "foot", Vector2(832, 112 + i * 98))
-		var watching := bool(patron.get("watching", false))
-		var bob := sin(flicker * 3.2 + float(i) * 0.7) * (2.0 if watching else 1.2)
-		var model_foot := foot + Vector2(float(i - 1) * 1.4, bob)
-		var accent := _cache_color(patron, "accent", C_TEAL)
-		canvas.draw_rect(Rect2(foot + Vector2(-27, -68), Vector2(54, 72)), IDLE_PANEL_BG)
-		_draw_overlay_character(canvas, model_foot, accent, _cache_color(patron, "jacket", C_TEAL), _cache_color(patron, "hair", IDLE_DEALER_HAIR), 0.86, i)
+func _draw_roulette_full_idle_overlay(canvas: Control) -> void:
+	if surface_game_module == null:
+		return
+	if not surface_game_module.has_method("_draw_roulette_wheel"):
+		return
+	surface_game_module.call("_draw_roulette_wheel", canvas, state)
+	if surface_game_module.has_method("_draw_croupier_station"):
+		surface_game_module.call("_draw_croupier_station", canvas, state)
+	if surface_game_module.has_method("_draw_table_patrons"):
+		surface_game_module.call("_draw_table_patrons", canvas, state)
+	if surface_game_module.has_method("_draw_round_timer"):
+		surface_game_module.call("_draw_round_timer", canvas, state)
 
 
 func _draw_overlay_character(canvas: Control, foot: Vector2, accent: Color, jacket: Color, hair: Color, scale_value: float, index: int) -> void:
@@ -936,10 +864,6 @@ func _draw_overlay_character(canvas: Control, foot: Vector2, accent: Color, jack
 	var eye_h := 1.0 if blink else 3.0
 	canvas.draw_rect(Rect2(head.position + Vector2(5, 10) * scale_value, Vector2(3, eye_h) * scale_value), C_DARK)
 	canvas.draw_rect(Rect2(head.position + Vector2(13, 10) * scale_value, Vector2(3, eye_h) * scale_value), C_DARK)
-
-
-func _draw_roulette_idle_timer(canvas: Control) -> void:
-	_draw_idle_round_timer(canvas, Rect2(666, 314, 112, 24), C_CYAN)
 
 
 func _draw_table_idle_overlay(canvas: Control) -> void:
@@ -1002,14 +926,6 @@ func _draw_idle_round_timer(canvas: Control, rect: Rect2, accent: Color) -> void
 	var bar_rect := Rect2(rect.position + Vector2(8, rect.size.y - 12.0), Vector2(maxf(1.0, rect.size.x - 16.0), 4.0))
 	canvas.draw_rect(bar_rect, Color("#070810"))
 	canvas.draw_rect(Rect2(bar_rect.position, Vector2(bar_rect.size.x * progress, bar_rect.size.y)), color)
-
-
-func _roulette_pocket_color(number: String) -> Color:
-	if number == "0" or number == "00":
-		return Color("#0b7b4e")
-	if ROULETTE_RED_NUMBERS.has(number):
-		return Color("#8e1026")
-	return Color("#111922")
 
 
 func _overlay_patron_jacket_color(patron: Dictionary) -> Color:
