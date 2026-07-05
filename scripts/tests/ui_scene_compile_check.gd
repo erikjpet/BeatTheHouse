@@ -360,6 +360,9 @@ func _run() -> void:
 		push_error("Games page Back did not return to the main menu controls.")
 		quit(1)
 		return
+	if not await _check_pull_tab_buy_button_single_activation(app):
+		quit(1)
+		return
 	if not await _check_slot_autoplay_button_one_click(app):
 		quit(1)
 		return
@@ -1660,6 +1663,44 @@ func _run() -> void:
 		quit(1)
 		return
 	duplicate_input_canvas.queue_free()
+	var duplicate_reverse_canvas: Control = PixelSceneCanvasScript.new()
+	duplicate_reverse_canvas.size = Vector2(VisualStyleScript.ENVIRONMENT_BOARD_SIZE)
+	root.add_child(duplicate_reverse_canvas)
+	duplicate_reverse_canvas.call("render_environment_snapshot", {
+		"id": "duplicate_reverse_input_room",
+		"display_name": "Duplicate Reverse Input Room",
+		"interactable_objects": [{
+			"object_id": "service:test_drink",
+			"object_type": "service",
+			"visual_type": "drink",
+			"source_id": "test_drink",
+			"label": "Test Drink",
+			"enabled": true,
+			"normalized_rect": {"x": 0.45, "y": 0.42, "w": 0.10, "h": 0.16},
+		}],
+	})
+	await process_frame
+	var reverse_activation_counter := {"count": 0}
+	duplicate_reverse_canvas.object_activated.connect(func(_object_id: String) -> void:
+		reverse_activation_counter["count"] = int(reverse_activation_counter.get("count", 0)) + 1
+	)
+	var duplicate_reverse_touch_event := InputEventScreenTouch.new()
+	duplicate_reverse_touch_event.pressed = true
+	duplicate_reverse_touch_event.double_tap = true
+	duplicate_reverse_touch_event.position = duplicate_click_position
+	duplicate_reverse_canvas.call("_gui_input", duplicate_reverse_touch_event)
+	var duplicate_reverse_mouse_event := InputEventMouseButton.new()
+	duplicate_reverse_mouse_event.button_index = MOUSE_BUTTON_LEFT
+	duplicate_reverse_mouse_event.pressed = true
+	duplicate_reverse_mouse_event.double_click = true
+	duplicate_reverse_mouse_event.position = duplicate_click_position
+	duplicate_reverse_canvas.call("_gui_input", duplicate_reverse_mouse_event)
+	await process_frame
+	if int(reverse_activation_counter.get("count", 0)) != 1:
+		push_error("Environment canvas applied both touch and emulated-mouse activation for one object.")
+		quit(1)
+		return
+	duplicate_reverse_canvas.queue_free()
 
 	var serialized_before_selection := JSON.stringify(app.call("serialized_run_state"))
 	app.call("select_environment_view_object", 0)
@@ -4098,6 +4139,65 @@ func _travel_to_target_and_check_games(app: Control, target_id: String) -> bool:
 	if typeof(traveled_game_ids_value) == TYPE_ARRAY:
 		traveled_game_ids = traveled_game_ids_value
 	return not traveled_game_ids.is_empty()
+
+
+func _check_pull_tab_buy_button_single_activation(app: Control) -> bool:
+	var original_run_state: Variant = app.get("run_state")
+	var original_dev_game_test_mode := bool(app.get("dev_game_test_mode"))
+	app.call("start_game_test_session", "pull_tabs")
+	await process_frame
+	await process_frame
+	var run_state: RunState = app.get("run_state")
+	var canvas: Control = app.get("game_surface_canvas")
+	if run_state == null or app.get("current_game") == null or canvas == null:
+		push_error("Pull-tab duplicate-input fixture could not start the pull-tab surface.")
+		return false
+	run_state.bankroll = 100000
+	app.call("_refresh")
+	await process_frame
+	var before_snapshot: Dictionary = app.call("current_game_view_snapshot")
+	if str(before_snapshot.get("surface_renderer", "")) != "pull_tab_machine":
+		push_error("Pull-tab duplicate-input fixture did not render the pull-tab machine.")
+		return false
+	var deals_value: Variant = before_snapshot.get("pull_tab_deals", [])
+	var deals: Array = deals_value if typeof(deals_value) == TYPE_ARRAY else []
+	if deals.is_empty() or typeof(deals[0]) != TYPE_DICTIONARY:
+		push_error("Pull-tab duplicate-input fixture did not expose a purchasable deal.")
+		return false
+	var first_deal: Dictionary = deals[0]
+	var ticket_price := maxi(1, int(first_deal.get("price", 1)))
+	var tray_before := int(before_snapshot.get("pull_tab_tray_count", 0))
+	var bankroll_before := run_state.bankroll
+	var click_position: Vector2 = canvas.call("local_position_for_surface_action", "pull_tab_buy", 0)
+	if click_position.x < 0.0 or click_position.y < 0.0:
+		push_error("Pull-tab duplicate-input fixture could not locate the buy button hit region.")
+		return false
+	var touch_event := InputEventScreenTouch.new()
+	touch_event.pressed = true
+	touch_event.position = click_position
+	canvas.call("_gui_input", touch_event)
+	var mouse_event := InputEventMouseButton.new()
+	mouse_event.button_index = MOUSE_BUTTON_LEFT
+	mouse_event.pressed = true
+	mouse_event.position = click_position
+	canvas.call("_gui_input", mouse_event)
+	await process_frame
+	var after_snapshot: Dictionary = app.call("current_game_view_snapshot")
+	var tray_after := int(after_snapshot.get("pull_tab_tray_count", 0))
+	if tray_after != tray_before + 1:
+		push_error("One pull-tab input activated %d purchases instead of 1." % (tray_after - tray_before))
+		return false
+	if run_state.bankroll != bankroll_before - ticket_price:
+		push_error("One pull-tab input charged $%d instead of one $%d ticket." % [bankroll_before - run_state.bankroll, ticket_price])
+		return false
+	app.call("return_to_main_menu")
+	await process_frame
+	app.set("run_state", original_run_state)
+	app.set("dev_game_test_mode", original_dev_game_test_mode)
+	app.call("_refresh_run_action_service")
+	app.call("_refresh_start_screen")
+	await process_frame
+	return true
 
 
 func _check_slot_autoplay_button_one_click(app: Control) -> bool:

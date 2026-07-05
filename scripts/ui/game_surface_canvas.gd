@@ -99,6 +99,8 @@ var reduce_motion := false
 var drunk_time_scale := 1.0
 var last_mouse_press_msec: int = -100000
 var last_mouse_press_position := Vector2(-100000.0, -100000.0)
+var last_touch_press_msec: int = -100000
+var last_touch_press_position := Vector2(-100000.0, -100000.0)
 var surface_animation_redraw_accumulator := 0.0
 var surface_animation_redraw_count := 0
 
@@ -562,6 +564,9 @@ func _gui_input(event: InputEvent) -> void:
 	var mouse_event := event as InputEventMouseButton
 	if mouse_event != null:
 		if mouse_event.pressed and mouse_event.button_index == MOUSE_BUTTON_LEFT:
+			if _mouse_duplicates_recent_touch_press(mouse_event.position):
+				accept_event()
+				return
 			_remember_mouse_press(mouse_event.position)
 			_activate_surface_at_position(mouse_event.position, mouse_event.double_click)
 		return
@@ -571,6 +576,7 @@ func _gui_input(event: InputEvent) -> void:
 			if _touch_duplicates_recent_mouse_press(touch_event.position):
 				accept_event()
 				return
+			_remember_touch_press(touch_event.position)
 			_activate_surface_at_position(touch_event.position, touch_event.double_tap)
 		return
 
@@ -580,11 +586,23 @@ func _remember_mouse_press(position: Vector2) -> void:
 	last_mouse_press_position = position
 
 
+func _remember_touch_press(position: Vector2) -> void:
+	last_touch_press_msec = Time.get_ticks_msec()
+	last_touch_press_position = position
+
+
 func _touch_duplicates_recent_mouse_press(position: Vector2) -> bool:
 	var elapsed := Time.get_ticks_msec() - last_mouse_press_msec
 	if elapsed < 0 or elapsed > EMULATED_TOUCH_SUPPRESS_MS:
 		return false
 	return position.distance_to(last_mouse_press_position) <= EMULATED_TOUCH_SUPPRESS_DISTANCE
+
+
+func _mouse_duplicates_recent_touch_press(position: Vector2) -> bool:
+	var elapsed := Time.get_ticks_msec() - last_touch_press_msec
+	if elapsed < 0 or elapsed > EMULATED_TOUCH_SUPPRESS_MS:
+		return false
+	return position.distance_to(last_touch_press_position) <= EMULATED_TOUCH_SUPPRESS_DISTANCE
 
 
 func _activate_surface_at_position(position: Vector2, confirm_requested: bool) -> void:
