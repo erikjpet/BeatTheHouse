@@ -435,7 +435,7 @@ func _probe_game_resolve_budgets() -> void:
 
 
 func _probe_synthetic_idle_overlays() -> void:
-	for snapshot in [_synthetic_blackjack_idle_snapshot(), _synthetic_roulette_idle_snapshot()]:
+	for snapshot in [_synthetic_blackjack_idle_snapshot()]:
 		var canvas: Control = GameSurfaceCanvasScript.new()
 		canvas.size = Vector2(VisualStyleScript.GAME_BOARD_SIZE)
 		root.add_child(canvas)
@@ -540,33 +540,6 @@ func _synthetic_blackjack_idle_snapshot() -> Dictionary:
 			"started_msec": Time.get_ticks_msec(),
 			"duration_msec": 12000,
 			"remaining_msec": 12000,
-		},
-	}
-
-
-func _synthetic_roulette_idle_snapshot() -> Dictionary:
-	return {
-		"game_id": "roulette",
-		"surface_renderer": "roulette",
-		"surface_ambient_overlay": "roulette_idle",
-		"surface_animates_idle": false,
-		"reduce_motion": false,
-		"wheel_sequence": ["0", "28", "9", "26", "30", "11", "7", "20", "32", "17", "5", "22", "34", "15", "3", "24", "36", "13", "1", "00", "27", "10", "25", "29", "12", "8", "19", "31", "18", "6", "21", "33", "16", "4", "23", "35", "14", "2"],
-		"patrons": [
-			{"name": "Rail 1", "snitch_risk": 18, "active_snitch_risk": 18, "watching_player": false, "silhouette": "coat"},
-			{"name": "Rail 2", "snitch_risk": 42, "active_snitch_risk": 42, "watching_player": true, "silhouette": "vest"},
-			{"name": "Rail 3", "snitch_risk": 25, "active_snitch_risk": 25, "watching_player": false, "silhouette": "cap"},
-		],
-		"patron_layout": [
-			{"foot": {"x": 832.0, "y": 112.0}},
-			{"foot": {"x": 836.0, "y": 210.0}},
-			{"foot": {"x": 830.0, "y": 308.0}},
-		],
-		"table_round_timer": {
-			"active": true,
-			"started_msec": Time.get_ticks_msec(),
-			"duration_msec": 15000,
-			"remaining_msec": 15000,
 		},
 	}
 
