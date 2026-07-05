@@ -157,6 +157,7 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 	var roulette_motion_active := spin_active or payout_active or result_reveal_active or past_post_available
 	var rules := _table_rules(table)
 	var barred := bool(table.get("table_barred", false))
+	var roulette_ambient_overlay := "roulette_idle" if not barred else ""
 	var recent_numbers := _roulette_recent_numbers(table)
 	var timer_active := not barred and not spin_active and not payout_active
 	var round_timer := GameModule.table_round_timer_status_peek(table, now_msec, "Next spin") if timer_active else {}
@@ -177,7 +178,8 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 		"surface_stake_controls_required": true,
 		"surface_embeds_outcomes": true,
 		"surface_suppresses_game_result_burst": true,
-		"surface_animates_idle": roulette_motion_active,
+		"surface_animates_idle": false,
+		"surface_ambient_overlay": roulette_ambient_overlay,
 		"surface_realtime_state_refresh": roulette_motion_active,
 		"surface_state_labels": [
 			{"label": "Wager", "value": "$%d" % total_wager},
@@ -287,17 +289,12 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 func draw_surface(surface, surface_state: Dictionary, _render_context: Dictionary = {}) -> bool:
 	if str(surface_state.get("surface_renderer", "")) != "roulette":
 		return false
-	var static_betting := _roulette_static_betting_view(surface, surface_state)
 	surface.surface_begin_design_space(surface.surface_board_size())
 	_draw_roulette_room(surface, surface_state)
 	_draw_roulette_table(surface, surface_state)
 	_draw_roulette_wheel(surface, surface_state)
-	if static_betting:
-		_draw_static_table_patrons(surface, surface_state)
-		_draw_static_croupier_station(surface, surface_state)
-	else:
-		_draw_table_patrons(surface, surface_state)
-		_draw_croupier_station(surface, surface_state)
+	_draw_table_patrons(surface, surface_state)
+	_draw_croupier_station(surface, surface_state)
 	_draw_recent_numbers(surface, surface_state)
 	_draw_betting_layout(surface, surface_state)
 	_draw_bet_chips(surface, surface_state)
@@ -309,15 +306,6 @@ func draw_surface(surface, surface_state: Dictionary, _render_context: Dictionar
 	_draw_rule_hover_overlay(surface, surface_state)
 	_draw_payout_animation(surface, surface_state)
 	return true
-
-
-func _roulette_static_betting_view(surface, surface_state: Dictionary) -> bool:
-	if str(surface_state.get("phase", "betting")) != "betting":
-		return false
-	if bool(surface_state.get("result_reveal_active", false)):
-		return false
-	return not bool(surface.surface_animation_active(ROULETTE_SPIN_CHANNEL)) and not bool(surface.surface_animation_active(ROULETTE_PAYOUT_CHANNEL))
-
 
 func surface_needs_auto_tick(ui_state: Dictionary, run_state: RunState, environment: Dictionary) -> bool:
 	# Per-frame check: operate on the live stored table (zero-copy) instead of
@@ -1898,47 +1886,38 @@ func _draw_roulette_wheel(surface, surface_state: Dictionary) -> void:
 	var settled_drift := fposmod(settled_elapsed * -0.18, TAU) if reveal_result else 0.0
 	if reveal_result:
 		wheel_angle = fposmod(wheel_angle + settled_drift, TAU)
-	var detailed_wheel := spin_active or reveal_result
-	var draw_pocket_labels := detailed_wheel
+	if not spin_active and not reveal_result:
+		wheel_angle = fposmod(wheel_angle + _surface_clock(surface) * -0.16, TAU)
 	surface.draw_circle(WHEEL_CENTER, WHEEL_RADIUS + 10, Color("#1b0d16"))
 	surface.draw_circle(WHEEL_CENTER, WHEEL_RADIUS + 4, Color(C_YELLOW.r, C_YELLOW.g, C_YELLOW.b, 0.28), false, 2)
 	surface.draw_circle(WHEEL_CENTER, WHEEL_RADIUS, Color("#0b1118"))
 	var count := maxi(1, sequence.size())
-	if detailed_wheel:
+	for i in range(count):
+		var a0 := wheel_angle + float(i) / float(count) * TAU
+		var a1 := wheel_angle + float(i + 1) / float(count) * TAU
+		var mid := (a0 + a1) * 0.5
+		var number := str(sequence[i])
+		var color := _pocket_color(number)
+		var p0 := WHEEL_CENTER + Vector2(cos(a0), sin(a0)) * (WHEEL_RADIUS - 2.0)
+		var p1 := WHEEL_CENTER + Vector2(cos(a1), sin(a1)) * (WHEEL_RADIUS - 2.0)
+		var inner := WHEEL_CENTER + Vector2(cos(mid), sin(mid)) * 48.0
+		surface.draw_polygon([WHEEL_CENTER, p0, p1, inner], [color])
+		var spoke_start := WHEEL_CENTER + Vector2(cos(a0), sin(a0)) * 52.0
+		var spoke_end := WHEEL_CENTER + Vector2(cos(a0), sin(a0)) * (WHEEL_RADIUS - 3.0)
+		surface.draw_line(spoke_start, spoke_end, Color(C_SOFT.r, C_SOFT.g, C_SOFT.b, 0.16), 1)
+	if spin_active or reveal_result:
 		for i in range(count):
-			var a0 := wheel_angle + float(i) / float(count) * TAU
-			var a1 := wheel_angle + float(i + 1) / float(count) * TAU
-			var mid := (a0 + a1) * 0.5
-			var number := str(sequence[i])
-			var color := _pocket_color(number)
-			var p0 := WHEEL_CENTER + Vector2(cos(a0), sin(a0)) * (WHEEL_RADIUS - 2.0)
-			var p1 := WHEEL_CENTER + Vector2(cos(a1), sin(a1)) * (WHEEL_RADIUS - 2.0)
-			var inner := WHEEL_CENTER + Vector2(cos(mid), sin(mid)) * 48.0
-			surface.draw_polygon([WHEEL_CENTER, p0, p1, inner], [color])
-			var spoke_start := WHEEL_CENTER + Vector2(cos(a0), sin(a0)) * 52.0
-			var spoke_end := WHEEL_CENTER + Vector2(cos(a0), sin(a0)) * (WHEEL_RADIUS - 3.0)
-			surface.draw_line(spoke_start, spoke_end, Color(C_SOFT.r, C_SOFT.g, C_SOFT.b, 0.16), 1)
-	else:
-		for i in range(12):
-			var angle := wheel_angle + float(i) / 12.0 * TAU
-			var color := Color("#8e1026") if i % 2 == 0 else Color("#111922")
-			var spoke_start := WHEEL_CENTER + Vector2(cos(angle), sin(angle)) * 50.0
-			var spoke_end := WHEEL_CENTER + Vector2(cos(angle), sin(angle)) * (WHEEL_RADIUS - 4.0)
-			surface.draw_line(spoke_start, spoke_end, Color(C_SOFT.r, C_SOFT.g, C_SOFT.b, 0.14), 1)
-			surface.draw_circle(WHEEL_CENTER + Vector2(cos(angle + 0.12), sin(angle + 0.12)) * 76.0, 4.0, Color(color.r, color.g, color.b, 0.78))
-	if draw_pocket_labels:
-		for i in range(count):
-			var a0 := wheel_angle + float(i) / float(count) * TAU
-			var a1 := wheel_angle + float(i + 1) / float(count) * TAU
-			var mid := (a0 + a1) * 0.5
-			var number := str(sequence[i])
-			var pocket_color := _pocket_color(number)
-			var label_size := Vector2(19, 10) if number.length() > 1 else Vector2(15, 10)
-			var label_pos := WHEEL_CENTER + Vector2(cos(mid), sin(mid)) * (WHEEL_RADIUS + 17.0)
+			var label_a0 := wheel_angle + float(i) / float(count) * TAU
+			var label_a1 := wheel_angle + float(i + 1) / float(count) * TAU
+			var label_mid := (label_a0 + label_a1) * 0.5
+			var label_number := str(sequence[i])
+			var pocket_color := _pocket_color(label_number)
+			var label_size := Vector2(19, 10) if label_number.length() > 1 else Vector2(15, 10)
+			var label_pos := WHEEL_CENTER + Vector2(cos(label_mid), sin(label_mid)) * (WHEEL_RADIUS + 17.0)
 			var label_rect := Rect2(label_pos - label_size * 0.5, label_size)
 			surface.draw_rect(label_rect.grow(1.0), Color(0.01, 0.02, 0.04, 0.86))
 			surface.draw_rect(label_rect.grow(1.0), Color(pocket_color.r, pocket_color.g, pocket_color.b, 0.92), false, 1)
-			surface.surface_label_centered(number, label_rect, 6 if number.length() > 1 else 7, _wheel_label_color(number))
+			surface.surface_label_centered(label_number, label_rect, 6 if label_number.length() > 1 else 7, _wheel_label_color(label_number))
 	if reveal_result and winning_index >= 0 and winning_index < count:
 		var win_a0 := wheel_angle + float(winning_index) / float(count) * TAU
 		var win_a1 := wheel_angle + float(winning_index + 1) / float(count) * TAU
@@ -1956,8 +1935,10 @@ func _draw_roulette_wheel(surface, surface_state: Dictionary) -> void:
 		surface.surface_label_centered(result_label, result_rect, 8, C_YELLOW)
 	surface.draw_circle(WHEEL_CENTER, 44, Color("#241427"))
 	surface.draw_circle(WHEEL_CENTER, 24, Color(C_YELLOW.r, C_YELLOW.g, C_YELLOW.b, 0.32))
-	var ball_default_angle := _surface_clock(surface) * 2.0 if spin_active or reveal_result else -0.72
+	var ball_default_angle := _surface_clock(surface) * 0.22 - 0.72 if not spin_active and not reveal_result else _surface_clock(surface) * 2.0
 	var ball_angle := float(keyframe.get("ball_angle", ball_default_angle))
+	if not spin_active and not reveal_result:
+		ball_angle = ball_default_angle
 	if reveal_result:
 		ball_angle = fposmod(ball_angle + settled_drift, TAU)
 	var ball_radius := float(keyframe.get("ball_radius", WHEEL_RADIUS - 9.0))
@@ -2255,7 +2236,7 @@ func _draw_table_notice(surface, surface_state: Dictionary) -> void:
 
 
 func _draw_round_timer(surface, surface_state: Dictionary) -> void:
-	TableVisualsScript.draw_round_timer_panel(surface, _copy_dict(surface_state.get("table_round_timer", {})), Rect2(666, 314, 112, 24), C_CYAN)
+	TableVisualsScript.draw_round_timer_panel(surface, surface_state.get("table_round_timer", {}), Rect2(666, 314, 112, 24), C_CYAN)
 
 
 func _draw_chip_rack(surface, surface_state: Dictionary) -> void:

@@ -255,7 +255,7 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 	var payout_started_msec := int(last_result.get("resolved_at_msec", last_result.get("timestamp_msec", 0)))
 	var deal_animation_active := not deal_active_id.is_empty() and deal_started_msec > 0 and now_msec - deal_started_msec >= 0 and now_msec - deal_started_msec < deal_duration_msec
 	var payout_animation_active := not payout_active_id.is_empty() and payout_started_msec > 0 and now_msec - payout_started_msec >= 0 and now_msec - payout_started_msec < PAYOUT_ANIMATION_DURATION_MSEC
-	var blackjack_live_redraw_active := not barred and (deal_animation_active or payout_animation_active or count_active or distraction_active)
+	var blackjack_ambient_redraw_active := not barred
 	var timer_active := not dealt and not barred and not deal_animation_active and not payout_animation_active
 	var round_timer := GameModule.table_round_timer_status_peek(table, now_msec, "Next hand") if timer_active else {}
 	if timer_active and bool(round_timer.get("active", false)) and table_notice == "Slide chips, choose side bets, then press DEAL.":
@@ -289,7 +289,7 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 		"surface_controls_native": true,
 		"surface_stake_controls_required": true,
 		"surface_embeds_outcomes": true,
-		"surface_animates_idle": blackjack_live_redraw_active,
+		"surface_animates_idle": blackjack_ambient_redraw_active,
 		"surface_realtime_state_refresh": false,
 		"surface_ui_protected_regions": _blackjack_ui_protected_regions(count_challenge),
 		"surface_hover_ui_protected_regions": [
@@ -646,9 +646,6 @@ func surface_action_command(surface_action: String, index: int, confirm_requeste
 			var projected_cost: int = _wager_cost_from_session(selected_stake, dealt_state, table, run_state)
 			if projected_cost > maxi(0, run_state.bankroll if run_state != null else projected_cost):
 				return _message_command(next_state, "You do not have enough bankroll for those chips and side bets.")
-			if confirm_requested:
-				_stand_all_hands(dealt_state)
-				return _settle_completed_round_command(dealt_state, index, "Quick hand dealt and settled from the shoe.", table, run_state)
 			return _action_command("play_basic", "legal", false, dealt_state, index, _opening_deal_notice(dealt_state, table), true)
 		"blackjack_distraction":
 			return _start_distraction_command(index, next_state, table)
@@ -1425,7 +1422,7 @@ func _draw_blackjack_table_notice(surface, surface_state: Dictionary) -> void:
 
 
 func _draw_blackjack_round_timer(surface, surface_state: Dictionary) -> void:
-	TableVisualsScript.draw_round_timer_panel(surface, _local_copy_dict(surface_state.get("table_round_timer", {})), Rect2(668, 294, 112, 30), C_CYAN)
+	TableVisualsScript.draw_round_timer_panel(surface, surface_state.get("table_round_timer", {}), Rect2(668, 294, 112, 30), C_CYAN)
 
 
 func _draw_blackjack_ambient_event(surface, surface_state: Dictionary) -> void:
@@ -1570,8 +1567,6 @@ func _draw_table_actions(surface, surface_state: Dictionary) -> void:
 		surface.surface_add_invisible_hit(Rect2(panel.position.x + 14, panel.position.y + 7, 84, 16), "blackjack_deal", 0)
 		_draw_table_button(surface, Rect2(panel.position.x + 12, panel.position.y + 24, 84, 26), "HIT", "blackjack_hit", 0, C_TEAL, bool(surface_state.get("can_hit", false)))
 		var stand_rect := Rect2(panel.position.x + 104, panel.position.y + 24, 84, 26)
-		if surface.surface_native_action_selected("blackjack_deal"):
-			surface.surface_add_invisible_hit(stand_rect, "blackjack_deal", 0)
 		_draw_table_button(surface, stand_rect, "STAND", "blackjack_stand", 0, C_CYAN, bool(surface_state.get("can_stand", false)), surface.surface_native_action_selected("blackjack_stand"))
 		_draw_table_button(surface, Rect2(panel.position.x + 196, panel.position.y + 24, 72, 26), "DOUBLE", "blackjack_double", 0, C_YELLOW, bool(surface_state.get("can_double", false)))
 		_draw_table_button(surface, Rect2(panel.position.x + 12, panel.position.y + 54, 84, 22), "SPLIT", "blackjack_split", 0, C_AMBER, bool(surface_state.get("can_split", false)))

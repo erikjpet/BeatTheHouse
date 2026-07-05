@@ -2680,7 +2680,7 @@ func _draw_legend_row(surface, state: Dictionary, pos: Vector2) -> void:
 
 
 func _draw_round_timer(surface, state: Dictionary) -> void:
-	TableVisualsScript.draw_round_timer_panel(surface, _copy_dict(state.get("table_round_timer", {})), ROUND_TIMER_RECT, C_TEAL)
+	TableVisualsScript.draw_round_timer_panel(surface, state.get("table_round_timer", {}), ROUND_TIMER_RECT, C_TEAL)
 
 
 func _draw_console(surface, state: Dictionary) -> void:

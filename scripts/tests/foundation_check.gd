@@ -7475,7 +7475,9 @@ func _check_roulette_surface_contract(game: GameModule, failures: Array, library
 	if not bool(surface.get("surface_controls_native", false)):
 		failures.append("Roulette surface did not expose native table controls.")
 	if bool(surface.get("surface_animates_idle", false)):
-		failures.append("Roulette betting surface should stay static until a spin, payout, or result reveal is active.")
+		failures.append("Roulette betting surface must not redraw the full betting layout for idle animation.")
+	if str(surface.get("surface_ambient_overlay", "")) != "roulette_idle":
+		failures.append("Roulette betting surface did not request the low-cost idle wheel/player overlay.")
 	if bool(surface.get("surface_realtime_state_refresh", false)):
 		failures.append("Roulette betting surface must not rebuild full realtime snapshots for idle animation.")
 	var initial_recent: Array = _baccarat_dictionary_array(surface.get("recent_numbers", []))
@@ -8573,8 +8575,8 @@ func _check_blackjack_surface_contract(game: GameModule, failures: Array) -> voi
 		failures.append("Blackjack surface did not expose native surface controls.")
 	if not bool(surface.get("can_deal", false)):
 		failures.append("Blackjack surface did not start in a deal-ready betting phase.")
-	if bool(surface.get("surface_animates_idle", false)):
-		failures.append("Blackjack betting surface should not redraw continuously before a hand is dealt.")
+	if not bool(surface.get("surface_animates_idle", false)):
+		failures.append("Blackjack betting surface must keep cached ambient redraw active for table animation.")
 	if bool(surface.get("surface_realtime_state_refresh", false)):
 		failures.append("Blackjack betting surface must not rebuild full realtime snapshots while idle.")
 	if (surface.get("table_round_timer", {}) as Dictionary).is_empty():
@@ -8614,6 +8616,11 @@ func _check_blackjack_surface_contract(game: GameModule, failures: Array) -> voi
 			if str(label_value).find("SIDE BET RULES") >= 0:
 				failures.append("Blackjack side-bet rules overlay stayed visible from active selection without hover.")
 				break
+	var confirm_deal_click := game.surface_action_command("blackjack_deal", 0, true, {}, run_state, environment)
+	if bool(confirm_deal_click.get("resolve", false)):
+		failures.append("Blackjack confirmed Deal quick-settled instead of starting the visible card-deal animation.")
+	if (confirm_deal_click.get("ui_state", {}) as Dictionary).get("round_terminal", false):
+		failures.append("Blackjack confirmed Deal marked the hand terminal before any player action.")
 	var deal_click := game.surface_action_command("blackjack_deal", 0, false, {}, run_state, environment)
 	var deal_ui: Dictionary = deal_click.get("ui_state", {})
 	if (deal_ui.get("player_hands", []) as Array).is_empty():
@@ -8633,6 +8640,16 @@ func _check_blackjack_surface_contract(game: GameModule, failures: Array) -> voi
 		var first_deal_event: Dictionary = deal_events[0] if typeof(deal_events[0]) == TYPE_DICTIONARY else {}
 		if str(first_deal_event.get("zone", "")) != "player" or not first_deal_event.has("from") or not first_deal_event.has("to"):
 			failures.append("Blackjack deal animation events did not include normalized card targets.")
+		var prior_delay := -1
+		for event_value in deal_events.slice(0, mini(4, deal_events.size())):
+			if typeof(event_value) != TYPE_DICTIONARY:
+				continue
+			var event: Dictionary = event_value
+			var event_delay := int(event.get("delay_msec", -1))
+			if event_delay <= prior_delay:
+				failures.append("Blackjack initial deal events were not staggered card by card.")
+				break
+			prior_delay = event_delay
 	var dealer_focus: Dictionary = dealt_surface.get("dealer_focus", {}) if typeof(dealt_surface.get("dealer_focus", {})) == TYPE_DICTIONARY else {}
 	if not dealer_focus.has("gaze_phase") or not dealer_focus.has("peek_danger") or not dealer_focus.has("scan_phase") or not dealer_focus.has("watching_player") or not dealer_focus.has("peek_window_open"):
 		failures.append("Blackjack dealer focus did not expose visual read timing fields.")
@@ -8728,6 +8745,21 @@ func _check_blackjack_surface_contract(game: GameModule, failures: Array) -> voi
 		failures.append("Blackjack stand did not immediately resolve a completed one-hand round.")
 	if bool(first_click.get("preserve_surface_ui_state", false)):
 		failures.append("Blackjack stand preserved stale completed-hand UI state after resolution.")
+	var settle_anim_run_state: RunState = RunStateScript.new()
+	settle_anim_run_state.start_new("BLACKJACK-STAND-ANIMATION")
+	settle_anim_run_state.bankroll = 1000
+	var settle_anim_environment := _surface_contract_environment()
+	settle_anim_environment["game_states"] = {"blackjack": generated_state.duplicate(true)}
+	var settle_anim_deal := game.surface_action_command("blackjack_deal", 0, false, {"selected_stake": 5}, settle_anim_run_state, settle_anim_environment)
+	var settle_anim_stand := game.surface_action_command("blackjack_stand", 0, true, settle_anim_deal.get("ui_state", {}), settle_anim_run_state, settle_anim_environment)
+	var settle_anim_result := game.resolve_with_context("play_basic", 5, settle_anim_run_state, settle_anim_environment, settle_anim_run_state.create_rng("blackjack_stand_animation_resolve"), settle_anim_stand.get("ui_state", {}))
+	if not bool(settle_anim_result.get("ok", false)):
+		failures.append("Blackjack stand animation fixture did not resolve through the normal play_basic path.")
+	var settle_anim_surface := game.surface_state(settle_anim_run_state, settle_anim_environment, {})
+	if (settle_anim_surface.get("deal_animation_events", []) as Array).is_empty():
+		failures.append("Blackjack stand settlement did not leave dealer card animation events on the result surface.")
+	if not bool(settle_anim_surface.get("surface_animates_idle", false)):
+		failures.append("Blackjack result surface did not keep cached redraw active for settlement animation.")
 	var sit_run_state: RunState = RunStateScript.new()
 	sit_run_state.start_new("BLACKJACK-SITOUT-CONTRACT")
 	sit_run_state.bankroll = 1000

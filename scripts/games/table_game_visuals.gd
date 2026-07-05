@@ -13,6 +13,7 @@ const C_ORANGE := VisualStyleScript.ORANGE
 const C_WHITE := VisualStyleScript.WHITE
 const C_SOFT := VisualStyleScript.SOFT
 
+const TABLE_ROUND_WARNING_MSEC := 5000
 const CONSOLE_Y := 342.0
 const TABLE_BOTTOM := 334.0
 const DEFAULT_PATRON_POSITIONS := [
@@ -189,18 +190,28 @@ static func draw_patron_wager_badge(surface, state: Dictionary, patron: Dictiona
 		surface.surface_add_hit(fade_rect, action, index + 100)
 
 
-static func draw_round_timer_panel(surface, timer: Dictionary, rect: Rect2, accent: Color = C_YELLOW) -> void:
+static func draw_round_timer_panel(surface, timer_value: Variant, rect: Rect2, accent: Color = C_YELLOW) -> void:
+	if typeof(timer_value) != TYPE_DICTIONARY:
+		return
+	var timer: Dictionary = timer_value as Dictionary
 	if timer.is_empty() or not bool(timer.get("active", false)):
 		return
-	var warning := bool(timer.get("warning", false))
+	var remaining_msec := maxi(0, int(timer.get("remaining_msec", 0)))
+	var progress := clampf(float(timer.get("progress", 0.0)), 0.0, 1.0)
+	var started_msec := maxi(0, int(timer.get("started_msec", 0)))
+	var duration_msec := maxi(0, int(timer.get("duration_msec", 0)))
+	if started_msec > 0 and duration_msec > 0:
+		var elapsed_msec := maxi(0, Time.get_ticks_msec() - started_msec)
+		remaining_msec = maxi(0, duration_msec - elapsed_msec)
+		progress = clampf(float(elapsed_msec) / float(duration_msec), 0.0, 1.0)
+	var warning := bool(timer.get("warning", false)) or (started_msec > 0 and remaining_msec <= TABLE_ROUND_WARNING_MSEC)
 	var color := C_PINK if warning else accent
 	_draw_neon_panel(surface, rect, color, 0.16 if warning else 0.11)
 	var label := str(timer.get("label", "Next round")).to_upper().left(20)
-	var seconds := maxi(0, int(timer.get("remaining_seconds", 0)))
+	var seconds := maxi(0, int(ceil(float(remaining_msec) / 1000.0)))
 	surface.surface_label(label, rect.position + Vector2(8, 13), 8, C_SOFT)
 	surface.surface_label("%02ds" % seconds, rect.position + Vector2(rect.size.x - 44.0, 15), 14, color)
 	var bar_rect := Rect2(rect.position + Vector2(8, rect.size.y - 12.0), Vector2(maxf(1.0, rect.size.x - 16.0), 4.0))
-	var progress := clampf(float(timer.get("progress", 0.0)), 0.0, 1.0)
 	surface.draw_rect(bar_rect, Color("#070810"))
 	surface.draw_rect(Rect2(bar_rect.position, Vector2(bar_rect.size.x * progress, bar_rect.size.y)), color)
 

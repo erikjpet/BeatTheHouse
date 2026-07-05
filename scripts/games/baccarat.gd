@@ -2797,7 +2797,7 @@ func _draw_table_notice(surface, state: Dictionary) -> void:
 
 
 func _draw_round_timer(surface, state: Dictionary) -> void:
-	TableVisualsScript.draw_round_timer_panel(surface, _copy_dict(state.get("table_round_timer", {})), Rect2(664, 314, 116, 26), C_CYAN)
+	TableVisualsScript.draw_round_timer_panel(surface, state.get("table_round_timer", {}), Rect2(664, 314, 116, 26), C_CYAN)
 
 
 func _draw_chip_rack(surface, state: Dictionary) -> void:

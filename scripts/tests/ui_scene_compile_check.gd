@@ -1545,6 +1545,36 @@ func _run() -> void:
 		push_error("Game surface animation did not maintain a 60 FPS redraw cadence.")
 		quit(1)
 		return
+	var roulette_idle_canvas: Control = GameSurfaceCanvasScript.new()
+	root.add_child(roulette_idle_canvas)
+	roulette_idle_canvas.call("render_game_snapshot", {
+		"game_id": "roulette",
+		"surface_renderer": "roulette",
+		"surface_ambient_overlay": "roulette_idle",
+		"surface_animates_idle": false,
+		"reduce_motion": false,
+		"wheel_sequence": ["0", "28", "9", "26", "30", "11", "7", "20", "32", "17", "5", "22", "34", "15", "3", "24", "36", "13", "1", "00", "27", "10", "25", "29", "12", "8", "19", "31", "18", "6", "21", "33", "16", "4", "23", "35", "14", "2"],
+		"patrons": [],
+		"patron_layout": [],
+	})
+	await process_frame
+	var roulette_idle_start_snapshot: Dictionary = roulette_idle_canvas.call("current_view_snapshot")
+	if not bool(roulette_idle_start_snapshot.get("surface_ambient_overlay_active", false)):
+		push_error("Roulette idle overlay was not active for a roulette_idle surface snapshot.")
+		quit(1)
+		return
+	if bool(roulette_idle_start_snapshot.get("surface_continuous_redraw_active", true)):
+		push_error("Roulette idle overlay should animate without full-surface continuous redraw.")
+		quit(1)
+		return
+	var roulette_overlay_redraw_start := int(roulette_idle_start_snapshot.get("surface_animation_redraw_count", 0))
+	for _roulette_overlay_frame in range(6):
+		roulette_idle_canvas.call("_process", 1.0 / 60.0)
+	var roulette_idle_end_snapshot: Dictionary = roulette_idle_canvas.call("current_view_snapshot")
+	if int(roulette_idle_end_snapshot.get("surface_animation_redraw_count", 0)) - roulette_overlay_redraw_start < 6:
+		push_error("Roulette idle overlay did not maintain a 60 FPS redraw cadence.")
+		quit(1)
+		return
 	var duplicate_input_canvas: Control = PixelSceneCanvasScript.new()
 	duplicate_input_canvas.size = Vector2(VisualStyleScript.ENVIRONMENT_BOARD_SIZE)
 	root.add_child(duplicate_input_canvas)

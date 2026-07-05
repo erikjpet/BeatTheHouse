@@ -37,6 +37,24 @@ const EMULATED_TOUCH_SUPPRESS_MS := 120
 const EMULATED_TOUCH_SUPPRESS_DISTANCE := 6.0
 const SURFACE_ANIMATION_FPS := 60.0
 const SURFACE_ANIMATION_INTERVAL_SEC := 1.0 / SURFACE_ANIMATION_FPS
+const ROULETTE_WHEEL_CENTER := Vector2(150, 182)
+const ROULETTE_WHEEL_RADIUS := 108.0
+const ROULETTE_RED_NUMBERS := {
+	"1": true, "3": true, "5": true, "7": true, "9": true, "12": true, "14": true, "16": true, "18": true,
+	"19": true, "21": true, "23": true, "25": true, "27": true, "30": true, "32": true, "34": true, "36": true,
+}
+
+class AmbientSurfaceOverlay:
+	extends Control
+
+	var host = null
+
+	func _ready() -> void:
+		mouse_filter = Control.MOUSE_FILTER_IGNORE
+
+	func _draw() -> void:
+		if host != null:
+			host._draw_ambient_surface_overlay(self)
 
 var game_id: String = ""
 var state: Dictionary = {}
@@ -52,6 +70,7 @@ var hovered_surface_index: int = -1
 var surface_animation_channels: Dictionary = {}
 var surface_sfx_player: Node
 var drunk_distortion_overlay: DrunkDistortionOverlay
+var ambient_surface_overlay: Control
 var drunk_effect_mode: String = "distortion"
 var surface_game_module: GameModule
 var continuous_redraw_was_active := false
@@ -89,6 +108,7 @@ func render_game_snapshot(snapshot: Dictionary) -> void:
 	drunk_effect_mode = _normalized_drunk_effect_mode(str(state.get("drunk_effect_mode", drunk_effect_mode)))
 	_update_drunk_distortion_overlay()
 	_update_surface_animation_channels()
+	_update_ambient_surface_overlay()
 	queue_redraw()
 
 
@@ -125,6 +145,8 @@ func current_view_snapshot() -> Dictionary:
 		"surface_animation_target_fps": SURFACE_ANIMATION_FPS,
 		"surface_animation_redraw_count": surface_animation_redraw_count,
 		"surface_continuous_redraw_active": _needs_continuous_redraw(),
+		"surface_ambient_overlay": str(state.get("surface_ambient_overlay", "")),
+		"surface_ambient_overlay_active": _ambient_surface_overlay_active(),
 	}
 
 
@@ -154,6 +176,8 @@ func surface_runtime_status() -> Dictionary:
 		"surface_animation_target_fps": SURFACE_ANIMATION_FPS,
 		"surface_animation_redraw_count": surface_animation_redraw_count,
 		"surface_continuous_redraw_active": _needs_continuous_redraw(),
+		"surface_ambient_overlay": str(state.get("surface_ambient_overlay", "")),
+		"surface_ambient_overlay_active": _ambient_surface_overlay_active(),
 	}
 
 
@@ -514,6 +538,7 @@ func _ready() -> void:
 	mouse_filter = Control.MOUSE_FILTER_STOP
 	clip_contents = true
 	_ensure_surface_sfx_player()
+	_ensure_ambient_surface_overlay()
 	_ensure_drunk_distortion_overlay()
 
 
@@ -583,11 +608,17 @@ func _process(delta: float) -> void:
 	flicker += delta
 	_sync_surface_audio()
 	var continuous_redraw := _needs_continuous_redraw()
+	var ambient_redraw := _ambient_surface_overlay_active()
 	if continuous_redraw and _surface_animation_redraw_due(delta):
 		queue_redraw()
+	elif ambient_redraw and _surface_animation_redraw_due(delta):
+		if ambient_surface_overlay != null:
+			ambient_surface_overlay.queue_redraw()
 	elif continuous_redraw_was_active:
 		surface_animation_redraw_accumulator = 0.0
 		queue_redraw()
+	elif ambient_surface_overlay != null and ambient_surface_overlay.visible and not ambient_redraw:
+		ambient_surface_overlay.queue_redraw()
 	else:
 		surface_animation_redraw_accumulator = 0.0
 	continuous_redraw_was_active = continuous_redraw
@@ -634,6 +665,191 @@ func _ensure_surface_sfx_player() -> void:
 	if surface_sfx_player.has_signal("music_cue_requested"):
 		surface_sfx_player.music_cue_requested.connect(_on_surface_sfx_music_cue)
 	add_child(surface_sfx_player)
+
+
+func _ensure_ambient_surface_overlay() -> void:
+	if ambient_surface_overlay != null:
+		return
+	var overlay := AmbientSurfaceOverlay.new()
+	overlay.name = "AmbientSurfaceOverlay"
+	overlay.host = self
+	overlay.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	overlay.set_anchors_preset(Control.PRESET_FULL_RECT)
+	overlay.visible = false
+	ambient_surface_overlay = overlay
+	add_child(ambient_surface_overlay)
+
+
+func _update_ambient_surface_overlay() -> void:
+	_ensure_ambient_surface_overlay()
+	if ambient_surface_overlay == null:
+		return
+	ambient_surface_overlay.visible = _ambient_surface_overlay_active()
+	ambient_surface_overlay.queue_redraw()
+
+
+func _ambient_surface_overlay_active() -> bool:
+	if reduce_motion:
+		return false
+	if str(state.get("surface_ambient_overlay", "")) != "roulette_idle":
+		return false
+	for channel_id in surface_animation_channels.keys():
+		if surface_animation_active(str(channel_id)):
+			return false
+	return true
+
+
+func _draw_ambient_surface_overlay(canvas: Control) -> void:
+	var draw_started_usec := Time.get_ticks_usec()
+	canvas.draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
+	if not _ambient_surface_overlay_active():
+		_record_draw_performance(draw_started_usec)
+		return
+	var scale := _board_scale()
+	canvas.draw_set_transform(_board_offset(scale), 0.0, Vector2(scale, scale))
+	if str(state.get("surface_ambient_overlay", "")) == "roulette_idle":
+		_draw_roulette_idle_overlay(canvas)
+	canvas.draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
+	_record_draw_performance(draw_started_usec)
+
+
+func _draw_roulette_idle_overlay(canvas: Control) -> void:
+	_draw_roulette_idle_wheel(canvas)
+	_draw_roulette_idle_croupier(canvas)
+	_draw_roulette_idle_patrons(canvas)
+	_draw_roulette_idle_timer(canvas)
+
+
+func _draw_roulette_idle_wheel(canvas: Control) -> void:
+	var sequence := _string_array(state.get("wheel_sequence", []))
+	if sequence.is_empty():
+		sequence = ["0", "28", "9", "26", "30", "11", "7", "20", "32", "17", "5", "22", "34", "15", "3", "24", "36", "13", "1", "00", "27", "10", "25", "29", "12", "8", "19", "31", "18", "6", "21", "33", "16", "4", "23", "35", "14", "2"]
+	var angle := fposmod(flicker * -0.16, TAU)
+	var count := maxi(1, sequence.size())
+	canvas.draw_circle(ROULETTE_WHEEL_CENTER, ROULETTE_WHEEL_RADIUS + 12.0, Color("#1b0d16"))
+	canvas.draw_circle(ROULETTE_WHEEL_CENTER, ROULETTE_WHEEL_RADIUS + 4.0, Color(C_YELLOW.r, C_YELLOW.g, C_YELLOW.b, 0.28), false, 2.0)
+	canvas.draw_circle(ROULETTE_WHEEL_CENTER, ROULETTE_WHEEL_RADIUS, Color("#0b1118"))
+	for i in range(count):
+		var a0 := angle + float(i) / float(count) * TAU
+		var a1 := angle + float(i + 1) / float(count) * TAU
+		var mid := (a0 + a1) * 0.5
+		var number := str(sequence[i])
+		var color := _roulette_pocket_color(number)
+		var p0 := ROULETTE_WHEEL_CENTER + Vector2(cos(a0), sin(a0)) * (ROULETTE_WHEEL_RADIUS - 2.0)
+		var p1 := ROULETTE_WHEEL_CENTER + Vector2(cos(a1), sin(a1)) * (ROULETTE_WHEEL_RADIUS - 2.0)
+		var inner := ROULETTE_WHEEL_CENTER + Vector2(cos(mid), sin(mid)) * 48.0
+		canvas.draw_polygon([ROULETTE_WHEEL_CENTER, p0, p1, inner], [color])
+		canvas.draw_line(ROULETTE_WHEEL_CENTER + Vector2(cos(a0), sin(a0)) * 52.0, ROULETTE_WHEEL_CENTER + Vector2(cos(a0), sin(a0)) * (ROULETTE_WHEEL_RADIUS - 3.0), Color(C_SOFT.r, C_SOFT.g, C_SOFT.b, 0.16), 1.0)
+	canvas.draw_circle(ROULETTE_WHEEL_CENTER, 44.0, Color("#241427"))
+	canvas.draw_circle(ROULETTE_WHEEL_CENTER, 24.0, Color(C_YELLOW.r, C_YELLOW.g, C_YELLOW.b, 0.32))
+	var ball_angle := flicker * 0.22 - 0.72
+	var ball_pos := ROULETTE_WHEEL_CENTER + Vector2(cos(ball_angle), sin(ball_angle)) * (ROULETTE_WHEEL_RADIUS - 9.0)
+	canvas.draw_circle(ball_pos, 6.0, Color("#e9f2f2"))
+	canvas.draw_circle(ball_pos + Vector2(-2.0, -2.0), 2.0, C_WHITE)
+
+
+func _draw_roulette_idle_croupier(canvas: Control) -> void:
+	var rect := Rect2(352, 54, 196, 104)
+	var phase := 0.5 + 0.5 * sin(flicker * 2.2)
+	var attention := clampf(0.45 + phase * 0.35, 0.0, 1.0)
+	canvas.draw_rect(rect, Color("#0b0d16"))
+	canvas.draw_rect(rect, Color(C_TEAL.r, C_TEAL.g, C_TEAL.b, 0.18), false, 1.0)
+	canvas.draw_rect(Rect2(rect.position + Vector2(26, 26), Vector2(44, 54)), Color("#111827"))
+	canvas.draw_rect(Rect2(rect.position + Vector2(34, 12 + sin(flicker * 3.1) * 1.2), Vector2(28, 26)), Color("#c49371"))
+	canvas.draw_rect(Rect2(rect.position + Vector2(34, 12 + sin(flicker * 3.1) * 1.2), Vector2(28, 8)), Color("#2a1a25"))
+	canvas.draw_rect(Rect2(rect.position + Vector2(40, 25), Vector2(5, 3)), C_DARK)
+	canvas.draw_rect(Rect2(rect.position + Vector2(52, 25), Vector2(5, 3)), C_DARK)
+	var meter := Rect2(rect.position + Vector2(84, 54), Vector2(86, 6))
+	canvas.draw_rect(meter, Color("#070810"))
+	canvas.draw_rect(Rect2(meter.position, Vector2(meter.size.x * attention, meter.size.y)), C_TEAL)
+
+
+func _draw_roulette_idle_patrons(canvas: Control) -> void:
+	var patrons := _dictionary_array(state.get("patrons", []))
+	var layout := _dictionary_array(state.get("patron_layout", []))
+	for i in range(mini(patrons.size(), 3)):
+		var patron: Dictionary = patrons[i]
+		var foot := Vector2(832, 112 + i * 98)
+		if i < layout.size():
+			var slot: Dictionary = layout[i]
+			foot = _vector_from_dict(slot.get("foot", {}), foot)
+		var panel := Rect2(784, foot.y - 64, 96, 84)
+		canvas.draw_rect(panel.grow(4.0), Color("#070810"))
+		var bob := sin(flicker * 3.2 + float(i) * 0.7) * (2.0 if bool(patron.get("watching_player", false)) else 1.2)
+		var model_foot := foot + Vector2(float(i - 1) * 1.4, bob)
+		var accent := C_PINK if bool(patron.get("watching_player", false)) else C_TEAL
+		_draw_overlay_character(canvas, model_foot, accent, _overlay_patron_jacket_color(patron), _overlay_patron_hair_color(patron), 0.86, i)
+		var risk := clampf(float(int(patron.get("active_snitch_risk", patron.get("snitch_risk", 0)))) / 60.0, 0.0, 1.0)
+		var risk_rect := Rect2(panel.position + Vector2(8, panel.size.y - 22), Vector2(54, 4))
+		canvas.draw_rect(risk_rect, Color("#040509"))
+		canvas.draw_rect(Rect2(risk_rect.position, Vector2(risk_rect.size.x * risk, risk_rect.size.y)), accent)
+
+
+func _draw_overlay_character(canvas: Control, foot: Vector2, accent: Color, jacket: Color, hair: Color, scale_value: float, index: int) -> void:
+	var body := Rect2(foot + Vector2(-15, -50) * scale_value, Vector2(30, 42) * scale_value)
+	var head := Rect2(foot + Vector2(-10, -68) * scale_value, Vector2(20, 20) * scale_value)
+	canvas.draw_rect(Rect2(foot.x - 22.0, foot.y - 2.0, 44.0, 4.0), Color(0, 0, 0, 0.28))
+	canvas.draw_rect(body, jacket)
+	canvas.draw_rect(body.grow(1.0), Color(accent.r, accent.g, accent.b, 0.40), false, 1.0)
+	canvas.draw_rect(head, Color("#c49371"))
+	canvas.draw_rect(Rect2(head.position, Vector2(head.size.x, 6.0 * scale_value)), hair)
+	var blink := fposmod(flicker * 1.7 + float(index) * 0.23, 1.0) > 0.94
+	var eye_h := 1.0 if blink else 3.0
+	canvas.draw_rect(Rect2(head.position + Vector2(5, 10) * scale_value, Vector2(3, eye_h) * scale_value), C_DARK)
+	canvas.draw_rect(Rect2(head.position + Vector2(13, 10) * scale_value, Vector2(3, eye_h) * scale_value), C_DARK)
+
+
+func _draw_roulette_idle_timer(canvas: Control) -> void:
+	var timer_value: Variant = state.get("table_round_timer", {})
+	if typeof(timer_value) != TYPE_DICTIONARY:
+		return
+	var timer: Dictionary = timer_value as Dictionary
+	if timer.is_empty() or not bool(timer.get("active", false)):
+		return
+	var started_msec := maxi(0, int(timer.get("started_msec", 0)))
+	var duration_msec := maxi(1, int(timer.get("duration_msec", 1)))
+	var elapsed_msec := maxi(0, Time.get_ticks_msec() - started_msec) if started_msec > 0 else maxi(0, duration_msec - int(timer.get("remaining_msec", duration_msec)))
+	var remaining_msec := maxi(0, duration_msec - elapsed_msec)
+	var progress := clampf(float(elapsed_msec) / float(duration_msec), 0.0, 1.0)
+	var rect := Rect2(666, 314, 112, 24)
+	var color := C_PINK if remaining_msec <= 5000 else C_CYAN
+	canvas.draw_rect(rect, Color("#0b0d16"))
+	canvas.draw_rect(rect, Color(color.r, color.g, color.b, 0.28), false, 1.0)
+	var bar_rect := Rect2(rect.position + Vector2(8, rect.size.y - 12.0), Vector2(maxf(1.0, rect.size.x - 16.0), 4.0))
+	canvas.draw_rect(bar_rect, Color("#070810"))
+	canvas.draw_rect(Rect2(bar_rect.position, Vector2(bar_rect.size.x * progress, bar_rect.size.y)), color)
+
+
+func _roulette_pocket_color(number: String) -> Color:
+	if number == "0" or number == "00":
+		return Color("#0b7b4e")
+	if ROULETTE_RED_NUMBERS.has(number):
+		return Color("#8e1026")
+	return Color("#111922")
+
+
+func _overlay_patron_jacket_color(patron: Dictionary) -> Color:
+	match str(patron.get("silhouette", "coat")):
+		"cap":
+			return Color("#173847")
+		"vest":
+			return Color("#3a213a")
+		"jacket":
+			return Color("#1c2544")
+		_:
+			return Color("#251930")
+
+
+func _overlay_patron_hair_color(patron: Dictionary) -> Color:
+	match str(patron.get("silhouette", "coat")):
+		"cap":
+			return Color("#0e1118")
+		"vest":
+			return Color("#7b4b28")
+		"jacket":
+			return Color("#2a1a25")
+		_:
+			return Color("#38221b")
 
 
 func _on_surface_sfx_music_cue(cue_id: String, context: Dictionary) -> void:
@@ -1350,6 +1566,13 @@ func _string_array(value: Variant) -> Array:
 		if not text.is_empty():
 			result.append(text)
 	return result
+
+
+func _vector_from_dict(value: Variant, fallback: Vector2 = Vector2.ZERO) -> Vector2:
+	if typeof(value) != TYPE_DICTIONARY:
+		return fallback
+	var data: Dictionary = value as Dictionary
+	return Vector2(float(data.get("x", fallback.x)), float(data.get("y", fallback.y)))
 
 
 func _copy_dict(value: Variant) -> Dictionary:
