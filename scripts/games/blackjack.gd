@@ -255,7 +255,9 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 	var payout_started_msec := int(last_result.get("resolved_at_msec", last_result.get("timestamp_msec", 0)))
 	var deal_animation_active := not deal_active_id.is_empty() and deal_started_msec > 0 and now_msec - deal_started_msec >= 0 and now_msec - deal_started_msec < deal_duration_msec
 	var payout_animation_active := not payout_active_id.is_empty() and payout_started_msec > 0 and now_msec - payout_started_msec >= 0 and now_msec - payout_started_msec < PAYOUT_ANIMATION_DURATION_MSEC
-	var blackjack_ambient_redraw_active := not barred
+	var attention_animation_active := not attention_active_id.is_empty() and attention_started_msec > 0 and attention_duration_msec > 0 and now_msec - attention_started_msec >= 0 and now_msec - attention_started_msec < attention_duration_msec
+	var surface_motion_active := deal_animation_active or payout_animation_active or count_active or attention_animation_active
+	var blackjack_ambient_overlay := "table_idle" if not barred and not surface_motion_active else ""
 	var timer_active := not dealt and not barred and not deal_animation_active and not payout_animation_active
 	var round_timer := GameModule.table_round_timer_status_peek(table, now_msec, "Next hand") if timer_active else {}
 	if timer_active and bool(round_timer.get("active", false)) and table_notice == "Slide chips, choose side bets, then press DEAL.":
@@ -289,7 +291,8 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 		"surface_controls_native": true,
 		"surface_stake_controls_required": true,
 		"surface_embeds_outcomes": true,
-		"surface_animates_idle": blackjack_ambient_redraw_active,
+		"surface_animates_idle": false,
+		"surface_ambient_overlay": blackjack_ambient_overlay,
 		"surface_realtime_state_refresh": false,
 		"surface_ui_protected_regions": _blackjack_ui_protected_regions(count_challenge),
 		"surface_hover_ui_protected_regions": [

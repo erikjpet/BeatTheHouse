@@ -39,6 +39,16 @@ const SURFACE_ANIMATION_FPS := 60.0
 const SURFACE_ANIMATION_INTERVAL_SEC := 1.0 / SURFACE_ANIMATION_FPS
 const ROULETTE_WHEEL_CENTER := Vector2(150, 182)
 const ROULETTE_WHEEL_RADIUS := 108.0
+const ROULETTE_IDLE_DEFAULT_SEQUENCE := ["0", "28", "9", "26", "30", "11", "7", "20", "32", "17", "5", "22", "34", "15", "3", "24", "36", "13", "1", "00", "27", "10", "25", "29", "12", "8", "19", "31", "18", "6", "21", "33", "16", "4", "23", "35", "14", "2"]
+const IDLE_PANEL_BG := Color("#070810")
+const IDLE_STATION_BG := Color("#0b0d16")
+const IDLE_CHARACTER_SKIN := Color("#c49371")
+const IDLE_DEALER_JACKET := Color("#1b2230")
+const IDLE_DEALER_HAIR := Color("#2a1a25")
+const IDLE_WHEEL_OUTER := Color("#1b0d16")
+const IDLE_WHEEL_FELT := Color("#0b1118")
+const IDLE_WHEEL_HUB := Color("#241427")
+const IDLE_BALL := Color("#e9f2f2")
 const TABLE_IDLE_PATRON_POSITIONS := [
 	Vector2(128, 176),
 	Vector2(272, 130),
@@ -92,6 +102,12 @@ var perf_runtime_status_calls := 0
 var perf_draw_frame_usec_samples: Array = []
 var surface_label_fit_cache: Dictionary = {}
 var hit_region_group_cache: Dictionary = {}
+var ambient_table_patron_cache: Array = []
+var ambient_roulette_patron_cache: Array = []
+var ambient_table_dealer_cache: Dictionary = {}
+var roulette_idle_wheel_sequence_key := ""
+var roulette_idle_wheel_segments: Array = []
+var roulette_idle_wheel_dividers: Array = []
 var active_design_scale := Vector2.ONE
 var active_design_offset := Vector2.ZERO
 var design_space_active := false
@@ -122,6 +138,7 @@ func render_game_snapshot(snapshot: Dictionary) -> void:
 	drunk_effect_mode = _normalized_drunk_effect_mode(str(state.get("drunk_effect_mode", drunk_effect_mode)))
 	_update_drunk_distortion_overlay()
 	_update_surface_animation_channels()
+	_rebuild_ambient_surface_cache()
 	_update_ambient_surface_overlay()
 	queue_redraw()
 
@@ -718,6 +735,93 @@ func _update_ambient_surface_overlay() -> void:
 	ambient_surface_overlay.queue_redraw()
 
 
+func _rebuild_ambient_surface_cache() -> void:
+	ambient_table_patron_cache = []
+	ambient_roulette_patron_cache = []
+	ambient_table_dealer_cache = {}
+	var profile_value: Variant = state.get("dealer_profile", {})
+	var profile: Dictionary = profile_value as Dictionary if typeof(profile_value) == TYPE_DICTIONARY else {}
+	ambient_table_dealer_cache = {
+		"attention_base": int(profile.get("attention_base", 24)),
+	}
+	_rebuild_table_idle_patron_cache()
+	_rebuild_roulette_idle_patron_cache()
+	_rebuild_roulette_idle_wheel_cache()
+
+
+func _rebuild_table_idle_patron_cache() -> void:
+	var patrons_value: Variant = state.get("patrons", [])
+	if typeof(patrons_value) != TYPE_ARRAY:
+		return
+	var patrons: Array = patrons_value as Array
+	var positions: Array = DICE_IDLE_PATRON_POSITIONS if str(state.get("surface_renderer", "")) == "dice_table" else TABLE_IDLE_PATRON_POSITIONS
+	for i in range(mini(patrons.size(), positions.size())):
+		if typeof(patrons[i]) != TYPE_DICTIONARY:
+			continue
+		var patron: Dictionary = patrons[i]
+		var watching := bool(patron.get("watching_player", patron.get("watching", false)))
+		var risk := clampf(float(int(patron.get("active_snitch_risk", patron.get("snitch_risk", 0)))) / 60.0, 0.0, 1.0)
+		ambient_table_patron_cache.append({
+			"base_pos": positions[i],
+			"watching": watching,
+			"risk": risk,
+			"animation_offset_sec": float(int(patron.get("animation_offset", i * 217))) / 1000.0,
+			"accent": C_PINK if watching else C_TEAL if risk > 0.45 else C_SOFT,
+			"jacket": _overlay_patron_jacket_color(patron),
+			"hair": _overlay_patron_hair_color(patron),
+		})
+
+
+func _rebuild_roulette_idle_patron_cache() -> void:
+	var patrons := _dictionary_array(state.get("patrons", []))
+	var layout := _dictionary_array(state.get("patron_layout", []))
+	for i in range(mini(patrons.size(), 3)):
+		var patron: Dictionary = patrons[i]
+		var foot := Vector2(832, 112 + i * 98)
+		if i < layout.size():
+			var slot: Dictionary = layout[i]
+			foot = _vector_from_dict(slot.get("foot", {}), foot)
+		var watching := bool(patron.get("watching_player", false))
+		ambient_roulette_patron_cache.append({
+			"foot": foot,
+			"watching": watching,
+			"risk": clampf(float(int(patron.get("active_snitch_risk", patron.get("snitch_risk", 0)))) / 60.0, 0.0, 1.0),
+			"accent": C_PINK if watching else C_TEAL,
+			"jacket": _overlay_patron_jacket_color(patron),
+			"hair": _overlay_patron_hair_color(patron),
+		})
+
+
+func _rebuild_roulette_idle_wheel_cache() -> void:
+	var sequence := _string_array(state.get("wheel_sequence", []))
+	if sequence.is_empty():
+		sequence = ROULETTE_IDLE_DEFAULT_SEQUENCE.duplicate()
+	var sequence_key := "|".join(sequence)
+	if sequence_key == roulette_idle_wheel_sequence_key and not roulette_idle_wheel_segments.is_empty():
+		return
+	roulette_idle_wheel_sequence_key = sequence_key
+	roulette_idle_wheel_segments = []
+	roulette_idle_wheel_dividers = []
+	var count := maxi(1, sequence.size())
+	for i in range(count):
+		var a0 := float(i) / float(count) * TAU
+		var a1 := float(i + 1) / float(count) * TAU
+		var mid := (a0 + a1) * 0.5
+		var number := str(sequence[i])
+		var color := _roulette_pocket_color(number)
+		var p0 := Vector2(cos(a0), sin(a0)) * (ROULETTE_WHEEL_RADIUS - 2.0)
+		var p1 := Vector2(cos(a1), sin(a1)) * (ROULETTE_WHEEL_RADIUS - 2.0)
+		var inner := Vector2(cos(mid), sin(mid)) * 48.0
+		roulette_idle_wheel_segments.append({
+			"points": PackedVector2Array([Vector2.ZERO, p0, p1, inner]),
+			"colors": PackedColorArray([color, color, color, color]),
+		})
+		roulette_idle_wheel_dividers.append({
+			"start": Vector2(cos(a0), sin(a0)) * 52.0,
+			"end": Vector2(cos(a0), sin(a0)) * (ROULETTE_WHEEL_RADIUS - 3.0),
+		})
+
+
 func _ambient_surface_overlay_active() -> bool:
 	if reduce_motion:
 		return false
@@ -743,6 +847,8 @@ func _draw_ambient_surface_overlay(canvas: Control) -> void:
 			_draw_roulette_idle_overlay(canvas)
 		"table_idle":
 			_draw_table_idle_overlay(canvas)
+	_draw_pressure_overlay_on(canvas)
+	_draw_drunk_overlay_on(canvas)
 	canvas.draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
 	_record_draw_performance(draw_started_usec)
 
@@ -755,30 +861,37 @@ func _draw_roulette_idle_overlay(canvas: Control) -> void:
 
 
 func _draw_roulette_idle_wheel(canvas: Control) -> void:
-	var sequence := _string_array(state.get("wheel_sequence", []))
-	if sequence.is_empty():
-		sequence = ["0", "28", "9", "26", "30", "11", "7", "20", "32", "17", "5", "22", "34", "15", "3", "24", "36", "13", "1", "00", "27", "10", "25", "29", "12", "8", "19", "31", "18", "6", "21", "33", "16", "4", "23", "35", "14", "2"]
+	if roulette_idle_wheel_segments.is_empty():
+		_rebuild_roulette_idle_wheel_cache()
 	var angle := fposmod(flicker * -0.16, TAU)
-	var count := maxi(1, sequence.size())
-	canvas.draw_circle(ROULETTE_WHEEL_CENTER, ROULETTE_WHEEL_RADIUS + 12.0, Color("#1b0d16"))
+	canvas.draw_circle(ROULETTE_WHEEL_CENTER, ROULETTE_WHEEL_RADIUS + 12.0, IDLE_WHEEL_OUTER)
 	canvas.draw_circle(ROULETTE_WHEEL_CENTER, ROULETTE_WHEEL_RADIUS + 4.0, Color(C_YELLOW.r, C_YELLOW.g, C_YELLOW.b, 0.28), false, 2.0)
-	canvas.draw_circle(ROULETTE_WHEEL_CENTER, ROULETTE_WHEEL_RADIUS, Color("#0b1118"))
-	for i in range(count):
-		var a0 := angle + float(i) / float(count) * TAU
-		var a1 := angle + float(i + 1) / float(count) * TAU
-		var mid := (a0 + a1) * 0.5
-		var number := str(sequence[i])
-		var color := _roulette_pocket_color(number)
-		var p0 := ROULETTE_WHEEL_CENTER + Vector2(cos(a0), sin(a0)) * (ROULETTE_WHEEL_RADIUS - 2.0)
-		var p1 := ROULETTE_WHEEL_CENTER + Vector2(cos(a1), sin(a1)) * (ROULETTE_WHEEL_RADIUS - 2.0)
-		var inner := ROULETTE_WHEEL_CENTER + Vector2(cos(mid), sin(mid)) * 48.0
-		canvas.draw_polygon([ROULETTE_WHEEL_CENTER, p0, p1, inner], [color])
-		canvas.draw_line(ROULETTE_WHEEL_CENTER + Vector2(cos(a0), sin(a0)) * 52.0, ROULETTE_WHEEL_CENTER + Vector2(cos(a0), sin(a0)) * (ROULETTE_WHEEL_RADIUS - 3.0), Color(C_SOFT.r, C_SOFT.g, C_SOFT.b, 0.16), 1.0)
-	canvas.draw_circle(ROULETTE_WHEEL_CENTER, 44.0, Color("#241427"))
+	canvas.draw_circle(ROULETTE_WHEEL_CENTER, ROULETTE_WHEEL_RADIUS, IDLE_WHEEL_FELT)
+	var board_scale := _board_scale()
+	var board_offset := _board_offset(board_scale)
+	canvas.draw_set_transform(board_offset + ROULETTE_WHEEL_CENTER * board_scale, angle, Vector2(board_scale, board_scale))
+	for segment_value in roulette_idle_wheel_segments:
+		if typeof(segment_value) != TYPE_DICTIONARY:
+			continue
+		var segment: Dictionary = segment_value
+		var points_value: Variant = segment.get("points")
+		var colors_value: Variant = segment.get("colors")
+		if typeof(points_value) != TYPE_PACKED_VECTOR2_ARRAY or typeof(colors_value) != TYPE_PACKED_COLOR_ARRAY:
+			continue
+		var points: PackedVector2Array = points_value
+		var colors: PackedColorArray = colors_value
+		canvas.draw_polygon(points, colors)
+	for divider_value in roulette_idle_wheel_dividers:
+		if typeof(divider_value) != TYPE_DICTIONARY:
+			continue
+		var divider: Dictionary = divider_value
+		canvas.draw_line(_cache_vector2(divider, "start", Vector2.ZERO), _cache_vector2(divider, "end", Vector2.ZERO), Color(C_SOFT.r, C_SOFT.g, C_SOFT.b, 0.16), 1.0)
+	canvas.draw_set_transform(board_offset, 0.0, Vector2(board_scale, board_scale))
+	canvas.draw_circle(ROULETTE_WHEEL_CENTER, 44.0, IDLE_WHEEL_HUB)
 	canvas.draw_circle(ROULETTE_WHEEL_CENTER, 24.0, Color(C_YELLOW.r, C_YELLOW.g, C_YELLOW.b, 0.32))
 	var ball_angle := flicker * 0.22 - 0.72
 	var ball_pos := ROULETTE_WHEEL_CENTER + Vector2(cos(ball_angle), sin(ball_angle)) * (ROULETTE_WHEEL_RADIUS - 9.0)
-	canvas.draw_circle(ball_pos, 6.0, Color("#e9f2f2"))
+	canvas.draw_circle(ball_pos, 6.0, IDLE_BALL)
 	canvas.draw_circle(ball_pos + Vector2(-2.0, -2.0), 2.0, C_WHITE)
 
 
@@ -786,37 +899,27 @@ func _draw_roulette_idle_croupier(canvas: Control) -> void:
 	var rect := Rect2(352, 54, 196, 104)
 	var phase := 0.5 + 0.5 * sin(flicker * 2.2)
 	var attention := clampf(0.45 + phase * 0.35, 0.0, 1.0)
-	canvas.draw_rect(rect, Color("#0b0d16"))
-	canvas.draw_rect(rect, Color(C_TEAL.r, C_TEAL.g, C_TEAL.b, 0.18), false, 1.0)
+	canvas.draw_rect(Rect2(rect.position + Vector2(22, 8), Vector2(58, 76)), IDLE_STATION_BG)
 	canvas.draw_rect(Rect2(rect.position + Vector2(26, 26), Vector2(44, 54)), Color("#111827"))
 	canvas.draw_rect(Rect2(rect.position + Vector2(34, 12 + sin(flicker * 3.1) * 1.2), Vector2(28, 26)), Color("#c49371"))
 	canvas.draw_rect(Rect2(rect.position + Vector2(34, 12 + sin(flicker * 3.1) * 1.2), Vector2(28, 8)), Color("#2a1a25"))
 	canvas.draw_rect(Rect2(rect.position + Vector2(40, 25), Vector2(5, 3)), C_DARK)
 	canvas.draw_rect(Rect2(rect.position + Vector2(52, 25), Vector2(5, 3)), C_DARK)
 	var meter := Rect2(rect.position + Vector2(84, 54), Vector2(86, 6))
-	canvas.draw_rect(meter, Color("#070810"))
+	canvas.draw_rect(meter, IDLE_PANEL_BG)
 	canvas.draw_rect(Rect2(meter.position, Vector2(meter.size.x * attention, meter.size.y)), C_TEAL)
 
 
 func _draw_roulette_idle_patrons(canvas: Control) -> void:
-	var patrons := _dictionary_array(state.get("patrons", []))
-	var layout := _dictionary_array(state.get("patron_layout", []))
-	for i in range(mini(patrons.size(), 3)):
-		var patron: Dictionary = patrons[i]
-		var foot := Vector2(832, 112 + i * 98)
-		if i < layout.size():
-			var slot: Dictionary = layout[i]
-			foot = _vector_from_dict(slot.get("foot", {}), foot)
-		var panel := Rect2(784, foot.y - 64, 96, 84)
-		canvas.draw_rect(panel.grow(4.0), Color("#070810"))
-		var bob := sin(flicker * 3.2 + float(i) * 0.7) * (2.0 if bool(patron.get("watching_player", false)) else 1.2)
+	for i in range(ambient_roulette_patron_cache.size()):
+		var patron: Dictionary = ambient_roulette_patron_cache[i]
+		var foot := _cache_vector2(patron, "foot", Vector2(832, 112 + i * 98))
+		var watching := bool(patron.get("watching", false))
+		var bob := sin(flicker * 3.2 + float(i) * 0.7) * (2.0 if watching else 1.2)
 		var model_foot := foot + Vector2(float(i - 1) * 1.4, bob)
-		var accent := C_PINK if bool(patron.get("watching_player", false)) else C_TEAL
-		_draw_overlay_character(canvas, model_foot, accent, _overlay_patron_jacket_color(patron), _overlay_patron_hair_color(patron), 0.86, i)
-		var risk := clampf(float(int(patron.get("active_snitch_risk", patron.get("snitch_risk", 0)))) / 60.0, 0.0, 1.0)
-		var risk_rect := Rect2(panel.position + Vector2(8, panel.size.y - 22), Vector2(54, 4))
-		canvas.draw_rect(risk_rect, Color("#040509"))
-		canvas.draw_rect(Rect2(risk_rect.position, Vector2(risk_rect.size.x * risk, risk_rect.size.y)), accent)
+		var accent := _cache_color(patron, "accent", C_TEAL)
+		canvas.draw_rect(Rect2(foot + Vector2(-27, -68), Vector2(54, 72)), IDLE_PANEL_BG)
+		_draw_overlay_character(canvas, model_foot, accent, _cache_color(patron, "jacket", C_TEAL), _cache_color(patron, "hair", IDLE_DEALER_HAIR), 0.86, i)
 
 
 func _draw_overlay_character(canvas: Control, foot: Vector2, accent: Color, jacket: Color, hair: Color, scale_value: float, index: int) -> void:
@@ -845,46 +948,30 @@ func _draw_table_idle_overlay(canvas: Control) -> void:
 
 func _draw_table_idle_dealer(canvas: Control) -> void:
 	var rect := Rect2(352, 54, 196, 104)
-	var profile_value: Variant = state.get("dealer_profile", {})
-	var profile: Dictionary = profile_value as Dictionary if typeof(profile_value) == TYPE_DICTIONARY else {}
-	var base_attention := int(profile.get("attention_base", 24))
+	var base_attention := int(ambient_table_dealer_cache.get("attention_base", 24))
 	var heat := int(state.get("suspicion_level", 0))
 	var pressure := int(state.get("dealer_attention_pressure", 0))
 	var scan := int((0.5 + 0.5 * sin(flicker * 2.6)) * 18.0)
 	var attention := clampf(float(base_attention + pressure + scan) + float(heat) * 0.35, 0.0, 100.0) / 100.0
 	var accent := C_PINK if attention >= 0.70 else C_YELLOW if attention >= 0.42 else C_TEAL
 	var bob := sin(flicker * 2.9) * 1.4
-	canvas.draw_rect(rect, Color("#0b0d16"))
-	canvas.draw_rect(rect, Color(accent.r, accent.g, accent.b, 0.18), false, 1.0)
-	_draw_overlay_character(canvas, Vector2(450, 156 + bob), accent, Color("#1b2230"), Color("#2a1a25"), 1.04, 21)
+	canvas.draw_rect(Rect2(rect.position + Vector2(62, 14), Vector2(72, 82)), IDLE_STATION_BG)
+	_draw_overlay_character(canvas, Vector2(450, 156 + bob), accent, IDLE_DEALER_JACKET, IDLE_DEALER_HAIR, 1.04, 21)
 	var meter := Rect2(rect.position + Vector2(108, 58), Vector2(68, 6))
-	canvas.draw_rect(meter, Color("#070810"))
+	canvas.draw_rect(meter, IDLE_PANEL_BG)
 	canvas.draw_rect(Rect2(meter.position, Vector2(meter.size.x * attention, meter.size.y)), accent)
 
 
 func _draw_table_idle_patrons(canvas: Control) -> void:
-	var patrons_value: Variant = state.get("patrons", [])
-	if typeof(patrons_value) != TYPE_ARRAY:
-		return
-	var patrons: Array = patrons_value as Array
-	var positions: Array = DICE_IDLE_PATRON_POSITIONS if str(state.get("surface_renderer", "")) == "dice_table" else TABLE_IDLE_PATRON_POSITIONS
-	for i in range(mini(patrons.size(), positions.size())):
-		if typeof(patrons[i]) != TYPE_DICTIONARY:
-			continue
-		var patron: Dictionary = patrons[i]
-		var base_pos: Vector2 = positions[i]
-		var watching := bool(patron.get("watching_player", patron.get("watching", false)))
-		var risk := clampf(float(int(patron.get("active_snitch_risk", patron.get("snitch_risk", 0)))) / 60.0, 0.0, 1.0)
-		var phase := flicker * 3.0 + float(int(patron.get("animation_offset", i * 217))) / 1000.0
+	for i in range(ambient_table_patron_cache.size()):
+		var patron: Dictionary = ambient_table_patron_cache[i]
+		var base_pos := _cache_vector2(patron, "base_pos", Vector2.ZERO)
+		var watching := bool(patron.get("watching", false))
+		var phase := flicker * 3.0 + float(patron.get("animation_offset_sec", 0.0))
 		var bob := sin(phase) * (2.0 if watching else 1.0)
-		var accent := C_PINK if watching else C_TEAL if risk > 0.45 else C_SOFT
-		var panel := Rect2(base_pos + Vector2(-42, -70), Vector2(84, 116))
-		canvas.draw_rect(panel, Color("#070810"))
-		canvas.draw_rect(panel, Color(accent.r, accent.g, accent.b, 0.12), false, 1.0)
-		_draw_overlay_character(canvas, base_pos + Vector2(0, 52 + bob), accent, _overlay_patron_jacket_color(patron), _overlay_patron_hair_color(patron), 0.86, i)
-		var risk_rect := Rect2(base_pos + Vector2(-28, 60), Vector2(56, 5))
-		canvas.draw_rect(risk_rect, Color("#030407"))
-		canvas.draw_rect(Rect2(risk_rect.position, Vector2(risk_rect.size.x * risk, risk_rect.size.y)), accent)
+		var accent := _cache_color(patron, "accent", C_SOFT)
+		canvas.draw_rect(Rect2(base_pos + Vector2(-27, -16), Vector2(54, 74)), IDLE_PANEL_BG)
+		_draw_overlay_character(canvas, base_pos + Vector2(0, 52 + bob), accent, _cache_color(patron, "jacket", C_TEAL), _cache_color(patron, "hair", IDLE_DEALER_HAIR), 0.86, i)
 
 
 func _draw_table_idle_timer(canvas: Control) -> void:
@@ -945,6 +1032,20 @@ func _overlay_patron_hair_color(patron: Dictionary) -> Color:
 			return Color("#2a1a25")
 		_:
 			return Color("#38221b")
+
+
+func _cache_vector2(data: Dictionary, key: String, fallback: Vector2) -> Vector2:
+	var value: Variant = data.get(key, fallback)
+	if typeof(value) == TYPE_VECTOR2:
+		return value
+	return fallback
+
+
+func _cache_color(data: Dictionary, key: String, fallback: Color) -> Color:
+	var value: Variant = data.get(key, fallback)
+	if typeof(value) == TYPE_COLOR:
+		return value
+	return fallback
 
 
 func _on_surface_sfx_music_cue(cue_id: String, context: Dictionary) -> void:
@@ -1045,11 +1146,12 @@ func _needs_continuous_redraw() -> bool:
 	for channel_id in surface_animation_channels.keys():
 		if surface_animation_active(str(channel_id)):
 			return true
-	if int(state.get("suspicion_level", 0)) > 0:
+	var ambient_redraw_available := _ambient_surface_overlay_active()
+	if int(state.get("suspicion_level", 0)) > 0 and not ambient_redraw_available:
 		return true
 	if drunk_distortion_overlay != null and drunk_distortion_overlay.visible:
 		return true
-	if drunk_effect_mode == "classic" and int(state.get("drunk_level", 0)) >= 12:
+	if drunk_effect_mode == "classic" and int(state.get("drunk_level", 0)) >= 12 and not ambient_redraw_available:
 		return true
 	return bool(state.get("surface_animates_idle", false))
 
@@ -1551,6 +1653,10 @@ func _draw_foundation_result_burst() -> void:
 
 
 func _draw_pressure_overlay() -> void:
+	_draw_pressure_overlay_on(self)
+
+
+func _draw_pressure_overlay_on(canvas: Control) -> void:
 	var level := clampi(int(state.get("suspicion_level", 0)), 0, 100)
 	if level <= 0:
 		return
@@ -1560,34 +1666,42 @@ func _draw_pressure_overlay() -> void:
 	if level < 50:
 		var subtle := clampf(float(level) / 50.0, 0.0, 1.0)
 		var alpha := 0.010 + subtle * 0.030
-		_draw_pressure_side_band(C_BLUE, alpha * (0.65 + blue_phase * 0.35), true)
+		_draw_pressure_side_band_on(canvas, C_BLUE, alpha * (0.65 + blue_phase * 0.35), true)
 		if level >= 25:
-			_draw_pressure_side_band(C_PINK, alpha * 0.65 * (0.65 + red_phase * 0.35), false)
+			_draw_pressure_side_band_on(canvas, C_PINK, alpha * 0.65 * (0.65 + red_phase * 0.35), false)
 		return
 	var high := clampf(float(level - 50) / 50.0, 0.0, 1.0)
 	var base_alpha := 0.035 + high * 0.120
-	draw_rect(Rect2(Vector2.ZERO, board_size), Color(0.03, 0.02, 0.08, 0.030 + high * 0.060))
-	_draw_pressure_side_band(C_HOT, base_alpha * (0.72 + red_phase * 0.55), false)
-	_draw_pressure_side_band(C_BLUE, base_alpha * (0.72 + blue_phase * 0.55), true)
+	canvas.draw_rect(Rect2(Vector2.ZERO, board_size), Color(0.03, 0.02, 0.08, 0.030 + high * 0.060))
+	_draw_pressure_side_band_on(canvas, C_HOT, base_alpha * (0.72 + red_phase * 0.55), false)
+	_draw_pressure_side_band_on(canvas, C_BLUE, base_alpha * (0.72 + blue_phase * 0.55), true)
 	var top_alpha := base_alpha * (0.44 + maxf(red_phase, blue_phase) * 0.24)
-	draw_rect(Rect2(0, 0, board_size.x, 9), Color(C_HOT.r, C_HOT.g, C_HOT.b, top_alpha * red_phase))
-	draw_rect(Rect2(0, 9, board_size.x, 7), Color(C_BLUE.r, C_BLUE.g, C_BLUE.b, top_alpha * blue_phase))
-	draw_rect(Rect2(0, board_size.y - 10, board_size.x, 10), Color(C_BLUE.r, C_BLUE.g, C_BLUE.b, top_alpha * blue_phase * 0.60))
+	canvas.draw_rect(Rect2(0, 0, board_size.x, 9), Color(C_HOT.r, C_HOT.g, C_HOT.b, top_alpha * red_phase))
+	canvas.draw_rect(Rect2(0, 9, board_size.x, 7), Color(C_BLUE.r, C_BLUE.g, C_BLUE.b, top_alpha * blue_phase))
+	canvas.draw_rect(Rect2(0, board_size.y - 10, board_size.x, 10), Color(C_BLUE.r, C_BLUE.g, C_BLUE.b, top_alpha * blue_phase * 0.60))
 	var sweep_x := fposmod(flicker * (180.0 + high * 120.0), board_size.x + 220.0) - 110.0
 	var sweep_color := C_HOT if red_phase > blue_phase else C_BLUE
-	draw_rect(Rect2(sweep_x, 0, 68 + high * 48, board_size.y), Color(sweep_color.r, sweep_color.g, sweep_color.b, base_alpha * 0.20))
+	canvas.draw_rect(Rect2(sweep_x, 0, 68 + high * 48, board_size.y), Color(sweep_color.r, sweep_color.g, sweep_color.b, base_alpha * 0.20))
 
 
 func _draw_pressure_side_band(color: Color, alpha: float, left_side: bool) -> void:
+	_draw_pressure_side_band_on(self, color, alpha, left_side)
+
+
+func _draw_pressure_side_band_on(canvas: Control, color: Color, alpha: float, left_side: bool) -> void:
 	var board_size := _active_board_size()
 	for i in range(5):
 		var width := 16.0 + float(i) * 11.0
 		var band_alpha := alpha * (1.0 - float(i) * 0.16)
 		var x := 0.0 if left_side else board_size.x - width
-		draw_rect(Rect2(x, 0, width, board_size.y), Color(color.r, color.g, color.b, maxf(0.0, band_alpha)))
+		canvas.draw_rect(Rect2(x, 0, width, board_size.y), Color(color.r, color.g, color.b, maxf(0.0, band_alpha)))
 
 
 func _draw_drunk_overlay() -> void:
+	_draw_drunk_overlay_on(self)
+
+
+func _draw_drunk_overlay_on(canvas: Control) -> void:
 	if drunk_effect_mode != "classic":
 		return
 	var level := clampi(int(state.get("drunk_level", 0)), 0, 100)
@@ -1596,14 +1710,14 @@ func _draw_drunk_overlay() -> void:
 	var board_size := _active_board_size()
 	var normalized := clampf(float(level - 12) / 88.0, 0.0, 1.0)
 	var alpha := 0.018 + pow(normalized, 1.25) * 0.070
-	draw_rect(Rect2(Vector2.ZERO, board_size), Color(0.08, 0.04, 0.13, alpha))
+	canvas.draw_rect(Rect2(Vector2.ZERO, board_size), Color(0.08, 0.04, 0.13, alpha))
 	var spacing := 18
 	var phase := int(fmod(flicker * 10.0, float(spacing)))
 	for y in range(-spacing + phase, int(ceil(board_size.y)) + spacing, spacing):
 		var color := C_PINK_2 if int(y / spacing) % 2 == 0 else C_CYAN
-		draw_rect(Rect2(0, y, board_size.x, 2), Color(color.r, color.g, color.b, alpha * 1.55))
+		canvas.draw_rect(Rect2(0, y, board_size.x, 2), Color(color.r, color.g, color.b, alpha * 1.55))
 		if level >= 45:
-			draw_rect(Rect2(0, y + 6, board_size.x, 1), Color(color.r, color.g, color.b, alpha * 0.85))
+			canvas.draw_rect(Rect2(0, y + 6, board_size.x, 1), Color(color.r, color.g, color.b, alpha * 0.85))
 
 
 func _surface_action_selected(kind: String, action: Dictionary) -> bool:

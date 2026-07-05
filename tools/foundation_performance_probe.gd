@@ -5,6 +5,8 @@ extends SceneTree
 # rebuilding full surface snapshots when no surface automation is active.
 
 const MainScene := preload("res://scenes/main.tscn")
+const GameSurfaceCanvasScript := preload("res://scripts/ui/game_surface_canvas.gd")
+const VisualStyleScript := preload("res://scripts/ui/visual_style.gd")
 const REPORT_PATH := "user://foundation_performance_probe_report.json"
 const DEFAULT_SEED_PREFIX := "FOUNDATION-PERF"
 const DEFAULT_RUN_COUNT := 8
@@ -97,6 +99,7 @@ func _run() -> void:
 	await _probe_practice_game_surface_coverage()
 	await _probe_casino_slot_preview_coverage()
 	await _probe_game_resolve_budgets()
+	await _probe_synthetic_idle_overlays()
 	_assert_required_game_surface_coverage()
 	_assert_required_resolve_coverage()
 	_assert_low_end_budget_headroom()
@@ -429,6 +432,103 @@ func _probe_game_resolve_budgets() -> void:
 		elif ok_count < samples.size():
 			failures.append("Resolve performance probe only got %d/%d successful %s results." % [ok_count, samples.size(), game_id])
 		_assert_resolve_budget(game_id, stats, budget)
+
+
+func _probe_synthetic_idle_overlays() -> void:
+	for snapshot in [_synthetic_blackjack_idle_snapshot(), _synthetic_roulette_idle_snapshot()]:
+		var canvas: Control = GameSurfaceCanvasScript.new()
+		canvas.size = Vector2(VisualStyleScript.GAME_BOARD_SIZE)
+		root.add_child(canvas)
+		canvas.call("render_game_snapshot", snapshot)
+		await _settle(3)
+		canvas.set_process(false)
+		if canvas.has_method("reset_performance_counters"):
+			canvas.call("reset_performance_counters")
+		var start_usec := Time.get_ticks_usec()
+		for _frame_index in range(frames_per_surface):
+			canvas.set("flicker", float(canvas.get("flicker")) + (1.0 / 60.0))
+			var overlay := canvas.get("ambient_surface_overlay") as Control
+			if overlay != null:
+				overlay.queue_redraw()
+			await process_frame
+		var elapsed_usec := Time.get_ticks_usec() - start_usec
+		var counters := _canvas_counters(canvas)
+		var renderer := str(snapshot.get("surface_renderer", ""))
+		var draw_samples := _array_size(counters.get("draw_frame_usec_samples", []))
+		observations.append({
+			"seed": "synthetic:idle_overlay",
+			"run_index": -1,
+			"environment_id": "synthetic_idle_overlay",
+			"game_id": str(snapshot.get("game_id", "")),
+			"renderer": renderer,
+			"mode": "synthetic_idle_overlay",
+			"frames": frames_per_surface,
+			"elapsed_ms": float(elapsed_usec) / 1000.0,
+			"avg_frame_ms": float(elapsed_usec) / float(maxi(1, frames_per_surface)) / 1000.0,
+			"draw_avg_ms": float(counters.get("draw_avg_ms", 0.0)),
+			"draw_p95_ms": float(counters.get("draw_p95_ms", 0.0)),
+			"draw_max_ms": float(counters.get("draw_max_ms", 0.0)),
+			"draw_samples": draw_samples,
+			"full_snapshot_calls": int(counters.get("full_snapshot_calls", 0)),
+			"runtime_status_calls": int(counters.get("runtime_status_calls", 0)),
+			"idle_draw_budget_ms": MAX_IDLE_SURFACE_DRAW_P95_MS,
+		})
+		if draw_samples <= 0:
+			failures.append("Synthetic %s idle overlay produced no draw samples." % renderer)
+		canvas.queue_free()
+		await _settle(1)
+
+
+func _synthetic_blackjack_idle_snapshot() -> Dictionary:
+	return {
+		"game_id": "blackjack",
+		"surface_renderer": "blackjack",
+		"surface_ambient_overlay": "table_idle",
+		"surface_animates_idle": false,
+		"reduce_motion": false,
+		"dealer_profile": {"attention_base": 28, "blink_offset": 120},
+		"dealer_attention_pressure": 6,
+		"suspicion_level": 5,
+		"patrons": [
+			{"name": "Seat 1", "snitch_risk": 22, "active_snitch_risk": 22, "watching_player": true, "animation_offset": 0, "silhouette": "coat"},
+			{"name": "Seat 2", "snitch_risk": 10, "active_snitch_risk": 10, "watching_player": false, "animation_offset": 300, "silhouette": "cap"},
+			{"name": "Seat 3", "snitch_risk": 36, "active_snitch_risk": 36, "watching_player": true, "animation_offset": 650, "silhouette": "vest"},
+			{"name": "Seat 4", "snitch_risk": 18, "active_snitch_risk": 18, "watching_player": false, "animation_offset": 910, "silhouette": "jacket"},
+		],
+		"table_round_timer": {
+			"active": true,
+			"started_msec": Time.get_ticks_msec(),
+			"duration_msec": 12000,
+			"remaining_msec": 12000,
+		},
+	}
+
+
+func _synthetic_roulette_idle_snapshot() -> Dictionary:
+	return {
+		"game_id": "roulette",
+		"surface_renderer": "roulette",
+		"surface_ambient_overlay": "roulette_idle",
+		"surface_animates_idle": false,
+		"reduce_motion": false,
+		"wheel_sequence": ["0", "28", "9", "26", "30", "11", "7", "20", "32", "17", "5", "22", "34", "15", "3", "24", "36", "13", "1", "00", "27", "10", "25", "29", "12", "8", "19", "31", "18", "6", "21", "33", "16", "4", "23", "35", "14", "2"],
+		"patrons": [
+			{"name": "Rail 1", "snitch_risk": 18, "active_snitch_risk": 18, "watching_player": false, "silhouette": "coat"},
+			{"name": "Rail 2", "snitch_risk": 42, "active_snitch_risk": 42, "watching_player": true, "silhouette": "vest"},
+			{"name": "Rail 3", "snitch_risk": 25, "active_snitch_risk": 25, "watching_player": false, "silhouette": "cap"},
+		],
+		"patron_layout": [
+			{"foot": {"x": 832.0, "y": 112.0}},
+			{"foot": {"x": 836.0, "y": 210.0}},
+			{"foot": {"x": 830.0, "y": 308.0}},
+		],
+		"table_round_timer": {
+			"active": true,
+			"started_msec": Time.get_ticks_msec(),
+			"duration_msec": 15000,
+			"remaining_msec": 15000,
+		},
+	}
 
 
 func _prepare_run_for_resolve_probe(run_state: RunState, baseline_environment: Dictionary, baseline_rng_seed: int, baseline_rng_state: int, baseline_suspicion: Dictionary) -> void:
