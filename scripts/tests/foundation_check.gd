@@ -1840,6 +1840,8 @@ func _check_slot_contract_smoke(library: ContentLibrary, failures: Array) -> voi
 	_check_slot_cabinet_distinctness(library, definition, failures)
 	print("SLOT_CONTRACT_SMOKE environment_preview")
 	_check_slot_environment_preview(library, definition, failures)
+	print("SLOT_CONTRACT_SMOKE autoplay_toggle")
+	_check_slot_autoplay_toggle(library, definition, failures)
 	print("SLOT_CONTRACT_SMOKE animation_present")
 	_check_slot_animation_present(library, definition, failures)
 	print("SLOT_CONTRACT_SMOKE hold_fill_scaling")
@@ -3246,6 +3248,36 @@ func _check_slot_environment_preview(library: ContentLibrary, definition: Dictio
 		str(nudge_preview.get("phase", "")),
 		int(nudge_chain.get("coin_count", 0)),
 	])
+
+
+func _check_slot_autoplay_toggle(library: ContentLibrary, definition: Dictionary, failures: Array) -> void:
+	var game: GameModule = _slot_game(library, failures)
+	if game == null:
+		return
+	var run_state: RunState = _slot_run_state("SLOT-AUTOPLAY-TOGGLE", 100000)
+	var environment: Dictionary = _slot_environment()
+	var machine: Dictionary = _slot_machine(definition, run_state, "buffalo", "video_feature", "standard", "plain")
+	_slot_store_machine(run_state, environment, machine)
+	var start_msec := 12000
+	var command: Dictionary = game.surface_action_command("slot_auto_toggle", 0, false, {"surface_time_msec": start_msec, "drunk_scaled_surface_time_msec": start_msec}, run_state, environment)
+	if not bool(command.get("handled", false)) or not bool(command.get("environment_changed", false)):
+		failures.append("Slot autoplay toggle did not handle the one-click surface action.")
+	var enabled_machine: Dictionary = SlotMachineStateScript.read_machine(environment, "slot")
+	if not bool(enabled_machine.get("slot_autoplay_active", false)):
+		failures.append("Slot autoplay toggle did not activate autoplay on one click.")
+	if int(enabled_machine.get("slot_autoplay_next_msec", 0)) <= start_msec:
+		failures.append("Slot autoplay toggle did not schedule a future first spin.")
+	if game.surface_needs_auto_tick({"surface_time_msec": start_msec, "drunk_scaled_surface_time_msec": start_msec}, run_state, environment):
+		failures.append("Slot autoplay requested an immediate spin on the same frame it was toggled on.")
+	var surface: Dictionary = game.surface_state(run_state, environment, {"surface_time_msec": start_msec, "drunk_scaled_surface_time_msec": start_msec})
+	if not bool(surface.get("slot_autoplay_active", false)):
+		failures.append("Slot surface did not show AUTO ON after one click.")
+	var off_command: Dictionary = game.surface_action_command("slot_auto_toggle", 0, false, {"surface_time_msec": start_msec + 1, "drunk_scaled_surface_time_msec": start_msec + 1}, run_state, environment)
+	if not bool(off_command.get("handled", false)):
+		failures.append("Slot autoplay off toggle was not handled.")
+	var disabled_machine: Dictionary = SlotMachineStateScript.read_machine(environment, "slot")
+	if bool(disabled_machine.get("slot_autoplay_active", false)) or int(disabled_machine.get("slot_autoplay_next_msec", -1)) != 0:
+		failures.append("Slot autoplay off toggle did not clear active state and timer.")
 
 
 func _check_slot_animation_present(library: ContentLibrary, definition: Dictionary, failures: Array) -> void:

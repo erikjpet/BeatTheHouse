@@ -360,6 +360,9 @@ func _run() -> void:
 		push_error("Games page Back did not return to the main menu controls.")
 		quit(1)
 		return
+	if not await _check_slot_autoplay_button_one_click(app):
+		quit(1)
+		return
 	if not await _check_all_in_wager_confirmation_recovery(app):
 		quit(1)
 		return
@@ -4097,6 +4100,61 @@ func _travel_to_target_and_check_games(app: Control, target_id: String) -> bool:
 	return not traveled_game_ids.is_empty()
 
 
+func _check_slot_autoplay_button_one_click(app: Control) -> bool:
+	var original_run_state: Variant = app.get("run_state")
+	var original_dev_game_test_mode := bool(app.get("dev_game_test_mode"))
+	app.call("start_game_test_session", "slot")
+	await process_frame
+	await process_frame
+	var run_state: RunState = app.get("run_state")
+	var canvas: Control = app.get("game_surface_canvas")
+	if run_state == null or app.get("current_game") == null or canvas == null:
+		push_error("Slot autoplay one-click fixture could not start the slot surface.")
+		return false
+	run_state.bankroll = 100000
+	app.call("_refresh")
+	await process_frame
+	var before_snapshot: Dictionary = app.call("current_game_view_snapshot")
+	if bool(before_snapshot.get("slot_autoplay_active", false)):
+		push_error("Slot autoplay one-click fixture started with autoplay already active.")
+		return false
+	var click_position: Vector2 = canvas.call("local_position_for_surface_action", "slot_auto_toggle", 0)
+	if click_position.x < 0.0 or click_position.y < 0.0:
+		push_error("Slot autoplay one-click fixture could not locate the AUTO hit region.")
+		return false
+	var machine_before: Dictionary = SlotMachineStateScript.read_machine(run_state.current_environment, "slot")
+	var spin_count_before := int(machine_before.get("spin_count", 0))
+	var mouse_event := InputEventMouseButton.new()
+	mouse_event.button_index = MOUSE_BUTTON_LEFT
+	mouse_event.pressed = true
+	mouse_event.position = click_position
+	canvas.call("_gui_input", mouse_event)
+	var machine_after_click: Dictionary = SlotMachineStateScript.read_machine(run_state.current_environment, "slot")
+	if not bool(machine_after_click.get("slot_autoplay_active", false)):
+		push_error("Clicking the slot AUTO button did not activate autoplay on the first click.")
+		return false
+	if int(machine_after_click.get("slot_autoplay_next_msec", 0)) <= 0:
+		push_error("Clicking the slot AUTO button did not schedule the first autoplay spin.")
+		return false
+	var after_click_snapshot: Dictionary = app.call("current_game_view_snapshot")
+	if not bool(after_click_snapshot.get("slot_autoplay_active", false)):
+		push_error("Slot surface did not show AUTO ON immediately after the first click.")
+		return false
+	await process_frame
+	var machine_after_frame: Dictionary = SlotMachineStateScript.read_machine(run_state.current_environment, "slot")
+	if int(machine_after_frame.get("spin_count", 0)) != spin_count_before:
+		push_error("Slot autoplay fired an immediate spin on the same frame as the AUTO click.")
+		return false
+	app.call("return_to_main_menu")
+	await process_frame
+	app.set("run_state", original_run_state)
+	app.set("dev_game_test_mode", original_dev_game_test_mode)
+	app.call("_refresh_run_action_service")
+	app.call("_refresh_start_screen")
+	await process_frame
+	return true
+
+
 func _check_all_in_wager_confirmation_recovery(app: Control) -> bool:
 	var original_run_state: Variant = app.get("run_state")
 	var original_dev_game_test_mode := bool(app.get("dev_game_test_mode"))
@@ -4116,6 +4174,9 @@ func _check_all_in_wager_confirmation_recovery(app: Control) -> bool:
 	if not bool(app.call("_handle_module_surface_action", "slot_auto_toggle", 0, false)):
 		push_error("All-in confirmation fixture could not enable slot autoplay.")
 		return false
+	var autoplay_machine: Dictionary = SlotMachineStateScript.read_machine(run_state.current_environment, "slot")
+	autoplay_machine["slot_autoplay_next_msec"] = 1
+	SlotMachineStateScript.write_machine(run_state.current_environment, "slot", autoplay_machine)
 	for _index in range(5):
 		await process_frame
 	var popup: Dictionary = app.call("current_event_choice_popup_snapshot")

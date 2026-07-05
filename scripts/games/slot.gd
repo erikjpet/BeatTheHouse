@@ -227,6 +227,10 @@ func surface_action_command(surface_action: String, index: int, confirm_requeste
 			})
 		"slot_auto_toggle":
 			machine["slot_autoplay_active"] = not bool(machine.get("slot_autoplay_active", false))
+			if bool(machine.get("slot_autoplay_active", false)):
+				machine["slot_autoplay_next_msec"] = _slot_autoplay_next_msec(machine, ui_state, run_state)
+			else:
+				machine["slot_autoplay_next_msec"] = 0
 			StateScript.write_machine(environment, get_id(), machine)
 			return GameModule.surface_command({
 				"handled": true,
