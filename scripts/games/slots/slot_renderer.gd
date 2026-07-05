@@ -1146,10 +1146,15 @@ func _pinball_feature_manifest(surface_state: Dictionary, time_msec: int, mode: 
 	var live_feature_active := _pinball_live_feature_active(active)
 	var feature_active := live_feature_active or _pinball_visual_replay_active(active, time_msec)
 	var positions: Array = []
-	if feature_active:
-		positions = _pinball_positions_at_time(_pinball_trajectory(active), time_msec)
+	if live_feature_active:
+		var trajectory: Array = _pinball_trajectory(active)
+		var last_live_msec := int(active.get("last_physics_real_msec", 0))
+		if (bool(active.get("pinball_replay_query", false)) or (last_live_msec > 0 and time_msec < last_live_msec)) and not trajectory.is_empty():
+			positions = _pinball_positions_at_time(trajectory, time_msec, true)
 		if positions.is_empty():
 			positions = _pinball_live_positions(active)
+	elif feature_active:
+		positions = _pinball_positions_at_time(_pinball_trajectory(active), time_msec)
 	if feature_active and int(active.get("active_ball_count", 0)) > 1 and positions.size() <= 1 and int(active.get("max_active_count", 0)) > 1:
 		positions = _pinball_multiball_fallback_positions(time_msec)
 	var manifest: Dictionary = {
@@ -1367,20 +1372,21 @@ func _pinball_trajectory(active: Dictionary) -> Array:
 	if typeof(display_trajectory_value) == TYPE_ARRAY:
 		display_trajectory = display_trajectory_value
 	if bool(active.get("active", false)) and not bool(active.get("complete", false)) and not display_trajectory.is_empty():
-		var live_trajectory_value: Variant = active.get("trajectory", [])
-		if typeof(live_trajectory_value) == TYPE_ARRAY:
-			var live_trajectory: Array = live_trajectory_value
-			if _pinball_trajectory_time_span(live_trajectory) >= 0.18:
-				return live_trajectory
 		if _pinball_trajectory_time_span(display_trajectory) >= 0.18:
 			return display_trajectory
-		return display_trajectory
 	var trajectory: Array = []
 	var trajectory_value: Variant = active.get("trajectory", [])
 	if typeof(trajectory_value) == TYPE_ARRAY:
 		trajectory = trajectory_value
 	if not trajectory.is_empty():
 		return trajectory
+	if bool(active.get("active", false)) and not bool(active.get("complete", false)):
+		var live_view_trajectory: Array = _read_array(_pinball_view(active).get("trajectory", []))
+		if not live_view_trajectory.is_empty():
+			return live_view_trajectory
+	var view_trajectory: Array = _read_array(_pinball_view(active).get("trajectory", []))
+	if not view_trajectory.is_empty():
+		return view_trajectory
 	for step_value in _read_array(active.get("history", [])):
 		var step: Dictionary = _read_dict(step_value)
 		for point_value in _read_array(step.get("trajectory", [])):
@@ -1424,14 +1430,16 @@ func _pinball_live_positions(active: Dictionary) -> Array:
 	return result
 
 
-func _pinball_positions_at_time(trajectory: Array, time_msec: int) -> Array:
+func _pinball_positions_at_time(trajectory: Array, time_msec: int, clamp_to_duration: bool = false) -> Array:
 	var result: Array = []
 	if trajectory.is_empty():
 		return result
 	var playback_sec: float = _pinball_playback_time(time_msec)
 	var duration_sec: float = _pinball_trajectory_time_span(trajectory)
 	if duration_sec > 0.035 and playback_sec > duration_sec:
-		return result
+		if not clamp_to_duration:
+			return result
+		playback_sec = duration_sec
 	var previous_by_ball: Dictionary = {}
 	var next_by_ball: Dictionary = {}
 	for point_value in trajectory:

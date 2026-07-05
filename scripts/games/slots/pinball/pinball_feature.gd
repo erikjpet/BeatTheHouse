@@ -22,11 +22,31 @@ const LAUNCH_METER_GOOD_WIDTH := 8
 const LAUNCH_METER_WILD_WIDTH := 22
 
 static var _sessions: Dictionary = {}
+static var _runtime_sessions: Dictionary = {}
 static var _layouts: Dictionary = {}
 static var _compiled_boards: Dictionary = {}
 static var _surface_refresh_msec: Dictionary = {}
+static var _sequencer_instance = null
 static var _session_order: Array[String] = []
 const MAX_RUNTIME_SESSIONS := 32
+const EVENT_LOG_CAP := 192
+const TRAJECTORY_CAP := 120
+const DISPLAY_TRAJECTORY_CAP := 24
+const HISTORY_CAP := 24
+const HISTORY_EVENT_CAP := 6
+const HISTORY_TRAJECTORY_CAP := 8
+
+
+class RuntimeSession:
+	extends RefCounted
+
+	var sim
+	var layout: Dictionary = {}
+	var layout_view: Dictionary = {}
+	var compiled: Dictionary = {}
+	var last_surface_msec := 0
+	var cached_view_tick := -1
+	var cached_view: Dictionary = {}
 
 
 func open(machine: Dictionary, mode: String, stake: int, rng: RngStream, params: Dictionary = {}) -> Dictionary:
@@ -87,7 +107,7 @@ func open(machine: Dictionary, mode: String, stake: int, rng: RngStream, params:
 		"display_trajectory": [],
 		"last_event_count": 0,
 		"combo_state": {"route_id": "", "step": 0, "multiplier": 1, "timer_ticks": 0, "label": ""},
-		"sequencer_state": SequencerScript.new().initial_state(str(layout.get("id", "")), mode),
+		"sequencer_state": _sequencer().initial_state(str(layout.get("id", "")), mode),
 		"pinball_debug": {},
 		"lane_locks": 0,
 		"lit_jackpots": 0,
@@ -192,7 +212,12 @@ func step(machine: Dictionary, action_id: String, rng: RngStream, _definition: D
 		active["physics_tick_budget"] = ticks_to_run
 		_run_ticks_with_trajectory(sim, ticks_to_run, local_trajectory, live_display)
 		if live_display:
-			_surface_refresh_msec[session_id] = maxi(0, int(ui_state.get("surface_time_msec", ui_state.get("slot_visual_time_msec", 0))))
+			var live_msec := maxi(0, int(ui_state.get("surface_time_msec", ui_state.get("slot_visual_time_msec", 0))))
+			_surface_refresh_msec[session_id] = live_msec
+			var runtime: RuntimeSession = _runtime_for_static(active)
+			if runtime != null:
+				runtime.last_surface_msec = live_msec
+				runtime.cached_view_tick = -1
 	if not live_display and bool(active.get("headless", false)):
 		var drain_deadline_tick := int(sim.tick) + int(sim.max_ticks)
 		while sim.active_ball_count() > 0 and int(sim.tick) < drain_deadline_tick:
@@ -237,24 +262,33 @@ func preview(machine: Dictionary, stake: int, definition: Dictionary, rng: RngSt
 
 static func surface_refresh(active: Dictionary, surface_time_msec: int) -> Dictionary:
 	var result := active.duplicate(false)
-	var sim = _session_for_static(result)
+	var runtime: RuntimeSession = _runtime_for_static(result)
+	var sim = runtime.sim if runtime != null else _session_for_static(result)
 	if sim != null and bool(result.get("active", false)) and sim.active_ball_count() > 0:
 		var session_id := str(result.get("runtime_session_id", ""))
-		var last_msec := maxi(0, int(_surface_refresh_msec.get(session_id, 0)))
+		var stored_msec := maxi(0, int(_surface_refresh_msec.get(session_id, 0)))
+		var last_msec := maxi(stored_msec, runtime.last_surface_msec if runtime != null else 0)
 		var elapsed := 32 if last_msec <= 0 else clampi(surface_time_msec - last_msec, 0, 64)
 		var ticks_to_run := 1 if elapsed >= 56 else 0
+		if last_msec > 0:
+			result["last_physics_real_msec"] = last_msec
+			result["pinball_replay_query"] = surface_time_msec < last_msec
 		for _i in range(ticks_to_run):
 			sim.step_tick()
 		if ticks_to_run > 0:
+			if runtime != null:
+				runtime.last_surface_msec = surface_time_msec
+				runtime.cached_view_tick = -1
 			_surface_refresh_msec[session_id] = surface_time_msec
 			result["last_physics_real_msec"] = surface_time_msec
+			result["pinball_replay_query"] = false
 		result["physics_tick_budget"] = ticks_to_run
 		result["active_ball_count"] = sim.active_ball_count()
-		result["pinball_view"] = _view_for_static(result, sim, [], sim.active_position_log())
-		result["event_log"] = _tail_array_shallow(result.get("event_log", []), 48)
-		result["trajectory"] = _tail_array_shallow(result.get("trajectory", []), 80)
+		result["pinball_view"] = _cached_live_view(runtime, result, sim)
+		result["event_log"] = _tail_array_shallow(result.get("event_log", []), 24)
+		result["trajectory"] = _tail_array_shallow(result.get("trajectory", []), 32)
 		result["display_event_log"] = _tail_array_shallow(result.get("display_event_log", []), 8)
-		result["display_trajectory"] = _tail_array_shallow(result.get("display_trajectory", []), 24)
+		result["display_trajectory"] = _tail_array_shallow(result.get("display_trajectory", []), 12)
 		result["history"] = []
 	elif sim == null and bool(result.get("active", false)):
 		var balls_remaining := maxi(0, int(result.get("balls_remaining", result.get("remaining_steps", 0))))
@@ -262,6 +296,30 @@ static func surface_refresh(active: Dictionary, surface_time_msec: int) -> Dicti
 		result["launch_in_progress"] = false
 		result["remaining_steps"] = balls_remaining
 	return result
+
+
+static func live_status(active: Dictionary) -> Dictionary:
+	var runtime: RuntimeSession = _runtime_for_static(active)
+	var sim = runtime.sim if runtime != null else _session_for_static(active)
+	var active_count := 0
+	var runtime_tick := 0
+	var balls_remaining := maxi(0, int(active.get("balls_remaining", active.get("remaining_steps", 0))))
+	var remaining_steps := maxi(0, int(active.get("remaining_steps", balls_remaining)))
+	if sim != null:
+		active_count = sim.active_ball_count()
+		remaining_steps = maxi(0, int(active.get("remaining_steps", balls_remaining + active_count)))
+		runtime_tick = int(sim.tick)
+	else:
+		var summary: Dictionary = _dict_static(active.get("pinball_summary", {}))
+		runtime_tick = maxi(0, int(summary.get("tick", _dict_static(active.get("pinball_debug", {})).get("tick", 0))))
+		remaining_steps = balls_remaining
+	return {
+		"active_ball_count": active_count,
+		"balls_remaining": balls_remaining,
+		"remaining_steps": remaining_steps,
+		"runtime_active": sim != null,
+		"tick": runtime_tick,
+	}
 
 
 func _refresh_active(active: Dictionary, sim, local_events: Array, local_trajectory: Array) -> void:
@@ -282,10 +340,10 @@ func _refresh_active(active: Dictionary, sim, local_events: Array, local_traject
 	active["last_event_count"] = int(snapshot.get("event_total_count", 0))
 	active["pinball_summary"] = _summary_for(active, sim)
 	active["pinball_debug"] = snapshot
-	active["display_event_log"] = local_events
-	active["display_trajectory"] = local_trajectory
-	active["event_log"] = _trimmed(_array(active.get("event_log", [])) + local_events, 420)
-	active["trajectory"] = _trimmed(_array(active.get("trajectory", [])) + local_trajectory, 300)
+	active["display_event_log"] = _tail_array_shallow(local_events, 16)
+	active["display_trajectory"] = _sampled_array_shallow(local_trajectory, DISPLAY_TRAJECTORY_CAP)
+	active["event_log"] = _bounded_event_log(_array_static(active.get("event_log", [])), local_events, EVENT_LOG_CAP, int(snapshot.get("total_awarded", 0)), str(active.get("mode", "")))
+	active["trajectory"] = _sampled_array_shallow(_array_static(active.get("trajectory", [])) + local_trajectory, TRAJECTORY_CAP)
 	_append_history(active, snapshot, local_events, local_trajectory)
 	active["pinball_view"] = _view_for(active, sim, local_events, local_trajectory)
 	if not local_trajectory.is_empty():
@@ -303,12 +361,14 @@ func _append_history(active: Dictionary, snapshot: Dictionary, local_events: Arr
 		"id": "pinball_step_%03d" % history.size(),
 		"tick": int(snapshot.get("tick", 0)),
 		"award": _logged_award(local_events),
-		"event_log": local_events,
-		"trajectory": _trimmed(local_trajectory.duplicate(true), 42),
+		"event_log": _tail_array_shallow(local_events, HISTORY_EVENT_CAP),
+		"trajectory": _tail_array_shallow(local_trajectory, HISTORY_TRAJECTORY_CAP),
+		"event_count": local_events.size(),
+		"trajectory_count": local_trajectory.size(),
 		"active_balls": int(snapshot.get("active_ball_count", 0)),
 		"total": int(snapshot.get("total_awarded", 0)),
 	})
-	active["history"] = _trimmed(history, 48)
+	active["history"] = _trimmed(history, HISTORY_CAP)
 
 
 func _sequence_events_to_log(sequence_events: Array, source_events: Array, sim) -> Array:
@@ -427,7 +487,11 @@ func _finish(machine: Dictionary, active: Dictionary, sim, message: String) -> D
 	active["launch_in_progress"] = false
 	if not finish_events.is_empty():
 		active["display_event_log"] = finish_events
-		active["event_log"] = _trimmed(_array(active.get("event_log", [])) + finish_events, 420)
+		var event_log: Array = _array_static(active.get("event_log", []))
+		event_log.append_array(finish_events)
+		active["event_log"] = _final_event_log(event_log, EVENT_LOG_CAP, award, str(active.get("mode", "")))
+	else:
+		active["event_log"] = _final_event_log(_array_static(active.get("event_log", [])), EVENT_LOG_CAP, award, str(active.get("mode", "")))
 	active["pinball_view"] = _view_for(active, sim, [], [])
 	_erase_session(str(active.get("runtime_session_id", "")))
 	machine["last_bonus_replay"] = active.duplicate(true)
@@ -454,11 +518,24 @@ static func _session_for_static(active: Dictionary):
 	return _sessions.get(session_id, null)
 
 
+static func _runtime_for_static(active: Dictionary) -> RuntimeSession:
+	var session_id := str(active.get("runtime_session_id", ""))
+	var runtime: Variant = _runtime_sessions.get(session_id, null)
+	return runtime as RuntimeSession if runtime is RuntimeSession else null
+
+
 static func _store_session(session_id: String, sim, layout: Dictionary, compiled: Dictionary) -> void:
 	if session_id.is_empty():
 		return
+	var layout_view := _layout_view(layout)
+	var runtime := RuntimeSession.new()
+	runtime.sim = sim
+	runtime.layout = layout
+	runtime.layout_view = layout_view
+	runtime.compiled = compiled
 	_sessions[session_id] = sim
-	_layouts[session_id] = _layout_view(layout)
+	_runtime_sessions[session_id] = runtime
+	_layouts[session_id] = layout_view
 	_compiled_boards[session_id] = compiled
 	_surface_refresh_msec[session_id] = 0
 	_session_order.erase(session_id)
@@ -470,6 +547,7 @@ static func _erase_session(session_id: String) -> void:
 	if session_id.is_empty():
 		return
 	_sessions.erase(session_id)
+	_runtime_sessions.erase(session_id)
 	_layouts.erase(session_id)
 	_compiled_boards.erase(session_id)
 	_surface_refresh_msec.erase(session_id)
@@ -478,6 +556,7 @@ static func _erase_session(session_id: String) -> void:
 
 static func clear_runtime_session_cache() -> void:
 	_sessions.clear()
+	_runtime_sessions.clear()
 	_layouts.clear()
 	_compiled_boards.clear()
 	_surface_refresh_msec.clear()
@@ -509,19 +588,17 @@ static func _restore_session_progress(active: Dictionary, sim) -> void:
 	sim.max_active_seen = maxi(int(active.get("max_active_count", 0)), int(debug.get("max_active_seen", 0)))
 
 
-func _run_ticks_with_trajectory(sim, ticks_to_run: int, trajectory: Array, local_time: bool) -> void:
-	var start_tick := int(sim.tick)
+func _run_ticks_with_trajectory(sim, ticks_to_run: int, trajectory: Array, _local_time: bool) -> void:
 	for index in range(maxi(0, ticks_to_run)):
 		sim.step_tick()
 		if index % 3 == 0 or sim.active_ball_count() == 0:
-			var local_sec := float(sim.tick - start_tick) * SimScript.FIXED_DT if local_time else -1.0
-			trajectory.append_array(sim.active_position_log(local_sec))
+			trajectory.append_array(sim.active_position_log())
 
 
 func _apply_mode_progress(active: Dictionary, sim, mode: String, events: Array) -> void:
 	if events.is_empty():
 		return
-	var sequencer := SequencerScript.new()
+	var sequencer: Object = _sequencer()
 	sequencer.apply(active, sim, mode, events)
 	ItemsScript.apply_event_hooks(active, sim, mode, events)
 
@@ -530,11 +607,28 @@ func _view_for(active: Dictionary, sim, local_events: Array, local_trajectory: A
 	return _view_for_static(active, sim, local_events, local_trajectory)
 
 
-static func _view_for_static(active: Dictionary, sim, local_events: Array, local_trajectory: Array) -> Dictionary:
+static func _cached_live_view(runtime: RuntimeSession, active: Dictionary, sim) -> Dictionary:
+	if runtime != null and runtime.cached_view_tick == int(sim.tick) and not runtime.cached_view.is_empty():
+		return runtime.cached_view
+	var balls: Array = sim.active_position_log()
+	var view: Dictionary = _view_for_static(active, sim, [], balls, balls, runtime.layout_view if runtime != null else {})
+	if runtime != null:
+		runtime.cached_view_tick = int(sim.tick)
+		runtime.cached_view = view
+	return view
+
+
+static func _view_for_static(active: Dictionary, sim, local_events: Array, local_trajectory: Array, balls_override: Array = [], layout_override: Dictionary = {}) -> Dictionary:
 	var session_id := str(active.get("runtime_session_id", ""))
+	var balls: Array = balls_override
+	if balls.is_empty() and sim.active_ball_count() > 0:
+		balls = sim.active_position_log()
+	var layout: Dictionary = layout_override
+	if layout.is_empty():
+		layout = _layouts.get(session_id, {})
 	return {
-		"layout": _layouts.get(session_id, {}),
-		"balls": sim.active_position_log(),
+		"layout": layout,
+		"balls": balls,
 		"events": local_events,
 		"trajectory": local_trajectory,
 		"time": float(sim.tick) * SimScript.FIXED_DT,
@@ -558,6 +652,12 @@ func _summary_for(active: Dictionary, sim) -> Dictionary:
 		"item_hooks": _array(active.get("pinball_item_hooks", [])),
 		"input_log": _array(active.get("input_log", [])),
 	}
+
+
+static func _sequencer():
+	if _sequencer_instance == null:
+		_sequencer_instance = SequencerScript.new()
+	return _sequencer_instance
 
 
 static func _layout_view(layout: Dictionary) -> Dictionary:
@@ -838,6 +938,101 @@ static func _trimmed(values: Array, keep: int) -> Array:
 	while values.size() > keep:
 		values.remove_at(0)
 	return values
+
+
+static func _sampled_array_shallow(values: Array, keep: int) -> Array:
+	var safe_keep := maxi(0, keep)
+	if safe_keep <= 0:
+		return []
+	if values.size() <= safe_keep:
+		return values
+	if safe_keep == 1:
+		return [values[values.size() - 1]]
+	var result: Array = []
+	var last_index := values.size() - 1
+	for sample_index in range(safe_keep):
+		var source_index := int(round(float(sample_index) * float(last_index) / float(safe_keep - 1)))
+		result.append(values[clampi(source_index, 0, last_index)])
+	return result
+
+
+static func _bounded_event_log(existing_events: Array, local_events: Array, keep: int, target_award: int, mode: String) -> Array:
+	var combined: Array = []
+	combined.append_array(existing_events)
+	combined.append_array(local_events)
+	var safe_keep := maxi(1, keep)
+	var result: Array = _sampled_array_shallow(combined, safe_keep)
+	var missing_award := maxi(0, target_award - _logged_award_static(result))
+	if missing_award > 0:
+		while result.size() >= safe_keep:
+			result.remove_at(0)
+		result.insert(0, _summary_award_event(mode, missing_award, combined))
+	return result
+
+
+static func _final_event_log(events: Array, keep: int, target_award: int, mode: String) -> Array:
+	var safe_keep := maxi(1, keep)
+	var sampled: Array = _sampled_array_shallow(events, safe_keep)
+	var result: Array = []
+	var running_award := 0
+	var content_slots := maxi(0, safe_keep - 1)
+	for event_value in sampled:
+		if result.size() >= content_slots:
+			break
+		var event: Dictionary = _dict_static(event_value)
+		if event.is_empty():
+			continue
+		var event_award := maxi(0, int(event.get("award", 0)))
+		if event_award > 0 and running_award + event_award > target_award:
+			continue
+		result.append(event)
+		running_award += event_award
+	var missing_award := maxi(0, target_award - running_award)
+	if missing_award > 0:
+		result.insert(0, _summary_award_event(mode, missing_award, events))
+	while result.size() > safe_keep:
+		result.remove_at(1 if result.size() > 1 else 0)
+	return result
+
+
+static func _summary_award_event(mode: String, award: int, source_events: Array) -> Dictionary:
+	var event_type := "bumper"
+	if mode == "lane_multiball":
+		event_type = "launcher"
+	elif mode == "video_feature":
+		event_type = "jackpot"
+	var position := _point_payload(Vector2(0.5, 0.5))
+	var event_time := 0.0
+	var ball_index := 0
+	for index in range(source_events.size() - 1, -1, -1):
+		var source: Dictionary = _dict_static(source_events[index])
+		if source.is_empty():
+			continue
+		var source_type := str(source.get("element_type", ""))
+		if source_type == "gate" or source_type == "launcher" or source_type == "jackpot" or source_type == "bumper":
+			event_type = source_type
+		var source_position: Variant = source.get("position", {})
+		if typeof(source_position) == TYPE_DICTIONARY:
+			position = (source_position as Dictionary).duplicate(true)
+		event_time = float(source.get("time", event_time))
+		ball_index = int(source.get("ball_index", ball_index))
+		break
+	return {
+		"element_id": "bounded_award_summary",
+		"element_type": event_type,
+		"position": position,
+		"award": maxi(0, award),
+		"time": snappedf(event_time, 0.0001),
+		"ball_index": ball_index,
+		"summary": true,
+	}
+
+
+static func _logged_award_static(events: Array) -> int:
+	var total := 0
+	for event_value in events:
+		total += maxi(0, int(_dict_static(event_value).get("award", 0)))
+	return total
 
 
 static func _tail_array_shallow(value: Variant, keep: int) -> Array:

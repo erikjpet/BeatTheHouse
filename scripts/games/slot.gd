@@ -1024,14 +1024,10 @@ func _slot_bonus_watchdog_status(machine: Dictionary, ui_state: Dictionary) -> D
 func _slot_bonus_has_no_live_work(active: Dictionary, ui_state: Dictionary) -> bool:
 	var family := str(active.get("family", ""))
 	if family == "pinball":
-		var live: Dictionary = _slot_copy_dict(active)
-		var surface_time := _surface_timing_msec(ui_state)
-		if surface_time > 0:
-			live = PinballFeatureScript.surface_refresh(live, surface_time)
-		var summary: Dictionary = _slot_copy_dict(live.get("pinball_summary", {}))
-		var active_count := maxi(0, int(live.get("active_ball_count", summary.get("active_ball_count", summary.get("active", 0)))))
-		var balls_remaining := maxi(0, int(live.get("balls_remaining", live.get("remaining_steps", 0))))
-		var remaining_steps := maxi(0, int(live.get("remaining_steps", balls_remaining + active_count)))
+		var status: Dictionary = PinballFeatureScript.live_status(active)
+		var active_count := maxi(0, int(status.get("active_ball_count", 0)))
+		var balls_remaining := maxi(0, int(status.get("balls_remaining", active.get("remaining_steps", 0))))
+		var remaining_steps := maxi(0, int(status.get("remaining_steps", balls_remaining + active_count)))
 		return balls_remaining <= 0 and active_count <= 0 and remaining_steps <= 0
 	if family == "buffalo":
 		var mode := str(active.get("mode", ""))

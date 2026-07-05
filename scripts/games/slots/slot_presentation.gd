@@ -206,7 +206,7 @@ func surface_state(machine: Dictionary, run_state: RunState, definition: Diction
 
 
 func _pinball_active_surface_state(machine: Dictionary, active_bonus: Dictionary, run_state: RunState, surface_time_msec: int, ui_state: Dictionary) -> Dictionary:
-	var live: Dictionary = PinballFeatureScript.surface_refresh(_copy_dict_shallow(active_bonus), surface_time_msec)
+	var live: Dictionary = PinballFeatureScript.surface_refresh(active_bonus, surface_time_msec)
 	live = _with_pinball_alert_metadata(live, machine)
 	live["pinball_launch_meter"] = _pinball_launch_meter(live, surface_time_msec)
 	var pinball_scene: Dictionary = _feature_scene(live)
@@ -751,7 +751,7 @@ func _pinball_feature_scene(active_bonus: Dictionary) -> Dictionary:
 	return {
 		"feature_phase": phase,
 		"feature_music": feature_music,
-		"launch_meter": _copy_dict(active_bonus.get("pinball_launch_meter", {})),
+		"launch_meter": _copy_dict_shallow(active_bonus.get("pinball_launch_meter", {})),
 		"audio_cues": _pinball_feature_audio_cues(active_bonus, phase, alert_active),
 	}
 
@@ -766,7 +766,7 @@ func _pinball_feature_audio_cues(active_bonus: Dictionary, phase: String, alert_
 			cues.append({"phase": "table_music", "cue_id": "pinball_shot_counter", "time_sec": 0.38, "marker": "pinball_shot_counter", "volume_db": PINBALL_BONUS_ALERT_STINGER_VOLUME_DB})
 	var recent: Array = _pinball_recent_audio_events(active_bonus)
 	for index in range(mini(recent.size(), 6)):
-		var event: Dictionary = _copy_dict(recent[index])
+		var event: Dictionary = _copy_dict_shallow(recent[index])
 		var event_type := str(event.get("element_type", ""))
 		var cue_id := _pinball_event_cue_id(event_type)
 		var award := maxi(0, int(event.get("award", 0)))
@@ -778,7 +778,7 @@ func _pinball_feature_audio_cues(active_bonus: Dictionary, phase: String, alert_
 func _with_pinball_alert_metadata(active_bonus: Dictionary, machine: Dictionary) -> Dictionary:
 	if str(active_bonus.get("family", "")) != "pinball":
 		return active_bonus
-	var result: Dictionary = active_bonus.duplicate(true)
+	var result: Dictionary = active_bonus.duplicate(false)
 	result["slot_pending_feature_alert"] = bool(machine.get("slot_pending_feature_alert", false))
 	result["slot_pending_feature_alert_msec"] = maxi(0, int(machine.get("slot_pending_feature_alert_msec", 0)))
 	return result

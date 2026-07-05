@@ -4382,6 +4382,22 @@ func _check_slot_pinball_feature_visual_manifest(definition: Dictionary, failure
 		failures.append("Slot pinball surface refresh did not move live ball state.")
 	if int(realtime_after.get("last_physics_real_msec", 0)) != 1064:
 		failures.append("Slot pinball surface refresh did not track real surface time.")
+	var watchdog_game: GameModule = SlotGameScript.new()
+	watchdog_game.setup(definition, null)
+	var watchdog_run: RunState = _slot_run_state("SLOT-LA4-PINBALL-WATCHDOG-READ", 100000)
+	var watchdog_environment: Dictionary = _slot_environment()
+	var watchdog_machine: Dictionary = _slot_machine(definition, watchdog_run, "pinball", "classic_3_reel", "standard", "plain")
+	watchdog_machine["active_bonus"] = pinball.open_feature(watchdog_machine, 10, watchdog_run.create_rng("slot_la4_watchdog_open"), definition)
+	var watchdog_launch: Dictionary = pinball.step_bonus(watchdog_machine, "slot_bonus_launch", watchdog_run.create_rng("slot_la4_watchdog_launch"), definition, {"surface_time_msec": 1000, "drunk_scaled_surface_time_msec": 1000})
+	watchdog_machine["active_bonus"] = _slot_dict(watchdog_launch.get("active_bonus", {}))
+	_slot_store_machine(watchdog_run, watchdog_environment, watchdog_machine)
+	var watchdog_before_status: Dictionary = PinballFeatureScript.live_status(_slot_dict(watchdog_machine.get("active_bonus", {})))
+	var watchdog_before_tick := int(watchdog_before_status.get("tick", 0))
+	watchdog_game.surface_needs_auto_tick({"surface_time_msec": 1800, "drunk_scaled_surface_time_msec": 1800}, watchdog_run, watchdog_environment)
+	var watchdog_after_machine: Dictionary = SlotMachineStateScript.read_machine(watchdog_environment, "slot")
+	var watchdog_after_status: Dictionary = PinballFeatureScript.live_status(_slot_dict(watchdog_after_machine.get("active_bonus", {})))
+	if int(watchdog_after_status.get("tick", 0)) != watchdog_before_tick:
+		failures.append("Slot pinball watchdog read path advanced live physics state.")
 	var prelaunch_cues: Array = []
 	for cue_value in _slot_array(prelaunch_scene.get("audio_cues", [])):
 		var cue: Dictionary = _slot_dict(cue_value)
