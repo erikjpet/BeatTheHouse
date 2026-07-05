@@ -20,14 +20,21 @@ const SLOT_AUTOPLAY_ACTION_INTERVAL := 97
 const SLOT_AUTOPLAY_FRAMES := 150
 const PINBALL_CACHE_STRESS_SESSIONS := 40
 const SOAK_SAVE_SLOT := "foundation_soak_probe"
+const SOAK_PREWARM_GAME_IDS := ["blackjack", "baccarat", "roulette", "video_poker", "bar_dice", "pull_tabs", "slot"]
 
 const MAX_SERIALIZED_RUN_STATE_BYTES := 1500000
-const MAX_POST_WARMUP_MEMORY_GROWTH_BYTES := 16 * 1024 * 1024
-const MAX_POST_WARMUP_MEMORY_SLOPE_BYTES_PER_SAMPLE := 1024 * 1024
-const MAX_POST_WARMUP_OBJECT_GROWTH := 512
-const MAX_POST_WARMUP_OBJECT_SLOPE_PER_SAMPLE := 24.0
-const MAX_POST_WARMUP_NODE_GROWTH := 16
-const MAX_POST_WARMUP_NODE_SLOPE_PER_SAMPLE := 2.0
+const MAX_POST_WARMUP_MEMORY_PEAK_GROWTH_BYTES := 32 * 1024 * 1024
+const MAX_POST_WARMUP_MEMORY_RETAINED_GROWTH_BYTES := 4 * 1024 * 1024
+const MAX_POST_WARMUP_MEMORY_RETAINED_SLOPE_BYTES_PER_SAMPLE := 256 * 1024
+const MAX_POST_WARMUP_RESOURCE_PEAK_GROWTH := 12
+const MAX_POST_WARMUP_RESOURCE_RETAINED_GROWTH := 8
+const MAX_POST_WARMUP_RESOURCE_RETAINED_SLOPE_PER_SAMPLE := 0.5
+const MAX_POST_WARMUP_OBJECT_PEAK_GROWTH := 96
+const MAX_POST_WARMUP_OBJECT_RETAINED_GROWTH := 32
+const MAX_POST_WARMUP_OBJECT_RETAINED_SLOPE_PER_SAMPLE := 2.0
+const MAX_POST_WARMUP_NODE_PEAK_GROWTH := 12
+const MAX_POST_WARMUP_NODE_RETAINED_GROWTH := 8
+const MAX_POST_WARMUP_NODE_RETAINED_SLOPE_PER_SAMPLE := 0.5
 const MAX_POST_WARMUP_ORPHAN_NODE_COUNT := 0
 
 var app: Control
@@ -67,6 +74,8 @@ func _run() -> void:
 		"lender_actions": 0,
 	}
 	await _open_fresh_app()
+	await _prewarm_runtime_caches()
+	_stress_pinball_session_cache()
 	await _start_next_run()
 	await _sample(0)
 	var sample_count := maxi(1, int(ceil(float(sim_minutes) / float(SAMPLE_INTERVAL_MINUTES))))
@@ -108,6 +117,15 @@ func _start_next_run() -> void:
 	app.set("autosave_slot_id", SOAK_SAVE_SLOT)
 	app.call("start_foundation_run", seed, challenge)
 	coverage["runs_started"] = int(coverage.get("runs_started", 0)) + 1
+	await _settle(4)
+
+
+func _prewarm_runtime_caches() -> void:
+	for game_id_value in SOAK_PREWARM_GAME_IDS:
+		var game_id := str(game_id_value)
+		app.call("start_game_test_session", game_id)
+		await _settle(3)
+	app.call("return_to_main_menu")
 	await _settle(4)
 
 
@@ -411,6 +429,10 @@ func _sample(sample_index: int) -> void:
 	await _settle(2)
 	var state: Dictionary = app.call("serialized_run_state") if app != null else {}
 	var serialized_text := JSON.stringify(state)
+	var app_debug := _app_debug_snapshot()
+	var pinball_debug := PinballFeatureScript.runtime_session_debug_snapshot()
+	var node_class_counts := _node_class_counts()
+	var environment_debug := _dict(app_debug.get("environment_canvas", {}))
 	var sample := {
 		"sample_index": sample_index,
 		"sim_minute": sample_index * SAMPLE_INTERVAL_MINUTES,
@@ -431,13 +453,19 @@ func _sample(sample_index: int) -> void:
 		"story_log_entry_count": int(state.get("story_log_archive_count", 0)) + _array_size(state.get("story_log", [])),
 		"world_map_visited_path_length": _world_map_visited_path_length(state),
 		"pinball_session_cache_size": PinballFeatureScript.runtime_session_cache_size(),
+		"node_class_counts": node_class_counts,
+		"diagnostics": {
+			"app": app_debug,
+			"pinball": pinball_debug,
+		},
 	}
 	samples.append(sample)
-	print("SOAK_SAMPLE index=%d sim_minute=%d memory=%d objects=%d nodes=%d orphans=%d serialized=%d env_history=%d/%d story=%d/%d pinball_cache=%d" % [
+	print("SOAK_SAMPLE index=%d sim_minute=%d memory=%d objects=%d resources=%d nodes=%d orphans=%d serialized=%d env_history=%d/%d story=%d/%d pinball_cache=%d pinball_view_bytes=%d room_icon_cache=%d run_icon_cache=%d" % [
 		sample_index,
 		int(sample.get("sim_minute", 0)),
 		int(sample.get("memory_static_bytes", 0)),
 		int(sample.get("object_count", 0)),
+		int(sample.get("resource_count", 0)),
 		int(sample.get("node_count", 0)),
 		int(sample.get("orphan_node_count", 0)),
 		int(sample.get("serialized_run_state_bytes", 0)),
@@ -446,6 +474,9 @@ func _sample(sample_index: int) -> void:
 		int(sample.get("story_log_length", 0)),
 		int(sample.get("story_log_entry_count", 0)),
 		int(sample.get("pinball_session_cache_size", 0)),
+		int(pinball_debug.get("cached_view_bytes", 0)),
+		int(environment_debug.get("item_icon_texture_cache_size", 0)),
+		int(app_debug.get("run_item_icon_texture_cache_size", 0)),
 	])
 
 
@@ -463,9 +494,30 @@ func _assert_growth() -> void:
 	if samples.size() <= WARMUP_SAMPLE_COUNT:
 		failures.append("Soak probe did not collect enough samples for post-warmup growth checks.")
 		return
-	_assert_metric_growth("memory_static_bytes", MAX_POST_WARMUP_MEMORY_GROWTH_BYTES, MAX_POST_WARMUP_MEMORY_SLOPE_BYTES_PER_SAMPLE)
-	_assert_metric_growth("object_count", MAX_POST_WARMUP_OBJECT_GROWTH, MAX_POST_WARMUP_OBJECT_SLOPE_PER_SAMPLE)
-	_assert_metric_growth("node_count", MAX_POST_WARMUP_NODE_GROWTH, MAX_POST_WARMUP_NODE_SLOPE_PER_SAMPLE)
+	_assert_metric_growth(
+		"memory_static_bytes",
+		MAX_POST_WARMUP_MEMORY_PEAK_GROWTH_BYTES,
+		MAX_POST_WARMUP_MEMORY_RETAINED_GROWTH_BYTES,
+		MAX_POST_WARMUP_MEMORY_RETAINED_SLOPE_BYTES_PER_SAMPLE
+	)
+	_assert_metric_growth(
+		"resource_count",
+		MAX_POST_WARMUP_RESOURCE_PEAK_GROWTH,
+		MAX_POST_WARMUP_RESOURCE_RETAINED_GROWTH,
+		MAX_POST_WARMUP_RESOURCE_RETAINED_SLOPE_PER_SAMPLE
+	)
+	_assert_metric_growth(
+		"object_count",
+		MAX_POST_WARMUP_OBJECT_PEAK_GROWTH,
+		MAX_POST_WARMUP_OBJECT_RETAINED_GROWTH,
+		MAX_POST_WARMUP_OBJECT_RETAINED_SLOPE_PER_SAMPLE
+	)
+	_assert_metric_growth(
+		"node_count",
+		MAX_POST_WARMUP_NODE_PEAK_GROWTH,
+		MAX_POST_WARMUP_NODE_RETAINED_GROWTH,
+		MAX_POST_WARMUP_NODE_RETAINED_SLOPE_PER_SAMPLE
+	)
 	for sample_value in samples:
 		var sample := _dict(sample_value)
 		if int(sample.get("serialized_run_state_bytes", 0)) > MAX_SERIALIZED_RUN_STATE_BYTES:
@@ -487,19 +539,35 @@ func _assert_growth() -> void:
 			])
 
 
-func _assert_metric_growth(metric_key: String, max_growth: float, max_slope: float) -> void:
+func _assert_metric_growth(metric_key: String, max_peak_growth: float, max_retained_growth: float, max_retained_slope: float) -> void:
 	var warmup_sample := _dict(samples[WARMUP_SAMPLE_COUNT])
 	var warmup_value := float(warmup_sample.get(metric_key, 0.0))
+	var final_sample := _dict(samples[samples.size() - 1])
+	var final_value := float(final_sample.get(metric_key, 0.0))
 	var max_value := warmup_value
 	for index in range(WARMUP_SAMPLE_COUNT, samples.size()):
 		var sample := _dict(samples[index])
 		max_value = maxf(max_value, float(sample.get(metric_key, 0.0)))
-	var growth := max_value - warmup_value
-	var slope := _linear_slope(metric_key, WARMUP_SAMPLE_COUNT)
-	if growth > max_growth:
-		failures.append("%s post-warmup growth %.3f exceeded %.3f." % [metric_key, growth, max_growth])
-	if slope > max_slope:
-		failures.append("%s post-warmup slope %.3f/sample exceeded %.3f/sample." % [metric_key, slope, max_slope])
+	var peak_growth := max_value - warmup_value
+	var retained_growth := final_value - warmup_value
+	var retained_slope := _retained_slope(metric_key, WARMUP_SAMPLE_COUNT)
+	if peak_growth > max_peak_growth:
+		failures.append("%s post-warmup peak growth %.3f exceeded %.3f." % [metric_key, peak_growth, max_peak_growth])
+	if retained_growth > max_retained_growth:
+		failures.append("%s post-warmup retained growth %.3f exceeded %.3f." % [metric_key, retained_growth, max_retained_growth])
+	if retained_slope > max_retained_slope:
+		failures.append("%s post-warmup retained slope %.3f/sample exceeded %.3f/sample." % [metric_key, retained_slope, max_retained_slope])
+
+
+func _retained_slope(metric_key: String, start_index: int) -> float:
+	if samples.size() <= start_index + 1:
+		return 0.0
+	var start_value := float(_dict(samples[start_index]).get(metric_key, 0.0))
+	var final_value := float(_dict(samples[samples.size() - 1]).get(metric_key, 0.0))
+	var intervals := float(samples.size() - 1 - start_index)
+	if intervals <= 0.0:
+		return 0.0
+	return maxf(0.0, (final_value - start_value) / intervals)
 
 
 func _linear_slope(metric_key: String, start_index: int) -> float:
@@ -555,16 +623,31 @@ func _write_report() -> void:
 			"environment_history_cap": RunStateScript.MAX_ENVIRONMENT_HISTORY_ENTRIES,
 			"story_log_cap": RunStateScript.MAX_STORY_LOG_ENTRIES,
 			"pinball_session_cache_cap": PinballFeatureScript.MAX_RUNTIME_SESSIONS,
-			"memory_growth_cap_bytes": MAX_POST_WARMUP_MEMORY_GROWTH_BYTES,
-			"memory_slope_cap_bytes_per_sample": MAX_POST_WARMUP_MEMORY_SLOPE_BYTES_PER_SAMPLE,
-			"object_growth_cap": MAX_POST_WARMUP_OBJECT_GROWTH,
-			"node_growth_cap": MAX_POST_WARMUP_NODE_GROWTH,
+			"memory_peak_growth_cap_bytes": MAX_POST_WARMUP_MEMORY_PEAK_GROWTH_BYTES,
+			"memory_retained_growth_cap_bytes": MAX_POST_WARMUP_MEMORY_RETAINED_GROWTH_BYTES,
+			"memory_retained_slope_cap_bytes_per_sample": MAX_POST_WARMUP_MEMORY_RETAINED_SLOPE_BYTES_PER_SAMPLE,
+			"resource_peak_growth_cap": MAX_POST_WARMUP_RESOURCE_PEAK_GROWTH,
+			"resource_retained_growth_cap": MAX_POST_WARMUP_RESOURCE_RETAINED_GROWTH,
+			"resource_retained_slope_cap_per_sample": MAX_POST_WARMUP_RESOURCE_RETAINED_SLOPE_PER_SAMPLE,
+			"object_peak_growth_cap": MAX_POST_WARMUP_OBJECT_PEAK_GROWTH,
+			"object_retained_growth_cap": MAX_POST_WARMUP_OBJECT_RETAINED_GROWTH,
+			"object_retained_slope_cap_per_sample": MAX_POST_WARMUP_OBJECT_RETAINED_SLOPE_PER_SAMPLE,
+			"node_peak_growth_cap": MAX_POST_WARMUP_NODE_PEAK_GROWTH,
+			"node_retained_growth_cap": MAX_POST_WARMUP_NODE_RETAINED_GROWTH,
+			"node_retained_slope_cap_per_sample": MAX_POST_WARMUP_NODE_RETAINED_SLOPE_PER_SAMPLE,
 		},
 		"samples": samples.duplicate(true),
 		"post_warmup_slopes": {
 			"memory_static_bytes": _linear_slope("memory_static_bytes", WARMUP_SAMPLE_COUNT),
+			"resource_count": _linear_slope("resource_count", WARMUP_SAMPLE_COUNT),
 			"object_count": _linear_slope("object_count", WARMUP_SAMPLE_COUNT),
 			"node_count": _linear_slope("node_count", WARMUP_SAMPLE_COUNT),
+		},
+		"post_warmup_retained_slopes": {
+			"memory_static_bytes": _retained_slope("memory_static_bytes", WARMUP_SAMPLE_COUNT),
+			"resource_count": _retained_slope("resource_count", WARMUP_SAMPLE_COUNT),
+			"object_count": _retained_slope("object_count", WARMUP_SAMPLE_COUNT),
+			"node_count": _retained_slope("node_count", WARMUP_SAMPLE_COUNT),
 		},
 	}
 	var file := FileAccess.open(REPORT_PATH, FileAccess.WRITE)
@@ -588,6 +671,29 @@ func _current_world_node_id(state: Dictionary) -> String:
 func _world_map_visited_path_length(state: Dictionary) -> int:
 	var world_map := _dict(state.get("world_map", {}))
 	return _array_size(world_map.get("visited_path", []))
+
+
+func _app_debug_snapshot() -> Dictionary:
+	if app == null or not app.has_method("debug_soak_snapshot"):
+		return {}
+	var value: Variant = app.call("debug_soak_snapshot")
+	return _dict(value)
+
+
+func _node_class_counts() -> Dictionary:
+	var counts := {}
+	if app == null:
+		return counts
+	_count_node_classes(app, counts)
+	return counts
+
+
+func _count_node_classes(node: Node, counts: Dictionary) -> void:
+	var class_id := node.get_class()
+	counts[class_id] = int(counts.get(class_id, 0)) + 1
+	for child in node.get_children():
+		if child is Node:
+			_count_node_classes(child as Node, counts)
 
 
 func _scene_tree_node_count() -> int:

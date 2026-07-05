@@ -177,6 +177,25 @@ func _exit_tree() -> void:
 	_authored_manifest_cache.clear()
 
 
+func debug_soak_snapshot() -> Dictionary:
+	return {
+		"ambient_stream_cache_size": _ambient_stream_cache.size(),
+		"ambient_primer_cache_size": _ambient_primer_cache.size(),
+		"ambient_instant_cache_size": _ambient_instant_cache.size(),
+		"ambient_profile_cache_size": _ambient_profile_cache.size(),
+		"authored_manifest_cache_size": _authored_manifest_cache.size(),
+		"feature_stem_cache_size": _feature_stem_cache.size(),
+		"feature_stinger_pending_count": _feature_stinger_pending.size(),
+		"feature_stinger_history_count": _feature_stinger_history.size(),
+		"stem_player_count": _stem_players.size(),
+		"feature_stem_player_count": _feature_stem_players.size(),
+		"feature_stinger_player_count": _feature_stinger_players.size(),
+		"current_cache_key": _current_cache_key,
+		"pending_cache_key": _pending_cache_key,
+		"thread_cache_key": _thread_cache_key,
+	}
+
+
 # Starts or updates the generated theme for the current environment.
 func play_for_environment(environment: Dictionary, heat_level: int) -> void:
 	play_for_environment_state(environment, heat_level, {})

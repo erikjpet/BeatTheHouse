@@ -178,6 +178,20 @@ func performance_counters() -> Dictionary:
 	}
 
 
+func debug_soak_snapshot() -> Dictionary:
+	return {
+		"game_id": game_id,
+		"state_key_count": state.size(),
+		"view_data_key_count": view_data.size(),
+		"surface_animation_channel_count": surface_animation_channels.size(),
+		"surface_label_fit_cache_size": surface_label_fit_cache.size(),
+		"hit_region_group_cache_size": hit_region_group_cache.size(),
+		"hit_region_count": hit_regions.size(),
+		"draw_sample_count": perf_draw_frame_usec_samples.size(),
+		"surface_sfx": surface_sfx_player.call("debug_soak_snapshot") if surface_sfx_player != null and surface_sfx_player.has_method("debug_soak_snapshot") else {},
+	}
+
+
 func _record_draw_performance(start_usec: int) -> void:
 	var elapsed := maxi(0, Time.get_ticks_usec() - start_usec)
 	perf_draw_frame_usec_samples.append(elapsed)

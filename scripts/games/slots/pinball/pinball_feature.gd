@@ -567,6 +567,35 @@ static func runtime_session_cache_size() -> int:
 	return _session_order.size()
 
 
+static func runtime_session_debug_snapshot() -> Dictionary:
+	var cached_view_count := 0
+	var cached_view_bytes := 0
+	var sim_count := 0
+	for session_id_value in _session_order:
+		var session_id := str(session_id_value)
+		if _sessions.has(session_id):
+			sim_count += 1
+		var runtime_value: Variant = _runtime_sessions.get(session_id, null)
+		if not (runtime_value is RuntimeSession):
+			continue
+		var runtime := runtime_value as RuntimeSession
+		if runtime.cached_view.is_empty():
+			continue
+		cached_view_count += 1
+		cached_view_bytes += JSON.stringify(runtime.cached_view).length()
+	return {
+		"session_order_size": _session_order.size(),
+		"sessions_size": _sessions.size(),
+		"runtime_sessions_size": _runtime_sessions.size(),
+		"layouts_size": _layouts.size(),
+		"compiled_boards_size": _compiled_boards.size(),
+		"surface_refresh_size": _surface_refresh_msec.size(),
+		"sim_count": sim_count,
+		"cached_view_count": cached_view_count,
+		"cached_view_bytes": cached_view_bytes,
+	}
+
+
 static func _prune_session_cache() -> void:
 	while _session_order.size() > MAX_RUNTIME_SESSIONS:
 		_erase_session(str(_session_order[0]))

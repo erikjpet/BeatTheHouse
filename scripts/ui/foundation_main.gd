@@ -36,6 +36,7 @@ const ENVIRONMENT_CANVAS_MIN_SIZE := Vector2.ZERO
 const GAME_SURFACE_FOCUSED_MIN_SIZE := Vector2.ZERO
 const GAME_SURFACE_PREVIEW_MIN_SIZE := Vector2.ZERO
 const GAME_SURFACE_REALTIME_REFRESH_INTERVAL_MSEC := 16
+const RUN_ITEM_ICON_TEXTURE_CACHE_LIMIT := 64
 const RESULT_FEEDBACK_WIDTH := 340.0
 const RESULT_FEEDBACK_HEIGHT := 46.0
 const RESULT_FEEDBACK_MAX_CHARS := 64
@@ -350,6 +351,7 @@ func start_foundation_run(seed_text: String = DEFAULT_SEED, challenge_config: Di
 	pending_autosave_status_text = "Autosaved."
 	pending_autosave_after_frame = -1
 	last_environment_runtime_result = {}
+	run_item_icon_texture_cache.clear()
 	close_content_group_config()
 	close_challenge_selection()
 	_hide_run_menu()
@@ -1929,6 +1931,7 @@ func _load_foundation_run_from_slot(return_to_start_on_missing: bool) -> bool:
 	pending_autosave = false
 	pending_autosave_status_text = "Autosaved."
 	pending_autosave_after_frame = -1
+	run_item_icon_texture_cache.clear()
 	run_state = loaded
 	dev_game_test_mode = false
 	_refresh_run_action_service()
@@ -5252,6 +5255,65 @@ func serialized_run_state() -> Dictionary:
 	return run_state.to_dict()
 
 
+func debug_soak_snapshot() -> Dictionary:
+	var environment_debug: Dictionary = {}
+	if environment_canvas != null and environment_canvas.has_method("debug_soak_snapshot"):
+		environment_debug = environment_canvas.call("debug_soak_snapshot") as Dictionary
+	var game_surface_debug: Dictionary = {}
+	if game_surface_canvas != null and game_surface_canvas.has_method("debug_soak_snapshot"):
+		game_surface_debug = game_surface_canvas.call("debug_soak_snapshot") as Dictionary
+	var music_debug: Dictionary = {}
+	if procedural_music_player != null and procedural_music_player.has_method("debug_soak_snapshot"):
+		music_debug = procedural_music_player.call("debug_soak_snapshot") as Dictionary
+	var sfx_debug: Dictionary = {}
+	if environment_sfx_player != null and environment_sfx_player.has_method("debug_soak_snapshot"):
+		sfx_debug = environment_sfx_player.call("debug_soak_snapshot") as Dictionary
+	var library_debug: Dictionary = {}
+	if library != null and library.has_method("debug_soak_snapshot"):
+		library_debug = library.call("debug_soak_snapshot") as Dictionary
+	return {
+		"screen": current_screen,
+		"game_module_cache_size": game_module_cache.size(),
+		"run_item_icon_texture_cache_size": run_item_icon_texture_cache.size(),
+		"travel_target_ids_cache_size": travel_target_ids_cache.size(),
+		"travel_choice_cache_size": travel_choice_cache.size(),
+		"world_route_cache_size": world_route_cache.size(),
+		"world_map_snapshot_cache_size": world_map_snapshot_cache.size(),
+		"world_map_button_count": world_map_button_ids.size(),
+		"event_choice_popup_child_count": event_choice_popup_choices_list.get_child_count() if event_choice_popup_choices_list != null else 0,
+		"inventory_child_count": run_inventory_list.get_child_count() if run_inventory_list != null else 0,
+		"journal_child_count": run_journal_list.get_child_count() if run_journal_list != null else 0,
+		"environment_canvas": environment_debug,
+		"game_surface_canvas": game_surface_debug,
+		"procedural_music": music_debug,
+		"environment_sfx": sfx_debug,
+		"content_library": library_debug,
+		"signal_connection_counts": {
+			"foundation_main": _debug_signal_connection_count(self),
+			"environment_canvas": _debug_signal_connection_count(environment_canvas),
+			"game_surface_canvas": _debug_signal_connection_count(game_surface_canvas),
+			"procedural_music_player": _debug_signal_connection_count(procedural_music_player),
+			"environment_sfx_player": _debug_signal_connection_count(environment_sfx_player),
+			"world_map_nodes_layer": _debug_signal_connection_count(world_map_nodes_layer),
+		},
+	}
+
+
+func _debug_signal_connection_count(object: Object) -> int:
+	if object == null:
+		return 0
+	var total := 0
+	for signal_value in object.get_signal_list():
+		if typeof(signal_value) != TYPE_DICTIONARY:
+			continue
+		var signal_data: Dictionary = signal_value
+		var signal_name := StringName(str(signal_data.get("name", "")))
+		if String(signal_name).is_empty():
+			continue
+		total += object.get_signal_connection_list(signal_name).size()
+	return total
+
+
 func current_environment_view_snapshot() -> Dictionary:
 	if run_state == null:
 		return {}
@@ -7716,6 +7778,7 @@ func return_to_main_menu() -> void:
 	current_game = null
 	game_surface_ui_state = {}
 	last_environment_runtime_result = {}
+	run_item_icon_texture_cache.clear()
 	run_state = null
 	dev_game_test_mode = false
 	_refresh_run_action_service()
@@ -11129,16 +11192,26 @@ func _texture_for_image_asset_path(asset_path: String) -> Texture2D:
 	if run_item_icon_texture_cache.has(path):
 		return run_item_icon_texture_cache[path] as Texture2D
 	if not ResourceLoader.exists(path):
-		var image := Image.new()
-		if image.load(path) != OK:
-			run_item_icon_texture_cache[path] = null
-			return null
-		var image_texture := ImageTexture.create_from_image(image)
-		run_item_icon_texture_cache[path] = image_texture
-		return image_texture
-	var texture := load(path) as Texture2D
-	run_item_icon_texture_cache[path] = texture
+		return _load_uncached_run_item_texture(path)
+	var texture := ResourceLoader.load(path, "Texture2D", ResourceLoader.CACHE_MODE_IGNORE) as Texture2D
+	_remember_run_item_texture(path, texture)
 	return texture
+
+
+func _load_uncached_run_item_texture(path: String) -> Texture2D:
+	var image := Image.new()
+	if image.load(path) != OK:
+		_remember_run_item_texture(path, null)
+		return null
+	var image_texture := ImageTexture.create_from_image(image)
+	_remember_run_item_texture(path, image_texture)
+	return image_texture
+
+
+func _remember_run_item_texture(path: String, texture: Texture2D) -> void:
+	if run_item_icon_texture_cache.size() >= RUN_ITEM_ICON_TEXTURE_CACHE_LIMIT and not run_item_icon_texture_cache.has(path):
+		run_item_icon_texture_cache.clear()
+	run_item_icon_texture_cache[path] = texture
 
 
 func _style_selected_button(button: Button) -> void:

@@ -444,6 +444,32 @@ func _rebuild_indexes() -> void:
 	}
 
 
+func debug_soak_snapshot() -> Dictionary:
+	var index_sizes := {}
+	for key_value in _indexes.keys():
+		var key := str(key_value)
+		var value: Variant = _indexes.get(key, {})
+		index_sizes[key] = (value as Dictionary).size() if typeof(value) == TYPE_DICTIONARY else 0
+	return {
+		"pack_counts": {
+			"environment_archetypes": environment_archetypes.size(),
+			"games": games.size(),
+			"items": items.size(),
+			"content_groups": content_groups.size(),
+			"events": events.size(),
+			"challenges": challenges.size(),
+			"lenders": lenders.size(),
+			"services": services.size(),
+			"travel_routes": travel_routes.size(),
+			"prestige_purchases": prestige_purchases.size(),
+			"music_tracks": music_tracks.size(),
+		},
+		"index_sizes": index_sizes,
+		"validation_errors": validation_errors.size(),
+		"validation_warnings": validation_warnings.size(),
+	}
+
+
 # Validates required fields and duplicate ids for one content array.
 func _validate_collection(label: String, values: Array, required_fields: Array) -> void:
 	var seen := {}

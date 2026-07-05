@@ -678,6 +678,16 @@ func debug_music_director_cue_ids() -> Array:
 	return result
 
 
+func debug_soak_snapshot() -> Dictionary:
+	return {
+		"player_count": _players.size(),
+		"has_loop_player": _loop_player != null,
+		"stream_cache_size": _stream_cache.size(),
+		"normalized_event_cache_size": _normalized_event_cache.size(),
+		"played_marker_count": _played_markers.size(),
+	}
+
+
 func _active_slot_audio_id(slot_state: Dictionary, feature_scene: Dictionary, timing: Dictionary) -> String:
 	if bool(slot_state.get("slot_nudge_chain_active", false)):
 		var chain_id := str(timing.get("nudge_chain_active_id", ""))

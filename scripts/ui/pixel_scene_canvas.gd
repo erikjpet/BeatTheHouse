@@ -73,6 +73,7 @@ const EMULATED_TOUCH_SUPPRESS_DISTANCE := 6.0
 const DRUNK_TIME_SCALE_MIN := 0.33
 const SCENE_IDLE_ANIMATION_FPS := 60.0
 const SCENE_IDLE_ANIMATION_INTERVAL_SEC := 1.0 / SCENE_IDLE_ANIMATION_FPS
+const ITEM_ICON_TEXTURE_CACHE_LIMIT := 32
 
 var environment_id: String = "corner_store"
 var environment_name: String = "Corner Store"
@@ -97,6 +98,7 @@ var camera_focus_active := false
 var camera_target_dirty := true
 var camera_target_refresh_count := 0
 var item_icon_texture_cache: Dictionary = {}
+var item_icon_texture_cache_scope_key: String = ""
 var icon_sprite_texture_cache: Dictionary = {}
 var scene_objects_by_id_cache: Dictionary = {}
 var draw_text_width_cache: Dictionary = {}
@@ -132,6 +134,12 @@ func render_environment_snapshot(snapshot: Dictionary) -> void:
 	uses_foundation_snapshot = true
 	foundation_snapshot = snapshot.duplicate(true)
 	environment_id = str(foundation_snapshot.get("archetype_id", foundation_snapshot.get("id", environment_id)))
+	var texture_scope_key := str(foundation_snapshot.get("world_node_id", foundation_snapshot.get("id", environment_id))).strip_edges()
+	if texture_scope_key.is_empty():
+		texture_scope_key = environment_id
+	if texture_scope_key != item_icon_texture_cache_scope_key:
+		item_icon_texture_cache.clear()
+		item_icon_texture_cache_scope_key = texture_scope_key
 	environment_name = str(foundation_snapshot.get("display_name", foundation_snapshot.get("name", environment_name)))
 	suspicion_level = int(foundation_snapshot.get("suspicion_level", suspicion_level))
 	drunk_level = int(foundation_snapshot.get("drunk_level", drunk_level))
@@ -150,6 +158,22 @@ func render_environment_snapshot(snapshot: Dictionary) -> void:
 	_invalidate_camera_target()
 	_update_camera_target_if_needed()
 	queue_redraw()
+
+
+func debug_soak_snapshot() -> Dictionary:
+	return {
+		"environment_id": environment_id,
+		"item_icon_texture_cache_scope_key": item_icon_texture_cache_scope_key,
+		"foundation_object_count": foundation_scene_objects.size(),
+		"scene_object_index_count": scene_objects_by_id_cache.size(),
+		"item_icon_texture_cache_size": item_icon_texture_cache.size(),
+		"icon_sprite_texture_cache_size": icon_sprite_texture_cache.size(),
+		"draw_text_width_cache_size": draw_text_width_cache.size(),
+		"fit_draw_text_cache_size": fit_draw_text_cache.size(),
+		"object_animation_phase_cache_size": object_animation_phase_cache.size(),
+		"background_texture_loaded": background_texture != null,
+		"scene_idle_animation_redraw_count": scene_idle_animation_redraw_count,
+	}
 
 
 func _ensure_drunk_distortion_overlay() -> void:
@@ -2730,17 +2754,27 @@ func _texture_for_asset_path(asset_path: String) -> Texture2D:
 	if item_icon_texture_cache.has(path):
 		return item_icon_texture_cache[path] as Texture2D
 	if not ResourceLoader.exists(path):
-		var image := Image.new()
-		if image.load(path) != OK:
-			item_icon_texture_cache[path] = null
-			return null
-		var image_texture := ImageTexture.create_from_image(image)
-		item_icon_texture_cache[path] = image_texture
-		return image_texture
-	var resource := load(path)
+		return _load_uncached_image_texture(path)
+	var resource := ResourceLoader.load(path, "Texture2D", ResourceLoader.CACHE_MODE_IGNORE)
 	var texture := resource as Texture2D
-	item_icon_texture_cache[path] = texture
+	_remember_item_icon_texture(path, texture)
 	return texture
+
+
+func _load_uncached_image_texture(path: String) -> Texture2D:
+	var image := Image.new()
+	if image.load(path) != OK:
+		_remember_item_icon_texture(path, null)
+		return null
+	var image_texture := ImageTexture.create_from_image(image)
+	_remember_item_icon_texture(path, image_texture)
+	return image_texture
+
+
+func _remember_item_icon_texture(path: String, texture: Texture2D) -> void:
+	if item_icon_texture_cache.size() >= ITEM_ICON_TEXTURE_CACHE_LIMIT and not item_icon_texture_cache.has(path):
+		item_icon_texture_cache.clear()
+	item_icon_texture_cache[path] = texture
 
 
 func _draw_game_object_icon(object_data: Dictionary, icon_rect: Rect2, accent: Color, selected: bool, disabled: bool = false) -> void:
