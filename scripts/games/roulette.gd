@@ -262,9 +262,7 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 			"profile_id": "roulette_table",
 			"action_cues": {
 				"roulette_chip": "roulette_chip_select",
-				"roulette_bet": "roulette_chip_place",
 				"roulette_patron_focus": "roulette_chip_select",
-				"roulette_patron_bet": "roulette_chip_place",
 				"roulette_clear": "roulette_chip_sweep",
 				"roulette_undo": "roulette_chip_lift",
 				"roulette_rebet": "roulette_chip_stack",
@@ -1453,9 +1451,24 @@ func _place_bet_command(index: int, state: Dictionary, table: Dictionary, run_st
 	if index < 0 or index >= targets.size():
 		return _message_command(state, "That roulette space is not available.")
 	var target: Dictionary = targets[index]
-	_push_undo_state(state)
 	var bets := _bet_array(state.get("roulette_bets", []))
 	var chip := maxi(1, int(state.get("selected_chip", _chip_denominations(table)[0])))
+	if str(target.get("family", "")) == "outside":
+		var rules := _table_rules(table)
+		var current_total := _total_wager(bets)
+		var outside_min := int(rules.get("outside_min_each", 1))
+		if chip < outside_min:
+			var bankroll_room := maxi(0, (run_state.bankroll if run_state != null else chip) - current_total)
+			var table_room := maxi(0, int(rules.get("table_max", 100)) - current_total)
+			var room_cap := mini(bankroll_room, table_room)
+			if typeof(environment.get("economic_profile", {})) == TYPE_DICTIONARY:
+				var ceiling := int((environment.get("economic_profile", {}) as Dictionary).get("stake_ceiling", int(rules.get("table_max", 100))))
+				if ceiling > 0:
+					room_cap = mini(room_cap, maxi(0, ceiling - current_total))
+			if room_cap >= outside_min:
+				chip = outside_min
+			else:
+				return _message_command(state, "That outside bet cannot meet the table minimum.")
 	var placed := false
 	for i in range(bets.size()):
 		var bet: Dictionary = bets[i]
@@ -1468,17 +1481,21 @@ func _place_bet_command(index: int, state: Dictionary, table: Dictionary, run_st
 		var next_bet := target.duplicate(true)
 		next_bet["stake"] = chip
 		bets.append(next_bet)
-	state["roulette_bets"] = bets
-	state.erase("table_social_alignment")
 	var validation := _validate_roulette_bets(bets, table, run_state, environment)
 	if not bool(validation.get("ok", false)):
-		state["roulette_bets"] = _pop_undo_state(state)
 		return _message_command(state, str(validation.get("message", "Those chips cannot stay on the layout.")))
+	_push_undo_state(state)
+	state["roulette_bets"] = bets
+	state["selected_chip"] = chip
+	state["selected_stake"] = chip
+	state.erase("table_social_alignment")
 	return GameModule.surface_command({
 		"handled": true,
 		"ui_state": state,
 		"set_stake": chip,
 		"selected_index": index,
+		"surface_audio_cue": "roulette_chip_place",
+		"surface_audio_context": {"action": "roulette_bet", "index": index},
 		"message": "$%d on %s." % [chip, str(target.get("label", "roulette"))],
 	})
 
@@ -1563,6 +1580,8 @@ func _patron_bet_command(index: int, state: Dictionary, table: Dictionary, run_s
 		"ui_state": state,
 		"set_stake": chip,
 		"selected_index": patron_index,
+		"surface_audio_cue": "roulette_chip_place",
+		"surface_audio_context": {"action": "roulette_patron_bet", "index": patron_index},
 		"message": "%s %s: $%d on %s." % ["Fading" if fade else "Following", str(patron.get("name", "Patron")), chip, str(target.get("label", "roulette"))],
 	})
 
@@ -1917,7 +1936,10 @@ func _draw_roulette_wheel(surface, surface_state: Dictionary) -> void:
 		var label_rect := Rect2(label_pos - label_size * 0.5, label_size)
 		surface.draw_rect(label_rect.grow(1.0), Color(0.01, 0.02, 0.04, 0.86))
 		surface.draw_rect(label_rect.grow(1.0), Color(pocket_color.r, pocket_color.g, pocket_color.b, 0.92), false, 1)
-		surface.surface_label_centered(label_number, label_rect, 6 if label_number.length() > 1 else 7, _wheel_label_color(label_number))
+		var label_font_size := 6 if label_number.length() > 1 else 7
+		var label_width := 9.0 if label_number.length() > 1 else 5.0
+		var label_draw_pos := label_rect.position + Vector2((label_rect.size.x - label_width) * 0.5, label_rect.size.y - 2.0)
+		surface.surface_label_plain(label_number, label_draw_pos, label_font_size, _wheel_label_color(label_number))
 	if settled_spin and winning_index >= 0 and winning_index < count:
 		var win_a0 := wheel_angle + float(winning_index) / float(count) * TAU
 		var win_a1 := wheel_angle + float(winning_index + 1) / float(count) * TAU

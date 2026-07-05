@@ -587,6 +587,7 @@ func _apply_game_surface_command(command: Dictionary, index: int = -1, confirm_r
 		set_selected_stake(multiplied_stake)
 	if command.has("set_stake"):
 		set_selected_stake(int(command.get("set_stake", _current_selected_stake())))
+	_play_surface_command_audio(command, index)
 	var environment_changed := bool(command.get("environment_changed", false))
 	var action_id := str(command.get("action_id", ""))
 	var action_kind := str(command.get("action_kind", ""))
@@ -606,6 +607,21 @@ func _apply_game_surface_command(command: Dictionary, index: int = -1, confirm_r
 		_autosave_foundation_run("Autosaved.")
 	_refresh()
 	return true
+
+
+func _play_surface_command_audio(command: Dictionary, fallback_index: int) -> void:
+	if game_surface_canvas == null:
+		return
+	var cue_id := str(command.get("surface_audio_cue", "")).strip_edges()
+	if cue_id.is_empty():
+		return
+	var context: Dictionary = command.get("surface_audio_context", {}) if typeof(command.get("surface_audio_context", {})) == TYPE_DICTIONARY else {}
+	context = context.duplicate(true)
+	if not context.has("index"):
+		context["index"] = int(command.get("selected_index", fallback_index))
+	if not context.has("action"):
+		context["action"] = str(command.get("surface_audio_action", ""))
+	game_surface_canvas.surface_play_audio_cue(cue_id, context)
 
 
 func _select_or_resolve_surface_game_action(action_kind: String, index: int, confirm_requested: bool) -> bool:

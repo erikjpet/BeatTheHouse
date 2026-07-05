@@ -7587,6 +7587,9 @@ func _check_roulette_surface_contract(game: GameModule, failures: Array, library
 	var sync: Dictionary = audio.get("state_sync", {}) if typeof(audio.get("state_sync", {})) == TYPE_DICTIONARY else {}
 	if str(sync.get("method", "")) != "roulette_table_state":
 		failures.append("Roulette surface audio did not expose roulette_table_state sync.")
+	var action_cues: Dictionary = audio.get("action_cues", {}) if typeof(audio.get("action_cues", {})) == TYPE_DICTIONARY else {}
+	if action_cues.has("roulette_bet") or action_cues.has("roulette_patron_bet"):
+		failures.append("Roulette chip placement audio must be emitted only after a bet command is accepted.")
 	var blocked_surface := surface.duplicate(true)
 	blocked_surface["surface_action_blocks"] = game.call("_surface_action_blocks", true)
 	if not _surface_blocks_action(blocked_surface, "roulette_bet") or not _surface_blocks_action(blocked_surface, "roulette_spin"):
@@ -7606,6 +7609,44 @@ func _check_roulette_surface_contract(game: GameModule, failures: Array, library
 	var bet_total: int = game.call("_total_wager", bet_ui.get("roulette_bets", []))
 	if bet_total != contract_chip:
 		failures.append("Roulette straight bet did not create a $%d wager: %s." % [contract_chip, JSON.stringify(bet_click)])
+	if str(bet_click.get("surface_audio_cue", "")) != "roulette_chip_place":
+		failures.append("Roulette accepted direct bet did not return a post-validation chip-place cue.")
+	var red_index := _roulette_target_index(targets, "red", "1")
+	if red_index < 0:
+		failures.append("Roulette betting layout did not expose a RED outside target.")
+	else:
+		var outside_min_table := table.duplicate(true)
+		var outside_min_rules: Dictionary = table.get("rules", {}) if typeof(table.get("rules", {})) == TYPE_DICTIONARY else {}
+		outside_min_rules = outside_min_rules.duplicate(true)
+		outside_min_rules["outside_min_each"] = 5
+		outside_min_rules["table_max"] = 200
+		outside_min_table["rules"] = outside_min_rules
+		var outside_min_environment := environment.duplicate(true)
+		outside_min_environment["game_states"] = {"roulette": outside_min_table}
+		outside_min_environment["economic_profile"] = {"stake_floor": 1, "stake_ceiling": 200}
+		var outside_click := _check_surface_command_non_mutating(game, "roulette_bet", red_index, false, {"selected_chip": 1}, run_state, outside_min_environment, "roulette direct outside minimum", failures)
+		var outside_ui: Dictionary = outside_click.get("ui_state", {}) if typeof(outside_click.get("ui_state", {})) == TYPE_DICTIONARY else {}
+		var outside_total: int = game.call("_total_wager", outside_ui.get("roulette_bets", []))
+		if outside_total != 5:
+			failures.append("Roulette direct outside bet with a small chip should raise to the $5 table minimum; got $%d." % outside_total)
+		if int(outside_ui.get("selected_chip", 0)) != 5:
+			failures.append("Roulette direct outside minimum raise did not update the selected chip display.")
+		if str(outside_click.get("surface_audio_cue", "")) != "roulette_chip_place":
+			failures.append("Roulette accepted outside bet did not return a post-validation chip-place cue.")
+		var reject_table := outside_min_table.duplicate(true)
+		var reject_rules := outside_min_rules.duplicate(true)
+		reject_rules["table_max"] = 4
+		reject_table["rules"] = reject_rules
+		var reject_environment := environment.duplicate(true)
+		reject_environment["game_states"] = {"roulette": reject_table}
+		reject_environment["economic_profile"] = {"stake_floor": 1, "stake_ceiling": 4}
+		var reject_click := _check_surface_command_non_mutating(game, "roulette_bet", red_index, false, {"selected_chip": 1}, run_state, reject_environment, "roulette rejected outside minimum", failures)
+		var reject_ui: Dictionary = reject_click.get("ui_state", {}) if typeof(reject_click.get("ui_state", {})) == TYPE_DICTIONARY else {}
+		var reject_total: int = game.call("_total_wager", reject_ui.get("roulette_bets", []))
+		if reject_total != 0:
+			failures.append("Roulette rejected outside minimum still changed the bet layout.")
+		if not str(reject_click.get("surface_audio_cue", "")).is_empty():
+			failures.append("Roulette rejected outside minimum returned a chip-place audio cue.")
 	if game.wager_cost_for_context("spin_roulette", contract_chip, run_state, environment, bet_ui) != contract_chip:
 		failures.append("Roulette wager cost did not reflect chips placed on the layout.")
 	var spin_surface := game.surface_state(run_state, environment, bet_ui)
