@@ -48,6 +48,46 @@ function ConvertTo-Array {
     return @($Value)
 }
 
+function Test-PathInsideDirectory {
+    param([string]$Path, [string]$Directory)
+    $directoryFull = [System.IO.Path]::GetFullPath($Directory)
+    if (-not $directoryFull.EndsWith([System.IO.Path]::DirectorySeparatorChar)) {
+        $directoryFull += [System.IO.Path]::DirectorySeparatorChar
+    }
+    $pathFull = [System.IO.Path]::GetFullPath($Path)
+    return $pathFull.StartsWith($directoryFull, [System.StringComparison]::OrdinalIgnoreCase)
+}
+
+function Remove-StaleRunReports {
+    param(
+        [string]$Directory,
+        [string]$Pattern,
+        [string]$RunIdRegex,
+        [int]$MaxRunIndex
+    )
+    if (-not (Test-Path -LiteralPath $Directory)) {
+        return 0
+    }
+    $removed = 0
+    foreach ($file in Get-ChildItem -LiteralPath $Directory -Filter $Pattern -File) {
+        $match = [regex]::Match($file.Name, $RunIdRegex)
+        if (-not $match.Success) {
+            continue
+        }
+        $runIndex = [int]$match.Groups[1].Value
+        if ($runIndex -le $MaxRunIndex) {
+            continue
+        }
+        $fullPath = [System.IO.Path]::GetFullPath($file.FullName)
+        if (-not (Test-PathInsideDirectory -Path $fullPath -Directory $Directory)) {
+            throw "Refusing to remove stale report outside output directory: $fullPath"
+        }
+        Remove-Item -LiteralPath $fullPath -Force -ErrorAction Stop
+        $removed += 1
+    }
+    return $removed
+}
+
 function Get-MissingCoverageKeys {
     param([object]$Coverage)
     $missing = @()
@@ -420,6 +460,11 @@ $analysisDir = Join-Path $OutputRoot "run_analysis"
 $rawDir = Join-Path $OutputRoot "raw_mouse_reports"
 New-Item -ItemType Directory -Force -Path $analysisDir | Out-Null
 New-Item -ItemType Directory -Force -Path $rawDir | Out-Null
+$staleRawRemoved = Remove-StaleRunReports -Directory $rawDir -Pattern "mouse_run_*.json" -RunIdRegex "^mouse_run_(\d+)\.json$" -MaxRunIndex $RunCount
+$staleAnalysisRemoved = Remove-StaleRunReports -Directory $analysisDir -Pattern "run_*_analysis.json" -RunIdRegex "^run_(\d+)_analysis\.json$" -MaxRunIndex $RunCount
+if (($staleRawRemoved + $staleAnalysisRemoved) -gt 0) {
+    Write-Output ("Mouse batch report rotation removed {0} stale raw reports and {1} stale analysis reports beyond RunCount {2}." -f $staleRawRemoved, $staleAnalysisRemoved, $RunCount)
+}
 
 $analyses = @()
 $batchStopwatch = [System.Diagnostics.Stopwatch]::StartNew()
@@ -674,7 +719,7 @@ $lines += "- Victories: $($won.Count) ($($aggregate.victory_percentage)%)"
 $lines += "- Losses: $($lost.Count) ($($aggregate.loss_percentage)%)"
 $lines += "- Analysis files: $analysisDir"
 $lines += "- Raw mouse reports: $rawDir"
-$lines += "- Report preservation: no cleanup/removal is performed; current aggregate files and matching run ids are overwritten only for this output root."
+$lines += "- Report preservation: current aggregate files and matching run ids are overwritten for this output root; stale per-run files beyond the requested RunCount are removed."
 $lines += ""
 $lines += "## Failure Reasons"
 $lines += ""

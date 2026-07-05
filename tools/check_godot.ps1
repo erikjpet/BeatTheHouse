@@ -178,9 +178,72 @@ function Convert-ReportResourcePath {
     return "res://" + (Get-ProjectRelativePath $fullPath)
 }
 
+function Get-ReportKeepCount {
+    $keep = 30
+    if (-not [string]::IsNullOrWhiteSpace($env:BTH_REPORT_KEEP)) {
+        $parsed = 0
+        if ([int]::TryParse($env:BTH_REPORT_KEEP, [ref]$parsed)) {
+            $keep = $parsed
+        }
+    }
+    return [Math]::Max(1, $keep)
+}
+
+function Test-PathInsideDirectory {
+    param([string]$Path, [string]$Directory)
+    $directoryFull = [System.IO.Path]::GetFullPath($Directory)
+    if (-not $directoryFull.EndsWith([System.IO.Path]::DirectorySeparatorChar)) {
+        $directoryFull += [System.IO.Path]::DirectorySeparatorChar
+    }
+    $pathFull = [System.IO.Path]::GetFullPath($Path)
+    return $pathFull.StartsWith($directoryFull, [System.StringComparison]::OrdinalIgnoreCase)
+}
+
+function Invoke-ReportRotation {
+    if ([string]::IsNullOrWhiteSpace($script:ReportRotationRoot)) {
+        return
+    }
+    if ($script:ReportRotationRan) {
+        return
+    }
+    $script:ReportRotationRan = $true
+    if (-not (Test-Path -LiteralPath $script:ReportRotationRoot)) {
+        return
+    }
+    $rotationRoot = [System.IO.Path]::GetFullPath($script:ReportRotationRoot)
+    $expectedRoot = [System.IO.Path]::GetFullPath((Join-Path $root ".tmp\test_reports"))
+    if ($rotationRoot -ne $expectedRoot) {
+        throw "Refusing to rotate unexpected report root: $rotationRoot"
+    }
+    $currentPath = [System.IO.Path]::GetFullPath($script:ReportRoot)
+    $keep = Get-ReportKeepCount
+    $directories = @(Get-ChildItem -LiteralPath $rotationRoot -Directory | Sort-Object LastWriteTimeUtc -Descending)
+    $keptSlots = [Math]::Max(0, $keep - 1)
+    $oldDirectories = @($directories | Where-Object {
+        [System.IO.Path]::GetFullPath($_.FullName) -ne $currentPath
+    } | Select-Object -Skip $keptSlots)
+    $removed = 0
+    foreach ($directory in $oldDirectories) {
+        $fullPath = [System.IO.Path]::GetFullPath($directory.FullName)
+        if (-not (Test-PathInsideDirectory -Path $fullPath -Directory $rotationRoot)) {
+            throw "Refusing to remove report directory outside rotation root: $fullPath"
+        }
+        if ($fullPath -eq $currentPath) {
+            continue
+        }
+        Remove-Item -LiteralPath $fullPath -Recurse -Force -ErrorAction Stop
+        $removed += 1
+    }
+    if ($removed -gt 0) {
+        Write-Host ("Report rotation: removed {0} old .tmp/test_reports directories, kept {1} newest." -f $removed, $keep)
+    }
+}
+
 if ([string]::IsNullOrWhiteSpace($ReportDir)) {
     $stamp = Get-Date -Format "yyyyMMdd_HHmmss"
-    $ReportDir = Join-Path $root (".tmp\test_reports\{0}_{1}" -f $stamp, $suiteKey)
+    $script:ReportRotationRoot = Join-Path $root ".tmp\test_reports"
+    $script:ReportRotationRan = $false
+    $ReportDir = Join-Path $script:ReportRotationRoot ("{0}_{1}" -f $stamp, $suiteKey)
 }
 elseif (-not [System.IO.Path]::IsPathRooted($ReportDir)) {
     $ReportDir = Join-Path $root $ReportDir
@@ -349,6 +412,7 @@ function Write-TestSummary {
     $summaryPath = Join-Path $script:ReportRoot "summary.json"
     $summary | ConvertTo-Json -Depth 8 | Set-Content -LiteralPath $summaryPath
     Write-Host "Report: $summaryPath"
+    Invoke-ReportRotation
 }
 
 function Assert-NoConcurrentProjectGodot {
