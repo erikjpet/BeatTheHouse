@@ -71,11 +71,7 @@ $requiredFiles = @(
     "assets/art/game_scenes/bar_dice.png",
     "assets/art/game_scenes/blackjack.png",
     "assets/art/game_scenes/video_poker.png",
-    "assets/art/game_scenes/scratch_tickets.png",
-    "assets/art/game_scenes/three_card_monte.png",
-    "assets/art/game_scenes/street_dice.png",
-    "assets/art/game_scenes/poker.png",
-    "assets/art/game_scenes/last_chance.png"
+    "assets/art/game_scenes/poker.png"
 )
 
 $failures = New-Object System.Collections.Generic.List[string]
@@ -101,11 +97,7 @@ $assetDimensions = @{
     "assets/art/game_scenes/bar_dice.png" = @(900, 430)
     "assets/art/game_scenes/blackjack.png" = @(900, 430)
     "assets/art/game_scenes/video_poker.png" = @(900, 430)
-    "assets/art/game_scenes/scratch_tickets.png" = @(900, 430)
-    "assets/art/game_scenes/three_card_monte.png" = @(900, 430)
-    "assets/art/game_scenes/street_dice.png" = @(900, 430)
     "assets/art/game_scenes/poker.png" = @(900, 430)
-    "assets/art/game_scenes/last_chance.png" = @(900, 430)
 }
 
 $iconFolders = @("assets/art/items", "assets/art/events", "assets/art/games", "assets/art/ui")

@@ -47,11 +47,7 @@
     "bar_dice": {"path": "res://assets/art/game_scenes/bar_dice.png", "brief": "bar dice table with cup and dice lanes"},
     "pull_tabs": {"path": "res://assets/art/game_scenes/pull_tabs.png", "brief": "counter surface with three pull-tab windows"},
     "video_poker": {"path": "res://assets/art/game_scenes/video_poker.png", "brief": "machine screen with five-card row"},
-    "scratch_tickets": {"path": "res://assets/art/game_scenes/scratch_tickets.png", "brief": "counter ticket surface with four scratch panels"},
-    "three_card_monte": {"path": "res://assets/art/game_scenes/three_card_monte.png", "brief": "street table with three card lanes and watcher space"},
-    "street_dice": {"path": "res://assets/art/game_scenes/street_dice.png", "brief": "alley dice surface with two dice lane"},
-    "poker": {"path": "res://assets/art/game_scenes/poker.png", "brief": "felt table with player and house hand lanes"},
-    "last_chance": {"path": "res://assets/art/game_scenes/last_chance.png", "brief": "cheap paper slips and matchbook emergency table"}
+    "poker": {"path": "res://assets/art/game_scenes/poker.png", "brief": "felt table with player and house hand lanes"}
   },
   "icons": {
     "creased_luck_card": {"path": "res://assets/art/items/creased_luck_card.png"},
