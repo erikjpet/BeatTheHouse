@@ -477,6 +477,46 @@ func _probe_synthetic_idle_overlays() -> void:
 			failures.append("Synthetic %s idle overlay produced no draw samples." % renderer)
 		canvas.queue_free()
 		await _settle(1)
+		await _probe_synthetic_idle_overlay_liveness(snapshot)
+
+
+func _probe_synthetic_idle_overlay_liveness(snapshot: Dictionary) -> void:
+	var canvas: Control = GameSurfaceCanvasScript.new()
+	canvas.size = Vector2(VisualStyleScript.GAME_BOARD_SIZE)
+	root.add_child(canvas)
+	canvas.call("render_game_snapshot", snapshot)
+	await _settle(3)
+	if canvas.has_method("reset_performance_counters"):
+		canvas.call("reset_performance_counters")
+	var start_usec := Time.get_ticks_usec()
+	for _frame_index in range(frames_per_surface):
+		await process_frame
+	var elapsed_usec := Time.get_ticks_usec() - start_usec
+	var counters := _canvas_counters(canvas)
+	var renderer := str(snapshot.get("surface_renderer", ""))
+	var draw_samples := _array_size(counters.get("draw_frame_usec_samples", []))
+	observations.append({
+		"seed": "synthetic:idle_overlay_liveness",
+		"run_index": -1,
+		"environment_id": "synthetic_idle_overlay",
+		"game_id": str(snapshot.get("game_id", "")),
+		"renderer": renderer,
+		"mode": "synthetic_idle_overlay_liveness",
+		"frames": frames_per_surface,
+		"elapsed_ms": float(elapsed_usec) / 1000.0,
+		"avg_frame_ms": float(elapsed_usec) / float(maxi(1, frames_per_surface)) / 1000.0,
+		"draw_avg_ms": float(counters.get("draw_avg_ms", 0.0)),
+		"draw_p95_ms": float(counters.get("draw_p95_ms", 0.0)),
+		"draw_max_ms": float(counters.get("draw_max_ms", 0.0)),
+		"draw_samples": draw_samples,
+		"full_snapshot_calls": int(counters.get("full_snapshot_calls", 0)),
+		"runtime_status_calls": int(counters.get("runtime_status_calls", 0)),
+		"idle_draw_budget_ms": MAX_IDLE_SURFACE_DRAW_P95_MS,
+	})
+	if draw_samples <= 0:
+		failures.append("Synthetic %s idle overlay did not redraw from _process without input/hover." % renderer)
+	canvas.queue_free()
+	await _settle(1)
 
 
 func _synthetic_blackjack_idle_snapshot() -> Dictionary:

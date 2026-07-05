@@ -656,15 +656,17 @@ func _process(delta: float) -> void:
 	_sync_surface_audio()
 	var continuous_redraw := _needs_continuous_redraw()
 	var ambient_redraw := _ambient_surface_overlay_active()
-	if continuous_redraw and _surface_animation_redraw_due(delta):
-		queue_redraw()
-	elif ambient_redraw and _surface_animation_redraw_due(delta):
-		if ambient_surface_overlay != null:
-			ambient_surface_overlay.queue_redraw()
+	if continuous_redraw or ambient_redraw:
+		if _surface_animation_redraw_due(delta):
+			if continuous_redraw:
+				queue_redraw()
+			elif ambient_surface_overlay != null:
+				ambient_surface_overlay.queue_redraw()
 	elif continuous_redraw_was_active:
 		surface_animation_redraw_accumulator = 0.0
 		queue_redraw()
 	elif ambient_surface_overlay != null and ambient_surface_overlay.visible and not ambient_redraw:
+		surface_animation_redraw_accumulator = 0.0
 		ambient_surface_overlay.queue_redraw()
 	else:
 		surface_animation_redraw_accumulator = 0.0
