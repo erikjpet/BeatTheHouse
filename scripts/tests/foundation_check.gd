@@ -75,6 +75,7 @@ class SurfaceHarness:
 	var hovered_action: String = ""
 	var hovered_index: int = -1
 	var labels: Array = []
+	var label_records: Array = []
 	var stake_control_count := 0
 	var native_stake_strip_count := 0
 	var animation_active := false
@@ -87,6 +88,7 @@ class SurfaceHarness:
 		hovered_action = ""
 		hovered_index = -1
 		labels = []
+		label_records = []
 		stake_control_count = 0
 		native_stake_strip_count = 0
 		animation_active = false
@@ -135,17 +137,21 @@ class SurfaceHarness:
 	func surface_native_action_selected(action: String) -> bool:
 		return (surface_state.get("native_selected_surface_actions", []) as Array).has(action)
 
-	func surface_label(text: String, _pos: Vector2, _font_size: int, _color: Color) -> void:
+	func surface_label(text: String, pos: Vector2, font_size: int, _color: Color) -> void:
 		labels.append(text)
+		label_records.append({"text": text, "rect": Rect2(pos, Vector2.ZERO), "font_size": font_size})
 
-	func surface_label_plain(text: String, _pos: Vector2, _font_size: int, _color: Color) -> void:
+	func surface_label_plain(text: String, pos: Vector2, font_size: int, _color: Color) -> void:
 		labels.append(text)
+		label_records.append({"text": text, "rect": Rect2(pos, Vector2.ZERO), "font_size": font_size})
 
-	func surface_label_centered(text: String, _rect: Rect2, _font_size: int, _color: Color) -> void:
+	func surface_label_centered(text: String, rect: Rect2, font_size: int, _color: Color) -> void:
 		labels.append(text)
+		label_records.append({"text": text, "rect": rect, "font_size": font_size})
 
-	func surface_label_centered_plain(text: String, _rect: Rect2, _font_size: int, _color: Color) -> void:
+	func surface_label_centered_plain(text: String, rect: Rect2, font_size: int, _color: Color) -> void:
 		labels.append(text)
+		label_records.append({"text": text, "rect": rect, "font_size": font_size})
 
 	func surface_title(text: String, _pos: Vector2, _color: Color) -> void:
 		labels.append(text)
@@ -7641,6 +7647,28 @@ func _check_roulette_surface_contract(game: GameModule, failures: Array, library
 	var result_surface := game.surface_state(run_state, environment, {})
 	if str((result_surface.get("last_result", {}) as Dictionary).get("winning_number", "")) != str(result.get("roulette_winning_number", "")):
 		failures.append("Roulette post-spin surface did not expose the latest winning number.")
+	var post_spin_harness := SurfaceHarness.new()
+	post_spin_harness.setup(result_surface)
+	post_spin_harness.animation_active = false
+	game.draw_surface(post_spin_harness, result_surface, {"contract_harness": true})
+	var wheel_label_numbers: Dictionary = {}
+	var wheel_label_center := Vector2(150.0, 182.0)
+	for label_value in post_spin_harness.label_records:
+		if typeof(label_value) != TYPE_DICTIONARY:
+			continue
+		var label_record: Dictionary = label_value
+		var text := str(label_record.get("text", ""))
+		if not wheel_sequence.has(text):
+			continue
+		if int(label_record.get("font_size", 0)) > 7:
+			continue
+		var label_rect: Rect2 = label_record.get("rect", Rect2())
+		var distance := label_rect.get_center().distance_to(wheel_label_center)
+		if distance < 112.0 or distance > 138.0:
+			continue
+		wheel_label_numbers[text] = true
+	if wheel_label_numbers.size() < wheel_sequence.size():
+		failures.append("Roulette post-spin wheel must keep pocket numbers attached to every wheel section; saw %d of %d." % [wheel_label_numbers.size(), wheel_sequence.size()])
 	var recent_numbers: Array = _baccarat_dictionary_array(result_surface.get("recent_numbers", []))
 	if recent_numbers.is_empty() or str((recent_numbers[0] as Dictionary).get("number", "")) != str(result.get("roulette_winning_number", "")):
 		failures.append("Roulette recent-number strip did not record the latest spin.")
