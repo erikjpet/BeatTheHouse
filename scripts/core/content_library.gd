@@ -32,6 +32,8 @@ var validation_errors: Array = []
 var validation_warnings: Array = []
 var _load_errors: Array = []
 var _indexes: Dictionary = {}
+var _load_timing: Dictionary = {}
+var _load_pack_timings: Array = []
 
 
 # Returns the active README pack paths required by the foundation path.
@@ -59,7 +61,9 @@ static func future_pack_paths() -> Dictionary:
 
 # Loads the active packs and any future packs that already exist.
 func load() -> Dictionary:
+	var load_started_usec := Time.get_ticks_usec()
 	_load_errors = []
+	_load_pack_timings = []
 	environment_archetypes = _load_array(ENVIRONMENT_ARCHETYPES_PATH, true)
 	games = _load_array(GAMES_PATH, true)
 	items = _load_array(ITEMS_PATH, true)
@@ -71,8 +75,18 @@ func load() -> Dictionary:
 	travel_routes = _load_array(TRAVEL_ROUTES_PATH, false)
 	prestige_purchases = _load_array(PRESTIGE_PURCHASES_PATH, false)
 	music_tracks = _load_array(MUSIC_MANIFEST_PATH, false)
+	var parse_complete_usec := Time.get_ticks_usec()
 	_rebuild_indexes()
+	var index_complete_usec := Time.get_ticks_usec()
 	validate()
+	var validate_complete_usec := Time.get_ticks_usec()
+	_load_timing = {
+		"total_ms": _elapsed_ms(load_started_usec, validate_complete_usec),
+		"parse_ms": _elapsed_ms(load_started_usec, parse_complete_usec),
+		"index_ms": _elapsed_ms(parse_complete_usec, index_complete_usec),
+		"validate_ms": _elapsed_ms(index_complete_usec, validate_complete_usec),
+		"packs": _load_pack_timings.duplicate(true),
+	}
 	return {
 		"environment_archetypes": environment_archetypes,
 		"games": games,
@@ -415,15 +429,46 @@ func music_track(track_id: String) -> Dictionary:
 
 # Reads one JSON array content pack from disk.
 func _load_array(path: String, required: bool) -> Array:
+	var started_usec := Time.get_ticks_usec()
 	if not FileAccess.file_exists(path):
 		if required:
 			_load_errors.append("Missing required content pack: %s" % path)
+		_load_pack_timings.append({
+			"path": path,
+			"exists": false,
+			"required": required,
+			"bytes": 0,
+			"entries": 0,
+			"duration_ms": _elapsed_ms(started_usec, Time.get_ticks_usec()),
+			"parse_ms": 0.0,
+		})
 		return []
 	var text := FileAccess.get_file_as_string(path)
+	var parse_started_usec := Time.get_ticks_usec()
 	var parsed: Variant = JSON.parse_string(text)
+	var parse_complete_usec := Time.get_ticks_usec()
 	if typeof(parsed) != TYPE_ARRAY:
 		_load_errors.append("Content file must contain a JSON array: %s" % path)
+		_load_pack_timings.append({
+			"path": path,
+			"exists": true,
+			"required": required,
+			"bytes": text.length(),
+			"entries": 0,
+			"duration_ms": _elapsed_ms(started_usec, parse_complete_usec),
+			"parse_ms": _elapsed_ms(parse_started_usec, parse_complete_usec),
+		})
 		return []
+	var result: Array = parsed
+	_load_pack_timings.append({
+		"path": path,
+		"exists": true,
+		"required": required,
+		"bytes": text.length(),
+		"entries": result.size(),
+		"duration_ms": _elapsed_ms(started_usec, parse_complete_usec),
+		"parse_ms": _elapsed_ms(parse_started_usec, parse_complete_usec),
+	})
 	return parsed
 
 
@@ -468,6 +513,14 @@ func debug_soak_snapshot() -> Dictionary:
 		"validation_errors": validation_errors.size(),
 		"validation_warnings": validation_warnings.size(),
 	}
+
+
+func load_timing_snapshot() -> Dictionary:
+	return _load_timing.duplicate(true)
+
+
+static func _elapsed_ms(start_usec: int, end_usec: int) -> float:
+	return float(maxi(0, end_usec - start_usec)) / 1000.0
 
 
 # Validates required fields and duplicate ids for one content array.

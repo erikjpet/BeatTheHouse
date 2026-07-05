@@ -124,6 +124,8 @@ func configure(owner: FoundationMain) -> void:
 	})
 	if plan_id == "l02":
 		call_deferred("_run_l02_plan")
+	elif plan_id == "lb3":
+		call_deferred("_run_lb3_plan")
 	elif plan_id == "la1":
 		call_deferred("_run_la1_plan")
 	elif plan_id == "la5":
@@ -165,6 +167,7 @@ func dump_report() -> Dictionary:
 		"memory_seconds": memory_seconds,
 		"created_msec": created_msec,
 		"dump_msec": Time.get_ticks_msec(),
+		"boot_timeline": _boot_timeline_snapshot(),
 		"scenario_count": scenario_records.size(),
 		"scenarios": scenario_records,
 		"events": telemetry_events,
@@ -202,6 +205,87 @@ func _run_l02_plan() -> void:
 	dump_report()
 	if auto_quit:
 		get_tree().quit()
+
+
+func _run_lb3_plan() -> void:
+	if l02_driver_started:
+		return
+	l02_driver_started = true
+	await _wait_frames(8)
+	_end_scenario()
+	if app == null:
+		mark_event("lb3_missing_app")
+		dump_report()
+		if auto_quit:
+			get_tree().quit()
+		return
+	mark_event("lb3_boot_snapshot", _boot_timeline_snapshot())
+	var run_started_usec := Time.get_ticks_usec()
+	app.start_foundation_run("LB3-FIRST-RUN")
+	mark_event("lb3_first_run_start", {
+		"duration_ms": _duration_ms_since(run_started_usec),
+		"screen": str(app.get("current_screen")),
+	})
+	await _wait_frames(8)
+	var first_surface_started_usec := Time.get_ticks_usec()
+	app.enter_first_available_game()
+	mark_event("lb3_first_surface_open", {
+		"duration_ms": _duration_ms_since(first_surface_started_usec),
+		"screen": str(app.get("current_screen")),
+	})
+	await _measure_scenario("lb3_first_surface_interactive", {"surface": "first_available", "mode": "first_open"}, mini(scenario_frames, 90))
+	app.back_to_environment()
+	await _wait_frames(8)
+	for game_id_value in REQUIRED_GAME_IDS:
+		var game_id := str(game_id_value)
+		await _measure_lb3_game_open(game_id, true)
+		await _measure_lb3_game_open(game_id, false)
+	await _measure_lb3_save_stall()
+	l02_driver_complete = true
+	dump_report()
+	if auto_quit:
+		get_tree().quit()
+
+
+func _measure_lb3_game_open(game_id: String, first_open: bool) -> void:
+	var mode := "first_open" if first_open else "steady_open"
+	var opened_started_usec := Time.get_ticks_usec()
+	app.start_game_test_session(game_id)
+	mark_event("lb3_game_%s" % mode, {
+		"game_id": game_id,
+		"duration_ms": _duration_ms_since(opened_started_usec),
+		"screen": str(app.get("current_screen")),
+	})
+	await _measure_scenario("lb3_%s_%s" % [game_id, mode], {"surface": game_id, "mode": mode}, mini(scenario_frames, 90))
+	app.back_to_environment()
+	await _wait_frames(8)
+
+
+func _measure_lb3_save_stall() -> void:
+	app.start_foundation_run("LB3-SAVE-STALL")
+	await _wait_frames(8)
+	var autosave_started_usec := Time.get_ticks_usec()
+	var autosave_accepted := bool(app.call("_autosave_foundation_run", "LB3 Autosave.", false))
+	mark_event("lb3_autosave_request", {
+		"duration_ms": _duration_ms_since(autosave_started_usec),
+		"accepted": autosave_accepted,
+		"pending": bool(app.get("pending_autosave")),
+	})
+	await _wait_frames(4)
+	mark_event("lb3_autosave_after_flush", {
+		"pending": bool(app.get("pending_autosave")),
+	})
+	var save_service: SaveService = app.get("save_service") as SaveService
+	var run_state: RunState = app.get("run_state") as RunState
+	if save_service == null or run_state == null:
+		mark_event("lb3_save_unavailable")
+		return
+	var save_started_usec := Time.get_ticks_usec()
+	var save_error := save_service.save_run(run_state, "lb3_direct_save_probe")
+	mark_event("lb3_save_run_direct", {
+		"duration_ms": _duration_ms_since(save_started_usec),
+		"error": int(save_error),
+	})
 
 
 func _run_la1_plan() -> void:
@@ -727,6 +811,16 @@ func _record_signed_delta(all_samples: Array, positive_samples: Array, negative_
 		positive_samples.append(delta)
 	elif delta < 0:
 		negative_samples.append(abs(delta))
+
+
+func _duration_ms_since(started_usec: int) -> float:
+	return float(maxi(0, Time.get_ticks_usec() - started_usec)) / 1000.0
+
+
+func _boot_timeline_snapshot() -> Dictionary:
+	if app == null or not app.has_method("boot_telemetry_snapshot"):
+		return {}
+	return app.call("boot_telemetry_snapshot") as Dictionary
 
 
 func _percentile(sorted_samples: Array, percentile: float) -> float:

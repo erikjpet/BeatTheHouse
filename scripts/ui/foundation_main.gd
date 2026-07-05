@@ -198,6 +198,8 @@ var settings_menu: SettingsMenu
 var procedural_music_player: ProceduralMusicPlayer
 var environment_sfx_player: Node
 var perf_telemetry_overlay: PerfTelemetryOverlay
+var boot_telemetry_events: Array = []
+var boot_start_msec := 0
 var event_choice_popup_overlay: Control
 var event_choice_popup_panel: PanelContainer
 var event_choice_popup_title_label: Label
@@ -298,12 +300,25 @@ const WEB_AUDIO_UNLOCK_REFRESH_DELAY_SECONDS := 0.20
 #   travel, world map, inventory, journal, or decision popups.
 
 func _ready() -> void:
+	boot_start_msec = Time.get_ticks_msec()
+	boot_telemetry_events = []
+	_mark_boot_event("engine_ready_start", {"autoload_count": _project_autoload_count()})
 	_initialize_user_settings()
+	_mark_boot_event("user_settings_ready")
 	_initialize_procedural_music()
+	_mark_boot_event("music_ready")
 	_initialize_profile_inventory()
+	_mark_boot_event("profile_inventory_ready")
 	_initialize_foundation()
+	_mark_boot_event("foundation_ready")
 	_build_ui()
+	_mark_boot_event("ui_built")
 	_refresh()
+	_mark_boot_event("main_menu_interactive", {
+		"screen": current_screen,
+		"continue_available": _has_foundation_save(),
+		"challenge_count": library.challenges.size() if library != null else 0,
+	})
 	_initialize_perf_telemetry()
 
 
@@ -2210,8 +2225,11 @@ func _should_yield_for_travel_transition() -> bool:
 
 
 func _initialize_foundation() -> void:
+	_mark_boot_event("foundation_init_start")
 	library = ContentLibrary.new()
+	_mark_boot_event("content_library_load_start")
 	library.load()
+	_mark_boot_event("content_library_load_complete", library.load_timing_snapshot())
 	game_module_cache = {}
 	generator = RunGenerator.new(library)
 	save_service = SaveService.new()
@@ -2220,6 +2238,39 @@ func _initialize_foundation() -> void:
 	platform_services.initialize()
 	run_action_service = RunActionServiceScript.new()
 	_refresh_run_action_service()
+	_mark_boot_event("foundation_init_complete")
+
+
+func boot_telemetry_snapshot() -> Dictionary:
+	return {
+		"start_msec": boot_start_msec,
+		"uptime_msec": maxi(0, Time.get_ticks_msec() - boot_start_msec),
+		"events": boot_telemetry_events.duplicate(true),
+		"content_library": library.load_timing_snapshot() if library != null else {},
+	}
+
+
+func _mark_boot_event(event_id: String, data: Dictionary = {}) -> void:
+	var now := Time.get_ticks_msec()
+	if boot_start_msec <= 0:
+		boot_start_msec = now
+	boot_telemetry_events.append({
+		"id": event_id,
+		"msec": now,
+		"relative_msec": maxi(0, now - boot_start_msec),
+		"data": data.duplicate(true),
+	})
+
+
+func _project_autoload_count() -> int:
+	var count := 0
+	for property_info in ProjectSettings.get_property_list():
+		if typeof(property_info) != TYPE_DICTIONARY:
+			continue
+		var property_name := str((property_info as Dictionary).get("name", ""))
+		if property_name.begins_with("autoload/"):
+			count += 1
+	return count
 
 
 func _refresh_run_action_service() -> void:

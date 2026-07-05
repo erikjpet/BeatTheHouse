@@ -1,4 +1,5 @@
 param(
+    [string]$Plan = "l02",
     [int]$Frames = 180,
     [int]$ActiveFrames = 240,
     [int]$MemorySeconds = 600,
@@ -33,7 +34,7 @@ $args = @(
     "--path", $root,
     "--",
     "--bth-perf-telemetry",
-    "--bth-perf-plan=l02",
+    "--bth-perf-plan=$Plan",
     "--bth-perf-auto-quit",
     "--bth-perf-frames=$Frames",
     "--bth-perf-active-frames=$ActiveFrames",
