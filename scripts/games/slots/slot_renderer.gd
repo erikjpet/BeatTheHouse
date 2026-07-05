@@ -8,6 +8,33 @@ const PINBALL_AIM_MAX_DEGREES := 60
 const PINBALL_AIM_CHOICES := 25
 const PINBALL_START_CHOICES := 25
 const PINBALL_POWER_CHOICES := 21
+const PINBALL_START_ACTIONS := [
+	"slot_bonus_start_00",
+	"slot_bonus_start_01",
+	"slot_bonus_start_02",
+	"slot_bonus_start_03",
+	"slot_bonus_start_04",
+	"slot_bonus_start_05",
+	"slot_bonus_start_06",
+	"slot_bonus_start_07",
+	"slot_bonus_start_08",
+	"slot_bonus_start_09",
+	"slot_bonus_start_10",
+	"slot_bonus_start_11",
+	"slot_bonus_start_12",
+	"slot_bonus_start_13",
+	"slot_bonus_start_14",
+	"slot_bonus_start_15",
+	"slot_bonus_start_16",
+	"slot_bonus_start_17",
+	"slot_bonus_start_18",
+	"slot_bonus_start_19",
+	"slot_bonus_start_20",
+	"slot_bonus_start_21",
+	"slot_bonus_start_22",
+	"slot_bonus_start_23",
+	"slot_bonus_start_24",
+]
 
 var catalog
 var background_textures: Dictionary = {}
@@ -855,10 +882,9 @@ func _main_reel_cell_rect(rect: Rect2, reel: int, row: int, gap: float, cell_w: 
 
 func _draw_symbol(surface, definition: Dictionary, family: String, symbol: String, rect: Rect2, blurred: bool) -> void:
 	var meta: Dictionary = _symbol_draw_metadata(definition, family, symbol)
-	var colors: Array = _read_array(meta.get("colors", []))
-	var primary := Color(str(colors[0] if colors.size() > 0 else "#1b2230"))
-	var secondary := Color(str(colors[1] if colors.size() > 1 else "#3f5269"))
-	var glow := Color(str(colors[2] if colors.size() > 2 else colors[0] if colors.size() > 0 else "#6d88a8"))
+	var primary: Color = meta.get("primary", Color("#1b2230"))
+	var secondary: Color = meta.get("secondary", Color("#3f5269"))
+	var glow: Color = meta.get("glow", Color("#6d88a8"))
 	var alpha := 0.18 if blurred else 0.26
 	surface.draw_rect(rect, Color(primary.r, primary.g, primary.b, alpha))
 	surface.draw_rect(rect, Color(glow.r, glow.g, glow.b, 0.38), false, 1)
@@ -898,13 +924,19 @@ func _draw_symbol(surface, definition: Dictionary, family: String, symbol: Strin
 
 
 func _symbol_draw_metadata(definition: Dictionary, family: String, symbol: String) -> Dictionary:
-	var key := "%s:%s" % [family, symbol]
+	var key := family + ":" + symbol
 	if symbol_draw_metadata_cache.has(key):
 		return _read_dict(symbol_draw_metadata_cache.get(key, {}))
 	var meta: Dictionary = catalog.symbol_metadata(definition, family, symbol)
+	var colors: Array = _read_array(meta.get("colors", []))
+	var primary := Color(str(colors[0] if colors.size() > 0 else "#1b2230"))
+	var secondary := Color(str(colors[1] if colors.size() > 1 else "#3f5269"))
+	var glow := Color(str(colors[2] if colors.size() > 2 else colors[0] if colors.size() > 0 else "#6d88a8"))
 	var cached := {
 		"shape": str(meta.get("shape", "backplate")),
-		"colors": _read_array(meta.get("colors", [])).duplicate(false),
+		"primary": primary,
+		"secondary": secondary,
+		"glow": glow,
 	}
 	symbol_draw_metadata_cache[key] = cached
 	return cached
@@ -939,6 +971,10 @@ func _win_cell_lookup(cells: Array) -> Dictionary:
 
 func _cell_key(reel_index: int, row_index: int) -> String:
 	return "%d:%d" % [reel_index, row_index]
+
+
+func _cell_int_key(reel_index: int, row_index: int) -> int:
+	return reel_index * 1000 + row_index
 
 
 func _all_reels_landed(motions: Array) -> bool:
@@ -1093,8 +1129,8 @@ func _draw_pinball_playfield(surface, rect: Rect2, state: Dictionary, active: Di
 		positions.append({"ball_index": 0, "position": Vector2(clampf(float(physics.get("ball_x", 0.5)), 0.0, 1.0), clampf(float(physics.get("ball_y", 0.5)), 0.0, 1.0))})
 	surface.draw_rect(play_rect, Color("#08101a"))
 	surface.draw_rect(play_rect, Color(light.r, light.g, light.b, 0.18), false, 2)
-	var identity := str(_copy_dict(state.get("slot_skin", {})).get("cabinet_identity", ""))
-	_draw_pinball_backglass(surface, play_rect, active, identity, accent, light, trim, bucket)
+	var identity := str(_read_dict(state.get("slot_skin", {})).get("cabinet_identity", ""))
+	_draw_pinball_backglass(surface, play_rect, active, identity, accent, light, trim, bucket, layout)
 	var inner: Rect2 = play_rect.grow(-14)
 	var elements: Array = []
 	var elements_value: Variant = layout.get("elements", [])
@@ -1123,7 +1159,7 @@ func _draw_pinball_playfield(surface, rect: Rect2, state: Dictionary, active: Di
 		surface.draw_circle(p + Vector2(-radius * 0.36, -radius * 0.34), radius * 0.34, Color(1.0, 1.0, 1.0, 0.70))
 		surface.draw_circle(p + Vector2(radius * 0.28, radius * 0.30), radius * 0.24, Color(0.35, 0.42, 0.50, 0.36))
 	var unlaunched_count := maxi(0, int(active.get("balls_remaining", 0))) if feature_active else 0
-	surface.surface_label("LEFT %d  LIVE %d" % [unlaunched_count, positions.size()], play_rect.position + Vector2(12, play_rect.size.y - 10), 11, light)
+	surface.surface_label("LEFT " + str(unlaunched_count) + "  LIVE " + str(positions.size()), play_rect.position + Vector2(12, play_rect.size.y - 10), 11, light)
 	_draw_pinball_callout(surface, play_rect, active, events, playback_sec, identity, accent, light, trim)
 
 
@@ -1544,17 +1580,20 @@ func _pinball_latest_event(events: Array, playback_sec: float) -> Dictionary:
 	return latest
 
 
-func _draw_pinball_backglass(surface, rect: Rect2, active: Dictionary, identity: String, accent: Color, light: Color, trim: Color, bucket: int) -> void:
+func _draw_pinball_backglass(surface, rect: Rect2, active: Dictionary, identity: String, accent: Color, light: Color, trim: Color, bucket: int, layout_override: Variant = null) -> void:
 	var panel := Rect2(rect.position + Vector2(12, 8), Vector2(rect.size.x - 24, 28))
 	var mode := str(active.get("mode", "pinball"))
 	var combo_label := _pinball_combo_status(active)
-	var layout: Dictionary = _pinball_layout_from_active(active)
+	var layout: Dictionary = _read_dict(layout_override)
+	if layout.is_empty():
+		layout = _pinball_layout_from_active(active)
 	var title := str(layout.get("board_title", mode.replace("_", " ").to_upper()))
 	var multiplier := maxi(1, int(_read_dict(active.get("combo_state", {})).get("multiplier", 1)))
+	var feature_total := int(active.get("feature_total", active.get("awarded", 0)))
 	if identity == "em_bumper_drop":
 		surface.draw_rect(panel, Color(trim.r, trim.g, trim.b, 0.10))
-		surface.surface_label("%s  X%d" % [title.to_upper().left(18), multiplier], panel.position + Vector2(16, 20), 12, trim)
-		surface.surface_label("BANK %d" % int(active.get("feature_total", active.get("awarded", 0))), panel.position + Vector2(panel.size.x - 150, 20), 12, trim)
+		surface.surface_label(title.to_upper().left(18) + "  X" + str(multiplier), panel.position + Vector2(16, 20), 12, trim)
+		surface.surface_label("BANK " + str(feature_total), panel.position + Vector2(panel.size.x - 150, 20), 12, trim)
 		if not combo_label.is_empty():
 			surface.surface_label(combo_label.left(22), panel.position + Vector2(210, 20), 10, light)
 	elif identity == "lane_multiball":
@@ -1562,14 +1601,14 @@ func _draw_pinball_backglass(surface, rect: Rect2, active: Dictionary, identity:
 		for x in range(32):
 			var lit := posmod(bucket + x, 5) == 0
 			surface.draw_circle(panel.position + Vector2(8 + x * 7, 14), 1.8, Color(trim.r, trim.g, trim.b, 0.68 if lit else 0.18))
-		surface.surface_label("%s  LOCK %d  X%d" % [title.to_upper().left(14), int(active.get("lane_locks", 0)), multiplier], panel.position + Vector2(176, 20), 12, trim)
-		surface.surface_label("$%d" % int(active.get("feature_total", active.get("awarded", 0))), panel.position + Vector2(panel.size.x - 90, 20), 12, trim)
+		surface.surface_label(title.to_upper().left(14) + "  LOCK " + str(int(active.get("lane_locks", 0))) + "  X" + str(multiplier), panel.position + Vector2(176, 20), 12, trim)
+		surface.surface_label("$" + str(feature_total), panel.position + Vector2(panel.size.x - 90, 20), 12, trim)
 		if not combo_label.is_empty():
 			surface.surface_label(combo_label.left(22), panel.position + Vector2(430, 20), 10, light)
 	else:
 		surface.draw_rect(panel, Color("#07192d"))
 		surface.draw_rect(panel, Color(accent.r, light.g, light.b, 0.18), false, 2)
-		surface.surface_label("%s  X%d  $%d" % [title.to_upper().left(16), multiplier, int(active.get("feature_total", active.get("awarded", 0)))], panel.position + Vector2(12, 20), 12, light)
+		surface.surface_label(title.to_upper().left(16) + "  X" + str(multiplier) + "  $" + str(feature_total), panel.position + Vector2(12, 20), 12, light)
 		if not combo_label.is_empty():
 			surface.surface_label(combo_label.left(26), panel.position + Vector2(panel.size.x - 220, 20), 10, trim)
 
@@ -1814,18 +1853,19 @@ func _draw_pinball_launch_guideline(surface, rect: Rect2, active: Dictionary, la
 	var gravity: Vector2 = _vector2_from_payload(layout.get("gravity", Vector2(0.0, 2.8)), Vector2(0.0, 2.8))
 	var position := start_norm
 	var velocity := direction * speed
-	var points: Array = []
-	for step_index in range(9):
-		points.append(_pinball_point(rect, position))
+	var previous_point: Vector2 = _pinball_point(rect, position)
+	var end_point := previous_point
+	var pulse := 0.45 + 0.22 * sin(float(time_msec) * 0.016)
+	for point_index in range(1, 9):
 		velocity += gravity * 0.075
 		position += velocity * 0.075
-	var pulse := 0.45 + 0.22 * sin(float(time_msec) * 0.016)
-	for point_index in range(1, points.size()):
+		var current_point: Vector2 = _pinball_point(rect, position)
 		var alpha := clampf(0.22 + float(point_index) * 0.055 + pulse * 0.12, 0.0, 0.90)
-		surface.draw_line(points[point_index - 1], points[point_index], Color(light.r, light.g, light.b, alpha), 3)
-		surface.draw_line(points[point_index - 1], points[point_index], Color(trim.r, trim.g, trim.b, alpha * 0.38), 7)
+		surface.draw_line(previous_point, current_point, Color(light.r, light.g, light.b, alpha), 3)
+		surface.draw_line(previous_point, current_point, Color(trim.r, trim.g, trim.b, alpha * 0.38), 7)
+		previous_point = current_point
+		end_point = current_point
 	var start_point: Vector2 = _pinball_point(rect, start_norm)
-	var end_point: Vector2 = points[points.size() - 1]
 	var cone_left := _pinball_point(rect, start_norm + direction.rotated(-0.16) * 0.22)
 	var cone_right := _pinball_point(rect, start_norm + direction.rotated(0.16) * 0.22)
 	surface.draw_line(start_point, cone_left, Color(trim.r, trim.g, trim.b, 0.18), 2)
@@ -1852,16 +1892,20 @@ func _draw_pinball_launch_start_rail(surface, rect: Rect2, active: Dictionary, l
 		min_x = float(layout.get("launch_x_min", 0.06))
 		max_x = float(layout.get("launch_x_max", 0.94))
 		y_norm = float(_vector2_from_payload(layout.get("plunger_start", Vector2(0.5, 0.07)), Vector2(0.5, 0.07)).y)
-	var rail_a := _pinball_point(rect, Vector2(min_x, y_norm))
-	var rail_b := _pinball_point(rect, Vector2(max_x, y_norm))
+	min_x = clampf(min_x, -0.1, 1.1)
+	max_x = clampf(max_x, -0.1, 1.1)
+	y_norm = clampf(y_norm, -0.1, 1.1)
+	var rail_y := rect.position.y + y_norm * rect.size.y
+	var rail_a := Vector2(rect.position.x + min_x * rect.size.x, rail_y)
+	var rail_b := Vector2(rect.position.x + max_x * rect.size.x, rail_y)
 	surface.draw_line(rail_a, rail_b, Color(trim.r, trim.g, trim.b, 0.30), 3)
 	for index in range(PINBALL_START_CHOICES):
 		var ratio := float(index) / float(PINBALL_START_CHOICES - 1)
-		var marker := _pinball_point(rect, Vector2(lerpf(min_x, max_x, ratio), y_norm))
+		var marker := Vector2(rect.position.x + lerpf(min_x, max_x, ratio) * rect.size.x, rail_y)
 		var radius := 5.0 if index == selected_index else 3.0
 		var alpha := 0.82 if index == selected_index else 0.34
 		surface.draw_circle(marker, radius, Color(trim.r, trim.g, trim.b, alpha))
-		surface.surface_add_hit(Rect2(marker - Vector2(12, 12), Vector2(24, 24)), "slot_bonus_start_%02d" % index, index)
+		surface.surface_add_hit(Rect2(marker - Vector2(12, 12), Vector2(24, 24)), str(PINBALL_START_ACTIONS[index]), index)
 
 
 func _draw_pinball_power_meter(surface, rect: Rect2, active: Dictionary, light: Color, trim: Color) -> void:
@@ -2029,27 +2073,33 @@ func _draw_buffalo_free_games(surface, rect: Rect2, state: Dictionary, definitio
 	var header_rect := Rect2(rect.position + Vector2(8, 8), Vector2(rect.size.x - 16, 28))
 	surface.draw_rect(header_rect, Color(trim.r, trim.g, trim.b, 0.16))
 	surface.draw_rect(header_rect, Color(light.r, light.g, light.b, 0.22), false, 1)
-	surface.surface_label("FREE %d  RETRIG %d" % [int(active.get("remaining_steps", 0)), int(active.get("retrigger_count", 0))], header_rect.position + Vector2(8, 19), 12, light)
-	var coin_header := "COINS HELD %d" % int(active.get("coins_collected", 0))
+	var remaining_steps := int(active.get("remaining_steps", 0))
+	var retrigger_count := int(active.get("retrigger_count", 0))
+	var coins_collected := int(active.get("coins_collected", 0))
+	var feature_total := int(active.get("feature_total", 0))
+	var coin_collect_total := int(active.get("coin_collect_total", 0))
+	var coin_reveal_total := int(active.get("coin_reveal_total", coin_collect_total))
+	surface.surface_label("FREE " + str(remaining_steps) + "  RETRIG " + str(retrigger_count), header_rect.position + Vector2(8, 19), 12, light)
+	var coin_header := "COINS HELD " + str(coins_collected)
 	if str(active.get("feature_phase", "")) == "coin_collect" or _array_read_size(active.get("coin_reveals", [])) > 0:
-		coin_header = "REVEAL $%d" % int(active.get("coin_reveal_total", active.get("coin_collect_total", 0)))
-	surface.surface_label("$%d + %s" % [int(active.get("spin_win_total", active.get("feature_total", 0))), coin_header], header_rect.position + Vector2(header_rect.size.x - 210, 19), 12, trim)
+		coin_header = "REVEAL $" + str(coin_reveal_total)
+	surface.surface_label("$" + str(int(active.get("spin_win_total", feature_total))) + " + " + coin_header, header_rect.position + Vector2(header_rect.size.x - 210, 19), 12, trim)
 	var grid_rect := Rect2(rect.position + Vector2(8, 42), Vector2(rect.size.x - 16, rect.size.y - 92))
 	_draw_buffalo_free_games_reel_grid(surface, grid_rect, state, definition, active, accent, light, trim, spin_msec, feature_msec)
 	var meter: Dictionary = _read_dict(active.get("collection_meter", {}))
 	var cycle := maxi(0, int(meter.get("cycle", active.get("coins_since_retrigger", 0))))
 	var threshold := maxi(1, int(meter.get("threshold", 3)))
 	var meter_rect := Rect2(rect.position + Vector2(10, rect.size.y - 34), Vector2(rect.size.x - 20, 14))
-	_draw_buffalo_meter(surface, meter_rect, _buffalo_collection_ratio(active), trim, light, "COINS %d/%d  HELD %d  $%d" % [cycle, threshold, int(active.get("coins_collected", 0)), int(active.get("coin_total", 0))])
+	_draw_buffalo_meter(surface, meter_rect, _buffalo_collection_ratio(active), trim, light, "COINS " + str(cycle) + "/" + str(threshold) + "  HELD " + str(coins_collected) + "  $" + str(int(active.get("coin_total", 0))))
 	if int(active.get("last_retrigger_grant", 0)) > 0:
-		surface.surface_label_centered("+%d FREE GAMES" % int(active.get("last_retrigger_grant", 0)), Rect2(rect.position + Vector2(rect.size.x * 0.24, rect.size.y - 64), Vector2(rect.size.x * 0.52, 24)), 18, accent)
+		surface.surface_label_centered("+" + str(int(active.get("last_retrigger_grant", 0))) + " FREE GAMES", Rect2(rect.position + Vector2(rect.size.x * 0.24, rect.size.y - 64), Vector2(rect.size.x * 0.52, 24)), 18, accent)
 	if bool(active.get("coin_collect_awarded", false)) or str(active.get("feature_phase", "")) == "coin_collect":
 		var pulse := 0.35 + 0.16 * sin(float(feature_msec) * 0.010)
 		var collect_rect := Rect2(rect.position + Vector2(rect.size.x * 0.18, rect.size.y * 0.38), Vector2(rect.size.x * 0.64, 46))
 		surface.draw_rect(collect_rect, Color(trim.r, trim.g, trim.b, pulse))
 		surface.draw_rect(collect_rect, Color(light.r, light.g, light.b, 0.80), false, 2)
 		var revealed_total := _buffalo_revealed_coin_total(active, feature_msec)
-		surface.surface_label_centered("COIN PRIZES +$%d / $%d" % [revealed_total, int(active.get("coin_reveal_total", active.get("coin_collect_total", 0)))], collect_rect.grow(-4), 20, Color("#130907"))
+		surface.surface_label_centered("COIN PRIZES +$" + str(revealed_total) + " / $" + str(coin_reveal_total), collect_rect.grow(-4), 20, Color("#130907"))
 
 
 func _draw_buffalo_free_games_reel_grid(surface, rect: Rect2, state: Dictionary, definition: Dictionary, active: Dictionary, accent: Color, light: Color, trim: Color, time_msec: int, feature_msec: int) -> void:
@@ -2059,23 +2109,21 @@ func _draw_buffalo_free_games_reel_grid(surface, rect: Rect2, state: Dictionary,
 	var reel_count := maxi(1, int(state.get("slot_reel_count", maxi(1, grid.size()))))
 	var row_count := maxi(1, int(state.get("slot_row_count", 3)))
 	var timeline: Array = _read_array(state.get("slot_reel_timeline", []))
-	var motions: Array = []
-	for reel_index in range(reel_count):
-		var motion: Dictionary = {"phase": "settled", "scroll_cells": 0.0, "blur": 0.0}
-		if reel_index < timeline.size():
-			motion = _reel_motion(_read_dict(timeline[reel_index]), time_msec)
-		motions.append(motion)
 	surface.draw_rect(rect, Color("#130907"))
 	surface.draw_rect(rect, Color(trim.r, trim.g, trim.b, 0.26), false, 2)
 	var gap := 4.0
 	var cell_w := (rect.size.x - gap * float(reel_count + 1)) / float(reel_count)
 	var cell_h := (rect.size.y - gap * float(row_count + 1)) / float(row_count)
-	var locked_coin_lookup: Dictionary = _buffalo_coin_lookup(_read_array(active.get("collected_coins", [])))
+	var locked_coin_lookup: Dictionary = _buffalo_coin_index_lookup(_read_array(active.get("collected_coins", [])))
 	for reel_index in range(reel_count):
-		var motion: Dictionary = _read_dict(motions[reel_index])
-		var phase := str(motion.get("phase", "settled"))
-		var scroll_cells := float(motion.get("scroll_cells", 0.0))
-		var blur := float(motion.get("blur", 0.0))
+		var phase := "settled"
+		var scroll_cells := 0.0
+		var blur := 0.0
+		if reel_index < timeline.size():
+			var motion: Dictionary = _reel_motion(_read_dict(timeline[reel_index]), time_msec)
+			phase = str(motion.get("phase", "settled"))
+			scroll_cells = float(motion.get("scroll_cells", 0.0))
+			blur = float(motion.get("blur", 0.0))
 		var fractional: float = scroll_cells - floor(scroll_cells)
 		var whole_offset := int(floor(scroll_cells))
 		if phase == "settled":
@@ -2087,7 +2135,7 @@ func _draw_buffalo_free_games_reel_grid(surface, rect: Rect2, state: Dictionary,
 			var visible_cell := _rect_intersection(cell, rect)
 			if visible_cell.size.x <= 0.0 or visible_cell.size.y <= 0.0:
 				continue
-			if visual_row >= 0 and visual_row < row_count and locked_coin_lookup.has(_cell_key(reel_index, visual_row)):
+			if visual_row >= 0 and visual_row < row_count and locked_coin_lookup.has(_cell_int_key(reel_index, visual_row)):
 				surface.draw_rect(visible_cell, Color("#130907"))
 				surface.draw_rect(visible_cell, Color(trim.r, trim.g, trim.b, 0.28), false, 1)
 				continue
@@ -2097,10 +2145,10 @@ func _draw_buffalo_free_games_reel_grid(surface, rect: Rect2, state: Dictionary,
 			if blur > 0.38:
 				surface.draw_rect(_rect_intersection(visible_cell.grow(-4), rect), Color(light.r, light.g, light.b, minf(0.18, blur * 0.22)))
 	var recent := _buffalo_coin_lookup(_read_array(active.get("last_collected_coins", [])))
-	var coins := _buffalo_coin_lookup(_read_array(active.get("collected_coins", [])))
-	var reveal_lookup := _buffalo_coin_reveal_lookup(active, feature_msec)
+	var coins := locked_coin_lookup
+	var reveal_lookup := _buffalo_coin_reveal_index_lookup(active, feature_msec)
 	for key_value in coins.keys():
-		var key := str(key_value)
+		var key := int(key_value)
 		var coin: Dictionary = _read_dict(coins.get(key_value, {}))
 		var reel := int(coin.get("reel", 0))
 		var row := int(coin.get("row", 0))
@@ -2111,7 +2159,7 @@ func _draw_buffalo_free_games_reel_grid(surface, rect: Rect2, state: Dictionary,
 		var revealed := reveal.is_empty() or bool(reveal.get("revealed", false))
 		if not reveal.is_empty():
 			coin = reveal
-		var slam: bool = recent.has(key) or (not reveal.is_empty() and reveal.get("just_revealed", false) == true)
+		var slam: bool = recent.has(_cell_key(reel, row)) or (not reveal.is_empty() and reveal.get("just_revealed", false) == true)
 		_draw_buffalo_coin_cell(surface, cell_rect, coin, true, slam, accent, light, trim, revealed)
 
 
@@ -2129,11 +2177,32 @@ func _buffalo_coin_lookup(coins: Array) -> Dictionary:
 	return result
 
 
+func _buffalo_coin_index_lookup(coins: Array) -> Dictionary:
+	var result: Dictionary = {}
+	for coin_value in coins:
+		var coin: Dictionary = _read_dict(coin_value)
+		result[_cell_int_key(int(coin.get("reel", 0)), int(coin.get("row", 0)))] = coin
+	return result
+
+
 func _buffalo_coin_reveal_lookup(active: Dictionary, feature_msec: int) -> Dictionary:
 	var result: Dictionary = {}
 	for reveal_value in _read_array(active.get("coin_reveals", [])):
 		var reveal: Dictionary = _read_dict(reveal_value).duplicate(true)
 		var key := _cell_key(int(reveal.get("reel", 0)), int(reveal.get("row", 0)))
+		var start_msec := int(reveal.get("reveal_start_msec", 0))
+		var duration_msec := maxi(1, int(reveal.get("reveal_duration_msec", 320)))
+		reveal["revealed"] = feature_msec >= start_msec
+		reveal["just_revealed"] = feature_msec >= start_msec and feature_msec <= start_msec + duration_msec
+		result[key] = reveal
+	return result
+
+
+func _buffalo_coin_reveal_index_lookup(active: Dictionary, feature_msec: int) -> Dictionary:
+	var result: Dictionary = {}
+	for reveal_value in _read_array(active.get("coin_reveals", [])):
+		var reveal: Dictionary = _read_dict(reveal_value).duplicate(true)
+		var key := _cell_int_key(int(reveal.get("reel", 0)), int(reveal.get("row", 0)))
 		var start_msec := int(reveal.get("reveal_start_msec", 0))
 		var duration_msec := maxi(1, int(reveal.get("reveal_duration_msec", 320)))
 		reveal["revealed"] = feature_msec >= start_msec
@@ -2164,7 +2233,7 @@ func _draw_buffalo_coin_cell(surface, cell_rect: Rect2, coin: Dictionary, has_co
 	surface.draw_circle(center, radius, trim)
 	surface.draw_circle(center + Vector2(-radius * 0.30, -radius * 0.30), radius * 0.36, Color(1.0, 1.0, 1.0, 0.48))
 	surface.draw_circle(center, radius * 0.74, Color("#f8c94a"), false, 2)
-	var label := "$%d" % int(coin.get("value", 0)) if revealed else "?"
+	var label := "$" + str(int(coin.get("value", 0))) if revealed else "?"
 	var label_size := int(clampf(cell_rect.size.y * 0.22, 8.0, 18.0))
 	surface.surface_label_centered(label, cell_rect.grow(-2), label_size, Color("#130907"))
 	if slam:
@@ -2342,27 +2411,23 @@ func _draw_status_panel(surface, state: Dictionary, skin: Dictionary, accent: Co
 	var left := _rect_from_dict(skin.get("tease_panel", {}))
 	var right := _rect_from_dict(skin.get("feature_panel", {}))
 	_draw_panel(surface, left, "CREDITS", accent)
-	surface.surface_label("$%d" % int(state.get("bankroll", 0)), left.position + Vector2(14, 52), 18, light)
-	surface.surface_label("HEAT %d" % int(state.get("suspicion_level", 0)), left.position + Vector2(14, 80), 13, accent)
-	surface.surface_label("BET $%d" % int(state.get("slot_selected_bet", 10)), left.position + Vector2(14, 106), 13, trim)
+	surface.surface_label("$" + str(int(state.get("bankroll", 0))), left.position + Vector2(14, 52), 18, light)
+	surface.surface_label("HEAT " + str(int(state.get("suspicion_level", 0))), left.position + Vector2(14, 80), 13, accent)
+	surface.surface_label("BET $" + str(int(state.get("slot_selected_bet", 10))), left.position + Vector2(14, 106), 13, trim)
 	if bool(state.get("slot_nudge_available", false)):
 		var nudge_label := "COIN CHAIN" if bool(state.get("slot_nudge_chain_active", false)) else "NUDGE WINDOW" if bool(state.get("slot_nudge_tease_window_active", false)) else "NUDGE"
 		surface.surface_label(nudge_label, left.position + Vector2(14, 134), 13, Color("#ff3f75"))
 		var hint := str(state.get("slot_nudge_tease_outcome_hint", ""))
 		if bool(state.get("slot_nudge_chain_active", false)):
-			hint = "%d/%d BANK $%d" % [
-				int(state.get("slot_nudge_chain_collected_count", 0)),
-				_array_read_size(state.get("slot_nudge_chain_coins", [])),
-				int(state.get("slot_nudge_chain_banked_payout", 0)),
-			]
+			hint = str(int(state.get("slot_nudge_chain_collected_count", 0))) + "/" + str(_array_read_size(state.get("slot_nudge_chain_coins", []))) + " BANK $" + str(int(state.get("slot_nudge_chain_banked_payout", 0)))
 		if not hint.is_empty():
 			surface.surface_label(hint.to_upper().left(16), left.position + Vector2(14, 154), 10, trim)
 	_draw_panel(surface, right, "FEATURE", light)
 	var active: Dictionary = _read_dict(state.get("slot_active_bonus", {}))
 	if bool(active.get("active", false)) and not bool(active.get("complete", false)):
 		surface.surface_label(str(active.get("display_mode", active.get("mode", "bonus"))).replace("_", " ").to_upper().left(18), right.position + Vector2(14, 50), 12, light)
-		surface.surface_label("$%d" % int(active.get("feature_total", active.get("pending_award", 0))), right.position + Vector2(14, 78), 18, trim)
-		surface.surface_label("LEFT %d" % int(active.get("remaining_steps", 0)), right.position + Vector2(14, 106), 13, accent)
+		surface.surface_label("$" + str(int(active.get("feature_total", active.get("pending_award", 0)))), right.position + Vector2(14, 78), 18, trim)
+		surface.surface_label("LEFT " + str(int(active.get("remaining_steps", 0))), right.position + Vector2(14, 106), 13, accent)
 	else:
 		surface.surface_label(str(skin.get("feature_name", "")).to_upper().left(18), right.position + Vector2(14, 50), 12, trim)
 		surface.surface_label("READY", right.position + Vector2(14, 78), 16, light)
