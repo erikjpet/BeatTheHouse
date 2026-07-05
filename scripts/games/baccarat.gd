@@ -164,6 +164,7 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 		"surface_embeds_outcomes": true,
 		"surface_suppresses_game_result_burst": true,
 		"surface_animates_idle": surface_motion_active,
+		"surface_ambient_overlay": "" if surface_motion_active else "table_idle",
 		"surface_realtime_state_refresh": surface_motion_active,
 		"surface_state_labels": [
 			{"label": "Wager", "value": "$%d" % total_wager},

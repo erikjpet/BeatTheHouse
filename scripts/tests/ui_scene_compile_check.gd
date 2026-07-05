@@ -1575,6 +1575,46 @@ func _run() -> void:
 		push_error("Roulette idle overlay did not maintain a 60 FPS redraw cadence.")
 		quit(1)
 		return
+	var table_idle_canvas: Control = GameSurfaceCanvasScript.new()
+	root.add_child(table_idle_canvas)
+	table_idle_canvas.call("render_game_snapshot", {
+		"game_id": "baccarat",
+		"surface_renderer": "baccarat",
+		"surface_ambient_overlay": "table_idle",
+		"surface_animates_idle": false,
+		"reduce_motion": false,
+		"dealer_profile": {"attention_base": 24},
+		"dealer_attention_pressure": 6,
+		"suspicion_level": 0,
+		"patrons": [
+			{"name": "Seat 1", "snitch_risk": 22, "watching_player": true, "animation_offset": 0},
+			{"name": "Seat 2", "snitch_risk": 10, "watching_player": false, "animation_offset": 300},
+		],
+		"table_round_timer": {
+			"active": true,
+			"started_msec": Time.get_ticks_msec(),
+			"duration_msec": 12000,
+			"remaining_msec": 12000,
+		},
+	})
+	await process_frame
+	var table_idle_start_snapshot: Dictionary = table_idle_canvas.call("current_view_snapshot")
+	if not bool(table_idle_start_snapshot.get("surface_ambient_overlay_active", false)):
+		push_error("Table idle overlay was not active for a table_idle surface snapshot.")
+		quit(1)
+		return
+	if bool(table_idle_start_snapshot.get("surface_continuous_redraw_active", true)):
+		push_error("Table idle overlay should animate without full-surface continuous redraw.")
+		quit(1)
+		return
+	var table_overlay_redraw_start := int(table_idle_start_snapshot.get("surface_animation_redraw_count", 0))
+	for _table_overlay_frame in range(6):
+		table_idle_canvas.call("_process", 1.0 / 60.0)
+	var table_idle_end_snapshot: Dictionary = table_idle_canvas.call("current_view_snapshot")
+	if int(table_idle_end_snapshot.get("surface_animation_redraw_count", 0)) - table_overlay_redraw_start < 6:
+		push_error("Table idle overlay did not maintain a 60 FPS redraw cadence.")
+		quit(1)
+		return
 	var duplicate_input_canvas: Control = PixelSceneCanvasScript.new()
 	duplicate_input_canvas.size = Vector2(VisualStyleScript.ENVIRONMENT_BOARD_SIZE)
 	root.add_child(duplicate_input_canvas)

@@ -39,6 +39,18 @@ const SURFACE_ANIMATION_FPS := 60.0
 const SURFACE_ANIMATION_INTERVAL_SEC := 1.0 / SURFACE_ANIMATION_FPS
 const ROULETTE_WHEEL_CENTER := Vector2(150, 182)
 const ROULETTE_WHEEL_RADIUS := 108.0
+const TABLE_IDLE_PATRON_POSITIONS := [
+	Vector2(128, 176),
+	Vector2(272, 130),
+	Vector2(628, 130),
+	Vector2(772, 176),
+]
+const DICE_IDLE_PATRON_POSITIONS := [
+	Vector2(94, 84),
+	Vector2(236, 70),
+	Vector2(660, 70),
+	Vector2(808, 84),
+]
 const ROULETTE_RED_NUMBERS := {
 	"1": true, "3": true, "5": true, "7": true, "9": true, "12": true, "14": true, "16": true, "18": true,
 	"19": true, "21": true, "23": true, "25": true, "27": true, "30": true, "32": true, "34": true, "36": true,
@@ -691,7 +703,8 @@ func _update_ambient_surface_overlay() -> void:
 func _ambient_surface_overlay_active() -> bool:
 	if reduce_motion:
 		return false
-	if str(state.get("surface_ambient_overlay", "")) != "roulette_idle":
+	var overlay_id := str(state.get("surface_ambient_overlay", ""))
+	if overlay_id != "roulette_idle" and overlay_id != "table_idle":
 		return false
 	for channel_id in surface_animation_channels.keys():
 		if surface_animation_active(str(channel_id)):
@@ -707,8 +720,11 @@ func _draw_ambient_surface_overlay(canvas: Control) -> void:
 		return
 	var scale := _board_scale()
 	canvas.draw_set_transform(_board_offset(scale), 0.0, Vector2(scale, scale))
-	if str(state.get("surface_ambient_overlay", "")) == "roulette_idle":
-		_draw_roulette_idle_overlay(canvas)
+	match str(state.get("surface_ambient_overlay", "")):
+		"roulette_idle":
+			_draw_roulette_idle_overlay(canvas)
+		"table_idle":
+			_draw_table_idle_overlay(canvas)
 	canvas.draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
 	_record_draw_performance(draw_started_usec)
 
@@ -800,6 +816,68 @@ func _draw_overlay_character(canvas: Control, foot: Vector2, accent: Color, jack
 
 
 func _draw_roulette_idle_timer(canvas: Control) -> void:
+	_draw_idle_round_timer(canvas, Rect2(666, 314, 112, 24), C_CYAN)
+
+
+func _draw_table_idle_overlay(canvas: Control) -> void:
+	_draw_table_idle_dealer(canvas)
+	_draw_table_idle_patrons(canvas)
+	_draw_table_idle_timer(canvas)
+
+
+func _draw_table_idle_dealer(canvas: Control) -> void:
+	var rect := Rect2(352, 54, 196, 104)
+	var profile_value: Variant = state.get("dealer_profile", {})
+	var profile: Dictionary = profile_value as Dictionary if typeof(profile_value) == TYPE_DICTIONARY else {}
+	var base_attention := int(profile.get("attention_base", 24))
+	var heat := int(state.get("suspicion_level", 0))
+	var pressure := int(state.get("dealer_attention_pressure", 0))
+	var scan := int((0.5 + 0.5 * sin(flicker * 2.6)) * 18.0)
+	var attention := clampf(float(base_attention + pressure + scan) + float(heat) * 0.35, 0.0, 100.0) / 100.0
+	var accent := C_PINK if attention >= 0.70 else C_YELLOW if attention >= 0.42 else C_TEAL
+	var bob := sin(flicker * 2.9) * 1.4
+	canvas.draw_rect(rect, Color("#0b0d16"))
+	canvas.draw_rect(rect, Color(accent.r, accent.g, accent.b, 0.18), false, 1.0)
+	_draw_overlay_character(canvas, Vector2(450, 156 + bob), accent, Color("#1b2230"), Color("#2a1a25"), 1.04, 21)
+	var meter := Rect2(rect.position + Vector2(108, 58), Vector2(68, 6))
+	canvas.draw_rect(meter, Color("#070810"))
+	canvas.draw_rect(Rect2(meter.position, Vector2(meter.size.x * attention, meter.size.y)), accent)
+
+
+func _draw_table_idle_patrons(canvas: Control) -> void:
+	var patrons_value: Variant = state.get("patrons", [])
+	if typeof(patrons_value) != TYPE_ARRAY:
+		return
+	var patrons: Array = patrons_value as Array
+	var positions: Array = DICE_IDLE_PATRON_POSITIONS if str(state.get("surface_renderer", "")) == "dice_table" else TABLE_IDLE_PATRON_POSITIONS
+	for i in range(mini(patrons.size(), positions.size())):
+		if typeof(patrons[i]) != TYPE_DICTIONARY:
+			continue
+		var patron: Dictionary = patrons[i]
+		var base_pos: Vector2 = positions[i]
+		var watching := bool(patron.get("watching_player", patron.get("watching", false)))
+		var risk := clampf(float(int(patron.get("active_snitch_risk", patron.get("snitch_risk", 0)))) / 60.0, 0.0, 1.0)
+		var phase := flicker * 3.0 + float(int(patron.get("animation_offset", i * 217))) / 1000.0
+		var bob := sin(phase) * (2.0 if watching else 1.0)
+		var accent := C_PINK if watching else C_TEAL if risk > 0.45 else C_SOFT
+		var panel := Rect2(base_pos + Vector2(-42, -70), Vector2(84, 116))
+		canvas.draw_rect(panel, Color("#070810"))
+		canvas.draw_rect(panel, Color(accent.r, accent.g, accent.b, 0.12), false, 1.0)
+		_draw_overlay_character(canvas, base_pos + Vector2(0, 52 + bob), accent, _overlay_patron_jacket_color(patron), _overlay_patron_hair_color(patron), 0.86, i)
+		var risk_rect := Rect2(base_pos + Vector2(-28, 60), Vector2(56, 5))
+		canvas.draw_rect(risk_rect, Color("#030407"))
+		canvas.draw_rect(Rect2(risk_rect.position, Vector2(risk_rect.size.x * risk, risk_rect.size.y)), accent)
+
+
+func _draw_table_idle_timer(canvas: Control) -> void:
+	var renderer := str(state.get("surface_renderer", ""))
+	if renderer == "dice_table":
+		_draw_idle_round_timer(canvas, Rect2(752, 282, 116, 50), C_TEAL)
+	else:
+		_draw_idle_round_timer(canvas, Rect2(664, 314, 116, 26), C_CYAN)
+
+
+func _draw_idle_round_timer(canvas: Control, rect: Rect2, accent: Color) -> void:
 	var timer_value: Variant = state.get("table_round_timer", {})
 	if typeof(timer_value) != TYPE_DICTIONARY:
 		return
@@ -811,8 +889,7 @@ func _draw_roulette_idle_timer(canvas: Control) -> void:
 	var elapsed_msec := maxi(0, Time.get_ticks_msec() - started_msec) if started_msec > 0 else maxi(0, duration_msec - int(timer.get("remaining_msec", duration_msec)))
 	var remaining_msec := maxi(0, duration_msec - elapsed_msec)
 	var progress := clampf(float(elapsed_msec) / float(duration_msec), 0.0, 1.0)
-	var rect := Rect2(666, 314, 112, 24)
-	var color := C_PINK if remaining_msec <= 5000 else C_CYAN
+	var color := C_PINK if remaining_msec <= 5000 else accent
 	canvas.draw_rect(rect, Color("#0b0d16"))
 	canvas.draw_rect(rect, Color(color.r, color.g, color.b, 0.28), false, 1.0)
 	var bar_rect := Rect2(rect.position + Vector2(8, rect.size.y - 12.0), Vector2(maxf(1.0, rect.size.x - 16.0), 4.0))

@@ -8026,6 +8026,8 @@ func _check_baccarat_surface_contract(game: GameModule, failures: Array, library
 		failures.append("Baccarat betting surface did not expose realtime table-round timer state.")
 	if bool(surface.get("surface_realtime_state_refresh", false)):
 		failures.append("Baccarat static betting surface should not request full snapshot refreshes.")
+	if str(surface.get("surface_ambient_overlay", "")) != "table_idle":
+		failures.append("Baccarat static betting surface should keep table idle animation on the ambient overlay.")
 	var guide_explainer: Dictionary = surface.get("baccarat_explainer", {}) if typeof(surface.get("baccarat_explainer", {})) == TYPE_DICTIONARY else {}
 	if str(guide_explainer.get("mode", "")) != "guide" or str(guide_explainer.get("primary", "")).find("Bet Player") < 0:
 		failures.append("Baccarat betting surface did not expose a beginner-readable guide explainer.")
@@ -10881,6 +10883,8 @@ func _check_bar_dice_surface_contract(game: GameModule, failures: Array) -> void
 		failures.append("Bar Dice table surface did not expose timer/patron state.")
 	if bool(surface.get("surface_realtime_state_refresh", false)):
 		failures.append("Bar Dice static table surface should not request full snapshot refreshes.")
+	if str(surface.get("surface_ambient_overlay", "")) != "table_idle":
+		failures.append("Bar Dice static table surface should keep table idle animation on the ambient overlay.")
 	if bool(surface.get("surface_stake_controls_required", true)):
 		failures.append("Bar Dice should use its generated chip ladder instead of host stake controls.")
 	if (surface.get("player", []) as Array).size() != 5:
