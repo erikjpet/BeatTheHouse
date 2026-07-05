@@ -84,6 +84,8 @@ const SCALE_HARMONIC_MINOR := [0, 2, 3, 5, 7, 8, 11]
 const DEFAULT_PROGRESSION := [0, 5, 2, 6]
 const DEFAULT_MOTIF := [0, EMPTY_NOTE, 2, EMPTY_NOTE, 4, EMPTY_NOTE, 2, EMPTY_NOTE, 0, EMPTY_NOTE, 3, EMPTY_NOTE, 4, EMPTY_NOTE, 2, EMPTY_NOTE]
 
+static var _effect_property_name_cache: Dictionary = {}
+
 var audio_enabled: bool = true
 var audio_calm: bool = false
 
@@ -134,6 +136,8 @@ var _feature_mix_pending: Dictionary = {}
 var _feature_input_snapshot: Dictionary = {}
 var _feature_stinger_pending: Array = []
 var _feature_stinger_history: Array = []
+var _music_fx_runtime_bus_index := -1
+var _music_fx_runtime_indices: Dictionary = {}
 
 
 func _ready() -> void:
@@ -527,6 +531,24 @@ static func ensure_music_fx_bus_graph() -> Dictionary:
 	return music_fx_bus_graph_snapshot()
 
 
+func _ensure_music_fx_runtime_refs() -> int:
+	var current_bus_index := AudioServer.get_bus_index(MUSIC_BUS)
+	if _music_fx_runtime_bus_index >= 0 \
+			and current_bus_index == _music_fx_runtime_bus_index \
+			and AudioServer.get_bus_effect_count(_music_fx_runtime_bus_index) == MUSIC_FX_EFFECT_ORDER.size() \
+			and _music_fx_runtime_indices.size() == MUSIC_FX_EFFECT_ORDER.size():
+		return _music_fx_runtime_bus_index
+	var graph := ensure_music_fx_bus_graph()
+	_music_fx_runtime_bus_index = int(graph.get("bus_index", -1))
+	_music_fx_runtime_indices = {}
+	if _music_fx_runtime_bus_index < 0:
+		return -1
+	for key_value in MUSIC_FX_EFFECT_ORDER:
+		var key := str(key_value)
+		_music_fx_runtime_indices[key] = _music_fx_effect_index(_music_fx_runtime_bus_index, key)
+	return _music_fx_runtime_bus_index
+
+
 static func music_fx_bus_graph_snapshot() -> Dictionary:
 	var bus_index := AudioServer.get_bus_index(MUSIC_BUS)
 	var effects: Array = []
@@ -829,26 +851,27 @@ func _apply_feature_mix_pending_for_position(playback_position: float) -> void:
 
 
 func _apply_music_fx_vector(vector: Dictionary, _force: bool) -> void:
-	var graph := ensure_music_fx_bus_graph()
-	var bus_index := int(graph.get("bus_index", -1))
+	var bus_index := _ensure_music_fx_runtime_refs()
 	if bus_index < 0:
 		return
-	var low_pass_index := _music_fx_effect_index(bus_index, "low_pass")
-	var chorus_index := _music_fx_effect_index(bus_index, "chorus")
-	var distortion_index := _music_fx_effect_index(bus_index, "distortion")
-	var reverb_index := _music_fx_effect_index(bus_index, "reverb")
-	var compressor_index := _music_fx_effect_index(bus_index, "compressor")
-	var limiter_index := _music_fx_effect_index(bus_index, "limiter")
-	var public_vector := _music_fx_public_vector(vector)
 	var lowpass_amount := clampf(float(vector.get("lowpass_amount", 0.0)), 0.0, 1.0)
 	var chorus_depth := clampf(float(vector.get("chorus_depth", 0.0)), 0.0, 1.0)
 	var distortion_drive := clampf(float(vector.get("distortion_drive", 0.0)), 0.0, 1.0)
 	var reverb_wet := clampf(float(vector.get("reverb_wet", 0.0)), 0.0, 1.0)
+	var watch_tinge := clampf(float(vector.get("watch_tinge", 0.0)), 0.0, 1.0)
+	var compressor_pump := clampf(float(vector.get("compressor_pump", 0.0)), 0.0, 1.0)
+	var lowpass_cutoff_hz := snappedf(lerpf(18000.0, 4200.0, lowpass_amount), 0.01)
+	var lowpass_resonance := snappedf(0.18 + watch_tinge * 1.20, 0.001)
+	var compressor_threshold_db := snappedf(lerpf(-6.0, -22.0, compressor_pump), 0.001)
+	var compressor_ratio := snappedf(lerpf(2.0, 5.2, compressor_pump), 0.001)
+	var compressor_gain_db := snappedf(lerpf(0.0, 2.2, compressor_pump), 0.001)
+	var low_pass_index := int(_music_fx_runtime_indices.get("low_pass", -1))
 	if low_pass_index >= 0:
 		var effect := AudioServer.get_bus_effect(bus_index, low_pass_index)
-		_set_effect_property(effect, "cutoff_hz", float(public_vector.get("lowpass_cutoff_hz", 18000.0)))
-		_set_effect_property(effect, "resonance", float(public_vector.get("lowpass_resonance", 0.18)))
-		AudioServer.set_bus_effect_enabled(bus_index, low_pass_index, lowpass_amount > 0.012 or float(vector.get("watch_tinge", 0.0)) > 0.01)
+		_set_effect_property(effect, "cutoff_hz", lowpass_cutoff_hz)
+		_set_effect_property(effect, "resonance", lowpass_resonance)
+		AudioServer.set_bus_effect_enabled(bus_index, low_pass_index, lowpass_amount > 0.012 or watch_tinge > 0.01)
+	var chorus_index := int(_music_fx_runtime_indices.get("chorus", -1))
 	if chorus_index >= 0:
 		var effect := AudioServer.get_bus_effect(bus_index, chorus_index)
 		_set_effect_property(effect, "dry", 1.0)
@@ -861,6 +884,7 @@ func _apply_music_fx_vector(vector: Dictionary, _force: bool) -> void:
 		_set_effect_property(effect, "voice/2/depth_ms", 1.0 + chorus_depth * 7.0)
 		_set_effect_property(effect, "voice/2/level_db", -22.0 + chorus_depth * 7.0)
 		AudioServer.set_bus_effect_enabled(bus_index, chorus_index, chorus_depth > 0.012)
+	var distortion_index := int(_music_fx_runtime_indices.get("distortion", -1))
 	if distortion_index >= 0:
 		var effect := AudioServer.get_bus_effect(bus_index, distortion_index)
 		_set_effect_property(effect, "drive", distortion_drive)
@@ -868,23 +892,26 @@ func _apply_music_fx_vector(vector: Dictionary, _force: bool) -> void:
 		_set_effect_property(effect, "post_gain", -4.0 * distortion_drive)
 		_set_effect_property(effect, "keep_hf_hz", 7200.0)
 		AudioServer.set_bus_effect_enabled(bus_index, distortion_index, distortion_drive > 0.012)
+	var reverb_index := int(_music_fx_runtime_indices.get("reverb", -1))
 	if reverb_index >= 0:
 		var effect := AudioServer.get_bus_effect(bus_index, reverb_index)
-		_set_effect_property(effect, "room_size", float(public_vector.get("reverb_size", 0.22)))
-		_set_effect_property(effect, "damping", float(public_vector.get("reverb_damping", 0.72)))
+		_set_effect_property(effect, "room_size", snappedf(clampf(float(vector.get("reverb_size", 0.22)), 0.0, 1.0), 0.0001))
+		_set_effect_property(effect, "damping", snappedf(clampf(float(vector.get("reverb_damping", 0.72)), 0.0, 1.0), 0.0001))
 		_set_effect_property(effect, "wet", reverb_wet)
 		_set_effect_property(effect, "dry", 1.0)
 		_set_effect_property(effect, "spread", 0.42)
 		AudioServer.set_bus_effect_enabled(bus_index, reverb_index, reverb_wet > 0.008)
+	var compressor_index := int(_music_fx_runtime_indices.get("compressor", -1))
 	if compressor_index >= 0:
 		var effect := AudioServer.get_bus_effect(bus_index, compressor_index)
-		_set_effect_property(effect, "threshold", float(public_vector.get("compressor_threshold_db", -6.0)))
-		_set_effect_property(effect, "ratio", float(public_vector.get("compressor_ratio", 2.0)))
-		_set_effect_property(effect, "gain", float(public_vector.get("compressor_gain_db", 0.0)))
+		_set_effect_property(effect, "threshold", compressor_threshold_db)
+		_set_effect_property(effect, "ratio", compressor_ratio)
+		_set_effect_property(effect, "gain", compressor_gain_db)
 		_set_effect_property(effect, "attack_us", 8500.0)
 		_set_effect_property(effect, "release_ms", 220.0)
 		_set_effect_property(effect, "mix", 1.0)
 		AudioServer.set_bus_effect_enabled(bus_index, compressor_index, true)
+	var limiter_index := int(_music_fx_runtime_indices.get("limiter", -1))
 	if limiter_index >= 0:
 		var effect := AudioServer.get_bus_effect(bus_index, limiter_index)
 		_set_effect_property(effect, "ceiling_db", -0.5)
@@ -3505,10 +3532,15 @@ static func _gain_to_db(gain: float) -> float:
 static func _set_effect_property(effect: AudioEffect, property_name: String, value: Variant) -> void:
 	if effect == null:
 		return
-	for property_value in effect.get_property_list():
-		if typeof(property_value) == TYPE_DICTIONARY and str((property_value as Dictionary).get("name", "")) == property_name:
-			effect.set(property_name, value)
-			return
+	var effect_class := effect.get_class()
+	var property_names: Dictionary = _effect_property_name_cache.get(effect_class, {})
+	if property_names.is_empty():
+		for property_value in effect.get_property_list():
+			if typeof(property_value) == TYPE_DICTIONARY:
+				property_names[str((property_value as Dictionary).get("name", ""))] = true
+		_effect_property_name_cache[effect_class] = property_names
+	if bool(property_names.get(property_name, false)):
+		effect.set(property_name, value)
 
 
 static func _copy_dict_static(value: Variant) -> Dictionary:

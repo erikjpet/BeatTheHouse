@@ -6,6 +6,7 @@ extends Control
 
 const SlotStateScript := preload("res://scripts/games/slots/slot_machine_state.gd")
 const SlotPinballScript := preload("res://scripts/games/slots/slot_family_pinball.gd")
+const WebAudioBridgeScript := preload("res://scripts/ui/web_audio_bridge.gd")
 
 const REQUIRED_GAME_IDS := [
 	"pull_tabs",
@@ -116,6 +117,8 @@ func configure(owner: FoundationMain) -> void:
 		call_deferred("_run_la1_plan")
 	elif plan_id == "la5":
 		call_deferred("_run_la5_plan")
+	elif plan_id == "la6":
+		call_deferred("_run_la6_plan")
 
 
 func _process(delta: float) -> void:
@@ -267,6 +270,40 @@ func _run_la5_plan() -> void:
 	_force_drunk_distortion_level(72)
 	await _wait_frames(8)
 	await _measure_scenario("la5_game_drunk_distortion", {"surface": "slot", "mode": "drunk_distortion"}, scenario_frames)
+	l02_driver_complete = true
+	dump_report()
+	if auto_quit:
+		get_tree().quit()
+
+
+func _run_la6_plan() -> void:
+	if l02_driver_started:
+		return
+	l02_driver_started = true
+	await _wait_frames(8)
+	_end_scenario()
+	if app == null:
+		mark_event("la6_missing_app")
+		dump_report()
+		if auto_quit:
+			get_tree().quit()
+		return
+	WebAudioBridgeScript.reset_debug_stats()
+	app.start_foundation_run("LA6-WEB-AUDIO")
+	await _wait_frames(20)
+	var music_player: ProceduralMusicPlayer = app.get("procedural_music_player") as ProceduralMusicPlayer
+	if music_player != null:
+		music_player.web_audio_user_gesture()
+		var run_state: RunState = app.get("run_state") as RunState
+		if run_state != null:
+			music_player.refresh_after_web_audio_unlock(run_state.current_environment, run_state.suspicion_level(), app.music_fx_state_snapshot())
+	await _wait_frames(8)
+	for index in range(24):
+		var cue_id := "roulette_chip_place" if index % 3 == 0 else "blackjack_card" if index % 3 == 1 else "bonus_start_pinball"
+		app.call("_play_environment_audio_cue", cue_id, -4.0)
+		await _wait_frames(2)
+	await _measure_scenario("la6_audio_unlocked_idle", {"surface": "environment", "mode": "audio"}, scenario_frames)
+	mark_event("la6_web_audio_bridge_stats", WebAudioBridgeScript.debug_stats())
 	l02_driver_complete = true
 	dump_report()
 	if auto_quit:

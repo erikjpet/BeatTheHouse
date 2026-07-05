@@ -45,6 +45,8 @@ const ROULETTE_PREWARM_EVENTS := [
 	"roulette_dolly_tap",
 	"roulette_payout",
 ]
+const ROULETTE_RIM_TIMES := [0.42, 0.82, 1.26, 1.78, 2.34, 2.94, 3.32]
+const ROULETTE_SCATTER_TIMES := [3.66, 3.86, 4.08, 4.32]
 const MUSIC_DIRECTOR_CUES := {
 	"bonus_music_buffalo": true,
 	"bonus_music_pinball": true,
@@ -121,6 +123,7 @@ var _roulette_payout_id: String = ""
 var _baccarat_deal_id: String = ""
 var _baccarat_payout_id: String = ""
 var _played_markers: Dictionary = {}
+var _normalized_event_cache: Dictionary = {}
 
 
 func _ready() -> void:
@@ -556,21 +559,19 @@ func sync_roulette_state(surface_state: Dictionary, spin_elapsed: float, spin_an
 		if spin_elapsed >= 3.42:
 			_stop_reel_loop()
 		_trigger("roulette_spin_start_%s" % spin_active_id, spin_elapsed >= 0.02, "roulette_rotor_launch", -2.4, 0.96)
-		var rim_times := [0.42, 0.82, 1.26, 1.78, 2.34, 2.94, 3.32]
-		for i in range(rim_times.size()):
+		for i in range(ROULETTE_RIM_TIMES.size()):
 			_trigger(
 				"roulette_spin_rim_%s_%d" % [spin_active_id, i],
-				spin_elapsed >= float(rim_times[i]),
+				spin_elapsed >= float(ROULETTE_RIM_TIMES[i]),
 				"roulette_ball_rim_tick",
 				-8.8 + float(i) * 0.25,
 				1.18 - float(i) * 0.035
 			)
 		_trigger("roulette_spin_ball_drop_%s" % spin_active_id, spin_elapsed >= 3.36, "roulette_ball_drop", -5.4, 0.98)
-		var scatter_times := [3.66, 3.86, 4.08, 4.32]
-		for i in range(scatter_times.size()):
+		for i in range(ROULETTE_SCATTER_TIMES.size()):
 			_trigger(
 				"roulette_spin_ball_scatter_%s_%d" % [spin_active_id, i],
-				spin_elapsed >= float(scatter_times[i]),
+				spin_elapsed >= float(ROULETTE_SCATTER_TIMES[i]),
 				"roulette_ball_scatter",
 				-4.8 + float(i) * 0.35,
 				1.02 - float(i) * 0.045
@@ -1058,6 +1059,17 @@ func _event_stream(event_id: String) -> AudioStreamWAV:
 
 
 func _normalized_event_id(event_id: String) -> String:
+	var cached: Variant = _normalized_event_cache.get(event_id)
+	if typeof(cached) == TYPE_STRING:
+		return str(cached)
+	var normalized := _normalized_event_id_uncached(event_id)
+	if _normalized_event_cache.size() > 512:
+		_normalized_event_cache.clear()
+	_normalized_event_cache[event_id] = normalized
+	return normalized
+
+
+func _normalized_event_id_uncached(event_id: String) -> String:
 	var family_event := event_id.strip_edges()
 	if family_event.begins_with("classic_pinball_mechanical_"):
 		return _normalized_family_event(family_event, {

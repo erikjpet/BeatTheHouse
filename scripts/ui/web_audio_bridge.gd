@@ -1,6 +1,11 @@
 class_name WebAudioBridge
 extends RefCounted
 
+static var _ensured := false
+static var _last_music_payload_key := ""
+static var _eval_counts: Dictionary = {}
+static var _eval_bytes := 0
+
 const WEB_AUDIO_SCRIPT := """
 (function () {
 	if (window.BTHWebAudio) {
@@ -230,20 +235,38 @@ static func available() -> bool:
 static func ensure() -> void:
 	if not available():
 		return
+	if _ensured:
+		return
+	_record_eval("ensure", WEB_AUDIO_SCRIPT.length())
 	JavaScriptBridge.eval(WEB_AUDIO_SCRIPT, true)
+	_ensured = true
 
 
 static func unlock() -> void:
 	if not available():
 		return
 	ensure()
-	JavaScriptBridge.eval("window.BTHWebAudio && window.BTHWebAudio.unlock();", true)
+	_last_music_payload_key = ""
+	var source := "window.BTHWebAudio && window.BTHWebAudio.unlock();"
+	_record_eval("unlock", source.length())
+	JavaScriptBridge.eval(source, true)
 
 
 static func play_music(profile: Dictionary, music_state: Dictionary) -> void:
 	if not available():
 		return
 	ensure()
+	var payload_key := "%s|%s|%s|%d|%d|%s" % [
+		str(profile.get("environment_id", "")),
+		str(profile.get("theme", "")),
+		str(profile.get("palette_id", "")),
+		int(music_state.get("heat", music_state.get("suspicion_level", 0))),
+		int(music_state.get("drunk_level", 0)),
+		str(bool(music_state.get("watched", false)) or bool(music_state.get("watch_active", false))),
+	]
+	if payload_key == _last_music_payload_key:
+		_record_eval("play_music_skipped", 0)
+		return
 	var payload := {
 		"environment_id": str(profile.get("environment_id", "")),
 		"theme": str(profile.get("theme", "")),
@@ -252,14 +275,20 @@ static func play_music(profile: Dictionary, music_state: Dictionary) -> void:
 		"drunk_level": int(music_state.get("drunk_level", 0)),
 		"watched": bool(music_state.get("watched", false)) or bool(music_state.get("watch_active", false)),
 	}
-	JavaScriptBridge.eval("window.BTHWebAudio && window.BTHWebAudio.playMusic(%s);" % JSON.stringify(payload), true)
+	var source := "window.BTHWebAudio && window.BTHWebAudio.playMusic(%s);" % JSON.stringify(payload)
+	_record_eval("play_music", source.length())
+	JavaScriptBridge.eval(source, true)
+	_last_music_payload_key = payload_key
 
 
 static func stop_music() -> void:
 	if not available():
 		return
 	ensure()
-	JavaScriptBridge.eval("window.BTHWebAudio && window.BTHWebAudio.stopMusic();", true)
+	_last_music_payload_key = ""
+	var source := "window.BTHWebAudio && window.BTHWebAudio.stopMusic();"
+	_record_eval("stop_music", source.length())
+	JavaScriptBridge.eval(source, true)
 
 
 static func play_sfx(cue_id: String, volume_db: float = 0.0, pitch: float = 1.0) -> void:
@@ -271,4 +300,26 @@ static func play_sfx(cue_id: String, volume_db: float = 0.0, pitch: float = 1.0)
 		"volume_db": volume_db,
 		"pitch": pitch,
 	}
-	JavaScriptBridge.eval("window.BTHWebAudio && window.BTHWebAudio.sfx(%s);" % JSON.stringify(payload), true)
+	var source := "window.BTHWebAudio && window.BTHWebAudio.sfx(%s);" % JSON.stringify(payload)
+	_record_eval("sfx", source.length())
+	JavaScriptBridge.eval(source, true)
+
+
+static func reset_debug_stats() -> void:
+	_eval_counts = {}
+	_eval_bytes = 0
+	_last_music_payload_key = ""
+
+
+static func debug_stats() -> Dictionary:
+	return {
+		"available": available(),
+		"ensured": _ensured,
+		"eval_counts": _eval_counts.duplicate(true),
+		"eval_bytes": _eval_bytes,
+	}
+
+
+static func _record_eval(kind: String, byte_count: int) -> void:
+	_eval_counts[kind] = int(_eval_counts.get(kind, 0)) + 1
+	_eval_bytes += maxi(0, byte_count)
