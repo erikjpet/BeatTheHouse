@@ -96,6 +96,7 @@ var _shader_material: ShaderMaterial
 var _drunk_level: int = 0
 var _intensity: float = 0.0
 var _ui_protected_rects: Array = []
+var _ui_protected_rect_signature := ""
 var _reduce_motion := false
 
 
@@ -135,16 +136,23 @@ func set_reduce_motion(enabled: bool) -> void:
 
 
 func set_ui_protected_rects(rects: Array) -> void:
-	_ui_protected_rects = []
+	var next_rects: Array = []
+	var parts: Array[String] = []
 	for rect_value in rects:
 		if typeof(rect_value) != TYPE_RECT2:
 			continue
 		var rect: Rect2 = rect_value
 		if rect.size.x <= 0.0 or rect.size.y <= 0.0:
 			continue
-		_ui_protected_rects.append(rect)
-		if _ui_protected_rects.size() >= MAX_UI_PROTECTED_RECTS:
+		next_rects.append(rect)
+		parts.append("%.1f,%.1f,%.1f,%.1f" % [rect.position.x, rect.position.y, rect.size.x, rect.size.y])
+		if next_rects.size() >= MAX_UI_PROTECTED_RECTS:
 			break
+	var next_signature := "|".join(parts)
+	if next_signature == _ui_protected_rect_signature:
+		return
+	_ui_protected_rect_signature = next_signature
+	_ui_protected_rects = next_rects
 	_apply_ui_protected_rects()
 
 

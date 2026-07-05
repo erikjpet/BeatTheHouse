@@ -97,6 +97,11 @@ var camera_focus_active := false
 var camera_target_dirty := true
 var camera_target_refresh_count := 0
 var item_icon_texture_cache: Dictionary = {}
+var icon_sprite_texture_cache: Dictionary = {}
+var scene_objects_by_id_cache: Dictionary = {}
+var draw_text_width_cache: Dictionary = {}
+var fit_draw_text_cache: Dictionary = {}
+var object_animation_phase_cache: Dictionary = {}
 var drunk_distortion_overlay: DrunkDistortionOverlay
 var drunk_effect_mode: String = "distortion"
 var last_mouse_press_msec: int = -100000
@@ -135,6 +140,9 @@ func render_environment_snapshot(snapshot: Dictionary) -> void:
 	drunk_effect_mode = _normalized_drunk_effect_mode(str(foundation_snapshot.get("drunk_effect_mode", drunk_effect_mode)))
 	_update_drunk_distortion_overlay()
 	foundation_scene_objects = _objects_from_foundation_snapshot(foundation_snapshot)
+	_rebuild_scene_object_cache()
+	_clear_draw_text_caches()
+	icon_sprite_texture_cache = {}
 	if not selected_object_id.is_empty() and _scene_object(selected_object_id).is_empty():
 		selected_object_id = ""
 	if not hovered_object_id.is_empty() and _scene_object(hovered_object_id).is_empty():
@@ -1310,6 +1318,17 @@ func _active_scene_objects() -> Array:
 	return scene_objects
 
 
+func _rebuild_scene_object_cache() -> void:
+	scene_objects_by_id_cache = {}
+	for object_value in _active_scene_objects():
+		if typeof(object_value) != TYPE_DICTIONARY:
+			continue
+		var object_data: Dictionary = object_value
+		var object_id := str(object_data.get("id", ""))
+		if not object_id.is_empty():
+			scene_objects_by_id_cache[object_id] = object_data
+
+
 func _objects_from_foundation_snapshot(snapshot: Dictionary) -> Array:
 	var interactable_objects: Array = snapshot.get("interactable_objects", [])
 	if not interactable_objects.is_empty():
@@ -1513,6 +1532,12 @@ func _copy_array(value: Variant) -> Array:
 	return (value as Array).duplicate(true)
 
 
+func _array_view(value: Variant) -> Array:
+	if typeof(value) != TYPE_ARRAY:
+		return []
+	return value as Array
+
+
 func _copy_dictionary(value: Variant) -> Dictionary:
 	if typeof(value) != TYPE_DICTIONARY:
 		return {}
@@ -1520,9 +1545,13 @@ func _copy_dictionary(value: Variant) -> Dictionary:
 
 
 func _scene_object(object_id: String) -> Dictionary:
+	if scene_objects_by_id_cache.has(object_id):
+		var cached_value: Variant = scene_objects_by_id_cache.get(object_id, {})
+		if typeof(cached_value) == TYPE_DICTIONARY:
+			return cached_value as Dictionary
 	for object_data in _active_scene_objects():
 		if typeof(object_data) == TYPE_DICTIONARY and str((object_data as Dictionary).get("id", "")) == object_id:
-			return (object_data as Dictionary).duplicate(true)
+			return object_data as Dictionary
 	return {}
 
 
@@ -1719,15 +1748,34 @@ func _fit_draw_text(text: String, font: Font, font_size: int, max_width: float) 
 	var compact := text.replace("\n", " ").replace("\t", " ").strip_edges()
 	while compact.find("  ") != -1:
 		compact = compact.replace("  ", " ")
-	if font == null or compact.is_empty() or font.get_string_size(compact, HORIZONTAL_ALIGNMENT_LEFT, -1.0, font_size).x <= max_width:
-		return compact
-	var available := compact.length()
-	while available > 0:
-		var candidate := compact.left(available).strip_edges()
-		if font.get_string_size(candidate, HORIZONTAL_ALIGNMENT_LEFT, -1.0, font_size).x <= max_width:
-			return candidate
-		available -= 1
-	return ""
+	var cache_key := _fit_draw_text_cache_key(compact, font, font_size, max_width)
+	if fit_draw_text_cache.has(cache_key):
+		return str(fit_draw_text_cache.get(cache_key, compact))
+	var fitted := compact
+	if font != null and not compact.is_empty() and _draw_text_width(compact, font, font_size) > max_width:
+		fitted = ""
+		var available := compact.length()
+		while available > 0:
+			var candidate := compact.left(available).strip_edges()
+			if _draw_text_width(candidate, font, font_size) <= max_width:
+				fitted = candidate
+				break
+			available -= 1
+	_store_fit_draw_text(cache_key, fitted)
+	return fitted
+
+
+func _fit_draw_text_cache_key(text: String, font: Font, font_size: int, max_width: float) -> String:
+	var font_id := 0
+	if font != null:
+		font_id = int(font.get_instance_id())
+	return "%d|%d|%.1f|%s" % [font_id, font_size, max_width, text]
+
+
+func _store_fit_draw_text(cache_key: String, value: String) -> void:
+	if fit_draw_text_cache.size() > 1024:
+		fit_draw_text_cache.clear()
+	fit_draw_text_cache[cache_key] = value
 
 
 func _selected_info_has_action_button(object_data: Dictionary) -> bool:
@@ -1745,7 +1793,7 @@ func _selected_info_has_single_action_button(object_data: Dictionary) -> bool:
 		return false
 	if not str(object_data.get("confirm_action_id", "")).strip_edges().is_empty():
 		return true
-	return not _copy_array(object_data.get("available_actions", [])).is_empty()
+	return not _array_view(object_data.get("available_actions", [])).is_empty()
 
 
 func _selected_info_inline_actions(object_data: Dictionary) -> Array:
@@ -1755,7 +1803,7 @@ func _selected_info_inline_actions(object_data: Dictionary) -> Array:
 		return []
 	if bool(object_data.get("disabled", false)):
 		return []
-	var actions := _copy_array(object_data.get("inline_actions", []))
+	var actions := _array_view(object_data.get("inline_actions", []))
 	var result: Array = []
 	for action in actions:
 		if typeof(action) != TYPE_DICTIONARY:
@@ -1765,7 +1813,7 @@ func _selected_info_inline_actions(object_data: Dictionary) -> Array:
 		var emit_object_id := str(action_data.get("emit_object_id", action_data.get("id", ""))).strip_edges()
 		if label.is_empty() or emit_object_id.is_empty():
 			continue
-		result.append(action_data.duplicate(true))
+		result.append(action_data)
 		if result.size() >= OBJECT_INFO_INLINE_ACTION_MAX:
 			break
 	return result
@@ -1788,7 +1836,7 @@ func _selected_info_action_label(object_data: Dictionary) -> String:
 	if not inline_actions.is_empty() and typeof(inline_actions[0]) == TYPE_DICTIONARY:
 		return str((inline_actions[0] as Dictionary).get("label", "")).strip_edges().capitalize()
 	var action_id := str(object_data.get("confirm_action_id", "")).strip_edges()
-	var actions := _copy_array(object_data.get("available_actions", []))
+	var actions := _array_view(object_data.get("available_actions", []))
 	var label := ""
 	if not actions.is_empty() and typeof(actions[0]) == TYPE_DICTIONARY:
 		label = str((actions[0] as Dictionary).get("label", "")).strip_edges()
@@ -1940,7 +1988,7 @@ func _selected_info_action_entry_at_local_position(local_position: Vector2) -> D
 	var info := _selected_object_info()
 	if info.is_empty():
 		return {}
-	var visual_info := info.duplicate(true)
+	var visual_info := info.duplicate(false)
 	visual_info["rect"] = _animated_info_card_rect(info)
 	var board_position := _local_to_board_position(local_position)
 	for entry in _selected_info_action_entries_from_info(visual_info):
@@ -2094,7 +2142,19 @@ func _object_info_type_width(type_text: String, font: Font) -> float:
 func _draw_text_width(text: String, font: Font, font_size: int) -> float:
 	if font == null or text.is_empty():
 		return float(text.length()) * float(font_size) * 0.58
-	return font.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1.0, font_size).x
+	var cache_key := "%d|%d|%s" % [int(font.get_instance_id()), font_size, text]
+	if draw_text_width_cache.has(cache_key):
+		return float(draw_text_width_cache.get(cache_key, 0.0))
+	var width := font.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1.0, font_size).x
+	if draw_text_width_cache.size() > 1024:
+		draw_text_width_cache.clear()
+	draw_text_width_cache[cache_key] = width
+	return width
+
+
+func _clear_draw_text_caches() -> void:
+	draw_text_width_cache = {}
+	fit_draw_text_cache = {}
 
 
 func _clamp_rect_to_visible(rect: Rect2, visible_rect: Rect2) -> Rect2:
@@ -2338,7 +2398,7 @@ func _board_rect_to_local_rect(board_rect: Rect2) -> Rect2:
 
 
 func _update_drunk_distortion_protected_rects() -> void:
-	if drunk_distortion_overlay == null:
+	if drunk_distortion_overlay == null or not drunk_distortion_overlay.visible:
 		return
 	var protected_rects: Array = []
 	var selected_info := _selected_object_info()
@@ -2570,11 +2630,35 @@ func _draw_live_sprite_icon(icon_sprite: Dictionary, icon_rect: Rect2, object_da
 	var bob := sin(flicker * (2.0 + fposmod(phase, 0.7)) + phase) * (1.1 if selected else 0.55)
 	var live_rect := Rect2(icon_rect.position + Vector2(0.0, bob), icon_rect.size)
 	_draw_live_icon_backdrop(live_rect, accent, phase, selected, disabled)
+	var sprite_texture := _texture_for_icon_sprite(icon_sprite, object_data, accent, maxi(1, roundi(maxf(live_rect.size.x, live_rect.size.y))))
 	if _icon_glitch_active(phase) and not disabled:
-		IconSpriteRendererScript.draw_canvas(self, icon_sprite, Rect2(live_rect.position + Vector2(2.0, 0.0), live_rect.size), C_PINK)
-		IconSpriteRendererScript.draw_canvas(self, icon_sprite, Rect2(live_rect.position + Vector2(-2.0, 1.0), live_rect.size), C_CYAN)
-	IconSpriteRendererScript.draw_canvas(self, icon_sprite, live_rect, accent)
+		var pink_texture := _texture_for_icon_sprite(icon_sprite, object_data, C_PINK, maxi(1, roundi(maxf(live_rect.size.x, live_rect.size.y))))
+		var cyan_texture := _texture_for_icon_sprite(icon_sprite, object_data, C_CYAN, maxi(1, roundi(maxf(live_rect.size.x, live_rect.size.y))))
+		if pink_texture != null:
+			draw_texture_rect(pink_texture, Rect2(live_rect.position + Vector2(2.0, 0.0), live_rect.size), false, Color(1.0, 1.0, 1.0, 0.72))
+		if cyan_texture != null:
+			draw_texture_rect(cyan_texture, Rect2(live_rect.position + Vector2(-2.0, 1.0), live_rect.size), false, Color(1.0, 1.0, 1.0, 0.66))
+	if sprite_texture != null:
+		draw_texture_rect(sprite_texture, live_rect, false, Color(1.0, 1.0, 1.0, 0.42 if disabled else 1.0))
+	else:
+		IconSpriteRendererScript.draw_canvas(self, icon_sprite, live_rect, accent)
 	_draw_live_icon_overlay(live_rect, accent, phase, selected, disabled)
+
+
+func _texture_for_icon_sprite(icon_sprite: Dictionary, object_data: Dictionary, accent: Color, texture_size: int) -> Texture2D:
+	if icon_sprite.is_empty():
+		return null
+	var object_id := str(object_data.get("id", object_data.get("source_id", object_data.get("icon_key", "")))).strip_edges()
+	if object_id.is_empty():
+		object_id = "sprite"
+	var cache_key := "%s|%s|%d" % [object_id, accent.to_html(true), texture_size]
+	if icon_sprite_texture_cache.has(cache_key):
+		return icon_sprite_texture_cache[cache_key] as Texture2D
+	var texture := IconSpriteRendererScript.texture(icon_sprite, texture_size, accent, false)
+	if icon_sprite_texture_cache.size() > 256:
+		icon_sprite_texture_cache.clear()
+	icon_sprite_texture_cache[cache_key] = texture
+	return texture
 
 
 func _draw_live_icon_backdrop(icon_rect: Rect2, accent: Color, phase: float, selected: bool, disabled: bool) -> void:
@@ -2614,10 +2698,16 @@ func _object_animation_phase(object_data: Dictionary) -> float:
 	var key := str(object_data.get("id", object_data.get("source_id", object_data.get("icon_key", ""))))
 	if key.is_empty():
 		key = str(object_data)
+	if object_animation_phase_cache.has(key):
+		return float(object_animation_phase_cache.get(key, 0.0))
 	var hash_value := 17
 	for i in range(key.length()):
 		hash_value = int(fposmod(float(hash_value * 31 + key.unicode_at(i)), 9973.0))
-	return float(hash_value) * 0.013
+	var phase := float(hash_value) * 0.013
+	if object_animation_phase_cache.size() > 512:
+		object_animation_phase_cache.clear()
+	object_animation_phase_cache[key] = phase
+	return phase
 
 
 func _draw_item_prop(rect: Rect2, object_data: Dictionary, selected: bool, surface: String) -> void:
@@ -2763,7 +2853,12 @@ func _draw_travel_prop(rect: Rect2, object_data: Dictionary, selected: bool) -> 
 			_draw_travel_ride(rect, accent)
 		_:
 			_draw_travel_arrow(rect, accent)
-	IconSpriteRendererScript.draw_canvas(self, object_data.get("icon_sprite", {}), _centered_icon_rect(rect, 30.0, Vector2(rect.size.x * 0.22, -rect.size.y * 0.20)), accent)
+	var travel_icon := _centered_icon_rect(rect, 30.0, Vector2(rect.size.x * 0.22, -rect.size.y * 0.20))
+	var travel_icon_texture := _texture_for_icon_sprite(object_data.get("icon_sprite", {}), object_data, accent, 30)
+	if travel_icon_texture != null:
+		draw_texture_rect(travel_icon_texture, travel_icon, false)
+	else:
+		IconSpriteRendererScript.draw_canvas(self, object_data.get("icon_sprite", {}), travel_icon, accent)
 
 
 func _draw_travel_door(rect: Rect2, accent: Color) -> void:

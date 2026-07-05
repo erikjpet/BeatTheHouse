@@ -114,6 +114,8 @@ func configure(owner: FoundationMain) -> void:
 		call_deferred("_run_l02_plan")
 	elif plan_id == "la1":
 		call_deferred("_run_la1_plan")
+	elif plan_id == "la5":
+		call_deferred("_run_la5_plan")
 
 
 func _process(delta: float) -> void:
@@ -241,6 +243,45 @@ func _run_la1_plan() -> void:
 	dump_report()
 	if auto_quit:
 		get_tree().quit()
+
+
+func _run_la5_plan() -> void:
+	if l02_driver_started:
+		return
+	l02_driver_started = true
+	await _wait_frames(8)
+	_end_scenario()
+	if app == null:
+		mark_event("la5_missing_app")
+		dump_report()
+		if auto_quit:
+			get_tree().quit()
+		return
+	app.start_foundation_run("LA5-DRUNK-ENV")
+	await _wait_frames(20)
+	_force_drunk_distortion_level(72)
+	await _wait_frames(8)
+	await _measure_scenario("la5_environment_drunk_distortion", {"surface": "environment", "mode": "drunk_distortion"}, scenario_frames)
+	app.start_game_test_session("slot")
+	await _wait_frames(12)
+	_force_drunk_distortion_level(72)
+	await _wait_frames(8)
+	await _measure_scenario("la5_game_drunk_distortion", {"surface": "slot", "mode": "drunk_distortion"}, scenario_frames)
+	l02_driver_complete = true
+	dump_report()
+	if auto_quit:
+		get_tree().quit()
+
+
+func _force_drunk_distortion_level(level: int) -> void:
+	if app == null:
+		return
+	var run_state: RunState = app.get("run_state") as RunState
+	if run_state == null:
+		return
+	run_state.change_pending_drunk_absorption(-run_state.pending_drunk_absorption_amount())
+	run_state.change_drunk(clampi(level, 0, RunState.ALCOHOL_MAX) - run_state.drunk_level)
+	app.call("_refresh")
 
 
 func _measure_game(game_id: String) -> void:

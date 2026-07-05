@@ -9,14 +9,15 @@ const VisualStyleScript := preload("res://scripts/ui/visual_style.gd")
 const SPRITE_UNIT := 32.0
 
 
-static func texture(sprite: Dictionary, size: int = 32, accent: Color = VisualStyleScript.CYAN) -> Texture2D:
-	return ImageTexture.create_from_image(image(sprite, size, accent))
+static func texture(sprite: Dictionary, size: int = 32, accent: Color = VisualStyleScript.CYAN, include_frame: bool = true) -> Texture2D:
+	return ImageTexture.create_from_image(image(sprite, size, accent, include_frame))
 
 
-static func image(sprite: Dictionary, size: int = 32, accent: Color = VisualStyleScript.CYAN) -> Image:
+static func image(sprite: Dictionary, size: int = 32, accent: Color = VisualStyleScript.CYAN, include_frame: bool = true) -> Image:
 	var image := Image.create(size, size, false, Image.FORMAT_RGBA8)
 	image.fill(Color(0, 0, 0, 0))
-	_draw_image_frame(image, sprite, accent)
+	if include_frame:
+		_draw_image_frame(image, sprite, accent)
 	for shape in sprite.get("shapes", []):
 		_draw_image_shape(image, shape as Dictionary, accent)
 	return image

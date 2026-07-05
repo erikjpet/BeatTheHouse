@@ -13,6 +13,7 @@ var snapshot: Dictionary = {}
 var icon_texture_cache: Dictionary = {}
 var background_texture_cache: Dictionary = {}
 var nodes_by_id_cache: Dictionary = {}
+var node_screen_position_cache: Dictionary = {}
 var map_view_bounds_cache := Rect2(Vector2.ZERO, Vector2.ONE)
 var travel_edge_ids_cache: Array = []
 var enabled_travel_edge_ids_cache: Array = []
@@ -55,10 +56,9 @@ func current_view_snapshot() -> Dictionary:
 
 func local_position_for_node(node_id: String) -> Vector2:
 	_ensure_layout_cache()
-	if not nodes_by_id_cache.has(node_id):
+	if not node_screen_position_cache.has(node_id):
 		return Vector2.ZERO
-	var node: Dictionary = nodes_by_id_cache.get(node_id, {})
-	return _normalized_position(_copy_dict(node.get("position", {})))
+	return node_screen_position_cache.get(node_id, Vector2.ZERO) as Vector2
 
 
 func _notification(what: int) -> void:
@@ -138,7 +138,7 @@ func _draw_nodes() -> void:
 			continue
 		var node: Dictionary = node_value
 		var node_id := str(node.get("id", ""))
-		var pos := _normalized_position(_copy_dict(node.get("position", {})))
+		var pos := _node_position(nodes_by_id_cache, node_id)
 		var state := str(node.get("state", "hidden"))
 		var radius := MARKER_RADIUS
 		var is_current := node_id == current_id
@@ -207,13 +207,26 @@ func _ensure_layout_cache() -> void:
 func _rebuild_layout_cache() -> void:
 	map_view_bounds_cache = _compute_map_view_bounds()
 	cached_layout_size = size
+	node_screen_position_cache = {}
+	for node_id_value in nodes_by_id_cache.keys():
+		var node_id := str(node_id_value)
+		var node: Dictionary = nodes_by_id_cache.get(node_id, {})
+		node_screen_position_cache[node_id] = _normalized_position_from_variant(node.get("position", {}))
 
 
 func _node_position(nodes: Dictionary, node_id: String) -> Vector2:
+	if node_screen_position_cache.has(node_id):
+		return node_screen_position_cache.get(node_id, Vector2(-1.0, -1.0)) as Vector2
 	if not nodes.has(node_id):
 		return Vector2(-1.0, -1.0)
 	var node: Dictionary = nodes.get(node_id, {})
-	return _normalized_position(_copy_dict(node.get("position", {})))
+	return _normalized_position_from_variant(node.get("position", {}))
+
+
+func _normalized_position_from_variant(value: Variant) -> Vector2:
+	if typeof(value) != TYPE_DICTIONARY:
+		return _normalized_position({})
+	return _normalized_position(value as Dictionary)
 
 
 func _normalized_position(position: Dictionary) -> Vector2:
@@ -239,7 +252,10 @@ func _compute_map_view_bounds() -> Rect2:
 		if typeof(node_value) != TYPE_DICTIONARY:
 			continue
 		var node: Dictionary = node_value
-		var position := _copy_dict(node.get("position", {}))
+		var position_value: Variant = node.get("position", {})
+		var position: Dictionary = {}
+		if typeof(position_value) == TYPE_DICTIONARY:
+			position = position_value as Dictionary
 		var x := clampf(float(position.get("x", 0.5)), 0.0, 1.0)
 		var y := clampf(float(position.get("y", 0.5)), 0.0, 1.0)
 		min_x = minf(min_x, x)

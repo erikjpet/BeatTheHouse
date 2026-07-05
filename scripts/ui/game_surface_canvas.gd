@@ -832,7 +832,7 @@ func _board_rect_to_screen_rect(rect: Rect2) -> Rect2:
 
 
 func _update_drunk_distortion_protected_rects() -> void:
-	if drunk_distortion_overlay == null:
+	if drunk_distortion_overlay == null or not drunk_distortion_overlay.visible:
 		return
 	var protected_rects: Array = []
 	for rect in _surface_ui_protected_board_rects():
