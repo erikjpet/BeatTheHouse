@@ -17,14 +17,13 @@ NEVER re-implement work a status note says already exists somewhere.
 
 | # | Prompt | Status | Machine | Notes |
 | --- | --- | --- | --- | --- |
-| 1 | CRITICAL_table_environments_not_loading_prompt.md | claimed (2026-07-06, Codex PM workspace) | PM machine ONLY | Bug exists only in the PM machine's uncommitted tree; blocks entries 3-5 |
-| 2 | release_0_3_3_patch_prompt.md | blocked | work server (clean tree) | GitHub source release is being cut from the PM tree; keep only if a separate export/hash package gate is still required |
-| 3 | playtest_root_fix_agent_prompt.md | in-progress-elsewhere | PM machine | Partially implemented, uncommitted on the PM machine — do not start fresh |
-| 4 | home_environment_feature_prompt.md | in-progress-elsewhere | PM machine | Partially implemented, uncommitted on the PM machine (archetypes/data/art) |
-| 5 | environment_semantic_layout_prompt.md | blocked | PM machine | Touches archetypes.json, which carries uncommitted home-environment work; wait for entries 1 and 4 |
-| 6 | web_audio_bridge_modernization_prompt.md | ready | any (clean tree) | Independent; safe on the work server |
-| 7 | attribute_glyph_system_prompt.md | blocked | any | Wants inventory extraction landed and committed before inventory rows integration |
-| 8 | beach_environment_prompt.md | blocked | PM machine | New beach environment plus hidden legendary slot item; touches archetypes/routes/items/art/slot item behavior, so wait for entries 1, 4, and 5 |
+| 1 | release_0_3_3_patch_prompt.md | blocked | work server (clean tree) | GitHub source release is being cut from the PM tree; keep only if a separate export/hash package gate is still required |
+| 2 | playtest_root_fix_agent_prompt.md | in-progress-elsewhere | PM machine | Partially implemented, uncommitted on the PM machine — do not start fresh |
+| 3 | home_environment_feature_prompt.md | in-progress-elsewhere | PM machine | Partially implemented, uncommitted on the PM machine (archetypes/data/art) |
+| 4 | environment_semantic_layout_prompt.md | blocked | PM machine | Touches archetypes.json, which carries uncommitted home-environment work; wait for entry 3 |
+| 5 | web_audio_bridge_modernization_prompt.md | ready | any (clean tree) | Independent; safe on the work server |
+| 6 | attribute_glyph_system_prompt.md | blocked | any | Wants inventory extraction landed and committed before inventory rows integration |
+| 7 | beach_environment_prompt.md | blocked | PM machine | New beach environment plus hidden legendary slot item; touches archetypes/routes/items/art/slot item behavior, so wait for entries 3 and 4 |
 
 Only the project manager adds entries or reorders this table; executing
 agents only flip Status fields for claims and remove completed entries.

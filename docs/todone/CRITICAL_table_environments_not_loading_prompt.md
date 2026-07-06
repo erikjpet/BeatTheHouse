@@ -85,3 +85,17 @@ one of them. Diff sizes vs HEAD and prime suspects, in order:
 2. `tools\validate_project.ps1`, then `tools\check_godot.ps1 -RequireGodot
    -FoundationSuite games` and `-FoundationSuite ui` once at the end.
 3. Move this prompt to docs/todone/ with an execution record per RULES.
+
+---
+
+## Execution Record
+
+- Claimed: 2026-07-06 by Codex PM workspace in `docs/todo/QUEUE.md`.
+- Repro preservation: current tree was clean after the v0.3.3 release commit, so the repro snapshot was preserved as branch `wip/table-env-regression` at `18e0f860616cbb4a6076de15ffe31ea513b8505d`.
+- Investigation: `tasklist | findstr /I Godot` found no running Godot editor/process. `check_godot.ps1 -RequireGodot -FoundationSuite games` and `-FoundationSuite ui` were green before the guard. A strict 3-run mouse batch initially failed 2/3 on seed `M2-FUN-BATCH-002` with a visible game object not entering a game surface.
+- Implementation: added `table_environment_entry_contracts` to `scripts/tests/foundation_check.gd`. The fixture creates roulette, blackjack, baccarat, and bar dice environments, verifies each room has a clickable game object, enters through `FoundationMain.enter_game`, asserts entry does not mutate serialized `RunState`, asserts the game screen/snapshot is active, and confirms an explicit legal action resolves only when invoked.
+- Verification:
+  - `powershell -ExecutionPolicy Bypass -File tools/validate_project.ps1` PASS.
+  - `powershell -ExecutionPolicy Bypass -File tools/check_godot.ps1 -RequireGodot -FoundationSuite games -TimeoutSec 600` PASS (`foundation_games` PASS, 123.019s final run).
+  - `powershell -ExecutionPolicy Bypass -File tools/check_godot.ps1 -RequireGodot -FoundationSuite ui -TimeoutSec 600` PASS (`ui_scene_compile` PASS, 43.998s final run).
+  - `powershell -ExecutionPolicy Bypass -File tools/foundation_mouse_batch_playtest.ps1 -RunCount 3 -RequireGodot` PASS: playable 3/3, R100 UI regression 3/3, true failures 0, strict gate passed.

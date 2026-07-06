@@ -341,6 +341,7 @@ func _foundation_run_suite(suite: String, content_library: ContentLibrary, fixtu
 		"games":
 			_foundation_run_check(report, failures, "content", Callable(self, "_check_content"), [content_library])
 			_foundation_run_check(report, failures, "game_surface_contracts", Callable(self, "_check_game_surface_contracts"), [content_library])
+			_foundation_run_check(report, failures, "table_environment_entry_contracts", Callable(self, "_check_table_environment_entry_contracts"), [content_library])
 			_foundation_run_check(report, failures, "bar_dice_contract", Callable(self, "_check_bar_dice_contract"), [content_library])
 			_foundation_run_check(report, failures, "video_poker_contract", Callable(self, "_check_video_poker_contract"), [content_library])
 			_foundation_run_check(report, failures, "all_game_module_contracts", Callable(self, "_check_all_game_module_contracts"), [content_library])
@@ -423,6 +424,7 @@ func _foundation_run_all_suite(content_library: ContentLibrary, fixture_library:
 	_foundation_run_check(report, failures, "profile_inventory_boundary", Callable(self, "_check_profile_inventory_boundary"), [])
 	_foundation_run_check(report, failures, "fixture_rng", Callable(self, "_check_rng"), [fixture_library])
 	_foundation_run_check(report, failures, "run_state_source_of_truth", Callable(self, "_check_run_state_source_of_truth"), [fixture_library])
+	_foundation_run_check(report, failures, "table_environment_entry_contracts", Callable(self, "_check_table_environment_entry_contracts"), [content_library])
 	_foundation_run_check(report, failures, "locked_logic_rate_foundation", Callable(self, "_check_locked_logic_rate_foundation"), [content_library])
 	_foundation_run_check(report, failures, "fixture_contracts", Callable(self, "_check_contracts"), [fixture_library])
 	_foundation_run_check(report, failures, "ui_state_machine_input_fuzz_foundation", Callable(self, "_check_ui_state_machine_input_fuzz_foundation"), [content_library])
@@ -1830,6 +1832,119 @@ func _check_game_surface_contracts(library: ContentLibrary, failures: Array) -> 
 	var pull_tabs: GameModule = _load_surface_contract_game(library, "pull_tabs", failures)
 	if pull_tabs != null:
 		_check_pull_tabs_surface_contract(pull_tabs, failures)
+
+
+func _check_table_environment_entry_contracts(library: ContentLibrary, failures: Array) -> void:
+	var app_value: Variant = MainScene.instantiate()
+	if not app_value is Control:
+		failures.append("Table environment entry contract could not instantiate FoundationMain.")
+		return
+	var app: Control = app_value
+	root.add_child(app)
+	if not bool(app.call("uses_foundation_runtime")):
+		app.call("_ready")
+	if not bool(app.call("uses_foundation_runtime")):
+		failures.append("Table environment entry contract requires FoundationMain runtime nodes.")
+		_sb4_dispose_app(app)
+		return
+
+	for game_id in ["roulette", "blackjack", "baccarat", "bar_dice"]:
+		_check_single_table_environment_entry_contract(library, app, str(game_id), failures)
+
+	_sb4_dispose_app(app)
+
+
+func _check_single_table_environment_entry_contract(library: ContentLibrary, app: Control, game_id: String, failures: Array) -> void:
+	var game: GameModule = _load_surface_contract_game(library, game_id, failures)
+	if game == null:
+		return
+	var archetype := _first_archetype_with_game(library, game_id)
+	if archetype.is_empty():
+		failures.append("Table environment entry contract could not find an environment archetype for %s." % game_id)
+		return
+
+	var run_state: RunState = RunStateScript.new()
+	run_state.start_new("TABLE-ENV-ENTRY-%s" % game_id.to_upper())
+	run_state.bankroll = 500
+	var environment_instance := EnvironmentInstance.from_archetype(archetype, 1, run_state.create_rng("table_env:%s" % game_id), library)
+	var environment := environment_instance.to_dict()
+	environment["game_ids"] = [game_id]
+	environment["game_states"] = {}
+	var generated_state := game.generate_environment_state(run_state, environment, run_state.create_rng("table_state:%s" % game_id))
+	if typeof(generated_state) == TYPE_DICTIONARY and not generated_state.is_empty():
+		var game_states: Dictionary = {}
+		game_states[game_id] = (generated_state as Dictionary).duplicate(true)
+		environment["game_states"] = game_states
+	environment["layout"] = EnvironmentInstance.ensure_generated_layout(environment)
+
+	var object_id := "game:%s" % game_id
+	var layout_value: Variant = environment.get("layout", {})
+	var layout: Dictionary = layout_value if typeof(layout_value) == TYPE_DICTIONARY else {}
+	var object_rects_value: Variant = layout.get("object_rects", {})
+	var object_rects: Dictionary = object_rects_value if typeof(object_rects_value) == TYPE_DICTIONARY else {}
+	var object_rect := _layout_rect_from_dict(object_rects.get(object_id, {}))
+	if object_rect.size.x <= 0.0 or object_rect.size.y <= 0.0:
+		failures.append("Table environment entry contract missing clickable room object for %s." % game_id)
+		return
+
+	run_state.set_environment(environment)
+	app.set("run_state", run_state)
+	app.set("current_game", null)
+	app.set("last_game_result", {})
+	app.call("_set_current_screen", "ENVIRONMENT")
+	app.call("_refresh")
+	var before_enter := JSON.stringify(run_state.to_dict())
+	app.call("enter_game", game_id)
+	var after_enter := JSON.stringify(run_state.to_dict())
+	if before_enter != after_enter:
+		failures.append("Table environment entry mutated RunState before player action for %s." % game_id)
+
+	var screen_value: Variant = app.get("current_screen")
+	if str(screen_value) != "GAME":
+		failures.append("Table environment entry did not switch to game screen for %s." % game_id)
+	var active_game_value: Variant = app.get("current_game")
+	if not active_game_value is GameModule:
+		failures.append("Table environment entry did not keep an active GameModule for %s." % game_id)
+	else:
+		var active_game: GameModule = active_game_value
+		if active_game.get_id() != game_id:
+			failures.append("Table environment entry opened %s instead of %s." % [active_game.get_id(), game_id])
+
+	var snapshot_value: Variant = app.call("current_game_view_snapshot")
+	var snapshot: Dictionary = snapshot_value if typeof(snapshot_value) == TYPE_DICTIONARY else {}
+	if str(snapshot.get("game_id", "")) != game_id:
+		failures.append("Table environment entry snapshot did not expose %s." % game_id)
+	if str(snapshot.get("surface_renderer", "")).is_empty() or str(snapshot.get("surface_life", "")).is_empty():
+		failures.append("Table environment entry snapshot missing table surface metadata for %s." % game_id)
+	var legal_actions_value: Variant = snapshot.get("legal_actions", [])
+	var legal_actions: Array = legal_actions_value if typeof(legal_actions_value) == TYPE_ARRAY else []
+	if legal_actions.is_empty():
+		failures.append("Table environment entry has no visible legal action for %s." % game_id)
+
+	var actions := game.actions(run_state, run_state.current_environment)
+	var module_legal_value: Variant = actions.get("legal_actions", [])
+	var module_legal_actions: Array = module_legal_value if typeof(module_legal_value) == TYPE_ARRAY else []
+	var action_id := _first_action_id(module_legal_actions)
+	if action_id.is_empty():
+		failures.append("Table environment entry could not find a resolvable action for %s." % game_id)
+		return
+	var stake := clampi(int(snapshot.get("stake_min", actions.get("stake_floor", 1))), 1, maxi(1, run_state.bankroll))
+	var result := game.resolve_with_context(action_id, stake, run_state, run_state.current_environment, run_state.create_rng("table_resolve:%s" % game_id), {})
+	if not bool(result.get("ok", false)):
+		failures.append("Table environment explicit action did not resolve for %s action %s." % [game_id, action_id])
+	if str(app.get("current_screen")) != "GAME":
+		failures.append("Table environment explicit module resolve should not auto-close the UI for %s." % game_id)
+
+
+func _first_action_id(actions: Array) -> String:
+	for action_value in actions:
+		if typeof(action_value) != TYPE_DICTIONARY:
+			continue
+		var action: Dictionary = action_value
+		var action_id := str(action.get("id", "")).strip_edges()
+		if not action_id.is_empty():
+			return action_id
+	return ""
 
 
 func _load_surface_contract_game(library: ContentLibrary, game_id: String, failures: Array):
