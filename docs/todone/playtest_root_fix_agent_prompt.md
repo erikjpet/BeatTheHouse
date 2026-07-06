@@ -1,3 +1,23 @@
+## Execution Record
+
+- Completion date: 2026-07-06.
+- Implementing commit hash(es): `eef32ff`.
+- Verification gates:
+  - `git diff --check` -> PASS.
+  - `powershell -ExecutionPolicy Bypass -File tools/check_godot.ps1 -RequireGodot -FoundationSuite ui -TimeoutSec 300` -> FAIL in `ui_scene_compile` with exit `-1` after `validate_project`, `godot_import`, and `gdscript_load_check` passed; no script diagnostics were emitted. Report: `D:\Projects\Beat-The-House\.tmp\test_reports\20260706_153834_smoke\summary.json`.
+  - Cleared orphaned headless Godot processes left by the UI scene crash (`PID 11844`, `PID 21468`) before continuing.
+  - `powershell -ExecutionPolicy Bypass -File tools/check_godot.ps1 -RequireGodot -FoundationSuite games -TimeoutSec 300` -> initial FAIL in `game_surface_contracts`, exposing roulette command locking still using raw wall-clock when no UI timestamp was supplied.
+  - `powershell -ExecutionPolicy Bypass -File tools/check_godot.ps1 -RequireGodot -FoundationSuite games -TimeoutSec 300` -> PASS after routing roulette lock/auto paths through the shared result-time helper. Stages: `validate_project` PASS 14993ms, `godot_import` PASS 11968ms, `gdscript_load_check` PASS 9980ms, `foundation_games` PASS 119853ms. Report: `D:\Projects\Beat-The-House\.tmp\test_reports\20260706_154500_smoke\summary.json`.
+- Summary:
+  - Roulette, blackjack, baccarat, and bar dice no longer request or override the deprecated ambient overlay; idle animation is owned by the main surface.
+  - Roulette recent numbers stay on the top strip, current spin result/history/bankroll stay hidden until the animation settles, chips can render from `last_result.bet_results` during the spin, and lock/auto paths share result-phase timing.
+  - Video-poker deal/double animation IDs now use the stamped surface-time domain.
+  - Pull-tab TOP badge branches were already absent in the current drawing path; `top_prize_*` view fields remain for audit/data consumers.
+- Deviations:
+  - Full QA was not run because the prompt explicitly forbids extensive suite iteration.
+  - The targeted UI scene compile crashed without diagnostics; the narrower game-focused contract suite was used as completion evidence for the touched game modules.
+  - Existing unrelated dirty-tree fixes remain unpartitioned for later queue work.
+
 # Agent Prompt — Playtest Bug Root Fixes (Roulette / Video Poker / Pull Tabs / Betting UX)
 
 Copy everything below this line into the agent.
