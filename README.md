@@ -16,19 +16,6 @@ until after 0.3. Beat the House is not a real-money gambling product. It has no
 real-money wagering, cash prizes, gambling monetization, or store credentials
 checked into the repository.
 
-## 0.2.0 Demo Highlights
-
-- Seven full-simulation games with shared run-state consequences.
-- Generated Pinball and Buffalo slot machines with cabinet art, fixed bet
-  ladders, feature bonuses, nudge/autoplay support, and active room previews.
-- Seeded run generation, daily runs, content-group packs, autosave/load, travel,
-  events, services, lenders, debt, heat, alcohol/luck, items, and terminal
-  states.
-- Grand Casino demo objective with two victory routes: a clean Players Card
-  cashout or Pit Boss Rourke's back-room showdown.
-- Web/itch.io and Windows export packaging, with Android and iOS presets staged
-  for future credentialed store work.
-
 ## Current Implementation
 
 | Area | Current state |
