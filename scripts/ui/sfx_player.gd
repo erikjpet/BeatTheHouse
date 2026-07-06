@@ -19,6 +19,7 @@ const SLOT_CLASSIC_REEL_STOP_TIMES := [1.05, 1.55, 2.15]
 const SLOT_POST_REEL_BONUS_DELAY := 0.40
 const SLOT_BONUS_STEP_TIME := 0.72
 const ONE_SHOT_PLAYER_COUNT := 10
+const WEB_SURFACE_LOOP_ID := "sfx:surface_loop"
 const BLACKJACK_PREWARM_EVENTS := [
 	"blackjack_card",
 	"blackjack_chip",
@@ -122,6 +123,7 @@ var _roulette_spin_id: String = ""
 var _roulette_payout_id: String = ""
 var _baccarat_deal_id: String = ""
 var _baccarat_payout_id: String = ""
+var _web_surface_loop_active := false
 var _played_markers: Dictionary = {}
 var _normalized_event_cache: Dictionary = {}
 
@@ -972,18 +974,23 @@ func _sync_feature_scene_cues(slot_state: Dictionary, profile: Dictionary, fallb
 
 
 func _start_reel_loop(event_id: String = "reel_loop", volume_db: float = -13.0, pitch: float = 1.0) -> void:
+	var stream := _event_stream(event_id)
 	if WebAudioBridgeScript.available():
-		WebAudioBridgeScript.play_sfx(event_id, volume_db, pitch)
+		WebAudioBridgeScript.play_stream(stream, "sfx:%s" % _normalized_event_id(event_id), volume_db, pitch, WEB_SURFACE_LOOP_ID, true)
+		_web_surface_loop_active = true
 		return
 	if _loop_player == null:
 		return
-	_loop_player.stream = _event_stream(event_id)
+	_loop_player.stream = stream
 	_loop_player.volume_db = volume_db
 	_loop_player.pitch_scale = pitch
 	_loop_player.play()
 
 
 func _stop_reel_loop() -> void:
+	if WebAudioBridgeScript.available() and _web_surface_loop_active:
+		WebAudioBridgeScript.stop_loop(WEB_SURFACE_LOOP_ID)
+		_web_surface_loop_active = false
 	if _loop_player != null and _loop_player.playing:
 		_loop_player.stop()
 
@@ -1001,14 +1008,15 @@ func _stop_one_shot_loops() -> void:
 
 
 func _play(event_id: String, volume_db: float = 0.0, pitch: float = 1.0) -> void:
+	var stream := _event_stream(event_id)
 	if WebAudioBridgeScript.available():
-		WebAudioBridgeScript.play_sfx(event_id, volume_db, pitch)
+		WebAudioBridgeScript.play_stream(stream, "sfx:%s" % _normalized_event_id(event_id), volume_db, pitch)
 		return
 	var player := _next_player()
 	if player == null:
 		return
 	player.stop()
-	player.stream = _event_stream(event_id)
+	player.stream = stream
 	player.volume_db = volume_db
 	player.pitch_scale = pitch
 	player.play()
@@ -1154,7 +1162,7 @@ func _normalized_event_id_uncached(event_id: String) -> String:
 			"loss": "lose",
 		})
 	match family_event:
-		"button", "button_pinball", "button_buffalo", "button_digital", "lever", "lever_buffalo", "lever_digital", "nudge", "nudge_pinball", "nudge_buffalo", "nudge_digital", "reel_loop", "reel_loop_pinball", "reel_loop_buffalo", "reel_loop_digital", "reel_stop", "reel_stop_pinball", "reel_stop_buffalo", "reel_stop_digital", "gold_coin_tease", "double_gold_coin_tease", "bonus_start", "bonus_start_pinball", "bonus_start_buffalo", "bonus_start_digital", "bumper", "bonus_step_buffalo", "bonus_step_digital", "jackpot_hit", "jackpot_hit_buffalo", "jackpot_hit_digital", "payout", "payout_digital", "bonus_total", "bonus_total_buffalo", "bonus_total_digital", "jackpot", "jackpot_buffalo", "jackpot_digital", "lose", "pull_tab_click", "pull_tab_thump", "paper_peek", "paper_peel", "blackjack_card", "blackjack_chip", "blackjack_felt", "blackjack_payout", "blackjack_bust", "blackjack_peek", "blackjack_count", "blackjack_distraction", "roulette_chip_select", "roulette_chip_place", "roulette_chip_lift", "roulette_chip_stack", "roulette_chip_sweep", "roulette_rotor_launch", "roulette_ball_loop", "roulette_ball_rim_tick", "roulette_ball_roll", "roulette_ball_drop", "roulette_ball_scatter", "roulette_ball_bounce", "roulette_ball_pocket", "roulette_dolly_tap", "roulette_payout":
+		"button", "button_pinball", "button_buffalo", "button_digital", "lever", "lever_buffalo", "lever_digital", "nudge", "nudge_pinball", "nudge_buffalo", "nudge_digital", "reel_loop", "reel_loop_pinball", "reel_loop_buffalo", "reel_loop_digital", "reel_stop", "reel_stop_pinball", "reel_stop_buffalo", "reel_stop_digital", "gold_coin_tease", "double_gold_coin_tease", "bonus_start", "bonus_start_pinball", "bonus_start_buffalo", "bonus_start_digital", "bumper", "pinball_money_ding", "bonus_step_buffalo", "bonus_step_digital", "jackpot_hit", "jackpot_hit_buffalo", "jackpot_hit_digital", "payout", "payout_digital", "bonus_total", "bonus_total_buffalo", "bonus_total_digital", "jackpot", "jackpot_buffalo", "jackpot_digital", "lose", "pull_tab_click", "pull_tab_thump", "paper_peek", "paper_peel", "blackjack_card", "blackjack_chip", "blackjack_felt", "blackjack_payout", "blackjack_bust", "blackjack_peek", "blackjack_count", "blackjack_distraction", "roulette_chip_select", "roulette_chip_place", "roulette_chip_lift", "roulette_chip_stack", "roulette_chip_sweep", "roulette_rotor_launch", "roulette_ball_loop", "roulette_ball_rim_tick", "roulette_ball_roll", "roulette_ball_drop", "roulette_ball_scatter", "roulette_ball_bounce", "roulette_ball_pocket", "roulette_dolly_tap", "roulette_payout":
 			return event_id
 		"slot_reel_spin_loop":
 			return "reel_loop"
@@ -1170,6 +1178,8 @@ func _normalized_event_id_uncached(event_id: String) -> String:
 			return "bonus_start_pinball"
 		"pinball_flipper", "pinball_cup_hit", "pinball_shot_counter", "pinball_lane_lit", "pinball_history_tick", "pinball_peg_tick", "pinball_bumper_pop", "pinball_target_hit", "pinball_gate_chime":
 			return "bumper"
+		"pinball_award", "pinball_good_hit", "pinball_money":
+			return "pinball_money_ding"
 		"pinball_launcher_fire", "pinball_multiball":
 			return "bonus_start_pinball"
 		"pinball_tilt", "pinball_drain":
@@ -1216,6 +1226,8 @@ func _event_seconds(event_id: String) -> float:
 			return 0.44
 		"bumper", "bonus_step_buffalo", "bonus_step_digital":
 			return 0.22
+		"pinball_money_ding":
+			return 0.36
 		"jackpot_hit", "jackpot_hit_buffalo", "jackpot_hit_digital":
 			return 0.46
 		"payout", "payout_digital":
@@ -1328,6 +1340,8 @@ func _event_sample(event_id: String, t: float, frame: int, seconds: float) -> fl
 			return _sample_bonus_start_digital(t, frame, seconds)
 		"bumper":
 			return _sample_bumper(t, frame, seconds)
+		"pinball_money_ding":
+			return _sample_pinball_money_ding(t, frame, seconds)
 		"bonus_step_buffalo":
 			return _sample_bonus_step_buffalo(t, frame, seconds)
 		"bonus_step_digital":
@@ -1557,6 +1571,21 @@ func _sample_bumper(t: float, frame: int, seconds: float) -> float:
 	var body := sin(TAU * 180.0 * t) * 0.16 * _decay_env(t, seconds, 0.002, 0.090)
 	var spark := _noise(frame, 83) * 0.08 * _pulse_window(t, 0.0, 0.050)
 	return pop + body + spark
+
+
+func _sample_pinball_money_ding(t: float, frame: int, seconds: float) -> float:
+	var notes := [1046.50, 1318.51, 1567.98]
+	var sample := 0.0
+	for i in range(notes.size()):
+		var local := t - float(i) * 0.052
+		if local < 0.0:
+			continue
+		var bell := sin(TAU * float(notes[i]) * local) * 0.125
+		var shine := sin(TAU * float(notes[i]) * 2.01 * local) * 0.045
+		sample += (bell + shine) * _decay_env(local, 0.22, 0.002, 0.180)
+	var body := sin(TAU * 392.0 * t) * 0.055 * _decay_env(t, seconds, 0.010, 0.260)
+	var strike := _noise(frame, 89) * 0.030 * _pulse_window(t, 0.0, 0.035)
+	return (sample + body + strike) * _decay_env(t, seconds, 0.002, 0.300)
 
 
 func _sample_jackpot_hit(t: float, frame: int, seconds: float) -> float:

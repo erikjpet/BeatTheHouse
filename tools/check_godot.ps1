@@ -483,7 +483,7 @@ function Invoke-FoundationPerfSmoke {
     try {
         $env:BTH_PERF_RUNS = "0"
         $env:BTH_PERF_FRAMES = "40"
-        $env:BTH_PERF_RESOLVE_SAMPLES = "8"
+        $env:BTH_PERF_RESOLVE_SAMPLES = "24"
         $env:BTH_PERF_SEED_PREFIX = "CHECK-GODOT-PERF"
         Invoke-GodotScript -Name "foundation_perf_smoke" -ScriptPath "res://tools/foundation_performance_probe.gd" -StageTimeoutSec 60
     }

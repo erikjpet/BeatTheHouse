@@ -13,7 +13,7 @@
 		"icon_key": "luck_card",
 		"environment_prop": "loose_card",
 		"surface": "felt_table",
-		"description": "A bent card that seems to find good breaks.",
+		"description": "Small luck boost.",
 		"effect": {"baseline_luck_delta": 1, "win_chance": 2, "win_bonus": 1}
 	},
 	{
@@ -30,7 +30,7 @@
 		"icon_key": "coffee_cup",
 		"environment_prop": "coffee",
 		"surface": "store_shelf",
-		"description": "Cheap focus for clean play; risky moves get louder.",
+		"description": "Clean-play focus.",
 		"effect": {"legal_win_chance": 3, "loss_reduction": 1, "cheat_suspicion_delta": 1}
 	},
 	{
@@ -48,7 +48,7 @@
 		"icon_key": "ledger_pencil",
 		"environment_prop": "notepad",
 		"surface": "store_shelf",
-		"description": "Pairs with Instant Coffee for cleaner wins.",
+		"description": "Cleaner odds notes.",
 		"effect": {
 			"win_chance": 1,
 			"loss_reduction": 1,
@@ -73,7 +73,7 @@
 		"icon_key": "cashout_envelope",
 		"environment_prop": "map",
 		"surface": "store_shelf",
-		"description": "Pairs with Luck Card or Ledger for steadier cash.",
+		"description": "Steadier cashouts.",
 		"effect": {
 			"win_bonus": 1,
 			"loss_reduction": 1,
@@ -97,7 +97,7 @@
 		"icon_key": "thermos_black_coffee",
 		"environment_prop": "coffee",
 		"surface": "store_shelf",
-		"description": "Two strong pours that cut the buzz and steady your sight.",
+		"description": "Sobers and steadies.",
 		"effect": {
 			"active_item": true,
 			"active_mode": "consumable",
@@ -124,7 +124,7 @@
 		"icon_key": "thermos_black_coffee_half",
 		"environment_prop": "coffee",
 		"surface": "store_shelf",
-		"description": "The last pour from a thermos of black coffee.",
+		"description": "Last sober-up pour.",
 		"effect": {
 			"active_item": true,
 			"active_mode": "consumable",
@@ -151,7 +151,7 @@
 		"icon_key": "pickled_olive_jar",
 		"environment_prop": "coffee",
 		"surface": "counter_case",
-		"description": "A boozy bite; pairs with Bar Napkin for luck.",
+		"description": "Drink and luck.",
 		"effect": {
 			"active_item": true,
 			"active_mode": "consumable",
@@ -181,7 +181,7 @@
 		"icon_key": "lucky_bar_napkin",
 		"environment_prop": "loose_card",
 		"surface": "felt_table",
-		"description": "Pairs with olives or coffee for steadier drunk play.",
+		"description": "Drunk-play stabilizer.",
 		"effect": {
 			"win_chance": 1,
 			"loss_reduction": 1,
@@ -205,7 +205,7 @@
 		"icon_key": "sunglasses",
 		"environment_prop": "sunglasses",
 		"surface": "counter_case",
-		"description": "A bad disguise that still buys nerve.",
+		"description": "Lowers cheat heat.",
 		"effect": {"cheat_suspicion_delta": -2}
 	},
 	{
@@ -222,7 +222,7 @@
 		"icon_key": "marked_cards",
 		"environment_prop": "loose_card",
 		"surface": "felt_table",
-		"description": "Edge marks help hole-card peeks, but the deck looks hot.",
+		"description": "Helps card peeks.",
 		"effect": {"blackjack_peek_heat_delta": -3, "blackjack_dealer_catch_chance": -8, "blackjack_peek_loss_reduction": 2, "baccarat_edge_sort_cue_count": -1, "cheat_suspicion_delta": 1}
 	},
 	{
@@ -239,7 +239,7 @@
 		"icon_key": "edge_sort_loupe",
 		"environment_prop": "loose_card",
 		"surface": "counter_case",
-		"description": "A pocket lens for reading card-back asymmetry.",
+		"description": "Reads card backs.",
 		"effect": {"baccarat_edge_sort_cue_count": -1, "baccarat_edge_sort_memory_tolerance": 1, "baccarat_edge_sort_heat_delta": -2, "skill_cheat_drunk_memory_offset": 1, "cheat_suspicion_delta": 1}
 	},
 	{
@@ -256,7 +256,7 @@
 		"icon_key": "scratch_pad",
 		"environment_prop": "notepad",
 		"surface": "folding_table",
-		"description": "Tiny notes, counts, and odds.",
+		"description": "Stores quick counts.",
 		"effect": {"baccarat_edge_sort_memory_tolerance": 1, "families": {"cards": {"win_chance": 5}}}
 	},
 	{
@@ -274,7 +274,7 @@
 		"icon_key": "odds_notebook",
 		"environment_prop": "notepad",
 		"surface": "folding_table",
-		"description": "Pairs with Counter Notes or Scratch Pad.",
+		"description": "Sharper odds notes.",
 		"effect": {
 			"blackjack_count_tolerance": 1,
 			"blackjack_count_edge_bonus": 1,
@@ -301,7 +301,7 @@
 		"icon_key": "shoe_cut_marker",
 		"environment_prop": "loose_card",
 		"surface": "felt_table",
-		"description": "Pairs with Loupe and Notebook for sharper reads.",
+		"description": "Sharper shoe reads.",
 		"effect": {
 			"blackjack_count_cover": 2,
 			"baccarat_edge_sort_memory_tolerance": 1,
@@ -325,7 +325,7 @@
 		"icon_key": "card_counters_notes",
 		"environment_prop": "notepad",
 		"surface": "folding_table",
-		"description": "A cramped Hi-Lo crib sheet for cleaner count checks.",
+		"description": "Improves count checks.",
 		"effect": {"blackjack_count_tolerance": 1, "blackjack_count_window_msec": 90, "blackjack_count_heat_delta": -2, "blackjack_count_cover": 4, "blackjack_count_edge_bonus": 2, "baccarat_edge_sort_memory_tolerance": 1}
 	},
 	{
@@ -342,7 +342,7 @@
 		"icon_key": "side_bet_chart",
 		"environment_prop": "notepad",
 		"surface": "counter_case",
-		"description": "A laminated odds card for blackjack side bets.",
+		"description": "Improves side bets.",
 		"effect": {"blackjack_side_bet_bonus": 1, "blackjack_side_bet_loss_reduction": 1, "blackjack_side_bet_flat_bonus": 1}
 	},
 	{
@@ -359,7 +359,7 @@
 		"icon_key": "basic_strategy_card",
 		"environment_prop": "loose_card",
 		"surface": "felt_table",
-		"description": "A pocket blackjack book that marks the table play.",
+		"description": "Guides blackjack play.",
 		"effect": {"blackjack_basic_strategy_card": 1}
 	},
 	{
@@ -376,7 +376,7 @@
 		"icon_key": "lucky_ladies_compact",
 		"environment_prop": "keychain",
 		"surface": "counter_case",
-		"description": "Doubles Lucky Ladies odds, but doubles that side bet.",
+		"description": "Boosts Lucky Ladies.",
 		"effect": {"blackjack_lucky_ladies_stake_multiplier": 2, "blackjack_lucky_ladies_payout_multiplier": 2}
 	},
 	{
@@ -393,7 +393,7 @@
 		"icon_key": "coolers_cufflinks",
 		"environment_prop": "keychain",
 		"surface": "counter_case",
-		"description": "Absorbs one failed blackjack peek heat spike, then breaks.",
+		"description": "Blocks peek heat.",
 		"effect": {"blackjack_failed_peek_heat_absorb": 1}
 	},
 	{
@@ -410,7 +410,7 @@
 		"icon_key": "broken_cufflinks",
 		"environment_prop": "keychain",
 		"surface": "counter_case",
-		"description": "Bent metal that halves blackjack peek windows until repaired.",
+		"description": "Damaged peek gear.",
 		"effect": {"blackjack_peek_window_percent": 50, "repair_cost": 50, "repair_to_item": "coolers_cufflinks"}
 	},
 	{
@@ -427,7 +427,7 @@
 		"icon_key": "high_roller_watch",
 		"environment_prop": "keychain",
 		"surface": "counter_case",
-		"description": "Blackjack table limits double, but the old max is now minimum.",
+		"description": "Raises table limits.",
 		"effect": {"blackjack_table_limit_multiplier": 2, "blackjack_table_minimum_to_previous_max": 1}
 	},
 	{
@@ -444,7 +444,7 @@
 		"icon_key": "keychain",
 		"environment_prop": "keychain",
 		"surface": "counter_case",
-		"description": "A charm that softens the worst beats.",
+		"description": "Softens bad beats.",
 		"effect": {"loss_reduction": 2}
 	},
 	{
@@ -461,7 +461,7 @@
 		"icon_key": "foil_sleeve",
 		"environment_prop": "foil_sleeve",
 		"surface": "box_stack",
-		"description": "A machine trick; strong near cabinets, risky elsewhere.",
+		"description": "Cabinet cheat aid.",
 		"effect": {"families": {"slots": {"win_chance": 6}, "wheel": {"roulette_past_post_perfect_msec": 20, "roulette_past_post_good_msec": 35, "roulette_past_post_window_msec": 80, "roulette_past_post_base_heat": -3}}, "cheat_suspicion_delta": 2}
 	},
 	{
@@ -478,7 +478,7 @@
 		"icon_key": "holdout_wax",
 		"environment_prop": "foil_sleeve",
 		"surface": "counter_case",
-		"description": "Card tack for a cleaner palm-and-swap window.",
+		"description": "Improves card swaps.",
 		"effect": {"video_poker_holdout_perfect_msec": 28, "video_poker_holdout_good_msec": 55, "video_poker_holdout_close_msec": 80, "video_poker_holdout_heat_delta": -2, "skill_cheat_drunk_window_offset_msec": 8, "cheat_suspicion_delta": 1}
 	},
 	{
@@ -495,7 +495,7 @@
 		"icon_key": "chip_slide_wax",
 		"environment_prop": "foil_sleeve",
 		"surface": "counter_case",
-		"description": "A felt slick for sliding one late roulette chip.",
+		"description": "Improves late chips.",
 		"effect": {"families": {"wheel": {"roulette_past_post_perfect_msec": 35, "roulette_past_post_good_msec": 65, "roulette_past_post_window_msec": 130, "roulette_past_post_base_heat": -3}}, "skill_cheat_drunk_window_offset_msec": 8, "cheat_suspicion_delta": 1}
 	},
 	{
@@ -513,7 +513,7 @@
 		"icon_key": "sleeve_rig",
 		"environment_prop": "foil_sleeve",
 		"surface": "counter_case",
-		"description": "Pairs with Holdout Wax and Chip-Slide Wax.",
+		"description": "Combines wax tricks.",
 		"effect": {
 			"video_poker_holdout_good_msec": 20,
 			"video_poker_holdout_close_msec": 35,
@@ -539,7 +539,7 @@
 		"icon_key": "coin_return_shim",
 		"environment_prop": "coin",
 		"surface": "box_stack",
-		"description": "Refunds a slice of losing three-reel slot pulls.",
+		"description": "Refunds slot losses.",
 		"effect": {"families": {"slots": {"slot_three_reel_loss_refund_percent": 35}}}
 	},
 	{
@@ -556,7 +556,7 @@
 		"icon_key": "lucky_reel_grease",
 		"environment_prop": "token",
 		"surface": "counter_case",
-		"description": "Arms a short run of slot spins with extra near-miss chances.",
+		"description": "Adds nudge chances.",
 		"effect": {"active_item": true, "active_mode": "consumable", "active_target": "slot"}
 	},
 	{
@@ -573,7 +573,7 @@
 		"icon_key": "timing_bracelet",
 		"environment_prop": "keychain",
 		"surface": "counter_case",
-		"description": "A tiny timing aid for Buffalo nudge windows.",
+		"description": "Easier Buffalo nudges.",
 		"effect": {"families": {"slots": {"slot_nudge_perfect_msec_bonus": 15, "slot_nudge_close_msec_bonus": 25}}}
 	},
 	{
@@ -590,7 +590,7 @@
 		"icon_key": "gold_tooth_token",
 		"environment_prop": "coin",
 		"surface": "counter_case",
-		"description": "Buffalo feature coins sometimes flash richer values.",
+		"description": "Richer Buffalo coins.",
 		"effect": {"families": {"slots": {"slot_gold_tooth_coin_upgrade_chance": 10, "slot_gold_tooth_coin_multiplier": 2}}}
 	},
 	{
@@ -607,7 +607,7 @@
 		"icon_key": "payout_pamphlet",
 		"environment_prop": "notepad",
 		"surface": "counter_case",
-		"description": "A slot paytable cheat sheet with a small edge.",
+		"description": "Small slot edge.",
 		"effect": {"families": {"slots": {"win_bonus": 1}}}
 	},
 	{
@@ -624,7 +624,7 @@
 		"icon_key": "cold_quarters",
 		"environment_prop": "coin",
 		"surface": "counter_case",
-		"description": "A chilled coin stack that softens nudge heat.",
+		"description": "Lowers nudge heat.",
 		"effect": {"active_item": true, "active_mode": "consumable", "active_target": "slot", "slot_cold_quarter_heat_reduction": 6}
 	},
 	{
@@ -641,7 +641,7 @@
 		"icon_key": "neon_players_charm",
 		"environment_prop": "keychain",
 		"surface": "counter_case",
-		"description": "The first slot feature in a room gets a modest glow-up.",
+		"description": "Boosts first feature.",
 		"effect": {"families": {"slots": {"slot_first_bonus_bonus_percent": 15, "slot_first_bonus_bonus_cap": 40}}}
 	},
 	{
@@ -658,7 +658,7 @@
 		"icon_key": "split_reel_note",
 		"environment_prop": "notepad",
 		"surface": "counter_case",
-		"description": "Arms a clearer Buffalo nudge cue, with watch risk.",
+		"description": "Clearer nudge cue.",
 		"effect": {"active_item": true, "active_mode": "consumable", "active_target": "slot", "slot_split_reel_note_perfect_msec_bonus": 55, "slot_split_reel_note_close_msec_bonus": 90}
 	},
 	{
@@ -675,7 +675,7 @@
 		"icon_key": "feature_magnet",
 		"environment_prop": "keychain",
 		"surface": "counter_case",
-		"description": "Dulls line hits while tugging cabinets toward features.",
+		"description": "More slot features.",
 		"effect": {"families": {"slots": {"slot_feature_weight_bonus_percent": 125, "slot_reel_win_weight_percent": 35}}}
 	},
 	{
@@ -692,7 +692,7 @@
 		"icon_key": "drain_cleaner",
 		"environment_prop": "coin",
 		"surface": "box_stack",
-		"description": "Once per pinball feature, a bad drain pays a safety bonus.",
+		"description": "Pays bad drains.",
 		"effect": {"families": {"slots": {"slot_pinball_drain_cleaner_uses": 1, "slot_pinball_drain_cleaner_floor_percent": 200, "slot_pinball_drain_cleaner_award_percent": 100}}}
 	},
 	{
@@ -709,7 +709,7 @@
 		"icon_key": "jackpot_magnet",
 		"environment_prop": "keychain",
 		"surface": "counter_case",
-		"description": "Jackpot-zone pinball triggers build progress and pay richer.",
+		"description": "Boosts jackpot cups.",
 		"effect": {"families": {"slots": {"slot_pinball_jackpot_magnet_uses": 4, "slot_pinball_jackpot_magnet_award_percent": 35, "slot_pinball_jackpot_magnet_progress_bonus": 1}}}
 	},
 	{
@@ -726,7 +726,7 @@
 		"icon_key": "splitter_token",
 		"environment_prop": "coin",
 		"surface": "counter_case",
-		"description": "The first pinball splitter creates one extra cascade ball.",
+		"description": "Adds cascade ball.",
 		"effect": {"families": {"slots": {"slot_pinball_splitter_token_uses": 1, "slot_pinball_splitter_token_extra_balls": 1}}}
 	},
 	{
@@ -743,7 +743,7 @@
 		"icon_key": "return_spring",
 		"environment_prop": "keychain",
 		"surface": "counter_case",
-		"description": "Once per feature, a slow lower-board ball springs upward.",
+		"description": "Saves slow balls.",
 		"effect": {"families": {"slots": {"slot_pinball_return_spring_uses": 1, "slot_pinball_return_spring_impulse": 170}}}
 	},
 	{
@@ -760,7 +760,7 @@
 		"icon_key": "tilt_dampener",
 		"environment_prop": "keychain",
 		"surface": "counter_case",
-		"description": "Pinball nudges stay forgiving before tilt locks the board.",
+		"description": "Forgiving nudges.",
 		"effect": {"families": {"slots": {"slot_pinball_tilt_dampener_percent": 45}}}
 	},
 	{
@@ -777,7 +777,7 @@
 		"icon_key": "bumper_battery",
 		"environment_prop": "token",
 		"surface": "counter_case",
-		"description": "The first pinball bumper hits pop harder and add bonus value.",
+		"description": "Stronger first bumpers.",
 		"effect": {"families": {"slots": {"slot_pinball_bumper_battery_hits": 3, "slot_pinball_bumper_battery_award_percent": 40, "slot_pinball_bumper_battery_kick_percent": 130, "slot_pinball_bumper_battery_up_impulse": 18}}}
 	},
 	{
@@ -794,7 +794,7 @@
 		"icon_key": "rubber_pegs",
 		"environment_prop": "token",
 		"surface": "counter_case",
-		"description": "Fresh pinball rubbers make peg bounces livelier and streakier.",
+		"description": "Livelier peg bounces.",
 		"effect": {"families": {"slots": {"slot_pinball_rubber_pegs": 1}}}
 	},
 	{
@@ -811,7 +811,7 @@
 		"icon_key": "magnet_cup",
 		"environment_prop": "keychain",
 		"surface": "counter_case",
-		"description": "Jackpot and risk cups capture a slightly wider lane.",
+		"description": "Wider cup captures.",
 		"effect": {"families": {"slots": {"slot_pinball_magnet_cup_radius_percent": 18}}}
 	},
 	{
@@ -828,7 +828,7 @@
 		"icon_key": "extra_ball_token",
 		"environment_prop": "coin",
 		"surface": "counter_case",
-		"description": "Every pinball feature starts with one more ball in reserve.",
+		"description": "Adds feature ball.",
 		"effect": {"families": {"slots": {"slot_pinball_extra_ball_token": 1}}}
 	},
 	{
@@ -845,7 +845,7 @@
 		"icon_key": "plunger_tuner",
 		"environment_prop": "keychain",
 		"surface": "counter_case",
-		"description": "The skill-shot sweet band is twice as forgiving.",
+		"description": "Easier skill shots.",
 		"effect": {"families": {"slots": {"slot_pinball_plunger_tuner_width_percent": 200}}}
 	},
 	{
@@ -862,7 +862,7 @@
 		"icon_key": "lock_jammer",
 		"environment_prop": "keychain",
 		"surface": "counter_case",
-		"description": "First lock counts double toward multiball, but looks crooked.",
+		"description": "Faster multiball locks.",
 		"effect": {"families": {"slots": {"slot_pinball_lock_jammer_uses": 1}}, "cheat_suspicion_delta": 1}
 	},
 	{
@@ -879,7 +879,7 @@
 		"icon_key": "weighted_keyring",
 		"environment_prop": "weighted_keyring",
 		"surface": "folding_table",
-		"description": "A dice-game weight; useful, obvious if abused.",
+		"description": "Loaded dice weight.",
 		"effect": {"families": {"dice": {"win_chance": 7, "bar_dice_controlled_roll_perfect_msec": 20, "bar_dice_controlled_roll_good_msec": 45, "bar_dice_controlled_roll_close_msec": 65, "bar_dice_controlled_roll_meter_period_msec": 80, "bar_dice_controlled_roll_base_heat": -1}}, "cheat_suspicion_delta": 2}
 	},
 	{
@@ -896,7 +896,7 @@
 		"icon_key": "dice_calipers",
 		"environment_prop": "weighted_keyring",
 		"surface": "folding_table",
-		"description": "A pocket gauge for setting a controlled dice release.",
+		"description": "Controlled-roll aid.",
 		"effect": {"families": {"dice": {"bar_dice_controlled_roll_perfect_msec": 35, "bar_dice_controlled_roll_good_msec": 70, "bar_dice_controlled_roll_close_msec": 95, "bar_dice_controlled_roll_meter_period_msec": 120, "bar_dice_controlled_roll_base_heat": -2}}, "skill_cheat_drunk_window_offset_msec": 6, "cheat_suspicion_delta": 1}
 	},
 	{
@@ -914,7 +914,7 @@
 		"icon_key": "false_bottom_cup",
 		"environment_prop": "weighted_keyring",
 		"surface": "folding_table",
-		"description": "Dice cup pairs with Keyring or Calipers.",
+		"description": "Hidden dice cup.",
 		"effect": {
 			"families": {"dice": {"bar_dice_controlled_roll_good_msec": 35, "bar_dice_controlled_roll_close_msec": 50, "bar_dice_controlled_roll_base_heat": -1}},
 			"skill_cheat_drunk_window_offset_msec": 4,
@@ -939,7 +939,7 @@
 		"icon_key": "roadside_map",
 		"environment_prop": "map",
 		"surface": "folding_table",
-		"description": "Marked-up routes reveal exact stops before you pay.",
+		"description": "Reveals route stops.",
 		"effect": {"win_bonus": 1, "travel_scouting_level": 1}
 	},
 	{
@@ -957,7 +957,7 @@
 		"icon_key": "payment_calendar",
 		"environment_prop": "notepad",
 		"surface": "store_shelf",
-		"description": "Pairs with Pawn Sleeve for another debt grace.",
+		"description": "Extends debt grace.",
 		"effect": {
 			"debt_grace_turns": 1,
 			"loss_reduction": 1,
@@ -982,7 +982,7 @@
 		"icon_key": "pawn_receipt_sleeve",
 		"environment_prop": "notepad",
 		"surface": "counter_case",
-		"description": "Pairs with Calendar or Envelope on late notes.",
+		"description": "Protects pawn loans.",
 		"effect": {
 			"debt_default_heat_delta": -2,
 			"loss_reduction": 1,
@@ -1006,7 +1006,7 @@
 		"icon_key": "xray_glasses",
 		"environment_prop": "glasses",
 		"surface": "counter_case",
-		"description": "Marks one buried pull-tab winner per generated machine.",
+		"description": "Marks buried winners.",
 		"effect": {}
 	},
 	{
@@ -1023,7 +1023,7 @@
 		"icon_key": "tab_detector",
 		"environment_prop": "scanner",
 		"surface": "counter_case",
-		"description": "Points at the closest pull-tab winner, then draws rising heat.",
+		"description": "Finds next winner.",
 		"effect": {"active_item": true, "active_mode": "toggle", "active_target": "pull_tabs"}
 	},
 	{
@@ -1040,7 +1040,7 @@
 		"icon_key": "tarot_card",
 		"environment_prop": "loose_card",
 		"surface": "felt_table",
-		"description": "Burns the next bought ticket and prints future results.",
+		"description": "Previews pull tabs.",
 		"effect": {"active_item": true, "active_mode": "consumable", "active_target": "pull_tabs"}
 	},
 	{
@@ -1057,7 +1057,7 @@
 		"icon_key": "jazz_sax_lucky_coin",
 		"environment_prop": "coin",
 		"surface": "counter_case",
-		"description": "A heavy club coin that makes clean breaks arrive early.",
+		"description": "Clean luck boost.",
 		"effect": {"win_chance": 10, "win_bonus": 3, "loss_reduction": 2, "cheat_suspicion_delta": -2}
 	},
 	{
@@ -1074,7 +1074,7 @@
 		"icon_key": "jazz_cello_lucky_coin",
 		"environment_prop": "coin",
 		"surface": "counter_case",
-		"description": "A warm brass coin with a low note's patience.",
+		"description": "Clean luck boost.",
 		"effect": {"win_chance": 10, "win_bonus": 3, "loss_reduction": 2, "cheat_suspicion_delta": -2}
 	},
 	{
@@ -1091,7 +1091,7 @@
 		"icon_key": "jazz_drummer_lucky_coin",
 		"environment_prop": "coin",
 		"surface": "counter_case",
-		"description": "A bright beat-up coin from the house drummer.",
+		"description": "Clean luck boost.",
 		"effect": {"win_chance": 10, "win_bonus": 3, "loss_reduction": 2, "cheat_suspicion_delta": -2}
 	},
 	{
@@ -1108,7 +1108,79 @@
 		"icon_key": "jazz_drummer_glasses",
 		"environment_prop": "glasses",
 		"surface": "counter_case",
-		"description": "Famous frames; show them once per venue to clear heat.",
+		"description": "Clears venue heat.",
 		"effect": {"win_chance": 3, "cheat_suspicion_delta": -4, "loss_reduction": 1}
+	},
+	{
+		"id": "bag",
+		"display_name": "Bag",
+		"class": "container",
+		"domain": "home",
+		"content_groups": ["universal_passive_items"],
+		"sellable": true,
+		"sale_price": 8,
+		"price_min": 12,
+		"price_max": 22,
+		"asset_path": "res://assets/art/items/bag.png",
+		"icon_key": "bag",
+		"environment_prop": "satchel",
+		"surface": "counter",
+		"description": "Stores 3 items.",
+		"container_capacity": 3,
+		"effect": {}
+	},
+	{
+		"id": "backpack",
+		"display_name": "Backpack",
+		"class": "container",
+		"domain": "home",
+		"content_groups": ["universal_passive_items"],
+		"sellable": true,
+		"sale_price": 14,
+		"price_min": 22,
+		"price_max": 34,
+		"asset_path": "res://assets/art/items/backpack.png",
+		"icon_key": "backpack",
+		"environment_prop": "satchel",
+		"surface": "counter",
+		"description": "Stores 5 items.",
+		"container_capacity": 5,
+		"effect": {}
+	},
+	{
+		"id": "suitcase",
+		"display_name": "Suitcase",
+		"class": "container",
+		"domain": "home",
+		"content_groups": ["universal_passive_items"],
+		"sellable": true,
+		"sale_price": 22,
+		"price_min": 36,
+		"price_max": 55,
+		"asset_path": "res://assets/art/items/suitcase.png",
+		"icon_key": "suitcase",
+		"environment_prop": "briefcase",
+		"surface": "counter",
+		"description": "Stores 7 items.",
+		"container_capacity": 7,
+		"effect": {}
+	},
+	{
+		"id": "trunk",
+		"display_name": "Trunk",
+		"class": "container",
+		"domain": "home",
+		"content_groups": ["universal_passive_items"],
+		"sellable": true,
+		"sale_price": 34,
+		"price_min": 58,
+		"price_max": 84,
+		"asset_path": "res://assets/art/items/trunk.png",
+		"icon_key": "trunk",
+		"environment_prop": "crate",
+		"surface": "counter",
+		"description": "Stores 10 items.",
+		"container_capacity": 10,
+		"effect": {}
 	}
 ]

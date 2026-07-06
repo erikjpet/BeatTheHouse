@@ -3,7 +3,7 @@
 		"id": "street_lender",
 		"display_name": "Street Lender",
 		"lender_type": "criminal",
-		"description": "Fast cash with pressure attached.",
+		"description": "Fast risky cash.",
 		"debt_profile": {
 			"principal_min": 25,
 			"principal_max": 60,
@@ -40,7 +40,7 @@
 		"id": "motel_friend",
 		"display_name": "Motel Friend",
 		"lender_type": "personal",
-		"description": "A softer loan with social strings.",
+		"description": "Soft social loan.",
 		"debt_profile": {
 			"principal_min": 15,
 			"principal_max": 40,
@@ -77,7 +77,7 @@
 		"id": "the_crew",
 		"display_name": "The Crew",
 		"lender_type": "favor_crew",
-		"description": "Free cash from people whose favors arrive on their schedule.",
+		"description": "Cash for favors.",
 		"debt_profile": {
 			"principal_min": 35,
 			"principal_max": 55,
@@ -98,7 +98,7 @@
 		"id": "brother_in_law",
 		"display_name": "Your Brother-in-Law",
 		"lender_type": "family_phone",
-		"description": "One family phone-call loan per run, fair terms and loud strings.",
+		"description": "Fair family loan.",
 		"availability": {
 			"requires_flags": {
 				"brother_in_law_phone_ready": true
@@ -124,7 +124,7 @@
 		"id": "sals_pawn_counter",
 		"display_name": "Sal's Pawn Counter",
 		"lender_type": "pawn",
-		"description": "Collateral, not credit. Sal holds an item until you redeem it.",
+		"description": "Pawn item for cash.",
 		"debt_profile": {
 			"principal_min": 10,
 			"principal_max": 70,

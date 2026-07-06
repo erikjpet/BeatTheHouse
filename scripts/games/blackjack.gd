@@ -25,14 +25,17 @@ const DEAL_ANIMATION_CHANNEL := "blackjack_deal"
 const ATTENTION_ANIMATION_CHANNEL := "blackjack_attention"
 const COUNT_ANIMATION_CHANNEL := "blackjack_count_rhythm"
 const PAYOUT_ANIMATION_CHANNEL := "blackjack_payout"
-const DEAL_CARD_DURATION_MSEC := 380
-const DEAL_CARD_STAGGER_MSEC := 185
+const DEAL_CARD_DURATION_MSEC := 520
+const DEAL_CARD_STAGGER_MSEC := 280
+const DEAL_OPENING_FIRST_DELAY_MSEC := 120
+const DEAL_HOLE_REVEAL_DELAY_MSEC := 180
+const DEAL_HOLE_REVEAL_DURATION_MSEC := 520
 const DEAL_CARD_SHOE_POS := Vector2(736, 126)
 const PAYOUT_ANIMATION_DURATION_MSEC := 1800
 const COUNT_ICON_DURATION_MSEC := 3000
 const COUNT_ICON_STAGGER_MSEC := 520
 const COUNT_ICON_FADE_MSEC := 420
-const PATRON_DECISION_START_DELAY_MSEC := 260
+const PATRON_DECISION_START_DELAY_MSEC := 680
 const PATRON_DECISION_STEP_DELAY_MSEC := 220
 const PATRON_HIT_CARD_DELAY_MSEC := 110
 const PATRON_DECISION_HIGHLIGHT_MSEC := 840
@@ -121,11 +124,11 @@ func generate_environment_state(_run_state: RunState, environment: Dictionary, r
 	var shoe: Array = _build_shoe(deck_count, rng)
 	var cut_remaining := CardShoeScript.cut_card_remaining(deck_count)
 	# Act 1 tables intentionally model common shoe variants: S17/H17, DAS/no
-	# DAS, split to 3-4 hands, one-card split aces, and late surrender.
+	# DAS, split to 3-4 hands, and late surrender.
 	var rule_variants: Array = [
-		{"dealer_hits_soft_17": false, "double_after_split": true, "split_aces_one_card": true, "max_split_hands": 4, "late_surrender": true},
-		{"dealer_hits_soft_17": true, "double_after_split": true, "split_aces_one_card": true, "max_split_hands": 3, "late_surrender": false},
-		{"dealer_hits_soft_17": false, "double_after_split": false, "split_aces_one_card": true, "max_split_hands": 4, "late_surrender": true},
+		{"dealer_hits_soft_17": false, "double_after_split": true, "split_aces_one_card": false, "max_split_hands": 4, "late_surrender": true},
+		{"dealer_hits_soft_17": true, "double_after_split": true, "split_aces_one_card": false, "max_split_hands": 3, "late_surrender": false},
+		{"dealer_hits_soft_17": false, "double_after_split": false, "split_aces_one_card": false, "max_split_hands": 4, "late_surrender": true},
 	]
 	var rules: Dictionary = (rng.pick(rule_variants, rule_variants[0]) as Dictionary).duplicate(true)
 	var side_bet_min: int = 2
@@ -218,7 +221,7 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 	for side_bet in available_side_bets:
 		var side_bet_id := str(side_bet.get("id", ""))
 		side_bet_stakes[side_bet_id] = _side_bet_stake(selected_stake, side_bet, run_state)
-	var patrons: Array = _patrons_for_surface(table, session)
+	var patrons: Array = GameModule.patrons_with_talk_focus(_patrons_for_surface(table, session), ui_state.get("focused_talk_speaker", {}))
 	var snitch_pressure := _patron_snitch_risk_from_patrons(patrons)
 	var dealer_focus: Dictionary = _dealer_focus_state(table, session, run_state, snitch_pressure)
 	var distraction_active: bool = bool(dealer_focus.get("peek_window_open", bool(dealer_focus.get("lookaway_active", false))))
@@ -253,11 +256,13 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 	var table_notice := _table_notice_for_session(session, table)
 	var payout_active_id := str(last_result.get("payout_animation_id", ""))
 	var payout_started_msec := int(last_result.get("resolved_at_msec", last_result.get("timestamp_msec", 0)))
+	if not last_result.is_empty() and not deal_events.is_empty():
+		payout_started_msec += deal_duration_msec
 	var deal_animation_active := not deal_active_id.is_empty() and deal_started_msec > 0 and now_msec - deal_started_msec >= 0 and now_msec - deal_started_msec < deal_duration_msec
 	var payout_animation_active := not payout_active_id.is_empty() and payout_started_msec > 0 and now_msec - payout_started_msec >= 0 and now_msec - payout_started_msec < PAYOUT_ANIMATION_DURATION_MSEC
 	var attention_animation_active := not attention_active_id.is_empty() and attention_started_msec > 0 and attention_duration_msec > 0 and now_msec - attention_started_msec >= 0 and now_msec - attention_started_msec < attention_duration_msec
 	var surface_motion_active := deal_animation_active or payout_animation_active or count_active or attention_animation_active
-	var blackjack_ambient_overlay := "table_idle" if not barred and not surface_motion_active else ""
+	var blackjack_ambient_overlay := "table_idle" if not barred else ""
 	var timer_active := not dealt and not barred and not deal_animation_active and not payout_animation_active
 	var round_timer := GameModule.table_round_timer_status_peek(table, now_msec, "Next hand") if timer_active else {}
 	if timer_active and bool(round_timer.get("active", false)) and table_notice == "Slide chips, choose side bets, then press DEAL.":
@@ -293,8 +298,10 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 		"surface_embeds_outcomes": true,
 		"surface_animates_idle": false,
 		"surface_ambient_overlay": blackjack_ambient_overlay,
+		"surface_dynamic_overlay_channels": [DEAL_ANIMATION_CHANNEL, ATTENTION_ANIMATION_CHANNEL, COUNT_ANIMATION_CHANNEL, PAYOUT_ANIMATION_CHANNEL],
 		"surface_realtime_state_refresh": false,
 		"surface_ui_protected_regions": _blackjack_ui_protected_regions(count_challenge),
+		"surface_ui_preference_keys": ["blackjack_side_bets"],
 		"surface_hover_ui_protected_regions": [
 			_blackjack_ui_rect(236, 202, 428, 108, "blackjack_side_bet"),
 		],
@@ -340,8 +347,12 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 		"patron_wager_action": "blackjack_patron_bet",
 		"patron_hands": patron_hands,
 		"patron_action_events": patron_action_events,
+		"deal_animation_id": deal_active_id,
+		"deal_started_msec": deal_started_msec,
 		"deal_animation_events": deal_events,
 		"deal_animation_duration_msec": deal_duration_msec,
+		"payout_animation_id": payout_active_id,
+		"payout_started_msec": payout_started_msec,
 		"last_result": last_result,
 		"showdown_active": not last_result.is_empty() and not dealt,
 		"showdown_player_hands": _hand_array(last_result.get("player_hands", [])),
@@ -476,25 +487,45 @@ func _blackjack_ui_rect(x: float, y: float, width: float, height: float, hover_a
 	return rect
 
 
-func draw_surface(surface, surface_state: Dictionary, _render_context: Dictionary = {}) -> bool:
+func draw_surface(surface, surface_state: Dictionary, render_context: Dictionary = {}) -> bool:
 	if str(surface_state.get("surface_renderer", "")) != "blackjack":
 		return false
+	var overlay_owns_table_idle := bool(render_context.get("surface_dynamic_overlay_active", false)) and str(render_context.get("surface_dynamic_overlay_id", "")) == "table_idle"
 	if surface.surface_animation_active(DEAL_ANIMATION_CHANNEL):
 		_prepare_draw_deal_events_cache(surface_state)
 	surface.surface_begin_design_space(surface.surface_board_size())
 	_draw_blackjack_room(surface, surface_state)
 	_draw_blackjack_table(surface, surface_state)
-	_draw_table_patrons(surface, surface_state)
-	_draw_dealer_station(surface, surface_state)
+	if not overlay_owns_table_idle:
+		_draw_table_patrons(surface, surface_state)
+		_draw_dealer_station(surface, surface_state)
 	_draw_player_station(surface, surface_state)
 	_draw_blackjack_table_notice(surface, surface_state)
-	_draw_blackjack_round_timer(surface, surface_state)
+	if not overlay_owns_table_idle:
+		_draw_blackjack_round_timer(surface, surface_state)
 	_draw_blackjack_ambient_event(surface, surface_state)
 	_draw_chip_rack(surface, surface_state)
 	_draw_table_actions(surface, surface_state)
 	_draw_basic_strategy_advice(surface, surface_state)
 	_draw_blackjack_result_board(surface, surface_state)
 	_draw_side_bet_rule_overlay(surface, surface_state)
+	if not overlay_owns_table_idle:
+		_draw_deal_animation(surface, surface_state)
+		_draw_chip_payout_animation(surface, surface_state)
+	if not overlay_owns_table_idle:
+		_draw_count_challenge(surface, surface_state)
+	return true
+
+
+func draw_surface_dynamic_overlay(surface, surface_state: Dictionary, overlay_id: String) -> bool:
+	if overlay_id != "table_idle" or str(surface_state.get("surface_renderer", "")) != "blackjack":
+		return false
+	if surface.surface_animation_active(DEAL_ANIMATION_CHANNEL):
+		_prepare_draw_deal_events_cache(surface_state)
+	_draw_table_patrons(surface, surface_state)
+	_draw_dealer_station(surface, surface_state)
+	_draw_player_station(surface, surface_state, false)
+	_draw_blackjack_round_timer(surface, surface_state)
 	_draw_deal_animation(surface, surface_state)
 	_draw_chip_payout_animation(surface, surface_state)
 	_draw_count_challenge(surface, surface_state)
@@ -533,7 +564,10 @@ func surface_needs_auto_tick(ui_state: Dictionary, run_state: RunState, environm
 	if _blackjack_table_motion_active(table, now_msec):
 		return false
 	var timer := GameModule.table_round_timer_status_peek(table, now_msec, "Next hand")
-	return not bool(timer.get("active", false)) or bool(timer.get("due", false))
+	if bool(timer.get("active", false)):
+		return bool(timer.get("due", false))
+	var last_result: Dictionary = _local_copy_dict(table.get("last_result", {}))
+	return not last_result.is_empty()
 
 
 func _peek_table_state(environment: Dictionary) -> Dictionary:
@@ -559,9 +593,15 @@ func surface_auto_action_command(ui_state: Dictionary, run_state: RunState, envi
 	var now_msec := int(ui_state.get("surface_time_msec", Time.get_ticks_msec()))
 	if _blackjack_table_motion_active(table, now_msec):
 		return {"handled": false}
-	var timer := GameModule.table_round_timer_status(table, now_msec, "Next hand")
-	if not bool(timer.get("due", false)):
+	var timer := GameModule.table_round_timer_status_peek(table, now_msec, "Next hand")
+	if not bool(timer.get("active", false)):
+		var last_result: Dictionary = _local_copy_dict(table.get("last_result", {}))
+		if last_result.is_empty():
+			return {"handled": false}
+		timer = GameModule.table_round_timer_status(table, now_msec, "Next hand")
 		_update_environment_table(environment, table)
+		return {"handled": false}
+	if not bool(timer.get("due", false)):
 		return {"handled": false}
 	next_state["blackjack_sit_out"] = true
 	next_state["blackjack_side_bets"] = []
@@ -639,6 +679,9 @@ func surface_action_command(surface_action: String, index: int, confirm_requeste
 		"blackjack_deal":
 			if _has_dealt_hand(next_state):
 				if not _all_hands_complete(next_state) and not _dealer_has_blackjack(_card_array(next_state.get("dealer_cards", []))):
+					if _count_settlement_preview_required(next_state):
+						_stand_all_hands(next_state)
+						return _settle_completed_round_command(next_state, index, "You wave off the hand. Dealer reveals and settles.", table, run_state)
 					if str(next_state.get("selected_action_id", "")) == "play_basic" and str(next_state.get("selected_action_kind", "")) == "legal":
 						_stand_all_hands(next_state)
 						return _settle_completed_round_command(next_state, index, "You wave off the hand. Dealer reveals and settles.", table, run_state)
@@ -649,7 +692,7 @@ func surface_action_command(surface_action: String, index: int, confirm_requeste
 			var projected_cost: int = _wager_cost_from_session(selected_stake, dealt_state, table, run_state)
 			if projected_cost > maxi(0, run_state.bankroll if run_state != null else projected_cost):
 				return _message_command(next_state, "You do not have enough bankroll for those chips and side bets.")
-			return _action_command("play_basic", "legal", false, dealt_state, index, _opening_deal_notice(dealt_state, table), true)
+			return _opening_deal_command(dealt_state, index, _opening_deal_notice(dealt_state, table))
 		"blackjack_distraction":
 			return _start_distraction_command(index, next_state, table)
 		"blackjack_patron_cover":
@@ -1342,7 +1385,7 @@ func _draw_patron_move_badge(surface, pos: Vector2, patron: Dictionary, active_e
 		surface.surface_label(reason.left(17), rect.position + Vector2(4, -4), 7, C_SOFT)
 
 
-func _draw_player_station(surface, surface_state: Dictionary) -> void:
+func _draw_player_station(surface, surface_state: Dictionary, include_betting_chrome: bool = true) -> void:
 	var hands: Array = _hand_array(surface_state.get("player_hands", []))
 	var result: Dictionary = _local_copy_dict(surface_state.get("last_result", {}))
 	var showdown_hands: Array = _hand_array(result.get("player_hands", []))
@@ -1359,20 +1402,26 @@ func _draw_player_station(surface, surface_state: Dictionary) -> void:
 		var cards: Array = _card_array(hand.get("cards", []))
 		var pad := Rect2(pos.x - 12, pos.y - 28, 120, 82)
 		var pulse := 0.08 + absf(sin(clock * 3.2 + float(i))) * 0.08 if active else 0.04
+		var cards_revealed := _hand_cards_revealed_for_deal(surface, surface_state, "player", i, cards)
 		surface.draw_rect(pad.grow(3 if active else 0), Color(C_TEAL.r, C_TEAL.g, C_TEAL.b, pulse))
 		surface.draw_rect(pad, C_YELLOW if showing_showdown else C_TEAL if active else Color(C_SOFT.r, C_SOFT.g, C_SOFT.b, 0.22), false, 1)
 		_draw_card_row_for_table(surface, surface_state, cards, pos, "player", i, PLAYER_CARD_SCALE)
-		surface.surface_label("H%d %s" % [i + 1, _hand_label(hand)], pos + Vector2(-4, -8), 10, C_TEAL if active else C_SOFT)
-		_draw_hand_state_badge(surface, pos + Vector2(6, -30), hand, active)
-		if i < result_hands.size():
+		var hand_label := "H%d" % [i + 1]
+		if cards_revealed:
+			hand_label = "H%d %s" % [i + 1, _hand_label(hand)]
+		surface.surface_label(hand_label, pos + Vector2(-4, -8), 10, C_TEAL if active else C_SOFT)
+		if cards_revealed:
+			_draw_hand_state_badge(surface, pos + Vector2(6, -30), hand, active)
+		if i < result_hands.size() and not _settlement_reveal_waiting(surface, surface_state):
 			_draw_hand_result_badge(surface, pos + Vector2(6, 54), result_hands[i])
 	if showing_showdown:
 		surface.surface_label_centered("SHOWDOWN HELD ON FELT", Rect2(342, 226, 216, 16), 10, C_YELLOW)
-	if display_hands.is_empty():
+	if include_betting_chrome and display_hands.is_empty():
 		_draw_neon_panel(surface, Rect2(346, 236, 208, 36), C_CYAN, 0.12)
 		surface.surface_label_centered("slide chips, then deal", Rect2(358, 246, 184, 16), 13, C_SOFT)
-	_draw_player_wager_chips(surface, surface_state)
-	_draw_side_bet_felt(surface, surface_state)
+	if include_betting_chrome:
+		_draw_player_wager_chips(surface, surface_state)
+		_draw_side_bet_felt(surface, surface_state)
 
 
 func _draw_player_wager_chips(surface, surface_state: Dictionary) -> void:
@@ -1638,6 +1687,8 @@ func _draw_chip_payout_animation(surface, surface_state: Dictionary) -> void:
 	var result: Dictionary = _local_copy_dict(surface_state.get("last_result", {}))
 	if result.is_empty():
 		return
+	if _settlement_reveal_waiting(surface, surface_state):
+		return
 	if not surface.surface_animation_active(PAYOUT_ANIMATION_CHANNEL):
 		return
 	var elapsed_msec := float(surface.surface_elapsed(PAYOUT_ANIMATION_CHANNEL)) * 1000.0
@@ -1700,6 +1751,21 @@ func _draw_card_row_for_table(surface, surface_state: Dictionary, cards: Array, 
 		if _card_waiting_for_deal_animation(surface, surface_state, zone, hand_index, i):
 			continue
 		_draw_card(surface, cards[i], start + Vector2(float(i) * spacing, 0), scale)
+
+
+func _hand_cards_revealed_for_deal(surface, surface_state: Dictionary, zone: String, hand_index: int, cards: Array) -> bool:
+	for i in range(cards.size()):
+		if _card_waiting_for_deal_animation(surface, surface_state, zone, hand_index, i):
+			return false
+	return true
+
+
+func _settlement_reveal_waiting(surface, surface_state: Dictionary) -> bool:
+	if _local_copy_dict(surface_state.get("last_result", {})).is_empty():
+		return false
+	if not surface.surface_animation_active(DEAL_ANIMATION_CHANNEL):
+		return false
+	return not _surface_deal_animation_events(surface_state).is_empty()
 
 
 func _card_waiting_for_deal_animation(surface, surface_state: Dictionary, zone: String, hand_index: int, card_index: int) -> bool:
@@ -1980,6 +2046,12 @@ func _draw_blackjack_result_board(surface, surface_state: Dictionary) -> void:
 		_draw_neon_panel(surface, rect, C_CYAN, 0.10)
 		surface.surface_label("TABLE READ", rect.position + Vector2(10, 18), 12, C_CYAN)
 		surface.surface_label("eyes + snitches", rect.position + Vector2(10, 36), 9, C_SOFT)
+		return
+	if _settlement_reveal_waiting(surface, surface_state):
+		_draw_neon_panel(surface, rect, C_YELLOW, 0.16)
+		surface.surface_label("DEALER REVEAL", rect.position + Vector2(10, 18), 12, C_YELLOW)
+		surface.surface_label("cards still moving", rect.position + Vector2(10, 38), 9, C_SOFT)
+		surface.surface_label("settlement follows", rect.position + Vector2(10, 58), 8, C_SOFT)
 		return
 	var delta := int(result.get("bankroll_delta", 0))
 	var heat := int(result.get("suspicion_delta", 0))
@@ -2451,11 +2523,19 @@ func _normalized_session(run_state: RunState, environment: Dictionary, ui_state:
 
 
 func _initial_deal(session: Dictionary, table: Dictionary) -> Dictionary:
-	var opening_cards: Array = _draw_cards_from_session(session, table, 4)
-	while opening_cards.size() < 4:
-		opening_cards.append({"rank": 2, "suit": opening_cards.size() % 4, "deck": 0})
-	var player_cards: Array = [opening_cards[0], opening_cards[2]]
-	var dealer_cards: Array = [opening_cards[1], opening_cards[3]]
+	var sit_out := bool(session.get("blackjack_sit_out", false))
+	var player_cards: Array = []
+	var dealer_cards: Array = []
+	if sit_out:
+		dealer_cards = _draw_cards_from_session(session, table, 2)
+		while dealer_cards.size() < 2:
+			dealer_cards.append({"rank": 2, "suit": dealer_cards.size() % 4, "deck": 0})
+	else:
+		var opening_cards: Array = _draw_cards_from_session(session, table, 4)
+		while opening_cards.size() < 4:
+			opening_cards.append({"rank": 2, "suit": opening_cards.size() % 4, "deck": 0})
+		player_cards = [opening_cards[0], opening_cards[2]]
+		dealer_cards = [opening_cards[1], opening_cards[3]]
 	var patron_hands: Array = []
 	var patrons: Array = _dictionary_array(table.get("patrons", []))
 	for i in range(patrons.size()):
@@ -2474,15 +2554,18 @@ func _initial_deal(session: Dictionary, table: Dictionary) -> Dictionary:
 			"blackjack_eligible": false,
 			"terminal_reason": "",
 		})
-	return {
-		"player_hands": [{
+	var player_hands: Array = []
+	if not sit_out:
+		player_hands.append({
 			"cards": player_cards,
 			"wager_multiplier": 1,
 			"stood": false,
 			"doubled": false,
 			"split": false,
 			"blackjack_eligible": true,
-		}],
+		})
+	return {
+		"player_hands": player_hands,
 		"dealer_cards": dealer_cards,
 		"patron_hands": patron_hands,
 		"cards_consumed": int(session.get("cards_consumed", 0)),
@@ -2490,7 +2573,10 @@ func _initial_deal(session: Dictionary, table: Dictionary) -> Dictionary:
 
 
 func _has_dealt_hand(session: Dictionary) -> bool:
-	return not _hand_array(session.get("player_hands", [])).is_empty() and not _card_array(session.get("dealer_cards", [])).is_empty()
+	var dealer_cards: Array = _card_array(session.get("dealer_cards", []))
+	if dealer_cards.is_empty():
+		return false
+	return not _hand_array(session.get("player_hands", [])).is_empty() or bool(session.get("blackjack_sit_out", false))
 
 
 func _start_initial_hand(session: Dictionary, table: Dictionary, stake: int = 1, run_state: RunState = null, result_msec: int = -1) -> void:
@@ -2519,6 +2605,8 @@ func _start_initial_hand(session: Dictionary, table: Dictionary, stake: int = 1,
 	if not hands.is_empty():
 		var opening_hand: Dictionary = hands[0]
 		session["initial_player_cards"] = _first_cards(_card_array(opening_hand.get("cards", [])), 2)
+	else:
+		session["initial_player_cards"] = []
 	session["initial_dealer_cards"] = _first_cards(dealer_cards, 2)
 	_mark_deal_animation(session, "initial", _initial_deal_animation_events(hands, dealer_cards, patron_hands), result_msec)
 	if bool(table.get("counting_enabled", false)):
@@ -2657,8 +2745,10 @@ func _deal_animation_event_array(value: Variant) -> Array:
 func _surface_deal_animation_events(surface_state: Dictionary) -> Array:
 	if str(surface_state.get("deal_animation_id", "")) == draw_deal_events_cache_id:
 		return draw_deal_events_cache
-	var cached_value: Variant = surface_state.get(DRAW_DEAL_EVENTS_CACHE_KEY, [])
-	if typeof(cached_value) == TYPE_ARRAY:
+	if surface_state.has(DRAW_DEAL_EVENTS_CACHE_KEY):
+		var cached_value: Variant = surface_state.get(DRAW_DEAL_EVENTS_CACHE_KEY, [])
+		if typeof(cached_value) != TYPE_ARRAY:
+			return []
 		var cached_events: Array = cached_value as Array
 		return cached_events
 	return _deal_animation_event_array(surface_state.get("deal_animation_events", []))
@@ -2780,21 +2870,29 @@ func _patron_hand_base_position(patron_index: int) -> Vector2:
 
 func _initial_deal_animation_events(hands: Array, dealer_cards: Array, patron_hands: Array = []) -> Array:
 	var events: Array = []
-	if hands.is_empty():
-		return events
-	var first_hand: Dictionary = hands[0]
-	var cards: Array = _card_array(first_hand.get("cards", []))
+	var cards: Array = []
+	if not hands.is_empty():
+		var first_hand: Dictionary = hands[0]
+		cards = _card_array(first_hand.get("cards", []))
 	if cards.size() > 0:
-		events.append(_deal_animation_event(cards[0], "player", 0, 0, DEAL_CARD_SHOE_POS, _player_hand_card_target(0, 0), 0, PLAYER_CARD_SCALE, "player first"))
+		events.append(_deal_animation_event(cards[0], "player", 0, 0, DEAL_CARD_SHOE_POS, _player_hand_card_target(0, 0), DEAL_OPENING_FIRST_DELAY_MSEC, PLAYER_CARD_SCALE, "player first"))
+	var dealer_delay := DEAL_OPENING_FIRST_DELAY_MSEC + DEAL_CARD_STAGGER_MSEC
+	if cards.is_empty():
+		dealer_delay = DEAL_OPENING_FIRST_DELAY_MSEC
 	if dealer_cards.size() > 0:
-		events.append(_deal_animation_event(dealer_cards[0], "dealer", 0, 0, DEAL_CARD_SHOE_POS, _dealer_card_target(0), DEAL_CARD_STAGGER_MSEC, DEALER_CARD_SCALE, "dealer upcard"))
+		events.append(_deal_animation_event(dealer_cards[0], "dealer", 0, 0, DEAL_CARD_SHOE_POS, _dealer_card_target(0), dealer_delay, DEALER_CARD_SCALE, "dealer upcard"))
 	if cards.size() > 1:
-		events.append(_deal_animation_event(cards[1], "player", 0, 1, DEAL_CARD_SHOE_POS, _player_hand_card_target(0, 1), DEAL_CARD_STAGGER_MSEC * 2, PLAYER_CARD_SCALE, "player second"))
+		events.append(_deal_animation_event(cards[1], "player", 0, 1, DEAL_CARD_SHOE_POS, _player_hand_card_target(0, 1), DEAL_OPENING_FIRST_DELAY_MSEC + DEAL_CARD_STAGGER_MSEC * 2, PLAYER_CARD_SCALE, "player second"))
+	var hole_delay := DEAL_OPENING_FIRST_DELAY_MSEC + DEAL_CARD_STAGGER_MSEC * 3
+	if cards.is_empty():
+		hole_delay = DEAL_OPENING_FIRST_DELAY_MSEC + DEAL_CARD_STAGGER_MSEC
 	if dealer_cards.size() > 1:
 		var hole: Dictionary = (dealer_cards[1] as Dictionary).duplicate(true)
 		hole["hidden"] = true
-		events.append(_deal_animation_event(hole, "dealer", 0, 1, DEAL_CARD_SHOE_POS, _dealer_card_target(1), DEAL_CARD_STAGGER_MSEC * 3, DEALER_CARD_SCALE, "hole card"))
-	var delay := DEAL_CARD_STAGGER_MSEC * 4
+		events.append(_deal_animation_event(hole, "dealer", 0, 1, DEAL_CARD_SHOE_POS, _dealer_card_target(1), hole_delay, DEALER_CARD_SCALE, "hole card"))
+	var delay := DEAL_OPENING_FIRST_DELAY_MSEC + DEAL_CARD_STAGGER_MSEC * 4
+	if cards.is_empty():
+		delay = DEAL_OPENING_FIRST_DELAY_MSEC + DEAL_CARD_STAGGER_MSEC * 2
 	for patron_index in range(patron_hands.size()):
 		var patron_hand: Dictionary = patron_hands[patron_index]
 		var patron_cards: Array = _card_array(patron_hand.get("cards", []))
@@ -2933,26 +3031,7 @@ func _split_active_hand(session: Dictionary, table: Dictionary) -> void:
 		split_events.append(_deal_animation_event(second_cards[1], "player", active_index + 1, 1, DEAL_CARD_SHOE_POS, _player_hand_card_target(active_index + 1, 1), 315, PLAYER_CARD_SCALE, "split second draw"))
 	_mark_deal_animation(session, "split_%d_%d" % [active_index, int(session.get("split_count", 0))], split_events)
 	session["moves_made"] = true
-	_autostand_split_aces(session, table)
-
-
-func _autostand_split_aces(session: Dictionary, table: Dictionary) -> void:
-	var rules: Dictionary = _table_rules(table)
-	if not bool(rules.get("split_aces_one_card", true)):
-		return
-	# Split aces are deliberately one-card hands and cannot be re-split or hit.
-	var hands: Array = _hand_array(session.get("player_hands", []))
-	for i in range(hands.size()):
-		var hand: Dictionary = hands[i]
-		if not bool(hand.get("split", false)):
-			continue
-		var cards: Array = _card_array(hand.get("cards", []))
-		if cards.size() >= 2 and _card_rank_value(cards[0]) == RANK_ACE:
-			hand["stood"] = true
-			hand["terminal_reason"] = "split ace"
-			hands[i] = hand
-	session["player_hands"] = hands
-	_advance_active_hand(session)
+	_autoadvance_finished_hands(session, table)
 
 
 func _autoadvance_finished_hands(session: Dictionary, table: Dictionary) -> void:
@@ -2996,11 +3075,12 @@ func _stand_all_hands(session: Dictionary) -> void:
 func _dealer_final_cards(session: Dictionary, table: Dictionary) -> Array:
 	var dealer_cards: Array = _card_array(session.get("dealer_cards", []))
 	var rules: Dictionary = _table_rules(table)
+	var settlement_events: Array = _dealer_hole_reveal_animation_events(dealer_cards)
 	if _dealer_has_blackjack(dealer_cards):
-		session["settlement_deal_animation_events"] = []
+		session["settlement_deal_animation_events"] = settlement_events
 		session["dealer_cards"] = dealer_cards
 		return dealer_cards
-	var settlement_events: Array = _play_patron_hands_for_settlement(session, table)
+	settlement_events.append_array(_play_patron_hands_for_settlement(session, table))
 	var dealer_draw_needed := false
 	for hand_value in _hand_array(session.get("player_hands", [])):
 		var hand: Dictionary = hand_value
@@ -3035,6 +3115,27 @@ func _dealer_final_cards(session: Dictionary, table: Dictionary) -> Array:
 	session["settlement_deal_animation_events"] = settlement_events
 	session["dealer_cards"] = dealer_cards
 	return dealer_cards
+
+
+func _dealer_hole_reveal_animation_events(dealer_cards: Array) -> Array:
+	if dealer_cards.size() < 2 or typeof(dealer_cards[1]) != TYPE_DICTIONARY:
+		return []
+	var hole_card: Dictionary = (dealer_cards[1] as Dictionary).duplicate(true)
+	hole_card.erase("hidden")
+	return [
+		_deal_animation_event(
+			hole_card,
+			"dealer",
+			0,
+			1,
+			_dealer_card_target(1),
+			_dealer_card_target(1),
+			DEAL_HOLE_REVEAL_DELAY_MSEC,
+			DEALER_CARD_SCALE,
+			"hole reveal",
+			DEAL_HOLE_REVEAL_DURATION_MSEC
+		)
+	]
 
 
 func _play_patron_hands_for_settlement(session: Dictionary, table: Dictionary) -> Array:
@@ -3547,6 +3648,18 @@ func _action_command(action_id: String, action_kind: String, confirm_requested: 
 	})
 
 
+func _opening_deal_command(ui_state: Dictionary, index: int, message: String) -> Dictionary:
+	if not message.is_empty():
+		ui_state["table_notice"] = message
+	var compact_state: Dictionary = _compact_session_for_ui(ui_state)
+	return GameModule.surface_command({
+		"handled": true,
+		"ui_state": compact_state,
+		"selected_index": index,
+		"message": message,
+	})
+
+
 func _message_command(ui_state: Dictionary, message: String) -> Dictionary:
 	if not message.is_empty():
 		ui_state["table_notice"] = message
@@ -3627,6 +3740,8 @@ func _session_stake(stake: int, session: Dictionary) -> int:
 
 
 func _opening_deal_notice(session: Dictionary, _table: Dictionary) -> String:
+	if bool(session.get("blackjack_sit_out", false)):
+		return "You sit out this hand. The dealer deals the table without your wager."
 	var dealer_cards: Array = _card_array(session.get("dealer_cards", []))
 	var hand: Dictionary = _active_hand(session)
 	var cards: Array = _card_array(hand.get("cards", []))
@@ -3684,6 +3799,8 @@ func _active_hand_status_text(session: Dictionary) -> String:
 
 func _terminal_round_message(session: Dictionary) -> String:
 	var dealer_cards: Array = _card_array(session.get("dealer_cards", []))
+	if bool(session.get("blackjack_sit_out", false)) and _hand_array(session.get("player_hands", [])).is_empty():
+		return "You sat out. Dealer reveals and settles the table."
 	if _dealer_has_blackjack(dealer_cards):
 		return "Dealer reveals blackjack. The hand settles immediately."
 	var hands: Array = _hand_array(session.get("player_hands", []))
@@ -4749,7 +4866,7 @@ func _side_bet_can_toggle_now(bet: Dictionary, session: Dictionary) -> bool:
 func _all_hands_complete(session: Dictionary) -> bool:
 	var hands: Array = _hand_array(session.get("player_hands", []))
 	if hands.is_empty():
-		return false
+		return bool(session.get("blackjack_sit_out", false)) and not _card_array(session.get("dealer_cards", [])).is_empty()
 	for hand_value in hands:
 		var hand: Dictionary = hand_value
 		if bool(hand.get("stood", false)):
@@ -4991,7 +5108,7 @@ func _table_rules(table: Dictionary) -> Dictionary:
 	return {
 		"dealer_hits_soft_17": bool(rules.get("dealer_hits_soft_17", false)),
 		"double_after_split": bool(rules.get("double_after_split", true)),
-		"split_aces_one_card": bool(rules.get("split_aces_one_card", true)),
+		"split_aces_one_card": bool(rules.get("split_aces_one_card", false)),
 		"max_split_hands": clampi(int(rules.get("max_split_hands", 4)), 2, 4),
 		"late_surrender": bool(rules.get("late_surrender", true)),
 		"blackjack_payout": BLACKJACK_PAYOUT_LABEL,
@@ -5001,7 +5118,7 @@ func _table_rules(table: Dictionary) -> Dictionary:
 
 func _table_summary(table: Dictionary) -> String:
 	var rules: Dictionary = _table_rules(table)
-	return "%s blackjack, %s, count %s, %s, split to %d, aces one-card, dealer %s soft 17%s, insurance on ace." % [
+	return "%s blackjack, %s, count %s, %s, split to %d, dealer %s soft 17%s, insurance on ace." % [
 		BLACKJACK_PAYOUT_LABEL,
 		str(table.get("shoe_label", CardShoeScript.shoe_label(int(table.get("deck_count", 6))))),
 		str(table.get("count_efficiency", CardShoeScript.count_efficiency_label(int(table.get("deck_count", 6))))),
@@ -5023,7 +5140,7 @@ func _table_rules_text(surface_state: Dictionary) -> String:
 
 
 func _table_rules_text_from_values(rules: Dictionary, total_wager_cost: int, shoe_label: String, shoe_remaining: int) -> String:
-	return "%s %s %s split%d A1%s Ins / Risk $%d / %s %d" % [
+	return "%s %s %s split%d%s Ins / Risk $%d / %s %d" % [
 		str(rules.get("blackjack_payout", BLACKJACK_PAYOUT_LABEL)),
 		"H17" if bool(rules.get("dealer_hits_soft_17", false)) else "S17",
 		"DAS" if bool(rules.get("double_after_split", true)) else "noDAS",
@@ -5288,7 +5405,9 @@ func _blackjack_result_message(hand_results: Array, side_results: Array, main_de
 	for side_value in side_results:
 		var side: Dictionary = side_value
 		side_details.append(_blackjack_side_result_detail(side))
-	var message := "Dealer %d. %s. Main %+d" % [dealer_total, "; ".join(hand_details), main_delta]
+	var message := "No player wager. Main %+d" % main_delta
+	if not hand_details.is_empty():
+		message = "Dealer %d. %s. Main %+d" % [dealer_total, "; ".join(hand_details), main_delta]
 	if side_delta != 0:
 		message += ". Side %+d" % side_delta
 	if not side_details.is_empty():

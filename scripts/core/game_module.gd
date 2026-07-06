@@ -128,6 +128,12 @@ func draw_surface(_surface_canvas, _surface_state: Dictionary, _render_context: 
 	return false
 
 
+# Optional game-owned dynamic overlay renderer. GameSurfaceCanvas has already
+# transformed the draw host into design-space coordinates when this is called.
+func draw_surface_dynamic_overlay(_surface_canvas, _surface_state: Dictionary, _overlay_id: String) -> bool:
+	return false
+
+
 # Optional game-specific state generated with an environment before the UI sees
 # it. This lets involved games own machine/table state without mutating on
 # selection or entry.
@@ -255,6 +261,7 @@ static func surface_spec(payload: Dictionary = {}) -> Dictionary:
 	spec["surface_action_blocks"] = _copy_array(spec.get("surface_action_blocks", []))
 	spec["surface_state_labels"] = _copy_array(spec.get("surface_state_labels", []))
 	spec["surface_result_display"] = _copy_dict(spec.get("surface_result_display", {}))
+	spec["surface_ui_preference_keys"] = _copy_array(spec.get("surface_ui_preference_keys", []))
 	return spec
 
 
@@ -556,6 +563,30 @@ static func set_result_message(result: Dictionary, message: String) -> Dictionar
 	updated["deltas"] = deltas
 	updated["messages"] = _copy_array(deltas["messages"])
 	return updated
+
+
+static func patrons_with_talk_focus(patrons: Array, focused_speaker_value: Variant) -> Array:
+	var focused_speaker := _copy_dict(focused_speaker_value)
+	if focused_speaker.is_empty() or str(focused_speaker.get("role", "")) != "patron":
+		return patrons.duplicate(true)
+	var focused_index := int(focused_speaker.get("patron_index", -1))
+	var focused_name := str(focused_speaker.get("name", "")).strip_edges()
+	var result: Array = []
+	for index in range(patrons.size()):
+		var patron_value: Variant = patrons[index]
+		if typeof(patron_value) != TYPE_DICTIONARY:
+			result.append(patron_value)
+			continue
+		var patron: Dictionary = (patron_value as Dictionary).duplicate(true)
+		var matches_index := focused_index >= 0 and index == focused_index
+		var matches_name := not focused_name.is_empty() and str(patron.get("name", "")).strip_edges() == focused_name
+		if matches_index or matches_name:
+			patron["watching_player"] = true
+			patron["tell_active"] = true
+			if str(patron.get("behavior", "")).strip_edges().is_empty():
+				patron["behavior"] = "speaking"
+		result.append(patron)
+	return result
 
 
 # Applies structured module changes through RunState.

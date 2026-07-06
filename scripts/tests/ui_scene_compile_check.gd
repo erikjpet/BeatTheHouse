@@ -8,9 +8,12 @@ const MainScene := preload("res://scenes/main.tscn")
 const VisualStyleScript := preload("res://scripts/ui/visual_style.gd")
 const PixelSceneCanvasScript := preload("res://scripts/ui/pixel_scene_canvas.gd")
 const GameSurfaceCanvasScript := preload("res://scripts/ui/game_surface_canvas.gd")
+const RunInventoryScreenScript := preload("res://scripts/ui/run_inventory_screen.gd")
+const TalkDockScript := preload("res://scripts/ui/talk_dock.gd")
 const SfxPlayerScript := preload("res://scripts/ui/sfx_player.gd")
 const SlotMachineStateScript := preload("res://scripts/games/slots/slot_machine_state.gd")
 const RunStateScript := preload("res://scripts/core/run_state.gd")
+const WorldMapScript := preload("res://scripts/core/world_map.gd")
 const RunActionServiceScript := preload("res://scripts/core/run_action_service.gd")
 const EventModuleScript := preload("res://scripts/core/event_module.gd")
 const UserSettingsScript := preload("res://scripts/core/user_settings.gd")
@@ -42,6 +45,358 @@ func _visible_buttons_meet_touch_target(node: Node, label: String) -> bool:
 		if not _visible_buttons_meet_touch_target(child, label):
 			return false
 	return true
+
+
+func _check_run_inventory_screen_component() -> bool:
+	var parent := Control.new()
+	parent.size = Vector2(900, 520)
+	root.add_child(parent)
+	var screen: RunInventoryScreen = RunInventoryScreenScript.new()
+	screen.configure(Callable(self, "_run_inventory_test_texture"))
+	parent.add_child(screen)
+	var emitted := {
+		"selected": "",
+		"selected_source": "",
+		"active": "",
+		"sell": "",
+		"repair": "",
+		"place": "",
+		"store": "",
+		"store_container": "",
+		"take": "",
+		"take_container": "",
+	}
+	screen.item_selected.connect(func(item_id: String, source: String) -> void:
+		emitted["selected"] = item_id
+		emitted["selected_source"] = source
+	)
+	screen.set_active_requested.connect(func(item_id: String) -> void:
+		emitted["active"] = item_id
+	)
+	screen.sell_requested.connect(func(item_id: String) -> void:
+		emitted["sell"] = item_id
+	)
+	screen.repair_requested.connect(func(item_id: String) -> void:
+		emitted["repair"] = item_id
+	)
+	screen.place_container_requested.connect(func(item_id: String) -> void:
+		emitted["place"] = item_id
+	)
+	screen.store_item_requested.connect(func(container_id: String, item_id: String) -> void:
+		emitted["store_container"] = container_id
+		emitted["store"] = item_id
+	)
+	screen.take_item_requested.connect(func(container_id: String, item_id: String) -> void:
+		emitted["take_container"] = container_id
+		emitted["take"] = item_id
+	)
+	screen.open(_run_inventory_component_model("inspect"))
+	await process_frame
+	if not screen.is_open() or screen.rendered_item_child_count() < 2 or not _has_visible_text(screen, "Odds Notebook") or not _has_visible_text(screen, "Effect"):
+		parent.queue_free()
+		push_error("Standalone run inventory screen did not render inspect grid and detail content.")
+		return false
+	if not _click_visible_button(screen, "Set Active") or str(emitted.get("active", "")) != "odds_notebook":
+		parent.queue_free()
+		push_error("Standalone run inventory screen did not emit active-item intent.")
+		return false
+	screen.update_model(_run_inventory_component_model("merchant_sale"))
+	await process_frame
+	if not _click_visible_button(screen, "Repair for 3") or str(emitted.get("repair", "")) != "odds_notebook":
+		parent.queue_free()
+		push_error("Standalone run inventory merchant mode did not emit repair intent.")
+		return false
+	if not _click_visible_button(screen, "Sell for 12") or str(emitted.get("sell", "")) != "odds_notebook":
+		parent.queue_free()
+		push_error("Standalone run inventory merchant mode did not emit sale intent.")
+		return false
+	screen.update_model(_run_inventory_component_model("place_container"))
+	await process_frame
+	if not _click_visible_button(screen, "Place at Home") or str(emitted.get("place", "")) != "canvas_bag":
+		parent.queue_free()
+		push_error("Standalone run inventory place-container mode did not emit placement intent.")
+		return false
+	screen.update_model(_run_inventory_component_model("home_container", "home_box", {"id": "odds_notebook", "source": "carried"}))
+	await process_frame
+	if not _click_visible_button(screen, "Move to Storage") or str(emitted.get("store_container", "")) != "home_box" or str(emitted.get("store", "")) != "odds_notebook":
+		parent.queue_free()
+		push_error("Standalone run inventory home-container mode did not emit store intent.")
+		return false
+	screen.select_item("odds_notebook", "container", false)
+	await process_frame
+	var selected_key: Dictionary = screen.selected_item_key()
+	if str(selected_key.get("id", "")) != "odds_notebook" or str(selected_key.get("source", "")) != "container":
+		parent.queue_free()
+		push_error("Standalone run inventory did not preserve item/source pair selection.")
+		return false
+	if not _click_visible_button(screen, "Move to Inventory") or str(emitted.get("take_container", "")) != "home_box" or str(emitted.get("take", "")) != "odds_notebook":
+		parent.queue_free()
+		push_error("Standalone run inventory home-container mode did not emit take intent.")
+		return false
+	screen.update_model(_run_inventory_component_model("home_container", "home_box", {"id": "odds_notebook", "source": "container"}))
+	selected_key = screen.selected_item_key()
+	if str(selected_key.get("source", "")) != "container":
+		parent.queue_free()
+		push_error("Standalone run inventory update_model did not keep an existing selected item/source pair.")
+		return false
+	screen.update_model(_run_inventory_component_model("inspect", "", {"id": "missing", "source": "carried"}))
+	selected_key = screen.selected_item_key()
+	if str(selected_key.get("id", "")) != "odds_notebook" or str(selected_key.get("source", "")) != "carried":
+		parent.queue_free()
+		push_error("Standalone run inventory did not auto-select the first item when selection was absent.")
+		return false
+	parent.size = Vector2(640, 360)
+	screen.size = parent.size
+	await process_frame
+	screen.refresh_layout()
+	await process_frame
+	var rects: Dictionary = screen.layout_rects()
+	var popup_rect := _snapshot_rect(rects.get("popup_rect", Rect2()))
+	var screen_rect := _snapshot_rect(rects.get("screen_rect", Rect2()))
+	if popup_rect.size.x <= 0.0 or popup_rect.size.y <= 0.0 or not screen_rect.grow(1.0).encloses(popup_rect):
+		parent.queue_free()
+		push_error("Standalone run inventory popup did not clamp inside a small viewport: popup=%s screen=%s." % [str(popup_rect), str(screen_rect)])
+		return false
+	screen.close()
+	if screen.is_open():
+		parent.queue_free()
+		push_error("Standalone run inventory close did not hide the component.")
+		return false
+	parent.queue_free()
+	return true
+
+
+func _check_talk_dock_component() -> bool:
+	var parent := Control.new()
+	parent.size = Vector2(640, 360)
+	root.add_child(parent)
+	var dock: TalkDock = TalkDockScript.new()
+	dock.size = parent.size
+	parent.add_child(dock)
+	await process_frame
+	var emitted := {"event_id": "", "choice_id": "", "count": 0}
+	dock.choice_requested.connect(func(event_id: String, choice_id: String) -> void:
+		emitted["event_id"] = event_id
+		emitted["choice_id"] = choice_id
+		emitted["count"] = int(emitted.get("count", 0)) + 1
+	)
+	dock.set_entry(_talk_dock_entry_fixture(), _talk_dock_option_fixture(), 2)
+	await process_frame
+	var snapshot: Dictionary = dock.current_snapshot()
+	if not bool(snapshot.get("visible", false)) or not bool(snapshot.get("expanded", false)) or int(snapshot.get("choice_count", 0)) != 3:
+		parent.queue_free()
+		push_error("Talk dock fixture did not render an expanded timed entry.")
+		return false
+	if not _has_visible_text(dock, "Mara") or not _has_visible_text(dock, "Hear Them Out"):
+		parent.queue_free()
+		push_error("Talk dock fixture did not expose speaker and choice copy.")
+		return false
+	var key_event := InputEventKey.new()
+	key_event.pressed = true
+	key_event.keycode = KEY_2
+	if not dock.handle_hotkey(key_event) or str(emitted.get("choice_id", "")) != "pass":
+		parent.queue_free()
+		push_error("Talk dock hotkey did not emit the second choice.")
+		return false
+	dock.set_entry(_talk_dock_entry_fixture(), _talk_dock_option_fixture(), 1)
+	await process_frame
+	if not _click_visible_button(dock, "Risk It") or int(emitted.get("count", 0)) != 1:
+		parent.queue_free()
+		push_error("Talk dock risky choice did not arm without resolving.")
+		return false
+	if not _click_visible_button(dock, "Confirm: Risk It") or str(emitted.get("choice_id", "")) != "risk":
+		parent.queue_free()
+		push_error("Talk dock risky choice did not resolve on second click.")
+		return false
+	var bad_key := InputEventKey.new()
+	bad_key.pressed = true
+	bad_key.keycode = KEY_9
+	if dock.handle_hotkey(bad_key):
+		parent.queue_free()
+		push_error("Talk dock consumed an out-of-range hotkey.")
+		return false
+	snapshot = dock.current_snapshot()
+	var panel_rect := _snapshot_rect(snapshot.get("panel_rect", Rect2()))
+	var screen_rect := _snapshot_rect(snapshot.get("screen_rect", Rect2()))
+	if panel_rect.size.x <= 0.0 or panel_rect.size.y <= 0.0 or not screen_rect.grow(1.0).encloses(panel_rect):
+		parent.queue_free()
+		push_error("Talk dock did not clamp inside a small viewport: panel=%s screen=%s." % [str(panel_rect), str(screen_rect)])
+		return false
+	dock.clear_entry()
+	if bool(dock.current_snapshot().get("visible", true)):
+		parent.queue_free()
+		push_error("Talk dock clear_entry did not hide the dock.")
+		return false
+	parent.queue_free()
+	return true
+
+
+func _talk_dock_entry_fixture() -> Dictionary:
+	return {
+		"event_id": "talk_fixture",
+		"speaker": {"role": "patron", "name": "Mara", "silhouette": "coat", "bind": "table_patron", "patron_index": 0},
+		"timing": {"expires": true, "duration_actions": 3, "remaining_actions": 3, "timeout_choice_id": "pass"},
+	}
+
+
+func _talk_dock_option_fixture() -> Dictionary:
+	return {
+		"display_name": "Table Whisper",
+		"summary": "Someone at the table leans in with a read on the room.",
+		"choices": [
+			{"id": "hear", "label": "Hear Them Out", "text": "Listen.", "consequence_summary": "Heat -1."},
+			{"id": "pass", "label": "Pass", "text": "Let it go.", "consequence_summary": "Event closes."},
+			{"id": "risk", "label": "Risk It", "text": "Push the room.", "consequence_summary": "Heat +3.", "requires_confirm": true},
+		],
+	}
+
+
+func _check_talk_dock_main_flow(app: Control) -> bool:
+	var modal_heat := await _resolve_talk_event_fixture(app, "modal")
+	if modal_heat < 0:
+		return false
+	var talk_heat := await _resolve_talk_event_fixture(app, "talk")
+	if talk_heat < 0:
+		return false
+	if talk_heat != modal_heat:
+		push_error("Talk dock event resolution did not match modal consequence result: talk=%d modal=%d." % [talk_heat, modal_heat])
+		return false
+	var talk_snapshot: Dictionary = app.call("current_talk_dock_snapshot")
+	if bool(talk_snapshot.get("visible", false)):
+		push_error("Talk dock remained visible after resolving its focused entry.")
+		return false
+	var popup: Dictionary = app.call("current_event_choice_popup_snapshot")
+	if bool(popup.get("visible", false)):
+		push_error("Talk dock resolution left a blocking event popup visible.")
+		return false
+	return true
+
+
+func _resolve_talk_event_fixture(app: Control, presentation: String) -> int:
+	app.call("start_foundation_run", "UI-TALK-%s" % presentation)
+	await process_frame
+	var run_state: RunState = app.get("run_state")
+	var library: ContentLibrary = app.get("library")
+	if run_state == null or library == null:
+		push_error("Talk dock fixture could not access run state or content library.")
+		return -1
+	var event_id := "table_patron_whisper"
+	var event_definition := library.event(event_id)
+	if event_definition.is_empty():
+		push_error("Talk dock fixture event is missing: %s." % event_id)
+		return -1
+	var environment := run_state.current_environment.duplicate(true)
+	environment["id"] = "ui_talk_table"
+	environment["archetype_id"] = "bar"
+	environment["kind"] = "bar"
+	environment["tier"] = 1
+	environment["game_ids"] = ["blackjack"]
+	environment["event_ids"] = []
+	environment["resolved_event_ids"] = []
+	run_state.set_environment(environment)
+	run_state.suspicion["level"] = 10
+	var context := {
+		"trigger": "table_approach",
+		"type": "table_approach",
+		"game_id": "blackjack",
+		"hands_played": 1,
+		"environment_snapshot": run_state.current_environment.duplicate(true),
+	}
+	var speaker := {
+		"role": "patron",
+		"name": "Mara",
+		"silhouette": "coat",
+		"bind": "table_patron",
+		"patron_index": 0,
+	}
+	var overrides: Dictionary = app.call("_triggered_entry_overrides", event_definition, speaker)
+	overrides["presentation"] = presentation
+	if not run_state.enqueue_triggered_event(event_id, "ui_fixture", context, overrides):
+		push_error("Talk dock fixture could not enqueue %s as %s." % [event_id, presentation])
+		return -1
+	app.call("_refresh")
+	await process_frame
+	if presentation == "modal":
+		if not bool(app.call("_show_next_pending_triggered_event")):
+			push_error("Talk dock modal comparison could not open the triggered popup.")
+			return -1
+		await process_frame
+		var popup: Dictionary = app.call("current_event_choice_popup_snapshot")
+		if not bool(popup.get("visible", false)):
+			push_error("Talk dock modal comparison did not expose a blocking popup.")
+			return -1
+	else:
+		var talk_snapshot: Dictionary = app.call("current_talk_dock_snapshot")
+		if not bool(talk_snapshot.get("visible", false)) or str(talk_snapshot.get("event_id", "")) != event_id:
+			push_error("Talk dock fixture did not expose the queued talk event.")
+			return -1
+		var before_screen: Dictionary = app.call("current_screen_snapshot")
+		if not bool(app.call("select_action_category", "items")):
+			push_error("Talk dock pending entry blocked normal action-category routing.")
+			return -1
+		await process_frame
+		var after_screen: Dictionary = app.call("current_screen_snapshot")
+		if str(before_screen.get("screen", "")) == str(after_screen.get("screen", "")):
+			push_error("Talk dock route probe did not exercise a visible screen change.")
+			return -1
+	app.call("resolve_event_choice", event_id, "hear_them_out")
+	await process_frame
+	return run_state.suspicion_level()
+
+
+func _run_inventory_component_model(mode: String, container_id: String = "", selected: Dictionary = {}) -> Dictionary:
+	var items: Array = []
+	match mode:
+		"place_container":
+			items = [_run_inventory_component_item("canvas_bag", "Canvas Bag", "carried", true)]
+		"home_container":
+			items = [
+				_run_inventory_component_item("odds_notebook", "Odds Notebook", "carried", false),
+				_run_inventory_component_item("odds_notebook", "Odds Notebook", "container", false),
+			]
+		_:
+			items = [
+				_run_inventory_component_item("odds_notebook", "Odds Notebook", "carried", false),
+				_run_inventory_component_item("lucky_coin", "Lucky Coin", "carried", false),
+			]
+	var selected_value := selected
+	if selected_value.is_empty():
+		selected_value = {"id": str((items[0] as Dictionary).get("id", "")), "source": str((items[0] as Dictionary).get("storage_source", "carried"))}
+	return {
+		"mode": mode,
+		"title": "Sell Items" if mode == "merchant_sale" else "Place Storage" if mode == "place_container" else "Home Box" if mode == "home_container" else "Inventory",
+		"summary": "Standalone inventory component fixture.",
+		"container_id": container_id,
+		"selected": selected_value,
+		"empty_text": "No run items yet.",
+		"items": items,
+		"layout": {"columns": 2},
+	}
+
+
+func _run_inventory_component_item(item_id: String, display_name: String, source: String, container: bool) -> Dictionary:
+	return {
+		"id": item_id,
+		"display_name": display_name,
+		"description": "Standalone component item.",
+		"effect_summary": "Fixture effect.",
+		"asset_path": "",
+		"item_class": "container" if container else "tool",
+		"domain": "global",
+		"item_type": "fixture",
+		"storage_source": source,
+		"capacity": 4 if container else 0,
+		"sellable": not container and source != "container",
+		"sale_price": 12,
+		"repairable": not container and source != "container",
+		"repair_cost": 3,
+		"active_item": not container and source != "container",
+		"active_selected": false,
+	}
+
+
+func _run_inventory_test_texture(_asset_path: String) -> Texture2D:
+	return null
 
 
 class AllInLosingFixtureGame:
@@ -118,6 +473,12 @@ func _run() -> void:
 	_use_isolated_user_settings(TEST_SETTINGS_PATH)
 	if VisualStyleScript.HOT != VisualStyleScript.PINK:
 		push_error("VisualStyle.HOT should alias the production hot/pink token.")
+		quit(1)
+		return
+	if not await _check_run_inventory_screen_component():
+		quit(1)
+		return
+	if not await _check_talk_dock_component():
 		quit(1)
 		return
 
@@ -776,6 +1137,14 @@ func _run() -> void:
 		push_error("Live procedural music primer is too long to solve first-playback latency.")
 		quit(1)
 		return
+	if float(music_latency.get("web_bed_seconds", 0.0)) < 30.0:
+		push_error("Web procedural music bed should not collapse to a short repeated loop.")
+		quit(1)
+		return
+	if int(music_latency.get("web_bed_pcm_bytes", 0)) > int(music_latency.get("web_bed_bridge_cap_bytes", 0)):
+		push_error("Web procedural music bed exceeded the browser PCM bridge budget.")
+		quit(1)
+		return
 	var transition_policy: Dictionary = procedural_music_player.call("music_transition_policy_snapshot_for_environment", app.get("run_state").current_environment, 70)
 	if transition_policy.is_empty() or not bool(transition_policy.get("deferred_stream_changes", false)):
 		push_error("Procedural music player did not expose deferred breakpoint transitions.")
@@ -899,7 +1268,8 @@ func _run() -> void:
 	var jackpot_sfx: AudioStreamWAV = slot_sfx.preview_event_stream("jackpot")
 	var pull_tab_thump_sfx: AudioStreamWAV = slot_sfx.preview_event_stream("pull_tab_thump")
 	var paper_peel_sfx: AudioStreamWAV = slot_sfx.preview_event_stream("paper_peel")
-	if lever_sfx == null or reel_loop_sfx == null or jackpot_sfx == null or pull_tab_thump_sfx == null or paper_peel_sfx == null:
+	var pinball_money_sfx: AudioStreamWAV = slot_sfx.preview_event_stream("pinball_money_ding")
+	if lever_sfx == null or reel_loop_sfx == null or jackpot_sfx == null or pull_tab_thump_sfx == null or paper_peel_sfx == null or pinball_money_sfx == null:
 		push_error("SFX player did not generate required procedural streams.")
 		quit(1)
 		return
@@ -909,6 +1279,10 @@ func _run() -> void:
 		return
 	if pull_tab_thump_sfx.data.size() <= 2048 or paper_peel_sfx.data.size() <= 2048:
 		push_error("Pull-tab SFX streams are too small to represent dispenser and paper events.")
+		quit(1)
+		return
+	if pinball_money_sfx.data.size() <= 2048:
+		push_error("Pinball money ding SFX is too small to represent a positive hit cue.")
 		quit(1)
 		return
 	if reel_loop_sfx.loop_mode != AudioStreamWAV.LOOP_FORWARD:
@@ -967,16 +1341,17 @@ func _run() -> void:
 			push_error("M1.6 spatial interaction snapshot is missing UI-local field: %s." % field)
 			quit(1)
 			return
-	if _interactable_by_type(spatial_objects, "item").is_empty():
-		push_error("M1.6 spatial interaction model did not expose item objects from the shop-start foundation state.")
-		quit(1)
-		return
-	if _interactable_by_type(spatial_objects, "shopkeeper").is_empty():
-		push_error("M1.6 spatial interaction model did not expose the shopkeeper from the shop-start foundation state.")
+	var has_shop_start_objects := not _interactable_by_type(spatial_objects, "item").is_empty() and not _interactable_by_type(spatial_objects, "shopkeeper").is_empty()
+	var has_home_start_objects := not _interactable_by_type(spatial_objects, "home_tenure").is_empty() and not _interactable_by_type(spatial_objects, "home_storage").is_empty()
+	if not has_shop_start_objects and not has_home_start_objects:
+		push_error("M1.6 spatial interaction model did not expose the expected shop-start or home-start objects.")
 		quit(1)
 		return
 	if _interactable_by_type(spatial_objects, "travel").is_empty():
 		push_error("M1.6 spatial interaction model did not expose travel objects from foundation state.")
+		quit(1)
+		return
+	if not _interactable_copy_is_concise(spatial_objects, "initial room objects"):
 		quit(1)
 		return
 	if not _interactable_by_type(spatial_objects, "prestige").is_empty() or _interactable_object_id_with_prefix(spatial_objects, "prestige:"):
@@ -1269,18 +1644,26 @@ func _run() -> void:
 		quit(1)
 		return
 	var initial_environment_snapshot: Dictionary = app.call("current_environment_view_snapshot")
-	if str(initial_environment_snapshot.get("kind", "")) != "shop":
-		push_error("The first environment should be a shop so players can buy gear before gambling.")
+	if str(initial_environment_snapshot.get("kind", "")) != "home":
+		push_error("The first environment should be the starting home so players can choose which starter items to pick up.")
 		quit(1)
 		return
 	var initial_item_offers: Array = initial_environment_snapshot.get("item_offers", [])
 	if initial_item_offers.is_empty():
-		push_error("The first shop environment did not expose item offers.")
+		push_error("The starting home did not expose starter item pickups.")
 		quit(1)
 		return
+	for offer_value in initial_item_offers:
+		if typeof(offer_value) != TYPE_DICTIONARY:
+			continue
+		var starter_offer: Dictionary = offer_value
+		if int(starter_offer.get("price", -1)) != 0 or not bool(starter_offer.get("pickup", false)):
+			push_error("The starting home exposed a non-pickup starter item offer.")
+			quit(1)
+			return
 	var initial_objects: Array = app.call("current_spatial_interaction_snapshot").get("objects", [])
-	if _interactable_by_type(initial_objects, "item").is_empty() or _interactable_by_type(initial_objects, "shopkeeper").is_empty():
-		push_error("The first shop environment did not expose item and shopkeeper room objects.")
+	if _interactable_by_type(initial_objects, "item").is_empty() or not _interactable_by_type(initial_objects, "shopkeeper").is_empty():
+		push_error("The starting home should expose pickup item room objects without a shopkeeper.")
 		quit(1)
 		return
 	if not _check_final_demo_objective_hud_matrix(app):
@@ -1290,6 +1673,11 @@ func _run() -> void:
 		quit(1)
 		return
 	if not await _check_run_journal_flow(app, save_service, viewport_rect):
+		quit(1)
+		return
+	app.call("start_foundation_run", "UI-COMPILE-SEED")
+	await process_frame
+	if not await _check_talk_dock_main_flow(app):
 		quit(1)
 		return
 	app.call("start_foundation_run", "UI-COMPILE-SEED")
@@ -2495,23 +2883,19 @@ func _run() -> void:
 	var event_snapshot: Dictionary = app.call("current_environment_view_snapshot")
 	var event_options: Array = event_snapshot.get("event_options", [])
 	if event_options.is_empty():
-		var event_seeds := [
-			"UI-EVENT-SEED",
-			"UI-EVENT-SEED-2",
-			"UI-EVENT-SEED-3",
-			"UI-EVENT-SEED-4",
-			"UI-EVENT-SEED-5",
-			"UI-EVENT-SEED-6",
-			"UI-EVENT-SEED-7",
-			"UI-EVENT-SEED-8",
-		]
-		for event_seed in event_seeds:
-			app.call("start_foundation_run", event_seed)
-			await process_frame
-			event_snapshot = app.call("current_environment_view_snapshot")
-			event_options = event_snapshot.get("event_options", [])
-			if not event_options.is_empty():
-				break
+		var event_fixture_run_state: RunState = app.get("run_state")
+		event_fixture_run_state.current_environment["kind"] = "shop"
+		event_fixture_run_state.current_environment["display_name"] = "Fixture Shop"
+		event_fixture_run_state.current_environment["event_ids"] = ["late_shift_discount"]
+		event_fixture_run_state.current_environment["resolved_event_ids"] = []
+		event_fixture_run_state.current_environment["item_offers"] = []
+		event_fixture_run_state.current_environment["service_ids"] = []
+		event_fixture_run_state.current_environment["lender_hooks"] = []
+		event_fixture_run_state.current_environment["layout"] = EnvironmentInstance.ensure_generated_layout(event_fixture_run_state.current_environment)
+		app.call("clear_interaction_focus")
+		await process_frame
+		event_snapshot = app.call("current_environment_view_snapshot")
+		event_options = event_snapshot.get("event_options", [])
 	if event_options.is_empty():
 		push_error("Foundation UI did not expose an eligible event option.")
 		quit(1)
@@ -2727,6 +3111,37 @@ func _run() -> void:
 
 	app.call("start_foundation_run", "UI-ITEM-SEED")
 	await process_frame
+	var home_pickup_snapshot: Dictionary = app.call("current_environment_view_snapshot")
+	var home_pickup_offers: Array = home_pickup_snapshot.get("item_offers", [])
+	if home_pickup_offers.is_empty():
+		push_error("Starting home did not expose item pickups before shop fixture setup.")
+		quit(1)
+		return
+	var home_pickup_offer: Dictionary = home_pickup_offers[0]
+	if int(home_pickup_offer.get("price", -1)) != 0 or not bool(home_pickup_offer.get("pickup", false)):
+		push_error("Starting home item offer was not exposed as a free pickup.")
+		quit(1)
+		return
+	var home_pickup_objects: Array = app.call("current_spatial_interaction_snapshot").get("objects", [])
+	if _interactable_by_type(home_pickup_objects, "item").is_empty() or not _interactable_by_type(home_pickup_objects, "shopkeeper").is_empty():
+		push_error("Starting home did not expose pickup items without a shopkeeper.")
+		quit(1)
+		return
+	var item_fixture_run_state: RunState = app.get("run_state")
+	item_fixture_run_state.current_environment["kind"] = "shop"
+	item_fixture_run_state.current_environment["archetype_id"] = "corner_store"
+	item_fixture_run_state.current_environment["display_name"] = "Fixture Corner Store"
+	item_fixture_run_state.current_environment["object_fixtures"] = ["shopkeeper:merchant"]
+	item_fixture_run_state.current_environment["item_offers"] = [{"id": "creased_luck_card", "price": 8}]
+	item_fixture_run_state.current_environment["event_ids"] = []
+	item_fixture_run_state.current_environment["service_ids"] = []
+	item_fixture_run_state.current_environment["lender_hooks"] = []
+	item_fixture_run_state.current_environment["resolved_event_ids"] = []
+	var item_fixture_archetype := _archetype_by_id(app.get("library"), "corner_store")
+	item_fixture_run_state.current_environment["layout"] = (item_fixture_archetype.get("layout", {}) as Dictionary).duplicate(true) if typeof(item_fixture_archetype.get("layout", {})) == TYPE_DICTIONARY else {}
+	item_fixture_run_state.current_environment["layout"] = EnvironmentInstance.ensure_generated_layout(item_fixture_run_state.current_environment)
+	app.call("clear_interaction_focus")
+	await process_frame
 	var item_start_snapshot: Dictionary = app.call("current_environment_view_snapshot")
 	var item_snapshot: Dictionary = item_start_snapshot
 	var item_offers: Array = item_snapshot.get("item_offers", [])
@@ -2930,6 +3345,26 @@ func _run() -> void:
 		push_error("Run inventory did not use the centered shared popup format.")
 		quit(1)
 		return
+	if not bool(run_inventory_snapshot.get("grid", false)):
+		push_error("Run inventory did not expose the item-icon grid contract.")
+		quit(1)
+		return
+	var run_inventory_popup_rect := _snapshot_rect(run_inventory_snapshot.get("popup_rect", {}))
+	var run_inventory_screen_rect := _snapshot_rect(run_inventory_snapshot.get("screen_rect", {}))
+	if run_inventory_popup_rect.size.x <= 0.0 or run_inventory_popup_rect.size.y <= 0.0 or not run_inventory_screen_rect.grow(1.0).encloses(run_inventory_popup_rect):
+		push_error("Run inventory popup did not stay inside the visible screen: %s within %s." % [str(run_inventory_popup_rect), str(run_inventory_screen_rect)])
+		quit(1)
+		return
+	if run_inventory_popup_rect.get_center().distance_to(run_inventory_screen_rect.get_center()) > 1.5:
+		push_error("Run inventory popup was not centered: %s within %s." % [str(run_inventory_popup_rect), str(run_inventory_screen_rect)])
+		quit(1)
+		return
+	var run_inventory_grid_rect := _snapshot_rect(run_inventory_snapshot.get("grid_rect", {}))
+	var run_inventory_detail_rect := _snapshot_rect(run_inventory_snapshot.get("detail_rect", {}))
+	if run_inventory_grid_rect.size.x <= 0.0 or run_inventory_detail_rect.size.x <= run_inventory_grid_rect.size.x:
+		push_error("Run inventory detail panel did not receive more horizontal space than the item grid: grid %s detail %s." % [str(run_inventory_grid_rect), str(run_inventory_detail_rect)])
+		quit(1)
+		return
 	var run_inventory_items: Array = run_inventory_snapshot.get("items", [])
 	if run_inventory_items.is_empty():
 		push_error("Run inventory view did not expose purchased inventory items.")
@@ -2938,6 +3373,24 @@ func _run() -> void:
 	var purchased_inventory_item: Dictionary = run_inventory_items[0]
 	if str(purchased_inventory_item.get("id", "")) != item_id or str(purchased_inventory_item.get("display_name", "")).is_empty() or str(purchased_inventory_item.get("item_type", "")).is_empty() or str(purchased_inventory_item.get("domain", "")).is_empty():
 		push_error("Run inventory item details did not identify id, display name, type, and domain.")
+		quit(1)
+		return
+	var selected_inventory_item: Dictionary = run_inventory_snapshot.get("selected_item", {}) if typeof(run_inventory_snapshot.get("selected_item", {})) == TYPE_DICTIONARY else {}
+	if str(run_inventory_snapshot.get("selected_item_id", "")) != item_id or selected_inventory_item.is_empty() or str(selected_inventory_item.get("effect_summary", "")).is_empty():
+		push_error("Run inventory did not select the item and expose effect details in the detail panel.")
+		quit(1)
+		return
+	app.call("select_run_inventory_item", item_id, str(purchased_inventory_item.get("storage_source", "carried")))
+	await process_frame
+	var selected_layout_snapshot: Dictionary = app.call("current_run_inventory_snapshot")
+	var selected_popup_rect := _snapshot_rect(selected_layout_snapshot.get("popup_rect", {}))
+	var selected_screen_rect := _snapshot_rect(selected_layout_snapshot.get("screen_rect", {}))
+	if absf(selected_popup_rect.size.x - run_inventory_popup_rect.size.x) > 0.5 or absf(selected_popup_rect.size.y - run_inventory_popup_rect.size.y) > 0.5:
+		push_error("Run inventory popup changed size after item selection: before %s after %s." % [str(run_inventory_popup_rect), str(selected_popup_rect)])
+		quit(1)
+		return
+	if selected_popup_rect.get_center().distance_to(selected_screen_rect.get_center()) > 1.5 or not selected_screen_rect.grow(1.0).encloses(selected_popup_rect):
+		push_error("Run inventory popup moved off-center or off-screen after item selection: %s within %s." % [str(selected_popup_rect), str(selected_screen_rect)])
 		quit(1)
 		return
 	if str(purchased_inventory_item.get("effect_summary", "")).is_empty() or int(purchased_inventory_item.get("sale_price", -1)) < 0 or not bool(purchased_inventory_item.get("sellable", false)):
@@ -3041,6 +3494,8 @@ func _run() -> void:
 
 	var hook_run_state: RunState = app.get("run_state")
 	var hook_library: ContentLibrary = app.get("library")
+	var original_hook_services: Array = hook_library.services.duplicate(true)
+	var original_hook_lenders: Array = hook_library.lenders.duplicate(true)
 	hook_library.services = [{
 		"id": "fixture_ui_service",
 		"display_name": "Fixture Service",
@@ -3182,6 +3637,9 @@ func _run() -> void:
 		push_error("Supported service hook result did not survive SaveService save/load.")
 		quit(1)
 		return
+	hook_library.services = original_hook_services
+	hook_library.lenders = original_hook_lenders
+	app.call("_refresh_run_action_service")
 
 	if not await _resolve_visible_event_popup(app, "before travel card category routing"):
 		quit(1)
@@ -3205,7 +3663,12 @@ func _run() -> void:
 		push_error("Foundation screen router did not move to TRAVEL for travel cards.")
 		quit(1)
 		return
-	if not _has_visible_text(actions_list, str(travel_choice.get("label", ""))):
+	var selected_travel_label_visible := _has_visible_text(actions_list, str(travel_choice.get("label", "")))
+	if not selected_travel_label_visible:
+		var focused_travel_snapshot: Dictionary = app.call("current_spatial_interaction_snapshot")
+		var focused_travel_label := _label_for_object_id(focused_travel_snapshot.get("objects", []), str(focused_travel_snapshot.get("selected_object_id", "")))
+		selected_travel_label_visible = not focused_travel_label.is_empty() and _has_visible_text(actions_list, focused_travel_label)
+	if not selected_travel_label_visible:
 		push_error("Travel card did not show the destination label.")
 		quit(1)
 		return
@@ -3227,13 +3690,15 @@ func _run() -> void:
 		push_error("World-map travel did not expose the Leave room object.")
 		quit(1)
 		return
-	var serialized_before_map_open := JSON.stringify(app.call("serialized_run_state"))
-	if not bool(app.call("activate_interactable_object", "travel:leave")):
-		push_error("Double-clicking Leave did not open the world map.")
+	var map_open_state_before: Dictionary = app.call("serialized_run_state")
+	var serialized_before_map_open := JSON.stringify(map_open_state_before)
+	if not bool(app.call("open_world_map")):
+		push_error("World map could not be opened from the travel card.")
 		quit(1)
 		return
 	await process_frame
-	if serialized_before_map_open != JSON.stringify(app.call("serialized_run_state")):
+	var map_open_state_after: Dictionary = app.call("serialized_run_state")
+	if serialized_before_map_open != JSON.stringify(map_open_state_after):
 		push_error("Opening the world map mutated serialized RunState.")
 		quit(1)
 		return
@@ -3270,7 +3735,25 @@ func _run() -> void:
 		push_error("World map canvas did not report zoom bounds.")
 		quit(1)
 		return
+	var map_focus_ids: Array = map_snapshot.get("map_focus_node_ids", []) if typeof(map_snapshot.get("map_focus_node_ids", [])) == TYPE_ARRAY else []
+	if not map_focus_ids.has(str(map_snapshot.get("current_node_id", ""))):
+		push_error("World map did not include the current stop in the focused camera window.")
+		quit(1)
+		return
+	var map_enabled_ids: Array = map_snapshot.get("travel_enabled_node_ids", []) if typeof(map_snapshot.get("travel_enabled_node_ids", [])) == TYPE_ARRAY else []
+	for enabled_id_value in map_enabled_ids:
+		var enabled_id := str(enabled_id_value)
+		if not map_focus_ids.has(enabled_id):
+			push_error("World map did not focus the camera on travelable node %s." % enabled_id)
+			quit(1)
+			return
+		var enabled_node := _world_map_node_by_id(app.call("serialized_run_state").get("world_map", {}), enabled_id)
+		if not _world_map_position_in_bounds(enabled_node.get("position", {}), map_bounds):
+			push_error("World map focused bounds did not contain travelable node %s." % enabled_id)
+			quit(1)
+			return
 	var map_markers: Array = map_view.get("icon_markers", []) if typeof(map_view.get("icon_markers", [])) == TYPE_ARRAY else []
+	var marker_ids: Array = []
 	for marker_value in map_markers:
 		if typeof(marker_value) != TYPE_DICTIONARY:
 			continue
@@ -3278,6 +3761,7 @@ func _run() -> void:
 		var node_id := str(marker_data.get("id", ""))
 		if node_id.is_empty():
 			continue
+		marker_ids.append(node_id)
 		var node_button := map_canvas.get_node_or_null("WorldMapNode_%s" % node_id) as Button
 		if node_button == null:
 			push_error("World map first-open hit target was missing for node %s." % node_id)
@@ -3287,6 +3771,12 @@ func _run() -> void:
 		var button_center := node_button.position + node_button.size * 0.5
 		if button_center.distance_to(marker_center) > 2.0:
 			push_error("World map first-open hit target for %s was %.1fpx away from the drawn icon." % [node_id, button_center.distance_to(marker_center)])
+			quit(1)
+			return
+	for enabled_id_value in map_enabled_ids:
+		var enabled_marker_id := str(enabled_id_value)
+		if not marker_ids.has(enabled_marker_id):
+			push_error("World map did not draw a marker for travelable node %s inside the focused camera window." % enabled_marker_id)
 			quit(1)
 			return
 	var full_map: Dictionary = app.call("serialized_run_state").get("world_map", {}) if typeof(app.call("serialized_run_state").get("world_map", {})) == TYPE_DICTIONARY else {}
@@ -3312,6 +3802,10 @@ func _run() -> void:
 			return
 		if not node_data.has("travel_enabled"):
 			push_error("World map node %s did not expose travel-enabled metadata." % node_id)
+			quit(1)
+			return
+		if str(node_data.get("discovery_source", "")).strip_edges() == WorldMapScript.DISCOVERY_SOURCE_TRAVEL and str(node_data.get("state", "")) != WorldMapScript.STATE_VISITED and not bool(node_data.get("travel_target", false)):
+			push_error("World map displayed travel-discovered non-target node %s." % node_id)
 			quit(1)
 			return
 		if bool(node_data.get("travel_enabled", false)):
@@ -3610,6 +4104,9 @@ func _run() -> void:
 		return
 	if not _has_visible_text(app, "Main Menu") or not _has_visible_text(app, "New Run"):
 		push_error("Victory screen did not present terminal actions.")
+		quit(1)
+		return
+	if not await _check_lender_acceptance_does_not_open_motel_popup(app):
 		quit(1)
 		return
 	environment_canvas.queue_free()
@@ -5181,6 +5678,72 @@ func _grand_casino_environment_for_ui(app: Control) -> Dictionary:
 	return environment
 
 
+func _check_lender_acceptance_does_not_open_motel_popup(app: Control) -> bool:
+	app.call("start_foundation_run", "UI-CREW-LENDER-NO-MOTEL-POPUP")
+	await process_frame
+	var library: ContentLibrary = app.get("library")
+	if library == null or library.lender("the_crew").is_empty() or library.event("motel_knock").is_empty():
+		var lender_found := false if library == null else not library.lender("the_crew").is_empty()
+		var event_found := false if library == null else not library.event("motel_knock").is_empty()
+		var lender_count := -1 if library == null else library.lenders.size()
+		var event_count := -1 if library == null else library.events.size()
+		push_error("Crew lender popup regression fixture is missing required content. lender=%s event=%s lender_count=%d event_count=%d." % [str(lender_found), str(event_found), lender_count, event_count])
+		return false
+	var run_state: RunState = app.get("run_state")
+	run_state.bankroll = 1
+	run_state.economic_state = "volatile"
+	var environment := {
+		"id": "ui_crew_lender_interrupt_fixture",
+		"archetype_id": "motel",
+		"display_name": "Motel Lender Fixture",
+		"kind": "shop",
+		"tier": 1,
+		"turns": 1,
+		"game_ids": [],
+		"event_ids": ["motel_knock"],
+		"resolved_event_ids": [],
+		"item_offers": [],
+		"service_ids": [],
+		"lender_hooks": ["the_crew"],
+		"travel_hooks": [],
+		"next_archetypes": [],
+		"object_fixtures": [],
+	}
+	environment["layout"] = EnvironmentInstance.ensure_generated_layout(environment)
+	run_state.set_environment(environment)
+	app.call("clear_interaction_focus")
+	app.call("_refresh")
+	await process_frame
+	if not bool(app.call("select_lender_hook", "the_crew")):
+		push_error("Crew lender popup regression fixture could not select The Crew.")
+		return false
+	await process_frame
+	if not bool(app.call("confirm_selected_lender_hook")):
+		push_error("Crew lender popup regression fixture could not accept The Crew offer.")
+		return false
+	await process_frame
+	var state: Dictionary = app.call("serialized_run_state")
+	if int(state.get("bankroll", 0)) <= 1:
+		push_error("Crew lender popup regression fixture did not apply the crew loan.")
+		return false
+	var crew_debt_found := false
+	for debt_value in state.get("debt", []):
+		if typeof(debt_value) == TYPE_DICTIONARY and str((debt_value as Dictionary).get("lender_id", "")) == "the_crew":
+			crew_debt_found = true
+			break
+	if not crew_debt_found:
+		push_error("Crew lender popup regression fixture did not create the crew marker.")
+		return false
+	var popup: Dictionary = app.call("current_event_choice_popup_snapshot")
+	if bool(popup.get("visible", false)):
+		push_error("Accepting The Crew offer opened an unrelated event popup: %s." % str(popup.get("event_id", "")))
+		return false
+	if not (state.get("pending_triggered_events", []) as Array).is_empty():
+		push_error("Accepting The Crew offer enqueued an unrelated triggered event.")
+		return false
+	return true
+
+
 func _remove_save_slot(save_service: SaveService, slot_id: String) -> Error:
 	if save_service == null:
 		return ERR_UNCONFIGURED
@@ -5314,11 +5877,36 @@ func _category_by_id(categories: Array, category_id: String) -> Dictionary:
 	return {}
 
 
+func _interactable_copy_is_concise(objects: Array, label: String) -> bool:
+	for object_value in objects:
+		if typeof(object_value) != TYPE_DICTIONARY:
+			continue
+		var object_data: Dictionary = object_value
+		var object_id := str(object_data.get("object_id", "object"))
+		for key in ["short_description", "choice_summary", "cost_summary", "risk_summary", "impact_summary", "action_summary", "disabled_reason"]:
+			var text := str(object_data.get(key, "")).strip_edges()
+			if text.length() > 96:
+				push_error("%s %s has oversized %s copy: %s" % [label, object_id, key, text])
+				return false
+		var effect_text := str(object_data.get("effect_summary", "")).strip_edges()
+		if effect_text.length() > 132:
+			push_error("%s %s has oversized effect copy: %s" % [label, object_id, effect_text])
+			return false
+	return true
+
+
 func _interactable_by_type(objects: Array, object_type: String) -> Dictionary:
 	for object_data in objects:
 		if typeof(object_data) == TYPE_DICTIONARY and str((object_data as Dictionary).get("object_type", "")) == object_type:
 			return (object_data as Dictionary).duplicate(true)
 	return {}
+
+
+func _label_for_object_id(objects: Array, object_id: String) -> String:
+	for object_data in objects:
+		if typeof(object_data) == TYPE_DICTIONARY and str((object_data as Dictionary).get("object_id", "")) == object_id:
+			return str((object_data as Dictionary).get("label", ""))
+	return ""
 
 
 func _interactable_object_id_with_prefix(objects: Array, prefix: String) -> bool:
@@ -5369,6 +5957,19 @@ func _world_map_node_by_id(map_data: Dictionary, node_id: String) -> Dictionary:
 		if typeof(node_value) == TYPE_DICTIONARY and str((node_value as Dictionary).get("id", "")) == node_id:
 			return (node_value as Dictionary).duplicate(true)
 	return {}
+
+
+func _world_map_position_in_bounds(position_value: Variant, bounds: Dictionary) -> bool:
+	if typeof(position_value) != TYPE_DICTIONARY:
+		return false
+	var position: Dictionary = position_value
+	var x := float(position.get("x", 0.5))
+	var y := float(position.get("y", 0.5))
+	var left := float(bounds.get("x", 0.0))
+	var top := float(bounds.get("y", 0.0))
+	var right := left + float(bounds.get("width", bounds.get("w", 1.0)))
+	var bottom := top + float(bounds.get("height", bounds.get("h", 1.0)))
+	return x >= left - 0.001 and x <= right + 0.001 and y >= top - 0.001 and y <= bottom + 0.001
 
 
 func _copy_array(value: Variant) -> Array:

@@ -5,6 +5,7 @@ extends Control
 # GameModule; this canvas only owns scaling, hit regions, overlays, and input.
 
 signal surface_action(action: String, index: int, confirm_requested: bool)
+signal surface_action_blocked(action: String, reason: String)
 signal surface_music_cue(cue_id: String, context: Dictionary)
 
 const VisualStyleScript := preload("res://scripts/ui/visual_style.gd")
@@ -38,23 +39,6 @@ const EMULATED_TOUCH_SUPPRESS_MS := 750
 const EMULATED_TOUCH_SUPPRESS_DISTANCE := 18.0
 const SURFACE_ANIMATION_FPS := 60.0
 const SURFACE_ANIMATION_INTERVAL_SEC := 1.0 / SURFACE_ANIMATION_FPS
-const IDLE_PANEL_BG := Color("#070810")
-const IDLE_STATION_BG := Color("#0b0d16")
-const IDLE_CHARACTER_SKIN := Color("#c49371")
-const IDLE_DEALER_JACKET := Color("#1b2230")
-const IDLE_DEALER_HAIR := Color("#2a1a25")
-const TABLE_IDLE_PATRON_POSITIONS := [
-	Vector2(128, 176),
-	Vector2(272, 130),
-	Vector2(628, 130),
-	Vector2(772, 176),
-]
-const DICE_IDLE_PATRON_POSITIONS := [
-	Vector2(94, 84),
-	Vector2(236, 70),
-	Vector2(660, 70),
-	Vector2(808, 84),
-]
 class AmbientSurfaceOverlay:
 	extends Control
 
@@ -76,17 +60,40 @@ class AmbientSurfaceOverlay:
 	func surface_animation_active(channel_id: String) -> bool:
 		return bool(host.surface_animation_active(channel_id)) if host != null and host.has_method("surface_animation_active") else false
 
+	func surface_elapsed(channel_id: String) -> float:
+		return float(host.surface_elapsed(channel_id)) if host != null and host.has_method("surface_elapsed") else 0.0
+
 	func surface_animation_progress(channel_id: String) -> float:
 		return float(host.surface_animation_progress(channel_id)) if host != null and host.has_method("surface_animation_progress") else 1.0
 
 	func surface_region_hovered(action: String, index: int = -1) -> bool:
 		return bool(host.surface_region_hovered(action, index)) if host != null and host.has_method("surface_region_hovered") else false
 
-	func surface_add_exact_hit(_rect: Rect2, _action: String, _index: int = -1) -> void:
-		pass
+	func surface_hovered_index(action: String) -> int:
+		return int(host.surface_hovered_index(action)) if host != null and host.has_method("surface_hovered_index") else -1
 
-	func surface_add_hit(_rect: Rect2, _action: String, _index: int = -1) -> void:
-		pass
+	func surface_action_is_blocked(action: String) -> bool:
+		return bool(host.surface_action_is_blocked(action)) if host != null and host.has_method("surface_action_is_blocked") else false
+
+	func surface_add_exact_hit(rect: Rect2, action: String, index: int = -1) -> void:
+		if host != null and host.has_method("surface_add_exact_invisible_hit"):
+			host.surface_add_exact_invisible_hit(rect, action, index)
+
+	func surface_add_hit(rect: Rect2, action: String, index: int = -1, expand_touch_hit: bool = true) -> void:
+		if host != null and host.has_method("surface_add_invisible_hit"):
+			host.surface_add_invisible_hit(rect, action, index, expand_touch_hit)
+
+	func surface_add_invisible_hit(rect: Rect2, action: String, index: int = -1, expand_touch_hit: bool = true) -> void:
+		if host != null and host.has_method("surface_add_invisible_hit"):
+			host.surface_add_invisible_hit(rect, action, index, expand_touch_hit)
+
+	func surface_add_exact_invisible_hit(rect: Rect2, action: String, index: int = -1) -> void:
+		if host != null and host.has_method("surface_add_exact_invisible_hit"):
+			host.surface_add_exact_invisible_hit(rect, action, index)
+
+	func surface_add_cached_exact_hits(cache_key: String, rect_sources: Array, action: String) -> void:
+		if host != null and host.has_method("surface_add_cached_exact_hits"):
+			host.surface_add_cached_exact_hits(cache_key, rect_sources, action)
 
 	func surface_label(text: String, pos: Vector2, font_size: int, color: Color) -> void:
 		var font := get_theme_default_font()
@@ -143,8 +150,6 @@ var perf_runtime_status_calls := 0
 var perf_draw_frame_usec_samples: Array = []
 var surface_label_fit_cache: Dictionary = {}
 var hit_region_group_cache: Dictionary = {}
-var ambient_table_patron_cache: Array = []
-var ambient_table_dealer_cache: Dictionary = {}
 var active_design_scale := Vector2.ONE
 var active_design_offset := Vector2.ZERO
 var design_space_active := false
@@ -156,6 +161,7 @@ var last_touch_press_msec: int = -100000
 var last_touch_press_position := Vector2(-100000.0, -100000.0)
 var surface_animation_redraw_accumulator := 0.0
 var surface_animation_redraw_count := 0
+var ambient_overlay_registered_hit_count := 0
 
 
 func set_game_module(game_module: GameModule) -> void:
@@ -175,7 +181,6 @@ func render_game_snapshot(snapshot: Dictionary) -> void:
 	drunk_effect_mode = _normalized_drunk_effect_mode(str(state.get("drunk_effect_mode", drunk_effect_mode)))
 	_update_drunk_distortion_overlay()
 	_update_surface_animation_channels()
-	_rebuild_ambient_surface_cache()
 	_update_ambient_surface_overlay()
 	queue_redraw()
 
@@ -667,7 +672,9 @@ func _activate_surface_at_position(position: Vector2, confirm_requested: bool) -
 		if rect.has_point(board_point):
 			hovered_surface_action = str(region.get("action", ""))
 			hovered_surface_index = int(region.get("index", -1))
-			if _surface_action_blocked(hovered_surface_action):
+			var block_reason := _surface_action_block_reason(hovered_surface_action)
+			if not block_reason.is_empty():
+				surface_action_blocked.emit(hovered_surface_action, block_reason)
 				accept_event()
 				return
 			var audio_cue := _surface_action_audio_cue(hovered_surface_action)
@@ -697,7 +704,7 @@ func _process(delta: float) -> void:
 		if _surface_animation_redraw_due(delta):
 			if continuous_redraw:
 				queue_redraw()
-			elif ambient_surface_overlay != null:
+			if ambient_redraw and ambient_surface_overlay != null:
 				ambient_surface_overlay.queue_redraw()
 	elif continuous_redraw_was_active:
 		surface_animation_redraw_accumulator = 0.0
@@ -713,6 +720,7 @@ func _process(delta: float) -> void:
 func _draw() -> void:
 	var draw_started_usec := Time.get_ticks_usec()
 	hit_regions = []
+	ambient_overlay_registered_hit_count = 0
 	active_design_scale = Vector2.ONE
 	active_design_offset = Vector2.ZERO
 	design_space_active = false
@@ -728,8 +736,12 @@ func _draw() -> void:
 			draw_rect(Rect2(0, y, board_size.x, 16), C_DARK_2 if (y / 16) % 2 == 0 else C_PANEL)
 	var rendered := false
 	if surface_game_module != null and uses_foundation_snapshot:
+		var overlay_id := str(state.get("surface_ambient_overlay", ""))
+		var overlay_active := _ambient_surface_overlay_active()
 		rendered = bool(surface_game_module.draw_surface(self, state, {
 			"selected_view_index": selected_view_index,
+			"surface_dynamic_overlay_active": overlay_active,
+			"surface_dynamic_overlay_id": overlay_id if overlay_active else "",
 		}))
 	surface_end_design_space()
 	if not rendered:
@@ -774,197 +786,67 @@ func _update_ambient_surface_overlay() -> void:
 	ambient_surface_overlay.queue_redraw()
 
 
-func _rebuild_ambient_surface_cache() -> void:
-	ambient_table_patron_cache = []
-	ambient_table_dealer_cache = {}
-	var profile_value: Variant = state.get("dealer_profile", {})
-	var profile: Dictionary = profile_value as Dictionary if typeof(profile_value) == TYPE_DICTIONARY else {}
-	ambient_table_dealer_cache = {
-		"attention_base": int(profile.get("attention_base", 24)),
-	}
-	_rebuild_table_idle_patron_cache()
-
-
-func _rebuild_table_idle_patron_cache() -> void:
-	var patrons_value: Variant = state.get("patrons", [])
-	if typeof(patrons_value) != TYPE_ARRAY:
-		return
-	var patrons: Array = patrons_value as Array
-	var positions: Array = DICE_IDLE_PATRON_POSITIONS if str(state.get("surface_renderer", "")) == "dice_table" else TABLE_IDLE_PATRON_POSITIONS
-	for i in range(mini(patrons.size(), positions.size())):
-		if typeof(patrons[i]) != TYPE_DICTIONARY:
-			continue
-		var patron: Dictionary = patrons[i]
-		var watching := bool(patron.get("watching_player", patron.get("watching", false)))
-		var risk := clampf(float(int(patron.get("active_snitch_risk", patron.get("snitch_risk", 0)))) / 60.0, 0.0, 1.0)
-		ambient_table_patron_cache.append({
-			"base_pos": positions[i],
-			"watching": watching,
-			"risk": risk,
-			"animation_offset_sec": float(int(patron.get("animation_offset", i * 217))) / 1000.0,
-			"accent": C_PINK if watching else C_TEAL if risk > 0.45 else C_SOFT,
-			"jacket": _overlay_patron_jacket_color(patron),
-			"hair": _overlay_patron_hair_color(patron),
-		})
-
-
 func _ambient_surface_overlay_active() -> bool:
 	if reduce_motion:
 		return false
 	var overlay_id := str(state.get("surface_ambient_overlay", ""))
 	if overlay_id != "table_idle" and overlay_id != "roulette_full_idle":
 		return false
-	for channel_id in surface_animation_channels.keys():
-		if surface_animation_active(str(channel_id)):
-			return false
-	return true
+	return _ambient_surface_overlay_needs_redraw()
+
+
+func _ambient_surface_overlay_needs_redraw() -> bool:
+	if _surface_dynamic_overlay_channel_active():
+		return true
+	if int(state.get("suspicion_level", 0)) > 0:
+		return true
+	if drunk_distortion_overlay != null and drunk_distortion_overlay.visible:
+		return true
+	if drunk_effect_mode == "classic" and int(state.get("drunk_level", 0)) >= 12:
+		return true
+	var overlay_id := str(state.get("surface_ambient_overlay", ""))
+	if overlay_id == "table_idle" or overlay_id == "roulette_full_idle":
+		return true
+	return bool(state.get("surface_animates_idle", false))
+
+
+func _surface_dynamic_overlay_channel_active() -> bool:
+	var channels_value: Variant = state.get("surface_dynamic_overlay_channels", [])
+	if typeof(channels_value) != TYPE_ARRAY:
+		return false
+	var channels: Array = channels_value as Array
+	for value in channels:
+		var channel_id := str(value)
+		if not channel_id.is_empty() and surface_animation_active(channel_id):
+			return true
+	return false
 
 
 func _draw_ambient_surface_overlay(canvas: Control) -> void:
 	var draw_started_usec := Time.get_ticks_usec()
+	if ambient_overlay_registered_hit_count > 0:
+		hit_regions.resize(maxi(0, hit_regions.size() - ambient_overlay_registered_hit_count))
+		ambient_overlay_registered_hit_count = 0
 	canvas.draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
 	if not _ambient_surface_overlay_active():
 		_record_draw_performance(draw_started_usec)
 		return
+	var hit_count_before_overlay := hit_regions.size()
 	var scale := _board_scale()
 	canvas.draw_set_transform(_board_offset(scale), 0.0, Vector2(scale, scale))
-	match str(state.get("surface_ambient_overlay", "")):
-		"roulette_full_idle":
-			_draw_roulette_full_idle_overlay(canvas)
-		"table_idle":
-			_draw_table_idle_overlay(canvas)
+	_draw_surface_dynamic_overlay(canvas)
+	ambient_overlay_registered_hit_count = maxi(0, hit_regions.size() - hit_count_before_overlay)
 	_draw_pressure_overlay_on(canvas)
 	_draw_drunk_overlay_on(canvas)
 	canvas.draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
 	_record_draw_performance(draw_started_usec)
 
 
-func _draw_roulette_full_idle_overlay(canvas: Control) -> void:
+func _draw_surface_dynamic_overlay(canvas: Control) -> bool:
 	if surface_game_module == null:
-		return
-	if not surface_game_module.has_method("_draw_roulette_wheel"):
-		return
-	surface_game_module.call("_draw_roulette_wheel", canvas, state)
-	if surface_game_module.has_method("_draw_croupier_station"):
-		surface_game_module.call("_draw_croupier_station", canvas, state)
-	if surface_game_module.has_method("_draw_table_patrons"):
-		surface_game_module.call("_draw_table_patrons", canvas, state)
-	if surface_game_module.has_method("_draw_round_timer"):
-		surface_game_module.call("_draw_round_timer", canvas, state)
-
-
-func _draw_overlay_character(canvas: Control, foot: Vector2, accent: Color, jacket: Color, hair: Color, scale_value: float, index: int) -> void:
-	var body := Rect2(foot + Vector2(-15, -50) * scale_value, Vector2(30, 42) * scale_value)
-	var head := Rect2(foot + Vector2(-10, -68) * scale_value, Vector2(20, 20) * scale_value)
-	canvas.draw_rect(Rect2(foot.x - 22.0, foot.y - 2.0, 44.0, 4.0), Color(0, 0, 0, 0.28))
-	canvas.draw_rect(body, jacket)
-	canvas.draw_rect(body.grow(1.0), Color(accent.r, accent.g, accent.b, 0.40), false, 1.0)
-	canvas.draw_rect(head, Color("#c49371"))
-	canvas.draw_rect(Rect2(head.position, Vector2(head.size.x, 6.0 * scale_value)), hair)
-	var blink := fposmod(flicker * 1.7 + float(index) * 0.23, 1.0) > 0.94
-	var eye_h := 1.0 if blink else 3.0
-	canvas.draw_rect(Rect2(head.position + Vector2(5, 10) * scale_value, Vector2(3, eye_h) * scale_value), C_DARK)
-	canvas.draw_rect(Rect2(head.position + Vector2(13, 10) * scale_value, Vector2(3, eye_h) * scale_value), C_DARK)
-
-
-func _draw_table_idle_overlay(canvas: Control) -> void:
-	_draw_table_idle_dealer(canvas)
-	_draw_table_idle_patrons(canvas)
-	_draw_table_idle_timer(canvas)
-
-
-func _draw_table_idle_dealer(canvas: Control) -> void:
-	var rect := Rect2(352, 54, 196, 104)
-	var base_attention := int(ambient_table_dealer_cache.get("attention_base", 24))
-	var heat := int(state.get("suspicion_level", 0))
-	var pressure := int(state.get("dealer_attention_pressure", 0))
-	var scan := int((0.5 + 0.5 * sin(flicker * 2.6)) * 18.0)
-	var attention := clampf(float(base_attention + pressure + scan) + float(heat) * 0.35, 0.0, 100.0) / 100.0
-	var accent := C_PINK if attention >= 0.70 else C_YELLOW if attention >= 0.42 else C_TEAL
-	var bob := sin(flicker * 2.9) * 1.4
-	canvas.draw_rect(Rect2(rect.position + Vector2(62, 14), Vector2(72, 82)), IDLE_STATION_BG)
-	_draw_overlay_character(canvas, Vector2(450, 156 + bob), accent, IDLE_DEALER_JACKET, IDLE_DEALER_HAIR, 1.04, 21)
-	var meter := Rect2(rect.position + Vector2(108, 58), Vector2(68, 6))
-	canvas.draw_rect(meter, IDLE_PANEL_BG)
-	canvas.draw_rect(Rect2(meter.position, Vector2(meter.size.x * attention, meter.size.y)), accent)
-
-
-func _draw_table_idle_patrons(canvas: Control) -> void:
-	for i in range(ambient_table_patron_cache.size()):
-		var patron: Dictionary = ambient_table_patron_cache[i]
-		var base_pos := _cache_vector2(patron, "base_pos", Vector2.ZERO)
-		var watching := bool(patron.get("watching", false))
-		var phase := flicker * 3.0 + float(patron.get("animation_offset_sec", 0.0))
-		var bob := sin(phase) * (2.0 if watching else 1.0)
-		var accent := _cache_color(patron, "accent", C_SOFT)
-		canvas.draw_rect(Rect2(base_pos + Vector2(-27, -16), Vector2(54, 74)), IDLE_PANEL_BG)
-		_draw_overlay_character(canvas, base_pos + Vector2(0, 52 + bob), accent, _cache_color(patron, "jacket", C_TEAL), _cache_color(patron, "hair", IDLE_DEALER_HAIR), 0.86, i)
-
-
-func _draw_table_idle_timer(canvas: Control) -> void:
-	var renderer := str(state.get("surface_renderer", ""))
-	if renderer == "dice_table":
-		_draw_idle_round_timer(canvas, Rect2(752, 282, 116, 50), C_TEAL)
-	else:
-		_draw_idle_round_timer(canvas, Rect2(664, 314, 116, 26), C_CYAN)
-
-
-func _draw_idle_round_timer(canvas: Control, rect: Rect2, accent: Color) -> void:
-	var timer_value: Variant = state.get("table_round_timer", {})
-	if typeof(timer_value) != TYPE_DICTIONARY:
-		return
-	var timer: Dictionary = timer_value as Dictionary
-	if timer.is_empty() or not bool(timer.get("active", false)):
-		return
-	var started_msec := maxi(0, int(timer.get("started_msec", 0)))
-	var duration_msec := maxi(1, int(timer.get("duration_msec", 1)))
-	var elapsed_msec := maxi(0, Time.get_ticks_msec() - started_msec) if started_msec > 0 else maxi(0, duration_msec - int(timer.get("remaining_msec", duration_msec)))
-	var remaining_msec := maxi(0, duration_msec - elapsed_msec)
-	var progress := clampf(float(elapsed_msec) / float(duration_msec), 0.0, 1.0)
-	var color := C_PINK if remaining_msec <= 5000 else accent
-	canvas.draw_rect(rect, Color("#0b0d16"))
-	canvas.draw_rect(rect, Color(color.r, color.g, color.b, 0.28), false, 1.0)
-	var bar_rect := Rect2(rect.position + Vector2(8, rect.size.y - 12.0), Vector2(maxf(1.0, rect.size.x - 16.0), 4.0))
-	canvas.draw_rect(bar_rect, Color("#070810"))
-	canvas.draw_rect(Rect2(bar_rect.position, Vector2(bar_rect.size.x * progress, bar_rect.size.y)), color)
-
-
-func _overlay_patron_jacket_color(patron: Dictionary) -> Color:
-	match str(patron.get("silhouette", "coat")):
-		"cap":
-			return Color("#173847")
-		"vest":
-			return Color("#3a213a")
-		"jacket":
-			return Color("#1c2544")
-		_:
-			return Color("#251930")
-
-
-func _overlay_patron_hair_color(patron: Dictionary) -> Color:
-	match str(patron.get("silhouette", "coat")):
-		"cap":
-			return Color("#0e1118")
-		"vest":
-			return Color("#7b4b28")
-		"jacket":
-			return Color("#2a1a25")
-		_:
-			return Color("#38221b")
-
-
-func _cache_vector2(data: Dictionary, key: String, fallback: Vector2) -> Vector2:
-	var value: Variant = data.get(key, fallback)
-	if typeof(value) == TYPE_VECTOR2:
-		return value
-	return fallback
-
-
-func _cache_color(data: Dictionary, key: String, fallback: Color) -> Color:
-	var value: Variant = data.get(key, fallback)
-	if typeof(value) == TYPE_COLOR:
-		return value
-	return fallback
+		return false
+	var overlay_id := str(state.get("surface_ambient_overlay", ""))
+	return bool(surface_game_module.draw_surface_dynamic_overlay(canvas, state, overlay_id))
 
 
 func _on_surface_sfx_music_cue(cue_id: String, context: Dictionary) -> void:
@@ -1063,7 +945,8 @@ func _needs_continuous_redraw() -> bool:
 	if reduce_motion:
 		return false
 	for channel_id in surface_animation_channels.keys():
-		if surface_animation_active(str(channel_id)):
+		var normalized_id := str(channel_id)
+		if surface_animation_active(normalized_id) and not _surface_channel_redraw_owned_by_overlay(normalized_id):
 			return true
 	var ambient_redraw_available := _ambient_surface_overlay_active()
 	if int(state.get("suspicion_level", 0)) > 0 and not ambient_redraw_available:
@@ -1072,7 +955,20 @@ func _needs_continuous_redraw() -> bool:
 		return true
 	if drunk_effect_mode == "classic" and int(state.get("drunk_level", 0)) >= 12 and not ambient_redraw_available:
 		return true
-	return bool(state.get("surface_animates_idle", false))
+	return bool(state.get("surface_animates_idle", false)) and not ambient_redraw_available
+
+
+func _surface_channel_redraw_owned_by_overlay(channel_id: String) -> bool:
+	if channel_id.is_empty() or not _ambient_surface_overlay_active():
+		return false
+	var channels_value: Variant = state.get("surface_dynamic_overlay_channels", [])
+	if typeof(channels_value) != TYPE_ARRAY:
+		return false
+	var channels: Array = channels_value as Array
+	for value in channels:
+		if str(value) == channel_id:
+			return true
+	return false
 
 
 func _surface_animation_redraw_due(delta: float) -> bool:
@@ -1389,6 +1285,10 @@ func _surface_animation_status_snapshot() -> Dictionary:
 
 
 func _surface_action_blocked(action: String) -> bool:
+	return not _surface_action_block_reason(action).is_empty()
+
+
+func _surface_action_block_reason(action: String) -> String:
 	for block_value in _dictionary_array(state.get("surface_action_blocks", [])):
 		var block: Dictionary = block_value
 		var blocked_action := str(block.get("action", ""))
@@ -1397,13 +1297,14 @@ func _surface_action_blocked(action: String) -> bool:
 			if not blocked_actions.has(action):
 				continue
 		var channel_id := str(block.get("while_animation", ""))
-		if channel_id.is_empty() or not surface_animation_active(channel_id):
+		if not channel_id.is_empty() and not surface_animation_active(channel_id):
 			continue
 		var unless_flag := str(block.get("unless_state_flag", ""))
 		if not unless_flag.is_empty() and bool(state.get(unless_flag, false)):
 			continue
-		return true
-	return false
+		var reason := str(block.get("reason", ""))
+		return reason if not reason.is_empty() else "That action is not available right now."
+	return ""
 
 
 func _surface_audio_spec() -> Dictionary:

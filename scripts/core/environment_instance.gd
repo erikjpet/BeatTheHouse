@@ -29,6 +29,11 @@ var game_ids: Array = []
 var game_states: Dictionary = {}
 var event_ids: Array = []
 var item_offers: Array = []
+var home_profile: Dictionary = {}
+var home_containers: Array = []
+var home_container_index: int = 0
+var home_lost: bool = false
+var parent_archetype: String = ""
 var service_ids: Array = []
 var lender_hooks: Array = []
 var suspicion_cues: Array = []
@@ -66,6 +71,9 @@ static func from_archetype(archetype: Dictionary, p_depth: int, rng: RngStream, 
 	environment.game_states = {}
 	environment.event_ids = _pick_events(archetype, rng, library)
 	environment.item_offers = _build_offers(archetype, rng, library, challenge_config)
+	environment.home_profile = _copy_dict(archetype.get("home_profile", {}))
+	environment.home_containers = []
+	environment.parent_archetype = str(archetype.get("parent_archetype", ""))
 	environment.service_ids = _copy_array(archetype.get("service_pool", []))
 	environment.lender_hooks = _copy_array(archetype.get("lender_hooks", []))
 	environment.suspicion_cues = _copy_array(archetype.get("suspicion_cues", environment.security_profile.get("visible_cues", [])))
@@ -105,6 +113,11 @@ static func from_dict(data: Dictionary) -> EnvironmentInstance:
 	environment.game_states = _copy_dict(data.get("game_states", {}))
 	environment.event_ids = _copy_array(data.get("event_ids", []))
 	environment.item_offers = _copy_array(data.get("item_offers", []))
+	environment.home_profile = _copy_dict(data.get("home_profile", {}))
+	environment.home_containers = _copy_array(data.get("home_containers", []))
+	environment.home_container_index = maxi(0, int(data.get("home_container_index", 0)))
+	environment.home_lost = bool(data.get("home_lost", false))
+	environment.parent_archetype = str(data.get("parent_archetype", ""))
 	environment.service_ids = _copy_array(data.get("service_ids", []))
 	environment.lender_hooks = _copy_array(data.get("lender_hooks", []))
 	environment.suspicion_cues = _copy_array(data.get("suspicion_cues", []))
@@ -143,6 +156,11 @@ func to_dict() -> Dictionary:
 		"game_states": game_states.duplicate(true),
 		"event_ids": event_ids.duplicate(true),
 		"item_offers": item_offers.duplicate(true),
+		"home_profile": home_profile.duplicate(true),
+		"home_containers": home_containers.duplicate(true),
+		"home_container_index": home_container_index,
+		"home_lost": home_lost,
+		"parent_archetype": parent_archetype,
 		"service_ids": service_ids.duplicate(true),
 		"lender_hooks": lender_hooks.duplicate(true),
 		"suspicion_cues": suspicion_cues.duplicate(true),
@@ -178,6 +196,9 @@ static func ensure_generated_layout(environment_data: Dictionary) -> Dictionary:
 	_assign_string_object_rects(object_rects, layout, "service", _copy_array(environment_data.get("service_ids", [])), "service_spots", active_object_ids)
 	_assign_string_object_rects(object_rects, layout, "lender", _copy_array(environment_data.get("lender_hooks", [])), "lender_spots", active_object_ids)
 	_assign_string_object_rects(object_rects, layout, "game_hook", _game_hook_ids(environment_data), "game_hook_spots", active_object_ids)
+	_assign_single_object_rect(object_rects, layout, "home_tenure:status", "home_tenure", 0, "home_tenure_spots", _home_tenure_should_exist(environment_data), active_object_ids)
+	_assign_single_object_rect(object_rects, layout, "home_storage:place", "home_storage", 0, "home_storage_spots", _home_storage_should_exist(environment_data), active_object_ids)
+	_assign_string_object_rects(object_rects, layout, "home_container", _home_container_ids(environment_data), "home_container_spots", active_object_ids)
 	if prioritize_services:
 		_assign_item_offer_rects(object_rects, layout, _copy_array(environment_data.get("item_offers", [])), active_object_ids)
 	_resolve_active_object_rect_collisions(object_rects, layout, active_entries)
@@ -532,6 +553,16 @@ static func _fallback_object_rect(object_type: String, index: int) -> Rect2:
 			var lender_columns := 5
 			center = Vector2(0.22 + float(index % lender_columns) * 0.15, 0.70 + float(index / lender_columns) * 0.12)
 			size = Vector2(102.0 / ENVIRONMENT_BOARD_SIZE.x, 58.0 / ENVIRONMENT_BOARD_SIZE.y)
+		"home_tenure":
+			center = Vector2(0.78, 0.46)
+			size = Vector2(116.0 / ENVIRONMENT_BOARD_SIZE.x, 58.0 / ENVIRONMENT_BOARD_SIZE.y)
+		"home_storage":
+			center = Vector2(0.20, 0.72)
+			size = Vector2(108.0 / ENVIRONMENT_BOARD_SIZE.x, 58.0 / ENVIRONMENT_BOARD_SIZE.y)
+		"home_container":
+			var container_columns := 4
+			center = Vector2(0.22 + float(index % container_columns) * 0.18, 0.76 + float(index / container_columns) * 0.11)
+			size = Vector2(104.0 / ENVIRONMENT_BOARD_SIZE.x, 58.0 / ENVIRONMENT_BOARD_SIZE.y)
 		"prestige":
 			center = Vector2(0.16 + float(index % 2) * 0.14, 0.30)
 			size = Vector2(112.0 / ENVIRONMENT_BOARD_SIZE.x, 58.0 / ENVIRONMENT_BOARD_SIZE.y)
@@ -735,6 +766,11 @@ static func _active_object_layout_entries(environment_data: Dictionary) -> Array
 	_append_string_layout_entries(entries, "service", _copy_array(environment_data.get("service_ids", [])), "service_spots")
 	_append_string_layout_entries(entries, "lender", _copy_array(environment_data.get("lender_hooks", [])), "lender_spots")
 	_append_string_layout_entries(entries, "game_hook", _game_hook_ids(environment_data), "game_hook_spots")
+	if _home_tenure_should_exist(environment_data):
+		entries.append({"object_id": "home_tenure:status", "object_type": "home_tenure", "index": 0, "spot_field": "home_tenure_spots"})
+	if _home_storage_should_exist(environment_data):
+		entries.append({"object_id": "home_storage:place", "object_type": "home_storage", "index": 0, "spot_field": "home_storage_spots"})
+	_append_string_layout_entries(entries, "home_container", _home_container_ids(environment_data), "home_container_spots")
 	if prioritize_services:
 		_append_item_offer_layout_entries(entries, _copy_array(environment_data.get("item_offers", [])))
 	return entries
@@ -801,6 +837,12 @@ static func _active_object_ids(environment_data: Dictionary) -> Dictionary:
 		result["lender:%s" % lender_id] = true
 	for hook_id in _game_hook_ids(environment_data):
 		result["game_hook:%s" % hook_id] = true
+	if _home_tenure_should_exist(environment_data):
+		result["home_tenure:status"] = true
+	if _home_storage_should_exist(environment_data):
+		result["home_storage:place"] = true
+	for container_id in _home_container_ids(environment_data):
+		result["home_container:%s" % container_id] = true
 	return result
 
 
@@ -812,7 +854,7 @@ static func _prune_inactive_object_rects(object_rects: Dictionary, active_object
 
 
 static func _is_managed_object_id(object_id: String) -> bool:
-	for prefix in ["game:", "event:", "item:", "shopkeeper:", "travel:", "service:", "lender:", "game_hook:", "prestige:"]:
+	for prefix in ["game:", "event:", "item:", "shopkeeper:", "travel:", "service:", "lender:", "game_hook:", "home_tenure:", "home_storage:", "home_container:", "prestige:"]:
 		if object_id.begins_with(prefix):
 			return true
 	return false
@@ -845,6 +887,26 @@ static func _game_hook_ids(environment_data: Dictionary) -> Array:
 			if not hook_id.is_empty():
 				result.append("%s:%s" % [game_id, hook_id])
 	return result
+
+
+static func _home_container_ids(environment_data: Dictionary) -> Array:
+	var result: Array = []
+	for container_value in _copy_array(environment_data.get("home_containers", [])):
+		if typeof(container_value) != TYPE_DICTIONARY:
+			continue
+		var container: Dictionary = container_value
+		var container_id := str(container.get("id", "")).strip_edges()
+		if not container_id.is_empty() and not result.has(container_id):
+			result.append(container_id)
+	return result
+
+
+static func _home_tenure_should_exist(environment_data: Dictionary) -> bool:
+	return str(environment_data.get("kind", "")) == "home" and not bool(environment_data.get("home_lost", false))
+
+
+static func _home_storage_should_exist(environment_data: Dictionary) -> bool:
+	return str(environment_data.get("kind", "")) == "home" and not bool(environment_data.get("home_lost", false))
 
 
 # Returns whether this environment should expose a merchant prop.

@@ -68,7 +68,7 @@ func load() -> Dictionary:
 	games = _load_array(GAMES_PATH, true)
 	items = _load_array(ITEMS_PATH, true)
 	content_groups = _load_array(CONTENT_GROUPS_PATH, true)
-	events = _load_array(EVENTS_PATH, true)
+	events = _normalize_event_definitions(_load_array(EVENTS_PATH, true))
 	challenges = _load_array(CHALLENGES_PATH, false)
 	lenders = _load_array(LENDERS_PATH, false)
 	services = _load_array(SERVICES_PATH, false)
@@ -104,6 +104,7 @@ func load() -> Dictionary:
 
 # Validates loaded packs without reading demo runtime data.
 func validate() -> Array:
+	events = _normalize_event_definitions(events)
 	validation_errors = _load_errors.duplicate(true)
 	validation_warnings = []
 	_validate_collection("environment_archetypes", environment_archetypes, [
@@ -472,6 +473,74 @@ func _load_array(path: String, required: bool) -> Array:
 	return parsed
 
 
+static func _normalize_event_definitions(values: Array) -> Array:
+	var result: Array = []
+	for value in values:
+		if typeof(value) != TYPE_DICTIONARY:
+			result.append(value)
+			continue
+		result.append(_normalize_event_definition(value as Dictionary))
+	return result
+
+
+static func _normalize_event_definition(event_def: Dictionary) -> Dictionary:
+	var normalized := event_def.duplicate(true)
+	var presentation := str(normalized.get("presentation", "modal")).strip_edges().to_lower()
+	if not ["talk", "modal"].has(presentation):
+		presentation = "modal"
+	normalized["presentation"] = presentation
+	normalized["speaker"] = _normalize_event_speaker(normalized.get("speaker", {}))
+	var trigger := _as_dict(normalized.get("trigger", {"type": "manual"}))
+	if trigger.is_empty():
+		trigger = {"type": "manual"}
+	var trigger_type := str(trigger.get("type", "manual")).strip_edges().to_lower()
+	if trigger_type.is_empty():
+		trigger_type = "manual"
+	trigger["type"] = trigger_type
+	match trigger_type:
+		"heat_threshold":
+			trigger["level"] = clampi(int(trigger.get("level", 65)), 0, 100)
+		"table_approach":
+			trigger["games"] = _string_array(trigger.get("games", []))
+			trigger["min_hands"] = maxi(0, int(trigger.get("min_hands", trigger.get("min_rounds", 1))))
+			trigger["chance"] = clampf(float(trigger.get("chance", 1.0)), 0.0, 1.0)
+	normalized["trigger"] = trigger
+	var payload := _as_dict(normalized.get("payload", {}))
+	payload["timing"] = _normalize_event_timing(payload.get("timing", {}))
+	normalized["payload"] = payload
+	return normalized
+
+
+static func _normalize_event_speaker(value: Variant) -> Dictionary:
+	var source := _as_dict(value)
+	var role := str(source.get("role", "stranger")).strip_edges().to_lower()
+	if not ["patron", "staff", "stranger", "lender"].has(role):
+		role = "stranger"
+	var bind := str(source.get("bind", "none")).strip_edges().to_lower()
+	if not ["table_patron", "none"].has(bind):
+		bind = "none"
+	return {
+		"role": role,
+		"name": str(source.get("name", "")).strip_edges(),
+		"silhouette": str(source.get("silhouette", "")).strip_edges(),
+		"bind": bind,
+	}
+
+
+static func _normalize_event_timing(value: Variant) -> Dictionary:
+	var source := _as_dict(value)
+	var expires := bool(source.get("expires", false))
+	var duration_actions := maxi(0, int(source.get("duration_actions", 0)))
+	if not expires:
+		duration_actions = 0
+	var timeout_choice_id := str(source.get("timeout_choice_id", "")).strip_edges()
+	return {
+		"expires": expires and duration_actions > 0 and not timeout_choice_id.is_empty(),
+		"duration_actions": duration_actions,
+		"timeout_choice_id": timeout_choice_id,
+	}
+
+
 # Rebuilds id indexes for loaded content arrays. Fixture tests can still assign
 # arrays directly; _lookup refreshes a stale or missing index on demand.
 func _rebuild_indexes() -> void:
@@ -764,6 +833,7 @@ func _validate_non_empty_string_array(label: String, value: Variant) -> void:
 # Validates event choice payloads and route references inside consequences.
 func _validate_event_definitions() -> void:
 	var archetype_ids := _ids_for(environment_archetypes)
+	var game_ids := _ids_for(games)
 	var event_ids := _ids_for(events)
 	var event_modes := {}
 	for event_value in events:
@@ -782,6 +852,14 @@ func _validate_event_definitions() -> void:
 			validation_errors.append("events %s is missing interaction_mode." % event_id)
 		elif not ["interactable", "triggered"].has(interaction_mode):
 			validation_errors.append("events %s has unknown interaction_mode: %s" % [event_id, interaction_mode])
+		var presentation := str(event_def.get("presentation", "modal")).strip_edges()
+		if not ["talk", "modal"].has(presentation):
+			validation_errors.append("events %s has unknown presentation: %s" % [event_id, presentation])
+		var speaker: Dictionary = _as_dict(event_def.get("speaker", {}))
+		if not ["patron", "staff", "stranger", "lender"].has(str(speaker.get("role", "stranger"))):
+			validation_errors.append("events %s speaker role is invalid." % event_id)
+		if not ["table_patron", "none"].has(str(speaker.get("bind", "none"))):
+			validation_errors.append("events %s speaker bind is invalid." % event_id)
 		var icon_key := str(event_def.get("icon_key", "")).strip_edges()
 		var environment_prop := str(event_def.get("environment_prop", "")).strip_edges()
 		if interaction_mode == "triggered":
@@ -798,10 +876,35 @@ func _validate_event_definitions() -> void:
 				validation_errors.append("events %s is missing environment_prop." % event_id)
 			if str(event_def.get("start_summary", "")).strip_edges().is_empty():
 				validation_errors.append("events %s is missing start_summary." % event_id)
+		var trigger: Dictionary = _as_dict(event_def.get("trigger", {}))
+		var trigger_type := str(trigger.get("type", "manual")).strip_edges()
+		if not ["manual", "timed", "travel", "random", "heat_threshold", "table_approach"].has(trigger_type):
+			validation_errors.append("events %s has unknown trigger type: %s" % [event_id, trigger_type])
+		if trigger_type == "heat_threshold":
+			var level := int(trigger.get("level", 0))
+			if level <= 0 or level > 100:
+				validation_errors.append("events %s heat_threshold level must be 1-100." % event_id)
+		elif trigger_type == "table_approach":
+			_validate_id_references("events %s table_approach games" % event_id, trigger.get("games", []), game_ids)
+			if int(trigger.get("min_hands", 0)) < 0:
+				validation_errors.append("events %s table_approach min_hands must be non-negative." % event_id)
+			var table_chance_value: Variant = trigger.get("chance", 1.0)
+			if not _variant_is_number(table_chance_value):
+				validation_errors.append("events %s table_approach chance must be numeric." % event_id)
+			else:
+				var table_chance := float(table_chance_value)
+				if table_chance < 0.0 or table_chance > 1.0:
+					validation_errors.append("events %s table_approach chance must be between 0 and 1." % event_id)
 		var payload: Variant = event_def.get("payload", {})
 		if typeof(payload) != TYPE_DICTIONARY:
 			validation_errors.append("events %s payload must be a dictionary." % event_id)
 			continue
+		var timing: Dictionary = _as_dict((payload as Dictionary).get("timing", {}))
+		if bool(timing.get("expires", false)):
+			if int(timing.get("duration_actions", 0)) <= 0:
+				validation_errors.append("events %s timing duration_actions must be positive when expires is true." % event_id)
+			if str(timing.get("timeout_choice_id", "")).strip_edges().is_empty():
+				validation_errors.append("events %s timing timeout_choice_id is required when expires is true." % event_id)
 		var choices: Variant = (payload as Dictionary).get("choices", [])
 		if typeof(choices) != TYPE_ARRAY:
 			validation_errors.append("events %s payload choices must be an array." % event_id)

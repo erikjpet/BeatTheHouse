@@ -8,7 +8,7 @@ const WebAudioBridgeScript := preload("res://scripts/ui/web_audio_bridge.gd")
 # cached per room/heat profile, played through the Music bus.
 
 const MUSIC_BUS := "Music"
-const AMBIENT_VERSION := 9
+const AMBIENT_VERSION := 10
 const MUSIC_FX_GRAPH_VERSION := 1
 const MUSIC_STEM_CONTRACT_VERSION := 1
 const SAMPLE_RATE := 22050
@@ -77,6 +77,20 @@ const MUSIC_FEATURE_RELEASE_SECONDS := 2.0
 const MUSIC_AUTHORED_MANIFEST_PATH := "res://data/audio/music_manifest.json"
 const MUSIC_AUTHORED_ROOT := "res://assets/audio/music"
 const MUSIC_MIN_VOLUME_DB := -80.0
+const WEB_AUDIO_MUSIC_STEM_MAX_PCM_BYTES := 393216
+const WEB_AUDIO_MUSIC_BED_SECONDS := 60.0
+const WEB_AUDIO_MUSIC_BED_SAMPLE_RATE := 3000
+const WEB_MIXDOWN_ROLE_WEIGHTS := {
+	"pad": 0.74,
+	"bass": 0.52,
+	"bass_dark": 0.42,
+	"lead": 0.46,
+	"drums_low": 0.42,
+	"drums_high": 0.36,
+	"drums_high_double": 0.22,
+	"tension": 0.64,
+	"texture": 0.38,
+}
 const SCALE_MINOR := [0, 2, 3, 5, 7, 8, 10]
 const SCALE_DORIAN := [0, 2, 3, 5, 7, 9, 10]
 const SCALE_PHRYGIAN := [0, 1, 3, 5, 7, 8, 10]
@@ -93,8 +107,11 @@ var _ambient_player: AudioStreamPlayer
 var _ambient_stream_cache: Dictionary = {}
 var _ambient_primer_cache: Dictionary = {}
 var _ambient_instant_cache: Dictionary = {}
+var _web_music_bed_cache: Dictionary = {}
 var _ambient_profile_cache: Dictionary = {}
 var _current_cache_key: String = ""
+var _current_web_music_bed_cache_key: String = ""
+var _current_web_music_bed_stem_key: String = ""
 var _current_stream_is_primer: bool = false
 var _current_music_context: Dictionary = {}
 var _pending_cache_key: String = ""
@@ -154,7 +171,7 @@ func _ready() -> void:
 	_apply_music_fx_vector(_music_fx_live, true)
 	if WebAudioBridgeScript.available():
 		WebAudioBridgeScript.ensure()
-	if not _running_headless() and not WebAudioBridgeScript.available():
+	if not _running_headless():
 		_ensure_stem_players()
 
 
@@ -173,6 +190,7 @@ func _exit_tree() -> void:
 	_ambient_stream_cache.clear()
 	_ambient_primer_cache.clear()
 	_ambient_instant_cache.clear()
+	_web_music_bed_cache.clear()
 	_ambient_profile_cache.clear()
 	_authored_manifest_cache.clear()
 
@@ -182,6 +200,7 @@ func debug_soak_snapshot() -> Dictionary:
 		"ambient_stream_cache_size": _ambient_stream_cache.size(),
 		"ambient_primer_cache_size": _ambient_primer_cache.size(),
 		"ambient_instant_cache_size": _ambient_instant_cache.size(),
+		"web_music_bed_cache_size": _web_music_bed_cache.size(),
 		"ambient_profile_cache_size": _ambient_profile_cache.size(),
 		"authored_manifest_cache_size": _authored_manifest_cache.size(),
 		"feature_stem_cache_size": _feature_stem_cache.size(),
@@ -208,9 +227,6 @@ func play_for_environment_state(environment: Dictionary, heat_level: int, music_
 	if not audio_enabled or environment.is_empty() or _running_headless():
 		stop()
 		return
-	if WebAudioBridgeScript.available():
-		WebAudioBridgeScript.play_music(_music_profile_from_environment(environment, heat_level), snapshot)
-		return
 	_ensure_stem_players()
 	var profile := _music_profile_from_environment(environment, heat_level)
 	var cache_key := _ambient_cache_key(profile)
@@ -219,10 +235,21 @@ func play_for_environment_state(environment: Dictionary, heat_level: int, music_
 	if not authored_stem_set.is_empty():
 		_ambient_stream_cache[cache_key] = authored_stem_set
 		if cache_key == _current_cache_key and _music_is_playing() and not _current_stream_is_primer:
+			if WebAudioBridgeScript.available() and _current_web_music_bed_cache_key != cache_key:
+				_play_web_music_bed_for_cache(cache_key, _director_playback_position(), _current_stem_set)
 			return
+		if WebAudioBridgeScript.available():
+			_play_web_music_bed_for_cache(cache_key, 0.0, authored_stem_set)
 		_accept_full_stem_set(cache_key, authored_stem_set)
 		return
 	if cache_key == _current_cache_key and _music_is_playing() and not _current_stream_is_primer:
+		if WebAudioBridgeScript.available() and _current_web_music_bed_cache_key != cache_key:
+			_play_web_music_bed_for_cache(cache_key, _director_playback_position(), _current_stem_set)
+		return
+	if WebAudioBridgeScript.available():
+		# Web keeps the compact browser bed as final procedural music; applying
+		# the desktop full-stem result hitches Chrome when generation completes.
+		_play_web_full_bed(profile, cache_key)
 		return
 	if _should_defer_music_change(cache_key):
 		_schedule_breakpoint_music_change(profile, cache_key)
@@ -248,8 +275,6 @@ func refresh_after_web_audio_unlock(environment: Dictionary, heat_level: int, mu
 		return
 	if WebAudioBridgeScript.available():
 		WebAudioBridgeScript.unlock()
-		play_for_environment_state(environment, heat_level, music_state)
-		return
 	var snapshot := _music_fx_state_from_environment(environment, heat_level, music_state)
 	update_music_state(snapshot)
 	_ensure_stem_players()
@@ -260,6 +285,11 @@ func refresh_after_web_audio_unlock(environment: Dictionary, heat_level: int, mu
 		if stage.is_empty():
 			stage = str(stem_set.get("stage", AMBIENT_STAGE_FULL))
 		_play_stem_set(stem_set, resume_position, stage)
+		if WebAudioBridgeScript.available() and stage == AMBIENT_STAGE_FULL:
+			var refresh_profile := _music_profile_from_environment(environment, heat_level)
+			var refresh_cache_key := _ambient_cache_key(refresh_profile)
+			_remember_profile(refresh_cache_key, refresh_profile)
+			_play_web_music_bed_for_cache(refresh_cache_key, resume_position, stem_set)
 		return
 	play_for_environment_state(environment, heat_level, music_state)
 
@@ -274,6 +304,8 @@ func stop() -> void:
 	if WebAudioBridgeScript.available():
 		WebAudioBridgeScript.stop_music()
 	_current_cache_key = ""
+	_current_web_music_bed_cache_key = ""
+	_current_web_music_bed_stem_key = ""
 	_current_stream_is_primer = false
 	_pending_cache_key = ""
 	_transition_target_cache_key = ""
@@ -349,11 +381,26 @@ func music_theory_snapshot_for_environment(environment: Dictionary, heat_level: 
 func music_generation_latency_snapshot_for_environment(environment: Dictionary, heat_level: int) -> Dictionary:
 	if environment.is_empty():
 		return {}
-	var context := _ambient_generation_context(_music_profile_from_environment(environment, heat_level))
+	var profile := _music_profile_from_environment(environment, heat_level)
+	var context := _ambient_generation_context(profile)
 	var full_frames := int(context.get("frames", 0))
 	var primer_context := _primer_context(context)
 	var primer_frames := int(primer_context.get("frames", 0))
 	var instant_frames := int(INSTANT_BED_SECONDS * float(SAMPLE_RATE))
+	var web_bed_seconds := _web_music_bed_duration_seconds(context, WEB_AUDIO_MUSIC_BED_SECONDS)
+	var web_bed_frames := int(web_bed_seconds * float(WEB_AUDIO_MUSIC_BED_SAMPLE_RATE))
+	var web_bed_track_id := "web_%s_%s" % [str(profile.get("archetype_id", "environment")), str(profile.get("palette_id", ""))]
+	var authored_stem_set := _authored_stem_set_from_profile(profile)
+	var web_mixdown_source := "procedural"
+	var web_mixdown_source_seconds := float(full_frames) / float(SAMPLE_RATE)
+	if not authored_stem_set.is_empty():
+		web_mixdown_source = "authored"
+		var authored_sample_rate := _stem_set_source_sample_rate(authored_stem_set)
+		web_mixdown_source_seconds = float(int(authored_stem_set.get("loop_frames", 0))) / float(authored_sample_rate)
+	var web_mixdown_frames := mini(
+		maxi(1, int(WEB_AUDIO_MUSIC_STEM_MAX_PCM_BYTES / PCM_BYTES_PER_FRAME)),
+		maxi(1, int(clampf(web_mixdown_source_seconds, 1.0, WEB_AUDIO_MUSIC_BED_SECONDS) * float(WEB_AUDIO_MUSIC_BED_SAMPLE_RATE)))
+	)
 	return {
 		"full_frames": full_frames,
 		"full_seconds": float(full_frames) / float(SAMPLE_RATE),
@@ -362,6 +409,18 @@ func music_generation_latency_snapshot_for_environment(environment: Dictionary, 
 		"primer_frames": primer_frames,
 		"primer_seconds": float(primer_frames) / float(SAMPLE_RATE),
 		"primer_steps": PRIMER_STEPS,
+		"web_bed_frames": web_bed_frames,
+		"web_bed_seconds": web_bed_seconds,
+		"web_bed_sample_rate": WEB_AUDIO_MUSIC_BED_SAMPLE_RATE,
+		"web_bed_pcm_bytes": web_bed_frames * PCM_BYTES_PER_FRAME,
+		"web_bed_bridge_cap_bytes": WEB_AUDIO_MUSIC_STEM_MAX_PCM_BYTES,
+		"web_bed_cache_key": _ambient_cache_key(profile),
+		"web_bed_track_id": web_bed_track_id,
+		"web_mixdown_source": web_mixdown_source,
+		"web_mixdown_source_seconds": web_mixdown_source_seconds,
+		"web_mixdown_frames": web_mixdown_frames,
+		"web_mixdown_seconds": float(web_mixdown_frames) / float(WEB_AUDIO_MUSIC_BED_SAMPLE_RATE),
+		"web_mixdown_pcm_bytes": web_mixdown_frames * PCM_BYTES_PER_FRAME,
 	}
 
 
@@ -443,9 +502,6 @@ func stop_feature_music() -> void:
 func play_feature_stinger(cue_id: String, context: Dictionary = {}) -> void:
 	var normalized := cue_id.strip_edges()
 	if normalized.is_empty():
-		return
-	if WebAudioBridgeScript.available():
-		WebAudioBridgeScript.play_sfx(normalized, float(context.get("volume_db", -2.0)), float(context.get("pitch", 1.0)))
 		return
 	var step_period := _music_director_step_seconds()
 	var position := _director_playback_position()
@@ -721,12 +777,22 @@ func _advance_music_mix(delta: float) -> void:
 
 
 func _apply_music_mix_vector(vector: Dictionary, _force: bool) -> void:
-	var duck := clampf(float(_feature_mix_live.get("venue_duck", 0.0)), 0.0, 0.82)
+	var role_volumes := _music_role_volume_db_map(vector)
 	for role_value in MUSIC_STEM_PLAYBACK_ROLES:
 		var role := str(role_value)
 		var player: AudioStreamPlayer = _stem_players.get(role, null)
 		if player == null:
 			continue
+		player.volume_db = float(role_volumes.get(role, MUSIC_MIN_VOLUME_DB))
+	if WebAudioBridgeScript.available():
+		WebAudioBridgeScript.set_music_mix("music", role_volumes)
+
+
+func _music_role_volume_db_map(vector: Dictionary) -> Dictionary:
+	var duck := clampf(float(_feature_mix_live.get("venue_duck", 0.0)), 0.0, 0.82)
+	var result := {}
+	for role_value in MUSIC_STEM_PLAYBACK_ROLES:
+		var role := str(role_value)
 		var gain := clampf(float(vector.get(role, 0.0)), 0.0, 1.35)
 		if role == "pad":
 			gain *= lerpf(1.0, 0.42, duck)
@@ -734,7 +800,8 @@ func _apply_music_mix_vector(vector: Dictionary, _force: bool) -> void:
 			gain *= lerpf(1.0, 0.62, duck)
 		elif role == "bass" or role == "bass_dark":
 			gain *= lerpf(1.0, 0.78, duck)
-		player.volume_db = _gain_to_db(gain)
+		result[role] = _gain_to_db(gain)
+	return result
 
 
 func _update_music_mix_state(music_state: Dictionary) -> void:
@@ -815,14 +882,25 @@ func _advance_feature_mix(delta: float) -> void:
 
 
 func _apply_feature_mix_vector(vector: Dictionary, _force: bool) -> void:
-	var feature_gain := clampf(float(vector.get("feature", 0.0)), 0.0, 1.2)
+	var role_volumes := _feature_role_volume_db_map(vector)
 	for role_value in MUSIC_STEM_PLAYBACK_ROLES:
 		var role := str(role_value)
 		var player: AudioStreamPlayer = _feature_stem_players.get(role, null)
 		if player == null:
 			continue
+		player.volume_db = float(role_volumes.get(role, MUSIC_MIN_VOLUME_DB))
+	if WebAudioBridgeScript.available() and _web_audio_stem_set_bridge_allowed(_current_feature_stem_set, "feature", AMBIENT_STAGE_FULL):
+		WebAudioBridgeScript.set_music_mix("feature", role_volumes)
+
+
+func _feature_role_volume_db_map(vector: Dictionary) -> Dictionary:
+	var feature_gain := clampf(float(vector.get("feature", 0.0)), 0.0, 1.2)
+	var result := {}
+	for role_value in MUSIC_STEM_PLAYBACK_ROLES:
+		var role := str(role_value)
 		var role_weight := clampf(float(MUSIC_FEATURE_ROLE_WEIGHTS.get(role, 0.0)), 0.0, 1.0)
-		player.volume_db = _gain_to_db(feature_gain * role_weight)
+		result[role] = _gain_to_db(feature_gain * role_weight)
+	return result
 
 
 func _update_feature_mix_state(feature_state: Dictionary) -> void:
@@ -1754,9 +1832,33 @@ func _remember_current_music_context(cache_key: String) -> void:
 func _play_instant_stem_bed(profile: Dictionary, cache_key: String) -> void:
 	if _stem_players.is_empty():
 		return
+	if WebAudioBridgeScript.available():
+		if not _web_music_bed_cache.has(cache_key):
+			_web_music_bed_cache[cache_key] = _web_music_bed_stem_set(profile, WEB_AUDIO_MUSIC_BED_SECONDS, "web_full")
+		_play_primer_stem_set(cache_key, _web_music_bed_cache[cache_key])
+		return
 	if not _ambient_instant_cache.has(cache_key):
 		_ambient_instant_cache[cache_key] = _instant_bed_stem_set(profile)
 	_play_primer_stem_set(cache_key, _ambient_instant_cache[cache_key])
+
+
+func _play_web_full_bed(profile: Dictionary, cache_key: String) -> void:
+	if _stem_players.is_empty() or not WebAudioBridgeScript.available():
+		return
+	_pending_cache_key = ""
+	_queued_generation_profile = {}
+	_queued_generation_cache_key = ""
+	_queued_generation_token = 0
+	_advance_generation_token()
+	if not _web_music_bed_cache.has(cache_key):
+		_web_music_bed_cache[cache_key] = _web_music_bed_stem_set(profile, WEB_AUDIO_MUSIC_BED_SECONDS, "web_full")
+	var stem_set: Dictionary = _web_music_bed_cache.get(cache_key, {}) as Dictionary
+	if not _stem_set_contract_valid(stem_set):
+		return
+	_current_cache_key = cache_key
+	_current_stream_is_primer = false
+	_remember_current_music_context(cache_key)
+	_play_stem_set(stem_set, 0.0, AMBIENT_STAGE_FULL)
 
 
 func _instant_bed_stream(profile: Dictionary) -> AudioStreamWAV:
@@ -1775,6 +1877,225 @@ func _instant_bed_stem_set(profile: Dictionary) -> Dictionary:
 	contract["step_period"] = float(context.get("step_period", 0.36))
 	contract["profile"] = profile.duplicate(true)
 	return contract
+
+
+func _web_music_bed_stem_set(profile: Dictionary, seconds: float = WEB_AUDIO_MUSIC_BED_SECONDS, source_id: String = "web_compact") -> Dictionary:
+	var context := _ambient_generation_context(profile)
+	var sample_rate := maxi(1, WEB_AUDIO_MUSIC_BED_SAMPLE_RATE)
+	var safe_seconds := _web_music_bed_duration_seconds(context, seconds)
+	var frames := maxi(1, int(safe_seconds * float(sample_rate)))
+	var data := _web_music_bed_pcm_data(context, frames, sample_rate)
+	var stems := {
+		"pad": _ambient_stream_from_data_with_rate(data, frames, sample_rate),
+	}
+	var step_period := float(context.get("step_period", 0.36))
+	var bars := maxi(1, int(ceil(safe_seconds / maxf(step_period * float(STEPS_PER_BAR), 0.001))))
+	var contract := _stem_set_contract(source_id, stems, float(context.get("bpm", profile.get("bpm", 82.0))), bars, frames, str(profile.get("palette_id", "")), {}, AMBIENT_STAGE_PRIMER)
+	contract["step_period"] = step_period
+	contract["profile"] = profile.duplicate(true)
+	contract["sample_rate"] = sample_rate
+	contract["track_id"] = "%s_%s_%s" % [source_id, str(profile.get("archetype_id", "environment")), str(profile.get("palette_id", ""))]
+	contract["web_bridge_bed"] = true
+	return contract
+
+
+static func _web_music_bed_duration_seconds(context: Dictionary, requested_seconds: float = WEB_AUDIO_MUSIC_BED_SECONDS) -> float:
+	var cap_seconds := maxf(1.0, WEB_AUDIO_MUSIC_BED_SECONDS)
+	var target_seconds := clampf(requested_seconds, 1.0, cap_seconds)
+	var cycle_seconds := maxf(1.0, float(context.get("duration", target_seconds)))
+	if cycle_seconds >= cap_seconds:
+		return cap_seconds
+	var cycle_count := maxi(1, int(floor(target_seconds / cycle_seconds)))
+	return clampf(cycle_seconds * float(cycle_count), 1.0, cap_seconds)
+
+
+func _web_music_bed_pcm_data(context: Dictionary, frames: int, sample_rate: int) -> PackedByteArray:
+	var data := _empty_pcm(frames)
+	var safe_rate := maxi(1, sample_rate)
+	var step_period := float(context.get("step_period", 0.36))
+	var beat_period := float(context.get("beat_period", 0.72))
+	var phrase_steps := maxi(1, int(context.get("phrase_steps", BASE_PHRASE_STEPS)))
+	var phrase_count := maxi(1, int(context.get("phrase_count", DEFAULT_ARRANGEMENT_PHRASES)))
+	var duration := float(frames) / float(safe_rate)
+	var total_steps := maxi(1, int(ceil(duration / maxf(step_period, 0.001))))
+	var root_midi := int(context.get("root_midi", 45))
+	var danger := float(context.get("danger", 0.5))
+	var volume := float(context.get("volume", 0.22)) * 0.92
+	var pad_gain := float(context.get("pad_gain", 0.38))
+	var bass_gain := float(context.get("bass_gain", 0.20)) * 0.82
+	var lead_gain := float(context.get("lead_gain", 0.08)) * 0.72
+	var drum_gain := float(context.get("drum_gain", 0.07)) * 0.58
+	var texture_gain := float(context.get("texture_gain", 0.45)) * 0.68
+	var heartbeat_gain := float(context.get("heartbeat_gain", 0.02))
+	var siren_gain := float(context.get("siren_gain", 0.0))
+	var scale: Array = context.get("scale", SCALE_MINOR)
+	var progression_degrees: Array = context.get("progression_degrees", DEFAULT_PROGRESSION)
+	var chord_roots: Array = context.get("chord_roots", [0])
+	var chord_voicings: Array = context.get("chord_voicings", [])
+	var motif: Array = context.get("motif", DEFAULT_MOTIF)
+	var palette: Dictionary = context.get("instrument_palette", {}) as Dictionary
+	var swing_amount := float(context.get("swing_amount", 0.0))
+	var answer_transform := str(context.get("answer_transform", "inversion"))
+	var bridge_phrase_index := int(context.get("bridge_phrase_index", 2))
+	var texture_kind := str(context.get("texture_kind", "fluorescent"))
+	var texture_rate := float(context.get("texture_rate", 0.33))
+	var texture_seed := int(context.get("texture_seed", 0))
+	var variation_seed := int(context.get("variation_seed", texture_seed))
+	var humanize_seed := int(context.get("humanize_seed", variation_seed))
+	for i in range(frames):
+		var t := float(i) / float(safe_rate)
+		var step_index := int(t / step_period) % total_steps
+		var step_local := fposmod(t, step_period)
+		var phrase_index := int(step_index / phrase_steps) % phrase_count
+		var phrase_step := step_index % phrase_steps
+		var bar_index := int(phrase_step / STEPS_PER_BAR) % maxi(1, chord_roots.size())
+		var beat_step := phrase_step % STEPS_PER_BAR
+		var chord_root := root_midi + int(chord_roots[bar_index])
+		var chord_voicing: Array = []
+		if not chord_voicings.is_empty():
+			chord_voicing = chord_voicings[bar_index % chord_voicings.size()] as Array
+		var phrase_energy := _phrase_energy(phrase_index, phrase_count, danger)
+		var fill_amount := _phrase_fill_amount(phrase_step, phrase_index, phrase_count, phrase_energy) * 0.5
+		var loop_edge := _loop_edge_envelope(t, duration)
+		var pad := _music_pad_voiced(root_midi, chord_voicing, chord_root, t, palette) * pad_gain * lerpf(0.94, 1.06, phrase_energy)
+		var bass := 0.0
+		var bass_offset := _bass_offset_for_step(scale, progression_degrees, chord_roots, bar_index, beat_step, phrase_index, phrase_count, variation_seed)
+		if bass_offset > -900:
+			bass = _music_bass(_midi_freq(root_midi + bass_offset), step_local) * bass_gain * lerpf(0.92, 1.13, phrase_energy) * _palette_value(palette, "bass_weight", 1.0)
+		var lead := 0.0
+		var lead_offset := _lead_offset_for_step(scale, progression_degrees, motif, bar_index, phrase_step, phrase_index, phrase_count, variation_seed, answer_transform, bridge_phrase_index)
+		if lead_offset > -900:
+			var lead_local := _swing_step_local(beat_step, step_local, step_period, swing_amount)
+			lead = _music_lead(_midi_freq(root_midi + lead_offset), lead_local, palette) * lead_gain * lerpf(0.70, 1.28, phrase_energy) * _step_humanization(humanize_seed, phrase_step, phrase_index, 0.08)
+		var drum_local := _swing_step_local(beat_step, step_local, step_period, swing_amount)
+		var drums := _music_drums(beat_step, drum_local, step_period, i + texture_seed, phrase_index, phrase_count, variation_seed, fill_amount, palette) * drum_gain * _step_humanization(humanize_seed + 29, phrase_step, phrase_index, 0.10)
+		var heartbeat := _heartbeat_shape(fposmod(t, beat_period), beat_period) * heartbeat_gain
+		var siren := _music_siren(t) * siren_gain
+		var texture := _ambient_texture_sample(texture_kind, texture_rate, t, i, texture_seed) * texture_gain
+		var mixed := (pad + bass + lead + drums + heartbeat + siren + texture) * volume * loop_edge
+		_write_i16(data, i * PCM_BYTES_PER_FRAME, _soft_limit(mixed))
+	return data
+
+
+func _web_music_mixdown_stem_set(profile: Dictionary, source_stem_set: Dictionary) -> Dictionary:
+	if not _stem_set_contract_valid(source_stem_set):
+		return {}
+	var source_sample_rate := _stem_set_source_sample_rate(source_stem_set)
+	var source_loop_frames := int(source_stem_set.get("loop_frames", 0))
+	var source_seconds := float(source_loop_frames) / float(source_sample_rate)
+	if source_seconds <= 0.0:
+		return {}
+	var sample_rate := maxi(1, WEB_AUDIO_MUSIC_BED_SAMPLE_RATE)
+	var max_frames := maxi(1, int(WEB_AUDIO_MUSIC_STEM_MAX_PCM_BYTES / PCM_BYTES_PER_FRAME))
+	var target_seconds := clampf(source_seconds, 1.0, WEB_AUDIO_MUSIC_BED_SECONDS)
+	var frames := mini(max_frames, maxi(1, int(target_seconds * float(sample_rate))))
+	var data := _web_music_mixdown_pcm_data(source_stem_set, frames, sample_rate)
+	var stems := {
+		"pad": _ambient_stream_from_data_with_rate(data, frames, sample_rate),
+	}
+	var bpm := float(source_stem_set.get("bpm", profile.get("bpm", 82.0)))
+	var step_period := _step_period_from_bpm(bpm)
+	var bars := maxi(1, int(ceil((float(frames) / float(sample_rate)) / maxf(step_period * float(STEPS_PER_BAR), 0.001))))
+	var contract := _stem_set_contract("web_mixdown", stems, bpm, bars, frames, str(source_stem_set.get("palette_id", profile.get("palette_id", ""))), {}, AMBIENT_STAGE_PRIMER)
+	contract["step_period"] = step_period
+	contract["profile"] = profile.duplicate(true)
+	contract["sample_rate"] = sample_rate
+	contract["track_id"] = "web_mixdown_%s_%s_%s" % [
+		str(profile.get("archetype_id", "environment")),
+		str(source_stem_set.get("source", "")),
+		str(source_stem_set.get("palette_id", profile.get("palette_id", ""))),
+	]
+	contract["web_bridge_bed"] = true
+	contract["web_bridge_mixdown"] = true
+	return contract
+
+
+func _web_music_mixdown_pcm_data(source_stem_set: Dictionary, frames: int, sample_rate: int) -> PackedByteArray:
+	var data := _empty_pcm(frames)
+	var stems_value: Variant = source_stem_set.get("stems", {})
+	if typeof(stems_value) != TYPE_DICTIONARY:
+		return data
+	var stems: Dictionary = stems_value
+	var safe_rate := maxi(1, sample_rate)
+	for i in range(frames):
+		var t := float(i) / float(safe_rate)
+		var mixed := 0.0
+		var total_weight := 0.0
+		for role_value in MUSIC_STEM_PLAYBACK_ROLES:
+			var role := str(role_value)
+			var stream_value: Variant = stems.get(role, null)
+			if not (stream_value is AudioStreamWAV):
+				continue
+			var weight := float(WEB_MIXDOWN_ROLE_WEIGHTS.get(role, 0.0))
+			if weight <= 0.0:
+				continue
+			mixed += _wav_sample_mono_at_time(stream_value as AudioStreamWAV, t) * weight
+			total_weight += weight
+		if total_weight > 1.25:
+			mixed /= total_weight * 0.82
+		_write_i16(data, i * PCM_BYTES_PER_FRAME, _soft_limit(mixed * 0.84))
+	return data
+
+
+func _stem_set_source_sample_rate(stem_set: Dictionary) -> int:
+	var explicit_rate := int(stem_set.get("sample_rate", 0))
+	if explicit_rate > 0:
+		return explicit_rate
+	var stems_value: Variant = stem_set.get("stems", {})
+	if typeof(stems_value) == TYPE_DICTIONARY:
+		var stems: Dictionary = stems_value
+		for role_value in MUSIC_STEM_PLAYBACK_ROLES:
+			var stream_value: Variant = stems.get(str(role_value), null)
+			if stream_value is AudioStreamWAV:
+				return maxi(1, (stream_value as AudioStreamWAV).mix_rate)
+	return SAMPLE_RATE
+
+
+func _wav_sample_mono_at_time(wav: AudioStreamWAV, time_seconds: float) -> float:
+	return _wav_sample_mono_at_frame(wav, maxf(0.0, time_seconds) * float(maxi(1, wav.mix_rate)))
+
+
+func _wav_sample_mono_at_frame(wav: AudioStreamWAV, frame_position: float) -> float:
+	var frame_count := _wav_frame_count(wav)
+	if frame_count <= 0:
+		return 0.0
+	var loop_begin := clampi(int(wav.loop_begin), 0, maxi(0, frame_count - 1))
+	var loop_end := int(wav.loop_end)
+	if loop_end <= loop_begin:
+		loop_end = frame_count
+	loop_end = clampi(loop_end, loop_begin + 1, frame_count)
+	var loop_length := maxi(1, loop_end - loop_begin)
+	var local_position := fposmod(frame_position - float(loop_begin), float(loop_length)) + float(loop_begin)
+	var frame_a := clampi(int(floor(local_position)), loop_begin, loop_end - 1)
+	var frame_b := frame_a + 1
+	if frame_b >= loop_end:
+		frame_b = loop_begin
+	var blend := clampf(local_position - floor(local_position), 0.0, 1.0)
+	return lerpf(_wav_frame_mono_sample(wav, frame_a), _wav_frame_mono_sample(wav, frame_b), blend)
+
+
+func _wav_frame_count(wav: AudioStreamWAV) -> int:
+	var channels := 2 if wav.stereo else 1
+	return int(wav.data.size() / maxi(1, channels * PCM_BYTES_PER_FRAME))
+
+
+func _wav_frame_mono_sample(wav: AudioStreamWAV, frame_index: int) -> float:
+	var channels := 2 if wav.stereo else 1
+	var byte_index := frame_index * channels * PCM_BYTES_PER_FRAME
+	var left := _read_i16_float(wav.data, byte_index)
+	if channels <= 1:
+		return left
+	var right := _read_i16_float(wav.data, byte_index + PCM_BYTES_PER_FRAME)
+	return (left + right) * 0.5
+
+
+func _read_i16_float(data: PackedByteArray, byte_index: int) -> float:
+	if byte_index < 0 or byte_index + 1 >= data.size():
+		return 0.0
+	var sample := int(data[byte_index]) | (int(data[byte_index + 1]) << 8)
+	if sample >= 32768:
+		sample -= 65536
+	return clampf(float(sample) / 32768.0, -1.0, 1.0)
 
 
 func _instant_bed_pcm_data(context: Dictionary, frames: int) -> PackedByteArray:
@@ -1867,6 +2188,31 @@ func _play_full_stem_set(cache_key: String, stem_set: Dictionary) -> void:
 	_current_stream_is_primer = false
 	_remember_current_music_context(cache_key)
 	_play_stem_set(stem_set, resume_position, AMBIENT_STAGE_FULL)
+	_play_web_music_bed_for_cache(cache_key, resume_position, stem_set)
+
+
+func _play_web_music_bed_for_cache(cache_key: String, resume_position: float, source_stem_set: Dictionary = {}) -> void:
+	if not WebAudioBridgeScript.available() or cache_key.is_empty():
+		return
+	var profile: Dictionary = _ambient_profile_cache.get(cache_key, {}) as Dictionary
+	if profile.is_empty():
+		return
+	if not source_stem_set.is_empty() and str(source_stem_set.get("source", "")) == "authored":
+		var cached_source := ""
+		if _web_music_bed_cache.has(cache_key):
+			var cached_stem_set: Dictionary = _web_music_bed_cache.get(cache_key, {}) as Dictionary
+			cached_source = str(cached_stem_set.get("source", ""))
+		if cached_source != "web_mixdown":
+			var mixdown := _web_music_mixdown_stem_set(profile, source_stem_set)
+			if not mixdown.is_empty():
+				_web_music_bed_cache[cache_key] = mixdown
+	if not _web_music_bed_cache.has(cache_key):
+		_web_music_bed_cache[cache_key] = _web_music_bed_stem_set(profile, WEB_AUDIO_MUSIC_BED_SECONDS, "web_full")
+	var stem_set: Dictionary = _web_music_bed_cache.get(cache_key, {}) as Dictionary
+	if not _stem_set_contract_valid(stem_set):
+		return
+	var role_volumes := _music_role_volume_db_map(_music_mix_live if not _music_mix_live.is_empty() else _neutral_music_mix_vector())
+	_play_web_music_stems_if_needed(cache_key, stem_set, role_volumes, maxf(0.0, resume_position))
 
 
 func _advance_generation_token() -> int:
@@ -2030,9 +2376,13 @@ func _write_ambient_frame(data: PackedByteArray, context: Dictionary, frame_inde
 
 
 func _ambient_stream_from_data(data: PackedByteArray, frames: int) -> AudioStreamWAV:
+	return _ambient_stream_from_data_with_rate(data, frames, SAMPLE_RATE)
+
+
+func _ambient_stream_from_data_with_rate(data: PackedByteArray, frames: int, sample_rate: int) -> AudioStreamWAV:
 	var stream := AudioStreamWAV.new()
 	stream.format = AudioStreamWAV.FORMAT_16_BITS
-	stream.mix_rate = SAMPLE_RATE
+	stream.mix_rate = maxi(1, sample_rate)
 	stream.stereo = false
 	stream.data = data
 	stream.loop_mode = AudioStreamWAV.LOOP_FORWARD
@@ -2094,30 +2444,37 @@ func _play_feature_stem_set(stem_set: Dictionary, resume_position: float) -> voi
 		return
 	var stems: Dictionary = stem_set.get("stems", {}) as Dictionary
 	var safe_position := maxf(0.0, resume_position)
+	var role_volumes := _feature_role_volume_db_map(_feature_mix_live if not _feature_mix_live.is_empty() else _neutral_feature_mix_vector())
+	var web_audio_playback := WebAudioBridgeScript.available()
 	for role_value in MUSIC_STEM_PLAYBACK_ROLES:
 		var role := str(role_value)
 		var player: AudioStreamPlayer = _feature_stem_players.get(role, null)
 		if player == null:
 			continue
 		var stream: AudioStream = stems.get(role, null)
-		if stream == null:
+		if stream == null or web_audio_playback:
 			player.stop()
 			player.stream = null
-			player.volume_db = MUSIC_MIN_VOLUME_DB
+			player.volume_db = float(role_volumes.get(role, MUSIC_MIN_VOLUME_DB)) if web_audio_playback else MUSIC_MIN_VOLUME_DB
 			continue
 		player.stream = stream
-		player.volume_db = _gain_to_db(float(_feature_mix_live.get("feature", 0.0)) * float(MUSIC_FEATURE_ROLE_WEIGHTS.get(role, 0.0)))
-	for role_value in MUSIC_STEM_PLAYBACK_ROLES:
-		var role := str(role_value)
-		var player: AudioStreamPlayer = _feature_stem_players.get(role, null)
-		if player == null or player.stream == null:
-			continue
-		player.play(safe_position)
+		player.volume_db = float(role_volumes.get(role, MUSIC_MIN_VOLUME_DB))
+	if not web_audio_playback:
+		for role_value in MUSIC_STEM_PLAYBACK_ROLES:
+			var role := str(role_value)
+			var player: AudioStreamPlayer = _feature_stem_players.get(role, null)
+			if player == null or player.stream == null:
+				continue
+			player.play(safe_position)
 	_current_feature_stem_set = stem_set.duplicate(true)
+	if _web_audio_stem_set_bridge_allowed(stem_set, "feature", AMBIENT_STAGE_FULL):
+		WebAudioBridgeScript.play_music_stems("feature", _web_stem_set_key(stem_set, AMBIENT_STAGE_FULL, "feature"), stem_set, role_volumes, safe_position)
 	_apply_feature_mix_vector(_feature_mix_live if not _feature_mix_live.is_empty() else _neutral_feature_mix_vector(), true)
 
 
 func _stop_feature_stem_players() -> void:
+	if WebAudioBridgeScript.available():
+		WebAudioBridgeScript.stop_music("feature")
 	for player_value in _feature_stem_players.values():
 		if player_value is AudioStreamPlayer:
 			var player := player_value as AudioStreamPlayer
@@ -2273,6 +2630,9 @@ func _play_feature_stinger_now(cue_id: String, volume_db: float = -2.0) -> void:
 	var stream := _feature_stinger_stream_for_cue(cue_id)
 	if stream == null:
 		return
+	if WebAudioBridgeScript.available():
+		WebAudioBridgeScript.play_stream(stream, "music_stinger:%s" % cue_id, volume_db, 1.0)
+		return
 	for player_value in _feature_stinger_players:
 		if player_value is AudioStreamPlayer and not (player_value as AudioStreamPlayer).playing:
 			var player := player_value as AudioStreamPlayer
@@ -2408,31 +2768,102 @@ func _play_stem_set(stem_set: Dictionary, resume_position: float, stage: String)
 	var stems: Dictionary = stem_set.get("stems", {})
 	var safe_position := maxf(0.0, resume_position)
 	var started_frame := Engine.get_process_frames()
+	var started_msec := Time.get_ticks_msec()
+	var role_volumes := _music_role_volume_db_map(_music_mix_live if not _music_mix_live.is_empty() else _neutral_music_mix_vector())
+	var web_audio_playback := WebAudioBridgeScript.available()
 	for role_value in MUSIC_STEM_PLAYBACK_ROLES:
 		var role := str(role_value)
 		var player: AudioStreamPlayer = _stem_players.get(role, null)
 		if player == null:
 			continue
 		var stream: AudioStream = stems.get(role, null)
-		if stream == null:
+		if stream == null or web_audio_playback:
 			player.stop()
 			player.stream = null
-			player.volume_db = MUSIC_MIN_VOLUME_DB
+			player.volume_db = float(role_volumes.get(role, MUSIC_MIN_VOLUME_DB)) if web_audio_playback else MUSIC_MIN_VOLUME_DB
 			continue
 		player.stream = stream
-		player.volume_db = _gain_to_db(float(_music_mix_live.get(role, 0.0)))
-	for role_value in MUSIC_STEM_PLAYBACK_ROLES:
-		var role := str(role_value)
-		var player: AudioStreamPlayer = _stem_players.get(role, null)
-		if player == null or player.stream == null:
-			continue
-		player.play(safe_position)
+		player.volume_db = float(role_volumes.get(role, MUSIC_MIN_VOLUME_DB))
+	if not web_audio_playback:
+		for role_value in MUSIC_STEM_PLAYBACK_ROLES:
+			var role := str(role_value)
+			var player: AudioStreamPlayer = _stem_players.get(role, null)
+			if player == null or player.stream == null:
+				continue
+			player.play(safe_position)
 	_current_stem_set = stem_set.duplicate(true)
 	_current_stem_stage = stage
 	_current_stem_set["started_frame"] = started_frame
+	_current_stem_set["started_ticks_msec"] = started_msec
 	_current_stem_set["started_position"] = safe_position
 	_current_music_context = _context_from_stem_set(stem_set)
+	if _web_audio_stem_set_bridge_allowed(stem_set, "music", stage):
+		_play_web_music_stems_if_needed(_current_cache_key, stem_set, role_volumes, safe_position)
 	_apply_music_mix_vector(_music_mix_live if not _music_mix_live.is_empty() else _neutral_music_mix_vector(), true)
+
+
+func _play_web_music_stems_if_needed(cache_key: String, stem_set: Dictionary, role_volumes: Dictionary, resume_position: float) -> void:
+	if not _web_audio_stem_set_bridge_allowed(stem_set, "music", AMBIENT_STAGE_PRIMER):
+		return
+	var stem_key := _web_stem_set_key(stem_set, AMBIENT_STAGE_PRIMER, "music")
+	if _current_web_music_bed_cache_key == cache_key and _current_web_music_bed_stem_key == stem_key:
+		return
+	if WebAudioBridgeScript.play_music_stems("music", stem_key, stem_set, role_volumes, resume_position):
+		_current_web_music_bed_cache_key = cache_key
+		_current_web_music_bed_stem_key = stem_key
+
+
+func _web_audio_stem_set_bridge_allowed(stem_set: Dictionary, group_id: String, stage: String) -> bool:
+	if not WebAudioBridgeScript.available():
+		return false
+	if group_id != "music" and group_id != "feature":
+		return false
+	if group_id == "music" and stage != AMBIENT_STAGE_PRIMER and not bool(stem_set.get("web_bridge_bed", false)):
+		return false
+	if group_id == "feature" and stage != AMBIENT_STAGE_FULL:
+		return false
+	var total_bytes := _web_audio_stem_set_pcm_bytes(stem_set)
+	return total_bytes > 0 and total_bytes <= WEB_AUDIO_MUSIC_STEM_MAX_PCM_BYTES
+
+
+func _web_audio_stem_set_pcm_bytes(stem_set: Dictionary) -> int:
+	var stems_value: Variant = stem_set.get("stems", {})
+	if typeof(stems_value) != TYPE_DICTIONARY:
+		return 0
+	var stems: Dictionary = stems_value
+	var total := 0
+	for role_value in MUSIC_STEM_PLAYBACK_ROLES:
+		var role := str(role_value)
+		var stream_value: Variant = stems.get(role, null)
+		if not (stream_value is AudioStreamWAV):
+			continue
+		var stream := stream_value as AudioStreamWAV
+		if not _web_audio_wav_has_signal(stream):
+			continue
+		total += stream.data.size()
+	return total
+
+
+func _web_audio_wav_has_signal(wav: AudioStreamWAV) -> bool:
+	for byte_value in wav.data:
+		if int(byte_value) != 0:
+			return true
+	return false
+
+
+func _web_stem_set_key(stem_set: Dictionary, stage: String, group_id: String) -> String:
+	var profile: Dictionary = stem_set.get("profile", {}) as Dictionary
+	var identity := str(stem_set.get("track_id", profile.get("palette_id", stem_set.get("palette_id", group_id)))).strip_edges()
+	if identity.is_empty():
+		identity = group_id
+	return "%s:%s:%s:%s:%d:%d" % [
+		group_id,
+		str(stem_set.get("source", "")),
+		identity,
+		stage,
+		int(stem_set.get("loop_frames", 0)),
+		int(stem_set.get("version", 0)),
+	]
 
 
 func _context_from_stem_set(stem_set: Dictionary) -> Dictionary:
@@ -3524,6 +3955,8 @@ func _music_director_step_seconds() -> float:
 
 
 func _music_is_playing() -> bool:
+	if WebAudioBridgeScript.available() and not _current_stem_set.is_empty():
+		return true
 	for player_value in _stem_players.values():
 		if player_value is AudioStreamPlayer and (player_value as AudioStreamPlayer).playing:
 			return true
@@ -3531,6 +3964,14 @@ func _music_is_playing() -> bool:
 
 
 func _director_playback_position() -> float:
+	if WebAudioBridgeScript.available() and not _current_stem_set.is_empty():
+		var started_msec := int(_current_stem_set.get("started_ticks_msec", 0))
+		var loop_frames := int(_current_stem_set.get("loop_frames", 0))
+		var sample_rate := maxi(1, int(_current_stem_set.get("sample_rate", SAMPLE_RATE)))
+		var duration := float(loop_frames) / float(sample_rate)
+		if started_msec > 0 and duration > 0.0:
+			var elapsed := maxf(0.0, float(Time.get_ticks_msec() - started_msec) / 1000.0)
+			return fposmod(float(_current_stem_set.get("started_position", 0.0)) + elapsed, duration)
 	for role_value in MUSIC_STEM_PLAYBACK_ROLES:
 		var role := str(role_value)
 		var player: AudioStreamPlayer = _stem_players.get(role, null)

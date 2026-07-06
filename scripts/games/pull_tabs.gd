@@ -2835,10 +2835,6 @@ func _draw_pull_tab_column_stack(surface, rect: Rect2, deal: Dictionary, index: 
 	elif tension_state == "thin":
 		var thin_rect := Rect2(rect.position + Vector2(2, 2), Vector2(rect.size.x - 4, 8))
 		surface.draw_rect(thin_rect, Color(C_AMBER.r, C_AMBER.g, C_AMBER.b, 0.42))
-	elif not bool(deal.get("top_prize_available", true)):
-		var top_gone_rect := Rect2(rect.position + Vector2(2, rect.size.y - 11), Vector2(rect.size.x - 4, 8))
-		surface.draw_rect(top_gone_rect, Color(C_DARK.r, C_DARK.g, C_DARK.b, 0.68))
-		surface.surface_label_centered("TOP", top_gone_rect.grow(-1.0), 5, C_SOFT)
 
 
 func _draw_pull_tab_control_panel(surface, rect: Rect2, deals: Array) -> void:
@@ -2878,8 +2874,6 @@ func _draw_pull_tab_column_button(surface, deal: Dictionary, index: int, rect: R
 		surface.surface_label_centered("LOW", Rect2(rect.position + Vector2(3, 11), Vector2(rect.size.x - 6, 8)), 6, C_PINK)
 	elif tension_state == "sold_out":
 		surface.surface_label_centered("OUT", Rect2(rect.position + Vector2(3, 11), Vector2(rect.size.x - 6, 8)), 6, C_SOFT)
-	elif not bool(deal.get("top_prize_available", true)):
-		surface.surface_label_centered("TOP-", Rect2(rect.position + Vector2(3, 11), Vector2(rect.size.x - 6, 8)), 6, C_SOFT)
 	if enabled:
 		surface.surface_add_exact_invisible_hit(rect.grow(5), "pull_tab_buy", index)
 

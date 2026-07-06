@@ -1,5 +1,27 @@
 # Agent Prompt — Talk Overlay: Bottom-Left Non-Blocking Decision Dock + NPC Approach Events
 
+## Execution Record
+
+- Completion date: 2026-07-06.
+- Implementing commit hash(es): pending. The implementation is verified in the working tree, but the repository contains broad unrelated uncommitted changes, including same-file edits; do not create a blended commit for this archive move.
+- Verification gates:
+  - `powershell -ExecutionPolicy Bypass -File tools\validate_project.ps1` -> PASS.
+  - `powershell -ExecutionPolicy Bypass -File tools\check_godot.ps1 -RequireGodot -FoundationSuite ui -TimeoutSec 300 -AllowConcurrentGodot` -> PASS, report `D:\Projects\Beat-The-House\.tmp\test_reports\20260706_115757_smoke\summary.json`.
+  - `powershell -ExecutionPolicy Bypass -File tools\check_godot.ps1 -RequireGodot -FoundationSuite systems -TimeoutSec 300 -AllowConcurrentGodot` -> PASS, report `D:\Projects\Beat-The-House\.tmp\test_reports\20260706_115920_smoke\summary.json`.
+  - `powershell -ExecutionPolicy Bypass -File tools\check_godot.ps1 -RequireGodot -FoundationSuite blackjack -TimeoutSec 300 -AllowConcurrentGodot` -> PASS, report `D:\Projects\Beat-The-House\.tmp\test_reports\20260706_120023_smoke\summary.json`.
+  - `powershell -ExecutionPolicy Bypass -File tools\foundation_determinism_probe.ps1 -RequireGodot -SeedCount 10` -> PASS, seeds 10, checkpoints 207, combined hash `825289154`, reports `D:\Projects\Beat-The-House\.tmp\foundation_determinism_probe\run_a.json` and `run_b.json`.
+  - `powershell -ExecutionPolicy Bypass -File tools\foundation_stuck_state_sweep.ps1 -RequireGodot -SeedCount 50` -> PASS, stuck `0`, slot scenarios `48`, wait scenarios `8`.
+  - `powershell -ExecutionPolicy Bypass -File tools\foundation_mouse_batch_playtest.ps1 -RunCount 10 -RequireGodot` -> PASS, strict gate, playable-loop `10/10`, victory `10/10`, true failures `0`.
+- Summary:
+  - Added the non-modal bottom-left talk dock (`scripts/ui/talk_dock.gd`) with collapsed/expanded states, queue badge, choice hotkeys, action-count timing display, and second-click confirmation for risky choices.
+  - Extended triggered-event normalization/queue accessors in `scripts/core/run_state.gd`, event trigger validation in `scripts/core/content_library.gd`, and trigger matching in `scripts/core/event_module.gd`.
+  - Routed talk decisions through the existing event consequence path in `scripts/ui/foundation_main.gd`; modal events remain on the existing popup path.
+  - Added heat-threshold and table-approach talk events in `data/events/events.json`, with live table patron speaker snapshots highlighted through blackjack, baccarat, roulette, and bar dice surface-state paths.
+  - Added regression coverage in `scripts/tests/foundation_check.gd` and `scripts/tests/ui_scene_compile_check.gd`.
+  - Fixed validation blockers discovered during the prompt gate: blackjack count-preview settlement now clears instead of stranding, travel/map visual QA now handles local-door routes deterministically, canvas hit targeting samples robust board-space points, and fresh blackjack/baccarat/roulette surface entry no longer starts table timers or mutates RunState before a game action.
+- Deviations:
+  - No commit was created because this workspace is already carrying unrelated dirty work. The archive and implementation should be partitioned by a later commit pass.
+
 Copy everything below this line into the agent.
 
 ---

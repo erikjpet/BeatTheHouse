@@ -139,14 +139,13 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 	var elapsed_msec := now_msec - int(last_result.get("resolved_at_msec", 0))
 	var deal_active := not last_result.is_empty() and elapsed_msec >= 0 and elapsed_msec < DEAL_ANIMATION_DURATION_MSEC
 	var payout_active := not last_result.is_empty() and elapsed_msec >= DEAL_ANIMATION_DURATION_MSEC and elapsed_msec < DEAL_ANIMATION_DURATION_MSEC + PAYOUT_ANIMATION_DURATION_MSEC
-	var surface_motion_active := deal_active or payout_active
 	var min_ready := total_wager >= int(table.get("table_minimum", 20))
 	var timer_active := not deal_active and not payout_active
 	var round_timer := GameModule.table_round_timer_status_peek(table, now_msec, "Next hand") if timer_active else {}
 	var table_notice := _table_notice(table, session, last_result, deal_active, payout_active, round_timer)
 	var rules := _table_rules(table)
 	var targets := _baccarat_bet_targets(table)
-	var surface_patrons := _patrons_for_surface(table, last_result)
+	var surface_patrons := GameModule.patrons_with_talk_focus(_patrons_for_surface(table, last_result), ui_state.get("focused_talk_speaker", {}))
 	var hand_explainer := _baccarat_hand_explainer(session, last_result, deal_active, payout_active, round_timer)
 	var edge_challenge := _normalized_edge_sort_challenge(table.get("edge_sort_challenge", {}))
 	var edge := _normalized_edge_sort_edge(table.get("edge_sort_edge", {}), table)
@@ -163,9 +162,10 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 		"surface_stake_controls_required": true,
 		"surface_embeds_outcomes": true,
 		"surface_suppresses_game_result_burst": true,
-		"surface_animates_idle": surface_motion_active,
-		"surface_ambient_overlay": "" if surface_motion_active else "table_idle",
-		"surface_realtime_state_refresh": surface_motion_active,
+		"surface_animates_idle": false,
+		"surface_ambient_overlay": "table_idle",
+		"surface_dynamic_overlay_channels": [BACCARAT_DEAL_CHANNEL, BACCARAT_PAYOUT_CHANNEL],
+		"surface_realtime_state_refresh": deal_active or payout_active,
 		"surface_state_labels": [
 			{"label": "Wager", "value": "$%d" % total_wager},
 			{"label": "Shoe", "value": str(table.get("shoe_label", "8-deck shoe"))},
@@ -271,26 +271,40 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 	})
 
 
-func draw_surface(surface, surface_state: Dictionary, _render_context: Dictionary = {}) -> bool:
+func draw_surface(surface, surface_state: Dictionary, render_context: Dictionary = {}) -> bool:
 	if str(surface_state.get("surface_renderer", "")) != "baccarat":
 		return false
+	var overlay_owns_table_idle := bool(render_context.get("surface_dynamic_overlay_active", false)) and str(render_context.get("surface_dynamic_overlay_id", "")) == "table_idle"
 	surface.surface_begin_design_space(surface.surface_board_size())
 	_draw_baccarat_room(surface, surface_state)
 	_draw_hand_explainer(surface, surface_state)
 	_draw_baccarat_table(surface, surface_state)
-	_draw_table_patrons(surface, surface_state)
-	_draw_croupier_station(surface, surface_state)
+	if not overlay_owns_table_idle:
+		_draw_table_patrons(surface, surface_state)
+		_draw_croupier_station(surface, surface_state)
 	_draw_bet_zones(surface, surface_state)
-	_draw_card_areas(surface, surface_state)
+	if not overlay_owns_table_idle:
+		_draw_card_areas(surface, surface_state)
 	_draw_bet_chips(surface, surface_state)
 	_draw_shoe_and_discard(surface, surface_state)
 	_draw_baccarat_road(surface, surface_state)
 	_draw_edge_sort_panel(surface, surface_state)
 	_draw_table_notice(surface, surface_state)
-	_draw_round_timer(surface, surface_state)
+	if not overlay_owns_table_idle:
+		_draw_round_timer(surface, surface_state)
 	_draw_chip_rack(surface, surface_state)
 	_draw_action_console(surface, surface_state)
 	surface.surface_end_design_space()
+	return true
+
+
+func draw_surface_dynamic_overlay(surface, surface_state: Dictionary, overlay_id: String) -> bool:
+	if overlay_id != "table_idle" or str(surface_state.get("surface_renderer", "")) != "baccarat":
+		return false
+	_draw_table_patrons(surface, surface_state)
+	_draw_croupier_station(surface, surface_state)
+	_draw_card_areas(surface, surface_state)
+	_draw_round_timer(surface, surface_state)
 	return true
 
 
@@ -308,7 +322,9 @@ func surface_needs_auto_tick(ui_state: Dictionary, run_state: RunState, environm
 		if elapsed_msec >= 0 and elapsed_msec < DEAL_ANIMATION_DURATION_MSEC + PAYOUT_ANIMATION_DURATION_MSEC:
 			return false
 	var timer := GameModule.table_round_timer_status_peek(table, now_msec, "Next hand")
-	return not bool(timer.get("active", false)) or bool(timer.get("due", false))
+	if bool(timer.get("active", false)):
+		return bool(timer.get("due", false))
+	return typeof(last_result) == TYPE_DICTIONARY and not (last_result as Dictionary).is_empty()
 
 
 func _peek_table_state(environment: Dictionary) -> Dictionary:
@@ -329,9 +345,15 @@ func surface_auto_action_command(ui_state: Dictionary, run_state: RunState, envi
 	if _surface_locked(table, session):
 		return {"handled": false}
 	var now_msec := int(ui_state.get("surface_time_msec", Time.get_ticks_msec()))
-	var timer := GameModule.table_round_timer_status(table, now_msec, "Next hand")
-	if not bool(timer.get("due", false)):
+	var timer := GameModule.table_round_timer_status_peek(table, now_msec, "Next hand")
+	if not bool(timer.get("active", false)):
+		var last_result: Dictionary = _copy_dict(table.get("last_result", {}))
+		if last_result.is_empty():
+			return {"handled": false}
+		timer = GameModule.table_round_timer_status(table, now_msec, "Next hand")
 		_update_environment_table(environment, table)
+		return {"handled": false}
+	if not bool(timer.get("due", false)):
 		return {"handled": false}
 	session["baccarat_sit_out"] = _bet_dict(session.get("baccarat_bets", {})).is_empty()
 	GameModule.reset_table_round_timer(table)
@@ -2554,7 +2576,7 @@ func _draw_card_areas(surface, state: Dictionary) -> void:
 	var last_hand := _copy_dict(state.get("last_hand", {}))
 	var player_cards := _card_array(last_hand.get("player_cards", []))
 	var banker_cards := _card_array(last_hand.get("banker_cards", []))
-	var deal_active := str(state.get("phase", "")) == "dealing"
+	var deal_active := bool(surface.surface_animation_active(BACCARAT_DEAL_CHANNEL))
 	var visible_cards := _visible_animation_cards(surface, state) if deal_active else []
 	if deal_active and not visible_cards.is_empty():
 		for event in visible_cards:

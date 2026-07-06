@@ -67,11 +67,16 @@ func item_offer_view_list(selected_item_id: String = "") -> Array:
 			continue
 		var display_name := str(offer_data.get("display_name", item_definition.get("display_name", item_id)))
 		var price := int(offer_data.get("price", item_definition.get("price_min", 0)))
+		var pickup := bool(offer_data.get("pickup", false))
+		if pickup:
+			price = 0
 		var effect: Dictionary = item_definition.get("effect", {}) if typeof(item_definition.get("effect", {})) == TYPE_DICTIONARY else {}
 		offers.append({
 			"id": item_id,
 			"display_name": display_name,
 			"price": price,
+			"pickup": pickup,
+			"action_label": "Pick Up" if pickup else "Buy",
 			"description": str(item_definition.get("description", "")),
 			"asset_path": str(item_definition.get("asset_path", "")),
 			"icon_key": str(item_definition.get("icon_key", item_id)),
@@ -330,8 +335,9 @@ func item_sale_price(item_definition: Dictionary) -> int:
 func shopkeeper_available() -> bool:
 	if run_state == null:
 		return false
-	if not _copy_array(run_state.current_environment.get("item_offers", [])).is_empty():
-		return true
+	for offer_value in _copy_array(run_state.current_environment.get("item_offers", [])):
+		if typeof(offer_value) == TYPE_DICTIONARY and not bool((offer_value as Dictionary).get("pickup", false)):
+			return true
 	if str(run_state.current_environment.get("kind", "")) == "shop":
 		var archetype := _environment_archetype(str(run_state.current_environment.get("archetype_id", "")))
 		return not _string_array(archetype.get("item_pool", [])).is_empty()
@@ -576,6 +582,7 @@ func purchase_item_result(effect_result: Dictionary, item_definition: Dictionary
 	var item_id := str(item_definition.get("id", offer.get("id", "")))
 	var display_name := str(item_definition.get("display_name", offer.get("display_name", item_id)))
 	var price := int(offer.get("price", 0))
+	var pickup := bool(offer.get("pickup", false))
 	var result := effect_result.duplicate(true)
 	var deltas := copy_result_deltas(effect_result.get("deltas", {}))
 	if _definition_is_active_item(item_definition):
@@ -586,7 +593,7 @@ func purchase_item_result(effect_result: Dictionary, item_definition: Dictionary
 		inventory_add.append(item_id)
 	deltas["inventory_add"] = inventory_add
 	var story_log: Array = deltas.get("story_log", [])
-	var message := "Bought %s for %d." % [display_name, price]
+	var message := "Picked up %s." % display_name if pickup else "Bought %s for %d." % [display_name, price]
 	var effect_payload: Dictionary = item_definition.get("effect", {}) if typeof(item_definition.get("effect", {})) == TYPE_DICTIONARY else {}
 	var effect_text := effect_summary(effect_payload)
 	if not effect_text.is_empty():
@@ -596,6 +603,7 @@ func purchase_item_result(effect_result: Dictionary, item_definition: Dictionary
 		"item_id": item_id,
 		"item_name": display_name,
 		"price": price,
+		"pickup": pickup,
 		"environment_id": str(run_state.current_environment.get("id", "")),
 		"message": message,
 	})

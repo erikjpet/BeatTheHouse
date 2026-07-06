@@ -15,7 +15,7 @@
       "type": "manual"
     },
     "payload": {
-      "summary": "A tired clerk points to a dubious half-off sticker.",
+      "summary": "Possible cash break.",
       "choices": [
         {
           "id": "haggle",
@@ -54,7 +54,7 @@
       "type": "manual"
     },
     "payload": {
-      "summary": "The clerk knows which low-stakes rooms are loose.",
+      "summary": "Route information.",
       "choices": [
         {
           "id": "ask_routes",
@@ -104,7 +104,7 @@
       ]
     },
     "payload": {
-      "summary": "Someone mentions cash games behind bad signage.",
+      "summary": "Underground route tip.",
       "choices": [
         {
           "id": "follow_tip",
@@ -145,7 +145,7 @@
       "turns": 2
     },
     "payload": {
-      "summary": "A stranger checks whether you win too often.",
+      "summary": "Heat check.",
       "choices": [
         {
           "id": "talk_down",
@@ -184,7 +184,7 @@
       "type": "manual"
     },
     "payload": {
-      "summary": "Someone offers a dubious edge item from a trunk.",
+      "summary": "Shady trunk offer.",
       "choices": [
         {
           "id": "take_cash",
@@ -229,7 +229,7 @@
       ]
     },
     "payload": {
-      "summary": "A motel-door knock offers cash with strings.",
+      "summary": "Emergency loan offer.",
       "choices": [
         {
           "id": "borrow",
@@ -273,7 +273,7 @@
       "type": "manual"
     },
     "payload": {
-      "summary": "A loud regular draws every eye after a bad beat.",
+      "summary": "Crowd attention spike.",
       "choices": [
         {
           "id": "blend_in",
@@ -311,7 +311,7 @@
       "turns": 2
     },
     "payload": {
-      "summary": "A jammed machine makes an attendant watch the floor.",
+      "summary": "Attendant watching.",
       "choices": [
         {
           "id": "wait",
@@ -351,7 +351,7 @@
       "type": "manual"
     },
     "payload": {
-      "summary": "A side door hints at cheaper rooms and darker routes.",
+      "summary": "Shortcut route choice.",
       "choices": [
         {
           "id": "cheap_route",
@@ -393,7 +393,7 @@
       "type": "travel"
     },
     "payload": {
-      "summary": "Security watches the exit after noisy wins.",
+      "summary": "Exit watched.",
       "choices": [
         {
           "id": "slip_out",
@@ -429,7 +429,7 @@
       "type": "manual"
     },
     "payload": {
-      "summary": "Pit Boss Rourke sweeps the high-limit row.",
+      "summary": "Pit boss sweep.",
       "choices": [
         {
           "id": "lay_low",
@@ -479,7 +479,7 @@
       "type": "manual"
     },
     "payload": {
-      "summary": "A casino host offers a drink and a sharper table.",
+      "summary": "Comped risk offer.",
       "choices": [
         {
           "id": "take_comp",
@@ -528,7 +528,7 @@
       "turns": 2
     },
     "payload": {
-      "summary": "A camera operator keeps returning to your table.",
+      "summary": "Camera attention.",
       "choices": [
         {
           "id": "change_table",
@@ -587,7 +587,7 @@
       ]
     },
     "payload": {
-      "summary": "A health inspector says the bar is closing after one more move.",
+      "summary": "One more move.",
       "choices": [
         {
           "id": "finish_one",
@@ -647,7 +647,7 @@
       ]
     },
     "payload": {
-      "summary": "The same inspector comes back with a bigger smile.",
+      "summary": "Inspector returns.",
       "choices": [
         {
           "id": "pay_again",
@@ -704,7 +704,7 @@
       ]
     },
     "payload": {
-      "summary": "Another counter is working the same blackjack shoe.",
+      "summary": "Rival counter.",
       "choices": [
         {
           "id": "play_through",
@@ -776,7 +776,7 @@
       ]
     },
     "payload": {
-      "summary": "The rival counter slides you a signal from across the pit.",
+      "summary": "Counter signal.",
       "choices": [
         {
           "id": "take_signal",
@@ -832,7 +832,7 @@
       ]
     },
     "payload": {
-      "summary": "The regulars have heard you talk to the pit.",
+      "summary": "Snitch reputation.",
       "choices": [
         {
           "id": "shrug",
@@ -887,7 +887,7 @@
       ]
     },
     "payload": {
-      "summary": "A host sets down a free drink you did not order.",
+      "summary": "Free drink offer.",
       "choices": [
         {
           "id": "accept",
@@ -970,7 +970,7 @@
       ]
     },
     "payload": {
-      "summary": "A lender's man finds you before the next move.",
+      "summary": "Debt collector.",
       "choices": [
         {
           "id": "pay_now",
@@ -1060,7 +1060,7 @@
       ]
     },
     "payload": {
-      "summary": "The pit boss hands the floor to a rookie for a few moves.",
+      "summary": "Rookie floor watch.",
       "choices": [
         {
           "id": "position",
@@ -1114,7 +1114,7 @@
       ]
     },
     "payload": {
-      "summary": "The room drops black for one breath while staff scramble.",
+      "summary": "Brief blackout.",
       "choices": [
         {
           "id": "move",
@@ -1171,7 +1171,7 @@
       ]
     },
     "payload": {
-      "summary": "When the lights return, the pit counts every chip that moved.",
+      "summary": "Chip count check.",
       "choices": [
         {
           "id": "stand_still",
@@ -1223,7 +1223,7 @@
       "min_tier": 2
     },
     "payload": {
-      "summary": "A whale pulls staff and cameras toward one loud table.",
+      "summary": "Staff distraction.",
       "choices": [
         {
           "id": "tail",
@@ -1269,7 +1269,7 @@
       "min_tier": 2
     },
     "payload": {
-      "summary": "A dealer whispers that the next floor walk is late.",
+      "summary": "Late floor walk.",
       "choices": [
         {
           "id": "tip_dealer",
@@ -1317,7 +1317,7 @@
       "min_suspicion": 15
     },
     "payload": {
-      "summary": "A quiet booth opens just as the room starts watching you.",
+      "summary": "Hide from heat.",
       "choices": [
         {
           "id": "sit_out",
@@ -1363,7 +1363,7 @@
       "min_suspicion": 20
     },
     "payload": {
-      "summary": "The door man names a price for a quieter room.",
+      "summary": "Buy quiet entry.",
       "choices": [
         {
           "id": "pay",
@@ -1409,7 +1409,7 @@
       "min_luck": 1
     },
     "payload": {
-      "summary": "The room believes you are running hot.",
+      "summary": "Hot-streak choice.",
       "choices": [
         {
           "id": "press",
@@ -1456,7 +1456,7 @@
       }
     },
     "payload": {
-      "summary": "The Crew tells you a package needs moving now.",
+      "summary": "Crew favor due.",
       "choices": [
         {
           "id": "run_package",
@@ -1512,7 +1512,7 @@
     },
     "payload": {
       "kind": "grand_casino_high_roller_cashout",
-      "summary": "The host prepares your Grand Casino Players Card.",
+      "summary": "Claim boss access.",
       "success_message": "The host issues you a Grand Casino Players Card and lets you leave with your winnings. The next act is not implemented yet.",
       "choices": [
         {
@@ -1552,7 +1552,7 @@
     },
     "payload": {
       "kind": "grand_casino_showdown",
-      "summary": "Rourke takes you off the floor and waits for one clean answer.",
+      "summary": "Final house call.",
       "success_message": "Rourke cannot prove enough to hold you. The casino lets you walk with your winnings; the next act is not implemented yet.",
       "failure_message": "The story falls apart in the back room. The casino takes you out back and the run ends.",
       "showdown_tuning": {
@@ -1614,7 +1614,7 @@
     "environment_prop": "payphone",
     "start_summary": "Pick up the counter phone.",
     "payload": {
-      "summary": "The counter phone has his number taped under the receiver.",
+      "summary": "Family phone access.",
       "choices": [
         {
           "id": "make_call",
@@ -1678,7 +1678,7 @@
     "asset_path": "res://assets/art/events/motel_knock.png",
     "visual_key": "phone",
     "payload": {
-      "summary": "He answers on the third ring: fair money, loud strings.",
+      "summary": "Family loan offer.",
       "choices": [
         {
           "id": "accept",
@@ -1709,6 +1709,178 @@
                 "message": "You turned down the family loan."
               }
             ]
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "table_patron_whisper",
+    "display_name": "Table Whisper",
+    "type": "social",
+    "interaction_mode": "triggered",
+    "presentation": "talk",
+    "speaker": {
+      "role": "patron",
+      "name": "Patron",
+      "silhouette": "coat",
+      "bind": "table_patron"
+    },
+    "scopes": [
+      "bar",
+      "casino",
+      "club",
+      "any"
+    ],
+    "trigger": {
+      "type": "table_approach",
+      "games": [
+        "blackjack",
+        "roulette",
+        "baccarat",
+        "bar_dice"
+      ],
+      "min_hands": 1,
+      "chance": 0.18
+    },
+    "asset_path": "res://assets/art/events/suspicious_patron.png",
+    "visual_key": "patron",
+    "payload": {
+      "summary": "Patron leans in with a room read.",
+      "timing": {
+        "expires": true,
+        "duration_actions": 3,
+        "timeout_choice_id": "ignore"
+      },
+      "choices": [
+        {
+          "id": "hear_them_out",
+          "label": "Hear Them Out",
+          "text": "You let the table talk settle before your next move.",
+          "consequence_summary": "Heat -1.",
+          "consequences": {
+            "suspicion_delta": -1,
+            "resolve_event": true
+          }
+        },
+        {
+          "id": "brush_off",
+          "label": "Brush Off",
+          "text": "You keep your eyes on the felt.",
+          "consequence_summary": "No immediate cost.",
+          "consequences": {
+            "resolve_event": true
+          }
+        },
+        {
+          "id": "ignore",
+          "label": "Ignore",
+          "text": "The moment passes without an answer.",
+          "consequence_summary": "No immediate cost.",
+          "consequences": {
+            "resolve_event": true
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "floor_staff_heat_warning",
+    "display_name": "Floor Staff",
+    "type": "security",
+    "interaction_mode": "triggered",
+    "presentation": "talk",
+    "speaker": {
+      "role": "staff",
+      "name": "Floor Staff",
+      "silhouette": "vest",
+      "bind": "none"
+    },
+    "scopes": [
+      "any"
+    ],
+    "trigger": {
+      "type": "heat_threshold",
+      "level": 65
+    },
+    "asset_path": "res://assets/art/events/heat_at_exit.png",
+    "visual_key": "security",
+    "payload": {
+      "summary": "Staff warns you to cool it.",
+      "timing": {
+        "expires": true,
+        "duration_actions": 2,
+        "timeout_choice_id": "nod"
+      },
+      "choices": [
+        {
+          "id": "lay_low",
+          "label": "Lay Low",
+          "text": "You slow down and let the room breathe.",
+          "consequence_summary": "Heat -3.",
+          "consequences": {
+            "suspicion_delta": -3,
+            "resolve_event": true
+          }
+        },
+        {
+          "id": "nod",
+          "label": "Nod",
+          "text": "You acknowledge the warning and keep moving.",
+          "consequence_summary": "Event closes.",
+          "consequences": {
+            "resolve_event": true
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "pit_boss_heat_warning",
+    "display_name": "Pit Boss",
+    "type": "security",
+    "interaction_mode": "triggered",
+    "presentation": "talk",
+    "speaker": {
+      "role": "staff",
+      "name": "Pit Boss",
+      "silhouette": "suit",
+      "bind": "none"
+    },
+    "scopes": [
+      "any"
+    ],
+    "trigger": {
+      "type": "heat_threshold",
+      "level": 85
+    },
+    "asset_path": "res://assets/art/events/pit_boss_sweep.png",
+    "visual_key": "security",
+    "payload": {
+      "summary": "Pit boss watches your next move.",
+      "timing": {
+        "expires": true,
+        "duration_actions": 1,
+        "timeout_choice_id": "play_natural"
+      },
+      "choices": [
+        {
+          "id": "step_away",
+          "label": "Step Away",
+          "text": "You take a breath and stop feeding the pattern.",
+          "consequence_summary": "Heat -5.",
+          "consequences": {
+            "suspicion_delta": -5,
+            "resolve_event": true
+          }
+        },
+        {
+          "id": "play_natural",
+          "label": "Play Natural",
+          "text": "You stay calm and keep the table moving.",
+          "consequence_summary": "Event closes.",
+          "consequences": {
+            "resolve_event": true
           }
         }
       ]

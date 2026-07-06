@@ -8,13 +8,15 @@ Roulette, and Video Poker. Every win, cheat, drink, loan, and bad exit pushes
 the run state forward.
 
 The runnable 0.2.0 demo candidate has shipped. Current development is the
-0.3 source release-candidate line: release-prep work is partitioned into
-auditable commits, and the remaining non-code release actions are manual itch.io
-publishing plus Android/iOS signing credentials. Broader jazz-club,
-profile-completion, music-rework, mobile-runbook, and Act 2 seam work is parked
-until after 0.3. Beat the House is not a real-money gambling product. It has no
-real-money wagering, cash prizes, gambling monetization, or store credentials
-checked into the repository.
+0.3 patch-release line: 0.3.2 closed as an internal low-end/web cleanup build,
+and 0.3.3 is the current GitHub source release for the low-end stability, home
+location, container, world-map travel, and web-audio fix set. Remaining release
+actions are manual itch.io publishing plus Android/iOS signing credentials.
+Broader jazz-club, profile-completion, music-rework,
+mobile-runbook, and Act 2 seam work is parked until after the 0.3 public patch.
+Beat the House is not a real-money gambling product. It has no real-money
+wagering, cash prizes, gambling monetization, or store credentials checked into
+the repository.
 
 ## Current Implementation
 
@@ -24,12 +26,12 @@ checked into the repository.
 | Main scene | `res://scenes/main.tscn` |
 | Main UI shell | `res://scripts/ui/foundation_main.gd` |
 | Shipped baseline | 0.3.0 Act 1 feature-complete release |
-| Active planning target | 0.3.2 low-end and web cleanup release, version-stamped as 0.3.2 |
-| Current release readiness | LD.2 release closure is complete; full-suite, per-suite, performance, soak, determinism, stuck-state, 60-run mouse, seed-audit, web-smoke, and export evidence are tracked in `docs/plans/0.3.2_release_checklist.md` |
+| Active planning target | 0.3.3 GitHub source release |
+| Current release readiness | 0.3.3 source release stamped in `project.godot` and export presets; itch package upload remains manual |
 | Viewport | 1280x720, non-resizable, canvas stretch with kept aspect |
 | Renderer | Godot mobile renderer |
 | Input model | Single pointer interaction with mouse/touch parity |
-| Target exports | 0.3.2 ships Web/itch.io and Windows desktop; Android/iOS presets remain credential-blocked |
+| Target exports | 0.3.3 targets Web/itch.io and Windows desktop; Android/iOS presets remain credential-blocked |
 | Run model | Seeded deterministic run state with forked RNG streams |
 | Current win target | Reach the Grand Casino, then win either clean (net +$10 while staying low-heat for a Players Card) or by surviving Pit Boss Rourke's back-room showdown |
 | Prestige content | Act 1 keeps prestige dormant: the code path exists, but empty `data/prestige/purchases.json` hides all prestige UI/objects |
@@ -283,9 +285,11 @@ The wrappers resolve Godot in this order:
 
 ## Validation
 
-The current 0.3.2 readiness ledger is
-`docs/plans/0.3.2_release_checklist.md`. Headless commands verified during the
-LD.2 release closure:
+The last completed full readiness ledger is
+`docs/plans/0.3.2_release_checklist.md`. The 0.3.3 GitHub source release is
+stamped in project/export metadata; itch package hashes should be recorded when
+operator packaging runs. Headless commands verified during the LD.2 release
+closure:
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File tools\validate_project.ps1
@@ -341,9 +345,9 @@ Windows native access-violation dialogs on later runs.
 For shipped 0.2.0 release evidence, use the tracked checklist at
 `docs/plans/0.2_release_checklist.md`. For shipped 0.3.0 evidence, use
 `docs/plans/0.3_release_checklist.md`. For shipped 0.3.1 evidence, use
-`docs/plans/0.3.1_release_checklist.md`. For the current 0.3.2 readiness
-ledger, use `docs/plans/0.3.2_release_checklist.md`. For Act 1 historical work,
-use `docs/plans/act_one_feature_complete_task_board.md`.
+`docs/plans/0.3.1_release_checklist.md`. For the completed 0.3.2 internal
+readiness ledger, use `docs/plans/0.3.2_release_checklist.md`. For Act 1
+historical work, use `docs/plans/act_one_feature_complete_task_board.md`.
 
 ## Documentation
 
@@ -351,6 +355,8 @@ The README is the current top-level implementation spec. The `docs/plans/`
 folder holds active planning documents, shipped-release ledgers, and historical
 context:
 
+- `CHANGELOG.md` - public release changelog, including the 0.3.3 GitHub source
+  release notes.
 - `docs/plans/act_one_feature_complete_task_board.md` - the active planning
   entry point for Act 1 feature-complete work, including the T0.1 status ledger
   and current gap table.
@@ -375,8 +381,10 @@ context:
 - `docs/plans/0.3_release_checklist.md` - the shipped 0.3.0 readiness ledger.
 - `docs/plans/0.3.1_release_checklist.md` - the shipped 0.3.1 hardening
   release ledger, including performance/stability evidence and package hashes.
-- `docs/plans/0.3.2_release_checklist.md` - the current 0.3.2 low-end/web
+- `docs/plans/0.3.2_release_checklist.md` - the completed 0.3.2 low-end/web
   cleanup release ledger, including gate evidence and package hashes.
+- `docs/plans/0.3.3_publish_copy.md` - paste-ready itch.io, GitHub release,
+  and devlog copy for the 0.3.3 public patch.
 
 For current slot implementation work, use the slot stack listed in this README
 and the pinball docs above rather than older file names referenced inside
@@ -393,18 +401,20 @@ historical release evidence.
 
 `tools/export_itch.ps1` packages the Web and Windows presets for itch.io upload
 after Godot export templates are installed. Project and export preset versions
-are stamped `0.3.2`; the start screen reads the same project version. The tool
-supports `-Push -DryRun` for butler command verification and non-dry-run
-publishing after the user has installed butler and run `butler login` once.
-Fresh 0.3.2 Web/Windows package hashes and gate evidence live in
-`docs/plans/0.3.2_release_checklist.md`. Android signing and iOS team/signature
-values still require real project credentials before store submission.
+are currently stamped `0.3.3`. The tool supports `-Push -DryRun` for butler
+command verification and non-dry-run publishing after the user has installed
+butler and run `butler login` once. Fresh 0.3.2 Web/Windows package hashes and
+gate evidence live in `docs/plans/0.3.2_release_checklist.md`; 0.3.3 artifact
+hashes should be recorded when operator packaging runs. Android
+signing and iOS team/signature values still require real project credentials
+before store submission.
 
-## Known 0.3.2 Release Limitations
+## Known Release Limitations
 
 - itch.io publishing remains a user action: install/login with butler and push
   the Web and Windows packages from `tools/export_itch.ps1`, or upload through
   the itch.io dashboard.
+- itch.io package publishing remains separate from the GitHub source release.
 - Android and iOS store submission require real signing/team credentials.
 
 ## Design Rules

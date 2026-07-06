@@ -309,6 +309,14 @@ func resolve_bonus_action(machine: Dictionary, action_id: String, rng: RngStream
 	result["slot_bonus_step"] = step
 	result["slot_bonus_complete"] = complete
 	result["slot_bonus_award"] = award
+	result["slot_bonus_family"] = family_id
+	if family_id == "pinball" and award > 0 and complete:
+		result["surface_audio_cue"] = "pinball_money_ding"
+		result["surface_audio_context"] = {
+			"action": "pinball_money_ding",
+			"volume_db": -4.5,
+			"pitch": clampf(0.98 + minf(0.18, float(award) / 140.0), 0.98, 1.16),
+		}
 	result["slot_animation_id"] = str(machine.get("slot_animation_id", ""))
 	result["slot_animation_duration_msec"] = int(machine.get("slot_animation_duration_msec", 0))
 	result["slot_reel_timeline"] = _copy_array(machine.get("slot_reel_timeline", []))

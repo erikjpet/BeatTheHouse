@@ -30,6 +30,7 @@ var text_size: String = "normal"
 var reduce_motion: bool = false
 var drunk_effect_mode: String = "distortion"
 var high_contrast: bool = false
+var selected_home_type_id: String = "random"
 
 
 # Restores default preference values.
@@ -46,6 +47,7 @@ func reset() -> void:
 	reduce_motion = false
 	drunk_effect_mode = "distortion"
 	high_contrast = false
+	selected_home_type_id = "random"
 
 
 # Loads preferences from disk or defaults.
@@ -95,6 +97,7 @@ func to_dict() -> Dictionary:
 		"reduce_motion": reduce_motion,
 		"drunk_effect_mode": drunk_effect_mode,
 		"high_contrast": high_contrast,
+		"selected_home_type_id": selected_home_type_id,
 	}
 
 
@@ -123,6 +126,9 @@ func from_dict(data: Dictionary) -> void:
 	if not DRUNK_EFFECT_MODES.has(drunk_effect_mode):
 		drunk_effect_mode = "distortion"
 	high_contrast = bool(data.get("high_contrast", high_contrast))
+	selected_home_type_id = str(data.get("selected_home_type_id", selected_home_type_id)).strip_edges()
+	if selected_home_type_id.is_empty():
+		selected_home_type_id = "random"
 
 
 # Applies preferences to Godot services.

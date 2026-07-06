@@ -339,6 +339,53 @@ def draw_ledger_pencil():
     return image
 
 
+def draw_bag():
+    image, d = new_icon()
+    poly(d, [(9, 13), (23, 13), (25, 25), (7, 25)], BROWN)
+    d.arc((11, 7, 21, 18), 190, 350, fill=METAL, width=2)
+    d.rectangle((10, 15, 22, 17), fill=AMBER)
+    d.rectangle((13, 19, 19, 23), fill=rgba("#2b1511"))
+    d.rectangle((21, 12, 24, 15), fill=PINK)
+    glint(d, 7, 10, CYAN)
+    return image
+
+
+def draw_backpack():
+    image, d = new_icon()
+    rect(d, (9, 8, 23, 26), BLUE)
+    d.arc((11, 5, 21, 15), 185, 355, fill=METAL, width=2)
+    d.rectangle((11, 13, 21, 17), fill=CYAN)
+    d.rectangle((12, 20, 20, 24), fill=rgba("#111b38"))
+    d.rectangle((7, 13, 10, 22), fill=PINK)
+    d.rectangle((22, 13, 25, 22), fill=PINK)
+    glint(d, 24, 8, YELLOW)
+    return image
+
+
+def draw_suitcase():
+    image, d = new_icon()
+    rect(d, (7, 11, 25, 25), BROWN)
+    d.arc((12, 7, 20, 16), 180, 360, fill=METAL, width=2)
+    d.rectangle((9, 14, 23, 16), fill=AMBER)
+    d.rectangle((10, 19, 12, 23), fill=METAL)
+    d.rectangle((20, 19, 22, 23), fill=METAL)
+    d.rectangle((23, 10, 26, 13), fill=CYAN)
+    glint(d, 7, 8, PINK)
+    return image
+
+
+def draw_trunk():
+    image, d = new_icon()
+    rect(d, (6, 12, 26, 25), rgba("#3a1d16"))
+    d.arc((7, 5, 25, 21), 180, 360, fill=BROWN, width=5)
+    d.rectangle((8, 14, 24, 16), fill=AMBER)
+    d.rectangle((14, 17, 18, 22), fill=METAL)
+    d.rectangle((7, 23, 25, 25), fill=rgba("#1b0d0b"))
+    d.rectangle((22, 9, 25, 12), fill=PINK)
+    glint(d, 6, 9, CYAN)
+    return image
+
+
 def draw_cashout_envelope():
     image, d = new_icon()
     poly(d, [(5, 11), (26, 9), (27, 24), (7, 26)], PAPER)
@@ -1039,6 +1086,43 @@ def draw_motel_map():
     return image
 
 
+def draw_motel_room_map():
+    image, d = new_icon()
+    rect(d, (6, 11, 26, 24), BLUE)
+    rect(d, (8, 15, 18, 22), rgba("#39201e"))
+    d.rectangle((10, 16, 17, 17), fill=PINK)
+    d.rectangle((20, 13, 24, 24), fill=AMBER)
+    d.rectangle((21, 16, 23, 19), fill=FIELD)
+    d.rectangle((12, 8, 23, 11), fill=CYAN)
+    d.rectangle((13, 9, 22, 9), fill=YELLOW)
+    return image
+
+
+def draw_apartment_map():
+    image, d = new_icon()
+    rect(d, (8, 7, 24, 26), BLUE)
+    line(d, (7, 7, 16, 3), PINK, 2)
+    line(d, (16, 3, 25, 7), PINK, 2)
+    for x in (11, 18):
+        d.rectangle((x, 10, x + 4, 14), fill=CYAN)
+        d.rectangle((x, 17, x + 4, 21), fill=AMBER)
+    d.rectangle((14, 22, 18, 26), fill=rgba("#211017"))
+    glint(d, 25, 5, YELLOW)
+    return image
+
+
+def draw_house_map():
+    image, d = new_icon()
+    rect(d, (7, 13, 25, 25), rgba("#233044"))
+    poly(d, [(5, 13), (16, 5), (27, 13)], BROWN)
+    d.rectangle((10, 16, 14, 20), fill=CYAN)
+    d.rectangle((19, 16, 23, 20), fill=PINK)
+    d.rectangle((14, 21, 18, 25), fill=AMBER)
+    d.rectangle((22, 8, 25, 12), fill=METAL)
+    tiny_smoke(d, [(24, 4, 4)])
+    return image
+
+
 def draw_bar_map():
     image, d = new_icon()
     rect(d, (7, 9, 25, 24), BROWN)
@@ -1191,6 +1275,8 @@ def draw_cyberpunk_city_overhead():
 
 
 ITEM_ICONS = {
+    "backpack": draw_backpack,
+    "bag": draw_bag,
     "basic_strategy_card": draw_basic_strategy_card,
     "broken_cufflinks": draw_broken_cufflinks,
     "card_counters_notes": draw_card_counters_notes,
@@ -1247,12 +1333,14 @@ ITEM_ICONS = {
     "side_bet_chart": draw_side_bet_chart,
     "split_reel_note": draw_split_reel_note,
     "splitter_token": draw_splitter_token,
+    "suitcase": draw_suitcase,
     "tab_detector": draw_tab_detector,
     "tarot_card": draw_tarot_card,
     "timing_bracelet": draw_timing_bracelet,
     "tilt_dampener": draw_tilt_dampener,
     "tip_sheet": draw_tip_sheet,
     "thermos_black_coffee": draw_thermos_black_coffee,
+    "trunk": draw_trunk,
     "return_spring": draw_return_spring,
     "weighted_keyring": draw_weighted_keyring,
     "xray_glasses": draw_xray_glasses,
@@ -1270,15 +1358,18 @@ GAME_ICONS = {
 }
 
 MAP_ICONS = {
+    "apartment": draw_apartment_map,
     "back_alley": draw_back_alley_map,
     "bar": draw_bar_map,
     "corner_store": draw_corner_store_map,
     "delta_queen": draw_delta_queen_map,
     "gas_station_casino": draw_gas_station_casino_map,
     "grand_casino": draw_grand_casino_map,
+    "house": draw_house_map,
     "jazz_club": draw_jazz_club_map,
     "kitty_cat_lounge": draw_kitty_cat_lounge_map,
     "motel": draw_motel_map,
+    "motel_room": draw_motel_room_map,
     "small_underground_casino": draw_small_underground_casino_map,
 }
 

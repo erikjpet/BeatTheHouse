@@ -3,7 +3,7 @@
 		"id": "cashier_tip",
 		"display_name": "Cashier Tip",
 		"category": "information",
-		"description": "A quiet tip about who is watching and when to move on.",
+		"description": "Scouts safer exits.",
 		"cost": 4,
 		"effect": {
 			"suspicion_delta": -1,
@@ -17,7 +17,7 @@
 		"id": "house_drink",
 		"display_name": "Buy a Drink",
 		"category": "alcohol",
-		"description": "More luck now, sharper heat after the buzz.",
+		"description": "Luck with buzz.",
 		"cost": 8,
 		"message": "You buy a quick drink. Luck lifts, but the room gets easier to read wrong.",
 		"effect": {
@@ -30,7 +30,7 @@
 		"id": "call_brother_in_law",
 		"display_name": "Call Brother-in-Law",
 		"category": "family",
-		"description": "One family phone call that opens a fair loan with loud strings.",
+		"description": "Unlocks family loan.",
 		"cost": 0,
 		"message": "You make the family call and hear the strings before the cash.",
 		"effect": {
@@ -44,7 +44,7 @@
 		"id": "jazz_sax_round",
 		"display_name": "Buy Sax a Round",
 		"category": "favor",
-		"description": "A long-shot chance to coax a lucky coin from the sax.",
+		"description": "Chance at sax coin.",
 		"cost": 8,
 		"message": "The sax player nods over the rim and lets the solo curl around your luck.",
 		"effect": {
@@ -55,7 +55,7 @@
 		"id": "jazz_cello_round",
 		"display_name": "Buy Cello a Round",
 		"category": "favor",
-		"description": "A long-shot chance to coax a lucky coin from the cello.",
+		"description": "Chance at cello coin.",
 		"cost": 8,
 		"message": "The cellist smiles into a low walking line and keeps time with your nerve.",
 		"effect": {
@@ -66,7 +66,7 @@
 		"id": "jazz_drummer_round",
 		"display_name": "Buy Drummer a Round",
 		"category": "favor",
-		"description": "Small chance to coax a coin, or glasses after two full sets.",
+		"description": "Chance at drummer gear.",
 		"cost": 8,
 		"message": "The drummer taps the glass twice, then rolls the groove forward.",
 		"effect": {
@@ -77,7 +77,7 @@
 		"id": "jazz_band_tip_jar",
 		"display_name": "Band Tip Jar",
 		"category": "favor",
-		"description": "A cheaper tip with a chance to buy each player a round.",
+		"description": "Random band favor.",
 		"cost": 6,
 		"message": "You feed the band jar and let chance carry the round.",
 		"effect": {
@@ -88,7 +88,7 @@
 		"id": "listen_to_jazz",
 		"display_name": "Stay for the Set",
 		"category": "music",
-		"description": "Stay through the changes and cool the room.",
+		"description": "Cool the room.",
 		"cost": 0,
 		"message": "You stay through the changes and let the room swing around you.",
 		"effect": {
@@ -99,7 +99,7 @@
 		"id": "show_drummer_glasses",
 		"display_name": "Show Legend's Glasses",
 		"category": "security",
-		"description": "Cool all local heat once per venue.",
+		"description": "Clear venue heat.",
 		"cost": 0,
 		"message": "The glasses make people rethink what they saw.",
 		"effect": {
@@ -110,7 +110,7 @@
 		"id": "kitty_champagne",
 		"display_name": "Champagne Tray",
 		"category": "alcohol",
-		"description": "Expensive nerve and luck; the bubbles push your timing.",
+		"description": "Luck, drink, grace.",
 		"cost": 18,
 		"message": "The lounge sends over champagne and the room softens at the edges.",
 		"effect": {
@@ -124,7 +124,7 @@
 		"id": "kitty_burlesque_show",
 		"display_name": "Burlesque Show",
 		"category": "nightlife",
-		"description": "A costly show that turns attention away from the tables.",
+		"description": "Diverts table attention.",
 		"cost": 28,
 		"message": "The lights hit the stage and half the room forgets to watch you.",
 		"effect": {
@@ -138,7 +138,7 @@
 		"id": "riverboat_deck_walk",
 		"display_name": "Walk the Deck",
 		"category": "recovery",
-		"description": "Step into river air and let the room reset a little.",
+		"description": "Cool off outside.",
 		"cost": 10,
 		"message": "Cold river air clears your head while the dock stays out of reach.",
 		"effect": {

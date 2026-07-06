@@ -10,7 +10,7 @@
 		"scene_asset_path": "res://assets/art/game_scenes/pull_tabs.png",
 		"environment_prop": "machine",
 		"intro": "A four-row pull-tab dispenser sits near the counter.",
-		"description": "Finite bar pull-tab deals with sealed ticket windows.",
+		"description": "Buy finite sealed tickets.",
 		"pull_tab_deals": [
 			{
 				"id": "cherry_bells",
@@ -151,7 +151,7 @@
 		"scene_asset_path": "res://assets/art/game_scenes/slot.png",
 		"environment_prop": "machine",
 		"intro": "The reels hum, waiting for your bet.",
-		"description": "Full-simulation slots with two bonus families.",
+		"description": "Spin reels; chase features.",
 		"slot_generation": {
 			"behavior_combo_count": 72,
 			"visual_machine_count": 360,
@@ -468,7 +468,7 @@
 		"scene_asset_path": "res://assets/art/game_scenes/bar_dice.png",
 		"environment_prop": "dice_table",
 		"intro": "A leather dice cup slaps down on the bar.",
-		"description": "Ship, Captain, Crew: lock 6-5-4 and win the cargo pot.",
+		"description": "Lock 6-5-4 cargo.",
 		"legal_actions": [
 			{"id": "roll", "label": "Roll", "summary": "Ante into the bar pot, shake up to three times, lock 6-5-4, and beat the table's cargo.", "win_chance": 42, "payout_mult": 3}
 		],
@@ -488,7 +488,7 @@
 		"scene_asset_path": "res://assets/art/game_scenes/blackjack.png",
 		"environment_prop": "card_table",
 		"intro": "The dealer taps the felt and waits for your bet.",
-		"description": "Shoe blackjack with splits, doubles, side bets, and heat.",
+		"description": "Beat dealer to 21.",
 		"legal_actions": [
 			{"id": "play_basic", "label": "Play Hand", "summary": "Hit, stand, split, or double on a blackjack table; naturals pay 3:2", "win_chance": 49, "payout_mult": 2}
 		],
@@ -508,7 +508,7 @@
 		"scene_asset_path": "res://assets/art/game_scenes/baccarat.png",
 		"environment_prop": "baccarat_table",
 		"intro": "The croupier waits with the baccarat shoe.",
-		"description": "Mini-baccarat with shoe rules, pair bets, and commission.",
+		"description": "Bet banker, player, tie.",
 		"legal_actions": [
 			{"id": "deal_baccarat", "label": "Deal", "summary": "Place Player, Banker, Tie, or pair chips before the croupier deals from the shoe.", "win_chance": 0, "payout_mult": 0}
 		],
@@ -528,7 +528,7 @@
 		"scene_asset_path": "res://assets/art/game_scenes/roulette.png",
 		"environment_prop": "roulette_table",
 		"intro": "The croupier spins the wheel and waits for chips on the felt.",
-		"description": "Full roulette with inside/outside bets and wheel physics.",
+		"description": "Place bets, spin wheel.",
 		"legal_actions": [
 			{"id": "spin_roulette", "label": "Spin", "summary": "Place roulette chips across the layout, then spin the wheel.", "win_chance": 0, "payout_mult": 0}
 		],
@@ -548,7 +548,7 @@
 		"scene_asset_path": "res://assets/art/game_scenes/video_poker.png",
 		"environment_prop": "video_poker_machine",
 		"intro": "A video poker screen glows in candy static.",
-		"description": "Multi-game video poker: bet, hold, draw, double up.",
+		"description": "Hold, draw, double up.",
 		"legal_actions": [
 			{"id": "draw", "label": "Draw", "summary": "Hold cards, draw the rest, pay on Jacks or better", "win_chance": 31, "payout_mult": 3}
 		],

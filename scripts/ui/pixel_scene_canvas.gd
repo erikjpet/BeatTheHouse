@@ -452,6 +452,12 @@ func _draw() -> void:
 				_draw_back_alley()
 			"motel":
 				_draw_motel()
+			"motel_room":
+				_draw_motel_room()
+			"apartment":
+				_draw_apartment()
+			"house":
+				_draw_house()
 			"bar":
 				_draw_bar()
 			"jazz_club":
@@ -592,6 +598,11 @@ func _draw_motel() -> void:
 	draw_rect(Rect2(586, 44, 26, 192), Color("#080812"))
 	for x in range(326, 572, 18):
 		draw_rect(Rect2(x, 50, 8, 178), Color("#10101c"))
+	draw_rect(Rect2(260, 84, 86, 126), Color("#10131f"))
+	draw_rect(Rect2(274, 98, 58, 112), Color("#1d2840"))
+	draw_rect(Rect2(282, 112, 42, 72), Color("#111827"))
+	draw_rect(Rect2(324, 142, 6, 6), C_AMBER)
+	draw_line(Vector2(268, 90), Vector2(338, 72), C_PINK.darkened(0.25), 2)
 	draw_rect(Rect2(96, 224, 452, 72), Color("#302049"))
 	for x in range(116, 520, 36):
 		draw_rect(Rect2(x, 240 + int(sin(float(x)) * 4.0), 22, 12), C_PINK_2.darkened(0.2))
@@ -606,6 +617,74 @@ func _draw_motel() -> void:
 	draw_rect(Rect2(742, 58, 54, 146), Color("#13283a"))
 	for y in range(78, 172, 22):
 		draw_rect(Rect2(752, y, 34, 12), _cycle_color(y))
+	_floor_reflections()
+
+
+func _draw_motel_room() -> void:
+	draw_rect(Rect2(0, 0, 900, 246), Color("#151024"))
+	draw_rect(Rect2(52, 54, 260, 168), Color("#211536"))
+	draw_rect(Rect2(72, 74, 220, 120), Color("#0a0a13"))
+	_neon_text("NO VACANCY", Vector2(92, 120), 25, C_PINK)
+	draw_rect(Rect2(352, 114, 286, 104), Color("#38264a"))
+	draw_rect(Rect2(372, 130, 242, 34), Color("#55315e"))
+	for x in range(390, 602, 34):
+		draw_rect(Rect2(x, 154 + int(sin(flicker * 1.2 + x) * 2.0), 20, 12), C_PINK_2.darkened(0.25))
+	draw_rect(Rect2(650, 84, 116, 148), Color("#171a28"))
+	draw_rect(Rect2(668, 104, 78, 58), Color("#202b3e"))
+	_draw_scan_bands(670, 744, 108, 158, C_SOFT, 0.12, 5.0)
+	draw_rect(Rect2(744, 188, 82, 46), Color("#30241e"))
+	draw_rect(Rect2(760, 174, 50, 18), Color("#4d3424"))
+	draw_rect(Rect2(204, 236, 514, 58), Color("#241632"))
+	_floor_reflections()
+
+
+func _draw_apartment() -> void:
+	draw_rect(Rect2(0, 0, 900, 246), Color("#111827"))
+	draw_rect(Rect2(56, 48, 210, 154), Color("#16263a"))
+	draw_rect(Rect2(76, 70, 170, 92), Color("#071727"))
+	for x in range(86, 236, 30):
+		draw_rect(Rect2(x, 82, 14, 70), Color(C_CYAN.r, C_CYAN.g, C_CYAN.b, 0.16 + abs(sin(flicker * 2.0 + x)) * 0.12))
+	draw_rect(Rect2(312, 132, 238, 82), Color("#2a1835"))
+	draw_rect(Rect2(330, 110, 104, 38), Color("#362045"))
+	draw_rect(Rect2(462, 112, 74, 42), Color("#1e2438"))
+	draw_rect(Rect2(604, 76, 176, 150), Color("#1b1322"))
+	draw_rect(Rect2(624, 96, 136, 18), C_AMBER.darkened(0.2))
+	for y in [124, 152, 180]:
+		draw_rect(Rect2(628, y, 126, 7), Color("#392448"))
+		for x in range(638, 744, 34):
+			draw_rect(Rect2(x, y - 19, 18, 16), _cycle_color(x + y))
+	draw_rect(Rect2(132, 246, 606, 58), Color("#171221"))
+	_floor_reflections()
+
+
+func _draw_house() -> void:
+	draw_rect(Rect2(0, 0, 900, 246), Color("#10131d"))
+	draw_rect(Rect2(42, 46, 490, 190), Color("#1d1730"))
+	draw_rect(Rect2(554, 46, 298, 190), Color("#171b25"))
+	draw_line(Vector2(536, 48), Vector2(536, 236), Color("#332744"), 3)
+	draw_rect(Rect2(76, 72, 132, 94), Color("#08101b"))
+	draw_rect(Rect2(92, 88, 100, 52), Color("#162f43"))
+	for x in range(104, 184, 18):
+		draw_rect(Rect2(x, 92, 8, 44), Color(C_CYAN.r, C_CYAN.g, C_CYAN.b, 0.10 + abs(sin(flicker * 1.7 + x)) * 0.10))
+	draw_rect(Rect2(250, 82, 170, 78), Color("#131722"))
+	draw_rect(Rect2(264, 96, 142, 48), Color("#06131e"))
+	draw_rect(Rect2(450, 102, 46, 74), Color("#2e1720"))
+	draw_rect(Rect2(122, 174, 244, 50), Color("#382333"))
+	draw_rect(Rect2(146, 150, 184, 42), Color("#4a2940"))
+	draw_rect(Rect2(170, 134, 62, 28), Color("#352037"))
+	draw_rect(Rect2(354, 184, 108, 38), Color("#342015"))
+	draw_rect(Rect2(370, 166, 76, 22), Color("#50311f"))
+	draw_rect(Rect2(576, 70, 248, 54), Color("#242b32"))
+	draw_rect(Rect2(590, 84, 54, 26), Color("#334653"))
+	draw_rect(Rect2(660, 84, 54, 26), Color("#334653"))
+	draw_rect(Rect2(730, 84, 70, 26), Color("#3d3030"))
+	draw_rect(Rect2(616, 150, 150, 60), Color("#37261c"))
+	draw_rect(Rect2(642, 132, 96, 28), Color("#503520"))
+	for x in [636, 704]:
+		draw_rect(Rect2(x, 204, 14, 34), Color("#21140f"))
+	for x in range(594, 796, 42):
+		draw_rect(Rect2(x, 60 + int(abs(sin(flicker + x)) * 3.0), 16, 8), _cycle_color(x).darkened(0.15))
+	draw_rect(Rect2(218, 234, 610, 62), Color("#191421"))
 	_floor_reflections()
 
 
@@ -898,6 +977,18 @@ func _draw_scene_life() -> void:
 			draw_rect(Rect2(82, 118, 150, 8), Color(C_PINK.r, C_PINK.g, C_PINK.b, 0.22 + abs(sin(flicker * 5.0)) * 0.18))
 			_draw_scan_bands(680, 790, 126, 188, C_SOFT, 0.16, 8.0)
 			_draw_sparkles(SCENE_SPARKLES_MOTEL, C_CYAN, 0.16)
+		"motel_room":
+			_draw_sign_pulse(Rect2(72, 74, 220, 120), C_PINK, 0.14, 4.8)
+			_draw_scan_bands(670, 744, 108, 158, C_SOFT, 0.14, 6.0)
+			draw_rect(Rect2(372, 130, 242, 6), Color(C_PINK.r, C_PINK.g, C_PINK.b, 0.18 + abs(sin(flicker * 3.0)) * 0.15))
+		"apartment":
+			_draw_sign_pulse(Rect2(76, 70, 170, 92), C_CYAN, 0.09, 3.2)
+			_draw_smoke_bands(324, 546, 108, C_CYAN, 0.022)
+			draw_rect(Rect2(624, 96, 136, 8), Color(C_AMBER.r, C_AMBER.g, C_AMBER.b, 0.18 + abs(sin(flicker * 2.4)) * 0.12))
+		"house":
+			_draw_sign_pulse(Rect2(648, 88, 136, 110), C_YELLOW, 0.08, 2.8)
+			_draw_smoke_bands(342, 536, 112, C_AMBER, 0.024)
+			draw_rect(Rect2(350, 116, 188, 7), Color(C_PINK.r, C_PINK.g, C_PINK.b, 0.12 + abs(sin(flicker * 2.1)) * 0.10))
 		"bar":
 			_draw_sign_pulse(Rect2(616, 52, 122, 40), C_PINK, 0.22, 4.0)
 			_draw_sign_pulse(Rect2(596, 102, 172, 34), C_CYAN, 0.17, 5.4)
@@ -1549,6 +1640,14 @@ func _apply_draw_hints(object_data: Dictionary, object_type: String, index: int)
 			object_data["surface"] = "counter_case"
 		"lender":
 			object_data["surface"] = "wire_cage"
+		"home_tenure":
+			object_data["surface"] = "counter"
+			if str(object_data.get("prop", "")).strip_edges().is_empty():
+				object_data["prop"] = "paper_note"
+		"home_storage":
+			object_data["surface"] = "floor"
+		"home_container":
+			object_data["surface"] = "floor"
 		"save", "load":
 			object_data["surface"] = "counter"
 		_:
@@ -1754,6 +1853,12 @@ func _player_facing_object_type(object_type: String) -> String:
 			return "Lender"
 		"prestige":
 			return "Goal"
+		"home_tenure":
+			return "Home"
+		"home_storage":
+			return "Storage"
+		"home_container":
+			return "Container"
 		_:
 			return "Info"
 
@@ -2578,6 +2683,10 @@ func _color_for_object_type(object_type: String) -> Color:
 			return C_ORANGE
 		"item", "drink", "service", "shopkeeper", "lender":
 			return C_YELLOW
+		"home_tenure":
+			return C_AMBER
+		"home_storage", "home_container":
+			return C_TEAL
 		"save", "load":
 			return C_PURPLE_2
 		_:

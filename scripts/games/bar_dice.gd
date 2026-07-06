@@ -215,7 +215,7 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 	var showing_result := not rolled and not last_result.is_empty()
 	var phase := "select" if rolled else ("settled" if showing_result else "bet")
 	var active_stake := _active_stake_from_context(0, state, ui, run_state, environment)
-	var patrons := _patrons_for_surface(state, last_result, active_stake)
+	var patrons := GameModule.patrons_with_talk_focus(_patrons_for_surface(state, last_result, active_stake), ui_state.get("focused_talk_speaker", {}))
 	var participants := _participant_count(state)
 	var working_pot := _working_pot(active_stake, state)
 	var rake := _rake_for_pot(working_pot, state)
@@ -288,7 +288,7 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 		"surface_embeds_outcomes": true,
 		"surface_suppresses_game_result_burst": true,
 		"surface_animates_idle": surface_motion_active,
-		"surface_ambient_overlay": "" if surface_motion_active else "table_idle",
+		"surface_ambient_overlay": "table_idle",
 		"surface_realtime_state_refresh": surface_motion_active,
 		"phase": phase,
 		"table_key": str(state.get("table_key", "")),
@@ -412,20 +412,32 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 	})
 
 
-func draw_surface(surface, surface_state: Dictionary, _render_context: Dictionary = {}) -> bool:
+func draw_surface(surface, surface_state: Dictionary, render_context: Dictionary = {}) -> bool:
 	if str(surface_state.get("surface_renderer", "")) != "dice_table":
 		return false
+	var overlay_owns_table_idle := bool(render_context.get("surface_dynamic_overlay_active", false)) and str(render_context.get("surface_dynamic_overlay_id", "")) == "table_idle"
 	surface.surface_begin_design_space(surface.surface_board_size())
 	_draw_bar_room(surface, surface_state)
 	_draw_bar_top(surface, surface_state)
-	TableVisualsScript.draw_table_patrons(surface, surface_state, BAR_PATRON_POSITIONS)
-	TableVisualsScript.draw_dealer_station(surface, surface_state, "calls cargo")
+	if not overlay_owns_table_idle:
+		TableVisualsScript.draw_table_patrons(surface, surface_state, BAR_PATRON_POSITIONS)
+		TableVisualsScript.draw_dealer_station(surface, surface_state, "calls cargo")
 	_draw_dice_rows(surface, surface_state)
 	_draw_explainer(surface, surface_state)
 	_draw_paytable(surface, surface_state)
-	_draw_round_timer(surface, surface_state)
+	if not overlay_owns_table_idle:
+		_draw_round_timer(surface, surface_state)
 	_draw_console(surface, surface_state)
 	surface.surface_end_design_space()
+	return true
+
+
+func draw_surface_dynamic_overlay(surface, surface_state: Dictionary, overlay_id: String) -> bool:
+	if overlay_id != "table_idle" or str(surface_state.get("surface_renderer", "")) != "dice_table":
+		return false
+	TableVisualsScript.draw_table_patrons(surface, surface_state, BAR_PATRON_POSITIONS)
+	TableVisualsScript.draw_dealer_station(surface, surface_state, "calls cargo")
+	_draw_round_timer(surface, surface_state)
 	return true
 
 

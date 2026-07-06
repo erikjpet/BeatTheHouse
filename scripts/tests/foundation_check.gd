@@ -16,6 +16,7 @@ const ArtContractsScript := preload("res://scripts/core/art_contracts.gd")
 const UserSettingsScript := preload("res://scripts/core/user_settings.gd")
 const ProceduralMusicPlayerScript := preload("res://scripts/ui/procedural_music_player.gd")
 const SfxPlayerScript := preload("res://scripts/ui/sfx_player.gd")
+const WebAudioBridgeScript := preload("res://scripts/ui/web_audio_bridge.gd")
 const SlotGameScript := preload("res://scripts/games/slot.gd")
 const SlotMachineGeneratorScript := preload("res://scripts/games/slots/slot_machine_generator.gd")
 const SlotMachineStateScript := preload("res://scripts/games/slots/slot_machine_state.gd")
@@ -393,6 +394,7 @@ func _foundation_run_system_suite(content_library: ContentLibrary, fixture_libra
 	_foundation_run_check(report, failures, "item_build_interaction_foundation", Callable(self, "_check_item_build_interaction_foundation"), [content_library])
 	_foundation_run_check(report, failures, "event_module_foundation", Callable(self, "_check_event_module_foundation"), [content_library])
 	_foundation_run_check(report, failures, "event_system_state_foundation", Callable(self, "_check_event_system_state_foundation"), [content_library])
+	_foundation_run_check(report, failures, "talk_decision_system_foundation", Callable(self, "_check_talk_decision_system_foundation"), [content_library])
 	_foundation_run_check(report, failures, "t4_7_event_interaction_model", Callable(self, "_check_t4_7_event_interaction_model"), [content_library])
 	_foundation_run_check(report, failures, "t6_7_visibility_event_cadence", Callable(self, "_check_t6_7_visibility_event_cadence"), [content_library])
 	_foundation_run_check(report, failures, "save_service_foundation_round_trip", Callable(self, "_check_save_service_foundation_round_trip"), [content_library])
@@ -424,6 +426,7 @@ func _foundation_run_all_suite(content_library: ContentLibrary, fixture_library:
 	_foundation_run_check(report, failures, "locked_logic_rate_foundation", Callable(self, "_check_locked_logic_rate_foundation"), [content_library])
 	_foundation_run_check(report, failures, "fixture_contracts", Callable(self, "_check_contracts"), [fixture_library])
 	_foundation_run_check(report, failures, "ui_state_machine_input_fuzz_foundation", Callable(self, "_check_ui_state_machine_input_fuzz_foundation"), [content_library])
+	_foundation_run_check(report, failures, "talk_decision_system_foundation", Callable(self, "_check_talk_decision_system_foundation"), [content_library])
 
 
 func _foundation_run_check(report: Dictionary, failures: Array, check_id: String, callable: Callable, args: Array) -> void:
@@ -469,6 +472,7 @@ func _check_content(library: ContentLibrary, failures: Array) -> void:
 		failures.append("Expected at least eight starter items.")
 	if library.games.size() < 5:
 		failures.append("Expected at least five starter activities.")
+	_check_player_facing_description_copy(library, failures)
 	_check_content_art_presentation(library, failures)
 	_check_blackjack_item_content(library, failures)
 	_check_m2_pack_availability(library, failures)
@@ -487,9 +491,10 @@ func _check_content(library: ContentLibrary, failures: Array) -> void:
 	var generator: RunGenerator = RunGeneratorScript.new(library)
 	var first_environment: EnvironmentInstance = generator.next_environment(run_state)
 	_check_environment_instance_shape(first_environment, false, failures)
-	_check_start_shop_environment(first_environment, failures)
-	_check_offer_prices(first_environment.item_offers, library, failures)
-	_check_events(first_environment.event_ids, library, [first_environment.kind], failures)
+	_check_start_home_environment(run_state, first_environment, failures)
+	if first_environment.kind != "home":
+		_check_offer_prices(first_environment.item_offers, library, failures)
+		_check_events(first_environment.event_ids, library, [first_environment.kind], failures)
 	for game_id in first_environment.game_ids:
 		if library.game(game_id).is_empty():
 			failures.append("Generated environment references unknown activity: %s." % game_id)
@@ -504,6 +509,49 @@ func _check_content(library: ContentLibrary, failures: Array) -> void:
 func _check_s0_2_baseline_regression_fixtures(library: ContentLibrary, failures: Array) -> void:
 	_check_s0_2_tool_harness_contracts(failures)
 	_check_s0_2_kitty_lounge_mixed_hook_layout(library, failures)
+
+
+func _check_player_facing_description_copy(library: ContentLibrary, failures: Array) -> void:
+	_check_description_list("item", library.items, "description", 8, failures)
+	_check_description_list("game", library.games, "description", 8, failures)
+	_check_description_list("travel route", library.travel_routes, "description", 8, failures)
+	_check_description_list("service", library.services, "description", 8, failures)
+	_check_description_list("lender", library.lenders, "description", 8, failures)
+	for event_value in library.events:
+		if typeof(event_value) != TYPE_DICTIONARY:
+			continue
+		var event: Dictionary = event_value
+		var payload: Dictionary = event.get("payload", {}) if typeof(event.get("payload", {})) == TYPE_DICTIONARY else {}
+		_check_copy_word_limit("event %s summary" % str(event.get("id", "")), str(payload.get("summary", "")), 8, failures)
+		var start_summary := str(event.get("start_summary", "")).strip_edges()
+		if not start_summary.is_empty():
+			_check_copy_word_limit("event %s start_summary" % str(event.get("id", "")), start_summary, 10, failures)
+	for archetype_value in library.environment_archetypes:
+		if typeof(archetype_value) != TYPE_DICTIONARY:
+			continue
+		var archetype: Dictionary = archetype_value
+		var visual_context: Dictionary = archetype.get("visual_context", {}) if typeof(archetype.get("visual_context", {})) == TYPE_DICTIONARY else {}
+		_check_copy_word_limit("environment %s description" % str(archetype.get("id", "")), str(visual_context.get("description", "")), 8, failures)
+
+
+func _check_description_list(label: String, values: Array, field: String, max_words: int, failures: Array) -> void:
+	for value in values:
+		if typeof(value) != TYPE_DICTIONARY:
+			continue
+		var entry: Dictionary = value
+		_check_copy_word_limit("%s %s %s" % [label, str(entry.get("id", "")), field], str(entry.get(field, "")), max_words, failures)
+
+
+func _check_copy_word_limit(label: String, text: String, max_words: int, failures: Array) -> void:
+	var clean := text.strip_edges()
+	if clean.is_empty():
+		failures.append("%s should be brief but non-empty." % label)
+		return
+	var words := clean.split(" ", false)
+	if words.size() > max_words:
+		failures.append("%s should be %d words or fewer: %s" % [label, max_words, clean])
+	if clean.length() > 72:
+		failures.append("%s should fit compact description boxes: %s" % [label, clean])
 
 
 func _check_s0_2_tool_harness_contracts(failures: Array) -> void:
@@ -728,25 +776,48 @@ func _sa_2_line_mutates_peek_var(stripped_line: String, var_name: String) -> boo
 	return false
 
 
-func _check_start_shop_environment(environment: EnvironmentInstance, failures: Array) -> void:
+func _check_start_home_environment(run_state: RunState, environment: EnvironmentInstance, failures: Array) -> void:
 	if environment == null:
 		return
 	if environment.depth != 0:
 		failures.append("The first generated EnvironmentInstance should be depth 0.")
-	if environment.kind != "shop":
-		failures.append("The first generated EnvironmentInstance should be a shop so players can buy gear before gambling.")
+	if environment.kind != "home":
+		failures.append("The first generated EnvironmentInstance should be the selected home.")
 	if not environment.game_ids.is_empty():
-		failures.append("The first generated shop should not expose gambling games before travel.")
+		failures.append("The first generated home should not expose gambling games before travel.")
+	if not run_state.inventory.is_empty():
+		failures.append("The first generated home should leave starter items in the room instead of auto-adding inventory.")
 	if environment.item_offers.is_empty():
-		failures.append("The first generated shop should expose item offers before the first wager.")
+		failures.append("The first generated home should expose starter items as pickup objects.")
+	for offer_value in environment.item_offers:
+		if typeof(offer_value) != TYPE_DICTIONARY:
+			continue
+		var offer: Dictionary = offer_value
+		if int(offer.get("price", -1)) != 0 or not bool(offer.get("pickup", false)):
+			failures.append("Starter home item offers should be zero-cost pickup objects.")
+			break
 	var layout_rects_value: Variant = environment.layout.get("object_rects", {})
 	var layout_rects: Dictionary = {}
 	if typeof(layout_rects_value) == TYPE_DICTIONARY:
 		layout_rects = layout_rects_value
-	if not layout_rects.has("shopkeeper:merchant"):
-		failures.append("The first generated shop should expose a shopkeeper object.")
+	for offer_value in environment.item_offers:
+		if typeof(offer_value) != TYPE_DICTIONARY:
+			continue
+		var offer: Dictionary = offer_value
+		var item_id := str(offer.get("id", ""))
+		if not item_id.is_empty() and not layout_rects.has("item:%s" % item_id):
+			failures.append("The first generated home should place starter item %s in the room layout." % item_id)
+			break
+	if not layout_rects.has("home_tenure:status"):
+		failures.append("The first generated home should expose the tenure object.")
+	if not layout_rects.has("home_storage:place"):
+		failures.append("The first generated home should expose the storage placement object.")
 	if environment.next_archetypes.is_empty() and environment.travel_hooks.is_empty():
-		failures.append("The first generated shop should offer a route onward to gambling venues.")
+		failures.append("The first generated home should offer a route onward into the world.")
+	if not run_state.home_is_active():
+		failures.append("The first generated home should initialize RunState home_state.")
+	if run_state.clock_display_text(true) != "Day 1 8 AM":
+		failures.append("The first generated home should start at the fixed day 1, 8 AM clock.")
 
 
 func _check_environment_game_pool_distribution(library: ContentLibrary, failures: Array) -> void:
@@ -1106,11 +1177,8 @@ func _check_t4_4_item_pack(library: ContentLibrary, failures: Array) -> void:
 			if not _string_array(item.get("build_tags", [])).has(str(build_id)):
 				failures.append("T4.4 item %s does not declare build tag %s." % [item_id, str(build_id)])
 			var effect: Dictionary = item.get("effect", {}) if typeof(item.get("effect", {})) == TYPE_DICTIONARY else {}
-			if _string_array(effect.get("synergies", [])).is_empty() and str(item_id) != "pickled_olive_jar":
+			if _copy_array(effect.get("synergies", [])).is_empty():
 				failures.append("T4.4 item %s should declare a data-driven synergy." % item_id)
-			var description := str(item.get("description", ""))
-			if description.to_lower().find("pair") == -1:
-				failures.append("T4.4 item %s description should make its synergy discoverable." % item_id)
 	_check_t4_4_item_effect_key_consumption(library, failures)
 	_check_t4_4_item_shop_distribution(library, failures)
 	_check_t4_4_item_synergy_math(failures)
@@ -1594,12 +1662,14 @@ func _check_foundation_contract_smoke(library: ContentLibrary, failures: Array, 
 	var generator: RunGenerator = RunGeneratorScript.new(library)
 	var first_environment: EnvironmentInstance = generator.next_environment(run_state)
 	_check_environment_instance_shape(first_environment, false, failures)
-	_check_start_shop_environment(first_environment, failures)
+	_check_start_home_environment(run_state, first_environment, failures)
 	var second_environment: EnvironmentInstance = generator.next_environment(run_state, first_environment.next_archetypes[0] if not first_environment.next_archetypes.is_empty() else "")
 	_check_environment_instance_shape(second_environment, false, failures)
-	if second_environment.game_ids.is_empty():
-		failures.append("Second foundation EnvironmentInstance should expose at least one game after the shop start.")
-	else:
+	if second_environment.kind == "home":
+		failures.append("Second foundation EnvironmentInstance should leave home into the world.")
+	if second_environment.game_ids.is_empty() and second_environment.item_offers.is_empty() and second_environment.service_ids.is_empty() and second_environment.lender_hooks.is_empty() and second_environment.event_ids.is_empty() and second_environment.next_archetypes.is_empty():
+		failures.append("Second foundation EnvironmentInstance should expose world interactions after leaving home.")
+	if not second_environment.game_ids.is_empty():
 		_check_production_game_module_load(library, run_state, second_environment, failures)
 	_check_foundation_shell_no_game_specific_code(failures)
 	_check_selected_starter_game_port(library, failures)
@@ -3626,6 +3696,13 @@ func _check_slot_pinball_pending_animation_watchdog(game: GameModule, definition
 			GameModule.apply_result(run_state, result, rng)
 		if int(result.get("slot_bonus_award", 0)) < 37:
 			failures.append("Slot pinball watchdog did not preserve the pending feature award.")
+		if str(result.get("slot_bonus_family", "")) != "pinball":
+			failures.append("Slot pinball award result did not identify the pinball bonus family.")
+		if str(result.get("surface_audio_cue", "")) != "pinball_money_ding":
+			failures.append("Slot pinball award result did not request the money ding SFX cue.")
+		var cue_context: Dictionary = _slot_dict(result.get("surface_audio_context", {}))
+		if str(cue_context.get("action", "")) != "pinball_money_ding":
+			failures.append("Slot pinball award SFX cue did not include a stable action id.")
 	_assert_slot_bonus_base_state(game, run_state, environment, "Pinball pending-animation watchdog", failures)
 
 
@@ -4411,6 +4488,31 @@ func _check_slot_pinball_feature_visual_manifest(definition: Dictionary, failure
 	var live_manifest: Dictionary = renderer.render_signature(live_surface, definition, 300, "feature")
 	if int(live_manifest.get("pinball_physics_tick_budget", 99)) > 3:
 		failures.append("Slot pinball live feature used a fast-forward physics tick budget instead of realtime-sized ticks.")
+	var cue_machine: Dictionary = _slot_machine(definition, prelaunch_run, "pinball", "classic_3_reel", "standard", "plain")
+	var cue_active: Dictionary = pinball.open_feature(cue_machine, 10, prelaunch_run.create_rng("slot_pin_cue_open"), definition)
+	cue_active["launch_in_progress"] = true
+	cue_active["display_event_log"] = [{
+		"element_type": "bumper",
+		"element_id": "bumper_fixture",
+		"award": 5,
+		"time": 0.16,
+	}]
+	cue_machine["active_bonus"] = cue_active
+	cue_machine["slot_animation_id"] = "bonus:pinball_audio_fixture"
+	var cue_surface: Dictionary = presentation.surface_state(cue_machine, prelaunch_run, definition, {"surface_time_msec": 360})
+	var cue_audio: Dictionary = _slot_dict(cue_surface.get("surface_audio", {}))
+	var cue_sync: Dictionary = _slot_dict(cue_audio.get("state_sync", {}))
+	if str(cue_sync.get("method", "")) != "reel_machine_state":
+		failures.append("Slot pinball active feature surface did not sync feature audio cues.")
+	var cue_scene: Dictionary = _slot_dict(cue_surface.get("slot_feature_scene", {}))
+	var saw_money_ding := false
+	for cue_value in _slot_array(cue_scene.get("audio_cues", [])):
+		var cue: Dictionary = _slot_dict(cue_value)
+		if str(cue.get("cue_id", "")) == "pinball_money_ding":
+			saw_money_ding = true
+			break
+	if not saw_money_ding:
+		failures.append("Slot pinball awarded hit did not expose the money ding cue in feature audio.")
 	var control_machine: Dictionary = _slot_machine(definition, prelaunch_run, "pinball", "video_feature", "standard", "plain")
 	control_machine["active_bonus"] = pinball.open_feature(control_machine, 10, prelaunch_run.create_rng("slot_pin_control_open"), definition)
 	var start_step: Dictionary = pinball.step_bonus(control_machine, "slot_bonus_start_24", prelaunch_run.create_rng("slot_pin_control_start"), definition)
@@ -7751,7 +7853,7 @@ func _check_roulette_surface_contract(game: GameModule, failures: Array, library
 
 	var timer_table: Dictionary = table.duplicate(true)
 	timer_table["last_result"] = {}
-	timer_table["table_round_timer_started_msec"] = Time.get_ticks_msec() - GameModule.TABLE_ROUND_START_DELAY_MSEC - 100
+	timer_table["table_round_timer_started_msec"] = Time.get_ticks_msec() - RouletteGame.ROULETTE_ROUND_DELAY_MSEC - 100
 	var timer_environment := _surface_contract_environment()
 	timer_environment["game_ids"] = ["roulette"]
 	timer_environment["economic_profile"] = {"stake_floor": 1, "stake_ceiling": 200}
@@ -8726,6 +8828,11 @@ func _check_blackjack_surface_contract(game: GameModule, failures: Array) -> voi
 		failures.append("Blackjack confirmed Deal quick-settled instead of starting the visible card-deal animation.")
 	if (confirm_deal_click.get("ui_state", {}) as Dictionary).get("round_terminal", false):
 		failures.append("Blackjack confirmed Deal marked the hand terminal before any player action.")
+	var selected_deal_click := game.surface_action_command("blackjack_deal", 0, false, {"selected_action_id": "play_basic", "selected_action_kind": "legal"}, run_state, environment)
+	if bool(selected_deal_click.get("resolve", false)) or not str(selected_deal_click.get("action_id", "")).is_empty():
+		failures.append("Blackjack opening Deal resolved immediately when play_basic was already selected.")
+	if bool((selected_deal_click.get("ui_state", {}) as Dictionary).get("round_terminal", false)):
+		failures.append("Blackjack selected opening Deal marked the hand terminal before player action.")
 	var deal_click := game.surface_action_command("blackjack_deal", 0, false, {}, run_state, environment)
 	var deal_ui: Dictionary = deal_click.get("ui_state", {})
 	if (deal_ui.get("player_hands", []) as Array).is_empty():
@@ -8755,6 +8862,17 @@ func _check_blackjack_surface_contract(game: GameModule, failures: Array) -> voi
 				failures.append("Blackjack initial deal events were not staggered card by card.")
 				break
 			prior_delay = event_delay
+	var opening_deal_harness := SurfaceHarness.new()
+	opening_deal_harness.setup(dealt_surface)
+	opening_deal_harness.animation_active = true
+	opening_deal_harness.animation_elapsed = 0.05
+	if not bool(game.call("_card_waiting_for_deal_animation", opening_deal_harness, dealt_surface, "player", 0, 0)):
+		failures.append("Blackjack initial deal exposed the first player card before its animation delay.")
+	if not bool(game.call("_card_waiting_for_deal_animation", opening_deal_harness, dealt_surface, "dealer", 0, 0)):
+		failures.append("Blackjack initial deal exposed the dealer upcard before its animation delay.")
+	opening_deal_harness.animation_elapsed = 3.5
+	if bool(game.call("_card_waiting_for_deal_animation", opening_deal_harness, dealt_surface, "player", 0, 0)):
+		failures.append("Blackjack initial deal kept the first player card hidden after the animation window.")
 	var dealer_focus: Dictionary = dealt_surface.get("dealer_focus", {}) if typeof(dealt_surface.get("dealer_focus", {})) == TYPE_DICTIONARY else {}
 	if not dealer_focus.has("gaze_phase") or not dealer_focus.has("peek_danger") or not dealer_focus.has("scan_phase") or not dealer_focus.has("watching_player") or not dealer_focus.has("peek_window_open"):
 		failures.append("Blackjack dealer focus did not expose visual read timing fields.")
@@ -8766,6 +8884,18 @@ func _check_blackjack_surface_contract(game: GameModule, failures: Array) -> voi
 		failures.append("Blackjack dealt surface did not activate the card-deal animation channel.")
 	if bool(dealt_surface.get("surface_realtime_state_refresh", false)):
 		failures.append("Blackjack dealt surface should compute live table focus during draw without full snapshot rebuilds.")
+	var deal_overlay_harness := SurfaceHarness.new()
+	deal_overlay_harness.setup(dealt_surface)
+	deal_overlay_harness.animation_active = true
+	deal_overlay_harness.animation_elapsed = 0.55
+	game.draw_surface_dynamic_overlay(deal_overlay_harness, dealt_surface, "table_idle")
+	var overlay_drew_player_hand := false
+	for label_value in deal_overlay_harness.labels:
+		if str(label_value).begins_with("H1"):
+			overlay_drew_player_hand = true
+			break
+	if not overlay_drew_player_hand:
+		failures.append("Blackjack table idle overlay did not keep player cards/hands live during deal animation.")
 	var book_run_state: RunState = RunStateScript.new()
 	book_run_state.start_new("BLACKJACK-BASIC-STRATEGY-CARD")
 	book_run_state.add_item("basic_strategy_card")
@@ -8865,14 +8995,41 @@ func _check_blackjack_surface_contract(game: GameModule, failures: Array) -> voi
 	if not bool(settle_anim_result.get("ok", false)):
 		failures.append("Blackjack stand animation fixture did not resolve through the normal play_basic path.")
 	var settle_anim_surface := game.surface_state(settle_anim_run_state, settle_anim_environment, {})
-	if (settle_anim_surface.get("deal_animation_events", []) as Array).is_empty():
+	var settlement_deal_events: Array = settle_anim_surface.get("deal_animation_events", []) as Array
+	if settlement_deal_events.is_empty():
 		failures.append("Blackjack stand settlement did not leave dealer card animation events on the result surface.")
+	var dealer_hole_reveal_found := false
+	for settlement_event_value in settlement_deal_events:
+		if typeof(settlement_event_value) != TYPE_DICTIONARY:
+			continue
+		var settlement_event: Dictionary = settlement_event_value
+		if str(settlement_event.get("zone", "")) == "dealer" and int(settlement_event.get("card_index", -1)) == 1:
+			dealer_hole_reveal_found = true
+			break
+	if not dealer_hole_reveal_found:
+		failures.append("Blackjack settlement did not schedule a dealer hole-card reveal event.")
+	var settlement_reveal_harness := SurfaceHarness.new()
+	settlement_reveal_harness.setup(settle_anim_surface)
+	settlement_reveal_harness.animation_active = true
+	settlement_reveal_harness.animation_elapsed = 0.05
+	if not bool(game.call("_card_waiting_for_deal_animation", settlement_reveal_harness, settle_anim_surface, "dealer", 0, 1)):
+		failures.append("Blackjack settlement exposed the dealer hole card before the reveal animation.")
+	var settle_deal_started_msec := 0
+	var settle_payout_started_msec := 0
 	var settle_payout_channel_found := false
 	for channel_value in settle_anim_surface.get("surface_animation_channels", []):
-		if typeof(channel_value) == TYPE_DICTIONARY and str((channel_value as Dictionary).get("id", "")) == "blackjack_payout":
-			settle_payout_channel_found = not str((channel_value as Dictionary).get("active_id", "")).is_empty()
+		if typeof(channel_value) != TYPE_DICTIONARY:
+			continue
+		var settlement_channel: Dictionary = channel_value
+		if str(settlement_channel.get("id", "")) == "blackjack_deal":
+			settle_deal_started_msec = int(settlement_channel.get("started_msec", 0))
+		elif str(settlement_channel.get("id", "")) == "blackjack_payout":
+			settle_payout_channel_found = not str(settlement_channel.get("active_id", "")).is_empty()
+			settle_payout_started_msec = int(settlement_channel.get("started_msec", 0))
 	if not settle_payout_channel_found:
 		failures.append("Blackjack result surface did not activate the settlement payout animation channel.")
+	if settle_deal_started_msec > 0 and settle_payout_started_msec - settle_deal_started_msec < int(settle_anim_surface.get("deal_animation_duration_msec", 0)):
+		failures.append("Blackjack payout animation started before the dealer reveal/deal sequence completed.")
 	var sit_run_state: RunState = RunStateScript.new()
 	sit_run_state.start_new("BLACKJACK-SITOUT-CONTRACT")
 	sit_run_state.bankroll = 1000
@@ -8883,9 +9040,30 @@ func _check_blackjack_surface_contract(game: GameModule, failures: Array) -> voi
 	var sit_result := game.resolve_with_context("play_basic", 0, sit_run_state, sit_environment, sit_run_state.create_rng("blackjack_sitout_resolve"), {"blackjack_sit_out": true})
 	if not bool(sit_result.get("blackjack_sat_out", false)) or int(sit_result.get("total_wager", int(sit_result.get("stake", -1)))) != 0 or int(sit_result.get("bankroll_delta", 999)) != 0:
 		failures.append("Blackjack sit-out hand did not consume a hand with zero wager and zero bankroll movement.")
+	if not (sit_result.get("blackjack_player_hands", []) as Array).is_empty():
+		failures.append("Blackjack sit-out hand dealt cards to the player despite no wager.")
+	var sit_patron_hands: Array = sit_result.get("blackjack_patron_hands", []) as Array
+	if sit_patron_hands.is_empty():
+		failures.append("Blackjack sit-out hand did not deal hands to the table patrons.")
+	for sit_patron_value in sit_patron_hands:
+		if typeof(sit_patron_value) != TYPE_DICTIONARY:
+			continue
+		var sit_patron_hand: Dictionary = sit_patron_value
+		var sit_patron_cards: Array = sit_patron_hand.get("cards", []) if typeof(sit_patron_hand.get("cards", [])) == TYPE_ARRAY else []
+		if sit_patron_cards.size() < 2:
+			failures.append("Blackjack sit-out patron hand had fewer than two cards.")
+			break
+	var sit_dealer_cards: Array = sit_result.get("blackjack_dealer", []) if typeof(sit_result.get("blackjack_dealer", [])) == TYPE_ARRAY else []
+	if sit_dealer_cards.size() < 2:
+		failures.append("Blackjack sit-out hand did not deal the dealer cards.")
 	var sit_after_table: Dictionary = (sit_environment.get("game_states", {}) as Dictionary).get("blackjack", {})
 	if int(sit_after_table.get("hands_played", 0)) <= 0 or int(sit_after_table.get("shoe_remaining", generated_shoe.size())) >= generated_shoe.size():
 		failures.append("Blackjack sit-out hand did not advance table hand count and shoe state.")
+	var sit_last_result: Dictionary = sit_after_table.get("last_result", {}) if typeof(sit_after_table.get("last_result", {})) == TYPE_DICTIONARY else {}
+	if not (sit_last_result.get("player_hands", []) as Array).is_empty():
+		failures.append("Blackjack sit-out last-result payload leaked a player hand.")
+	if (sit_last_result.get("patron_hands", []) as Array).is_empty():
+		failures.append("Blackjack sit-out last-result payload did not retain patron hands.")
 	var timer_table: Dictionary = game.generate_environment_state(sit_run_state, sit_environment, sit_run_state.create_rng("blackjack_timer_table"))
 	timer_table["last_result"] = {}
 	timer_table["last_deal_started_msec"] = 0
@@ -9640,18 +9818,57 @@ func _check_blackjack_soft_17_matrix(game: GameModule, base_table: Dictionary, f
 
 
 func _check_blackjack_split_policy_matrix(game: GameModule, base_table: Dictionary, failures: Array) -> void:
-	var split_ace_table := _blackjack_rule_table(base_table, {"dealer_hits_soft_17": false, "double_after_split": true, "split_aces_one_card": true, "max_split_hands": 4, "late_surrender": true}, [
+	var live_split_ace_table := _blackjack_rule_table(base_table, {"dealer_hits_soft_17": false, "double_after_split": true, "split_aces_one_card": true, "max_split_hands": 4, "late_surrender": true}, [
 		{"rank": 14, "suit": 0}, {"rank": 5, "suit": 1}, {"rank": 14, "suit": 2}, {"rank": 6, "suit": 3},
-		{"rank": 13, "suit": 0}, {"rank": 9, "suit": 1}, {"rank": 7, "suit": 2}, {"rank": 8, "suit": 3}
+		{"rank": 14, "suit": 1}, {"rank": 6, "suit": 2}, {"rank": 9, "suit": 1}, {"rank": 8, "suit": 3}
 	])
-	var split_ace_fixture := _blackjack_rule_fixture(game, "BLACKJACK-RULE-SPLIT-ACES", split_ace_table, 5)
-	var split_ace_ui: Dictionary = split_ace_fixture.get("ui", {})
-	var split_ace := game.surface_action_command("blackjack_split", 0, false, split_ace_ui, split_ace_fixture.get("run_state", null), split_ace_fixture.get("environment", {}))
-	split_ace_ui = split_ace.get("ui_state", {})
-	var split_ace_surface := game.surface_state(split_ace_fixture.get("run_state", null), split_ace_fixture.get("environment", {}), split_ace_ui)
-	if bool(split_ace_surface.get("can_hit", true)) or bool(split_ace_surface.get("can_split", true)):
-		failures.append("Blackjack split aces were not locked to one card each.")
-	var split_ace_result := game.resolve_with_context("play_basic", 5, split_ace_fixture.get("run_state", null), split_ace_fixture.get("environment", {}), (split_ace_fixture.get("run_state", null) as RunState).create_rng("blackjack_rule_split_aces"), split_ace_ui)
+	var live_split_ace_fixture := _blackjack_rule_fixture(game, "BLACKJACK-RULE-SPLIT-ACES-LIVE", live_split_ace_table, 5)
+	var live_split_ace_run_state: RunState = live_split_ace_fixture.get("run_state", null)
+	var live_split_ace_environment: Dictionary = live_split_ace_fixture.get("environment", {})
+	var live_split_ace_ui: Dictionary = live_split_ace_fixture.get("ui", {})
+	var live_split_ace := game.surface_action_command("blackjack_split", 0, false, live_split_ace_ui, live_split_ace_run_state, live_split_ace_environment)
+	live_split_ace_ui = live_split_ace.get("ui_state", {})
+	var live_split_ace_hands: Array = live_split_ace_ui.get("player_hands", []) as Array
+	if live_split_ace_hands.size() != 2:
+		failures.append("Blackjack split aces did not create two live hands.")
+	else:
+		var live_first_hand: Dictionary = live_split_ace_hands[0]
+		var live_second_hand: Dictionary = live_split_ace_hands[1]
+		if bool(live_first_hand.get("stood", false)) or bool(live_second_hand.get("stood", false)):
+			failures.append("Blackjack auto-stood split aces below 21.")
+	var live_split_ace_surface := game.surface_state(live_split_ace_run_state, live_split_ace_environment, live_split_ace_ui)
+	if int(live_split_ace_surface.get("active_hand_index", -1)) != 0 or int(live_split_ace_surface.get("blackjack_total", 0)) != 12 or not bool(live_split_ace_surface.get("can_hit", false)) or not bool(live_split_ace_surface.get("can_stand", false)):
+		failures.append("Blackjack split ace 12 was not left as a playable active hand.")
+	var live_split_ace_stand := game.surface_action_command("blackjack_stand", 0, false, live_split_ace_ui, live_split_ace_run_state, live_split_ace_environment)
+	var live_second_ace_ui: Dictionary = live_split_ace_stand.get("ui_state", {})
+	var live_second_ace_surface := game.surface_state(live_split_ace_run_state, live_split_ace_environment, live_second_ace_ui)
+	if int(live_second_ace_surface.get("active_hand_index", -1)) != 1 or int(live_second_ace_surface.get("blackjack_total", 0)) != 17 or not bool(live_second_ace_surface.get("can_hit", false)) or not bool(live_second_ace_surface.get("can_stand", false)):
+		failures.append("Blackjack split ace 17 was not left as a playable active hand.")
+
+	var split_ace_21_table := _blackjack_rule_table(base_table, {"dealer_hits_soft_17": false, "double_after_split": true, "split_aces_one_card": true, "max_split_hands": 4, "late_surrender": true}, [
+		{"rank": 14, "suit": 0}, {"rank": 5, "suit": 1}, {"rank": 14, "suit": 2}, {"rank": 6, "suit": 3},
+		{"rank": 13, "suit": 0}, {"rank": 6, "suit": 1}, {"rank": 7, "suit": 2}, {"rank": 8, "suit": 3}
+	])
+	var split_ace_21_fixture := _blackjack_rule_fixture(game, "BLACKJACK-RULE-SPLIT-ACES-21", split_ace_21_table, 5)
+	var split_ace_21_run_state: RunState = split_ace_21_fixture.get("run_state", null)
+	var split_ace_21_environment: Dictionary = split_ace_21_fixture.get("environment", {})
+	var split_ace_21_ui: Dictionary = split_ace_21_fixture.get("ui", {})
+	var split_ace_21 := game.surface_action_command("blackjack_split", 0, false, split_ace_21_ui, split_ace_21_run_state, split_ace_21_environment)
+	split_ace_21_ui = split_ace_21.get("ui_state", {})
+	var split_ace_21_hands: Array = split_ace_21_ui.get("player_hands", []) as Array
+	if split_ace_21_hands.size() != 2:
+		failures.append("Blackjack split ace 21 fixture did not create two hands.")
+	else:
+		var split_ace_21_first: Dictionary = split_ace_21_hands[0]
+		var split_ace_21_second: Dictionary = split_ace_21_hands[1]
+		if not bool(split_ace_21_first.get("stood", false)) or str(split_ace_21_first.get("terminal_reason", "")) != "21":
+			failures.append("Blackjack split ace 21 did not auto-complete as the only automatic stand.")
+		if bool(split_ace_21_second.get("stood", false)):
+			failures.append("Blackjack auto-stood a split ace 17 while advancing past a split ace 21.")
+	var split_ace_21_surface := game.surface_state(split_ace_21_run_state, split_ace_21_environment, split_ace_21_ui)
+	if int(split_ace_21_surface.get("active_hand_index", -1)) != 1 or int(split_ace_21_surface.get("blackjack_total", 0)) != 17 or not bool(split_ace_21_surface.get("can_hit", false)) or not bool(split_ace_21_surface.get("can_stand", false)):
+		failures.append("Blackjack split ace 21 did not advance to the next playable split hand.")
+	var split_ace_result := game.resolve_with_context("play_basic", 5, split_ace_21_run_state, split_ace_21_environment, split_ace_21_run_state.create_rng("blackjack_rule_split_aces"), split_ace_21_ui)
 	for hand_value in split_ace_result.get("blackjack_hand_results", []) as Array:
 		if typeof(hand_value) == TYPE_DICTIONARY and bool((hand_value as Dictionary).get("blackjack", false)):
 			failures.append("Blackjack treated a split-ace 21 as a natural blackjack.")
@@ -12297,6 +12514,13 @@ func _check_event_module_foundation(library: ContentLibrary, failures: Array) ->
 	var environment_b := generator_b.next_environment(run_b).to_dict()
 	var event_context := _first_triggerable_event_context(library, run_a, environment_a)
 	if event_context.is_empty():
+		for target_id in ["corner_store", "back_alley", "motel", "bar", "gas_station_casino", "small_underground_casino", "jazz_club"]:
+			environment_a = generator_a.next_environment(run_a, target_id).to_dict()
+			environment_b = generator_b.next_environment(run_b, target_id).to_dict()
+			event_context = _first_triggerable_event_context(library, run_a, environment_a)
+			if not event_context.is_empty():
+				break
+	if event_context.is_empty():
 		failures.append("No generated production event could trigger through EventModule.")
 		return
 	var event_id := str(event_context.get("event_id", ""))
@@ -12515,6 +12739,90 @@ func _check_t4_7_triggered_queue_round_trip(failures: Array) -> void:
 	active_loaded.complete_triggered_event_resolution("family_loan")
 	if active_loaded.triggered_event_resolution_active():
 		failures.append("T4.7 triggered event modal state did not clear after resolution.")
+
+
+func _check_talk_decision_system_foundation(library: ContentLibrary, failures: Array) -> void:
+	var run_state: RunState = RunStateScript.new()
+	run_state.start_new("TALK-QUEUE")
+	run_state.set_environment(_t4_3_fixture_environment("bar", "bar", 1, ["blackjack"], [], ["motel"]))
+	var patron := {
+		"name": "Mara",
+		"mood": "wary",
+		"behavior": "watching",
+		"silhouette": "coat",
+		"hair_color": "#442211",
+		"jacket_color": "#224466",
+		"tell": "glance",
+	}
+	var speaker := {
+		"role": "patron",
+		"name": str(patron.get("name", "")),
+		"mood": str(patron.get("mood", "")),
+		"behavior": str(patron.get("behavior", "")),
+		"silhouette": str(patron.get("silhouette", "")),
+		"bind": "table_patron",
+		"patron_index": 0,
+		"hair_color": str(patron.get("hair_color", "")),
+		"jacket_color": str(patron.get("jacket_color", "")),
+		"tell": str(patron.get("tell", "")),
+	}
+	var timing := {
+		"expires": true,
+		"duration_actions": 2,
+		"remaining_actions": 2,
+		"timeout_choice_id": "ignore",
+	}
+	var context := {
+		"trigger": "table_approach",
+		"type": "table_approach",
+		"game_id": "blackjack",
+		"hands_played": 1,
+		"environment_snapshot": run_state.current_environment.duplicate(true),
+	}
+	var event_id := "table_patron_whisper"
+	if library.event(event_id).is_empty():
+		failures.append("Talk decision fixture event is missing: %s." % event_id)
+		return
+	if not run_state.enqueue_triggered_event(event_id, "fixture", context, {"presentation": "talk", "speaker": speaker, "timing": timing}):
+		failures.append("Talk decision event could not be enqueued.")
+		return
+	if run_state.enqueue_triggered_event(event_id, "fixture", context, {"presentation": "talk"}):
+		failures.append("Talk decision queue accepted a duplicate event id.")
+	var talk_entry := run_state.next_pending_talk_event()
+	if str(talk_entry.get("event_id", "")) != event_id or str(talk_entry.get("presentation", "")) != "talk":
+		failures.append("Talk decision entry was not exposed through the talk subset.")
+	if not run_state.next_pending_triggered_event().is_empty():
+		failures.append("Talk decision entry leaked into the modal triggered-event accessor.")
+	if not run_state.enqueue_triggered_event("family_loan", "fixture", {"trigger": "manual"}):
+		failures.append("Modal fixture event could not be queued behind talk entry.")
+	var modal_entry := run_state.next_pending_triggered_event()
+	if str(modal_entry.get("event_id", "")) != "family_loan":
+		failures.append("Modal triggered-event accessor did not skip the pending talk entry.")
+	var loaded: RunState = RunStateScript.new()
+	loaded.from_dict(run_state.to_dict())
+	var loaded_talk := loaded.next_pending_talk_event()
+	var loaded_speaker: Dictionary = loaded_talk.get("speaker", {}) if typeof(loaded_talk.get("speaker", {})) == TYPE_DICTIONARY else {}
+	var loaded_timing: Dictionary = loaded_talk.get("timing", {}) if typeof(loaded_talk.get("timing", {})) == TYPE_DICTIONARY else {}
+	if str(loaded_speaker.get("name", "")) != "Mara" or int(loaded_timing.get("remaining_actions", 0)) != 2:
+		failures.append("Talk decision entry did not round-trip speaker/timing state.")
+	patron["name"] = "Changed Later"
+	if str(loaded_speaker.get("name", "")) != "Mara":
+		failures.append("Talk decision speaker snapshot followed later patron mutation.")
+	var highlighted := GameModule.patrons_with_talk_focus([patron], loaded_speaker)
+	if highlighted.is_empty() or typeof(highlighted[0]) != TYPE_DICTIONARY or not bool((highlighted[0] as Dictionary).get("watching_player", false)):
+		failures.append("Talk decision patron focus did not mark the snapshot patron as watching.")
+	if bool(patron.get("watching_player", false)):
+		failures.append("Talk decision patron focus mutated the source patron dictionary.")
+	var first_tick := loaded.advance_focused_talk_event_actions(1)
+	if not first_tick.is_empty():
+		failures.append("Talk decision timing expired before its action counter was exhausted.")
+	var second_tick := loaded.advance_focused_talk_event_actions(1)
+	var second_timing: Dictionary = second_tick.get("timing", {}) if typeof(second_tick.get("timing", {})) == TYPE_DICTIONARY else {}
+	if str(second_tick.get("event_id", "")) != event_id or str(second_timing.get("timeout_choice_id", "")) != "ignore" or int(second_timing.get("remaining_actions", -1)) != 0:
+		failures.append("Talk decision timing did not deterministically expose the timeout choice.")
+	loaded.complete_talk_event_resolution(event_id)
+	if not loaded.next_pending_talk_event().is_empty():
+		failures.append("Talk decision event did not clear after completion.")
 
 
 func _check_t4_7_chain_determinism(library: ContentLibrary, failures: Array) -> void:
@@ -13770,8 +14078,8 @@ func _check_jazz_club_foundation(library: ContentLibrary, failures: Array) -> vo
 		failures.append("Jazz Club visual context should use the jazz_club scene type.")
 	if str(jazz_visual_context.get("asset_path", "")).find("jazz_club.png") == -1:
 		failures.append("Jazz Club should reference its own environment art asset.")
-	if str(jazz_visual_context.get("description", "")).to_lower().find("pull-tab") == -1:
-		failures.append("Jazz Club visual description should include the pull-tab machine.")
+	if str(jazz_visual_context.get("description", "")).strip_edges().is_empty():
+		failures.append("Jazz Club visual description should be present.")
 	for service_id in ["house_drink", "jazz_sax_round", "jazz_cello_round", "jazz_drummer_round", "jazz_band_tip_jar", "listen_to_jazz"]:
 		if not _string_array(jazz_archetype.get("service_pool", [])).has(service_id):
 			failures.append("Jazz Club service pool is missing %s." % service_id)
@@ -14053,15 +14361,15 @@ func _check_jazz_club_layout(environment_data: Dictionary, failures: Array) -> v
 		if not object_rects.has(object_id):
 			failures.append("Jazz Club layout is missing object placement for %s." % object_id)
 	var expected_zones := {
-		"game:pull_tabs": Rect2(685, 250, 150, 105),
-		"game_hook:pull_tabs:ticket_redeemer": Rect2(765, 335, 130, 85),
-		"shopkeeper:merchant": Rect2(750, 110, 150, 105),
-		"service:house_drink": Rect2(560, 185, 140, 90),
+		"game:pull_tabs": Rect2(680, 175, 150, 105),
+		"game_hook:pull_tabs:ticket_redeemer": Rect2(550, 210, 130, 85),
+		"shopkeeper:merchant": Rect2(580, 80, 150, 105),
+		"service:house_drink": Rect2(760, 85, 140, 90),
 		"service:jazz_sax_round": Rect2(110, 220, 130, 90),
 		"service:jazz_cello_round": Rect2(255, 220, 130, 90),
 		"service:jazz_drummer_round": Rect2(405, 220, 130, 90),
-		"service:jazz_band_tip_jar": Rect2(380, 310, 140, 90),
-		"service:listen_to_jazz": Rect2(200, 310, 140, 90),
+		"service:jazz_band_tip_jar": Rect2(25, 305, 140, 90),
+		"service:listen_to_jazz": Rect2(440, 305, 140, 90),
 	}
 	for object_id in expected_zones.keys():
 		if not object_rects.has(object_id):
@@ -14594,11 +14902,66 @@ func _check_music_fx_foundation(library: ContentLibrary, failures: Array) -> voi
 	if enabled.size() == 6 and (bool(enabled[0]) or bool(enabled[1]) or bool(enabled[2]) or bool(enabled[3]) or not bool(enabled[4]) or not bool(enabled[5])):
 		failures.append("Music FX startup enabled state should bypass low-pass/chorus/distortion/reverb and keep compressor/limiter active.")
 
+	var web_contract: Dictionary = WebAudioBridgeScript.mix_contract_snapshot()
+	if not bool(web_contract.get("stream_bridge_enabled", false)) or not bool(web_contract.get("pcm_stream_bridge_default", false)):
+		failures.append("Web export should use the browser PCM stream bridge so music/SFX remain audible when native web playback is silent.")
+	if bool(web_contract.get("oscillator_fallback_enabled", true)) or bool(web_contract.get("script_has_oscillator_fallback", true)):
+		failures.append("Web audio bridge must not fall back to oscillator synth cues; those produced the browser hum regression.")
+	if int(web_contract.get("version", 0)) < 3 or not bool(web_contract.get("script_has_version_guard", false)):
+		failures.append("Web audio bridge did not expose a versioned replacement guard.")
+	if not bool(web_contract.get("script_has_highpass", false)) or float(web_contract.get("highpass_hz", 0.0)) < 30.0:
+		failures.append("Web audio bridge must high-pass browser output to prevent sub-bass overload.")
+	if not bool(web_contract.get("script_has_compressor", false)) or float(web_contract.get("compressor_ratio", 0.0)) < 1.5:
+		failures.append("Web audio bridge must keep a browser-side compressor before destination output.")
+	if not bool(web_contract.get("script_has_pcm_decoder", false)) or not bool(web_contract.get("script_has_music_stems", false)):
+		failures.append("Web audio bridge must decode PCM buffers and play the normal music stem set.")
+	if not bool(web_contract.get("script_has_loop_stop", false)):
+		failures.append("Web audio bridge must expose explicit loop stopping for reel/roulette browser loops.")
+	if int(web_contract.get("music_mix_min_interval_msec", 0)) < 100:
+		failures.append("Web audio bridge must throttle browser mix evals so music fades do not stall the web main thread.")
+	if not bool(web_contract.get("bridge_skips_silent_music_stems", false)):
+		failures.append("Web audio bridge must skip silent music stems before serializing browser PCM payloads.")
+	if not bool(web_contract.get("bridge_skips_duplicate_music_stems", false)):
+		failures.append("Web audio bridge must skip duplicate music stem payloads before crossing JavaScriptBridge.")
+	if not bool(web_contract.get("bridge_skips_duplicate_music_stops", false)):
+		failures.append("Web audio bridge must skip duplicate browser music stops before crossing JavaScriptBridge.")
+	if not bool(web_contract.get("script_limits_sfx_gain", false)) or float(web_contract.get("sfx_max_gain", 2.0)) > 1.25:
+		failures.append("Web audio bridge SFX gain staging can clip browser output.")
+	if float(web_contract.get("master_gain", 1.0)) * float(web_contract.get("output_gain", 1.0)) > 0.75:
+		failures.append("Web audio bridge master/output gain leaves too little headroom.")
+	var foundation_main_text := FileAccess.get_file_as_string("res://scripts/ui/foundation_main.gd")
+	if foundation_main_text.find("_suppress_web_music_for_game_surface") != -1 or foundation_main_text.find("OS.has_feature(\"web\") and current_screen == SCREEN_GAME") != -1:
+		failures.append("Web procedural music should keep playing inside game surfaces instead of being suppressed on entry.")
+
 	var player: ProceduralMusicPlayer = ProceduralMusicPlayerScript.new()
 	get_root().add_child(player)
 	var initial_snapshot: Dictionary = player.music_fx_snapshot({})
 	if bool(initial_snapshot.get("player_instantiated", true)):
 		failures.append("Headless procedural music player should not instantiate AudioStreamPlayer playback.")
+	var music_latency: Dictionary = player.music_generation_latency_snapshot_for_environment(first_environment, 20)
+	var web_bed_seconds := float(music_latency.get("web_bed_seconds", 0.0))
+	var web_bed_pcm_bytes := int(music_latency.get("web_bed_pcm_bytes", 0))
+	var web_bed_cap_bytes := int(music_latency.get("web_bed_bridge_cap_bytes", 0))
+	if web_bed_seconds < 30.0:
+		failures.append("Web procedural music bed should be long-form, not a short startup loop.")
+	if web_bed_pcm_bytes <= 0 or web_bed_cap_bytes <= 0 or web_bed_pcm_bytes > web_bed_cap_bytes:
+		failures.append("Web procedural music bed must fit the browser PCM bridge budget.")
+	if web_bed_seconds <= float(music_latency.get("instant_seconds", 0.0)) * 4.0:
+		failures.append("Web procedural music bed should be substantially longer than the desktop instant bed.")
+	var first_music_profile_value: Variant = first_environment.get("music_profile", {})
+	var first_music_profile: Dictionary = {}
+	if typeof(first_music_profile_value) == TYPE_DICTIONARY:
+		first_music_profile = first_music_profile_value as Dictionary
+	if not str(first_music_profile.get("authored_track_id", "")).is_empty():
+		if str(music_latency.get("web_mixdown_source", "")) != "authored":
+			failures.append("Web music bridge should downmix authored room music instead of replacing it with generated filler.")
+		if float(music_latency.get("web_mixdown_seconds", 0.0)) < 20.0:
+			failures.append("Web authored room music mixdown should preserve a long-form loop.")
+	var boss_music_latency: Dictionary = player.music_generation_latency_snapshot_for_environment(boss_environment, 20)
+	if str(music_latency.get("web_bed_track_id", "")) == str(boss_music_latency.get("web_bed_track_id", "")):
+		failures.append("Web procedural music bed track ids should change between environment archetypes.")
+	if str(music_latency.get("web_bed_cache_key", "")) == str(boss_music_latency.get("web_bed_cache_key", "")):
+		failures.append("Web procedural music bed cache keys should change between environment archetypes.")
 
 	var sober: Dictionary = _music_fx_target(player, {
 		"environment": first_environment,
@@ -16009,7 +16372,7 @@ func _check_environment_instance_shape(environment: EnvironmentInstance, require
 		failures.append("EnvironmentInstance is missing economy pressure data.")
 	if require_game and environment.game_ids.is_empty():
 		failures.append("First foundation EnvironmentInstance should expose at least one game option.")
-	if environment.event_ids.is_empty():
+	if environment.kind != "home" and environment.event_ids.is_empty():
 		failures.append("EnvironmentInstance should expose event hooks.")
 	if environment.travel_hooks.is_empty() and environment.next_archetypes.is_empty():
 		failures.append("EnvironmentInstance should expose travel hooks or next archetypes.")
@@ -17279,6 +17642,7 @@ func _check_save_load_world_event_lender_midstates(library: ContentLibrary, fail
 	var travel_lock_run: RunState = RunStateScript.new()
 	travel_lock_run.start_new("SB3-TRAVEL-LOCK", RunState.custom_challenge("sb3_travel_lock", "SB3-TRAVEL-LOCK", {"starting_bankroll": 3000}))
 	generator.next_environment(travel_lock_run)
+	generator.next_environment(travel_lock_run, "gas_station_casino")
 	travel_lock_run.current_environment["travel_locked_actions"] = 3
 	travel_lock_run.current_environment["travel_lock_remaining"] = 2
 	_save_load_checkpoint(library, travel_lock_run, "target/travel_lock_active", true, failures)

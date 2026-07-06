@@ -23,7 +23,7 @@
       "perspective": "first_person",
       "scene_type": "shop",
       "asset_path": "res://assets/art/environments/corner_store.png",
-      "description": "A fluorescent corner store with pink shadows, narrow shelves, and a clerk half-awake behind the register."
+      "description": "Cheap supplies and low attention."
     },
     "objective_hint": "Build enough cash to buy into the Grand Casino.",
     "object_fixtures": [
@@ -32,68 +32,68 @@
     "layout": {
       "shopkeeper_spots": [
         [
-          780,
-          99
+          470,
+          162
         ]
       ],
       "item_spots": [
         [
-          118,
-          159
+          83,
+          102
         ],
         [
-          286,
-          159
+          190,
+          102
         ],
         [
-          454,
-          159
+          297,
+          102
         ],
         [
-          202,
-          331
+          130,
+          176
         ],
         [
-          390,
-          331
+          240,
+          176
         ]
       ],
       "event_spots": [
         [
-          604,
-          96
+          592,
+          180
         ],
         [
-          80,
-          369
+          76,
+          346
         ],
         [
-          604,
-          210
+          449,
+          361
+        ],
+        [
+          260,
+          293
         ]
       ],
       "service_spots": [
         [
-          604,
-          331
+          350,
+          178
         ],
         [
-          445,
-          70
-        ],
-        [
-          286,
-          250
+          710,
+          180
         ]
       ],
       "lender_spots": [
         [
-          80,
-          250
+          640,
+          302
         ],
         [
-          450,
-          250
+          812,
+          370
         ]
       ],
       "travel_spots": [
@@ -102,14 +102,14 @@
           258
         ],
         [
-          780,
-          369
+          830,
+          96
         ]
       ],
       "prestige_spots": [
         [
-          68,
-          61
+          604,
+          60
         ]
       ]
     },
@@ -255,7 +255,7 @@
       "perspective": "first_person",
       "scene_type": "shop",
       "asset_path": "res://assets/art/environments/back_alley.png",
-      "description": "A rain-slick alley glowing magenta and cyan around a folding table of questionable tools."
+      "description": "Shady tools and high risk."
     },
     "objective_hint": "Build enough cash to buy into the Grand Casino.",
     "object_fixtures": [
@@ -264,76 +264,88 @@
     "layout": {
       "shopkeeper_spots": [
         [
-          780,
-          99
+          450,
+          90
         ]
       ],
       "item_spots": [
         [
-          118,
-          159
+          334,
+          184
         ],
         [
-          286,
-          159
+          444,
+          184
         ],
         [
-          454,
-          159
+          554,
+          184
         ],
         [
-          202,
-          331
+          388,
+          276
+        ],
+        [
+          500,
+          276
         ]
       ],
       "event_spots": [
         [
-          604,
-          96
+          304,
+          92
         ],
         [
-          80,
-          369
+          706,
+          92
         ],
         [
-          604,
-          210
+          220,
+          360
+        ],
+        [
+          508,
+          360
         ]
       ],
       "service_spots": [
         [
-          604,
-          331
+          674,
+          184
         ]
       ],
       "lender_spots": [
         [
-          80,
-          250
+          104,
+          258
         ],
         [
-          286,
-          250
+          790,
+          258
         ],
         [
-          450,
-          250
+          364,
+          360
         ]
       ],
       "travel_spots": [
         [
-          780,
-          258
+          820,
+          360
         ],
         [
-          780,
-          369
+          77,
+          360
+        ],
+        [
+          650,
+          360
         ]
       ],
       "prestige_spots": [
         [
-          68,
-          61
+          142,
+          70
         ]
       ]
     },
@@ -470,7 +482,7 @@
       "perspective": "first_person",
       "scene_type": "shop",
       "asset_path": "res://assets/art/environments/motel.png",
-      "description": "A cheap motel room with venetian shadows, a vibrating sign outside, and supplies spread on a bedspread."
+      "description": "Private recovery and regrouping."
     },
     "objective_hint": "Build enough cash to buy into the Grand Casino.",
     "object_fixtures": [
@@ -479,70 +491,92 @@
     "layout": {
       "shopkeeper_spots": [
         [
-          780,
-          99
+          736,
+          162
         ]
       ],
       "item_spots": [
         [
-          118,
-          159
+          150,
+          260
         ],
         [
-          286,
-          159
+          260,
+          260
         ],
         [
-          454,
-          159
+          370,
+          260
         ],
         [
-          202,
-          331
+          480,
+          260
+        ],
+        [
+          620,
+          92
         ]
       ],
       "event_spots": [
         [
-          604,
-          96
+          86,
+          170
         ],
         [
-          80,
-          369
+          430,
+          154
         ],
         [
-          604,
-          210
+          610,
+          270
+        ],
+        [
+          300,
+          350
+        ]
+      ],
+      "service_spots": [
+        [
+          764,
+          78
         ]
       ],
       "lender_spots": [
         [
-          80,
-          250
+          116,
+          350
         ],
         [
-          286,
-          250
+          500,
+          350
         ],
         [
-          450,
-          250
+          650,
+          350
         ]
       ],
       "travel_spots": [
         [
-          780,
-          258
+          820,
+          350
         ],
         [
-          780,
-          369
+          302,
+          132
+        ],
+        [
+          820,
+          260
+        ],
+        [
+          77,
+          350
         ]
       ],
       "prestige_spots": [
         [
-          68,
-          61
+          168,
+          82
         ]
       ]
     },
@@ -686,64 +720,84 @@
       "perspective": "first_person",
       "scene_type": "bar",
       "asset_path": "res://assets/art/environments/bar.png",
-      "description": "A low-stakes bar with pull-tab slips, a dice cup, and old machines glowing against teal walls."
+      "description": "Low-stakes games and talk."
     },
     "objective_hint": "Build enough cash to buy into the Grand Casino.",
     "layout": {
       "game_spots": [
         [
-          150,
-          192
+          136,
+          202
         ],
         [
-          330,
-          192
+          322,
+          202
         ],
         [
-          510,
-          192
+          812,
+          202
         ]
       ],
       "event_spots": [
         [
-          80,
-          369
+          84,
+          290
         ],
         [
-          650,
-          91
+          486,
+          92
         ],
         [
-          80,
-          81
+          500,
+          286
+        ],
+        [
+          234,
+          318
         ]
       ],
       "service_spots": [
         [
-          650,
-          281
+          624,
+          130
         ]
       ],
       "game_hook_spots": [
         [
-          510,
-          369
+          650,
+          256
         ]
       ],
       "travel_spots": [
         [
-          780,
-          258
+          820,
+          376
         ],
         [
-          780,
-          369
+          77,
+          376
+        ],
+        [
+          220,
+          376
+        ],
+        [
+          363,
+          376
+        ],
+        [
+          506,
+          376
+        ],
+        [
+          649,
+          376
         ]
       ],
       "prestige_spots": [
         [
           300,
-          61
+          70
         ]
       ]
     },
@@ -878,64 +932,88 @@
       "perspective": "first_person",
       "scene_type": "gas_station_casino",
       "asset_path": "res://assets/art/environments/gas_station_casino.png",
-      "description": "A gas station game corner with buzzing coolers, pull tabs, and video machines under violent neon."
+      "description": "Bright machines and cameras."
     },
     "objective_hint": "Build enough cash to buy into the Grand Casino.",
     "layout": {
       "game_spots": [
         [
-          150,
-          192
+          386,
+          160
         ],
         [
-          330,
-          192
+          482,
+          254
         ],
         [
-          510,
-          192
+          578,
+          160
         ]
       ],
       "event_spots": [
         [
-          80,
-          369
+          118,
+          328
         ],
         [
-          650,
-          91
+          244,
+          106
         ],
         [
-          80,
-          81
+          820,
+          92
+        ],
+        [
+          360,
+          346
         ]
       ],
       "service_spots": [
         [
-          650,
-          281
+          702,
+          190
         ]
       ],
       "game_hook_spots": [
         [
-          510,
-          369
+          650,
+          274
         ]
       ],
       "travel_spots": [
         [
-          780,
-          258
+          820,
+          348
         ],
         [
-          780,
-          369
+          77,
+          348
+        ],
+        [
+          306,
+          348
+        ],
+        [
+          500,
+          348
+        ],
+        [
+          820,
+          182
+        ],
+        [
+          77,
+          230
+        ],
+        [
+          650,
+          360
         ]
       ],
       "prestige_spots": [
         [
-          300,
-          61
+          450,
+          70
         ]
       ]
     },
@@ -1069,75 +1147,91 @@
       "perspective": "first_person",
       "scene_type": "underground",
       "asset_path": "res://assets/art/environments/small_underground_casino.png",
-      "description": "A cramped underground room where cyan light catches felt tables, dice, and guarded side glances."
+      "description": "Higher action, sharper eyes."
     },
     "objective_hint": "Win enough for the Grand Casino entry.",
     "layout": {
       "game_spots": [
         [
-          150,
-          192
+          798,
+          176
         ],
         [
-          330,
-          192
+          220,
+          202
         ],
         [
-          510,
-          192
+          568,
+          202
         ]
       ],
       "event_spots": [
         [
-          90,
-          369
+          84,
+          86
         ],
         [
-          650,
-          78
+          410,
+          96
         ],
         [
-          650,
-          248
+          220,
+          300
         ],
         [
-          90,
-          78
+          410,
+          300
+        ],
+        [
+          620,
+          300
         ]
       ],
       "service_spots": [
         [
-          330,
-          369
+          78,
+          220
         ]
       ],
       "lender_spots": [
         [
-          500,
-          369
+          790,
+          300
+        ],
+        [
+          84,
+          300
         ]
       ],
       "travel_spots": [
         [
-          805,
-          78
+          820,
+          86
         ],
         [
-          805,
-          218
+          820,
+          380
         ],
         [
-          805,
-          357
+          676,
+          82
         ],
         [
-          650,
-          382
+          520,
+          380
+        ],
+        [
+          250,
+          380
+        ],
+        [
+          84,
+          380
         ]
       ],
       "prestige_spots": [
         [
-          300,
+          540,
           61
         ]
       ]
@@ -1274,7 +1368,7 @@
       "perspective": "first_person",
       "scene_type": "jazz_club",
       "asset_path": "res://assets/art/environments/jazz_club.png",
-      "description": "A late-1960s jazz club: amber stage wash, cigarette haze, small round tables, a sax player, a cellist, a legendary drummer, and a pull-tab machine glowing at the bar."
+      "description": "Music, favors, and pull tabs."
     },
     "objective_hint": "Buy the trio rounds, stay for the set, and earn rare luck gear.",
     "object_fixtures": [
@@ -1284,82 +1378,98 @@
       "prioritize_service_spots": true,
       "game_spots": [
         [
-          750,
-          300
+          744,
+          220
         ]
       ],
       "shopkeeper_spots": [
         [
-          825,
-          160
+          642,
+          124
         ]
       ],
       "item_spots": [
         [
-          615,
-          335
+          244,
+          380
         ],
         [
-          120,
-          355
+          380,
+          380
+        ],
+        [
+          612,
+          380
         ]
       ],
       "event_spots": [
         [
-          80,
-          105
+          84,
+          112
+        ],
+        [
+          112,
+          338
         ]
       ],
       "service_spots": [
         [
-          620,
-          225
+          820,
+          126
         ],
         [
           170,
-          260
+          255
         ],
         [
-          320,
-          260
+          322,
+          258
         ],
         [
-          470,
-          260
+          466,
+          255
         ],
         [
-          445,
-          350
+          84,
+          342
         ],
         [
-          260,
-          350
+          500,
+          342
         ]
       ],
       "travel_spots": [
         [
-          520,
-          75
+          820,
+          340
         ],
         [
-          680,
-          75
+          500,
+          72
         ],
         [
-          840,
-          75
+          300,
+          72
+        ],
+        [
+          650,
+          380
+        ],
+        [
+          770,
+          380
         ]
       ],
       "game_hook_spots": [
         [
-          835,
-          382
+          610,
+          250
         ]
       ],
       "prestige_spots": [
         [
-          68,
-          61
+          300,
+          160
         ]
       ]
     },
@@ -1494,90 +1604,118 @@
       "perspective": "first_person",
       "scene_type": "kitty_cat_lounge",
       "asset_path": "res://assets/art/environments/jazz_club.png",
-      "description": "A velvet-rope lounge where stage lights, champagne trays, and a house wheel make heat management feel expensive."
+      "description": "Costly heat control."
     },
     "objective_hint": "Spend on the show to cool attention, then push toward the Grand Casino.",
     "layout": {
       "game_spots": [
         [
-          150,
-          204
+          704,
+          274
+        ],
+        [
+          130,
+          276
         ],
         [
           330,
-          204
-        ],
-        [
-          510,
-          204
+          250
         ]
       ],
       "event_spots": [
         [
-          88,
-          364
+          92,
+          100
         ],
         [
-          690,
-          88
+          520,
+          260
         ],
         [
-          690,
-          246
+          820,
+          72
+        ],
+        [
+          250,
+          112
         ]
       ],
       "service_spots": [
         [
-          172,
-          320
+          638,
+          160
         ],
         [
           330,
-          320
+          150
         ],
         [
-          510,
-          320
+          520,
+          150
         ]
       ],
       "lender_spots": [
         [
-          640,
-          350
+          520,
+          376
         ],
         [
-          560,
-          60
+          690,
+          376
         ]
       ],
       "game_hook_spots": [
         [
-          510,
-          366
+          820,
+          180
         ]
       ],
       "travel_spots": [
         [
-          780,
-          86
+          820,
+          376
         ],
         [
-          780,
-          198
+          77,
+          376
         ],
         [
-          780,
-          310
+          220,
+          376
         ],
         [
-          642,
-          78
+          363,
+          376
+        ],
+        [
+          420,
+          72
         ]
       ],
       "prestige_spots": [
         [
-          300,
-          61
+          190,
+          180
+        ]
+      ],
+      "item_spots": [
+        [
+          590,
+          72
+        ],
+        [
+          700,
+          72
+        ],
+        [
+          500,
+          176
+        ]
+      ],
+      "shopkeeper_spots": [
+        [
+          820,
+          180
         ]
       ]
     },
@@ -1735,82 +1873,114 @@
       "perspective": "first_person",
       "scene_type": "delta_queen",
       "asset_path": "res://assets/art/environments/small_underground_casino.png",
-      "description": "A legally gray riverboat casino where the dock falls away, the wheel turns, and leaving waits on the next landing."
+      "description": "Riverboat tables; dock timer."
     },
     "objective_hint": "Ride the mid-stakes boat long enough to afford a real Grand Casino climb.",
     "layout": {
       "game_spots": [
         [
-          138,
-          205
+          183,
+          190
         ],
         [
-          330,
-          205
+          466,
+          198
         ],
         [
-          522,
-          205
+          762,
+          194
         ]
       ],
       "event_spots": [
         [
           86,
-          360
+          86
         ],
         [
-          672,
-          88
+          500,
+          92
         ],
         [
-          672,
-          250
+          600,
+          210
+        ],
+        [
+          354,
+          350
         ]
       ],
       "service_spots": [
         [
-          200,
-          326
+          240,
+          292
         ],
         [
-          390,
-          326
+          466,
+          292
         ]
       ],
       "lender_spots": [
         [
-          574,
-          350
+          686,
+          376
+        ],
+        [
+          80,
+          290
         ]
       ],
       "game_hook_spots": [
         [
-          522,
-          366
+          762,
+          320
         ]
       ],
       "travel_spots": [
         [
-          780,
-          82
+          820,
+          322
         ],
         [
-          780,
-          194
+          77,
+          376
         ],
         [
-          780,
-          306
+          220,
+          376
         ],
         [
-          642,
-          78
+          363,
+          376
+        ],
+        [
+          506,
+          376
         ]
       ],
       "prestige_spots": [
         [
-          300,
-          61
+          260,
+          62
+        ]
+      ],
+      "item_spots": [
+        [
+          650,
+          92
+        ],
+        [
+          600,
+          300
+        ],
+        [
+          760,
+          92
+        ]
+      ],
+      "shopkeeper_spots": [
+        [
+          820,
+          90
         ]
       ]
     },
@@ -1971,7 +2141,7 @@
       "perspective": "first_person",
       "scene_type": "boss",
       "asset_path": "res://assets/art/environments/grand_casino.png",
-      "description": "A polished boss casino floor with velvet ropes, camera domes, high-limit tables, and a pit boss watching for cheating."
+      "description": "Boss floor under cameras."
     },
     "objective_hint": "Win $10 on the Grand Casino floor for a Players Card.",
     "demo_objective": {
@@ -1997,68 +2167,72 @@
     "layout": {
       "game_spots": [
         [
-          150,
-          200
+          273,
+          134
         ],
         [
-          330,
-          200
+          178,
+          230
         ],
         [
-          510,
-          200
+          587,
+          134
         ],
         [
-          690,
-          200
+          302,
+          326
         ],
         [
-          300,
-          286
+          622,
+          230
         ],
         [
-          600,
-          286
+          742,
+          326
         ]
       ],
       "event_spots": [
         [
-          92,
-          369
+          80,
+          126
         ],
         [
-          330,
-          369
+          770,
+          92
         ],
         [
-          568,
-          369
+          450,
+          380
         ],
         [
-          806,
-          369
+          600,
+          380
         ]
       ],
       "service_spots": [
         [
           450,
-          94
-        ]
-      ],
-      "travel_spots": [
-        [
-          780,
-          281
-        ],
-        [
-          780,
-          382
+          260
         ]
       ],
       "game_hook_spots": [
         [
-          650,
-          94
+          820,
+          220
+        ]
+      ],
+      "travel_spots": [
+        [
+          820,
+          228
+        ],
+        [
+          80,
+          380
+        ],
+        [
+          450,
+          86
         ]
       ]
     },
@@ -2178,6 +2352,535 @@
       "polished",
       "watched",
       "expensive"
+    ]
+  },
+  {
+    "id": "motel_room",
+    "kind": "home",
+    "is_start": false,
+    "is_home_start": true,
+    "parent_archetype": "motel",
+    "display_name": "Motel Room",
+    "next_archetypes": [
+      "motel"
+    ],
+    "tier": 1,
+    "name_prefixes": [
+      "Prepaid",
+      "Flickering"
+    ],
+    "name_nouns": [
+      "Motel Room"
+    ],
+    "visual_context": {
+      "perspective": "first_person",
+      "scene_type": "motel_room",
+      "description": "Home room and lobby door."
+    },
+    "home_profile": {
+      "starting_cash": [
+        60,
+        140
+      ],
+      "starting_items": 1,
+      "starting_item_pool": [
+        "creased_luck_card",
+        "instant_coffee",
+        "ledger_pencil",
+        "cashout_envelope",
+        "cheap_sunglasses",
+        "lucky_keychain",
+        "lucky_bar_napkin",
+        "roadside_map",
+        "payment_calendar",
+        "scratch_pad",
+        "side_bet_chart",
+        "card_counters_notes"
+      ],
+      "starting_containers": [
+        {
+          "item_id": "backpack",
+          "capacity": 5
+        }
+      ],
+      "tenure": {
+        "type": "stay",
+        "prepaid_days": 3,
+        "renewal_cost": 45,
+        "renewal_days": 1,
+        "expiry_message": "The prepaid motel room expires and housekeeping clears out anything you left."
+      }
+    },
+    "layout": {
+      "item_spots": [
+        [
+          520,
+          286
+        ]
+      ],
+      "home_tenure_spots": [
+        [
+          780,
+          166
+        ]
+      ],
+      "home_storage_spots": [
+        [
+          210,
+          340
+        ]
+      ],
+      "home_container_spots": [
+        [
+          356,
+          340
+        ],
+        [
+          512,
+          340
+        ]
+      ],
+      "travel_spots": [
+        [
+          812,
+          340
+        ]
+      ]
+    },
+    "security_profile": {
+      "strictness": "safe",
+      "visible_cues": [
+        "The room is private until the paid stay runs out."
+      ]
+    },
+    "music_profile": {
+      "theme": "cheap motel room",
+      "ambience": 0.45,
+      "mode": "minor",
+      "progression": [
+        0,
+        3,
+        5,
+        4
+      ],
+      "motif": [
+        0,
+        -999,
+        2,
+        -999,
+        3,
+        -999,
+        2,
+        -999
+      ],
+      "root_midi": 43,
+      "safety": 0.90,
+      "texture": "motel",
+      "texture_rate": 0.18,
+      "volume": 0.22
+    },
+    "economic_profile": {
+      "stake_floor": 0,
+      "stake_ceiling": 0,
+      "safehouse": true
+    },
+    "game_pool": [],
+    "game_count": [
+      0,
+      0
+    ],
+    "item_pool": [],
+    "item_count": [
+      0,
+      0
+    ],
+    "event_pool": [],
+    "event_scopes": [
+      "home"
+    ],
+    "event_count": [
+      0,
+      0
+    ],
+    "service_pool": [],
+    "lender_hooks": [],
+    "suspicion_cues": [
+      "Nobody is watching the room yet."
+    ],
+    "travel_hooks": [
+      "motel"
+    ],
+    "local_narrative_flags": {
+      "home": true,
+      "motel_room": true
+    },
+    "moods": [
+      "private",
+      "cheap",
+      "buzzing"
+    ]
+  },
+  {
+    "id": "apartment",
+    "kind": "home",
+    "is_start": false,
+    "is_home_start": true,
+    "display_name": "Apartment",
+    "next_archetypes": [
+      "corner_store",
+      "bar",
+      "gas_station_casino"
+    ],
+    "tier": 1,
+    "name_prefixes": [
+      "Walkup",
+      "Neon"
+    ],
+    "name_nouns": [
+      "Apartment"
+    ],
+    "visual_context": {
+      "perspective": "first_person",
+      "scene_type": "apartment",
+      "description": "Home storage and city access."
+    },
+    "home_profile": {
+      "starting_cash": [
+        120,
+        170
+      ],
+      "starting_items": 2,
+      "starting_item_pool": [
+        "creased_luck_card",
+        "instant_coffee",
+        "ledger_pencil",
+        "cashout_envelope",
+        "cheap_sunglasses",
+        "lucky_keychain",
+        "lucky_bar_napkin",
+        "roadside_map",
+        "payment_calendar",
+        "scratch_pad",
+        "side_bet_chart",
+        "card_counters_notes"
+      ],
+      "starting_containers": [
+        {
+          "item_id": "backpack",
+          "capacity": 5
+        }
+      ],
+      "tenure": {
+        "type": "rent",
+        "rent_amount": 90,
+        "first_due_in_days": 7,
+        "cycle_days": 7,
+        "grace_days": 3,
+        "eviction_message": "The landlord changes the lock and clears out anything you stored."
+      }
+    },
+    "layout": {
+      "item_spots": [
+        [
+          430,
+          250
+        ],
+        [
+          530,
+          250
+        ]
+      ],
+      "home_tenure_spots": [
+        [
+          770,
+          170
+        ]
+      ],
+      "home_storage_spots": [
+        [
+          190,
+          342
+        ]
+      ],
+      "home_container_spots": [
+        [
+          344,
+          342
+        ],
+        [
+          502,
+          342
+        ],
+        [
+          650,
+          342
+        ]
+      ],
+      "travel_spots": [
+        [
+          820,
+          342
+        ]
+      ]
+    },
+    "security_profile": {
+      "strictness": "safe",
+      "visible_cues": [
+        "The apartment is quiet until rent comes due."
+      ]
+    },
+    "music_profile": {
+      "theme": "walkup apartment",
+      "ambience": 0.42,
+      "mode": "minor",
+      "progression": [
+        0,
+        5,
+        3,
+        4
+      ],
+      "motif": [
+        0,
+        -999,
+        3,
+        -999,
+        5,
+        -999,
+        4,
+        -999
+      ],
+      "root_midi": 45,
+      "safety": 0.92,
+      "texture": "apartment",
+      "texture_rate": 0.16,
+      "volume": 0.22
+    },
+    "economic_profile": {
+      "stake_floor": 0,
+      "stake_ceiling": 0,
+      "safehouse": true
+    },
+    "game_pool": [],
+    "game_count": [
+      0,
+      0
+    ],
+    "item_pool": [],
+    "item_count": [
+      0,
+      0
+    ],
+    "event_pool": [],
+    "event_scopes": [
+      "home"
+    ],
+    "event_count": [
+      0,
+      0
+    ],
+    "service_pool": [],
+    "lender_hooks": [],
+    "suspicion_cues": [
+      "The hallway is quiet for now."
+    ],
+    "travel_hooks": [
+      "corner_store",
+      "bar",
+      "gas_station_casino"
+    ],
+    "local_narrative_flags": {
+      "home": true,
+      "apartment": true
+    },
+    "moods": [
+      "private",
+      "city",
+      "thin_walls"
+    ]
+  },
+  {
+    "id": "house",
+    "kind": "home",
+    "is_start": false,
+    "is_home_start": true,
+    "display_name": "House",
+    "next_archetypes": [
+      "corner_store",
+      "back_alley",
+      "bar"
+    ],
+    "tier": 1,
+    "name_prefixes": [
+      "Old",
+      "Quiet"
+    ],
+    "name_nouns": [
+      "House"
+    ],
+    "visual_context": {
+      "perspective": "first_person",
+      "scene_type": "house",
+      "description": "Living room, kitchen, trunk."
+    },
+    "home_profile": {
+      "starting_cash": [
+        20,
+        80
+      ],
+      "starting_items": 3,
+      "starting_item_pool": [
+        "creased_luck_card",
+        "instant_coffee",
+        "ledger_pencil",
+        "cashout_envelope",
+        "cheap_sunglasses",
+        "lucky_keychain",
+        "lucky_bar_napkin",
+        "roadside_map",
+        "payment_calendar",
+        "scratch_pad",
+        "side_bet_chart",
+        "card_counters_notes"
+      ],
+      "starting_containers": [
+        {
+          "item_id": "trunk",
+          "capacity": 10,
+          "contains_random_items": 1
+        }
+      ],
+      "tenure": {
+        "type": "rent",
+        "rent_amount": 150,
+        "first_due_in_days": 3,
+        "cycle_days": 30,
+        "grace_days": 3,
+        "payment_label": "mortgage",
+        "action_label": "Pay Mortgage",
+        "eviction_message": "The house is lost and the trunk is gone with it."
+      }
+    },
+    "layout": {
+      "item_spots": [
+        [
+          510,
+          240
+        ],
+        [
+          590,
+          240
+        ],
+        [
+          670,
+          240
+        ]
+      ],
+      "home_tenure_spots": [
+        [
+          820,
+          130
+        ]
+      ],
+      "home_storage_spots": [
+        [
+          660,
+          202
+        ]
+      ],
+      "home_container_spots": [
+        [
+          292,
+          344
+        ],
+        [
+          456,
+          344
+        ],
+        [
+          610,
+          344
+        ]
+      ],
+      "travel_spots": [
+        [
+          820,
+          344
+        ]
+      ]
+    },
+    "security_profile": {
+      "strictness": "safe",
+      "visible_cues": [
+        "The house stays quiet until the first payment hits."
+      ]
+    },
+    "music_profile": {
+      "theme": "old house",
+      "ambience": 0.38,
+      "mode": "minor",
+      "progression": [
+        0,
+        4,
+        5,
+        3
+      ],
+      "motif": [
+        0,
+        -999,
+        4,
+        -999,
+        5,
+        -999,
+        2,
+        -999
+      ],
+      "root_midi": 41,
+      "safety": 0.94,
+      "texture": "house",
+      "texture_rate": 0.14,
+      "volume": 0.21
+    },
+    "economic_profile": {
+      "stake_floor": 0,
+      "stake_ceiling": 0,
+      "safehouse": true
+    },
+    "game_pool": [],
+    "game_count": [
+      0,
+      0
+    ],
+    "item_pool": [],
+    "item_count": [
+      0,
+      0
+    ],
+    "event_pool": [],
+    "event_scopes": [
+      "home"
+    ],
+    "event_count": [
+      0,
+      0
+    ],
+    "service_pool": [],
+    "lender_hooks": [],
+    "suspicion_cues": [
+      "The street is quiet outside the curtains."
+    ],
+    "travel_hooks": [
+      "corner_store",
+      "back_alley",
+      "bar"
+    ],
+    "local_narrative_flags": {
+      "home": true,
+      "house": true
+    },
+    "moods": [
+      "private",
+      "old",
+      "thin_light"
     ]
   }
 ]

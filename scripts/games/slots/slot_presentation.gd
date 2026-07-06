@@ -276,6 +276,10 @@ func _pinball_active_surface_state(machine: Dictionary, active_bonus: Dictionary
 				"feature": "slot_feature",
 				"feature_animation_channel": "slot_feature",
 			},
+			"state_sync": {
+				"method": "reel_machine_state",
+				"feature_animation_channel": "slot_feature",
+			},
 		},
 		"machine_key": str(machine.get("machine_key", "")),
 		"slot_skin": skin,
@@ -771,7 +775,11 @@ func _pinball_feature_audio_cues(active_bonus: Dictionary, phase: String, alert_
 		var cue_id := _pinball_event_cue_id(event_type)
 		var award := maxi(0, int(event.get("award", 0)))
 		var volume := -4.0 + minf(5.0, float(award) * 0.08)
-		cues.append({"phase": "pinball_hit", "cue_id": cue_id, "time_sec": 0.54 + float(index) * 0.075, "marker": "pinball_hit_%d_%s" % [index, event_type], "pitch": 0.92 + float(index) * 0.025 + minf(0.18, float(award) * 0.004), "volume_db": volume})
+		var event_marker := "%s_%s_%s_%d" % [event_type, str(event.get("element_id", "")), str(event.get("time", index)), award]
+		var event_time := 0.54 + float(index) * 0.075
+		cues.append({"phase": "pinball_hit", "cue_id": cue_id, "time_sec": event_time, "marker": "pinball_hit_%s" % event_marker, "pitch": 0.92 + float(index) * 0.025 + minf(0.18, float(award) * 0.004), "volume_db": volume})
+		if award > 0:
+			cues.append({"phase": "pinball_money", "cue_id": "pinball_money_ding", "time_sec": event_time + 0.018, "marker": "pinball_money_%s" % event_marker, "pitch": 0.98 + minf(0.18, float(award) * 0.004), "volume_db": -4.5 + minf(2.5, float(award) * 0.04)})
 	return cues
 
 

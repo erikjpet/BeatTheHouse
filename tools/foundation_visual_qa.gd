@@ -166,9 +166,9 @@ func _run() -> void:
 	_cover("r100_result_hidden_when_empty")
 	_assert_m2_player_feedback_clarity("environment screen")
 	await _verify_demo_objective_visible()
-	_require(_start_room_has_shop_offers(), "The first generated room did not expose shop items before gambling.")
-	_cover("shop_first_start")
-	_require(await _try_travel_object_flow("shop-first start"), "Could not travel from the shop start to a gambling environment.")
+	_require(_start_room_has_home_affordances(), "The first generated room was not the selected home with tenure and storage affordances.")
+	_cover("home_first_start")
+	_require(await _try_travel_object_flow("home-first start"), "Could not travel from the home start into the world.")
 	_return_to_room_view()
 	await _settle()
 	await _verify_all_visible_game_objects_clickable()
@@ -469,8 +469,23 @@ func _try_travel_object_flow(context_label: String, objective: Dictionary = {}) 
 	_cover("travel_card")
 	_cover("travel_object_double_click")
 	await _settle()
-	_require(serialized_before_travel_activation == _serialized_run_text(), "Opening the world map should not mutate serialized RunState before route confirmation.")
 	var map_open_screen: Dictionary = app.call("current_screen_snapshot")
+	if not bool(map_open_screen.get("world_map_overlay_visible", false)) and serialized_before_travel_activation != _serialized_run_text():
+		_record_state("local_travel_result_screen", "Visible local door moved from a home room into its parent venue before world-map routing.")
+		_return_to_room_view()
+		await _settle()
+		canvas = app.get("environment_canvas") as Control
+		_require(canvas != null and canvas.visible and canvas.has_method("current_view_snapshot"), "Environment canvas was not restored after local door travel.")
+		if canvas == null:
+			return false
+		travel_object = _first_clickable_canvas_object_type_enabled(canvas, "travel", true)
+		_require(not travel_object.is_empty(), "Local door travel did not expose a world-map travel object.")
+		serialized_before_travel_activation = _serialized_run_text()
+		travel_button = await _double_click_canvas_object_data(canvas, travel_object, "travel")
+		_require(not travel_button.is_empty(), "Could not double-click the world-map travel objective after local door travel.")
+		await _settle()
+		map_open_screen = app.call("current_screen_snapshot")
+	_require(serialized_before_travel_activation == _serialized_run_text(), "Opening the world map should not mutate serialized RunState before route confirmation.")
 	_require(bool(map_open_screen.get("world_map_overlay_visible", false)), "Double-clicking Leave did not open the world map overlay.")
 	_cover("world_map_open")
 	var map_snapshot: Dictionary = map_open_screen.get("world_map", {}) if typeof(map_open_screen.get("world_map", {})) == TYPE_DICTIONARY else {}
@@ -1279,22 +1294,19 @@ func _verify_demo_objective_visible() -> void:
 		_cover("pit_boss_watch_visible")
 
 
-func _start_room_has_shop_offers() -> bool:
+func _start_room_has_home_affordances() -> bool:
 	var snapshot: Dictionary = app.call("current_environment_view_snapshot")
-	if str(snapshot.get("kind", "")) != "shop":
+	if str(snapshot.get("kind", "")) != "home":
 		return false
-	var offers_value: Variant = snapshot.get("item_offers", [])
-	var offers: Array = []
-	if typeof(offers_value) == TYPE_ARRAY:
-		offers = offers_value
-	if offers.is_empty():
+	var home_state_value: Variant = snapshot.get("home_state", {})
+	if typeof(home_state_value) != TYPE_DICTIONARY or not bool((home_state_value as Dictionary).get("active", false)):
 		return false
 	var spatial_snapshot: Dictionary = app.call("current_spatial_interaction_snapshot")
 	var objects_value: Variant = spatial_snapshot.get("objects", [])
 	var objects: Array = []
 	if typeof(objects_value) == TYPE_ARRAY:
 		objects = objects_value
-	return not _interactable_by_type(objects, "item").is_empty() and not _interactable_by_type(objects, "shopkeeper").is_empty()
+	return not _interactable_by_type(objects, "home_tenure").is_empty() and not _interactable_by_type(objects, "home_storage").is_empty()
 
 
 func _interactable_by_type(objects: Array, object_type: String) -> Dictionary:
@@ -2173,6 +2185,11 @@ func _return_to_room_view() -> void:
 		return
 	if not _click_button_contains("Back to room").is_empty():
 		return
+	if app.has_method("current_screen_snapshot"):
+		var screen_snapshot: Dictionary = app.call("current_screen_snapshot")
+		if str(screen_snapshot.get("screen", "")) != "ENVIRONMENT" and app.has_method("back_to_environment"):
+			app.call("back_to_environment")
+			return
 	var canvas := app.get("environment_canvas") as Control
 	if canvas == null or not canvas.visible or not canvas.has_method("current_view_snapshot"):
 		return
@@ -2700,13 +2717,9 @@ func _click_first_canvas_object_type(object_type: String) -> String:
 
 func _click_canvas_object_data(canvas: Control, object_data: Dictionary, object_type: String) -> String:
 	var object_id := str(object_data.get("id", ""))
-	var local_position := _canvas_local_center_for_object(canvas, object_data)
+	var local_position := _canvas_local_hit_position_for_object(canvas, object_data)
 	if local_position.x < 0.0 or local_position.y < 0.0 or local_position.x > canvas.size.x or local_position.y > canvas.size.y:
 		return ""
-	if canvas.has_method("object_id_at_local_position"):
-		var hit_id := str(canvas.call("object_id_at_local_position", local_position))
-		if hit_id != object_id:
-			return ""
 	var global_position := canvas.get_global_rect().position + local_position
 	_push_mouse_motion(global_position)
 	await _settle()
@@ -2748,13 +2761,9 @@ func _double_click_first_enabled_canvas_object_type(object_type: String) -> Stri
 
 func _double_click_canvas_object_data(canvas: Control, object_data: Dictionary, object_type: String) -> String:
 	var object_id := str(object_data.get("id", ""))
-	var local_position := _canvas_local_center_for_object(canvas, object_data)
+	var local_position := _canvas_local_hit_position_for_object(canvas, object_data)
 	if local_position.x < 0.0 or local_position.y < 0.0 or local_position.x > canvas.size.x or local_position.y > canvas.size.y:
 		return ""
-	if canvas.has_method("object_id_at_local_position"):
-		var hit_id := str(canvas.call("object_id_at_local_position", local_position))
-		if hit_id != object_id:
-			return ""
 	var global_position := canvas.get_global_rect().position + local_position
 	_push_mouse_motion(global_position)
 	await _settle()
@@ -2951,11 +2960,9 @@ func _canvas_object_center_hits(canvas: Control, object_data: Dictionary) -> boo
 	var object_id := str(object_data.get("id", ""))
 	if object_id.is_empty():
 		return false
-	var local_position := _canvas_local_center_for_object(canvas, object_data)
+	var local_position := _canvas_local_hit_position_for_object(canvas, object_data)
 	if local_position.x < 0.0 or local_position.y < 0.0 or local_position.x > canvas.size.x or local_position.y > canvas.size.y:
 		return false
-	if canvas.has_method("object_id_at_local_position"):
-		return str(canvas.call("object_id_at_local_position", local_position)) == object_id
 	return true
 
 
@@ -3009,9 +3016,49 @@ func _canvas_position_is_blank(canvas: Control, local_position: Vector2) -> bool
 
 
 func _canvas_local_center_for_object(canvas: Control, object_data: Dictionary) -> Vector2:
-	var snapshot: Dictionary = canvas.call("current_view_snapshot")
 	var position: Vector2 = object_data.get("position", Vector2(0.5, 0.5))
 	var board_point := Vector2(position.x * BOARD_SIZE.x, position.y * BOARD_SIZE.y)
+	return _canvas_local_position_for_board_point(canvas, board_point)
+
+
+func _canvas_local_hit_position_for_object(canvas: Control, object_data: Dictionary) -> Vector2:
+	var object_id := str(object_data.get("id", ""))
+	if object_id.is_empty():
+		return Vector2(-1.0, -1.0)
+	for board_point_value in _canvas_object_board_hit_candidates(object_data):
+		var board_point: Vector2 = board_point_value
+		var local_position := _canvas_local_position_for_board_point(canvas, board_point)
+		if local_position.x < 0.0 or local_position.y < 0.0 or local_position.x > canvas.size.x or local_position.y > canvas.size.y:
+			continue
+		if canvas.has_method("object_id_at_local_position") and str(canvas.call("object_id_at_local_position", local_position)) != object_id:
+			continue
+		return local_position
+	return Vector2(-1.0, -1.0)
+
+
+func _canvas_object_board_hit_candidates(object_data: Dictionary) -> Array:
+	var position: Vector2 = object_data.get("position", Vector2(0.5, 0.5))
+	var object_size: Vector2 = object_data.get("size", Vector2(128.0, 68.0))
+	var center := Vector2(position.x * BOARD_SIZE.x, position.y * BOARD_SIZE.y)
+	var rect := Rect2(center - object_size * 0.5, object_size).grow(-4.0)
+	if rect.size.x <= 0.0 or rect.size.y <= 0.0:
+		rect = Rect2(center - object_size * 0.5, object_size)
+	var inset := Vector2(minf(rect.size.x * 0.28, 24.0), minf(rect.size.y * 0.28, 18.0))
+	return [
+		center,
+		rect.position + inset,
+		Vector2(rect.end.x - inset.x, rect.position.y + inset.y),
+		Vector2(rect.position.x + inset.x, rect.end.y - inset.y),
+		rect.end - inset,
+		Vector2(center.x, rect.position.y + inset.y),
+		Vector2(center.x, rect.end.y - inset.y),
+		Vector2(rect.position.x + inset.x, center.y),
+		Vector2(rect.end.x - inset.x, center.y),
+	]
+
+
+func _canvas_local_position_for_board_point(canvas: Control, board_point: Vector2) -> Vector2:
+	var snapshot: Dictionary = canvas.call("current_view_snapshot")
 	var board_rect := _snapshot_rect(snapshot.get("board_rect", {}))
 	if board_rect.size.x > 0.0 and board_rect.size.y > 0.0:
 		var scale := board_rect.size.x / BOARD_SIZE.x

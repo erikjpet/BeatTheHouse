@@ -112,6 +112,8 @@ func _world_environment_data_for_node(run_state: RunState, map_data: Dictionary,
 	environment.game_states = _generated_game_states(run_state, environment.to_dict(), rng)
 	var environment_data := environment.to_dict()
 	environment_data["world_node_id"] = node_id
+	if str(archetype.get("kind", "")) == "home":
+		_apply_home_profile(run_state, environment_data, archetype, node_id, rng.fork("home_profile:%s" % node_id))
 	_apply_world_travel_targets(environment_data, run_state, map_data, node_id)
 	environment_data["layout"] = EnvironmentInstance.ensure_generated_layout(environment_data)
 	return environment_data
@@ -271,6 +273,114 @@ func _weighted_pick_archetype(archetypes: Array, rng: RngStream) -> Dictionary:
 	return rng.pick(weighted, {})
 
 
+func _apply_home_profile(run_state: RunState, environment_data: Dictionary, archetype: Dictionary, node_id: String, rng: RngStream) -> void:
+	var profile := _copy_dict(archetype.get("home_profile", {}))
+	if profile.is_empty():
+		return
+	run_state.initialize_home_from_profile(archetype, node_id, profile)
+	var cash_range := _int_range(profile.get("starting_cash", [RunState.DEFAULT_BANKROLL, RunState.DEFAULT_BANKROLL]), RunState.DEFAULT_BANKROLL, RunState.DEFAULT_BANKROLL)
+	var starting_cash := rng.randi_range(int(cash_range[0]), int(cash_range[1]))
+	run_state.change_bankroll(starting_cash - run_state.bankroll)
+	var starting_pool := _home_starting_item_pool(profile, run_state.challenge_config)
+	var starting_item_offers := _home_starting_item_offers(profile, starting_pool, rng)
+	var containers := _home_starting_containers(profile, starting_pool, rng)
+	environment_data["home_profile"] = profile.duplicate(true)
+	environment_data["item_offers"] = starting_item_offers
+	environment_data["home_containers"] = containers
+	environment_data["home_container_index"] = containers.size()
+	environment_data["home_lost"] = false
+
+
+func _home_starting_item_offers(profile: Dictionary, starting_pool: Array, rng: RngStream) -> Array:
+	var offers: Array = []
+	var starting_items_count := maxi(0, int(profile.get("starting_items", 0)))
+	for item_id_value in rng.pick_many(starting_pool, starting_items_count):
+		var item_id := str(item_id_value).strip_edges()
+		if item_id.is_empty():
+			continue
+		var definition: Dictionary = library.item(item_id) if library != null else {}
+		offers.append({
+			"id": item_id,
+			"display_name": str(definition.get("display_name", item_id.replace("_", " ").capitalize())),
+			"price": 0,
+			"pickup": true,
+			"source": "home_start",
+		})
+	return offers
+
+
+func _home_starting_item_pool(profile: Dictionary, challenge_config: Dictionary) -> Array:
+	var pool := _string_array(profile.get("starting_item_pool", []))
+	if pool.is_empty():
+		if library == null:
+			return pool
+		for item_value in library.items:
+			if typeof(item_value) != TYPE_DICTIONARY:
+				continue
+			var item: Dictionary = item_value
+			var item_id := str(item.get("id", "")).strip_edges()
+			if item_id.is_empty():
+				continue
+			var item_class := str(item.get("class", "")).strip_edges().to_lower()
+			if item_class == "container":
+				continue
+			pool.append(item_id)
+	if library != null:
+		pool = library.filter_item_ids_for_challenge(pool, challenge_config)
+	return pool
+
+
+func _home_starting_containers(profile: Dictionary, starting_pool: Array, rng: RngStream) -> Array:
+	var containers: Array = []
+	var index := 0
+	for container_value in _copy_array(profile.get("starting_containers", [])):
+		if typeof(container_value) != TYPE_DICTIONARY:
+			continue
+		var entry: Dictionary = container_value
+		var item_id := str(entry.get("item_id", entry.get("id", ""))).strip_edges()
+		if item_id.is_empty():
+			continue
+		index += 1
+		var definition: Dictionary = library.item(item_id) if library != null else {}
+		var capacity := _container_capacity(item_id, int(entry.get("capacity", 0)))
+		var stored_items: Array = []
+		var random_count := maxi(0, int(entry.get("contains_random_items", 0)))
+		for stored_item_value in rng.pick_many(starting_pool, random_count):
+			var stored_item_id := str(stored_item_value).strip_edges()
+			if not stored_item_id.is_empty():
+				stored_items.append(stored_item_id)
+		if capacity > 0 and stored_items.size() > capacity:
+			stored_items = stored_items.slice(0, capacity)
+		containers.append({
+			"id": "%s_%02d" % [item_id, index],
+			"item_id": item_id,
+			"display_name": str(definition.get("display_name", item_id.replace("_", " ").capitalize())),
+			"capacity": capacity,
+			"items": stored_items,
+		})
+	return containers
+
+
+func _container_capacity(item_id: String, fallback: int) -> int:
+	var capacity := maxi(0, fallback)
+	var definition: Dictionary = library.item(item_id) if library != null else {}
+	if definition.is_empty():
+		return capacity
+	capacity = maxi(capacity, int(definition.get("container_capacity", 0)))
+	var effect := _copy_dict(definition.get("effect", {}))
+	return maxi(capacity, int(effect.get("container_capacity", 0)))
+
+
+func _int_range(value: Variant, fallback_min: int, fallback_max: int) -> Array:
+	if typeof(value) == TYPE_ARRAY:
+		var values: Array = value
+		if values.size() >= 2:
+			var first := int(values[0])
+			var second := int(values[1])
+			return [mini(first, second), maxi(first, second)]
+	return [mini(fallback_min, fallback_max), maxi(fallback_min, fallback_max)]
+
+
 # Lets GameModule instances attach generated per-environment state before entry.
 func _generated_game_states(run_state: RunState, environment_data: Dictionary, rng: RngStream) -> Dictionary:
 	var states := _copy_dict(environment_data.get("game_states", {}))
@@ -312,6 +422,12 @@ func _string_array(value: Variant) -> Array:
 		if not id.is_empty():
 			result.append(id)
 	return result
+
+
+func _copy_array(value: Variant) -> Array:
+	if typeof(value) != TYPE_ARRAY:
+		return []
+	return (value as Array).duplicate(true)
 
 
 func _count_ceiling(value: Variant) -> int:

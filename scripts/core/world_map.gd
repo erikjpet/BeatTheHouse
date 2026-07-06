@@ -40,13 +40,19 @@ func build(run_state: RunState, rng: RngStream) -> Dictionary:
 	var archetypes_by_id := _archetypes_by_id()
 	if archetypes_by_id.is_empty():
 		return {}
-	var ids := _sorted_keys(archetypes_by_id)
+	var start_id := _pick_start_id(archetypes_by_id, run_state, rng)
+	var ids: Array = []
+	for id_value in _sorted_keys(archetypes_by_id):
+		var archetype_id := str(id_value)
+		var archetype: Dictionary = archetypes_by_id.get(archetype_id, {})
+		if str(archetype.get("kind", "")) == "home" and archetype_id != start_id:
+			continue
+		ids.append(archetype_id)
 	if ids.size() < 2:
 		return {}
-	var start_id := _pick_start_id(archetypes_by_id, rng)
 	var nodes: Array = []
 	var positions := _layout_positions(ids, archetypes_by_id, start_id, rng.fork("world_map_layout"))
-	var edges := _build_edges(ids, archetypes_by_id, positions)
+	var edges := _build_edges(ids, archetypes_by_id, positions, start_id)
 	var discovered_at_spawn_ids := _initial_discovered_ids(ids, start_id, edges, archetypes_by_id, rng.fork("world_map_discovery"))
 	for id_value in ids:
 		var archetype_id := str(id_value)
@@ -518,6 +524,27 @@ static func unlock_nodes(map_data: Dictionary, node_ids: Array, source: String =
 	return normalized
 
 
+static func mark_home_lost(map_data: Dictionary, node_id: String) -> Dictionary:
+	var target_id := node_id.strip_edges()
+	if target_id.is_empty():
+		return normalize(map_data)
+	var normalized := normalize(map_data)
+	var nodes: Array = normalized.get("nodes", [])
+	for index in range(nodes.size()):
+		if typeof(nodes[index]) != TYPE_DICTIONARY:
+			continue
+		var node: Dictionary = nodes[index]
+		if str(node.get("id", "")) != target_id:
+			continue
+		node["home_lost"] = true
+		node["environment"] = {}
+		node["flavor"] = "Home access is gone; anything stored there was lost."
+		nodes[index] = node
+		break
+	normalized["nodes"] = nodes
+	return normalized
+
+
 static func snapshot(map_data: Dictionary, selected_id: String = "") -> Dictionary:
 	var normalized := normalize(map_data)
 	var visible_ids: Array = []
@@ -570,7 +597,18 @@ func _archetypes_by_id() -> Dictionary:
 	return result
 
 
-func _pick_start_id(archetypes_by_id: Dictionary, rng: RngStream) -> String:
+func _pick_start_id(archetypes_by_id: Dictionary, run_state: RunState, rng: RngStream) -> String:
+	var home_ids: Array = []
+	for id_value in _sorted_keys(archetypes_by_id):
+		var id := str(id_value)
+		var archetype: Dictionary = archetypes_by_id.get(id, {})
+		if str(archetype.get("kind", "")) == "home" or bool(archetype.get("is_home_start", false)):
+			home_ids.append(id)
+	if not home_ids.is_empty():
+		var selected_home := run_state.selected_home_archetype_id() if run_state != null else RunState.HOME_SELECTION_RANDOM
+		if selected_home != RunState.HOME_SELECTION_RANDOM and home_ids.has(selected_home):
+			return selected_home
+		return str(rng.pick(home_ids, str(home_ids[0])))
 	var shop_starts: Array = []
 	var starts: Array = []
 	var tier_one: Array = []
@@ -616,6 +654,12 @@ func _layout_positions(ids: Array, archetypes_by_id: Dictionary, start_id: Strin
 
 func _city_anchor_for_node(id: String, archetype: Dictionary, tier: int) -> Vector2:
 	match id:
+		"apartment":
+			return Vector2(0.13, 0.32)
+		"motel_room":
+			return Vector2(0.21, 0.19)
+		"house":
+			return Vector2(0.11, 0.62)
 		"corner_store":
 			return Vector2(0.16, 0.45)
 		"back_alley":
@@ -637,6 +681,8 @@ func _city_anchor_for_node(id: String, archetype: Dictionary, tier: int) -> Vect
 		GRAND_CASINO_ID:
 			return Vector2(0.90, 0.49)
 	var kind := str(archetype.get("kind", "")).strip_edges()
+	if kind == "home":
+		return Vector2(0.12, 0.38)
 	var kind_offset := 0.08 if kind == "casino" else -0.04
 	var x := clampf(0.16 + float(tier - 1) * 0.24 + kind_offset, 0.08, 0.90)
 	var y_seed := float(abs(hash(id)) % 64) / 100.0
@@ -666,7 +712,7 @@ func _spread_positions(ids: Array, source_positions: Dictionary) -> Dictionary:
 	return positions
 
 
-func _build_edges(ids: Array, archetypes_by_id: Dictionary, positions: Dictionary) -> Array:
+func _build_edges(ids: Array, archetypes_by_id: Dictionary, positions: Dictionary, start_id: String) -> Array:
 	var edges_by_id: Dictionary = {}
 	for source_id_value in ids:
 		var source_id := str(source_id_value)
@@ -691,7 +737,7 @@ func _build_edges(ids: Array, archetypes_by_id: Dictionary, positions: Dictionar
 			if _node_degree(edges_by_id, str(target_id)) >= _target_degree(str(target_id), archetypes_by_id) + 1:
 				continue
 			_add_edge(edges_by_id, source_id, str(target_id), positions)
-	_guarantee_start_edges(edges_by_id, ids, archetypes_by_id, positions)
+	_guarantee_start_edges(edges_by_id, ids, archetypes_by_id, positions, start_id)
 	_guarantee_progression_edges(edges_by_id, ids, archetypes_by_id, positions)
 	if archetypes_by_id.has(UNDERGROUND_SHORTCUT_ID) and archetypes_by_id.has(GRAND_CASINO_ID):
 		_add_edge(edges_by_id, UNDERGROUND_SHORTCUT_ID, GRAND_CASINO_ID, positions)
@@ -703,32 +749,34 @@ func _build_edges(ids: Array, archetypes_by_id: Dictionary, positions: Dictionar
 	return edges
 
 
-func _guarantee_start_edges(edges_by_id: Dictionary, ids: Array, archetypes_by_id: Dictionary, positions: Dictionary) -> void:
-	for start_id_value in ids:
-		var start_id := str(start_id_value)
-		var start_archetype: Dictionary = archetypes_by_id.get(start_id, {})
-		if not bool(start_archetype.get("is_start", false)):
+func _guarantee_start_edges(edges_by_id: Dictionary, ids: Array, archetypes_by_id: Dictionary, positions: Dictionary, start_id: String) -> void:
+	if start_id.is_empty() or not ids.has(start_id):
+		return
+	var open_targets: Array = []
+	var fallback_targets: Array = []
+	var start_archetype: Dictionary = archetypes_by_id.get(start_id, {})
+	var parent_id := str(start_archetype.get("parent_archetype", "")).strip_edges()
+	if not parent_id.is_empty() and ids.has(parent_id):
+		open_targets.append(parent_id)
+	for target_id_value in ids:
+		var target_id := str(target_id_value)
+		if target_id == start_id:
 			continue
-		var open_targets: Array = []
-		var fallback_targets: Array = []
-		for target_id_value in ids:
-			var target_id := str(target_id_value)
-			if target_id == start_id:
-				continue
-			var target_archetype: Dictionary = archetypes_by_id.get(target_id, {})
-			if int(target_archetype.get("tier", 1)) > 2:
-				continue
-			if _route_is_spawn_open(target_id) and _archetype_has_games_for_discovery(target_archetype):
+		var target_archetype: Dictionary = archetypes_by_id.get(target_id, {})
+		if int(target_archetype.get("tier", 1)) > 2:
+			continue
+		if _route_is_spawn_open(target_id) and _archetype_has_games_for_discovery(target_archetype):
+			if not open_targets.has(target_id):
 				open_targets.append(target_id)
-			elif _route_is_spawn_open(target_id):
-				fallback_targets.append(target_id)
-		var ranked_targets := _ranked_target_ids(start_id, open_targets, archetypes_by_id, positions)
-		if ranked_targets.size() < TRAVEL_NEW_TARGET_LIMIT:
-			for fallback_id in _ranked_target_ids(start_id, fallback_targets, archetypes_by_id, positions):
-				if not ranked_targets.has(str(fallback_id)):
-					ranked_targets.append(str(fallback_id))
-		for index in range(mini(TRAVEL_NEW_TARGET_LIMIT, ranked_targets.size())):
-			_add_edge(edges_by_id, start_id, str(ranked_targets[index]), positions)
+		elif _route_is_spawn_open(target_id) and not fallback_targets.has(target_id):
+			fallback_targets.append(target_id)
+	var ranked_targets := _ranked_target_ids(start_id, open_targets, archetypes_by_id, positions)
+	if ranked_targets.size() < TRAVEL_NEW_TARGET_LIMIT:
+		for fallback_id in _ranked_target_ids(start_id, fallback_targets, archetypes_by_id, positions):
+			if not ranked_targets.has(str(fallback_id)):
+				ranked_targets.append(str(fallback_id))
+	for index in range(mini(TRAVEL_NEW_TARGET_LIMIT, ranked_targets.size())):
+		_add_edge(edges_by_id, start_id, str(ranked_targets[index]), positions)
 
 
 func _guarantee_progression_edges(edges_by_id: Dictionary, ids: Array, archetypes_by_id: Dictionary, positions: Dictionary) -> void:
@@ -1118,6 +1166,7 @@ static func _normalize_nodes(nodes: Array) -> Array:
 			"icon_path": str(source.get("icon_path", _map_icon_path(id))),
 			"flavor": str(source.get("flavor", "")),
 			"scouted": bool(source.get("scouted", false)),
+			"home_lost": bool(source.get("home_lost", false)),
 			"environment": _copy_dict(source.get("environment", {})),
 		})
 	return result
@@ -1189,6 +1238,7 @@ static func _snapshot_node(node: Dictionary) -> Dictionary:
 		"scouted": bool(node.get("scouted", false)),
 		"icon_path": str(node.get("icon_path", _map_icon_path(str(node.get("archetype_id", node.get("id", "")))))),
 		"flavor": str(node.get("flavor", "")),
+		"home_lost": bool(node.get("home_lost", false)),
 	}
 
 
@@ -1255,6 +1305,8 @@ static func _travel_candidate_entries_prepared(map_data: Dictionary, source_id: 
 			continue
 		var node: Dictionary = node_lookup.get(target_id, {})
 		if node.is_empty():
+			continue
+		if bool(node.get("home_lost", false)):
 			continue
 		var is_visited := str(node.get("state", STATE_HIDDEN)) == STATE_VISITED
 		if is_visited != visited_only:

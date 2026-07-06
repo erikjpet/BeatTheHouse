@@ -25,6 +25,7 @@ const IDLE_SURFACE_DRAW_WAIVERS := {
 }
 const MAX_SEVERE_IDLE_AVG_MS := 45.0
 const MAX_SEVERE_FOCUS_AVG_MS := 45.0
+const MAX_FOCUS_CALL_MS := 10.0
 const FOCUS_PROBE_FRAMES := 18
 const MAX_FOCUS_OBJECTS_PER_SEED := 4
 const REQUIRED_GAME_IDS := [
@@ -96,6 +97,8 @@ func _run() -> void:
 	await _open_fresh_app()
 	for run_index in range(run_count):
 		await _probe_seed("%s-%02d" % [seed_prefix, run_index + 1], run_index)
+	if run_count <= 0:
+		await _probe_default_environment_focus_smoke()
 	await _probe_practice_game_surface_coverage()
 	await _probe_casino_slot_preview_coverage()
 	await _probe_game_resolve_budgets()
@@ -126,6 +129,14 @@ func _probe_seed(seed: String, run_index: int) -> void:
 		await _probe_game(seed, run_index, str(environment_snapshot.get("id", "")), game_id)
 
 
+func _probe_default_environment_focus_smoke() -> void:
+	var focus_seed := "%s-focus" % seed_prefix
+	app.call("start_foundation_run", focus_seed)
+	await _settle(3)
+	var environment_snapshot: Dictionary = app.call("current_environment_view_snapshot")
+	await _probe_environment_focus(focus_seed, -1, str(environment_snapshot.get("id", "")))
+
+
 func _probe_environment_focus(seed: String, run_index: int, environment_id: String) -> void:
 	var canvas := app.get("environment_canvas") as Control
 	if canvas == null or not canvas.has_method("current_view_snapshot"):
@@ -143,7 +154,10 @@ func _probe_environment_focus(seed: String, run_index: int, environment_id: Stri
 		var object_id := str(object_data.get("object_id", ""))
 		if object_id.is_empty():
 			continue
-		if not bool(app.call("focus_interactable_object", object_id)):
+		var focus_call_start_usec := Time.get_ticks_usec()
+		var focus_result := bool(app.call("focus_interactable_object_from_view", object_data)) if app.has_method("focus_interactable_object_from_view") else bool(app.call("focus_interactable_object", object_id))
+		var focus_call_usec := Time.get_ticks_usec() - focus_call_start_usec
+		if not focus_result:
 			failures.append("Focus probe could not focus %s in seed %s." % [object_id, seed])
 			continue
 		await _settle(1)
@@ -172,6 +186,7 @@ func _probe_environment_focus(seed: String, run_index: int, environment_id: Stri
 			"object_type": str(object_data.get("object_type", "")),
 			"mode": "environment_focus",
 			"frames": FOCUS_PROBE_FRAMES,
+			"focus_call_ms": float(focus_call_usec) / 1000.0,
 			"elapsed_ms": float(elapsed_usec) / 1000.0,
 			"avg_frame_ms": avg_ms,
 			"camera_target_refresh_count": target_refresh_count,
@@ -179,6 +194,8 @@ func _probe_environment_focus(seed: String, run_index: int, environment_id: Stri
 		})
 		if target_recalculated:
 			failures.append("Environment focus target recalculated during glide for %s in seed %s." % [object_id, seed])
+		if float(focus_call_usec) / 1000.0 > MAX_FOCUS_CALL_MS:
+			failures.append("Environment focus call for %s took %.3f ms, above %.3f ms." % [object_id, float(focus_call_usec) / 1000.0, MAX_FOCUS_CALL_MS])
 		if avg_ms > MAX_SEVERE_FOCUS_AVG_MS:
 			failures.append("Environment focus for %s averaged %.2f ms per frame, above %.2f ms." % [object_id, avg_ms, MAX_SEVERE_FOCUS_AVG_MS])
 		checked += 1

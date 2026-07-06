@@ -29,6 +29,9 @@ const CONTEXT_MODE_LENDER := "lender"
 const CONTEXT_MODE_PRESTIGE := "prestige"
 const CONTEXT_MODE_SHOPKEEPER := "shopkeeper"
 const CONTEXT_MODE_GAME_HOOK := "game_hook"
+const CONTEXT_MODE_HOME_TENURE := "home_tenure"
+const CONTEXT_MODE_HOME_STORAGE := "home_storage"
+const CONTEXT_MODE_HOME_CONTAINER := "home_container"
 const RUN_INFO_BAND_RATIO := 0.15
 const RUN_SURFACE_BAND_RATIO := 0.85
 const RUN_INFO_MIN_HEIGHT := 144.0
@@ -36,6 +39,7 @@ const ENVIRONMENT_CANVAS_MIN_SIZE := Vector2.ZERO
 const GAME_SURFACE_FOCUSED_MIN_SIZE := Vector2.ZERO
 const GAME_SURFACE_PREVIEW_MIN_SIZE := Vector2.ZERO
 const GAME_SURFACE_REALTIME_REFRESH_INTERVAL_MSEC := 16
+const GAME_CLOCK_MINUTES_PER_REAL_SECOND := 4.0
 const RUN_ITEM_ICON_TEXTURE_CACHE_LIMIT := 64
 const RESULT_FEEDBACK_WIDTH := 340.0
 const RESULT_FEEDBACK_HEIGHT := 46.0
@@ -49,12 +53,26 @@ const ACCESSIBILITY_BASE_COLOR_META := "accessibility_base_font_color"
 const ACCESSIBILITY_STYLEBOX_META_PREFIX := "accessibility_base_stylebox_"
 const DEFAULT_CONTROL_FONT_SIZE := 13
 const MIN_NATIVE_TOUCH_TARGET_HEIGHT := 40.0
+const RUN_INVENTORY_POPUP_SIZE := Vector2(820, 500)
+const RUN_INVENTORY_POPUP_MARGIN := 12.0
+const RUN_INVENTORY_ITEM_CARD_SIZE := Vector2(118, 104)
+const GAME_SURFACE_UI_PREFERENCE_KEYS := [
+	"selected_chip",
+	"selected_stake",
+	"selected_stake_index",
+	"bet_level",
+	"denomination_index",
+]
 const UserSettingsScript := preload("res://scripts/core/user_settings.gd")
 const ProfileInventoryScript := preload("res://scripts/core/profile_inventory.gd")
 const SettingsMenuScript := preload("res://scripts/ui/settings_menu.gd")
 const PixelSceneCanvasScript := preload("res://scripts/ui/pixel_scene_canvas.gd")
 const GameSurfaceCanvasScript := preload("res://scripts/ui/game_surface_canvas.gd")
 const WorldMapCanvasScript := preload("res://scripts/ui/world_map_canvas.gd")
+const FoundationWidgetsScript := preload("res://scripts/ui/foundation_widgets.gd")
+const RunInventoryScreenScript := preload("res://scripts/ui/run_inventory_screen.gd")
+const RunInventoryViewModelScript := preload("res://scripts/ui/run_inventory_view_model.gd")
+const TalkDockScript := preload("res://scripts/ui/talk_dock.gd")
 const SfxPlayerScript := preload("res://scripts/ui/sfx_player.gd")
 const ProceduralMusicPlayerScript := preload("res://scripts/ui/procedural_music_player.gd")
 const PerfTelemetryOverlayScript := preload("res://scripts/ui/perf_telemetry_overlay.gd")
@@ -117,6 +135,9 @@ var pending_wager_confirm_source_game_id: String = ""
 var pending_all_in_result_terminal_check := false
 var pending_active_item_id: String = ""
 var run_inventory_popup_mode: String = ""
+var run_inventory_context_container_id: String = ""
+var selected_run_inventory_item_id: String = ""
+var selected_run_inventory_item_source: String = ""
 var travel_transition_active := false
 var travel_transition_target_id: String = ""
 var travel_transition_target_label: String = ""
@@ -163,6 +184,8 @@ var main_menu_seed_counter: int = 0
 var content_group_config_button: Button
 var content_group_panel: PanelContainer
 var content_group_status_label: Label
+var home_type_option: OptionButton
+var selected_home_type_id: String = RunState.HOME_SELECTION_RANDOM
 var content_group_list: GridContainer
 var content_group_toggles: Dictionary = {}
 var selected_content_group_ids: Array = []
@@ -205,13 +228,18 @@ var event_choice_popup_panel: PanelContainer
 var event_choice_popup_title_label: Label
 var event_choice_popup_summary_label: Label
 var event_choice_popup_choices_list: VBoxContainer
+var talk_dock: TalkDock
 var conclusion_animation_overlay: Control
 var conclusion_animation_snapshot: Dictionary = {}
+var run_inventory_screen: RunInventoryScreen
 var run_inventory_overlay: Control
 var run_inventory_panel: PanelContainer
+var run_inventory_items_scroll: ScrollContainer
+var run_inventory_detail_panel: PanelContainer
 var run_inventory_title_label: Label
 var run_inventory_summary_label: Label
-var run_inventory_list: VBoxContainer
+var run_inventory_list: GridContainer
+var run_inventory_detail_box: VBoxContainer
 var run_journal_overlay: Control
 var run_journal_panel: PanelContainer
 var run_journal_summary_label: Label
@@ -238,6 +266,7 @@ var world_route_cache_key: String = ""
 var world_route_cache: Dictionary = {}
 var world_map_snapshot_cache_key: String = ""
 var world_map_snapshot_cache: Dictionary = {}
+var rendered_environment_snapshot_signature: String = ""
 var run_hud_panel: Panel
 var visual_panel_container: PanelContainer
 var title_label: Label
@@ -275,6 +304,8 @@ var run_layout_dirty := true
 var run_layout_last_screen_size := Vector2(-1.0, -1.0)
 var web_audio_unlock_refresh_scheduled := false
 var web_audio_unlock_refresh_count := 0
+var run_clock_minute_accumulator := 0.0
+var run_clock_ui_preview_pause_frames := 0
 
 const WEB_AUDIO_UNLOCK_REFRESH_ATTEMPTS := 4
 const WEB_AUDIO_UNLOCK_REFRESH_DELAY_SECONDS := 0.20
@@ -324,6 +355,7 @@ func _ready() -> void:
 
 func _process(_delta: float) -> void:
 	_apply_run_screen_layout()
+	_advance_run_game_clock(_delta)
 	_advance_game_surface_automation()
 	_advance_game_surface_realtime_state()
 	_advance_environment_game_runtime()
@@ -331,11 +363,53 @@ func _process(_delta: float) -> void:
 	_flush_pending_autosave_if_ready()
 
 
+func _advance_run_game_clock(delta: float) -> void:
+	if run_state == null or not _run_clock_should_tick():
+		run_clock_minute_accumulator = 0.0
+		return
+	run_clock_minute_accumulator += maxf(0.0, delta) * GAME_CLOCK_MINUTES_PER_REAL_SECOND
+	var whole_minutes := int(floor(run_clock_minute_accumulator))
+	if whole_minutes <= 0:
+		return
+	run_clock_minute_accumulator -= float(whole_minutes)
+	run_state.advance_game_clock_minutes(whole_minutes)
+	if run_state.current_environment.get("layout", null) != null:
+		run_state.current_environment["layout"] = EnvironmentInstance.ensure_generated_layout(run_state.current_environment)
+	_render_foundation_snapshots()
+	if status_label != null:
+		status_label.text = _hud_status_text()
+	if objective_label != null:
+		objective_label.text = _objective_hud_text()
+
+
+func _run_clock_should_tick() -> bool:
+	if run_state == null or run_state.is_terminal():
+		return false
+	if not [SCREEN_ENVIRONMENT, SCREEN_GAME].has(current_screen):
+		return false
+	if not selected_object_id.is_empty() or not focus_target_id.is_empty() or current_context_mode != CONTEXT_MODE_ROOM:
+		return false
+	if run_clock_ui_preview_pause_frames > 0:
+		run_clock_ui_preview_pause_frames -= 1
+		return false
+	if settings_overlay != null and settings_overlay.visible:
+		return false
+	if travel_transition_active or _event_choice_popup_is_visible() or _run_inventory_popup_is_visible() or _run_journal_popup_is_visible() or _world_map_overlay_is_visible() or _run_menu_is_visible():
+		return false
+	return current_screen == SCREEN_GAME or environment_canvas == null or environment_canvas.visible
+
+
+func _pause_run_clock_for_ui_preview(frames: int = 2) -> void:
+	run_clock_ui_preview_pause_frames = maxi(run_clock_ui_preview_pause_frames, frames)
+
+
 func _input(event: InputEvent) -> void:
 	if _is_web_audio_unlock_gesture(event):
 		if procedural_music_player != null and procedural_music_player.has_method("web_audio_user_gesture"):
 			procedural_music_player.web_audio_user_gesture()
 		_schedule_web_audio_unlock_refresh()
+	if talk_dock != null and not _modal_contract_blocks_player_input() and talk_dock.handle_hotkey(event):
+		get_viewport().set_input_as_handled()
 
 
 func _notification(what: int) -> void:
@@ -367,6 +441,8 @@ func start_foundation_run(seed_text: String = DEFAULT_SEED, challenge_config: Di
 	pending_autosave_after_frame = -1
 	last_environment_runtime_result = {}
 	run_item_icon_texture_cache.clear()
+	run_clock_minute_accumulator = 0.0
+	run_clock_ui_preview_pause_frames = 0
 	close_content_group_config()
 	close_challenge_selection()
 	_hide_run_menu()
@@ -379,6 +455,7 @@ func start_foundation_run(seed_text: String = DEFAULT_SEED, challenge_config: Di
 		resolved_seed = DEFAULT_SEED
 	run_state = RunState.new()
 	run_state.start_new(resolved_seed, challenge_config)
+	run_state.begin_act(1)
 	dev_game_test_mode = false
 	generator.next_environment(run_state)
 	_refresh_run_action_service()
@@ -394,6 +471,8 @@ func start_foundation_run(seed_text: String = DEFAULT_SEED, challenge_config: Di
 	_hide_run_journal_popup()
 	_hide_world_map_overlay()
 	_hide_travel_transition()
+	if talk_dock != null:
+		talk_dock.clear_entry()
 	_clear_selected_game_action()
 	_clear_selected_stake()
 	_clear_selected_travel()
@@ -559,6 +638,14 @@ func _on_game_surface_action(action: String, index: int, confirm_requested: bool
 	if game_surface_canvas != null:
 		game_surface_canvas.set_selected_index(index)
 	_show_message("That part of the game is only visual right now.")
+	_refresh()
+
+
+func _on_game_surface_action_blocked(_action: String, reason: String) -> void:
+	var message := reason.strip_edges()
+	if message.is_empty():
+		message = "That action is not available right now."
+	_show_message(message)
 	_refresh()
 
 
@@ -877,6 +964,7 @@ func set_selected_stake(stake: int) -> bool:
 func select_travel_option(target_id: String) -> bool:
 	if _guard_player_input_route():
 		return false
+	_pause_run_clock_for_ui_preview()
 	var choice := _travel_choice(target_id)
 	if choice.is_empty():
 		_show_message("Travel option is not available.")
@@ -929,6 +1017,7 @@ func open_world_map() -> bool:
 		return false
 	if _guard_player_input_route():
 		return false
+	_pause_run_clock_for_ui_preview()
 	selected_action_category = ACTION_CATEGORY_TRAVEL
 	_set_current_screen(SCREEN_TRAVEL)
 	if selected_world_map_node_id.is_empty() or (run_state.has_world_map() and not WorldMapScript.is_node_visible(run_state.world_map, selected_world_map_node_id)):
@@ -947,6 +1036,7 @@ func open_world_map() -> bool:
 
 
 func close_world_map() -> void:
+	_pause_run_clock_for_ui_preview()
 	if world_map_overlay != null:
 		world_map_overlay.visible = false
 	if current_screen == SCREEN_TRAVEL:
@@ -967,6 +1057,10 @@ func select_world_map_node(node_id: String) -> bool:
 		return false
 	if run_state != null and run_state.has_world_map() and not WorldMapScript.is_node_visible(run_state.world_map, clean_id):
 		_show_message("That stop is not on your map yet.")
+		_refresh_world_map_overlay()
+		return false
+	if run_state != null and run_state.has_world_map() and not _world_map_node_ids(_world_map_snapshot()).has(clean_id):
+		_show_message("That stop is not on your map from here.")
 		_refresh_world_map_overlay()
 		return false
 	selected_world_map_node_id = clean_id
@@ -1057,7 +1151,9 @@ func resolve_event_choice(event_id: String, choice_id: String) -> void:
 		_show_message("Finish the current prompt first.")
 		_refresh_modal_contract_owner()
 		return
-	if not _event_choice_popup_is_visible() and _guard_player_input_route():
+	var talk_entry := _pending_talk_event_entry(event_id)
+	var resolving_talk := not _event_choice_popup_is_visible() and not talk_entry.is_empty()
+	if not _event_choice_popup_is_visible() and not resolving_talk and _guard_player_input_route():
 		return
 	var event_definition := library.event(event_id)
 	if event_definition.is_empty():
@@ -1066,36 +1162,85 @@ func resolve_event_choice(event_id: String, choice_id: String) -> void:
 	var event_module := EventModule.new()
 	event_module.setup(event_definition, library)
 	var event_context := _pending_event_trigger_context(event_id)
+	if resolving_talk:
+		event_context = _copy_dict(talk_entry.get("context", {}))
 	var event_environment := _event_environment_for_context(event_context)
 	if not event_module.can_trigger(run_state, event_environment, event_context):
 		_show_message("Event cannot trigger right now.")
+		if resolving_talk and run_state != null:
+			run_state.complete_talk_event_resolution(event_id)
+			_refresh_talk_dock()
 		return
-	var popup_rect := event_choice_popup_panel.get_global_rect() if event_choice_popup_panel != null else Rect2()
+	var popup_rect := _talk_dock_panel_rect() if resolving_talk else event_choice_popup_panel.get_global_rect() if event_choice_popup_panel != null else Rect2()
 	var had_event_popup := bool(pending_event_choice_popup_snapshot.get("visible", false))
 	var was_triggered_popup := str(pending_event_choice_popup_snapshot.get("popup_type", "")) == "triggered_event"
 	var result := event_module.resolve(run_state, event_environment, choice_id)
 	_start_conclusion_animation(result, popup_rect)
 	if was_triggered_popup and run_state != null:
 		run_state.complete_triggered_event_resolution(event_id)
+	if resolving_talk and run_state != null:
+		run_state.complete_talk_event_resolution(event_id)
 	if had_event_popup and run_state != null:
 		run_state.event_cadence_note_modal_closed()
 	_hide_event_choice_popup()
-	_hide_run_inventory_popup()
-	_hide_run_journal_popup()
 	_clear_selected_event_choice()
-	_set_current_screen(SCREEN_RESULT)
 	_show_message(str(result.get("message", "")))
 	_advance_alcohol_absorption()
 	_autosave_foundation_run("Autosaved.")
+	_refresh_talk_dock()
+	if resolving_talk:
+		_refresh()
+		return
+	_hide_run_inventory_popup()
+	_hide_run_journal_popup()
+	_set_current_screen(SCREEN_RESULT)
 	_refresh()
+
+
+func _on_talk_dock_choice_requested(event_id: String, choice_id: String) -> void:
+	resolve_event_choice(event_id, choice_id)
 
 
 func _apply_post_action_environment_interrupt(source: String) -> bool:
 	if run_state == null or library == null or run_state.is_terminal():
 		return false
+	if _advance_talk_event_action_boundary(source):
+		return true
 	if _apply_forced_environment_travel(source):
 		return true
+	if _enqueue_talk_events_for_action_boundary(source):
+		_autosave_foundation_run("Autosaved.")
+		_refresh_talk_dock()
+		return true
 	return _maybe_trigger_unavoidable_event(source)
+
+
+func _advance_talk_event_action_boundary(_source: String) -> bool:
+	if run_state == null:
+		return false
+	var expired := run_state.advance_focused_talk_event_actions(1)
+	if expired.is_empty():
+		_refresh_talk_dock()
+		return false
+	var timing: Dictionary = expired.get("timing", {}) if typeof(expired.get("timing", {})) == TYPE_DICTIONARY else {}
+	var timeout_choice_id := str(timing.get("timeout_choice_id", "")).strip_edges()
+	var event_id := str(expired.get("event_id", "")).strip_edges()
+	if timeout_choice_id.is_empty() or event_id.is_empty():
+		_refresh_talk_dock()
+		return false
+	resolve_event_choice(event_id, timeout_choice_id)
+	return true
+
+
+func _enqueue_talk_events_for_action_boundary(source: String) -> bool:
+	if run_state == null or library == null:
+		return false
+	var enqueued := false
+	if _enqueue_heat_threshold_talk_events(source):
+		enqueued = true
+	if _enqueue_table_approach_talk_events(source):
+		enqueued = true
+	return enqueued
 
 
 func _apply_forced_environment_travel(_source: String) -> bool:
@@ -1125,11 +1270,18 @@ func _maybe_trigger_unavoidable_event(source: String) -> bool:
 		return false
 	if _show_next_pending_triggered_event():
 		return true
+	if not _source_allows_action_triggered_events(source):
+		return false
 	var context := _event_action_trigger_context(source)
 	if _enqueue_triggered_events_for_context(source, context, run_state.current_environment):
 		_autosave_foundation_run("Autosaved.")
 		return _show_next_pending_triggered_event()
 	return false
+
+
+func _source_allows_action_triggered_events(source: String) -> bool:
+	var normalized := source.strip_edges().to_lower()
+	return normalized != "lender"
 
 
 func _enqueue_triggered_events_for_context(source: String, context: Dictionary, environment: Dictionary) -> bool:
@@ -1156,7 +1308,7 @@ func _enqueue_triggered_events_for_context(source: String, context: Dictionary, 
 		if trigger_type == "random":
 			candidates.append({"id": event_id, "trigger": trigger, "event": event_definition})
 		elif ["timed", "travel"].has(trigger_type):
-			if run_state.enqueue_triggered_event(event_id, source, _event_context_with_environment(context, environment)):
+			if run_state.enqueue_triggered_event(event_id, source, _event_context_with_environment(context, environment), _triggered_entry_overrides(event_definition)):
 				run_state.event_cadence_note_event_enqueued(event_id, not run_state.event_cadence_event_bypasses_budget(event_id, trigger_type, source, event_definition))
 				enqueued = true
 				break
@@ -1175,11 +1327,178 @@ func _enqueue_triggered_events_for_context(source: String, context: Dictionary, 
 			var picked := _weighted_triggered_event_pick(rolled, cadence_rng)
 			var picked_id := str(picked.get("id", ""))
 			var picked_event: Dictionary = picked.get("event", {}) if typeof(picked.get("event", {})) == TYPE_DICTIONARY else {}
-			if run_state.enqueue_triggered_event(picked_id, source, _event_context_with_environment(context, environment)):
+			if run_state.enqueue_triggered_event(picked_id, source, _event_context_with_environment(context, environment), _triggered_entry_overrides(picked_event)):
 				run_state.event_cadence_note_event_enqueued(picked_id, not run_state.event_cadence_event_bypasses_budget(picked_id, "random", source, picked_event))
 				enqueued = true
 	run_state.save_event_cadence_rng(cadence_rng)
 	return enqueued
+
+
+func _enqueue_heat_threshold_talk_events(source: String) -> bool:
+	var result := _recent_result_snapshot()
+	var applied_delta := int(result.get("suspicion_delta", _copy_dict(result.get("deltas", {})).get("suspicion_delta", 0)))
+	if applied_delta <= 0:
+		return false
+	var current_level := run_state.suspicion_level()
+	var previous_level := clampi(current_level - applied_delta, 0, 100)
+	var enqueued := false
+	for event_definition_value in library.events:
+		if typeof(event_definition_value) != TYPE_DICTIONARY:
+			continue
+		var event_definition: Dictionary = event_definition_value
+		if str(event_definition.get("interaction_mode", "interactable")) != "triggered":
+			continue
+		if str(event_definition.get("presentation", "modal")) != "talk":
+			continue
+		var trigger: Dictionary = event_definition.get("trigger", {}) if typeof(event_definition.get("trigger", {})) == TYPE_DICTIONARY else {}
+		if str(trigger.get("type", "manual")) != "heat_threshold":
+			continue
+		var threshold := int(trigger.get("level", 0))
+		if threshold <= 0 or previous_level >= threshold or current_level < threshold:
+			continue
+		var seen_flag := "talk_heat_threshold_%d_seen" % threshold
+		if bool(run_state.narrative_flags.get(seen_flag, false)):
+			continue
+		var event_id := str(event_definition.get("id", ""))
+		var context := _event_context_with_environment({
+			"trigger": "heat_threshold",
+			"type": "heat_threshold",
+			"source": source,
+			"threshold": threshold,
+			"previous_suspicion": previous_level,
+			"current_suspicion": current_level,
+		}, run_state.current_environment)
+		var event_module := EventModule.new()
+		event_module.setup(event_definition, library)
+		if not event_module.can_trigger(run_state, run_state.current_environment, context):
+			continue
+		if run_state.enqueue_triggered_event(event_id, "heat_threshold", context, _triggered_entry_overrides(event_definition)):
+			run_state.narrative_flags[seen_flag] = true
+			enqueued = true
+	return enqueued
+
+
+func _enqueue_table_approach_talk_events(source: String) -> bool:
+	if current_game == null or not ["game_action", "game_hook", "environment_game"].has(source):
+		return false
+	var game_id := current_game.get_id()
+	if game_id.is_empty():
+		return false
+	var surface_state := current_game.surface_state(run_state, run_state.current_environment, _current_game_surface_ui_state())
+	if typeof(surface_state) != TYPE_DICTIONARY:
+		return false
+	var state: Dictionary = surface_state
+	var patrons := _copy_array(state.get("patrons", []))
+	if patrons.is_empty():
+		return false
+	var hands_played := int(state.get("hands_played", state.get("rounds_played", 0)))
+	var cadence_rng := run_state.create_event_cadence_rng()
+	var enqueued := false
+	for event_definition_value in library.events:
+		if typeof(event_definition_value) != TYPE_DICTIONARY:
+			continue
+		var event_definition: Dictionary = event_definition_value
+		if str(event_definition.get("interaction_mode", "interactable")) != "triggered":
+			continue
+		if str(event_definition.get("presentation", "modal")) != "talk":
+			continue
+		var trigger: Dictionary = event_definition.get("trigger", {}) if typeof(event_definition.get("trigger", {})) == TYPE_DICTIONARY else {}
+		if str(trigger.get("type", "manual")) != "table_approach":
+			continue
+		var chance := clampf(float(trigger.get("chance", 1.0)), 0.0, 1.0)
+		var roll := cadence_rng.randi_range(0, 9999)
+		var context := _event_context_with_environment({
+			"trigger": "table_approach",
+			"type": "table_approach",
+			"source": source,
+			"game_id": game_id,
+			"hands_played": hands_played,
+			"roll": roll,
+			"chance": chance,
+		}, run_state.current_environment)
+		var event_module := EventModule.new()
+		event_module.setup(event_definition, library)
+		if not event_module.can_trigger(run_state, run_state.current_environment, context):
+			continue
+		if roll >= int(round(chance * 10000.0)):
+			continue
+		var patron_index := cadence_rng.randi_range(0, patrons.size() - 1)
+		var patron: Dictionary = patrons[patron_index] if typeof(patrons[patron_index]) == TYPE_DICTIONARY else {}
+		if patron.is_empty():
+			continue
+		var overrides := _triggered_entry_overrides(event_definition, _talk_speaker_from_patron(patron, patron_index, event_definition))
+		if run_state.enqueue_triggered_event(str(event_definition.get("id", "")), "table_approach", context, overrides):
+			enqueued = true
+			break
+	run_state.save_event_cadence_rng(cadence_rng)
+	return enqueued
+
+
+func _triggered_entry_overrides(event_definition: Dictionary, speaker_override: Dictionary = {}) -> Dictionary:
+	var payload: Dictionary = event_definition.get("payload", {}) if typeof(event_definition.get("payload", {})) == TYPE_DICTIONARY else {}
+	var speaker := speaker_override.duplicate(true) if not speaker_override.is_empty() else _copy_dict(event_definition.get("speaker", {}))
+	return {
+		"presentation": str(event_definition.get("presentation", "modal")),
+		"speaker": _normalized_talk_speaker(speaker),
+		"timing": _triggered_entry_timing(payload),
+	}
+
+
+func _triggered_entry_timing(payload: Dictionary) -> Dictionary:
+	var timing: Dictionary = payload.get("timing", {}) if typeof(payload.get("timing", {})) == TYPE_DICTIONARY else {}
+	var expires := bool(timing.get("expires", false))
+	var duration_actions := maxi(0, int(timing.get("duration_actions", 0)))
+	var timeout_choice_id := str(timing.get("timeout_choice_id", "")).strip_edges()
+	if not expires or duration_actions <= 0 or timeout_choice_id.is_empty():
+		return {
+			"expires": false,
+			"duration_actions": 0,
+			"remaining_actions": 0,
+			"timeout_choice_id": "",
+		}
+	return {
+		"expires": true,
+		"duration_actions": duration_actions,
+		"remaining_actions": duration_actions,
+		"timeout_choice_id": timeout_choice_id,
+	}
+
+
+func _talk_speaker_from_patron(patron: Dictionary, patron_index: int, event_definition: Dictionary) -> Dictionary:
+	var definition_speaker: Dictionary = event_definition.get("speaker", {}) if typeof(event_definition.get("speaker", {})) == TYPE_DICTIONARY else {}
+	return {
+		"role": "patron",
+		"name": str(patron.get("name", definition_speaker.get("name", "Patron"))),
+		"mood": str(patron.get("mood", "")),
+		"behavior": str(patron.get("behavior", "")),
+		"silhouette": str(patron.get("silhouette", definition_speaker.get("silhouette", "coat"))),
+		"bind": "table_patron",
+		"patron_index": patron_index,
+		"hair_color": str(patron.get("hair_color", patron.get("hair", ""))),
+		"jacket_color": str(patron.get("jacket_color", patron.get("jacket", ""))),
+		"tell": str(patron.get("tell", "")),
+	}
+
+
+func _normalized_talk_speaker(speaker: Dictionary) -> Dictionary:
+	var role := str(speaker.get("role", "stranger")).strip_edges().to_lower()
+	if not ["patron", "staff", "stranger", "lender"].has(role):
+		role = "stranger"
+	var bind := str(speaker.get("bind", "none")).strip_edges().to_lower()
+	if not ["table_patron", "none"].has(bind):
+		bind = "none"
+	return {
+		"role": role,
+		"name": str(speaker.get("name", "")).strip_edges(),
+		"mood": str(speaker.get("mood", "")).strip_edges(),
+		"behavior": str(speaker.get("behavior", "")).strip_edges(),
+		"silhouette": str(speaker.get("silhouette", "")).strip_edges(),
+		"bind": bind,
+		"patron_index": maxi(-1, int(speaker.get("patron_index", -1))),
+		"hair_color": str(speaker.get("hair_color", "")).strip_edges(),
+		"jacket_color": str(speaker.get("jacket_color", "")).strip_edges(),
+		"tell": str(speaker.get("tell", "")).strip_edges(),
+	}
 
 
 func _weighted_triggered_event_pick(candidates: Array, rng: RngStream) -> Dictionary:
@@ -1287,6 +1606,43 @@ func _show_triggered_event_popup(entry: Dictionary) -> bool:
 	return true
 
 
+func _refresh_talk_dock() -> void:
+	if talk_dock == null:
+		return
+	if run_state == null or library == null:
+		talk_dock.clear_entry()
+		return
+	var entry := run_state.next_pending_talk_event()
+	if entry.is_empty():
+		talk_dock.clear_entry()
+		return
+	var event_id := str(entry.get("event_id", ""))
+	var context: Dictionary = entry.get("context", {}) if typeof(entry.get("context", {})) == TYPE_DICTIONARY else {}
+	var event_environment := _event_environment_for_context(context)
+	var option := _eligible_event_option_with_context(event_id, context, event_environment)
+	if option.is_empty():
+		run_state.complete_talk_event_resolution(event_id)
+		talk_dock.clear_entry()
+		return
+	talk_dock.set_entry(entry, option, run_state.pending_talk_event_count())
+
+
+func _pending_talk_event_entry(event_id: String) -> Dictionary:
+	if run_state == null:
+		return {}
+	return run_state.pending_talk_event(event_id)
+
+
+func _talk_dock_panel_rect() -> Rect2:
+	if talk_dock == null:
+		return Rect2()
+	var snapshot := talk_dock.current_snapshot()
+	var rect_value: Variant = snapshot.get("panel_rect", Rect2())
+	if typeof(rect_value) == TYPE_RECT2:
+		return rect_value
+	return Rect2()
+
+
 func _event_action_trigger_context(source: String) -> Dictionary:
 	return {
 		"trigger": "action",
@@ -1301,6 +1657,9 @@ func _pending_event_trigger_context(event_id: String) -> Dictionary:
 	if ["triggered_event", "unavoidable_event"].has(popup_type) and str(pending_event_choice_popup_snapshot.get("event_id", "")) == event_id:
 		var context: Dictionary = pending_event_choice_popup_snapshot.get("trigger_context", {}) if typeof(pending_event_choice_popup_snapshot.get("trigger_context", {})) == TYPE_DICTIONARY else {}
 		return context.duplicate(true)
+	var talk_entry := _pending_talk_event_entry(event_id)
+	if not talk_entry.is_empty():
+		return _copy_dict(talk_entry.get("context", {}))
 	return {}
 
 
@@ -1354,6 +1713,96 @@ func apply_item_offer(item_id: String) -> bool:
 		return true
 	_refresh()
 	return true
+
+
+func confirm_home_tenure_action() -> bool:
+	if _guard_player_input_route():
+		return false
+	if run_state == null:
+		_show_message("No active home.")
+		return false
+	var result := run_state.pay_home_tenure()
+	if not bool(result.get("ok", false)):
+		_show_message(str(result.get("message", "Home payment is not available.")))
+		_refresh()
+		return false
+	last_item_result = {
+		"ok": true,
+		"type": "home_tenure",
+		"message": str(result.get("message", "")),
+		"bankroll_delta": int(result.get("bankroll_delta", 0)),
+	}
+	_show_message(str(result.get("message", "Home payment complete.")))
+	_autosave_foundation_run("Autosaved.")
+	_refresh()
+	return true
+
+
+func _show_place_container_popup() -> bool:
+	if run_state == null:
+		return false
+	var options := _held_container_item_options()
+	if options.is_empty():
+		_show_message("Carry a container before placing home storage.")
+		_refresh()
+		return false
+	_hide_event_choice_popup()
+	_hide_run_journal_popup()
+	_open_run_inventory_popup("place_container")
+	return true
+
+
+func _place_home_container_from_popup(item_id: String) -> void:
+	var option := _container_item_option(item_id)
+	var result: Dictionary = run_state.place_home_container(item_id, str(option.get("display_name", item_id.replace("_", " ").capitalize())), int(option.get("capacity", 0))) if run_state != null else {"ok": false, "message": "No active home."}
+	_show_message(str(result.get("message", "Container placement failed.")))
+	_autosave_foundation_run("Autosaved.")
+	if bool(result.get("ok", false)):
+		_open_run_inventory_popup("home_container", str(result.get("container_id", "")))
+		return
+	if _run_inventory_popup_is_visible():
+		_open_run_inventory_popup("place_container")
+	_refresh()
+
+
+func _show_home_container_popup(container_id: String) -> bool:
+	if run_state == null:
+		return false
+	var container := _home_container_by_id(container_id)
+	if container.is_empty():
+		_show_message("Container is no longer available.")
+		_refresh()
+		return false
+	_hide_event_choice_popup()
+	_hide_run_journal_popup()
+	_open_run_inventory_popup("home_container", container_id)
+	return true
+
+
+func _store_home_container_item_from_popup(container_id: String, item_id: String) -> void:
+	var result: Dictionary = run_state.transfer_item_to_home_container(container_id, item_id) if run_state != null else {"ok": false, "message": "No active home."}
+	_show_message(str(result.get("message", "Transfer failed.")))
+	_autosave_foundation_run("Autosaved.")
+	if _run_inventory_popup_is_visible():
+		_open_run_inventory_popup("home_container", container_id)
+		return
+	_refresh()
+
+
+func _take_home_container_item_from_popup(container_id: String, item_id: String) -> void:
+	var result: Dictionary = run_state.transfer_item_from_home_container(container_id, item_id) if run_state != null else {"ok": false, "message": "No active home."}
+	_show_message(str(result.get("message", "Transfer failed.")))
+	_autosave_foundation_run("Autosaved.")
+	if _run_inventory_popup_is_visible():
+		_open_run_inventory_popup("home_container", container_id)
+		return
+	_refresh()
+
+
+func _close_home_storage_popup() -> void:
+	_hide_event_choice_popup()
+	_hide_run_inventory_popup()
+	_refresh()
 
 
 func open_run_inventory() -> void:
@@ -2318,6 +2767,7 @@ func _main_menu_background_environment_id() -> String:
 func _initialize_user_settings() -> void:
 	user_settings = UserSettingsScript.new()
 	user_settings.load()
+	selected_home_type_id = user_settings.selected_home_type_id
 	VisualStyle.set_high_contrast_enabled(user_settings.high_contrast)
 	user_settings.apply()
 
@@ -2369,6 +2819,7 @@ func _build_ui() -> void:
 	run_screen.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	screen_stack.add_child(run_screen)
 	_build_run_screen()
+	_build_talk_dock()
 	_build_run_menu_overlay()
 	_build_settings_overlay()
 	_build_event_choice_popup_overlay()
@@ -2574,6 +3025,22 @@ func _build_content_group_controls(parent: VBoxContainer) -> void:
 	done_button.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	_set_control_font_size(done_button, 12)
 	heading_row.add_child(done_button)
+	var home_row := HBoxContainer.new()
+	home_row.add_theme_constant_override("separation", 8)
+	home_row.custom_minimum_size = Vector2(0, 34)
+	home_row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	stack.add_child(home_row)
+	var home_label := _label("Home", 12)
+	home_label.custom_minimum_size = Vector2(92, 30)
+	_set_control_font_color(home_label, VisualStyle.YELLOW)
+	home_row.add_child(home_label)
+	home_type_option = OptionButton.new()
+	home_type_option.custom_minimum_size = Vector2(0, MIN_NATIVE_TOUCH_TARGET_HEIGHT)
+	home_type_option.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_set_control_font_color(home_type_option, VisualStyle.WHITE)
+	_set_control_font_size(home_type_option, 12)
+	home_type_option.item_selected.connect(_on_home_type_selected)
+	home_row.add_child(home_type_option)
 	var scroll := ScrollContainer.new()
 	scroll.custom_minimum_size = Vector2(0, 164)
 	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
@@ -2801,6 +3268,8 @@ func _refresh_content_group_controls() -> void:
 	if library == null:
 		return
 	selected_content_group_ids = library.normalize_content_group_ids(selected_content_group_ids)
+	selected_home_type_id = _normalize_home_type_id(selected_home_type_id)
+	_refresh_home_type_controls()
 	var selected := _selected_content_group_set()
 	for group_id in content_group_toggles.keys():
 		var check := content_group_toggles[group_id] as CheckBox
@@ -2813,6 +3282,81 @@ func _refresh_content_group_controls() -> void:
 		var selected_count := selected_content_group_ids.size()
 		var total_count := library.content_groups.size()
 		content_group_status_label.text = "%d of %d groups enabled" % [selected_count, total_count]
+
+
+func _refresh_home_type_controls() -> void:
+	if home_type_option == null:
+		return
+	home_type_option.clear()
+	var options := _home_type_options()
+	var selected_index := 0
+	for index in range(options.size()):
+		var option: Dictionary = options[index]
+		var option_id := str(option.get("id", RunState.HOME_SELECTION_RANDOM))
+		home_type_option.add_item(str(option.get("label", option_id.capitalize())))
+		home_type_option.set_item_metadata(index, option_id)
+		if option_id == selected_home_type_id:
+			selected_index = index
+	home_type_option.select(selected_index)
+	home_type_option.tooltip_text = "Choose the home this run starts in."
+
+
+func _home_type_options() -> Array:
+	var options: Array = [{"id": RunState.HOME_SELECTION_RANDOM, "label": "Random"}]
+	if library == null:
+		return options
+	for archetype_value in library.environment_archetypes:
+		if typeof(archetype_value) != TYPE_DICTIONARY:
+			continue
+		var archetype: Dictionary = archetype_value
+		if str(archetype.get("kind", "")) != "home":
+			continue
+		var home_id := str(archetype.get("id", "")).strip_edges()
+		if home_id.is_empty():
+			continue
+		options.append({
+			"id": home_id,
+			"label": _home_type_label(archetype),
+		})
+	return options
+
+
+func _home_type_label(archetype: Dictionary) -> String:
+	var display_name := str(archetype.get("display_name", "")).strip_edges()
+	if not display_name.is_empty():
+		return display_name
+	var nouns := _string_array(archetype.get("name_nouns", []))
+	if not nouns.is_empty():
+		return str(nouns[0])
+	return str(archetype.get("id", "Home")).replace("_", " ").capitalize()
+
+
+func _normalize_home_type_id(home_id: String) -> String:
+	var clean_id := home_id.strip_edges()
+	if clean_id.is_empty():
+		return RunState.HOME_SELECTION_RANDOM
+	if clean_id == RunState.HOME_SELECTION_RANDOM:
+		return clean_id
+	if library == null:
+		return clean_id
+	for option in _home_type_options():
+		if typeof(option) == TYPE_DICTIONARY and str((option as Dictionary).get("id", "")) == clean_id:
+			return clean_id
+	return RunState.HOME_SELECTION_RANDOM
+
+
+func _on_home_type_selected(index: int) -> void:
+	if home_type_option == null:
+		return
+	var selected_id := RunState.HOME_SELECTION_RANDOM
+	var metadata: Variant = home_type_option.get_item_metadata(index)
+	if metadata != null:
+		selected_id = str(metadata)
+	selected_home_type_id = _normalize_home_type_id(selected_id)
+	if user_settings != null:
+		user_settings.selected_home_type_id = selected_home_type_id
+		user_settings.save()
+	_refresh_home_type_controls()
 
 
 func _challenge_pack_loaded() -> bool:
@@ -2946,9 +3490,24 @@ func _content_group_challenge_for_seed(seed_text: String) -> Dictionary:
 
 
 func _new_run_challenge_for_seed(seed_text: String) -> Dictionary:
+	var config: Dictionary
 	if _challenge_pack_loaded() and not selected_challenge_id.is_empty():
-		return library.challenge_config_for(selected_challenge_id, seed_text)
-	return _content_group_challenge_for_seed(seed_text)
+		config = library.challenge_config_for(selected_challenge_id, seed_text)
+	else:
+		config = _content_group_challenge_for_seed(seed_text)
+	return _challenge_with_home_selection(seed_text, config)
+
+
+func _challenge_with_home_selection(seed_text: String, config: Dictionary) -> Dictionary:
+	var normalized := RunState.normalize_challenge(seed_text, config)
+	var modifiers := _copy_dict(normalized.get("modifiers", {}))
+	var home_id := _normalize_home_type_id(selected_home_type_id)
+	if home_id == RunState.HOME_SELECTION_RANDOM:
+		modifiers.erase("home_archetype_id")
+	else:
+		modifiers["home_archetype_id"] = home_id
+	normalized["modifiers"] = modifiers
+	return normalized
 
 
 func _build_settings_overlay() -> void:
@@ -3026,6 +3585,12 @@ func _build_event_choice_popup_overlay() -> void:
 	scroll.add_child(event_choice_popup_choices_list)
 
 
+func _build_talk_dock() -> void:
+	talk_dock = TalkDockScript.new()
+	talk_dock.choice_requested.connect(Callable(self, "_on_talk_dock_choice_requested"))
+	add_child(talk_dock)
+
+
 func _build_conclusion_animation_overlay() -> void:
 	conclusion_animation_overlay = Control.new()
 	conclusion_animation_overlay.visible = false
@@ -3035,50 +3600,18 @@ func _build_conclusion_animation_overlay() -> void:
 
 
 func _build_run_inventory_overlay() -> void:
-	run_inventory_overlay = Control.new()
-	run_inventory_overlay.visible = false
-	run_inventory_overlay.set_anchors_preset(Control.PRESET_FULL_RECT)
-	run_inventory_overlay.mouse_filter = Control.MOUSE_FILTER_STOP
-	add_child(run_inventory_overlay)
-
-	run_inventory_panel = _panel_container(Color("#080817", 0.98), VisualStyle.AMBER)
-	run_inventory_panel.custom_minimum_size = Vector2(460, 320)
-	run_inventory_panel.mouse_filter = Control.MOUSE_FILTER_STOP
-	run_inventory_overlay.add_child(run_inventory_panel)
-
-	var stack := VBoxContainer.new()
-	stack.add_theme_constant_override("separation", 8)
-	stack.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	stack.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	run_inventory_panel.add_child(stack)
-
-	var header := HBoxContainer.new()
-	header.add_theme_constant_override("separation", 8)
-	stack.add_child(header)
-	run_inventory_title_label = _label("Inventory", 18)
-	_set_control_font_color(run_inventory_title_label, VisualStyle.YELLOW)
-	run_inventory_title_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	header.add_child(run_inventory_title_label)
-	var close_button := _button("Close", Callable(self, "close_run_inventory"))
-	close_button.custom_minimum_size = Vector2(88, MIN_NATIVE_TOUCH_TARGET_HEIGHT)
-	header.add_child(close_button)
-
-	run_inventory_summary_label = _label("", 12)
-	_set_control_font_color(run_inventory_summary_label, VisualStyle.CYAN)
-	run_inventory_summary_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	stack.add_child(run_inventory_summary_label)
-
-	var scroll := ScrollContainer.new()
-	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
-	scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_AUTO
-	scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	stack.add_child(scroll)
-
-	run_inventory_list = VBoxContainer.new()
-	run_inventory_list.add_theme_constant_override("separation", 8)
-	run_inventory_list.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	scroll.add_child(run_inventory_list)
+	run_inventory_screen = RunInventoryScreenScript.new()
+	run_inventory_screen.configure(Callable(self, "_run_item_texture_for_asset_path"))
+	run_inventory_screen.close_requested.connect(Callable(self, "close_run_inventory"))
+	run_inventory_screen.item_selected.connect(Callable(self, "_on_run_inventory_screen_item_selected"))
+	run_inventory_screen.set_active_requested.connect(Callable(self, "select_active_inventory_item"))
+	run_inventory_screen.sell_requested.connect(Callable(self, "sell_inventory_item"))
+	run_inventory_screen.repair_requested.connect(Callable(self, "repair_inventory_item"))
+	run_inventory_screen.place_container_requested.connect(Callable(self, "_place_home_container_from_popup"))
+	run_inventory_screen.store_item_requested.connect(Callable(self, "_store_home_container_item_from_popup"))
+	run_inventory_screen.take_item_requested.connect(Callable(self, "_take_home_container_item_from_popup"))
+	add_child(run_inventory_screen)
+	run_inventory_overlay = run_inventory_screen
 
 
 func _build_run_journal_overlay() -> void:
@@ -3581,6 +4114,7 @@ func _build_run_screen() -> void:
 	game_surface_canvas.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	game_surface_canvas.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	game_surface_canvas.surface_action.connect(_on_game_surface_action)
+	game_surface_canvas.surface_action_blocked.connect(_on_game_surface_action_blocked)
 	game_surface_canvas.surface_music_cue.connect(_on_game_surface_music_cue)
 	visual_stack.add_child(game_surface_canvas)
 
@@ -3603,11 +4137,17 @@ func _build_run_screen() -> void:
 	action_hint_label.max_lines_visible = 2
 	action_hint_label.clip_text = true
 	action_stack.add_child(action_hint_label)
+	var action_scroll := ScrollContainer.new()
+	action_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	action_scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_AUTO
+	action_scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	action_scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	action_stack.add_child(action_scroll)
 	actions_list = VBoxContainer.new()
 	actions_list.add_theme_constant_override("separation", 5)
 	actions_list.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	actions_list.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	action_stack.add_child(actions_list)
+	action_scroll.add_child(actions_list)
 
 	consequence_panel = _panel_container(VisualStyle.DARK_2, VisualStyle.AMBER)
 	consequence_panel.custom_minimum_size = Vector2(0, 0)
@@ -3871,12 +4411,13 @@ func _render_environment_screen() -> void:
 	_render_failure_summary()
 	_render_result_panel()
 	_render_foundation_snapshots()
+	_refresh_talk_dock()
 	_render_action_panel()
 	_refresh_world_map_overlay()
 	_update_procedural_music()
 
 
-func _refresh_world_header() -> void:
+func _refresh_world_header(selected_world_object_override: Dictionary = {}) -> void:
 	if run_state == null or title_label == null or summary_label == null:
 		return
 	var environment := run_state.current_environment
@@ -3898,7 +4439,9 @@ func _refresh_world_header() -> void:
 		var game_description := _current_game_description()
 		summary_label.text = game_description if not game_description.is_empty() else str(environment.get("display_name", "Game"))
 	else:
-		var selected_world_object := _interactable_object(selected_object_id)
+		var selected_world_object := selected_world_object_override
+		if selected_world_object.is_empty() or str(selected_world_object.get("object_id", "")) != selected_object_id:
+			selected_world_object = _interactable_object(selected_object_id)
 		if selected_world_object.is_empty():
 			title_label.text = str(environment.get("display_name", environment.get("id", "Environment")))
 			var room_description := str(environment.get("visual_context", {}).get("description", ""))
@@ -3909,8 +4452,8 @@ func _refresh_world_header() -> void:
 	summary_label.max_lines_visible = 1 if game_focus_mode else 2
 
 
-func _render_action_panel() -> void:
-	_rebuild_actions()
+func _render_action_panel(focused_object_override: Dictionary = {}) -> void:
+	_rebuild_actions(focused_object_override)
 
 
 func _render_result_panel() -> void:
@@ -4395,14 +4938,16 @@ func _screen_for_action_category(category_id: String) -> String:
 			return SCREEN_GAME if current_game != null else SCREEN_ENVIRONMENT
 
 
-func _rebuild_actions() -> void:
+func _rebuild_actions(focused_object_override: Dictionary = {}) -> void:
 	stake_input = null
 	_clear(actions_list)
-	_render_focused_context_panel()
+	_render_focused_context_panel(focused_object_override)
 
 
-func _render_focused_context_panel() -> void:
-	var object_data := _interactable_object(selected_object_id)
+func _render_focused_context_panel(focused_object_override: Dictionary = {}) -> void:
+	var object_data := focused_object_override
+	if object_data.is_empty() or str(object_data.get("object_id", "")) != selected_object_id:
+		object_data = _interactable_object(selected_object_id)
 	if current_game != null and (object_data.is_empty() or str(object_data.get("object_type", "")) == CONTEXT_MODE_GAME):
 		_add_current_game_panel(run_state.current_environment)
 		return
@@ -4432,7 +4977,7 @@ func _render_empty_context_panel() -> void:
 			continue
 		if shown >= 5:
 			continue
-		var button := _button(label, Callable(self, "focus_interactable_object").bind(object_id))
+		var button := _button(label, Callable(self, "focus_interactable_object_from_view").bind(data.duplicate(true)))
 		var enabled := bool(data.get("enabled", true))
 		if not enabled:
 			button.text = "%s - locked" % label
@@ -4452,27 +4997,36 @@ func _render_selected_object_context(object_data: Dictionary) -> void:
 	var title := str(object_data.get("label", "Something here"))
 	var enabled := bool(object_data.get("enabled", true))
 	var card := _begin_action_card(title, _context_border_color(object_type, enabled))
-	card.add_child(_label("Type: %s" % _context_type_label(object_type), 12))
+	_add_detail_row(card, "Type", _context_type_label(object_type))
 	var description := str(object_data.get("short_description", ""))
 	if not description.is_empty():
-		card.add_child(_label(description, 13))
+		_add_detail_row(card, "Does", description)
 	var cost := str(object_data.get("cost_summary", ""))
 	if not cost.is_empty():
-		card.add_child(_label(cost, 13))
+		_add_detail_row(card, "Cost", cost.replace("Cost:", "").strip_edges())
 	var risk := str(object_data.get("risk_summary", ""))
 	if not risk.is_empty():
-		card.add_child(_label("Risk: %s" % risk, 13))
+		_add_detail_row(card, "Risk", risk)
+	var choice_summary := str(object_data.get("choice_summary", ""))
+	if not choice_summary.is_empty():
+		_add_detail_row(card, "Choices", choice_summary)
 	if object_type == CONTEXT_MODE_TRAVEL:
 		for preview_line in _copy_array(object_data.get("preview_lines", [])).slice(0, 4):
 			var preview_text := str(preview_line).strip_edges()
 			if not preview_text.is_empty():
-				card.add_child(_muted_label(preview_text, 12))
+				_add_detail_row(card, "Route", preview_text, true)
 		var unlock_lines := _copy_array(object_data.get("unlock_conditions", []))
 		if not unlock_lines.is_empty():
-			card.add_child(_muted_label("Unlock: %s" % "; ".join(unlock_lines.slice(0, 2)), 12))
+			_add_detail_row(card, "Unlock", "; ".join(unlock_lines.slice(0, 2)), true)
 	var effect := str(object_data.get("effect_summary", ""))
 	if not effect.is_empty():
-		card.add_child(_label("Effect: %s" % effect, 13))
+		_add_detail_row(card, "Effect", effect)
+	var status := str(object_data.get("status_summary", ""))
+	if not status.is_empty():
+		_add_detail_row(card, "Status", status, true)
+	var impact := str(object_data.get("impact_summary", ""))
+	if not impact.is_empty():
+		_add_detail_row(card, "Impact", impact, true)
 	if object_type == CONTEXT_MODE_GAME:
 		_add_game_object_context_details(card, str(object_data.get("source_id", "")))
 	var action_summary := str(object_data.get("action_summary", ""))
@@ -4480,14 +5034,11 @@ func _render_selected_object_context(object_data: Dictionary) -> void:
 	if not enabled and action_summary == disabled_reason:
 		action_summary = ""
 	if not action_summary.is_empty():
-		if enabled:
-			card.add_child(_label(action_summary, 13))
-		else:
-			card.add_child(_muted_label(action_summary, 13))
+		_add_detail_row(card, "Action", action_summary, not enabled)
 	if not enabled:
 		if disabled_reason.strip_edges().is_empty():
 			disabled_reason = "Not available right now."
-		card.add_child(_muted_label(disabled_reason, 13))
+		_add_detail_row(card, "Locked", disabled_reason, true)
 	_add_context_object_actions(card, object_data)
 	_add_card_button(card, "Back to room", Callable(self, "clear_interaction_focus"))
 
@@ -4508,6 +5059,12 @@ func _add_context_object_actions(card: VBoxContainer, object_data: Dictionary) -
 			_add_context_shopkeeper_actions(card)
 		CONTEXT_MODE_GAME_HOOK:
 			_add_context_game_hook_actions(card, object_data)
+		CONTEXT_MODE_HOME_TENURE:
+			_add_card_button(card, str(object_data.get("label", "Pay")), Callable(self, "confirm_home_tenure_action"), false, true)
+		CONTEXT_MODE_HOME_STORAGE:
+			_add_card_button(card, "Place container", Callable(self, "_show_place_container_popup"), false, true)
+		CONTEXT_MODE_HOME_CONTAINER:
+			_add_card_button(card, "Open storage", Callable(self, "_show_home_container_popup").bind(source_id), false, true)
 		CONTEXT_MODE_TRAVEL:
 			_add_context_travel_actions(card, source_id)
 		CONTEXT_MODE_SERVICE:
@@ -4605,8 +5162,9 @@ func _add_context_item_actions(card: VBoxContainer, item_id: String) -> void:
 	if offer.is_empty():
 		card.add_child(_muted_label("That offer is no longer available.", 13))
 		return
+	var action_label := str(offer.get("action_label", "Buy"))
 	if selected_item_offer_id == item_id:
-		_add_card_button(card, "Buy", Callable(self, "confirm_selected_item_offer"), false, true)
+		_add_card_button(card, action_label, Callable(self, "confirm_selected_item_offer"), false, true)
 	else:
 		_add_card_button(card, "Select item", Callable(self, "select_item_offer").bind(item_id))
 
@@ -4646,7 +5204,31 @@ func _add_context_travel_actions(card: VBoxContainer, target_id: String) -> void
 			card.add_child(_muted_label(line, 12))
 		if not selected_travel_target_id.is_empty():
 			_add_card_button(card, "Travel to %s" % selected_travel_label, Callable(self, "confirm_selected_travel"), false, true)
+			_add_card_button(card, "Open Map", Callable(self, "open_world_map"))
+			return
+		var direct_room_exit := _local_parent_home_door_travel_choice(_parent_home_parent_target_id())
+		if not direct_room_exit.is_empty():
+			for preview_line in _copy_array(direct_room_exit.get("preview_lines", [])):
+				var preview_text := str(preview_line).strip_edges()
+				if not preview_text.is_empty():
+					card.add_child(_muted_label(preview_text, 12))
+			if not bool(direct_room_exit.get("enabled", true)):
+				card.add_child(_muted_label(str(direct_room_exit.get("disabled_reason", "That door is not available right now.")), 13))
+				return
+			_add_card_button(card, "Enter Lobby", Callable(self, "_travel_to").bind(str(direct_room_exit.get("id", "")), str(direct_room_exit.get("label", "Lobby")), direct_room_exit), false, true)
+			return
 		_add_card_button(card, "Open Map", Callable(self, "open_world_map"), selected_travel_target_id.is_empty(), selected_travel_target_id.is_empty())
+		return
+	var local_door_choice := _local_parent_home_door_travel_choice(target_id)
+	if not local_door_choice.is_empty():
+		for preview_line in _copy_array(local_door_choice.get("preview_lines", [])):
+			var preview_text := str(preview_line).strip_edges()
+			if not preview_text.is_empty():
+				card.add_child(_muted_label(preview_text, 12))
+		if not bool(local_door_choice.get("enabled", true)):
+			card.add_child(_muted_label(str(local_door_choice.get("disabled_reason", "That door is not available right now.")), 13))
+			return
+		_add_card_button(card, "Enter Room", Callable(self, "_travel_to").bind(str(local_door_choice.get("id", "")), str(local_door_choice.get("label", "Room")), local_door_choice), false, true)
 		return
 	var choice := _travel_choice(target_id)
 	if choice.is_empty():
@@ -4727,6 +5309,10 @@ func _context_border_color(object_type: String, enabled: bool) -> Color:
 			return VisualStyle.YELLOW
 		CONTEXT_MODE_GAME_HOOK:
 			return VisualStyle.YELLOW
+		CONTEXT_MODE_HOME_TENURE:
+			return VisualStyle.AMBER
+		CONTEXT_MODE_HOME_STORAGE, CONTEXT_MODE_HOME_CONTAINER:
+			return VisualStyle.TEAL
 		CONTEXT_MODE_TRAVEL:
 			return VisualStyle.PURPLE_2
 		CONTEXT_MODE_SERVICE, CONTEXT_MODE_LENDER:
@@ -4749,6 +5335,12 @@ func _context_type_label(object_type: String) -> String:
 			return "Shopkeeper"
 		CONTEXT_MODE_GAME_HOOK:
 			return "Game Clerk"
+		CONTEXT_MODE_HOME_TENURE:
+			return "Home"
+		CONTEXT_MODE_HOME_STORAGE:
+			return "Storage"
+		CONTEXT_MODE_HOME_CONTAINER:
+			return "Container"
 		CONTEXT_MODE_TRAVEL:
 			return "Travel"
 		CONTEXT_MODE_SERVICE:
@@ -4935,13 +5527,14 @@ func _resolve_game_action(action_id: String, skip_stake_validation: bool = false
 		run_state.clear_deferred_bankroll_zero_resolution()
 	var embeds_result_feedback := _current_game_embeds_result_feedback()
 	last_game_result = result.duplicate(true)
+	_play_result_surface_audio_cue(result)
 	pending_all_in_result_terminal_check = confirmed_all_in_wager and bool(result.get("ok", false)) and run_state != null and run_state.bankroll <= 0 and not bool(result.get("won", false))
 	if runtime_tick_in_progress:
 		if game_surface_canvas != null and current_screen == SCREEN_GAME:
 			game_surface_canvas.render_game_snapshot(_game_view_snapshot())
 		return
 	if not preserve_surface_ui_state:
-		game_surface_ui_state = {}
+		game_surface_ui_state = _preserved_game_surface_preference_state(game_surface_ui_state)
 	_clear_selected_game_action()
 	if embeds_result_feedback:
 		_set_current_screen(SCREEN_GAME)
@@ -4955,6 +5548,21 @@ func _resolve_game_action(action_id: String, skip_stake_validation: bool = false
 		_refresh()
 		return
 	_refresh()
+
+
+func _play_result_surface_audio_cue(result: Dictionary) -> void:
+	if game_surface_canvas == null or result.is_empty() or not bool(result.get("ok", false)):
+		return
+	var cue_id := str(result.get("surface_audio_cue", "")).strip_edges()
+	if cue_id.is_empty():
+		return
+	var context: Dictionary = {}
+	var context_value: Variant = result.get("surface_audio_context", {})
+	if typeof(context_value) == TYPE_DICTIONARY:
+		context = (context_value as Dictionary).duplicate(true)
+	if not context.has("action"):
+		context["action"] = cue_id
+	game_surface_canvas.surface_play_audio_cue(cue_id, context)
 
 
 func confirm_pending_wager_action() -> void:
@@ -5124,6 +5732,7 @@ func current_overlay_state_snapshot() -> Dictionary:
 		"event_choice_popup_visible": _event_choice_popup_is_visible(),
 		"event_choice_popup_type": str(pending_event_choice_popup_snapshot.get("popup_type", "")),
 		"event_choice_popup_blocking": _blocking_decision_popup_is_visible(),
+		"talk_dock_visible": talk_dock != null and talk_dock.visible,
 		"world_map_visible": _world_map_overlay_is_visible(),
 		"run_inventory_visible": _run_inventory_popup_is_visible(),
 		"run_inventory_mode": run_inventory_popup_mode,
@@ -5348,7 +5957,7 @@ func debug_soak_snapshot() -> Dictionary:
 		"world_map_snapshot_cache_size": world_map_snapshot_cache.size(),
 		"world_map_button_count": world_map_button_ids.size(),
 		"event_choice_popup_child_count": event_choice_popup_choices_list.get_child_count() if event_choice_popup_choices_list != null else 0,
-		"inventory_child_count": run_inventory_list.get_child_count() if run_inventory_list != null else 0,
+		"inventory_child_count": run_inventory_screen.rendered_item_child_count() if run_inventory_screen != null else 0,
 		"journal_child_count": run_journal_list.get_child_count() if run_journal_list != null else 0,
 		"environment_canvas": environment_debug,
 		"game_surface_canvas": game_surface_debug,
@@ -5430,6 +6039,7 @@ func current_screen_snapshot() -> Dictionary:
 		"run_menu_visible": _run_menu_is_visible(),
 		"run_menu": current_run_menu_snapshot(),
 		"run_journal_visible": _run_journal_popup_is_visible(),
+		"talk_dock": current_talk_dock_snapshot(),
 		"overlay_state": current_overlay_state_snapshot(),
 		"failure_summary": _failure_summary_snapshot() if run_state != null and run_state.run_status == RunState.RUN_STATUS_FAILED else {},
 		"victory_summary": _victory_summary_snapshot() if run_state != null and run_state.run_status == RunState.RUN_STATUS_ENDED else {},
@@ -5452,6 +6062,8 @@ func current_start_menu_snapshot() -> Dictionary:
 		"content_groups": _content_group_option_snapshot(),
 		"selected_content_groups": _selected_content_groups_for_new_run(),
 		"content_group_status": content_group_status_label.text if content_group_status_label != null else "",
+		"home_types": _home_type_options(),
+		"selected_home_type_id": _normalize_home_type_id(selected_home_type_id),
 		"content_group_config_visible": content_group_panel.visible if content_group_panel != null else false,
 		"challenges": _challenge_option_snapshot(),
 		"selected_challenge_id": selected_challenge_id,
@@ -5501,6 +6113,22 @@ func current_event_choice_popup_snapshot() -> Dictionary:
 	return snapshot
 
 
+func current_talk_dock_snapshot() -> Dictionary:
+	if talk_dock == null:
+		return {"visible": false}
+	_refresh_talk_dock()
+	var snapshot := talk_dock.current_snapshot()
+	if snapshot.has("panel_rect") and typeof(snapshot.get("panel_rect")) == TYPE_RECT2:
+		snapshot["panel_rect"] = _rect_to_dict(snapshot.get("panel_rect"))
+	if snapshot.has("screen_rect") and typeof(snapshot.get("screen_rect")) == TYPE_RECT2:
+		snapshot["screen_rect"] = _rect_to_dict(snapshot.get("screen_rect"))
+	if environment_canvas != null:
+		snapshot["environment_rect"] = _rect_to_dict(environment_canvas.get_global_rect())
+	if game_surface_canvas != null:
+		snapshot["game_surface_rect"] = _rect_to_dict(game_surface_canvas.get_global_rect())
+	return snapshot
+
+
 func current_conclusion_animation_snapshot() -> Dictionary:
 	var snapshot := conclusion_animation_snapshot.duplicate(true)
 	if not snapshot.has("active"):
@@ -5526,21 +6154,31 @@ func current_environment_result_feedback_snapshot() -> Dictionary:
 
 
 func current_run_inventory_snapshot() -> Dictionary:
+	var popup_model := _run_inventory_popup_model(run_inventory_popup_mode, run_inventory_context_container_id)
+	var popup_items: Array = popup_model.get("items", []) if typeof(popup_model.get("items", [])) == TYPE_ARRAY else []
+	var selected_item := _selected_inventory_popup_item(popup_items)
 	var snapshot := {
 		"visible": _run_inventory_popup_is_visible(),
 		"mode": run_inventory_popup_mode,
-		"items": _inventory_item_view_list(),
+		"items": popup_items,
+		"grid": true,
+		"selected_item_id": selected_run_inventory_item_id,
+		"selected_item_source": selected_run_inventory_item_source,
+		"selected_item": selected_item,
+		"container_id": run_inventory_context_container_id,
 		"merchant_available": _shopkeeper_available() if run_state != null else false,
 		"shop_description": _shop_description() if run_state != null else "",
 	}
 	if _run_inventory_popup_is_visible():
 		_position_run_inventory_popup()
 		snapshot["anchor"] = "screen_center"
-		snapshot["interaction_kind"] = "inventory" if run_inventory_popup_mode == "inspect" else "merchant_sale"
-		if run_inventory_panel != null:
-			snapshot["popup_rect"] = _rect_to_dict(run_inventory_panel.get_global_rect())
-		if run_inventory_overlay != null:
-			snapshot["screen_rect"] = _rect_to_dict(run_inventory_overlay.get_global_rect())
+		snapshot["interaction_kind"] = _run_inventory_interaction_kind(run_inventory_popup_mode)
+		if run_inventory_screen != null:
+			var layout_rects: Dictionary = run_inventory_screen.layout_rects()
+			snapshot["popup_rect"] = _rect_to_dict(_rect_from_dict(layout_rects.get("popup_rect", Rect2())))
+			snapshot["grid_rect"] = _rect_to_dict(_rect_from_dict(layout_rects.get("grid_rect", Rect2())))
+			snapshot["detail_rect"] = _rect_to_dict(_rect_from_dict(layout_rects.get("detail_rect", Rect2())))
+			snapshot["screen_rect"] = _rect_to_dict(_rect_from_dict(layout_rects.get("screen_rect", Rect2())))
 		if environment_canvas != null:
 			snapshot["environment_rect"] = _rect_to_dict(environment_canvas.get_global_rect())
 	return snapshot
@@ -5616,6 +6254,7 @@ func current_spatial_interaction_snapshot() -> Dictionary:
 
 
 func hover_interactable_object(object_id: String) -> bool:
+	_pause_run_clock_for_ui_preview()
 	if object_id.is_empty():
 		hover_target_id = ""
 		return true
@@ -5626,11 +6265,26 @@ func hover_interactable_object(object_id: String) -> bool:
 
 
 func focus_interactable_object(object_id: String) -> bool:
+	_pause_run_clock_for_ui_preview()
 	if object_id.is_empty():
 		clear_interaction_focus(true)
 		return true
 	var object_data := _interactable_object(object_id)
 	if object_data.is_empty():
+		return false
+	return _focus_interactable_object_with_data(object_id, object_data)
+
+
+func focus_interactable_object_from_view(object_data: Dictionary) -> bool:
+	_pause_run_clock_for_ui_preview()
+	var object_id := str(object_data.get("object_id", ""))
+	if object_id.is_empty():
+		return false
+	return _focus_interactable_object_with_data(object_id, object_data)
+
+
+func _focus_interactable_object_with_data(object_id: String, object_data: Dictionary) -> bool:
+	if object_data.is_empty() or str(object_data.get("object_id", "")) != object_id:
 		return false
 	selected_object_id = object_id
 	focus_target_id = object_id
@@ -5640,10 +6294,9 @@ func focus_interactable_object(object_id: String) -> bool:
 	if environment_canvas != null:
 		environment_canvas.set_selected_object(object_id)
 		if run_state != null:
-			_render_foundation_snapshots()
-			_refresh_world_header()
+			_refresh_world_header(object_data)
 	if actions_list != null:
-		_render_action_panel()
+		_render_action_panel(object_data)
 	return true
 
 
@@ -5651,6 +6304,15 @@ func activate_interactable_object(object_id: String) -> bool:
 	if _guard_player_input_route():
 		return false
 	if object_id == "travel:leave":
+		var direct_room_exit := _local_parent_home_door_travel_choice(_parent_home_parent_target_id())
+		if not direct_room_exit.is_empty():
+			if not bool(direct_room_exit.get("enabled", true)):
+				_show_message(str(direct_room_exit.get("disabled_reason", "That door is not available right now.")))
+				_refresh()
+				return false
+			focus_interactable_object(object_id)
+			_travel_to(str(direct_room_exit.get("id", "")), str(direct_room_exit.get("label", "Lobby")), direct_room_exit)
+			return true
 		var leave_object := _interactable_object(object_id)
 		if leave_object.is_empty():
 			if not _travel_choice_view_list().is_empty() and not _run_failed_without_recovery():
@@ -5703,8 +6365,22 @@ func activate_interactable_object(object_id: String) -> bool:
 			return talk_to_shopkeeper()
 		CONTEXT_MODE_GAME_HOOK:
 			return use_game_environment_hook(str(object_data.get("parent_id", "")), source_id, str(object_data.get("confirm_action_id", "")))
+		CONTEXT_MODE_HOME_TENURE:
+			return confirm_home_tenure_action()
+		CONTEXT_MODE_HOME_STORAGE:
+			return _show_place_container_popup()
+		CONTEXT_MODE_HOME_CONTAINER:
+			return _show_home_container_popup(source_id)
 		CONTEXT_MODE_TRAVEL:
 			if source_id == "leave":
+				var direct_room_exit := _local_parent_home_door_travel_choice(_parent_home_parent_target_id())
+				if not direct_room_exit.is_empty():
+					if not bool(direct_room_exit.get("enabled", true)):
+						_show_message(str(direct_room_exit.get("disabled_reason", "That door is not available right now.")))
+						_refresh()
+						return false
+					_travel_to(str(direct_room_exit.get("id", "")), str(direct_room_exit.get("label", "Lobby")), direct_room_exit)
+					return true
 				return open_world_map()
 			if select_travel_option(source_id):
 				confirm_selected_travel()
@@ -5887,6 +6563,7 @@ func _finish_conclusion_animation() -> void:
 
 
 func clear_interaction_focus(animate_camera_return: bool = false) -> void:
+	_pause_run_clock_for_ui_preview()
 	hover_target_id = ""
 	focus_target_id = ""
 	selected_object_id = ""
@@ -5894,9 +6571,10 @@ func clear_interaction_focus(animate_camera_return: bool = false) -> void:
 	camera_focus_point = Vector2(0.5, 0.5)
 	current_context_mode = CONTEXT_MODE_ROOM
 	if environment_canvas != null:
+		if _environment_canvas_snapshot_is_stale():
+			_render_environment_canvas_snapshot()
 		environment_canvas.set_selected_object("", not animate_camera_return)
 		if run_state != null:
-			_render_foundation_snapshots()
 			_refresh_world_header()
 	if actions_list != null:
 		_render_action_panel()
@@ -5923,11 +6601,49 @@ func _render_foundation_snapshots() -> void:
 	var environment_visible := current_screen != SCREEN_GAME or current_game == null
 	var game_visible := current_screen == SCREEN_GAME and current_game != null
 	if environment_canvas != null and environment_visible:
-		environment_canvas.render_environment_snapshot(_environment_view_snapshot())
+		_render_environment_canvas_snapshot()
 	if game_surface_canvas != null:
 		game_surface_canvas.set_game_module(current_game)
 		if game_visible:
 			game_surface_canvas.render_game_snapshot(_game_view_snapshot())
+
+
+func _render_environment_canvas_snapshot() -> void:
+	if environment_canvas == null:
+		return
+	environment_canvas.render_environment_snapshot(_environment_view_snapshot())
+	rendered_environment_snapshot_signature = _environment_snapshot_signature()
+
+
+func _environment_canvas_snapshot_is_stale() -> bool:
+	if environment_canvas == null or run_state == null:
+		return false
+	return rendered_environment_snapshot_signature != _environment_snapshot_signature()
+
+
+func _environment_snapshot_signature() -> String:
+	if run_state == null:
+		return ""
+	var environment := run_state.current_environment
+	var parts: Array = [
+		str(environment.get("id", "")),
+		str(environment.get("archetype_id", "")),
+		str(environment.get("world_node_id", "")),
+		str(environment.get("kind", "")),
+		str(environment.get("display_name", "")),
+		str(environment.get("game_ids", [])),
+		str(environment.get("event_ids", [])),
+		str(environment.get("item_offers", [])),
+		str(environment.get("service_ids", [])),
+		str(environment.get("lender_hooks", [])),
+		str(environment.get("next_archetypes", [])),
+		str(environment.get("travel_hooks", [])),
+		str(environment.get("object_fixtures", [])),
+		str(environment.get("home_containers", [])),
+		str(environment.get("layout", {})),
+		str(run_state.game_clock_minutes),
+	]
+	return "|".join(parts)
 
 
 func _environment_view_snapshot() -> Dictionary:
@@ -5955,6 +6671,11 @@ func _environment_view_snapshot() -> Dictionary:
 	snapshot["selected_travel_target_id"] = selected_travel_target_id
 	snapshot["selected_travel_label"] = selected_travel_label
 	snapshot["event_cadence"] = run_state.event_cadence_summary()
+	snapshot["game_clock_minutes"] = run_state.game_clock_minutes
+	snapshot["game_day"] = run_state.game_day()
+	snapshot["clock_text"] = run_state.clock_display_text()
+	snapshot["home_state"] = run_state.home_state.duplicate(true)
+	snapshot["home_status_summary"] = run_state.home_status_summary()
 	snapshot["world_map_overlay_visible"] = world_map_overlay != null and world_map_overlay.visible
 	snapshot["world_map"] = _world_map_snapshot() if bool(snapshot["world_map_overlay_visible"]) else {}
 	snapshot["event_options"] = _eligible_event_option_view_list()
@@ -6079,6 +6800,7 @@ func _interactable_object_view_list() -> Array:
 			continue
 		var item_object_id := "item:%s" % item_id
 		var affordable := bool(offer.get("affordable", true)) and not run_failed_without_recovery
+		var pickup := bool(offer.get("pickup", false))
 		objects.append(_make_interactable_object({
 			"object_id": item_object_id,
 			"object_type": CONTEXT_MODE_ITEM,
@@ -6088,16 +6810,16 @@ func _interactable_object_view_list() -> Array:
 			"presence": "dynamic",
 			"enabled": affordable,
 			"disabled_reason": "" if affordable else failed_reason if run_failed_without_recovery else "Not enough bankroll.",
-			"action_summary": "Buy this item." if affordable else "Needs more bankroll before it can be used.",
+			"action_summary": "Pick this item up." if pickup and affordable else "Buy this item." if affordable else "Needs more bankroll before it can be used.",
 			"effect_summary": str(offer.get("effect_summary", "")),
 			"risk_summary": "",
-			"cost_summary": "Cost: %d" % int(offer.get("price", 0)),
+			"cost_summary": "Pickup" if pickup else "Cost: %d" % int(offer.get("price", 0)),
 			"visual_key": "item",
 			"prop": str(offer.get("environment_prop", "")),
 			"surface": str(offer.get("surface", "counter")),
 			"icon_key": str(offer.get("icon_key", item_id)),
 			"asset_path": str(offer.get("asset_path", "")),
-			"available_actions": [{"id": "buy_item", "label": "Buy"}] if affordable else [],
+			"available_actions": [{"id": "buy_item", "label": str(offer.get("action_label", "Buy"))}] if affordable else [],
 			"confirm_action_id": "buy_item" if affordable else "",
 			"focus_rect": _interaction_rect_for_object(item_object_id, CONTEXT_MODE_ITEM, index),
 		}))
@@ -6126,9 +6848,13 @@ func _interactable_object_view_list() -> Array:
 			"focus_rect": _interaction_rect_for_object(shopkeeper_object_id, CONTEXT_MODE_SHOPKEEPER, 0),
 		}))
 	objects.append_array(_game_hook_interactable_objects())
+	objects.append_array(_home_interactable_objects())
 	var travel_choices := _travel_choice_view_list()
 	if not travel_choices.is_empty():
 		var first_choice: Dictionary = travel_choices[0] if typeof(travel_choices[0]) == TYPE_DICTIONARY else {}
+		var direct_room_exit := _local_parent_home_door_travel_choice(_parent_home_parent_target_id())
+		if not direct_room_exit.is_empty():
+			first_choice = direct_room_exit
 		var any_enabled := false
 		for choice_value in travel_choices:
 			if typeof(choice_value) == TYPE_DICTIONARY and bool((choice_value as Dictionary).get("enabled", true)):
@@ -6139,25 +6865,27 @@ func _interactable_object_view_list() -> Array:
 		var travel_disabled_reason := ""
 		if run_failed_without_recovery:
 			travel_disabled_reason = failed_reason
-		var preview_lines: Array = []
-		for choice_value in travel_choices.slice(0, 3):
-			if typeof(choice_value) != TYPE_DICTIONARY:
-				continue
-			var choice: Dictionary = choice_value
-			preview_lines.append("%s: %s, cost %d" % [
-				str(choice.get("label", choice.get("id", "Route"))),
-				str(choice.get("distance", "near")),
-				int(choice.get("cost", 0)),
-			])
+		var travel_label := "Leave"
+		var travel_description := "Open city map."
+		var travel_action_summary := "Open map." if any_enabled else "Inspect locked routes."
+		var travel_available_actions := [{"id": "open_map", "label": "Open Map"}] if travel_enabled else []
+		var travel_confirm_action := "open_map" if travel_enabled else ""
+		if not direct_room_exit.is_empty():
+			travel_label = str(direct_room_exit.get("label", "Lobby"))
+			travel_description = "Enter motel lobby."
+			travel_action_summary = "Enter lobby."
+			travel_available_actions = [{"id": "enter_lobby", "label": "Enter Lobby"}] if travel_enabled else []
+			travel_confirm_action = "enter_lobby" if travel_enabled else ""
+		var preview_lines := _travel_leave_preview_lines(travel_choices, direct_room_exit)
 		objects.append(_make_interactable_object({
 			"object_id": travel_object_id,
 			"object_type": CONTEXT_MODE_TRAVEL,
 			"source_id": "leave",
-			"label": "Leave",
-			"short_description": "Open the city map and choose a revealed stop.",
+			"label": travel_label,
+			"short_description": travel_description,
 			"enabled": travel_enabled,
 			"disabled_reason": travel_disabled_reason,
-			"action_summary": "Double-click to open the map." if any_enabled else "Open the map to inspect locked routes.",
+			"action_summary": travel_action_summary,
 			"risk_summary": _travel_risk_summary(first_choice),
 			"impact_summary": _travel_preview_summary(first_choice),
 			"cost_summary": "%d route(s)" % travel_choices.size(),
@@ -6166,10 +6894,13 @@ func _interactable_object_view_list() -> Array:
 			"visual_key": "travel",
 			"prop": "door",
 			"icon_key": "travel",
-			"available_actions": [{"id": "open_map", "label": "Open Map"}] if travel_enabled else [],
-			"confirm_action_id": "open_map" if travel_enabled else "",
+			"available_actions": travel_available_actions,
+			"confirm_action_id": travel_confirm_action,
 			"focus_rect": _interaction_rect_for_object(travel_object_id, CONTEXT_MODE_TRAVEL, 0),
 		}))
+	var room_return_object := _parent_home_return_interactable_object()
+	if not room_return_object.is_empty():
+		objects.append(room_return_object)
 	objects.append_array(_hook_interactable_objects(CONTEXT_MODE_SERVICE, _service_hook_view_list()))
 	objects.append_array(_hook_interactable_objects(CONTEXT_MODE_LENDER, _lender_hook_view_list()))
 	var prestige_options := _prestige_purchase_view_list()
@@ -6257,6 +6988,92 @@ func _game_hook_interactable_objects(apply_failure_lock: bool = true) -> Array:
 	return objects
 
 
+func _home_interactable_objects() -> Array:
+	var objects: Array = []
+	if run_state == null or library == null or not run_state.is_current_home_environment():
+		return objects
+	var tenure_status := run_state.home_tenure_status()
+	var tenure_action := run_state.home_tenure_action_status()
+	var tenure_available := bool(tenure_action.get("available", false))
+	var tenure_enabled := tenure_available and bool(tenure_action.get("enabled", false))
+	var tenure_label := str(tenure_action.get("label", "Home Status"))
+	var tenure_description := str(tenure_status.get("summary", run_state.home_status_summary()))
+	var tenure_actions := [{"id": "home_tenure_action", "label": tenure_label}] if tenure_available else []
+	objects.append(_make_interactable_object({
+		"object_id": "home_tenure:status",
+		"object_type": CONTEXT_MODE_HOME_TENURE,
+		"visual_type": CONTEXT_MODE_HOME_TENURE,
+		"source_id": "status",
+		"label": tenure_label,
+		"short_description": tenure_description,
+		"presence": "fixture",
+		"interactive": tenure_available,
+		"enabled": tenure_enabled,
+		"disabled_reason": "" if tenure_enabled else str(tenure_action.get("disabled_reason", "")),
+		"action_summary": "Settle the home clock." if tenure_enabled else tenure_description,
+		"status_summary": tenure_description,
+		"cost_summary": "Cost: %d" % int(tenure_action.get("cost", 0)) if tenure_available else "",
+		"visual_key": "home_tenure",
+		"prop": "paper_note",
+		"icon_key": "service",
+		"available_actions": tenure_actions if tenure_enabled else [],
+		"confirm_action_id": "home_tenure_action" if tenure_enabled else "",
+		"focus_rect": _interaction_rect_for_object("home_tenure:status", CONTEXT_MODE_HOME_TENURE, 0),
+	}))
+	var held_containers := _held_container_item_options()
+	var storage_enabled := not held_containers.is_empty()
+	objects.append(_make_interactable_object({
+		"object_id": "home_storage:place",
+		"object_type": CONTEXT_MODE_HOME_STORAGE,
+		"visual_type": CONTEXT_MODE_HOME_STORAGE,
+		"source_id": "place",
+		"label": "Storage Spot",
+		"short_description": "Place a carried container here for home storage.",
+		"presence": "fixture",
+		"interactive": true,
+		"enabled": storage_enabled,
+		"disabled_reason": "" if storage_enabled else "Carry a container first.",
+		"action_summary": "Place a carried container." if storage_enabled else "No carried container to place.",
+		"status_summary": "%d carried container(s)" % held_containers.size(),
+		"visual_key": "home_storage",
+		"prop": "crate",
+		"icon_key": "service",
+		"available_actions": [{"id": "place_home_container", "label": "Place"}] if storage_enabled else [],
+		"confirm_action_id": "place_home_container" if storage_enabled else "",
+		"focus_rect": _interaction_rect_for_object("home_storage:place", CONTEXT_MODE_HOME_STORAGE, 0),
+	}))
+	var containers := run_state.current_home_containers()
+	for index in range(containers.size()):
+		if typeof(containers[index]) != TYPE_DICTIONARY:
+			continue
+		var container: Dictionary = containers[index]
+		var container_id := str(container.get("id", ""))
+		var stored_items := _string_array(container.get("items", []))
+		var capacity := maxi(0, int(container.get("capacity", 0)))
+		var object_id := "home_container:%s" % container_id
+		objects.append(_make_interactable_object({
+			"object_id": object_id,
+			"object_type": CONTEXT_MODE_HOME_CONTAINER,
+			"visual_type": CONTEXT_MODE_HOME_CONTAINER,
+			"source_id": container_id,
+			"label": str(container.get("display_name", "Container")),
+			"short_description": "Home storage. Stored items do not grant effects while stashed.",
+			"presence": "fixture",
+			"interactive": true,
+			"enabled": true,
+			"action_summary": "Move items in or out.",
+			"status_summary": "%d/%d stored" % [stored_items.size(), capacity],
+			"effect_summary": _home_container_contents_summary(container),
+			"visual_key": "home_container",
+			"prop": "satchel",
+			"icon_key": str(container.get("item_id", "service")),
+			"available_actions": [{"id": "manage_home_container", "label": "Open"}],
+			"confirm_action_id": "manage_home_container",
+			"focus_rect": _interaction_rect_for_object(object_id, CONTEXT_MODE_HOME_CONTAINER, index),
+		}))
+	return objects
+
+
 func _hook_interactable_objects(object_type: String, options: Array) -> Array:
 	var objects: Array = []
 	var run_failed_without_recovery := _run_failed_without_recovery()
@@ -6293,7 +7110,8 @@ func _hook_interactable_objects(object_type: String, options: Array) -> Array:
 			"disabled_reason": disabled_reason,
 			"action_summary": "Double-click to use." if enabled else "",
 			"risk_summary": "",
-			"cost_summary": _hook_cost_effect_summary(option),
+			"cost_summary": "Cost: %d" % int(option.get("cost", 0)) if option.has("cost") else "",
+			"effect_summary": str(option.get("delta_summary", "")),
 			"visual_key": visual_type,
 			"icon_key": visual_type,
 			"available_actions": [{"id": "use_%s_hook" % object_type, "label": "Use"}] if enabled else [],
@@ -6312,6 +7130,36 @@ func _interactable_object(object_id: String) -> Dictionary:
 	return {}
 
 
+func _parent_home_return_interactable_object() -> Dictionary:
+	var room_node_id := _parent_home_node_id()
+	if room_node_id.is_empty():
+		return {}
+	var choice := _local_parent_home_door_travel_choice(room_node_id)
+	if choice.is_empty():
+		return {}
+	return _make_interactable_object({
+		"object_id": "travel:%s" % room_node_id,
+		"object_type": CONTEXT_MODE_TRAVEL,
+		"source_id": room_node_id,
+		"label": "Room Door",
+		"short_description": "Return to your room.",
+		"enabled": bool(choice.get("enabled", true)),
+		"disabled_reason": str(choice.get("disabled_reason", "")),
+		"action_summary": "Enter room.",
+		"risk_summary": "",
+		"impact_summary": "No fare. No street exposure.",
+		"cost_summary": "Cost: 0",
+		"preview_lines": _copy_array(choice.get("preview_lines", [])),
+		"unlock_conditions": [],
+		"visual_key": "travel",
+		"prop": "door",
+		"icon_key": "travel",
+		"available_actions": [{"id": "enter_room", "label": "Enter Room"}] if bool(choice.get("enabled", true)) else [],
+		"confirm_action_id": "enter_room" if bool(choice.get("enabled", true)) else "",
+		"focus_rect": _interaction_rect_for_object("travel:%s" % room_node_id, CONTEXT_MODE_TRAVEL, 1),
+	})
+
+
 func _travel_leave_interactable_object() -> Dictionary:
 	if run_state == null:
 		return {}
@@ -6319,31 +7167,30 @@ func _travel_leave_interactable_object() -> Dictionary:
 	if travel_choices.is_empty():
 		return {}
 	var first_choice: Dictionary = travel_choices[0] if typeof(travel_choices[0]) == TYPE_DICTIONARY else {}
+	var direct_room_exit := _local_parent_home_door_travel_choice(_parent_home_parent_target_id())
+	if not direct_room_exit.is_empty():
+		first_choice = direct_room_exit
 	var any_enabled := false
 	for choice_value in travel_choices:
 		if typeof(choice_value) == TYPE_DICTIONARY and bool((choice_value as Dictionary).get("enabled", true)):
 			any_enabled = true
 			break
 	var travel_enabled := not _run_failed_without_recovery()
-	var preview_lines: Array = []
-	for choice_value in travel_choices.slice(0, 3):
-		if typeof(choice_value) != TYPE_DICTIONARY:
-			continue
-		var choice: Dictionary = choice_value
-		preview_lines.append("%s: %s, cost %d" % [
-			str(choice.get("label", choice.get("id", "Route"))),
-			str(choice.get("distance", "near")),
-			int(choice.get("cost", 0)),
-		])
+	var preview_lines := _travel_leave_preview_lines(travel_choices, direct_room_exit)
+	var travel_label := str(direct_room_exit.get("label", "Lobby")) if not direct_room_exit.is_empty() else "Leave"
+	var travel_description := "Enter motel lobby." if not direct_room_exit.is_empty() else "Open city map."
+	var travel_action_summary := "Enter lobby." if not direct_room_exit.is_empty() else "Open map." if any_enabled else "Inspect locked routes."
+	var travel_available_actions := [{"id": "enter_lobby", "label": "Enter Lobby"}] if not direct_room_exit.is_empty() and travel_enabled else [{"id": "open_map", "label": "Open Map"}] if travel_enabled else []
+	var travel_confirm_action := "enter_lobby" if not direct_room_exit.is_empty() and travel_enabled else "open_map" if travel_enabled else ""
 	return _make_interactable_object({
 		"object_id": "travel:leave",
 		"object_type": CONTEXT_MODE_TRAVEL,
 		"source_id": "leave",
-		"label": "Leave",
-		"short_description": "Open the city map and choose a revealed stop.",
+		"label": travel_label,
+		"short_description": travel_description,
 		"enabled": travel_enabled,
 		"disabled_reason": _pressure_status_text(_run_pressure_view()) if not travel_enabled else "",
-		"action_summary": "Double-click to open the map." if any_enabled else "Open the map to inspect locked routes.",
+		"action_summary": travel_action_summary,
 		"risk_summary": _travel_risk_summary(first_choice),
 		"impact_summary": _travel_preview_summary(first_choice),
 		"cost_summary": "%d route(s)" % travel_choices.size(),
@@ -6352,10 +7199,138 @@ func _travel_leave_interactable_object() -> Dictionary:
 		"visual_key": "travel",
 		"prop": "door",
 		"icon_key": "travel",
-		"available_actions": [{"id": "open_map", "label": "Open Map"}] if travel_enabled else [],
-		"confirm_action_id": "open_map" if travel_enabled else "",
+		"available_actions": travel_available_actions,
+		"confirm_action_id": travel_confirm_action,
 		"focus_rect": _interaction_rect_for_object("travel:leave", CONTEXT_MODE_TRAVEL, 0),
 	})
+
+
+func _travel_leave_preview_lines(travel_choices: Array, direct_room_exit: Dictionary) -> Array:
+	var preview_lines: Array = []
+	for choice_value in travel_choices.slice(0, 3):
+		if typeof(choice_value) != TYPE_DICTIONARY:
+			continue
+		var choice: Dictionary = choice_value
+		var label := str(choice.get("label", choice.get("id", "Route"))).strip_edges()
+		if label.is_empty():
+			continue
+		preview_lines.append("%s: %s, cost %d" % [
+			label,
+			str(choice.get("distance", "near")),
+			int(choice.get("cost", 0)),
+		])
+	if not direct_room_exit.is_empty():
+		for line_value in _copy_array(direct_room_exit.get("preview_lines", [])):
+			var line := str(line_value).strip_edges()
+			if line.is_empty():
+				continue
+			var already_present := false
+			for existing_value in preview_lines:
+				if str(existing_value) == line:
+					already_present = true
+					break
+			if not already_present:
+				preview_lines.append(line)
+	return preview_lines
+
+
+func _local_parent_home_door_travel_choice(target_id: String) -> Dictionary:
+	var door_kind := _local_parent_home_door_kind(target_id)
+	if door_kind.is_empty():
+		return {}
+	if not _travel_target_ids().has(target_id):
+		return {}
+	var route := _world_route_for_target(target_id)
+	if route.is_empty():
+		route = library.route(target_id) if library != null else {}
+	route["cost"] = 0
+	route["base_cost"] = 0
+	route["distance"] = "near"
+	route["distance_blocks"] = 1
+	route["risk"] = ""
+	route["suspicion_delta"] = 0
+	route["risk_decay"] = 0
+	route["travel_method"] = "Door"
+	var archetype := _environment_archetype(target_id)
+	var label := _travel_label_from_archetype(archetype, target_id)
+	var preview_line := "Step through the door into the lobby."
+	if door_kind == "return":
+		label = str(run_state.home_state.get("display_name", "Room"))
+		preview_line = "Step through the door back into your room."
+	elif label.is_empty() or label == target_id:
+		label = "Lobby"
+	var status := run_state.travel_route_status(route)
+	if bool(status.get("hidden", false)):
+		return {}
+	return {
+		"id": target_id,
+		"label": label,
+		"kind": str(archetype.get("kind", "")),
+		"tier": int(archetype.get("tier", 1)),
+		"description": "A local door between your room and the lobby.",
+		"route": route.duplicate(true),
+		"cost": 0,
+		"risk": "",
+		"suspicion_delta": 0,
+		"distance": "near",
+		"distance_blocks": 1,
+		"risk_decay": 0,
+		"travel_method": "Door",
+		"risk_text": "",
+		"risk_event": {},
+		"unlock_conditions": _copy_array(status.get("unlock_conditions", [])),
+		"unlock_summary": str(status.get("unlock_summary", "")),
+		"preview": {"level": "full", "lines": [preview_line]},
+		"preview_level": "full",
+		"preview_lines": [preview_line],
+		"enabled": bool(status.get("available", true)),
+		"disabled_reason": str(status.get("disabled_reason", "")),
+		"local_door": true,
+		"door_kind": door_kind,
+	}
+
+
+func _local_parent_home_door_kind(target_id: String) -> String:
+	if run_state == null or target_id.strip_edges().is_empty():
+		return ""
+	var room_node_id := _parent_home_node_id()
+	if room_node_id.is_empty():
+		return ""
+	var current_id := _current_environment_archetype_id()
+	var parent_id := _parent_home_parent_target_id()
+	if current_id == room_node_id and target_id == parent_id:
+		return "exit"
+	if current_id == parent_id and target_id == room_node_id:
+		return "return"
+	return ""
+
+
+func _current_environment_archetype_id() -> String:
+	if run_state == null:
+		return ""
+	return str(run_state.current_environment.get("world_node_id", run_state.current_environment.get("archetype_id", run_state.current_environment.get("id", "")))).strip_edges()
+
+
+func _parent_home_node_id() -> String:
+	if run_state == null or not run_state.home_is_active():
+		return ""
+	var home_id := str(run_state.home_state.get("home_archetype_id", "")).strip_edges()
+	var home_archetype := _environment_archetype(home_id)
+	if str(home_archetype.get("parent_archetype", "")).strip_edges().is_empty():
+		return ""
+	var node_id := str(run_state.home_state.get("home_node_id", home_id)).strip_edges()
+	return node_id if not node_id.is_empty() else home_id
+
+
+func _parent_home_parent_target_id() -> String:
+	if run_state == null:
+		return ""
+	var room_node_id := _parent_home_node_id()
+	if room_node_id.is_empty():
+		return ""
+	var room_archetype := _environment_archetype(room_node_id)
+	var parent_id := str(room_archetype.get("parent_archetype", "")).strip_edges()
+	return parent_id
 
 
 func _environment_game_runtime_state(game_id: String) -> Dictionary:
@@ -6488,6 +7463,12 @@ func _layout_spot_field_name(object_type: String) -> String:
 			return "lender_spots"
 		CONTEXT_MODE_PRESTIGE:
 			return "prestige_spots"
+		CONTEXT_MODE_HOME_TENURE:
+			return "home_tenure_spots"
+		CONTEXT_MODE_HOME_STORAGE:
+			return "home_storage_spots"
+		CONTEXT_MODE_HOME_CONTAINER:
+			return "home_container_spots"
 	return ""
 
 
@@ -6553,6 +7534,15 @@ func _normalized_interaction_rect(object_type: String, index: int) -> Rect2:
 		CONTEXT_MODE_PRESTIGE:
 			center = Vector2(0.16 + float(index % 2) * 0.14, 0.30)
 			size = Vector2(112.0 / board_size.x, 58.0 / board_size.y)
+		CONTEXT_MODE_HOME_TENURE:
+			center = Vector2(0.78, 0.46)
+			size = Vector2(116.0 / board_size.x, 58.0 / board_size.y)
+		CONTEXT_MODE_HOME_STORAGE:
+			center = Vector2(0.20, 0.72)
+			size = Vector2(108.0 / board_size.x, 58.0 / board_size.y)
+		CONTEXT_MODE_HOME_CONTAINER:
+			center = Vector2(0.22 + float(index % 4) * 0.18, 0.76 + float(index / 4) * 0.11)
+			size = Vector2(104.0 / board_size.x, 58.0 / board_size.y)
 	return Rect2(center - size * 0.5, size)
 
 
@@ -6715,7 +7705,20 @@ func _current_game_surface_ui_state() -> Dictionary:
 	ui_state["selected_action_kind"] = selected_action_kind
 	ui_state["selected_stake"] = _current_selected_stake()
 	ui_state["surface_runtime_status"] = _current_game_surface_status()
+	ui_state["focused_talk_speaker"] = _focused_talk_speaker_snapshot()
 	return _apply_game_surface_time_fields(ui_state)
+
+
+func _focused_talk_speaker_snapshot() -> Dictionary:
+	if run_state == null:
+		return {}
+	var entry := run_state.next_pending_talk_event()
+	if entry.is_empty():
+		return {}
+	var speaker: Dictionary = entry.get("speaker", {}) if typeof(entry.get("speaker", {})) == TYPE_DICTIONARY else {}
+	if str(speaker.get("role", "")) != "patron":
+		return {}
+	return speaker.duplicate(true)
 
 
 func _current_game_result_snapshot() -> Dictionary:
@@ -6740,6 +7743,31 @@ func _current_game_embeds_result_feedback() -> bool:
 
 func _store_current_game_surface_ui_state(ui_state: Dictionary) -> void:
 	game_surface_ui_state = ui_state.duplicate(true)
+
+
+func _preserved_game_surface_preference_state(ui_state: Dictionary) -> Dictionary:
+	var preserved: Dictionary = {}
+	var preference_keys := GAME_SURFACE_UI_PREFERENCE_KEYS.duplicate()
+	if current_game != null and run_state != null and not run_state.current_environment.is_empty():
+		var surface := current_game.surface_state(run_state, run_state.current_environment, ui_state)
+		var module_keys: Array = surface.get("surface_ui_preference_keys", []) if typeof(surface.get("surface_ui_preference_keys", [])) == TYPE_ARRAY else []
+		for module_key_value in module_keys:
+			var module_key := str(module_key_value).strip_edges()
+			if not module_key.is_empty() and not preference_keys.has(module_key):
+				preference_keys.append(module_key)
+	for key_value in preference_keys:
+		var key := str(key_value)
+		if not ui_state.has(key):
+			continue
+		var value: Variant = ui_state.get(key)
+		match typeof(value):
+			TYPE_DICTIONARY:
+				preserved[key] = (value as Dictionary).duplicate(true)
+			TYPE_ARRAY:
+				preserved[key] = (value as Array).duplicate(true)
+			_:
+				preserved[key] = value
+	return preserved
 
 
 func _surface_renderer_for_game_definition(definition: Dictionary) -> String:
@@ -8290,6 +9318,7 @@ func _run_status_hud_model() -> Dictionary:
 		alcohol_text += " (+%d pending)" % pending_drink
 	var debt_text := "[DEBT] %s" % _hud_debt_text(debt_items)
 	var run_text := "[RUN] %s" % _hud_run_status_text(pressure)
+	var clock_text := "[TIME] %s" % run_state.clock_display_text()
 	var save_text := _hud_save_text()
 	var goal_text := _hud_goal_text(prestige, pressure, demo_objective)
 	var environment_text := "[ENV] %s / %s" % [
@@ -8318,10 +9347,15 @@ func _run_status_hud_model() -> Dictionary:
 		objective_parts.insert(3, "Status: %s" % _hud_short(pressure_text, 38))
 	if not pit_boss_text.is_empty():
 		objective_parts.insert(4, pit_boss_text)
+	var home_text := _hud_home_text()
+	if not home_text.is_empty():
+		objective_parts.insert(5, home_text)
 	return {
-		"status_text": "%s  %s  %s  %s  %s" % [bankroll_text, heat_text, alcohol_text, debt_text, run_text],
+		"status_text": "%s  %s  %s  %s  %s  %s" % [clock_text, bankroll_text, heat_text, alcohol_text, debt_text, run_text],
 		"objective_text": " | ".join(objective_parts),
 		"save_text": save_text,
+		"clock_text": clock_text,
+		"home_text": home_text,
 		"bankroll_text": bankroll_text,
 		"bankroll": run_state.bankroll,
 		"bankroll_delta": bankroll_delta,
@@ -8379,6 +9413,16 @@ func _hud_inventory_text(inventory_items: Array) -> String:
 			item_text = item_text.substr(0, effect_index)
 		return _hud_short(item_text, 24)
 	return "%d items" % inventory_items.size()
+
+
+func _hud_home_text() -> String:
+	if run_state == null or run_state.home_state.is_empty():
+		return ""
+	var status := run_state.home_tenure_status()
+	var summary := run_state.home_status_summary()
+	if bool(status.get("lost", false)) or bool(status.get("overdue", false)) or bool(status.get("due", false)) or run_state.is_current_home_environment():
+		return "Home: %s" % _hud_short(summary, 44)
+	return ""
 
 
 func _hud_run_status_text(pressure: Dictionary) -> String:
@@ -9683,6 +10727,7 @@ func _eligible_event_option_with_context(event_id: String, context: Dictionary =
 			"label": str(choice_data.get("label", choice_id)),
 			"text": str(choice_data.get("text", "")),
 			"consequence_summary": _event_choice_consequence_summary(choice_data),
+			"requires_confirm": _event_choice_requires_confirmation(choice_data),
 			"identity_summary": "Choice ID: %s" % choice_id,
 			"impact_summary": _event_choice_consequence_summary(choice_data),
 			"selected": event_id == selected_event_id and choice_id == selected_event_choice_id,
@@ -9799,121 +10844,100 @@ func _event_choice_consequence_summary(choice_data: Dictionary) -> String:
 	return "; ".join(parts)
 
 
+func _event_choice_requires_confirmation(choice_data: Dictionary) -> bool:
+	var consequences: Dictionary = choice_data.get("consequences", {}) if typeof(choice_data.get("consequences", {})) == TYPE_DICTIONARY else {}
+	if int(consequences.get("bankroll_delta", 0)) < 0 or int(consequences.get("suspicion_delta", 0)) > 0:
+		return true
+	if consequences.has("debt") or not _copy_array(consequences.get("debt_changes", [])).is_empty():
+		return true
+	if bool(consequences.get("ended", false)):
+		return true
+	return false
+
+
 func _signed_int_text(value: int) -> String:
 	return "+%d" % value if value > 0 else str(value)
 
 
-func _open_run_inventory_popup(mode: String = "inspect") -> void:
-	if run_inventory_overlay == null or run_inventory_list == null:
+func _open_run_inventory_popup(mode: String = "inspect", container_id: String = "") -> void:
+	if run_inventory_screen == null:
 		return
+	if mode != run_inventory_popup_mode or container_id != run_inventory_context_container_id:
+		selected_run_inventory_item_id = ""
+		selected_run_inventory_item_source = ""
 	run_inventory_popup_mode = mode
-	_render_run_inventory_popup_contents()
-	run_inventory_overlay.visible = true
-	run_inventory_overlay.move_to_front()
-	_position_run_inventory_popup()
-	call_deferred("_position_run_inventory_popup")
+	run_inventory_context_container_id = container_id
+	run_inventory_screen.open(_run_inventory_popup_model(mode, container_id))
+	_sync_run_inventory_selection_from_screen()
 
 
 func _render_run_inventory_popup_contents() -> void:
-	if run_inventory_list == null:
+	if run_inventory_screen == null:
 		return
-	_clear(run_inventory_list)
-	var merchant_mode := run_inventory_popup_mode == "merchant_sale"
-	if run_inventory_title_label != null:
-		if merchant_mode:
-			run_inventory_title_label.text = "Sell Items"
-		else:
-			run_inventory_title_label.text = "Inventory"
-	if run_inventory_summary_label != null:
-		run_inventory_summary_label.text = _run_inventory_summary_text(run_inventory_popup_mode)
-	var items := _inventory_item_view_list()
-	if items.is_empty():
-		run_inventory_list.add_child(_muted_label("No run items yet.", 13))
-		return
-	for item in items:
-		if typeof(item) == TYPE_DICTIONARY:
-			_add_inventory_item_card(item as Dictionary, merchant_mode)
+	run_inventory_screen.update_model(_run_inventory_popup_model(run_inventory_popup_mode, run_inventory_context_container_id))
+	_sync_run_inventory_selection_from_screen()
 
 
-func _add_inventory_item_card(item: Dictionary, merchant_mode: bool = false) -> void:
-	if run_inventory_list == null:
+func select_run_inventory_item(item_id: String, source: String = "carried") -> void:
+	selected_run_inventory_item_id = item_id.strip_edges()
+	selected_run_inventory_item_source = source.strip_edges()
+	if selected_run_inventory_item_source.is_empty():
+		selected_run_inventory_item_source = "carried"
+	if run_inventory_screen != null:
+		run_inventory_screen.select_item(selected_run_inventory_item_id, selected_run_inventory_item_source, false)
+
+
+func _on_run_inventory_screen_item_selected(item_id: String, source: String) -> void:
+	selected_run_inventory_item_id = item_id.strip_edges()
+	selected_run_inventory_item_source = source.strip_edges()
+	if selected_run_inventory_item_source.is_empty():
+		selected_run_inventory_item_source = "carried"
+
+
+func _sync_run_inventory_selection_from_screen() -> void:
+	if run_inventory_screen == null:
 		return
-	var sellable := bool(item.get("sellable", false))
-	var border := VisualStyle.TEAL if sellable else VisualStyle.CYAN_2
-	var card := _panel_container(VisualStyle.DARK_2, border)
-	card.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	run_inventory_list.add_child(card)
-	var stack := VBoxContainer.new()
-	stack.add_theme_constant_override("separation", 5)
-	stack.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	card.add_child(stack)
-	var title := _label(str(item.get("display_name", item.get("id", "Item"))), 15)
-	_set_control_font_color(title, border)
-	stack.add_child(title)
-	stack.add_child(_label("Type: %s / %s" % [str(item.get("item_class", "unknown")).capitalize(), str(item.get("domain", "global")).capitalize()], 12))
-	stack.add_child(_label("Sale price: %d" % int(item.get("sale_price", 0)), 12))
-	var description := str(item.get("description", ""))
-	if not description.is_empty():
-		stack.add_child(_label(description, 12))
-	var effect_summary := str(item.get("effect_summary", ""))
-	if not effect_summary.is_empty():
-		stack.add_child(_muted_label("Effect: %s" % effect_summary, 12))
-	if merchant_mode:
-		if bool(item.get("repairable", false)):
-			_add_card_button(stack, "Repair for %d" % int(item.get("repair_cost", 0)), Callable(self, "repair_inventory_item").bind(str(item.get("id", ""))), false, true)
-		if sellable:
-			_add_card_button(stack, "Sell for %d" % int(item.get("sale_price", 0)), Callable(self, "sell_inventory_item").bind(str(item.get("id", ""))), false, true)
-		elif not bool(item.get("repairable", false)):
-			stack.add_child(_muted_label("This item cannot be sold.", 12))
-	else:
-		if bool(item.get("active_item", false)):
-			var selected := bool(item.get("active_selected", false))
-			_add_card_button(stack, "Active Item" if selected else "Set Active", Callable(self, "select_active_inventory_item").bind(str(item.get("id", ""))), selected, selected)
-		if bool(item.get("repairable", false)):
-			stack.add_child(_muted_label("Repairable with a shopkeeper.", 12))
-		if sellable:
-			stack.add_child(_muted_label("Sellable with a merchant.", 12))
-		elif not bool(item.get("repairable", false)):
-			stack.add_child(_muted_label("Not sellable.", 12))
+	var selected: Dictionary = run_inventory_screen.selected_item_key()
+	selected_run_inventory_item_id = str(selected.get("id", "")).strip_edges()
+	selected_run_inventory_item_source = str(selected.get("source", "carried")).strip_edges()
+	if selected_run_inventory_item_source.is_empty():
+		selected_run_inventory_item_source = "carried"
+
+
+func _run_inventory_popup_model(mode: String, container_id: String) -> Dictionary:
+	_refresh_run_action_service()
+	return RunInventoryViewModelScript.build(run_state, run_action_service, mode, container_id, {
+		"id": selected_run_inventory_item_id,
+		"source": selected_run_inventory_item_source,
+	})
+
+
+func _selected_inventory_popup_item(items: Array) -> Dictionary:
+	for item_value in items:
+		if typeof(item_value) != TYPE_DICTIONARY:
+			continue
+		var item: Dictionary = item_value
+		if str(item.get("id", "")) == selected_run_inventory_item_id and str(item.get("storage_source", "carried")) == selected_run_inventory_item_source:
+			return item.duplicate(true)
+	return {}
 
 
 func _position_run_inventory_popup() -> void:
-	if run_inventory_overlay == null or run_inventory_panel == null:
-		return
-	var overlay_rect := run_inventory_overlay.get_global_rect()
-	if overlay_rect.size.x <= 0.0 or overlay_rect.size.y <= 0.0:
-		return
-	var margin := 12.0
-	var width := clampf(overlay_rect.size.x * 0.54, 460.0, 640.0)
-	var height := clampf(overlay_rect.size.y * 0.56, 320.0, 500.0)
-	if overlay_rect.size.x < 560.0:
-		width = clampf(overlay_rect.size.x - margin * 2.0, 300.0, 460.0)
-	if overlay_rect.size.y < 420.0:
-		height = clampf(overlay_rect.size.y - margin * 2.0, 260.0, 380.0)
-	var popup_size := Vector2(width, height)
-	var global_position := Vector2(
-		overlay_rect.position.x + (overlay_rect.size.x - popup_size.x) * 0.5,
-		overlay_rect.position.y + (overlay_rect.size.y - popup_size.y) * 0.5
-	)
-	global_position.x = clampf(global_position.x, overlay_rect.position.x + margin, overlay_rect.position.x + overlay_rect.size.x - popup_size.x - margin)
-	global_position.y = clampf(global_position.y, overlay_rect.position.y + margin, overlay_rect.position.y + overlay_rect.size.y - popup_size.y - margin)
-	run_inventory_panel.position = global_position - overlay_rect.position
-	run_inventory_panel.size = popup_size
+	if run_inventory_screen != null:
+		run_inventory_screen.refresh_layout()
 
 
 func _hide_run_inventory_popup() -> void:
-	if run_inventory_overlay != null:
-		run_inventory_overlay.visible = false
-	if run_inventory_list != null:
-		_clear(run_inventory_list)
-	if run_inventory_panel != null:
-		run_inventory_panel.position = Vector2.ZERO
-		run_inventory_panel.size = run_inventory_panel.custom_minimum_size
+	if run_inventory_screen != null:
+		run_inventory_screen.close()
 	run_inventory_popup_mode = ""
+	run_inventory_context_container_id = ""
+	selected_run_inventory_item_id = ""
+	selected_run_inventory_item_source = ""
 
 
 func _run_inventory_popup_is_visible() -> bool:
-	return run_inventory_overlay != null and run_inventory_overlay.visible
+	return run_inventory_screen != null and run_inventory_screen.is_open()
 
 
 func _open_run_journal_popup() -> void:
@@ -10252,6 +11276,81 @@ func _inventory_item_view_list() -> Array:
 	return run_action_service.inventory_item_view_list()
 
 
+func _held_container_item_options() -> Array:
+	var result: Array = []
+	if run_state == null or library == null:
+		return result
+	for item_id in _string_array(run_state.inventory):
+		var option := _container_item_option(item_id)
+		if not option.is_empty():
+			result.append(option)
+	return result
+
+
+func _container_item_option(item_id: String) -> Dictionary:
+	var clean_id := item_id.strip_edges()
+	if clean_id.is_empty() or library == null:
+		return {}
+	var definition := library.item(clean_id)
+	if definition.is_empty():
+		return {}
+	var effect: Dictionary = definition.get("effect", {}) if typeof(definition.get("effect", {})) == TYPE_DICTIONARY else {}
+	var capacity := maxi(0, int(definition.get("container_capacity", 0)))
+	capacity = maxi(capacity, int(effect.get("container_capacity", 0)))
+	var item_class := str(definition.get("class", "")).strip_edges().to_lower()
+	if item_class != "container" and capacity <= 0:
+		return {}
+	return {
+		"id": clean_id,
+		"display_name": str(definition.get("display_name", clean_id.replace("_", " ").capitalize())),
+		"capacity": capacity,
+		"description": str(definition.get("description", "")),
+	}
+
+
+func _storable_inventory_item_ids() -> Array:
+	var result: Array = []
+	if run_state == null:
+		return result
+	for item_id in _string_array(run_state.inventory):
+		if _container_item_option(item_id).is_empty():
+			result.append(item_id)
+	return result
+
+
+func _home_container_by_id(container_id: String) -> Dictionary:
+	if run_state == null:
+		return {}
+	for container_value in run_state.current_home_containers():
+		if typeof(container_value) != TYPE_DICTIONARY:
+			continue
+		var container: Dictionary = container_value
+		if str(container.get("id", "")) == container_id:
+			return container.duplicate(true)
+	return {}
+
+
+func _home_container_contents_summary(container: Dictionary) -> String:
+	var items := _string_array(container.get("items", []))
+	if items.is_empty():
+		return "Empty."
+	var labels: Array = []
+	for item_id in items.slice(0, 3):
+		labels.append(_inventory_item_label(str(item_id)))
+	if items.size() > labels.size():
+		labels.append("+%d more" % (items.size() - labels.size()))
+	return "Contains: %s" % ", ".join(labels)
+
+
+func _inventory_item_label(item_id: String) -> String:
+	if library == null:
+		return item_id.replace("_", " ").capitalize()
+	var definition := library.item(item_id)
+	if definition.is_empty():
+		return item_id.replace("_", " ").capitalize()
+	return str(definition.get("display_name", item_id.replace("_", " ").capitalize()))
+
+
 func _refresh_active_item_slot() -> void:
 	if active_item_button == null:
 		return
@@ -10312,11 +11411,16 @@ func _shop_description() -> String:
 	return run_action_service.shop_description()
 
 
-func _run_inventory_summary_text(mode: String) -> String:
-	if mode == "merchant_sale":
-		return "Sellable run items can be sold here."
-	var count := _inventory_item_view_list().size()
-	return "Current run items: %d. Sell items through a merchant." % count
+func _run_inventory_interaction_kind(mode: String) -> String:
+	match mode:
+		"merchant_sale":
+			return "merchant_sale"
+		"place_container":
+			return "home_storage"
+		"home_container":
+			return "home_container"
+		_:
+			return "inventory"
 
 
 func _clear_selected_event_choice() -> void:
@@ -10384,16 +11488,6 @@ func _prestige_purchase_option(purchase_id: String) -> Dictionary:
 	return run_action_service.prestige_purchase_option(purchase_id, selected_prestige_purchase_id)
 
 
-func _hook_cost_effect_summary(option: Dictionary) -> String:
-	var parts: Array = []
-	if option.has("cost"):
-		parts.append("Cost: %d" % int(option.get("cost", 0)))
-	var delta_summary := str(option.get("delta_summary", ""))
-	if not delta_summary.is_empty():
-		parts.append("Effect: %s" % delta_summary)
-	return " | ".join(parts)
-
-
 func _clear_selected_service_hook() -> void:
 	selected_service_hook_id = ""
 	selected_service_hook_label = ""
@@ -10413,6 +11507,10 @@ func _refresh_world_map_overlay() -> void:
 	if world_map_overlay == null or not world_map_overlay.visible:
 		return
 	var snapshot := _world_map_snapshot()
+	if not selected_world_map_node_id.is_empty() and not _world_map_node_ids(snapshot).has(selected_world_map_node_id):
+		selected_world_map_node_id = str(snapshot.get("current_node_id", ""))
+		world_map_snapshot_cache_key = ""
+		snapshot = _world_map_snapshot()
 	if world_map_nodes_layer != null and world_map_nodes_layer.has_method("set_map_snapshot"):
 		world_map_nodes_layer.call("set_map_snapshot", snapshot)
 		_sync_world_map_node_buttons(snapshot)
@@ -10504,6 +11602,9 @@ func _add_world_map_node_buttons(snapshot: Dictionary) -> void:
 		button.custom_minimum_size = Vector2(46, 46)
 		button.size = Vector2(46, 46)
 		button.position = _world_map_node_button_position(node_id, node) - button.size * 0.5
+		var in_view := _world_map_node_is_in_canvas_view(node_id)
+		button.visible = in_view
+		button.disabled = not in_view
 		button.tooltip_text = str(node.get("label", node_id))
 		button.name = "WorldMapNode_%s" % node_id
 		world_map_nodes_layer.add_child(button)
@@ -10523,6 +11624,9 @@ func _position_world_map_node_buttons(snapshot: Dictionary) -> void:
 		if button == null:
 			continue
 		button.position = _world_map_node_button_position(node_id, node) - button.size * 0.5
+		var in_view := _world_map_node_is_in_canvas_view(node_id)
+		button.visible = in_view
+		button.disabled = not in_view
 		button.tooltip_text = str(node.get("label", node_id))
 
 
@@ -10537,13 +11641,19 @@ func _world_map_node_button_position(node_id: String, node: Dictionary) -> Vecto
 	return center
 
 
+func _world_map_node_is_in_canvas_view(node_id: String) -> bool:
+	if world_map_nodes_layer == null or not world_map_nodes_layer.has_method("node_is_in_view"):
+		return true
+	return bool(world_map_nodes_layer.call("node_is_in_view", node_id))
+
+
 func _refresh_world_map_detail() -> void:
 	if world_map_detail_label == null or run_state == null:
 		return
 	var lock_remaining := run_state.current_travel_lock_remaining()
 	var lines: Array = []
 	if lock_remaining > 0:
-		lines.append(str(run_state.travel_route_status({}).get("disabled_reason", "Travel is locked for now.")))
+		lines.append("Locked: %s" % str(run_state.travel_route_status({}).get("disabled_reason", "Travel is locked for now.")))
 	if selected_world_map_node_id.is_empty():
 		lines.append("Select a revealed stop.")
 		_set_world_map_confirm_enabled(false)
@@ -10557,12 +11667,12 @@ func _refresh_world_map_detail() -> void:
 		world_map_detail_label.text = "\n".join(lines)
 		return
 	var choice := _travel_choice(selected_world_map_node_id)
-	lines.append(str(node.get("label", selected_world_map_node_id)))
+	lines.append("Stop: %s" % str(node.get("label", selected_world_map_node_id)))
 	var flavor := _world_map_node_flavor(node)
 	if not flavor.is_empty():
-		lines.append(flavor)
+		lines.append("Does: %s" % flavor)
 	if selected_world_map_node_id == current_id:
-		lines.append("You are here.")
+		lines.append("Status: You are here.")
 		_set_world_map_confirm_enabled(false)
 		world_map_detail_label.text = "\n".join(lines)
 		return
@@ -10575,13 +11685,13 @@ func _refresh_world_map_detail() -> void:
 		_set_world_map_confirm_enabled(false)
 		world_map_detail_label.text = "\n".join(lines)
 		return
-	lines.append("Travel: %s." % _world_map_travel_method(choice))
+	lines.append("Travel: %s" % _world_map_travel_method(choice))
 	var distance_blocks := int(choice.get("distance_blocks", 0))
 	var distance_text := str(choice.get("distance", "near")).capitalize()
 	if distance_blocks > 0:
-		distance_text = "%s, %d block(s)" % [distance_text, distance_blocks]
-	lines.append("Distance: %s." % distance_text)
-	lines.append("Cost: %d." % int(choice.get("cost", 0)))
+		distance_text = "%s / %d blocks" % [distance_text, distance_blocks]
+	lines.append("Distance: %s" % distance_text)
+	lines.append("Cost: %d" % int(choice.get("cost", 0)))
 	var risk := _travel_risk_summary(choice)
 	if not risk.is_empty():
 		lines.append("Risk: %s" % risk)
@@ -10589,13 +11699,13 @@ func _refresh_world_map_detail() -> void:
 	if not bool(choice.get("enabled", true)) and not unlock_summary.is_empty():
 		lines.append("Lock: %s" % unlock_summary)
 	elif bool(choice.get("enabled", true)):
-		lines.append("Route open.")
+		lines.append("Status: Route open.")
 	for preview_line in _copy_array(choice.get("preview_lines", [])).slice(0, 3):
 		var preview_text := str(preview_line).strip_edges()
 		if not preview_text.is_empty():
-			lines.append(preview_text)
+			lines.append("Intel: %s" % preview_text)
 	if not bool(choice.get("enabled", true)):
-		lines.append(str(choice.get("disabled_reason", "That route is not available right now.")))
+		lines.append("Locked: %s" % str(choice.get("disabled_reason", "That route is not available right now.")))
 	_set_world_map_confirm_enabled(bool(choice.get("enabled", true)))
 	world_map_detail_label.text = "\n".join(lines)
 
@@ -10680,7 +11790,10 @@ func _enriched_world_map_snapshot(snapshot: Dictionary) -> Dictionary:
 	var target_ids := _travel_target_ids()
 	var travel_enabled_ids: Array = []
 	var travel_disabled_ids: Array = []
+	var visible_target_ids: Array = []
 	var travel_paths: Array = []
+	var displayed_lookup: Dictionary = {}
+	var visible_node_ids: Array = []
 	var nodes: Array = []
 	for node_value in _copy_array(enriched.get("nodes", [])):
 		if typeof(node_value) != TYPE_DICTIONARY:
@@ -10693,11 +11806,15 @@ func _enriched_world_map_snapshot(snapshot: Dictionary) -> Dictionary:
 		var status := run_state.travel_route_status(route) if not route.is_empty() else {}
 		var route_hidden := bool(status.get("hidden", false))
 		var enabled := is_target and not is_current and not route.is_empty() and not route_hidden and bool(status.get("available", true))
+		var visible_travel_target := is_target and not is_current and not route_hidden
+		if not _world_map_node_should_render(node, is_current, visible_travel_target):
+			continue
 		node["current"] = is_current
-		node["travel_target"] = is_target and not is_current and not route_hidden
+		node["travel_target"] = visible_travel_target
 		node["travel_enabled"] = enabled
 		node["travel_disabled_reason"] = ""
 		if bool(node.get("travel_target", false)):
+			visible_target_ids.append(node_id)
 			node["travel_method"] = _world_map_travel_method({"route": route, "distance": str(status.get("distance", route.get("distance", "near")))})
 			node["distance"] = str(status.get("distance", route.get("distance", "")))
 			node["distance_blocks"] = int(route.get("distance_blocks", 0))
@@ -10719,14 +11836,58 @@ func _enriched_world_map_snapshot(snapshot: Dictionary) -> Dictionary:
 		elif not is_current:
 			node["travel_disabled_reason"] = "Not on the route list from here right now."
 		nodes.append(node)
+		displayed_lookup[node_id] = true
+		visible_node_ids.append(node_id)
+	var visible_edges: Array = []
+	for edge_value in _copy_array(enriched.get("edges", [])):
+		if typeof(edge_value) != TYPE_DICTIONARY:
+			continue
+		var edge: Dictionary = edge_value
+		if displayed_lookup.has(str(edge.get("a", ""))) and displayed_lookup.has(str(edge.get("b", ""))):
+			visible_edges.append(edge.duplicate(true))
+	var visible_path: Array = []
+	for path_node_id_value in _string_array(enriched.get("visited_path", [])):
+		var path_node_id := str(path_node_id_value)
+		if displayed_lookup.has(path_node_id):
+			visible_path.append(path_node_id)
+	var focus_node_ids: Array = []
+	if displayed_lookup.has(current_id):
+		focus_node_ids.append(current_id)
+	for enabled_id_value in travel_enabled_ids:
+		var enabled_id := str(enabled_id_value)
+		if displayed_lookup.has(enabled_id) and not focus_node_ids.has(enabled_id):
+			focus_node_ids.append(enabled_id)
+	if focus_node_ids.size() <= 1:
+		for target_id_value in visible_target_ids:
+			var target_id := str(target_id_value)
+			if displayed_lookup.has(target_id) and not focus_node_ids.has(target_id):
+				focus_node_ids.append(target_id)
+	if not displayed_lookup.has(str(enriched.get("selected_node_id", ""))):
+		enriched["selected_node_id"] = ""
+	enriched["visible_node_ids"] = visible_node_ids
 	enriched["nodes"] = nodes
+	enriched["edges"] = visible_edges
+	enriched["visited_path"] = visible_path
 	enriched["travel_target_ids"] = target_ids
 	enriched["travel_enabled_node_ids"] = travel_enabled_ids
 	enriched["travel_disabled_node_ids"] = travel_disabled_ids
 	enriched["travel_paths"] = travel_paths
+	enriched["map_focus_node_ids"] = focus_node_ids
 	if str(enriched.get("background_path", "")).strip_edges().is_empty():
 		enriched["background_path"] = WorldMapScript.MAP_BACKGROUND_PATH
 	return enriched
+
+
+func _world_map_node_should_render(node: Dictionary, is_current: bool, is_travel_target: bool) -> bool:
+	if is_current or is_travel_target:
+		return true
+	var state := str(node.get("state", WorldMapScript.STATE_HIDDEN)).strip_edges().to_lower()
+	if state == WorldMapScript.STATE_VISITED:
+		return true
+	if state != WorldMapScript.STATE_REVEALED:
+		return false
+	var source := str(node.get("discovery_source", "")).strip_edges().to_lower()
+	return bool(node.get("discovered_at_spawn", false)) or bool(node.get("unlocked", false)) or source == WorldMapScript.DISCOVERY_SOURCE_SPAWN or source == WorldMapScript.DISCOVERY_SOURCE_EVENT
 
 
 func _world_route_for_target(target_id: String) -> Dictionary:
@@ -10769,6 +11930,9 @@ func _travel_choice(target_id: String, known_target_ids: Array = []) -> Dictiona
 	var target_ids := known_target_ids if not known_target_ids.is_empty() else _travel_target_ids()
 	if target_id.is_empty() or not target_ids.has(target_id):
 		return {}
+	var local_door_choice := _local_parent_home_door_travel_choice(target_id)
+	if not local_door_choice.is_empty():
+		return local_door_choice
 	var route := _world_route_for_target(target_id)
 	var archetype := _environment_archetype(target_id)
 	var label := str(route.get("label", archetype.get("display_name", "")))
@@ -10996,15 +12160,11 @@ func _clear_selected_travel() -> void:
 
 
 func _panel_container(fill: Color, border: Color) -> PanelContainer:
-	var panel := PanelContainer.new()
-	panel.add_theme_stylebox_override("panel", VisualStyle.pixel_box(fill, border, 1))
-	return panel
+	return FoundationWidgetsScript.panel_container(fill, border)
 
 
 func _panel(fill: Color, border: Color) -> Panel:
-	var panel := Panel.new()
-	panel.add_theme_stylebox_override("panel", VisualStyle.pixel_box(fill, border, 1))
-	return panel
+	return FoundationWidgetsScript.panel(fill, border)
 
 
 func _surface_panel_style() -> StyleBoxFlat:
@@ -11030,13 +12190,12 @@ func _begin_action_card(title: String, border: Color = VisualStyle.CYAN_2) -> VB
 	return stack
 
 
+func _add_detail_row(stack: VBoxContainer, label_text: String, value_text: String, muted: bool = false) -> void:
+	FoundationWidgetsScript.add_detail_row(stack, label_text, value_text, muted)
+
+
 func _add_card_button(stack: VBoxContainer, text: String, callback: Callable, disabled: bool = false, primary: bool = false) -> Button:
-	var button := _button(text, callback)
-	button.disabled = disabled
-	if primary:
-		_style_selected_button(button)
-	stack.add_child(button)
-	return button
+	return FoundationWidgetsScript.add_card_button(stack, text, callback, disabled, primary)
 
 
 func _accessible_font_size(base_size: int) -> int:
@@ -11044,13 +12203,12 @@ func _accessible_font_size(base_size: int) -> int:
 
 
 func _set_control_font_size(control: Control, base_size: int) -> void:
+	FoundationWidgetsScript.set_control_font_size(control, _accessible_font_size(base_size))
 	control.set_meta(ACCESSIBILITY_BASE_FONT_META, base_size)
-	control.add_theme_font_size_override("font_size", _accessible_font_size(base_size))
 
 
 func _set_control_font_color(control: Control, color: Color) -> void:
-	control.set_meta(ACCESSIBILITY_BASE_COLOR_META, color)
-	control.add_theme_color_override("font_color", VisualStyle.accessible_color(color))
+	FoundationWidgetsScript.set_control_font_color(control, color)
 
 
 func _accessibility_font_scale() -> float:
@@ -11162,18 +12320,15 @@ func _control_uses_text(control: Control) -> bool:
 
 
 func _label(text: String, size: int) -> Label:
-	var label := Label.new()
-	label.text = text
-	_set_control_font_color(label, VisualStyle.SOFT)
-	_set_control_font_size(label, size)
-	label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	return label
+	var label_node := FoundationWidgetsScript.label(text, size)
+	_set_control_font_size(label_node, size)
+	return label_node
 
 
 func _muted_label(text: String, size: int) -> Label:
-	var label := _label(text, size)
-	_set_control_font_color(label, VisualStyle.CYAN_2)
-	return label
+	var label_node := _label(text, size)
+	_set_control_font_color(label_node, VisualStyle.CYAN_2)
+	return label_node
 
 
 func _section(text: String) -> Label:
@@ -11183,18 +12338,9 @@ func _section(text: String) -> Label:
 
 
 func _button(text: String, callback: Callable) -> Button:
-	var button := Button.new()
-	button.text = text
-	button.custom_minimum_size = Vector2(0, MIN_NATIVE_TOUCH_TARGET_HEIGHT)
-	button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	_set_control_font_color(button, VisualStyle.WHITE)
-	_set_control_font_size(button, DEFAULT_CONTROL_FONT_SIZE)
-	button.add_theme_stylebox_override("normal", VisualStyle.pixel_box(VisualStyle.DARK_2, VisualStyle.CYAN_2, 1))
-	button.add_theme_stylebox_override("hover", VisualStyle.pixel_box(VisualStyle.DARK_3, VisualStyle.CYAN, 1))
-	button.add_theme_stylebox_override("pressed", VisualStyle.pixel_box(VisualStyle.BLUE, VisualStyle.YELLOW, 1))
-	button.add_theme_stylebox_override("disabled", VisualStyle.pixel_box(VisualStyle.DARK_2, VisualStyle.SHADOW, 1))
-	button.pressed.connect(callback)
-	return button
+	var button_node := FoundationWidgetsScript.button(text, callback)
+	_set_control_font_size(button_node, DEFAULT_CONTROL_FONT_SIZE)
+	return button_node
 
 
 func _hud_nav_button(text: String, callback: Callable) -> Button:
@@ -11282,14 +12428,11 @@ func _remember_run_item_texture(path: String, texture: Texture2D) -> void:
 
 
 func _style_selected_button(button: Button) -> void:
-	button.add_theme_stylebox_override("normal", VisualStyle.pixel_box(VisualStyle.BLUE, VisualStyle.YELLOW, 1))
-	button.add_theme_stylebox_override("hover", VisualStyle.pixel_box(VisualStyle.BLUE, VisualStyle.AMBER, 1))
-	button.add_theme_stylebox_override("pressed", VisualStyle.pixel_box(VisualStyle.BLUE, VisualStyle.WHITE, 1))
+	FoundationWidgetsScript.style_selected_button(button)
 
 
 func _clear(container: Node) -> void:
-	for child in container.get_children():
-		child.queue_free()
+	FoundationWidgetsScript.clear(container)
 
 
 func _string_array(value: Variant) -> Array:

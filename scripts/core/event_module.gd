@@ -316,6 +316,18 @@ func _trigger_allows(environment: Dictionary, context: Dictionary = {}) -> bool:
 				return false
 			var turns := int(context.get("turns", environment.get("turns", 0)))
 			return turns >= int(trigger.get("turns", trigger.get("min_turns", 0)))
+		"heat_threshold":
+			if str(context.get("trigger", context.get("type", ""))) != "heat_threshold":
+				return false
+			return int(context.get("threshold", 0)) == int(trigger.get("level", 0))
+		"table_approach":
+			if str(context.get("trigger", context.get("type", ""))) != "table_approach":
+				return false
+			var games := _string_array(trigger.get("games", []))
+			var game_id := str(context.get("game_id", "")).strip_edges()
+			if not games.is_empty() and not games.has(game_id):
+				return false
+			return int(context.get("hands_played", context.get("rounds_played", 0))) >= int(trigger.get("min_hands", 0))
 		_:
 			return false
 

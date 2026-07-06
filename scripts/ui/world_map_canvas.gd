@@ -34,9 +34,12 @@ func current_view_snapshot() -> Dictionary:
 		if typeof(node_value) != TYPE_DICTIONARY:
 			continue
 		var node: Dictionary = node_value
+		var node_id := str(node.get("id", ""))
+		if not node_is_in_view(node_id):
+			continue
 		var center := _normalized_position(_copy_dict(node.get("position", {})))
 		markers.append({
-			"id": str(node.get("id", "")),
+			"id": node_id,
 			"position": _copy_dict(node.get("position", {})),
 			"screen_center": {"x": center.x, "y": center.y},
 			"icon_path": str(node.get("icon_path", "")),
@@ -59,6 +62,13 @@ func local_position_for_node(node_id: String) -> Vector2:
 	if not node_screen_position_cache.has(node_id):
 		return Vector2.ZERO
 	return node_screen_position_cache.get(node_id, Vector2.ZERO) as Vector2
+
+
+func node_is_in_view(node_id: String) -> bool:
+	_ensure_layout_cache()
+	if not node_screen_position_cache.has(node_id):
+		return false
+	return _point_in_view(node_screen_position_cache.get(node_id, Vector2.ZERO) as Vector2, MARKER_RADIUS + 8.0)
 
 
 func _notification(what: int) -> void:
@@ -104,6 +114,8 @@ func _draw_edges() -> void:
 		var b := _node_position(nodes, str(edge.get("b", "")))
 		if a.x < 0.0 or b.x < 0.0:
 			continue
+		if not _segment_in_view(a, b):
+			continue
 		var distance := str(edge.get("distance", "near"))
 		var edge_id := str(edge.get("id", _edge_id(str(edge.get("a", "")), str(edge.get("b", "")))))
 		var color := Color("#6f6aa8", 0.34)
@@ -127,6 +139,8 @@ func _draw_path() -> void:
 		var b := _node_position(nodes, str(path[index + 1]))
 		if a.x < 0.0 or b.x < 0.0:
 			continue
+		if not _segment_in_view(a, b):
+			continue
 		draw_line(a, b, Color("#ffd36a", 0.46), 4.0)
 
 
@@ -139,6 +153,8 @@ func _draw_nodes() -> void:
 		var node: Dictionary = node_value
 		var node_id := str(node.get("id", ""))
 		var pos := _node_position(nodes_by_id_cache, node_id)
+		if not _point_in_view(pos, MARKER_RADIUS + 8.0):
+			continue
 		var state := str(node.get("state", "hidden"))
 		var radius := MARKER_RADIUS
 		var is_current := node_id == current_id
@@ -235,13 +251,13 @@ func _normalized_position(position: Dictionary) -> Vector2:
 	var bounds := map_view_bounds_cache
 	var x := clampf(float(position.get("x", 0.5)), 0.0, 1.0)
 	var y := clampf(float(position.get("y", 0.5)), 0.0, 1.0)
-	var local_x := clampf((x - bounds.position.x) / maxf(0.001, bounds.size.x), 0.0, 1.0)
-	var local_y := clampf((y - bounds.position.y) / maxf(0.001, bounds.size.y), 0.0, 1.0)
+	var local_x := (x - bounds.position.x) / maxf(0.001, bounds.size.x)
+	var local_y := (y - bounds.position.y) / maxf(0.001, bounds.size.y)
 	return inset + Vector2(local_x, local_y) * drawable
 
 
 func _compute_map_view_bounds() -> Rect2:
-	var nodes := _array_view(snapshot.get("nodes", []))
+	var nodes := _bounds_focus_nodes()
 	if nodes.is_empty():
 		return Rect2(Vector2.ZERO, Vector2.ONE)
 	var min_x := 1.0
@@ -276,6 +292,38 @@ func _compute_map_view_bounds() -> Rect2:
 	var x0 := clampf(center.x - width * 0.5, 0.0, 1.0 - width)
 	var y0 := clampf(center.y - height * 0.5, 0.0, 1.0 - height)
 	return Rect2(Vector2(x0, y0), Vector2(width, height))
+
+
+func _bounds_focus_nodes() -> Array:
+	var nodes := _array_view(snapshot.get("nodes", []))
+	var focus_ids := _string_array(snapshot.get("map_focus_node_ids", []))
+	if focus_ids.is_empty():
+		return nodes
+	var focus_lookup: Dictionary = {}
+	for focus_id in focus_ids:
+		focus_lookup[str(focus_id)] = true
+	var result: Array = []
+	for node_value in nodes:
+		if typeof(node_value) != TYPE_DICTIONARY:
+			continue
+		var node: Dictionary = node_value
+		if focus_lookup.has(str(node.get("id", ""))):
+			result.append(node)
+	return result if not result.is_empty() else nodes
+
+
+func _point_in_view(point: Vector2, margin: float = 0.0) -> bool:
+	return point.x >= -margin and point.y >= -margin and point.x <= size.x + margin and point.y <= size.y + margin
+
+
+func _segment_in_view(a: Vector2, b: Vector2) -> bool:
+	if _point_in_view(a) or _point_in_view(b):
+		return true
+	var min_x := minf(a.x, b.x)
+	var max_x := maxf(a.x, b.x)
+	var min_y := minf(a.y, b.y)
+	var max_y := maxf(a.y, b.y)
+	return max_x >= 0.0 and min_x <= size.x and max_y >= 0.0 and min_y <= size.y
 
 
 func _travel_edge_ids(enabled_only: bool) -> Array:

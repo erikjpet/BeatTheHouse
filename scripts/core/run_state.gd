@@ -75,6 +75,10 @@ const MAX_STORY_LOG_ENTRIES := 240
 const STORY_SEEN_TYPE_FLAG_PREFIX := "_story_seen:"
 const STORY_SEEN_EVENT_FLAG_PREFIX := "_story_seen_event:"
 const STORY_SEEN_OBJECTIVE_FLAG_PREFIX := "_story_seen_objective:"
+const GAME_CLOCK_START_MINUTE := 8 * 60
+const HOME_SELECTION_RANDOM := "random"
+const HOME_TENURE_RENT := "rent"
+const HOME_TENURE_STAY := "stay"
 
 var seed_text: String = ""
 var seed_value: int = 1
@@ -104,6 +108,9 @@ var narrative_flags: Dictionary = {}
 var story_log: Array = []
 var story_log_archive_count: int = 0
 var simulation_msec: int = 0
+var game_clock_minutes: int = GAME_CLOCK_START_MINUTE
+var act_index: int = 0
+var home_state: Dictionary = {}
 var run_status: String = RUN_STATUS_ACTIVE
 var run_failure_reason: String = FAILURE_NONE
 var run_failure_message: String = ""
@@ -147,6 +154,9 @@ func start_new(p_seed_text: String = "FOUNDATION-SEED", p_challenge_config: Dict
 	story_log = []
 	story_log_archive_count = 0
 	simulation_msec = 0
+	game_clock_minutes = GAME_CLOCK_START_MINUTE
+	act_index = 0
+	home_state = {}
 	run_status = RUN_STATUS_ACTIVE
 	run_failure_reason = FAILURE_NONE
 	run_failure_message = ""
@@ -170,6 +180,473 @@ func save_rng(rng: RngStream) -> void:
 		return
 	rng_seed = rng.seed_value
 	rng_state = rng.state_value
+
+
+# Records the active act entry point. Future act transition rules should call
+# this before re-homing the player; this release only starts Act 1 here.
+func begin_act(p_act_index: int) -> void:
+	act_index = maxi(1, p_act_index)
+	if home_state.is_empty():
+		home_state = {"act_index": act_index}
+	else:
+		home_state["act_index"] = act_index
+
+
+func selected_home_archetype_id() -> String:
+	var selection := str(challenge_modifiers().get("home_archetype_id", HOME_SELECTION_RANDOM)).strip_edges()
+	if selection.is_empty():
+		return HOME_SELECTION_RANDOM
+	return selection
+
+
+func initialize_home_from_profile(home_archetype: Dictionary, node_id: String, profile: Dictionary) -> void:
+	var home_id := str(home_archetype.get("id", "")).strip_edges()
+	var home_node_id := node_id.strip_edges()
+	if home_node_id.is_empty():
+		home_node_id = home_id
+	if home_id.is_empty() or home_node_id.is_empty():
+		return
+	var current_day := game_day()
+	var tenure_profile := _copy_dict(profile.get("tenure", {}))
+	var tenure_type := str(tenure_profile.get("type", "")).strip_edges().to_lower()
+	var tenure: Dictionary = {}
+	if tenure_type == HOME_TENURE_STAY:
+		tenure = {
+			"type": HOME_TENURE_STAY,
+			"days_remaining": maxi(0, int(tenure_profile.get("prepaid_days", tenure_profile.get("days_remaining", 3)))),
+			"renewal_cost": maxi(0, int(tenure_profile.get("renewal_cost", 45))),
+			"renewal_days": maxi(1, int(tenure_profile.get("renewal_days", 1))),
+			"expiry_message": str(tenure_profile.get("expiry_message", "")),
+		}
+	else:
+		var first_due_in_days := maxi(0, int(tenure_profile.get("first_due_in_days", tenure_profile.get("due_in_days", 7))))
+		var payment_label := str(tenure_profile.get("payment_label", "rent")).strip_edges().to_lower()
+		if payment_label.is_empty():
+			payment_label = "rent"
+		var action_label := str(tenure_profile.get("action_label", "Pay %s" % payment_label.capitalize())).strip_edges()
+		if action_label.is_empty():
+			action_label = "Pay %s" % payment_label.capitalize()
+		tenure = {
+			"type": HOME_TENURE_RENT,
+			"rent_amount": maxi(0, int(tenure_profile.get("rent_amount", 90))),
+			"due_day": current_day + first_due_in_days,
+			"cycle_days": maxi(1, int(tenure_profile.get("cycle_days", 7))),
+			"grace_days": maxi(0, int(tenure_profile.get("grace_days", 3))),
+			"payment_label": payment_label,
+			"action_label": action_label,
+			"eviction_message": str(tenure_profile.get("eviction_message", "")),
+		}
+	var home_display_name := str(home_archetype.get("display_name", "")).strip_edges()
+	if home_display_name.is_empty():
+		var name_nouns := _string_array(_copy_array(home_archetype.get("name_nouns", [])))
+		home_display_name = str(name_nouns[0]) if not name_nouns.is_empty() else home_id.replace("_", " ").capitalize()
+	home_state = _normalize_home_state({
+		"active": true,
+		"lost": false,
+		"act_index": maxi(1, act_index),
+		"home_archetype_id": home_id,
+		"home_node_id": home_node_id,
+		"display_name": home_display_name,
+		"started_day": current_day,
+		"lost_day": 0,
+		"lost_reason": "",
+		"tenure": tenure,
+	})
+
+
+func game_day() -> int:
+	return maxi(1, int(floor(float(maxi(0, game_clock_minutes)) / 1440.0)) + 1)
+
+
+func game_minute_of_day() -> int:
+	return maxi(0, game_clock_minutes) % 1440
+
+
+func clock_display_text(include_day: bool = true) -> String:
+	var minute_of_day := game_minute_of_day()
+	var hour_24 := int(floor(float(minute_of_day) / 60.0)) % 24
+	var hour_12 := hour_24 % 12
+	if hour_12 == 0:
+		hour_12 = 12
+	var suffix := "AM" if hour_24 < 12 else "PM"
+	var time_text := "%d %s" % [hour_12, suffix]
+	if include_day:
+		return "Day %d %s" % [game_day(), time_text]
+	return time_text
+
+
+func advance_game_clock_minutes(amount: int) -> void:
+	if amount <= 0 or is_terminal():
+		return
+	var previous_day := game_day()
+	game_clock_minutes = maxi(0, game_clock_minutes + amount)
+	var next_day := game_day()
+	if next_day > previous_day:
+		_advance_home_day_rollovers(previous_day, next_day)
+
+
+func home_is_active() -> bool:
+	return not home_state.is_empty() and bool(home_state.get("active", false)) and not bool(home_state.get("lost", false))
+
+
+func is_current_home_environment() -> bool:
+	if current_environment.is_empty() or str(current_environment.get("kind", "")) != "home":
+		return false
+	if not home_is_active():
+		return false
+	var node_id := str(current_environment.get("world_node_id", current_environment.get("archetype_id", ""))).strip_edges()
+	var home_node_id := str(home_state.get("home_node_id", "")).strip_edges()
+	return home_node_id.is_empty() or node_id == home_node_id
+
+
+func home_status_summary() -> String:
+	if home_state.is_empty():
+		return "No home clock."
+	if bool(home_state.get("lost", false)):
+		return "Home lost on day %d." % maxi(1, int(home_state.get("lost_day", game_day())))
+	var name := str(home_state.get("display_name", "Home"))
+	var tenure := _copy_dict(home_state.get("tenure", {}))
+	var tenure_type := str(tenure.get("type", "")).strip_edges()
+	if tenure_type == HOME_TENURE_STAY:
+		var days_remaining := maxi(0, int(tenure.get("days_remaining", 0)))
+		var day_word := "day" if days_remaining == 1 else "days"
+		return "%s: %d prepaid %s left." % [name, days_remaining, day_word]
+	if tenure_type == HOME_TENURE_RENT:
+		var status := home_tenure_status()
+		var rent_amount := int(status.get("amount", tenure.get("rent_amount", 0)))
+		var payment_label := str(status.get("payment_label", tenure.get("payment_label", "rent"))).strip_edges().to_lower()
+		if payment_label.is_empty():
+			payment_label = "rent"
+		if bool(status.get("due", false)):
+			if bool(status.get("overdue", false)):
+				return "%s: %s $%d overdue, %d grace day(s) left." % [name, payment_label, rent_amount, int(status.get("grace_remaining", 0))]
+			return "%s: %s $%d due today." % [name, payment_label, rent_amount]
+		return "%s: %s $%d due day %d." % [name, payment_label, rent_amount, int(status.get("due_day", game_day()))]
+	return "%s: tenure active." % name
+
+
+func home_tenure_status() -> Dictionary:
+	if home_state.is_empty():
+		return {"active": false, "summary": "No home."}
+	var state := _normalize_home_state(home_state)
+	var tenure := _copy_dict(state.get("tenure", {}))
+	var tenure_type := str(tenure.get("type", "")).strip_edges()
+	var current_day := game_day()
+	if bool(state.get("lost", false)) or not bool(state.get("active", false)):
+		return {
+			"active": false,
+			"lost": true,
+			"summary": "Home access is lost.",
+		}
+	if tenure_type == HOME_TENURE_STAY:
+		var days_remaining := maxi(0, int(tenure.get("days_remaining", 0)))
+		var day_word := "day" if days_remaining == 1 else "days"
+		return {
+			"active": true,
+			"type": HOME_TENURE_STAY,
+			"days_remaining": days_remaining,
+			"renewal_cost": maxi(0, int(tenure.get("renewal_cost", 0))),
+			"renewal_days": maxi(1, int(tenure.get("renewal_days", 1))),
+			"due": days_remaining <= 1,
+			"overdue": days_remaining <= 0,
+			"summary": "%s: %d prepaid %s left." % [str(state.get("display_name", "Home")), days_remaining, day_word],
+		}
+	var due_day := maxi(1, int(tenure.get("due_day", current_day)))
+	var grace_days := maxi(0, int(tenure.get("grace_days", 0)))
+	var overdue_days := maxi(0, current_day - due_day)
+	var due := current_day >= due_day
+	var rent_amount := maxi(0, int(tenure.get("rent_amount", 0)))
+	var payment_label := str(tenure.get("payment_label", "rent")).strip_edges().to_lower()
+	if payment_label.is_empty():
+		payment_label = "rent"
+	var action_label := str(tenure.get("action_label", "Pay %s" % payment_label.capitalize())).strip_edges()
+	if action_label.is_empty():
+		action_label = "Pay %s" % payment_label.capitalize()
+	var summary := "%s: %s $%d due day %d." % [str(state.get("display_name", "Home")), payment_label, rent_amount, due_day]
+	if due:
+		summary = "%s: %s $%d due today." % [str(state.get("display_name", "Home")), payment_label, rent_amount]
+	if overdue_days > 0:
+		summary = "%s: %s $%d overdue, %d grace day(s) left." % [str(state.get("display_name", "Home")), payment_label, rent_amount, maxi(0, grace_days - overdue_days)]
+	return {
+		"active": true,
+		"type": HOME_TENURE_RENT,
+		"amount": rent_amount,
+		"payment_label": payment_label,
+		"action_label": action_label,
+		"due_day": due_day,
+		"cycle_days": maxi(1, int(tenure.get("cycle_days", 1))),
+		"grace_days": grace_days,
+		"due": due,
+		"overdue": overdue_days > 0,
+		"overdue_days": overdue_days,
+		"grace_remaining": maxi(0, grace_days - overdue_days),
+		"eviction_day": due_day + grace_days + 1,
+		"summary": summary,
+	}
+
+
+func home_tenure_action_status() -> Dictionary:
+	var status := home_tenure_status()
+	if not bool(status.get("active", false)) or not is_current_home_environment():
+		return {"available": false, "enabled": false, "label": "Home", "disabled_reason": "No active home tenure here."}
+	var tenure_type := str(status.get("type", ""))
+	if tenure_type == HOME_TENURE_STAY:
+		var renewal_cost := maxi(0, int(status.get("renewal_cost", 0)))
+		var enabled := bankroll >= renewal_cost
+		return {
+			"available": true,
+			"enabled": enabled,
+			"type": HOME_TENURE_STAY,
+			"label": "Renew Stay",
+			"cost": renewal_cost,
+			"disabled_reason": "" if enabled else "Need $%d to renew the room." % renewal_cost,
+		}
+	if tenure_type == HOME_TENURE_RENT:
+		var payment_label := str(status.get("payment_label", "rent")).strip_edges().to_lower()
+		if payment_label.is_empty():
+			payment_label = "rent"
+		var action_label := str(status.get("action_label", "Pay %s" % payment_label.capitalize())).strip_edges()
+		if action_label.is_empty():
+			action_label = "Pay %s" % payment_label.capitalize()
+		if not bool(status.get("due", false)):
+			return {
+				"available": false,
+				"enabled": false,
+				"type": HOME_TENURE_RENT,
+				"label": action_label,
+				"payment_label": payment_label,
+				"cost": int(status.get("amount", 0)),
+				"disabled_reason": "%s is not due until day %d." % [payment_label.capitalize(), int(status.get("due_day", game_day()))],
+			}
+		var amount := maxi(0, int(status.get("amount", 0)))
+		var enabled := bankroll >= amount
+		return {
+			"available": true,
+			"enabled": enabled,
+			"type": HOME_TENURE_RENT,
+			"label": action_label,
+			"payment_label": payment_label,
+			"cost": amount,
+			"disabled_reason": "" if enabled else "Need $%d to pay %s." % [amount, payment_label],
+		}
+	return {"available": false, "enabled": false, "label": "Home", "disabled_reason": "Home tenure is not configured."}
+
+
+func pay_home_tenure() -> Dictionary:
+	var action := home_tenure_action_status()
+	if not bool(action.get("available", false)):
+		return {"ok": false, "message": str(action.get("disabled_reason", "No payment is due."))}
+	if not bool(action.get("enabled", false)):
+		return {"ok": false, "message": str(action.get("disabled_reason", "Not enough bankroll."))}
+	var tenure := _copy_dict(home_state.get("tenure", {}))
+	var action_type := str(action.get("type", ""))
+	var cost := maxi(0, int(action.get("cost", 0)))
+	if cost > 0:
+		change_bankroll(-cost, true)
+		run_spending_score = maxi(0, run_spending_score + cost)
+	var message := ""
+	if action_type == HOME_TENURE_STAY:
+		var added_days := maxi(1, int(tenure.get("renewal_days", 1)))
+		tenure["days_remaining"] = maxi(0, int(tenure.get("days_remaining", 0))) + added_days
+		home_state["tenure"] = tenure
+		message = "Renewed the room for %d more day(s)." % added_days
+	elif action_type == HOME_TENURE_RENT:
+		var cycle_days := maxi(1, int(tenure.get("cycle_days", 1)))
+		tenure["due_day"] = game_day() + cycle_days
+		home_state["tenure"] = tenure
+		var payment_label := str(action.get("payment_label", tenure.get("payment_label", "rent"))).strip_edges().to_lower()
+		if payment_label.is_empty():
+			payment_label = "rent"
+		message = "Paid %s. Next due day %d." % [payment_label, int(tenure.get("due_day", game_day()))]
+	else:
+		return {"ok": false, "message": "Home payment is not configured."}
+	log_story({
+		"type": "home_tenure_payment",
+		"home_archetype_id": str(home_state.get("home_archetype_id", "")),
+		"amount": cost,
+		"day": game_day(),
+		"message": message,
+	})
+	return {"ok": true, "message": message, "bankroll_delta": -cost}
+
+
+func current_home_containers() -> Array:
+	if current_environment.is_empty():
+		return []
+	return _normalize_home_containers(_copy_array(current_environment.get("home_containers", [])))
+
+
+func place_home_container(item_id: String, display_name: String, capacity: int) -> Dictionary:
+	var clean_item_id := item_id.strip_edges()
+	if clean_item_id.is_empty() or capacity <= 0:
+		return {"ok": false, "message": "Container item is not configured."}
+	if not is_current_home_environment():
+		return {"ok": false, "message": "Containers can only be placed at your home."}
+	if not inventory.has(clean_item_id):
+		return {"ok": false, "message": "That container is not in your inventory."}
+	var containers := current_home_containers()
+	var container_id := _next_home_container_id(containers, clean_item_id)
+	remove_item(clean_item_id)
+	containers.append({
+		"id": container_id,
+		"item_id": clean_item_id,
+		"display_name": display_name if not display_name.strip_edges().is_empty() else clean_item_id.replace("_", " ").capitalize(),
+		"capacity": maxi(1, capacity),
+		"items": [],
+	})
+	_set_current_home_containers(containers)
+	var message := "Placed %s at home." % str(display_name if not display_name.strip_edges().is_empty() else clean_item_id.replace("_", " ").capitalize())
+	log_story({
+		"type": "home_container_placed",
+		"container_id": container_id,
+		"item_id": clean_item_id,
+		"day": game_day(),
+		"message": message,
+	})
+	return {"ok": true, "message": message, "container_id": container_id}
+
+
+func transfer_item_to_home_container(container_id: String, item_id: String) -> Dictionary:
+	var clean_container_id := container_id.strip_edges()
+	var clean_item_id := item_id.strip_edges()
+	if clean_container_id.is_empty() or clean_item_id.is_empty():
+		return {"ok": false, "message": "Storage transfer is not configured."}
+	if not is_current_home_environment():
+		return {"ok": false, "message": "Home storage is not available here."}
+	if not inventory.has(clean_item_id):
+		return {"ok": false, "message": "That item is not in your inventory."}
+	var containers := current_home_containers()
+	var index := _home_container_index(containers, clean_container_id)
+	if index < 0:
+		return {"ok": false, "message": "Container is no longer available."}
+	var container: Dictionary = containers[index]
+	var stored_items := _copy_array(container.get("items", []))
+	var capacity := maxi(0, int(container.get("capacity", 0)))
+	if stored_items.size() >= capacity:
+		return {"ok": false, "message": "%s is full." % str(container.get("display_name", "Container"))}
+	remove_item(clean_item_id)
+	stored_items.append(clean_item_id)
+	container["items"] = stored_items
+	containers[index] = container
+	_set_current_home_containers(containers)
+	var message := "Stored %s in %s." % [clean_item_id.replace("_", " ").capitalize(), str(container.get("display_name", "Container"))]
+	return {"ok": true, "message": message, "container_id": clean_container_id, "item_id": clean_item_id}
+
+
+func transfer_item_from_home_container(container_id: String, item_id: String) -> Dictionary:
+	var clean_container_id := container_id.strip_edges()
+	var clean_item_id := item_id.strip_edges()
+	if clean_container_id.is_empty() or clean_item_id.is_empty():
+		return {"ok": false, "message": "Storage transfer is not configured."}
+	if not is_current_home_environment():
+		return {"ok": false, "message": "Home storage is not available here."}
+	if inventory.has(clean_item_id):
+		return {"ok": false, "message": "You already carry %s." % clean_item_id.replace("_", " ").capitalize()}
+	var containers := current_home_containers()
+	var index := _home_container_index(containers, clean_container_id)
+	if index < 0:
+		return {"ok": false, "message": "Container is no longer available."}
+	var container: Dictionary = containers[index]
+	var stored_items := _copy_array(container.get("items", []))
+	if not stored_items.has(clean_item_id):
+		return {"ok": false, "message": "That item is not stored here."}
+	stored_items.erase(clean_item_id)
+	container["items"] = stored_items
+	containers[index] = container
+	add_item(clean_item_id)
+	_set_current_home_containers(containers)
+	var message := "Took %s from %s." % [clean_item_id.replace("_", " ").capitalize(), str(container.get("display_name", "Container"))]
+	return {"ok": true, "message": message, "container_id": clean_container_id, "item_id": clean_item_id}
+
+
+func lose_home(reason: String = "lost") -> Dictionary:
+	if home_state.is_empty() or bool(home_state.get("lost", false)):
+		return {"ok": false, "message": "Home access is already gone."}
+	var clean_reason := reason.strip_edges()
+	if clean_reason.is_empty():
+		clean_reason = "lost"
+	var home_node_id := str(home_state.get("home_node_id", "")).strip_edges()
+	home_state["active"] = false
+	home_state["lost"] = true
+	home_state["lost_reason"] = clean_reason
+	home_state["lost_day"] = game_day()
+	narrative_flags["home_lost"] = true
+	narrative_flags["home_lost_reason"] = clean_reason
+	if is_current_home_environment():
+		current_environment["home_containers"] = []
+		current_environment["home_lost"] = true
+		current_environment["layout"] = EnvironmentInstance.ensure_generated_layout(current_environment)
+	if not world_map.is_empty() and not home_node_id.is_empty():
+		world_map = WorldMap.mark_home_lost(world_map, home_node_id)
+	var message := "Your home access is gone. Anything stored there is lost."
+	log_story({
+		"type": "home_lost",
+		"home_node_id": home_node_id,
+		"reason": clean_reason,
+		"day": game_day(),
+		"message": message,
+	})
+	return {"ok": true, "message": message}
+
+
+func _advance_home_day_rollovers(previous_day: int, next_day: int) -> void:
+	if previous_day >= next_day or not home_is_active():
+		return
+	for day in range(previous_day + 1, next_day + 1):
+		_advance_home_for_day(day)
+		if not home_is_active():
+			return
+
+
+func _advance_home_for_day(current_day: int) -> void:
+	var tenure := _copy_dict(home_state.get("tenure", {}))
+	var tenure_type := str(tenure.get("type", "")).strip_edges()
+	if tenure_type == HOME_TENURE_STAY:
+		var days_remaining := maxi(0, int(tenure.get("days_remaining", 0)) - 1)
+		tenure["days_remaining"] = days_remaining
+		home_state["tenure"] = tenure
+		if days_remaining <= 0:
+			lose_home("stay_expired")
+	elif tenure_type == HOME_TENURE_RENT:
+		var due_day := maxi(1, int(tenure.get("due_day", current_day)))
+		var grace_days := maxi(0, int(tenure.get("grace_days", 0)))
+		if current_day > due_day + grace_days:
+			lose_home("evicted")
+
+
+func _set_current_home_containers(containers: Array) -> void:
+	current_environment["home_containers"] = _normalize_home_containers(containers)
+	current_environment["layout"] = EnvironmentInstance.ensure_generated_layout(current_environment)
+	store_current_world_node_environment()
+
+
+func _next_home_container_id(containers: Array, item_id: String) -> String:
+	var next_index := maxi(1, int(current_environment.get("home_container_index", 0)) + 1)
+	var existing: Dictionary = {}
+	for container_value in containers:
+		if typeof(container_value) != TYPE_DICTIONARY:
+			continue
+		var container: Dictionary = container_value
+		var existing_id := str(container.get("id", "")).strip_edges()
+		if not existing_id.is_empty():
+			existing[existing_id] = true
+	while true:
+		var candidate := "%s_%02d" % [item_id, next_index]
+		if not existing.has(candidate):
+			current_environment["home_container_index"] = next_index
+			return candidate
+		next_index += 1
+	return "%s_%02d" % [item_id, next_index]
+
+
+func _home_container_index(containers: Array, container_id: String) -> int:
+	for index in range(containers.size()):
+		if typeof(containers[index]) != TYPE_DICTIONARY:
+			continue
+		var container: Dictionary = containers[index]
+		if str(container.get("id", "")) == container_id:
+			return index
+	return -1
 
 
 # Returns the deterministic simulation clock used by gameplay systems.
@@ -2139,6 +2616,8 @@ func remove_item_offer(item_id: String) -> void:
 		if typeof(offer) == TYPE_DICTIONARY and offer.get("id", "") == item_id:
 			offers.remove_at(index)
 	current_environment["item_offers"] = offers
+	if current_environment.has("layout"):
+		current_environment["layout"] = EnvironmentInstance.ensure_generated_layout(current_environment)
 
 
 # Adds a debt entry and refreshes economy state.
@@ -3162,7 +3641,7 @@ func resolve_event(event_id: String) -> void:
 
 
 # Enqueues a world-acting event for modal resolution.
-func enqueue_triggered_event(event_id: String, source: String = "", context: Dictionary = {}) -> bool:
+func enqueue_triggered_event(event_id: String, source: String = "", context: Dictionary = {}, entry_overrides: Dictionary = {}) -> bool:
 	var normalized_id := event_id.strip_edges()
 	if normalized_id.is_empty():
 		return false
@@ -3175,22 +3654,97 @@ func enqueue_triggered_event(event_id: String, source: String = "", context: Dic
 		if str(entry.get("event_id", "")) == normalized_id:
 			return false
 	var queued_context := context.duplicate(true)
-	pending_triggered_events.append({
+	var entry := {
 		"event_id": normalized_id,
 		"source": source,
 		"context": queued_context,
 		"environment_id": str(current_environment.get("id", "")),
 		"environment_turns": int(current_environment.get("turns", 0)),
-	})
+	}
+	for key in entry_overrides.keys():
+		entry[str(key)] = entry_overrides[key]
+	pending_triggered_events.append(_normalize_triggered_event_entry(entry))
 	return true
 
 
-# Returns the next queued triggered event without consuming it.
+# Returns the first queued modal triggered event without consuming it.
 func next_pending_triggered_event() -> Dictionary:
+	return next_pending_modal_triggered_event()
+
+
+func next_pending_modal_triggered_event() -> Dictionary:
 	if pending_triggered_events.is_empty():
 		return {}
-	var first: Variant = pending_triggered_events[0]
-	return _normalize_triggered_event_entry(first)
+	for entry_value in pending_triggered_events:
+		var entry := _normalize_triggered_event_entry(entry_value)
+		if entry.is_empty() or str(entry.get("presentation", "modal")) == "talk":
+			continue
+		return entry
+	return {}
+
+
+func next_pending_talk_event() -> Dictionary:
+	for entry_value in pending_triggered_events:
+		var entry := _normalize_triggered_event_entry(entry_value)
+		if str(entry.get("presentation", "modal")) == "talk":
+			return entry
+	return {}
+
+
+func pending_talk_event_count() -> int:
+	var count := 0
+	for entry_value in pending_triggered_events:
+		var entry := _normalize_triggered_event_entry(entry_value)
+		if str(entry.get("presentation", "modal")) == "talk":
+			count += 1
+	return count
+
+
+func pending_talk_event(event_id: String) -> Dictionary:
+	var target_id := event_id.strip_edges()
+	if target_id.is_empty():
+		return {}
+	for entry_value in pending_triggered_events:
+		var entry := _normalize_triggered_event_entry(entry_value)
+		if str(entry.get("presentation", "modal")) == "talk" and str(entry.get("event_id", "")) == target_id:
+			return entry
+	return {}
+
+
+func complete_talk_event_resolution(event_id: String = "") -> void:
+	var expected_id := event_id.strip_edges()
+	for index in range(pending_triggered_events.size()):
+		var entry := _normalize_triggered_event_entry(pending_triggered_events[index])
+		if str(entry.get("presentation", "modal")) != "talk":
+			continue
+		if expected_id.is_empty() or str(entry.get("event_id", "")) == expected_id:
+			pending_triggered_events.remove_at(index)
+			return
+
+
+func advance_focused_talk_event_actions(amount: int = 1) -> Dictionary:
+	var step_count := maxi(0, amount)
+	if step_count <= 0:
+		return {}
+	for index in range(pending_triggered_events.size()):
+		var entry := _normalize_triggered_event_entry(pending_triggered_events[index])
+		if str(entry.get("presentation", "modal")) != "talk":
+			continue
+		var timing: Dictionary = entry.get("timing", {})
+		if not bool(timing.get("expires", false)):
+			return {}
+		var remaining := maxi(0, int(timing.get("remaining_actions", timing.get("duration_actions", 0))))
+		if remaining <= 0:
+			pending_triggered_events[index] = entry
+			return entry.duplicate(true)
+		remaining = maxi(0, remaining - step_count)
+		timing["remaining_actions"] = remaining
+		entry["timing"] = timing
+		pending_triggered_events[index] = entry
+		if remaining <= 0:
+			return entry.duplicate(true)
+		return {}
+	return {}
 
 
 # Moves a queued triggered event into active modal resolution.
@@ -3563,6 +4117,9 @@ func to_dict() -> Dictionary:
 		"story_log": _normalize_story_log(story_log),
 		"story_log_archive_count": story_log_archive_count,
 		"simulation_msec": simulation_msec,
+		"game_clock_minutes": game_clock_minutes,
+		"act_index": act_index,
+		"home_state": _normalize_home_state(home_state),
 		"run_status": run_status,
 		"run_failure_reason": run_failure_reason,
 		"run_failure_message": run_failure_message,
@@ -3607,6 +4164,9 @@ func from_dict(data: Dictionary) -> void:
 			_remember_story_seen_flags(story_entry_value as Dictionary)
 	_compact_story_log()
 	simulation_msec = maxi(0, int(data.get("simulation_msec", int(_copy_dict(data.get("event_cadence", {})).get("action_index", 0)) * SIMULATION_ACTION_MSEC)))
+	game_clock_minutes = maxi(0, int(data.get("game_clock_minutes", GAME_CLOCK_START_MINUTE)))
+	act_index = maxi(0, int(data.get("act_index", 0)))
+	home_state = _normalize_home_state(_copy_dict(data.get("home_state", {})))
 	var saved_run_status := str(data.get("run_status", RUN_STATUS_ACTIVE))
 	run_status = saved_run_status
 	run_failure_reason = str(data.get("run_failure_reason", FAILURE_NONE))
@@ -3906,13 +4466,59 @@ static func _normalize_triggered_event_entry(value: Variant) -> Dictionary:
 	if event_id.is_empty():
 		return {}
 	var context := _copy_dict(source.get("context", {}))
+	var presentation := str(source.get("presentation", "modal")).strip_edges().to_lower()
+	if not ["talk", "modal"].has(presentation):
+		presentation = "modal"
 	return {
 		"event_id": event_id,
 		"source": str(source.get("source", "")),
 		"context": context,
 		"environment_id": str(source.get("environment_id", "")),
 		"environment_turns": maxi(0, int(source.get("environment_turns", source.get("queued_turn", 0)))),
+		"presentation": presentation,
+		"speaker": _normalize_triggered_event_speaker(source.get("speaker", {})),
+		"timing": _normalize_triggered_event_timing(source.get("timing", {})),
 		"active": bool(source.get("active", false)),
+	}
+
+
+static func _normalize_triggered_event_speaker(value: Variant) -> Dictionary:
+	var source := _copy_dict(value)
+	var role := str(source.get("role", "stranger")).strip_edges().to_lower()
+	if not ["patron", "staff", "stranger", "lender"].has(role):
+		role = "stranger"
+	var bind := str(source.get("bind", "none")).strip_edges().to_lower()
+	if not ["table_patron", "none"].has(bind):
+		bind = "none"
+	return {
+		"role": role,
+		"name": str(source.get("name", "")).strip_edges(),
+		"mood": str(source.get("mood", "")).strip_edges(),
+		"behavior": str(source.get("behavior", "")).strip_edges(),
+		"silhouette": str(source.get("silhouette", "")).strip_edges(),
+		"bind": bind,
+		"patron_index": maxi(-1, int(source.get("patron_index", -1))),
+		"hair_color": str(source.get("hair_color", "")).strip_edges(),
+		"jacket_color": str(source.get("jacket_color", "")).strip_edges(),
+		"tell": str(source.get("tell", "")).strip_edges(),
+	}
+
+
+static func _normalize_triggered_event_timing(value: Variant) -> Dictionary:
+	var source := _copy_dict(value)
+	var duration_actions := maxi(0, int(source.get("duration_actions", 0)))
+	var remaining_actions := maxi(0, int(source.get("remaining_actions", duration_actions)))
+	var timeout_choice_id := str(source.get("timeout_choice_id", "")).strip_edges()
+	var expires := bool(source.get("expires", false)) and duration_actions > 0 and not timeout_choice_id.is_empty()
+	if not expires:
+		duration_actions = 0
+		remaining_actions = 0
+		timeout_choice_id = ""
+	return {
+		"expires": expires,
+		"duration_actions": duration_actions,
+		"remaining_actions": mini(remaining_actions, duration_actions) if duration_actions > 0 else 0,
+		"timeout_choice_id": timeout_choice_id,
 	}
 
 
@@ -3959,6 +4565,11 @@ static func _normalize_environment(data: Dictionary) -> Dictionary:
 	environment["game_ids"] = _copy_array(environment.get("game_ids", []))
 	environment["event_ids"] = _copy_array(environment.get("event_ids", []))
 	environment["item_offers"] = _normalize_item_offers(_copy_array(environment.get("item_offers", [])))
+	environment["home_profile"] = _copy_dict(environment.get("home_profile", {}))
+	environment["home_containers"] = _normalize_home_containers(_copy_array(environment.get("home_containers", [])))
+	environment["home_container_index"] = maxi(0, int(environment.get("home_container_index", 0)))
+	environment["home_lost"] = bool(environment.get("home_lost", false))
+	environment["parent_archetype"] = str(environment.get("parent_archetype", ""))
 	environment["service_ids"] = _copy_array(environment.get("service_ids", []))
 	environment["lender_hooks"] = _copy_array(environment.get("lender_hooks", []))
 	environment["suspicion_cues"] = _copy_array(environment.get("suspicion_cues", []))
@@ -4025,6 +4636,79 @@ static func _normalize_item_offers(offers: Array) -> Array:
 			item_offer["price"] = int(item_offer.get("price", 0))
 		result.append(item_offer)
 	return result
+
+
+static func _normalize_home_containers(containers: Array) -> Array:
+	var result: Array = []
+	for container_value in containers:
+		if typeof(container_value) != TYPE_DICTIONARY:
+			continue
+		var container: Dictionary = container_value
+		var container_id := str(container.get("id", "")).strip_edges()
+		var item_id := str(container.get("item_id", "")).strip_edges()
+		if container_id.is_empty():
+			container_id = item_id
+		if container_id.is_empty() or item_id.is_empty():
+			continue
+		var normalized_items: Array = []
+		for item_value in _copy_array(container.get("items", [])):
+			var stored_item_id := str(item_value).strip_edges()
+			if not stored_item_id.is_empty():
+				normalized_items.append(stored_item_id)
+		var capacity := maxi(0, int(container.get("capacity", normalized_items.size())))
+		if normalized_items.size() > capacity and capacity > 0:
+			normalized_items = normalized_items.slice(0, capacity)
+		result.append({
+			"id": container_id,
+			"item_id": item_id,
+			"display_name": str(container.get("display_name", item_id.replace("_", " ").capitalize())),
+			"capacity": capacity,
+			"items": normalized_items,
+		})
+	return result
+
+
+static func _normalize_home_state(data: Dictionary) -> Dictionary:
+	if data.is_empty():
+		return {}
+	var normalized := data.duplicate(true)
+	var lost := bool(normalized.get("lost", false))
+	normalized["active"] = bool(normalized.get("active", not lost)) and not lost
+	normalized["lost"] = lost
+	normalized["act_index"] = maxi(0, int(normalized.get("act_index", 0)))
+	normalized["home_archetype_id"] = str(normalized.get("home_archetype_id", "")).strip_edges()
+	normalized["home_node_id"] = str(normalized.get("home_node_id", normalized.get("home_archetype_id", ""))).strip_edges()
+	normalized["display_name"] = str(normalized.get("display_name", normalized.get("home_archetype_id", "Home"))).strip_edges()
+	if normalized["display_name"].is_empty():
+		normalized["display_name"] = "Home"
+	normalized["started_day"] = maxi(1, int(normalized.get("started_day", 1)))
+	normalized["lost_day"] = maxi(0, int(normalized.get("lost_day", 0)))
+	normalized["lost_reason"] = str(normalized.get("lost_reason", ""))
+	var tenure := _copy_dict(normalized.get("tenure", {}))
+	var tenure_type := str(tenure.get("type", "")).strip_edges().to_lower()
+	if tenure_type == HOME_TENURE_STAY:
+		tenure["type"] = HOME_TENURE_STAY
+		tenure["days_remaining"] = maxi(0, int(tenure.get("days_remaining", tenure.get("prepaid_days", 0))))
+		tenure["renewal_cost"] = maxi(0, int(tenure.get("renewal_cost", 0)))
+		tenure["renewal_days"] = maxi(1, int(tenure.get("renewal_days", 1)))
+		tenure["expiry_message"] = str(tenure.get("expiry_message", ""))
+	elif tenure_type == HOME_TENURE_RENT:
+		tenure["type"] = HOME_TENURE_RENT
+		tenure["rent_amount"] = maxi(0, int(tenure.get("rent_amount", 0)))
+		tenure["due_day"] = maxi(1, int(tenure.get("due_day", 1)))
+		tenure["cycle_days"] = maxi(1, int(tenure.get("cycle_days", 1)))
+		tenure["grace_days"] = maxi(0, int(tenure.get("grace_days", 0)))
+		tenure["payment_label"] = str(tenure.get("payment_label", "rent")).strip_edges().to_lower()
+		if str(tenure.get("payment_label", "")).is_empty():
+			tenure["payment_label"] = "rent"
+		tenure["action_label"] = str(tenure.get("action_label", "Pay %s" % str(tenure.get("payment_label", "rent")).capitalize())).strip_edges()
+		if str(tenure.get("action_label", "")).is_empty():
+			tenure["action_label"] = "Pay %s" % str(tenure.get("payment_label", "rent")).capitalize()
+		tenure["eviction_message"] = str(tenure.get("eviction_message", ""))
+	else:
+		tenure = {}
+	normalized["tenure"] = tenure
+	return normalized
 
 
 # Normalizes per-environment gameplay state owned by GameModule instances.
