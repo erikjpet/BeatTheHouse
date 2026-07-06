@@ -102,7 +102,7 @@ func _run() -> void:
 	await _probe_practice_game_surface_coverage()
 	await _probe_casino_slot_preview_coverage()
 	await _probe_game_resolve_budgets()
-	await _probe_synthetic_idle_overlays()
+	await _probe_synthetic_idle_surfaces()
 	_assert_required_game_surface_coverage()
 	_assert_required_resolve_coverage()
 	_assert_low_end_budget_headroom()
@@ -451,7 +451,7 @@ func _probe_game_resolve_budgets() -> void:
 		_assert_resolve_budget(game_id, stats, budget)
 
 
-func _probe_synthetic_idle_overlays() -> void:
+func _probe_synthetic_idle_surfaces() -> void:
 	for snapshot in [_synthetic_blackjack_idle_snapshot()]:
 		var canvas: Control = GameSurfaceCanvasScript.new()
 		canvas.size = Vector2(VisualStyleScript.GAME_BOARD_SIZE)
@@ -473,12 +473,12 @@ func _probe_synthetic_idle_overlays() -> void:
 		var renderer := str(snapshot.get("surface_renderer", ""))
 		var draw_samples := _array_size(counters.get("draw_frame_usec_samples", []))
 		observations.append({
-			"seed": "synthetic:idle_overlay",
+			"seed": "synthetic:idle_surface",
 			"run_index": -1,
-			"environment_id": "synthetic_idle_overlay",
+			"environment_id": "synthetic_idle_surface",
 			"game_id": str(snapshot.get("game_id", "")),
 			"renderer": renderer,
-			"mode": "synthetic_idle_overlay",
+			"mode": "synthetic_idle_surface",
 			"frames": frames_per_surface,
 			"elapsed_ms": float(elapsed_usec) / 1000.0,
 			"avg_frame_ms": float(elapsed_usec) / float(maxi(1, frames_per_surface)) / 1000.0,
@@ -491,13 +491,13 @@ func _probe_synthetic_idle_overlays() -> void:
 			"idle_draw_budget_ms": MAX_IDLE_SURFACE_DRAW_P95_MS,
 		})
 		if draw_samples <= 0:
-			failures.append("Synthetic %s idle overlay produced no draw samples." % renderer)
+			failures.append("Synthetic %s idle surface produced no draw samples." % renderer)
 		canvas.queue_free()
 		await _settle(1)
-		await _probe_synthetic_idle_overlay_liveness(snapshot)
+		await _probe_synthetic_idle_surface_liveness(snapshot)
 
 
-func _probe_synthetic_idle_overlay_liveness(snapshot: Dictionary) -> void:
+func _probe_synthetic_idle_surface_liveness(snapshot: Dictionary) -> void:
 	var canvas: Control = GameSurfaceCanvasScript.new()
 	canvas.size = Vector2(VisualStyleScript.GAME_BOARD_SIZE)
 	root.add_child(canvas)
@@ -513,12 +513,12 @@ func _probe_synthetic_idle_overlay_liveness(snapshot: Dictionary) -> void:
 	var renderer := str(snapshot.get("surface_renderer", ""))
 	var draw_samples := _array_size(counters.get("draw_frame_usec_samples", []))
 	observations.append({
-		"seed": "synthetic:idle_overlay_liveness",
+		"seed": "synthetic:idle_surface_liveness",
 		"run_index": -1,
-		"environment_id": "synthetic_idle_overlay",
+		"environment_id": "synthetic_idle_surface",
 		"game_id": str(snapshot.get("game_id", "")),
 		"renderer": renderer,
-		"mode": "synthetic_idle_overlay_liveness",
+		"mode": "synthetic_idle_surface_liveness",
 		"frames": frames_per_surface,
 		"elapsed_ms": float(elapsed_usec) / 1000.0,
 		"avg_frame_ms": float(elapsed_usec) / float(maxi(1, frames_per_surface)) / 1000.0,
@@ -531,7 +531,7 @@ func _probe_synthetic_idle_overlay_liveness(snapshot: Dictionary) -> void:
 		"idle_draw_budget_ms": MAX_IDLE_SURFACE_DRAW_P95_MS,
 	})
 	if draw_samples <= 0:
-		failures.append("Synthetic %s idle overlay did not redraw from _process without input/hover." % renderer)
+		failures.append("Synthetic %s idle surface did not redraw from _process without input/hover." % renderer)
 	canvas.queue_free()
 	await _settle(1)
 
@@ -540,8 +540,8 @@ func _synthetic_blackjack_idle_snapshot() -> Dictionary:
 	return {
 		"game_id": "blackjack",
 		"surface_renderer": "blackjack",
-		"surface_ambient_overlay": "table_idle",
-		"surface_animates_idle": false,
+		"surface_ambient_overlay": "",
+		"surface_animates_idle": true,
 		"reduce_motion": false,
 		"dealer_profile": {"attention_base": 28, "blink_offset": 120},
 		"dealer_attention_pressure": 6,

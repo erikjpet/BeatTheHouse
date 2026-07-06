@@ -260,9 +260,6 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 		payout_started_msec += deal_duration_msec
 	var deal_animation_active := not deal_active_id.is_empty() and deal_started_msec > 0 and now_msec - deal_started_msec >= 0 and now_msec - deal_started_msec < deal_duration_msec
 	var payout_animation_active := not payout_active_id.is_empty() and payout_started_msec > 0 and now_msec - payout_started_msec >= 0 and now_msec - payout_started_msec < PAYOUT_ANIMATION_DURATION_MSEC
-	var attention_animation_active := not attention_active_id.is_empty() and attention_started_msec > 0 and attention_duration_msec > 0 and now_msec - attention_started_msec >= 0 and now_msec - attention_started_msec < attention_duration_msec
-	var surface_motion_active := deal_animation_active or payout_animation_active or count_active or attention_animation_active
-	var blackjack_ambient_overlay := "table_idle" if not barred else ""
 	var timer_active := not dealt and not barred and not deal_animation_active and not payout_animation_active
 	var round_timer := GameModule.table_round_timer_status_peek(table, now_msec, "Next hand") if timer_active else {}
 	if timer_active and bool(round_timer.get("active", false)) and table_notice == "Slide chips, choose side bets, then press DEAL.":
@@ -296,8 +293,8 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 		"surface_controls_native": true,
 		"surface_stake_controls_required": true,
 		"surface_embeds_outcomes": true,
-		"surface_animates_idle": false,
-		"surface_ambient_overlay": blackjack_ambient_overlay,
+		"surface_animates_idle": not barred,
+		"surface_ambient_overlay": "",
 		"surface_dynamic_overlay_channels": [DEAL_ANIMATION_CHANNEL, ATTENTION_ANIMATION_CHANNEL, COUNT_ANIMATION_CHANNEL, PAYOUT_ANIMATION_CHANNEL],
 		"surface_realtime_state_refresh": false,
 		"surface_ui_protected_regions": _blackjack_ui_protected_regions(count_challenge),
@@ -487,45 +484,25 @@ func _blackjack_ui_rect(x: float, y: float, width: float, height: float, hover_a
 	return rect
 
 
-func draw_surface(surface, surface_state: Dictionary, render_context: Dictionary = {}) -> bool:
+func draw_surface(surface, surface_state: Dictionary, _render_context: Dictionary = {}) -> bool:
 	if str(surface_state.get("surface_renderer", "")) != "blackjack":
 		return false
-	var overlay_owns_table_idle := bool(render_context.get("surface_dynamic_overlay_active", false)) and str(render_context.get("surface_dynamic_overlay_id", "")) == "table_idle"
 	if surface.surface_animation_active(DEAL_ANIMATION_CHANNEL):
 		_prepare_draw_deal_events_cache(surface_state)
 	surface.surface_begin_design_space(surface.surface_board_size())
 	_draw_blackjack_room(surface, surface_state)
 	_draw_blackjack_table(surface, surface_state)
-	if not overlay_owns_table_idle:
-		_draw_table_patrons(surface, surface_state)
-		_draw_dealer_station(surface, surface_state)
+	_draw_table_patrons(surface, surface_state)
+	_draw_dealer_station(surface, surface_state)
 	_draw_player_station(surface, surface_state)
 	_draw_blackjack_table_notice(surface, surface_state)
-	if not overlay_owns_table_idle:
-		_draw_blackjack_round_timer(surface, surface_state)
+	_draw_blackjack_round_timer(surface, surface_state)
 	_draw_blackjack_ambient_event(surface, surface_state)
 	_draw_chip_rack(surface, surface_state)
 	_draw_table_actions(surface, surface_state)
 	_draw_basic_strategy_advice(surface, surface_state)
 	_draw_blackjack_result_board(surface, surface_state)
 	_draw_side_bet_rule_overlay(surface, surface_state)
-	if not overlay_owns_table_idle:
-		_draw_deal_animation(surface, surface_state)
-		_draw_chip_payout_animation(surface, surface_state)
-	if not overlay_owns_table_idle:
-		_draw_count_challenge(surface, surface_state)
-	return true
-
-
-func draw_surface_dynamic_overlay(surface, surface_state: Dictionary, overlay_id: String) -> bool:
-	if overlay_id != "table_idle" or str(surface_state.get("surface_renderer", "")) != "blackjack":
-		return false
-	if surface.surface_animation_active(DEAL_ANIMATION_CHANNEL):
-		_prepare_draw_deal_events_cache(surface_state)
-	_draw_table_patrons(surface, surface_state)
-	_draw_dealer_station(surface, surface_state)
-	_draw_player_station(surface, surface_state, false)
-	_draw_blackjack_round_timer(surface, surface_state)
 	_draw_deal_animation(surface, surface_state)
 	_draw_chip_payout_animation(surface, surface_state)
 	_draw_count_challenge(surface, surface_state)

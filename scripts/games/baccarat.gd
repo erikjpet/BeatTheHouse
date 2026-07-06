@@ -162,8 +162,8 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 		"surface_stake_controls_required": true,
 		"surface_embeds_outcomes": true,
 		"surface_suppresses_game_result_burst": true,
-		"surface_animates_idle": false,
-		"surface_ambient_overlay": "table_idle",
+		"surface_animates_idle": true,
+		"surface_ambient_overlay": "",
 		"surface_dynamic_overlay_channels": [BACCARAT_DEAL_CHANNEL, BACCARAT_PAYOUT_CHANNEL],
 		"surface_realtime_state_refresh": deal_active or payout_active,
 		"surface_state_labels": [
@@ -271,40 +271,26 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 	})
 
 
-func draw_surface(surface, surface_state: Dictionary, render_context: Dictionary = {}) -> bool:
+func draw_surface(surface, surface_state: Dictionary, _render_context: Dictionary = {}) -> bool:
 	if str(surface_state.get("surface_renderer", "")) != "baccarat":
 		return false
-	var overlay_owns_table_idle := bool(render_context.get("surface_dynamic_overlay_active", false)) and str(render_context.get("surface_dynamic_overlay_id", "")) == "table_idle"
 	surface.surface_begin_design_space(surface.surface_board_size())
 	_draw_baccarat_room(surface, surface_state)
 	_draw_hand_explainer(surface, surface_state)
 	_draw_baccarat_table(surface, surface_state)
-	if not overlay_owns_table_idle:
-		_draw_table_patrons(surface, surface_state)
-		_draw_croupier_station(surface, surface_state)
+	_draw_table_patrons(surface, surface_state)
+	_draw_croupier_station(surface, surface_state)
 	_draw_bet_zones(surface, surface_state)
-	if not overlay_owns_table_idle:
-		_draw_card_areas(surface, surface_state)
+	_draw_card_areas(surface, surface_state)
 	_draw_bet_chips(surface, surface_state)
 	_draw_shoe_and_discard(surface, surface_state)
 	_draw_baccarat_road(surface, surface_state)
 	_draw_edge_sort_panel(surface, surface_state)
 	_draw_table_notice(surface, surface_state)
-	if not overlay_owns_table_idle:
-		_draw_round_timer(surface, surface_state)
+	_draw_round_timer(surface, surface_state)
 	_draw_chip_rack(surface, surface_state)
 	_draw_action_console(surface, surface_state)
 	surface.surface_end_design_space()
-	return true
-
-
-func draw_surface_dynamic_overlay(surface, surface_state: Dictionary, overlay_id: String) -> bool:
-	if overlay_id != "table_idle" or str(surface_state.get("surface_renderer", "")) != "baccarat":
-		return false
-	_draw_table_patrons(surface, surface_state)
-	_draw_croupier_station(surface, surface_state)
-	_draw_card_areas(surface, surface_state)
-	_draw_round_timer(surface, surface_state)
 	return true
 
 

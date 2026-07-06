@@ -512,9 +512,10 @@ func surface_action_command(surface_action: String, index: int, confirm_requeste
 		"video_poker_deal":
 			var level2 := _bet_level(next)
 			var denom2 := _denomination_index(next, state)
+			var deal_started_msec := _surface_time_msec(ui_state)
 			next = {"hand_active": true, "holds": [], "marked": false, "bet_level": level2, "denomination_index": denom2}
-			next["deal_id"] = "deal_%d" % Time.get_ticks_msec()
-			next["deal_started_msec"] = Time.get_ticks_msec()
+			next["deal_id"] = "deal_%d" % deal_started_msec
+			next["deal_started_msec"] = deal_started_msec
 			return GameModule.surface_command({
 				"handled": true,
 				"ui_state": next,
@@ -595,10 +596,11 @@ func surface_action_command(surface_action: String, index: int, confirm_requeste
 				"message": "Win collected. Deal again to play on.",
 			})
 		"video_poker_double":
+			var double_started_msec := _surface_time_msec(ui_state)
 			next["double_active"] = true
 			next.erase("double_pick")
-			next["deal_id"] = "double_%d" % Time.get_ticks_msec()
-			next["deal_started_msec"] = Time.get_ticks_msec()
+			next["deal_id"] = "double_%d" % double_started_msec
+			next["deal_started_msec"] = double_started_msec
 			return GameModule.surface_command({
 				"handled": true,
 				"ui_state": next,

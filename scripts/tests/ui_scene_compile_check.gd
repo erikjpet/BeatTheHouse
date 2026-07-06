@@ -1944,18 +1944,18 @@ func _run() -> void:
 	roulette_full_idle_canvas.call("render_game_snapshot", {
 		"game_id": "roulette",
 		"surface_renderer": "roulette",
-		"surface_ambient_overlay": "roulette_full_idle",
-		"surface_animates_idle": false,
+		"surface_ambient_overlay": "",
+		"surface_animates_idle": true,
 		"reduce_motion": false,
 	})
 	await process_frame
 	var roulette_full_idle_start_snapshot: Dictionary = roulette_full_idle_canvas.call("current_view_snapshot")
-	if not bool(roulette_full_idle_start_snapshot.get("surface_ambient_overlay_active", false)):
-		push_error("Roulette full-wheel idle motion layer was not active.")
+	if bool(roulette_full_idle_start_snapshot.get("surface_ambient_overlay_active", false)):
+		push_error("Roulette idle should not activate the deprecated ambient overlay.")
 		quit(1)
 		return
-	if bool(roulette_full_idle_start_snapshot.get("surface_continuous_redraw_active", true)):
-		push_error("Roulette full-wheel idle motion layer should animate without full-surface continuous redraw.")
+	if not bool(roulette_full_idle_start_snapshot.get("surface_continuous_redraw_active", false)):
+		push_error("Roulette full-wheel idle must animate through the single main surface.")
 		quit(1)
 		return
 	var roulette_full_redraw_start := int(roulette_full_idle_start_snapshot.get("surface_animation_redraw_count", 0))
@@ -1963,7 +1963,7 @@ func _run() -> void:
 		roulette_full_idle_canvas.call("_process", 1.0 / 60.0)
 	var roulette_full_idle_end_snapshot: Dictionary = roulette_full_idle_canvas.call("current_view_snapshot")
 	if int(roulette_full_idle_end_snapshot.get("surface_animation_redraw_count", 0)) - roulette_full_redraw_start < 6:
-		push_error("Roulette full-wheel idle motion layer did not maintain a 60 FPS redraw cadence.")
+		push_error("Roulette main-surface idle did not maintain a 60 FPS redraw cadence.")
 		quit(1)
 		return
 	var table_idle_canvas: Control = GameSurfaceCanvasScript.new()
@@ -1971,8 +1971,8 @@ func _run() -> void:
 	table_idle_canvas.call("render_game_snapshot", {
 		"game_id": "baccarat",
 		"surface_renderer": "baccarat",
-		"surface_ambient_overlay": "table_idle",
-		"surface_animates_idle": false,
+		"surface_ambient_overlay": "",
+		"surface_animates_idle": true,
 		"reduce_motion": false,
 		"dealer_profile": {"attention_base": 24},
 		"dealer_attention_pressure": 6,
@@ -1990,12 +1990,12 @@ func _run() -> void:
 	})
 	await process_frame
 	var table_idle_start_snapshot: Dictionary = table_idle_canvas.call("current_view_snapshot")
-	if not bool(table_idle_start_snapshot.get("surface_ambient_overlay_active", false)):
-		push_error("Table idle overlay was not active for a table_idle surface snapshot.")
+	if bool(table_idle_start_snapshot.get("surface_ambient_overlay_active", false)):
+		push_error("Table idle should not activate the deprecated ambient overlay.")
 		quit(1)
 		return
-	if bool(table_idle_start_snapshot.get("surface_continuous_redraw_active", true)):
-		push_error("Table idle overlay should animate without full-surface continuous redraw.")
+	if not bool(table_idle_start_snapshot.get("surface_continuous_redraw_active", false)):
+		push_error("Table idle must animate through the single main surface.")
 		quit(1)
 		return
 	var table_overlay_redraw_start := int(table_idle_start_snapshot.get("surface_animation_redraw_count", 0))
@@ -2003,7 +2003,7 @@ func _run() -> void:
 		table_idle_canvas.call("_process", 1.0 / 60.0)
 	var table_idle_end_snapshot: Dictionary = table_idle_canvas.call("current_view_snapshot")
 	if int(table_idle_end_snapshot.get("surface_animation_redraw_count", 0)) - table_overlay_redraw_start < 6:
-		push_error("Table idle overlay did not maintain a 60 FPS redraw cadence.")
+		push_error("Table main-surface idle did not maintain a 60 FPS redraw cadence.")
 		quit(1)
 		return
 	var duplicate_input_canvas: Control = PixelSceneCanvasScript.new()

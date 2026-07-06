@@ -154,17 +154,19 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 	var payout_active := bool(phase_status.get("payout_active", false))
 	var result_reveal_active := bool(phase_status.get("result_reveal_active", false))
 	var roulette_wheel_locked := bool(phase_status.get("motion_active", false))
+	var result_settled_for_display := _roulette_result_settled_for_surface(last_result_source, phase_status)
 	var past_post_window := _past_post_window_status(table, session, last_result, now_msec, run_state)
 	var past_post_challenge := _normalized_past_post_challenge(session.get("past_post_challenge", {}))
 	var past_post_available := bool(past_post_window.get("available", false))
 	var roulette_motion_active := roulette_wheel_locked or past_post_available
 	var rules := _table_rules(table)
 	var barred := bool(table.get("table_barred", false))
-	var roulette_ambient_overlay := "roulette_full_idle" if not barred else ""
-	var recent_numbers := _roulette_recent_numbers(table)
+	var visible_last_results := _roulette_visible_last_results(table, last_result_source, result_settled_for_display)
+	var recent_numbers := _roulette_recent_numbers_from_history(visible_last_results)
+	var visible_bankroll := _roulette_visible_bankroll(run_state, last_result_source, result_settled_for_display)
 	var timer_active := not barred and not roulette_wheel_locked
 	var round_timer := GameModule.table_round_timer_status_peek(table, now_msec, "Next spin", ROULETTE_ROUND_DELAY_MSEC) if timer_active else {}
-	var table_notice := _table_notice(table, session, last_result, spin_active, payout_active, round_timer)
+	var table_notice := _table_notice(table, session, last_result, spin_active, payout_active or result_reveal_active or not result_settled_for_display, round_timer)
 	if past_post_available:
 		table_notice = "The payout lock is open. A late chip could still slide."
 	if barred:
@@ -181,10 +183,11 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 		"surface_stake_controls_required": true,
 		"surface_embeds_outcomes": true,
 		"surface_suppresses_game_result_burst": true,
-		"surface_animates_idle": false,
-		"surface_ambient_overlay": roulette_ambient_overlay,
+		"surface_animates_idle": not barred,
+		"surface_ambient_overlay": "",
 		"surface_dynamic_overlay_channels": [ROULETTE_SPIN_CHANNEL],
 		"surface_realtime_state_refresh": roulette_motion_active,
+		"surface_time_msec": now_msec,
 		"surface_state_labels": [
 			{"label": "Wager", "value": "$%d" % total_wager},
 			{"label": "Wheel", "value": "00" if int(rules.get("zero_count", 2)) == 2 else "0"},
@@ -239,8 +242,9 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 		"can_undo": not barred and not roulette_wheel_locked and not (_array(session.get("roulette_undo_stack", [])).is_empty()),
 		"can_clear": not barred and not roulette_wheel_locked and not bets.is_empty(),
 		"can_rebet": not barred and not roulette_wheel_locked and not _bet_array(session.get("roulette_rebet", table.get("last_bets", []))).is_empty(),
+		"bankroll": visible_bankroll,
 		"last_result": last_result,
-		"last_results": _dictionary_array(table.get("last_results", [])),
+		"last_results": visible_last_results,
 		"recent_numbers": recent_numbers,
 		"roulette_recent_numbers": recent_numbers,
 		"past_post_available": past_post_available,
@@ -248,8 +252,9 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 		"past_post_challenge": past_post_challenge,
 		"past_post_item_modifiers": past_post_item_modifiers,
 		"result_reveal_active": result_reveal_active,
+		"roulette_result_settled": result_settled_for_display,
 		"roulette_motion_active": roulette_motion_active,
-		"result_message": str(last_result.get("summary", "")) if not spin_active else "",
+		"result_message": str(last_result.get("summary", "")) if result_settled_for_display else "",
 		"table_notice": table_notice,
 		"table_round_timer": round_timer,
 		"spin_trajectory": _dictionary_array(last_result_source.get("trajectory", [])),
@@ -288,38 +293,25 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 	})
 
 
-func draw_surface(surface, surface_state: Dictionary, render_context: Dictionary = {}) -> bool:
+func draw_surface(surface, surface_state: Dictionary, _render_context: Dictionary = {}) -> bool:
 	if str(surface_state.get("surface_renderer", "")) != "roulette":
 		return false
-	var overlay_owns_motion := bool(render_context.get("surface_dynamic_overlay_active", false)) and str(render_context.get("surface_dynamic_overlay_id", "")) == "roulette_full_idle"
 	surface.surface_begin_design_space(surface.surface_board_size())
 	_draw_roulette_room(surface, surface_state)
 	_draw_roulette_table(surface, surface_state)
-	if not overlay_owns_motion:
-		_draw_roulette_wheel(surface, surface_state)
-		_draw_table_patrons(surface, surface_state)
-		_draw_croupier_station(surface, surface_state)
+	_draw_roulette_wheel(surface, surface_state)
+	_draw_table_patrons(surface, surface_state)
+	_draw_croupier_station(surface, surface_state)
 	_draw_recent_numbers(surface, surface_state)
 	_draw_betting_layout(surface, surface_state)
 	_draw_bet_chips(surface, surface_state)
 	_draw_table_notice(surface, surface_state)
-	if not overlay_owns_motion:
-		_draw_round_timer(surface, surface_state)
+	_draw_round_timer(surface, surface_state)
 	_draw_chip_rack(surface, surface_state)
 	_draw_table_actions(surface, surface_state)
 	_draw_spin_result(surface, surface_state)
 	_draw_rule_hover_overlay(surface, surface_state)
 	_draw_payout_animation(surface, surface_state)
-	return true
-
-
-func draw_surface_dynamic_overlay(surface, surface_state: Dictionary, overlay_id: String) -> bool:
-	if overlay_id != "roulette_full_idle" or str(surface_state.get("surface_renderer", "")) != "roulette":
-		return false
-	_draw_roulette_wheel(surface, surface_state)
-	_draw_table_patrons(surface, surface_state)
-	_draw_croupier_station(surface, surface_state)
-	_draw_round_timer(surface, surface_state)
 	return true
 
 
@@ -330,13 +322,13 @@ func surface_needs_auto_tick(ui_state: Dictionary, run_state: RunState, environm
 	var table := _peek_table_state(environment)
 	if table.is_empty() or bool(table.get("table_barred", false)):
 		return false
-	var now_msec := int(ui_state.get("surface_time_msec", Time.get_ticks_msec()))
+	var last_result: Dictionary = _last_result_source(table)
+	var now_msec := _surface_time_msec_for_result(ui_state, last_result)
 	var timer := GameModule.table_round_timer_status_peek(table, now_msec, "Next spin", ROULETTE_ROUND_DELAY_MSEC)
 	if _roulette_motion_active(table, now_msec) and not bool(timer.get("due", false)):
 		return false
 	if bool(timer.get("active", false)):
 		return bool(timer.get("due", false))
-	var last_result: Dictionary = _last_result_source(table)
 	return not last_result.is_empty()
 
 
@@ -355,7 +347,7 @@ func _peek_table_state(environment: Dictionary) -> Dictionary:
 func surface_auto_action_command(ui_state: Dictionary, run_state: RunState, environment: Dictionary, _surface_status: Dictionary = {}) -> Dictionary:
 	var table := _table_state(run_state, environment)
 	var session := _normalized_session(run_state, environment, ui_state, table)
-	var now_msec := int(ui_state.get("surface_time_msec", Time.get_ticks_msec()))
+	var now_msec := _surface_time_msec_for_result(ui_state, _last_result_source(table))
 	var timer := GameModule.table_round_timer_status_peek(table, now_msec, "Next spin", ROULETTE_ROUND_DELAY_MSEC)
 	if _roulette_motion_active(table, now_msec) and not bool(timer.get("due", false)):
 		return {"handled": false}
@@ -2368,6 +2360,8 @@ func _draw_table_actions(surface, surface_state: Dictionary) -> void:
 
 
 func _draw_spin_result(surface, surface_state: Dictionary) -> void:
+	if not bool(surface_state.get("roulette_result_settled", true)):
+		return
 	var result := _copy_dict(surface_state.get("last_result", {}))
 	if result.is_empty():
 		return
@@ -2695,8 +2689,14 @@ func _surface_last_result(value: Variant) -> Dictionary:
 
 
 func _roulette_recent_numbers(table: Dictionary) -> Array:
+	return _roulette_recent_numbers_from_history(_dictionary_array(table.get("last_results", [])))
+
+
+func _roulette_recent_numbers_from_history(history_entries: Array) -> Array:
 	var result: Array = []
-	for history_value in _dictionary_array(table.get("last_results", [])):
+	for history_value in history_entries:
+		if typeof(history_value) != TYPE_DICTIONARY:
+			continue
 		var history: Dictionary = history_value
 		var number := str(history.get("winning_number", ""))
 		if number.is_empty():
@@ -2711,6 +2711,45 @@ func _roulette_recent_numbers(table: Dictionary) -> Array:
 		if result.size() >= HISTORY_LIMIT:
 			break
 	return result
+
+
+func _roulette_visible_last_results(table: Dictionary, current_result: Dictionary, current_result_settled: bool) -> Array:
+	var history := _dictionary_array(table.get("last_results", []))
+	if current_result_settled or current_result.is_empty():
+		return history
+	var current_spin_id := str(current_result.get("spin_id", ""))
+	if current_spin_id.is_empty():
+		return history
+	var visible: Array = []
+	for history_value in history:
+		var history_entry: Dictionary = history_value
+		if str(history_entry.get("spin_id", "")) == current_spin_id:
+			continue
+		visible.append(history_entry)
+	return visible
+
+
+func _roulette_result_settled_for_surface(last_result: Dictionary, phase_status: Dictionary) -> bool:
+	if last_result.is_empty():
+		return true
+	var elapsed_msec := int(phase_status.get("elapsed_msec", -1))
+	return elapsed_msec >= SPIN_ANIMATION_DURATION_MSEC + PAYOUT_ANIMATION_DURATION_MSEC + ROULETTE_RESULT_REVEAL_MSEC
+
+
+func _roulette_visible_bankroll(run_state: RunState, last_result: Dictionary, result_settled: bool) -> int:
+	if run_state == null:
+		return 0
+	var bankroll := run_state.bankroll
+	if result_settled or last_result.is_empty():
+		return bankroll
+	return bankroll - _roulette_pending_display_bankroll_delta(last_result)
+
+
+func _roulette_pending_display_bankroll_delta(last_result: Dictionary) -> int:
+	var pending_delta := int(last_result.get("bankroll_delta", 0))
+	if bool(last_result.get("past_post_resolved", false)):
+		pending_delta += int(last_result.get("past_post_bankroll_delta", 0))
+	return pending_delta
 
 
 func _roulette_pressure_message(table: Dictionary, pit_boss_status: Dictionary) -> String:
@@ -2753,9 +2792,7 @@ func _surface_action_blocks(blocked: bool) -> Array:
 
 
 func _surface_locked(table: Dictionary, ui_state: Dictionary) -> bool:
-	if not ui_state.has("surface_time_msec"):
-		return false
-	var now_msec := int(ui_state.get("surface_time_msec", Time.get_ticks_msec()))
+	var now_msec := _surface_time_msec_for_result(ui_state, _last_result_source(table))
 	return bool(_roulette_phase_status(table, now_msec).get("motion_active", false))
 
 
