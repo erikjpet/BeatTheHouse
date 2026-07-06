@@ -17,7 +17,7 @@ NEVER re-implement work a status note says already exists somewhere.
 
 | # | Prompt | Status | Machine | Notes |
 | --- | --- | --- | --- | --- |
-| 1 | CRITICAL_table_environments_not_loading_prompt.md | ready | PM machine ONLY | Bug exists only in the PM machine's uncommitted tree; blocks entries 3-5 |
+| 1 | CRITICAL_table_environments_not_loading_prompt.md | claimed (2026-07-06, Codex PM workspace) | PM machine ONLY | Bug exists only in the PM machine's uncommitted tree; blocks entries 3-5 |
 | 2 | release_0_3_3_patch_prompt.md | blocked | work server (clean tree) | GitHub source release is being cut from the PM tree; keep only if a separate export/hash package gate is still required |
 | 3 | playtest_root_fix_agent_prompt.md | in-progress-elsewhere | PM machine | Partially implemented, uncommitted on the PM machine — do not start fresh |
 | 4 | home_environment_feature_prompt.md | in-progress-elsewhere | PM machine | Partially implemented, uncommitted on the PM machine (archetypes/data/art) |
