@@ -7576,6 +7576,20 @@ func _count_string_occurrences(values: Variant, target: String) -> int:
 	return count
 
 
+func _foundation_string_occurrence_count(text: String, needle: String) -> int:
+	if needle.is_empty():
+		return 0
+	var count := 0
+	var offset := 0
+	while offset < text.length():
+		var found := text.find(needle, offset)
+		if found < 0:
+			break
+		count += 1
+		offset = found + needle.length()
+	return count
+
+
 func _dictionary_has_key_prefix(values: Dictionary, prefix: String) -> bool:
 	for key in values.keys():
 		if str(key).begins_with(prefix):
@@ -15022,7 +15036,7 @@ func _check_music_fx_foundation(library: ContentLibrary, failures: Array) -> voi
 		failures.append("Web export should use the browser PCM stream bridge so music/SFX remain audible when native web playback is silent.")
 	if bool(web_contract.get("oscillator_fallback_enabled", true)) or bool(web_contract.get("script_has_oscillator_fallback", true)):
 		failures.append("Web audio bridge must not fall back to oscillator synth cues; those produced the browser hum regression.")
-	if int(web_contract.get("version", 0)) < 3 or not bool(web_contract.get("script_has_version_guard", false)):
+	if int(web_contract.get("version", 0)) < 4 or not bool(web_contract.get("script_has_version_guard", false)):
 		failures.append("Web audio bridge did not expose a versioned replacement guard.")
 	if not bool(web_contract.get("script_has_highpass", false)) or float(web_contract.get("highpass_hz", 0.0)) < 30.0:
 		failures.append("Web audio bridge must high-pass browser output to prevent sub-bass overload.")
@@ -15030,10 +15044,14 @@ func _check_music_fx_foundation(library: ContentLibrary, failures: Array) -> voi
 		failures.append("Web audio bridge must keep a browser-side compressor before destination output.")
 	if not bool(web_contract.get("script_has_pcm_decoder", false)) or not bool(web_contract.get("script_has_music_stems", false)):
 		failures.append("Web audio bridge must decode PCM buffers and play the normal music stem set.")
+	if not bool(web_contract.get("script_accepts_json_payloads", false)):
+		failures.append("Web audio bridge JavaScript methods must parse JSON string payloads from direct interface calls.")
 	if not bool(web_contract.get("script_has_loop_stop", false)):
 		failures.append("Web audio bridge must expose explicit loop stopping for reel/roulette browser loops.")
 	if int(web_contract.get("music_mix_min_interval_msec", 0)) < 100:
-		failures.append("Web audio bridge must throttle browser mix evals so music fades do not stall the web main thread.")
+		failures.append("Web audio bridge must throttle browser mix calls so music fades do not stall the web main thread.")
+	if not bool(web_contract.get("bridge_uses_direct_interface", false)) or not bool(web_contract.get("telemetry_uses_call_payload_names", false)):
+		failures.append("Web audio bridge must report direct-call payload telemetry instead of eval byte telemetry.")
 	if not bool(web_contract.get("bridge_skips_silent_music_stems", false)):
 		failures.append("Web audio bridge must skip silent music stems before serializing browser PCM payloads.")
 	if not bool(web_contract.get("bridge_skips_duplicate_music_stems", false)):
@@ -15044,6 +15062,13 @@ func _check_music_fx_foundation(library: ContentLibrary, failures: Array) -> voi
 		failures.append("Web audio bridge SFX gain staging can clip browser output.")
 	if float(web_contract.get("master_gain", 1.0)) * float(web_contract.get("output_gain", 1.0)) > 0.75:
 		failures.append("Web audio bridge master/output gain leaves too little headroom.")
+	var web_audio_bridge_text := FileAccess.get_file_as_string("res://scripts/ui/web_audio_bridge.gd")
+	if _foundation_string_occurrence_count(web_audio_bridge_text, "JavaScriptBridge.eval(") != 1:
+		failures.append("Web audio bridge should use JavaScriptBridge.eval only for one-time bridge installation.")
+	if web_audio_bridge_text.find("JavaScriptBridge.get_interface(\"BTHWebAudio\")") < 0:
+		failures.append("Web audio bridge should cache BTHWebAudio through JavaScriptBridge.get_interface after installation.")
+	if web_audio_bridge_text.find("\"call_counts\"") < 0 or web_audio_bridge_text.find("\"payload_bytes\"") < 0:
+		failures.append("Web audio bridge debug stats should expose call_counts and payload_bytes telemetry.")
 	var foundation_main_text := FileAccess.get_file_as_string("res://scripts/ui/foundation_main.gd")
 	if foundation_main_text.find("_suppress_web_music_for_game_surface") != -1 or foundation_main_text.find("OS.has_feature(\"web\") and current_screen == SCREEN_GAME") != -1:
 		failures.append("Web procedural music should keep playing inside game surfaces instead of being suppressed on entry.")

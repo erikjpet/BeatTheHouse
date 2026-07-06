@@ -21,7 +21,7 @@ NEVER re-implement work a status note says already exists somewhere.
 | 2 | playtest_root_fix_agent_prompt.md | in-progress-elsewhere | PM machine | Partially implemented, uncommitted on the PM machine — do not start fresh |
 | 3 | home_environment_feature_prompt.md | in-progress-elsewhere | PM machine | Partially implemented, uncommitted on the PM machine (archetypes/data/art) |
 | 4 | environment_semantic_layout_prompt.md | blocked | PM machine | Touches archetypes.json, which carries uncommitted home-environment work; wait for entry 3 |
-| 5 | web_audio_bridge_modernization_prompt.md | claimed (2026-07-06, Codex PM workspace) | any (clean tree) | Independent; safe on the work server |
+| 5 | web_audio_bridge_modernization_prompt.md | blocked (2026-07-06, Codex PM workspace) | any (clean tree) | Task A implemented and UI gate green, but DONE gate fails `tools/web_perf_smoke.ps1`: table idle budgets exceed p95 limits (`baccarat_idle`, `roulette_idle`, `bar_dice_idle`, `blackjack_idle`; latest `.tmp/web_audio_bridge_after_rerun/report.summary.json`) |
 | 6 | attribute_glyph_system_prompt.md | blocked | any | Wants inventory extraction landed and committed before inventory rows integration |
 | 7 | beach_environment_prompt.md | blocked | PM machine | New beach environment plus hidden legendary slot item; touches archetypes/routes/items/art/slot item behavior, so wait for entries 3 and 4 |
 

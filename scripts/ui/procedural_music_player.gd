@@ -2845,9 +2845,30 @@ func _web_audio_stem_set_pcm_bytes(stem_set: Dictionary) -> int:
 
 
 func _web_audio_wav_has_signal(wav: AudioStreamWAV) -> bool:
-	for byte_value in wav.data:
-		if int(byte_value) != 0:
+	var data := wav.data
+	var size := data.size()
+	if size <= 0:
+		return false
+	var edge_count := mini(size, 256)
+	for index in range(edge_count):
+		if int(data[index]) != 0:
 			return true
+	var suffix_start := maxi(edge_count, size - 256)
+	for index in range(suffix_start, size):
+		if int(data[index]) != 0:
+			return true
+	var interior_count := suffix_start - edge_count
+	if interior_count <= 0:
+		return false
+	var sample_count := mini(256, interior_count)
+	var step := maxi(1, int(interior_count / sample_count))
+	var index := edge_count
+	var checked := 0
+	while index < suffix_start and checked < sample_count:
+		if int(data[index]) != 0:
+			return true
+		index += step
+		checked += 1
 	return false
 
 

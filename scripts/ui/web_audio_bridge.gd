@@ -2,15 +2,16 @@ class_name WebAudioBridge
 extends RefCounted
 
 static var _ensured := false
+static var _bridge_interface: Variant = null
 static var _last_music_payload_key := ""
 static var _last_music_mix_keys: Dictionary = {}
 static var _last_music_mix_msec: Dictionary = {}
 static var _registered_pcm_keys: Dictionary = {}
 static var _active_music_groups: Dictionary = {}
-static var _eval_counts: Dictionary = {}
-static var _eval_bytes := 0
+static var _call_counts: Dictionary = {}
+static var _payload_bytes := 0
 
-const WEB_AUDIO_VERSION := 3
+const WEB_AUDIO_VERSION := 4
 const WEB_MASTER_GAIN := 0.72
 const WEB_OUTPUT_GAIN := 0.92
 const WEB_HIGHPASS_HZ := 38.0
@@ -24,7 +25,7 @@ const WEB_MUSIC_STEM_ROLES := ["pad", "bass", "bass_dark", "lead", "drums_low", 
 
 const WEB_AUDIO_SCRIPT := """
 (function () {
-	var BRIDGE_VERSION = 3;
+	var BRIDGE_VERSION = 4;
 	if (window.BTHWebAudio && window.BTHWebAudio.version === BRIDGE_VERSION) {
 		return true;
 	}
@@ -65,6 +66,16 @@ const WEB_AUDIO_SCRIPT := """
 			bytes[index] = binary.charCodeAt(index) & 255;
 		}
 		return bytes;
+	}
+	function parsePayload(payload, fallback) {
+		if (typeof payload === "string") {
+			try {
+				return JSON.parse(payload);
+			} catch (_error) {
+				return fallback || {};
+			}
+		}
+		return payload || fallback || {};
 	}
 	function decodePcm16(payload, ctx) {
 		var channels = Math.max(1, Math.min(2, Number(payload.channels || 1) | 0));
@@ -159,7 +170,7 @@ const WEB_AUDIO_SCRIPT := """
 			return true;
 		},
 		registerPcm: function (payload) {
-			payload = payload || {};
+			payload = parsePayload(payload, {});
 			if (!this.ensure()) {
 				return false;
 			}
@@ -177,7 +188,7 @@ const WEB_AUDIO_SCRIPT := """
 			return true;
 		},
 		playPcm: function (payload) {
-			payload = payload || {};
+			payload = parsePayload(payload, {});
 			if (!this.unlock() || !this.registerPcm(payload)) {
 				return false;
 			}
@@ -232,7 +243,7 @@ const WEB_AUDIO_SCRIPT := """
 			return true;
 		},
 		playMusicStems: function (payload) {
-			payload = payload || {};
+			payload = parsePayload(payload, {});
 			if (!this.unlock()) {
 				return false;
 			}
@@ -279,7 +290,7 @@ const WEB_AUDIO_SCRIPT := """
 			return true;
 		},
 		setMusicMix: function (payload) {
-			payload = payload || {};
+			payload = parsePayload(payload, {});
 			if (!this.ensure()) {
 				return false;
 			}
@@ -299,7 +310,7 @@ const WEB_AUDIO_SCRIPT := """
 			return true;
 		},
 		stopMusic: function (payload) {
-			payload = payload || {};
+			payload = parsePayload(payload, {});
 			var groupId = "";
 			if (typeof payload === "string") {
 				groupId = payload;
@@ -354,33 +365,44 @@ static func available() -> bool:
 static func ensure() -> void:
 	if not available():
 		return
-	if _ensured:
+	if _ensured and _bridge_interface != null:
 		return
-	_record_eval("ensure", WEB_AUDIO_SCRIPT.length())
-	JavaScriptBridge.eval(WEB_AUDIO_SCRIPT, true)
-	_ensured = true
+	if not _ensured:
+		_record_bridge_call("install_eval", WEB_AUDIO_SCRIPT.length())
+		JavaScriptBridge.eval(WEB_AUDIO_SCRIPT, true)
+		_ensured = true
+	_bridge_interface = JavaScriptBridge.get_interface("BTHWebAudio")
+
+
+static func _bridge_ready() -> bool:
+	if not available():
+		return false
+	ensure()
+	return _bridge_interface != null
 
 
 static func unlock() -> void:
 	if not available():
 		return
 	ensure()
+	if _bridge_interface == null:
+		return
 	_last_music_payload_key = ""
-	var source := "window.BTHWebAudio && window.BTHWebAudio.unlock();"
-	_record_eval("unlock", source.length())
-	JavaScriptBridge.eval(source, true)
+	_record_bridge_call("unlock", 0)
+	_bridge_interface.unlock()
 
 
 static func play_stream(stream: AudioStream, stream_id: String, volume_db: float = 0.0, pitch: float = 1.0, loop_id: String = "", force_loop: bool = false) -> bool:
 	if not available():
 		return false
-	ensure()
+	if not _bridge_ready():
+		return false
 	var payload := _stream_payload(stream, stream_id, volume_db, pitch, loop_id, force_loop)
 	if payload.is_empty():
 		return false
-	var source := "window.BTHWebAudio && window.BTHWebAudio.playPcm(%s);" % JSON.stringify(payload)
-	_record_eval("play_pcm", source.length())
-	JavaScriptBridge.eval(source, true)
+	var payload_json := JSON.stringify(payload)
+	_record_bridge_call("play_pcm", payload_json.length())
+	_bridge_interface.playPcm(payload_json)
 	_mark_pcm_registered(payload)
 	return true
 
@@ -391,16 +413,17 @@ static func stop_loop(loop_id: String) -> void:
 	var safe_loop_id := loop_id.strip_edges()
 	if safe_loop_id.is_empty():
 		return
-	ensure()
-	var source := "window.BTHWebAudio && window.BTHWebAudio.stopLoop(%s);" % JSON.stringify(safe_loop_id)
-	_record_eval("stop_loop", source.length())
-	JavaScriptBridge.eval(source, true)
+	if not _bridge_ready():
+		return
+	_record_bridge_call("stop_loop", safe_loop_id.length())
+	_bridge_interface.stopLoop(safe_loop_id)
 
 
 static func play_music_stems(group_id: String, stem_set_key: String, stem_set: Dictionary, role_volume_db: Dictionary, resume_position: float) -> bool:
 	if not available():
 		return false
-	ensure()
+	if not _bridge_ready():
+		return false
 	var stems_value: Variant = stem_set.get("stems", {})
 	if typeof(stems_value) != TYPE_DICTIONARY:
 		return false
@@ -436,9 +459,9 @@ static func play_music_stems(group_id: String, stem_set_key: String, stem_set: D
 		"position": maxf(0.0, resume_position),
 		"stems": stem_payloads,
 	}
-	var source := "window.BTHWebAudio && window.BTHWebAudio.playMusicStems(%s);" % JSON.stringify(payload)
-	_record_eval("play_music_stems", source.length())
-	JavaScriptBridge.eval(source, true)
+	var payload_json := JSON.stringify(payload)
+	_record_bridge_call("play_music_stems", payload_json.length())
+	_bridge_interface.playMusicStems(payload_json)
 	for stem_payload_value in stem_payloads:
 		if typeof(stem_payload_value) == TYPE_DICTIONARY:
 			_mark_pcm_registered(stem_payload_value as Dictionary)
@@ -452,7 +475,8 @@ static func play_music_stems(group_id: String, stem_set_key: String, stem_set: D
 static func set_music_mix(group_id: String, role_volume_db: Dictionary) -> void:
 	if not available():
 		return
-	ensure()
+	if not _bridge_ready():
+		return
 	var safe_group_id := group_id.strip_edges()
 	if safe_group_id.is_empty():
 		safe_group_id = "music"
@@ -473,19 +497,20 @@ static func set_music_mix(group_id: String, role_volume_db: Dictionary) -> void:
 		"group_id": safe_group_id,
 		"volumes_db": volumes_db,
 	}
-	var source := "window.BTHWebAudio && window.BTHWebAudio.setMusicMix(%s);" % JSON.stringify(payload)
-	_record_eval("set_music_mix", source.length())
-	JavaScriptBridge.eval(source, true)
+	var payload_json := JSON.stringify(payload)
+	_record_bridge_call("set_music_mix", payload_json.length())
+	_bridge_interface.setMusicMix(payload_json)
 
 
 static func play_music(_profile: Dictionary, _music_state: Dictionary) -> void:
-	_record_eval("legacy_play_music_blocked", 0)
+	_record_bridge_call("legacy_play_music_blocked", 0)
 
 
 static func stop_music(group_id: String = "") -> void:
 	if not available():
 		return
-	ensure()
+	if not _bridge_ready():
+		return
 	_last_music_payload_key = ""
 	var safe_group_id := group_id.strip_edges()
 	if safe_group_id.is_empty():
@@ -501,18 +526,18 @@ static func stop_music(group_id: String = "") -> void:
 		_last_music_mix_msec.erase(safe_group_id)
 		_active_music_groups.erase(safe_group_id)
 	var payload := {"group_id": safe_group_id}
-	var source := "window.BTHWebAudio && window.BTHWebAudio.stopMusic(%s);" % JSON.stringify(payload)
-	_record_eval("stop_music", source.length())
-	JavaScriptBridge.eval(source, true)
+	var payload_json := JSON.stringify(payload)
+	_record_bridge_call("stop_music", payload_json.length())
+	_bridge_interface.stopMusic(payload_json)
 
 
 static func play_sfx(_cue_id: String, _volume_db: float = 0.0, _pitch: float = 1.0) -> void:
-	_record_eval("legacy_sfx_blocked", 0)
+	_record_bridge_call("legacy_sfx_blocked", 0)
 
 
 static func reset_debug_stats() -> void:
-	_eval_counts = {}
-	_eval_bytes = 0
+	_call_counts = {}
+	_payload_bytes = 0
 	_last_music_payload_key = ""
 	_last_music_mix_keys = {}
 	_last_music_mix_msec = {}
@@ -524,8 +549,8 @@ static func debug_stats() -> Dictionary:
 	return {
 		"available": available(),
 		"ensured": _ensured,
-		"eval_counts": _eval_counts.duplicate(true),
-		"eval_bytes": _eval_bytes,
+		"call_counts": _call_counts.duplicate(true),
+		"payload_bytes": _payload_bytes,
 		"registered_pcm_count": _registered_pcm_keys.size(),
 		"active_music_group_count": _active_music_groups.size(),
 	}
@@ -550,9 +575,12 @@ static func mix_contract_snapshot() -> Dictionary:
 		"script_has_highpass": WEB_AUDIO_SCRIPT.find("this.highpass.type = \"highpass\"") >= 0 and WEB_AUDIO_SCRIPT.find("this.highpass.frequency.value = 38") >= 0,
 		"script_has_compressor": WEB_AUDIO_SCRIPT.find("createDynamicsCompressor") >= 0 and WEB_AUDIO_SCRIPT.find("this.compressor.threshold.value = -6") >= 0,
 		"script_has_pcm_decoder": WEB_AUDIO_SCRIPT.find("decodePcm16") >= 0 and WEB_AUDIO_SCRIPT.find("createBuffer(channels, frames, sampleRate)") >= 0,
+		"script_accepts_json_payloads": WEB_AUDIO_SCRIPT.find("parsePayload") >= 0 and WEB_AUDIO_SCRIPT.find("JSON.parse(payload)") >= 0,
 		"script_has_music_stems": WEB_AUDIO_SCRIPT.find("playMusicStems") >= 0 and WEB_AUDIO_SCRIPT.find("setMusicMix") >= 0,
 		"script_has_loop_stop": WEB_AUDIO_SCRIPT.find("stopLoop") >= 0,
 		"script_has_oscillator_fallback": WEB_AUDIO_SCRIPT.find("createOscillator") >= 0,
+		"bridge_uses_direct_interface": true,
+		"telemetry_uses_call_payload_names": true,
 		"bridge_skips_silent_music_stems": true,
 		"bridge_skips_duplicate_music_stems": true,
 		"bridge_skips_duplicate_music_stops": true,
@@ -609,12 +637,32 @@ static func _mark_pcm_registered(payload: Dictionary) -> void:
 
 static func _wav_has_signal(wav: AudioStreamWAV) -> bool:
 	var data := wav.data
-	for byte_value in data:
-		if int(byte_value) != 0:
+	var size := data.size()
+	if size <= 0:
+		return false
+	var edge_count := mini(size, 256)
+	for index in range(edge_count):
+		if int(data[index]) != 0:
 			return true
+	var suffix_start := maxi(edge_count, size - 256)
+	for index in range(suffix_start, size):
+		if int(data[index]) != 0:
+			return true
+	var interior_count := suffix_start - edge_count
+	if interior_count <= 0:
+		return false
+	var sample_count := mini(256, interior_count)
+	var step := maxi(1, int(interior_count / sample_count))
+	var index := edge_count
+	var checked := 0
+	while index < suffix_start and checked < sample_count:
+		if int(data[index]) != 0:
+			return true
+		index += step
+		checked += 1
 	return false
 
 
-static func _record_eval(kind: String, byte_count: int) -> void:
-	_eval_counts[kind] = int(_eval_counts.get(kind, 0)) + 1
-	_eval_bytes += maxi(0, byte_count)
+static func _record_bridge_call(kind: String, byte_count: int) -> void:
+	_call_counts[kind] = int(_call_counts.get(kind, 0)) + 1
+	_payload_bytes += maxi(0, byte_count)
