@@ -1,173 +1,216 @@
 # Item Collection Meta System — Design Plan
 
-Date: 2026-07-06
-Status: PLANNING (owner-directed). Promote to docs/todo prompts per phase once
-dependencies land. Owner reference model: Counter-Strike item system
-(collections, rarity tiers, float values, trade-up contracts) adapted to a
-single-player, non-monetized gambling roguelike.
+Date: 2026-07-06 (rev 2 — owner decisions incorporated)
+Status: PLANNING. Promote to docs/todo prompts per phase once dependencies
+land. Owner reference model: Counter-Strike item system (collections, rarity
+tiers, float values, trade-up contracts), adapted to the game — and designed
+from day one to be **Steam Inventory Service / community market compatible**.
 
 ## Vision
 
-A persistent collection meta-game layered over runs. Players earn **bags**
-(containers) through gameplay; a bag belongs to a **collection** and its bag
-type/color encodes the **tier** of the item inside. Opening a bag yields an
-item whose stats are defined by **three float values** rolled at drop time.
+A persistent collection meta-game layered over runs. Players find **bags**
+(containers) — themselves extremely rare items, discovered in-game or in
+special locations; a bag visibly shows its **collection** and **tier**
+(blue → purple → pink → red → gold) before opening. Opening a bag yields an
+item whose identity is defined by **four float attributes** rolled in [0,1].
 Items live in the player's **meta-home** — a persistent, rented home viewed
-*outside* the run — and are packed into a **backpack loadout** to be carried
-into runs, where they behave as run items. Duplicate/unwanted items feed an
-**upgrade (trade-up)** path to higher tiers. The inventory UI is reworked to
-serve both the run and the meta collection.
+*outside* the run — and are packed into a **backpack loadout** carried into
+runs. Items are never deleted by play: failure **decays** them. Items leave
+the collection only by deliberate destruction: pawn-shop sale for **gold**
+(the meta currency) or **trade-up** to the next tier.
 
-## Compliance framing (binding)
+## Compliance framing (binding, revised)
 
-Beat the House is simulated gambling with no real-money anything. Bags are
-**earned through play only** — never purchasable with real money, no
-tradable/market economy, no external value. This is a progression/collection
-system, not a monetized loot box. All content text must respect the existing
-framing (see release checklists' "simulated gambling only" identity line).
+In-game acquisition is earned through play only — no real-money purchase of
+bags or items in the game itself. The gambling simulation remains free of
+real-money wagering. **Steam-marketable items are a planned future layer**
+(the CS model: items tradable/marketable on the Steam community market once
+Steam Inventory integration ships); when that lands, store-page and framing
+language must be revisited deliberately. Until then, everything is local.
 
 ## Terminology
 
 | Term | Meaning |
 | --- | --- |
-| Collection | A themed set of items (e.g. "Boardwalk Collection") with items at multiple tiers |
-| Bag | A container drop; art/type encodes tier; belongs to one collection |
-| Tier | blue → purple → pink → red → gold (ascending rarity, CS-style) |
-| Floats | Three per-item rolled values in [0,1] that combine to define the item's characteristics |
+| Collection | A themed set of 14 items across 5 tiers |
+| Bag | A rare container item; shows collection + tier before opening |
+| Tier | blue → purple → pink → red → gold (ascending rarity) |
+| Floats | Four per-item attributes in [0,1]: potency, condition, resonance, usage |
+| Gold | Meta currency, earned only by destroying items |
 | Meta-home | Persistent rented home visited outside runs; stores the collection |
 | Loadout | Items packed into the backpack and carried into a run |
-| Trade-up | Consume N same-tier items from one collection → 1 item of the next tier |
+| Trade-up | Consume N same-tier, same-collection items → 1 next-tier item |
 
-## 1. Data schema
+## 1. Item identity: four float attributes
 
-New `data/collections/collections.json` (data-driven, validated on load like
-existing content):
+Each item instance rolls four independent floats in [0,1] at drop time
+(seeded). Together with the item type they fully define the instance:
 
-- **Collection**: `id`, `display_name`, `theme`, `items` (per tier lists),
-  `bag_asset_map` (tier → bag art; existing untracked art
-  `assets/art/items/{bag,backpack,suitcase,trunk}.png` seeds the container
-  visuals), unlock condition.
-- **Collection item**: `id`, `display_name`, `tier`, `base_effect` (same
-  effect-key vocabulary as `data/items/items.json` — `baseline_luck_delta`,
-  `win_chance`, etc. so run integration reuses the existing item pipeline),
-  `float_bindings` (below), flavor text, icon (icon_sprites.json format).
-- **Float semantics** (the three floats, each rolled in [0,1] at drop time):
-  1. `potency` — scales the magnitude of the item's primary effect between a
-     min/max band defined per item (`float_bindings.potency: {effect_key,
-     min, max}`).
-  2. `condition` — wear/quality: drives sell/salvage value, display name
-     suffix bands (e.g. Battered / Worn / Clean / Crisp / Mint), and visual
-     accent.
-  3. `resonance` — weights a secondary/quirk effect unique to the item
-     (`float_bindings.resonance: {effect_key, threshold, value}` — quirk
-     activates above threshold, stronger near 1.0).
-  The triplet combines into one item identity: two "Lucky Keychain" drops
-  play differently. Bands and thresholds are data, not code.
+1. **`potency`** — scales the magnitude of the item's primary run effect
+   between a per-item min/max band (`float_bindings.potency`).
+2. **`condition`** — finish quality at drop: display band (Battered / Worn /
+   Clean / Crisp / Mint), base sale value, and visual finish. Immutable.
+3. **`resonance`** — weights a secondary/quirk effect (activates above a
+   per-item threshold) and drives the **theme variant** of the art.
+4. **`usage`** — durability. Starts at its rolled value and **decays by a
+   small amount each time a run fails while the item is in the loadout**
+   (decay size is data, e.g. 0.02–0.05 per failure, seeded jitter). Usage is
+   the only mutable float. It never reaches deletion: at 0 the item is
+   "spent" — heavily reduced sale value and dampened potency — but remains
+   owned, displayable, and trade-up-eligible. Decay of value over time, not
+   destruction.
 
-## 2. Acquisition (bag drops)
+**Floats drive art, not just stats.** Each of the 14 items per collection
+gets a full art rework, authored with variation axes so the floats visibly
+modulate: partial/accent colors, hue shifts, wear overlays (condition +
+usage), and theme variants (resonance). Two drops of the same item must be
+visually distinguishable at a glance.
 
-- Drop moments (seeded from the run seed so the determinism gate holds): run
-  victory (guaranteed), showdown completion, first-time challenge clears,
-  high-heat clean escapes, lender payoff milestones. Weights and tier odds
-  are data (`drop_tables` in collections.json).
-- Tier odds follow a CS-like descending curve (config, e.g. blue 60 / purple
-  25 / pink 10 / red 4 / gold 1) — tunable per drop moment.
-- Bags accumulate in the meta-home **unopened**; opening happens at the
-  meta-home with a reveal ceremony (simple first pass: staged reveal panel;
-  no gambling-adjacent near-miss theatrics — see compliance framing).
+## 2. Data schema (Steam-compatible from day one)
 
-## 3. Meta persistence (new layer — does not exist today)
+New `data/collections/collections.json`, validated on load like existing
+content. **Design constraint: the schema mirrors Steam Inventory Service
+concepts so future Steam integration is a mapping layer, not a redesign:**
+
+- Every item **definition** (including each bag type) carries a stable
+  numeric `itemdef_id` (never reused, never renumbered).
+- Every owned item **instance** carries a unique instance id plus its four
+  floats as dynamic per-instance properties (Steam supports CS-style dynamic
+  properties; floats and decayed usage live there).
+- Display names compose market-hash-friendly: `"{Item Name} ({Condition
+  Band})"`; tier maps to a rarity tag (blue/purple/pink/red/gold), collection
+  maps to an item-set tag.
+- **Bags are item definitions too** (owner ruling: bags are items in
+  themselves) — with their own tier, collection attribute, rarity tagging,
+  and eventual marketability. A bag's tier/collection is plainly visible in
+  every UI before opening.
+
+Definition contents: collection (`id`, `display_name`, `theme`, per-tier item
+lists, bag defs per tier, unlock/discovery rules, drop tables); item
+(`itemdef_id`, `id`, `display_name`, `tier`, `base_effect` using the existing
+items.json effect-key vocabulary, `float_bindings`, art variation bindings,
+flavor).
+
+## 3. Launch content (owner spec)
+
+- **2 collections × 14 items**: 4 × tier-1 (blue), 4 × tier-2 (purple),
+  3 × tier-3 (pink), 2 × tier-4 (red), 1 × gold.
+- Items are drawn from existing in-game objects but **vetted and curated** —
+  each selected item gets completely reworked art authored for float-driven
+  variation (§1). Selection list is an owner-review checkpoint in P0.
+
+## 4. Acquisition: bags as rare finds
+
+- Bags are **extremely rare in-game finds**: seeded drop rolls at run
+  milestones (victory, showdown, first-time challenge clears, high-heat
+  clean escapes) plus placement in **special locations** (rare environment
+  spots/events — hooks into the environment/event systems; exact venues
+  curated per collection).
+- Tier odds per drop table are data (descending curve, e.g. 60/25/10/4/1),
+  but the *found bag itself always shows what it is* — collection and tier —
+  from the moment it drops. The suspense is which item and which floats.
+- Found bags travel home with the run's conclusion and sit **unopened** in
+  meta-home storage.
+
+## 5. Opening pipeline (v1: deliberately simple)
+
+- When a bag is **stored in a home container**, it exposes a single
+  **Open** button. Pressing it consumes the bag, rolls the item (seeded),
+  and plays a **simple reveal animation** showcasing the acquired item
+  (name, tier color, floats/bands).
+- **Out of scope for now (owner ruling):** the richer container-transfer
+  mechanic (transferring containers to the items within them) is a future,
+  separate game mechanic with its own plan/prompt. Do not build toward it
+  beyond keeping the open pipeline behind one clean function boundary.
+
+## 6. Meta persistence (new layer — none exists today)
 
 - New `scripts/core/meta_collection_service.gd` owning
-  `user://meta_collection.json`: schema-versioned, atomic write (follow
-  `user_settings.gd`'s pattern at scripts/core/user_settings.gd:6,67),
-  corruption-tolerant load with normalization (follow RunState's
-  normalize-on-load discipline).
-- Holds: unopened bags, owned items (with float triplets), backpack loadout,
-  meta-home state (rent status, placed decor), collection progress,
-  trade-up history.
-- **Strictly outside RunState.** Runs read the loadout once at run start
-  (injection, §5) and write earned drops once at run end. No mid-run meta
-  writes — this keeps the SB.3 save fuzz and SB.5 determinism contracts
-  untouched inside runs.
-- `data/prestige/purchases.json` is an empty stub today; fold prestige
-  ambitions into this meta layer rather than maintaining two meta systems.
+  `user://meta_collection.json`: schema-versioned, atomic write (pattern:
+  scripts/core/user_settings.gd:6,67), corruption-tolerant normalize-on-load
+  (RunState discipline).
+- Holds: unopened bags, owned item instances (itemdef + instance id + four
+  floats), gold balance, backpack loadout, meta-home state (rent, container
+  furniture, placements), collection progress, trade-up/sale history.
+- **Strictly outside RunState.** Loadout injected once at run start; drops
+  and usage decay applied once at run end. No mid-run meta writes — SB.3
+  save fuzz and SB.5 determinism contracts stay untouched inside runs.
+- `data/prestige/purchases.json` is an empty stub; fold prestige ambitions
+  into this layer rather than maintaining two meta systems.
 
-## 4. Meta-home (overarching home, outside the run)
+## 7. Meta-home (overarching home, outside the run)
 
-- Distinct from the **run-side home** currently in progress
-  (docs/todo/home_environment_feature_prompt.md: apartment/motel_room/house
-  as run start environments). The meta-home is where the player *lives
-  between runs*: entered from the main menu, not travel.
-- First pass reuses the run-side home's environment rendering (same
-  archetypes/pixel scene canvas) in a "meta" mode with different
-  interactions: browse collection, open bags, pack backpack, trade-up
-  station, pay rent.
-- Rent: meta-home tier (apartment → motel → house mirrors run-home art)
-  charged from a meta wallet funded by run results; lapsed rent downgrades
-  storage capacity (design lever, tune later — do not build eviction
-  spirals in v1).
-- Container furniture = storage capacity; container/bag tier unlocks
-  (bag → backpack → suitcase → trunk) gate **loadout slots**, not storage.
+- Distinct from the run-side home currently in progress
+  (docs/todo/home_environment_feature_prompt.md). Entered from the main
+  menu, not travel. First pass reuses the run-home environment rendering in
+  a "meta" mode.
+- Interactions: browse collection, open bags (§5), pack backpack, trade-up
+  station, **pawn shop counter** (§9), pay rent.
+- Rent charged from gold; lapsed rent downgrades storage capacity (tuning
+  lever — no eviction spirals in v1).
+- Container furniture = storage; unlocked container tier
+  (bag → backpack → suitcase → trunk) gates **loadout slots**, not storage.
 
-## 5. Backpack loadout → run integration
+## 8. Backpack loadout → run integration
 
-- Pre-run (or at meta-home), player packs up to N items; N = unlocked
-  container tier (bag 1 / backpack 2 / suitcase 3 / trunk 4 — tune).
-- At run start the loadout is injected as normal run items: each collection
-  item resolves to an items.json-compatible dictionary with float-scaled
-  effect values, flowing through the existing item pipeline
-  (run_action_service/run_state) unchanged. The injection is part of run
-  generation (seed-stable given the same loadout; the loadout itself is
-  recorded in the run's save for SB.3 idempotence).
-- **Risk ruling (recommended):** carried items are *staked* — lost on run
-  failure (bust/arrest), kept on victory/clean exit. This makes packing a
-  gambling decision consistent with the game's identity, and gives duplicate
-  drops purpose. Alternative (safe mode): items always return but go "on
-  cooldown" after a failed run. Decide before Phase 2 implementation; the
-  schema supports both (`loadout_policy` field).
+- Pack up to N items (N = unlocked container tier; bag 1 / backpack 2 /
+  suitcase 3 / trunk 4 — tune).
+- At run start the loadout injects as normal run items: items.json-compatible
+  dictionaries with float-scaled effects, flowing through the existing item
+  pipeline unchanged. Loadout recorded in the run save (SB.3 idempotence);
+  injection is seed-stable given the same loadout.
+- **Risk ruling (owner decision):** run failure while holding loadout items
+  applies **usage decay** (§1.4) to each carried item at run end. Nothing is
+  deleted, nothing cools down — value erodes. Victory/clean exit: no decay.
 
-## 6. Trade-up (upgrade between tiers)
+## 9. Destruction economy: gold
 
-- Consume N (default 5 — fewer than CS's 10, collection sizes are smaller)
-  items of tier T from the same collection → receive 1 random tier T+1 item
-  of that collection.
-- Float inheritance CS-style: output floats = per-float mean of inputs
-  remapped into the output item's band, with a seeded jitter. Gold tier is
-  terminal (no trade-up out; gold duplicates salvage into meta wallet).
-- Trade-up rolls use a dedicated seeded stream in the meta service (recorded
-  in the meta save for auditability); they happen outside runs, so run
-  determinism is untouched.
+Gold enters the meta economy **only** by destroying items — two paths:
 
-## 7. Inventory rework
+1. **Pawn shop sale** (meta-home counter): item is destroyed permanently for
+   gold; price = f(tier base, condition, usage, potency band). Spent items
+   fetch scrap prices.
+2. **Trade-up**: consume 5 same-tier, same-collection items → 1 random
+   next-tier item of that collection. Float inheritance: per-float mean of
+   inputs remapped into the output item's band with seeded jitter (usage
+   inherits too — trading up worn items yields a worn output). Gold tier is
+   terminal.
 
-- Builds directly on two queued/in-flight pieces: the extracted
-  `RunInventoryScreen` + view model (verify its prompt reaches todone first)
-  and the attribute glyph system (tier = the class badge; tier colors
-  blue/purple/pink/red/gold join the glyph registry; float bands render as
-  badges).
+Gold is a **separate meta currency** (owner decision) — never mixed with the
+run bankroll. Gold spends on rent (§7) and future meta sinks.
+
+## 10. Inventory rework
+
+- Builds on the extracted `RunInventoryScreen` + view model (verify in
+  docs/todone first) and the attribute glyph system (tier colors join the
+  glyph registry as class badges; float bands render as badges; bags render
+  their collection + tier badges unopened).
 - One inventory component, two model sources: run inventory (existing view
   model) and meta collection (new meta view model) — same grid/detail UI,
-  different intents (run: use/sell/store; meta: pack/trade-up/place/salvage).
+  different intents (run: use/sell/store; meta: pack/open/trade-up/pawn).
 - Sort/filter by collection, tier, float bands.
 
-## 8. Phasing (each phase = one future docs/todo prompt)
+## 11. Phasing (each phase = one future docs/todo prompt)
 
 | Phase | Scope | Depends on |
 | --- | --- | --- |
-| P0 | collections.json schema + validation; MetaCollectionService with versioned save; float roll + effect resolution unit coverage | CRITICAL table bug fixed; nothing else |
-| P1 | Bag drops at run milestones + unopened bag storage + basic collection browser (list UI) | P0 |
-| P2 | Backpack loadout + run-start injection + risk ruling | P0, run inventory extraction verified |
-| P3 | Meta-home scene (browse/open/pack in-world) + rent | P1, run-side home feature shipped |
-| P4 | Trade-up station + salvage economy + collection completion rewards | P1 |
-| P5 | Reveal ceremony polish, glyph/tier badge integration, sort/filter | P2, attribute glyph system |
+| P0 | collections.json schema (Steam-compatible ids) + validation; MetaCollectionService versioned save; 4-float roll/decay/effect resolution with unit coverage; owner-vetted 2×14 item selection list | CRITICAL table bug fixed |
+| P1 | Bag drops (milestones + special locations) + unopened storage + single-button open pipeline with simple reveal animation + basic collection browser | P0 |
+| P2 | Backpack loadout + run-start injection + run-end usage decay | P0; run inventory extraction verified |
+| P3 | Meta-home scene (browse/open/pack in-world) + rent + pawn shop counter | P1; run-side home feature shipped |
+| P4 | Trade-up station + gold economy balance + collection completion rewards | P1 |
+| P5 | Art rework integration for float-driven variation; glyph/tier badges; sort/filter; reveal polish | P2; attribute glyph system |
+| P6 (future, separate plan) | Container-transfer mechanic; Steam Inventory Service + community market integration | Owner go-ahead; P0–P5 |
 
-## Open design questions (owner input wanted before P0 promotion)
+## Resolved owner decisions (2026-07-06)
 
-1. Risk ruling for carried items (§5): staked (recommended) or cooldown?
-2. Do bag *drops* announce their tier before opening (CS-style known-case,
-   suspense on item) or is the tier itself hidden until opened?
-3. Collection count at launch: recommend 2 collections × ~12 items each
-   across 5 tiers to keep trade-up viable without dilution.
-4. Does the meta wallet share the run bankroll currency or use a separate
-   currency (recommend separate — protects run economy balance).
+1. **Risk:** usage-decay on failure (fourth float), never deletion, no
+   cooldowns.
+2. **Bag visibility:** bags are rare items in their own right; collection and
+   tier are visible attributes before opening; bags (and items) must be
+   Steam item/market compatible by construction.
+3. **Launch size:** 2 collections × 14 items (4/4/3/2/1 across
+   blue/purple/pink/red/gold); curated from existing game objects with full
+   art rework; four floats modulate partial colors, hue, wear, theme.
+4. **Currency:** separate meta gold, minted only by item destruction (pawn
+   sale or trade-up consumption).
