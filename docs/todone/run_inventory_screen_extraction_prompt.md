@@ -1,5 +1,20 @@
 # Agent Prompt — Extract RunInventoryScreen UI Component
 
+## Execution Record
+
+- Completion date: 2026-07-06.
+- Implementing commit hash(es): pending. The implementation is present in the working tree, but the repository already contains unrelated dirty changes in the same high-traffic files; do not create a blended commit for this archive move.
+- Verification gates:
+  - `powershell -ExecutionPolicy Bypass -File tools\validate_project.ps1` -> PASS.
+  - `powershell -ExecutionPolicy Bypass -File tools\check_godot.ps1 -RequireGodot -FoundationSuite ui -TimeoutSec 300 -AllowConcurrentGodot` -> PASS, report `D:\Projects\Beat-The-House\.tmp\test_reports\20260706_104400_smoke\summary.json`.
+- Summary:
+  - Added `scripts/ui/foundation_widgets.gd`, `scripts/ui/run_inventory_screen.gd`, and `scripts/ui/run_inventory_view_model.gd`.
+  - Kept Main's existing inventory entry points and QA snapshot contract while moving the UI rendering and model construction out of `scripts/ui/foundation_main.gd`.
+  - Added standalone component coverage in `scripts/tests/ui_scene_compile_check.gd`.
+  - Reduced `scripts/ui/foundation_main.gd` from 12,366 to 12,078 lines at completion (-288).
+- Deviations:
+  - The prompt requested two ordered commits. Because the current working tree already contains many unrelated uncommitted changes, including same-file edits, this execution record documents the completed verified state but leaves commit partitioning to a later clean commit pass.
+
 Copy everything below this line into the agent.
 
 ---
