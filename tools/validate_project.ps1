@@ -51,8 +51,6 @@ $requiredFiles = @(
     "data/services/services.json",
     "data/travel/routes.json",
     "data/prestige/purchases.json",
-    "docs/plans/0.3.2_function_census.json",
-    "docs/plans/0.3.2_function_census.md",
     "scripts/games/slot.gd",
     "scripts/games/pull_tabs.gd",
     "scripts/games/bar_dice.gd",
@@ -218,12 +216,12 @@ try {
             if ([string]::IsNullOrWhiteSpace($message)) {
                 $message = "tools/function_census.ps1 exited with code $censusExitCode."
             }
-            $failures.Add("Function census freshness check failed: $message")
+            $failures.Add("Function census generation failed: $message")
         }
     }
 }
 catch {
-    $failures.Add("Function census freshness check failed: $($_.Exception.Message)")
+    $failures.Add("Function census generation failed: $($_.Exception.Message)")
 }
 
 function Get-ProjectText {

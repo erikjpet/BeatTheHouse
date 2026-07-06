@@ -1,3 +1,7 @@
+# Generated reports (rebuild with tools/function_census.ps1; outputs live under .tmp/)
+docs/plans/0.3.2_function_census.json
+docs/plans/0.3.2_function_census.md
+
 # Godot generated files
 .godot/
 *.translation

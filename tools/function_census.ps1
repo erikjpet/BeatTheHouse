@@ -9,10 +9,10 @@ $ErrorActionPreference = "Stop"
 $root = Split-Path -Parent $PSScriptRoot
 
 if ([string]::IsNullOrWhiteSpace($OutputJson)) {
-    $OutputJson = Join-Path $root "docs/plans/0.3.2_function_census.json"
+    $OutputJson = Join-Path $root ".tmp/function_census/0.3.2_function_census.json"
 }
 if ([string]::IsNullOrWhiteSpace($OutputMarkdown)) {
-    $OutputMarkdown = Join-Path $root "docs/plans/0.3.2_function_census.md"
+    $OutputMarkdown = Join-Path $root ".tmp/function_census/0.3.2_function_census.md"
 }
 
 $productionRoots = @("scripts/core", "scripts/games", "scripts/ui")
@@ -425,35 +425,14 @@ function Write-CensusJson {
     Set-Content -LiteralPath $Path -Value $json -Encoding utf8
 }
 
-function Compare-FileText {
-    param([string]$ExpectedPath, [string]$ActualPath)
-    if (-not (Test-Path -LiteralPath $ExpectedPath)) {
-        throw "Missing census output: $(Get-ProjectRelativePath $ExpectedPath)"
-    }
-    if (-not (Test-Path -LiteralPath $ActualPath)) {
-        throw "Generator did not produce comparison file: $ActualPath"
-    }
-    $expected = [System.IO.File]::ReadAllText($ExpectedPath)
-    $actual = [System.IO.File]::ReadAllText($ActualPath)
-    if ($expected -ne $actual) {
-        throw "Function census is stale: $(Get-ProjectRelativePath $ExpectedPath). Run tools/function_census.ps1 and commit the updated outputs."
-    }
-}
-
+# Census outputs are generated artifacts under .tmp/ and are never committed.
+# -Check regenerates them to confirm the generator still runs cleanly.
 if ($Check) {
-    $tempDir = Join-Path $root ".tmp/function_census_check"
-    if (-not (Test-Path -LiteralPath $tempDir)) {
-        New-Item -ItemType Directory -Path $tempDir | Out-Null
-    }
-    $tempJson = Join-Path $tempDir "0.3.2_function_census.json"
-    $tempMarkdown = Join-Path $tempDir "0.3.2_function_census.md"
     $census = New-Census
-    Write-CensusJson -Census $census -Path $tempJson
-    Write-CensusMarkdown -Census $census -Path $tempMarkdown
-    Compare-FileText -ExpectedPath $OutputJson -ActualPath $tempJson
-    Compare-FileText -ExpectedPath $OutputMarkdown -ActualPath $tempMarkdown
+    Write-CensusJson -Census $census -Path $OutputJson
+    Write-CensusMarkdown -Census $census -Path $OutputMarkdown
     if (-not $Quiet) {
-        Write-Host "Function census freshness check passed."
+        Write-Host ("Function census generation check passed: {0} functions across {1} files." -f $census.summary.functions_total, $census.summary.files_total)
     }
     exit 0
 }
