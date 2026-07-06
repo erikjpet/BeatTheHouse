@@ -21,14 +21,19 @@ work that has not yet been executed.
 
 ## How to execute a prompt
 
-1. Work from the prompt file itself, not from memory of how it came to exist.
-2. Honor the prompt's hard constraints and run its verification gates.
-3. On completion, move the file to `docs/todone/` (use `git mv`) in the same
+1. **Selection and looping are governed by `QUEUE.md` in this folder.** When
+   told to "work on the todo list" (or any equivalent), follow QUEUE.md's
+   protocol: claim the first ready entry for your machine, execute it,
+   archive it, update QUEUE.md, and repeat until nothing is ready for you.
+   A file whose name starts with `CRITICAL_` always outranks everything.
+2. Work from the prompt file itself, not from memory of how it came to exist.
+3. Honor the prompt's hard constraints and run its verification gates.
+4. On completion, move the file to `docs/todone/` (use `git mv`) in the same
    commit as the completed work or its evidence commit, and follow the rules
    in `docs/todone/RULES.md` for the required execution record.
-4. If execution is abandoned or the prompt is invalidated, either fix the
-   prompt in place or delete it with a commit message stating why. Do not
-   leave stale prompts here.
+5. If execution is abandoned or the prompt is invalidated, either fix the
+   prompt in place or delete it with a commit message stating why, and update
+   QUEUE.md. Do not leave stale prompts here.
 
 ## Authority
 

@@ -28,9 +28,11 @@ This repository is worked by two kinds of agent session:
 Queue mechanics:
 
 - `docs/todo/` is the backlog of record: complete, self-contained agent
-  prompt files for pending work. When asked to "pick up a task", "execute a
-  todo", or similar, select a prompt there and follow
-  `docs/todo/RULES.md` (binding).
+  prompt files for pending work. When asked to "work on the todo list",
+  "pick up a task", or similar: follow `docs/todo/QUEUE.md` — claim the
+  first ready entry for your machine, execute it per `docs/todo/RULES.md`
+  (binding), archive it, and **keep looping until nothing is ready for your
+  machine**, then report what remains and why.
 - `docs/todone/` archives executed prompts with execution records. Never
   execute prompts from there. Rules: `docs/todone/RULES.md` (binding).
 - Before executing a prompt, state which one you are executing so overlapping
