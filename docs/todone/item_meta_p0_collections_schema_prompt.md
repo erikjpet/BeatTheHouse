@@ -1,5 +1,27 @@
 # Agent Prompt — Item Meta P0: Collections Schema + Meta Store + Float Engine
 
+## Execution Record
+
+- Completion date: 2026-07-06.
+- Implementing commit hash(es): this local commit; final hash assigned after commit creation.
+- Verification gates:
+  - `powershell -ExecutionPolicy Bypass -File tools\validate_project.ps1` -> PASS.
+  - `powershell -ExecutionPolicy Bypass -File tools\collection_meta_check.ps1 -RequireGodot` -> PASS (`collection_meta_check: PASS`).
+  - `powershell -ExecutionPolicy Bypass -File tools\check_godot.ps1 -RequireGodot -FoundationSuite smoke` -> FAIL in existing `foundation_smoke`, report `D:\Projects\Beat-The-House\.tmp\test_reports\20260706_210705_smoke\summary.json`; failing assertion: `Selected starter pull-tabs route did not generate a pull-tabs gambling environment.` `validate_project`, `godot_import`, and `gdscript_load_check` stages passed. This is outside the P0 new-files-only scope and unrelated to item collection files.
+- Summary:
+  - Added `data/collections/collections.json` with draft Steam-compatible collection definitions: collection itemdef ranges `1000-1013` and `2000-2013`; bag itemdef ranges `9000-9004` and `9010-9014`.
+  - Draft 28-item owner-review list: `1000 Creased Luck Card`, `1001 Instant Coffee Packet`, `1002 Ledger Pencil`, `1003 Cashout Envelope`, `1004 Lucky Bar Napkin`, `1005 Roadside Map`, `1006 Payment Calendar`, `1007 Pawn Receipt Sleeve`, `1008 Lucky Keychain`, `1009 Rabbit's Foot`, `1010 Neon Player Charm`, `1011 High Roller Watch`, `1012 Feature Magnet`, `1013 Golden Motel Token`, `2000 Cheap Sunglasses`, `2001 Scratch Pad`, `2002 Side Bet Chart`, `2003 Payout Pamphlet`, `2004 Marked Cards`, `2005 Edge-Sort Loupe`, `2006 Timing Bracelet`, `2007 Cold Quarters`, `2008 Holdout Wax`, `2009 Split Reel Note`, `2010 Weighted Keyring`, `2011 Holdout Rig`, `2012 Cooler's Cufflinks`, `2013 Velvet Table Key`.
+  - Added `scripts/core/collection_item_resolver.gd` for schema validation, deterministic four-float rolls, usage decay with spent dampening, condition/value resolution, and pure `items.json`-shaped run-item output.
+  - Added `scripts/core/meta_collection_service.gd` for isolated `user://meta_collection.json` persistence with schema defaults, unknown-key preservation, corrupt-load recovery, monotonic local instance ids, item/bag grants, removal, and gold mutation.
+  - Added standalone coverage in `scripts/tests/collection_meta_check.gd` and wrapper `tools/collection_meta_check.ps1`.
+- Store schema:
+  - Root fields: `schema_version`, `owned_instances`, `unopened_bags`, `gold_balance`, `loadout`, `meta_home`, `trade_up_history`, `sale_history`, `next_instance_id`.
+  - Owned instances preserve `instance_id`, `itemdef_id`, `potency`, `condition`, `resonance`, `usage`; unopened bags preserve `instance_id`, `bagdef_id`, and `rng_seed`.
+- Deviations:
+  - Kept `data/collections/collections.json` as a single-object top-level array so the current repository-wide JSON validator accepts the new data pack without touching `tools/validate_project.ps1`; the required `"draft": true` header lives on the bundle object.
+  - Skipped the optional `tools/validate_project.ps1` required-file hook because that file already carries unrelated dirty work and the existing recursive data JSON validation covers the new file.
+  - Did not fix the smoke-suite pull-tabs route failure because the prompt explicitly forbids edits to existing gameplay/test files and the failure is outside the item-meta P0 surface.
+
 Copy everything below this line into the agent.
 
 ---

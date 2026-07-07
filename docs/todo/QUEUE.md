@@ -27,7 +27,6 @@ both test files) belong to the two claimed Codex entries.
 | --- | --- | --- | --- | --- |
 | 4 | environment_semantic_layout_prompt.md | blocked | PM machine | Home/archetype work landed in `c9a719d`, but entry 7 (beach) is claimed and touches archetypes/routes — unblocks when entry 7 completes |
 | 5 | web_audio_bridge_modernization_prompt.md | blocked (2026-07-06, Codex PM workspace) | any (clean tree) | Task A landed in `8eefdc5`; after table-surface fix `eef32ff`, needs fresh clean-tree `tools/web_perf_smoke.ps1` before it can be marked ready/done |
-| 8 | item_meta_p0_collections_schema_prompt.md | claimed (2026-07-06, Codex desktop; local only) | any (new files only) | Executing now; local commit only per user instruction, no push |
 | 9 | time_system_open_hours_prompt.md | claimed (2026-07-06, Codex desktop; user override) | any | Executing by explicit user override despite attribute-glyph dirty overlap; preserve current glyph/inventory/world-map work |
 | 10 | dialogue_system_prompt.md | blocked | any | Multi-turn branching dialogue in a smaller talk dock with speaker models + per-choice effect badges; pilot = pull-tab clerk. Touches talk_dock/foundation_main/glyph registry — wait for claimed entries 8 and 9 to land, then flip to ready |
 | 11 | profile_persistence_completion_prompt.md | blocked | any | Parked T5.3: run history, streaks, lifetime stats in the main-menu profile. Wait for entry 8 (align persistence patterns with MetaCollectionService) and entry 9 (foundation_main overlap) |

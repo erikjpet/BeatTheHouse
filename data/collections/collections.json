@@ -1,0 +1,552 @@
+[
+	{
+		"schema_version": 1,
+		"draft": true,
+		"steam_inventory_compatible": true,
+		"tiers": ["blue", "purple", "pink", "red", "gold"],
+		"collections": [
+			{
+				"id": "roadside_luck",
+				"display_name": "Roadside Luck Collection",
+				"theme": "convenience-store charms, motel counters, and small clean-play edges",
+				"drop_table": {
+					"blue": 7000,
+					"purple": 2000,
+					"pink": 800,
+					"red": 180,
+					"gold": 20
+				},
+				"bag_defs": [
+					{
+						"itemdef_id": 9000,
+						"id": "roadside_luck_blue_bag",
+						"display_name": "Roadside Luck Blue Bag",
+						"tier": "blue",
+						"collection_id": "roadside_luck",
+						"icon_key": "cashout_envelope",
+						"flavor": "A soft paper bag with a lucky receipt tucked under the fold."
+					},
+					{
+						"itemdef_id": 9001,
+						"id": "roadside_luck_purple_bag",
+						"display_name": "Roadside Luck Purple Bag",
+						"tier": "purple",
+						"collection_id": "roadside_luck",
+						"icon_key": "lucky_bar_napkin",
+						"flavor": "A roadside prize bag with a purple stamp and a coffee stain."
+					},
+					{
+						"itemdef_id": 9002,
+						"id": "roadside_luck_pink_bag",
+						"display_name": "Roadside Luck Pink Bag",
+						"tier": "pink",
+						"collection_id": "roadside_luck",
+						"icon_key": "neon_players_charm",
+						"flavor": "The paper glints like a motel sign after midnight."
+					},
+					{
+						"itemdef_id": 9003,
+						"id": "roadside_luck_red_bag",
+						"display_name": "Roadside Luck Red Bag",
+						"tier": "red",
+						"collection_id": "roadside_luck",
+						"icon_key": "high_roller_watch",
+						"flavor": "A rare counter bag sealed with a red pull-tab sticker."
+					},
+					{
+						"itemdef_id": 9004,
+						"id": "roadside_luck_gold_bag",
+						"display_name": "Roadside Luck Gold Bag",
+						"tier": "gold",
+						"collection_id": "roadside_luck",
+						"icon_key": "gold_tooth_token",
+						"flavor": "A tiny gold-tagged bag that feels heavier than it looks."
+					}
+				],
+				"items": [
+					{
+						"itemdef_id": 1000,
+						"id": "creased_luck_card_meta",
+						"display_name": "Creased Luck Card",
+						"tier": "blue",
+						"base_effect": {"baseline_luck_delta": 1, "win_chance": 1},
+						"float_bindings": {
+							"potency": {"effect_key": "win_chance", "min": 1, "max": 3},
+							"condition": {"spent_value_multiplier": 0.08, "spent_potency_factor": 0.35, "bands": [{"id": "battered", "display_name": "Battered", "max": 0.2, "value_multiplier": 0.35}, {"id": "worn", "display_name": "Worn", "max": 0.45, "value_multiplier": 0.6}, {"id": "clean", "display_name": "Clean", "max": 0.7, "value_multiplier": 0.85}, {"id": "crisp", "display_name": "Crisp", "max": 0.9, "value_multiplier": 1.1}, {"id": "mint", "display_name": "Mint", "max": 1.0, "value_multiplier": 1.35}]},
+							"resonance": {"effect_key": "win_bonus", "threshold": 0.84, "value": 1},
+							"usage": {"decay_min": 0.02, "decay_max": 0.05}
+						},
+						"flavor": "A bent house card that still seems to land face up.",
+						"icon_key": "luck_card"
+					},
+					{
+						"itemdef_id": 1001,
+						"id": "instant_coffee_packet_meta",
+						"display_name": "Instant Coffee Packet",
+						"tier": "blue",
+						"base_effect": {"legal_win_chance": 1, "loss_reduction": 1},
+						"float_bindings": {
+							"potency": {"effect_key": "legal_win_chance", "min": 1, "max": 4},
+							"condition": {"spent_value_multiplier": 0.08, "spent_potency_factor": 0.35, "bands": [{"id": "battered", "display_name": "Battered", "max": 0.2, "value_multiplier": 0.35}, {"id": "worn", "display_name": "Worn", "max": 0.45, "value_multiplier": 0.6}, {"id": "clean", "display_name": "Clean", "max": 0.7, "value_multiplier": 0.85}, {"id": "crisp", "display_name": "Crisp", "max": 0.9, "value_multiplier": 1.1}, {"id": "mint", "display_name": "Mint", "max": 1.0, "value_multiplier": 1.35}]},
+							"resonance": {"effect_key": "loss_reduction", "threshold": 0.8, "value": 1},
+							"usage": {"decay_min": 0.025, "decay_max": 0.055}
+						},
+						"flavor": "A bitter packet for the kind of focus that fits in a coat pocket.",
+						"icon_key": "coffee_cup"
+					},
+					{
+						"itemdef_id": 1002,
+						"id": "ledger_pencil_meta",
+						"display_name": "Ledger Pencil",
+						"tier": "blue",
+						"base_effect": {"win_chance": 1, "loss_reduction": 1},
+						"float_bindings": {
+							"potency": {"effect_key": "loss_reduction", "min": 1, "max": 3},
+							"condition": {"spent_value_multiplier": 0.08, "spent_potency_factor": 0.35, "bands": [{"id": "battered", "display_name": "Battered", "max": 0.2, "value_multiplier": 0.35}, {"id": "worn", "display_name": "Worn", "max": 0.45, "value_multiplier": 0.6}, {"id": "clean", "display_name": "Clean", "max": 0.7, "value_multiplier": 0.85}, {"id": "crisp", "display_name": "Crisp", "max": 0.9, "value_multiplier": 1.1}, {"id": "mint", "display_name": "Mint", "max": 1.0, "value_multiplier": 1.35}]},
+							"resonance": {"effect_key": "win_chance", "threshold": 0.82, "value": 1},
+							"usage": {"decay_min": 0.02, "decay_max": 0.05}
+						},
+						"flavor": "A stub of pencil sharpened down by careful records.",
+						"icon_key": "ledger_pencil"
+					},
+					{
+						"itemdef_id": 1003,
+						"id": "cashout_envelope_meta",
+						"display_name": "Cashout Envelope",
+						"tier": "blue",
+						"base_effect": {"win_bonus": 1, "loss_reduction": 1},
+						"float_bindings": {
+							"potency": {"effect_key": "win_bonus", "min": 1, "max": 3},
+							"condition": {"spent_value_multiplier": 0.08, "spent_potency_factor": 0.35, "bands": [{"id": "battered", "display_name": "Battered", "max": 0.2, "value_multiplier": 0.35}, {"id": "worn", "display_name": "Worn", "max": 0.45, "value_multiplier": 0.6}, {"id": "clean", "display_name": "Clean", "max": 0.7, "value_multiplier": 0.85}, {"id": "crisp", "display_name": "Crisp", "max": 0.9, "value_multiplier": 1.1}, {"id": "mint", "display_name": "Mint", "max": 1.0, "value_multiplier": 1.35}]},
+							"resonance": {"effect_key": "loss_reduction", "threshold": 0.83, "value": 1},
+							"usage": {"decay_min": 0.02, "decay_max": 0.05}
+						},
+						"flavor": "A folded envelope that makes leaving ahead feel possible.",
+						"icon_key": "cashout_envelope"
+					},
+					{
+						"itemdef_id": 1004,
+						"id": "lucky_bar_napkin_meta",
+						"display_name": "Lucky Bar Napkin",
+						"tier": "purple",
+						"base_effect": {"win_chance": 1, "loss_reduction": 1},
+						"float_bindings": {
+							"potency": {"effect_key": "win_chance", "min": 2, "max": 5},
+							"condition": {"spent_value_multiplier": 0.08, "spent_potency_factor": 0.35, "bands": [{"id": "battered", "display_name": "Battered", "max": 0.2, "value_multiplier": 0.35}, {"id": "worn", "display_name": "Worn", "max": 0.45, "value_multiplier": 0.6}, {"id": "clean", "display_name": "Clean", "max": 0.7, "value_multiplier": 0.85}, {"id": "crisp", "display_name": "Crisp", "max": 0.9, "value_multiplier": 1.1}, {"id": "mint", "display_name": "Mint", "max": 1.0, "value_multiplier": 1.35}]},
+							"resonance": {"effect_key": "win_bonus", "threshold": 0.82, "value": 1},
+							"usage": {"decay_min": 0.025, "decay_max": 0.055}
+						},
+						"flavor": "A napkin full of score marks and one good superstition.",
+						"icon_key": "lucky_bar_napkin"
+					},
+					{
+						"itemdef_id": 1005,
+						"id": "roadside_map_meta",
+						"display_name": "Roadside Map",
+						"tier": "purple",
+						"base_effect": {"travel_scouting_level": 1, "loss_reduction": 1},
+						"float_bindings": {
+							"potency": {"effect_key": "travel_scouting_level", "min": 1, "max": 3},
+							"condition": {"spent_value_multiplier": 0.08, "spent_potency_factor": 0.35, "bands": [{"id": "battered", "display_name": "Battered", "max": 0.2, "value_multiplier": 0.35}, {"id": "worn", "display_name": "Worn", "max": 0.45, "value_multiplier": 0.6}, {"id": "clean", "display_name": "Clean", "max": 0.7, "value_multiplier": 0.85}, {"id": "crisp", "display_name": "Crisp", "max": 0.9, "value_multiplier": 1.1}, {"id": "mint", "display_name": "Mint", "max": 1.0, "value_multiplier": 1.35}]},
+							"resonance": {"effect_key": "loss_reduction", "threshold": 0.86, "value": 1},
+							"usage": {"decay_min": 0.02, "decay_max": 0.045}
+						},
+						"flavor": "Highlighted routes and coffee rings turn into a plan.",
+						"icon_key": "roadside_map"
+					},
+					{
+						"itemdef_id": 1006,
+						"id": "payment_calendar_meta",
+						"display_name": "Payment Calendar",
+						"tier": "purple",
+						"base_effect": {"debt_grace_turns": 1, "loss_reduction": 1},
+						"float_bindings": {
+							"potency": {"effect_key": "debt_grace_turns", "min": 1, "max": 3},
+							"condition": {"spent_value_multiplier": 0.08, "spent_potency_factor": 0.35, "bands": [{"id": "battered", "display_name": "Battered", "max": 0.2, "value_multiplier": 0.35}, {"id": "worn", "display_name": "Worn", "max": 0.45, "value_multiplier": 0.6}, {"id": "clean", "display_name": "Clean", "max": 0.7, "value_multiplier": 0.85}, {"id": "crisp", "display_name": "Crisp", "max": 0.9, "value_multiplier": 1.1}, {"id": "mint", "display_name": "Mint", "max": 1.0, "value_multiplier": 1.35}]},
+							"resonance": {"effect_key": "debt_default_heat_delta", "threshold": 0.88, "value": -1},
+							"usage": {"decay_min": 0.02, "decay_max": 0.045}
+						},
+						"flavor": "Dates circled in red, then crossed out with relief.",
+						"icon_key": "payment_calendar"
+					},
+					{
+						"itemdef_id": 1007,
+						"id": "pawn_receipt_sleeve_meta",
+						"display_name": "Pawn Receipt Sleeve",
+						"tier": "purple",
+						"base_effect": {"debt_default_heat_delta": -1, "loss_reduction": 1},
+						"float_bindings": {
+							"potency": {"effect_key": "debt_default_heat_delta", "min": -4, "max": -1},
+							"condition": {"spent_value_multiplier": 0.08, "spent_potency_factor": 0.35, "bands": [{"id": "battered", "display_name": "Battered", "max": 0.2, "value_multiplier": 0.35}, {"id": "worn", "display_name": "Worn", "max": 0.45, "value_multiplier": 0.6}, {"id": "clean", "display_name": "Clean", "max": 0.7, "value_multiplier": 0.85}, {"id": "crisp", "display_name": "Crisp", "max": 0.9, "value_multiplier": 1.1}, {"id": "mint", "display_name": "Mint", "max": 1.0, "value_multiplier": 1.35}]},
+							"resonance": {"effect_key": "debt_grace_turns", "threshold": 0.86, "value": 1},
+							"usage": {"decay_min": 0.025, "decay_max": 0.055}
+						},
+						"flavor": "A clear sleeve for keeping hard choices dry.",
+						"icon_key": "pawn_receipt_sleeve"
+					},
+					{
+						"itemdef_id": 1008,
+						"id": "lucky_keychain_meta",
+						"display_name": "Lucky Keychain",
+						"tier": "pink",
+						"base_effect": {"baseline_luck_delta": 1, "win_bonus": 1},
+						"float_bindings": {
+							"potency": {"effect_key": "baseline_luck_delta", "min": 1, "max": 3},
+							"condition": {"spent_value_multiplier": 0.08, "spent_potency_factor": 0.35, "bands": [{"id": "battered", "display_name": "Battered", "max": 0.2, "value_multiplier": 0.35}, {"id": "worn", "display_name": "Worn", "max": 0.45, "value_multiplier": 0.6}, {"id": "clean", "display_name": "Clean", "max": 0.7, "value_multiplier": 0.85}, {"id": "crisp", "display_name": "Crisp", "max": 0.9, "value_multiplier": 1.1}, {"id": "mint", "display_name": "Mint", "max": 1.0, "value_multiplier": 1.35}]},
+							"resonance": {"effect_key": "win_chance", "threshold": 0.84, "value": 2},
+							"usage": {"decay_min": 0.025, "decay_max": 0.055}
+						},
+						"flavor": "A room key that always seems to open one more door.",
+						"icon_key": "lucky_keychain"
+					},
+					{
+						"itemdef_id": 1009,
+						"id": "rabbits_foot_meta",
+						"display_name": "Rabbit's Foot",
+						"tier": "pink",
+						"base_effect": {"baseline_luck_delta": 1, "win_chance": 2},
+						"float_bindings": {
+							"potency": {"effect_key": "win_chance", "min": 3, "max": 7},
+							"condition": {"spent_value_multiplier": 0.08, "spent_potency_factor": 0.35, "bands": [{"id": "battered", "display_name": "Battered", "max": 0.2, "value_multiplier": 0.35}, {"id": "worn", "display_name": "Worn", "max": 0.45, "value_multiplier": 0.6}, {"id": "clean", "display_name": "Clean", "max": 0.7, "value_multiplier": 0.85}, {"id": "crisp", "display_name": "Crisp", "max": 0.9, "value_multiplier": 1.1}, {"id": "mint", "display_name": "Mint", "max": 1.0, "value_multiplier": 1.35}]},
+							"resonance": {"effect_key": "win_bonus", "threshold": 0.82, "value": 2},
+							"usage": {"decay_min": 0.03, "decay_max": 0.06}
+						},
+						"flavor": "Old luck tied to a new ring.",
+						"icon_key": "lucky_charm"
+					},
+					{
+						"itemdef_id": 1010,
+						"id": "neon_player_charm_meta",
+						"display_name": "Neon Player Charm",
+						"tier": "pink",
+						"base_effect": {"win_bonus": 2, "legal_win_chance": 1},
+						"float_bindings": {
+							"potency": {"effect_key": "win_bonus", "min": 2, "max": 5},
+							"condition": {"spent_value_multiplier": 0.08, "spent_potency_factor": 0.35, "bands": [{"id": "battered", "display_name": "Battered", "max": 0.2, "value_multiplier": 0.35}, {"id": "worn", "display_name": "Worn", "max": 0.45, "value_multiplier": 0.6}, {"id": "clean", "display_name": "Clean", "max": 0.7, "value_multiplier": 0.85}, {"id": "crisp", "display_name": "Crisp", "max": 0.9, "value_multiplier": 1.1}, {"id": "mint", "display_name": "Mint", "max": 1.0, "value_multiplier": 1.35}]},
+							"resonance": {"effect_key": "legal_win_chance", "threshold": 0.84, "value": 2},
+							"usage": {"decay_min": 0.03, "decay_max": 0.06}
+						},
+						"flavor": "A tiny sign bright enough to make a bad table look honest.",
+						"icon_key": "neon_players_charm"
+					},
+					{
+						"itemdef_id": 1011,
+						"id": "high_roller_watch_meta",
+						"display_name": "High Roller Watch",
+						"tier": "red",
+						"base_effect": {"win_bonus": 2, "loss_reduction": 1},
+						"float_bindings": {
+							"potency": {"effect_key": "win_bonus", "min": 3, "max": 7},
+							"condition": {"spent_value_multiplier": 0.08, "spent_potency_factor": 0.35, "bands": [{"id": "battered", "display_name": "Battered", "max": 0.2, "value_multiplier": 0.35}, {"id": "worn", "display_name": "Worn", "max": 0.45, "value_multiplier": 0.6}, {"id": "clean", "display_name": "Clean", "max": 0.7, "value_multiplier": 0.85}, {"id": "crisp", "display_name": "Crisp", "max": 0.9, "value_multiplier": 1.1}, {"id": "mint", "display_name": "Mint", "max": 1.0, "value_multiplier": 1.35}]},
+							"resonance": {"effect_key": "baseline_luck_delta", "threshold": 0.86, "value": 1},
+							"usage": {"decay_min": 0.035, "decay_max": 0.065}
+						},
+						"flavor": "A heavy watch that ticks like a dealer counting down.",
+						"icon_key": "high_roller_watch"
+					},
+					{
+						"itemdef_id": 1012,
+						"id": "feature_magnet_meta",
+						"display_name": "Feature Magnet",
+						"tier": "red",
+						"base_effect": {"win_chance": 2, "win_bonus": 2},
+						"float_bindings": {
+							"potency": {"effect_key": "win_chance", "min": 4, "max": 8},
+							"condition": {"spent_value_multiplier": 0.08, "spent_potency_factor": 0.35, "bands": [{"id": "battered", "display_name": "Battered", "max": 0.2, "value_multiplier": 0.35}, {"id": "worn", "display_name": "Worn", "max": 0.45, "value_multiplier": 0.6}, {"id": "clean", "display_name": "Clean", "max": 0.7, "value_multiplier": 0.85}, {"id": "crisp", "display_name": "Crisp", "max": 0.9, "value_multiplier": 1.1}, {"id": "mint", "display_name": "Mint", "max": 1.0, "value_multiplier": 1.35}]},
+							"resonance": {"effect_key": "win_bonus", "threshold": 0.86, "value": 2},
+							"usage": {"decay_min": 0.035, "decay_max": 0.065}
+						},
+						"flavor": "A pocket magnet wrapped in old prize-counter foil.",
+						"icon_key": "feature_magnet"
+					},
+					{
+						"itemdef_id": 1013,
+						"id": "golden_motel_token_meta",
+						"display_name": "Golden Motel Token",
+						"tier": "gold",
+						"base_effect": {"baseline_luck_delta": 2, "win_chance": 3, "win_bonus": 3},
+						"float_bindings": {
+							"potency": {"effect_key": "win_bonus", "min": 5, "max": 10},
+							"condition": {"spent_value_multiplier": 0.08, "spent_potency_factor": 0.35, "bands": [{"id": "battered", "display_name": "Battered", "max": 0.2, "value_multiplier": 0.35}, {"id": "worn", "display_name": "Worn", "max": 0.45, "value_multiplier": 0.6}, {"id": "clean", "display_name": "Clean", "max": 0.7, "value_multiplier": 0.85}, {"id": "crisp", "display_name": "Crisp", "max": 0.9, "value_multiplier": 1.1}, {"id": "mint", "display_name": "Mint", "max": 1.0, "value_multiplier": 1.35}]},
+							"resonance": {"effect_key": "baseline_luck_delta", "threshold": 0.88, "value": 2},
+							"usage": {"decay_min": 0.04, "decay_max": 0.07}
+						},
+						"flavor": "A polished token from a motel that never appears on maps.",
+						"icon_key": "gold_tooth_token"
+					}
+				]
+			},
+			{
+				"id": "house_edge",
+				"display_name": "House Edge Collection",
+				"theme": "table-read tools, slot-side timing pieces, and risky casino advantages",
+				"drop_table": {
+					"blue": 7000,
+					"purple": 2000,
+					"pink": 800,
+					"red": 180,
+					"gold": 20
+				},
+				"bag_defs": [
+					{
+						"itemdef_id": 9010,
+						"id": "house_edge_blue_bag",
+						"display_name": "House Edge Blue Bag",
+						"tier": "blue",
+						"collection_id": "house_edge",
+						"icon_key": "sunglasses",
+						"flavor": "A blue-tagged table bag with casino dust in the seams."
+					},
+					{
+						"itemdef_id": 9011,
+						"id": "house_edge_purple_bag",
+						"display_name": "House Edge Purple Bag",
+						"tier": "purple",
+						"collection_id": "house_edge",
+						"icon_key": "marked_cards",
+						"flavor": "A purple table bag sealed with a narrow strip of tape."
+					},
+					{
+						"itemdef_id": 9012,
+						"id": "house_edge_pink_bag",
+						"display_name": "House Edge Pink Bag",
+						"tier": "pink",
+						"collection_id": "house_edge",
+						"icon_key": "holdout_wax",
+						"flavor": "A pink-tagged bag that feels warm from the machine floor."
+					},
+					{
+						"itemdef_id": 9013,
+						"id": "house_edge_red_bag",
+						"display_name": "House Edge Red Bag",
+						"tier": "red",
+						"collection_id": "house_edge",
+						"icon_key": "holdout_rig",
+						"flavor": "A red-tagged bag with a dealer's mark under the fold."
+					},
+					{
+						"itemdef_id": 9014,
+						"id": "house_edge_gold_bag",
+						"display_name": "House Edge Gold Bag",
+						"tier": "gold",
+						"collection_id": "house_edge",
+						"icon_key": "velvet_table_key",
+						"flavor": "A gold table bag with a tag that names no casino."
+					}
+				],
+				"items": [
+					{
+						"itemdef_id": 2000,
+						"id": "cheap_sunglasses_meta",
+						"display_name": "Cheap Sunglasses",
+						"tier": "blue",
+						"base_effect": {"cheat_suspicion_delta": -1},
+						"float_bindings": {
+							"potency": {"effect_key": "cheat_suspicion_delta", "min": -3, "max": -1},
+							"condition": {"spent_value_multiplier": 0.08, "spent_potency_factor": 0.35, "bands": [{"id": "battered", "display_name": "Battered", "max": 0.2, "value_multiplier": 0.35}, {"id": "worn", "display_name": "Worn", "max": 0.45, "value_multiplier": 0.6}, {"id": "clean", "display_name": "Clean", "max": 0.7, "value_multiplier": 0.85}, {"id": "crisp", "display_name": "Crisp", "max": 0.9, "value_multiplier": 1.1}, {"id": "mint", "display_name": "Mint", "max": 1.0, "value_multiplier": 1.35}]},
+							"resonance": {"effect_key": "loss_reduction", "threshold": 0.84, "value": 1},
+							"usage": {"decay_min": 0.02, "decay_max": 0.05}
+						},
+						"flavor": "The lenses are scratched, but the stare still works.",
+						"icon_key": "sunglasses"
+					},
+					{
+						"itemdef_id": 2001,
+						"id": "scratch_pad_meta",
+						"display_name": "Scratch Pad",
+						"tier": "blue",
+						"base_effect": {"win_chance": 1, "loss_reduction": 1},
+						"float_bindings": {
+							"potency": {"effect_key": "win_chance", "min": 1, "max": 4},
+							"condition": {"spent_value_multiplier": 0.08, "spent_potency_factor": 0.35, "bands": [{"id": "battered", "display_name": "Battered", "max": 0.2, "value_multiplier": 0.35}, {"id": "worn", "display_name": "Worn", "max": 0.45, "value_multiplier": 0.6}, {"id": "clean", "display_name": "Clean", "max": 0.7, "value_multiplier": 0.85}, {"id": "crisp", "display_name": "Crisp", "max": 0.9, "value_multiplier": 1.1}, {"id": "mint", "display_name": "Mint", "max": 1.0, "value_multiplier": 1.35}]},
+							"resonance": {"effect_key": "loss_reduction", "threshold": 0.82, "value": 1},
+							"usage": {"decay_min": 0.02, "decay_max": 0.05}
+						},
+						"flavor": "Quick marks for quicker decisions.",
+						"icon_key": "scratch_pad"
+					},
+					{
+						"itemdef_id": 2002,
+						"id": "side_bet_chart_meta",
+						"display_name": "Side Bet Chart",
+						"tier": "blue",
+						"base_effect": {"win_bonus": 1},
+						"float_bindings": {
+							"potency": {"effect_key": "win_bonus", "min": 1, "max": 3},
+							"condition": {"spent_value_multiplier": 0.08, "spent_potency_factor": 0.35, "bands": [{"id": "battered", "display_name": "Battered", "max": 0.2, "value_multiplier": 0.35}, {"id": "worn", "display_name": "Worn", "max": 0.45, "value_multiplier": 0.6}, {"id": "clean", "display_name": "Clean", "max": 0.7, "value_multiplier": 0.85}, {"id": "crisp", "display_name": "Crisp", "max": 0.9, "value_multiplier": 1.1}, {"id": "mint", "display_name": "Mint", "max": 1.0, "value_multiplier": 1.35}]},
+							"resonance": {"effect_key": "legal_win_chance", "threshold": 0.85, "value": 1},
+							"usage": {"decay_min": 0.025, "decay_max": 0.055}
+						},
+						"flavor": "A laminated edge for bets that usually bite back.",
+						"icon_key": "side_bet_chart"
+					},
+					{
+						"itemdef_id": 2003,
+						"id": "payout_pamphlet_meta",
+						"display_name": "Payout Pamphlet",
+						"tier": "blue",
+						"base_effect": {"loss_reduction": 1, "win_bonus": 1},
+						"float_bindings": {
+							"potency": {"effect_key": "loss_reduction", "min": 1, "max": 3},
+							"condition": {"spent_value_multiplier": 0.08, "spent_potency_factor": 0.35, "bands": [{"id": "battered", "display_name": "Battered", "max": 0.2, "value_multiplier": 0.35}, {"id": "worn", "display_name": "Worn", "max": 0.45, "value_multiplier": 0.6}, {"id": "clean", "display_name": "Clean", "max": 0.7, "value_multiplier": 0.85}, {"id": "crisp", "display_name": "Crisp", "max": 0.9, "value_multiplier": 1.1}, {"id": "mint", "display_name": "Mint", "max": 1.0, "value_multiplier": 1.35}]},
+							"resonance": {"effect_key": "win_bonus", "threshold": 0.84, "value": 1},
+							"usage": {"decay_min": 0.02, "decay_max": 0.05}
+						},
+						"flavor": "Small print, big nerve.",
+						"icon_key": "payout_pamphlet"
+					},
+					{
+						"itemdef_id": 2004,
+						"id": "marked_cards_meta",
+						"display_name": "Marked Cards",
+						"tier": "purple",
+						"base_effect": {"blackjack_peek_loss_reduction": 1, "cheat_suspicion_delta": 1},
+						"float_bindings": {
+							"potency": {"effect_key": "blackjack_peek_loss_reduction", "min": 1, "max": 4},
+							"condition": {"spent_value_multiplier": 0.08, "spent_potency_factor": 0.35, "bands": [{"id": "battered", "display_name": "Battered", "max": 0.2, "value_multiplier": 0.35}, {"id": "worn", "display_name": "Worn", "max": 0.45, "value_multiplier": 0.6}, {"id": "clean", "display_name": "Clean", "max": 0.7, "value_multiplier": 0.85}, {"id": "crisp", "display_name": "Crisp", "max": 0.9, "value_multiplier": 1.1}, {"id": "mint", "display_name": "Mint", "max": 1.0, "value_multiplier": 1.35}]},
+							"resonance": {"effect_key": "blackjack_peek_heat_delta", "threshold": 0.86, "value": -1},
+							"usage": {"decay_min": 0.03, "decay_max": 0.06}
+						},
+						"flavor": "A familiar deck with marks too subtle to trust twice.",
+						"icon_key": "marked_cards"
+					},
+					{
+						"itemdef_id": 2005,
+						"id": "edge_sort_loupe_meta",
+						"display_name": "Edge-Sort Loupe",
+						"tier": "purple",
+						"base_effect": {"baccarat_edge_sort_memory_tolerance": 1, "cheat_suspicion_delta": 1},
+						"float_bindings": {
+							"potency": {"effect_key": "baccarat_edge_sort_memory_tolerance", "min": 1, "max": 3},
+							"condition": {"spent_value_multiplier": 0.08, "spent_potency_factor": 0.35, "bands": [{"id": "battered", "display_name": "Battered", "max": 0.2, "value_multiplier": 0.35}, {"id": "worn", "display_name": "Worn", "max": 0.45, "value_multiplier": 0.6}, {"id": "clean", "display_name": "Clean", "max": 0.7, "value_multiplier": 0.85}, {"id": "crisp", "display_name": "Crisp", "max": 0.9, "value_multiplier": 1.1}, {"id": "mint", "display_name": "Mint", "max": 1.0, "value_multiplier": 1.35}]},
+							"resonance": {"effect_key": "cheat_suspicion_delta", "threshold": 0.86, "value": -1},
+							"usage": {"decay_min": 0.03, "decay_max": 0.06}
+						},
+						"flavor": "A tiny glass eye for a table that looks back.",
+						"icon_key": "edge_sort_loupe"
+					},
+					{
+						"itemdef_id": 2006,
+						"id": "timing_bracelet_meta",
+						"display_name": "Timing Bracelet",
+						"tier": "purple",
+						"base_effect": {"slot_nudge_perfect_msec_bonus": 10, "cheat_suspicion_delta": 1},
+						"float_bindings": {
+							"potency": {"effect_key": "slot_nudge_perfect_msec_bonus", "min": 10, "max": 35},
+							"condition": {"spent_value_multiplier": 0.08, "spent_potency_factor": 0.35, "bands": [{"id": "battered", "display_name": "Battered", "max": 0.2, "value_multiplier": 0.35}, {"id": "worn", "display_name": "Worn", "max": 0.45, "value_multiplier": 0.6}, {"id": "clean", "display_name": "Clean", "max": 0.7, "value_multiplier": 0.85}, {"id": "crisp", "display_name": "Crisp", "max": 0.9, "value_multiplier": 1.1}, {"id": "mint", "display_name": "Mint", "max": 1.0, "value_multiplier": 1.35}]},
+							"resonance": {"effect_key": "loss_reduction", "threshold": 0.84, "value": 1},
+							"usage": {"decay_min": 0.03, "decay_max": 0.06}
+						},
+						"flavor": "Loose beads that click on the beat before the reel stops.",
+						"icon_key": "timing_bracelet"
+					},
+					{
+						"itemdef_id": 2007,
+						"id": "cold_quarters_meta",
+						"display_name": "Cold Quarters",
+						"tier": "purple",
+						"base_effect": {"slot_cold_quarter_heat_reduction": 4, "loss_reduction": 1},
+						"float_bindings": {
+							"potency": {"effect_key": "slot_cold_quarter_heat_reduction", "min": 4, "max": 12},
+							"condition": {"spent_value_multiplier": 0.08, "spent_potency_factor": 0.35, "bands": [{"id": "battered", "display_name": "Battered", "max": 0.2, "value_multiplier": 0.35}, {"id": "worn", "display_name": "Worn", "max": 0.45, "value_multiplier": 0.6}, {"id": "clean", "display_name": "Clean", "max": 0.7, "value_multiplier": 0.85}, {"id": "crisp", "display_name": "Crisp", "max": 0.9, "value_multiplier": 1.1}, {"id": "mint", "display_name": "Mint", "max": 1.0, "value_multiplier": 1.35}]},
+							"resonance": {"effect_key": "win_bonus", "threshold": 0.84, "value": 1},
+							"usage": {"decay_min": 0.025, "decay_max": 0.055}
+						},
+						"flavor": "Quarters that stay cold no matter how long the run gets.",
+						"icon_key": "cold_quarters"
+					},
+					{
+						"itemdef_id": 2008,
+						"id": "holdout_wax_meta",
+						"display_name": "Holdout Wax",
+						"tier": "pink",
+						"base_effect": {"video_poker_holdout_heat_delta": -1, "cheat_suspicion_delta": 1},
+						"float_bindings": {
+							"potency": {"effect_key": "video_poker_holdout_heat_delta", "min": -4, "max": -1},
+							"condition": {"spent_value_multiplier": 0.08, "spent_potency_factor": 0.35, "bands": [{"id": "battered", "display_name": "Battered", "max": 0.2, "value_multiplier": 0.35}, {"id": "worn", "display_name": "Worn", "max": 0.45, "value_multiplier": 0.6}, {"id": "clean", "display_name": "Clean", "max": 0.7, "value_multiplier": 0.85}, {"id": "crisp", "display_name": "Crisp", "max": 0.9, "value_multiplier": 1.1}, {"id": "mint", "display_name": "Mint", "max": 1.0, "value_multiplier": 1.35}]},
+							"resonance": {"effect_key": "video_poker_holdout_perfect_msec", "threshold": 0.85, "value": 12},
+							"usage": {"decay_min": 0.035, "decay_max": 0.065}
+						},
+						"flavor": "A thumb-sized tin for hands that need to act natural.",
+						"icon_key": "holdout_wax"
+					},
+					{
+						"itemdef_id": 2009,
+						"id": "split_reel_note_meta",
+						"display_name": "Split Reel Note",
+						"tier": "pink",
+						"base_effect": {"slot_split_reel_note_perfect_msec_bonus": 30, "cheat_suspicion_delta": 1},
+						"float_bindings": {
+							"potency": {"effect_key": "slot_split_reel_note_perfect_msec_bonus", "min": 30, "max": 90},
+							"condition": {"spent_value_multiplier": 0.08, "spent_potency_factor": 0.35, "bands": [{"id": "battered", "display_name": "Battered", "max": 0.2, "value_multiplier": 0.35}, {"id": "worn", "display_name": "Worn", "max": 0.45, "value_multiplier": 0.6}, {"id": "clean", "display_name": "Clean", "max": 0.7, "value_multiplier": 0.85}, {"id": "crisp", "display_name": "Crisp", "max": 0.9, "value_multiplier": 1.1}, {"id": "mint", "display_name": "Mint", "max": 1.0, "value_multiplier": 1.35}]},
+							"resonance": {"effect_key": "loss_reduction", "threshold": 0.86, "value": 2},
+							"usage": {"decay_min": 0.035, "decay_max": 0.065}
+						},
+						"flavor": "A folded machine note with a timing mark in the crease.",
+						"icon_key": "split_reel_note"
+					},
+					{
+						"itemdef_id": 2010,
+						"id": "weighted_keyring_meta",
+						"display_name": "Weighted Keyring",
+						"tier": "pink",
+						"base_effect": {"roulette_past_post_base_heat": -1, "cheat_suspicion_delta": 1},
+						"float_bindings": {
+							"potency": {"effect_key": "roulette_past_post_base_heat", "min": -4, "max": -1},
+							"condition": {"spent_value_multiplier": 0.08, "spent_potency_factor": 0.35, "bands": [{"id": "battered", "display_name": "Battered", "max": 0.2, "value_multiplier": 0.35}, {"id": "worn", "display_name": "Worn", "max": 0.45, "value_multiplier": 0.6}, {"id": "clean", "display_name": "Clean", "max": 0.7, "value_multiplier": 0.85}, {"id": "crisp", "display_name": "Crisp", "max": 0.9, "value_multiplier": 1.1}, {"id": "mint", "display_name": "Mint", "max": 1.0, "value_multiplier": 1.35}]},
+							"resonance": {"effect_key": "win_bonus", "threshold": 0.85, "value": 2},
+							"usage": {"decay_min": 0.035, "decay_max": 0.065}
+						},
+						"flavor": "A ring weighted just enough to remind your hand where it is.",
+						"icon_key": "weighted_keyring"
+					},
+					{
+						"itemdef_id": 2011,
+						"id": "holdout_rig_meta",
+						"display_name": "Holdout Rig",
+						"tier": "red",
+						"base_effect": {"video_poker_holdout_perfect_msec": 20, "cheat_suspicion_delta": 2},
+						"float_bindings": {
+							"potency": {"effect_key": "video_poker_holdout_perfect_msec", "min": 20, "max": 75},
+							"condition": {"spent_value_multiplier": 0.08, "spent_potency_factor": 0.35, "bands": [{"id": "battered", "display_name": "Battered", "max": 0.2, "value_multiplier": 0.35}, {"id": "worn", "display_name": "Worn", "max": 0.45, "value_multiplier": 0.6}, {"id": "clean", "display_name": "Clean", "max": 0.7, "value_multiplier": 0.85}, {"id": "crisp", "display_name": "Crisp", "max": 0.9, "value_multiplier": 1.1}, {"id": "mint", "display_name": "Mint", "max": 1.0, "value_multiplier": 1.35}]},
+							"resonance": {"effect_key": "video_poker_holdout_heat_delta", "threshold": 0.87, "value": -2},
+							"usage": {"decay_min": 0.04, "decay_max": 0.07}
+						},
+						"flavor": "Carefully built, badly explained, and too useful to ignore.",
+						"icon_key": "holdout_rig"
+					},
+					{
+						"itemdef_id": 2012,
+						"id": "coolers_cufflinks_meta",
+						"display_name": "Cooler's Cufflinks",
+						"tier": "red",
+						"base_effect": {"blackjack_failed_peek_heat_absorb": 1, "cheat_suspicion_delta": 1},
+						"float_bindings": {
+							"potency": {"effect_key": "blackjack_failed_peek_heat_absorb", "min": 1, "max": 4},
+							"condition": {"spent_value_multiplier": 0.08, "spent_potency_factor": 0.35, "bands": [{"id": "battered", "display_name": "Battered", "max": 0.2, "value_multiplier": 0.35}, {"id": "worn", "display_name": "Worn", "max": 0.45, "value_multiplier": 0.6}, {"id": "clean", "display_name": "Clean", "max": 0.7, "value_multiplier": 0.85}, {"id": "crisp", "display_name": "Crisp", "max": 0.9, "value_multiplier": 1.1}, {"id": "mint", "display_name": "Mint", "max": 1.0, "value_multiplier": 1.35}]},
+							"resonance": {"effect_key": "blackjack_peek_loss_reduction", "threshold": 0.86, "value": 2},
+							"usage": {"decay_min": 0.04, "decay_max": 0.07}
+						},
+						"flavor": "A pair of quiet cufflinks with a colder reputation.",
+						"icon_key": "coolers_cufflinks"
+					},
+					{
+						"itemdef_id": 2013,
+						"id": "velvet_table_key_meta",
+						"display_name": "Velvet Table Key",
+						"tier": "gold",
+						"base_effect": {"win_chance": 4, "win_bonus": 4, "cheat_suspicion_delta": -1},
+						"float_bindings": {
+							"potency": {"effect_key": "win_chance", "min": 6, "max": 12},
+							"condition": {"spent_value_multiplier": 0.08, "spent_potency_factor": 0.35, "bands": [{"id": "battered", "display_name": "Battered", "max": 0.2, "value_multiplier": 0.35}, {"id": "worn", "display_name": "Worn", "max": 0.45, "value_multiplier": 0.6}, {"id": "clean", "display_name": "Clean", "max": 0.7, "value_multiplier": 0.85}, {"id": "crisp", "display_name": "Crisp", "max": 0.9, "value_multiplier": 1.1}, {"id": "mint", "display_name": "Mint", "max": 1.0, "value_multiplier": 1.35}]},
+							"resonance": {"effect_key": "win_bonus", "threshold": 0.9, "value": 4},
+							"usage": {"decay_min": 0.045, "decay_max": 0.075}
+						},
+						"flavor": "A small key wrapped in velvet, cut for a room behind the pit.",
+						"icon_key": "velvet_table_key"
+					}
+				]
+			}
+		]
+	}
+]
