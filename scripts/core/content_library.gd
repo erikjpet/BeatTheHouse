@@ -657,6 +657,13 @@ func _validate_actions(label: String, actions: Variant) -> void:
 # Validates item shape used by the first foundation loop.
 func _validate_item_definitions() -> void:
 	var group_ids := _ids_for(content_groups)
+	var allowed_rarity := {
+		"common": true,
+		"uncommon": true,
+		"rare": true,
+		"epic": true,
+		"legendary": true,
+	}
 	for item_def in items:
 		if typeof(item_def) != TYPE_DICTIONARY:
 			continue
@@ -666,6 +673,9 @@ func _validate_item_definitions() -> void:
 			validation_errors.append("items %s has price_min greater than price_max." % item_id)
 		if typeof(item_def.get("effect", {})) != TYPE_DICTIONARY:
 			validation_errors.append("items %s effect must be a dictionary." % item_id)
+		var rarity := str(item_def.get("rarity", "")).strip_edges().to_lower()
+		if not rarity.is_empty() and not bool(allowed_rarity.get(rarity, false)):
+			validation_errors.append("items %s has unsupported rarity: %s." % [item_id, rarity])
 		_validate_art_asset("items %s" % item_id, item_def)
 		if str(item_def.get("icon_key", "")).strip_edges().is_empty():
 			validation_errors.append("items %s is missing icon_key." % item_id)
@@ -991,6 +1001,8 @@ func _validate_service_definitions() -> void:
 			validation_errors.append("services %s cost must be non-negative." % service_id)
 		if typeof(service_def.get("effect", {})) != TYPE_DICTIONARY:
 			validation_errors.append("services %s effect must be a dictionary." % service_id)
+		if service_def.has("availability") and typeof(service_def.get("availability", {})) != TYPE_DICTIONARY:
+			validation_errors.append("services %s availability must be a dictionary." % service_id)
 
 
 # Validates route identities and destination references.

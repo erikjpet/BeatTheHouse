@@ -3001,6 +3001,7 @@ func _check_slot_item_pack_effects(library: ContentLibrary, definition: Dictiona
 		"neon_players_charm",
 		"split_reel_note",
 		"feature_magnet",
+		"cumquat_sandwich",
 		"drain_cleaner",
 		"jackpot_magnet",
 		"splitter_token",
@@ -3062,6 +3063,8 @@ func _check_slot_item_pack_effects(library: ContentLibrary, definition: Dictiona
 	else:
 		var slot_only_challenge := RunState.custom_challenge("only_slot_items", "SLOT-ITEMS", {"content_groups": ["slot_pack"]})
 		var slot_shop_pool := library.shop_item_pool_for_challenge(shop_archetype.get("item_pool", []), slot_only_challenge)
+		if slot_shop_pool.has("cumquat_sandwich"):
+			failures.append("Cumquat Sandwich should stay a hidden beach reward, not a shop-spawn item.")
 		for item_id_value in pinball_item_ids:
 			var item_id := str(item_id_value)
 			if not slot_shop_pool.has(item_id):
@@ -3085,6 +3088,41 @@ func _check_slot_item_pack_effects(library: ContentLibrary, definition: Dictiona
 	var game: GameModule = _slot_game(library, failures)
 	if game == null:
 		return
+
+	var cumquat_item: Dictionary = library.item("cumquat_sandwich")
+	if str(cumquat_item.get("rarity", "")) != "legendary" or bool(cumquat_item.get("sellable", true)):
+		failures.append("Cumquat Sandwich should be a legendary non-shop item.")
+	var cumquat_run: RunState = _slot_run_state("SLOT-ITEM-CUMQUAT", 100000)
+	var cumquat_environment: Dictionary = _slot_environment()
+	var cumquat_machine: Dictionary = _slot_machine(definition, cumquat_run, "pinball", "classic_3_reel", "standard", "plain")
+	_slot_store_machine(cumquat_run, cumquat_environment, cumquat_machine)
+	cumquat_run.add_item("cumquat_sandwich")
+	var cumquat_command: Dictionary = game.active_item_command("cumquat_sandwich", cumquat_run, cumquat_environment, cumquat_run.create_rng("slot_item_cumquat_arm"))
+	var cumquat_result: Dictionary = _slot_dict(cumquat_command.get("result", {}))
+	if not bool(cumquat_command.get("handled", false)) or not bool(cumquat_result.get("ok", false)):
+		failures.append("Cumquat Sandwich active item did not arm the slot cabinet.")
+	else:
+		GameModule.apply_result(cumquat_run, cumquat_result, cumquat_run.create_rng("slot_item_cumquat_apply"))
+		if cumquat_run.inventory.has("cumquat_sandwich"):
+			failures.append("Cumquat Sandwich was not consumed on use.")
+		var armed_cumquat_state: Dictionary = _slot_dict(SlotMachineStateScript.read_machine(cumquat_environment, "slot").get("slot_item_state", {}))
+		if not bool(armed_cumquat_state.get("cumquat_force_bonus_pending", false)):
+			failures.append("Cumquat Sandwich did not persist its forced-bonus state.")
+		var loaded_cumquat_run: RunState = RunStateScript.new()
+		loaded_cumquat_run.from_dict(cumquat_run.to_dict())
+		var loaded_cumquat_environment: Dictionary = _slot_dict(loaded_cumquat_run.current_environment)
+		var loaded_cumquat_state: Dictionary = _slot_dict(SlotMachineStateScript.read_machine(loaded_cumquat_environment, "slot").get("slot_item_state", {}))
+		if not bool(loaded_cumquat_state.get("cumquat_force_bonus_pending", false)):
+			failures.append("Cumquat Sandwich forced-bonus state did not survive RunState round-trip.")
+		var cumquat_rng: RngStream = loaded_cumquat_run.create_rng("slot_item_cumquat_spin")
+		var cumquat_spin: Dictionary = game.resolve_with_context("spin", 10, loaded_cumquat_run, loaded_cumquat_environment, cumquat_rng, {})
+		if not bool(cumquat_spin.get("slot_feature_triggered", false)) or not bool(cumquat_spin.get("slot_forced_bonus_item", false)):
+			failures.append("Cumquat Sandwich did not force a slot bonus on the next paid spin.")
+		if bool(cumquat_spin.get("ok", false)):
+			GameModule.apply_result(loaded_cumquat_run, cumquat_spin, cumquat_rng)
+		var consumed_cumquat_state: Dictionary = _slot_dict(SlotMachineStateScript.read_machine(loaded_cumquat_environment, "slot").get("slot_item_state", {}))
+		if bool(consumed_cumquat_state.get("cumquat_force_bonus_pending", false)):
+			failures.append("Cumquat Sandwich forced-bonus state was not cleared after the paid spin.")
 
 	var grease_run: RunState = _slot_run_state("SLOT-ITEM-GREASE", 100000)
 	var grease_environment: Dictionary = _slot_environment()
@@ -13630,6 +13668,21 @@ func _check_travel_route_foundation(library: ContentLibrary, failures: Array) ->
 		if int(full_preview.get("travel_locked_actions", 0)) != int(actual_environment.get("travel_locked_actions", 0)):
 			failures.append("Scouted route preview did not expose the generated travel lock.")
 
+	var beach_route := library.route("beach")
+	var beach_archetype := _archetype_by_id(library, "beach")
+	if beach_route.is_empty() or beach_archetype.is_empty():
+		failures.append("Beach route/archetype fixture is missing.")
+	else:
+		if str(beach_route.get("destination_archetype", "")) != "beach":
+			failures.append("Beach route does not point to the beach archetype.")
+		if int(beach_route.get("cost", -1)) != 3 or str(beach_route.get("distance", "")) != "near" or str(beach_route.get("risk", "")) != "low":
+			failures.append("Beach route should be a near, low-risk, low-cost stop.")
+		if not _string_array(delta_archetype.get("travel_hooks", [])).has("beach"):
+			failures.append("Delta Queen should expose the nearby beach travel hook.")
+		if not _string_array(beach_archetype.get("travel_hooks", [])).has("delta_queen"):
+			failures.append("Beach should route back to the Delta Queen.")
+		if not _string_array(beach_archetype.get("service_pool", [])).has("beach_relax") or not _string_array(beach_archetype.get("service_pool", [])).has("beach_sand_pile"):
+			failures.append("Beach should expose relax and sand-pile service hooks.")
 	var scout_run: RunState = RunStateScript.new()
 	scout_run.start_new("TRAVEL-SCOUTING")
 	if scout_run.travel_scouting_level() != 0:
@@ -14119,6 +14172,44 @@ func _check_service_hook_foundation(library: ContentLibrary, failures: Array) ->
 	if bool(poor_status.get("available", true)):
 		failures.append("Unaffordable service was not disabled.")
 
+	var beach_relax := library.service("beach_relax")
+	var beach_sand_pile := library.service("beach_sand_pile")
+	if beach_relax.is_empty() or beach_sand_pile.is_empty():
+		failures.append("Beach service fixture is missing.")
+	else:
+		var beach_run: RunState = RunStateScript.new()
+		beach_run.start_new("SERVICE-BEACH")
+		beach_run.set_environment({
+			"id": "service_beach_room",
+			"archetype_id": "beach",
+			"service_ids": ["beach_relax", "beach_sand_pile"],
+		})
+		beach_run.add_suspicion("beach_heat_fixture", 8)
+		var beach_heat_before := beach_run.suspicion_level()
+		var relax_status := beach_run.service_hook_status(beach_relax)
+		if not bool(relax_status.get("available", false)):
+			failures.append("Beach relax service should be available.")
+		var relax_result := _fixture_service_result(beach_run, beach_relax, "beach_relax")
+		GameModule.apply_result(beach_run, relax_result)
+		if beach_run.suspicion_level() >= beach_heat_before:
+			failures.append("Beach relax service did not reduce heat.")
+		var sand_status := beach_run.service_hook_status(beach_sand_pile)
+		if not bool(sand_status.get("available", false)):
+			failures.append("Beach sand pile should be available before inspection.")
+		var sand_result := _fixture_service_result(beach_run, beach_sand_pile, "beach_sand_pile")
+		GameModule.apply_result(beach_run, sand_result)
+		if not beach_run.inventory.has("cumquat_sandwich"):
+			failures.append("Beach sand pile did not add the Cumquat Sandwich.")
+		if not bool(beach_run.narrative_flags.get("beach_sand_pile_found", false)):
+			failures.append("Beach sand pile did not set its one-shot flag.")
+		var sand_after_status := beach_run.service_hook_status(beach_sand_pile)
+		if bool(sand_after_status.get("available", true)):
+			failures.append("Beach sand pile stayed available after inspection.")
+		var beach_loaded: RunState = RunStateScript.new()
+		beach_loaded.from_dict(beach_run.to_dict())
+		if not beach_loaded.inventory.has("cumquat_sandwich") or not bool(beach_loaded.narrative_flags.get("beach_sand_pile_found", false)):
+			failures.append("Beach sand pile inventory/flag state did not survive RunState round-trip.")
+
 	var unsupported_run: RunState = RunStateScript.new()
 	unsupported_run.start_new("SERVICE-UNSUPPORTED")
 	var unsupported_before := unsupported_run.to_dict()
@@ -14161,10 +14252,27 @@ func _fixture_service_result(run_state: RunState, service: Dictionary, service_i
 	deltas["baseline_luck_delta"] = int(effect.get("baseline_luck_delta", 0))
 	if typeof(effect.get("flags_set", {})) == TYPE_DICTIONARY:
 		deltas["flags_set"] = (effect.get("flags_set", {}) as Dictionary).duplicate(true)
+	if typeof(effect.get("inventory_add", [])) == TYPE_ARRAY:
+		deltas["inventory_add"] = (effect.get("inventory_add", []) as Array).duplicate(true)
+	if typeof(effect.get("inventory_remove", [])) == TYPE_ARRAY:
+		deltas["inventory_remove"] = (effect.get("inventory_remove", []) as Array).duplicate(true)
 	if typeof(effect.get("messages", [])) == TYPE_ARRAY:
 		deltas["messages"] = (effect.get("messages", []) as Array).duplicate(true)
 	var flags: Dictionary = deltas.get("flags_set", {}) if typeof(deltas.get("flags_set", {})) == TYPE_DICTIONARY else {}
-	var has_mutation := int(deltas.get("bankroll_delta", 0)) != 0 or int(deltas.get("suspicion_delta", 0)) != 0 or int(deltas.get("alcohol_intake", 0)) != 0 or int(deltas.get("drunk_delta", 0)) != 0 or int(deltas.get("alcoholic_delta", 0)) != 0 or int(deltas.get("baseline_luck_delta", 0)) != 0 or not flags.is_empty() or not (deltas.get("messages", []) as Array).is_empty()
+	var inventory_add: Array = deltas.get("inventory_add", []) if typeof(deltas.get("inventory_add", [])) == TYPE_ARRAY else []
+	var inventory_remove: Array = deltas.get("inventory_remove", []) if typeof(deltas.get("inventory_remove", [])) == TYPE_ARRAY else []
+	var has_mutation := (
+		int(deltas.get("bankroll_delta", 0)) != 0
+		or int(deltas.get("suspicion_delta", 0)) != 0
+		or int(deltas.get("alcohol_intake", 0)) != 0
+		or int(deltas.get("drunk_delta", 0)) != 0
+		or int(deltas.get("alcoholic_delta", 0)) != 0
+		or int(deltas.get("baseline_luck_delta", 0)) != 0
+		or not flags.is_empty()
+		or not inventory_add.is_empty()
+		or not inventory_remove.is_empty()
+		or not (deltas.get("messages", []) as Array).is_empty()
+	)
 	if not has_mutation:
 		return GameModule.build_action_result({
 			"ok": false,

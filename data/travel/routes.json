@@ -120,6 +120,16 @@
 		"condition_text": "Boarding opens on the riverboat schedule."
 	},
 	{
+		"id": "beach",
+		"label": "The Beach",
+		"destination_archetype": "beach",
+		"description": "Beach access.",
+		"cost": 3,
+		"risk": "low",
+		"distance": "near",
+		"risk_decay": 35
+	},
+	{
 		"id": "grand_casino",
 		"label": "Grand Casino",
 		"destination_archetype": "grand_casino",

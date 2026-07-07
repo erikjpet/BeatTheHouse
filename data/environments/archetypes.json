@@ -2102,12 +2102,14 @@
     "travel_hooks": [
       "small_underground_casino",
       "kitty_cat_lounge",
+      "beach",
       "grand_casino",
       "motel"
     ],
     "next_archetypes": [
       "small_underground_casino",
       "kitty_cat_lounge",
+      "beach",
       "grand_casino",
       "motel"
     ],
@@ -2120,6 +2122,130 @@
       "river",
       "brass",
       "trapped"
+    ]
+  },
+  {
+    "id": "beach",
+    "kind": "recovery",
+    "is_start": false,
+    "tier": 2,
+    "display_name": "The Beach",
+    "name_prefixes": [
+      "Neon",
+      "Low Tide"
+    ],
+    "name_nouns": [
+      "Beach"
+    ],
+    "visual_context": {
+      "perspective": "first_person",
+      "scene_type": "beach",
+      "description": "Dockside beach and quiet surf."
+    },
+    "objective_hint": "Cool off near the riverboat before returning to the circuit.",
+    "layout": {
+      "service_spots": [
+        [
+          224,
+          284
+        ],
+        [
+          628,
+          322
+        ]
+      ],
+      "travel_spots": [
+        [
+          812,
+          322
+        ]
+      ],
+      "prioritize_service_spots": true
+    },
+    "security_profile": {
+      "strictness": "loose",
+      "attention_scale": 0.55,
+      "visible_cues": [
+        "The surf buries small mistakes."
+      ]
+    },
+    "music_profile": {
+      "theme": "neon beach",
+      "ambience": 0.48,
+      "bpm": 72,
+      "mode": "dorian",
+      "progression": [
+        0,
+        5,
+        3,
+        6
+      ],
+      "motif": [
+        0,
+        -999,
+        2,
+        -999,
+        5,
+        -999,
+        3,
+        -999
+      ],
+      "root_midi": 45,
+      "safety": 0.70,
+      "texture": "riverboat",
+      "texture_rate": 0.16,
+      "volume": 0.22
+    },
+    "economic_profile": {
+      "stake_floor": 0,
+      "stake_ceiling": 0,
+      "price_tone": "quiet",
+      "cashout_tone": "none"
+    },
+    "game_pool": [],
+    "game_count": [
+      0,
+      0
+    ],
+    "item_pool": [],
+    "item_count": [
+      0,
+      0
+    ],
+    "event_pool": [],
+    "event_scopes": [
+      "recovery"
+    ],
+    "event_count": [
+      0,
+      0
+    ],
+    "service_pool": [
+      "beach_relax",
+      "beach_sand_pile"
+    ],
+    "lender_hooks": [],
+    "suspicion_cues": [
+      "Only the tide keeps score here."
+    ],
+    "travel_hooks": [
+      "delta_queen",
+      "kitty_cat_lounge",
+      "motel"
+    ],
+    "next_archetypes": [
+      "delta_queen",
+      "kitty_cat_lounge",
+      "motel"
+    ],
+    "local_narrative_flags": {
+      "tier_two": true,
+      "beach": true
+    },
+    "moods": [
+      "salt",
+      "neon",
+      "quiet"
     ]
   },
   {

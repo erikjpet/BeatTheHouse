@@ -1779,6 +1779,53 @@ func _run() -> void:
 		quit(1)
 		return
 	environment_canvas.call("render_environment_snapshot", {
+		"id": "beach",
+		"display_name": "The Beach",
+		"interactable_objects": [
+			{
+				"object_id": "service:beach_relax",
+				"object_type": "service",
+				"visual_type": "service",
+				"source_id": "beach_relax",
+				"label": "Relax",
+				"short_description": "Lower heat.",
+				"enabled": true,
+				"normalized_rect": {"x": 0.24, "y": 0.62, "w": 0.12, "h": 0.16},
+				"available_actions": [{"id": "use_service_hook", "label": "Use"}],
+				"confirm_action_id": "use_service_hook",
+			},
+			{
+				"object_id": "service:beach_sand_pile",
+				"object_type": "service",
+				"visual_type": "service",
+				"source_id": "beach_sand_pile",
+				"label": "Sand Pile",
+				"short_description": "Inspect the pile.",
+				"enabled": true,
+				"prop": "sand_pile",
+				"surface": "floor",
+				"normalized_rect": {"x": 0.64, "y": 0.68, "w": 0.12, "h": 0.14},
+				"available_actions": [{"id": "use_service_hook", "label": "Use"}],
+				"confirm_action_id": "use_service_hook",
+			},
+		],
+	})
+	environment_canvas.call("set_selected_object", "service:beach_sand_pile")
+	await process_frame
+	var beach_canvas_snapshot: Dictionary = environment_canvas.call("current_view_snapshot")
+	var beach_sand_object := _canvas_object_by_id(beach_canvas_snapshot.get("objects", []), "service:beach_sand_pile")
+	if beach_sand_object.is_empty():
+		push_error("Beach canvas did not retain the sand-pile service object.")
+		quit(1)
+		return
+	if str(beach_sand_object.get("prop", "")) != "sand_pile" or str(beach_sand_object.get("surface", "")) != "floor":
+		push_error("Beach sand-pile object lost its floor/sand-pile draw hints.")
+		quit(1)
+		return
+	if not _selected_info_text_fits(environment_canvas, "beach sand pile info", ["Inspect the pile."]):
+		quit(1)
+		return
+	environment_canvas.call("render_environment_snapshot", {
 		"id": "classic_drunk_room",
 		"display_name": "Classic Drunk Room",
 		"drunk_level": 35,
@@ -4588,6 +4635,10 @@ func _check_run_menu_open_resume(app: Control, expected_screen: String, label: S
 
 
 func _travel_to_first_game_environment(app: Control) -> bool:
+	return await _travel_to_first_game_environment_depth(app, 0, {})
+
+
+func _travel_to_first_game_environment_depth(app: Control, depth: int, visited_targets: Dictionary) -> bool:
 	var current_snapshot: Dictionary = app.call("current_environment_view_snapshot")
 	var current_game_ids_value: Variant = current_snapshot.get("game_ids", [])
 	var current_game_ids: Array = []
@@ -4595,6 +4646,8 @@ func _travel_to_first_game_environment(app: Control) -> bool:
 		current_game_ids = current_game_ids_value
 	if not current_game_ids.is_empty():
 		return true
+	if depth >= 3:
+		return false
 	var travel_choices_value: Variant = current_snapshot.get("travel_choices", [])
 	var travel_choices: Array = []
 	if typeof(travel_choices_value) == TYPE_ARRAY:
@@ -4618,6 +4671,21 @@ func _travel_to_first_game_environment(app: Control) -> bool:
 			continue
 		if await _travel_to_target_and_check_games(app, target_id):
 			return true
+	for choice_value in travel_choices:
+		if typeof(choice_value) != TYPE_DICTIONARY:
+			continue
+		var waypoint_choice: Dictionary = choice_value
+		var waypoint_id := str(waypoint_choice.get("id", ""))
+		if waypoint_id.is_empty() or bool(visited_targets.get(waypoint_id, false)):
+			continue
+		visited_targets[waypoint_id] = true
+		if not bool(app.call("select_travel_option", waypoint_id)):
+			continue
+		app.call("confirm_selected_travel")
+		await process_frame
+		if await _travel_to_first_game_environment_depth(app, depth + 1, visited_targets):
+			return true
+		return false
 	return false
 
 

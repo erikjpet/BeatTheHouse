@@ -3161,6 +3161,26 @@ func service_hook_status(service_data: Dictionary) -> Dictionary:
 		status["disabled_reason"] = "This challenge blocks that service."
 		status["availability_class"] = AVAILABILITY_CATEGORICAL_UNAVAILABLE
 		return status
+	var availability := _copy_dict(service_data.get("availability", {}))
+	var single_use_flag := str(availability.get("single_use_flag", "")).strip_edges()
+	if not single_use_flag.is_empty() and bool(narrative_flags.get(single_use_flag, false)):
+		status["available"] = false
+		status["disabled_reason"] = str(availability.get("blocked_text", "This one-time service is spent."))
+		status["availability_class"] = AVAILABILITY_CATEGORICAL_UNAVAILABLE
+		return status
+	var required_flags := _copy_dict(availability.get("requires_flags", {}))
+	for key in required_flags.keys():
+		if narrative_flags.get(str(key), null) != required_flags[key]:
+			status["available"] = false
+			status["disabled_reason"] = str(availability.get("condition_text", "A service condition is not met."))
+			status["availability_class"] = AVAILABILITY_CATEGORICAL_UNAVAILABLE
+			return status
+	for flag_id in _copy_array(availability.get("blocked_by_flags", [])):
+		if bool(narrative_flags.get(str(flag_id), false)):
+			status["available"] = false
+			status["disabled_reason"] = str(availability.get("blocked_text", "This service is not available now."))
+			status["availability_class"] = AVAILABILITY_CATEGORICAL_UNAVAILABLE
+			return status
 	if cost > bankroll:
 		status["available"] = false
 		status["disabled_reason"] = "Not enough bankroll for this service."

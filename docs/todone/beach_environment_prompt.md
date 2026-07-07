@@ -214,3 +214,53 @@ lists:
 - test fixture names
 - one-line evidence that the beach one-shot pickup, heat-lowering relax action,
   and one-shot forced slot bonus all work
+
+---
+
+## Execution Record - 2026-07-06
+
+Status: implemented and validated for the beach-specific gate.
+
+Files changed:
+- `data/travel/routes.json`
+- `data/environments/archetypes.json`
+- `data/services/services.json`
+- `data/items/items.json`
+- `data/content_groups/groups.json`
+- `data/art/art_manifest.json`
+- `scripts/core/content_library.gd`
+- `scripts/core/run_action_service.gd`
+- `scripts/core/run_state.gd`
+- `scripts/games/slot.gd`
+- `scripts/games/slots/slot_resolver.gd`
+- `scripts/ui/foundation_main.gd`
+- `scripts/ui/pixel_scene_canvas.gd`
+- `scripts/tests/foundation_check.gd`
+- `scripts/tests/ui_scene_compile_check.gd`
+- `tools/generate_icon_art.py`
+- `docs/todo/QUEUE.md`
+- `docs/todone/beach_environment_prompt.md`
+
+Generated art files:
+- `assets/art/items/cumquat_sandwich.png`
+- `assets/art/map_icons/beach.png`
+
+Test fixtures:
+- `foundation_check.gd`: `travel_route_foundation` verifies the beach route/archetype and Delta Queen connection.
+- `foundation_check.gd`: `service_hook_foundation` verifies `beach_relax`, one-shot sand-pile pickup, inventory grant, flag persistence, and save/load.
+- `foundation_check.gd`: `slot_item_pack_effects` verifies `cumquat_sandwich` rarity, non-shop reachability, active-item consumption, armed slot state save/load, forced feature, and flag clearing.
+- `ui_scene_compile_check.gd`: direct `PixelSceneCanvas` fixture verifies beach scene object rendering, `sand_pile` draw hints, and selected info text.
+
+Commands run:
+- `python tools/generate_icon_art.py` - PASS. Output: `Wrote 70 item icons, 8 game icons, 14 map icons, and 1 map backgrounds.`
+- `git diff --check` - PASS, with line-ending warnings only.
+- `powershell -ExecutionPolicy Bypass -File tools/validate_project.ps1` - PASS. Output: `Beat the House foundation architecture validation passed.`
+- `powershell -ExecutionPolicy Bypass -File tools/check_godot.ps1 -RequireGodot -FoundationSuite systems -TimeoutSec 300` - PASS. Final run: `foundation_systems PASS 24665ms`.
+- `powershell -ExecutionPolicy Bypass -File tools/check_godot.ps1 -RequireGodot -FoundationSuite slot -TimeoutSec 300` - PASS. Output: `foundation_slot PASS 21108ms`.
+- `powershell -ExecutionPolicy Bypass -File tools/check_godot.ps1 -RequireGodot -FoundationSuite ui -TimeoutSec 300` - PASS. Final run: `ui_scene_compile PASS 43977ms`.
+- `powershell -ExecutionPolicy Bypass -File tools/foundation_visual_qa.ps1 -RequireGodot` - PASS with existing warning: `Recovery pressure QA could not find a visible lender or route to a lender environment.`
+- `powershell -ExecutionPolicy Bypass -File tools/check_godot.ps1 -RequireGodot` - FAIL in default perf smoke only. Passing stages: validate/import/load/foundation_smoke/ui_scene_compile/roulette_audio_audit. Failing stage: `foundation_perf_smoke`, with existing idle draw budget failures for dice_table, blackjack, baccarat, and roulette synthetic idle surfaces.
+- Post-archive `powershell -ExecutionPolicy Bypass -File tools/validate_project.ps1` rerun - FAIL due unrelated untracked `data/art/attribute_glyphs.json` using an object root where the validator requires arrays under `data/`.
+
+One-line evidence:
+`beach_relax` reduces heat through service result deltas; `beach_sand_pile` grants exactly one saved `cumquat_sandwich`; using that item on a slot consumes it, survives save/load as an armed machine flag, forces one normal slot feature on the next paid spin, then clears the flag.

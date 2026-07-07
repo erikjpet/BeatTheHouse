@@ -679,6 +679,24 @@
 		"effect": {"families": {"slots": {"slot_feature_weight_bonus_percent": 125, "slot_reel_win_weight_percent": 35}}}
 	},
 	{
+		"id": "cumquat_sandwich",
+		"display_name": "Cumquat Sandwich",
+		"class": "consumable",
+		"domain": "games",
+		"content_groups": ["slot_pack"],
+		"rarity": "legendary",
+		"sellable": false,
+		"sale_price": 0,
+		"price_min": 0,
+		"price_max": 0,
+		"asset_path": "res://assets/art/items/cumquat_sandwich.png",
+		"icon_key": "cumquat_sandwich",
+		"environment_prop": "sandwich",
+		"surface": "counter_case",
+		"description": "Forces one slot bonus.",
+		"effect": {"active_item": true, "active_mode": "consumable", "active_target": "slot"}
+	},
+	{
 		"id": "drain_cleaner",
 		"display_name": "Drain Cleaner",
 		"class": "permanent",

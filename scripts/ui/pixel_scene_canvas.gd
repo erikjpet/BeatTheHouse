@@ -466,6 +466,8 @@ func _draw() -> void:
 				_draw_kitty_cat_lounge()
 			"delta_queen":
 				_draw_delta_queen()
+			"beach":
+				_draw_beach()
 			"gas_station_casino":
 				_draw_gas_station()
 			"small_underground_casino":
@@ -858,6 +860,42 @@ func _draw_delta_queen() -> void:
 	_floor_reflections()
 
 
+func _draw_beach() -> void:
+	# Night beach below the casino docks with surf, boardwalk neon, towels, and a suspicious sand pile.
+	draw_rect(Rect2(0, 0, 900, 246), Color("#071221"))
+	draw_rect(Rect2(0, 0, 900, 80), Color("#061025"))
+	for x in range(0, 900, 120):
+		draw_rect(Rect2(x + 18, 26, 64, 8), Color(C_PINK.r, C_PINK.g, C_PINK.b, 0.16))
+		draw_rect(Rect2(x + 40, 42, 84, 6), Color(C_CYAN.r, C_CYAN.g, C_CYAN.b, 0.12))
+	draw_rect(Rect2(0, 78, 900, 112), Color("#08233a"))
+	for i in range(8):
+		var y := 90 + i * 13 + int(sin(flicker * 1.1 + i) * 2.0)
+		draw_line(Vector2(0, y), Vector2(900, y - 8), Color(C_CYAN.r, C_CYAN.g, C_CYAN.b, 0.14), 2)
+	draw_rect(Rect2(0, 180, 900, 120), Color("#a36832"))
+	for x in range(0, 900, 48):
+		draw_rect(Rect2(x, 184 + int(sin(float(x)) * 3.0), 34, 3), Color("#d18d45"))
+	draw_rect(Rect2(0, 238, 900, 78), Color("#3c2517"))
+	for x in range(0, 900, 64):
+		draw_line(Vector2(x, 238), Vector2(x + 16, 316), Color("#6b4624"), 2)
+	draw_line(Vector2(0, 238), Vector2(900, 238), C_AMBER, 3)
+	draw_rect(Rect2(76, 198, 170, 36), Color("#151025"))
+	draw_rect(Rect2(88, 206, 146, 10), C_PINK_2.darkened(0.10))
+	draw_rect(Rect2(106, 214, 112, 7), C_CYAN.darkened(0.20))
+	draw_line(Vector2(300, 198), Vector2(300, 272), C_AMBER, 3)
+	draw_line(Vector2(300, 198), Vector2(248, 232), C_PINK, 8)
+	draw_line(Vector2(300, 198), Vector2(352, 232), C_PINK, 8)
+	draw_line(Vector2(248, 232), Vector2(352, 232), C_PINK, 5)
+	draw_line(Vector2(300, 198), Vector2(270, 238), C_CYAN, 7)
+	draw_line(Vector2(300, 198), Vector2(330, 238), C_CYAN, 7)
+	draw_line(Vector2(270, 238), Vector2(330, 238), C_CYAN, 4)
+	draw_rect(Rect2(616, 192, 130, 42), Color("#080d16"))
+	_neon_text("BEACH", Vector2(634, 220), 21, C_YELLOW)
+	draw_rect(Rect2(650, 66, 132, 44), Color("#101a25"))
+	draw_rect(Rect2(662, 76, 108, 16), C_AMBER.darkened(0.10))
+	_slot_machine(Rect2(704, 112, 72, 118), C_CYAN)
+	_floor_reflections()
+
+
 func _draw_gas_station() -> void:
 	# Converted gas station with canopy, highway window, slot row, cage, camera, and fluorescents.
 	draw_rect(Rect2(0, 0, 900, 248), Color("#101122"))
@@ -1023,6 +1061,15 @@ func _draw_scene_life() -> void:
 			draw_rect(Rect2(dock_x, 108, 52, 8), Color(C_AMBER.r, C_AMBER.g, C_AMBER.b, 0.32))
 			draw_rect(Rect2(dock_x + 8, 116, 6, 42), Color(C_AMBER.r, C_AMBER.g, C_AMBER.b, 0.22))
 			_draw_sparkles(SCENE_SPARKLES_DELTA_QUEEN, C_CYAN, 0.16)
+		"beach":
+			for i in range(8):
+				var y := 92 + i * 13 + int(sin(flicker * 1.6 + i) * 4.0)
+				draw_line(Vector2(0, y), Vector2(900, y - 8), Color(C_CYAN.r, C_CYAN.g, C_CYAN.b, 0.12), 2)
+			var boat_x := int(fmod(flicker * 16.0, 980.0)) - 80
+			draw_rect(Rect2(boat_x, 72, 64, 9), Color(C_AMBER.r, C_AMBER.g, C_AMBER.b, 0.26))
+			draw_rect(Rect2(boat_x + 16, 56, 28, 16), Color(C_PINK.r, C_PINK.g, C_PINK.b, 0.20))
+			_draw_sign_pulse(Rect2(650, 66, 132, 44), C_YELLOW, 0.12, 4.2)
+			_draw_sparkles(SCENE_SPARKLES_DELTA_QUEEN, C_YELLOW, 0.12)
 		"gas_station_casino":
 			var sweep := 724 + int(abs(sin(flicker * 1.8)) * 72.0)
 			var hot := sin(flicker * 1.8) > 0.25
@@ -1635,7 +1682,8 @@ func _apply_draw_hints(object_data: Dictionary, object_type: String, index: int)
 			if str(object_data.get("prop", "")).strip_edges().is_empty():
 				object_data["prop"] = _fallback_event_prop(str(object_data.get("visual_key", "")), str(object_data.get("icon_key", "")))
 		"service":
-			object_data["surface"] = "counter_case"
+			if str(object_data.get("surface", "")).strip_edges().is_empty():
+				object_data["surface"] = "counter_case"
 		"shopkeeper":
 			object_data["surface"] = "counter_case"
 		"lender":
@@ -2873,6 +2921,10 @@ func _object_animation_phase(object_data: Dictionary) -> float:
 
 
 func _draw_item_prop(rect: Rect2, object_data: Dictionary, selected: bool, surface: String) -> void:
+	var prop := str(object_data.get("prop", "")).strip_edges()
+	if prop == "sand_pile":
+		_draw_sand_pile_prop(rect, selected)
+		return
 	var accent := C_YELLOW if selected else C_TEAL
 	_draw_interactable_light(rect, accent, selected)
 	_draw_item_surface(rect, surface, accent)
@@ -2883,6 +2935,25 @@ func _draw_item_prop(rect: Rect2, object_data: Dictionary, selected: bool, surfa
 		_draw_live_texture_icon(icon_texture, icon_rect, object_data, accent, selected, disabled)
 	else:
 		_draw_live_sprite_icon(object_data.get("icon_sprite", {}), icon_rect, object_data, accent, selected, bool(object_data.get("disabled", false)))
+
+
+func _draw_sand_pile_prop(rect: Rect2, selected: bool) -> void:
+	var accent := C_YELLOW if selected else C_TEAL
+	_draw_interactable_light(rect, accent, selected)
+	var base := rect.position + Vector2(rect.size.x * 0.50, rect.size.y * 0.68)
+	draw_rect(Rect2(rect.position + Vector2(rect.size.x * 0.18, rect.size.y * 0.76), Vector2(rect.size.x * 0.64, 6)), Color(0.0, 0.0, 0.0, 0.34))
+	for i in range(5):
+		var width := rect.size.x * (0.62 - float(i) * 0.08)
+		var height := rect.size.y * (0.14 - float(i) * 0.012)
+		var y := base.y - float(i) * rect.size.y * 0.07
+		var color := Color("#c7833c") if i % 2 == 0 else Color("#d89b52")
+		draw_rect(Rect2(Vector2(base.x - width * 0.5, y), Vector2(width, height)), color)
+	draw_circle(base + Vector2(-rect.size.x * 0.12, -rect.size.y * 0.16), rect.size.x * 0.06, Color("#e2ac61"))
+	draw_circle(base + Vector2(rect.size.x * 0.10, -rect.size.y * 0.11), rect.size.x * 0.045, Color("#f0bf70"))
+	draw_rect(Rect2(base + Vector2(rect.size.x * 0.10, -rect.size.y * 0.30), Vector2(rect.size.x * 0.18, rect.size.y * 0.05)), Color(C_ORANGE.r, C_ORANGE.g, C_ORANGE.b, 0.78))
+	draw_rect(Rect2(base + Vector2(rect.size.x * 0.15, -rect.size.y * 0.27), Vector2(rect.size.x * 0.05, rect.size.y * 0.09)), Color(C_WHITE.r, C_WHITE.g, C_WHITE.b, 0.80))
+	if selected:
+		draw_line(base + Vector2(-rect.size.x * 0.34, -rect.size.y * 0.02), base + Vector2(rect.size.x * 0.34, -rect.size.y * 0.09), accent, 2)
 
 
 func _texture_for_asset_path(asset_path: String) -> Texture2D:

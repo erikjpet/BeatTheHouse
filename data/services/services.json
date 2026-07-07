@@ -146,5 +146,38 @@
 			"drunk_delta": -6,
 			"messages": ["The river air cools attention without ending the ride."]
 		}
+	},
+	{
+		"id": "beach_relax",
+		"display_name": "Relax",
+		"category": "recovery",
+		"description": "Lower heat.",
+		"cost": 0,
+		"message": "The surf gives the heat time to fade.",
+		"effect": {
+			"suspicion_delta": -3,
+			"drunk_delta": -4,
+			"messages": ["The surf cools the room's attention."]
+		}
+	},
+	{
+		"id": "beach_sand_pile",
+		"display_name": "Sand Pile",
+		"category": "discovery",
+		"description": "Inspect the pile.",
+		"cost": 0,
+		"message": "You uncover a Cumquat Sandwich.",
+		"availability": {
+			"single_use_flag": "beach_sand_pile_found",
+			"blocked_text": "The pile is empty."
+		},
+		"icon_key": "service",
+		"environment_prop": "sand_pile",
+		"surface": "floor",
+		"effect": {
+			"inventory_add": ["cumquat_sandwich"],
+			"flags_set": {"beach_sand_pile_found": true},
+			"messages": ["You uncover a Cumquat Sandwich."]
+		}
 	}
 ]

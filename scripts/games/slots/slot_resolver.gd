@@ -29,6 +29,13 @@ func _init() -> void:
 	buffalo = BuffaloScript.new()
 
 
+func machine_has_feature_entry(machine: Dictionary, definition: Dictionary) -> bool:
+	var family = _family_hook(str(machine.get("type_id", "pinball")))
+	if family == null:
+		return false
+	return not _feature_entry_for_family(machine, family, definition, false).is_empty()
+
+
 func resolve_spin(machine: Dictionary, action_id: String, selected_bet: Dictionary, rng: RngStream, definition: Dictionary, environment: Dictionary = {}, normalize_machine: bool = true, audit_metrics_mode: bool = false, run_state: RunState = null, item_effects: Dictionary = {}, ui_state: Dictionary = {}) -> Dictionary:
 	if normalize_machine:
 		machine = StateScript.normalize(machine)
@@ -64,6 +71,7 @@ func resolve_spin(machine: Dictionary, action_id: String, selected_bet: Dictiona
 	else:
 		entry = _select_entry(machine, family, definition, rng, free_spin, resolved_item_effects)
 		entry = _apply_lucky_reel_grease_entry(machine, family, definition, rng, entry, normalized_action, stake_cost)
+		entry = _apply_cumquat_sandwich_entry(machine, family, definition, entry, normalized_action, stake_cost, free_spin)
 		if audit_metrics_mode and family_id == "pinball":
 			grid = _blank_grid(int(machine.get("reel_count", 3)), int(machine.get("row_count", 1)))
 		else:
@@ -538,6 +546,41 @@ func _slot_item_adjusted_outcome_table(machine: Dictionary, family, definition: 
 			entry["slot_item_weight_adjusted"] = true
 		result.append(entry)
 	return result
+
+
+func _apply_cumquat_sandwich_entry(machine: Dictionary, family, definition: Dictionary, entry: Dictionary, action_id: String, stake_cost: int, free_spin: bool) -> Dictionary:
+	if action_id != SPIN_ACTION or stake_cost <= 0 or free_spin:
+		return entry
+	var item_state: Dictionary = _copy_dict(machine.get("slot_item_state", {}))
+	if not bool(item_state.get("cumquat_force_bonus_pending", false)):
+		return entry
+	var forced_entry: Dictionary = _feature_entry_for_family(machine, family, definition, free_spin)
+	if forced_entry.is_empty():
+		item_state.erase("cumquat_force_bonus_pending")
+		item_state.erase("cumquat_force_bonus_item_id")
+		item_state["cumquat_force_bonus_failed"] = true
+		machine["slot_item_state"] = item_state
+		return entry
+	item_state.erase("cumquat_force_bonus_pending")
+	item_state.erase("cumquat_force_bonus_item_id")
+	item_state["cumquat_force_bonus_consumed_count"] = maxi(0, int(item_state.get("cumquat_force_bonus_consumed_count", 0))) + 1
+	machine["slot_item_state"] = item_state
+	forced_entry["forced_by_cumquat_sandwich"] = true
+	return forced_entry
+
+
+func _feature_entry_for_family(machine: Dictionary, family, definition: Dictionary, free_spin: bool) -> Dictionary:
+	if family == null:
+		return {}
+	var table: Array = family.outcome_table(machine, definition, free_spin)
+	for entry_value in table:
+		if typeof(entry_value) != TYPE_DICTIONARY:
+			continue
+		var entry: Dictionary = entry_value
+		var classification := str(entry.get("classification", ""))
+		if bool(family.opens_feature(classification)):
+			return entry.duplicate(true)
+	return {}
 
 
 func _apply_lucky_reel_grease_entry(machine: Dictionary, family, definition: Dictionary, rng: RngStream, entry: Dictionary, action_id: String, stake_cost: int) -> Dictionary:
@@ -1614,6 +1657,7 @@ func _spin_result(machine: Dictionary, entry: Dictionary, action_id: String, sta
 	result["slot_nudge_applied"] = nudge_applied
 	result["slot_nudge_skill_outcome"] = nudge_skill_outcome
 	result["slot_feature_triggered"] = feature_triggered
+	result["slot_forced_bonus_item"] = bool(entry.get("forced_by_cumquat_sandwich", false))
 	result["slot_active_bonus"] = active_bonus.duplicate(true)
 	result["slot_grid"] = _copy_array(machine.get("last_grid", []))
 	result["slot_reel_stops"] = _copy_array(machine.get("reel_stops", []))

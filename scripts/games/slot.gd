@@ -22,6 +22,7 @@ const SLOT_ENV_PREVIEW_MAX_ROWS := 4
 const LUCKY_REEL_GREASE_ITEM_ID := "lucky_reel_grease"
 const COLD_QUARTERS_ITEM_ID := "cold_quarters"
 const SPLIT_REEL_NOTE_ITEM_ID := "split_reel_note"
+const CUMQUAT_SANDWICH_ITEM_ID := "cumquat_sandwich"
 
 var generator
 var resolver
@@ -106,6 +107,8 @@ func active_item_command(item_id: String, run_state: RunState, environment: Dict
 			return _load_cold_quarters(machine, environment)
 		SPLIT_REEL_NOTE_ITEM_ID:
 			return _arm_split_reel_note(machine, run_state, environment)
+		CUMQUAT_SANDWICH_ITEM_ID:
+			return _arm_cumquat_sandwich(machine, environment)
 	return {"handled": false}
 
 
@@ -835,6 +838,34 @@ func _arm_split_reel_note(machine: Dictionary, run_state: RunState, environment:
 		environment,
 		[SPLIT_REEL_NOTE_ITEM_ID],
 		heat_delta
+	)
+
+
+func _arm_cumquat_sandwich(machine: Dictionary, environment: Dictionary) -> Dictionary:
+	if not resolver.machine_has_feature_entry(machine, definition):
+		return {
+			"handled": true,
+			"environment_changed": false,
+			"message": "This cabinet has no bonus to force.",
+		}
+	var item_state: Dictionary = _slot_copy_dict(machine.get("slot_item_state", {}))
+	if bool(item_state.get("cumquat_force_bonus_pending", false)):
+		return {
+			"handled": true,
+			"environment_changed": false,
+			"message": "A bonus is already forced on this cabinet.",
+		}
+	item_state["cumquat_force_bonus_pending"] = true
+	item_state["cumquat_force_bonus_item_id"] = CUMQUAT_SANDWICH_ITEM_ID
+	machine["slot_item_state"] = item_state
+	StateScript.write_machine(environment, get_id(), machine)
+	return _slot_active_item_result(
+		CUMQUAT_SANDWICH_ITEM_ID,
+		"arm_cumquat_sandwich",
+		"The next slot spin forces a bonus.",
+		environment,
+		[CUMQUAT_SANDWICH_ITEM_ID],
+		0
 	)
 
 

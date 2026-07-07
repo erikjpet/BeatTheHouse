@@ -474,6 +474,10 @@ func hook_option(kind: String, hook_id: String, selected_hook_id: String = "") -
 		"hidden": availability_class == RunState.AVAILABILITY_CATEGORICAL_UNAVAILABLE,
 		"disabled_reason": disabled_reason,
 		"cost": int(hook_status.get("cost", definition.get("cost", 0))),
+		"icon_key": str(definition.get("icon_key", kind)),
+		"environment_prop": str(definition.get("environment_prop", "")),
+		"surface": str(definition.get("surface", "")),
+		"asset_path": str(definition.get("asset_path", "")),
 		"delta_summary": delta_summary(deltas) if supported else "",
 		"selected": hook_id == selected_hook_id,
 	}

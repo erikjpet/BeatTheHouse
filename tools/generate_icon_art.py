@@ -689,6 +689,20 @@ def draw_feature_magnet():
     return image
 
 
+def draw_cumquat_sandwich_item():
+    image, d = new_icon()
+    poly(d, [(5, 14), (11, 8), (22, 7), (27, 13), (26, 25), (8, 27)], rgba("#d79b52"))
+    poly(d, [(8, 15), (12, 11), (21, 10), (24, 14), (23, 22), (10, 24)], rgba("#f6e5cd"))
+    d.rectangle((10, 16, 23, 20), fill=rgba("#fff4de"))
+    for x, y in ((12, 14), (18, 13), (21, 18), (14, 20)):
+        ellipse(d, (x, y, x + 6, y + 5), ORANGE)
+        d.rectangle((x + 2, y + 1, x + 4, y + 3), fill=YELLOW)
+    line(d, (6, 25, 25, 24), AMBER, 1)
+    line(d, (7, 14, 12, 10), AMBER, 1)
+    glint(d, 24, 8, WHITE)
+    return image
+
+
 def draw_drain_cleaner():
     image, d = new_icon()
     rect(d, (8, 7, 23, 12), METAL)
@@ -1192,6 +1206,20 @@ def draw_delta_queen_map():
     return image
 
 
+def draw_beach_map():
+    image, d = new_icon()
+    d.rectangle((5, 18, 27, 26), fill=rgba("#d79b52"))
+    d.rectangle((5, 7, 27, 18), fill=rgba("#063a58"))
+    for y in (10, 14, 18):
+        line(d, (5, y, 27, y - 2), CYAN, 1)
+    poly(d, [(12, 16), (18, 8), (24, 16)], PINK)
+    line(d, (18, 8, 18, 24), AMBER, 1)
+    d.rectangle((8, 22, 15, 24), fill=TEAL)
+    chip(d, 22, 20, ORANGE)
+    glint(d, 25, 8, WHITE)
+    return image
+
+
 def draw_grand_casino_map():
     image, d = new_icon()
     rect(d, (6, 12, 26, 25), BLUE)
@@ -1286,6 +1314,7 @@ ITEM_ICONS = {
     "cold_quarters": draw_cold_quarters,
     "coolers_cufflinks": draw_coolers_cufflinks,
     "creased_luck_card": draw_creased_luck_card,
+    "cumquat_sandwich": draw_cumquat_sandwich_item,
     "drain_cleaner": draw_drain_cleaner,
     "feature_magnet": draw_feature_magnet,
     "flask_of_courage": draw_flask_of_courage,
@@ -1361,6 +1390,7 @@ MAP_ICONS = {
     "apartment": draw_apartment_map,
     "back_alley": draw_back_alley_map,
     "bar": draw_bar_map,
+    "beach": draw_beach_map,
     "corner_store": draw_corner_store_map,
     "delta_queen": draw_delta_queen_map,
     "gas_station_casino": draw_gas_station_casino_map,

@@ -7097,6 +7097,9 @@ func _hook_interactable_objects(object_type: String, options: Array) -> Array:
 		var availability_class := str(option.get("availability_class", RunState.AVAILABILITY_AVAILABLE))
 		var category := str(option.get("category", ""))
 		var visual_type := "drink" if object_type == CONTEXT_MODE_SERVICE and category == "alcohol" else object_type
+		var icon_key := str(option.get("icon_key", visual_type)).strip_edges()
+		if icon_key.is_empty():
+			icon_key = visual_type
 		objects.append(_make_interactable_object({
 			"object_id": object_id,
 			"object_type": object_type,
@@ -7113,7 +7116,10 @@ func _hook_interactable_objects(object_type: String, options: Array) -> Array:
 			"cost_summary": "Cost: %d" % int(option.get("cost", 0)) if option.has("cost") else "",
 			"effect_summary": str(option.get("delta_summary", "")),
 			"visual_key": visual_type,
-			"icon_key": visual_type,
+			"prop": str(option.get("environment_prop", "")),
+			"surface": str(option.get("surface", "")),
+			"icon_key": icon_key,
+			"asset_path": str(option.get("asset_path", "")),
 			"available_actions": [{"id": "use_%s_hook" % object_type, "label": "Use"}] if enabled else [],
 			"confirm_action_id": "use_%s_hook" % object_type if enabled else "",
 			"focus_rect": _interaction_rect_for_object(object_id, object_type, index),
