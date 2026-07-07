@@ -30,6 +30,7 @@ both test files) belong to the two claimed Codex entries.
 | 6 | attribute_glyph_system_prompt.md | claimed (2026-07-06, Codex desktop; user override) | any | Executing by explicit user override despite dirty inventory/view-model blocker; preserve current inventory work |
 | 7 | beach_environment_prompt.md | claimed (2026-07-06, Codex desktop; user override) | PM machine | Executing by explicit user override despite blockers; preserve dirty home/layout/inventory work |
 | 8 | item_meta_p0_collections_schema_prompt.md | ready | any (new files only) | Item collection meta P0: collections schema + MetaCollectionService + 4-float engine. Creates only NEW files, safe beside the dirty PM tree; prompt forbids touching foundation_check.gd / ui_scene_compile_check.gd |
+| 9 | time_system_open_hours_prompt.md | blocked | any | Opening hours + closing-time eviction + open revisit travel. Touches run_state/world_map/foundation_main/archetypes.json — wait for entries 6 and 7 to land, then flip to ready |
 
 Only the project manager adds entries or reorders this table; executing
 agents only flip Status fields for claims and remove completed entries.
