@@ -644,7 +644,7 @@ func _clear_active_purchase_use_deltas(deltas: Dictionary) -> void:
 		"suspicion_delta",
 	]:
 		deltas[key] = 0
-	for key in ["debt_changes", "inventory_add", "inventory_remove", "travel_hooks_add", "story_log", "messages", "event_hooks"]:
+	for key in ["debt_changes", "inventory_add", "inventory_remove", "travel_hooks_add", "story_log", "messages", "event_hooks", "pending_bags"]:
 		deltas[key] = []
 	for key in ["flags_set", "travel_changes"]:
 		deltas[key] = {}
@@ -777,7 +777,7 @@ func result_deltas_have_mutation(deltas: Dictionary) -> bool:
 			return true
 	if bool(deltas.get("ended", false)):
 		return true
-	for key in ["debt_changes", "inventory_add", "inventory_remove", "travel_hooks_add", "story_log"]:
+	for key in ["debt_changes", "inventory_add", "inventory_remove", "travel_hooks_add", "story_log", "pending_bags"]:
 		if not _copy_array(deltas.get(key, [])).is_empty():
 			return true
 	for key in ["flags_set", "travel_changes"]:
@@ -827,6 +827,9 @@ func delta_summary(deltas: Dictionary) -> String:
 	if not inventory_add.is_empty():
 		parts.append("items +%d" % inventory_add.size())
 	var inventory_remove := _copy_array(deltas.get("inventory_remove", []))
+	var pending_bags := _copy_array(deltas.get("pending_bags", []))
+	if not pending_bags.is_empty():
+		parts.append("bags +%d" % pending_bags.size())
 	if not inventory_remove.is_empty():
 		parts.append("items -%d" % inventory_remove.size())
 	return "; ".join(parts) if not parts.is_empty() else "story changes"

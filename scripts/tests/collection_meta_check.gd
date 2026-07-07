@@ -2,6 +2,9 @@ extends SceneTree
 
 const CollectionItemResolverScript := preload("res://scripts/core/collection_item_resolver.gd")
 const MetaCollectionServiceScript := preload("res://scripts/core/meta_collection_service.gd")
+const CollectionDropServiceScript := preload("res://scripts/core/collection_drop_service.gd")
+const MetaCollectionViewModelScript := preload("res://scripts/ui/meta_collection_view_model.gd")
+const RunStateScript := preload("res://scripts/core/run_state.gd")
 
 const TEST_STORE_PATH := "user://collection_meta_check_store.json"
 const EXPECTED_TIER_COUNTS := {
@@ -27,6 +30,11 @@ func _run() -> void:
 	_test_usage_decay(resolver)
 	_test_resolve_run_item(resolver)
 	_test_store_round_trip(resolver)
+	_test_terminal_drop_determinism()
+	_test_run_end_grant_persists()
+	_test_open_bag_consumes_once()
+	_test_collection_browser_view_model_read_only(resolver)
+	_test_end_summary_lists_bags()
 	_finish()
 
 
@@ -145,6 +153,110 @@ func _test_store_round_trip(resolver: Variant) -> void:
 	_check(int(corrupt_loaded.get("gold_balance", -1)) == 0, "Corrupt store did not reset gold balance.")
 	_remove_user_file(TEST_STORE_PATH)
 	OS.set_environment(MetaCollectionServiceScript.STORE_PATH_ENV, "")
+
+
+func _test_terminal_drop_determinism() -> void:
+	var drop_service: Variant = CollectionDropServiceScript.new()
+	var run_a: Variant = _terminal_run("p1-deterministic-seed")
+	var run_b: Variant = _terminal_run("p1-deterministic-seed")
+	var markers_a: Array = drop_service.ensure_run_end_pending_bags(run_a, null)
+	var markers_b: Array = drop_service.ensure_run_end_pending_bags(run_b, null)
+	_check(not markers_a.is_empty(), "Terminal victory did not create a pending collection bag marker.")
+	_check(JSON.stringify(markers_a) == JSON.stringify(markers_b), "Same seed and outcome did not produce identical pending bag drops.")
+	var restored: Variant = RunStateScript.new()
+	restored.from_dict(run_a.to_dict())
+	_check(JSON.stringify(restored.pending_bag_markers()) == JSON.stringify(markers_a), "Pending bag markers did not round-trip through RunState save data.")
+
+
+func _test_run_end_grant_persists() -> void:
+	OS.set_environment(MetaCollectionServiceScript.STORE_PATH_ENV, TEST_STORE_PATH)
+	_remove_user_file(TEST_STORE_PATH)
+	var service: Variant = MetaCollectionServiceScript.new()
+	service.load()
+	var drop_service: Variant = CollectionDropServiceScript.new()
+	var run_state: Variant = _terminal_run("p1-grant-seed", "challenge_p1_meta_complete")
+	var markers: Array = drop_service.ensure_run_end_pending_bags(run_state, null)
+	var flush_result: Dictionary = drop_service.flush_pending_bags(run_state, service)
+	_check(markers.size() >= 2, "Victory plus first challenge completion should create at least two pending bags.")
+	_check(_copy_array(flush_result.get("granted", [])).size() == markers.size(), "Run-end flush did not grant each pending bag.")
+	_check(run_state.pending_bag_markers().is_empty(), "Run-end flush did not clear pending bag markers.")
+	_check(bool(run_state.narrative_flags.get(CollectionDropServiceScript.FLUSHED_FLAG, false)), "Run-end flush flag was not recorded.")
+	var save_error: Error = service.save()
+	_check(save_error == OK, "Meta collection store save after run-end grant failed.")
+	var loaded_service: Variant = MetaCollectionServiceScript.new()
+	var loaded: Dictionary = loaded_service.load()
+	_check(_copy_array(loaded.get("unopened_bags", [])).size() == markers.size(), "Granted bags did not survive meta store reload.")
+	_remove_user_file(TEST_STORE_PATH)
+	OS.set_environment(MetaCollectionServiceScript.STORE_PATH_ENV, "")
+
+
+func _test_open_bag_consumes_once() -> void:
+	OS.set_environment(MetaCollectionServiceScript.STORE_PATH_ENV, TEST_STORE_PATH)
+	_remove_user_file(TEST_STORE_PATH)
+	var service: Variant = MetaCollectionServiceScript.new()
+	service.load()
+	var granted: Dictionary = service.grant_bag(9000, "p1-open-seed", {"display_name": "Roadside Luck Blue Bag"})
+	var instance_id := int(granted.get("instance_id", 0))
+	var before_rng := JSON.stringify(service.meta_rng_snapshot())
+	var first: Dictionary = service.open_bag(instance_id)
+	var second: Dictionary = service.open_bag(instance_id)
+	var third: Dictionary = service.open_bag(instance_id)
+	_check(bool(first.get("ok", false)), "First bag open did not succeed.")
+	_check(not bool(second.get("ok", true)) and not bool(third.get("ok", true)), "Repeated bag opens were not rejected.")
+	_check(service.unopened_bags().is_empty(), "Opened bag was not removed from unopened storage.")
+	_check(service.owned_instances().size() == 1, "Opening one bag did not grant exactly one item instance.")
+	_check(JSON.stringify(service.meta_rng_snapshot()) != before_rng, "Opening a bag did not advance the persisted meta RNG stream.")
+	_remove_user_file(TEST_STORE_PATH)
+	OS.set_environment(MetaCollectionServiceScript.STORE_PATH_ENV, "")
+
+
+func _test_collection_browser_view_model_read_only(resolver: Variant) -> void:
+	OS.set_environment(MetaCollectionServiceScript.STORE_PATH_ENV, TEST_STORE_PATH)
+	_remove_user_file(TEST_STORE_PATH)
+	var service: Variant = MetaCollectionServiceScript.new()
+	service.load()
+	service.grant_instance(resolver.roll_instance(1000, "browser-owned-seed"))
+	service.grant_bag(9010, "browser-bag-seed", {"display_name": "House Edge Blue Bag"})
+	var before_json := JSON.stringify(service.snapshot())
+	var view: Dictionary = MetaCollectionViewModelScript.build(service)
+	var after_json := JSON.stringify(service.snapshot())
+	_check(before_json == after_json, "Collection browser view-model mutated the meta store.")
+	_check(_copy_array(view.get("collections", [])).size() == 2, "Collection browser did not list both launch collections.")
+	_check(_copy_array(view.get("unopened_bags", [])).size() == 1, "Collection browser did not list unopened bags.")
+	_check(int(view.get("owned_count", 0)) == 1, "Collection browser owned count mismatch.")
+	_remove_user_file(TEST_STORE_PATH)
+	OS.set_environment(MetaCollectionServiceScript.STORE_PATH_ENV, "")
+
+
+func _test_end_summary_lists_bags() -> void:
+	var drop_service: Variant = CollectionDropServiceScript.new()
+	var marker: Dictionary = drop_service.marker_from_static_bag(9000, "test", "summary")
+	var lines: Array = drop_service.summary_lines_for_markers([marker])
+	_check(lines.size() == 1, "Bag summary did not produce one line.")
+	var text := str(lines[0]) if not lines.is_empty() else ""
+	_check(text.contains("Roadside Luck") and text.contains("Blue"), "Bag summary did not include collection and tier.")
+
+
+func _terminal_run(seed: String, completion_flag: String = "") -> Variant:
+	var run_state: Variant = RunStateScript.new()
+	var config := {
+		"mode": "custom",
+		"id": "p1_meta",
+		"title": "P1 Meta",
+		"seed_text": seed,
+		"daily_id": "",
+		"modifiers": {},
+		"hidden_seed": false,
+	}
+	if not completion_flag.is_empty():
+		config["completion_flag"] = completion_flag
+	run_state.start_new(seed, config)
+	run_state.bankroll = 500
+	run_state.suspicion["level"] = 72
+	run_state.run_status = RunStateScript.RUN_STATUS_ENDED
+	run_state.narrative_flags["demo_victory"] = true
+	run_state.narrative_flags["demo_victory_route"] = RunStateScript.GRAND_CASINO_SHOWDOWN_ROUTE
+	return run_state
 
 
 func _item_float_bindings_are_known(item: Dictionary) -> bool:

@@ -102,6 +102,56 @@ func bag_definition(itemdef_id: int) -> Dictionary:
 	return _copy_dict(_bags_by_itemdef_id.get(itemdef_id, {}))
 
 
+func item_definitions_for_collection_tier(collection_id: String, tier: String) -> Array:
+	_ensure_loaded()
+	var clean_collection_id := collection_id.strip_edges()
+	var clean_tier := tier.strip_edges()
+	var items: Array = []
+	for item_value in _items_by_itemdef_id.values():
+		var item := _copy_dict(item_value)
+		if str(item.get("collection_id", "")) == clean_collection_id and str(item.get("tier", "")) == clean_tier:
+			items.append(item)
+	items.sort_custom(func(left: Dictionary, right: Dictionary) -> bool:
+		return int(left.get("itemdef_id", 0)) < int(right.get("itemdef_id", 0))
+	)
+	return items
+
+
+func bag_item_definitions(collection_id: String = "", tier: String = "") -> Array:
+	_ensure_loaded()
+	var clean_collection_id := collection_id.strip_edges()
+	var clean_tier := tier.strip_edges()
+	var bags: Array = []
+	for bag_value in _bags_by_itemdef_id.values():
+		var bag := _copy_dict(bag_value)
+		if not clean_collection_id.is_empty() and str(bag.get("collection_id", "")) != clean_collection_id:
+			continue
+		if not clean_tier.is_empty() and str(bag.get("tier", "")) != clean_tier:
+			continue
+		bags.append(bag)
+	bags.sort_custom(func(left: Dictionary, right: Dictionary) -> bool:
+		return int(left.get("itemdef_id", 0)) < int(right.get("itemdef_id", 0))
+	)
+	return bags
+
+
+func collection_definition(collection_id: String) -> Dictionary:
+	_ensure_loaded()
+	var clean_id := collection_id.strip_edges()
+	for collection_value in _collections:
+		var collection := _copy_dict(collection_value)
+		if str(collection.get("id", "")) == clean_id:
+			return collection
+	return {}
+
+
+func bag_item_options_for_bag(bagdef_id: int) -> Array:
+	var bag := bag_definition(bagdef_id)
+	if bag.is_empty():
+		return []
+	return item_definitions_for_collection_tier(str(bag.get("collection_id", "")), str(bag.get("tier", "")))
+
+
 func roll_instance(itemdef_id: int, rng_seed: String) -> Dictionary:
 	_ensure_loaded()
 	var definition := item_definition(itemdef_id)

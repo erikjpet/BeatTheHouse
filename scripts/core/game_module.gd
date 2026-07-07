@@ -233,6 +233,7 @@ static func empty_result_deltas() -> Dictionary:
 		"travel_changes": {},
 		"story_log": [],
 		"messages": [],
+		"pending_bags": [],
 		"ended": false,
 		"item_hooks": [],
 		"event_hooks": [],
@@ -651,6 +652,9 @@ static func apply_result(run_state: RunState, result: Dictionary, rng: RngStream
 		run_state.add_item(str(item_id))
 	for item_id in deltas.get("inventory_remove", []):
 		run_state.remove_item(str(item_id))
+	for bag_marker_value in deltas.get("pending_bags", []):
+		if typeof(bag_marker_value) == TYPE_DICTIONARY:
+			run_state.add_pending_bag_marker(bag_marker_value)
 	var flags := _copy_dict(deltas.get("flags_set", {}))
 	for key in flags.keys():
 		run_state.narrative_flags[str(key)] = flags[key]

@@ -31,7 +31,6 @@ both test files) belong to the two claimed Codex entries.
 | 10 | dialogue_system_prompt.md | blocked | any | Multi-turn branching dialogue in a smaller talk dock with speaker models + per-choice effect badges; pilot = pull-tab clerk. Touches talk_dock/foundation_main/glyph registry — wait for claimed entries 8 and 9 to land, then flip to ready |
 | 11 | profile_persistence_completion_prompt.md | blocked | any | Parked T5.3: run history, streaks, lifetime stats in the main-menu profile. Wait for entry 8 (align persistence patterns with MetaCollectionService) and entry 9 (foundation_main overlap) |
 | 12 | act_two_seam_prompt.md | blocked | any | Parked T8.1: cross-act payload, save act marker, per-route victory hook replacing "not implemented yet". Wait for entry 9 (foundation_main) and ideally entry 11 (profile records the payload) |
-| 13 | item_meta_p1_bag_drops_prompt.md | blocked | any | Bag drops at run milestones/special locations, single-button open + reveal, collection browser. Hard dependency: entry 8 (P0) archived in todone |
 | 14 | talk_content_pass_prompt.md | blocked | any | Content pass: 6 patron approach events, pit-boss heat talks at 65/85, migrate ~8-14 events to talk presentation. Wait for entries 9 and 10 so content is authored once against the final talk/dialogue system |
 | 15 | jazz_club_content_completion_prompt.md | blocked | PM machine preferred | Parked T4.2: coherent service menu, 2-3 club events, concrete musician reward. Wait for entry 9 (archetypes/open-hours churn); pairs well after entry 14's talk patterns exist |
 

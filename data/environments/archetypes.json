@@ -190,6 +190,7 @@
     "event_pool": [
       "late_shift_discount",
       "chatty_clerk",
+      "roadside_bag_cache",
       "parking_lot_tip",
       "suspicious_patron",
       "the_collector",
@@ -654,6 +655,7 @@
     ],
     "event_pool": [
       "motel_knock",
+      "roadside_bag_cache",
       "parking_lot_tip",
       "suspicious_patron",
       "the_collector",
@@ -1083,6 +1085,7 @@
       "machine_jam",
       "parking_lot_tip",
       "side_door",
+      "house_edge_bag_case",
       "heat_at_exit",
       "suspicious_patron",
       "the_collector",
@@ -1299,6 +1302,7 @@
       "rowdy_regular",
       "machine_jam",
       "side_door",
+      "house_edge_bag_case",
       "heat_at_exit",
       "suspicious_patron",
       "rival_counter",

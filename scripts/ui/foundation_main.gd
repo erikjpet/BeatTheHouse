@@ -65,6 +65,8 @@ const GAME_SURFACE_UI_PREFERENCE_KEYS := [
 ]
 const UserSettingsScript := preload("res://scripts/core/user_settings.gd")
 const ProfileInventoryScript := preload("res://scripts/core/profile_inventory.gd")
+const MetaCollectionServiceScript := preload("res://scripts/core/meta_collection_service.gd")
+const CollectionDropServiceScript := preload("res://scripts/core/collection_drop_service.gd")
 const SettingsMenuScript := preload("res://scripts/ui/settings_menu.gd")
 const PixelSceneCanvasScript := preload("res://scripts/ui/pixel_scene_canvas.gd")
 const GameSurfaceCanvasScript := preload("res://scripts/ui/game_surface_canvas.gd")
@@ -72,6 +74,7 @@ const WorldMapCanvasScript := preload("res://scripts/ui/world_map_canvas.gd")
 const FoundationWidgetsScript := preload("res://scripts/ui/foundation_widgets.gd")
 const RunInventoryScreenScript := preload("res://scripts/ui/run_inventory_screen.gd")
 const RunInventoryViewModelScript := preload("res://scripts/ui/run_inventory_view_model.gd")
+const MetaCollectionViewModelScript := preload("res://scripts/ui/meta_collection_view_model.gd")
 const TalkDockScript := preload("res://scripts/ui/talk_dock.gd")
 const SfxPlayerScript := preload("res://scripts/ui/sfx_player.gd")
 const ProceduralMusicPlayerScript := preload("res://scripts/ui/procedural_music_player.gd")
@@ -83,6 +86,8 @@ const WorldMapScript := preload("res://scripts/core/world_map.gd")
 
 var user_settings: UserSettings
 var profile_inventory: ProfileInventory
+var meta_collection_service: MetaCollectionService
+var collection_drop_service: CollectionDropService
 var library: ContentLibrary
 var run_state: RunState
 var generator: RunGenerator
@@ -166,6 +171,10 @@ var main_menu_background: Control
 var inventory_page: VBoxContainer
 var inventory_status_label: Label
 var inventory_items_list: VBoxContainer
+var collection_status_label: Label
+var collection_bags_list: VBoxContainer
+var collection_items_list: VBoxContainer
+var collection_reveal_label: Label
 var game_test_menu: VBoxContainer
 var game_library_button: Button
 var game_test_status_label: Label
@@ -177,6 +186,7 @@ var game_test_security_option: OptionButton
 var game_test_generation_overrides_text: TextEdit
 var acquire_chip_button: Button
 var inventory_button: Button
+var collections_button: Button
 var profile_chip_texture: Texture2D
 var run_item_icon_texture_cache: Dictionary = {}
 var seed_input: LineEdit
@@ -340,6 +350,8 @@ func _ready() -> void:
 	_mark_boot_event("music_ready")
 	_initialize_profile_inventory()
 	_mark_boot_event("profile_inventory_ready")
+	_initialize_meta_collection()
+	_mark_boot_event("meta_collection_ready")
 	_initialize_foundation()
 	_mark_boot_event("foundation_ready")
 	_build_ui()
@@ -2777,6 +2789,12 @@ func _initialize_profile_inventory() -> void:
 	profile_inventory.load()
 
 
+func _initialize_meta_collection() -> void:
+	meta_collection_service = MetaCollectionServiceScript.new()
+	meta_collection_service.load()
+	collection_drop_service = CollectionDropServiceScript.new()
+
+
 func _initialize_procedural_music() -> void:
 	procedural_music_player = ProceduralMusicPlayerScript.new()
 	procedural_music_player.audio_calm = user_settings != null and bool(user_settings.audio_calm)
@@ -2965,6 +2983,8 @@ func _build_start_screen() -> void:
 	utility_row.add_child(settings_button)
 	inventory_button = _main_menu_button("Inventory", "Profile stash", Callable(self, "open_inventory_page"))
 	utility_row.add_child(inventory_button)
+	collections_button = _main_menu_button("Collections", "Bags and collection items", Callable(self, "open_collection_browser"))
+	utility_row.add_child(collections_button)
 	if show_game_library_launcher:
 		game_library_button = _main_menu_button("Games", "Practice any table", Callable(self, "open_game_test_menu"))
 		utility_row.add_child(game_library_button)
@@ -3847,6 +3867,45 @@ func _build_inventory_page(parent: Node) -> void:
 	inventory_items_list.add_theme_constant_override("separation", 6)
 	inventory_items_list.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	inventory_page.add_child(inventory_items_list)
+
+	var collection_panel := _panel_container(Color("#060b12", 0.9), VisualStyle.CYAN_2)
+	collection_panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	collection_panel.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	inventory_page.add_child(collection_panel)
+	var collection_stack := VBoxContainer.new()
+	collection_stack.add_theme_constant_override("separation", 8)
+	collection_stack.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	collection_stack.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	collection_panel.add_child(collection_stack)
+	var collection_header := HBoxContainer.new()
+	collection_header.add_theme_constant_override("separation", 8)
+	collection_stack.add_child(collection_header)
+	var collection_heading := _label("Collections", 18)
+	_set_control_font_color(collection_heading, VisualStyle.CYAN)
+	collection_heading.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	collection_header.add_child(collection_heading)
+	collection_status_label = _label("", 12)
+	_set_control_font_color(collection_status_label, VisualStyle.SOFT)
+	collection_status_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	collection_status_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	collection_header.add_child(collection_status_label)
+	collection_reveal_label = _label("", 13)
+	collection_reveal_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_set_control_font_color(collection_reveal_label, VisualStyle.YELLOW)
+	collection_stack.add_child(collection_reveal_label)
+	collection_bags_list = VBoxContainer.new()
+	collection_bags_list.add_theme_constant_override("separation", 6)
+	collection_bags_list.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	collection_stack.add_child(collection_bags_list)
+	var collection_scroll := ScrollContainer.new()
+	collection_scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	collection_scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	collection_stack.add_child(collection_scroll)
+	collection_items_list = VBoxContainer.new()
+	collection_items_list.add_theme_constant_override("separation", 8)
+	collection_items_list.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	collection_scroll.add_child(collection_items_list)
+
 	_refresh_profile_inventory_page()
 
 
@@ -4849,6 +4908,7 @@ func _render_failure_summary() -> void:
 	])
 	_add_failure_summary_section("Travel", _copy_array(snapshot.get("travel_lines", [])))
 	_add_failure_summary_section("Items", _copy_array(snapshot.get("item_lines", [])))
+	_add_failure_summary_section("Collections", _copy_array(snapshot.get("bag_lines", [])))
 	_add_failure_summary_section("Debt", _copy_array(snapshot.get("debt_lines", [])))
 	_add_failure_summary_section("Recent Result", _copy_array(snapshot.get("recent_result_lines", [])))
 	_add_failure_summary_section("Story", _copy_array(snapshot.get("story_lines", [])))
@@ -4888,6 +4948,7 @@ func _render_victory_summary() -> void:
 		"Visited: %s" % str(snapshot.get("visited_summary", "")),
 	])
 	_add_victory_summary_section("Items", _copy_array(snapshot.get("item_lines", [])))
+	_add_victory_summary_section("Collections", _copy_array(snapshot.get("bag_lines", [])))
 	_add_victory_summary_section("Debt", _copy_array(snapshot.get("debt_lines", [])))
 	_add_victory_summary_section("Story", _copy_array(snapshot.get("story_lines", [])))
 
@@ -7882,6 +7943,20 @@ func _add_consequence_card(card: Dictionary) -> void:
 			break
 
 
+func _terminal_bag_summary_lines() -> Array:
+	if run_state == null:
+		return []
+	var lines := _copy_array(run_state.narrative_flags.get(CollectionDropServiceScript.GRANTS_FLAG, []))
+	if not lines.is_empty():
+		return lines
+	var markers := run_state.pending_bag_markers()
+	if markers.is_empty():
+		return []
+	if collection_drop_service == null:
+		collection_drop_service = CollectionDropServiceScript.new()
+	return collection_drop_service.summary_lines_for_markers(markers)
+
+
 func _failure_summary_snapshot() -> Dictionary:
 	if run_state == null:
 		return {}
@@ -7953,6 +8028,7 @@ func _failure_summary_snapshot() -> Dictionary:
 	var visited_places := _visited_environment_summary_lines()
 	var score_summary: Dictionary = run_state.terminal_score_summary()
 	var score_lines: Array = _terminal_score_lines(score_summary)
+	var bag_lines := _terminal_bag_summary_lines()
 	return {
 		"title": title,
 		"message": _player_facing_text(message),
@@ -7982,6 +8058,7 @@ func _failure_summary_snapshot() -> Dictionary:
 		"travel_lines": travel_lines,
 		"alcohol_lines": alcohol_lines,
 		"item_lines": item_lines,
+		"bag_lines": bag_lines,
 		"debt_lines": debt_lines,
 		"recent_result_lines": recent_result_lines,
 		"story_lines": story_lines,
@@ -8045,6 +8122,7 @@ func _victory_summary_snapshot() -> Dictionary:
 	var visited_places := _visited_environment_summary_lines()
 	var score_summary: Dictionary = run_state.terminal_score_summary()
 	var score_lines: Array = _terminal_score_lines(score_summary)
+	var bag_lines := _terminal_bag_summary_lines()
 	return {
 		"title": title,
 		"message": message,
@@ -8074,6 +8152,7 @@ func _victory_summary_snapshot() -> Dictionary:
 		"next_act_line": next_act_line,
 		"alcohol_lines": alcohol_lines,
 		"item_lines": item_lines,
+		"bag_lines": bag_lines,
 		"debt_lines": debt_lines,
 		"story_lines": story_lines,
 		"flag_lines": _flag_view_list(),
@@ -8994,7 +9073,12 @@ func open_inventory_page() -> void:
 	if game_test_menu != null:
 		game_test_menu.visible = false
 	_refresh_profile_inventory_page()
+	_refresh_collection_browser_page()
 	inventory_page.visible = true
+
+
+func open_collection_browser() -> void:
+	open_inventory_page()
 
 
 func close_inventory_page() -> void:
@@ -9092,6 +9176,7 @@ func acquire_profile_chip() -> void:
 	if inventory_status_label != null:
 		inventory_status_label.text = "Chip stored in profile inventory." if error == OK else "Chip added, but profile save failed."
 	_refresh_profile_inventory_page()
+	_refresh_collection_browser_page()
 
 
 func _refresh_profile_inventory_page() -> void:
@@ -9128,6 +9213,152 @@ func _refresh_profile_inventory_page() -> void:
 		var description := _label(str(item_data.get("description", "")), 12)
 		_set_control_font_color(description, VisualStyle.CYAN_2)
 		text_stack.add_child(description)
+
+
+func _refresh_collection_browser_page() -> void:
+	if collection_items_list == null or collection_bags_list == null:
+		return
+	if meta_collection_service == null:
+		_initialize_meta_collection()
+	var view: Dictionary = MetaCollectionViewModelScript.build(meta_collection_service)
+	if collection_status_label != null:
+		collection_status_label.text = str(view.get("summary", "Collections ready."))
+	_clear(collection_bags_list)
+	var bags := _copy_array(view.get("unopened_bags", []))
+	var bags_heading := _section("Unopened Bags")
+	_set_control_font_color(bags_heading, VisualStyle.YELLOW)
+	collection_bags_list.add_child(bags_heading)
+	if bags.is_empty():
+		var empty_bags := _label("No unopened collection bags.", 12)
+		_set_control_font_color(empty_bags, VisualStyle.CYAN_2)
+		collection_bags_list.add_child(empty_bags)
+	else:
+		for bag_value in bags:
+			_add_collection_bag_row(_copy_dict(bag_value))
+	_clear(collection_items_list)
+	for collection_value in _copy_array(view.get("collections", [])):
+		_add_collection_section(_copy_dict(collection_value))
+
+
+func _add_collection_bag_row(bag: Dictionary) -> void:
+	if collection_bags_list == null:
+		return
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override("separation", 8)
+	row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	collection_bags_list.add_child(row)
+	var text_stack := VBoxContainer.new()
+	text_stack.add_theme_constant_override("separation", 2)
+	text_stack.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	row.add_child(text_stack)
+	var title := _label("%s - %s" % [str(bag.get("display_name", "Collection Bag")), str(bag.get("tier_label", ""))], 13)
+	_set_control_font_color(title, _collection_tier_color(str(bag.get("tier", ""))))
+	text_stack.add_child(title)
+	var detail := _label(str(bag.get("collection_display_name", "Collection")), 12)
+	_set_control_font_color(detail, VisualStyle.SOFT)
+	text_stack.add_child(detail)
+	var open_button := _button("Open", Callable(self, "open_meta_collection_bag").bind(int(bag.get("instance_id", 0))))
+	open_button.custom_minimum_size = Vector2(92, MIN_NATIVE_TOUCH_TARGET_HEIGHT)
+	row.add_child(open_button)
+
+
+func _add_collection_section(collection: Dictionary) -> void:
+	if collection_items_list == null:
+		return
+	var panel := _panel_container(Color("#05070d", 0.86), VisualStyle.CYAN_2)
+	panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	collection_items_list.add_child(panel)
+	var stack := VBoxContainer.new()
+	stack.add_theme_constant_override("separation", 5)
+	stack.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	panel.add_child(stack)
+	var header := _label("%s  %d/%d" % [
+		str(collection.get("display_name", "Collection")),
+		int(collection.get("owned_count", 0)),
+		int(collection.get("total_count", 0)),
+	], 14)
+	_set_control_font_color(header, VisualStyle.CYAN)
+	stack.add_child(header)
+	var theme := str(collection.get("theme", "")).strip_edges()
+	if not theme.is_empty():
+		var theme_label := _label(theme, 11)
+		_set_control_font_color(theme_label, VisualStyle.SOFT)
+		theme_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		stack.add_child(theme_label)
+	for item_value in _copy_array(collection.get("items", [])):
+		var item := _copy_dict(item_value)
+		var item_label := _label(_collection_item_row_text(item), 12)
+		item_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		_set_control_font_color(item_label, _collection_tier_color(str(item.get("tier", ""))) if bool(item.get("owned", false)) else VisualStyle.SOFT)
+		stack.add_child(item_label)
+
+
+func _collection_item_row_text(item: Dictionary) -> String:
+	var owned_count := int(item.get("owned_count", 0))
+	if owned_count <= 0:
+		return "%s - %s - silhouette" % [str(item.get("display_name", "Collection Item")), str(item.get("tier_label", ""))]
+	var owned_instances := _copy_array(item.get("owned_instances", []))
+	var first_instance := _copy_dict(owned_instances[0]) if not owned_instances.is_empty() else {}
+	return "%s - %s x%d - %s - %s" % [
+		str(item.get("display_name", "Collection Item")),
+		str(item.get("tier_label", "")),
+		owned_count,
+		str(first_instance.get("condition_band", "Unknown")),
+		str(first_instance.get("float_summary", "")),
+	]
+
+
+func open_meta_collection_bag(instance_id: int) -> void:
+	if instance_id <= 0:
+		return
+	if meta_collection_service == null:
+		_initialize_meta_collection()
+	var result: Dictionary = meta_collection_service.open_bag(instance_id)
+	if bool(result.get("ok", false)):
+		meta_collection_service.save()
+	if collection_reveal_label != null:
+		collection_reveal_label.text = _collection_reveal_text(result)
+	_refresh_collection_browser_page()
+
+
+func _collection_reveal_text(result: Dictionary) -> String:
+	if not bool(result.get("ok", false)):
+		return str(result.get("message", "Bag could not be opened."))
+	var reveal := _copy_dict(result.get("reveal", {}))
+	var definition := _copy_dict(reveal.get("definition", {}))
+	var item := _copy_dict(reveal.get("item", {}))
+	var bag := _copy_dict(reveal.get(MetaCollectionServiceScript.REVEAL_BAG_KEY, {}))
+	var tier := str(definition.get("tier", "")).capitalize()
+	var condition := str(reveal.get("condition_band", "unknown")).capitalize()
+	var floats := "P %d%% / C %d%% / R %d%% / U %d%%" % [
+		int(round(clampf(float(item.get("potency", 0.0)), 0.0, 1.0) * 100.0)),
+		int(round(clampf(float(item.get("condition", 0.0)), 0.0, 1.0) * 100.0)),
+		int(round(clampf(float(item.get("resonance", 0.0)), 0.0, 1.0) * 100.0)),
+		int(round(clampf(float(item.get("usage", 0.0)), 0.0, 1.0) * 100.0)),
+	]
+	return "Opened %s: %s, %s, %s. %s" % [
+		str(bag.get("display_name", "Collection Bag")),
+		str(definition.get("display_name", "Collection Item")),
+		tier,
+		condition,
+		floats,
+	]
+
+
+func _collection_tier_color(tier: String) -> Color:
+	match tier.strip_edges().to_lower():
+		"blue":
+			return Color("#79a8ff")
+		"purple":
+			return Color("#b27cff")
+		"pink":
+			return Color("#ff7ecb")
+		"red":
+			return Color("#ff6b5c")
+		"gold":
+			return VisualStyle.YELLOW
+		_:
+			return VisualStyle.SOFT
 
 
 func _refresh_start_screen() -> void:
@@ -9948,6 +10179,7 @@ func _clear_terminal_interaction_state() -> void:
 func _route_ended_run_if_needed(terminal_result: Dictionary = {}) -> bool:
 	if run_state == null or run_state.run_status != RunState.RUN_STATUS_ENDED:
 		return false
+	_process_terminal_meta_bag_drops()
 	_clear_terminal_interaction_state()
 	_set_current_screen(SCREEN_VICTORY)
 	_record_challenge_completion_if_needed()
@@ -9961,6 +10193,7 @@ func _route_ended_run_if_needed(terminal_result: Dictionary = {}) -> bool:
 func _route_failed_run_if_needed(terminal_result: Dictionary = {}) -> bool:
 	if run_state == null or run_state.run_status != RunState.RUN_STATUS_FAILED:
 		return false
+	_process_terminal_meta_bag_drops()
 	_clear_terminal_interaction_state()
 	_set_current_screen(SCREEN_FAILURE)
 	var message := run_state.run_failure_message
@@ -9968,6 +10201,19 @@ func _route_failed_run_if_needed(terminal_result: Dictionary = {}) -> bool:
 		message = str(terminal_result.get("message", "The run is over."))
 	_show_message(message)
 	return true
+
+
+func _process_terminal_meta_bag_drops() -> void:
+	if run_state == null or not run_state.is_terminal():
+		return
+	if meta_collection_service == null or collection_drop_service == null:
+		_initialize_meta_collection()
+	collection_drop_service.ensure_run_end_pending_bags(run_state, profile_inventory)
+	var flush_result: Dictionary = collection_drop_service.flush_pending_bags(run_state, meta_collection_service)
+	if bool(flush_result.get("ok", false)):
+		var save_error := meta_collection_service.save()
+		if save_error == OK and not _copy_array(flush_result.get("summary_lines", [])).is_empty():
+			save_status_message = "Collection bags stored."
 
 
 func _record_challenge_completion_if_needed() -> void:

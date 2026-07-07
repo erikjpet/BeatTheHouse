@@ -633,6 +633,7 @@ $resultDeltaKeys = @(
     "messages",
     "ended",
     "item_hooks",
+    "pending_bags",
     "event_hooks",
     "demo_finale"
 )

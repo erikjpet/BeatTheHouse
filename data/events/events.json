@@ -209,6 +209,96 @@
     }
   },
   {
+    "id": "roadside_bag_cache",
+    "display_name": "Roadside Bag Cache",
+    "type": "landmark",
+    "interaction_mode": "interactable",
+    "scopes": [
+      "shop"
+    ],
+    "asset_path": "res://assets/art/events/back_alley_offer.png",
+    "icon_key": "cashout_envelope",
+    "environment_prop": "trunk_offer",
+    "start_summary": "Check the tucked-away bag.",
+    "trigger": {
+      "type": "manual"
+    },
+    "payload": {
+      "summary": "Roadside collection bag.",
+      "choices": [
+        {
+          "id": "stash_for_home",
+          "label": "Stash Bag",
+          "text": "You mark a Roadside Luck Blue Bag for your home stash.",
+          "consequences": {
+            "pending_bags": [
+              {
+                "bagdef_id": 9000,
+                "collection_id": "roadside_luck",
+                "collection_display_name": "Roadside Luck Collection",
+                "tier": "blue",
+                "tier_label": "Blue",
+                "display_name": "Roadside Luck Blue Bag",
+                "source": "landmark_event",
+                "source_id": "roadside_bag_cache",
+                "rng_seed": "landmark|roadside_bag_cache|9000"
+              }
+            ],
+            "messages": [
+              "Roadside Luck Blue Bag marked for home storage."
+            ],
+            "resolve_event": true
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "house_edge_bag_case",
+    "display_name": "House Edge Bag Case",
+    "type": "landmark",
+    "interaction_mode": "interactable",
+    "scopes": [
+      "casino"
+    ],
+    "asset_path": "res://assets/art/events/side_door.png",
+    "icon_key": "marked_cards",
+    "environment_prop": "side_door",
+    "start_summary": "Inspect the locked display case.",
+    "trigger": {
+      "type": "manual"
+    },
+    "payload": {
+      "summary": "House Edge collection bag.",
+      "choices": [
+        {
+          "id": "pocket_case_tag",
+          "label": "Tag Bag",
+          "text": "You tag a House Edge Blue Bag to collect after the run.",
+          "consequences": {
+            "pending_bags": [
+              {
+                "bagdef_id": 9010,
+                "collection_id": "house_edge",
+                "collection_display_name": "House Edge Collection",
+                "tier": "blue",
+                "tier_label": "Blue",
+                "display_name": "House Edge Blue Bag",
+                "source": "landmark_event",
+                "source_id": "house_edge_bag_case",
+                "rng_seed": "landmark|house_edge_bag_case|9010"
+              }
+            ],
+            "messages": [
+              "House Edge Blue Bag marked for home storage."
+            ],
+            "resolve_event": true
+          }
+        }
+      ]
+    }
+  },
+  {
     "id": "motel_knock",
     "display_name": "Motel Knock",
     "type": "debt",

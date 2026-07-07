@@ -186,6 +186,11 @@ func _consequence_deltas(consequences: Dictionary, story_entry: Dictionary, mess
 		deltas["debt_changes"] = [_copy_dict(consequences.get("debt", {}))]
 	else:
 		deltas["debt_changes"] = _copy_array(consequences.get("debt_changes", []))
+	var pending_bag_value: Variant = consequences.get("pending_bags", consequences.get("pending_bag", []))
+	if typeof(pending_bag_value) == TYPE_DICTIONARY:
+		deltas["pending_bags"] = [pending_bag_value]
+	else:
+		deltas["pending_bags"] = _copy_array(pending_bag_value)
 	deltas["inventory_add"] = _copy_array(consequences.get("inventory_add", []))
 	deltas["inventory_remove"] = _copy_array(consequences.get("inventory_remove", []))
 	deltas["flags_set"] = _copy_dict(consequences.get("flags", consequences.get("flags_set", {})))

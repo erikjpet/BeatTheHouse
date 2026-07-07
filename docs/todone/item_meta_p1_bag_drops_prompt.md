@@ -1,3 +1,23 @@
+## Execution Record
+
+- Completion date: 2026-07-06.
+- Implementing commit hash(es): this local commit; final hash assigned after commit creation.
+- Verification gates:
+  - `powershell -ExecutionPolicy Bypass -File tools\validate_project.ps1` -> PASS (`Beat the House foundation architecture validation passed.`).
+  - `powershell -ExecutionPolicy Bypass -File tools\collection_meta_check.ps1 -RequireGodot` -> PASS (`collection_meta_check: PASS`).
+  - `powershell -ExecutionPolicy Bypass -File tools\check_godot.ps1 -RequireGodot -FoundationSuite systems` -> PASS on clean rerun; report `.tmp\test_reports\20260706_214016_smoke\summary.json`. Earlier attempt exited -1 after `music_stem_director_foundation` with no report; rerun passed.
+  - `powershell -ExecutionPolicy Bypass -File tools\check_godot.ps1 -RequireGodot -FoundationSuite ui` -> PASS; report `.tmp\test_reports\20260706_213824_smoke\summary.json`.
+  - `powershell -ExecutionPolicy Bypass -File tools\foundation_determinism_probe.ps1 -RequireGodot -SeedCount 10` -> PASS; seeds=10, checkpoints=206, hash=2095811141.
+- Summary:
+  - Added deterministic run-boundary bag drop evaluation and terminal grant flushing through `CollectionDropService`.
+  - Added serialized RunState pending bag markers, event/result delta plumbing, and two landmark events that only add pending markers during a run.
+  - Added persisted meta RNG bag opening with one-button consume/roll/grant behavior.
+  - Added a basic main-menu collection browser/view-model and terminal bag summary lines.
+  - Extended `collection_meta_check` with P1 regression coverage.
+- Deviations:
+  - Tier badge data is emitted by the new view-model as glyph-shaped metadata; the in-flight attribute glyph registry work is still dirty in this workspace, so P1 does not take ownership of those unrelated files.
+  - Several guard attempts were blocked by stale headless Godot processes; stale jobs were allowed to finish or exact orphaned workspace PIDs were stopped before clean reruns.
+
 # Agent Prompt — Item Meta P1: Bag Drops, Single-Button Opening, Collection Browser
 
 Copy everything below this line into the agent.

@@ -99,6 +99,7 @@ var drunk_distortion_suppression_turns: int = 0
 var current_environment: Dictionary = {}
 var world_map: Dictionary = {}
 var pending_triggered_events: Array = []
+var pending_bags: Array = []
 var active_triggered_event: Dictionary = {}
 var event_cadence: Dictionary = {}
 var environment_history: Array = []
@@ -145,6 +146,7 @@ func start_new(p_seed_text: String = "FOUNDATION-SEED", p_challenge_config: Dict
 	current_environment = {}
 	world_map = {}
 	pending_triggered_events = []
+	pending_bags = []
 	active_triggered_event = {}
 	_reset_event_cadence_state()
 	environment_history = []
@@ -3797,6 +3799,29 @@ func triggered_event_resolution_active() -> bool:
 	return not active_triggered_event.is_empty()
 
 
+func add_pending_bag_marker(marker: Dictionary) -> Dictionary:
+	var normalized := _normalize_pending_bag_marker(marker)
+	if normalized.is_empty():
+		return {}
+	var marker_id := str(normalized.get("marker_id", "")).strip_edges()
+	if not marker_id.is_empty():
+		for existing_value in pending_bags:
+			var existing := _normalize_pending_bag_marker(existing_value)
+			if str(existing.get("marker_id", "")) == marker_id:
+				return existing
+	pending_bags.append(normalized)
+	return normalized.duplicate(true)
+
+
+func pending_bag_markers() -> Array:
+	pending_bags = _normalize_pending_bag_markers(pending_bags)
+	return pending_bags.duplicate(true)
+
+
+func clear_pending_bag_markers() -> void:
+	pending_bags = []
+
+
 # Adds travel targets to the current environment.
 func add_next_archetypes(archetype_ids: Array) -> void:
 	if current_environment.is_empty():
@@ -4128,6 +4153,7 @@ func to_dict() -> Dictionary:
 		"current_environment": current_environment.duplicate(true),
 		"world_map": WorldMap.normalize(world_map),
 		"pending_triggered_events": pending_triggered_events.duplicate(true),
+		"pending_bags": pending_bags.duplicate(true),
 		"active_triggered_event": active_triggered_event.duplicate(true),
 		"event_cadence": _normalize_event_cadence(event_cadence),
 		"environment_history": environment_history.duplicate(true),
@@ -4170,6 +4196,11 @@ func from_dict(data: Dictionary) -> void:
 	current_environment = _normalize_environment(_copy_dict(data.get("current_environment", {})))
 	world_map = WorldMap.normalize(_copy_dict(data.get("world_map", {})))
 	pending_triggered_events = _normalize_triggered_event_queue(_copy_array(data.get("pending_triggered_events", [])))
+	var saved_pending_bags: Variant = data.get("pending_bags", data.get("pending_bag", []))
+	if typeof(saved_pending_bags) == TYPE_DICTIONARY:
+		pending_bags = _normalize_pending_bag_markers([saved_pending_bags])
+	else:
+		pending_bags = _normalize_pending_bag_markers(_copy_array(saved_pending_bags))
 	active_triggered_event = _normalize_triggered_event_entry(data.get("active_triggered_event", {}))
 	event_cadence = _normalize_event_cadence(_copy_dict(data.get("event_cadence", {})))
 	environment_history_archive_count = maxi(0, int(data.get("environment_history_archive_count", 0)))
@@ -4539,6 +4570,57 @@ static func _normalize_triggered_event_timing(value: Variant) -> Dictionary:
 		"duration_actions": duration_actions,
 		"remaining_actions": mini(remaining_actions, duration_actions) if duration_actions > 0 else 0,
 		"timeout_choice_id": timeout_choice_id,
+	}
+
+
+static func _normalize_pending_bag_markers(entries: Array) -> Array:
+	var result: Array = []
+	for entry_value in entries:
+		var marker := _normalize_pending_bag_marker(entry_value)
+		if marker.is_empty():
+			continue
+		var marker_id := str(marker.get("marker_id", ""))
+		var duplicate_found := false
+		for existing_value in result:
+			var existing := _copy_dict(existing_value)
+			if not marker_id.is_empty() and str(existing.get("marker_id", "")) == marker_id:
+				duplicate_found = true
+				break
+		if not duplicate_found:
+			result.append(marker)
+	return result
+
+
+static func _normalize_pending_bag_marker(value: Variant) -> Dictionary:
+	if typeof(value) != TYPE_DICTIONARY:
+		return {}
+	var source := _copy_dict(value)
+	var bagdef_id := int(source.get("bagdef_id", source.get("itemdef_id", -1)))
+	if bagdef_id < 0:
+		return {}
+	var source_id := str(source.get("source_id", source.get("event_id", ""))).strip_edges()
+	var source_type := str(source.get("source", "run_end")).strip_edges()
+	if source_type.is_empty():
+		source_type = "run_end"
+	var rng_seed := str(source.get("rng_seed", "")).strip_edges()
+	if rng_seed.is_empty():
+		rng_seed = "%s|%s|%d" % [source_type, source_id, bagdef_id]
+	var marker_id := str(source.get("marker_id", "")).strip_edges()
+	if marker_id.is_empty():
+		marker_id = "%s:%s:%d:%s" % [source_type, source_id, bagdef_id, rng_seed]
+	return {
+		"schema_version": int(source.get("schema_version", 1)),
+		"bagdef_id": bagdef_id,
+		"collection_id": str(source.get("collection_id", "")).strip_edges(),
+		"collection_display_name": str(source.get("collection_display_name", "")).strip_edges(),
+		"tier": str(source.get("tier", "")).strip_edges(),
+		"tier_label": str(source.get("tier_label", "")).strip_edges(),
+		"display_name": str(source.get("display_name", "Collection Bag")).strip_edges(),
+		"icon_key": str(source.get("icon_key", "")).strip_edges(),
+		"source": source_type,
+		"source_id": source_id,
+		"rng_seed": rng_seed,
+		"marker_id": marker_id,
 	}
 
 
