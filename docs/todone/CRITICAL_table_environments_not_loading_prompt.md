@@ -1,3 +1,17 @@
+## Execution Record
+
+- Completion date: 2026-07-06.
+- Implementing commit hash(es): claimed in `18e0f86`, closed in `eb420b0`
+  ("Complete table environment entry todo"); the root fix itself landed as
+  `eef32ff` ("Fix table surface root regressions") under the companion
+  playtest_root_fix prompt.
+- Verification gates: see eb420b0/eef32ff commit evidence and the
+  playtest_root_fix_agent_prompt.md execution record (which discloses a
+  `ui_scene_compile` exit -1 crash still open at archive time).
+- Deviations: the executing session archived this file without the
+  execution record RULES require; this record was reconstructed by the PM
+  during 2026-07-06 queue maintenance.
+
 # Agent Prompt — CRITICAL: Table Environments Not Loading (Auto-Resolved Results)
 
 Priority: **CRITICAL — execute before any other prompt in this folder.**

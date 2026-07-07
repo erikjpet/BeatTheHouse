@@ -1,3 +1,18 @@
+## Execution Record
+
+- Completion date: 2026-07-06.
+- Implementing commit hash(es): shipped in `c9a719d` ("log #3.3", version
+  stamped 0.3.3) — starting home locations (apartment/motel_room/house),
+  containers, world map travel, and home/container art all landed there.
+- Verification gates: no per-prompt gate run was recorded; the work shipped
+  as part of the owner's manual 0.3.3 release. Known outstanding red gate at
+  archive time: `ui_scene_compile` crash (exit -1) disclosed in
+  playtest_root_fix_agent_prompt.md's execution record.
+- Deviations: executed piecemeal across multiple sessions without a formal
+  claim, then released directly by the owner (devlog #3.3) rather than
+  through the queue lifecycle. This record was reconstructed by the PM
+  during 2026-07-06 queue maintenance.
+
 # Agent Prompt — "Home" Environment System (Apartment / Motel Room / House), Containers, Rent, and Game Clock
 
 Copy everything below this line into the agent.

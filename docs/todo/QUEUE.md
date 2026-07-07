@@ -15,15 +15,17 @@ Agents told to "work on the todo list" (or similar) follow this protocol:
 Never execute an entry marked `in-progress-elsewhere` or `blocked` — and
 NEVER re-implement work a status note says already exists somewhere.
 
-Last reviewed: 2026-07-06 by Codex desktop. No entries are currently `ready`.
-The PM workspace still has unrelated dirty home/inventory/world-map/event work,
-so downstream prompts must stay blocked until that work is committed or cleared.
+Last reviewed: 2026-07-06 by PM (Claude) — maintenance pass. Home environment
+shipped in `c9a719d` (0.3.3) and moved to todone; the 0.3.3 release prompt was
+deleted as obsolete (release shipped manually without its gate matrix). Known
+red gate: `ui_scene_compile` exit -1 crash disclosed in the playtest_root_fix
+execution record — untracked, PM flagging for owner. Remaining dirty PM-tree
+files (run_state, world_map, foundation_main, inventory screen/view-model,
+both test files) belong to the two claimed Codex entries.
 
 | # | Prompt | Status | Machine | Notes |
 | --- | --- | --- | --- | --- |
-| 1 | release_0_3_3_patch_prompt.md | blocked | work server (clean tree) | Still blocked: requires clean release/export context on the work server; current PM tree is dirty |
-| 3 | home_environment_feature_prompt.md | in-progress-elsewhere | PM machine | Still in progress elsewhere; PM tree has uncommitted core/world-map/foundation/inventory/test changes, so do not duplicate |
-| 4 | environment_semantic_layout_prompt.md | blocked | PM machine | Still blocked: depends on entry 3 home-environment/archetype work landing first |
+| 4 | environment_semantic_layout_prompt.md | blocked | PM machine | Home/archetype work landed in `c9a719d`, but entry 7 (beach) is claimed and touches archetypes/routes — unblocks when entry 7 completes |
 | 5 | web_audio_bridge_modernization_prompt.md | blocked (2026-07-06, Codex PM workspace) | any (clean tree) | Task A landed in `8eefdc5`; after table-surface fix `eef32ff`, needs fresh clean-tree `tools/web_perf_smoke.ps1` before it can be marked ready/done |
 | 6 | attribute_glyph_system_prompt.md | claimed (2026-07-06, Codex desktop; user override) | any | Executing by explicit user override despite dirty inventory/view-model blocker; preserve current inventory work |
 | 7 | beach_environment_prompt.md | claimed (2026-07-06, Codex desktop; user override) | PM machine | Executing by explicit user override despite blockers; preserve dirty home/layout/inventory work |
