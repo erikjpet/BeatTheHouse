@@ -29,6 +29,7 @@ both test files) belong to the two claimed Codex entries.
 | 5 | web_audio_bridge_modernization_prompt.md | blocked (2026-07-06, Codex PM workspace) | any (clean tree) | Task A landed in `8eefdc5`; after table-surface fix `eef32ff`, needs fresh clean-tree `tools/web_perf_smoke.ps1` before it can be marked ready/done |
 | 8 | item_meta_p0_collections_schema_prompt.md | claimed (2026-07-06, Codex desktop; local only) | any (new files only) | Executing now; local commit only per user instruction, no push |
 | 9 | time_system_open_hours_prompt.md | claimed (2026-07-06, Codex desktop; user override) | any | Executing by explicit user override despite attribute-glyph dirty overlap; preserve current glyph/inventory/world-map work |
+| 10 | dialogue_system_prompt.md | blocked | any | Multi-turn branching dialogue in a smaller talk dock with speaker models + per-choice effect badges; pilot = pull-tab clerk. Touches talk_dock/foundation_main/glyph registry — wait for claimed entries 8 and 9 to land, then flip to ready |
 
 Only the project manager adds entries or reorders this table; executing
 agents only flip Status fields for claims and remove completed entries.
