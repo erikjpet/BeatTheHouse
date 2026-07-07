@@ -25,7 +25,7 @@ so downstream prompts must stay blocked until that work is committed or cleared.
 | 3 | home_environment_feature_prompt.md | in-progress-elsewhere | PM machine | Still in progress elsewhere; PM tree has uncommitted core/world-map/foundation/inventory/test changes, so do not duplicate |
 | 4 | environment_semantic_layout_prompt.md | blocked | PM machine | Still blocked: depends on entry 3 home-environment/archetype work landing first |
 | 5 | web_audio_bridge_modernization_prompt.md | blocked (2026-07-06, Codex PM workspace) | any (clean tree) | Task A landed in `8eefdc5`; after table-surface fix `eef32ff`, needs fresh clean-tree `tools/web_perf_smoke.ps1` before it can be marked ready/done |
-| 6 | attribute_glyph_system_prompt.md | blocked | any | Still blocked: inventory extraction/view-model work is dirty and must land before glyph integration |
+| 6 | attribute_glyph_system_prompt.md | claimed (2026-07-06, Codex desktop; user override) | any | Executing by explicit user override despite dirty inventory/view-model blocker; preserve current inventory work |
 | 7 | beach_environment_prompt.md | claimed (2026-07-06, Codex desktop; user override) | PM machine | Executing by explicit user override despite blockers; preserve dirty home/layout/inventory work |
 | 8 | item_meta_p0_collections_schema_prompt.md | ready | any (new files only) | Item collection meta P0: collections schema + MetaCollectionService + 4-float engine. Creates only NEW files, safe beside the dirty PM tree; prompt forbids touching foundation_check.gd / ui_scene_compile_check.gd |
 
