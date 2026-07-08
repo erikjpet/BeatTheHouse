@@ -22,7 +22,7 @@ before new feature work proceeds.
 
 | # | Prompt | Status | Machine | Notes |
 | --- | --- | --- | --- | --- |
-| 7 | act_two_seam_prompt.md | ready | any | Parked T8.1: save act marker, profile act seam, and route-specific victory hook replacing release-end placeholder copy. |
+| 7 | act_two_seam_prompt.md | claimed (2026-07-07, Codex desktop) | any | Parked T8.1: save act marker, profile act seam, and route-specific victory hook replacing release-end placeholder copy. |
 | 8 | v04_final_balance_release_gate_prompt.md | blocked until #4-#7 | any | Final full gate, metrics, performance, soak, determinism, stuck-state, web smoke, and 60-run mouse batch. |
 | 9 | v04_release_docs_packaging_prompt.md | blocked until #8 | any | Version 0.4.0, README/checklist/changelog/publish copy, exports, checksums, web/windows smoke, butler dry-run. |
 
