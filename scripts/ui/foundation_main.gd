@@ -507,6 +507,7 @@ func start_foundation_run(seed_text: String = DEFAULT_SEED, challenge_config: Di
 	_show_message("The run begins.")
 	_autosave_foundation_run("Autosaved.")
 	_refresh()
+	_prewarm_world_map_overlay_for_run()
 
 
 func start_daily_challenge_run() -> void:
@@ -1055,6 +1056,24 @@ func open_world_map(force_closing_allowed: bool = false) -> bool:
 	_request_world_map_button_relayout()
 	_refresh()
 	return true
+
+
+func _prewarm_world_map_overlay_for_run() -> void:
+	if run_state == null or world_map_overlay == null:
+		return
+	if not run_state.has_world_map() and not _is_meta_session():
+		return
+	var was_visible := world_map_overlay.visible
+	if selected_world_map_node_id.is_empty() or (run_state.has_world_map() and not WorldMapScript.is_node_visible(run_state.world_map, selected_world_map_node_id)):
+		var first_choice := _first_enabled_travel_choice()
+		if first_choice.is_empty():
+			first_choice = _first_disabled_travel_choice()
+		selected_world_map_node_id = str(first_choice.get("id", ""))
+		if selected_world_map_node_id.is_empty() and run_state.has_world_map():
+			selected_world_map_node_id = run_state.current_world_node_id()
+	world_map_overlay.visible = true
+	_refresh_world_map_overlay()
+	world_map_overlay.visible = was_visible
 
 
 func close_world_map() -> void:
