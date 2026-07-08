@@ -1556,13 +1556,13 @@ func _try_lender_hook_flow(prepared_fixture: bool = false) -> void:
 		if not current_lender.is_empty():
 			await _try_lender_object_in_current_room(current_lender, prepared_fixture)
 			return
+	if not prepared_fixture:
+		await _prepare_lender_pressure_visual_qa_fixture()
+		await _try_lender_hook_flow(true)
+		return
 	var serialized_before_lender_travel := _serialized_run_text()
 	var lender_route := await _double_click_first_travel_to_lender_environment()
 	if lender_route.is_empty():
-		if not prepared_fixture:
-			await _prepare_lender_pressure_visual_qa_fixture()
-			await _try_lender_hook_flow(true)
-			return
 		_require(false, "Prepared lender visual QA fixture did not expose a visible route or lender object.")
 		return
 	_cover("travel_card")
