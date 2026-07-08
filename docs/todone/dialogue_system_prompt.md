@@ -1,3 +1,16 @@
+## Execution Record
+
+- Completion date: 2026-07-06.
+- Implementing commit hash(es): Not committed in this pass; the workspace already contained unrelated in-flight dirty changes, so this task is left uncommitted for later clean partitioning.
+- Verification gates:
+  - `powershell -ExecutionPolicy Bypass -File tools/check_godot.ps1 -RequireGodot -FoundationSuite ui -TimeoutSec 300` PASS (`ui_scene_compile` PASS, 46.690s; report `20260706_220652_smoke`).
+  - `powershell -ExecutionPolicy Bypass -File tools/check_godot.ps1 -RequireGodot -FoundationSuite systems -TimeoutSec 300` PASS (`foundation_systems` PASS, 24.565s; report `20260706_221023_smoke`).
+  - `powershell -ExecutionPolicy Bypass -File tools/check_godot.ps1 -RequireGodot -FoundationSuite pull_tabs -TimeoutSec 300` PASS (`foundation_pull_tabs` PASS, 7.460s; report `20260706_221129_smoke`).
+  - `powershell -ExecutionPolicy Bypass -File tools/foundation_determinism_probe.ps1 -SeedCount 10 -RequireGodot` PASS (`seeds=10`, `checkpoints=236`, `hash=911242423`).
+- Deviations from prompt:
+  - Interactable event activation remains side-effect-free and opens the existing dismissible event popup to preserve the preview/no-mutation contract. Migrated event dialogues start from the explicit Talk action in the event panel.
+  - The pull-tab clerk room object starts the new dialogue directly and exercises the pilot path.
+  - No local commit was created because the tree is not cleanly partitionable.
 # Agent Prompt — Full Dialogue System: Multi-Turn Conversations in the Talk Dock (Pilot: Pull-Tab Clerk)
 
 Copy everything below this line into the agent.

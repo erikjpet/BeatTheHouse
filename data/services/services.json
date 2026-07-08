@@ -44,10 +44,11 @@
 		"id": "jazz_sax_round",
 		"display_name": "Buy Sax a Round",
 		"category": "favor",
-		"description": "Chance at sax coin.",
+		"description": "Luck lift; hidden favor.",
 		"cost": 8,
 		"message": "The sax player nods over the rim and lets the solo curl around your luck.",
 		"effect": {
+			"baseline_luck_delta": 1,
 			"messages": ["The sax player remembers the round."]
 		}
 	},
@@ -55,10 +56,11 @@
 		"id": "jazz_cello_round",
 		"display_name": "Buy Cello a Round",
 		"category": "favor",
-		"description": "Chance at cello coin.",
+		"description": "Heat cool; hidden favor.",
 		"cost": 8,
 		"message": "The cellist smiles into a low walking line and keeps time with your nerve.",
 		"effect": {
+			"suspicion_delta": -1,
 			"messages": ["The cellist remembers the round."]
 		}
 	},
@@ -66,10 +68,11 @@
 		"id": "jazz_drummer_round",
 		"display_name": "Buy Drummer a Round",
 		"category": "favor",
-		"description": "Chance at drummer gear.",
+		"description": "Light buzz; rare gear.",
 		"cost": 8,
 		"message": "The drummer taps the glass twice, then rolls the groove forward.",
 		"effect": {
+			"alcohol_intake": 4,
 			"messages": ["The drummer remembers the round."]
 		}
 	},
@@ -77,10 +80,12 @@
 		"id": "jazz_band_tip_jar",
 		"display_name": "Band Tip Jar",
 		"category": "favor",
-		"description": "Random band favor.",
+		"description": "Random favor; heat cools.",
 		"cost": 6,
 		"message": "You feed the band jar and let chance carry the round.",
 		"effect": {
+			"heat_cooldown_actions": 3,
+			"heat_cooldown_per_action": 1,
 			"messages": ["The band notices the tip jar."]
 		}
 	},
@@ -88,10 +93,11 @@
 		"id": "listen_to_jazz",
 		"display_name": "Stay for the Set",
 		"category": "music",
-		"description": "Cool the room.",
+		"description": "Heat cools; stay awhile.",
 		"cost": 0,
 		"message": "You stay through the changes and let the room swing around you.",
 		"effect": {
+			"suspicion_delta": -1,
 			"messages": ["The band notices you stayed for the music."]
 		}
 	},

@@ -1,0 +1,172 @@
+[
+  {
+    "id": "pull_tab_clerk",
+    "display_name": "Pull-Tab Clerk",
+    "speaker": {
+      "role": "staff",
+      "name": "Rina",
+      "mood": "dry",
+      "behavior": "watching",
+      "silhouette": "glasses",
+      "hair_color": "#2bd7ff",
+      "jacket_color": "#3b255f"
+    },
+    "start": "greeting",
+    "nodes": {
+      "greeting": {
+        "text": "Got winners, questions, or trouble?",
+        "choices": [
+          {
+            "id": "redeem_chatter",
+            "label": "Redeem?",
+            "effects": {},
+            "goto": "redeem"
+          },
+          {
+            "id": "ask_loose",
+            "label": "Loose tabs?",
+            "effects": {
+              "suspicion_delta": 2,
+              "check": {
+                "chance_percent": 45,
+                "success_consequences": {
+                  "bankroll_delta": 8
+                },
+                "failure_consequences": {
+                  "suspicion_delta": 3
+                }
+              }
+            },
+            "goto": "loose"
+          },
+          {
+            "id": "ask_routes",
+            "label": "Routes?",
+            "effects": {
+              "set_story_flag": "pull_tab_clerk_route_tip",
+              "unlock_travel_route": "gas_station_casino"
+            },
+            "goto": "routes"
+          },
+          {
+            "id": "leave",
+            "label": "Leave",
+            "effects": {},
+            "end": true
+          }
+        ]
+      },
+      "redeem": {
+        "text": "Sorted winners cash at the tray. Dead tabs stay visible.",
+        "choices": [
+          {
+            "id": "done",
+            "label": "Done",
+            "effects": {},
+            "end": true
+          }
+        ]
+      },
+      "loose": {
+        "text": "Maybe. Maybe the camera heard you ask.",
+        "choices": [
+          {
+            "id": "done",
+            "label": "Done",
+            "effects": {},
+            "end": true
+          }
+        ]
+      },
+      "routes": {
+        "text": "Gas station machines stay loose after midnight.",
+        "choices": [
+          {
+            "id": "done",
+            "label": "Done",
+            "effects": {},
+            "end": true
+          }
+        ]
+      }
+    }
+  },
+  {
+    "id": "late_shift_discount",
+    "display_name": "Late Shift Clerk",
+    "speaker": {
+      "role": "staff",
+      "name": "Mara",
+      "mood": "tired",
+      "behavior": "clerk",
+      "silhouette": "cap",
+      "hair_color": "#171022",
+      "jacket_color": "#27324a"
+    },
+    "start": "counter",
+    "nodes": {
+      "counter": {
+        "text": "Late shelf. Quick sale if you do not linger.",
+        "choices": [
+          {
+            "id": "haggle",
+            "label": "Haggle",
+            "effects": {
+              "bankroll_delta": 5,
+              "suspicion_delta": 1
+            },
+            "end": true
+          },
+          {
+            "id": "move_on",
+            "label": "Move on",
+            "effects": {},
+            "end": true
+          }
+        ]
+      }
+    }
+  },
+  {
+    "id": "chatty_clerk",
+    "display_name": "Chatty Clerk",
+    "speaker": {
+      "role": "staff",
+      "name": "June",
+      "mood": "wired",
+      "behavior": "talking",
+      "silhouette": "glasses",
+      "hair_color": "#f1cf75",
+      "jacket_color": "#1d4b57"
+    },
+    "start": "counter",
+    "nodes": {
+      "counter": {
+        "text": "People talk when the cooler hums loud.",
+        "choices": [
+          {
+            "id": "ask_routes",
+            "label": "Ask routes",
+            "effects": {
+              "set_story_flag": "heard_local_tip",
+              "set_next_archetypes": [
+                "bar",
+                "gas_station_casino"
+              ],
+              "unlock_travel_route": "bar"
+            },
+            "end": true
+          },
+          {
+            "id": "keep_quiet",
+            "label": "Keep quiet",
+            "effects": {
+              "suspicion_delta": -1
+            },
+            "end": true
+          }
+        ]
+      }
+    }
+  }
+]

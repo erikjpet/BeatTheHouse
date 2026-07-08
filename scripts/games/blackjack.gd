@@ -118,7 +118,7 @@ func actions(run_state: RunState, environment: Dictionary) -> Dictionary:
 	return result
 
 
-func generate_environment_state(_run_state: RunState, environment: Dictionary, rng: RngStream) -> Dictionary:
+func generate_environment_state(run_state: RunState, environment: Dictionary, rng: RngStream) -> Dictionary:
 	var deck_count_options: Array = [2, 3, 4, 6]
 	var deck_count: int = int(rng.pick(deck_count_options, 6))
 	var shoe: Array = _build_shoe(deck_count, rng)
@@ -150,6 +150,12 @@ func generate_environment_state(_run_state: RunState, environment: Dictionary, r
 	var dealer_profile: Dictionary = _generate_dealer_profile(rng, catch_base)
 	var patrons: Array = _generate_table_patrons(rng, int(environment.get("depth", 0)))
 	var distractions: Array = _generate_table_distractions(rng)
+	var table_limit := maxi(25, GameModule.stake_ceiling_for_game(environment, get_id(), run_state.bankroll if run_state != null else 25))
+	var chip_denominations := [1, 5, 10, 25]
+	if table_limit >= 60:
+		chip_denominations.append(50)
+	if table_limit >= 150:
+		chip_denominations.append(100)
 	return {
 		"schema": "blackjack_table_state",
 		"version": 2,
@@ -173,7 +179,7 @@ func generate_environment_state(_run_state: RunState, environment: Dictionary, r
 		"dealer_profile": dealer_profile,
 		"patrons": patrons,
 		"distractions": distractions,
-		"chip_denominations": [1, 5, 10, 25],
+		"chip_denominations": chip_denominations,
 		"table_layout": "immersive_blackjack",
 		"dealer_catch_base": catch_base,
 		"catch_heat": catch_base + 8,
@@ -4284,8 +4290,7 @@ func _effective_table_stake(stake: int, session: Dictionary, run_state: RunState
 func _blackjack_original_stake_ceiling(run_state: RunState, environment: Dictionary) -> int:
 	if run_state == null:
 		return 1
-	var profile: Dictionary = environment.get("economic_profile", {}) if typeof(environment.get("economic_profile", {})) == TYPE_DICTIONARY else {}
-	return maxi(1, int(profile.get("stake_ceiling", run_state.bankroll)))
+	return maxi(1, GameModule.stake_ceiling_for_game(environment, get_id(), run_state.bankroll))
 
 
 func _blackjack_base_stake_ceiling(run_state: RunState, environment: Dictionary) -> int:

@@ -99,6 +99,8 @@ func resolve(run_state: RunState, environment: Dictionary, choice_id: String = "
 	var drunk_delta := int(consequences.get("drunk_delta", 0))
 	var pending_drunk_absorption_delta := int(consequences.get("pending_drunk_absorption_delta", 0))
 	var drunk_distortion_suppression_turns := int(consequences.get("drunk_distortion_suppression_turns", 0))
+	var heat_cooldown_actions := int(consequences.get("heat_cooldown_actions", 0))
+	var heat_cooldown_per_action := int(consequences.get("heat_cooldown_per_action", 0))
 	var alcoholic_delta := int(consequences.get("alcoholic_delta", 0))
 	var baseline_luck_delta := int(consequences.get("baseline_luck_delta", 0))
 	var choice_key := str(selected_choice.get("id", choice_id))
@@ -114,6 +116,8 @@ func resolve(run_state: RunState, environment: Dictionary, choice_id: String = "
 		"drunk_delta": drunk_delta,
 		"pending_drunk_absorption_delta": pending_drunk_absorption_delta,
 		"drunk_distortion_suppression_turns": drunk_distortion_suppression_turns,
+		"heat_cooldown_actions": heat_cooldown_actions,
+		"heat_cooldown_per_action": heat_cooldown_per_action,
 		"alcoholic_delta": alcoholic_delta,
 		"baseline_luck_delta": baseline_luck_delta,
 	}
@@ -142,6 +146,7 @@ func resolve(run_state: RunState, environment: Dictionary, choice_id: String = "
 static func apply_event_result(run_state: RunState, result: Dictionary) -> void:
 	if run_state == null or not bool(result.get("ok", false)):
 		return
+	run_state.advance_environment_turns(1)
 	GameModule.apply_result(run_state, result)
 	var deltas: Dictionary = result.get("deltas", {})
 	for hook in deltas.get("event_hooks", []):
@@ -180,21 +185,37 @@ func _consequence_deltas(consequences: Dictionary, story_entry: Dictionary, mess
 	deltas["drunk_delta"] = int(consequences.get("drunk_delta", 0))
 	deltas["pending_drunk_absorption_delta"] = int(consequences.get("pending_drunk_absorption_delta", 0))
 	deltas["drunk_distortion_suppression_turns"] = int(consequences.get("drunk_distortion_suppression_turns", 0))
+	deltas["heat_cooldown_actions"] = int(consequences.get("heat_cooldown_actions", 0))
+	deltas["heat_cooldown_per_action"] = int(consequences.get("heat_cooldown_per_action", 0))
 	deltas["alcoholic_delta"] = int(consequences.get("alcoholic_delta", 0))
 	deltas["baseline_luck_delta"] = int(consequences.get("baseline_luck_delta", 0))
 	if consequences.has("debt"):
 		deltas["debt_changes"] = [_copy_dict(consequences.get("debt", {}))]
 	else:
 		deltas["debt_changes"] = _copy_array(consequences.get("debt_changes", []))
+	deltas["inventory_add"] = _copy_array(consequences.get("inventory_add", []))
+	deltas["inventory_remove"] = _copy_array(consequences.get("inventory_remove", []))
 	var pending_bag_value: Variant = consequences.get("pending_bags", consequences.get("pending_bag", []))
 	if typeof(pending_bag_value) == TYPE_DICTIONARY:
 		deltas["pending_bags"] = [pending_bag_value]
 	else:
 		deltas["pending_bags"] = _copy_array(pending_bag_value)
-	deltas["inventory_add"] = _copy_array(consequences.get("inventory_add", []))
-	deltas["inventory_remove"] = _copy_array(consequences.get("inventory_remove", []))
 	deltas["flags_set"] = _copy_dict(consequences.get("flags", consequences.get("flags_set", {})))
-	deltas["travel_hooks_add"] = _copy_array(consequences.get("travel_hooks_add", []))
+	var story_flags := _copy_dict(consequences.get("story_flags_set", {}))
+	var single_story_flag := str(consequences.get("set_story_flag", "")).strip_edges()
+	if not single_story_flag.is_empty():
+		story_flags[single_story_flag] = true
+	for story_flag_id in _single_or_array_strings(consequences.get("set_story_flags", [])):
+		story_flags[str(story_flag_id)] = true
+	deltas["story_flags_set"] = story_flags
+	var travel_hooks := _copy_array(consequences.get("travel_hooks_add", []))
+	for route_id in _single_or_array_strings(consequences.get("unlock_travel_route", consequences.get("unlock_travel_routes", []))):
+		var route_target := _destination_archetype_for_route(str(route_id))
+		if route_target.is_empty():
+			route_target = str(route_id)
+		if not travel_hooks.has(route_target):
+			travel_hooks.append(route_target)
+	deltas["travel_hooks_add"] = travel_hooks
 	var travel_changes := _copy_dict(consequences.get("travel_changes", {}))
 	if consequences.has("set_next_archetypes"):
 		travel_changes["set_next_archetypes"] = _copy_array(consequences.get("set_next_archetypes", []))
@@ -224,6 +245,16 @@ func _consequence_deltas(consequences: Dictionary, story_entry: Dictionary, mess
 	return deltas
 
 
+func _destination_archetype_for_route(route_id: String) -> String:
+	var clean_id := route_id.strip_edges()
+	if clean_id.is_empty() or content_library == null:
+		return ""
+	var route := content_library.route(clean_id)
+	if route.is_empty():
+		return ""
+	return str(route.get("destination_archetype", "")).strip_edges()
+
+
 func _resolved_lender_hook_consequences(run_state: RunState, consequences: Dictionary) -> Dictionary:
 	var lender_id := str(consequences.get("lender_hook", "")).strip_edges()
 	if lender_id.is_empty() or run_state == null or content_library == null:
@@ -235,7 +266,7 @@ func _resolved_lender_hook_consequences(run_state: RunState, consequences: Dicti
 		return consequences
 	var lender_deltas := _copy_dict(lender_result.get("deltas", {}))
 	var resolved := consequences.duplicate(true)
-	for key in ["bankroll_delta", "suspicion_delta", "alcohol_intake", "drunk_delta", "pending_drunk_absorption_delta", "drunk_distortion_suppression_turns", "alcoholic_delta", "baseline_luck_delta"]:
+	for key in ["bankroll_delta", "suspicion_delta", "alcohol_intake", "drunk_delta", "pending_drunk_absorption_delta", "drunk_distortion_suppression_turns", "heat_cooldown_actions", "heat_cooldown_per_action", "alcoholic_delta", "baseline_luck_delta"]:
 		resolved[key] = int(resolved.get(key, 0)) + int(lender_deltas.get(key, 0))
 	var debt_changes := _copy_array(resolved.get("debt_changes", []))
 	debt_changes.append_array(_copy_array(lender_deltas.get("debt_changes", [])))
@@ -375,11 +406,21 @@ func _conditions_allow(run_state: RunState, environment: Dictionary, context: Di
 	for key in requires_flags.keys():
 		if run_state.narrative_flags.get(str(key), null) != requires_flags[key]:
 			return false
+	var requires_story_flags := _copy_dict(conditions.get("requires_story_flags", {}))
+	for key in requires_story_flags.keys():
+		if _story_flag_value(run_state, str(key)) != requires_story_flags[key]:
+			return false
 	for flag_id in _string_array(conditions.get("blocked_by_flags", [])):
 		if bool(run_state.narrative_flags.get(flag_id, false)):
 			return false
 	for flag_id in _string_array(conditions.get("missing_flags", [])):
 		if bool(run_state.narrative_flags.get(flag_id, false)):
+			return false
+	for flag_id in _string_array(conditions.get("blocked_by_story_flags", [])):
+		if _story_flag_is_true(run_state, flag_id):
+			return false
+	for flag_id in _string_array(conditions.get("missing_story_flags", [])):
+		if _story_flag_is_true(run_state, flag_id):
 			return false
 	for item_id in _string_array(conditions.get("requires_items", [])):
 		if not run_state.inventory.has(item_id):
@@ -419,6 +460,32 @@ func _conditions_allow(run_state: RunState, environment: Dictionary, context: Di
 		if context.get(str(key), null) != context_flags[key]:
 			return false
 	return true
+
+
+func _story_flag_value(run_state: RunState, flag_id: String) -> Variant:
+	if run_state == null:
+		return null
+	if run_state.story_flags.has(flag_id):
+		return run_state.story_flags.get(flag_id)
+	return run_state.narrative_flags.get(flag_id, null)
+
+
+func _story_flag_is_true(run_state: RunState, flag_id: String) -> bool:
+	var value: Variant = _story_flag_value(run_state, flag_id)
+	match typeof(value):
+		TYPE_BOOL:
+			return bool(value)
+		TYPE_NIL:
+			return false
+		TYPE_INT:
+			return int(value) != 0
+		TYPE_FLOAT:
+			return not is_zero_approx(float(value))
+		TYPE_STRING:
+			var text := str(value).strip_edges().to_lower()
+			return text == "true" or text == "1" or text == "yes"
+		_:
+			return false
 
 
 func _event_travel_targets(run_state: RunState, environment: Dictionary) -> Array:
@@ -632,6 +699,13 @@ static func _string_array(value: Variant) -> Array:
 		if not id.is_empty():
 			result.append(id)
 	return result
+
+
+static func _single_or_array_strings(value: Variant) -> Array:
+	if typeof(value) == TYPE_ARRAY:
+		return _string_array(value)
+	var text := str(value).strip_edges()
+	return [] if text.is_empty() else [text]
 
 
 # Safely duplicates dictionary content.

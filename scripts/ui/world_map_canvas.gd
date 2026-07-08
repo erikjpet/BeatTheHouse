@@ -18,9 +18,14 @@ var map_view_bounds_cache := Rect2(Vector2.ZERO, Vector2.ONE)
 var travel_edge_ids_cache: Array = []
 var enabled_travel_edge_ids_cache: Array = []
 var cached_layout_size := Vector2(-1.0, -1.0)
+var snapshot_signature := ""
 
 
 func set_map_snapshot(map_snapshot: Dictionary) -> void:
+	var next_signature := JSON.stringify(map_snapshot)
+	if next_signature == snapshot_signature:
+		return
+	snapshot_signature = next_signature
 	snapshot = map_snapshot.duplicate(true)
 	_rebuild_snapshot_cache()
 	queue_redraw()
@@ -45,6 +50,7 @@ func current_view_snapshot() -> Dictionary:
 			"icon_path": str(node.get("icon_path", "")),
 			"travel_target": bool(node.get("travel_target", false)),
 			"travel_enabled": bool(node.get("travel_enabled", false)),
+			"attribute_badges": _copy_array(node.get("attribute_badges", [])),
 		})
 	view["icon_markers"] = markers
 	var bounds := map_view_bounds_cache
@@ -191,7 +197,13 @@ func _draw_nodes() -> void:
 			draw_circle(pos, 7.0, color if is_current or travel_enabled else Color(color.r, color.g, color.b, alpha))
 		if is_current:
 			draw_circle(pos, radius + 3.0, Color("#5df2a2", 0.22), false, 2.0)
-
+		if travel_target:
+			var status_color := Color("#5df2a2", alpha)
+			if bool(node.get("closing_soon", false)):
+				status_color = Color("#ffd36a", alpha)
+			elif not bool(node.get("open_now", true)):
+				status_color = Color("#f26d7d", alpha)
+			draw_circle(pos + Vector2(radius - 2.0, -radius + 2.0), 4.0, status_color)
 
 func _rebuild_snapshot_cache() -> void:
 	nodes_by_id_cache = {}
@@ -212,7 +224,8 @@ func _warm_texture_cache() -> void:
 	_background_texture()
 	for node_value in _array_view(snapshot.get("nodes", [])):
 		if typeof(node_value) == TYPE_DICTIONARY:
-			_texture_for_node(node_value)
+			var node: Dictionary = node_value
+			_texture_for_node(node)
 
 
 func _ensure_layout_cache() -> void:

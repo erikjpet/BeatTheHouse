@@ -99,6 +99,12 @@ func generate_environment_state(_run_state: RunState, environment: Dictionary, r
 			catch_base = 11
 	var variant := "american_double_zero"
 	var names := ["Neon Wheel", "Velvet Zero", "Copper Rotor", "Midnight 00", "Cyan Dolly"]
+	var table_max := maxi(50, _roulette_room_ceiling(environment, 100))
+	var chip_denominations := [1, 5, 10, 25]
+	if table_max >= 100:
+		chip_denominations.append(50)
+	if table_max >= 150:
+		chip_denominations.append(100)
 	return {
 		"schema": "roulette_table_state",
 		"version": 1,
@@ -117,12 +123,12 @@ func generate_environment_state(_run_state: RunState, environment: Dictionary, r
 			"late_bets_allowed": false,
 			"inside_min_total": 1,
 			"outside_min_each": maxi(1, int(environment.get("economic_profile", {}).get("stake_floor", 1)) if typeof(environment.get("economic_profile", {})) == TYPE_DICTIONARY else 1),
-			"table_max": maxi(50, int(environment.get("economic_profile", {}).get("stake_ceiling", 100)) if typeof(environment.get("economic_profile", {})) == TYPE_DICTIONARY else 100),
+			"table_max": table_max,
 		},
 		"physics_profile": _standard_physics_profile(rng),
 		"dealer_profile": _generate_dealer_profile(rng, catch_base),
 		"patrons": _generate_table_patrons(rng, int(environment.get("depth", 0))),
-		"chip_denominations": [1, 5, 10, 25],
+		"chip_denominations": chip_denominations,
 		"table_layout": "immersive_roulette",
 		"spin_count": 0,
 		"last_results": [],
@@ -133,6 +139,10 @@ func generate_environment_state(_run_state: RunState, environment: Dictionary, r
 		"barred_reason": "",
 		"table_round_timer_started_msec": 0,
 	}
+
+
+func _roulette_room_ceiling(environment: Dictionary, fallback_ceiling: int) -> int:
+	return maxi(0, GameModule.stake_ceiling_for_game(environment, get_id(), fallback_ceiling))
 
 
 func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dictionary = {}) -> Dictionary:
@@ -1396,10 +1406,9 @@ func _validate_roulette_bets(bets: Array, table: Dictionary, run_state: RunState
 	var inside_min := int(rules.get("inside_min_total", 1))
 	if inside_total > 0 and inside_total < inside_min:
 		return {"ok": false, "message": "Inside bets must meet the inside minimum."}
-	if typeof(environment.get("economic_profile", {})) == TYPE_DICTIONARY:
-		var ceiling := int((environment.get("economic_profile", {}) as Dictionary).get("stake_ceiling", max_table))
-		if ceiling > 0 and total > ceiling:
-			return {"ok": false, "message": "This room's stake ceiling will not cover those chips."}
+	var room_ceiling := _roulette_room_ceiling(environment, max_table)
+	if room_ceiling > 0 and total > room_ceiling:
+		return {"ok": false, "message": "This room's stake ceiling will not cover those chips."}
 	return {"ok": true}
 
 
@@ -1482,10 +1491,9 @@ func _place_bet_command(index: int, state: Dictionary, table: Dictionary, run_st
 			var bankroll_room := maxi(0, (run_state.bankroll if run_state != null else chip) - current_total)
 			var table_room := maxi(0, int(rules.get("table_max", 100)) - current_total)
 			var room_cap := mini(bankroll_room, table_room)
-			if typeof(environment.get("economic_profile", {})) == TYPE_DICTIONARY:
-				var ceiling := int((environment.get("economic_profile", {}) as Dictionary).get("stake_ceiling", int(rules.get("table_max", 100))))
-				if ceiling > 0:
-					room_cap = mini(room_cap, maxi(0, ceiling - current_total))
+			var room_ceiling := _roulette_room_ceiling(environment, int(rules.get("table_max", 100)))
+			if room_ceiling > 0:
+				room_cap = mini(room_cap, maxi(0, room_ceiling - current_total))
 			if room_cap >= outside_min:
 				chip = outside_min
 			else:
@@ -1769,8 +1777,7 @@ func _double_bets_command(state: Dictionary, table: Dictionary, run_state: RunSt
 func _max_bet_command(state: Dictionary, table: Dictionary, run_state: RunState, environment: Dictionary) -> Dictionary:
 	var denoms := _chip_denominations(table)
 	var max_chip := int(denoms[denoms.size() - 1])
-	if typeof(environment.get("economic_profile", {})) == TYPE_DICTIONARY:
-		max_chip = mini(max_chip, maxi(1, int((environment.get("economic_profile", {}) as Dictionary).get("stake_ceiling", max_chip))))
+	max_chip = mini(max_chip, maxi(1, _roulette_room_ceiling(environment, max_chip)))
 	if run_state != null:
 		max_chip = mini(max_chip, maxi(1, run_state.bankroll))
 	state["selected_chip"] = max_chip

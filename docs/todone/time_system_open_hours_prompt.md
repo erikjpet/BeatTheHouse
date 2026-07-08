@@ -1,11 +1,24 @@
-# Agent Prompt — Time System: Opening Hours, Closing-Time Eviction, Open Revisit Travel
+﻿## Execution Record
+
+- Completion date: 2026-07-06.
+- Implementing commit: not created in this pass; the working tree contains overlapping pre-existing queue changes in `data/environments/archetypes.json`, `scripts/ui/foundation_main.gd`, `scripts/tests/foundation_check.gd`, and related shared files, so a clean task-only commit could not be partitioned without risking unrelated work.
+- Verification gates:
+  - `powershell -ExecutionPolicy Bypass -File tools/validate_project.ps1` -> PASS.
+  - `powershell -ExecutionPolicy Bypass -File tools/check_godot.ps1 -RequireGodot -FoundationSuite systems -TimeoutSec 300` -> PASS.
+  - `powershell -ExecutionPolicy Bypass -File tools/check_godot.ps1 -RequireGodot -FoundationSuite ui -TimeoutSec 300` -> PASS.
+  - `powershell -ExecutionPolicy Bypass -File tools/foundation_determinism_probe.ps1 -RequireGodot -SeedCount 10` -> PASS, checkpoints 206, combined hash 2095811141.
+  - `powershell -ExecutionPolicy Bypass -File tools/foundation_stuck_state_sweep.ps1 -RequireGodot -SeedCount 100` -> PASS, wait scenarios 9 including `broke_closing_walk_fallback`.
+- Deviations:
+  - Local commit deferred because this task overlaps an already-dirty queue tree. The implementation and archive are present locally but intentionally uncommitted.
+  - During UI reruns, stale Godot validation processes spawned by failed UI runs were stopped before rerunning the gate cleanly.
+# Agent Prompt â€” Time System: Opening Hours, Closing-Time Eviction, Open Revisit Travel
 
 Copy everything below this line into the agent.
 
 ---
 
 You are working in `D:\Projects\Beat-The-House` (Godot 4.6 GDScript casino
-roguelike — see CLAUDE.md). The game clock exists but is ignorable: nothing
+roguelike â€” see CLAUDE.md). The game clock exists but is ignorable: nothing
 gates on it. This task makes time a real system: venues keep realistic
 opening hours, closing time evicts the player (with grace), and travel opens
 up so any visited location is reachable again for a distance-correlated
@@ -17,14 +30,14 @@ price.
   rollover (`_advance_home_day_rollovers`, :592), 12-hour AM/PM display
   already implemented (`clock_display_text`, :265-272), and
   `advance_game_clock_minutes` (:278). Audit every call site of
-  `advance_game_clock_minutes` first — the clock only matters if actions,
+  `advance_game_clock_minutes` first â€” the clock only matters if actions,
   game rounds, and travel all advance it with sane, data-tuned costs
   (travel must scale with distance blocks).
 - **Travel:** `scripts/core/world_map.gd` has `visited_path`, distance
   bands `near/local/far/remote` with cost multipliers 1.0/1.35/1.75/2.25
   (:16-27), per-route `distance_blocks` from node geometry (:103,825), and
   separate new/old candidate lists (:381-383).
-- **Environments:** `data/environments/archetypes.json` — archetype list:
+- **Environments:** `data/environments/archetypes.json` â€” archetype list:
   corner_store, back_alley, motel, bar, gas_station_casino,
   small_underground_casino, jazz_club, kitty_cat_lounge, delta_queen,
   grand_casino, motel_room, apartment, house.
@@ -38,32 +51,32 @@ null = open 24 hours. Owner-specified and proposed hours:
 
 | Archetype | Hours | Source |
 | --- | --- | --- |
-| corner_store | 6 AM – 1 AM | owner |
-| bar | 11 AM – 3 AM | owner |
+| corner_store | 6 AM â€“ 1 AM | owner |
+| bar | 11 AM â€“ 3 AM | owner |
 | small_underground_casino | 24h | owner |
-| kitty_cat_lounge | 1 PM – 5 AM | owner |
+| kitty_cat_lounge | 1 PM â€“ 5 AM | owner |
 | back_alley | 24h | owner |
 | motel | 24h | owner |
 | grand_casino | 24h | owner |
 | gas_station_casino | 24h | proposed (gas stations do not close) |
-| jazz_club | 5 PM – 3 AM | proposed |
-| delta_queen | 9 AM – 3 AM | proposed (riverboat boarding hours) |
+| jazz_club | 5 PM â€“ 3 AM | proposed |
+| delta_queen | 9 AM â€“ 3 AM | proposed (riverboat boarding hours) |
 | motel_room / apartment / house | 24h | homes are always accessible |
 
-Proposed rows are data — trivially owner-tunable later. Add a shared helper
+Proposed rows are data â€” trivially owner-tunable later. Add a shared helper
 (`environment_open_at(archetype, minute_of_day) -> bool`) with the wrap
 logic in ONE place (core layer, pure function); UI and travel both call it.
 
 ## 2. Closing-time eviction
 
-Evaluate **only at action boundaries** (never per-frame, never wall-clock —
+Evaluate **only at action boundaries** (never per-frame, never wall-clock â€”
 the determinism probe must keep hash-matching):
 
 1. When an action completes and the clock now sits at/past closing time for
    the current environment, enter `closing_time` state: show a clear
    message ("<Venue> is closing."), and grant **grace**: the player may
    finish the current bet/round if one is mid-resolution (blackjack hand,
-   roulette spin+payout, pinball bonus — the round runs to its natural end)
+   roulette spin+payout, pinball bonus â€” the round runs to its natural end)
    and then perform **at most one more action**.
 2. After grace is spent, all environment interactions except opening the
    world map are blocked (reuse the existing action-block/disabled-reason
@@ -71,7 +84,7 @@ the determinism probe must keep hash-matching):
    world map opens for forced travel.
 3. Edge cases that MUST be handled: closing during a triggered/talk event
    (event resolves first, counts as the grace action), closing while the
-   world map is already open (no-op — traveling anyway), attempting to
+   world map is already open (no-op â€” traveling anyway), attempting to
    re-enter a closed venue from the map (blocked with an "opens at <time>"
    reason), and save/load mid-grace (state round-trips; SB.3-style
    idempotence for the new fields).
@@ -81,11 +94,11 @@ the determinism probe must keep hash-matching):
 ## 3. Travel opens up: revisits always available
 
 1. Every node with `state == visited` is a legal travel destination from
-   anywhere, whenever the player can afford it (and it is open — see below).
+   anywhere, whenever the player can afford it (and it is open â€” see below).
    Extend the world map candidate logic (world_map.gd:381-383) so revisit
    candidates are not limited to adjacency; compute their cost from the
-   full path/geometry distance (`distance_blocks` × the existing band
-   multipliers). Price correlates with distance — farther = costlier.
+   full path/geometry distance (`distance_blocks` Ã— the existing band
+   multipliers). Price correlates with distance â€” farther = costlier.
 2. Closed destinations remain visible on the map but disabled with the
    "opens at <time>" reason. Because back_alley, motel, underground casino,
    grand_casino, gas_station, and homes are 24h, at least one destination is
@@ -93,10 +106,10 @@ the determinism probe must keep hash-matching):
 3. **No-stuck guarantee (hard requirement):** forced eviction with an empty
    bankroll must never soft-lock. Add a zero-cost "walk" fallback: the
    nearest 24h venue (or the player's home) is always reachable for free at
-   eviction time — walking takes proportionally more clock minutes instead
+   eviction time â€” walking takes proportionally more clock minutes instead
    of money. Extend the stuck-state sweep inventory with this scenario
    (broke player evicted at close) so it stays covered.
-4. Travel advances the clock by a per-block minute cost (data constant) —
+4. Travel advances the clock by a per-block minute cost (data constant) â€”
    arriving somewhere far costs real night hours.
 
 ## 4. UI
@@ -105,7 +118,7 @@ the determinism probe must keep hash-matching):
   (world map header) if not already there.
 - Venue cards/map nodes show open/closed and closing-soon (within ~1 hour)
   status. Plain text is fine now; note the queued attribute-glyph system
-  (docs/todo/attribute_glyph_system_prompt.md) will replace text badges —
+  (docs/todo/attribute_glyph_system_prompt.md) will replace text badges â€”
   route status text through one small helper so the glyph swap is one-site.
 
 ## Hard constraints
@@ -127,7 +140,7 @@ the determinism probe must keep hash-matching):
 ## Coordination note
 
 This task touches `run_state.gd`, `world_map.gd`, `foundation_main.gd`, and
-`archetypes.json` — files that currently carry other in-flight work (see
+`archetypes.json` â€” files that currently carry other in-flight work (see
 QUEUE.md). Do not start while those entries are claimed; when you do start,
 pull first and build on the landed state.
 
@@ -136,9 +149,9 @@ pull first and build on the landed state.
 1. `powershell -ExecutionPolicy Bypass -File tools\validate_project.ps1`
 2. `tools\check_godot.ps1 -RequireGodot -FoundationSuite systems` and
    `-FoundationSuite ui`.
-3. `tools\foundation_determinism_probe.ps1 -RequireGodot -SeedCount 10` —
+3. `tools\foundation_determinism_probe.ps1 -RequireGodot -SeedCount 10` â€”
    hash match with the clock/eviction active.
-4. `tools\foundation_stuck_state_sweep.ps1 -RequireGodot -SeedCount 100` —
+4. `tools\foundation_stuck_state_sweep.ps1 -RequireGodot -SeedCount 100` â€”
    includes the broke-eviction scenario, 0 stuck.
 5. Move this prompt to docs/todone/ with an execution record per RULES;
    update QUEUE.md. Commit locally; do NOT push.

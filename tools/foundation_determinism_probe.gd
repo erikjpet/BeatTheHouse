@@ -124,6 +124,8 @@ func _simulate_seed(seed: String, seed_index: int) -> Dictionary:
 	_apply_alcohol_timing(run_state, checkpoints, seed)
 	_apply_world_travel(run_state, checkpoints, seed)
 	_apply_triggered_event_chain(run_state, checkpoints, seed)
+	_apply_dialogue_sequence(run_state, checkpoints, seed)
+	_apply_talk_content_sequence(run_state, checkpoints, seed)
 	_install_all_game_environment(run_state, seed_index)
 	_checkpoint(run_state, checkpoints, seed, "all_games_fixture")
 	_apply_all_game_resolves(run_state, checkpoints, seed)
@@ -189,6 +191,105 @@ func _apply_triggered_event_chain(run_state: RunState, checkpoints: Array, seed:
 	run_state.complete_triggered_event_resolution("family_loan")
 	run_state.advance_environment_turns(1)
 	_checkpoint(run_state, checkpoints, seed, "triggered_event_resolved")
+
+
+func _apply_dialogue_sequence(run_state: RunState, checkpoints: Array, seed: String) -> void:
+	var dialogue := library.dialogue("pull_tab_clerk")
+	if dialogue.is_empty():
+		failures.append("Missing dialogue definition for determinism probe: pull_tab_clerk")
+		return
+	var speaker: Dictionary = dialogue.get("speaker", {}) if typeof(dialogue.get("speaker", {})) == TYPE_DICTIONARY else {}
+	if not run_state.enqueue_dialogue("pull_tab_clerk", "dialogue:pull_tab_clerk", speaker, str(dialogue.get("start", "greeting")), "determinism", {"trigger": "dialogue"}):
+		failures.append("%s could not enqueue dialogue determinism fixture." % seed)
+		return
+	_checkpoint(run_state, checkpoints, seed, "dialogue_queued")
+	var route_effects := _dialogue_choice_effects(dialogue, "greeting", "ask_routes")
+	if route_effects.is_empty():
+		failures.append("Missing ask_routes dialogue fixture for determinism probe.")
+		return
+	var route_event := _dialogue_event("dialogue_route_determinism", "ask_routes", route_effects)
+	route_event.resolve(run_state, run_state.current_environment, "ask_routes")
+	run_state.update_pending_talk_dialogue_node("dialogue:pull_tab_clerk", "routes")
+	_checkpoint(run_state, checkpoints, seed, "dialogue_route_choice")
+	var loose_effects := _dialogue_choice_effects(dialogue, "greeting", "ask_loose")
+	if loose_effects.is_empty():
+		failures.append("Missing ask_loose dialogue fixture for determinism probe.")
+		return
+	var loose_event := _dialogue_event("dialogue_loose_determinism", "ask_loose", loose_effects)
+	loose_event.resolve(run_state, run_state.current_environment, "ask_loose")
+	run_state.complete_talk_event_resolution("dialogue:pull_tab_clerk")
+	_checkpoint(run_state, checkpoints, seed, "dialogue_risky_choice")
+
+
+func _dialogue_choice_effects(dialogue: Dictionary, node_id: String, choice_id: String) -> Dictionary:
+	var nodes: Dictionary = dialogue.get("nodes", {}) if typeof(dialogue.get("nodes", {})) == TYPE_DICTIONARY else {}
+	var node: Dictionary = nodes.get(node_id, {}) if typeof(nodes.get(node_id, {})) == TYPE_DICTIONARY else {}
+	var choices: Array = node.get("choices", []) if typeof(node.get("choices", [])) == TYPE_ARRAY else []
+	for choice_value in choices:
+		if typeof(choice_value) != TYPE_DICTIONARY:
+			continue
+		var choice: Dictionary = choice_value
+		if str(choice.get("id", "")) != choice_id:
+			continue
+		var effects: Dictionary = choice.get("effects", {}) if typeof(choice.get("effects", {})) == TYPE_DICTIONARY else {}
+		return effects.duplicate(true)
+	return {}
+
+
+func _dialogue_event(event_id: String, choice_id: String, effects: Dictionary) -> EventModule:
+	var event := EventModuleScript.new()
+	event.setup({
+		"id": event_id,
+		"display_name": "Dialogue Determinism",
+		"type": "social",
+		"interaction_mode": "triggered",
+		"scopes": ["any"],
+		"trigger": {"type": "manual"},
+		"payload": {
+			"choices": [{
+				"id": choice_id,
+				"label": choice_id,
+				"text": choice_id,
+				"consequences": effects,
+			}],
+		},
+	}, library)
+	return event
+
+
+func _apply_talk_content_sequence(run_state: RunState, checkpoints: Array, seed: String) -> void:
+	run_state.add_suspicion("talk_content_probe", 90, "behavior")
+	for spec_value in [
+		{"event_id": "blackjack_counter_probe", "choice_id": "play_dumb", "trigger": "table_approach", "game_id": "blackjack"},
+		{"event_id": "floor_staff_heat_warning", "choice_id": "buy_round", "trigger": "heat_threshold", "threshold": 65},
+		{"event_id": "pit_boss_heat_warning", "choice_id": "bluff", "trigger": "heat_threshold", "threshold": 85},
+		{"event_id": "suspicious_patron", "choice_id": "talk_down", "trigger": "timed"},
+	]:
+		var spec: Dictionary = spec_value
+		var event_id := str(spec.get("event_id", ""))
+		var choice_id := str(spec.get("choice_id", ""))
+		var event_definition := library.event(event_id)
+		if event_definition.is_empty():
+			failures.append("Missing talk content determinism event: %s" % event_id)
+			continue
+		var context := {
+			"trigger": str(spec.get("trigger", "talk_content")),
+			"type": str(spec.get("trigger", "talk_content")),
+			"game_id": str(spec.get("game_id", "")),
+			"threshold": int(spec.get("threshold", 0)),
+			"hands_played": 2,
+		}
+		var speaker: Dictionary = event_definition.get("speaker", {}) if typeof(event_definition.get("speaker", {})) == TYPE_DICTIONARY else {}
+		if not run_state.enqueue_triggered_event(event_id, "talk_content_determinism", context, {"presentation": "talk", "speaker": speaker}):
+			failures.append("%s could not enqueue talk content event %s." % [seed, event_id])
+			continue
+		_checkpoint(run_state, checkpoints, seed, "talk_content_%s_queued" % event_id)
+		var event_module := _event_module(event_id)
+		if event_module == null:
+			continue
+		event_module.resolve(run_state, run_state.current_environment, choice_id)
+		run_state.complete_talk_event_resolution(event_id)
+		_checkpoint(run_state, checkpoints, seed, "talk_content_%s_resolved" % event_id)
 
 
 func _install_all_game_environment(run_state: RunState, seed_index: int) -> void:

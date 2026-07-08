@@ -240,6 +240,22 @@ func environment_interactable_objects(run_state: RunState, environment: Dictiona
 	var winner_count := _array_size(machine.get("winner_pile", []))
 	var label := _redeemer_label(environment)
 	return [{
+		"id": "pull_tab_clerk_dialogue",
+		"object_id": "dialogue:pull_tab_clerk",
+		"label": "Pull-Tab Clerk",
+		"short_description": "Answers quick questions about tabs.",
+		"enabled": true,
+		"action_summary": "Talk to the clerk.",
+		"effect_summary": "Tips, risk, route leads.",
+		"risk_summary": "Loose-ticket questions can draw heat.",
+		"cost_summary": "",
+		"dialogue_id": "pull_tab_clerk",
+		"visual_key": "pull_tab_redeemer",
+		"visual_type": "service",
+		"icon_key": "clerk_chat",
+		"available_actions": [{"id": "start_dialogue", "label": "Talk"}],
+		"confirm_action_id": "start_dialogue",
+	}, {
 		"id": REDEEM_HOOK_ID,
 		"object_id": "game_hook:%s:%s" % [get_id(), REDEEM_HOOK_ID],
 		"label": label,

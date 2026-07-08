@@ -1,5 +1,24 @@
 # Agent Prompt — Attribute Glyph System: Symbol Badges Replace Prose Text Boxes
 
+## Execution Record
+
+- Completion date: 2026-07-06.
+- Implementing commit hash(es): pending. The implementation is verified in the working tree, but this workspace contains broad unrelated dirty changes, including same-file edits; do not create a blended commit for this archive move.
+- Verification gates:
+  - `powershell -ExecutionPolicy Bypass -File tools\validate_project.ps1` -> PASS.
+  - `powershell -ExecutionPolicy Bypass -File tools\check_godot.ps1 -RequireGodot -FoundationSuite ui` -> PASS, report `D:\Projects\Beat-The-House\.tmp\test_reports\20260706_204117_smoke\summary.json`.
+  - `powershell -ExecutionPolicy Bypass -File tools\check_godot.ps1 -RequireGodot -FoundationSuite systems` -> PASS, report `D:\Projects\Beat-The-House\.tmp\test_reports\20260706_204250_smoke\summary.json`.
+  - `powershell -ExecutionPolicy Bypass -File tools\foundation_mouse_batch_playtest.ps1 -RunCount 10 -RequireGodot` -> PASS, strict gate, playable-loop `10/10`, victory `10/10`, true failures `0`.
+  - `powershell -ExecutionPolicy Bypass -File tools\foundation_performance_probe.ps1 -RequireGodot` -> FAIL on pre-existing synthetic game-surface idle rows not exercised by attribute badges: dice table p95 `2.00ms > 1.50ms`, baccarat p95 `3.25ms > 1.50ms`, roulette p95 `6.66ms > 1.50ms`, synthetic blackjack idle produced no draw samples. Badge-relevant environment focus observations remained within the probe path.
+- Summary:
+  - Added `data/art/attribute_glyphs.json` as the active authored glyph registry, avoiding the deprecated `data/runtime` path that production validators forbid.
+  - Added `scripts/core/attribute_badges.gd` for read-only badge translation and `scripts/ui/attribute_badge_row.gd` for cached Control/canvas rendering.
+  - Integrated badge rows into travel focus cards, world-map target nodes, item/shop/inventory detail paths, event modal choices, talk-dock choices, services/lenders, and the run-menu legend.
+  - Added validator required-file coverage and foundation/UI tests for registry validation, class coverage, read-only builders, legend enumeration, and inventory component rendering.
+- Deviations:
+  - The prompt referenced `data/runtime/attribute_glyphs.json`, but `tools/validate_project.ps1` explicitly forbids `data/runtime`; the registry was implemented under `data/art/attribute_glyphs.json`.
+  - No commit was created because the workspace is carrying unrelated dirty work and same-file edits. A later partition pass should commit this task separately.
+
 Copy everything below this line into the agent.
 
 ---

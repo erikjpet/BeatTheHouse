@@ -95,17 +95,30 @@ func route_for_target(map_data: Dictionary, current_id: String, target_id: Strin
 	var destination_id := target_id.strip_edges()
 	if source_id.is_empty() or destination_id.is_empty() or source_id == destination_id:
 		return {}
+	var source_node := node_by_id(normalized, source_id)
+	var destination_node := node_by_id(normalized, destination_id)
+	var direct_revisit_path := false
 	var path := _path_between_normalized(normalized, source_id, destination_id, true)
 	if path.size() < 2:
-		return {}
+		if source_node.is_empty() or destination_node.is_empty() or str(destination_node.get("state", STATE_HIDDEN)) != STATE_VISITED:
+			return {}
+		path = [source_id, destination_id]
+		direct_revisit_path = true
 	var route := library.route(destination_id).duplicate(true) if library != null else {}
 	var edge_lookup := _edge_lookup(normalized)
 	var distance_blocks := _path_distance_blocks_prepared(edge_lookup, path)
+	if direct_revisit_path:
+		var source_position: Dictionary = source_node.get("position", {"x": 0.5, "y": 0.5}) if typeof(source_node.get("position", {})) == TYPE_DICTIONARY else {"x": 0.5, "y": 0.5}
+		var destination_position: Dictionary = destination_node.get("position", {"x": 0.5, "y": 0.5}) if typeof(destination_node.get("position", {})) == TYPE_DICTIONARY else {"x": 0.5, "y": 0.5}
+		var direct_distance := Vector2(float(source_position.get("x", 0.5)), float(source_position.get("y", 0.5))).distance_to(Vector2(float(destination_position.get("x", 0.5)), float(destination_position.get("y", 0.5))))
+		distance_blocks = maxi(1, ceili(direct_distance * 15.0))
 	var band := _distance_band(distance_blocks)
 	var base_cost := _path_base_cost_prepared(edge_lookup, path)
 	var generated_cost := _path_cost_prepared(edge_lookup, path)
 	var risk_decay := _path_risk_decay_prepared(edge_lookup, path, band)
 	var edge_id := _route_edge_id_prepared(edge_lookup, path)
+	if direct_revisit_path:
+		edge_id = "revisit:%s:%s" % [source_id, destination_id]
 	if route.is_empty():
 		route = {
 			"id": destination_id,
@@ -392,18 +405,12 @@ static func travel_target_ids(map_data: Dictionary, node_id: String = "", max_ne
 		var target_id := str(candidate.get("id", ""))
 		if not target_id.is_empty() and not result.has(target_id):
 			result.append(target_id)
-	var old_slots := maxi(0, total_limit - result.size())
-	if result.size() >= new_limit and new_limit > 0:
-		old_slots = mini(old_slots, 1)
 	for candidate_value in enabled_old_candidates:
-		if old_slots <= 0 or result.size() >= total_limit:
-			break
 		var candidate: Dictionary = candidate_value
 		var target_id := str(candidate.get("id", ""))
 		if target_id.is_empty() or result.has(target_id):
 			continue
 		result.append(target_id)
-		old_slots -= 1
 	for candidate_value in fallback_new_candidates:
 		if result.size() >= total_limit or result.size() >= maxi(1, new_limit):
 			break
@@ -412,8 +419,6 @@ static func travel_target_ids(map_data: Dictionary, node_id: String = "", max_ne
 		if not target_id.is_empty() and not result.has(target_id):
 			result.append(target_id)
 	for candidate_value in fallback_old_candidates:
-		if result.size() >= total_limit:
-			break
 		var candidate: Dictionary = candidate_value
 		var target_id := str(candidate.get("id", ""))
 		if not target_id.is_empty() and not result.has(target_id):
@@ -519,6 +524,27 @@ static func unlock_nodes(map_data: Dictionary, node_ids: Array, source: String =
 		else:
 			node["unlocked"] = true
 		node["discovery_source"] = clean_source
+		nodes[index] = node
+	normalized["nodes"] = nodes
+	return normalized
+
+
+static func refresh_shop_node_environments(map_data: Dictionary, node_ids: Array) -> Dictionary:
+	if node_ids.is_empty():
+		return normalize(map_data)
+	var normalized := normalize(map_data)
+	var refresh_ids := _string_array(node_ids)
+	var nodes: Array = normalized.get("nodes", [])
+	for index in range(nodes.size()):
+		if typeof(nodes[index]) != TYPE_DICTIONARY:
+			continue
+		var node: Dictionary = nodes[index]
+		var node_id := str(node.get("id", ""))
+		if not refresh_ids.has(node_id):
+			continue
+		if str(node.get("kind", "")).strip_edges().to_lower() != "shop":
+			continue
+		node["environment"] = {}
 		nodes[index] = node
 	normalized["nodes"] = nodes
 	return normalized
@@ -1313,9 +1339,21 @@ static func _travel_candidate_entries_prepared(map_data: Dictionary, source_id: 
 			continue
 		var path := _path_between_prepared(map_data, source_id, target_id, true, visible_lookup)
 		if path.size() < 2:
-			continue
+			if not visited_only:
+				continue
+			path = [source_id, target_id]
 		var blocks := _path_distance_blocks_prepared(edge_lookup, path)
+		var direct_edge: Dictionary = edge_lookup.get(_edge_id(str(path[0]), str(path[1])), {})
+		if visited_only and path.size() == 2 and direct_edge.is_empty():
+			var source_node: Dictionary = node_lookup.get(source_id, {})
+			var source_position: Dictionary = source_node.get("position", {"x": 0.5, "y": 0.5}) if typeof(source_node.get("position", {})) == TYPE_DICTIONARY else {"x": 0.5, "y": 0.5}
+			var target_position: Dictionary = node.get("position", {"x": 0.5, "y": 0.5}) if typeof(node.get("position", {})) == TYPE_DICTIONARY else {"x": 0.5, "y": 0.5}
+			var direct_distance := Vector2(float(source_position.get("x", 0.5)), float(source_position.get("y", 0.5))).distance_to(Vector2(float(target_position.get("x", 0.5)), float(target_position.get("y", 0.5))))
+			blocks = maxi(1, ceili(direct_distance * 15.0))
 		var cost := _path_cost_prepared(edge_lookup, path)
+		if cost <= 0:
+			var band := _distance_band(blocks)
+			cost = maxi(0, ceili(float(_base_cost_for_band(band)) * float(BAND_COST_SCALE.get(band, 1.0))))
 		var last_visit_index := _last_index_of(visited_path, target_id)
 		var enabled_hint := _candidate_enabled_hint(node, target_id, enabled_lookup)
 		var score := float(blocks) + float(cost) * 0.08 + float(int(node.get("tier", 1))) * 0.18

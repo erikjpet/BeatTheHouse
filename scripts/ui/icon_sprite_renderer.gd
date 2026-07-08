@@ -1,9 +1,9 @@
 class_name IconSpriteRenderer
 extends RefCounted
 
-# Renders small pixel sprites from data/runtime/icon_sprites.json. The runtime
-# controller and scene canvas both use this helper so item/game/event icons are
-# authored as data instead of content-id branches inside UI scripts.
+# Renders small pixel sprites from data-authored shape dictionaries. Runtime
+# controllers and canvases use this helper so icons and badges are authored as
+# data instead of content-id branches inside UI scripts.
 
 const VisualStyleScript := preload("res://scripts/ui/visual_style.gd")
 const SPRITE_UNIT := 32.0

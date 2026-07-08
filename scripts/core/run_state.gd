@@ -63,6 +63,8 @@ const GRAND_CASINO_SHOWDOWN_DEFAULT_SUCCESS_MESSAGE := "Rourke cannot prove enou
 const GRAND_CASINO_SHOWDOWN_DEFAULT_FAILURE_MESSAGE := "The story falls apart in the back room. The casino takes you out back and the run ends."
 const GRAND_CASINO_HIGH_ROLLER_DEFAULT_SUCCESS_MESSAGE := "The host issues you a Grand Casino Players Card and lets you leave with your winnings. The next act is not implemented yet."
 const TERMINAL_SCORE_VICTORY_MULTIPLIER := 3
+const HEAT_COOLDOWN_ACTIONS_FLAG := "heat_cooldown_actions"
+const HEAT_COOLDOWN_PER_ACTION_FLAG := "heat_cooldown_per_action"
 const ITEM_DEFINITIONS_PATH := "res://data/items/items.json"
 const AVAILABILITY_AVAILABLE := "available"
 const AVAILABILITY_TRANSIENT_BLOCKED := "transient_blocked"
@@ -76,6 +78,10 @@ const STORY_SEEN_TYPE_FLAG_PREFIX := "_story_seen:"
 const STORY_SEEN_EVENT_FLAG_PREFIX := "_story_seen_event:"
 const STORY_SEEN_OBJECTIVE_FLAG_PREFIX := "_story_seen_objective:"
 const GAME_CLOCK_START_MINUTE := 8 * 60
+const ACTION_CLOCK_MINUTES := 8
+const CLOSING_TIME_DEFAULT_GRACE_ACTIONS := 1
+const CLOSING_TIME_PHASE_GRACE := "grace"
+const CLOSING_TIME_PHASE_FORCED_TRAVEL := "forced_travel"
 const HOME_SELECTION_RANDOM := "random"
 const HOME_TENURE_RENT := "rent"
 const HOME_TENURE_STAY := "stay"
@@ -106,10 +112,12 @@ var environment_history: Array = []
 var environment_history_archive_count: int = 0
 var unlocked_travel: Array = []
 var narrative_flags: Dictionary = {}
+var story_flags: Dictionary = {}
 var story_log: Array = []
 var story_log_archive_count: int = 0
 var simulation_msec: int = 0
 var game_clock_minutes: int = GAME_CLOCK_START_MINUTE
+var closing_time_state: Dictionary = {}
 var act_index: int = 0
 var home_state: Dictionary = {}
 var run_status: String = RUN_STATUS_ACTIVE
@@ -153,10 +161,12 @@ func start_new(p_seed_text: String = "FOUNDATION-SEED", p_challenge_config: Dict
 	environment_history_archive_count = 0
 	unlocked_travel = []
 	narrative_flags = {}
+	story_flags = {}
 	story_log = []
 	story_log_archive_count = 0
 	simulation_msec = 0
 	game_clock_minutes = GAME_CLOCK_START_MINUTE
+	closing_time_state = {}
 	act_index = 0
 	home_state = {}
 	run_status = RUN_STATUS_ACTIVE
@@ -285,6 +295,76 @@ func advance_game_clock_minutes(amount: int) -> void:
 	var next_day := game_day()
 	if next_day > previous_day:
 		_advance_home_day_rollovers(previous_day, next_day)
+
+
+func advance_action_clock(amount: int = 1) -> void:
+	var actions := maxi(0, amount)
+	if actions <= 0:
+		return
+	advance_game_clock_minutes(actions * ACTION_CLOCK_MINUTES)
+
+
+func closing_time_status() -> Dictionary:
+	return _normalize_closing_time_state(closing_time_state)
+
+
+func closing_time_active() -> bool:
+	return not closing_time_state.is_empty() and not str(closing_time_state.get("phase", "")).is_empty()
+
+
+func closing_time_forced_travel_required() -> bool:
+	return str(closing_time_state.get("phase", "")) == CLOSING_TIME_PHASE_FORCED_TRAVEL
+
+
+func closing_time_environment_id() -> String:
+	return str(closing_time_state.get("environment_id", "")).strip_edges()
+
+
+func begin_closing_time(environment_data: Dictionary, current_minute: int, grace_actions: int = CLOSING_TIME_DEFAULT_GRACE_ACTIONS) -> Dictionary:
+	var environment_id := str(environment_data.get("id", environment_data.get("world_node_id", environment_data.get("archetype_id", "")))).strip_edges()
+	var display_name := str(environment_data.get("display_name", environment_id.replace("_", " ").capitalize()))
+	closing_time_state = _normalize_closing_time_state({
+		"phase": CLOSING_TIME_PHASE_GRACE,
+		"environment_id": environment_id,
+		"world_node_id": str(environment_data.get("world_node_id", environment_data.get("archetype_id", ""))).strip_edges(),
+		"archetype_id": str(environment_data.get("archetype_id", environment_id)).strip_edges(),
+		"display_name": display_name,
+		"started_game_clock_minutes": maxi(0, game_clock_minutes),
+		"started_minute_of_day": clampi(current_minute, 0, EnvironmentHours.MINUTES_PER_DAY - 1),
+		"grace_actions_remaining": maxi(0, grace_actions),
+		"message": "%s is closing." % display_name,
+	})
+	return closing_time_state.duplicate(true)
+
+
+func spend_closing_time_grace_action() -> Dictionary:
+	if closing_time_state.is_empty():
+		return {}
+	var state := _normalize_closing_time_state(closing_time_state)
+	var remaining := maxi(0, int(state.get("grace_actions_remaining", 0)))
+	if remaining > 0:
+		remaining -= 1
+	state["grace_actions_remaining"] = remaining
+	if remaining <= 0:
+		state["phase"] = CLOSING_TIME_PHASE_FORCED_TRAVEL
+		state["message"] = "%s is closed. Choose a route out." % str(state.get("display_name", "This venue"))
+	closing_time_state = state
+	return state.duplicate(true)
+
+
+func force_closing_time_travel() -> Dictionary:
+	if closing_time_state.is_empty():
+		return {}
+	var state := _normalize_closing_time_state(closing_time_state)
+	state["grace_actions_remaining"] = 0
+	state["phase"] = CLOSING_TIME_PHASE_FORCED_TRAVEL
+	state["message"] = "%s is closed. Choose a route out." % str(state.get("display_name", "This venue"))
+	closing_time_state = state
+	return state.duplicate(true)
+
+
+func clear_closing_time_state() -> void:
+	closing_time_state = {}
 
 
 func home_is_active() -> bool:
@@ -3420,6 +3500,7 @@ func advance_environment_turns(amount: int = 1) -> void:
 	if current_environment.is_empty() or is_terminal():
 		return
 	var safe_amount := maxi(0, amount)
+	advance_action_clock(safe_amount)
 	simulation_msec = maxi(0, simulation_msec + safe_amount * SIMULATION_ACTION_MSEC)
 	event_cadence_advance_actions(safe_amount)
 	var alcohol_decay := safe_amount * DRUNK_TURN_DECAY
@@ -3435,7 +3516,44 @@ func advance_environment_turns(amount: int = 1) -> void:
 	var previous_decay_step := int(floor(float(previous_turns) / float(decay_interval)))
 	var next_decay_step := int(floor(float(next_turns) / float(decay_interval)))
 	_decrease_current_suspicion(next_decay_step - previous_decay_step)
+	_advance_heat_cooldown(safe_amount)
 	_advance_debt_clocks(safe_amount)
+
+
+func start_heat_cooldown(actions: int, per_action: int = 1) -> void:
+	var safe_actions := maxi(0, actions)
+	var safe_per_action := maxi(0, per_action)
+	if safe_actions <= 0 or safe_per_action <= 0:
+		return
+	narrative_flags[HEAT_COOLDOWN_ACTIONS_FLAG] = maxi(active_heat_cooldown_actions(), safe_actions)
+	narrative_flags[HEAT_COOLDOWN_PER_ACTION_FLAG] = maxi(active_heat_cooldown_per_action(), safe_per_action)
+
+
+func active_heat_cooldown_actions() -> int:
+	return maxi(0, int(narrative_flags.get(HEAT_COOLDOWN_ACTIONS_FLAG, 0)))
+
+
+func active_heat_cooldown_per_action() -> int:
+	return maxi(0, int(narrative_flags.get(HEAT_COOLDOWN_PER_ACTION_FLAG, 0)))
+
+
+func _advance_heat_cooldown(amount: int) -> void:
+	var remaining_actions := active_heat_cooldown_actions()
+	var per_action := active_heat_cooldown_per_action()
+	if remaining_actions <= 0 or per_action <= 0:
+		narrative_flags.erase(HEAT_COOLDOWN_ACTIONS_FLAG)
+		narrative_flags.erase(HEAT_COOLDOWN_PER_ACTION_FLAG)
+		return
+	var consumed_actions := mini(remaining_actions, maxi(0, amount))
+	if consumed_actions <= 0:
+		return
+	_decrease_current_suspicion(consumed_actions * per_action)
+	remaining_actions -= consumed_actions
+	if remaining_actions > 0:
+		narrative_flags[HEAT_COOLDOWN_ACTIONS_FLAG] = remaining_actions
+	else:
+		narrative_flags.erase(HEAT_COOLDOWN_ACTIONS_FLAG)
+		narrative_flags.erase(HEAT_COOLDOWN_PER_ACTION_FLAG)
 
 
 func _advance_travel_lock(amount: int) -> void:
@@ -3662,6 +3780,14 @@ func resolve_event(event_id: String) -> void:
 	current_environment["resolved_event_ids"] = resolved
 
 
+func set_story_flag(flag_id: String, value: Variant = true) -> void:
+	var clean_id := flag_id.strip_edges()
+	if clean_id.is_empty():
+		return
+	story_flags[clean_id] = value
+	narrative_flags[clean_id] = value
+
+
 # Enqueues a world-acting event for modal resolution.
 func enqueue_triggered_event(event_id: String, source: String = "", context: Dictionary = {}, entry_overrides: Dictionary = {}) -> bool:
 	var normalized_id := event_id.strip_edges()
@@ -3687,6 +3813,42 @@ func enqueue_triggered_event(event_id: String, source: String = "", context: Dic
 		entry[str(key)] = entry_overrides[key]
 	pending_triggered_events.append(_normalize_triggered_event_entry(entry))
 	return true
+
+
+func enqueue_dialogue(dialogue_id: String, event_id: String, speaker: Dictionary, current_node: String, source: String = "dialogue", context: Dictionary = {}) -> bool:
+	var clean_dialogue_id := dialogue_id.strip_edges()
+	var clean_event_id := event_id.strip_edges()
+	if clean_dialogue_id.is_empty():
+		return false
+	if clean_event_id.is_empty():
+		clean_event_id = "dialogue:%s" % clean_dialogue_id
+	var node_id := current_node.strip_edges()
+	var overrides := {
+		"presentation": "talk",
+		"dialogue_id": clean_dialogue_id,
+		"current_node": node_id,
+		"speaker": speaker.duplicate(true),
+	}
+	return enqueue_triggered_event(clean_event_id, source, context, overrides)
+
+
+func update_pending_talk_dialogue_node(event_id: String, node_id: String) -> bool:
+	var expected_id := event_id.strip_edges()
+	var clean_node := node_id.strip_edges()
+	if expected_id.is_empty() or clean_node.is_empty():
+		return false
+	for index in range(pending_triggered_events.size()):
+		var entry := _normalize_triggered_event_entry(pending_triggered_events[index])
+		if str(entry.get("presentation", "modal")) != "talk":
+			continue
+		if str(entry.get("event_id", "")) != expected_id:
+			continue
+		if str(entry.get("dialogue_id", "")).strip_edges().is_empty():
+			return false
+		entry["current_node"] = clean_node
+		pending_triggered_events[index] = entry
+		return true
+	return false
 
 
 # Returns the first queued modal triggered event without consuming it.
@@ -3835,6 +3997,7 @@ func add_next_archetypes(archetype_ids: Array) -> void:
 	unlocked_travel = _unique_strings(unlocked_travel + clean_ids)
 	if has_world_map():
 		world_map = WorldMap.unlock_nodes(world_map, clean_ids, WorldMap.DISCOVERY_SOURCE_EVENT)
+		world_map = WorldMap.refresh_shop_node_environments(world_map, clean_ids)
 	current_environment["layout"] = EnvironmentInstance.ensure_generated_layout(current_environment)
 
 
@@ -3847,6 +4010,7 @@ func set_next_archetypes(archetype_ids: Array) -> void:
 	unlocked_travel = _unique_strings(unlocked_travel + clean_ids)
 	if has_world_map():
 		world_map = WorldMap.unlock_nodes(world_map, clean_ids, WorldMap.DISCOVERY_SOURCE_EVENT)
+		world_map = WorldMap.refresh_shop_node_environments(world_map, clean_ids)
 	current_environment["layout"] = EnvironmentInstance.ensure_generated_layout(current_environment)
 
 
@@ -4095,7 +4259,7 @@ func _evaluate_immediate_terminal_state(defer_bankroll_zero: bool = false) -> vo
 			return
 		fail_run(FAILURE_POLICE_CAPTURE, POLICE_CAPTURE_FAILURE_MESSAGE)
 		return
-	if bankroll <= 0 and not defer_bankroll_zero:
+	if bankroll <= 0 and not defer_bankroll_zero and not closing_time_forced_travel_required():
 		fail_run(FAILURE_BANKROLL_ZERO, BANKROLL_ZERO_FAILURE_MESSAGE)
 
 
@@ -4160,10 +4324,12 @@ func to_dict() -> Dictionary:
 		"environment_history_archive_count": environment_history_archive_count,
 		"unlocked_travel": unlocked_travel.duplicate(true),
 		"narrative_flags": narrative_flags.duplicate(true),
+		"story_flags": story_flags.duplicate(true),
 		"story_log": _normalize_story_log(story_log),
 		"story_log_archive_count": story_log_archive_count,
 		"simulation_msec": simulation_msec,
 		"game_clock_minutes": game_clock_minutes,
+		"closing_time_state": _normalize_closing_time_state(closing_time_state),
 		"act_index": act_index,
 		"home_state": _normalize_home_state(home_state),
 		"run_status": run_status,
@@ -4208,6 +4374,9 @@ func from_dict(data: Dictionary) -> void:
 	_compact_environment_history()
 	unlocked_travel = _copy_array(data.get("unlocked_travel", current_environment.get("travel_hooks", [])))
 	narrative_flags = _copy_dict(data.get("narrative_flags", {}))
+	story_flags = _copy_dict(data.get("story_flags", {}))
+	for story_flag_key in story_flags.keys():
+		narrative_flags[str(story_flag_key)] = story_flags[story_flag_key]
 	story_log_archive_count = maxi(0, int(data.get("story_log_archive_count", 0)))
 	story_log = _normalize_story_log(_copy_array(data.get("story_log", [])))
 	for story_entry_value in story_log:
@@ -4216,6 +4385,7 @@ func from_dict(data: Dictionary) -> void:
 	_compact_story_log()
 	simulation_msec = maxi(0, int(data.get("simulation_msec", int(_copy_dict(data.get("event_cadence", {})).get("action_index", 0)) * SIMULATION_ACTION_MSEC)))
 	game_clock_minutes = maxi(0, int(data.get("game_clock_minutes", GAME_CLOCK_START_MINUTE)))
+	closing_time_state = _normalize_closing_time_state(_copy_dict(data.get("closing_time_state", {})))
 	act_index = maxi(0, int(data.get("act_index", 0)))
 	home_state = _normalize_home_state(_copy_dict(data.get("home_state", {})))
 	var saved_run_status := str(data.get("run_status", RUN_STATUS_ACTIVE))
@@ -4528,6 +4698,8 @@ static func _normalize_triggered_event_entry(value: Variant) -> Dictionary:
 		"environment_turns": maxi(0, int(source.get("environment_turns", source.get("queued_turn", 0)))),
 		"presentation": presentation,
 		"speaker": _normalize_triggered_event_speaker(source.get("speaker", {})),
+		"dialogue_id": str(source.get("dialogue_id", "")).strip_edges(),
+		"current_node": str(source.get("current_node", source.get("dialogue_node", ""))).strip_edges(),
 		"timing": _normalize_triggered_event_timing(source.get("timing", {})),
 		"active": bool(source.get("active", false)),
 	}
@@ -4689,6 +4861,29 @@ static func _normalize_environment(data: Dictionary) -> Dictionary:
 	return environment
 
 
+static func _normalize_closing_time_state(data: Dictionary) -> Dictionary:
+	if data.is_empty():
+		return {}
+	var phase := str(data.get("phase", "")).strip_edges()
+	if phase != CLOSING_TIME_PHASE_GRACE and phase != CLOSING_TIME_PHASE_FORCED_TRAVEL:
+		return {}
+	var environment_id := str(data.get("environment_id", "")).strip_edges()
+	var display_name := str(data.get("display_name", environment_id.replace("_", " ").capitalize())).strip_edges()
+	if display_name.is_empty():
+		display_name = "This venue"
+	return {
+		"phase": phase,
+		"environment_id": environment_id,
+		"world_node_id": str(data.get("world_node_id", "")).strip_edges(),
+		"archetype_id": str(data.get("archetype_id", environment_id)).strip_edges(),
+		"display_name": display_name,
+		"started_game_clock_minutes": maxi(0, int(data.get("started_game_clock_minutes", 0))),
+		"started_minute_of_day": clampi(int(data.get("started_minute_of_day", 0)), 0, EnvironmentHours.MINUTES_PER_DAY - 1),
+		"grace_actions_remaining": maxi(0, int(data.get("grace_actions_remaining", 0))),
+		"message": str(data.get("message", "%s is closing." % display_name)),
+	}
+
+
 # Normalizes saved cadence state after load or older saves.
 func _normalize_event_cadence(data: Dictionary) -> Dictionary:
 	if data.is_empty():
@@ -4832,6 +5027,15 @@ static func _normalize_economic_profile(profile: Dictionary) -> Dictionary:
 	for key in ["stake_floor", "stake_ceiling"]:
 		if result.has(key):
 			result[key] = int(result.get(key, 0))
+	if typeof(result.get("game_stake_ceiling_overrides", {})) == TYPE_DICTIONARY:
+		var normalized_overrides: Dictionary = {}
+		var overrides: Dictionary = result.get("game_stake_ceiling_overrides", {})
+		for game_id in overrides.keys():
+			var normalized_id := str(game_id).strip_edges()
+			if normalized_id.is_empty():
+				continue
+			normalized_overrides[normalized_id] = maxi(0, int(overrides.get(game_id, 0)))
+		result["game_stake_ceiling_overrides"] = normalized_overrides
 	return result
 
 

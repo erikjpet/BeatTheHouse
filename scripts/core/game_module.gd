@@ -97,7 +97,7 @@ func cheat_actions(run_state: RunState, environment: Dictionary) -> Array:
 # Packages all actions and stake bounds for the UI.
 func actions(run_state: RunState, environment: Dictionary) -> Dictionary:
 	var economic_profile: Dictionary = environment.get("economic_profile", {})
-	var base_stake_ceiling := int(economic_profile.get("stake_ceiling", run_state.bankroll))
+	var base_stake_ceiling := stake_ceiling_for_game(environment, get_id(), run_state.bankroll)
 	var economy_stake_ceiling := run_state.economy_stake_ceiling(base_stake_ceiling)
 	var wager_stake_ceiling := run_state.wager_stake_ceiling(base_stake_ceiling)
 	return {
@@ -113,6 +113,17 @@ func actions(run_state: RunState, environment: Dictionary) -> Dictionary:
 		"economy_state": run_state.economy(),
 		"economy_pressure_applied": economy_stake_ceiling < wager_stake_ceiling,
 	}
+
+
+# Returns the room stake ceiling, optionally overridden per game id.
+static func stake_ceiling_for_game(environment: Dictionary, game_id: String, fallback_ceiling: int = 1) -> int:
+	var economic_profile: Dictionary = environment.get("economic_profile", {}) if typeof(environment.get("economic_profile", {})) == TYPE_DICTIONARY else {}
+	var ceiling := int(economic_profile.get("stake_ceiling", fallback_ceiling))
+	var overrides: Dictionary = economic_profile.get("game_stake_ceiling_overrides", {}) if typeof(economic_profile.get("game_stake_ceiling_overrides", {})) == TYPE_DICTIONARY else {}
+	var normalized_game_id := game_id.strip_edges()
+	if not normalized_game_id.is_empty() and overrides.has(normalized_game_id):
+		ceiling = int(overrides.get(normalized_game_id, ceiling))
+	return maxi(0, ceiling)
 
 
 # Optional game-specific surface presentation. Returned data is display/input
@@ -223,12 +234,15 @@ static func empty_result_deltas() -> Dictionary:
 		"drunk_delta": 0,
 		"pending_drunk_absorption_delta": 0,
 		"drunk_distortion_suppression_turns": 0,
+		"heat_cooldown_actions": 0,
+		"heat_cooldown_per_action": 0,
 		"alcoholic_delta": 0,
 		"baseline_luck_delta": 0,
 		"debt_changes": [],
 		"inventory_add": [],
 		"inventory_remove": [],
 		"flags_set": {},
+		"story_flags_set": {},
 		"travel_hooks_add": [],
 		"travel_changes": {},
 		"story_log": [],
@@ -421,7 +435,7 @@ static func skill_outcome_for_grade(prefix: String, grade: String, fallback_grad
 # Builds a normalized ActionResult dictionary from module payload data.
 static func build_action_result(payload: Dictionary = {}) -> Dictionary:
 	var source_deltas := _copy_dict(payload.get("deltas", {}))
-	for key in ["bankroll_delta", "suspicion_delta", "alcohol_intake", "drunk_delta", "pending_drunk_absorption_delta", "drunk_distortion_suppression_turns", "alcoholic_delta", "baseline_luck_delta", "ended"]:
+	for key in ["bankroll_delta", "suspicion_delta", "alcohol_intake", "drunk_delta", "pending_drunk_absorption_delta", "drunk_distortion_suppression_turns", "heat_cooldown_actions", "heat_cooldown_per_action", "alcoholic_delta", "baseline_luck_delta", "ended"]:
 		if payload.has(key) and not source_deltas.has(key):
 			source_deltas[key] = payload[key]
 	if payload.has("messages") and not source_deltas.has("messages"):
@@ -639,6 +653,10 @@ static func apply_result(run_state: RunState, result: Dictionary, rng: RngStream
 	var drunk_distortion_suppression_turns := int(deltas.get("drunk_distortion_suppression_turns", 0))
 	if drunk_distortion_suppression_turns > 0:
 		run_state.suppress_drunk_distortion(drunk_distortion_suppression_turns)
+	var heat_cooldown_actions := int(deltas.get("heat_cooldown_actions", 0))
+	var heat_cooldown_per_action := int(deltas.get("heat_cooldown_per_action", 0))
+	if heat_cooldown_actions > 0 and heat_cooldown_per_action > 0:
+		run_state.start_heat_cooldown(heat_cooldown_actions, heat_cooldown_per_action)
 	var alcoholic_delta := int(deltas.get("alcoholic_delta", 0))
 	if alcoholic_delta != 0:
 		run_state.change_alcoholic(alcoholic_delta)
@@ -658,6 +676,9 @@ static func apply_result(run_state: RunState, result: Dictionary, rng: RngStream
 	var flags := _copy_dict(deltas.get("flags_set", {}))
 	for key in flags.keys():
 		run_state.narrative_flags[str(key)] = flags[key]
+	var story_flags := _copy_dict(deltas.get("story_flags_set", {}))
+	for key in story_flags.keys():
+		run_state.set_story_flag(str(key), story_flags[key])
 	var travel_hooks := _copy_array(deltas.get("travel_hooks_add", []))
 	if not travel_hooks.is_empty():
 		run_state.add_next_archetypes(travel_hooks)
@@ -722,7 +743,7 @@ func resolve(action_id: String, stake: int, run_state: RunState, environment: Di
 	var is_cheat := _is_cheat_action(action_id)
 	var economic_profile: Dictionary = environment.get("economic_profile", {})
 	var stake_floor := int(economic_profile.get("stake_floor", 1))
-	var stake_ceiling := run_state.wager_stake_ceiling(int(economic_profile.get("stake_ceiling", run_state.bankroll)))
+	var stake_ceiling := run_state.wager_stake_ceiling(stake_ceiling_for_game(environment, get_id(), run_state.bankroll))
 	if stake_ceiling < stake_floor or stake_ceiling <= 0:
 		return _empty_result(action_id, stake, environment, "Economy pressure leaves no valid stake.")
 	var adjusted_stake := clampi(stake, stake_floor, stake_ceiling)
@@ -1157,11 +1178,11 @@ static func _normalize_result_deltas(value: Variant) -> Dictionary:
 	for key in result.keys():
 		if not source.has(key):
 			continue
-		if key == "bankroll_delta" or key == "suspicion_delta" or key == "alcohol_intake" or key == "drunk_delta" or key == "pending_drunk_absorption_delta" or key == "drunk_distortion_suppression_turns" or key == "alcoholic_delta" or key == "baseline_luck_delta":
+		if key == "bankroll_delta" or key == "suspicion_delta" or key == "alcohol_intake" or key == "drunk_delta" or key == "pending_drunk_absorption_delta" or key == "drunk_distortion_suppression_turns" or key == "heat_cooldown_actions" or key == "heat_cooldown_per_action" or key == "alcoholic_delta" or key == "baseline_luck_delta":
 			result[key] = int(source[key])
 		elif key == "ended":
 			result[key] = bool(source[key])
-		elif key == "flags_set" or key == "travel_changes" or key == "demo_finale":
+		elif key == "flags_set" or key == "story_flags_set" or key == "travel_changes" or key == "demo_finale":
 			result[key] = _copy_dict(source[key])
 		else:
 			result[key] = _copy_array(source[key])

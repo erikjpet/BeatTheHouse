@@ -1,3 +1,26 @@
+# Execution Record
+
+Completion date: 2026-07-07
+
+Commit hash(es): not committed in this run. The shared workspace already had
+unrelated dirty work, including pre-existing edits in `data/environments/archetypes.json`
+and multiple docs/todo moves, so this task was left as local changes for the
+owner to partition safely.
+
+Verification gates:
+- `.tools\godot-4.6-stable\Godot_v4.6-stable_win64_console.exe --path . --script res://tools/environment_layout_screenshots.gd -- --out=D:\Projects\Beat-The-House\.tmp\layout_survey_semantic_final` -> `LAYOUT_SURVEY_DONE 14 environments`.
+- Parsed `.tmp\layout_survey_semantic_final\layout_report.json` -> `NO_OVERLAPS`.
+- Parsed mapped object centers against authored layout spots -> `NO_FALLBACK_BUMPS_FOR_MAPPED_OBJECTS`.
+- `powershell -ExecutionPolicy Bypass -File tools/validate_project.ps1` -> `Beat the House foundation architecture validation passed.`
+
+Implementation summary:
+- Bar: added a second pull-tab hook spot on the bar service counter so the ticket redeemer no longer falls into the Leave exit while the dialogue clerk remains at the approved service-end anchor.
+- Gas Station Casino: added a second pull-tab hook spot along the lower service counter, keeping the dialogue clerk near the register/cage and the redeemer away from the Leave exit.
+- Jazz Club: added a second pull-tab hook spot on the bar/stage-side service area so the ticket redeemer is no longer bumped into the entrance/Leave object.
+- Other environments were verified by the final survey with no authored-spot fallback bumps or overlap corrections required.
+
+Deviations:
+- `docs/todo/QUEUE.md` still marked this prompt blocked because beach work had once touched archetypes/routes. That blocker is obsolete in the current tree (`docs/todone/beach_environment_prompt.md` exists), and the owner explicitly requested finishing this prompt.
 # Agent Prompt — Semantic Placement of Environment Objects (All Archetypes)
 
 Copy everything below this line into the agent.

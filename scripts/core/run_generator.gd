@@ -155,6 +155,10 @@ func _enabled_world_route_ids(run_state: RunState, map_data: Dictionary, source_
 		var route := map.route_for_target(map_data, source_id, target_id)
 		if route.is_empty():
 			continue
+		var archetype := _archetype_by_id(target_id)
+		var arrival_minute := (run_state.game_minute_of_day() + maxi(1, int(route.get("distance_blocks", 1))) * 6) % EnvironmentHours.MINUTES_PER_DAY
+		if not EnvironmentHours.environment_open_at(archetype, arrival_minute):
+			continue
 		var status := run_state.travel_route_status(route)
 		if not bool(status.get("hidden", false)) and bool(status.get("available", true)):
 			result.append(target_id)

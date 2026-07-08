@@ -29,11 +29,13 @@ $requiredFiles = @(
     "scripts/core/event_module.gd",
     "scripts/core/platform_services.gd",
     "scripts/core/profile_inventory.gd",
+    "scripts/core/attribute_badges.gd",
     "scripts/core/content_library.gd",
     "scripts/core/rng_stream.gd",
     "scripts/core/run_generator.gd",
     "scripts/core/save_service.gd",
     "scripts/ui/foundation_main.gd",
+    "scripts/ui/attribute_badge_row.gd",
     "scripts/ui/visual_style.gd",
     "scripts/tests/foundation_check.gd",
     "scripts/tests/ui_scene_compile_check.gd",
@@ -43,6 +45,7 @@ $requiredFiles = @(
     "tools/foundation_visual_qa.ps1",
     "tools/foundation_visual_qa.gd",
     "data/art/art_manifest.json",
+    "data/art/attribute_glyphs.json",
     "data/environments/archetypes.json",
     "data/items/items.json",
     "data/events/events.json",
@@ -129,7 +132,8 @@ foreach ($entry in $assetDimensions.GetEnumerator()) {
 }
 
 $objectJsonFiles = @(
-    "data/art/art_manifest.json"
+    "data/art/art_manifest.json",
+    "data/art/attribute_glyphs.json"
 )
 
 $jsonFiles = Get-ChildItem -LiteralPath (Join-Path $root "data") -Filter "*.json" -File -Recurse -ErrorAction SilentlyContinue
@@ -275,6 +279,9 @@ function Get-JsonProperty {
     $property = $Object.PSObject.Properties[$Name]
     if ($null -eq $property) {
         return $null
+    }
+    if ($property.Value -is [System.Array]) {
+        return ,$property.Value
     }
     return $property.Value
 }
@@ -621,19 +628,22 @@ $resultDeltaKeys = @(
     "drunk_delta",
     "pending_drunk_absorption_delta",
     "drunk_distortion_suppression_turns",
+    "heat_cooldown_actions",
+    "heat_cooldown_per_action",
     "alcoholic_delta",
     "baseline_luck_delta",
     "debt_changes",
     "inventory_add",
     "inventory_remove",
     "flags_set",
+    "story_flags_set",
     "travel_hooks_add",
     "travel_changes",
     "story_log",
     "messages",
+    "pending_bags",
     "ended",
     "item_hooks",
-    "pending_bags",
     "event_hooks",
     "demo_finale"
 )
@@ -641,6 +651,11 @@ $eventConsequenceKeys = $resultDeltaKeys + @(
     "debt",
     "flags",
     "flags_set",
+    "set_story_flag",
+    "set_story_flags",
+    "story_flags_set",
+    "unlock_travel_route",
+    "unlock_travel_routes",
     "set_next_archetypes",
     "add_next_archetypes",
     "check",

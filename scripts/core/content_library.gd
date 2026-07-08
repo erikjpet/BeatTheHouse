@@ -8,6 +8,7 @@ const GAMES_PATH := "res://data/games/games.json"
 const ITEMS_PATH := "res://data/items/items.json"
 const CONTENT_GROUPS_PATH := "res://data/content_groups/groups.json"
 const EVENTS_PATH := "res://data/events/events.json"
+const DIALOGUES_PATH := "res://data/dialogue/dialogues.json"
 const CHALLENGES_PATH := "res://data/challenges/challenges.json"
 const LENDERS_PATH := "res://data/debt/lenders.json"
 const SERVICES_PATH := "res://data/services/services.json"
@@ -22,6 +23,7 @@ var games: Array = []
 var items: Array = []
 var content_groups: Array = []
 var events: Array = []
+var dialogues: Array = []
 var challenges: Array = []
 var lenders: Array = []
 var services: Array = []
@@ -44,6 +46,7 @@ static func required_pack_paths() -> Dictionary:
 		"items": ITEMS_PATH,
 		"content_groups": CONTENT_GROUPS_PATH,
 		"events": EVENTS_PATH,
+		"dialogues": DIALOGUES_PATH,
 	}
 
 
@@ -69,6 +72,7 @@ func load() -> Dictionary:
 	items = _load_array(ITEMS_PATH, true)
 	content_groups = _load_array(CONTENT_GROUPS_PATH, true)
 	events = _normalize_event_definitions(_load_array(EVENTS_PATH, true))
+	dialogues = _normalize_dialogue_definitions(_load_array(DIALOGUES_PATH, true))
 	challenges = _load_array(CHALLENGES_PATH, false)
 	lenders = _load_array(LENDERS_PATH, false)
 	services = _load_array(SERVICES_PATH, false)
@@ -93,6 +97,7 @@ func load() -> Dictionary:
 		"items": items,
 		"content_groups": content_groups,
 		"events": events,
+		"dialogues": dialogues,
 		"challenges": challenges,
 		"lenders": lenders,
 		"services": services,
@@ -105,6 +110,7 @@ func load() -> Dictionary:
 # Validates loaded packs without reading demo runtime data.
 func validate() -> Array:
 	events = _normalize_event_definitions(events)
+	dialogues = _normalize_dialogue_definitions(dialogues)
 	validation_errors = _load_errors.duplicate(true)
 	validation_warnings = []
 	_validate_collection("environment_archetypes", environment_archetypes, [
@@ -161,6 +167,12 @@ func validate() -> Array:
 		"trigger",
 		"payload",
 	])
+	_validate_collection("dialogues", dialogues, [
+		"id",
+		"speaker",
+		"start",
+		"nodes",
+	])
 	_validate_collection("challenges", challenges, [
 		"id",
 		"title",
@@ -213,6 +225,7 @@ func validate() -> Array:
 	_validate_content_group_definitions()
 	_validate_challenge_definitions()
 	_validate_event_definitions()
+	_validate_dialogue_definitions()
 	_validate_lender_definitions()
 	_validate_service_definitions()
 	_validate_travel_route_definitions()
@@ -365,6 +378,11 @@ func event(event_id: String) -> Dictionary:
 	return _lookup("events", events, event_id)
 
 
+# Finds a dialogue definition by id.
+func dialogue(dialogue_id: String) -> Dictionary:
+	return _lookup("dialogues", dialogues, dialogue_id)
+
+
 # Finds a challenge definition by id.
 func challenge(challenge_id: String) -> Dictionary:
 	return _lookup("challenges", challenges, challenge_id)
@@ -511,6 +529,22 @@ static func _normalize_event_definition(event_def: Dictionary) -> Dictionary:
 	return normalized
 
 
+static func _normalize_dialogue_definitions(values: Array) -> Array:
+	var result: Array = []
+	for value in values:
+		if typeof(value) != TYPE_DICTIONARY:
+			result.append(value)
+			continue
+		result.append(_normalize_dialogue_definition(value as Dictionary))
+	return result
+
+
+static func _normalize_dialogue_definition(dialogue_def: Dictionary) -> Dictionary:
+	var normalized := dialogue_def.duplicate(true)
+	normalized["speaker"] = _normalize_event_speaker(normalized.get("speaker", {}))
+	return normalized
+
+
 static func _normalize_event_speaker(value: Variant) -> Dictionary:
 	var source := _as_dict(value)
 	var role := str(source.get("role", "stranger")).strip_edges().to_lower()
@@ -549,6 +583,7 @@ func _rebuild_indexes() -> void:
 		"items": _index_by_id(items),
 		"content_groups": _index_by_id(content_groups),
 		"events": _index_by_id(events),
+		"dialogues": _index_by_id(dialogues),
 		"challenges": _index_by_id(challenges),
 		"lenders": _index_by_id(lenders),
 		"services": _index_by_id(services),
@@ -571,6 +606,7 @@ func debug_soak_snapshot() -> Dictionary:
 			"items": items.size(),
 			"content_groups": content_groups.size(),
 			"events": events.size(),
+			"dialogues": dialogues.size(),
 			"challenges": challenges.size(),
 			"lenders": lenders.size(),
 			"services": services.size(),
@@ -843,8 +879,10 @@ func _validate_non_empty_string_array(label: String, value: Variant) -> void:
 # Validates event choice payloads and route references inside consequences.
 func _validate_event_definitions() -> void:
 	var archetype_ids := _ids_for(environment_archetypes)
+	var route_ids := _ids_for(travel_routes)
 	var game_ids := _ids_for(games)
 	var event_ids := _ids_for(events)
+	var dialogue_ids := _ids_for(dialogues)
 	var event_modes := {}
 	for event_value in events:
 		if typeof(event_value) == TYPE_DICTIONARY:
@@ -857,6 +895,9 @@ func _validate_event_definitions() -> void:
 			continue
 		var event_id := str(event_def.get("id", "")).strip_edges()
 		_validate_art_asset("events %s" % event_id, event_def)
+		var dialogue_id := str(event_def.get("dialogue_id", "")).strip_edges()
+		if not dialogue_id.is_empty() and not bool(dialogue_ids.get(dialogue_id, false)):
+			validation_errors.append("events %s references unknown dialogue_id: %s" % [event_id, dialogue_id])
 		var interaction_mode := str(event_def.get("interaction_mode", "")).strip_edges()
 		if interaction_mode.is_empty():
 			validation_errors.append("events %s is missing interaction_mode." % event_id)
@@ -937,6 +978,7 @@ func _validate_event_definitions() -> void:
 			var consequences: Dictionary = _as_dict(choice.get("consequences", {}))
 			_validate_id_references("events %s choice %s set_next_archetypes" % [event_id, choice_id], consequences.get("set_next_archetypes", []), archetype_ids)
 			_validate_id_references("events %s choice %s add_next_archetypes" % [event_id, choice_id], consequences.get("add_next_archetypes", []), archetype_ids)
+			_validate_dialogue_effect_references("events %s choice %s" % [event_id, choice_id], consequences, archetype_ids, route_ids)
 			var trigger_event := _as_dict(consequences.get("trigger_event", {}))
 			if not trigger_event.is_empty():
 				var trigger_event_id := str(trigger_event.get("event_id", "")).strip_edges()
@@ -953,6 +995,103 @@ func _validate_event_definitions() -> void:
 					var chance := float(chance_value)
 					if chance < 0.0 or chance > 1.0:
 						validation_errors.append("events %s choice %s trigger_event chance must be between 0 and 1." % [event_id, choice_id])
+
+
+# Validates dialogue graph structure and consequence references.
+func _validate_dialogue_definitions() -> void:
+	var archetype_ids := _ids_for(environment_archetypes)
+	var route_ids := _ids_for(travel_routes)
+	for dialogue_value in dialogues:
+		if typeof(dialogue_value) != TYPE_DICTIONARY:
+			continue
+		var dialogue: Dictionary = dialogue_value
+		var dialogue_id := str(dialogue.get("id", "")).strip_edges()
+		var speaker: Dictionary = _as_dict(dialogue.get("speaker", {}))
+		if not ["patron", "staff", "stranger", "lender"].has(str(speaker.get("role", "stranger"))):
+			validation_errors.append("dialogues %s speaker role is invalid." % dialogue_id)
+		var start_id := str(dialogue.get("start", "")).strip_edges()
+		var nodes: Dictionary = _dialogue_nodes_map(dialogue.get("nodes", {}))
+		if nodes.is_empty():
+			validation_errors.append("dialogues %s nodes must contain at least one node." % dialogue_id)
+			continue
+		if start_id.is_empty() or not nodes.has(start_id):
+			validation_errors.append("dialogues %s start references missing node: %s" % [dialogue_id, start_id])
+		for node_id_value in nodes.keys():
+			var node_id := str(node_id_value).strip_edges()
+			if node_id.is_empty():
+				validation_errors.append("dialogues %s has an empty node id." % dialogue_id)
+				continue
+			var node_value: Variant = nodes.get(node_id, {})
+			if typeof(node_value) != TYPE_DICTIONARY:
+				validation_errors.append("dialogues %s node %s must be a dictionary." % [dialogue_id, node_id])
+				continue
+			var node: Dictionary = node_value
+			if str(node.get("text", "")).strip_edges().is_empty():
+				validation_errors.append("dialogues %s node %s is missing text." % [dialogue_id, node_id])
+			var choices_value: Variant = node.get("choices", [])
+			if typeof(choices_value) != TYPE_ARRAY:
+				validation_errors.append("dialogues %s node %s choices must be an array." % [dialogue_id, node_id])
+				continue
+			var choices: Array = choices_value
+			if choices.size() > 4:
+				validation_errors.append("dialogues %s node %s has more than four choices." % [dialogue_id, node_id])
+			var seen_choices := {}
+			for choice_index in range(choices.size()):
+				var choice_value: Variant = choices[choice_index]
+				if typeof(choice_value) != TYPE_DICTIONARY:
+					validation_errors.append("dialogues %s node %s choice[%d] must be a dictionary." % [dialogue_id, node_id, choice_index])
+					continue
+				var choice: Dictionary = choice_value
+				var choice_id := str(choice.get("id", "")).strip_edges()
+				if choice_id.is_empty():
+					validation_errors.append("dialogues %s node %s choice[%d] is missing id." % [dialogue_id, node_id, choice_index])
+				elif seen_choices.has(choice_id):
+					validation_errors.append("dialogues %s node %s contains duplicate choice id: %s" % [dialogue_id, node_id, choice_id])
+				else:
+					seen_choices[choice_id] = true
+				if str(choice.get("label", "")).strip_edges().is_empty():
+					validation_errors.append("dialogues %s node %s choice %s is missing label." % [dialogue_id, node_id, choice_id])
+				var goto_id := str(choice.get("goto", "")).strip_edges()
+				var ends := bool(choice.get("end", false))
+				if goto_id.is_empty() and not ends:
+					validation_errors.append("dialogues %s node %s choice %s must declare goto or end." % [dialogue_id, node_id, choice_id])
+				if not goto_id.is_empty() and not nodes.has(goto_id):
+					validation_errors.append("dialogues %s node %s choice %s references missing goto: %s" % [dialogue_id, node_id, choice_id, goto_id])
+				var effects: Dictionary = _as_dict(choice.get("effects", choice.get("consequences", {})))
+				_validate_dialogue_effect_references("dialogues %s node %s choice %s" % [dialogue_id, node_id, choice_id], effects, archetype_ids, route_ids)
+
+
+func _validate_dialogue_effect_references(label: String, effects: Dictionary, archetype_ids: Dictionary, route_ids: Dictionary) -> void:
+	_validate_id_references("%s set_next_archetypes" % label, effects.get("set_next_archetypes", []), archetype_ids)
+	_validate_id_references("%s add_next_archetypes" % label, effects.get("add_next_archetypes", []), archetype_ids)
+	_validate_id_references("%s travel_hooks_add" % label, effects.get("travel_hooks_add", []), archetype_ids)
+	for route_id in _single_or_array_strings(effects.get("unlock_travel_route", effects.get("unlock_travel_routes", []))):
+		if not bool(route_ids.get(route_id, false)):
+			validation_errors.append("%s unlock_travel_route references unknown route: %s" % [label, route_id])
+
+
+static func _dialogue_nodes_map(value: Variant) -> Dictionary:
+	if typeof(value) == TYPE_DICTIONARY:
+		return (value as Dictionary).duplicate(true)
+	if typeof(value) != TYPE_ARRAY:
+		return {}
+	var result := {}
+	for node_value in value as Array:
+		if typeof(node_value) != TYPE_DICTIONARY:
+			continue
+		var node: Dictionary = node_value
+		var node_id := str(node.get("id", "")).strip_edges()
+		if node_id.is_empty():
+			continue
+		result[node_id] = node.duplicate(true)
+	return result
+
+
+static func _single_or_array_strings(value: Variant) -> Array:
+	if typeof(value) == TYPE_ARRAY:
+		return _string_array(value)
+	var text := str(value).strip_edges()
+	return [] if text.is_empty() else [text]
 
 
 # Validates replaceable art metadata used by environment object presentation.
@@ -1221,6 +1360,7 @@ func _validate_environment_references() -> void:
 		if typeof(archetype) != TYPE_DICTIONARY:
 			continue
 		var archetype_id := str(archetype.get("id", "")).strip_edges()
+		_validate_environment_open_hours(archetype_id, archetype.get("open_hours", null))
 		_validate_id_references("environment %s game_pool" % archetype_id, archetype.get("game_pool", []), game_ids)
 		_validate_id_references("environment %s required_game_ids" % archetype_id, archetype.get("required_game_ids", []), game_ids)
 		_validate_required_game_pool(archetype_id, archetype)
@@ -1232,10 +1372,42 @@ func _validate_environment_references() -> void:
 		if not route_ids.is_empty():
 			_validate_id_references("environment %s travel_hooks route metadata" % archetype_id, archetype.get("travel_hooks", []), route_ids)
 		_validate_id_references("environment %s next_archetypes" % archetype_id, archetype.get("next_archetypes", []), archetype_ids)
+		var economic_profile: Dictionary = _as_dict(archetype.get("economic_profile", {}))
+		var game_limit_overrides: Dictionary = _as_dict(economic_profile.get("game_stake_ceiling_overrides", {}))
+		for game_id_value in game_limit_overrides.keys():
+			var game_id := str(game_id_value).strip_edges()
+			if game_id.is_empty():
+				validation_errors.append("environment %s game_stake_ceiling_overrides contains an empty game id." % archetype_id)
+			elif not game_ids.has(game_id):
+				validation_errors.append("environment %s game_stake_ceiling_overrides references unknown game id: %s" % [archetype_id, game_id])
+			if typeof(game_limit_overrides.get(game_id_value)) != TYPE_INT and typeof(game_limit_overrides.get(game_id_value)) != TYPE_FLOAT:
+				validation_errors.append("environment %s game_stake_ceiling_overrides.%s must be numeric." % [archetype_id, game_id])
+			elif int(game_limit_overrides.get(game_id_value, 0)) < 0:
+				validation_errors.append("environment %s game_stake_ceiling_overrides.%s must be non-negative." % [archetype_id, game_id])
 		var music_profile: Dictionary = _as_dict(archetype.get("music_profile", {}))
 		var authored_track_id := str(music_profile.get("authored_track_id", "")).strip_edges()
 		if not authored_track_id.is_empty() and music_track(authored_track_id).is_empty():
 			validation_warnings.append("environment %s references unavailable authored_track_id %s; procedural music will be used." % [archetype_id, authored_track_id])
+
+
+func _validate_environment_open_hours(archetype_id: String, value: Variant) -> void:
+	if value == null:
+		return
+	if typeof(value) != TYPE_DICTIONARY:
+		validation_errors.append("environment %s open_hours must be null or a dictionary." % archetype_id)
+		return
+	var hours: Dictionary = value
+	for key in ["open_minute", "close_minute"]:
+		if not hours.has(key):
+			validation_errors.append("environment %s open_hours is missing %s." % [archetype_id, key])
+			continue
+		var minute_value: Variant = hours.get(key, 0)
+		if not _variant_is_number(minute_value):
+			validation_errors.append("environment %s open_hours.%s must be numeric." % [archetype_id, key])
+			continue
+		var minute := int(minute_value)
+		if minute < 0 or minute > 1439:
+			validation_errors.append("environment %s open_hours.%s must be between 0 and 1439." % [archetype_id, key])
 
 
 func _validate_required_game_pool(archetype_id: String, archetype: Dictionary) -> void:

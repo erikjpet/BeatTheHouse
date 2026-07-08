@@ -2,6 +2,7 @@
   {
     "id": "late_shift_discount",
     "display_name": "Late Shift Discount",
+    "dialogue_id": "late_shift_discount",
     "type": "opportunistic",
     "interaction_mode": "interactable",
     "scopes": [
@@ -41,6 +42,7 @@
   {
     "id": "chatty_clerk",
     "display_name": "Chatty Clerk",
+    "dialogue_id": "chatty_clerk",
     "type": "social",
     "interaction_mode": "interactable",
     "scopes": [
@@ -136,6 +138,13 @@
     "display_name": "Suspicious Patron",
     "type": "social",
     "interaction_mode": "triggered",
+    "presentation": "talk",
+    "speaker": {
+      "role": "patron",
+      "name": "Suspicious Patron",
+      "silhouette": "coat",
+      "bind": "none"
+    },
     "scopes": [
       "any"
     ],
@@ -162,6 +171,258 @@
           "text": "They remember your face.",
           "consequences": {
             "suspicion_delta": 4,
+            "resolve_event": true
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "jazz_trio_set_break",
+    "display_name": "Set Break Trio",
+    "type": "social",
+    "interaction_mode": "triggered",
+    "presentation": "talk",
+    "speaker": {
+      "role": "staff",
+      "name": "The Trio",
+      "silhouette": "vest",
+      "bind": "none"
+    },
+    "scopes": [
+      "shop"
+    ],
+    "asset_path": "res://assets/art/events/chatty_clerk.png",
+    "trigger": {
+      "type": "random",
+      "turns": 1,
+      "chance_percent": 35,
+      "unavoidable": false
+    },
+    "conditions": {
+      "archetype_ids": [
+        "jazz_club"
+      ],
+      "missing_story_flags": [
+        "jazz_trio_set_break_done"
+      ]
+    },
+    "payload": {
+      "summary": "The trio takes five by your table.",
+      "timing": {
+        "expires": true,
+        "duration_actions": 3,
+        "timeout_choice_id": "let_them_play"
+      },
+      "choices": [
+        {
+          "id": "tip_the_solo",
+          "label": "Tip Solo",
+          "text": "You buy the chorus and the sax player points your luck at the next hand.",
+          "consequence_summary": "$ -10, luck +1",
+          "consequences": {
+            "bankroll_delta": -10,
+            "baseline_luck_delta": 1,
+            "story_flags_set": {
+              "jazz_trio_set_break_done": true,
+              "jazz_trio_backed_player": true
+            },
+            "resolve_event": true
+          }
+        },
+        {
+          "id": "ask_old_room",
+          "label": "Ask Room",
+          "text": "The cellist names a quieter room with serious tables.",
+          "consequence_summary": "Underground route",
+          "consequences": {
+            "add_next_archetypes": [
+              "small_underground_casino"
+            ],
+            "story_flags_set": {
+              "jazz_trio_set_break_done": true,
+              "jazz_trio_named_room": true
+            },
+            "resolve_event": true
+          }
+        },
+        {
+          "id": "let_them_play",
+          "label": "Listen",
+          "text": "You keep quiet and the room forgets to watch you.",
+          "consequence_summary": "Heat -2",
+          "consequences": {
+            "suspicion_delta": -2,
+            "story_flags_set": {
+              "jazz_trio_set_break_done": true
+            },
+            "resolve_event": true
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "jazz_connected_regular",
+    "display_name": "Connected Regular",
+    "type": "progression",
+    "interaction_mode": "triggered",
+    "presentation": "talk",
+    "speaker": {
+      "role": "patron",
+      "name": "Velvet Regular",
+      "silhouette": "glasses",
+      "bind": "none"
+    },
+    "scopes": [
+      "shop"
+    ],
+    "asset_path": "res://assets/art/events/suspicious_patron.png",
+    "trigger": {
+      "type": "random",
+      "turns": 1,
+      "chance_percent": 28,
+      "unavoidable": false
+    },
+    "conditions": {
+      "archetype_ids": [
+        "jazz_club"
+      ],
+      "missing_story_flags": [
+        "jazz_connected_regular_done"
+      ]
+    },
+    "payload": {
+      "summary": "A regular knows which doors matter.",
+      "choices": [
+        {
+          "id": "buy_the_name",
+          "label": "Buy Name",
+          "text": "You buy the table's next drink and get a real introduction.",
+          "consequence_summary": "$ -8, underground route",
+          "consequences": {
+            "bankroll_delta": -8,
+            "add_next_archetypes": [
+              "small_underground_casino"
+            ],
+            "story_flags_set": {
+              "jazz_connected_regular_done": true,
+              "jazz_underground_scene_marked": true
+            },
+            "resolve_event": true
+          }
+        },
+        {
+          "id": "keep_it_soft",
+          "label": "Soft Talk",
+          "text": "You let them talk while you become less interesting.",
+          "consequence_summary": "Heat -2",
+          "consequences": {
+            "suspicion_delta": -2,
+            "story_flags_set": {
+              "jazz_connected_regular_done": true
+            },
+            "resolve_event": true
+          }
+        },
+        {
+          "id": "say_too_much",
+          "label": "Overshare",
+          "text": "The wrong person hears you fishing for the room.",
+          "consequence_summary": "Heat +5",
+          "consequences": {
+            "suspicion_delta": 5,
+            "story_flags_set": {
+              "jazz_connected_regular_done": true
+            },
+            "resolve_event": true
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "jazz_after_hours_invitation",
+    "display_name": "After-Hours Invite",
+    "type": "progression",
+    "interaction_mode": "triggered",
+    "presentation": "talk",
+    "speaker": {
+      "role": "staff",
+      "name": "After-Hours Host",
+      "silhouette": "suit",
+      "bind": "none"
+    },
+    "scopes": [
+      "shop"
+    ],
+    "asset_path": "res://assets/art/events/parking_lot_tip.png",
+    "trigger": {
+      "type": "random",
+      "turns": 2,
+      "chance_percent": 22,
+      "unavoidable": false
+    },
+    "conditions": {
+      "archetype_ids": [
+        "jazz_club"
+      ],
+      "requires_story_flags": {
+        "jazz_trio_backed_player": true
+      },
+      "missing_story_flags": [
+        "jazz_after_hours_invitation_done"
+      ]
+    },
+    "payload": {
+      "summary": "Late room and cover.",
+      "choices": [
+        {
+          "id": "take_the_shades",
+          "label": "Take Shades",
+          "text": "She hands over cheap dark glasses that still sell the part.",
+          "consequence_summary": "$ -12, Grand Casino cover item",
+          "conditions": {
+            "min_bankroll": 12
+          },
+          "consequences": {
+            "bankroll_delta": -12,
+            "inventory_add": [
+              "cheap_sunglasses"
+            ],
+            "story_flags_set": {
+              "jazz_after_hours_invitation_done": true,
+              "jazz_after_hours_cover": true
+            },
+            "resolve_event": true
+          }
+        },
+        {
+          "id": "take_address",
+          "label": "Take Address",
+          "text": "You take the address and keep your cash in your pocket.",
+          "consequence_summary": "Grand Casino route",
+          "consequences": {
+            "add_next_archetypes": [
+              "grand_casino"
+            ],
+            "story_flags_set": {
+              "jazz_after_hours_invitation_done": true,
+              "jazz_after_hours_address": true
+            },
+            "resolve_event": true
+          }
+        },
+        {
+          "id": "decline_after_hours",
+          "label": "Decline",
+          "text": "You smile, pass, and let the invite vanish without heat.",
+          "consequence_summary": "Heat -1",
+          "consequences": {
+            "suspicion_delta": -1,
+            "story_flags_set": {
+              "jazz_after_hours_invitation_done": true
+            },
             "resolve_event": true
           }
         }
@@ -303,6 +564,13 @@
     "display_name": "Motel Knock",
     "type": "debt",
     "interaction_mode": "triggered",
+    "presentation": "talk",
+    "speaker": {
+      "role": "stranger",
+      "name": "Motel Friend",
+      "silhouette": "cap",
+      "bind": "none"
+    },
     "scopes": [
       "shop"
     ],
@@ -774,6 +1042,13 @@
     "display_name": "Rival Counter",
     "type": "social",
     "interaction_mode": "triggered",
+    "presentation": "talk",
+    "speaker": {
+      "role": "patron",
+      "name": "Rival Counter",
+      "silhouette": "glasses",
+      "bind": "none"
+    },
     "scopes": [
       "casino",
       "boss"
@@ -846,6 +1121,13 @@
     "display_name": "Counter Payoff",
     "type": "social",
     "interaction_mode": "triggered",
+    "presentation": "talk",
+    "speaker": {
+      "role": "patron",
+      "name": "Counter",
+      "silhouette": "coat",
+      "bind": "none"
+    },
     "scopes": [
       "casino",
       "boss"
@@ -903,6 +1185,13 @@
     "display_name": "Snitch Reputation",
     "type": "social",
     "interaction_mode": "triggered",
+    "presentation": "talk",
+    "speaker": {
+      "role": "patron",
+      "name": "Snitch",
+      "silhouette": "cap",
+      "bind": "none"
+    },
     "scopes": [
       "casino"
     ],
@@ -959,6 +1248,13 @@
     "display_name": "On the House",
     "type": "temptation",
     "interaction_mode": "triggered",
+    "presentation": "talk",
+    "speaker": {
+      "role": "staff",
+      "name": "Casino Host",
+      "silhouette": "vest",
+      "bind": "none"
+    },
     "scopes": [
       "casino",
       "boss"
@@ -1043,6 +1339,13 @@
     "display_name": "The Collector",
     "type": "debt",
     "interaction_mode": "triggered",
+    "presentation": "talk",
+    "speaker": {
+      "role": "stranger",
+      "name": "Collector",
+      "silhouette": "suit",
+      "bind": "none"
+    },
     "scopes": [
       "any"
     ],
@@ -1132,6 +1435,13 @@
     "display_name": "Shift Change",
     "type": "security",
     "interaction_mode": "triggered",
+    "presentation": "talk",
+    "speaker": {
+      "role": "staff",
+      "name": "Rookie Floor",
+      "silhouette": "vest",
+      "bind": "none"
+    },
     "scopes": [
       "casino",
       "boss"
@@ -1298,6 +1608,13 @@
     "display_name": "Whale Sighting",
     "type": "temptation",
     "interaction_mode": "triggered",
+    "presentation": "talk",
+    "speaker": {
+      "role": "staff",
+      "name": "Casino Host",
+      "silhouette": "vest",
+      "bind": "none"
+    },
     "scopes": [
       "casino",
       "boss"
@@ -1344,6 +1661,13 @@
     "display_name": "Staff Shift Tip",
     "type": "security",
     "interaction_mode": "triggered",
+    "presentation": "talk",
+    "speaker": {
+      "role": "staff",
+      "name": "Dealer",
+      "silhouette": "vest",
+      "bind": "none"
+    },
     "scopes": [
       "casino",
       "boss"
@@ -1805,15 +2129,15 @@
     }
   },
   {
-    "id": "table_patron_whisper",
-    "display_name": "Table Whisper",
+    "id": "blackjack_counter_probe",
+    "display_name": "Counter Probe",
     "type": "social",
     "interaction_mode": "triggered",
     "presentation": "talk",
     "speaker": {
       "role": "patron",
-      "name": "Patron",
-      "silhouette": "coat",
+      "name": "Counter",
+      "silhouette": "glasses",
       "bind": "table_patron"
     },
     "scopes": [
@@ -1825,18 +2149,15 @@
     "trigger": {
       "type": "table_approach",
       "games": [
-        "blackjack",
-        "roulette",
-        "baccarat",
-        "bar_dice"
+        "blackjack"
       ],
-      "min_hands": 1,
-      "chance": 0.18
+      "min_hands": 2,
+      "chance": 0.12
     },
     "asset_path": "res://assets/art/events/suspicious_patron.png",
     "visual_key": "patron",
     "payload": {
-      "summary": "Patron leans in with a room read.",
+      "summary": "A counter tests your count.",
       "timing": {
         "expires": true,
         "duration_actions": 3,
@@ -1844,29 +2165,375 @@
       },
       "choices": [
         {
-          "id": "hear_them_out",
-          "label": "Hear Them Out",
-          "text": "You let the table talk settle before your next move.",
-          "consequence_summary": "Heat -1.",
+          "id": "play_dumb",
+          "label": "Play Dumb",
+          "text": "You miss the count on purpose.",
+          "consequence_summary": "Heat -2",
           "consequences": {
-            "suspicion_delta": -1,
+            "suspicion_delta": -2,
             "resolve_event": true
           }
         },
         {
-          "id": "brush_off",
-          "label": "Brush Off",
-          "text": "You keep your eyes on the felt.",
-          "consequence_summary": "No immediate cost.",
+          "id": "trade_count",
+          "label": "Trade Count",
+          "text": "You trade a small edge and become memorable.",
+          "consequence_summary": "Luck +1, heat +3",
           "consequences": {
+            "baseline_luck_delta": 1,
+            "suspicion_delta": 3,
             "resolve_event": true
           }
         },
         {
           "id": "ignore",
           "label": "Ignore",
-          "text": "The moment passes without an answer.",
-          "consequence_summary": "No immediate cost.",
+          "text": "The count dies in the noise.",
+          "consequence_summary": "No effect",
+          "consequences": {
+            "resolve_event": true
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "roulette_lucky_regular",
+    "display_name": "Lucky Regular",
+    "type": "social",
+    "interaction_mode": "triggered",
+    "presentation": "talk",
+    "speaker": {
+      "role": "patron",
+      "name": "Regular",
+      "silhouette": "coat",
+      "bind": "table_patron"
+    },
+    "scopes": [
+      "casino",
+      "club",
+      "any"
+    ],
+    "trigger": {
+      "type": "table_approach",
+      "games": [
+        "roulette"
+      ],
+      "min_hands": 1,
+      "chance": 0.12
+    },
+    "asset_path": "res://assets/art/events/rowdy_regular.png",
+    "visual_key": "patron",
+    "payload": {
+      "summary": "A regular pushes a lucky number.",
+      "timing": {
+        "expires": true,
+        "duration_actions": 3,
+        "timeout_choice_id": "ignore"
+      },
+      "choices": [
+        {
+          "id": "take_number",
+          "label": "Take Number",
+          "text": "You pocket the superstition.",
+          "consequence_summary": "Luck +1, heat +1",
+          "consequences": {
+            "baseline_luck_delta": 1,
+            "suspicion_delta": 1,
+            "resolve_event": true
+          }
+        },
+        {
+          "id": "buy_story",
+          "label": "Buy Story",
+          "text": "You buy the story a drink and cool the table.",
+          "consequence_summary": "$ -6, heat -3",
+          "consequences": {
+            "bankroll_delta": -6,
+            "suspicion_delta": -3,
+            "resolve_event": true
+          }
+        },
+        {
+          "id": "ignore",
+          "label": "Ignore",
+          "text": "The wheel keeps its own counsel.",
+          "consequence_summary": "No effect",
+          "consequences": {
+            "resolve_event": true
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "baccarat_off_duty_dealer",
+    "display_name": "Off-Duty Dealer",
+    "type": "social",
+    "interaction_mode": "triggered",
+    "presentation": "talk",
+    "speaker": {
+      "role": "patron",
+      "name": "Dealer",
+      "silhouette": "vest",
+      "bind": "table_patron"
+    },
+    "scopes": [
+      "casino",
+      "club",
+      "any"
+    ],
+    "trigger": {
+      "type": "table_approach",
+      "games": [
+        "baccarat"
+      ],
+      "min_hands": 1,
+      "chance": 0.12
+    },
+    "asset_path": "res://assets/art/events/pit_boss_sweep.png",
+    "visual_key": "patron",
+    "payload": {
+      "summary": "An off-duty dealer reads the shoe.",
+      "timing": {
+        "expires": true,
+        "duration_actions": 3,
+        "timeout_choice_id": "ignore"
+      },
+      "choices": [
+        {
+          "id": "hear_pattern",
+          "label": "Hear Pattern",
+          "text": "You take the rhythm and keep your face still.",
+          "consequence_summary": "Luck +1, heat +2",
+          "consequences": {
+            "baseline_luck_delta": 1,
+            "suspicion_delta": 2,
+            "resolve_event": true
+          }
+        },
+        {
+          "id": "tip_dealer",
+          "label": "Tip Dealer",
+          "text": "You pay for discretion.",
+          "consequence_summary": "$ -8, heat -4",
+          "consequences": {
+            "bankroll_delta": -8,
+            "suspicion_delta": -4,
+            "resolve_event": true
+          }
+        },
+        {
+          "id": "ignore",
+          "label": "Ignore",
+          "text": "You let the shoe talk alone.",
+          "consequence_summary": "No effect",
+          "consequences": {
+            "resolve_event": true
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "video_poker_neighbor",
+    "display_name": "Machine Neighbor",
+    "type": "social",
+    "interaction_mode": "triggered",
+    "presentation": "talk",
+    "speaker": {
+      "role": "patron",
+      "name": "Neighbor",
+      "silhouette": "cap",
+      "bind": "table_patron"
+    },
+    "scopes": [
+      "shop",
+      "casino",
+      "club",
+      "any"
+    ],
+    "trigger": {
+      "type": "table_approach",
+      "games": [
+        "video_poker"
+      ],
+      "min_hands": 2,
+      "chance": 0.12
+    },
+    "asset_path": "res://assets/art/events/machine_jam.png",
+    "visual_key": "patron",
+    "payload": {
+      "summary": "A neighbor points at your holds.",
+      "timing": {
+        "expires": true,
+        "duration_actions": 3,
+        "timeout_choice_id": "ignore"
+      },
+      "choices": [
+        {
+          "id": "accept_tip",
+          "label": "Accept Tip",
+          "text": "You take the hold advice.",
+          "consequence_summary": "$ +6, heat +1",
+          "consequences": {
+            "bankroll_delta": 6,
+            "suspicion_delta": 1,
+            "resolve_event": true
+          }
+        },
+        {
+          "id": "swap_seat",
+          "label": "Swap Seat",
+          "text": "You move and lose the stare.",
+          "consequence_summary": "Heat -2",
+          "consequences": {
+            "suspicion_delta": -2,
+            "resolve_event": true
+          }
+        },
+        {
+          "id": "ignore",
+          "label": "Ignore",
+          "text": "The machine hums louder.",
+          "consequence_summary": "No effect",
+          "consequences": {
+            "resolve_event": true
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "bar_dice_tipsy_braggart",
+    "display_name": "Tipsy Braggart",
+    "type": "social",
+    "interaction_mode": "triggered",
+    "presentation": "talk",
+    "speaker": {
+      "role": "patron",
+      "name": "Braggart",
+      "silhouette": "coat",
+      "bind": "table_patron"
+    },
+    "scopes": [
+      "bar",
+      "club",
+      "any"
+    ],
+    "trigger": {
+      "type": "table_approach",
+      "games": [
+        "bar_dice"
+      ],
+      "min_hands": 1,
+      "chance": 0.14
+    },
+    "asset_path": "res://assets/art/events/rowdy_regular.png",
+    "visual_key": "patron",
+    "payload": {
+      "summary": "A braggart wants a loud side bet.",
+      "timing": {
+        "expires": true,
+        "duration_actions": 3,
+        "timeout_choice_id": "ignore"
+      },
+      "choices": [
+        {
+          "id": "take_side_bet",
+          "label": "Side Bet",
+          "text": "You take the small money and the attention.",
+          "consequence_summary": "$ +7, heat +3",
+          "consequences": {
+            "bankroll_delta": 7,
+            "suspicion_delta": 3,
+            "resolve_event": true
+          }
+        },
+        {
+          "id": "laugh_it_off",
+          "label": "Laugh Off",
+          "text": "You make the table laugh at him instead.",
+          "consequence_summary": "Heat -2",
+          "consequences": {
+            "suspicion_delta": -2,
+            "resolve_event": true
+          }
+        },
+        {
+          "id": "ignore",
+          "label": "Ignore",
+          "text": "The dice keep rolling.",
+          "consequence_summary": "No effect",
+          "consequences": {
+            "resolve_event": true
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "pull_tabs_friendly_local",
+    "display_name": "Friendly Local",
+    "type": "social",
+    "interaction_mode": "triggered",
+    "presentation": "talk",
+    "speaker": {
+      "role": "patron",
+      "name": "Local",
+      "silhouette": "cap",
+      "bind": "table_patron"
+    },
+    "scopes": [
+      "shop",
+      "bar",
+      "any"
+    ],
+    "trigger": {
+      "type": "table_approach",
+      "games": [
+        "pull_tabs"
+      ],
+      "min_hands": 2,
+      "chance": 0.14
+    },
+    "asset_path": "res://assets/art/events/chatty_clerk.png",
+    "visual_key": "patron",
+    "payload": {
+      "summary": "A local knows which jar is light.",
+      "timing": {
+        "expires": true,
+        "duration_actions": 3,
+        "timeout_choice_id": "ignore"
+      },
+      "choices": [
+        {
+          "id": "take_tip",
+          "label": "Take Tip",
+          "text": "You take the jar read.",
+          "consequence_summary": "$ +5, story flag",
+          "consequences": {
+            "bankroll_delta": 5,
+            "set_story_flag": "pull_tabs_local_tip",
+            "resolve_event": true
+          }
+        },
+        {
+          "id": "buy_coffee",
+          "label": "Buy Coffee",
+          "text": "You buy the local's quiet.",
+          "consequence_summary": "$ -4, heat -2",
+          "consequences": {
+            "bankroll_delta": -4,
+            "suspicion_delta": -2,
+            "resolve_event": true
+          }
+        },
+        {
+          "id": "ignore",
+          "label": "Ignore",
+          "text": "The stack stays mysterious.",
+          "consequence_summary": "No effect",
           "consequences": {
             "resolve_event": true
           }
@@ -1896,29 +2563,47 @@
     "asset_path": "res://assets/art/events/heat_at_exit.png",
     "visual_key": "security",
     "payload": {
-      "summary": "Staff warns you to cool it.",
+      "summary": "Floor staff asks for a slower night.",
       "timing": {
         "expires": true,
-        "duration_actions": 2,
-        "timeout_choice_id": "nod"
+        "duration_actions": 3,
+        "timeout_choice_id": "play_cool"
       },
       "choices": [
         {
-          "id": "lay_low",
-          "label": "Lay Low",
-          "text": "You slow down and let the room breathe.",
-          "consequence_summary": "Heat -3.",
+          "id": "play_cool",
+          "label": "Play Cool",
+          "text": "You slow your rhythm and let the floor breathe.",
+          "consequence_summary": "Heat -4, cool flag",
           "consequences": {
-            "suspicion_delta": -3,
+            "suspicion_delta": -4,
+            "flags": {
+              "floor_staff_cool_window": 3
+            },
             "resolve_event": true
           }
         },
         {
-          "id": "nod",
-          "label": "Nod",
-          "text": "You acknowledge the warning and keep moving.",
-          "consequence_summary": "Event closes.",
+          "id": "buy_round",
+          "label": "Buy Round",
+          "text": "You buy noise for the rail and lose the stare.",
+          "consequence_summary": "$ -12, heat -8",
           "consequences": {
+            "bankroll_delta": -12,
+            "suspicion_delta": -8,
+            "resolve_event": true
+          }
+        },
+        {
+          "id": "talk_back",
+          "label": "Talk Back",
+          "text": "You make a point and make a memory.",
+          "consequence_summary": "Heat +5, pride flag",
+          "consequences": {
+            "suspicion_delta": 5,
+            "flags": {
+              "talked_back_to_floor": true
+            },
             "resolve_event": true
           }
         }
@@ -1947,29 +2632,55 @@
     "asset_path": "res://assets/art/events/pit_boss_sweep.png",
     "visual_key": "security",
     "payload": {
-      "summary": "Pit boss watches your next move.",
+      "summary": "The pit boss squeezes the table.",
       "timing": {
         "expires": true,
-        "duration_actions": 1,
-        "timeout_choice_id": "play_natural"
+        "duration_actions": 2,
+        "timeout_choice_id": "walk_now"
       },
       "choices": [
         {
-          "id": "step_away",
-          "label": "Step Away",
-          "text": "You take a breath and stop feeding the pattern.",
-          "consequence_summary": "Heat -5.",
+          "id": "walk_now",
+          "label": "Walk Now",
+          "text": "You leave the table before the look hardens.",
+          "consequence_summary": "Heat -10",
           "consequences": {
-            "suspicion_delta": -5,
+            "suspicion_delta": -10,
+            "flags": {
+              "pit_boss_walked_table": true
+            },
             "resolve_event": true
           }
         },
         {
-          "id": "play_natural",
-          "label": "Play Natural",
-          "text": "You stay calm and keep the table moving.",
-          "consequence_summary": "Event closes.",
+          "id": "bluff",
+          "label": "Bluff",
+          "text": "You sell the win as noise and manners.",
+          "consequence_summary": "60% heat -8; miss heat +8",
           "consequences": {
+            "check": {
+              "chance_percent": 60,
+              "success_consequences": {
+                "suspicion_delta": -8
+              },
+              "failure_consequences": {
+                "suspicion_delta": 8,
+                "flags": {
+                  "pit_boss_watching": true
+                }
+              }
+            },
+            "resolve_event": true
+          }
+        },
+        {
+          "id": "slip_bribe",
+          "label": "Slip Bribe",
+          "text": "You pay for the next few minutes.",
+          "consequence_summary": "$ -30, heat -14",
+          "consequences": {
+            "bankroll_delta": -30,
+            "suspicion_delta": -14,
             "resolve_event": true
           }
         }

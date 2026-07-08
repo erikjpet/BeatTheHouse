@@ -79,7 +79,7 @@ static func _summary_text(run_state: RunState, run_action_service: RunActionServ
 	var count := 0
 	if run_action_service != null:
 		count = run_action_service.inventory_item_view_list().size()
-	return "Current run items: %d. Select an icon to inspect purpose and effect details." % count
+	return "Current run items: %d. Select an icon to inspect description and value." % count
 
 
 static func _title_text(run_state: RunState, mode: String, container_id: String) -> String:

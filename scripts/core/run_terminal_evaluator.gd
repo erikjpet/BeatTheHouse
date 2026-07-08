@@ -26,6 +26,11 @@ static func evaluate(run_state: RunState, library: ContentLibrary = null) -> Dic
 		result["message"] = RunState.POLICE_CAPTURE_FAILURE_MESSAGE
 		return result
 	if run_state.bankroll <= 0:
+		if run_state.closing_time_forced_travel_required():
+			result["bankroll_zero_deferred"] = true
+			result["travel_available"] = true
+			result["recovery_available"] = true
+			return result
 		if library != null and _has_deferred_bankroll_zero_failure(run_state, library):
 			result["bankroll_zero_deferred"] = true
 			result["recovery_available"] = true

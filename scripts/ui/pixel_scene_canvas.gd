@@ -9,6 +9,7 @@ signal object_activated(object_id: String)
 
 const VisualStyleScript := preload("res://scripts/ui/visual_style.gd")
 const IconSpriteRendererScript := preload("res://scripts/ui/icon_sprite_renderer.gd")
+const AttributeBadgeRowScript := preload("res://scripts/ui/attribute_badge_row.gd")
 const DrunkDistortionOverlayScript := preload("res://scripts/ui/drunk_distortion_overlay.gd")
 
 const C_DARK := VisualStyleScript.DARK
@@ -1352,6 +1353,10 @@ func _draw_selected_object_info() -> void:
 	var y := card.position.y + OBJECT_INFO_BODY_Y
 	if lines.is_empty():
 		lines = [_fallback_object_description(object_data)]
+	var badges := _array_view(object_data.get("attribute_badges", []))
+	if not badges.is_empty():
+		var row_rect := AttributeBadgeRowScript.draw_canvas(self, badges, Vector2(card.position.x + OBJECT_INFO_PADDING_X, y), card.size.x - OBJECT_INFO_PADDING_X * 2.0, 12)
+		y += row_rect.size.y + 4.0
 	var action_area_height := _selected_info_action_area_height(object_data)
 	var body_bottom := card.end.y - OBJECT_INFO_BOTTOM_PADDING
 	if action_area_height > 0.0:
@@ -1518,6 +1523,7 @@ func _rebuild_scene_object_cache() -> void:
 		var object_id := str(object_data.get("id", ""))
 		if not object_id.is_empty():
 			scene_objects_by_id_cache[object_id] = object_data
+		AttributeBadgeRowScript.warm_cache(_copy_array(object_data.get("attribute_badges", [])), 14)
 
 
 func _objects_from_foundation_snapshot(snapshot: Dictionary) -> Array:
@@ -1610,6 +1616,7 @@ func _objects_from_interactable_records(records: Array) -> Array:
 			"choice_summary": str(record.get("choice_summary", "")),
 			"risk_summary": str(record.get("risk_summary", "")),
 			"cost_summary": str(record.get("cost_summary", "")),
+			"attribute_badges": _copy_array(record.get("attribute_badges", [])),
 			"runtime_state": (record.get("runtime_state", {}) as Dictionary).duplicate(true) if typeof(record.get("runtime_state", {})) == TYPE_DICTIONARY else {},
 			"visual_state": (record.get("visual_state", {}) as Dictionary).duplicate(true) if typeof(record.get("visual_state", {})) == TYPE_DICTIONARY else {},
 			"state_badge": str(record.get("state_badge", "")),
@@ -1787,6 +1794,7 @@ func _selected_object_info_snapshot() -> Dictionary:
 		"action_label": _selected_info_action_label(object_data),
 		"action_button_rect": _rect_to_snapshot(action_button_rect),
 		"actions": _selected_info_action_snapshot_list(action_entries),
+		"attribute_badges": _copy_array(object_data.get("attribute_badges", [])),
 	}
 
 
@@ -2239,7 +2247,7 @@ func _compact_info_text(text: String) -> String:
 	for phrase in phrase_replacements.keys():
 		compact = compact.replace(str(phrase), str(phrase_replacements[phrase]))
 	var replacements := {
-		"Buy this item.": "Buy item.",
+		"Buy this item.": "Useful shop item.",
 		"Double-click to sell gear.": "Double-click to sell.",
 		"Double-click this machine to enter.": "Double-click to enter.",
 		"Double-click to review this response.": "Double-click to review.",
@@ -2327,14 +2335,21 @@ func _object_info_size(title: String, lines: Array, object_type: String, visible
 		content_width = maxf(content_width, _draw_text_width(str(line), font, 9) + OBJECT_INFO_PADDING_X * 2.0)
 	if lines.is_empty():
 		content_width = maxf(content_width, min_width)
+	var badge_height := _object_info_badge_height(object_data)
+	if badge_height > 0.0:
+		content_width = maxf(content_width, min_width)
 	var width := clampf(ceilf(content_width), min_width, max_width)
 	var line_count := maxi(1, lines.size())
-	var height := maxf(OBJECT_INFO_MIN_HEIGHT, OBJECT_INFO_BODY_Y + float(line_count) * OBJECT_INFO_LINE_HEIGHT + OBJECT_INFO_BOTTOM_PADDING)
+	var height := maxf(OBJECT_INFO_MIN_HEIGHT, OBJECT_INFO_BODY_Y + badge_height + float(line_count) * OBJECT_INFO_LINE_HEIGHT + OBJECT_INFO_BOTTOM_PADDING)
 	var action_area_height := _selected_info_action_area_height(object_data)
 	if action_area_height > 0.0:
 		height += OBJECT_INFO_ACTION_GAP + action_area_height
 	height = minf(ceilf(height), visible_rect.size.y)
 	return Vector2(width, height)
+
+
+func _object_info_badge_height(object_data: Dictionary) -> float:
+	return 22.0 if not _array_view(object_data.get("attribute_badges", [])).is_empty() else 0.0
 
 
 func _object_info_header_width(title: String, type_text: String, font: Font) -> float:

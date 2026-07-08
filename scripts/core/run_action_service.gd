@@ -9,6 +9,7 @@ extends RefCounted
 # them through RunState/GameModule so the same path can support a large catalog
 # of environments, items, services, lenders, and prestige goals.
 
+const AttributeBadgesScript := preload("res://scripts/core/attribute_badges.gd")
 const ItemEffectScript := preload("res://scripts/core/item_effect.gd")
 
 const JAZZ_CLUB_ARCHETYPE_ID := "jazz_club"
@@ -70,7 +71,9 @@ func item_offer_view_list(selected_item_id: String = "") -> Array:
 		var pickup := bool(offer_data.get("pickup", false))
 		if pickup:
 			price = 0
-		var effect: Dictionary = item_definition.get("effect", {}) if typeof(item_definition.get("effect", {})) == TYPE_DICTIONARY else {}
+		var item_context := item_definition.duplicate(true)
+		item_context["price"] = price
+		item_context["pickup"] = pickup
 		offers.append({
 			"id": item_id,
 			"display_name": display_name,
@@ -78,11 +81,13 @@ func item_offer_view_list(selected_item_id: String = "") -> Array:
 			"pickup": pickup,
 			"action_label": "Pick Up" if pickup else "Buy",
 			"description": str(item_definition.get("description", "")),
+			"purpose_summary": _item_purpose_summary(item_definition),
 			"asset_path": str(item_definition.get("asset_path", "")),
 			"icon_key": str(item_definition.get("icon_key", item_id)),
 			"environment_prop": str(item_definition.get("environment_prop", "")),
 			"surface": str(item_definition.get("surface", "counter")),
-			"effect_summary": effect_summary(effect),
+			"effect_summary": "",
+			"attribute_badges": AttributeBadgesScript.for_item(item_context),
 			"affordable": run_state.bankroll >= price,
 			"selected": item_id == selected_item_id,
 		})
@@ -97,6 +102,76 @@ func item_offer(item_id: String, selected_item_id: String = "") -> Dictionary:
 		if typeof(offer) == TYPE_DICTIONARY and str((offer as Dictionary).get("id", "")) == item_id:
 			return (offer as Dictionary).duplicate(true)
 	return {}
+
+
+func _item_purpose_summary(item_definition: Dictionary) -> String:
+	var effect := _copy_dict(item_definition.get("effect", {}))
+	var item_class := str(item_definition.get("class", item_definition.get("item_class", ""))).strip_edges().to_lower()
+	var domain := str(item_definition.get("domain", "")).strip_edges().to_lower()
+	if int(effect.get("container_capacity", item_definition.get("container_capacity", 0))) > 0 or item_class == "container":
+		return "Stores items outside your carried kit."
+	if bool(effect.get("active_item", false)) or not str(effect.get("active_mode", "")).strip_edges().is_empty():
+		var target := str(effect.get("active_target", domain)).strip_edges()
+		return "Active item for %s." % _purpose_domain_label(target)
+	var families := _copy_dict(effect.get("families", {}))
+	if not families.is_empty():
+		return "Helps %s." % _purpose_family_list(families.keys())
+	if int(effect.get("travel_scouting_level", 0)) > 0:
+		return "Reveals better route intel."
+	if effect.has("debt_grace_turns") or effect.has("debt_default_heat_delta"):
+		return "Helps manage debt pressure."
+	if int(effect.get("cheat_suspicion_delta", 0)) < 0:
+		return "Makes risky moves quieter."
+	if int(effect.get("cheat_suspicion_delta", 0)) > 0:
+		return "Stronger edge, more heat."
+	if effect.has("win_chance") or effect.has("legal_win_chance") or effect.has("win_bonus") or effect.has("loss_reduction"):
+		return "Improves clean-play outcomes."
+	if domain == "games":
+		return "Helps gambling decisions."
+	if domain == "travel":
+		return "Helps route choices."
+	return "Adds a useful run item."
+
+
+func _purpose_family_list(family_ids: Array) -> String:
+	var labels: Array[String] = []
+	for family_value in family_ids:
+		var label := _purpose_domain_label(str(family_value))
+		if label.is_empty() or labels.has(label):
+			continue
+		labels.append(label)
+	if labels.is_empty():
+		return "gambling"
+	if labels.size() == 1:
+		return labels[0]
+	if labels.size() == 2:
+		return "%s and %s" % [labels[0], labels[1]]
+	return "%s, %s, and more" % [labels[0], labels[1]]
+
+
+func _purpose_domain_label(value: String) -> String:
+	match value.strip_edges().to_lower():
+		"slots", "slot":
+			return "slot machines"
+		"cards":
+			return "card games"
+		"wheel", "roulette":
+			return "roulette"
+		"dice":
+			return "dice games"
+		"pull_tabs":
+			return "pull tabs"
+		"blackjack":
+			return "blackjack"
+		"baccarat":
+			return "baccarat"
+		"video_poker":
+			return "video poker"
+		"travel":
+			return "travel"
+		_:
+			var clean := value.strip_edges().replace("_", " ")
+			return clean if not clean.is_empty() else "this run"
 
 
 # Buys one item offer, applies its ItemEffect, removes the offer, and returns the result.
@@ -124,6 +199,7 @@ func buy_item_offer(item_id: String) -> Dictionary:
 	}
 	var effect_result: Dictionary = item_effect.apply(context)
 	var result := purchase_item_result(effect_result, item_definition, offer)
+	run_state.advance_environment_turns(1)
 	GameModule.apply_result(run_state, result)
 	if _definition_is_active_item(item_definition):
 		_auto_select_active_item_after_gain(item_id)
@@ -202,6 +278,9 @@ func inventory_item_detail(item_id: String) -> Dictionary:
 	var sale_price := item_sale_price(definition)
 	var is_active := _definition_is_active_item(definition)
 	var selected_id := selected_active_item_id() if run_state != null else ""
+	var item_context := definition.duplicate(true)
+	item_context["item_class"] = item_class
+	item_context["sale_price"] = sale_price
 	return {
 		"id": item_id,
 		"display_name": str(definition.get("display_name", item_id.capitalize())),
@@ -211,7 +290,8 @@ func inventory_item_detail(item_id: String) -> Dictionary:
 		"domain": str(definition.get("domain", "global")),
 		"sellable": sellable,
 		"sale_price": sale_price,
-		"effect_summary": effect_summary(effect),
+		"effect_summary": "",
+		"attribute_badges": AttributeBadgesScript.for_item(item_context),
 		"asset_path": str(definition.get("asset_path", "")),
 		"icon_key": str(definition.get("icon_key", item_id)),
 		"active_item": is_active,
@@ -461,6 +541,10 @@ func hook_option(kind: String, hook_id: String, selected_hook_id: String = "") -
 	elif not enabled:
 		disabled_reason = str(hook_status.get("disabled_reason", "Not available right now."))
 	var status := "Ready to use." if enabled else disabled_reason
+	var badge_source := definition.duplicate(true)
+	badge_source["cost"] = int(hook_status.get("cost", definition.get("cost", 0)))
+	badge_source["deltas"] = deltas
+	var attribute_badges := AttributeBadgesScript.for_service(badge_source) if kind == "service" else AttributeBadgesScript.for_lender(badge_source)
 	return {
 		"id": hook_id,
 		"kind": kind,
@@ -474,11 +558,12 @@ func hook_option(kind: String, hook_id: String, selected_hook_id: String = "") -
 		"hidden": availability_class == RunState.AVAILABILITY_CATEGORICAL_UNAVAILABLE,
 		"disabled_reason": disabled_reason,
 		"cost": int(hook_status.get("cost", definition.get("cost", 0))),
+		"delta_summary": delta_summary(deltas) if supported else "",
 		"icon_key": str(definition.get("icon_key", kind)),
 		"environment_prop": str(definition.get("environment_prop", "")),
 		"surface": str(definition.get("surface", "")),
 		"asset_path": str(definition.get("asset_path", "")),
-		"delta_summary": delta_summary(deltas) if supported else "",
+		"attribute_badges": attribute_badges,
 		"selected": hook_id == selected_hook_id,
 	}
 
@@ -598,10 +683,6 @@ func purchase_item_result(effect_result: Dictionary, item_definition: Dictionary
 	deltas["inventory_add"] = inventory_add
 	var story_log: Array = deltas.get("story_log", [])
 	var message := "Picked up %s." % display_name if pickup else "Bought %s for %d." % [display_name, price]
-	var effect_payload: Dictionary = item_definition.get("effect", {}) if typeof(item_definition.get("effect", {})) == TYPE_DICTIONARY else {}
-	var effect_text := effect_summary(effect_payload)
-	if not effect_text.is_empty():
-		message = "%s %s." % [message, effect_text]
 	story_log.append({
 		"type": "item_purchase",
 		"item_id": item_id,
@@ -639,6 +720,8 @@ func _clear_active_purchase_use_deltas(deltas: Dictionary) -> void:
 		"drunk_delta",
 		"pending_drunk_absorption_delta",
 		"drunk_distortion_suppression_turns",
+		"heat_cooldown_actions",
+		"heat_cooldown_per_action",
 		"alcoholic_delta",
 		"baseline_luck_delta",
 		"suspicion_delta",
@@ -772,7 +855,7 @@ func copy_result_deltas(value: Variant) -> Dictionary:
 func result_deltas_have_mutation(deltas: Dictionary) -> bool:
 	if int(deltas.get("bankroll_delta", 0)) != 0 or int(deltas.get("suspicion_delta", 0)) != 0:
 		return true
-	for key in ["alcohol_intake", "drunk_delta", "pending_drunk_absorption_delta", "drunk_distortion_suppression_turns", "alcoholic_delta", "baseline_luck_delta"]:
+	for key in ["alcohol_intake", "drunk_delta", "pending_drunk_absorption_delta", "drunk_distortion_suppression_turns", "heat_cooldown_actions", "heat_cooldown_per_action", "alcoholic_delta", "baseline_luck_delta"]:
 		if int(deltas.get(key, 0)) != 0:
 			return true
 	if bool(deltas.get("ended", false)):
@@ -808,6 +891,10 @@ func delta_summary(deltas: Dictionary) -> String:
 	var drunk_distortion_suppression_turns := int(deltas.get("drunk_distortion_suppression_turns", 0))
 	if drunk_distortion_suppression_turns > 0:
 		parts.append("steady vision %d" % drunk_distortion_suppression_turns)
+	var heat_cooldown_actions := int(deltas.get("heat_cooldown_actions", 0))
+	var heat_cooldown_per_action := int(deltas.get("heat_cooldown_per_action", 0))
+	if heat_cooldown_actions > 0 and heat_cooldown_per_action > 0:
+		parts.append("heat cools %d actions" % heat_cooldown_actions)
 	var alcoholic_delta := int(deltas.get("alcoholic_delta", 0))
 	if alcoholic_delta != 0:
 		parts.append("need %+d" % alcoholic_delta)
@@ -827,11 +914,11 @@ func delta_summary(deltas: Dictionary) -> String:
 	if not inventory_add.is_empty():
 		parts.append("items +%d" % inventory_add.size())
 	var inventory_remove := _copy_array(deltas.get("inventory_remove", []))
+	if not inventory_remove.is_empty():
+		parts.append("items -%d" % inventory_remove.size())
 	var pending_bags := _copy_array(deltas.get("pending_bags", []))
 	if not pending_bags.is_empty():
 		parts.append("bags +%d" % pending_bags.size())
-	if not inventory_remove.is_empty():
-		parts.append("items -%d" % inventory_remove.size())
 	return "; ".join(parts) if not parts.is_empty() else "story changes"
 
 
@@ -1356,20 +1443,25 @@ func _jazz_service_result(service_id: String, definition: Dictionary, status: Di
 		JAZZ_SAX_ROUND_SERVICE_ID:
 			favor_key = _jazz_favor_flag(JAZZ_MUSICIAN_SAX)
 			favor_count = _jazz_increment_flag(flags, favor_key)
+			baseline_luck_delta += 1
 			messages.append("The sax player leans into a brighter chorus.")
 			baseline_luck_delta += _jazz_try_reward_from_round(JAZZ_MUSICIAN_SAX, favor_count, flags, inventory_add, messages)
 		JAZZ_CELLO_ROUND_SERVICE_ID:
 			favor_key = _jazz_favor_flag(JAZZ_MUSICIAN_CELLO)
 			favor_count = _jazz_increment_flag(flags, favor_key)
+			deltas["suspicion_delta"] = -1 if run_state.suspicion_level() > 0 else 0
 			messages.append("The cellist answers with a low, steady run.")
 			baseline_luck_delta += _jazz_try_reward_from_round(JAZZ_MUSICIAN_CELLO, favor_count, flags, inventory_add, messages)
 		JAZZ_DRUMMER_ROUND_SERVICE_ID:
 			favor_key = _jazz_favor_flag(JAZZ_MUSICIAN_DRUMMER)
 			favor_count = _jazz_increment_flag(flags, favor_key)
+			deltas["alcohol_intake"] = 4
 			messages.append("The drummer gives you a two-tap salute.")
 			baseline_luck_delta += _jazz_try_reward_from_round(JAZZ_MUSICIAN_DRUMMER, favor_count, flags, inventory_add, messages)
 		JAZZ_TIP_JAR_SERVICE_ID:
 			story_type = "jazz_tip_jar"
+			deltas["heat_cooldown_actions"] = 3
+			deltas["heat_cooldown_per_action"] = 1
 			var tip_result := _jazz_apply_tip_jar(flags, inventory_add, messages)
 			baseline_luck_delta += int(tip_result.get("baseline_luck_delta", 0))
 			favor_count = int(tip_result.get("favor_count", 0))
@@ -1403,6 +1495,8 @@ func _jazz_service_result(service_id: String, definition: Dictionary, status: Di
 		"environment_archetype_id": str(run_state.current_environment.get("archetype_id", "")),
 		"bankroll_delta": int(deltas.get("bankroll_delta", 0)),
 		"suspicion_delta": int(deltas.get("suspicion_delta", 0)),
+		"alcohol_intake": int(deltas.get("alcohol_intake", 0)),
+		"heat_cooldown_actions": int(deltas.get("heat_cooldown_actions", 0)),
 		"baseline_luck_delta": baseline_luck_delta,
 		"favor_count": favor_count,
 		"listen_count": _jazz_flag_value(flags, listen_key),

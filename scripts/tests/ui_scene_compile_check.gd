@@ -15,6 +15,7 @@ const SlotMachineStateScript := preload("res://scripts/games/slots/slot_machine_
 const RunStateScript := preload("res://scripts/core/run_state.gd")
 const WorldMapScript := preload("res://scripts/core/world_map.gd")
 const RunActionServiceScript := preload("res://scripts/core/run_action_service.gd")
+const AttributeBadgesScript := preload("res://scripts/core/attribute_badges.gd")
 const EventModuleScript := preload("res://scripts/core/event_module.gd")
 const UserSettingsScript := preload("res://scripts/core/user_settings.gd")
 const TEST_SETTINGS_PATH := "user://settings_ui_scene_compile_check.json"
@@ -92,7 +93,7 @@ func _check_run_inventory_screen_component() -> bool:
 	)
 	screen.open(_run_inventory_component_model("inspect"))
 	await process_frame
-	if not screen.is_open() or screen.rendered_item_child_count() < 2 or not _has_visible_text(screen, "Odds Notebook") or not _has_visible_text(screen, "Effect"):
+	if not screen.is_open() or screen.rendered_item_child_count() < 2 or not _has_visible_text(screen, "Odds Notebook") or not _has_visible_text(screen, "Standalone component item."):
 		parent.queue_free()
 		push_error("Standalone run inventory screen did not render inspect grid and detail content.")
 		return false
@@ -222,6 +223,10 @@ func _check_talk_dock_component() -> bool:
 		parent.queue_free()
 		push_error("Talk dock did not clamp inside a small viewport: panel=%s screen=%s." % [str(panel_rect), str(screen_rect)])
 		return false
+	if panel_rect.size.x > 340.0 or panel_rect.size.y > 180.0:
+		parent.queue_free()
+		push_error("Talk dock expanded size regressed from the compact dialogue target: panel=%s." % str(panel_rect))
+		return false
 	dock.clear_entry()
 	if bool(dock.current_snapshot().get("visible", true)):
 		parent.queue_free()
@@ -280,7 +285,8 @@ func _resolve_talk_event_fixture(app: Control, presentation: String) -> int:
 	if run_state == null or library == null:
 		push_error("Talk dock fixture could not access run state or content library.")
 		return -1
-	var event_id := "table_patron_whisper"
+	var event_id := "blackjack_counter_probe" if presentation == "talk" else "family_loan"
+	var choice_id := "ignore" if presentation == "talk" else "deny"
 	var event_definition := library.event(event_id)
 	if event_definition.is_empty():
 		push_error("Talk dock fixture event is missing: %s." % event_id)
@@ -295,11 +301,13 @@ func _resolve_talk_event_fixture(app: Control, presentation: String) -> int:
 	environment["resolved_event_ids"] = []
 	run_state.set_environment(environment)
 	run_state.suspicion["level"] = 10
+	if presentation == "modal":
+		run_state.narrative_flags["brother_in_law_phone_ready"] = true
 	var context := {
 		"trigger": "table_approach",
 		"type": "table_approach",
 		"game_id": "blackjack",
-		"hands_played": 1,
+		"hands_played": 2,
 		"environment_snapshot": run_state.current_environment.duplicate(true),
 	}
 	var speaker := {
@@ -339,9 +347,65 @@ func _resolve_talk_event_fixture(app: Control, presentation: String) -> int:
 		if str(before_screen.get("screen", "")) == str(after_screen.get("screen", "")):
 			push_error("Talk dock route probe did not exercise a visible screen change.")
 			return -1
-	app.call("resolve_event_choice", event_id, "hear_them_out")
+	app.call("resolve_event_choice", event_id, choice_id)
 	await process_frame
 	return run_state.suspicion_level()
+
+
+func _check_dialogue_dock_main_flow(app: Control) -> bool:
+	app.call("start_foundation_run", "UI-DIALOGUE-SEED")
+	await process_frame
+	var run_state: RunState = app.get("run_state")
+	if run_state == null:
+		push_error("Dialogue dock fixture could not access run state.")
+		return false
+	var environment := run_state.current_environment.duplicate(true)
+	environment["id"] = "ui_dialogue_pull_tabs"
+	environment["archetype_id"] = "corner_store"
+	environment["kind"] = "shop"
+	environment["tier"] = 1
+	environment["game_ids"] = ["pull_tabs"]
+	environment["event_ids"] = []
+	environment["resolved_event_ids"] = []
+	environment["next_archetypes"] = ["bar"]
+	run_state.set_environment(environment)
+	if not bool(app.call("start_dialogue", "pull_tab_clerk", {})):
+		push_error("Dialogue dock fixture could not start pull_tab_clerk.")
+		return false
+	await process_frame
+	var snapshot: Dictionary = app.call("current_talk_dock_snapshot")
+	if not bool(snapshot.get("visible", false)) or str(snapshot.get("event_id", "")) != "dialogue:pull_tab_clerk":
+		push_error("Dialogue dock fixture did not expose the pilot dialogue.")
+		return false
+	var panel_rect := _snapshot_rect(snapshot.get("panel_rect", Rect2()))
+	if panel_rect.size.x > 340.0 or panel_rect.size.y > 180.0:
+		push_error("Dialogue dock fixture exceeded compact size: %s." % str(panel_rect))
+		return false
+	app.call("resolve_event_choice", "dialogue:pull_tab_clerk", "ask_routes")
+	await process_frame
+	if not bool(run_state.story_flags.get("pull_tab_clerk_route_tip", false)) or not run_state.unlocked_travel.has("gas_station_casino"):
+		push_error("Dialogue dock route branch did not apply story flag and route unlock.")
+		return false
+	var travel_count := 0
+	for travel_id in run_state.unlocked_travel:
+		if str(travel_id) == "gas_station_casino":
+			travel_count += 1
+	app.call("resolve_event_choice", "dialogue:pull_tab_clerk", "ask_routes")
+	await process_frame
+	var after_repeat_count := 0
+	for travel_id in run_state.unlocked_travel:
+		if str(travel_id) == "gas_station_casino":
+			after_repeat_count += 1
+	if after_repeat_count != travel_count:
+		push_error("Dialogue dock rapid repeat applied the route unlock twice.")
+		return false
+	app.call("resolve_event_choice", "dialogue:pull_tab_clerk", "done")
+	await process_frame
+	snapshot = app.call("current_talk_dock_snapshot")
+	if bool(snapshot.get("visible", false)):
+		push_error("Dialogue dock stayed visible after the end choice.")
+		return false
+	return true
 
 
 func _run_inventory_component_model(mode: String, container_id: String = "", selected: Dictionary = {}) -> Dictionary:
@@ -375,7 +439,7 @@ func _run_inventory_component_model(mode: String, container_id: String = "", sel
 
 
 func _run_inventory_component_item(item_id: String, display_name: String, source: String, container: bool) -> Dictionary:
-	return {
+	var item := {
 		"id": item_id,
 		"display_name": display_name,
 		"description": "Standalone component item.",
@@ -393,6 +457,15 @@ func _run_inventory_component_item(item_id: String, display_name: String, source
 		"active_item": not container and source != "container",
 		"active_selected": false,
 	}
+	item["attribute_badges"] = AttributeBadgesScript.for_item({
+		"id": item_id,
+		"class": str(item.get("item_class", "tool")),
+		"domain": str(item.get("domain", "global")),
+		"sale_price": int(item.get("sale_price", 0)),
+		"capacity": int(item.get("capacity", 0)),
+		"effect": {"baseline_luck_delta": 1} if not container else {},
+	})
+	return item
 
 
 func _run_inventory_test_texture(_asset_path: String) -> Texture2D:
@@ -1680,6 +1753,9 @@ func _run() -> void:
 	if not await _check_talk_dock_main_flow(app):
 		quit(1)
 		return
+	if not await _check_dialogue_dock_main_flow(app):
+		quit(1)
+		return
 	app.call("start_foundation_run", "UI-COMPILE-SEED")
 	await process_frame
 	if not await _check_preview_focus_keeps_serialized_run_state(app):
@@ -2725,6 +2801,55 @@ func _run() -> void:
 	if not await _resolve_visible_event_popup(app, "before cheat/advantage action selection"):
 		quit(1)
 		return
+	if not _enter_action_fixture_game(app, "bar_dice"):
+		push_error("Game interrupt regression could not enter the bar dice action fixture.")
+		quit(1)
+		return
+	await process_frame
+	var game_interrupt_run_state: RunState = app.get("run_state")
+	game_interrupt_run_state.event_cadence_advance_actions(4)
+	var game_interrupt_resolved: Array = game_interrupt_run_state.current_environment.get("resolved_event_ids", []) if typeof(game_interrupt_run_state.current_environment.get("resolved_event_ids", [])) == TYPE_ARRAY else []
+	game_interrupt_resolved.erase("suspicious_patron")
+	game_interrupt_run_state.current_environment["resolved_event_ids"] = game_interrupt_resolved
+	game_interrupt_run_state.current_environment["turns"] = maxi(2, int(game_interrupt_run_state.current_environment.get("turns", 0)))
+	var game_interrupt_context: Dictionary = {
+		"trigger": "action",
+		"type": "action",
+		"source": "game_action",
+		"turns": int(game_interrupt_run_state.current_environment.get("turns", 0)),
+	}
+	if not game_interrupt_run_state.enqueue_triggered_event("suspicious_patron", "game_action", game_interrupt_context):
+		push_error("Game interrupt regression could not enqueue a triggered event.")
+		quit(1)
+		return
+	if not bool(app.call("_show_next_pending_triggered_event")):
+		push_error("Game interrupt regression could not open the triggered event popup.")
+		quit(1)
+		return
+	await process_frame
+	var game_interrupt_popup: Dictionary = app.call("current_event_choice_popup_snapshot")
+	var game_interrupt_choices: Array = game_interrupt_popup.get("choices", []) if typeof(game_interrupt_popup.get("choices", [])) == TYPE_ARRAY else []
+	if not bool(game_interrupt_popup.get("visible", false)) or str(game_interrupt_popup.get("event_id", "")) != "suspicious_patron" or game_interrupt_choices.is_empty():
+		push_error("Game interrupt regression popup did not expose the expected triggered event.")
+		quit(1)
+		return
+	var game_interrupt_choice: Dictionary = game_interrupt_choices[0] if typeof(game_interrupt_choices[0]) == TYPE_DICTIONARY else {}
+	if game_interrupt_choice.is_empty():
+		push_error("Game interrupt regression popup choice was malformed.")
+		quit(1)
+		return
+	app.call("resolve_event_choice", "suspicious_patron", str(game_interrupt_choice.get("id", "")))
+	await process_frame
+	var game_interrupt_after_popup: Dictionary = app.call("current_event_choice_popup_snapshot")
+	if bool(game_interrupt_after_popup.get("visible", false)):
+		push_error("Game interrupt regression left the triggered event popup visible.")
+		quit(1)
+		return
+	var game_interrupt_screen := str(app.call("current_screen_snapshot").get("screen", ""))
+	if game_interrupt_screen != "GAME":
+		push_error("Resolving a triggered event from a game left the surface on %s instead of GAME." % game_interrupt_screen)
+		quit(1)
+		return
 	var cheat_action: Dictionary = higher_cheat_actions[0]
 	var serialized_before_cheat_selection := JSON.stringify(app.call("serialized_run_state"))
 	app.call("select_game_action", str(cheat_action.get("id", "")), "cheat")
@@ -3203,11 +3328,17 @@ func _run() -> void:
 		push_error("Foundation item offer view data is missing id or price.")
 		quit(1)
 		return
-	if str(item_offer.get("effect_summary", "")).is_empty():
-		push_error("Foundation item offer did not expose an effect summary from data.")
+	if str(item_offer.get("description", "")).is_empty():
+		push_error("Foundation item offer did not expose a short description from data.")
 		quit(1)
 		return
-	if not _player_facing_effect_summary_is_clean(str(item_offer.get("effect_summary", "")), "Item offer effect summary"):
+	var item_purpose := str(item_offer.get("purpose_summary", "")).strip_edges()
+	if item_purpose.is_empty():
+		push_error("Foundation item offer did not expose a purpose summary for shop object info.")
+		quit(1)
+		return
+	if not str(item_offer.get("effect_summary", "")).is_empty():
+		push_error("Foundation item offer should not expose specific stat changes in player-facing item text.")
 		quit(1)
 		return
 	var summary_service := RunActionServiceScript.new()
@@ -3279,8 +3410,8 @@ func _run() -> void:
 		push_error("Foundation screen router did not move to ITEMS for item cards.")
 		quit(1)
 		return
-	if not _has_visible_text(actions_list, str(item_offer.get("display_name", ""))) or not _has_visible_text(actions_list, "Cost:") or not _has_visible_text(actions_list, "Effect:"):
-		push_error("Item card did not show title, cost, and effect summary.")
+	if not _has_visible_text(actions_list, str(item_offer.get("display_name", ""))) or not _has_visible_text(actions_list, "Cost:") or not _has_visible_text(actions_list, str(item_offer.get("description", ""))):
+		push_error("Item card did not show title, short description, and cost.")
 		quit(1)
 		return
 	var serialized_before_item_selection := JSON.stringify(app.call("serialized_run_state"))
@@ -3312,7 +3443,13 @@ func _run() -> void:
 		push_error("Selecting an item offer reflowed environment objects.")
 		quit(1)
 		return
-	if not _selected_info_text_fits(app.get("environment_canvas"), "shop item object info", ["Cost:", "Effect:"]):
+	if not _selected_info_text_fits(app.get("environment_canvas"), "shop item object info", ["Cost:", str(item_offer.get("description", "")), item_purpose]):
+		quit(1)
+		return
+	var selected_item_info_snapshot: Dictionary = (app.get("environment_canvas") as Control).call("current_view_snapshot").get("selected_info", {})
+	var selected_item_info_lines: Array = selected_item_info_snapshot.get("lines", []) if typeof(selected_item_info_snapshot.get("lines", [])) == TYPE_ARRAY else []
+	if "\n".join(selected_item_info_lines).find("Buy item") != -1:
+		push_error("Shop item object info should explain item purpose instead of showing Buy item.")
 		quit(1)
 		return
 	var item_run_state: RunState = app.get("run_state")
@@ -3423,8 +3560,8 @@ func _run() -> void:
 		quit(1)
 		return
 	var selected_inventory_item: Dictionary = run_inventory_snapshot.get("selected_item", {}) if typeof(run_inventory_snapshot.get("selected_item", {})) == TYPE_DICTIONARY else {}
-	if str(run_inventory_snapshot.get("selected_item_id", "")) != item_id or selected_inventory_item.is_empty() or str(selected_inventory_item.get("effect_summary", "")).is_empty():
-		push_error("Run inventory did not select the item and expose effect details in the detail panel.")
+	if str(run_inventory_snapshot.get("selected_item_id", "")) != item_id or selected_inventory_item.is_empty() or str(selected_inventory_item.get("description", "")).is_empty() or not str(selected_inventory_item.get("effect_summary", "")).is_empty():
+		push_error("Run inventory did not select the item with short description-only detail text.")
 		quit(1)
 		return
 	app.call("select_run_inventory_item", item_id, str(purchased_inventory_item.get("storage_source", "carried")))
@@ -3440,8 +3577,8 @@ func _run() -> void:
 		push_error("Run inventory popup moved off-center or off-screen after item selection: %s within %s." % [str(selected_popup_rect), str(selected_screen_rect)])
 		quit(1)
 		return
-	if str(purchased_inventory_item.get("effect_summary", "")).is_empty() or int(purchased_inventory_item.get("sale_price", -1)) < 0 or not bool(purchased_inventory_item.get("sellable", false)):
-		push_error("Run inventory item details did not expose effect, sale price, and sellable status.")
+	if not str(purchased_inventory_item.get("effect_summary", "")).is_empty() or int(purchased_inventory_item.get("sale_price", -1)) < 0 or not bool(purchased_inventory_item.get("sellable", false)):
+		push_error("Run inventory item details exposed stat text or missed sale price/sellable status.")
 		quit(1)
 		return
 	app.call("close_run_inventory")
@@ -3543,6 +3680,8 @@ func _run() -> void:
 	var hook_library: ContentLibrary = app.get("library")
 	var original_hook_services: Array = hook_library.services.duplicate(true)
 	var original_hook_lenders: Array = hook_library.lenders.duplicate(true)
+	hook_run_state.game_clock_minutes = 20 * 60
+	hook_run_state.clear_closing_time_state()
 	hook_library.services = [{
 		"id": "fixture_ui_service",
 		"display_name": "Fixture Service",
@@ -3627,6 +3766,12 @@ func _run() -> void:
 		push_error("Supported service hook did not report a foundation hook result.")
 		quit(1)
 		return
+	app.call("back_to_environment")
+	await process_frame
+	app.call("_hide_event_choice_popup")
+	await process_frame
+	hook_run_state.game_clock_minutes = 20 * 60
+	hook_run_state.clear_closing_time_state()
 
 	hook_library.lenders = [{
 		"id": "fixture_ui_lender",
@@ -3648,7 +3793,9 @@ func _run() -> void:
 	var debt_count_before_lender := hook_run_state.debt.size()
 	var serialized_before_lender_selection := JSON.stringify(app.call("serialized_run_state"))
 	if not bool(app.call("select_lender_hook", lender_id)):
-		push_error("Foundation UI rejected an available lender hook.")
+		var blocker := str(app.call("_blocking_modal_message")) if app.has_method("_blocking_modal_message") else ""
+		var option: Dictionary = app.call("_lender_hook", lender_id) if app.has_method("_lender_hook") else {}
+		push_error("Foundation UI rejected an available lender hook. blocker=%s option=%s" % [blocker, JSON.stringify(option)])
 		quit(1)
 		return
 	await process_frame
@@ -3754,6 +3901,11 @@ func _run() -> void:
 		push_error("Leave did not show the modal world map overlay.")
 		quit(1)
 		return
+	var map_title_text := str(map_screen.get("world_map_title_text", ""))
+	if not map_title_text.contains("World Map") or (not map_title_text.contains("AM") and not map_title_text.contains("PM")):
+		push_error("World map header did not expose the in-run clock.")
+		quit(1)
+		return
 	if not _visible_buttons_meet_touch_target(app, "world map overlay"):
 		quit(1)
 		return
@@ -3829,6 +3981,7 @@ func _run() -> void:
 	var full_map: Dictionary = app.call("serialized_run_state").get("world_map", {}) if typeof(app.call("serialized_run_state").get("world_map", {})) == TYPE_DICTIONARY else {}
 	var hidden_map_ids := _hidden_world_map_ids(full_map)
 	var travel_enabled_found := false
+	var current_map_id := str(map_snapshot.get("current_node_id", ""))
 	for node_value in (map_snapshot.get("nodes", []) as Array):
 		if typeof(node_value) != TYPE_DICTIONARY:
 			continue
@@ -3851,6 +4004,11 @@ func _run() -> void:
 			push_error("World map node %s did not expose travel-enabled metadata." % node_id)
 			quit(1)
 			return
+		if bool(node_data.get("travel_target", false)) and node_id != current_map_id:
+			if not node_data.has("open_now") or not node_data.has("open_status_text"):
+				push_error("World map travel target %s did not expose open-hours metadata." % node_id)
+				quit(1)
+				return
 		if str(node_data.get("discovery_source", "")).strip_edges() == WorldMapScript.DISCOVERY_SOURCE_TRAVEL and str(node_data.get("state", "")) != WorldMapScript.STATE_VISITED and not bool(node_data.get("travel_target", false)):
 			push_error("World map displayed travel-discovered non-target node %s." % node_id)
 			quit(1)
@@ -3865,7 +4023,6 @@ func _run() -> void:
 		push_error("World map did not highlight any currently travelable node.")
 		quit(1)
 		return
-	var current_map_id := str(map_snapshot.get("current_node_id", ""))
 	if not bool(app.call("select_world_map_node", current_map_id)):
 		push_error("World map did not allow selecting the current node.")
 		quit(1)
@@ -3892,6 +4049,31 @@ func _run() -> void:
 	var detail_text := str(selected_map_screen.get("world_map_detail_text", ""))
 	if not detail_text.contains("Travel:") or not detail_text.contains("Distance:") or not detail_text.contains("Cost:"):
 		push_error("World map selection panel did not show travel method, distance, and cost.")
+		quit(1)
+		return
+	if int(selected_map_screen.get("world_map_detail_badge_count", 0)) <= 0:
+		push_error("World map selection panel did not render route attribute glyphs in the detail panel.")
+		quit(1)
+		return
+	var badge_slot := app.get("world_map_badge_slot") as VBoxContainer
+	if badge_slot == null or badge_slot.get_child_count() <= 0:
+		push_error("World map route glyph slot was empty after selecting a route.")
+		quit(1)
+		return
+	var badge_child_count := badge_slot.get_child_count()
+	var badge_child_instance_id := int(badge_slot.get_child(0).get_instance_id())
+	for _repeat_index in range(4):
+		if not bool(app.call("select_world_map_node", travel_target_id)):
+			push_error("World map repeated target selection unexpectedly failed.")
+			quit(1)
+			return
+		await process_frame
+	if badge_slot.get_child_count() != badge_child_count or int(badge_slot.get_child(0).get_instance_id()) != badge_child_instance_id:
+		push_error("World map route glyph row was rebuilt during an unchanged detail refresh.")
+		quit(1)
+		return
+	if not detail_text.contains("Hours:"):
+		push_error("World map selection panel did not show destination open-hours status.")
 		quit(1)
 		return
 	if serialized_before_map_select != JSON.stringify(app.call("serialized_run_state")):
@@ -5620,6 +5802,7 @@ func _check_preview_focus_keeps_serialized_run_state(app: Control) -> bool:
 	var fixture_run: RunState = RunStateScript.new()
 	fixture_run.start_new("UI-PREVIEW-FOCUS-NO-MUTATION")
 	fixture_run.bankroll = 100
+	fixture_run.game_clock_minutes = 20 * 60
 	fixture_run.pending_drunk_absorption = [{
 		"remaining": 6,
 		"interval_msec": 1,

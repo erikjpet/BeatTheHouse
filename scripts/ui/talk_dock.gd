@@ -3,10 +3,58 @@ extends Control
 
 signal choice_requested(event_id: String, choice_id: String)
 
-const COLLAPSED_SIZE := Vector2(380, 48)
-const EXPANDED_SIZE := Vector2(380, 220)
+const COLLAPSED_SIZE := Vector2(324, 42)
+const EXPANDED_SIZE := Vector2(322, 165)
 const VIEWPORT_MARGIN := Vector2(12, 14)
 const MAX_CHOICES := 4
+const AttributeBadgeRowScript := preload("res://scripts/ui/attribute_badge_row.gd")
+
+
+class PortraitModel:
+	extends Control
+
+	const PortraitTableGameVisualsScript := preload("res://scripts/games/table_game_visuals.gd")
+
+	var speaker: Dictionary = {}
+	var speaker_key := ""
+
+	func set_speaker(next_speaker: Dictionary) -> void:
+		var key := JSON.stringify(next_speaker)
+		if key == speaker_key:
+			return
+		speaker_key = key
+		speaker = next_speaker.duplicate(true)
+		queue_redraw()
+
+	func _draw() -> void:
+		var rect := Rect2(Vector2.ZERO, size)
+		draw_rect(rect, Color("#080a12"))
+		draw_rect(rect.grow(-2), Color("#111421"))
+		var hair := _speaker_color("hair_color", Color("#171022"))
+		var jacket := _speaker_color("jacket_color", Color("#1d2030"))
+		var style := {
+			"name": "",
+			"skin": Color("#c49371"),
+			"hair": hair,
+			"jacket": jacket,
+			"accent": VisualStyle.CYAN_2,
+			"role": str(speaker.get("role", "staff")),
+			"pose": "watching",
+			"eye_offset": 0.0,
+			"blink": false,
+			"holding_card": false,
+			"silhouette": str(speaker.get("silhouette", "coat")),
+		}
+		PortraitTableGameVisualsScript._draw_table_character(self, style, Vector2(size.x * 0.5, size.y + 8.0), 0.58, 0.0)
+
+	func surface_label(_text: String, _pos: Vector2, _font_size: int, _color: Color) -> void:
+		pass
+
+	func _speaker_color(field: String, fallback: Color) -> Color:
+		var text := str(speaker.get(field, "")).strip_edges()
+		if text.is_empty():
+			return fallback
+		return Color(text)
 
 var entry: Dictionary = {}
 var option: Dictionary = {}
@@ -19,6 +67,7 @@ var stack: VBoxContainer
 var collapsed_button: Button
 var header_row: HBoxContainer
 var portrait_panel: Panel
+var portrait_model: PortraitModel
 var speaker_label: Label
 var summary_label: Label
 var body_label: Label
@@ -115,13 +164,13 @@ func _build() -> void:
 	add_child(panel)
 
 	stack = VBoxContainer.new()
-	stack.add_theme_constant_override("separation", 6)
+	stack.add_theme_constant_override("separation", 5)
 	stack.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	stack.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	panel.add_child(stack)
 
 	collapsed_button = FoundationWidgets.button("", Callable(self, "_toggle_expanded"))
-	collapsed_button.custom_minimum_size = Vector2(0, 34)
+	collapsed_button.custom_minimum_size = Vector2(0, FoundationWidgets.MIN_NATIVE_TOUCH_TARGET_HEIGHT)
 	stack.add_child(collapsed_button)
 
 	header_row = HBoxContainer.new()
@@ -130,8 +179,12 @@ func _build() -> void:
 	stack.add_child(header_row)
 
 	portrait_panel = FoundationWidgets.panel(VisualStyle.DARK_2, VisualStyle.PINK_2)
-	portrait_panel.custom_minimum_size = Vector2(48, 54)
+	portrait_panel.custom_minimum_size = Vector2(44, 48)
 	header_row.add_child(portrait_panel)
+	portrait_model = PortraitModel.new()
+	portrait_model.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	portrait_model.set_anchors_preset(Control.PRESET_FULL_RECT)
+	portrait_panel.add_child(portrait_model)
 
 	var header_text := VBoxContainer.new()
 	header_text.add_theme_constant_override("separation", 2)
@@ -170,7 +223,7 @@ func _build() -> void:
 	choice_scroll = ScrollContainer.new()
 	choice_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
 	choice_scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_AUTO
-	choice_scroll.custom_minimum_size = Vector2(0, 68)
+	choice_scroll.custom_minimum_size = Vector2(0, 48)
 	choice_scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	choice_scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	stack.add_child(choice_scroll)
@@ -195,6 +248,9 @@ func _render() -> void:
 	summary_label.text = str(option.get("display_name", "Talk"))
 	body_label.text = summary
 	badge_label.text = "+%d" % maxi(0, queue_count - 1) if queue_count > 1 else ""
+	if portrait_model != null:
+		var speaker: Dictionary = entry.get("speaker", {}) if typeof(entry.get("speaker", {})) == TYPE_DICTIONARY else {}
+		portrait_model.set_speaker(speaker)
 	var timing: Dictionary = entry.get("timing", {}) if typeof(entry.get("timing", {})) == TYPE_DICTIONARY else {}
 	urgency_bar.visible = expanded and bool(timing.get("expires", false))
 	if urgency_bar.visible:
@@ -224,8 +280,15 @@ func _render_choices() -> void:
 		if _choice_requires_confirm(choice_data) and armed_choice_id == choice_id:
 			label = "Confirm: %s" % label
 		var button := FoundationWidgets.button(label, Callable(self, "_on_choice_pressed").bind(choice_id))
-		button.tooltip_text = str(choice_data.get("text", choice_data.get("consequence_summary", "")))
+		var enabled := bool(choice_data.get("enabled", true))
+		var disabled_reason := str(choice_data.get("disabled_reason", "")).strip_edges()
+		button.disabled = not enabled
+		button.tooltip_text = disabled_reason if not enabled and not disabled_reason.is_empty() else str(choice_data.get("text", choice_data.get("consequence_summary", "")))
 		choice_list.add_child(button)
+		var badges := _copy_array(choice_data.get("attribute_badges", []))
+		if not badges.is_empty():
+			AttributeBadgeRowScript.warm_cache(badges, 12)
+			choice_list.add_child(AttributeBadgeRowScript.control_row(badges, 12))
 
 
 func _choices() -> Array:
@@ -233,6 +296,12 @@ func _choices() -> Array:
 	if typeof(source) != TYPE_ARRAY:
 		return []
 	return (source as Array).slice(0, MAX_CHOICES)
+
+
+func _copy_array(value: Variant) -> Array:
+	if typeof(value) != TYPE_ARRAY:
+		return []
+	return (value as Array).duplicate(true)
 
 
 func _toggle_expanded() -> void:
@@ -248,6 +317,8 @@ func _on_choice_pressed(choice_id: String) -> void:
 
 func _choose(choice_id: String, choice: Dictionary) -> void:
 	if choice_id.is_empty():
+		return
+	if not bool(choice.get("enabled", true)):
 		return
 	if _choice_requires_confirm(choice) and armed_choice_id != choice_id:
 		armed_choice_id = choice_id
@@ -283,7 +354,12 @@ func _position_panel() -> void:
 	if panel == null:
 		return
 	var panel_size := EXPANDED_SIZE if expanded else COLLAPSED_SIZE
-	panel_size.x = minf(panel_size.x, maxf(280.0, size.x - VIEWPORT_MARGIN.x * 2.0))
-	panel_size.y = minf(panel_size.y, maxf(44.0, size.y - VIEWPORT_MARGIN.y * 2.0))
+	var available_size := Vector2(
+		maxf(280.0, size.x - VIEWPORT_MARGIN.x * 2.0),
+		maxf(44.0, size.y - VIEWPORT_MARGIN.y * 2.0)
+	)
+	var minimum_size := panel.get_combined_minimum_size()
+	panel_size.x = minf(maxf(panel_size.x, minimum_size.x), available_size.x)
+	panel_size.y = minf(maxf(panel_size.y, minimum_size.y), available_size.y)
 	panel.size = panel_size
 	panel.position = Vector2(VIEWPORT_MARGIN.x, maxf(VIEWPORT_MARGIN.y, size.y - panel_size.y - VIEWPORT_MARGIN.y))

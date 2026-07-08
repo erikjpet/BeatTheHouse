@@ -9,6 +9,9 @@ const BuffaloScript := preload("res://scripts/games/slots/slot_family_buffalo.gd
 const PinballScript := preload("res://scripts/games/slots/slot_family_pinball.gd")
 const PinballFeatureScript := preload("res://scripts/games/slots/pinball/pinball_feature.gd")
 const EventModuleScript := preload("res://scripts/core/event_module.gd")
+const RunGeneratorScript := preload("res://scripts/core/run_generator.gd")
+const RunTerminalEvaluatorScript := preload("res://scripts/core/run_terminal_evaluator.gd")
+const WorldMapScript := preload("res://scripts/core/world_map.gd")
 
 const WATCHDOG_GRACE_MSEC := 2200
 const GENERAL_GAME_IDS := ["slot", "pull_tabs", "blackjack", "baccarat", "roulette", "video_poker", "bar_dice"]
@@ -112,6 +115,7 @@ func _wait_state_scenario_names() -> Array:
 		"pull_tabs_reveal_and_file",
 		"triggered_event_queue",
 		"travel_lock_countdown",
+		"broke_closing_walk_fallback",
 	]
 
 
@@ -125,6 +129,7 @@ func _run_wait_state_scenarios(library: ContentLibrary, game_modules: Dictionary
 		_run_pull_tabs_wait(game_modules, seed_index),
 		_run_triggered_event_wait(library, seed_index),
 		_run_travel_lock_wait(seed_index),
+		_run_broke_closing_walk_fallback(library, seed_index),
 	]
 
 
@@ -364,6 +369,49 @@ func _run_travel_lock_wait(seed_index: int) -> Dictionary:
 	restored.advance_environment_turns(2)
 	if restored.current_travel_lock_remaining() > 0:
 		return _scenario_fail(scenario, label, "travel lock did not count down through environment turns")
+	return _scenario_ok(scenario)
+
+
+func _run_broke_closing_walk_fallback(library: ContentLibrary, seed_index: int) -> Dictionary:
+	var scenario := "broke_closing_walk_fallback"
+	var label := "SB6-WAIT-%03d-closing-walk" % seed_index
+	var run_state: RunState = RunStateScript.new()
+	run_state.start_new(label)
+	run_state.bankroll = 0
+	var generator: RunGenerator = RunGeneratorScript.new(library)
+	generator.next_environment(run_state)
+	if not run_state.has_world_map():
+		return _scenario_fail(scenario, label, "world map was not initialized")
+	var home_node_id := run_state.current_world_node_id()
+	var bar_archetype := _environment_archetype_by_id(library, "bar")
+	if bar_archetype.is_empty():
+		return _scenario_fail(scenario, label, "bar archetype fixture missing")
+	var bar_rng: RngStream = run_state.create_rng("closing_walk_fixture")
+	var bar_environment := EnvironmentInstance.from_archetype(bar_archetype, 1, bar_rng, library)
+	var bar_data := bar_environment.to_dict()
+	bar_data["world_node_id"] = "bar"
+	run_state.save_rng(bar_rng)
+	run_state.store_current_world_node_environment()
+	run_state.set_environment(bar_data)
+	run_state.world_map = WorldMapScript.enter_node(run_state.world_map, "bar", run_state.current_environment)
+	run_state.game_clock_minutes = 3 * 60
+	run_state.begin_closing_time(run_state.current_environment, run_state.game_minute_of_day(), 0)
+	run_state.force_closing_time_travel()
+	var terminal := RunTerminalEvaluatorScript.evaluate(run_state, library)
+	if bool(terminal.get("failed", false)):
+		return _scenario_fail(scenario, label, "bankroll-zero failure stranded forced closing travel")
+	var map: WorldMap = WorldMapScript.new(library)
+	var route := map.route_for_target(run_state.world_map, run_state.current_world_node_id(), home_node_id)
+	if route.is_empty():
+		return _scenario_fail(scenario, label, "visited home node was not routeable during closing eviction")
+	var zero_cost_route := route.duplicate(true)
+	zero_cost_route["cost"] = 0
+	if run_state.bankroll - int(zero_cost_route.get("cost", 0)) < 0:
+		return _scenario_fail(scenario, label, "walk fallback was not affordable while broke")
+	run_state.advance_game_clock_minutes(maxi(1, int(zero_cost_route.get("distance_blocks", 1))) * 10)
+	run_state.clear_closing_time_state()
+	if run_state.closing_time_active():
+		return _scenario_fail(scenario, label, "closing state survived normal forced travel completion")
 	return _scenario_ok(scenario)
 
 
@@ -763,3 +811,15 @@ func _array(value: Variant) -> Array:
 	if typeof(value) != TYPE_ARRAY:
 		return []
 	return (value as Array).duplicate(true)
+
+
+func _environment_archetype_by_id(library: ContentLibrary, archetype_id: String) -> Dictionary:
+	if library == null:
+		return {}
+	for archetype_value in library.environment_archetypes:
+		if typeof(archetype_value) != TYPE_DICTIONARY:
+			continue
+		var archetype: Dictionary = archetype_value
+		if str(archetype.get("id", "")) == archetype_id:
+			return archetype.duplicate(true)
+	return {}

@@ -2,6 +2,10 @@
   {
     "id": "corner_store",
     "kind": "shop",
+    "open_hours": {
+      "open_minute": 360,
+      "close_minute": 60
+    },
     "is_start": true,
     "next_archetypes": [
       "bar",
@@ -235,6 +239,7 @@
   {
     "id": "back_alley",
     "kind": "shop",
+    "open_hours": null,
     "is_start": true,
     "next_archetypes": [
       "bar",
@@ -462,6 +467,7 @@
   {
     "id": "motel",
     "kind": "shop",
+    "open_hours": null,
     "is_start": true,
     "next_archetypes": [
       "gas_station_casino",
@@ -699,6 +705,10 @@
   {
     "id": "bar",
     "kind": "casino",
+    "open_hours": {
+      "open_minute": 660,
+      "close_minute": 180
+    },
     "is_start": false,
     "next_archetypes": [
       "corner_store",
@@ -768,6 +778,10 @@
         [
           650,
           256
+        ],
+        [
+          520,
+          326
         ]
       ],
       "travel_spots": [
@@ -911,6 +925,7 @@
   {
     "id": "gas_station_casino",
     "kind": "casino",
+    "open_hours": null,
     "is_start": false,
     "next_archetypes": [
       "corner_store",
@@ -980,6 +995,10 @@
         [
           650,
           274
+        ],
+        [
+          520,
+          360
         ]
       ],
       "travel_spots": [
@@ -1126,6 +1145,7 @@
   {
     "id": "small_underground_casino",
     "kind": "casino",
+    "open_hours": null,
     "is_start": false,
     "next_archetypes": [
       "back_alley",
@@ -1282,6 +1302,9 @@
     "economic_profile": {
       "stake_floor": 5,
       "stake_ceiling": 35,
+      "game_stake_ceiling_overrides": {
+        "blackjack": 60
+      },
       "cashout_tone": "private"
     },
     "game_pool": [
@@ -1350,6 +1373,10 @@
   {
     "id": "jazz_club",
     "kind": "shop",
+    "open_hours": {
+      "open_minute": 1020,
+      "close_minute": 180
+    },
     "is_start": false,
     "rarity": "rare",
     "spawn_weight": 4,
@@ -1468,6 +1495,10 @@
         [
           610,
           250
+        ],
+        [
+          500,
+          170
         ]
       ],
       "prestige_spots": [
@@ -1553,11 +1584,9 @@
       2
     ],
     "event_pool": [
-      "chatty_clerk",
-      "parking_lot_tip",
-      "suspicious_patron",
-      "late_shift_discount",
-      "crew_favor_delivery"
+      "jazz_trio_set_break",
+      "jazz_connected_regular",
+      "jazz_after_hours_invitation"
     ],
     "event_scopes": [
       "shop"
@@ -1596,6 +1625,10 @@
   {
     "id": "kitty_cat_lounge",
     "kind": "casino",
+    "open_hours": {
+      "open_minute": 780,
+      "close_minute": 300
+    },
     "is_start": false,
     "tier": 2,
     "name_prefixes": [
@@ -1769,6 +1802,9 @@
     "economic_profile": {
       "stake_floor": 8,
       "stake_ceiling": 45,
+      "game_stake_ceiling_overrides": {
+        "roulette": 90
+      },
       "price_tone": "velvet",
       "cashout_tone": "host"
     },
@@ -1864,6 +1900,10 @@
   {
     "id": "delta_queen",
     "kind": "casino",
+    "open_hours": {
+      "open_minute": 540,
+      "close_minute": 180
+    },
     "is_start": false,
     "tier": 2,
     "travel_locked_actions": 2,
@@ -2033,6 +2073,10 @@
     "economic_profile": {
       "stake_floor": 6,
       "stake_ceiling": 42,
+      "game_stake_ceiling_overrides": {
+        "blackjack": 80,
+        "roulette": 100
+      },
       "price_tone": "mid-stakes",
       "cashout_tone": "purser"
     },
@@ -2131,6 +2175,7 @@
   {
     "id": "beach",
     "kind": "recovery",
+    "open_hours": null,
     "is_start": false,
     "tier": 2,
     "display_name": "The Beach",
@@ -2255,6 +2300,7 @@
   {
     "id": "grand_casino",
     "kind": "boss",
+    "open_hours": null,
     "is_start": false,
     "next_archetypes": [
       "motel",
@@ -2419,6 +2465,10 @@
     "economic_profile": {
       "stake_floor": 5,
       "stake_ceiling": 35,
+      "game_stake_ceiling_overrides": {
+        "blackjack": 150,
+        "roulette": 150
+      },
       "cashout_tone": "cage"
     },
     "game_pool": [
@@ -2487,6 +2537,7 @@
   {
     "id": "motel_room",
     "kind": "home",
+    "open_hours": null,
     "is_start": false,
     "is_home_start": true,
     "parent_archetype": "motel",
@@ -2653,6 +2704,7 @@
   {
     "id": "apartment",
     "kind": "home",
+    "open_hours": null,
     "is_start": false,
     "is_home_start": true,
     "display_name": "Apartment",
@@ -2831,6 +2883,7 @@
   {
     "id": "house",
     "kind": "home",
+    "open_hours": null,
     "is_start": false,
     "is_home_start": true,
     "display_name": "House",

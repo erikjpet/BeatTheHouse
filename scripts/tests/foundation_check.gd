@@ -12,7 +12,9 @@ const CardShoeScript := preload("res://scripts/core/card_shoe.gd")
 const ProfileInventoryScript := preload("res://scripts/core/profile_inventory.gd")
 const RunTerminalEvaluatorScript := preload("res://scripts/core/run_terminal_evaluator.gd")
 const RunActionServiceScript := preload("res://scripts/core/run_action_service.gd")
+const AttributeBadgesScript := preload("res://scripts/core/attribute_badges.gd")
 const ArtContractsScript := preload("res://scripts/core/art_contracts.gd")
+const EnvironmentHoursScript := preload("res://scripts/core/environment_hours.gd")
 const UserSettingsScript := preload("res://scripts/core/user_settings.gd")
 const ProceduralMusicPlayerScript := preload("res://scripts/ui/procedural_music_player.gd")
 const SfxPlayerScript := preload("res://scripts/ui/sfx_player.gd")
@@ -381,6 +383,7 @@ func _foundation_run_contract_suite(content_library: ContentLibrary, fixture_lib
 
 func _foundation_run_system_suite(content_library: ContentLibrary, fixture_library: ContentLibrary, failures: Array, report: Dictionary) -> void:
 	_foundation_run_check(report, failures, "content", Callable(self, "_check_content"), [content_library])
+	_foundation_run_check(report, failures, "attribute_glyph_foundation", Callable(self, "_check_attribute_glyph_foundation"), [content_library])
 	_foundation_run_check(report, failures, "profile_inventory_boundary", Callable(self, "_check_profile_inventory_boundary"), [])
 	_foundation_run_check(report, failures, "fixture_rng", Callable(self, "_check_rng"), [fixture_library])
 	_foundation_run_check(report, failures, "run_state_source_of_truth", Callable(self, "_check_run_state_source_of_truth"), [fixture_library])
@@ -396,6 +399,7 @@ func _foundation_run_system_suite(content_library: ContentLibrary, fixture_libra
 	_foundation_run_check(report, failures, "event_module_foundation", Callable(self, "_check_event_module_foundation"), [content_library])
 	_foundation_run_check(report, failures, "event_system_state_foundation", Callable(self, "_check_event_system_state_foundation"), [content_library])
 	_foundation_run_check(report, failures, "talk_decision_system_foundation", Callable(self, "_check_talk_decision_system_foundation"), [content_library])
+	_foundation_run_check(report, failures, "dialogue_system_foundation", Callable(self, "_check_dialogue_system_foundation"), [content_library])
 	_foundation_run_check(report, failures, "t4_7_event_interaction_model", Callable(self, "_check_t4_7_event_interaction_model"), [content_library])
 	_foundation_run_check(report, failures, "t6_7_visibility_event_cadence", Callable(self, "_check_t6_7_visibility_event_cadence"), [content_library])
 	_foundation_run_check(report, failures, "save_service_foundation_round_trip", Callable(self, "_check_save_service_foundation_round_trip"), [content_library])
@@ -404,6 +408,7 @@ func _foundation_run_system_suite(content_library: ContentLibrary, fixture_libra
 	_foundation_run_check(report, failures, "economy_pressure_foundation", Callable(self, "_check_economy_pressure_foundation"), [content_library])
 	_foundation_run_check(report, failures, "travel_route_foundation", Callable(self, "_check_travel_route_foundation"), [content_library])
 	_foundation_run_check(report, failures, "world_map_foundation", Callable(self, "_check_world_map_foundation"), [content_library])
+	_foundation_run_check(report, failures, "time_open_hours_foundation", Callable(self, "_check_time_open_hours_foundation"), [content_library])
 	_foundation_run_check(report, failures, "service_hook_foundation", Callable(self, "_check_service_hook_foundation"), [content_library])
 	_foundation_run_check(report, failures, "jazz_club_foundation", Callable(self, "_check_jazz_club_foundation"), [content_library])
 	_foundation_run_check(report, failures, "lender_debt_foundation", Callable(self, "_check_lender_debt_foundation"), [content_library])
@@ -420,6 +425,7 @@ func _foundation_run_system_suite(content_library: ContentLibrary, fixture_libra
 
 func _foundation_run_all_suite(content_library: ContentLibrary, fixture_library: ContentLibrary, failures: Array, report: Dictionary) -> void:
 	_foundation_run_check(report, failures, "content", Callable(self, "_check_content"), [content_library])
+	_foundation_run_check(report, failures, "attribute_glyph_foundation", Callable(self, "_check_attribute_glyph_foundation"), [content_library])
 	_foundation_run_check(report, failures, "foundation_contracts_all", Callable(self, "_check_foundation_contract_smoke_for_suite"), [content_library])
 	_foundation_run_check(report, failures, "profile_inventory_boundary", Callable(self, "_check_profile_inventory_boundary"), [])
 	_foundation_run_check(report, failures, "fixture_rng", Callable(self, "_check_rng"), [fixture_library])
@@ -429,6 +435,7 @@ func _foundation_run_all_suite(content_library: ContentLibrary, fixture_library:
 	_foundation_run_check(report, failures, "fixture_contracts", Callable(self, "_check_contracts"), [fixture_library])
 	_foundation_run_check(report, failures, "ui_state_machine_input_fuzz_foundation", Callable(self, "_check_ui_state_machine_input_fuzz_foundation"), [content_library])
 	_foundation_run_check(report, failures, "talk_decision_system_foundation", Callable(self, "_check_talk_decision_system_foundation"), [content_library])
+	_foundation_run_check(report, failures, "dialogue_system_foundation", Callable(self, "_check_dialogue_system_foundation"), [content_library])
 
 
 func _foundation_run_check(report: Dictionary, failures: Array, check_id: String, callable: Callable, args: Array) -> void:
@@ -481,6 +488,10 @@ func _check_content(library: ContentLibrary, failures: Array) -> void:
 	_check_tier_two_venue_progression(library, failures)
 	_check_baccarat_grand_casino_only(library, failures)
 	_check_environment_game_pool_distribution(library, failures)
+	_check_high_risk_table_limit_overrides(library, failures)
+	_check_environment_open_hours(library, failures)
+	_check_dialogue_system_content(library, failures)
+	_check_talk_content_pass_content(library, failures)
 	_check_t4_3_event_pack(library, failures)
 	_check_t4_4_item_pack(library, failures)
 	_check_content_group_modularity(library, failures)
@@ -506,6 +517,92 @@ func _check_content(library: ContentLibrary, failures: Array) -> void:
 	_check_environment_instance_shape(second_environment, false, failures)
 	if second_environment.id == first_environment.id:
 		failures.append("Travel did not generate a distinct second environment.")
+
+
+func _check_attribute_glyph_foundation(library: ContentLibrary, failures: Array) -> void:
+	for error_value in AttributeBadgesScript.validation_errors():
+		failures.append("Attribute glyph registry validation failed: %s" % str(error_value))
+	var glyph_ids := AttributeBadgesScript.glyph_ids()
+	if glyph_ids.is_empty():
+		failures.append("Attribute glyph registry did not expose any glyph ids.")
+	var legend_entries := AttributeBadgesScript.legend_entries()
+	if legend_entries.size() != glyph_ids.size():
+		failures.append("Attribute glyph legend must enumerate every registry glyph.")
+	_check_attribute_class_coverage("item", library.items, "class", failures)
+	_check_attribute_class_coverage("event", library.events, "type", failures)
+	_check_attribute_class_coverage("route", library.travel_routes, "risk", failures)
+	_check_attribute_class_coverage("service", library.services, "category", failures)
+	_check_attribute_class_coverage("lender", library.lenders, "lender_type", failures)
+	var route := _first_dictionary(library.travel_routes)
+	if route.is_empty():
+		failures.append("Attribute glyph route fixture is missing.")
+	else:
+		var route_before := JSON.stringify(route)
+		var route_badges := AttributeBadgesScript.for_route(route, {})
+		if route_badges.is_empty():
+			failures.append("Attribute glyph route builder returned no badges.")
+		if JSON.stringify(route) != route_before:
+			failures.append("Attribute glyph route builder mutated its input.")
+	var item := _first_dictionary(library.items)
+	if item.is_empty():
+		failures.append("Attribute glyph item fixture is missing.")
+	else:
+		var item_before := JSON.stringify(item)
+		var item_badges := AttributeBadgesScript.for_item(item)
+		if item_badges.is_empty():
+			failures.append("Attribute glyph item builder returned no badges.")
+		if JSON.stringify(item) != item_before:
+			failures.append("Attribute glyph item builder mutated its input.")
+	var event_choice := _first_event_choice_fixture(library)
+	if event_choice.is_empty():
+		failures.append("Attribute glyph event choice fixture is missing.")
+	else:
+		var event_before := JSON.stringify(event_choice)
+		var event_badges := AttributeBadgesScript.for_event_choice(event_choice)
+		if event_badges.is_empty():
+			failures.append("Attribute glyph event choice builder returned no badges.")
+		if JSON.stringify(event_choice) != event_before:
+			failures.append("Attribute glyph event choice builder mutated its input.")
+
+
+func _check_attribute_class_coverage(kind: String, values: Array, field: String, failures: Array) -> void:
+	var class_map := AttributeBadgesScript.class_badge_map(kind)
+	var seen: Dictionary = {}
+	for value in values:
+		if typeof(value) != TYPE_DICTIONARY:
+			continue
+		var definition: Dictionary = value
+		var class_id := str(definition.get(field, "")).strip_edges().to_lower()
+		if class_id.is_empty() or seen.has(class_id):
+			continue
+		seen[class_id] = true
+		if not class_map.has(class_id):
+			failures.append("Attribute glyph class map %s is missing explicit badge for %s." % [kind, class_id])
+			continue
+		if AttributeBadgesScript.class_badge(kind, class_id).is_empty():
+			failures.append("Attribute glyph class badge %s/%s did not build." % [kind, class_id])
+
+
+func _first_event_choice_fixture(library: ContentLibrary) -> Dictionary:
+	for event_value in library.events:
+		if typeof(event_value) != TYPE_DICTIONARY:
+			continue
+		var event: Dictionary = event_value
+		var payload: Dictionary = event.get("payload", {}) if typeof(event.get("payload", {})) == TYPE_DICTIONARY else {}
+		for choice_value in _copy_array(payload.get("choices", [])):
+			if typeof(choice_value) != TYPE_DICTIONARY:
+				continue
+			var choice: Dictionary = (choice_value as Dictionary).duplicate(true)
+			choice["event_type"] = str(event.get("type", ""))
+			return choice
+	return {}
+
+
+func _first_dictionary(values: Array) -> Dictionary:
+	for value in values:
+		if typeof(value) == TYPE_DICTIONARY:
+			return (value as Dictionary).duplicate(true)
+	return {}
 
 
 func _check_s0_2_baseline_regression_fixtures(library: ContentLibrary, failures: Array) -> void:
@@ -875,6 +972,266 @@ func _check_environment_game_pool_distribution(library: ContentLibrary, failures
 			failures.append("Game %s is defined but absent from every environment game_pool." % game_id)
 		elif not bool(non_rare_placed_by_game.get(game_id, false)):
 			failures.append("Game %s only appears in rare environment game pools." % game_id)
+
+
+func _check_high_risk_table_limit_overrides(library: ContentLibrary, failures: Array) -> void:
+	var expected := {
+		"small_underground_casino": {"blackjack": 60},
+		"delta_queen": {"blackjack": 80, "roulette": 100},
+		"kitty_cat_lounge": {"roulette": 90},
+		"grand_casino": {"blackjack": 150, "roulette": 150},
+	}
+	var blackjack: GameModule = _load_surface_contract_game(library, "blackjack", failures)
+	var roulette: GameModule = _load_surface_contract_game(library, "roulette", failures)
+	var run_state: RunState = RunStateScript.new()
+	run_state.start_new("TABLE-LIMITS")
+	run_state.bankroll = 1000
+	for venue_id in expected.keys():
+		var archetype := _archetype_by_id(library, str(venue_id))
+		if archetype.is_empty():
+			failures.append("High-risk table limit fixture is missing venue: %s." % str(venue_id))
+			continue
+		var profile: Dictionary = archetype.get("economic_profile", {}) if typeof(archetype.get("economic_profile", {})) == TYPE_DICTIONARY else {}
+		var base_limit := int(profile.get("stake_ceiling", 0))
+		var overrides: Dictionary = profile.get("game_stake_ceiling_overrides", {}) if typeof(profile.get("game_stake_ceiling_overrides", {})) == TYPE_DICTIONARY else {}
+		var venue_expected: Dictionary = expected.get(venue_id, {})
+		for game_id in venue_expected.keys():
+			var expected_limit := int(venue_expected.get(game_id, 0))
+			if int(overrides.get(game_id, 0)) != expected_limit:
+				failures.append("%s should set %s table limit to %d." % [str(venue_id), str(game_id), expected_limit])
+			if GameModule.stake_ceiling_for_game({"economic_profile": profile}, str(game_id), run_state.bankroll) != expected_limit:
+				failures.append("%s %s override did not resolve through GameModule.stake_ceiling_for_game." % [str(venue_id), str(game_id)])
+			if expected_limit <= base_limit:
+				failures.append("%s %s override should raise the base venue limit." % [str(venue_id), str(game_id)])
+		if blackjack != null and venue_expected.has("blackjack"):
+			var blackjack_actions := blackjack.actions(run_state, {"economic_profile": profile})
+			if int(blackjack_actions.get("base_stake_ceiling", 0)) != int(venue_expected.get("blackjack", 0)):
+				failures.append("%s blackjack action view did not expose the raised table limit." % str(venue_id))
+		if roulette != null and venue_expected.has("roulette"):
+			var roulette_environment := {
+				"economic_profile": profile,
+				"security_profile": {},
+				"depth": int(archetype.get("tier", 0)),
+			}
+			var roulette_table := roulette.generate_environment_state(run_state, roulette_environment, run_state.create_rng("roulette_limits:%s" % str(venue_id)))
+			var rules: Dictionary = roulette_table.get("rules", {}) if typeof(roulette_table.get("rules", {})) == TYPE_DICTIONARY else {}
+			if int(rules.get("table_max", 0)) != int(venue_expected.get("roulette", 0)):
+				failures.append("%s roulette table did not generate the raised table max." % str(venue_id))
+			var chips := _copy_array(roulette_table.get("chip_denominations", []))
+			if int(venue_expected.get("roulette", 0)) >= 100 and not chips.has(50):
+				failures.append("%s roulette high-limit table should expose a $50 chip." % str(venue_id))
+			if int(venue_expected.get("roulette", 0)) >= 150 and not chips.has(100):
+				failures.append("%s roulette top-limit table should expose a $100 chip." % str(venue_id))
+
+
+func _check_environment_open_hours(library: ContentLibrary, failures: Array) -> void:
+	var expected_hours := {
+		"corner_store": {"open_minute": 360, "close_minute": 60},
+		"bar": {"open_minute": 660, "close_minute": 180},
+		"kitty_cat_lounge": {"open_minute": 780, "close_minute": 300},
+		"jazz_club": {"open_minute": 1020, "close_minute": 180},
+		"delta_queen": {"open_minute": 540, "close_minute": 180},
+	}
+	for archetype_value in library.environment_archetypes:
+		if typeof(archetype_value) != TYPE_DICTIONARY:
+			continue
+		var archetype: Dictionary = archetype_value
+		var archetype_id := str(archetype.get("id", "")).strip_edges()
+		if not archetype_id.is_empty() and not archetype.has("open_hours"):
+			failures.append("Environment %s must declare open_hours or explicit null." % archetype_id)
+	for archetype_id in expected_hours.keys():
+		var archetype := _archetype_by_id(library, str(archetype_id))
+		var hours: Dictionary = archetype.get("open_hours", {}) if typeof(archetype.get("open_hours", {})) == TYPE_DICTIONARY else {}
+		var expected: Dictionary = expected_hours.get(archetype_id, {})
+		if int(hours.get("open_minute", -1)) != int(expected.get("open_minute", -2)) or int(hours.get("close_minute", -1)) != int(expected.get("close_minute", -2)):
+			failures.append("Environment %s open_hours do not match the authored schedule." % str(archetype_id))
+	var corner_store := _archetype_by_id(library, "corner_store")
+	if not EnvironmentHoursScript.environment_open_at(corner_store, 360):
+		failures.append("corner_store should be open at 6 AM.")
+	if not EnvironmentHoursScript.environment_open_at(corner_store, 0):
+		failures.append("corner_store should remain open at midnight before its 1 AM close.")
+	if EnvironmentHoursScript.environment_open_at(corner_store, 60):
+		failures.append("corner_store should close exactly at 1 AM.")
+	if EnvironmentHoursScript.environment_open_at(corner_store, 300):
+		failures.append("corner_store should stay closed before 6 AM.")
+	var motel := _archetype_by_id(library, "motel")
+	if not EnvironmentHoursScript.environment_open_at(motel, 0) or not EnvironmentHoursScript.environment_open_at(motel, 720):
+		failures.append("motel should be open 24h.")
+	var jazz := _archetype_by_id(library, "jazz_club")
+	if not EnvironmentHoursScript.environment_open_at(jazz, 17 * 60) or not EnvironmentHoursScript.environment_open_at(jazz, 2 * 60):
+		failures.append("jazz_club should use wrap-around evening hours.")
+	if EnvironmentHoursScript.environment_open_at(jazz, 12 * 60):
+		failures.append("jazz_club should be closed at noon.")
+
+
+func _check_dialogue_system_content(library: ContentLibrary, failures: Array) -> void:
+	for dialogue_id in ["pull_tab_clerk", "late_shift_discount", "chatty_clerk"]:
+		var dialogue := library.dialogue(dialogue_id)
+		if dialogue.is_empty():
+			failures.append("Dialogue pack is missing %s." % dialogue_id)
+			continue
+		if str(dialogue.get("start", "")).strip_edges().is_empty():
+			failures.append("Dialogue %s is missing a start node." % dialogue_id)
+	var late_event := library.event("late_shift_discount")
+	if str(late_event.get("dialogue_id", "")) != "late_shift_discount":
+		failures.append("late_shift_discount event did not migrate to a dialogue_id.")
+	var chatty_event := library.event("chatty_clerk")
+	if str(chatty_event.get("dialogue_id", "")) != "chatty_clerk":
+		failures.append("chatty_clerk event did not migrate to a dialogue_id.")
+	var bad_library: ContentLibrary = ContentLibraryScript.new()
+	bad_library.dialogues = [{
+		"id": "bad_goto_fixture",
+		"speaker": {"role": "staff", "name": "Fixture"},
+		"start": "start",
+		"nodes": {
+			"start": {
+				"text": "Bad edge.",
+				"choices": [{"id": "bad", "label": "Bad", "goto": "missing", "effects": {}}],
+			},
+		},
+	}]
+	bad_library.travel_routes = library.travel_routes.duplicate(true)
+	bad_library.validation_errors = []
+	bad_library._validate_dialogue_definitions()
+	var saw_bad_goto := false
+	for error_value in bad_library.validation_errors:
+		if str(error_value).find("missing goto") >= 0:
+			saw_bad_goto = true
+			break
+	if not saw_bad_goto:
+		failures.append("Dialogue validation did not reject a bad goto target.")
+
+
+func _check_talk_content_pass_content(library: ContentLibrary, failures: Array) -> void:
+	var table_events := {
+		"blackjack_counter_probe": "blackjack",
+		"roulette_lucky_regular": "roulette",
+		"baccarat_off_duty_dealer": "baccarat",
+		"video_poker_neighbor": "video_poker",
+		"bar_dice_tipsy_braggart": "bar_dice",
+		"pull_tabs_friendly_local": "pull_tabs",
+	}
+	for event_id_value in table_events.keys():
+		var event_id := str(event_id_value)
+		var game_id := str(table_events[event_id_value])
+		var event := library.event(event_id)
+		if event.is_empty():
+			failures.append("Talk content pass is missing table approach event: %s." % event_id)
+			continue
+		_check_talk_content_event_shape(event, event_id, "table_approach", failures)
+		var trigger: Dictionary = event.get("trigger", {}) if typeof(event.get("trigger", {})) == TYPE_DICTIONARY else {}
+		var games := _string_array(trigger.get("games", []))
+		if games != [game_id]:
+			failures.append("Talk content table approach %s must target only %s." % [event_id, game_id])
+		var run_state: RunState = RunStateScript.new()
+		run_state.start_new("TALK-CONTENT-%s" % event_id)
+		run_state.set_environment(_t4_3_fixture_environment("talk_%s" % game_id, "casino", 2, [game_id], [], ["bar"]))
+		var event_module := EventModule.new()
+		event_module.setup(event, library)
+		var context := {
+			"trigger": "table_approach",
+			"type": "table_approach",
+			"game_id": game_id,
+			"hands_played": int(trigger.get("min_hands", 0)),
+		}
+		if not event_module.can_trigger(run_state, run_state.current_environment, context):
+			failures.append("Talk content table approach %s did not trigger for %s." % [event_id, game_id])
+		context["game_id"] = "roulette" if game_id != "roulette" else "blackjack"
+		if event_module.can_trigger(run_state, run_state.current_environment, context):
+			failures.append("Talk content table approach %s triggered for the wrong game." % event_id)
+
+	var heat_events := {
+		"floor_staff_heat_warning": 65,
+		"pit_boss_heat_warning": 85,
+	}
+	for event_id_value in heat_events.keys():
+		var heat_event_id := str(event_id_value)
+		var threshold := int(heat_events[event_id_value])
+		var event := library.event(heat_event_id)
+		if event.is_empty():
+			failures.append("Talk content pass is missing heat threshold event: %s." % heat_event_id)
+			continue
+		_check_talk_content_event_shape(event, heat_event_id, "heat_threshold", failures)
+		var trigger: Dictionary = event.get("trigger", {}) if typeof(event.get("trigger", {})) == TYPE_DICTIONARY else {}
+		if int(trigger.get("level", 0)) != threshold:
+			failures.append("Talk content heat event %s must trigger at %d." % [heat_event_id, threshold])
+		var run_state: RunState = RunStateScript.new()
+		run_state.start_new("TALK-HEAT-%s" % heat_event_id)
+		run_state.set_environment(_t4_3_fixture_environment("talk_heat", "casino", 2, ["blackjack"], [], ["bar"]))
+		run_state.add_suspicion("talk_content_fixture", threshold, "behavior")
+		var event_module := EventModule.new()
+		event_module.setup(event, library)
+		var context := {
+			"trigger": "heat_threshold",
+			"type": "heat_threshold",
+			"threshold": threshold,
+			"previous_suspicion": threshold - 3,
+			"current_suspicion": threshold,
+		}
+		if not event_module.can_trigger(run_state, run_state.current_environment, context):
+			failures.append("Talk content heat threshold event %s did not trigger at %d." % [heat_event_id, threshold])
+
+	for migrated_event_id in [
+		"suspicious_patron",
+		"motel_knock",
+		"rival_counter",
+		"counter_payoff",
+		"snitch_reputation",
+		"on_the_house",
+		"the_collector",
+		"shift_change",
+		"whale_sighting",
+		"staff_shift_tip",
+	]:
+		var event := library.event(migrated_event_id)
+		if event.is_empty():
+			failures.append("Talk content migrated event is missing: %s." % migrated_event_id)
+			continue
+		if str(event.get("presentation", "")) != "talk":
+			failures.append("Talk content migrated event %s is not presentation=talk." % migrated_event_id)
+		var speaker: Dictionary = event.get("speaker", {}) if typeof(event.get("speaker", {})) == TYPE_DICTIONARY else {}
+		if str(speaker.get("name", "")).strip_edges().is_empty():
+			failures.append("Talk content migrated event %s is missing a speaker name." % migrated_event_id)
+
+	_check_talk_content_resolve_delta(library, "suspicious_patron", "talk_down", 0, -3, failures)
+	_check_talk_content_resolve_delta(library, "motel_knock", "borrow", 35, 0, failures)
+	_check_talk_content_resolve_delta(library, "the_collector", "pay_now", -20, -2, failures)
+
+
+func _check_talk_content_event_shape(event: Dictionary, event_id: String, trigger_type: String, failures: Array) -> void:
+	if str(event.get("interaction_mode", "")) != "triggered":
+		failures.append("Talk content event %s must be triggered." % event_id)
+	if str(event.get("presentation", "")) != "talk":
+		failures.append("Talk content event %s must use talk presentation." % event_id)
+	var speaker: Dictionary = event.get("speaker", {}) if typeof(event.get("speaker", {})) == TYPE_DICTIONARY else {}
+	if str(speaker.get("role", "")).strip_edges().is_empty() or str(speaker.get("silhouette", "")).strip_edges().is_empty():
+		failures.append("Talk content event %s is missing a usable speaker snapshot." % event_id)
+	var trigger: Dictionary = event.get("trigger", {}) if typeof(event.get("trigger", {})) == TYPE_DICTIONARY else {}
+	if str(trigger.get("type", "")) != trigger_type:
+		failures.append("Talk content event %s must use %s trigger." % [event_id, trigger_type])
+	var payload: Dictionary = event.get("payload", {}) if typeof(event.get("payload", {})) == TYPE_DICTIONARY else {}
+	var choices: Array = payload.get("choices", []) if typeof(payload.get("choices", [])) == TYPE_ARRAY else []
+	if choices.size() < 2 or choices.size() > 3:
+		failures.append("Talk content event %s must expose 2-3 choices." % event_id)
+
+
+func _check_talk_content_resolve_delta(library: ContentLibrary, event_id: String, choice_id: String, expected_bankroll_delta: int, expected_suspicion_delta: int, failures: Array) -> void:
+	var event := library.event(event_id)
+	if event.is_empty():
+		return
+	var run_state: RunState = RunStateScript.new()
+	run_state.start_new("TALK-PARITY-%s" % event_id)
+	run_state.set_environment(_t4_3_fixture_environment("talk_parity", "casino", 2, ["blackjack"], [], ["bar"]))
+	if expected_suspicion_delta < 0:
+		run_state.add_suspicion("talk_parity_start", 20, "behavior")
+	var event_module := EventModule.new()
+	event_module.setup(event, library)
+	var result: Dictionary = event_module.resolve(run_state, run_state.current_environment, choice_id)
+	var deltas: Dictionary = result.get("deltas", {}) if typeof(result.get("deltas", {})) == TYPE_DICTIONARY else {}
+	if int(result.get("bankroll_delta", deltas.get("bankroll_delta", 0))) != expected_bankroll_delta:
+		failures.append("Talk content migrated event %s/%s changed bankroll consequence." % [event_id, choice_id])
+	if int(result.get("suspicion_delta", deltas.get("suspicion_delta", 0))) != expected_suspicion_delta:
+		failures.append("Talk content migrated event %s/%s changed heat consequence." % [event_id, choice_id])
 
 
 func _check_t4_3_event_pack(library: ContentLibrary, failures: Array) -> void:
@@ -12268,10 +12625,13 @@ func _check_selected_starter_game_port(library: ContentLibrary, failures: Array)
 	var generator_b: RunGenerator = RunGeneratorScript.new(library)
 	var start_environment_a: EnvironmentInstance = generator_a.next_environment(run_a)
 	var start_environment_b: EnvironmentInstance = generator_b.next_environment(run_b)
-	var gambling_target_a := _first_target_with_game(library, start_environment_a.next_archetypes, "pull_tabs")
-	var gambling_target_b := _first_target_with_game(library, start_environment_b.next_archetypes, "pull_tabs")
-	var environment_a := generator_a.next_environment(run_a, gambling_target_a).to_dict()
-	var environment_b := generator_b.next_environment(run_b, gambling_target_b).to_dict()
+	var gambling_path_a := _first_reachable_target_path_with_game(library, start_environment_a.next_archetypes, "pull_tabs")
+	var gambling_path_b := _first_reachable_target_path_with_game(library, start_environment_b.next_archetypes, "pull_tabs")
+	if gambling_path_a.is_empty() or gambling_path_b.is_empty():
+		failures.append("Selected starter route did not expose a reachable pull-tabs gambling environment.")
+		return
+	var environment_a := _generate_path_target_environment(generator_a, run_a, gambling_path_a)
+	var environment_b := _generate_path_target_environment(generator_b, run_b, gambling_path_b)
 	if not (environment_a.get("game_ids", []) as Array).has("pull_tabs"):
 		failures.append("Selected starter pull-tabs route did not generate a pull-tabs gambling environment.")
 		return
@@ -12322,9 +12682,31 @@ func _first_target_with_game(library: ContentLibrary, target_ids: Array, game_id
 				return target_id
 			if game_pool.has(game_id):
 				return target_id
-	if not target_ids.is_empty():
+	if game_id.is_empty() and not target_ids.is_empty():
 		return str(target_ids[0])
 	return ""
+
+
+func _first_reachable_target_path_with_game(library: ContentLibrary, target_ids: Array, game_id: String) -> Array:
+	var direct := _first_target_with_game(library, target_ids, game_id)
+	if not direct.is_empty():
+		return [direct]
+	for target_id_value in target_ids:
+		var target_id := str(target_id_value)
+		var archetype := _archetype_by_id(library, target_id)
+		if archetype.is_empty():
+			continue
+		var nested := _first_target_with_game(library, _string_array(archetype.get("next_archetypes", [])), game_id)
+		if not nested.is_empty():
+			return [target_id, nested]
+	return []
+
+
+func _generate_path_target_environment(generator: RunGenerator, run_state: RunState, target_path: Array) -> Dictionary:
+	var environment := run_state.current_environment.duplicate(true)
+	for target_id_value in target_path:
+		environment = generator.next_environment(run_state, str(target_id_value)).to_dict()
+	return environment
 
 
 # Checks the small Pull Tabs result payload stays gameplay-only.
@@ -12788,6 +13170,49 @@ func _check_event_system_state_foundation(library: ContentLibrary, failures: Arr
 	if tip_event.can_trigger(tip_run, tip_run.current_environment):
 		failures.append("System-state event stayed eligible after its blocking flag was set.")
 
+	var side_door_def := library.event("side_door")
+	if side_door_def.is_empty():
+		failures.append("Side Door cheap-route event fixture is missing.")
+	else:
+		var route_refresh_run: RunState = RunStateScript.new()
+		route_refresh_run.start_new("EVENT-CHEAP-ROUTE-SHOP-REFRESH")
+		var route_refresh_generator: RunGenerator = RunGeneratorScript.new(library)
+		route_refresh_generator.next_environment(route_refresh_run)
+		route_refresh_run.current_environment["kind"] = "casino"
+		route_refresh_run.current_environment["event_ids"] = ["side_door"]
+		route_refresh_run.current_environment["resolved_event_ids"] = []
+		var stale_corner_environment := {
+			"id": "stale_corner_store",
+			"archetype_id": "corner_store",
+			"kind": "shop",
+			"item_offers": [{"id": "old_ticket", "price": 1}],
+		}
+		var stale_motel_environment := {
+			"id": "stale_motel",
+			"archetype_id": "motel",
+			"kind": "shop",
+			"item_offers": [{"id": "old_key", "price": 1}],
+		}
+		route_refresh_run.world_map = WorldMapScript.store_environment(route_refresh_run.world_map, "corner_store", stale_corner_environment)
+		route_refresh_run.world_map = WorldMapScript.store_environment(route_refresh_run.world_map, "motel", stale_motel_environment)
+		var stale_corner_node := WorldMapScript.node_by_id(route_refresh_run.world_map, "corner_store")
+		var stale_motel_node := WorldMapScript.node_by_id(route_refresh_run.world_map, "motel")
+		if _copy_dict(stale_corner_node.get("environment", {})).is_empty() or _copy_dict(stale_motel_node.get("environment", {})).is_empty():
+			failures.append("Side Door route-refresh fixture could not seed stale shop environments.")
+		var side_door_event := EventModule.new()
+		side_door_event.setup(side_door_def)
+		if not side_door_event.can_trigger(route_refresh_run, route_refresh_run.current_environment):
+			failures.append("Side Door cheap-route event did not trigger in the route-refresh fixture.")
+		else:
+			var cheap_route_before := _run_state_result_snapshot(route_refresh_run)
+			var cheap_route_result := side_door_event.resolve(route_refresh_run, route_refresh_run.current_environment, "cheap_route")
+			_check_event_result_delta_shape(cheap_route_result, failures)
+			_check_event_result_applied(cheap_route_before, route_refresh_run, cheap_route_result, "side-door cheap-route result", failures)
+			var corner_after := WorldMapScript.node_by_id(route_refresh_run.world_map, "corner_store")
+			var motel_after := WorldMapScript.node_by_id(route_refresh_run.world_map, "motel")
+			if not _copy_dict(corner_after.get("environment", {})).is_empty() or not _copy_dict(motel_after.get("environment", {})).is_empty():
+				failures.append("Side Door cheap-route choice did not clear stored shop nodes for fresh offers.")
+
 	var debt_event_def := library.event("motel_knock")
 	if debt_event_def.is_empty():
 		failures.append("Economy-gated event fixture is missing: motel_knock.")
@@ -12971,7 +13396,7 @@ func _check_talk_decision_system_foundation(library: ContentLibrary, failures: A
 		"hands_played": 1,
 		"environment_snapshot": run_state.current_environment.duplicate(true),
 	}
-	var event_id := "table_patron_whisper"
+	var event_id := "blackjack_counter_probe"
 	if library.event(event_id).is_empty():
 		failures.append("Talk decision fixture event is missing: %s." % event_id)
 		return
@@ -13015,6 +13440,93 @@ func _check_talk_decision_system_foundation(library: ContentLibrary, failures: A
 	loaded.complete_talk_event_resolution(event_id)
 	if not loaded.next_pending_talk_event().is_empty():
 		failures.append("Talk decision event did not clear after completion.")
+
+
+func _check_dialogue_system_foundation(library: ContentLibrary, failures: Array) -> void:
+	var dialogue := library.dialogue("pull_tab_clerk")
+	if dialogue.is_empty():
+		failures.append("Dialogue system pilot fixture is missing pull_tab_clerk.")
+		return
+	var run_state: RunState = RunStateScript.new()
+	run_state.start_new("DIALOGUE-SYSTEM")
+	run_state.set_environment(_t4_3_fixture_environment("corner_store", "shop", 1, ["pull_tabs"], [], ["bar"]))
+	var speaker: Dictionary = dialogue.get("speaker", {}) if typeof(dialogue.get("speaker", {})) == TYPE_DICTIONARY else {}
+	if not run_state.enqueue_dialogue("pull_tab_clerk", "dialogue:pull_tab_clerk", speaker, "greeting", "fixture", {"trigger": "dialogue"}):
+		failures.append("Dialogue system could not enqueue a pilot dialogue.")
+		return
+	var pending := run_state.next_pending_talk_event()
+	if str(pending.get("dialogue_id", "")) != "pull_tab_clerk" or str(pending.get("current_node", "")) != "greeting":
+		failures.append("Dialogue queue entry did not expose dialogue_id/current_node.")
+	var restored: RunState = RunStateScript.new()
+	restored.from_dict(run_state.to_dict())
+	var restored_pending := restored.next_pending_talk_event()
+	if str(restored_pending.get("dialogue_id", "")) != "pull_tab_clerk" or str(restored_pending.get("current_node", "")) != "greeting":
+		failures.append("Dialogue queue entry did not round-trip through RunState save/load.")
+
+	var ask_routes := _dialogue_choice_fixture(dialogue, "greeting", "ask_routes")
+	if ask_routes.is_empty():
+		failures.append("Dialogue pilot ask_routes choice is missing.")
+	else:
+		var route_effects: Dictionary = ask_routes.get("effects", {}) if typeof(ask_routes.get("effects", {})) == TYPE_DICTIONARY else {}
+		var route_event := EventModule.new()
+		route_event.setup(_dialogue_test_event_definition("dialogue_route_fixture", "ask_routes", route_effects), library)
+		route_event.resolve(run_state, run_state.current_environment, "ask_routes")
+		if not bool(run_state.story_flags.get("pull_tab_clerk_route_tip", false)) or not bool(run_state.narrative_flags.get("pull_tab_clerk_route_tip", false)):
+			failures.append("Dialogue set_story_flag did not sync story_flags and narrative_flags.")
+		if not run_state.unlocked_travel.has("gas_station_casino"):
+			failures.append("Dialogue unlock_travel_route did not unlock the route destination.")
+		var route_badges := AttributeBadgesScript.for_event_choice({"event_type": "social", "consequences": route_effects})
+		var has_story_badge := false
+		var has_route_badge := false
+		for badge_value in route_badges:
+			if typeof(badge_value) != TYPE_DICTIONARY:
+				continue
+			var badge: Dictionary = badge_value
+			has_story_badge = has_story_badge or str(badge.get("glyph_id", "")) == "story"
+			has_route_badge = has_route_badge or str(badge.get("glyph_id", "")) == "class_route"
+		if not has_story_badge or not has_route_badge:
+			failures.append("Dialogue effect badge disclosure did not include story and route badges.")
+
+	var ask_loose := _dialogue_choice_fixture(dialogue, "greeting", "ask_loose")
+	if ask_loose.is_empty():
+		failures.append("Dialogue pilot ask_loose choice is missing.")
+	else:
+		var loose_effects: Dictionary = ask_loose.get("effects", {}) if typeof(ask_loose.get("effects", {})) == TYPE_DICTIONARY else {}
+		var heat_before := run_state.suspicion_level()
+		var loose_event := EventModule.new()
+		loose_event.setup(_dialogue_test_event_definition("dialogue_loose_fixture", "ask_loose", loose_effects), library)
+		loose_event.resolve(run_state, run_state.current_environment, "ask_loose")
+		if run_state.suspicion_level() < heat_before + 2:
+			failures.append("Dialogue risky branch did not apply its heat cost.")
+
+
+func _dialogue_choice_fixture(dialogue: Dictionary, node_id: String, choice_id: String) -> Dictionary:
+	var nodes: Dictionary = dialogue.get("nodes", {}) if typeof(dialogue.get("nodes", {})) == TYPE_DICTIONARY else {}
+	var node: Dictionary = nodes.get(node_id, {}) if typeof(nodes.get(node_id, {})) == TYPE_DICTIONARY else {}
+	var choices: Array = node.get("choices", []) if typeof(node.get("choices", [])) == TYPE_ARRAY else []
+	for choice_value in choices:
+		if typeof(choice_value) == TYPE_DICTIONARY and str((choice_value as Dictionary).get("id", "")) == choice_id:
+			return (choice_value as Dictionary).duplicate(true)
+	return {}
+
+
+func _dialogue_test_event_definition(event_id: String, choice_id: String, effects: Dictionary) -> Dictionary:
+	return {
+		"id": event_id,
+		"display_name": "Dialogue Fixture",
+		"type": "social",
+		"interaction_mode": "triggered",
+		"scopes": ["any"],
+		"trigger": {"type": "manual"},
+		"payload": {
+			"choices": [{
+				"id": choice_id,
+				"label": choice_id,
+				"text": choice_id,
+				"consequences": effects,
+			}],
+		},
+	}
 
 
 func _check_t4_7_chain_determinism(library: ContentLibrary, failures: Array) -> void:
@@ -13342,6 +13854,7 @@ func _check_event_result_applied(before: Dictionary, run_state: RunState, result
 func _check_save_service_foundation_round_trip(library: ContentLibrary, failures: Array) -> void:
 	var run_state: RunState = RunStateScript.new()
 	run_state.start_new("SAVE-SERVICE-SEED", RunState.custom_challenge("save_service_round_trip", "SAVE-SERVICE-SEED", {"fixture": true}))
+	run_state.game_clock_minutes = 20 * 60
 	var generator: RunGenerator = RunGeneratorScript.new(library)
 	var start_environment: EnvironmentInstance = generator.next_environment(run_state)
 	var environment_target := _first_target_with_game(library, _unique_strings(start_environment.next_archetypes, start_environment.travel_hooks), "")
@@ -13667,7 +14180,6 @@ func _check_travel_route_foundation(library: ContentLibrary, failures: Array) ->
 			failures.append("Scouted route preview services did not match the generated destination.")
 		if int(full_preview.get("travel_locked_actions", 0)) != int(actual_environment.get("travel_locked_actions", 0)):
 			failures.append("Scouted route preview did not expose the generated travel lock.")
-
 	var beach_route := library.route("beach")
 	var beach_archetype := _archetype_by_id(library, "beach")
 	if beach_route.is_empty() or beach_archetype.is_empty():
@@ -13683,6 +14195,7 @@ func _check_travel_route_foundation(library: ContentLibrary, failures: Array) ->
 			failures.append("Beach should route back to the Delta Queen.")
 		if not _string_array(beach_archetype.get("service_pool", [])).has("beach_relax") or not _string_array(beach_archetype.get("service_pool", [])).has("beach_sand_pile"):
 			failures.append("Beach should expose relax and sand-pile service hooks.")
+
 	var scout_run: RunState = RunStateScript.new()
 	scout_run.start_new("TRAVEL-SCOUTING")
 	if scout_run.travel_scouting_level() != 0:
@@ -13834,10 +14347,17 @@ func _check_world_map_foundation(library: ContentLibrary, failures: Array) -> vo
 	var return_targets := WorldMapScript.travel_target_ids(run_a.world_map, visited_node_id)
 	if not return_targets.has(start_node_id):
 		failures.append("Visited world-map node did not offer the previous stop as a return target.")
+	for visited_id_value in _world_map_visited_ids(run_a.world_map):
+		var visited_id := str(visited_id_value)
+		if visited_id != visited_node_id and not return_targets.has(visited_id):
+			failures.append("World map did not expose visited node %s as a revisit target from %s." % [visited_id, visited_node_id])
+			break
 	var return_route := generator.world_route_for_target(run_a, start_node_id)
 	if _string_array(return_route.get("world_path", [])).size() < 2:
 		failures.append("Return world-map route did not include a visible path.")
 	var return_cost := int(return_route.get("cost", 0))
+	if return_cost <= 0 and int(return_route.get("distance_blocks", 0)) > 0:
+		failures.append("Return world-map route did not charge a distance-based cost.")
 	var bankroll_before_return := run_a.bankroll
 	var return_heat := run_a.begin_travel_suspicion_decay(return_route, start_node_id)
 	generator.next_environment(run_a, start_node_id)
@@ -13860,12 +14380,56 @@ func _check_world_map_foundation(library: ContentLibrary, failures: Array) -> vo
 		failures.append("World map graph/discovery/path state did not survive RunState save/load.")
 
 
+func _check_time_open_hours_foundation(library: ContentLibrary, failures: Array) -> void:
+	var bar_archetype := _archetype_by_id(library, "bar")
+	if bar_archetype.is_empty():
+		failures.append("Time-system fixture is missing bar archetype.")
+		return
+	var run_state: RunState = RunStateScript.new()
+	run_state.start_new("TIME-OPEN-HOURS")
+	var environment := EnvironmentInstance.from_archetype(bar_archetype, 1, run_state.create_rng("time_open_hours"), library)
+	run_state.set_environment(environment.to_dict())
+	run_state.game_clock_minutes = (24 + 3) * 60
+	if EnvironmentHoursScript.environment_open_at(bar_archetype, run_state.game_minute_of_day()):
+		failures.append("Bar should be closed at its 3 AM boundary.")
+	var closing_state := run_state.begin_closing_time(run_state.current_environment, run_state.game_minute_of_day())
+	if str(closing_state.get("phase", "")) != RunState.CLOSING_TIME_PHASE_GRACE or int(closing_state.get("grace_actions_remaining", -1)) != RunState.CLOSING_TIME_DEFAULT_GRACE_ACTIONS:
+		failures.append("Closing-time state did not start in one-action grace.")
+	var loaded: RunState = RunStateScript.new()
+	loaded.from_dict(run_state.to_dict())
+	if JSON.stringify(loaded.closing_time_status()) != JSON.stringify(run_state.closing_time_status()):
+		failures.append("Closing-time grace state did not survive save/load.")
+	var spent := loaded.spend_closing_time_grace_action()
+	if str(spent.get("phase", "")) != RunState.CLOSING_TIME_PHASE_FORCED_TRAVEL:
+		failures.append("Closing-time grace did not transition to forced travel after one action.")
+	loaded.bankroll = 0
+	var terminal := RunTerminalEvaluatorScript.evaluate(loaded, library)
+	if bool(terminal.get("failed", false)) or not bool(terminal.get("travel_available", false)):
+		failures.append("Broke forced-closing travel should defer bankroll-zero failure and keep travel available.")
+	var restored: RunState = RunStateScript.new()
+	restored.from_dict(loaded.to_dict())
+	if not restored.closing_time_forced_travel_required():
+		failures.append("Forced closing travel state did not survive save/load.")
+
+
 func _world_map_hidden_count(map_data: Dictionary) -> int:
 	var count := 0
 	for node_value in _copy_array(map_data.get("nodes", [])):
 		if typeof(node_value) == TYPE_DICTIONARY and str((node_value as Dictionary).get("state", "")) == WorldMapScript.STATE_HIDDEN:
 			count += 1
 	return count
+
+
+func _world_map_visited_ids(map_data: Dictionary) -> Array:
+	var ids: Array = []
+	for node_value in _copy_array(map_data.get("nodes", [])):
+		if typeof(node_value) != TYPE_DICTIONARY:
+			continue
+		var node: Dictionary = node_value
+		var node_id := str(node.get("id", "")).strip_edges()
+		if not node_id.is_empty() and str(node.get("state", "")) == WorldMapScript.STATE_VISITED:
+			ids.append(node_id)
+	return ids
 
 
 func _world_map_visible_ids_have_sources(map_data: Dictionary) -> bool:
@@ -14250,29 +14814,18 @@ func _fixture_service_result(run_state: RunState, service: Dictionary, service_i
 	deltas["drunk_delta"] = int(effect.get("drunk_delta", 0))
 	deltas["alcoholic_delta"] = int(effect.get("alcoholic_delta", 0))
 	deltas["baseline_luck_delta"] = int(effect.get("baseline_luck_delta", 0))
-	if typeof(effect.get("flags_set", {})) == TYPE_DICTIONARY:
-		deltas["flags_set"] = (effect.get("flags_set", {}) as Dictionary).duplicate(true)
 	if typeof(effect.get("inventory_add", [])) == TYPE_ARRAY:
 		deltas["inventory_add"] = (effect.get("inventory_add", []) as Array).duplicate(true)
 	if typeof(effect.get("inventory_remove", [])) == TYPE_ARRAY:
 		deltas["inventory_remove"] = (effect.get("inventory_remove", []) as Array).duplicate(true)
+	if typeof(effect.get("flags_set", {})) == TYPE_DICTIONARY:
+		deltas["flags_set"] = (effect.get("flags_set", {}) as Dictionary).duplicate(true)
 	if typeof(effect.get("messages", [])) == TYPE_ARRAY:
 		deltas["messages"] = (effect.get("messages", []) as Array).duplicate(true)
 	var flags: Dictionary = deltas.get("flags_set", {}) if typeof(deltas.get("flags_set", {})) == TYPE_DICTIONARY else {}
 	var inventory_add: Array = deltas.get("inventory_add", []) if typeof(deltas.get("inventory_add", [])) == TYPE_ARRAY else []
 	var inventory_remove: Array = deltas.get("inventory_remove", []) if typeof(deltas.get("inventory_remove", [])) == TYPE_ARRAY else []
-	var has_mutation := (
-		int(deltas.get("bankroll_delta", 0)) != 0
-		or int(deltas.get("suspicion_delta", 0)) != 0
-		or int(deltas.get("alcohol_intake", 0)) != 0
-		or int(deltas.get("drunk_delta", 0)) != 0
-		or int(deltas.get("alcoholic_delta", 0)) != 0
-		or int(deltas.get("baseline_luck_delta", 0)) != 0
-		or not flags.is_empty()
-		or not inventory_add.is_empty()
-		or not inventory_remove.is_empty()
-		or not (deltas.get("messages", []) as Array).is_empty()
-	)
+	var has_mutation := int(deltas.get("bankroll_delta", 0)) != 0 or int(deltas.get("suspicion_delta", 0)) != 0 or int(deltas.get("alcohol_intake", 0)) != 0 or int(deltas.get("drunk_delta", 0)) != 0 or int(deltas.get("alcoholic_delta", 0)) != 0 or int(deltas.get("baseline_luck_delta", 0)) != 0 or not flags.is_empty() or not inventory_add.is_empty() or not inventory_remove.is_empty() or not (deltas.get("messages", []) as Array).is_empty()
 	if not has_mutation:
 		return GameModule.build_action_result({
 			"ok": false,
@@ -14345,9 +14898,38 @@ func _check_jazz_club_foundation(library: ContentLibrary, failures: Array) -> vo
 	for service_id in ["house_drink", "jazz_sax_round", "jazz_cello_round", "jazz_drummer_round", "jazz_band_tip_jar", "listen_to_jazz"]:
 		if not _string_array(jazz_archetype.get("service_pool", [])).has(service_id):
 			failures.append("Jazz Club service pool is missing %s." % service_id)
+	var jazz_service_expectations := {
+		"jazz_sax_round": "baseline_luck_delta",
+		"jazz_cello_round": "suspicion_delta",
+		"jazz_drummer_round": "alcohol_intake",
+		"jazz_band_tip_jar": "heat_cooldown_actions",
+		"listen_to_jazz": "suspicion_delta",
+	}
+	for service_id_value in jazz_service_expectations.keys():
+		var service_id := str(service_id_value)
+		var service_definition := library.service(service_id)
+		var service_effect: Dictionary = service_definition.get("effect", {}) if typeof(service_definition.get("effect", {})) == TYPE_DICTIONARY else {}
+		var expected_effect_key := str(jazz_service_expectations.get(service_id_value, ""))
+		if service_definition.is_empty() or not service_effect.has(expected_effect_key):
+			failures.append("Jazz Club service %s is missing concrete effect metadata for %s." % [service_id, expected_effect_key])
 	for item_id in ["jazz_sax_lucky_coin", "jazz_cello_lucky_coin", "jazz_drummer_lucky_coin", "jazz_drummer_glasses"]:
 		if library.item(item_id).is_empty():
 			failures.append("Jazz reward item is missing: %s." % item_id)
+	var jazz_event_ids := ["jazz_trio_set_break", "jazz_connected_regular", "jazz_after_hours_invitation"]
+	var jazz_event_pool := _string_array(jazz_archetype.get("event_pool", []))
+	for event_id_value in jazz_event_ids:
+		var event_id := str(event_id_value)
+		if not jazz_event_pool.has(event_id):
+			failures.append("Jazz Club event pool is missing %s." % event_id)
+		var event_definition := library.event(event_id)
+		if event_definition.is_empty():
+			failures.append("Jazz Club event definition is missing: %s." % event_id)
+			continue
+		if str(event_definition.get("interaction_mode", "")) != "triggered" or str(event_definition.get("presentation", "")) != "talk":
+			failures.append("Jazz Club event %s should be a triggered talk event." % event_id)
+		var event_conditions: Dictionary = event_definition.get("conditions", {}) if typeof(event_definition.get("conditions", {})) == TYPE_DICTIONARY else {}
+		if not _string_array(event_conditions.get("archetype_ids", [])).has("jazz_club"):
+			failures.append("Jazz Club event %s should be scoped to the jazz_club archetype." % event_id)
 	var jazz_route := library.route("jazz_club")
 	if jazz_route.is_empty() or str(jazz_route.get("destination_archetype", "")) != "jazz_club":
 		failures.append("Jazz Club travel route metadata is missing.")
@@ -14383,6 +14965,38 @@ func _check_jazz_club_foundation(library: ContentLibrary, failures: Array) -> vo
 	var tip_option := resolver.hook_option("service", "jazz_band_tip_jar")
 	if int(tip_option.get("cost", 0)) >= int(resolver.hook_option("service", "house_drink").get("cost", 0)):
 		failures.append("Jazz band tip jar should cost less than a drink.")
+
+	var jazz_event_run: RunState = RunStateScript.new()
+	jazz_event_run.start_new("JAZZ-CLUB-EVENTS")
+	jazz_event_run.bankroll = 100
+	jazz_event_run.set_environment(environment_a.to_dict())
+	var event_context := {
+		"trigger": "action",
+		"type": "action",
+		"turns": 2,
+	}
+	var off_route_environment := jazz_event_run.current_environment.duplicate(true)
+	off_route_environment["archetype_id"] = "corner_store"
+	off_route_environment["kind"] = "shop"
+	for event_id_value in jazz_event_ids:
+		var event_id := str(event_id_value)
+		var event_module := EventModule.new()
+		event_module.setup(library.event(event_id), library)
+		if event_id == "jazz_after_hours_invitation":
+			jazz_event_run.set_story_flag("jazz_trio_backed_player", true)
+		if not event_module.can_trigger(jazz_event_run, jazz_event_run.current_environment, event_context):
+			failures.append("Jazz Club event %s did not trigger in the jazz club context." % event_id)
+		if event_module.can_trigger(jazz_event_run, off_route_environment, event_context):
+			failures.append("Jazz Club event %s triggered outside the jazz club archetype." % event_id)
+	var after_hours_event := EventModule.new()
+	after_hours_event.setup(library.event("jazz_after_hours_invitation"), library)
+	var shades_result := after_hours_event.resolve(jazz_event_run, jazz_event_run.current_environment, "take_the_shades")
+	if not bool(shades_result.get("ok", false)):
+		failures.append("Jazz after-hours invitation cover-item choice did not resolve.")
+	if not jazz_event_run.inventory.has("cheap_sunglasses"):
+		failures.append("Jazz after-hours invitation did not award the Grand Casino cover item.")
+	if not bool(jazz_event_run.story_flags.get("jazz_after_hours_cover", false)):
+		failures.append("Jazz after-hours invitation did not persist its cover story flag.")
 
 	var generated_setup_run: RunState = RunStateScript.new()
 	generated_setup_run.start_new("JAZZ-CLUB-SETUP")
@@ -14427,11 +15041,20 @@ func _check_jazz_club_foundation(library: ContentLibrary, failures: Array) -> vo
 	first_round_run.narrative_flags["jazz_%s_reward_drinks_required" % first_round_jazz_id] = 3
 	var first_round_resolver: RunActionService = RunActionServiceScript.new()
 	first_round_resolver.setup(library, first_round_run)
+	first_round_run.add_suspicion("jazz_cello_heat_fixture", 4, "behavior", false, {"environment_id": str(first_round_run.current_environment.get("id", ""))})
 	for first_service_id in ["jazz_sax_round", "jazz_cello_round", "jazz_drummer_round"]:
 		var first_result := first_round_resolver.use_hook("service", first_service_id)
 		if not bool(first_result.get("ok", false)):
 			failures.append("Jazz first musician drink did not resolve for %s." % first_service_id)
 			continue
+		var first_result_data: Dictionary = first_result.get("result", {}) if typeof(first_result.get("result", {})) == TYPE_DICTIONARY else {}
+		var first_deltas: Dictionary = first_result_data.get("deltas", {}) if typeof(first_result_data.get("deltas", {})) == TYPE_DICTIONARY else {}
+		if first_service_id == "jazz_sax_round" and int(first_deltas.get("baseline_luck_delta", 0)) < 1:
+			failures.append("Jazz sax round did not apply its luck lift.")
+		if first_service_id == "jazz_cello_round" and int(first_deltas.get("suspicion_delta", 0)) >= 0:
+			failures.append("Jazz cello round did not cool local heat.")
+		if first_service_id == "jazz_drummer_round" and int(first_deltas.get("alcohol_intake", 0)) != 4:
+			failures.append("Jazz drummer round did not apply its light buzz.")
 		if str(first_result.get("message", "")).to_lower().find("nothing") != -1:
 			failures.append("Jazz first musician drink incorrectly revealed an empty musician for %s." % first_service_id)
 		var first_musician_id := str(first_service_id).trim_suffix("_round").trim_prefix("jazz_")
@@ -14445,12 +15068,14 @@ func _check_jazz_club_foundation(library: ContentLibrary, failures: Array) -> vo
 	tip_run.bankroll = 500
 	var tip_environment := EnvironmentInstance.from_archetype(jazz_archetype, 5, tip_run.create_rng("jazz_tip"), library)
 	tip_run.set_environment(tip_environment.to_dict())
+	tip_run.add_suspicion("jazz_tip_heat", 6, "behavior", false, {"environment_id": str(tip_run.current_environment.get("id", ""))})
 	var tip_jazz_id := str(tip_run.current_environment.get("id", ""))
 	tip_run.narrative_flags["jazz_%s_reward_holder" % tip_jazz_id] = "cello"
 	tip_run.narrative_flags["jazz_%s_reward_drinks_required" % tip_jazz_id] = 4
 	var tip_resolver: RunActionService = RunActionServiceScript.new()
 	tip_resolver.setup(library, tip_run)
 	var tip_success_seen := false
+	var tip_cooldown_checked := false
 	for _index in range(12):
 		var favor_before := (
 			int(tip_run.narrative_flags.get("jazz_%s_sax_favor" % tip_jazz_id, 0))
@@ -14465,6 +15090,18 @@ func _check_jazz_club_foundation(library: ContentLibrary, failures: Array) -> vo
 		if tip_run.bankroll != bankroll_before_tip - 6:
 			failures.append("Jazz band tip jar did not charge its configured cost.")
 			break
+		if not tip_cooldown_checked:
+			var tip_result_data: Dictionary = tip_result.get("result", {}) if typeof(tip_result.get("result", {})) == TYPE_DICTIONARY else {}
+			var tip_deltas: Dictionary = tip_result_data.get("deltas", {}) if typeof(tip_result_data.get("deltas", {})) == TYPE_DICTIONARY else {}
+			if int(tip_deltas.get("heat_cooldown_actions", 0)) != 3 or int(tip_deltas.get("heat_cooldown_per_action", 0)) != 1:
+				failures.append("Jazz band tip jar did not report its heat cooldown delta.")
+			if tip_run.active_heat_cooldown_actions() <= 0:
+				failures.append("Jazz band tip jar did not start a persistent heat cooldown.")
+			var heat_before_cooldown_tick := tip_run.suspicion_level()
+			tip_run.advance_environment_turns(1)
+			if tip_run.suspicion_level() >= heat_before_cooldown_tick:
+				failures.append("Jazz band tip jar heat cooldown did not cool on the next action.")
+			tip_cooldown_checked = true
 		var favor_after := (
 			int(tip_run.narrative_flags.get("jazz_%s_sax_favor" % tip_jazz_id, 0))
 			+ int(tip_run.narrative_flags.get("jazz_%s_cello_favor" % tip_jazz_id, 0))
@@ -15577,6 +16214,7 @@ func _music_environment_by_archetype(library: ContentLibrary, archetype_id: Stri
 func _check_m2_system_interaction_scenario(library: ContentLibrary, failures: Array) -> void:
 	var run_state: RunState = RunStateScript.new()
 	run_state.start_new("M2-SYSTEM-SCENARIO")
+	run_state.game_clock_minutes = 20 * 60
 	var generator: RunGenerator = RunGeneratorScript.new(library)
 	var start_environment: EnvironmentInstance = generator.next_environment(run_state)
 	var environment_target := _first_target_with_game(library, _unique_strings(start_environment.next_archetypes, start_environment.travel_hooks), "")
@@ -16590,7 +17228,9 @@ func _check_run_state_save_round_trip(expected: Dictionary, actual: Dictionary, 
 		"environment_history",
 		"unlocked_travel",
 		"narrative_flags",
+		"story_flags",
 		"story_log",
+		"closing_time_state",
 		"run_status",
 		"run_spending_score",
 	]
@@ -17323,6 +17963,7 @@ func _check_run_state_source_of_truth(library: ContentLibrary, failures: Array) 
 	})
 	run_a.add_suspicion("fixture_behavior", 4, "behavior", false, {"environment_id": environment.id})
 	run_a.narrative_flags["fixture_flag"] = true
+	run_a.set_story_flag("fixture_story_flag", true)
 	run_a.log_story({"type": "round_trip", "id": "fixture_story", "environment_id": environment.id})
 	run_a.record_score_spending(13, "round_trip_fixture")
 	run_a.advance_environment_turns(2)
@@ -17351,6 +17992,7 @@ func _check_run_state_source_of_truth(library: ContentLibrary, failures: Array) 
 	_assert_json_equal(run_a.environment_history, restored.environment_history, "RunState environment history did not survive round-trip.", failures)
 	_assert_json_equal(run_a.unlocked_travel, restored.unlocked_travel, "RunState travel hooks did not survive round-trip.", failures)
 	_assert_json_equal(run_a.narrative_flags, restored.narrative_flags, "RunState narrative flags did not survive round-trip.", failures)
+	_assert_json_equal(run_a.story_flags, restored.story_flags, "RunState story flags did not survive round-trip.", failures)
 	_assert_json_equal(run_a.story_log, restored.story_log, "RunState story log did not survive round-trip.", failures)
 	_assert_equal(run_a.run_status, restored.run_status, "RunState run status did not survive round-trip.", failures)
 	_assert_equal(run_a.run_spending_score, restored.run_spending_score, "RunState score spending did not survive round-trip.", failures)
@@ -17365,6 +18007,7 @@ func _check_run_state_source_of_truth(library: ContentLibrary, failures: Array) 
 	snapshot["suspicion"]["cues"][0]["context"]["environment_id"] = "mutated_environment"
 	snapshot["current_environment"]["id"] = "mutated_environment"
 	snapshot["narrative_flags"]["fixture_flag"] = false
+	snapshot["story_flags"]["fixture_story_flag"] = false
 	snapshot["story_log"][0]["id"] = "mutated_story"
 	if restored.inventory.has("mutated_item"):
 		failures.append("RunState.from_dict retained mutable inventory source data.")
@@ -17376,6 +18019,8 @@ func _check_run_state_source_of_truth(library: ContentLibrary, failures: Array) 
 		failures.append("RunState.from_dict retained mutable environment source data.")
 	if not bool(restored.narrative_flags.get("fixture_flag", false)):
 		failures.append("RunState.from_dict retained mutable flag source data.")
+	if not bool(restored.story_flags.get("fixture_story_flag", false)):
+		failures.append("RunState.from_dict retained mutable story flag source data.")
 	if str(restored.story_log[0].get("id", "")) == "mutated_story":
 		failures.append("RunState.from_dict retained mutable story source data.")
 

@@ -12,6 +12,7 @@ signal take_item_requested(container_id: String, item_id: String)
 
 const RUN_INVENTORY_POPUP_SIZE := Vector2(820, 500)
 const RUN_INVENTORY_POPUP_MARGIN := 12.0
+const AttributeBadgeRowScript := preload("res://scripts/ui/attribute_badge_row.gd")
 
 var _texture_provider: Callable = Callable()
 var _model: Dictionary = {}
@@ -251,14 +252,12 @@ func _render_detail(item: Dictionary, merchant_mode: bool = false) -> void:
 	var location := "Stored" if source == "container" else "Carried"
 	FoundationWidgets.add_detail_row(_detail_box, "Where", location)
 	FoundationWidgets.add_detail_row(_detail_box, "Type", "%s / %s" % [str(item.get("item_class", "unknown")).capitalize(), str(item.get("domain", "global")).capitalize()])
+	_add_attribute_badges(item)
 	if item.has("capacity") and int(item.get("capacity", 0)) > 0:
 		FoundationWidgets.add_detail_row(_detail_box, "Stores", "%d items" % int(item.get("capacity", 0)))
 	var description := str(item.get("description", ""))
 	if not description.is_empty():
 		FoundationWidgets.add_detail_row(_detail_box, "Does", description)
-	var effect_summary := str(item.get("effect_summary", ""))
-	if not effect_summary.is_empty():
-		FoundationWidgets.add_detail_row(_detail_box, "Effect", effect_summary)
 	if merchant_mode:
 		if bool(item.get("repairable", false)):
 			FoundationWidgets.add_card_button(_detail_box, "Repair for %d" % int(item.get("repair_cost", 0)), Callable(self, "_emit_repair_requested").bind(str(item.get("id", ""))), false, true)
@@ -286,6 +285,14 @@ func _render_detail(item: Dictionary, merchant_mode: bool = false) -> void:
 				FoundationWidgets.add_detail_row(_detail_box, "Sale", "Merchant", true)
 			elif not bool(item.get("repairable", false)):
 				FoundationWidgets.add_detail_row(_detail_box, "Sale", "Cannot sell", true)
+
+
+func _add_attribute_badges(item: Dictionary) -> void:
+	var badges := _copy_array(item.get("attribute_badges", []))
+	if badges.is_empty():
+		return
+	AttributeBadgeRowScript.warm_cache(badges, 12)
+	_detail_box.add_child(AttributeBadgeRowScript.control_row(badges, 12))
 
 
 func _position_popup() -> void:
@@ -402,6 +409,12 @@ func _item_array(value: Variant) -> Array:
 		if typeof(item_value) == TYPE_DICTIONARY:
 			result.append((item_value as Dictionary).duplicate(true))
 	return result
+
+
+func _copy_array(value: Variant) -> Array:
+	if typeof(value) != TYPE_ARRAY:
+		return []
+	return (value as Array).duplicate(true)
 
 
 func _mode() -> String:
