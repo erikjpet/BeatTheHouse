@@ -1,3 +1,50 @@
+## Execution Record
+
+Completion date: 2026-07-08.
+
+Implementing/evidence commits:
+- `8eefdc5` - Task A landed before this run: v4 `get_interface` bridge.
+- `30d779a` - Claimed this queue entry after confirming entry 1 was archived.
+- Archive/evidence commit - this commit.
+
+Verification:
+- Confirmed `docs/todone/v04_worktree_baseline_and_gate_recovery_prompt.md` exists before starting.
+- `powershell -ExecutionPolicy Bypass -File tools\web_perf_smoke.ps1` on the clean shipped bridge: PASS. Final report `.tmp/web_perf_smoke/report.summary.json`: ready 13,064ms / 20,000ms, telemetry overhead avg 0.0187ms / 0.1ms, no failures.
+- `powershell -ExecutionPolicy Bypass -File tools\validate_project.ps1`: PASS, "Beat the House foundation architecture validation passed."
+- `powershell -ExecutionPolicy Bypass -File tools\check_godot.ps1 -RequireGodot -FoundationSuite ui -TimeoutSec 900`: PASS. Stages: validate_project 15,387ms; godot_import 12,132ms; gdscript_load_check 10,164ms; ui_scene_compile 46,342ms. Report: `.tmp/test_reports/20260707_202449_smoke/summary.json`.
+- Task B threaded native fallback spike (`WEB_AUDIO_BRIDGE_ENABLED := false`, shipped `variant/thread_support=true`, temporary only): FAIL. Report `.tmp/web_perf_smoke_native/report.summary.json`; failures were `bar_dice_idle` memory delta 209,982,128 bytes and `scripted_play_memory_10m` memory delta 189,455,060 bytes, both over the 134,217,728 byte budget.
+- Task B single-thread native fallback spike (`WEB_AUDIO_BRIDGE_ENABLED := false`, `variant/thread_support=false`, temporary only): FAIL. Report `.tmp/web_perf_smoke_native_single/report.summary.json`; failure was `video_poker_idle` frame p95 20.405ms over the 20.000ms budget.
+- Restored `WEB_AUDIO_BRIDGE_ENABLED := true` and `variant/thread_support=true`; `git diff -- scripts/ui/web_audio_bridge.gd export_presets.cfg` was empty before final gates.
+
+Task A verification:
+- `scripts/ui/web_audio_bridge.gd` has `WEB_AUDIO_VERSION := 4` and JS `BRIDGE_VERSION = 4`.
+- Only one `JavaScriptBridge.eval(WEB_AUDIO_SCRIPT, true)` remains in `web_audio_bridge.gd`, used for one-time bridge installation.
+- `ensure()` caches `JavaScriptBridge.get_interface("BTHWebAudio")`; playback/control calls use direct interface methods with JSON string payloads.
+- Telemetry reports `call_counts` and `payload_bytes`; `scripts/tests/foundation_check.gd` asserts the one-eval, `get_interface`, and telemetry contracts.
+- `_wav_has_signal()` is bounded/strided rather than a full byte-by-byte WAV scan.
+
+Fallback code verification:
+- `scripts/ui/sfx_player.gd` falls back to native `AudioStreamPlayer` one-shots and loop players when `WebAudioBridge.available()` is false.
+- `scripts/ui/procedural_music_player.gd` falls back to native `AudioStreamPlayer` stems when web bridge playback is unavailable.
+
+## Spike Verdict
+
+Verdict: keep bridge.
+
+Native Godot web audio is not ready to replace the shipped bridge for this project in this release line. The threaded native fallback ran but failed memory budgets badly: compared with the final shipped bridge report, `bar_dice_idle` was 1,241,512 bytes vs 209,982,128 bytes and `scripted_play_memory_10m` was 4,089,381 bytes vs 189,455,060 bytes. The single-thread native fallback had better memory behavior but still failed the smoke gate (`video_poker_idle` p95 20.405ms > 20.000ms) and was slower than the bridge on key release surfaces: `world_map_idle` p95 11.901ms bridge vs 30.07ms native single-thread, and `scripted_play_memory_10m` p95 10.746ms bridge vs 36.667ms native single-thread.
+
+The local server already sends cross-origin-isolation headers for threaded web smoke (`Cross-Origin-Opener-Policy: same-origin`, `Cross-Origin-Embedder-Policy: require-corp` in `tools/serve_web.ps1`). Local export config was temporarily switched to `variant/thread_support=false` for the single-thread spike and restored. The repo does not currently carry a separate sample-playback export preset, so the single-thread run is the closest local matrix entry without introducing new release configuration in this evidence-only task.
+
+Research notes used for the verdict:
+- Godot documents `JavaScriptBridge.get_interface()` for calling global JS objects directly and `eval()` as string execution, supporting the v4 bridge direction: https://docs.godotengine.org/en/stable/classes/class_javascriptbridge.html and https://docs.godotengine.org/en/stable/tutorials/platform/web/javascript_bridge.html.
+- Godot 4.3 web-export notes describe the web audio/threading tradeoff and cross-origin isolation requirement: https://godotengine.org/article/progress-report-web-export-in-4-3/.
+- Godot PR #91382 introduced sample playback support, while issue #109728 still tracks native web audio instability with stream playback: https://github.com/godotengine/godot/pull/91382 and https://github.com/godotengine/godot/issues/109728.
+- itch.io SharedArrayBuffer support remains a deployment/browser-compatibility constraint: https://itch.io/blog/456223/godot-cross-origin-isolation-and-sharedarraybuffers and https://itch.io/t/2025776/experimental-sharedarraybuffer-support.
+
+Deviations:
+- Task A was not reimplemented because commit `8eefdc5` already landed it; this run verified it and completed the remaining spike/verdict.
+- No retirement prompt was authored because the verdict is keep bridge.
+- Temporary spike edits were restored before final validation.
 # Agent Prompt — Web Audio Bridge Modernization (eval → get_interface, native-audio spike)
 
 Copy everything below this line into the agent.
