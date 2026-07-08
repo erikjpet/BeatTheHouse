@@ -1822,7 +1822,7 @@ coherent.
 
 ## 11. Epic 8 — Act 2 Seam
 
-**T8.1 — Act Transition Contract** — P1 — deps: T5.1 — status: PARKED(0.3)
+**T8.1 — Act Transition Contract** — P1 — deps: T5.1 — status: DONE
 
 ```text
 [PREPEND SHARED GUIDELINE]
@@ -1846,6 +1846,8 @@ load with defaults; both victory routes produce distinct seam payloads.
 DONE GATE: validate_project.ps1; check_godot.ps1 -RequireGodot
 -FoundationSuite systems and ui.
 ```
+
+Evidence 2026-07-07: commit `e5efadf` added `docs/plans/act_two_seam.md`, save/profile Act 1 markers, profile `act_seam`, route-specific victory hooks, and visual-QA seam assertions; `validate_project.ps1`, `check_godot.ps1 -RequireGodot -FoundationSuite systems`, `check_godot.ps1 -RequireGodot -FoundationSuite ui`, and `foundation_visual_qa.ps1 -RequireGodot` PASS.
 
 ---
 
