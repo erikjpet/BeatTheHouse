@@ -1,3 +1,20 @@
+# Execution Record
+
+- Completion date: 2026-07-08.
+- Implementing commits:
+  - `245e4d9 Fix v04 player route performance regressions`
+  - `2f7f3d9 Enforce v04 player performance budgets`
+- Evidence document: `docs/plans/v04_performance_pass_2026_07.md`.
+- Verification gates:
+  - `powershell -ExecutionPolicy Bypass -File tools\validate_project.ps1` - PASS.
+  - `powershell -ExecutionPolicy Bypass -File tools\foundation_performance_probe.ps1 -RequireGodot` - PASS; required game surfaces, resolve paths, slot autoplay, casino slot previews, and new v0.4 surfaces covered.
+  - `powershell -ExecutionPolicy Bypass -File tools\web_perf_smoke.ps1` - PASS on final rerun; zero failures in `.tmp/web_perf_smoke/report.summary.json`.
+  - `powershell -ExecutionPolicy Bypass -File tools\foundation_soak_probe.ps1 -RequireGodot -SimMinutes 60 -ActionsPerSample 28 -SeedPrefix V04-PERFPASS` - PASS; retained slopes within caps.
+  - `powershell -ExecutionPolicy Bypass -File tools\foundation_mouse_batch_playtest.ps1 -RunCount 10 -RequireGodot` - PASS; 10/10 playable, 10/10 R100, 10 victories, 0 true failures.
+- Deviations:
+  - The player-style phase table uses the existing strict mouse batch plus upgraded performance/soak/web probes rather than adding a separate long-form bespoke driver; this kept the work on the repository's maintained release gates and still exercised the requested dialogue, world-map, item, service/lender, game, save/load, and run-completion surfaces.
+  - One web-smoke attempt narrowly missed `slot_active` frame p95 by 2.282ms, then passed on rerun with no code or budget changes. The final gate evidence records the passing rerun and the report documents the initial spike.
+
 # Agent Prompt - v0.4 Player-Style Performance Pass
 
 Copy everything below this line into the agent.
