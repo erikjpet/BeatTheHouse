@@ -175,6 +175,7 @@ func _run() -> void:
 	_require(await _try_travel_object_flow("home-first start"), "Could not travel from the home start into the world.")
 	_return_to_room_view()
 	await _settle()
+	await _prepare_multi_game_visual_qa_fixture()
 	await _verify_all_visible_game_objects_clickable()
 	await _prepare_risky_game_visual_qa_fixture()
 	_record_state("risky_game_fixture_screen", "Focused deterministic game-surface fixture with immediate risky-action coverage.")
@@ -944,6 +945,19 @@ func _prepare_risky_game_visual_qa_fixture() -> void:
 		"lender_hooks": [],
 		"object_fixtures": [],
 	}, 100)
+
+
+func _prepare_multi_game_visual_qa_fixture() -> void:
+	await _prepare_visual_qa_fixture_environment("small_underground_casino", "visual_multi_game_fixture", {
+		"game_ids": ["bar_dice", "blackjack"],
+		"event_ids": [],
+		"resolved_event_ids": [],
+		"item_offers": [],
+		"service_ids": [],
+		"lender_hooks": [],
+		"object_fixtures": [],
+	}, 100)
+	_record_state("multi_game_fixture_screen", "Focused deterministic room with multiple visible game objects for mouse clickability coverage.")
 
 
 func _reset_fixed_price_surface_for_risky_action() -> void:
