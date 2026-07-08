@@ -22,7 +22,7 @@ before new feature work proceeds.
 
 | # | Prompt | Status | Machine | Notes |
 | --- | --- | --- | --- | --- |
-| 8 | v04_final_balance_release_gate_prompt.md | ready | any | Final full gate, metrics, performance, soak, determinism, stuck-state, web smoke, and 60-run mouse batch. |
+| 8 | v04_final_balance_release_gate_prompt.md | claimed (2026-07-08, DESKTOP-1950ULQ/Codex) | any | Final full gate, metrics, performance, soak, determinism, stuck-state, web smoke, and 60-run mouse batch. |
 | 9 | v04_release_docs_packaging_prompt.md | blocked until #8 | any | Version 0.4.0, README/checklist/changelog/publish copy, exports, checksums, web/windows smoke, butler dry-run. |
 | 10 | v04_publish_and_tag_prompt.md | blocked until #9; owner-launch only | PM machine (butler/gh credentials) | PUBLISHES the release: pre-publish audit, git push + v0.4.0 tag + GitHub release, butler upload to itch channels. Contains push/upload authority — only the owner may kick this off; loop agents must never self-select it. |
 | 11 | v04_post_release_verification_prompt.md | blocked until #10; owner-launch only | PM machine | Verifies the LIVE builds players receive (itch web + published Windows zip), generates devlog #4 card/copy assets, marks the plan SHIPPED. Devlog posting stays with the owner. |
