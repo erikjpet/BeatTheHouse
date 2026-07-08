@@ -9712,6 +9712,10 @@ func _refresh_profile_inventory_page() -> void:
 	if inventory_items_list == null:
 		return
 	_clear(inventory_items_list)
+	_add_profile_summary_sections()
+	var stash_heading := _section("Profile Stash")
+	_set_control_font_color(stash_heading, VisualStyle.YELLOW)
+	inventory_items_list.add_child(stash_heading)
 	if profile_inventory.items.is_empty():
 		var empty := _label("No profile items yet. Acquire the reference chip to test permanent storage.", 13)
 		_set_control_font_color(empty, VisualStyle.CYAN_2)
@@ -9738,6 +9742,81 @@ func _refresh_profile_inventory_page() -> void:
 		var description := _label(str(item_data.get("description", "")), 12)
 		_set_control_font_color(description, VisualStyle.CYAN_2)
 		text_stack.add_child(description)
+
+
+func _add_profile_summary_sections() -> void:
+	if inventory_items_list == null or profile_inventory == null:
+		return
+	var daily := _copy_dict(profile_inventory.daily_runs)
+	var lifetime := _copy_dict(profile_inventory.lifetime_stats)
+	var summary_panel := _panel_container(Color("#05070d", 0.86), VisualStyle.CYAN_2)
+	summary_panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	inventory_items_list.add_child(summary_panel)
+	var stack := VBoxContainer.new()
+	stack.add_theme_constant_override("separation", 5)
+	stack.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	summary_panel.add_child(stack)
+	var summary_heading := _label("Profile Summary", 15)
+	_set_control_font_color(summary_heading, VisualStyle.CYAN)
+	stack.add_child(summary_heading)
+	stack.add_child(_profile_line("Runs: %d  Daily streak: %d / best %d" % [
+		int(lifetime.get("total_runs", 0)),
+		int(daily.get("current_streak", 0)),
+		int(daily.get("best_streak", 0)),
+	]))
+	var victories := _copy_dict(lifetime.get("victories_per_route", {}))
+	stack.add_child(_profile_line("Victories: card %d, showdown %d" % [
+		int(victories.get("players_card_cashout", 0)),
+		int(victories.get("showdown", 0)),
+	]))
+	stack.add_child(_profile_line("Bankroll won/lost: $%d / $%d  Biggest win: $%d" % [
+		int(lifetime.get("total_bankroll_won", 0)),
+		int(lifetime.get("total_bankroll_lost", 0)),
+		int(lifetime.get("biggest_single_win", 0)),
+	]))
+	var challenge_rows := profile_inventory.completed_challenge_rows()
+	var challenge_heading := _section("Completed Challenges")
+	_set_control_font_color(challenge_heading, VisualStyle.YELLOW)
+	inventory_items_list.add_child(challenge_heading)
+	if challenge_rows.is_empty():
+		inventory_items_list.add_child(_profile_line("No completed challenges yet."))
+	else:
+		for challenge_value in challenge_rows:
+			var challenge := _copy_dict(challenge_value)
+			var title := str(challenge.get("title", challenge.get("flag", "Challenge"))).strip_edges()
+			inventory_items_list.add_child(_profile_line(title))
+	var history_heading := _section("Recent Runs")
+	_set_control_font_color(history_heading, VisualStyle.YELLOW)
+	inventory_items_list.add_child(history_heading)
+	var history := _copy_array(profile_inventory.run_history)
+	if history.is_empty():
+		inventory_items_list.add_child(_profile_line("No completed runs recorded yet."))
+	else:
+		var count := mini(history.size(), 8)
+		for index in range(count):
+			var entry := _copy_dict(history[index])
+			inventory_items_list.add_child(_profile_line("%s - %s - $%d - Day %d - %d actions" % [
+				str(entry.get("completed_date", "")),
+				_profile_history_outcome_text(entry),
+				int(entry.get("final_bankroll", 0)),
+				int(entry.get("day_count", 1)),
+				int(entry.get("duration_actions", 0)),
+			]))
+
+
+func _profile_line(text: String) -> Label:
+	var label := _label(text, 12)
+	label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_set_control_font_color(label, VisualStyle.SOFT)
+	return label
+
+
+func _profile_history_outcome_text(entry: Dictionary) -> String:
+	var outcome := str(entry.get("outcome", "")).capitalize()
+	var route := str(entry.get("route", "")).replace("_", " ").capitalize()
+	if route.is_empty() or route == outcome:
+		return outcome
+	return "%s: %s" % [outcome, route]
 
 
 func _refresh_collection_browser_page() -> void:
@@ -10740,6 +10819,7 @@ func _route_ended_run_if_needed(terminal_result: Dictionary = {}) -> bool:
 	if run_state == null or run_state.run_status != RunState.RUN_STATUS_ENDED:
 		return false
 	_process_terminal_meta_bag_drops()
+	_record_profile_run_result_once(terminal_result)
 	_clear_terminal_interaction_state()
 	_set_current_screen(SCREEN_VICTORY)
 	_record_challenge_completion_if_needed()
@@ -10754,6 +10834,7 @@ func _route_failed_run_if_needed(terminal_result: Dictionary = {}) -> bool:
 	if run_state == null or run_state.run_status != RunState.RUN_STATUS_FAILED:
 		return false
 	_process_terminal_meta_bag_drops()
+	_record_profile_run_result_once(terminal_result)
 	_clear_terminal_interaction_state()
 	_set_current_screen(SCREEN_FAILURE)
 	var message := run_state.run_failure_message
@@ -10780,6 +10861,70 @@ func _process_terminal_meta_bag_drops() -> void:
 		var save_error := meta_collection_service.save()
 		if save_error == OK and not _copy_array(flush_result.get("summary_lines", [])).is_empty():
 			save_status_message = "Collection bags stored."
+
+
+func _record_profile_run_result_once(terminal_result: Dictionary = {}) -> void:
+	if run_state == null or not run_state.is_terminal():
+		return
+	if bool(run_state.narrative_flags.get("profile_run_result_recorded", false)):
+		return
+	if profile_inventory == null:
+		_initialize_profile_inventory()
+	var record_result: Dictionary = profile_inventory.record_run_result(_profile_run_result_snapshot(terminal_result))
+	if not bool(record_result.get("ok", false)):
+		return
+	var save_error := profile_inventory.save()
+	if save_error == OK:
+		run_state.narrative_flags["profile_run_result_recorded"] = true
+		if save_status_message.strip_edges().is_empty() or save_status_message == "Run not saved yet.":
+			save_status_message = "Profile updated."
+
+
+func _profile_run_result_snapshot(terminal_result: Dictionary = {}) -> Dictionary:
+	if run_state == null:
+		return {}
+	var outcome := "victory" if run_state.run_status == RunState.RUN_STATUS_ENDED else "failure"
+	var failure_reason := run_state.run_failure_reason if outcome == "failure" else ""
+	var route := _profile_victory_route() if outcome == "victory" else failure_reason
+	if route.strip_edges().is_empty():
+		route = outcome
+	var challenge_config := run_state.challenge_config.duplicate(true)
+	var completion_now := Time.get_datetime_dict_from_system()
+	var completion_date := "%04d-%02d-%02d" % [int(completion_now.get("year", 1970)), int(completion_now.get("month", 1)), int(completion_now.get("day", 1))]
+	return {
+		"seed": run_state.player_facing_seed_text(),
+		"route": route,
+		"outcome": outcome,
+		"failure_reason": failure_reason,
+		"final_bankroll": run_state.bankroll,
+		"day_count": run_state.game_day(),
+		"duration_actions": maxi(0, int(_copy_dict(run_state.event_cadence).get("action_index", 0))),
+		"completed_date": completion_date,
+		"completed_unix": int(Time.get_unix_time_from_system()),
+		"challenge_mode": str(challenge_config.get("mode", "")),
+		"challenge_id": str(challenge_config.get("id", "")),
+		"daily_id": str(challenge_config.get("daily_id", "")),
+		"score": run_state.terminal_score(),
+		"bankroll_delta": run_state.bankroll - RunState.DEFAULT_BANKROLL,
+		"bankroll_won": maxi(0, int(run_state.narrative_flags.get("profile_bankroll_won", maxi(0, run_state.bankroll - RunState.DEFAULT_BANKROLL)))),
+		"bankroll_lost": maxi(0, int(run_state.narrative_flags.get("profile_bankroll_lost", maxi(0, RunState.DEFAULT_BANKROLL - run_state.bankroll)))),
+		"biggest_single_win": maxi(0, int(run_state.narrative_flags.get("profile_biggest_single_win", 0))),
+		"games_played": _copy_dict(run_state.narrative_flags.get("profile_games_played", {})),
+		"terminal_message": str(terminal_result.get("message", "")),
+	}
+
+
+func _profile_victory_route() -> String:
+	if run_state == null:
+		return "victory"
+	var route := str(run_state.narrative_flags.get("demo_victory_route", "")).strip_edges()
+	if route == RunState.GRAND_CASINO_HIGH_ROLLER_EVENT_ID:
+		return "players_card_cashout"
+	if route == RunState.GRAND_CASINO_SHOWDOWN_ROUTE:
+		return "showdown"
+	if route.is_empty():
+		return "victory"
+	return route
 
 
 func _record_challenge_completion_if_needed() -> void:

@@ -694,6 +694,7 @@ static func apply_result(run_state: RunState, result: Dictionary, rng: RngStream
 	var demo_finale := _copy_dict(deltas.get("demo_finale", {}))
 	if not demo_finale.is_empty():
 		run_state.apply_demo_finale_result(demo_finale)
+	run_state.record_profile_game_result(result)
 	run_state.record_grand_casino_game_result(result)
 	if bool(deltas.get("ended", false)) and (bool(run_state.narrative_flags.get("prestige_victory", false)) or bool(run_state.narrative_flags.get("demo_victory", false))):
 		run_state.run_status = RESULT_ENDED

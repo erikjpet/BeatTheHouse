@@ -1678,6 +1678,24 @@ func record_grand_casino_game_result(result: Dictionary) -> void:
 	narrative_flags["grand_casino_games_played"] = games_played
 
 
+func record_profile_game_result(result: Dictionary) -> void:
+	if result.is_empty() or not bool(result.get("ok", false)):
+		return
+	var game_id := str(result.get("game_id", "")).strip_edges()
+	if game_id.is_empty():
+		return
+	var tallies := _copy_dict(narrative_flags.get("profile_games_played", {}))
+	tallies[game_id] = maxi(0, int(tallies.get(game_id, 0))) + 1
+	narrative_flags["profile_games_played"] = tallies
+	var deltas := _copy_dict(result.get("deltas", {}))
+	var bankroll_delta := int(deltas.get("bankroll_delta", result.get("bankroll_delta", 0)))
+	if bankroll_delta > 0:
+		narrative_flags["profile_bankroll_won"] = maxi(0, int(narrative_flags.get("profile_bankroll_won", 0))) + bankroll_delta
+		narrative_flags["profile_biggest_single_win"] = maxi(maxi(0, int(narrative_flags.get("profile_biggest_single_win", 0))), bankroll_delta)
+	elif bankroll_delta < 0:
+		narrative_flags["profile_bankroll_lost"] = maxi(0, int(narrative_flags.get("profile_bankroll_lost", 0))) + absi(bankroll_delta)
+
+
 func _grand_casino_demo_objective_status(source: Dictionary, objective: Dictionary) -> Dictionary:
 	if not _is_grand_casino_environment(source):
 		return {

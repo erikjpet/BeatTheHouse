@@ -2168,24 +2168,101 @@ func _check_foundation_contract_smoke(library: ContentLibrary, failures: Array, 
 
 
 func _check_profile_inventory_boundary(failures: Array) -> void:
+	OS.set_environment(ProfileInventoryScript.INVENTORY_PATH_ENV, "user://foundation_profile_inventory_check.json")
+	_remove_profile_inventory_test_file()
 	var profile_inventory: ProfileInventory = ProfileInventoryScript.new()
+	profile_inventory.load()
 	profile_inventory.add_reference_chip()
 	if not profile_inventory.has_item(ProfileInventory.REFERENCE_CHIP_ID):
 		failures.append("ProfileInventory did not store the reference poker chip.")
+	profile_inventory.mark_challenge_completed("challenge_fixture_complete", "fixture_challenge", "Fixture Challenge")
+	profile_inventory.record_run_result(_profile_result_fixture("victory", "players_card_cashout", "2026-07-01", 210, {"bar_dice": 2}, "standard"))
+	profile_inventory.record_run_result(_profile_result_fixture("failure", RunStateScript.FAILURE_BANKROLL_ZERO, "2026-07-02", 0, {"blackjack": 1}, "standard"))
+	profile_inventory.record_run_result(_profile_result_fixture("failure", RunStateScript.FAILURE_POLICE_CAPTURE, "2026-07-03", 55, {}, "standard"))
+	profile_inventory.record_run_result(_profile_result_fixture("failure", RunStateScript.FAILURE_STRANDED, "2026-07-04", 5, {}, "standard"))
+	profile_inventory.record_run_result(_profile_result_fixture("failure", RunStateScript.FAILURE_ABANDONED, "2026-07-05", 100, {}, "standard"))
 	var snapshot := profile_inventory.to_dict()
+	snapshot["future_profile_field"] = {"kept": true}
 	var restored: ProfileInventory = ProfileInventoryScript.new()
 	restored.from_dict(snapshot)
 	if restored.item_quantity(ProfileInventory.REFERENCE_CHIP_ID) != 1:
 		failures.append("ProfileInventory did not round-trip the reference poker chip.")
-	profile_inventory.mark_challenge_completed("challenge_fixture_complete", "fixture_challenge", "Fixture Challenge")
-	restored = ProfileInventoryScript.new()
-	restored.from_dict(profile_inventory.to_dict())
 	if not restored.has_challenge_completion("challenge_fixture_complete"):
 		failures.append("ProfileInventory did not round-trip challenge completion flags.")
+	if restored.completed_challenge_rows().is_empty():
+		failures.append("ProfileInventory did not surface completed challenge rows.")
+	if restored.run_history.size() != 5:
+		failures.append("ProfileInventory did not append one history entry for each terminal fixture.")
+	if int(restored.lifetime_stats.get("total_runs", 0)) != 5:
+		failures.append("ProfileInventory lifetime total_runs did not match terminal fixtures.")
+	var victories := _copy_dict(restored.lifetime_stats.get("victories_per_route", {}))
+	if int(victories.get("players_card_cashout", 0)) != 1:
+		failures.append("ProfileInventory did not count players-card victories by route.")
+	var games_played := _copy_dict(restored.lifetime_stats.get("games_played", {}))
+	if int(games_played.get("bar_dice", 0)) != 2 or int(games_played.get("blackjack", 0)) != 1:
+		failures.append("ProfileInventory did not merge lifetime game tallies.")
+	if not restored.to_dict().has("future_profile_field"):
+		failures.append("ProfileInventory did not preserve unknown profile keys.")
+	var save_error := restored.save()
+	if save_error != OK:
+		failures.append("ProfileInventory atomic save failed with error %d." % int(save_error))
+	var loaded: ProfileInventory = ProfileInventoryScript.new()
+	loaded.load()
+	if JSON.stringify(loaded.to_dict()) != JSON.stringify(restored.to_dict()):
+		failures.append("ProfileInventory did not round-trip through disk save/load.")
+	var corrupt_file := FileAccess.open(ProfileInventoryScript.store_path(), FileAccess.WRITE)
+	if corrupt_file != null:
+		corrupt_file.store_string("{bad")
+		corrupt_file.close()
+	var corrupt: ProfileInventory = ProfileInventoryScript.new()
+	corrupt.load()
+	if int(corrupt.to_dict().get("schema_version", 0)) != ProfileInventoryScript.SCHEMA_VERSION or not corrupt.run_history.is_empty() or int(corrupt.lifetime_stats.get("total_runs", -1)) != 0:
+		failures.append("ProfileInventory corrupt file did not load normalized defaults.")
+	var streak_profile: ProfileInventory = ProfileInventoryScript.new()
+	streak_profile.record_run_result(_profile_result_fixture("victory", "showdown", "2026-07-01", 180, {}, "daily", "daily:one"))
+	streak_profile.record_run_result(_profile_result_fixture("failure", RunStateScript.FAILURE_ABANDONED, "2026-07-01", 20, {}, "daily", "daily:repeat"))
+	if int(streak_profile.daily_runs.get("current_streak", 0)) != 1:
+		failures.append("ProfileInventory same-day daily repeat double-counted the streak.")
+	streak_profile.record_run_result(_profile_result_fixture("victory", "showdown", "2026-07-02", 220, {}, "daily", "daily:two"))
+	if int(streak_profile.daily_runs.get("current_streak", 0)) != 2 or int(streak_profile.daily_runs.get("best_streak", 0)) != 2:
+		failures.append("ProfileInventory consecutive daily completion did not extend streak.")
+	streak_profile.record_run_result(_profile_result_fixture("victory", "showdown", "2026-07-04", 240, {}, "daily", "daily:gap"))
+	if int(streak_profile.daily_runs.get("current_streak", 0)) != 1:
+		failures.append("ProfileInventory daily gap did not break current streak.")
 	var run_state: RunState = RunStateScript.new()
 	run_state.start_new("PROFILE-INVENTORY-BOUNDARY")
 	if run_state.to_dict().has("profile_inventory"):
 		failures.append("Profile inventory leaked into RunState serialization.")
+	_remove_profile_inventory_test_file()
+	OS.set_environment(ProfileInventoryScript.INVENTORY_PATH_ENV, "")
+
+
+func _profile_result_fixture(outcome: String, route: String, completed_date: String, final_bankroll: int, games_played: Dictionary, mode: String = "standard", daily_id: String = "") -> Dictionary:
+	return {
+		"seed": "PROFILE-%s-%s" % [outcome, route],
+		"route": route,
+		"outcome": outcome,
+		"failure_reason": route if outcome == "failure" else "",
+		"final_bankroll": final_bankroll,
+		"day_count": 2,
+		"duration_actions": 12,
+		"completed_date": completed_date,
+		"completed_unix": 1780000000,
+		"challenge_mode": mode,
+		"daily_id": daily_id,
+		"score": final_bankroll,
+		"bankroll_delta": final_bankroll - RunStateScript.DEFAULT_BANKROLL,
+		"bankroll_won": maxi(0, final_bankroll - RunStateScript.DEFAULT_BANKROLL),
+		"bankroll_lost": maxi(0, RunStateScript.DEFAULT_BANKROLL - final_bankroll),
+		"biggest_single_win": maxi(0, final_bankroll - RunStateScript.DEFAULT_BANKROLL),
+		"games_played": games_played.duplicate(true),
+	}
+
+
+func _remove_profile_inventory_test_file() -> void:
+	var path := ProfileInventoryScript.store_path()
+	if FileAccess.file_exists(path):
+		DirAccess.remove_absolute(ProjectSettings.globalize_path(path))
 
 
 func _check_foundation_shell_no_game_specific_code(failures: Array) -> void:

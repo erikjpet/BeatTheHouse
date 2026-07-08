@@ -936,6 +936,10 @@ func _run() -> void:
 		push_error("Profile inventory page did not expose storage controls.")
 		quit(1)
 		return
+	if not _has_visible_text(app, "Profile Summary") or not _has_visible_text(app, "Recent Runs") or not _has_visible_text(app, "Completed Challenges"):
+		push_error("Profile page did not expose summary, recent run, and completed challenge sections.")
+		quit(1)
+		return
 	app.call("close_inventory_page")
 	await process_frame
 	if inventory_page.visible or not start_menu_controls.visible:
