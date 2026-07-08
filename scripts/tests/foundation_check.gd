@@ -45,6 +45,8 @@ const SAVE_LOAD_CANONICAL_FLOAT_STEP := 0.000000001
 const SAVE_LOAD_CANONICAL_INTEGER_EPSILON := 0.000000001
 const UI_STATE_FUZZ_SEEDS := 3
 const UI_STATE_FUZZ_STEPS_PER_SEED := 12
+const RELEASE_COPY_BLOCKER_MARKERS := ["todo", "placeholder", "debug-only", "dev-only", "test-only", "coming soon", "not implemented"]
+const RELEASE_COPY_SOURCE_MARKERS := ["debug-only", "dev-only", "test-only", "coming soon", "not implemented"]
 const FOUNDATION_SUITE_ALIASES := {
 	"contract": "contracts",
 	"full": "all",
@@ -482,6 +484,7 @@ func _check_content(library: ContentLibrary, failures: Array) -> void:
 	if library.games.size() < 5:
 		failures.append("Expected at least five starter activities.")
 	_check_player_facing_description_copy(library, failures)
+	_check_release_copy_style_blockers(library, failures)
 	_check_content_art_presentation(library, failures)
 	_check_blackjack_item_content(library, failures)
 	_check_m2_pack_availability(library, failures)
@@ -651,6 +654,105 @@ func _check_copy_word_limit(label: String, text: String, max_words: int, failure
 		failures.append("%s should be %d words or fewer: %s" % [label, max_words, clean])
 	if clean.length() > 72:
 		failures.append("%s should fit compact description boxes: %s" % [label, clean])
+
+
+func _check_release_copy_style_blockers(_library: ContentLibrary, failures: Array) -> void:
+	var json_paths := _release_copy_json_paths("res://data")
+	for path_value in json_paths:
+		var json_path := str(path_value)
+		var parsed: Variant = JSON.parse_string(FileAccess.get_file_as_string(json_path))
+		if parsed == null:
+			failures.append("Release copy source scan could not parse %s." % json_path)
+			continue
+		_scan_release_copy_value(parsed, json_path, failures)
+	for source_path in ["res://scripts/core/run_state.gd", "res://scripts/ui/foundation_main.gd"]:
+		_scan_release_copy_source(str(source_path), failures)
+
+
+func _release_copy_json_paths(root_path: String) -> Array:
+	var paths: Array = []
+	_release_copy_collect_json_paths(root_path, paths)
+	paths.sort()
+	return paths
+
+
+func _release_copy_collect_json_paths(dir_path: String, paths: Array) -> void:
+	var dir := DirAccess.open(dir_path)
+	if dir == null:
+		return
+	dir.list_dir_begin()
+	var entry := dir.get_next()
+	while not entry.is_empty():
+		var child_path := "%s/%s" % [dir_path, entry]
+		if dir.current_is_dir():
+			_release_copy_collect_json_paths(child_path, paths)
+		elif entry.ends_with(".json"):
+			paths.append(child_path)
+		entry = dir.get_next()
+	dir.list_dir_end()
+
+
+func _scan_release_copy_value(value: Variant, path: String, failures: Array) -> void:
+	var value_type := typeof(value)
+	if value_type == TYPE_STRING:
+		_check_release_copy_text(str(value), path, RELEASE_COPY_BLOCKER_MARKERS, failures)
+		return
+	if value_type == TYPE_DICTIONARY:
+		var dict_value: Dictionary = value
+		var keys := dict_value.keys()
+		keys.sort()
+		for key_value in keys:
+			var key := str(key_value)
+			_scan_release_copy_value(dict_value.get(key), "%s.%s" % [path, key], failures)
+		return
+	if value_type == TYPE_ARRAY:
+		var array_value: Array = value
+		for index in range(array_value.size()):
+			var child_value: Variant = array_value[index]
+			var child_path := "%s[%d]" % [path, index]
+			if typeof(child_value) == TYPE_DICTIONARY:
+				var child_dict: Dictionary = child_value
+				var child_id := str(child_dict.get("id", "")).strip_edges()
+				if not child_id.is_empty():
+					child_path = "%s:%s" % [path, child_id]
+			_scan_release_copy_value(child_value, child_path, failures)
+
+
+func _scan_release_copy_source(path: String, failures: Array) -> void:
+	var source := FileAccess.get_file_as_string(path)
+	if source.is_empty():
+		failures.append("Release copy source scan could not read %s." % path)
+		return
+	var lines := source.split("\n")
+	for index in range(lines.size()):
+		var line := str(lines[index])
+		_check_release_copy_text(line, "%s:%d" % [path, index + 1], RELEASE_COPY_SOURCE_MARKERS, failures)
+
+
+func _check_release_copy_text(text: String, path: String, markers: Array, failures: Array) -> void:
+	var clean := text.strip_edges()
+	if clean.is_empty():
+		return
+	var lowered := clean.to_lower()
+	for marker_value in markers:
+		var marker := str(marker_value)
+		if lowered.find(marker) == -1:
+			continue
+		if _release_copy_expected_followup(path, marker, clean):
+			continue
+		failures.append("Release copy blocker marker '%s' found at %s: %s" % [marker, path, clean])
+
+
+func _release_copy_expected_followup(path: String, marker: String, text: String) -> bool:
+	if marker != "not implemented":
+		return false
+	if path == "res://data/events/events.json:high_roller_cashout.payload.success_message" or path == "res://data/events/events.json:the_house_calls.payload.success_message":
+		return true
+	if path == "res://scripts/core/run_state.gd:62" or path == "res://scripts/core/run_state.gd:64":
+		return true
+	if path == "res://scripts/ui/foundation_main.gd:8588" and text.find("The next act is not implemented yet.") >= 0:
+		return true
+	return false
 
 
 func _check_s0_2_tool_harness_contracts(failures: Array) -> void:

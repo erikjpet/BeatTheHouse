@@ -2520,7 +2520,7 @@ FAIL means the old premise was corrected here.
 | D3 | PASS | `check_godot.ps1 -RequireGodot` PASS; `foundation_mouse_batch_playtest.ps1 -RunCount 60 -AllowRunFailures` PASS (`60/60` victories, `0` true failures). |
 | D4 | PASS | `check_godot.ps1 -FoundationSuite systems` PASS. |
 | D5 | PASS / superseded by T5.2 | Demo prestige cut/hide posture is current; the challenge gap noted by T0.1 is now resolved by `data/challenges/challenges.json`. |
-| D6 | FAIL | `docs/plans/content_style_guide.md` is missing. |
+| D6 | PASS / v0.4 follow-up | `docs/plans/content_style_guide.md` now defines the release voice and copy guardrails; the known Act 2 "not implemented yet" seam remains owned by `act_two_seam_prompt.md`. |
 | D7 | FAIL | `tools/endgame_metrics_probe.gd` and `.ps1` are missing. |
 | E1 | PASS | `foundation_visual_qa.ps1` PASS and includes Grand Casino/The House Calls snapshots. |
 | E2 | PASS | `check_godot.ps1 -RequireGodot` PASS including `roulette_audio_audit` PASS. |

@@ -367,6 +367,8 @@ context:
 - `docs/plans/grand_casino_endgame_design.md` - the authoritative Grand Casino
   endgame design lock (dual victory routes, showdown structure, state machine,
   and canonical ids).
+- `docs/plans/content_style_guide.md` - the active release voice and
+  player-facing copy rules for Act 1 content.
 - `docs/plans/dead_code_audit_report.md` - the release cleanup audit and
   protect list for code and tooling that looks dead but is live.
 - `docs/plans/skill_based_cheating_methods_plan.md` - the shared

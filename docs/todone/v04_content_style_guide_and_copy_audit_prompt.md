@@ -1,3 +1,30 @@
+# Execution Record
+
+Completion date: 2026-07-08.
+
+Implementing/evidence commits:
+- `8c465a1` - Claimed this queue entry after confirming entry 1 was archived.
+- Archive/evidence commit - this commit.
+
+Work completed:
+- Added `docs/plans/content_style_guide.md` as the active v0.4 Act 1 release voice and copy convention guide.
+- Added a focused release-copy blocker check to `scripts/tests/foundation_check.gd`; it parses every JSON file under `data/` and scans the release-path terminal-copy script files for blocker phrases.
+- Updated the README documentation index to include the style guide.
+- Updated the v0.4 completion plan and Act 1 D6 ledger so the old missing-style-guide failure is no longer stale.
+
+Audit result:
+- Structured JSON scan found only the two known Grand Casino Act 2 seam messages in `data/events/events.json`.
+- Source scan found the same known seam in `scripts/core/run_state.gd` and `scripts/ui/foundation_main.gd`; this remains owned by `act_two_seam_prompt.md`.
+- No TODO, placeholder, debug-only, dev-only, test-only, coming-soon, real-money, or cash-prize release-path content was introduced.
+
+Verification:
+- `powershell -ExecutionPolicy Bypass -File tools\validate_project.ps1` - PASS, "Beat the House foundation architecture validation passed."
+- `powershell -ExecutionPolicy Bypass -File tools\check_godot.ps1 -RequireGodot -FoundationSuite systems -TimeoutSec 300` - PASS. Stages: validate_project 15,369ms; godot_import 12,491ms; gdscript_load_check 10,153ms; foundation_systems 24,553ms. Report: `.tmp/test_reports/20260707_203933_smoke/summary.json`.
+- `powershell -ExecutionPolicy Bypass -File tools\check_godot.ps1 -RequireGodot -FoundationSuite ui -TimeoutSec 300` - PASS. Stages: validate_project 15,504ms; godot_import 11,934ms; gdscript_load_check 10,131ms; ui_scene_compile 47,064ms. Report: `.tmp/test_reports/20260707_204040_smoke/summary.json`.
+
+Deviations:
+- The existing Act 2 "not implemented yet" seam was not removed because `act_two_seam_prompt.md` owns that work. The new validator allows only those documented seam locations.
+
 # Agent Prompt - v0.4 Content Style Guide And Copy Audit
 
 Copy everything below this line into the agent.
