@@ -4,6 +4,49 @@
 		"draft": true,
 		"steam_inventory_compatible": true,
 		"tiers": ["blue", "purple", "pink", "red", "gold"],
+		"meta_home": {
+			"housing_order": ["back_alley", "motel_room", "apartment", "house"],
+			"starter_container_id": "bag",
+			"housing": {
+				"back_alley": {
+					"display_name": "Back Alley",
+					"archetype_id": "back_alley",
+					"storage_slots": 0,
+					"upgrade_price": 0,
+					"trade_up": false
+				},
+				"motel_room": {
+					"display_name": "Motel Room",
+					"archetype_id": "motel_room",
+					"storage_slots": 8,
+					"upgrade_price": 60,
+					"trade_up": false
+				},
+				"apartment": {
+					"display_name": "Apartment",
+					"archetype_id": "apartment",
+					"storage_slots": 16,
+					"upgrade_price": 250,
+					"trade_up": true
+				},
+				"house": {
+					"display_name": "House",
+					"archetype_id": "house",
+					"storage_slots": 32,
+					"upgrade_price": 600,
+					"trade_up": true
+				}
+			},
+			"sale_prices": {
+				"bags": {"blue": 6, "purple": 12, "pink": 24, "red": 48, "gold": 96},
+				"items": {"blue": 10, "purple": 22, "pink": 48, "red": 100, "gold": 220}
+			},
+			"map_nodes": [
+				{"id": "home", "label": "Home", "kind": "home"},
+				{"id": "pawn_shop", "label": "Sal's Pawn Counter", "kind": "pawn_shop"}
+			],
+			"design_note": "Meta housing is bought once with gold and has no rent. Future rent or upkeep belongs in a separate owner-approved economy pass."
+		},
 		"collections": [
 			{
 				"id": "roadside_luck",

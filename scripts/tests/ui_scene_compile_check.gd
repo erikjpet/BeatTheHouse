@@ -751,12 +751,17 @@ func _run() -> void:
 			return
 	var settings_button: Button = app.get("settings_button")
 	var inventory_button: Button = app.get("inventory_button")
+	var collections_button: Button = app.get("collections_button")
 	var exit_game_button: Button = app.get("exit_game_button")
 	var settings_menu: SettingsMenu = app.get("settings_menu")
 	var inventory_page: Control = app.get("inventory_page")
 	var start_menu_controls: Control = app.get("start_menu_controls")
-	if settings_button == null or inventory_button == null or exit_game_button == null or settings_menu == null or inventory_page == null or start_menu_controls == null:
+	if settings_button == null or inventory_button == null or collections_button == null or exit_game_button == null or settings_menu == null or inventory_page == null or start_menu_controls == null:
 		push_error("Main menu did not expose the required run, settings, inventory, and exit controls.")
+		quit(1)
+		return
+	if collections_button.text != "Home":
+		push_error("Meta collection launcher should be labeled Home on the main menu.")
 		quit(1)
 		return
 	if not exit_game_button.visible or exit_game_button.disabled:
@@ -1717,25 +1722,29 @@ func _run() -> void:
 		quit(1)
 		return
 	var initial_environment_snapshot: Dictionary = app.call("current_environment_view_snapshot")
-	if str(initial_environment_snapshot.get("kind", "")) != "home":
-		push_error("The first environment should be the starting home so players can choose which starter items to pick up.")
+	var initial_archetype_id := str(initial_environment_snapshot.get("archetype_id", initial_environment_snapshot.get("id", "")))
+	var starts_in_home := str(initial_environment_snapshot.get("kind", "")) == "home"
+	var starts_homeless := initial_archetype_id == "back_alley"
+	if not starts_in_home and not starts_homeless:
+		push_error("The first environment should be the meta home start or the homeless back alley.")
 		quit(1)
 		return
 	var initial_item_offers: Array = initial_environment_snapshot.get("item_offers", [])
-	if initial_item_offers.is_empty():
+	if starts_in_home and initial_item_offers.is_empty():
 		push_error("The starting home did not expose starter item pickups.")
 		quit(1)
 		return
-	for offer_value in initial_item_offers:
-		if typeof(offer_value) != TYPE_DICTIONARY:
-			continue
-		var starter_offer: Dictionary = offer_value
-		if int(starter_offer.get("price", -1)) != 0 or not bool(starter_offer.get("pickup", false)):
-			push_error("The starting home exposed a non-pickup starter item offer.")
-			quit(1)
-			return
+	if starts_in_home:
+		for offer_value in initial_item_offers:
+			if typeof(offer_value) != TYPE_DICTIONARY:
+				continue
+			var starter_offer: Dictionary = offer_value
+			if int(starter_offer.get("price", -1)) != 0 or not bool(starter_offer.get("pickup", false)):
+				push_error("The starting home exposed a non-pickup starter item offer.")
+				quit(1)
+				return
 	var initial_objects: Array = app.call("current_spatial_interaction_snapshot").get("objects", [])
-	if _interactable_by_type(initial_objects, "item").is_empty() or not _interactable_by_type(initial_objects, "shopkeeper").is_empty():
+	if starts_in_home and (_interactable_by_type(initial_objects, "item").is_empty() or not _interactable_by_type(initial_objects, "shopkeeper").is_empty()):
 		push_error("The starting home should expose pickup item room objects without a shopkeeper.")
 		quit(1)
 		return
@@ -2221,6 +2230,8 @@ func _run() -> void:
 		quit(1)
 		return
 
+	app.call("start_foundation_run", "UI-COMPILE-GAME-SEED", RunStateScript.custom_challenge("ui_compile_game_fixture", "UI-COMPILE-GAME-SEED", {"home_archetype_id": "bar"}))
+	await process_frame
 	if not await _travel_to_first_game_environment(app):
 		push_error("Foundation screen router could not reach a gambling environment after the shop start.")
 		quit(1)
@@ -3281,7 +3292,7 @@ func _run() -> void:
 	if ui_settings != null:
 		ui_settings.reduce_motion = previous_reduce_motion
 
-	app.call("start_foundation_run", "UI-ITEM-SEED")
+	app.call("start_foundation_run", "UI-ITEM-SEED", RunStateScript.custom_challenge("ui_item_home_fixture", "UI-ITEM-SEED", {"home_archetype_id": "motel_room"}))
 	await process_frame
 	var home_pickup_snapshot: Dictionary = app.call("current_environment_view_snapshot")
 	var home_pickup_offers: Array = home_pickup_snapshot.get("item_offers", [])
@@ -4153,7 +4164,7 @@ func _run() -> void:
 		push_error("Same seed/state/travel choice did not generate deterministic travel.")
 		quit(1)
 		return
-	app.call("start_foundation_run", "UI-COMPILE-SEED")
+	app.call("start_foundation_run", "UI-COMPILE-SEED", RunStateScript.custom_challenge("ui_failure_game_fixture", "UI-COMPILE-SEED", {"home_archetype_id": "bar"}))
 	await process_frame
 	if not await _travel_to_first_game_environment(app):
 		push_error("Failure screen check could not reach a gambling environment after the shop start.")
@@ -4622,7 +4633,7 @@ func _check_in_run_menu_flow(app: Control, save_service: SaveService, viewport_r
 		return false
 	app.set("autosave_slot_id", menu_slot)
 
-	app.call("start_foundation_run", "UI-RUN-MENU-SCREENS")
+	app.call("start_foundation_run", "UI-RUN-MENU-SCREENS", RunStateScript.custom_challenge("ui_run_menu_home_fixture", "UI-RUN-MENU-SCREENS", {"home_archetype_id": "bar"}))
 	await process_frame
 	var top_menu_button: Button = app.get("top_menu_button")
 	if top_menu_button == null:
@@ -4730,7 +4741,7 @@ func _check_in_run_menu_flow(app: Control, save_service: SaveService, viewport_r
 		push_error("Environment-screen in-run load did not return to a playable run view.")
 		return false
 
-	app.call("start_foundation_run", "UI-RUN-MENU-SAVE-GAME")
+	app.call("start_foundation_run", "UI-RUN-MENU-SAVE-GAME", RunStateScript.custom_challenge("ui_run_menu_save_game_fixture", "UI-RUN-MENU-SAVE-GAME", {"home_archetype_id": "bar"}))
 	await process_frame
 	if not await _travel_to_first_game_environment(app):
 		push_error("Run menu game-surface save test could not reach a gambling environment.")

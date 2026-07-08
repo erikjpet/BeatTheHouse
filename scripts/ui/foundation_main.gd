@@ -358,8 +358,8 @@ func _ready() -> void:
 	_mark_boot_event("music_ready")
 	_initialize_profile_inventory()
 	_mark_boot_event("profile_inventory_ready")
-	_initialize_meta_collection()
-	_mark_boot_event("meta_collection_ready")
+	collection_drop_service = CollectionDropServiceScript.new()
+	_mark_boot_event("meta_collection_deferred")
 	_initialize_foundation()
 	_mark_boot_event("foundation_ready")
 	_build_ui()
@@ -458,8 +458,10 @@ func start_foundation_run(seed_text: String = DEFAULT_SEED, challenge_config: Di
 	var resolved_seed := seed_text.strip_edges()
 	if resolved_seed.is_empty():
 		resolved_seed = DEFAULT_SEED
+	var resolved_challenge_config := _challenge_with_meta_home_for_run(resolved_seed, challenge_config)
 	run_state = RunState.new()
-	run_state.start_new(resolved_seed, challenge_config)
+	run_state.start_new(resolved_seed, resolved_challenge_config)
+	_apply_meta_collection_loadout_to_run()
 	run_state.begin_act(1)
 	dev_game_test_mode = false
 	generator.next_environment(run_state)
@@ -3324,7 +3326,7 @@ func _build_start_screen() -> void:
 	utility_row.add_child(settings_button)
 	inventory_button = _main_menu_button("Inventory", "Profile stash", Callable(self, "open_inventory_page"))
 	utility_row.add_child(inventory_button)
-	collections_button = _main_menu_button("Collections", "Bags and collection items", Callable(self, "open_collection_browser"))
+	collections_button = _main_menu_button("Home", "Meta home, pawn counter, and bags", Callable(self, "open_collection_browser"))
 	utility_row.add_child(collections_button)
 	if show_game_library_launcher:
 		game_library_button = _main_menu_button("Games", "Practice any table", Callable(self, "open_game_test_menu"))
@@ -8585,7 +8587,7 @@ func _victory_summary_snapshot() -> Dictionary:
 	message = _player_facing_text(message)
 	if message.strip_edges().is_empty():
 		message = "You beat the house for now."
-	var next_act_line := "The next act is not implemented yet."
+	var next_act_line := "Act 2 opens after this release."
 	var inventory_items := _inventory_view_list()
 	var debt_items := _debt_view_list()
 	var story_lines := _story_message_view_list()
@@ -9441,6 +9443,36 @@ func start_generated_foundation_run() -> void:
 	start_foundation_run(seed_text, _new_run_challenge_for_seed(seed_text))
 
 
+func _challenge_with_meta_home_for_run(seed_text: String, config: Dictionary) -> Dictionary:
+	var normalized := RunState.normalize_challenge(seed_text, config)
+	var mode := str(normalized.get("mode", "standard")).strip_edges().to_lower()
+	if mode != "standard" or not str(normalized.get("completion_flag", "")).strip_edges().is_empty():
+		return normalized
+	if meta_collection_service == null:
+		_initialize_meta_collection()
+	var modifiers := _copy_dict(normalized.get("modifiers", {}))
+	var meta_modifiers: Dictionary = meta_collection_service.normal_run_start_modifiers()
+	for key in meta_modifiers.keys():
+		modifiers[str(key)] = meta_modifiers[key]
+	normalized["modifiers"] = modifiers
+	return normalized
+
+
+func _apply_meta_collection_loadout_to_run() -> void:
+	if run_state == null or not run_state.meta_collection_enabled_for_run():
+		return
+	var modifiers := run_state.challenge_modifiers()
+	for item_value in _copy_array(modifiers.get("meta_collection_loadout", [])):
+		if typeof(item_value) != TYPE_DICTIONARY:
+			continue
+		var item: Dictionary = item_value
+		var item_id := str(item.get("id", "")).strip_edges()
+		if item_id.is_empty():
+			continue
+		if not run_state.inventory.has(item):
+			run_state.inventory.append(item.duplicate(true))
+
+
 func return_to_main_menu() -> void:
 	if _all_in_result_terminal_check_is_pending():
 		_evaluate_run_terminal_state(true)
@@ -9717,6 +9749,7 @@ func _refresh_collection_browser_page() -> void:
 	if collection_status_label != null:
 		collection_status_label.text = str(view.get("summary", "Collections ready."))
 	_clear(collection_bags_list)
+	_add_meta_home_section(_copy_dict(view.get("home", {})))
 	var bags := _copy_array(view.get("unopened_bags", []))
 	var bags_heading := _section("Unopened Bags")
 	_set_control_font_color(bags_heading, VisualStyle.YELLOW)
@@ -9731,6 +9764,40 @@ func _refresh_collection_browser_page() -> void:
 	_clear(collection_items_list)
 	for collection_value in _copy_array(view.get("collections", [])):
 		_add_collection_section(_copy_dict(collection_value))
+
+
+func _add_meta_home_section(home: Dictionary) -> void:
+	if collection_bags_list == null:
+		return
+	var panel := _panel_container(Color("#05070d", 0.86), VisualStyle.YELLOW)
+	panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	collection_bags_list.add_child(panel)
+	var stack := VBoxContainer.new()
+	stack.add_theme_constant_override("separation", 5)
+	stack.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	panel.add_child(stack)
+	var title := _label("%s - %d carried / %d carry, %d storage" % [
+		str(home.get("display_name", "Back Alley")),
+		int(home.get("carried_count", 0)),
+		int(home.get("carry_capacity", 0)),
+		int(home.get("storage_slots", 0)),
+	], 13)
+	_set_control_font_color(title, VisualStyle.YELLOW)
+	stack.add_child(title)
+	var map_line := _label("Home map: Home / Sal's Pawn Counter", 12)
+	_set_control_font_color(map_line, VisualStyle.CYAN_2)
+	stack.add_child(map_line)
+	var pawn_line := _label("Pawn shop: sell counter only.", 12)
+	_set_control_font_color(pawn_line, VisualStyle.SOFT)
+	stack.add_child(pawn_line)
+	var upgrade := _copy_dict(home.get("upgrade", {}))
+	var upgrade_text := "Trade-ups unlocked." if bool(home.get("trade_up_unlocked", false)) else "Trade-ups require an apartment or house."
+	if not upgrade.is_empty():
+		upgrade_text = "%s Next home: %s for %d gold." % [upgrade_text, str(upgrade.get("display_name", "Home")), int(upgrade.get("price", 0))]
+	var upgrade_label := _label(upgrade_text, 12)
+	upgrade_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_set_control_font_color(upgrade_label, VisualStyle.SOFT)
+	stack.add_child(upgrade_label)
 
 
 func _add_collection_bag_row(bag: Dictionary) -> void:
@@ -10699,8 +10766,14 @@ func _route_failed_run_if_needed(terminal_result: Dictionary = {}) -> bool:
 func _process_terminal_meta_bag_drops() -> void:
 	if run_state == null or not run_state.is_terminal():
 		return
+	if not run_state.meta_collection_enabled_for_run():
+		return
 	if meta_collection_service == null or collection_drop_service == null:
 		_initialize_meta_collection()
+	if run_state.run_status == RunState.RUN_STATUS_FAILED and not bool(run_state.narrative_flags.get(MetaCollectionServiceScript.FAILURE_DECAY_FLAG, false)):
+		var carried_ids := _copy_array(run_state.challenge_modifiers().get("meta_collection_carried_instance_ids", []))
+		meta_collection_service.apply_failure_decay(carried_ids, "%s|failure" % run_state.seed_text)
+		run_state.narrative_flags[MetaCollectionServiceScript.FAILURE_DECAY_FLAG] = true
 	collection_drop_service.ensure_run_end_pending_bags(run_state, profile_inventory)
 	var flush_result: Dictionary = collection_drop_service.flush_pending_bags(run_state, meta_collection_service)
 	if bool(flush_result.get("ok", false)):

@@ -624,6 +624,9 @@ func _archetypes_by_id() -> Dictionary:
 
 
 func _pick_start_id(archetypes_by_id: Dictionary, run_state: RunState, rng: RngStream) -> String:
+	var selected_home := run_state.selected_home_archetype_id() if run_state != null else RunState.HOME_SELECTION_RANDOM
+	if selected_home != RunState.HOME_SELECTION_RANDOM and archetypes_by_id.has(selected_home):
+		return selected_home
 	var home_ids: Array = []
 	for id_value in _sorted_keys(archetypes_by_id):
 		var id := str(id_value)
@@ -631,9 +634,6 @@ func _pick_start_id(archetypes_by_id: Dictionary, run_state: RunState, rng: RngS
 		if str(archetype.get("kind", "")) == "home" or bool(archetype.get("is_home_start", false)):
 			home_ids.append(id)
 	if not home_ids.is_empty():
-		var selected_home := run_state.selected_home_archetype_id() if run_state != null else RunState.HOME_SELECTION_RANDOM
-		if selected_home != RunState.HOME_SELECTION_RANDOM and home_ids.has(selected_home):
-			return selected_home
 		return str(rng.pick(home_ids, str(home_ids[0])))
 	var shop_starts: Array = []
 	var starts: Array = []

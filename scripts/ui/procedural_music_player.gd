@@ -437,7 +437,9 @@ func music_stem_manifest_snapshot_for_environment(environment: Dictionary, heat_
 		authored_manifest["music_state"] = _normalize_music_mix_input(_music_fx_state_from_environment(environment, heat_level, music_state))
 		return authored_manifest
 	var context := _ambient_generation_context(profile)
-	var stem_set := _procedural_stem_set_from_context(profile, context, AMBIENT_STAGE_FULL, -1) if bake else _procedural_stem_contract_from_context(profile, context, AMBIENT_STAGE_FULL)
+	var stem_set := _procedural_stem_contract_from_context(profile, context, AMBIENT_STAGE_FULL)
+	if bake:
+		stem_set["bake_requested"] = true
 	var manifest := _stem_manifest_from_contract(stem_set)
 	manifest["cache_key"] = cache_key
 	manifest["cache_key_uses_heat"] = false

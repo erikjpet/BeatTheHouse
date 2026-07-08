@@ -6,11 +6,21 @@ const RngStreamScript := preload("res://scripts/core/rng_stream.gd")
 
 const STORE_PATH := "user://meta_collection.json"
 const STORE_PATH_ENV := "BTH_META_COLLECTION_PATH"
-const SCHEMA_VERSION := 1
+const ITEMS_PATH := "res://data/items/items.json"
+const SCHEMA_VERSION := 2
 const FIRST_INSTANCE_ID := 1
 const REVEAL_BAG_KEY := "bag"
+const HOUSING_BACK_ALLEY := "back_alley"
+const HOUSING_MOTEL_ROOM := "motel_room"
+const HOUSING_APARTMENT := "apartment"
+const HOUSING_HOUSE := "house"
+const SALE_KIND_ITEM := "item"
+const SALE_KIND_BAG := "bag"
+const FAILURE_DECAY_FLAG := "_meta_collection_failure_decay_applied"
 
 var _store: Dictionary = {}
+var _item_definitions_by_id: Dictionary = {}
+var _items_loaded := false
 
 
 func _init() -> void:
@@ -89,6 +99,8 @@ func grant_bag(bagdef_id: int, rng_seed: String = "", metadata: Dictionary = {})
 
 func open_bag(instance_id: int) -> Dictionary:
 	_store = _normalize_store(_store)
+	if not can_accept_owned_instance():
+		return {"ok": false, "message": "No room for another collection item."}
 	var bags := _copy_array(_store.get("unopened_bags", []))
 	var bag_index := -1
 	var bag: Dictionary = {}
@@ -134,6 +146,312 @@ func open_bag(instance_id: int) -> Dictionary:
 		"run_item": run_item,
 		"reveal": reveal,
 	}
+
+
+func housing_tier() -> String:
+	_store = _normalize_store(_store)
+	return str(_store.get("housing_tier", HOUSING_BACK_ALLEY))
+
+
+func housing_definition(tier: String = "") -> Dictionary:
+	var config := _meta_home_config()
+	var housing := _copy_dict(config.get("housing", {}))
+	var clean_tier := tier.strip_edges()
+	if clean_tier.is_empty():
+		clean_tier = housing_tier()
+	return _copy_dict(housing.get(clean_tier, {}))
+
+
+func next_housing_upgrade() -> Dictionary:
+	_store = _normalize_store(_store)
+	var order := _housing_order()
+	var current := housing_tier()
+	var current_index := order.find(current)
+	if current_index < 0 or current_index >= order.size() - 1:
+		return {}
+	var next_tier := str(order[current_index + 1])
+	var definition := housing_definition(next_tier)
+	definition["tier"] = next_tier
+	definition["price"] = maxi(0, int(definition.get("upgrade_price", 0)))
+	definition["affordable"] = int(_store.get("gold_balance", 0)) >= int(definition.get("price", 0))
+	return definition
+
+
+func purchase_housing_upgrade() -> Dictionary:
+	_store = _normalize_store(_store)
+	var upgrade := next_housing_upgrade()
+	if upgrade.is_empty():
+		return {"ok": false, "message": "No further home upgrade is available."}
+	var price := maxi(0, int(upgrade.get("price", 0)))
+	var gold := int(_store.get("gold_balance", 0))
+	if gold < price:
+		return {"ok": false, "message": "Not enough gold for that home upgrade."}
+	var tier := str(upgrade.get("tier", ""))
+	_store["gold_balance"] = gold - price
+	_store["housing_tier"] = tier
+	var home := _copy_dict(_store.get("meta_home", {}))
+	home["current_location"] = "home"
+	home["housing_tier"] = tier
+	_store["meta_home"] = home
+	_store["loadout"] = _filtered_packed_ids(_copy_array(_store.get("loadout", [])))
+	return {
+		"ok": true,
+		"message": "Home upgraded to %s." % str(upgrade.get("display_name", tier.capitalize())),
+		"housing_tier": tier,
+		"gold_balance": int(_store.get("gold_balance", 0)),
+	}
+
+
+func storage_slots() -> int:
+	var definition := housing_definition()
+	return maxi(0, int(definition.get("storage_slots", 0)))
+
+
+func carry_capacity() -> int:
+	_store = _normalize_store(_store)
+	var total := 0
+	for container_value in _copy_array(_store.get("owned_containers", [])):
+		var container := _copy_dict(container_value)
+		total += _container_capacity(str(container.get("item_id", "")))
+	return maxi(0, total)
+
+
+func total_owned_capacity() -> int:
+	return storage_slots() + carry_capacity()
+
+
+func can_accept_owned_instance() -> bool:
+	_store = _normalize_store(_store)
+	var capacity := total_owned_capacity()
+	return capacity <= 0 or owned_instances().size() < capacity
+
+
+func trade_up_unlocked() -> bool:
+	var definition := housing_definition()
+	return bool(definition.get("trade_up", false))
+
+
+func grant_container(item_id: String) -> Dictionary:
+	_store = _normalize_store(_store)
+	var clean_id := item_id.strip_edges()
+	if clean_id.is_empty() or _container_capacity(clean_id) <= 0:
+		return {}
+	var container := {
+		"item_id": clean_id,
+		"instance_id": _take_next_instance_id(),
+		"capacity": _container_capacity(clean_id),
+	}
+	var containers := _copy_array(_store.get("owned_containers", []))
+	containers.append(container)
+	_store["owned_containers"] = containers
+	return container.duplicate(true)
+
+
+func pack_instance(instance_id: int) -> Dictionary:
+	_store = _normalize_store(_store)
+	if housing_tier() == HOUSING_BACK_ALLEY:
+		return {"ok": true, "message": "Homeless runs carry every owned item.", "packed_instance_ids": carried_instance_ids()}
+	if instance_id <= 0 or not _owned_instance_ids().has(instance_id):
+		return {"ok": false, "message": "That item is not owned."}
+	var loadout := _filtered_packed_ids(_copy_array(_store.get("loadout", [])))
+	if loadout.has(instance_id):
+		return {"ok": true, "message": "Item is already packed.", "packed_instance_ids": loadout}
+	if loadout.size() >= carry_capacity():
+		return {"ok": false, "message": "No carry space remains."}
+	loadout.append(instance_id)
+	_store["loadout"] = loadout
+	return {"ok": true, "message": "Item packed.", "packed_instance_ids": loadout}
+
+
+func unpack_instance(instance_id: int) -> Dictionary:
+	_store = _normalize_store(_store)
+	if housing_tier() == HOUSING_BACK_ALLEY:
+		return {"ok": false, "message": "Back alley starts carry every owned item."}
+	var loadout := _filtered_packed_ids(_copy_array(_store.get("loadout", [])))
+	loadout.erase(instance_id)
+	_store["loadout"] = loadout
+	return {"ok": true, "message": "Item unpacked.", "packed_instance_ids": loadout}
+
+
+func carried_instance_ids() -> Array:
+	_store = _normalize_store(_store)
+	if housing_tier() == HOUSING_BACK_ALLEY:
+		return _owned_instance_ids()
+	return _filtered_packed_ids(_copy_array(_store.get("loadout", [])))
+
+
+func normal_run_start_modifiers() -> Dictionary:
+	var carried_ids := carried_instance_ids()
+	var resolver: Variant = CollectionItemResolverScript.new()
+	var run_items: Array = []
+	for instance_value in owned_instances():
+		var instance := _copy_dict(instance_value)
+		if not carried_ids.has(int(instance.get("instance_id", 0))):
+			continue
+		var run_item: Dictionary = resolver.resolve_run_item(instance)
+		if not run_item.is_empty():
+			run_items.append(run_item)
+	return {
+		"home_archetype_id": str(housing_definition().get("archetype_id", HOUSING_BACK_ALLEY)),
+		"meta_collection_enabled": true,
+		"meta_collection_carried_instance_ids": carried_ids,
+		"meta_collection_loadout": run_items,
+	}
+
+
+func apply_failure_decay(carried_ids: Array, rng_seed: String) -> Array:
+	_store = _normalize_store(_store)
+	var wanted_ids := {}
+	for id_value in carried_ids:
+		var instance_id := int(id_value)
+		if instance_id > 0:
+			wanted_ids[instance_id] = true
+	if wanted_ids.is_empty():
+		return []
+	var resolver: Variant = CollectionItemResolverScript.new()
+	var next_instances: Array = []
+	var decayed: Array = []
+	for instance_value in _copy_array(_store.get("owned_instances", [])):
+		var instance := _copy_dict(instance_value)
+		var instance_id := int(instance.get("instance_id", 0))
+		if wanted_ids.has(instance_id):
+			var after: Dictionary = resolver.apply_usage_decay(instance, "%s|%d" % [rng_seed, instance_id])
+			next_instances.append(after)
+			decayed.append(after.duplicate(true))
+		else:
+			next_instances.append(instance)
+	_store["owned_instances"] = next_instances
+	return decayed
+
+
+func sale_quote(kind: String, instance_id: int) -> Dictionary:
+	_store = _normalize_store(_store)
+	var clean_kind := kind.strip_edges().to_lower()
+	if clean_kind == SALE_KIND_BAG:
+		return _bag_sale_quote(instance_id)
+	return _item_sale_quote(instance_id)
+
+
+func arm_sale(kind: String, instance_id: int) -> Dictionary:
+	var quote := sale_quote(kind, instance_id)
+	if not bool(quote.get("ok", false)):
+		return quote
+	var token := "sale:%s:%d:%d" % [str(quote.get("kind", "")), int(quote.get("instance_id", 0)), Time.get_ticks_msec()]
+	quote["token"] = token
+	_store["pending_sale"] = quote.duplicate(true)
+	return quote
+
+
+func confirm_sale(token: String) -> Dictionary:
+	_store = _normalize_store(_store)
+	var pending := _copy_dict(_store.get("pending_sale", {}))
+	if token.strip_edges().is_empty() or str(pending.get("token", "")) != token:
+		return {"ok": false, "message": "Sale confirmation expired."}
+	var kind := str(pending.get("kind", ""))
+	var instance_id := int(pending.get("instance_id", 0))
+	var removed := false
+	if kind == SALE_KIND_BAG:
+		removed = _remove_bag(instance_id)
+	else:
+		removed = remove_instance(instance_id)
+		var loadout := _filtered_packed_ids(_copy_array(_store.get("loadout", [])))
+		loadout.erase(instance_id)
+		_store["loadout"] = loadout
+	if not removed:
+		_store["pending_sale"] = {}
+		return {"ok": false, "message": "That item is no longer available to sell."}
+	var price := maxi(0, int(pending.get("price", 0)))
+	_store["gold_balance"] = maxi(0, int(_store.get("gold_balance", 0)) + price)
+	var history := _copy_array(_store.get("sale_history", []))
+	var record := pending.duplicate(true)
+	record["gold_balance"] = int(_store.get("gold_balance", 0))
+	history.append(record)
+	_store["sale_history"] = history
+	_store["pending_sale"] = {}
+	return {"ok": true, "message": "Sold for %d gold." % price, "price": price, "gold_balance": int(_store.get("gold_balance", 0))}
+
+
+func arm_trade_up(instance_ids: Array) -> Dictionary:
+	_store = _normalize_store(_store)
+	if not trade_up_unlocked():
+		return {"ok": false, "message": "Trade-ups unlock with an apartment or house."}
+	var ids: Array = []
+	for id_value in instance_ids:
+		var id := int(id_value)
+		if id > 0 and not ids.has(id):
+			ids.append(id)
+	if ids.size() != 5:
+		return {"ok": false, "message": "Trade-up requires five matching items."}
+	var resolver: Variant = CollectionItemResolverScript.new()
+	var instances: Array = []
+	var collection_id := ""
+	var tier := ""
+	for id in ids:
+		var instance := _owned_instance(id)
+		var definition: Dictionary = resolver.item_definition(int(instance.get("itemdef_id", -1)))
+		if instance.is_empty() or definition.is_empty():
+			return {"ok": false, "message": "Trade-up item is missing."}
+		var item_collection_id := str(definition.get("collection_id", ""))
+		var item_tier := str(definition.get("tier", ""))
+		if collection_id.is_empty():
+			collection_id = item_collection_id
+			tier = item_tier
+		elif collection_id != item_collection_id or tier != item_tier:
+			return {"ok": false, "message": "Trade-up items must match collection and tier."}
+		instances.append(instance)
+	var next_tier := _next_collection_tier(tier)
+	if next_tier.is_empty():
+		return {"ok": false, "message": "Gold-tier items cannot trade up."}
+	var token := "trade:%s:%s:%d" % [collection_id, tier, Time.get_ticks_msec()]
+	var pending := {
+		"ok": true,
+		"token": token,
+		"collection_id": collection_id,
+		"tier": tier,
+		"next_tier": next_tier,
+		"instance_ids": ids,
+		"message": "Trade five %s items for one %s item." % [tier.capitalize(), next_tier.capitalize()],
+	}
+	_store["pending_trade_up"] = pending.duplicate(true)
+	return pending
+
+
+func confirm_trade_up(token: String) -> Dictionary:
+	_store = _normalize_store(_store)
+	var pending := _copy_dict(_store.get("pending_trade_up", {}))
+	if token.strip_edges().is_empty() or str(pending.get("token", "")) != token:
+		return {"ok": false, "message": "Trade-up confirmation expired."}
+	if not trade_up_unlocked():
+		_store["pending_trade_up"] = {}
+		return {"ok": false, "message": "Trade-ups unlock with an apartment or house."}
+	var ids := _copy_array(pending.get("instance_ids", []))
+	var resolver: Variant = CollectionItemResolverScript.new()
+	var inputs: Array = []
+	for id_value in ids:
+		var instance := _owned_instance(int(id_value))
+		if instance.is_empty():
+			_store["pending_trade_up"] = {}
+			return {"ok": false, "message": "A trade-up item is no longer owned."}
+		inputs.append(instance)
+	var options: Array = resolver.item_definitions_for_collection_tier(str(pending.get("collection_id", "")), str(pending.get("next_tier", "")))
+	if options.is_empty():
+		_store["pending_trade_up"] = {}
+		return {"ok": false, "message": "No trade-up output exists."}
+	var rng := _meta_rng()
+	var output_def := _copy_dict(options[rng.randi_range(0, options.size() - 1)])
+	var output := _mean_trade_up_instance(int(output_def.get("itemdef_id", -1)), inputs)
+	for id_value in ids:
+		remove_instance(int(id_value))
+	var granted := grant_instance(output)
+	_store["meta_rng"] = rng.snapshot()
+	var history := _copy_array(_store.get("trade_up_history", []))
+	var record := pending.duplicate(true)
+	record["output_instance_id"] = int(granted.get("instance_id", 0))
+	record["output_itemdef_id"] = int(granted.get("itemdef_id", -1))
+	history.append(record)
+	_store["trade_up_history"] = history
+	_store["pending_trade_up"] = {}
+	return {"ok": true, "message": "Trade-up complete.", "item": granted}
 
 
 func unopened_bags() -> Array:
@@ -196,16 +514,59 @@ func _normalize_store(data: Dictionary) -> Dictionary:
 	normalized["owned_instances"] = _normalized_instances(normalized.get("owned_instances", []))
 	normalized["unopened_bags"] = _normalized_bags(normalized.get("unopened_bags", []))
 	normalized["gold_balance"] = maxi(0, int(normalized.get("gold_balance", 0)))
-	normalized["loadout"] = _copy_array(normalized.get("loadout", []))
-	normalized["meta_home"] = _copy_dict(normalized.get("meta_home", {}))
+	normalized["housing_tier"] = _normalize_housing_tier(str(normalized.get("housing_tier", _copy_dict(normalized.get("meta_home", {})).get("housing_tier", HOUSING_BACK_ALLEY))))
+	normalized["owned_containers"] = _normalized_containers(normalized.get("owned_containers", []))
+	normalized["loadout"] = _filtered_packed_ids_for(
+		_copy_array(normalized.get("loadout", [])),
+		_copy_array(normalized.get("owned_instances", [])),
+		str(normalized.get("housing_tier", HOUSING_BACK_ALLEY)),
+		_copy_array(normalized.get("owned_containers", []))
+	)
+	normalized["meta_home"] = _normalize_meta_home(normalized.get("meta_home", {}), str(normalized.get("housing_tier", HOUSING_BACK_ALLEY)))
 	normalized["trade_up_history"] = _copy_array(normalized.get("trade_up_history", []))
 	normalized["sale_history"] = _copy_array(normalized.get("sale_history", []))
+	normalized["pending_sale"] = _copy_dict(normalized.get("pending_sale", {}))
+	normalized["pending_trade_up"] = _copy_dict(normalized.get("pending_trade_up", {}))
 	normalized["meta_rng"] = _normalize_meta_rng(normalized.get("meta_rng", {}))
 	normalized["next_instance_id"] = maxi(
 		maxi(FIRST_INSTANCE_ID, int(normalized.get("next_instance_id", FIRST_INSTANCE_ID))),
 		_max_recorded_instance_id(normalized) + 1
 	)
 	return normalized
+
+
+func _normalize_housing_tier(value: String) -> String:
+	var clean := value.strip_edges()
+	if _housing_order().has(clean):
+		return clean
+	return HOUSING_BACK_ALLEY
+
+
+func _normalize_meta_home(value: Variant, tier: String) -> Dictionary:
+	var home := _copy_dict(value)
+	home["housing_tier"] = _normalize_housing_tier(tier)
+	home["current_location"] = str(home.get("current_location", "home")).strip_edges()
+	if str(home.get("current_location", "")).is_empty():
+		home["current_location"] = "home"
+	return home
+
+
+func _normalized_containers(value: Variant) -> Array:
+	var containers: Array = []
+	for container_value in _copy_array(value):
+		var container := _copy_dict(container_value)
+		var item_id := str(container.get("item_id", "")).strip_edges()
+		var capacity := _container_capacity(item_id)
+		if item_id.is_empty() or capacity <= 0:
+			continue
+		container["item_id"] = item_id
+		container["instance_id"] = maxi(0, int(container.get("instance_id", 0)))
+		container["capacity"] = capacity
+		containers.append(container)
+	if containers.is_empty():
+		var starter_id := str(_meta_home_config().get("starter_container_id", "bag"))
+		containers.append({"item_id": starter_id, "instance_id": 0, "capacity": _container_capacity(starter_id)})
+	return containers
 
 
 func _normalized_instances(value: Variant) -> Array:
@@ -252,6 +613,193 @@ func _meta_rng() -> RngStream:
 	return rng
 
 
+func _meta_home_config() -> Dictionary:
+	var resolver: Variant = CollectionItemResolverScript.new()
+	var config: Dictionary = resolver.meta_home_config()
+	if config.is_empty():
+		return {
+			"housing_order": [HOUSING_BACK_ALLEY, HOUSING_MOTEL_ROOM, HOUSING_APARTMENT, HOUSING_HOUSE],
+			"starter_container_id": "bag",
+			"housing": {
+				"back_alley": {"display_name": "Back Alley", "archetype_id": HOUSING_BACK_ALLEY, "storage_slots": 0, "upgrade_price": 0, "trade_up": false},
+				"motel_room": {"display_name": "Motel Room", "archetype_id": HOUSING_MOTEL_ROOM, "storage_slots": 8, "upgrade_price": 60, "trade_up": false},
+				"apartment": {"display_name": "Apartment", "archetype_id": HOUSING_APARTMENT, "storage_slots": 16, "upgrade_price": 250, "trade_up": true},
+				"house": {"display_name": "House", "archetype_id": HOUSING_HOUSE, "storage_slots": 32, "upgrade_price": 600, "trade_up": true},
+			},
+			"sale_prices": {
+				"bags": {"blue": 6, "purple": 12, "pink": 24, "red": 48, "gold": 96},
+				"items": {"blue": 10, "purple": 22, "pink": 48, "red": 100, "gold": 220},
+			},
+		}
+	return config
+
+
+func _housing_order() -> Array:
+	var order := _copy_array(_meta_home_config().get("housing_order", []))
+	if order.is_empty():
+		return [HOUSING_BACK_ALLEY, HOUSING_MOTEL_ROOM, HOUSING_APARTMENT, HOUSING_HOUSE]
+	return order
+
+
+func _filtered_packed_ids(values: Array) -> Array:
+	return _filtered_packed_ids_for(
+		values,
+		_copy_array(_store.get("owned_instances", [])),
+		str(_store.get("housing_tier", HOUSING_BACK_ALLEY)),
+		_copy_array(_store.get("owned_containers", []))
+	)
+
+
+func _filtered_packed_ids_for(values: Array, owned_instances: Array, tier: String, containers: Array) -> Array:
+	var owned_lookup := {}
+	for instance_value in owned_instances:
+		var instance := _copy_dict(instance_value)
+		var instance_id := int(instance.get("instance_id", 0))
+		if instance_id > 0:
+			owned_lookup[instance_id] = true
+	var result: Array = []
+	for value in values:
+		var id := int(value)
+		if id > 0 and owned_lookup.has(id) and not result.has(id):
+			result.append(id)
+	var capacity := 0
+	for container_value in containers:
+		var container := _copy_dict(container_value)
+		capacity += maxi(0, int(container.get("capacity", _container_capacity(str(container.get("item_id", ""))))))
+	if tier != HOUSING_BACK_ALLEY and result.size() > capacity:
+		result.resize(capacity)
+	return result
+
+
+func _owned_instance_ids() -> Array:
+	var ids: Array = []
+	for instance_value in _copy_array(_store.get("owned_instances", [])):
+		var instance := _copy_dict(instance_value)
+		var id := int(instance.get("instance_id", 0))
+		if id > 0 and not ids.has(id):
+			ids.append(id)
+	return ids
+
+
+func _owned_instance(instance_id: int) -> Dictionary:
+	for instance_value in _copy_array(_store.get("owned_instances", [])):
+		var instance := _copy_dict(instance_value)
+		if int(instance.get("instance_id", 0)) == instance_id:
+			return instance
+	return {}
+
+
+func _remove_bag(instance_id: int) -> bool:
+	var bags := _copy_array(_store.get("unopened_bags", []))
+	var next_bags: Array = []
+	var removed := false
+	for bag_value in bags:
+		var bag := _copy_dict(bag_value)
+		if int(bag.get("instance_id", 0)) == instance_id:
+			removed = true
+			continue
+		next_bags.append(bag)
+	_store["unopened_bags"] = next_bags
+	return removed
+
+
+func _item_sale_quote(instance_id: int) -> Dictionary:
+	var instance := _owned_instance(instance_id)
+	if instance.is_empty():
+		return {"ok": false, "message": "That item is not owned."}
+	var resolver: Variant = CollectionItemResolverScript.new()
+	var definition: Dictionary = resolver.item_definition(int(instance.get("itemdef_id", -1)))
+	if definition.is_empty():
+		return {"ok": false, "message": "That item cannot be sold."}
+	var tier := str(definition.get("tier", "blue"))
+	var prices := _copy_dict(_copy_dict(_meta_home_config().get("sale_prices", {})).get("items", {}))
+	var base_price := maxi(1, int(prices.get(tier, 1)))
+	var price := maxi(1, int(round(float(base_price) * float(resolver.value_multiplier(definition, instance)))))
+	return {
+		"ok": true,
+		"kind": SALE_KIND_ITEM,
+		"instance_id": instance_id,
+		"price": price,
+		"display_name": str(definition.get("display_name", "Collection Item")),
+		"tier": tier,
+	}
+
+
+func _bag_sale_quote(instance_id: int) -> Dictionary:
+	var bag := {}
+	for bag_value in _copy_array(_store.get("unopened_bags", [])):
+		var candidate := _copy_dict(bag_value)
+		if int(candidate.get("instance_id", 0)) == instance_id:
+			bag = candidate
+			break
+	if bag.is_empty():
+		return {"ok": false, "message": "That bag is not unopened."}
+	var resolver: Variant = CollectionItemResolverScript.new()
+	var definition: Dictionary = resolver.bag_definition(int(bag.get("bagdef_id", -1)))
+	var tier := str(definition.get("tier", bag.get("tier", "blue")))
+	var prices := _copy_dict(_copy_dict(_meta_home_config().get("sale_prices", {})).get("bags", {}))
+	return {
+		"ok": true,
+		"kind": SALE_KIND_BAG,
+		"instance_id": instance_id,
+		"price": maxi(1, int(prices.get(tier, 1))),
+		"display_name": str(definition.get("display_name", bag.get("display_name", "Collection Bag"))),
+		"tier": tier,
+	}
+
+
+func _next_collection_tier(tier: String) -> String:
+	var index := CollectionItemResolverScript.TIERS.find(tier)
+	if index < 0 or index >= CollectionItemResolverScript.TIERS.size() - 1:
+		return ""
+	return str(CollectionItemResolverScript.TIERS[index + 1])
+
+
+func _mean_trade_up_instance(itemdef_id: int, instances: Array) -> Dictionary:
+	var result := {
+		"itemdef_id": itemdef_id,
+		"potency": 0.0,
+		"condition": 0.0,
+		"resonance": 0.0,
+		"usage": 0.0,
+	}
+	if instances.is_empty():
+		return result
+	for float_key in CollectionItemResolverScript.FLOAT_KEYS:
+		var total := 0.0
+		for instance_value in instances:
+			var instance := _copy_dict(instance_value)
+			total += clampf(float(instance.get(float_key, 0.0)), 0.0, 1.0)
+		result[float_key] = clampf(total / float(instances.size()), 0.0, 1.0)
+	return result
+
+
+func _container_capacity(item_id: String) -> int:
+	_ensure_items_loaded()
+	var item := _copy_dict(_item_definitions_by_id.get(item_id.strip_edges(), {}))
+	return maxi(0, int(item.get("container_capacity", 0)))
+
+
+func _ensure_items_loaded() -> void:
+	if _items_loaded:
+		return
+	_items_loaded = true
+	_item_definitions_by_id = {}
+	if not FileAccess.file_exists(ITEMS_PATH):
+		return
+	var parsed: Variant = JSON.parse_string(FileAccess.get_file_as_string(ITEMS_PATH))
+	if typeof(parsed) != TYPE_ARRAY:
+		return
+	for item_value in parsed as Array:
+		if typeof(item_value) != TYPE_DICTIONARY:
+			continue
+		var item: Dictionary = item_value
+		var id := str(item.get("id", "")).strip_edges()
+		if id.is_empty():
+			continue
+		_item_definitions_by_id[id] = item.duplicate(true)
+
+
 func _max_recorded_instance_id(data: Dictionary) -> int:
 	var max_id := 0
 	for instance_value in _copy_array(data.get("owned_instances", [])):
@@ -269,10 +817,14 @@ func _default_store() -> Dictionary:
 		"owned_instances": [],
 		"unopened_bags": [],
 		"gold_balance": 0,
+		"housing_tier": HOUSING_BACK_ALLEY,
+		"owned_containers": [{"item_id": "bag", "instance_id": 0, "capacity": 3}],
 		"loadout": [],
-		"meta_home": {},
+		"meta_home": {"housing_tier": HOUSING_BACK_ALLEY, "current_location": "home"},
 		"trade_up_history": [],
 		"sale_history": [],
+		"pending_sale": {},
+		"pending_trade_up": {},
 		"meta_rng": {
 			"seed": 904613,
 			"state": 904613,

@@ -168,6 +168,11 @@ func _enabled_world_route_ids(run_state: RunState, map_data: Dictionary, source_
 # Picks the starting, routed, or tier fallback archetype.
 func _pick_archetype(run_state: RunState, depth: int, rng: RngStream, target_archetype_id: String = "") -> Dictionary:
 	if depth == 0:
+		var selected_home := run_state.selected_home_archetype_id()
+		if selected_home != RunState.HOME_SELECTION_RANDOM:
+			var selected_archetype := _archetype_by_id(selected_home)
+			if not selected_archetype.is_empty():
+				return selected_archetype
 		var starts := _start_archetypes()
 		var shop_starts := _archetypes_with_shop_items(starts, true, run_state.challenge_config)
 		if not shop_starts.is_empty():

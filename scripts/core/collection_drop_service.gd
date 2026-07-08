@@ -17,6 +17,8 @@ const HIGH_HEAT_CLEAN_ESCAPE_CHANCE_PERCENT := 35
 func ensure_run_end_pending_bags(run_state: RunState, profile_inventory: Variant = null) -> Array:
 	if run_state == null or not run_state.is_terminal():
 		return []
+	if not run_state.meta_collection_enabled_for_run():
+		return []
 	if bool(run_state.narrative_flags.get(EVALUATED_FLAG, false)):
 		return run_state.pending_bag_markers()
 	var rng := _run_drop_rng(run_state)
@@ -43,6 +45,8 @@ func ensure_run_end_pending_bags(run_state: RunState, profile_inventory: Variant
 func flush_pending_bags(run_state: RunState, meta_collection_service: Variant) -> Dictionary:
 	if run_state == null or meta_collection_service == null:
 		return {"ok": false, "granted": [], "summary_lines": []}
+	if not run_state.meta_collection_enabled_for_run():
+		return {"ok": true, "granted": [], "summary_lines": []}
 	var existing_lines := _copy_array(run_state.narrative_flags.get(GRANTS_FLAG, []))
 	if bool(run_state.narrative_flags.get(FLUSHED_FLAG, false)):
 		return {"ok": true, "granted": [], "summary_lines": existing_lines}

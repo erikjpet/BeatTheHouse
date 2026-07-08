@@ -184,3 +184,24 @@ Walkable room using the existing environment rendering (pixel scene canvas
 - `powershell -ExecutionPolicy Bypass -File tools\foundation_determinism_probe.ps1 -RequireGodot -SeedCount 5 -SeedPrefix V04-METAHOME`
 - Prompt archived to `docs/todone/` with execution record; QUEUE.md updated.
   Commit locally per queue lifecycle; do NOT push.
+
+## Execution Record - 2026-07-07 Codex desktop
+
+Implemented the v0.4 meta-home foundation:
+
+- Added data-driven meta-home config to `data/collections/collections.json` with housing order, gold upgrade prices, storage slots, starter container, pawn-shop map node, sale prices, and the no-rent design note.
+- Extended `MetaCollectionService` to normalize schema v2 stores, persist housing tier/containers/loadout/pending sale/trade-up state, enforce homeless carry capacity, support gold housing purchases, selective housed packing, failure decay for carried items, pawn sell confirmations, and apartment/house trade-ups.
+- Added normal-run-only meta loadout injection in `FoundationMain`; daily/challenge runs are isolated by `RunState.meta_collection_enabled_for_run()` and `CollectionDropService` no-ops.
+- Updated world start selection so the meta back-alley start is honored even though it is a shop archetype, while housed starts still use the existing home archetypes.
+- Updated the meta collection view model and main-menu launcher to present the Home/Pawn/Collections surface, with pawn shop restricted to the sell counter.
+- Optimized the music stem manifest snapshot gate by avoiding unused PCM allocation in metadata-only bake snapshots, reducing systems gate runtime without changing playback generation.
+- Added/updated collection, foundation, and UI regression coverage for housing defaults/upgrades, capacity, sell/trade-up, failure decay, run modifiers, daily/challenge isolation, meta start routing, and first-open UI fixture expectations.
+
+Validation evidence:
+
+- `powershell -ExecutionPolicy Bypass -File tools\validate_project.ps1` PASS.
+- `powershell -ExecutionPolicy Bypass -File tools\collection_meta_check.ps1 -RequireGodot` PASS.
+- `powershell -ExecutionPolicy Bypass -File tools\check_godot.ps1 -RequireGodot -FoundationSuite systems -TimeoutSec 300` PASS (`foundation_systems` 18099ms).
+- `powershell -ExecutionPolicy Bypass -File tools\check_godot.ps1 -RequireGodot -FoundationSuite ui -TimeoutSec 300` PASS (`ui_scene_compile` 49843ms).
+- `powershell -ExecutionPolicy Bypass -File tools\check_godot.ps1 -RequireGodot -TimeoutSec 600` PASS, Suite=Smoke.
+- `powershell -ExecutionPolicy Bypass -File tools\foundation_determinism_probe.ps1 -RequireGodot -SeedCount 5 -SeedPrefix V04-METAHOME` PASS, seeds=5, checkpoints=157, combined hash=4030649591.

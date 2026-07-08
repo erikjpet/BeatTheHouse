@@ -30,8 +30,12 @@ func _run() -> void:
 	_test_usage_decay(resolver)
 	_test_resolve_run_item(resolver)
 	_test_store_round_trip(resolver)
+	_test_meta_home_rules(resolver)
+	_test_pawn_sale_and_trade_up(resolver)
+	_test_failure_decay_and_run_modifiers(resolver)
 	_test_terminal_drop_determinism()
 	_test_run_end_grant_persists()
+	_test_daily_and_challenge_runs_are_meta_isolated()
 	_test_open_bag_consumes_once()
 	_test_collection_browser_view_model_read_only(resolver)
 	_test_end_summary_lists_bags()
@@ -129,6 +133,7 @@ func _test_store_round_trip(resolver: Variant) -> void:
 	var empty_store: Dictionary = service.load()
 	_check(int(empty_store.get("schema_version", 0)) == MetaCollectionServiceScript.SCHEMA_VERSION, "Default store missing schema_version.")
 	_check(int(empty_store.get("gold_balance", -1)) == 0, "Default gold balance must start at 0.")
+	_check(str(empty_store.get("housing_tier", "")) == MetaCollectionServiceScript.HOUSING_BACK_ALLEY, "Default housing tier must be back alley.")
 	var granted: Dictionary = service.grant_instance(resolver.roll_instance(1000, "store-seed"))
 	service.grant_bag(9000, "bag-seed")
 	service.add_gold(17)
@@ -155,6 +160,86 @@ func _test_store_round_trip(resolver: Variant) -> void:
 	OS.set_environment(MetaCollectionServiceScript.STORE_PATH_ENV, "")
 
 
+func _test_meta_home_rules(resolver: Variant) -> void:
+	OS.set_environment(MetaCollectionServiceScript.STORE_PATH_ENV, TEST_STORE_PATH)
+	_remove_user_file(TEST_STORE_PATH)
+	var service: Variant = MetaCollectionServiceScript.new()
+	service.load()
+	_check(service.housing_tier() == MetaCollectionServiceScript.HOUSING_BACK_ALLEY, "Meta home must default to back alley.")
+	_check(service.storage_slots() == 0, "Back alley must not provide owned storage slots.")
+	_check(service.carry_capacity() == 3, "Starter bag capacity must come from container data.")
+	_check(not service.trade_up_unlocked(), "Back alley must not unlock trade-ups.")
+	for index in range(3):
+		service.grant_instance(resolver.roll_instance(1000, "home-cap-%d" % index))
+	var bag: Dictionary = service.grant_bag(9000, "home-full-bag")
+	var blocked: Dictionary = service.open_bag(int(bag.get("instance_id", 0)))
+	_check(not bool(blocked.get("ok", true)), "Homeless owned-cap must block opening bags when full.")
+	_check(service.unopened_bags().size() == 1, "Blocked bag open must not consume the bag.")
+	service.add_gold(60)
+	var motel: Dictionary = service.purchase_housing_upgrade()
+	_check(bool(motel.get("ok", false)) and service.housing_tier() == MetaCollectionServiceScript.HOUSING_MOTEL_ROOM, "Gold purchase did not upgrade to motel room.")
+	_check(service.storage_slots() == 8, "Motel room must provide eight storage slots.")
+	_check(not service.trade_up_unlocked(), "Motel room must not unlock trade-ups.")
+	var owned_ids: Array = _instance_ids(service.owned_instances())
+	var packed: Dictionary = service.pack_instance(int(owned_ids[0]))
+	var duplicate_pack: Dictionary = service.pack_instance(int(owned_ids[0]))
+	_check(bool(packed.get("ok", false)) and _copy_array(packed.get("packed_instance_ids", [])).size() == 1, "Housed packing did not select one item.")
+	_check(_copy_array(duplicate_pack.get("packed_instance_ids", [])).size() == 1, "Packing the same item twice duplicated it.")
+	service.add_gold(250)
+	var apartment: Dictionary = service.purchase_housing_upgrade()
+	_check(bool(apartment.get("ok", false)) and service.housing_tier() == MetaCollectionServiceScript.HOUSING_APARTMENT, "Gold purchase did not upgrade to apartment.")
+	_check(service.trade_up_unlocked(), "Apartment must unlock trade-ups.")
+	_remove_user_file(TEST_STORE_PATH)
+	OS.set_environment(MetaCollectionServiceScript.STORE_PATH_ENV, "")
+
+
+func _test_pawn_sale_and_trade_up(resolver: Variant) -> void:
+	OS.set_environment(MetaCollectionServiceScript.STORE_PATH_ENV, TEST_STORE_PATH)
+	_remove_user_file(TEST_STORE_PATH)
+	var service: Variant = MetaCollectionServiceScript.new()
+	service.load()
+	service.add_gold(310)
+	service.purchase_housing_upgrade()
+	service.purchase_housing_upgrade()
+	var ids: Array = []
+	for index in range(5):
+		var granted: Dictionary = service.grant_instance(resolver.roll_instance(1000, "trade-%d" % index))
+		ids.append(int(granted.get("instance_id", 0)))
+	var trade: Dictionary = service.arm_trade_up(ids)
+	_check(bool(trade.get("ok", false)), "Apartment trade-up did not arm for five matching items.")
+	var trade_result: Dictionary = service.confirm_trade_up(str(trade.get("token", "")))
+	_check(bool(trade_result.get("ok", false)), "Apartment trade-up did not confirm.")
+	_check(service.owned_instances().size() == 1, "Trade-up did not consume five items and grant one output.")
+	var output := _copy_dict(service.owned_instances()[0])
+	var output_def: Dictionary = resolver.item_definition(int(output.get("itemdef_id", -1)))
+	_check(str(output_def.get("tier", "")) == "purple", "Trade-up output did not move to the next tier.")
+	var sale: Dictionary = service.arm_sale(MetaCollectionServiceScript.SALE_KIND_ITEM, int(output.get("instance_id", 0)))
+	_check(bool(sale.get("ok", false)) and int(sale.get("price", 0)) > 0, "Pawn sale did not produce a deterministic item quote.")
+	var sale_result: Dictionary = service.confirm_sale(str(sale.get("token", "")))
+	_check(bool(sale_result.get("ok", false)) and int(sale_result.get("gold_balance", 0)) > 0, "Pawn sale did not mint gold on confirmation.")
+	_check(service.owned_instances().is_empty(), "Pawn sale did not remove the sold item.")
+	_remove_user_file(TEST_STORE_PATH)
+	OS.set_environment(MetaCollectionServiceScript.STORE_PATH_ENV, "")
+
+
+func _test_failure_decay_and_run_modifiers(resolver: Variant) -> void:
+	OS.set_environment(MetaCollectionServiceScript.STORE_PATH_ENV, TEST_STORE_PATH)
+	_remove_user_file(TEST_STORE_PATH)
+	var service: Variant = MetaCollectionServiceScript.new()
+	service.load()
+	var granted: Dictionary = service.grant_instance(resolver.roll_instance(1000, "failure-decay"))
+	var modifiers: Dictionary = service.normal_run_start_modifiers()
+	_check(str(modifiers.get("home_archetype_id", "")) == MetaCollectionServiceScript.HOUSING_BACK_ALLEY, "Homeless normal run must start at the back alley archetype.")
+	_check(_copy_array(modifiers.get("meta_collection_carried_instance_ids", [])).has(int(granted.get("instance_id", 0))), "Homeless normal run must carry every owned item.")
+	_check(_copy_array(modifiers.get("meta_collection_loadout", [])).size() == 1, "Normal run modifiers did not inject resolved run items.")
+	var before_usage := float(granted.get("usage", 0.0))
+	var decayed: Array = service.apply_failure_decay([int(granted.get("instance_id", 0))], "failure-decay-seed")
+	var after := _copy_dict(decayed[0]) if not decayed.is_empty() else {}
+	_check(float(after.get("usage", 1.0)) < before_usage, "Failure decay did not reduce carried item usage.")
+	_remove_user_file(TEST_STORE_PATH)
+	OS.set_environment(MetaCollectionServiceScript.STORE_PATH_ENV, "")
+
+
 func _test_terminal_drop_determinism() -> void:
 	var drop_service: Variant = CollectionDropServiceScript.new()
 	var run_a: Variant = _terminal_run("p1-deterministic-seed")
@@ -174,10 +259,10 @@ func _test_run_end_grant_persists() -> void:
 	var service: Variant = MetaCollectionServiceScript.new()
 	service.load()
 	var drop_service: Variant = CollectionDropServiceScript.new()
-	var run_state: Variant = _terminal_run("p1-grant-seed", "challenge_p1_meta_complete")
+	var run_state: Variant = _terminal_run("p1-grant-seed")
 	var markers: Array = drop_service.ensure_run_end_pending_bags(run_state, null)
 	var flush_result: Dictionary = drop_service.flush_pending_bags(run_state, service)
-	_check(markers.size() >= 2, "Victory plus first challenge completion should create at least two pending bags.")
+	_check(markers.size() >= 2, "Standard meta victory plus showdown should create at least two pending bags.")
 	_check(_copy_array(flush_result.get("granted", [])).size() == markers.size(), "Run-end flush did not grant each pending bag.")
 	_check(run_state.pending_bag_markers().is_empty(), "Run-end flush did not clear pending bag markers.")
 	_check(bool(run_state.narrative_flags.get(CollectionDropServiceScript.FLUSHED_FLAG, false)), "Run-end flush flag was not recorded.")
@@ -188,6 +273,20 @@ func _test_run_end_grant_persists() -> void:
 	_check(_copy_array(loaded.get("unopened_bags", [])).size() == markers.size(), "Granted bags did not survive meta store reload.")
 	_remove_user_file(TEST_STORE_PATH)
 	OS.set_environment(MetaCollectionServiceScript.STORE_PATH_ENV, "")
+
+
+func _test_daily_and_challenge_runs_are_meta_isolated() -> void:
+	var drop_service: Variant = CollectionDropServiceScript.new()
+	var service: Variant = MetaCollectionServiceScript.new()
+	service.load()
+	var before_json := JSON.stringify(service.snapshot())
+	var daily: Variant = _terminal_run("daily-meta-isolated", "", false, "daily")
+	var authored: Variant = _terminal_run("challenge-meta-isolated", "challenge_complete", false, "custom")
+	_check(drop_service.ensure_run_end_pending_bags(daily, null).is_empty(), "Daily runs must not create pending meta bags.")
+	_check(drop_service.ensure_run_end_pending_bags(authored, null).is_empty(), "Challenge runs must not create pending meta bags.")
+	drop_service.flush_pending_bags(daily, service)
+	drop_service.flush_pending_bags(authored, service)
+	_check(JSON.stringify(service.snapshot()) == before_json, "Daily/challenge flush must not mutate meta collection storage.")
 
 
 func _test_open_bag_consumes_once() -> void:
@@ -224,6 +323,9 @@ func _test_collection_browser_view_model_read_only(resolver: Variant) -> void:
 	_check(_copy_array(view.get("collections", [])).size() == 2, "Collection browser did not list both launch collections.")
 	_check(_copy_array(view.get("unopened_bags", [])).size() == 1, "Collection browser did not list unopened bags.")
 	_check(int(view.get("owned_count", 0)) == 1, "Collection browser owned count mismatch.")
+	var home := _copy_dict(view.get("home", {}))
+	_check(str(home.get("housing_tier", "")) == MetaCollectionServiceScript.HOUSING_BACK_ALLEY, "Collection browser did not expose meta home state.")
+	_check(str(_copy_dict(home.get("pawn_shop", {})).get("interaction", "")) == "sell_counter_only", "Collection browser did not restrict pawn shop to sell counter.")
 	_remove_user_file(TEST_STORE_PATH)
 	OS.set_environment(MetaCollectionServiceScript.STORE_PATH_ENV, "")
 
@@ -237,15 +339,15 @@ func _test_end_summary_lists_bags() -> void:
 	_check(text.contains("Roadside Luck") and text.contains("Blue"), "Bag summary did not include collection and tier.")
 
 
-func _terminal_run(seed: String, completion_flag: String = "") -> Variant:
+func _terminal_run(seed: String, completion_flag: String = "", meta_enabled: bool = true, mode: String = "standard") -> Variant:
 	var run_state: Variant = RunStateScript.new()
 	var config := {
-		"mode": "custom",
-		"id": "p1_meta",
+		"mode": mode,
+		"id": mode if mode != "standard" else "standard",
 		"title": "P1 Meta",
 		"seed_text": seed,
 		"daily_id": "",
-		"modifiers": {},
+		"modifiers": {"meta_collection_enabled": true} if meta_enabled else {},
 		"hidden_seed": false,
 	}
 	if not completion_flag.is_empty():
@@ -257,6 +359,14 @@ func _terminal_run(seed: String, completion_flag: String = "") -> Variant:
 	run_state.narrative_flags["demo_victory"] = true
 	run_state.narrative_flags["demo_victory_route"] = RunStateScript.GRAND_CASINO_SHOWDOWN_ROUTE
 	return run_state
+
+
+func _instance_ids(instances: Array) -> Array:
+	var ids: Array = []
+	for instance_value in instances:
+		var instance := _copy_dict(instance_value)
+		ids.append(int(instance.get("instance_id", 0)))
+	return ids
 
 
 func _item_float_bindings_are_known(item: Dictionary) -> bool:

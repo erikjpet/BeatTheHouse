@@ -10,6 +10,8 @@ const PlatformServicesScript := preload("res://scripts/core/platform_services.gd
 const WorldMapScript := preload("res://scripts/core/world_map.gd")
 const CardShoeScript := preload("res://scripts/core/card_shoe.gd")
 const ProfileInventoryScript := preload("res://scripts/core/profile_inventory.gd")
+const MetaCollectionServiceScript := preload("res://scripts/core/meta_collection_service.gd")
+const CollectionDropServiceScript := preload("res://scripts/core/collection_drop_service.gd")
 const RunTerminalEvaluatorScript := preload("res://scripts/core/run_terminal_evaluator.gd")
 const RunActionServiceScript := preload("res://scripts/core/run_action_service.gd")
 const AttributeBadgesScript := preload("res://scripts/core/attribute_badges.gd")
@@ -410,6 +412,7 @@ func _foundation_run_system_suite(content_library: ContentLibrary, fixture_libra
 	_foundation_run_check(report, failures, "economy_pressure_foundation", Callable(self, "_check_economy_pressure_foundation"), [content_library])
 	_foundation_run_check(report, failures, "travel_route_foundation", Callable(self, "_check_travel_route_foundation"), [content_library])
 	_foundation_run_check(report, failures, "world_map_foundation", Callable(self, "_check_world_map_foundation"), [content_library])
+	_foundation_run_check(report, failures, "meta_home_run_boundary", Callable(self, "_check_meta_home_run_boundary"), [content_library])
 	_foundation_run_check(report, failures, "time_open_hours_foundation", Callable(self, "_check_time_open_hours_foundation"), [content_library])
 	_foundation_run_check(report, failures, "service_hook_foundation", Callable(self, "_check_service_hook_foundation"), [content_library])
 	_foundation_run_check(report, failures, "jazz_club_foundation", Callable(self, "_check_jazz_club_foundation"), [content_library])
@@ -14480,6 +14483,29 @@ func _check_world_map_foundation(library: ContentLibrary, failures: Array) -> vo
 	loaded.from_dict(save_snapshot)
 	if JSON.stringify(loaded.world_map) != JSON.stringify(run_a.world_map):
 		failures.append("World map graph/discovery/path state did not survive RunState save/load.")
+
+
+func _check_meta_home_run_boundary(library: ContentLibrary, failures: Array) -> void:
+	var service: Variant = MetaCollectionServiceScript.new()
+	var modifiers: Dictionary = service.normal_run_start_modifiers()
+	var config: Dictionary = RunStateScript.standard_challenge("META-HOME-BOUNDARY")
+	config["modifiers"] = modifiers
+	var run_state: RunState = RunStateScript.new()
+	run_state.start_new("META-HOME-BOUNDARY", config)
+	if not run_state.meta_collection_enabled_for_run():
+		failures.append("Standard run with meta modifiers did not enable the meta collection boundary.")
+	var generator: RunGenerator = RunGeneratorScript.new(library)
+	generator.next_environment(run_state)
+	if str(run_state.current_environment.get("archetype_id", run_state.current_environment.get("id", ""))) != MetaCollectionServiceScript.HOUSING_BACK_ALLEY:
+		failures.append("Default homeless meta run did not start in the back alley archetype.")
+	var daily: RunState = RunStateScript.new()
+	daily.start_new("META-HOME-DAILY", RunStateScript.daily_challenge("meta_home_daily", "META-HOME-DAILY", true))
+	daily.run_status = RunStateScript.RUN_STATUS_ENDED
+	var drop_service: Variant = CollectionDropServiceScript.new()
+	if not drop_service.ensure_run_end_pending_bags(daily, null).is_empty():
+		failures.append("Daily run created meta collection pending bags.")
+	if not _copy_array(drop_service.flush_pending_bags(daily, service).get("granted", [])).is_empty():
+		failures.append("Daily run flushed meta collection bags.")
 
 
 func _check_time_open_hours_foundation(library: ContentLibrary, failures: Array) -> void:

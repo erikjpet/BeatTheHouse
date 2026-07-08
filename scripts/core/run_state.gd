@@ -980,6 +980,15 @@ func challenge_completion_flag() -> String:
 	return str(challenge_config.get("completion_flag", "")).strip_edges()
 
 
+func meta_collection_enabled_for_run() -> bool:
+	var mode := str(challenge_config.get("mode", "standard")).strip_edges().to_lower()
+	if mode != "standard":
+		return false
+	if not challenge_completion_flag().is_empty():
+		return false
+	return bool(challenge_modifiers().get("meta_collection_enabled", false))
+
+
 func challenge_cheat_actions_disabled() -> bool:
 	return bool(challenge_modifiers().get("disable_cheat_actions", false))
 
@@ -2624,15 +2633,15 @@ func item_effect_total(key: String, game_family: String = "", action_kind: Strin
 	var family_key := game_family.strip_edges()
 	var action_key := action_kind.strip_edges()
 	var effects_by_id := _item_effect_index()
-	if effects_by_id.is_empty():
-		return 0
 	var owned_lookup := _owned_item_lookup()
 	var total := 0
 	for inventory_entry in inventory:
 		var item_id := _inventory_item_id(inventory_entry)
 		if item_id.is_empty():
 			continue
-		var effect := _copy_dict(effects_by_id.get(item_id, {}))
+		var effect := _inventory_entry_effect(inventory_entry)
+		if effect.is_empty():
+			effect = _copy_dict(effects_by_id.get(item_id, {}))
 		if effect.is_empty():
 			continue
 		total += _numeric_effect_value(effect, effect_key)
@@ -2645,6 +2654,13 @@ func item_effect_total(key: String, game_family: String = "", action_kind: Strin
 			total += _numeric_effect_value(_copy_dict(families.get(family_key, {})), effect_key)
 		total += _synergy_effect_total(effect, effect_key, family_key, action_key, owned_lookup)
 	return total
+
+
+func _inventory_entry_effect(entry: Variant) -> Dictionary:
+	if typeof(entry) != TYPE_DICTIONARY:
+		return {}
+	var data: Dictionary = entry
+	return _copy_dict(data.get("effect", {}))
 
 
 func _owned_item_lookup() -> Dictionary:

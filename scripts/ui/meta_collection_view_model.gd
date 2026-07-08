@@ -10,6 +10,7 @@ static func build(meta_service: Variant) -> Dictionary:
 	var owned_instances := _copy_array(snapshot.get("owned_instances", []))
 	var unopened_bags := _bag_rows(resolver, _copy_array(snapshot.get("unopened_bags", [])))
 	var owned_by_itemdef := _owned_by_itemdef(owned_instances)
+	var home := _home_view(meta_service, snapshot)
 	var collections: Array = []
 	for collection_value in resolver.collections():
 		var collection := _copy_dict(collection_value)
@@ -27,16 +28,42 @@ static func build(meta_service: Variant) -> Dictionary:
 			"items": item_rows,
 		})
 	return {
-		"title": "Collections",
-		"summary": "%d owned, %d unopened bag%s." % [
+		"title": "Home",
+		"summary": "%s - %d owned, %d unopened bag%s, %d gold." % [
+			str(home.get("display_name", "Back Alley")),
 			owned_instances.size(),
 			unopened_bags.size(),
 			"" if unopened_bags.size() == 1 else "s",
+			int(snapshot.get("gold_balance", 0)),
 		],
+		"home": home,
 		"owned_count": owned_instances.size(),
 		"bag_count": unopened_bags.size(),
+		"gold_balance": int(snapshot.get("gold_balance", 0)),
 		"collections": collections,
 		"unopened_bags": unopened_bags,
+	}
+
+
+static func _home_view(meta_service: Variant, snapshot: Dictionary) -> Dictionary:
+	var housing_tier := str(snapshot.get("housing_tier", "back_alley"))
+	var definition: Dictionary = meta_service.housing_definition(housing_tier) if meta_service != null and meta_service.has_method("housing_definition") else {}
+	var upgrade: Dictionary = meta_service.next_housing_upgrade() if meta_service != null and meta_service.has_method("next_housing_upgrade") else {}
+	var carried_ids: Array = meta_service.carried_instance_ids() if meta_service != null and meta_service.has_method("carried_instance_ids") else []
+	return {
+		"housing_tier": housing_tier,
+		"display_name": str(definition.get("display_name", housing_tier.capitalize())),
+		"storage_slots": int(meta_service.storage_slots()) if meta_service != null and meta_service.has_method("storage_slots") else 0,
+		"carry_capacity": int(meta_service.carry_capacity()) if meta_service != null and meta_service.has_method("carry_capacity") else 0,
+		"total_capacity": int(meta_service.total_owned_capacity()) if meta_service != null and meta_service.has_method("total_owned_capacity") else 0,
+		"trade_up_unlocked": bool(meta_service.trade_up_unlocked()) if meta_service != null and meta_service.has_method("trade_up_unlocked") else false,
+		"carried_count": carried_ids.size(),
+		"upgrade": upgrade,
+		"map_nodes": [
+			{"id": "home", "label": "Home", "kind": "home", "selected": true},
+			{"id": "pawn_shop", "label": "Sal's Pawn Counter", "kind": "pawn_shop", "selected": false},
+		],
+		"pawn_shop": {"interaction": "sell_counter_only"},
 	}
 
 

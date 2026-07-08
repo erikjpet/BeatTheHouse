@@ -145,6 +145,11 @@ func collection_definition(collection_id: String) -> Dictionary:
 	return {}
 
 
+func meta_home_config() -> Dictionary:
+	_ensure_loaded()
+	return _copy_dict(_root.get("meta_home", {}))
+
+
 func bag_item_options_for_bag(bagdef_id: int) -> Array:
 	var bag := bag_definition(bagdef_id)
 	if bag.is_empty():
