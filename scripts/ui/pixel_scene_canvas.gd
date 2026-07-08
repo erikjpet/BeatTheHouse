@@ -1703,6 +1703,20 @@ func _apply_draw_hints(object_data: Dictionary, object_type: String, index: int)
 			object_data["surface"] = "floor"
 		"home_container":
 			object_data["surface"] = "floor"
+		"meta_bag":
+			object_data["surface"] = "floor"
+			if str(object_data.get("prop", "")).strip_edges().is_empty():
+				object_data["prop"] = "paper_bag"
+		"meta_upgrade":
+			object_data["surface"] = "wall"
+			if str(object_data.get("prop", "")).strip_edges().is_empty():
+				object_data["prop"] = "sign"
+		"meta_trade_up":
+			object_data["surface"] = "counter"
+			if str(object_data.get("prop", "")).strip_edges().is_empty():
+				object_data["prop"] = "workbench"
+		"meta_pawn_counter":
+			object_data["surface"] = "counter_case"
 		"save", "load":
 			object_data["surface"] = "counter"
 		_:
@@ -1915,6 +1929,14 @@ func _player_facing_object_type(object_type: String) -> String:
 			return "Storage"
 		"home_container":
 			return "Container"
+		"meta_bag":
+			return "Bag"
+		"meta_upgrade":
+			return "Upgrade"
+		"meta_trade_up":
+			return "Trade-Up"
+		"meta_pawn_counter":
+			return "Pawn"
 		_:
 			return "Info"
 
@@ -2750,6 +2772,8 @@ func _color_for_object_type(object_type: String) -> Color:
 			return C_AMBER
 		"home_storage", "home_container":
 			return C_TEAL
+		"meta_bag", "meta_upgrade", "meta_trade_up", "meta_pawn_counter":
+			return C_YELLOW
 		"save", "load":
 			return C_PURPLE_2
 		_:

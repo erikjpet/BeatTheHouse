@@ -353,6 +353,46 @@
           142,
           70
         ]
+      ],
+      "home_storage_spots": [
+        [
+          178,
+          338
+        ]
+      ],
+      "home_container_spots": [
+        [
+          320,
+          342
+        ],
+        [
+          456,
+          342
+        ],
+        [
+          592,
+          342
+        ]
+      ],
+      "home_bag_spots": [
+        [
+          452,
+          248
+        ],
+        [
+          560,
+          248
+        ],
+        [
+          668,
+          248
+        ]
+      ],
+      "home_upgrade_spots": [
+        [
+          760,
+          170
+        ]
       ]
     },
     "security_profile": {
@@ -2298,6 +2338,111 @@
     ]
   },
   {
+    "id": "pawn_shop",
+    "kind": "pawn_shop",
+    "open_hours": null,
+    "is_start": false,
+    "tier": 0,
+    "display_name": "Sal's Pawn Counter",
+    "name_prefixes": [
+      "Sal's"
+    ],
+    "name_nouns": [
+      "Pawn Counter"
+    ],
+    "visual_context": {
+      "perspective": "first_person",
+      "scene_type": "pawn_shop",
+      "description": "Barred glass and one sell tray."
+    },
+    "objective_hint": "Sell collection items or unopened bags for gold.",
+    "layout": {
+      "pawn_counter_spots": [
+        [
+          454,
+          224
+        ]
+      ],
+      "travel_spots": [
+        [
+          812,
+          340
+        ]
+      ]
+    },
+    "security_profile": {
+      "strictness": "safe",
+      "visible_cues": [
+        "Sal keeps the glass shut unless you set something on the tray."
+      ]
+    },
+    "music_profile": {
+      "theme": "pawn counter",
+      "ambience": 0.40,
+      "mode": "minor",
+      "progression": [
+        0,
+        4,
+        2,
+        5
+      ],
+      "motif": [
+        0,
+        -999,
+        2,
+        -999,
+        4,
+        -999,
+        2,
+        -999
+      ],
+      "root_midi": 42,
+      "safety": 0.88,
+      "texture": "fluorescent",
+      "texture_rate": 0.12,
+      "volume": 0.22
+    },
+    "economic_profile": {
+      "stake_floor": 0,
+      "stake_ceiling": 0,
+      "safehouse": true
+    },
+    "game_pool": [],
+    "game_count": [
+      0,
+      0
+    ],
+    "item_pool": [],
+    "item_count": [
+      0,
+      0
+    ],
+    "event_pool": [],
+    "event_scopes": [
+      "meta"
+    ],
+    "event_count": [
+      0,
+      0
+    ],
+    "service_pool": [],
+    "lender_hooks": [],
+    "suspicion_cues": [
+      "The pawn counter is quiet unless you sell."
+    ],
+    "travel_hooks": [],
+    "next_archetypes": [],
+    "local_narrative_flags": {
+      "meta": true,
+      "pawn_shop": true
+    },
+    "moods": [
+      "quiet",
+      "barred",
+      "fluorescent"
+    ]
+  },
+  {
     "id": "grand_casino",
     "kind": "boss",
     "open_hours": null,
@@ -2621,6 +2766,22 @@
           340
         ]
       ],
+      "home_bag_spots": [
+        [
+          450,
+          248
+        ],
+        [
+          560,
+          248
+        ]
+      ],
+      "home_upgrade_spots": [
+        [
+          688,
+          174
+        ]
+      ],
       "travel_spots": [
         [
           812,
@@ -2796,6 +2957,32 @@
         [
           650,
           342
+        ]
+      ],
+      "home_bag_spots": [
+        [
+          430,
+          258
+        ],
+        [
+          540,
+          258
+        ],
+        [
+          650,
+          258
+        ]
+      ],
+      "home_upgrade_spots": [
+        [
+          760,
+          172
+        ]
+      ],
+      "home_trade_up_spots": [
+        [
+          622,
+          160
         ]
       ],
       "travel_spots": [
@@ -2982,6 +3169,32 @@
         [
           610,
           344
+        ]
+      ],
+      "home_bag_spots": [
+        [
+          380,
+          250
+        ],
+        [
+          490,
+          250
+        ],
+        [
+          600,
+          250
+        ]
+      ],
+      "home_upgrade_spots": [
+        [
+          802,
+          202
+        ]
+      ],
+      "home_trade_up_spots": [
+        [
+          180,
+          230
         ]
       ],
       "travel_spots": [

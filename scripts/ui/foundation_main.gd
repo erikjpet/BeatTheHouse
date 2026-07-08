@@ -33,6 +33,11 @@ const CONTEXT_MODE_DIALOGUE := "dialogue"
 const CONTEXT_MODE_HOME_TENURE := "home_tenure"
 const CONTEXT_MODE_HOME_STORAGE := "home_storage"
 const CONTEXT_MODE_HOME_CONTAINER := "home_container"
+const CONTEXT_MODE_META_BAG := "meta_bag"
+const CONTEXT_MODE_META_UPGRADE := "meta_upgrade"
+const CONTEXT_MODE_META_TRADE_UP := "meta_trade_up"
+const CONTEXT_MODE_META_PAWN_COUNTER := "meta_pawn_counter"
+const META_LOCATION_HOME := "home"
 const RUN_INFO_BAND_RATIO := 0.15
 const RUN_SURFACE_BAND_RATIO := 0.85
 const RUN_INFO_MIN_HEIGHT := 144.0
@@ -70,6 +75,7 @@ const UserSettingsScript := preload("res://scripts/core/user_settings.gd")
 const ProfileInventoryScript := preload("res://scripts/core/profile_inventory.gd")
 const MetaCollectionServiceScript := preload("res://scripts/core/meta_collection_service.gd")
 const CollectionDropServiceScript := preload("res://scripts/core/collection_drop_service.gd")
+const CollectionItemResolverScript := preload("res://scripts/core/collection_item_resolver.gd")
 const SettingsMenuScript := preload("res://scripts/ui/settings_menu.gd")
 const PixelSceneCanvasScript := preload("res://scripts/ui/pixel_scene_canvas.gd")
 const GameSurfaceCanvasScript := preload("res://scripts/ui/game_surface_canvas.gd")
@@ -159,6 +165,9 @@ var drunk_time_anchor_real_msec := 0
 var drunk_time_anchor_scaled_msec := 0
 var drunk_time_last_scale := 1.0
 var dev_game_test_mode := false
+var meta_session_active := false
+var meta_session_location_id: String = ""
+var meta_last_panel_message: String = ""
 var show_game_library_launcher := true
 var autosave_slot_id := AUTOSAVE_SLOT
 var pending_autosave := false
@@ -388,6 +397,8 @@ func _advance_run_game_clock(_delta: float) -> void:
 
 
 func _run_clock_should_tick() -> bool:
+	if _is_meta_session():
+		return false
 	if run_state == null or run_state.is_terminal():
 		return false
 	if not [SCREEN_ENVIRONMENT, SCREEN_GAME].has(current_screen):
@@ -440,6 +451,9 @@ func uses_foundation_runtime() -> bool:
 func start_foundation_run(seed_text: String = DEFAULT_SEED, challenge_config: Dictionary = {}) -> void:
 	if library == null:
 		_initialize_foundation()
+	meta_session_active = false
+	meta_session_location_id = ""
+	meta_last_panel_message = ""
 	pending_all_in_result_terminal_check = false
 	pending_autosave = false
 	pending_autosave_status_text = "Autosaved."
@@ -1062,6 +1076,8 @@ func select_world_map_node(node_id: String) -> bool:
 	var clean_id := node_id.strip_edges()
 	if clean_id.is_empty():
 		return false
+	if _is_meta_session():
+		return _select_meta_world_map_node(clean_id)
 	if run_state != null and run_state.has_world_map() and not WorldMapScript.is_node_visible(run_state.world_map, clean_id):
 		_show_message("That stop is not on your map yet.")
 		_refresh_world_map_overlay()
@@ -1100,6 +1116,9 @@ func confirm_world_map_travel() -> void:
 	if selected_world_map_node_id.is_empty():
 		_show_message("Select a map stop first.")
 		return
+	if _is_meta_session():
+		_confirm_meta_world_map_travel()
+		return
 	var choice := _travel_choice(selected_world_map_node_id)
 	if choice.is_empty():
 		_show_message("That stop is not available from here right now.")
@@ -1114,6 +1133,41 @@ func confirm_world_map_travel() -> void:
 	if world_map_overlay != null:
 		world_map_overlay.visible = false
 	confirm_selected_travel()
+
+
+func _select_meta_world_map_node(node_id: String) -> bool:
+	if not _meta_map_node_ids().has(node_id):
+		_show_message("That meta stop is not available.")
+		_refresh_world_map_overlay()
+		return false
+	selected_world_map_node_id = node_id
+	if node_id == meta_session_location_id:
+		selected_travel_target_id = ""
+		selected_travel_label = ""
+		_show_message("You are here.")
+		_refresh_world_map_overlay()
+		return true
+	var choice := _meta_travel_choice(node_id)
+	selected_travel_target_id = node_id
+	selected_travel_label = str(choice.get("label", node_id))
+	_show_message("Selected travel: %s." % selected_travel_label)
+	_refresh_world_map_overlay()
+	return true
+
+
+func _confirm_meta_world_map_travel() -> void:
+	if selected_world_map_node_id == meta_session_location_id:
+		_show_message("You are here.")
+		_refresh_world_map_overlay()
+		return
+	var choice := _meta_travel_choice(selected_world_map_node_id)
+	if choice.is_empty():
+		_show_message("That meta stop is not available.")
+		_refresh_world_map_overlay()
+		return
+	if world_map_overlay != null:
+		world_map_overlay.visible = false
+	_enter_meta_location(str(choice.get("id", META_LOCATION_HOME)))
 
 
 # Selects an event choice without mutating simulation state.
@@ -4182,7 +4236,7 @@ func _build_inventory_page(parent: Node) -> void:
 	back_button.custom_minimum_size = Vector2(110, MIN_NATIVE_TOUCH_TARGET_HEIGHT)
 	header_row.add_child(back_button)
 
-	var description := _label("Items here live outside a single run. This is the long-term stash structure; it does not change RunState.", 13)
+	var description := _label("Profile progress lives outside a single run. Collection storage is handled through the walkable Home room.", 13)
 	_set_control_font_color(description, VisualStyle.CYAN)
 	description.max_lines_visible = 2
 	inventory_page.add_child(description)
@@ -4217,43 +4271,6 @@ func _build_inventory_page(parent: Node) -> void:
 	inventory_items_list.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	inventory_page.add_child(inventory_items_list)
 
-	var collection_panel := _panel_container(Color("#060b12", 0.9), VisualStyle.CYAN_2)
-	collection_panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	collection_panel.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	inventory_page.add_child(collection_panel)
-	var collection_stack := VBoxContainer.new()
-	collection_stack.add_theme_constant_override("separation", 8)
-	collection_stack.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	collection_stack.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	collection_panel.add_child(collection_stack)
-	var collection_header := HBoxContainer.new()
-	collection_header.add_theme_constant_override("separation", 8)
-	collection_stack.add_child(collection_header)
-	var collection_heading := _label("Collections", 18)
-	_set_control_font_color(collection_heading, VisualStyle.CYAN)
-	collection_heading.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	collection_header.add_child(collection_heading)
-	collection_status_label = _label("", 12)
-	_set_control_font_color(collection_status_label, VisualStyle.SOFT)
-	collection_status_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
-	collection_status_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	collection_header.add_child(collection_status_label)
-	collection_reveal_label = _label("", 13)
-	collection_reveal_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	_set_control_font_color(collection_reveal_label, VisualStyle.YELLOW)
-	collection_stack.add_child(collection_reveal_label)
-	collection_bags_list = VBoxContainer.new()
-	collection_bags_list.add_theme_constant_override("separation", 6)
-	collection_bags_list.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	collection_stack.add_child(collection_bags_list)
-	var collection_scroll := ScrollContainer.new()
-	collection_scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	collection_scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	collection_stack.add_child(collection_scroll)
-	collection_items_list = VBoxContainer.new()
-	collection_items_list.add_theme_constant_override("separation", 8)
-	collection_items_list.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	collection_scroll.add_child(collection_items_list)
 	_refresh_profile_inventory_page()
 
 
@@ -5531,7 +5548,18 @@ func _add_context_object_actions(card: VBoxContainer, object_data: Dictionary) -
 		CONTEXT_MODE_HOME_STORAGE:
 			_add_card_button(card, "Place container", Callable(self, "_show_place_container_popup"), false, true)
 		CONTEXT_MODE_HOME_CONTAINER:
-			_add_card_button(card, "Open storage", Callable(self, "_show_home_container_popup").bind(source_id), false, true)
+			if _is_meta_session():
+				_add_card_button(card, "Open contents", Callable(self, "open_meta_container").bind(source_id), false, true)
+			else:
+				_add_card_button(card, "Open storage", Callable(self, "_show_home_container_popup").bind(source_id), false, true)
+		CONTEXT_MODE_META_BAG:
+			_add_card_button(card, "Open bag", Callable(self, "open_meta_bag").bind(int(source_id)), false, true)
+		CONTEXT_MODE_META_UPGRADE:
+			_add_card_button(card, "Buy upgrade", Callable(self, "buy_meta_home_upgrade"), false, true)
+		CONTEXT_MODE_META_TRADE_UP:
+			_add_card_button(card, "Review trades", Callable(self, "open_meta_trade_up"), false, true)
+		CONTEXT_MODE_META_PAWN_COUNTER:
+			_add_card_button(card, "Sell", Callable(self, "open_meta_sell_counter"), false, true)
 		CONTEXT_MODE_TRAVEL:
 			_add_context_travel_actions(card, source_id)
 		CONTEXT_MODE_SERVICE:
@@ -5785,6 +5813,8 @@ func _context_border_color(object_type: String, enabled: bool) -> Color:
 			return VisualStyle.AMBER
 		CONTEXT_MODE_HOME_STORAGE, CONTEXT_MODE_HOME_CONTAINER:
 			return VisualStyle.TEAL
+		CONTEXT_MODE_META_BAG, CONTEXT_MODE_META_UPGRADE, CONTEXT_MODE_META_TRADE_UP, CONTEXT_MODE_META_PAWN_COUNTER:
+			return VisualStyle.YELLOW
 		CONTEXT_MODE_TRAVEL:
 			return VisualStyle.PURPLE_2
 		CONTEXT_MODE_SERVICE, CONTEXT_MODE_LENDER:
@@ -5815,6 +5845,14 @@ func _context_type_label(object_type: String) -> String:
 			return "Storage"
 		CONTEXT_MODE_HOME_CONTAINER:
 			return "Container"
+		CONTEXT_MODE_META_BAG:
+			return "Bag"
+		CONTEXT_MODE_META_UPGRADE:
+			return "Upgrade"
+		CONTEXT_MODE_META_TRADE_UP:
+			return "Trade-Up"
+		CONTEXT_MODE_META_PAWN_COUNTER:
+			return "Pawn Counter"
 		CONTEXT_MODE_TRAVEL:
 			return "Travel"
 		CONTEXT_MODE_SERVICE:
@@ -6813,6 +6851,8 @@ func _focus_interactable_object_with_data(object_id: String, object_data: Dictio
 func activate_interactable_object(object_id: String) -> bool:
 	if _guard_player_input_route():
 		return false
+	if _is_meta_session():
+		return _activate_meta_interactable_object(object_id)
 	if object_id == "travel:leave":
 		var direct_room_exit := _local_parent_home_door_travel_choice(_parent_home_parent_target_id())
 		if not direct_room_exit.is_empty():
@@ -6928,6 +6968,48 @@ func _activate_event_response_action(action_object_id: String) -> bool:
 		return false
 	confirm_selected_event_choice()
 	return true
+
+
+func _activate_meta_interactable_object(object_id: String) -> bool:
+	if object_id == "travel:leave":
+		focus_interactable_object(object_id)
+		return open_world_map()
+	if not focus_interactable_object(object_id):
+		return false
+	var object_data := _interactable_object(object_id)
+	if object_data.is_empty():
+		return false
+	if not bool(object_data.get("interactive", bool(object_data.get("enabled", true)))):
+		_show_message(str(object_data.get("disabled_reason", "Nothing to do here right now.")))
+		_refresh()
+		return false
+	if not bool(object_data.get("enabled", true)):
+		_show_message(str(object_data.get("disabled_reason", "Not available right now.")))
+		_refresh()
+		return false
+	var object_type := str(object_data.get("object_type", ""))
+	var source_id := str(object_data.get("source_id", ""))
+	match object_type:
+		CONTEXT_MODE_HOME_CONTAINER:
+			open_meta_container(source_id)
+			return true
+		CONTEXT_MODE_META_BAG:
+			open_meta_bag(int(source_id))
+			return true
+		CONTEXT_MODE_META_UPGRADE:
+			buy_meta_home_upgrade()
+			return true
+		CONTEXT_MODE_META_TRADE_UP:
+			open_meta_trade_up()
+			return true
+		CONTEXT_MODE_META_PAWN_COUNTER:
+			open_meta_sell_counter()
+			return true
+		CONTEXT_MODE_TRAVEL:
+			return open_world_map()
+	_show_message("Inspect this first.")
+	_refresh()
+	return false
 
 
 func _activate_event_object(event_id: String) -> bool:
@@ -7225,6 +7307,8 @@ func _environment_view_snapshot() -> Dictionary:
 func _interactable_object_view_list() -> Array:
 	if run_state == null or library == null:
 		return []
+	if _is_meta_session():
+		return _meta_interactable_object_view_list()
 	var objects: Array = []
 	var run_failed_without_recovery := _run_failed_without_recovery()
 	var failed_reason := _pressure_status_text(_run_pressure_view())
@@ -8029,6 +8113,14 @@ func _layout_spot_field_name(object_type: String) -> String:
 			return "home_storage_spots"
 		CONTEXT_MODE_HOME_CONTAINER:
 			return "home_container_spots"
+		CONTEXT_MODE_META_BAG:
+			return "home_bag_spots"
+		CONTEXT_MODE_META_UPGRADE:
+			return "home_upgrade_spots"
+		CONTEXT_MODE_META_TRADE_UP:
+			return "home_trade_up_spots"
+		CONTEXT_MODE_META_PAWN_COUNTER:
+			return "pawn_counter_spots"
 	return ""
 
 
@@ -8106,6 +8198,18 @@ func _normalized_interaction_rect(object_type: String, index: int) -> Rect2:
 		CONTEXT_MODE_HOME_CONTAINER:
 			center = Vector2(0.22 + float(index % 4) * 0.18, 0.76 + float(index / 4) * 0.11)
 			size = Vector2(104.0 / board_size.x, 58.0 / board_size.y)
+		CONTEXT_MODE_META_BAG:
+			center = Vector2(0.42 + float(index % 3) * 0.12, 0.66 + float(index / 3) * 0.11)
+			size = Vector2(90.0 / board_size.x, 54.0 / board_size.y)
+		CONTEXT_MODE_META_UPGRADE:
+			center = Vector2(0.78, 0.34)
+			size = Vector2(118.0 / board_size.x, 64.0 / board_size.y)
+		CONTEXT_MODE_META_TRADE_UP:
+			center = Vector2(0.62, 0.72)
+			size = Vector2(118.0 / board_size.x, 64.0 / board_size.y)
+		CONTEXT_MODE_META_PAWN_COUNTER:
+			center = Vector2(0.50, 0.48)
+			size = Vector2(136.0 / board_size.x, 72.0 / board_size.y)
 	return Rect2(center - size * 0.5, size)
 
 
@@ -9484,6 +9588,9 @@ func _apply_meta_collection_loadout_to_run() -> void:
 
 
 func return_to_main_menu() -> void:
+	if _is_meta_session():
+		_exit_meta_session()
+		return
 	if _all_in_result_terminal_check_is_pending():
 		_evaluate_run_terminal_state(true)
 	if run_state != null and not dev_game_test_mode:
@@ -9495,6 +9602,9 @@ func return_to_main_menu() -> void:
 	last_environment_runtime_result = {}
 	run_item_icon_texture_cache.clear()
 	run_state = null
+	meta_session_active = false
+	meta_session_location_id = ""
+	meta_last_panel_message = ""
 	dev_game_test_mode = false
 	_refresh_run_action_service()
 	close_content_group_config()
@@ -9608,12 +9718,734 @@ func open_inventory_page() -> void:
 	if game_test_menu != null:
 		game_test_menu.visible = false
 	_refresh_profile_inventory_page()
-	_refresh_collection_browser_page()
 	inventory_page.visible = true
 
 
 func open_collection_browser() -> void:
-	open_inventory_page()
+	open_meta_home()
+
+
+func open_meta_home() -> void:
+	_enter_meta_location(META_LOCATION_HOME)
+
+
+func _enter_meta_location(location_id: String) -> void:
+	var clean_location := location_id.strip_edges()
+	var pawn_location := _meta_pawn_location_id()
+	if clean_location != pawn_location:
+		clean_location = META_LOCATION_HOME
+	if library == null:
+		_initialize_foundation()
+	if meta_collection_service == null:
+		_initialize_meta_collection()
+	_hide_event_choice_popup()
+	_hide_run_inventory_popup()
+	_hide_run_journal_popup()
+	_hide_world_map_overlay()
+	_hide_travel_transition()
+	_reset_game_surface_runtime_state()
+	if run_state == null or not _is_meta_session():
+		run_state = RunState.new()
+		run_state.start_new("META-HOME")
+		run_state.begin_act(1)
+		run_state.narrative_flags["_meta_home_session"] = true
+	meta_session_active = true
+	meta_session_location_id = clean_location
+	run_state.narrative_flags["_meta_home_session"] = true
+	run_state.run_status = RunState.RUN_STATUS_ACTIVE
+	current_game = null
+	last_game_result = {}
+	last_item_result = {}
+	last_hook_result = {}
+	game_surface_ui_state = {}
+	selected_action_category = ACTION_CATEGORY_TRAVEL if clean_location == pawn_location else ACTION_CATEGORY_ITEMS
+	_set_current_screen(SCREEN_ENVIRONMENT)
+	close_content_group_config()
+	close_challenge_selection()
+	close_settings_menu()
+	if start_menu_controls != null:
+		start_menu_controls.visible = false
+	if start_menu_intro != null:
+		start_menu_intro.visible = false
+	if inventory_page != null:
+		inventory_page.visible = false
+	if game_test_menu != null:
+		game_test_menu.visible = false
+	_apply_meta_environment(clean_location)
+	_clear_selected_game_action()
+	_clear_selected_stake()
+	_clear_selected_travel()
+	_clear_selected_event_choice()
+	_clear_selected_item_offer()
+	_clear_selected_service_hook()
+	_clear_selected_lender_hook()
+	_clear_selected_prestige_purchase()
+	clear_interaction_focus()
+	_show_message("Home is ready." if clean_location == META_LOCATION_HOME else "Sal's counter is open.")
+	_refresh()
+
+
+func _exit_meta_session() -> void:
+	_hide_event_choice_popup()
+	_hide_run_inventory_popup()
+	_hide_run_journal_popup()
+	_hide_world_map_overlay()
+	_hide_travel_transition()
+	_reset_game_surface_runtime_state()
+	current_game = null
+	run_state = null
+	meta_session_active = false
+	meta_session_location_id = ""
+	meta_last_panel_message = ""
+	_set_current_screen(SCREEN_START)
+	if run_screen != null:
+		run_screen.visible = false
+	if start_screen != null:
+		start_screen.visible = true
+	if start_menu_controls != null:
+		start_menu_controls.visible = true
+	if start_menu_intro != null:
+		start_menu_intro.visible = true
+	if inventory_page != null:
+		inventory_page.visible = false
+	if game_test_menu != null:
+		game_test_menu.visible = false
+	_stop_procedural_music()
+	_refresh_start_screen()
+
+
+func _is_meta_session() -> bool:
+	return meta_session_active and run_state != null and bool(run_state.narrative_flags.get("_meta_home_session", false))
+
+
+func _meta_pawn_location_id() -> String:
+	if meta_collection_service != null:
+		var view: Dictionary = MetaCollectionViewModelScript.build(meta_collection_service)
+		var home := _copy_dict(view.get("home", {}))
+		for node_value in _copy_array(home.get("map_nodes", [])):
+			if typeof(node_value) != TYPE_DICTIONARY:
+				continue
+			var node: Dictionary = node_value
+			if str(node.get("kind", "")) == "pawn" + "_shop":
+				return str(node.get("id", "pawn" + "_shop"))
+	return "pawn" + "_shop"
+
+
+func _apply_meta_environment(location_id: String) -> void:
+	if run_state == null:
+		return
+	var environment := _build_meta_environment(location_id)
+	if environment.is_empty():
+		return
+	run_state.set_environment(environment)
+	_invalidate_travel_view_cache()
+	_refresh_run_action_service()
+
+
+func _build_meta_environment(location_id: String) -> Dictionary:
+	if meta_collection_service == null:
+		_initialize_meta_collection()
+	var clean_location := location_id.strip_edges()
+	if clean_location == _meta_pawn_location_id():
+		return _build_meta_pawn_environment()
+	return _build_meta_home_environment()
+
+
+func _build_meta_home_environment() -> Dictionary:
+	var definition: Dictionary = meta_collection_service.housing_definition()
+	var archetype_id := str(definition.get("archetype_id", MetaCollectionServiceScript.HOUSING_BACK_ALLEY)).strip_edges()
+	if archetype_id.is_empty():
+		archetype_id = MetaCollectionServiceScript.HOUSING_BACK_ALLEY
+	var archetype := _environment_archetype(archetype_id)
+	if archetype.is_empty():
+		return {}
+	var rng := run_state.create_rng("meta_home:%s" % archetype_id)
+	var instance := EnvironmentInstance.from_archetype(archetype, 1, rng, library, {})
+	var data: Dictionary = instance.to_dict()
+	data["id"] = "meta_home_%s" % archetype_id
+	data["archetype_id"] = archetype_id
+	data["world_node_id"] = META_LOCATION_HOME
+	data["world_map_travel"] = true
+	data["kind"] = "home"
+	data["display_name"] = str(definition.get("display_name", data.get("display_name", "Home")))
+	data["objective_hint"] = "Use room props to manage storage, bags, upgrades, and travel."
+	data["game_ids"] = []
+	data["game_states"] = {}
+	data["event_ids"] = []
+	data["item_offers"] = []
+	data["service_ids"] = []
+	data["lender_hooks"] = []
+	data["object_fixtures"] = []
+	var pawn_location := _meta_pawn_location_id()
+	data["travel_hooks"] = [pawn_location]
+	data["next_archetypes"] = [pawn_location]
+	data["home_profile"] = _copy_dict(archetype.get("home_profile", {}))
+	data["home_containers"] = _meta_container_rows()
+	data["home_container_index"] = _copy_array(data.get("home_containers", [])).size()
+	data["home_lost"] = false
+	data["meta_session"] = true
+	data["meta_location"] = META_LOCATION_HOME
+	run_state.home_state = {
+		"active": true,
+		"lost": false,
+		"act_index": maxi(1, run_state.act_marker()),
+		"home_archetype_id": archetype_id,
+		"home_node_id": META_LOCATION_HOME,
+		"display_name": str(data.get("display_name", "Home")),
+		"started_day": run_state.game_day(),
+		"lost_day": 0,
+		"lost_reason": "",
+		"tenure": {},
+	}
+	data["layout"] = EnvironmentInstance.ensure_generated_layout(data)
+	return data
+
+
+func _build_meta_pawn_environment() -> Dictionary:
+	var pawn_location := _meta_pawn_location_id()
+	var archetype := _environment_archetype(pawn_location)
+	if archetype.is_empty():
+		return {}
+	var rng := run_state.create_rng("meta_pawn_shop")
+	var instance := EnvironmentInstance.from_archetype(archetype, 1, rng, library, {})
+	var data: Dictionary = instance.to_dict()
+	data["id"] = "meta_pawn_shop"
+	data["world_node_id"] = pawn_location
+	data["world_map_travel"] = true
+	data["kind"] = "pawn" + "_shop"
+	data["display_name"] = "Sal's Pawn Counter"
+	data["objective_hint"] = "Sell collection items or unopened bags for gold."
+	data["game_ids"] = []
+	data["game_states"] = {}
+	data["event_ids"] = []
+	data["item_offers"] = []
+	data["service_ids"] = []
+	data["lender_hooks"] = []
+	data["object_fixtures"] = []
+	data["travel_hooks"] = [META_LOCATION_HOME]
+	data["next_archetypes"] = [META_LOCATION_HOME]
+	data["home_containers"] = []
+	data["meta_session"] = true
+	data["meta_location"] = pawn_location
+	data["layout"] = EnvironmentInstance.ensure_generated_layout(data)
+	return data
+
+
+func _meta_container_rows() -> Array:
+	var snapshot := meta_collection_service.snapshot() if meta_collection_service != null else {}
+	var rows: Array = []
+	var index := 0
+	for container_value in _copy_array(snapshot.get("owned_containers", [])):
+		if typeof(container_value) != TYPE_DICTIONARY:
+			continue
+		var container: Dictionary = container_value
+		var item_id := str(container.get("item_id", "b" + "ag")).strip_edges()
+		if item_id.is_empty():
+			continue
+		index += 1
+		rows.append({
+			"id": "meta_%s_%02d" % [item_id, index],
+			"item_id": item_id,
+			"display_name": _meta_container_label(item_id),
+			"capacity": maxi(0, int(container.get("capacity", 0))),
+			"items": _meta_container_item_ids_for_index(index - 1),
+		})
+	return rows
+
+
+func _meta_container_item_ids_for_index(container_index: int) -> Array:
+	var ids: Array = []
+	if meta_collection_service == null:
+		return ids
+	var carried := meta_collection_service.carried_instance_ids()
+	var capacity := 0
+	var containers := _copy_array(meta_collection_service.snapshot().get("owned_containers", []))
+	if container_index >= 0 and container_index < containers.size() and typeof(containers[container_index]) == TYPE_DICTIONARY:
+		capacity = maxi(0, int((containers[container_index] as Dictionary).get("capacity", 0)))
+	for id_value in carried:
+		if capacity > 0 and ids.size() >= capacity:
+			break
+		ids.append("meta_item_%d" % int(id_value))
+	return ids
+
+
+func _meta_container_label(item_id: String) -> String:
+	var clean_id := item_id.strip_edges()
+	if library != null:
+		var item := library.item(clean_id)
+		if not item.is_empty():
+			return str(item.get("display_name", clean_id.replace("_", " ").capitalize()))
+	return clean_id.replace("_", " ").capitalize()
+
+
+func _meta_interactable_object_view_list() -> Array:
+	if meta_session_location_id == _meta_pawn_location_id():
+		return _meta_pawn_interactable_objects()
+	return _meta_home_interactable_objects()
+
+
+func _meta_home_interactable_objects() -> Array:
+	var objects: Array = []
+	var view: Dictionary = MetaCollectionViewModelScript.build(meta_collection_service)
+	var home := _copy_dict(view.get("home", {}))
+	var gold := int(view.get("gold_balance", 0))
+	var containers := run_state.current_home_containers()
+	for index in range(containers.size()):
+		if typeof(containers[index]) != TYPE_DICTIONARY:
+			continue
+		var container: Dictionary = containers[index]
+		var container_id := str(container.get("id", ""))
+		objects.append(_make_interactable_object({
+			"object_id": "meta_container:%s" % container_id,
+			"object_type": CONTEXT_MODE_HOME_CONTAINER,
+			"visual_type": CONTEXT_MODE_HOME_CONTAINER,
+			"source_id": container_id,
+			"label": str(container.get("display_name", "Container")),
+			"short_description": "Storage you own. Click to inspect packed and stored collection items.",
+			"presence": "fixture",
+			"interactive": true,
+			"enabled": true,
+			"action_summary": "Open contents.",
+			"status_summary": "%d carried / %d capacity" % [int(home.get("carried_count", 0)), int(home.get("carry_capacity", 0))],
+			"effect_summary": "Gold: %d" % gold,
+			"visual_key": "home_container",
+			"prop": "satchel",
+			"icon_key": str(container.get("item_id", "b" + "ag")),
+			"available_actions": [{"id": "open_meta_container", "label": "Open"}],
+			"confirm_action_id": "open_meta_container",
+			"focus_rect": _interaction_rect_for_object("meta_container:%s" % container_id, CONTEXT_MODE_HOME_CONTAINER, index),
+		}))
+	var bags := _copy_array(view.get("unopened_bags", []))
+	for index in range(bags.size()):
+		var bag := _copy_dict(bags[index])
+		var bag_id := int(bag.get("instance_id", 0))
+		objects.append(_make_interactable_object({
+			"object_id": "meta_bag:%d" % bag_id,
+			"object_type": CONTEXT_MODE_META_BAG,
+			"visual_type": CONTEXT_MODE_META_BAG,
+			"source_id": str(bag_id),
+			"label": str(bag.get("display_name", "Collection Bag")),
+			"short_description": str(bag.get("collection_display_name", "Unopened collection bag")),
+			"presence": "fixture",
+			"interactive": true,
+			"enabled": true,
+			"action_summary": "Open this bag.",
+			"status_summary": str(bag.get("tier_label", "")),
+			"attribute_badges": _copy_array(bag.get("tier_badges", [])),
+			"visual_key": "meta_bag",
+			"prop": "paper_bag",
+			"icon_key": str(bag.get("icon_key", "cashout" + "_envelope")),
+			"available_actions": [{"id": "open_meta_bag", "label": "Open"}],
+			"confirm_action_id": "open_meta_bag",
+			"focus_rect": _interaction_rect_for_object("meta_bag:%d" % bag_id, CONTEXT_MODE_META_BAG, index),
+		}))
+	var upgrade := _copy_dict(home.get("upgrade", {}))
+	var upgrade_enabled := not upgrade.is_empty() and bool(upgrade.get("affordable", false))
+	objects.append(_make_interactable_object({
+		"object_id": "meta_upgrade:home",
+		"object_type": CONTEXT_MODE_META_UPGRADE,
+		"visual_type": CONTEXT_MODE_META_UPGRADE,
+		"source_id": "home",
+		"label": "Upgrade Sign",
+		"short_description": "Buy the next housing tier with pawn-shop gold.",
+		"presence": "fixture",
+		"interactive": not upgrade.is_empty(),
+		"enabled": upgrade_enabled,
+		"disabled_reason": "No further upgrade." if upgrade.is_empty() else "Needs %d gold." % int(upgrade.get("price", 0)),
+		"action_summary": "Buy %s." % str(upgrade.get("display_name", "next home")) if upgrade_enabled else "Inspect the next housing price.",
+		"cost_summary": "Gold: %d / %d" % [gold, int(upgrade.get("price", 0))] if not upgrade.is_empty() else "",
+		"visual_key": "meta_upgrade",
+		"prop": "sign",
+		"icon_key": "roadside" + "_map",
+		"available_actions": [{"id": "buy_home_upgrade", "label": "Buy"}] if upgrade_enabled else [],
+		"confirm_action_id": "buy_home_upgrade" if upgrade_enabled else "",
+		"focus_rect": _interaction_rect_for_object("meta_upgrade:home", CONTEXT_MODE_META_UPGRADE, 0),
+	}))
+	var trade_unlocked := bool(home.get("trade_up_unlocked", false))
+	if trade_unlocked or str(home.get("housing_tier", "")) != MetaCollectionServiceScript.HOUSING_BACK_ALLEY:
+		objects.append(_make_interactable_object({
+			"object_id": "meta_trade_up:station",
+			"object_type": CONTEXT_MODE_META_TRADE_UP,
+			"visual_type": CONTEXT_MODE_META_TRADE_UP,
+			"source_id": "station",
+			"label": "Trade-Up Station",
+			"short_description": "Trade five matching collection items for one next-tier item.",
+			"presence": "fixture",
+			"interactive": true,
+			"enabled": trade_unlocked,
+			"disabled_reason": "" if trade_unlocked else "Trade-ups unlock with an apartment or house.",
+			"action_summary": "Review eligible trades." if trade_unlocked else "Housing tier is too low.",
+			"visual_key": "meta_trade_up",
+			"prop": "workbench",
+			"icon_key": "ledger" + "_pencil",
+			"available_actions": [{"id": "open_trade_up", "label": "Trade"}] if trade_unlocked else [],
+			"confirm_action_id": "open_trade_up" if trade_unlocked else "",
+			"focus_rect": _interaction_rect_for_object("meta_trade_up:station", CONTEXT_MODE_META_TRADE_UP, 0),
+		}))
+	objects.append(_make_interactable_object({
+		"object_id": "travel:leave",
+		"object_type": CONTEXT_MODE_TRAVEL,
+		"source_id": "leave",
+		"label": "Map Door",
+		"short_description": "Open the meta travel map.",
+		"enabled": true,
+		"action_summary": "Travel to Sal's Pawn Counter.",
+		"cost_summary": "Free",
+		"visual_key": "travel",
+		"prop": "door",
+		"icon_key": "travel",
+		"available_actions": [{"id": "open_meta_map", "label": "Open Map"}],
+		"confirm_action_id": "open_meta_map",
+		"focus_rect": _interaction_rect_for_object("travel:leave", CONTEXT_MODE_TRAVEL, 0),
+	}))
+	return objects
+
+
+func _meta_pawn_interactable_objects() -> Array:
+	return [
+		_make_interactable_object({
+			"object_id": "meta_pawn_counter:sell",
+			"object_type": CONTEXT_MODE_META_PAWN_COUNTER,
+			"visual_type": CONTEXT_MODE_META_PAWN_COUNTER,
+			"source_id": "sell",
+			"label": "Sell Counter",
+			"short_description": "Sal buys collection items and unopened bags for gold.",
+			"presence": "fixture",
+			"interactive": true,
+			"enabled": true,
+			"action_summary": "Choose something to sell.",
+			"effect_summary": "Pawn shop is the only gold faucet.",
+			"visual_key": "meta_pawn_counter",
+			"prop": "counter",
+			"icon_key": "pawn_receipt" + "_sleeve",
+			"available_actions": [{"id": "open_sell_counter", "label": "Sell"}],
+			"confirm_action_id": "open_sell_counter",
+			"focus_rect": _interaction_rect_for_object("meta_pawn_counter:sell", CONTEXT_MODE_META_PAWN_COUNTER, 0),
+		}),
+		_make_interactable_object({
+			"object_id": "travel:leave",
+			"object_type": CONTEXT_MODE_TRAVEL,
+			"source_id": "leave",
+			"label": "Street Door",
+			"short_description": "Open the meta travel map.",
+			"enabled": true,
+			"action_summary": "Return home.",
+			"cost_summary": "Free",
+			"visual_key": "travel",
+			"prop": "door",
+			"icon_key": "travel",
+			"available_actions": [{"id": "open_meta_map", "label": "Open Map"}],
+			"confirm_action_id": "open_meta_map",
+			"focus_rect": _interaction_rect_for_object("travel:leave", CONTEXT_MODE_TRAVEL, 0),
+		}),
+	]
+
+
+func open_meta_container(container_id: String = "") -> void:
+	var view: Dictionary = MetaCollectionViewModelScript.build(meta_collection_service)
+	var home := _copy_dict(view.get("home", {}))
+	var lines: Array[String] = [
+		"%s storage. Gold: %d." % [str(home.get("display_name", "Home")), int(view.get("gold_balance", 0))],
+		"Carry: %d / %d. Home storage: %d." % [int(home.get("carried_count", 0)), int(home.get("carry_capacity", 0)), int(home.get("storage_slots", 0))],
+	]
+	_show_meta_popup("Container", "\n".join(lines), "meta_container")
+	var rows := _meta_owned_item_rows()
+	if rows.is_empty():
+		_add_meta_popup_line("No collection items owned yet.")
+	else:
+		for row_value in rows.slice(0, 10):
+			var row := _copy_dict(row_value)
+			_add_meta_action_card(
+				str(row.get("display_name", "Collection Item")),
+				"%s. %s" % [str(row.get("collection_display_name", "Collection")), str(row.get("float_summary", ""))],
+				"Packed" if bool(row.get("packed", false)) else "Stored",
+				Callable(self, "_toggle_meta_item_pack").bind(int(row.get("instance_id", 0)), not bool(row.get("packed", false))),
+				"Unpack" if bool(row.get("packed", false)) else "Pack",
+				true
+			)
+		if rows.size() > 10:
+			_add_meta_popup_line("+%d more item(s)." % (rows.size() - 10))
+	_add_meta_close_card()
+
+
+func open_meta_bag(instance_id: int) -> void:
+	if instance_id <= 0:
+		_show_message("Bag is not available.")
+		return
+	var result: Dictionary = meta_collection_service.open_bag(instance_id)
+	if bool(result.get("ok", false)):
+		meta_collection_service.save()
+		meta_last_panel_message = _collection_reveal_text(result)
+		_apply_meta_environment(meta_session_location_id)
+	_show_meta_popup("Bag Opened", _collection_reveal_text(result), "meta_bag")
+	_add_meta_close_card()
+	_refresh()
+
+
+func buy_meta_home_upgrade() -> void:
+	var result: Dictionary = meta_collection_service.purchase_housing_upgrade()
+	if bool(result.get("ok", false)):
+		meta_collection_service.save()
+		meta_last_panel_message = str(result.get("message", "Home upgraded."))
+		_apply_meta_environment(META_LOCATION_HOME)
+	_show_meta_popup("Upgrade Home", str(result.get("message", "Upgrade unavailable.")), "meta_upgrade")
+	_add_meta_close_card()
+	_refresh()
+
+
+func open_meta_trade_up() -> void:
+	var candidates := _meta_trade_up_candidates()
+	_show_meta_popup("Trade-Up Station", "Trade five same-tier, same-collection items for one next-tier item.", "meta_trade_up")
+	if candidates.is_empty():
+		_add_meta_popup_line("No eligible 5-item set is available.")
+	else:
+		for candidate_value in candidates.slice(0, 4):
+			var candidate := _copy_dict(candidate_value)
+			_add_meta_action_card(
+				str(candidate.get("label", "Trade")),
+				str(candidate.get("summary", "")),
+				"Consumes five items.",
+				Callable(self, "_arm_meta_trade_up").bind(_copy_array(candidate.get("instance_ids", []))),
+				"Trade",
+				true
+			)
+	_add_meta_close_card()
+
+
+func open_meta_sell_counter() -> void:
+	_show_meta_popup("Sell Counter", "Choose one collection item or unopened bag to sell for gold.", "meta_pawn_counter")
+	var rows := _meta_sale_rows()
+	if rows.is_empty():
+		_add_meta_popup_line("Nothing is available to sell.")
+	else:
+		for row_value in rows.slice(0, 12):
+			var row := _copy_dict(row_value)
+			_add_meta_action_card(
+				str(row.get("display_name", "Item")),
+				str(row.get("detail", "")),
+				"%d gold" % int(row.get("price", 0)),
+				Callable(self, "_show_meta_sale_confirm").bind(str(row.get("kind", "")), int(row.get("instance_id", 0))),
+				"Sell",
+				true
+			)
+		if rows.size() > 12:
+			_add_meta_popup_line("+%d more sale option(s)." % (rows.size() - 12))
+	_add_meta_close_card()
+
+
+func _toggle_meta_item_pack(instance_id: int, should_pack: bool) -> void:
+	var result: Dictionary = meta_collection_service.pack_instance(instance_id) if should_pack else meta_collection_service.unpack_instance(instance_id)
+	if bool(result.get("ok", false)):
+		meta_collection_service.save()
+		_apply_meta_environment(meta_session_location_id)
+	meta_last_panel_message = str(result.get("message", "Packing unchanged."))
+	open_meta_container()
+	_refresh()
+
+
+func _arm_meta_trade_up(instance_ids: Array) -> void:
+	var result: Dictionary = meta_collection_service.arm_trade_up(instance_ids)
+	if not bool(result.get("ok", false)):
+		_show_meta_popup("Trade-Up Station", str(result.get("message", "Trade-up unavailable.")), "meta_trade_up")
+		_add_meta_close_card()
+		return
+	_show_meta_popup("Confirm Trade-Up", str(result.get("message", "Confirm trade-up.")), "meta_trade_up")
+	_add_meta_action_card("Confirm", "This consumes the five listed items.", "Permanent", Callable(self, "_confirm_meta_trade_up").bind(str(result.get("token", ""))), "Confirm", true)
+	_add_meta_close_card()
+
+
+func _confirm_meta_trade_up(token: String) -> void:
+	var result: Dictionary = meta_collection_service.confirm_trade_up(token)
+	if bool(result.get("ok", false)):
+		meta_collection_service.save()
+		_apply_meta_environment(meta_session_location_id)
+	_show_meta_popup("Trade-Up Station", str(result.get("message", "Trade-up complete.")), "meta_trade_up")
+	_add_meta_close_card()
+	_refresh()
+
+
+func _show_meta_sale_confirm(kind: String, instance_id: int) -> void:
+	var quote: Dictionary = meta_collection_service.arm_sale(kind, instance_id)
+	if not bool(quote.get("ok", false)):
+		_show_meta_popup("Sell Counter", str(quote.get("message", "Sale unavailable.")), "meta_pawn_counter")
+		_add_meta_close_card()
+		return
+	var label := str(quote.get("display_name", "Item"))
+	_show_meta_popup("Confirm Sale", "Sell %s for %d gold?" % [label, int(quote.get("price", 0))], "meta_pawn_counter")
+	_add_meta_action_card("Confirm Sale", "The sold item leaves your collection.", "Permanent", Callable(self, "_confirm_meta_sale").bind(str(quote.get("token", ""))), "Confirm", true)
+	_add_meta_close_card()
+
+
+func _confirm_meta_sale(token: String) -> void:
+	var result: Dictionary = meta_collection_service.confirm_sale(token)
+	if bool(result.get("ok", false)):
+		meta_collection_service.save()
+		_apply_meta_environment(meta_session_location_id)
+	_show_meta_popup("Sell Counter", str(result.get("message", "Sale complete.")), "meta_pawn_counter")
+	_add_meta_close_card()
+	_refresh()
+
+
+func _show_meta_popup(title: String, summary: String, popup_type: String) -> void:
+	if event_choice_popup_overlay == null or event_choice_popup_choices_list == null:
+		return
+	pending_event_choice_popup_event_id = ""
+	pending_event_choice_popup_focus_choice_id = ""
+	pending_event_choice_popup_snapshot = {
+		"visible": true,
+		"blocking": false,
+		"popup_type": popup_type,
+		"interaction_kind": popup_type,
+		"dismissible": true,
+		"summary": summary,
+		"choices": [],
+	}
+	if event_choice_popup_title_label != null:
+		event_choice_popup_title_label.text = title
+	if event_choice_popup_summary_label != null:
+		event_choice_popup_summary_label.text = summary
+	_clear(event_choice_popup_choices_list)
+	event_choice_popup_overlay.visible = true
+	event_choice_popup_overlay.move_to_front()
+	_position_event_choice_popup()
+	call_deferred("_position_event_choice_popup")
+
+
+func _add_meta_action_card(title: String, text: String, impact: String, callback: Callable, button_text: String, primary: bool) -> void:
+	_add_wager_confirmation_card(title, text, impact, callback, primary)
+	if event_choice_popup_choices_list == null or event_choice_popup_choices_list.get_child_count() <= 0:
+		return
+	var card := event_choice_popup_choices_list.get_child(event_choice_popup_choices_list.get_child_count() - 1)
+	var stack := card.get_child(0) as VBoxContainer if card.get_child_count() > 0 else null
+	if stack == null or stack.get_child_count() <= 0:
+		return
+	var button := stack.get_child(stack.get_child_count() - 1) as Button
+	if button != null:
+		button.text = button_text
+
+
+func _add_meta_popup_line(text: String) -> void:
+	if event_choice_popup_choices_list == null:
+		return
+	var label := _label(text, 13)
+	label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_set_control_font_color(label, VisualStyle.SOFT)
+	event_choice_popup_choices_list.add_child(label)
+
+
+func _add_meta_close_card() -> void:
+	_add_meta_action_card("Back", "Return to the room.", "No change.", Callable(self, "_hide_event_choice_popup"), "Back", false)
+
+
+func _meta_owned_item_rows() -> Array:
+	var rows: Array = []
+	if meta_collection_service == null:
+		return rows
+	var resolver: Variant = CollectionItemResolverScript.new()
+	var packed_ids := meta_collection_service.carried_instance_ids()
+	for instance_value in meta_collection_service.owned_instances():
+		if typeof(instance_value) != TYPE_DICTIONARY:
+			continue
+		var instance: Dictionary = instance_value
+		var itemdef_id := int(instance.get("itemdef_id", -1))
+		var definition: Dictionary = resolver.item_definition(itemdef_id)
+		var collection: Dictionary = resolver.collection_definition(str(definition.get("collection_id", "")))
+		var run_item: Dictionary = resolver.resolve_run_item(instance)
+		var meta: Dictionary = _copy_dict(run_item.get("meta_collection", {}))
+		rows.append({
+			"instance_id": int(instance.get("instance_id", 0)),
+			"itemdef_id": itemdef_id,
+			"display_name": str(definition.get("display_name", "Collection Item")),
+			"collection_display_name": str(collection.get("display_name", "Collection")),
+			"tier": str(definition.get("tier", "")),
+			"condition_band": str(meta.get("condition_band", "")),
+			"float_summary": MetaCollectionViewModelScript._float_summary(instance),
+			"packed": packed_ids.has(int(instance.get("instance_id", 0))),
+		})
+	return rows
+
+
+func _meta_sale_rows() -> Array:
+	var rows: Array = []
+	if meta_collection_service == null:
+		return rows
+	for item_row_value in _meta_owned_item_rows():
+		var item_row := _copy_dict(item_row_value)
+		var instance_id := int(item_row.get("instance_id", 0))
+		var quote: Dictionary = meta_collection_service.sale_quote(MetaCollectionServiceScript.SALE_KIND_ITEM, instance_id)
+		if not bool(quote.get("ok", false)):
+			continue
+		rows.append({
+			"kind": MetaCollectionServiceScript.SALE_KIND_ITEM,
+			"instance_id": instance_id,
+			"display_name": str(item_row.get("display_name", "Collection Item")),
+			"detail": "%s. %s" % [str(item_row.get("collection_display_name", "Collection")), str(item_row.get("float_summary", ""))],
+			"price": int(quote.get("price", 0)),
+		})
+	var resolver: Variant = CollectionItemResolverScript.new()
+	for bag_value in meta_collection_service.unopened_bags():
+		if typeof(bag_value) != TYPE_DICTIONARY:
+			continue
+		var bag: Dictionary = bag_value
+		var bagdef_id := int(bag.get("bagdef_id", -1))
+		var definition: Dictionary = resolver.bag_definition(bagdef_id)
+		var collection: Dictionary = resolver.collection_definition(str(definition.get("collection_id", "")))
+		var instance_id := int(bag.get("instance_id", 0))
+		var quote: Dictionary = meta_collection_service.sale_quote(MetaCollectionServiceScript.SALE_KIND_BAG, instance_id)
+		if not bool(quote.get("ok", false)):
+			continue
+		rows.append({
+			"kind": MetaCollectionServiceScript.SALE_KIND_BAG,
+			"instance_id": instance_id,
+			"display_name": str(definition.get("display_name", "Collection Bag")),
+			"detail": "%s unopened bag." % str(collection.get("display_name", "Collection")),
+			"price": int(quote.get("price", 0)),
+		})
+	return rows
+
+
+func _meta_trade_up_candidates() -> Array:
+	var grouped: Dictionary = {}
+	var resolver: Variant = CollectionItemResolverScript.new()
+	for instance_value in meta_collection_service.owned_instances():
+		if typeof(instance_value) != TYPE_DICTIONARY:
+			continue
+		var instance: Dictionary = instance_value
+		var definition: Dictionary = resolver.item_definition(int(instance.get("itemdef_id", -1)))
+		var collection_id := str(definition.get("collection_id", ""))
+		var tier := str(definition.get("tier", ""))
+		var next_tier := _meta_next_tier(tier)
+		if collection_id.is_empty() or tier.is_empty() or next_tier.is_empty():
+			continue
+		var key := "%s|%s" % [collection_id, tier]
+		var ids := _copy_array(grouped.get(key, []))
+		ids.append(int(instance.get("instance_id", 0)))
+		grouped[key] = ids
+	var candidates: Array = []
+	for key_value in grouped.keys():
+		var ids := _copy_array(grouped.get(key_value, []))
+		if ids.size() < 5:
+			continue
+		var key := str(key_value)
+		var parts := key.split("|", false)
+		if parts.size() < 2:
+			continue
+		var collection: Dictionary = resolver.collection_definition(str(parts[0]))
+		var tier := str(parts[1])
+		candidates.append({
+			"label": "%s %s" % [str(collection.get("display_name", "Collection")), tier.capitalize()],
+			"summary": "Creates one %s item." % _meta_next_tier(tier).capitalize(),
+			"instance_ids": ids.slice(0, 5),
+		})
+	return candidates
+
+
+func _meta_next_tier(tier: String) -> String:
+	var order := ["blue", "purple", "pink", "red", "gold"]
+	var index := order.find(tier.strip_edges().to_lower())
+	if index < 0 or index >= order.size() - 1:
+		return ""
+	return str(order[index + 1])
 
 
 func close_inventory_page() -> void:
@@ -12642,6 +13474,9 @@ func _world_map_node_is_in_canvas_view(node_id: String) -> bool:
 func _refresh_world_map_detail() -> void:
 	if world_map_detail_label == null or run_state == null:
 		return
+	if _is_meta_session():
+		_refresh_meta_world_map_detail()
+		return
 	var lock_remaining := run_state.current_travel_lock_remaining()
 	var lines: Array = []
 	if lock_remaining > 0:
@@ -12779,6 +13614,129 @@ func _world_map_travel_method(choice: Dictionary) -> String:
 			return "Night cab"
 
 
+func _meta_map_node_ids() -> Array:
+	return [META_LOCATION_HOME, _meta_pawn_location_id()]
+
+
+func _meta_travel_target_ids() -> Array:
+	var pawn_location := _meta_pawn_location_id()
+	if meta_session_location_id == pawn_location:
+		return [META_LOCATION_HOME]
+	return [pawn_location]
+
+
+func _meta_travel_choice(target_id: String) -> Dictionary:
+	var clean_id := target_id.strip_edges()
+	if not _meta_map_node_ids().has(clean_id):
+		return {}
+	var label := "Home"
+	if clean_id == _meta_pawn_location_id():
+		label = "Sal's Pawn Counter"
+	return {
+		"id": clean_id,
+		"label": label,
+		"kind": "meta",
+		"tier": 0,
+		"description": "Free out-of-run travel.",
+		"route": {
+			"id": clean_id,
+			"cost": 0,
+			"distance": "near",
+			"distance_blocks": 0,
+			"travel_method": "Walk",
+		},
+		"cost": 0,
+		"distance": "near",
+		"distance_blocks": 0,
+		"travel_minutes": 0,
+		"enabled": clean_id != meta_session_location_id,
+		"disabled_reason": "You are here." if clean_id == meta_session_location_id else "",
+		"open_now": true,
+		"open_status_text": "Always open",
+		"attribute_badges": [],
+	}
+
+
+func _meta_world_map_snapshot() -> Dictionary:
+	var selected_id := selected_world_map_node_id
+	if selected_id.is_empty():
+		selected_id = meta_session_location_id
+	var nodes: Array = [
+		_meta_world_map_node(META_LOCATION_HOME, Vector2(0.36, 0.50), selected_id),
+		_meta_world_map_node(_meta_pawn_location_id(), Vector2(0.64, 0.50), selected_id),
+	]
+	return {
+		"schema_version": 1,
+		"current_node_id": meta_session_location_id,
+		"selected_node_id": selected_id,
+		"nodes": nodes,
+		"edges": [{"id": "home-pawn", "a": META_LOCATION_HOME, "b": _meta_pawn_location_id(), "distance": "near"}],
+		"visited_path": [meta_session_location_id],
+		"travel_target_ids": _meta_travel_target_ids(),
+		"travel_enabled_node_ids": _meta_travel_target_ids(),
+		"travel_disabled_node_ids": [],
+		"travel_paths": [{"target_id": _meta_travel_target_ids()[0], "path": [meta_session_location_id, _meta_travel_target_ids()[0]], "enabled": true}] if not _meta_travel_target_ids().is_empty() else [],
+		"map_focus_node_ids": _meta_map_node_ids(),
+		"background_path": WorldMapScript.MAP_BACKGROUND_PATH,
+	}
+
+
+func _meta_world_map_node(node_id: String, position: Vector2, selected_id: String) -> Dictionary:
+	var is_current := node_id == meta_session_location_id
+	var label := "Home" if node_id == META_LOCATION_HOME else "Sal's Pawn Counter"
+	var flavor := "Your current housing room." if node_id == META_LOCATION_HOME else "Sell collection finds for gold."
+	return {
+		"id": node_id,
+		"archetype_id": _meta_archetype_id_for_location(node_id),
+		"icon_path": "res://assets/art/map_icons/%s.png" % _meta_map_icon_archetype_id(node_id),
+		"label": label,
+		"kind": "meta",
+		"state": "visited",
+		"position": {"x": position.x, "y": position.y},
+		"current": is_current,
+		"selected": node_id == selected_id,
+		"travel_target": node_id != meta_session_location_id,
+		"travel_enabled": node_id != meta_session_location_id,
+		"open_now": true,
+		"open_status_text": "Always open",
+		"flavor": flavor,
+	}
+
+
+func _meta_archetype_id_for_location(node_id: String) -> String:
+	if node_id == _meta_pawn_location_id():
+		return _meta_pawn_location_id()
+	if meta_collection_service == null:
+		return MetaCollectionServiceScript.HOUSING_BACK_ALLEY
+	return str(meta_collection_service.housing_definition().get("archetype_id", MetaCollectionServiceScript.HOUSING_BACK_ALLEY))
+
+
+func _meta_map_icon_archetype_id(node_id: String) -> String:
+	if node_id == _meta_pawn_location_id():
+		return MetaCollectionServiceScript.HOUSING_BACK_ALLEY
+	return _meta_archetype_id_for_location(node_id)
+
+
+func _refresh_meta_world_map_detail() -> void:
+	var lines: Array = []
+	if selected_world_map_node_id.is_empty():
+		selected_world_map_node_id = meta_session_location_id
+	var node_id := selected_world_map_node_id
+	var label := "Home" if node_id == META_LOCATION_HOME else "Sal's Pawn Counter"
+	lines.append("Stop: %s" % label)
+	lines.append("Travel: Walk")
+	lines.append("Cost: 0")
+	lines.append("Clock: no time passes")
+	if node_id == meta_session_location_id:
+		lines.append("Status: You are here.")
+		_set_world_map_confirm_enabled(false)
+	else:
+		lines.append("Status: Route open.")
+		_set_world_map_confirm_enabled(true)
+	_set_world_map_detail_badges([])
+	world_map_detail_label.text = "\n".join(lines)
+
+
 func _set_world_map_confirm_enabled(enabled: bool) -> void:
 	if world_map_confirm_button == null:
 		return
@@ -12788,6 +13746,8 @@ func _set_world_map_confirm_enabled(enabled: bool) -> void:
 func _world_map_snapshot() -> Dictionary:
 	if run_state == null:
 		return {}
+	if _is_meta_session():
+		return _meta_world_map_snapshot()
 	var cache_key := "%s|map:%s" % [_travel_base_cache_key(), selected_world_map_node_id]
 	if world_map_snapshot_cache_key == cache_key:
 		return world_map_snapshot_cache.duplicate(true)
@@ -12973,6 +13933,8 @@ func _travel_choice_view_list() -> Array:
 
 
 func _travel_choice(target_id: String, known_target_ids: Array = []) -> Dictionary:
+	if _is_meta_session():
+		return _meta_travel_choice(target_id)
 	var target_ids := known_target_ids if not known_target_ids.is_empty() else _travel_target_ids()
 	if target_id.is_empty() or not target_ids.has(target_id):
 		return {}
@@ -13069,6 +14031,8 @@ func _travel_choice(target_id: String, known_target_ids: Array = []) -> Dictiona
 func _travel_target_ids() -> Array:
 	if run_state == null:
 		return []
+	if _is_meta_session():
+		return _meta_travel_target_ids()
 	var cache_key := _travel_base_cache_key()
 	if travel_target_ids_cache_key == cache_key:
 		return travel_target_ids_cache.duplicate()

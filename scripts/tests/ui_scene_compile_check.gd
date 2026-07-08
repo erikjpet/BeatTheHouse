@@ -18,7 +18,9 @@ const RunActionServiceScript := preload("res://scripts/core/run_action_service.g
 const AttributeBadgesScript := preload("res://scripts/core/attribute_badges.gd")
 const EventModuleScript := preload("res://scripts/core/event_module.gd")
 const UserSettingsScript := preload("res://scripts/core/user_settings.gd")
+const MetaCollectionServiceScript := preload("res://scripts/core/meta_collection_service.gd")
 const TEST_SETTINGS_PATH := "user://settings_ui_scene_compile_check.json"
+const TEST_META_COLLECTION_PATH := "user://ui_scene_compile_meta_collection.json"
 
 
 func _player_facing_effect_summary_is_clean(text: String, label: String) -> bool:
@@ -544,6 +546,9 @@ func _init() -> void:
 
 func _run() -> void:
 	_use_isolated_user_settings(TEST_SETTINGS_PATH)
+	OS.set_environment(MetaCollectionServiceScript.STORE_PATH_ENV, TEST_META_COLLECTION_PATH)
+	if FileAccess.file_exists(TEST_META_COLLECTION_PATH):
+		DirAccess.remove_absolute(ProjectSettings.globalize_path(TEST_META_COLLECTION_PATH))
 	if VisualStyleScript.HOT != VisualStyleScript.PINK:
 		push_error("VisualStyle.HOT should alias the production hot/pink token.")
 		quit(1)
@@ -762,6 +767,9 @@ func _run() -> void:
 		return
 	if collections_button.text != "Home":
 		push_error("Meta collection launcher should be labeled Home on the main menu.")
+		quit(1)
+		return
+	if not await _check_meta_home_launcher_opens_room(app):
 		quit(1)
 		return
 	if not exit_game_button.visible or exit_game_button.disabled:
@@ -4369,6 +4377,73 @@ func _use_isolated_user_settings(path: String) -> void:
 	if error != OK:
 		push_error("Could not prepare isolated UI test settings.")
 		quit(1)
+
+
+func _check_meta_home_launcher_opens_room(app: Control) -> bool:
+	var collections_button := app.get("collections_button") as Button
+	if collections_button == null:
+		push_error("Meta home launcher button was missing.")
+		return false
+	collections_button.emit_signal("pressed")
+	await process_frame
+	await process_frame
+	var run_state: RunState = app.get("run_state")
+	if run_state == null:
+		push_error("Home launcher did not enter a meta room session.")
+		return false
+	var environment: Dictionary = run_state.current_environment
+	if not bool(environment.get("meta_session", false)) or str(environment.get("meta_location", "")) != "home":
+		push_error("Home launcher opened the wrong environment instead of the meta home room: %s." % str(environment))
+		return false
+	var inventory_page := app.get("inventory_page") as Control
+	if inventory_page != null and inventory_page.visible:
+		push_error("Home launcher still opened the rejected collection menu page.")
+		return false
+	var canvas := app.get("environment_canvas") as Control
+	var viewport_rect := app.get_viewport().get_visible_rect()
+	if not _control_fits_viewport(canvas, viewport_rect, "meta home environment canvas"):
+		return false
+	var spatial: Dictionary = app.call("current_spatial_interaction_snapshot")
+	var objects := _copy_array(spatial.get("objects", []))
+	var container_id := ""
+	var has_map_door := false
+	for object_value in objects:
+		if typeof(object_value) != TYPE_DICTIONARY:
+			continue
+		var object_data: Dictionary = object_value
+		var object_id := str(object_data.get("object_id", ""))
+		if object_id.begins_with("meta_container:") and container_id.is_empty():
+			container_id = object_id
+		if object_id == "travel:leave":
+			has_map_door = true
+	if container_id.is_empty() or not has_map_door:
+		push_error("Meta home room did not expose container and map-door props.")
+		return false
+	if not bool(app.call("activate_interactable_object", container_id)):
+		push_error("Meta home container prop did not activate.")
+		return false
+	await process_frame
+	var popup: Dictionary = app.call("current_event_choice_popup_snapshot")
+	if not bool(popup.get("visible", false)) or str(popup.get("popup_type", "")) != "meta_container":
+		push_error("Meta home container did not open its contents popup.")
+		return false
+	var popup_rect := _snapshot_rect(popup.get("popup_rect", {}))
+	var screen_rect := _snapshot_rect(popup.get("screen_rect", {}))
+	if popup_rect.size.x <= 0.0 or popup_rect.size.y <= 0.0 or not screen_rect.grow(1.0).encloses(popup_rect):
+		push_error("Meta home popup did not fit inside the viewport: popup=%s screen=%s." % [str(popup_rect), str(screen_rect)])
+		return false
+	app.call("_hide_event_choice_popup")
+	await process_frame
+	app.call("return_to_main_menu")
+	await process_frame
+	if app.get("run_state") != null:
+		push_error("Returning from the meta room did not clear the meta session.")
+		return false
+	var start_menu_controls := app.get("start_menu_controls") as Control
+	if start_menu_controls == null or not start_menu_controls.visible:
+		push_error("Returning from the meta room did not restore the main menu.")
+		return false
+	return true
 
 
 func _control_fits_viewport(control: Variant, viewport_rect, label: String) -> bool:
