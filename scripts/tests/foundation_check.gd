@@ -38,6 +38,7 @@ const MainScene := preload("res://scenes/main.tscn")
 
 const FOUNDATION_DEFAULT_REPORT_PATH := "res://.tmp/foundation_check/report.json"
 const SAVE_COMPAT_030_FIXTURE_PATH := "res://scripts/tests/fixtures/run_state_0_3_0_save.json"
+const SAVE_COMPAT_033_FIXTURE_PATH := "res://scripts/tests/fixtures/run_state_0_3_3_save.json"
 const SLOT_ACCEPTANCE_MONTE_CARLO_SPINS := 10000
 const SLOT_FEATURE_SUBSIMULATION_SAMPLES := 96
 const SAVE_LOAD_FUZZ_SEEDS := 4
@@ -18279,6 +18280,7 @@ func _check_save_load_interrupt_fuzz_foundation(library: ContentLibrary, failure
 	_check_save_load_seed_sweep(library, failures)
 	_check_save_load_targeted_midstates(library, failures)
 	_check_save_load_030_compat_fixture(library, failures)
+	_check_save_load_033_compat_fixture(library, failures)
 
 
 func _check_save_load_seed_sweep(library: ContentLibrary, failures: Array) -> void:
@@ -18914,6 +18916,55 @@ func _check_save_load_030_compat_fixture(library: ContentLibrary, failures: Arra
 	if JSON.stringify(second.to_dict()) != JSON.stringify(normalized):
 		failures.append("SB.3 0.3.0 save compatibility fixture was not idempotent after normalization.")
 	_save_load_checkpoint(library, restored, "compat/0_3_0_fixture", true, failures)
+
+
+func _check_save_load_033_compat_fixture(library: ContentLibrary, failures: Array) -> void:
+	if not FileAccess.file_exists(SAVE_COMPAT_033_FIXTURE_PATH):
+		failures.append("SB.3 missing 0.3.3 save compatibility fixture: %s." % SAVE_COMPAT_033_FIXTURE_PATH)
+		return
+	var parsed: Variant = JSON.parse_string(FileAccess.get_file_as_string(SAVE_COMPAT_033_FIXTURE_PATH))
+	if typeof(parsed) != TYPE_DICTIONARY:
+		failures.append("SB.3 0.3.3 save compatibility fixture did not parse as a dictionary.")
+		return
+	var payload: Dictionary = parsed
+	var source_run_data: Dictionary = payload.get("run_state", {}) if typeof(payload.get("run_state", {})) == TYPE_DICTIONARY else {}
+	for absent_field in ["game_clock_minutes", "closing_time_state", "act", "act_index", "home_state", "pending_bags"]:
+		if source_run_data.has(absent_field):
+			failures.append("SB.3 0.3.3 fixture must stay pre-v0.4 for field %s." % absent_field)
+	var save_service: SaveService = SaveServiceScript.new()
+	var run_data_value: Variant = save_service.call("_run_data_from_payload", payload)
+	if typeof(run_data_value) != TYPE_DICTIONARY:
+		failures.append("SB.3 0.3.3 save compatibility fixture did not produce RunState data.")
+		return
+	var run_data: Dictionary = run_data_value
+	if not run_data.has("legacy_unknown_033_root"):
+		failures.append("SB.3 0.3.3 save fixture no longer covers unknown root-key tolerance.")
+	var restored: RunState = RunStateScript.new()
+	restored.from_dict(run_data)
+	var normalized := restored.to_dict()
+	if normalized.has("legacy_unknown_033_root"):
+		failures.append("SB.3 0.3.3 save compatibility kept an unknown RunState root key.")
+	if int(normalized.get("act", 0)) != 1 or int(restored.act_index) != 1:
+		failures.append("SB.3 0.3.3 markerless save did not normalize to Act 1.")
+	if int(normalized.get("game_clock_minutes", -1)) != 8 * 60:
+		failures.append("SB.3 0.3.3 save did not normalize the new game clock default.")
+	if typeof(normalized.get("closing_time_state", null)) != TYPE_DICTIONARY:
+		failures.append("SB.3 0.3.3 save did not normalize closing time state.")
+	if typeof(normalized.get("home_state", null)) != TYPE_DICTIONARY:
+		failures.append("SB.3 0.3.3 save did not normalize home state.")
+	var bags: Array = normalized.get("pending_bags", []) if typeof(normalized.get("pending_bags", [])) == TYPE_ARRAY else []
+	if bags.size() != 1:
+		failures.append("SB.3 0.3.3 save did not migrate the legacy pending_bag field.")
+	var talk_entry: Dictionary = restored.next_pending_talk_event()
+	if str(talk_entry.get("event_id", "")) != "suspicious_patron" or str(talk_entry.get("presentation", "")) != "talk":
+		failures.append("SB.3 0.3.3 save did not preserve the pending talk event.")
+	if typeof(talk_entry.get("speaker", null)) != TYPE_DICTIONARY or typeof(talk_entry.get("timing", null)) != TYPE_DICTIONARY:
+		failures.append("SB.3 0.3.3 save did not normalize talk speaker/timing fields.")
+	var second: RunState = RunStateScript.new()
+	second.from_dict(normalized)
+	if JSON.stringify(second.to_dict()) != JSON.stringify(normalized):
+		failures.append("SB.3 0.3.3 save compatibility fixture was not idempotent after normalization.")
+	_save_load_checkpoint(library, restored, "compat/0_3_3_fixture", true, failures)
 
 
 # Verifies real-time gameplay logic is derived from absolute milliseconds, not frame counts.

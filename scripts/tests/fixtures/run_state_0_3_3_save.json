@@ -1,0 +1,137 @@
+{
+	"schema": "beat_the_house.foundation_run",
+	"version": 1,
+	"slot_id": "sb3_033_compat",
+	"legacy_unknown_envelope": "drop_me",
+	"run_state": {
+		"seed_text": "SB3-033-COMPAT",
+		"seed_value": 196440333,
+		"rng_seed": 196440333,
+		"rng_state": 196440777,
+		"challenge_config": {
+			"mode": "standard",
+			"id": "",
+			"seed_text": "SB3-033-COMPAT",
+			"daily_id": "",
+			"modifiers": {},
+			"hidden_seed": false
+		},
+		"bankroll": 1465,
+		"economic_state": "stable",
+		"inventory": ["cheap_sunglasses", "ledger_pencil"],
+		"active_item_id": "cheap_sunglasses",
+		"debt": [],
+		"suspicion": {
+			"level": 9,
+			"cues": [],
+			"local_levels": {
+				"corner_store": 9
+			}
+		},
+		"baseline_luck": 0,
+		"drunk_level": 0,
+		"alcoholic_level": 0,
+		"pending_drunk_absorption": [],
+		"drunk_distortion_suppression_turns": 0,
+		"current_environment": {
+			"id": "corner_store_033",
+			"archetype_id": "corner_store",
+			"world_node_id": "corner_store",
+			"world_map_travel": true,
+			"kind": "shop",
+			"display_name": "Compatibility Corner Store",
+			"tier": 1,
+			"depth": 1,
+			"art_key": "corner_store",
+			"visual_context": {},
+			"layout": {},
+			"security_profile": {
+				"strictness": "low"
+			},
+			"music_profile": {},
+			"economic_profile": {
+				"stake_floor": 1,
+				"stake_ceiling": 50
+			},
+			"objective_hint": "",
+			"demo_objective": {},
+			"game_ids": ["pull_tabs"],
+			"game_states": {},
+			"event_ids": ["suspicious_patron"],
+			"item_offers": [],
+			"service_ids": [],
+			"lender_hooks": [],
+			"suspicion_cues": [],
+			"travel_hooks": ["bar"],
+			"next_archetypes": ["bar"],
+			"object_fixtures": [],
+			"local_narrative_flags": {},
+			"mood": "neon",
+			"turns": 1,
+			"resolved_event_ids": [],
+			"travel_locked_actions": 0,
+			"travel_lock_remaining": 0
+		},
+		"world_map": {},
+		"pending_triggered_events": [{
+			"event_id": "suspicious_patron",
+			"source": "compat_fixture",
+			"context": {
+				"trigger": "table_approach"
+			},
+			"environment_id": "corner_store_033",
+			"environment_turns": 1,
+			"presentation": "talk",
+			"active": false
+		}],
+		"pending_bag": {
+			"source": "compat_fixture",
+			"source_id": "pull_tabs",
+			"itemdef_id": 9000,
+			"collection_id": "roadside_luck",
+			"collection_display_name": "Roadside Luck Collection",
+			"tier": "blue",
+			"tier_label": "Blue",
+			"display_name": "Roadside Luck Blue Bag",
+			"icon_key": "roadside_luck_blue_bag"
+		},
+		"active_triggered_event": {},
+		"event_cadence": {
+			"rng_seed": 196440334,
+			"rng_state": 196440335,
+			"action_index": 4,
+			"last_world_event_action": 2,
+			"last_modal_closed_action": -9999,
+			"visit_key": "corner_store_033#0",
+			"visit_should_fire": false,
+			"visit_min_action": 0,
+			"visit_event_count": 1,
+			"visit_event_ids": ["suspicious_patron"],
+			"seen_event_counts": {
+				"suspicious_patron": 1
+			},
+			"visit_count": 1,
+			"quiet_visit_count": 0
+		},
+		"environment_history": [],
+		"environment_history_archive_count": 0,
+		"unlocked_travel": ["bar"],
+		"narrative_flags": {
+			"compat_033_fixture": true
+		},
+		"story_flags": {},
+		"story_log": [{
+			"type": "fixture",
+			"id": "compat_033_story",
+			"environment_id": "corner_store_033",
+			"message": "0.3.3 compatibility fixture"
+		}],
+		"story_log_archive_count": 0,
+		"simulation_msec": 480000,
+		"run_status": "active",
+		"run_failure_reason": "",
+		"run_failure_message": "",
+		"run_spending_score": 33,
+		"legacy_unknown_033_root": "drop_me"
+	}
+}
