@@ -22,7 +22,8 @@ before new feature work proceeds.
 
 | # | Prompt | Status | Machine | Notes |
 | --- | --- | --- | --- | --- |
-| 10 | v04_publish_and_tag_prompt.md | claimed (2026-07-08, DESKTOP-1950ULQ/Codex; owner-authorized publish) | PM machine (butler/gh credentials) | PUBLISHES the release: pre-publish audit, git push + v0.4.0 tag + GitHub release, butler upload to itch channels. Contains push/upload authority — only the owner may kick this off; loop agents must never self-select it. |
+| 0 | CRITICAL_idle_animation_liveness_regression_prompt.md | claimed (2026-07-08, DESKTOP-1950ULQ/Codex) | PM machine (repro) | **PLAYTEST BLOCKER — 4th recurrence of the frozen-idle-animation regression** (history: 8420529, 901549d, post-0.3.2 hotfix chain, eef32ff; suspect this time: 066e479 / perf-pass budget adoption). Owner demands root-cause writeup AND a permanent release-gated liveness check so perf passes can never trade animation away again. Invalidates the built 0.4.0 packages; repackage happens at pre-publish. |
+| 10 | v04_publish_and_tag_prompt.md | blocked: awaiting #0, remaining owner playtest verdict, and owner auth; owner-launch only | PM machine (butler/gh credentials) | First attempt 2026-07-08 stopped correctly at the toolchain check (audit green, hashes verified, nothing pushed). gh 2.96.0 and butler 15.28.0 are now installed; still required before rerun: owner runs `gh auth login` and `butler login`; #0 (and any further playtest fixes) archived; packages re-exported and checklist hashes refreshed to match the fixed tree. |
 | 11 | v04_post_release_verification_prompt.md | blocked until #10; owner-launch only | PM machine | Verifies the LIVE builds players receive (itch web + published Windows zip), generates devlog #4 card/copy assets, marks the plan SHIPPED. Devlog posting stays with the owner. |
 
 Only the project manager adds entries or reorders this table; executing
