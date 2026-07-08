@@ -64,7 +64,7 @@ const MIN_NATIVE_TOUCH_TARGET_HEIGHT := 40.0
 const RUN_INVENTORY_POPUP_SIZE := Vector2(820, 500)
 const RUN_INVENTORY_POPUP_MARGIN := 12.0
 const RUN_INVENTORY_ITEM_CARD_SIZE := Vector2(118, 104)
-const WORLD_MAP_NODE_BUTTON_POOL_SIZE := 16
+const WORLD_MAP_NODE_BUTTON_POOL_SIZE := 48
 const GAME_SURFACE_UI_PREFERENCE_KEYS := [
 	"selected_chip",
 	"selected_stake",
@@ -13381,6 +13381,7 @@ func _clear_world_map_node_buttons() -> void:
 		button.disabled = true
 		button.tooltip_text = ""
 		button.set_meta("node_id", "")
+		button.name = "WorldMapNodePool_%02d" % index
 	world_map_button_ids = []
 	world_map_button_layout_size = Vector2(-1.0, -1.0)
 
@@ -13446,6 +13447,7 @@ func _add_world_map_node_buttons(snapshot: Dictionary) -> void:
 		button.disabled = not in_view
 		button.tooltip_text = str(node.get("label", node_id))
 		button.set_meta("node_id", node_id)
+		button.name = "WorldMapNode_%s" % node_id
 		index += 1
 
 
@@ -13472,6 +13474,7 @@ func _position_world_map_node_buttons(snapshot: Dictionary) -> void:
 		button.disabled = not in_view
 		button.tooltip_text = str(node.get("label", node_id))
 		button.set_meta("node_id", node_id)
+		button.name = "WorldMapNode_%s" % node_id
 		index += 1
 
 
@@ -13615,6 +13618,7 @@ func _ensure_world_map_node_button_pool() -> void:
 		button.size = Vector2(46, 46)
 		button.visible = false
 		button.disabled = true
+		button.set_meta("pool_index", index)
 		button.set_meta("node_id", "")
 		world_map_nodes_layer.add_child(button)
 
@@ -13622,7 +13626,10 @@ func _ensure_world_map_node_button_pool() -> void:
 func _world_map_pool_button(index: int) -> Button:
 	if world_map_nodes_layer == null:
 		return null
-	return world_map_nodes_layer.get_node_or_null("WorldMapNodePool_%02d" % index) as Button
+	for child in world_map_nodes_layer.get_children():
+		if child is Button and int(child.get_meta("pool_index", -1)) == index:
+			return child as Button
+	return null
 
 
 func _on_world_map_pool_button_pressed(index: int) -> void:
