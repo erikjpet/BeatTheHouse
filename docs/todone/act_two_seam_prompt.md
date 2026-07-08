@@ -1,3 +1,21 @@
+## Execution Record
+
+Completion date: 2026-07-07
+
+Implementing commit: `e5efadf` (`Implement Act 2 seam contract`)
+
+Verification gates:
+
+- `powershell -ExecutionPolicy Bypass -File tools\validate_project.ps1` - PASS, `Beat the House foundation architecture validation passed.`
+- `powershell -ExecutionPolicy Bypass -File tools\check_godot.ps1 -RequireGodot -FoundationSuite systems` - PASS (`foundation_systems PASS`, report `.tmp\test_reports\20260707_215544_smoke\summary.json`).
+- `powershell -ExecutionPolicy Bypass -File tools\check_godot.ps1 -RequireGodot -FoundationSuite ui` - PASS (`ui_scene_compile PASS`, report `.tmp\test_reports\20260707_215646_smoke\summary.json`).
+- `powershell -ExecutionPolicy Bypass -File tools\foundation_visual_qa.ps1 -RequireGodot` - PASS; coverage includes `home_first_start`, `grand_casino_high_roller_cashout`, `grand_casino_showdown_event`, and `terminal_victory_summary`. Existing optional warning remained: recovery pressure QA could not find a visible lender route.
+
+Deviations:
+
+- The prompt's normal queue rule says push, but this prompt explicitly said commit locally and do not push; no push was performed.
+- Visual QA now seeds an isolated motel-tier meta collection store for this route because the v0.4 meta-home system, not the legacy menu selector, owns normal-run housing. This preserves the home-start assertion without touching the real player profile.
+
 # Agent Prompt — Act 2 Seam: Cross-Act Contract, Save Marker, Victory Hook (parked T8.1)
 
 Copy everything below this line into the agent.

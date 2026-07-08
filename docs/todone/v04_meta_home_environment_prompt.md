@@ -1,3 +1,15 @@
+## REJECTED — Owner Review 2026-07-08
+
+The owner playtested this implementation and **rejected it**: the "home" was
+delivered as a menu screen — not the walkable environment this prompt
+explicitly required ("persistent, **walkable** home environment", §3 "Walkable
+room using the existing environment rendering") — and the menu itself is
+broken (content cuts off; not usable). The delivered state does not satisfy
+the prompt. Corrective work is owned by
+`docs/todo/CRITICAL_meta_home_must_be_walkable_environment_prompt.md` (top of
+queue). This file stays archived as history per docs/todone/RULES.md; do not
+execute from here.
+
 # Agent Prompt - v0.4 Meta Home Environment, Housing Progression, and Pawn Shop
 
 Copy everything below this line into the agent.
