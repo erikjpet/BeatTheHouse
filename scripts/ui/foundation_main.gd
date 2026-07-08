@@ -65,6 +65,7 @@ const RUN_INVENTORY_POPUP_SIZE := Vector2(820, 500)
 const RUN_INVENTORY_POPUP_MARGIN := 12.0
 const RUN_INVENTORY_ITEM_CARD_SIZE := Vector2(118, 104)
 const WORLD_MAP_NODE_BUTTON_POOL_SIZE := 12
+const WORLD_MAP_DETAIL_BADGE_CELL_POOL_SIZE := 10
 const GAME_SURFACE_UI_PREFERENCE_KEYS := [
 	"selected_chip",
 	"selected_stake",
@@ -279,6 +280,8 @@ var world_map_nodes_layer: Control
 var world_map_title_label: Label
 var world_map_detail_label: Label
 var world_map_badge_slot: VBoxContainer
+var world_map_badge_row: HFlowContainer
+var world_map_badge_cells: Array = []
 var world_map_confirm_button: Button
 var selected_world_map_node_id: String = ""
 var world_map_button_ids: Array = []
@@ -1073,6 +1076,8 @@ func _prewarm_world_map_overlay_for_run() -> void:
 			selected_world_map_node_id = run_state.current_world_node_id()
 	world_map_overlay.visible = true
 	_refresh_world_map_overlay()
+	_set_world_map_detail_badges(_world_map_detail_badge_prewarm_sample())
+	_set_world_map_detail_badges([])
 	world_map_overlay.visible = was_visible
 
 
@@ -4228,6 +4233,7 @@ func _build_world_map_overlay() -> void:
 	world_map_badge_slot.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	world_map_badge_slot.visible = false
 	side.add_child(world_map_badge_slot)
+	_ensure_world_map_detail_badge_pool()
 
 	world_map_detail_label = _label("Select a revealed stop.", 13)
 	world_map_detail_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
@@ -6525,6 +6531,9 @@ func debug_soak_snapshot() -> Dictionary:
 		"world_route_cache_size": world_route_cache.size(),
 		"world_map_snapshot_cache_size": world_map_snapshot_cache.size(),
 		"world_map_button_count": world_map_button_ids.size(),
+		"world_map_badge_slot_child_count": world_map_badge_slot.get_child_count() if world_map_badge_slot != null else 0,
+		"world_map_badge_slot_visible": world_map_badge_slot.visible if world_map_badge_slot != null else false,
+		"world_map_detail_badges_key": world_map_detail_badges_key,
 		"event_choice_popup_child_count": event_choice_popup_choices_list.get_child_count() if event_choice_popup_choices_list != null else 0,
 		"inventory_child_count": run_inventory_screen.rendered_item_child_count() if run_inventory_screen != null else 0,
 		"journal_child_count": run_journal_list.get_child_count() if run_journal_list != null else 0,
@@ -13594,6 +13603,7 @@ func _refresh_world_map_detail() -> void:
 func _set_world_map_detail_badges(badges_value: Variant) -> void:
 	if world_map_badge_slot == null:
 		return
+	_ensure_world_map_detail_badge_pool()
 	var badges := _copy_array(badges_value)
 	var should_show := not badges.is_empty()
 	var badges_key := JSON.stringify(badges)
@@ -13601,11 +13611,133 @@ func _set_world_map_detail_badges(badges_value: Variant) -> void:
 		if not should_show or world_map_badge_slot.get_child_count() > 0:
 			return
 	world_map_detail_badges_key = badges_key
-	_clear(world_map_badge_slot)
 	world_map_badge_slot.visible = should_show
 	if badges.is_empty():
+		_update_world_map_detail_badge_cells([])
 		return
-	_add_attribute_badge_row(world_map_badge_slot, badges, 12)
+	_update_world_map_detail_badge_cells(badges)
+
+
+func _ensure_world_map_detail_badge_pool() -> void:
+	if world_map_badge_slot == null:
+		return
+	if world_map_badge_row == null:
+		world_map_badge_row = HFlowContainer.new()
+		world_map_badge_row.add_theme_constant_override("h_separation", 4)
+		world_map_badge_row.add_theme_constant_override("v_separation", 4)
+		world_map_badge_row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		world_map_badge_slot.add_child(world_map_badge_row)
+	while world_map_badge_cells.size() < WORLD_MAP_DETAIL_BADGE_CELL_POOL_SIZE:
+		var cell := PanelContainer.new()
+		cell.visible = false
+		cell.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
+		cell.add_theme_stylebox_override("panel", _world_map_badge_cell_style(VisualStyle.CYAN_2))
+		var cell_box := HBoxContainer.new()
+		cell_box.add_theme_constant_override("separation", 3)
+		cell.add_child(cell_box)
+		var icon := TextureRect.new()
+		icon.custom_minimum_size = Vector2(12, 12)
+		icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+		cell_box.add_child(icon)
+		var label := Label.new()
+		label.clip_text = true
+		label.add_theme_font_size_override("font_size", 10)
+		label.custom_minimum_size = Vector2(18.0, 0.0)
+		label.visible = false
+		cell_box.add_child(label)
+		world_map_badge_row.add_child(cell)
+		world_map_badge_cells.append({
+			"cell": cell,
+			"icon": icon,
+			"label": label,
+		})
+
+
+func _update_world_map_detail_badge_cells(badges: Array) -> void:
+	var max_count := world_map_badge_cells.size()
+	for index in range(max_count):
+		var cell_data: Dictionary = world_map_badge_cells[index]
+		var cell := cell_data.get("cell", null) as PanelContainer
+		var icon := cell_data.get("icon", null) as TextureRect
+		var label := cell_data.get("label", null) as Label
+		if cell == null or icon == null or label == null:
+			continue
+		if index >= badges.size() or typeof(badges[index]) != TYPE_DICTIONARY:
+			cell.visible = false
+			icon.texture = null
+			label.text = ""
+			label.visible = false
+			continue
+		var badge: Dictionary = badges[index]
+		var glyph_id := str(badge.get("glyph_id", "")).strip_edges()
+		if glyph_id.is_empty():
+			cell.visible = false
+			icon.texture = null
+			label.text = ""
+			label.visible = false
+			continue
+		var accent := VisualStyle.color(AttributeBadgesScript.palette_token_for_badge(badge), VisualStyle.CYAN_2)
+		cell.visible = true
+		cell.tooltip_text = _world_map_badge_tooltip_text(badge)
+		cell.add_theme_stylebox_override("panel", _world_map_badge_cell_style(accent))
+		icon.texture = AttributeBadgeRowScript.texture_for_badge(badge, 12, false)
+		var value_text := _world_map_badge_value_text(str(badge.get("value_text", "")).strip_edges())
+		label.text = value_text
+		label.visible = not value_text.is_empty()
+		label.custom_minimum_size = Vector2(minf(54.0, maxf(18.0, float(value_text.length()) * 6.0)), 0.0)
+		label.add_theme_color_override("font_color", VisualStyle.accessible_color(accent))
+
+
+func _world_map_badge_cell_style(accent: Color) -> StyleBoxFlat:
+	var style := StyleBoxFlat.new()
+	style.bg_color = Color(accent.r, accent.g, accent.b, 0.12)
+	style.border_color = VisualStyle.accessible_color(accent)
+	style.border_width_left = 1
+	style.border_width_top = 1
+	style.border_width_right = 1
+	style.border_width_bottom = 1
+	style.corner_radius_top_left = 0
+	style.corner_radius_top_right = 0
+	style.corner_radius_bottom_left = 0
+	style.corner_radius_bottom_right = 0
+	style.content_margin_left = 3
+	style.content_margin_right = 4
+	style.content_margin_top = 2
+	style.content_margin_bottom = 2
+	return style
+
+
+func _world_map_badge_tooltip_text(badge: Dictionary) -> String:
+	var tooltip := str(badge.get("tooltip", "")).strip_edges()
+	if not tooltip.is_empty():
+		return tooltip
+	var glyph_id := str(badge.get("glyph_id", "")).strip_edges()
+	var glyph := AttributeBadgesScript.glyph_definition(glyph_id)
+	return str(glyph.get("description", glyph.get("label", glyph_id)))
+
+
+func _world_map_badge_value_text(value_text: String) -> String:
+	if value_text.length() <= 8:
+		return value_text
+	return value_text.left(7) + "."
+
+
+func _world_map_detail_badge_prewarm_sample() -> Array:
+	return AttributeBadgesScript.for_route({
+		"risk": "high",
+		"cost": 999,
+		"distance": "far",
+		"risk_decay": 2,
+		"risk_event": {
+			"chance_percent": 75,
+			"bankroll_delta": -25,
+			"suspicion_delta": 2,
+		},
+	}, {
+		"chance_percent": 75,
+		"bankroll_delta": -25,
+		"suspicion_delta": 2,
+	})
 
 
 func _world_map_hit_button(callback: Callable) -> Button:
