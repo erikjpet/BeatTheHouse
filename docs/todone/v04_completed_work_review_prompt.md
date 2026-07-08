@@ -1,3 +1,29 @@
+## Execution Record
+
+- Completion date: 2026-07-07
+- Implementing/evidence commits:
+  - `9904fda` - claimed the queue entry.
+  - `502b008` - fixed the review-discovered 0.3.3 save compatibility coverage gap.
+  - Archive/report commit - this commit.
+- Deliverable: `docs/plans/v04_work_review_2026_07.md`
+- Verification gates:
+  - `powershell -ExecutionPolicy Bypass -File tools\validate_project.ps1` - PASS.
+  - `powershell -ExecutionPolicy Bypass -File tools\check_godot.ps1 -RequireGodot -FoundationSuite smoke -TimeoutSec 300` - PASS, report `.tmp\test_reports\20260707_232134_smoke\summary.json`.
+  - `powershell -ExecutionPolicy Bypass -File tools\check_godot.ps1 -RequireGodot -FoundationSuite systems -TimeoutSec 300` - initial FAIL on the new review fixture shape, then PASS after `502b008`, report `.tmp\test_reports\20260707_232414_smoke\summary.json`.
+  - `powershell -ExecutionPolicy Bypass -File tools\check_godot.ps1 -RequireGodot -FoundationSuite ui -TimeoutSec 300` - PASS, report `.tmp\test_reports\20260707_232519_smoke\summary.json`.
+  - `powershell -ExecutionPolicy Bypass -File tools\check_godot.ps1 -RequireGodot -FoundationSuite contracts -TimeoutSec 420` - PASS, report `.tmp\test_reports\20260707_232658_smoke\summary.json`.
+  - `powershell -ExecutionPolicy Bypass -File tools\check_godot.ps1 -RequireGodot -FoundationSuite games -TimeoutSec 420` - PASS, report `.tmp\test_reports\20260707_232941_smoke\summary.json`.
+  - `powershell -ExecutionPolicy Bypass -File tools\check_godot.ps1 -RequireGodot -FoundationSuite pull_tabs -TimeoutSec 300` - PASS, report `.tmp\test_reports\20260707_233225_smoke\summary.json`.
+  - `powershell -ExecutionPolicy Bypass -File tools\collection_meta_check.ps1 -RequireGodot` - PASS.
+  - `powershell -ExecutionPolicy Bypass -File tools\foundation_determinism_probe.ps1 -RequireGodot -SeedCount 10 -SeedPrefix V04-REVIEW` - PASS, 10 seeds, 317 checkpoints, hash `4286288731`.
+  - `powershell -ExecutionPolicy Bypass -File tools\foundation_stuck_state_sweep.ps1 -RequireGodot -SeedCount 100` - PASS, stuck `0`.
+  - `powershell -ExecutionPolicy Bypass -File tools\foundation_performance_probe.ps1 -RequireGodot` - PASS.
+  - `powershell -ExecutionPolicy Bypass -File tools\environment_generation_audit.ps1 -RequireGodot` - PASS, 596 samples, 500 transitions, 0 failures.
+  - `powershell -ExecutionPolicy Bypass -File tools\web_perf_smoke.ps1` - PASS, report `.tmp\web_perf_smoke\report.summary.json`.
+- Deviations:
+  - The queue-level claim push was performed because `QUEUE.md` required it. The prompt's completion rule says do not push; completion commits after the claim were kept local.
+  - `v04_meta_home_environment_prompt.md` was recorded as owner-rejected/superseded rather than treated as standalone-current; its live contract was verified through the critical meta-home rework archive.
+
 # Agent Prompt - v0.4 Completed-Work Review And Confirmation Pass
 
 Copy everything below this line into the agent.
