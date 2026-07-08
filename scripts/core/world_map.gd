@@ -406,6 +406,8 @@ static func travel_target_ids(map_data: Dictionary, node_id: String = "", max_ne
 		if not target_id.is_empty() and not result.has(target_id):
 			result.append(target_id)
 	for candidate_value in enabled_old_candidates:
+		if result.size() >= total_limit:
+			break
 		var candidate: Dictionary = candidate_value
 		var target_id := str(candidate.get("id", ""))
 		if target_id.is_empty() or result.has(target_id):
@@ -419,6 +421,8 @@ static func travel_target_ids(map_data: Dictionary, node_id: String = "", max_ne
 		if not target_id.is_empty() and not result.has(target_id):
 			result.append(target_id)
 	for candidate_value in fallback_old_candidates:
+		if result.size() >= total_limit:
+			break
 		var candidate: Dictionary = candidate_value
 		var target_id := str(candidate.get("id", ""))
 		if not target_id.is_empty() and not result.has(target_id):

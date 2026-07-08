@@ -25,6 +25,8 @@ const PULL_TAB_UNIT_PRIZE_COUNTS := [
 ]
 const SORT_TICKET_ACTION := "sort_tab_ticket"
 const REDEEM_HOOK_ID := "ticket_redeemer"
+const CLERK_DIALOGUE_HOOK_ID := "pull_tab_clerk_dialogue"
+const CLERK_DIALOGUE_ID := "pull_tab_clerk"
 const REDEEM_ACTION_ID := "redeem_pull_tab_winners"
 const CHEAT_REDEMPTION_HEAT := 7
 const FAKE_TICKET_REDEMPTION_HEAT := 14
@@ -240,8 +242,8 @@ func environment_interactable_objects(run_state: RunState, environment: Dictiona
 	var winner_count := _array_size(machine.get("winner_pile", []))
 	var label := _redeemer_label(environment)
 	return [{
-		"id": "pull_tab_clerk_dialogue",
-		"object_id": "dialogue:pull_tab_clerk",
+		"id": CLERK_DIALOGUE_HOOK_ID,
+		"object_id": "dialogue:%s" % CLERK_DIALOGUE_ID,
 		"label": "Pull-Tab Clerk",
 		"short_description": "Answers quick questions about tabs.",
 		"enabled": true,
@@ -249,7 +251,7 @@ func environment_interactable_objects(run_state: RunState, environment: Dictiona
 		"effect_summary": "Tips, risk, route leads.",
 		"risk_summary": "Loose-ticket questions can draw heat.",
 		"cost_summary": "",
-		"dialogue_id": "pull_tab_clerk",
+		"dialogue_id": CLERK_DIALOGUE_ID,
 		"visual_key": "pull_tab_redeemer",
 		"visual_type": "service",
 		"icon_key": "clerk_chat",
@@ -1203,11 +1205,7 @@ func _generate_machine_state(_run_state: RunState, environment: Dictionary, rng_
 		"deals": deals,
 		"deal_template_count": _deal_templates().size(),
 		"item_state": item_state,
-		"environment_hooks": [{
-			"id": REDEEM_HOOK_ID,
-			"kind": "redeemer",
-			"label": "Pull-Tab Clerk",
-		}],
+		"environment_hooks": _default_environment_hooks(),
 		"tray_stack": [],
 		"ticket_stack": [],
 		"winner_pile": [],
@@ -2715,13 +2713,34 @@ func _dispense_event_array(value: Variant) -> Array:
 
 func _environment_hook_array(value: Variant) -> Array:
 	var hooks := _dictionary_array(value)
-	if hooks.is_empty():
-		return [{
-			"id": REDEEM_HOOK_ID,
-			"kind": "redeemer",
-			"label": "Pull-Tab Clerk",
-		}]
+	var defaults := _default_environment_hooks()
+	for default_value in defaults:
+		var default_hook: Dictionary = default_value
+		var default_id := str(default_hook.get("id", ""))
+		var found := false
+		for hook_value in hooks:
+			var hook: Dictionary = hook_value
+			if str(hook.get("id", "")) == default_id:
+				found = true
+				break
+		if not found:
+			hooks.append(default_hook.duplicate(true))
 	return hooks
+
+
+func _default_environment_hooks() -> Array:
+	return [{
+		"id": REDEEM_HOOK_ID,
+		"kind": "redeemer",
+		"label": "Pull-Tab Clerk",
+		"object_id": "game_hook:%s:%s" % [get_id(), REDEEM_HOOK_ID],
+	}, {
+		"id": CLERK_DIALOGUE_HOOK_ID,
+		"kind": "dialogue",
+		"label": "Pull-Tab Clerk",
+		"object_id": "dialogue:%s" % CLERK_DIALOGUE_ID,
+		"dialogue_id": CLERK_DIALOGUE_ID,
+	}]
 
 
 func _int_array(value: Variant) -> Array:

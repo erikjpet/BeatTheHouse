@@ -195,7 +195,7 @@ static func ensure_generated_layout(environment_data: Dictionary) -> Dictionary:
 	_assign_single_object_rect(object_rects, layout, "travel:leave", "travel", 0, "travel_spots", not _travel_target_ids(environment_data).is_empty(), active_object_ids)
 	_assign_string_object_rects(object_rects, layout, "service", _copy_array(environment_data.get("service_ids", [])), "service_spots", active_object_ids)
 	_assign_string_object_rects(object_rects, layout, "lender", _copy_array(environment_data.get("lender_hooks", [])), "lender_spots", active_object_ids)
-	_assign_string_object_rects(object_rects, layout, "game_hook", _game_hook_ids(environment_data), "game_hook_spots", active_object_ids)
+	_assign_object_layout_entries(object_rects, layout, _game_hook_layout_entries(environment_data), active_object_ids)
 	_assign_single_object_rect(object_rects, layout, "home_tenure:status", "home_tenure", 0, "home_tenure_spots", _home_tenure_should_exist(environment_data), active_object_ids)
 	_assign_single_object_rect(object_rects, layout, "home_storage:place", "home_storage", 0, "home_storage_spots", _home_storage_should_exist(environment_data), active_object_ids)
 	_assign_string_object_rects(object_rects, layout, "home_container", _home_container_ids(environment_data), "home_container_spots", active_object_ids)
@@ -427,6 +427,23 @@ static func _assign_string_object_rects(object_rects: Dictionary, layout: Dictio
 	var stable_ids := _string_array(ids)
 	for index in range(stable_ids.size()):
 		_assign_single_object_rect(object_rects, layout, "%s:%s" % [object_type, stable_ids[index]], object_type, index, spot_field, true, active_object_ids)
+
+
+static func _assign_object_layout_entries(object_rects: Dictionary, layout: Dictionary, entries: Array, active_object_ids: Dictionary) -> void:
+	for entry_value in entries:
+		if typeof(entry_value) != TYPE_DICTIONARY:
+			continue
+		var entry: Dictionary = entry_value
+		_assign_single_object_rect(
+			object_rects,
+			layout,
+			str(entry.get("object_id", "")),
+			str(entry.get("object_type", "")),
+			int(entry.get("index", 0)),
+			str(entry.get("spot_field", "")),
+			true,
+			active_object_ids
+		)
 
 
 # Assigns stable rects to generated item offers by item id.
@@ -765,7 +782,7 @@ static func _active_object_layout_entries(environment_data: Dictionary) -> Array
 		entries.append({"object_id": "travel:leave", "object_type": "travel", "index": 0, "spot_field": "travel_spots"})
 	_append_string_layout_entries(entries, "service", _copy_array(environment_data.get("service_ids", [])), "service_spots")
 	_append_string_layout_entries(entries, "lender", _copy_array(environment_data.get("lender_hooks", [])), "lender_spots")
-	_append_string_layout_entries(entries, "game_hook", _game_hook_ids(environment_data), "game_hook_spots")
+	entries.append_array(_game_hook_layout_entries(environment_data))
 	if _home_tenure_should_exist(environment_data):
 		entries.append({"object_id": "home_tenure:status", "object_type": "home_tenure", "index": 0, "spot_field": "home_tenure_spots"})
 	if _home_storage_should_exist(environment_data):
@@ -835,8 +852,12 @@ static func _active_object_ids(environment_data: Dictionary) -> Dictionary:
 		result["service:%s" % service_id] = true
 	for lender_id in _string_array(environment_data.get("lender_hooks", [])):
 		result["lender:%s" % lender_id] = true
-	for hook_id in _game_hook_ids(environment_data):
-		result["game_hook:%s" % hook_id] = true
+	for entry_value in _game_hook_layout_entries(environment_data):
+		if typeof(entry_value) != TYPE_DICTIONARY:
+			continue
+		var object_id := str((entry_value as Dictionary).get("object_id", ""))
+		if not object_id.is_empty():
+			result[object_id] = true
 	if _home_tenure_should_exist(environment_data):
 		result["home_tenure:status"] = true
 	if _home_storage_should_exist(environment_data):
@@ -854,7 +875,7 @@ static func _prune_inactive_object_rects(object_rects: Dictionary, active_object
 
 
 static func _is_managed_object_id(object_id: String) -> bool:
-	for prefix in ["game:", "event:", "item:", "shopkeeper:", "travel:", "service:", "lender:", "game_hook:", "home_tenure:", "home_storage:", "home_container:", "prestige:"]:
+	for prefix in ["game:", "event:", "item:", "shopkeeper:", "travel:", "service:", "lender:", "game_hook:", "dialogue:", "home_tenure:", "home_storage:", "home_container:", "prestige:"]:
 		if object_id.begins_with(prefix):
 			return true
 	return false
@@ -873,7 +894,7 @@ static func _travel_target_ids(environment_data: Dictionary) -> Array:
 	return result
 
 
-static func _game_hook_ids(environment_data: Dictionary) -> Array:
+static func _game_hook_layout_entries(environment_data: Dictionary) -> Array:
 	var result: Array = []
 	var game_states := _copy_dict(environment_data.get("game_states", {}))
 	for game_id in _string_array(environment_data.get("game_ids", [])):
@@ -883,9 +904,20 @@ static func _game_hook_ids(environment_data: Dictionary) -> Array:
 		for hook in _copy_array((machine as Dictionary).get("environment_hooks", [])):
 			if typeof(hook) != TYPE_DICTIONARY:
 				continue
-			var hook_id := str((hook as Dictionary).get("id", ""))
-			if not hook_id.is_empty():
-				result.append("%s:%s" % [game_id, hook_id])
+			var hook_data: Dictionary = hook
+			var hook_id := str(hook_data.get("id", ""))
+			if hook_id.is_empty():
+				continue
+			var object_id := str(hook_data.get("object_id", "")).strip_edges()
+			if object_id.is_empty():
+				var dialogue_id := str(hook_data.get("dialogue_id", "")).strip_edges()
+				object_id = "dialogue:%s" % dialogue_id if not dialogue_id.is_empty() else "game_hook:%s:%s" % [game_id, hook_id]
+			result.append({
+				"object_id": object_id,
+				"object_type": "game_hook",
+				"index": result.size(),
+				"spot_field": "game_hook_spots",
+			})
 	return result
 
 

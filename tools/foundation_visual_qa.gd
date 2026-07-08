@@ -1138,6 +1138,7 @@ func _try_item_card_flow(prepared_fixture: bool = false) -> void:
 	_require(item_bankroll_after < item_bankroll_before, "Item double-click did not apply item cost to bankroll.")
 	_require(_has_visible_text(app, "Bought") or _has_visible_text(app, item_label), "Item double-click did not show visible purchase/effect feedback.")
 	_cover("item_purchase_result")
+	await _verify_item_purchase_save_load(item_source_id)
 	_set_optional_hook_status("item", "passed", "Bought/applied a visible affordable item.", item_object)
 	_record_state("item_result_screen", "Bought/applied a visible item through environment double-click activation.")
 	_assert_objective_hud("item result")
@@ -1172,6 +1173,21 @@ func _try_item_card_flow(prepared_fixture: bool = false) -> void:
 			_require(serialized_before_disabled_item == _serialized_run_text(), "Double-clicking a disabled item mutated serialized RunState.")
 			_require(_disabled_reason_is_visible(disabled_reason), "Disabled item did not show a visible rejection reason.")
 			_cover("unaffordable_item_rejects")
+
+
+func _verify_item_purchase_save_load(item_source_id: String) -> void:
+	var saved_summary := _run_state_restore_summary(app.call("serialized_run_state"))
+	var saved_inventory: Array = saved_summary.get("inventory", []) as Array
+	_require(saved_inventory.has(item_source_id), "Purchased item was missing before item save/load verification.")
+	app.call("return_to_main_menu")
+	await _settle()
+	_require(_has_visible_button_contains("Continue"), "Main menu did not expose Continue after item purchase.")
+	_require(not _click_button_contains("Continue").is_empty(), "Could not load the item-purchase autosave through main-menu Continue.")
+	await _settle()
+	var loaded_summary := _run_state_restore_summary(app.call("serialized_run_state"))
+	var loaded_inventory: Array = loaded_summary.get("inventory", []) as Array
+	_require(JSON.stringify(loaded_inventory) == JSON.stringify(saved_inventory), "Main-menu Continue did not preserve purchased item inventory.")
+	_cover("item_save_load")
 
 
 func _first_nonterminal_item_object(canvas: Control) -> Dictionary:
