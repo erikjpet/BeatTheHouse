@@ -22,6 +22,7 @@ const MAX_SEVERE_FOCUS_AVG_MS := 45.0
 const MAX_FOCUS_CALL_MS := 10.0
 const FOCUS_PROBE_FRAMES := 18
 const MAX_FOCUS_OBJECTS_PER_SEED := 4
+const NEW_SURFACE_SAMPLE_FRAMES := 120
 const REQUIRED_GAME_IDS := [
 	"pull_tabs",
 	"slot",
@@ -55,6 +56,12 @@ const LOW_END_HEADROOM_WAIVERS := {
 		"web_gate": "tools/web_perf_smoke.ps1 slot_autoplay_active frame p95 budget",
 	},
 }
+const NEW_SURFACE_BUDGETS := {
+	"meta_home_idle": {"frame_p95_ms": 16.0, "sample_frames": NEW_SURFACE_SAMPLE_FRAMES},
+	"talk_dock_active": {"frame_p95_ms": 16.0, "sample_frames": NEW_SURFACE_SAMPLE_FRAMES},
+	"dialogue_active": {"frame_p95_ms": 16.0, "sample_frames": NEW_SURFACE_SAMPLE_FRAMES},
+	"eviction_map_transition": {"frame_p95_ms": 16.0, "sample_frames": NEW_SURFACE_SAMPLE_FRAMES},
+}
 
 var app: Control
 var failures: Array = []
@@ -65,6 +72,7 @@ var budget_headroom_checks: Array = []
 var renderer_coverage := {}
 var game_surface_coverage := {}
 var resolve_coverage := {}
+var new_surface_coverage := {}
 var slot_autoplay_checked := false
 var casino_slot_preview_checked := false
 var run_count := DEFAULT_RUN_COUNT
@@ -93,8 +101,10 @@ func _run() -> void:
 	await _probe_casino_slot_preview_coverage()
 	await _probe_game_resolve_budgets()
 	await _probe_synthetic_idle_surfaces()
+	await _probe_new_surface_budgets()
 	_assert_required_game_surface_coverage()
 	_assert_required_resolve_coverage()
+	_assert_required_new_surface_coverage()
 	_assert_low_end_budget_headroom()
 	_write_report()
 	_print_summary()
@@ -533,6 +543,154 @@ func _probe_synthetic_idle_surface_liveness(snapshot: Dictionary) -> void:
 	await _settle(1)
 
 
+func _probe_new_surface_budgets() -> void:
+	await _probe_meta_home_surface_budget()
+	await _probe_talk_dock_surface_budget()
+	await _probe_dialogue_surface_budget()
+	await _probe_eviction_map_transition_budget()
+
+
+func _probe_meta_home_surface_budget() -> void:
+	app.call("open_meta_home")
+	await _settle(8)
+	var environment_snapshot: Dictionary = app.call("current_environment_view_snapshot")
+	if str(environment_snapshot.get("kind", "")) != "home":
+		failures.append("New-surface performance probe did not enter meta home.")
+		return
+	var spatial_snapshot: Dictionary = app.call("current_spatial_interaction_snapshot")
+	if _array_size(spatial_snapshot.get("objects", [])) <= 0:
+		failures.append("Meta home performance probe did not expose walkable room objects.")
+	await _record_new_surface_phase("meta_home_idle", "Meta home idle")
+
+
+func _probe_talk_dock_surface_budget() -> void:
+	app.call("start_foundation_run", "%s-talk-dock" % seed_prefix)
+	await _settle(4)
+	var run_state: RunState = app.get("run_state")
+	var library: ContentLibrary = app.get("library")
+	if run_state == null or library == null:
+		failures.append("Talk dock performance probe could not access RunState or ContentLibrary.")
+		return
+	var event_id := "blackjack_counter_probe"
+	var event_definition := library.event(event_id)
+	if event_definition.is_empty():
+		failures.append("Talk dock performance probe could not find event %s." % event_id)
+		return
+	var environment := run_state.current_environment.duplicate(true)
+	environment["id"] = "perf_talk_table"
+	environment["archetype_id"] = "bar"
+	environment["kind"] = "bar"
+	environment["tier"] = 1
+	environment["game_ids"] = ["blackjack"]
+	environment["event_ids"] = []
+	environment["resolved_event_ids"] = []
+	run_state.set_environment(environment)
+	run_state.suspicion["level"] = 10
+	var context := {
+		"trigger": "table_approach",
+		"type": "table_approach",
+		"game_id": "blackjack",
+		"hands_played": 2,
+		"environment_snapshot": run_state.current_environment.duplicate(true),
+	}
+	var speaker := {
+		"role": "patron",
+		"name": "Mara",
+		"silhouette": "coat",
+		"bind": "table_patron",
+		"patron_index": 0,
+	}
+	var overrides: Dictionary = app.call("_triggered_entry_overrides", event_definition, speaker)
+	overrides["presentation"] = "talk"
+	if not run_state.enqueue_triggered_event(event_id, "perf_probe", context, overrides):
+		failures.append("Talk dock performance probe could not enqueue %s." % event_id)
+		return
+	app.call("_refresh")
+	await _settle(4)
+	var talk_snapshot: Dictionary = app.call("current_talk_dock_snapshot")
+	if not bool(talk_snapshot.get("visible", false)):
+		failures.append("Talk dock performance probe did not expose an active dock.")
+		return
+	await _record_new_surface_phase("talk_dock_active", "Talk dock active")
+
+
+func _probe_dialogue_surface_budget() -> void:
+	app.call("start_foundation_run", "%s-dialogue" % seed_prefix)
+	await _settle(4)
+	var run_state: RunState = app.get("run_state")
+	if run_state == null:
+		failures.append("Dialogue performance probe could not access RunState.")
+		return
+	var environment := run_state.current_environment.duplicate(true)
+	environment["id"] = "perf_dialogue_pull_tabs"
+	environment["archetype_id"] = "corner_store"
+	environment["kind"] = "shop"
+	environment["tier"] = 1
+	environment["game_ids"] = ["pull_tabs"]
+	environment["event_ids"] = []
+	environment["resolved_event_ids"] = []
+	environment["next_archetypes"] = ["bar"]
+	run_state.set_environment(environment)
+	if not bool(app.call("start_dialogue", "pull_tab_clerk", {})):
+		failures.append("Dialogue performance probe could not start pull_tab_clerk.")
+		return
+	await _settle(4)
+	var talk_snapshot: Dictionary = app.call("current_talk_dock_snapshot")
+	if not bool(talk_snapshot.get("visible", false)) or str(talk_snapshot.get("event_id", "")) != "dialogue:pull_tab_clerk":
+		failures.append("Dialogue performance probe did not expose pull_tab_clerk in the talk dock.")
+		return
+	await _record_new_surface_phase("dialogue_active", "Dialogue active")
+
+
+func _probe_eviction_map_transition_budget() -> void:
+	app.call("start_foundation_run", "%s-eviction-map" % seed_prefix)
+	await _settle(4)
+	var run_state: RunState = app.get("run_state")
+	if run_state == null:
+		failures.append("Eviction/map transition performance probe could not access RunState.")
+		return
+	run_state.begin_closing_time(run_state.current_environment, run_state.game_minute_of_day(), 0)
+	run_state.force_closing_time_travel()
+	app.call("_refresh")
+	var opened := bool(app.call("open_world_map", true))
+	await _settle(6)
+	var screen_snapshot: Dictionary = app.call("current_screen_snapshot")
+	if not opened or not bool(screen_snapshot.get("world_map_overlay_visible", false)):
+		failures.append("Eviction/map transition performance probe did not expose forced world-map travel.")
+		return
+	await _record_new_surface_phase("eviction_map_transition", "Eviction map transition")
+
+
+func _record_new_surface_phase(mode: String, label: String) -> void:
+	var budget := _dict(NEW_SURFACE_BUDGETS.get(mode, {}))
+	if budget.is_empty():
+		failures.append("New-surface performance probe has no budget for %s." % mode)
+		return
+	var sample_frames := maxi(1, int(budget.get("sample_frames", NEW_SURFACE_SAMPLE_FRAMES)))
+	var samples: Array = []
+	for _frame_index in range(sample_frames):
+		var start_usec := Time.get_ticks_usec()
+		await process_frame
+		samples.append(float(Time.get_ticks_usec() - start_usec) / 1000.0)
+	var stats := _timing_stats(samples)
+	var p95_budget := float(budget.get("frame_p95_ms", 0.0))
+	observations.append({
+		"seed": "new_surface:%s" % mode,
+		"run_index": -1,
+		"environment_id": str(app.call("current_environment_view_snapshot").get("id", "")) if app.has_method("current_environment_view_snapshot") else "",
+		"mode": mode,
+		"label": label,
+		"frames": sample_frames,
+		"avg_frame_ms": float(stats.get("avg_ms", 0.0)),
+		"p95_frame_ms": float(stats.get("p95_ms", 0.0)),
+		"max_frame_ms": float(stats.get("max_ms", 0.0)),
+		"budget": budget,
+	})
+	new_surface_coverage[mode] = int(new_surface_coverage.get(mode, 0)) + 1
+	if p95_budget > 0.0 and float(stats.get("p95_ms", 0.0)) > p95_budget:
+		failures.append("%s frame p95 %.3f ms exceeded %.3f ms." % [label, float(stats.get("p95_ms", 0.0)), p95_budget])
+
+
 func _synthetic_blackjack_idle_snapshot() -> Dictionary:
 	return {
 		"game_id": "blackjack",
@@ -597,6 +755,13 @@ func _assert_required_resolve_coverage() -> void:
 		var game_id := str(game_id_value)
 		if int(resolve_coverage.get(game_id, 0)) <= 0:
 			failures.append("Performance probe did not cover resolve path %s." % game_id)
+
+
+func _assert_required_new_surface_coverage() -> void:
+	for mode_value in NEW_SURFACE_BUDGETS.keys():
+		var mode := str(mode_value)
+		if int(new_surface_coverage.get(mode, 0)) <= 0:
+			failures.append("Performance probe did not cover new surface budget %s." % mode)
 
 
 func _assert_draw_budget(label: String, draw_p95_ms: float, draw_samples: int) -> void:
@@ -787,12 +952,14 @@ func _write_report() -> void:
 		"renderer_coverage": renderer_coverage,
 		"game_surface_coverage": game_surface_coverage,
 		"resolve_coverage": resolve_coverage,
+		"new_surface_coverage": new_surface_coverage,
 		"slot_autoplay_checked": slot_autoplay_checked,
 		"casino_slot_preview_checked": casino_slot_preview_checked,
 		"observations": observations,
 		"resolve_observations": resolve_observations,
 		"resolve_sample_count": resolve_sample_count,
 		"resolve_budgets": RESOLVE_BUDGETS,
+		"new_surface_budgets": NEW_SURFACE_BUDGETS,
 		"low_end_scale_factor": LOW_END_SCALE_FACTOR,
 		"low_end_frame_budget_ms": LOW_END_FRAME_BUDGET_MS,
 		"budget_headroom_checks": budget_headroom_checks,
@@ -815,6 +982,7 @@ func _print_summary() -> void:
 	print("Renderer coverage: %s" % JSON.stringify(renderer_coverage))
 	print("Game surface coverage: %s" % JSON.stringify(game_surface_coverage))
 	print("Resolve coverage: %s" % JSON.stringify(resolve_coverage))
+	print("New surface coverage: %s" % JSON.stringify(new_surface_coverage))
 	if failures.is_empty():
 		print("Foundation performance probe passed.")
 	else:

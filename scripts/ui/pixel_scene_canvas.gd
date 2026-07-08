@@ -163,6 +163,7 @@ func render_environment_snapshot(snapshot: Dictionary) -> void:
 	_update_drunk_distortion_overlay()
 	foundation_scene_objects = _objects_from_foundation_snapshot(foundation_snapshot)
 	_rebuild_scene_object_cache()
+	_prune_object_animation_phase_cache()
 	_clear_draw_text_caches()
 	icon_sprite_texture_cache = {}
 	if not selected_object_id.is_empty() and _scene_object(selected_object_id).is_empty():
@@ -2957,6 +2958,22 @@ func _object_animation_phase(object_data: Dictionary) -> float:
 		object_animation_phase_cache.clear()
 	object_animation_phase_cache[key] = phase
 	return phase
+
+
+func _prune_object_animation_phase_cache() -> void:
+	var active_keys := {}
+	for object_value in _active_scene_objects():
+		if typeof(object_value) != TYPE_DICTIONARY:
+			continue
+		var object_data: Dictionary = object_value
+		for key_field in ["id", "source_id", "icon_key"]:
+			var key := str(object_data.get(key_field, "")).strip_edges()
+			if not key.is_empty():
+				active_keys[key] = true
+	for key_value in object_animation_phase_cache.keys():
+		var key := str(key_value)
+		if not bool(active_keys.get(key, false)):
+			object_animation_phase_cache.erase(key)
 
 
 func _draw_item_prop(rect: Rect2, object_data: Dictionary, selected: bool, surface: String) -> void:

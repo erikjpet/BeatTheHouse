@@ -64,6 +64,7 @@ const MIN_NATIVE_TOUCH_TARGET_HEIGHT := 40.0
 const RUN_INVENTORY_POPUP_SIZE := Vector2(820, 500)
 const RUN_INVENTORY_POPUP_MARGIN := 12.0
 const RUN_INVENTORY_ITEM_CARD_SIZE := Vector2(118, 104)
+const WORLD_MAP_NODE_BUTTON_POOL_SIZE := 16
 const GAME_SURFACE_UI_PREFERENCE_KEYS := [
 	"selected_chip",
 	"selected_stake",
@@ -3103,6 +3104,8 @@ func _initialize_foundation() -> void:
 	library = ContentLibrary.new()
 	_mark_boot_event("content_library_load_start")
 	library.load()
+	AttributeBadgeRowScript.warm_all_glyphs(12)
+	AttributeBadgeRowScript.warm_all_glyphs(14)
 	_mark_boot_event("content_library_load_complete", library.load_timing_snapshot())
 	game_module_cache = {}
 	generator = RunGenerator.new(library)
@@ -4193,6 +4196,7 @@ func _build_world_map_overlay() -> void:
 	if world_map_nodes_layer.has_signal("layout_changed"):
 		world_map_nodes_layer.connect("layout_changed", Callable(self, "_on_world_map_canvas_layout_changed"))
 	map_holder.add_child(world_map_nodes_layer)
+	_ensure_world_map_node_button_pool()
 
 	var side := VBoxContainer.new()
 	side.add_theme_constant_override("separation", 8)
@@ -13369,10 +13373,14 @@ func _refresh_world_map_overlay_after_layout() -> void:
 func _clear_world_map_node_buttons() -> void:
 	if world_map_nodes_layer == null:
 		return
-	for child in world_map_nodes_layer.get_children():
-		if child is Button:
-			world_map_nodes_layer.remove_child(child)
-			child.queue_free()
+	for index in range(WORLD_MAP_NODE_BUTTON_POOL_SIZE):
+		var button := _world_map_pool_button(index)
+		if button == null:
+			continue
+		button.visible = false
+		button.disabled = true
+		button.tooltip_text = ""
+		button.set_meta("node_id", "")
 	world_map_button_ids = []
 	world_map_button_layout_size = Vector2(-1.0, -1.0)
 
@@ -13380,6 +13388,7 @@ func _clear_world_map_node_buttons() -> void:
 func _sync_world_map_node_buttons(snapshot: Dictionary) -> void:
 	if world_map_nodes_layer == null:
 		return
+	_ensure_world_map_node_button_pool()
 	var node_ids := _world_map_node_ids(snapshot)
 	var layer_size := _world_map_layer_size()
 	if node_ids != world_map_button_ids or layer_size != world_map_button_layout_size:
@@ -13415,6 +13424,8 @@ func _world_map_layer_size() -> Vector2:
 func _add_world_map_node_buttons(snapshot: Dictionary) -> void:
 	if world_map_nodes_layer == null:
 		return
+	_ensure_world_map_node_button_pool()
+	var index := 0
 	for node_value in _copy_array(snapshot.get("nodes", [])):
 		if typeof(node_value) != TYPE_DICTIONARY:
 			continue
@@ -13422,7 +13433,11 @@ func _add_world_map_node_buttons(snapshot: Dictionary) -> void:
 		var node_id := str(node.get("id", ""))
 		if node_id.is_empty():
 			continue
-		var button := _world_map_hit_button(Callable(self, "select_world_map_node").bind(node_id))
+		if index >= WORLD_MAP_NODE_BUTTON_POOL_SIZE:
+			break
+		var button := _world_map_pool_button(index)
+		if button == null:
+			continue
 		button.custom_minimum_size = Vector2(46, 46)
 		button.size = Vector2(46, 46)
 		button.position = _world_map_node_button_position(node_id, node) - button.size * 0.5
@@ -13430,13 +13445,15 @@ func _add_world_map_node_buttons(snapshot: Dictionary) -> void:
 		button.visible = in_view
 		button.disabled = not in_view
 		button.tooltip_text = str(node.get("label", node_id))
-		button.name = "WorldMapNode_%s" % node_id
-		world_map_nodes_layer.add_child(button)
+		button.set_meta("node_id", node_id)
+		index += 1
 
 
 func _position_world_map_node_buttons(snapshot: Dictionary) -> void:
 	if world_map_nodes_layer == null:
 		return
+	_ensure_world_map_node_button_pool()
+	var index := 0
 	for node_value in _copy_array(snapshot.get("nodes", [])):
 		if typeof(node_value) != TYPE_DICTIONARY:
 			continue
@@ -13444,7 +13461,9 @@ func _position_world_map_node_buttons(snapshot: Dictionary) -> void:
 		var node_id := str(node.get("id", ""))
 		if node_id.is_empty():
 			continue
-		var button := world_map_nodes_layer.get_node_or_null("WorldMapNode_%s" % node_id) as Button
+		if index >= WORLD_MAP_NODE_BUTTON_POOL_SIZE:
+			break
+		var button := _world_map_pool_button(index)
 		if button == null:
 			continue
 		button.position = _world_map_node_button_position(node_id, node) - button.size * 0.5
@@ -13452,6 +13471,8 @@ func _position_world_map_node_buttons(snapshot: Dictionary) -> void:
 		button.visible = in_view
 		button.disabled = not in_view
 		button.tooltip_text = str(node.get("label", node_id))
+		button.set_meta("node_id", node_id)
+		index += 1
 
 
 func _world_map_node_button_position(node_id: String, node: Dictionary) -> Vector2:
@@ -13580,6 +13601,38 @@ func _world_map_hit_button(callback: Callable) -> Button:
 	button.add_theme_stylebox_override("disabled", empty)
 	button.pressed.connect(callback)
 	return button
+
+
+func _ensure_world_map_node_button_pool() -> void:
+	if world_map_nodes_layer == null:
+		return
+	for index in range(WORLD_MAP_NODE_BUTTON_POOL_SIZE):
+		if _world_map_pool_button(index) != null:
+			continue
+		var button := _world_map_hit_button(Callable(self, "_on_world_map_pool_button_pressed").bind(index))
+		button.name = "WorldMapNodePool_%02d" % index
+		button.custom_minimum_size = Vector2(46, 46)
+		button.size = Vector2(46, 46)
+		button.visible = false
+		button.disabled = true
+		button.set_meta("node_id", "")
+		world_map_nodes_layer.add_child(button)
+
+
+func _world_map_pool_button(index: int) -> Button:
+	if world_map_nodes_layer == null:
+		return null
+	return world_map_nodes_layer.get_node_or_null("WorldMapNodePool_%02d" % index) as Button
+
+
+func _on_world_map_pool_button_pressed(index: int) -> void:
+	var button := _world_map_pool_button(index)
+	if button == null:
+		return
+	var node_id := str(button.get_meta("node_id", "")).strip_edges()
+	if node_id.is_empty():
+		return
+	select_world_map_node(node_id)
 
 
 func _world_map_node_flavor(node: Dictionary) -> String:

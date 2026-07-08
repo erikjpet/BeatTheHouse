@@ -8,6 +8,7 @@ signal layout_changed
 const ICON_SIZE := Vector2(28.0, 28.0)
 const MARKER_RADIUS := 17.0
 const BACKGROUND_PATH := "res://assets/art/map_backgrounds/cyberpunk_city_overhead.png"
+const MAP_ICON_DIR := "res://assets/art/map_icons"
 
 var snapshot: Dictionary = {}
 var icon_texture_cache: Dictionary = {}
@@ -19,6 +20,11 @@ var travel_edge_ids_cache: Array = []
 var enabled_travel_edge_ids_cache: Array = []
 var cached_layout_size := Vector2(-1.0, -1.0)
 var snapshot_signature := ""
+
+
+func _ready() -> void:
+	_background_texture()
+	_prewarm_map_icon_directory()
 
 
 func set_map_snapshot(map_snapshot: Dictionary) -> void:
@@ -371,15 +377,7 @@ func _background_texture() -> Texture2D:
 		path = BACKGROUND_PATH
 	if background_texture_cache.has(path):
 		return background_texture_cache[path] as Texture2D
-	if not ResourceLoader.exists(path):
-		var image := Image.new()
-		if image.load(path) != OK:
-			background_texture_cache[path] = null
-			return null
-		var image_texture := ImageTexture.create_from_image(image)
-		background_texture_cache[path] = image_texture
-		return image_texture
-	var texture := load(path) as Texture2D
+	var texture := _texture_for_path(path)
 	background_texture_cache[path] = texture
 	return texture
 
@@ -392,17 +390,33 @@ func _texture_for_node(node: Dictionary) -> Texture2D:
 		return null
 	if icon_texture_cache.has(path):
 		return icon_texture_cache[path] as Texture2D
+	var texture := _texture_for_path(path)
+	icon_texture_cache[path] = texture
+	return texture
+
+
+func _prewarm_map_icon_directory() -> void:
+	var directory := DirAccess.open(MAP_ICON_DIR)
+	if directory == null:
+		return
+	directory.list_dir_begin()
+	var file_name := directory.get_next()
+	while not file_name.is_empty():
+		if not directory.current_is_dir() and file_name.ends_with(".png"):
+			var path := "%s/%s" % [MAP_ICON_DIR, file_name]
+			if not icon_texture_cache.has(path):
+				icon_texture_cache[path] = _texture_for_path(path)
+		file_name = directory.get_next()
+	directory.list_dir_end()
+
+
+func _texture_for_path(path: String) -> Texture2D:
 	if not ResourceLoader.exists(path):
 		var image := Image.new()
 		if image.load(path) != OK:
-			icon_texture_cache[path] = null
 			return null
-		var image_texture := ImageTexture.create_from_image(image)
-		icon_texture_cache[path] = image_texture
-		return image_texture
-	var texture := load(path) as Texture2D
-	icon_texture_cache[path] = texture
-	return texture
+		return ImageTexture.create_from_image(image)
+	return ResourceLoader.load(path, "Texture2D", ResourceLoader.CACHE_MODE_IGNORE) as Texture2D
 
 
 static func _array_view(value: Variant) -> Array:
