@@ -790,24 +790,30 @@ func _ambient_surface_overlay_active() -> bool:
 	if reduce_motion:
 		return false
 	var overlay_id := str(state.get("surface_ambient_overlay", ""))
-	if overlay_id != "table_idle" and overlay_id != "roulette_full_idle":
-		return false
-	return _ambient_surface_overlay_needs_redraw()
+	if overlay_id == "table_idle" or overlay_id == "roulette_full_idle":
+		return _ambient_surface_overlay_needs_redraw()
+	return _screen_effect_overlay_needs_redraw()
 
 
 func _ambient_surface_overlay_needs_redraw() -> bool:
+	if _screen_effect_overlay_needs_redraw():
+		return true
 	if _surface_dynamic_overlay_channel_active():
 		return true
+	var overlay_id := str(state.get("surface_ambient_overlay", ""))
+	if overlay_id == "table_idle" or overlay_id == "roulette_full_idle":
+		return true
+	return bool(state.get("surface_animates_idle", false))
+
+
+func _screen_effect_overlay_needs_redraw() -> bool:
 	if int(state.get("suspicion_level", 0)) > 0:
 		return true
 	if drunk_distortion_overlay != null and drunk_distortion_overlay.visible:
 		return true
 	if drunk_effect_mode == "classic" and int(state.get("drunk_level", 0)) >= 12:
 		return true
-	var overlay_id := str(state.get("surface_ambient_overlay", ""))
-	if overlay_id == "table_idle" or overlay_id == "roulette_full_idle":
-		return true
-	return bool(state.get("surface_animates_idle", false))
+	return false
 
 
 func _surface_dynamic_overlay_channel_active() -> bool:

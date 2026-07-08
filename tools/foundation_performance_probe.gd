@@ -16,13 +16,7 @@ const LOW_END_SCALE_FACTOR := 10.2
 const LOW_END_FRAME_BUDGET_MS := 16.6
 const MAX_SURFACE_DRAW_P95_MS := 5.0
 const MAX_IDLE_SURFACE_DRAW_P95_MS := 1.5
-const IDLE_SURFACE_DRAW_WAIVERS := {
-	"Idle blackjack surface": {
-		"p95_ms": 1.9,
-		"reason": "Blackjack keeps dealer and patron ambient animation live while idle. This is above the 10.2x scaled headroom target but below the prior 0.3.1 2.0ms dev-box idle cap; LD.1 gates the exported path with the blackjack_idle web smoke row.",
-		"web_gate": "tools/web_perf_smoke.ps1 blackjack_idle frame p95 budget",
-	},
-}
+const IDLE_SURFACE_DRAW_WAIVERS := {}
 const MAX_SEVERE_IDLE_AVG_MS := 45.0
 const MAX_SEVERE_FOCUS_AVG_MS := 45.0
 const MAX_FOCUS_CALL_MS := 10.0
@@ -56,10 +50,6 @@ const RESOLVE_BUDGETS := {
 	"video_poker": {"avg_ms": 2.5, "p95_ms": 4.5, "max_ms": 5.0},
 }
 const LOW_END_HEADROOM_WAIVERS := {
-	"blackjack_idle_surface_draw_p95": {
-		"reason": "Blackjack keeps dealer and patron ambient animation live while idle. The dev-box waiver is capped at 1.9ms p95, and the LD.1 web smoke gates the exported WebGL path directly with the blackjack_idle scenario.",
-		"web_gate": "tools/web_perf_smoke.ps1 blackjack_idle frame p95 budget",
-	},
 	"slot_autoplay_draw_p95": {
 		"reason": "Active slot autoplay renderer is still above the 10.2x min-spec proxy headroom on the dev-box draw timer. The LD.1 web smoke gates the exported WebGL path directly while LD.2 keeps this as a release-gate row.",
 		"web_gate": "tools/web_perf_smoke.ps1 slot_autoplay_active frame p95 budget",
@@ -472,6 +462,10 @@ func _probe_synthetic_idle_surfaces() -> void:
 		var counters := _canvas_counters(canvas)
 		var renderer := str(snapshot.get("surface_renderer", ""))
 		var draw_samples := _array_size(counters.get("draw_frame_usec_samples", []))
+		var expects_idle_redraw := bool(snapshot.get("surface_animates_idle", false)) \
+			or not str(snapshot.get("surface_ambient_overlay", "")).is_empty() \
+			or int(snapshot.get("suspicion_level", 0)) > 0 \
+			or int(snapshot.get("drunk_level", 0)) >= 12
 		observations.append({
 			"seed": "synthetic:idle_surface",
 			"run_index": -1,
@@ -490,11 +484,14 @@ func _probe_synthetic_idle_surfaces() -> void:
 			"runtime_status_calls": int(counters.get("runtime_status_calls", 0)),
 			"idle_draw_budget_ms": MAX_IDLE_SURFACE_DRAW_P95_MS,
 		})
-		if draw_samples <= 0:
+		if expects_idle_redraw and draw_samples <= 0:
 			failures.append("Synthetic %s idle surface produced no draw samples." % renderer)
+		elif not expects_idle_redraw and draw_samples > 0:
+			failures.append("Synthetic %s static idle surface redrew %d time(s)." % [renderer, draw_samples])
 		canvas.queue_free()
 		await _settle(1)
-		await _probe_synthetic_idle_surface_liveness(snapshot)
+		if expects_idle_redraw:
+			await _probe_synthetic_idle_surface_liveness(snapshot)
 
 
 func _probe_synthetic_idle_surface_liveness(snapshot: Dictionary) -> void:
@@ -541,7 +538,7 @@ func _synthetic_blackjack_idle_snapshot() -> Dictionary:
 		"game_id": "blackjack",
 		"surface_renderer": "blackjack",
 		"surface_ambient_overlay": "",
-		"surface_animates_idle": true,
+		"surface_animates_idle": false,
 		"reduce_motion": false,
 		"dealer_profile": {"attention_base": 28, "blink_offset": 120},
 		"dealer_attention_pressure": 6,

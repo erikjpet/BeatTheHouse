@@ -287,7 +287,7 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 		"surface_stake_controls_required": false,
 		"surface_embeds_outcomes": true,
 		"surface_suppresses_game_result_burst": true,
-		"surface_animates_idle": true,
+		"surface_animates_idle": false,
 		"surface_ambient_overlay": "",
 		"surface_realtime_state_refresh": surface_motion_active,
 		"phase": phase,

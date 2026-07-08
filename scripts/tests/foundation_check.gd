@@ -8138,8 +8138,8 @@ func _check_roulette_surface_contract(game: GameModule, failures: Array, library
 		failures.append("Roulette surface did not route to the roulette renderer.")
 	if not bool(surface.get("surface_controls_native", false)):
 		failures.append("Roulette surface did not expose native table controls.")
-	if not bool(surface.get("surface_animates_idle", false)):
-		failures.append("Roulette betting surface must keep the full wheel alive on the main canvas.")
+	if bool(surface.get("surface_animates_idle", false)):
+		failures.append("Roulette betting surface must not redraw the full wheel for static idle animation.")
 	if not str(surface.get("surface_ambient_overlay", "")).is_empty():
 		failures.append("Roulette betting surface must not use the deprecated ambient overlay.")
 	if bool(surface.get("surface_realtime_state_refresh", false)):
@@ -8774,8 +8774,8 @@ func _check_baccarat_surface_contract(game: GameModule, failures: Array, library
 		failures.append("Baccarat betting surface did not expose realtime table-round timer state.")
 	if bool(surface.get("surface_realtime_state_refresh", false)):
 		failures.append("Baccarat static betting surface should not request full snapshot refreshes.")
-	if not bool(surface.get("surface_animates_idle", false)):
-		failures.append("Baccarat static betting surface should keep table idle animation on the main canvas.")
+	if bool(surface.get("surface_animates_idle", false)):
+		failures.append("Baccarat static betting surface should not redraw the full table for idle animation.")
 	if not str(surface.get("surface_ambient_overlay", "")).is_empty():
 		failures.append("Baccarat static betting surface must not use the deprecated ambient overlay.")
 	var guide_explainer: Dictionary = surface.get("baccarat_explainer", {}) if typeof(surface.get("baccarat_explainer", {})) == TYPE_DICTIONARY else {}
@@ -9327,8 +9327,8 @@ func _check_blackjack_surface_contract(game: GameModule, failures: Array) -> voi
 		failures.append("Blackjack surface did not expose native surface controls.")
 	if not bool(surface.get("can_deal", false)):
 		failures.append("Blackjack surface did not start in a deal-ready betting phase.")
-	if not bool(surface.get("surface_animates_idle", false)):
-		failures.append("Blackjack betting surface must keep table players and dealer alive on the main canvas.")
+	if bool(surface.get("surface_animates_idle", false)):
+		failures.append("Blackjack betting surface must not redraw table players and dealer for static idle animation.")
 	if not str(surface.get("surface_ambient_overlay", "")).is_empty():
 		failures.append("Blackjack betting surface must not use the deprecated ambient overlay.")
 	if bool(surface.get("surface_realtime_state_refresh", false)):
@@ -11758,8 +11758,8 @@ func _check_bar_dice_surface_contract(game: GameModule, failures: Array) -> void
 		failures.append("Bar Dice table surface did not expose timer/patron state.")
 	if bool(surface.get("surface_realtime_state_refresh", false)):
 		failures.append("Bar Dice static table surface should not request full snapshot refreshes.")
-	if not bool(surface.get("surface_animates_idle", false)):
-		failures.append("Bar Dice static table surface should keep table idle animation on the main canvas.")
+	if bool(surface.get("surface_animates_idle", false)):
+		failures.append("Bar Dice static table surface should not redraw the full table for idle animation.")
 	if not str(surface.get("surface_ambient_overlay", "")).is_empty():
 		failures.append("Bar Dice static table surface must not use the deprecated ambient overlay.")
 	if bool(surface.get("surface_stake_controls_required", true)):
