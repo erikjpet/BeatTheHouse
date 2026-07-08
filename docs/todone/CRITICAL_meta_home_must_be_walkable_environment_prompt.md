@@ -1,3 +1,22 @@
+## Execution Record
+
+- Completion date: 2026-07-07
+- Implementing commits: a0e11fb (claim), 80d4273 (walkable meta home implementation)
+- Verification gates:
+  - `powershell -ExecutionPolicy Bypass -File tools\validate_project.ps1` - PASS (`Beat the House foundation architecture validation passed.`)
+  - `powershell -ExecutionPolicy Bypass -File tools\check_godot.ps1 -RequireGodot -FoundationSuite ui -TimeoutSec 300` - PASS (`ui_scene_compile PASS`, report `D:\Projects\Beat-The-House\.tmp\test_reports\20260707_225618_smoke\summary.json`)
+  - `powershell -ExecutionPolicy Bypass -File tools\check_godot.ps1 -RequireGodot -FoundationSuite systems -TimeoutSec 300` - PASS (`foundation_systems PASS`, report `D:\Projects\Beat-The-House\.tmp\test_reports\20260707_225753_smoke\summary.json`)
+  - `powershell -ExecutionPolicy Bypass -File tools\foundation_determinism_probe.ps1 -RequireGodot -SeedCount 5 -SeedPrefix V04-METAHOME-REWORK` - PASS (5 seeds, 160 checkpoints, combined hash `478083386`)
+  - `Godot_v4.6-stable_win64_console.exe --path . --script res://tools/environment_layout_screenshots.gd -- --out=.tmp\meta_home_review --meta-home-review` - PASS (`META_HOME_LAYOUT_SURVEY_DONE`, screenshots listed below)
+- Screenshot evidence:
+  - `D:\Projects\Beat-The-House\.tmp\meta_home_review\back_alley.png`
+  - `D:\Projects\Beat-The-House\.tmp\meta_home_review\motel_room.png`
+  - `D:\Projects\Beat-The-House\.tmp\meta_home_review\apartment.png`
+  - `D:\Projects\Beat-The-House\.tmp\meta_home_review\house.png`
+  - `D:\Projects\Beat-The-House\.tmp\meta_home_review\pawn_shop.png`
+- Verified click path: open Home from the main menu, click a home container, click an unopened bag, click the apartment/house trade-up station, use the map prop to travel to the pawn shop, click the pawn sell counter, confirm a sale, then use the pawn shop exit/map prop to return home.
+- Deviations from prompt: none. The accepted backend was retained; the rejected full-screen collection browser is no longer the Home entry path.
+
 # Agent Prompt - CRITICAL: The Meta Home Must Be A Walkable Environment, Not A Menu
 
 Priority: **CRITICAL — top of queue. Execute before every other entry.**
