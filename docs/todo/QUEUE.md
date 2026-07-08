@@ -22,11 +22,10 @@ before new feature work proceeds.
 
 | # | Prompt | Status | Machine | Notes |
 | --- | --- | --- | --- | --- |
-| 1 | v04_worktree_baseline_and_gate_recovery_prompt.md | claimed (2026-07-08, Codex desktop) | any | Partition/commit current dirty tree, reconcile archived prompts, and establish a clean v0.4 baseline. |
-| 2 | web_audio_bridge_modernization_prompt.md | blocked until #1 | any (clean tree) | Code appears to contain the v4 `get_interface` bridge; finish the clean-tree web smoke/spike verdict and archive the existing prompt. |
-| 3 | v04_content_style_guide_and_copy_audit_prompt.md | blocked until #1 | any | Closes the old D6 content-style gap and audits release-path copy. |
-| 4 | v04_meta_home_environment_prompt.md | blocked until #1 | any | Owner-directed renovation superseding the former loadout + economy-polish prompts: walkable persistent home (alley→motel→apartment→house bought with gold), meta map travel, pawn-shop sell counter, homeless carry-everything rule, loadout injection + failure decay for normal runs only (daily/challenge isolated). |
-| 6 | profile_persistence_completion_prompt.md | blocked until #1 and #4 | any | Parked T5.3: run history, daily streaks, lifetime stats, challenge display, schema/atomic profile save. |
+| 2 | web_audio_bridge_modernization_prompt.md | ready | any (clean tree) | Code appears to contain the v4 `get_interface` bridge; finish the clean-tree web smoke/spike verdict and archive the existing prompt. |
+| 3 | v04_content_style_guide_and_copy_audit_prompt.md | ready | any | Closes the old D6 content-style gap and audits release-path copy. |
+| 4 | v04_meta_home_environment_prompt.md | ready | any | Owner-directed renovation superseding the former loadout + economy-polish prompts: walkable persistent home (alley→motel→apartment→house bought with gold), meta map travel, pawn-shop sell counter, homeless carry-everything rule, loadout injection + failure decay for normal runs only (daily/challenge isolated). |
+| 6 | profile_persistence_completion_prompt.md | blocked until #4 | any | Parked T5.3: run history, daily streaks, lifetime stats, challenge display, schema/atomic profile save. |
 | 7 | act_two_seam_prompt.md | blocked until #6 | any | Parked T8.1: save act marker, profile act seam, and route-specific victory hook replacing "not implemented yet". |
 | 8 | v04_final_balance_release_gate_prompt.md | blocked until #2-#7 | any | Final full gate, metrics, performance, soak, determinism, stuck-state, web smoke, and 60-run mouse batch. |
 | 9 | v04_release_docs_packaging_prompt.md | blocked until #8 | any | Version 0.4.0, README/checklist/changelog/publish copy, exports, checksums, web/windows smoke, butler dry-run. |

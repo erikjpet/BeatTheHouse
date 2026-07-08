@@ -1,3 +1,27 @@
+## Execution Record
+
+- Completion date: 2026-07-08.
+- Implementing commit hash(es):
+  - `32cd4c0` - claimed the queue entry and pushed the coordination update per `docs/todo/QUEUE.md`.
+  - `f968a03` - replaced the two narrower collection prompts with the owner-directed meta-home prompt, updated the v0.4 plan, and normalized one archived execution-record heading.
+  - `066e479` - recovered table-surface idle performance by stopping full-table redraws on static betting screens, moving pressure/drunk screen effects to the lightweight overlay path, and updating the performance probe/contracts.
+  - Final archive/queue commit: this commit.
+- Verification gates:
+  - `powershell -ExecutionPolicy Bypass -File tools\validate_project.ps1` -> PASS (`Beat the House foundation architecture validation passed.`).
+  - `powershell -ExecutionPolicy Bypass -File tools\check_godot.ps1 -RequireGodot -FoundationSuite ui -TimeoutSec 300` -> PASS, report `D:\Projects\Beat-The-House\.tmp\test_reports\20260707_195740_smoke\summary.json`.
+  - `powershell -ExecutionPolicy Bypass -File tools\check_godot.ps1 -RequireGodot -FoundationSuite systems -TimeoutSec 300` -> PASS, report `D:\Projects\Beat-The-House\.tmp\test_reports\20260707_195911_smoke\summary.json`.
+  - `powershell -ExecutionPolicy Bypass -File tools\check_godot.ps1 -RequireGodot -TimeoutSec 600` -> PASS, report `D:\Projects\Beat-The-House\.tmp\test_reports\20260707_200018_smoke\summary.json`.
+  - Supplemental direct probe: `powershell -ExecutionPolicy Bypass -File tools\foundation_performance_probe.ps1 -RequireGodot` -> initial FAIL on the stale table idle/synthetic contract, then PASS after the runtime/probe fix.
+- Dirty-tree inventory and decisions:
+  - Docs/queue cluster: `docs/plans/0.4_act1_completion_plan.md`, deleted `v04_meta_collection_loadout_prompt.md`, deleted `v04_meta_collection_economy_polish_prompt.md`, and new `v04_meta_home_environment_prompt.md` were committed as intentional queue maintenance in `f968a03`; the new prompt supersedes both deleted prompts.
+  - Archive-format cluster: `docs/todone/environment_semantic_layout_prompt.md` already had an execution record but used `# Execution Record`; normalized to `## Execution Record` in `f968a03`.
+  - Runtime/performance cluster: table games were still requesting continuous full-surface idle redraws; committed the root-cause recovery in `066e479`.
+  - No generated cruft, unowned WIP, or completed prompt files remained under `docs/todo/` after this closeout.
+- Notes and deviations:
+  - The previously archived `ui_scene_compile` crash did not reproduce; the UI suite passed twice during this task.
+  - One systems rerun was blocked by the concurrent-Godot guard after the first systems attempt left workspace Godot processes running (`PID 16160`, `PID 18876`); both were spawned during the gate window and were cleared before rerunning.
+  - The prompt says "Do not push" for the completed task; only the initial claim commit was pushed because `docs/todo/QUEUE.md` explicitly requires claim visibility before execution. Completion commits remain local.
+
 # Agent Prompt - v0.4 Worktree Baseline And Gate Recovery
 
 Copy everything below this line into the agent.
