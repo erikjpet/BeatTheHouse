@@ -22,7 +22,7 @@ before new feature work proceeds.
 
 | # | Prompt | Status | Machine | Notes |
 | --- | --- | --- | --- | --- |
-| 7c | v04_player_performance_pass_prompt.md | ready | any | Owner-directed player-style performance pass: instrumented full-session playthrough (meta home rooms → pawn shop → run with dialogue/talk/eviction live → slot autoplay → decay/drop/open), probe + web smoke + 60-min soak vs 0.3.2 ledger baselines, and adoption of enforced budgets for the new surfaces. Runs after #7b so review fixes do not contaminate baselines. |
+| 7c | v04_player_performance_pass_prompt.md | claimed (2026-07-07, DESKTOP-1950ULQ/Codex) | any | Owner-directed player-style performance pass: instrumented full-session playthrough (meta home rooms → pawn shop → run with dialogue/talk/eviction live → slot autoplay → decay/drop/open), probe + web smoke + 60-min soak vs 0.3.2 ledger baselines, and adoption of enforced budgets for the new surfaces. Runs after #7b so review fixes do not contaminate baselines. |
 | 8 | v04_final_balance_release_gate_prompt.md | blocked until #0-#7c | any | Final full gate, metrics, performance, soak, determinism, stuck-state, web smoke, and 60-run mouse batch. |
 | 9 | v04_release_docs_packaging_prompt.md | blocked until #8 | any | Version 0.4.0, README/checklist/changelog/publish copy, exports, checksums, web/windows smoke, butler dry-run. |
 | 10 | v04_publish_and_tag_prompt.md | blocked until #9; owner-launch only | PM machine (butler/gh credentials) | PUBLISHES the release: pre-publish audit, git push + v0.4.0 tag + GitHub release, butler upload to itch channels. Contains push/upload authority — only the owner may kick this off; loop agents must never self-select it. |
