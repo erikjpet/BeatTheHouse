@@ -8587,7 +8587,7 @@ func _victory_summary_snapshot() -> Dictionary:
 	message = _player_facing_text(message)
 	if message.strip_edges().is_empty():
 		message = "You beat the house for now."
-	var next_act_line := "Act 2 opens after this release."
+	var next_act_line := _victory_next_act_line(route)
 	var inventory_items := _inventory_view_list()
 	var debt_items := _debt_view_list()
 	var story_lines := _story_message_view_list()
@@ -8665,6 +8665,16 @@ func _terminal_score_lines(score_summary: Dictionary) -> Array:
 		"Run score: %d" % score,
 	]
 	return lines
+
+
+func _victory_next_act_line(route: String) -> String:
+	match route:
+		RunState.GRAND_CASINO_HIGH_ROLLER_EVENT_ID:
+			return "The Players Card opens quieter rooms. Your name is now on the list."
+		RunState.GRAND_CASINO_SHOWDOWN_ROUTE:
+			return "Rourke lets the elevator close. The house will remember your face."
+		_:
+			return "The house closes one door and leaves another cracked open."
 
 
 func _visited_environment_summary_lines() -> Array:
@@ -10870,6 +10880,10 @@ func _record_profile_run_result_once(terminal_result: Dictionary = {}) -> void:
 		return
 	if profile_inventory == null:
 		_initialize_profile_inventory()
+	if run_state.run_status == RunState.RUN_STATUS_ENDED:
+		var seam_payload: Dictionary = run_state.act_two_seam_payload()
+		if not seam_payload.is_empty():
+			profile_inventory.record_act_seam(seam_payload)
 	var record_result: Dictionary = profile_inventory.record_run_result(_profile_run_result_snapshot(terminal_result))
 	if not bool(record_result.get("ok", false)):
 		return

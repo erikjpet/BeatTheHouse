@@ -8,6 +8,8 @@ const VisualStyleScript := preload("res://scripts/ui/visual_style.gd")
 const UserSettingsScript := preload("res://scripts/core/user_settings.gd")
 const REPORT_PATH := "user://foundation_visual_qa_report.json"
 const TEST_SETTINGS_PATH := "user://settings_foundation_visual_qa.json"
+const TEST_META_COLLECTION_PATH := "user://foundation_visual_qa_meta_collection.json"
+const META_COLLECTION_PATH_ENV := "BTH_META_COLLECTION_PATH"
 const DEFAULT_VISUAL_QA_SEED := "FOUNDATION-VISUAL-QA"
 const CONTINUE_QA_SEED := "FOUNDATION-CONTINUE-QA"
 const BOARD_SIZE := Vector2(VisualStyleScript.ENVIRONMENT_BOARD_SIZE)
@@ -123,6 +125,7 @@ func _init() -> void:
 
 func _run() -> void:
 	_use_isolated_user_settings(TEST_SETTINGS_PATH)
+	_use_isolated_meta_collection_store(TEST_META_COLLECTION_PATH)
 	visual_qa_seed = _configured_visual_qa_seed()
 	report["seed"] = visual_qa_seed
 	await _open_fresh_app()
@@ -147,6 +150,7 @@ func _run() -> void:
 	_cover("release_menu_framing")
 	_cover("release_menu_no_game_test")
 	_set_seed_text(visual_qa_seed)
+	_select_new_run_home_type("motel_room")
 	_require(not _click_button_exact("New Run").is_empty(), "Could not click New Run through visible controls.")
 	_cover("new_run_button")
 	await _settle()
@@ -392,6 +396,36 @@ func _use_isolated_user_settings(path: String) -> void:
 		report["warnings"].append("Could not prepare isolated visual QA settings.")
 		_write_report()
 		quit(1)
+
+
+func _use_isolated_meta_collection_store(path: String) -> void:
+	OS.set_environment(META_COLLECTION_PATH_ENV, path)
+	var absolute := ProjectSettings.globalize_path(path)
+	if FileAccess.file_exists(absolute):
+		DirAccess.remove_absolute(absolute)
+	var directory_error := DirAccess.make_dir_recursive_absolute(absolute.get_base_dir())
+	if directory_error != OK:
+		return
+	var file := FileAccess.open(absolute, FileAccess.WRITE)
+	if file == null:
+		return
+	file.store_string(JSON.stringify({
+		"schema_version": 2,
+		"owned_instances": [],
+		"unopened_bags": [],
+		"gold_balance": 0,
+		"housing_tier": "motel_room",
+		"owned_containers": [{"item_id": "bag", "instance_id": 0, "capacity": 3}],
+		"loadout": [],
+		"meta_home": {"housing_tier": "motel_room", "current_location": "home"},
+		"trade_up_history": [],
+		"sale_history": [],
+		"pending_sale": {},
+		"pending_trade_up": {},
+		"meta_rng": {"seed": 904613, "state": 904613},
+		"next_instance_id": 1,
+	}, "\t"))
+	file.close()
 
 
 func _try_follow_visible_objective_once() -> bool:
@@ -851,7 +885,14 @@ func _verify_terminal_victory_summary_snapshot() -> void:
 	_require(not bool(screen_snapshot.get("has_game", true)), "Victory summary visual QA left a game surface active.")
 	var summary: Dictionary = app.call("current_victory_summary_snapshot")
 	_require(str(summary.get("route", "")) == RunState.GRAND_CASINO_HIGH_ROLLER_EVENT_ID, "Victory summary visual QA did not preserve the Players Card route.")
-	_require(str(summary.get("next_act_line", "")).find("not implemented") >= 0, "Victory summary visual QA did not expose the next-act message.")
+	_require(str(summary.get("next_act_line", "")).find("Players Card opens quieter rooms") >= 0, "Victory summary visual QA did not expose the Players Card Act 2 hook.")
+	fixture_run.narrative_flags["demo_victory_route"] = RunState.GRAND_CASINO_SHOWDOWN_ROUTE
+	fixture_run.narrative_flags["demo_victory_message"] = RunState.GRAND_CASINO_SHOWDOWN_DEFAULT_SUCCESS_MESSAGE
+	app.call("_refresh")
+	await _settle()
+	summary = app.call("current_victory_summary_snapshot")
+	_require(str(summary.get("route", "")) == RunState.GRAND_CASINO_SHOWDOWN_ROUTE, "Victory summary visual QA did not preserve the showdown route.")
+	_require(str(summary.get("next_act_line", "")).find("house will remember your face") >= 0, "Victory summary visual QA did not expose the showdown Act 2 hook.")
 	_require(_is_control_visible("victory_summary_panel"), "Victory summary panel is not visible.")
 	_require(not _is_control_visible("game_surface_canvas"), "Game surface remained visible over the victory summary.")
 	_cover("demo_victory")
@@ -1941,6 +1982,39 @@ func _set_seed_text(seed_text: String) -> void:
 			input.text_changed.emit(seed_text)
 			return
 	_require(false, "Could not find visible seed input.")
+
+
+func _select_new_run_home_type(preferred_home_id: String) -> void:
+	var snapshot: Dictionary = app.call("current_screen_snapshot")
+	var start_menu: Dictionary = snapshot.get("start_menu", {}) if typeof(snapshot.get("start_menu", {})) == TYPE_DICTIONARY else {}
+	var home_types: Array = start_menu.get("home_types", []) if typeof(start_menu.get("home_types", [])) == TYPE_ARRAY else []
+	var selected_home_id := ""
+	for home_value in home_types:
+		if typeof(home_value) != TYPE_DICTIONARY:
+			continue
+		var home_id := str((home_value as Dictionary).get("id", "")).strip_edges()
+		if home_id == preferred_home_id:
+			selected_home_id = home_id
+			break
+	if selected_home_id.is_empty():
+		for home_value in home_types:
+			if typeof(home_value) != TYPE_DICTIONARY:
+				continue
+			var home_id := str((home_value as Dictionary).get("id", "")).strip_edges()
+			if not home_id.is_empty() and home_id != RunState.HOME_SELECTION_RANDOM:
+				selected_home_id = home_id
+				break
+	_require(not selected_home_id.is_empty(), "Visual QA could not find a selectable home type.")
+	var option := app.get("home_type_option") as OptionButton
+	if option != null:
+		for index in range(option.item_count):
+			if str(option.get_item_metadata(index)) == selected_home_id:
+				option.select(index)
+				option.item_selected.emit(index)
+				return
+	app.set("selected_home_type_id", selected_home_id)
+	if app.has_method("_refresh_home_type_controls"):
+		app.call("_refresh_home_type_controls")
 
 
 func _assert_active_foundation_guardrails() -> void:

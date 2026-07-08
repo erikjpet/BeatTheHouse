@@ -59,6 +59,7 @@ func _save_payload(run_state: RunState, slot_id: String) -> Dictionary:
 	return {
 		"schema": SAVE_SCHEMA,
 		"version": SAVE_VERSION,
+		"act": run_state.act_marker(),
 		"slot_id": slot_id,
 		"run_state": run_state.to_dict(),
 	}
@@ -70,7 +71,10 @@ func _run_data_from_payload(payload: Dictionary) -> Dictionary:
 		var run_data: Variant = payload.get("run_state", {})
 		if typeof(run_data) != TYPE_DICTIONARY:
 			return {}
-		return (run_data as Dictionary).duplicate(true)
+		var copied_run_data := (run_data as Dictionary).duplicate(true)
+		if not copied_run_data.has("act"):
+			copied_run_data["act"] = maxi(1, int(payload.get("act", 1)))
+		return copied_run_data
 	if _looks_like_run_state(payload):
 		return payload.duplicate(true)
 	return {}

@@ -59,9 +59,9 @@ const GRAND_CASINO_STATE_VICTORY := "victory"
 const GRAND_CASINO_STATE_FAILURE := "failure"
 const GRAND_CASINO_SHOWDOWN_ROUTE := "pit_boss_showdown"
 const GRAND_CASINO_SHOWDOWN_STEP_PRESSURE := "pressure_choice"
-const GRAND_CASINO_SHOWDOWN_DEFAULT_SUCCESS_MESSAGE := "Rourke cannot prove enough to hold you. The casino lets you walk with your winnings; the next act is not implemented yet."
+const GRAND_CASINO_SHOWDOWN_DEFAULT_SUCCESS_MESSAGE := "Rourke cannot prove enough to hold you. The casino lets you walk with your winnings. Rourke lets the elevator close; the house will remember your face."
 const GRAND_CASINO_SHOWDOWN_DEFAULT_FAILURE_MESSAGE := "The story falls apart in the back room. The casino takes you out back and the run ends."
-const GRAND_CASINO_HIGH_ROLLER_DEFAULT_SUCCESS_MESSAGE := "The host issues you a Grand Casino Players Card and lets you leave with your winnings. The next act is not implemented yet."
+const GRAND_CASINO_HIGH_ROLLER_DEFAULT_SUCCESS_MESSAGE := "The host issues you a Grand Casino Players Card and lets you leave with your winnings. The Players Card opens quieter rooms; your name is now on the list."
 const TERMINAL_SCORE_VICTORY_MULTIPLIER := 3
 const HEAT_COOLDOWN_ACTIONS_FLAG := "heat_cooldown_actions"
 const HEAT_COOLDOWN_PER_ACTION_FLAG := "heat_cooldown_per_action"
@@ -202,6 +202,67 @@ func begin_act(p_act_index: int) -> void:
 		home_state = {"act_index": act_index}
 	else:
 		home_state["act_index"] = act_index
+
+
+func act_marker() -> int:
+	return maxi(1, act_index)
+
+
+func act_two_seam_payload() -> Dictionary:
+	if run_status != RUN_STATUS_ENDED or not bool(narrative_flags.get("demo_victory", false)):
+		return {}
+	var demo_route := str(narrative_flags.get("demo_victory_route", "")).strip_edges()
+	var seam_route := _act_seam_route(demo_route)
+	if seam_route.is_empty():
+		return {}
+	return {
+		"schema_version": 1,
+		"source_act": act_marker(),
+		"target_act": 2,
+		"victory_route": seam_route,
+		"demo_victory_route": demo_route,
+		"final_bankroll_band": act_seam_bankroll_band(bankroll),
+		"story_flags": story_flags.duplicate(true),
+		"route_payload": _act_seam_route_payload(seam_route),
+	}
+
+
+static func act_seam_bankroll_band(bankroll_value: int) -> String:
+	if bankroll_value < 50:
+		return "empty_pockets"
+	if bankroll_value < 150:
+		return "walking_money"
+	if bankroll_value < 400:
+		return "solid_winnings"
+	if bankroll_value < 800:
+		return "heavy_envelope"
+	return "house_money"
+
+
+func _act_seam_route(demo_route: String) -> String:
+	if demo_route == GRAND_CASINO_HIGH_ROLLER_EVENT_ID:
+		return "players_card_cashout"
+	if demo_route == GRAND_CASINO_SHOWDOWN_ROUTE:
+		return "showdown"
+	return ""
+
+
+func _act_seam_route_payload(seam_route: String) -> Dictionary:
+	match seam_route:
+		"players_card_cashout":
+			return {
+				"hook": "players_card_open_rooms",
+				"house_attention": "valued_guest",
+				"tone": "invited",
+			}
+		"showdown":
+			return {
+				"hook": "rourke_remembers",
+				"house_attention": "watched_exit",
+				"tone": "marked",
+			}
+		_:
+			return {}
 
 
 func selected_home_archetype_id() -> String:
@@ -4364,7 +4425,8 @@ func to_dict() -> Dictionary:
 		"simulation_msec": simulation_msec,
 		"game_clock_minutes": game_clock_minutes,
 		"closing_time_state": _normalize_closing_time_state(closing_time_state),
-		"act_index": act_index,
+		"act": act_marker(),
+		"act_index": act_marker(),
 		"home_state": _normalize_home_state(home_state),
 		"run_status": run_status,
 		"run_failure_reason": run_failure_reason,
@@ -4420,7 +4482,7 @@ func from_dict(data: Dictionary) -> void:
 	simulation_msec = maxi(0, int(data.get("simulation_msec", int(_copy_dict(data.get("event_cadence", {})).get("action_index", 0)) * SIMULATION_ACTION_MSEC)))
 	game_clock_minutes = maxi(0, int(data.get("game_clock_minutes", GAME_CLOCK_START_MINUTE)))
 	closing_time_state = _normalize_closing_time_state(_copy_dict(data.get("closing_time_state", {})))
-	act_index = maxi(0, int(data.get("act_index", 0)))
+	act_index = maxi(1, int(data.get("act", data.get("act_index", 1))))
 	home_state = _normalize_home_state(_copy_dict(data.get("home_state", {})))
 	var saved_run_status := str(data.get("run_status", RUN_STATUS_ACTIVE))
 	run_status = saved_run_status

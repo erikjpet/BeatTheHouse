@@ -1927,7 +1927,7 @@
     "payload": {
       "kind": "grand_casino_high_roller_cashout",
       "summary": "Claim boss access.",
-      "success_message": "The host issues you a Grand Casino Players Card and lets you leave with your winnings. The next act is not implemented yet.",
+      "success_message": "The host issues you a Grand Casino Players Card and lets you leave with your winnings. The Players Card opens quieter rooms; your name is now on the list.",
       "choices": [
         {
           "id": "high_roller_cashout",
@@ -1967,7 +1967,7 @@
     "payload": {
       "kind": "grand_casino_showdown",
       "summary": "Final house call.",
-      "success_message": "Rourke cannot prove enough to hold you. The casino lets you walk with your winnings; the next act is not implemented yet.",
+      "success_message": "Rourke cannot prove enough to hold you. The casino lets you walk with your winnings. Rourke lets the elevator close; the house will remember your face.",
       "failure_message": "The story falls apart in the back room. The casino takes you out back and the run ends.",
       "showdown_tuning": {
         "base_success_chance": 95,

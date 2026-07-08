@@ -5,7 +5,7 @@ extends RefCounted
 
 const INVENTORY_PATH := "user://profile_inventory.json"
 const INVENTORY_PATH_ENV := "BTH_PROFILE_INVENTORY_PATH"
-const SCHEMA_VERSION := 2
+const SCHEMA_VERSION := 3
 const RUN_HISTORY_LIMIT := 20
 const REFERENCE_CHIP_ID := "profile_poker_chip"
 const REFERENCE_CHIP := {
@@ -21,6 +21,7 @@ var challenge_completions: Dictionary = {}
 var run_history: Array = []
 var daily_runs: Dictionary = {}
 var lifetime_stats: Dictionary = {}
+var act_seam: Dictionary = {}
 var _unknown_fields: Dictionary = {}
 
 
@@ -58,24 +59,27 @@ func to_dict() -> Dictionary:
 	var data := _unknown_fields.duplicate(true)
 	data.merge({
 		"schema_version": SCHEMA_VERSION,
+		"act": 1,
 		"items": items.duplicate(true),
 		"challenge_completions": challenge_completions.duplicate(true),
 		"run_history": run_history.duplicate(true),
 		"daily_runs": daily_runs.duplicate(true),
 		"lifetime_stats": lifetime_stats.duplicate(true),
+		"act_seam": act_seam.duplicate(true),
 	}, true)
 	return data
 
 
 func from_dict(data: Dictionary) -> void:
 	_unknown_fields = data.duplicate(true)
-	for key in ["schema_version", "items", "challenge_completions", "completed_challenge_flags", "run_history", "daily_runs", "lifetime_stats"]:
+	for key in ["schema_version", "act", "items", "challenge_completions", "completed_challenge_flags", "run_history", "daily_runs", "lifetime_stats", "act_seam"]:
 		_unknown_fields.erase(key)
 	items = []
 	challenge_completions = _normalize_challenge_completions(data.get("challenge_completions", data.get("completed_challenge_flags", {})))
 	run_history = _normalize_run_history(data.get("run_history", []))
 	daily_runs = _normalize_daily_runs(data.get("daily_runs", {}))
 	lifetime_stats = _normalize_lifetime_stats(data.get("lifetime_stats", {}))
+	act_seam = _normalize_act_seam(data.get("act_seam", {}))
 	var loaded: Variant = data.get("items", [])
 	if typeof(loaded) != TYPE_ARRAY:
 		return
@@ -177,6 +181,14 @@ func record_run_result(snapshot: Dictionary) -> Dictionary:
 	_record_lifetime_stats(entry)
 	_record_daily_result(entry)
 	return {"ok": true, "entry": entry.duplicate(true)}
+
+
+func record_act_seam(payload: Dictionary) -> Dictionary:
+	var normalized := _normalize_act_seam(payload)
+	if normalized.is_empty():
+		return {"ok": false, "message": "Act seam payload was empty."}
+	act_seam = normalized
+	return {"ok": true, "act_seam": act_seam.duplicate(true)}
 
 
 func has_challenge_completion(completion_flag: String) -> bool:
@@ -353,6 +365,25 @@ static func _normalize_int_dictionary(value: Variant) -> Dictionary:
 			continue
 		result[key] = maxi(0, int(source.get(key_value, 0)))
 	return result
+
+
+static func _normalize_act_seam(value: Variant) -> Dictionary:
+	if typeof(value) != TYPE_DICTIONARY:
+		return {}
+	var source: Dictionary = value
+	var route := str(source.get("victory_route", source.get("route", ""))).strip_edges()
+	if route.is_empty():
+		return {}
+	return {
+		"schema_version": maxi(1, int(source.get("schema_version", 1))),
+		"source_act": maxi(1, int(source.get("source_act", source.get("act", 1)))),
+		"target_act": maxi(2, int(source.get("target_act", 2))),
+		"victory_route": route,
+		"demo_victory_route": str(source.get("demo_victory_route", "")).strip_edges(),
+		"final_bankroll_band": str(source.get("final_bankroll_band", "walking_money")).strip_edges(),
+		"story_flags": _copy_dict(source.get("story_flags", {})),
+		"route_payload": _copy_dict(source.get("route_payload", {})),
+	}
 
 
 static func _today_date_string() -> String:

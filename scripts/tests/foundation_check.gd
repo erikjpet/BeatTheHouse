@@ -746,15 +746,7 @@ func _check_release_copy_text(text: String, path: String, markers: Array, failur
 		failures.append("Release copy blocker marker '%s' found at %s: %s" % [marker, path, clean])
 
 
-func _release_copy_expected_followup(path: String, marker: String, text: String) -> bool:
-	if marker != "not implemented":
-		return false
-	if path == "res://data/events/events.json:high_roller_cashout.payload.success_message" or path == "res://data/events/events.json:the_house_calls.payload.success_message":
-		return true
-	if path == "res://scripts/core/run_state.gd:62" or path == "res://scripts/core/run_state.gd:64":
-		return true
-	if path == "res://scripts/ui/foundation_main.gd:8588" and text.find("The next act is not implemented yet.") >= 0:
-		return true
+func _release_copy_expected_followup(_path: String, _marker: String, _text: String) -> bool:
 	return false
 
 
@@ -2203,6 +2195,21 @@ func _check_profile_inventory_boundary(failures: Array) -> void:
 		failures.append("ProfileInventory did not merge lifetime game tallies.")
 	if not restored.to_dict().has("future_profile_field"):
 		failures.append("ProfileInventory did not preserve unknown profile keys.")
+	if int(restored.to_dict().get("act", 0)) != 1:
+		failures.append("ProfileInventory did not write the Act 1 profile marker.")
+	if not _copy_dict(restored.to_dict().get("act_seam", {})).is_empty():
+		failures.append("ProfileInventory old profile normalization should leave act_seam empty.")
+	var seam_result: Dictionary = restored.record_act_seam({
+		"source_act": 1,
+		"target_act": 2,
+		"victory_route": "players_card_cashout",
+		"demo_victory_route": RunStateScript.GRAND_CASINO_HIGH_ROLLER_EVENT_ID,
+		"final_bankroll_band": "heavy_envelope",
+		"story_flags": {"met_host": true},
+		"route_payload": {"hook": "players_card_open_rooms"},
+	})
+	if not bool(seam_result.get("ok", false)) or str(restored.act_seam.get("victory_route", "")) != "players_card_cashout":
+		failures.append("ProfileInventory did not record the Act 2 seam payload.")
 	var save_error := restored.save()
 	if save_error != OK:
 		failures.append("ProfileInventory atomic save failed with error %d." % int(save_error))
@@ -2233,8 +2240,46 @@ func _check_profile_inventory_boundary(failures: Array) -> void:
 	run_state.start_new("PROFILE-INVENTORY-BOUNDARY")
 	if run_state.to_dict().has("profile_inventory"):
 		failures.append("Profile inventory leaked into RunState serialization.")
+	var old_profile: ProfileInventory = ProfileInventoryScript.new()
+	old_profile.from_dict({"schema_version": 2, "items": []})
+	if int(old_profile.to_dict().get("act", 0)) != 1 or not _copy_dict(old_profile.to_dict().get("act_seam", {})).is_empty():
+		failures.append("ProfileInventory markerless profile did not normalize Act 1 with empty act_seam.")
+	_check_act_two_seam_payloads(failures)
 	_remove_profile_inventory_test_file()
 	OS.set_environment(ProfileInventoryScript.INVENTORY_PATH_ENV, "")
+
+
+func _check_act_two_seam_payloads(failures: Array) -> void:
+	var clean_run: RunState = RunStateScript.new()
+	clean_run.start_new("ACT-TWO-SEAM-CLEAN")
+	clean_run.begin_act(1)
+	clean_run.bankroll = 575
+	clean_run.story_flags["host_saw_clean_play"] = true
+	clean_run.narrative_flags["demo_victory"] = true
+	clean_run.narrative_flags["demo_victory_route"] = RunStateScript.GRAND_CASINO_HIGH_ROLLER_EVENT_ID
+	clean_run.run_status = RunStateScript.RUN_STATUS_ENDED
+	var clean_payload := clean_run.act_two_seam_payload()
+	if str(clean_payload.get("victory_route", "")) != "players_card_cashout" or str(clean_payload.get("final_bankroll_band", "")) != "heavy_envelope":
+		failures.append("Act 2 seam clean victory payload did not record route and bankroll band.")
+	if not bool(_copy_dict(clean_payload.get("story_flags", {})).get("host_saw_clean_play", false)):
+		failures.append("Act 2 seam clean victory payload did not carry story flags.")
+	var showdown_run: RunState = RunStateScript.new()
+	showdown_run.start_new("ACT-TWO-SEAM-SHOWDOWN")
+	showdown_run.begin_act(1)
+	showdown_run.bankroll = 45
+	showdown_run.narrative_flags["demo_victory"] = true
+	showdown_run.narrative_flags["demo_victory_route"] = RunStateScript.GRAND_CASINO_SHOWDOWN_ROUTE
+	showdown_run.run_status = RunStateScript.RUN_STATUS_ENDED
+	var showdown_payload := showdown_run.act_two_seam_payload()
+	if str(showdown_payload.get("victory_route", "")) != "showdown" or str(showdown_payload.get("final_bankroll_band", "")) != "empty_pockets":
+		failures.append("Act 2 seam showdown victory payload did not record route and bankroll band.")
+	if JSON.stringify(_copy_dict(clean_payload.get("route_payload", {}))) == JSON.stringify(_copy_dict(showdown_payload.get("route_payload", {}))):
+		failures.append("Act 2 seam route payloads were not distinct.")
+	var failure_run: RunState = RunStateScript.new()
+	failure_run.start_new("ACT-TWO-SEAM-FAILURE")
+	failure_run.fail_run(RunStateScript.FAILURE_BANKROLL_ZERO)
+	if not failure_run.act_two_seam_payload().is_empty():
+		failures.append("Act 2 seam failure route wrote a cross-act payload.")
 
 
 func _profile_result_fixture(outcome: String, route: String, completed_date: String, final_bankroll: int, games_played: Dictionary, mode: String = "standard", daily_id: String = "") -> Dictionary:
@@ -18855,9 +18900,13 @@ func _check_save_load_030_compat_fixture(library: ContentLibrary, failures: Arra
 	var run_data: Dictionary = run_data_value
 	if not run_data.has("legacy_unknown_root"):
 		failures.append("SB.3 0.3.0 save fixture no longer covers unknown root-key tolerance.")
+	if int(run_data.get("act", 0)) != 1:
+		failures.append("SB.3 0.3.0 save compatibility did not add the Act 1 marker.")
 	var restored: RunState = RunStateScript.new()
 	restored.from_dict(run_data)
 	var normalized := restored.to_dict()
+	if int(restored.act_index) != 1 or int(normalized.get("act", 0)) != 1:
+		failures.append("SB.3 0.3.0 markerless save did not load as Act 1.")
 	if normalized.has("legacy_unknown_root"):
 		failures.append("SB.3 0.3.0 save compatibility kept an unknown RunState root key.")
 	var second: RunState = RunStateScript.new()

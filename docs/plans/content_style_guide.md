@@ -124,10 +124,9 @@ Terminal copy should state the ending and preserve the run story:
 - Failure: name the cause without a lecture.
 - Keep future-act seams deliberate and non-placeholder.
 
-Known follow-up: the current Act 2 seam still uses "The next act is not
-implemented yet." in Grand Casino success copy. `act_two_seam_prompt.md` owns
-replacing that release-path text; this guide and the foundation check tolerate
-only those known seam fields until that prompt lands.
+The Act 2 seam is deliberately diegetic: Players Card victories imply opened
+doors, while showdown victories imply Rourke remembers the player. Release copy
+checks no longer tolerate "not implemented" text in Grand Casino success paths.
 
 ## Simulated-Gambling Safety Copy
 

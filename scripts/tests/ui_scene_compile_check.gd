@@ -4338,8 +4338,8 @@ func _run() -> void:
 		push_error("Victory screen did not present the Players Card victory route.")
 		quit(1)
 		return
-	if not _has_visible_text(app, "The next act is not implemented yet."):
-		push_error("Victory screen did not present the next-act message.")
+	if not _has_visible_text(app, "The Players Card opens quieter rooms. Your name is now on the list."):
+		push_error("Victory screen did not present the Players Card Act 2 hook.")
 		quit(1)
 		return
 	if not _has_visible_text(app, "Victory multiplier: x3") or not _has_visible_text(app, "Run score: %d" % (expected_victory_score_spending * 3)):
