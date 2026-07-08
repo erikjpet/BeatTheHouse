@@ -1,4 +1,29 @@
-# Agent Prompt — Profile & Out-of-Run Persistence Completion (parked T5.3)
+## Execution Record - 2026-07-07 Codex desktop
+
+Implemented profile and out-of-run persistence completion for parked T5.3.
+
+Commits:
+
+- Claim: `46c1455` (`Claim profile persistence completion task`)
+- Implementation: `9862671` (`Complete profile persistence`)
+
+Summary:
+
+- Upgraded `ProfileInventory` to schema v2 with atomic writes, corrupt-file defaults, normalize-on-load, an isolated test path override, and unknown-key preservation aligned with `MetaCollectionService`.
+- Added profile run history, daily streak/best-result tracking, lifetime totals, route victory counts, bankroll won/lost, biggest single win, and games-played tallies.
+- Recorded run-local game tallies through `RunState` from `GameModule.apply_result`, then wrote profile history once at terminal victory/failure routing in `FoundationMain`.
+- Extended the main-menu profile page with summary, completed challenges, recent run history, and the existing stash/collections sections.
+- Added systems/UI coverage for profile round trips, terminal-route history entries, corrupt profile fallback, daily streak gap/same-day behavior, challenge rows, and profile page sections.
+
+Verification:
+
+- `powershell -ExecutionPolicy Bypass -File tools\validate_project.ps1` PASS.
+- `powershell -ExecutionPolicy Bypass -File tools\check_godot.ps1 -RequireGodot -FoundationSuite systems -TimeoutSec 300` PASS (`foundation_systems` 17234ms).
+- `powershell -ExecutionPolicy Bypass -File tools\check_godot.ps1 -RequireGodot -FoundationSuite ui -TimeoutSec 300` PASS (`ui_scene_compile` 52178ms).
+
+Deviations:
+
+- The queue claim commit was kept local instead of pushed because the prompt's done gate says commit locally and do not push, and the branch already contained the prior local task commit.
 
 Copy everything below this line into the agent.
 
