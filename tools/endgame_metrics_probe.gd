@@ -10,6 +10,9 @@ const RunStateScript := preload("res://scripts/core/run_state.gd")
 const RunActionServiceScript := preload("res://scripts/core/run_action_service.gd")
 const EventModuleScript := preload("res://scripts/core/event_module.gd")
 const WorldMapScript := preload("res://scripts/core/world_map.gd")
+const MetaCollectionServiceScript := preload("res://scripts/core/meta_collection_service.gd")
+const CollectionDropServiceScript := preload("res://scripts/core/collection_drop_service.gd")
+const CollectionItemResolverScript := preload("res://scripts/core/collection_item_resolver.gd")
 
 const DEFAULT_SEEDS_PER_SCENARIO := 2
 const DEFAULT_SEED_PREFIX := "ACT1-BALANCE"
@@ -212,8 +215,16 @@ func _simulate_run(run_index: int, scenario: Dictionary, seed: String, max_actio
 	var challenge_config := RunStateScript.standard_challenge(seed)
 	if not challenge_id.is_empty():
 		challenge_config = library.challenge_config_for(challenge_id, seed)
+	var collection_context := _collection_context_for_run(seed, challenge_id)
+	if bool(collection_context.get("enabled", false)):
+		var challenge_modifiers := _dict(challenge_config.get("modifiers", {}))
+		var collection_modifiers := _dict(collection_context.get("modifiers", {}))
+		for key_value in collection_modifiers.keys():
+			challenge_modifiers[str(key_value)] = collection_modifiers[key_value]
+		challenge_config["modifiers"] = challenge_modifiers
 	var run_state: RunState = RunStateScript.new()
 	run_state.start_new(seed, challenge_config)
+	_apply_collection_loadout_to_run(run_state, collection_context)
 	generator.next_environment(run_state)
 
 	var run := {
@@ -235,6 +246,14 @@ func _simulate_run(run_index: int, scenario: Dictionary, seed: String, max_actio
 		"service_uses": 0,
 		"item_purchases": 0,
 		"events_resolved": 0,
+		"collection_enabled": bool(collection_context.get("enabled", false)),
+		"collection_loadout_count": _array(_dict(collection_context.get("modifiers", {})).get("meta_collection_loadout", [])).size(),
+		"collection_carried_count": _array(_dict(collection_context.get("modifiers", {})).get("meta_collection_carried_instance_ids", [])).size(),
+		"collection_pending_bag_markers": 0,
+		"collection_bags_granted": 0,
+		"collection_decay_count": 0,
+		"collection_store_unopened_bags": 0,
+		"collection_engaged": false,
 		"showdown_attempted": false,
 		"showdown_won": false,
 		"showdown_success_chance": 0,
@@ -300,8 +319,78 @@ func _simulate_run(run_index: int, scenario: Dictionary, seed: String, max_actio
 		_count_action(run, "idle")
 		_record_curve(run, run_state, "idle")
 
+	_finalize_collection_engagement(run, run_state, collection_context)
 	_finalize_run(run, run_state)
 	return run
+
+
+func _collection_context_for_run(seed: String, challenge_id: String) -> Dictionary:
+	if not challenge_id.strip_edges().is_empty():
+		return {"enabled": false, "modifiers": {}}
+	var service: Variant = MetaCollectionServiceScript.new()
+	var resolver: Variant = CollectionItemResolverScript.new()
+	var definitions: Array = resolver.item_definitions()
+	if definitions.is_empty():
+		warnings.append("Collection engagement metrics skipped starter item: no collection item definitions.")
+		return {"enabled": false, "modifiers": {}}
+	var definition := _dict(definitions[0])
+	var itemdef_id := int(definition.get("itemdef_id", -1))
+	if itemdef_id < 0:
+		warnings.append("Collection engagement metrics skipped starter item: invalid itemdef id.")
+		return {"enabled": false, "modifiers": {}}
+	service.grant_instance(resolver.roll_instance(itemdef_id, "%s|metrics_collection_loadout" % seed))
+	var modifiers: Dictionary = service.normal_run_start_modifiers()
+	return {
+		"enabled": true,
+		"service": service,
+		"modifiers": modifiers,
+	}
+
+
+func _apply_collection_loadout_to_run(run_state: RunState, collection_context: Dictionary) -> void:
+	if run_state == null or not bool(collection_context.get("enabled", false)):
+		return
+	var modifiers := _dict(collection_context.get("modifiers", {}))
+	for item_value in _array(modifiers.get("meta_collection_loadout", [])):
+		if typeof(item_value) != TYPE_DICTIONARY:
+			continue
+		var item: Dictionary = item_value
+		var item_id := str(item.get("id", "")).strip_edges()
+		if item_id.is_empty():
+			continue
+		if not run_state.inventory.has(item):
+			run_state.inventory.append(item.duplicate(true))
+
+
+func _finalize_collection_engagement(run: Dictionary, run_state: RunState, collection_context: Dictionary) -> void:
+	if run_state == null or not bool(collection_context.get("enabled", false)):
+		run["collection_engaged"] = false
+		return
+	var service: Variant = collection_context.get("service", null)
+	if service == null:
+		run["collection_engaged"] = false
+		return
+	var modifiers := _dict(collection_context.get("modifiers", {}))
+	var carried_ids := _array(modifiers.get("meta_collection_carried_instance_ids", []))
+	run["collection_loadout_count"] = _array(modifiers.get("meta_collection_loadout", [])).size()
+	run["collection_carried_count"] = carried_ids.size()
+	if run_state.run_status == RunState.RUN_STATUS_FAILED and not bool(run_state.narrative_flags.get(MetaCollectionServiceScript.FAILURE_DECAY_FLAG, false)):
+		var decayed: Array = service.apply_failure_decay(carried_ids, "%s|failure" % run_state.seed_text)
+		run["collection_decay_count"] = decayed.size()
+		run_state.narrative_flags[MetaCollectionServiceScript.FAILURE_DECAY_FLAG] = true
+	var drop_service: Variant = CollectionDropServiceScript.new()
+	var markers: Array = drop_service.ensure_run_end_pending_bags(run_state, null)
+	var flush_result: Dictionary = drop_service.flush_pending_bags(run_state, service)
+	var granted := _array(flush_result.get("granted", []))
+	run["collection_pending_bag_markers"] = markers.size()
+	run["collection_bags_granted"] = granted.size()
+	run["collection_store_unopened_bags"] = _array(service.unopened_bags()).size()
+	run["collection_engaged"] = (
+		int(run.get("collection_loadout_count", 0)) > 0
+		or int(run.get("collection_pending_bag_markers", 0)) > 0
+		or int(run.get("collection_bags_granted", 0)) > 0
+		or int(run.get("collection_decay_count", 0)) > 0
+	)
 
 
 func _try_claim_or_resolve_endgame(run_state: RunState, run: Dictionary) -> bool:
@@ -1217,12 +1306,22 @@ func _build_aggregate(runs: Array, seeds_per_scenario: int, seed_prefix: String)
 	var tier2_runs: Array = []
 	var lender_runs: Array = []
 	var showdown_runs: Array = []
+	var collection_runs: Array = []
 	var minutes: Array = []
+	var collection_loadout_item_total := 0
+	var collection_bag_grant_total := 0
+	var collection_decay_item_total := 0
+	var collection_terminal_drop_runs := 0
 	for run_value in runs:
 		if typeof(run_value) != TYPE_DICTIONARY:
 			continue
 		var run: Dictionary = run_value
 		minutes.append(float(run.get("estimated_minutes", 0.0)))
+		collection_loadout_item_total += int(run.get("collection_loadout_count", 0))
+		collection_bag_grant_total += int(run.get("collection_bags_granted", 0))
+		collection_decay_item_total += int(run.get("collection_decay_count", 0))
+		if int(run.get("collection_bags_granted", 0)) > 0:
+			collection_terminal_drop_runs += 1
 		if bool(run.get("won", false)):
 			var route := str(run.get("victory_route", "unknown"))
 			victory_routes[route] = int(victory_routes.get(route, 0)) + 1
@@ -1247,6 +1346,8 @@ func _build_aggregate(runs: Array, seeds_per_scenario: int, seed_prefix: String)
 			lender_runs.append(run)
 		if bool(run.get("showdown_attempted", false)):
 			showdown_runs.append(run)
+		if bool(run.get("collection_engaged", false)):
+			collection_runs.append(run)
 	for scenario_value in SCENARIOS:
 		var scenario: Dictionary = scenario_value
 		var scenario_id := str(scenario.get("id", ""))
@@ -1277,6 +1378,13 @@ func _build_aggregate(runs: Array, seeds_per_scenario: int, seed_prefix: String)
 		"lender_engagement_rate": _rate(lender_runs.size(), total_count),
 		"challenge_engagement_count": challenge_runs.size(),
 		"challenge_engagement_rate": _rate(challenge_runs.size(), total_count),
+		"collection_engagement_count": collection_runs.size(),
+		"collection_engagement_rate": _rate(collection_runs.size(), total_count),
+		"collection_loadout_item_total": collection_loadout_item_total,
+		"collection_bag_grant_total": collection_bag_grant_total,
+		"collection_decay_item_total": collection_decay_item_total,
+		"collection_terminal_drop_runs": collection_terminal_drop_runs,
+		"collection_split": _summary_row(collection_runs, "collection_engaged"),
 		"showdown_attempts": showdown_runs.size(),
 		"showdown_wins": showdown_wins,
 		"showdown_win_rate": _rate(showdown_wins, showdown_runs.size()),
@@ -1293,6 +1401,9 @@ func _summary_row(runs: Array, label: String) -> Dictionary:
 	var cheat_actions := 0
 	var lender_uses := 0
 	var tier2_visits := 0
+	var collection_loadout_items := 0
+	var collection_bags_granted := 0
+	var collection_decayed_items := 0
 	for run_value in runs:
 		if typeof(run_value) != TYPE_DICTIONARY:
 			continue
@@ -1303,6 +1414,9 @@ func _summary_row(runs: Array, label: String) -> Dictionary:
 		cheat_actions += int(run.get("cheat_actions", 0))
 		lender_uses += int(run.get("lender_uses", 0))
 		tier2_visits += int(run.get("tier2_visits", 0))
+		collection_loadout_items += int(run.get("collection_loadout_count", 0))
+		collection_bags_granted += int(run.get("collection_bags_granted", 0))
+		collection_decayed_items += int(run.get("collection_decay_count", 0))
 	var run_count := runs.size()
 	return {
 		"label": label,
@@ -1317,6 +1431,9 @@ func _summary_row(runs: Array, label: String) -> Dictionary:
 		"cheat_actions": cheat_actions,
 		"lender_uses": lender_uses,
 		"tier2_visits": tier2_visits,
+		"collection_loadout_items": collection_loadout_items,
+		"collection_bags_granted": collection_bags_granted,
+		"collection_decayed_items": collection_decayed_items,
 	}
 
 
@@ -1414,15 +1531,22 @@ func _write_markdown(path: String, report: Dictionary) -> void:
 	lines.append("- Tier-2 usage: %.2f" % float(aggregate.get("tier2_usage_rate", 0.0)))
 	lines.append("- Lender engagement: %.2f" % float(aggregate.get("lender_engagement_rate", 0.0)))
 	lines.append("- Challenge engagement: %.2f" % float(aggregate.get("challenge_engagement_rate", 0.0)))
+	lines.append("- Collection engagement: %.2f (%d runs, %d loadout items, %d bags granted, %d decayed items)" % [
+		float(aggregate.get("collection_engagement_rate", 0.0)),
+		int(aggregate.get("collection_engagement_count", 0)),
+		int(aggregate.get("collection_loadout_item_total", 0)),
+		int(aggregate.get("collection_bag_grant_total", 0)),
+		int(aggregate.get("collection_decay_item_total", 0)),
+	])
 	lines.append("- Showdown win rate: %.2f (%d/%d)" % [float(aggregate.get("showdown_win_rate", 0.0)), int(aggregate.get("showdown_wins", 0)), int(aggregate.get("showdown_attempts", 0))])
 	lines.append("")
 	lines.append("## Scenario Summary")
 	lines.append("")
-	lines.append("| Scenario | Runs | Victory % | Loss % | Median min | Median bankroll | Median heat | Cheats | Lenders | Tier-2 visits |")
-	lines.append("|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|")
+	lines.append("| Scenario | Runs | Victory % | Loss % | Median min | Median bankroll | Median heat | Cheats | Lenders | Tier-2 visits | Collection loadout | Bags granted |")
+	lines.append("|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|")
 	for row_value in _array(aggregate.get("scenario_summaries", [])):
 		var row: Dictionary = _dict(row_value)
-		lines.append("| %s | %d | %.2f | %.2f | %.2f | %.2f | %.2f | %d | %d | %d |" % [
+		lines.append("| %s | %d | %.2f | %.2f | %.2f | %.2f | %.2f | %d | %d | %d | %d | %d |" % [
 			str(row.get("label", "")),
 			int(row.get("run_count", 0)),
 			float(row.get("victory_rate", 0.0)),
@@ -1433,6 +1557,8 @@ func _write_markdown(path: String, report: Dictionary) -> void:
 			int(row.get("cheat_actions", 0)),
 			int(row.get("lender_uses", 0)),
 			int(row.get("tier2_visits", 0)),
+			int(row.get("collection_loadout_items", 0)),
+			int(row.get("collection_bags_granted", 0)),
 		])
 	lines.append("")
 	lines.append("## Victory Routes")
@@ -1479,7 +1605,7 @@ func _write_markdown(path: String, report: Dictionary) -> void:
 
 
 func _print_summary(output_json: String, output_markdown: String, aggregate: Dictionary) -> void:
-	print("ENDGAME_METRICS status=%s runs=%d victory_rate=%.2f median_minutes=%.2f tier2_rate=%.2f lender_rate=%.2f challenge_rate=%.2f showdown=%d/%d" % [
+	print("ENDGAME_METRICS status=%s runs=%d victory_rate=%.2f median_minutes=%.2f tier2_rate=%.2f lender_rate=%.2f challenge_rate=%.2f collection_rate=%.2f showdown=%d/%d" % [
 		"PASS" if failures.is_empty() else "FAIL",
 		int(aggregate.get("run_count", 0)),
 		float(aggregate.get("victory_rate", 0.0)),
@@ -1487,6 +1613,7 @@ func _print_summary(output_json: String, output_markdown: String, aggregate: Dic
 		float(aggregate.get("tier2_usage_rate", 0.0)),
 		float(aggregate.get("lender_engagement_rate", 0.0)),
 		float(aggregate.get("challenge_engagement_rate", 0.0)),
+		float(aggregate.get("collection_engagement_rate", 0.0)),
 		int(aggregate.get("showdown_wins", 0)),
 		int(aggregate.get("showdown_attempts", 0)),
 	])
