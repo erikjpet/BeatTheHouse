@@ -22,7 +22,7 @@ before new feature work proceeds.
 
 | # | Prompt | Status | Machine | Notes |
 | --- | --- | --- | --- | --- |
-| 2 | web_audio_bridge_modernization_prompt.md | ready | any (clean tree) | Code appears to contain the v4 `get_interface` bridge; finish the clean-tree web smoke/spike verdict and archive the existing prompt. |
+| 2 | web_audio_bridge_modernization_prompt.md | claimed (2026-07-08, Codex desktop) | any (clean tree) | Code appears to contain the v4 `get_interface` bridge; finish the clean-tree web smoke/spike verdict and archive the existing prompt. |
 | 3 | v04_content_style_guide_and_copy_audit_prompt.md | ready | any | Closes the old D6 content-style gap and audits release-path copy. |
 | 4 | v04_meta_home_environment_prompt.md | ready | any | Owner-directed renovation superseding the former loadout + economy-polish prompts: walkable persistent home (alley→motel→apartment→house bought with gold), meta map travel, pawn-shop sell counter, homeless carry-everything rule, loadout injection + failure decay for normal runs only (daily/challenge isolated). |
 | 6 | profile_persistence_completion_prompt.md | blocked until #4 | any | Parked T5.3: run history, daily streaks, lifetime stats, challenge display, schema/atomic profile save. |
