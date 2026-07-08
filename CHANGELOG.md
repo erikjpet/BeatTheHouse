@@ -2,6 +2,26 @@
 
 All notable public release changes for Beat the House are recorded here.
 
+## 0.4.0 - Act 1 completion release
+
+Status: release candidate packaged for Web/itch.io and Windows desktop. Itch,
+GitHub release publication, and tags remain manual operator actions.
+
+### Release Notes
+
+- Completes the Act 1 release cut while leaving the new boss fight/final scene
+  out of scope.
+- Adds the walkable meta home, housing progression, pawn-shop sell counter,
+  local collection bags, loadout injection, and run-end collection drops.
+- Finishes profile persistence, run history/stat tracking, dialogue/talk
+  content, jazz/beach route content, semantic room layouts, and attribute
+  glyph panels.
+- Refreshes balance and release evidence: final full suite, every
+  FoundationSuite, performance/soak/determinism/stuck-state probes, strict
+  60-run mouse batch, web smoke, and endgame metrics all pass.
+- Keeps the simulated-gambling boundary: no real-money wagering, cash prizes,
+  gambling monetization, or store credentials in the repository.
+
 ## 0.3.3 - GitHub source release
 
 Status: GitHub source release cut from the current PM release tree. Itch export

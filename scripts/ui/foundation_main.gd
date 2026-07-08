@@ -10892,9 +10892,9 @@ func _refresh_start_screen() -> void:
 
 
 func _release_version_text() -> String:
-	var release_version := str(ProjectSettings.get_setting("application/config/version", "0.3.0")).strip_edges()
+	var release_version := str(ProjectSettings.get_setting("application/config/version", "0.4.0")).strip_edges()
 	if release_version.is_empty():
-		release_version = "0.3.0"
+		release_version = "0.4.0"
 	return "Version %s" % release_version
 
 
