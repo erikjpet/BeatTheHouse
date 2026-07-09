@@ -188,6 +188,21 @@ class SurfaceHarness:
 	func surface_add_exact_hit(rect: Rect2, action: String, index: int = -1) -> void:
 		surface_add_hit(rect, action, index, false)
 
+	func surface_add_cached_exact_hits(_cache_key: String, rect_sources: Array, action: String) -> void:
+		for index in range(rect_sources.size()):
+			var source_value: Variant = rect_sources[index]
+			var rect_value: Variant = source_value
+			if typeof(source_value) == TYPE_DICTIONARY:
+				rect_value = (source_value as Dictionary).get("rect", Rect2())
+			var rect := Rect2()
+			if typeof(rect_value) == TYPE_RECT2:
+				rect = rect_value as Rect2
+			elif typeof(rect_value) == TYPE_DICTIONARY:
+				var data: Dictionary = rect_value
+				rect = Rect2(Vector2(float(data.get("x", data.get("left", 0.0))), float(data.get("y", data.get("top", 0.0)))), Vector2(float(data.get("w", data.get("width", 0.0))), float(data.get("h", data.get("height", 0.0)))))
+			if rect.size.x > 0.0 and rect.size.y > 0.0:
+				surface_add_exact_hit(rect, action, index)
+
 	func surface_add_exact_invisible_hit(rect: Rect2, action: String, index: int = -1) -> void:
 		surface_add_invisible_hit(rect, action, index)
 
@@ -2457,6 +2472,28 @@ func _check_idle_animation_liveness_contract(surface: Dictionary, label: String,
 		failures.append("%s idle animation did not schedule redraws with zero input." % label)
 	if first_sample == second_sample:
 		failures.append("%s idle animation sample did not advance over simulated time." % label)
+	root.remove_child(canvas)
+	canvas.free()
+
+
+func _check_surface_visual_motion_advances(game: GameModule, surface: Dictionary, label: String, failures: Array) -> void:
+	var canvas: Control = GameSurfaceCanvasScript.new()
+	canvas.size = Vector2(ArtContractsScript.GAME_BOARD_SIZE)
+	root.add_child(canvas)
+	canvas.call("set_game_module", game)
+	canvas.call("render_game_snapshot", surface)
+	if canvas.has_method("reset_performance_counters"):
+		canvas.call("reset_performance_counters")
+	var before_status: Dictionary = canvas.call("surface_runtime_status")
+	var before_sample: Dictionary = canvas.call("debug_surface_motion_sample")
+	for _frame_index in range(18):
+		canvas.call("debug_advance_idle_liveness", 1.0 / 60.0)
+	var after_status: Dictionary = canvas.call("surface_runtime_status")
+	var after_sample: Dictionary = canvas.call("debug_surface_motion_sample")
+	if int(after_status.get("surface_animation_redraw_count", 0)) <= int(before_status.get("surface_animation_redraw_count", 0)):
+		failures.append("%s did not schedule redraws across the table surface lifecycle." % label)
+	if JSON.stringify(before_sample) == JSON.stringify(after_sample):
+		failures.append("%s visual motion sample did not advance across the table surface lifecycle." % label)
 	root.remove_child(canvas)
 	canvas.free()
 
@@ -8269,6 +8306,53 @@ func _surface_harness_has_action(harness, action_id: String) -> bool:
 	return false
 
 
+func _surface_harness_first_hit(harness, action_id: String, index: int = -999999) -> Dictionary:
+	for region_value in harness.hit_regions:
+		if typeof(region_value) != TYPE_DICTIONARY:
+			continue
+		var region: Dictionary = region_value
+		if str(region.get("action", "")) != action_id:
+			continue
+		if index != -999999 and int(region.get("index", -1)) != index:
+			continue
+		return region.duplicate(true)
+	return {}
+
+
+func _check_canvas_hit_dispatch(surface: Dictionary, rect: Rect2, action: String, index: int, label: String, failures: Array) -> void:
+	if rect.size.x <= 0.0 or rect.size.y <= 0.0:
+		failures.append("%s could not dispatch because the hit rect was empty." % label)
+		return
+	var canvas: Control = GameSurfaceCanvasScript.new()
+	canvas.size = Vector2(ArtContractsScript.GAME_BOARD_SIZE)
+	root.add_child(canvas)
+	canvas.call("render_game_snapshot", surface)
+	canvas.call("surface_add_exact_hit", rect, action, index)
+	var position: Vector2 = canvas.call("local_position_for_surface_action", action, index)
+	if position.x < 0.0 or position.y < 0.0:
+		failures.append("%s did not resolve a local click position." % label)
+		root.remove_child(canvas)
+		canvas.free()
+		return
+	var dispatched: Array = []
+	canvas.surface_action.connect(func(emitted_action: String, emitted_index: int, emitted_confirmed: bool) -> void:
+		dispatched.append({
+			"action": emitted_action,
+			"index": emitted_index,
+			"confirmed": emitted_confirmed,
+		})
+	)
+	canvas.call("_activate_surface_at_position", position, false)
+	if dispatched.is_empty():
+		failures.append("%s did not emit a surface action from its registered hit region." % label)
+	else:
+		var event: Dictionary = dispatched[0]
+		if str(event.get("action", "")) != action or int(event.get("index", -1)) != index:
+			failures.append("%s emitted %s[%d] instead of %s[%d]." % [label, str(event.get("action", "")), int(event.get("index", -1)), action, index])
+	root.remove_child(canvas)
+	canvas.free()
+
+
 func _check_surface_hit_layout(harness: SurfaceHarness, label: String, failures: Array) -> void:
 	var board := Rect2(Vector2.ZERO, Vector2(ArtContractsScript.GAME_BOARD_SIZE))
 	var regions: Array = []
@@ -8475,6 +8559,8 @@ func _check_roulette_surface_contract(game: GameModule, failures: Array, library
 		failures.append("Roulette renderer did not expose a recent-number display.")
 	if _surface_hit_count(harness, "roulette_bet") < targets.size():
 		failures.append("Roulette renderer did not create hit regions for every bet target.")
+	var roulette_bet_hit := _surface_harness_first_hit(harness, "roulette_bet", straight_17_index)
+	_check_canvas_hit_dispatch(surface, roulette_bet_hit.get("rect", Rect2()), "roulette_bet", straight_17_index, "Roulette straight-bet canvas dispatch", failures)
 	for action_id in ["roulette_read_wheel", "roulette_chip"]:
 		if not _surface_harness_has_action(harness, action_id):
 			failures.append("Roulette renderer missing surface action: %s." % action_id)
@@ -8606,6 +8692,7 @@ func _check_roulette_surface_contract(game: GameModule, failures: Array, library
 	var result_surface := game.surface_state(run_state, environment, {})
 	if str((result_surface.get("last_result", {}) as Dictionary).get("winning_number", "")) != str(result.get("roulette_winning_number", "")):
 		failures.append("Roulette post-spin surface did not expose the latest winning number.")
+	_check_surface_visual_motion_advances(game, result_surface, "Roulette post-payout handoff", failures)
 	var post_spin_harness := SurfaceHarness.new()
 	post_spin_harness.setup(result_surface)
 	post_spin_harness.animation_active = false
@@ -9075,6 +9162,9 @@ func _check_baccarat_surface_contract(game: GameModule, failures: Array, library
 		failures.append("Baccarat renderer did not draw the bead-plate road panel.")
 	if _surface_hit_count(harness, "baccarat_bet") < 5:
 		failures.append("Baccarat renderer did not create hit regions for all core bet targets.")
+	var player_index := _baccarat_target_index(targets, "player")
+	var baccarat_bet_hit := _surface_harness_first_hit(harness, "baccarat_bet", player_index)
+	_check_canvas_hit_dispatch(surface, baccarat_bet_hit.get("rect", Rect2()), "baccarat_bet", player_index, "Baccarat player-bet canvas dispatch", failures)
 	for action_id in ["baccarat_chip", "baccarat_read_shoe"]:
 		if not _surface_harness_has_action(harness, action_id):
 			failures.append("Baccarat renderer missing surface action: %s." % action_id)
@@ -9085,7 +9175,6 @@ func _check_baccarat_surface_contract(game: GameModule, failures: Array, library
 	if not _surface_blocks_action_while(surface, "baccarat_bet", "baccarat_deal") or not _surface_blocks_action_while(surface, "baccarat_deal", "baccarat_deal"):
 		failures.append("Baccarat surface did not block betting/dealing during the deal animation.")
 
-	var player_index := _baccarat_target_index(targets, "player")
 	var bet_click := _check_surface_command_non_mutating(game, "baccarat_bet", player_index, false, {"selected_chip": 20}, run_state, environment, "baccarat player bet", failures)
 	var bet_ui: Dictionary = bet_click.get("ui_state", {})
 	if int((bet_ui.get("baccarat_bets", {}) as Dictionary).get("player", 0)) != 20:
@@ -9620,6 +9709,11 @@ func _check_blackjack_surface_contract(game: GameModule, failures: Array) -> voi
 			failures.append("Blackjack side bet did not expose rule and payout text for the highlight overlay.")
 	if int(surface.get("total_wager_cost", 0)) <= 0:
 		failures.append("Blackjack surface did not expose total wager cost.")
+	var blackjack_harness := SurfaceHarness.new()
+	blackjack_harness.setup(surface)
+	game.draw_surface(blackjack_harness, surface, {"contract_harness": true})
+	var blackjack_deal_hit := _surface_harness_first_hit(blackjack_harness, "blackjack_deal", 0)
+	_check_canvas_hit_dispatch(surface, blackjack_deal_hit.get("rect", Rect2()), "blackjack_deal", 0, "Blackjack deal canvas dispatch", failures)
 	var side_bet_hover_harness := SurfaceHarness.new()
 	side_bet_hover_harness.setup(surface)
 	side_bet_hover_harness.hovered_action = "blackjack_side_bet"
@@ -12120,6 +12214,11 @@ func _check_bar_dice_surface_contract(game: GameModule, failures: Array) -> void
 		failures.append("Bar Dice surface did not expose generated table identity.")
 	if int(surface.get("pot_meter", 0)) <= int(surface.get("active_stake", 0)):
 		failures.append("Bar Dice surface did not expose the shared table pot meter.")
+	var bar_dice_harness := SurfaceHarness.new()
+	bar_dice_harness.setup(surface)
+	game.draw_surface(bar_dice_harness, surface, {"contract_harness": true})
+	var bar_dice_roll_hit := _surface_harness_first_hit(bar_dice_harness, "bar_dice_roll", 0)
+	_check_canvas_hit_dispatch(surface, bar_dice_roll_hit.get("rect", Rect2()), "bar_dice_roll", 0, "Bar Dice roll canvas dispatch", failures)
 	var stake_click := _check_surface_command_non_mutating(game, "bar_dice_stake", 0, false, {}, run_state, environment, "bar dice stake", failures)
 	if int((stake_click.get("ui_state", {}) as Dictionary).get("selected_stake_index", -1)) != 0:
 		failures.append("Bar Dice chip selection did not update UI-local stake state.")

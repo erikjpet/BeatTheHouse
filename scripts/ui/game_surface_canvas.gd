@@ -161,6 +161,7 @@ var last_touch_press_msec: int = -100000
 var last_touch_press_position := Vector2(-100000.0, -100000.0)
 var surface_animation_redraw_accumulator := 0.0
 var surface_animation_redraw_count := 0
+var surface_animation_handoff_until_msec := 0
 var ambient_overlay_registered_hit_count := 0
 
 
@@ -219,6 +220,7 @@ func current_view_snapshot() -> Dictionary:
 		"surface_animation_redraw_count": surface_animation_redraw_count,
 		"surface_continuous_redraw_active": _needs_continuous_redraw(),
 		"surface_animation_liveness_active": surface_animation_liveness_active(),
+		"surface_animation_handoff_active": _surface_animation_handoff_active(),
 		"surface_ambient_overlay": str(state.get("surface_ambient_overlay", "")),
 		"surface_ambient_overlay_active": _ambient_surface_overlay_active(),
 	}
@@ -251,6 +253,7 @@ func surface_runtime_status() -> Dictionary:
 		"surface_animation_redraw_count": surface_animation_redraw_count,
 		"surface_continuous_redraw_active": _needs_continuous_redraw(),
 		"surface_animation_liveness_active": surface_animation_liveness_active(),
+		"surface_animation_handoff_active": _surface_animation_handoff_active(),
 		"surface_ambient_overlay": str(state.get("surface_ambient_overlay", "")),
 		"surface_ambient_overlay_active": _ambient_surface_overlay_active(),
 	}
@@ -287,6 +290,16 @@ func debug_advance_idle_liveness(delta: float) -> Dictionary:
 	flicker += maxf(0.0, delta)
 	_schedule_surface_animation_redraws(delta)
 	return surface_runtime_status()
+
+
+func debug_surface_motion_sample() -> Dictionary:
+	if surface_game_module != null and surface_game_module.has_method("surface_motion_signature"):
+		var sample: Variant = surface_game_module.call("surface_motion_signature", self, state)
+		if typeof(sample) == TYPE_DICTIONARY:
+			return sample as Dictionary
+	return {
+		"surface_flicker_bucket": int(round(surface_flicker() * 1000.0)),
+	}
 
 
 func debug_soak_snapshot() -> Dictionary:
@@ -716,8 +729,9 @@ func _process(delta: float) -> void:
 
 
 func _schedule_surface_animation_redraws(delta: float) -> void:
-	var main_redraw := _surface_main_animation_redraw_active()
-	var overlay_redraw := _surface_overlay_animation_redraw_active()
+	var redraw_demand := _surface_animation_redraw_demand()
+	var main_redraw := bool(redraw_demand.get("main", false))
+	var overlay_redraw := bool(redraw_demand.get("overlay", false))
 	if main_redraw or overlay_redraw:
 		if _surface_animation_redraw_due(delta):
 			if main_redraw:
@@ -889,6 +903,7 @@ func _normalized_drunk_effect_mode(value: String) -> String:
 
 func _update_surface_animation_channels() -> void:
 	var next_ids := {}
+	var now_msec := Time.get_ticks_msec()
 	for channel_value in _dictionary_array(state.get("surface_animation_channels", [])):
 		var channel: Dictionary = channel_value
 		var channel_id := str(channel.get("id", ""))
@@ -900,10 +915,11 @@ func _update_surface_animation_channels() -> void:
 		var incoming_started := int(channel.get("started_msec", 0))
 		var restart_on_id_change := bool(channel.get("restart_on_active_id_change", true))
 		var current := _copy_dict(surface_animation_channels.get(channel_id, {}))
+		var was_active := _surface_channel_record_active(current)
 		var current_active_id := str(current.get("active_id", ""))
 		if current.is_empty() or (restart_on_id_change and current_active_id != incoming_active_id):
 			current = channel.duplicate(true)
-			current["started_msec"] = incoming_started if incoming_started > 0 else Time.get_ticks_msec()
+			current["started_msec"] = incoming_started if incoming_started > 0 else now_msec
 		else:
 			current["active_id"] = incoming_active_id
 			current["duration_msec"] = maxi(0, int(channel.get("duration_msec", current.get("duration_msec", 0))))
@@ -916,8 +932,13 @@ func _update_surface_animation_channels() -> void:
 		if not current.has("metadata"):
 			current["metadata"] = {}
 		surface_animation_channels[channel_id] = current
+		var is_active := _surface_channel_record_active(current)
+		if was_active and not is_active:
+			_mark_surface_animation_handoff(now_msec)
 	for existing_id in surface_animation_channels.keys():
 		if not next_ids.has(str(existing_id)):
+			if _surface_channel_record_active(_copy_dict(surface_animation_channels.get(existing_id, {}))):
+				_mark_surface_animation_handoff(now_msec)
 			surface_animation_channels.erase(existing_id)
 
 
@@ -954,11 +975,22 @@ func _surface_audio_timing(sync_spec: Dictionary) -> Dictionary:
 
 
 func _needs_continuous_redraw() -> bool:
-	return _surface_main_animation_redraw_active()
+	return bool(_surface_animation_redraw_demand().get("main", false))
 
 
 func _surface_animation_liveness_active() -> bool:
-	return _surface_main_animation_redraw_active() or _surface_overlay_animation_redraw_active()
+	var demand := _surface_animation_redraw_demand()
+	return bool(demand.get("main", false)) or bool(demand.get("overlay", false))
+
+
+func _surface_animation_redraw_demand() -> Dictionary:
+	var main := _surface_main_animation_redraw_active()
+	var overlay := _surface_overlay_animation_redraw_active()
+	return {
+		"main": main,
+		"overlay": overlay,
+		"handoff": _surface_animation_handoff_active(),
+	}
 
 
 func _surface_main_animation_redraw_active() -> bool:
@@ -975,7 +1007,21 @@ func _surface_main_animation_redraw_active() -> bool:
 		return true
 	if drunk_effect_mode == "classic" and int(state.get("drunk_level", 0)) >= 12 and not ambient_redraw_available:
 		return true
+	if _surface_animation_handoff_active():
+		return true
 	return bool(state.get("surface_animates_idle", false))
+
+
+func _surface_channel_record_active(channel: Dictionary) -> bool:
+	return bool(channel.get("active", false)) and not str(channel.get("active_id", "")).is_empty()
+
+
+func _mark_surface_animation_handoff(now_msec: int) -> void:
+	surface_animation_handoff_until_msec = maxi(surface_animation_handoff_until_msec, now_msec + 250)
+
+
+func _surface_animation_handoff_active() -> bool:
+	return surface_animation_handoff_until_msec > Time.get_ticks_msec()
 
 
 func _surface_overlay_animation_redraw_active() -> bool:

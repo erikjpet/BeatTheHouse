@@ -325,6 +325,15 @@ func draw_surface(surface, surface_state: Dictionary, _render_context: Dictionar
 	return true
 
 
+func surface_motion_signature(surface, surface_state: Dictionary) -> Dictionary:
+	var motion := _roulette_wheel_motion(surface, surface_state)
+	return {
+		"wheel_angle_mdeg": int(round(float(motion.get("wheel_angle", 0.0)) * 1000.0)),
+		"ball_angle_mdeg": int(round(float(motion.get("ball_angle", 0.0)) * 1000.0)),
+		"ball_radius_tenth": int(round(float(motion.get("ball_radius", 0.0)) * 10.0)),
+	}
+
+
 func surface_needs_auto_tick(ui_state: Dictionary, run_state: RunState, environment: Dictionary) -> bool:
 	# Per-frame check: operate on the live stored table (zero-copy) instead of
 	# normalize -> deep copy -> write-back every frame. Stored state is already
@@ -1920,22 +1929,14 @@ func _draw_roulette_table(surface, _surface_state: Dictionary) -> void:
 func _draw_roulette_wheel(surface, surface_state: Dictionary) -> void:
 	var sequence := _string_array(surface_state.get("wheel_sequence", AMERICAN_SEQUENCE))
 	var trajectory := _dictionary_array(surface_state.get("spin_trajectory", []))
-	var spin_active: bool = bool(surface.surface_animation_active(ROULETTE_SPIN_CHANNEL))
-	var progress: float = surface.surface_animation_progress(ROULETTE_SPIN_CHANNEL) if spin_active else 1.0
-	var keyframe := _trajectory_keyframe(trajectory, progress)
-	var clock := _surface_clock(surface)
-	var wheel_default_angle := clock * -0.5 if spin_active else 0.0
-	var wheel_angle := float(keyframe.get("wheel_angle", wheel_default_angle))
 	var last_result := _copy_dict(surface_state.get("last_result", {}))
+	var motion := _roulette_wheel_motion(surface, surface_state)
+	var spin_active := bool(motion.get("spin_active", false))
+	var keyframe := _copy_dict(motion.get("keyframe", {}))
+	var wheel_angle := float(motion.get("wheel_angle", 0.0))
 	var winning_index := int(last_result.get("winning_index", -1))
 	var settled_spin := not spin_active and not last_result.is_empty()
 	var reveal_result := settled_spin and bool(surface_state.get("result_reveal_active", false))
-	var settled_elapsed := maxf(0.0, float(int(surface_state.get("surface_time_msec", Time.get_ticks_msec())) - int(last_result.get("resolved_at_msec", 0)) - SPIN_ANIMATION_DURATION_MSEC) / 1000.0) if settled_spin else 0.0
-	var settled_drift := fposmod(settled_elapsed * -0.18, TAU) if settled_spin else 0.0
-	if settled_spin:
-		wheel_angle = fposmod(wheel_angle + settled_drift, TAU)
-	elif not spin_active:
-		wheel_angle = fposmod(wheel_angle + clock * -0.16, TAU)
 	surface.draw_circle(WHEEL_CENTER, WHEEL_RADIUS + 10, Color("#1b0d16"))
 	surface.draw_circle(WHEEL_CENTER, WHEEL_RADIUS + 4, Color(C_YELLOW.r, C_YELLOW.g, C_YELLOW.b, 0.28), false, 2)
 	surface.draw_circle(WHEEL_CENTER, WHEEL_RADIUS, Color("#0b1118"))
@@ -1985,22 +1986,51 @@ func _draw_roulette_wheel(surface, surface_state: Dictionary) -> void:
 		surface.surface_label_centered(result_label, result_rect, 8, C_YELLOW)
 	surface.draw_circle(WHEEL_CENTER, 44, Color("#241427"))
 	surface.draw_circle(WHEEL_CENTER, 24, Color(C_YELLOW.r, C_YELLOW.g, C_YELLOW.b, 0.32))
-	var ball_default_angle := clock * 0.22 - 0.72 if not spin_active and not settled_spin else clock * 2.0
-	var ball_angle := float(keyframe.get("ball_angle", ball_default_angle))
-	var ball_radius := float(keyframe.get("ball_radius", WHEEL_RADIUS - 9.0))
+	var ball_angle := float(motion.get("ball_angle", 0.0))
+	var ball_radius := float(motion.get("ball_radius", WHEEL_RADIUS - 9.0))
 	var bounce := float(keyframe.get("bounce", 0.0))
 	if settled_spin:
 		if trajectory.is_empty() and winning_index >= 0 and winning_index < count:
 			ball_angle = fposmod(wheel_angle + (float(winning_index) + 0.5) / float(count) * TAU, TAU)
 			ball_radius = WHEEL_RADIUS * 0.58
 		else:
-			ball_angle = fposmod(ball_angle + settled_drift, TAU)
+			ball_angle = fposmod(ball_angle + float(motion.get("settled_drift", 0.0)), TAU)
 		bounce = 0.0
-	elif not spin_active:
-		ball_angle = ball_default_angle
 	var ball_pos := WHEEL_CENTER + Vector2(cos(ball_angle), sin(ball_angle)) * (ball_radius + bounce)
 	surface.draw_circle(ball_pos, 6.0, Color("#e9f2f2"))
 	surface.draw_circle(ball_pos + Vector2(-2, -2), 2.0, C_WHITE)
+
+
+func _roulette_wheel_motion(surface, surface_state: Dictionary) -> Dictionary:
+	var trajectory := _dictionary_array(surface_state.get("spin_trajectory", []))
+	var spin_active: bool = bool(surface.surface_animation_active(ROULETTE_SPIN_CHANNEL))
+	var progress: float = surface.surface_animation_progress(ROULETTE_SPIN_CHANNEL) if spin_active else 1.0
+	var keyframe := _trajectory_keyframe(trajectory, progress)
+	var clock := _surface_clock(surface)
+	var last_result := _copy_dict(surface_state.get("last_result", {}))
+	var settled_spin := not spin_active and not last_result.is_empty()
+	var wheel_default_angle := clock * -0.5 if spin_active else 0.0
+	var wheel_angle := float(keyframe.get("wheel_angle", wheel_default_angle))
+	var settled_elapsed := maxf(0.0, float(int(surface_state.get("surface_time_msec", Time.get_ticks_msec())) - int(last_result.get("resolved_at_msec", 0)) - SPIN_ANIMATION_DURATION_MSEC) / 1000.0) if settled_spin else 0.0
+	var settled_live_drift := clock * -0.18 if settled_spin else 0.0
+	var settled_drift := fposmod(settled_elapsed * -0.18 + settled_live_drift, TAU) if settled_spin else 0.0
+	if settled_spin:
+		wheel_angle = fposmod(wheel_angle + settled_drift, TAU)
+	elif not spin_active:
+		wheel_angle = fposmod(wheel_angle + clock * -0.16, TAU)
+	var ball_default_angle := clock * 0.22 - 0.72 if not spin_active and not settled_spin else clock * 2.0
+	var ball_angle := float(keyframe.get("ball_angle", ball_default_angle))
+	var ball_radius := float(keyframe.get("ball_radius", WHEEL_RADIUS - 9.0))
+	if not spin_active and not settled_spin:
+		ball_angle = ball_default_angle
+	return {
+		"spin_active": spin_active,
+		"keyframe": keyframe,
+		"wheel_angle": wheel_angle,
+		"settled_drift": settled_drift,
+		"ball_angle": ball_angle,
+		"ball_radius": ball_radius,
+	}
 
 
 func _draw_static_croupier_station(surface, surface_state: Dictionary) -> void:

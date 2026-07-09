@@ -1,3 +1,47 @@
+## Execution Record
+
+Completion date: 2026-07-09
+
+Implementation commit: same commit as this archive record.
+
+Root causes:
+- Roulette animation handoff/freeze: the post-payout roulette surface stopped requesting full realtime snapshots once `roulette_motion_active` became false, which is correct for performance, but `_draw_roulette_wheel()` still based settled wheel drift on the frozen `surface_time_msec` value from that last snapshot. The prior liveness guard only checked redraw-count/flicker advancement, so it passed while the actual roulette wheel signature stayed identical until input forced a fresh render path.
+- Bet placement: no current runtime overlap or blocked-action defect reproduced after checking the real dispatch path. The actionable defect was test coverage: foundation game contracts called `surface_action_command()` directly and `SurfaceHarness` did not exercise `surface_add_cached_exact_hits()`, so roulette cached bet regions and canvas hit dispatch could regress without failing the gate.
+
+Fix summary:
+- Added shared canvas animation demand semantics with explicit channel-handoff tracking in `scripts/ui/game_surface_canvas.gd`.
+- Added `debug_surface_motion_sample()` so guards can assert visual output changes, not just redraw counters.
+- Refactored roulette wheel motion through one signature helper and made settled roulette drift use the canvas live render clock, preserving zero full-snapshot idle rebuilds.
+- Hardened foundation checks with real canvas dispatch assertions for roulette, baccarat, blackjack, and bar dice, plus cached-hit coverage in `SurfaceHarness`.
+
+Guard fail -> pass proof:
+- Pre-fix hardened guard: `powershell -ExecutionPolicy Bypass -File tools\check_godot.ps1 -RequireGodot -FoundationSuite roulette -TimeoutSec 300` failed. Output: `validate_project PASS`, `godot_import PASS`, `gdscript_load_check PASS`, `foundation_roulette FAIL`; failure: `Roulette post-payout handoff visual motion sample did not advance across the table surface lifecycle.`
+- Post-fix same command passed. Output: `validate_project PASS 16535ms`, `godot_import PASS 12959ms`, `gdscript_load_check PASS 10512ms`, `foundation_roulette PASS 6895ms`.
+
+Per-game function confirmation:
+
+| Game | First-click input path | Resolve/payout path | Animation/liveness | Cheat/skill spot check | Result |
+| --- | --- | --- | --- | --- | --- |
+| Blackjack | Canvas dispatch guard for `blackjack_deal`; games suite contract | Existing deal/hit/stand/payout contract | Idle + deal channel contracts | Count/basic-strategy checks | PASS |
+| Roulette | Canvas dispatch guard for cached `roulette_bet`; games suite contract | Spin, recent-result, payout, rebet contracts | New post-payout motion signature guard; roulette suite fail->pass proof | Read-wheel/nudge checks | PASS |
+| Baccarat | Canvas dispatch guard for `baccarat_bet`; games suite contract | Deal, settlement, road/commission contracts | Idle/deal/payout contracts | Read-shoe/edge-sort checks | PASS |
+| Video Poker | Existing games suite + mouse batch surface path | Draw/double/settlement contracts | Covered by games/UI/mouse batch | Hold/double flow checks | PASS |
+| Bar Dice | Canvas dispatch guard for `bar_dice_roll`; games suite contract | Roll/select/settle contracts | Idle/tumble contracts | Loaded/palm/press checks | PASS |
+| Pull Tabs | Existing games suite + UI buy-button single-activation guard | Buy/reveal/payout contracts | Cabinet idle liveness contract | Route/item checks | PASS |
+| Slot | Existing games suite + mouse batch surface path | Spin/feature/autoplay contracts | Performance probe surface coverage | Nudge/skill-feature checks | PASS |
+
+Verification gates run:
+- `powershell -ExecutionPolicy Bypass -File tools\validate_project.ps1` -> PASS (`Beat the House foundation architecture validation passed.`).
+- `powershell -ExecutionPolicy Bypass -File tools\check_godot.ps1 -RequireGodot -FoundationSuite roulette -TimeoutSec 300` -> PASS after fix.
+- `powershell -ExecutionPolicy Bypass -File tools\check_godot.ps1 -RequireGodot -FoundationSuite games -TimeoutSec 600` -> PASS (`foundation_games PASS 116606ms`).
+- `powershell -ExecutionPolicy Bypass -File tools\check_godot.ps1 -RequireGodot -FoundationSuite ui -TimeoutSec 300` -> PASS (`ui_scene_compile PASS 52071ms`).
+- `powershell -ExecutionPolicy Bypass -File tools\foundation_mouse_batch_playtest.ps1 -RunCount 20 -RequireGodot` -> PASS, playable-loop 20/20, UI regression 20/20, true failures 0.
+- `powershell -ExecutionPolicy Bypass -File tools\foundation_performance_probe.ps1 -RequireGodot` -> PASS, roulette covered, roulette idle draw p95 5.551ms, no failures.
+
+Deviations and release note:
+- Manual play of every table game was covered by automated function confirmation and mouse batch rather than interactive owner-style hand play in this agent run.
+- 0.4.0 packages remain stale until the queued repackage step.
+
 # Agent Prompt - CRITICAL: Full Table-Game Function Confirmation + Animation-Gap Liveness Fix
 
 Priority: **CRITICAL — playtest blocker for the 0.4 release.**
