@@ -11,6 +11,7 @@ const GameSurfaceCanvasScript := preload("res://scripts/ui/game_surface_canvas.g
 const RunInventoryScreenScript := preload("res://scripts/ui/run_inventory_screen.gd")
 const TalkDockScript := preload("res://scripts/ui/talk_dock.gd")
 const SfxPlayerScript := preload("res://scripts/ui/sfx_player.gd")
+const WorldMapCanvasScript := preload("res://scripts/ui/world_map_canvas.gd")
 const SlotMachineStateScript := preload("res://scripts/games/slots/slot_machine_state.gd")
 const RunStateScript := preload("res://scripts/core/run_state.gd")
 const WorldMapScript := preload("res://scripts/core/world_map.gd")
@@ -410,6 +411,42 @@ func _check_dialogue_dock_main_flow(app: Control) -> bool:
 	return true
 
 
+func _check_world_map_selection_stable_component() -> bool:
+	var canvas: Control = WorldMapCanvasScript.new()
+	canvas.size = Vector2(560, 360)
+	root.add_child(canvas)
+	var base_snapshot := {
+		"current_node_id": "center",
+		"selected_node_id": "west",
+		"nodes": [
+			{"id": "center", "label": "Center", "state": "visited", "position": {"x": 0.50, "y": 0.50}, "icon_path": "res://assets/art/map_icons/back_alley.png"},
+			{"id": "west", "label": "West", "state": "revealed", "position": {"x": 0.10, "y": 0.50}, "travel_target": true, "travel_enabled": true, "icon_path": "res://assets/art/map_icons/bar.png"},
+			{"id": "east", "label": "East", "state": "revealed", "position": {"x": 0.90, "y": 0.50}, "travel_target": true, "travel_enabled": true, "icon_path": "res://assets/art/map_icons/corner_store.png"},
+		],
+		"edges": [
+			{"id": "center-west", "a": "center", "b": "west", "distance": "near"},
+			{"id": "center-east", "a": "center", "b": "east", "distance": "near"},
+		],
+		"visited_path": ["center"],
+		"map_focus_node_ids": ["west"],
+	}
+	canvas.call("set_map_snapshot", base_snapshot)
+	var before_view: Dictionary = canvas.call("current_view_snapshot")
+	var before_bounds: Dictionary = before_view.get("map_bounds", {}) if typeof(before_view.get("map_bounds", {})) == TYPE_DICTIONARY else {}
+	var selected_snapshot := base_snapshot.duplicate(true)
+	selected_snapshot["selected_node_id"] = "east"
+	selected_snapshot["map_focus_node_ids"] = ["east"]
+	canvas.call("set_map_snapshot", selected_snapshot)
+	var after_view: Dictionary = canvas.call("current_view_snapshot")
+	var after_bounds: Dictionary = after_view.get("map_bounds", {}) if typeof(after_view.get("map_bounds", {})) == TYPE_DICTIONARY else {}
+	root.remove_child(canvas)
+	canvas.free()
+	if not _map_bounds_equal(before_bounds, after_bounds):
+		push_error("World map canvas selection changed the view window: before %s after %s." % [JSON.stringify(before_bounds), JSON.stringify(after_bounds)])
+		return false
+	return true
+
+
 func _run_inventory_component_model(mode: String, container_id: String = "", selected: Dictionary = {}) -> Dictionary:
 	var items: Array = []
 	match mode:
@@ -557,6 +594,9 @@ func _run() -> void:
 		quit(1)
 		return
 	if not await _check_talk_dock_component():
+		quit(1)
+		return
+	if not _check_world_map_selection_stable_component():
 		quit(1)
 		return
 
@@ -4056,6 +4096,12 @@ func _run() -> void:
 		push_error("Selecting the current world-map node did not show the You are here state.")
 		quit(1)
 		return
+	var current_node_map_view: Dictionary = map_canvas.call("current_view_snapshot")
+	var current_node_bounds: Dictionary = current_node_map_view.get("map_bounds", {}) if typeof(current_node_map_view.get("map_bounds", {})) == TYPE_DICTIONARY else {}
+	if not _map_bounds_equal(map_bounds, current_node_bounds):
+		push_error("Selecting the current world-map node moved the map view window: before %s after %s." % [JSON.stringify(map_bounds), JSON.stringify(current_node_bounds)])
+		quit(1)
+		return
 	var serialized_before_map_select := JSON.stringify(app.call("serialized_run_state"))
 	var target_node_button := map_canvas.get_node_or_null("WorldMapNode_%s" % travel_target_id) as Button
 	if target_node_button == null:
@@ -4067,6 +4113,12 @@ func _run() -> void:
 	var selected_map_screen: Dictionary = app.call("current_screen_snapshot")
 	if str(selected_map_screen.get("selected_world_map_node_id", "")) != travel_target_id:
 		push_error("World map first-open icon press did not select %s." % travel_target_id)
+		quit(1)
+		return
+	var selected_map_view: Dictionary = map_canvas.call("current_view_snapshot")
+	var selected_map_bounds: Dictionary = selected_map_view.get("map_bounds", {}) if typeof(selected_map_view.get("map_bounds", {})) == TYPE_DICTIONARY else {}
+	if not _map_bounds_equal(map_bounds, selected_map_bounds):
+		push_error("Selecting a world-map target moved the map view window: before %s after %s." % [JSON.stringify(map_bounds), JSON.stringify(selected_map_bounds)])
 		quit(1)
 		return
 	var detail_text := str(selected_map_screen.get("world_map_detail_text", ""))
@@ -4447,6 +4499,36 @@ func _check_meta_home_launcher_opens_room(app: Control) -> bool:
 	if active_item_button != null and active_item_button.visible:
 		push_error("Meta top bar still showed the in-run active item button.")
 		return false
+	if not bool(app.call("open_world_map", true)):
+		push_error("Meta home could not open the shared world map.")
+		return false
+	await process_frame
+	var meta_map_screen: Dictionary = app.call("current_screen_snapshot")
+	if not bool(meta_map_screen.get("world_map_overlay_visible", false)):
+		push_error("Meta world map overlay was not visible.")
+		return false
+	var meta_map_canvas := app.get("world_map_nodes_layer") as Control
+	if meta_map_canvas == null or not meta_map_canvas.has_method("current_view_snapshot"):
+		push_error("Meta world map did not expose the shared canvas.")
+		return false
+	var meta_map_view: Dictionary = meta_map_canvas.call("current_view_snapshot")
+	var meta_map_bounds: Dictionary = meta_map_view.get("map_bounds", {}) if typeof(meta_map_view.get("map_bounds", {})) == TYPE_DICTIONARY else {}
+	var meta_target_ids: Array = _copy_array(_copy_dict(meta_map_screen.get("world_map", {})).get("travel_target_ids", []))
+	if meta_target_ids.is_empty():
+		push_error("Meta world map did not expose a travel target.")
+		return false
+	var meta_target_id := str(meta_target_ids[0])
+	if not bool(app.call("select_world_map_node", meta_target_id)):
+		push_error("Meta world map rejected selecting %s." % meta_target_id)
+		return false
+	await process_frame
+	var selected_meta_map_view: Dictionary = meta_map_canvas.call("current_view_snapshot")
+	var selected_meta_bounds: Dictionary = selected_meta_map_view.get("map_bounds", {}) if typeof(selected_meta_map_view.get("map_bounds", {})) == TYPE_DICTIONARY else {}
+	if not _map_bounds_equal(meta_map_bounds, selected_meta_bounds):
+		push_error("Selecting a meta world-map node moved the map view window: before %s after %s." % [JSON.stringify(meta_map_bounds), JSON.stringify(selected_meta_bounds)])
+		return false
+	app.call("close_world_map")
+	await process_frame
 	if not bool(app.call("activate_interactable_object", container_id)):
 		push_error("Meta home container prop did not activate.")
 		return false
@@ -6347,6 +6429,13 @@ func _world_map_position_in_bounds(position_value: Variant, bounds: Dictionary) 
 	var right := left + float(bounds.get("width", bounds.get("w", 1.0)))
 	var bottom := top + float(bounds.get("height", bounds.get("h", 1.0)))
 	return x >= left - 0.001 and x <= right + 0.001 and y >= top - 0.001 and y <= bottom + 0.001
+
+
+func _map_bounds_equal(a: Dictionary, b: Dictionary) -> bool:
+	for key in ["x", "y", "width", "height"]:
+		if absf(float(a.get(key, -999.0)) - float(b.get(key, 999.0))) > 0.0001:
+			return false
+	return true
 
 
 func _copy_array(value: Variant) -> Array:

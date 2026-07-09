@@ -20,6 +20,7 @@ var travel_edge_ids_cache: Array = []
 var enabled_travel_edge_ids_cache: Array = []
 var cached_layout_size := Vector2(-1.0, -1.0)
 var snapshot_signature := ""
+var map_view_bounds_signature := ""
 
 
 func _ready() -> void:
@@ -240,7 +241,10 @@ func _ensure_layout_cache() -> void:
 
 
 func _rebuild_layout_cache() -> void:
-	map_view_bounds_cache = _compute_map_view_bounds()
+	var next_bounds_signature := _map_view_bounds_signature()
+	if next_bounds_signature != map_view_bounds_signature:
+		map_view_bounds_cache = _compute_map_view_bounds()
+		map_view_bounds_signature = next_bounds_signature
 	cached_layout_size = size
 	node_screen_position_cache = {}
 	for node_id_value in nodes_by_id_cache.keys():
@@ -313,6 +317,24 @@ func _compute_map_view_bounds() -> Rect2:
 	return Rect2(Vector2(x0, y0), Vector2(width, height))
 
 
+func _map_view_bounds_signature() -> String:
+	var parts: Array[String] = [
+		"%.2f" % size.x,
+		"%.2f" % size.y,
+	]
+	var node_ids := _sorted_string_keys(nodes_by_id_cache)
+	for node_id in node_ids:
+		var node: Dictionary = nodes_by_id_cache.get(node_id, {})
+		var position: Dictionary = node.get("position", {}) if typeof(node.get("position", {})) == TYPE_DICTIONARY else {}
+		parts.append("%s:%.5f:%.5f:%s" % [
+			node_id,
+			clampf(float(position.get("x", 0.5)), 0.0, 1.0),
+			clampf(float(position.get("y", 0.5)), 0.0, 1.0),
+			str(node.get("state", "")),
+		])
+	return "|".join(parts)
+
+
 func _bounds_focus_nodes() -> Array:
 	var nodes := _array_view(snapshot.get("nodes", []))
 	var focus_ids := _string_array(snapshot.get("map_focus_node_ids", []))
@@ -329,6 +351,16 @@ func _bounds_focus_nodes() -> Array:
 		if focus_lookup.has(str(node.get("id", ""))):
 			result.append(node)
 	return result if not result.is_empty() else nodes
+
+
+func _sorted_string_keys(values: Dictionary) -> Array[String]:
+	var keys: Array[String] = []
+	for key_value in values.keys():
+		var key := str(key_value)
+		if not key.is_empty():
+			keys.append(key)
+	keys.sort()
+	return keys
 
 
 func _point_in_view(point: Vector2, margin: float = 0.0) -> bool:
