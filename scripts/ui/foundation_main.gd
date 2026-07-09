@@ -151,6 +151,12 @@ var pending_wager_confirm_preserve_surface_ui_state := false
 var pending_wager_confirm_stake: int = 0
 var pending_wager_confirm_source_game_id: String = ""
 var pending_all_in_result_terminal_check := false
+var presented_bankroll_hold_active := false
+var presented_bankroll_value := 0
+var presented_bankroll_game_id := ""
+var presented_bankroll_action_id := ""
+var presented_bankroll_release_screen := ""
+var presented_bankroll_started_msec := 0
 var pending_active_item_id: String = ""
 var run_inventory_popup_mode: String = ""
 var run_inventory_context_container_id: String = ""
@@ -393,6 +399,7 @@ func _process(_delta: float) -> void:
 	_advance_run_game_clock(_delta)
 	_advance_game_surface_automation()
 	_advance_game_surface_realtime_state()
+	_advance_presented_bankroll()
 	_advance_environment_game_runtime()
 	_advance_deferred_bankroll_failure()
 	_flush_pending_autosave_if_ready()
@@ -461,6 +468,7 @@ func start_foundation_run(seed_text: String = DEFAULT_SEED, challenge_config: Di
 	meta_session_location_id = ""
 	meta_last_panel_message = ""
 	pending_all_in_result_terminal_check = false
+	_sync_presented_bankroll_to_actual()
 	pending_autosave = false
 	pending_autosave_status_text = "Autosaved."
 	pending_autosave_after_frame = -1
@@ -481,6 +489,7 @@ func start_foundation_run(seed_text: String = DEFAULT_SEED, challenge_config: Di
 	var resolved_challenge_config := _challenge_with_meta_home_for_run(resolved_seed, challenge_config)
 	run_state = RunState.new()
 	run_state.start_new(resolved_seed, resolved_challenge_config)
+	_sync_presented_bankroll_to_actual()
 	_apply_meta_collection_loadout_to_run()
 	run_state.begin_act(1)
 	dev_game_test_mode = false
@@ -580,6 +589,7 @@ func enter_game(game_id: String) -> void:
 		_show_message("This game is not ready here.")
 		return
 	current_game = game_module
+	_sync_presented_bankroll_to_actual()
 	_reset_game_surface_runtime_state()
 	selected_action_category = ACTION_CATEGORY_GAMES
 	_set_current_screen(SCREEN_GAME)
@@ -599,6 +609,7 @@ func back_to_environment() -> void:
 		return
 	if _guard_blocking_decision_or_transition():
 		return
+	_sync_presented_bankroll_to_actual()
 	_reset_game_surface_runtime_state()
 	current_game = null
 	last_game_result = {}
@@ -812,6 +823,92 @@ func _advance_game_surface_realtime_state() -> void:
 		return
 	last_game_surface_realtime_refresh_msec = now_msec
 	game_surface_canvas.render_game_snapshot(_game_view_snapshot())
+
+
+func _advance_presented_bankroll() -> void:
+	if not presented_bankroll_hold_active:
+		return
+	if run_state == null:
+		_clear_presented_bankroll_hold()
+		return
+	if current_screen != SCREEN_GAME or current_game == null:
+		_sync_presented_bankroll_to_actual()
+		_refresh_runtime_environment_views()
+		return
+	if not _game_surface_presentation_active():
+		_sync_presented_bankroll_to_actual()
+		_refresh_runtime_environment_views()
+
+
+func _presented_bankroll() -> int:
+	if run_state == null:
+		return 0
+	if presented_bankroll_hold_active:
+		return presented_bankroll_value
+	return run_state.bankroll
+
+
+func _visible_recent_bankroll_delta(bankroll_delta: int) -> int:
+	return 0 if presented_bankroll_hold_active else bankroll_delta
+
+
+func _begin_presented_bankroll_hold(result: Dictionary, before_bankroll: int, wager_cost: int) -> void:
+	_clear_presented_bankroll_hold()
+	if run_state == null or current_game == null:
+		return
+	if not bool(result.get("ok", false)):
+		return
+	var deltas: Dictionary = result.get("deltas", {}) if typeof(result.get("deltas", {})) == TYPE_DICTIONARY else {}
+	var bankroll_delta := int(result.get("bankroll_delta", deltas.get("bankroll_delta", 0)))
+	if bankroll_delta == 0:
+		return
+	if not _result_uses_game_bankroll_presentation(result):
+		return
+	var stake_cost := maxi(wager_cost, int(result.get("stake", 0)))
+	presented_bankroll_hold_active = true
+	presented_bankroll_value = maxi(0, before_bankroll - maxi(0, stake_cost))
+	presented_bankroll_game_id = current_game.get_id()
+	presented_bankroll_action_id = str(result.get("action_id", ""))
+	presented_bankroll_release_screen = SCREEN_GAME
+	presented_bankroll_started_msec = Time.get_ticks_msec()
+
+
+func _result_uses_game_bankroll_presentation(result: Dictionary) -> bool:
+	if current_game == null:
+		return false
+	var result_game_id := str(result.get("game_id", result.get("source_id", "")))
+	if not result_game_id.is_empty() and result_game_id != current_game.get_id():
+		return false
+	return bool(result.get("surface_embeds_outcomes", false)) or _current_game_embeds_result_feedback()
+
+
+func _sync_presented_bankroll_to_actual() -> void:
+	if run_state != null:
+		presented_bankroll_value = run_state.bankroll
+	_clear_presented_bankroll_hold()
+
+
+func _clear_presented_bankroll_hold() -> void:
+	presented_bankroll_hold_active = false
+	presented_bankroll_game_id = ""
+	presented_bankroll_action_id = ""
+	presented_bankroll_release_screen = ""
+	presented_bankroll_started_msec = 0
+
+
+func _game_surface_presentation_active() -> bool:
+	if game_surface_canvas == null:
+		return false
+	var status := game_surface_canvas.surface_runtime_status()
+	var animations: Dictionary = status.get("surface_animations", {}) if typeof(status.get("surface_animations", {})) == TYPE_DICTIONARY else {}
+	for animation_id in animations.keys():
+		var animation_value: Variant = animations.get(animation_id)
+		if typeof(animation_value) != TYPE_DICTIONARY:
+			continue
+		var animation: Dictionary = animation_value
+		if bool(animation.get("active", false)):
+			return true
+	return bool(status.get("surface_animation_handoff_active", false))
 
 
 func _advance_environment_game_runtime() -> void:
@@ -2836,6 +2933,7 @@ func _load_foundation_run_from_slot(return_to_start_on_missing: bool) -> bool:
 	pending_autosave_after_frame = -1
 	run_item_icon_texture_cache.clear()
 	run_state = loaded
+	_sync_presented_bankroll_to_actual()
 	dev_game_test_mode = false
 	_refresh_run_action_service()
 	current_game = null
@@ -5064,7 +5162,7 @@ func music_fx_state_snapshot() -> Dictionary:
 		"visual_context": visual_context,
 		"scene_type": scene_type,
 		"room_scale": _music_room_scale_for_visual_context(visual_context, environment),
-		"bankroll": run_state.bankroll,
+		"bankroll": _presented_bankroll(),
 		"economy": run_state.economy(),
 		"bankroll_pressure": _music_bankroll_pressure_amount(),
 		"debt": debt_status.get("debt", []),
@@ -5997,7 +6095,7 @@ func _add_current_game_panel(environment: Dictionary) -> void:
 		description_label.max_lines_visible = 1
 		description_label.clip_text = true
 		actions_list.add_child(description_label)
-	actions_list.add_child(_label("Current bankroll: %d" % run_state.bankroll, 12))
+	actions_list.add_child(_label("Current bankroll: %d" % _presented_bankroll(), 12))
 	actions_list.add_child(_button("Back to environment", Callable(self, "back_to_environment")))
 	actions_list.add_child(_section("Stake"))
 	_add_stake_controls(action_view)
@@ -6048,6 +6146,7 @@ func _resolve_game_action(action_id: String, skip_stake_validation: bool = false
 	var confirmed_all_in_wager := wager_confirmed and _wager_needs_final_bankroll_confirmation(wager_cost)
 	if confirmed_all_in_wager:
 		run_state.begin_deferred_bankroll_zero_resolution()
+	var bankroll_before_result := run_state.bankroll
 	var rng := run_state.create_rng()
 	var result := current_game.resolve_with_context(action_id, stake, run_state, run_state.current_environment, rng, _current_game_surface_ui_state())
 	if confirmed_all_in_wager:
@@ -6070,6 +6169,8 @@ func _resolve_game_action(action_id: String, skip_stake_validation: bool = false
 	if confirmed_all_in_wager and run_state.defer_next_bankroll_zero_failure:
 		run_state.clear_deferred_bankroll_zero_resolution()
 	var embeds_result_feedback := _current_game_embeds_result_feedback()
+	if bool(result.get("ok", false)) and embeds_result_feedback and not runtime_tick_in_progress:
+		_begin_presented_bankroll_hold(result, bankroll_before_result, wager_cost)
 	last_game_result = result.duplicate(true)
 	_play_result_surface_audio_cue(result)
 	pending_all_in_result_terminal_check = confirmed_all_in_wager and bool(result.get("ok", false)) and run_state != null and run_state.bankroll <= 0 and not bool(result.get("won", false))
@@ -6089,6 +6190,8 @@ func _resolve_game_action(action_id: String, skip_stake_validation: bool = false
 		_advance_alcohol_absorption()
 	_autosave_foundation_run("Autosaved.")
 	if bool(result.get("ok", false)) and _apply_post_action_environment_interrupt("game_action"):
+		if current_screen != SCREEN_GAME:
+			_sync_presented_bankroll_to_actual()
 		_refresh()
 		return
 	_refresh()
@@ -6815,7 +6918,7 @@ func current_objective_hud_snapshot() -> Dictionary:
 		"goal": _objective_goal_text(prestige, pressure, demo_objective),
 		"objective_state": str(guidance.get("state", _objective_presentation_state(pressure, demo_objective))),
 		"guidance": guidance,
-		"bankroll": run_state.bankroll,
+		"bankroll": _presented_bankroll(),
 		"economy": _economy_cue_text(),
 		"heat": run_state.security_pressure_label(),
 		"alcohol": run_state.alcohol_pressure_summary(),
@@ -8374,6 +8477,9 @@ func _game_view_snapshot() -> Dictionary:
 		family = str(result.get("family", ""))
 	var deltas: Dictionary = result.get("deltas", {})
 	var result_message := _player_facing_text(str(result.get("message", "")))
+	var result_bankroll_delta := _visible_recent_bankroll_delta(int(result.get("bankroll_delta", deltas.get("bankroll_delta", 0))))
+	if presented_bankroll_hold_active:
+		result_message = ""
 	if result_message.is_empty():
 		if current_game == null and result.is_empty():
 			result_message = "Pick a game from the choices to start playing."
@@ -8406,10 +8512,10 @@ func _game_view_snapshot() -> Dictionary:
 		"surface_cast": surface_cast,
 		"has_recent_outcome": not result.is_empty(),
 		"outcome_message": result_message,
-		"outcome_bankroll_delta": int(result.get("bankroll_delta", deltas.get("bankroll_delta", 0))),
+		"outcome_bankroll_delta": result_bankroll_delta,
 		"outcome_suspicion_delta": int(result.get("suspicion_delta", deltas.get("suspicion_delta", 0))),
 		"result_message": result_message,
-		"bankroll": run_state.bankroll,
+		"bankroll": _presented_bankroll(),
 		"suspicion_level": run_state.suspicion_level(),
 		"drunk_level": run_state.drunk_level,
 		"drunk_time_scale": drunk_time_scale,
@@ -8425,7 +8531,7 @@ func _game_view_snapshot() -> Dictionary:
 		"baseline_luck": run_state.baseline_luck,
 		"luck_modifier": run_state.effective_luck(),
 		"alcohol_condition": run_state.alcohol_condition_label(),
-		"bankroll_delta": int(result.get("bankroll_delta", deltas.get("bankroll_delta", 0))),
+		"bankroll_delta": result_bankroll_delta,
 		"suspicion_delta": int(result.get("suspicion_delta", deltas.get("suspicion_delta", 0))),
 		"result_stake": int(result.get("stake", 0)),
 		"ticket_symbols": _copy_array(result.get("ticket_symbols", [])),
@@ -8435,6 +8541,7 @@ func _game_view_snapshot() -> Dictionary:
 	}
 	for key in module_surface_state.keys():
 		snapshot[key] = _snapshot_copy_value(module_surface_state[key])
+	snapshot["bankroll"] = _presented_bankroll()
 	snapshot["stake_min"] = int(stake_range.get("min", 1))
 	snapshot["stake_max"] = int(stake_range.get("max", 1))
 	snapshot["selected_stake"] = snapshot_selected_stake
@@ -8881,7 +8988,7 @@ func _visited_environment_summary_lines() -> Array:
 func _consequence_view_snapshot() -> Dictionary:
 	var recent_result := _recent_result_snapshot()
 	var deltas: Dictionary = recent_result.get("deltas", {})
-	var recent_bankroll_delta := int(recent_result.get("bankroll_delta", deltas.get("bankroll_delta", 0)))
+	var recent_bankroll_delta := _visible_recent_bankroll_delta(int(recent_result.get("bankroll_delta", deltas.get("bankroll_delta", 0))))
 	var recent_suspicion_delta := int(recent_result.get("suspicion_delta", deltas.get("suspicion_delta", 0)))
 	var recent_alcohol_intake := int(deltas.get("alcohol_intake", 0))
 	var recent_drunk_delta := int(deltas.get("drunk_delta", 0))
@@ -8898,9 +9005,11 @@ func _consequence_view_snapshot() -> Dictionary:
 	var recent_message := _player_facing_text(str(recent_result.get("message", "")))
 	if recent_message.is_empty() and message_label != null:
 		recent_message = _player_facing_text(message_label.text)
+	if presented_bankroll_hold_active:
+		recent_message = "Result resolving."
 	var has_recent_consequence := _result_is_visible_consequence(recent_result, recent_message)
 	var current_state_text := "Bankroll %d | %s | Status %s | %s | Debt %s | Gear %s | Routes %s" % [
-		run_state.bankroll,
+		_presented_bankroll(),
 		_economy_cue_text(),
 		str(pressure.get("title", "")),
 		run_state.alcohol_pressure_summary(),
@@ -8941,7 +9050,7 @@ func _consequence_view_snapshot() -> Dictionary:
 		"pressure": pressure,
 	})
 	return {
-		"bankroll": run_state.bankroll,
+		"bankroll": _presented_bankroll(),
 		"economy": run_state.economy(),
 		"recent_bankroll_delta": recent_bankroll_delta,
 		"recent_suspicion_delta": recent_suspicion_delta,
@@ -8995,7 +9104,7 @@ func _consequence_card_view_list(context: Dictionary) -> Array:
 		"tone": _outcome_card_tone(recent_result, recent_bankroll_delta, recent_suspicion_delta),
 		"lines": [
 			recent_message if not recent_message.is_empty() else "No result yet.",
-			"Bankroll now %d." % run_state.bankroll,
+			"Bankroll now %d." % _presented_bankroll(),
 		],
 	})
 	if not recent_result.is_empty() or recent_bankroll_delta != 0:
@@ -9004,7 +9113,7 @@ func _consequence_card_view_list(context: Dictionary) -> Array:
 			"tone": "positive" if recent_bankroll_delta >= 0 else "cost",
 			"lines": [
 				"Change %+d." % recent_bankroll_delta,
-				"Current bankroll %d." % run_state.bankroll,
+				"Current bankroll %d." % _presented_bankroll(),
 				_economy_cue_text() + ".",
 			],
 		})
@@ -11066,7 +11175,7 @@ func save_status_snapshot() -> Dictionary:
 		"pending_autosave": pending_autosave,
 		"active_summary": _run_summary_text(run_state) if run_state != null else "",
 		"visible_objective": _objective_hud_text() if run_state != null else "",
-		"visible_bankroll": run_state.bankroll if run_state != null else 0,
+		"visible_bankroll": _presented_bankroll() if run_state != null else 0,
 		"visible_run_status": run_state.run_status if run_state != null else "",
 		"visible_pressure": _pressure_status_text(pressure),
 		"visible_environment": str(run_state.current_environment.get("display_name", "")) if run_state != null else "",
@@ -11109,7 +11218,7 @@ func _refresh_run_menu() -> void:
 			status = "Seed %s | %s | Bankroll %d | Heat %d" % [
 				run_state.player_facing_seed_text(),
 				venue,
-				run_state.bankroll,
+				_presented_bankroll(),
 				run_state.suspicion_level(),
 			]
 		var save_note := "Resume Slot ready." if has_save else "Resume Slot empty."
@@ -11186,12 +11295,12 @@ func _run_status_hud_model() -> Dictionary:
 	var guidance := _objective_guidance_view(prestige, pressure, demo_objective)
 	var recent_result := _recent_result_snapshot()
 	var deltas: Dictionary = recent_result.get("deltas", {})
-	var bankroll_delta := int(recent_result.get("bankroll_delta", deltas.get("bankroll_delta", 0)))
+	var bankroll_delta := _visible_recent_bankroll_delta(int(recent_result.get("bankroll_delta", deltas.get("bankroll_delta", 0))))
 	var heat_delta := int(recent_result.get("suspicion_delta", deltas.get("suspicion_delta", 0)))
 	var debt_items := _debt_view_list()
 	var inventory_items := _inventory_view_list()
 	var environment := run_state.current_environment
-	var bankroll_text := "[$] Bankroll %d" % run_state.bankroll
+	var bankroll_text := "[$] Bankroll %d" % _presented_bankroll()
 	if bankroll_delta != 0:
 		bankroll_text += " (%+d)" % bankroll_delta
 	var heat_meter := _hud_meter(run_state.suspicion_level(), 100, 10)
@@ -11252,7 +11361,7 @@ func _run_status_hud_model() -> Dictionary:
 		"clock_text": clock_text,
 		"home_text": home_text,
 		"bankroll_text": bankroll_text,
-		"bankroll": run_state.bankroll,
+		"bankroll": _presented_bankroll(),
 		"bankroll_delta": bankroll_delta,
 		"heat_text": heat_text,
 		"heat_meter": heat_meter,
@@ -12578,7 +12687,8 @@ func _stake_range_from_action_view(action_view: Dictionary = {}) -> Dictionary:
 	if run_state == null:
 		return {"min": 1, "max": 1, "default": 1, "has_valid": false}
 	var floor := 1
-	var ceiling := run_state.bankroll
+	var display_bankroll := _presented_bankroll()
+	var ceiling := display_bankroll
 	var economic_profile: Dictionary = run_state.current_environment.get("economic_profile", {})
 	floor = int(economic_profile.get("stake_floor", floor))
 	ceiling = int(economic_profile.get("stake_ceiling", ceiling))
@@ -12586,7 +12696,7 @@ func _stake_range_from_action_view(action_view: Dictionary = {}) -> Dictionary:
 		floor = int(action_view.get("stake_floor", floor))
 		ceiling = int(action_view.get("stake_ceiling", ceiling))
 	var min_stake := maxi(1, floor)
-	var max_stake := mini(ceiling, run_state.bankroll)
+	var max_stake := mini(ceiling, display_bankroll)
 	var has_valid := max_stake >= min_stake
 	return {
 		"min": min_stake,
@@ -12596,7 +12706,7 @@ func _stake_range_from_action_view(action_view: Dictionary = {}) -> Dictionary:
 		"default": min_stake if has_valid else 0,
 		"has_valid": has_valid,
 		"economy_state": run_state.economy(),
-		"economy_pressure_applied": bool(action_view.get("economy_pressure_applied", false)) if not action_view.is_empty() else max_stake < mini(ceiling, run_state.bankroll),
+		"economy_pressure_applied": bool(action_view.get("economy_pressure_applied", false)) if not action_view.is_empty() else max_stake < mini(ceiling, display_bankroll),
 	}
 
 

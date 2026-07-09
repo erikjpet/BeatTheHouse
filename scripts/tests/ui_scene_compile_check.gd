@@ -577,6 +577,131 @@ class AllInLosingFixtureGame:
 		return result
 
 
+class BankrollPresentationFixtureGame:
+	extends GameModule
+
+	const PRESENTATION_CHANNEL := "bankroll_fixture_reveal"
+	const PRESENTATION_DURATION_MSEC := 700
+
+	func _init() -> void:
+		setup({
+			"id": "bankroll_presentation_fixture",
+			"display_name": "Bankroll Presentation Fixture",
+			"family": "fixture",
+			"full_simulation": true,
+			"legal_actions": [{
+				"id": "bankroll_fixture_win",
+				"label": "Reveal win",
+				"summary": "Deterministic animated win.",
+			}],
+			"cheat_actions": [],
+		})
+
+	func actions(run_state: RunState, environment: Dictionary) -> Dictionary:
+		var ceiling := maxi(1, run_state.bankroll)
+		var economic_profile: Dictionary = environment.get("economic_profile", {}) if typeof(environment.get("economic_profile", {})) == TYPE_DICTIONARY else {}
+		if economic_profile.has("stake_ceiling"):
+			ceiling = mini(ceiling, int(economic_profile.get("stake_ceiling", ceiling)))
+		return {
+			"ok": true,
+			"type": "game_actions",
+			"game_id": get_id(),
+			"legal_actions": legal_actions(run_state, environment),
+			"cheat_actions": [],
+			"stake_floor": 10,
+			"stake_ceiling": ceiling,
+			"base_stake_ceiling": ceiling,
+			"economy_stake_ceiling": ceiling,
+			"economy_state": run_state.economy(),
+			"economy_pressure_applied": false,
+		}
+
+	func wager_cost_for_context(_action_id: String, stake: int, _run_state: RunState, _environment: Dictionary, _ui_state: Dictionary = {}) -> int:
+		return maxi(0, stake)
+
+	func surface_state(_run_state: RunState, environment: Dictionary, _ui_state: Dictionary = {}) -> Dictionary:
+		var fixture_state := _fixture_state(environment)
+		var last_result: Dictionary = _ui_state.get("bankroll_fixture_last_result", {}) if typeof(_ui_state.get("bankroll_fixture_last_result", {})) == TYPE_DICTIONARY else {}
+		if last_result.is_empty():
+			last_result = fixture_state.get("last_result", {}) if typeof(fixture_state.get("last_result", {})) == TYPE_DICTIONARY else {}
+		var animation_id := str(last_result.get("animation_id", ""))
+		var started_msec := int(last_result.get("resolved_at_msec", 0))
+		var active := not animation_id.is_empty() and started_msec > 0 and Time.get_ticks_msec() - started_msec < PRESENTATION_DURATION_MSEC
+		return GameModule.surface_spec({
+			"surface_renderer": "result",
+			"surface_life": "result",
+			"surface_controls_native": false,
+			"surface_stake_controls_required": true,
+			"surface_embeds_outcomes": true,
+			"surface_realtime_state_refresh": false,
+			"surface_animation_channels": [
+				GameModule.surface_animation_channel(
+					PRESENTATION_CHANNEL,
+					animation_id if active else "",
+					PRESENTATION_DURATION_MSEC if active else 0,
+					started_msec
+				),
+			],
+			"result_message": "" if active else str(last_result.get("summary", "")),
+		})
+
+	func resolve_with_context(action_id: String, stake: int, _run_state: RunState, environment: Dictionary, _rng: RngStream, _ui_state: Dictionary = {}) -> Dictionary:
+		var wager := maxi(1, stake)
+		var bankroll_delta := 40
+		var started_msec := Time.get_ticks_msec()
+		var fixture_state := _fixture_state(environment)
+		var last_result := {
+			"summary": "Fixture win revealed.",
+			"bankroll_delta": bankroll_delta,
+			"animation_id": "fixture:%d" % started_msec,
+			"resolved_at_msec": started_msec,
+		}
+		fixture_state["last_result"] = last_result.duplicate(true)
+		_store_fixture_state(environment, fixture_state)
+		var deltas := GameModule.empty_result_deltas()
+		deltas["bankroll_delta"] = bankroll_delta
+		deltas["messages"] = ["Fixture win revealed."]
+		deltas["story_log"] = [{
+			"type": "game_action",
+			"game_id": get_id(),
+			"action_id": action_id,
+			"won": true,
+			"stake_cost": wager,
+			"bankroll_delta": bankroll_delta,
+			"suspicion_delta": 0,
+			"environment_id": str(environment.get("id", "")),
+		}]
+		var result := GameModule.build_action_result({
+			"ok": true,
+			"type": "game_action",
+			"source_id": get_id(),
+			"game_id": get_id(),
+			"action_id": action_id,
+			"action_kind": "legal",
+			"stake": wager,
+			"bankroll_delta": bankroll_delta,
+			"deltas": deltas,
+			"won": true,
+			"environment_id": str(environment.get("id", "")),
+			"message": "Fixture win revealed.",
+			"surface_embeds_outcomes": true,
+		})
+		result["host_apply_result"] = true
+		result["ui_state"] = {"bankroll_fixture_last_result": last_result}
+		result["preserve_surface_ui_state"] = true
+		return result
+
+	func _fixture_state(environment: Dictionary) -> Dictionary:
+		var states: Dictionary = environment.get("game_states", {}) if typeof(environment.get("game_states", {})) == TYPE_DICTIONARY else {}
+		var state: Dictionary = states.get(get_id(), {}) if typeof(states.get(get_id(), {})) == TYPE_DICTIONARY else {}
+		return state.duplicate(true)
+
+	func _store_fixture_state(environment: Dictionary, fixture_state: Dictionary) -> void:
+		var states: Dictionary = environment.get("game_states", {}) if typeof(environment.get("game_states", {})) == TYPE_DICTIONARY else {}
+		states[get_id()] = fixture_state.duplicate(true)
+		environment["game_states"] = states
+
+
 func _init() -> void:
 	call_deferred("_run")
 
@@ -857,6 +982,9 @@ func _run() -> void:
 		quit(1)
 		return
 	if not await _check_confirmed_all_in_wager_result_then_failure(app):
+		quit(1)
+		return
+	if not await _check_presented_bankroll_waits_for_result_reveal(app):
 		quit(1)
 		return
 	if not await _check_background_slot_autoplay_isolated_from_active_game(app):
@@ -5332,6 +5460,124 @@ func _check_confirmed_all_in_wager_result_then_failure(app: Control) -> bool:
 	var recent_lines: Array = failure_summary.get("recent_result_lines", [])
 	if JSON.stringify(recent_lines).find("Fixture all-in wager lost") == -1:
 		push_error("Resolved losing all-in failure summary lost the wager result context.")
+		return false
+	app.call("return_to_main_menu")
+	await process_frame
+	app.set("run_state", original_run_state)
+	app.set("dev_game_test_mode", original_dev_game_test_mode)
+	app.call("_refresh_run_action_service")
+	app.call("_refresh_start_screen")
+	await process_frame
+	return true
+
+
+func _check_presented_bankroll_waits_for_result_reveal(app: Control) -> bool:
+	var original_run_state: Variant = app.get("run_state")
+	var original_dev_game_test_mode := bool(app.get("dev_game_test_mode"))
+	app.call("start_foundation_run", "UI-BANKROLL-PRESENTATION")
+	await process_frame
+	var run_state: RunState = app.get("run_state")
+	if run_state == null:
+		push_error("Bankroll presentation fixture could not start a run.")
+		return false
+	run_state.bankroll = 100
+	var fixture_game := BankrollPresentationFixtureGame.new()
+	var environment := run_state.current_environment.duplicate(true)
+	environment["game_ids"] = [fixture_game.get_id()]
+	environment["game_states"] = {}
+	environment["economic_profile"] = {"stake_floor": 10, "stake_ceiling": 100}
+	run_state.set_environment(environment)
+	app.call("_refresh_run_action_service")
+	app.set("current_game", fixture_game)
+	app.call("_reset_game_surface_runtime_state")
+	app.call("_set_current_screen", "GAME")
+	app.call("_clear_selected_game_action")
+	app.call("_clear_selected_stake")
+	if not bool(app.call("set_selected_stake", 10)):
+		push_error("Bankroll presentation fixture could not select its stake.")
+		return false
+	var before_bankroll := int((app.call("serialized_run_state") as Dictionary).get("bankroll", -1))
+	if before_bankroll != 100:
+		push_error("Bankroll presentation fixture started from an unexpected bankroll: %d." % before_bankroll)
+		return false
+	app.call("_resolve_game_action", "bankroll_fixture_win", false, false, false)
+	await process_frame
+	var settled_bankroll := int((app.call("serialized_run_state") as Dictionary).get("bankroll", -1))
+	var expected_presented := 90
+	if settled_bankroll != 140:
+		var debug_game_value: Variant = app.get("current_game")
+		var debug_popup: Dictionary = app.call("current_event_choice_popup_snapshot")
+		push_error("Bankroll presentation fixture did not settle simulation immediately: %d game=%s stake=%d screen=%s popup=%s." % [
+			settled_bankroll,
+			str(debug_game_value),
+			int(app.get("selected_stake")),
+			str((app.call("current_screen_snapshot") as Dictionary).get("screen", "")),
+			JSON.stringify(debug_popup),
+		])
+		return false
+	var mid_hud: Dictionary = app.call("current_objective_hud_snapshot")
+	var mid_game: Dictionary = app.call("current_game_view_snapshot")
+	var mid_save: Dictionary = app.call("save_status_snapshot")
+	var mid_consequence: Dictionary = app.call("current_consequence_view_snapshot")
+	if int(mid_hud.get("bankroll", -1)) != expected_presented:
+		var debug_canvas := app.get("game_surface_canvas") as Control
+		var debug_surface: Dictionary = debug_canvas.call("surface_runtime_status") if debug_canvas != null else {}
+		push_error("Top HUD spoiled the settled bankroll during result animation: hud=%d hold=%s presented=%d surface=%s." % [
+			int(mid_hud.get("bankroll", -1)),
+			str(app.get("presented_bankroll_hold_active")),
+			int(app.get("presented_bankroll_value")),
+			JSON.stringify(debug_surface),
+		])
+		return false
+	if int(mid_game.get("bankroll", -1)) != expected_presented:
+		push_error("Game snapshot spoiled the settled bankroll during result animation.")
+		return false
+	if int(mid_save.get("visible_bankroll", -1)) != expected_presented:
+		push_error("Save/status side channel spoiled the settled bankroll during result animation.")
+		return false
+	if int(mid_consequence.get("bankroll", -1)) != expected_presented or int(mid_consequence.get("recent_bankroll_delta", 999)) != 0:
+		push_error("Consequence side channel exposed result money before the reveal boundary.")
+		return false
+	if int(mid_game.get("stake_max", 999)) > expected_presented:
+		push_error("Stake availability used settled bankroll while result presentation was still active.")
+		return false
+	var game_surface_canvas := app.get("game_surface_canvas") as Control
+	if game_surface_canvas == null:
+		push_error("Bankroll presentation fixture could not inspect the game surface canvas.")
+		return false
+	var mid_surface: Dictionary = game_surface_canvas.call("surface_runtime_status")
+	var mid_animations: Dictionary = mid_surface.get("surface_animations", {}) if typeof(mid_surface.get("surface_animations", {})) == TYPE_DICTIONARY else {}
+	var reveal_animation: Dictionary = mid_animations.get(BankrollPresentationFixtureGame.PRESENTATION_CHANNEL, {}) if typeof(mid_animations.get(BankrollPresentationFixtureGame.PRESENTATION_CHANNEL, {})) == TYPE_DICTIONARY else {}
+	if not bool(reveal_animation.get("active", false)):
+		push_error("Bankroll presentation fixture did not expose an active reveal animation.")
+		return false
+	await create_timer(0.9).timeout
+	await process_frame
+	var post_hud: Dictionary = app.call("current_objective_hud_snapshot")
+	var post_consequence: Dictionary = app.call("current_consequence_view_snapshot")
+	if int(post_hud.get("bankroll", -1)) != settled_bankroll:
+		push_error("Presented bankroll did not sync after the reveal animation completed.")
+		return false
+	if int(post_consequence.get("recent_bankroll_delta", 0)) != 40:
+		push_error("Result delta did not become visible after the reveal animation completed.")
+		return false
+	run_state.bankroll = 100
+	environment["game_states"] = {}
+	run_state.set_environment(environment)
+	app.set("current_game", fixture_game)
+	app.call("_reset_game_surface_runtime_state")
+	app.call("_set_current_screen", "GAME")
+	app.call("_clear_selected_game_action")
+	app.call("_clear_selected_stake")
+	app.call("set_selected_stake", 10)
+	app.call("_resolve_game_action", "bankroll_fixture_win", false, false, false)
+	await process_frame
+	var second_settled_bankroll := int((app.call("serialized_run_state") as Dictionary).get("bankroll", -1))
+	app.call("back_to_environment")
+	await process_frame
+	var leave_hud: Dictionary = app.call("current_objective_hud_snapshot")
+	if int(leave_hud.get("bankroll", -1)) != second_settled_bankroll:
+		push_error("Leaving mid-animation did not snap presented bankroll to actual.")
 		return false
 	app.call("return_to_main_menu")
 	await process_frame
