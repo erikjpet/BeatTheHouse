@@ -1,3 +1,53 @@
+# Execution Record (2026-07-09)
+
+- Claimed in `docs/todo/QUEUE.md` on 2026-07-09 and committed as `81082b1`.
+- Preconditions verified before package work: both CRITICAL playtest-fix
+  prompts were archived with execution records, no unresolved ready/claimed fix
+  work remained in the queue, the tree was clean after `4377545`, and no Godot
+  process was running before gates.
+- Scope rerun: release-grade gates affected by the playtest fixes and package
+  freshness were rerun instead of the full multi-hour release matrix, matching
+  this prompt's scoped repackage instruction.
+- Root cause found during repackage: exported Web table surfaces were still
+  driving expensive idle redraws under Chrome 4x CPU throttle, which caused
+  `tools\web_perf_smoke.ps1` to fail on baccarat, roulette, bar-dice, and
+  blackjack idle budgets even though native probes passed.
+- Fix commit: `3990ae2` adds a Web-only low-detail idle path for table surfaces
+  and slows idle-only redraw cadence when no animation channel, overlay, or
+  handoff is active. Active animations keep the normal redraw cadence.
+- Verification:
+  - `powershell -ExecutionPolicy Bypass -File tools\validate_project.ps1`:
+    PASS.
+  - `powershell -ExecutionPolicy Bypass -File tools\check_godot.ps1
+    -RequireGodot -Suite Full -TimeoutSec 1800`: PASS; report
+    `.tmp/test_reports/20260709_015947_full/summary.json`.
+  - `powershell -ExecutionPolicy Bypass -File
+    tools\foundation_performance_probe.ps1 -RequireGodot`: PASS; all seven
+    game surfaces plus meta home, talk dock, dialogue, and eviction covered;
+    `meta_home_open` 233.488ms under the 450ms budget.
+  - `powershell -ExecutionPolicy Bypass -File
+    tools\foundation_mouse_batch_playtest.ps1 -RunCount 20 -RequireGodot`:
+    PASS strict; 20/20 playable, R100 20/20, victories 20/20, true failures 0.
+  - `powershell -ExecutionPolicy Bypass -File tools\web_perf_smoke.ps1`: first
+    run failed on Web table idle budgets; after `3990ae2`, PASS with Chrome 4x
+    ready 14,378ms / 20,000ms and report
+    `.tmp/web_perf_smoke/report.summary.json`.
+  - `powershell -ExecutionPolicy Bypass -File tools\export_itch.ps1 -Target web`:
+    PASS.
+  - `powershell -ExecutionPolicy Bypass -File tools\export_itch.ps1 -Target windows`:
+    PASS.
+- Rebuilt artifacts:
+  - `builds/itch/BeatTheHouse-web.zip`: 17,177,826 bytes, SHA256
+    `E364B27C765D8B82B6C525A1CDF248D013BDE69BD1643D104E48883256816F71`.
+  - `builds/itch/BeatTheHouse-windows.zip`: 43,657,926 bytes, SHA256
+    `2D40849FF927EB47772A889D8F5735D7CAABE3D24030493A480C4729B90EA363`.
+- Documentation updated: `docs/plans/0.4_release_checklist.md` package rows
+  were refreshed and a Playtest Fix Addendum was appended.
+- Queue update: this prompt was removed and
+  `v04_publish_and_tag_prompt.md` was unblocked for owner-launch only.
+- Deviations: none from the prompt. No push, tag, upload, or publish action was
+  performed.
+
 # Agent Prompt - v0.4 Repackage After Playtest Fixes
 
 Copy everything below this line into the agent.
