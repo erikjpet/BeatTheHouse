@@ -22,7 +22,7 @@ before new feature work proceeds.
 
 | # | Prompt | Status | Machine | Notes |
 | --- | --- | --- | --- | --- |
-| 10 | v04_publish_and_tag_prompt.md | ready; owner-launch only | PM machine (stored git credentials) | Unblocked by archived `v04_repackage_after_playtest_fixes_prompt.md`; start only when the owner pastes the kickoff prompt. Owner decision 2026-07-08: NO new logins — publish uses existing git credentials only (push main + v0.4.0 tag, no gh Release, no butler). The itch upload is prepared as a documented owner action with verified zip integrity. First-attempt toolchain blockers are moot under this flow. |
+| 10 | v04_publish_and_tag_prompt.md | claimed (2026-07-09, Codex PM machine) | PM machine (stored git credentials) | Unblocked by archived `v04_repackage_after_playtest_fixes_prompt.md`; start only when the owner pastes the kickoff prompt. Owner decision 2026-07-08: NO new logins — publish uses existing git credentials only (push main + v0.4.0 tag, no gh Release, no butler). The itch upload is prepared as a documented owner action with verified zip integrity. First-attempt toolchain blockers are moot under this flow. |
 | 11 | v04_post_release_verification_prompt.md | blocked until #10; owner-launch only | PM machine | Verifies the LIVE builds players receive (itch web + published Windows zip), generates devlog #4 card/copy assets, marks the plan SHIPPED. Devlog posting stays with the owner. |
 
 Only the project manager adds entries or reorders this table; executing
