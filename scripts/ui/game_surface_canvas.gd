@@ -218,6 +218,7 @@ func current_view_snapshot() -> Dictionary:
 		"surface_animation_target_fps": SURFACE_ANIMATION_FPS,
 		"surface_animation_redraw_count": surface_animation_redraw_count,
 		"surface_continuous_redraw_active": _needs_continuous_redraw(),
+		"surface_animation_liveness_active": surface_animation_liveness_active(),
 		"surface_ambient_overlay": str(state.get("surface_ambient_overlay", "")),
 		"surface_ambient_overlay_active": _ambient_surface_overlay_active(),
 	}
@@ -249,6 +250,7 @@ func surface_runtime_status() -> Dictionary:
 		"surface_animation_target_fps": SURFACE_ANIMATION_FPS,
 		"surface_animation_redraw_count": surface_animation_redraw_count,
 		"surface_continuous_redraw_active": _needs_continuous_redraw(),
+		"surface_animation_liveness_active": surface_animation_liveness_active(),
 		"surface_ambient_overlay": str(state.get("surface_ambient_overlay", "")),
 		"surface_ambient_overlay_active": _ambient_surface_overlay_active(),
 	}
@@ -256,6 +258,10 @@ func surface_runtime_status() -> Dictionary:
 
 func surface_realtime_state_refresh_enabled() -> bool:
 	return uses_foundation_snapshot and bool(state.get("surface_realtime_state_refresh", false))
+
+
+func surface_animation_liveness_active() -> bool:
+	return _surface_animation_liveness_active()
 
 
 func reset_performance_counters() -> void:
@@ -273,6 +279,14 @@ func performance_counters() -> Dictionary:
 		"draw_p95_ms": _draw_percentile_ms(0.95),
 		"draw_max_ms": _draw_max_ms(),
 	}
+
+
+func debug_advance_idle_liveness(delta: float) -> Dictionary:
+	if reduce_motion:
+		return surface_runtime_status()
+	flicker += maxf(0.0, delta)
+	_schedule_surface_animation_redraws(delta)
+	return surface_runtime_status()
 
 
 func debug_soak_snapshot() -> Dictionary:
@@ -698,23 +712,27 @@ func _process(delta: float) -> void:
 		return
 	flicker += delta
 	_sync_surface_audio()
-	var continuous_redraw := _needs_continuous_redraw()
-	var ambient_redraw := _ambient_surface_overlay_active()
-	if continuous_redraw or ambient_redraw:
+	_schedule_surface_animation_redraws(delta)
+
+
+func _schedule_surface_animation_redraws(delta: float) -> void:
+	var main_redraw := _surface_main_animation_redraw_active()
+	var overlay_redraw := _surface_overlay_animation_redraw_active()
+	if main_redraw or overlay_redraw:
 		if _surface_animation_redraw_due(delta):
-			if continuous_redraw:
+			if main_redraw:
 				queue_redraw()
-			if ambient_redraw and ambient_surface_overlay != null:
+			if overlay_redraw and ambient_surface_overlay != null:
 				ambient_surface_overlay.queue_redraw()
 	elif continuous_redraw_was_active:
 		surface_animation_redraw_accumulator = 0.0
 		queue_redraw()
-	elif ambient_surface_overlay != null and ambient_surface_overlay.visible and not ambient_redraw:
+	elif ambient_surface_overlay != null and ambient_surface_overlay.visible and not overlay_redraw:
 		surface_animation_redraw_accumulator = 0.0
 		ambient_surface_overlay.queue_redraw()
 	else:
 		surface_animation_redraw_accumulator = 0.0
-	continuous_redraw_was_active = continuous_redraw
+	continuous_redraw_was_active = main_redraw
 
 
 func _draw() -> void:
@@ -787,23 +805,11 @@ func _update_ambient_surface_overlay() -> void:
 
 
 func _ambient_surface_overlay_active() -> bool:
-	if reduce_motion:
-		return false
-	var overlay_id := str(state.get("surface_ambient_overlay", ""))
-	if overlay_id == "table_idle" or overlay_id == "roulette_full_idle":
-		return _ambient_surface_overlay_needs_redraw()
-	return _screen_effect_overlay_needs_redraw()
+	return _surface_overlay_animation_redraw_active()
 
 
 func _ambient_surface_overlay_needs_redraw() -> bool:
-	if _screen_effect_overlay_needs_redraw():
-		return true
-	if _surface_dynamic_overlay_channel_active():
-		return true
-	var overlay_id := str(state.get("surface_ambient_overlay", ""))
-	if overlay_id == "table_idle" or overlay_id == "roulette_full_idle":
-		return true
-	return bool(state.get("surface_animates_idle", false))
+	return _surface_overlay_animation_redraw_active()
 
 
 func _screen_effect_overlay_needs_redraw() -> bool:
@@ -948,6 +954,14 @@ func _surface_audio_timing(sync_spec: Dictionary) -> Dictionary:
 
 
 func _needs_continuous_redraw() -> bool:
+	return _surface_main_animation_redraw_active()
+
+
+func _surface_animation_liveness_active() -> bool:
+	return _surface_main_animation_redraw_active() or _surface_overlay_animation_redraw_active()
+
+
+func _surface_main_animation_redraw_active() -> bool:
 	if reduce_motion:
 		return false
 	for channel_id in surface_animation_channels.keys():
@@ -961,11 +975,22 @@ func _needs_continuous_redraw() -> bool:
 		return true
 	if drunk_effect_mode == "classic" and int(state.get("drunk_level", 0)) >= 12 and not ambient_redraw_available:
 		return true
-	return bool(state.get("surface_animates_idle", false)) and not ambient_redraw_available
+	return bool(state.get("surface_animates_idle", false))
+
+
+func _surface_overlay_animation_redraw_active() -> bool:
+	if reduce_motion:
+		return false
+	if _screen_effect_overlay_needs_redraw():
+		return true
+	if _surface_dynamic_overlay_channel_active():
+		return true
+	var overlay_id := str(state.get("surface_ambient_overlay", ""))
+	return overlay_id == "table_idle" or overlay_id == "roulette_full_idle"
 
 
 func _surface_channel_redraw_owned_by_overlay(channel_id: String) -> bool:
-	if channel_id.is_empty() or not _ambient_surface_overlay_active():
+	if channel_id.is_empty() or not _surface_overlay_animation_redraw_active():
 		return false
 	var channels_value: Variant = state.get("surface_dynamic_overlay_channels", [])
 	if typeof(channels_value) != TYPE_ARRAY:

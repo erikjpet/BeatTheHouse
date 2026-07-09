@@ -193,7 +193,7 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 		"surface_stake_controls_required": true,
 		"surface_embeds_outcomes": true,
 		"surface_suppresses_game_result_burst": true,
-		"surface_animates_idle": false,
+		"surface_animates_idle": true,
 		"surface_ambient_overlay": "",
 		"surface_dynamic_overlay_channels": [ROULETTE_SPIN_CHANNEL],
 		"surface_realtime_state_refresh": roulette_motion_active,

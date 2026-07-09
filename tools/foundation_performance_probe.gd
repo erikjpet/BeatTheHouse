@@ -15,8 +15,14 @@ const DEFAULT_RESOLVE_SAMPLE_COUNT := 48
 const LOW_END_SCALE_FACTOR := 10.2
 const LOW_END_FRAME_BUDGET_MS := 16.6
 const MAX_SURFACE_DRAW_P95_MS := 5.0
+# Static idle surfaces may report zero draw samples because they have no active
+# animation liveness. Animated idle surfaces must redraw and use the active
+# draw budget above; zero samples on an animated surface is a release failure.
 const MAX_IDLE_SURFACE_DRAW_P95_MS := 1.5
 const IDLE_SURFACE_DRAW_WAIVERS := {}
+const ANIMATED_IDLE_SURFACE_DRAW_BUDGETS := {
+	"roulette": 7.0,
+}
 const MAX_SEVERE_IDLE_AVG_MS := 45.0
 const MAX_SEVERE_FOCUS_AVG_MS := 45.0
 const MAX_FOCUS_CALL_MS := 10.0
@@ -227,6 +233,8 @@ func _probe_game(seed: String, run_index: int, environment_id: String, game_id: 
 		await process_frame
 	var elapsed_usec := Time.get_ticks_usec() - start_usec
 	var counters := _canvas_counters(canvas)
+	var runtime_status: Dictionary = canvas.call("surface_runtime_status") if canvas.has_method("surface_runtime_status") else {}
+	var animation_liveness_active := bool(runtime_status.get("surface_animation_liveness_active", false))
 	var avg_ms := float(elapsed_usec) / float(maxi(1, frames_per_surface)) / 1000.0
 	var draw_p95_ms := float(counters.get("draw_p95_ms", 0.0))
 	var draw_samples := _array_size(counters.get("draw_frame_usec_samples", []))
@@ -244,9 +252,10 @@ func _probe_game(seed: String, run_index: int, environment_id: String, game_id: 
 		"draw_p95_ms": draw_p95_ms,
 		"draw_max_ms": float(counters.get("draw_max_ms", 0.0)),
 		"draw_samples": draw_samples,
+		"animation_liveness_active": animation_liveness_active,
 		"full_snapshot_calls": int(counters.get("full_snapshot_calls", 0)),
 		"runtime_status_calls": int(counters.get("runtime_status_calls", 0)),
-		"idle_draw_budget_ms": MAX_IDLE_SURFACE_DRAW_P95_MS,
+		"idle_draw_budget_ms": _animated_idle_draw_budget(renderer) if animation_liveness_active else MAX_IDLE_SURFACE_DRAW_P95_MS,
 	})
 	if int(counters.get("full_snapshot_calls", 0)) > 0:
 		failures.append("Idle %s surface rebuilt full snapshots %d times." % [renderer, int(counters.get("full_snapshot_calls", 0))])
@@ -255,7 +264,7 @@ func _probe_game(seed: String, run_index: int, environment_id: String, game_id: 
 	# only full snapshot rebuilds indicate the expensive regression T7.1 guards.
 	if avg_ms > MAX_SEVERE_IDLE_AVG_MS:
 		failures.append("Idle %s surface averaged %.2f ms per frame, above %.2f ms." % [renderer, avg_ms, MAX_SEVERE_IDLE_AVG_MS])
-	_assert_idle_draw_budget("Idle %s surface" % renderer, draw_p95_ms)
+	_assert_idle_draw_budget("Idle %s surface" % renderer, renderer, draw_p95_ms, draw_samples, animation_liveness_active)
 	if renderer == "slot_machine" and not slot_autoplay_checked:
 		await _probe_slot_autoplay(seed, run_index, environment_id, game_id, canvas)
 	app.call("back_to_environment")
@@ -472,10 +481,8 @@ func _probe_synthetic_idle_surfaces() -> void:
 		var counters := _canvas_counters(canvas)
 		var renderer := str(snapshot.get("surface_renderer", ""))
 		var draw_samples := _array_size(counters.get("draw_frame_usec_samples", []))
-		var expects_idle_redraw := bool(snapshot.get("surface_animates_idle", false)) \
-			or not str(snapshot.get("surface_ambient_overlay", "")).is_empty() \
-			or int(snapshot.get("suspicion_level", 0)) > 0 \
-			or int(snapshot.get("drunk_level", 0)) >= 12
+		var runtime_status: Dictionary = canvas.call("surface_runtime_status") if canvas.has_method("surface_runtime_status") else {}
+		var expects_idle_redraw := bool(runtime_status.get("surface_animation_liveness_active", false))
 		observations.append({
 			"seed": "synthetic:idle_surface",
 			"run_index": -1,
@@ -490,9 +497,10 @@ func _probe_synthetic_idle_surfaces() -> void:
 			"draw_p95_ms": float(counters.get("draw_p95_ms", 0.0)),
 			"draw_max_ms": float(counters.get("draw_max_ms", 0.0)),
 			"draw_samples": draw_samples,
+			"animation_liveness_active": expects_idle_redraw,
 			"full_snapshot_calls": int(counters.get("full_snapshot_calls", 0)),
 			"runtime_status_calls": int(counters.get("runtime_status_calls", 0)),
-			"idle_draw_budget_ms": MAX_IDLE_SURFACE_DRAW_P95_MS,
+			"idle_draw_budget_ms": _animated_idle_draw_budget(renderer) if expects_idle_redraw else MAX_IDLE_SURFACE_DRAW_P95_MS,
 		})
 		if expects_idle_redraw and draw_samples <= 0:
 			failures.append("Synthetic %s idle surface produced no draw samples." % renderer)
@@ -519,6 +527,8 @@ func _probe_synthetic_idle_surface_liveness(snapshot: Dictionary) -> void:
 	var counters := _canvas_counters(canvas)
 	var renderer := str(snapshot.get("surface_renderer", ""))
 	var draw_samples := _array_size(counters.get("draw_frame_usec_samples", []))
+	var runtime_status: Dictionary = canvas.call("surface_runtime_status") if canvas.has_method("surface_runtime_status") else {}
+	var liveness_active := bool(runtime_status.get("surface_animation_liveness_active", false))
 	observations.append({
 		"seed": "synthetic:idle_surface_liveness",
 		"run_index": -1,
@@ -533,11 +543,14 @@ func _probe_synthetic_idle_surface_liveness(snapshot: Dictionary) -> void:
 		"draw_p95_ms": float(counters.get("draw_p95_ms", 0.0)),
 		"draw_max_ms": float(counters.get("draw_max_ms", 0.0)),
 		"draw_samples": draw_samples,
+		"animation_liveness_active": liveness_active,
 		"full_snapshot_calls": int(counters.get("full_snapshot_calls", 0)),
 		"runtime_status_calls": int(counters.get("runtime_status_calls", 0)),
-		"idle_draw_budget_ms": MAX_IDLE_SURFACE_DRAW_P95_MS,
+		"idle_draw_budget_ms": _animated_idle_draw_budget(renderer) if liveness_active else MAX_IDLE_SURFACE_DRAW_P95_MS,
 	})
-	if draw_samples <= 0:
+	if not liveness_active:
+		failures.append("Synthetic %s idle surface lost animation liveness before sampling." % renderer)
+	elif draw_samples <= 0:
 		failures.append("Synthetic %s idle surface did not redraw from _process without input/hover." % renderer)
 	canvas.queue_free()
 	await _settle(1)
@@ -696,7 +709,7 @@ func _synthetic_blackjack_idle_snapshot() -> Dictionary:
 		"game_id": "blackjack",
 		"surface_renderer": "blackjack",
 		"surface_ambient_overlay": "",
-		"surface_animates_idle": false,
+		"surface_animates_idle": true,
 		"reduce_motion": false,
 		"dealer_profile": {"attention_base": 28, "blink_offset": 120},
 		"dealer_attention_pressure": 6,
@@ -771,7 +784,12 @@ func _assert_draw_budget(label: String, draw_p95_ms: float, draw_samples: int) -
 		failures.append("%s draw p95 %.2f ms exceeded %.2f ms." % [label, draw_p95_ms, MAX_SURFACE_DRAW_P95_MS])
 
 
-func _assert_idle_draw_budget(label: String, draw_p95_ms: float) -> void:
+func _assert_idle_draw_budget(label: String, renderer: String, draw_p95_ms: float, draw_samples: int, animation_liveness_active: bool) -> void:
+	if animation_liveness_active:
+		_assert_draw_budget_with_limit("%s animated idle" % label, draw_p95_ms, draw_samples, _animated_idle_draw_budget(renderer))
+		return
+	if draw_samples <= 0:
+		return
 	if draw_p95_ms <= MAX_IDLE_SURFACE_DRAW_P95_MS:
 		return
 	var waiver: Dictionary = _dict(IDLE_SURFACE_DRAW_WAIVERS.get(label, {}))
@@ -786,6 +804,17 @@ func _assert_idle_draw_budget(label: String, draw_p95_ms: float) -> void:
 		])
 		return
 	failures.append("%s idle draw p95 %.2f ms exceeded %.2f ms." % [label, draw_p95_ms, MAX_IDLE_SURFACE_DRAW_P95_MS])
+
+
+func _animated_idle_draw_budget(renderer: String) -> float:
+	return float(ANIMATED_IDLE_SURFACE_DRAW_BUDGETS.get(renderer, MAX_SURFACE_DRAW_P95_MS))
+
+
+func _assert_draw_budget_with_limit(label: String, draw_p95_ms: float, draw_samples: int, budget_ms: float) -> void:
+	if draw_samples <= 0:
+		failures.append("%s did not record draw performance samples." % label)
+	elif draw_p95_ms > budget_ms:
+		failures.append("%s draw p95 %.2f ms exceeded %.2f ms." % [label, draw_p95_ms, budget_ms])
 
 
 func _assert_resolve_budget(game_id: String, stats: Dictionary, budget: Dictionary) -> void:

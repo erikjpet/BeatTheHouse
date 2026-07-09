@@ -21,6 +21,7 @@ const UserSettingsScript := preload("res://scripts/core/user_settings.gd")
 const ProceduralMusicPlayerScript := preload("res://scripts/ui/procedural_music_player.gd")
 const SfxPlayerScript := preload("res://scripts/ui/sfx_player.gd")
 const WebAudioBridgeScript := preload("res://scripts/ui/web_audio_bridge.gd")
+const GameSurfaceCanvasScript := preload("res://scripts/ui/game_surface_canvas.gd")
 const SlotGameScript := preload("res://scripts/games/slot.gd")
 const SlotMachineGeneratorScript := preload("res://scripts/games/slots/slot_machine_generator.gd")
 const SlotMachineStateScript := preload("res://scripts/games/slots/slot_machine_state.gd")
@@ -2417,6 +2418,46 @@ func _check_game_surface_contracts(library: ContentLibrary, failures: Array) -> 
 	var pull_tabs: GameModule = _load_surface_contract_game(library, "pull_tabs", failures)
 	if pull_tabs != null:
 		_check_pull_tabs_surface_contract(pull_tabs, failures)
+	var bar_dice: GameModule = _load_surface_contract_game(library, "bar_dice", failures)
+	if bar_dice != null:
+		_check_bar_dice_surface_contract(bar_dice, failures)
+
+
+func _surface_requires_idle_animation_liveness(surface: Dictionary) -> bool:
+	var renderer := str(surface.get("surface_renderer", ""))
+	return ["blackjack", "roulette", "baccarat", "dice_table", "pull_tab_machine"].has(renderer) or bool(surface.get("surface_animates_idle", false))
+
+
+func _idle_animation_sample_from_canvas(canvas: Control) -> int:
+	var flicker := float(canvas.call("surface_flicker")) if canvas.has_method("surface_flicker") else 0.0
+	return int(round((sin(flicker * 2.1) + sin(flicker * 3.7)) * 100000.0))
+
+
+func _check_idle_animation_liveness_contract(surface: Dictionary, label: String, failures: Array) -> void:
+	if not _surface_requires_idle_animation_liveness(surface):
+		return
+	if not bool(surface.get("surface_animates_idle", false)):
+		failures.append("%s uses time-based idle motion but does not declare surface_animates_idle." % label)
+	var canvas: Control = GameSurfaceCanvasScript.new()
+	canvas.size = Vector2(ArtContractsScript.GAME_BOARD_SIZE)
+	root.add_child(canvas)
+	canvas.call("render_game_snapshot", surface)
+	if canvas.has_method("reset_performance_counters"):
+		canvas.call("reset_performance_counters")
+	var before_snapshot: Dictionary = canvas.call("surface_runtime_status")
+	var before_redraw_count := int(before_snapshot.get("surface_animation_redraw_count", 0))
+	var first_sample := _idle_animation_sample_from_canvas(canvas)
+	for _frame_index in range(12):
+		canvas.call("debug_advance_idle_liveness", 1.0 / 60.0)
+	var after_snapshot: Dictionary = canvas.call("surface_runtime_status")
+	var after_redraw_count := int(after_snapshot.get("surface_animation_redraw_count", 0))
+	var second_sample := _idle_animation_sample_from_canvas(canvas)
+	if after_redraw_count <= before_redraw_count:
+		failures.append("%s idle animation did not schedule redraws with zero input." % label)
+	if first_sample == second_sample:
+		failures.append("%s idle animation sample did not advance over simulated time." % label)
+	root.remove_child(canvas)
+	canvas.free()
 
 
 func _check_table_environment_entry_contracts(library: ContentLibrary, failures: Array) -> void:
@@ -8364,10 +8405,11 @@ func _check_roulette_surface_contract(game: GameModule, failures: Array, library
 	var surface := game.surface_state(run_state, environment, {})
 	if str(surface.get("surface_renderer", "")) != "roulette":
 		failures.append("Roulette surface did not route to the roulette renderer.")
+	_check_idle_animation_liveness_contract(surface, "Roulette betting surface", failures)
 	if not bool(surface.get("surface_controls_native", false)):
 		failures.append("Roulette surface did not expose native table controls.")
-	if bool(surface.get("surface_animates_idle", false)):
-		failures.append("Roulette betting surface must not redraw the full wheel for static idle animation.")
+	if not bool(surface.get("surface_animates_idle", false)):
+		failures.append("Roulette betting surface must declare idle animation liveness for wheel and patron motion.")
 	if not str(surface.get("surface_ambient_overlay", "")).is_empty():
 		failures.append("Roulette betting surface must not use the deprecated ambient overlay.")
 	if bool(surface.get("surface_realtime_state_refresh", false)):
@@ -8993,6 +9035,7 @@ func _check_baccarat_surface_contract(game: GameModule, failures: Array, library
 	var surface := game.surface_state(run_state, environment, {})
 	if str(surface.get("surface_renderer", "")) != "baccarat":
 		failures.append("Baccarat surface did not route to the baccarat renderer.")
+	_check_idle_animation_liveness_contract(surface, "Baccarat betting surface", failures)
 	if str(surface.get("surface_life", "")) != "immersive_table" or str(surface.get("surface_cast", "")) != "dealer_table":
 		failures.append("Baccarat surface did not expose immersive dealer-table metadata.")
 	if not bool(surface.get("surface_controls_native", false)):
@@ -9002,8 +9045,8 @@ func _check_baccarat_surface_contract(game: GameModule, failures: Array, library
 		failures.append("Baccarat betting surface did not expose realtime table-round timer state.")
 	if bool(surface.get("surface_realtime_state_refresh", false)):
 		failures.append("Baccarat static betting surface should not request full snapshot refreshes.")
-	if bool(surface.get("surface_animates_idle", false)):
-		failures.append("Baccarat static betting surface should not redraw the full table for idle animation.")
+	if not bool(surface.get("surface_animates_idle", false)):
+		failures.append("Baccarat betting surface must declare idle animation liveness for dealer, patron, and timer motion.")
 	if not str(surface.get("surface_ambient_overlay", "")).is_empty():
 		failures.append("Baccarat static betting surface must not use the deprecated ambient overlay.")
 	var guide_explainer: Dictionary = surface.get("baccarat_explainer", {}) if typeof(surface.get("baccarat_explainer", {})) == TYPE_DICTIONARY else {}
@@ -9551,12 +9594,13 @@ func _check_blackjack_surface_contract(game: GameModule, failures: Array) -> voi
 	var surface := game.surface_state(run_state, environment, {})
 	if str(surface.get("surface_renderer", "")) != "blackjack":
 		failures.append("Blackjack surface did not route to the blackjack renderer.")
+	_check_idle_animation_liveness_contract(surface, "Blackjack betting surface", failures)
 	if not bool(surface.get("surface_controls_native", false)):
 		failures.append("Blackjack surface did not expose native surface controls.")
 	if not bool(surface.get("can_deal", false)):
 		failures.append("Blackjack surface did not start in a deal-ready betting phase.")
-	if bool(surface.get("surface_animates_idle", false)):
-		failures.append("Blackjack betting surface must not redraw table players and dealer for static idle animation.")
+	if not bool(surface.get("surface_animates_idle", false)):
+		failures.append("Blackjack betting surface must declare idle animation liveness for dealer, patron, and timer motion.")
 	if not str(surface.get("surface_ambient_overlay", "")).is_empty():
 		failures.append("Blackjack betting surface must not use the deprecated ambient overlay.")
 	if bool(surface.get("surface_realtime_state_refresh", false)):
@@ -11439,10 +11483,11 @@ func _check_pull_tabs_surface_contract(game: GameModule, failures: Array) -> voi
 	var surface := game.surface_state(run_state, environment, {})
 	if str(surface.get("surface_renderer", "")) != "pull_tab_machine":
 		failures.append("Pull Tabs surface did not route to the pull-tab machine renderer.")
+	_check_idle_animation_liveness_contract(surface, "Pull Tabs cabinet surface", failures)
 	if not bool(surface.get("surface_controls_native", false)):
 		failures.append("Pull Tabs surface did not expose native surface controls.")
-	if bool(surface.get("surface_animates_idle", false)):
-		failures.append("Pull Tabs surface should stay static until dispense, reveal, or file animation is active.")
+	if not bool(surface.get("surface_animates_idle", false)):
+		failures.append("Pull Tabs cabinet surface must declare idle animation liveness for glow and glare motion.")
 	if not bool(surface.get("surface_embeds_outcomes", false)):
 		failures.append("Pull Tabs surface did not declare ticket-embedded outcomes.")
 	if _surface_blocks_action_while(surface, "pull_tab_buy", "pull_tab_dispense") or _surface_blocks_action_while(surface, "pull_tab_buy_all", "pull_tab_dispense"):
@@ -11489,8 +11534,8 @@ func _check_pull_tabs_surface_contract(game: GameModule, failures: Array) -> voi
 		failures.append("Pull Tabs surface did not leave the dispensed ticket in the machine tray.")
 	if int(tray_surface.get("pull_tab_stack_count", 0)) != 0:
 		failures.append("Pull Tabs buy moved a ticket directly into the play pile instead of the tray.")
-	if bool(tray_surface.get("surface_animates_idle", false)):
-		failures.append("Pull Tabs surface re-enabled idle redraws after a ticket purchase.")
+	if not bool(tray_surface.get("surface_animates_idle", false)):
+		failures.append("Pull Tabs tray surface lost cabinet idle animation liveness after a ticket purchase.")
 	var dispense_events: Array = tray_surface.get("pull_tab_dispense_events", []) as Array
 	if dispense_events.is_empty():
 		failures.append("Pull Tabs buy did not expose tray-drop dispense animation events.")
@@ -11975,6 +12020,7 @@ func _check_bar_dice_surface_contract(game: GameModule, failures: Array) -> void
 	var surface := game.surface_state(run_state, environment, {})
 	if str(surface.get("surface_renderer", "")) != "dice_table":
 		failures.append("Bar Dice surface did not route to the dice-table renderer.")
+	_check_idle_animation_liveness_contract(surface, "Bar Dice table surface", failures)
 	if str(surface.get("surface_life", "")) != "bar_dice_table" or str(surface.get("surface_cast", "")) != "dealer_table":
 		failures.append("Bar Dice surface did not expose the table-game life/cast metadata.")
 	if not bool(surface.get("surface_controls_native", false)):
@@ -11986,8 +12032,8 @@ func _check_bar_dice_surface_contract(game: GameModule, failures: Array) -> void
 		failures.append("Bar Dice table surface did not expose timer/patron state.")
 	if bool(surface.get("surface_realtime_state_refresh", false)):
 		failures.append("Bar Dice static table surface should not request full snapshot refreshes.")
-	if bool(surface.get("surface_animates_idle", false)):
-		failures.append("Bar Dice static table surface should not redraw the full table for idle animation.")
+	if not bool(surface.get("surface_animates_idle", false)):
+		failures.append("Bar Dice table surface must declare idle animation liveness for rail, timer, and table motion.")
 	if not str(surface.get("surface_ambient_overlay", "")).is_empty():
 		failures.append("Bar Dice static table surface must not use the deprecated ambient overlay.")
 	if bool(surface.get("surface_stake_controls_required", true)):

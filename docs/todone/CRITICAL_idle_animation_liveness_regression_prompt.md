@@ -1,3 +1,91 @@
+## Execution Record
+
+Completion date: 2026-07-08
+
+Implementing commits:
+
+- `dcc814e` - Claim idle animation liveness regression.
+- Final archive/evidence commit: this file is archived with the root fix,
+  release-gated liveness check, performance-probe semantic update, and queue
+  cleanup.
+
+Root cause:
+
+- The regression was reintroduced by the performance-oriented redraw gating
+  around `066e479` and then preserved by later performance evidence. The game
+  modules for Blackjack, Roulette, Baccarat, Bar Dice, and Pull Tabs were
+  rendering time-based motion via `surface_flicker()` and timer-derived draw
+  helpers, but their surface snapshots still declared
+  `surface_animates_idle=false` and no ambient overlay. `GameSurfaceCanvas`
+  therefore treated them as static and did not schedule animation-cadence
+  redraws while the mouse was idle.
+- Mouse movement over selectable regions masked the bug because hover changes
+  call the normal dirty/redraw path, so the same frozen time-based renderers
+  appeared to move only while the pointer crossed hit regions.
+- The recurrence pattern came from asymmetric gates: performance probes
+  rewarded `0.000ms` idle draw samples, and old foundation assertions
+  explicitly required table surfaces not to redraw for idle animation. No
+  release gate asserted that a surface with time-based ambient motion must keep
+  redrawing without input.
+
+Fix:
+
+- Added a single `GameSurfaceCanvas` liveness/scheduler path:
+  `surface_animation_liveness_active()`,
+  `_surface_main_animation_redraw_active()`,
+  `_surface_overlay_animation_redraw_active()`, and
+  `_schedule_surface_animation_redraws()`. Production `_process()` and the
+  headless diagnostic hook both use this same authority.
+- Updated animated surface declarations for Blackjack, Roulette, Baccarat, Bar
+  Dice, and Pull Tabs so they declare `surface_animates_idle=true` while still
+  keeping `surface_realtime_state_refresh=false`; animation redraws no longer
+  imply full snapshot rebuilds.
+- Replaced the old "must not redraw" table-contract assertions with release
+  liveness assertions that verify zero-input simulated time advances the
+  animation sample and increments the redraw scheduler.
+- Updated `tools/foundation_performance_probe.gd` so static idle surfaces may
+  have zero draw samples only when no animation liveness is active. Animated
+  idle surfaces must produce draw samples and are budgeted as animated redraw
+  cost. Roulette's measured animated-idle renderer budget is recorded
+  explicitly at 7.0ms p95; static idle budget remains 1.5ms.
+- Added the `CLAUDE.md` hard rule that idle-animation liveness and idle-draw
+  budgets must pass together.
+
+Guard proof:
+
+- Before the fix, after adding the new guard but before changing surface
+  declarations/scheduling,
+  `powershell -ExecutionPolicy Bypass -File tools\check_godot.ps1 -RequireGodot -FoundationSuite games -TimeoutSec 300`
+  failed as intended in `.tmp/test_reports/20260708_184700_smoke/summary.json`.
+  The guard reported Blackjack, Roulette, Baccarat, and Bar Dice as using
+  time-based idle motion without `surface_animates_idle`, without zero-input
+  redraw scheduling, and without an advancing animation sample.
+- After the fix, the same games suite passed in
+  `.tmp/test_reports/20260708_185349_smoke/summary.json`.
+
+Verification:
+
+- `powershell -ExecutionPolicy Bypass -File tools\check_godot.ps1 -RequireGodot -FoundationSuite games -TimeoutSec 300`
+  - PASS.
+- `powershell -ExecutionPolicy Bypass -File tools\check_godot.ps1 -RequireGodot -FoundationSuite ui -TimeoutSec 300`
+  - PASS, report `.tmp/test_reports/20260708_185922_smoke/summary.json`.
+- `powershell -ExecutionPolicy Bypass -File tools\foundation_performance_probe.ps1 -RequireGodot`
+  - PASS. Animated-idle samples were live for Pull Tabs, Bar Dice,
+  Blackjack, Baccarat, and Roulette; static Slot and Video Poker idle surfaces
+  remained at zero samples.
+- `powershell -ExecutionPolicy Bypass -File tools\validate_project.ps1`
+  - PASS: `Beat the House foundation architecture validation passed.`
+- Manual 30-second mouse-idle playtest was not separately driven in a visible
+  desktop window in this agent run; the new release-gated headless liveness
+  fixture is the permanent regression guard and covers the same zero-input
+  condition.
+
+Release note:
+
+- The existing 0.4.0 Web/Windows packages are stale because this fix post-dates
+  the packaged release candidate. Re-export and checklist hash refresh remain
+  owned by the pre-publish step in `docs/todo/QUEUE.md`.
+
 # Agent Prompt - CRITICAL: Table Idle Animations Frozen Again — Fix It AND Make Recurrence Impossible
 
 Priority: **CRITICAL — top of queue. Playtest blocker for the 0.4 release.**

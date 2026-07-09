@@ -47,6 +47,9 @@ Queue mechanics:
 
 - Per-frame code paths stay zero-copy: never `duplicate(true)` live state per
   frame (this repo shipped a measured 32.6 ms/frame regression from that).
+- Idle-animation liveness is release-gated: never optimize idle redraws by
+  suppressing animation scheduling; liveness and idle-draw budgets must pass
+  together.
 - Generated reports go under `.tmp/` (gitignored), never committed.
   `tools/function_census.ps1` output is generated — do not re-track it.
 - Match existing style: tab indentation, typed GDScript, sparse comments that

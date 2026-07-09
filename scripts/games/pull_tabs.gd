@@ -130,7 +130,7 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 		"surface_controls_native": true,
 		"surface_fixed_price_actions": true,
 		"surface_stake_controls_required": false,
-		"surface_animates_idle": false,
+		"surface_animates_idle": true,
 		"surface_embeds_outcomes": true,
 		"machine_name": str(machine.get("machine_name", "Bar Pull-Tab Dispenser")),
 		"pull_tab_rules": "Buy a ticket, then peel its three windows top to bottom. Match three symbols on a row to win.",
