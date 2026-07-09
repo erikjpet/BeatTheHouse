@@ -457,6 +457,19 @@ func surface_animation_active(channel_id: String) -> bool:
 	return surface_elapsed(channel_id) < duration
 
 
+func surface_low_detail_idle() -> bool:
+	if not OS.has_feature("web"):
+		return false
+	if reduce_motion or not bool(state.get("surface_animates_idle", false)):
+		return false
+	if _screen_effect_overlay_needs_redraw() or _surface_dynamic_overlay_channel_active() or _surface_animation_handoff_active():
+		return false
+	for channel_id in surface_animation_channels.keys():
+		if surface_animation_active(str(channel_id)):
+			return false
+	return true
+
+
 func surface_animation_progress(channel_id: String) -> float:
 	if reduce_motion:
 		return 1.0
@@ -1050,11 +1063,12 @@ func _surface_channel_redraw_owned_by_overlay(channel_id: String) -> bool:
 
 func _surface_animation_redraw_due(delta: float) -> bool:
 	surface_animation_redraw_accumulator += maxf(0.0, delta)
-	if surface_animation_redraw_accumulator < SURFACE_ANIMATION_INTERVAL_SEC:
+	var target_interval := 1.0 if surface_low_detail_idle() else SURFACE_ANIMATION_INTERVAL_SEC
+	if surface_animation_redraw_accumulator < target_interval:
 		return false
 	surface_animation_redraw_accumulator = minf(
-		surface_animation_redraw_accumulator - SURFACE_ANIMATION_INTERVAL_SEC,
-		SURFACE_ANIMATION_INTERVAL_SEC
+		surface_animation_redraw_accumulator - target_interval,
+		target_interval
 	)
 	surface_animation_redraw_count += 1
 	return true

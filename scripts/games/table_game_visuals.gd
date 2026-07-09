@@ -26,6 +26,7 @@ const DEFAULT_PATRON_POSITIONS := [
 
 static func draw_room(surface, state: Dictionary, title: String, info: String = "") -> void:
 	var clock := _surface_clock(surface)
+	var low_detail := _surface_low_detail_idle(surface)
 	var board_size: Vector2 = surface.surface_board_size()
 	surface.draw_rect(Rect2(Vector2.ZERO, board_size), Color("#05060a"))
 	surface.draw_rect(Rect2(0, 0, board_size.x, 82), Color("#101427"))
@@ -33,13 +34,17 @@ static func draw_room(surface, state: Dictionary, title: String, info: String = 
 	surface.draw_rect(Rect2(0, CONSOLE_Y, board_size.x, maxf(0.0, board_size.y - CONSOLE_Y)), Color("#07070d"))
 	surface.draw_rect(Rect2(0, 78, board_size.x, 3), Color(C_CYAN.r, C_CYAN.g, C_CYAN.b, 0.62))
 	surface.draw_rect(Rect2(0, CONSOLE_Y - 3.0, board_size.x, 3), Color(C_PINK.r, C_PINK.g, C_PINK.b, 0.42))
-	_draw_surface_light_cone(surface, Vector2(176, 78), Vector2(190, 238), C_CYAN, 0.065)
-	_draw_surface_light_cone(surface, Vector2(724, 78), Vector2(188, 238), C_PINK, 0.070)
-	_draw_surface_scan_bands(surface, 0, int(board_size.x), 0, 146, C_CYAN, 0.040, 1.6)
-	_draw_neon_panel(surface, Rect2(24, 14, 286, 58), C_CYAN, 0.16 + absf(sin(clock * 2.1)) * 0.04)
-	_draw_neon_panel(surface, Rect2(332, 18, 236, 48), C_PINK, 0.12 + absf(sin(clock * 1.7)) * 0.04)
-	_draw_security_mirror(surface, Rect2(606, 16, 68, 50), C_PINK)
-	_draw_watch_camera_surface(surface, Vector2(584, 42), C_PINK)
+	if not low_detail:
+		_draw_surface_light_cone(surface, Vector2(176, 78), Vector2(190, 238), C_CYAN, 0.065)
+		_draw_surface_light_cone(surface, Vector2(724, 78), Vector2(188, 238), C_PINK, 0.070)
+		_draw_surface_scan_bands(surface, 0, int(board_size.x), 0, 146, C_CYAN, 0.040, 1.6)
+		_draw_neon_panel(surface, Rect2(24, 14, 286, 58), C_CYAN, 0.16 + absf(sin(clock * 2.1)) * 0.04)
+		_draw_neon_panel(surface, Rect2(332, 18, 236, 48), C_PINK, 0.12 + absf(sin(clock * 1.7)) * 0.04)
+		_draw_security_mirror(surface, Rect2(606, 16, 68, 50), C_PINK)
+		_draw_watch_camera_surface(surface, Vector2(584, 42), C_PINK)
+	else:
+		surface.draw_rect(Rect2(24, 14, 286, 58), Color(C_CYAN.r, C_CYAN.g, C_CYAN.b, 0.12), false, 1)
+		surface.draw_rect(Rect2(332, 18, 236, 48), Color(C_PINK.r, C_PINK.g, C_PINK.b, 0.10), false, 1)
 	surface.surface_title(title.to_upper().left(18), Vector2(36, 42), C_CYAN)
 	if not info.is_empty():
 		surface.surface_label(info.left(42), Vector2(42, 62), 10, C_SOFT)
@@ -49,6 +54,7 @@ static func draw_room(surface, state: Dictionary, title: String, info: String = 
 
 static func draw_table(surface) -> void:
 	var clock := _surface_clock(surface)
+	var low_detail := _surface_low_detail_idle(surface)
 	var rail_points := [
 		Vector2(46, 142), Vector2(156, 92), Vector2(334, 76), Vector2(566, 76),
 		Vector2(744, 92), Vector2(854, 142), Vector2(822, TABLE_BOTTOM), Vector2(78, TABLE_BOTTOM),
@@ -67,16 +73,20 @@ static func draw_table(surface) -> void:
 		Vector2(126, 166), Vector2(226, 136), Vector2(372, 120), Vector2(528, 120),
 		Vector2(674, 136), Vector2(774, 166), Vector2(736, 292), Vector2(164, 292),
 	], [Color("#063f35")])
-	for i in range(7):
-		var y := 134 + i * 20
-		surface.draw_line(Vector2(144 + i * 5, y), Vector2(756 - i * 5, y + 3), Color(C_TEAL.r, C_TEAL.g, C_TEAL.b, 0.035), 1)
 	surface.draw_rect(Rect2(116, 316, 672, 5), Color(C_YELLOW.r, C_YELLOW.g, C_YELLOW.b, 0.30))
-	surface.draw_rect(Rect2(140, 308, 620, 2), Color(C_CYAN.r, C_CYAN.g, C_CYAN.b, 0.16 + absf(sin(clock * 2.4)) * 0.08))
+	if not low_detail:
+		for i in range(7):
+			var y := 134 + i * 20
+			surface.draw_line(Vector2(144 + i * 5, y), Vector2(756 - i * 5, y + 3), Color(C_TEAL.r, C_TEAL.g, C_TEAL.b, 0.035), 1)
+		surface.draw_rect(Rect2(140, 308, 620, 2), Color(C_CYAN.r, C_CYAN.g, C_CYAN.b, 0.16 + absf(sin(clock * 2.4)) * 0.08))
+	else:
+		surface.draw_rect(Rect2(140, 308, 620, 2), Color(C_CYAN.r, C_CYAN.g, C_CYAN.b, 0.14))
 
 
 static func draw_dealer_station(surface, state: Dictionary, label_override: String = "") -> void:
 	var focus := dealer_focus_for_state(state)
 	var profile := _copy_dict(state.get("dealer_profile", {}))
+	var low_detail := _surface_low_detail_idle(surface)
 	var looking_away := bool(focus.get("lookaway_active", false))
 	var peek_window := bool(focus.get("peek_window_open", looking_away))
 	var blink := bool(focus.get("blink", false))
@@ -85,20 +95,23 @@ static func draw_dealer_station(surface, state: Dictionary, label_override: Stri
 	var attention_color := C_PINK if int(focus.get("peek_danger", 0)) >= 70 else C_YELLOW if int(focus.get("peek_danger", 0)) >= 42 else C_TEAL
 	surface.draw_rect(Rect2(352, 54, 196, 104), Color("#0b0d16"))
 	surface.draw_rect(Rect2(352, 54, 196, 104), Color(C_CYAN.r, C_CYAN.g, C_CYAN.b, 0.18), false, 1)
-	_draw_dealer_gaze(surface, focus, Vector2(450, 91))
-	_draw_table_character(surface, {
-		"name": str(state.get("dealer_name", profile.get("name", "Dealer"))),
-		"skin": Color("#d8b18a"),
-		"hair": Color("#2a1a25"),
-		"jacket": Color("#1b2230"),
-		"accent": attention_color,
-		"role": "dealer",
-		"pose": "lookaway" if peek_window else "watching",
-		"eye_offset": eye_offset,
-		"blink": blink,
-		"holding_card": bool(state.get("dealer_holding_card", false)),
-		"uniform_accent": str(profile.get("uniform_accent", "")),
-	}, Vector2(450, 156), 1.06, idle)
+	if low_detail:
+		_draw_static_character(surface, Vector2(450, 156), 1.06, attention_color, Color("#1b2230"), str(state.get("dealer_name", profile.get("name", "Dealer"))))
+	else:
+		_draw_dealer_gaze(surface, focus, Vector2(450, 91))
+		_draw_table_character(surface, {
+			"name": str(state.get("dealer_name", profile.get("name", "Dealer"))),
+			"skin": Color("#d8b18a"),
+			"hair": Color("#2a1a25"),
+			"jacket": Color("#1b2230"),
+			"accent": attention_color,
+			"role": "dealer",
+			"pose": "lookaway" if peek_window else "watching",
+			"eye_offset": eye_offset,
+			"blink": blink,
+			"holding_card": bool(state.get("dealer_holding_card", false)),
+			"uniform_accent": str(profile.get("uniform_accent", "")),
+		}, Vector2(450, 156), 1.06, idle)
 	var meter := clampi(int(focus.get("attention_meter", 0)), 0, 100)
 	_draw_status_meter(surface, Rect2(566, 92, 118, 9), meter, "dealer %s" % str(focus.get("status", "watching")), C_PINK if meter >= 70 else C_YELLOW if meter >= 42 else C_TEAL)
 	_draw_status_meter(surface, Rect2(566, 116, 118, 6), int(focus.get("peek_danger", 0)), str(focus.get("gaze_phase", "read")).left(20), attention_color)
@@ -114,6 +127,21 @@ static func draw_dealer_station(surface, state: Dictionary, label_override: Stri
 static func draw_table_patrons(surface, state: Dictionary, positions: Array = []) -> void:
 	var patrons := _dictionary_array(state.get("patrons", []))
 	var seat_positions := positions if not positions.is_empty() else DEFAULT_PATRON_POSITIONS
+	if _surface_low_detail_idle(surface):
+		for i in range(patrons.size()):
+			var patron: Dictionary = patrons[i]
+			var base_pos: Vector2 = seat_positions[clampi(i, 0, seat_positions.size() - 1)]
+			var watching := bool(patron.get("watching_player", false))
+			var covered := bool(patron.get("covered", false))
+			var risk := int(patron.get("active_snitch_risk", patron.get("snitch_risk", 0)))
+			var accent := C_PINK if watching else C_TEAL if covered else C_SOFT
+			_draw_static_character(surface, base_pos + Vector2(0, 52), 0.86, accent, _patron_jacket_color(patron), str(patron.get("name", "Seat")))
+			var risk_width := clampf(float(risk) / 60.0, 0.0, 1.0) * 46.0
+			surface.draw_rect(Rect2(base_pos.x - 28, base_pos.y + 61, 56, 5), Color("#070810"))
+			surface.draw_rect(Rect2(base_pos.x - 28, base_pos.y + 61, risk_width, 5), accent)
+			_draw_patron_chip_stack(surface, base_pos + Vector2(30, 42), clampi(int(patron.get("chip_stack", 0)) / 20, 1, 4), accent)
+			draw_patron_wager_badge(surface, state, patron, base_pos, i)
+		return
 	for i in range(patrons.size()):
 		var patron: Dictionary = patrons[i]
 		var base_pos: Vector2 = seat_positions[clampi(i, 0, seat_positions.size() - 1)]
@@ -151,6 +179,25 @@ static func draw_table_patrons(surface, state: Dictionary, positions: Array = []
 		surface.surface_label(str(patron.get("behavior", ("%d" % risk) if watching else str(patron.get("mood", "")).left(7))).left(12), pos + Vector2(-30, 78), 9, accent)
 		_draw_patron_chip_stack(surface, pos + Vector2(30, 42), clampi(int(patron.get("chip_stack", 0)) / 20, 1, 4), accent)
 		draw_patron_wager_badge(surface, state, patron, pos, i)
+
+
+static func _surface_low_detail_idle(surface) -> bool:
+	return bool(surface.surface_low_detail_idle()) if surface != null and surface.has_method("surface_low_detail_idle") else false
+
+
+static func _draw_static_character(surface, foot: Vector2, scale_value: float, accent: Color, jacket: Color, label: String = "") -> void:
+	var head := Rect2(foot + Vector2(-12, -78) * scale_value, Vector2(24, 24) * scale_value)
+	var body := Rect2(foot + Vector2(-22, -54) * scale_value, Vector2(44, 52) * scale_value)
+	surface.draw_rect(Rect2(foot.x - 24 * scale_value, foot.y - 6 * scale_value, 48 * scale_value, 5 * scale_value), Color(0, 0, 0, 0.30))
+	surface.draw_rect(body, Color("#05060a"))
+	surface.draw_rect(Rect2(body.position + Vector2(4, 5) * scale_value, body.size - Vector2(8, 9) * scale_value), jacket)
+	surface.draw_rect(Rect2(foot + Vector2(-17, -56) * scale_value, Vector2(34, 5) * scale_value), accent)
+	surface.draw_rect(head, Color("#c49371"))
+	surface.draw_rect(Rect2(head.position, Vector2(head.size.x, 8 * scale_value)), Color("#2a1a25"))
+	surface.draw_rect(Rect2(head.position + Vector2(6, 12) * scale_value, Vector2(4, 3) * scale_value), Color("#05060a"))
+	surface.draw_rect(Rect2(head.position + Vector2(16, 12) * scale_value, Vector2(4, 3) * scale_value), Color("#05060a"))
+	if not label.is_empty():
+		surface.surface_label(label.left(10), foot + Vector2(-26, 10) * scale_value, int(10 * scale_value), accent)
 
 
 static func draw_patron_wager_badge(surface, state: Dictionary, patron: Dictionary, pos: Vector2, index: int) -> void:

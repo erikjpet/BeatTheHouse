@@ -306,12 +306,17 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 func draw_surface(surface, surface_state: Dictionary, _render_context: Dictionary = {}) -> bool:
 	if str(surface_state.get("surface_renderer", "")) != "roulette":
 		return false
+	var low_detail := bool(surface.surface_low_detail_idle()) if surface.has_method("surface_low_detail_idle") else false
 	surface.surface_begin_design_space(surface.surface_board_size())
 	_draw_roulette_room(surface, surface_state)
 	_draw_roulette_table(surface, surface_state)
-	_draw_roulette_wheel(surface, surface_state)
-	_draw_table_patrons(surface, surface_state)
-	_draw_croupier_station(surface, surface_state)
+	_draw_roulette_wheel(surface, surface_state, low_detail)
+	if low_detail:
+		_draw_static_table_patrons(surface, surface_state)
+		_draw_static_croupier_station(surface, surface_state)
+	else:
+		_draw_table_patrons(surface, surface_state)
+		_draw_croupier_station(surface, surface_state)
 	_draw_recent_numbers(surface, surface_state)
 	_draw_betting_layout(surface, surface_state)
 	_draw_bet_chips(surface, surface_state)
@@ -1926,7 +1931,7 @@ func _draw_roulette_table(surface, _surface_state: Dictionary) -> void:
 	TableVisualsScript.draw_table(surface)
 
 
-func _draw_roulette_wheel(surface, surface_state: Dictionary) -> void:
+func _draw_roulette_wheel(surface, surface_state: Dictionary, low_detail: bool = false) -> void:
 	var sequence := _string_array(surface_state.get("wheel_sequence", AMERICAN_SEQUENCE))
 	var trajectory := _dictionary_array(surface_state.get("spin_trajectory", []))
 	var last_result := _copy_dict(surface_state.get("last_result", {}))
@@ -1951,24 +1956,26 @@ func _draw_roulette_wheel(surface, surface_state: Dictionary) -> void:
 		var p1 := WHEEL_CENTER + Vector2(cos(a1), sin(a1)) * (WHEEL_RADIUS - 2.0)
 		var inner := WHEEL_CENTER + Vector2(cos(mid), sin(mid)) * 48.0
 		surface.draw_polygon([WHEEL_CENTER, p0, p1, inner], [color])
-		var spoke_start := WHEEL_CENTER + Vector2(cos(a0), sin(a0)) * 52.0
-		var spoke_end := WHEEL_CENTER + Vector2(cos(a0), sin(a0)) * (WHEEL_RADIUS - 3.0)
-		surface.draw_line(spoke_start, spoke_end, Color(C_SOFT.r, C_SOFT.g, C_SOFT.b, 0.16), 1)
-	for i in range(count):
-		var label_a0 := wheel_angle + float(i) / float(count) * TAU
-		var label_a1 := wheel_angle + float(i + 1) / float(count) * TAU
-		var label_mid := (label_a0 + label_a1) * 0.5
-		var label_number := str(sequence[i])
-		var pocket_color := _pocket_color(label_number)
-		var label_size := Vector2(19, 10) if label_number.length() > 1 else Vector2(15, 10)
-		var label_pos := WHEEL_CENTER + Vector2(cos(label_mid), sin(label_mid)) * (WHEEL_RADIUS + 17.0)
-		var label_rect := Rect2(label_pos - label_size * 0.5, label_size)
-		surface.draw_rect(label_rect.grow(1.0), Color(0.01, 0.02, 0.04, 0.86))
-		surface.draw_rect(label_rect.grow(1.0), Color(pocket_color.r, pocket_color.g, pocket_color.b, 0.92), false, 1)
-		var label_font_size := 6 if label_number.length() > 1 else 7
-		var label_width := 9.0 if label_number.length() > 1 else 5.0
-		var label_draw_pos := label_rect.position + Vector2((label_rect.size.x - label_width) * 0.5, label_rect.size.y - 2.0)
-		surface.surface_label_plain(label_number, label_draw_pos, label_font_size, _wheel_label_color(label_number))
+		if not low_detail and i % 2 == 0:
+			var spoke_start := WHEEL_CENTER + Vector2(cos(a0), sin(a0)) * 52.0
+			var spoke_end := WHEEL_CENTER + Vector2(cos(a0), sin(a0)) * (WHEEL_RADIUS - 3.0)
+			surface.draw_line(spoke_start, spoke_end, Color(C_SOFT.r, C_SOFT.g, C_SOFT.b, 0.16), 1)
+	if not low_detail:
+		for i in range(count):
+			var label_a0 := wheel_angle + float(i) / float(count) * TAU
+			var label_a1 := wheel_angle + float(i + 1) / float(count) * TAU
+			var label_mid := (label_a0 + label_a1) * 0.5
+			var label_number := str(sequence[i])
+			var pocket_color := _pocket_color(label_number)
+			var label_size := Vector2(19, 10) if label_number.length() > 1 else Vector2(15, 10)
+			var label_pos := WHEEL_CENTER + Vector2(cos(label_mid), sin(label_mid)) * (WHEEL_RADIUS + 17.0)
+			var label_rect := Rect2(label_pos - label_size * 0.5, label_size)
+			surface.draw_rect(label_rect.grow(1.0), Color(0.01, 0.02, 0.04, 0.86))
+			surface.draw_rect(label_rect.grow(1.0), Color(pocket_color.r, pocket_color.g, pocket_color.b, 0.92), false, 1)
+			var label_font_size := 6 if label_number.length() > 1 else 7
+			var label_width := 9.0 if label_number.length() > 1 else 5.0
+			var label_draw_pos := label_rect.position + Vector2((label_rect.size.x - label_width) * 0.5, label_rect.size.y - 2.0)
+			surface.surface_label_plain(label_number, label_draw_pos, label_font_size, _wheel_label_color(label_number))
 	if settled_spin and winning_index >= 0 and winning_index < count:
 		var win_a0 := wheel_angle + float(winning_index) / float(count) * TAU
 		var win_a1 := wheel_angle + float(winning_index + 1) / float(count) * TAU

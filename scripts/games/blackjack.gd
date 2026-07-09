@@ -1188,6 +1188,7 @@ func _base_suspicion_for_applied_cap(desired_applied_heat: int, run_state: RunSt
 
 func _draw_blackjack_room(surface, surface_state: Dictionary) -> void:
 	var clock := _surface_clock(surface)
+	var low_detail := _surface_low_detail_idle(surface)
 	var board_size: Vector2 = surface.surface_board_size()
 	surface.draw_rect(Rect2(Vector2.ZERO, board_size), Color("#05060a"))
 	surface.draw_rect(Rect2(0, 0, board_size.x, 82), Color("#101427"))
@@ -1195,13 +1196,17 @@ func _draw_blackjack_room(surface, surface_state: Dictionary) -> void:
 	surface.draw_rect(Rect2(0, BJ_CONSOLE_Y, board_size.x, maxf(0.0, board_size.y - BJ_CONSOLE_Y)), Color("#07070d"))
 	surface.draw_rect(Rect2(0, 78, board_size.x, 3), Color(C_CYAN.r, C_CYAN.g, C_CYAN.b, 0.62))
 	surface.draw_rect(Rect2(0, BJ_CONSOLE_Y - 3.0, board_size.x, 3), Color(C_PINK.r, C_PINK.g, C_PINK.b, 0.42))
-	_draw_surface_light_cone(surface, Vector2(176, 78), Vector2(190, 238), C_CYAN, 0.065)
-	_draw_surface_light_cone(surface, Vector2(724, 78), Vector2(188, 238), C_PINK, 0.070)
-	_draw_surface_scan_bands(surface, 0, int(board_size.x), 0, 146, C_CYAN, 0.040, 1.6)
-	_draw_neon_panel(surface, Rect2(24, 14, 286, 58), C_CYAN, 0.16 + absf(sin(clock * 2.1)) * 0.04)
-	_draw_neon_panel(surface, Rect2(332, 18, 236, 48), C_PINK, 0.12 + absf(sin(clock * 1.7)) * 0.04)
-	_draw_security_mirror(surface, Rect2(606, 16, 68, 50), C_PINK)
-	_draw_watch_camera_surface(surface, Vector2(584, 42), C_PINK)
+	if not low_detail:
+		_draw_surface_light_cone(surface, Vector2(176, 78), Vector2(190, 238), C_CYAN, 0.065)
+		_draw_surface_light_cone(surface, Vector2(724, 78), Vector2(188, 238), C_PINK, 0.070)
+		_draw_surface_scan_bands(surface, 0, int(board_size.x), 0, 146, C_CYAN, 0.040, 1.6)
+		_draw_neon_panel(surface, Rect2(24, 14, 286, 58), C_CYAN, 0.16 + absf(sin(clock * 2.1)) * 0.04)
+		_draw_neon_panel(surface, Rect2(332, 18, 236, 48), C_PINK, 0.12 + absf(sin(clock * 1.7)) * 0.04)
+		_draw_security_mirror(surface, Rect2(606, 16, 68, 50), C_PINK)
+		_draw_watch_camera_surface(surface, Vector2(584, 42), C_PINK)
+	else:
+		surface.draw_rect(Rect2(24, 14, 286, 58), Color(C_CYAN.r, C_CYAN.g, C_CYAN.b, 0.12), false, 1)
+		surface.draw_rect(Rect2(332, 18, 236, 48), Color(C_PINK.r, C_PINK.g, C_PINK.b, 0.10), false, 1)
 	surface.surface_title(str(surface_state.get("table_name", "Blackjack")).to_upper().left(18), Vector2(36, 42), C_CYAN)
 	var rules_text := str(surface_state.get("table_rules_text", ""))
 	if rules_text.is_empty():
@@ -1215,15 +1220,19 @@ func _draw_blackjack_room(surface, surface_state: Dictionary) -> void:
 
 func _draw_blackjack_table(surface, surface_state: Dictionary) -> void:
 	var clock := _surface_clock(surface)
+	var low_detail := _surface_low_detail_idle(surface)
 	surface.draw_polygon(BJ_RAIL_POINTS, BJ_RAIL_COLORS)
 	surface.draw_polygon(BJ_OUTER_FELT_POINTS, BJ_OUTER_FELT_COLORS)
 	surface.draw_polygon(BJ_FELT_POINTS, BJ_FELT_COLORS)
 	surface.draw_polygon(BJ_CENTER_FELT_POINTS, BJ_CENTER_FELT_COLORS)
-	for i in range(7):
-		var y := 134 + i * 20
-		surface.draw_line(Vector2(144 + i * 5, y), Vector2(756 - i * 5, y + 3), Color(C_TEAL.r, C_TEAL.g, C_TEAL.b, 0.035), 1)
 	surface.draw_rect(Rect2(116, 316, 672, 5), Color(C_YELLOW.r, C_YELLOW.g, C_YELLOW.b, 0.30))
-	surface.draw_rect(Rect2(140, 308, 620, 2), Color(C_CYAN.r, C_CYAN.g, C_CYAN.b, 0.16 + absf(sin(clock * 2.4)) * 0.08))
+	if not low_detail:
+		for i in range(7):
+			var y := 134 + i * 20
+			surface.draw_line(Vector2(144 + i * 5, y), Vector2(756 - i * 5, y + 3), Color(C_TEAL.r, C_TEAL.g, C_TEAL.b, 0.035), 1)
+		surface.draw_rect(Rect2(140, 308, 620, 2), Color(C_CYAN.r, C_CYAN.g, C_CYAN.b, 0.16 + absf(sin(clock * 2.4)) * 0.08))
+	else:
+		surface.draw_rect(Rect2(140, 308, 620, 2), Color(C_CYAN.r, C_CYAN.g, C_CYAN.b, 0.14))
 	_draw_betting_arc(surface, Vector2(450, 306), 374, C_YELLOW)
 	_draw_seat_marker(surface, _player_hand_base_position(0), "H1", bool(surface_state.get("active_hand_index", 0) == 0))
 	_draw_seat_marker(surface, _player_hand_base_position(1), "H2", bool(surface_state.get("active_hand_index", 0) == 1))
@@ -1237,6 +1246,7 @@ func _draw_blackjack_table(surface, surface_state: Dictionary) -> void:
 func _draw_dealer_station(surface, surface_state: Dictionary) -> void:
 	var focus: Dictionary = _dealer_focus_for_surface_state(surface_state)
 	var profile: Dictionary = surface_state.get("dealer_profile", {}) if typeof(surface_state.get("dealer_profile", {})) == TYPE_DICTIONARY else {}
+	var low_detail := _surface_low_detail_idle(surface)
 	var looking_away := bool(focus.get("lookaway_active", false))
 	var peek_window := bool(focus.get("peek_window_open", looking_away))
 	var blink := bool(focus.get("blink", false))
@@ -1245,20 +1255,23 @@ func _draw_dealer_station(surface, surface_state: Dictionary) -> void:
 	var attention_color := C_PINK if int(focus.get("peek_danger", 0)) >= 70 else C_YELLOW if int(focus.get("peek_danger", 0)) >= 42 else C_TEAL
 	surface.draw_rect(Rect2(352, 54, 196, 104), Color("#0b0d16"))
 	surface.draw_rect(Rect2(352, 54, 196, 104), Color(C_CYAN.r, C_CYAN.g, C_CYAN.b, 0.18), false, 1)
-	_draw_dealer_gaze(surface, focus, Vector2(450, 91))
-	draw_dealer_character_style.clear()
-	draw_dealer_character_style["name"] = str(surface_state.get("dealer_name", "Dealer"))
-	draw_dealer_character_style["skin"] = Color("#d8b18a")
-	draw_dealer_character_style["hair"] = Color("#2a1a25")
-	draw_dealer_character_style["jacket"] = Color("#1b2230")
-	draw_dealer_character_style["accent"] = attention_color
-	draw_dealer_character_style["role"] = "dealer"
-	draw_dealer_character_style["pose"] = "lookaway" if peek_window else "watching"
-	draw_dealer_character_style["eye_offset"] = eye_offset
-	draw_dealer_character_style["blink"] = blink
-	draw_dealer_character_style["holding_card"] = surface.surface_animation_active(DEAL_ANIMATION_CHANNEL)
-	draw_dealer_character_style["uniform_accent"] = str(profile.get("uniform_accent", ""))
-	_draw_table_character(surface, draw_dealer_character_style, Vector2(450, 156), 1.06, idle)
+	if low_detail:
+		_draw_static_table_character(surface, Vector2(450, 156), 1.06, attention_color, Color("#1b2230"), str(surface_state.get("dealer_name", "Dealer")))
+	else:
+		_draw_dealer_gaze(surface, focus, Vector2(450, 91))
+		draw_dealer_character_style.clear()
+		draw_dealer_character_style["name"] = str(surface_state.get("dealer_name", "Dealer"))
+		draw_dealer_character_style["skin"] = Color("#d8b18a")
+		draw_dealer_character_style["hair"] = Color("#2a1a25")
+		draw_dealer_character_style["jacket"] = Color("#1b2230")
+		draw_dealer_character_style["accent"] = attention_color
+		draw_dealer_character_style["role"] = "dealer"
+		draw_dealer_character_style["pose"] = "lookaway" if peek_window else "watching"
+		draw_dealer_character_style["eye_offset"] = eye_offset
+		draw_dealer_character_style["blink"] = blink
+		draw_dealer_character_style["holding_card"] = surface.surface_animation_active(DEAL_ANIMATION_CHANNEL)
+		draw_dealer_character_style["uniform_accent"] = str(profile.get("uniform_accent", ""))
+		_draw_table_character(surface, draw_dealer_character_style, Vector2(450, 156), 1.06, idle)
 	var meter := clampi(int(focus.get("attention_meter", 0)), 0, 100)
 	_draw_status_meter(surface, Rect2(566, 92, 118, 9), meter, "dealer %s" % str(focus.get("status", "watching")), C_PINK if meter >= 70 else C_YELLOW if meter >= 42 else C_TEAL)
 	_draw_status_meter(surface, Rect2(566, 116, 118, 6), int(focus.get("peek_danger", 0)), str(focus.get("gaze_phase", "read")).left(20), attention_color)
@@ -1276,6 +1289,26 @@ func _draw_dealer_station(surface, surface_state: Dictionary) -> void:
 func _draw_table_patrons(surface, surface_state: Dictionary) -> void:
 	var patrons: Array = surface_state.get("patrons", []) if typeof(surface_state.get("patrons", [])) == TYPE_ARRAY else []
 	var clock := _surface_clock(surface)
+	if _surface_low_detail_idle(surface):
+		for i in range(patrons.size()):
+			if typeof(patrons[i]) != TYPE_DICTIONARY:
+				continue
+			var patron: Dictionary = patrons[i]
+			var base_pos := _patron_seat_position(i)
+			var watching := bool(patron.get("watching_player", false))
+			var covered := bool(patron.get("covered", false))
+			var risk := int(patron.get("active_snitch_risk", 0))
+			var accent := C_PINK if watching else C_TEAL if covered else C_SOFT
+			_draw_static_table_character(surface, base_pos + Vector2(0, 52), 0.86, accent, _patron_jacket_color(patron), str(patron.get("name", "Seat")))
+			var risk_width := clampf(float(risk) / 60.0, 0.0, 1.0) * 46.0
+			surface.draw_rect(Rect2(base_pos.x - 28, base_pos.y + 61, 56, 5), Color("#070810"))
+			surface.draw_rect(Rect2(base_pos.x - 28, base_pos.y + 61, risk_width, 5), accent)
+			var patron_chip_count := clampi(int(patron.get("chip_stack", 0)) / 20, 1, 4)
+			for chip_index in range(patron_chip_count):
+				_draw_casino_chip(surface, base_pos + Vector2(30, 42 - float(chip_index) * 3.0 * 0.42), 5, 11.0 * 0.42, 0.92, false)
+			TableVisualsScript.draw_patron_wager_badge(surface, surface_state, patron, base_pos, i)
+			surface.surface_add_invisible_hit(Rect2(base_pos.x - 34, base_pos.y - 24, 68, 94), "blackjack_patron_cover", i)
+		return
 	for i in range(patrons.size()):
 		if typeof(patrons[i]) != TYPE_DICTIONARY:
 			continue
@@ -1331,6 +1364,25 @@ func _draw_table_patrons(surface, surface_state: Dictionary) -> void:
 			_draw_patron_move_badge(surface, card_start + Vector2(-3, -23), patron, action_event)
 		surface.surface_label("cover", pos + Vector2(-18, 92), 8, Color(C_SOFT.r, C_SOFT.g, C_SOFT.b, 0.62))
 		surface.surface_add_invisible_hit(Rect2(pos.x - 34, pos.y - 24, 68, 94), "blackjack_patron_cover", i)
+
+
+func _surface_low_detail_idle(surface) -> bool:
+	return bool(surface.surface_low_detail_idle()) if surface != null and surface.has_method("surface_low_detail_idle") else false
+
+
+func _draw_static_table_character(surface, foot: Vector2, scale_value: float, accent: Color, jacket: Color, label: String = "") -> void:
+	var head := Rect2(foot + Vector2(-12, -78) * scale_value, Vector2(24, 24) * scale_value)
+	var body := Rect2(foot + Vector2(-22, -54) * scale_value, Vector2(44, 52) * scale_value)
+	surface.draw_rect(Rect2(foot.x - 24 * scale_value, foot.y - 6 * scale_value, 48 * scale_value, 5 * scale_value), Color(0, 0, 0, 0.30))
+	surface.draw_rect(body, Color("#05060a"))
+	surface.draw_rect(Rect2(body.position + Vector2(4, 5) * scale_value, body.size - Vector2(8, 9) * scale_value), jacket)
+	surface.draw_rect(Rect2(foot + Vector2(-17, -56) * scale_value, Vector2(34, 5) * scale_value), accent)
+	surface.draw_rect(head, Color("#c49371"))
+	surface.draw_rect(Rect2(head.position, Vector2(head.size.x, 8 * scale_value)), Color("#2a1a25"))
+	surface.draw_rect(Rect2(head.position + Vector2(6, 12) * scale_value, Vector2(4, 3) * scale_value), Color("#05060a"))
+	surface.draw_rect(Rect2(head.position + Vector2(16, 12) * scale_value, Vector2(4, 3) * scale_value), Color("#05060a"))
+	if not label.is_empty():
+		surface.surface_label(label.left(10), foot + Vector2(-26, 10) * scale_value, int(10 * scale_value), accent)
 
 
 func _patron_active_action_event(surface, surface_state: Dictionary, patron_index: int) -> Dictionary:
