@@ -1,3 +1,49 @@
+# Execution Record (2026-07-09)
+
+- Claimed in `docs/todo/QUEUE.md` and committed locally as `ece6bc7` before
+  audit. The claim was not pushed until the pre-publish audit passed, honoring
+  the prompt's "STOP before pushing anything if any audit step fails" rule.
+- Confirmed `docs/todone/v04_repackage_after_playtest_fixes_prompt.md` was
+  archived and `docs/plans/0.4_release_checklist.md` contained the fresh
+  package hashes from the repackage task.
+- Pre-publish audit:
+  - `git status --porcelain`: clean.
+  - Queue audit: no remaining ready/claimed entries except this publish prompt;
+    post-release verification remained blocked until publish completion.
+  - Required v0.4 chain archives audited: 12 required prompt archives existed
+    in `docs/todone/` with execution records.
+  - Package hash audit: `BeatTheHouse-web.zip` matched
+    `E364B27C765D8B82B6C525A1CDF248D013BDE69BD1643D104E48883256816F71`;
+    `BeatTheHouse-windows.zip` matched
+    `2D40849FF927EB47772A889D8F5735D7CAABE3D24030493A480C4729B90EA363`.
+  - Archive integrity audit: Web zip opened with 9 entries; Windows zip opened
+    with 2 entries.
+  - Version stamps audited: `project.godot` and `export_presets.cfg` remained
+    stamped `0.4.0`.
+  - Required reports existed:
+    `docs/plans/v04_work_review_2026_07.md` and
+    `docs/plans/v04_performance_pass_2026_07.md`.
+  - Package freshness audit: rebuilt zips were newer than gameplay/export
+    sources; latest source checked was `scripts/ui/game_surface_canvas.gd`.
+  - `powershell -ExecutionPolicy Bypass -File tools\validate_project.ps1`:
+    PASS.
+- Remote audit:
+  - `git fetch origin`: PASS.
+  - `origin/main..HEAD`: local `main` was ahead by 38 commits.
+  - `HEAD..origin/main`: empty, so no merge was required.
+- Authorized git publish:
+  - `git push origin main`: PASS; `main` advanced from `9904fda` to `ece6bc7`.
+  - `git tag -a v0.4.0 -m "Beat the House 0.4.0 - Act 1 completion"`: PASS.
+  - `git push origin v0.4.0`: PASS.
+  - Tag target commit: `ece6bc7c453bbb178d49c2b8f670b29f9ccfaddf`.
+  - Tag object: `11eae2964d8efe372ebc4d2704ef54d314f1f1e6`.
+- `docs/plans/0.4_release_checklist.md` was updated with a Published section,
+  including the pushed commit/tag and the owner-only itch upload instructions.
+- `docs/todo/QUEUE.md` was updated to remove this prompt and unblock
+  `v04_post_release_verification_prompt.md` as owner-launch only.
+- Explicitly not performed: no `gh`, no butler, no login attempt, no GitHub
+  Release object, and no itch upload.
+
 # Agent Prompt - v0.4 Publish: Pre-Publish Audit, GitHub Push + Tag, itch Upload
 
 Copy everything below this line into the agent.
