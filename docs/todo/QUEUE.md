@@ -22,7 +22,7 @@ before new feature work proceeds.
 
 | # | Prompt | Status | Machine | Notes |
 | --- | --- | --- | --- | --- |
-| 11 | v04_post_release_verification_prompt.md | ready; owner-launch only | PM machine | Unblocked by archived `v04_publish_and_tag_prompt.md`; start only when the owner pastes the kickoff prompt. Verifies the LIVE builds players receive (itch web + published Windows zip), generates devlog #4 card/copy assets, marks the plan SHIPPED. Devlog posting stays with the owner. |
+| 11 | v04_post_release_verification_prompt.md | claimed (2026-07-09, Codex PM machine) | PM machine | Unblocked by archived `v04_publish_and_tag_prompt.md`; start only when the owner pastes the kickoff prompt. Verifies the LIVE builds players receive (itch web + published Windows zip), generates devlog #4 card/copy assets, marks the plan SHIPPED. Devlog posting stays with the owner. |
 
 Only the project manager adds entries or reorders this table; executing
 agents only flip Status fields for claims and remove completed entries.
