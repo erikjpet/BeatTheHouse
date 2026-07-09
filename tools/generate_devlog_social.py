@@ -26,36 +26,32 @@ WHITE = (255, 255, 255, 255)
 SOFT = (216, 232, 234, 255)
 
 DEVLOG = {
-    "tag": "v0_3_3",
-    "header_kicker": "DEVLOG #3.3",
-    "hero": "v0.3.3 IS OUT",
-    "subtitle": "stability, home start, containers, travel, web audio",
+    "tag": "v0_4_0",
+    "header_kicker": "DEVLOG #4",
+    "hero": "v0.4 IS OUT",
+    "subtitle": "Act 1 completion: home, bags, talk, travel, stability",
     "chips": [
-        ("STABILITY", CYAN),
         ("HOME", PINK),
-        ("CONTAINERS", YELLOW),
-        ("WORLD MAP", ORANGE),
+        ("BAGS", YELLOW),
+        ("DIALOGUE", CYAN),
+        ("TRAVEL", ORANGE),
     ],
     "panel_large": {
-        "image": ROOT / "branding/screenshots/06_slot_in_play.png",
-        "caption": "SMOOTHER LOW-END PLAY",
+        "image": ROOT / "branding/screenshots/11_meta_home_back_alley.png",
+        "caption": "WALKABLE HOME BASE",
         "border": CYAN,
     },
     "panel_right_top": {
-        "icons": [
-            ROOT / "assets/art/map_icons/apartment.png",
-            ROOT / "assets/art/map_icons/motel_room.png",
-            ROOT / "assets/art/map_icons/house.png",
-        ],
-        "caption": "STARTING HOME",
+        "image": ROOT / "branding/screenshots/12_dialogue_talk_dock.png",
+        "caption": "DIALOGUE & TALK",
         "border": AMBER,
     },
     "panel_right_bottom": {
         "image": ROOT / "assets/art/map_backgrounds/cyberpunk_city_overhead.png",
-        "caption": "WORLD MAP TRAVEL",
+        "caption": "PRICED WORLD TRAVEL",
         "border": YELLOW,
     },
-    "strip_label": "CONTAINERS",
+    "strip_label": "COLLECTIONS",
     "strip_icons": [
         ROOT / "assets/art/items/bag.png",
         ROOT / "assets/art/items/backpack.png",
@@ -69,15 +65,15 @@ DEVLOG = {
         ROOT / "assets/art/items/cashout_envelope.png",
     ],
     "notes": [
-        ("LOW-END", CYAN, "stability"),
-        ("HOME", PINK, "starts"),
-        ("CONTAINERS", YELLOW, "storage"),
-        ("WORLD MAP", ORANGE, "travel"),
-        ("WEB AUDIO", TEAL, "fixed"),
-        ("BUG FIXES", PURPLE, "polish"),
+        ("HOUSING", PINK, "progression"),
+        ("BAGS", YELLOW, "drops"),
+        ("TALK", CYAN, "dialogue"),
+        ("HOURS", AMBER, "venues"),
+        ("TRAVEL", ORANGE, "pricing"),
+        ("STABILITY", TEAL, "gates"),
     ],
-    "backdrop": ROOT / "branding/screenshots/03_environment_room_b.png",
-    "footer": "CASINO ROGUELIKE PATCH AVAILABLE NOW",
+    "backdrop": ROOT / "branding/screenshots/12_dialogue_talk_dock.png",
+    "footer": "ACT 1 COMPLETION RELEASE AVAILABLE NOW",
 }
 
 
@@ -179,15 +175,20 @@ def build():
 
     rt = (688, 432, 1016, 566)
     rounded(d, rt, 22, c["panel_right_top"]["border"], 4, fill=PANEL_SOFT)
-    icons = c["panel_right_top"]["icons"]
-    size = 78
-    total_icons = len(icons) * size + (len(icons) - 1) * 28
-    ix = rt[0] + (rt[2] - rt[0] - total_icons) // 2
-    for icon_path in icons:
-        icon = Image.open(icon_path).convert("RGBA").resize((size, size), Image.NEAREST)
-        canvas.alpha_composite(icon, (ix, rt[1] + 16))
-        ix += size + 28
-    d.text((rt[0] + 16, rt[3] - 40), c["panel_right_top"]["caption"], font=F_CAPTION, fill=WHITE)
+    if "image" in c["panel_right_top"]:
+        inner_rt = (rt[0] + 7, rt[1] + 7, rt[2] - 7, rt[3] - 7)
+        paste_cover(canvas, Image.open(c["panel_right_top"]["image"]).convert("RGBA"), inner_rt)
+        caption_bar(canvas, d, inner_rt, c["panel_right_top"]["caption"])
+    else:
+        icons = c["panel_right_top"]["icons"]
+        size = 78
+        total_icons = len(icons) * size + (len(icons) - 1) * 28
+        ix = rt[0] + (rt[2] - rt[0] - total_icons) // 2
+        for icon_path in icons:
+            icon = Image.open(icon_path).convert("RGBA").resize((size, size), Image.NEAREST)
+            canvas.alpha_composite(icon, (ix, rt[1] + 16))
+            ix += size + 28
+        d.text((rt[0] + 16, rt[3] - 40), c["panel_right_top"]["caption"], font=F_CAPTION, fill=WHITE)
 
     rb = (688, 590, 1016, 718)
     rounded(d, rb, 22, c["panel_right_bottom"]["border"], 4, fill=PANEL_SOFT)
