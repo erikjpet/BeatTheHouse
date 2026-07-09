@@ -7,11 +7,13 @@ Copy everything below this line into the agent.
 You are working in `D:\Projects\Beat-The-House` (Godot 4.6 GDScript casino
 roguelike — see CLAUDE.md). Every 0.4 queue task through
 `v04_release_docs_packaging` is archived and the 0.4.0 packages are built.
-This task **publishes the release**. The owner launching this prompt IS the
-explicit authorization to push to GitHub and upload to itch.io — both are
-otherwise forbidden in this repository's agent rules. If any pre-publish
-audit step below fails, STOP before pushing anything and report; do not
-publish a broken cut.
+This task **publishes the release to GitHub** and prepares the itch upload
+for the owner. The owner launching this prompt IS the explicit
+authorization for the git pushes it contains. No new credentials are
+involved: pushes use the machine's existing stored git credentials (the
+same path all queue pushes use); `gh` and `butler` are NOT used. If any
+pre-publish audit step below fails, STOP before pushing anything and
+report; do not publish a broken cut.
 
 ## Read first
 
@@ -39,46 +41,43 @@ publish a broken cut.
 5. `powershell -ExecutionPolicy Bypass -File tools\validate_project.ps1`
    passes one final time.
 
-## 2. GitHub publish
+## 2. GitHub publish (existing git credentials — no gh, no new logins)
 
 1. `git fetch origin` and inspect `origin/main..HEAD` and `HEAD..origin/main`.
    If the remote has new commits, merge (never rebase — evidence ledgers pin
    commit hashes) and re-run the validate gate before continuing.
-2. `git push origin main`.
+2. `git push origin main` (the machine's stored git credentials — the same
+   path every queue push has used).
 3. Tag and push: `git tag -a v0.4.0 -m "Beat the House 0.4.0 — Act 1 completion"`,
    `git push origin v0.4.0`.
-4. Create the GitHub release with `gh release create v0.4.0` using the
-   release notes from CHANGELOG.md's 0.4.0 section; attach both zips only
-   if prior releases did so (check `gh release view v0.3.0` for precedent —
-   mirror it).
+4. Do NOT use `gh` or attempt to create a GitHub Release object; prior
+   releases shipped as pushed tags only. The owner can add a web release
+   later if desired.
 
-## 3. itch.io upload
+## 3. itch.io upload — prepared for the owner, performed by the owner
 
-1. Verify butler auth non-interactively first (`butler status` via the
-   export tool's path or directly). If credentials are missing or expired,
-   STOP here, report exactly what is needed, and leave GitHub published —
-   do not attempt interactive login.
-2. Push through the established channels (mirror the 0.3.x pattern in
-   tools/export_itch.ps1: web zip → `html` channel, windows zip →
-   `windows` channel, user version 0.4.0).
-3. Wait for butler processing to settle; record the butler build numbers
-   and output.
-4. Verify live: fetch the itch page, confirm the new build is being served
-   (butler status shows the new build live on both channels).
+Do NOT attempt butler or any itch upload; no itch credentials exist by
+owner decision, and prior releases were uploaded manually via the itch
+web page. Instead, prepare the manual step precisely:
+
+1. Write an "Itch Upload — Owner Action" section into the checklist's
+   Published section with: the two zip paths, their SHA256 hashes, target
+   channels (web zip → the HTML/playable channel, windows zip → the
+   Windows channel), and the user-visible version string 0.4.0.
+2. Confirm both zips open cleanly (archive integrity check) so the owner
+   never uploads a corrupt file.
 
 ## 4. Record
 
 Append a "Published" section to `docs/plans/0.4_release_checklist.md`: push
-commit hash, tag, GitHub release URL, butler build numbers/channels,
-publish timestamp. Commit that locally and push it too (it is part of this
-authorized publish).
+commit hash, tag, publish timestamp, and the Itch Upload — Owner Action
+block. Commit it and push (part of this authorized publish).
 
 ## Done gate
 
 - Pre-publish audit fully green before the first push.
-- main + v0.4.0 tag on GitHub; GitHub release created.
-- Both itch channels serving the 0.4.0 builds (or a precise credential
-  blocker reported with GitHub already published).
-- Checklist "Published" section committed and pushed.
+- main + v0.4.0 tag on GitHub.
+- Checklist "Published" section committed and pushed, including the
+  owner's itch upload instructions with verified zip integrity.
 - Prompt archived to docs/todone/ with an execution record; QUEUE.md
   updated; archive commit pushed.

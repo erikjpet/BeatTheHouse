@@ -5,16 +5,22 @@ Copy everything below this line into the agent.
 ---
 
 You are working in `D:\Projects\Beat-The-House` (Godot 4.6 GDScript casino
-roguelike — see CLAUDE.md). The 0.4.0 release is published (GitHub + itch;
-see the "Published" section of `docs/plans/0.4_release_checklist.md`). This
-task verifies the release players actually receive and produces the devlog
-assets. Publishing the devlog post itself remains the owner's action.
+roguelike — see CLAUDE.md). The 0.4.0 release is pushed to GitHub (see the
+"Published" section of `docs/plans/0.4_release_checklist.md`) and the owner
+uploads the zips to itch manually. This task verifies the release players
+actually receive and produces the devlog assets. Publishing the devlog
+post itself remains the owner's action.
 
 ## 1. Verify the shipped builds (what players download, not the local tree)
 
-1. **Web:** drive the live itch page (or, if embed/auth blocks automation,
-   download the served web build and host it with the same COI headers the
-   web smoke harness uses) through headless Chrome via the
+0. **Precondition:** check whether the itch page is serving 0.4.0 yet (the
+   owner uploads manually). If not yet live, verify the exact packaged
+   zips from `builds/itch/` instead (hash-match them against the checklist
+   first), state clearly in your report that live-page verification is
+   pending the owner's upload, and continue with everything else.
+1. **Web:** drive the live itch page if 0.4.0 is being served (or the
+   hash-verified web zip hosted locally with the same COI headers the web
+   smoke harness uses) through headless Chrome via the
    `tools/web_perf_smoke.ps1` infrastructure: boot to menu, start a run,
    one table hand with a talk event, open the meta home room, verify audio
    starts after first input. Record frame p95 for the boot/menu scenario
