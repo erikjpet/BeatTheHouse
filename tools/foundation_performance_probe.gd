@@ -8,6 +8,8 @@ const MainScene := preload("res://scenes/main.tscn")
 const GameSurfaceCanvasScript := preload("res://scripts/ui/game_surface_canvas.gd")
 const VisualStyleScript := preload("res://scripts/ui/visual_style.gd")
 const REPORT_PATH := "user://foundation_performance_probe_report.json"
+const TEST_META_COLLECTION_PATH := "user://foundation_performance_probe_meta_collection.json"
+const META_COLLECTION_PATH_ENV := "BTH_META_COLLECTION_PATH"
 const DEFAULT_SEED_PREFIX := "FOUNDATION-PERF"
 const DEFAULT_RUN_COUNT := 8
 const DEFAULT_FRAMES_PER_SURFACE := 120
@@ -63,6 +65,7 @@ const LOW_END_HEADROOM_WAIVERS := {
 	},
 }
 const NEW_SURFACE_BUDGETS := {
+	"meta_home_open": {"call_ms": 450.0},
 	"meta_home_idle": {"frame_p95_ms": 16.0, "sample_frames": NEW_SURFACE_SAMPLE_FRAMES},
 	"talk_dock_active": {"frame_p95_ms": 16.0, "sample_frames": NEW_SURFACE_SAMPLE_FRAMES},
 	"dialogue_active": {"frame_p95_ms": 16.0, "sample_frames": NEW_SURFACE_SAMPLE_FRAMES},
@@ -98,6 +101,7 @@ func _run() -> void:
 	seed_prefix = OS.get_environment("BTH_PERF_SEED_PREFIX")
 	if seed_prefix.strip_edges().is_empty():
 		seed_prefix = DEFAULT_SEED_PREFIX
+	_use_isolated_meta_collection_store(TEST_META_COLLECTION_PATH)
 	await _open_fresh_app()
 	for run_index in range(run_count):
 		await _probe_seed("%s-%02d" % [seed_prefix, run_index + 1], run_index)
@@ -564,7 +568,10 @@ func _probe_new_surface_budgets() -> void:
 
 
 func _probe_meta_home_surface_budget() -> void:
+	var open_budget := _dict(NEW_SURFACE_BUDGETS.get("meta_home_open", {}))
+	var open_start_usec := Time.get_ticks_usec()
 	app.call("open_meta_home")
+	var open_ms := float(Time.get_ticks_usec() - open_start_usec) / 1000.0
 	await _settle(8)
 	var environment_snapshot: Dictionary = app.call("current_environment_view_snapshot")
 	if str(environment_snapshot.get("kind", "")) != "home":
@@ -573,6 +580,19 @@ func _probe_meta_home_surface_budget() -> void:
 	var spatial_snapshot: Dictionary = app.call("current_spatial_interaction_snapshot")
 	if _array_size(spatial_snapshot.get("objects", [])) <= 0:
 		failures.append("Meta home performance probe did not expose walkable room objects.")
+	observations.append({
+		"seed": "new_surface:meta_home_open",
+		"run_index": -1,
+		"environment_id": str(environment_snapshot.get("id", "")),
+		"mode": "meta_home_open",
+		"open_call_ms": open_ms,
+		"object_count": _array_size(spatial_snapshot.get("objects", [])),
+		"budget": open_budget,
+	})
+	new_surface_coverage["meta_home_open"] = int(new_surface_coverage.get("meta_home_open", 0)) + 1
+	var call_budget := float(open_budget.get("call_ms", 0.0))
+	if call_budget > 0.0 and open_ms > call_budget:
+		failures.append("Meta home open call %.3f ms exceeded %.3f ms." % [open_ms, call_budget])
 	await _record_new_surface_phase("meta_home_idle", "Meta home idle")
 
 
@@ -897,6 +917,13 @@ func _open_fresh_app() -> void:
 	app = MainScene.instantiate()
 	root.add_child(app)
 	await _settle(3)
+
+
+func _use_isolated_meta_collection_store(path: String) -> void:
+	OS.set_environment(META_COLLECTION_PATH_ENV, path)
+	var absolute_path := ProjectSettings.globalize_path(path)
+	if FileAccess.file_exists(absolute_path):
+		DirAccess.remove_absolute(absolute_path)
 
 
 func _settle(frame_count: int = 2) -> void:

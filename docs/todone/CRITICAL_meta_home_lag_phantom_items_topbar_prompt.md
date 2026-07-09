@@ -1,3 +1,18 @@
+## Execution Record
+
+- Completion date: 2026-07-08.
+- Implementation/archive commit: this commit (local only; not pushed).
+- Root cause: **(b) polluted local default meta store, plus renderer cost scaling with that store**. The room renderer reads `MetaCollectionService` owned state, not collection definitions: fresh isolated `user://meta_collection.json` loaded with `owned_instances=[]`, `unopened_bags=[]`, `gold_balance=0`, `housing_tier=back_alley`, and one starter `bag` container. The PM machine's default store was not fresh: it contained 1 owned instance, 109 unopened bags, 6 gold, and `next_instance_id=113`; the first bag markers were UI/test victory seeds such as `UI-RUN-MENU-VICTORY`, proving test/demo pollution rather than catalog-definition rendering.
+- Fix summary: meta-home prop generation now uses a lean owned-state summary instead of building the full collection catalog; meta interactable object views are cached by meta location/store state; hot layout reads no longer deep-copy generated layout dictionaries; the performance probe uses an isolated fresh meta store; the HUD now has a meta mode showing only gold and next-home price and hides in-run inventory/active-item buttons.
+- Fresh-store guard: `foundation_check.gd` systems suite now asserts a brand-new store has zero owned instances, zero unopened bags, zero gold, back-alley housing, exactly the starter container, and no advanced instance id after save/load. `ui_scene_compile_check.gd` now asserts fresh home renders no `meta_bag:`/`meta_item:` props, shows the starter container, exposes exactly `gold` + `next_home_price` fields, and restores the standard run bar after leaving meta mode.
+- Lag evidence: scratch pre-fix cold open measured real polluted store `4428.506 ms` / 112 props and fresh isolated store `2883.706 ms` / 3 props. After fixes, scratch cold open measured polluted store `756.875 ms` / 112 props and fresh isolated store `360.279 ms` / 3 props. Release performance probe measured the warmed guarded fresh open at `256.952 ms` under the new `450 ms` `meta_home_open` budget, and `meta_home_idle` p95 `6.915 ms` under the 16 ms frame budget.
+- Verification:
+  - `powershell -ExecutionPolicy Bypass -File tools\check_godot.ps1 -RequireGodot -FoundationSuite systems -TimeoutSec 300` — PASS (`.tmp/test_reports/20260708_233924_smoke/summary.json`).
+  - `powershell -ExecutionPolicy Bypass -File tools\check_godot.ps1 -RequireGodot -FoundationSuite ui -TimeoutSec 300` — PASS after fixing the test cleanup (`.tmp/test_reports/20260708_234302_smoke/summary.json`).
+  - `powershell -ExecutionPolicy Bypass -File tools\foundation_performance_probe.ps1 -RequireGodot` — PASS; `meta_home_open` and `meta_home_idle` coverage present.
+  - `powershell -ExecutionPolicy Bypass -File tools\validate_project.ps1` — PASS.
+- Deviations: did not delete or rewrite the owner's existing default `user://meta_collection.json`; it is evidence of prior test/demo pollution and may contain user-local data. The fixed guards prove fresh stores stay empty and release tooling no longer uses the default store for the performance probe. Built 0.4.0 packages remain STALE and must be rebuilt by the queued repackage task.
+
 # Agent Prompt - CRITICAL: Meta Home Lag, Phantom Starting Items, and Wrong Top Bar
 
 Priority: **CRITICAL — playtest blocker for the 0.4 release. Execute after

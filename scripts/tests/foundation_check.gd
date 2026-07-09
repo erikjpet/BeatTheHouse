@@ -415,6 +415,7 @@ func _foundation_run_system_suite(content_library: ContentLibrary, fixture_libra
 	_foundation_run_check(report, failures, "travel_route_foundation", Callable(self, "_check_travel_route_foundation"), [content_library])
 	_foundation_run_check(report, failures, "world_map_foundation", Callable(self, "_check_world_map_foundation"), [content_library])
 	_foundation_run_check(report, failures, "meta_home_run_boundary", Callable(self, "_check_meta_home_run_boundary"), [content_library])
+	_foundation_run_check(report, failures, "meta_home_fresh_store_defaults", Callable(self, "_check_meta_home_fresh_store_defaults"), [])
 	_foundation_run_check(report, failures, "time_open_hours_foundation", Callable(self, "_check_time_open_hours_foundation"), [content_library])
 	_foundation_run_check(report, failures, "service_hook_foundation", Callable(self, "_check_service_hook_foundation"), [content_library])
 	_foundation_run_check(report, failures, "jazz_club_foundation", Callable(self, "_check_jazz_club_foundation"), [content_library])
@@ -14677,6 +14678,41 @@ func _check_meta_home_run_boundary(library: ContentLibrary, failures: Array) -> 
 		failures.append("Daily run flushed meta collection bags.")
 
 
+func _check_meta_home_fresh_store_defaults(failures: Array) -> void:
+	var previous_path := OS.get_environment(MetaCollectionServiceScript.STORE_PATH_ENV)
+	var test_path := "user://foundation_check_fresh_meta_collection.json"
+	OS.set_environment(MetaCollectionServiceScript.STORE_PATH_ENV, test_path)
+	_remove_user_store_file(test_path)
+	var service: Variant = MetaCollectionServiceScript.new()
+	var fresh: Dictionary = service.load()
+	if not _copy_array(fresh.get("owned_instances", [])).is_empty():
+		failures.append("Fresh meta store must start with zero owned item instances.")
+	if not _copy_array(fresh.get("unopened_bags", [])).is_empty():
+		failures.append("Fresh meta store must start with zero unopened bags.")
+	if int(fresh.get("gold_balance", -1)) != 0:
+		failures.append("Fresh meta store must start with zero gold.")
+	if str(fresh.get("housing_tier", "")) != MetaCollectionServiceScript.HOUSING_BACK_ALLEY:
+		failures.append("Fresh meta store must start at back alley housing.")
+	var containers := _copy_array(fresh.get("owned_containers", []))
+	if containers.size() != 1:
+		failures.append("Fresh meta store must contain exactly one starter container.")
+	else:
+		var container := _copy_dict(containers[0])
+		if str(container.get("item_id", "")) != "bag" or int(container.get("capacity", 0)) != 3:
+			failures.append("Fresh meta store starter container should be the empty spawn bag.")
+	if int(fresh.get("next_instance_id", 0)) != MetaCollectionServiceScript.FIRST_INSTANCE_ID:
+		failures.append("Fresh meta store next_instance_id should not advance without grants.")
+	var save_error: Error = service.save()
+	if save_error != OK:
+		failures.append("Fresh meta store save failed with error %d." % int(save_error))
+	var reloaded_service: Variant = MetaCollectionServiceScript.new()
+	var reloaded: Dictionary = reloaded_service.load()
+	if not _copy_array(reloaded.get("owned_instances", [])).is_empty() or not _copy_array(reloaded.get("unopened_bags", [])).is_empty():
+		failures.append("Fresh meta store persisted phantom owned items or bags.")
+	_remove_user_store_file(test_path)
+	OS.set_environment(MetaCollectionServiceScript.STORE_PATH_ENV, previous_path)
+
+
 func _check_time_open_hours_foundation(library: ContentLibrary, failures: Array) -> void:
 	var bar_archetype := _archetype_by_id(library, "bar")
 	if bar_archetype.is_empty():
@@ -14853,6 +14889,12 @@ func _copy_array(value: Variant) -> Array:
 	if typeof(value) != TYPE_ARRAY:
 		return []
 	return (value as Array).duplicate(true)
+
+
+func _remove_user_store_file(path: String) -> void:
+	var absolute_path := ProjectSettings.globalize_path(path)
+	if FileAccess.file_exists(absolute_path):
+		DirAccess.remove_absolute(absolute_path)
 
 
 func _world_map_positions(map_data: Dictionary) -> Dictionary:

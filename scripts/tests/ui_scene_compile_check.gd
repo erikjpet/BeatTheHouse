@@ -4407,6 +4407,8 @@ func _check_meta_home_launcher_opens_room(app: Control) -> bool:
 	var objects := _copy_array(spatial.get("objects", []))
 	var container_id := ""
 	var has_map_door := false
+	var bag_prop_count := 0
+	var item_prop_count := 0
 	for object_value in objects:
 		if typeof(object_value) != TYPE_DICTIONARY:
 			continue
@@ -4416,8 +4418,34 @@ func _check_meta_home_launcher_opens_room(app: Control) -> bool:
 			container_id = object_id
 		if object_id == "travel:leave":
 			has_map_door = true
+		if object_id.begins_with("meta_bag:"):
+			bag_prop_count += 1
+		if object_id.begins_with("meta_item:"):
+			item_prop_count += 1
 	if container_id.is_empty() or not has_map_door:
 		push_error("Meta home room did not expose container and map-door props.")
+		return false
+	if bag_prop_count != 0 or item_prop_count != 0:
+		push_error("Fresh meta home rendered phantom collection props: bags=%d items=%d." % [bag_prop_count, item_prop_count])
+		return false
+	var meta_hud: Dictionary = app.call("current_objective_hud_snapshot")
+	if str(meta_hud.get("mode", "")) != "meta":
+		push_error("Meta home did not switch the top bar to meta mode.")
+		return false
+	var hud_fields := _copy_array(meta_hud.get("fields", []))
+	if hud_fields.size() != 2 or str(_copy_dict(hud_fields[0]).get("id", "")) != "gold" or str(_copy_dict(hud_fields[1]).get("id", "")) != "next_home_price":
+		push_error("Meta top bar should expose only gold and next home price, got %s." % str(hud_fields))
+		return false
+	if int(meta_hud.get("gold", -1)) != 0 or str(meta_hud.get("next_home_label", "")) != "Motel Room" or int(meta_hud.get("next_home_price", 0)) != 60:
+		push_error("Fresh meta top bar had wrong values: %s." % str(meta_hud))
+		return false
+	var top_inventory_button := app.get("top_inventory_button") as Button
+	var active_item_button := app.get("active_item_button") as Button
+	if top_inventory_button != null and top_inventory_button.visible:
+		push_error("Meta top bar still showed the in-run inventory button.")
+		return false
+	if active_item_button != null and active_item_button.visible:
+		push_error("Meta top bar still showed the in-run active item button.")
 		return false
 	if not bool(app.call("activate_interactable_object", container_id)):
 		push_error("Meta home container prop did not activate.")
@@ -4443,6 +4471,14 @@ func _check_meta_home_launcher_opens_room(app: Control) -> bool:
 	if start_menu_controls == null or not start_menu_controls.visible:
 		push_error("Returning from the meta room did not restore the main menu.")
 		return false
+	app.call("start_foundation_run", "UI-META-BAR-RUN-CHECK")
+	await process_frame
+	var run_hud: Dictionary = app.call("current_objective_hud_snapshot")
+	if str(run_hud.get("mode", "")) == "meta" or not run_hud.has("bankroll") or not run_hud.has("heat"):
+		push_error("In-run screen did not restore the standard top bar after leaving meta home.")
+		return false
+	app.call("return_to_main_menu")
+	await process_frame
 	return true
 
 
@@ -6317,6 +6353,12 @@ func _copy_array(value: Variant) -> Array:
 	if typeof(value) != TYPE_ARRAY:
 		return []
 	return (value as Array).duplicate(true)
+
+
+func _copy_dict(value: Variant) -> Dictionary:
+	if typeof(value) != TYPE_DICTIONARY:
+		return {}
+	return (value as Dictionary).duplicate(true)
 
 
 func _event_choice_has_trigger_event(event_definition: Dictionary, choice_id: String) -> bool:

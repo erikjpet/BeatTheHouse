@@ -170,6 +170,8 @@ var dev_game_test_mode := false
 var meta_session_active := false
 var meta_session_location_id: String = ""
 var meta_last_panel_message: String = ""
+var meta_interactable_object_view_cache: Array = []
+var meta_interactable_object_view_cache_key := ""
 var show_game_library_launcher := true
 var autosave_slot_id := AUTOSAVE_SLOT
 var pending_autosave := false
@@ -4901,6 +4903,7 @@ func _render_environment_screen() -> void:
 	_style_hud_for_recent_consequence()
 	if save_status_label != null:
 		save_status_label.text = _save_status_text()
+	_apply_hud_mode_visibility()
 	_refresh_active_item_slot()
 	_apply_focus_layout()
 	_refresh_environment_result_feedback()
@@ -6788,6 +6791,20 @@ func current_run_journal_snapshot() -> Dictionary:
 func current_objective_hud_snapshot() -> Dictionary:
 	if run_state == null:
 		return {}
+	if _is_meta_session():
+		var meta_hud := _meta_status_hud_model()
+		return {
+			"mode": "meta",
+			"text": str(meta_hud.get("objective_text", "")),
+			"status_text": str(meta_hud.get("status_text", "")),
+			"save_text": "",
+			"fields": _copy_array(meta_hud.get("fields", [])),
+			"gold": int(meta_hud.get("gold", 0)),
+			"next_home_label": str(meta_hud.get("next_home_label", "")),
+			"next_home_price": int(meta_hud.get("next_home_price", 0)),
+			"housing_tier": str(meta_hud.get("housing_tier", "")),
+			"status_hud": meta_hud,
+		}
 	var pressure := _run_pressure_view()
 	var prestige := _primary_prestige_option()
 	var demo_objective := _demo_objective_status()
@@ -8177,13 +8194,13 @@ func _current_environment_layout() -> Dictionary:
 		return {}
 	var serialized_layout: Variant = run_state.current_environment.get("layout", {})
 	if typeof(serialized_layout) == TYPE_DICTIONARY and not (serialized_layout as Dictionary).is_empty():
-		return (serialized_layout as Dictionary).duplicate(true)
+		return serialized_layout as Dictionary
 	var archetype_id := str(run_state.current_environment.get("archetype_id", ""))
 	var archetype := _environment_archetype(archetype_id)
 	var archetype_layout: Variant = archetype.get("layout", {})
 	if typeof(archetype_layout) != TYPE_DICTIONARY:
 		return {}
-	return (archetype_layout as Dictionary).duplicate(true)
+	return archetype_layout as Dictionary
 
 
 func _normalized_interaction_rect(object_type: String, index: int) -> Rect2:
@@ -9851,15 +9868,6 @@ func _is_meta_session() -> bool:
 
 
 func _meta_pawn_location_id() -> String:
-	if meta_collection_service != null:
-		var view: Dictionary = MetaCollectionViewModelScript.build(meta_collection_service)
-		var home := _copy_dict(view.get("home", {}))
-		for node_value in _copy_array(home.get("map_nodes", [])):
-			if typeof(node_value) != TYPE_DICTIONARY:
-				continue
-			var node: Dictionary = node_value
-			if str(node.get("kind", "")) == "pawn" + "_shop":
-				return str(node.get("id", "pawn" + "_shop"))
 	return "pawn" + "_shop"
 
 
@@ -10011,16 +10019,36 @@ func _meta_container_label(item_id: String) -> String:
 
 
 func _meta_interactable_object_view_list() -> Array:
+	var cache_key := _meta_interactable_object_view_cache_key()
+	if cache_key == meta_interactable_object_view_cache_key and not meta_interactable_object_view_cache.is_empty():
+		return _copy_array(meta_interactable_object_view_cache)
+	var objects: Array = []
 	if meta_session_location_id == _meta_pawn_location_id():
-		return _meta_pawn_interactable_objects()
-	return _meta_home_interactable_objects()
+		objects = _meta_pawn_interactable_objects()
+	else:
+		objects = _meta_home_interactable_objects()
+	meta_interactable_object_view_cache_key = cache_key
+	meta_interactable_object_view_cache = _copy_array(objects)
+	return objects
+
+
+func _meta_interactable_object_view_cache_key() -> String:
+	var parts: Array[String] = [meta_session_location_id]
+	if meta_collection_service != null:
+		var snapshot: Dictionary = meta_collection_service.snapshot()
+		parts.append(str(snapshot.get("housing_tier", "")))
+		parts.append(str(snapshot.get("gold_balance", 0)))
+		parts.append(JSON.stringify(snapshot.get("owned_containers", [])))
+		parts.append(JSON.stringify(snapshot.get("owned_instances", [])))
+		parts.append(JSON.stringify(snapshot.get("unopened_bags", [])))
+		parts.append(JSON.stringify(snapshot.get("loadout", [])))
+	return "|".join(parts)
 
 
 func _meta_home_interactable_objects() -> Array:
 	var objects: Array = []
-	var view: Dictionary = MetaCollectionViewModelScript.build(meta_collection_service)
-	var home := _copy_dict(view.get("home", {}))
-	var gold := int(view.get("gold_balance", 0))
+	var home := _meta_home_summary_view()
+	var gold := int(home.get("gold_balance", 0))
 	var containers := run_state.current_home_containers()
 	for index in range(containers.size()):
 		if typeof(containers[index]) != TYPE_DICTIONARY:
@@ -10047,7 +10075,7 @@ func _meta_home_interactable_objects() -> Array:
 			"confirm_action_id": "open_meta_container",
 			"focus_rect": _interaction_rect_for_object("meta_container:%s" % container_id, CONTEXT_MODE_HOME_CONTAINER, index),
 		}))
-	var bags := _copy_array(view.get("unopened_bags", []))
+	var bags := _meta_unopened_bag_rows()
 	for index in range(bags.size()):
 		var bag := _copy_dict(bags[index])
 		var bag_id := int(bag.get("instance_id", 0))
@@ -10131,6 +10159,88 @@ func _meta_home_interactable_objects() -> Array:
 		"focus_rect": _interaction_rect_for_object("travel:leave", CONTEXT_MODE_TRAVEL, 0),
 	}))
 	return objects
+
+
+func _meta_home_summary_view() -> Dictionary:
+	if meta_collection_service == null:
+		_initialize_meta_collection()
+	var snapshot: Dictionary = meta_collection_service.snapshot() if meta_collection_service != null else {}
+	var housing_tier := str(snapshot.get("housing_tier", MetaCollectionServiceScript.HOUSING_BACK_ALLEY))
+	var definition: Dictionary = meta_collection_service.housing_definition(housing_tier) if meta_collection_service != null else {}
+	var owned_instances := _copy_array(snapshot.get("owned_instances", []))
+	var loadout := _copy_array(snapshot.get("loadout", []))
+	var carried_ids: Array = _meta_snapshot_carried_instance_ids(owned_instances, loadout, housing_tier)
+	var carry_capacity := _meta_snapshot_container_capacity(_copy_array(snapshot.get("owned_containers", [])))
+	var storage_slots := maxi(0, int(definition.get("storage_slots", 0)))
+	return {
+		"housing_tier": housing_tier,
+		"display_name": str(definition.get("display_name", housing_tier.capitalize())),
+		"gold_balance": int(snapshot.get("gold_balance", 0)),
+		"storage_slots": storage_slots,
+		"carry_capacity": carry_capacity,
+		"total_capacity": storage_slots + carry_capacity,
+		"trade_up_unlocked": meta_collection_service.trade_up_unlocked() if meta_collection_service != null else false,
+		"carried_count": carried_ids.size(),
+		"upgrade": meta_collection_service.next_housing_upgrade() if meta_collection_service != null else {},
+	}
+
+
+func _meta_snapshot_carried_instance_ids(owned_instances: Array, loadout: Array, housing_tier: String) -> Array:
+	var owned_ids: Array = []
+	for instance_value in owned_instances:
+		var instance := _copy_dict(instance_value)
+		var instance_id := int(instance.get("instance_id", 0))
+		if instance_id > 0 and not owned_ids.has(instance_id):
+			owned_ids.append(instance_id)
+	if housing_tier == MetaCollectionServiceScript.HOUSING_BACK_ALLEY:
+		return owned_ids
+	var carried: Array = []
+	for id_value in loadout:
+		var instance_id := int(id_value)
+		if instance_id > 0 and owned_ids.has(instance_id) and not carried.has(instance_id):
+			carried.append(instance_id)
+	return carried
+
+
+func _meta_snapshot_container_capacity(containers: Array) -> int:
+	var total := 0
+	for container_value in containers:
+		var container := _copy_dict(container_value)
+		total += maxi(0, int(container.get("capacity", 0)))
+	return total
+
+
+func _meta_unopened_bag_rows() -> Array:
+	var rows: Array = []
+	if meta_collection_service == null:
+		return rows
+	var resolver: Variant = CollectionItemResolverScript.new()
+	for bag_value in meta_collection_service.unopened_bags():
+		if typeof(bag_value) != TYPE_DICTIONARY:
+			continue
+		var bag: Dictionary = bag_value
+		var definition: Dictionary = resolver.bag_definition(int(bag.get("bagdef_id", -1)))
+		var collection: Dictionary = resolver.collection_definition(str(definition.get("collection_id", bag.get("collection_id", ""))))
+		var tier := str(definition.get("tier", bag.get("tier", "")))
+		rows.append({
+			"instance_id": int(bag.get("instance_id", 0)),
+			"bagdef_id": int(bag.get("bagdef_id", -1)),
+			"display_name": str(definition.get("display_name", bag.get("display_name", "Collection Bag"))),
+			"collection_id": str(definition.get("collection_id", bag.get("collection_id", ""))),
+			"collection_display_name": str(collection.get("display_name", bag.get("collection_display_name", "Collection"))),
+			"tier": tier,
+			"tier_label": tier.capitalize(),
+			"icon_key": str(definition.get("icon_key", bag.get("icon_key", ""))),
+			"source": str(bag.get("source", "")),
+			"source_id": str(bag.get("source_id", "")),
+			"tier_badges": [{
+				"glyph_id": "collection_tier",
+				"value_text": tier.capitalize(),
+				"polarity": "positive",
+				"tooltip": "%s collection tier" % tier.capitalize(),
+			}],
+		})
+	return rows
 
 
 func _meta_pawn_interactable_objects() -> Array:
@@ -11012,6 +11122,8 @@ func current_run_menu_snapshot() -> Dictionary:
 
 
 func _save_status_text() -> String:
+	if _is_meta_session():
+		return ""
 	if run_state != null:
 		return str(_run_status_hud_model().get("save_text", ""))
 	var availability := "Saved run available" if _has_foundation_save() else "No saved run"
@@ -11034,6 +11146,8 @@ func _objective_hud_text() -> String:
 
 
 func _run_status_hud_model() -> Dictionary:
+	if _is_meta_session():
+		return _meta_status_hud_model()
 	var pressure := _run_pressure_view()
 	var prestige := _primary_prestige_option()
 	var demo_objective := _demo_objective_status()
@@ -11137,6 +11251,42 @@ func _run_status_hud_model() -> Dictionary:
 		"pressure": pressure,
 		"run_status": run_state.run_status,
 	}
+
+
+func _meta_status_hud_model() -> Dictionary:
+	var home := _meta_home_summary_view()
+	var gold := int(home.get("gold_balance", 0))
+	var upgrade := _copy_dict(home.get("upgrade", {}))
+	var status_text := "[GOLD] Gold %d" % gold
+	var objective_text := ""
+	var next_price := 0
+	var next_label := ""
+	if not upgrade.is_empty():
+		next_price = maxi(0, int(upgrade.get("price", 0)))
+		next_label = str(upgrade.get("display_name", "Next home"))
+		objective_text = "[HOME] %s - %d gold" % [next_label, next_price]
+	var fields: Array = [{"id": "gold", "label": "Gold", "value": gold}]
+	if not upgrade.is_empty():
+		fields.append({"id": "next_home_price", "label": next_label, "value": next_price})
+	return {
+		"mode": "meta",
+		"status_text": status_text,
+		"objective_text": objective_text,
+		"save_text": "",
+		"fields": fields,
+		"gold": gold,
+		"next_home_label": next_label,
+		"next_home_price": next_price,
+		"housing_tier": str(home.get("housing_tier", "")),
+	}
+
+
+func _apply_hud_mode_visibility() -> void:
+	var meta_mode := _is_meta_session()
+	if top_inventory_button != null:
+		top_inventory_button.visible = not meta_mode
+	if active_item_button != null:
+		active_item_button.visible = not meta_mode
 
 
 func _hud_goal_text(prestige: Dictionary, pressure: Dictionary, demo_objective: Dictionary = {}) -> String:
