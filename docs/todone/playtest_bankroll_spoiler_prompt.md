@@ -1,3 +1,14 @@
+## Execution Record
+
+- Completion date: 2026-07-09.
+- Implementing commit: `f2589d8` (`Fix bankroll reveal presentation timing`).
+- Verification:
+  - `powershell -ExecutionPolicy Bypass -File tools/validate_project.ps1` PASS: `Beat the House foundation architecture validation passed.`
+  - `powershell -ExecutionPolicy Bypass -File tools/check_godot.ps1 -RequireGodot -FoundationSuite ui -TimeoutSec 300` PASS: `ui_scene_compile PASS 52153ms` in `.tmp/test_reports/20260709_011126_smoke/summary.json`.
+  - `powershell -ExecutionPolicy Bypass -File tools/check_godot.ps1 -RequireGodot -FoundationSuite games -TimeoutSec 600` PASS: `foundation_games PASS 116834ms` in `.tmp/test_reports/20260709_010844_smoke/summary.json`.
+  - `powershell -ExecutionPolicy Bypass -File tools/foundation_determinism_probe.ps1 -RequireGodot -SeedCount 5 -SeedPrefix V04-BANKROLL` PASS: seeds `5`, checkpoints `159`, hash `2470382990`.
+- Deviations: The permanent guard uses a deterministic UI fixture with an active surface animation channel instead of scripting seven live games separately; the host fix is shared and the existing games suite passed against all current game modules. Manual spot-checks are left for owner playtest. Packages remain stale until the repackage prompt runs.
+
 # Agent Prompt - Playtest Fix: Bankroll Must Not Reveal Results Before They Are Presented
 
 Priority: playtest blocker for the 0.4 release (runs before the repackage
