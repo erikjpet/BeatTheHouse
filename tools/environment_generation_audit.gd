@@ -119,6 +119,7 @@ func _simulate_run(run_index: int, seed: String, visits_per_run: int) -> void:
 	run_state.start_new(seed)
 	var path_rng := run_state.create_rng("environment_generation_audit_path")
 	generator.next_environment(run_state)
+	_audit_world_map_beach_delta(run_state.world_map, seed)
 
 	var run_summary := {
 		"run_index": run_index,
@@ -138,6 +139,7 @@ func _simulate_run(run_index: int, seed: String, visits_per_run: int) -> void:
 			run_summary["stopped_reason"] = "missing_environment"
 			break
 		var record := _record_environment(run_state, run_index, seed, visit_index)
+		_audit_environment_unique_object_classes(run_state.current_environment, seed, visit_index)
 		var event_results := _resolve_travel_unlock_events(run_state, path_rng)
 		record["events_resolved_for_travel"] = event_results
 		record["resolved_event_ids_after_policy"] = _copy_array(run_state.current_environment.get("resolved_event_ids", []))
@@ -227,6 +229,84 @@ func _record_environment(run_state: RunState, run_index: int, seed: String, visi
 		"bankroll_on_entry": run_state.bankroll,
 		"suspicion_on_entry": run_state.suspicion_level(),
 	}
+
+
+func _audit_world_map_beach_delta(map_data: Dictionary, seed: String) -> void:
+	if map_data.is_empty():
+		return
+	var beach := WorldMapScript.node_by_id(map_data, "beach")
+	var delta := WorldMapScript.node_by_id(map_data, "delta_queen")
+	if beach.is_empty() or delta.is_empty():
+		failures.append("%s: generated world map is missing beach or delta_queen." % seed)
+		return
+	var edge := _world_map_edge_between(map_data, "beach", "delta_queen")
+	if edge.is_empty():
+		failures.append("%s: beach must have a direct edge to delta_queen." % seed)
+		return
+	if int(edge.get("distance_blocks", 0)) != 1:
+		failures.append("%s: beach edge to delta_queen must be 1 block, got %d." % [seed, int(edge.get("distance_blocks", 0))])
+
+
+func _world_map_edge_between(map_data: Dictionary, a: String, b: String) -> Dictionary:
+	for edge_value in _copy_array(map_data.get("edges", [])):
+		if typeof(edge_value) != TYPE_DICTIONARY:
+			continue
+		var edge: Dictionary = edge_value
+		var left := str(edge.get("a", "")).strip_edges()
+		var right := str(edge.get("b", "")).strip_edges()
+		if (left == a and right == b) or (left == b and right == a):
+			return edge
+	return {}
+
+
+func _audit_environment_unique_object_classes(environment: Dictionary, seed: String, visit_index: int) -> void:
+	var class_by_object_id := _unique_class_by_layout_object_id(environment)
+	if class_by_object_id.is_empty():
+		return
+	var layout := _copy_dict(environment.get("layout", {}))
+	var object_rects := _copy_dict(layout.get("object_rects", {}))
+	var seen_classes: Dictionary = {}
+	for object_id_value in object_rects.keys():
+		var object_id := str(object_id_value)
+		var unique_class := str(class_by_object_id.get(object_id, "")).strip_edges()
+		if unique_class.is_empty():
+			continue
+		if seen_classes.has(unique_class):
+			failures.append("%s visit %d %s: duplicate unique object class %s from %s and %s." % [
+				seed,
+				visit_index,
+				str(environment.get("archetype_id", environment.get("id", ""))),
+				unique_class,
+				str(seen_classes.get(unique_class, "")),
+				object_id,
+			])
+			return
+		seen_classes[unique_class] = object_id
+
+
+func _unique_class_by_layout_object_id(environment: Dictionary) -> Dictionary:
+	var result: Dictionary = {}
+	for event_id in _string_array(environment.get("event_ids", [])):
+		var event_definition := library.event(event_id)
+		var unique_class := str(event_definition.get("unique_object_class", "")).strip_edges()
+		if not unique_class.is_empty() and not bool(event_definition.get("allow_duplicate_unique_class", false)):
+			result["event:%s" % event_id] = unique_class
+	var game_states := _copy_dict(environment.get("game_states", {}))
+	for game_id in _string_array(environment.get("game_ids", [])):
+		var machine := _copy_dict(game_states.get(game_id, {}))
+		for hook_value in _copy_array(machine.get("environment_hooks", [])):
+			if typeof(hook_value) != TYPE_DICTIONARY:
+				continue
+			var hook: Dictionary = hook_value
+			var unique_class := str(hook.get("unique_object_class", "")).strip_edges()
+			if unique_class.is_empty() or bool(hook.get("allow_duplicate_unique_class", false)):
+				continue
+			var object_id := str(hook.get("object_id", "")).strip_edges()
+			if object_id.is_empty():
+				var dialogue_id := str(hook.get("dialogue_id", "")).strip_edges()
+				object_id = "dialogue:%s" % dialogue_id if not dialogue_id.is_empty() else "game_hook:%s:%s" % [game_id, str(hook.get("id", ""))]
+			result[object_id] = unique_class
+	return result
 
 
 func _summarize_game_state(game_id: String, state: Dictionary) -> Dictionary:

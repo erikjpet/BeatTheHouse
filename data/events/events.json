@@ -11,6 +11,8 @@
     "asset_path": "res://assets/art/events/late_shift_discount.png",
     "icon_key": "discount_sticker",
     "environment_prop": "clerk_counter",
+    "unique_object_class": "shop_counter_clerk",
+    "unique_object_priority": 60,
     "start_summary": "Talk to the tired clerk.",
     "trigger": {
       "type": "manual"
@@ -51,6 +53,8 @@
     "asset_path": "res://assets/art/events/chatty_clerk.png",
     "icon_key": "clerk_chat",
     "environment_prop": "clerk_talk",
+    "unique_object_class": "shop_counter_clerk",
+    "unique_object_priority": 50,
     "start_summary": "Talk to the clerk.",
     "trigger": {
       "type": "manual"

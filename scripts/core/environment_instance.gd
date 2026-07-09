@@ -195,7 +195,7 @@ static func ensure_generated_layout(environment_data: Dictionary) -> Dictionary:
 	_assign_single_object_rect(object_rects, layout, "travel:leave", "travel", 0, "travel_spots", not _travel_target_ids(environment_data).is_empty(), active_object_ids)
 	_assign_string_object_rects(object_rects, layout, "service", _copy_array(environment_data.get("service_ids", [])), "service_spots", active_object_ids)
 	_assign_string_object_rects(object_rects, layout, "lender", _copy_array(environment_data.get("lender_hooks", [])), "lender_spots", active_object_ids)
-	_assign_object_layout_entries(object_rects, layout, _game_hook_layout_entries(environment_data), active_object_ids)
+	_assign_object_layout_entries(object_rects, layout, _filter_unique_object_layout_entries(_game_hook_layout_entries(environment_data)), active_object_ids)
 	_assign_single_object_rect(object_rects, layout, "home_tenure:status", "home_tenure", 0, "home_tenure_spots", _home_tenure_should_exist(environment_data), active_object_ids)
 	_assign_single_object_rect(object_rects, layout, "home_storage:place", "home_storage", 0, "home_storage_spots", _home_storage_should_exist(environment_data), active_object_ids)
 	_assign_string_object_rects(object_rects, layout, "home_container", _home_container_ids(environment_data), "home_container_spots", active_object_ids)
@@ -366,7 +366,33 @@ static func _pick_events(archetype: Dictionary, rng: RngStream, library: Content
 	for required_id in _string_array(archetype.get("required_event_ids", [])):
 		if candidates.has(required_id):
 			required_events.append(required_id)
-	return _pick_ids_with_required(candidates, archetype.get("event_count", 1), required_events, rng)
+	return _filter_unique_event_ids(_pick_ids_with_required(candidates, archetype.get("event_count", 1), required_events, rng), library)
+
+
+static func _filter_unique_event_ids(event_ids: Array, library: ContentLibrary) -> Array:
+	if library == null:
+		return event_ids
+	var result: Array = []
+	var class_indexes: Dictionary = {}
+	for event_id_value in event_ids:
+		var event_id := str(event_id_value).strip_edges()
+		if event_id.is_empty():
+			continue
+		var event := library.event(event_id)
+		var unique_class := str(event.get("unique_object_class", "")).strip_edges()
+		if unique_class.is_empty() or bool(event.get("allow_duplicate_unique_class", false)):
+			result.append(event_id)
+			continue
+		if not class_indexes.has(unique_class):
+			class_indexes[unique_class] = result.size()
+			result.append(event_id)
+			continue
+		var existing_index := int(class_indexes[unique_class])
+		var existing_id := str(result[existing_index])
+		var existing := library.event(existing_id)
+		if int(event.get("unique_object_priority", 0)) > int(existing.get("unique_object_priority", 0)):
+			result[existing_index] = event_id
+	return result
 
 
 # Checks whether an event can appear in the environment scopes.
@@ -790,7 +816,7 @@ static func _active_object_layout_entries(environment_data: Dictionary) -> Array
 	_append_string_layout_entries(entries, "home_container", _home_container_ids(environment_data), "home_container_spots")
 	if prioritize_services:
 		_append_item_offer_layout_entries(entries, _copy_array(environment_data.get("item_offers", [])))
-	return entries
+	return _filter_unique_object_layout_entries(entries)
 
 
 static func _append_string_layout_entries(entries: Array, object_type: String, ids: Array, spot_field: String) -> void:
@@ -917,7 +943,32 @@ static func _game_hook_layout_entries(environment_data: Dictionary) -> Array:
 				"object_type": "game_hook",
 				"index": result.size(),
 				"spot_field": "game_hook_spots",
+				"unique_object_class": str(hook_data.get("unique_object_class", "")).strip_edges(),
+				"unique_object_priority": int(hook_data.get("unique_object_priority", 0)),
+				"allow_duplicate_unique_class": bool(hook_data.get("allow_duplicate_unique_class", false)),
 			})
+	return result
+
+
+static func _filter_unique_object_layout_entries(entries: Array) -> Array:
+	var result: Array = []
+	var class_indexes: Dictionary = {}
+	for entry_value in entries:
+		if typeof(entry_value) != TYPE_DICTIONARY:
+			continue
+		var entry: Dictionary = (entry_value as Dictionary).duplicate(true)
+		var unique_class := str(entry.get("unique_object_class", "")).strip_edges()
+		if unique_class.is_empty() or bool(entry.get("allow_duplicate_unique_class", false)):
+			result.append(entry)
+			continue
+		if not class_indexes.has(unique_class):
+			class_indexes[unique_class] = result.size()
+			result.append(entry)
+			continue
+		var existing_index := int(class_indexes[unique_class])
+		var existing: Dictionary = result[existing_index]
+		if int(entry.get("unique_object_priority", 0)) > int(existing.get("unique_object_priority", 0)):
+			result[existing_index] = entry
 	return result
 
 

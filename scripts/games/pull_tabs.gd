@@ -255,6 +255,8 @@ func environment_interactable_objects(run_state: RunState, environment: Dictiona
 		"visual_key": "pull_tab_redeemer",
 		"visual_type": "service",
 		"icon_key": "clerk_chat",
+		"unique_object_class": "pull_tab_clerk",
+		"unique_object_priority": 80,
 		"available_actions": [{"id": "start_dialogue", "label": "Talk"}],
 		"confirm_action_id": "start_dialogue",
 	}, {
@@ -271,6 +273,8 @@ func environment_interactable_objects(run_state: RunState, environment: Dictiona
 		"visual_key": "pull_tab_redeemer",
 		"visual_type": "service",
 		"icon_key": "service",
+		"unique_object_class": "pull_tab_clerk",
+		"unique_object_priority": 100,
 		"available_actions": [{"id": REDEEM_ACTION_ID, "label": "Redeem tabs"}],
 		"confirm_action_id": REDEEM_ACTION_ID,
 	}]
@@ -2734,12 +2738,16 @@ func _default_environment_hooks() -> Array:
 		"kind": "redeemer",
 		"label": "Pull-Tab Clerk",
 		"object_id": "game_hook:%s:%s" % [get_id(), REDEEM_HOOK_ID],
+		"unique_object_class": "pull_tab_clerk",
+		"unique_object_priority": 100,
 	}, {
 		"id": CLERK_DIALOGUE_HOOK_ID,
 		"kind": "dialogue",
 		"label": "Pull-Tab Clerk",
 		"object_id": "dialogue:%s" % CLERK_DIALOGUE_ID,
 		"dialogue_id": CLERK_DIALOGUE_ID,
+		"unique_object_class": "pull_tab_clerk",
+		"unique_object_priority": 80,
 	}]
 
 

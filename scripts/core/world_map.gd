@@ -708,6 +708,8 @@ func _city_anchor_for_node(id: String, archetype: Dictionary, tier: int) -> Vect
 			return Vector2(0.70, 0.48)
 		"delta_queen":
 			return Vector2(0.76, 0.20)
+		"beach":
+			return Vector2(0.80, 0.22)
 		GRAND_CASINO_ID:
 			return Vector2(0.90, 0.49)
 	var kind := str(archetype.get("kind", "")).strip_edges()
@@ -739,6 +741,19 @@ func _spread_positions(ids: Array, source_positions: Dictionary) -> Dictionary:
 				b["y"] = clampf(float(b.get("y", 0.5)) - push, 0.08, 0.92)
 				positions[id_a] = a
 				positions[id_b] = b
+	return _enforce_beach_delta_adjacency(positions)
+
+
+func _enforce_beach_delta_adjacency(positions: Dictionary) -> Dictionary:
+	if not positions.has("beach") or not positions.has("delta_queen"):
+		return positions
+	var delta: Dictionary = positions.get("delta_queen", {})
+	var delta_position := Vector2(float(delta.get("x", 0.76)), float(delta.get("y", 0.20)))
+	var beach_position := Vector2(
+		clampf(delta_position.x + 0.045, 0.06, 0.94),
+		clampf(delta_position.y + 0.015, 0.08, 0.92)
+	)
+	positions["beach"] = {"x": beach_position.x, "y": beach_position.y}
 	return positions
 
 
@@ -769,6 +784,8 @@ func _build_edges(ids: Array, archetypes_by_id: Dictionary, positions: Dictionar
 			_add_edge(edges_by_id, source_id, str(target_id), positions)
 	_guarantee_start_edges(edges_by_id, ids, archetypes_by_id, positions, start_id)
 	_guarantee_progression_edges(edges_by_id, ids, archetypes_by_id, positions)
+	if archetypes_by_id.has("beach") and archetypes_by_id.has("delta_queen"):
+		_add_edge(edges_by_id, "beach", "delta_queen", positions)
 	if archetypes_by_id.has(UNDERGROUND_SHORTCUT_ID) and archetypes_by_id.has(GRAND_CASINO_ID):
 		_add_edge(edges_by_id, UNDERGROUND_SHORTCUT_ID, GRAND_CASINO_ID, positions)
 	_connect_components(edges_by_id, ids, positions)

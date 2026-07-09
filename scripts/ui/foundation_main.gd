@@ -7435,6 +7435,9 @@ func _interactable_object_view_list() -> Array:
 			"prop": str(event_data.get("environment_prop", event_data.get("prop", ""))),
 			"icon_key": str(event_data.get("icon_key", event_id)),
 			"asset_path": str(event_data.get("asset_path", "")),
+			"unique_object_class": str(event_data.get("unique_object_class", "")).strip_edges(),
+			"unique_object_priority": int(event_data.get("unique_object_priority", 0)),
+			"allow_duplicate_unique_class": bool(event_data.get("allow_duplicate_unique_class", false)),
 			"available_actions": [{"id": "inspect_event_choices", "label": "Review responses"}] if event_enabled else [],
 			"inline_actions": _event_inline_response_actions(event_id, choices) if event_enabled else [],
 			"confirm_action_id": "inspect_event_choices" if event_enabled else "",
@@ -7587,7 +7590,29 @@ func _interactable_object_view_list() -> Array:
 		}))
 	if _closing_time_blocks_environment_actions():
 		objects = _objects_with_closing_time_lock(objects)
-	return objects
+	return _filter_unique_interactable_objects(objects)
+
+
+func _filter_unique_interactable_objects(objects: Array) -> Array:
+	var result: Array = []
+	var class_indexes: Dictionary = {}
+	for object_value in objects:
+		if typeof(object_value) != TYPE_DICTIONARY:
+			continue
+		var object_data: Dictionary = object_value
+		var unique_class := str(object_data.get("unique_object_class", "")).strip_edges()
+		if unique_class.is_empty() or bool(object_data.get("allow_duplicate_unique_class", false)):
+			result.append(object_data)
+			continue
+		if not class_indexes.has(unique_class):
+			class_indexes[unique_class] = result.size()
+			result.append(object_data)
+			continue
+		var existing_index := int(class_indexes[unique_class])
+		var existing: Dictionary = result[existing_index]
+		if int(object_data.get("unique_object_priority", 0)) > int(existing.get("unique_object_priority", 0)):
+			result[existing_index] = object_data
+	return result
 
 
 func _objects_with_closing_time_lock(objects: Array) -> Array:
@@ -7660,6 +7685,9 @@ func _game_hook_interactable_objects(apply_failure_lock: bool = true) -> Array:
 				"attribute_badges": _copy_array(hook.get("attribute_badges", [])),
 				"visual_key": str(hook.get("visual_key", "")),
 				"icon_key": str(hook.get("icon_key", "service")),
+				"unique_object_class": str(hook.get("unique_object_class", "")).strip_edges(),
+				"unique_object_priority": int(hook.get("unique_object_priority", 0)),
+				"allow_duplicate_unique_class": bool(hook.get("allow_duplicate_unique_class", false)),
 				"available_actions": [{"id": "start_dialogue", "label": "Talk"}] if enabled and not dialogue_id.is_empty() else _copy_array(hook.get("available_actions", [])) if enabled else [],
 				"confirm_action_id": "start_dialogue" if enabled and not dialogue_id.is_empty() else str(hook.get("confirm_action_id", "")) if enabled else "",
 				"focus_rect": _interaction_rect_for_object(object_id, object_type, hook_index),
@@ -8077,6 +8105,9 @@ func _make_interactable_object(source: Dictionary) -> Dictionary:
 			"surface": str(source.get("surface", "")),
 			"icon_key": str(source.get("icon_key", "")),
 			"asset_path": str(source.get("asset_path", "")),
+			"unique_object_class": str(source.get("unique_object_class", "")).strip_edges(),
+			"unique_object_priority": int(source.get("unique_object_priority", 0)),
+			"allow_duplicate_unique_class": bool(source.get("allow_duplicate_unique_class", false)),
 			"available_actions": _copy_array(source.get("available_actions", [])),
 			"inline_actions": _copy_array(source.get("inline_actions", [])),
 			"confirm_action_id": str(source.get("confirm_action_id", "")),
@@ -12740,6 +12771,9 @@ func _eligible_event_option_with_context(event_id: String, context: Dictionary =
 		"visual_key": str(event_definition.get("visual_key", event_definition.get("type", "event"))),
 		"icon_key": str(event_definition.get("icon_key", event_id)),
 		"environment_prop": str(event_definition.get("environment_prop", event_definition.get("prop", ""))),
+		"unique_object_class": str(event_definition.get("unique_object_class", "")).strip_edges(),
+		"unique_object_priority": int(event_definition.get("unique_object_priority", 0)),
+		"allow_duplicate_unique_class": bool(event_definition.get("allow_duplicate_unique_class", false)),
 		"start_summary": str(event_definition.get("start_summary", "Choose a response.")),
 		"choices": option_choices,
 	}

@@ -14606,6 +14606,13 @@ func _check_world_map_foundation(library: ContentLibrary, failures: Array) -> vo
 			failures.append("World map target policy did not offer two new destinations for seed %02d." % policy_seed_index)
 			break
 
+	for beach_seed_index in range(50):
+		var beach_run: RunState = RunStateScript.new()
+		beach_run.start_new("WORLD-MAP-BEACH-%02d" % beach_seed_index)
+		generator.next_environment(beach_run)
+		if not _world_map_beach_delta_adjacency_ok(beach_run.world_map, "seed %02d" % beach_seed_index, failures):
+			break
+
 	if travel_targets.is_empty():
 		failures.append("World map revisit fixture could not find a neighboring destination.")
 		return
@@ -14653,6 +14660,7 @@ func _check_world_map_foundation(library: ContentLibrary, failures: Array) -> vo
 	loaded.from_dict(save_snapshot)
 	if JSON.stringify(loaded.world_map) != JSON.stringify(run_a.world_map):
 		failures.append("World map graph/discovery/path state did not survive RunState save/load.")
+	_check_unique_object_layout_classes(library, failures)
 
 
 func _check_meta_home_run_boundary(library: ContentLibrary, failures: Array) -> void:
@@ -14905,6 +14913,97 @@ func _world_map_positions(map_data: Dictionary) -> Dictionary:
 		var node: Dictionary = node_value
 		result[str(node.get("id", ""))] = _copy_dict(node.get("position", {}))
 	return result
+
+
+func _world_map_beach_delta_adjacency_ok(map_data: Dictionary, label: String, failures: Array) -> bool:
+	var beach := WorldMapScript.node_by_id(map_data, "beach")
+	var delta := WorldMapScript.node_by_id(map_data, "delta_queen")
+	if beach.is_empty() or delta.is_empty():
+		failures.append("World map beach adjacency fixture missing beach or delta_queen for %s." % label)
+		return false
+	var edge := _world_map_edge_between(map_data, "beach", "delta_queen")
+	if edge.is_empty():
+		failures.append("World map beach must have a direct edge to delta_queen for %s." % label)
+		return false
+	if int(edge.get("distance_blocks", 0)) != 1:
+		failures.append("World map beach edge must price as 1 block for %s, got %d." % [label, int(edge.get("distance_blocks", 0))])
+		return false
+	return true
+
+
+func _world_map_edge_between(map_data: Dictionary, a: String, b: String) -> Dictionary:
+	for edge_value in _copy_array(map_data.get("edges", [])):
+		if typeof(edge_value) != TYPE_DICTIONARY:
+			continue
+		var edge: Dictionary = edge_value
+		var left := str(edge.get("a", "")).strip_edges()
+		var right := str(edge.get("b", "")).strip_edges()
+		if (left == a and right == b) or (left == b and right == a):
+			return edge
+	return {}
+
+
+func _check_unique_object_layout_classes(library: ContentLibrary, failures: Array) -> void:
+	var pull_tabs_game: GameModule = _load_surface_contract_game(library, "pull_tabs", failures)
+	if pull_tabs_game == null:
+		return
+	for archetype_id in ["bar", "gas_station_casino", "jazz_club"]:
+		var archetype := _archetype_by_id(library, str(archetype_id))
+		if archetype.is_empty():
+			failures.append("Unique object layout guard missing archetype: %s." % str(archetype_id))
+			continue
+		var run_state: RunState = RunStateScript.new()
+		run_state.start_new("UNIQUE-OBJECT-%s" % str(archetype_id))
+		var environment := EnvironmentInstance.from_archetype(archetype, 1, run_state.create_rng("unique_object_environment"), library)
+		var environment_data := environment.to_dict()
+		var game_states := _copy_dict(environment_data.get("game_states", {}))
+		game_states["pull_tabs"] = pull_tabs_game.generate_environment_state(run_state, environment_data, run_state.create_rng("unique_object_pull_tabs"))
+		environment_data["game_states"] = game_states
+		environment_data["layout"] = EnvironmentInstance.ensure_generated_layout(environment_data)
+		var conflicts := _unique_object_layout_conflicts(environment_data, library)
+		if not conflicts.is_empty():
+			failures.append("Unique object layout guard found duplicate identity classes in %s: %s." % [str(archetype_id), ", ".join(conflicts)])
+		var object_rects: Dictionary = _copy_dict(_copy_dict(environment_data.get("layout", {})).get("object_rects", {}))
+		if object_rects.has("dialogue:pull_tab_clerk"):
+			failures.append("Pull Tabs duplicate dialogue clerk still reserved a room object in %s." % str(archetype_id))
+		if not object_rects.has("game_hook:pull_tabs:ticket_redeemer"):
+			failures.append("Pull Tabs unique clerk guard dropped the redeem counter in %s." % str(archetype_id))
+
+
+func _unique_object_layout_conflicts(environment_data: Dictionary, library: ContentLibrary) -> Array:
+	var class_by_object_id: Dictionary = {}
+	for event_id in _string_array(environment_data.get("event_ids", [])):
+		var event_definition := library.event(event_id)
+		var unique_class := str(event_definition.get("unique_object_class", "")).strip_edges()
+		if not unique_class.is_empty() and not bool(event_definition.get("allow_duplicate_unique_class", false)):
+			class_by_object_id["event:%s" % event_id] = unique_class
+	var game_states := _copy_dict(environment_data.get("game_states", {}))
+	for game_id in _string_array(environment_data.get("game_ids", [])):
+		var machine := _copy_dict(game_states.get(game_id, {}))
+		for hook_value in _copy_array(machine.get("environment_hooks", [])):
+			if typeof(hook_value) != TYPE_DICTIONARY:
+				continue
+			var hook: Dictionary = hook_value
+			var unique_class := str(hook.get("unique_object_class", "")).strip_edges()
+			if unique_class.is_empty() or bool(hook.get("allow_duplicate_unique_class", false)):
+				continue
+			var object_id := str(hook.get("object_id", "")).strip_edges()
+			if object_id.is_empty():
+				var dialogue_id := str(hook.get("dialogue_id", "")).strip_edges()
+				object_id = "dialogue:%s" % dialogue_id if not dialogue_id.is_empty() else "game_hook:%s:%s" % [game_id, str(hook.get("id", ""))]
+			class_by_object_id[object_id] = unique_class
+	var object_rects: Dictionary = _copy_dict(_copy_dict(environment_data.get("layout", {})).get("object_rects", {}))
+	var seen_classes: Dictionary = {}
+	var conflicts: Array = []
+	for object_id_value in object_rects.keys():
+		var object_id := str(object_id_value)
+		var unique_class := str(class_by_object_id.get(object_id, "")).strip_edges()
+		if unique_class.is_empty():
+			continue
+		if seen_classes.has(unique_class) and not conflicts.has(unique_class):
+			conflicts.append(unique_class)
+		seen_classes[unique_class] = object_id
+	return conflicts
 
 
 func _world_map_hops_to(map_data: Dictionary, start_id: String, target_id: String) -> int:

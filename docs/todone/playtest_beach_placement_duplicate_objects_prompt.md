@@ -1,3 +1,22 @@
+# Execution Record
+
+- Completion date: 2026-07-09.
+- Claim commit: `a9df75d`.
+- Implementation/archive commit: this commit (local only; not pushed).
+- Beach root cause: confirmed `beach` had no fixed world-map anchor, so it fell through to the generic tier/kind hash placement. Repro seed `PLAYTEST-BEACH-DUP-000` generated a direct `beach`/`delta_queen` edge priced at `8` blocks, with beach at `{x=0.33, y=0.53}` and `delta_queen` at `{x=0.75, y=0.21}`.
+- Duplicate-object root cause: confirmed identity dedup only handled rectangle collisions/object ids, not semantic identity. The owner-facing pull-tab duplicate source was the Pull Tabs module exposing two room-side hooks with the same visible identity: `game_hook:pull_tabs:ticket_redeemer` and `dialogue:pull_tab_clerk` / hook id `pull_tab_clerk_dialogue`. The new audit also exposed an authored shop-clerk collision in `corner_store`: `event:late_shift_discount` and `event:chatty_clerk`.
+- Fix summary: `beach` now anchors beside `delta_queen`, the beach/delta pair is re-clamped after spread, and a direct edge is guaranteed at `distance_blocks == 1`. Unique identity is now data-shaped through `unique_object_class`, `unique_object_priority`, and `allow_duplicate_unique_class`; Pull Tabs clerk hooks and shop clerk events declare their classes; generated layout assignment and live interactable objects filter duplicate classes deterministically, keeping the higher-priority object.
+- Permanent guards: `foundation_check.gd` sweeps 50 world-map seeds for beach/delta adjacency and checks pull-tab unique-clerk layout in `bar`, `gas_station_casino`, and `jazz_club`. `tools/environment_generation_audit.gd` now fails if any generated map lacks the 1-block direct beach/delta edge or any generated layout contains duplicate visible unique-class objects.
+- Verification:
+  - `powershell -ExecutionPolicy Bypass -File tools\validate_project.ps1` - PASS.
+  - `powershell -ExecutionPolicy Bypass -File tools\environment_generation_audit.ps1 -RequireGodot -Runs 20 -Visits 6 -SeedPrefix V04-BEACHFIX -Output res://.tmp/environment_generation_audit/beachfix_report.json -Report res://.tmp/environment_generation_audit/beachfix_report.md` - initially reproduced duplicate failures, then PASS after fixes.
+  - `powershell -ExecutionPolicy Bypass -File tools\check_godot.ps1 -RequireGodot -FoundationSuite systems -TimeoutSec 300` - PASS (`.tmp/test_reports/20260709_000201_smoke/summary.json`).
+  - `powershell -ExecutionPolicy Bypass -File tools\check_godot.ps1 -RequireGodot -FoundationSuite contracts -TimeoutSec 300` - PASS (`.tmp/test_reports/20260709_000304_smoke/summary.json`).
+  - `powershell -ExecutionPolicy Bypass -File tools\foundation_determinism_probe.ps1 -RequireGodot -SeedCount 5 -SeedPrefix V04-WORLDFIX` - PASS, combined hash `3493911849`.
+  - `powershell -ExecutionPolicy Bypass -File tools\environment_generation_audit.ps1 -RequireGodot -SeedPrefix V04-WORLDFIX` - PASS, `598` environment samples and `499` travel transitions.
+- Save/load note: existing saved maps with old beach positions still load without normalization crashes; new generated maps receive the fixed beach anchor/edge. Existing environments with duplicate objects are filtered at the live interactable layer when viewed.
+- Release packaging note: built 0.4.0 packages remain stale until the queued repackage task runs.
+
 # Agent Prompt - Playtest Fixes: Beach Anchors Beside The Riverboat + No Duplicate Unique Objects
 
 Priority: playtest blocker for the 0.4 release (runs before the repackage
