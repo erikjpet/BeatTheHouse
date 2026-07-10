@@ -123,6 +123,9 @@ var last_mouse_press_position: Vector2 = Vector2(-100000.0, -100000.0)
 var info_card_visual_rect: Rect2 = Rect2()
 var info_card_visual_object_id: String = ""
 var info_card_animating := false
+var selected_info_badge_hit_entries: Array = []
+var selected_info_badge_hover_text := ""
+var selected_info_badge_hover_local_position := Vector2.ZERO
 var reduce_motion := false
 var scene_idle_animation_redraw_accumulator := 0.0
 var scene_idle_animation_redraw_count := 0
@@ -313,11 +316,25 @@ func local_position_for_selected_info_action_button() -> Vector2:
 
 func _gui_input(event: InputEvent) -> void:
 	if event is InputEventMouseMotion:
-		if _selected_info_action_button_at_local_position((event as InputEventMouseMotion).position):
+		var motion := event as InputEventMouseMotion
+		var badge_tooltip := _selected_info_badge_tooltip_at_local_position(motion.position)
+		if not badge_tooltip.is_empty():
+			tooltip_text = ""
+			selected_info_badge_hover_text = badge_tooltip
+			selected_info_badge_hover_local_position = motion.position
+			_set_hovered_object(selected_object_id)
+			mouse_default_cursor_shape = Control.CURSOR_ARROW
+			queue_redraw()
+			return
+		tooltip_text = ""
+		if not selected_info_badge_hover_text.is_empty():
+			selected_info_badge_hover_text = ""
+			queue_redraw()
+		if _selected_info_action_button_at_local_position(motion.position):
 			_set_hovered_object(selected_object_id)
 			mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
 			return
-		_set_hovered_object(object_id_at_local_position((event as InputEventMouseMotion).position))
+		_set_hovered_object(object_id_at_local_position(motion.position))
 		return
 	if event is InputEventMouseButton:
 		var mouse_event := event as InputEventMouseButton
@@ -441,6 +458,7 @@ func _scene_idle_animation_redraw_due(delta: float) -> bool:
 
 # Selects the active venue drawing routine.
 func _draw() -> void:
+	selected_info_badge_hit_entries = []
 	draw_rect(Rect2(Vector2.ZERO, size), C_DARK)
 	_scale_canvas()
 	_bg()
@@ -1356,7 +1374,9 @@ func _draw_selected_object_info() -> void:
 		lines = [_fallback_object_description(object_data)]
 	var badges := _array_view(object_data.get("attribute_badges", []))
 	if not badges.is_empty():
-		var row_rect := AttributeBadgeRowScript.draw_canvas(self, badges, Vector2(card.position.x + OBJECT_INFO_PADDING_X, y), card.size.x - OBJECT_INFO_PADDING_X * 2.0, 12)
+		var badge_entries := _selected_info_badge_entries_for_rect(object_data, card, y)
+		var row_rect := AttributeBadgeRowScript.draw_canvas(self, badges, Vector2(card.position.x + OBJECT_INFO_PADDING_X, y), card.size.x - OBJECT_INFO_PADDING_X * 2.0, 16)
+		selected_info_badge_hit_entries = badge_entries
 		y += row_rect.size.y + 4.0
 	var action_area_height := _selected_info_action_area_height(object_data)
 	var body_bottom := card.end.y - OBJECT_INFO_BOTTOM_PADDING
@@ -1389,6 +1409,23 @@ func _draw_selected_object_info() -> void:
 			var detail := str(entry.get("detail", "")).strip_edges()
 			if not detail.is_empty() and detail_rect.size.x > 0.0 and detail_rect.size.y > 0.0:
 				draw_string(font, detail_rect.position + Vector2(0.0, 9.0), _fit_draw_text(detail, font, 8, detail_rect.size.x), HORIZONTAL_ALIGNMENT_CENTER, detail_rect.size.x, 8, Color(C_SOFT.r, C_SOFT.g, C_SOFT.b, 0.86))
+	_draw_selected_info_badge_hover_text(font)
+
+
+func _draw_selected_info_badge_hover_text(font: Font) -> void:
+	var text := selected_info_badge_hover_text.strip_edges()
+	if text.is_empty():
+		return
+	var mouse_board_position := _local_to_board_position(selected_info_badge_hover_local_position)
+	var text_width := minf(176.0, maxf(58.0, _draw_text_width(text, font, 9) + 10.0))
+	var rect := Rect2(mouse_board_position + Vector2(10.0, 10.0), Vector2(text_width, 18.0))
+	if rect.end.x > BOARD_SIZE.x - 4.0:
+		rect.position.x = maxf(4.0, BOARD_SIZE.x - 4.0 - rect.size.x)
+	if rect.end.y > BOARD_SIZE.y - 4.0:
+		rect.position.y = maxf(4.0, mouse_board_position.y - rect.size.y - 10.0)
+	draw_rect(rect, Color(0.0, 0.0, 0.0, 0.90))
+	draw_rect(rect, Color(C_CYAN.r, C_CYAN.g, C_CYAN.b, 0.86), false, 1.0)
+	draw_string(font, rect.position + Vector2(5.0, 12.5), _fit_draw_text(text, font, 9, rect.size.x - 10.0), HORIZONTAL_ALIGNMENT_LEFT, rect.size.x - 10.0, 9, C_WHITE)
 
 
 func _update_info_card_animation(delta: float) -> void:
@@ -1810,6 +1847,8 @@ func _selected_object_info_snapshot() -> Dictionary:
 		"action_button_rect": _rect_to_snapshot(action_button_rect),
 		"actions": _selected_info_action_snapshot_list(action_entries),
 		"attribute_badges": _copy_array(object_data.get("attribute_badges", [])),
+		"badge_hit_entries": _selected_info_badge_snapshot_list(_selected_info_badge_entries_for_rect(object_data, visual_rect, visual_rect.position.y + OBJECT_INFO_BODY_Y)),
+		"body_text_start_y": _selected_info_body_text_start_y(object_data, visual_rect),
 	}
 
 
@@ -1898,8 +1937,6 @@ func _fallback_object_description(object_data: Dictionary) -> String:
 			return "A merchant watching the counter."
 		"lender":
 			return "Fast cash with strings attached."
-		"prestige":
-			return "A possible way to finish the run."
 		_:
 			return str(object_data.get("action_summary", "")).strip_edges()
 
@@ -1922,8 +1959,6 @@ func _player_facing_object_type(object_type: String) -> String:
 			return "Shopkeeper"
 		"lender":
 			return "Lender"
-		"prestige":
-			return "Goal"
 		"home_tenure":
 			return "Home"
 		"home_storage":
@@ -2092,8 +2127,6 @@ func _selected_info_action_label(object_data: Dictionary) -> String:
 			label = "Talk"
 		"confirm_travel", "select_travel":
 			label = "Travel"
-		"buy_prestige":
-			label = "Claim"
 	if label.is_empty():
 		match str(object_data.get("type", "info")):
 			"game":
@@ -2108,8 +2141,6 @@ func _selected_info_action_label(object_data: Dictionary) -> String:
 				label = "Talk"
 			"service", "lender", "drink":
 				label = "Use"
-			"prestige":
-				label = "Claim"
 			_:
 				label = "Select"
 	return label.capitalize()
@@ -2221,6 +2252,42 @@ func _selected_info_action_snapshot_list(entries: Array) -> Array:
 	return snapshots
 
 
+func _selected_info_badge_entries_for_rect(object_data: Dictionary, card: Rect2, y: float) -> Array:
+	var badges := _array_view(object_data.get("attribute_badges", []))
+	if badges.is_empty() or card.size.x <= 0.0:
+		return []
+	return AttributeBadgeRowScript.canvas_hit_entries(
+		badges,
+		Vector2(card.position.x + OBJECT_INFO_PADDING_X, y),
+		card.size.x - OBJECT_INFO_PADDING_X * 2.0,
+		16
+	)
+
+
+func _selected_info_badge_snapshot_list(entries: Array) -> Array:
+	var snapshots: Array = []
+	for entry_value in entries:
+		if typeof(entry_value) != TYPE_DICTIONARY:
+			continue
+		var entry: Dictionary = entry_value
+		snapshots.append({
+			"rect": _rect_to_snapshot(entry.get("rect", Rect2())),
+			"tooltip": str(entry.get("tooltip", "")),
+		})
+	return snapshots
+
+
+func _selected_info_body_text_start_y(object_data: Dictionary, card: Rect2) -> float:
+	var y := card.position.y + OBJECT_INFO_BODY_Y
+	if not _array_view(object_data.get("attribute_badges", [])).is_empty():
+		var entries := _selected_info_badge_entries_for_rect(object_data, card, y)
+		if not entries.is_empty() and typeof(entries[0]) == TYPE_DICTIONARY:
+			var first_entry: Dictionary = entries[0]
+			var rect: Rect2 = first_entry.get("rect", Rect2())
+			y += rect.size.y + 4.0
+	return y
+
+
 func _selected_info_action_entry_at_local_position(local_position: Vector2) -> Dictionary:
 	var info := _selected_object_info()
 	if info.is_empty():
@@ -2240,6 +2307,20 @@ func _selected_info_action_entry_at_local_position(local_position: Vector2) -> D
 
 func _selected_info_action_button_at_local_position(local_position: Vector2) -> bool:
 	return not _selected_info_action_entry_at_local_position(local_position).is_empty()
+
+
+func _selected_info_badge_tooltip_at_local_position(local_position: Vector2) -> String:
+	if selected_info_badge_hit_entries.is_empty():
+		return ""
+	var board_position := _local_to_board_position(local_position)
+	for entry_value in selected_info_badge_hit_entries:
+		if typeof(entry_value) != TYPE_DICTIONARY:
+			continue
+		var entry: Dictionary = entry_value
+		var rect: Rect2 = entry.get("rect", Rect2())
+		if rect.has_point(board_position):
+			return str(entry.get("tooltip", "")).strip_edges()
+	return ""
 
 
 func _activate_selected_info_action_at_local_position(local_position: Vector2) -> bool:
@@ -2372,7 +2453,7 @@ func _object_info_size(title: String, lines: Array, object_type: String, visible
 
 
 func _object_info_badge_height(object_data: Dictionary) -> float:
-	return 22.0 if not _array_view(object_data.get("attribute_badges", [])).is_empty() else 0.0
+	return 28.0 if not _array_view(object_data.get("attribute_badges", [])).is_empty() else 0.0
 
 
 func _object_info_header_width(title: String, type_text: String, font: Font) -> float:

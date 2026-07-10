@@ -21,6 +21,9 @@ var enabled_travel_edge_ids_cache: Array = []
 var cached_layout_size := Vector2(-1.0, -1.0)
 var snapshot_signature := ""
 var map_view_bounds_signature := ""
+var map_view_basis_signature := ""
+var map_view_focus_node_ids_cache: Array = []
+var stable_layout_size := Vector2(-1.0, -1.0)
 
 
 func _ready() -> void:
@@ -61,6 +64,10 @@ func current_view_snapshot() -> Dictionary:
 		})
 	view["icon_markers"] = markers
 	var bounds := map_view_bounds_cache
+	view["canvas_size"] = {
+		"x": size.x,
+		"y": size.y,
+	}
 	view["map_bounds"] = {
 		"x": bounds.position.x,
 		"y": bounds.position.y,
@@ -241,7 +248,12 @@ func _ensure_layout_cache() -> void:
 
 
 func _rebuild_layout_cache() -> void:
-	var next_bounds_signature := _map_view_bounds_signature()
+	var next_basis_signature := _map_view_basis_signature()
+	if next_basis_signature != map_view_basis_signature:
+		map_view_basis_signature = next_basis_signature
+		map_view_focus_node_ids_cache = _string_array(snapshot.get("map_focus_node_ids", []))
+		stable_layout_size = _current_or_default_layout_size()
+	var next_bounds_signature := _map_view_bounds_signature(next_basis_signature)
 	if next_bounds_signature != map_view_bounds_signature:
 		map_view_bounds_cache = _compute_map_view_bounds()
 		map_view_bounds_signature = next_bounds_signature
@@ -270,7 +282,8 @@ func _normalized_position_from_variant(value: Variant) -> Vector2:
 
 func _normalized_position(position: Dictionary) -> Vector2:
 	var inset := Vector2(32.0, 28.0)
-	var drawable := Vector2(maxf(1.0, size.x - inset.x * 2.0), maxf(1.0, size.y - inset.y * 2.0))
+	var layout_size := _stable_layout_size()
+	var drawable := Vector2(maxf(1.0, layout_size.x - inset.x * 2.0), maxf(1.0, layout_size.y - inset.y * 2.0))
 	var bounds := map_view_bounds_cache
 	var x := clampf(float(position.get("x", 0.5)), 0.0, 1.0)
 	var y := clampf(float(position.get("y", 0.5)), 0.0, 1.0)
@@ -280,7 +293,7 @@ func _normalized_position(position: Dictionary) -> Vector2:
 
 
 func _compute_map_view_bounds() -> Rect2:
-	var nodes := _bounds_focus_nodes()
+	var nodes := _bounds_focus_nodes(map_view_focus_node_ids_cache)
 	if nodes.is_empty():
 		return Rect2(Vector2.ZERO, Vector2.ONE)
 	var min_x := 1.0
@@ -304,7 +317,8 @@ func _compute_map_view_bounds() -> Rect2:
 	var center := Vector2((min_x + max_x) * 0.5, (min_y + max_y) * 0.5)
 	var width := maxf(0.34, (max_x - min_x) + 0.20)
 	var height := maxf(0.34, (max_y - min_y) + 0.20)
-	var drawable := Vector2(maxf(1.0, size.x - 64.0), maxf(1.0, size.y - 56.0))
+	var layout_size := _stable_layout_size()
+	var drawable := Vector2(maxf(1.0, layout_size.x - 64.0), maxf(1.0, layout_size.y - 56.0))
 	var aspect := drawable.x / drawable.y
 	if width / height < aspect:
 		width = height * aspect
@@ -317,11 +331,30 @@ func _compute_map_view_bounds() -> Rect2:
 	return Rect2(Vector2(x0, y0), Vector2(width, height))
 
 
-func _map_view_bounds_signature() -> String:
+func _map_view_bounds_signature(basis_signature: String) -> String:
 	var parts: Array[String] = [
-		"%.2f" % size.x,
-		"%.2f" % size.y,
+		"%.2f" % _stable_layout_size().x,
+		"%.2f" % _stable_layout_size().y,
+		basis_signature,
+		",".join(map_view_focus_node_ids_cache),
 	]
+	return "|".join(parts)
+
+
+func _stable_layout_size() -> Vector2:
+	if stable_layout_size.x <= 0.0 or stable_layout_size.y <= 0.0:
+		stable_layout_size = _current_or_default_layout_size()
+	return stable_layout_size
+
+
+func _current_or_default_layout_size() -> Vector2:
+	if size.x > 0.0 and size.y > 0.0:
+		return size
+	return Vector2(540.0, 390.0)
+
+
+func _map_view_basis_signature() -> String:
+	var parts: Array[String] = []
 	var node_ids := _sorted_string_keys(nodes_by_id_cache)
 	for node_id in node_ids:
 		var node: Dictionary = nodes_by_id_cache.get(node_id, {})
@@ -335,9 +368,8 @@ func _map_view_bounds_signature() -> String:
 	return "|".join(parts)
 
 
-func _bounds_focus_nodes() -> Array:
+func _bounds_focus_nodes(focus_ids: Array) -> Array:
 	var nodes := _array_view(snapshot.get("nodes", []))
-	var focus_ids := _string_array(snapshot.get("map_focus_node_ids", []))
 	if focus_ids.is_empty():
 		return nodes
 	var focus_lookup: Dictionary = {}
@@ -364,7 +396,8 @@ func _sorted_string_keys(values: Dictionary) -> Array[String]:
 
 
 func _point_in_view(point: Vector2, margin: float = 0.0) -> bool:
-	return point.x >= -margin and point.y >= -margin and point.x <= size.x + margin and point.y <= size.y + margin
+	var layout_size := _stable_layout_size()
+	return point.x >= -margin and point.y >= -margin and point.x <= layout_size.x + margin and point.y <= layout_size.y + margin
 
 
 func _segment_in_view(a: Vector2, b: Vector2) -> bool:
@@ -374,7 +407,8 @@ func _segment_in_view(a: Vector2, b: Vector2) -> bool:
 	var max_x := maxf(a.x, b.x)
 	var min_y := minf(a.y, b.y)
 	var max_y := maxf(a.y, b.y)
-	return max_x >= 0.0 and min_x <= size.x and max_y >= 0.0 and min_y <= size.y
+	var layout_size := _stable_layout_size()
+	return max_x >= 0.0 and min_x <= layout_size.x and max_y >= 0.0 and min_y <= layout_size.y
 
 
 func _travel_edge_ids(enabled_only: bool) -> Array:

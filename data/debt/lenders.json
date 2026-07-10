@@ -8,7 +8,8 @@
 			"principal_min": 25,
 			"principal_max": 60,
 			"loan_amount": 25,
-			"interest_rate": 0.15,
+			"repeat_loan_step": 10,
+			"interest_rate": 0.1,
 			"deadline_turns": 3,
 			"default_consequence": "forced_repayment"
 		},
@@ -26,7 +27,7 @@
 					"debt_kind": "cash",
 					"deadline_turns": 3,
 					"turns_remaining": 3,
-					"interest_rate": 0.15,
+					"interest_rate": 0.1,
 					"default_consequence": "forced_repayment"
 				}
 			],
@@ -45,7 +46,8 @@
 			"principal_min": 15,
 			"principal_max": 40,
 			"loan_amount": 20,
-			"interest_rate": 0.05,
+			"repeat_loan_step": 8,
+			"interest_rate": 0.1,
 			"deadline_turns": 4,
 			"default_consequence": "favor_owed"
 		},
@@ -63,7 +65,7 @@
 					"debt_kind": "cash",
 					"deadline_turns": 4,
 					"turns_remaining": 4,
-					"interest_rate": 0.05,
+					"interest_rate": 0.1,
 					"default_consequence": "favor_owed"
 				}
 			],
@@ -107,9 +109,10 @@
 		},
 		"debt_profile": {
 			"principal_min": 30,
-			"principal_max": 30,
+			"principal_max": 45,
 			"loan_amount": 30,
-			"interest_rate": 0.06,
+			"repeat_loan_step": 5,
+			"interest_rate": 0.1,
 			"deadline_turns": 6,
 			"default_consequence": "family_nag",
 			"early_repay_flag": "brother_in_law_goodwill",

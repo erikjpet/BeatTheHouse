@@ -10,6 +10,7 @@ const RngStreamScript := preload("res://scripts/core/rng_stream.gd")
 const EVALUATED_FLAG := "_meta_bag_drops_evaluated"
 const FLUSHED_FLAG := "_meta_bag_grants_flushed"
 const GRANTS_FLAG := "_meta_bag_grants"
+const SELECTED_FLAG := "_meta_bag_selected"
 const HIGH_HEAT_CLEAN_ESCAPE_THRESHOLD := 65
 const HIGH_HEAT_CLEAN_ESCAPE_CHANCE_PERCENT := 35
 
@@ -47,6 +48,11 @@ func flush_pending_bags(run_state: RunState, meta_collection_service: Variant) -
 		return {"ok": false, "granted": [], "summary_lines": []}
 	if not run_state.meta_collection_enabled_for_run():
 		return {"ok": true, "granted": [], "summary_lines": []}
+	if run_state.run_status != RunState.RUN_STATUS_ENDED:
+		run_state.clear_pending_bag_markers()
+		run_state.narrative_flags[GRANTS_FLAG] = []
+		run_state.narrative_flags[FLUSHED_FLAG] = true
+		return {"ok": true, "granted": [], "summary_lines": []}
 	var existing_lines := _copy_array(run_state.narrative_flags.get(GRANTS_FLAG, []))
 	if bool(run_state.narrative_flags.get(FLUSHED_FLAG, false)):
 		return {"ok": true, "granted": [], "summary_lines": existing_lines}
@@ -68,6 +74,50 @@ func flush_pending_bags(run_state: RunState, meta_collection_service: Variant) -
 		"ok": true,
 		"granted": granted,
 		"summary_lines": summary_lines,
+	}
+
+
+func flush_selected_pending_bag(run_state: RunState, meta_collection_service: Variant, marker_id: String) -> Dictionary:
+	if run_state == null or meta_collection_service == null:
+		return {"ok": false, "granted": [], "summary_lines": [], "message": "Collection storage is unavailable."}
+	if not run_state.meta_collection_enabled_for_run():
+		return {"ok": true, "granted": [], "summary_lines": [], "message": "Meta collection is disabled for this run."}
+	if run_state.run_status != RunState.RUN_STATUS_ENDED:
+		run_state.clear_pending_bag_markers()
+		run_state.narrative_flags[GRANTS_FLAG] = []
+		run_state.narrative_flags[FLUSHED_FLAG] = true
+		return {"ok": true, "granted": [], "summary_lines": [], "message": "Collection bag rewards are only extracted after a victory."}
+	var existing_lines := _copy_array(run_state.narrative_flags.get(GRANTS_FLAG, []))
+	if bool(run_state.narrative_flags.get(FLUSHED_FLAG, false)):
+		return {"ok": true, "granted": [], "summary_lines": existing_lines, "message": "A bag was already brought home."}
+	var selected_id := marker_id.strip_edges()
+	if selected_id.is_empty():
+		return {"ok": false, "granted": [], "summary_lines": [], "message": "Choose a bag to bring home."}
+	var selected_marker := {}
+	for marker_value in run_state.pending_bag_markers():
+		var marker := _enriched_marker(_copy_dict(marker_value))
+		if str(marker.get("marker_id", "")) == selected_id:
+			selected_marker = marker
+			break
+	if selected_marker.is_empty():
+		return {"ok": false, "granted": [], "summary_lines": [], "message": "That bag is no longer available."}
+	var bagdef_id := int(selected_marker.get("bagdef_id", -1))
+	if bagdef_id < 0:
+		return {"ok": false, "granted": [], "summary_lines": [], "message": "That bag cannot be extracted."}
+	var grant: Dictionary = meta_collection_service.grant_bag(bagdef_id, str(selected_marker.get("rng_seed", "")), selected_marker)
+	var granted: Array = []
+	if not grant.is_empty():
+		granted.append(grant)
+	var summary_lines := summary_lines_for_markers(granted)
+	run_state.narrative_flags[GRANTS_FLAG] = summary_lines
+	run_state.narrative_flags[SELECTED_FLAG] = selected_id
+	run_state.narrative_flags[FLUSHED_FLAG] = true
+	run_state.clear_pending_bag_markers()
+	return {
+		"ok": true,
+		"granted": granted,
+		"summary_lines": summary_lines,
+		"message": "Collection bag stored." if not granted.is_empty() else "No collection bag was stored.",
 	}
 
 

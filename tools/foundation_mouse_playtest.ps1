@@ -50,7 +50,7 @@ function Get-VictoryReachability {
         [object]$Coverage
     )
 
-    if ((Get-BoolProp -Object $Coverage -Name "prestige_victory") -or (Get-BoolProp -Object $Coverage -Name "demo_victory")) {
+    if (Get-BoolProp -Object $Coverage -Name "demo_victory") {
         return [pscustomobject][ordered]@{
             status = "reached"
             reason = "Victory reached through visible mouse controls."
@@ -60,41 +60,22 @@ function Get-VictoryReachability {
     }
 
     $hud = Get-JsonProp -Object $Visual -Name "final_objective_hud" -Default ([pscustomobject]@{})
-    $prestige = Get-JsonProp -Object $hud -Name "prestige" -Default ([pscustomobject]@{})
     $demoObjective = Get-JsonProp -Object $hud -Name "demo_objective" -Default ([pscustomobject]@{})
     $nextObjective = Get-JsonProp -Object $hud -Name "next_objective" -Default ([pscustomobject]@{})
     $objectiveText = [string](Get-JsonProp -Object $hud -Name "text" -Default "")
-    $prestigeReason = [string](Get-JsonProp -Object $prestige -Name "disabled_reason" -Default "")
-    if ([string]::IsNullOrWhiteSpace($prestigeReason)) {
-        $prestigeReason = [string](Get-JsonProp -Object $prestige -Name "status" -Default "")
-    }
-    if ([string]::IsNullOrWhiteSpace($prestigeReason)) {
-        $prestigeReason = [string](Get-JsonProp -Object $hud -Name "goal" -Default "")
-    }
-
-    $nextType = [string](Get-JsonProp -Object $nextObjective -Name "object_type" -Default "")
-    $nextEnabled = [bool](Get-JsonProp -Object $nextObjective -Name "enabled" -Default $false)
-    $prestigeEnabled = Get-BoolProp -Object $prestige -Name "enabled"
-    if ($prestigeEnabled -or (($objectiveText -match "ready") -and $nextType -eq "prestige" -and $nextEnabled)) {
-        return [pscustomobject][ordered]@{
-            status = "ready_not_claimed"
-            reason = "Victory target was eligible but not claimed."
-            objective = $objectiveText
-            next_objective = $nextObjective
-        }
-    }
+    $objectiveReason = [string](Get-JsonProp -Object $hud -Name "goal" -Default "")
 
     $demoActive = Get-BoolProp -Object $demoObjective -Name "active"
-    $requirementsVisible = (Get-BoolProp -Object $Coverage -Name "prestige_requirements_visible") -or (Get-BoolProp -Object $Coverage -Name "prestige_locked") -or (Get-BoolProp -Object $Coverage -Name "demo_objective_visible") -or $demoActive
-    $reasonLooksUseful = $prestigeReason -match "bankroll|heat|visit|place|locked|need|build|casino|entry|target|\\$100"
-    if ($demoActive -and [string]::IsNullOrWhiteSpace($prestigeReason)) {
-        $prestigeReason = [string](Get-JsonProp -Object $demoObjective -Name "summary" -Default $objectiveText)
-        $reasonLooksUseful = $prestigeReason -match "bankroll|heat|visit|place|locked|need|casino|target"
+    $requirementsVisible = (Get-BoolProp -Object $Coverage -Name "demo_objective_visible") -or $demoActive
+    $reasonLooksUseful = $objectiveReason -match "bankroll|heat|visit|place|locked|need|build|casino|entry|target|\\$100"
+    if ($demoActive -and [string]::IsNullOrWhiteSpace($objectiveReason)) {
+        $objectiveReason = [string](Get-JsonProp -Object $demoObjective -Name "summary" -Default $objectiveText)
+        $reasonLooksUseful = $objectiveReason -match "bankroll|heat|visit|place|locked|need|casino|target"
     }
     if ($requirementsVisible -and $reasonLooksUseful) {
         return [pscustomobject][ordered]@{
             status = "not_yet_reachable_requirements_visible"
-            reason = $prestigeReason
+            reason = $objectiveReason
             objective = $objectiveText
             next_objective = $nextObjective
         }
@@ -256,7 +237,7 @@ else {
     Add-Error ("Risky game-surface action was neither resolved nor classified unavailable. {0}" -f $riskyReason).Trim()
 }
 
-if (-not ((Get-BoolProp -Object $coverage -Name "prestige_victory") -or (Get-BoolProp -Object $coverage -Name "demo_victory"))) {
+if (-not (Get-BoolProp -Object $coverage -Name "demo_victory")) {
     $victoryStatus = [string](Get-JsonProp -Object $victoryReachability -Name "status" -Default "unknown_or_hidden")
     $victoryReason = [string](Get-JsonProp -Object $victoryReachability -Name "reason" -Default "")
     if ($victoryStatus -eq "ready_not_claimed") {

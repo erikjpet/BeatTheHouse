@@ -194,7 +194,6 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 		"surface_embeds_outcomes": true,
 		"surface_suppresses_game_result_burst": true,
 		"surface_animates_idle": true,
-		"surface_ambient_overlay": "",
 		"surface_dynamic_overlay_channels": [ROULETTE_SPIN_CHANNEL],
 		"surface_realtime_state_refresh": roulette_motion_active,
 		"surface_time_msec": now_msec,
@@ -1942,6 +1941,7 @@ func _draw_roulette_wheel(surface, surface_state: Dictionary, low_detail: bool =
 	var winning_index := int(last_result.get("winning_index", -1))
 	var settled_spin := not spin_active and not last_result.is_empty()
 	var reveal_result := settled_spin and bool(surface_state.get("result_reveal_active", false))
+	var draw_wheel_labels := not low_detail and (spin_active or settled_spin)
 	surface.draw_circle(WHEEL_CENTER, WHEEL_RADIUS + 10, Color("#1b0d16"))
 	surface.draw_circle(WHEEL_CENTER, WHEEL_RADIUS + 4, Color(C_YELLOW.r, C_YELLOW.g, C_YELLOW.b, 0.28), false, 2)
 	surface.draw_circle(WHEEL_CENTER, WHEEL_RADIUS, Color("#0b1118"))
@@ -1960,7 +1960,7 @@ func _draw_roulette_wheel(surface, surface_state: Dictionary, low_detail: bool =
 			var spoke_start := WHEEL_CENTER + Vector2(cos(a0), sin(a0)) * 52.0
 			var spoke_end := WHEEL_CENTER + Vector2(cos(a0), sin(a0)) * (WHEEL_RADIUS - 3.0)
 			surface.draw_line(spoke_start, spoke_end, Color(C_SOFT.r, C_SOFT.g, C_SOFT.b, 0.16), 1)
-	if not low_detail:
+	if draw_wheel_labels:
 		for i in range(count):
 			var label_a0 := wheel_angle + float(i) / float(count) * TAU
 			var label_a1 := wheel_angle + float(i + 1) / float(count) * TAU
@@ -2019,8 +2019,7 @@ func _roulette_wheel_motion(surface, surface_state: Dictionary) -> Dictionary:
 	var wheel_default_angle := clock * -0.5 if spin_active else 0.0
 	var wheel_angle := float(keyframe.get("wheel_angle", wheel_default_angle))
 	var settled_elapsed := maxf(0.0, float(int(surface_state.get("surface_time_msec", Time.get_ticks_msec())) - int(last_result.get("resolved_at_msec", 0)) - SPIN_ANIMATION_DURATION_MSEC) / 1000.0) if settled_spin else 0.0
-	var settled_live_drift := clock * -0.18 if settled_spin else 0.0
-	var settled_drift := fposmod(settled_elapsed * -0.18 + settled_live_drift, TAU) if settled_spin else 0.0
+	var settled_drift := fposmod(settled_elapsed * -0.18, TAU) if settled_spin else 0.0
 	if settled_spin:
 		wheel_angle = fposmod(wheel_angle + settled_drift, TAU)
 	elif not spin_active:

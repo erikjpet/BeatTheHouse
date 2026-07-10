@@ -139,12 +139,6 @@ func draw_surface(_surface_canvas, _surface_state: Dictionary, _render_context: 
 	return false
 
 
-# Optional game-owned dynamic overlay renderer. GameSurfaceCanvas has already
-# transformed the draw host into design-space coordinates when this is called.
-func draw_surface_dynamic_overlay(_surface_canvas, _surface_state: Dictionary, _overlay_id: String) -> bool:
-	return false
-
-
 # Optional game-specific state generated with an environment before the UI sees
 # it. This lets involved games own machine/table state without mutating on
 # selection or entry.
@@ -696,7 +690,7 @@ static func apply_result(run_state: RunState, result: Dictionary, rng: RngStream
 		run_state.apply_demo_finale_result(demo_finale)
 	run_state.record_profile_game_result(result)
 	run_state.record_grand_casino_game_result(result)
-	if bool(deltas.get("ended", false)) and (bool(run_state.narrative_flags.get("prestige_victory", false)) or bool(run_state.narrative_flags.get("demo_victory", false))):
+	if bool(deltas.get("ended", false)) and bool(run_state.narrative_flags.get("demo_victory", false)):
 		run_state.run_status = RESULT_ENDED
 		run_state.run_failure_reason = RunState.FAILURE_NONE
 		run_state.run_failure_message = ""

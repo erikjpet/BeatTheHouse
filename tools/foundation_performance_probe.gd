@@ -477,9 +477,7 @@ func _probe_synthetic_idle_surfaces() -> void:
 		var start_usec := Time.get_ticks_usec()
 		for _frame_index in range(frames_per_surface):
 			canvas.set("flicker", float(canvas.get("flicker")) + (1.0 / 60.0))
-			var overlay := canvas.get("ambient_surface_overlay") as Control
-			if overlay != null:
-				overlay.queue_redraw()
+			canvas.queue_redraw()
 			await process_frame
 		var elapsed_usec := Time.get_ticks_usec() - start_usec
 		var counters := _canvas_counters(canvas)
@@ -728,7 +726,6 @@ func _synthetic_blackjack_idle_snapshot() -> Dictionary:
 	return {
 		"game_id": "blackjack",
 		"surface_renderer": "blackjack",
-		"surface_ambient_overlay": "",
 		"surface_animates_idle": true,
 		"reduce_motion": false,
 		"dealer_profile": {"attention_base": 28, "blink_offset": 120},
