@@ -22,7 +22,7 @@ before new feature work proceeds.
 
 | # | Prompt | Status | Machine | Notes |
 | --- | --- | --- | --- | --- |
-| - | - | closed | - | The 0.4 release queue is closed pending the owner's next planning pass. |
+| 1 | v05_dead_code_and_system_removal_prompt.md | claimed (2026-07-09 20:28, Codex desktop/main) | any | **0.4 FINAL CLEANUP phase (owner correction 2026-07-09: 0.4 is tagged on GitHub but NOT player-released; itch upload deliberately pending final cleanup + bugfixes).** Evidence-driven removal of dead/deprecated/superseded code — named candidates: rejected menu-home remnants, prestige plumbing, AmbientSurfaceOverlay vestiges, web-audio legacy stubs, one-off evidence probes, orphaned data/assets. Systems beyond the named list get a kill-list proposal for owner review, not deletion. LC.1 cluster discipline + strict deletion smoke + census/payload deltas. Removals invalidate the packaged zips — repackage + tag/version decision happens at the release step after this phase lands. |
 
 Only the project manager adds entries or reorders this table; executing
 agents only flip Status fields for claims and remove completed entries.
