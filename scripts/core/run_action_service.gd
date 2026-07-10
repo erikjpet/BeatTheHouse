@@ -7,7 +7,7 @@ extends RefCounted
 # only presentation, selection, modal, and focus state in UI. The service never
 # reads UI controls and never draws; it builds shared result deltas and applies
 # them through RunState/GameModule so the same path can support a large catalog
-# of environments, items, services, lenders, and prestige goals.
+# of environments, items, services, and lenders.
 
 const AttributeBadgesScript := preload("res://scripts/core/attribute_badges.gd")
 const ItemEffectScript := preload("res://scripts/core/item_effect.gd")
@@ -607,65 +607,6 @@ func use_hook(kind: String, hook_id: String) -> Dictionary:
 	return _service_success(result)
 
 
-# Builds all prestige purchase presentation options.
-func prestige_purchase_view_list(selected_purchase_id: String = "") -> Array:
-	if not is_ready():
-		return []
-	var purchases: Array = []
-	for purchase in library.prestige_purchases:
-		if typeof(purchase) != TYPE_DICTIONARY:
-			continue
-		var definition: Dictionary = purchase
-		var purchase_id := str(definition.get("id", ""))
-		if purchase_id.is_empty():
-			continue
-		purchases.append(prestige_purchase_option_from_definition(definition, selected_purchase_id))
-	return purchases
-
-
-# Finds one prestige purchase option.
-func prestige_purchase_option(purchase_id: String, selected_purchase_id: String = "") -> Dictionary:
-	return _find_option(prestige_purchase_view_list(selected_purchase_id), purchase_id)
-
-
-# Builds one prestige purchase presentation option.
-func prestige_purchase_option_from_definition(definition: Dictionary, selected_purchase_id: String = "") -> Dictionary:
-	var purchase_id := str(definition.get("id", ""))
-	var status := run_state.prestige_purchase_status(definition)
-	var enabled := bool(status.get("available", false))
-	var requirements := prestige_requirement_summary(status)
-	var effect := copy_result_deltas(definition.get("effect", {}))
-	return {
-		"id": purchase_id,
-		"display_name": str(definition.get("display_name", label_from_id(purchase_id))),
-		"description": str(definition.get("description", "")),
-		"type": str(definition.get("type", "prestige")),
-		"cost": int(status.get("cost", definition.get("cost", 0))),
-		"enabled": enabled,
-		"disabled_reason": "" if enabled else str(status.get("disabled_reason", "This target is locked for now.")),
-		"status": "Ready to claim." if enabled else str(status.get("disabled_reason", "This target is locked for now.")),
-		"requirements_summary": requirements,
-		"effect_summary": delta_summary(effect),
-		"risk_summary": "Keep heat at %d or lower." % int(status.get("max_heat", 100)),
-		"selected": purchase_id == selected_purchase_id,
-	}
-
-
-# Applies one prestige purchase through shared result deltas.
-func buy_prestige_purchase(purchase_id: String) -> Dictionary:
-	if not is_ready():
-		return _service_error("Prestige target is not available.")
-	var option := prestige_purchase_option(purchase_id)
-	if option.is_empty():
-		return _service_error("Prestige target is not available.")
-	if not bool(option.get("enabled", false)):
-		return _service_error(str(option.get("disabled_reason", "This target is locked for now.")))
-	var definition := library.prestige(purchase_id)
-	var result := prestige_purchase_result(definition, option)
-	GameModule.apply_result(run_state, result)
-	return _service_success(result)
-
-
 # Converts an ItemEffect result plus offer data into a purchase result.
 func purchase_item_result(effect_result: Dictionary, item_definition: Dictionary, offer: Dictionary) -> Dictionary:
 	var item_id := str(item_definition.get("id", offer.get("id", "")))
@@ -768,47 +709,6 @@ func hook_result(kind: String, hook_id: String) -> Dictionary:
 		"type": "%s_hook" % kind,
 		"source_id": hook_id,
 		"action_id": "use_service" if kind == "service" else "borrow",
-		"environment_id": str(run_state.current_environment.get("id", "")),
-		"deltas": deltas,
-		"message": message,
-	})
-
-
-# Builds a prestige purchase result without applying it.
-func prestige_purchase_result(definition: Dictionary, option: Dictionary) -> Dictionary:
-	var purchase_id := str(definition.get("id", option.get("id", "")))
-	var display_name := str(definition.get("display_name", option.get("display_name", purchase_id)))
-	var cost := maxi(0, int(option.get("cost", definition.get("cost", 0))))
-	var deltas := copy_result_deltas(definition.get("effect", {}))
-	deltas["bankroll_delta"] = int(deltas.get("bankroll_delta", 0)) - cost
-	var flags: Dictionary = deltas.get("flags_set", {})
-	flags["prestige_victory"] = true
-	deltas["flags_set"] = flags
-	deltas["ended"] = true
-	var message := str(definition.get("victory_message", "Prestige Victory: %s is yours." % display_name))
-	var story_log: Array = deltas.get("story_log", [])
-	story_log.append({
-		"type": "prestige_purchase",
-		"id": purchase_id,
-		"purchase_id": purchase_id,
-		"label": display_name,
-		"cost": cost,
-		"bankroll_delta": -cost,
-		"environment_id": str(run_state.current_environment.get("id", "")),
-		"message": message,
-		"ended": true,
-	})
-	deltas["story_log"] = story_log
-	var messages: Array = deltas.get("messages", [])
-	if messages.is_empty():
-		messages.append(message)
-	deltas["messages"] = messages
-	return GameModule.build_action_result({
-		"ok": true,
-		"type": "prestige_purchase",
-		"source_id": purchase_id,
-		"action_id": "buy_prestige",
-		"action_kind": "prestige",
 		"environment_id": str(run_state.current_environment.get("id", "")),
 		"deltas": deltas,
 		"message": message,
@@ -1045,20 +945,6 @@ func label_from_id(id: String) -> String:
 	return id.replace("_", " ").capitalize()
 
 
-func prestige_requirement_summary(status: Dictionary) -> String:
-	var parts: Array = []
-	var bankroll_required := int(status.get("bankroll_min", status.get("bankroll_required", status.get("min_bankroll", status.get("cost", 0)))))
-	if bankroll_required > 0:
-		parts.append("Need bankroll %d" % bankroll_required)
-	var max_heat := int(status.get("max_heat", 100))
-	if max_heat < 100:
-		parts.append("heat %d or lower" % max_heat)
-	var places_required := int(status.get("environment_count_min", status.get("places_required", status.get("min_environments_visited", 0))))
-	if places_required > 0:
-		parts.append("%d places visited" % places_required)
-	return "; ".join(parts) if not parts.is_empty() else "Ready when listed requirements are met."
-
-
 func hook_run_status(kind: String, definition: Dictionary) -> Dictionary:
 	if run_state == null:
 		return {"available": true, "disabled_reason": "", "cost": int(definition.get("cost", 0))}
@@ -1126,8 +1012,8 @@ func _dynamic_lender_status(definition: Dictionary, base_status: Dictionary) -> 
 	if not bool(status.get("available", true)):
 		return status
 	var lender_type := str(definition.get("lender_type", ""))
+	var profile := _copy_dict(definition.get("debt_profile", {}))
 	if lender_type == "pawn":
-		var profile := _copy_dict(definition.get("debt_profile", {}))
 		var collateral := _pawn_collateral_option(profile)
 		if collateral.is_empty():
 			status["available"] = false
@@ -1137,6 +1023,8 @@ func _dynamic_lender_status(definition: Dictionary, base_status: Dictionary) -> 
 			status["collateral_item_id"] = str(collateral.get("item_id", ""))
 			status["collateral_item_name"] = str(collateral.get("item_name", ""))
 			status["loan_amount"] = int(collateral.get("loan_amount", 0))
+	elif not profile.is_empty():
+		status["loan_amount"] = _profile_loan_amount(profile, str(definition.get("id", "")))
 	return status
 
 
@@ -1155,24 +1043,29 @@ func _dynamic_lender_deltas(definition: Dictionary, status: Dictionary) -> Dicti
 		"pawn":
 			return _pawn_lender_deltas(definition, profile, status)
 		_:
-			if lender_id.is_empty():
-				return deltas
+			if not lender_id.is_empty() and not profile.is_empty():
+				return _cash_lender_deltas(definition, profile)
 	return deltas
 
 
 func _crew_lender_deltas(definition: Dictionary, profile: Dictionary) -> Dictionary:
 	var lender_id := str(definition.get("id", "the_crew"))
-	var loan_amount := _profile_loan_amount(profile)
+	var loan_amount := _profile_loan_amount(profile, lender_id)
 	var favor_count := maxi(1, int(profile.get("favor_count", 2)))
 	var deadline_turns := maxi(0, int(profile.get("deadline_turns", 2)))
+	var location_id := _current_lender_location_id()
 	var debt_change := {
 		"id": "%s_marker" % lender_id,
 		"lender_id": lender_id,
 		"balance": favor_count,
+		"principal": loan_amount,
 		"status": "active",
 		"debt_kind": "favor",
 		"deadline_turns": deadline_turns,
 		"turns_remaining": deadline_turns,
+		"loan_count": 1,
+		"source_location_id": location_id,
+		"source_location_ids": [location_id] if not location_id.is_empty() else [],
 		"interest_rate": 0.0,
 		"default_consequence": str(profile.get("default_consequence", "crew_favor_due")),
 		"refuse_consequence": str(profile.get("refuse_consequence", "crew_convert_to_cash")),
@@ -1186,7 +1079,7 @@ func _crew_lender_deltas(definition: Dictionary, profile: Dictionary) -> Diction
 
 func _family_lender_deltas(definition: Dictionary, profile: Dictionary) -> Dictionary:
 	var lender_id := str(definition.get("id", "brother_in_law"))
-	var loan_amount := _profile_loan_amount(profile)
+	var loan_amount := _profile_loan_amount(profile, lender_id)
 	var interest_rate := maxf(0.0, float(profile.get("interest_rate", 0.0)))
 	var balance := maxi(loan_amount, int(ceil(float(loan_amount) * (1.0 + interest_rate))))
 	var deadline_turns := maxi(0, int(profile.get("deadline_turns", 6)))
@@ -1194,10 +1087,12 @@ func _family_lender_deltas(definition: Dictionary, profile: Dictionary) -> Dicti
 		"id": "%s_note" % lender_id,
 		"lender_id": lender_id,
 		"balance": balance,
+		"principal": loan_amount,
 		"status": "active",
 		"debt_kind": "cash",
 		"deadline_turns": deadline_turns,
 		"turns_remaining": deadline_turns,
+		"source_location_id": _current_lender_location_id(),
 		"interest_rate": interest_rate,
 		"default_consequence": str(profile.get("default_consequence", "family_nag")),
 		"early_repay_flag": str(profile.get("early_repay_flag", "brother_in_law_goodwill")),
@@ -1211,6 +1106,34 @@ func _family_lender_deltas(definition: Dictionary, profile: Dictionary) -> Dicti
 		flags[single_use_flag] = true
 	flags["brother_in_law_phone_ready"] = false
 	return _dynamic_lender_delta_payload(definition, loan_amount, [debt_change], flags, ["Fair money, family pressure."])
+
+
+func _cash_lender_deltas(definition: Dictionary, profile: Dictionary) -> Dictionary:
+	var lender_id := str(definition.get("id", ""))
+	if lender_id.is_empty():
+		return GameModule.empty_result_deltas()
+	var loan_amount := _profile_loan_amount(profile, lender_id)
+	var interest_rate := maxf(0.0, float(profile.get("interest_rate", 0.10)))
+	var balance := maxi(loan_amount, int(ceil(float(loan_amount) * (1.0 + interest_rate))))
+	var deadline_turns := maxi(0, int(profile.get("deadline_turns", 3)))
+	var debt_change := {
+		"id": "%s_note" % lender_id,
+		"lender_id": lender_id,
+		"balance": balance,
+		"principal": loan_amount,
+		"status": "active",
+		"debt_kind": "cash",
+		"deadline_turns": deadline_turns,
+		"turns_remaining": deadline_turns,
+		"source_location_id": _current_lender_location_id(),
+		"interest_rate": interest_rate,
+		"default_consequence": str(profile.get("default_consequence", "favor_owed")),
+	}
+	var flags := {}
+	flags["%s_debt" % lender_id] = true
+	var base_effect := copy_result_deltas(definition.get("effect", {}))
+	var suspicion_delta := int(base_effect.get("suspicion_delta", 0))
+	return _dynamic_lender_delta_payload(definition, loan_amount, [debt_change], flags, ["Loan lands in your hand; payoff comes with interest."], suspicion_delta)
 
 
 func _pawn_lender_deltas(definition: Dictionary, profile: Dictionary, status: Dictionary) -> Dictionary:
@@ -1242,12 +1165,13 @@ func _pawn_lender_deltas(definition: Dictionary, profile: Dictionary, status: Di
 	return deltas
 
 
-func _dynamic_lender_delta_payload(definition: Dictionary, bankroll_delta: int, debt_changes: Array, flags: Dictionary, messages: Array) -> Dictionary:
+func _dynamic_lender_delta_payload(definition: Dictionary, bankroll_delta: int, debt_changes: Array, flags: Dictionary, messages: Array, suspicion_delta: int = 0) -> Dictionary:
 	var deltas := GameModule.empty_result_deltas()
 	var lender_id := str(definition.get("id", ""))
 	var display_name := str(definition.get("display_name", lender_id))
 	var message := str(definition.get("message", "Borrowed from %s." % display_name))
 	deltas["bankroll_delta"] = bankroll_delta
+	deltas["suspicion_delta"] = suspicion_delta
 	deltas["debt_changes"] = debt_changes.duplicate(true)
 	deltas["flags_set"] = flags.duplicate(true)
 	deltas["messages"] = messages.duplicate(true)
@@ -1260,17 +1184,34 @@ func _dynamic_lender_delta_payload(definition: Dictionary, bankroll_delta: int, 
 		"environment_id": str(run_state.current_environment.get("id", "")),
 		"environment_archetype_id": str(run_state.current_environment.get("archetype_id", "")),
 		"bankroll_delta": bankroll_delta,
+		"suspicion_delta": suspicion_delta,
 		"debt_changes": debt_changes.duplicate(true),
 		"message": message,
 	}]
 	return deltas
 
 
-func _profile_loan_amount(profile: Dictionary) -> int:
+func _profile_loan_amount(profile: Dictionary, lender_id: String = "") -> int:
 	var minimum := maxi(0, int(profile.get("principal_min", 0)))
 	var maximum := maxi(minimum, int(profile.get("principal_max", minimum)))
 	var configured := int(profile.get("loan_amount", minimum))
-	return clampi(configured, minimum, maximum)
+	var paid_count := 0
+	if run_state != null and not lender_id.is_empty():
+		paid_count = maxi(0, int(run_state.narrative_flags.get("lender_%s_paid_count" % lender_id, 0)))
+	var repeat_step := int(profile.get("repeat_loan_step", maxi(5, int(ceil(float(configured) * 0.25)))))
+	return clampi(configured + repeat_step * paid_count, minimum, maximum)
+
+
+func _current_lender_location_id() -> String:
+	if run_state == null:
+		return ""
+	var environment_id := str(run_state.current_environment.get("id", "")).strip_edges()
+	if not environment_id.is_empty():
+		return environment_id
+	environment_id = str(run_state.current_environment.get("world_node_id", "")).strip_edges()
+	if not environment_id.is_empty():
+		return environment_id
+	return str(run_state.current_environment.get("archetype_id", "")).strip_edges()
 
 
 func _pawn_collateral_option(profile: Dictionary) -> Dictionary:
@@ -1302,7 +1243,10 @@ func _pawn_collateral_option(profile: Dictionary) -> Dictionary:
 
 
 func _lender_has_dynamic_contract(definition: Dictionary) -> bool:
-	return ["favor_crew", "family_phone", "pawn"].has(str(definition.get("lender_type", "")))
+	if ["favor_crew", "family_phone", "pawn"].has(str(definition.get("lender_type", ""))):
+		return true
+	var profile := _copy_dict(definition.get("debt_profile", {}))
+	return not profile.is_empty()
 
 
 func hook_definition(kind: String, hook_id: String) -> Dictionary:

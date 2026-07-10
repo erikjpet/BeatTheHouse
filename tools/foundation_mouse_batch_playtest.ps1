@@ -170,13 +170,13 @@ function Get-RunFailureReason {
     if ($errorText -match "prohibited button|side-panel fallback") {
         return "prohibited_ui_path_used"
     }
-    if ($FinalObjective -match "ready" -and (($MissingCoverage -contains "prestige_victory") -and ($MissingCoverage -contains "demo_victory"))) {
+    if ($FinalObjective -match "ready" -and ($MissingCoverage -contains "demo_victory")) {
         return "victory_ready_not_claimed"
     }
     if ($FinalObjective -match "Visit .*more place" -and $MissingCoverage -contains "travel_object_double_click") {
         return "place_progression_not_traveled"
     }
-    if (($FinalObjective -match "choose stake|game-surface action") -and $TotalGameActions -ge 6 -and ($MissingCoverage -contains "travel_object_double_click" -or (($MissingCoverage -contains "prestige_victory") -and ($MissingCoverage -contains "demo_victory")))) {
+    if (($FinalObjective -match "choose stake|game-surface action") -and $TotalGameActions -ge 6 -and ($MissingCoverage -contains "travel_object_double_click" -or ($MissingCoverage -contains "demo_victory"))) {
         return "game_surface_overplayed_no_objective_pivot"
     }
     if (($MissingCoverage -contains "save" -or $MissingCoverage -contains "load" -or $MissingCoverage -contains "continue") -and $errorText -match "Save was not|Load was not|Continue was not") {
@@ -335,7 +335,7 @@ function New-RunAnalysis {
     $serviceEvents = @($events | Where-Object { [string](Get-JsonProp -Object $_ -Name "object_type" -Default "") -eq "service" })
     $lenderEvents = @($events | Where-Object { [string](Get-JsonProp -Object $_ -Name "object_type" -Default "") -eq "lender" })
 
-    $victory = (Get-BoolProp -Object $coverage -Name "prestige_victory") -or (Get-BoolProp -Object $coverage -Name "demo_victory")
+    $victory = Get-BoolProp -Object $coverage -Name "demo_victory"
     $failed = $false
     $lossReason = ""
     foreach ($state in $states) {
@@ -354,7 +354,7 @@ function New-RunAnalysis {
 
     $victoryState = $states | Where-Object {
         $stateName = [string](Get-JsonProp -Object $_ -Name "name" -Default "")
-        $stateName -eq "prestige_victory_screen" -or $stateName -eq "demo_victory_screen"
+        $stateName -eq "demo_victory_screen"
     } | Select-Object -First 1
     $completionBalance = Get-JsonProp -Object $finalRun -Name "bankroll" -Default $null
     if ($null -ne $victoryState) {

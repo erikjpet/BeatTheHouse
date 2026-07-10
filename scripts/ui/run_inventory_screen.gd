@@ -240,14 +240,20 @@ func _render_detail(item: Dictionary, merchant_mode: bool = false) -> void:
 		_detail_box.add_child(FoundationWidgets.muted_label("Select an item to inspect details.", 13))
 		return
 	var display_name := str(item.get("display_name", item.get("id", "Item")))
+	var header := HBoxContainer.new()
+	header.add_theme_constant_override("separation", 8)
+	header.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_detail_box.add_child(header)
 	var icon := TextureRect.new()
 	icon.texture = _texture_for_item(item)
-	icon.custom_minimum_size = Vector2(74, 74)
+	icon.custom_minimum_size = Vector2(54, 54)
 	icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-	_detail_box.add_child(icon)
+	header.add_child(icon)
 	var title := FoundationWidgets.label(display_name, 16)
 	FoundationWidgets.set_control_font_color(title, VisualStyle.YELLOW)
-	_detail_box.add_child(title)
+	title.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	header.add_child(title)
 	var source := str(item.get("storage_source", "carried"))
 	var location := "Stored" if source == "container" else "Carried"
 	FoundationWidgets.add_detail_row(_detail_box, "Where", location)
@@ -291,8 +297,8 @@ func _add_attribute_badges(item: Dictionary) -> void:
 	var badges := _copy_array(item.get("attribute_badges", []))
 	if badges.is_empty():
 		return
-	AttributeBadgeRowScript.warm_cache(badges, 12)
-	_detail_box.add_child(AttributeBadgeRowScript.control_row(badges, 12))
+	AttributeBadgeRowScript.warm_cache(badges, 16)
+	_detail_box.add_child(AttributeBadgeRowScript.control_row(badges, 16))
 
 
 func _position_popup() -> void:

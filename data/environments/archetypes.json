@@ -109,12 +109,6 @@
           830,
           96
         ]
-      ],
-      "prestige_spots": [
-        [
-          604,
-          60
-        ]
       ]
     },
     "security_profile": {
@@ -185,7 +179,8 @@
       "lucky_keychain",
       "lucky_bar_napkin",
       "payment_calendar",
-      "roadside_map"
+      "roadside_map",
+      "bag"
     ],
     "item_count": [
       3,
@@ -194,7 +189,6 @@
     "event_pool": [
       "late_shift_discount",
       "chatty_clerk",
-      "roadside_bag_cache",
       "parking_lot_tip",
       "suspicious_patron",
       "the_collector",
@@ -346,12 +340,6 @@
         [
           650,
           360
-        ]
-      ],
-      "prestige_spots": [
-        [
-          142,
-          70
         ]
       ],
       "home_storage_spots": [
@@ -619,12 +607,6 @@
           77,
           350
         ]
-      ],
-      "prestige_spots": [
-        [
-          168,
-          82
-        ]
       ]
     },
     "security_profile": {
@@ -693,7 +675,8 @@
       "payment_calendar",
       "pawn_receipt_sleeve",
       "roadside_map",
-      "cheap_sunglasses"
+      "cheap_sunglasses",
+      "bag"
     ],
     "item_count": [
       2,
@@ -701,7 +684,6 @@
     ],
     "event_pool": [
       "motel_knock",
-      "roadside_bag_cache",
       "parking_lot_tip",
       "suspicious_patron",
       "the_collector",
@@ -848,12 +830,6 @@
         [
           649,
           376
-        ]
-      ],
-      "prestige_spots": [
-        [
-          300,
-          70
         ]
       ]
     },
@@ -1070,12 +1046,6 @@
           650,
           360
         ]
-      ],
-      "prestige_spots": [
-        [
-          450,
-          70
-        ]
       ]
     },
     "security_profile": {
@@ -1144,7 +1114,6 @@
       "machine_jam",
       "parking_lot_tip",
       "side_door",
-      "house_edge_bag_case",
       "heat_at_exit",
       "suspicious_patron",
       "the_collector",
@@ -1291,12 +1260,6 @@
           84,
           380
         ]
-      ],
-      "prestige_spots": [
-        [
-          540,
-          61
-        ]
       ]
     },
     "security_profile": {
@@ -1365,7 +1328,6 @@
       "rowdy_regular",
       "machine_jam",
       "side_door",
-      "house_edge_bag_case",
       "heat_at_exit",
       "suspicious_patron",
       "rival_counter",
@@ -1539,12 +1501,6 @@
         [
           500,
           170
-        ]
-      ],
-      "prestige_spots": [
-        [
-          300,
-          160
         ]
       ]
     },
@@ -1767,12 +1723,6 @@
         [
           420,
           72
-        ]
-      ],
-      "prestige_spots": [
-        [
-          190,
-          180
         ]
       ],
       "item_spots": [
@@ -2039,12 +1989,6 @@
         [
           506,
           376
-        ]
-      ],
-      "prestige_spots": [
-        [
-          260,
-          62
         ]
       ],
       "item_spots": [

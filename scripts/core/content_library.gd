@@ -13,7 +13,6 @@ const CHALLENGES_PATH := "res://data/challenges/challenges.json"
 const LENDERS_PATH := "res://data/debt/lenders.json"
 const SERVICES_PATH := "res://data/services/services.json"
 const TRAVEL_ROUTES_PATH := "res://data/travel/routes.json"
-const PRESTIGE_PURCHASES_PATH := "res://data/prestige/purchases.json"
 const MUSIC_MANIFEST_PATH := "res://data/audio/music_manifest.json"
 const MUSIC_ASSET_ROOT := "res://assets/audio/music"
 const MIN_AUTHORED_MUSIC_LOOP_SECONDS := 12.0
@@ -28,7 +27,6 @@ var challenges: Array = []
 var lenders: Array = []
 var services: Array = []
 var travel_routes: Array = []
-var prestige_purchases: Array = []
 var music_tracks: Array = []
 var validation_errors: Array = []
 var validation_warnings: Array = []
@@ -57,7 +55,6 @@ static func future_pack_paths() -> Dictionary:
 		"lenders": LENDERS_PATH,
 		"services": SERVICES_PATH,
 		"travel_routes": TRAVEL_ROUTES_PATH,
-		"prestige_purchases": PRESTIGE_PURCHASES_PATH,
 		"music_tracks": MUSIC_MANIFEST_PATH,
 	}
 
@@ -77,7 +74,6 @@ func load() -> Dictionary:
 	lenders = _load_array(LENDERS_PATH, false)
 	services = _load_array(SERVICES_PATH, false)
 	travel_routes = _load_array(TRAVEL_ROUTES_PATH, false)
-	prestige_purchases = _load_array(PRESTIGE_PURCHASES_PATH, false)
 	music_tracks = _load_array(MUSIC_MANIFEST_PATH, false)
 	var parse_complete_usec := Time.get_ticks_usec()
 	_rebuild_indexes()
@@ -102,7 +98,6 @@ func load() -> Dictionary:
 		"lenders": lenders,
 		"services": services,
 		"travel_routes": travel_routes,
-		"prestige_purchases": prestige_purchases,
 		"music_tracks": music_tracks,
 	}
 
@@ -204,15 +199,6 @@ func validate() -> Array:
 		"cost",
 		"risk",
 	])
-	_validate_collection("prestige_purchases", prestige_purchases, [
-		"id",
-		"display_name",
-		"description",
-		"type",
-		"cost",
-		"requirements",
-		"effect",
-	])
 	_validate_collection("music_tracks", music_tracks, [
 		"id",
 		"bpm",
@@ -229,7 +215,6 @@ func validate() -> Array:
 	_validate_lender_definitions()
 	_validate_service_definitions()
 	_validate_travel_route_definitions()
-	_validate_prestige_purchase_definitions()
 	_validate_music_manifest_definitions()
 	_validate_environment_references()
 	return validation_errors.duplicate(true)
@@ -436,11 +421,6 @@ func route(route_id: String) -> Dictionary:
 	return _lookup("travel_routes", travel_routes, route_id)
 
 
-# Finds a prestige purchase definition by id.
-func prestige(purchase_id: String) -> Dictionary:
-	return _lookup("prestige_purchases", prestige_purchases, purchase_id)
-
-
 # Finds an authored music track manifest entry by id.
 func music_track(track_id: String) -> Dictionary:
 	return _lookup("music_tracks", music_tracks, track_id)
@@ -588,7 +568,6 @@ func _rebuild_indexes() -> void:
 		"lenders": _index_by_id(lenders),
 		"services": _index_by_id(services),
 		"travel_routes": _index_by_id(travel_routes),
-		"prestige_purchases": _index_by_id(prestige_purchases),
 		"music_tracks": _index_by_id(music_tracks),
 	}
 
@@ -611,7 +590,6 @@ func debug_soak_snapshot() -> Dictionary:
 			"lenders": lenders.size(),
 			"services": services.size(),
 			"travel_routes": travel_routes.size(),
-			"prestige_purchases": prestige_purchases.size(),
 			"music_tracks": music_tracks.size(),
 		},
 		"index_sizes": index_sizes,
@@ -1180,20 +1158,6 @@ func _validate_travel_route_definitions() -> void:
 			validation_errors.append("travel_routes %s is missing destination_archetype." % route_id)
 		elif not archetype_ids.has(destination):
 			validation_errors.append("travel_routes %s references unknown destination_archetype: %s" % [route_id, destination])
-
-
-# Validates prestige targets without expanding victory systems.
-func _validate_prestige_purchase_definitions() -> void:
-	for purchase_def in prestige_purchases:
-		if typeof(purchase_def) != TYPE_DICTIONARY:
-			continue
-		var purchase_id := str(purchase_def.get("id", "")).strip_edges()
-		if int(purchase_def.get("cost", 0)) < 0:
-			validation_errors.append("prestige_purchases %s cost must be non-negative." % purchase_id)
-		if typeof(purchase_def.get("requirements", {})) != TYPE_DICTIONARY:
-			validation_errors.append("prestige_purchases %s requirements must be a dictionary." % purchase_id)
-		if typeof(purchase_def.get("effect", {})) != TYPE_DICTIONARY:
-			validation_errors.append("prestige_purchases %s effect must be a dictionary." % purchase_id)
 
 
 # Validates authored music stem manifests without requiring every venue to use one.

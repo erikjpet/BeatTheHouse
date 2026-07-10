@@ -245,6 +245,15 @@ func _audit_world_map_beach_delta(map_data: Dictionary, seed: String) -> void:
 		return
 	if int(edge.get("distance_blocks", 0)) != 1:
 		failures.append("%s: beach edge to delta_queen must be 1 block, got %d." % [seed, int(edge.get("distance_blocks", 0))])
+	var beach_edge_count := 0
+	for edge_value in _copy_array(map_data.get("edges", [])):
+		if typeof(edge_value) != TYPE_DICTIONARY:
+			continue
+		var candidate: Dictionary = edge_value
+		if str(candidate.get("a", "")) == "beach" or str(candidate.get("b", "")) == "beach":
+			beach_edge_count += 1
+	if beach_edge_count != 1:
+		failures.append("%s: beach must only connect to delta_queen, saw %d beach edges." % [seed, beach_edge_count])
 
 
 func _world_map_edge_between(map_data: Dictionary, a: String, b: String) -> Dictionary:

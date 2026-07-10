@@ -9,6 +9,7 @@ const BUFFALO_BONUS_MAX_ANIMATION_MSEC := 10000
 const PINBALL_BONUS_ALERT_DURATION_MSEC := 2000
 const PINBALL_BONUS_ALERT_VOLUME_DB := -21.0
 const PINBALL_BONUS_ALERT_STINGER_VOLUME_DB := -8.5
+const SLOT_RESULT_REVEAL_BEAT_MSEC := 180
 
 var catalog
 
@@ -21,13 +22,16 @@ func surface_state(machine: Dictionary, run_state: RunState, definition: Diction
 	machine = _surface_machine_view(machine)
 	var stored_active_bonus: Dictionary = machine.get("active_bonus", {}) if typeof(machine.get("active_bonus", {})) == TYPE_DICTIONARY else {}
 	var surface_time_msec := maxi(0, int(ui_state.get("drunk_scaled_surface_time_msec", ui_state.get("surface_time_msec", 0))))
+	var spin_elapsed_msec := _surface_spin_elapsed_msec(ui_state, 0)
 	var fast_animation_id := str(machine.get("slot_animation_id", ""))
 	if str(stored_active_bonus.get("family", "")) == "pinball" and bool(stored_active_bonus.get("active", false)) and not bool(stored_active_bonus.get("complete", false)) and fast_animation_id.begins_with("bonus:"):
 		return _pinball_active_surface_state(machine, stored_active_bonus, run_state, surface_time_msec, ui_state)
 	var selected_bet: Dictionary = StateScript.selected_bet(machine)
 	var animation_duration := maxi(0, int(machine.get("slot_animation_duration_msec", 0)))
 	var animation_id := str(machine.get("slot_animation_id", ""))
-	var active_bonus: Dictionary = _display_active_bonus(machine, stored_active_bonus, surface_time_msec)
+	var trigger_reveal_msec := _trigger_bonus_reveal_msec(machine)
+	var trigger_reveal_pending := _trigger_bonus_reveal_pending(machine, stored_active_bonus, spin_elapsed_msec, trigger_reveal_msec)
+	var active_bonus: Dictionary = _display_active_bonus(machine, stored_active_bonus, surface_time_msec, trigger_reveal_pending)
 	active_bonus = _with_pinball_alert_metadata(active_bonus, machine)
 	var spin_motion_active := not animation_id.is_empty() and animation_duration > 0
 	var spin_channel := GameModule.surface_animation_channel(
@@ -71,6 +75,7 @@ func surface_state(machine: Dictionary, run_state: RunState, definition: Diction
 		active_bonus["pinball_launch_meter"] = _pinball_launch_meter(active_bonus, surface_time_msec)
 	var bet_options: Array = _bet_options(selected_bet)
 	var surface_motion_active := spin_motion_active or feature_active or nudge_available
+	var trigger_bonus_armed := _bonus_visible_on_surface(stored_active_bonus)
 	return _slot_surface_spec({
 		"surface_renderer": "slot_machine",
 		"surface_life": "reel_machine",
@@ -79,7 +84,7 @@ func surface_state(machine: Dictionary, run_state: RunState, definition: Diction
 		"surface_fixed_price_actions": true,
 		"surface_stake_controls_required": false,
 		"surface_animates_idle": surface_motion_active,
-		"surface_realtime_state_refresh": nudge_available or (feature_active and (str(active_bonus.get("family", "")) == "pinball" or str(active_bonus.get("family", "")) == "buffalo")),
+		"surface_realtime_state_refresh": nudge_available or trigger_reveal_pending or (feature_active and (str(active_bonus.get("family", "")) == "pinball" or str(active_bonus.get("family", "")) == "buffalo")),
 		"surface_embeds_outcomes": true,
 		"surface_suppresses_game_result_burst": true,
 		"surface_action_bindings": {
@@ -140,6 +145,10 @@ func surface_state(machine: Dictionary, run_state: RunState, definition: Diction
 		"slot_visual_time_msec": surface_time_msec,
 		"slot_attract_phase": _attract_phase(surface_time_msec, skin),
 		"slot_bonus_start_time": _bonus_start_time(machine),
+		"slot_bonus_trigger_reveal_msec": trigger_reveal_msec,
+		"slot_bonus_trigger_reveal_pending": trigger_reveal_pending,
+		"slot_bonus_trigger_armed": trigger_bonus_armed,
+		"slot_spin_elapsed_msec": spin_elapsed_msec,
 		"slot_audio_cues": _audio_cues(machine),
 		"slot_feature_scene": _feature_scene(active_bonus),
 		"slot_bonus_steps": _surface_bonus_steps(active_bonus),
@@ -366,8 +375,12 @@ func _result_message(classification: String, payout: int, net: int, reason: Stri
 	return "%s, net %+d." % [classification.replace("_", " ").capitalize(), net]
 
 
-func _display_active_bonus(machine: Dictionary, active_bonus: Dictionary, surface_time_msec: int = 0) -> Dictionary:
+func _display_active_bonus(machine: Dictionary, active_bonus: Dictionary, surface_time_msec: int = 0, trigger_reveal_pending: bool = false) -> Dictionary:
 	var live: Dictionary = _copy_dict_shallow(active_bonus)
+	if trigger_reveal_pending and bool(live.get("active", false)) and not bool(live.get("complete", false)):
+		live["active"] = false
+		live["trigger_reveal_pending"] = true
+		return live
 	if bool(live.get("active", false)) and not bool(live.get("complete", false)):
 		return _pinball_display_bonus(live, surface_time_msec)
 	if not str(machine.get("slot_animation_id", "")).begins_with("bonus:"):
@@ -401,6 +414,39 @@ func _bonus_visible_on_surface(active_bonus: Dictionary) -> bool:
 	if bool(active_bonus.get("visual_replay", false)):
 		return true
 	return bool(active_bonus.get("active", false)) and not bool(active_bonus.get("complete", false))
+
+
+func _trigger_bonus_reveal_pending(machine: Dictionary, active_bonus: Dictionary, spin_elapsed_msec: int, reveal_msec: int) -> bool:
+	if not _bonus_visible_on_surface(active_bonus):
+		return false
+	if reveal_msec <= 0:
+		return false
+	if str(machine.get("slot_animation_id", "")).is_empty() or str(machine.get("slot_animation_id", "")).begins_with("bonus:"):
+		return false
+	return spin_elapsed_msec < reveal_msec
+
+
+func _trigger_bonus_reveal_msec(machine: Dictionary) -> int:
+	var plan: Dictionary = _copy_dict(machine.get("slot_animation_plan", {}))
+	var timeline: Array = _copy_array(plan.get("reel_timeline", machine.get("slot_reel_timeline", [])))
+	if timeline.is_empty():
+		return 0
+	var reveal_msec := 0
+	for entry_value in timeline:
+		var entry: Dictionary = _copy_dict(entry_value)
+		reveal_msec = maxi(reveal_msec, int(ceil(float(entry.get("settle_end", entry.get("stop_time", 0.0))) * 1000.0)))
+	return reveal_msec + SLOT_RESULT_REVEAL_BEAT_MSEC
+
+
+func _surface_spin_elapsed_msec(ui_state: Dictionary, missing_value: int = -1) -> int:
+	if int(ui_state.get("slot_tease_input_msec", -1)) >= 0:
+		return int(ui_state.get("slot_tease_input_msec", -1))
+	var runtime: Dictionary = _copy_dict(ui_state.get("surface_runtime_status", {}))
+	var animations: Dictionary = _copy_dict(runtime.get("surface_animations", {}))
+	var spin: Dictionary = _copy_dict(animations.get("slot_spin", {}))
+	if spin.is_empty():
+		return missing_value
+	return maxi(0, int(round(float(spin.get("elapsed", 0.0)) * 1000.0)))
 
 
 func _selected_actions(ui_state: Dictionary) -> Array:
@@ -508,17 +554,6 @@ func _nudge_timing_state(offer: Dictionary, ui_state: Dictionary) -> Dictionary:
 		"window_msec": window,
 		"hint": hint if not hint.is_empty() else "time the stop",
 	}
-
-
-func _surface_spin_elapsed_msec(ui_state: Dictionary) -> int:
-	if int(ui_state.get("slot_tease_input_msec", -1)) >= 0:
-		return int(ui_state.get("slot_tease_input_msec", -1))
-	var runtime: Dictionary = _copy_dict(ui_state.get("surface_runtime_status", {}))
-	var animations: Dictionary = _copy_dict(runtime.get("surface_animations", {}))
-	var spin: Dictionary = _copy_dict(animations.get("slot_spin", {}))
-	if spin.is_empty():
-		return -1
-	return maxi(0, int(round(float(spin.get("elapsed", 0.0)) * 1000.0)))
 
 
 func _surface_spin_active(ui_state: Dictionary) -> bool:

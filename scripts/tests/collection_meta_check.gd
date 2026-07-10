@@ -34,7 +34,8 @@ func _run() -> void:
 	_test_pawn_sale_and_trade_up(resolver)
 	_test_failure_decay_and_run_modifiers(resolver)
 	_test_terminal_drop_determinism()
-	_test_run_end_grant_persists()
+	_test_victory_selection_grants_one_bag()
+	_test_failed_run_discards_pending_bags()
 	_test_daily_and_challenge_runs_are_meta_isolated()
 	_test_open_bag_consumes_once()
 	_test_collection_browser_view_model_read_only(resolver)
@@ -232,10 +233,16 @@ func _test_failure_decay_and_run_modifiers(resolver: Variant) -> void:
 	_check(str(modifiers.get("home_archetype_id", "")) == MetaCollectionServiceScript.HOUSING_BACK_ALLEY, "Homeless normal run must start at the back alley archetype.")
 	_check(_copy_array(modifiers.get("meta_collection_carried_instance_ids", [])).has(int(granted.get("instance_id", 0))), "Homeless normal run must carry every owned item.")
 	_check(_copy_array(modifiers.get("meta_collection_loadout", [])).size() == 1, "Normal run modifiers did not inject resolved run items.")
-	var before_usage := float(granted.get("usage", 0.0))
+	var before_condition := float(granted.get("condition", 0.0))
 	var decayed: Array = service.apply_failure_decay([int(granted.get("instance_id", 0))], "failure-decay-seed")
 	var after := _copy_dict(decayed[0]) if not decayed.is_empty() else {}
-	_check(float(after.get("usage", 1.0)) < before_usage, "Failure decay did not reduce carried item usage.")
+	_check(is_equal_approx(float(after.get("condition", 1.0)), maxf(0.0, before_condition - MetaCollectionServiceScript.FAILURE_DURABILITY_LOSS)), "Failure decay did not reduce carried item condition by 10%.")
+	var fragile := after.duplicate(true)
+	fragile["condition"] = 0.05
+	var fragile_grant: Dictionary = service.grant_instance(fragile)
+	var fragile_id := int(fragile_grant.get("instance_id", 0))
+	service.apply_failure_decay([fragile_id], "failure-delete-seed")
+	_check(not _instance_ids(service.owned_instances()).has(fragile_id), "Failure decay did not delete a zero-condition carried item.")
 	_remove_user_file(TEST_STORE_PATH)
 	OS.set_environment(MetaCollectionServiceScript.STORE_PATH_ENV, "")
 
@@ -253,7 +260,7 @@ func _test_terminal_drop_determinism() -> void:
 	_check(JSON.stringify(restored.pending_bag_markers()) == JSON.stringify(markers_a), "Pending bag markers did not round-trip through RunState save data.")
 
 
-func _test_run_end_grant_persists() -> void:
+func _test_victory_selection_grants_one_bag() -> void:
 	OS.set_environment(MetaCollectionServiceScript.STORE_PATH_ENV, TEST_STORE_PATH)
 	_remove_user_file(TEST_STORE_PATH)
 	var service: Variant = MetaCollectionServiceScript.new()
@@ -261,16 +268,34 @@ func _test_run_end_grant_persists() -> void:
 	var drop_service: Variant = CollectionDropServiceScript.new()
 	var run_state: Variant = _terminal_run("p1-grant-seed")
 	var markers: Array = drop_service.ensure_run_end_pending_bags(run_state, null)
-	var flush_result: Dictionary = drop_service.flush_pending_bags(run_state, service)
 	_check(markers.size() >= 2, "Standard meta victory plus showdown should create at least two pending bags.")
-	_check(_copy_array(flush_result.get("granted", [])).size() == markers.size(), "Run-end flush did not grant each pending bag.")
+	var selected := _copy_dict(markers[0])
+	var flush_result: Dictionary = drop_service.flush_selected_pending_bag(run_state, service, str(selected.get("marker_id", "")))
+	_check(_copy_array(flush_result.get("granted", [])).size() == 1, "Victory extraction did not grant exactly one selected bag.")
 	_check(run_state.pending_bag_markers().is_empty(), "Run-end flush did not clear pending bag markers.")
 	_check(bool(run_state.narrative_flags.get(CollectionDropServiceScript.FLUSHED_FLAG, false)), "Run-end flush flag was not recorded.")
 	var save_error: Error = service.save()
 	_check(save_error == OK, "Meta collection store save after run-end grant failed.")
 	var loaded_service: Variant = MetaCollectionServiceScript.new()
 	var loaded: Dictionary = loaded_service.load()
-	_check(_copy_array(loaded.get("unopened_bags", [])).size() == markers.size(), "Granted bags did not survive meta store reload.")
+	_check(_copy_array(loaded.get("unopened_bags", [])).size() == 1, "Selected bag did not survive meta store reload as the only grant.")
+	_remove_user_file(TEST_STORE_PATH)
+	OS.set_environment(MetaCollectionServiceScript.STORE_PATH_ENV, "")
+
+
+func _test_failed_run_discards_pending_bags() -> void:
+	OS.set_environment(MetaCollectionServiceScript.STORE_PATH_ENV, TEST_STORE_PATH)
+	_remove_user_file(TEST_STORE_PATH)
+	var service: Variant = MetaCollectionServiceScript.new()
+	service.load()
+	var drop_service: Variant = CollectionDropServiceScript.new()
+	var run_state: Variant = _terminal_run("p1-failure-pending")
+	run_state.run_status = RunStateScript.RUN_STATUS_FAILED
+	run_state.add_pending_bag_marker(drop_service.marker_from_static_bag(9000, "legacy_event", "removed_bag_marker", "failure-bag"))
+	var flush_result: Dictionary = drop_service.flush_pending_bags(run_state, service)
+	_check(_copy_array(flush_result.get("granted", [])).is_empty(), "Failed run must not grant pending bag rewards.")
+	_check(run_state.pending_bag_markers().is_empty(), "Failed run did not discard pending bag markers.")
+	_check(service.unopened_bags().is_empty(), "Failed run leaked an unopened bag into meta storage.")
 	_remove_user_file(TEST_STORE_PATH)
 	OS.set_environment(MetaCollectionServiceScript.STORE_PATH_ENV, "")
 
