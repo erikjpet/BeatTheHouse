@@ -35,7 +35,7 @@ the repository.
 | Target exports | 0.4.0 targets Web/itch.io and Windows desktop; Android/iOS presets remain credential-blocked |
 | Run model | Seeded deterministic run state with forked RNG streams |
 | Current win target | Reach the Grand Casino, then win either clean (net +$10 while staying low-heat for a Players Card) or by surviving Pit Boss Rourke's back-room showdown |
-| Prestige content | Act 1 keeps prestige dormant: the code path exists, but empty `data/prestige/purchases.json` hides all prestige UI/objects |
+| Prestige content | Removed from the Act 1 runtime; real prestige meta-progression is deferred to a future act |
 
 The player starts in a generated low-stakes environment, buys or uses items,
 plays full-simulation casino games, takes services or lender offers when needed,
@@ -47,15 +47,14 @@ bankroll, heat, police capture, or being stranded without a useful recovery path
 1. `FoundationMain` loads content through `ContentLibrary`.
 2. `RunGenerator` creates a seeded run and an initial environment.
 3. `EnvironmentInstance` turns archetype data into visible objects: games, items,
-   events, services, lenders, world-map travel exits, and prestige hooks when
-   prestige data exists.
+   events, services, lenders, and world-map travel exits.
 4. The player interacts with objects through the shared UI shell.
-5. Game modules, item effects, services, lenders, events, travel, and any
-   authored prestige targets return result dictionaries.
+5. Game modules, item effects, services, lenders, events, and travel return
+   result dictionaries.
 6. `GameModule.apply_result()` and `RunActionService` apply those results to
    `RunState`.
 7. `RunTerminalEvaluator` and `RunState` determine whether the run continues,
-   fails, or ends in demo victory or a future data-enabled prestige victory.
+   fails, or ends in demo victory.
 8. `SaveService` persists the active run through the autosave slot.
 
 ## Content Packs
@@ -72,7 +71,6 @@ Production content is JSON under `data/`.
 | Services | 14 | `data/services/services.json` | `cashier_tip`, `house_drink`, `call_brother_in_law`, jazz-club round/tip/show services, and tier-2 lounge/riverboat services |
 | Lenders | 5 | `data/debt/lenders.json` | `street_lender`, `motel_friend`, `the_crew`, `brother_in_law`, `sals_pawn_counter` |
 | Travel route templates | 11 | `data/travel/routes.json` | Destination templates for shops, casinos, tier-2 venues, the jazz club, beach, the underground casino, and the Grand Casino; `WorldMap` turns them into seeded graph paths with costs, unlocks, scouting previews, travel locks, and route-risk events |
-| Prestige purchases | 0 | `data/prestige/purchases.json` | Empty Act 1 data pack; HUD, menu, room, and victory hooks stay hidden |
 | Challenges | 7 | `data/challenges/challenges.json` | Act 1 authored challenge runs with profile completion flags |
 | Dialogues | 3 | `data/dialogue/dialogues.json` | Talk/dock dialogue content for current Act 1 routes |
 | Collection schemas | 1 file / 2 collections | `data/collections/collections.json` | Local meta collection bags/items, housing data, and pawn-shop sale values |
@@ -198,7 +196,7 @@ Buffalo collection/conversion, must-hit meter data, and jackpot tiers.
 | `scripts/core/game_module.gd` | Base game contract and shared result application |
 | `scripts/core/item_effect.gd` | Item purchase/use/sale effect resolution |
 | `scripts/core/event_module.gd` | Event condition and choice resolution |
-| `scripts/core/run_action_service.gd` | Services, lenders, travel, item actions, prestige actions |
+| `scripts/core/run_action_service.gd` | Services, lenders, travel, and item actions |
 | `scripts/core/run_terminal_evaluator.gd` | Terminal state evaluation that needs run and content context |
 | `scripts/core/save_service.gd` | Autosave/load round trips |
 | `scripts/core/platform_services.gd` | Platform abstraction boundary |
@@ -242,9 +240,8 @@ shared state, autosave, and terminal presentation.
   `pit_boss_showdown` (`the_house_calls`) back-room route. See
   `docs/plans/grand_casino_endgame_design.md` for the authoritative endgame
   contract.
-- Prestige victory is implemented as a future code path through
-  `RunActionService`, but Act 1 keeps `data/prestige/purchases.json` empty and
-  the empty pack produces no menu, HUD, environment, or victory-screen hooks.
+- Prestige meta-progression is out of Act 1 scope and no prestige content pack
+  is loaded in the runtime.
 
 ## Repository Layout
 

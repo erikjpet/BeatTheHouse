@@ -39,92 +39,6 @@ const EMULATED_TOUCH_SUPPRESS_MS := 750
 const EMULATED_TOUCH_SUPPRESS_DISTANCE := 18.0
 const SURFACE_ANIMATION_FPS := 60.0
 const SURFACE_ANIMATION_INTERVAL_SEC := 1.0 / SURFACE_ANIMATION_FPS
-class AmbientSurfaceOverlay:
-	extends Control
-
-	var host = null
-
-	func _ready() -> void:
-		mouse_filter = Control.MOUSE_FILTER_IGNORE
-
-	func _draw() -> void:
-		if host != null:
-			host._draw_ambient_surface_overlay(self)
-
-	func surface_board_size() -> Vector2:
-		return host.surface_board_size() if host != null and host.has_method("surface_board_size") else VisualStyleScript.GAME_BOARD_SIZE
-
-	func surface_flicker() -> float:
-		return float(host.surface_flicker()) if host != null and host.has_method("surface_flicker") else float(Time.get_ticks_msec()) / 1000.0
-
-	func surface_animation_active(channel_id: String) -> bool:
-		return bool(host.surface_animation_active(channel_id)) if host != null and host.has_method("surface_animation_active") else false
-
-	func surface_elapsed(channel_id: String) -> float:
-		return float(host.surface_elapsed(channel_id)) if host != null and host.has_method("surface_elapsed") else 0.0
-
-	func surface_animation_progress(channel_id: String) -> float:
-		return float(host.surface_animation_progress(channel_id)) if host != null and host.has_method("surface_animation_progress") else 1.0
-
-	func surface_region_hovered(action: String, index: int = -1) -> bool:
-		return bool(host.surface_region_hovered(action, index)) if host != null and host.has_method("surface_region_hovered") else false
-
-	func surface_hovered_index(action: String) -> int:
-		return int(host.surface_hovered_index(action)) if host != null and host.has_method("surface_hovered_index") else -1
-
-	func surface_action_is_blocked(action: String) -> bool:
-		return bool(host.surface_action_is_blocked(action)) if host != null and host.has_method("surface_action_is_blocked") else false
-
-	func surface_add_exact_hit(rect: Rect2, action: String, index: int = -1) -> void:
-		if host != null and host.has_method("surface_add_exact_invisible_hit"):
-			host.surface_add_exact_invisible_hit(rect, action, index)
-
-	func surface_add_hit(rect: Rect2, action: String, index: int = -1, expand_touch_hit: bool = true) -> void:
-		if host != null and host.has_method("surface_add_invisible_hit"):
-			host.surface_add_invisible_hit(rect, action, index, expand_touch_hit)
-
-	func surface_add_invisible_hit(rect: Rect2, action: String, index: int = -1, expand_touch_hit: bool = true) -> void:
-		if host != null and host.has_method("surface_add_invisible_hit"):
-			host.surface_add_invisible_hit(rect, action, index, expand_touch_hit)
-
-	func surface_add_exact_invisible_hit(rect: Rect2, action: String, index: int = -1) -> void:
-		if host != null and host.has_method("surface_add_exact_invisible_hit"):
-			host.surface_add_exact_invisible_hit(rect, action, index)
-
-	func surface_add_cached_exact_hits(cache_key: String, rect_sources: Array, action: String) -> void:
-		if host != null and host.has_method("surface_add_cached_exact_hits"):
-			host.surface_add_cached_exact_hits(cache_key, rect_sources, action)
-
-	func surface_label(text: String, pos: Vector2, font_size: int, color: Color) -> void:
-		var font := get_theme_default_font()
-		draw_string(font, pos + Vector2(1, 1), text, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size, Color(0.0, 0.0, 0.0, 0.62))
-		draw_string(font, pos, text, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size, color)
-
-	func surface_label_plain(text: String, pos: Vector2, font_size: int, color: Color) -> void:
-		draw_string(get_theme_default_font(), pos, text, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size, color)
-
-	func surface_label_centered(text: String, rect: Rect2, font_size: int, color: Color) -> void:
-		var font := get_theme_default_font()
-		var fitted_size := _centered_label_fit_size(font, text, rect, font_size)
-		var ascent := font.get_ascent(fitted_size)
-		var descent := font.get_descent(fitted_size)
-		var baseline_y := rect.position.y + (rect.size.y - ascent - descent) * 0.5 + ascent
-		var shadow := Color(0.0, 0.0, 0.0, 0.62)
-		draw_string(font, Vector2(rect.position.x + 1.0, baseline_y + 1.0), text, HORIZONTAL_ALIGNMENT_CENTER, rect.size.x, fitted_size, shadow)
-		draw_string(font, Vector2(rect.position.x, baseline_y), text, HORIZONTAL_ALIGNMENT_CENTER, rect.size.x, fitted_size, color)
-
-	func surface_label_centered_plain(text: String, rect: Rect2, font_size: int, color: Color) -> void:
-		var font := get_theme_default_font()
-		var fitted_size := _centered_label_fit_size(font, text, rect, font_size)
-		var ascent := font.get_ascent(fitted_size)
-		var descent := font.get_descent(fitted_size)
-		var baseline_y := rect.position.y + (rect.size.y - ascent - descent) * 0.5 + ascent
-		draw_string(font, Vector2(rect.position.x, baseline_y), text, HORIZONTAL_ALIGNMENT_CENTER, rect.size.x, fitted_size, color)
-
-	func _centered_label_fit_size(font: Font, text: String, rect: Rect2, font_size: int) -> int:
-		if host != null and host.has_method("_centered_label_fit_size"):
-			return int(host._centered_label_fit_size(font, text, rect, font_size))
-		return font_size
 
 var game_id: String = ""
 var state: Dictionary = {}
@@ -140,7 +54,6 @@ var hovered_surface_index: int = -1
 var surface_animation_channels: Dictionary = {}
 var surface_sfx_player: Node
 var drunk_distortion_overlay: DrunkDistortionOverlay
-var ambient_surface_overlay: Control
 var drunk_effect_mode: String = "distortion"
 var surface_game_module: GameModule
 var continuous_redraw_was_active := false
@@ -162,7 +75,6 @@ var last_touch_press_position := Vector2(-100000.0, -100000.0)
 var surface_animation_redraw_accumulator := 0.0
 var surface_animation_redraw_count := 0
 var surface_animation_handoff_until_msec := 0
-var ambient_overlay_registered_hit_count := 0
 
 
 func set_game_module(game_module: GameModule) -> void:
@@ -182,7 +94,6 @@ func render_game_snapshot(snapshot: Dictionary) -> void:
 	drunk_effect_mode = _normalized_drunk_effect_mode(str(state.get("drunk_effect_mode", drunk_effect_mode)))
 	_update_drunk_distortion_overlay()
 	_update_surface_animation_channels()
-	_update_ambient_surface_overlay()
 	queue_redraw()
 
 
@@ -221,8 +132,6 @@ func current_view_snapshot() -> Dictionary:
 		"surface_continuous_redraw_active": _needs_continuous_redraw(),
 		"surface_animation_liveness_active": surface_animation_liveness_active(),
 		"surface_animation_handoff_active": _surface_animation_handoff_active(),
-		"surface_ambient_overlay": str(state.get("surface_ambient_overlay", "")),
-		"surface_ambient_overlay_active": _ambient_surface_overlay_active(),
 	}
 
 
@@ -254,8 +163,6 @@ func surface_runtime_status() -> Dictionary:
 		"surface_continuous_redraw_active": _needs_continuous_redraw(),
 		"surface_animation_liveness_active": surface_animation_liveness_active(),
 		"surface_animation_handoff_active": _surface_animation_handoff_active(),
-		"surface_ambient_overlay": str(state.get("surface_ambient_overlay", "")),
-		"surface_ambient_overlay_active": _ambient_surface_overlay_active(),
 	}
 
 
@@ -651,7 +558,6 @@ func _ready() -> void:
 	mouse_filter = Control.MOUSE_FILTER_STOP
 	clip_contents = true
 	_ensure_surface_sfx_player()
-	_ensure_ambient_surface_overlay()
 	_ensure_drunk_distortion_overlay()
 
 
@@ -744,19 +650,12 @@ func _process(delta: float) -> void:
 func _schedule_surface_animation_redraws(delta: float) -> void:
 	var redraw_demand := _surface_animation_redraw_demand()
 	var main_redraw := bool(redraw_demand.get("main", false))
-	var overlay_redraw := bool(redraw_demand.get("overlay", false))
-	if main_redraw or overlay_redraw:
+	if main_redraw:
 		if _surface_animation_redraw_due(delta):
-			if main_redraw:
-				queue_redraw()
-			if overlay_redraw and ambient_surface_overlay != null:
-				ambient_surface_overlay.queue_redraw()
+			queue_redraw()
 	elif continuous_redraw_was_active:
 		surface_animation_redraw_accumulator = 0.0
 		queue_redraw()
-	elif ambient_surface_overlay != null and ambient_surface_overlay.visible and not overlay_redraw:
-		surface_animation_redraw_accumulator = 0.0
-		ambient_surface_overlay.queue_redraw()
 	else:
 		surface_animation_redraw_accumulator = 0.0
 	continuous_redraw_was_active = main_redraw
@@ -765,7 +664,6 @@ func _schedule_surface_animation_redraws(delta: float) -> void:
 func _draw() -> void:
 	var draw_started_usec := Time.get_ticks_usec()
 	hit_regions = []
-	ambient_overlay_registered_hit_count = 0
 	active_design_scale = Vector2.ONE
 	active_design_offset = Vector2.ZERO
 	design_space_active = false
@@ -781,12 +679,9 @@ func _draw() -> void:
 			draw_rect(Rect2(0, y, board_size.x, 16), C_DARK_2 if (y / 16) % 2 == 0 else C_PANEL)
 	var rendered := false
 	if surface_game_module != null and uses_foundation_snapshot:
-		var overlay_id := str(state.get("surface_ambient_overlay", ""))
-		var overlay_active := _ambient_surface_overlay_active()
 		rendered = bool(surface_game_module.draw_surface(self, state, {
 			"selected_view_index": selected_view_index,
-			"surface_dynamic_overlay_active": overlay_active,
-			"surface_dynamic_overlay_id": overlay_id if overlay_active else "",
+			"surface_dynamic_overlay_active": _surface_dynamic_overlay_channel_active(),
 		}))
 	surface_end_design_space()
 	if not rendered:
@@ -810,35 +705,6 @@ func _ensure_surface_sfx_player() -> void:
 	add_child(surface_sfx_player)
 
 
-func _ensure_ambient_surface_overlay() -> void:
-	if ambient_surface_overlay != null:
-		return
-	var overlay := AmbientSurfaceOverlay.new()
-	overlay.name = "AmbientSurfaceOverlay"
-	overlay.host = self
-	overlay.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	overlay.set_anchors_preset(Control.PRESET_FULL_RECT)
-	overlay.visible = false
-	ambient_surface_overlay = overlay
-	add_child(ambient_surface_overlay)
-
-
-func _update_ambient_surface_overlay() -> void:
-	_ensure_ambient_surface_overlay()
-	if ambient_surface_overlay == null:
-		return
-	ambient_surface_overlay.visible = _ambient_surface_overlay_active()
-	ambient_surface_overlay.queue_redraw()
-
-
-func _ambient_surface_overlay_active() -> bool:
-	return _surface_overlay_animation_redraw_active()
-
-
-func _ambient_surface_overlay_needs_redraw() -> bool:
-	return _surface_overlay_animation_redraw_active()
-
-
 func _screen_effect_overlay_needs_redraw() -> bool:
 	if int(state.get("suspicion_level", 0)) > 0:
 		return true
@@ -859,33 +725,6 @@ func _surface_dynamic_overlay_channel_active() -> bool:
 		if not channel_id.is_empty() and surface_animation_active(channel_id):
 			return true
 	return false
-
-
-func _draw_ambient_surface_overlay(canvas: Control) -> void:
-	var draw_started_usec := Time.get_ticks_usec()
-	if ambient_overlay_registered_hit_count > 0:
-		hit_regions.resize(maxi(0, hit_regions.size() - ambient_overlay_registered_hit_count))
-		ambient_overlay_registered_hit_count = 0
-	canvas.draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
-	if not _ambient_surface_overlay_active():
-		_record_draw_performance(draw_started_usec)
-		return
-	var hit_count_before_overlay := hit_regions.size()
-	var scale := _board_scale()
-	canvas.draw_set_transform(_board_offset(scale), 0.0, Vector2(scale, scale))
-	_draw_surface_dynamic_overlay(canvas)
-	ambient_overlay_registered_hit_count = maxi(0, hit_regions.size() - hit_count_before_overlay)
-	_draw_pressure_overlay_on(canvas)
-	_draw_drunk_overlay_on(canvas)
-	canvas.draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
-	_record_draw_performance(draw_started_usec)
-
-
-func _draw_surface_dynamic_overlay(canvas: Control) -> bool:
-	if surface_game_module == null:
-		return false
-	var overlay_id := str(state.get("surface_ambient_overlay", ""))
-	return bool(surface_game_module.draw_surface_dynamic_overlay(canvas, state, overlay_id))
 
 
 func _on_surface_sfx_music_cue(cue_id: String, context: Dictionary) -> void:
@@ -993,15 +832,13 @@ func _needs_continuous_redraw() -> bool:
 
 func _surface_animation_liveness_active() -> bool:
 	var demand := _surface_animation_redraw_demand()
-	return bool(demand.get("main", false)) or bool(demand.get("overlay", false))
+	return bool(demand.get("main", false))
 
 
 func _surface_animation_redraw_demand() -> Dictionary:
 	var main := _surface_main_animation_redraw_active()
-	var overlay := _surface_overlay_animation_redraw_active()
 	return {
 		"main": main,
-		"overlay": overlay,
 		"handoff": _surface_animation_handoff_active(),
 	}
 
@@ -1011,14 +848,13 @@ func _surface_main_animation_redraw_active() -> bool:
 		return false
 	for channel_id in surface_animation_channels.keys():
 		var normalized_id := str(channel_id)
-		if surface_animation_active(normalized_id) and not _surface_channel_redraw_owned_by_overlay(normalized_id):
+		if surface_animation_active(normalized_id):
 			return true
-	var ambient_redraw_available := _ambient_surface_overlay_active()
-	if int(state.get("suspicion_level", 0)) > 0 and not ambient_redraw_available:
+	if int(state.get("suspicion_level", 0)) > 0:
 		return true
 	if drunk_distortion_overlay != null and drunk_distortion_overlay.visible:
 		return true
-	if drunk_effect_mode == "classic" and int(state.get("drunk_level", 0)) >= 12 and not ambient_redraw_available:
+	if drunk_effect_mode == "classic" and int(state.get("drunk_level", 0)) >= 12:
 		return true
 	if _surface_animation_handoff_active():
 		return true
@@ -1035,30 +871,6 @@ func _mark_surface_animation_handoff(now_msec: int) -> void:
 
 func _surface_animation_handoff_active() -> bool:
 	return surface_animation_handoff_until_msec > Time.get_ticks_msec()
-
-
-func _surface_overlay_animation_redraw_active() -> bool:
-	if reduce_motion:
-		return false
-	if _screen_effect_overlay_needs_redraw():
-		return true
-	if _surface_dynamic_overlay_channel_active():
-		return true
-	var overlay_id := str(state.get("surface_ambient_overlay", ""))
-	return overlay_id == "table_idle" or overlay_id == "roulette_full_idle"
-
-
-func _surface_channel_redraw_owned_by_overlay(channel_id: String) -> bool:
-	if channel_id.is_empty() or not _surface_overlay_animation_redraw_active():
-		return false
-	var channels_value: Variant = state.get("surface_dynamic_overlay_channels", [])
-	if typeof(channels_value) != TYPE_ARRAY:
-		return false
-	var channels: Array = channels_value as Array
-	for value in channels:
-		if str(value) == channel_id:
-			return true
-	return false
 
 
 func _surface_animation_redraw_due(delta: float) -> bool:

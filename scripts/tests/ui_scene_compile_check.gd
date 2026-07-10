@@ -437,12 +437,28 @@ func _check_world_map_selection_stable_component() -> bool:
 	selected_snapshot["selected_node_id"] = "east"
 	selected_snapshot["map_focus_node_ids"] = ["east"]
 	canvas.call("set_map_snapshot", selected_snapshot)
+	canvas.size = Vector2(561, 360)
+	var jitter_view: Dictionary = canvas.call("current_view_snapshot")
+	var jitter_bounds: Dictionary = jitter_view.get("map_bounds", {}) if typeof(jitter_view.get("map_bounds", {})) == TYPE_DICTIONARY else {}
+	canvas.size = Vector2(560, 360)
 	var after_view: Dictionary = canvas.call("current_view_snapshot")
 	var after_bounds: Dictionary = after_view.get("map_bounds", {}) if typeof(after_view.get("map_bounds", {})) == TYPE_DICTIONARY else {}
 	root.remove_child(canvas)
 	canvas.free()
+	if not _map_bounds_equal(before_bounds, jitter_bounds):
+		push_error("World map canvas live size jitter changed the view window: before %s jitter %s." % [JSON.stringify(before_bounds), JSON.stringify(jitter_bounds)])
+		return false
+	if not _map_marker_centers_equal(before_view, jitter_view):
+		push_error("World map canvas live size jitter changed marker screen centers.")
+		return false
 	if not _map_bounds_equal(before_bounds, after_bounds):
 		push_error("World map canvas selection changed the view window: before %s after %s." % [JSON.stringify(before_bounds), JSON.stringify(after_bounds)])
+		return false
+	if not _map_canvas_size_equal(before_view, after_view):
+		push_error("World map canvas selection changed the rendered canvas size: before %s after %s." % [JSON.stringify(before_view.get("canvas_size", {})), JSON.stringify(after_view.get("canvas_size", {}))])
+		return false
+	if not _map_marker_centers_equal(before_view, after_view):
+		push_error("World map canvas selection changed marker screen centers.")
 		return false
 	return true
 
@@ -1198,13 +1214,30 @@ func _run() -> void:
 		push_error("Main menu still shows the old READ / BUILD / ESCAPE pillar boxes.")
 		quit(1)
 		return
-	if _has_visible_text(app, "Prestige") or _has_visible_text(app, "Down Payment on Act 2"):
-		push_error("Main menu exposed an Act 2 prestige hook while prestige data is empty.")
-		quit(1)
-		return
 	var collapsed_panel_size: Vector2 = start_menu_snapshot.get("menu_panel_size", Vector2.ZERO)
 	if collapsed_panel_size.x > 800.0 or collapsed_panel_size.y > 560.0:
 		push_error("Main menu panel did not shrink to fit the collapsed internal controls.")
+		quit(1)
+		return
+	var menu_panel: Control = app.get("main_menu_panel")
+	var collapsed_start_menu_controls: Control = app.get("start_menu_controls")
+	var start_menu_stack: Control = app.get("start_menu_stack")
+	if _control_tree_has_scroll_container(menu_panel):
+		push_error("Main menu should fit its interface without a scrollbar.")
+		quit(1)
+		return
+	if menu_panel == null or collapsed_start_menu_controls == null or not _control_rect_inside(collapsed_start_menu_controls, menu_panel):
+		push_error("Main menu controls do not fit inside the menu panel.")
+		quit(1)
+		return
+	if start_menu_stack == null or not _control_rect_inside(start_menu_stack, menu_panel):
+		push_error("Main menu stack does not fit inside the menu panel.")
+		quit(1)
+		return
+	var collapsed_menu_rect := _snapshot_rect(start_menu_snapshot.get("menu_panel_rect", {}))
+	var collapsed_stack_rect := _snapshot_rect(start_menu_snapshot.get("start_menu_stack_rect", {}))
+	if collapsed_menu_rect.size.x <= 0.0 or collapsed_stack_rect.size.x <= 0.0 or not collapsed_menu_rect.grow(1.0).encloses(collapsed_stack_rect):
+		push_error("Main menu snapshot shows clipped collapsed content: panel=%s stack=%s." % [str(collapsed_menu_rect), str(collapsed_stack_rect)])
 		quit(1)
 		return
 	var content_group_options: Array = start_menu_snapshot.get("content_groups", [])
@@ -1239,8 +1272,13 @@ func _run() -> void:
 		push_error("Main menu panel did not resize cleanly around the opened run content controls.")
 		quit(1)
 		return
+	var expanded_menu_rect := _snapshot_rect(start_menu_snapshot.get("menu_panel_rect", {}))
+	var expanded_stack_rect := _snapshot_rect(start_menu_snapshot.get("start_menu_stack_rect", {}))
+	if expanded_menu_rect.size.x <= 0.0 or expanded_stack_rect.size.x <= 0.0 or not expanded_menu_rect.grow(1.0).encloses(expanded_stack_rect):
+		push_error("Main menu snapshot shows clipped expanded content: panel=%s stack=%s." % [str(expanded_menu_rect), str(expanded_stack_rect)])
+		quit(1)
+		return
 	var viewport_size := root.get_visible_rect().size
-	var menu_panel: Control = app.get("main_menu_panel")
 	var menu_rect := menu_panel.get_global_rect() if menu_panel != null else Rect2()
 	var content_panel_rect := content_group_panel.get_global_rect()
 	if menu_rect.position.y < 16.0 or menu_rect.end.y > viewport_size.y - 16.0:
@@ -1612,15 +1650,6 @@ func _run() -> void:
 	if not _interactable_copy_is_concise(spatial_objects, "initial room objects"):
 		quit(1)
 		return
-	if not _interactable_by_type(spatial_objects, "prestige").is_empty() or _interactable_object_id_with_prefix(spatial_objects, "prestige:"):
-		push_error("Empty prestige data produced a room interactable object.")
-		quit(1)
-		return
-	var prestige_category_snapshot: Dictionary = app.call("current_action_category_snapshot")
-	if _category_has_fragment(prestige_category_snapshot.get("categories", []), "prestige"):
-		push_error("Run action categories exposed a prestige menu while prestige data is empty.")
-		quit(1)
-		return
 	var first_interactable: Dictionary = spatial_objects[0]
 	for field in ["object_id", "object_type", "source_id", "label", "enabled", "normalized_rect", "focus_point", "available_actions"]:
 		if not first_interactable.has(field):
@@ -1704,10 +1733,6 @@ func _run() -> void:
 	var canvas_object := _canvas_object_by_id(canvas_snapshot.get("objects", []), focus_object_id)
 	if canvas_object.is_empty():
 		push_error("M1.6 canvas did not receive InteractableObject records for visible hotspots.")
-		quit(1)
-		return
-	if _canvas_has_object_type(canvas_snapshot.get("objects", []), "prestige") or _canvas_object_id_with_prefix(canvas_snapshot.get("objects", []), "prestige:"):
-		push_error("Empty prestige data produced a canvas room object.")
 		quit(1)
 		return
 	if not _canvas_preserves_art_aspect(canvas_snapshot, "live environment canvas"):
@@ -1839,12 +1864,6 @@ func _run() -> void:
 	var objective_snapshot: Dictionary = app.call("current_objective_hud_snapshot")
 	if str(objective_snapshot.get("text", "")) != objective_label.text:
 		push_error("M2-FUN objective HUD snapshot did not match visible objective text.")
-		quit(1)
-		return
-	var empty_prestige: Dictionary = objective_snapshot.get("prestige", {}) if typeof(objective_snapshot.get("prestige", {})) == TYPE_DICTIONARY else {}
-	var next_objective: Dictionary = objective_snapshot.get("next_objective", {}) if typeof(objective_snapshot.get("next_objective", {})) == TYPE_DICTIONARY else {}
-	if not empty_prestige.is_empty() or str(next_objective.get("object_type", "")) == "prestige" or str(objective_snapshot.get("text", "")).findn("prestige") != -1 or str(objective_snapshot.get("text", "")).find("Down Payment on Act 2") != -1:
-		push_error("Objective HUD exposed prestige while prestige data is empty.")
 		quit(1)
 		return
 	var run_hud_snapshot: Dictionary = app.call("current_run_status_hud_snapshot")
@@ -2256,16 +2275,11 @@ func _run() -> void:
 	roulette_full_idle_canvas.call("render_game_snapshot", {
 		"game_id": "roulette",
 		"surface_renderer": "roulette",
-		"surface_ambient_overlay": "",
 		"surface_animates_idle": true,
 		"reduce_motion": false,
 	})
 	await process_frame
 	var roulette_full_idle_start_snapshot: Dictionary = roulette_full_idle_canvas.call("current_view_snapshot")
-	if bool(roulette_full_idle_start_snapshot.get("surface_ambient_overlay_active", false)):
-		push_error("Roulette idle should not activate the deprecated ambient overlay.")
-		quit(1)
-		return
 	if not bool(roulette_full_idle_start_snapshot.get("surface_continuous_redraw_active", false)):
 		push_error("Roulette full-wheel idle must animate through the single main surface.")
 		quit(1)
@@ -2283,7 +2297,6 @@ func _run() -> void:
 	table_idle_canvas.call("render_game_snapshot", {
 		"game_id": "baccarat",
 		"surface_renderer": "baccarat",
-		"surface_ambient_overlay": "",
 		"surface_animates_idle": true,
 		"reduce_motion": false,
 		"dealer_profile": {"attention_base": 24},
@@ -2302,10 +2315,6 @@ func _run() -> void:
 	})
 	await process_frame
 	var table_idle_start_snapshot: Dictionary = table_idle_canvas.call("current_view_snapshot")
-	if bool(table_idle_start_snapshot.get("surface_ambient_overlay_active", false)):
-		push_error("Table idle should not activate the deprecated ambient overlay.")
-		quit(1)
-		return
 	if not bool(table_idle_start_snapshot.get("surface_continuous_redraw_active", false)):
 		push_error("Table idle must animate through the single main surface.")
 		quit(1)
@@ -2458,6 +2467,14 @@ func _run() -> void:
 		return
 	var focused_game_surface_snapshot: Dictionary = focused_game_surface.call("current_view_snapshot")
 	if not _canvas_preserves_art_aspect(focused_game_surface_snapshot, "focused game surface"):
+		quit(1)
+		return
+	if str(focused_game_surface_snapshot.get("game_id", "")) == "blackjack" and not _surface_hit_groups_disjoint(
+		focused_game_surface_snapshot,
+		["blackjack_chip"],
+		["blackjack_clear_bet", "blackjack_max_bet"],
+		"blackjack betting chips and clear/max buttons"
+	):
 		quit(1)
 		return
 	var surface_back_position: Vector2 = focused_game_surface.call("local_position_for_surface_action", "surface_back", -1)
@@ -4218,7 +4235,8 @@ func _run() -> void:
 		push_error("World map did not allow selecting the current node.")
 		quit(1)
 		return
-	await process_frame
+	for _layout_index in range(3):
+		await process_frame
 	var current_node_screen: Dictionary = app.call("current_screen_snapshot")
 	if not str(current_node_screen.get("world_map_detail_text", "")).contains("You are here."):
 		push_error("Selecting the current world-map node did not show the You are here state.")
@@ -4230,6 +4248,14 @@ func _run() -> void:
 		push_error("Selecting the current world-map node moved the map view window: before %s after %s." % [JSON.stringify(map_bounds), JSON.stringify(current_node_bounds)])
 		quit(1)
 		return
+	if not _map_canvas_size_equal(map_view, current_node_map_view):
+		push_error("Selecting the current world-map node changed the canvas size: before %s after %s." % [JSON.stringify(map_view.get("canvas_size", {})), JSON.stringify(current_node_map_view.get("canvas_size", {}))])
+		quit(1)
+		return
+	if not _map_marker_centers_equal(map_view, current_node_map_view):
+		push_error("Selecting the current world-map node changed marker screen centers.")
+		quit(1)
+		return
 	var serialized_before_map_select := JSON.stringify(app.call("serialized_run_state"))
 	var target_node_button := map_canvas.get_node_or_null("WorldMapNode_%s" % travel_target_id) as Button
 	if target_node_button == null:
@@ -4237,7 +4263,8 @@ func _run() -> void:
 		quit(1)
 		return
 	target_node_button.emit_signal("pressed")
-	await process_frame
+	for _layout_index in range(3):
+		await process_frame
 	var selected_map_screen: Dictionary = app.call("current_screen_snapshot")
 	if str(selected_map_screen.get("selected_world_map_node_id", "")) != travel_target_id:
 		push_error("World map first-open icon press did not select %s." % travel_target_id)
@@ -4247,6 +4274,14 @@ func _run() -> void:
 	var selected_map_bounds: Dictionary = selected_map_view.get("map_bounds", {}) if typeof(selected_map_view.get("map_bounds", {})) == TYPE_DICTIONARY else {}
 	if not _map_bounds_equal(map_bounds, selected_map_bounds):
 		push_error("Selecting a world-map target moved the map view window: before %s after %s." % [JSON.stringify(map_bounds), JSON.stringify(selected_map_bounds)])
+		quit(1)
+		return
+	if not _map_canvas_size_equal(map_view, selected_map_view):
+		push_error("Selecting a world-map target changed the canvas size: before %s after %s." % [JSON.stringify(map_view.get("canvas_size", {})), JSON.stringify(selected_map_view.get("canvas_size", {}))])
+		quit(1)
+		return
+	if not _map_marker_centers_equal(map_view, selected_map_view):
+		push_error("Selecting a world-map target changed marker screen centers.")
 		quit(1)
 		return
 	var detail_text := str(selected_map_screen.get("world_map_detail_text", ""))
@@ -4261,6 +4296,9 @@ func _run() -> void:
 	var badge_slot := app.get("world_map_badge_slot") as VBoxContainer
 	if badge_slot == null or badge_slot.get_child_count() <= 0:
 		push_error("World map route glyph slot was empty after selecting a route.")
+		quit(1)
+		return
+	if not _badge_slot_icon_only_with_tooltips(badge_slot, "World map route glyphs"):
 		quit(1)
 		return
 	var badge_child_count := badge_slot.get_child_count()
@@ -4498,10 +4536,6 @@ func _run() -> void:
 		push_error("Victory summary did not preserve the route id.")
 		quit(1)
 		return
-	if str(victory_summary.get("route", "")).findn("prestige") != -1 or str(victory_summary.get("message", "")).findn("prestige") != -1 or _has_visible_text(app, "Prestige") or _has_visible_text(app, "Down Payment on Act 2"):
-		push_error("Victory screen exposed a prestige hook while prestige data is empty.")
-		quit(1)
-		return
 	if str(victory_summary.get("seed", "")) != "UI-VICTORY-SEED" or int(victory_summary.get("bankroll", 0)) != 540 or int(victory_summary.get("heat", 0)) != 18:
 		push_error("Victory summary did not include seed, final bankroll, and final heat.")
 		quit(1)
@@ -4649,11 +4683,18 @@ func _check_meta_home_launcher_opens_room(app: Control) -> bool:
 	if not bool(app.call("select_world_map_node", meta_target_id)):
 		push_error("Meta world map rejected selecting %s." % meta_target_id)
 		return false
-	await process_frame
+	for _layout_index in range(3):
+		await process_frame
 	var selected_meta_map_view: Dictionary = meta_map_canvas.call("current_view_snapshot")
 	var selected_meta_bounds: Dictionary = selected_meta_map_view.get("map_bounds", {}) if typeof(selected_meta_map_view.get("map_bounds", {})) == TYPE_DICTIONARY else {}
 	if not _map_bounds_equal(meta_map_bounds, selected_meta_bounds):
 		push_error("Selecting a meta world-map node moved the map view window: before %s after %s." % [JSON.stringify(meta_map_bounds), JSON.stringify(selected_meta_bounds)])
+		return false
+	if not _map_canvas_size_equal(meta_map_view, selected_meta_map_view):
+		push_error("Selecting a meta world-map node changed the canvas size: before %s after %s." % [JSON.stringify(meta_map_view.get("canvas_size", {})), JSON.stringify(selected_meta_map_view.get("canvas_size", {}))])
+		return false
+	if not _map_marker_centers_equal(meta_map_view, selected_meta_map_view):
+		push_error("Selecting a meta world-map node changed marker screen centers.")
 		return false
 	app.call("close_world_map")
 	await process_frame
@@ -4705,6 +4746,30 @@ func _control_fits_viewport(control: Variant, viewport_rect, label: String) -> b
 		push_error("%s is clipped outside the visible viewport: %s within %s." % [label, str(rect), str(viewport_rect)])
 		return false
 	return true
+
+
+func _control_rect_inside(inner: Control, outer: Control) -> bool:
+	if inner == null or outer == null:
+		return false
+	var inner_rect := inner.get_global_rect()
+	var outer_rect := outer.get_global_rect()
+	return inner_rect.position.x >= outer_rect.position.x - 1.0 \
+		and inner_rect.position.y >= outer_rect.position.y - 1.0 \
+		and inner_rect.end.x <= outer_rect.end.x + 1.0 \
+		and inner_rect.end.y <= outer_rect.end.y + 1.0
+
+
+func _control_tree_has_scroll_container(node: Node) -> bool:
+	if node == null:
+		return false
+	if node is CanvasItem and not (node as CanvasItem).visible:
+		return false
+	if node is ScrollContainer:
+		return true
+	for child in node.get_children():
+		if _control_tree_has_scroll_container(child):
+			return true
+	return false
 
 
 func _control_clips_contents(control: Variant, label: String) -> bool:
@@ -4820,6 +4885,22 @@ func _selected_info_text_fits(canvas_value: Variant, label: String, required_fra
 		push_error("%s info card covered the selected environment object." % label)
 		return false
 	var max_chars := int(selected_info.get("max_line_chars", 42))
+	var badge_entries: Array = selected_info.get("badge_hit_entries", [])
+	var body_text_start_y := float(selected_info.get("body_text_start_y", card_rect.position.y))
+	for badge_entry_value in badge_entries:
+		if typeof(badge_entry_value) != TYPE_DICTIONARY:
+			continue
+		var badge_entry: Dictionary = badge_entry_value
+		var badge_rect := _snapshot_rect(badge_entry.get("rect", {}))
+		if badge_rect.size.x <= 0.0 or badge_rect.size.y <= 0.0:
+			push_error("%s info-card badge exposed an invalid hover rect." % label)
+			return false
+		if badge_rect.end.y > body_text_start_y - 0.01:
+			push_error("%s info-card badge row overlaps body text." % label)
+			return false
+		if str(badge_entry.get("tooltip", "")).strip_edges().is_empty():
+			push_error("%s info-card badge did not expose hover details." % label)
+			return false
 	var joined := ""
 	for line in lines:
 		var text := str(line)
@@ -4838,6 +4919,48 @@ func _selected_info_text_fits(canvas_value: Variant, label: String, required_fra
 			push_error("%s info card omitted expected context: %s" % [label, str(fragment)])
 			return false
 	return true
+
+
+func _badge_slot_icon_only_with_tooltips(root: Control, label: String) -> bool:
+	var badge_cells := _badge_cell_controls(root)
+	if badge_cells.is_empty():
+		push_error("%s did not expose any badge cells." % label)
+		return false
+	for cell_value in badge_cells:
+		var cell := cell_value as Control
+		if cell == null or not cell.visible:
+			continue
+		if cell.tooltip_text.strip_edges().is_empty():
+			push_error("%s badge cell did not expose hover details." % label)
+			return false
+		if _visible_badge_text_label_count(cell) > 0:
+			push_error("%s badge cell still rendered text next to the icon." % label)
+			return false
+	return true
+
+
+func _badge_cell_controls(root: Control) -> Array:
+	var result: Array = []
+	if root.tooltip_text.strip_edges() != "":
+		result.append(root)
+	for child in root.get_children():
+		var child_control := child as Control
+		if child_control == null:
+			continue
+		result.append_array(_badge_cell_controls(child_control))
+	return result
+
+
+func _visible_badge_text_label_count(root: Control) -> int:
+	var count := 0
+	for child in root.get_children():
+		var label := child as Label
+		if label != null and label.visible and label.text.strip_edges() != "":
+			count += 1
+		var child_control := child as Control
+		if child_control != null:
+			count += _visible_badge_text_label_count(child_control)
+	return count
 
 
 func _canvas_local_center_for_object(canvas: Control, object_data: Dictionary) -> Vector2:
@@ -5115,6 +5238,40 @@ func _check_in_run_menu_flow(app: Control, save_service: SaveService, viewport_r
 		return false
 	if not _has_visible_text(app, "Run abandoned"):
 		push_error("Abandon Run did not present a clear terminal summary title.")
+		return false
+	if not await _check_run_menu_main_menu_button_closes_overlay(app, "UI-RUN-MENU-MAIN", false):
+		return false
+	if not await _check_run_menu_main_menu_button_closes_overlay(app, "UI-RUN-MENU-META", true):
+		return false
+	return true
+
+
+func _check_run_menu_main_menu_button_closes_overlay(app: Control, seed: String, meta_session: bool) -> bool:
+	if meta_session:
+		app.call("return_to_main_menu")
+		await process_frame
+		app.call("open_meta_home")
+	else:
+		app.call("start_foundation_run", seed)
+	await process_frame
+	app.call("open_run_menu")
+	await process_frame
+	var menu_snapshot: Dictionary = app.call("current_run_menu_snapshot")
+	if not bool(menu_snapshot.get("visible", false)):
+		push_error("Run menu Main Menu regression could not open the overlay.")
+		return false
+	var main_menu_button: Button = app.get("run_menu_main_menu_button")
+	if main_menu_button == null or main_menu_button.disabled:
+		push_error("Run menu Main Menu regression could not press the button.")
+		return false
+	main_menu_button.emit_signal("pressed")
+	await process_frame
+	var after_snapshot: Dictionary = app.call("current_run_menu_snapshot")
+	if bool(after_snapshot.get("visible", true)):
+		push_error("Run menu Main Menu button left the overlay visible after one press%s." % (" in meta home" if meta_session else ""))
+		return false
+	if str(app.call("current_screen_snapshot").get("screen", "")) != "START":
+		push_error("Run menu Main Menu button did not return to the start screen%s." % (" from meta home" if meta_session else ""))
 		return false
 	return true
 
@@ -6542,6 +6699,44 @@ func _surface_hit_rect(regions: Array, action: String) -> Rect2:
 	return Rect2()
 
 
+func _surface_hit_groups_disjoint(snapshot: Dictionary, left_actions: Array, right_actions: Array, label: String) -> bool:
+	var left_rects := _surface_hit_rects(snapshot, left_actions)
+	var right_rects := _surface_hit_rects(snapshot, right_actions)
+	if left_rects.is_empty() or right_rects.is_empty():
+		push_error("%s could not expose both hit-region groups." % label)
+		return false
+	for left_rect_value in left_rects:
+		if typeof(left_rect_value) != TYPE_RECT2:
+			continue
+		var left_rect: Rect2 = left_rect_value
+		for right_rect_value in right_rects:
+			if typeof(right_rect_value) != TYPE_RECT2:
+				continue
+			var right_rect: Rect2 = right_rect_value
+			if left_rect.grow(0.5).intersects(right_rect.grow(0.5)):
+				push_error("%s overlap: %s intersects %s." % [label, str(left_rect), str(right_rect)])
+				return false
+	return true
+
+
+func _surface_hit_rects(snapshot: Dictionary, actions: Array) -> Array:
+	var action_lookup: Dictionary = {}
+	for action_value in actions:
+		action_lookup[str(action_value)] = true
+	var rects: Array = []
+	var regions: Array = snapshot.get("surface_hit_actions", [])
+	for region_value in regions:
+		if typeof(region_value) != TYPE_DICTIONARY:
+			continue
+		var region: Dictionary = region_value
+		if not action_lookup.has(str(region.get("action", ""))):
+			continue
+		var rect: Variant = region.get("rect", Rect2())
+		if typeof(rect) == TYPE_RECT2:
+			rects.append(rect as Rect2)
+	return rects
+
+
 func _has_visible_text(node: Node, text: String) -> bool:
 	if node == null:
 		return false
@@ -6682,6 +6877,46 @@ func _map_bounds_equal(a: Dictionary, b: Dictionary) -> bool:
 		if absf(float(a.get(key, -999.0)) - float(b.get(key, 999.0))) > 0.0001:
 			return false
 	return true
+
+
+func _map_canvas_size_equal(a: Dictionary, b: Dictionary) -> bool:
+	var a_size: Dictionary = a.get("canvas_size", {}) if typeof(a.get("canvas_size", {})) == TYPE_DICTIONARY else {}
+	var b_size: Dictionary = b.get("canvas_size", {}) if typeof(b.get("canvas_size", {})) == TYPE_DICTIONARY else {}
+	for key in ["x", "y"]:
+		if absf(float(a_size.get(key, -999.0)) - float(b_size.get(key, 999.0))) > 0.001:
+			return false
+	return true
+
+
+func _map_marker_centers_equal(a: Dictionary, b: Dictionary) -> bool:
+	var a_centers := _map_marker_centers(a)
+	var b_centers := _map_marker_centers(b)
+	if a_centers.keys().size() != b_centers.keys().size():
+		return false
+	for marker_id_value in a_centers.keys():
+		var marker_id := str(marker_id_value)
+		if not b_centers.has(marker_id):
+			return false
+		var a_position: Vector2 = a_centers.get(marker_id, Vector2.ZERO)
+		var b_position: Vector2 = b_centers.get(marker_id, Vector2.INF)
+		if a_position.distance_to(b_position) > 0.25:
+			return false
+	return true
+
+
+func _map_marker_centers(view: Dictionary) -> Dictionary:
+	var result: Dictionary = {}
+	for marker_value in _copy_array(view.get("icon_markers", [])):
+		if typeof(marker_value) != TYPE_DICTIONARY:
+			continue
+		var marker: Dictionary = marker_value
+		var marker_id := str(marker.get("id", "")).strip_edges()
+		var center_value: Variant = marker.get("screen_center", {})
+		if marker_id.is_empty() or typeof(center_value) != TYPE_DICTIONARY:
+			continue
+		var center: Dictionary = center_value
+		result[marker_id] = Vector2(float(center.get("x", 0.0)), float(center.get("y", 0.0)))
+	return result
 
 
 func _copy_array(value: Variant) -> Array:

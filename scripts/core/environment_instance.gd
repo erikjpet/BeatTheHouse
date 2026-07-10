@@ -606,9 +606,6 @@ static func _fallback_object_rect(object_type: String, index: int) -> Rect2:
 			var container_columns := 4
 			center = Vector2(0.22 + float(index % container_columns) * 0.18, 0.76 + float(index / container_columns) * 0.11)
 			size = Vector2(104.0 / ENVIRONMENT_BOARD_SIZE.x, 58.0 / ENVIRONMENT_BOARD_SIZE.y)
-		"prestige":
-			center = Vector2(0.16 + float(index % 2) * 0.14, 0.30)
-			size = Vector2(112.0 / ENVIRONMENT_BOARD_SIZE.x, 58.0 / ENVIRONMENT_BOARD_SIZE.y)
 	return _clamped_rect_from_center(center, size)
 
 
@@ -901,7 +898,7 @@ static func _prune_inactive_object_rects(object_rects: Dictionary, active_object
 
 
 static func _is_managed_object_id(object_id: String) -> bool:
-	for prefix in ["game:", "event:", "item:", "shopkeeper:", "travel:", "service:", "lender:", "game_hook:", "dialogue:", "home_tenure:", "home_storage:", "home_container:", "prestige:"]:
+	for prefix in ["game:", "event:", "item:", "shopkeeper:", "travel:", "service:", "lender:", "game_hook:", "dialogue:", "home_tenure:", "home_storage:", "home_container:"]:
 		if object_id.begins_with(prefix):
 			return true
 	return false

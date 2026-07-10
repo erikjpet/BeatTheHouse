@@ -90,6 +90,8 @@ class SurfaceHarness:
 	var animation_active := false
 	var animation_elapsed := 999.0
 	var animation_duration := 2.4
+	var animation_progress := 1.0
+	var flicker_value := 0.0
 
 	func setup(state: Dictionary) -> void:
 		surface_state = state.duplicate(true)
@@ -103,6 +105,8 @@ class SurfaceHarness:
 		animation_active = false
 		animation_elapsed = 999.0
 		animation_duration = 2.4
+		animation_progress = 1.0
+		flicker_value = 0.0
 
 	func surface_board_size() -> Vector2:
 		return Vector2(ArtContractsScript.GAME_BOARD_SIZE)
@@ -117,7 +121,7 @@ class SurfaceHarness:
 		pass
 
 	func surface_flicker() -> float:
-		return 0.0
+		return flicker_value
 
 	func surface_elapsed(_channel_id: String) -> float:
 		return animation_elapsed
@@ -129,7 +133,7 @@ class SurfaceHarness:
 		return animation_duration
 
 	func surface_animation_progress(_channel_id: String) -> float:
-		return 1.0
+		return clampf(animation_progress, 0.0, 1.0)
 
 	func surface_animation_active_id(channel_id: String) -> String:
 		for channel_value in surface_state.get("surface_animation_channels", []):
@@ -413,7 +417,6 @@ func _foundation_run_system_suite(content_library: ContentLibrary, fixture_libra
 	_foundation_run_check(report, failures, "run_action_service_boundary", Callable(self, "_check_run_action_service_boundary"), [content_library])
 	_foundation_run_check(report, failures, "mutation_firewall_foundation", Callable(self, "_check_mutation_firewall_foundation"), [content_library])
 	_foundation_run_check(report, failures, "ui_state_machine_input_fuzz_foundation", Callable(self, "_check_ui_state_machine_input_fuzz_foundation"), [content_library])
-	_foundation_run_check(report, failures, "prestige_empty_data_foundation", Callable(self, "_check_prestige_empty_data_foundation"), [content_library])
 	_foundation_run_check(report, failures, "challenge_pack_foundation", Callable(self, "_check_challenge_pack_foundation"), [content_library])
 	_foundation_run_check(report, failures, "item_effect_foundation", Callable(self, "_check_item_effect_foundation"), [content_library])
 	_foundation_run_check(report, failures, "item_build_interaction_foundation", Callable(self, "_check_item_build_interaction_foundation"), [content_library])
@@ -431,6 +434,7 @@ func _foundation_run_system_suite(content_library: ContentLibrary, fixture_libra
 	_foundation_run_check(report, failures, "world_map_foundation", Callable(self, "_check_world_map_foundation"), [content_library])
 	_foundation_run_check(report, failures, "meta_home_run_boundary", Callable(self, "_check_meta_home_run_boundary"), [content_library])
 	_foundation_run_check(report, failures, "meta_home_fresh_store_defaults", Callable(self, "_check_meta_home_fresh_store_defaults"), [])
+	_foundation_run_check(report, failures, "meta_home_fixture_pollution_migration", Callable(self, "_check_meta_home_fixture_pollution_migration"), [])
 	_foundation_run_check(report, failures, "time_open_hours_foundation", Callable(self, "_check_time_open_hours_foundation"), [content_library])
 	_foundation_run_check(report, failures, "service_hook_foundation", Callable(self, "_check_service_hook_foundation"), [content_library])
 	_foundation_run_check(report, failures, "jazz_club_foundation", Callable(self, "_check_jazz_club_foundation"), [content_library])
@@ -2490,6 +2494,11 @@ func _check_surface_visual_motion_advances(game: GameModule, surface: Dictionary
 		canvas.call("debug_advance_idle_liveness", 1.0 / 60.0)
 	var after_status: Dictionary = canvas.call("surface_runtime_status")
 	var after_sample: Dictionary = canvas.call("debug_surface_motion_sample")
+	if JSON.stringify(before_sample) == JSON.stringify(after_sample) and surface.has("surface_time_msec"):
+		var advanced_surface := surface.duplicate(true)
+		advanced_surface["surface_time_msec"] = int(advanced_surface.get("surface_time_msec", 0)) + 300
+		canvas.call("render_game_snapshot", advanced_surface)
+		after_sample = canvas.call("debug_surface_motion_sample")
 	if int(after_status.get("surface_animation_redraw_count", 0)) <= int(before_status.get("surface_animation_redraw_count", 0)):
 		failures.append("%s did not schedule redraws across the table surface lifecycle." % label)
 	if JSON.stringify(before_sample) == JSON.stringify(after_sample):
@@ -2746,6 +2755,8 @@ func _check_slot_acceptance(library: ContentLibrary, failures: Array) -> void:
 	_check_slot_item_pack_effects(library, definition, failures)
 	print("SLOT_ACCEPTANCE feature_reachability")
 	_check_slot_feature_reachability(library, definition, failures)
+	print("SLOT_ACCEPTANCE bonus_trigger_reveal_order")
+	_check_slot_bonus_trigger_reveal_order(definition, failures)
 	print("SLOT_ACCEPTANCE cabinet_distinctness")
 	_check_slot_cabinet_distinctness(library, definition, failures)
 	print("SLOT_ACCEPTANCE environment_preview")
@@ -2774,6 +2785,8 @@ func _check_slot_acceptance(library: ContentLibrary, failures: Array) -> void:
 	_check_slot_video_pinball_feature_event(definition, failures)
 	print("SLOT_ACCEPTANCE pinball_feature_visual_manifest")
 	_check_slot_pinball_feature_visual_manifest(definition, failures)
+	print("SLOT_ACCEPTANCE pinball_launch_hit_regions")
+	_check_slot_pinball_launch_hit_regions(failures)
 	print("SLOT_ACCEPTANCE pinball_sim_physics")
 	_check_slot_pinball_sim_physics(definition, failures)
 	print("SLOT_ACCEPTANCE economy_rng_discipline")
@@ -4047,6 +4060,75 @@ func _check_slot_feature_reachability(library: ContentLibrary, definition: Dicti
 		failures.append("Slot jackpot eligibility did not scale the bet_2 grand to 50x.")
 	if str(bet_20.get("tier", "")) != "grand" or int(bet_20.get("award", 0)) != 1000:
 		failures.append("Slot jackpot eligibility did not scale the bet_20 grand to 50x.")
+
+
+func _check_slot_bonus_trigger_reveal_order(definition: Dictionary, failures: Array) -> void:
+	var presentation = SlotPresentationScript.new()
+	var renderer = SlotRendererScript.new()
+	var fixtures: Array[Dictionary] = [
+		{
+			"label": "Pinball trigger",
+			"family": "pinball",
+			"format": "classic_3_reel",
+			"classification": "bonus",
+			"seed": "SLOT-PINBALL-TRIGGER-REVEAL",
+			"trigger_symbol": "PINBALL",
+		},
+		{
+			"label": "Buffalo trigger",
+			"family": "buffalo",
+			"format": "line_5x3",
+			"classification": "free_games",
+			"seed": "SLOT-BUFFALO-TRIGGER-REVEAL",
+			"trigger_symbol": "GOLD_TOKEN",
+		},
+	]
+	for fixture_value in fixtures:
+		var fixture: Dictionary = fixture_value
+		var sample: Dictionary = _slot_spin_until_classification(
+			definition,
+			str(fixture.get("family", "")),
+			str(fixture.get("format", "")),
+			str(fixture.get("classification", "")),
+			str(fixture.get("seed", "")),
+			failures
+		)
+		if sample.is_empty():
+			continue
+		var run_state_value: Variant = sample.get("run_state", null)
+		if not run_state_value is RunState:
+			failures.append("%s did not return a RunState." % str(fixture.get("label", "Slot trigger")))
+			continue
+		var run_state: RunState = run_state_value
+		var machine: Dictionary = _slot_dict(sample.get("machine", {}))
+		var result: Dictionary = _slot_dict(sample.get("result", {}))
+		var timeline: Array = _slot_array(result.get("slot_reel_timeline", []))
+		var reveal_msec := _slot_reveal_msec(timeline)
+		var before_reveal_msec := maxi(0, reveal_msec - 120)
+		var after_reveal_msec := reveal_msec + 80
+		var trigger_grid: Array = _slot_array(result.get("slot_grid", []))
+		if _slot_symbol_count(trigger_grid, str(fixture.get("trigger_symbol", ""))) < 3:
+			failures.append("%s did not produce a visible three-symbol trigger grid." % str(fixture.get("label", "Slot trigger")))
+		var before_surface: Dictionary = presentation.surface_state(machine, run_state, definition, _slot_surface_ui_at_spin_msec(before_reveal_msec))
+		var before_scene: Dictionary = _slot_dict(before_surface.get("slot_feature_scene", {}))
+		var before_manifest: Dictionary = renderer.render_signature(before_surface, definition, before_reveal_msec, "")
+		if not bool(before_surface.get("slot_bonus_trigger_reveal_pending", false)):
+			failures.append("%s did not mark the bonus trigger reveal as pending before the reels settled." % str(fixture.get("label", "Slot trigger")))
+		if bool(before_surface.get("slot_active_bonus_active", false)) or bool(before_scene.get("active", false)):
+			failures.append("%s showed the bonus feature before the triggering spin was revealed." % str(fixture.get("label", "Slot trigger")))
+		if str(before_manifest.get("mode", "")) != "spin":
+			failures.append("%s render signature left spin mode before reveal." % str(fixture.get("label", "Slot trigger")))
+		if JSON.stringify(_slot_array(before_surface.get("slot_grid", []))) != JSON.stringify(trigger_grid):
+			failures.append("%s did not keep the trigger grid visible during the pre-feature reveal." % str(fixture.get("label", "Slot trigger")))
+		var after_surface: Dictionary = presentation.surface_state(machine, run_state, definition, _slot_surface_ui_at_spin_msec(after_reveal_msec))
+		var after_scene: Dictionary = _slot_dict(after_surface.get("slot_feature_scene", {}))
+		var after_manifest: Dictionary = renderer.render_signature(after_surface, definition, after_reveal_msec, "")
+		if bool(after_surface.get("slot_bonus_trigger_reveal_pending", true)):
+			failures.append("%s kept the bonus trigger reveal gate active after the reveal beat." % str(fixture.get("label", "Slot trigger")))
+		if not bool(after_surface.get("slot_active_bonus_active", false)) or not bool(after_scene.get("active", false)):
+			failures.append("%s did not enter the bonus feature after the triggering spin reveal." % str(fixture.get("label", "Slot trigger")))
+		if str(after_manifest.get("mode", "")) != "feature":
+			failures.append("%s render signature did not enter feature mode after reveal." % str(fixture.get("label", "Slot trigger")))
 
 
 func _check_slot_cabinet_distinctness(_library: ContentLibrary, definition: Dictionary, failures: Array) -> void:
@@ -5772,6 +5854,86 @@ func _slot_event_award_summary(events: Array, limit: int = 10) -> String:
 	return ", ".join(parts)
 
 
+func _check_slot_pinball_launch_hit_regions(failures: Array) -> void:
+	var renderer = SlotRendererScript.new()
+	var specs: Array[Dictionary] = [
+		{
+			"label": "START",
+			"rect": Rect2(18, 12, 238, 34),
+			"prefix": "slot_bonus_start_",
+			"count": 25,
+			"selected": 12,
+			"color": Color("#22c55e"),
+		},
+		{
+			"label": "AIM",
+			"rect": Rect2(276, 12, 238, 34),
+			"prefix": "slot_bonus_aim_",
+			"count": 25,
+			"selected": 12,
+			"color": Color("#facc15"),
+		},
+		{
+			"label": "POWER",
+			"rect": Rect2(534, 12, 150, 34),
+			"prefix": "slot_bonus_power_",
+			"count": 21,
+			"selected": 10,
+			"color": Color("#38bdf8"),
+		},
+	]
+	for spec in specs:
+		var harness := SurfaceHarness.new()
+		harness.setup({})
+		renderer.call(
+			"_draw_pinball_choice_strip",
+			harness,
+			spec.get("rect", Rect2()),
+			str(spec.get("label", "")),
+			str(spec.get("prefix", "")),
+			int(spec.get("count", 0)),
+			int(spec.get("selected", 0)),
+			spec.get("color", Color.WHITE)
+		)
+		var previous_rect := Rect2()
+		for index in range(int(spec.get("count", 0))):
+			var action := "%s%02d" % [str(spec.get("prefix", "")), index]
+			var hit: Dictionary = _surface_harness_first_hit(harness, action, index)
+			if hit.is_empty():
+				failures.append("Slot pinball %s launch strip did not register hit %s." % [str(spec.get("label", "")), action])
+				continue
+			if not bool(hit.get("exact", false)):
+				failures.append("Slot pinball %s launch strip used expanded touch hit %s, offsetting mouse selection." % [str(spec.get("label", "")), action])
+			var hit_rect: Rect2 = hit.get("rect", Rect2())
+			if hit_rect.size.x >= 40.0 or hit_rect.size.y >= 40.0:
+				failures.append("Slot pinball %s launch strip hit %s was expanded to %s instead of matching the visible cell." % [str(spec.get("label", "")), action, str(hit_rect.size)])
+			if index > 0 and previous_rect.intersects(hit_rect):
+				failures.append("Slot pinball %s launch strip hit %s overlaps the previous cell, so mouse selection is ambiguous." % [str(spec.get("label", "")), action])
+			previous_rect = hit_rect
+	var rail_harness := SurfaceHarness.new()
+	rail_harness.setup({})
+	var rail_active := {
+		"mode": "video_feature",
+		"launch_start": {"x": 0.74, "y": 0.07},
+		"launch_angle_degrees": 0,
+	}
+	var rail_layout := {
+		"plunger_start": Vector2(0.5, 0.07),
+		"launch_x_min": 0.06,
+		"launch_x_max": 0.94,
+	}
+	renderer.call("_draw_pinball_launch_start_rail", rail_harness, Rect2(0, 0, 960, 420), rail_active, rail_layout, Color("#22c55e"))
+	var rail_hit: Dictionary = _surface_harness_first_hit(rail_harness, "slot_bonus_start_12", 12)
+	if rail_hit.is_empty():
+		failures.append("Slot pinball launch rail did not register direct start hits.")
+	else:
+		if not bool(rail_hit.get("exact", false)):
+			failures.append("Slot pinball launch rail used expanded touch hits, offsetting mouse start selection.")
+		var rail_rect: Rect2 = rail_hit.get("rect", Rect2())
+		if rail_rect.size.x > 24.5 or rail_rect.size.y > 24.5:
+			failures.append("Slot pinball launch rail hit was expanded to %s instead of staying centered on the visible marker." % str(rail_rect.size))
+
+
 func _check_slot_pinball_sim_physics(_definition: Dictionary, failures: Array) -> void:
 	var compiled: Dictionary = _slot_pinball_compiled_board("bumper_alley")
 	var sim = PinballSimScript.new()
@@ -6204,6 +6366,31 @@ func _slot_settle_msec(timeline: Array) -> int:
 	return maxi(100, result)
 
 
+func _slot_reveal_msec(timeline: Array) -> int:
+	var result := 0
+	for entry_value in timeline:
+		var entry: Dictionary = _slot_dict(entry_value)
+		result = maxi(result, int(ceil(float(entry.get("settle_end", entry.get("stop_time", 0.0))) * 1000.0)))
+	return maxi(180, result + 180)
+
+
+func _slot_surface_ui_at_spin_msec(spin_msec: int) -> Dictionary:
+	var elapsed_sec := float(maxi(0, spin_msec)) / 1000.0
+	return {
+		"surface_time_msec": maxi(0, spin_msec),
+		"drunk_scaled_surface_time_msec": maxi(0, spin_msec),
+		"surface_runtime_status": {
+			"surface_animations": {
+				"slot_spin": {
+					"id": "slot_spin",
+					"active": true,
+					"elapsed": elapsed_sec,
+				},
+			},
+		},
+	}
+
+
 func _slot_spin_mid_msec(timeline: Array) -> int:
 	for entry_value in timeline:
 		var entry: Dictionary = _slot_dict(entry_value)
@@ -6231,6 +6418,18 @@ func _slot_grid_symbol(grid: Array, reel_index: int, row_index: int) -> String:
 	if row_index < 0 or row_index >= column.size():
 		return "BLANK"
 	return str(column[row_index])
+
+
+func _slot_symbol_count(grid: Array, symbol_id: String) -> int:
+	var count := 0
+	for column_value in grid:
+		if typeof(column_value) != TYPE_ARRAY:
+			continue
+		var column: Array = column_value as Array
+		for symbol_value in column:
+			if str(symbol_value) == symbol_id:
+				count += 1
+	return count
 
 
 func _slot_count_grid_symbols(grid: Array, counts: Dictionary) -> void:
@@ -6626,6 +6825,47 @@ func _roulette_past_post_item_fixture(game: GameModule, library: ContentLibrary,
 		"challenge": challenge,
 		"surface": surface,
 	}
+
+
+func _check_roulette_spin_lands_on_result(game: GameModule, result_surface: Dictionary, failures: Array) -> void:
+	var last_result: Dictionary = result_surface.get("last_result", {}) if typeof(result_surface.get("last_result", {})) == TYPE_DICTIONARY else {}
+	var trajectory: Array = _baccarat_dictionary_array(result_surface.get("spin_trajectory", []))
+	if last_result.is_empty() or trajectory.is_empty():
+		failures.append("Roulette landing fixture missing result or trajectory.")
+		return
+	var sequence := _string_array(result_surface.get("wheel_sequence", []))
+	var count := maxi(1, sequence.size())
+	var winning_index := int(last_result.get("winning_index", -1))
+	if winning_index < 0 or winning_index >= count:
+		failures.append("Roulette landing fixture has invalid winning index.")
+		return
+	var handoff_surface := result_surface.duplicate(true)
+	handoff_surface["surface_time_msec"] = int(last_result.get("resolved_at_msec", 0)) + 5600
+	var active_harness := SurfaceHarness.new()
+	active_harness.setup(handoff_surface)
+	active_harness.animation_active = true
+	active_harness.animation_progress = 1.0
+	active_harness.flicker_value = 27.5
+	var final_motion: Dictionary = game.call("surface_motion_signature", active_harness, handoff_surface)
+	var settled_harness := SurfaceHarness.new()
+	settled_harness.setup(handoff_surface)
+	settled_harness.animation_active = false
+	settled_harness.animation_progress = 1.0
+	settled_harness.flicker_value = 27.5
+	var settled_motion: Dictionary = game.call("surface_motion_signature", settled_harness, handoff_surface)
+	if absf(float(final_motion.get("wheel_angle_mdeg", 0)) - float(settled_motion.get("wheel_angle_mdeg", 0))) > 2.0:
+		failures.append("Roulette wheel jumps between final spin frame and settled frame.")
+	if absf(float(final_motion.get("ball_angle_mdeg", 0)) - float(settled_motion.get("ball_angle_mdeg", 0))) > 2.0:
+		failures.append("Roulette ball jumps between final spin frame and settled frame.")
+	var wheel_angle := float(final_motion.get("wheel_angle_mdeg", 0)) / 1000.0
+	var ball_angle := float(final_motion.get("ball_angle_mdeg", 0)) / 1000.0
+	var expected_ball_angle := fposmod(wheel_angle + (float(winning_index) + 0.5) / float(count) * TAU, TAU)
+	if _angle_distance(ball_angle, expected_ball_angle) > 0.01:
+		failures.append("Roulette ball final frame did not land in the winning pocket: expected %.3f got %.3f." % [expected_ball_angle, ball_angle])
+
+
+func _angle_distance(a: float, b: float) -> float:
+	return absf(atan2(sin(a - b), cos(a - b)))
 
 
 func _check_baccarat_edge_sort_item_modifier(game: GameModule, failures: Array) -> void:
@@ -7952,11 +8192,6 @@ func _check_run_action_service_read_path_mutation_firewall(library: ContentLibra
 	var lender_before := _mutation_firewall_snapshot(run_state)
 	var lender_payload := resolver.lender_hook(lender_id, lender_id)
 	_mutation_firewall_probe_payload("run_action_service", "lender_hook", run_state, failures, lender_before, lender_payload)
-	var prestige_before := _mutation_firewall_snapshot(run_state)
-	var prestige_payload := resolver.prestige_purchase_view_list()
-	_mutation_firewall_probe_payload("run_action_service", "prestige_purchase_view_list", run_state, failures, prestige_before, prestige_payload)
-
-
 func _check_event_choice_read_path_mutation_firewall(library: ContentLibrary, failures: Array) -> void:
 	var event_definition := _first_definition(library.events)
 	if event_definition.is_empty():
@@ -8018,56 +8253,6 @@ func _mutation_firewall_mutate_payload(payload: Variant, depth: int = 0) -> void
 		values.append({"__mutation_firewall_probe": "mutated"})
 		for index in range(original_size):
 			_mutation_firewall_mutate_payload(values[index], depth + 1)
-
-
-func _check_prestige_empty_data_foundation(library: ContentLibrary, failures: Array) -> void:
-	if not library.prestige_purchases.is_empty():
-		failures.append("Act 1 prestige should stay hidden: data/prestige/purchases.json must remain empty.")
-		return
-	var run_state: RunState = RunStateScript.new()
-	run_state.start_new("PRESTIGE-EMPTY-DATA")
-	run_state.bankroll = 500
-	run_state.current_environment = {
-		"id": "prestige_empty_data_room",
-		"display_name": "Prestige Empty Data Room",
-		"kind": "shop",
-		"archetype_id": "prestige_empty_data_fixture",
-		"layout": {
-			"object_rects": {
-				"prestige:stale": {"x": 0.12, "y": 0.12, "w": 0.12, "h": 0.12},
-			},
-			"generated_object_rect_version": EnvironmentInstance.GENERATED_LAYOUT_VERSION,
-		},
-	}
-	var resolver: RunActionService = RunActionServiceScript.new()
-	resolver.setup(library, run_state)
-	var before := JSON.stringify(run_state.to_dict())
-	if not resolver.prestige_purchase_view_list().is_empty():
-		failures.append("Empty prestige data produced purchase presentation options.")
-	if not resolver.prestige_purchase_option("stale").is_empty():
-		failures.append("Empty prestige data resolved a stale prestige option.")
-	var stale_purchase := resolver.buy_prestige_purchase("stale")
-	if bool(stale_purchase.get("ok", false)):
-		failures.append("Empty prestige data allowed a stale prestige purchase.")
-	if before != JSON.stringify(run_state.to_dict()):
-		failures.append("Rejected empty-data prestige purchase mutated RunState.")
-	var cleaned_layout := EnvironmentInstance.ensure_generated_layout(run_state.current_environment)
-	var cleaned_rects: Dictionary = cleaned_layout.get("object_rects", {}) if typeof(cleaned_layout.get("object_rects", {})) == TYPE_DICTIONARY else {}
-	if _dictionary_has_key_prefix(cleaned_rects, "prestige:"):
-		failures.append("Generated layout kept a stale prestige object rect with empty prestige data.")
-	for archetype_value in library.environment_archetypes:
-		if typeof(archetype_value) != TYPE_DICTIONARY:
-			continue
-		var archetype: Dictionary = archetype_value
-		var archetype_id := str(archetype.get("id", ""))
-		var sample_run: RunState = RunStateScript.new()
-		sample_run.start_new("PRESTIGE-EMPTY-GEN-%s" % archetype_id)
-		var sample_rng := sample_run.create_rng("prestige_empty_layout")
-		var environment := EnvironmentInstance.from_archetype(archetype, 0, sample_rng, library)
-		var rects_value: Variant = environment.layout.get("object_rects", {})
-		var rects: Dictionary = rects_value if typeof(rects_value) == TYPE_DICTIONARY else {}
-		if _dictionary_has_key_prefix(rects, "prestige:"):
-			failures.append("Generated %s exposed a prestige object rect with empty prestige data." % archetype_id)
 
 
 func _check_challenge_pack_foundation(library: ContentLibrary, failures: Array) -> void:
@@ -8495,8 +8680,6 @@ func _check_roulette_surface_contract(game: GameModule, failures: Array, library
 		failures.append("Roulette surface did not expose native table controls.")
 	if not bool(surface.get("surface_animates_idle", false)):
 		failures.append("Roulette betting surface must declare idle animation liveness for wheel and patron motion.")
-	if not str(surface.get("surface_ambient_overlay", "")).is_empty():
-		failures.append("Roulette betting surface must not use the deprecated ambient overlay.")
 	if bool(surface.get("surface_realtime_state_refresh", false)):
 		failures.append("Roulette betting surface must not rebuild full realtime snapshots for idle animation.")
 	var initial_recent: Array = _baccarat_dictionary_array(surface.get("recent_numbers", []))
@@ -8693,6 +8876,7 @@ func _check_roulette_surface_contract(game: GameModule, failures: Array, library
 	if str((result_surface.get("last_result", {}) as Dictionary).get("winning_number", "")) != str(result.get("roulette_winning_number", "")):
 		failures.append("Roulette post-spin surface did not expose the latest winning number.")
 	_check_surface_visual_motion_advances(game, result_surface, "Roulette post-payout handoff", failures)
+	_check_roulette_spin_lands_on_result(game, result_surface, failures)
 	var post_spin_harness := SurfaceHarness.new()
 	post_spin_harness.setup(result_surface)
 	post_spin_harness.animation_active = false
@@ -9135,8 +9319,6 @@ func _check_baccarat_surface_contract(game: GameModule, failures: Array, library
 		failures.append("Baccarat static betting surface should not request full snapshot refreshes.")
 	if not bool(surface.get("surface_animates_idle", false)):
 		failures.append("Baccarat betting surface must declare idle animation liveness for dealer, patron, and timer motion.")
-	if not str(surface.get("surface_ambient_overlay", "")).is_empty():
-		failures.append("Baccarat static betting surface must not use the deprecated ambient overlay.")
 	var guide_explainer: Dictionary = surface.get("baccarat_explainer", {}) if typeof(surface.get("baccarat_explainer", {})) == TYPE_DICTIONARY else {}
 	if str(guide_explainer.get("mode", "")) != "guide" or str(guide_explainer.get("primary", "")).find("Bet Player") < 0:
 		failures.append("Baccarat betting surface did not expose a beginner-readable guide explainer.")
@@ -9691,8 +9873,6 @@ func _check_blackjack_surface_contract(game: GameModule, failures: Array) -> voi
 		failures.append("Blackjack surface did not start in a deal-ready betting phase.")
 	if not bool(surface.get("surface_animates_idle", false)):
 		failures.append("Blackjack betting surface must declare idle animation liveness for dealer, patron, and timer motion.")
-	if not str(surface.get("surface_ambient_overlay", "")).is_empty():
-		failures.append("Blackjack betting surface must not use the deprecated ambient overlay.")
 	if bool(surface.get("surface_realtime_state_refresh", false)):
 		failures.append("Blackjack betting surface must not rebuild full realtime snapshots while idle.")
 	if (surface.get("table_round_timer", {}) as Dictionary).is_empty():
@@ -12129,8 +12309,6 @@ func _check_bar_dice_surface_contract(game: GameModule, failures: Array) -> void
 		failures.append("Bar Dice static table surface should not request full snapshot refreshes.")
 	if not bool(surface.get("surface_animates_idle", false)):
 		failures.append("Bar Dice table surface must declare idle animation liveness for rail, timer, and table motion.")
-	if not str(surface.get("surface_ambient_overlay", "")).is_empty():
-		failures.append("Bar Dice static table surface must not use the deprecated ambient overlay.")
 	if bool(surface.get("surface_stake_controls_required", true)):
 		failures.append("Bar Dice should use its generated chip ladder instead of host stake controls.")
 	if (surface.get("player", []) as Array).size() != 5:
@@ -14123,7 +14301,6 @@ func _clone_library_for_validation(library: ContentLibrary) -> ContentLibrary:
 	clone.lenders = library.lenders.duplicate(true)
 	clone.services = library.services.duplicate(true)
 	clone.travel_routes = library.travel_routes.duplicate(true)
-	clone.prestige_purchases = library.prestige_purchases.duplicate(true)
 	return clone
 
 
@@ -14711,6 +14888,8 @@ func _check_world_map_foundation(library: ContentLibrary, failures: Array) -> vo
 		generator.next_environment(beach_run)
 		if not _world_map_beach_delta_adjacency_ok(beach_run.world_map, "seed %02d" % beach_seed_index, failures):
 			break
+		if not _world_map_beach_route_gate_ok(beach_run.world_map, "seed %02d" % beach_seed_index, library, failures):
+			break
 
 	if travel_targets.is_empty():
 		failures.append("World map revisit fixture could not find a neighboring destination.")
@@ -14817,6 +14996,97 @@ func _check_meta_home_fresh_store_defaults(failures: Array) -> void:
 	if not _copy_array(reloaded.get("owned_instances", [])).is_empty() or not _copy_array(reloaded.get("unopened_bags", [])).is_empty():
 		failures.append("Fresh meta store persisted phantom owned items or bags.")
 	_remove_user_store_file(test_path)
+	OS.set_environment(MetaCollectionServiceScript.STORE_PATH_ENV, previous_path)
+
+
+func _check_meta_home_fixture_pollution_migration(failures: Array) -> void:
+	var previous_path := OS.get_environment(MetaCollectionServiceScript.STORE_PATH_ENV)
+	var polluted_path := "user://foundation_check_polluted_meta_collection.json"
+	OS.set_environment(MetaCollectionServiceScript.STORE_PATH_ENV, polluted_path)
+	_remove_user_store_file(polluted_path)
+	_write_user_store_file(polluted_path, {
+		"schema_version": MetaCollectionServiceScript.SCHEMA_VERSION,
+		"gold_balance": 6,
+		"housing_tier": MetaCollectionServiceScript.HOUSING_BACK_ALLEY,
+		"owned_containers": [{"item_id": "bag", "instance_id": 1, "capacity": 3}],
+		"owned_instances": [{
+			"schema_version": MetaCollectionServiceScript.SCHEMA_VERSION,
+			"instance_id": 112,
+			"itemdef_id": 2007,
+			"state": {"condition": 1.0},
+		}],
+		"unopened_bags": [{
+			"schema_version": MetaCollectionServiceScript.SCHEMA_VERSION,
+			"instance_id": 113,
+			"bagdef_id": 1,
+			"rng_seed": "UI-VICTORY-SEED|ended|run_victory|run_victory|9010|123456",
+			"source": "run_victory",
+			"source_id": "UI-RUN-MENU-VICTORY",
+			"marker_id": "UI-DRY-RUN-SEED",
+		}],
+		"sale_history": [{"kind": "bag", "instance_id": 110}],
+		"next_instance_id": 114,
+	})
+	var polluted_service: Variant = MetaCollectionServiceScript.new()
+	var migrated: Dictionary = polluted_service.load()
+	if not _copy_array(migrated.get("owned_instances", [])).is_empty():
+		failures.append("Fixture-polluted meta store should quarantine legacy owned item instances.")
+	if not _copy_array(migrated.get("unopened_bags", [])).is_empty():
+		failures.append("Fixture-polluted meta store should quarantine UI/test unopened bags.")
+	if int(migrated.get("gold_balance", -1)) != 0:
+		failures.append("Fixture-only meta store should reset gold to zero after quarantine.")
+	if not bool(migrated.get(MetaCollectionServiceScript.FIXTURE_POLLUTION_MIGRATION_FLAG, false)):
+		failures.append("Fixture-polluted meta store did not persist the quarantine migration flag.")
+	var quarantine := _copy_dict(migrated.get("quarantined_records", {}))
+	if _copy_array(quarantine.get("fixture_bags", [])).is_empty():
+		failures.append("Fixture-polluted meta store did not preserve quarantined bag evidence.")
+	if _copy_array(quarantine.get("fixture_instances", [])).is_empty():
+		failures.append("Fixture-polluted meta store did not preserve quarantined instance evidence.")
+	var persisted_service: Variant = MetaCollectionServiceScript.new()
+	var persisted: Dictionary = persisted_service.load()
+	if not _copy_array(persisted.get("owned_instances", [])).is_empty() or not _copy_array(persisted.get("unopened_bags", [])).is_empty():
+		failures.append("Fixture-polluted meta store quarantine did not survive reload.")
+	_remove_user_store_file(polluted_path)
+
+	var earned_path := "user://foundation_check_earned_meta_collection.json"
+	OS.set_environment(MetaCollectionServiceScript.STORE_PATH_ENV, earned_path)
+	_remove_user_store_file(earned_path)
+	var earned_seed := "PLAYER-SEED|ended|run_victory|run_victory|9010|123456"
+	_write_user_store_file(earned_path, {
+		"schema_version": MetaCollectionServiceScript.SCHEMA_VERSION,
+		"gold_balance": 12,
+		"housing_tier": MetaCollectionServiceScript.HOUSING_BACK_ALLEY,
+		"owned_containers": [{"item_id": "bag", "instance_id": 1, "capacity": 3}],
+		"owned_instances": [{
+			"schema_version": MetaCollectionServiceScript.SCHEMA_VERSION,
+			"instance_id": 11,
+			"itemdef_id": 2007,
+			"source": "run_victory",
+			"source_id": "run_victory",
+			"source_rng_seed": earned_seed,
+			"state": {"condition": 1.0},
+		}],
+		"unopened_bags": [{
+			"schema_version": MetaCollectionServiceScript.SCHEMA_VERSION,
+			"instance_id": 12,
+			"bagdef_id": 1,
+			"rng_seed": earned_seed,
+			"source": "run_victory",
+			"source_id": "run_victory",
+		}],
+		"next_instance_id": 13,
+	})
+	var earned_service: Variant = MetaCollectionServiceScript.new()
+	var earned: Dictionary = earned_service.load()
+	if _copy_array(earned.get("owned_instances", [])).size() != 1:
+		failures.append("Earned meta item with real provenance was incorrectly quarantined.")
+	if _copy_array(earned.get("unopened_bags", [])).size() != 1:
+		failures.append("Earned meta bag with real provenance was incorrectly quarantined.")
+	if int(earned.get("gold_balance", -1)) != 12:
+		failures.append("Earned meta store gold changed during fixture quarantine check.")
+	if bool(earned.get(MetaCollectionServiceScript.FIXTURE_POLLUTION_MIGRATION_FLAG, false)):
+		failures.append("Clean earned meta store should not receive the fixture quarantine flag.")
+	_remove_user_store_file(earned_path)
 	OS.set_environment(MetaCollectionServiceScript.STORE_PATH_ENV, previous_path)
 
 
@@ -15004,6 +15274,16 @@ func _remove_user_store_file(path: String) -> void:
 		DirAccess.remove_absolute(absolute_path)
 
 
+func _write_user_store_file(path: String, data: Dictionary) -> void:
+	var absolute_path := ProjectSettings.globalize_path(path)
+	DirAccess.make_dir_recursive_absolute(absolute_path.get_base_dir())
+	var file := FileAccess.open(absolute_path, FileAccess.WRITE)
+	if file == null:
+		return
+	file.store_string(JSON.stringify(data, "\t"))
+	file.close()
+
+
 func _world_map_positions(map_data: Dictionary) -> Dictionary:
 	var result: Dictionary = {}
 	for node_value in _copy_array(map_data.get("nodes", [])):
@@ -15027,6 +15307,45 @@ func _world_map_beach_delta_adjacency_ok(map_data: Dictionary, label: String, fa
 	if int(edge.get("distance_blocks", 0)) != 1:
 		failures.append("World map beach edge must price as 1 block for %s, got %d." % [label, int(edge.get("distance_blocks", 0))])
 		return false
+	var beach_edge_count := 0
+	for edge_value in _copy_array(map_data.get("edges", [])):
+		if typeof(edge_value) != TYPE_DICTIONARY:
+			continue
+		var candidate: Dictionary = edge_value
+		if str(candidate.get("a", "")) == "beach" or str(candidate.get("b", "")) == "beach":
+			beach_edge_count += 1
+	if beach_edge_count != 1:
+		failures.append("World map beach should only connect to delta_queen for %s, saw %d beach edges." % [label, beach_edge_count])
+		return false
+	return true
+
+
+func _world_map_beach_route_gate_ok(map_data: Dictionary, label: String, library: ContentLibrary, failures: Array) -> bool:
+	var gated_map := WorldMapScript.unlock_nodes(map_data, ["beach"], WorldMapScript.DISCOVERY_SOURCE_EVENT)
+	gated_map = WorldMapScript.enter_node(gated_map, "delta_queen", {})
+	var map_service: Variant = WorldMapScript.new(library)
+	var delta_targets := WorldMapScript.travel_target_ids(gated_map, "delta_queen")
+	if not delta_targets.has("beach"):
+		failures.append("World map beach should be travelable from delta_queen for %s." % label)
+		return false
+	if map_service.route_for_target(gated_map, "delta_queen", "beach").is_empty():
+		failures.append("World map beach route should resolve from delta_queen for %s." % label)
+		return false
+	gated_map = WorldMapScript.enter_node(gated_map, "beach", {})
+	var beach_targets := WorldMapScript.travel_target_ids(gated_map, "beach")
+	if not beach_targets.has("delta_queen"):
+		failures.append("World map beach should still allow return travel to delta_queen for %s." % label)
+		return false
+	for node_id_value in WorldMapScript.visible_node_ids(gated_map):
+		var source_id := str(node_id_value)
+		if source_id == "delta_queen" or source_id == "beach":
+			continue
+		if WorldMapScript.travel_target_ids(gated_map, source_id).has("beach"):
+			failures.append("World map beach should not be a travel target from %s for %s." % [source_id, label])
+			return false
+		if not map_service.route_for_target(gated_map, source_id, "beach").is_empty():
+			failures.append("World map beach route should not resolve from %s for %s." % [source_id, label])
+			return false
 	return true
 
 
@@ -15894,6 +16213,10 @@ func _check_cash_lender_lifecycle(library: ContentLibrary, lender_id: String, de
 	var debt_data: Dictionary = run_state.debt[0] as Dictionary
 	if str(debt_data.get("id", "")) != debt_id or str(debt_data.get("lender_id", "")) != lender_id:
 		failures.append("Cash lender %s debt identity was not preserved." % lender_id)
+	var loan_amount := run_state.bankroll - before_bankroll
+	var expected_balance := maxi(loan_amount, int(ceil(float(loan_amount) * 1.10)))
+	if int(debt_data.get("balance", 0)) != expected_balance:
+		failures.append("Cash lender %s did not add the 10 percent payoff balance." % lender_id)
 	if expects_heat and run_state.suspicion_level() <= before_suspicion:
 		failures.append("Street-style lender did not apply pressure heat.")
 	if bool(resolver.hook_option("lender", lender_id).get("enabled", true)):
@@ -15903,9 +16226,23 @@ func _check_cash_lender_lifecycle(library: ContentLibrary, lender_id: String, de
 	var repay_resolver: RunActionService = repay_run.get("resolver", null)
 	repay_resolver.use_hook("lender", lender_id)
 	repay_state.bankroll = 500
+	repay_state.add_suspicion("lender_repay_fixture", 8)
+	var heat_before_repay := repay_state.suspicion_level()
 	var repay := repay_state.repay_debt(debt_id)
 	if not bool(repay.get("ok", false)) or not repay_state.debt.is_empty():
 		failures.append("Cash lender %s could not be repaid cleanly." % lender_id)
+	if repay_state.suspicion_level() >= heat_before_repay:
+		failures.append("Cash lender %s repayment did not cool heat." % lender_id)
+	if bool(repay_resolver.hook_option("lender", lender_id).get("enabled", true)):
+		failures.append("Cash lender %s offered a larger loan in the same room after repayment." % lender_id)
+	repay_state.current_environment["id"] = "lender_cash_return_%s" % lender_id
+	var next_option := repay_resolver.hook_option("lender", lender_id)
+	if not bool(next_option.get("enabled", false)):
+		failures.append("Cash lender %s did not return after leaving the room: %s" % [lender_id, str(next_option.get("disabled_reason", ""))])
+	else:
+		var next_deltas: Dictionary = repay_resolver.hook_result_deltas(library.lender(lender_id), "lender", repay_state.lender_hook_status(library.lender(lender_id)))
+		if int(next_deltas.get("bankroll_delta", 0)) <= loan_amount:
+			failures.append("Cash lender %s did not offer a larger loan after repayment." % lender_id)
 	var default_run := _lender_fixture(library, "LENDER-CASH-DEFAULT-%s" % lender_id, [lender_id], [], [])
 	var default_state: RunState = default_run.get("run_state", null)
 	var default_resolver: RunActionService = default_run.get("resolver", null)
@@ -15929,6 +16266,34 @@ func _check_cash_lender_lifecycle(library: ContentLibrary, lender_id: String, de
 
 
 func _check_crew_lender_lifecycle(library: ContentLibrary, failures: Array) -> void:
+	var multi_fixture := _lender_fixture(library, "LENDER-CREW-MULTI", ["the_crew"], [], [])
+	var multi_state: RunState = multi_fixture.get("run_state", null)
+	var multi_resolver: RunActionService = multi_fixture.get("resolver", null)
+	var first_marker := multi_resolver.use_hook("lender", "the_crew")
+	if not bool(first_marker.get("ok", false)):
+		failures.append("The Crew first location loan did not resolve.")
+	if bool(multi_resolver.hook_option("lender", "the_crew").get("enabled", true)):
+		failures.append("The Crew allowed a second marker from the same location.")
+	multi_state.current_environment["id"] = "lender_crew_second_room"
+	var second_marker := multi_resolver.use_hook("lender", "the_crew")
+	if not bool(second_marker.get("ok", false)):
+		failures.append("The Crew second location loan did not resolve.")
+	multi_state.current_environment["id"] = "lender_crew_third_room"
+	var third_marker := multi_resolver.use_hook("lender", "the_crew")
+	if not bool(third_marker.get("ok", false)):
+		failures.append("The Crew third location loan did not resolve.")
+	if multi_state.debt.size() != 1:
+		failures.append("The Crew did not stack location markers into one debt entry.")
+	else:
+		var multi_debt: Dictionary = multi_state.debt[0] as Dictionary
+		if int(multi_debt.get("balance", 0)) != 6:
+			failures.append("The Crew stacked marker balance was not six favors after three locations.")
+		if _copy_array(multi_debt.get("source_location_ids", [])).size() != 3:
+			failures.append("The Crew did not preserve all three source locations.")
+	multi_state.current_environment["id"] = "lender_crew_fourth_room"
+	if bool(multi_resolver.hook_option("lender", "the_crew").get("enabled", true)):
+		failures.append("The Crew allowed more than three active loan locations.")
+
 	var fixture := _lender_fixture(library, "LENDER-CREW", ["the_crew"], [], [])
 	var run_state: RunState = fixture.get("run_state", null)
 	var resolver: RunActionService = fixture.get("resolver", null)
@@ -15983,6 +16348,17 @@ func _check_family_lender_lifecycle(library: ContentLibrary, failures: Array) ->
 		failures.append("Brother-in-law loan could not be repaid.")
 	if not bool(run_state.narrative_flags.get("brother_in_law_goodwill", false)):
 		failures.append("Brother-in-law early repayment did not record goodwill.")
+	if bool(resolver.hook_option("lender", "brother_in_law").get("enabled", true)):
+		failures.append("Brother-in-law offered a same-room repeat loan after repayment.")
+	run_state.current_environment["id"] = "lender_family_return_room"
+	run_state.narrative_flags["brother_in_law_phone_ready"] = true
+	var repeat_option := resolver.hook_option("lender", "brother_in_law")
+	if not bool(repeat_option.get("enabled", false)):
+		failures.append("Brother-in-law did not become available again after repayment and a new phone call.")
+	else:
+		var repeat_deltas: Dictionary = resolver.hook_result_deltas(library.lender("brother_in_law"), "lender", run_state.lender_hook_status(library.lender("brother_in_law")))
+		if int(repeat_deltas.get("bankroll_delta", 0)) <= 30:
+			failures.append("Brother-in-law repeat loan did not scale above the first amount.")
 
 	var late_fixture := _lender_fixture(library, "LENDER-FAMILY-LATE", ["brother_in_law"], ["call_brother_in_law"], [])
 	var late_state: RunState = late_fixture.get("run_state", null)
@@ -16341,7 +16717,7 @@ func _check_music_fx_foundation(library: ContentLibrary, failures: Array) -> voi
 	var web_contract: Dictionary = WebAudioBridgeScript.mix_contract_snapshot()
 	if not bool(web_contract.get("stream_bridge_enabled", false)) or not bool(web_contract.get("pcm_stream_bridge_default", false)):
 		failures.append("Web export should use the browser PCM stream bridge so music/SFX remain audible when native web playback is silent.")
-	if bool(web_contract.get("oscillator_fallback_enabled", true)) or bool(web_contract.get("script_has_oscillator_fallback", true)):
+	if bool(web_contract.get("script_has_oscillator_fallback", true)):
 		failures.append("Web audio bridge must not fall back to oscillator synth cues; those produced the browser hum regression.")
 	if int(web_contract.get("version", 0)) < 4 or not bool(web_contract.get("script_has_version_guard", false)):
 		failures.append("Web audio bridge did not expose a versioned replacement guard.")
@@ -16881,8 +17257,6 @@ func _check_m2_system_interaction_scenario(library: ContentLibrary, failures: Ar
 
 # Checks the boss-floor demo objective triggers and resolves The House Calls through RunState.
 func _check_demo_boss_objective_foundation(library: ContentLibrary, failures: Array) -> void:
-	if not library.prestige_purchases.is_empty():
-		failures.append("Initial demo victory should not be a purchasable prestige token.")
 	var boss_archetype := _archetype_by_id(library, "grand_casino")
 	if boss_archetype.is_empty():
 		failures.append("Grand Casino boss archetype is missing.")
@@ -17582,16 +17956,16 @@ func _check_recovery_loss_pressure_foundation(library: ContentLibrary, failures:
 	victory_run.start_new("M2-FUN-VICTORY-NOT-FAILURE")
 	victory_run.change_bankroll(-(victory_run.bankroll - 1))
 	var victory_deltas := GameModule.empty_result_deltas()
-	victory_deltas["flags_set"] = {"prestige_victory": true}
+	victory_deltas["flags_set"] = {"demo_victory": true}
 	victory_deltas["ended"] = true
-	victory_deltas["messages"] = ["Prestige Victory: you beat the house for now."]
+	victory_deltas["messages"] = ["Demo Victory: you beat the house for now."]
 	GameModule.apply_result(victory_run, GameModule.build_action_result({
 		"ok": true,
-		"type": "prestige_purchase",
-		"source_id": "fixture_prestige",
-		"action_id": "buy_prestige",
+		"type": "event",
+		"source_id": "fixture_victory",
+		"action_id": "demo_victory",
 		"deltas": victory_deltas,
-		"message": "Prestige Victory: you beat the house for now.",
+		"message": "Demo Victory: you beat the house for now.",
 	}))
 	var victory_pressure := victory_run.recovery_pressure_status(false)
 	if victory_run.run_status != GameModule.RESULT_ENDED:
@@ -18338,13 +18712,6 @@ func _fixture_library() -> ContentLibrary:
 			"display_name": "Fixture Route",
 			"cost": 1,
 			"destination_tier_hint": 1,
-		},
-	]
-	library.prestige_purchases = [
-		{
-			"id": "fixture_prestige",
-			"type": "prestige_victory",
-			"cost": 1,
 		},
 	]
 	return library

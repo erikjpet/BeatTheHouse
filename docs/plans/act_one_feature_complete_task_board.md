@@ -59,7 +59,7 @@ external), multiplayer/leaderboards, real-money anything.
 | Core loop, 7 games, dual endgame, save/load, exports | SHIPPED 0.2 | `0.2_release_checklist.md` full-suite pass, 60/60 batch playtest |
 | Pinball feature event | COMPLETE / RELEASE GATES GREEN | R2 reran Prompt C plus the post-rework slot release audit: Full, pinball probes, `slot`, `slot_acceptance`, cabinet QA, deep audit, and metrics probe all pass/exit cleanly with evidence under T1.2/T1.3. |
 | Skill-based cheating | CONTRACT ENFORCED ACROSS 7 GAMES | T2.1 added `docs/plans/skill_based_cheating_methods_plan.md`; T2.2-T2.5 added/updated the four rich skill cheats; T2.6 verifies all 11 registered cheat actions across 7 games with shared contract fields, watched Grand Casino attention, clean-play evidence absence, and per-game audits. |
-| Prestige | EMPTY | `data/prestige/purchases.json` = `[]`; README confirms code path with no data |
+| Prestige | CUT FOR ACT 1 | Empty prestige pack and dormant runtime hooks removed in v05 cleanup; real prestige meta-progression remains out of Act 1 scope |
 | Challenges pack | SHIPPED | `data/challenges/challenges.json` contains 7 Act 1 challenge runs with start-menu selection and profile completion flags |
 | Content depth | EXPANDING / ITEM SYNERGY LANDED | 31 events, 12 services, 5 lenders, 10 routes; items have grown to 59 after slot/pinball, skill-cheat, Thermos, and T4.4 build-synergy item work |
 | Venue progression | TIER 2 ADDED | T4.1 adds `kitty_cat_lounge` and `delta_queen` as tier-2 casino rungs between tier 1 and `grand_casino`, while keeping the underground shortcut. |
@@ -2428,7 +2428,7 @@ architecture, validation commands, active docs index, export readiness, and
 known 0.3 blockers. Added `docs/plans/0.3_release_checklist.md` with fresh
 0.3 evidence and a not-release-ready decision. Scripted content counts from
 `data/`: environments 10, games 7, items 59, content groups 9, events 33,
-services 12, lenders 5, travel route templates 10, prestige purchases 0,
+services 12, lenders 5, travel route templates 10, prestige cut,
 challenges 7. Fresh gates: `tools/validate_project.ps1` PASS;
 `tools/check_godot.ps1 -RequireGodot -Suite Full -TimeoutSec 1800` PASS
 (`.tmp/test_reports/20260703_023820_full/summary.json`);
@@ -2541,7 +2541,7 @@ FAIL means the old premise was corrected here.
 | Core loop, 7 games, dual endgame, save/load, exports | PASS | `check_godot.ps1 -Suite Full` PASS; 60-run mouse batch PASS (`60/60`, `0` true failures). |
 | Pinball feature event | PASS / R2 closed | T1.2 Prompt C independent audit PASS; T1.3 slot release audit PASS with Full, slot, slot_acceptance, cabinet QA, deep audit, and metrics evidence. |
 | Skill-based cheating | PASS / superseded by T2.1 | T0.1 verified the gap at that time: rich `count_challenge` pattern was in blackjack and the shared skill-cheat design doc was missing. T2.1 later added the design doc; T2.2-T2.7 now implement and item-wire the contract. |
-| Prestige | PASS | Gap verified: `data/prestige/purchases.json` length is 3 bytes (`[]`). |
+| Prestige | PASS | Act 1 cut verified: empty prestige pack and runtime hooks removed during v05 cleanup; future prestige remains out of scope. |
 | Challenges pack | PASS / superseded by T5.2 | Gap was verified by T0.1; T5.2 now ships `data/challenges/challenges.json` with start-menu selection and profile completion flags. |
 | Content depth | PASS / updated | Gap updated by T4.3/T4.5/T4.1/T4.4: 31 events, 12 services, 5 lenders, 10 routes, 59 items; event breadth now includes systemic pressure, chains, debt, heat, item hooks, and build-synergy item identities. |
 | Venue progression | PASS / superseded by T4.1 | T0.1 verified no tier-2 venues on 2026-07-01; T4.1 now adds `kitty_cat_lounge` and `delta_queen` as tier-2 casino rungs. |

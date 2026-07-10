@@ -8,15 +8,13 @@ const IconSpriteRendererScript := preload("res://scripts/ui/icon_sprite_renderer
 const VisualStyleScript := preload("res://scripts/ui/visual_style.gd")
 
 const MAX_TEXTURE_CACHE := 192
-const MAX_TEXT_WIDTH_CACHE := 512
-const DEFAULT_GLYPH_SIZE := 14
-const MIN_CONTROL_GLYPH_SIZE := 10
-const MAX_CONTROL_GLYPH_SIZE := 14
-const CANVAS_FONT_SIZE := 8
-const CANVAS_BADGE_HEIGHT := 18.0
+const DEFAULT_GLYPH_SIZE := 16
+const MIN_CONTROL_GLYPH_SIZE := 12
+const MAX_CONTROL_GLYPH_SIZE := 18
+const CANVAS_BADGE_HEIGHT := 22.0
+const CONTROL_BADGE_TEXT_WIDTH := 116.0
 
 static var _texture_cache: Dictionary = {}
-static var _text_width_cache: Dictionary = {}
 
 
 static func control_row(badges: Array, glyph_size: int = DEFAULT_GLYPH_SIZE) -> HFlowContainer:
@@ -25,6 +23,7 @@ static func control_row(badges: Array, glyph_size: int = DEFAULT_GLYPH_SIZE) -> 
 	row.add_theme_constant_override("h_separation", 4)
 	row.add_theme_constant_override("v_separation", 4)
 	row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	row.custom_minimum_size = Vector2(0.0, float(safe_glyph_size) + 8.0)
 	for badge_value in badges:
 		if typeof(badge_value) != TYPE_DICTIONARY:
 			continue
@@ -32,27 +31,44 @@ static func control_row(badges: Array, glyph_size: int = DEFAULT_GLYPH_SIZE) -> 
 		var glyph_id := str(badge.get("glyph_id", "")).strip_edges()
 		if glyph_id.is_empty():
 			continue
+		var tooltip := _tooltip_text(badge)
+		var collapsed_width := float(safe_glyph_size) + 8.0
+		var expanded_width := collapsed_width + CONTROL_BADGE_TEXT_WIDTH
+		var row_height := float(safe_glyph_size) + 6.0
 		var cell := PanelContainer.new()
 		cell.add_theme_stylebox_override("panel", _cell_style(_badge_color(badge)))
-		cell.tooltip_text = _tooltip_text(badge)
+		cell.mouse_filter = Control.MOUSE_FILTER_STOP
+		cell.mouse_default_cursor_shape = Control.CURSOR_ARROW
+		cell.custom_minimum_size = Vector2(collapsed_width, row_height)
 		cell.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
 		var cell_box := HBoxContainer.new()
-		cell_box.add_theme_constant_override("separation", 3)
+		cell_box.add_theme_constant_override("separation", 4)
 		cell.add_child(cell_box)
 		var icon := TextureRect.new()
 		icon.custom_minimum_size = Vector2(safe_glyph_size, safe_glyph_size)
 		icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 		icon.texture = texture_for_badge(badge, safe_glyph_size, false)
+		icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		cell_box.add_child(icon)
-		var value_text := _compact_value_text(str(badge.get("value_text", "")).strip_edges())
-		if not value_text.is_empty():
-			var label := Label.new()
-			label.text = value_text
-			label.clip_text = true
-			label.add_theme_font_size_override("font_size", 10)
-			label.add_theme_color_override("font_color", VisualStyleScript.accessible_color(_badge_color(badge)))
-			label.custom_minimum_size = Vector2(minf(54.0, maxf(18.0, float(value_text.length()) * 6.0)), 0.0)
-			cell_box.add_child(label)
+		var label := Label.new()
+		label.text = tooltip
+		label.visible = false
+		label.clip_text = true
+		label.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+		label.custom_minimum_size = Vector2(CONTROL_BADGE_TEXT_WIDTH - 4.0, float(safe_glyph_size))
+		label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+		label.add_theme_font_size_override("font_size", 10)
+		label.add_theme_color_override("font_color", VisualStyleScript.accessible_color(_badge_color(badge)))
+		label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		cell_box.add_child(label)
+		cell.mouse_entered.connect(func() -> void:
+			cell.custom_minimum_size = Vector2(expanded_width, row_height)
+			label.visible = true
+		)
+		cell.mouse_exited.connect(func() -> void:
+			label.visible = false
+			cell.custom_minimum_size = Vector2(collapsed_width, row_height)
+		)
 		row.add_child(cell)
 	return row
 
@@ -61,10 +77,9 @@ static func draw_canvas(canvas: CanvasItem, badges: Array, origin: Vector2, max_
 	var control := canvas as Control
 	if control == null:
 		return Rect2(origin, Vector2.ZERO)
-	var font := control.get_theme_default_font()
 	var x := origin.x
 	var y := origin.y
-	var row_height := maxf(CANVAS_BADGE_HEIGHT, float(glyph_size) + 4.0)
+	var row_height := maxf(CANVAS_BADGE_HEIGHT, float(glyph_size) + 6.0)
 	var drawn_width := 0.0
 	for badge_value in badges:
 		if typeof(badge_value) != TYPE_DICTIONARY:
@@ -73,11 +88,7 @@ static func draw_canvas(canvas: CanvasItem, badges: Array, origin: Vector2, max_
 		var glyph_id := str(badge.get("glyph_id", "")).strip_edges()
 		if glyph_id.is_empty():
 			continue
-		var value_text := str(badge.get("value_text", "")).strip_edges()
-		var text_width := _canvas_text_width(font, value_text)
-		var badge_width := float(glyph_size) + 8.0
-		if not value_text.is_empty():
-			badge_width += text_width + 4.0
+		var badge_width := float(glyph_size) + 10.0
 		if drawn_width > 0.0 and drawn_width + badge_width > max_width:
 			break
 		var accent := _badge_color(badge)
@@ -93,11 +104,34 @@ static func draw_canvas(canvas: CanvasItem, badges: Array, origin: Vector2, max_
 			var glyph := AttributeBadgesScript.glyph_definition(glyph_id)
 			var sprite: Dictionary = glyph.get("sprite", {}) if typeof(glyph.get("sprite", {})) == TYPE_DICTIONARY else {}
 			IconSpriteRendererScript.draw_canvas(canvas, sprite, icon_rect, accent)
-		if not value_text.is_empty():
-			canvas.draw_string(font, Vector2(x + float(glyph_size) + 7.0, y + 12.0), value_text, HORIZONTAL_ALIGNMENT_LEFT, text_width + 2.0, CANVAS_FONT_SIZE, VisualStyleScript.accessible_color(accent))
 		x += badge_width + 4.0
 		drawn_width += badge_width + 4.0
 	return Rect2(origin, Vector2(drawn_width, row_height))
+
+
+static func canvas_hit_entries(badges: Array, origin: Vector2, max_width: float = 180.0, glyph_size: int = 14) -> Array:
+	var entries: Array = []
+	var x := origin.x
+	var y := origin.y
+	var row_height := maxf(CANVAS_BADGE_HEIGHT, float(glyph_size) + 6.0)
+	var drawn_width := 0.0
+	for badge_value in badges:
+		if typeof(badge_value) != TYPE_DICTIONARY:
+			continue
+		var badge: Dictionary = badge_value
+		var glyph_id := str(badge.get("glyph_id", "")).strip_edges()
+		if glyph_id.is_empty():
+			continue
+		var badge_width := float(glyph_size) + 10.0
+		if drawn_width > 0.0 and drawn_width + badge_width > max_width:
+			break
+		entries.append({
+			"rect": Rect2(Vector2(x, y), Vector2(badge_width, row_height)),
+			"tooltip": _tooltip_text(badge),
+		})
+		x += badge_width + 4.0
+		drawn_width += badge_width + 4.0
+	return entries
 
 
 static func warm_cache(badges: Array, glyph_size: int = DEFAULT_GLYPH_SIZE) -> void:
@@ -166,29 +200,14 @@ static func _cell_style(accent: Color) -> StyleBoxFlat:
 
 static func _tooltip_text(badge: Dictionary) -> String:
 	var tooltip := str(badge.get("tooltip", "")).strip_edges()
+	var value_text := str(badge.get("value_text", "")).strip_edges()
+	if not tooltip.is_empty() and not value_text.is_empty() and tooltip.find(value_text) < 0:
+		return "%s: %s" % [tooltip, value_text]
 	if not tooltip.is_empty():
 		return tooltip
 	var glyph_id := str(badge.get("glyph_id", "")).strip_edges()
 	var glyph := AttributeBadgesScript.glyph_definition(glyph_id)
-	return str(glyph.get("description", glyph.get("label", glyph_id)))
-
-
-static func _compact_value_text(value_text: String) -> String:
-	if value_text.length() <= 8:
-		return value_text
-	return value_text.left(7) + "."
-
-
-static func _canvas_text_width(font: Font, text: String) -> float:
-	if text.is_empty():
-		return 0.0
-	if font == null:
-		return float(text.length()) * 5.0
-	var cache_key := "%d|%d|%s" % [int(font.get_instance_id()), CANVAS_FONT_SIZE, text]
-	if _text_width_cache.has(cache_key):
-		return float(_text_width_cache.get(cache_key, 0.0))
-	var width := font.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1.0, CANVAS_FONT_SIZE).x
-	if _text_width_cache.size() > MAX_TEXT_WIDTH_CACHE:
-		_text_width_cache.clear()
-	_text_width_cache[cache_key] = width
-	return width
+	var label := str(glyph.get("label", glyph_id)).strip_edges()
+	if not value_text.is_empty():
+		return "%s: %s" % [label, value_text]
+	return str(glyph.get("description", label))

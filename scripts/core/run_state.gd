@@ -85,6 +85,9 @@ const CLOSING_TIME_PHASE_FORCED_TRAVEL := "forced_travel"
 const HOME_SELECTION_RANDOM := "random"
 const HOME_TENURE_RENT := "rent"
 const HOME_TENURE_STAY := "stay"
+const CREW_LENDER_ID := "the_crew"
+const CREW_MAX_LOAN_LOCATIONS := 3
+const LENDER_REPAY_HEAT_REDUCTION := 3
 
 var seed_text: String = ""
 var seed_value: int = 1
@@ -866,7 +869,7 @@ func event_cadence_event_bypasses_budget(event_id: String, trigger_type: String,
 	var normalized_id := event_id.strip_edges()
 	if [GRAND_CASINO_SHOWDOWN_EVENT_ID, GRAND_CASINO_HIGH_ROLLER_EVENT_ID, "the_collector", "family_loan"].has(normalized_id):
 		return true
-	if ["event_chain", "debt", "lender", "showdown", "prestige"].has(source):
+	if ["event_chain", "debt", "lender", "showdown"].has(source):
 		return true
 	var conditions := _copy_dict(event_definition.get("conditions", {}))
 	if bool(conditions.get("requires_overdue_debt", false)):
@@ -1505,44 +1508,6 @@ func security_action_pressure(action_kind: String, stake: int, projected_level: 
 		"bankroll_delta": 0,
 		"ended": false,
 		"message": "",
-	}
-
-
-# Evaluates a prestige target using current run state without mutating the run.
-func prestige_purchase_status(definition: Dictionary) -> Dictionary:
-	var cost := maxi(0, int(definition.get("cost", 0)))
-	var requirements := _copy_dict(definition.get("requirements", {}))
-	var bankroll_min := maxi(cost, int(requirements.get("bankroll_min", cost)))
-	var max_heat := clampi(int(requirements.get("max_heat", 100)), 0, 100)
-	var environment_count_min := maxi(0, int(requirements.get("environment_count_min", 0)))
-	var available := true
-	var reasons: Array = []
-	if bankroll < bankroll_min:
-		available = false
-		reasons.append("Needs bankroll %d." % bankroll_min)
-	if suspicion_level() > max_heat:
-		available = false
-		reasons.append("Heat must be %d or lower." % max_heat)
-	var visited_count := visited_environment_count()
-	if visited_count < environment_count_min:
-		available = false
-		var remaining := environment_count_min - visited_count
-		reasons.append("Visit %d more place%s." % [remaining, "" if remaining == 1 else "s"])
-	var required_flags := _copy_dict(requirements.get("flags", requirements.get("required_flags", {})))
-	for flag_key in required_flags.keys():
-		var expected: Variant = required_flags[flag_key]
-		if narrative_flags.get(str(flag_key), null) != expected:
-			available = false
-			reasons.append("Another clue is still missing.")
-			break
-	var reason := "Ready." if available else " ".join(reasons)
-	return {
-		"available": available,
-		"disabled_reason": reason,
-		"cost": cost,
-		"bankroll_min": bankroll_min,
-		"max_heat": max_heat,
-		"environment_count_min": environment_count_min,
 	}
 
 
@@ -2804,6 +2769,9 @@ func add_debt(debt_data: Dictionary) -> void:
 		return
 	var debt_entry: Dictionary = normalized[0]
 	_apply_debt_item_modifiers_to_new_debt(debt_entry)
+	if _merge_stackable_debt(debt_entry):
+		_refresh_economy()
+		return
 	debt.append(debt_entry)
 	_refresh_economy()
 
@@ -3374,6 +3342,7 @@ func service_hook_status(service_data: Dictionary) -> Dictionary:
 # Returns whether a lender hook can currently be used without mutating state.
 func lender_hook_status(lender_data: Dictionary) -> Dictionary:
 	var lender_id := str(lender_data.get("id", ""))
+	var lender_type := str(lender_data.get("lender_type", ""))
 	var status := {
 		"available": true,
 		"disabled_reason": "",
@@ -3388,10 +3357,12 @@ func lender_hook_status(lender_data: Dictionary) -> Dictionary:
 	var availability := _copy_dict(lender_data.get("availability", {}))
 	var single_use_flag := str(availability.get("single_use_flag", ""))
 	if not single_use_flag.is_empty() and bool(narrative_flags.get(single_use_flag, false)):
-		status["available"] = false
-		status["disabled_reason"] = "That one-time lender has already helped this run."
-		status["availability_class"] = AVAILABILITY_CATEGORICAL_UNAVAILABLE
-		return status
+		var paid_count := _lender_paid_count(lender_id)
+		if paid_count <= 0:
+			status["available"] = false
+			status["disabled_reason"] = "That one-time lender has already helped this run."
+			status["availability_class"] = AVAILABILITY_CATEGORICAL_UNAVAILABLE
+			return status
 	var tier_min := maxi(0, int(availability.get("tier_min", availability.get("min_tier", 0))))
 	if tier_min > 0 and int(current_environment.get("tier", 1)) < tier_min:
 		status["available"] = false
@@ -3411,6 +3382,19 @@ func lender_hook_status(lender_data: Dictionary) -> Dictionary:
 			status["disabled_reason"] = "This lender will not answer again."
 			status["availability_class"] = AVAILABILITY_CATEGORICAL_UNAVAILABLE
 			return status
+	var current_location_id := _lender_location_key()
+	if lender_id == CREW_LENDER_ID or lender_type == "favor_crew":
+		var crew_status := _crew_lender_repeat_status(current_location_id)
+		if not bool(crew_status.get("available", true)):
+			return crew_status
+		return status
+	else:
+		var paid_environment_id := str(narrative_flags.get(_lender_paid_environment_key(lender_id), ""))
+		if not current_location_id.is_empty() and paid_environment_id == current_location_id:
+			status["available"] = false
+			status["disabled_reason"] = "They will offer more the next time you see them."
+			status["availability_class"] = AVAILABILITY_TRANSIENT_BLOCKED
+			return status
 	for debt_entry in debt:
 		if typeof(debt_entry) != TYPE_DICTIONARY:
 			continue
@@ -3418,12 +3402,90 @@ func lender_hook_status(lender_data: Dictionary) -> Dictionary:
 		if str(debt_data.get("lender_id", "")) != lender_id:
 			continue
 		var debt_status := str(debt_data.get("status", "active"))
-		if debt_status == "active" or debt_status == "overdue":
+		if debt_status == "active" or debt_status == "overdue" or debt_status == "favor_due":
 			status["available"] = false
 			status["disabled_reason"] = "You already owe this lender."
 			status["active_debt"] = true
 			status["availability_class"] = AVAILABILITY_TRANSIENT_BLOCKED
 			return status
+	return status
+
+
+# Returns whether a visible lender can accept a cash repayment now.
+func lender_repayment_status(lender_id: String) -> Dictionary:
+	var status := {
+		"available": false,
+		"enabled": false,
+		"disabled_reason": "No active loan to repay.",
+		"debt_id": "",
+		"payoff_amount": 0,
+	}
+	for debt_entry in debt:
+		if typeof(debt_entry) != TYPE_DICTIONARY:
+			continue
+		var debt_data := debt_entry as Dictionary
+		if str(debt_data.get("lender_id", "")) != lender_id:
+			continue
+		var debt_status := str(debt_data.get("status", "active"))
+		if debt_status != "active" and debt_status != "overdue":
+			continue
+		var debt_kind := str(debt_data.get("debt_kind", "cash"))
+		if debt_kind == "favor":
+			status["available"] = false
+			status["disabled_reason"] = "The Crew wants favors, not a cash payoff."
+			return status
+		var balance := maxi(0, int(debt_data.get("balance", 0)))
+		status["available"] = true
+		status["debt_id"] = str(debt_data.get("id", ""))
+		status["payoff_amount"] = balance
+		if balance <= 0 or bankroll >= balance:
+			status["enabled"] = true
+			status["disabled_reason"] = ""
+		else:
+			status["disabled_reason"] = "Need $%d to settle this loan." % balance
+		return status
+	return status
+
+
+func _crew_lender_repeat_status(current_location_id: String) -> Dictionary:
+	var status := {
+		"available": true,
+		"disabled_reason": "",
+		"active_debt": false,
+		"availability_class": AVAILABILITY_AVAILABLE,
+	}
+	var location_lookup := {}
+	var open_locations := 0
+	for debt_entry in debt:
+		if typeof(debt_entry) != TYPE_DICTIONARY:
+			continue
+		var debt_data := debt_entry as Dictionary
+		if str(debt_data.get("lender_id", "")) != CREW_LENDER_ID:
+			continue
+		var debt_status := str(debt_data.get("status", "active"))
+		if debt_status != "active" and debt_status != "overdue" and debt_status != "favor_due":
+			continue
+		for location_value in _copy_array(debt_data.get("source_location_ids", [])):
+			var location_id := str(location_value)
+			if location_id.is_empty() or location_lookup.has(location_id):
+				continue
+			location_lookup[location_id] = true
+			open_locations += 1
+		var single_location_id := str(debt_data.get("source_location_id", ""))
+		if not single_location_id.is_empty() and not location_lookup.has(single_location_id):
+			location_lookup[single_location_id] = true
+			open_locations += 1
+	if not current_location_id.is_empty() and location_lookup.has(current_location_id):
+		status["available"] = false
+		status["disabled_reason"] = "The Crew already marked this location."
+		status["active_debt"] = true
+		status["availability_class"] = AVAILABILITY_TRANSIENT_BLOCKED
+		return status
+	if open_locations >= CREW_MAX_LOAN_LOCATIONS:
+		status["available"] = false
+		status["disabled_reason"] = "The Crew will not open more than three markers."
+		status["active_debt"] = true
+		status["availability_class"] = AVAILABILITY_TRANSIENT_BLOCKED
 	return status
 
 
@@ -3472,15 +3534,6 @@ func recovery_pressure_status(recovery_available: bool = false, bankroll_zero_de
 				"state": "victory",
 				"title": "Demo victory",
 				"summary": current_demo_victory_message(),
-				"failed": false,
-				"recovery_available": false,
-				"terminal": true,
-			}
-		if bool(narrative_flags.get("prestige_victory", false)):
-			return {
-				"state": "victory",
-				"title": "Victory claimed",
-				"summary": "You beat the house for now.",
 				"failed": false,
 				"recovery_available": false,
 				"terminal": true,
@@ -3823,16 +3876,100 @@ func _settle_paid_debt(index: int, debt_data: Dictionary, payment: int) -> Strin
 		if not goodwill_flag.is_empty():
 			narrative_flags[goodwill_flag] = true
 		message = "Paid your brother-in-law early enough to become a story he tells nicely."
+	_mark_lender_repaid(lender_id)
+	var heat_reduction := mini(LENDER_REPAY_HEAT_REDUCTION, suspicion_level())
+	if heat_reduction > 0:
+		_decrease_current_suspicion(heat_reduction)
 	debt.remove_at(index)
 	log_story({
 		"type": "debt_paid",
 		"debt_id": str(debt_data.get("id", "")),
 		"lender_id": lender_id,
 		"bankroll_delta": -payment,
+		"suspicion_delta": -heat_reduction,
 		"collateral_item_id": str(debt_data.get("collateral_item_id", "")),
 		"message": message,
 	})
 	return message
+
+
+func _merge_stackable_debt(debt_entry: Dictionary) -> bool:
+	if str(debt_entry.get("lender_id", "")) != CREW_LENDER_ID:
+		return false
+	if str(debt_entry.get("debt_kind", "")) != "favor":
+		return false
+	for index in range(debt.size()):
+		if typeof(debt[index]) != TYPE_DICTIONARY:
+			continue
+		var existing := (debt[index] as Dictionary).duplicate(true)
+		if str(existing.get("lender_id", "")) != CREW_LENDER_ID:
+			continue
+		if str(existing.get("debt_kind", "")) != "favor":
+			continue
+		var debt_status := str(existing.get("status", "active"))
+		if debt_status != "active" and debt_status != "overdue" and debt_status != "favor_due":
+			continue
+		existing["balance"] = maxi(0, int(existing.get("balance", 0))) + maxi(0, int(debt_entry.get("balance", 0)))
+		existing["status"] = "active"
+		existing["deadline_turns"] = maxi(int(existing.get("deadline_turns", 0)), int(debt_entry.get("deadline_turns", 0)))
+		existing["turns_remaining"] = maxi(int(existing.get("turns_remaining", 0)), int(debt_entry.get("turns_remaining", 0)))
+		existing["loan_count"] = maxi(1, int(existing.get("loan_count", 1))) + maxi(1, int(debt_entry.get("loan_count", 1)))
+		existing["source_location_ids"] = _unique_lender_source_locations(existing, debt_entry)
+		debt[index] = existing
+		return true
+	return false
+
+
+func _unique_lender_source_locations(first: Dictionary, second: Dictionary) -> Array:
+	var result: Array = []
+	var lookup := {}
+	for source in [first, second]:
+		var source_dict := source as Dictionary
+		for location_value in _copy_array(source_dict.get("source_location_ids", [])):
+			var location_id := str(location_value)
+			if location_id.is_empty() or lookup.has(location_id):
+				continue
+			lookup[location_id] = true
+			result.append(location_id)
+		var single_location_id := str(source_dict.get("source_location_id", ""))
+		if not single_location_id.is_empty() and not lookup.has(single_location_id):
+			lookup[single_location_id] = true
+			result.append(single_location_id)
+	return result
+
+
+func _mark_lender_repaid(lender_id: String) -> void:
+	if lender_id.is_empty():
+		return
+	var count_key := _lender_paid_count_key(lender_id)
+	narrative_flags[count_key] = maxi(0, int(narrative_flags.get(count_key, 0))) + 1
+	var location_id := _lender_location_key()
+	if not location_id.is_empty():
+		narrative_flags[_lender_paid_environment_key(lender_id)] = location_id
+
+
+func _lender_paid_count(lender_id: String) -> int:
+	if lender_id.is_empty():
+		return 0
+	return maxi(0, int(narrative_flags.get(_lender_paid_count_key(lender_id), 0)))
+
+
+func _lender_paid_count_key(lender_id: String) -> String:
+	return "lender_%s_paid_count" % lender_id
+
+
+func _lender_paid_environment_key(lender_id: String) -> String:
+	return "lender_%s_paid_environment_id" % lender_id
+
+
+func _lender_location_key() -> String:
+	var environment_id := str(current_environment.get("id", "")).strip_edges()
+	if not environment_id.is_empty():
+		return environment_id
+	environment_id = str(current_environment.get("world_node_id", "")).strip_edges()
+	if not environment_id.is_empty():
+		return environment_id
+	return str(current_environment.get("archetype_id", "")).strip_edges()
 
 
 func _debt_index(debt_id: String) -> int:
@@ -4187,7 +4324,7 @@ func _first_story_price(deltas: Dictionary, story_type: String) -> int:
 
 # Marks the run as failed in the RunState source of truth.
 func fail_run(reason: String, message: String = "") -> void:
-	if run_status == RUN_STATUS_ENDED and (bool(narrative_flags.get("demo_victory", false)) or bool(narrative_flags.get("prestige_victory", false))):
+	if run_status == RUN_STATUS_ENDED and bool(narrative_flags.get("demo_victory", false)):
 		return
 	run_status = RUN_STATUS_FAILED
 	run_failure_reason = reason if not reason.strip_edges().is_empty() else FAILURE_BANKROLL_ZERO
@@ -4689,6 +4826,26 @@ static func _normalize_debt_entries(entries: Array) -> Array:
 			debt_entry["balance"] = int(debt_entry.get("balance", 0))
 		else:
 			debt_entry["balance"] = 0
+		if debt_entry.has("principal"):
+			debt_entry["principal"] = maxi(0, int(debt_entry.get("principal", 0)))
+		if debt_entry.has("loan_count"):
+			debt_entry["loan_count"] = maxi(1, int(debt_entry.get("loan_count", 1)))
+		if debt_entry.has("source_location_id"):
+			debt_entry["source_location_id"] = str(debt_entry.get("source_location_id", ""))
+		var source_location_ids: Array = []
+		var source_lookup := {}
+		for source_value in _copy_array(debt_entry.get("source_location_ids", [])):
+			var source_location_id := str(source_value)
+			if source_location_id.is_empty() or source_lookup.has(source_location_id):
+				continue
+			source_lookup[source_location_id] = true
+			source_location_ids.append(source_location_id)
+		var single_source_location := str(debt_entry.get("source_location_id", ""))
+		if not single_source_location.is_empty() and not source_lookup.has(single_source_location):
+			source_lookup[single_source_location] = true
+			source_location_ids.append(single_source_location)
+		if not source_location_ids.is_empty():
+			debt_entry["source_location_ids"] = source_location_ids
 		debt_entry["deadline_turns"] = maxi(0, int(debt_entry.get("deadline_turns", 0)))
 		if debt_entry.has("turns_remaining"):
 			debt_entry["turns_remaining"] = maxi(0, int(debt_entry.get("turns_remaining", 0)))

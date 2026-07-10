@@ -163,7 +163,6 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 		"surface_embeds_outcomes": true,
 		"surface_suppresses_game_result_burst": true,
 		"surface_animates_idle": true,
-		"surface_ambient_overlay": "",
 		"surface_dynamic_overlay_channels": [BACCARAT_DEAL_CHANNEL, BACCARAT_PAYOUT_CHANNEL],
 		"surface_realtime_state_refresh": deal_active or payout_active,
 		"surface_state_labels": [
