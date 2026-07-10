@@ -17,6 +17,21 @@ const HOUSING_HOUSE := "house"
 const SALE_KIND_ITEM := "item"
 const SALE_KIND_BAG := "bag"
 const FAILURE_DECAY_FLAG := "_meta_collection_failure_decay_applied"
+const FIXTURE_POLLUTION_MIGRATION_FLAG := "_fixture_pollution_quarantined_v1"
+const FAILURE_DURABILITY_LOSS := 0.10
+
+const FIXTURE_PROVENANCE_TOKENS := [
+	"ui-",
+	"fixture",
+	"test",
+	"dry-run",
+	"meta-home-review",
+	"screenshot",
+	"post-release",
+	"foundation-",
+	"layout-",
+	"v04-",
+]
 
 var _store: Dictionary = {}
 var _item_definitions_by_id: Dictionary = {}
@@ -43,7 +58,10 @@ func load() -> Dictionary:
 		_store = _default_store()
 		return snapshot()
 	var data: Dictionary = parsed
-	_store = _normalize_store(data)
+	var migration := _migrate_fixture_pollution(_normalize_store(data))
+	_store = _copy_dict(migration.get("store", {}))
+	if bool(migration.get("migrated", false)):
+		save()
 	return snapshot()
 
 
@@ -129,6 +147,10 @@ func open_bag(instance_id: int) -> Dictionary:
 	_store["unopened_bags"] = bags
 	_store["meta_rng"] = rng.snapshot()
 	var rolled: Dictionary = resolver.roll_instance(int(definition.get("itemdef_id", -1)), reveal_seed)
+	rolled["source"] = str(bag.get("source", "bag"))
+	rolled["source_id"] = str(bag.get("source_id", ""))
+	rolled["source_bag_instance_id"] = instance_id
+	rolled["source_rng_seed"] = str(bag.get("rng_seed", ""))
 	var granted := grant_instance(rolled)
 	var run_item: Dictionary = resolver.resolve_run_item(granted)
 	var reveal := {
@@ -308,19 +330,32 @@ func apply_failure_decay(carried_ids: Array, rng_seed: String) -> Array:
 			wanted_ids[instance_id] = true
 	if wanted_ids.is_empty():
 		return []
-	var resolver: Variant = CollectionItemResolverScript.new()
 	var next_instances: Array = []
 	var decayed: Array = []
+	var deleted_ids: Array = []
 	for instance_value in _copy_array(_store.get("owned_instances", [])):
 		var instance := _copy_dict(instance_value)
 		var instance_id := int(instance.get("instance_id", 0))
 		if wanted_ids.has(instance_id):
-			var after: Dictionary = resolver.apply_usage_decay(instance, "%s|%d" % [rng_seed, instance_id])
-			next_instances.append(after)
+			var after: Dictionary = CollectionItemResolverScript.normalize_instance(instance)
+			var before_condition := clampf(float(after.get("condition", 0.0)), 0.0, 1.0)
+			after["condition"] = 0.0 if before_condition <= FAILURE_DURABILITY_LOSS else clampf(before_condition - FAILURE_DURABILITY_LOSS, 0.0, 1.0)
+			after["failure_durability_loss"] = FAILURE_DURABILITY_LOSS
+			after["failure_rng_seed"] = "%s|%d" % [rng_seed, instance_id]
+			if float(after.get("condition", 0.0)) <= 0.0:
+				after["deleted"] = true
+				deleted_ids.append(instance_id)
+			else:
+				next_instances.append(after)
 			decayed.append(after.duplicate(true))
 		else:
 			next_instances.append(instance)
 	_store["owned_instances"] = next_instances
+	if not deleted_ids.is_empty():
+		var loadout := _filtered_packed_ids(_copy_array(_store.get("loadout", [])))
+		for deleted_id in deleted_ids:
+			loadout.erase(int(deleted_id))
+		_store["loadout"] = loadout
 	return decayed
 
 
@@ -533,6 +568,66 @@ func _normalize_store(data: Dictionary) -> Dictionary:
 		_max_recorded_instance_id(normalized) + 1
 	)
 	return normalized
+
+
+func _migrate_fixture_pollution(data: Dictionary) -> Dictionary:
+	var next := data.duplicate(true)
+	var quarantined_bags: Array = []
+	var kept_bags: Array = []
+	for bag_value in _copy_array(next.get("unopened_bags", [])):
+		var bag := _copy_dict(bag_value)
+		if _record_has_fixture_provenance(bag):
+			quarantined_bags.append(bag)
+		else:
+			kept_bags.append(bag)
+	var fixture_pollution_found := not quarantined_bags.is_empty()
+	var quarantined_instances: Array = []
+	var kept_instances: Array = []
+	for instance_value in _copy_array(next.get("owned_instances", [])):
+		var instance := _copy_dict(instance_value)
+		if _record_has_fixture_provenance(instance):
+			quarantined_instances.append(instance)
+		elif fixture_pollution_found and not _record_has_earned_provenance(instance):
+			quarantined_instances.append(instance)
+		else:
+			kept_instances.append(instance)
+	if quarantined_bags.is_empty() and quarantined_instances.is_empty():
+		return {"store": next, "migrated": false}
+	next["unopened_bags"] = kept_bags
+	next["owned_instances"] = kept_instances
+	var quarantine := _copy_dict(next.get("quarantined_records", {}))
+	quarantine["fixture_bags"] = _copy_array(quarantine.get("fixture_bags", [])) + quarantined_bags
+	quarantine["fixture_instances"] = _copy_array(quarantine.get("fixture_instances", [])) + quarantined_instances
+	quarantine["migration"] = FIXTURE_POLLUTION_MIGRATION_FLAG
+	next["quarantined_records"] = quarantine
+	if kept_bags.is_empty() and kept_instances.is_empty():
+		next["loadout"] = []
+		next["pending_sale"] = {}
+		next["pending_trade_up"] = {}
+		next["sale_history"] = []
+		next["gold_balance"] = 0
+	next[FIXTURE_POLLUTION_MIGRATION_FLAG] = true
+	next["next_instance_id"] = maxi(FIRST_INSTANCE_ID, _max_recorded_instance_id(next) + 1)
+	return {"store": _normalize_store(next), "migrated": true}
+
+
+func _record_has_earned_provenance(record: Dictionary) -> bool:
+	var source := str(record.get("source", "")).strip_edges()
+	var rng_seed := str(record.get("rng_seed", record.get("source_rng_seed", ""))).strip_edges()
+	if source.is_empty() and rng_seed.is_empty():
+		return false
+	return not _record_has_fixture_provenance(record)
+
+
+func _record_has_fixture_provenance(record: Dictionary) -> bool:
+	for field in ["source", "source_id", "rng_seed", "source_rng_seed", "marker_id"]:
+		var text := str(record.get(field, "")).strip_edges().to_lower()
+		if text.is_empty():
+			continue
+		for token in FIXTURE_PROVENANCE_TOKENS:
+			if text.contains(str(token)):
+				return true
+	return false
 
 
 func _normalize_housing_tier(value: String) -> String:

@@ -1076,7 +1076,7 @@ func _draw_pinball_choice_strip(surface, rect: Rect2, title: String, action_pref
 		surface.draw_rect(cell, Color("#f8fafc") if hovered or selected else Color(color.r, color.g, color.b, 0.46), false, 1)
 		if selected:
 			surface.draw_line(Vector2(cell.position.x + cell.size.x * 0.5, cell.position.y - 2), Vector2(cell.position.x + cell.size.x * 0.5, cell.end.y + 2), Color("#f8fafc"), 2)
-		surface.surface_add_hit(cell, "%s%02d" % [action_prefix, index], index)
+		surface.surface_add_exact_hit(cell, "%s%02d" % [action_prefix, index], index)
 
 
 func _pinball_aim_choice_index(active: Dictionary) -> int:
@@ -1905,7 +1905,7 @@ func _draw_pinball_launch_start_rail(surface, rect: Rect2, active: Dictionary, l
 		var radius := 5.0 if index == selected_index else 3.0
 		var alpha := 0.82 if index == selected_index else 0.34
 		surface.draw_circle(marker, radius, Color(trim.r, trim.g, trim.b, alpha))
-		surface.surface_add_hit(Rect2(marker - Vector2(12, 12), Vector2(24, 24)), str(PINBALL_START_ACTIONS[index]), index)
+		surface.surface_add_exact_hit(Rect2(marker - Vector2(12, 12), Vector2(24, 24)), str(PINBALL_START_ACTIONS[index]), index)
 
 
 func _draw_pinball_power_meter(surface, rect: Rect2, active: Dictionary, light: Color, trim: Color) -> void:

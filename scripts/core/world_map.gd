@@ -6,6 +6,8 @@ extends RefCounted
 const VERSION := 1
 const GRAND_CASINO_ID := "grand_casino"
 const UNDERGROUND_SHORTCUT_ID := "small_underground_casino"
+const BEACH_ID := "beach"
+const BEACH_GATEWAY_ID := "delta_queen"
 const STATE_HIDDEN := "hidden"
 const STATE_REVEALED := "revealed"
 const STATE_VISITED := "visited"
@@ -94,6 +96,8 @@ func route_for_target(map_data: Dictionary, current_id: String, target_id: Strin
 	var source_id := current_id.strip_edges()
 	var destination_id := target_id.strip_edges()
 	if source_id.is_empty() or destination_id.is_empty() or source_id == destination_id:
+		return {}
+	if not _travel_target_allowed_from_source(source_id, destination_id):
 		return {}
 	var source_node := node_by_id(normalized, source_id)
 	var destination_node := node_by_id(normalized, destination_id)
@@ -427,7 +431,12 @@ static func travel_target_ids(map_data: Dictionary, node_id: String = "", max_ne
 		var target_id := str(candidate.get("id", ""))
 		if not target_id.is_empty() and not result.has(target_id):
 			result.append(target_id)
-	result = _ensure_priority_target(result, enabled_new_candidates + enabled_old_candidates, GRAND_CASINO_ID, total_limit)
+	var priority_candidates := enabled_new_candidates + enabled_old_candidates
+	if source_id == BEACH_GATEWAY_ID:
+		result = _ensure_visible_neighbor_target(result, source_id, BEACH_ID, total_limit, visible_lookup, edge_lookup, node_lookup)
+	elif source_id == BEACH_ID:
+		result = _ensure_visible_neighbor_target(result, source_id, BEACH_GATEWAY_ID, total_limit, visible_lookup, edge_lookup, node_lookup)
+	result = _ensure_priority_target(result, priority_candidates, GRAND_CASINO_ID, total_limit)
 	return result
 
 
@@ -845,6 +854,8 @@ func _guarantee_progression_edges(edges_by_id: Dictionary, ids: Array, archetype
 func _add_edge(edges_by_id: Dictionary, a: String, b: String, positions: Dictionary) -> void:
 	var edge_id := _edge_id(a, b)
 	if edge_id.is_empty() or edges_by_id.has(edge_id):
+		return
+	if _is_beach_route_pair(a, b) and not _is_beach_gateway_pair(a, b):
 		return
 	var pa: Dictionary = positions.get(a, {"x": 0.5, "y": 0.5})
 	var pb: Dictionary = positions.get(b, {"x": 0.5, "y": 0.5})
@@ -1334,6 +1345,24 @@ static func _ensure_priority_target(result: Array, candidates: Array, target_id:
 	return normalized_result
 
 
+static func _ensure_visible_neighbor_target(result: Array, source_id: String, target_id: String, total_limit: int, visible_lookup: Dictionary, edge_lookup: Dictionary, node_lookup: Dictionary) -> Array:
+	var normalized_result := result.duplicate(true)
+	if total_limit <= 0 or source_id.is_empty() or target_id.is_empty() or normalized_result.has(target_id):
+		return normalized_result
+	if not visible_lookup.has(source_id) or not visible_lookup.has(target_id):
+		return normalized_result
+	if not edge_lookup.has(_edge_id(source_id, target_id)):
+		return normalized_result
+	var target_node: Dictionary = node_lookup.get(target_id, {})
+	if target_node.is_empty() or bool(target_node.get("home_lost", false)):
+		return normalized_result
+	if normalized_result.size() < total_limit:
+		normalized_result.append(target_id)
+	elif not normalized_result.is_empty():
+		normalized_result[normalized_result.size() - 1] = target_id
+	return normalized_result
+
+
 static func _travel_candidate_entries(map_data: Dictionary, source_id: String, visited_only: bool, enabled_lookup: Dictionary = {}) -> Array:
 	var visible_data := _visible_ids_and_lookup(map_data)
 	var visible_ids: Array = visible_data.get("ids", [])
@@ -1349,6 +1378,8 @@ static func _travel_candidate_entries_prepared(map_data: Dictionary, source_id: 
 	for target_id_value in visible_ids:
 		var target_id := str(target_id_value)
 		if target_id == source_id:
+			continue
+		if not _travel_target_allowed_from_source(source_id, target_id):
 			continue
 		var node: Dictionary = node_lookup.get(target_id, {})
 		if node.is_empty():
@@ -1405,6 +1436,24 @@ static func _travel_candidate_entries_prepared(map_data: Dictionary, source_id: 
 		})
 	entries.sort_custom(Callable(WorldMap, "_sort_travel_candidate"))
 	return entries
+
+
+static func _travel_target_allowed_from_source(source_id: String, target_id: String) -> bool:
+	var source := source_id.strip_edges()
+	var target := target_id.strip_edges()
+	if target != BEACH_ID:
+		return true
+	return source == BEACH_GATEWAY_ID
+
+
+static func _is_beach_route_pair(a: String, b: String) -> bool:
+	return a.strip_edges() == BEACH_ID or b.strip_edges() == BEACH_ID
+
+
+static func _is_beach_gateway_pair(a: String, b: String) -> bool:
+	var left := a.strip_edges()
+	var right := b.strip_edges()
+	return (left == BEACH_ID and right == BEACH_GATEWAY_ID) or (left == BEACH_GATEWAY_ID and right == BEACH_ID)
 
 
 static func _sort_travel_candidate(a: Variant, b: Variant) -> bool:

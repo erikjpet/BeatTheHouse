@@ -26,7 +26,6 @@ const CONTEXT_MODE_ITEM := "item"
 const CONTEXT_MODE_TRAVEL := "travel"
 const CONTEXT_MODE_SERVICE := "service"
 const CONTEXT_MODE_LENDER := "lender"
-const CONTEXT_MODE_PRESTIGE := "prestige"
 const CONTEXT_MODE_SHOPKEEPER := "shopkeeper"
 const CONTEXT_MODE_GAME_HOOK := "game_hook"
 const CONTEXT_MODE_DIALOGUE := "dialogue"
@@ -52,7 +51,7 @@ const RUN_ITEM_ICON_TEXTURE_CACHE_LIMIT := 64
 const RESULT_FEEDBACK_WIDTH := 340.0
 const RESULT_FEEDBACK_HEIGHT := 46.0
 const RESULT_FEEDBACK_MAX_CHARS := 64
-const MAIN_MENU_COLLAPSED_SIZE := Vector2(780, 520)
+const MAIN_MENU_COLLAPSED_SIZE := Vector2(780, 560)
 const MAIN_MENU_EXPANDED_SIZE := Vector2(940, 380)
 const MAIN_MENU_VIEWPORT_MARGIN := Vector2(32, 24)
 const ACCESSIBILITY_BASE_FONT_META := "accessibility_base_font_size"
@@ -129,8 +128,6 @@ var selected_service_hook_label: String = ""
 var selected_lender_hook_id: String = ""
 var selected_lender_hook_label: String = ""
 var last_hook_result: Dictionary = {}
-var selected_prestige_purchase_id: String = ""
-var selected_prestige_purchase_label: String = ""
 var save_status_message: String = ""
 var selected_action_category: String = ACTION_CATEGORY_GAMES
 var current_screen: String = SCREEN_START
@@ -189,16 +186,13 @@ var run_screen: Control
 var main_menu_panel: PanelContainer
 var start_menu_controls: VBoxContainer
 var start_menu_intro: VBoxContainer
+var start_menu_stack: VBoxContainer
 var release_framing_label: Label
 var release_version_label: Label
 var main_menu_background: Control
 var inventory_page: VBoxContainer
 var inventory_status_label: Label
 var inventory_items_list: VBoxContainer
-var collection_status_label: Label
-var collection_bags_list: VBoxContainer
-var collection_items_list: VBoxContainer
-var collection_reveal_label: Label
 var game_test_menu: VBoxContainer
 var game_library_button: Button
 var game_test_status_label: Label
@@ -516,7 +510,6 @@ func start_foundation_run(seed_text: String = DEFAULT_SEED, challenge_config: Di
 	_clear_selected_item_offer()
 	_clear_selected_service_hook()
 	_clear_selected_lender_hook()
-	_clear_selected_prestige_purchase()
 	clear_interaction_focus()
 	_show_message("The run begins.")
 	_autosave_foundation_run("Autosaved.")
@@ -2717,6 +2710,32 @@ func use_lender_hook(lender_id: String) -> bool:
 	return true
 
 
+func repay_lender_debt(lender_id: String) -> bool:
+	if run_state == null:
+		return false
+	if _guard_player_input_route():
+		return false
+	var status := run_state.lender_repayment_status(lender_id)
+	if not bool(status.get("available", false)):
+		_show_message(str(status.get("disabled_reason", "No active loan to repay.")))
+		_refresh()
+		return false
+	if not bool(status.get("enabled", false)):
+		_show_message(str(status.get("disabled_reason", "Not enough bankroll to repay this loan.")))
+		_refresh()
+		return false
+	var result := run_state.repay_debt(str(status.get("debt_id", "")))
+	if not bool(result.get("ok", false)):
+		_show_message(str(result.get("message", "Could not settle this loan.")))
+		_refresh()
+		return false
+	_clear_selected_lender_hook()
+	_show_message(str(result.get("message", "Loan settled.")))
+	_autosave_foundation_run("Autosaved.")
+	_refresh()
+	return true
+
+
 func use_game_environment_hook(game_id: String, hook_id: String, action_id: String = "") -> bool:
 	if run_state == null or library == null:
 		return false
@@ -2758,64 +2777,6 @@ func use_game_environment_hook(game_id: String, hook_id: String, action_id: Stri
 	if bool(result.get("ok", false)) and _apply_post_action_environment_interrupt("game_hook"):
 		_refresh()
 		return true
-	_refresh()
-	return true
-
-
-# Selects a prestige target without mutating simulation state.
-func select_prestige_purchase(purchase_id: String) -> bool:
-	if _guard_player_input_route():
-		return false
-	var option := _prestige_purchase_option(purchase_id)
-	if option.is_empty():
-		_show_message("Prestige target is not available.")
-		return false
-	selected_prestige_purchase_id = purchase_id
-	selected_prestige_purchase_label = str(option.get("display_name", purchase_id))
-	focus_interactable_object("prestige:%s" % purchase_id)
-	_show_message("%s: %s" % [selected_prestige_purchase_label, str(option.get("status", ""))])
-	_refresh()
-	return true
-
-
-# Confirms the selected prestige purchase through the result-delta path.
-func confirm_selected_prestige_purchase() -> bool:
-	if selected_prestige_purchase_id.is_empty():
-		_show_message("Select a prestige target first.")
-		return false
-	return buy_prestige_purchase(selected_prestige_purchase_id)
-
-
-# Buys one prestige target and lets RunState hold the resulting run status.
-func buy_prestige_purchase(purchase_id: String) -> bool:
-	if _guard_player_input_route():
-		return false
-	var option := _prestige_purchase_option(purchase_id)
-	if option.is_empty():
-		_show_message("Prestige target is not available.")
-		return false
-	if not bool(option.get("enabled", false)):
-		_show_message(str(option.get("disabled_reason", "This target is locked for now.")))
-		_refresh()
-		return false
-	_refresh_run_action_service()
-	var resolved := run_action_service.buy_prestige_purchase(purchase_id)
-	if not bool(resolved.get("ok", false)):
-		_show_message(str(resolved.get("message", "Prestige target is not available.")))
-		_refresh()
-		return false
-	var result: Dictionary = resolved.get("result", {})
-	_reset_game_surface_runtime_state()
-	current_game = null
-	last_game_result = {}
-	last_item_result = {}
-	last_hook_result = result.duplicate(true)
-	_clear_selected_prestige_purchase()
-	clear_interaction_focus()
-	_set_current_screen(SCREEN_RESULT)
-	_show_message(str(result.get("message", "")))
-	_advance_alcohol_absorption()
-	_autosave_foundation_run("Autosaved.")
 	_refresh()
 	return true
 
@@ -2952,7 +2913,6 @@ func _load_foundation_run_from_slot(return_to_start_on_missing: bool) -> bool:
 	_clear_selected_item_offer()
 	_clear_selected_service_hook()
 	_clear_selected_lender_hook()
-	_clear_selected_prestige_purchase()
 	clear_interaction_focus()
 	save_status_message = "Loaded run."
 	_set_current_screen(SCREEN_ENVIRONMENT)
@@ -3070,7 +3030,6 @@ func _travel_to(target_id: String, target_label: String, choice_data: Dictionary
 	_clear_selected_item_offer()
 	_clear_selected_service_hook()
 	_clear_selected_lender_hook()
-	_clear_selected_prestige_purchase()
 	clear_interaction_focus()
 	var destination_name := str(run_state.current_environment.get("display_name", target_label))
 	var travel_result := _travel_result(target_id, destination_name, route, previous_environment, run_state.current_environment, travel_decay, route_risk)
@@ -3230,6 +3189,7 @@ func _initialize_foundation() -> void:
 	library.load()
 	AttributeBadgeRowScript.warm_all_glyphs(12)
 	AttributeBadgeRowScript.warm_all_glyphs(14)
+	AttributeBadgeRowScript.warm_all_glyphs(16)
 	_mark_boot_event("content_library_load_complete", library.load_timing_snapshot())
 	game_module_cache = {}
 	generator = RunGenerator.new(library)
@@ -3384,6 +3344,7 @@ func _build_start_screen() -> void:
 
 	var menu_panel := _panel_container(Color("#050611", 0.96), VisualStyle.PURPLE_2)
 	main_menu_panel = menu_panel
+	menu_panel.clip_contents = true
 	menu_panel.anchor_left = 0.5
 	menu_panel.anchor_top = 0.5
 	menu_panel.anchor_right = 0.5
@@ -3401,22 +3362,23 @@ func _build_start_screen() -> void:
 	menu_panel.add_child(menu_margin)
 
 	var stack := VBoxContainer.new()
-	stack.add_theme_constant_override("separation", 12)
+	start_menu_stack = stack
+	stack.add_theme_constant_override("separation", 8)
 	stack.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	stack.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
 	menu_margin.add_child(stack)
 
 	start_menu_intro = VBoxContainer.new()
-	start_menu_intro.add_theme_constant_override("separation", 12)
+	start_menu_intro.add_theme_constant_override("separation", 8)
 	start_menu_intro.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	stack.add_child(start_menu_intro)
 
-	var kicker := _label("Run-Based Casino Crime Spiral", 16)
+	var kicker := _label("Run-Based Casino Crime Spiral", 14)
 	kicker.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_set_control_font_color(kicker, VisualStyle.YELLOW)
 	start_menu_intro.add_child(kicker)
 
-	var heading := _label("BEAT THE HOUSE", 44)
+	var heading := _label("BEAT THE HOUSE", 38)
 	heading.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_set_control_font_color(heading, VisualStyle.PINK)
 	start_menu_intro.add_child(heading)
@@ -3426,26 +3388,26 @@ func _build_start_screen() -> void:
 	_set_control_font_color(release_version_label, VisualStyle.CYAN_2)
 	start_menu_intro.add_child(release_version_label)
 
-	var copy := _label("Start in cheap rooms, borrow badly, read crooked tables, and climb toward the Grand Casino before the house learns your shape.", 16)
+	var copy := _label("Start in cheap rooms, borrow badly, read crooked tables, and climb toward the Grand Casino before the house learns your shape.", 14)
 	copy.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_set_control_font_color(copy, VisualStyle.SOFT)
 	start_menu_intro.add_child(copy)
 
 	release_framing_label = _label(RELEASE_MENU_FRAMING, 12)
 	release_framing_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	release_framing_label.max_lines_visible = 2
+	release_framing_label.max_lines_visible = 1
 	release_framing_label.clip_text = true
 	_set_control_font_color(release_framing_label, VisualStyle.CYAN_2)
 	start_menu_intro.add_child(release_framing_label)
 
-	start_status_label = _label("", 13)
+	start_status_label = _label("", 12)
 	start_status_label.visible = true
 	start_status_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_set_control_font_color(start_status_label, VisualStyle.YELLOW)
 	start_menu_intro.add_child(start_status_label)
 
 	start_menu_controls = VBoxContainer.new()
-	start_menu_controls.add_theme_constant_override("separation", 12)
+	start_menu_controls.add_theme_constant_override("separation", 8)
 	start_menu_controls.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	start_menu_controls.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
 	stack.add_child(start_menu_controls)
@@ -3459,7 +3421,7 @@ func _build_start_screen() -> void:
 	seed_input.text = _generate_menu_seed_text()
 	seed_input.placeholder_text = "Enter run seed"
 	seed_input.tooltip_text = "Edit the seed before New Run to replay a deterministic climb."
-	seed_input.custom_minimum_size = Vector2(0, 54)
+	seed_input.custom_minimum_size = Vector2(0, 46)
 	seed_input.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_set_control_font_color(seed_input, VisualStyle.WHITE)
 	seed_input.add_theme_stylebox_override("normal", VisualStyle.pixel_box(Color("#080817", 0.98), VisualStyle.TEAL, 2))
@@ -3469,10 +3431,10 @@ func _build_start_screen() -> void:
 	content_group_config_button = Button.new()
 	content_group_config_button.text = "⚙"
 	content_group_config_button.tooltip_text = "Configure run content."
-	content_group_config_button.custom_minimum_size = Vector2(54, 54)
+	content_group_config_button.custom_minimum_size = Vector2(46, 46)
 	content_group_config_button.size_flags_horizontal = Control.SIZE_SHRINK_END
 	_set_control_font_color(content_group_config_button, VisualStyle.WHITE)
-	_set_control_font_size(content_group_config_button, 22)
+	_set_control_font_size(content_group_config_button, 18)
 	content_group_config_button.add_theme_stylebox_override("normal", VisualStyle.pixel_box(Color("#080817", 0.98), VisualStyle.CYAN_2, 2))
 	content_group_config_button.add_theme_stylebox_override("hover", VisualStyle.pixel_box(Color("#13142c", 0.98), VisualStyle.CYAN, 2))
 	content_group_config_button.add_theme_stylebox_override("pressed", VisualStyle.pixel_box(Color("#271538", 1.0), VisualStyle.YELLOW, 2))
@@ -3480,7 +3442,7 @@ func _build_start_screen() -> void:
 	seed_row.add_child(content_group_config_button)
 
 	challenge_select_button = _main_menu_button("Challenges", "Pick an authored challenge run", Callable(self, "toggle_challenge_selection"))
-	challenge_select_button.custom_minimum_size = Vector2(136, 54)
+	challenge_select_button.custom_minimum_size = Vector2(128, 46)
 	challenge_select_button.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
 	_set_control_font_size(challenge_select_button, 13)
 	seed_row.add_child(challenge_select_button)
@@ -3488,8 +3450,10 @@ func _build_start_screen() -> void:
 	_build_content_group_controls(start_menu_controls)
 	_build_challenge_controls(start_menu_controls)
 
-	var run_row := HBoxContainer.new()
-	run_row.add_theme_constant_override("separation", 12)
+	var run_row := HFlowContainer.new()
+	run_row.add_theme_constant_override("h_separation", 12)
+	run_row.add_theme_constant_override("v_separation", 6)
+	run_row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	start_menu_controls.add_child(run_row)
 	start_menu_action_controls.append(run_row)
 	new_run_button = _main_menu_button("New Run", "Start a seeded climb", Callable(self, "_on_start_pressed"))
@@ -3499,8 +3463,10 @@ func _build_start_screen() -> void:
 	continue_button = _main_menu_button("Continue", "Load the saved run", Callable(self, "load_foundation_run"))
 	run_row.add_child(continue_button)
 
-	var utility_row := HBoxContainer.new()
-	utility_row.add_theme_constant_override("separation", 12)
+	var utility_row := HFlowContainer.new()
+	utility_row.add_theme_constant_override("h_separation", 12)
+	utility_row.add_theme_constant_override("v_separation", 6)
+	utility_row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	start_menu_controls.add_child(utility_row)
 	start_menu_action_controls.append(utility_row)
 	settings_button = _main_menu_button("Settings", "Resolution and sound", Callable(self, "open_settings_menu"))
@@ -3668,8 +3634,8 @@ func _apply_main_menu_panel_size(size: Vector2) -> void:
 		return
 	var viewport_size := get_viewport_rect().size
 	var max_size := Vector2(
-		maxf(320.0, viewport_size.x - MAIN_MENU_VIEWPORT_MARGIN.x * 2.0),
-		maxf(420.0, viewport_size.y - MAIN_MENU_VIEWPORT_MARGIN.y * 2.0)
+		maxf(1.0, viewport_size.x - MAIN_MENU_VIEWPORT_MARGIN.x * 2.0),
+		maxf(1.0, viewport_size.y - MAIN_MENU_VIEWPORT_MARGIN.y * 2.0)
 	)
 	var applied_size := Vector2(minf(size.x, max_size.x), minf(size.y, max_size.y))
 	var centered_top := -applied_size.y * 0.5
@@ -4310,11 +4276,13 @@ func _build_world_map_overlay() -> void:
 
 	var map_holder := Control.new()
 	map_holder.custom_minimum_size = Vector2(540, 390)
-	map_holder.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	map_holder.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	map_holder.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
+	map_holder.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
+	map_holder.clip_contents = true
 	body.add_child(map_holder)
 
 	world_map_nodes_layer = WorldMapCanvasScript.new()
+	world_map_nodes_layer.custom_minimum_size = Vector2(540, 390)
 	world_map_nodes_layer.set_anchors_preset(Control.PRESET_FULL_RECT)
 	world_map_nodes_layer.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	if world_map_nodes_layer.has_signal("layout_changed"):
@@ -4325,17 +4293,20 @@ func _build_world_map_overlay() -> void:
 	var side := VBoxContainer.new()
 	side.add_theme_constant_override("separation", 8)
 	side.custom_minimum_size = Vector2(230, 390)
+	side.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
 	side.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	body.add_child(side)
 
 	world_map_badge_slot = VBoxContainer.new()
 	world_map_badge_slot.add_theme_constant_override("separation", 4)
+	world_map_badge_slot.custom_minimum_size = Vector2(230, 0)
 	world_map_badge_slot.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	world_map_badge_slot.visible = false
 	side.add_child(world_map_badge_slot)
 	_ensure_world_map_detail_badge_pool()
 
 	world_map_detail_label = _label("Select a revealed stop.", 13)
+	world_map_detail_label.custom_minimum_size = Vector2(230, 0)
 	world_map_detail_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	world_map_detail_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	world_map_detail_label.size_flags_vertical = Control.SIZE_EXPAND_FILL
@@ -4862,11 +4833,8 @@ func _attribute_glyph_legend_panel() -> Control:
 		cell.add_theme_constant_override("separation", 3)
 		cell.tooltip_text = str(entry.get("description", entry.get("label", "")))
 		var badge: Dictionary = entry.get("badge", {}) if typeof(entry.get("badge", {})) == TYPE_DICTIONARY else {}
-		AttributeBadgeRowScript.warm_cache([badge], 14)
-		cell.add_child(AttributeBadgeRowScript.control_row([badge], 14))
-		var label := _muted_label(str(entry.get("label", "")), 10)
-		label.clip_text = true
-		cell.add_child(label)
+		AttributeBadgeRowScript.warm_cache([badge], 16)
+		cell.add_child(AttributeBadgeRowScript.control_row([badge], 16))
 		row.add_child(cell)
 	return panel
 
@@ -5488,6 +5456,8 @@ func _render_victory_summary() -> void:
 	])
 	_add_victory_summary_section("Items", _copy_array(snapshot.get("item_lines", [])))
 	_add_victory_summary_section("Collections", _copy_array(snapshot.get("bag_lines", [])))
+	_add_victory_collection_bag_choice_section()
+	_add_victory_container_choice_section()
 	_add_victory_summary_section("Debt", _copy_array(snapshot.get("debt_lines", [])))
 	_add_victory_summary_section("Story", _copy_array(snapshot.get("story_lines", [])))
 
@@ -5524,6 +5494,131 @@ func _add_terminal_summary_section(target_list: VBoxContainer, title: String, li
 		var label := _label(line, 12)
 		label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		stack.add_child(label)
+
+
+func _add_victory_collection_bag_choice_section() -> void:
+	if victory_summary_list == null or run_state == null or run_state.run_status != RunState.RUN_STATUS_ENDED:
+		return
+	if bool(run_state.narrative_flags.get(CollectionDropServiceScript.FLUSHED_FLAG, false)):
+		return
+	var markers := run_state.pending_bag_markers()
+	if markers.is_empty():
+		return
+	var panel := _terminal_choice_panel("Bring Home One Collection Bag", "Choose one earned bag. Unchosen bags stay with the run.", VisualStyle.TEAL)
+	victory_summary_list.add_child(panel)
+	var stack := panel.get_child(0) as VBoxContainer
+	for marker_value in markers:
+		var marker := _copy_dict(marker_value)
+		var title := str(marker.get("display_name", "Collection Bag"))
+		var subtitle := "%s, %s" % [
+			str(marker.get("collection_display_name", marker.get("collection_id", "Collection"))),
+			str(marker.get("tier_label", marker.get("tier", "Tiered"))).capitalize(),
+		]
+		_add_terminal_choice_row(
+			stack,
+			title,
+			subtitle,
+			"",
+			str(marker.get("icon_key", "b" + "ag")),
+			"Bring Home",
+			Callable(self, "claim_victory_collection_bag").bind(str(marker.get("marker_id", "")))
+		)
+
+
+func _add_victory_container_choice_section() -> void:
+	if victory_summary_list == null or run_state == null or run_state.run_status != RunState.RUN_STATUS_ENDED:
+		return
+	if bool(run_state.narrative_flags.get("victory_container_extracted", false)):
+		return
+	var choices := _victory_container_item_choices()
+	if choices.is_empty():
+		return
+	var panel := _terminal_choice_panel("Bring Home One Container", "Choose one bag, backpack, suitcase, or trunk held at victory.", VisualStyle.AMBER)
+	victory_summary_list.add_child(panel)
+	var stack := panel.get_child(0) as VBoxContainer
+	for choice_value in choices:
+		var choice := _copy_dict(choice_value)
+		_add_terminal_choice_row(
+			stack,
+			str(choice.get("display_name", "Container")),
+			"Stores %d items." % int(choice.get("capacity", 0)),
+			str(choice.get("asset_path", "")),
+			str(choice.get("icon_key", "b" + "ag")),
+			"Bring Home",
+			Callable(self, "claim_victory_container_item").bind(str(choice.get("id", "")))
+		)
+
+
+func _terminal_choice_panel(title: String, subtitle: String, accent: Color) -> PanelContainer:
+	var panel := _panel_container(VisualStyle.DARK_3, accent)
+	panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	var stack := VBoxContainer.new()
+	stack.add_theme_constant_override("separation", 6)
+	stack.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	panel.add_child(stack)
+	var title_label := _section(title)
+	_set_control_font_color(title_label, accent)
+	stack.add_child(title_label)
+	var subtitle_label := _label(subtitle, 12)
+	subtitle_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	stack.add_child(subtitle_label)
+	return panel
+
+
+func _add_terminal_choice_row(stack: VBoxContainer, title: String, subtitle: String, asset_path: String, fallback_icon: String, button_text: String, callback: Callable) -> void:
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override("separation", 8)
+	row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	stack.add_child(row)
+	var texture := _run_item_texture_for_asset_path(asset_path)
+	if texture != null:
+		var icon := TextureRect.new()
+		icon.texture = texture
+		icon.custom_minimum_size = Vector2(52, 52)
+		icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+		icon.tooltip_text = title
+		row.add_child(icon)
+	else:
+		var icon_panel := _panel(VisualStyle.DARK_2, VisualStyle.CYAN_2)
+		icon_panel.custom_minimum_size = Vector2(52, 52)
+		icon_panel.tooltip_text = title
+		row.add_child(icon_panel)
+		var icon_label := _label(_terminal_choice_icon_text(fallback_icon), 12)
+		icon_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		icon_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+		icon_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		icon_label.size_flags_vertical = Control.SIZE_EXPAND_FILL
+		icon_panel.add_child(icon_label)
+	var text_stack := VBoxContainer.new()
+	text_stack.add_theme_constant_override("separation", 1)
+	text_stack.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	row.add_child(text_stack)
+	var title_label := _label(title, 13)
+	title_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	text_stack.add_child(title_label)
+	var subtitle_label := _label(subtitle, 11)
+	subtitle_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_set_control_font_color(subtitle_label, VisualStyle.SOFT)
+	text_stack.add_child(subtitle_label)
+	var button := _button(button_text, callback)
+	button.custom_minimum_size = Vector2(112, FoundationWidgetsScript.MIN_NATIVE_TOUCH_TARGET_HEIGHT)
+	row.add_child(button)
+
+
+func _terminal_choice_icon_text(icon_key: String) -> String:
+	var clean := icon_key.strip_edges()
+	if clean.is_empty():
+		return "BAG"
+	var parts := clean.split("_", false)
+	var letters := ""
+	for part in parts:
+		var text := str(part)
+		if text.is_empty():
+			continue
+		letters += text.substr(0, 1).to_upper()
+		if letters.length() >= 3:
+			break
+	return letters if not letters.is_empty() else clean.substr(0, mini(3, clean.length())).to_upper()
 
 
 func _screen_for_action_category(category_id: String) -> String:
@@ -5601,7 +5696,7 @@ func _render_selected_object_context(object_data: Dictionary) -> void:
 	var description := str(object_data.get("short_description", ""))
 	if not description.is_empty():
 		_add_detail_row(card, "Does", description)
-	_add_attribute_badge_row(card, object_data.get("attribute_badges", []), 12)
+	_add_attribute_badge_row(card, object_data.get("attribute_badges", []), 16)
 	var cost := str(object_data.get("cost_summary", ""))
 	if not cost.is_empty() and object_type != CONTEXT_MODE_TRAVEL:
 		_add_detail_row(card, "Cost", cost.replace("Cost:", "").strip_edges())
@@ -5648,7 +5743,7 @@ func _add_attribute_badge_row(parent: BoxContainer, badges_value: Variant, glyph
 	var badges := _copy_array(badges_value)
 	if badges.is_empty():
 		return
-	var safe_glyph_size := clampi(glyph_size, 10, 14)
+	var safe_glyph_size := clampi(glyph_size, 12, 18)
 	AttributeBadgeRowScript.warm_cache(badges, safe_glyph_size)
 	var row := AttributeBadgeRowScript.control_row(badges, safe_glyph_size)
 	row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -5664,7 +5759,8 @@ func _add_context_object_actions(card: VBoxContainer, object_data: Dictionary) -
 		CONTEXT_MODE_GAME:
 			card.add_child(_muted_label("Double-click the machine to enter.", 13))
 		CONTEXT_MODE_EVENT:
-			_add_context_event_actions(card, source_id)
+			if not _add_context_event_inline_actions(card, source_id, object_data.get("inline_actions", [])):
+				_add_context_event_actions(card, source_id)
 		CONTEXT_MODE_ITEM:
 			_add_context_item_actions(card, source_id)
 		CONTEXT_MODE_SHOPKEEPER:
@@ -5696,8 +5792,6 @@ func _add_context_object_actions(card: VBoxContainer, object_data: Dictionary) -
 			_add_context_service_actions(card, source_id)
 		CONTEXT_MODE_LENDER:
 			_add_context_lender_actions(card, source_id)
-		CONTEXT_MODE_PRESTIGE:
-			_add_context_prestige_actions(card, source_id)
 
 
 func _add_game_object_context_details(card: VBoxContainer, game_id: String) -> void:
@@ -5735,6 +5829,38 @@ func _add_context_event_actions(card: VBoxContainer, event_id: String) -> void:
 		_add_event_choice_action_option(card, event_id, choice_data)
 
 
+func _add_context_event_inline_actions(card: VBoxContainer, event_id: String, inline_actions_value: Variant) -> bool:
+	if typeof(inline_actions_value) != TYPE_ARRAY:
+		return false
+	var inline_actions := inline_actions_value as Array
+	var rendered := false
+	for action_value in inline_actions:
+		if typeof(action_value) != TYPE_DICTIONARY:
+			continue
+		var action_data: Dictionary = action_value
+		var emit_id := str(action_data.get("emit_object_id", action_data.get("id", ""))).strip_edges()
+		var separator := emit_id.rfind(":")
+		var choice_id := emit_id.substr(separator + 1) if separator > 0 and separator < emit_id.length() - 1 else ""
+		if choice_id.is_empty():
+			continue
+		var label := str(action_data.get("label", choice_id))
+		var selected := bool(action_data.get("selected", false))
+		var button := _add_card_button(card, label, Callable(self, "resolve_event_choice").bind(event_id, choice_id), false, selected)
+		button.custom_minimum_size = Vector2(0, MIN_NATIVE_TOUCH_TARGET_HEIGHT)
+		_set_control_font_size(button, 16)
+		var detail := str(action_data.get("text", "")).strip_edges()
+		if not detail.is_empty():
+			var detail_label := _muted_label(detail, 11)
+			_set_control_font_color(detail_label, VisualStyle.SOFT)
+			card.add_child(detail_label)
+		_add_attribute_badge_row(card, action_data.get("attribute_badges", []), 16)
+		var impact := str(action_data.get("impact_summary", "")).strip_edges()
+		if not impact.is_empty():
+			card.add_child(_muted_label("Effect: %s" % impact, 11))
+		rendered = true
+	return rendered
+
+
 func _add_event_choice_action_option(stack: VBoxContainer, event_id: String, choice_data: Dictionary) -> void:
 	var choice_id := str(choice_data.get("id", ""))
 	if choice_id.is_empty():
@@ -5749,7 +5875,7 @@ func _add_event_choice_action_option(stack: VBoxContainer, event_id: String, cho
 		var detail_label := _muted_label(detail, 11)
 		_set_control_font_color(detail_label, VisualStyle.SOFT)
 		stack.add_child(detail_label)
-	_add_attribute_badge_row(stack, choice_data.get("attribute_badges", []), 14)
+	_add_attribute_badge_row(stack, choice_data.get("attribute_badges", []), 16)
 	var consequence_summary := str(choice_data.get("consequence_summary", "")).strip_edges()
 	if not consequence_summary.is_empty():
 		stack.add_child(_muted_label("Effect: %s" % consequence_summary, 11))
@@ -5829,7 +5955,7 @@ func _add_context_travel_actions(card: VBoxContainer, target_id: String) -> void
 			if not bool(choice.get("enabled", true)):
 				line += " (locked)"
 			card.add_child(_muted_label(line, 12))
-			_add_attribute_badge_row(card, choice.get("attribute_badges", []), 14)
+			_add_attribute_badge_row(card, choice.get("attribute_badges", []), 16)
 		if not selected_travel_target_id.is_empty():
 			_add_card_button(card, "Travel to %s" % selected_travel_label, Callable(self, "confirm_selected_travel"), false, true)
 			_add_card_button(card, "Open Map", Callable(self, "open_world_map"))
@@ -5840,7 +5966,7 @@ func _add_context_travel_actions(card: VBoxContainer, target_id: String) -> void
 				var preview_text := str(preview_line).strip_edges()
 				if not preview_text.is_empty():
 					card.add_child(_muted_label(preview_text, 12))
-			_add_attribute_badge_row(card, direct_room_exit.get("attribute_badges", []), 14)
+			_add_attribute_badge_row(card, direct_room_exit.get("attribute_badges", []), 16)
 			if not bool(direct_room_exit.get("enabled", true)):
 				card.add_child(_muted_label(str(direct_room_exit.get("disabled_reason", "That door is not available right now.")), 13))
 				return
@@ -5854,7 +5980,7 @@ func _add_context_travel_actions(card: VBoxContainer, target_id: String) -> void
 			var preview_text := str(preview_line).strip_edges()
 			if not preview_text.is_empty():
 				card.add_child(_muted_label(preview_text, 12))
-		_add_attribute_badge_row(card, local_door_choice.get("attribute_badges", []), 14)
+		_add_attribute_badge_row(card, local_door_choice.get("attribute_badges", []), 16)
 		if not bool(local_door_choice.get("enabled", true)):
 			card.add_child(_muted_label(str(local_door_choice.get("disabled_reason", "That door is not available right now.")), 13))
 			return
@@ -5868,7 +5994,7 @@ func _add_context_travel_actions(card: VBoxContainer, target_id: String) -> void
 		var preview_text := str(preview_line).strip_edges()
 		if not preview_text.is_empty():
 			card.add_child(_muted_label(preview_text, 12))
-	_add_attribute_badge_row(card, choice.get("attribute_badges", []), 14)
+	_add_attribute_badge_row(card, choice.get("attribute_badges", []), 16)
 	var unlock_lines := _copy_array(choice.get("unlock_conditions", []))
 	if not unlock_lines.is_empty():
 		card.add_child(_muted_label("Unlock: %s" % "; ".join(unlock_lines.slice(0, 2)), 12))
@@ -5901,26 +6027,22 @@ func _add_context_lender_actions(card: VBoxContainer, lender_id: String) -> void
 		card.add_child(_muted_label(str(option.get("status", "Not usable yet.")), 13))
 		return
 	if not bool(option.get("enabled", true)):
+		if run_state != null:
+			var repayment := run_state.lender_repayment_status(lender_id)
+			if bool(repayment.get("available", false)):
+				card.add_child(_muted_label(str(option.get("disabled_reason", "Lender cannot be used right now.")), 13))
+				var payoff := maxi(0, int(repayment.get("payoff_amount", 0)))
+				var disabled := not bool(repayment.get("enabled", false))
+				_add_card_button(card, "Pay $%d" % payoff, Callable(self, "repay_lender_debt").bind(lender_id), disabled, not disabled)
+				if disabled:
+					card.add_child(_muted_label(str(repayment.get("disabled_reason", "Not enough bankroll to repay this loan.")), 13))
+				return
 		card.add_child(_muted_label(str(option.get("disabled_reason", "Lender cannot be used right now.")), 13))
 		return
 	if selected_lender_hook_id == lender_id:
 		_add_card_button(card, "Use %s" % selected_lender_hook_label, Callable(self, "confirm_selected_lender_hook"), false, true)
 	else:
 		_add_card_button(card, "Select lender", Callable(self, "select_lender_hook").bind(lender_id))
-
-
-func _add_context_prestige_actions(card: VBoxContainer, purchase_id: String) -> void:
-	var option := _prestige_purchase_option(purchase_id)
-	if option.is_empty():
-		card.add_child(_muted_label("No prestige target is available right now.", 13))
-		return
-	if not bool(option.get("enabled", false)):
-		card.add_child(_muted_label(str(option.get("disabled_reason", "This target is locked for now.")), 13))
-		return
-	if selected_prestige_purchase_id == purchase_id:
-		_add_card_button(card, "Claim victory: %s" % selected_prestige_purchase_label, Callable(self, "confirm_selected_prestige_purchase"), false, true)
-	else:
-		_add_card_button(card, "Select prestige target", Callable(self, "select_prestige_purchase").bind(purchase_id))
 
 
 func _context_border_color(object_type: String, enabled: bool) -> Color:
@@ -5949,8 +6071,6 @@ func _context_border_color(object_type: String, enabled: bool) -> Color:
 			return VisualStyle.PURPLE_2
 		CONTEXT_MODE_SERVICE, CONTEXT_MODE_LENDER:
 			return VisualStyle.YELLOW
-		CONTEXT_MODE_PRESTIGE:
-			return VisualStyle.AMBER
 		_:
 			return VisualStyle.CYAN_2
 
@@ -5989,8 +6109,6 @@ func _context_type_label(object_type: String) -> String:
 			return "Service"
 		CONTEXT_MODE_LENDER:
 			return "Lender"
-		CONTEXT_MODE_PRESTIGE:
-			return "Prestige"
 		_:
 			return "Info"
 
@@ -6590,7 +6708,7 @@ func _add_wager_confirmation_card(label: String, text: String, impact: String, c
 	_set_control_font_color(heading, border)
 	stack.add_child(heading)
 	stack.add_child(_label(text, 13))
-	_add_attribute_badge_row(stack, badges_value, 14)
+	_add_attribute_badge_row(stack, badges_value, 16)
 	stack.add_child(_muted_label("Impact: %s" % impact, 12))
 	var button := _button(label, callback)
 	if primary:
@@ -6743,7 +6861,7 @@ func current_screen_snapshot() -> Dictionary:
 
 
 func current_start_menu_snapshot() -> Dictionary:
-	return {
+	var snapshot := {
 		"seed_text": seed_input.text if seed_input != null else "",
 		"content_groups": _content_group_option_snapshot(),
 		"selected_content_groups": _selected_content_groups_for_new_run(),
@@ -6757,6 +6875,15 @@ func current_start_menu_snapshot() -> Dictionary:
 		"challenge_config_visible": challenge_panel.visible if challenge_panel != null else false,
 		"menu_panel_size": main_menu_panel.custom_minimum_size if main_menu_panel != null else Vector2.ZERO,
 	}
+	if main_menu_panel != null:
+		snapshot["menu_panel_rect"] = _rect_to_dict(main_menu_panel.get_global_rect())
+	if start_menu_stack != null and start_menu_stack.visible:
+		snapshot["start_menu_stack_rect"] = _rect_to_dict(start_menu_stack.get_global_rect())
+	if start_menu_intro != null and start_menu_intro.visible:
+		snapshot["start_menu_intro_rect"] = _rect_to_dict(start_menu_intro.get_global_rect())
+	if start_menu_controls != null and start_menu_controls.visible:
+		snapshot["start_menu_controls_rect"] = _rect_to_dict(start_menu_controls.get_global_rect())
+	return snapshot
 
 
 func current_accessibility_snapshot() -> Dictionary:
@@ -6909,13 +7036,12 @@ func current_objective_hud_snapshot() -> Dictionary:
 			"status_hud": meta_hud,
 		}
 	var pressure := _run_pressure_view()
-	var prestige := _primary_prestige_option()
 	var demo_objective := _demo_objective_status()
 	var hud := _run_status_hud_model()
 	var guidance: Dictionary = hud.get("objective_guidance", {})
 	return {
 		"text": _objective_hud_text(),
-		"goal": _objective_goal_text(prestige, pressure, demo_objective),
+		"goal": _objective_goal_text(pressure, demo_objective),
 		"objective_state": str(guidance.get("state", _objective_presentation_state(pressure, demo_objective))),
 		"guidance": guidance,
 		"bankroll": _presented_bankroll(),
@@ -6925,7 +7051,6 @@ func current_objective_hud_snapshot() -> Dictionary:
 		"pressure": _pressure_status_text(pressure),
 		"next_hint": _next_opportunity_hint(),
 		"next_objective": hud.get("next_objective", {}),
-		"prestige": prestige,
 		"demo_objective": demo_objective,
 		"pit_boss_watch": _pit_boss_watch_status(),
 		"run_status": run_state.run_status,
@@ -7097,10 +7222,6 @@ func activate_interactable_object(object_id: String) -> bool:
 		CONTEXT_MODE_LENDER:
 			if select_lender_hook(source_id):
 				return confirm_selected_lender_hook()
-			return false
-		CONTEXT_MODE_PRESTIGE:
-			if select_prestige_purchase(source_id):
-				return confirm_selected_prestige_purchase()
 			return false
 	_show_message("Inspect this first.")
 	_refresh()
@@ -7663,34 +7784,6 @@ func _interactable_object_view_list() -> Array:
 		objects.append(room_return_object)
 	objects.append_array(_hook_interactable_objects(CONTEXT_MODE_SERVICE, _service_hook_view_list()))
 	objects.append_array(_hook_interactable_objects(CONTEXT_MODE_LENDER, _lender_hook_view_list()))
-	var prestige_options := _prestige_purchase_view_list()
-	for index in range(prestige_options.size()):
-		if typeof(prestige_options[index]) != TYPE_DICTIONARY:
-			continue
-		var prestige: Dictionary = prestige_options[index]
-		var purchase_id := str(prestige.get("id", ""))
-		if purchase_id.is_empty():
-			continue
-		var prestige_object_id := "prestige:%s" % purchase_id
-		var prestige_enabled := bool(prestige.get("enabled", false)) and not run_failed_without_recovery
-		objects.append(_make_interactable_object({
-			"object_id": prestige_object_id,
-			"object_type": CONTEXT_MODE_PRESTIGE,
-			"source_id": purchase_id,
-			"label": str(prestige.get("display_name", _label_from_id(purchase_id))),
-			"short_description": str(prestige.get("description", "")),
-			"enabled": prestige_enabled,
-			"disabled_reason": "" if prestige_enabled else failed_reason if run_failed_without_recovery else str(prestige.get("disabled_reason", "This target is locked for now.")),
-			"action_summary": "Double-click to claim victory." if prestige_enabled else "Prestige target locked.",
-			"effect_summary": str(prestige.get("effect_summary", "")),
-			"risk_summary": str(prestige.get("risk_summary", "")),
-			"cost_summary": "Cost: %d" % int(prestige.get("cost", 0)),
-			"visual_key": "prestige",
-			"icon_key": "prestige",
-			"available_actions": [{"id": "buy_prestige", "label": "Claim victory"}] if prestige_enabled else [],
-			"confirm_action_id": "buy_prestige" if prestige_enabled else "",
-			"focus_rect": _interaction_rect_for_object(prestige_object_id, CONTEXT_MODE_PRESTIGE, index),
-		}))
 	if _closing_time_blocks_environment_actions():
 		objects = _objects_with_closing_time_lock(objects)
 	return _filter_unique_interactable_objects(objects)
@@ -8288,8 +8381,6 @@ func _layout_spot_field_name(object_type: String) -> String:
 			return "service_spots"
 		CONTEXT_MODE_LENDER:
 			return "lender_spots"
-		CONTEXT_MODE_PRESTIGE:
-			return "prestige_spots"
 		CONTEXT_MODE_HOME_TENURE:
 			return "home_tenure_spots"
 		CONTEXT_MODE_HOME_STORAGE:
@@ -8369,9 +8460,6 @@ func _normalized_interaction_rect(object_type: String, index: int) -> Rect2:
 		CONTEXT_MODE_LENDER:
 			center = Vector2(0.62 + float(index % 2) * 0.12, 0.72)
 			size = Vector2(102.0 / board_size.x, 58.0 / board_size.y)
-		CONTEXT_MODE_PRESTIGE:
-			center = Vector2(0.16 + float(index % 2) * 0.14, 0.30)
-			size = Vector2(112.0 / board_size.x, 58.0 / board_size.y)
 		CONTEXT_MODE_HOME_TENURE:
 			center = Vector2(0.78, 0.46)
 			size = Vector2(116.0 / board_size.x, 58.0 / board_size.y)
@@ -8859,15 +8947,11 @@ func _victory_summary_snapshot() -> Dictionary:
 	var pressure := _run_pressure_view()
 	var environment := run_state.current_environment
 	var route := str(run_state.narrative_flags.get("demo_victory_route", "")).strip_edges()
-	if route.is_empty() and bool(run_state.narrative_flags.get("prestige_victory", false)):
-		route = "prestige_victory"
 	if route.is_empty():
 		route = "run_complete"
 	var title := str(pressure.get("title", "Demo Victory"))
 	if bool(run_state.narrative_flags.get("demo_victory", false)):
 		title = "Demo Victory"
-	elif bool(run_state.narrative_flags.get("prestige_victory", false)):
-		title = "Victory Claimed"
 	elif title.strip_edges().is_empty():
 		title = "Run Complete"
 	var message := ""
@@ -8890,6 +8974,9 @@ func _victory_summary_snapshot() -> Dictionary:
 		if not run_state.active_item_id.is_empty():
 			item_lines.append("Active item: %s." % _label_from_id(run_state.active_item_id))
 		item_lines.append_array(inventory_items.slice(0, 5))
+	var extracted_container_line := str(run_state.narrative_flags.get("victory_container_extracted_line", "")).strip_edges()
+	if not extracted_container_line.is_empty():
+		item_lines.append(extracted_container_line)
 	var debt_lines: Array = []
 	if debt_items.is_empty():
 		debt_lines.append("Debt: none.")
@@ -8944,6 +9031,35 @@ func _victory_summary_snapshot() -> Dictionary:
 		"story_lines": story_lines,
 		"flag_lines": _flag_view_list(),
 	}
+
+
+func _victory_container_item_choices() -> Array:
+	var result: Array = []
+	if run_state == null or library == null:
+		return result
+	var seen := {}
+	for item_id in _string_array(run_state.inventory):
+		if seen.has(item_id):
+			continue
+		seen[item_id] = true
+		var definition := library.item(item_id)
+		if definition.is_empty():
+			continue
+		var effect := _copy_dict(definition.get("effect", {}))
+		var capacity := maxi(0, int(definition.get("container_capacity", 0)))
+		capacity = maxi(capacity, int(effect.get("container_capacity", 0)))
+		if str(definition.get("class", "")) != "container" and capacity <= 0:
+			continue
+		if capacity <= 0:
+			continue
+		result.append({
+			"id": item_id,
+			"display_name": str(definition.get("display_name", _label_from_id(item_id))),
+			"capacity": capacity,
+			"asset_path": str(definition.get("asset_path", "")),
+			"icon_key": str(definition.get("icon_key", item_id)),
+		})
+	return result
 
 
 func _terminal_score_lines(score_summary: Dictionary) -> Array:
@@ -9198,7 +9314,7 @@ func _result_is_visible_consequence(result: Dictionary, recent_message: String =
 			return true
 	if not recent_message.strip_edges().is_empty():
 		return true
-	return ["game_action", "game_action_summary", "item_effect", "item_sale", "event", "travel", "service_hook", "lender_hook", "game_hook", "prestige_purchase", "story_summary"].has(result_type)
+	return ["game_action", "game_action_summary", "item_effect", "item_sale", "event", "travel", "service_hook", "lender_hook", "game_hook", "story_summary"].has(result_type)
 
 
 func _refresh_environment_result_feedback() -> void:
@@ -9305,8 +9421,6 @@ func _outcome_card_title(result: Dictionary) -> String:
 			return "Debt changed"
 		"game_hook":
 			return "Cashout resolved"
-		"prestige_purchase":
-			return "Prestige Victory"
 		_:
 			return "Outcome"
 
@@ -9968,13 +10082,13 @@ func _enter_meta_location(location_id: String) -> void:
 	_clear_selected_item_offer()
 	_clear_selected_service_hook()
 	_clear_selected_lender_hook()
-	_clear_selected_prestige_purchase()
 	clear_interaction_focus()
 	_show_message("Home is ready." if clean_location == META_LOCATION_HOME else "Sal's counter is open.")
 	_refresh()
 
 
 func _exit_meta_session() -> void:
+	_hide_run_menu()
 	_hide_event_choice_popup()
 	_hide_run_inventory_popup()
 	_hide_run_journal_popup()
@@ -10806,7 +10920,6 @@ func start_game_test_session(game_id: String) -> void:
 	_clear_selected_item_offer()
 	_clear_selected_service_hook()
 	_clear_selected_lender_hook()
-	_clear_selected_prestige_purchase()
 	clear_interaction_focus()
 	if game_test_menu != null:
 		game_test_menu.visible = false
@@ -10825,7 +10938,6 @@ func acquire_profile_chip() -> void:
 	if inventory_status_label != null:
 		inventory_status_label.text = "Chip stored in profile inventory." if error == OK else "Chip added, but profile save failed."
 	_refresh_profile_inventory_page()
-	_refresh_collection_browser_page()
 
 
 func _refresh_profile_inventory_page() -> void:
@@ -10943,147 +11055,6 @@ func _profile_history_outcome_text(entry: Dictionary) -> String:
 	return "%s: %s" % [outcome, route]
 
 
-func _refresh_collection_browser_page() -> void:
-	if collection_items_list == null or collection_bags_list == null:
-		return
-	if meta_collection_service == null:
-		_initialize_meta_collection()
-	var view: Dictionary = MetaCollectionViewModelScript.build(meta_collection_service)
-	if collection_status_label != null:
-		collection_status_label.text = str(view.get("summary", "Collections ready."))
-	_clear(collection_bags_list)
-	_add_meta_home_section(_copy_dict(view.get("home", {})))
-	var bags := _copy_array(view.get("unopened_bags", []))
-	var bags_heading := _section("Unopened Bags")
-	_set_control_font_color(bags_heading, VisualStyle.YELLOW)
-	collection_bags_list.add_child(bags_heading)
-	if bags.is_empty():
-		var empty_bags := _label("No unopened collection bags.", 12)
-		_set_control_font_color(empty_bags, VisualStyle.CYAN_2)
-		collection_bags_list.add_child(empty_bags)
-	else:
-		for bag_value in bags:
-			_add_collection_bag_row(_copy_dict(bag_value))
-	_clear(collection_items_list)
-	for collection_value in _copy_array(view.get("collections", [])):
-		_add_collection_section(_copy_dict(collection_value))
-
-
-func _add_meta_home_section(home: Dictionary) -> void:
-	if collection_bags_list == null:
-		return
-	var panel := _panel_container(Color("#05070d", 0.86), VisualStyle.YELLOW)
-	panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	collection_bags_list.add_child(panel)
-	var stack := VBoxContainer.new()
-	stack.add_theme_constant_override("separation", 5)
-	stack.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	panel.add_child(stack)
-	var title := _label("%s - %d carried / %d carry, %d storage" % [
-		str(home.get("display_name", "Back Alley")),
-		int(home.get("carried_count", 0)),
-		int(home.get("carry_capacity", 0)),
-		int(home.get("storage_slots", 0)),
-	], 13)
-	_set_control_font_color(title, VisualStyle.YELLOW)
-	stack.add_child(title)
-	var map_line := _label("Home map: Home / Sal's Pawn Counter", 12)
-	_set_control_font_color(map_line, VisualStyle.CYAN_2)
-	stack.add_child(map_line)
-	var pawn_line := _label("Pawn shop: sell counter only.", 12)
-	_set_control_font_color(pawn_line, VisualStyle.SOFT)
-	stack.add_child(pawn_line)
-	var upgrade := _copy_dict(home.get("upgrade", {}))
-	var upgrade_text := "Trade-ups unlocked." if bool(home.get("trade_up_unlocked", false)) else "Trade-ups require an apartment or house."
-	if not upgrade.is_empty():
-		upgrade_text = "%s Next home: %s for %d gold." % [upgrade_text, str(upgrade.get("display_name", "Home")), int(upgrade.get("price", 0))]
-	var upgrade_label := _label(upgrade_text, 12)
-	upgrade_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	_set_control_font_color(upgrade_label, VisualStyle.SOFT)
-	stack.add_child(upgrade_label)
-
-
-func _add_collection_bag_row(bag: Dictionary) -> void:
-	if collection_bags_list == null:
-		return
-	var row := HBoxContainer.new()
-	row.add_theme_constant_override("separation", 8)
-	row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	collection_bags_list.add_child(row)
-	var text_stack := VBoxContainer.new()
-	text_stack.add_theme_constant_override("separation", 2)
-	text_stack.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	row.add_child(text_stack)
-	var title := _label("%s - %s" % [str(bag.get("display_name", "Collection Bag")), str(bag.get("tier_label", ""))], 13)
-	_set_control_font_color(title, _collection_tier_color(str(bag.get("tier", ""))))
-	text_stack.add_child(title)
-	var detail := _label(str(bag.get("collection_display_name", "Collection")), 12)
-	_set_control_font_color(detail, VisualStyle.SOFT)
-	text_stack.add_child(detail)
-	var open_button := _button("Open", Callable(self, "open_meta_collection_bag").bind(int(bag.get("instance_id", 0))))
-	open_button.custom_minimum_size = Vector2(92, MIN_NATIVE_TOUCH_TARGET_HEIGHT)
-	row.add_child(open_button)
-
-
-func _add_collection_section(collection: Dictionary) -> void:
-	if collection_items_list == null:
-		return
-	var panel := _panel_container(Color("#05070d", 0.86), VisualStyle.CYAN_2)
-	panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	collection_items_list.add_child(panel)
-	var stack := VBoxContainer.new()
-	stack.add_theme_constant_override("separation", 5)
-	stack.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	panel.add_child(stack)
-	var header := _label("%s  %d/%d" % [
-		str(collection.get("display_name", "Collection")),
-		int(collection.get("owned_count", 0)),
-		int(collection.get("total_count", 0)),
-	], 14)
-	_set_control_font_color(header, VisualStyle.CYAN)
-	stack.add_child(header)
-	var theme := str(collection.get("theme", "")).strip_edges()
-	if not theme.is_empty():
-		var theme_label := _label(theme, 11)
-		_set_control_font_color(theme_label, VisualStyle.SOFT)
-		theme_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-		stack.add_child(theme_label)
-	for item_value in _copy_array(collection.get("items", [])):
-		var item := _copy_dict(item_value)
-		var item_label := _label(_collection_item_row_text(item), 12)
-		item_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-		_set_control_font_color(item_label, _collection_tier_color(str(item.get("tier", ""))) if bool(item.get("owned", false)) else VisualStyle.SOFT)
-		stack.add_child(item_label)
-
-
-func _collection_item_row_text(item: Dictionary) -> String:
-	var owned_count := int(item.get("owned_count", 0))
-	if owned_count <= 0:
-		return "%s - %s - silhouette" % [str(item.get("display_name", "Collection Item")), str(item.get("tier_label", ""))]
-	var owned_instances := _copy_array(item.get("owned_instances", []))
-	var first_instance := _copy_dict(owned_instances[0]) if not owned_instances.is_empty() else {}
-	return "%s - %s x%d - %s - %s" % [
-		str(item.get("display_name", "Collection Item")),
-		str(item.get("tier_label", "")),
-		owned_count,
-		str(first_instance.get("condition_band", "Unknown")),
-		str(first_instance.get("float_summary", "")),
-	]
-
-
-func open_meta_collection_bag(instance_id: int) -> void:
-	if instance_id <= 0:
-		return
-	if meta_collection_service == null:
-		_initialize_meta_collection()
-	var result: Dictionary = meta_collection_service.open_bag(instance_id)
-	if bool(result.get("ok", false)):
-		meta_collection_service.save()
-	if collection_reveal_label != null:
-		collection_reveal_label.text = _collection_reveal_text(result)
-	_refresh_collection_browser_page()
-
-
 func _collection_reveal_text(result: Dictionary) -> String:
 	if not bool(result.get("ok", false)):
 		return str(result.get("message", "Bag could not be opened."))
@@ -11106,22 +11077,6 @@ func _collection_reveal_text(result: Dictionary) -> String:
 		condition,
 		floats,
 	]
-
-
-func _collection_tier_color(tier: String) -> Color:
-	match tier.strip_edges().to_lower():
-		"blue":
-			return Color("#79a8ff")
-		"purple":
-			return Color("#b27cff")
-		"pink":
-			return Color("#ff7ecb")
-		"red":
-			return Color("#ff6b5c")
-		"gold":
-			return VisualStyle.YELLOW
-		_:
-			return VisualStyle.WHITE
 
 
 func _refresh_start_screen() -> void:
@@ -11289,10 +11244,9 @@ func _run_status_hud_model() -> Dictionary:
 	if _is_meta_session():
 		return _meta_status_hud_model()
 	var pressure := _run_pressure_view()
-	var prestige := _primary_prestige_option()
 	var demo_objective := _demo_objective_status()
 	var pit_boss_watch := _pit_boss_watch_status()
-	var guidance := _objective_guidance_view(prestige, pressure, demo_objective)
+	var guidance := _objective_guidance_view(pressure, demo_objective)
 	var recent_result := _recent_result_snapshot()
 	var deltas: Dictionary = recent_result.get("deltas", {})
 	var bankroll_delta := _visible_recent_bankroll_delta(int(recent_result.get("bankroll_delta", deltas.get("bankroll_delta", 0))))
@@ -11324,7 +11278,7 @@ func _run_status_hud_model() -> Dictionary:
 	var run_text := "[RUN] %s" % _hud_run_status_text(pressure)
 	var clock_text := "[TIME] %s" % run_state.clock_display_text()
 	var save_text := _hud_save_text()
-	var goal_text := _hud_goal_text(prestige, pressure, demo_objective)
+	var goal_text := _hud_goal_text(pressure, demo_objective)
 	var environment_text := "[ENV] %s / %s" % [
 		_hud_short(str(environment.get("display_name", "Environment")), 28),
 		_label_from_id(str(environment.get("kind", environment.get("archetype_id", "room")))),
@@ -11429,8 +11383,8 @@ func _apply_hud_mode_visibility() -> void:
 		active_item_button.visible = not meta_mode
 
 
-func _hud_goal_text(prestige: Dictionary, pressure: Dictionary, demo_objective: Dictionary = {}) -> String:
-	var text := _objective_goal_text(prestige, pressure, demo_objective)
+func _hud_goal_text(pressure: Dictionary, demo_objective: Dictionary = {}) -> String:
+	var text := _objective_goal_text(pressure, demo_objective)
 	text = text.replace("Double-click it to win.", "double-click to win.")
 	return _hud_short(text, 54)
 
@@ -11511,7 +11465,7 @@ func _hud_short(text: String, max_length: int) -> String:
 	return "%s..." % cleaned.left(max_length - 3)
 
 
-func _objective_goal_text(prestige: Dictionary, pressure: Dictionary, demo_objective: Dictionary = {}) -> String:
+func _objective_goal_text(pressure: Dictionary, demo_objective: Dictionary = {}) -> String:
 	var pressure_state := str(pressure.get("state", ""))
 	if pressure_state == "victory":
 		return "Victory claimed. Return to the menu or start fresh."
@@ -11528,12 +11482,6 @@ func _objective_goal_text(prestige: Dictionary, pressure: Dictionary, demo_objec
 		if bool(demo_objective.get("complete", false)):
 			return "%s complete. Cash out to move on." % title
 		return "%s: reach $%d. Need $%d." % [title, target, remaining]
-	if not prestige.is_empty():
-		var label := str(prestige.get("display_name", "prestige target"))
-		if bool(prestige.get("enabled", false)):
-			return "%s is ready. Double-click it to win." % label
-		var reason := str(prestige.get("disabled_reason", "Build bankroll and keep heat down."))
-		return "Build toward %s. %s" % [label, reason]
 	var hint := str(run_state.current_environment.get("objective_hint", "")).strip_edges()
 	if not hint.is_empty():
 		return "Build cash, find Grand Casino routes, keep heat low."
@@ -11571,7 +11519,7 @@ func _objective_presentation_state(pressure: Dictionary, demo_objective: Diction
 	return "pre-grand"
 
 
-func _objective_guidance_view(prestige: Dictionary, pressure: Dictionary, demo_objective: Dictionary) -> Dictionary:
+func _objective_guidance_view(pressure: Dictionary, demo_objective: Dictionary) -> Dictionary:
 	var state := _objective_presentation_state(pressure, demo_objective)
 	var guidance_text := ""
 	var route_name := ""
@@ -11604,7 +11552,7 @@ func _objective_guidance_view(prestige: Dictionary, pressure: Dictionary, demo_o
 		"clean_progress_close": _boss_floor_high_roller_progress_close(demo_objective),
 		"heat_pressure_close": _boss_floor_heat_pressure_close(demo_objective),
 		"staff_attention": bool(demo_objective.get("staff_attention_active", false)),
-		"next": _next_objective_option_for_state(state, demo_objective, prestige),
+		"next": _next_objective_option_for_state(state, demo_objective),
 	}
 
 
@@ -11703,10 +11651,9 @@ func _next_objective_option() -> Dictionary:
 	if pressure_state == "failed":
 		return _objective_for_object("menu", "main_menu", "return to the menu to continue or start over", true)
 
-	var prestige := _primary_prestige_option()
 	var demo_objective := _demo_objective_status()
 	var objective_state := _objective_presentation_state(pressure, demo_objective)
-	var state_objective := _next_objective_option_for_state(objective_state, demo_objective, prestige)
+	var state_objective := _next_objective_option_for_state(objective_state, demo_objective)
 	if not state_objective.is_empty():
 		return state_objective
 	if current_game != null:
@@ -11717,51 +11664,12 @@ func _next_objective_option() -> Dictionary:
 				"object_id": "",
 				"enabled": true,
 			}
-		if not prestige.is_empty():
-			var in_game_prestige_label := str(prestige.get("display_name", "victory target"))
-			var in_game_prestige_id := str(prestige.get("id", ""))
-			if bool(prestige.get("enabled", false)):
-				return _objective_for_object(
-					CONTEXT_MODE_PRESTIGE,
-					"prestige:%s" % in_game_prestige_id,
-					"return to room and claim %s" % in_game_prestige_label,
-					true
-				)
-			if _prestige_needs_more_places(prestige):
-				var in_game_travel := _first_enabled_travel_choice()
-				if not in_game_travel.is_empty():
-					return _objective_for_object(
-						CONTEXT_MODE_TRAVEL,
-						"travel:%s" % str(in_game_travel.get("id", "")),
-						"return to room and visit another place",
-						true
-					)
 		return {
 			"hint": "choose stake and click a game-surface action",
 			"object_type": "game_surface",
 			"object_id": "",
 			"enabled": true,
 		}
-	if not prestige.is_empty():
-		var prestige_label := str(prestige.get("display_name", "victory target"))
-		var prestige_id := str(prestige.get("id", ""))
-		if bool(prestige.get("enabled", false)):
-			return _objective_for_object(
-				CONTEXT_MODE_PRESTIGE,
-				"prestige:%s" % prestige_id,
-				"claim %s" % prestige_label,
-				true
-			)
-		if _prestige_needs_more_places(prestige):
-			var travel := _first_enabled_travel_choice()
-			if not travel.is_empty():
-				return _objective_for_object(
-					CONTEXT_MODE_TRAVEL,
-					"travel:%s" % str(travel.get("id", "")),
-					"visit another place",
-					true
-				)
-
 	if _active_demo_objective_needs_play() and _has_enabled_game_object():
 		return _objective_for_object(CONTEXT_MODE_GAME, "", "play for the boss-floor target", true)
 
@@ -11796,7 +11704,7 @@ func _next_objective_option() -> Dictionary:
 	return _objective_for_object("menu", "main_menu", "return to the menu or inspect the room", true)
 
 
-func _next_objective_option_for_state(state: String, demo_objective: Dictionary, _prestige: Dictionary = {}) -> Dictionary:
+func _next_objective_option_for_state(state: String, demo_objective: Dictionary) -> Dictionary:
 	if not bool(demo_objective.get("active", false)) or not _is_boss_floor_demo_objective(demo_objective):
 		return {}
 	if state == "showdown-pending" or state == "showdown-active":
@@ -11819,11 +11727,6 @@ func _objective_for_object(object_type: String, object_id: String, hint: String,
 		"object_id": object_id,
 		"enabled": enabled,
 	}
-
-
-func _prestige_needs_more_places(prestige: Dictionary) -> bool:
-	var reason := str(prestige.get("disabled_reason", "")).to_lower()
-	return reason.find("visit") != -1 and reason.find("place") != -1
 
 
 func _first_enabled_travel_choice() -> Dictionary:
@@ -11866,14 +11769,6 @@ func _has_enabled_game_object() -> bool:
 		if not library.game(game_id).is_empty():
 			return true
 	return false
-
-
-func _primary_prestige_option() -> Dictionary:
-	var options := _prestige_purchase_view_list()
-	for option in options:
-		if typeof(option) == TYPE_DICTIONARY:
-			return (option as Dictionary).duplicate(true)
-	return {}
 
 
 func _economy_cue_text() -> String:
@@ -11967,7 +11862,6 @@ func _clear_terminal_interaction_state() -> void:
 	_clear_selected_item_offer()
 	_clear_selected_service_hook()
 	_clear_selected_lender_hook()
-	_clear_selected_prestige_purchase()
 	hover_target_id = ""
 	focus_target_id = ""
 	selected_object_id = ""
@@ -12019,12 +11913,61 @@ func _process_terminal_meta_bag_drops() -> void:
 		var carried_ids := _copy_array(run_state.challenge_modifiers().get("meta_collection_carried_instance_ids", []))
 		meta_collection_service.apply_failure_decay(carried_ids, "%s|failure" % run_state.seed_text)
 		run_state.narrative_flags[MetaCollectionServiceScript.FAILURE_DECAY_FLAG] = true
-	collection_drop_service.ensure_run_end_pending_bags(run_state, profile_inventory)
-	var flush_result: Dictionary = collection_drop_service.flush_pending_bags(run_state, meta_collection_service)
-	if bool(flush_result.get("ok", false)):
+		run_state.clear_pending_bag_markers()
+		var failure_save_error := meta_collection_service.save()
+		if failure_save_error == OK:
+			save_status_message = "Collection durability updated."
+		return
+	if run_state.run_status == RunState.RUN_STATUS_ENDED:
+		collection_drop_service.ensure_run_end_pending_bags(run_state, profile_inventory)
+
+
+func claim_victory_collection_bag(marker_id: String) -> void:
+	if run_state == null or run_state.run_status != RunState.RUN_STATUS_ENDED:
+		return
+	if meta_collection_service == null or collection_drop_service == null:
+		_initialize_meta_collection()
+	var result: Dictionary = collection_drop_service.flush_selected_pending_bag(run_state, meta_collection_service, marker_id)
+	if bool(result.get("ok", false)):
 		var save_error := meta_collection_service.save()
-		if save_error == OK and not _copy_array(flush_result.get("summary_lines", [])).is_empty():
-			save_status_message = "Collection bags stored."
+		if save_error == OK and not _copy_array(result.get("summary_lines", [])).is_empty():
+			save_status_message = "Collection bag stored."
+	_show_message(str(result.get("message", "Collection choice updated.")))
+	_render_victory_summary()
+
+
+func claim_victory_container_item(item_id: String) -> void:
+	if run_state == null or run_state.run_status != RunState.RUN_STATUS_ENDED:
+		return
+	if bool(run_state.narrative_flags.get("victory_container_extracted", false)):
+		_show_message("A container was already brought home.")
+		return
+	var clean_id := item_id.strip_edges()
+	var choices := _victory_container_item_choices()
+	var selected := {}
+	for choice_value in choices:
+		var choice := _copy_dict(choice_value)
+		if str(choice.get("id", "")) == clean_id:
+			selected = choice
+			break
+	if selected.is_empty():
+		_show_message("That container is no longer available.")
+		return
+	if meta_collection_service == null:
+		_initialize_meta_collection()
+	var grant: Dictionary = meta_collection_service.grant_container(clean_id)
+	if grant.is_empty():
+		_show_message("That container cannot be brought home.")
+		return
+	var display_name := str(selected.get("display_name", _label_from_id(clean_id)))
+	run_state.narrative_flags["victory_container_extracted"] = true
+	run_state.narrative_flags["victory_container_extracted_item_id"] = clean_id
+	run_state.narrative_flags["victory_container_extracted_line"] = "Brought home %s." % display_name
+	var save_error := meta_collection_service.save()
+	if save_error == OK:
+		save_status_message = "Container stored at home."
+	_show_message("Brought home %s." % display_name)
+	_render_victory_summary()
 
 
 func _record_profile_run_result_once(terminal_result: Dictionary = {}) -> void:
@@ -12194,9 +12137,6 @@ func _outcome_object_id(result: Dictionary) -> String:
 				if parts.size() >= 2:
 					return "game_hook:%s:%s" % [str(parts[0]), str(parts[1])]
 			return "game:%s" % str(result.get("game_id", "")) if not str(result.get("game_id", "")).is_empty() else ""
-		"prestige_purchase":
-			var purchase_id := str(result.get("source_id", ""))
-			return "prestige:%s" % purchase_id if not purchase_id.is_empty() else ""
 		_:
 			return ""
 
@@ -13624,16 +13564,6 @@ func _lender_hook(lender_id: String) -> Dictionary:
 	return run_action_service.lender_hook(lender_id, selected_lender_hook_id)
 
 
-func _prestige_purchase_view_list() -> Array:
-	_refresh_run_action_service()
-	return run_action_service.prestige_purchase_view_list(selected_prestige_purchase_id)
-
-
-func _prestige_purchase_option(purchase_id: String) -> Dictionary:
-	_refresh_run_action_service()
-	return run_action_service.prestige_purchase_option(purchase_id, selected_prestige_purchase_id)
-
-
 func _clear_selected_service_hook() -> void:
 	selected_service_hook_id = ""
 	selected_service_hook_label = ""
@@ -13642,11 +13572,6 @@ func _clear_selected_service_hook() -> void:
 func _clear_selected_lender_hook() -> void:
 	selected_lender_hook_id = ""
 	selected_lender_hook_label = ""
-
-
-func _clear_selected_prestige_purchase() -> void:
-	selected_prestige_purchase_id = ""
-	selected_prestige_purchase_label = ""
 
 
 func _refresh_world_map_overlay() -> void:
@@ -13925,20 +13850,32 @@ func _ensure_world_map_detail_badge_pool() -> void:
 		var cell := PanelContainer.new()
 		cell.visible = false
 		cell.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
+		cell.mouse_filter = Control.MOUSE_FILTER_STOP
+		cell.mouse_default_cursor_shape = Control.CURSOR_ARROW
+		cell.custom_minimum_size = Vector2(24.0, 22.0)
 		cell.add_theme_stylebox_override("panel", _world_map_badge_cell_style(VisualStyle.CYAN_2))
 		var cell_box := HBoxContainer.new()
 		cell_box.add_theme_constant_override("separation", 3)
 		cell.add_child(cell_box)
 		var icon := TextureRect.new()
-		icon.custom_minimum_size = Vector2(12, 12)
+		icon.custom_minimum_size = Vector2(16, 16)
 		icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 		cell_box.add_child(icon)
 		var label := Label.new()
 		label.clip_text = true
+		label.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
 		label.add_theme_font_size_override("font_size", 10)
-		label.custom_minimum_size = Vector2(18.0, 0.0)
+		label.custom_minimum_size = Vector2(112.0, 0.0)
 		label.visible = false
 		cell_box.add_child(label)
+		cell.mouse_entered.connect(func() -> void:
+			cell.custom_minimum_size = Vector2(142.0, 22.0)
+			label.visible = not label.text.strip_edges().is_empty()
+		)
+		cell.mouse_exited.connect(func() -> void:
+			label.visible = false
+			cell.custom_minimum_size = Vector2(24.0, 22.0)
+		)
 		world_map_badge_row.add_child(cell)
 		world_map_badge_cells.append({
 			"cell": cell,
@@ -13971,14 +13908,14 @@ func _update_world_map_detail_badge_cells(badges: Array) -> void:
 			label.visible = false
 			continue
 		var accent := VisualStyle.color(AttributeBadgesScript.palette_token_for_badge(badge), VisualStyle.CYAN_2)
+		var detail_text := _world_map_badge_tooltip_text(badge)
 		cell.visible = true
-		cell.tooltip_text = _world_map_badge_tooltip_text(badge)
+		cell.tooltip_text = detail_text
+		cell.custom_minimum_size = Vector2(24.0, 22.0)
 		cell.add_theme_stylebox_override("panel", _world_map_badge_cell_style(accent))
-		icon.texture = AttributeBadgeRowScript.texture_for_badge(badge, 12, false)
-		var value_text := _world_map_badge_value_text(str(badge.get("value_text", "")).strip_edges())
-		label.text = value_text
-		label.visible = not value_text.is_empty()
-		label.custom_minimum_size = Vector2(minf(54.0, maxf(18.0, float(value_text.length()) * 6.0)), 0.0)
+		icon.texture = AttributeBadgeRowScript.texture_for_badge(badge, 16, false)
+		label.text = detail_text
+		label.visible = false
 		label.add_theme_color_override("font_color", VisualStyle.accessible_color(accent))
 
 
@@ -14003,17 +13940,17 @@ func _world_map_badge_cell_style(accent: Color) -> StyleBoxFlat:
 
 func _world_map_badge_tooltip_text(badge: Dictionary) -> String:
 	var tooltip := str(badge.get("tooltip", "")).strip_edges()
+	var value_text := str(badge.get("value_text", "")).strip_edges()
+	if not tooltip.is_empty() and not value_text.is_empty() and tooltip.find(value_text) < 0:
+		return "%s: %s" % [tooltip, value_text]
 	if not tooltip.is_empty():
 		return tooltip
 	var glyph_id := str(badge.get("glyph_id", "")).strip_edges()
 	var glyph := AttributeBadgesScript.glyph_definition(glyph_id)
-	return str(glyph.get("description", glyph.get("label", glyph_id)))
-
-
-func _world_map_badge_value_text(value_text: String) -> String:
-	if value_text.length() <= 8:
-		return value_text
-	return value_text.left(7) + "."
+	var label := str(glyph.get("label", glyph_id)).strip_edges()
+	if not value_text.is_empty():
+		return "%s: %s" % [label, value_text]
+	return str(glyph.get("description", label))
 
 
 func _world_map_detail_badge_prewarm_sample() -> Array:
@@ -14963,8 +14900,9 @@ func _hud_nav_button(text: String, callback: Callable) -> Button:
 func _main_menu_button(title: String, subtitle: String, callback: Callable) -> Button:
 	var button := _button(title, callback)
 	button.tooltip_text = subtitle
-	button.custom_minimum_size = Vector2(176, 52)
-	_set_control_font_size(button, 16)
+	button.custom_minimum_size = Vector2(148, 46)
+	button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_set_control_font_size(button, 14)
 	_set_control_font_color(button, VisualStyle.WHITE)
 	button.add_theme_stylebox_override("normal", VisualStyle.pixel_box(Color("#091025", 0.96), VisualStyle.CYAN, 2))
 	button.add_theme_stylebox_override("hover", VisualStyle.pixel_box(Color("#13142c", 0.98), VisualStyle.CYAN, 2))

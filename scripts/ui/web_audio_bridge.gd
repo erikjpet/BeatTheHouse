@@ -19,7 +19,6 @@ const WEB_COMPRESSOR_THRESHOLD_DB := -6.0
 const WEB_COMPRESSOR_RATIO := 3.0
 const WEB_SFX_MAX_GAIN := 1.25
 const WEB_AUDIO_BRIDGE_ENABLED := true
-const WEB_AUDIO_OSCILLATOR_FALLBACK_ENABLED := false
 const WEB_MUSIC_MIX_MIN_INTERVAL_MSEC := 140
 const WEB_MUSIC_STEM_ROLES := ["pad", "bass", "bass_dark", "lead", "drums_low", "drums_high", "drums_high_double", "tension", "texture"]
 
@@ -502,10 +501,6 @@ static func set_music_mix(group_id: String, role_volume_db: Dictionary) -> void:
 	_bridge_interface.setMusicMix(payload_json)
 
 
-static func play_music(_profile: Dictionary, _music_state: Dictionary) -> void:
-	_record_bridge_call("legacy_play_music_blocked", 0)
-
-
 static func stop_music(group_id: String = "") -> void:
 	if not available():
 		return
@@ -529,10 +524,6 @@ static func stop_music(group_id: String = "") -> void:
 	var payload_json := JSON.stringify(payload)
 	_record_bridge_call("stop_music", payload_json.length())
 	_bridge_interface.stopMusic(payload_json)
-
-
-static func play_sfx(_cue_id: String, _volume_db: float = 0.0, _pitch: float = 1.0) -> void:
-	_record_bridge_call("legacy_sfx_blocked", 0)
 
 
 static func reset_debug_stats() -> void:
@@ -567,9 +558,7 @@ static func mix_contract_snapshot() -> Dictionary:
 		"sfx_max_gain": WEB_SFX_MAX_GAIN,
 		"music_mix_min_interval_msec": WEB_MUSIC_MIX_MIN_INTERVAL_MSEC,
 		"stream_bridge_enabled": WEB_AUDIO_BRIDGE_ENABLED,
-		"fallback_enabled": WEB_AUDIO_OSCILLATOR_FALLBACK_ENABLED,
-		"oscillator_fallback_enabled": WEB_AUDIO_OSCILLATOR_FALLBACK_ENABLED,
-		"pcm_stream_bridge_default": WEB_AUDIO_BRIDGE_ENABLED and not WEB_AUDIO_OSCILLATOR_FALLBACK_ENABLED,
+		"pcm_stream_bridge_default": WEB_AUDIO_BRIDGE_ENABLED,
 		"native_godot_audio_default": false,
 		"script_has_version_guard": WEB_AUDIO_SCRIPT.find("version === BRIDGE_VERSION") >= 0,
 		"script_has_highpass": WEB_AUDIO_SCRIPT.find("this.highpass.type = \"highpass\"") >= 0 and WEB_AUDIO_SCRIPT.find("this.highpass.frequency.value = 38") >= 0,

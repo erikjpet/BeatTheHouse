@@ -96,11 +96,6 @@ var report := {
 		"run_pressure_visible": false,
 		"objective_hud": false,
 		"objective_state_guidance": false,
-		"prestige_locked": false,
-		"prestige_requirements_visible": false,
-		"prestige_not_yet_reachable": false,
-		"prestige_victory": false,
-		"prestige_save_load": false,
 		"demo_objective_visible": false,
 		"demo_victory": false,
 		"terminal_victory_summary": false,
@@ -356,22 +351,12 @@ func _run() -> void:
 	await _settle()
 	_require(_environment_canvas_is_primary(), "Back to room did not restore the environment canvas as the primary surface.")
 	_assert_environment_canvas_contained("returned environment screen")
-	var claimed_victory := await _try_claim_prestige_victory_if_ready()
-	if not claimed_victory:
-		await _try_follow_visible_objective_once()
-		claimed_victory = await _try_claim_prestige_victory_if_ready()
-	if not claimed_victory:
-		await _try_service_hook_flow()
-		claimed_victory = await _try_claim_prestige_victory_if_ready()
-	if not claimed_victory:
-		await _try_event_card_flow()
-		claimed_victory = await _try_claim_prestige_victory_if_ready()
-	if not claimed_victory:
-		await _try_item_card_flow()
-		claimed_victory = await _try_claim_prestige_victory_if_ready()
-	if not claimed_victory:
-		await _try_lender_hook_flow()
-		claimed_victory = await _try_claim_prestige_victory_if_ready()
+	var claimed_victory := false
+	await _try_follow_visible_objective_once()
+	await _try_service_hook_flow()
+	await _try_event_card_flow()
+	await _try_item_card_flow()
+	await _try_lender_hook_flow()
 	if not claimed_victory:
 		await _record_demo_victory_not_yet_reachable()
 	await _save_and_load_flow()
@@ -441,8 +426,6 @@ func _try_follow_visible_objective_once() -> bool:
 		_add_warning("Next visible objective is not currently actionable: %s" % str(objective.get("hint", "")))
 		return false
 	match object_type:
-		"prestige":
-			return await _try_claim_prestige_victory_if_ready()
 		"travel":
 			return await _try_travel_object_flow("visible objective", objective)
 		"item":
@@ -1465,45 +1448,6 @@ func _record_demo_victory_not_yet_reachable() -> void:
 		_cover("demo_objective_visible")
 
 
-func _try_claim_prestige_victory_if_ready() -> bool:
-	_return_to_room_view()
-	await _settle()
-	var canvas := app.get("environment_canvas") as Control
-	if canvas == null or not canvas.visible or not canvas.has_method("current_view_snapshot"):
-		return false
-	var prestige_object := _first_clickable_canvas_object_type_enabled(canvas, "prestige", true)
-	if prestige_object.is_empty():
-		return false
-	_record_state("prestige_screen", "Focused the visible prestige target as the current objective.")
-	await _activate_prestige_victory_object(canvas, prestige_object)
-	return true
-
-
-func _activate_prestige_victory_object(canvas: Control, prestige_object: Dictionary) -> void:
-	var serialized_before_focus := _serialized_run_text()
-	var focus_click := await _click_canvas_object_data(canvas, prestige_object, "prestige")
-	_require(not focus_click.is_empty(), "Could not single-click the eligible prestige target.")
-	await _settle()
-	_require(serialized_before_focus == _serialized_run_text(), "Focusing an eligible prestige target mutated serialized RunState.")
-	_require(_focused_object_type() == "prestige", "Eligible prestige target did not update the focused context panel.")
-	var summary_before := _run_state_restore_summary(app.call("serialized_run_state"))
-	var serialized_before_activation := _serialized_run_text()
-	var activate_click := await _double_click_canvas_object_data(canvas, prestige_object, "prestige")
-	_require(not activate_click.is_empty(), "Could not double-click the eligible prestige target.")
-	await _settle()
-	_require(serialized_before_activation != _serialized_run_text(), "Double-clicking an eligible prestige target did not update serialized RunState.")
-	var summary_after := _run_state_restore_summary(app.call("serialized_run_state"))
-	_require(str(summary_after.get("run_status", "")) == "ended", "Prestige purchase did not end the run.")
-	var flags: Dictionary = summary_after.get("narrative_flags", {})
-	_require(bool(flags.get("prestige_victory", false)), "Prestige purchase did not set the victory flag.")
-	_require(int(summary_after.get("bankroll", 0)) < int(summary_before.get("bankroll", 0)), "Prestige purchase did not spend bankroll.")
-	_require(_has_visible_text(app, "Victory claimed") or _has_visible_text(app, "Victory"), "Prestige purchase did not show a visible victory message.")
-	_cover("prestige_victory")
-	_record_state("prestige_victory_screen", "Bought the visible prestige target and reached the minimal victory state.")
-	_assert_objective_hud("prestige victory")
-	_assert_m2_player_feedback_clarity("prestige victory")
-
-
 func _try_service_hook_flow(prepared_fixture: bool = false) -> void:
 	await _resolve_blocking_event_popups()
 	_return_to_room_view()
@@ -1692,10 +1636,6 @@ func _save_and_load_flow() -> void:
 	if not saved_inventory.is_empty():
 		_require(JSON.stringify(loaded_summary.get("inventory", [])) == JSON.stringify(saved_inventory), "Main-menu Continue did not preserve item inventory.")
 		_cover("item_save_load")
-	if str(saved_summary.get("run_status", "")) == "ended" and bool((saved_summary.get("narrative_flags", {}) as Dictionary).get("prestige_victory", false)):
-		_require(str(loaded_summary.get("run_status", "")) == "ended", "Main-menu Continue did not preserve prestige victory status.")
-		_require(bool((loaded_summary.get("narrative_flags", {}) as Dictionary).get("prestige_victory", false)), "Main-menu Continue did not preserve prestige victory flag.")
-		_cover("prestige_save_load")
 	if str(saved_summary.get("run_status", "")) == "ended" and bool((saved_summary.get("narrative_flags", {}) as Dictionary).get("demo_victory", false)):
 		_require(str(loaded_summary.get("run_status", "")) == "ended", "Main-menu Continue did not preserve demo victory status.")
 		_require(bool((loaded_summary.get("narrative_flags", {}) as Dictionary).get("demo_victory", false)), "Main-menu Continue did not preserve demo victory flag.")

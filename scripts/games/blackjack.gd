@@ -300,7 +300,6 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 		"surface_stake_controls_required": true,
 		"surface_embeds_outcomes": true,
 		"surface_animates_idle": true,
-		"surface_ambient_overlay": "",
 		"surface_dynamic_overlay_channels": [DEAL_ANIMATION_CHANNEL, ATTENTION_ANIMATION_CHANNEL, COUNT_ANIMATION_CHANNEL, PAYOUT_ANIMATION_CHANNEL],
 		"surface_realtime_state_refresh": false,
 		"surface_ui_protected_regions": _blackjack_ui_protected_regions(count_challenge),
@@ -1429,17 +1428,12 @@ func _draw_player_station(surface, surface_state: Dictionary, include_betting_ch
 	var active_index: int = int(surface_state.get("active_hand_index", 0))
 	_draw_player_forearms(surface, surface_state)
 	var result_hands: Array = _dictionary_array(result.get("hand_results", []))
-	var clock := _surface_clock(surface)
 	for i in range(display_hands.size()):
 		var hand: Dictionary = display_hands[i]
 		var pos: Vector2 = _player_hand_base_position(i)
 		var active := i == active_index and not showing_showdown
 		var cards: Array = _card_array(hand.get("cards", []))
-		var pad := Rect2(pos.x - 12, pos.y - 28, 120, 82)
-		var pulse := 0.08 + absf(sin(clock * 3.2 + float(i))) * 0.08 if active else 0.04
 		var cards_revealed := _hand_cards_revealed_for_deal(surface, surface_state, "player", i, cards)
-		surface.draw_rect(pad.grow(3 if active else 0), Color(C_TEAL.r, C_TEAL.g, C_TEAL.b, pulse))
-		surface.draw_rect(pad, C_YELLOW if showing_showdown else C_TEAL if active else Color(C_SOFT.r, C_SOFT.g, C_SOFT.b, 0.22), false, 1)
 		_draw_card_row_for_table(surface, surface_state, cards, pos, "player", i, PLAYER_CARD_SCALE)
 		var hand_label := "H%d" % [i + 1]
 		if cards_revealed:
@@ -1491,9 +1485,7 @@ func _draw_hand_state_badge(surface, pos: Vector2, hand: Dictionary, active: boo
 		accent = C_TEAL
 	if text.is_empty():
 		return
-	var rect := Rect2(pos, Vector2(66, 16))
-	_draw_neon_panel(surface, rect, accent, 0.14)
-	surface.surface_label(text, rect.position + Vector2(6, 11), 8, accent)
+	surface.surface_label(text, pos + Vector2(2, 10), 8, accent)
 
 
 func _draw_blackjack_table_notice(surface, surface_state: Dictionary) -> void:
@@ -1626,14 +1618,16 @@ func _draw_chip_rack(surface, surface_state: Dictionary) -> void:
 	surface.surface_label("CHIP RAIL", rack.position + Vector2(12, 15), 10, C_SOFT)
 	surface.surface_label("BET $%d" % int(surface_state.get("selected_stake", 1)), rack.position + Vector2(112, 15), 12, C_YELLOW)
 	var chips: Array = surface_state.get("chip_denominations", []) if typeof(surface_state.get("chip_denominations", [])) == TYPE_ARRAY else []
-	var chip_y := rack.position.y + 46.0
+	var chip_origin := rack.position + Vector2(27.0, 48.0)
+	var chip_spacing := 24.0 if chips.size() > 4 else 30.0
 	for i in range(chips.size()):
+		var chip_center := chip_origin + Vector2(float(i) * chip_spacing, 0.0)
 		if i == 0:
-			surface.surface_add_invisible_hit(Rect2(Vector2(rack.position.x + 34.0 + float(i) * 40.0, chip_y) - Vector2(18, 18), Vector2(36, 36)), "surface_stake_up")
-		_draw_chip_button(surface, Vector2(rack.position.x + 34.0 + float(i) * 40.0, chip_y), int(chips[i]), "blackjack_chip", i)
-	_draw_chip_stack(surface, rack.position + Vector2(184, 50), surface_state.get("chip_stack", []), 0.46)
-	_draw_table_button(surface, Rect2(rack.position.x + 174, rack.position.y + 22, 50, 22), "CLEAR", "blackjack_clear_bet", 0, C_SOFT, true)
-	_draw_table_button(surface, Rect2(rack.position.x + 174, rack.position.y + 48, 50, 22), "MAX", "blackjack_max_bet", 0, C_YELLOW, true)
+			surface.surface_add_exact_invisible_hit(Rect2(chip_center - Vector2(12, 12), Vector2(24, 24)), "surface_stake_up")
+		_draw_chip_button(surface, chip_center, int(chips[i]), "blackjack_chip", i)
+	_draw_chip_stack(surface, rack.position + Vector2(222, 48), surface_state.get("chip_stack", []), 0.30)
+	_draw_table_button(surface, Rect2(rack.position.x + 174, rack.position.y + 28, 36, 16), "CLEAR", "blackjack_clear_bet", 0, C_SOFT, true)
+	_draw_table_button(surface, Rect2(rack.position.x + 174, rack.position.y + 50, 36, 16), "MAX", "blackjack_max_bet", 0, C_YELLOW, true)
 
 
 func _draw_table_actions(surface, surface_state: Dictionary) -> void:
@@ -1964,8 +1958,6 @@ func _draw_betting_arc(surface, center: Vector2, width: float, accent: Color) ->
 
 func _draw_seat_marker(surface, pos: Vector2, label: String, active: bool) -> void:
 	var color := C_TEAL if active else Color(C_SOFT.r, C_SOFT.g, C_SOFT.b, 0.32)
-	surface.draw_rect(Rect2(pos + Vector2(-16, -18), Vector2(40, 5)), Color(color.r, color.g, color.b, 0.20))
-	surface.draw_rect(Rect2(pos + Vector2(-12, -28), Vector2(32, 20)), Color(color.r, color.g, color.b, 0.06), false, 1)
 	surface.surface_label_centered(label, Rect2(pos + Vector2(-11, -25), Vector2(30, 12)), 8, color)
 
 
@@ -2147,7 +2139,8 @@ func _draw_table_button(surface, rect: Rect2, label: String, action: String, ind
 		fill = Color(0.03, 0.03, 0.06, 0.72)
 	surface.draw_rect(rect, fill)
 	surface.draw_rect(rect, C_WHITE if hovered and enabled else accent if enabled else Color(C_SOFT.r, C_SOFT.g, C_SOFT.b, 0.30), false, 2 if hovered or selected else 1)
-	surface.surface_label_centered(label.left(16), rect.grow(-3), 11, accent if enabled else Color(C_SOFT.r, C_SOFT.g, C_SOFT.b, 0.46))
+	var label_size := 9 if rect.size.y <= 18.0 else 11
+	surface.surface_label_centered(label.left(16), rect.grow(-3), label_size, accent if enabled else Color(C_SOFT.r, C_SOFT.g, C_SOFT.b, 0.46))
 	if selected:
 		surface.surface_draw_ready_badge(rect, "READY")
 	if enabled:
@@ -2156,8 +2149,8 @@ func _draw_table_button(surface, rect: Rect2, label: String, action: String, ind
 
 func _draw_chip_button(surface, center: Vector2, value: int, action: String, index: int) -> void:
 	var hovered := bool(surface.surface_region_hovered(action, index))
-	_draw_casino_chip(surface, center, value, 17.0, 1.0, hovered)
-	surface.surface_add_hit(Rect2(center - Vector2(18, 18), Vector2(36, 36)), action, index)
+	_draw_casino_chip(surface, center, value, 11.0, 1.0, hovered)
+	surface.surface_add_exact_hit(Rect2(center - Vector2(12, 12), Vector2(24, 24)), action, index)
 
 
 func _draw_chip_stack(surface, pos: Vector2, stack_value: Variant, scale: float = 1.0) -> void:

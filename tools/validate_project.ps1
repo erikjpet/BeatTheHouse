@@ -53,7 +53,6 @@ $requiredFiles = @(
     "data/debt/lenders.json",
     "data/services/services.json",
     "data/travel/routes.json",
-    "data/prestige/purchases.json",
     "scripts/games/slot.gd",
     "scripts/games/pull_tabs.gd",
     "scripts/games/bar_dice.gd",
@@ -428,7 +427,7 @@ function Assert-EnvironmentLayoutSpots {
         $failures.Add("environment $ArchetypeId layout must be an object when present.")
         return
     }
-    $spotFields = @("game_spots", "event_spots", "item_spots", "shopkeeper_spots", "travel_spots", "service_spots", "lender_spots", "prestige_spots")
+    $spotFields = @("game_spots", "event_spots", "item_spots", "shopkeeper_spots", "travel_spots", "service_spots", "lender_spots")
     foreach ($field in $spotFields) {
         $spots = Get-JsonProperty $Layout $field
         if ($null -eq $spots) {
@@ -516,7 +515,7 @@ Require-Text $foundationUi "ContentLibrary.new()" "Foundation UI shell must load
 Require-Text $foundationUi "RunState.new()" "Foundation UI shell must own runs through RunState."
 Require-Text $foundationUi "RunGenerator.new(library)" "Foundation UI shell must generate environments through RunGenerator."
 Require-Text $foundationUi "GameModule" "Foundation UI shell must route gameplay through GameModule."
-Require-Text $foundationUi "RunActionServiceScript.new()" "Foundation UI shell must route item/hook/prestige actions through RunActionService."
+Require-Text $foundationUi "RunActionServiceScript.new()" "Foundation UI shell must route item/hook actions through RunActionService."
 Require-Text "scripts/core/run_action_service.gd" "ItemEffectScript.new()" "RunActionService must route item effects through ItemEffect."
 Require-Text $foundationUi "EventModule.new()" "Foundation UI shell must route events through EventModule."
 Require-Text $foundationUi "save_service.save_run" "Foundation UI shell must save runs through SaveService."
@@ -538,8 +537,7 @@ $requiredPackStrings = @(
     "res://data/challenges/challenges.json",
     "res://data/debt/lenders.json",
     "res://data/services/services.json",
-    "res://data/travel/routes.json",
-    "res://data/prestige/purchases.json"
+    "res://data/travel/routes.json"
 )
 foreach ($packPath in $requiredPackStrings) {
     Require-Text $contentLibrary $packPath "ContentLibrary is missing README data pack path: $packPath"
@@ -797,25 +795,6 @@ foreach ($lender in (Read-JsonArray "data/debt/lenders.json")) {
             }
         }
     }
-}
-
-Assert-JsonRequiredFields "data/prestige/purchases.json" "prestige_purchases" @("id", "display_name", "description", "type", "cost", "requirements", "effect")
-Assert-JsonUniqueIds "data/prestige/purchases.json" "prestige_purchases"
-$prestigePurchases = @(Read-JsonArray "data/prestige/purchases.json")
-foreach ($purchase in $prestigePurchases) {
-    $purchaseId = [string](Get-JsonProperty $purchase "id")
-    Assert-ObjectInfoTextLength "prestige_purchases $purchaseId description" ([string](Get-JsonProperty $purchase "description"))
-    Assert-NonNegativeIntProperty "prestige_purchases $purchaseId" $purchase "cost"
-    $requirements = Get-JsonProperty $purchase "requirements"
-    if ($requirements -isnot [pscustomobject]) {
-        $failures.Add("prestige_purchases $purchaseId requirements must be an object.")
-    }
-    else {
-        Assert-NonNegativeIntProperty "prestige_purchases $purchaseId requirements" $requirements "bankroll_min"
-        Assert-NonNegativeIntProperty "prestige_purchases $purchaseId requirements" $requirements "max_heat"
-        Assert-NonNegativeIntProperty "prestige_purchases $purchaseId requirements" $requirements "environment_count_min"
-    }
-    Assert-DeltaKeys "prestige_purchases $purchaseId effect" (Get-JsonProperty $purchase "effect") $resultDeltaKeys
 }
 
 $grandCasino = $null

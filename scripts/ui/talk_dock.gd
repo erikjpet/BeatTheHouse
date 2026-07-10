@@ -287,8 +287,8 @@ func _render_choices() -> void:
 		choice_list.add_child(button)
 		var badges := _copy_array(choice_data.get("attribute_badges", []))
 		if not badges.is_empty():
-			AttributeBadgeRowScript.warm_cache(badges, 12)
-			choice_list.add_child(AttributeBadgeRowScript.control_row(badges, 12))
+			AttributeBadgeRowScript.warm_cache(badges, 16)
+			choice_list.add_child(AttributeBadgeRowScript.control_row(badges, 16))
 
 
 func _choices() -> Array:
