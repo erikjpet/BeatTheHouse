@@ -97,6 +97,7 @@ const RunInventoryScreenScript := preload("res://scripts/ui/run_inventory_screen
 const RunInventoryViewModelScript := preload("res://scripts/ui/run_inventory_view_model.gd")
 const MetaCollectionViewModelScript := preload("res://scripts/ui/meta_collection_view_model.gd")
 const MetaSessionControllerScript := preload("res://scripts/ui/meta_session_controller.gd")
+const WorldMapOverlayControllerScript := preload("res://scripts/ui/world_map_overlay_controller.gd")
 const TalkDockScript := preload("res://scripts/ui/talk_dock.gd")
 const SfxPlayerScript := preload("res://scripts/ui/sfx_player.gd")
 const ProceduralMusicPlayerScript := preload("res://scripts/ui/procedural_music_player.gd")
@@ -303,6 +304,7 @@ var world_map_badge_slot: VBoxContainer
 var world_map_badge_row: HFlowContainer
 var world_map_badge_cells: Array = []
 var world_map_confirm_button: Button
+var world_map_overlay_controller: WorldMapOverlayController
 var selected_world_map_node_id: String = ""
 var world_map_button_ids: Array = []
 var world_map_button_layout_size := Vector2(-1.0, -1.0)
@@ -1207,11 +1209,9 @@ func _hide_world_map_overlay() -> void:
 
 
 func _clear_world_map_selection(refresh_overlay: bool = true) -> void:
-	selected_world_map_node_id = ""
-	selected_travel_target_id = ""
-	selected_travel_label = ""
-	world_map_snapshot_cache_key = ""
-	world_map_canvas_snapshot_key = ""
+	_ensure_world_map_overlay_controller()
+	world_map_overlay_controller.clear_selection()
+	_sync_world_map_overlay_controller_to_host()
 	if refresh_overlay:
 		_refresh_world_map_overlay()
 
@@ -1222,43 +1222,32 @@ func select_world_map_node(node_id: String) -> bool:
 	var clean_id := node_id.strip_edges()
 	if clean_id.is_empty():
 		return false
+	_sync_world_map_overlay_controller_from_host()
 	if _is_meta_session():
 		return _select_meta_world_map_node(clean_id)
 	if run_state != null and run_state.has_world_map() and not WorldMapScript.is_node_visible(run_state.world_map, clean_id):
 		_show_message("That stop is not on your map yet.")
 		_refresh_world_map_overlay()
 		return false
-	if run_state != null and run_state.has_world_map() and not _world_map_node_ids(_world_map_snapshot()).has(clean_id):
-		_show_message("That stop is not on your map from here.")
-		_refresh_world_map_overlay()
-		return false
-	selected_world_map_node_id = clean_id
-	if run_state != null and clean_id == run_state.current_world_node_id():
-		selected_travel_target_id = ""
-		selected_travel_label = ""
-		_show_message("You are here.")
-		_refresh_world_map_overlay()
-		return true
 	var choice := _travel_choice(clean_id)
-	if choice.is_empty():
-		selected_travel_target_id = ""
-		selected_travel_label = ""
-		_show_message("That stop is not available from here right now.")
+	var current_node_id := run_state.current_world_node_id() if run_state != null else ""
+	var visible_node_ids := _world_map_node_ids(_world_map_snapshot())
+	if not choice.is_empty() and not visible_node_ids.has(clean_id):
+		visible_node_ids.append(clean_id)
+	var result := world_map_overlay_controller.select_run_node(clean_id, current_node_id, visible_node_ids, choice)
+	_sync_world_map_overlay_controller_to_host()
+	var message := str(result.get("message", ""))
+	if not message.is_empty():
+		_show_message(message)
+	if bool(result.get("refresh", false)):
 		_refresh_world_map_overlay()
-		return true
-	selected_travel_target_id = clean_id if bool(choice.get("enabled", true)) else ""
-	selected_travel_label = str(choice.get("label", clean_id)) if bool(choice.get("enabled", true)) else ""
-	if bool(choice.get("enabled", true)):
-		_show_message("Selected travel: %s." % str(choice.get("label", clean_id)))
-	else:
-		_show_message(str(choice.get("disabled_reason", "That route is not available right now.")))
-	_refresh_world_map_overlay()
-	return bool(choice.get("enabled", true))
+	return bool(result.get("ok", false))
 
 
 func confirm_world_map_travel() -> void:
 	if _guard_blocking_decision_or_transition():
 		return
+	_sync_world_map_overlay_controller_from_host()
 	var confirmed_target_id := selected_world_map_node_id
 	if confirmed_target_id.is_empty() and not selected_travel_target_id.is_empty():
 		confirmed_target_id = selected_travel_target_id
@@ -1269,54 +1258,46 @@ func confirm_world_map_travel() -> void:
 		_confirm_meta_world_map_travel()
 		return
 	var choice := _travel_choice(confirmed_target_id)
-	if choice.is_empty():
-		_show_message("That stop is not available from here right now.")
-		_refresh_world_map_overlay()
+	var result := world_map_overlay_controller.confirm_run_selection(choice)
+	_sync_world_map_overlay_controller_to_host()
+	if str(result.get("action", "")) != "travel":
+		var message := str(result.get("message", ""))
+		if not message.is_empty():
+			_show_message(message)
+		if bool(result.get("refresh", false)):
+			_refresh_world_map_overlay()
 		return
-	if not bool(choice.get("enabled", true)):
-		_show_message(str(choice.get("disabled_reason", "That route is not available right now.")))
-		_refresh_world_map_overlay()
-		return
-	selected_travel_target_id = str(choice.get("id", ""))
-	selected_travel_label = str(choice.get("label", selected_travel_target_id))
 	if world_map_overlay != null:
 		world_map_overlay.visible = false
-	_travel_to(str(choice.get("id", "")), str(choice.get("label", choice.get("id", ""))), choice)
+	_travel_to(str(result.get("target_id", "")), str(result.get("label", result.get("target_id", ""))), result.get("choice", {}) as Dictionary)
 
 
 func _select_meta_world_map_node(node_id: String) -> bool:
-	if not _meta_map_node_ids().has(node_id):
-		_show_message("That meta stop is not available.")
-		_refresh_world_map_overlay()
-		return false
-	selected_world_map_node_id = node_id
-	if node_id == meta_session_location_id:
-		selected_travel_target_id = ""
-		selected_travel_label = ""
-		_show_message("You are here.")
-		_refresh_world_map_overlay()
-		return true
 	var choice := _meta_travel_choice(node_id)
-	selected_travel_target_id = node_id
-	selected_travel_label = str(choice.get("label", node_id))
-	_show_message("Selected travel: %s." % selected_travel_label)
-	_refresh_world_map_overlay()
-	return true
+	var result := world_map_overlay_controller.select_meta_node(node_id, meta_session_location_id, _meta_map_node_ids(), choice)
+	_sync_world_map_overlay_controller_to_host()
+	var message := str(result.get("message", ""))
+	if not message.is_empty():
+		_show_message(message)
+	if bool(result.get("refresh", false)):
+		_refresh_world_map_overlay()
+	return bool(result.get("ok", false))
 
 
 func _confirm_meta_world_map_travel() -> void:
-	if selected_world_map_node_id == meta_session_location_id:
-		_show_message("You are here.")
-		_refresh_world_map_overlay()
-		return
 	var choice := _meta_travel_choice(selected_world_map_node_id)
-	if choice.is_empty():
-		_show_message("That meta stop is not available.")
-		_refresh_world_map_overlay()
+	var result := world_map_overlay_controller.confirm_meta_selection(meta_session_location_id, choice)
+	_sync_world_map_overlay_controller_to_host()
+	if str(result.get("action", "")) != "meta_travel":
+		var message := str(result.get("message", ""))
+		if not message.is_empty():
+			_show_message(message)
+		if bool(result.get("refresh", false)):
+			_refresh_world_map_overlay()
 		return
 	if world_map_overlay != null:
 		world_map_overlay.visible = false
-	_enter_meta_location(str(choice.get("id", META_LOCATION_HOME)))
+	_enter_meta_location(str(result.get("target_id", META_LOCATION_HOME)))
 
 
 # Selects an event choice without mutating simulation state.
@@ -4507,6 +4488,7 @@ func _build_travel_transition_overlay() -> void:
 
 
 func _build_world_map_overlay() -> void:
+	_ensure_world_map_overlay_controller()
 	world_map_overlay = Control.new()
 	world_map_overlay.name = "WorldMapOverlay"
 	world_map_overlay.visible = false
@@ -4608,6 +4590,27 @@ func _build_world_map_overlay() -> void:
 	world_map_confirm_button = _button("Travel", Callable(self, "confirm_world_map_travel"))
 	world_map_confirm_button.custom_minimum_size = Vector2(132, MIN_NATIVE_TOUCH_TARGET_HEIGHT)
 	popup_stack.add_child(world_map_confirm_button)
+
+
+func _ensure_world_map_overlay_controller() -> void:
+	if world_map_overlay_controller == null:
+		world_map_overlay_controller = WorldMapOverlayControllerScript.new()
+
+
+func _sync_world_map_overlay_controller_from_host() -> void:
+	_ensure_world_map_overlay_controller()
+	world_map_overlay_controller.sync_from_host(selected_world_map_node_id, selected_travel_target_id, selected_travel_label, world_map_snapshot_cache_key, world_map_canvas_snapshot_key)
+
+
+func _sync_world_map_overlay_controller_to_host() -> void:
+	if world_map_overlay_controller == null:
+		return
+	var state := world_map_overlay_controller.export_state()
+	selected_world_map_node_id = str(state.get("selected_node_id", ""))
+	selected_travel_target_id = str(state.get("selected_travel_target_id", ""))
+	selected_travel_label = str(state.get("selected_travel_label", ""))
+	world_map_snapshot_cache_key = str(state.get("snapshot_cache_key", world_map_snapshot_cache_key))
+	world_map_canvas_snapshot_key = str(state.get("canvas_snapshot_key", world_map_canvas_snapshot_key))
 
 
 func _build_inventory_page(parent: Node) -> void:
