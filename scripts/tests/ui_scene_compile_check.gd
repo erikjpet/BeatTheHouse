@@ -811,6 +811,26 @@ func _run() -> void:
 		push_error("Continue button should be disabled when no foundation save exists.")
 		quit(1)
 		return
+	if not _write_save_slot_text(save_service, compile_save_slot, "{"):
+		push_error("Could not create corrupt compile-test save for Continue state.")
+		quit(1)
+		return
+	app.call("_refresh_start_screen")
+	await process_frame
+	var corrupt_status_label: Label = app.get("start_status_label")
+	if corrupt_status_label == null or corrupt_status_label.text.find("corrupt") == -1:
+		push_error("Main menu should surface corrupt unrecoverable save state.")
+		quit(1)
+		return
+	if not continue_button.disabled:
+		push_error("Continue button should stay disabled for an unrecoverable corrupt save.")
+		quit(1)
+		return
+	remove_error = _remove_save_slot(save_service, compile_save_slot)
+	if remove_error != OK:
+		push_error("Could not clean corrupt compile-test save slot.")
+		quit(1)
+		return
 	var continue_test_run: RunState = RunStateScript.new()
 	continue_test_run.start_new("UI-COMPILE-CONTINUE-SAVE")
 	var save_error := save_service.save_run(continue_test_run, compile_save_slot)
@@ -6708,14 +6728,31 @@ func _check_lender_acceptance_does_not_open_motel_popup(app: Control) -> bool:
 func _remove_save_slot(save_service: SaveService, slot_id: String) -> Error:
 	if save_service == null:
 		return ERR_UNCONFIGURED
-	var path := save_service.run_save_path(slot_id)
-	if not FileAccess.file_exists(path):
-		return OK
 	var user_dir := DirAccess.open("user://")
 	if user_dir == null:
 		return ERR_CANT_OPEN
-	var relative_path := path.replace("user://", "")
-	return user_dir.remove(relative_path)
+	for path in [save_service.run_save_path(slot_id), save_service.backup_save_path(slot_id)]:
+		if not FileAccess.file_exists(path):
+			continue
+		var relative_path := str(path).replace("user://", "")
+		var remove_error := user_dir.remove(relative_path)
+		if remove_error != OK:
+			return remove_error
+	return OK
+
+
+func _write_save_slot_text(save_service: SaveService, slot_id: String, text: String) -> bool:
+	if save_service == null:
+		return false
+	var path := save_service.run_save_path(slot_id)
+	var absolute_path := ProjectSettings.globalize_path(path)
+	DirAccess.make_dir_recursive_absolute(absolute_path.get_base_dir())
+	var file := FileAccess.open(absolute_path, FileAccess.WRITE)
+	if file == null:
+		return false
+	file.store_string(text)
+	file.close()
+	return true
 
 
 func _resolve_visible_event_popup(app: Control, label: String) -> bool:

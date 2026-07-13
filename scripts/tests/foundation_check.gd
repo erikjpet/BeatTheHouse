@@ -14761,6 +14761,7 @@ func _check_save_service_foundation_round_trip(library: ContentLibrary, failures
 	var save_service: SaveService = SaveServiceScript.new()
 	var slot_id := "foundation_save_round_trip"
 	var save_path := save_service.run_save_path(slot_id)
+	_remove_save_slot_files(save_service, slot_id)
 	if not save_path.begins_with("%s/" % SaveService.SAVE_DIR) or save_path.contains("demo_save"):
 		failures.append("Foundation SaveService path escaped the foundation run save directory.")
 	var save_error := save_service.save_run(run_state, slot_id)
@@ -14776,6 +14777,79 @@ func _check_save_service_foundation_round_trip(library: ContentLibrary, failures
 		failures.append("SaveService foundation round trip load returned null.")
 		return
 	_check_run_state_save_round_trip(expected, loaded.to_dict(), failures)
+	_check_save_service_atomic_recovery(failures)
+
+
+func _check_save_service_atomic_recovery(failures: Array) -> void:
+	var save_service: SaveService = SaveServiceScript.new()
+	var slot_id := "foundation_save_atomic_recovery"
+	_remove_save_slot_files(save_service, slot_id)
+	var primary_path := save_service.run_save_path(slot_id)
+	var backup_path := save_service.backup_save_path(slot_id)
+	var first_run := _save_service_atomic_fixture("SAVE-ATOMIC-FIRST", 137)
+	var second_run := _save_service_atomic_fixture("SAVE-ATOMIC-SECOND", 289)
+	var first_error := save_service.save_run(first_run, slot_id)
+	if first_error != OK:
+		failures.append("SaveService atomic fixture first save failed with error %s." % first_error)
+		return
+	var first_text := FileAccess.get_file_as_string(primary_path)
+	var second_error := save_service.save_run(second_run, slot_id)
+	if second_error != OK:
+		failures.append("SaveService atomic fixture second save failed with error %s." % second_error)
+		return
+	var second_text := FileAccess.get_file_as_string(primary_path)
+	var backup_text := FileAccess.get_file_as_string(backup_path)
+	if backup_text != first_text:
+		failures.append("SaveService backup rotation did not preserve the first successful save.")
+	if second_text == first_text:
+		failures.append("SaveService primary did not contain the second successful save after rotation.")
+	var loaded_primary = save_service.load_run(slot_id)
+	var primary_outcome := save_service.last_load_result()
+	if loaded_primary == null or int(loaded_primary.bankroll) != second_run.bankroll:
+		failures.append("SaveService primary load did not return the second successful save.")
+	if str(primary_outcome.get("outcome", "")) != SaveService.LOAD_OUTCOME_PRIMARY:
+		failures.append("SaveService load outcome did not report primary load.")
+	_write_user_store_text(primary_path, "{\"schema\":\"truncated\"")
+	if FileAccess.get_file_as_string(backup_path) != first_text:
+		failures.append("SaveService backup changed after a truncated primary simulation.")
+	if not save_service.has_run(slot_id):
+		failures.append("SaveService has_run should stay true when a valid backup can recover a corrupt primary.")
+	var loaded_backup = save_service.load_run(slot_id)
+	var backup_outcome := save_service.last_load_result()
+	if loaded_backup == null or int(loaded_backup.bankroll) != first_run.bankroll:
+		failures.append("SaveService did not recover the backup when primary was corrupt.")
+	if str(backup_outcome.get("outcome", "")) != SaveService.LOAD_OUTCOME_BACKUP:
+		failures.append("SaveService load outcome did not report backup recovery.")
+	_remove_user_store_file(primary_path)
+	if not save_service.has_run(slot_id):
+		failures.append("SaveService has_run should be true when only backup exists.")
+	var backup_only = save_service.load_run(slot_id)
+	if backup_only == null or int(backup_only.bankroll) != first_run.bankroll:
+		failures.append("SaveService did not load from a backup-only slot.")
+	_remove_user_store_file(backup_path)
+	_write_user_store_text(primary_path, "{")
+	if save_service.has_run(slot_id):
+		failures.append("SaveService has_run should be false for an unrecoverable corrupt primary.")
+	var loaded_corrupt = save_service.load_run(slot_id)
+	var corrupt_outcome := save_service.last_load_result()
+	if loaded_corrupt != null:
+		failures.append("SaveService loaded an unrecoverable corrupt primary.")
+	if str(corrupt_outcome.get("outcome", "")) != SaveService.LOAD_OUTCOME_NONE:
+		failures.append("SaveService corrupt-primary outcome should be nothing-loadable.")
+	_remove_save_slot_files(save_service, slot_id)
+
+
+func _save_service_atomic_fixture(seed: String, bankroll: int) -> RunState:
+	var run_state: RunState = RunStateScript.new()
+	run_state.start_new(seed)
+	run_state.bankroll = bankroll
+	run_state.narrative_flags["atomic_fixture"] = seed
+	return run_state
+
+
+func _remove_save_slot_files(save_service: SaveService, slot_id: String) -> void:
+	_remove_user_store_file(save_service.run_save_path(slot_id))
+	_remove_user_store_file(save_service.backup_save_path(slot_id))
 
 
 # Checks the local/no-op platform adapter stays outside core gameplay behavior.
@@ -15719,6 +15793,16 @@ func _write_user_store_file(path: String, data: Dictionary) -> void:
 	if file == null:
 		return
 	file.store_string(JSON.stringify(data, "\t"))
+	file.close()
+
+
+func _write_user_store_text(path: String, text: String) -> void:
+	var absolute_path := ProjectSettings.globalize_path(path)
+	DirAccess.make_dir_recursive_absolute(absolute_path.get_base_dir())
+	var file := FileAccess.open(absolute_path, FileAccess.WRITE)
+	if file == null:
+		return
+	file.store_string(text)
 	file.close()
 
 

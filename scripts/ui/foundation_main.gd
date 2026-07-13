@@ -3109,9 +3109,11 @@ func _load_foundation_run_from_slot(return_to_start_on_missing: bool) -> bool:
 		_refresh_run_menu()
 		return false
 	var loaded: Variant = save_service.load_run(autosave_slot_id)
+	var load_result := save_service.last_load_result()
 	if loaded == null:
-		save_status_message = "No saved run is available."
-		_show_message("No saved run found.")
+		var found_corrupt_save := bool(load_result.get("primary_exists", false)) or bool(load_result.get("backup_exists", false))
+		save_status_message = "Saved run is corrupt." if found_corrupt_save else "No saved run is available."
+		_show_message("Saved run is corrupt and no backup could be loaded." if found_corrupt_save else "No saved run found.")
 		if return_to_start_on_missing:
 			_set_current_screen(SCREEN_START)
 			_refresh_start_screen()
@@ -3147,9 +3149,10 @@ func _load_foundation_run_from_slot(return_to_start_on_missing: bool) -> bool:
 	_clear_selected_service_hook()
 	_clear_selected_lender_hook()
 	clear_interaction_focus()
-	save_status_message = "Loaded run."
+	var loaded_from_backup := str(load_result.get("outcome", "")) == SaveService.LOAD_OUTCOME_BACKUP
+	save_status_message = "Loaded backup save." if loaded_from_backup else "Loaded run."
 	_set_current_screen(SCREEN_ENVIRONMENT)
-	_show_message("Run loaded: %s." % str(run_state.current_environment.get("display_name", "Environment")))
+	_show_message("%s: %s." % ["Recovered run from backup" if loaded_from_backup else "Run loaded", str(run_state.current_environment.get("display_name", "Environment"))])
 	_hide_run_menu()
 	_refresh()
 	if _show_next_pending_triggered_event():
@@ -11370,8 +11373,14 @@ func _refresh_start_screen() -> void:
 		release_version_label.text = _release_version_text()
 	var has_save := _has_foundation_save()
 	if start_status_label != null:
+		var save_slot_status := save_service.slot_status(autosave_slot_id) if save_service != null else {}
 		if has_save:
-			start_status_label.text = "Saved run available. Continue it, or enter a seed for a new run."
+			if bool(save_slot_status.get("primary_corrupt", false)) and bool(save_slot_status.get("backup_loadable", false)):
+				start_status_label.text = "Backup save available. Continue will recover the last good run."
+			else:
+				start_status_label.text = "Saved run available. Continue it, or enter a seed for a new run."
+		elif bool(save_slot_status.get("primary_corrupt", false)) or bool(save_slot_status.get("backup_corrupt", false)):
+			start_status_label.text = "Saved run is corrupt and no backup can be loaded."
 		elif start_status_label.text.is_empty() or start_status_label.text.begins_with("Saved run") or start_status_label.text.begins_with("No saved"):
 			start_status_label.text = "No saved run yet. Enter a seed or use the generated one."
 	if continue_button != null:
