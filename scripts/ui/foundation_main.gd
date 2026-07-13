@@ -174,6 +174,7 @@ var travel_transition_active := false
 var travel_transition_target_id: String = ""
 var travel_transition_target_label: String = ""
 var game_surface_auto_resolving := false
+var environment_game_runtime_scan_count := 0
 var last_game_surface_realtime_refresh_msec := 0
 var surface_feature_music_active := false
 var surface_feature_music_ducking := false
@@ -400,12 +401,17 @@ func _ready() -> void:
 
 
 func _process(_delta: float) -> void:
-	_apply_run_screen_layout()
-	_advance_game_surface_automation()
-	_advance_game_surface_realtime_state()
-	_advance_presented_bankroll()
-	_advance_environment_game_runtime()
-	_flush_pending_autosave_if_ready()
+	if run_layout_dirty:
+		_apply_run_screen_layout()
+	if current_screen == SCREEN_GAME:
+		_advance_game_surface_automation()
+		_advance_game_surface_realtime_state()
+	if presented_bankroll_hold_active:
+		_advance_presented_bankroll()
+	if (current_screen == SCREEN_ENVIRONMENT or current_screen == SCREEN_GAME) and not meta_session_active:
+		_advance_environment_game_runtime()
+	if pending_autosave:
+		_flush_pending_autosave_if_ready()
 
 
 func _input(event: InputEvent) -> void:
@@ -890,12 +896,31 @@ func _game_surface_presentation_active() -> bool:
 func _advance_environment_game_runtime() -> void:
 	if game_surface_auto_resolving or run_state == null or library == null or run_state.is_terminal():
 		return
+	if (current_screen != SCREEN_ENVIRONMENT and current_screen != SCREEN_GAME) or meta_session_active:
+		return
+	var game_ids_value: Variant = run_state.current_environment.get("game_ids", [])
+	if typeof(game_ids_value) != TYPE_ARRAY or (game_ids_value as Array).is_empty():
+		return
+	var current_game_id := current_game.get_id() if current_game != null else ""
+	var has_runtime_candidate := false
+	for candidate_value in game_ids_value as Array:
+		var candidate_id := str(candidate_value)
+		if candidate_id.is_empty() or candidate_id == current_game_id:
+			continue
+		has_runtime_candidate = true
+		break
+	if not has_runtime_candidate:
+		return
 	if _foreground_game_blocks_environment_runtime():
 		return
 	if _modal_contract_blocks_player_input():
 		return
+	environment_game_runtime_scan_count += 1
 	var now_msec := Time.get_ticks_msec()
-	for game_id in _string_array(run_state.current_environment.get("game_ids", [])):
+	for game_id_value in game_ids_value as Array:
+		var game_id := str(game_id_value)
+		if game_id.is_empty():
+			continue
 		if current_game != null and game_id == current_game.get_id():
 			continue
 		var game := _game_module_for_id(game_id)

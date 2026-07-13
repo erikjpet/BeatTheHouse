@@ -2496,11 +2496,54 @@ func _check_game_surface_contracts(library: ContentLibrary, failures: Array) -> 
 	var bar_dice: GameModule = _load_surface_contract_game(library, "bar_dice", failures)
 	if bar_dice != null:
 		_check_bar_dice_surface_contract(bar_dice, failures)
+	_check_process_fanout_guards(library, failures)
 
 
 func _surface_requires_idle_animation_liveness(surface: Dictionary) -> bool:
 	var renderer := str(surface.get("surface_renderer", ""))
 	return ["blackjack", "roulette", "baccarat", "dice_table", "pull_tab_machine"].has(renderer) or bool(surface.get("surface_animates_idle", false))
+
+
+func _check_process_fanout_guards(library: ContentLibrary, failures: Array) -> void:
+	var app_value: Variant = MainScene.instantiate()
+	if not app_value is Control:
+		failures.append("Process fan-out guard fixture could not instantiate FoundationMain.")
+		return
+	var app: Control = app_value
+	root.add_child(app)
+	if not bool(app.call("uses_foundation_runtime")):
+		app.call("_ready")
+	if not bool(app.call("uses_foundation_runtime")):
+		failures.append("Process fan-out guard fixture requires FoundationMain runtime nodes.")
+		_sb4_dispose_app(app)
+		return
+	var run_state: RunState = RunStateScript.new()
+	run_state.start_new("PROCESS-FANOUT-GUARD")
+	run_state.set_environment({
+		"id": "process_fanout_fixture",
+		"archetype_id": "fixture_room",
+		"kind": "casino",
+		"game_ids": ["slot"],
+		"game_states": {},
+	})
+	app.set("run_state", run_state)
+	app.set("current_game", null)
+	app.set("environment_game_runtime_scan_count", 0)
+	app.call("_set_current_screen", "START")
+	app.call("_process", 1.0 / 60.0)
+	if int(app.get("environment_game_runtime_scan_count")) != 0:
+		failures.append("Process fan-out scanned environment games on the start/menu screen.")
+	app.set("meta_session_active", true)
+	app.call("_set_current_screen", "ENVIRONMENT")
+	app.call("_process", 1.0 / 60.0)
+	if int(app.get("environment_game_runtime_scan_count")) != 0:
+		failures.append("Process fan-out scanned environment games during a meta session.")
+	app.set("meta_session_active", false)
+	run_state.current_environment["game_ids"] = []
+	app.call("_process", 1.0 / 60.0)
+	if int(app.get("environment_game_runtime_scan_count")) != 0:
+		failures.append("Process fan-out scanned an environment with no runtime-capable game ids.")
+	_sb4_dispose_app(app)
 
 
 func _idle_animation_sample_from_canvas(canvas: Control) -> int:
