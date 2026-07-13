@@ -521,6 +521,7 @@ func _check_content(library: ContentLibrary, failures: Array) -> void:
 	_check_environment_open_hours(library, failures)
 	_check_dialogue_system_content(library, failures)
 	_check_talk_content_pass_content(library, failures)
+	_check_content_validation_boot_surfacing(library, failures)
 	_check_t4_3_event_pack(library, failures)
 	_check_t4_4_item_pack(library, failures)
 	_check_content_group_modularity(library, failures)
@@ -1274,6 +1275,34 @@ func _check_dialogue_system_content(library: ContentLibrary, failures: Array) ->
 			break
 	if not saw_bad_goto:
 		failures.append("Dialogue validation did not reject a bad goto target.")
+
+
+func _check_content_validation_boot_surfacing(library: ContentLibrary, failures: Array) -> void:
+	var debug_snapshot := library.debug_soak_snapshot()
+	if int(debug_snapshot.get("validation_errors", -1)) != library.validation_errors.size():
+		failures.append("ContentLibrary debug stats did not expose validation error count.")
+	var bad_library: ContentLibrary = ContentLibraryScript.new()
+	bad_library.games = [{"id": "bad_boot_surface_game"}]
+	bad_library.validate()
+	if bad_library.validation_errors.is_empty():
+		failures.append("Bad injected content pack did not produce validation errors.")
+		return
+	var app_value: Variant = MainScene.instantiate()
+	if not app_value is Control:
+		failures.append("Content validation surfacing fixture could not instantiate FoundationMain.")
+		return
+	var app: Control = app_value
+	root.add_child(app)
+	if not bool(app.call("uses_foundation_runtime")):
+		app.call("_ready")
+	var surface_state: Dictionary = app.call("debug_surface_content_validation_errors", bad_library, false)
+	if int(surface_state.get("error_count", 0)) != bad_library.validation_errors.size():
+		failures.append("Content validation surfacing did not report the injected error count.")
+	app.call("_refresh_start_screen")
+	var label: Label = app.get("start_status_label")
+	if OS.is_debug_build() and (label == null or label.text.find("Content validation:") == -1 or label.text.find("see console") == -1):
+		failures.append("Content validation surfacing did not paint the debug start-screen banner.")
+	_sb4_dispose_app(app)
 
 
 func _check_talk_content_pass_content(library: ContentLibrary, failures: Array) -> void:

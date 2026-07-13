@@ -237,6 +237,8 @@ var challenge_buttons: Dictionary = {}
 var selected_challenge_id: String = ""
 var start_menu_action_controls: Array[Control] = []
 var start_status_label: Label
+var content_validation_status_message: String = ""
+var content_validation_error_count := 0
 var new_run_button: Button
 var daily_run_button: Button
 var continue_button: Button
@@ -3433,6 +3435,7 @@ func _initialize_foundation() -> void:
 	library = ContentLibrary.new()
 	_mark_boot_event("content_library_load_start")
 	library.load()
+	_surface_content_validation_errors(library, true)
 	AttributeBadgeRowScript.warm_all_glyphs(12)
 	AttributeBadgeRowScript.warm_all_glyphs(14)
 	AttributeBadgeRowScript.warm_all_glyphs(16)
@@ -3454,6 +3457,35 @@ func boot_telemetry_snapshot() -> Dictionary:
 		"uptime_msec": maxi(0, Time.get_ticks_msec() - boot_start_msec),
 		"events": boot_telemetry_events.duplicate(true),
 		"content_library": library.load_timing_snapshot() if library != null else {},
+		"content_library_stats": library.debug_soak_snapshot() if library != null else {},
+	}
+
+
+func debug_surface_content_validation_errors(source_library: ContentLibrary, emit_console: bool = false) -> Dictionary:
+	return _surface_content_validation_errors(source_library, emit_console)
+
+
+func _surface_content_validation_errors(source_library: ContentLibrary, emit_console: bool) -> Dictionary:
+	content_validation_status_message = ""
+	content_validation_error_count = 0
+	if source_library == null:
+		return {"error_count": 0, "message": ""}
+	var errors := source_library.validation_errors.duplicate()
+	content_validation_error_count = errors.size()
+	if content_validation_error_count <= 0:
+		return {"error_count": 0, "message": ""}
+	if OS.is_debug_build():
+		content_validation_status_message = "Content validation: %d errors - see console." % content_validation_error_count
+	if emit_console:
+		for error_value in errors:
+			var message := "Content validation: %s" % str(error_value)
+			if OS.is_debug_build():
+				push_error(message)
+			else:
+				push_warning(message)
+	return {
+		"error_count": content_validation_error_count,
+		"message": content_validation_status_message,
 	}
 
 
@@ -11374,7 +11406,9 @@ func _refresh_start_screen() -> void:
 	var has_save := _has_foundation_save()
 	if start_status_label != null:
 		var save_slot_status := save_service.slot_status(autosave_slot_id) if save_service != null else {}
-		if has_save:
+		if not content_validation_status_message.is_empty():
+			start_status_label.text = content_validation_status_message
+		elif has_save:
 			if bool(save_slot_status.get("primary_corrupt", false)) and bool(save_slot_status.get("backup_loadable", false)):
 				start_status_label.text = "Backup save available. Continue will recover the last good run."
 			else:
