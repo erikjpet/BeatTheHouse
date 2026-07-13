@@ -2649,6 +2649,7 @@ func _check_single_table_environment_entry_contract(library: ContentLibrary, app
 	var legal_actions: Array = legal_actions_value if typeof(legal_actions_value) == TYPE_ARRAY else []
 	if legal_actions.is_empty():
 		failures.append("Table environment entry has no visible legal action for %s." % game_id)
+	_check_idle_surface_automation_snapshot_contract(app, game_id, failures)
 
 	var actions := game.actions(run_state, run_state.current_environment)
 	var module_legal_value: Variant = actions.get("legal_actions", [])
@@ -2663,6 +2664,26 @@ func _check_single_table_environment_entry_contract(library: ContentLibrary, app
 		failures.append("Table environment explicit action did not resolve for %s action %s." % [game_id, action_id])
 	if str(app.get("current_screen")) != "GAME":
 		failures.append("Table environment explicit module resolve should not auto-close the UI for %s." % game_id)
+
+
+func _check_idle_surface_automation_snapshot_contract(app: Control, game_id: String, failures: Array) -> void:
+	var canvas_value: Variant = app.get("game_surface_canvas")
+	if not canvas_value is Control:
+		failures.append("Idle automation snapshot contract could not inspect the game canvas for %s." % game_id)
+		return
+	var canvas: Control = canvas_value
+	if not canvas.has_method("reset_performance_counters") or not canvas.has_method("performance_counters"):
+		failures.append("Idle automation snapshot contract missing canvas performance counters for %s." % game_id)
+		return
+	canvas.call("reset_performance_counters")
+	for _frame_index in range(8):
+		app.call("_advance_game_surface_automation")
+	var counters_value: Variant = canvas.call("performance_counters")
+	var counters: Dictionary = counters_value if typeof(counters_value) == TYPE_DICTIONARY else {}
+	if int(counters.get("full_snapshot_calls", 0)) != 0:
+		failures.append("Idle automation rebuilt full game snapshots for %s." % game_id)
+	if int(counters.get("runtime_status_calls", 0)) != 0:
+		failures.append("Idle automation queried canvas runtime status for %s instead of using the zero-copy tick state." % game_id)
 
 
 func _first_action_id(actions: Array) -> String:

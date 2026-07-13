@@ -166,9 +166,9 @@ func render_environment_snapshot(snapshot: Dictionary) -> void:
 	drunk_effect_mode = _normalized_drunk_effect_mode(str(foundation_snapshot.get("drunk_effect_mode", drunk_effect_mode)))
 	_update_drunk_distortion_overlay()
 	foundation_scene_objects = _objects_from_foundation_snapshot(foundation_snapshot)
+	_clear_draw_text_caches()
 	_rebuild_scene_object_cache()
 	_prune_object_animation_phase_cache()
-	_clear_draw_text_caches()
 	icon_sprite_texture_cache = {}
 	if not selected_object_id.is_empty() and _scene_object(selected_object_id).is_empty():
 		selected_object_id = ""
@@ -1609,6 +1609,7 @@ func _rebuild_scene_object_cache() -> void:
 		if not object_id.is_empty():
 			scene_objects_by_id_cache[object_id] = object_data
 		AttributeBadgeRowScript.warm_cache(_copy_array(object_data.get("attribute_badges", [])), 14)
+		_warm_object_info_layout_cache(object_data)
 
 
 func _objects_from_foundation_snapshot(snapshot: Dictionary) -> Array:
@@ -1859,6 +1860,17 @@ func _scene_object(object_id: String) -> Dictionary:
 		if typeof(object_data) == TYPE_DICTIONARY and str((object_data as Dictionary).get("id", "")) == object_id:
 			return object_data as Dictionary
 	return {}
+
+
+func _warm_object_info_layout_cache(object_data: Dictionary) -> void:
+	var title := str(object_data.get("label", "")).strip_edges()
+	var lines := _object_info_lines(object_data)
+	if title.is_empty() and lines.is_empty():
+		return
+	var object_rect := _board_rect_for_object(object_data)
+	if object_rect.size.x <= 0.0 or object_rect.size.y <= 0.0:
+		return
+	_object_info_rect(object_rect, title, lines, str(object_data.get("type", "item")), object_data)
 
 
 func _pit_boss_watch_snapshot() -> Dictionary:

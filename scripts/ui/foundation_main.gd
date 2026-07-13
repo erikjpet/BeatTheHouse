@@ -73,6 +73,15 @@ const GAME_SURFACE_UI_PREFERENCE_KEYS := [
 	"bet_level",
 	"denomination_index",
 ]
+const GAME_SURFACE_AUTO_TICK_STATE_KEYS := [
+	"player_hands",
+	"blackjack_hands",
+	"dealer_cards",
+	"dealer",
+	"blackjack_sit_out",
+	"count_challenge",
+	"count_answered",
+]
 const UserSettingsScript := preload("res://scripts/core/user_settings.gd")
 const ProfileInventoryScript := preload("res://scripts/core/profile_inventory.gd")
 const MetaCollectionServiceScript := preload("res://scripts/core/meta_collection_service.gd")
@@ -762,6 +771,9 @@ func _advance_game_surface_automation() -> void:
 		return
 	if _modal_contract_blocks_player_input():
 		return
+	var tick_state := _current_game_surface_auto_tick_state()
+	if not current_game.surface_needs_auto_tick(tick_state, run_state, run_state.current_environment):
+		return
 	var ui_state := _current_game_surface_ui_state()
 	if not current_game.surface_needs_auto_tick(ui_state, run_state, run_state.current_environment):
 		return
@@ -983,6 +995,20 @@ func _current_game_surface_status() -> Dictionary:
 	if game_surface_canvas == null:
 		return {}
 	return game_surface_canvas.surface_runtime_status()
+
+
+func _current_game_surface_auto_tick_state() -> Dictionary:
+	var ui_state: Dictionary = {
+		"selected_action_id": selected_action_id,
+		"selected_action_kind": selected_action_kind,
+		"selected_stake": _current_selected_stake(),
+	}
+	# Read-only live references avoid the per-frame deep copy; action paths still
+	# rebuild the canonical ui_state before mutating or resolving anything.
+	for key in GAME_SURFACE_AUTO_TICK_STATE_KEYS:
+		if game_surface_ui_state.has(key):
+			ui_state[key] = game_surface_ui_state[key]
+	return _apply_game_surface_time_fields(ui_state)
 
 
 func _reset_game_surface_runtime_state() -> void:
