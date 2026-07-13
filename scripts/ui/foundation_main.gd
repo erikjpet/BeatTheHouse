@@ -4552,7 +4552,6 @@ func _build_world_map_overlay() -> void:
 	if world_map_nodes_layer.has_signal("layout_changed"):
 		world_map_nodes_layer.connect("layout_changed", Callable(self, "_on_world_map_canvas_layout_changed"))
 	world_map_holder.add_child(world_map_nodes_layer)
-	_ensure_world_map_node_button_pool()
 
 	world_map_detail_popup = _panel_container(Color("#070915", 0.97), VisualStyle.CYAN_2)
 	world_map_detail_popup.name = "WorldMapDetailPopup"
@@ -4572,7 +4571,6 @@ func _build_world_map_overlay() -> void:
 	world_map_badge_slot.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	world_map_badge_slot.visible = false
 	popup_stack.add_child(world_map_badge_slot)
-	_ensure_world_map_detail_badge_pool()
 
 	world_map_detail_label = _label("Select a revealed stop.", 13)
 	world_map_detail_label.custom_minimum_size = Vector2(248, 78)
@@ -4585,11 +4583,13 @@ func _build_world_map_overlay() -> void:
 	world_map_confirm_button = _button("Travel", Callable(self, "confirm_world_map_travel"))
 	world_map_confirm_button.custom_minimum_size = Vector2(132, MIN_NATIVE_TOUCH_TARGET_HEIGHT)
 	popup_stack.add_child(world_map_confirm_button)
+	world_map_overlay_controller.configure_nodes(world_map_overlay, world_map_holder, world_map_nodes_layer, world_map_title_label, world_map_detail_popup, world_map_detail_label, world_map_badge_slot, world_map_confirm_button)
 
 
 func _ensure_world_map_overlay_controller() -> void:
 	if world_map_overlay_controller == null:
 		world_map_overlay_controller = WorldMapOverlayControllerScript.new()
+		world_map_overlay_controller.node_pressed.connect(Callable(self, "select_world_map_node"))
 
 
 func _sync_world_map_overlay_controller_from_host() -> void:
@@ -13525,6 +13525,7 @@ func _clear_selected_lender_hook() -> void:
 func _refresh_world_map_overlay() -> void:
 	if world_map_overlay == null or not world_map_overlay.visible:
 		return
+	_ensure_world_map_overlay_controller()
 	var snapshot := _world_map_snapshot()
 	if run_state != null and run_state.has_world_map() and not selected_world_map_node_id.is_empty() and not _world_map_node_ids(snapshot).has(selected_world_map_node_id):
 		selected_world_map_node_id = ""
@@ -13532,15 +13533,11 @@ func _refresh_world_map_overlay() -> void:
 		selected_travel_label = ""
 		world_map_snapshot_cache_key = ""
 		snapshot = _world_map_snapshot()
-	if world_map_nodes_layer != null and world_map_nodes_layer.has_method("set_map_snapshot"):
-		var snapshot_key := world_map_snapshot_cache_key
-		if world_map_canvas_snapshot_key != snapshot_key:
-			world_map_nodes_layer.call("set_map_snapshot", snapshot)
-			world_map_canvas_snapshot_key = snapshot_key
-		_sync_world_map_node_buttons(snapshot)
+	world_map_overlay_controller.sync_canvas_snapshot(snapshot, world_map_snapshot_cache_key)
+	_sync_world_map_overlay_controller_to_host()
+	world_map_overlay_controller.sync_node_buttons(snapshot)
 	var current_label := str(run_state.current_environment.get("display_name", "Current room")) if run_state != null else "Current room"
-	if world_map_title_label != null:
-		world_map_title_label.text = _world_map_title_text(current_label)
+	world_map_overlay_controller.apply_title(_world_map_title_text(current_label))
 	_refresh_world_map_detail()
 	_position_world_map_detail_popup(snapshot)
 
@@ -13552,7 +13549,8 @@ func _on_world_map_canvas_layout_changed() -> void:
 
 
 func _request_world_map_button_relayout() -> void:
-	world_map_button_layout_size = Vector2(-1.0, -1.0)
+	_ensure_world_map_overlay_controller()
+	world_map_overlay_controller.reset_button_layout()
 	if world_map_button_relayout_deferred:
 		return
 	world_map_button_relayout_deferred = true
@@ -13563,133 +13561,14 @@ func _refresh_world_map_overlay_after_layout() -> void:
 	world_map_button_relayout_deferred = false
 	if world_map_overlay == null or not world_map_overlay.visible:
 		return
-	world_map_button_layout_size = Vector2(-1.0, -1.0)
+	_ensure_world_map_overlay_controller()
+	world_map_overlay_controller.reset_button_layout()
 	_refresh_world_map_overlay()
 
 
-func _clear_world_map_node_buttons() -> void:
-	if world_map_nodes_layer == null:
-		return
-	for index in range(WORLD_MAP_NODE_BUTTON_POOL_SIZE):
-		var button := _world_map_pool_button(index)
-		if button == null:
-			continue
-		button.visible = false
-		button.disabled = true
-		button.tooltip_text = ""
-		button.set_meta("node_id", "")
-		button.name = "WorldMapNodePool_%02d" % index
-	world_map_button_ids = []
-	world_map_button_layout_size = Vector2(-1.0, -1.0)
-
-
-func _sync_world_map_node_buttons(snapshot: Dictionary) -> void:
-	if world_map_nodes_layer == null:
-		return
-	_ensure_world_map_node_button_pool()
-	var node_ids := _world_map_node_ids(snapshot)
-	var layer_size := _world_map_layer_size()
-	if node_ids != world_map_button_ids or layer_size != world_map_button_layout_size:
-		_clear_world_map_node_buttons()
-		_add_world_map_node_buttons(snapshot)
-		world_map_button_ids = node_ids.duplicate()
-		world_map_button_layout_size = layer_size
-	else:
-		_position_world_map_node_buttons(snapshot)
-
-
 func _world_map_node_ids(snapshot: Dictionary) -> Array:
-	var ids: Array = []
-	for node_value in _copy_array(snapshot.get("nodes", [])):
-		if typeof(node_value) != TYPE_DICTIONARY:
-			continue
-		var node: Dictionary = node_value
-		var node_id := str(node.get("id", ""))
-		if not node_id.is_empty():
-			ids.append(node_id)
-	return ids
-
-
-func _world_map_layer_size() -> Vector2:
-	if world_map_nodes_layer == null:
-		return Vector2(540, 390)
-	var layer_size := world_map_nodes_layer.size
-	if layer_size.x <= 0.0 or layer_size.y <= 0.0:
-		return Vector2(540, 390)
-	return layer_size
-
-
-func _add_world_map_node_buttons(snapshot: Dictionary) -> void:
-	if world_map_nodes_layer == null:
-		return
-	_ensure_world_map_node_button_pool()
-	var index := 0
-	for node_value in _copy_array(snapshot.get("nodes", [])):
-		if typeof(node_value) != TYPE_DICTIONARY:
-			continue
-		var node: Dictionary = node_value
-		var node_id := str(node.get("id", ""))
-		if node_id.is_empty():
-			continue
-		if index >= WORLD_MAP_NODE_BUTTON_POOL_SIZE:
-			break
-		var button := _world_map_pool_button(index)
-		if button == null:
-			continue
-		button.custom_minimum_size = Vector2(46, 46)
-		button.size = Vector2(46, 46)
-		button.position = _world_map_node_button_position(node_id, node) - button.size * 0.5
-		var in_view := _world_map_node_is_in_canvas_view(node_id)
-		button.visible = in_view
-		button.disabled = not in_view
-		button.tooltip_text = str(node.get("label", node_id))
-		button.set_meta("node_id", node_id)
-		button.name = "WorldMapNode_%s" % node_id
-		index += 1
-
-
-func _position_world_map_node_buttons(snapshot: Dictionary) -> void:
-	if world_map_nodes_layer == null:
-		return
-	_ensure_world_map_node_button_pool()
-	var index := 0
-	for node_value in _copy_array(snapshot.get("nodes", [])):
-		if typeof(node_value) != TYPE_DICTIONARY:
-			continue
-		var node: Dictionary = node_value
-		var node_id := str(node.get("id", ""))
-		if node_id.is_empty():
-			continue
-		if index >= WORLD_MAP_NODE_BUTTON_POOL_SIZE:
-			break
-		var button := _world_map_pool_button(index)
-		if button == null:
-			continue
-		button.position = _world_map_node_button_position(node_id, node) - button.size * 0.5
-		var in_view := _world_map_node_is_in_canvas_view(node_id)
-		button.visible = in_view
-		button.disabled = not in_view
-		button.tooltip_text = str(node.get("label", node_id))
-		button.set_meta("node_id", node_id)
-		button.name = "WorldMapNode_%s" % node_id
-		index += 1
-
-
-func _world_map_node_button_position(node_id: String, node: Dictionary) -> Vector2:
-	var layer_size := _world_map_layer_size()
-	var inset := Vector2(32.0, 28.0)
-	var drawable := Vector2(maxf(1.0, layer_size.x - inset.x * 2.0), maxf(1.0, layer_size.y - inset.y * 2.0))
-	var position: Dictionary = node.get("position", {}) if typeof(node.get("position", {})) == TYPE_DICTIONARY else {}
-	var center := inset + Vector2(clampf(float(position.get("x", 0.5)), 0.0, 1.0), clampf(float(position.get("y", 0.5)), 0.0, 1.0)) * drawable
-	if world_map_nodes_layer != null and world_map_nodes_layer.size.x > 0.0 and world_map_nodes_layer.size.y > 0.0 and world_map_nodes_layer.has_method("local_position_for_node"):
-		center = world_map_nodes_layer.call("local_position_for_node", node_id) as Vector2
-	return center
-
-
-func _world_map_node_is_in_canvas_view(node_id: String) -> bool:
-	if world_map_nodes_layer == null or not world_map_nodes_layer.has_method("node_is_in_view"):
-		return true
-	return bool(world_map_nodes_layer.call("node_is_in_view", node_id))
+	_ensure_world_map_overlay_controller()
+	return world_map_overlay_controller.node_ids(snapshot)
 
 
 func _world_map_title_text(current_label: String) -> String:
@@ -13703,29 +13582,8 @@ func _world_map_title_text(current_label: String) -> String:
 
 
 func _position_world_map_detail_popup(snapshot: Dictionary) -> void:
-	if world_map_detail_popup == null or world_map_holder == null:
-		return
-	var node_id := selected_world_map_node_id.strip_edges()
-	if node_id.is_empty() or not _world_map_node_ids(snapshot).has(node_id):
-		world_map_detail_popup.visible = false
-		return
-	var holder_size := world_map_holder.size
-	if holder_size.x <= 0.0 or holder_size.y <= 0.0:
-		holder_size = Vector2(800, 430)
-	var popup_size := Vector2(276, 150)
-	world_map_detail_popup.size = popup_size
-	world_map_detail_popup.visible = true
-	var center := holder_size * 0.5
-	if world_map_nodes_layer != null and world_map_nodes_layer.has_method("local_position_for_node") and bool(world_map_nodes_layer.call("node_is_in_view", node_id)):
-		center = world_map_nodes_layer.call("local_position_for_node", node_id) as Vector2
-	var margin := 12.0
-	var x := center.x + 30.0
-	if x + popup_size.x > holder_size.x - margin:
-		x = center.x - popup_size.x - 30.0
-	var y := center.y - popup_size.y * 0.5
-	x = clampf(x, margin, maxf(margin, holder_size.x - popup_size.x - margin))
-	y = clampf(y, margin, maxf(margin, holder_size.y - popup_size.y - margin))
-	world_map_detail_popup.position = Vector2(roundf(x), roundf(y))
+	_ensure_world_map_overlay_controller()
+	world_map_overlay_controller.position_detail_popup(snapshot)
 
 
 func _refresh_world_map_detail() -> void:
@@ -13812,251 +13670,31 @@ func _refresh_world_map_detail() -> void:
 
 
 func _set_world_map_detail_badges(badges_value: Variant) -> void:
-	if world_map_badge_slot == null:
-		return
-	_ensure_world_map_detail_badge_pool()
-	var badges := _copy_array(badges_value)
-	var should_show := not badges.is_empty()
-	var badges_key := JSON.stringify(badges)
-	if badges_key == world_map_detail_badges_key and world_map_badge_slot.visible == should_show:
-		if not should_show or world_map_badge_slot.get_child_count() > 0:
-			return
-	world_map_detail_badges_key = badges_key
-	world_map_badge_slot.visible = should_show
-	if badges.is_empty():
-		_update_world_map_detail_badge_cells([])
-		return
-	_update_world_map_detail_badge_cells(badges)
+	_ensure_world_map_overlay_controller()
+	world_map_overlay_controller.set_detail_badges(badges_value)
 
 
 func _ensure_world_map_detail_badge_pool() -> void:
-	if world_map_badge_slot == null:
-		return
-	if world_map_badge_row == null:
-		world_map_badge_row = HFlowContainer.new()
-		world_map_badge_row.add_theme_constant_override("h_separation", 4)
-		world_map_badge_row.add_theme_constant_override("v_separation", 4)
-		world_map_badge_row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		world_map_badge_slot.add_child(world_map_badge_row)
-	while world_map_badge_cells.size() < WORLD_MAP_DETAIL_BADGE_CELL_POOL_SIZE:
-		var cell := PanelContainer.new()
-		cell.visible = false
-		cell.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
-		cell.mouse_filter = Control.MOUSE_FILTER_STOP
-		cell.mouse_default_cursor_shape = Control.CURSOR_ARROW
-		cell.custom_minimum_size = Vector2(24.0, 22.0)
-		cell.add_theme_stylebox_override("panel", _world_map_badge_cell_style(VisualStyle.CYAN_2))
-		var cell_box := HBoxContainer.new()
-		cell_box.add_theme_constant_override("separation", 3)
-		cell.add_child(cell_box)
-		var icon := TextureRect.new()
-		icon.custom_minimum_size = Vector2(16, 16)
-		icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-		cell_box.add_child(icon)
-		var label := Label.new()
-		label.clip_text = true
-		label.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
-		label.add_theme_font_size_override("font_size", 10)
-		label.custom_minimum_size = Vector2(112.0, 0.0)
-		label.visible = false
-		cell_box.add_child(label)
-		cell.mouse_entered.connect(func() -> void:
-			cell.custom_minimum_size = Vector2(142.0, 22.0)
-			label.visible = not label.text.strip_edges().is_empty()
-		)
-		cell.mouse_exited.connect(func() -> void:
-			label.visible = false
-			cell.custom_minimum_size = Vector2(24.0, 22.0)
-		)
-		world_map_badge_row.add_child(cell)
-		world_map_badge_cells.append({
-			"cell": cell,
-			"icon": icon,
-			"label": label,
-		})
+	_ensure_world_map_overlay_controller()
+	world_map_overlay_controller.set_detail_badges([])
 
 
 func _update_world_map_detail_badge_cells(badges: Array) -> void:
-	var max_count := world_map_badge_cells.size()
-	for index in range(max_count):
-		var cell_data: Dictionary = world_map_badge_cells[index]
-		var cell := cell_data.get("cell", null) as PanelContainer
-		var icon := cell_data.get("icon", null) as TextureRect
-		var label := cell_data.get("label", null) as Label
-		if cell == null or icon == null or label == null:
-			continue
-		if index >= badges.size() or typeof(badges[index]) != TYPE_DICTIONARY:
-			cell.visible = false
-			icon.texture = null
-			label.text = ""
-			label.visible = false
-			continue
-		var badge: Dictionary = badges[index]
-		var glyph_id := str(badge.get("glyph_id", "")).strip_edges()
-		if glyph_id.is_empty():
-			cell.visible = false
-			icon.texture = null
-			label.text = ""
-			label.visible = false
-			continue
-		var accent := VisualStyle.color(AttributeBadgesScript.palette_token_for_badge(badge), VisualStyle.CYAN_2)
-		var detail_text := _world_map_badge_tooltip_text(badge)
-		cell.visible = true
-		cell.tooltip_text = detail_text
-		cell.custom_minimum_size = Vector2(24.0, 22.0)
-		cell.add_theme_stylebox_override("panel", _world_map_badge_cell_style(accent))
-		icon.texture = AttributeBadgeRowScript.texture_for_badge(badge, 16, false)
-		label.text = detail_text
-		label.visible = false
-		label.add_theme_color_override("font_color", VisualStyle.accessible_color(accent))
-
-
-func _world_map_badge_cell_style(accent: Color) -> StyleBoxFlat:
-	var style := StyleBoxFlat.new()
-	style.bg_color = Color(accent.r, accent.g, accent.b, 0.12)
-	style.border_color = VisualStyle.accessible_color(accent)
-	style.border_width_left = 1
-	style.border_width_top = 1
-	style.border_width_right = 1
-	style.border_width_bottom = 1
-	style.corner_radius_top_left = 0
-	style.corner_radius_top_right = 0
-	style.corner_radius_bottom_left = 0
-	style.corner_radius_bottom_right = 0
-	style.content_margin_left = 3
-	style.content_margin_right = 4
-	style.content_margin_top = 2
-	style.content_margin_bottom = 2
-	return style
-
-
-func _world_map_badge_tooltip_text(badge: Dictionary) -> String:
-	var tooltip := str(badge.get("tooltip", "")).strip_edges()
-	var value_text := str(badge.get("value_text", "")).strip_edges()
-	if not tooltip.is_empty() and not value_text.is_empty() and tooltip.find(value_text) < 0:
-		return "%s: %s" % [tooltip, value_text]
-	if not tooltip.is_empty():
-		return tooltip
-	var glyph_id := str(badge.get("glyph_id", "")).strip_edges()
-	var glyph := AttributeBadgesScript.glyph_definition(glyph_id)
-	var label := str(glyph.get("label", glyph_id)).strip_edges()
-	if not value_text.is_empty():
-		return "%s: %s" % [label, value_text]
-	return str(glyph.get("description", label))
+	_set_world_map_detail_badges(badges)
 
 
 func _world_map_detail_badge_prewarm_sample() -> Array:
-	return AttributeBadgesScript.for_route({
-		"risk": "high",
-		"cost": 999,
-		"distance": "far",
-		"risk_decay": 2,
-		"risk_event": {
-			"chance_percent": 75,
-			"bankroll_delta": -25,
-			"suspicion_delta": 2,
-		},
-	}, {
-		"chance_percent": 75,
-		"bankroll_delta": -25,
-		"suspicion_delta": 2,
-	})
-
-
-func _world_map_hit_button(callback: Callable) -> Button:
-	var button := Button.new()
-	button.text = ""
-	button.flat = true
-	button.focus_mode = Control.FOCUS_NONE
-	button.mouse_filter = Control.MOUSE_FILTER_STOP
-	button.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
-	button.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-	var empty := StyleBoxEmpty.new()
-	button.add_theme_stylebox_override("normal", empty)
-	button.add_theme_stylebox_override("hover", empty)
-	button.add_theme_stylebox_override("pressed", empty)
-	button.add_theme_stylebox_override("disabled", empty)
-	button.pressed.connect(callback)
-	return button
-
-
-func _ensure_world_map_node_button_pool() -> void:
-	if world_map_nodes_layer == null:
-		return
-	for index in range(WORLD_MAP_NODE_BUTTON_POOL_SIZE):
-		if _world_map_pool_button(index) != null:
-			continue
-		var button := _world_map_hit_button(Callable(self, "_on_world_map_pool_button_pressed").bind(index))
-		button.name = "WorldMapNodePool_%02d" % index
-		button.custom_minimum_size = Vector2(46, 46)
-		button.size = Vector2(46, 46)
-		button.visible = false
-		button.disabled = true
-		button.set_meta("pool_index", index)
-		button.set_meta("node_id", "")
-		world_map_nodes_layer.add_child(button)
-
-
-func _world_map_pool_button(index: int) -> Button:
-	if world_map_nodes_layer == null:
-		return null
-	for child in world_map_nodes_layer.get_children():
-		if child is Button and int(child.get_meta("pool_index", -1)) == index:
-			return child as Button
-	return null
-
-
-func _on_world_map_pool_button_pressed(index: int) -> void:
-	var button := _world_map_pool_button(index)
-	if button == null:
-		return
-	var node_id := str(button.get_meta("node_id", "")).strip_edges()
-	if node_id.is_empty():
-		return
-	select_world_map_node(node_id)
+	_ensure_world_map_overlay_controller()
+	return world_map_overlay_controller.detail_badge_prewarm_sample()
 
 
 func _on_world_map_holder_gui_input(event: InputEvent) -> void:
-	if selected_world_map_node_id.is_empty():
-		return
-	var local_position := Vector2.ZERO
-	var pressed := false
-	if event is InputEventMouseButton:
-		var mouse_event := event as InputEventMouseButton
-		pressed = mouse_event.pressed and mouse_event.button_index == MOUSE_BUTTON_LEFT
-		local_position = mouse_event.position
-	elif event is InputEventScreenTouch:
-		var touch_event := event as InputEventScreenTouch
-		pressed = touch_event.pressed
-		local_position = touch_event.position
-	if not pressed:
-		return
-	if _world_map_detail_popup_contains_local_position(local_position):
-		return
-	if _world_map_node_button_contains_holder_position(local_position):
-		return
-	_clear_world_map_selection()
-	accept_event()
-
-
-func _world_map_detail_popup_contains_local_position(local_position: Vector2) -> bool:
-	if world_map_detail_popup == null or not world_map_detail_popup.visible:
-		return false
-	return Rect2(world_map_detail_popup.position, world_map_detail_popup.size).has_point(local_position)
-
-
-func _world_map_node_button_contains_holder_position(local_position: Vector2) -> bool:
-	if world_map_nodes_layer == null:
-		return false
-	var nodes_layer_offset := world_map_nodes_layer.position
-	for index in range(WORLD_MAP_NODE_BUTTON_POOL_SIZE):
-		var button := _world_map_pool_button(index)
-		if button == null or not button.visible or button.disabled:
-			continue
-		var rect := Rect2(nodes_layer_offset + button.position, button.size)
-		if rect.has_point(local_position):
-			return true
-	return false
+	_ensure_world_map_overlay_controller()
+	_sync_world_map_overlay_controller_from_host()
+	if world_map_overlay_controller.handle_holder_gui_input(event):
+		_sync_world_map_overlay_controller_to_host()
+		_refresh_world_map_overlay()
+		accept_event()
 
 
 func _world_map_node_flavor(node: Dictionary) -> String:
