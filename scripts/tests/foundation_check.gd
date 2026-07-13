@@ -15414,6 +15414,19 @@ func _check_time_open_hours_foundation(library: ContentLibrary, failures: Array)
 	run_state.start_new("TIME-OPEN-HOURS")
 	var environment := EnvironmentInstance.from_archetype(bar_archetype, 1, run_state.create_rng("time_open_hours"), library)
 	run_state.set_environment(environment.to_dict())
+	run_state.game_clock_minutes = 0
+	if run_state.clock_display_text(true) != "Day 1 12 AM":
+		failures.append("Clock display should render midnight as Day 1 12 AM.")
+	run_state.game_clock_minutes = 12 * 60
+	if run_state.clock_display_text(true) != "Day 1 12 PM":
+		failures.append("Clock display should render noon as Day 1 12 PM.")
+	run_state.game_clock_minutes = 24 * 60
+	if run_state.clock_display_text(true) != "Day 2 12 AM":
+		failures.append("Clock display should roll over to Day 2 at midnight.")
+	var action_clock_before := run_state.game_clock_minutes
+	run_state.advance_environment_turns(2)
+	if run_state.game_clock_minutes != action_clock_before + RunState.ACTION_CLOCK_MINUTES * 2:
+		failures.append("Environment actions should advance the game clock by the action clock cost.")
 	run_state.game_clock_minutes = (24 + 3) * 60
 	if EnvironmentHoursScript.environment_open_at(bar_archetype, run_state.game_minute_of_day()):
 		failures.append("Bar should be closed at its 3 AM boundary.")
@@ -15472,6 +15485,7 @@ func _check_time_open_hours_foundation(library: ContentLibrary, failures: Array)
 	var selected_target := str(app.get("selected_travel_target_id"))
 	if selected_node != "motel" or selected_target != "motel":
 		failures.append("Closing-time forced travel selection did not arm the route: node=%s target=%s." % [selected_node, selected_target])
+	var travel_clock_before := ui_run.game_clock_minutes
 	app.call("confirm_world_map_travel")
 	if str(ui_run.current_environment.get("archetype_id", "")) != "motel":
 		failures.append("Closing-time map Travel button did not leave the closed venue; current=%s selected_node=%s selected_target=%s." % [
@@ -15479,6 +15493,8 @@ func _check_time_open_hours_foundation(library: ContentLibrary, failures: Array)
 			str(app.get("selected_world_map_node_id")),
 			str(app.get("selected_travel_target_id")),
 		])
+	if ui_run.game_clock_minutes <= travel_clock_before:
+		failures.append("Closing-time forced travel did not advance the action-driven travel clock.")
 	if ui_run.closing_time_forced_travel_required():
 		failures.append("Closing-time forced travel state was not cleared after successful travel.")
 	_sb4_dispose_app(app)

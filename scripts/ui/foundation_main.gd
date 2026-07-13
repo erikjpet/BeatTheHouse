@@ -340,8 +340,6 @@ var run_layout_dirty := true
 var run_layout_last_screen_size := Vector2(-1.0, -1.0)
 var web_audio_unlock_refresh_scheduled := false
 var web_audio_unlock_refresh_count := 0
-var run_clock_minute_accumulator := 0.0
-var run_clock_ui_preview_pause_frames := 0
 
 const WEB_AUDIO_UNLOCK_REFRESH_ATTEMPTS := 4
 const WEB_AUDIO_UNLOCK_REFRESH_DELAY_SECONDS := 0.20
@@ -393,40 +391,12 @@ func _ready() -> void:
 
 func _process(_delta: float) -> void:
 	_apply_run_screen_layout()
-	_advance_run_game_clock(_delta)
 	_advance_game_surface_automation()
 	_advance_game_surface_realtime_state()
 	_advance_presented_bankroll()
 	_advance_environment_game_runtime()
 	_advance_deferred_bankroll_failure()
 	_flush_pending_autosave_if_ready()
-
-
-func _advance_run_game_clock(_delta: float) -> void:
-	run_clock_minute_accumulator = 0.0
-
-
-func _run_clock_should_tick() -> bool:
-	if _is_meta_session():
-		return false
-	if run_state == null or run_state.is_terminal():
-		return false
-	if not [SCREEN_ENVIRONMENT, SCREEN_GAME].has(current_screen):
-		return false
-	if not selected_object_id.is_empty() or not focus_target_id.is_empty() or current_context_mode != CONTEXT_MODE_ROOM:
-		return false
-	if run_clock_ui_preview_pause_frames > 0:
-		run_clock_ui_preview_pause_frames -= 1
-		return false
-	if settings_overlay != null and settings_overlay.visible:
-		return false
-	if travel_transition_active or _event_choice_popup_is_visible() or _run_inventory_popup_is_visible() or _run_journal_popup_is_visible() or _world_map_overlay_is_visible() or _run_menu_is_visible():
-		return false
-	return current_screen == SCREEN_GAME or environment_canvas == null or environment_canvas.visible
-
-
-func _pause_run_clock_for_ui_preview(frames: int = 2) -> void:
-	run_clock_ui_preview_pause_frames = maxi(run_clock_ui_preview_pause_frames, frames)
 
 
 func _input(event: InputEvent) -> void:
@@ -471,8 +441,6 @@ func start_foundation_run(seed_text: String = DEFAULT_SEED, challenge_config: Di
 	pending_autosave_after_frame = -1
 	last_environment_runtime_result = {}
 	run_item_icon_texture_cache.clear()
-	run_clock_minute_accumulator = 0.0
-	run_clock_ui_preview_pause_frames = 0
 	close_content_group_config()
 	close_challenge_selection()
 	_hide_run_menu()
@@ -1100,7 +1068,6 @@ func set_selected_stake(stake: int) -> bool:
 func select_travel_option(target_id: String) -> bool:
 	if _guard_player_input_route():
 		return false
-	_pause_run_clock_for_ui_preview()
 	var choice := _travel_choice(target_id)
 	if choice.is_empty():
 		_show_message("Travel option is not available.")
@@ -1153,7 +1120,6 @@ func open_world_map(force_closing_allowed: bool = false) -> bool:
 		return false
 	if _guard_player_input_route(force_closing_allowed):
 		return false
-	_pause_run_clock_for_ui_preview()
 	selected_action_category = ACTION_CATEGORY_TRAVEL
 	_set_current_screen(SCREEN_TRAVEL)
 	_clear_world_map_selection(false)
@@ -1180,7 +1146,6 @@ func _prewarm_world_map_overlay_for_run() -> void:
 
 
 func close_world_map() -> void:
-	_pause_run_clock_for_ui_preview()
 	_clear_world_map_selection(false)
 	if world_map_overlay != null:
 		world_map_overlay.visible = false
@@ -7338,7 +7303,6 @@ func current_spatial_interaction_snapshot() -> Dictionary:
 
 
 func hover_interactable_object(object_id: String) -> bool:
-	_pause_run_clock_for_ui_preview()
 	if object_id.is_empty():
 		hover_target_id = ""
 		return true
@@ -7349,7 +7313,6 @@ func hover_interactable_object(object_id: String) -> bool:
 
 
 func focus_interactable_object(object_id: String) -> bool:
-	_pause_run_clock_for_ui_preview()
 	if object_id.is_empty():
 		clear_interaction_focus(true)
 		return true
@@ -7360,7 +7323,6 @@ func focus_interactable_object(object_id: String) -> bool:
 
 
 func focus_interactable_object_from_view(object_data: Dictionary) -> bool:
-	_pause_run_clock_for_ui_preview()
 	var object_id := str(object_data.get("object_id", ""))
 	if object_id.is_empty():
 		return false
@@ -7706,7 +7668,6 @@ func _finish_conclusion_animation() -> void:
 
 
 func clear_interaction_focus(animate_camera_return: bool = false) -> void:
-	_pause_run_clock_for_ui_preview()
 	hover_target_id = ""
 	focus_target_id = ""
 	selected_object_id = ""
