@@ -3,10 +3,11 @@ extends Control
 
 signal choice_requested(event_id: String, choice_id: String)
 
-const COLLAPSED_SIZE := Vector2(324, 42)
-const EXPANDED_SIZE := Vector2(322, 165)
-const VIEWPORT_MARGIN := Vector2(12, 14)
+const COLLAPSED_SIZE := Vector2(420, 58)
+const EXPANDED_SIZE := Vector2(520, 292)
+const VIEWPORT_MARGIN := Vector2(18, 18)
 const MAX_CHOICES := 4
+const IGNORE_PENALTY_HEAT := 5
 const AttributeBadgeRowScript := preload("res://scripts/ui/attribute_badge_row.gd")
 
 
@@ -28,8 +29,9 @@ class PortraitModel:
 
 	func _draw() -> void:
 		var rect := Rect2(Vector2.ZERO, size)
-		draw_rect(rect, Color("#080a12"))
-		draw_rect(rect.grow(-2), Color("#111421"))
+		draw_rect(rect, Color("#070714"))
+		draw_rect(rect.grow(-3), Color("#151323"))
+		draw_line(Vector2(0.0, rect.size.y - 3.0), Vector2(rect.size.x, rect.size.y - 3.0), VisualStyle.PINK_2, 3.0)
 		var hair := _speaker_color("hair_color", Color("#171022"))
 		var jacket := _speaker_color("jacket_color", Color("#1d2030"))
 		var style := {
@@ -39,13 +41,13 @@ class PortraitModel:
 			"jacket": jacket,
 			"accent": VisualStyle.CYAN_2,
 			"role": str(speaker.get("role", "staff")),
-			"pose": "watching",
-			"eye_offset": 0.0,
+			"pose": "speaking",
+			"eye_offset": 0.08,
 			"blink": false,
 			"holding_card": false,
 			"silhouette": str(speaker.get("silhouette", "coat")),
 		}
-		PortraitTableGameVisualsScript._draw_table_character(self, style, Vector2(size.x * 0.5, size.y + 8.0), 0.58, 0.0)
+		PortraitTableGameVisualsScript._draw_table_character(self, style, Vector2(size.x * 0.5, size.y + 18.0), 0.92, 0.0)
 
 	func surface_label(_text: String, _pos: Vector2, _font_size: int, _color: Color) -> void:
 		pass
@@ -75,6 +77,7 @@ var choice_scroll: ScrollContainer
 var choice_list: VBoxContainer
 var urgency_bar: ProgressBar
 var badge_label: Label
+var urgency_label: Label
 
 
 func _ready() -> void:
@@ -92,12 +95,11 @@ func set_entry(next_entry: Dictionary, next_option: Dictionary, next_queue_count
 	if entry.is_empty() or option.is_empty():
 		clear_entry()
 		return
-	var timing: Dictionary = entry.get("timing", {}) if typeof(entry.get("timing", {})) == TYPE_DICTIONARY else {}
-	if bool(timing.get("expires", false)):
-		expanded = true
+	expanded = true
 	armed_choice_id = ""
 	visible = true
 	_render()
+	_play_attention_animation()
 
 
 func clear_entry() -> void:
@@ -147,6 +149,8 @@ func current_snapshot() -> Dictionary:
 		"summary": str(option.get("summary", "")),
 		"queue_count": queue_count,
 		"choice_count": _choices().size(),
+		"ignore_penalty_heat": IGNORE_PENALTY_HEAT,
+		"anchored_bottom_left": true,
 		"timing": timing.duplicate(true),
 		"panel_rect": panel.get_global_rect() if panel != null else Rect2(),
 		"screen_rect": get_global_rect(),
@@ -159,7 +163,7 @@ func _notification(what: int) -> void:
 
 
 func _build() -> void:
-	panel = FoundationWidgets.panel_container(Color("#070810", 0.96), VisualStyle.CYAN_2)
+	panel = FoundationWidgets.panel_container(Color("#090717", 0.98), VisualStyle.PINK_2)
 	panel.mouse_filter = Control.MOUSE_FILTER_STOP
 	add_child(panel)
 
@@ -174,12 +178,12 @@ func _build() -> void:
 	stack.add_child(collapsed_button)
 
 	header_row = HBoxContainer.new()
-	header_row.add_theme_constant_override("separation", 8)
+	header_row.add_theme_constant_override("separation", 12)
 	header_row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	stack.add_child(header_row)
 
-	portrait_panel = FoundationWidgets.panel(VisualStyle.DARK_2, VisualStyle.PINK_2)
-	portrait_panel.custom_minimum_size = Vector2(44, 48)
+	portrait_panel = FoundationWidgets.panel(Color("#14111f"), VisualStyle.PINK_2)
+	portrait_panel.custom_minimum_size = Vector2(98, 112)
 	header_row.add_child(portrait_panel)
 	portrait_model = PortraitModel.new()
 	portrait_model.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -191,25 +195,31 @@ func _build() -> void:
 	header_text.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	header_row.add_child(header_text)
 
-	speaker_label = FoundationWidgets.label("", 14)
+	speaker_label = FoundationWidgets.label("", 20)
 	speaker_label.max_lines_visible = 1
 	speaker_label.clip_text = true
 	FoundationWidgets.set_control_font_color(speaker_label, VisualStyle.YELLOW)
 	header_text.add_child(speaker_label)
 
-	summary_label = FoundationWidgets.muted_label("", 11)
+	summary_label = FoundationWidgets.muted_label("", 13)
 	summary_label.max_lines_visible = 2
 	summary_label.clip_text = true
 	header_text.add_child(summary_label)
 
-	badge_label = FoundationWidgets.muted_label("", 11)
+	urgency_label = FoundationWidgets.label("", 12)
+	urgency_label.max_lines_visible = 2
+	urgency_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	FoundationWidgets.set_control_font_color(urgency_label, VisualStyle.PINK_2)
+	header_text.add_child(urgency_label)
+
+	badge_label = FoundationWidgets.muted_label("", 12)
 	badge_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
-	badge_label.custom_minimum_size = Vector2(46, 0)
+	badge_label.custom_minimum_size = Vector2(54, 0)
 	header_row.add_child(badge_label)
 
-	body_label = FoundationWidgets.label("", 12)
-	body_label.max_lines_visible = 2
-	body_label.clip_text = true
+	body_label = FoundationWidgets.label("", 14)
+	body_label.max_lines_visible = 3
+	body_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	stack.add_child(body_label)
 
 	urgency_bar = ProgressBar.new()
@@ -223,7 +233,7 @@ func _build() -> void:
 	choice_scroll = ScrollContainer.new()
 	choice_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
 	choice_scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_AUTO
-	choice_scroll.custom_minimum_size = Vector2(0, 48)
+	choice_scroll.custom_minimum_size = Vector2(0, 112)
 	choice_scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	choice_scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	stack.add_child(choice_scroll)
@@ -239,19 +249,20 @@ func _render() -> void:
 		return
 	var speaker_name := _speaker_name()
 	var summary := str(option.get("summary", "")).strip_edges()
-	collapsed_button.text = "%s: %s%s" % [
+	collapsed_button.text = "Talk now: %s - %s%s" % [
 		speaker_name if not speaker_name.is_empty() else "Someone",
-		summary.left(42) if not summary.is_empty() else str(option.get("display_name", "Talk")),
+		summary.left(52) if not summary.is_empty() else str(option.get("display_name", "Talk")),
 		"  +%d" % maxi(0, queue_count - 1) if queue_count > 1 else "",
 	]
 	speaker_label.text = speaker_name if not speaker_name.is_empty() else str(option.get("display_name", "Talk"))
 	summary_label.text = str(option.get("display_name", "Talk"))
 	body_label.text = summary
+	var timing: Dictionary = entry.get("timing", {}) if typeof(entry.get("timing", {})) == TYPE_DICTIONARY else {}
+	urgency_label.text = _urgency_text(timing)
 	badge_label.text = "+%d" % maxi(0, queue_count - 1) if queue_count > 1 else ""
 	if portrait_model != null:
 		var speaker: Dictionary = entry.get("speaker", {}) if typeof(entry.get("speaker", {})) == TYPE_DICTIONARY else {}
 		portrait_model.set_speaker(speaker)
-	var timing: Dictionary = entry.get("timing", {}) if typeof(entry.get("timing", {})) == TYPE_DICTIONARY else {}
 	urgency_bar.visible = expanded and bool(timing.get("expires", false))
 	if urgency_bar.visible:
 		var duration := maxi(1, int(timing.get("duration_actions", 1)))
@@ -277,6 +288,8 @@ func _render_choices() -> void:
 		if choice_id.is_empty():
 			continue
 		var label := str(choice_data.get("label", choice_id))
+		if _choice_is_ignore(choice_data):
+			label = "%s (heat +%d)" % [label, IGNORE_PENALTY_HEAT]
 		if _choice_requires_confirm(choice_data) and armed_choice_id == choice_id:
 			label = "Confirm: %s" % label
 		var button := FoundationWidgets.button(label, Callable(self, "_on_choice_pressed").bind(choice_id))
@@ -341,6 +354,21 @@ func _choice_requires_confirm(choice: Dictionary) -> bool:
 	return summary.find("debt") >= 0 or summary.find("heat +") >= 0 or summary.find("barred") >= 0
 
 
+func _choice_is_ignore(choice: Dictionary) -> bool:
+	var choice_id := str(choice.get("id", "")).strip_edges().to_lower()
+	if choice_id.begins_with("ignore"):
+		return true
+	var label := str(choice.get("label", "")).strip_edges().to_lower()
+	return label == "ignore" or label.begins_with("ignore ")
+
+
+func _urgency_text(timing: Dictionary) -> String:
+	if bool(timing.get("expires", false)):
+		var remaining := maxi(0, int(timing.get("remaining_actions", timing.get("duration_actions", 0))))
+		return "Answer before this passes. Ignoring adds heat +%d. Actions left: %d." % [IGNORE_PENALTY_HEAT, remaining]
+	return "They are waiting on you. Ignoring adds heat +%d." % IGNORE_PENALTY_HEAT
+
+
 func _speaker_name() -> String:
 	var speaker: Dictionary = entry.get("speaker", {}) if typeof(entry.get("speaker", {})) == TYPE_DICTIONARY else {}
 	var name := str(speaker.get("name", "")).strip_edges()
@@ -363,3 +391,17 @@ func _position_panel() -> void:
 	panel_size.y = minf(maxf(panel_size.y, minimum_size.y), available_size.y)
 	panel.size = panel_size
 	panel.position = Vector2(VIEWPORT_MARGIN.x, maxf(VIEWPORT_MARGIN.y, size.y - panel_size.y - VIEWPORT_MARGIN.y))
+
+
+func _play_attention_animation() -> void:
+	if panel == null:
+		return
+	panel.modulate = Color(1.0, 1.0, 1.0, 0.88)
+	var tween := create_tween()
+	tween.set_trans(Tween.TRANS_CUBIC)
+	tween.set_ease(Tween.EASE_OUT)
+	tween.tween_property(panel, "modulate", Color.WHITE, 0.12)
+	if portrait_model != null:
+		portrait_model.pivot_offset = portrait_model.size * 0.5
+		portrait_model.scale = Vector2(1.04, 1.04)
+		tween.parallel().tween_property(portrait_model, "scale", Vector2.ONE, 0.18)

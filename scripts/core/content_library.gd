@@ -1332,6 +1332,8 @@ func _validate_environment_references() -> void:
 		_validate_id_references("environment %s event_pool" % archetype_id, archetype.get("event_pool", []), event_ids)
 		_validate_id_references("environment %s service_pool" % archetype_id, archetype.get("service_pool", []), service_ids)
 		_validate_id_references("environment %s lender_hooks" % archetype_id, archetype.get("lender_hooks", []), lender_ids)
+		_validate_id_references("environment %s required_lender_hooks" % archetype_id, archetype.get("required_lender_hooks", []), lender_ids)
+		_validate_count_range("environment %s lender_count" % archetype_id, archetype.get("lender_count", null), _string_array(archetype.get("lender_hooks", [])).size())
 		_validate_id_references("environment %s travel_hooks" % archetype_id, archetype.get("travel_hooks", []), archetype_ids)
 		if not route_ids.is_empty():
 			_validate_id_references("environment %s travel_hooks route metadata" % archetype_id, archetype.get("travel_hooks", []), route_ids)
@@ -1379,6 +1381,31 @@ func _validate_required_game_pool(archetype_id: String, archetype: Dictionary) -
 	for required_id in _string_array(archetype.get("required_game_ids", [])):
 		if not game_pool.has(required_id):
 			validation_errors.append("environment %s required_game_ids includes %s but game_pool does not." % [archetype_id, required_id])
+
+
+func _validate_count_range(label: String, value: Variant, pool_size: int) -> void:
+	if value == null:
+		return
+	var values: Array = []
+	if typeof(value) == TYPE_ARRAY:
+		values = value
+	else:
+		values = [value]
+	if values.is_empty() or values.size() > 2:
+		validation_errors.append("%s must be a number or two-number range." % label)
+		return
+	for count_value in values:
+		if not _variant_is_number(count_value):
+			validation_errors.append("%s must contain only numeric values." % label)
+			return
+	var min_count := int(values[0])
+	var max_count := int(values[values.size() - 1])
+	if min_count < 0 or max_count < 0:
+		validation_errors.append("%s must be non-negative." % label)
+	if min_count > max_count:
+		validation_errors.append("%s minimum must not exceed maximum." % label)
+	if max_count > pool_size:
+		validation_errors.append("%s cannot exceed its source pool size." % label)
 
 
 # Validates that every id in a reference array exists in the supplied index.

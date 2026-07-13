@@ -674,7 +674,23 @@ func surface_action_command(surface_action: String, index: int, confirm_requeste
 			var projected_cost: int = _wager_cost_from_session(selected_stake, dealt_state, table, run_state)
 			if projected_cost > maxi(0, run_state.bankroll if run_state != null else projected_cost):
 				return _message_command(next_state, "You do not have enough bankroll for those chips and side bets.")
-			return _opening_deal_command(dealt_state, index, _opening_deal_notice(dealt_state, table))
+			if run_state != null and projected_cost >= maxi(0, run_state.bankroll):
+				return GameModule.surface_command({
+					"handled": true,
+					"ui_state": _compact_session_for_ui(next_state),
+					"action_id": "blackjack_place_bet",
+					"action_kind": "legal",
+					"direct_resolve": true,
+					"preserve_surface_ui_state": true,
+					"selected_index": index,
+					"message": "Confirm the all-in blackjack wager.",
+				})
+			var command := _opening_deal_command(dealt_state, index, _opening_deal_notice(dealt_state, table))
+			command["action_id"] = "blackjack_place_bet"
+			command["action_kind"] = "legal"
+			command["direct_resolve"] = true
+			command["preserve_surface_ui_state"] = true
+			return GameModule.surface_command(command)
 		"blackjack_distraction":
 			return _start_distraction_command(index, next_state, table)
 		"blackjack_patron_cover":
@@ -785,6 +801,8 @@ func resolve(action_id: String, stake: int, run_state: RunState, environment: Di
 
 
 func resolve_with_context(action_id: String, stake: int, run_state: RunState, environment: Dictionary, rng: RngStream, ui_state: Dictionary = {}) -> Dictionary:
+	if action_id == "blackjack_place_bet":
+		return _resolve_place_bet(stake, run_state, environment, rng, ui_state)
 	if action_id == "peek_hole_card" or action_id == "count_cards":
 		return _resolve_cheat_only(action_id, run_state, environment, rng, ui_state)
 	if action_id != "play_basic":
@@ -804,7 +822,9 @@ func resolve_with_context(action_id: String, stake: int, run_state: RunState, en
 	var table_stake := 0 if sit_out else _session_stake(stake, session)
 	var total_wager: int = 0 if sit_out else _wager_cost_from_session(table_stake, session, table, run_state)
 	if total_wager > maxi(0, run_state.bankroll):
-		return _empty_blackjack_result(action_id, stake, environment, "You do not have enough bankroll for that table action.")
+		var debited_wager := _session_debited_wager(session)
+		if total_wager - debited_wager > maxi(0, run_state.bankroll):
+			return _empty_blackjack_result(action_id, stake, environment, "You do not have enough bankroll for that table action.")
 
 	session["dealer_hole_visible"] = true
 	var dealer_cards: Array = _dealer_final_cards(session, table)
@@ -844,7 +864,9 @@ func resolve_with_context(action_id: String, stake: int, run_state: RunState, en
 	var item_adjustment: Dictionary = {} if sit_out else _blackjack_item_adjustment(main_delta, side_delta, session, run_state, table_stake)
 	main_delta += int(item_adjustment.get("main_delta", 0))
 	side_delta += int(item_adjustment.get("side_delta", 0))
-	var bankroll_delta: int = main_delta + side_delta + security_bankroll_delta
+	var debited_wager_total := 0 if sit_out else _session_debited_wager(session)
+	var settlement_return_delta := main_delta + side_delta + debited_wager_total
+	var bankroll_delta: int = settlement_return_delta + security_bankroll_delta
 
 	var used_cards: Array = _cards_used_for_counting(hands, dealer_cards, patron_hands)
 	var patron_action_events: Array = _patron_action_event_array(session.get("patron_action_events", []))
@@ -873,6 +895,8 @@ func resolve_with_context(action_id: String, stake: int, run_state: RunState, en
 		"action_kind": result_action_kind,
 		"stake": table_stake,
 		"total_wager": total_wager,
+		"wager_debited": debited_wager_total,
+		"settlement_return_delta": settlement_return_delta,
 		"sat_out": sit_out,
 		"bankroll_delta": bankroll_delta,
 		"main_delta": main_delta,
@@ -923,6 +947,8 @@ func resolve_with_context(action_id: String, stake: int, run_state: RunState, en
 	result["blackjack_side_bet_results"] = side_results
 	result["blackjack_main_delta"] = main_delta
 	result["blackjack_side_bet_delta"] = side_delta
+	result["blackjack_wager_debited"] = debited_wager_total
+	result["blackjack_settlement_return_delta"] = settlement_return_delta
 	result["blackjack_sat_out"] = sit_out
 	result["blackjack_cheat_caught"] = bool(cheat.get("caught", false))
 	result["blackjack_coolers_cufflinks_broke"] = cufflinks_broke
@@ -937,7 +963,7 @@ func resolve_with_context(action_id: String, stake: int, run_state: RunState, en
 
 
 func wager_cost_for_context(action_id: String, stake: int, run_state: RunState, environment: Dictionary, ui_state: Dictionary = {}) -> int:
-	if action_id != "play_basic":
+	if action_id != "play_basic" and action_id != "blackjack_place_bet":
 		return 0
 	var table: Dictionary = _table_state(run_state, environment)
 	if bool(table.get("barred", false)):
@@ -945,7 +971,75 @@ func wager_cost_for_context(action_id: String, stake: int, run_state: RunState, 
 	var session: Dictionary = _normalized_session(run_state, environment, ui_state, table)
 	if bool(session.get("blackjack_sit_out", false)):
 		return 0
-	return _wager_cost_from_session(_session_stake(stake, session), session, table, run_state)
+	var total_wager := _wager_cost_from_session(_session_stake(stake, session), session, table, run_state)
+	return maxi(0, total_wager - _session_debited_wager(session))
+
+
+func _resolve_place_bet(stake: int, run_state: RunState, environment: Dictionary, rng: RngStream, ui_state: Dictionary) -> Dictionary:
+	var result_msec := GameModule.deterministic_time_msec(run_state, ui_state)
+	var table: Dictionary = _table_state(run_state, environment)
+	if bool(table.get("barred", false)):
+		return _empty_blackjack_result("blackjack_place_bet", stake, environment, str(table.get("barred_reason", "The dealer refuses to let you play this blackjack table.")))
+	var session: Dictionary = _normalized_session(run_state, environment, ui_state, table)
+	if not _has_dealt_hand(session):
+		_start_initial_hand(session, table, maxi(1, stake), run_state, result_msec)
+	if bool(session.get("blackjack_sit_out", false)):
+		session["bankroll_wager_debited"] = true
+		session["wager_debited"] = 0
+		return _place_bet_result(run_state, environment, rng, session, 0, "You watch this blackjack hand without wagering.")
+	var table_stake := _session_stake(stake, session)
+	var total_wager := _wager_cost_from_session(table_stake, session, table, run_state)
+	var already_debited := _session_debited_wager(session)
+	var debit := maxi(0, total_wager - already_debited)
+	if debit <= 0:
+		session["bankroll_wager_debited"] = true
+		session["wager_debited"] = maxi(already_debited, total_wager)
+		return _place_bet_result(run_state, environment, rng, session, 0, "Blackjack wager is already on the felt.")
+	if debit > maxi(0, run_state.bankroll if run_state != null else debit):
+		return _empty_blackjack_result("blackjack_place_bet", stake, environment, "You do not have enough bankroll for that table action.")
+	session["bankroll_wager_debited"] = true
+	session["wager_debited"] = already_debited + debit
+	var message := "Blackjack wager placed: $%d on the felt." % int(session.get("wager_debited", debit))
+	return _place_bet_result(run_state, environment, rng, session, -debit, message)
+
+
+func _place_bet_result(run_state: RunState, environment: Dictionary, rng: RngStream, session: Dictionary, bankroll_delta: int, message: String) -> Dictionary:
+	var deltas := GameModule.empty_result_deltas()
+	deltas["bankroll_delta"] = bankroll_delta
+	deltas["messages"] = [message]
+	deltas["story_log"] = [{
+		"type": "game_action",
+		"game_id": get_id(),
+		"action_id": "blackjack_place_bet",
+		"action_kind": "legal",
+		"stake": int(session.get("locked_stake", session.get("selected_stake", 0))),
+		"total_wager": int(session.get("wager_debited", 0)),
+		"bankroll_delta": bankroll_delta,
+		"environment_id": environment.get("id", ""),
+	}]
+	var result := GameModule.build_action_result({
+		"ok": true,
+		"type": "game_action",
+		"source_id": get_id(),
+		"game_id": get_id(),
+		"action_id": "blackjack_place_bet",
+		"action_kind": "legal",
+		"stake": int(session.get("locked_stake", session.get("selected_stake", 0))),
+		"bankroll_delta": bankroll_delta,
+		"deltas": deltas,
+		"won": false,
+		"environment_id": environment.get("id", ""),
+		"environment_archetype_id": environment.get("archetype_id", ""),
+		"message": message,
+	})
+	result["ui_state"] = _compact_session_for_ui(session.duplicate(true))
+	result["preserve_surface_ui_state"] = true
+	result["surface_embeds_outcomes"] = true
+	result["blackjack_wager_debited"] = int(session.get("wager_debited", 0))
+	if run_state != null and run_state.bankroll + bankroll_delta <= 0 and _has_dealt_hand(session):
+		result["defer_bankroll_zero_failure"] = true
+	GameModule.apply_result(run_state, result, rng)
+	return result
 
 
 func environment_object_state(run_state: RunState, environment: Dictionary) -> Dictionary:
@@ -3710,7 +3804,9 @@ func _settle_completed_round_command(ui_state: Dictionary, index: int, message: 
 	ui_state["round_terminal"] = true
 	ui_state["settlement_pending"] = true
 	ui_state["table_notice"] = message
-	return _action_command("play_basic", "legal", true, ui_state, index, message, true, false, true)
+	var command := _action_command("play_basic", "legal", true, ui_state, index, message, true, false, true)
+	command["skip_stake_validation"] = true
+	return command
 
 
 func _count_settlement_preview_required(ui_state: Dictionary) -> bool:
@@ -4875,7 +4971,8 @@ func _can_afford_extra_main_wager(session: Dictionary, table: Dictionary, run_st
 	if run_state == null:
 		return true
 	var projected_cost: int = _wager_cost_from_session(stake, session, table, run_state) + maxi(1, stake) * maxi(0, extra_units)
-	return projected_cost <= maxi(0, run_state.bankroll)
+	var additional_cost := maxi(0, projected_cost - _session_debited_wager(session))
+	return additional_cost <= maxi(0, run_state.bankroll)
 
 
 func _can_change_side_bets(session: Dictionary) -> bool:
@@ -4937,6 +5034,12 @@ func _wager_cost_from_session(stake: int, session: Dictionary, table: Dictionary
 			var reduction: int = _item_effect_total("blackjack_side_bet_loss_reduction", run_state)
 			cost += maxi(0, side_stake - reduction)
 	return cost
+
+
+func _session_debited_wager(session: Dictionary) -> int:
+	if not bool(session.get("bankroll_wager_debited", false)):
+		return 0
+	return maxi(0, int(session.get("wager_debited", 0)))
 
 
 func _side_bet_stake(stake: int, bet: Dictionary, run_state: RunState) -> int:

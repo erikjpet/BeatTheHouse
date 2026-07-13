@@ -210,6 +210,10 @@
       "the_crew",
       "sals_pawn_counter"
     ],
+    "lender_count": [
+      1,
+      2
+    ],
     "suspicion_cues": [
       "The clerk glances up when you linger near the counter."
     ],
@@ -476,6 +480,10 @@
       "sals_pawn_counter",
       "street_lender"
     ],
+    "lender_count": [
+      1,
+      2
+    ],
     "suspicion_cues": [
       "The seller keeps one eye on the mouth of the alley."
     ],
@@ -704,6 +712,10 @@
       "brother_in_law",
       "sals_pawn_counter",
       "motel_friend"
+    ],
+    "lender_count": [
+      1,
+      2
     ],
     "suspicion_cues": [
       "The front desk phone rings once and stops."
@@ -1353,6 +1365,10 @@
       "the_crew",
       "street_lender"
     ],
+    "lender_count": [
+      1,
+      2
+    ],
     "suspicion_cues": [
       "The guard near the side door stops laughing when you win."
     ],
@@ -1865,6 +1881,10 @@
       "the_crew",
       "sals_pawn_counter"
     ],
+    "lender_count": [
+      1,
+      2
+    ],
     "suspicion_cues": [
       "The host smiles at your action and counts the empty glasses."
     ],
@@ -2136,6 +2156,10 @@
       "the_crew",
       "sals_pawn_counter"
     ],
+    "lender_count": [
+      1,
+      2
+    ],
     "suspicion_cues": [
       "The river keeps everyone aboard with their tells."
     ],
@@ -2292,27 +2316,71 @@
   {
     "id": "pawn_shop",
     "kind": "pawn_shop",
-    "open_hours": null,
+    "open_hours": {
+      "open_minute": 540,
+      "close_minute": 1260
+    },
     "is_start": false,
-    "tier": 0,
-    "display_name": "Sal's Pawn Counter",
+    "tier": 1,
+    "display_name": "Sal's Pawn Shop",
     "name_prefixes": [
       "Sal's"
     ],
     "name_nouns": [
-      "Pawn Counter"
+      "Pawn Shop"
     ],
     "visual_context": {
       "perspective": "first_person",
       "scene_type": "pawn_shop",
-      "description": "Barred glass and one sell tray."
+      "art_key": "pawn_shop",
+      "description": "Barred glass, locked shelves, and one sell tray."
     },
-    "objective_hint": "Sell collection items or unopened bags for gold.",
+    "objective_hint": "Pawn gear for cash, or buy it back before Sal keeps it.",
     "layout": {
       "pawn_counter_spots": [
         [
-          454,
-          224
+          452,
+          220
+        ]
+      ],
+      "lender_spots": [
+        [
+          452,
+          220
+        ]
+      ],
+      "item_spots": [
+        [
+          120,
+          164
+        ],
+        [
+          186,
+          164
+        ],
+        [
+          720,
+          156
+        ],
+        [
+          786,
+          156
+        ]
+      ],
+      "event_spots": [
+        [
+          142,
+          286
+        ],
+        [
+          704,
+          286
+        ]
+      ],
+      "service_spots": [
+        [
+          452,
+          246
         ]
       ],
       "travel_spots": [
@@ -2329,7 +2397,7 @@
       ]
     },
     "music_profile": {
-      "theme": "pawn counter",
+      "theme": "pawn shop",
       "ambience": 0.40,
       "mode": "minor",
       "progression": [
@@ -2357,6 +2425,7 @@
     "economic_profile": {
       "stake_floor": 0,
       "stake_ceiling": 0,
+      "shop_price_multiplier": 0.85,
       "safehouse": true
     },
     "game_pool": [],
@@ -2364,26 +2433,51 @@
       0,
       0
     ],
-    "item_pool": [],
-    "item_count": [
-      0,
-      0
+    "item_pool": [
+      "creased_luck_card",
+      "cheap_sunglasses",
+      "tarot_card",
+      "lucky_keychain",
+      "scratch_pad",
+      "side_bet_chart",
+      "payment_calendar",
+      "roadside_map"
     ],
-    "event_pool": [],
+    "item_count": [
+      2,
+      4
+    ],
+    "event_pool": [
+      "suspicious_patron",
+      "the_collector",
+      "chatty_clerk"
+    ],
     "event_scopes": [
+      "shop",
       "meta"
     ],
     "event_count": [
       0,
-      0
+      1
     ],
     "service_pool": [],
-    "lender_hooks": [],
-    "suspicion_cues": [
-      "The pawn counter is quiet unless you sell."
+    "lender_hooks": [
+      "sals_pawn_counter"
     ],
-    "travel_hooks": [],
-    "next_archetypes": [],
+    "required_lender_hooks": [
+      "sals_pawn_counter"
+    ],
+    "suspicion_cues": [
+      "The barred window stays shut unless you put something on the tray."
+    ],
+    "travel_hooks": [
+      "corner_store",
+      "bar"
+    ],
+    "next_archetypes": [
+      "corner_store",
+      "bar"
+    ],
     "local_narrative_flags": {
       "meta": true,
       "pawn_shop": true

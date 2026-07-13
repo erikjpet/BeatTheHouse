@@ -86,6 +86,7 @@ const SCENE_SPARKLES_KITTY_CAT := [Vector2(168, 166), Vector2(318, 164), Vector2
 const SCENE_SPARKLES_DELTA_QUEEN := [Vector2(128, 96), Vector2(448, 96), Vector2(744, 96)]
 const SCENE_SPARKLES_UNDERGROUND := [Vector2(154, 134), Vector2(505, 136), Vector2(772, 142)]
 const SCENE_SPARKLES_GRAND_CASINO := [Vector2(132, 118), Vector2(728, 118), Vector2(444, 154)]
+const SCENE_SPARKLES_PAWN_SHOP := [Vector2(150, 84), Vector2(414, 118), Vector2(690, 154)]
 
 var environment_id: String = "corner_store"
 var environment_name: String = "Corner Store"
@@ -478,6 +479,8 @@ func _draw() -> void:
 				_draw_apartment()
 			"house":
 				_draw_house()
+			"pawn_shop":
+				_draw_pawn_shop()
 			"bar":
 				_draw_bar()
 			"jazz_club":
@@ -707,6 +710,41 @@ func _draw_house() -> void:
 	for x in range(594, 796, 42):
 		draw_rect(Rect2(x, 60 + int(abs(sin(flicker + x)) * 3.0), 16, 8), _cycle_color(x).darkened(0.15))
 	draw_rect(Rect2(218, 234, 610, 62), Color("#191421"))
+	_floor_reflections()
+
+
+func _draw_pawn_shop() -> void:
+	draw_rect(Rect2(0, 0, 900, 246), Color("#0d1018"))
+	for x in range(0, 900, 90):
+		draw_rect(Rect2(x, 0, 90, 246), Color("#141824") if int(x / 90) % 2 == 0 else Color("#10131d"))
+	draw_rect(Rect2(0, 0, 900, 32), Color("#07090f"))
+	draw_rect(Rect2(0, 32, 900, 6), Color(C_AMBER.r, C_AMBER.g, C_AMBER.b, 0.36))
+	_neon_text("SAL'S PAWN", Vector2(306, 58), 31, C_YELLOW)
+	_neon_text("BUY SELL TRADE", Vector2(330, 94), 16, C_CYAN)
+	draw_rect(Rect2(56, 70, 218, 146), Color("#151321"))
+	draw_rect(Rect2(72, 86, 186, 104), Color("#080a10"))
+	for y in [98, 126, 154, 182]:
+		draw_rect(Rect2(78, y, 174, 5), Color(C_CYAN.r, C_CYAN.g, C_CYAN.b, 0.18))
+		for x in range(92, 236, 36):
+			draw_rect(Rect2(x, y - 18, 20, 14), _cycle_color(x + y).darkened(0.18))
+	draw_rect(Rect2(316, 92, 268, 132), Color("#07080e"))
+	for x in range(332, 570, 22):
+		draw_line(Vector2(x, 96), Vector2(x - 24, 222), Color(C_SOFT.r, C_SOFT.g, C_SOFT.b, 0.20), 1)
+	draw_rect(Rect2(342, 116, 214, 74), Color("#151b23"))
+	draw_rect(Rect2(358, 132, 182, 42), Color("#222b34"))
+	draw_rect(Rect2(408, 148, 76, 16), Color(C_AMBER.r, C_AMBER.g, C_AMBER.b, 0.42))
+	draw_rect(Rect2(316, 224, 268, 54), Color("#3b2a18"))
+	draw_line(Vector2(330, 232), Vector2(570, 232), Color(C_YELLOW.r, C_YELLOW.g, C_YELLOW.b, 0.42), 3)
+	draw_rect(Rect2(612, 72, 224, 150), Color("#111621"))
+	draw_rect(Rect2(630, 92, 188, 108), Color("#080b12"))
+	for x in [648, 690, 732, 774]:
+		draw_rect(Rect2(x, 108, 22, 42), Color("#2c2230"))
+		draw_rect(Rect2(x + 4, 114, 14, 5), C_AMBER)
+		draw_rect(Rect2(x + 5, 132, 12, 4), C_PINK_2)
+	draw_rect(Rect2(652, 170, 142, 18), Color(C_CYAN.r, C_CYAN.g, C_CYAN.b, 0.16))
+	draw_rect(Rect2(58, 236, 792, 62), Color("#18161f"))
+	for x in range(84, 826, 68):
+		draw_rect(Rect2(x, 248 + int(sin(float(x)) * 3.0), 42, 5), Color(C_AMBER.r, C_AMBER.g, C_AMBER.b, 0.14))
 	_floor_reflections()
 
 
@@ -1047,6 +1085,12 @@ func _draw_scene_life() -> void:
 			_draw_sign_pulse(Rect2(648, 88, 136, 110), C_YELLOW, 0.08, 2.8)
 			_draw_smoke_bands(342, 536, 112, C_AMBER, 0.024)
 			draw_rect(Rect2(350, 116, 188, 7), Color(C_PINK.r, C_PINK.g, C_PINK.b, 0.12 + abs(sin(flicker * 2.1)) * 0.10))
+		"pawn_shop":
+			_draw_sign_pulse(Rect2(292, 42, 320, 68), C_YELLOW, 0.13, 4.0)
+			_draw_scan_bands(332, 570, 98, 218, C_SOFT, 0.12, 3.6)
+			draw_rect(Rect2(410, 148, 72, 14), Color(C_AMBER.r, C_AMBER.g, C_AMBER.b, 0.20 + abs(sin(flicker * 3.4)) * 0.16))
+			_draw_smoke_bands(66, 826, 86, C_CYAN, 0.018)
+			_draw_sparkles(SCENE_SPARKLES_PAWN_SHOP, C_YELLOW, 0.18)
 		"bar":
 			_draw_sign_pulse(Rect2(616, 52, 122, 40), C_PINK, 0.22, 4.0)
 			_draw_sign_pulse(Rect2(596, 102, 172, 34), C_CYAN, 0.17, 5.4)
@@ -1159,6 +1203,8 @@ func _draw_familiar_characters() -> void:
 		"small_underground_casino":
 			_draw_named_character("sable", Vector2(505, 155), 0.72, "dealer")
 			_draw_named_character("ox", Vector2(794, 205), 1.02, "bouncer")
+		"pawn_shop":
+			_draw_named_character("sal", Vector2(450, 210), 0.74, "clerk")
 		"grand_casino":
 			_draw_named_character("rourke", Vector2(450 + sin(flicker * 0.75) * 70.0, 222), 1.04, "pit_boss")
 			_draw_named_character("iris", Vector2(632, 180), 0.76, "dealer")
@@ -1211,6 +1257,7 @@ func _character_style(id: String) -> Dictionary:
 		"ox": {"skin": Color("#8f5a48"), "hair": Color("#05060a"), "jacket": Color("#11131f"), "accent": C_ORANGE, "tempo": 0.55, "phase": 0.0},
 		"rourke": {"skin": Color("#d1a072"), "hair": Color("#ede0b5"), "jacket": Color("#161017"), "accent": C_PINK, "tempo": 0.65, "phase": 1.2},
 		"iris": {"skin": Color("#cca17e"), "hair": Color("#2b1630"), "jacket": Color("#20203c"), "accent": C_CYAN, "tempo": 0.85, "phase": 2.6},
+		"sal": {"skin": Color("#bf8366"), "hair": Color("#1b1210"), "jacket": Color("#24212a"), "accent": C_YELLOW, "tempo": 0.60, "phase": 1.7},
 	}
 	return styles.get(id, styles["mara"])
 

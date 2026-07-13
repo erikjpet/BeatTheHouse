@@ -6,7 +6,7 @@ extends RefCounted
 const ArtContractsScript := preload("res://scripts/core/art_contracts.gd")
 
 const ENVIRONMENT_BOARD_SIZE := Vector2(ArtContractsScript.ENVIRONMENT_BOARD_SIZE)
-const GENERATED_LAYOUT_VERSION := 8
+const GENERATED_LAYOUT_VERSION := 9
 const EMPTY_MUSIC_NOTE := -999
 
 var id: String = ""
@@ -59,7 +59,7 @@ static func from_archetype(archetype: Dictionary, p_depth: int, rng: RngStream, 
 	environment.display_name = _build_name(archetype, rng)
 	environment.art_key = _art_key(archetype)
 	environment.visual_context = _simulation_visual_context(archetype, environment.art_key)
-	environment.layout = _copy_dict(archetype.get("layout", {}))
+	environment.layout = _generated_layout_variant(archetype, rng.fork("layout:%s" % environment.id))
 	environment.security_profile = _copy_dict(archetype.get("security_profile", {}))
 	environment.music_profile = _generated_music_profile(archetype, environment, rng)
 	environment.economic_profile = _copy_dict(archetype.get("economic_profile", {}))
@@ -69,13 +69,13 @@ static func from_archetype(archetype: Dictionary, p_depth: int, rng: RngStream, 
 	var required_games := _filtered_required_games(archetype, game_pool)
 	environment.game_ids = _pick_ids_with_required(game_pool, archetype.get("game_count", 1), required_games, rng)
 	environment.game_states = {}
-	environment.event_ids = _pick_events(archetype, rng, library)
+	environment.event_ids = _pick_events(archetype, rng.fork("events:%s" % environment.id), library)
 	environment.item_offers = _build_offers(archetype, rng, library, challenge_config)
 	environment.home_profile = _copy_dict(archetype.get("home_profile", {}))
 	environment.home_containers = []
 	environment.parent_archetype = str(archetype.get("parent_archetype", ""))
 	environment.service_ids = _copy_array(archetype.get("service_pool", []))
-	environment.lender_hooks = _copy_array(archetype.get("lender_hooks", []))
+	environment.lender_hooks = _pick_lenders(archetype, rng.fork("lenders:%s" % environment.id))
 	environment.suspicion_cues = _copy_array(archetype.get("suspicion_cues", environment.security_profile.get("visible_cues", [])))
 	environment.travel_hooks = _copy_array(archetype.get("travel_hooks", []))
 	environment.next_archetypes = _copy_array(archetype.get("next_archetypes", []))
@@ -299,6 +299,19 @@ static func _simulation_visual_context(archetype: Dictionary, p_art_key: String)
 	return _strip_presentation_paths(_copy_dict(archetype.get("visual_context", {})), p_art_key)
 
 
+# Builds the per-instance room layout variant. Authored object families stay in their
+# authored zones, while encounters can trade spots between runs.
+static func _generated_layout_variant(archetype: Dictionary, rng: RngStream) -> Dictionary:
+	var layout := _copy_dict(archetype.get("layout", {}))
+	var randomized_fields := _string_array(archetype.get("randomized_spot_fields", ["event_spots", "lender_spots"]))
+	for field_name_value in randomized_fields:
+		var field_name := str(field_name_value)
+		var spots := _copy_array(layout.get(field_name, []))
+		if spots.size() > 1:
+			layout[field_name] = rng.pick_many(spots, spots.size())
+	return layout
+
+
 # Removes presentation-only paths from generated environment state.
 static func _strip_presentation_paths(visual: Dictionary, p_art_key: String) -> Dictionary:
 	visual.erase("asset_path")
@@ -312,6 +325,10 @@ static func _build_offers(archetype: Dictionary, rng: RngStream, library: Conten
 	if library == null:
 		return []
 	var offers: Array = []
+	var economic_profile := _copy_dict(archetype.get("economic_profile", {}))
+	var price_multiplier := 1.0
+	if economic_profile.has("shop_price_multiplier"):
+		price_multiplier = clampf(float(economic_profile.get("shop_price_multiplier", 1.0)), 0.5, 1.5)
 	var item_pool := library.shop_item_pool_for_challenge(archetype.get("item_pool", []), challenge_config)
 	var item_ids := _pick_ids(item_pool, archetype.get("item_count", 0), rng)
 	for item_id in item_ids:
@@ -320,10 +337,13 @@ static func _build_offers(archetype: Dictionary, rng: RngStream, library: Conten
 			continue
 		var min_price := int(item.get("price_min", 1))
 		var max_price := int(item.get("price_max", min_price))
+		var price := rng.randi_range(min_price, max_price)
+		if not is_equal_approx(price_multiplier, 1.0):
+			price = maxi(1, int(floor(float(price) * price_multiplier)))
 		offers.append({
 			"id": item_id,
 			"display_name": item.get("display_name", item_id),
-			"price": rng.randi_range(min_price, max_price),
+			"price": price,
 			"price_min": min_price,
 			"price_max": max_price,
 		})
@@ -345,10 +365,23 @@ static func _filtered_required_games(archetype: Dictionary, filtered_pool: Array
 	return required
 
 
+# Picks a per-instance subset of lender hooks when the archetype declares a count.
+static func _pick_lenders(archetype: Dictionary, rng: RngStream) -> Array:
+	var pool := _string_array(archetype.get("lender_hooks", []))
+	if pool.is_empty():
+		return []
+	if not archetype.has("lender_count"):
+		return rng.pick_many(pool, pool.size())
+	var required_lenders := _string_array(archetype.get("required_lender_hooks", []))
+	var selected := _pick_ids_with_required(pool, archetype.get("lender_count", pool.size()), required_lenders, rng)
+	return rng.pick_many(selected, selected.size())
+
+
 # Picks event ids that match the environment scopes.
 static func _pick_events(archetype: Dictionary, rng: RngStream, library: ContentLibrary) -> Array:
 	if library == null:
-		return _pick_ids(archetype.get("event_pool", []), archetype.get("event_count", 1), rng)
+		var fallback_events := _pick_ids(archetype.get("event_pool", []), archetype.get("event_count", 1), rng)
+		return rng.pick_many(fallback_events, fallback_events.size())
 	var pool: Array = archetype.get("event_pool", [])
 	var scopes: Array = archetype.get("event_scopes", [])
 	var candidates: Array = []
@@ -366,7 +399,8 @@ static func _pick_events(archetype: Dictionary, rng: RngStream, library: Content
 	for required_id in _string_array(archetype.get("required_event_ids", [])):
 		if candidates.has(required_id):
 			required_events.append(required_id)
-	return _filter_unique_event_ids(_pick_ids_with_required(candidates, archetype.get("event_count", 1), required_events, rng), library)
+	var picked_events := _filter_unique_event_ids(_pick_ids_with_required(candidates, archetype.get("event_count", 1), required_events, rng), library)
+	return rng.pick_many(picked_events, picked_events.size())
 
 
 static func _filter_unique_event_ids(event_ids: Array, library: ContentLibrary) -> Array:

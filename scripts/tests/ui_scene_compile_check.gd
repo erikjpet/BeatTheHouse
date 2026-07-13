@@ -226,9 +226,13 @@ func _check_talk_dock_component() -> bool:
 		parent.queue_free()
 		push_error("Talk dock did not clamp inside a small viewport: panel=%s screen=%s." % [str(panel_rect), str(screen_rect)])
 		return false
-	if panel_rect.size.x > 340.0 or panel_rect.size.y > 180.0:
+	if panel_rect.size.x < 480.0 or panel_rect.size.y < 250.0 or panel_rect.size.x > 540.0 or panel_rect.size.y > 330.0:
 		parent.queue_free()
-		push_error("Talk dock expanded size regressed from the compact dialogue target: panel=%s." % str(panel_rect))
+		push_error("Talk dock expanded size did not match the larger attention target: panel=%s." % str(panel_rect))
+		return false
+	if panel_rect.position.x > 28.0 or absf(panel_rect.end.y - screen_rect.end.y) > 28.0:
+		parent.queue_free()
+		push_error("Talk dock did not anchor to the bottom left: panel=%s screen=%s." % [str(panel_rect), str(screen_rect)])
 		return false
 	dock.clear_entry()
 	if bool(dock.current_snapshot().get("visible", true)):
@@ -381,8 +385,8 @@ func _check_dialogue_dock_main_flow(app: Control) -> bool:
 		push_error("Dialogue dock fixture did not expose the pilot dialogue.")
 		return false
 	var panel_rect := _snapshot_rect(snapshot.get("panel_rect", Rect2()))
-	if panel_rect.size.x > 340.0 or panel_rect.size.y > 180.0:
-		push_error("Dialogue dock fixture exceeded compact size: %s." % str(panel_rect))
+	if panel_rect.size.x < 480.0 or panel_rect.size.y < 250.0:
+		push_error("Dialogue dock fixture did not use the larger attention size: %s." % str(panel_rect))
 		return false
 	app.call("resolve_event_choice", "dialogue:pull_tab_clerk", "ask_routes")
 	await process_frame
@@ -4109,9 +4113,17 @@ func _run() -> void:
 		push_error("Leave did not show the modal world map overlay.")
 		quit(1)
 		return
+	if not str(map_screen.get("selected_world_map_node_id", "")).is_empty() or bool(map_screen.get("world_map_detail_popup_visible", false)):
+		push_error("World map should open in browse mode without a selected detail popup.")
+		quit(1)
+		return
 	var map_title_text := str(map_screen.get("world_map_title_text", ""))
 	if not map_title_text.contains("World Map") or (not map_title_text.contains("AM") and not map_title_text.contains("PM")):
 		push_error("World map header did not expose the in-run clock.")
+		quit(1)
+		return
+	if map_title_text.contains("\n") or not map_title_text.contains("Day") or not map_title_text.contains("Here:"):
+		push_error("World map header should be a single compact line with day, time, and current location: %s." % map_title_text)
 		quit(1)
 		return
 	if not _visible_buttons_meet_touch_target(app, "world map overlay"):
@@ -4242,18 +4254,21 @@ func _run() -> void:
 		push_error("Selecting the current world-map node did not show the You are here state.")
 		quit(1)
 		return
+	if not _world_map_detail_popup_fits(current_node_screen):
+		quit(1)
+		return
 	var current_node_map_view: Dictionary = map_canvas.call("current_view_snapshot")
 	var current_node_bounds: Dictionary = current_node_map_view.get("map_bounds", {}) if typeof(current_node_map_view.get("map_bounds", {})) == TYPE_DICTIONARY else {}
-	if not _map_bounds_equal(map_bounds, current_node_bounds):
-		push_error("Selecting the current world-map node moved the map view window: before %s after %s." % [JSON.stringify(map_bounds), JSON.stringify(current_node_bounds)])
+	if _map_bounds_equal(map_bounds, current_node_bounds) or not bool(current_node_map_view.get("selected_focus_zoom_active", false)):
+		push_error("Selecting the current world-map node did not apply the selected-location focus zoom.")
 		quit(1)
 		return
 	if not _map_canvas_size_equal(map_view, current_node_map_view):
 		push_error("Selecting the current world-map node changed the canvas size: before %s after %s." % [JSON.stringify(map_view.get("canvas_size", {})), JSON.stringify(current_node_map_view.get("canvas_size", {}))])
 		quit(1)
 		return
-	if not _map_marker_centers_equal(map_view, current_node_map_view):
-		push_error("Selecting the current world-map node changed marker screen centers.")
+	if not _world_map_position_in_bounds(_world_map_node_by_id(full_map, current_map_id).get("position", {}), current_node_bounds):
+		push_error("Selecting the current world-map node focused bounds away from the current stop.")
 		quit(1)
 		return
 	var serialized_before_map_select := JSON.stringify(app.call("serialized_run_state"))
@@ -4272,25 +4287,29 @@ func _run() -> void:
 		return
 	var selected_map_view: Dictionary = map_canvas.call("current_view_snapshot")
 	var selected_map_bounds: Dictionary = selected_map_view.get("map_bounds", {}) if typeof(selected_map_view.get("map_bounds", {})) == TYPE_DICTIONARY else {}
-	if not _map_bounds_equal(map_bounds, selected_map_bounds):
-		push_error("Selecting a world-map target moved the map view window: before %s after %s." % [JSON.stringify(map_bounds), JSON.stringify(selected_map_bounds)])
+	if _map_bounds_equal(map_bounds, selected_map_bounds) or not bool(selected_map_view.get("selected_focus_zoom_active", false)):
+		push_error("Selecting a world-map target did not apply the selected-location focus zoom.")
 		quit(1)
 		return
 	if not _map_canvas_size_equal(map_view, selected_map_view):
 		push_error("Selecting a world-map target changed the canvas size: before %s after %s." % [JSON.stringify(map_view.get("canvas_size", {})), JSON.stringify(selected_map_view.get("canvas_size", {}))])
 		quit(1)
 		return
-	if not _map_marker_centers_equal(map_view, selected_map_view):
-		push_error("Selecting a world-map target changed marker screen centers.")
+	var selected_focus_node := _world_map_node_by_id(full_map, travel_target_id)
+	if not _world_map_position_in_bounds(selected_focus_node.get("position", {}), selected_map_bounds):
+		push_error("Selecting a world-map target focused bounds away from the selected stop.")
 		quit(1)
 		return
 	var detail_text := str(selected_map_screen.get("world_map_detail_text", ""))
 	if not detail_text.contains("Travel:") or not detail_text.contains("Distance:") or not detail_text.contains("Cost:"):
-		push_error("World map selection panel did not show travel method, distance, and cost.")
+		push_error("World map selection popup did not show travel method, distance, and cost.")
+		quit(1)
+		return
+	if not _world_map_detail_popup_fits(selected_map_screen):
 		quit(1)
 		return
 	if int(selected_map_screen.get("world_map_detail_badge_count", 0)) <= 0:
-		push_error("World map selection panel did not render route attribute glyphs in the detail panel.")
+		push_error("World map selection popup did not render route attribute glyphs.")
 		quit(1)
 		return
 	var badge_slot := app.get("world_map_badge_slot") as VBoxContainer
@@ -4314,11 +4333,31 @@ func _run() -> void:
 		quit(1)
 		return
 	if not detail_text.contains("Hours:"):
-		push_error("World map selection panel did not show destination open-hours status.")
+		push_error("World map selection popup did not show destination open-hours status.")
 		quit(1)
 		return
 	if serialized_before_map_select != JSON.stringify(app.call("serialized_run_state")):
 		push_error("Selecting a world-map node mutated serialized RunState before confirmation.")
+		quit(1)
+		return
+	var blank_map_click := InputEventMouseButton.new()
+	blank_map_click.button_index = MOUSE_BUTTON_LEFT
+	blank_map_click.pressed = true
+	blank_map_click.position = Vector2(5.0, 5.0)
+	app.call("_on_world_map_holder_gui_input", blank_map_click)
+	await process_frame
+	var deselected_map_screen: Dictionary = app.call("current_screen_snapshot")
+	if not str(deselected_map_screen.get("selected_world_map_node_id", "")).is_empty() or bool(deselected_map_screen.get("world_map_detail_popup_visible", false)):
+		push_error("Clicking blank world-map space did not clear the selected location popup.")
+		quit(1)
+		return
+	var deselected_map_view: Dictionary = map_canvas.call("current_view_snapshot")
+	if bool(deselected_map_view.get("selected_focus_zoom_active", true)):
+		push_error("Clicking blank world-map space did not clear the selected-location focus zoom.")
+		quit(1)
+		return
+	if not _map_canvas_size_equal(map_view, deselected_map_view):
+		push_error("Deselecting the world map changed the canvas size.")
 		quit(1)
 		return
 	app.call("close_world_map")
@@ -4661,6 +4700,11 @@ func _check_meta_home_launcher_opens_room(app: Control) -> bool:
 	if active_item_button != null and active_item_button.visible:
 		push_error("Meta top bar still showed the in-run active item button.")
 		return false
+	var pre_meta_map_canvas := app.get("world_map_nodes_layer") as Control
+	if pre_meta_map_canvas != null and pre_meta_map_canvas.has_method("set_map_snapshot"):
+		pre_meta_map_canvas.call("set_map_snapshot", {})
+	app.set("world_map_canvas_snapshot_key", "")
+	app.set("world_map_snapshot_cache_key", "")
 	if not bool(app.call("open_world_map", true)):
 		push_error("Meta home could not open the shared world map.")
 		return false
@@ -4675,6 +4719,23 @@ func _check_meta_home_launcher_opens_room(app: Control) -> bool:
 		return false
 	var meta_map_view: Dictionary = meta_map_canvas.call("current_view_snapshot")
 	var meta_map_bounds: Dictionary = meta_map_view.get("map_bounds", {}) if typeof(meta_map_view.get("map_bounds", {})) == TYPE_DICTIONARY else {}
+	var meta_map_markers: Array = _copy_array(meta_map_view.get("icon_markers", []))
+	var meta_home_marker := _map_icon_marker(meta_map_markers, "home")
+	if meta_home_marker.is_empty():
+		push_error("Meta world map did not draw the home icon marker.")
+		return false
+	var meta_home_icon := str(meta_home_marker.get("icon_path", ""))
+	if meta_home_icon.strip_edges().is_empty() or not FileAccess.file_exists(meta_home_icon):
+		push_error("Meta world map home marker used a missing icon path: %s." % meta_home_icon)
+		return false
+	var meta_pawn_marker := _map_icon_marker(meta_map_markers, "pawn_shop")
+	if meta_pawn_marker.is_empty():
+		push_error("Meta world map did not draw the pawn shop icon marker.")
+		return false
+	var meta_pawn_icon := str(meta_pawn_marker.get("icon_path", ""))
+	if meta_pawn_icon != "res://assets/art/map_icons/pawn_shop.png" or not FileAccess.file_exists(meta_pawn_icon):
+		push_error("Meta world map pawn shop marker used the wrong icon path: %s." % meta_pawn_icon)
+		return false
 	var meta_target_ids: Array = _copy_array(_copy_dict(meta_map_screen.get("world_map", {})).get("travel_target_ids", []))
 	if meta_target_ids.is_empty():
 		push_error("Meta world map did not expose a travel target.")
@@ -4713,6 +4774,29 @@ func _check_meta_home_launcher_opens_room(app: Control) -> bool:
 		return false
 	app.call("_hide_event_choice_popup")
 	await process_frame
+	if not bool(app.call("open_world_map", true)):
+		push_error("Meta home could not reopen the shared world map for pawn-shop travel.")
+		return false
+	await process_frame
+	if not bool(app.call("select_world_map_node", meta_target_id)):
+		push_error("Meta world map rejected selecting %s for travel." % meta_target_id)
+		return false
+	app.call("confirm_world_map_travel")
+	await process_frame
+	await process_frame
+	run_state = app.get("run_state")
+	if run_state == null:
+		push_error("Meta world map travel cleared the meta session.")
+		return false
+	var pawn_environment: Dictionary = run_state.current_environment
+	if str(pawn_environment.get("archetype_id", "")) != "pawn_shop" or str(pawn_environment.get("display_name", "")) != "Sal's Pawn Shop":
+		push_error("Meta pawn travel did not open the custom pawn-shop room: %s." % str(pawn_environment))
+		return false
+	var pawn_spatial: Dictionary = app.call("current_spatial_interaction_snapshot")
+	var pawn_objects := _copy_array(pawn_spatial.get("objects", []))
+	if _object_by_id(pawn_objects, "meta_pawn_counter:sell").is_empty() or _object_by_id(pawn_objects, "travel:leave").is_empty():
+		push_error("Custom pawn-shop room did not expose the sell counter and map door.")
+		return false
 	app.call("return_to_main_menu")
 	await process_frame
 	if app.get("run_state") != null:
@@ -4936,6 +5020,21 @@ func _badge_slot_icon_only_with_tooltips(root: Control, label: String) -> bool:
 		if _visible_badge_text_label_count(cell) > 0:
 			push_error("%s badge cell still rendered text next to the icon." % label)
 			return false
+	return true
+
+
+func _world_map_detail_popup_fits(screen_snapshot: Dictionary) -> bool:
+	if not bool(screen_snapshot.get("world_map_detail_popup_visible", false)):
+		push_error("World map detail should be shown as an overlay popup.")
+		return false
+	var popup_rect := _snapshot_rect(screen_snapshot.get("world_map_detail_popup_rect", {}))
+	var holder_rect := _snapshot_rect(screen_snapshot.get("world_map_holder_rect", {}))
+	if popup_rect.size.x <= 0.0 or popup_rect.size.y <= 0.0 or holder_rect.size.x <= 0.0 or holder_rect.size.y <= 0.0:
+		push_error("World map popup or holder did not expose valid bounds: popup=%s holder=%s." % [str(popup_rect), str(holder_rect)])
+		return false
+	if not holder_rect.grow(1.0).encloses(popup_rect):
+		push_error("World map detail popup was not clamped inside the map: popup=%s holder=%s." % [str(popup_rect), str(holder_rect)])
+		return false
 	return true
 
 
@@ -6809,6 +6908,13 @@ func _label_for_object_id(objects: Array, object_id: String) -> String:
 	return ""
 
 
+func _object_by_id(objects: Array, object_id: String) -> Dictionary:
+	for object_data in objects:
+		if typeof(object_data) == TYPE_DICTIONARY and str((object_data as Dictionary).get("object_id", "")) == object_id:
+			return (object_data as Dictionary).duplicate(true)
+	return {}
+
+
 func _interactable_object_id_with_prefix(objects: Array, prefix: String) -> bool:
 	for object_data in objects:
 		if typeof(object_data) == TYPE_DICTIONARY and str((object_data as Dictionary).get("object_id", "")).begins_with(prefix):
@@ -6917,6 +7023,16 @@ func _map_marker_centers(view: Dictionary) -> Dictionary:
 		var center: Dictionary = center_value
 		result[marker_id] = Vector2(float(center.get("x", 0.0)), float(center.get("y", 0.0)))
 	return result
+
+
+func _map_icon_marker(markers: Array, node_id: String) -> Dictionary:
+	for marker_value in markers:
+		if typeof(marker_value) != TYPE_DICTIONARY:
+			continue
+		var marker: Dictionary = marker_value
+		if str(marker.get("id", "")) == node_id:
+			return marker.duplicate(true)
+	return {}
 
 
 func _copy_array(value: Variant) -> Array:

@@ -17,19 +17,21 @@ const ALCOHOL_MAX := 100
 const DRUNK_TIME_SCALE_MIN := 0.33
 const DRUNK_TIME_SCALE_EXPONENT := 1.63
 const DRUNK_ABSORPTION_INTERVAL_MSEC := 3000
+const DRUNK_ABSORPTION_INITIAL_POINTS := 4
+const DRUNK_ABSORPTION_POINTS_PER_INTERVAL := 4
 const DRUNK_ABSORPTION_STACK_GRACE_MSEC := 250
 const SIMULATION_ACTION_MSEC := DRUNK_ABSORPTION_INTERVAL_MSEC
 const BASELINE_LUCK_MIN := -20
 const BASELINE_LUCK_MAX := 20
 const EFFECTIVE_LUCK_MIN := -8
 const EFFECTIVE_LUCK_MAX := 8
-const DRUNK_TURN_DECAY := 3
+const DRUNK_TURN_DECAY := 2
 const DRUNK_TRAVEL_DECAY_BY_DISTANCE := {
 	"same": 0,
-	"near": 8,
-	"local": 14,
-	"far": 28,
-	"remote": 38,
+	"near": 6,
+	"local": 11,
+	"far": 23,
+	"remote": 32,
 }
 const RUN_STATUS_ACTIVE := "active"
 const RUN_STATUS_DISTRESSED := "distressed"
@@ -77,7 +79,7 @@ const MAX_STORY_LOG_ENTRIES := 240
 const STORY_SEEN_TYPE_FLAG_PREFIX := "_story_seen:"
 const STORY_SEEN_EVENT_FLAG_PREFIX := "_story_seen_event:"
 const STORY_SEEN_OBJECTIVE_FLAG_PREFIX := "_story_seen_objective:"
-const GAME_CLOCK_START_MINUTE := 8 * 60
+const GAME_CLOCK_START_MINUTE := 12 * 60
 const ACTION_CLOCK_MINUTES := 8
 const CLOSING_TIME_DEFAULT_GRACE_ACTIONS := 1
 const CLOSING_TIME_PHASE_GRACE := "grace"
@@ -88,6 +90,9 @@ const HOME_TENURE_STAY := "stay"
 const CREW_LENDER_ID := "the_crew"
 const CREW_MAX_LOAN_LOCATIONS := 3
 const LENDER_REPAY_HEAT_REDUCTION := 3
+const SALS_PAWN_COUNTER_ID := "sals_pawn_counter"
+const PAWN_SHOP_ARCHETYPE_ID := "pawn_shop"
+const PAWN_SHOP_MAX_OFFERS := 4
 
 var seed_text: String = ""
 var seed_value: int = 1
@@ -99,6 +104,7 @@ var economic_state: String = "stable"
 var inventory: Array = []
 var active_item_id: String = ""
 var debt: Array = []
+var sals_forfeited_item_ids: Array = []
 var suspicion: Dictionary = {}
 var baseline_luck: int = 0
 var drunk_level: int = 0
@@ -130,6 +136,8 @@ var run_spending_score: int = 0
 var defer_next_bankroll_zero_failure: bool = false
 var _item_effects_by_id: Dictionary = {}
 var _item_effects_loaded: bool = false
+var _item_definitions_by_id: Dictionary = {}
+var _item_definitions_loaded: bool = false
 
 
 # Resets the run from a seed and optional challenge.
@@ -144,6 +152,7 @@ func start_new(p_seed_text: String = "FOUNDATION-SEED", p_challenge_config: Dict
 	inventory = []
 	active_item_id = ""
 	debt = []
+	sals_forfeited_item_ids = []
 	suspicion = {
 		"level": 0,
 		"cues": [],
@@ -975,6 +984,7 @@ func set_environment(environment_data: Dictionary) -> void:
 		environment_history.append(current_environment.duplicate(true))
 		_compact_environment_history()
 	current_environment = _normalize_environment(environment_data)
+	_apply_sals_forfeited_shelf_to_current_environment()
 	var next_environment := current_environment
 	unlocked_travel = _unique_strings(
 		_copy_array(next_environment.get("travel_hooks", [])) + _copy_array(next_environment.get("next_archetypes", []))
@@ -1254,7 +1264,7 @@ func drunk_distortion_suppressed() -> bool:
 	return drunk_distortion_suppression_turns > 0
 
 
-# Applies delayed drink absorption at one drunk point per drink every interval.
+# Applies delayed drink absorption in small chunks after the immediate first sip.
 func update_drunk_absorption(now_msec: int = -1) -> Dictionary:
 	if pending_drunk_absorption.is_empty():
 		return {
@@ -1276,9 +1286,11 @@ func update_drunk_absorption(now_msec: int = -1) -> Dictionary:
 		if remaining <= 0:
 			continue
 		while remaining > 0 and drunk_level < ALCOHOL_MAX and now_msec >= next_msec:
-			drunk_level = clampi(drunk_level + 1, 0, ALCOHOL_MAX)
-			remaining -= 1
-			applied += 1
+			var step := mini(remaining, DRUNK_ABSORPTION_POINTS_PER_INTERVAL)
+			step = mini(step, ALCOHOL_MAX - drunk_level)
+			drunk_level = clampi(drunk_level + step, 0, ALCOHOL_MAX)
+			remaining -= step
+			applied += step
 			next_msec += interval
 		if remaining > 0 and drunk_level < ALCOHOL_MAX:
 			entry["remaining"] = remaining
@@ -1311,6 +1323,12 @@ func pending_drunk_absorption_amount() -> int:
 func _queue_drunk_absorption(amount: int) -> void:
 	var capacity := maxi(0, ALCOHOL_MAX - drunk_level - pending_drunk_absorption_amount())
 	var queued := mini(maxi(0, amount), capacity)
+	if queued <= 0:
+		return
+	var immediate := mini(queued, DRUNK_ABSORPTION_INITIAL_POINTS)
+	if immediate > 0:
+		drunk_level = clampi(drunk_level + immediate, 0, ALCOHOL_MAX)
+		queued -= immediate
 	if queued <= 0:
 		return
 	var now_msec := simulation_time_msec()
@@ -2753,11 +2771,15 @@ static func _synergy_requirements_met(synergy: Dictionary, owned_lookup: Diction
 # Removes an item offer from the current environment.
 func remove_item_offer(item_id: String) -> void:
 	var offers: Array = current_environment.get("item_offers", [])
+	var removed_forfeited := false
 	for index in range(offers.size() - 1, -1, -1):
 		var offer: Variant = offers[index]
 		if typeof(offer) == TYPE_DICTIONARY and offer.get("id", "") == item_id:
+			removed_forfeited = removed_forfeited or bool((offer as Dictionary).get("forfeited_pawn_shelf", false))
 			offers.remove_at(index)
 	current_environment["item_offers"] = offers
+	if removed_forfeited:
+		remove_sals_forfeited_item(item_id)
 	if current_environment.has("layout"):
 		current_environment["layout"] = EnvironmentInstance.ensure_generated_layout(current_environment)
 
@@ -2935,6 +2957,7 @@ func travel_route_status(route_data: Dictionary) -> Dictionary:
 	for key in required_flags.keys():
 		if narrative_flags.get(str(key), null) != required_flags[key]:
 			status["available"] = false
+			status["hidden"] = true
 			status["disabled_reason"] = str(route_data.get("condition_text", "A route condition is not met."))
 			return _finalize_travel_route_status(status, route_data)
 	for flag_id in _copy_array(route_data.get("blocked_by_flags", [])):
@@ -3401,6 +3424,8 @@ func lender_hook_status(lender_data: Dictionary) -> Dictionary:
 		var debt_data := debt_entry as Dictionary
 		if str(debt_data.get("lender_id", "")) != lender_id:
 			continue
+		if lender_type == "pawn":
+			continue
 		var debt_status := str(debt_data.get("status", "active"))
 		if debt_status == "active" or debt_status == "overdue" or debt_status == "favor_due":
 			status["available"] = false
@@ -3445,6 +3470,52 @@ func lender_repayment_status(lender_id: String) -> Dictionary:
 			status["disabled_reason"] = "Need $%d to settle this loan." % balance
 		return status
 	return status
+
+
+func pawn_tickets_for_lender(lender_id: String) -> Array:
+	var result: Array = []
+	for debt_entry in debt:
+		if typeof(debt_entry) != TYPE_DICTIONARY:
+			continue
+		var debt_data := debt_entry as Dictionary
+		if str(debt_data.get("lender_id", "")) != lender_id:
+			continue
+		if str(debt_data.get("debt_kind", "cash")) != "pawn":
+			continue
+		var debt_status := str(debt_data.get("status", "active"))
+		if debt_status != "active" and debt_status != "overdue":
+			continue
+		var balance := maxi(0, int(debt_data.get("balance", 0)))
+		result.append({
+			"debt_id": str(debt_data.get("id", "")),
+			"item_id": str(debt_data.get("collateral_item_id", "")),
+			"item_name": str(debt_data.get("collateral_item_name", debt_data.get("collateral_item_id", ""))),
+			"principal": maxi(0, int(debt_data.get("principal", balance))),
+			"redemption_fee": maxi(0, int(debt_data.get("redemption_fee", 0))),
+			"payoff_amount": balance,
+			"turns_remaining": maxi(0, int(debt_data.get("turns_remaining", debt_data.get("deadline_turns", 0)))),
+			"status": debt_status,
+			"enabled": balance <= 0 or bankroll >= balance,
+			"disabled_reason": "" if balance <= 0 or bankroll >= balance else "Need $%d to buy back this ticket." % balance,
+		})
+	return result
+
+
+func add_sals_forfeited_item(item_id: String) -> void:
+	var normalized_id := item_id.strip_edges()
+	if normalized_id.is_empty():
+		return
+	sals_forfeited_item_ids.append(normalized_id)
+
+
+func remove_sals_forfeited_item(item_id: String) -> void:
+	var normalized_id := item_id.strip_edges()
+	if normalized_id.is_empty():
+		return
+	for index in range(sals_forfeited_item_ids.size() - 1, -1, -1):
+		if str(sals_forfeited_item_ids[index]) == normalized_id:
+			sals_forfeited_item_ids.remove_at(index)
+			return
 
 
 func _crew_lender_repeat_status(current_location_id: String) -> Dictionary:
@@ -3803,6 +3874,7 @@ func _apply_debt_default(index: int, manual: bool = false) -> Dictionary:
 	match consequence:
 		"collateral_forfeit":
 			var item_name := str(debt_data.get("collateral_item_name", debt_data.get("collateral_item_id", "the collateral")))
+			add_sals_forfeited_item(str(debt_data.get("collateral_item_id", "")))
 			narrative_flags["sals_pawn_defaulted"] = true
 			debt.remove_at(index)
 			message = "Sal keeps %s. The loan is over." % item_name
@@ -4540,6 +4612,7 @@ func to_dict() -> Dictionary:
 		"inventory": inventory.duplicate(true),
 		"active_item_id": active_item_id,
 		"debt": debt.duplicate(true),
+		"sals_forfeited_item_ids": sals_forfeited_item_ids.duplicate(true),
 		"suspicion": suspicion.duplicate(true),
 		"baseline_luck": baseline_luck,
 		"drunk_level": drunk_level,
@@ -4586,6 +4659,7 @@ func from_dict(data: Dictionary) -> void:
 	if not inventory.has(active_item_id):
 		active_item_id = ""
 	debt = _normalize_debt_entries(_copy_array(data.get("debt", [])))
+	sals_forfeited_item_ids = _string_array(_copy_array(data.get("sals_forfeited_item_ids", [])))
 	suspicion = _normalize_suspicion(_copy_dict(data.get("suspicion", {"level": 0, "cues": []})))
 	baseline_luck = clampi(int(data.get("baseline_luck", 0)), BASELINE_LUCK_MIN, BASELINE_LUCK_MAX)
 	drunk_level = clampi(int(data.get("drunk_level", 0)), 0, ALCOHOL_MAX)
@@ -4593,6 +4667,7 @@ func from_dict(data: Dictionary) -> void:
 	pending_drunk_absorption = _normalize_pending_drunk_absorption(_copy_array(data.get("pending_drunk_absorption", [])))
 	drunk_distortion_suppression_turns = maxi(0, int(data.get("drunk_distortion_suppression_turns", 0)))
 	current_environment = _normalize_environment(_copy_dict(data.get("current_environment", {})))
+	_apply_sals_forfeited_shelf_to_current_environment()
 	world_map = WorldMap.normalize(_copy_dict(data.get("world_map", {})))
 	pending_triggered_events = _normalize_triggered_event_queue(_copy_array(data.get("pending_triggered_events", [])))
 	var saved_pending_bags: Variant = data.get("pending_bags", data.get("pending_bag", []))
@@ -4772,6 +4847,93 @@ func _item_effect_index() -> Dictionary:
 	return _item_effects_by_id
 
 
+func _item_definition_index() -> Dictionary:
+	if _item_definitions_loaded:
+		return _item_definitions_by_id
+	_item_definitions_loaded = true
+	_item_definitions_by_id = {}
+	if not FileAccess.file_exists(ITEM_DEFINITIONS_PATH):
+		return _item_definitions_by_id
+	var parsed: Variant = JSON.parse_string(FileAccess.get_file_as_string(ITEM_DEFINITIONS_PATH))
+	if typeof(parsed) != TYPE_ARRAY:
+		return _item_definitions_by_id
+	for item_value in parsed as Array:
+		if typeof(item_value) != TYPE_DICTIONARY:
+			continue
+		var item: Dictionary = item_value
+		var item_id := str(item.get("id", "")).strip_edges()
+		if item_id.is_empty():
+			continue
+		_item_definitions_by_id[item_id] = item.duplicate(true)
+	return _item_definitions_by_id
+
+
+func _item_definition(item_id: String) -> Dictionary:
+	var definitions := _item_definition_index()
+	var normalized_id := item_id.strip_edges()
+	if normalized_id.is_empty() or not definitions.has(normalized_id):
+		return {}
+	var definition: Dictionary = definitions[normalized_id]
+	return definition.duplicate(true)
+
+
+func _apply_sals_forfeited_shelf_to_current_environment() -> void:
+	if current_environment.is_empty() or sals_forfeited_item_ids.is_empty():
+		return
+	if bool(current_environment.get("meta_session", false)):
+		return
+	var archetype_id := str(current_environment.get("archetype_id", current_environment.get("id", ""))).strip_edges()
+	var kind := str(current_environment.get("kind", "")).strip_edges()
+	if archetype_id != PAWN_SHOP_ARCHETYPE_ID and kind != PAWN_SHOP_ARCHETYPE_ID:
+		return
+	var base_offers: Array = []
+	for offer_value in _normalize_item_offers(_copy_array(current_environment.get("item_offers", []))):
+		if typeof(offer_value) != TYPE_DICTIONARY:
+			continue
+		var offer := offer_value as Dictionary
+		if bool(offer.get("forfeited_pawn_shelf", false)):
+			continue
+		base_offers.append(offer)
+	var displayed := base_offers.duplicate(true)
+	var remaining_slots := maxi(0, PAWN_SHOP_MAX_OFFERS - displayed.size())
+	for item_value in sals_forfeited_item_ids:
+		if remaining_slots <= 0:
+			break
+		var item_id := str(item_value).strip_edges()
+		if item_id.is_empty() or _offer_list_has_item(displayed, item_id):
+			continue
+		var shelf_offer := _sals_forfeited_shelf_offer(item_id)
+		if shelf_offer.is_empty():
+			continue
+		displayed.append(shelf_offer)
+		remaining_slots -= 1
+	current_environment["item_offers"] = displayed
+	if current_environment.has("layout"):
+		current_environment["layout"] = EnvironmentInstance.ensure_generated_layout(current_environment)
+
+
+func _sals_forfeited_shelf_offer(item_id: String) -> Dictionary:
+	var definition := _item_definition(item_id)
+	if definition.is_empty():
+		return {}
+	var retail_price := maxi(1, int(definition.get("price_max", definition.get("price_min", 1))))
+	return {
+		"id": item_id,
+		"display_name": str(definition.get("display_name", item_id)),
+		"price": retail_price,
+		"price_min": retail_price,
+		"price_max": retail_price,
+		"forfeited_pawn_shelf": true,
+	}
+
+
+static func _offer_list_has_item(offers: Array, item_id: String) -> bool:
+	for offer_value in offers:
+		if typeof(offer_value) == TYPE_DICTIONARY and str((offer_value as Dictionary).get("id", "")) == item_id:
+			return true
+	return false
+
+
 static func _inventory_item_id(entry: Variant) -> String:
 	if typeof(entry) == TYPE_DICTIONARY:
 		return str((entry as Dictionary).get("id", "")).strip_edges()
@@ -4828,6 +4990,15 @@ static func _normalize_debt_entries(entries: Array) -> Array:
 			debt_entry["balance"] = 0
 		if debt_entry.has("principal"):
 			debt_entry["principal"] = maxi(0, int(debt_entry.get("principal", 0)))
+		elif str(debt_entry.get("debt_kind", "cash")) == "pawn":
+			debt_entry["principal"] = maxi(0, int(debt_entry.get("balance", 0)))
+		if debt_entry.has("redemption_fee"):
+			debt_entry["redemption_fee"] = maxi(0, int(debt_entry.get("redemption_fee", 0)))
+		if debt_entry.has("redemption_fee_rate"):
+			debt_entry["redemption_fee_rate"] = clampf(float(debt_entry.get("redemption_fee_rate", 0.0)), 0.0, 2.0)
+		if str(debt_entry.get("debt_kind", "cash")) == "pawn":
+			debt_entry["collateral_item_id"] = str(debt_entry.get("collateral_item_id", ""))
+			debt_entry["collateral_item_name"] = str(debt_entry.get("collateral_item_name", debt_entry.get("collateral_item_id", "")))
 		if debt_entry.has("loan_count"):
 			debt_entry["loan_count"] = maxi(1, int(debt_entry.get("loan_count", 1)))
 		if debt_entry.has("source_location_id"):
@@ -5184,6 +5355,8 @@ static func _normalize_item_offers(offers: Array) -> Array:
 		var item_offer := (offer as Dictionary).duplicate(true)
 		if item_offer.has("price"):
 			item_offer["price"] = int(item_offer.get("price", 0))
+		if item_offer.has("forfeited_pawn_shelf"):
+			item_offer["forfeited_pawn_shelf"] = bool(item_offer.get("forfeited_pawn_shelf", false))
 		result.append(item_offer)
 	return result
 

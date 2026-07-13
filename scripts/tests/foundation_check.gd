@@ -516,6 +516,7 @@ func _check_content(library: ContentLibrary, failures: Array) -> void:
 	_check_tier_two_venue_progression(library, failures)
 	_check_baccarat_grand_casino_only(library, failures)
 	_check_environment_game_pool_distribution(library, failures)
+	_check_environment_encounter_freshness(library, failures)
 	_check_high_risk_table_limit_overrides(library, failures)
 	_check_environment_open_hours(library, failures)
 	_check_dialogue_system_content(library, failures)
@@ -1034,8 +1035,62 @@ func _check_start_home_environment(run_state: RunState, environment: Environment
 		failures.append("The first generated home should offer a route onward into the world.")
 	if not run_state.home_is_active():
 		failures.append("The first generated home should initialize RunState home_state.")
-	if run_state.clock_display_text(true) != "Day 1 8 AM":
-		failures.append("The first generated home should start at the fixed day 1, 8 AM clock.")
+	if run_state.clock_display_text(true) != "Day 1 12 PM":
+		failures.append("The first generated home should start at the fixed day 1, 12 PM clock.")
+
+
+func _check_environment_encounter_freshness(library: ContentLibrary, failures: Array) -> void:
+	var back_alley := _archetype_by_id(library, "back_alley")
+	if back_alley.is_empty():
+		failures.append("Encounter freshness fixture is missing the back_alley archetype.")
+		return
+	var lender_pool := _string_array(back_alley.get("lender_hooks", []))
+	if lender_pool.size() < 3:
+		failures.append("Encounter freshness fixture expects Back Alley to expose a lender pool of at least three hooks.")
+		return
+	var composition_keys := {}
+	var staging_keys := {}
+	var all_lenders_count := 0
+	for sample_index in range(18):
+		var run_state: RunState = RunStateScript.new()
+		run_state.start_new("ENCOUNTER-FRESH-%02d" % sample_index)
+		var environment := EnvironmentInstance.from_archetype(back_alley, sample_index, run_state.create_rng("encounter_freshness"), library)
+		if environment.lender_hooks.is_empty():
+			failures.append("Encounter freshness generated Back Alley without any lender hook.")
+			continue
+		if environment.lender_hooks.size() >= lender_pool.size():
+			all_lenders_count += 1
+		composition_keys[JSON.stringify({
+			"events": environment.event_ids,
+			"lenders": environment.lender_hooks,
+		})] = true
+		staging_keys[_environment_encounter_staging_key(environment.to_dict())] = true
+		var repeat_state: RunState = RunStateScript.new()
+		repeat_state.start_new("ENCOUNTER-FRESH-%02d" % sample_index)
+		var repeated := EnvironmentInstance.from_archetype(back_alley, sample_index, repeat_state.create_rng("encounter_freshness"), library)
+		if JSON.stringify(repeated.to_dict()) != JSON.stringify(environment.to_dict()):
+			failures.append("Encounter freshness generation is not deterministic for sample %d." % sample_index)
+	if all_lenders_count > 0:
+		failures.append("Back Alley should not spawn every lender hook in a fresh generated visit.")
+	if composition_keys.size() < 3:
+		failures.append("Back Alley encounter composition did not vary across deterministic samples.")
+	if staging_keys.size() < 3:
+		failures.append("Back Alley encounter staging did not vary across deterministic samples.")
+
+
+func _environment_encounter_staging_key(environment_data: Dictionary) -> String:
+	var layout: Dictionary = environment_data.get("layout", {}) if typeof(environment_data.get("layout", {})) == TYPE_DICTIONARY else {}
+	var object_rects: Dictionary = layout.get("object_rects", {}) if typeof(layout.get("object_rects", {})) == TYPE_DICTIONARY else {}
+	var parts: Array = []
+	for object_id_value in object_rects.keys():
+		var object_id := str(object_id_value)
+		if not object_id.begins_with("event:") and not object_id.begins_with("lender:"):
+			continue
+		var rect := _layout_rect_from_dict(object_rects.get(object_id, {}))
+		var center := _layout_rect_center_board(rect)
+		parts.append("%s@%d,%d" % [object_id, roundi(center.x), roundi(center.y)])
+	parts.sort()
+	return "|".join(parts)
 
 
 func _check_environment_game_pool_distribution(library: ContentLibrary, failures: Array) -> void:
@@ -2494,7 +2549,8 @@ func _check_surface_visual_motion_advances(game: GameModule, surface: Dictionary
 		canvas.call("debug_advance_idle_liveness", 1.0 / 60.0)
 	var after_status: Dictionary = canvas.call("surface_runtime_status")
 	var after_sample: Dictionary = canvas.call("debug_surface_motion_sample")
-	if JSON.stringify(before_sample) == JSON.stringify(after_sample) and surface.has("surface_time_msec"):
+	var allows_state_time_fallback := str(surface.get("surface_renderer", "")) != "roulette"
+	if JSON.stringify(before_sample) == JSON.stringify(after_sample) and allows_state_time_fallback and surface.has("surface_time_msec"):
 		var advanced_surface := surface.duplicate(true)
 		advanced_surface["surface_time_msec"] = int(advanced_surface.get("surface_time_msec", 0)) + 300
 		canvas.call("render_game_snapshot", advanced_surface)
@@ -5001,7 +5057,12 @@ func _check_slot_buffalo_feature_presentation(definition: Dictionary, failures: 
 	var animation_machine: Dictionary = _slot_dict(animation_step.get("machine", {}))
 	if _slot_array(_slot_dict(animation_step.get("result", {})).get("slot_reel_timeline", [])).is_empty() or str(animation_machine.get("slot_animation_id", "")).find("bonus-step") == -1:
 		failures.append("Slot buffalo hold respin did not use the normal reel animation path.")
-	var hold_spin_manifest: Dictionary = renderer.render_signature(presentation.surface_state(animation_machine, run_state, definition, {"surface_time_msec": 240}), definition, 240, "feature")
+	var hold_animation_surface: Dictionary = presentation.surface_state(animation_machine, run_state, definition, {"surface_time_msec": 240})
+	var hold_animation_scene: Dictionary = _slot_dict(hold_animation_surface.get("slot_feature_scene", {}))
+	var hold_auto_manifest: Dictionary = renderer.render_signature(hold_animation_surface, definition, 240)
+	if not bool(hold_animation_surface.get("slot_active_bonus_active", false)) or not bool(hold_animation_scene.get("active", false)) or str(hold_auto_manifest.get("mode", "")) != "feature":
+		failures.append("Slot buffalo hold respin reverted to base UI during the in-feature reel spin.")
+	var hold_spin_manifest: Dictionary = renderer.render_signature(hold_animation_surface, definition, 240, "feature")
 	if int(hold_spin_manifest.get("buffalo_main_board_unlocked_cell_count", 0)) > 0 and not bool(hold_spin_manifest.get("buffalo_unlocked_spin_active", false)):
 		failures.append("Slot buffalo hold respin did not animate unlocked cells during the reel spin.")
 	hold_machine["reel_strips"] = _slot_coin_heavy_reel_strips(maxi(1, int(hold_machine.get("reel_count", 5))))
@@ -5078,6 +5139,10 @@ func _check_slot_buffalo_feature_presentation(definition: Dictionary, failures: 
 	free_animation_machine["active_bonus"] = free_active
 	var free_animation_step: Dictionary = resolver.resolve_bonus_action(free_animation_machine, "slot_bonus_launch", run_state.create_rng("buffalo_present_free_resolver"), definition)
 	var free_animation_surface: Dictionary = presentation.surface_state(_slot_dict(free_animation_step.get("machine", {})), run_state, definition, {"surface_time_msec": 240})
+	var free_animation_scene: Dictionary = _slot_dict(free_animation_surface.get("slot_feature_scene", {}))
+	var free_auto_manifest: Dictionary = renderer.render_signature(free_animation_surface, definition, 240)
+	if not bool(free_animation_surface.get("slot_active_bonus_active", false)) or not bool(free_animation_scene.get("active", false)) or str(free_auto_manifest.get("mode", "")) != "feature":
+		failures.append("Slot buffalo free-games respin reverted to base UI during the in-feature reel spin.")
 	var free_spin_manifest: Dictionary = renderer.render_signature(free_animation_surface, definition, 240, "feature")
 	if int(free_spin_manifest.get("buffalo_main_board_unlocked_cell_count", 0)) > 0 and not bool(free_spin_manifest.get("buffalo_unlocked_spin_active", false)):
 		failures.append("Slot buffalo free-games feature did not animate non-coin cells during the reel spin.")
@@ -7799,6 +7864,7 @@ func _check_ui_state_machine_input_fuzz_foundation(library: ContentLibrary, fail
 	_sb4_check_wager_modal_routes(library, app, failures)
 	_sb4_check_travel_transition_routes(app, failures)
 	_sb4_check_seeded_menu_canvas_routes(app, failures)
+	_sb4_check_background_runtime_does_not_block_active_game(library, app, failures)
 	_sb4_dispose_app(app)
 
 
@@ -7808,6 +7874,72 @@ func _sb4_dispose_app(app: Control) -> void:
 	if app.get_parent() != null:
 		app.get_parent().remove_child(app)
 	app.free()
+
+
+func _sb4_check_background_runtime_does_not_block_active_game(library: ContentLibrary, app: Control, failures: Array) -> void:
+	var blackjack: GameModule = _load_surface_contract_game(library, "blackjack", failures)
+	var slot: GameModule = _load_surface_contract_game(library, "slot", failures)
+	if blackjack == null or slot == null:
+		return
+	var run_state: RunState = RunStateScript.new()
+	run_state.start_new("SB4-BLACKJACK-SLOT-RUNTIME-BLOCK")
+	run_state.bankroll = 100
+	var environment := _surface_contract_environment()
+	environment["game_ids"] = ["blackjack", "slot"]
+	environment["economic_profile"] = {"stake_floor": 1, "stake_ceiling": 100}
+	var blackjack_table: Dictionary = blackjack.generate_environment_state(run_state, environment, run_state.create_rng("sb4_blackjack_table"))
+	blackjack_table["shoe_cursor"] = 0
+	blackjack_table["patrons"] = []
+	blackjack_table["side_bets"] = []
+	blackjack_table["rules"] = {"dealer_hits_soft_17": false, "double_after_split": true, "split_aces_one_card": true, "max_split_hands": 4, "late_surrender": true}
+	blackjack_table["shoe"] = [
+		{"rank": 14, "suit": 0}, {"rank": 9, "suit": 2}, {"rank": 13, "suit": 1}, {"rank": 7, "suit": 3},
+		{"rank": 5, "suit": 0}, {"rank": 6, "suit": 1}, {"rank": 8, "suit": 2}, {"rank": 4, "suit": 3}
+	]
+	var slot_machine: Dictionary = slot.generate_environment_state(run_state, environment, run_state.create_rng("sb4_background_slot"))
+	slot_machine = SlotMachineStateScript.set_selected_bet(slot_machine, "bet_20")
+	slot_machine["slot_autoplay_active"] = true
+	slot_machine["slot_autoplay_next_msec"] = 1
+	environment["game_states"] = {"blackjack": blackjack_table, "slot": SlotMachineStateScript.normalize(slot_machine)}
+	run_state.set_environment(environment)
+	var deal_command := blackjack.surface_action_command("blackjack_deal", 0, false, {"selected_stake": 60}, run_state, run_state.current_environment)
+	var placed := blackjack.resolve_with_context("blackjack_place_bet", 60, run_state, run_state.current_environment, run_state.create_rng("sb4_blackjack_place"), deal_command.get("ui_state", {}))
+	var placed_ui: Dictionary = placed.get("ui_state", {}) if typeof(placed.get("ui_state", {})) == TYPE_DICTIONARY else {}
+	if run_state.bankroll != 40:
+		failures.append("SB.4 blackjack/slot fixture did not leave the expected $40 after a $60 upfront blackjack wager.")
+		return
+	var stored_slot_before := SlotMachineStateScript.read_machine(run_state.current_environment, "slot")
+	var spin_count_before := int(stored_slot_before.get("spin_count", 0))
+	app.set("library", library)
+	app.set("run_state", run_state)
+	app.set("current_game", blackjack)
+	app.set("game_surface_ui_state", placed_ui)
+	app.set("selected_stake", 60)
+	app.set("selected_action_id", "play_basic")
+	app.set("selected_action_kind", "legal")
+	app.call("_set_current_screen", "GAME")
+	app.call("_hide_event_choice_popup")
+	app.call("_advance_environment_game_runtime")
+	var popup: Dictionary = app.call("current_event_choice_popup_snapshot")
+	if bool(popup.get("visible", false)):
+		failures.append("SB.4 background slot runtime opened a blocking wager prompt over an active blackjack settlement.")
+	var stored_slot_after := SlotMachineStateScript.read_machine(run_state.current_environment, "slot")
+	if int(stored_slot_after.get("spin_count", 0)) != spin_count_before:
+		failures.append("SB.4 background slot autoplay advanced while a foreground blackjack hand was waiting to settle.")
+	if run_state.bankroll != 40:
+		failures.append("SB.4 background slot runtime changed bankroll before the foreground blackjack settlement.")
+	app.call("_on_game_surface_action", "blackjack_deal", 0, true)
+	var result: Dictionary = app.get("last_game_result")
+	var hand_results: Array = result.get("blackjack_hand_results", []) as Array
+	if not bool(result.get("ok", false)) or hand_results.is_empty() or str((hand_results[0] as Dictionary).get("outcome", "")) != "blackjack":
+		failures.append("SB.4 blackjack natural could not settle after suppressing background slot runtime: action=%s ok=%s message=%s hand_count=%d selected=%s/%s." % [
+			str(result.get("action_id", "")),
+			str(result.get("ok", false)),
+			str(result.get("message", "")),
+			hand_results.size(),
+			str(app.get("selected_action_id")),
+			str(app.get("selected_action_kind")),
+		])
 
 
 func _sb4_check_event_modal_routes(library: ContentLibrary, app: Control, failures: Array) -> void:
@@ -9923,8 +10055,8 @@ func _check_blackjack_surface_contract(game: GameModule, failures: Array) -> voi
 	if (confirm_deal_click.get("ui_state", {}) as Dictionary).get("round_terminal", false):
 		failures.append("Blackjack confirmed Deal marked the hand terminal before any player action.")
 	var selected_deal_click := game.surface_action_command("blackjack_deal", 0, false, {"selected_action_id": "play_basic", "selected_action_kind": "legal"}, run_state, environment)
-	if bool(selected_deal_click.get("resolve", false)) or not str(selected_deal_click.get("action_id", "")).is_empty():
-		failures.append("Blackjack opening Deal resolved immediately when play_basic was already selected.")
+	if str(selected_deal_click.get("action_id", "")) != "blackjack_place_bet" or not bool(selected_deal_click.get("direct_resolve", false)):
+		failures.append("Blackjack opening Deal did not route through upfront wager placement when play_basic was already selected.")
 	if bool((selected_deal_click.get("ui_state", {}) as Dictionary).get("round_terminal", false)):
 		failures.append("Blackjack selected opening Deal marked the hand terminal before player action.")
 	var deal_click := game.surface_action_command("blackjack_deal", 0, false, {}, run_state, environment)
@@ -10469,6 +10601,73 @@ func _check_blackjack_surface_contract(game: GameModule, failures: Array) -> voi
 	var marked_surrender_result := game.resolve_with_context("play_basic", 5, marked_surrender_run_state, marked_surrender_environment, marked_surrender_run_state.create_rng("blackjack_marked_surrender_resolve"), marked_surrender_click.get("ui_state", {}))
 	if int(marked_surrender_result.get("bankroll_delta", 0)) != -3 or int(marked_surrender_result.get("blackjack_main_delta", 0)) != -3:
 		failures.append("Blackjack marked cards reduced a legal reveal loss without an actual peek cheat.")
+
+	var all_in_run_state: RunState = RunStateScript.new()
+	all_in_run_state.start_new("BLACKJACK-UPFRONT-ALL-IN")
+	all_in_run_state.change_bankroll(-90)
+	var all_in_environment := _surface_contract_environment()
+	var all_in_table := generated_state.duplicate(true)
+	all_in_table["shoe_cursor"] = 0
+	all_in_table["patrons"] = []
+	all_in_table["side_bets"] = []
+	all_in_table["rules"] = {"dealer_hits_soft_17": false, "double_after_split": true, "split_aces_one_card": true, "max_split_hands": 4, "late_surrender": true}
+	all_in_table["shoe"] = [
+		{"rank": 10, "suit": 0}, {"rank": 10, "suit": 1}, {"rank": 6, "suit": 2}, {"rank": 9, "suit": 3},
+		{"rank": 5, "suit": 0}, {"rank": 8, "suit": 1}, {"rank": 4, "suit": 2}, {"rank": 3, "suit": 3}
+	]
+	all_in_environment["game_states"] = {"blackjack": all_in_table}
+	var all_in_deal := game.surface_action_command("blackjack_deal", 0, false, {"selected_stake": 10}, all_in_run_state, all_in_environment)
+	if str(all_in_deal.get("action_id", "")) != "blackjack_place_bet":
+		failures.append("Blackjack all-in opening hand did not route through the upfront wager placement action.")
+	var all_in_bet := game.resolve_with_context("blackjack_place_bet", 10, all_in_run_state, all_in_environment, all_in_run_state.create_rng("blackjack_all_in_bet"), all_in_deal.get("ui_state", {}))
+	var all_in_bet_ui: Dictionary = all_in_bet.get("ui_state", {})
+	if all_in_run_state.bankroll != 0:
+		failures.append("Blackjack all-in opening wager did not debit bankroll before hand settlement.")
+	if all_in_run_state.is_terminal():
+		failures.append("Blackjack all-in opening wager ended the run before the unsettled hand resolved.")
+	if not bool(all_in_bet.get("defer_bankroll_zero_failure", false)):
+		failures.append("Blackjack all-in opening wager did not defer bankroll-zero failure during the live hand.")
+	if int(all_in_bet.get("blackjack_wager_debited", 0)) != 10:
+		failures.append("Blackjack all-in opening wager did not report the debited stake.")
+	if (all_in_bet_ui.get("player_hands", []) as Array).is_empty():
+		failures.append("Blackjack all-in upfront wager did not keep the dealt hand in surface state.")
+	var all_in_stand := game.surface_action_command("blackjack_stand", 0, true, all_in_bet_ui, all_in_run_state, all_in_environment)
+	var all_in_result := game.resolve_with_context("play_basic", 10, all_in_run_state, all_in_environment, all_in_run_state.create_rng("blackjack_all_in_settle"), all_in_stand.get("ui_state", {}))
+	if int(all_in_result.get("blackjack_wager_debited", 0)) != 10:
+		failures.append("Blackjack all-in settlement did not recognize the upfront-debited wager.")
+	if int(all_in_result.get("bankroll_delta", 999)) != 0:
+		failures.append("Blackjack all-in losing settlement charged the already-debited wager again.")
+	if all_in_run_state.bankroll != 0:
+		failures.append("Blackjack all-in losing settlement left an unexpected bankroll value.")
+	if not all_in_run_state.is_terminal() or all_in_run_state.run_failure_reason != RunState.FAILURE_BANKROLL_ZERO:
+		failures.append("Blackjack all-in losing settlement did not fail the run after the unresolved hand completed at zero bankroll.")
+
+	var double_prompt_run_state: RunState = RunStateScript.new()
+	double_prompt_run_state.start_new("BLACKJACK-DOUBLE-NOT-ALL-IN")
+	double_prompt_run_state.change_bankroll(-68)
+	var double_prompt_environment := _surface_contract_environment()
+	var double_prompt_table := generated_state.duplicate(true)
+	double_prompt_table["shoe_cursor"] = 0
+	double_prompt_table["patrons"] = []
+	double_prompt_table["side_bets"] = []
+	double_prompt_table["rules"] = {"dealer_hits_soft_17": false, "double_after_split": true, "split_aces_one_card": true, "max_split_hands": 4, "late_surrender": true}
+	double_prompt_table["shoe"] = [
+		{"rank": 10, "suit": 0}, {"rank": 9, "suit": 1}, {"rank": 6, "suit": 2}, {"rank": 7, "suit": 3},
+		{"rank": 2, "suit": 0}, {"rank": 8, "suit": 1}, {"rank": 4, "suit": 2}, {"rank": 3, "suit": 3}
+	]
+	double_prompt_environment["game_states"] = {"blackjack": double_prompt_table}
+	var double_prompt_deal := game.surface_action_command("blackjack_deal", 0, false, {"selected_stake": 11}, double_prompt_run_state, double_prompt_environment)
+	var double_prompt_bet := game.resolve_with_context("blackjack_place_bet", 11, double_prompt_run_state, double_prompt_environment, double_prompt_run_state.create_rng("blackjack_double_prompt_bet"), double_prompt_deal.get("ui_state", {}))
+	var double_prompt_bet_ui: Dictionary = double_prompt_bet.get("ui_state", {})
+	if double_prompt_run_state.bankroll != 21:
+		failures.append("Blackjack double prompt fixture did not leave $21 after the opening wager.")
+	var double_prompt_command := game.surface_action_command("blackjack_double", 0, false, double_prompt_bet_ui, double_prompt_run_state, double_prompt_environment)
+	var double_prompt_ui: Dictionary = double_prompt_command.get("ui_state", {})
+	var double_prompt_remaining_cost := game.wager_cost_for_context("play_basic", 11, double_prompt_run_state, double_prompt_environment, double_prompt_ui)
+	if double_prompt_remaining_cost != 11:
+		failures.append("Blackjack double reported total wager instead of unpaid extra wager; expected 11, got %d." % double_prompt_remaining_cost)
+	if double_prompt_run_state.bankroll - double_prompt_remaining_cost <= 0:
+		failures.append("Blackjack double would show all-in confirmation despite cash remaining after the extra wager.")
 
 	var split_run_state: RunState = RunStateScript.new()
 	split_run_state.start_new("BLACKJACK-SPLIT-CONTRACT")
@@ -13125,12 +13324,27 @@ func _check_action_result_applied(before: Dictionary, run_state: RunState, resul
 	var expected_suspicion := clampi(before_suspicion + int(deltas.get("suspicion_delta", 0)), 0, 100)
 	if actual_suspicion != expected_suspicion:
 		failures.append("RunState suspicion did not match %s delta." % label)
-	var expected_drunk := clampi(int(before.get("drunk_level", 0)) + int(deltas.get("drunk_delta", 0)), 0, RunState.ALCOHOL_MAX)
+	var intake := maxi(0, int(deltas.get("alcohol_intake", 0)))
+	var before_drunk := int(before.get("drunk_level", 0))
+	var before_pending := int(before.get("pending_drunk_absorption", 0))
+	var pending_capacity := maxi(0, RunState.ALCOHOL_MAX - before_drunk - before_pending)
+	var accepted_intake := mini(intake, pending_capacity)
+	var immediate_intake := mini(accepted_intake, RunState.DRUNK_ABSORPTION_INITIAL_POINTS)
+	var expected_pending := before_pending + accepted_intake - immediate_intake
+	var immediate_pending_delta := 0
+	var pending_delta := int(deltas.get("pending_drunk_absorption_delta", 0))
+	if pending_delta < 0:
+		expected_pending = maxi(0, expected_pending + pending_delta)
+	elif pending_delta > 0:
+		var pending_delta_capacity := maxi(0, RunState.ALCOHOL_MAX - before_drunk - immediate_intake - expected_pending)
+		var accepted_pending_delta := mini(pending_delta, pending_delta_capacity)
+		immediate_pending_delta = mini(accepted_pending_delta, RunState.DRUNK_ABSORPTION_INITIAL_POINTS)
+		expected_pending += maxi(0, accepted_pending_delta - immediate_pending_delta)
+	var drunk_delta := int(deltas.get("drunk_delta", 0))
+	var effective_drunk_delta := 0 if drunk_delta < 0 and expected_pending > 0 else drunk_delta
+	var expected_drunk := clampi(before_drunk + immediate_intake + immediate_pending_delta + effective_drunk_delta, 0, RunState.ALCOHOL_MAX)
 	if run_state.drunk_level != expected_drunk:
 		failures.append("RunState drunk level did not match %s delta." % label)
-	var intake := maxi(0, int(deltas.get("alcohol_intake", 0)))
-	var pending_capacity := maxi(0, RunState.ALCOHOL_MAX - int(before.get("drunk_level", 0)) - int(before.get("pending_drunk_absorption", 0)))
-	var expected_pending := int(before.get("pending_drunk_absorption", 0)) + mini(intake, pending_capacity)
 	if run_state.pending_drunk_absorption_amount() != expected_pending:
 		failures.append("RunState pending drunk absorption did not match %s alcohol intake." % label)
 	var expected_alcoholic := clampi(int(before.get("alcoholic_level", 0)) + int(deltas.get("alcohol_intake", 0)) + int(deltas.get("alcoholic_delta", 0)), 0, RunState.ALCOHOL_MAX)
@@ -13945,7 +14159,7 @@ func _check_talk_decision_system_foundation(library: ContentLibrary, failures: A
 		"trigger": "table_approach",
 		"type": "table_approach",
 		"game_id": "blackjack",
-		"hands_played": 1,
+		"hands_played": 2,
 		"environment_snapshot": run_state.current_environment.duplicate(true),
 	}
 	var event_id := "blackjack_counter_probe"
@@ -13992,6 +14206,56 @@ func _check_talk_decision_system_foundation(library: ContentLibrary, failures: A
 	loaded.complete_talk_event_resolution(event_id)
 	if not loaded.next_pending_talk_event().is_empty():
 		failures.append("Talk decision event did not clear after completion.")
+	var app_value: Variant = MainScene.instantiate()
+	if not app_value is Control:
+		failures.append("Talk ignore fixture could not instantiate FoundationMain.")
+		return
+	var app: Control = app_value
+	root.add_child(app)
+	if not bool(app.call("uses_foundation_runtime")):
+		app.call("_ready")
+	if not bool(app.call("uses_foundation_runtime")):
+		failures.append("Talk ignore fixture requires FoundationMain runtime nodes.")
+		_sb4_dispose_app(app)
+		return
+	var ignore_run: RunState = RunStateScript.new()
+	ignore_run.start_new("TALK-IGNORE-PENALTY")
+	ignore_run.set_environment(_t4_3_fixture_environment("bar", "bar", 1, ["blackjack"], [], ["motel"]))
+	ignore_run.enqueue_triggered_event(event_id, "fixture", context, {"presentation": "talk", "speaker": speaker, "timing": timing})
+	app.set("library", library)
+	app.set("run_state", ignore_run)
+	app.call("_refresh_talk_dock")
+	var dock_snapshot: Dictionary = app.call("current_talk_dock_snapshot")
+	if not bool(dock_snapshot.get("visible", false)) or not bool(dock_snapshot.get("expanded", false)):
+		failures.append("Talk dock did not open as an expanded attention popup.")
+	if int(dock_snapshot.get("ignore_penalty_heat", 0)) != 5:
+		failures.append("Talk dock did not expose the ignore heat penalty.")
+	var before_ignore_heat := ignore_run.suspicion_level()
+	app.call("_on_talk_dock_choice_requested", event_id, "ignore")
+	if not ignore_run.next_pending_talk_event().is_empty():
+		failures.append("Talk explicit ignore did not clear the pending entry.")
+	if ignore_run.suspicion_level() < before_ignore_heat + 5:
+		failures.append("Talk explicit ignore did not add heat.")
+	if _copy_array(ignore_run.current_environment.get("resolved_event_ids", [])).has(event_id):
+		failures.append("Talk explicit ignore resolved the event benefit path instead of only applying the penalty.")
+	if not _story_log_has_type(ignore_run.story_log, "talk_ignored"):
+		failures.append("Talk explicit ignore did not record a story entry.")
+	var travel_run: RunState = RunStateScript.new()
+	travel_run.start_new("TALK-IGNORE-TRAVEL")
+	travel_run.set_environment(_t4_3_fixture_environment("bar", "bar", 1, ["blackjack"], [], ["motel"]))
+	travel_run.enqueue_triggered_event(event_id, "fixture", context, {"presentation": "talk", "speaker": speaker, "timing": timing})
+	app.set("run_state", travel_run)
+	app.set("generator", RunGeneratorScript.new(library))
+	app.set("current_game", null)
+	var travel_before_heat := travel_run.suspicion_level()
+	app.call("_travel_to", "motel", "Motel", {"id": "motel", "label": "Motel", "enabled": true, "route": {"id": "motel", "cost": 0, "distance_blocks": 1}, "travel_minutes": 1})
+	if not travel_run.next_pending_talk_event().is_empty():
+		failures.append("Travel carried a pending talk entry into the next room.")
+	if travel_run.suspicion_level() < travel_before_heat + 5:
+		failures.append("Traveling away from pending talk did not add heat.")
+	if str(travel_run.current_environment.get("archetype_id", "")) != "motel":
+		failures.append("Talk travel-ignore fixture did not arrive at the target room.")
+	_sb4_dispose_app(app)
 
 
 func _check_dialogue_system_foundation(library: ContentLibrary, failures: Array) -> void:
@@ -14366,6 +14630,8 @@ func _check_event_result_delta_shape(result: Dictionary, failures: Array) -> voi
 		failures.append("EventModule top-level bankroll_delta does not match deltas.")
 	if int(result.get("suspicion_delta", 0)) != int(deltas.get("suspicion_delta", 0)):
 		failures.append("EventModule top-level suspicion_delta does not match deltas.")
+	if int(result.get("bankroll_delta", 0)) > 0 and str(result.get("conclusion_animation", "")) != "bankroll_transfer":
+		failures.append("EventModule positive bankroll result did not request the bankroll transfer animation.")
 	if str(result.get("message", "")).is_empty():
 		failures.append("EventModule result should include a player-facing message.")
 	if result.get("messages", []).is_empty() or deltas.get("messages", []).is_empty():
@@ -14845,6 +15111,27 @@ func _check_world_map_foundation(library: ContentLibrary, failures: Array) -> vo
 		if object_rects.has("travel:%s" % str(target_id)):
 			failures.append("World-map rooms should not expose per-destination travel object travel:%s." % str(target_id))
 			break
+	for tip_seed_index in range(20):
+		var tip_run: RunState = RunStateScript.new()
+		tip_run.start_new("WORLD-MAP-UNDERGROUND-TIP-%02d" % tip_seed_index)
+		generator.next_environment(tip_run)
+		var underground_id := WorldMapScript.UNDERGROUND_SHORTCUT_ID
+		if WorldMapScript.visible_node_ids(tip_run.world_map).has(underground_id):
+			failures.append("World map showed the underground casino before the parking lot tip for seed %02d." % tip_seed_index)
+			break
+		tip_run.narrative_flags["underground_tip"] = true
+		tip_run.add_next_archetypes([underground_id])
+		if not WorldMapScript.visible_node_ids(tip_run.world_map).has(underground_id):
+			failures.append("Parking lot tip did not reveal the underground casino for seed %02d." % tip_seed_index)
+			break
+		var tipped_targets := WorldMapScript.travel_target_ids(tip_run.world_map, tip_run.current_world_node_id(), WorldMapScript.TRAVEL_NEW_TARGET_LIMIT, WorldMapScript.TRAVEL_TOTAL_TARGET_LIMIT, [underground_id])
+		if not tipped_targets.has(underground_id):
+			failures.append("Parking lot tip did not make the underground casino a selectable map target for seed %02d." % tip_seed_index)
+			break
+		var tipped_route := WorldMapScript.new(library).route_for_target(tip_run.world_map, tip_run.current_world_node_id(), underground_id)
+		if tipped_route.is_empty():
+			failures.append("Parking lot tip revealed the underground casino without a usable map route for seed %02d." % tip_seed_index)
+			break
 
 	var run_b: RunState = RunStateScript.new()
 	run_b.start_new("WORLD-MAP-SEED")
@@ -15148,6 +15435,53 @@ func _check_time_open_hours_foundation(library: ContentLibrary, failures: Array)
 	restored.from_dict(loaded.to_dict())
 	if not restored.closing_time_forced_travel_required():
 		failures.append("Forced closing travel state did not survive save/load.")
+	var app_value: Variant = MainScene.instantiate()
+	if not app_value is Control:
+		failures.append("Closing-time travel fixture could not instantiate FoundationMain.")
+		return
+	var app: Control = app_value
+	root.add_child(app)
+	if not bool(app.call("uses_foundation_runtime")):
+		app.call("_ready")
+	if not bool(app.call("uses_foundation_runtime")):
+		failures.append("Closing-time travel fixture requires FoundationMain runtime nodes.")
+		_sb4_dispose_app(app)
+		return
+	var ui_run: RunState = RunStateScript.new()
+	ui_run.start_new("TIME-OPEN-HOURS-UI")
+	ui_run.bankroll = 100
+	var ui_environment := EnvironmentInstance.from_archetype(bar_archetype, 2, ui_run.create_rng("time_open_hours_ui"), library).to_dict()
+	ui_environment["next_archetypes"] = ["motel"]
+	ui_environment["travel_hooks"] = []
+	ui_environment["layout"] = EnvironmentInstance.ensure_generated_layout(ui_environment)
+	ui_run.set_environment(ui_environment)
+	ui_run.game_clock_minutes = (24 + 3) * 60
+	ui_run.begin_closing_time(ui_run.current_environment, ui_run.game_minute_of_day())
+	ui_run.spend_closing_time_grace_action()
+	app.set("run_state", ui_run)
+	app.set("current_game", null)
+	app.set("last_hook_result", {})
+	app.call("_set_current_screen", "ENVIRONMENT")
+	app.call("_refresh")
+	if not bool(app.call("open_world_map", true)):
+		failures.append("Closing-time forced travel could not open the map.")
+	var selected_ok := bool(app.call("select_world_map_node", "motel"))
+	if not selected_ok:
+		failures.append("Closing-time forced travel could not select the motel route.")
+	var selected_node := str(app.get("selected_world_map_node_id"))
+	var selected_target := str(app.get("selected_travel_target_id"))
+	if selected_node != "motel" or selected_target != "motel":
+		failures.append("Closing-time forced travel selection did not arm the route: node=%s target=%s." % [selected_node, selected_target])
+	app.call("confirm_world_map_travel")
+	if str(ui_run.current_environment.get("archetype_id", "")) != "motel":
+		failures.append("Closing-time map Travel button did not leave the closed venue; current=%s selected_node=%s selected_target=%s." % [
+			str(ui_run.current_environment.get("archetype_id", "")),
+			str(app.get("selected_world_map_node_id")),
+			str(app.get("selected_travel_target_id")),
+		])
+	if ui_run.closing_time_forced_travel_required():
+		failures.append("Closing-time forced travel state was not cleared after successful travel.")
+	_sb4_dispose_app(app)
 
 
 func _world_map_hidden_count(map_data: Dictionary) -> int:
@@ -15565,17 +15899,19 @@ func _check_service_hook_foundation(library: ContentLibrary, failures: Array) ->
 		GameModule.apply_result(drink_run, drink_result)
 		if drink_intake <= 0:
 			failures.append("Alcohol service did not expose a positive intake delta.")
-		if drink_run.drunk_level != 0 or drink_run.alcoholic_level != drink_intake or drink_run.pending_drunk_absorption_amount() != drink_intake:
-			failures.append("Alcohol service did not queue exactly one delayed drink intake.")
+		var immediate_drunk := mini(drink_intake, RunState.DRUNK_ABSORPTION_INITIAL_POINTS)
+		if drink_run.drunk_level != immediate_drunk or drink_run.alcoholic_level != drink_intake or drink_run.pending_drunk_absorption_amount() != drink_intake - immediate_drunk:
+			failures.append("Alcohol service did not apply the immediate first sip and queue the remaining drink intake.")
 		var first_absorption_msec := int(((drink_run.pending_drunk_absorption[0] as Dictionary).get("next_msec", 0))) if not drink_run.pending_drunk_absorption.is_empty() else 0
 		drink_run.update_drunk_absorption(first_absorption_msec - 1)
-		if drink_run.drunk_level != 0:
+		if drink_run.drunk_level != immediate_drunk:
 			failures.append("Alcohol absorption kicked in before its first interval.")
 		drink_run.update_drunk_absorption(first_absorption_msec)
-		if drink_run.drunk_level != 1 or drink_run.pending_drunk_absorption_amount() != drink_intake - 1:
-			failures.append("Alcohol absorption did not add exactly one drunk point at the first interval.")
+		var first_step := mini(drink_intake - immediate_drunk, RunState.DRUNK_ABSORPTION_POINTS_PER_INTERVAL)
+		if drink_run.drunk_level != immediate_drunk + first_step or drink_run.pending_drunk_absorption_amount() != drink_intake - immediate_drunk - first_step:
+			failures.append("Alcohol absorption did not add the expected drunk chunk at the first interval.")
 		drink_run.advance_environment_turns(6)
-		if drink_run.drunk_level != 1:
+		if drink_run.drunk_level != immediate_drunk + first_step:
 			failures.append("Drunk decay ran while drink absorption was still pending.")
 		drink_run.update_drunk_absorption(first_absorption_msec + drink_intake * RunState.DRUNK_ABSORPTION_INTERVAL_MSEC + 1)
 		if drink_run.drunk_level != drink_intake or drink_run.pending_drunk_absorption_amount() != 0:
@@ -15600,8 +15936,10 @@ func _check_service_hook_foundation(library: ContentLibrary, failures: Array) ->
 		stacked_run.drink_alcohol(10)
 		var stacked_next_msec := int(((stacked_run.pending_drunk_absorption[0] as Dictionary).get("next_msec", 0))) if not stacked_run.pending_drunk_absorption.is_empty() else 0
 		stacked_run.update_drunk_absorption(stacked_next_msec)
-		if stacked_run.drunk_level != 3 or stacked_run.pending_drunk_absorption_amount() != 27:
-			failures.append("Stacked drinks did not absorb one point per drink on the same interval.")
+		var stacked_immediate := RunState.DRUNK_ABSORPTION_INITIAL_POINTS * 3
+		var stacked_first_step := RunState.DRUNK_ABSORPTION_POINTS_PER_INTERVAL * 3
+		if stacked_run.drunk_level != stacked_immediate + stacked_first_step or stacked_run.pending_drunk_absorption_amount() != 30 - stacked_immediate - stacked_first_step:
+			failures.append("Stacked drinks did not absorb one chunk per drink on the same interval.")
 		var absorbed_luck := drink_run.effective_luck()
 		var heat_before := drink_run.suspicion_level()
 		var applied_heat := drink_run.add_suspicion("alcohol_heat_fixture", 2)
@@ -16221,6 +16559,7 @@ func _check_lender_debt_foundation(library: ContentLibrary, failures: Array) -> 
 	_check_crew_lender_lifecycle(library, failures)
 	_check_family_lender_lifecycle(library, failures)
 	_check_pawn_lender_lifecycle(library, failures)
+	_check_pawn_shop_run_environment(library, failures)
 
 
 func _check_cash_lender_lifecycle(library: ContentLibrary, lender_id: String, debt_id: String, expects_heat: bool, failures: Array) -> void:
@@ -16233,6 +16572,9 @@ func _check_cash_lender_lifecycle(library: ContentLibrary, lender_id: String, de
 	if not bool(borrow.get("ok", false)):
 		failures.append("Cash lender %s did not resolve: %s" % [lender_id, str(borrow.get("message", ""))])
 		return
+	var borrow_result: Dictionary = borrow.get("result", {}) if typeof(borrow.get("result", {})) == TYPE_DICTIONARY else {}
+	if str(borrow_result.get("conclusion_animation", "")) != "bankroll_transfer":
+		failures.append("Cash lender %s did not request the bankroll transfer animation." % lender_id)
 	if run_state.bankroll <= before_bankroll:
 		failures.append("Cash lender %s did not provide bankroll." % lender_id)
 	if run_state.debt.size() != 1:
@@ -16300,6 +16642,9 @@ func _check_crew_lender_lifecycle(library: ContentLibrary, failures: Array) -> v
 	var first_marker := multi_resolver.use_hook("lender", "the_crew")
 	if not bool(first_marker.get("ok", false)):
 		failures.append("The Crew first location loan did not resolve.")
+	var first_marker_result: Dictionary = first_marker.get("result", {}) if typeof(first_marker.get("result", {})) == TYPE_DICTIONARY else {}
+	if str(first_marker_result.get("conclusion_animation", "")) != "bankroll_transfer":
+		failures.append("The Crew lender did not request the bankroll transfer animation.")
 	if bool(multi_resolver.hook_option("lender", "the_crew").get("enabled", true)):
 		failures.append("The Crew allowed a second marker from the same location.")
 	multi_state.current_environment["id"] = "lender_crew_second_room"
@@ -16330,6 +16675,9 @@ func _check_crew_lender_lifecycle(library: ContentLibrary, failures: Array) -> v
 	if not bool(borrow.get("ok", false)):
 		failures.append("The Crew lender did not resolve: %s" % str(borrow.get("message", "")))
 		return
+	var borrow_result: Dictionary = borrow.get("result", {}) if typeof(borrow.get("result", {})) == TYPE_DICTIONARY else {}
+	if str(borrow_result.get("conclusion_animation", "")) != "bankroll_transfer":
+		failures.append("The Crew direct lender did not request the bankroll transfer animation.")
 	if run_state.bankroll != before_bankroll + 45:
 		failures.append("The Crew did not lend its configured cash amount.")
 	var debt_data: Dictionary = run_state.debt[0] as Dictionary
@@ -16366,6 +16714,9 @@ func _check_family_lender_lifecycle(library: ContentLibrary, failures: Array) ->
 	if not bool(borrow.get("ok", false)):
 		failures.append("Brother-in-law lender did not resolve after the phone call.")
 		return
+	var borrow_result: Dictionary = borrow.get("result", {}) if typeof(borrow.get("result", {})) == TYPE_DICTIONARY else {}
+	if str(borrow_result.get("conclusion_animation", "")) != "bankroll_transfer":
+		failures.append("Brother-in-law lender did not request the bankroll transfer animation.")
 	if not bool(run_state.narrative_flags.get("brother_in_law_loan_used", false)):
 		failures.append("Brother-in-law lender did not mark its single-use flag.")
 	if bool(resolver.hook_option("lender", "brother_in_law").get("enabled", true)):
@@ -16407,30 +16758,159 @@ func _check_pawn_lender_lifecycle(library: ContentLibrary, failures: Array) -> v
 	var empty_resolver: RunActionService = empty_fixture.get("resolver", null)
 	if bool(empty_resolver.hook_option("lender", "sals_pawn_counter").get("enabled", true)):
 		failures.append("Sal's Pawn Counter was enabled without collateral.")
-	var fixture := _lender_fixture(library, "LENDER-PAWN", ["sals_pawn_counter"], [], ["creased_luck_card"])
+	var fixture := _lender_fixture(library, "LENDER-PAWN", ["sals_pawn_counter"], [], ["creased_luck_card", "cheap_sunglasses", "scratch_pad", "payment_calendar", "pawn_receipt_sleeve"])
 	var run_state: RunState = fixture.get("run_state", null)
 	var resolver: RunActionService = fixture.get("resolver", null)
-	var borrow := resolver.use_hook("lender", "sals_pawn_counter")
-	if not bool(borrow.get("ok", false)):
-		failures.append("Sal's Pawn Counter did not resolve with collateral.")
+	var quotes := resolver.pawn_quote_options("sals_pawn_counter")
+	if quotes.size() < 3:
+		failures.append("Sal's Pawn Counter did not expose multiple pawn quote choices.")
 		return
-	if run_state.inventory.has("creased_luck_card"):
-		failures.append("Pawn collateral remained usable in inventory after borrowing.")
-	var debt_data: Dictionary = run_state.debt[0] as Dictionary
-	if str(debt_data.get("debt_kind", "")) != "pawn" or str(debt_data.get("collateral_item_id", "")) != "creased_luck_card":
-		failures.append("Pawn debt did not record escrowed collateral.")
+	var pawn_ids := ["creased_luck_card", "cheap_sunglasses", "scratch_pad"]
+	var principal_sum := 0
+	for item_id in pawn_ids:
+		var quote := _pawn_quote_by_item(quotes, item_id)
+		if quote.is_empty():
+			failures.append("Pawn quote was missing for %s." % item_id)
+			continue
+		var before_bankroll := run_state.bankroll
+		var borrow := resolver.pawn_inventory_item(item_id, "sals_pawn_counter")
+		if not bool(borrow.get("ok", false)):
+			failures.append("Sal's Pawn Counter did not pawn selected item %s: %s" % [item_id, str(borrow.get("message", ""))])
+			continue
+		var borrow_result: Dictionary = borrow.get("result", {}) if typeof(borrow.get("result", {})) == TYPE_DICTIONARY else {}
+		if str(borrow_result.get("conclusion_animation", "")) != "bankroll_transfer":
+			failures.append("Sal's Pawn Counter did not request the bankroll transfer animation.")
+		var loan_amount := maxi(0, int(quote.get("loan_amount", 0)))
+		principal_sum += loan_amount
+		if run_state.bankroll != before_bankroll + loan_amount:
+			failures.append("Pawn selected-item principal was not paid out for %s." % item_id)
+		if run_state.inventory.has(item_id):
+			failures.append("Pawn collateral %s remained usable in inventory after borrowing." % item_id)
+	if run_state.debt.size() != 3:
+		failures.append("Sal's Pawn Counter did not create three selected pawn tickets.")
+		return
+	var ticket_ids := {}
+	for debt_entry in run_state.debt:
+		var debt_data: Dictionary = debt_entry as Dictionary
+		var ticket_id := str(debt_data.get("id", ""))
+		if ticket_ids.has(ticket_id):
+			failures.append("Pawn ticket ids were not distinct.")
+		ticket_ids[ticket_id] = true
+		var principal := maxi(0, int(debt_data.get("principal", 0)))
+		var expected_fee := maxi(1, int(ceil(float(principal) * 0.25)))
+		if int(debt_data.get("balance", 0)) != principal + expected_fee or int(debt_data.get("redemption_fee", 0)) != expected_fee:
+			failures.append("Pawn ticket fee math did not store principal plus 25 percent fee.")
+		if int(debt_data.get("deadline_turns", 0)) <= 5:
+			failures.append("Pawn receipt/calendar grace did not extend pawn ticket deadlines.")
+	if principal_sum <= 0:
+		failures.append("Pawn selected-item principal sum was empty.")
+	var tickets := run_state.pawn_tickets_for_lender("sals_pawn_counter")
+	if tickets.size() != 3:
+		failures.append("Pawn ticket ledger did not expose all tickets.")
+	var middle_debt: Dictionary = run_state.debt[1] as Dictionary
+	var middle_id := str(middle_debt.get("id", ""))
+	var middle_item := str(middle_debt.get("collateral_item_id", ""))
+	var middle_payoff := maxi(0, int(middle_debt.get("balance", 0)))
 	run_state.bankroll = 500
-	var repay := run_state.repay_debt(str(debt_data.get("id", "")))
-	if not bool(repay.get("ok", false)) or not run_state.inventory.has("creased_luck_card") or not run_state.debt.is_empty():
-		failures.append("Pawn repayment did not redeem the escrowed item.")
+	var repay := run_state.repay_debt(middle_id)
+	if not bool(repay.get("ok", false)) or not run_state.inventory.has(middle_item) or run_state.debt.size() != 2:
+		failures.append("Pawn selective repayment did not redeem exactly the chosen ticket.")
+	if run_state.bankroll != 500 - middle_payoff:
+		failures.append("Pawn selective repayment did not charge exactly the ticket buy-back amount.")
 
 	var default_fixture := _lender_fixture(library, "LENDER-PAWN-DEFAULT", ["sals_pawn_counter"], [], ["creased_luck_card"])
 	var default_state: RunState = default_fixture.get("run_state", null)
 	var default_resolver: RunActionService = default_fixture.get("resolver", null)
 	default_resolver.use_hook("lender", "sals_pawn_counter")
 	default_state.advance_environment_turns(5)
-	if default_state.inventory.has("creased_luck_card") or not default_state.debt.is_empty() or not bool(default_state.narrative_flags.get("sals_pawn_defaulted", false)):
-		failures.append("Pawn default did not forfeit collateral and clear the loan.")
+	if default_state.inventory.has("creased_luck_card") or not default_state.debt.is_empty() or not bool(default_state.narrative_flags.get("sals_pawn_defaulted", false)) or not default_state.sals_forfeited_item_ids.has("creased_luck_card"):
+		failures.append("Pawn default did not forfeit collateral, clear the loan, and record Sal's shelf.")
+	default_state.set_environment({
+		"id": "pawn_shop_forfeit_fixture",
+		"kind": "pawn_shop",
+		"archetype_id": "pawn_shop",
+		"display_name": "Sal's Pawn Shop",
+		"item_offers": [],
+		"layout": {},
+	})
+	var shelf_offer := _item_offer_by_id(default_state.current_environment.get("item_offers", []), "creased_luck_card")
+	if shelf_offer.is_empty():
+		failures.append("Forfeited pawn item did not appear on Sal's shelf.")
+	else:
+		var item_definition := library.item("creased_luck_card")
+		if int(shelf_offer.get("price", 0)) != int(item_definition.get("price_max", 0)):
+			failures.append("Forfeited pawn shelf item was not priced at retail price_max.")
+	default_state.bankroll = 500
+	var buy_back := default_resolver.buy_item_offer("creased_luck_card")
+	if not bool(buy_back.get("ok", false)) or default_state.sals_forfeited_item_ids.has("creased_luck_card"):
+		failures.append("Buying a forfeited shelf item did not clear Sal's forfeited list.")
+	var save_service: SaveService = SaveServiceScript.new()
+	default_state.sals_forfeited_item_ids = ["cheap_sunglasses"]
+	var save_error: Error = save_service.save_run(default_state, "foundation_check_pawn_forfeit_shelf")
+	if save_error != OK:
+		failures.append("Save service could not save pawn forfeited shelf state: %s." % save_error)
+	else:
+		var loaded = save_service.load_run("foundation_check_pawn_forfeit_shelf")
+		if loaded == null or not loaded.sals_forfeited_item_ids.has("cheap_sunglasses"):
+			failures.append("Pawn forfeited shelf state did not survive SaveService load.")
+
+
+func _check_pawn_shop_run_environment(library: ContentLibrary, failures: Array) -> void:
+	var pawn_archetype := _archetype_by_id(library, "pawn_shop")
+	if pawn_archetype.is_empty():
+		failures.append("Pawn shop archetype is missing.")
+		return
+	if int(pawn_archetype.get("tier", 0)) != 1:
+		failures.append("Pawn shop run archetype must be tier 1.")
+	if not _string_array(pawn_archetype.get("lender_hooks", [])).has("sals_pawn_counter"):
+		failures.append("Pawn shop run archetype does not expose Sal's pawn counter.")
+	if _string_array(pawn_archetype.get("event_scopes", [])).find("shop") < 0:
+		failures.append("Pawn shop run archetype does not use shop event scope.")
+	var run_state: RunState = RunStateScript.new()
+	run_state.start_new("PAWN-SHOP-DISCOUNT")
+	var pawn_environment := EnvironmentInstance.from_archetype(pawn_archetype, 1, run_state.create_rng("pawn_shop_discount"), library).to_dict()
+	var pawn_offers: Array = pawn_environment.get("item_offers", [])
+	if pawn_offers.is_empty():
+		failures.append("Pawn shop did not roll discounted item offers.")
+	for offer_value in pawn_offers:
+		if typeof(offer_value) != TYPE_DICTIONARY:
+			continue
+		var offer := offer_value as Dictionary
+		var item := library.item(str(offer.get("id", "")))
+		var expected_min := maxi(1, int(floor(float(item.get("price_min", 1)) * 0.85)))
+		var expected_max := maxi(1, int(floor(float(item.get("price_max", item.get("price_min", 1))) * 0.85)))
+		var price := int(offer.get("price", 0))
+		if price < expected_min or price > expected_max:
+			failures.append("Pawn shop offer %s price %d was outside discounted range %d..%d." % [str(offer.get("id", "")), price, expected_min, expected_max])
+	var normal_archetype := _archetype_by_id(library, "corner_store")
+	if not normal_archetype.is_empty():
+		var normal_environment := EnvironmentInstance.from_archetype(normal_archetype, 1, run_state.create_rng("normal_shop_price"), library).to_dict()
+		for offer_value in _copy_array(normal_environment.get("item_offers", [])):
+			if typeof(offer_value) != TYPE_DICTIONARY:
+				continue
+			var offer := offer_value as Dictionary
+			var item := library.item(str(offer.get("id", "")))
+			var price := int(offer.get("price", 0))
+			if price < int(item.get("price_min", 0)) or price > int(item.get("price_max", item.get("price_min", 0))):
+				failures.append("Non-discount shop offer was changed by pawn multiplier pricing.")
+	if bool(pawn_environment.get("meta_session", false)) or str(pawn_environment.get("kind", "")) != "pawn_shop":
+		failures.append("Run pawn shop environment mixed with meta pawn session state.")
+
+
+func _pawn_quote_by_item(quotes: Array, item_id: String) -> Dictionary:
+	for quote_value in quotes:
+		if typeof(quote_value) == TYPE_DICTIONARY and str((quote_value as Dictionary).get("item_id", "")) == item_id:
+			return (quote_value as Dictionary).duplicate(true)
+	return {}
+
+
+func _item_offer_by_id(offers: Variant, item_id: String) -> Dictionary:
+	if typeof(offers) != TYPE_ARRAY:
+		return {}
+	for offer_value in offers as Array:
+		if typeof(offer_value) == TYPE_DICTIONARY and str((offer_value as Dictionary).get("id", "")) == item_id:
+			return (offer_value as Dictionary).duplicate(true)
+	return {}
 
 
 func _lender_fixture(library: ContentLibrary, seed: String, lender_ids: Array, service_ids: Array, inventory_ids: Array) -> Dictionary:
@@ -17167,6 +17647,7 @@ func _check_m2_system_interaction_scenario(library: ContentLibrary, failures: Ar
 		failures.append("M2 scenario generated environment without a game option.")
 		return
 
+	run_state.change_bankroll(RunState.DEFAULT_BANKROLL - run_state.bankroll)
 	var pressure_result := _fixture_system_pressure_result(run_state.current_environment, -60, "A cold streak tightens the run.")
 	GameModule.apply_result(run_state, pressure_result)
 	if run_state.economy() != "volatile":
@@ -17180,22 +17661,40 @@ func _check_m2_system_interaction_scenario(library: ContentLibrary, failures: Ar
 	if not run_state.inventory.has("instant_coffee"):
 		failures.append("M2 scenario did not buy an item through result-delta inventory.")
 
-	var game_id := str(environment.game_ids[0])
-	var game_definition := library.game(game_id)
-	if game_definition.is_empty():
-		failures.append("M2 scenario generated unknown game: %s." % game_id)
-		return
-	var game := GameModule.new()
-	game.setup(game_definition, library)
-	var actions := game.actions(run_state, run_state.current_environment)
-	var cheat_actions: Array = actions.get("cheat_actions", [])
-	if cheat_actions.is_empty():
-		failures.append("M2 scenario game did not expose a risky action.")
+	var game: GameModule = null
+	var risky_action: Dictionary = {}
+	for candidate_id_value in environment.game_ids:
+		var candidate_id := str(candidate_id_value)
+		var candidate_game_value = _load_surface_contract_game(library, candidate_id, failures)
+		if candidate_game_value == null or not candidate_game_value is GameModule:
+			continue
+		var candidate_game: GameModule = candidate_game_value
+		var candidate_actions := candidate_game.actions(run_state, run_state.current_environment)
+		var candidate_cheats: Array = candidate_actions.get("cheat_actions", []) if typeof(candidate_actions.get("cheat_actions", [])) == TYPE_ARRAY else []
+		if candidate_cheats.is_empty():
+			continue
+		var positive_heat_action: Dictionary = {}
+		for candidate_action_value in candidate_cheats:
+			if typeof(candidate_action_value) != TYPE_DICTIONARY:
+				continue
+			var candidate_action: Dictionary = candidate_action_value
+			if int(candidate_action.get("suspicion_delta", 0)) > 0:
+				positive_heat_action = candidate_action.duplicate(true)
+				break
+		if positive_heat_action.is_empty():
+			continue
+		game = candidate_game
+		risky_action = positive_heat_action
+		break
+	if game == null:
+		failures.append("M2 scenario generated no game with a risky action.")
 		return
 	var before_suspicion := run_state.suspicion_level()
-	var risky_action_id := str((cheat_actions[0] as Dictionary).get("id", ""))
+	var risky_action_id := str(risky_action.get("id", ""))
 	var risky_result := game.resolve(risky_action_id, 5, run_state, run_state.current_environment, run_state.create_rng())
 	_check_action_result_shape(risky_result, "cheat", failures)
+	if bool(risky_result.get("host_apply_result", false)):
+		GameModule.apply_result(run_state, risky_result, run_state.create_rng("m2_risky_host_apply"))
 	if run_state.suspicion_level() <= before_suspicion:
 		failures.append("M2 scenario risky action did not change suspicion/security state.")
 	if (run_state.suspicion.get("cues", []) as Array).is_empty():
@@ -19721,7 +20220,7 @@ func _check_save_load_033_compat_fixture(library: ContentLibrary, failures: Arra
 		failures.append("SB.3 0.3.3 save compatibility kept an unknown RunState root key.")
 	if int(normalized.get("act", 0)) != 1 or int(restored.act_index) != 1:
 		failures.append("SB.3 0.3.3 markerless save did not normalize to Act 1.")
-	if int(normalized.get("game_clock_minutes", -1)) != 8 * 60:
+	if int(normalized.get("game_clock_minutes", -1)) != RunState.GAME_CLOCK_START_MINUTE:
 		failures.append("SB.3 0.3.3 save did not normalize the new game clock default.")
 	if typeof(normalized.get("closing_time_state", null)) != TYPE_DICTIONARY:
 		failures.append("SB.3 0.3.3 save did not normalize closing time state.")

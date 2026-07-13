@@ -9,6 +9,7 @@ const ICON_SIZE := Vector2(28.0, 28.0)
 const MARKER_RADIUS := 17.0
 const BACKGROUND_PATH := "res://assets/art/map_backgrounds/cyberpunk_city_overhead.png"
 const MAP_ICON_DIR := "res://assets/art/map_icons"
+const SELECTED_FOCUS_ZOOM := 0.86
 
 var snapshot: Dictionary = {}
 var icon_texture_cache: Dictionary = {}
@@ -23,6 +24,7 @@ var snapshot_signature := ""
 var map_view_bounds_signature := ""
 var map_view_basis_signature := ""
 var map_view_focus_node_ids_cache: Array = []
+var map_view_selected_node_id_cache := ""
 var stable_layout_size := Vector2(-1.0, -1.0)
 
 
@@ -74,6 +76,7 @@ func current_view_snapshot() -> Dictionary:
 		"width": bounds.size.x,
 		"height": bounds.size.y,
 	}
+	view["selected_focus_zoom_active"] = _selected_focus_zoom_active()
 	return view
 
 
@@ -249,9 +252,14 @@ func _ensure_layout_cache() -> void:
 
 func _rebuild_layout_cache() -> void:
 	var next_basis_signature := _map_view_basis_signature()
-	if next_basis_signature != map_view_basis_signature:
+	var next_selected_node_id := str(snapshot.get("selected_node_id", "")).strip_edges()
+	if next_selected_node_id.is_empty():
+		map_view_selected_node_id_cache = ""
+		map_view_focus_node_ids_cache = []
+	elif next_basis_signature != map_view_basis_signature or map_view_selected_node_id_cache.is_empty():
 		map_view_basis_signature = next_basis_signature
 		map_view_focus_node_ids_cache = _string_array(snapshot.get("map_focus_node_ids", []))
+		map_view_selected_node_id_cache = next_selected_node_id
 		stable_layout_size = _current_or_default_layout_size()
 	var next_bounds_signature := _map_view_bounds_signature(next_basis_signature)
 	if next_bounds_signature != map_view_bounds_signature:
@@ -328,7 +336,34 @@ func _compute_map_view_bounds() -> Rect2:
 	height = minf(1.0, height)
 	var x0 := clampf(center.x - width * 0.5, 0.0, 1.0 - width)
 	var y0 := clampf(center.y - height * 0.5, 0.0, 1.0 - height)
-	return Rect2(Vector2(x0, y0), Vector2(width, height))
+	var base_bounds := Rect2(Vector2(x0, y0), Vector2(width, height))
+	return _selected_focus_bounds(base_bounds)
+
+
+func _selected_focus_bounds(base_bounds: Rect2) -> Rect2:
+	if not _selected_focus_zoom_active():
+		return base_bounds
+	var node: Dictionary = nodes_by_id_cache.get(map_view_selected_node_id_cache, {})
+	var position_value: Variant = node.get("position", {})
+	var position: Dictionary = {}
+	if typeof(position_value) == TYPE_DICTIONARY:
+		position = position_value as Dictionary
+	var focus := Vector2(
+		clampf(float(position.get("x", base_bounds.get_center().x)), 0.0, 1.0),
+		clampf(float(position.get("y", base_bounds.get_center().y)), 0.0, 1.0)
+	)
+	var zoom_size := Vector2(maxf(0.18, base_bounds.size.x * SELECTED_FOCUS_ZOOM), maxf(0.18, base_bounds.size.y * SELECTED_FOCUS_ZOOM))
+	zoom_size.x = minf(1.0, zoom_size.x)
+	zoom_size.y = minf(1.0, zoom_size.y)
+	var blend := 0.42
+	var center := base_bounds.get_center().lerp(focus, blend)
+	var x0 := clampf(center.x - zoom_size.x * 0.5, 0.0, 1.0 - zoom_size.x)
+	var y0 := clampf(center.y - zoom_size.y * 0.5, 0.0, 1.0 - zoom_size.y)
+	return Rect2(Vector2(x0, y0), zoom_size)
+
+
+func _selected_focus_zoom_active() -> bool:
+	return not map_view_selected_node_id_cache.is_empty() and nodes_by_id_cache.has(map_view_selected_node_id_cache)
 
 
 func _map_view_bounds_signature(basis_signature: String) -> String:
@@ -337,6 +372,7 @@ func _map_view_bounds_signature(basis_signature: String) -> String:
 		"%.2f" % _stable_layout_size().y,
 		basis_signature,
 		",".join(map_view_focus_node_ids_cache),
+		map_view_selected_node_id_cache,
 	]
 	return "|".join(parts)
 

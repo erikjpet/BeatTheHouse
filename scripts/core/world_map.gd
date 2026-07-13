@@ -104,7 +104,9 @@ func route_for_target(map_data: Dictionary, current_id: String, target_id: Strin
 	var direct_revisit_path := false
 	var path := _path_between_normalized(normalized, source_id, destination_id, true)
 	if path.size() < 2:
-		if source_node.is_empty() or destination_node.is_empty() or str(destination_node.get("state", STATE_HIDDEN)) != STATE_VISITED:
+		if source_node.is_empty() or destination_node.is_empty():
+			return {}
+		if str(destination_node.get("state", STATE_HIDDEN)) != STATE_VISITED and not bool(destination_node.get("unlocked", false)):
 			return {}
 		path = [source_id, destination_id]
 		direct_revisit_path = true
@@ -1080,7 +1082,6 @@ func _initial_discovered_ids(ids: Array, start_id: String, edges: Array, archety
 	if extra_guaranteed_count > 0:
 		var remaining_open_game_neighbors: Array = []
 		var remaining_open_neighbors: Array = []
-		var remaining_locked_neighbors: Array = []
 		for neighbor_id_value in start_neighbors:
 			var neighbor_id := str(neighbor_id_value)
 			if discovered.has(neighbor_id):
@@ -1090,14 +1091,13 @@ func _initial_discovered_ids(ids: Array, start_id: String, edges: Array, archety
 				remaining_open_game_neighbors.append(neighbor_id)
 			elif _route_is_spawn_open(neighbor_id):
 				remaining_open_neighbors.append(neighbor_id)
-			else:
-				remaining_locked_neighbors.append(neighbor_id)
 		extra_guaranteed_count = _append_discovery_picks(discovered, remaining_open_game_neighbors, extra_guaranteed_count, rng)
 		extra_guaranteed_count = _append_discovery_picks(discovered, remaining_open_neighbors, extra_guaranteed_count, rng)
-		_append_discovery_picks(discovered, remaining_locked_neighbors, extra_guaranteed_count, rng)
 	for id_value in ids:
 		var id := str(id_value)
 		if discovered.has(id):
+			continue
+		if not _route_is_spawn_open(id):
 			continue
 		var archetype: Dictionary = archetypes_by_id.get(id, {})
 		var tier := clampi(int(archetype.get("tier", 1)), 1, 4)
@@ -1391,12 +1391,12 @@ static func _travel_candidate_entries_prepared(map_data: Dictionary, source_id: 
 			continue
 		var path := _path_between_prepared(map_data, source_id, target_id, true, visible_lookup)
 		if path.size() < 2:
-			if not visited_only:
+			if not visited_only and not bool(node.get("unlocked", false)):
 				continue
 			path = [source_id, target_id]
 		var blocks := _path_distance_blocks_prepared(edge_lookup, path)
 		var direct_edge: Dictionary = edge_lookup.get(_edge_id(str(path[0]), str(path[1])), {})
-		if visited_only and path.size() == 2 and direct_edge.is_empty():
+		if path.size() == 2 and direct_edge.is_empty():
 			var source_node: Dictionary = node_lookup.get(source_id, {})
 			var source_position: Dictionary = source_node.get("position", {"x": 0.5, "y": 0.5}) if typeof(source_node.get("position", {})) == TYPE_DICTIONARY else {"x": 0.5, "y": 0.5}
 			var target_position: Dictionary = node.get("position", {"x": 0.5, "y": 0.5}) if typeof(node.get("position", {})) == TYPE_DICTIONARY else {"x": 0.5, "y": 0.5}

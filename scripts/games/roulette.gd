@@ -2018,7 +2018,10 @@ func _roulette_wheel_motion(surface, surface_state: Dictionary) -> Dictionary:
 	var settled_spin := not spin_active and not last_result.is_empty()
 	var wheel_default_angle := clock * -0.5 if spin_active else 0.0
 	var wheel_angle := float(keyframe.get("wheel_angle", wheel_default_angle))
-	var settled_elapsed := maxf(0.0, float(int(surface_state.get("surface_time_msec", Time.get_ticks_msec())) - int(last_result.get("resolved_at_msec", 0)) - SPIN_ANIMATION_DURATION_MSEC) / 1000.0) if settled_spin else 0.0
+	var settled_time_msec := int(surface_state.get("surface_time_msec", Time.get_ticks_msec()))
+	if surface != null and surface.has_method("surface_render_elapsed_msec"):
+		settled_time_msec += maxi(0, int(surface.surface_render_elapsed_msec()))
+	var settled_elapsed := maxf(0.0, float(settled_time_msec - int(last_result.get("resolved_at_msec", 0)) - SPIN_ANIMATION_DURATION_MSEC) / 1000.0) if settled_spin else 0.0
 	var settled_drift := fposmod(settled_elapsed * -0.18, TAU) if settled_spin else 0.0
 	if settled_spin:
 		wheel_angle = fposmod(wheel_angle + settled_drift, TAU)

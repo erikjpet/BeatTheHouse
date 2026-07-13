@@ -421,7 +421,8 @@ func _trigger_bonus_reveal_pending(machine: Dictionary, active_bonus: Dictionary
 		return false
 	if reveal_msec <= 0:
 		return false
-	if str(machine.get("slot_animation_id", "")).is_empty() or str(machine.get("slot_animation_id", "")).begins_with("bonus:"):
+	var animation_id := str(machine.get("slot_animation_id", ""))
+	if animation_id.is_empty() or animation_id.begins_with("bonus:") or animation_id.begins_with("bonus-step:"):
 		return false
 	return spin_elapsed_msec < reveal_msec
 

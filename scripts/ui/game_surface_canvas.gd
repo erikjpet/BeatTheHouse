@@ -75,6 +75,7 @@ var last_touch_press_position := Vector2(-100000.0, -100000.0)
 var surface_animation_redraw_accumulator := 0.0
 var surface_animation_redraw_count := 0
 var surface_animation_handoff_until_msec := 0
+var surface_render_elapsed_sec := 0.0
 
 
 func set_game_module(game_module: GameModule) -> void:
@@ -86,6 +87,7 @@ func set_game_module(game_module: GameModule) -> void:
 
 func render_game_snapshot(snapshot: Dictionary) -> void:
 	uses_foundation_snapshot = true
+	surface_render_elapsed_sec = 0.0
 	view_data = snapshot.duplicate(false)
 	game_id = str(view_data.get("game_id", game_id))
 	state = view_data
@@ -194,9 +196,15 @@ func performance_counters() -> Dictionary:
 func debug_advance_idle_liveness(delta: float) -> Dictionary:
 	if reduce_motion:
 		return surface_runtime_status()
-	flicker += maxf(0.0, delta)
-	_schedule_surface_animation_redraws(delta)
+	var clamped_delta := maxf(0.0, delta)
+	flicker += clamped_delta
+	surface_render_elapsed_sec += clamped_delta
+	_schedule_surface_animation_redraws(clamped_delta)
 	return surface_runtime_status()
+
+
+func surface_render_elapsed_msec() -> int:
+	return maxi(0, int(round(surface_render_elapsed_sec * 1000.0)))
 
 
 func debug_surface_motion_sample() -> Dictionary:
@@ -639,12 +647,15 @@ func _process(delta: float) -> void:
 		return
 	if reduce_motion:
 		flicker = 0.0
+		surface_render_elapsed_sec = 0.0
 		continuous_redraw_was_active = false
 		surface_animation_redraw_accumulator = 0.0
 		return
-	flicker += delta
+	var clamped_delta := maxf(0.0, delta)
+	flicker += clamped_delta
+	surface_render_elapsed_sec += clamped_delta
 	_sync_surface_audio()
-	_schedule_surface_animation_redraws(delta)
+	_schedule_surface_animation_redraws(clamped_delta)
 
 
 func _schedule_surface_animation_redraws(delta: float) -> void:

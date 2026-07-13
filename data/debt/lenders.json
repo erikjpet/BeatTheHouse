@@ -135,7 +135,8 @@
 			"deadline_turns": 5,
 			"default_consequence": "collateral_forfeit",
 			"collateral_required": true,
-			"loan_to_sale_price_multiplier": 2
+			"loan_to_sale_price_multiplier": 2,
+			"redemption_fee_rate": 0.25
 		},
 		"consequences": ["collateral_escrow", "collateral_forfeit"],
 		"message": "Sal bags the collateral and slides cash across the counter.",

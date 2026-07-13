@@ -137,7 +137,10 @@ func resolve(run_state: RunState, environment: Dictionary, choice_id: String = "
 	result["event_id"] = get_id()
 	result["choice_id"] = choice_key
 	result["interaction_mode"] = get_interaction_mode()
-	result["conclusion_animation"] = str(selected_choice.get("conclusion_animation", consequences.get("conclusion_animation", "")))
+	var conclusion_animation := str(selected_choice.get("conclusion_animation", consequences.get("conclusion_animation", ""))).strip_edges()
+	if conclusion_animation.is_empty() and bankroll_delta > 0:
+		conclusion_animation = "bankroll_transfer"
+	result["conclusion_animation"] = conclusion_animation
 	apply_event_result(run_state, result)
 	return result
 

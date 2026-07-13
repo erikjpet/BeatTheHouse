@@ -33,6 +33,7 @@ const JAZZ_DRUMMER_LISTEN_THRESHOLD := 2
 const JAZZ_TIP_JAR_CHANCE_DENOMINATOR := 4
 const JAZZ_COIN_LUCK_REWARD := 5
 const JAZZ_GLASSES_LUCK_REWARD := 2
+const SALS_PAWN_COUNTER_ID := "sals_pawn_counter"
 
 var library: ContentLibrary
 var run_state: RunState
@@ -302,6 +303,35 @@ func inventory_item_detail(item_id: String) -> Dictionary:
 		"repair_cost": maxi(0, int(effect.get("repair_cost", 0))),
 		"repair_to_item": str(effect.get("repair_to_item", "")),
 	}
+
+
+func pawn_quote_options(lender_id: String = SALS_PAWN_COUNTER_ID) -> Array:
+	if not is_ready():
+		return []
+	var definition := hook_definition("lender", lender_id)
+	if definition.is_empty() or str(definition.get("lender_type", "")) != "pawn":
+		return []
+	return _pawn_quote_options_for_profile(_copy_dict(definition.get("debt_profile", {})))
+
+
+func pawn_inventory_item(item_id: String, lender_id: String = SALS_PAWN_COUNTER_ID) -> Dictionary:
+	if not is_ready():
+		return _service_error("Pawn counter is not available.")
+	var definition := hook_definition("lender", lender_id)
+	if definition.is_empty() or str(definition.get("lender_type", "")) != "pawn":
+		return _service_error("Pawn counter is not available.")
+	var status := hook_run_status("lender", definition)
+	if not bool(status.get("available", true)):
+		return _service_error(str(status.get("disabled_reason", "Pawn counter is not available.")))
+	var quote := _pawn_quote_for_item(item_id, _copy_dict(definition.get("debt_profile", {})))
+	if quote.is_empty():
+		return _service_error("Sal needs a sellable item as collateral.")
+	var result := _dynamic_lender_result(lender_id, definition, status, quote)
+	if result.is_empty():
+		return _service_error("Pawn counter is not available.")
+	run_state.advance_environment_turns(1)
+	GameModule.apply_result(run_state, result)
+	return _service_success(result)
 
 
 func repair_inventory_item(item_id: String) -> Dictionary:
@@ -704,7 +734,7 @@ func hook_result(kind: String, hook_id: String) -> Dictionary:
 	if messages.is_empty():
 		messages.append(message)
 	deltas["messages"] = messages
-	return GameModule.build_action_result({
+	var result := GameModule.build_action_result({
 		"ok": true,
 		"type": "%s_hook" % kind,
 		"source_id": hook_id,
@@ -713,6 +743,9 @@ func hook_result(kind: String, hook_id: String) -> Dictionary:
 		"deltas": deltas,
 		"message": message,
 	})
+	if kind == "lender" and int(deltas.get("bankroll_delta", 0)) > 0:
+		result["conclusion_animation"] = "bankroll_transfer"
+	return result
 
 
 # Extracts result deltas from service/lender definitions.
@@ -968,10 +1001,10 @@ func hook_run_status(kind: String, definition: Dictionary) -> Dictionary:
 	return {"available": true, "disabled_reason": "", "cost": int(definition.get("cost", 0))}
 
 
-func _dynamic_lender_result(lender_id: String, definition: Dictionary, status: Dictionary) -> Dictionary:
+func _dynamic_lender_result(lender_id: String, definition: Dictionary, status: Dictionary, pawn_quote: Dictionary = {}) -> Dictionary:
 	if not bool(status.get("available", false)):
 		return {}
-	var deltas := _dynamic_lender_deltas(definition, status)
+	var deltas := _dynamic_lender_deltas(definition, status, pawn_quote)
 	if not result_deltas_have_mutation(deltas):
 		return {}
 	var display_name := hook_display_name("lender", lender_id, definition)
@@ -994,7 +1027,7 @@ func _dynamic_lender_result(lender_id: String, definition: Dictionary, status: D
 			"message": message,
 		})
 	deltas["story_log"] = story_log
-	return GameModule.build_action_result({
+	var result := GameModule.build_action_result({
 		"ok": true,
 		"type": "lender_hook",
 		"source_id": lender_id,
@@ -1005,6 +1038,9 @@ func _dynamic_lender_result(lender_id: String, definition: Dictionary, status: D
 		"deltas": deltas,
 		"message": message,
 	})
+	if int(deltas.get("bankroll_delta", 0)) > 0:
+		result["conclusion_animation"] = "bankroll_transfer"
+	return result
 
 
 func _dynamic_lender_status(definition: Dictionary, base_status: Dictionary) -> Dictionary:
@@ -1028,7 +1064,7 @@ func _dynamic_lender_status(definition: Dictionary, base_status: Dictionary) -> 
 	return status
 
 
-func _dynamic_lender_deltas(definition: Dictionary, status: Dictionary) -> Dictionary:
+func _dynamic_lender_deltas(definition: Dictionary, status: Dictionary, pawn_quote: Dictionary = {}) -> Dictionary:
 	var deltas := GameModule.empty_result_deltas()
 	if not bool(status.get("available", true)):
 		return deltas
@@ -1041,7 +1077,7 @@ func _dynamic_lender_deltas(definition: Dictionary, status: Dictionary) -> Dicti
 		"family_phone":
 			return _family_lender_deltas(definition, profile)
 		"pawn":
-			return _pawn_lender_deltas(definition, profile, status)
+			return _pawn_lender_deltas(definition, profile, status, pawn_quote)
 		_:
 			if not lender_id.is_empty() and not profile.is_empty():
 				return _cash_lender_deltas(definition, profile)
@@ -1136,19 +1172,27 @@ func _cash_lender_deltas(definition: Dictionary, profile: Dictionary) -> Diction
 	return _dynamic_lender_delta_payload(definition, loan_amount, [debt_change], flags, ["Loan lands in your hand; payoff comes with interest."], suspicion_delta)
 
 
-func _pawn_lender_deltas(definition: Dictionary, profile: Dictionary, status: Dictionary) -> Dictionary:
-	var collateral := _pawn_collateral_option(profile)
+func _pawn_lender_deltas(definition: Dictionary, profile: Dictionary, status: Dictionary, pawn_quote: Dictionary = {}) -> Dictionary:
+	var collateral := pawn_quote.duplicate(true)
+	if collateral.is_empty():
+		collateral = _pawn_collateral_option(profile)
 	if collateral.is_empty():
 		return GameModule.empty_result_deltas()
 	var lender_id := str(definition.get("id", "sals_pawn_counter"))
 	var loan_amount := int(collateral.get("loan_amount", status.get("loan_amount", 0)))
+	var fee_rate := clampf(float(profile.get("redemption_fee_rate", 0.0)), 0.0, 2.0)
+	var redemption_fee := maxi(1, int(ceil(float(loan_amount) * fee_rate))) if loan_amount > 0 else 0
+	var balance := loan_amount + redemption_fee
 	var deadline_turns := maxi(0, int(profile.get("deadline_turns", 5)))
 	var item_id := str(collateral.get("item_id", ""))
 	var item_name := str(collateral.get("item_name", item_id))
 	var debt_change := {
 		"id": "%s_%s_ticket" % [lender_id, item_id],
 		"lender_id": lender_id,
-		"balance": loan_amount,
+		"balance": balance,
+		"principal": loan_amount,
+		"redemption_fee": redemption_fee,
+		"redemption_fee_rate": fee_rate,
 		"status": "active",
 		"debt_kind": "pawn",
 		"deadline_turns": deadline_turns,
@@ -1215,15 +1259,25 @@ func _current_lender_location_id() -> String:
 
 
 func _pawn_collateral_option(profile: Dictionary) -> Dictionary:
-	if run_state == null or library == null:
+	var options := _pawn_quote_options_for_profile(profile)
+	if options.is_empty():
 		return {}
+	return (options[0] as Dictionary).duplicate(true)
+
+
+func _pawn_quote_options_for_profile(profile: Dictionary) -> Array:
+	if run_state == null or library == null:
+		return []
+	var result: Array = []
 	var minimum := maxi(0, int(profile.get("principal_min", 0)))
 	var maximum := maxi(minimum, int(profile.get("principal_max", minimum)))
 	var multiplier := maxi(1, int(profile.get("loan_to_sale_price_multiplier", 2)))
+	var seen := {}
 	for item_value in _copy_array(run_state.inventory):
 		var item_id := str(item_value)
-		if item_id.is_empty():
+		if item_id.is_empty() or seen.has(item_id):
 			continue
+		seen[item_id] = true
 		var detail := inventory_item_detail(item_id)
 		if detail.is_empty() or not bool(detail.get("sellable", false)):
 			continue
@@ -1233,12 +1287,27 @@ func _pawn_collateral_option(profile: Dictionary) -> Dictionary:
 		var loan_amount := clampi(sale_price * multiplier, minimum, maximum)
 		if loan_amount <= 0:
 			continue
-		return {
+		result.append({
 			"item_id": item_id,
 			"item_name": str(detail.get("display_name", item_id)),
+			"display_name": str(detail.get("display_name", item_id)),
+			"icon_key": str(detail.get("icon_key", item_id)),
 			"sale_price": sale_price,
 			"loan_amount": loan_amount,
-		}
+		})
+	return result
+
+
+func _pawn_quote_for_item(item_id: String, profile: Dictionary) -> Dictionary:
+	var normalized_id := item_id.strip_edges()
+	if normalized_id.is_empty():
+		return {}
+	for quote_value in _pawn_quote_options_for_profile(profile):
+		if typeof(quote_value) != TYPE_DICTIONARY:
+			continue
+		var quote := quote_value as Dictionary
+		if str(quote.get("item_id", "")) == normalized_id:
+			return quote.duplicate(true)
 	return {}
 
 

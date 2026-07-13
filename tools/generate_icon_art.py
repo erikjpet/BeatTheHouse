@@ -1088,6 +1088,21 @@ def draw_back_alley_map():
     return image
 
 
+def draw_pawn_shop_map():
+    image, d = new_icon()
+    rect(d, (6, 10, 26, 25), rgba("#1d2231"))
+    d.rectangle((8, 13, 24, 16), fill=AMBER)
+    d.rectangle((10, 18, 22, 23), fill=rgba("#090b12"))
+    for x in (12, 16, 20):
+        line(d, (x, 18, x - 3, 23), METAL, 1)
+    d.rectangle((11, 7, 23, 10), fill=YELLOW)
+    d.rectangle((12, 8, 22, 8), fill=PINK)
+    chip(d, 20, 18, CYAN)
+    d.rectangle((7, 24, 25, 26), fill=BROWN)
+    glint(d, 25, 8, WHITE)
+    return image
+
+
 def draw_motel_map():
     image, d = new_icon()
     rect(d, (6, 13, 25, 24), BLUE)
@@ -1400,6 +1415,7 @@ MAP_ICONS = {
     "kitty_cat_lounge": draw_kitty_cat_lounge_map,
     "motel": draw_motel_map,
     "motel_room": draw_motel_room_map,
+    "pawn_shop": draw_pawn_shop_map,
     "small_underground_casino": draw_small_underground_casino_map,
 }
 
