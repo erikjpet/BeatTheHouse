@@ -151,6 +151,13 @@ function Get-StageTimeout {
     if ($TimeoutSec -gt 0) {
         return $TimeoutSec
     }
+    $baseline = Get-FoundationSuiteStageBaselineSec $Name
+    if ($baseline -gt 0.0) {
+        return [Math]::Max(300, [int][Math]::Ceiling($baseline * 1.5))
+    }
+    if ($Name.StartsWith("foundation_")) {
+        return 300
+    }
     if ($Name -eq "foundation_contracts" -and $foundationSuiteKey -eq "contracts") {
         return 300
     }
@@ -176,6 +183,64 @@ function Convert-ReportResourcePath {
     param([string]$FileName)
     $fullPath = Join-Path $script:ReportRoot $FileName
     return "res://" + (Get-ProjectRelativePath $fullPath)
+}
+
+function Convert-ProjectResourcePath {
+    param([string]$Path)
+    return "res://" + (Get-ProjectRelativePath $Path)
+}
+
+function New-SplitTestRunner {
+    param(
+        [string]$Name,
+        [string[]]$SourceRelativePaths
+    )
+    $generatedRoot = Join-Path $root ".tmp\generated_tests"
+    New-Item -ItemType Directory -Force -Path $generatedRoot | Out-Null
+    $destination = Join-Path $generatedRoot $Name
+    $lines = New-Object System.Collections.Generic.List[string]
+    $sourceIndex = 0
+    foreach ($relativePath in $SourceRelativePaths) {
+        $source = Join-Path $root $relativePath
+        if (-not (Test-Path -LiteralPath $source)) {
+            throw "Split test source not found: $relativePath"
+        }
+        if ($sourceIndex -gt 0) {
+            $lines.Add("")
+            $lines.Add("# --- split source: $relativePath ---")
+        }
+        $fileLines = [System.IO.File]::ReadAllLines($source)
+        $lineIndex = 0
+        foreach ($line in $fileLines) {
+            if ($sourceIndex -gt 0 -and $lineIndex -eq 0 -and ($line -match '^extends\s+' -or $line -match '^class_name\s+')) {
+                $lineIndex += 1
+                continue
+            }
+            $lines.Add($line)
+            $lineIndex += 1
+        }
+        $sourceIndex += 1
+    }
+    [System.IO.File]::WriteAllLines($destination, $lines)
+    return Convert-ProjectResourcePath $destination
+}
+
+function Get-FoundationSplitRunnerPath {
+    return New-SplitTestRunner -Name "foundation_check_split_runner.gd" -SourceRelativePaths @(
+        "scripts/tests/foundation/check_core_content.gd",
+        "scripts/tests/foundation/check_slots_surfaces.gd",
+        "scripts/tests/foundation/check_table_games.gd",
+        "scripts/tests/foundation/check_items_events_world.gd",
+        "scripts/tests/foundation/check_lenders_release_saves.gd"
+    )
+}
+
+function Get-UiSceneSplitRunnerPath {
+    return New-SplitTestRunner -Name "ui_scene_compile_split_runner.gd" -SourceRelativePaths @(
+        "scripts/tests/ui_scene/compile_components_and_main_flow.gd",
+        "scripts/tests/ui_scene/compile_environment_layout.gd",
+        "scripts/tests/ui_scene/compile_run_menu_and_game_flows.gd"
+    )
 }
 
 function Get-ReportKeepCount {
@@ -261,12 +326,13 @@ $FoundationSuiteStageBaselinesSec = @{
     "foundation_games" = 150.015
     "foundation_slot" = 21.710
     "foundation_slot_acceptance" = 701.889
-    "foundation_blackjack" = 6.004
-    "foundation_roulette" = 6.126
-    "foundation_baccarat" = 5.712
+    "foundation_audit" = 701.889
+    "foundation_blackjack" = 8.772
+    "foundation_roulette" = 8.489
+    "foundation_baccarat" = 8.768
     "foundation_video_poker" = 65.390
     "foundation_bar_dice" = 38.103
-    "foundation_pull_tabs" = 6.386
+    "foundation_pull_tabs" = 9.140
 }
 
 function Get-FoundationSuiteStageBaselineSec {
@@ -472,7 +538,7 @@ function Invoke-GDScriptLoadCheck {
 function Invoke-FoundationSuite {
     param([string]$FoundationSuite, [int]$StageTimeoutSec = 0)
     $report = Convert-ReportResourcePath ("foundation_{0}.json" -f $FoundationSuite)
-    Invoke-GodotScript -Name ("foundation_{0}" -f $FoundationSuite) -ScriptPath "res://scripts/tests/foundation_check.gd" -UserArgs @("--suite=$FoundationSuite", "--report=$report") -StageTimeoutSec $StageTimeoutSec
+    Invoke-GodotScript -Name ("foundation_{0}" -f $FoundationSuite) -ScriptPath (Get-FoundationSplitRunnerPath) -UserArgs @("--suite=$FoundationSuite", "--report=$report") -StageTimeoutSec $StageTimeoutSec
 }
 
 function Invoke-FoundationPerfSmoke {
@@ -531,7 +597,7 @@ if ($ExhaustiveParse -or $suiteKey -eq "full") {
 
 if (-not [string]::IsNullOrWhiteSpace($foundationSuiteKey)) {
     if ($foundationSuiteKey -eq "ui") {
-        Invoke-GodotScript -Name "ui_scene_compile" -ScriptPath "res://scripts/tests/ui_scene_compile_check.gd" -StageTimeoutSec (Get-StageTimeout "ui_scene_compile")
+        Invoke-GodotScript -Name "ui_scene_compile" -ScriptPath (Get-UiSceneSplitRunnerPath) -StageTimeoutSec (Get-StageTimeout "ui_scene_compile")
     }
     else {
         Invoke-FoundationSuite -FoundationSuite $foundationSuiteKey -StageTimeoutSec (Get-StageTimeout ("foundation_{0}" -f $foundationSuiteKey))
@@ -547,13 +613,13 @@ if (-not [string]::IsNullOrWhiteSpace($foundationSuiteKey)) {
 switch ($suiteKey) {
     "smoke" {
         Invoke-FoundationSuite -FoundationSuite "smoke" -StageTimeoutSec 180
-        Invoke-GodotScript -Name "ui_scene_compile" -ScriptPath "res://scripts/tests/ui_scene_compile_check.gd" -StageTimeoutSec 240
+        Invoke-GodotScript -Name "ui_scene_compile" -ScriptPath (Get-UiSceneSplitRunnerPath) -StageTimeoutSec 240
         Invoke-GodotScript -Name "roulette_audio_audit" -ScriptPath "res://tools/roulette_audio_audit.gd" -StageTimeoutSec 120
         Invoke-FoundationPerfSmoke
     }
     "contract" {
         Invoke-FoundationSuite -FoundationSuite "contracts" -StageTimeoutSec 360
-        Invoke-GodotScript -Name "ui_scene_compile" -ScriptPath "res://scripts/tests/ui_scene_compile_check.gd" -StageTimeoutSec 240
+        Invoke-GodotScript -Name "ui_scene_compile" -ScriptPath (Get-UiSceneSplitRunnerPath) -StageTimeoutSec 240
         Invoke-GodotScript -Name "roulette_audio_audit" -ScriptPath "res://tools/roulette_audio_audit.gd" -StageTimeoutSec 120
     }
     "audit" {
@@ -564,7 +630,7 @@ switch ($suiteKey) {
     }
     "full" {
         Invoke-FoundationSuite -FoundationSuite "all" -StageTimeoutSec (Get-StageTimeout "foundation_all")
-        Invoke-GodotScript -Name "ui_scene_compile" -ScriptPath "res://scripts/tests/ui_scene_compile_check.gd" -StageTimeoutSec 300
+        Invoke-GodotScript -Name "ui_scene_compile" -ScriptPath (Get-UiSceneSplitRunnerPath) -StageTimeoutSec 300
         Invoke-FoundationPerfSmoke
         Invoke-GodotScript -Name "slot_pinball_physics_audit" -ScriptPath "res://tools/slot_pinball_physics_audit.gd" -UserArgs @("48") -StageTimeoutSec 240
         Invoke-GodotScript -Name "slot_machine_deep_audit" -ScriptPath "res://tools/slot_machine_deep_audit.gd" -UserArgs @("10000") -StageTimeoutSec 900

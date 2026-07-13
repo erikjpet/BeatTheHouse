@@ -1581,16 +1581,17 @@ func _verify_mouse_only_recovery_pressure_flow() -> void:
 		var serialized_before_travel := _serialized_run_text()
 		var lender_route := await _double_click_first_travel_to_lender_environment()
 		if lender_route.is_empty():
-			_add_warning("Recovery pressure QA could not find a visible lender or route to a lender environment.")
-			return
-		await _settle()
-		_require(serialized_before_travel != _serialized_run_text(), "Recovery pressure QA travel did not update RunState through visible controls.")
+			# Normal route caps can omit a lender-bearing venue; keep this QA
+			# deterministic by moving to the authored visible-lender fixture.
+			await _prepare_lender_pressure_visual_qa_fixture()
+		else:
+			await _settle()
+			_require(serialized_before_travel != _serialized_run_text(), "Recovery pressure QA travel did not update RunState through visible controls.")
 		before_lender = _run_state_restore_summary(app.call("serialized_run_state"))
 		serialized_before_lender = _serialized_run_text()
 		lender_button = await _double_click_first_debt_lender_object()
 		if lender_button.is_empty():
-			_add_warning("Recovery pressure QA reached a lender route but found no enabled visible lender object.")
-			return
+			_require(false, "Recovery pressure QA deterministic lender route did not expose an enabled visible debt lender object.")
 	await _settle()
 	_require(serialized_before_lender != _serialized_run_text(), "Recovery pressure QA lender interaction did not update RunState.")
 	var after_lender := _run_state_restore_summary(app.call("serialized_run_state"))

@@ -159,6 +159,10 @@ func surface_needs_auto_tick(_ui_state: Dictionary, _run_state: RunState, _envir
 	return false
 
 
+func surface_auto_tick_state_keys() -> Array:
+	return []
+
+
 func surface_auto_action_command(_ui_state: Dictionary, _run_state: RunState, _environment: Dictionary, _surface_status: Dictionary = {}) -> Dictionary:
 	return {"handled": false}
 

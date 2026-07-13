@@ -552,6 +552,18 @@ func surface_needs_auto_tick(ui_state: Dictionary, run_state: RunState, environm
 	return not last_result.is_empty()
 
 
+func surface_auto_tick_state_keys() -> Array:
+	return [
+		"player_hands",
+		"blackjack_hands",
+		"dealer_cards",
+		"dealer",
+		"blackjack_sit_out",
+		"count_challenge",
+		"count_answered",
+	]
+
+
 func _peek_table_state(environment: Dictionary) -> Dictionary:
 	# Zero-copy view of the stored table for read-mostly per-frame checks.
 	# Callers must not mutate it or hold it across writes.

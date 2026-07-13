@@ -37,8 +37,8 @@ $requiredFiles = @(
     "scripts/ui/foundation_main.gd",
     "scripts/ui/attribute_badge_row.gd",
     "scripts/ui/visual_style.gd",
-    "scripts/tests/foundation_check.gd",
-    "scripts/tests/ui_scene_compile_check.gd",
+    "scripts/tests/foundation/check_lenders_release_saves.gd",
+    "scripts/tests/ui_scene/compile_run_menu_and_game_flows.gd",
     "tools/check_godot.ps1",
     "tools/function_census.ps1",
     "tools/gdscript_load_check.gd",
@@ -242,6 +242,17 @@ function Require-Text {
     if (-not $content.Contains($Needle)) {
         $failures.Add($Message)
     }
+}
+
+function Require-TextInAny {
+    param([string[]]$RelativePaths, [string]$Needle, [string]$Message)
+    foreach ($relativePath in $RelativePaths) {
+        $content = Get-ProjectText $relativePath
+        if ($content.Contains($Needle)) {
+            return
+        }
+    }
+    $failures.Add($Message)
 }
 
 function Forbid-Text {
@@ -546,10 +557,11 @@ Forbid-Text $contentLibrary "RuntimeContent" "ContentLibrary must not use Runtim
 Forbid-Text $contentLibrary "core_content.json" "ContentLibrary must not load data/runtime/core_content.json."
 Forbid-Text $contentLibrary "res://data/runtime" "ContentLibrary must not load data/runtime paths."
 
-$foundationTestFiles = @(
-    "scripts/tests/foundation_check.gd",
-    "scripts/tests/ui_scene_compile_check.gd"
-)
+$foundationTestFiles = @()
+$foundationTestFiles += @(Get-ChildItem -LiteralPath (Join-Path $root "scripts/tests/foundation") -Filter "*.gd" | ForEach-Object { Get-ProjectRelativePath $_.FullName })
+$foundationTestFiles += @(Get-ChildItem -LiteralPath (Join-Path $root "scripts/tests/ui_scene") -Filter "*.gd" | ForEach-Object { Get-ProjectRelativePath $_.FullName })
+$foundationCheckFiles = @(Get-ChildItem -LiteralPath (Join-Path $root "scripts/tests/foundation") -Filter "*.gd" | ForEach-Object { Get-ProjectRelativePath $_.FullName })
+$uiSceneCheckFiles = @(Get-ChildItem -LiteralPath (Join-Path $root "scripts/tests/ui_scene") -Filter "*.gd" | ForEach-Object { Get-ProjectRelativePath $_.FullName })
 $forbiddenFoundationTestTokens = @(
     "RuntimeContentScript",
     "runtime_content.gd",
@@ -565,27 +577,29 @@ foreach ($testFile in $foundationTestFiles) {
     }
 }
 
-Require-Text "scripts/tests/foundation_check.gd" "ContentLibraryScript.new()" "Foundation tests must load content through ContentLibrary."
-Require-Text "scripts/tests/foundation_check.gd" "RunGeneratorScript.new" "Foundation tests must exercise RunGenerator."
-Require-Text "scripts/tests/foundation_check.gd" "EnvironmentInstance" "Foundation tests must exercise EnvironmentInstance."
-Require-Text "scripts/tests/foundation_check.gd" "GameModule" "Foundation tests must exercise GameModule."
-Require-Text "scripts/tests/foundation_check.gd" "ItemEffect.new()" "Foundation tests must exercise ItemEffect."
-Require-Text "scripts/tests/foundation_check.gd" "EventModule.new()" "Foundation tests must exercise EventModule."
-Require-Text "scripts/tests/foundation_check.gd" "SaveServiceScript.new()" "Foundation tests must exercise SaveService."
-Require-Text "scripts/tests/foundation_check.gd" "RngStream.new()" "Foundation tests must exercise RngStream."
-Require-Text "scripts/tests/foundation_check.gd" "PlatformServicesScript.new()" "Foundation tests must exercise PlatformServices."
-Require-Text "scripts/tests/ui_scene_compile_check.gd" "res://scenes/main.tscn" "UI scene compile check must instantiate the active main scene."
-Require-Text "scripts/tests/ui_scene_compile_check.gd" "res://scripts/ui/foundation_main.gd" "UI scene compile check must verify the foundation UI shell."
-Require-Text "scripts/tests/ui_scene_compile_check.gd" "render_environment_snapshot" "UI scene compile check must verify environment snapshot rendering."
-Require-Text "scripts/tests/ui_scene_compile_check.gd" "render_game_snapshot" "UI scene compile check must verify game snapshot rendering."
-Require-Text "tools/check_godot.ps1" 'res://scripts/tests/foundation_check.gd' "Godot check script must run foundation_check.gd."
-Require-Text "tools/check_godot.ps1" 'res://scripts/tests/ui_scene_compile_check.gd' "Godot check script must run ui_scene_compile_check.gd."
+Require-TextInAny $foundationCheckFiles "ContentLibraryScript.new()" "Foundation tests must load content through ContentLibrary."
+Require-TextInAny $foundationCheckFiles "RunGeneratorScript.new" "Foundation tests must exercise RunGenerator."
+Require-TextInAny $foundationCheckFiles "EnvironmentInstance" "Foundation tests must exercise EnvironmentInstance."
+Require-TextInAny $foundationCheckFiles "GameModule" "Foundation tests must exercise GameModule."
+Require-TextInAny $foundationCheckFiles "ItemEffect.new()" "Foundation tests must exercise ItemEffect."
+Require-TextInAny $foundationCheckFiles "EventModule.new()" "Foundation tests must exercise EventModule."
+Require-TextInAny $foundationCheckFiles "SaveServiceScript.new()" "Foundation tests must exercise SaveService."
+Require-TextInAny $foundationCheckFiles "RngStream.new()" "Foundation tests must exercise RngStream."
+Require-TextInAny $foundationCheckFiles "PlatformServicesScript.new()" "Foundation tests must exercise PlatformServices."
+Require-TextInAny $uiSceneCheckFiles "res://scenes/main.tscn" "UI scene compile check must instantiate the active main scene."
+Require-TextInAny $uiSceneCheckFiles "res://scripts/ui/foundation_main.gd" "UI scene compile check must verify the foundation UI shell."
+Require-TextInAny $uiSceneCheckFiles "render_environment_snapshot" "UI scene compile check must verify environment snapshot rendering."
+Require-TextInAny $uiSceneCheckFiles "render_game_snapshot" "UI scene compile check must verify game snapshot rendering."
+Require-Text "tools/check_godot.ps1" 'Get-FoundationSplitRunnerPath' "Godot check script must assemble the split foundation check runner."
+Require-Text "tools/check_godot.ps1" 'scripts/tests/foundation/check_lenders_release_saves.gd' "Godot check script must include the split foundation terminal source."
+Require-Text "tools/check_godot.ps1" 'Get-UiSceneSplitRunnerPath' "Godot check script must assemble the split UI scene compile runner."
+Require-Text "tools/check_godot.ps1" 'scripts/tests/ui_scene/compile_run_menu_and_game_flows.gd' "Godot check script must include the split UI scene terminal source."
 Require-Text "tools/check_godot.ps1" 'ValidateSet("Smoke", "Contract", "Audit", "Full")' "Godot check script must expose suite selection."
 Require-Text "tools/check_godot.ps1" 'gdscript_load_check.gd' "Godot check script must run the one-process GDScript load checker."
 Require-Text "tools/check_godot.ps1" 'Stop-NewGodotProcesses' "Godot check script must clean up timed-out Godot child processes."
-Require-Text "scripts/tests/foundation_check.gd" '--suite=' "Foundation check must support suite selection."
-Require-Text "scripts/tests/foundation_check.gd" 'FOUNDATION_SUITES' "Foundation check must declare available suites."
-Require-Text "scripts/tests/foundation_check.gd" 'FOUNDATION_DEFAULT_REPORT_PATH' "Foundation check must write a structured report."
+Require-TextInAny $foundationCheckFiles '--suite=' "Foundation check must support suite selection."
+Require-TextInAny $foundationCheckFiles 'FOUNDATION_SUITES' "Foundation check must declare available suites."
+Require-TextInAny $foundationCheckFiles 'FOUNDATION_DEFAULT_REPORT_PATH' "Foundation check must write a structured report."
 Require-Text "tools/gdscript_load_check.gd" 'checked_files' "GDScript load check must report checked files."
 Require-Text "tools/gdscript_load_check.gd" 'res://scripts' "GDScript load check must cover live scripts by default."
 Require-Text "tools/gdscript_load_check.gd" 'res://tools' "GDScript load check must cover tool scripts by default."
@@ -955,15 +969,15 @@ foreach ($managerPath in $forbiddenM2Managers) {
     }
 }
 
-Require-Text "scripts/tests/foundation_check.gd" "_check_m2_pack_availability" "Foundation tests must validate canonical M2 pack availability."
-Require-Text "scripts/tests/foundation_check.gd" "_check_economy_pressure_foundation" "Foundation tests must cover economy pressure."
-Require-Text "scripts/tests/foundation_check.gd" "_check_travel_route_foundation" "Foundation tests must cover route cost/risk/conditions."
-Require-Text "scripts/tests/foundation_check.gd" "_check_service_hook_foundation" "Foundation tests must cover services."
-Require-Text "scripts/tests/foundation_check.gd" "_check_lender_debt_foundation" "Foundation tests must cover debt/lenders."
-Require-Text "scripts/tests/foundation_check.gd" "_check_suspicion_security_foundation" "Foundation tests must cover suspicion/security."
-Require-Text "scripts/tests/foundation_check.gd" "_check_item_build_interaction_foundation" "Foundation tests must cover item build interactions."
-Require-Text "scripts/tests/foundation_check.gd" "_check_event_system_state_foundation" "Foundation tests must cover event state conditions."
-Require-Text "scripts/tests/foundation_check.gd" "_check_m2_system_interaction_scenario" "Foundation tests must cover an M2 system interaction scenario."
+Require-TextInAny $foundationCheckFiles "_check_m2_pack_availability" "Foundation tests must validate canonical M2 pack availability."
+Require-TextInAny $foundationCheckFiles "_check_economy_pressure_foundation" "Foundation tests must cover economy pressure."
+Require-TextInAny $foundationCheckFiles "_check_travel_route_foundation" "Foundation tests must cover route cost/risk/conditions."
+Require-TextInAny $foundationCheckFiles "_check_service_hook_foundation" "Foundation tests must cover services."
+Require-TextInAny $foundationCheckFiles "_check_lender_debt_foundation" "Foundation tests must cover debt/lenders."
+Require-TextInAny $foundationCheckFiles "_check_suspicion_security_foundation" "Foundation tests must cover suspicion/security."
+Require-TextInAny $foundationCheckFiles "_check_item_build_interaction_foundation" "Foundation tests must cover item build interactions."
+Require-TextInAny $foundationCheckFiles "_check_event_system_state_foundation" "Foundation tests must cover event state conditions."
+Require-TextInAny $foundationCheckFiles "_check_m2_system_interaction_scenario" "Foundation tests must cover an M2 system interaction scenario."
 
 $visualQa = "tools/foundation_visual_qa.gd"
 Require-Text $visualQa '"interaction_mode": "visible_controls"' "Foundation visual QA must identify visible control interaction mode."

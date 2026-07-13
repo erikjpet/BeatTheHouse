@@ -73,15 +73,6 @@ const GAME_SURFACE_UI_PREFERENCE_KEYS := [
 	"bet_level",
 	"denomination_index",
 ]
-const GAME_SURFACE_AUTO_TICK_STATE_KEYS := [
-	"player_hands",
-	"blackjack_hands",
-	"dealer_cards",
-	"dealer",
-	"blackjack_sit_out",
-	"count_challenge",
-	"count_answered",
-]
 const UserSettingsScript := preload("res://scripts/core/user_settings.gd")
 const ProfileInventoryScript := preload("res://scripts/core/profile_inventory.gd")
 const MetaCollectionServiceScript := preload("res://scripts/core/meta_collection_service.gd")
@@ -1029,8 +1020,10 @@ func _current_game_surface_auto_tick_state() -> Dictionary:
 	}
 	# Read-only live references avoid the per-frame deep copy; action paths still
 	# rebuild the canonical ui_state before mutating or resolving anything.
-	for key in GAME_SURFACE_AUTO_TICK_STATE_KEYS:
-		if game_surface_ui_state.has(key):
+	var auto_tick_keys: Array = current_game.surface_auto_tick_state_keys() if current_game != null else []
+	for key_value in auto_tick_keys:
+		var key := str(key_value)
+		if not key.is_empty() and game_surface_ui_state.has(key):
 			ui_state[key] = game_surface_ui_state[key]
 	return _apply_game_surface_time_fields(ui_state)
 

@@ -10,6 +10,8 @@ const MARKER_RADIUS := 17.0
 const BACKGROUND_PATH := "res://assets/art/map_backgrounds/cyberpunk_city_overhead.png"
 const MAP_ICON_DIR := "res://assets/art/map_icons"
 const SELECTED_FOCUS_ZOOM := 0.86
+const SELECTED_FOCUS_LERP_SPEED := 22.0
+const MAP_BOUNDS_SNAP_EPSILON := 0.00035
 
 var snapshot: Dictionary = {}
 var icon_texture_cache: Dictionary = {}
@@ -17,6 +19,7 @@ var background_texture_cache: Dictionary = {}
 var nodes_by_id_cache: Dictionary = {}
 var node_screen_position_cache: Dictionary = {}
 var map_view_bounds_cache := Rect2(Vector2.ZERO, Vector2.ONE)
+var target_map_view_bounds_cache := Rect2(Vector2.ZERO, Vector2.ONE)
 var travel_edge_ids_cache: Array = []
 var enabled_travel_edge_ids_cache: Array = []
 var cached_layout_size := Vector2(-1.0, -1.0)
@@ -31,6 +34,23 @@ var stable_layout_size := Vector2(-1.0, -1.0)
 func _ready() -> void:
 	_background_texture()
 	_prewarm_map_icon_directory()
+
+
+func _process(delta: float) -> void:
+	if not is_visible_in_tree():
+		return
+	_ensure_layout_cache()
+	if _map_bounds_equal(map_view_bounds_cache, target_map_view_bounds_cache):
+		return
+	var previous_bounds := map_view_bounds_cache
+	var weight := _bounds_lerp_weight(delta)
+	map_view_bounds_cache = _lerp_map_bounds(map_view_bounds_cache, target_map_view_bounds_cache, weight)
+	if _map_bounds_equal(map_view_bounds_cache, target_map_view_bounds_cache):
+		map_view_bounds_cache = target_map_view_bounds_cache
+	if not _map_bounds_equal(previous_bounds, map_view_bounds_cache):
+		_rebuild_node_screen_position_cache()
+		layout_changed.emit()
+		queue_redraw()
 
 
 func set_map_snapshot(map_snapshot: Dictionary) -> void:
@@ -76,7 +96,15 @@ func current_view_snapshot() -> Dictionary:
 		"width": bounds.size.x,
 		"height": bounds.size.y,
 	}
+	var target_bounds := target_map_view_bounds_cache
+	view["target_map_bounds"] = {
+		"x": target_bounds.position.x,
+		"y": target_bounds.position.y,
+		"width": target_bounds.size.x,
+		"height": target_bounds.size.y,
+	}
 	view["selected_focus_zoom_active"] = _selected_focus_zoom_active()
+	view["selected_focus_zoom_animating"] = not _map_bounds_equal(map_view_bounds_cache, target_map_view_bounds_cache)
 	return view
 
 
@@ -256,16 +284,23 @@ func _rebuild_layout_cache() -> void:
 	if next_selected_node_id.is_empty():
 		map_view_selected_node_id_cache = ""
 		map_view_focus_node_ids_cache = []
-	elif next_basis_signature != map_view_basis_signature or map_view_selected_node_id_cache.is_empty():
+	elif next_basis_signature != map_view_basis_signature or map_view_selected_node_id_cache != next_selected_node_id:
 		map_view_basis_signature = next_basis_signature
 		map_view_focus_node_ids_cache = _string_array(snapshot.get("map_focus_node_ids", []))
 		map_view_selected_node_id_cache = next_selected_node_id
 		stable_layout_size = _current_or_default_layout_size()
 	var next_bounds_signature := _map_view_bounds_signature(next_basis_signature)
 	if next_bounds_signature != map_view_bounds_signature:
-		map_view_bounds_cache = _compute_map_view_bounds()
+		var first_bounds := map_view_bounds_signature.is_empty()
+		target_map_view_bounds_cache = _compute_map_view_bounds()
+		if first_bounds:
+			map_view_bounds_cache = target_map_view_bounds_cache
 		map_view_bounds_signature = next_bounds_signature
 	cached_layout_size = size
+	_rebuild_node_screen_position_cache()
+
+
+func _rebuild_node_screen_position_cache() -> void:
 	node_screen_position_cache = {}
 	for node_id_value in nodes_by_id_cache.keys():
 		var node_id := str(node_id_value)
@@ -364,6 +399,23 @@ func _selected_focus_bounds(base_bounds: Rect2) -> Rect2:
 
 func _selected_focus_zoom_active() -> bool:
 	return not map_view_selected_node_id_cache.is_empty() and nodes_by_id_cache.has(map_view_selected_node_id_cache)
+
+
+func _bounds_lerp_weight(delta: float) -> float:
+	if delta <= 0.0:
+		return 0.0
+	return clampf(1.0 - exp(-SELECTED_FOCUS_LERP_SPEED * delta), 0.0, 1.0)
+
+
+func _lerp_map_bounds(from_bounds: Rect2, to_bounds: Rect2, weight: float) -> Rect2:
+	return Rect2(
+		from_bounds.position.lerp(to_bounds.position, weight),
+		from_bounds.size.lerp(to_bounds.size, weight)
+	)
+
+
+func _map_bounds_equal(a: Rect2, b: Rect2) -> bool:
+	return a.position.distance_squared_to(b.position) <= MAP_BOUNDS_SNAP_EPSILON * MAP_BOUNDS_SNAP_EPSILON and a.size.distance_squared_to(b.size) <= MAP_BOUNDS_SNAP_EPSILON * MAP_BOUNDS_SNAP_EPSILON
 
 
 func _map_view_bounds_signature(basis_signature: String) -> String:
