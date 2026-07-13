@@ -18570,6 +18570,100 @@ func _check_recovery_loss_pressure_foundation(library: ContentLibrary, failures:
 	var travel_escape_status := RunTerminalEvaluatorScript.evaluate_and_apply(travel_escape_run, library)
 	if bool(travel_escape_status.get("failed", false)) or not bool(travel_escape_status.get("travel_available", false)):
 		failures.append("Affordable travel was not preserved as a low-bankroll recovery path.")
+	_check_broke_pull_tab_deferred_terminal_boundary(library, failures)
+	_check_broke_idle_terminal_evaluator_not_per_frame(library, failures)
+
+
+func _check_broke_pull_tab_deferred_terminal_boundary(library: ContentLibrary, failures: Array) -> void:
+	var pull_tabs: GameModule = _load_surface_contract_game(library, "pull_tabs", failures)
+	if pull_tabs == null:
+		return
+	var run_state: RunState = RunStateScript.new()
+	run_state.start_new("BROKE-PULL-TAB-DEFERRED")
+	var environment := {
+		"id": "broke_pull_tab_fixture",
+		"archetype_id": "fixture_room",
+		"kind": "casino",
+		"economic_profile": {"stake_floor": 1, "stake_ceiling": 1},
+		"game_ids": ["pull_tabs"],
+		"event_ids": [],
+		"item_offers": [],
+		"travel_hooks": [],
+		"next_archetypes": [],
+		"lender_hooks": [],
+		"game_states": {},
+	}
+	var machine := pull_tabs.generate_environment_state(run_state, environment, run_state.create_rng("broke_pull_tabs"))
+	machine["tray_stack"] = [{"symbols": ["A", "B", "C"], "payout": 0}]
+	environment["game_states"] = {"pull_tabs": machine}
+	run_state.set_environment(environment)
+	run_state.change_bankroll(-run_state.bankroll, true)
+	var deferred_status := RunTerminalEvaluatorScript.evaluate(run_state, library)
+	if bool(deferred_status.get("failed", false)) or not bool(deferred_status.get("bankroll_zero_deferred", false)):
+		failures.append("Unresolved pull-tab ticket did not preserve zero-bankroll deferred recovery.")
+	var states: Dictionary = run_state.current_environment.get("game_states", {}) if typeof(run_state.current_environment.get("game_states", {})) == TYPE_DICTIONARY else {}
+	var stored_machine: Dictionary = states.get("pull_tabs", {}) if typeof(states.get("pull_tabs", {})) == TYPE_DICTIONARY else {}
+	stored_machine["tray_stack"] = []
+	stored_machine["ticket_stack"] = []
+	stored_machine["winner_pile"] = []
+	states["pull_tabs"] = stored_machine
+	run_state.current_environment["game_states"] = states
+	var failed_status := RunTerminalEvaluatorScript.evaluate_and_apply(run_state, library)
+	if not bool(failed_status.get("failed", false)) or run_state.run_failure_reason != RunState.FAILURE_BANKROLL_ZERO:
+		failures.append("Clearing zero-bankroll pull-tab recovery did not fail at the action boundary with bankroll-zero reason.")
+
+
+func _check_broke_idle_terminal_evaluator_not_per_frame(library: ContentLibrary, failures: Array) -> void:
+	var pull_tabs: GameModule = _load_surface_contract_game(library, "pull_tabs", failures)
+	if pull_tabs == null:
+		return
+	var app_value: Variant = MainScene.instantiate()
+	if not app_value is Control:
+		failures.append("Broke-idle terminal evaluator fixture could not instantiate FoundationMain.")
+		return
+	var app: Control = app_value
+	root.add_child(app)
+	if not bool(app.call("uses_foundation_runtime")):
+		app.call("_ready")
+	if not bool(app.call("uses_foundation_runtime")):
+		failures.append("Broke-idle terminal evaluator fixture requires FoundationMain runtime nodes.")
+		_sb4_dispose_app(app)
+		return
+	var run_state: RunState = RunStateScript.new()
+	run_state.start_new("BROKE-IDLE-NO-POLL")
+	var environment := {
+		"id": "broke_idle_fixture",
+		"archetype_id": "fixture_room",
+		"kind": "casino",
+		"economic_profile": {"stake_floor": 1, "stake_ceiling": 1},
+		"game_ids": ["pull_tabs"],
+		"event_ids": [],
+		"item_offers": [],
+		"travel_hooks": [],
+		"next_archetypes": [],
+		"lender_hooks": [],
+		"game_states": {},
+	}
+	var machine := pull_tabs.generate_environment_state(run_state, environment, run_state.create_rng("broke_idle_pull_tabs"))
+	machine["tray_stack"] = [{"symbols": ["A", "B", "C"], "payout": 0}]
+	environment["game_states"] = {"pull_tabs": machine}
+	run_state.set_environment(environment)
+	run_state.change_bankroll(-run_state.bankroll, true)
+	app.set("run_state", run_state)
+	app.set("current_game", null)
+	app.call("_set_current_screen", "ENVIRONMENT")
+	app.call("_refresh")
+	if run_state.run_status == RunState.RUN_STATUS_FAILED:
+		failures.append("Broke-idle deferred fixture failed before idle frame sampling.")
+		_sb4_dispose_app(app)
+		return
+	app.set("terminal_evaluator_call_count", 0)
+	for _frame_index in range(12):
+		app.call("_process", 1.0 / 60.0)
+	var call_count := int(app.get("terminal_evaluator_call_count"))
+	if call_count != 0:
+		failures.append("Broke-idle frames invoked the terminal evaluator %d time(s); expected action-boundary only." % call_count)
+	_sb4_dispose_app(app)
 
 
 func _save_service_expected_snapshot(run_state: RunState) -> Dictionary:

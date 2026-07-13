@@ -158,6 +158,7 @@ var pending_wager_confirm_preserve_surface_ui_state := false
 var pending_wager_confirm_stake: int = 0
 var pending_wager_confirm_source_game_id: String = ""
 var pending_all_in_result_terminal_check := false
+var terminal_evaluator_call_count := 0
 var presented_bankroll_hold_active := false
 var presented_bankroll_value := 0
 var presented_bankroll_game_id := ""
@@ -404,7 +405,6 @@ func _process(_delta: float) -> void:
 	_advance_game_surface_realtime_state()
 	_advance_presented_bankroll()
 	_advance_environment_game_runtime()
-	_advance_deferred_bankroll_failure()
 	_flush_pending_autosave_if_ready()
 
 
@@ -923,6 +923,10 @@ func _advance_environment_game_runtime() -> void:
 				run_state.advance_environment_turns(1)
 				if bool(result.get("host_apply_result", false)):
 					GameModule.apply_result(run_state, result, rng)
+				_evaluate_run_terminal_state()
+				if run_state.is_terminal():
+					_render_environment_screen()
+					return
 			last_environment_runtime_result = result.duplicate(true)
 			if current_game == null:
 				last_game_result = result.duplicate(true)
@@ -959,19 +963,6 @@ func _advance_alcohol_absorption() -> void:
 		return
 	_refresh_runtime_environment_views()
 	_render_foundation_snapshots()
-
-
-func _advance_deferred_bankroll_failure() -> void:
-	if run_state == null or library == null or run_state.is_terminal() or run_state.bankroll > 0:
-		return
-	if _all_in_result_terminal_check_is_pending():
-		return
-	var terminal_result := RunTerminalEvaluatorScript.evaluate(run_state, library)
-	if bool(terminal_result.get("bankroll_zero_deferred", false)):
-		return
-	_evaluate_run_terminal_state()
-	if run_state.run_status == RunState.RUN_STATUS_FAILED:
-		_render_environment_screen()
 
 
 func _refresh_runtime_environment_views() -> void:
@@ -12090,10 +12081,15 @@ func _evaluate_run_terminal_state(force: bool = false) -> Dictionary:
 		}
 	if force:
 		pending_all_in_result_terminal_check = false
-	var result := RunTerminalEvaluatorScript.evaluate_and_apply(run_state, library)
+	var result := _run_terminal_evaluator_evaluate_and_apply()
 	_route_ended_run_if_needed(result)
 	_route_failed_run_if_needed(result)
 	return result
+
+
+func _run_terminal_evaluator_evaluate_and_apply() -> Dictionary:
+	terminal_evaluator_call_count += 1
+	return RunTerminalEvaluatorScript.evaluate_and_apply(run_state, library)
 
 
 func _all_in_result_terminal_check_is_pending() -> bool:
