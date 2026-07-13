@@ -98,6 +98,7 @@ const RunInventoryViewModelScript := preload("res://scripts/ui/run_inventory_vie
 const MetaCollectionViewModelScript := preload("res://scripts/ui/meta_collection_view_model.gd")
 const MetaSessionControllerScript := preload("res://scripts/ui/meta_session_controller.gd")
 const WorldMapOverlayControllerScript := preload("res://scripts/ui/world_map_overlay_controller.gd")
+const WagerConfirmationControllerScript := preload("res://scripts/ui/wager_confirmation_controller.gd")
 const TalkDockScript := preload("res://scripts/ui/talk_dock.gd")
 const SfxPlayerScript := preload("res://scripts/ui/sfx_player.gd")
 const ProceduralMusicPlayerScript := preload("res://scripts/ui/procedural_music_player.gd")
@@ -305,6 +306,7 @@ var world_map_badge_row: HFlowContainer
 var world_map_badge_cells: Array = []
 var world_map_confirm_button: Button
 var world_map_overlay_controller: WorldMapOverlayController
+var wager_confirmation_controller: WagerConfirmationController
 var selected_world_map_node_id: String = ""
 var world_map_button_ids: Array = []
 var world_map_button_layout_size := Vector2(-1.0, -1.0)
@@ -6956,42 +6958,44 @@ func _slot_runtime_feature_audio_cue(runtime_state: Dictionary) -> String:
 	return cue if not cue.is_empty() else "bonus_start"
 
 
+func _ensure_wager_confirmation_controller() -> void:
+	if wager_confirmation_controller == null:
+		wager_confirmation_controller = WagerConfirmationControllerScript.new()
+
+
+func _sync_wager_confirmation_controller_to_host() -> void:
+	if wager_confirmation_controller == null:
+		return
+	var state := wager_confirmation_controller.pending_state()
+	pending_wager_confirm_action_id = str(state.get("action_id", ""))
+	pending_wager_confirm_skip_stake_validation = bool(state.get("skip_stake_validation", false))
+	pending_wager_confirm_preserve_surface_ui_state = bool(state.get("preserve_surface_ui_state", false))
+	pending_wager_confirm_stake = int(state.get("stake", 0))
+	pending_wager_confirm_source_game_id = str(state.get("source_game_id", ""))
+
+
 func _show_wager_confirmation_popup(action_id: String, stake: int, wager_cost: int, skip_stake_validation: bool, preserve_surface_ui_state: bool, source_game_id: String = "") -> void:
 	if event_choice_popup_overlay == null or event_choice_popup_choices_list == null:
 		_show_message("This bet risks your last cash. Click again to confirm.")
 		return
-	pending_wager_confirm_action_id = action_id
-	pending_wager_confirm_skip_stake_validation = skip_stake_validation
-	pending_wager_confirm_preserve_surface_ui_state = preserve_surface_ui_state
-	pending_wager_confirm_stake = stake
-	pending_wager_confirm_source_game_id = source_game_id
+	_ensure_wager_confirmation_controller()
 	var action_label := _wager_confirmation_action_label(action_id, source_game_id)
-	var summary := "Betting $%d risks your last cash. If this play loses, the run ends after the result finishes resolving." % wager_cost
+	var view := wager_confirmation_controller.configure_confirmation(action_id, stake, wager_cost, skip_stake_validation, preserve_surface_ui_state, source_game_id, action_label)
+	_sync_wager_confirmation_controller_to_host()
 	pending_event_choice_popup_event_id = ""
 	pending_event_choice_popup_focus_choice_id = ""
-	pending_event_choice_popup_snapshot = {
-		"visible": true,
-		"blocking": true,
-		"popup_type": "wager_confirmation",
-		"interaction_kind": "blocking_decision",
-		"dismissible": false,
-		"summary": summary,
-		"action_id": action_id,
-		"action_label": action_label,
-		"stake": stake,
-		"wager_cost": wager_cost,
-		"choices": [
-			{"id": "confirm", "label": "Confirm Bet", "text": "Resolve %s at stake %d." % [action_label, stake], "consequence_summary": "Loss can end the run."},
-			{"id": "cancel", "label": "Change Stake", "text": "Return to the game surface.", "consequence_summary": "No wager placed."},
-		],
-	}
+	pending_event_choice_popup_snapshot = (view.get("snapshot", {}) as Dictionary).duplicate(true) if typeof(view.get("snapshot", {})) == TYPE_DICTIONARY else {}
 	if event_choice_popup_title_label != null:
-		event_choice_popup_title_label.text = "All-in wager"
+		event_choice_popup_title_label.text = str(view.get("title", "All-in wager"))
 	if event_choice_popup_summary_label != null:
-		event_choice_popup_summary_label.text = summary
+		event_choice_popup_summary_label.text = str(view.get("summary", ""))
 	_clear(event_choice_popup_choices_list)
-	_add_wager_confirmation_card("Confirm Bet", "Resolve %s at stake %d." % [action_label, stake], "Loss can end the run.", Callable(self, "confirm_pending_wager_action"), true)
-	_add_wager_confirmation_card("Change Stake", "Return to the game surface.", "No wager placed.", Callable(self, "cancel_pending_wager_confirmation"), false)
+	for card_value in _copy_array(view.get("cards", [])):
+		if typeof(card_value) != TYPE_DICTIONARY:
+			continue
+		var card: Dictionary = card_value
+		var callback := Callable(self, "confirm_pending_wager_action") if str(card.get("action", "")) == "confirm" else Callable(self, "cancel_pending_wager_confirmation")
+		_add_wager_confirmation_card(str(card.get("label", "")), str(card.get("text", "")), str(card.get("impact", "")), callback, bool(card.get("primary", false)))
 	event_choice_popup_overlay.visible = true
 	event_choice_popup_overlay.move_to_front()
 	_position_event_choice_popup()
@@ -7022,11 +7026,9 @@ func _add_wager_confirmation_card(label: String, text: String, impact: String, c
 
 
 func _clear_pending_wager_confirmation() -> void:
-	pending_wager_confirm_action_id = ""
-	pending_wager_confirm_skip_stake_validation = false
-	pending_wager_confirm_preserve_surface_ui_state = false
-	pending_wager_confirm_stake = 0
-	pending_wager_confirm_source_game_id = ""
+	_ensure_wager_confirmation_controller()
+	wager_confirmation_controller.clear()
+	_sync_wager_confirmation_controller_to_host()
 
 
 func serialized_run_state() -> Dictionary:
