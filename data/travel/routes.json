@@ -141,6 +141,7 @@
 		"suspicion_delta": 8,
 		"requires_travel_count_min": 1,
 		"hide_until_travel_count_met": true,
+		"locked_hint": true,
 		"travel_count_condition_text": "Travel once before this route appears.",
 		"requires_flags": {
 			"grand_casino_invite": true

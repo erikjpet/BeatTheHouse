@@ -1153,6 +1153,8 @@ func _validate_travel_route_definitions() -> void:
 			validation_errors.append("travel_routes %s requires_travel_count_min must be non-negative." % route_id)
 		if route_def.has("hide_until_travel_count_met") and typeof(route_def.get("hide_until_travel_count_met", false)) != TYPE_BOOL:
 			validation_errors.append("travel_routes %s hide_until_travel_count_met must be a boolean." % route_id)
+		if route_def.has("locked_hint") and typeof(route_def.get("locked_hint", false)) != TYPE_BOOL:
+			validation_errors.append("travel_routes %s locked_hint must be a boolean." % route_id)
 		var destination := str(route_def.get("destination_archetype", "")).strip_edges()
 		if destination.is_empty():
 			validation_errors.append("travel_routes %s is missing destination_archetype." % route_id)

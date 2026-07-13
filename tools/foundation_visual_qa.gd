@@ -1494,9 +1494,7 @@ func _try_lender_hook_flow(prepared_fixture: bool = false) -> void:
 	await _settle()
 	var canvas := app.get("environment_canvas") as Control
 	if canvas != null and canvas.visible and canvas.has_method("current_view_snapshot"):
-		var current_lender := _first_clickable_canvas_object_type_enabled(canvas, "lender", true)
-		if current_lender.is_empty():
-			current_lender = _first_clickable_canvas_object_type_enabled(canvas, "lender", false)
+		var current_lender := _first_debt_lender_canvas_object_enabled(canvas, true)
 		if not current_lender.is_empty():
 			await _try_lender_object_in_current_room(current_lender, prepared_fixture)
 			return
@@ -1524,7 +1522,7 @@ func _try_lender_hook_flow(prepared_fixture: bool = false) -> void:
 			return
 		_require(false, "Prepared lender visual QA fixture did not expose the environment canvas.")
 		return
-	var lender_object := _first_clickable_canvas_object_type_enabled(canvas, "lender", true)
+	var lender_object := _first_debt_lender_canvas_object_enabled(canvas, true)
 	if lender_object.is_empty():
 		if not prepared_fixture:
 			await _prepare_lender_pressure_visual_qa_fixture()
@@ -1578,7 +1576,7 @@ func _verify_mouse_only_recovery_pressure_flow() -> void:
 	await _settle()
 	var before_lender := _run_state_restore_summary(app.call("serialized_run_state"))
 	var serialized_before_lender := _serialized_run_text()
-	var lender_button := await _double_click_first_enabled_canvas_object_type("lender")
+	var lender_button := await _double_click_first_debt_lender_object()
 	if lender_button.is_empty():
 		var serialized_before_travel := _serialized_run_text()
 		var lender_route := await _double_click_first_travel_to_lender_environment()
@@ -1589,7 +1587,7 @@ func _verify_mouse_only_recovery_pressure_flow() -> void:
 		_require(serialized_before_travel != _serialized_run_text(), "Recovery pressure QA travel did not update RunState through visible controls.")
 		before_lender = _run_state_restore_summary(app.call("serialized_run_state"))
 		serialized_before_lender = _serialized_run_text()
-		lender_button = await _double_click_first_enabled_canvas_object_type("lender")
+		lender_button = await _double_click_first_debt_lender_object()
 		if lender_button.is_empty():
 			_add_warning("Recovery pressure QA reached a lender route but found no enabled visible lender object.")
 			return
@@ -2984,6 +2982,48 @@ func _first_clickable_canvas_object_type_enabled(canvas: Control, object_type: S
 		if _canvas_object_center_hits(canvas, object_data):
 			return object_data.duplicate(true)
 	return {}
+
+
+func _first_debt_lender_canvas_object_enabled(canvas: Control, enabled: bool) -> Dictionary:
+	var snapshot: Dictionary = canvas.call("current_view_snapshot")
+	var objects: Array = snapshot.get("objects", [])
+	for item in objects:
+		if typeof(item) != TYPE_DICTIONARY:
+			continue
+		var object_data: Dictionary = item
+		if _object_type_value(object_data) != "lender":
+			continue
+		if _canvas_lender_is_pawn_counter(object_data):
+			continue
+		var object_enabled := not bool(object_data.get("disabled", false))
+		if object_enabled != enabled:
+			continue
+		if _canvas_object_center_hits(canvas, object_data):
+			return object_data.duplicate(true)
+	return {}
+
+
+func _canvas_lender_is_pawn_counter(object_data: Dictionary) -> bool:
+	var source_id := str(object_data.get("source_id", "")).strip_edges()
+	if source_id.is_empty():
+		source_id = str(object_data.get("id", object_data.get("object_id", ""))).trim_prefix("lender:")
+	if source_id.is_empty():
+		return false
+	var content_library := app.get("library") as ContentLibrary
+	if content_library == null:
+		return source_id == "sals_pawn_counter"
+	var definition := content_library.lender(source_id)
+	return str(definition.get("lender_type", "")) == "pawn"
+
+
+func _double_click_first_debt_lender_object() -> String:
+	var canvas := app.get("environment_canvas") as Control
+	if canvas == null or not canvas.visible or not canvas.has_method("current_view_snapshot"):
+		return ""
+	var lender_object := _first_debt_lender_canvas_object_enabled(canvas, true)
+	if lender_object.is_empty():
+		return ""
+	return await _double_click_canvas_object_data(canvas, lender_object, "lender")
 
 
 func _canvas_object_by_id(canvas: Control, object_id: String) -> Dictionary:

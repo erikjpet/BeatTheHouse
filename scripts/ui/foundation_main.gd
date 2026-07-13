@@ -8364,6 +8364,12 @@ func _travel_leave_preview_lines(travel_choices: Array, direct_room_exit: Dictio
 		var label := str(choice.get("label", choice.get("id", "Route"))).strip_edges()
 		if label.is_empty():
 			continue
+		if bool(choice.get("locked", false)):
+			preview_lines.append("%s: %s" % [
+				label,
+				str(choice.get("disabled_reason", "locked")),
+			])
+			continue
 		preview_lines.append("%s: %s, cost %d" % [
 			label,
 			str(choice.get("distance", "near")),
@@ -14063,11 +14069,17 @@ func _refresh_world_map_detail() -> void:
 		return
 	var choice := _travel_choice(selected_world_map_node_id)
 	lines.append("Stop: %s" % str(node.get("label", selected_world_map_node_id)))
+	var node_archetype := _environment_archetype(str(node.get("archetype_id", selected_world_map_node_id)))
+	var status_text := EnvironmentHours.travel_status_text(node_archetype, run_state.game_minute_of_day())
+	if bool(choice.get("locked", false)):
+		lines.append("Locked: %s" % str(choice.get("disabled_reason", "That route is not available right now.")))
+		_set_world_map_confirm_enabled(false)
+		_set_world_map_detail_badges([])
+		world_map_detail_label.text = "\n".join(lines)
+		return
 	var flavor := _world_map_node_flavor(node)
 	if not flavor.is_empty():
 		lines.append("Does: %s" % flavor)
-	var node_archetype := _environment_archetype(str(node.get("archetype_id", selected_world_map_node_id)))
-	var status_text := EnvironmentHours.travel_status_text(node_archetype, run_state.game_minute_of_day())
 	if selected_world_map_node_id == current_id:
 		lines.append("Status: You are here.")
 		lines.append("Hours: %s" % status_text)
@@ -14579,6 +14591,7 @@ func _enriched_world_map_snapshot(snapshot: Dictionary) -> Dictionary:
 		var route := _world_route_for_target(node_id) if is_target and not is_current else {}
 		var status := run_state.travel_route_status(route) if not route.is_empty() else {}
 		var route_hidden := bool(status.get("hidden", false))
+		var route_locked := bool(status.get("locked", false))
 		var enabled := is_target and not is_current and not route.is_empty() and not route_hidden and bool(status.get("available", true))
 		var visible_travel_target := is_target and not is_current and not route_hidden
 		if not _world_map_node_should_render(node, is_current, visible_travel_target):
@@ -14601,6 +14614,22 @@ func _enriched_world_map_snapshot(snapshot: Dictionary) -> Dictionary:
 		node["travel_disabled_reason"] = ""
 		if visible_travel_target:
 			visible_target_ids.append(node_id)
+			node["locked"] = route_locked
+			if route_locked:
+				node["travel_disabled_reason"] = str(status.get("disabled_reason", "That route is not available right now."))
+				node["attribute_badges"] = []
+				travel_disabled_ids.append(node_id)
+				var locked_route_path := _string_array(route.get("world_path", []))
+				if locked_route_path.size() >= 2:
+					travel_paths.append({
+						"target_id": node_id,
+						"path": locked_route_path,
+						"enabled": false,
+					})
+				nodes.append(node)
+				displayed_lookup[node_id] = true
+				visible_node_ids.append(node_id)
+				continue
 			node["travel_method"] = _world_map_travel_method({"route": route, "distance": str(status.get("distance", route.get("distance", "near")))})
 			node["distance"] = str(status.get("distance", route.get("distance", "")))
 			node["distance_blocks"] = int(route.get("distance_blocks", 0))
@@ -14783,6 +14812,20 @@ func _travel_choice(target_id: String, known_target_ids: Array = []) -> Dictiona
 	choice["force_walk_fallback"] = forced_walk
 	if bool(status.get("hidden", false)):
 		return {}
+	if bool(status.get("locked", false)):
+		var locked_reason := str(status.get("disabled_reason", route.get("condition_text", "This route is locked for now."))).strip_edges()
+		if locked_reason.is_empty():
+			locked_reason = "This route is locked for now."
+		return {
+			"id": target_id,
+			"label": label,
+			"condition_text": locked_reason,
+			"unlock_summary": str(status.get("unlock_summary", locked_reason)),
+			"enabled": false,
+			"disabled_reason": locked_reason,
+			"locked": true,
+			"attribute_badges": [],
+		}
 	choice["distance"] = str(status.get("distance", choice.get("distance", "")))
 	choice["risk_decay"] = int(status.get("risk_decay", choice.get("risk_decay", 0)))
 	choice["risk_text"] = str(status.get("risk_text", ""))
@@ -14906,7 +14949,7 @@ func _enabled_world_route_ids(source_id: String) -> Array:
 		if not EnvironmentHours.environment_open_at(archetype, _arrival_minute_for_route(route, false)):
 			continue
 		var status := run_state.travel_route_status(route)
-		if not bool(status.get("hidden", false)) and bool(status.get("available", true)):
+		if not bool(status.get("hidden", false)) and (bool(status.get("available", true)) or bool(status.get("locked", false))):
 			result.append(target_id)
 	return result
 

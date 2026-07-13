@@ -14920,20 +14920,16 @@ func _check_travel_route_foundation(library: ContentLibrary, failures: Array) ->
 		boss_run.start_new("TRAVEL-GRAND-GATE")
 		boss_run.bankroll = 200
 		var boss_before_status := boss_run.travel_route_status(boss_route)
-		if bool(boss_before_status.get("available", true)) or not bool(boss_before_status.get("hidden", false)):
-			failures.append("Grand Casino route should be hidden until the run has traveled once.")
+		if bool(boss_before_status.get("available", true)) or bool(boss_before_status.get("hidden", true)) or not bool(boss_before_status.get("locked", false)):
+			failures.append("Grand Casino route should be visible locked until the run has traveled once.")
 		boss_run.environment_history.append({"id": "visited_once", "archetype_id": "corner_store"})
 		var boss_after_status := boss_run.travel_route_status(boss_route)
-		if bool(boss_after_status.get("available", true)) or not bool(boss_after_status.get("hidden", false)):
-			failures.append("Grand Casino route should stay hidden until the invitation flag is earned.")
+		if bool(boss_after_status.get("available", true)) or bool(boss_after_status.get("hidden", true)) or not bool(boss_after_status.get("locked", false)):
+			failures.append("Grand Casino route should stay visible locked until the invitation flag is earned.")
 		var world_map := WorldMapScript.new(library)
 		var map_data := world_map.build(boss_run, boss_run.create_rng("grand_gate_map"))
 		map_data = WorldMapScript.unlock_nodes(map_data, ["grand_casino"], WorldMapScript.DISCOVERY_SOURCE_TRAVEL)
 		boss_run.set_world_map(map_data)
-		var enabled_targets := _enabled_world_route_ids_for_run(library, boss_run, boss_run.current_world_node_id())
-		var map_targets := WorldMapScript.travel_target_ids(boss_run.world_map, boss_run.current_world_node_id(), WorldMapScript.TRAVEL_NEW_TARGET_LIMIT, WorldMapScript.TRAVEL_TOTAL_TARGET_LIMIT, enabled_targets)
-		if enabled_targets.has("grand_casino") or map_targets.has("grand_casino"):
-			failures.append("Grand Casino world-map travel target surfaced before the invitation flag.")
 		boss_run.narrative_flags["grand_casino_invite"] = true
 		var boss_unlocked_status := boss_run.travel_route_status(boss_route)
 		if bool(boss_unlocked_status.get("hidden", true)) or not bool(boss_unlocked_status.get("available", false)):
@@ -15065,7 +15061,7 @@ func _enabled_world_route_ids_for_run(library: ContentLibrary, run_state: RunSta
 		if route.is_empty():
 			continue
 		var status := run_state.travel_route_status(route)
-		if not bool(status.get("hidden", false)) and bool(status.get("available", true)):
+		if not bool(status.get("hidden", false)) and (bool(status.get("available", true)) or bool(status.get("locked", false))):
 			result.append(target_id)
 	return result
 
@@ -18906,11 +18902,11 @@ func _check_tier_two_route_gates(library: ContentLibrary, delta: Dictionary, del
 	if loaded.current_travel_lock_remaining() != 0:
 		failures.append("Delta Queen travel lock did not expire after the required action count.")
 	var unlocked_status := loaded.travel_route_status(grand_route)
-	if bool(unlocked_status.get("available", true)) or not bool(unlocked_status.get("hidden", false)):
-		failures.append("Delta Queen allowed Grand Casino travel before the invitation was earned.")
+	if bool(unlocked_status.get("available", true)) or bool(unlocked_status.get("hidden", true)) or not bool(unlocked_status.get("locked", false)):
+		failures.append("Delta Queen did not expose Grand Casino as a visible locked route before the invitation was earned.")
 	loaded.narrative_flags["grand_casino_invite"] = true
 	var invite_status := loaded.travel_route_status(grand_route)
-	if not bool(invite_status.get("available", false)) or bool(invite_status.get("hidden", true)):
+	if not bool(invite_status.get("available", false)) or bool(invite_status.get("hidden", true)) or bool(invite_status.get("locked", true)):
 		failures.append("Delta Queen did not allow onward travel after ride lock and invitation: %s." % str(invite_status.get("disabled_reason", "")))
 
 
@@ -18960,8 +18956,12 @@ func _check_grand_casino_invite_gate(library: ContentLibrary, kitty: Dictionary,
 	accept_run.current_environment["travel_lock_remaining"] = 0
 	var locked_route := library.route("grand_casino")
 	var locked_status := accept_run.travel_route_status(locked_route)
-	if bool(locked_status.get("available", true)) or not bool(locked_status.get("hidden", false)):
-		failures.append("Grand Casino route was not hidden before accepting the invite.")
+	if bool(locked_status.get("available", true)) or bool(locked_status.get("hidden", true)) or not bool(locked_status.get("locked", false)):
+		failures.append("Grand Casino route was not exposed as a locked route before accepting the invite.")
+	var underground_locked_status := accept_run.travel_route_status(library.route("small_underground_casino"))
+	if bool(underground_locked_status.get("available", true)) or not bool(underground_locked_status.get("hidden", false)) or bool(underground_locked_status.get("locked", false)):
+		failures.append("Underground route without locked_hint should remain fully hidden before its tip.")
+	_check_grand_casino_locked_route_ui(library, delta, locked_route, failures)
 	var accept_result := invite_module.resolve(accept_run, accept_run.current_environment, "accept_invite")
 	if not bool(accept_result.get("ok", false)) or not bool(accept_run.narrative_flags.get("grand_casino_invite", false)):
 		failures.append("Accepting Grand Casino invite did not set the unlock flag.")
@@ -18971,7 +18971,7 @@ func _check_grand_casino_invite_gate(library: ContentLibrary, kitty: Dictionary,
 	if not bool(grand_node.get("unlocked", false)) or str(grand_node.get("discovery_source", "")) != WorldMapScript.DISCOVERY_SOURCE_EVENT:
 		failures.append("Accepting Grand Casino invite did not unlock the Grand Casino map node as an event discovery.")
 	var unlocked_status := accept_run.travel_route_status(locked_route)
-	if not bool(unlocked_status.get("available", false)) or bool(unlocked_status.get("hidden", true)):
+	if not bool(unlocked_status.get("available", false)) or bool(unlocked_status.get("hidden", true)) or bool(unlocked_status.get("locked", true)):
 		failures.append("Grand Casino route did not become available after accepting the invite.")
 	var suppressed_env := EnvironmentInstance.from_archetype(kitty, 2, accept_run.create_rng("suppressed_kitty"), library).to_dict()
 	if invite_module.can_trigger(accept_run, suppressed_env):
@@ -18999,8 +18999,93 @@ func _check_grand_casino_invite_gate(library: ContentLibrary, kitty: Dictionary,
 		var loaded_gated = save_service.load_run(gated_slot)
 		if loaded_gated != null:
 			var gated_status: Dictionary = loaded_gated.travel_route_status(locked_route)
-			if bool(gated_status.get("available", true)) or not bool(gated_status.get("hidden", false)):
-				failures.append("Grand Casino route gate did not survive save/load without the invite flag.")
+			if bool(gated_status.get("available", true)) or bool(gated_status.get("hidden", true)) or not bool(gated_status.get("locked", false)):
+				failures.append("Grand Casino locked route hint did not survive save/load without the invite flag.")
+
+
+func _check_grand_casino_locked_route_ui(library: ContentLibrary, delta: Dictionary, locked_route: Dictionary, failures: Array) -> void:
+	var app_value: Variant = MainScene.instantiate()
+	if not app_value is Control:
+		failures.append("Grand Casino locked route UI fixture could not instantiate FoundationMain.")
+		return
+	var app: Control = app_value
+	root.add_child(app)
+	if not bool(app.call("uses_foundation_runtime")):
+		app.call("_ready")
+	if not bool(app.call("uses_foundation_runtime")):
+		failures.append("Grand Casino locked route UI fixture requires FoundationMain runtime nodes.")
+		_sb4_dispose_app(app)
+		return
+	var ui_run: RunState = RunStateScript.new()
+	ui_run.start_new("GRAND-LOCKED-ROUTE-UI")
+	ui_run.bankroll = 500
+	ui_run.environment_history.append({"id": "visited_once", "archetype_id": "corner_store"})
+	var world_map := WorldMapScript.new(library)
+	ui_run.set_world_map(world_map.build(ui_run, ui_run.create_rng("grand_locked_ui_map")))
+	var delta_env := EnvironmentInstance.from_archetype(delta, 2, ui_run.create_rng("grand_locked_ui_delta"), library).to_dict()
+	delta_env["travel_lock_remaining"] = 0
+	ui_run.set_environment(delta_env)
+	ui_run.world_map = WorldMapScript.unlock_nodes(ui_run.world_map, ["delta_queen", "grand_casino"], WorldMapScript.DISCOVERY_SOURCE_EVENT)
+	ui_run.world_map = WorldMapScript.enter_node(ui_run.world_map, "delta_queen", ui_run.current_environment)
+	app.set("library", library)
+	app.set("generator", RunGeneratorScript.new(library))
+	app.set("run_state", ui_run)
+	app.set("current_game", null)
+	app.call("_set_current_screen", "ENVIRONMENT")
+	app.call("_refresh")
+	var choices: Array = app.call("_travel_choice_view_list")
+	var grand_choice: Dictionary = {}
+	for choice_value in choices:
+		if typeof(choice_value) != TYPE_DICTIONARY:
+			continue
+		var choice: Dictionary = choice_value
+		if str(choice.get("id", "")) == "grand_casino":
+			grand_choice = choice
+			break
+	if grand_choice.is_empty():
+		failures.append("Grand Casino locked route did not render in the travel list.")
+	else:
+		if bool(grand_choice.get("enabled", true)) or not bool(grand_choice.get("locked", false)):
+			failures.append("Grand Casino locked route travel row was not disabled and marked locked.")
+		if str(grand_choice.get("disabled_reason", "")).find("invitation") == -1:
+			failures.append("Grand Casino locked route row did not show the invitation condition.")
+		for leaked_key in ["cost", "risk", "distance", "distance_blocks", "risk_event", "preview", "preview_lines"]:
+			if grand_choice.has(leaked_key):
+				failures.append("Grand Casino locked route row leaked %s." % leaked_key)
+				break
+	if bool(app.call("select_travel_option", "grand_casino")):
+		failures.append("Grand Casino locked route was selectable from the travel list.")
+	if not str(app.get("selected_travel_target_id")).is_empty():
+		failures.append("Grand Casino locked route armed selected_travel_target_id.")
+	var map_snapshot: Dictionary = app.call("_world_map_snapshot")
+	var grand_node: Dictionary = {}
+	for node_value in _copy_array(map_snapshot.get("nodes", [])):
+		if typeof(node_value) != TYPE_DICTIONARY:
+			continue
+		var node: Dictionary = node_value
+		if str(node.get("id", "")) == "grand_casino":
+			grand_node = node
+			break
+	if grand_node.is_empty():
+		failures.append("Grand Casino locked route did not render as a map node.")
+	else:
+		if not bool(grand_node.get("travel_target", false)) or bool(grand_node.get("travel_enabled", true)) or not bool(grand_node.get("locked", false)):
+			failures.append("Grand Casino locked map node did not expose locked travel state.")
+		for leaked_key in ["cost", "risk", "distance", "distance_blocks", "risk_event"]:
+			if grand_node.has(leaked_key):
+				failures.append("Grand Casino locked map node leaked %s." % leaked_key)
+				break
+	if bool(app.call("select_world_map_node", "grand_casino")):
+		failures.append("Grand Casino locked map node was selectable for travel.")
+	if not str(app.get("selected_travel_target_id")).is_empty():
+		failures.append("Grand Casino locked map node armed selected_travel_target_id.")
+	var unlocked_run: RunState = RunStateScript.new()
+	unlocked_run.from_dict(ui_run.to_dict())
+	unlocked_run.narrative_flags["grand_casino_invite"] = true
+	var unlocked_status := unlocked_run.travel_route_status(locked_route)
+	if not bool(unlocked_status.get("available", false)) or bool(unlocked_status.get("hidden", true)) or bool(unlocked_status.get("locked", true)):
+		failures.append("Grand Casino locked_hint route did not return normal status after the invite flag.")
+	_sb4_dispose_app(app)
 
 
 # Collects unique ids from one array field across environment archetypes.

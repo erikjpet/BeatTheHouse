@@ -160,7 +160,7 @@ func _enabled_world_route_ids(run_state: RunState, map_data: Dictionary, source_
 		if not EnvironmentHours.environment_open_at(archetype, arrival_minute):
 			continue
 		var status := run_state.travel_route_status(route)
-		if not bool(status.get("hidden", false)) and bool(status.get("available", true)):
+		if not bool(status.get("hidden", false)) and (bool(status.get("available", true)) or bool(status.get("locked", false))):
 			result.append(target_id)
 	return result
 

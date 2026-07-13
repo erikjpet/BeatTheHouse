@@ -2934,6 +2934,8 @@ func travel_route_status(route_data: Dictionary) -> Dictionary:
 		"requires_travel_count_min": maxi(0, int(route_data.get("requires_travel_count_min", 0))),
 		"travel_count": environment_travel_count(),
 	}
+	if _route_locked_hint_enabled(route_data):
+		status["locked"] = false
 	var lock_remaining := current_travel_lock_remaining()
 	if lock_remaining > 0:
 		status["available"] = false
@@ -2945,6 +2947,8 @@ func travel_route_status(route_data: Dictionary) -> Dictionary:
 		status["available"] = false
 		status["hidden"] = bool(route_data.get("hide_until_travel_count_met", false))
 		status["disabled_reason"] = str(route_data.get("travel_count_condition_text", route_data.get("condition_text", "Travel farther before this route appears.")))
+		if bool(status.get("hidden", false)) and _route_locked_hint_enabled(route_data):
+			_apply_locked_route_hint(status)
 		return _finalize_travel_route_status(status, route_data)
 	var route_window := _route_availability_status(route_data)
 	if not bool(route_window.get("available", true)):
@@ -2959,6 +2963,8 @@ func travel_route_status(route_data: Dictionary) -> Dictionary:
 			status["available"] = false
 			status["hidden"] = true
 			status["disabled_reason"] = str(route_data.get("condition_text", "A route condition is not met."))
+			if _route_locked_hint_enabled(route_data):
+				_apply_locked_route_hint(status)
 			return _finalize_travel_route_status(status, route_data)
 	for flag_id in _copy_array(route_data.get("blocked_by_flags", [])):
 		if bool(narrative_flags.get(str(flag_id), false)):
@@ -2969,6 +2975,15 @@ func travel_route_status(route_data: Dictionary) -> Dictionary:
 		status["available"] = false
 		status["disabled_reason"] = "Not enough bankroll for this route."
 	return _finalize_travel_route_status(status, route_data)
+
+
+func _route_locked_hint_enabled(route_data: Dictionary) -> bool:
+	return bool(route_data.get("locked_hint", false))
+
+
+func _apply_locked_route_hint(status: Dictionary) -> void:
+	status["hidden"] = false
+	status["locked"] = true
 
 
 # Returns whether the run has enough scouting help to see exact route previews.
