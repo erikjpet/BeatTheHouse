@@ -138,6 +138,59 @@
     }
   },
   {
+    "id": "grand_casino_invite",
+    "display_name": "High Roller Invitation",
+    "type": "progression",
+    "interaction_mode": "interactable",
+    "scopes": [
+      "casino"
+    ],
+    "asset_path": "res://assets/art/events/parking_lot_tip.png",
+    "icon_key": "parking_note",
+    "environment_prop": "paper_note",
+    "start_summary": "A host is holding an invitation.",
+    "trigger": {
+      "type": "manual"
+    },
+    "conditions": {
+      "blocked_by_flags": [
+        "grand_casino_invite"
+      ]
+    },
+    "payload": {
+      "summary": "A host offers Grand Casino access.",
+      "choices": [
+        {
+          "id": "accept_invite",
+          "label": "Accept Invitation",
+          "text": "Take the card and open the boss-floor route.",
+          "consequences": {
+            "add_next_archetypes": [
+              "grand_casino"
+            ],
+            "flags": {
+              "grand_casino_invite": true
+            },
+            "resolve_event": true,
+            "messages": [
+              "The Grand Casino is open to you."
+            ]
+          }
+        },
+        {
+          "id": "not_yet",
+          "label": "Not Yet",
+          "text": "Leave the card with the host until you are ready.",
+          "consequences": {
+            "messages": [
+              "The host keeps the invitation ready."
+            ]
+          }
+        }
+      ]
+    }
+  },
+  {
     "id": "suspicious_patron",
     "display_name": "Suspicious Patron",
     "type": "social",

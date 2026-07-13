@@ -29,7 +29,7 @@
       "asset_path": "res://assets/art/environments/corner_store.png",
       "description": "Cheap supplies and low attention."
     },
-    "objective_hint": "Build enough cash to buy into the Grand Casino.",
+    "objective_hint": "Build cash, then find an invitation at the bigger rooms.",
     "object_fixtures": [
       "shopkeeper:merchant"
     ],
@@ -257,7 +257,7 @@
       "asset_path": "res://assets/art/environments/back_alley.png",
       "description": "Shady tools and high risk."
     },
-    "objective_hint": "Build enough cash to buy into the Grand Casino.",
+    "objective_hint": "Build cash, then find an invitation at the bigger rooms.",
     "object_fixtures": [
       "shopkeeper:merchant"
     ],
@@ -519,7 +519,7 @@
       "asset_path": "res://assets/art/environments/motel.png",
       "description": "Private recovery and regrouping."
     },
-    "objective_hint": "Build enough cash to buy into the Grand Casino.",
+    "objective_hint": "Build cash, then find an invitation at the bigger rooms.",
     "object_fixtures": [
       "shopkeeper:merchant"
     ],
@@ -756,7 +756,7 @@
       "asset_path": "res://assets/art/environments/bar.png",
       "description": "Low-stakes games and talk."
     },
-    "objective_hint": "Build enough cash to buy into the Grand Casino.",
+    "objective_hint": "Build cash, then find an invitation at the bigger rooms.",
     "layout": {
       "game_spots": [
         [
@@ -967,7 +967,7 @@
       "asset_path": "res://assets/art/environments/gas_station_casino.png",
       "description": "Bright machines and cameras."
     },
-    "objective_hint": "Build enough cash to buy into the Grand Casino.",
+    "objective_hint": "Build cash, then find an invitation at the bigger rooms.",
     "layout": {
       "game_spots": [
         [
@@ -1181,7 +1181,7 @@
       "asset_path": "res://assets/art/environments/small_underground_casino.png",
       "description": "Higher action, sharper eyes."
     },
-    "objective_hint": "Win enough for the Grand Casino entry.",
+    "objective_hint": "Win enough, then chase an invitation at the bigger rooms.",
     "layout": {
       "game_spots": [
         [
@@ -1639,7 +1639,7 @@
       "asset_path": "res://assets/art/environments/jazz_club.png",
       "description": "Costly heat control."
     },
-    "objective_hint": "Spend on the show to cool attention, then push toward the Grand Casino.",
+    "objective_hint": "Work the room, then claim the Grand Casino invitation.",
     "layout": {
       "game_spots": [
         [
@@ -1843,7 +1843,8 @@
       "lay_low_booth",
       "door_bribe",
       "lucky_streak_temptation",
-      "crew_favor_delivery"
+      "crew_favor_delivery",
+      "grand_casino_invite"
     ],
     "event_scopes": [
       "casino"
@@ -1851,6 +1852,9 @@
     "event_count": [
       2,
       3
+    ],
+    "required_event_ids": [
+      "grand_casino_invite"
     ],
     "service_pool": [
       "kitty_champagne",
@@ -1909,7 +1913,7 @@
       "asset_path": "res://assets/art/environments/small_underground_casino.png",
       "description": "Riverboat tables; dock timer."
     },
-    "objective_hint": "Ride the mid-stakes boat long enough to afford a real Grand Casino climb.",
+    "objective_hint": "Ride the boat, then claim the Grand Casino invitation.",
     "layout": {
       "game_spots": [
         [
@@ -2111,7 +2115,8 @@
       "lay_low_booth",
       "door_bribe",
       "lucky_streak_temptation",
-      "crew_favor_delivery"
+      "crew_favor_delivery",
+      "grand_casino_invite"
     ],
     "event_scopes": [
       "casino"
@@ -2119,6 +2124,9 @@
     "event_count": [
       2,
       3
+    ],
+    "required_event_ids": [
+      "grand_casino_invite"
     ],
     "service_pool": [
       "riverboat_deck_walk",

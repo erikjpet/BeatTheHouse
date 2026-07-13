@@ -14658,10 +14658,20 @@ func _check_travel_route_foundation(library: ContentLibrary, failures: Array) ->
 			failures.append("Grand Casino route should be hidden until the run has traveled once.")
 		boss_run.environment_history.append({"id": "visited_once", "archetype_id": "corner_store"})
 		var boss_after_status := boss_run.travel_route_status(boss_route)
-		if bool(boss_after_status.get("hidden", true)):
-			failures.append("Grand Casino route stayed hidden after one completed travel.")
-		if not bool(boss_after_status.get("available", false)):
-			failures.append("Grand Casino route should be available after one travel when bankroll covers the buy-in.")
+		if bool(boss_after_status.get("available", true)) or not bool(boss_after_status.get("hidden", false)):
+			failures.append("Grand Casino route should stay hidden until the invitation flag is earned.")
+		var world_map := WorldMapScript.new(library)
+		var map_data := world_map.build(boss_run, boss_run.create_rng("grand_gate_map"))
+		map_data = WorldMapScript.unlock_nodes(map_data, ["grand_casino"], WorldMapScript.DISCOVERY_SOURCE_TRAVEL)
+		boss_run.set_world_map(map_data)
+		var enabled_targets := _enabled_world_route_ids_for_run(library, boss_run, boss_run.current_world_node_id())
+		var map_targets := WorldMapScript.travel_target_ids(boss_run.world_map, boss_run.current_world_node_id(), WorldMapScript.TRAVEL_NEW_TARGET_LIMIT, WorldMapScript.TRAVEL_TOTAL_TARGET_LIMIT, enabled_targets)
+		if enabled_targets.has("grand_casino") or map_targets.has("grand_casino"):
+			failures.append("Grand Casino world-map travel target surfaced before the invitation flag.")
+		boss_run.narrative_flags["grand_casino_invite"] = true
+		var boss_unlocked_status := boss_run.travel_route_status(boss_route)
+		if bool(boss_unlocked_status.get("hidden", true)) or not bool(boss_unlocked_status.get("available", false)):
+			failures.append("Grand Casino route should be available after travel count, bankroll, and invitation.")
 
 	var back_alley_route := library.route("back_alley")
 	if back_alley_route.is_empty():
@@ -14774,6 +14784,24 @@ func _check_travel_route_foundation(library: ContentLibrary, failures: Array) ->
 		failures.append("Travel risk state did not survive RunState save/load restore.")
 	if restored.story_log.size() != run_state.story_log.size():
 		failures.append("Travel story state did not survive RunState save/load restore.")
+
+
+func _enabled_world_route_ids_for_run(library: ContentLibrary, run_state: RunState, source_id: String) -> Array:
+	var result: Array = []
+	if run_state == null or not run_state.has_world_map():
+		return result
+	var map := WorldMapScript.new(library)
+	for target_id_value in WorldMapScript.visible_node_ids(run_state.world_map):
+		var target_id := str(target_id_value)
+		if target_id == source_id or not WorldMapScript.has_path(run_state.world_map, source_id, target_id, true):
+			continue
+		var route := map.route_for_target(run_state.world_map, source_id, target_id)
+		if route.is_empty():
+			continue
+		var status := run_state.travel_route_status(route)
+		if not bool(status.get("hidden", false)) and bool(status.get("available", true)):
+			result.append(target_id)
+	return result
 
 
 func _check_world_map_foundation(library: ContentLibrary, failures: Array) -> void:
@@ -18317,6 +18345,7 @@ func _check_tier_two_venue_progression(library: ContentLibrary, failures: Array)
 	var underground_targets := _unique_strings(_string_array(underground.get("next_archetypes", [])), _string_array(underground.get("travel_hooks", [])))
 	if not underground_targets.has("grand_casino"):
 		failures.append("Small Underground Casino lost its direct Grand Casino shortcut.")
+	_check_grand_casino_invite_gate(library, kitty, delta, failures)
 	_check_tier_two_route_gates(library, delta, delta_route, failures)
 
 
@@ -18362,8 +18391,101 @@ func _check_tier_two_route_gates(library: ContentLibrary, delta: Dictionary, del
 	if loaded.current_travel_lock_remaining() != 0:
 		failures.append("Delta Queen travel lock did not expire after the required action count.")
 	var unlocked_status := loaded.travel_route_status(grand_route)
-	if not bool(unlocked_status.get("available", false)):
-		failures.append("Delta Queen did not allow onward travel after the ride lock expired: %s." % str(unlocked_status.get("disabled_reason", "")))
+	if bool(unlocked_status.get("available", true)) or not bool(unlocked_status.get("hidden", false)):
+		failures.append("Delta Queen allowed Grand Casino travel before the invitation was earned.")
+	loaded.narrative_flags["grand_casino_invite"] = true
+	var invite_status := loaded.travel_route_status(grand_route)
+	if not bool(invite_status.get("available", false)) or bool(invite_status.get("hidden", true)):
+		failures.append("Delta Queen did not allow onward travel after ride lock and invitation: %s." % str(invite_status.get("disabled_reason", "")))
+
+
+func _check_grand_casino_invite_gate(library: ContentLibrary, kitty: Dictionary, delta: Dictionary, failures: Array) -> void:
+	var invite_definition := library.event("grand_casino_invite")
+	if invite_definition.is_empty():
+		failures.append("Grand Casino invite event is missing.")
+		return
+	for archetype in [kitty, delta]:
+		var archetype_id := str((archetype as Dictionary).get("id", ""))
+		if not _string_array((archetype as Dictionary).get("event_pool", [])).has("grand_casino_invite"):
+			failures.append("%s event pool does not include the Grand Casino invite." % archetype_id)
+		if not _string_array((archetype as Dictionary).get("required_event_ids", [])).has("grand_casino_invite"):
+			failures.append("%s does not require the Grand Casino invite event." % archetype_id)
+	for seed_index in range(8):
+		var seed_text := "GRAND-INVITE-SPAWN-%d" % seed_index
+		var run_state: RunState = RunStateScript.new()
+		run_state.start_new(seed_text)
+		for archetype in [kitty, delta]:
+			var archetype_data := archetype as Dictionary
+			var environment := EnvironmentInstance.from_archetype(archetype_data, 2, run_state.create_rng("%s:%s" % [seed_text, str(archetype_data.get("id", ""))]), library).to_dict()
+			if not _string_array(environment.get("event_ids", [])).has("grand_casino_invite"):
+				failures.append("%s did not guarantee Grand Casino invite for seed %s." % [str(archetype_data.get("id", "")), seed_text])
+	var decline_run: RunState = RunStateScript.new()
+	decline_run.start_new("GRAND-INVITE-DECLINE")
+	var decline_env := EnvironmentInstance.from_archetype(delta, 2, decline_run.create_rng("decline_delta"), library).to_dict()
+	decline_run.set_environment(decline_env)
+	var invite_module := EventModule.new()
+	invite_module.setup(invite_definition, library)
+	if not invite_module.can_trigger(decline_run, decline_env):
+		failures.append("Grand Casino invite did not trigger at a tier-2 casino before acceptance.")
+	var decline_result := invite_module.resolve(decline_run, decline_env, "not_yet")
+	if not bool(decline_result.get("ok", false)):
+		failures.append("Grand Casino invite decline choice did not resolve.")
+	if bool(decline_run.narrative_flags.get("grand_casino_invite", false)) or _string_array(decline_run.current_environment.get("resolved_event_ids", [])).has("grand_casino_invite"):
+		failures.append("Declining Grand Casino invite set the flag or resolved the event.")
+	if not invite_module.can_trigger(decline_run, decline_run.current_environment):
+		failures.append("Declining Grand Casino invite did not leave the event re-openable.")
+	var accept_run: RunState = RunStateScript.new()
+	accept_run.start_new("GRAND-INVITE-ACCEPT")
+	accept_run.bankroll = 500
+	accept_run.environment_history.append({"id": "visited_once", "archetype_id": "corner_store"})
+	var world_map := WorldMapScript.new(library)
+	accept_run.set_world_map(world_map.build(accept_run, accept_run.create_rng("grand_invite_map")))
+	var accept_env := EnvironmentInstance.from_archetype(delta, 2, accept_run.create_rng("accept_delta"), library).to_dict()
+	accept_run.set_environment(accept_env)
+	accept_run.current_environment["travel_lock_remaining"] = 0
+	var locked_route := library.route("grand_casino")
+	var locked_status := accept_run.travel_route_status(locked_route)
+	if bool(locked_status.get("available", true)) or not bool(locked_status.get("hidden", false)):
+		failures.append("Grand Casino route was not hidden before accepting the invite.")
+	var accept_result := invite_module.resolve(accept_run, accept_run.current_environment, "accept_invite")
+	if not bool(accept_result.get("ok", false)) or not bool(accept_run.narrative_flags.get("grand_casino_invite", false)):
+		failures.append("Accepting Grand Casino invite did not set the unlock flag.")
+	if not _string_array(accept_run.current_environment.get("resolved_event_ids", [])).has("grand_casino_invite"):
+		failures.append("Accepting Grand Casino invite did not resolve the event instance.")
+	var grand_node := WorldMapScript.node_by_id(accept_run.world_map, "grand_casino")
+	if not bool(grand_node.get("unlocked", false)) or str(grand_node.get("discovery_source", "")) != WorldMapScript.DISCOVERY_SOURCE_EVENT:
+		failures.append("Accepting Grand Casino invite did not unlock the Grand Casino map node as an event discovery.")
+	var unlocked_status := accept_run.travel_route_status(locked_route)
+	if not bool(unlocked_status.get("available", false)) or bool(unlocked_status.get("hidden", true)):
+		failures.append("Grand Casino route did not become available after accepting the invite.")
+	var suppressed_env := EnvironmentInstance.from_archetype(kitty, 2, accept_run.create_rng("suppressed_kitty"), library).to_dict()
+	if invite_module.can_trigger(accept_run, suppressed_env):
+		failures.append("Grand Casino invite copy at the other tier-2 venue was not suppressed after acceptance.")
+	var save_service: SaveService = SaveServiceScript.new()
+	var accept_slot := "foundation_check_grand_invite_accept"
+	var save_error: Error = save_service.save_run(accept_run, accept_slot)
+	if save_error != OK:
+		failures.append("Save service could not save Grand Casino invite progress: %s." % save_error)
+	else:
+		var loaded_accept = save_service.load_run(accept_slot)
+		if loaded_accept == null:
+			failures.append("Save service could not reload Grand Casino invite progress.")
+		else:
+			var loaded_status: Dictionary = loaded_accept.travel_route_status(locked_route)
+			if not bool(loaded_status.get("available", false)):
+				failures.append("Grand Casino invite route availability did not survive save/load.")
+	var gated_run: RunState = RunStateScript.new()
+	gated_run.start_new("GRAND-INVITE-GATED-LOAD")
+	gated_run.bankroll = 500
+	gated_run.environment_history.append({"id": "visited_once", "archetype_id": "corner_store"})
+	var gated_slot := "foundation_check_grand_invite_gated"
+	var gated_save_error: Error = save_service.save_run(gated_run, gated_slot)
+	if gated_save_error == OK:
+		var loaded_gated = save_service.load_run(gated_slot)
+		if loaded_gated != null:
+			var gated_status: Dictionary = loaded_gated.travel_route_status(locked_route)
+			if bool(gated_status.get("available", true)) or not bool(gated_status.get("hidden", false)):
+				failures.append("Grand Casino route gate did not survive save/load without the invite flag.")
 
 
 # Collects unique ids from one array field across environment archetypes.

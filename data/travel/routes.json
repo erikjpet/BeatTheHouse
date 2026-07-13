@@ -142,6 +142,9 @@
 		"requires_travel_count_min": 1,
 		"hide_until_travel_count_met": true,
 		"travel_count_condition_text": "Travel once before this route appears.",
-		"condition_text": "Requires a serious bankroll."
+		"requires_flags": {
+			"grand_casino_invite": true
+		},
+		"condition_text": "You need an invitation from the high-roller circuit."
 	}
 ]

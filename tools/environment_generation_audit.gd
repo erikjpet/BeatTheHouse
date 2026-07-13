@@ -482,6 +482,9 @@ func _event_choice_score(run_state: RunState, choice: Dictionary, allow_bankroll
 		if str(key) == "underground_tip" and bool(flags[key]) and not bool(run_state.narrative_flags.get("underground_tip", false)):
 			score += 65
 			reasons.append("unlocks underground route condition")
+		if str(key) == "grand_casino_invite" and bool(flags[key]) and not bool(run_state.narrative_flags.get("grand_casino_invite", false)):
+			score += 90
+			reasons.append("unlocks Grand Casino route condition")
 	if allow_bankroll_help and int(consequences.get("bankroll_delta", 0)) > 0:
 		score += int(consequences.get("bankroll_delta", 0))
 		reasons.append("restores travel bankroll")
