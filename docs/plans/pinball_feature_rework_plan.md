@@ -1,6 +1,8 @@
 # Pinball Feature Event — Complete Rework Plan
 
-Status: PLANNED (no code changes yet)
+Status: **IMPLEMENTED for the unreleased 0.4.0 candidate.** Section 1 describes
+the removed pre-rework dictionary runtime. The live feature is under
+`scripts/games/slots/pinball/`; `slot_pinball_table.gd` was deleted as planned.
 Date: 2026-07-01
 Reference feel target: **Ballionaire** (roguelike plinko) — fast drops, readable boards,
 trigger-chain satisfaction, item-driven builds. Blended with a **licensed pinball slot

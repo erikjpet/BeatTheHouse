@@ -1,6 +1,9 @@
 # Skill-Based Cheating Methods Plan
 
-Status: DESIGN LOCKED for T2.2-T2.7 implementation
+Status: **IMPLEMENTED DESIGN LOCK** for the unreleased 0.4.0 candidate.
+Symbol names and shared result contracts remain authoritative; numeric line
+references in the source-check section are historical and should not be used
+for navigation after later architecture work.
 Date: 2026-07-01
 
 This document defines the shared skill-cheat contract for Act 1. It is a

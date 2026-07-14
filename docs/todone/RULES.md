@@ -1,5 +1,8 @@
 # docs/todone — Rules of Use
 
+> **DEPRECATED 2026-07-12:** the queue/claim ceremony below is historical.
+> Prompt files are self-contained and launch instructions name them directly.
+
 This folder is the archive of executed prompts. Files arrive here **only** by
 being moved (`git mv`) from `docs/todo/` after the work they describe has been
 completed and verified.

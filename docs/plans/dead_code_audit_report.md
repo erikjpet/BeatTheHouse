@@ -1,5 +1,9 @@
 # Dead & Redundant Code Audit
 
+> **HISTORICAL AUDIT — kept for reference.** This is a 2026-07-01 snapshot;
+> later cleanup commits and the current tree, not this file's line references,
+> determine whether code is live.
+
 Date: 2026-07-01
 Type: READ-ONLY AUDIT — no code was changed. This report classifies what is
 dead, what is suspect, what is live-but-looks-dead, and prescribes an

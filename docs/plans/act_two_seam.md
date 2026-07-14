@@ -1,5 +1,9 @@
 # Act Two Seam Contract
 
+Status: **IMPLEMENTED for the unreleased 0.4.0 candidate** in
+`scripts/core/run_state.gd`, `scripts/core/profile_inventory.gd`, and the
+terminal/profile handoff path. Act 2 content itself remains deferred.
+
 This is the Act 1 handoff contract. It records a small, versioned payload for a
 future Act 2 without adding Act 2 rooms, economy, prestige, or story content.
 

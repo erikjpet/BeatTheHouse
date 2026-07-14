@@ -1,7 +1,11 @@
 # Dynamic Music System Rework Plan
 
 Date: 2026-07-02
-Status: PLANNED (review + design; no code changed)
+Status: **IMPLEMENTED for the unreleased 0.4.0 candidate.** The original
+review describes the pre-rework player; the live implementation in
+`scripts/ui/procedural_music_player.gd` now includes synchronized stems,
+authored-manifest playback, music FX buses, feature stems/stingers, cache
+controls, and snapshot coverage.
 Scope: `scripts/ui/procedural_music_player.gd` (1,225 lines), the slot bonus
 music paths inside `scripts/ui/sfx_player.gd`, and the audio bus graph.
 

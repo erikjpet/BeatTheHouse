@@ -1,5 +1,8 @@
 # v0.4 Completed-Work Review - 2026-07-07
 
+> **COMPLETED SOURCE EVIDENCE.** This records an earlier 0.4 candidate review;
+> it does not claim that unreleased 0.4.0 has completed its final release gate.
+
 Verdict: PASS. The current tree satisfies the reviewed v0.4 feature wave contracts after one small review fix: `502b008` adds and enforces a genuine 0.3.3-shaped RunState compatibility fixture. No unexplained FAIL remains.
 
 ## Scope

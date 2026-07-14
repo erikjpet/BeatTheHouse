@@ -1,5 +1,10 @@
 # World Map Design Lock
 
+Status: **IMPLEMENTED for the unreleased 0.4.0 candidate.** The persistent
+graph/revisit contract remains active; travel dispatch still enters through
+`FoundationMain._travel_to`, while map presentation/state helpers have been
+extracted into focused modules under `scripts/ui/`.
+
 T4.8 replaces per-room destination props with a persistent seeded world map. This
 document is the implementation contract for the Act 1 map; it intentionally
 leaves no open design questions.

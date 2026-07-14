@@ -1,5 +1,10 @@
 # Grand Casino Endgame Design Lock
 
+Status: **IMPLEMENTED for the unreleased 0.4.0 candidate.** The canonical ids
+and state transitions remain binding. Forward-looking A1-A6 wording and the
+final helper cross-check are historical implementation instructions; the live
+helpers are now in `scripts/core/run_state.gd` and covered by foundation tests.
+
 This document is the authoritative Grand Casino endgame contract for A1-A6,
 B2, C1, C3, C5, D1, and D7. It is based on the current top-level README,
 `data/environments/archetypes.json`, `scripts/core/run_state.gd`, and the live

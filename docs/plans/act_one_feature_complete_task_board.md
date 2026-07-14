@@ -1,5 +1,9 @@
 # Beat the House — Act 1 Feature-Complete Task Board
 
+> **HISTORICAL — superseded, kept for reference.** Its implementation backlog
+> is complete or superseded; current 0.4 readiness lives in
+> `docs/plans/0.4_release_checklist.md`.
+
 Created: 2026-07-01
 Owner: project management
 Supersedes: `demo_release_task_board.md` (historical — its 0.2 demo scope shipped

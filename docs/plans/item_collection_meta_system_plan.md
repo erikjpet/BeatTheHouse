@@ -1,8 +1,13 @@
 # Item Collection Meta System — Design Plan
 
 Date: 2026-07-06 (rev 2 — owner decisions incorporated)
-Status: PLANNING. Promote to docs/todo prompts per phase once dependencies
-land. Owner reference model: Counter-Strike item system (collections, rarity
+Status: **PARTIALLY IMPLEMENTED for the unreleased 0.4.0 candidate.** The local
+collection schema, bags, storage/loadouts, meta home, housing, trade-up, run-end
+drops, and pawn selling have landed. Steam Inventory/community-market work is
+still deferred. Proposed rent/upkeep and the removed `data/prestige/purchases.json`
+path are superseded by gold-purchased housing with no rent.
+
+Owner reference model: Counter-Strike item system (collections, rarity
 tiers, float values, trade-up contracts), adapted to the game — and designed
 from day one to be **Steam Inventory Service / community market compatible**.
 
@@ -13,7 +18,7 @@ A persistent collection meta-game layered over runs. Players find **bags**
 special locations; a bag visibly shows its **collection** and **tier**
 (blue → purple → pink → red → gold) before opening. Opening a bag yields an
 item whose identity is defined by **four float attributes** rolled in [0,1].
-Items live in the player's **meta-home** — a persistent, rented home viewed
+Items live in the player's **meta-home** — a persistent, upgradeable home viewed
 *outside* the run — and are packed into a **backpack loadout** carried into
 runs. Items are never deleted by play: failure **decays** them. Items leave
 the collection only by deliberate destruction: pawn-shop sale for **gold**
@@ -37,7 +42,7 @@ language must be revisited deliberately. Until then, everything is local.
 | Tier | blue → purple → pink → red → gold (ascending rarity) |
 | Floats | Four per-item attributes in [0,1]: potency, condition, resonance, usage |
 | Gold | Meta currency, earned only by destroying items |
-| Meta-home | Persistent rented home visited outside runs; stores the collection |
+| Meta-home | Persistent gold-upgraded home visited outside runs; stores the collection |
 | Loadout | Items packed into the backpack and carried into a run |
 | Trade-up | Consume N same-tier, same-collection items → 1 next-tier item |
 
@@ -123,31 +128,30 @@ flavor).
   separate game mechanic with its own plan/prompt. Do not build toward it
   beyond keeping the open pipeline behind one clean function boundary.
 
-## 6. Meta persistence (new layer — none exists today)
+## 6. Meta persistence (implemented; original proposal corrected)
 
 - New `scripts/core/meta_collection_service.gd` owning
   `user://meta_collection.json`: schema-versioned, atomic write (pattern:
   scripts/core/user_settings.gd:6,67), corruption-tolerant normalize-on-load
   (RunState discipline).
 - Holds: unopened bags, owned item instances (itemdef + instance id + four
-  floats), gold balance, backpack loadout, meta-home state (rent, container
+  floats), gold balance, backpack loadout, meta-home state (housing, container
   furniture, placements), collection progress, trade-up/sale history.
 - **Strictly outside RunState.** Loadout injected once at run start; drops
   and usage decay applied once at run end. No mid-run meta writes — SB.3
   save fuzz and SB.5 determinism contracts stay untouched inside runs.
-- `data/prestige/purchases.json` is an empty stub; fold prestige ambitions
-  into this layer rather than maintaining two meta systems.
+- The old `data/prestige/purchases.json` stub was removed. Prestige remains
+  deferred rather than forming a second live meta system.
 
 ## 7. Meta-home (overarching home, outside the run)
 
-- Distinct from the run-side home currently in progress
-  (docs/todo/home_environment_feature_prompt.md). Entered from the main
-  menu, not travel. First pass reuses the run-home environment rendering in
-  a "meta" mode.
+- The earlier run-side home work is archived at
+  `docs/todone/home_environment_feature_prompt.md`. The implemented meta home
+  is entered from the main menu and uses the shared environment rendering path.
 - Interactions: browse collection, open bags (§5), pack backpack, trade-up
-  station, **pawn shop counter** (§9), pay rent.
-- Rent charged from gold; lapsed rent downgrades storage capacity (tuning
-  lever — no eviction spirals in v1).
+  station, and **pawn shop counter** (§9), plus one-time housing upgrades.
+- Housing upgrades are purchased once with gold. There is no rent or upkeep in
+  0.4.0.
 - Container furniture = storage; unlocked container tier
   (bag → backpack → suitcase → trunk) gates **loadout slots**, not storage.
 
@@ -177,7 +181,7 @@ Gold enters the meta economy **only** by destroying items — two paths:
    terminal.
 
 Gold is a **separate meta currency** (owner decision) — never mixed with the
-run bankroll. Gold spends on rent (§7) and future meta sinks.
+run bankroll. Gold buys housing upgrades (§7) and can fund future meta sinks.
 
 ## 10. Inventory rework
 
@@ -197,7 +201,7 @@ run bankroll. Gold spends on rent (§7) and future meta sinks.
 | P0 | collections.json schema (Steam-compatible ids) + validation; MetaCollectionService versioned save; 4-float roll/decay/effect resolution with unit coverage; owner-vetted 2×14 item selection list | CRITICAL table bug fixed |
 | P1 | Bag drops (milestones + special locations) + unopened storage + single-button open pipeline with simple reveal animation + basic collection browser | P0 |
 | P2 | Backpack loadout + run-start injection + run-end usage decay | P0; run inventory extraction verified |
-| P3 | Meta-home scene (browse/open/pack in-world) + rent + pawn shop counter | P1; run-side home feature shipped |
+| P3 | Meta-home scene (browse/open/pack in-world) + housing upgrades + pawn shop counter | P1; run-side home feature landed |
 | P4 | Trade-up station + gold economy balance + collection completion rewards | P1 |
 | P5 | Art rework integration for float-driven variation; glyph/tier badges; sort/filter; reveal polish | P2; attribute glyph system |
 | P6 (future, separate plan) | Container-transfer mechanic; Steam Inventory Service + community market integration | Owner go-ahead; P0–P5 |

@@ -4,8 +4,10 @@ All notable public release changes for Beat the House are recorded here.
 
 ## 0.4.0 - Act 1 completion release
 
-Status: release candidate packaged for Web/itch.io and Windows desktop. Itch,
-GitHub release publication, and tags remain manual operator actions.
+Status: **unreleased and in final development.** An earlier candidate was
+packaged and tagged, but game-breaking playtest defects sent 0.4.0 back into
+development. Fresh final-gate evidence, owner playtest, export packaging,
+itch/GitHub upload, and the release tag are still pending.
 
 ### Release Notes
 
@@ -16,9 +18,18 @@ GitHub release publication, and tags remain manual operator actions.
 - Finishes profile persistence, run history/stat tracking, dialogue/talk
   content, jazz/beach route content, semantic room layouts, and attribute
   glyph panels.
-- Refreshes balance and release evidence: final full suite, every
-  FoundationSuite, performance/soak/determinism/stuck-state probes, strict
-  60-run mouse batch, web smoke, and endgame metrics all pass.
+- Gates Grand Casino travel behind an earned invitation, adds the run-side
+  beach and Sal's Pawn Shop environments, and fixes venue-hours/time-state
+  travel behavior.
+- Hardens save recovery, process/liveness guards, deterministic state handling,
+  stuck/terminal polling, and idle/active rendering on native and Web paths.
+- Splits the oversized foundation UI host into focused terminal consequence,
+  environment interaction, HUD, screen, travel, action, journal, map, wager,
+  and meta-session modules without changing deterministic gameplay behavior.
+- Adds explicit idle-animation liveness and performance attribution gates plus
+  a verified local artifact retention/export tool.
+- Final 0.4 evidence: **PENDING**. The fresh release battery will be recorded in
+  `.tmp/release_readiness_0_4_0.md` before release.
 - Keeps the simulated-gambling boundary: no real-money wagering, cash prizes,
   gambling monetization, or store credentials in the repository.
 

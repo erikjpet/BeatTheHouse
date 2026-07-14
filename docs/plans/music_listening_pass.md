@@ -1,5 +1,8 @@
 # Music Listening Pass
 
+Status: **COMPLETE for the unreleased 0.4.0 candidate.** This remains the
+listening reference for the live procedural/authored stem system.
+
 Build checked: Act 1 T6.6 music director pass, 2026-07-02.
 
 - [x] Corner store: sparse authored fixture resolves, calm fluorescent pad stays immediate on entry.

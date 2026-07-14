@@ -1,10 +1,10 @@
 # Beat the House Content Style Guide
 
-Status: active for v0.4 Act 1 release-path content.
+Status: active for the unreleased v0.4 Act 1 release-path content.
 
 This guide defines the release voice and copy guardrails for player-facing text
 in `data/` and obvious release-path script constants. It complements the
-existing compact-copy validators in `scripts/tests/foundation_check.gd`.
+existing compact-copy validators under `scripts/tests/foundation/`.
 
 ## Release Voice
 

@@ -7,14 +7,16 @@ play full simulations of Pull Tabs, Slots, Bar Dice, Blackjack, Baccarat,
 Roulette, and Video Poker. Every win, cheat, drink, loan, and bad exit pushes
 the run state forward.
 
-The runnable 0.2.0 demo candidate has shipped. The current release candidate is
-0.4.0, the Act 1 completion cut: it includes the 0.3 low-end/web cleanup line,
-walkable meta home, housing progression, local collection bags/loadouts,
-profile persistence, dialogue/talk content, jazz/beach/world-map content, and
-fresh release-gate evidence. The explicit 0.4 cut is the new boss fight/final
-scene; the existing Grand Casino cashout and Rourke showdown remain the Act 1
-ending for this release. Remaining release actions are package upload/publish
-steps plus Android/iOS signing credentials.
+The runnable 0.2.0 demo and the 0.3 source line are historical releases. Version
+0.4.0 is still in final development: an earlier release candidate exposed
+game-breaking defects, so all subsequent gameplay, performance, stability, and
+architecture work remains part of this same unreleased Act 1 completion cut.
+It includes the 0.3 low-end/web cleanup line, a walkable meta home, housing
+progression, local collection bags/loadouts, profile persistence, dialogue/talk
+content, and jazz/beach/world-map content. The new boss fight/final scene is
+explicitly outside 0.4; the existing Grand Casino cashout and Rourke showdown
+remain the Act 1 ending. The final gate battery, owner playtest, fresh export
+packaging, uploads, and release tag are still pending.
 Beat the House is not a real-money gambling product. It has no real-money
 wagering, cash prizes, gambling monetization, or store credentials checked into
 the repository.
@@ -26,9 +28,9 @@ the repository.
 | Engine | Godot 4.x project with Godot 4.6 project feature metadata |
 | Main scene | `res://scenes/main.tscn` |
 | Main UI shell | `res://scripts/ui/foundation_main.gd` |
-| Shipped baseline | 0.3.0 Act 1 feature-complete release |
+| Prior release line | 0.3.3 GitHub source release; 0.4.0 is not released |
 | Active planning target | 0.4.0 Act 1 completion release |
-| Current release readiness | 0.4.0 stamped in `project.godot` and export presets; final gates green; itch/GitHub publishing remains manual |
+| Current release readiness | 0.4.0 stamped in `project.godot` and export presets; final gates, owner playtest, fresh packages, uploads, and release tag remain pending |
 | Viewport | 1280x720, non-resizable, canvas stretch with kept aspect |
 | Renderer | Godot mobile renderer |
 | Input model | Single pointer interaction with mouse/touch parity |
@@ -67,7 +69,7 @@ Production content is JSON under `data/`.
 | Games | 7 | `data/games/games.json` | All current games are full-simulation modules |
 | Items | 64 | `data/items/items.json` | Permanent, temporary, consumable, contraband, active, game, security, travel, slot, pinball, container, and build-synergy effects |
 | Content groups | 9 | `data/content_groups/groups.json` | Modular run packs that enable/disable games and their related item pools |
-| Events | 46 | `data/events/events.json` | Scoped room events with choices and consequences, including unavoidable pressure events, triggered follow-ups, and the boss-floor `the_house_calls` and `high_roller_cashout` |
+| Events | 45 | `data/events/events.json` | Scoped room events with choices and consequences, including unavoidable pressure events, triggered follow-ups, and the boss-floor `the_house_calls` and `high_roller_cashout` |
 | Services | 14 | `data/services/services.json` | `cashier_tip`, `house_drink`, `call_brother_in_law`, jazz-club round/tip/show services, and tier-2 lounge/riverboat services |
 | Lenders | 5 | `data/debt/lenders.json` | `street_lender`, `motel_friend`, `the_crew`, `brother_in_law`, `sals_pawn_counter` |
 | Travel route templates | 11 | `data/travel/routes.json` | Destination templates for shops, casinos, tier-2 venues, the jazz club, beach, the underground casino, and the Grand Casino; `WorldMap` turns them into seeded graph paths with costs, unlocks, scouting previews, travel locks, and route-risk events |
@@ -106,7 +108,12 @@ The current environment pack contains:
 | `small_underground_casino` | casino | 1 | Larger room with Grand Casino route access |
 | `kitty_cat_lounge` | casino | 2 | Velvet-rope lounge with a house wheel, champagne pressure, and paid heat management |
 | `delta_queen` | casino | 2 | Riverboat mid-stakes rung with scheduled boarding and temporary travel lock |
+| `beach` | recovery | 2 | Low Tide Beach route environment and recovery stop |
+| `pawn_shop` | pawn_shop | 1 | Sal's run-side pawn counter and item-backed lender stop |
 | `grand_casino` | boss | 3 | Demo objective destination |
+| `motel_room` | home | 1 | First paid housing tier |
+| `apartment` | home | 1 | Mid-tier home with collection facilities |
+| `house` | home | 1 | Final current housing tier |
 
 Environment archetypes define name parts, visual context, layout points,
 security/economic/music profiles, object pools, route hooks, local narrative
@@ -127,8 +134,8 @@ node's generated environment, and exposes a modal map through
 Travel can reveal tier-2 rungs, scout likely games/items/services/lenders,
 apply heat decay and suspicion deltas, trigger route-risk consequences, and lock
 the player temporarily in venues such as `delta_queen`. The Grand Casino route
-is hidden until the travel-count condition is met and costs `$70` before any
-graph path modifiers.
+requires the `grand_casino_invite` story flag and costs `$70` before any graph
+path modifiers.
 
 ## Games
 
@@ -297,10 +304,10 @@ The wrappers resolve Godot in this order:
 ## Validation
 
 The current release readiness ledger is
-`docs/plans/0.4_release_checklist.md`. The final balance gate evidence is
-recorded in `docs/plans/0.4_act1_completion_plan.md`; package hashes live in
-the 0.4 checklist after export. Headless commands verified for the 0.4 release
-candidate:
+`docs/plans/0.4_release_checklist.md`. Earlier candidate evidence is retained
+there as historical context, but it does not release 0.4.0. The current final
+battery and package evidence must be recorded before publishing. The primary
+headless commands are:
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File tools\validate_project.ps1
@@ -318,26 +325,13 @@ powershell -ExecutionPolicy Bypass -File tools\foundation_mouse_batch_playtest.p
 powershell -ExecutionPolicy Bypass -File tools\web_perf_smoke.ps1
 ```
 
-Current results:
+Required final results (pending a fresh release run):
 
-- `validate_project.ps1` passes.
-- `check_godot.ps1 -RequireGodot -Suite Full -TimeoutSec 1800` passes with
-  report paths recorded in `docs/plans/0.4_release_checklist.md`.
-- Every FoundationSuite passes, including systems, ui, contracts, games, slot,
-  slot_acceptance, each per-game suite, and audit.
-- `foundation_performance_probe.ps1 -RequireGodot` passes idle draw, active
-  draw, and resolve budget asserts.
-- `foundation_soak_probe.ps1 -RequireGodot -SimMinutes 180` passes bounded
-  growth assertions.
-- `foundation_determinism_probe.ps1 -RequireGodot -SeedCount 10` passes a
-  two-process hash match.
-- `foundation_stuck_state_sweep.ps1 -RequireGodot -SeedCount 200` passes with
-  zero stuck states.
-- `foundation_mouse_batch_playtest.ps1 -RunCount 60 -RequireGodot` passes
-  strict mode with `0` true failures.
-- `web_perf_smoke.ps1` passes the exported Web build smoke.
-- All seed audits for blackjack, roulette, baccarat, pull-tabs, and environment
-  generation pass.
+- Validation, every supported FoundationSuite name, performance, soak,
+  determinism, stuck-state, visual QA, strict 60-run mouse play, and Web smoke
+  must all pass on the final tree.
+- Only the fresh report linked by `docs/plans/0.4_release_checklist.md` is final
+  0.4 release evidence; older candidate reports remain historical baselines.
 
 Other targeted wrappers live in `tools/`: slot cabinet visual QA, environment
 generation audit, performance probe, mouse playtests, and game seed audits.
@@ -371,9 +365,8 @@ context:
 
 - `CHANGELOG.md` - public release changelog, including the 0.4.0 Act 1
   completion release notes.
-- `docs/plans/act_one_feature_complete_task_board.md` - the active planning
-  entry point for Act 1 feature-complete work, including the T0.1 status ledger
-  and current gap table.
+- `docs/plans/act_one_feature_complete_task_board.md` - the historical Act 1
+  implementation board, retained for decisions and landing evidence.
 - `docs/plans/pinball_feature_rework_plan.md`,
   `docs/plans/pinball_feel_reference.md` - the shipped pinball feature
   contract and feel targets. Use these with the live slot stack when touching
@@ -401,8 +394,8 @@ context:
   cleanup release ledger, including gate evidence and package hashes.
 - `docs/plans/0.3.3_publish_copy.md` - paste-ready itch.io, GitHub release,
   and devlog copy for the 0.3.3 public patch.
-- `docs/plans/0.4_act1_completion_plan.md` - the current Act 1 completion
-  release path and final balance gate evidence.
+- `docs/plans/0.4_act1_completion_plan.md` - the implemented 0.4 scope and
+  historical candidate evidence; the checklist is the current release path.
 - `docs/plans/0.4_release_checklist.md` - the 0.4 package/readiness ledger.
 - `docs/plans/0.4_publish_copy.md` - paste-ready itch.io, GitHub release, and
   devlog copy for the 0.4.0 release.
@@ -424,8 +417,8 @@ historical release evidence.
 after Godot export templates are installed. Project and export preset versions
 are currently stamped `0.4.0`. The tool supports `-Push -DryRun` for butler
 command verification and non-dry-run publishing after the user has installed
-butler and run `butler login` once. Fresh 0.4 Web/Windows package hashes and
-gate evidence live in `docs/plans/0.4_release_checklist.md`. Android
+butler and run `butler login` once. Fresh 0.4 Web/Windows package hashes do not
+exist until the owner runs the final export packaging. Android
 signing and iOS team/signature values still require real project credentials
 before store submission.
 

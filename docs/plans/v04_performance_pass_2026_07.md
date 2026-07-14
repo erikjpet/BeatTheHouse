@@ -1,5 +1,8 @@
 Verdict: no player-visible slowdown introduced.
 
+> **COMPLETED SOURCE EVIDENCE.** This records an earlier 0.4 candidate pass;
+> it does not claim that unreleased 0.4.0 has completed its final release gate.
+
 # v0.4 Player-Style Performance Pass - 2026-07
 
 This pass ran after the completed-work review fixes and measured before
