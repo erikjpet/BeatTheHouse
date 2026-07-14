@@ -89,6 +89,7 @@ const RunInventoryViewModelScript := preload("res://scripts/ui/run_inventory_vie
 const MetaCollectionViewModelScript := preload("res://scripts/ui/meta_collection_view_model.gd")
 const RunJournalViewModelScript := preload("res://scripts/ui/run_journal_view_model.gd")
 const TerminalConsequenceViewModelScript := preload("res://scripts/ui/terminal_consequence_view_model.gd")
+const EnvironmentInteractionViewModelScript := preload("res://scripts/ui/environment_interaction_view_model.gd")
 const MetaSessionControllerScript := preload("res://scripts/ui/meta_session_controller.gd")
 const WorldMapOverlayControllerScript := preload("res://scripts/ui/world_map_overlay_controller.gd")
 const WagerConfirmationControllerScript := preload("res://scripts/ui/wager_confirmation_controller.gd")
@@ -6348,71 +6349,11 @@ func _add_context_lender_actions(card: VBoxContainer, lender_id: String) -> void
 
 
 func _context_border_color(object_type: String, enabled: bool) -> Color:
-	if not enabled:
-		return VisualStyle.ORANGE
-	match object_type:
-		CONTEXT_MODE_GAME:
-			return VisualStyle.CYAN
-		CONTEXT_MODE_EVENT:
-			return VisualStyle.AMBER
-		CONTEXT_MODE_ITEM:
-			return VisualStyle.TEAL
-		CONTEXT_MODE_SHOPKEEPER:
-			return VisualStyle.YELLOW
-		CONTEXT_MODE_GAME_HOOK:
-			return VisualStyle.YELLOW
-		CONTEXT_MODE_DIALOGUE:
-			return VisualStyle.CYAN_2
-		CONTEXT_MODE_HOME_TENURE:
-			return VisualStyle.AMBER
-		CONTEXT_MODE_HOME_STORAGE, CONTEXT_MODE_HOME_CONTAINER:
-			return VisualStyle.TEAL
-		CONTEXT_MODE_META_BAG, CONTEXT_MODE_META_UPGRADE, CONTEXT_MODE_META_TRADE_UP, CONTEXT_MODE_META_PAWN_COUNTER:
-			return VisualStyle.YELLOW
-		CONTEXT_MODE_TRAVEL:
-			return VisualStyle.PURPLE_2
-		CONTEXT_MODE_SERVICE, CONTEXT_MODE_LENDER:
-			return VisualStyle.YELLOW
-		_:
-			return VisualStyle.CYAN_2
+	return EnvironmentInteractionViewModelScript.context_border_color(object_type, enabled)
 
 
 func _context_type_label(object_type: String) -> String:
-	match object_type:
-		CONTEXT_MODE_GAME:
-			return "Game"
-		CONTEXT_MODE_EVENT:
-			return "Event"
-		CONTEXT_MODE_ITEM:
-			return "Item"
-		CONTEXT_MODE_SHOPKEEPER:
-			return "Shopkeeper"
-		CONTEXT_MODE_GAME_HOOK:
-			return "Game Clerk"
-		CONTEXT_MODE_DIALOGUE:
-			return "Talk"
-		CONTEXT_MODE_HOME_TENURE:
-			return "Home"
-		CONTEXT_MODE_HOME_STORAGE:
-			return "Storage"
-		CONTEXT_MODE_HOME_CONTAINER:
-			return "Container"
-		CONTEXT_MODE_META_BAG:
-			return "Bag"
-		CONTEXT_MODE_META_UPGRADE:
-			return "Upgrade"
-		CONTEXT_MODE_META_TRADE_UP:
-			return "Trade-Up"
-		CONTEXT_MODE_META_PAWN_COUNTER:
-			return "Pawn Shop"
-		CONTEXT_MODE_TRAVEL:
-			return "Travel"
-		CONTEXT_MODE_SERVICE:
-			return "Service"
-		CONTEXT_MODE_LENDER:
-			return "Lender"
-		_:
-			return "Info"
+	return EnvironmentInteractionViewModelScript.context_type_label(object_type)
 
 
 func _action_category_view_list() -> Array:
@@ -7807,92 +7748,51 @@ func _environment_canvas_snapshot_is_stale() -> bool:
 
 
 func _environment_snapshot_signature() -> String:
-	if run_state == null:
-		return ""
-	var environment := run_state.current_environment
-	var parts: Array = [
-		str(environment.get("id", "")),
-		str(environment.get("archetype_id", "")),
-		str(environment.get("world_node_id", "")),
-		str(environment.get("kind", "")),
-		str(environment.get("display_name", "")),
-		str(environment.get("game_ids", [])),
-		str(environment.get("event_ids", [])),
-		str(environment.get("item_offers", [])),
-		str(environment.get("service_ids", [])),
-		str(environment.get("lender_hooks", [])),
-		str(environment.get("next_archetypes", [])),
-		str(environment.get("travel_hooks", [])),
-		str(environment.get("object_fixtures", [])),
-		str(environment.get("home_containers", [])),
-		str(environment.get("layout", {})),
-		str(run_state.game_clock_minutes),
-		str(run_state.closing_time_status()),
-	]
-	return "|".join(parts)
+	return EnvironmentInteractionViewModelScript.snapshot_signature(run_state)
 
 
 func _environment_view_snapshot() -> Dictionary:
-	var snapshot := run_state.current_environment.duplicate(true)
+	if run_state == null:
+		return {}
 	var recent_result := _recent_result_snapshot()
-	var recent_deltas: Dictionary = recent_result.get("deltas", {})
-	snapshot["suspicion_level"] = run_state.suspicion_level()
-	snapshot["drunk_level"] = run_state.drunk_level
-	snapshot["drunk_time_scale"] = run_state.drunk_time_scale()
-	snapshot["drunk_time_scale_percent"] = run_state.drunk_time_scale_percent()
-	snapshot["drunk_world_speed_percent"] = run_state.drunk_time_scale_percent()
-	snapshot["pending_drunk_absorption"] = run_state.pending_drunk_absorption_amount()
-	snapshot["drunk_distortion_suppression_turns"] = run_state.drunk_distortion_suppression_turns
-	snapshot["drunk_effect_mode"] = _drunk_effect_mode()
-	snapshot["reduce_motion"] = _reduce_motion_enabled()
-	snapshot["high_contrast"] = _high_contrast_enabled()
-	snapshot["accessibility"] = current_accessibility_snapshot()
-	snapshot["alcoholic_level"] = run_state.alcoholic_level
-	snapshot["baseline_luck"] = run_state.baseline_luck
-	snapshot["luck_modifier"] = run_state.effective_luck()
-	snapshot["alcohol_condition"] = run_state.alcohol_condition_label()
-	snapshot["demo_objective"] = run_state.demo_objective_status()
-	snapshot["pit_boss_watch"] = run_state.pit_boss_watch_status(run_state.current_environment)
-	snapshot["travel_choices"] = _travel_choice_view_list()
-	snapshot["selected_travel_target_id"] = selected_travel_target_id
-	snapshot["selected_travel_label"] = selected_travel_label
-	snapshot["event_cadence"] = run_state.event_cadence_summary()
-	snapshot["game_clock_minutes"] = run_state.game_clock_minutes
-	snapshot["game_day"] = run_state.game_day()
-	snapshot["clock_text"] = run_state.clock_display_text()
-	snapshot["venue_open_status"] = _environment_open_status(_current_environment_archetype())
-	snapshot["venue_open_status_text"] = EnvironmentHours.travel_status_text(_current_environment_archetype(), run_state.game_minute_of_day())
-	snapshot["closing_time_state"] = run_state.closing_time_status()
-	snapshot["home_state"] = run_state.home_state.duplicate(true)
-	snapshot["home_status_summary"] = run_state.home_status_summary()
-	snapshot["world_map_overlay_visible"] = world_map_overlay != null and world_map_overlay.visible
-	snapshot["world_map"] = _world_map_snapshot() if bool(snapshot["world_map_overlay_visible"]) else {}
-	snapshot["event_options"] = _eligible_event_option_view_list()
-	snapshot["selected_event_id"] = selected_event_id
-	snapshot["selected_event_choice_id"] = selected_event_choice_id
-	snapshot["selected_event_label"] = selected_event_label
-	snapshot["selected_event_choice_label"] = selected_event_choice_label
-	snapshot["item_offers"] = _item_offer_view_list()
-	snapshot["inventory_items"] = _inventory_item_view_list()
-	snapshot["shopkeeper_available"] = _shopkeeper_available()
-	snapshot["selected_item_offer_id"] = selected_item_offer_id
-	snapshot["selected_item_offer_label"] = selected_item_offer_label
-	snapshot["selected_item_offer_price"] = selected_item_offer_price
-	snapshot["last_item_result"] = last_item_result.duplicate(true)
-	snapshot["service_options"] = _service_hook_view_list()
-	snapshot["lender_options"] = _lender_hook_view_list()
-	snapshot["selected_service_hook_id"] = selected_service_hook_id
-	snapshot["selected_service_hook_label"] = selected_service_hook_label
-	snapshot["selected_lender_hook_id"] = selected_lender_hook_id
-	snapshot["selected_lender_hook_label"] = selected_lender_hook_label
-	snapshot["last_hook_result"] = last_hook_result.duplicate(true)
-	snapshot["interactable_objects"] = _interactable_object_view_list()
-	snapshot["recent_result"] = recent_result
-	snapshot["outcome_object_id"] = _outcome_object_id(recent_result)
-	snapshot["outcome_message"] = _outcome_message(recent_result)
-	snapshot["outcome_bankroll_delta"] = int(recent_result.get("bankroll_delta", recent_deltas.get("bankroll_delta", 0)))
-	snapshot["outcome_suspicion_delta"] = int(recent_result.get("suspicion_delta", recent_deltas.get("suspicion_delta", 0)))
-	return snapshot
+	var archetype := _current_environment_archetype()
+	var world_map_visible := world_map_overlay != null and world_map_overlay.visible
+	return EnvironmentInteractionViewModelScript.environment_snapshot(run_state, {
+		"recent_result": recent_result,
+		"drunk_effect_mode": _drunk_effect_mode(),
+		"reduce_motion": _reduce_motion_enabled(),
+		"high_contrast": _high_contrast_enabled(),
+		"accessibility": current_accessibility_snapshot(),
+		"travel_choices": _travel_choice_view_list(),
+		"selected_travel_target_id": selected_travel_target_id,
+		"selected_travel_label": selected_travel_label,
+		"venue_open_status": _environment_open_status(archetype),
+		"venue_open_status_text": EnvironmentHours.travel_status_text(archetype, run_state.game_minute_of_day()),
+		"world_map_overlay_visible": world_map_visible,
+		"world_map": _world_map_snapshot() if world_map_visible else {},
+		"event_options": _eligible_event_option_view_list(),
+		"selected_event_id": selected_event_id,
+		"selected_event_choice_id": selected_event_choice_id,
+		"selected_event_label": selected_event_label,
+		"selected_event_choice_label": selected_event_choice_label,
+		"item_offers": _item_offer_view_list(),
+		"inventory_items": _inventory_item_view_list(),
+		"shopkeeper_available": _shopkeeper_available(),
+		"selected_item_offer_id": selected_item_offer_id,
+		"selected_item_offer_label": selected_item_offer_label,
+		"selected_item_offer_price": selected_item_offer_price,
+		"last_item_result": last_item_result,
+		"service_options": _service_hook_view_list(),
+		"lender_options": _lender_hook_view_list(),
+		"selected_service_hook_id": selected_service_hook_id,
+		"selected_service_hook_label": selected_service_hook_label,
+		"selected_lender_hook_id": selected_lender_hook_id,
+		"selected_lender_hook_label": selected_lender_hook_label,
+		"last_hook_result": last_hook_result,
+		"interactable_objects": _interactable_object_view_list(),
+		"outcome_object_id": _outcome_object_id(recent_result),
+		"outcome_message": _outcome_message(recent_result),
+	})
 
 
 func _interactable_object_view_list() -> Array:
@@ -7900,254 +7800,67 @@ func _interactable_object_view_list() -> Array:
 		return []
 	if _is_meta_session():
 		return _meta_interactable_object_view_list()
-	var objects: Array = []
-	var run_failed_without_recovery := _run_failed_without_recovery()
+	var failed := _run_failed_without_recovery()
 	var failed_reason := _pressure_status_text(_run_pressure_view())
 	if failed_reason.strip_edges().is_empty():
 		failed_reason = "Run failed."
+	var game_sources: Array = []
 	var game_ids := _string_array(run_state.current_environment.get("game_ids", []))
 	for index in range(game_ids.size()):
 		var game_id := str(game_ids[index])
-		var game_object_id := "game:%s" % game_id
-		var definition := library.game(game_id)
-		var game_runtime_state := _environment_game_runtime_state(game_id)
-		var game_object_state := _environment_game_object_state(game_id)
-		var authored_runtime_state := _copy_dict(game_object_state.get("runtime_state", {}))
-		var merged_runtime_state := game_runtime_state.duplicate(true)
-		for runtime_key in authored_runtime_state.keys():
-			merged_runtime_state[runtime_key] = authored_runtime_state[runtime_key]
-		var label := str(definition.get("display_name", _label_from_id(game_id)))
-		var description := str(definition.get("description", ""))
-		if description.is_empty():
-			description = str(definition.get("intro", "Choose a stake on the surface, then click an action."))
-		var runtime_status := str(merged_runtime_state.get("status_label", "")).strip_edges()
-		if not runtime_status.is_empty():
-			description = "%s Status: %s." % [description, runtime_status]
-		var enabled := not definition.is_empty() and not run_failed_without_recovery
-		objects.append(_make_interactable_object({
-			"object_id": game_object_id,
-			"object_type": CONTEXT_MODE_GAME,
-			"source_id": game_id,
-			"label": label,
-			"short_description": description,
-			"presence": "fixture",
-			"enabled": enabled,
-			"disabled_reason": "" if enabled else failed_reason if run_failed_without_recovery else "Game definition is missing.",
-			"action_summary": "Double-click this machine to enter." if enabled else "This game is unavailable.",
-			"status_summary": str(game_object_state.get("status_summary", "")),
-			"effect_summary": str(game_object_state.get("effect_summary", "")),
-			"impact_summary": str(game_object_state.get("impact_summary", "")),
-			"state_badge": str(game_object_state.get("state_badge", "")),
-			"risk_summary": _risk_cue_text(),
-			"runtime_state": merged_runtime_state,
-			"visual_state": _copy_dict(game_object_state.get("visual_state", {})),
-			"visual_key": str(definition.get("family", definition.get("type", "game"))),
-			"prop": str(definition.get("environment_prop", definition.get("prop", "card_table"))),
-			"icon_key": str(definition.get("icon_key", game_id)),
-			"asset_path": str(definition.get("asset_path", "")),
-			"available_actions": [{"id": "enter_game", "label": "Double-click to enter"}] if enabled else [],
-			"confirm_action_id": "enter_game" if enabled else "",
-			"focus_rect": _interaction_rect_for_object(game_object_id, CONTEXT_MODE_GAME, index),
-		}))
-	var event_options := _eligible_event_option_view_list()
-	for index in range(event_options.size()):
-		if typeof(event_options[index]) != TYPE_DICTIONARY:
-			continue
-		var event_data: Dictionary = event_options[index]
-		var event_id := str(event_data.get("id", ""))
-		if event_id.is_empty():
-			continue
-		var choices: Array = event_data.get("choices", [])
-		var event_enabled := not choices.is_empty() and not run_failed_without_recovery
-		var event_object_id := "event:%s" % event_id
-		objects.append(_make_interactable_object({
-			"object_id": event_object_id,
-			"object_type": CONTEXT_MODE_EVENT,
-			"source_id": event_id,
-			"label": str(event_data.get("display_name", _label_from_id(event_id))),
-			"short_description": str(event_data.get("summary", "Something is happening here.")),
-			"presence": "dynamic",
-			"enabled": event_enabled,
-			"disabled_reason": "" if event_enabled else failed_reason if run_failed_without_recovery else "No event choice is currently available.",
-			"action_summary": str(event_data.get("start_summary", "Choose a response.")) if event_enabled else "No response is available right now.",
-			"risk_summary": str(event_data.get("type", "")),
-			"choice_summary": _event_choice_list_summary(choices),
-			"attribute_badges": AttributeBadgesScript.for_event_choice({"event_type": str(event_data.get("type", ""))}),
-			"visual_key": str(event_data.get("visual_key", event_data.get("type", "event"))),
-			"prop": str(event_data.get("environment_prop", event_data.get("prop", ""))),
-			"icon_key": str(event_data.get("icon_key", event_id)),
-			"asset_path": str(event_data.get("asset_path", "")),
-			"unique_object_class": str(event_data.get("unique_object_class", "")).strip_edges(),
-			"unique_object_priority": int(event_data.get("unique_object_priority", 0)),
-			"allow_duplicate_unique_class": bool(event_data.get("allow_duplicate_unique_class", false)),
-			"available_actions": [{"id": "inspect_event_choices", "label": "Review responses"}] if event_enabled else [],
-			"inline_actions": _event_inline_response_actions(event_id, choices) if event_enabled else [],
-			"confirm_action_id": "inspect_event_choices" if event_enabled else "",
-			"focus_rect": _interaction_rect_for_object(event_object_id, CONTEXT_MODE_EVENT, index),
-		}))
-	var item_offers := _item_offer_view_list()
-	for index in range(item_offers.size()):
-		if typeof(item_offers[index]) != TYPE_DICTIONARY:
-			continue
-		var offer: Dictionary = item_offers[index]
-		var item_id := str(offer.get("id", ""))
-		if item_id.is_empty():
-			continue
-		var item_object_id := "item:%s" % item_id
-		var affordable := bool(offer.get("affordable", true)) and not run_failed_without_recovery
-		var pickup := bool(offer.get("pickup", false))
-		var item_purpose := str(offer.get("purpose_summary", "")).strip_edges()
-		objects.append(_make_interactable_object({
-			"object_id": item_object_id,
-			"object_type": CONTEXT_MODE_ITEM,
-			"source_id": item_id,
-			"label": str(offer.get("display_name", _label_from_id(item_id))),
-			"short_description": str(offer.get("description", "")),
-			"presence": "dynamic",
-			"enabled": affordable,
-			"disabled_reason": "" if affordable else failed_reason if run_failed_without_recovery else "Not enough bankroll.",
-			"action_summary": "" if affordable else "Needs more bankroll before it can be used.",
-			"effect_summary": str(offer.get("effect_summary", "")),
-			"impact_summary": item_purpose,
-			"risk_summary": "",
-			"cost_summary": "Pickup" if pickup else "Cost: %d" % int(offer.get("price", 0)),
-			"attribute_badges": _copy_array(offer.get("attribute_badges", [])),
-			"visual_key": "item",
-			"prop": str(offer.get("environment_prop", "")),
-			"surface": str(offer.get("surface", "counter")),
-			"icon_key": str(offer.get("icon_key", item_id)),
-			"asset_path": str(offer.get("asset_path", "")),
-			"available_actions": [{"id": "buy_item", "label": str(offer.get("action_label", "Buy"))}] if affordable else [],
-			"confirm_action_id": "buy_item" if affordable else "",
-			"focus_rect": _interaction_rect_for_object(item_object_id, CONTEXT_MODE_ITEM, index),
-		}))
-	if _shopkeeper_should_draw():
-		var shopkeeper_enabled := _shopkeeper_available() and not run_failed_without_recovery
-		var disabled_reason := "" if shopkeeper_enabled else failed_reason if run_failed_without_recovery else "The counter is quiet right now."
-		var shopkeeper_object_id := "shopkeeper:merchant"
-		objects.append(_make_interactable_object({
-			"object_id": shopkeeper_object_id,
-			"object_type": CONTEXT_MODE_SHOPKEEPER,
-			"source_id": "merchant",
-			"label": _shopkeeper_label(),
-			"short_description": _shop_description(),
-			"presence": "fixture",
-			"interactive": shopkeeper_enabled,
-			"enabled": shopkeeper_enabled,
-			"disabled_reason": disabled_reason,
-			"action_summary": "Double-click to sell gear." if shopkeeper_enabled else disabled_reason,
-			"effect_summary": "Merchant sales.",
-			"risk_summary": "",
-			"cost_summary": "",
-			"visual_key": "shopkeeper",
-			"icon_key": "service",
-			"available_actions": [{"id": "talk_shopkeeper", "label": "Talk"}] if shopkeeper_enabled else [],
-			"confirm_action_id": "talk_shopkeeper" if shopkeeper_enabled else "",
-			"focus_rect": _interaction_rect_for_object(shopkeeper_object_id, CONTEXT_MODE_SHOPKEEPER, 0),
-		}))
-	objects.append_array(_game_hook_interactable_objects())
-	objects.append_array(_home_interactable_objects())
-	var travel_choices := _travel_choice_view_list()
-	if not travel_choices.is_empty():
-		var first_choice: Dictionary = travel_choices[0] if typeof(travel_choices[0]) == TYPE_DICTIONARY else {}
-		var direct_room_exit := _local_parent_home_door_travel_choice(_parent_home_parent_target_id())
-		if not direct_room_exit.is_empty():
-			first_choice = direct_room_exit
-		var any_enabled := false
-		for choice_value in travel_choices:
-			if typeof(choice_value) == TYPE_DICTIONARY and bool((choice_value as Dictionary).get("enabled", true)):
-				any_enabled = true
-				break
-		var travel_object_id := "travel:leave"
-		var travel_enabled := not run_failed_without_recovery
-		var travel_disabled_reason := ""
-		if run_failed_without_recovery:
-			travel_disabled_reason = failed_reason
-		var travel_label := "Leave"
-		var travel_description := "Open city map."
-		var travel_action_summary := "Open map." if any_enabled else "Inspect locked routes."
-		var travel_available_actions := [{"id": "open_map", "label": "Open Map"}] if travel_enabled else []
-		var travel_confirm_action := "open_map" if travel_enabled else ""
-		if not direct_room_exit.is_empty():
-			travel_label = str(direct_room_exit.get("label", "Lobby"))
-			travel_description = "Enter motel lobby."
-			travel_action_summary = "Enter lobby."
-			travel_available_actions = [{"id": "enter_lobby", "label": "Enter Lobby"}] if travel_enabled else []
-			travel_confirm_action = "enter_lobby" if travel_enabled else ""
-		var preview_lines := _travel_leave_preview_lines(travel_choices, direct_room_exit)
-		objects.append(_make_interactable_object({
-			"object_id": travel_object_id,
-			"object_type": CONTEXT_MODE_TRAVEL,
-			"source_id": "leave",
-			"label": travel_label,
-			"short_description": travel_description,
-			"enabled": travel_enabled,
-			"disabled_reason": travel_disabled_reason,
-			"action_summary": travel_action_summary,
-			"risk_summary": _travel_risk_summary(first_choice),
-			"impact_summary": _travel_preview_summary(first_choice),
-			"cost_summary": "%d route(s)" % travel_choices.size(),
-			"attribute_badges": _copy_array(first_choice.get("attribute_badges", [])),
-			"preview_lines": preview_lines,
-			"unlock_conditions": [],
-			"visual_key": "travel",
-			"prop": "door",
-			"icon_key": "travel",
-			"available_actions": travel_available_actions,
-			"confirm_action_id": travel_confirm_action,
-			"focus_rect": _interaction_rect_for_object(travel_object_id, CONTEXT_MODE_TRAVEL, 0),
-		}))
+		game_sources.append({
+			"id": game_id,
+			"index": index,
+			"definition": library.game(game_id),
+			"runtime_state": _environment_game_runtime_state(game_id),
+			"object_state": _environment_game_object_state(game_id),
+		})
+	var before_travel_objects: Array = []
+	before_travel_objects.append_array(_game_hook_interactable_objects())
+	before_travel_objects.append_array(_home_interactable_objects())
+	var after_travel_objects: Array = []
 	var room_return_object := _parent_home_return_interactable_object()
 	if not room_return_object.is_empty():
-		objects.append(room_return_object)
-	objects.append_array(_hook_interactable_objects(CONTEXT_MODE_SERVICE, _service_hook_view_list()))
-	objects.append_array(_hook_interactable_objects(CONTEXT_MODE_LENDER, _lender_hook_view_list()))
-	if _closing_time_blocks_environment_actions():
-		objects = _objects_with_closing_time_lock(objects)
-	return _filter_unique_interactable_objects(objects)
+		after_travel_objects.append(room_return_object)
+	after_travel_objects.append_array(_hook_interactable_objects(CONTEXT_MODE_SERVICE, _service_hook_view_list()))
+	after_travel_objects.append_array(_hook_interactable_objects(CONTEXT_MODE_LENDER, _lender_hook_view_list()))
+	var travel_choices := _travel_choice_view_list()
+	return EnvironmentInteractionViewModelScript.interactable_object_view_list(run_state, library, {
+		"run_failed_without_recovery": failed,
+		"failed_reason": failed_reason,
+		"selection": {
+			"hover_target_id": hover_target_id,
+			"focus_target_id": focus_target_id,
+			"selected_object_id": selected_object_id,
+		},
+		"layout": _current_environment_layout(),
+		"risk_cue": _risk_cue_text(),
+		"game_sources": game_sources,
+		"event_options": _eligible_event_option_view_list(),
+		"event_choice_summary": Callable(self, "_event_choice_list_summary"),
+		"event_inline_actions": Callable(self, "_event_inline_response_actions"),
+		"item_offers": _item_offer_view_list(),
+		"shopkeeper_should_draw": _shopkeeper_should_draw(),
+		"shopkeeper_available": _shopkeeper_available(),
+		"shopkeeper_label": _shopkeeper_label(),
+		"shop_description": _shop_description(),
+		"before_travel_objects": before_travel_objects,
+		"travel_choices": travel_choices,
+		"direct_room_exit": _local_parent_home_door_travel_choice(_parent_home_parent_target_id()),
+		"travel_risk_summary": Callable(self, "_travel_risk_summary"),
+		"travel_preview_summary": Callable(self, "_travel_preview_summary"),
+		"after_travel_objects": after_travel_objects,
+		"closing_time_locked": _closing_time_blocks_environment_actions(),
+		"closing_time_reason": _closing_time_disabled_reason(),
+	})
 
 
 func _filter_unique_interactable_objects(objects: Array) -> Array:
-	var result: Array = []
-	var class_indexes: Dictionary = {}
-	for object_value in objects:
-		if typeof(object_value) != TYPE_DICTIONARY:
-			continue
-		var object_data: Dictionary = object_value
-		var unique_class := str(object_data.get("unique_object_class", "")).strip_edges()
-		if unique_class.is_empty() or bool(object_data.get("allow_duplicate_unique_class", false)):
-			result.append(object_data)
-			continue
-		if not class_indexes.has(unique_class):
-			class_indexes[unique_class] = result.size()
-			result.append(object_data)
-			continue
-		var existing_index := int(class_indexes[unique_class])
-		var existing: Dictionary = result[existing_index]
-		if int(object_data.get("unique_object_priority", 0)) > int(existing.get("unique_object_priority", 0)):
-			result[existing_index] = object_data
-	return result
+	return EnvironmentInteractionViewModelScript.filter_unique_objects(objects)
 
 
 func _objects_with_closing_time_lock(objects: Array) -> Array:
-	var locked: Array = []
-	var disabled_reason := _closing_time_disabled_reason()
-	for object_value in objects:
-		if typeof(object_value) != TYPE_DICTIONARY:
-			continue
-		var object_data: Dictionary = (object_value as Dictionary).duplicate(true)
-		var object_type := str(object_data.get("object_type", ""))
-		if object_type == CONTEXT_MODE_TRAVEL:
-			locked.append(object_data)
-			continue
-		object_data["enabled"] = false
-		object_data["interactive"] = bool(object_data.get("interactive", true))
-		object_data["disabled_reason"] = disabled_reason
-		object_data["action_summary"] = "Open the map and leave."
-		object_data["available_actions"] = []
-		object_data["confirm_action_id"] = ""
-		locked.append(object_data)
-	return locked
+	return EnvironmentInteractionViewModelScript.objects_with_closing_time_lock(objects, _closing_time_disabled_reason())
 
 
 func _game_hook_interactable_objects(apply_failure_lock: bool = true) -> Array:
@@ -8437,38 +8150,7 @@ func _travel_leave_interactable_object() -> Dictionary:
 
 
 func _travel_leave_preview_lines(travel_choices: Array, direct_room_exit: Dictionary) -> Array:
-	var preview_lines: Array = []
-	for choice_value in travel_choices.slice(0, 3):
-		if typeof(choice_value) != TYPE_DICTIONARY:
-			continue
-		var choice: Dictionary = choice_value
-		var label := str(choice.get("label", choice.get("id", "Route"))).strip_edges()
-		if label.is_empty():
-			continue
-		if bool(choice.get("locked", false)):
-			preview_lines.append("%s: %s" % [
-				label,
-				str(choice.get("disabled_reason", "locked")),
-			])
-			continue
-		preview_lines.append("%s: %s, cost %d" % [
-			label,
-			str(choice.get("distance", "near")),
-			int(choice.get("cost", 0)),
-		])
-	if not direct_room_exit.is_empty():
-		for line_value in _copy_array(direct_room_exit.get("preview_lines", [])):
-			var line := str(line_value).strip_edges()
-			if line.is_empty():
-				continue
-			var already_present := false
-			for existing_value in preview_lines:
-				if str(existing_value) == line:
-					already_present = true
-					break
-			if not already_present:
-				preview_lines.append(line)
-	return preview_lines
+	return EnvironmentInteractionViewModelScript.travel_leave_preview_lines(travel_choices, direct_room_exit)
 
 
 func _local_parent_home_door_travel_choice(target_id: String) -> Dictionary:
@@ -8588,154 +8270,43 @@ func _environment_game_object_state(game_id: String) -> Dictionary:
 
 
 func _make_interactable_object(source: Dictionary) -> Dictionary:
-	var focus_rect := _rect_from_dict(source.get("focus_rect", {}))
-	var focus_point := focus_rect.position + focus_rect.size * 0.5
-	var enabled := bool(source.get("enabled", true))
-	var interactive := bool(source.get("interactive", true))
-	return {
-		"object_id": str(source.get("object_id", "")),
-		"object_type": str(source.get("object_type", "info")),
-		"visual_type": str(source.get("visual_type", source.get("object_type", "info"))),
-		"presence": str(source.get("presence", "dynamic")),
-		"interactive": interactive,
-		"decorative": not interactive,
-		"source_id": str(source.get("source_id", "")),
-		"parent_id": str(source.get("parent_id", "")),
-		"label": str(source.get("label", "")),
-			"short_description": str(source.get("short_description", "")),
-			"identity_summary": str(source.get("identity_summary", "")),
-			"enabled": enabled,
-			"disabled_reason": str(source.get("disabled_reason", "")) if not enabled else "",
-			"normalized_rect": _rect_to_dict(focus_rect),
-			"focus_rect": _rect_to_dict(focus_rect),
-			"focus_point": _vector2_to_dict(focus_point),
-			"action_summary": str(source.get("action_summary", "")),
-			"status_summary": str(source.get("status_summary", "")),
-			"effect_summary": str(source.get("effect_summary", "")),
-			"impact_summary": str(source.get("impact_summary", "")),
-			"choice_summary": str(source.get("choice_summary", "")),
-			"risk_summary": str(source.get("risk_summary", "")),
-			"cost_summary": str(source.get("cost_summary", "")),
-			"attribute_badges": _copy_array(source.get("attribute_badges", [])),
-			"runtime_state": (source.get("runtime_state", {}) as Dictionary).duplicate(true) if typeof(source.get("runtime_state", {})) == TYPE_DICTIONARY else {},
-			"visual_state": (source.get("visual_state", {}) as Dictionary).duplicate(true) if typeof(source.get("visual_state", {})) == TYPE_DICTIONARY else {},
-			"state_badge": str(source.get("state_badge", "")),
-			"visual_key": str(source.get("visual_key", "")),
-			"prop": str(source.get("prop", "")),
-			"surface": str(source.get("surface", "")),
-			"icon_key": str(source.get("icon_key", "")),
-			"asset_path": str(source.get("asset_path", "")),
-			"unique_object_class": str(source.get("unique_object_class", "")).strip_edges(),
-			"unique_object_priority": int(source.get("unique_object_priority", 0)),
-			"allow_duplicate_unique_class": bool(source.get("allow_duplicate_unique_class", false)),
-			"available_actions": _copy_array(source.get("available_actions", [])),
-			"inline_actions": _copy_array(source.get("inline_actions", [])),
-			"confirm_action_id": str(source.get("confirm_action_id", "")),
-			"hovered": str(source.get("object_id", "")) == hover_target_id,
-			"focused": str(source.get("object_id", "")) == focus_target_id,
-			"selected": str(source.get("object_id", "")) == selected_object_id,
-	}
+	return EnvironmentInteractionViewModelScript.make_interactable_object(source, {
+		"hover_target_id": hover_target_id,
+		"focus_target_id": focus_target_id,
+		"selected_object_id": selected_object_id,
+	})
 
 
 func _interaction_rect_for_object(object_id: String, object_type: String, index: int) -> Rect2:
-	var object_rect := _generated_object_interaction_rect(object_id)
-	if object_rect.size.x > 0.0 and object_rect.size.y > 0.0:
-		return object_rect
-	return _interaction_rect(object_type, index)
+	return EnvironmentInteractionViewModelScript.interaction_rect_for_object(object_id, object_type, index, _current_environment_layout())
 
 
 func _generated_object_interaction_rect(object_id: String) -> Rect2:
-	if object_id.is_empty():
-		return Rect2()
 	var layout := _current_environment_layout()
 	var object_rects: Variant = layout.get("object_rects", {})
-	if typeof(object_rects) != TYPE_DICTIONARY or not (object_rects as Dictionary).has(object_id):
-		return Rect2()
-	return _rect_from_dict((object_rects as Dictionary).get(object_id, {}))
+	return EnvironmentInteractionViewModelScript.rect_from_dict((object_rects as Dictionary).get(object_id, {})) if typeof(object_rects) == TYPE_DICTIONARY and (object_rects as Dictionary).has(object_id) else Rect2()
 
 
 func _interaction_rect(object_type: String, index: int) -> Rect2:
-	var authored_rect := _authored_interaction_rect(object_type, index)
-	if authored_rect.size.x > 0.0 and authored_rect.size.y > 0.0:
-		return authored_rect
-	return _normalized_interaction_rect(object_type, index)
+	return EnvironmentInteractionViewModelScript.interaction_rect_for_object("", object_type, index, _current_environment_layout())
 
 
 func _authored_interaction_rect(object_type: String, index: int) -> Rect2:
-	var spot := _layout_spot_for_object_type(object_type, index)
-	if spot.x < 0.0 or spot.y < 0.0:
-		return Rect2()
-	var fallback_rect := _normalized_interaction_rect(object_type, index)
-	var board_size := Vector2(VisualStyle.ENVIRONMENT_BOARD_SIZE)
-	var normalized_center := Vector2(
-		clampf(spot.x / board_size.x, 0.0, 1.0),
-		clampf(spot.y / board_size.y, 0.0, 1.0)
-	)
-	return Rect2(normalized_center - fallback_rect.size * 0.5, fallback_rect.size)
+	return EnvironmentInteractionViewModelScript.authored_interaction_rect(object_type, index, _current_environment_layout())
 
 
 func _layout_spot_for_object_type(object_type: String, index: int) -> Vector2:
-	var field_name := _layout_spot_field_name(object_type)
-	if field_name.is_empty():
-		return Vector2(-1.0, -1.0)
-	var layout := _current_environment_layout()
-	var spots: Variant = layout.get(field_name, [])
-	if typeof(spots) != TYPE_ARRAY or index < 0 or index >= (spots as Array).size():
-		return Vector2(-1.0, -1.0)
-	return _layout_spot_to_board_position((spots as Array)[index])
+	var field_name := EnvironmentInteractionViewModelScript.layout_spot_field_name(object_type)
+	var spots: Variant = _current_environment_layout().get(field_name, [])
+	return EnvironmentInteractionViewModelScript.layout_spot_to_board_position((spots as Array)[index]) if not field_name.is_empty() and typeof(spots) == TYPE_ARRAY and index >= 0 and index < (spots as Array).size() else Vector2(-1.0, -1.0)
 
 
 func _layout_spot_field_name(object_type: String) -> String:
-	match object_type:
-		CONTEXT_MODE_GAME:
-			return "game_spots"
-		CONTEXT_MODE_EVENT:
-			return "event_spots"
-		CONTEXT_MODE_ITEM:
-			return "item_spots"
-		CONTEXT_MODE_SHOPKEEPER:
-			return "shopkeeper_spots"
-		CONTEXT_MODE_GAME_HOOK:
-			return "game_hook_spots"
-		CONTEXT_MODE_DIALOGUE:
-			return "game_hook_spots"
-		CONTEXT_MODE_TRAVEL:
-			return "travel_spots"
-		CONTEXT_MODE_SERVICE:
-			return "service_spots"
-		CONTEXT_MODE_LENDER:
-			return "lender_spots"
-		CONTEXT_MODE_HOME_TENURE:
-			return "home_tenure_spots"
-		CONTEXT_MODE_HOME_STORAGE:
-			return "home_storage_spots"
-		CONTEXT_MODE_HOME_CONTAINER:
-			return "home_container_spots"
-		CONTEXT_MODE_META_BAG:
-			return "home_bag_spots"
-		CONTEXT_MODE_META_UPGRADE:
-			return "home_upgrade_spots"
-		CONTEXT_MODE_META_TRADE_UP:
-			return "home_trade_up_spots"
-		CONTEXT_MODE_META_PAWN_COUNTER:
-			return "pawn_counter_spots"
-	return ""
+	return EnvironmentInteractionViewModelScript.layout_spot_field_name(object_type)
 
 
 func _layout_spot_to_board_position(value: Variant) -> Vector2:
-	if typeof(value) == TYPE_VECTOR2:
-		return value as Vector2
-	if typeof(value) == TYPE_VECTOR2I:
-		var spot_i := value as Vector2i
-		return Vector2(float(spot_i.x), float(spot_i.y))
-	if typeof(value) == TYPE_ARRAY:
-		var parts := value as Array
-		if parts.size() >= 2:
-			return Vector2(float(parts[0]), float(parts[1]))
-	if typeof(value) == TYPE_DICTIONARY:
-		var data := value as Dictionary
-		return Vector2(float(data.get("x", -1.0)), float(data.get("y", -1.0)))
-	return Vector2(-1.0, -1.0)
+	return EnvironmentInteractionViewModelScript.layout_spot_to_board_position(value)
 
 
 func _current_environment_layout() -> Dictionary:
@@ -8753,80 +8324,15 @@ func _current_environment_layout() -> Dictionary:
 
 
 func _normalized_interaction_rect(object_type: String, index: int) -> Rect2:
-	var board_size := Vector2(VisualStyle.ENVIRONMENT_BOARD_SIZE)
-	var center := Vector2(0.5, 0.5)
-	var size := Vector2(0.12, 0.18)
-	match object_type:
-		CONTEXT_MODE_GAME:
-			center = Vector2(0.28 + float(index % 3) * 0.18, 0.56 + float(index / 3) * 0.13)
-			size = Vector2(118.0 / board_size.x, 72.0 / board_size.y)
-		CONTEXT_MODE_EVENT:
-			center = Vector2(0.68 + float(index % 2) * 0.12, 0.42 + float(index / 2) * 0.14)
-			size = Vector2(100.0 / board_size.x, 64.0 / board_size.y)
-		CONTEXT_MODE_ITEM:
-			center = Vector2(0.30 + float(index % 4) * 0.12, 0.76)
-			size = Vector2(90.0 / board_size.x, 54.0 / board_size.y)
-		CONTEXT_MODE_SHOPKEEPER:
-			center = Vector2(0.80, 0.34)
-			size = Vector2(108.0 / board_size.x, 70.0 / board_size.y)
-		CONTEXT_MODE_GAME_HOOK:
-			center = Vector2(0.66 + float(index % 2) * 0.12, 0.76)
-			size = Vector2(104.0 / board_size.x, 58.0 / board_size.y)
-		CONTEXT_MODE_DIALOGUE:
-			center = Vector2(0.66 + float(index % 2) * 0.12, 0.76)
-			size = Vector2(104.0 / board_size.x, 58.0 / board_size.y)
-		CONTEXT_MODE_TRAVEL:
-			center = Vector2(0.78, 0.64 + float(index) * 0.12)
-			size = Vector2(118.0 / board_size.x, 64.0 / board_size.y)
-		CONTEXT_MODE_SERVICE:
-			center = Vector2(0.50 + float(index % 2) * 0.14, 0.76)
-			size = Vector2(96.0 / board_size.x, 54.0 / board_size.y)
-		CONTEXT_MODE_LENDER:
-			center = Vector2(0.62 + float(index % 2) * 0.12, 0.72)
-			size = Vector2(102.0 / board_size.x, 58.0 / board_size.y)
-		CONTEXT_MODE_HOME_TENURE:
-			center = Vector2(0.78, 0.46)
-			size = Vector2(116.0 / board_size.x, 58.0 / board_size.y)
-		CONTEXT_MODE_HOME_STORAGE:
-			center = Vector2(0.20, 0.72)
-			size = Vector2(108.0 / board_size.x, 58.0 / board_size.y)
-		CONTEXT_MODE_HOME_CONTAINER:
-			center = Vector2(0.22 + float(index % 4) * 0.18, 0.76 + float(index / 4) * 0.11)
-			size = Vector2(104.0 / board_size.x, 58.0 / board_size.y)
-		CONTEXT_MODE_META_BAG:
-			center = Vector2(0.42 + float(index % 3) * 0.12, 0.66 + float(index / 3) * 0.11)
-			size = Vector2(90.0 / board_size.x, 54.0 / board_size.y)
-		CONTEXT_MODE_META_UPGRADE:
-			center = Vector2(0.78, 0.34)
-			size = Vector2(118.0 / board_size.x, 64.0 / board_size.y)
-		CONTEXT_MODE_META_TRADE_UP:
-			center = Vector2(0.62, 0.72)
-			size = Vector2(118.0 / board_size.x, 64.0 / board_size.y)
-		CONTEXT_MODE_META_PAWN_COUNTER:
-			center = Vector2(0.50, 0.48)
-			size = Vector2(136.0 / board_size.x, 72.0 / board_size.y)
-	return Rect2(center - size * 0.5, size)
+	return EnvironmentInteractionViewModelScript.normalized_interaction_rect(object_type, index)
 
 
 func _rect_to_dict(rect: Rect2) -> Dictionary:
-	return {
-		"x": rect.position.x,
-		"y": rect.position.y,
-		"w": rect.size.x,
-		"h": rect.size.y,
-	}
+	return EnvironmentInteractionViewModelScript.rect_to_dict(rect)
 
 
 func _rect_from_dict(value: Variant) -> Rect2:
-	if typeof(value) == TYPE_RECT2:
-		return value as Rect2
-	if typeof(value) != TYPE_DICTIONARY:
-		return Rect2()
-	var data: Dictionary = value
-	return Rect2(
-		Vector2(float(data.get("x", 0.0)), float(data.get("y", 0.0))),
-		Vector2(float(data.get("w", 0.0)), float(data.get("h", 0.0)))
-	)
+	return EnvironmentInteractionViewModelScript.rect_from_dict(value)
 
 
 func _active_play_surface_global_rect() -> Rect2:
@@ -8838,17 +8344,11 @@ func _active_play_surface_global_rect() -> Rect2:
 
 
 func _vector2_to_dict(value: Vector2) -> Dictionary:
-	return {
-		"x": value.x,
-		"y": value.y,
-	}
+	return EnvironmentInteractionViewModelScript.vector2_to_dict(value)
 
 
 func _vector2_from_dict(value: Variant, fallback: Vector2 = Vector2.ZERO) -> Vector2:
-	if typeof(value) != TYPE_DICTIONARY:
-		return fallback
-	var data: Dictionary = value
-	return Vector2(float(data.get("x", fallback.x)), float(data.get("y", fallback.y)))
+	return EnvironmentInteractionViewModelScript.vector2_from_dict(value, fallback)
 
 
 func _game_view_snapshot() -> Dictionary:
