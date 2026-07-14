@@ -86,6 +86,14 @@ var l02_driver_started := false
 var l02_driver_complete := false
 var last_web_heap_sample_frame := -WEB_HEAP_SAMPLE_STRIDE_FRAMES
 var last_web_heap_bytes := 0
+var foundation_snapshot_usec_samples: Array = []
+var foundation_environment_runtime_usec_samples: Array = []
+var foundation_autosave_usec_samples: Array = []
+var foundation_layout_usec_samples: Array = []
+var foundation_snapshot_last_usec := 0
+var foundation_environment_runtime_last_usec := 0
+var foundation_autosave_last_usec := 0
+var foundation_layout_last_usec := 0
 
 
 static func runtime_enabled() -> bool:
@@ -134,6 +142,41 @@ func configure(owner: FoundationMain) -> void:
 		call_deferred("_run_la6_plan")
 
 
+func configure_for_probe(owner: FoundationMain, overlay_visible: bool) -> void:
+	app = owner
+	runtime_options = {}
+	telemetry_enabled = true
+	mouse_filter = Control.MOUSE_FILTER_IGNORE
+	set_anchors_preset(Control.PRESET_FULL_RECT)
+	z_index = 4096
+	created_msec = Time.get_ticks_msec()
+	show_overlay = overlay_visible
+	visible = overlay_visible
+	if show_overlay:
+		_build_overlay()
+	_begin_scenario("overlay_cost_probe", {"surface": "environment", "mode": "idle"})
+
+
+func begin_foundation_frame() -> void:
+	foundation_snapshot_last_usec = 0
+	foundation_environment_runtime_last_usec = 0
+	foundation_autosave_last_usec = 0
+	foundation_layout_last_usec = 0
+
+
+func record_foundation_subsystem_usec(subsystem: String, elapsed_usec: int) -> void:
+	var value := maxi(0, elapsed_usec)
+	match subsystem:
+		"snapshot_builds":
+			foundation_snapshot_last_usec += value
+		"environment_runtime":
+			foundation_environment_runtime_last_usec += value
+		"autosave_flush":
+			foundation_autosave_last_usec += value
+		"layout":
+			foundation_layout_last_usec += value
+
+
 func _process(delta: float) -> void:
 	if not telemetry_enabled:
 		return
@@ -142,6 +185,10 @@ func _process(delta: float) -> void:
 	var frame_ms := maxf(0.0, delta * 1000.0)
 	if scenario_active:
 		frame_ms_samples.append(frame_ms)
+		foundation_snapshot_usec_samples.append(foundation_snapshot_last_usec)
+		foundation_environment_runtime_usec_samples.append(foundation_environment_runtime_last_usec)
+		foundation_autosave_usec_samples.append(foundation_autosave_last_usec)
+		foundation_layout_usec_samples.append(foundation_layout_last_usec)
 		if frame_index % sample_stride_frames == 0:
 			_sample_monitors()
 	if show_overlay and frame_index % OVERLAY_REFRESH_STRIDE_FRAMES == 0:
@@ -183,7 +230,7 @@ func mark_event(event_id: String, data: Dictionary = {}) -> void:
 		"id": event_id,
 		"msec": Time.get_ticks_msec(),
 		"scenario": current_scenario,
-		"data": data.duplicate(true),
+		"data": data.duplicate(false),
 	})
 
 
@@ -503,7 +550,7 @@ func _begin_scenario(name: String, tags: Dictionary = {}) -> void:
 	if scenario_active:
 		_end_scenario()
 	current_scenario = name
-	current_tags = tags.duplicate(true)
+	current_tags = tags.duplicate(false)
 	current_start_msec = Time.get_ticks_msec()
 	current_start_memory_bytes = _current_memory_bytes()
 	current_last_memory_bytes = current_start_memory_bytes
@@ -524,6 +571,10 @@ func _begin_scenario(name: String, tags: Dictionary = {}) -> void:
 	node_count_samples = []
 	node_count_delta_samples = []
 	orphan_node_count_samples = []
+	foundation_snapshot_usec_samples = []
+	foundation_environment_runtime_usec_samples = []
+	foundation_autosave_usec_samples = []
+	foundation_layout_usec_samples = []
 	monitor_sample_count = 0
 	last_sample_memory_bytes = current_start_memory_bytes
 	last_sample_object_count = int(Performance.get_monitor(Performance.OBJECT_COUNT))
@@ -540,7 +591,7 @@ func _end_scenario() -> void:
 	var memory_stats := _int_stats(memory_samples)
 	var record := {
 		"name": current_scenario,
-		"tags": current_tags.duplicate(true),
+		"tags": current_tags.duplicate(false),
 		"start_msec": current_start_msec,
 		"end_msec": end_msec,
 		"duration_msec": maxi(0, end_msec - current_start_msec),
@@ -559,6 +610,13 @@ func _end_scenario() -> void:
 		"object_count": _int_stats(object_count_samples),
 		"node_count": _int_stats(node_count_samples),
 		"orphan_node_count": _int_stats(orphan_node_count_samples),
+		"foundation_process_attribution_usec": {
+			"snapshot_builds": _int_stats(foundation_snapshot_usec_samples),
+			"environment_runtime": _int_stats(foundation_environment_runtime_usec_samples),
+			"autosave_flush": _int_stats(foundation_autosave_usec_samples),
+			"layout": _int_stats(foundation_layout_usec_samples),
+		},
+		"liveness_counters": _liveness_counter_snapshot(),
 		"allocation_proxy": {
 			"sample_count": monitor_sample_count,
 			"sample_stride_frames": sample_stride_frames,
@@ -711,7 +769,7 @@ func _build_overlay() -> void:
 	overlay_label = Label.new()
 	overlay_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	overlay_label.position = Vector2(12, 12)
-	overlay_label.size = Vector2(360, 94)
+	overlay_label.size = Vector2(560, 150)
 	overlay_label.add_theme_font_size_override("font_size", 12)
 	overlay_label.add_theme_color_override("font_color", Color("#b8fff1"))
 	add_child(overlay_label)
@@ -724,13 +782,54 @@ func _refresh_overlay() -> void:
 	var fps := Performance.get_monitor(Performance.TIME_FPS)
 	var frame_ms := 1000.0 / maxf(1.0, float(fps))
 	var overhead := _overhead_stats()
-	overlay_label.text = "BTH PERF %s\nframe %.2fms fps %.1f\nscenario %s\ntelemetry %.4fms avg" % [
+	var liveness := _liveness_counter_snapshot()
+	var game_live: Dictionary = liveness.get("game_surface", {})
+	var environment_live: Dictionary = liveness.get("environment_scene", {})
+	overlay_label.text = "BTH PERF %s\nframe %.2fms fps %.1f scenario %s\nmain usec snapshot %d env %d autosave %d layout %d\ncanvas draw %.3fms samples %d\nlive surface_animation_redraw_count %d scene_idle_animation_redraw_count %d\ntelemetry %.4fms avg" % [
 		_platform_label(),
 		frame_ms,
 		float(fps),
 		current_scenario,
+		foundation_snapshot_last_usec,
+		foundation_environment_runtime_last_usec,
+		foundation_autosave_last_usec,
+		foundation_layout_last_usec,
+		float(game_live.get("draw_avg_ms", 0.0)),
+		int(game_live.get("draw_sample_count", 0)),
+		int(game_live.get("surface_animation_redraw_count", 0)),
+		int(environment_live.get("scene_idle_animation_redraw_count", 0)),
 		float(overhead.get("avg_ms", 0.0)),
 	]
+
+
+func overhead_snapshot() -> Dictionary:
+	return _overhead_stats()
+
+
+func foundation_attribution_snapshot() -> Dictionary:
+	return {
+		"snapshot_builds": _int_stats(foundation_snapshot_usec_samples),
+		"environment_runtime": _int_stats(foundation_environment_runtime_usec_samples),
+		"autosave_flush": _int_stats(foundation_autosave_usec_samples),
+		"layout": _int_stats(foundation_layout_usec_samples),
+	}
+
+
+func _liveness_counter_snapshot() -> Dictionary:
+	if app == null:
+		return {"game_surface": {}, "environment_scene": {}}
+	var game_status: Dictionary = {}
+	var game_canvas := app.get("game_surface_canvas") as Control
+	if game_canvas != null and game_canvas.has_method("performance_live_status"):
+		game_status = game_canvas.call("performance_live_status")
+	var environment_status: Dictionary = {}
+	var environment_canvas := app.get("environment_canvas") as Control
+	if environment_canvas != null and environment_canvas.has_method("performance_live_status"):
+		environment_status = environment_canvas.call("performance_live_status")
+	return {
+		"game_surface": game_status,
+		"environment_scene": environment_status,
+	}
 
 
 func _write_report_file(report: Dictionary) -> void:

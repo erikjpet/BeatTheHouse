@@ -195,6 +195,17 @@ func debug_soak_snapshot() -> Dictionary:
 	}
 
 
+func reset_performance_counters() -> void:
+	scene_idle_animation_redraw_count = 0
+
+
+func performance_live_status() -> Dictionary:
+	return {
+		"scene_idle_animation_redraw_count": scene_idle_animation_redraw_count,
+		"scene_idle_animation_active": _scene_idle_animation_active(),
+	}
+
+
 func _ensure_drunk_distortion_overlay() -> void:
 	if drunk_distortion_overlay != null:
 		return

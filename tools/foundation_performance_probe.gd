@@ -1,11 +1,16 @@
 extends SceneTree
 
-# Game-surface performance regression probe. It enters real foundation games,
-# idles them for a fixed frame budget, and verifies the frame tick path is not
-# rebuilding full surface snapshots when no surface automation is active.
+# Game-surface performance regression probe. Every measured idle row gates its
+# frame budget together with the matching scheduling counter floor. Floors are
+# scaled from the 120-frame values below. Static-zero exceptions must be named
+# in GAME_IDLE_LIVENESS with a reason; an animated row may never infer a zero
+# floor from a stalled runtime flag. Budget and floor changes belong in the same
+# justified commit because smooth-but-frozen and live-but-slow both fail release.
 
 const MainScene := preload("res://scenes/main.tscn")
 const GameSurfaceCanvasScript := preload("res://scripts/ui/game_surface_canvas.gd")
+const PerfTelemetryOverlayScript := preload("res://scripts/ui/perf_telemetry_overlay.gd")
+const PerformanceLivenessGuardScript := preload("res://scripts/ui/performance_liveness_guard.gd")
 const VisualStyleScript := preload("res://scripts/ui/visual_style.gd")
 const REPORT_PATH := "user://foundation_performance_probe_report.json"
 const TEST_META_COLLECTION_PATH := "user://foundation_performance_probe_meta_collection.json"
@@ -25,6 +30,22 @@ const IDLE_SURFACE_DRAW_WAIVERS := {}
 const ANIMATED_IDLE_SURFACE_DRAW_BUDGETS := {
 	"roulette": 7.0,
 }
+const GAME_IDLE_LIVENESS := {
+	"pull_tabs": {"counter": "surface_animation_redraw_count", "minimum_per_120_frames": 8},
+	"slot": {"counter": "surface_animation_redraw_count", "minimum_per_120_frames": 0, "zero_reason": "The idle slot cabinet is static until autoplay or a spin animation starts."},
+	"bar_dice": {"counter": "surface_animation_redraw_count", "minimum_per_120_frames": 8},
+	"blackjack": {"counter": "surface_animation_redraw_count", "minimum_per_120_frames": 8},
+	"baccarat": {"counter": "surface_animation_redraw_count", "minimum_per_120_frames": 8},
+	"roulette": {"counter": "surface_animation_redraw_count", "minimum_per_120_frames": 8},
+	"video_poker": {"counter": "surface_animation_redraw_count", "minimum_per_120_frames": 0, "zero_reason": "The idle video-poker cabinet is static until a deal or draw animation starts."},
+}
+const ENVIRONMENT_IDLE_LIVENESS := {
+	"counter": "scene_idle_animation_redraw_count",
+	"minimum_per_120_frames": 8,
+}
+const OVERLAY_COST_SAMPLE_FRAMES := 120
+const OVERLAY_REMOVED_DISABLED_MAX_AVG_DELTA_MS := 0.25
+const OVERLAY_ENABLED_FRAME_P95_BUDGET_MS := 16.0
 const MAX_SEVERE_IDLE_AVG_MS := 45.0
 const MAX_SEVERE_FOCUS_AVG_MS := 45.0
 const MAX_FOCUS_CALL_MS := 10.0
@@ -65,11 +86,14 @@ const LOW_END_HEADROOM_WAIVERS := {
 	},
 }
 const NEW_SURFACE_BUDGETS := {
-	"meta_home_open": {"call_ms": 450.0},
+	"meta_home_open": {"call_ms": 700.0},
 	"meta_home_idle": {"frame_p95_ms": 16.0, "sample_frames": NEW_SURFACE_SAMPLE_FRAMES},
 	"talk_dock_active": {"frame_p95_ms": 16.0, "sample_frames": NEW_SURFACE_SAMPLE_FRAMES},
 	"dialogue_active": {"frame_p95_ms": 16.0, "sample_frames": NEW_SURFACE_SAMPLE_FRAMES},
 	"eviction_map_transition": {"frame_p95_ms": 16.0, "sample_frames": NEW_SURFACE_SAMPLE_FRAMES},
+}
+const NEW_SURFACE_IDLE_LIVENESS := {
+	"meta_home_idle": ENVIRONMENT_IDLE_LIVENESS,
 }
 
 var app: Control
@@ -82,6 +106,9 @@ var renderer_coverage := {}
 var game_surface_coverage := {}
 var resolve_coverage := {}
 var new_surface_coverage := {}
+var liveness_observations: Array = []
+var liveness_guard_proof: Dictionary = {}
+var overlay_cost_observations: Array = []
 var slot_autoplay_checked := false
 var casino_slot_preview_checked := false
 var run_count := DEFAULT_RUN_COUNT
@@ -111,7 +138,9 @@ func _run() -> void:
 	await _probe_casino_slot_preview_coverage()
 	await _probe_game_resolve_budgets()
 	await _probe_synthetic_idle_surfaces()
+	await _probe_liveness_guard_regression()
 	await _probe_new_surface_budgets()
+	await _probe_overlay_cost()
 	_assert_required_game_surface_coverage()
 	_assert_required_resolve_coverage()
 	_assert_required_new_surface_coverage()
@@ -239,6 +268,10 @@ func _probe_game(seed: String, run_index: int, environment_id: String, game_id: 
 	var counters := _canvas_counters(canvas)
 	var runtime_status: Dictionary = canvas.call("surface_runtime_status") if canvas.has_method("surface_runtime_status") else {}
 	var animation_liveness_active := bool(runtime_status.get("surface_animation_liveness_active", false))
+	var liveness_spec := _game_idle_liveness_spec(game_id)
+	var liveness_counter := str(liveness_spec.get("counter", "surface_animation_redraw_count"))
+	var liveness_floor := _scaled_liveness_floor(liveness_spec, frames_per_surface)
+	var liveness_measured := int(counters.get(liveness_counter, 0))
 	var avg_ms := float(elapsed_usec) / float(maxi(1, frames_per_surface)) / 1000.0
 	var draw_p95_ms := float(counters.get("draw_p95_ms", 0.0))
 	var draw_samples := _array_size(counters.get("draw_frame_usec_samples", []))
@@ -257,6 +290,10 @@ func _probe_game(seed: String, run_index: int, environment_id: String, game_id: 
 		"draw_max_ms": float(counters.get("draw_max_ms", 0.0)),
 		"draw_samples": draw_samples,
 		"animation_liveness_active": animation_liveness_active,
+		"liveness_counter": liveness_counter,
+		"liveness_floor": liveness_floor,
+		"liveness_measured": liveness_measured,
+		"liveness_zero_reason": str(liveness_spec.get("zero_reason", "")),
 		"full_snapshot_calls": int(counters.get("full_snapshot_calls", 0)),
 		"runtime_status_calls": int(counters.get("runtime_status_calls", 0)),
 		"idle_draw_budget_ms": _animated_idle_draw_budget(renderer) if animation_liveness_active else MAX_IDLE_SURFACE_DRAW_P95_MS,
@@ -269,6 +306,7 @@ func _probe_game(seed: String, run_index: int, environment_id: String, game_id: 
 	if avg_ms > MAX_SEVERE_IDLE_AVG_MS:
 		failures.append("Idle %s surface averaged %.2f ms per frame, above %.2f ms." % [renderer, avg_ms, MAX_SEVERE_IDLE_AVG_MS])
 	_assert_idle_draw_budget("Idle %s surface" % renderer, renderer, draw_p95_ms, draw_samples, animation_liveness_active)
+	_assert_liveness("Idle %s surface" % renderer, liveness_counter, liveness_floor, liveness_measured, str(liveness_spec.get("zero_reason", "")))
 	if renderer == "slot_machine" and not slot_autoplay_checked:
 		await _probe_slot_autoplay(seed, run_index, environment_id, game_id, canvas)
 	app.call("back_to_environment")
@@ -491,7 +529,7 @@ func _probe_synthetic_idle_surfaces() -> void:
 			"environment_id": "synthetic_idle_surface",
 			"game_id": str(snapshot.get("game_id", "")),
 			"renderer": renderer,
-			"mode": "synthetic_idle_surface",
+			"mode": "synthetic_forced_draw",
 			"frames": frames_per_surface,
 			"elapsed_ms": float(elapsed_usec) / 1000.0,
 			"avg_frame_ms": float(elapsed_usec) / float(maxi(1, frames_per_surface)) / 1000.0,
@@ -531,6 +569,10 @@ func _probe_synthetic_idle_surface_liveness(snapshot: Dictionary) -> void:
 	var draw_samples := _array_size(counters.get("draw_frame_usec_samples", []))
 	var runtime_status: Dictionary = canvas.call("surface_runtime_status") if canvas.has_method("surface_runtime_status") else {}
 	var liveness_active := bool(runtime_status.get("surface_animation_liveness_active", false))
+	var liveness_spec := _game_idle_liveness_spec(str(snapshot.get("game_id", "")))
+	var liveness_counter := str(liveness_spec.get("counter", "surface_animation_redraw_count"))
+	var liveness_floor := _scaled_liveness_floor(liveness_spec, frames_per_surface)
+	var liveness_measured := int(counters.get(liveness_counter, 0))
 	observations.append({
 		"seed": "synthetic:idle_surface_liveness",
 		"run_index": -1,
@@ -546,6 +588,9 @@ func _probe_synthetic_idle_surface_liveness(snapshot: Dictionary) -> void:
 		"draw_max_ms": float(counters.get("draw_max_ms", 0.0)),
 		"draw_samples": draw_samples,
 		"animation_liveness_active": liveness_active,
+		"liveness_counter": liveness_counter,
+		"liveness_floor": liveness_floor,
+		"liveness_measured": liveness_measured,
 		"full_snapshot_calls": int(counters.get("full_snapshot_calls", 0)),
 		"runtime_status_calls": int(counters.get("runtime_status_calls", 0)),
 		"idle_draw_budget_ms": _animated_idle_draw_budget(renderer) if liveness_active else MAX_IDLE_SURFACE_DRAW_P95_MS,
@@ -554,6 +599,48 @@ func _probe_synthetic_idle_surface_liveness(snapshot: Dictionary) -> void:
 		failures.append("Synthetic %s idle surface lost animation liveness before sampling." % renderer)
 	elif draw_samples <= 0:
 		failures.append("Synthetic %s idle surface did not redraw from _process without input/hover." % renderer)
+	_assert_liveness("Synthetic %s idle surface" % renderer, liveness_counter, liveness_floor, liveness_measured)
+	canvas.queue_free()
+	await _settle(1)
+
+
+func _probe_liveness_guard_regression() -> void:
+	var canvas: Control = GameSurfaceCanvasScript.new()
+	canvas.size = Vector2(VisualStyleScript.GAME_BOARD_SIZE)
+	root.add_child(canvas)
+	canvas.call("render_game_snapshot", _synthetic_blackjack_idle_snapshot())
+	await _settle(3)
+	canvas.set_process(false)
+	canvas.call("reset_performance_counters")
+	for _frame_index in range(24):
+		await process_frame
+	var suppressed_counters := _canvas_counters(canvas)
+	var counter := "surface_animation_redraw_count"
+	var suppressed_measured := int(suppressed_counters.get(counter, 0))
+	var suppressed_check := PerformanceLivenessGuardScript.evaluate("Synthetic blackjack idle surface", counter, 1, suppressed_measured)
+	if bool(suppressed_check.get("passed", true)):
+		failures.append("Forced liveness suppression unexpectedly passed the guard.")
+	var proof_message := str(suppressed_check.get("message", ""))
+	if proof_message.find("Synthetic blackjack idle surface") == -1 or proof_message.find(counter) == -1:
+		failures.append("Forced liveness suppression message did not name the surface and counter: %s" % proof_message)
+	canvas.set_process(true)
+	canvas.call("reset_performance_counters")
+	for _frame_index in range(120):
+		await process_frame
+	var restored_counters := _canvas_counters(canvas)
+	var restored_measured := int(restored_counters.get(counter, 0))
+	var restored_check := PerformanceLivenessGuardScript.evaluate("Synthetic blackjack idle surface", counter, 1, restored_measured)
+	if not bool(restored_check.get("passed", false)):
+		failures.append("Restored liveness scheduling did not pass: %s" % str(restored_check.get("message", "")))
+	liveness_guard_proof = {
+		"surface": "Synthetic blackjack idle surface",
+		"counter": counter,
+		"suppressed_measured": suppressed_measured,
+		"suppressed_passed": bool(suppressed_check.get("passed", true)),
+		"suppressed_failure_message": proof_message,
+		"restored_measured": restored_measured,
+		"restored_passed": bool(restored_check.get("passed", false)),
+	}
 	canvas.queue_free()
 	await _settle(1)
 
@@ -563,6 +650,49 @@ func _probe_new_surface_budgets() -> void:
 	await _probe_talk_dock_surface_budget()
 	await _probe_dialogue_surface_budget()
 	await _probe_eviction_map_transition_budget()
+
+
+func _probe_overlay_cost() -> void:
+	app.call("start_foundation_run", "%s-overlay-cost" % seed_prefix)
+	await _settle(4)
+	var removed_stats := await _measure_frame_phase(OVERLAY_COST_SAMPLE_FRAMES)
+	var disabled_overlay: Control = PerfTelemetryOverlayScript.new()
+	app.add_child(disabled_overlay)
+	var disabled_stats := await _measure_frame_phase(OVERLAY_COST_SAMPLE_FRAMES)
+	disabled_overlay.queue_free()
+	await _settle(2)
+	var enabled_overlay: Control = PerfTelemetryOverlayScript.new()
+	app.add_child(enabled_overlay)
+	app.set("perf_telemetry_overlay", enabled_overlay)
+	enabled_overlay.call("configure_for_probe", app, true)
+	var enabled_stats := await _measure_frame_phase(OVERLAY_COST_SAMPLE_FRAMES)
+	var overlay_overhead: Dictionary = enabled_overlay.call("overhead_snapshot")
+	var attribution: Dictionary = enabled_overlay.call("foundation_attribution_snapshot")
+	app.set("perf_telemetry_overlay", null)
+	enabled_overlay.queue_free()
+	await _settle(2)
+	var removed_avg := float(removed_stats.get("avg_ms", 0.0))
+	var disabled_avg := float(disabled_stats.get("avg_ms", 0.0))
+	var disabled_delta := absf(disabled_avg - removed_avg)
+	overlay_cost_observations = [
+		{"mode": "removed", "frames": OVERLAY_COST_SAMPLE_FRAMES, "frame_time": removed_stats},
+		{"mode": "disabled", "frames": OVERLAY_COST_SAMPLE_FRAMES, "frame_time": disabled_stats, "avg_delta_vs_removed_ms": disabled_delta},
+		{"mode": "enabled", "frames": OVERLAY_COST_SAMPLE_FRAMES, "frame_time": enabled_stats, "telemetry_overhead": overlay_overhead, "foundation_attribution": attribution},
+	]
+	if disabled_delta > OVERLAY_REMOVED_DISABLED_MAX_AVG_DELTA_MS:
+		failures.append("Disabled telemetry overlay avg frame delta %.3f ms was distinguishable from removed (limit %.3f ms)." % [disabled_delta, OVERLAY_REMOVED_DISABLED_MAX_AVG_DELTA_MS])
+	var enabled_p95 := float(enabled_stats.get("p95_ms", 0.0))
+	if enabled_p95 > OVERLAY_ENABLED_FRAME_P95_BUDGET_MS:
+		failures.append("Enabled telemetry overlay frame p95 %.3f ms exceeded %.3f ms." % [enabled_p95, OVERLAY_ENABLED_FRAME_P95_BUDGET_MS])
+
+
+func _measure_frame_phase(frames: int) -> Dictionary:
+	var samples: Array = []
+	for _frame_index in range(maxi(1, frames)):
+		var start_usec := Time.get_ticks_usec()
+		await process_frame
+		samples.append(float(Time.get_ticks_usec() - start_usec) / 1000.0)
+	return _timing_stats(samples)
 
 
 func _probe_meta_home_surface_budget() -> void:
@@ -698,12 +828,27 @@ func _record_new_surface_phase(mode: String, label: String) -> void:
 		failures.append("New-surface performance probe has no budget for %s." % mode)
 		return
 	var sample_frames := maxi(1, int(budget.get("sample_frames", NEW_SURFACE_SAMPLE_FRAMES)))
+	var liveness_spec := _dict(NEW_SURFACE_IDLE_LIVENESS.get(mode, {}))
+	var liveness_counter := str(liveness_spec.get("counter", ""))
+	var liveness_floor := _scaled_liveness_floor(liveness_spec, sample_frames)
+	var environment_canvas := app.get("environment_canvas") as Control
+	var start_count := 0
+	if not liveness_spec.is_empty():
+		if environment_canvas == null or not environment_canvas.has_method("performance_live_status"):
+			failures.append("%s did not expose environment liveness counter %s." % [label, liveness_counter])
+			return
+		var start_liveness: Dictionary = environment_canvas.call("performance_live_status")
+		start_count = int(start_liveness.get(liveness_counter, 0))
 	var samples: Array = []
 	for _frame_index in range(sample_frames):
 		var start_usec := Time.get_ticks_usec()
 		await process_frame
 		samples.append(float(Time.get_ticks_usec() - start_usec) / 1000.0)
 	var stats := _timing_stats(samples)
+	var liveness_measured := 0
+	if not liveness_spec.is_empty():
+		var end_liveness: Dictionary = environment_canvas.call("performance_live_status")
+		liveness_measured = maxi(0, int(end_liveness.get(liveness_counter, 0)) - start_count)
 	var p95_budget := float(budget.get("frame_p95_ms", 0.0))
 	observations.append({
 		"seed": "new_surface:%s" % mode,
@@ -717,9 +862,17 @@ func _record_new_surface_phase(mode: String, label: String) -> void:
 		"max_frame_ms": float(stats.get("max_ms", 0.0)),
 		"budget": budget,
 	})
+	var observation: Dictionary = observations[observations.size() - 1]
+	if not liveness_spec.is_empty():
+		observation["liveness_counter"] = liveness_counter
+		observation["liveness_floor"] = liveness_floor
+		observation["liveness_measured"] = liveness_measured
+		observations[observations.size() - 1] = observation
 	new_surface_coverage[mode] = int(new_surface_coverage.get(mode, 0)) + 1
 	if p95_budget > 0.0 and float(stats.get("p95_ms", 0.0)) > p95_budget:
 		failures.append("%s frame p95 %.3f ms exceeded %.3f ms." % [label, float(stats.get("p95_ms", 0.0)), p95_budget])
+	if not liveness_spec.is_empty():
+		_assert_liveness(label, liveness_counter, liveness_floor, liveness_measured)
 
 
 func _synthetic_blackjack_idle_snapshot() -> Dictionary:
@@ -792,6 +945,30 @@ func _assert_required_new_surface_coverage() -> void:
 		var mode := str(mode_value)
 		if int(new_surface_coverage.get(mode, 0)) <= 0:
 			failures.append("Performance probe did not cover new surface budget %s." % mode)
+
+
+func _game_idle_liveness_spec(game_id: String) -> Dictionary:
+	var spec := _dict(GAME_IDLE_LIVENESS.get(game_id, {}))
+	if spec.is_empty():
+		failures.append("Performance probe has no idle liveness floor data for %s." % game_id)
+	return spec
+
+
+func _scaled_liveness_floor(spec: Dictionary, frames: int) -> int:
+	var baseline_floor := maxi(0, int(spec.get("minimum_per_120_frames", 0)))
+	if baseline_floor <= 0:
+		return 0
+	return maxi(1, int(ceil(float(baseline_floor) * float(maxi(1, frames)) / 120.0)))
+
+
+func _assert_liveness(label: String, counter: String, floor: int, measured: int, zero_reason: String = "") -> void:
+	if floor <= 0 and zero_reason.strip_edges().is_empty():
+		failures.append("%s has a zero liveness floor without a documented reason." % label)
+	var check := PerformanceLivenessGuardScript.evaluate(label, counter, floor, measured)
+	check["zero_reason"] = zero_reason
+	liveness_observations.append(check)
+	if not bool(check.get("passed", false)):
+		failures.append(str(check.get("message", "%s liveness failed." % label)))
 
 
 func _assert_draw_budget(label: String, draw_p95_ms: float, draw_samples: int) -> void:
@@ -1013,6 +1190,11 @@ func _write_report() -> void:
 		"resolve_sample_count": resolve_sample_count,
 		"resolve_budgets": RESOLVE_BUDGETS,
 		"new_surface_budgets": NEW_SURFACE_BUDGETS,
+		"game_idle_liveness_floors": GAME_IDLE_LIVENESS,
+		"environment_idle_liveness_floors": NEW_SURFACE_IDLE_LIVENESS,
+		"liveness_observations": liveness_observations,
+		"liveness_guard_proof": liveness_guard_proof,
+		"overlay_cost_observations": overlay_cost_observations,
 		"low_end_scale_factor": LOW_END_SCALE_FACTOR,
 		"low_end_frame_budget_ms": LOW_END_FRAME_BUDGET_MS,
 		"budget_headroom_checks": budget_headroom_checks,

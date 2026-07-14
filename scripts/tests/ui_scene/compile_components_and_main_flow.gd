@@ -8,6 +8,7 @@ const MainScene := preload("res://scenes/main.tscn")
 const VisualStyleScript := preload("res://scripts/ui/visual_style.gd")
 const PixelSceneCanvasScript := preload("res://scripts/ui/pixel_scene_canvas.gd")
 const GameSurfaceCanvasScript := preload("res://scripts/ui/game_surface_canvas.gd")
+const PerformanceLivenessGuardScript := preload("res://scripts/ui/performance_liveness_guard.gd")
 const RunInventoryScreenScript := preload("res://scripts/ui/run_inventory_screen.gd")
 const TalkDockScript := preload("res://scripts/ui/talk_dock.gd")
 const SfxPlayerScript := preload("res://scripts/ui/sfx_player.gd")
@@ -484,6 +485,49 @@ func _check_world_map_selection_stable_component() -> bool:
 	return true
 
 
+func _check_performance_liveness_guard_component() -> bool:
+	var canvas: Control = GameSurfaceCanvasScript.new()
+	canvas.size = Vector2(VisualStyleScript.GAME_BOARD_SIZE)
+	root.add_child(canvas)
+	canvas.call("render_game_snapshot", {
+		"game_id": "blackjack",
+		"surface_renderer": "blackjack",
+		"surface_animates_idle": true,
+		"reduce_motion": false,
+		"table_round_timer": {
+			"active": true,
+			"started_msec": Time.get_ticks_msec(),
+			"duration_msec": 12000,
+			"remaining_msec": 12000,
+		},
+	})
+	await process_frame
+	canvas.set_process(false)
+	canvas.call("reset_performance_counters")
+	for _frame_index in range(24):
+		await process_frame
+	var counter := "surface_animation_redraw_count"
+	var suppressed: Dictionary = canvas.call("performance_counters")
+	var suppressed_check := PerformanceLivenessGuardScript.evaluate("UI regression blackjack surface", counter, 1, int(suppressed.get(counter, 0)))
+	var expected_message := "UI regression blackjack surface liveness counter surface_animation_redraw_count advanced 0 time(s), below floor 1."
+	if bool(suppressed_check.get("passed", true)) or str(suppressed_check.get("message", "")) != expected_message:
+		canvas.queue_free()
+		push_error("Forced idle-animation scheduling suppression did not fail with the surface/counter message: %s" % str(suppressed_check.get("message", "")))
+		return false
+	canvas.set_process(true)
+	canvas.call("reset_performance_counters")
+	for _frame_index in range(120):
+		await process_frame
+	var restored: Dictionary = canvas.call("performance_counters")
+	var restored_check := PerformanceLivenessGuardScript.evaluate("UI regression blackjack surface", counter, 1, int(restored.get(counter, 0)))
+	canvas.queue_free()
+	await process_frame
+	if not bool(restored_check.get("passed", false)):
+		push_error("Restored idle-animation scheduling did not pass the liveness guard: %s" % str(restored_check.get("message", "")))
+		return false
+	return true
+
+
 func _run_inventory_component_model(mode: String, container_id: String = "", selected: Dictionary = {}) -> Dictionary:
 	var items: Array = []
 	match mode:
@@ -759,6 +803,9 @@ func _run() -> void:
 		quit(1)
 		return
 	if not await _check_world_map_selection_stable_component():
+		quit(1)
+		return
+	if not await _check_performance_liveness_guard_component():
 		quit(1)
 		return
 

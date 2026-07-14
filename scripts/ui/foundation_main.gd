@@ -408,17 +408,41 @@ func _ready() -> void:
 
 
 func _process(_delta: float) -> void:
+	if perf_telemetry_overlay == null:
+		if run_layout_dirty:
+			_apply_run_screen_layout()
+		if current_screen == SCREEN_GAME:
+			_advance_game_surface_automation()
+			_advance_game_surface_realtime_state()
+		if presented_bankroll_hold_active:
+			_advance_presented_bankroll()
+		if (current_screen == SCREEN_ENVIRONMENT or current_screen == SCREEN_GAME) and not meta_session_active:
+			_advance_environment_game_runtime()
+		if pending_autosave:
+			_flush_pending_autosave_if_ready()
+		return
+	perf_telemetry_overlay.begin_foundation_frame()
 	if run_layout_dirty:
+		var layout_started_usec := Time.get_ticks_usec()
 		_apply_run_screen_layout()
+		perf_telemetry_overlay.record_foundation_subsystem_usec("layout", Time.get_ticks_usec() - layout_started_usec)
 	if current_screen == SCREEN_GAME:
+		var snapshot_started_usec := Time.get_ticks_usec()
 		_advance_game_surface_automation()
 		_advance_game_surface_realtime_state()
+		perf_telemetry_overlay.record_foundation_subsystem_usec("snapshot_builds", Time.get_ticks_usec() - snapshot_started_usec)
 	if presented_bankroll_hold_active:
+		var presented_started_usec := Time.get_ticks_usec()
 		_advance_presented_bankroll()
+		perf_telemetry_overlay.record_foundation_subsystem_usec("snapshot_builds", Time.get_ticks_usec() - presented_started_usec)
 	if (current_screen == SCREEN_ENVIRONMENT or current_screen == SCREEN_GAME) and not meta_session_active:
+		var environment_started_usec := Time.get_ticks_usec()
 		_advance_environment_game_runtime()
+		perf_telemetry_overlay.record_foundation_subsystem_usec("environment_runtime", Time.get_ticks_usec() - environment_started_usec)
 	if pending_autosave:
+		var autosave_started_usec := Time.get_ticks_usec()
 		_flush_pending_autosave_if_ready()
+		perf_telemetry_overlay.record_foundation_subsystem_usec("autosave_flush", Time.get_ticks_usec() - autosave_started_usec)
 
 
 func _input(event: InputEvent) -> void:

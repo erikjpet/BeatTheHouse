@@ -180,16 +180,28 @@ func reset_performance_counters() -> void:
 	perf_full_snapshot_calls = 0
 	perf_runtime_status_calls = 0
 	perf_draw_frame_usec_samples = []
+	surface_animation_redraw_count = 0
 
 
 func performance_counters() -> Dictionary:
 	return {
 		"full_snapshot_calls": perf_full_snapshot_calls,
 		"runtime_status_calls": perf_runtime_status_calls,
+		"surface_animation_redraw_count": surface_animation_redraw_count,
+		"surface_animation_liveness_active": surface_animation_liveness_active(),
 		"draw_frame_usec_samples": perf_draw_frame_usec_samples.duplicate(),
 		"draw_avg_ms": _draw_average_ms(),
 		"draw_p95_ms": _draw_percentile_ms(0.95),
 		"draw_max_ms": _draw_max_ms(),
+	}
+
+
+func performance_live_status() -> Dictionary:
+	return {
+		"surface_animation_redraw_count": surface_animation_redraw_count,
+		"surface_animation_liveness_active": surface_animation_liveness_active(),
+		"draw_sample_count": perf_draw_frame_usec_samples.size(),
+		"draw_avg_ms": _draw_average_ms(),
 	}
 
 
