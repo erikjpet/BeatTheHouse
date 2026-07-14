@@ -85,6 +85,33 @@ func set_game_module(game_module: GameModule) -> void:
 	queue_redraw()
 
 
+func clear_runtime_state() -> void:
+	stop_surface_audio()
+	surface_game_module = null
+	game_id = ""
+	state = {}
+	view_data = {}
+	selected_view_index = -1
+	uses_foundation_snapshot = false
+	background_texture = null
+	use_external_background = false
+	hit_regions = []
+	hovered_surface_action = ""
+	hovered_surface_index = -1
+	surface_animation_channels = {}
+	continuous_redraw_was_active = false
+	last_audio_profile_id = ""
+	surface_label_fit_cache.clear()
+	hit_region_group_cache.clear()
+	perf_draw_frame_usec_samples = []
+	surface_animation_redraw_accumulator = 0.0
+	surface_animation_redraw_count = 0
+	surface_animation_handoff_until_msec = 0
+	surface_render_elapsed_sec = 0.0
+	_update_drunk_distortion_overlay()
+	queue_redraw()
+
+
 func render_game_snapshot(snapshot: Dictionary) -> void:
 	uses_foundation_snapshot = true
 	surface_render_elapsed_sec = 0.0

@@ -3575,10 +3575,30 @@ func _run() -> void:
 		quit(1)
 		return
 	if ui_settings != null:
+		ui_settings.reduce_motion = false
+	app.call("_start_conclusion_animation", {
+		"ok": true,
+		"conclusion_animation": "bankroll_transfer",
+		"bankroll_delta": 30,
+		"deltas": {"bankroll_delta": 30},
+	}, Rect2(Vector2(120, 120), Vector2(220, 160)))
+	await process_frame
+	var animated_conclusion_debug: Dictionary = app.call("debug_soak_snapshot")
+	if int(animated_conclusion_debug.get("conclusion_animation_child_count", 0)) <= 0 or int(animated_conclusion_debug.get("conclusion_animation_tween_count", 0)) <= 0:
+		push_error("bankroll_transfer conclusion animation did not expose owned runtime nodes and tweens.")
+		quit(1)
+		return
+	if ui_settings != null:
 		ui_settings.reduce_motion = previous_reduce_motion
 
 	app.call("start_foundation_run", "UI-ITEM-SEED", RunStateScript.custom_challenge("ui_item_home_fixture", "UI-ITEM-SEED", {"home_archetype_id": "motel_room"}))
 	await process_frame
+	await process_frame
+	var restarted_conclusion_debug: Dictionary = app.call("debug_soak_snapshot")
+	if int(restarted_conclusion_debug.get("conclusion_animation_child_count", -1)) != 0 or int(restarted_conclusion_debug.get("conclusion_animation_tween_count", -1)) != 0:
+		push_error("Starting a new run retained conclusion-animation nodes or tweens.")
+		quit(1)
+		return
 	var home_pickup_snapshot: Dictionary = app.call("current_environment_view_snapshot")
 	var home_pickup_offers: Array = home_pickup_snapshot.get("item_offers", [])
 	if home_pickup_offers.is_empty():
@@ -4573,6 +4593,23 @@ func _run() -> void:
 		push_error("Failure screen did not present player-facing fail reason and run details.")
 		quit(1)
 		return
+	var failure_summary_list := app.get("failure_summary_list") as Control
+	if failure_summary_list == null or failure_summary_list.get_child_count() == 0:
+		push_error("Failure summary lifecycle fixture did not create summary children.")
+		quit(1)
+		return
+	app.call("start_foundation_run", "UI-FAILURE-SUMMARY-CLEANUP")
+	await process_frame
+	await process_frame
+	if failure_summary_list.get_child_count() != 0:
+		push_error("Starting a new run retained hidden failure summary children.")
+		quit(1)
+		return
+	var cleared_failure_surface: Dictionary = (app.get("game_surface_canvas") as Node).call("debug_soak_snapshot")
+	if not str(cleared_failure_surface.get("game_id", "")).is_empty() or int(cleared_failure_surface.get("state_key_count", -1)) != 0 or int(cleared_failure_surface.get("hit_region_count", -1)) != 0:
+		push_error("Starting a new run retained the prior failure-path game canvas runtime.")
+		quit(1)
+		return
 	var failure_reason_cases := [
 		{"reason": RunState.FAILURE_BANKROLL_ZERO, "label": "Bankroll zero"},
 		{"reason": RunState.FAILURE_STRANDED, "label": "Stranded"},
@@ -4693,6 +4730,23 @@ func _run() -> void:
 		return
 	if not _has_visible_text(app, "Main Menu") or not _has_visible_text(app, "New Run"):
 		push_error("Victory screen did not present terminal actions.")
+		quit(1)
+		return
+	var victory_summary_list := app.get("victory_summary_list") as Control
+	if victory_summary_list == null or victory_summary_list.get_child_count() == 0:
+		push_error("Victory summary lifecycle fixture did not create summary children.")
+		quit(1)
+		return
+	app.call("start_foundation_run", "UI-VICTORY-SUMMARY-CLEANUP")
+	await process_frame
+	await process_frame
+	if victory_summary_list.get_child_count() != 0:
+		push_error("Starting a new run retained hidden victory summary children.")
+		quit(1)
+		return
+	var cleared_victory_surface: Dictionary = (app.get("game_surface_canvas") as Node).call("debug_soak_snapshot")
+	if not str(cleared_victory_surface.get("game_id", "")).is_empty() or int(cleared_victory_surface.get("state_key_count", -1)) != 0 or int(cleared_victory_surface.get("hit_region_count", -1)) != 0:
+		push_error("Starting a new run retained the prior victory-path game canvas runtime.")
 		quit(1)
 		return
 	if not await _check_lender_acceptance_does_not_open_motel_popup(app):

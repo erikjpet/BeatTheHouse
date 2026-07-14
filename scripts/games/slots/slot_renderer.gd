@@ -8,6 +8,7 @@ const PINBALL_AIM_MAX_DEGREES := 60
 const PINBALL_AIM_CHOICES := 25
 const PINBALL_START_CHOICES := 25
 const PINBALL_POWER_CHOICES := 21
+const MAX_BACKGROUND_TEXTURE_CACHE := 6
 const PINBALL_START_ACTIONS := [
 	"slot_bonus_start_00",
 	"slot_bonus_start_01",
@@ -219,6 +220,8 @@ func _slot_background_texture(skin: Dictionary) -> Texture2D:
 		return null
 	if background_textures.has(path):
 		return background_textures[path] as Texture2D
+	if background_textures.size() >= MAX_BACKGROUND_TEXTURE_CACHE:
+		background_textures.erase(background_textures.keys()[0])
 	if not ResourceLoader.exists(path):
 		background_textures[path] = null
 		return null
@@ -226,6 +229,17 @@ func _slot_background_texture(skin: Dictionary) -> Texture2D:
 	var texture := resource as Texture2D
 	background_textures[path] = texture
 	return texture
+
+
+func prewarm_background_textures(definition: Dictionary) -> int:
+	for skin_value in catalog.all_skins(definition):
+		if typeof(skin_value) == TYPE_DICTIONARY:
+			_slot_background_texture(skin_value as Dictionary)
+	return background_textures.size()
+
+
+func background_texture_cache_size() -> int:
+	return background_textures.size()
 
 
 func _reel_motion(entry: Dictionary, time_msec: int) -> Dictionary:

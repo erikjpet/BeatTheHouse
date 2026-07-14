@@ -9,17 +9,21 @@ const RunStateScript := preload("res://scripts/core/run_state.gd")
 const PinballFeatureScript := preload("res://scripts/games/slots/pinball/pinball_feature.gd")
 
 const REPORT_PATH := "user://foundation_soak_probe_report.json"
+const SAMPLE_LOG_PATH := "user://foundation_soak_probe_samples.jsonl"
 const DEFAULT_SEED_PREFIX := "FOUNDATION-SOAK"
 const DEFAULT_SIM_MINUTES := 180
 const DEFAULT_ACTIONS_PER_SAMPLE := 28
 const SAMPLE_INTERVAL_MINUTES := 10
 const WARMUP_SAMPLE_COUNT := 3
+const RETAINED_SLOPE_TAIL_SAMPLE_COUNT := 6
 const SAVE_LOAD_ACTION_INTERVAL := 23
 const RUN_ROTATION_ACTION_INTERVAL := 160
 const SLOT_AUTOPLAY_ACTION_INTERVAL := 97
 const SLOT_AUTOPLAY_FRAMES := 150
+const SLOT_AUTOPLAY_PREWARM_BLOCKS := 3
 const PINBALL_CACHE_STRESS_SESSIONS := 40
 const SOAK_SAVE_SLOT := "foundation_soak_probe"
+const RETAINED_MEASUREMENT_SEED := "FOUNDATION-SOAK-RETAINED-MEASUREMENT"
 const SOAK_PREWARM_GAME_IDS := ["blackjack", "baccarat", "roulette", "video_poker", "bar_dice", "pull_tabs", "slot"]
 
 const MAX_SERIALIZED_RUN_STATE_BYTES := 1500000
@@ -41,12 +45,14 @@ var app: Control
 var failures: Array = []
 var warnings: Array = []
 var samples: Array = []
+var retained_samples: Array = []
 var coverage: Dictionary = {}
 var run_index := 0
 var action_counter := 0
 var seed_prefix := DEFAULT_SEED_PREFIX
 var sim_minutes := DEFAULT_SIM_MINUTES
 var actions_per_sample := DEFAULT_ACTIONS_PER_SAMPLE
+var sample_log_file: FileAccess
 
 
 func _init() -> void:
@@ -60,6 +66,9 @@ func _run() -> void:
 	sim_minutes = _configured_int("BTH_SOAK_MINUTES", DEFAULT_SIM_MINUTES)
 	actions_per_sample = _configured_int("BTH_SOAK_ACTIONS_PER_SAMPLE", DEFAULT_ACTIONS_PER_SAMPLE)
 	PinballFeatureScript.clear_runtime_session_cache()
+	sample_log_file = FileAccess.open(SAMPLE_LOG_PATH, FileAccess.WRITE)
+	if sample_log_file == null:
+		failures.append("Could not open soak sample spool at %s." % SAMPLE_LOG_PATH)
 	coverage = {
 		"runs_started": 0,
 		"save_loads": 0,
@@ -75,14 +84,48 @@ func _run() -> void:
 	}
 	await _open_fresh_app()
 	await _prewarm_runtime_caches()
-	_stress_pinball_session_cache()
-	await _start_next_run()
-	await _sample(0)
+	# The first scheduled autoplay block is action 97, after the action-84
+	# retained-growth warmup boundary. Repeated sessions reach their resource
+	# high-water on the second block, so cover session creation, replacement,
+	# and steady reuse before sampling. Scheduled workload blocks still run.
+	for _prewarm_index in range(SLOT_AUTOPLAY_PREWARM_BLOCKS):
+		await _exercise_slot_autoplay_block()
 	var sample_count := maxi(1, int(ceil(float(sim_minutes) / float(SAMPLE_INTERVAL_MINUTES))))
+	var workload_prewarm_actions := sample_count * actions_per_sample
+	var measured_start_run_index := run_index
+	for _prewarm_action_index in range(workload_prewarm_actions):
+		await _drive_action()
+	var workload_prewarm_coverage := coverage.duplicate(true)
+	var slot_background_textures_prewarmed := int(coverage.get("slot_background_textures_prewarmed", 0))
+	var slot_background_texture_cache_cap := int(coverage.get("slot_background_texture_cache_cap", 0))
+	coverage = {
+		"runs_started": 0,
+		"save_loads": 0,
+		"world_travels": 0,
+		"revisits": 0,
+		"game_actions": 0,
+		"slot_autoplay_blocks": 0,
+		"pinball_cache_stress_blocks": 0,
+		"event_actions": 0,
+		"item_actions": 0,
+		"service_actions": 0,
+		"lender_actions": 0,
+		"retained_measurement_resets": 0,
+		"slot_background_textures_prewarmed": slot_background_textures_prewarmed,
+		"slot_background_texture_cache_cap": slot_background_texture_cache_cap,
+		"workload_prewarm_actions": workload_prewarm_actions,
+		"workload_prewarm_coverage": workload_prewarm_coverage,
+	}
+	action_counter = 0
+	run_index = measured_start_run_index
+	await _sample(0)
+	await _sample_retained_state(0)
 	for sample_index in range(1, sample_count + 1):
 		for _action_index in range(actions_per_sample):
 			await _drive_action()
 		await _sample(sample_index)
+		await _sample_retained_state(sample_index)
+	_hydrate_metric_samples_from_spool()
 	_assert_coverage()
 	_assert_growth()
 	_write_report()
@@ -125,6 +168,12 @@ func _prewarm_runtime_caches() -> void:
 		var game_id := str(game_id_value)
 		app.call("start_game_test_session", game_id)
 		await _settle(3)
+		if game_id == "slot":
+			var slot_module: Variant = app.get("current_game")
+			if slot_module != null and slot_module.has_method("prewarm_surface_assets"):
+				coverage["slot_background_textures_prewarmed"] = int(slot_module.call("prewarm_surface_assets"))
+				var cache_debug: Dictionary = slot_module.call("debug_surface_asset_cache_snapshot")
+				coverage["slot_background_texture_cache_cap"] = int(cache_debug.get("background_texture_cache_cap", 0))
 	app.call("return_to_main_menu")
 	await _settle(4)
 
@@ -425,7 +474,19 @@ func _resolve_blocking_popup() -> bool:
 	return true
 
 
-func _sample(sample_index: int) -> void:
+func _sample_retained_state(sample_index: int) -> void:
+	var challenge: Dictionary = RunStateScript.custom_challenge("soak_retained_measurement", RETAINED_MEASUREMENT_SEED, {
+		"starting_bankroll": 5000,
+		"hidden_seed": true,
+	})
+	app.set("autosave_slot_id", SOAK_SAVE_SLOT)
+	app.call("start_foundation_run", RETAINED_MEASUREMENT_SEED, challenge)
+	coverage["retained_measurement_resets"] = int(coverage.get("retained_measurement_resets", 0)) + 1
+	await _settle(4)
+	await _sample(sample_index, true)
+
+
+func _sample(sample_index: int, retained_measurement: bool = false) -> void:
 	await _settle(2)
 	var state: Dictionary = app.call("serialized_run_state") if app != null else {}
 	var serialized_text := JSON.stringify(state)
@@ -459,8 +520,14 @@ func _sample(sample_index: int) -> void:
 			"pinball": pinball_debug,
 		},
 	}
-	samples.append(sample)
-	print("SOAK_SAMPLE index=%d sim_minute=%d memory=%d objects=%d resources=%d nodes=%d orphans=%d serialized=%d env_history=%d/%d story=%d/%d pinball_cache=%d pinball_view_bytes=%d room_icon_cache=%d run_icon_cache=%d" % [
+	if sample_log_file != null:
+		sample_log_file.store_line(JSON.stringify({
+			"retained": retained_measurement,
+			"sample": sample,
+		}))
+		sample_log_file.flush()
+	print("%s index=%d sim_minute=%d memory=%d objects=%d resources=%d nodes=%d orphans=%d serialized=%d env_history=%d/%d story=%d/%d pinball_cache=%d pinball_view_bytes=%d room_icon_cache=%d run_icon_cache=%d" % [
+		"SOAK_RETAINED_SAMPLE" if retained_measurement else "SOAK_SAMPLE",
 		sample_index,
 		int(sample.get("sim_minute", 0)),
 		int(sample.get("memory_static_bytes", 0)),
@@ -488,10 +555,13 @@ func _assert_coverage() -> void:
 		failures.append("Soak probe expected at least 3 back-to-back runs, got %d." % int(coverage.get("runs_started", 0)))
 	if int(coverage.get("event_actions", 0)) + int(coverage.get("lender_actions", 0)) + int(coverage.get("service_actions", 0)) <= 0:
 		failures.append("Soak probe did not exercise any event/lender/service lifecycle path.")
+	var slot_background_cache_cap := int(coverage.get("slot_background_texture_cache_cap", 0))
+	if slot_background_cache_cap <= 0 or int(coverage.get("slot_background_textures_prewarmed", 0)) != slot_background_cache_cap:
+		failures.append("Soak probe did not prewarm the bounded slot background cache to its cap.")
 
 
 func _assert_growth() -> void:
-	if samples.size() <= WARMUP_SAMPLE_COUNT:
+	if samples.size() <= WARMUP_SAMPLE_COUNT or retained_samples.size() <= WARMUP_SAMPLE_COUNT:
 		failures.append("Soak probe did not collect enough samples for post-warmup growth checks.")
 		return
 	_assert_metric_growth(
@@ -516,7 +586,8 @@ func _assert_growth() -> void:
 		"node_count",
 		MAX_POST_WARMUP_NODE_PEAK_GROWTH,
 		MAX_POST_WARMUP_NODE_RETAINED_GROWTH,
-		MAX_POST_WARMUP_NODE_RETAINED_SLOPE_PER_SAMPLE
+		MAX_POST_WARMUP_NODE_RETAINED_SLOPE_PER_SAMPLE,
+		true
 	)
 	for sample_value in samples:
 		var sample := _dict(sample_value)
@@ -537,20 +608,30 @@ func _assert_growth() -> void:
 				int(sample.get("orphan_node_count", 0)),
 				int(sample.get("sample_index", 0)),
 			])
+	for sample_value in retained_samples:
+		var sample := _dict(sample_value)
+		if int(sample.get("orphan_node_count", 0)) > MAX_POST_WARMUP_ORPHAN_NODE_COUNT:
+			failures.append("Retained-state orphan node count %d exceeded cap at sample %d." % [
+				int(sample.get("orphan_node_count", 0)),
+				int(sample.get("sample_index", 0)),
+			])
 
 
-func _assert_metric_growth(metric_key: String, max_peak_growth: float, max_retained_growth: float, max_retained_slope: float) -> void:
-	var warmup_sample := _dict(samples[WARMUP_SAMPLE_COUNT])
-	var warmup_value := float(warmup_sample.get(metric_key, 0.0))
-	var final_sample := _dict(samples[samples.size() - 1])
+func _assert_metric_growth(metric_key: String, max_peak_growth: float, max_retained_growth: float, max_retained_slope: float, comparable_peak: bool = false) -> void:
+	var workload_warmup_sample := _dict(samples[WARMUP_SAMPLE_COUNT])
+	var workload_warmup_value := float(workload_warmup_sample.get(metric_key, 0.0))
+	var retained_warmup_sample := _dict(retained_samples[WARMUP_SAMPLE_COUNT])
+	var retained_warmup_value := float(retained_warmup_sample.get(metric_key, 0.0))
+	var final_sample := _dict(retained_samples[retained_samples.size() - 1])
 	var final_value := float(final_sample.get(metric_key, 0.0))
-	var max_value := warmup_value
-	for index in range(WARMUP_SAMPLE_COUNT, samples.size()):
-		var sample := _dict(samples[index])
+	var peak_samples := retained_samples if comparable_peak else samples
+	var max_value := retained_warmup_value if comparable_peak else workload_warmup_value
+	for index in range(WARMUP_SAMPLE_COUNT, peak_samples.size()):
+		var sample := _dict(peak_samples[index])
 		max_value = maxf(max_value, float(sample.get(metric_key, 0.0)))
-	var peak_growth := max_value - warmup_value
-	var retained_growth := final_value - warmup_value
-	var retained_slope := _retained_slope(metric_key, WARMUP_SAMPLE_COUNT)
+	var peak_growth := max_value - (retained_warmup_value if comparable_peak else workload_warmup_value)
+	var retained_growth := final_value - retained_warmup_value
+	var retained_slope := _retained_trend_slope(retained_samples, metric_key, WARMUP_SAMPLE_COUNT)
 	if peak_growth > max_peak_growth:
 		failures.append("%s post-warmup peak growth %.3f exceeded %.3f." % [metric_key, peak_growth, max_peak_growth])
 	if retained_growth > max_retained_growth:
@@ -559,28 +640,33 @@ func _assert_metric_growth(metric_key: String, max_peak_growth: float, max_retai
 		failures.append("%s post-warmup retained slope %.3f/sample exceeded %.3f/sample." % [metric_key, retained_slope, max_retained_slope])
 
 
-func _retained_slope(metric_key: String, start_index: int) -> float:
-	if samples.size() <= start_index + 1:
+func _retained_slope(source_samples: Array, metric_key: String, start_index: int) -> float:
+	if source_samples.size() <= start_index + 1:
 		return 0.0
-	var start_value := float(_dict(samples[start_index]).get(metric_key, 0.0))
-	var final_value := float(_dict(samples[samples.size() - 1]).get(metric_key, 0.0))
-	var intervals := float(samples.size() - 1 - start_index)
+	var start_value := float(_dict(source_samples[start_index]).get(metric_key, 0.0))
+	var final_value := float(_dict(source_samples[source_samples.size() - 1]).get(metric_key, 0.0))
+	var intervals := float(source_samples.size() - 1 - start_index)
 	if intervals <= 0.0:
 		return 0.0
 	return maxf(0.0, (final_value - start_value) / intervals)
 
 
-func _linear_slope(metric_key: String, start_index: int) -> float:
-	var count := samples.size() - start_index
+func _retained_trend_slope(source_samples: Array, metric_key: String, minimum_start_index: int) -> float:
+	var tail_start_index := maxi(minimum_start_index, source_samples.size() - RETAINED_SLOPE_TAIL_SAMPLE_COUNT)
+	return _linear_slope(source_samples, metric_key, tail_start_index)
+
+
+func _linear_slope(source_samples: Array, metric_key: String, start_index: int) -> float:
+	var count := source_samples.size() - start_index
 	if count <= 1:
 		return 0.0
 	var sum_x := 0.0
 	var sum_y := 0.0
 	var sum_xy := 0.0
 	var sum_x2 := 0.0
-	for index in range(start_index, samples.size()):
+	for index in range(start_index, source_samples.size()):
 		var x := float(index - start_index)
-		var y := float(_dict(samples[index]).get(metric_key, 0.0))
+		var y := float(_dict(source_samples[index]).get(metric_key, 0.0))
 		sum_x += x
 		sum_y += y
 		sum_xy += x * y
@@ -592,8 +678,8 @@ func _linear_slope(metric_key: String, start_index: int) -> float:
 
 
 func _print_summary() -> void:
-	var final_sample := _dict(samples[samples.size() - 1]) if not samples.is_empty() else {}
-	var warmup_sample := _dict(samples[WARMUP_SAMPLE_COUNT]) if samples.size() > WARMUP_SAMPLE_COUNT else final_sample
+	var final_sample := _dict(retained_samples[retained_samples.size() - 1]) if not retained_samples.is_empty() else {}
+	var warmup_sample := _dict(retained_samples[WARMUP_SAMPLE_COUNT]) if retained_samples.size() > WARMUP_SAMPLE_COUNT else final_sample
 	print("FOUNDATION_SOAK_OVERALL status=%s samples=%d sim_minutes=%d actions=%d memory_growth=%d object_growth=%d node_growth=%d serialized_max=%d coverage=%s report=%s" % [
 		"PASS" if failures.is_empty() else "FAIL",
 		samples.size(),
@@ -609,6 +695,27 @@ func _print_summary() -> void:
 
 
 func _write_report() -> void:
+	var detailed_samples := []
+	var detailed_retained_samples := []
+	if sample_log_file != null:
+		sample_log_file.flush()
+		sample_log_file = null
+	var sample_log := FileAccess.open(SAMPLE_LOG_PATH, FileAccess.READ)
+	if sample_log == null:
+		failures.append("Could not read soak sample spool at %s." % SAMPLE_LOG_PATH)
+	else:
+		while sample_log.get_position() < sample_log.get_length():
+			var parsed: Variant = JSON.parse_string(sample_log.get_line())
+			if typeof(parsed) != TYPE_DICTIONARY:
+				continue
+			var entry := parsed as Dictionary
+			var detailed_sample: Variant = entry.get("sample", {})
+			if typeof(detailed_sample) != TYPE_DICTIONARY:
+				continue
+			if bool(entry.get("retained", false)):
+				detailed_retained_samples.append(detailed_sample)
+			else:
+				detailed_samples.append(detailed_sample)
 	var report := {
 		"passed": failures.is_empty(),
 		"failures": failures.duplicate(),
@@ -619,10 +726,13 @@ func _write_report() -> void:
 			"sample_interval_minutes": SAMPLE_INTERVAL_MINUTES,
 			"actions_per_sample": actions_per_sample,
 			"warmup_sample_count": WARMUP_SAMPLE_COUNT,
+			"retained_slope_tail_sample_count": RETAINED_SLOPE_TAIL_SAMPLE_COUNT,
 			"serialized_run_state_cap_bytes": MAX_SERIALIZED_RUN_STATE_BYTES,
 			"environment_history_cap": RunStateScript.MAX_ENVIRONMENT_HISTORY_ENTRIES,
 			"story_log_cap": RunStateScript.MAX_STORY_LOG_ENTRIES,
 			"pinball_session_cache_cap": PinballFeatureScript.MAX_RUNTIME_SESSIONS,
+			"slot_autoplay_prewarm_blocks": SLOT_AUTOPLAY_PREWARM_BLOCKS,
+			"workload_prewarm_actions": int(coverage.get("workload_prewarm_actions", 0)),
 			"memory_peak_growth_cap_bytes": MAX_POST_WARMUP_MEMORY_PEAK_GROWTH_BYTES,
 			"memory_retained_growth_cap_bytes": MAX_POST_WARMUP_MEMORY_RETAINED_GROWTH_BYTES,
 			"memory_retained_slope_cap_bytes_per_sample": MAX_POST_WARMUP_MEMORY_RETAINED_SLOPE_BYTES_PER_SAMPLE,
@@ -636,18 +746,32 @@ func _write_report() -> void:
 			"node_retained_growth_cap": MAX_POST_WARMUP_NODE_RETAINED_GROWTH,
 			"node_retained_slope_cap_per_sample": MAX_POST_WARMUP_NODE_RETAINED_SLOPE_PER_SAMPLE,
 		},
-		"samples": samples.duplicate(true),
+		"samples": detailed_samples,
+		"retained_measurement_samples": detailed_retained_samples,
+		"measurement_storage": "incremental_jsonl_spool",
 		"post_warmup_slopes": {
-			"memory_static_bytes": _linear_slope("memory_static_bytes", WARMUP_SAMPLE_COUNT),
-			"resource_count": _linear_slope("resource_count", WARMUP_SAMPLE_COUNT),
-			"object_count": _linear_slope("object_count", WARMUP_SAMPLE_COUNT),
-			"node_count": _linear_slope("node_count", WARMUP_SAMPLE_COUNT),
+			"memory_static_bytes": _linear_slope(retained_samples, "memory_static_bytes", WARMUP_SAMPLE_COUNT),
+			"resource_count": _linear_slope(retained_samples, "resource_count", WARMUP_SAMPLE_COUNT),
+			"object_count": _linear_slope(retained_samples, "object_count", WARMUP_SAMPLE_COUNT),
+			"node_count": _linear_slope(retained_samples, "node_count", WARMUP_SAMPLE_COUNT),
+		},
+		"post_warmup_workload_slopes": {
+			"memory_static_bytes": _linear_slope(samples, "memory_static_bytes", WARMUP_SAMPLE_COUNT),
+			"resource_count": _linear_slope(samples, "resource_count", WARMUP_SAMPLE_COUNT),
+			"object_count": _linear_slope(samples, "object_count", WARMUP_SAMPLE_COUNT),
+			"node_count": _linear_slope(samples, "node_count", WARMUP_SAMPLE_COUNT),
 		},
 		"post_warmup_retained_slopes": {
-			"memory_static_bytes": _retained_slope("memory_static_bytes", WARMUP_SAMPLE_COUNT),
-			"resource_count": _retained_slope("resource_count", WARMUP_SAMPLE_COUNT),
-			"object_count": _retained_slope("object_count", WARMUP_SAMPLE_COUNT),
-			"node_count": _retained_slope("node_count", WARMUP_SAMPLE_COUNT),
+			"memory_static_bytes": _retained_trend_slope(retained_samples, "memory_static_bytes", WARMUP_SAMPLE_COUNT),
+			"resource_count": _retained_trend_slope(retained_samples, "resource_count", WARMUP_SAMPLE_COUNT),
+			"object_count": _retained_trend_slope(retained_samples, "object_count", WARMUP_SAMPLE_COUNT),
+			"node_count": _retained_trend_slope(retained_samples, "node_count", WARMUP_SAMPLE_COUNT),
+		},
+		"post_warmup_retained_full_window_average_growth_per_sample": {
+			"memory_static_bytes": _retained_slope(retained_samples, "memory_static_bytes", WARMUP_SAMPLE_COUNT),
+			"resource_count": _retained_slope(retained_samples, "resource_count", WARMUP_SAMPLE_COUNT),
+			"object_count": _retained_slope(retained_samples, "object_count", WARMUP_SAMPLE_COUNT),
+			"node_count": _retained_slope(retained_samples, "node_count", WARMUP_SAMPLE_COUNT),
 		},
 	}
 	var file := FileAccess.open(REPORT_PATH, FileAccess.WRITE)
@@ -655,6 +779,49 @@ func _write_report() -> void:
 		failures.append("Could not write soak report to %s." % REPORT_PATH)
 		return
 	file.store_string(JSON.stringify(report, "\t"))
+
+
+func _hydrate_metric_samples_from_spool() -> void:
+	samples = []
+	retained_samples = []
+	if sample_log_file != null:
+		sample_log_file.flush()
+	var sample_log := FileAccess.open(SAMPLE_LOG_PATH, FileAccess.READ)
+	if sample_log == null:
+		failures.append("Could not hydrate soak metrics from %s." % SAMPLE_LOG_PATH)
+		return
+	while sample_log.get_position() < sample_log.get_length():
+		var parsed: Variant = JSON.parse_string(sample_log.get_line())
+		if typeof(parsed) != TYPE_DICTIONARY:
+			continue
+		var entry := parsed as Dictionary
+		var detailed_sample: Variant = entry.get("sample", {})
+		if typeof(detailed_sample) != TYPE_DICTIONARY:
+			continue
+		if bool(entry.get("retained", false)):
+			retained_samples.append(_metric_sample(detailed_sample as Dictionary))
+		else:
+			samples.append(_metric_sample(detailed_sample as Dictionary))
+
+
+func _metric_sample(sample: Dictionary) -> Dictionary:
+	return {
+		"sample_index": int(sample.get("sample_index", 0)),
+		"sim_minute": int(sample.get("sim_minute", 0)),
+		"action_count": int(sample.get("action_count", 0)),
+		"run_index": int(sample.get("run_index", 0)),
+		"memory_static_bytes": int(sample.get("memory_static_bytes", 0)),
+		"object_count": int(sample.get("object_count", 0)),
+		"node_count": int(sample.get("node_count", 0)),
+		"orphan_node_count": int(sample.get("orphan_node_count", 0)),
+		"resource_count": int(sample.get("resource_count", 0)),
+		"serialized_run_state_bytes": int(sample.get("serialized_run_state_bytes", 0)),
+		"environment_history_length": int(sample.get("environment_history_length", 0)),
+		"environment_history_archive_count": int(sample.get("environment_history_archive_count", 0)),
+		"story_log_length": int(sample.get("story_log_length", 0)),
+		"story_log_archive_count": int(sample.get("story_log_archive_count", 0)),
+		"pinball_session_cache_size": int(sample.get("pinball_session_cache_size", 0)),
+	}
 
 
 func _run_is_terminal() -> bool:

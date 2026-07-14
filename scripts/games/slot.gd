@@ -121,6 +121,17 @@ func draw_surface(surface_canvas, surface_state: Dictionary, _render_context: Di
 	return bool(renderer.draw(surface_canvas, surface_state, definition))
 
 
+func prewarm_surface_assets() -> int:
+	return int(renderer.prewarm_background_textures(definition))
+
+
+func debug_surface_asset_cache_snapshot() -> Dictionary:
+	return {
+		"background_texture_cache_size": int(renderer.background_texture_cache_size()),
+		"background_texture_cache_cap": RendererScript.MAX_BACKGROUND_TEXTURE_CACHE,
+	}
+
+
 func resolve(action_id: String, stake: int, run_state: RunState, environment: Dictionary, rng: RngStream) -> Dictionary:
 	return resolve_with_context(action_id, stake, run_state, environment, rng, {})
 

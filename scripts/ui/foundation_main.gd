@@ -276,6 +276,7 @@ var event_choice_popup_choices_list: VBoxContainer
 var talk_dock: TalkDock
 var conclusion_animation_overlay: Control
 var conclusion_animation_snapshot: Dictionary = {}
+var conclusion_animation_tweens: Array[Tween] = []
 var run_inventory_screen: RunInventoryScreen
 var run_inventory_overlay: Control
 var run_inventory_panel: PanelContainer
@@ -477,6 +478,7 @@ func uses_foundation_runtime() -> bool:
 func start_foundation_run(seed_text: String = DEFAULT_SEED, challenge_config: Dictionary = {}) -> void:
 	if library == null:
 		_initialize_foundation()
+	_finish_conclusion_animation()
 	meta_session_active = false
 	meta_session_location_id = ""
 	meta_last_panel_message = ""
@@ -1062,7 +1064,7 @@ func _current_game_surface_auto_tick_state() -> Dictionary:
 
 func _reset_game_surface_runtime_state() -> void:
 	if game_surface_canvas != null:
-		game_surface_canvas.stop_surface_audio()
+		game_surface_canvas.clear_runtime_state()
 	_stop_surface_feature_music()
 	game_surface_ui_state = {}
 	game_surface_auto_resolving = false
@@ -5371,6 +5373,8 @@ func _render_failure_summary() -> void:
 		return
 	if not _is_failure_screen():
 		failure_summary_panel.visible = false
+		if failure_summary_list != null and failure_summary_list.get_child_count() > 0:
+			_clear(failure_summary_list)
 		return
 	failure_summary_panel.visible = true
 	var snapshot := _failure_summary_snapshot()
@@ -5411,6 +5415,8 @@ func _render_victory_summary() -> void:
 		return
 	if not _is_victory_screen():
 		victory_summary_panel.visible = false
+		if victory_summary_list != null and victory_summary_list.get_child_count() > 0:
+			_clear(victory_summary_list)
 		return
 	victory_summary_panel.visible = true
 	var snapshot := _victory_summary_snapshot()
@@ -6693,6 +6699,8 @@ func debug_soak_snapshot() -> Dictionary:
 		"world_map_badge_slot_visible": world_map_badge_slot.visible if world_map_badge_slot != null else false,
 		"world_map_detail_badges_key": world_map_detail_badges_key,
 		"event_choice_popup_child_count": event_choice_popup_choices_list.get_child_count() if event_choice_popup_choices_list != null else 0,
+		"conclusion_animation_child_count": conclusion_animation_overlay.get_child_count() if conclusion_animation_overlay != null else 0,
+		"conclusion_animation_tween_count": conclusion_animation_tweens.size(),
 		"inventory_child_count": run_inventory_screen.rendered_item_child_count() if run_inventory_screen != null else 0,
 		"journal_child_count": run_journal_list.get_child_count() if run_journal_list != null else 0,
 		"environment_canvas": environment_debug,
@@ -7312,6 +7320,7 @@ func _start_conclusion_animation(result: Dictionary, popup_rect: Rect2) -> void:
 	var bankroll_delta := int(result.get("bankroll_delta", deltas.get("bankroll_delta", 0)))
 	if bankroll_delta <= 0:
 		return
+	_finish_conclusion_animation()
 	var reduce_motion := _reduce_motion_enabled()
 	var bill_count := clampi(5 + (bankroll_delta % 4), 5, 8)
 	conclusion_animation_snapshot = {
@@ -7350,11 +7359,13 @@ func _start_conclusion_animation(result: Dictionary, popup_rect: Rect2) -> void:
 		_set_control_font_color(bill, Color("#69f0ae"))
 		conclusion_animation_overlay.add_child(bill)
 		var tween := create_tween()
+		conclusion_animation_tweens.append(tween)
 		var delay := float(index) * 0.045
 		var duration := 0.62 + float(index % 3) * 0.06
 		tween.tween_property(bill, "position", end + Vector2(float(index % 2) * 3.0, 0.0), duration).set_delay(delay)
 		tween.parallel().tween_property(bill, "modulate:a", 0.0, duration * 0.45).set_delay(delay + duration * 0.55)
 	var cleanup := create_tween()
+	conclusion_animation_tweens.append(cleanup)
 	cleanup.tween_interval(0.94)
 	cleanup.tween_callback(Callable(self, "_finish_conclusion_animation"))
 
@@ -7374,6 +7385,11 @@ func _conclusion_animation_source_rect(object_id: String = "") -> Rect2:
 
 
 func _finish_conclusion_animation() -> void:
+	var active_tweens := conclusion_animation_tweens
+	conclusion_animation_tweens = []
+	for tween in active_tweens:
+		if is_instance_valid(tween) and tween.is_valid():
+			tween.kill()
 	if conclusion_animation_overlay != null:
 		_clear(conclusion_animation_overlay)
 		conclusion_animation_overlay.visible = false
@@ -8398,6 +8414,7 @@ func return_to_main_menu() -> void:
 	if run_state != null and not dev_game_test_mode:
 		_autosave_foundation_run("Autosaved before main menu.", true)
 	pending_all_in_result_terminal_check = false
+	_finish_conclusion_animation()
 	_reset_game_surface_runtime_state()
 	current_game = null
 	game_surface_ui_state = {}
@@ -8593,6 +8610,7 @@ func _exit_meta_session() -> void:
 	_hide_run_journal_popup()
 	_hide_world_map_overlay()
 	_hide_travel_transition()
+	_finish_conclusion_animation()
 	_reset_game_surface_runtime_state()
 	current_game = null
 	run_state = null
