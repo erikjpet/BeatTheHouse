@@ -271,6 +271,16 @@ Generated and local paths are intentionally not source:
 - `*.import`
 - local assistant/editor config directories
 
+### Local artifact retention
+
+Development artifacts are kept locally through active development. At release,
+use `tools/manage_local_artifacts.ps1` to report the ignored inventory and copy
+it to backup storage with `-Export <destination>`. Cleanup is allowed only
+after that export's manifest and SHA256 hashes verify, and requires both
+`-Clean -Destination <destination>` and `-IAmSure`. The `.tools/` toolchain is
+always protected from cleanup. The default invocation is read-only and removes
+or moves nothing.
+
 ## Running The Project
 
 `tools/run_godot.ps1` launches the app, and `tools/run_godot.ps1 -Editor`
