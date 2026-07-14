@@ -88,6 +88,7 @@ const RunInventoryScreenScript := preload("res://scripts/ui/run_inventory_screen
 const RunInventoryViewModelScript := preload("res://scripts/ui/run_inventory_view_model.gd")
 const MetaCollectionViewModelScript := preload("res://scripts/ui/meta_collection_view_model.gd")
 const RunJournalViewModelScript := preload("res://scripts/ui/run_journal_view_model.gd")
+const TerminalConsequenceViewModelScript := preload("res://scripts/ui/terminal_consequence_view_model.gd")
 const MetaSessionControllerScript := preload("res://scripts/ui/meta_session_controller.gd")
 const WorldMapOverlayControllerScript := preload("res://scripts/ui/world_map_overlay_controller.gd")
 const WagerConfirmationControllerScript := preload("res://scripts/ui/wager_confirmation_controller.gd")
@@ -9159,203 +9160,45 @@ func _failure_summary_snapshot() -> Dictionary:
 	if run_state == null:
 		return {}
 	var pressure := _run_pressure_view()
-	var environment := run_state.current_environment
 	var recent_result := _recent_result_snapshot()
-	var recent_deltas: Dictionary = recent_result.get("deltas", {})
 	var recent_message := _outcome_message(recent_result)
 	if recent_message.is_empty() and message_label != null:
 		recent_message = _player_facing_text(message_label.text)
-	var reason := run_state.run_failure_reason
-	if reason.strip_edges().is_empty():
-		reason = str(pressure.get("reason", RunState.FAILURE_BANKROLL_ZERO))
-	var title := str(pressure.get("title", "Run failed"))
-	if title.strip_edges().is_empty():
-		title = "Run failed"
 	var message := run_state.run_failure_message
 	if message.strip_edges().is_empty():
 		message = str(pressure.get("summary", "The run is over."))
-	var inventory_items := _inventory_view_list()
-	var debt_items := _debt_view_list()
-	var travel_choices := _travel_choice_view_list()
-	var story_lines := _story_message_view_list()
-	var item_lines: Array = []
-	if inventory_items.is_empty():
-		item_lines.append("Inventory: empty.")
-	else:
-		item_lines.append("Inventory: %s." % _inventory_summary(inventory_items))
-		item_lines.append_array(inventory_items.slice(0, 5))
-	var debt_lines: Array = []
-	if debt_items.is_empty():
-		debt_lines.append("Debt: none.")
-	else:
-		debt_lines.append("Debt: %s." % _debt_summary(debt_items))
-		debt_lines.append_array(debt_items.slice(0, 5))
-	var travel_lines: Array = []
-	if travel_choices.is_empty():
-		travel_lines.append("No routes were available at failure.")
-	else:
-		travel_lines.append("Routes at failure: %s." % _travel_summary(travel_choices))
-		for choice in travel_choices.slice(0, 5):
-			if typeof(choice) == TYPE_DICTIONARY:
-				var choice_data := choice as Dictionary
-				var line := str(choice_data.get("label", choice_data.get("id", "Route")))
-				if choice_data.has("cost"):
-					line += " cost %d" % int(choice_data.get("cost", 0))
-				if not bool(choice_data.get("enabled", true)):
-					line += " locked: %s" % str(choice_data.get("disabled_reason", "unavailable"))
-				travel_lines.append(line)
-	var recent_result_lines: Array = []
-	if recent_message.strip_edges().is_empty():
-		recent_result_lines.append("No recent action was recorded.")
-	else:
-		recent_result_lines.append(recent_message)
-	recent_result_lines.append("Bankroll %+d, heat %+d." % [
-		int(recent_result.get("bankroll_delta", recent_deltas.get("bankroll_delta", 0))),
-		int(recent_result.get("suspicion_delta", recent_deltas.get("suspicion_delta", 0))),
-	])
-	var alcohol_lines := [
-		"Alcohol: %s, drunk %d, need %d." % [
-			run_state.alcohol_condition_label().capitalize(),
-			run_state.drunk_level,
-			run_state.alcoholic_level,
-		],
-		"Baseline luck %+d, effective luck %+d." % [run_state.baseline_luck, run_state.effective_luck()],
-	]
-	if story_lines.is_empty():
-		story_lines.append("No story entries were recorded.")
-	var visited_places := _visited_environment_summary_lines()
-	var score_summary: Dictionary = run_state.terminal_score_summary()
-	var score_lines: Array = _terminal_score_lines(score_summary)
-	var bag_lines := _terminal_bag_summary_lines()
-	return {
-		"title": title,
-		"message": _player_facing_text(message),
-		"reason": reason,
-		"reason_label": _label_from_id(reason) if not reason.is_empty() else "Run failed",
-		"run_status": run_state.run_status,
-		"seed": run_state.player_facing_seed_text(),
-		"seed_hidden": run_state.seed_is_hidden(),
-		"score_spending": int(score_summary.get("base_spending", 0)),
-		"score_multiplier": int(score_summary.get("multiplier", 1)),
-		"score": int(score_summary.get("score", 0)),
-		"score_lines": score_lines,
-		"bankroll": run_state.bankroll,
-		"economy": _economy_cue_text(),
-		"heat": run_state.suspicion_level(),
-		"heat_label": run_state.security_pressure_label(),
-		"alcohol": run_state.alcohol_pressure_summary(),
-		"drunk_level": run_state.drunk_level,
-		"alcoholic_level": run_state.alcoholic_level,
-		"baseline_luck": run_state.baseline_luck,
-		"luck_modifier": run_state.effective_luck(),
-		"current_environment": str(environment.get("display_name", environment.get("id", "Unknown room"))),
-		"environment_id": str(environment.get("id", "")),
-		"environment_kind": _label_from_id(str(environment.get("kind", environment.get("archetype_id", "room")))),
-		"visited_count": visited_places.size(),
-		"visited_summary": ", ".join(visited_places) if not visited_places.is_empty() else "current room only",
-		"travel_lines": travel_lines,
-		"alcohol_lines": alcohol_lines,
-		"item_lines": item_lines,
-		"bag_lines": bag_lines,
-		"debt_lines": debt_lines,
-		"recent_result_lines": recent_result_lines,
-		"story_lines": story_lines,
+	return TerminalConsequenceViewModelScript.failure_summary(run_state, {
+		"pressure": pressure,
+		"recent_result": recent_result,
+		"recent_message": recent_message,
+		"player_facing_message": _player_facing_text(message),
+		"inventory_items": _inventory_view_list(),
+		"debt_items": _debt_view_list(),
+		"travel_choices": _travel_choice_view_list(),
+		"story_lines": _story_message_view_list(),
+		"visited_places": TerminalConsequenceViewModelScript.visited_environment_summary_lines(run_state),
+		"bag_lines": _terminal_bag_summary_lines(),
 		"flag_lines": _flag_view_list(),
-	}
-
-
+		"economy": _economy_cue_text(),
+		"label_from_id": Callable(self, "_label_from_id"),
+	})
 func _victory_summary_snapshot() -> Dictionary:
 	if run_state == null:
 		return {}
 	var pressure := _run_pressure_view()
-	var environment := run_state.current_environment
-	var route := str(run_state.narrative_flags.get("demo_victory_route", "")).strip_edges()
-	if route.is_empty():
-		route = "run_complete"
-	var title := str(pressure.get("title", "Demo Victory"))
-	if bool(run_state.narrative_flags.get("demo_victory", false)):
-		title = "Demo Victory"
-	elif title.strip_edges().is_empty():
-		title = "Run Complete"
-	var message := ""
-	if bool(run_state.narrative_flags.get("demo_victory", false)):
-		message = run_state.current_demo_victory_message()
-	else:
-		message = str(pressure.get("summary", "You beat the house for now."))
-	message = _player_facing_text(message)
-	if message.strip_edges().is_empty():
-		message = "You beat the house for now."
-	var next_act_line := _victory_next_act_line(route)
-	var inventory_items := _inventory_view_list()
-	var debt_items := _debt_view_list()
-	var story_lines := _story_message_view_list()
-	var item_lines: Array = []
-	if inventory_items.is_empty():
-		item_lines.append("Inventory: empty.")
-	else:
-		item_lines.append("Inventory: %s." % _inventory_summary(inventory_items))
-		if not run_state.active_item_id.is_empty():
-			item_lines.append("Active item: %s." % _label_from_id(run_state.active_item_id))
-		item_lines.append_array(inventory_items.slice(0, 5))
-	var extracted_container_line := str(run_state.narrative_flags.get("victory_container_extracted_line", "")).strip_edges()
-	if not extracted_container_line.is_empty():
-		item_lines.append(extracted_container_line)
-	var debt_lines: Array = []
-	if debt_items.is_empty():
-		debt_lines.append("Debt: none.")
-	else:
-		debt_lines.append("Debt: %s." % _debt_summary(debt_items))
-		debt_lines.append_array(debt_items.slice(0, 5))
-	var alcohol_lines := [
-		"Alcohol: %s, drunk %d, need %d." % [
-			run_state.alcohol_condition_label().capitalize(),
-			run_state.drunk_level,
-			run_state.alcoholic_level,
-		],
-		"Baseline luck %+d, effective luck %+d." % [run_state.baseline_luck, run_state.effective_luck()],
-	]
-	if story_lines.is_empty():
-		story_lines.append("No story entries were recorded.")
-	var visited_places := _visited_environment_summary_lines()
-	var score_summary: Dictionary = run_state.terminal_score_summary()
-	var score_lines: Array = _terminal_score_lines(score_summary)
-	var bag_lines := _terminal_bag_summary_lines()
-	return {
-		"title": title,
-		"message": message,
-		"route": route,
-		"route_label": _label_from_id(route),
-		"run_status": run_state.run_status,
-		"seed": run_state.player_facing_seed_text(),
-		"seed_hidden": run_state.seed_is_hidden(),
-		"score_spending": int(score_summary.get("base_spending", 0)),
-		"score_multiplier": int(score_summary.get("multiplier", 1)),
-		"score": int(score_summary.get("score", 0)),
-		"score_lines": score_lines,
-		"bankroll": run_state.bankroll,
-		"economy": _economy_cue_text(),
-		"heat": run_state.suspicion_level(),
-		"heat_label": run_state.security_pressure_label(),
-		"alcohol": run_state.alcohol_pressure_summary(),
-		"drunk_level": run_state.drunk_level,
-		"alcoholic_level": run_state.alcoholic_level,
-		"baseline_luck": run_state.baseline_luck,
-		"luck_modifier": run_state.effective_luck(),
-		"current_environment": str(environment.get("display_name", environment.get("id", "Unknown room"))),
-		"environment_id": str(environment.get("id", "")),
-		"environment_kind": _label_from_id(str(environment.get("kind", environment.get("archetype_id", "room")))),
-		"visited_count": visited_places.size(),
-		"visited_summary": ", ".join(visited_places) if not visited_places.is_empty() else "current room only",
-		"next_act_line": next_act_line,
-		"alcohol_lines": alcohol_lines,
-		"item_lines": item_lines,
-		"bag_lines": bag_lines,
-		"debt_lines": debt_lines,
-		"story_lines": story_lines,
+	var message := run_state.current_demo_victory_message() if bool(run_state.narrative_flags.get("demo_victory", false)) else str(pressure.get("summary", "You beat the house for now."))
+	return TerminalConsequenceViewModelScript.victory_summary(run_state, {
+		"pressure": pressure,
+		"player_facing_message": _player_facing_text(message),
+		"inventory_items": _inventory_view_list(),
+		"debt_items": _debt_view_list(),
+		"story_lines": _story_message_view_list(),
+		"visited_places": TerminalConsequenceViewModelScript.visited_environment_summary_lines(run_state),
+		"bag_lines": _terminal_bag_summary_lines(),
 		"flag_lines": _flag_view_list(),
-	}
-
-
+		"economy": _economy_cue_text(),
+		"label_from_id": Callable(self, "_label_from_id"),
+	})
 func _victory_container_item_choices() -> Array:
 	var result: Array = []
 	if run_state == null or library == null:
@@ -9385,233 +9228,34 @@ func _victory_container_item_choices() -> Array:
 	return result
 
 
-func _terminal_score_lines(score_summary: Dictionary) -> Array:
-	var base_spending := int(score_summary.get("base_spending", 0))
-	var multiplier := maxi(1, int(score_summary.get("multiplier", 1)))
-	var score := int(score_summary.get("score", base_spending * multiplier))
-	var lines: Array = [
-		"Items and travel spent: %d" % base_spending,
-		"Victory multiplier: x%d" % multiplier,
-		"Run score: %d" % score,
-	]
-	return lines
-
-
-func _victory_next_act_line(route: String) -> String:
-	match route:
-		RunState.GRAND_CASINO_HIGH_ROLLER_EVENT_ID:
-			return "The Players Card opens quieter rooms. Your name is now on the list."
-		RunState.GRAND_CASINO_SHOWDOWN_ROUTE:
-			return "Rourke lets the elevator close. The house will remember your face."
-		_:
-			return "The house closes one door and leaves another cracked open."
-
-
-func _visited_environment_summary_lines() -> Array:
-	if run_state == null:
-		return []
-	var labels: Array = []
-	for entry in run_state.environment_history:
-		if typeof(entry) != TYPE_DICTIONARY:
-			continue
-		var environment := entry as Dictionary
-		var label := str(environment.get("display_name", environment.get("id", "")))
-		if not label.is_empty() and not labels.has(label):
-			labels.append(label)
-	var current_label := str(run_state.current_environment.get("display_name", run_state.current_environment.get("id", "")))
-	if not current_label.is_empty() and not labels.has(current_label):
-		labels.append(current_label)
-	return labels
-
-
 func _consequence_view_snapshot() -> Dictionary:
+	if run_state == null:
+		return {}
 	var recent_result := _recent_result_snapshot()
 	var deltas: Dictionary = recent_result.get("deltas", {})
-	var recent_bankroll_delta := _visible_recent_bankroll_delta(int(recent_result.get("bankroll_delta", deltas.get("bankroll_delta", 0))))
-	var recent_suspicion_delta := int(recent_result.get("suspicion_delta", deltas.get("suspicion_delta", 0)))
-	var recent_alcohol_intake := int(deltas.get("alcohol_intake", 0))
-	var recent_drunk_delta := int(deltas.get("drunk_delta", 0))
-	var recent_alcoholic_delta := int(deltas.get("alcoholic_delta", 0))
-	var recent_luck_delta := int(deltas.get("baseline_luck_delta", 0))
-	var suspicion_cues := _suspicion_cue_view_list()
-	var security_cues := _security_cue_view_list()
-	var story_messages := _story_message_view_list()
-	var inventory_items := _inventory_view_list()
-	var debt_items := _debt_view_list()
-	var flag_labels := _flag_view_list()
-	var travel_choices := _travel_choice_view_list()
-	var pressure := _run_pressure_view()
 	var recent_message := _player_facing_text(str(recent_result.get("message", "")))
 	if recent_message.is_empty() and message_label != null:
 		recent_message = _player_facing_text(message_label.text)
 	if presented_bankroll_hold_active:
 		recent_message = "Result resolving."
-	var has_recent_consequence := _result_is_visible_consequence(recent_result, recent_message)
-	var current_state_text := "Bankroll %d | %s | Status %s | %s | Debt %s | Gear %s | Routes %s" % [
-		_presented_bankroll(),
-		_economy_cue_text(),
-		str(pressure.get("title", "")),
-		run_state.alcohol_pressure_summary(),
-		_debt_summary(debt_items),
-		_inventory_summary(inventory_items),
-		_travel_summary(travel_choices),
-	]
-	var suspicion_text := "Heat: %s" % run_state.security_pressure_label().capitalize()
-	if not suspicion_cues.is_empty():
-		suspicion_text += " | %s" % str(suspicion_cues[0])
-	elif not security_cues.is_empty():
-		suspicion_text += " | %s" % str(security_cues[0])
-	var recent_result_text := "Recent result: %s | Bankroll %+d | Heat %+d" % [
-		recent_message if not recent_message.is_empty() else "No result yet.",
-		recent_bankroll_delta,
-		recent_suspicion_delta,
-	]
-	var story_text := "Story: %s | Clues %s" % [
-		" / ".join(story_messages) if not story_messages.is_empty() else "No story yet.",
-		_flag_summary(flag_labels),
-	]
-	var cards := _consequence_card_view_list({
+	return TerminalConsequenceViewModelScript.consequence_snapshot(run_state, {
 		"recent_result": recent_result,
-		"has_recent_consequence": has_recent_consequence,
-		"recent_bankroll_delta": recent_bankroll_delta,
-		"recent_suspicion_delta": recent_suspicion_delta,
-		"recent_alcohol_intake": recent_alcohol_intake,
-		"recent_drunk_delta": recent_drunk_delta,
-		"recent_alcoholic_delta": recent_alcoholic_delta,
-		"recent_luck_delta": recent_luck_delta,
-		"recent_result_message": recent_message,
-		"suspicion_cues": suspicion_cues,
-		"security_cues": security_cues,
-		"debt_items": debt_items,
-		"inventory_items": inventory_items,
-		"story_messages": story_messages,
-		"travel_choices": travel_choices,
-		"pressure": pressure,
+		"recent_bankroll_delta": _visible_recent_bankroll_delta(int(recent_result.get("bankroll_delta", deltas.get("bankroll_delta", 0)))),
+		"recent_message": recent_message,
+		"suspicion_cues": _suspicion_cue_view_list(),
+		"security_cues": _security_cue_view_list(),
+		"story_messages": _story_message_view_list(),
+		"inventory_items": _inventory_view_list(),
+		"debt_items": _debt_view_list(),
+		"flag_labels": _flag_view_list(),
+		"travel_choices": _travel_choice_view_list(),
+		"pressure": _run_pressure_view(),
+		"presented_bankroll": _presented_bankroll(),
+		"economy": _economy_cue_text(),
+		"current_game_active": current_game != null,
+		"item_labeler": Callable(self, "_item_id_list_label"),
+		"travel_labeler": Callable(self, "_travel_id_list_label"),
 	})
-	return {
-		"bankroll": _presented_bankroll(),
-		"economy": run_state.economy(),
-		"recent_bankroll_delta": recent_bankroll_delta,
-		"recent_suspicion_delta": recent_suspicion_delta,
-		"recent_result_message": recent_message,
-		"suspicion_level": run_state.suspicion_level(),
-		"drunk_level": run_state.drunk_level,
-		"alcoholic_level": run_state.alcoholic_level,
-		"baseline_luck": run_state.baseline_luck,
-		"luck_modifier": run_state.effective_luck(),
-		"alcohol_text": run_state.alcohol_pressure_summary(),
-		"suspicion_cues": suspicion_cues,
-		"security_cues": security_cues,
-		"debt_items": debt_items,
-		"debt_summary": _debt_summary(debt_items),
-		"inventory_items": inventory_items,
-		"inventory_summary": _inventory_summary(inventory_items),
-		"flag_labels": flag_labels,
-		"flag_summary": _flag_summary(flag_labels),
-		"story_messages": story_messages,
-		"travel_available": not travel_choices.is_empty(),
-		"travel_count": travel_choices.size(),
-		"travel_summary": _travel_summary(travel_choices),
-		"run_status": run_state.run_status,
-		"pressure": pressure,
-		"pressure_text": _pressure_status_text(pressure),
-		"has_recent_consequence": has_recent_consequence,
-		"current_state_text": current_state_text,
-		"suspicion_text": suspicion_text,
-		"recent_result_text": recent_result_text,
-		"story_text": story_text,
-		"cards": cards,
-	}
-
-
-func _consequence_card_view_list(context: Dictionary) -> Array:
-	var recent_result: Dictionary = context.get("recent_result", {})
-	if not bool(context.get("has_recent_consequence", false)):
-		return []
-	var deltas: Dictionary = recent_result.get("deltas", {})
-	var recent_message := str(context.get("recent_result_message", ""))
-	var recent_bankroll_delta := int(context.get("recent_bankroll_delta", 0))
-	var recent_suspicion_delta := int(context.get("recent_suspicion_delta", 0))
-	var recent_alcohol_intake := int(context.get("recent_alcohol_intake", 0))
-	var recent_drunk_delta := int(context.get("recent_drunk_delta", 0))
-	var recent_alcoholic_delta := int(context.get("recent_alcoholic_delta", 0))
-	var recent_luck_delta := int(context.get("recent_luck_delta", 0))
-	var pressure: Dictionary = context.get("pressure", {})
-	var cards: Array = []
-	cards.append({
-		"title": _outcome_card_title(recent_result),
-		"tone": _outcome_card_tone(recent_result, recent_bankroll_delta, recent_suspicion_delta),
-		"lines": [
-			recent_message if not recent_message.is_empty() else "No result yet.",
-			"Bankroll now %d." % _presented_bankroll(),
-		],
-	})
-	if not recent_result.is_empty() or recent_bankroll_delta != 0:
-		cards.append({
-			"title": "Bankroll",
-			"tone": "positive" if recent_bankroll_delta >= 0 else "cost",
-			"lines": [
-				"Change %+d." % recent_bankroll_delta,
-				"Current bankroll %d." % _presented_bankroll(),
-				_economy_cue_text() + ".",
-			],
-		})
-	if recent_suspicion_delta != 0 or not (context.get("suspicion_cues", []) as Array).is_empty() or not (context.get("security_cues", []) as Array).is_empty():
-		cards.append({
-			"title": "Risk",
-			"tone": "risk",
-			"lines": _risk_card_lines(recent_suspicion_delta, context.get("suspicion_cues", []), context.get("security_cues", [])),
-		})
-	if recent_alcohol_intake != 0 or recent_drunk_delta != 0 or recent_alcoholic_delta != 0 or recent_luck_delta != 0 or run_state.drunk_level > 0 or run_state.alcoholic_level > 0 or run_state.baseline_luck != 0:
-		cards.append({
-			"title": "Alcohol",
-			"tone": "risk" if run_state.alcoholic_level > run_state.drunk_level else "positive",
-			"lines": _alcohol_card_lines(recent_alcohol_intake, recent_drunk_delta, recent_alcoholic_delta, recent_luck_delta),
-		})
-	var debt_changes := _copy_array(deltas.get("debt_changes", []))
-	if not debt_changes.is_empty() or not (context.get("debt_items", []) as Array).is_empty():
-		cards.append({
-			"title": "Debt",
-			"tone": "cost",
-			"lines": _debt_card_lines(debt_changes, context.get("debt_items", [])),
-		})
-	var inventory_add := _copy_array(deltas.get("inventory_add", []))
-	var inventory_remove := _copy_array(deltas.get("inventory_remove", []))
-	if not inventory_add.is_empty() or not inventory_remove.is_empty() or not (context.get("inventory_items", []) as Array).is_empty():
-		cards.append({
-			"title": "Items",
-			"tone": "positive",
-			"lines": _inventory_card_lines(inventory_add, inventory_remove, context.get("inventory_items", [])),
-		})
-	var travel_hooks := _copy_array(deltas.get("travel_hooks_add", []))
-	var travel_changes: Dictionary = deltas.get("travel_changes", {})
-	if not travel_hooks.is_empty() or not travel_changes.is_empty() or not (context.get("travel_choices", []) as Array).is_empty():
-		cards.append({
-			"title": "Travel",
-			"tone": "neutral",
-			"lines": _travel_card_lines(travel_hooks, travel_changes, context.get("travel_choices", [])),
-		})
-	if _should_show_pressure_card(pressure):
-		cards.append({
-			"title": str(pressure.get("title", "Run pressure")),
-			"tone": _pressure_card_tone(pressure),
-			"lines": _pressure_card_lines(pressure),
-		})
-	var story_messages: Array = context.get("story_messages", [])
-	if not recent_message.is_empty() or not story_messages.is_empty():
-		cards.append({
-			"title": "Story",
-			"tone": "story",
-			"lines": _story_card_lines(recent_message, story_messages),
-		})
-	cards.append({
-		"title": "Next",
-		"tone": "next",
-		"lines": _next_action_lines(context.get("travel_choices", [])),
-	})
-	return cards
-
-
 func _result_is_visible_consequence(result: Dictionary, recent_message: String = "") -> bool:
 	if result.is_empty():
 		return false
@@ -9759,129 +9403,43 @@ func _outcome_card_tone(_result: Dictionary, bankroll_delta: int, suspicion_delt
 
 
 func _should_show_pressure_card(pressure: Dictionary) -> bool:
-	var state := str(pressure.get("state", ""))
-	return ["failed", "recovery", "distressed", "volatile", "victory"].has(state)
+	return TerminalConsequenceViewModelScript.should_show_pressure_card(pressure)
 
 
 func _pressure_card_tone(pressure: Dictionary) -> String:
-	match str(pressure.get("state", "")):
-		"victory":
-			return "positive"
-		"failed":
-			return "risk"
-		"recovery", "distressed", "volatile":
-			return "cost"
-		_:
-			return "neutral"
+	return TerminalConsequenceViewModelScript.pressure_card_tone(pressure)
 
 
 func _pressure_card_lines(pressure: Dictionary) -> Array:
-	var lines: Array = []
-	var summary := str(pressure.get("summary", ""))
-	if not summary.is_empty():
-		lines.append(summary)
-	if bool(pressure.get("failed", false)):
-		lines.append("Start over or load a saved run.")
-	elif bool(pressure.get("recovery_available", false)):
-		lines.append("Use recovery before pushing the run.")
-	return lines
+	return TerminalConsequenceViewModelScript.pressure_card_lines(pressure)
 
 
 func _risk_card_lines(suspicion_delta: int, suspicion_cues: Variant, security_cues: Variant) -> Array:
-	var lines: Array = []
-	if suspicion_delta > 0:
-		lines.append("Heat rises %+d: %s." % [suspicion_delta, run_state.security_pressure_label()])
-	elif suspicion_delta < 0:
-		lines.append("Heat cools %+d: %s." % [suspicion_delta, run_state.security_pressure_label()])
-	else:
-		lines.append("No new heat.")
-	var cues := _copy_array(suspicion_cues)
-	var security := _copy_array(security_cues)
-	if not cues.is_empty():
-		lines.append(str(cues[0]) + ".")
-	elif not security.is_empty():
-		lines.append("Room cue: %s" % str(security[0]))
-	return lines
+	return TerminalConsequenceViewModelScript.risk_card_lines(run_state, suspicion_delta, _copy_array(suspicion_cues), _copy_array(security_cues))
 
 
 func _alcohol_card_lines(alcohol_intake: int, drunk_delta: int, alcoholic_delta: int, baseline_luck_delta: int) -> Array:
-	var lines: Array = []
-	if alcohol_intake > 0:
-		lines.append("Drink +%d pending; need +%d." % [alcohol_intake, alcohol_intake])
-	elif drunk_delta != 0 or alcoholic_delta != 0:
-		var parts: Array = []
-		if drunk_delta != 0:
-			parts.append("drunk %+d" % drunk_delta)
-		if alcoholic_delta != 0:
-			parts.append("need %+d" % alcoholic_delta)
-		lines.append(", ".join(parts).capitalize() + ".")
-	if baseline_luck_delta != 0:
-		lines.append("Baseline luck %+d." % baseline_luck_delta)
-	lines.append(run_state.alcohol_pressure_summary())
-	lines.append("Drunk %d, need %d, luck %+d." % [run_state.drunk_level, run_state.alcoholic_level, run_state.effective_luck()])
-	return lines
+	return TerminalConsequenceViewModelScript.alcohol_card_lines(run_state, alcohol_intake, drunk_delta, alcoholic_delta, baseline_luck_delta)
 
 
 func _debt_card_lines(debt_changes: Array, debt_items: Variant) -> Array:
-	var lines: Array = []
-	if not debt_changes.is_empty():
-		lines.append("New pressure from %d lender%s." % [debt_changes.size(), "" if debt_changes.size() == 1 else "s"])
-	var items := _copy_array(debt_items)
-	if items.is_empty():
-		lines.append("No active debt remains.")
-	else:
-		lines.append("Current debt: %s." % _debt_summary(items))
-		lines.append(str(items[0]))
-	return lines
+	return TerminalConsequenceViewModelScript.debt_card_lines(debt_changes, _copy_array(debt_items))
 
 
 func _inventory_card_lines(inventory_add: Array, inventory_remove: Array, inventory_items: Variant) -> Array:
-	var lines: Array = []
-	if not inventory_add.is_empty():
-		lines.append("Gained: %s." % _item_id_list_label(inventory_add))
-	if not inventory_remove.is_empty():
-		lines.append("Used: %s." % _item_id_list_label(inventory_remove))
-	var items := _copy_array(inventory_items)
-	lines.append("Inventory: %s." % _inventory_summary(items))
-	return lines
+	return TerminalConsequenceViewModelScript.inventory_card_lines(inventory_add, inventory_remove, _copy_array(inventory_items), Callable(self, "_item_id_list_label"))
 
 
 func _travel_card_lines(travel_hooks: Array, travel_changes: Dictionary, travel_choices: Variant) -> Array:
-	var choices := _copy_array(travel_choices)
-	var lines: Array = []
-	if not travel_hooks.is_empty():
-		lines.append("New routes: %s." % _travel_id_list_label(travel_hooks))
-	if not travel_changes.is_empty():
-		lines.append("Routes changed.")
-	if choices.is_empty():
-		lines.append("No route is available right now.")
-	else:
-		lines.append("Available: %s." % _travel_summary(choices))
-	return lines
+	return TerminalConsequenceViewModelScript.travel_card_lines(travel_hooks, travel_changes, _copy_array(travel_choices), Callable(self, "_travel_id_list_label"))
 
 
 func _story_card_lines(recent_message: String, story_messages: Array) -> Array:
-	var lines: Array = []
-	if not recent_message.is_empty():
-		lines.append(recent_message)
-	for message in story_messages:
-		var text := str(message)
-		if not text.is_empty() and not lines.has(text):
-			lines.append(text)
-		if lines.size() >= 3:
-			break
-	return lines
+	return TerminalConsequenceViewModelScript.story_card_lines(recent_message, story_messages)
 
 
 func _next_action_lines(travel_choices: Variant) -> Array:
-	var lines: Array = []
-	if current_game != null:
-		lines.append("Keep playing, change your stake, or go back to the environment.")
-	else:
-		lines.append("Choose a game, check events, review items, or save the run.")
-	if not _copy_array(travel_choices).is_empty():
-		lines.append("Travel is available when you are ready to move on.")
-	return lines
+	return TerminalConsequenceViewModelScript.next_action_lines(current_game != null, _copy_array(travel_choices))
 
 
 func _item_id_list_label(items: Array) -> String:
@@ -11987,15 +11545,7 @@ func _record_challenge_completion_if_needed() -> void:
 
 
 func _pressure_status_text(pressure: Dictionary) -> String:
-	if pressure.is_empty():
-		return ""
-	var title := str(pressure.get("title", ""))
-	var summary := str(pressure.get("summary", ""))
-	if title.is_empty():
-		return summary
-	if summary.is_empty() or summary == title:
-		return title
-	return "%s: %s" % [title, summary]
+	return TerminalConsequenceViewModelScript.pressure_status_text(pressure)
 
 
 func _supported_recovery_available() -> bool:
@@ -12041,120 +11591,24 @@ func _risk_cue_text() -> String:
 
 
 func _outcome_object_id(result: Dictionary) -> String:
-	if result.is_empty():
-		return ""
-	var type := str(result.get("type", ""))
-	match type:
-		"game_action", "game_action_summary", "game_enter":
-			var game_id := str(result.get("game_id", result.get("source_id", "")))
-			return "game:%s" % game_id if not game_id.is_empty() else ""
-		"item_effect", "item_sale":
-			var item_id := str(result.get("item_id", result.get("source_id", "")))
-			return "item:%s" % item_id if not item_id.is_empty() else ""
-		"event":
-			var event_id := str(result.get("event_id", result.get("source_id", "")))
-			return "event:%s" % event_id if not event_id.is_empty() else ""
-		"service_hook":
-			var service_id := str(result.get("source_id", ""))
-			return "service:%s" % service_id if not service_id.is_empty() else ""
-		"lender_hook":
-			var lender_id := str(result.get("source_id", ""))
-			return "lender:%s" % lender_id if not lender_id.is_empty() else ""
-		"game_hook":
-			var source_id := str(result.get("source_id", ""))
-			if source_id.contains(":"):
-				var parts := source_id.split(":")
-				if parts.size() >= 2:
-					return "game_hook:%s:%s" % [str(parts[0]), str(parts[1])]
-			return "game:%s" % str(result.get("game_id", "")) if not str(result.get("game_id", "")).is_empty() else ""
-		_:
-			return ""
+	return TerminalConsequenceViewModelScript.outcome_object_id(result)
 
 
 func _outcome_message(result: Dictionary) -> String:
-	var message := _player_facing_text(str(result.get("message", "")))
-	if not message.is_empty():
-		return message
-	var messages := _copy_array(result.get("messages", []))
-	if not messages.is_empty():
-		return _player_facing_text(str(messages[0]))
-	return ""
+	return TerminalConsequenceViewModelScript.outcome_message(result, Callable(self, "_player_facing_text"))
 
 
 func _run_summary_text(state: RunState) -> String:
-	if state == null:
-		return "No active run."
-	var environment := state.current_environment
-	var environment_name := str(environment.get("display_name", environment.get("id", "No environment")))
-	var travel_count := _run_travel_target_count(state)
 	var pressure: Dictionary = _run_pressure_view() if state == run_state else state.recovery_pressure_status()
-	var pressure_text := _pressure_status_text(pressure)
-	return "%s | Bankroll %d | %s | Heat %d | Story %d | Clues %d | Routes %d" % [
-		environment_name,
-		state.bankroll,
-		pressure_text,
-		state.suspicion_level(),
-		state.story_log_entry_count(),
-		state.narrative_flags.size(),
-		travel_count,
-	]
+	return TerminalConsequenceViewModelScript.run_summary_text(state, pressure)
 
 
 func _run_travel_target_count(state: RunState) -> int:
-	if state == null:
-		return 0
-	var result: Array = []
-	for source in [
-		state.current_environment.get("next_archetypes", []),
-		state.current_environment.get("travel_hooks", []),
-	]:
-		for target_id in _string_array(source):
-			if not result.has(target_id):
-				result.append(target_id)
-	return result.size()
+	return TerminalConsequenceViewModelScript.run_travel_target_count(state)
 
 
 func _game_result_from_story_log(entries: Array) -> Dictionary:
-	for index in range(entries.size() - 1, -1, -1):
-		var entry: Variant = entries[index]
-		if typeof(entry) != TYPE_DICTIONARY:
-			continue
-		var story_entry := entry as Dictionary
-		if str(story_entry.get("type", "")) != "game_action":
-			continue
-		var game_id := str(story_entry.get("game_id", ""))
-		var game_name := _game_display_name(game_id)
-		var action_label := _label_from_id(str(story_entry.get("action_id", "action")))
-		var bankroll_delta := int(story_entry.get("bankroll_delta", 0))
-		var suspicion_delta := int(story_entry.get("suspicion_delta", 0))
-		var message := "Last saved play: %s, %s. Bankroll %+d, heat %+d." % [
-			game_name,
-			action_label,
-			bankroll_delta,
-			suspicion_delta,
-		]
-		var result := GameModule.build_action_result({
-			"ok": true,
-			"type": "game_action_summary",
-			"source_id": game_id,
-			"game_id": game_id,
-			"action_id": str(story_entry.get("action_id", "")),
-			"action_kind": "summary",
-			"bankroll_delta": bankroll_delta,
-			"suspicion_delta": suspicion_delta,
-			"deltas": {
-				"bankroll_delta": bankroll_delta,
-				"suspicion_delta": suspicion_delta,
-				"messages": [message],
-			},
-			"won": bool(story_entry.get("won", false)),
-			"environment_id": str(story_entry.get("environment_id", "")),
-			"message": message,
-		})
-		result["display_name"] = "%s Saved Result" % game_name
-		result["summary_source"] = "saved_story_log"
-		return result
-	return {}
+	return TerminalConsequenceViewModelScript.game_result_from_story_log(entries, Callable(self, "_game_display_name"), Callable(self, "_label_from_id"))
 
 
 func _game_display_name(game_id: String) -> String:
