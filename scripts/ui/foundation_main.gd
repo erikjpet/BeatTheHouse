@@ -30,6 +30,7 @@ const CONTEXT_MODE_SHOPKEEPER := "shopkeeper"
 const CONTEXT_MODE_GAME_HOOK := "game_hook"
 const CONTEXT_MODE_DIALOGUE := "dialogue"
 const CONTEXT_MODE_HOME_TENURE := "home_tenure"
+const CONTEXT_MODE_HOME_SLEEP := "home_sleep"
 const CONTEXT_MODE_HOME_STORAGE := "home_storage"
 const CONTEXT_MODE_HOME_CONTAINER := "home_container"
 const CONTEXT_MODE_META_BAG := "meta_bag"
@@ -2466,6 +2467,29 @@ func confirm_home_tenure_action() -> bool:
 	}
 	_show_message(str(result.get("message", "Home payment complete.")))
 	_autosave_foundation_run("Autosaved.")
+	_refresh()
+	return true
+
+
+func confirm_home_sleep_action() -> bool:
+	if _guard_player_input_route():
+		return false
+	if run_state == null:
+		_show_message("No active home.")
+		return false
+	var result := run_state.sleep_at_home()
+	if not bool(result.get("ok", false)):
+		_show_message(str(result.get("message", "Sleep is not available.")))
+		_refresh()
+		return false
+	last_item_result = result.duplicate(true)
+	last_game_result = {}
+	last_hook_result = {}
+	_show_message(str(result.get("message", "You wake up rested.")))
+	_autosave_foundation_run("Autosaved.")
+	if _apply_post_action_environment_interrupt("home_sleep"):
+		_refresh()
+		return true
 	_refresh()
 	return true
 
@@ -5838,6 +5862,8 @@ func _add_context_object_actions(card: VBoxContainer, object_data: Dictionary) -
 			_add_card_button(card, "Talk", Callable(self, "start_dialogue").bind(source_id, object_data), false, true)
 		CONTEXT_MODE_HOME_TENURE:
 			_add_card_button(card, str(object_data.get("label", "Pay")), Callable(self, "confirm_home_tenure_action"), false, true)
+		CONTEXT_MODE_HOME_SLEEP:
+			_add_card_button(card, "Sleep", Callable(self, "confirm_home_sleep_action"), false, true)
 		CONTEXT_MODE_HOME_STORAGE:
 			_add_card_button(card, "Place container", Callable(self, "_show_place_container_popup"), false, true)
 		CONTEXT_MODE_HOME_CONTAINER:
@@ -7216,6 +7242,8 @@ func activate_interactable_object(object_id: String) -> bool:
 			return start_dialogue(source_id, object_data)
 		CONTEXT_MODE_HOME_TENURE:
 			return confirm_home_tenure_action()
+		CONTEXT_MODE_HOME_SLEEP:
+			return confirm_home_sleep_action()
 		CONTEXT_MODE_HOME_STORAGE:
 			return _show_place_container_popup()
 		CONTEXT_MODE_HOME_CONTAINER:

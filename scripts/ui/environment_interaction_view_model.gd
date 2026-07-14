@@ -403,6 +403,7 @@ static func layout_spot_field_name(object_type: String) -> String:
 		"service": return "service_spots"
 		"lender": return "lender_spots"
 		"home_tenure": return "home_tenure_spots"
+		"home_sleep": return "home_sleep_spots"
 		"home_storage": return "home_storage_spots"
 		"home_container": return "home_container_spots"
 		"meta_bag": return "home_bag_spots"
@@ -457,6 +458,9 @@ static func normalized_interaction_rect(object_type: String, index: int) -> Rect
 		"home_tenure":
 			center = Vector2(0.78, 0.46)
 			size = Vector2(116.0 / board_size.x, 58.0 / board_size.y)
+		"home_sleep":
+			center = Vector2(0.50, 0.42)
+			size = Vector2(150.0 / board_size.x, 74.0 / board_size.y)
 		"home_storage":
 			center = Vector2(0.20, 0.72)
 			size = Vector2(108.0 / board_size.x, 58.0 / board_size.y)
@@ -507,6 +511,7 @@ static func context_border_color(object_type: String, enabled: bool) -> Color:
 		"item": return VisualStyle.TEAL
 		"shopkeeper", "game_hook", "home_tenure", "meta_bag", "meta_upgrade", "meta_trade_up", "meta_pawn_counter", "service", "lender": return VisualStyle.YELLOW
 		"dialogue": return VisualStyle.CYAN_2
+		"home_sleep": return VisualStyle.CYAN
 		"home_storage", "home_container": return VisualStyle.TEAL
 		"travel": return VisualStyle.PURPLE_2
 	return VisualStyle.CYAN_2
@@ -521,6 +526,7 @@ static func context_type_label(object_type: String) -> String:
 		"game_hook": return "Game Clerk"
 		"dialogue": return "Talk"
 		"home_tenure": return "Home"
+		"home_sleep": return "Rest"
 		"home_storage": return "Storage"
 		"home_container": return "Container"
 		"meta_bag": return "Bag"

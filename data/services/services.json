@@ -159,6 +159,7 @@
 		"category": "recovery",
 		"description": "Lower heat.",
 		"cost": 0,
+		"duration_minutes": 60,
 		"message": "The surf gives the heat time to fade.",
 		"effect": {
 			"suspicion_delta": -3,

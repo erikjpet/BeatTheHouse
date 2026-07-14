@@ -6,7 +6,7 @@ extends RefCounted
 const ArtContractsScript := preload("res://scripts/core/art_contracts.gd")
 
 const ENVIRONMENT_BOARD_SIZE := Vector2(ArtContractsScript.ENVIRONMENT_BOARD_SIZE)
-const GENERATED_LAYOUT_VERSION := 9
+const GENERATED_LAYOUT_VERSION := 10
 const EMPTY_MUSIC_NOTE := -999
 
 var id: String = ""
@@ -197,6 +197,7 @@ static func ensure_generated_layout(environment_data: Dictionary) -> Dictionary:
 	_assign_string_object_rects(object_rects, layout, "lender", _copy_array(environment_data.get("lender_hooks", [])), "lender_spots", active_object_ids)
 	_assign_object_layout_entries(object_rects, layout, _filter_unique_object_layout_entries(_game_hook_layout_entries(environment_data)), active_object_ids)
 	_assign_single_object_rect(object_rects, layout, "home_tenure:status", "home_tenure", 0, "home_tenure_spots", _home_tenure_should_exist(environment_data), active_object_ids)
+	_assign_single_object_rect(object_rects, layout, "home_sleep:bed", "home_sleep", 0, "home_sleep_spots", _home_sleep_should_exist(environment_data), active_object_ids)
 	_assign_single_object_rect(object_rects, layout, "home_storage:place", "home_storage", 0, "home_storage_spots", _home_storage_should_exist(environment_data), active_object_ids)
 	_assign_string_object_rects(object_rects, layout, "home_container", _home_container_ids(environment_data), "home_container_spots", active_object_ids)
 	if prioritize_services:
@@ -633,6 +634,9 @@ static func _fallback_object_rect(object_type: String, index: int) -> Rect2:
 		"home_tenure":
 			center = Vector2(0.78, 0.46)
 			size = Vector2(116.0 / ENVIRONMENT_BOARD_SIZE.x, 58.0 / ENVIRONMENT_BOARD_SIZE.y)
+		"home_sleep":
+			center = Vector2(0.50, 0.42)
+			size = Vector2(150.0 / ENVIRONMENT_BOARD_SIZE.x, 74.0 / ENVIRONMENT_BOARD_SIZE.y)
 		"home_storage":
 			center = Vector2(0.20, 0.72)
 			size = Vector2(108.0 / ENVIRONMENT_BOARD_SIZE.x, 58.0 / ENVIRONMENT_BOARD_SIZE.y)
@@ -842,6 +846,8 @@ static func _active_object_layout_entries(environment_data: Dictionary) -> Array
 	entries.append_array(_game_hook_layout_entries(environment_data))
 	if _home_tenure_should_exist(environment_data):
 		entries.append({"object_id": "home_tenure:status", "object_type": "home_tenure", "index": 0, "spot_field": "home_tenure_spots"})
+	if _home_sleep_should_exist(environment_data):
+		entries.append({"object_id": "home_sleep:bed", "object_type": "home_sleep", "index": 0, "spot_field": "home_sleep_spots"})
 	if _home_storage_should_exist(environment_data):
 		entries.append({"object_id": "home_storage:place", "object_type": "home_storage", "index": 0, "spot_field": "home_storage_spots"})
 	_append_string_layout_entries(entries, "home_container", _home_container_ids(environment_data), "home_container_spots")
@@ -917,6 +923,8 @@ static func _active_object_ids(environment_data: Dictionary) -> Dictionary:
 			result[object_id] = true
 	if _home_tenure_should_exist(environment_data):
 		result["home_tenure:status"] = true
+	if _home_sleep_should_exist(environment_data):
+		result["home_sleep:bed"] = true
 	if _home_storage_should_exist(environment_data):
 		result["home_storage:place"] = true
 	for container_id in _home_container_ids(environment_data):
@@ -932,7 +940,7 @@ static func _prune_inactive_object_rects(object_rects: Dictionary, active_object
 
 
 static func _is_managed_object_id(object_id: String) -> bool:
-	for prefix in ["game:", "event:", "item:", "shopkeeper:", "travel:", "service:", "lender:", "game_hook:", "dialogue:", "home_tenure:", "home_storage:", "home_container:"]:
+	for prefix in ["game:", "event:", "item:", "shopkeeper:", "travel:", "service:", "lender:", "game_hook:", "dialogue:", "home_tenure:", "home_sleep:", "home_storage:", "home_container:"]:
 		if object_id.begins_with(prefix):
 			return true
 	return false
@@ -1016,6 +1024,10 @@ static func _home_container_ids(environment_data: Dictionary) -> Array:
 
 
 static func _home_tenure_should_exist(environment_data: Dictionary) -> bool:
+	return str(environment_data.get("kind", "")) == "home" and not bool(environment_data.get("home_lost", false))
+
+
+static func _home_sleep_should_exist(environment_data: Dictionary) -> bool:
 	return str(environment_data.get("kind", "")) == "home" and not bool(environment_data.get("home_lost", false))
 
 

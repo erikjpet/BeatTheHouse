@@ -1796,6 +1796,9 @@ func _apply_draw_hints(object_data: Dictionary, object_type: String, index: int)
 			object_data["surface"] = "counter"
 			if str(object_data.get("prop", "")).strip_edges().is_empty():
 				object_data["prop"] = "paper_note"
+		"home_sleep":
+			object_data["surface"] = "floor"
+			object_data["prop"] = "bed"
 		"home_storage":
 			object_data["surface"] = "floor"
 		"home_container":
@@ -2031,6 +2034,8 @@ func _player_facing_object_type(object_type: String) -> String:
 			return "Lender"
 		"home_tenure":
 			return "Home"
+		"home_sleep":
+			return "Rest"
 		"home_storage":
 			return "Storage"
 		"home_container":
@@ -2922,6 +2927,8 @@ func _color_for_object_type(object_type: String) -> Color:
 			return C_YELLOW
 		"home_tenure":
 			return C_AMBER
+		"home_sleep":
+			return C_CYAN
 		"home_storage", "home_container":
 			return C_TEAL
 		"meta_bag", "meta_upgrade", "meta_trade_up", "meta_pawn_counter":
@@ -3132,6 +3139,9 @@ func _draw_item_prop(rect: Rect2, object_data: Dictionary, selected: bool, surfa
 	if prop == "sand_pile":
 		_draw_sand_pile_prop(rect, selected)
 		return
+	if prop == "bed":
+		_draw_bed_prop(rect, selected)
+		return
 	var accent := C_YELLOW if selected else C_TEAL
 	_draw_interactable_light(rect, accent, selected)
 	_draw_item_surface(rect, surface, accent)
@@ -3142,6 +3152,23 @@ func _draw_item_prop(rect: Rect2, object_data: Dictionary, selected: bool, surfa
 		_draw_live_texture_icon(icon_texture, icon_rect, object_data, accent, selected, disabled)
 	else:
 		_draw_live_sprite_icon(object_data.get("icon_sprite", {}), icon_rect, object_data, accent, selected, bool(object_data.get("disabled", false)))
+
+
+func _draw_bed_prop(rect: Rect2, selected: bool) -> void:
+	var accent := C_YELLOW if selected else C_CYAN
+	_draw_interactable_light(rect, accent, selected)
+	var frame := Rect2(rect.position + Vector2(rect.size.x * 0.08, rect.size.y * 0.34), Vector2(rect.size.x * 0.84, rect.size.y * 0.44))
+	draw_rect(frame, C_SHADOW)
+	draw_rect(Rect2(frame.position + Vector2(5, 5), frame.size - Vector2(10, 10)), Color("#50315c"))
+	draw_rect(Rect2(frame.position + Vector2(10, 9), Vector2(frame.size.x * 0.25, frame.size.y - 18)), Color("#d8c9b5"))
+	draw_rect(Rect2(frame.position + Vector2(frame.size.x * 0.34, 9), Vector2(frame.size.x * 0.56, frame.size.y - 18)), Color("#6b3b73"))
+	for stripe in range(3):
+		var stripe_x := frame.position.x + frame.size.x * (0.48 + float(stripe) * 0.15)
+		draw_rect(Rect2(stripe_x, frame.position.y + 11, 7, frame.size.y - 22), C_PINK_2.darkened(0.22))
+	draw_line(frame.position + Vector2(0, frame.size.y), frame.position + Vector2(0, frame.size.y + 9), C_SHADOW, 4)
+	draw_line(frame.position + Vector2(frame.size.x, frame.size.y), frame.position + Vector2(frame.size.x, frame.size.y + 9), C_SHADOW, 4)
+	if selected:
+		draw_rect(frame.grow(4), Color(accent.r, accent.g, accent.b, 0.82), false, 2)
 
 
 func _draw_sand_pile_prop(rect: Rect2, selected: bool) -> void:

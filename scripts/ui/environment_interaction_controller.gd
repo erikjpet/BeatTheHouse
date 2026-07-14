@@ -153,6 +153,26 @@ static func home_interactable_objects(host: Variant) -> Array:
 		"confirm_action_id": "home_tenure_action" if tenure_enabled else "",
 		"focus_rect": host._interaction_rect_for_object("home_tenure:status", host.CONTEXT_MODE_HOME_TENURE, 0),
 	}))
+	objects.append(host._make_interactable_object({
+		"object_id": "home_sleep:bed",
+		"object_type": host.CONTEXT_MODE_HOME_SLEEP,
+		"visual_type": host.CONTEXT_MODE_HOME_SLEEP,
+		"source_id": "bed",
+		"label": "Sleep",
+		"short_description": "Sleep at home for four to eight hours.",
+		"presence": "fixture",
+		"interactive": true,
+		"enabled": true,
+		"action_summary": "Sleep until you wake naturally.",
+		"status_summary": "Several hours pass.",
+		"effect_summary": "Lowers heat and intoxication.",
+		"visual_key": "home_sleep",
+		"prop": "bed",
+		"icon_key": "motel_room",
+		"available_actions": [{"id": "home_sleep", "label": "Sleep"}],
+		"confirm_action_id": "home_sleep",
+		"focus_rect": host._interaction_rect_for_object("home_sleep:bed", host.CONTEXT_MODE_HOME_SLEEP, 0),
+	}))
 	var held_containers = host._held_container_item_options()
 	var storage_enabled = not held_containers.is_empty()
 	objects.append(host._make_interactable_object({
@@ -229,6 +249,8 @@ static func hook_interactable_objects(host: Variant, object_type: String, option
 		var disabled_reason = "" if enabled else failed_reason if run_failed_without_recovery else str(option.get("disabled_reason", option.get("status", "Display-only.")))
 		var availability_class := str(option.get("availability_class", RunState.AVAILABILITY_AVAILABLE))
 		var category := str(option.get("category", ""))
+		var duration_minutes := maxi(0, int(option.get("duration_minutes", 0)))
+		var duration_summary := "Takes 1 hour." if duration_minutes == 60 else "Takes %d minutes." % duration_minutes if duration_minutes > 0 else ""
 		var visual_type := "drink" if object_type == host.CONTEXT_MODE_SERVICE and category == "alcohol" else object_type
 		var icon_key := str(option.get("icon_key", visual_type)).strip_edges()
 		if icon_key.is_empty():
@@ -245,6 +267,7 @@ static func hook_interactable_objects(host: Variant, object_type: String, option
 			"enabled": enabled,
 			"disabled_reason": disabled_reason,
 			"action_summary": "Double-click to use." if enabled else "",
+			"status_summary": duration_summary,
 			"risk_summary": "",
 			"cost_summary": "Cost: %d" % int(option.get("cost", 0)) if option.has("cost") else "",
 			"effect_summary": str(option.get("delta_summary", "")),

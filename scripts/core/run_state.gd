@@ -87,6 +87,10 @@ const CLOSING_TIME_PHASE_FORCED_TRAVEL := "forced_travel"
 const HOME_SELECTION_RANDOM := "random"
 const HOME_TENURE_RENT := "rent"
 const HOME_TENURE_STAY := "stay"
+const HOME_SLEEP_MIN_HOURS := 4
+const HOME_SLEEP_MAX_HOURS := 8
+const HOME_SLEEP_HEAT_RECOVERY_PER_HOUR := 2
+const HOME_SLEEP_DRUNK_RECOVERY_PER_HOUR := 10
 const CREW_LENDER_ID := "the_crew"
 const CREW_MAX_LOAN_LOCATIONS := 3
 const LENDER_REPAY_HEAT_REDUCTION := 3
@@ -452,6 +456,60 @@ func is_current_home_environment() -> bool:
 	var node_id := str(current_environment.get("world_node_id", current_environment.get("archetype_id", ""))).strip_edges()
 	var home_node_id := str(home_state.get("home_node_id", "")).strip_edges()
 	return home_node_id.is_empty() or node_id == home_node_id
+
+
+func sleep_at_home() -> Dictionary:
+	if is_terminal():
+		return {"ok": false, "message": "This run is already over."}
+	if not is_current_home_environment():
+		return {"ok": false, "message": "You need to be home to sleep."}
+	var rng := create_rng()
+	var hours := rng.randi_range(HOME_SLEEP_MIN_HOURS, HOME_SLEEP_MAX_HOURS)
+	save_rng(rng)
+	var minutes := hours * 60
+	var heat_before := suspicion_level()
+	var drunk_before := drunk_level
+	var pending_drunk_before := pending_drunk_absorption_amount()
+	if pending_drunk_before > 0:
+		change_pending_drunk_absorption(-pending_drunk_before)
+	var heat_recovery := mini(heat_before, hours * HOME_SLEEP_HEAT_RECOVERY_PER_HOUR)
+	if heat_recovery > 0:
+		add_suspicion("home_sleep", -heat_recovery, "recovery", true, {
+			"environment_id": str(current_environment.get("id", "")),
+			"environment_archetype_id": str(current_environment.get("archetype_id", "")),
+		})
+	var drunk_recovery := mini(drunk_level, hours * HOME_SLEEP_DRUNK_RECOVERY_PER_HOUR)
+	if drunk_recovery > 0:
+		change_drunk(-drunk_recovery)
+	advance_game_clock_minutes(minutes)
+	var heat_after := suspicion_level()
+	var drunk_after := drunk_level
+	var message := "You sleep for %d hours and wake with a clearer head." % hours
+	log_story({
+		"type": "home_sleep",
+		"hours": hours,
+		"minutes": minutes,
+		"heat_delta": heat_after - heat_before,
+		"drunk_delta": drunk_after - drunk_before,
+		"pending_drunk_cleared": pending_drunk_before,
+		"game_clock_minutes": game_clock_minutes,
+		"environment_id": str(current_environment.get("id", "")),
+		"message": message,
+	})
+	return {
+		"ok": true,
+		"type": "home_sleep",
+		"hours": hours,
+		"minutes": minutes,
+		"heat_before": heat_before,
+		"heat_after": heat_after,
+		"heat_delta": heat_after - heat_before,
+		"drunk_before": drunk_before,
+		"drunk_after": drunk_after,
+		"drunk_delta": drunk_after - drunk_before,
+		"pending_drunk_cleared": pending_drunk_before,
+		"message": message,
+	}
 
 
 func home_status_summary() -> String:

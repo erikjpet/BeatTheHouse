@@ -588,6 +588,7 @@ func hook_option(kind: String, hook_id: String, selected_hook_id: String = "") -
 		"hidden": availability_class == RunState.AVAILABILITY_CATEGORICAL_UNAVAILABLE,
 		"disabled_reason": disabled_reason,
 		"cost": int(hook_status.get("cost", definition.get("cost", 0))),
+		"duration_minutes": maxi(0, int(definition.get("duration_minutes", 0))),
 		"delta_summary": delta_summary(deltas) if supported else "",
 		"icon_key": str(definition.get("icon_key", kind)),
 		"environment_prop": str(definition.get("environment_prop", "")),
@@ -628,13 +629,22 @@ func use_hook(kind: String, hook_id: String) -> Dictionary:
 	var result := hook_result(kind, hook_id)
 	if result.is_empty():
 		return _service_error("This %s is only informational right now." % kind)
+	var definition := hook_definition(kind, hook_id)
 	if kind == "service" and hook_id == JAZZ_SHOW_GLASSES_SERVICE_ID:
 		GameModule.apply_result(run_state, result)
-		run_state.advance_environment_turns(1)
+		_advance_hook_clock(kind, definition)
 		return _service_success(result)
-	run_state.advance_environment_turns(1)
+	_advance_hook_clock(kind, definition)
 	GameModule.apply_result(run_state, result)
 	return _service_success(result)
+
+
+func _advance_hook_clock(kind: String, definition: Dictionary) -> void:
+	var duration_minutes := maxi(0, int(definition.get("duration_minutes", 0))) if kind == "service" else 0
+	if duration_minutes > 0:
+		run_state.advance_game_clock_minutes(duration_minutes)
+	else:
+		run_state.advance_environment_turns(1)
 
 
 # Converts an ItemEffect result plus offer data into a purchase result.

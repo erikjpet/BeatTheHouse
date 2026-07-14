@@ -2912,6 +2912,8 @@ func _check_service_hook_foundation(library: ContentLibrary, failures: Array) ->
 	if beach_relax.is_empty() or beach_sand_pile.is_empty():
 		failures.append("Beach service fixture is missing.")
 	else:
+		if int(beach_relax.get("duration_minutes", 0)) != 60:
+			failures.append("Beach relax service should author exactly one hour of elapsed time.")
 		var beach_run: RunState = RunStateScript.new()
 		beach_run.start_new("SERVICE-BEACH")
 		beach_run.set_environment({
@@ -2924,8 +2926,14 @@ func _check_service_hook_foundation(library: ContentLibrary, failures: Array) ->
 		var relax_status := beach_run.service_hook_status(beach_relax)
 		if not bool(relax_status.get("available", false)):
 			failures.append("Beach relax service should be available.")
-		var relax_result := _fixture_service_result(beach_run, beach_relax, "beach_relax")
-		GameModule.apply_result(beach_run, relax_result)
+		var beach_clock_before := beach_run.game_clock_minutes
+		var beach_action_service: RunActionService = RunActionServiceScript.new()
+		beach_action_service.setup(library, beach_run)
+		var relax_resolution := beach_action_service.use_hook("service", "beach_relax")
+		if not bool(relax_resolution.get("ok", false)):
+			failures.append("Beach relax service did not resolve through RunActionService.")
+		if beach_run.game_clock_minutes - beach_clock_before != 60:
+			failures.append("Beach relax service did not advance the clock by exactly one hour.")
 		if beach_run.suspicion_level() >= beach_heat_before:
 			failures.append("Beach relax service did not reduce heat.")
 		var sand_status := beach_run.service_hook_status(beach_sand_pile)

@@ -1762,7 +1762,7 @@ func _run() -> void:
 			quit(1)
 			return
 	var has_shop_start_objects := not _interactable_by_type(spatial_objects, "item").is_empty() and not _interactable_by_type(spatial_objects, "shopkeeper").is_empty()
-	var has_home_start_objects := not _interactable_by_type(spatial_objects, "home_tenure").is_empty() and not _interactable_by_type(spatial_objects, "home_storage").is_empty()
+	var has_home_start_objects := not _interactable_by_type(spatial_objects, "home_tenure").is_empty() and not _interactable_by_type(spatial_objects, "home_sleep").is_empty() and not _interactable_by_type(spatial_objects, "home_storage").is_empty()
 	if not has_shop_start_objects and not has_home_start_objects:
 		push_error("M1.6 spatial interaction model did not expose the expected shop-start or home-start objects.")
 		quit(1)

@@ -1030,6 +1030,8 @@ func _check_start_home_environment(run_state: RunState, environment: Environment
 			break
 	if not layout_rects.has("home_tenure:status"):
 		failures.append("The first generated home should expose the tenure object.")
+	if not layout_rects.has("home_sleep:bed"):
+		failures.append("The first generated home should expose the sleep object on its bed.")
 	if not layout_rects.has("home_storage:place"):
 		failures.append("The first generated home should expose the storage placement object.")
 	if environment.next_archetypes.is_empty() and environment.travel_hooks.is_empty():
@@ -1038,6 +1040,29 @@ func _check_start_home_environment(run_state: RunState, environment: Environment
 		failures.append("The first generated home should initialize RunState home_state.")
 	if run_state.clock_display_text(true) != "Day 1 12 PM":
 		failures.append("The first generated home should start at the fixed day 1, 12 PM clock.")
+	var sleep_run: RunState = RunStateScript.new()
+	sleep_run.from_dict(run_state.to_dict())
+	sleep_run.add_suspicion("home_sleep_fixture", 30)
+	sleep_run.change_drunk(70)
+	sleep_run.drink_alcohol(12)
+	var deterministic_sleep_run: RunState = RunStateScript.new()
+	deterministic_sleep_run.from_dict(sleep_run.to_dict())
+	var sleep_clock_before := sleep_run.game_clock_minutes
+	var sleep_heat_before := sleep_run.suspicion_level()
+	var sleep_drunk_before := sleep_run.drunk_level
+	var sleep_result := sleep_run.sleep_at_home()
+	var deterministic_sleep_result := deterministic_sleep_run.sleep_at_home()
+	var sleep_hours := int(sleep_result.get("hours", 0))
+	if not bool(sleep_result.get("ok", false)) or sleep_hours < RunState.HOME_SLEEP_MIN_HOURS or sleep_hours > RunState.HOME_SLEEP_MAX_HOURS:
+		failures.append("Home sleep did not resolve within the authored four-to-eight-hour range.")
+	if sleep_run.game_clock_minutes - sleep_clock_before != sleep_hours * 60:
+		failures.append("Home sleep did not advance the clock by its resolved whole-hour duration.")
+	if sleep_run.suspicion_level() >= sleep_heat_before or sleep_run.drunk_level >= sleep_drunk_before:
+		failures.append("Home sleep did not lower both heat and drunk level.")
+	if sleep_run.pending_drunk_absorption_amount() != 0:
+		failures.append("Home sleep left queued alcohol absorption active after several hours.")
+	if int(deterministic_sleep_result.get("hours", 0)) != sleep_hours:
+		failures.append("Home sleep duration was not deterministic from saved run RNG state.")
 
 
 func _check_environment_encounter_freshness(library: ContentLibrary, failures: Array) -> void:

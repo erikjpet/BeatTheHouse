@@ -2796,6 +2796,12 @@
           166
         ]
       ],
+      "home_sleep_spots": [
+        [
+          495,
+          172
+        ]
+      ],
       "home_storage_spots": [
         [
           210,
@@ -2982,6 +2988,12 @@
       "home_tenure_spots": [
         [
           770,
+          170
+        ]
+      ],
+      "home_sleep_spots": [
+        [
+          430,
           170
         ]
       ],
@@ -3195,6 +3207,12 @@
         [
           820,
           130
+        ]
+      ],
+      "home_sleep_spots": [
+        [
+          244,
+          184
         ]
       ],
       "home_storage_spots": [
