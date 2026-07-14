@@ -6,8 +6,8 @@ All notable public release changes for Beat the House are recorded here.
 
 Status: **unreleased and in final development.** An earlier candidate was
 packaged and tagged, but game-breaking playtest defects sent 0.4.0 back into
-development. Fresh final-gate evidence, owner playtest, export packaging,
-itch/GitHub upload, and the release tag are still pending.
+development. The fresh final-gate battery passed on 2026-07-14; owner playtest,
+export packaging, itch/GitHub upload, and the release tag are still pending.
 
 ### Release Notes
 
@@ -28,8 +28,9 @@ itch/GitHub upload, and the release tag are still pending.
   and meta-session modules without changing deterministic gameplay behavior.
 - Adds explicit idle-animation liveness and performance attribution gates plus
   a verified local artifact retention/export tool.
-- Final 0.4 evidence: **PENDING**. The fresh release battery will be recorded in
-  `.tmp/release_readiness_0_4_0.md` before release.
+- Final 0.4 repository-gate evidence: **PASS** on 2026-07-14. The exact suites,
+  timeouts, metrics, warnings, and report paths are recorded in
+  `.tmp/release_readiness_0_4_0.md`; owner playtest and publishing remain manual.
 - Keeps the simulated-gambling boundary: no real-money wagering, cash prizes,
   gambling monetization, or store credentials in the repository.
 

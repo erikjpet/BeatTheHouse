@@ -1086,6 +1086,7 @@ func _lender_pressure_shift_visible(serialized: Dictionary, consequence: Diction
 
 func _try_item_card_flow(prepared_fixture: bool = false) -> void:
 	await _resolve_blocking_event_popups()
+	await _resolve_blocking_talk_dock()
 	_return_to_room_view()
 	await _settle()
 	_record_state("item_screen", "Focused and activated a visible item object through the mouse-only room path.")
@@ -1580,18 +1581,21 @@ func _verify_mouse_only_recovery_pressure_flow() -> void:
 	if lender_button.is_empty():
 		var serialized_before_travel := _serialized_run_text()
 		var lender_route := await _double_click_first_travel_to_lender_environment()
-		if lender_route.is_empty():
-			# Normal route caps can omit a lender-bearing venue; keep this QA
-			# deterministic by moving to the authored visible-lender fixture.
-			await _prepare_lender_pressure_visual_qa_fixture()
-		else:
+		if not lender_route.is_empty():
 			await _settle()
 			_require(serialized_before_travel != _serialized_run_text(), "Recovery pressure QA travel did not update RunState through visible controls.")
 		before_lender = _run_state_restore_summary(app.call("serialized_run_state"))
 		serialized_before_lender = _serialized_run_text()
 		lender_button = await _double_click_first_debt_lender_object()
 		if lender_button.is_empty():
-			_require(false, "Recovery pressure QA deterministic lender route did not expose an enabled visible debt lender object.")
+			# Normal route caps can omit a lender-bearing venue, and an exposed
+			# route can resolve to a room whose lender is unavailable. Rebuild the
+			# authored fixture before exercising the same visible lender control.
+			await _prepare_lender_pressure_visual_qa_fixture()
+			before_lender = _run_state_restore_summary(app.call("serialized_run_state"))
+			serialized_before_lender = _serialized_run_text()
+			lender_button = await _double_click_first_debt_lender_object()
+		_require(not lender_button.is_empty(), "Recovery pressure QA deterministic lender fixture did not expose an enabled visible debt lender object.")
 	await _settle()
 	_require(serialized_before_lender != _serialized_run_text(), "Recovery pressure QA lender interaction did not update RunState.")
 	var after_lender := _run_state_restore_summary(app.call("serialized_run_state"))
@@ -1679,6 +1683,29 @@ func _resolve_blocking_event_popups(max_count: int = 8) -> void:
 		var choice: Dictionary = choices[0]
 		app.call("resolve_event_choice", str(popup.get("event_id", "")), str(choice.get("id", "")))
 		await _settle()
+
+
+func _resolve_blocking_talk_dock(max_count: int = 8) -> void:
+	var dock := app.get("talk_dock") as Control
+	for _index in range(max_count):
+		if dock == null or not dock.visible:
+			return
+		var clicked := false
+		for item in _visible_control_items(dock):
+			var data := item as Dictionary
+			if str(data.get("kind", "")) != "button" or bool(data.get("disabled", false)):
+				continue
+			var label := str(data.get("text", ""))
+			if label.begins_with("Talk now:"):
+				continue
+			_emit_button(data)
+			clicked = true
+			break
+		_require(clicked, "Visible talk dock did not expose an enabled response control.")
+		if not clicked:
+			return
+		await _settle()
+	_require(dock == null or not dock.visible, "Talk dock response chain did not clear within the visual QA action bound.")
 
 
 func _wait_for_room_camera(max_frames: int = 18) -> void:
@@ -2766,6 +2793,14 @@ func _click_canvas_object_data(canvas: Control, object_data: Dictionary, object_
 	var global_position := canvas.get_global_rect().position + local_position
 	_push_mouse_motion(global_position)
 	await _settle()
+	var refreshed_object := _canvas_object_by_id(canvas, object_id)
+	if refreshed_object.is_empty():
+		return ""
+	local_position = _canvas_local_hit_position_for_object(canvas, refreshed_object)
+	if local_position.x < 0.0 or local_position.y < 0.0 or local_position.x > canvas.size.x or local_position.y > canvas.size.y:
+		return ""
+	global_position = canvas.get_global_rect().position + local_position
+	_push_mouse_motion(global_position)
 	_push_mouse_button(global_position, true)
 	await _settle()
 	_push_mouse_button(global_position, false)
@@ -2810,6 +2845,14 @@ func _double_click_canvas_object_data(canvas: Control, object_data: Dictionary, 
 	var global_position := canvas.get_global_rect().position + local_position
 	_push_mouse_motion(global_position)
 	await _settle()
+	var refreshed_object := _canvas_object_by_id(canvas, object_id)
+	if refreshed_object.is_empty():
+		return ""
+	local_position = _canvas_local_hit_position_for_object(canvas, refreshed_object)
+	if local_position.x < 0.0 or local_position.y < 0.0 or local_position.x > canvas.size.x or local_position.y > canvas.size.y:
+		return ""
+	global_position = canvas.get_global_rect().position + local_position
+	_push_mouse_motion(global_position)
 	_push_mouse_button(global_position, true, true)
 	await _settle()
 	_push_mouse_button(global_position, false, true)
