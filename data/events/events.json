@@ -215,7 +215,7 @@
       "choices": [
         {
           "id": "talk_down",
-          "label": "Talk",
+          "label": "Play it cool",
           "text": "You make yourself seem ordinary.",
           "consequences": {
             "suspicion_delta": -3,
@@ -558,7 +558,7 @@
       "choices": [
         {
           "id": "borrow",
-          "label": "Borrow $35",
+          "label": "Borrow cash",
           "text": "You take emergency cash and a name you may regret.",
           "consequences": {
             "bankroll_delta": 35,
@@ -929,7 +929,7 @@
         },
         {
           "id": "slip_twenty",
-          "label": "Slip $20",
+          "label": "Slip them cash",
           "text": "The inspector pockets the bill and remembers your face.",
           "consequence_summary": "Lose $20, later extortion",
           "consequences": {

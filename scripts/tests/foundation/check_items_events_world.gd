@@ -2368,10 +2368,37 @@ func _check_time_open_hours_foundation(library: ContentLibrary, failures: Array)
 	ui_run.begin_closing_time(ui_run.current_environment, ui_run.game_minute_of_day())
 	ui_run.spend_closing_time_grace_action()
 	app.set("run_state", ui_run)
+	var closing_slot: GameModule = SlotGameScript.new()
+	closing_slot.setup(library.game("slot"))
+	var closing_game_states: Dictionary = ui_run.current_environment.get("game_states", {}).duplicate(true) if typeof(ui_run.current_environment.get("game_states", {})) == TYPE_DICTIONARY else {}
+	closing_game_states["slot"] = {"active_bonus": {"active": true, "complete": false, "remaining_steps": 2}}
+	ui_run.current_environment["game_states"] = closing_game_states
+	app.set("current_game", closing_slot)
+	if bool(app.call("_closing_time_blocks_environment_actions")):
+		failures.append("Forced closing blocked input while a slot bonus still required spins.")
+	if bool(app.call("_apply_closing_time_action_boundary", "game_action")):
+		failures.append("Forced closing interrupted an unfinished slot bonus at the action boundary.")
+	if not ui_run.pending_talk_event("dialogue:venue_closing_notice").is_empty():
+		failures.append("Closing-time departure dialogue appeared before the unfinished slot bonus resolved.")
+	closing_game_states["slot"] = {"active_bonus": {"active": false, "complete": true}}
+	ui_run.current_environment["game_states"] = closing_game_states
 	app.set("current_game", null)
 	app.set("last_hook_result", {})
 	app.call("_set_current_screen", "ENVIRONMENT")
 	app.call("_refresh")
+	if not bool(app.call("_guard_player_input_route")):
+		failures.append("Closing-time forced travel did not block room input while presenting its departure conversation.")
+	var closing_talk := ui_run.pending_talk_event("dialogue:venue_closing_notice")
+	if str(closing_talk.get("dialogue_id", "")) != "venue_closing_notice":
+		failures.append("Closing-time forced travel did not queue the venue closing dialogue before opening the map.")
+	var closing_speaker: Dictionary = closing_talk.get("speaker", {}) if typeof(closing_talk.get("speaker", {})) == TYPE_DICTIONARY else {}
+	if str(closing_speaker.get("name", "")).strip_edges().is_empty():
+		failures.append("Closing-time departure dialogue did not identify an environment speaker.")
+	if bool(app.call("_world_map_overlay_is_visible")):
+		failures.append("Closing-time forced travel opened the map before the player acknowledged the departure dialogue.")
+	app.call("_acknowledge_closing_time_talk", "head_out")
+	if not ui_run.pending_talk_event("dialogue:venue_closing_notice").is_empty():
+		failures.append("Closing-time departure dialogue remained queued after acknowledgement.")
 	if not bool(app.call("open_world_map", true)):
 		failures.append("Closing-time forced travel could not open the map.")
 	var selected_ok := bool(app.call("select_world_map_node", "motel"))

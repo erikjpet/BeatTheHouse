@@ -469,6 +469,10 @@ func wager_cost_for_context(action_id: String, _stake: int, _run_state: RunState
 	return _wager_for(state, _normalized_ui_state(ui_state))
 
 
+func wager_activity_incomplete(_run_state: RunState, _environment: Dictionary, ui_state: Dictionary = {}) -> bool:
+	return bool(_normalized_ui_state(ui_state).get("hand_active", false))
+
+
 # Draws the cabinet screen and registers visible/invisible hit regions.
 func draw_surface(surface, surface_state: Dictionary, _render_context: Dictionary = {}) -> bool:
 	if str(surface_state.get("surface_renderer", "")) != "card_machine":

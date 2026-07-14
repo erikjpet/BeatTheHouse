@@ -48,6 +48,9 @@ const GAME_CLOCK_MINUTES_PER_REAL_SECOND := 4.0
 const TRAVEL_CLOCK_MINUTES_PER_BLOCK := 6
 const WALK_CLOCK_MINUTES_PER_BLOCK := 10
 const TALK_IGNORE_HEAT_DELTA := 5
+const CLOSING_TIME_DIALOGUE_ID := "venue_closing_notice"
+const CLOSING_TIME_TALK_EVENT_ID := "dialogue:venue_closing_notice"
+const CLOSING_TIME_TALK_CHOICE_ID := "head_out"
 const RUN_ITEM_ICON_TEXTURE_CACHE_LIMIT := 64
 const RESULT_FEEDBACK_WIDTH := 340.0
 const RESULT_FEEDBACK_HEIGHT := 46.0
@@ -1438,6 +1441,9 @@ func _event_resolution_returns_to_active_game(popup_type: String, event_context:
 
 
 func _on_talk_dock_choice_requested(event_id: String, choice_id: String) -> void:
+	if event_id == CLOSING_TIME_TALK_EVENT_ID:
+		_acknowledge_closing_time_talk(choice_id)
+		return
 	if _talk_choice_is_ignore(choice_id) and _ignore_talk_event(event_id, "choice"):
 		_refresh()
 		return
@@ -1470,15 +1476,27 @@ func _apply_closing_time_action_boundary(_source: String) -> bool:
 		if closing_matches_current:
 			run_state.clear_closing_time_state()
 		return false
+	if _current_wager_activity_incomplete():
+		if not run_state.closing_time_active() or not closing_matches_current:
+			var deferred := run_state.begin_closing_time(run_state.current_environment, run_state.game_minute_of_day())
+			run_state.log_story({
+				"type": "closing_time",
+				"environment_id": str(run_state.current_environment.get("id", "")),
+				"environment_archetype_id": str(run_state.current_environment.get("archetype_id", "")),
+				"game_clock_minutes": run_state.game_clock_minutes,
+				"message": str(deferred.get("message", "The venue is closing.")),
+			})
+			_show_message("Closing time. Finish the wager already in progress.")
+		_invalidate_travel_view_cache()
+		return false
 	if run_state.closing_time_forced_travel_required() and closing_matches_current:
-		_show_message(_closing_time_disabled_reason())
-		open_world_map(true)
+		_ensure_closing_time_departure_talk()
 		return true
 	if run_state.closing_time_active() and closing_matches_current:
 		var spent := run_state.spend_closing_time_grace_action()
 		_show_message(str(spent.get("message", _closing_time_disabled_reason())))
 		if run_state.closing_time_forced_travel_required():
-			open_world_map(true)
+			_ensure_closing_time_departure_talk()
 			return true
 		_invalidate_travel_view_cache()
 		return false
@@ -1493,6 +1511,64 @@ func _apply_closing_time_action_boundary(_source: String) -> bool:
 	_show_message(str(started.get("message", "The venue is closing.")))
 	_invalidate_travel_view_cache()
 	return false
+
+
+func _current_wager_activity_incomplete() -> bool:
+	if current_game == null or run_state == null or run_state.current_environment.is_empty():
+		return false
+	return current_game.wager_activity_incomplete(run_state, run_state.current_environment, _current_game_surface_ui_state())
+
+
+func _ensure_closing_time_departure_talk() -> bool:
+	if run_state == null or library == null:
+		return false
+	if not run_state.pending_talk_event(CLOSING_TIME_TALK_EVENT_ID).is_empty():
+		_refresh_talk_dock()
+		return true
+	var dialogue := library.dialogue(CLOSING_TIME_DIALOGUE_ID)
+	if dialogue.is_empty():
+		return false
+	var context := {
+		"trigger": "closing_time",
+		"type": "dialogue",
+		"dialogue_id": CLOSING_TIME_DIALOGUE_ID,
+		"source": "closing_time",
+		"environment_snapshot": run_state.current_environment.duplicate(true),
+	}
+	var start_node := str(dialogue.get("start", "notice")).strip_edges()
+	var speaker := _closing_time_talk_speaker(dialogue)
+	if not run_state.enqueue_dialogue(CLOSING_TIME_DIALOGUE_ID, CLOSING_TIME_TALK_EVENT_ID, speaker, start_node, "closing_time", context):
+		return false
+	_refresh_talk_dock()
+	_show_message("Someone from the room lets you know it is time to leave.")
+	_autosave_foundation_run("Autosaved.")
+	return true
+
+
+func _closing_time_talk_speaker(dialogue: Dictionary) -> Dictionary:
+	if current_game != null and run_state != null:
+		var surface := current_game.surface_state(run_state, run_state.current_environment, _current_game_surface_ui_state())
+		var patrons := _copy_array(surface.get("patrons", surface.get("rail_bettors", [])))
+		for patron_index in range(patrons.size()):
+			if typeof(patrons[patron_index]) == TYPE_DICTIONARY and not (patrons[patron_index] as Dictionary).is_empty():
+				return _talk_speaker_from_patron(patrons[patron_index], patron_index, dialogue)
+	var fallback: Dictionary = dialogue.get("speaker", {}).duplicate(true) if typeof(dialogue.get("speaker", {})) == TYPE_DICTIONARY else {}
+	if run_state != null:
+		var room_name := str(run_state.current_environment.get("display_name", "Room")).strip_edges()
+		fallback["name"] = "%s Host" % room_name
+		fallback["behavior"] = "closing the room"
+	return _normalized_talk_speaker(fallback)
+
+
+func _acknowledge_closing_time_talk(choice_id: String) -> void:
+	if choice_id != CLOSING_TIME_TALK_CHOICE_ID or run_state == null:
+		_show_message("Choose how to respond.")
+		return
+	run_state.complete_talk_event_resolution(CLOSING_TIME_TALK_EVENT_ID)
+	_refresh_talk_dock()
+	_show_message(_closing_time_disabled_reason())
+	_autosave_foundation_run("Autosaved.")
+	call_deferred("open_world_map", true)
 
 
 func _advance_talk_event_action_boundary(_source: String) -> bool:
@@ -6387,8 +6463,8 @@ func _guard_player_input_route(force_closing_allowed: bool = false) -> bool:
 	if message.is_empty():
 		if force_closing_allowed or not _closing_time_blocks_environment_actions():
 			return false
-		_show_message(_closing_time_disabled_reason())
-		call_deferred("open_world_map", true)
+		if not _ensure_closing_time_departure_talk():
+			_show_message(_closing_time_disabled_reason())
 		return true
 	_show_message(message)
 	_refresh_modal_contract_owner()
@@ -6410,7 +6486,7 @@ func _guard_blocking_decision_or_transition() -> bool:
 func _closing_time_blocks_environment_actions() -> bool:
 	if run_state == null or not run_state.closing_time_forced_travel_required():
 		return false
-	return _closing_time_state_matches_current_environment()
+	return _closing_time_state_matches_current_environment() and not _current_wager_activity_incomplete()
 
 
 func _closing_time_state_matches_current_environment() -> bool:
@@ -6878,6 +6954,8 @@ func current_talk_dock_snapshot() -> Dictionary:
 	var snapshot := talk_dock.current_snapshot()
 	if snapshot.has("panel_rect") and typeof(snapshot.get("panel_rect")) == TYPE_RECT2:
 		snapshot["panel_rect"] = _rect_to_dict(snapshot.get("panel_rect"))
+	if snapshot.has("portrait_rect") and typeof(snapshot.get("portrait_rect")) == TYPE_RECT2:
+		snapshot["portrait_rect"] = _rect_to_dict(snapshot.get("portrait_rect"))
 	if snapshot.has("screen_rect") and typeof(snapshot.get("screen_rect")) == TYPE_RECT2:
 		snapshot["screen_rect"] = _rect_to_dict(snapshot.get("screen_rect"))
 	if environment_canvas != null:
@@ -11075,8 +11153,8 @@ func _enriched_world_map_snapshot(snapshot: Dictionary) -> Dictionary:
 	return FoundationTravelViewModelScript.enriched_world_map_snapshot(self, snapshot)
 
 
-func _world_map_node_should_render(node: Dictionary, is_current: bool, is_travel_target: bool) -> bool:
-	return FoundationTravelViewModelScript.world_map_node_should_render(self, node, is_current, is_travel_target)
+func _world_map_node_should_render(node: Dictionary, is_current: bool, is_available_target: bool) -> bool:
+	return FoundationTravelViewModelScript.world_map_node_should_render(self, node, is_current, is_available_target)
 
 
 func _world_route_for_target(target_id: String) -> Dictionary:
@@ -11228,6 +11306,8 @@ func _accessibility_control_scale() -> float:
 func _apply_accessibility_settings() -> void:
 	if user_settings != null:
 		VisualStyle.set_high_contrast_enabled(user_settings.high_contrast)
+	if talk_dock != null:
+		talk_dock.set_reduce_motion(bool(user_settings.reduce_motion) if user_settings != null else false)
 	_apply_accessibility_to_node(self, _accessibility_font_scale(), _accessibility_control_scale())
 
 

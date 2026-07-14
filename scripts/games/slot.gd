@@ -771,6 +771,10 @@ func _slot_feature_pending(machine: Dictionary) -> bool:
 	return StateScript.active_bonus_incomplete(machine)
 
 
+func wager_activity_incomplete(run_state: RunState, environment: Dictionary, _ui_state: Dictionary = {}) -> bool:
+	return StateScript.active_bonus_incomplete(StateScript.read_machine(environment, get_id()))
+
+
 func _mark_slot_feature_pending(machine: Dictionary, now_msec: int) -> Dictionary:
 	var marked := machine.duplicate(true)
 	marked["slot_autoplay_active"] = false

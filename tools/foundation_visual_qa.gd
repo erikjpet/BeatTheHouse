@@ -1696,7 +1696,7 @@ func _resolve_blocking_talk_dock(max_count: int = 8) -> void:
 			if str(data.get("kind", "")) != "button" or bool(data.get("disabled", false)):
 				continue
 			var label := str(data.get("text", ""))
-			if label.begins_with("Talk now:"):
+			if label.begins_with("Talk now:") or label.begins_with("Talk to "):
 				continue
 			_emit_button(data)
 			clicked = true

@@ -460,6 +460,11 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 	})
 
 
+func wager_activity_incomplete(run_state: RunState, environment: Dictionary, ui_state: Dictionary = {}) -> bool:
+	var table := _table_state(run_state, environment)
+	return _has_dealt_hand(_normalized_session(run_state, environment, ui_state, table))
+
+
 func _blackjack_ui_protected_regions(count_challenge: Dictionary) -> Array:
 	var regions := [
 		_blackjack_ui_rect(24, 14, 286, 58),

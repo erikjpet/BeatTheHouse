@@ -212,6 +212,8 @@ func _check_slot_buffalo_feature_presentation(definition: Dictionary, failures: 
 	var auto_machine: Dictionary = _slot_machine(definition, auto_run, "buffalo", "line_5x3", "standard", "plain")
 	auto_machine["active_bonus"] = buffalo.open_feature(auto_machine, {"classification": "free_games"}, 10, auto_run.create_rng("buffalo_auto_open"), definition)
 	_slot_store_machine(auto_run, auto_environment, auto_machine)
+	if not auto_game.wager_activity_incomplete(auto_run, auto_environment, {}):
+		failures.append("Slot active bonus did not report its wager as incomplete for closing-time deferral.")
 	var auto_surface: Dictionary = auto_game.surface_state(auto_run, auto_environment, {"surface_time_msec": 1000, "drunk_scaled_surface_time_msec": 1000})
 	if not bool(auto_surface.get("surface_realtime_state_refresh", false)):
 		failures.append("Slot buffalo active feature did not request realtime surface refresh.")
@@ -225,6 +227,12 @@ func _check_slot_buffalo_feature_presentation(definition: Dictionary, failures: 
 	var auto_spin_command: Dictionary = auto_game.surface_auto_action_command({"surface_time_msec": auto_due_msec, "drunk_scaled_surface_time_msec": auto_due_msec}, auto_run, auto_environment, {})
 	if str(auto_spin_command.get("action_id", "")) != "slot_bonus_launch" or not bool(auto_spin_command.get("direct_resolve", false)):
 		failures.append("Slot buffalo active feature did not auto-queue the next feature spin.")
+	var settled_environment := auto_environment.duplicate(true)
+	var settled_machine := SlotMachineStateScript.read_machine(settled_environment, "slot")
+	settled_machine["active_bonus"] = {"active": false, "complete": true}
+	SlotMachineStateScript.write_machine(settled_environment, "slot", settled_machine)
+	if auto_game.wager_activity_incomplete(auto_run, settled_environment, {}):
+		failures.append("Slot completed bonus still reported its wager as incomplete.")
 
 	var grand_machine: Dictionary = _slot_machine(definition, run_state, "buffalo", "line_5x3", "standard", "plain")
 	grand_machine = SlotMachineStateScript.set_selected_bet(grand_machine, "bet_20")

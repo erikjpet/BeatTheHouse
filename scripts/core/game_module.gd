@@ -132,6 +132,13 @@ func surface_state(_run_state: RunState, _environment: Dictionary, _ui_state: Di
 	return {}
 
 
+# Reports whether a wager that already started still needs player/automatic
+# actions before its outcome is final. Venue closing may block a new wager, but
+# must never strand one of these in-progress activities.
+func wager_activity_incomplete(_run_state: RunState, _environment: Dictionary, _ui_state: Dictionary = {}) -> bool:
+	return false
+
+
 # Optional game-owned renderer for the active surface. The shared UI canvas
 # passes itself in only as a draw/hit host; game-specific scene composition must
 # stay in the concrete game module.

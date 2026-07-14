@@ -56,8 +56,6 @@ static func enriched_world_map_snapshot(host: Variant, snapshot: Dictionary) -> 
 		var route_locked = bool(status.get("locked", false))
 		var enabled = is_target and not is_current and not route.is_empty() and not route_hidden and bool(status.get("available", true))
 		var visible_travel_target = is_target and not is_current and not route_hidden
-		if not host._world_map_node_should_render(node, is_current, visible_travel_target):
-			continue
 		var open_status_text = ""
 		var open_now = true
 		var closing_soon = false
@@ -70,6 +68,8 @@ static func enriched_world_map_snapshot(host: Variant, snapshot: Dictionary) -> 
 			closing_soon = bool(open_status.get("closing_soon", false))
 			if not open_now:
 				enabled = false
+		if not host._world_map_node_should_render(node, is_current, enabled):
+			continue
 		node["current"] = is_current
 		node["travel_target"] = visible_travel_target
 		node["travel_enabled"] = enabled
@@ -168,16 +168,11 @@ static func enriched_world_map_snapshot(host: Variant, snapshot: Dictionary) -> 
 	return enriched
 
 
-static func world_map_node_should_render(host: Variant, node: Dictionary, is_current: bool, is_travel_target: bool) -> bool:
-	if is_current or is_travel_target:
+static func world_map_node_should_render(host: Variant, node: Dictionary, is_current: bool, is_available_target: bool) -> bool:
+	if is_current or is_available_target:
 		return true
 	var state = str(node.get("state", host.WorldMapScript.STATE_HIDDEN)).strip_edges().to_lower()
-	if state == host.WorldMapScript.STATE_VISITED:
-		return true
-	if state != host.WorldMapScript.STATE_REVEALED:
-		return false
-	var source = str(node.get("discovery_source", "")).strip_edges().to_lower()
-	return bool(node.get("discovered_at_spawn", false)) or bool(node.get("unlocked", false)) or source == host.WorldMapScript.DISCOVERY_SOURCE_SPAWN or source == host.WorldMapScript.DISCOVERY_SOURCE_EVENT
+	return state == host.WorldMapScript.STATE_VISITED
 
 
 static func world_route_for_target(host: Variant, target_id: String) -> Dictionary:

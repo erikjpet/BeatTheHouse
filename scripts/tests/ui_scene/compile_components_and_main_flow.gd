@@ -192,9 +192,23 @@ func _check_talk_dock_component() -> bool:
 		parent.queue_free()
 		push_error("Talk dock fixture did not render an expanded timed entry.")
 		return false
-	if not _has_visible_text(dock, "Mara") or not _has_visible_text(dock, "Hear Them Out"):
+	var animation_redraw_before := int(snapshot.get("portrait_animation_redraw_count", 0))
+	for _frame in range(20):
+		await process_frame
+	snapshot = dock.current_snapshot()
+	if not bool(snapshot.get("portrait_animation_active", false)) or int(snapshot.get("portrait_animation_redraw_count", 0)) <= animation_redraw_before:
 		parent.queue_free()
-		push_error("Talk dock fixture did not expose speaker and choice copy.")
+		push_error("Talk dock speaker portrait did not animate while the conversation was expanded.")
+		return false
+	dock.set_reduce_motion(true)
+	if bool(dock.current_snapshot().get("portrait_animation_active", true)):
+		parent.queue_free()
+		push_error("Talk dock speaker portrait ignored the reduced-motion setting.")
+		return false
+	dock.set_reduce_motion(false)
+	if not _has_visible_text(dock, "Mara") or not _has_visible_text(dock, "Hear Them Out") or not _has_visible_text(dock, "Someone at the table leans in with a read on the room."):
+		parent.queue_free()
+		push_error("Talk dock fixture did not expose the speaker, spoken line, and choice copy.")
 		return false
 	var key_event := InputEventKey.new()
 	key_event.pressed = true
@@ -222,18 +236,28 @@ func _check_talk_dock_component() -> bool:
 		return false
 	snapshot = dock.current_snapshot()
 	var panel_rect := _snapshot_rect(snapshot.get("panel_rect", Rect2()))
+	var portrait_rect := _snapshot_rect(snapshot.get("portrait_rect", Rect2()))
 	var screen_rect := _snapshot_rect(snapshot.get("screen_rect", Rect2()))
 	if panel_rect.size.x <= 0.0 or panel_rect.size.y <= 0.0 or not screen_rect.grow(1.0).encloses(panel_rect):
 		parent.queue_free()
 		push_error("Talk dock did not clamp inside a small viewport: panel=%s screen=%s." % [str(panel_rect), str(screen_rect)])
 		return false
-	if panel_rect.size.x < 480.0 or panel_rect.size.y < 250.0 or panel_rect.size.x > 540.0 or panel_rect.size.y > 330.0:
+	if panel_rect.size.x >= screen_rect.size.x - 80.0 or panel_rect.size.x < 280.0 or panel_rect.size.y > 280.0:
 		parent.queue_free()
-		push_error("Talk dock expanded size did not match the larger attention target: panel=%s." % str(panel_rect))
+		push_error("Talk dock did not present a compact selection overlay: panel=%s screen=%s." % [str(panel_rect), str(screen_rect)])
 		return false
-	if panel_rect.position.x > 28.0 or absf(panel_rect.end.y - screen_rect.end.y) > 28.0:
+	if portrait_rect.position.x > 48.0 or panel_rect.position.x > portrait_rect.end.x + 2.0 or absf(panel_rect.end.y - screen_rect.end.y) > 28.0:
 		parent.queue_free()
-		push_error("Talk dock did not anchor to the bottom left: panel=%s screen=%s." % [str(panel_rect), str(screen_rect)])
+		push_error("Talk dock cluster did not anchor to the bottom left: panel=%s portrait=%s screen=%s." % [str(panel_rect), str(portrait_rect), str(screen_rect)])
+		return false
+	if portrait_rect.size.x < 170.0 or portrait_rect.size.y < 220.0 or absf(portrait_rect.end.y - screen_rect.end.y) > 28.0:
+		parent.queue_free()
+		push_error("Talk dock speaker was not staged as a large environment portrait: portrait=%s screen=%s." % [str(portrait_rect), str(screen_rect)])
+		return false
+	var response_icon_kinds: Array = snapshot.get("response_icon_kinds", [])
+	if str(snapshot.get("presentation", "")) != "environment_overlay" or bool(snapshot.get("choice_effects_visible", true)) or _has_visible_text(dock, "Heat -1") or not response_icon_kinds.has("heat_down") or not response_icon_kinds.has("heat_up") or not response_icon_kinds.has("leave"):
+		parent.queue_free()
+		push_error("Talk dock did not pair concealed effect values with qualitative response icons: %s." % str(response_icon_kinds))
 		return false
 	dock.clear_entry()
 	if bool(dock.current_snapshot().get("visible", true)):
@@ -386,8 +410,20 @@ func _check_dialogue_dock_main_flow(app: Control) -> bool:
 		push_error("Dialogue dock fixture did not expose the pilot dialogue.")
 		return false
 	var panel_rect := _snapshot_rect(snapshot.get("panel_rect", Rect2()))
-	if panel_rect.size.x < 480.0 or panel_rect.size.y < 250.0:
-		push_error("Dialogue dock fixture did not use the larger attention size: %s." % str(panel_rect))
+	var portrait_rect := _snapshot_rect(snapshot.get("portrait_rect", Rect2()))
+	var screen_rect := _snapshot_rect(snapshot.get("screen_rect", Rect2()))
+	if panel_rect.size.x < 420.0 or panel_rect.size.x > 660.0 or panel_rect.size.y > 260.0 or panel_rect.size.x >= screen_rect.size.x - 160.0:
+		push_error("Dialogue dock fixture did not use the compact selection overlay: panel=%s screen=%s." % [str(panel_rect), str(screen_rect)])
+		return false
+	if screen_rect.size.x <= 0.0 or screen_rect.size.y <= 0.0 or portrait_rect.position.x > screen_rect.position.x + 48.0 or panel_rect.position.x > portrait_rect.end.x + 2.0 or absf(panel_rect.end.y - screen_rect.end.y) > 28.0:
+		push_error("Dialogue dock main flow did not anchor its cluster to the bottom left: panel=%s portrait=%s screen=%s." % [str(panel_rect), str(portrait_rect), str(screen_rect)])
+		return false
+	if portrait_rect.size.x < 240.0 or portrait_rect.size.y < 340.0 or absf(portrait_rect.end.y - screen_rect.end.y) > 28.0:
+		push_error("Dialogue dock main flow did not stage a large speaker over the environment: portrait=%s screen=%s." % [str(portrait_rect), str(screen_rect)])
+		return false
+	var response_icon_kinds: Array = snapshot.get("response_icon_kinds", [])
+	if str(snapshot.get("presentation", "")) != "environment_overlay" or bool(snapshot.get("choice_effects_visible", true)) or response_icon_kinds.is_empty() or not _has_visible_text(app, str(snapshot.get("summary", ""))):
+		push_error("Dialogue dock main flow did not expose spoken context with qualitative response icons and concealed values: %s." % str(response_icon_kinds))
 		return false
 	app.call("resolve_event_choice", "dialogue:pull_tab_clerk", "ask_routes")
 	await process_frame
@@ -4234,8 +4270,29 @@ func _run() -> void:
 		quit(1)
 		return
 	var map_snapshot: Dictionary = map_screen.get("world_map", {}) if typeof(map_screen.get("world_map", {})) == TYPE_DICTIONARY else {}
+	var map_narrative_flags: Dictionary = map_open_state_after.get("narrative_flags", {}) if typeof(map_open_state_after.get("narrative_flags", {})) == TYPE_DICTIONARY else {}
 	if (map_snapshot.get("nodes", []) as Array).size() < 2:
-		push_error("World map overlay did not render the current node and discovered stops.")
+		push_error("World map overlay did not render the current node and currently travelable stops.")
+		quit(1)
+		return
+	var revealed_fixture := {
+		"id": "unvisited_fixture",
+		"state": WorldMapScript.STATE_REVEALED,
+		"discovered_at_spawn": true,
+		"discovery_source": WorldMapScript.DISCOVERY_SOURCE_SPAWN,
+	}
+	if bool(app.call("_world_map_node_should_render", revealed_fixture, false, false)):
+		push_error("World map visibility contract exposed an unvisited location that cannot currently be traveled to.")
+		quit(1)
+		return
+	if not bool(app.call("_world_map_node_should_render", revealed_fixture, false, true)):
+		push_error("World map visibility contract hid an unvisited location that can currently be traveled to.")
+		quit(1)
+		return
+	var visited_fixture := revealed_fixture.duplicate(true)
+	visited_fixture["state"] = WorldMapScript.STATE_VISITED
+	if not bool(app.call("_world_map_node_should_render", visited_fixture, false, false)):
+		push_error("World map visibility contract hid a previously visited location that is not currently travelable.")
 		quit(1)
 		return
 	if not str(map_snapshot.get("background_path", "")).contains("map_backgrounds"):
@@ -4326,6 +4383,15 @@ func _run() -> void:
 			return
 		if not node_data.has("travel_enabled"):
 			push_error("World map node %s did not expose travel-enabled metadata." % node_id)
+			quit(1)
+			return
+		var was_visited := str(full_node.get("state", WorldMapScript.STATE_HIDDEN)) == WorldMapScript.STATE_VISITED
+		if node_id != current_map_id and not was_visited and not bool(node_data.get("travel_enabled", false)):
+			push_error("World map displayed unvisited location %s even though it cannot currently be traveled to." % node_id)
+			quit(1)
+			return
+		if node_id == WorldMapScript.GRAND_CASINO_ID and not bool(map_narrative_flags.get("grand_casino_invite", false)):
+			push_error("World map exposed the Grand Casino before the player received an invitation.")
 			quit(1)
 			return
 		if bool(node_data.get("travel_target", false)) and node_id != current_map_id:

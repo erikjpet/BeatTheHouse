@@ -207,6 +207,11 @@ func wager_cost_for_context(action_id: String, stake: int, run_state: RunState, 
 	return _active_stake_from_context(stake, state, ui_state, run_state, environment)
 
 
+func wager_activity_incomplete(run_state: RunState, environment: Dictionary, ui_state: Dictionary = {}) -> bool:
+	var state := _dice_state(run_state, environment)
+	return bool(_normalized_ui_state(run_state, environment, ui_state, state).get("rolled", false))
+
+
 func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dictionary = {}) -> Dictionary:
 	var state := _dice_state(run_state, environment)
 	var ui := _normalized_ui_state(run_state, environment, ui_state, state)

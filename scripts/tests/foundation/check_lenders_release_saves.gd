@@ -2164,15 +2164,8 @@ func _check_grand_casino_locked_route_ui(library: ContentLibrary, delta: Diction
 		if str(node.get("id", "")) == "grand_casino":
 			grand_node = node
 			break
-	if grand_node.is_empty():
-		failures.append("Grand Casino locked route did not render as a map node.")
-	else:
-		if not bool(grand_node.get("travel_target", false)) or bool(grand_node.get("travel_enabled", true)) or not bool(grand_node.get("locked", false)):
-			failures.append("Grand Casino locked map node did not expose locked travel state.")
-		for leaked_key in ["cost", "risk", "distance", "distance_blocks", "risk_event"]:
-			if grand_node.has(leaked_key):
-				failures.append("Grand Casino locked map node leaked %s." % leaked_key)
-				break
+	if not grand_node.is_empty():
+		failures.append("Grand Casino map node was visible before the player accepted its invitation.")
 	if bool(app.call("select_world_map_node", "grand_casino")):
 		failures.append("Grand Casino locked map node was selectable for travel.")
 	if not str(app.get("selected_travel_target_id")).is_empty():

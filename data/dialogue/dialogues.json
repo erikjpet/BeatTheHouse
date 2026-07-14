@@ -18,13 +18,13 @@
         "choices": [
           {
             "id": "redeem_chatter",
-            "label": "Redeem?",
+            "label": "Ask about redeeming",
             "effects": {},
             "goto": "redeem"
           },
           {
             "id": "ask_loose",
-            "label": "Loose tabs?",
+            "label": "Ask about loose tabs",
             "effects": {
               "suspicion_delta": 2,
               "check": {
@@ -41,7 +41,7 @@
           },
           {
             "id": "ask_routes",
-            "label": "Routes?",
+            "label": "Ask about local routes",
             "effects": {
               "set_story_flag": "pull_tab_clerk_route_tip",
               "unlock_travel_route": "gas_station_casino"
@@ -50,7 +50,7 @@
           },
           {
             "id": "leave",
-            "label": "Leave",
+            "label": "End the conversation",
             "effects": {},
             "end": true
           }
@@ -61,7 +61,7 @@
         "choices": [
           {
             "id": "done",
-            "label": "Done",
+            "label": "End the conversation",
             "effects": {},
             "end": true
           }
@@ -72,7 +72,7 @@
         "choices": [
           {
             "id": "done",
-            "label": "Done",
+            "label": "End the conversation",
             "effects": {},
             "end": true
           }
@@ -83,7 +83,7 @@
         "choices": [
           {
             "id": "done",
-            "label": "Done",
+            "label": "End the conversation",
             "effects": {},
             "end": true
           }
@@ -110,7 +110,7 @@
         "choices": [
           {
             "id": "haggle",
-            "label": "Haggle",
+            "label": "Try to haggle",
             "effects": {
               "bankroll_delta": 5,
               "suspicion_delta": 1
@@ -119,7 +119,7 @@
           },
           {
             "id": "move_on",
-            "label": "Move on",
+            "label": "Leave the clerk alone",
             "effects": {},
             "end": true
           }
@@ -146,7 +146,7 @@
         "choices": [
           {
             "id": "ask_routes",
-            "label": "Ask routes",
+            "label": "Ask about local routes",
             "effects": {
               "set_story_flag": "heard_local_tip",
               "set_next_archetypes": [
@@ -159,10 +159,39 @@
           },
           {
             "id": "keep_quiet",
-            "label": "Keep quiet",
+            "label": "Let the clerk talk",
             "effects": {
               "suspicion_delta": -1
             },
+            "end": true
+          }
+        ]
+      }
+    }
+  },
+  {
+    "id": "venue_closing_notice",
+    "display_name": "Closing Time",
+    "speaker": {
+      "role": "staff",
+      "name": "Room Host",
+      "mood": "firm",
+      "behavior": "closing the room",
+      "silhouette": "coat",
+      "hair_color": "#171022",
+      "jacket_color": "#3b255f"
+    },
+    "start": "notice",
+    "nodes": {
+      "notice": {
+        "text": "That's closing time. Finish up and head out—we have to clear the room.",
+        "choices": [
+          {
+            "id": "head_out",
+            "label": "Head out",
+            "text": "Acknowledge them and leave.",
+            "effects": {},
+            "effects_hidden": true,
             "end": true
           }
         ]
