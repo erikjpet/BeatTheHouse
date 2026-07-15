@@ -11117,13 +11117,12 @@ func _refresh_world_map_detail() -> void:
 	var status_text := EnvironmentHours.travel_status_text(node_archetype, run_state.game_minute_of_day())
 	if bool(choice.get("locked", false)):
 		lines.append("Hours: %s" % str(choice.get("open_status_text", status_text)))
-		lines.append("Travel: %s" % _world_map_travel_method(choice))
+		lines.append(_world_map_travel_cost_line(choice))
 		var locked_blocks := int(choice.get("distance_blocks", 0))
 		var locked_distance := str(choice.get("distance", "near")).capitalize()
 		if locked_blocks > 0:
 			locked_distance = "%s / %d block%s" % [locked_distance, locked_blocks, "" if locked_blocks == 1 else "s"]
 		lines.append("Distance: %s" % locked_distance)
-		lines.append("Cost: $%d" % int(choice.get("cost", 0)))
 		lines.append("Locked: %s" % str(choice.get("disabled_reason", "That route is not available right now.")))
 		_set_world_map_confirm_enabled(false)
 		_set_world_map_detail_badges(AttributeBadgesScript.for_world_map_detail(destination_kind, choice))
@@ -11139,9 +11138,8 @@ func _refresh_world_map_detail() -> void:
 	if choice.is_empty():
 		var path := WorldMapScript.path_between(run_state.world_map, current_id, selected_world_map_node_id, true)
 		lines.append("Hours: %s" % status_text)
-		lines.append("Travel: Unavailable from here")
+		lines.append("Travel: Unavailable from here · Cost: Not available")
 		lines.append("Distance: Not available")
-		lines.append("Cost: Not available")
 		if path.size() >= 2:
 			lines.append("Status: Not on the current route list.")
 		else:
@@ -11152,13 +11150,12 @@ func _refresh_world_map_detail() -> void:
 		return
 	status_text = str(choice.get("open_status_text", status_text))
 	lines.append("Hours: %s" % status_text)
-	lines.append("Travel: %s" % _world_map_travel_method(choice))
+	lines.append(_world_map_travel_cost_line(choice))
 	var distance_blocks := int(choice.get("distance_blocks", 0))
 	var distance_text := str(choice.get("distance", "near")).capitalize()
 	if distance_blocks > 0:
 		distance_text = "%s / %d block%s" % [distance_text, distance_blocks, "" if distance_blocks == 1 else "s"]
 	lines.append("Distance: %s" % distance_text)
-	lines.append("Cost: $%d" % int(choice.get("cost", 0)))
 	var unlock_summary := str(choice.get("unlock_summary", "")).strip_edges()
 	if not bool(choice.get("enabled", true)) and not unlock_summary.is_empty():
 		lines.append("Status: %s" % unlock_summary)
@@ -11229,6 +11226,10 @@ func _world_map_travel_method(choice: Dictionary) -> String:
 			return "Taxi ride"
 		_:
 			return "Night cab"
+
+
+func _world_map_travel_cost_line(choice: Dictionary) -> String:
+	return "Travel: %s · Cost: $%d" % [_world_map_travel_method(choice), maxi(0, int(choice.get("cost", 0)))]
 
 
 func _meta_map_node_ids() -> Array:

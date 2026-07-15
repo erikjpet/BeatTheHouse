@@ -4684,8 +4684,14 @@ func _run() -> void:
 		quit(1)
 		return
 	var detail_text := str(selected_map_screen.get("world_map_detail_text", ""))
-	if not detail_text.contains("Travel:") or not detail_text.contains("Distance:") or not detail_text.contains("Cost:"):
-		push_error("World map selection popup did not show travel method, distance, and cost.")
+	var travel_detail_line := ""
+	for detail_line_value in detail_text.split("\n"):
+		var detail_line := str(detail_line_value)
+		if detail_line.begins_with("Travel:"):
+			travel_detail_line = detail_line
+			break
+	if travel_detail_line.is_empty() or not travel_detail_line.contains(" · Cost: $") or not detail_text.contains("Distance:"):
+		push_error("World map selection popup did not show travel method and cost together with distance: %s" % detail_text)
 		quit(1)
 		return
 	if detail_text.split("\n").size() > 6:

@@ -143,7 +143,7 @@ func _check_meta_home_launcher_opens_room(app: Control) -> bool:
 		return false
 	var selected_meta_screen: Dictionary = app.call("current_screen_snapshot")
 	var selected_meta_detail := str(selected_meta_screen.get("world_map_detail_text", ""))
-	if not selected_meta_detail.contains("Travel: Walk") or not selected_meta_detail.contains("Distance: Near / 1 block") or not selected_meta_detail.contains("Cost: $0"):
+	if not selected_meta_detail.contains("Travel: Walk · Cost: $0") or not selected_meta_detail.contains("Distance: Near / 1 block"):
 		push_error("Meta world-map detail omitted its travel method, distance, or cost: %s" % selected_meta_detail)
 		return false
 	var selected_meta_badges: Array = _copy_array(selected_meta_screen.get("world_map_detail_badges", []))

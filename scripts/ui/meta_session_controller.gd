@@ -346,9 +346,8 @@ func world_map_detail_view(location_id: String, selected_node_id: String) -> Dic
 	var destination_kind := "shop" if selected_node_id == pawn_location_id() else "home"
 	var route := travel_choice(selected_node_id, location_id)
 	lines.append("Stop: %s" % label)
-	lines.append("Travel: Walk")
+	lines.append("Travel: Walk · Cost: $0")
 	lines.append("Distance: Near / 1 block")
-	lines.append("Cost: $0")
 	lines.append("Clock: no time passes")
 	if selected_node_id == location_id:
 		lines.append("Status: You are here.")
