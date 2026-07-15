@@ -10855,6 +10855,11 @@ func _inventory_item_label(item_id: String) -> String:
 		return item_id.replace("_", " ").capitalize()
 	var definition := library.item(item_id)
 	if definition.is_empty():
+		_refresh_run_action_service()
+		var runtime_detail := run_action_service.inventory_item_detail(item_id) if run_action_service != null else {}
+		if not runtime_detail.is_empty():
+			return str(runtime_detail.get("display_name", item_id.replace("_", " ").capitalize()))
+	if definition.is_empty():
 		return item_id.replace("_", " ").capitalize()
 	return str(definition.get("display_name", item_id.replace("_", " ").capitalize()))
 

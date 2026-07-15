@@ -314,7 +314,9 @@ func _apply_home_profile(run_state: RunState, environment_data: Dictionary, arch
 	run_state.change_bankroll(starting_cash - run_state.bankroll)
 	var starting_pool := _home_starting_item_pool(profile, run_state.challenge_config)
 	var starting_item_offers := _home_starting_item_offers(profile, starting_pool, rng)
-	var containers := _home_starting_containers(profile, starting_pool, rng)
+	var containers := _meta_collection_starting_containers(run_state.challenge_config)
+	if containers.is_empty():
+		containers = _home_starting_containers(profile, starting_pool, rng)
 	environment_data["home_profile"] = profile.duplicate(true)
 	environment_data["item_offers"] = starting_item_offers
 	environment_data["home_containers"] = containers
@@ -389,6 +391,27 @@ func _home_starting_containers(profile: Dictionary, starting_pool: Array, rng: R
 			"capacity": capacity,
 			"items": stored_items,
 		})
+	return containers
+
+
+func _meta_collection_starting_containers(challenge_config: Dictionary) -> Array:
+	var modifiers := _copy_dict(challenge_config.get("modifiers", {}))
+	if not bool(modifiers.get("meta_collection_enabled", false)):
+		return []
+	var containers: Array = []
+	for container_value in _copy_array(modifiers.get("meta_collection_containers", [])):
+		if typeof(container_value) != TYPE_DICTIONARY:
+			continue
+		var container: Dictionary = _copy_dict(container_value)
+		var item_id := str(container.get("item_id", "")).strip_edges()
+		var capacity := _container_capacity(item_id, int(container.get("capacity", 0)))
+		if item_id.is_empty() or capacity <= 0:
+			continue
+		var definition: Dictionary = library.item(item_id) if library != null else {}
+		container["display_name"] = str(definition.get("display_name", item_id.replace("_", " ").capitalize()))
+		container["capacity"] = capacity
+		container["meta_loadout"] = true
+		containers.append(container)
 	return containers
 
 

@@ -440,41 +440,19 @@ func _home_state_for_environment(environment: Dictionary, run_state: RunState) -
 
 
 func _container_rows() -> Array:
-	var snapshot := meta_collection_service.snapshot() if meta_collection_service != null else {}
 	var rows: Array = []
-	var index := 0
-	for container_value in _copy_array(snapshot.get("owned_containers", [])):
+	if meta_collection_service == null:
+		return rows
+	for container_value in meta_collection_service.carried_container_rows():
 		if typeof(container_value) != TYPE_DICTIONARY:
 			continue
-		var container: Dictionary = container_value
-		var item_id := str(container.get("item_id", "b" + "ag")).strip_edges()
+		var container: Dictionary = _copy_dict(container_value)
+		var item_id := str(container.get("item_id", "bag")).strip_edges()
 		if item_id.is_empty():
 			continue
-		index += 1
-		rows.append({
-			"id": "meta_%s_%02d" % [item_id, index],
-			"item_id": item_id,
-			"display_name": _container_label(item_id),
-			"capacity": maxi(0, int(container.get("capacity", 0))),
-			"items": _container_item_ids_for_index(index - 1),
-		})
+		container["display_name"] = _container_label(item_id)
+		rows.append(container)
 	return rows
-
-
-func _container_item_ids_for_index(container_index: int) -> Array:
-	var ids: Array = []
-	if meta_collection_service == null:
-		return ids
-	var carried := meta_collection_service.carried_instance_ids()
-	var capacity := 0
-	var containers := _copy_array(meta_collection_service.snapshot().get("owned_containers", []))
-	if container_index >= 0 and container_index < containers.size() and typeof(containers[container_index]) == TYPE_DICTIONARY:
-		capacity = maxi(0, int((containers[container_index] as Dictionary).get("capacity", 0)))
-	for id_value in carried:
-		if capacity > 0 and ids.size() >= capacity:
-			break
-		ids.append("meta_item_%d" % int(id_value))
-	return ids
 
 
 func _container_label(item_id: String) -> String:

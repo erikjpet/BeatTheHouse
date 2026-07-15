@@ -318,7 +318,54 @@ func normal_run_start_modifiers() -> Dictionary:
 		"meta_collection_enabled": true,
 		"meta_collection_carried_instance_ids": carried_ids,
 		"meta_collection_loadout": run_items,
+		"meta_collection_containers": carried_container_rows(),
 	}
+
+
+# Builds the one authoritative packed-container manifest used by both the
+# meta-home room and the generated run home.
+func carried_container_rows() -> Array:
+	_store = _normalize_store(_store)
+	var carried_ids := carried_instance_ids()
+	var resolver: Variant = CollectionItemResolverScript.new()
+	var packed_items: Array = []
+	for instance_value in owned_instances():
+		var instance := _copy_dict(instance_value)
+		if not carried_ids.has(int(instance.get("instance_id", 0))):
+			continue
+		var run_item: Dictionary = resolver.resolve_run_item(instance)
+		if not run_item.is_empty():
+			packed_items.append(run_item)
+	var rows: Array = []
+	var packed_index := 0
+	var container_index := 0
+	for container_value in _copy_array(_store.get("owned_containers", [])):
+		var container := _copy_dict(container_value)
+		var item_id := str(container.get("item_id", "bag")).strip_edges()
+		var capacity := maxi(0, int(container.get("capacity", _container_capacity(item_id))))
+		if item_id.is_empty() or capacity <= 0:
+			continue
+		container_index += 1
+		var item_ids: Array = []
+		var item_definitions := {}
+		while packed_index < packed_items.size() and item_ids.size() < capacity:
+			var packed_item: Dictionary = _copy_dict(packed_items[packed_index])
+			packed_index += 1
+			var packed_item_id := str(packed_item.get("id", "")).strip_edges()
+			if packed_item_id.is_empty():
+				continue
+			item_ids.append(packed_item_id)
+			item_definitions[packed_item_id] = packed_item
+		rows.append({
+			"id": "meta_%s_%02d" % [item_id, container_index],
+			"item_id": item_id,
+			"capacity": capacity,
+			"items": item_ids,
+			"item_definitions": item_definitions,
+			"meta_loadout": true,
+			"meta_container_instance_id": maxi(0, int(container.get("instance_id", 0))),
+		})
+	return rows
 
 
 func apply_failure_decay(carried_ids: Array, rng_seed: String) -> Array:

@@ -733,6 +733,8 @@ func transfer_item_to_home_container(container_id: String, item_id: String) -> D
 	if index < 0:
 		return {"ok": false, "message": "Container is no longer available."}
 	var container: Dictionary = containers[index]
+	if bool(container.get("meta_loadout", false)):
+		return {"ok": false, "message": "Meta-home loadout bags mirror the items already packed for this run."}
 	var stored_items := _copy_array(container.get("items", []))
 	var capacity := maxi(0, int(container.get("capacity", 0)))
 	if stored_items.size() >= capacity:
@@ -760,6 +762,8 @@ func transfer_item_from_home_container(container_id: String, item_id: String) ->
 	if index < 0:
 		return {"ok": false, "message": "Container is no longer available."}
 	var container: Dictionary = containers[index]
+	if bool(container.get("meta_loadout", false)):
+		return {"ok": false, "message": "These items are already carried from the meta-home loadout."}
 	var stored_items := _copy_array(container.get("items", []))
 	if not stored_items.has(clean_item_id):
 		return {"ok": false, "message": "That item is not stored here."}
@@ -5468,13 +5472,24 @@ static func _normalize_home_containers(containers: Array) -> Array:
 		var capacity := maxi(0, int(container.get("capacity", normalized_items.size())))
 		if normalized_items.size() > capacity and capacity > 0:
 			normalized_items = normalized_items.slice(0, capacity)
-		result.append({
+		var normalized_container := {
 			"id": container_id,
 			"item_id": item_id,
 			"display_name": str(container.get("display_name", item_id.replace("_", " ").capitalize())),
 			"capacity": capacity,
 			"items": normalized_items,
-		})
+		}
+		if bool(container.get("meta_loadout", false)):
+			normalized_container["meta_loadout"] = true
+			normalized_container["meta_container_instance_id"] = maxi(0, int(container.get("meta_container_instance_id", 0)))
+			var item_definitions := _copy_dict(container.get("item_definitions", {}))
+			var normalized_definitions := {}
+			for stored_item_id in normalized_items:
+				var stored_definition := _copy_dict(item_definitions.get(stored_item_id, {}))
+				if not stored_definition.is_empty():
+					normalized_definitions[stored_item_id] = stored_definition
+			normalized_container["item_definitions"] = normalized_definitions
+		result.append(normalized_container)
 	return result
 
 

@@ -2215,6 +2215,66 @@ func _check_meta_home_run_boundary(library: ContentLibrary, failures: Array) -> 
 	generator.next_environment(run_state)
 	if str(run_state.current_environment.get("archetype_id", run_state.current_environment.get("id", ""))) != MetaCollectionServiceScript.HOUSING_BACK_ALLEY:
 		failures.append("Default homeless meta run did not start in the back alley archetype.")
+	var previous_path := OS.get_environment(MetaCollectionServiceScript.STORE_PATH_ENV)
+	var linked_path := "user://meta_collection_linked_bag_check.json"
+	OS.set_environment(MetaCollectionServiceScript.STORE_PATH_ENV, linked_path)
+	_remove_user_store_file(linked_path)
+	_write_user_store_file(linked_path, {
+		"schema_version": MetaCollectionServiceScript.SCHEMA_VERSION,
+		"gold_balance": 0,
+		"housing_tier": MetaCollectionServiceScript.HOUSING_MOTEL_ROOM,
+		"owned_containers": [{"item_id": "bag", "instance_id": 7, "capacity": 3}],
+		"owned_instances": [
+			{"schema_version": MetaCollectionServiceScript.SCHEMA_VERSION, "instance_id": 11, "itemdef_id": 1000, "potency": 0.8, "condition": 0.9, "resonance": 0.7, "usage": 1.0, "source": "run_victory", "source_id": "player_run", "source_rng_seed": "PLAYER-RUN-11"},
+			{"schema_version": MetaCollectionServiceScript.SCHEMA_VERSION, "instance_id": 12, "itemdef_id": 1001, "potency": 0.7, "condition": 0.8, "resonance": 0.6, "usage": 1.0, "source": "run_victory", "source_id": "player_run", "source_rng_seed": "PLAYER-RUN-12"},
+		],
+		"unopened_bags": [],
+		"loadout": [11, 12],
+		"next_instance_id": 13,
+	})
+	var linked_service: Variant = MetaCollectionServiceScript.new()
+	linked_service.load()
+	var linked_modifiers: Dictionary = linked_service.normal_run_start_modifiers()
+	var meta_containers := _copy_array(linked_modifiers.get("meta_collection_containers", []))
+	if meta_containers.size() != 1:
+		failures.append("Meta-home two-item bag did not produce exactly one run container manifest.")
+	else:
+		var meta_container := _copy_dict(meta_containers[0])
+		if str(meta_container.get("item_id", "")) != "bag" or int(meta_container.get("capacity", 0)) != 3 or _copy_array(meta_container.get("items", [])).size() != 2:
+			failures.append("Meta-home two-item bag manifest did not preserve its bag identity, capacity, and packed count.")
+	var linked_config: Dictionary = RunStateScript.standard_challenge("META-HOME-LINKED-BAG")
+	linked_config["modifiers"] = linked_modifiers
+	var linked_run: RunState = RunStateScript.new()
+	linked_run.start_new("META-HOME-LINKED-BAG", linked_config)
+	for item_value in _copy_array(linked_modifiers.get("meta_collection_loadout", [])):
+		if typeof(item_value) == TYPE_DICTIONARY:
+			linked_run.inventory.append((item_value as Dictionary).duplicate(true))
+	var linked_generator: RunGenerator = RunGeneratorScript.new(library)
+	linked_generator.next_environment(linked_run)
+	var spawned_containers := linked_run.current_home_containers()
+	if str(linked_run.current_environment.get("archetype_id", "")) != MetaCollectionServiceScript.HOUSING_MOTEL_ROOM or spawned_containers.size() != 1:
+		failures.append("Motel run did not spawn the meta-home bag as its only linked container.")
+	else:
+		var spawned_container := _copy_dict(spawned_containers[0])
+		if str(spawned_container.get("id", "")) != str(_copy_dict(meta_containers[0]).get("id", "")) or str(spawned_container.get("item_id", "")) != "bag" or int(spawned_container.get("capacity", 0)) != 3 or _copy_array(spawned_container.get("items", [])).size() != 2 or not bool(spawned_container.get("meta_loadout", false)):
+			failures.append("Spawned motel bag was not identical to the two-item meta-home bag.")
+		var linked_resolver: RunActionService = RunActionServiceScript.new()
+		linked_resolver.setup(library, linked_run)
+		var linked_model: Dictionary = RunInventoryViewModelScript.build(linked_run, linked_resolver, "home_container", str(spawned_container.get("id", "")), {})
+		var linked_items := _copy_array(linked_model.get("items", []))
+		if linked_items.size() != 2 or not str(linked_model.get("summary", "")).begins_with("2/3 packed from the meta-home"):
+			failures.append("Spawned motel bag popup did not expose the two packed meta-home items and 2/3 capacity.")
+		for linked_item_value in linked_items:
+			if str(_copy_dict(linked_item_value).get("storage_source", "")) != "loadout":
+				failures.append("Spawned motel bag treated a linked meta-home item as unrelated room storage.")
+				break
+	var linked_loaded: RunState = RunStateScript.new()
+	linked_loaded.from_dict(linked_run.to_dict())
+	var loaded_containers := linked_loaded.current_home_containers()
+	if loaded_containers.size() != 1 or _copy_array(_copy_dict(loaded_containers[0]).get("items", [])).size() != 2 or not bool(_copy_dict(loaded_containers[0]).get("meta_loadout", false)):
+		failures.append("Linked meta-home bag identity and contents did not survive run save/load.")
+	_remove_user_store_file(linked_path)
+	OS.set_environment(MetaCollectionServiceScript.STORE_PATH_ENV, previous_path)
 	var daily: RunState = RunStateScript.new()
 	daily.start_new("META-HOME-DAILY", RunStateScript.daily_challenge("meta_home_daily", "META-HOME-DAILY", true))
 	daily.run_status = RunStateScript.RUN_STATUS_ENDED

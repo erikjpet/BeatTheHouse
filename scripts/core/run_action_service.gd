@@ -213,8 +213,8 @@ func inventory_item_view_list() -> Array:
 	if not is_ready():
 		return []
 	var result: Array = []
-	for item_id in _copy_array(run_state.inventory):
-		var detail := inventory_item_detail(str(item_id))
+	for item_value in _copy_array(run_state.inventory):
+		var detail := inventory_item_detail(_inventory_value_id(item_value))
 		if not detail.is_empty():
 			result.append(detail)
 	return result
@@ -271,6 +271,8 @@ func inventory_item_detail(item_id: String) -> Dictionary:
 	if item_id.is_empty() or library == null:
 		return {}
 	var definition := library.item(item_id)
+	if definition.is_empty():
+		definition = _runtime_item_definition(item_id)
 	if definition.is_empty():
 		return {}
 	var effect: Dictionary = definition.get("effect", {}) if typeof(definition.get("effect", {})) == TYPE_DICTIONARY else {}
@@ -985,7 +987,27 @@ func effect_summary_value(value: Variant) -> String:
 func label_from_id(id: String) -> String:
 	if id == "high_roller_cashout":
 		return "Players Card"
+	var runtime_definition := _runtime_item_definition(id)
+	if not runtime_definition.is_empty():
+		return str(runtime_definition.get("display_name", id.replace("_", " ").capitalize()))
 	return id.replace("_", " ").capitalize()
+
+
+func _runtime_item_definition(item_id: String) -> Dictionary:
+	if run_state == null or item_id.is_empty():
+		return {}
+	for item_value in _copy_array(run_state.inventory):
+		if typeof(item_value) != TYPE_DICTIONARY:
+			continue
+		var item: Dictionary = item_value
+		if str(item.get("id", "")).strip_edges() == item_id:
+			return item.duplicate(true)
+	for container_value in run_state.current_home_containers():
+		var container := _copy_dict(container_value)
+		var definition := _copy_dict(_copy_dict(container.get("item_definitions", {})).get(item_id, {}))
+		if not definition.is_empty():
+			return definition
+	return {}
 
 
 func hook_run_status(kind: String, definition: Dictionary) -> Dictionary:
@@ -1801,7 +1823,13 @@ static func _copy_dict(value: Variant) -> Dictionary:
 static func _string_array(value: Variant) -> Array:
 	var result: Array = []
 	for entry in _copy_array(value):
-		var id := str(entry)
+		var id := _inventory_value_id(entry)
 		if not id.is_empty():
 			result.append(id)
 	return result
+
+
+static func _inventory_value_id(value: Variant) -> String:
+	if typeof(value) == TYPE_DICTIONARY:
+		return str((value as Dictionary).get("id", "")).strip_edges()
+	return str(value).strip_edges()

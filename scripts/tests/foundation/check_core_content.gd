@@ -22,6 +22,7 @@ const ProceduralMusicPlayerScript := preload("res://scripts/ui/procedural_music_
 const SfxPlayerScript := preload("res://scripts/ui/sfx_player.gd")
 const WebAudioBridgeScript := preload("res://scripts/ui/web_audio_bridge.gd")
 const GameSurfaceCanvasScript := preload("res://scripts/ui/game_surface_canvas.gd")
+const RunInventoryViewModelScript := preload("res://scripts/ui/run_inventory_view_model.gd")
 const SlotGameScript := preload("res://scripts/games/slot.gd")
 const SlotMachineGeneratorScript := preload("res://scripts/games/slots/slot_machine_generator.gd")
 const SlotMachineStateScript := preload("res://scripts/games/slots/slot_machine_state.gd")

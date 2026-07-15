@@ -95,17 +95,19 @@ static func _home_container_inventory_details(run_state: RunState, run_action_se
 		return result
 	var container := _home_container_by_id(run_state, container_id)
 	var stored_items := _string_array(container.get("items", []))
-	for item_id in _storable_inventory_item_ids(run_state, run_action_service):
-		var carried_detail := run_action_service.inventory_item_detail(str(item_id))
-		if carried_detail.is_empty():
-			continue
-		carried_detail["storage_source"] = "carried"
-		result.append(carried_detail)
+	var meta_loadout := bool(container.get("meta_loadout", false))
+	if not meta_loadout:
+		for item_id in _storable_inventory_item_ids(run_state, run_action_service):
+			var carried_detail := run_action_service.inventory_item_detail(str(item_id))
+			if carried_detail.is_empty():
+				continue
+			carried_detail["storage_source"] = "carried"
+			result.append(carried_detail)
 	for item_id in stored_items:
 		var stored_detail := run_action_service.inventory_item_detail(str(item_id))
 		if stored_detail.is_empty():
 			continue
-		stored_detail["storage_source"] = "container"
+		stored_detail["storage_source"] = "loadout" if meta_loadout else "container"
 		stored_detail["sellable"] = false
 		stored_detail["active_selected"] = false
 		result.append(stored_detail)
@@ -123,6 +125,8 @@ static func _summary_text(run_state: RunState, run_action_service: RunActionServ
 		var container := _home_container_by_id(run_state, container_id)
 		var stored_items := _string_array(container.get("items", []))
 		var capacity := maxi(0, int(container.get("capacity", 0)))
+		if bool(container.get("meta_loadout", false)):
+			return "%d/%d packed from the meta-home. These item effects are active for this run." % [stored_items.size(), capacity]
 		return "%d/%d stored. Stored item effects do not apply until moved back to inventory." % [stored_items.size(), capacity]
 	var count := 0
 	if run_action_service != null:
@@ -207,7 +211,7 @@ static func _string_array(value: Variant) -> Array:
 	if typeof(value) != TYPE_ARRAY:
 		return result
 	for entry in value:
-		var id := str(entry)
+		var id := str((entry as Dictionary).get("id", "")) if typeof(entry) == TYPE_DICTIONARY else str(entry)
 		if not id.is_empty():
 			result.append(id)
 	return result
