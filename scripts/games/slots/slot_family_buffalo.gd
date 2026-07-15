@@ -12,6 +12,24 @@ const FEATURE_CLASSES := ["free_games", "hold_and_spin", "monster_feature"]
 const FREE_GAMES_RETRIGGER_THRESHOLD := 3
 const FREE_GAMES_RETRIGGER_GRANT := 8
 const FREE_GAMES_MAX_TOTAL_STEPS := 60
+const FREE_GAMES_FORMAT_PROFILES := {
+	"classic_3_reel": {
+		"base_spins": 12,
+		"four_scatter_spins": 18,
+		"five_scatter_spins": 24,
+		"retrigger_threshold": 2,
+		"retrigger_grant": 4,
+		"max_total_steps": 40,
+	},
+	"video_feature": {
+		"base_spins": 6,
+		"four_scatter_spins": 10,
+		"five_scatter_spins": 14,
+		"retrigger_threshold": 6,
+		"retrigger_grant": 2,
+		"max_total_steps": 30,
+	},
+}
 const GRAND_PRIZE_STATE_KEY := "buffalo_grand_prize"
 const GRAND_PRIZE_INITIAL_MULTIPLIER_KEY := "buffalo_grand_prize_initial_multiplier"
 const GRAND_PRIZE_SPINS_KEY := "buffalo_grand_prize_spins"
@@ -580,13 +598,14 @@ func hold_award_for_lock_count(stake: int, lock_count: int, max_cells: int, bet_
 func _free_games_feature(machine: Dictionary, stake: int, feature_scale: float, scatter_count: int, step_bonus: int) -> Dictionary:
 	var bet_id := str(_copy_dict(machine.get("bet_ladder", {})).get("selected_id", "bet_2"))
 	var grand_prize := current_grand_prize(machine, stake, bet_id)
-	var spins := 8
-	if scatter_count >= 5:
-		spins = 20
-	elif scatter_count >= 4:
-		spins = 15
-	spins += step_bonus
 	var format_id := str(machine.get("format_id", ""))
+	var profile := _free_games_profile(format_id)
+	var spins := int(profile.get("base_spins", 8))
+	if scatter_count >= 5:
+		spins = int(profile.get("five_scatter_spins", 20))
+	elif scatter_count >= 4:
+		spins = int(profile.get("four_scatter_spins", 15))
+	spins += step_bonus
 	var cap_multiplier := 74
 	if format_id == "line_5x3":
 		cap_multiplier = 58
@@ -618,9 +637,12 @@ func _free_games_feature(machine: Dictionary, stake: int, feature_scale: float, 
 		"coin_reveals": [],
 		"coin_reveal_total": 0,
 		"last_retrigger_grant": 0,
+		"retrigger_threshold": int(profile.get("retrigger_threshold", FREE_GAMES_RETRIGGER_THRESHOLD)),
+		"retrigger_grant": int(profile.get("retrigger_grant", FREE_GAMES_RETRIGGER_GRANT)),
+		"max_total_steps": int(profile.get("max_total_steps", FREE_GAMES_MAX_TOTAL_STEPS)),
 		"history": [],
 		"feature_phase": "transition",
-		"collection_meter": {"value": 0, "threshold": FREE_GAMES_RETRIGGER_THRESHOLD, "cycle": 0, "total": 0, "next_retrigger": FREE_GAMES_RETRIGGER_THRESHOLD},
+		"collection_meter": {"value": 0, "threshold": int(profile.get("retrigger_threshold", FREE_GAMES_RETRIGGER_THRESHOLD)), "cycle": 0, "total": 0, "next_retrigger": int(profile.get("retrigger_threshold", FREE_GAMES_RETRIGGER_THRESHOLD))},
 		"jackpot_ladder": _jackpot_ladder_state(bet_id, stake, "", machine),
 		"grand_prize": grand_prize,
 		"grand_prize_awarded": 0,
@@ -907,11 +929,14 @@ func _step_free_games(machine: Dictionary, active: Dictionary, rng: RngStream) -
 	var retrigger := 0
 	var retrigger_events := 0
 	var projected_total_steps := maxi(0, int(active.get("total_steps", 0)))
-	while coins_since_retrigger >= FREE_GAMES_RETRIGGER_THRESHOLD and projected_total_steps + FREE_GAMES_RETRIGGER_GRANT <= FREE_GAMES_MAX_TOTAL_STEPS:
-		coins_since_retrigger -= FREE_GAMES_RETRIGGER_THRESHOLD
-		retrigger += FREE_GAMES_RETRIGGER_GRANT
+	var retrigger_threshold := maxi(1, int(active.get("retrigger_threshold", FREE_GAMES_RETRIGGER_THRESHOLD)))
+	var retrigger_grant := maxi(1, int(active.get("retrigger_grant", FREE_GAMES_RETRIGGER_GRANT)))
+	var max_total_steps := maxi(projected_total_steps, int(active.get("max_total_steps", FREE_GAMES_MAX_TOTAL_STEPS)))
+	while coins_since_retrigger >= retrigger_threshold and projected_total_steps + retrigger_grant <= max_total_steps:
+		coins_since_retrigger -= retrigger_threshold
+		retrigger += retrigger_grant
 		retrigger_events += 1
-		projected_total_steps += FREE_GAMES_RETRIGGER_GRANT
+		projected_total_steps += retrigger_grant
 	var grid_award := grid_payout(grid, stake)
 	var spin_award := grid_award
 	var spin_win_total := maxi(0, int(active.get("spin_win_total", active.get("feature_total", 0)))) + spin_award
@@ -939,7 +964,7 @@ func _step_free_games(machine: Dictionary, active: Dictionary, rng: RngStream) -
 	history.append({"id": "stampede_free_spin", "step": int(active.get("step_index", 0)), "gold_tokens": new_coins.size(), "coin_hits": new_coins.duplicate(true), "coins_collected": coins_collected, "coins_since_retrigger": coins_since_retrigger, "coin_award": int(coin_result.get("coin_award", 0)), "coin_total": coin_total, "retrigger": retrigger, "retrigger_events": retrigger_events, "grid_award": grid_award, "award": spin_award, "running_total": spin_win_total, "grid": grid.duplicate(true), "reel_stops": stops.duplicate(true), "classification": classification})
 	active["history"] = history
 	var cell_capacity := maxi(1, reel_count * row_count)
-	var full_screen := MathScript.count_symbol(grid, "GOLD_TOKEN") >= cell_capacity
+	var full_screen := collected_coins.size() >= cell_capacity
 	if full_screen:
 		active["remaining_steps"] = 0
 	if int(active.get("remaining_steps", 0)) <= 0:
@@ -1133,14 +1158,29 @@ func _free_game_coin_value(stake: int, feature_scale: float, rng: RngStream, ite
 func _coin_collection_meter(active: Dictionary) -> Dictionary:
 	var cycle := maxi(0, int(active.get("coins_since_retrigger", 0)))
 	var total := maxi(0, int(active.get("coins_collected", 0)))
+	var threshold := maxi(1, int(active.get("retrigger_threshold", FREE_GAMES_RETRIGGER_THRESHOLD)))
 	return {
 		"value": cycle,
-		"threshold": FREE_GAMES_RETRIGGER_THRESHOLD,
+		"threshold": threshold,
 		"cycle": cycle,
 		"total": total,
 		"coin_total": maxi(0, int(active.get("coin_total", 0))),
-		"next_retrigger": FREE_GAMES_RETRIGGER_THRESHOLD - mini(cycle, FREE_GAMES_RETRIGGER_THRESHOLD),
+		"next_retrigger": threshold - mini(cycle, threshold),
 	}
+
+
+func _free_games_profile(format_id: String) -> Dictionary:
+	var defaults := {
+		"base_spins": 8,
+		"four_scatter_spins": 15,
+		"five_scatter_spins": 20,
+		"retrigger_threshold": FREE_GAMES_RETRIGGER_THRESHOLD,
+		"retrigger_grant": FREE_GAMES_RETRIGGER_GRANT,
+		"max_total_steps": FREE_GAMES_MAX_TOTAL_STEPS,
+	}
+	if FREE_GAMES_FORMAT_PROFILES.has(format_id):
+		defaults.merge(_copy_dict(FREE_GAMES_FORMAT_PROFILES.get(format_id, {})), true)
+	return defaults
 
 
 func _coin_cell_key(reel_index: int, row_index: int) -> String:

@@ -60,6 +60,16 @@ func _check_slot_buffalo_feature_presentation(definition: Dictionary, failures: 
 	var presentation = SlotPresentationScript.new()
 	var renderer = SlotRendererScript.new()
 	var run_state: RunState = _slot_run_state("SLOT-BUFFALO-PRESENTATION", 100000)
+	var classic_free_machine: Dictionary = _slot_machine(definition, run_state, "buffalo", "classic_3_reel", "standard", "plain")
+	var video_free_machine: Dictionary = _slot_machine(definition, run_state, "buffalo", "video_feature", "standard", "plain")
+	var classic_free: Dictionary = buffalo.open_feature(classic_free_machine, {"classification": "free_games"}, 10, run_state.create_rng("buffalo_classic_free_balance"), definition)
+	var video_free: Dictionary = buffalo.open_feature(video_free_machine, {"classification": "free_games"}, 10, run_state.create_rng("buffalo_video_free_balance"), definition)
+	if int(classic_free.get("remaining_steps", 0)) <= int(video_free.get("remaining_steps", 0)):
+		failures.append("Slot buffalo 3x1 feature did not receive more starting free spins than the 6x5 feature.")
+	if int(classic_free.get("retrigger_threshold", 0)) >= int(video_free.get("retrigger_threshold", 0)):
+		failures.append("Slot buffalo 3x1 feature did not have the more attainable retrigger threshold.")
+	if int(video_free.get("retrigger_grant", 0)) >= int(classic_free.get("retrigger_grant", 0)):
+		failures.append("Slot buffalo 6x5 feature retrigger still granted as many spins as the 3x1 feature.")
 
 	var hold_machine: Dictionary = _slot_machine(definition, run_state, "buffalo", "video_feature", "standard", "plain")
 	var hold_entry: Dictionary = {"id": "hold_and_spin", "classification": "hold_and_spin"}
@@ -234,26 +244,40 @@ func _check_slot_buffalo_feature_presentation(definition: Dictionary, failures: 
 	if auto_game.wager_activity_incomplete(auto_run, settled_environment, {}):
 		failures.append("Slot completed bonus still reported its wager as incomplete.")
 
-	var grand_machine: Dictionary = _slot_machine(definition, run_state, "buffalo", "line_5x3", "standard", "plain")
+	var grand_machine: Dictionary = _slot_machine(definition, run_state, "buffalo", "video_feature", "standard", "plain")
 	grand_machine = SlotMachineStateScript.set_selected_bet(grand_machine, "bet_20")
 	var grand_strips: Array = []
-	for _grand_reel in range(maxi(1, int(grand_machine.get("reel_count", 5)))):
-		grand_strips.append(["GOLD_TOKEN", "GOLD_TOKEN", "GOLD_TOKEN", "GOLD_TOKEN"])
+	for grand_reel in range(maxi(1, int(grand_machine.get("reel_count", 6)))):
+		grand_strips.append(["GOLD_TOKEN"] if grand_reel == 0 else ["BLANK"])
 	grand_machine["bonus_reel_strips"] = grand_strips
 	var grand_active: Dictionary = buffalo.open_feature(grand_machine, {"classification": "free_games"}, 20, run_state.create_rng("buffalo_present_grand_open"), definition)
 	grand_active["remaining_steps"] = 6
 	grand_active["total_steps"] = 6
+	var accumulated_coins: Array = []
+	var accumulated_coin_total := 0
+	for grand_reel in range(maxi(1, int(grand_machine.get("reel_count", 6)))):
+		for grand_row in range(maxi(1, int(grand_machine.get("row_count", 5)))):
+			if grand_reel == 0 and grand_row == 0:
+				continue
+			accumulated_coins.append({"reel": grand_reel, "row": grand_row, "value": 20, "added_value": 20, "tier": "", "symbol": "GOLD_TOKEN", "count": 1, "step": 1})
+			accumulated_coin_total += 20
+	grand_active["collected_coins"] = accumulated_coins
+	grand_active["coins_collected"] = accumulated_coins.size()
+	grand_active["coin_total"] = accumulated_coin_total
 	grand_machine["active_bonus"] = grand_active
 	var grand_before := buffalo.current_grand_prize(grand_machine, 20, "bet_20")
+	var advertised_grand := int(presentation.surface_state(grand_machine, run_state, definition, {"surface_time_msec": 300}).get("slot_buffalo_grand_prize", 0))
+	if advertised_grand != grand_before:
+		failures.append("Slot buffalo 6x5 feature did not advertise the captured progressive Grand value.")
 	var grand_result_payload: Dictionary = resolver.resolve_bonus_action(grand_machine, "slot_bonus_launch", run_state.create_rng("buffalo_present_grand_resolve"), definition)
 	var grand_result: Dictionary = _slot_dict(grand_result_payload.get("result", {}))
 	var grand_step: Dictionary = _slot_dict(grand_result.get("slot_bonus_step", {}))
 	var grand_step_active: Dictionary = _slot_dict(grand_step.get("active_bonus", {}))
 	if not bool(grand_result.get("slot_bonus_complete", false)):
 		failures.append("Slot buffalo full coin board did not complete the feature immediately.")
-	if int(grand_result.get("slot_bonus_award", 0)) < grand_before + int(grand_step_active.get("coin_total", 0)):
+	if int(grand_result.get("slot_bonus_award", 0)) < advertised_grand + int(grand_step_active.get("coin_total", 0)):
 		failures.append("Slot buffalo full coin board did not award the advertised Grand plus all visible coin values.")
-	if str(grand_result.get("slot_celebration_tier", "")) != "jackpot" or int(grand_step.get("grand_prize_awarded", 0)) != grand_before:
+	if str(grand_result.get("slot_celebration_tier", "")) != "jackpot" or int(grand_step.get("grand_prize_awarded", 0)) != advertised_grand:
 		failures.append("Slot buffalo full coin board did not report a Grand jackpot celebration.")
 
 	var trophy_machine: Dictionary = _slot_machine(definition, run_state, "buffalo", "video_feature", "standard", "plain")

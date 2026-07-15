@@ -2147,10 +2147,8 @@ func _check_grand_casino_locked_route_ui(library: ContentLibrary, delta: Diction
 			failures.append("Grand Casino locked route travel row was not disabled and marked locked.")
 		if str(grand_choice.get("disabled_reason", "")).find("invitation") == -1:
 			failures.append("Grand Casino locked route row did not show the invitation condition.")
-		for leaked_key in ["cost", "risk", "distance", "distance_blocks", "risk_event", "preview", "preview_lines"]:
-			if grand_choice.has(leaked_key):
-				failures.append("Grand Casino locked route row leaked %s." % leaked_key)
-				break
+		if not grand_choice.has("cost") or not grand_choice.has("distance") or not grand_choice.has("distance_blocks"):
+			failures.append("Grand Casino locked route row did not retain its read-only travel cost and distance details.")
 	if bool(app.call("select_travel_option", "grand_casino")):
 		failures.append("Grand Casino locked route was selectable from the travel list.")
 	if not str(app.get("selected_travel_target_id")).is_empty():

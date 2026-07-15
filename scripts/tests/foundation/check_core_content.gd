@@ -2886,6 +2886,8 @@ func _check_slot_contract_smoke(library: ContentLibrary, failures: Array) -> voi
 	_check_slot_hold_and_spin_fill_scaling(definition, failures)
 	print("SLOT_CONTRACT_SMOKE free_games_carryover")
 	_check_slot_free_games_carryover(definition, failures)
+	print("SLOT_CONTRACT_SMOKE buffalo_feature_presentation")
+	_check_slot_buffalo_feature_presentation(definition, failures)
 	print("SLOT_CONTRACT_SMOKE bonus_completion_recovery")
 	_check_slot_bonus_completion_recovery(library, definition, failures)
 	print("SLOT_CONTRACT_SMOKE pinball_sim_physics")
