@@ -1071,8 +1071,8 @@ func _check_environment_encounter_freshness(library: ContentLibrary, failures: A
 		failures.append("Encounter freshness fixture is missing the back_alley archetype.")
 		return
 	var lender_pool := _string_array(back_alley.get("lender_hooks", []))
-	if lender_pool.size() < 3:
-		failures.append("Encounter freshness fixture expects Back Alley to expose a lender pool of at least three hooks.")
+	if lender_pool.size() < 2:
+		failures.append("Encounter freshness fixture expects Back Alley to expose at least two non-pawn-shop lender hooks.")
 		return
 	var composition_keys := {}
 	var staging_keys := {}

@@ -8,6 +8,8 @@ const ArtContractsScript := preload("res://scripts/core/art_contracts.gd")
 const ENVIRONMENT_BOARD_SIZE := Vector2(ArtContractsScript.ENVIRONMENT_BOARD_SIZE)
 const GENERATED_LAYOUT_VERSION := 10
 const EMPTY_MUSIC_NOTE := -999
+const SALS_PAWN_COUNTER_ID := "sals_pawn_counter"
+const PAWN_SHOP_ARCHETYPE_ID := "pawn_shop"
 
 var id: String = ""
 var archetype_id: String = ""
@@ -330,6 +332,7 @@ static func _build_offers(archetype: Dictionary, rng: RngStream, library: Conten
 	var price_multiplier := 1.0
 	if economic_profile.has("shop_price_multiplier"):
 		price_multiplier = clampf(float(economic_profile.get("shop_price_multiplier", 1.0)), 0.5, 1.5)
+	var sale_price_multiplier := maxf(0.0, float(economic_profile.get("shop_sale_price_multiplier", 0.0)))
 	var item_pool := library.shop_item_pool_for_challenge(archetype.get("item_pool", []), challenge_config)
 	var item_ids := _pick_ids(item_pool, archetype.get("item_count", 0), rng)
 	for item_id in item_ids:
@@ -341,6 +344,9 @@ static func _build_offers(archetype: Dictionary, rng: RngStream, library: Conten
 		var price := rng.randi_range(min_price, max_price)
 		if not is_equal_approx(price_multiplier, 1.0):
 			price = maxi(1, int(floor(float(price) * price_multiplier)))
+		if sale_price_multiplier > 0.0:
+			var sale_price := _item_sale_price(item)
+			price = maxi(1, int(ceil(float(sale_price) * sale_price_multiplier)))
 		offers.append({
 			"id": item_id,
 			"display_name": item.get("display_name", item_id),
@@ -349,6 +355,14 @@ static func _build_offers(archetype: Dictionary, rng: RngStream, library: Conten
 			"price_max": max_price,
 		})
 	return offers
+
+
+static func _item_sale_price(item: Dictionary) -> int:
+	if item.has("sale_price"):
+		return maxi(0, int(item.get("sale_price", 0)))
+	var price_min := int(item.get("price_min", 0))
+	var price_max := int(item.get("price_max", price_min))
+	return maxi(0, int(round(float(price_min + price_max) * 0.25)))
 
 
 static func _filtered_game_pool(archetype: Dictionary, library: ContentLibrary, challenge_config: Dictionary = {}) -> Array:
@@ -369,11 +383,16 @@ static func _filtered_required_games(archetype: Dictionary, filtered_pool: Array
 # Picks a per-instance subset of lender hooks when the archetype declares a count.
 static func _pick_lenders(archetype: Dictionary, rng: RngStream) -> Array:
 	var pool := _string_array(archetype.get("lender_hooks", []))
+	var archetype_id := str(archetype.get("id", "")).strip_edges()
+	if archetype_id != PAWN_SHOP_ARCHETYPE_ID:
+		pool.erase(SALS_PAWN_COUNTER_ID)
 	if pool.is_empty():
 		return []
 	if not archetype.has("lender_count"):
 		return rng.pick_many(pool, pool.size())
 	var required_lenders := _string_array(archetype.get("required_lender_hooks", []))
+	if archetype_id != PAWN_SHOP_ARCHETYPE_ID:
+		required_lenders.erase(SALS_PAWN_COUNTER_ID)
 	var selected := _pick_ids_with_required(pool, archetype.get("lender_count", pool.size()), required_lenders, rng)
 	return rng.pick_many(selected, selected.size())
 

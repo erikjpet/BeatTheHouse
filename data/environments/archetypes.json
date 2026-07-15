@@ -207,12 +207,11 @@
       "house_drink"
     ],
     "lender_hooks": [
-      "the_crew",
-      "sals_pawn_counter"
+      "the_crew"
     ],
     "lender_count": [
       1,
-      2
+      1
     ],
     "suspicion_cues": [
       "The clerk glances up when you linger near the counter."
@@ -483,12 +482,11 @@
     ],
     "lender_hooks": [
       "the_crew",
-      "sals_pawn_counter",
       "street_lender"
     ],
     "lender_count": [
       1,
-      2
+      1
     ],
     "suspicion_cues": [
       "The seller keeps one eye on the mouth of the alley."
@@ -716,7 +714,6 @@
     ],
     "lender_hooks": [
       "brother_in_law",
-      "sals_pawn_counter",
       "motel_friend"
     ],
     "lender_count": [
@@ -1884,12 +1881,11 @@
       "house_drink"
     ],
     "lender_hooks": [
-      "the_crew",
-      "sals_pawn_counter"
+      "the_crew"
     ],
     "lender_count": [
       1,
-      2
+      1
     ],
     "suspicion_cues": [
       "The host smiles at your action and counts the empty glasses."
@@ -2159,12 +2155,11 @@
       "house_drink"
     ],
     "lender_hooks": [
-      "the_crew",
-      "sals_pawn_counter"
+      "the_crew"
     ],
     "lender_count": [
       1,
-      2
+      1
     ],
     "suspicion_cues": [
       "The river keeps everyone aboard with their tells."
@@ -2445,7 +2440,7 @@
     "economic_profile": {
       "stake_floor": 0,
       "stake_ceiling": 0,
-      "shop_price_multiplier": 0.65,
+      "shop_sale_price_multiplier": 1.1,
       "safehouse": true
     },
     "game_pool": [

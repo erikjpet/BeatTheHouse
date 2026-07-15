@@ -5354,6 +5354,9 @@ static func _normalize_environment(data: Dictionary) -> Dictionary:
 	environment["parent_archetype"] = str(environment.get("parent_archetype", ""))
 	environment["service_ids"] = _copy_array(environment.get("service_ids", []))
 	environment["lender_hooks"] = _copy_array(environment.get("lender_hooks", []))
+	if str(environment.get("archetype_id", "")) != PAWN_SHOP_ARCHETYPE_ID:
+		while environment["lender_hooks"].has(SALS_PAWN_COUNTER_ID):
+			environment["lender_hooks"].erase(SALS_PAWN_COUNTER_ID)
 	environment["suspicion_cues"] = _copy_array(environment.get("suspicion_cues", []))
 	environment["travel_hooks"] = _copy_array(environment.get("travel_hooks", []))
 	environment["next_archetypes"] = _copy_array(environment.get("next_archetypes", []))

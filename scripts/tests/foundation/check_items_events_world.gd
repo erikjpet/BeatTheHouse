@@ -3871,6 +3871,23 @@ func _check_pawn_shop_run_environment(library: ContentLibrary, failures: Array) 
 		failures.append("Pawn shop run archetype must be a tier 2 shop.")
 	if not _string_array(pawn_archetype.get("lender_hooks", [])).has("sals_pawn_counter"):
 		failures.append("Pawn shop run archetype does not expose Sal's pawn counter.")
+	for archetype_value in library.environment_archetypes:
+		if typeof(archetype_value) != TYPE_DICTIONARY:
+			continue
+		var archetype := archetype_value as Dictionary
+		if str(archetype.get("id", "")) != "pawn_shop" and _string_array(archetype.get("lender_hooks", [])).has("sals_pawn_counter"):
+			failures.append("Sal's pawn counter was authored outside the pawn shop in %s." % str(archetype.get("id", "unknown")))
+	var legacy_environment := {
+		"id": "legacy_corner_store",
+		"archetype_id": "corner_store",
+		"kind": "shop",
+		"lender_hooks": ["the_crew", "sals_pawn_counter"],
+	}
+	var migration_state := RunStateScript.new()
+	migration_state.start_new("PAWN-SHOP-LOCATION-MIGRATION")
+	migration_state.set_environment(legacy_environment)
+	if _string_array(migration_state.current_environment.get("lender_hooks", [])).has("sals_pawn_counter"):
+		failures.append("Legacy non-pawn-shop environment state retained Sal's pawn counter after normalization.")
 	if _string_array(pawn_archetype.get("event_scopes", [])).find("shop") < 0:
 		failures.append("Pawn shop run archetype does not use shop event scope.")
 	if _string_array(pawn_archetype.get("required_game_ids", [])) != ["slot"]:
@@ -3891,11 +3908,15 @@ func _check_pawn_shop_run_environment(library: ContentLibrary, failures: Array) 
 			continue
 		var offer := offer_value as Dictionary
 		var item := library.item(str(offer.get("id", "")))
-		var expected_min := maxi(1, int(floor(float(item.get("price_min", 1)) * 0.65)))
-		var expected_max := maxi(1, int(floor(float(item.get("price_max", item.get("price_min", 1))) * 0.65)))
+		var resale_price := int(item.get("sale_price", 0))
+		var expected_price := maxi(1, int(ceil(float(resale_price) * 1.1)))
 		var price := int(offer.get("price", 0))
-		if price < expected_min or price > expected_max:
-			failures.append("Pawn shop offer %s price %d was outside discounted range %d..%d." % [str(offer.get("id", "")), price, expected_min, expected_max])
+		if price != expected_price:
+			failures.append("Pawn shop offer %s price %d was not Sal's %d resale payout plus 10%%, rounded up to %d." % [str(offer.get("id", "")), price, resale_price, expected_price])
+		if resale_price > 0 and price <= resale_price:
+			failures.append("Pawn shop offer %s could be resold to Sal without a loss." % str(offer.get("id", "")))
+		if price > int(item.get("price_min", price)):
+			failures.append("Pawn shop offer %s price %d was above the bottom of its ordinary price range." % [str(offer.get("id", "")), price])
 	var normal_archetype := _archetype_by_id(library, "corner_store")
 	if not normal_archetype.is_empty():
 		var normal_environment := EnvironmentInstance.from_archetype(normal_archetype, 1, run_state.create_rng("normal_shop_price"), library).to_dict()

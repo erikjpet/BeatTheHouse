@@ -3091,14 +3091,19 @@ func _sb4_check_wager_modal_routes(library: ContentLibrary, app: Control, failur
 		"stake_ceiling": 2,
 	}
 	run_state.current_environment = environment
-	app.set("current_game", HostileInputAllInFixtureGame.new())
-	app.set("selected_stake", 2)
 	app.call("_set_current_screen", "GAME")
 	app.call("_refresh")
+	app.set("current_game", HostileInputAllInFixtureGame.new())
+	app.set("selected_stake", 2)
 	app.call("_resolve_game_action", "all_in_loss", false, false, false)
 	var popup: Dictionary = app.call("current_event_choice_popup_snapshot")
 	if not bool(popup.get("visible", false)) or str(popup.get("popup_type", "")) != "wager_confirmation":
-		failures.append("SB.4 all-in wager did not open a wager confirmation popup.")
+		failures.append("SB.4 all-in wager did not open a wager confirmation popup: popup=%s modal_blocked=%s closing_blocked=%s environment=%s." % [
+			JSON.stringify(popup),
+			str(app.call("_modal_contract_blocks_player_input")),
+			str(app.call("_closing_time_blocks_environment_actions")),
+			JSON.stringify(run_state.current_environment),
+		])
 		return
 	if run_state.bankroll != 2:
 		failures.append("SB.4 all-in wager changed bankroll before confirmation.")
