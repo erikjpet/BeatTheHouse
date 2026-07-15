@@ -1415,7 +1415,7 @@ func resolve_event_choice(event_id: String, choice_id: String) -> void:
 	var return_to_game_after_event := _event_resolution_returns_to_active_game(popup_type, event_context)
 	var inventory_before := _run_inventory_id_set()
 	var result := event_module.resolve(run_state, event_environment, choice_id)
-	_show_event_item_found_popups(result, inventory_before)
+	_show_item_found_popups(result, inventory_before)
 	_start_conclusion_animation(result, popup_rect)
 	if was_triggered_popup and run_state != null:
 		run_state.complete_triggered_event_resolution(event_id)
@@ -2233,7 +2233,7 @@ func _resolve_dialogue_choice(entry: Dictionary, choice_id: String) -> void:
 	event_module.setup(_dialogue_choice_event_definition(entry, option, choice_definition, effects), library)
 	var inventory_before := _run_inventory_id_set()
 	var result := event_module.resolve(run_state, event_environment, choice_id)
-	_show_event_item_found_popups(result, inventory_before)
+	_show_item_found_popups(result, inventory_before)
 	_start_conclusion_animation(result, _talk_dock_panel_rect())
 	if bool(result.get("ok", false)):
 		var goto_id := str(choice_definition.get("goto", "")).strip_edges()
@@ -2891,12 +2891,14 @@ func use_service_hook(service_id: String) -> bool:
 		_refresh()
 		return false
 	_refresh_run_action_service()
+	var inventory_before := _run_inventory_id_set()
 	var resolved := run_action_service.use_hook("service", service_id)
 	if not bool(resolved.get("ok", false)):
 		_show_message(str(resolved.get("message", "This service is only informational right now.")))
 		_refresh()
 		return false
 	var result: Dictionary = resolved.get("result", {})
+	_show_item_found_popups(result, inventory_before)
 	last_hook_result = result.duplicate(true)
 	_clear_selected_service_hook()
 	_set_current_screen(SCREEN_RESULT)
@@ -10736,7 +10738,7 @@ func _run_journal_callbacks() -> Dictionary:
 	}
 
 
-func _show_event_item_found_popups(result: Dictionary, inventory_before: Dictionary) -> void:
+func _show_item_found_popups(result: Dictionary, inventory_before: Dictionary) -> void:
 	if item_found_popup == null or library == null or run_state == null or not bool(result.get("ok", false)):
 		return
 	var deltas: Dictionary = result.get("deltas", {}) if typeof(result.get("deltas", {})) == TYPE_DICTIONARY else {}

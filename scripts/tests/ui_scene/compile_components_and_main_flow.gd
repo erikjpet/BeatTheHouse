@@ -581,6 +581,47 @@ func _check_event_item_found_main_flow(app: Control) -> bool:
 	return true
 
 
+func _check_service_item_found_main_flow(app: Control) -> bool:
+	app.call("start_foundation_run", "UI-CUMQUAT-FOUND-SEED")
+	await process_frame
+	var run_state: RunState = app.get("run_state")
+	if run_state == null:
+		push_error("Cumquat item-found service fixture could not access runtime state.")
+		return false
+	var environment := run_state.current_environment.duplicate(true)
+	environment["id"] = "ui_item_found_beach"
+	environment["archetype_id"] = "beach"
+	environment["display_name"] = "Low Tide Beach"
+	environment["kind"] = "recovery"
+	environment["tier"] = 2
+	environment["service_ids"] = ["beach_sand_pile"]
+	environment["resolved_event_ids"] = []
+	run_state.set_environment(environment)
+	app.call("_refresh")
+	await process_frame
+	if not bool(app.call("use_service_hook", "beach_sand_pile")):
+		push_error("Cumquat item-found fixture could not use the real beach sand-pile service.")
+		return false
+	await process_frame
+	var snapshot: Dictionary = app.call("current_item_found_popup_snapshot")
+	if not run_state.inventory.has("cumquat_sandwich") or not bool(run_state.narrative_flags.get("beach_sand_pile_found", false)):
+		push_error("Beach sand pile did not grant and persist the Cumquat Sandwich before presentation.")
+		return false
+	if not bool(snapshot.get("visible", false)) or str(snapshot.get("item_id", "")) != "cumquat_sandwich":
+		push_error("Cumquat Sandwich service grant did not open the item-found popup: %s." % JSON.stringify(snapshot))
+		return false
+	if str(snapshot.get("display_name", "")) != "Cumquat Sandwich" or not bool(snapshot.get("has_item_texture", false)) or str(snapshot.get("message", "")) != "You found the Cumquat Sandwich item.":
+		push_error("Cumquat Sandwich popup did not use the authored item name, icon, and discovery line.")
+		return false
+	if str(snapshot.get("presentation", "")) != "internal_dialogue" or not is_equal_approx(float(snapshot.get("duration_seconds", 0.0)), 3.0):
+		push_error("Cumquat Sandwich popup did not use the three-second internal-dialogue presentation.")
+		return false
+	var popup: ItemFoundPopup = app.get("item_found_popup")
+	popup.dismiss_current()
+	await process_frame
+	return true
+
+
 func _check_world_map_selection_stable_component() -> bool:
 	var canvas: Control = WorldMapCanvasScript.new()
 	canvas.size = Vector2(560, 360)
@@ -2255,6 +2296,9 @@ func _run() -> void:
 		quit(1)
 		return
 	if not await _check_event_item_found_main_flow(app):
+		quit(1)
+		return
+	if not await _check_service_item_found_main_flow(app):
 		quit(1)
 		return
 	app.call("start_foundation_run", "UI-COMPILE-SEED")
