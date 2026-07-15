@@ -57,6 +57,7 @@ const OBJECT_INFO_TYPE_GAP := 8.0
 const OBJECT_INFO_HEADER_Y := 13.0
 const OBJECT_INFO_HEADER_RULE_Y := 18.0
 const OBJECT_INFO_BODY_Y := 31.0
+const OBJECT_INFO_BADGE_RAISE := 3.0
 const OBJECT_INFO_ACTION_HEIGHT := 16.0
 const OBJECT_INFO_ACTION_GAP := 5.0
 const OBJECT_INFO_INLINE_ACTION_HEIGHT := 19.0
@@ -1433,7 +1434,7 @@ func _draw_selected_object_info() -> void:
 	var badges := _array_view(object_data.get("attribute_badges", []))
 	if not badges.is_empty():
 		var badge_entries := _selected_info_badge_entries_for_rect(object_data, card, y)
-		var row_rect := AttributeBadgeRowScript.draw_canvas(self, badges, Vector2(card.position.x + OBJECT_INFO_PADDING_X, y), card.size.x - OBJECT_INFO_PADDING_X * 2.0, 16)
+		var row_rect := AttributeBadgeRowScript.draw_canvas(self, badges, Vector2(card.position.x + OBJECT_INFO_PADDING_X, y - OBJECT_INFO_BADGE_RAISE), card.size.x - OBJECT_INFO_PADDING_X * 2.0, 16)
 		selected_info_badge_hit_entries = badge_entries
 		y += row_rect.size.y + 4.0
 	var action_area_height := _selected_info_action_area_height(object_data)
@@ -2333,7 +2334,7 @@ func _selected_info_badge_entries_for_rect(object_data: Dictionary, card: Rect2,
 		return []
 	return AttributeBadgeRowScript.canvas_hit_entries(
 		badges,
-		Vector2(card.position.x + OBJECT_INFO_PADDING_X, y),
+		Vector2(card.position.x + OBJECT_INFO_PADDING_X, y - OBJECT_INFO_BADGE_RAISE),
 		card.size.x - OBJECT_INFO_PADDING_X * 2.0,
 		16
 	)

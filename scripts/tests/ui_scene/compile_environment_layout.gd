@@ -366,6 +366,9 @@ func _selected_info_text_fits(canvas_value: Variant, label: String, required_fra
 		if badge_rect.end.y > body_text_start_y - 0.01:
 			push_error("%s info-card badge row overlaps body text." % label)
 			return false
+		if body_text_start_y - badge_rect.end.y < 6.0:
+			push_error("%s info-card badge row does not leave enough clearance above body text." % label)
+			return false
 		if str(badge_entry.get("tooltip", "")).strip_edges().is_empty():
 			push_error("%s info-card badge did not expose hover details." % label)
 			return false
