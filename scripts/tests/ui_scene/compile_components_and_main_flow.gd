@@ -11,6 +11,7 @@ const GameSurfaceCanvasScript := preload("res://scripts/ui/game_surface_canvas.g
 const PerformanceLivenessGuardScript := preload("res://scripts/ui/performance_liveness_guard.gd")
 const RunInventoryScreenScript := preload("res://scripts/ui/run_inventory_screen.gd")
 const TalkDockScript := preload("res://scripts/ui/talk_dock.gd")
+const ItemFoundPopupScript := preload("res://scripts/ui/item_found_popup.gd")
 const SfxPlayerScript := preload("res://scripts/ui/sfx_player.gd")
 const WorldMapCanvasScript := preload("res://scripts/ui/world_map_canvas.gd")
 const SlotMachineStateScript := preload("res://scripts/games/slots/slot_machine_state.gd")
@@ -268,6 +269,50 @@ func _check_talk_dock_component() -> bool:
 	return true
 
 
+func _check_item_found_popup_component() -> bool:
+	var parent := Control.new()
+	parent.size = Vector2(640, 360)
+	root.add_child(parent)
+	var popup: ItemFoundPopup = ItemFoundPopupScript.new()
+	popup.size = parent.size
+	parent.add_child(popup)
+	await process_frame
+	popup.show_item({"id": "fixture_key", "display_name": "Fixture Key"}, _item_found_test_texture())
+	await process_frame
+	var snapshot := popup.current_snapshot()
+	var panel_rect := _snapshot_rect(snapshot.get("panel_rect", Rect2()))
+	var screen_rect := _snapshot_rect(snapshot.get("screen_rect", Rect2()))
+	if not bool(snapshot.get("visible", false)) or str(snapshot.get("item_id", "")) != "fixture_key" or str(snapshot.get("message", "")) != "You found the Fixture Key item.":
+		parent.queue_free()
+		push_error("Item-found popup did not render the internal item discovery line.")
+		return false
+	if str(snapshot.get("presentation", "")) != "internal_dialogue" or not bool(snapshot.get("has_item_texture", false)) or not is_equal_approx(float(snapshot.get("duration_seconds", 0.0)), 3.0):
+		parent.queue_free()
+		push_error("Item-found popup did not expose item art and the three-second transient contract.")
+		return false
+	if panel_rect.size.x > 410.0 or panel_rect.size.y > 130.0 or panel_rect.position.x > screen_rect.position.x + 24.0 or absf(panel_rect.end.y - screen_rect.end.y) > 24.0:
+		parent.queue_free()
+		push_error("Item-found popup was not a small bottom-left overlay: panel=%s screen=%s snapshot=%s." % [str(panel_rect), str(screen_rect), JSON.stringify(snapshot)])
+		return false
+	popup.dismiss_timer.start(0.01)
+	await process_frame
+	await process_frame
+	if bool(popup.current_snapshot().get("visible", true)):
+		parent.queue_free()
+		push_error("Item-found popup did not dismiss itself when its timeout elapsed.")
+		return false
+	root.remove_child(parent)
+	parent.free()
+	await process_frame
+	return true
+
+
+func _item_found_test_texture() -> Texture2D:
+	var image := Image.create(8, 8, false, Image.FORMAT_RGBA8)
+	image.fill(Color("#36d7ff"))
+	return ImageTexture.create_from_image(image)
+
+
 func _talk_dock_entry_fixture() -> Dictionary:
 	return {
 		"event_id": "talk_fixture",
@@ -449,6 +494,43 @@ func _check_dialogue_dock_main_flow(app: Control) -> bool:
 	if bool(snapshot.get("visible", false)):
 		push_error("Dialogue dock stayed visible after the end choice.")
 		return false
+	return true
+
+
+func _check_event_item_found_main_flow(app: Control) -> bool:
+	app.call("start_foundation_run", "UI-ITEM-FOUND-SEED")
+	await process_frame
+	var run_state: RunState = app.get("run_state")
+	var library: ContentLibrary = app.get("library")
+	if run_state == null or library == null:
+		push_error("Item-found event fixture could not access runtime state.")
+		return false
+	var environment := run_state.current_environment.duplicate(true)
+	environment["id"] = "ui_item_found_jazz"
+	environment["archetype_id"] = "jazz_club"
+	environment["kind"] = "shop"
+	environment["tier"] = 2
+	environment["turns"] = 3
+	environment["resolved_event_ids"] = []
+	run_state.set_environment(environment)
+	run_state.set_story_flag("jazz_trio_backed_player", true)
+	var event_definition := library.event("jazz_after_hours_invitation")
+	var event_module := EventModuleScript.new()
+	event_module.setup(event_definition, library)
+	var inventory_before: Dictionary = app.call("_run_inventory_id_set")
+	var result := event_module.resolve(run_state, run_state.current_environment, "take_the_shades")
+	app.call("_show_event_item_found_popups", result, inventory_before)
+	await process_frame
+	var snapshot: Dictionary = app.call("current_item_found_popup_snapshot")
+	if not run_state.inventory.has("cheap_sunglasses") or not bool(snapshot.get("visible", false)) or str(snapshot.get("item_id", "")) != "cheap_sunglasses":
+		push_error("An event item grant did not open the item-found popup: %s." % JSON.stringify(snapshot))
+		return false
+	if str(snapshot.get("display_name", "")) != "Cheap Sunglasses" or not bool(snapshot.get("has_item_texture", false)) or str(snapshot.get("message", "")) != "You found the Cheap Sunglasses item.":
+		push_error("Event item-found popup did not use the granted item's authored name and icon.")
+		return false
+	var popup: ItemFoundPopup = app.get("item_found_popup")
+	popup.dismiss_current()
+	await process_frame
 	return true
 
 
@@ -836,6 +918,9 @@ func _run() -> void:
 		quit(1)
 		return
 	if not await _check_talk_dock_component():
+		quit(1)
+		return
+	if not await _check_item_found_popup_component():
 		quit(1)
 		return
 	if not await _check_world_map_selection_stable_component():
@@ -2086,6 +2171,9 @@ func _run() -> void:
 		quit(1)
 		return
 	if not await _check_dialogue_dock_main_flow(app):
+		quit(1)
+		return
+	if not await _check_event_item_found_main_flow(app):
 		quit(1)
 		return
 	app.call("start_foundation_run", "UI-COMPILE-SEED")

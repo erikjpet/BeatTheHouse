@@ -103,6 +103,7 @@ const MetaSessionControllerScript := preload("res://scripts/ui/meta_session_cont
 const WorldMapOverlayControllerScript := preload("res://scripts/ui/world_map_overlay_controller.gd")
 const WagerConfirmationControllerScript := preload("res://scripts/ui/wager_confirmation_controller.gd")
 const TalkDockScript := preload("res://scripts/ui/talk_dock.gd")
+const ItemFoundPopupScript := preload("res://scripts/ui/item_found_popup.gd")
 const SfxPlayerScript := preload("res://scripts/ui/sfx_player.gd")
 const ProceduralMusicPlayerScript := preload("res://scripts/ui/procedural_music_player.gd")
 const PerfTelemetryOverlayScript := preload("res://scripts/ui/perf_telemetry_overlay.gd")
@@ -278,6 +279,7 @@ var event_choice_popup_title_label: Label
 var event_choice_popup_summary_label: Label
 var event_choice_popup_choices_list: VBoxContainer
 var talk_dock: TalkDock
+var item_found_popup: ItemFoundPopup
 var conclusion_animation_overlay: Control
 var conclusion_animation_snapshot: Dictionary = {}
 var conclusion_animation_tweens: Array[Tween] = []
@@ -526,6 +528,8 @@ func start_foundation_run(seed_text: String = DEFAULT_SEED, challenge_config: Di
 	_hide_travel_transition()
 	if talk_dock != null:
 		talk_dock.clear_entry()
+	if item_found_popup != null:
+		item_found_popup.clear_all()
 	_clear_selected_game_action()
 	_clear_selected_stake()
 	_clear_selected_travel()
@@ -1403,7 +1407,9 @@ func resolve_event_choice(event_id: String, choice_id: String) -> void:
 	var popup_type := str(pending_event_choice_popup_snapshot.get("popup_type", ""))
 	var was_triggered_popup := popup_type == "triggered_event"
 	var return_to_game_after_event := _event_resolution_returns_to_active_game(popup_type, event_context)
+	var inventory_before := _run_inventory_id_set()
 	var result := event_module.resolve(run_state, event_environment, choice_id)
+	_show_event_item_found_popups(result, inventory_before)
 	_start_conclusion_animation(result, popup_rect)
 	if was_triggered_popup and run_state != null:
 		run_state.complete_triggered_event_resolution(event_id)
@@ -2216,7 +2222,9 @@ func _resolve_dialogue_choice(entry: Dictionary, choice_id: String) -> void:
 	var event_environment := _event_environment_for_context(context)
 	var event_module := EventModule.new()
 	event_module.setup(_dialogue_choice_event_definition(entry, option, choice_definition, effects), library)
+	var inventory_before := _run_inventory_id_set()
 	var result := event_module.resolve(run_state, event_environment, choice_id)
+	_show_event_item_found_popups(result, inventory_before)
 	_start_conclusion_animation(result, _talk_dock_panel_rect())
 	if bool(result.get("ok", false)):
 		var goto_id := str(choice_definition.get("goto", "")).strip_edges()
@@ -3250,6 +3258,8 @@ func _load_foundation_run_from_slot(return_to_start_on_missing: bool) -> bool:
 	last_game_result = _game_result_from_story_log(run_state.story_log)
 	last_item_result = {}
 	last_hook_result = {}
+	if item_found_popup != null:
+		item_found_popup.clear_all()
 	_hide_event_choice_popup()
 	_hide_run_inventory_popup()
 	_hide_run_journal_popup()
@@ -3722,6 +3732,7 @@ func _build_ui() -> void:
 	_build_run_journal_overlay()
 	_build_travel_transition_overlay()
 	_build_world_map_overlay()
+	_build_item_found_popup()
 	_apply_accessibility_settings()
 
 
@@ -4340,6 +4351,11 @@ func _build_talk_dock() -> void:
 	talk_dock = TalkDockScript.new()
 	talk_dock.choice_requested.connect(Callable(self, "_on_talk_dock_choice_requested"))
 	add_child(talk_dock)
+
+
+func _build_item_found_popup() -> void:
+	item_found_popup = ItemFoundPopupScript.new()
+	add_child(item_found_popup)
 
 
 func _build_conclusion_animation_overlay() -> void:
@@ -6886,6 +6902,7 @@ func current_screen_snapshot() -> Dictionary:
 		"run_menu": current_run_menu_snapshot(),
 		"run_journal_visible": _run_journal_popup_is_visible(),
 		"talk_dock": current_talk_dock_snapshot(),
+		"item_found_popup": current_item_found_popup_snapshot(),
 		"overlay_state": current_overlay_state_snapshot(),
 		"failure_summary": _failure_summary_snapshot() if run_state != null and run_state.run_status == RunState.RUN_STATUS_FAILED else {},
 		"victory_summary": _victory_summary_snapshot() if run_state != null and run_state.run_status == RunState.RUN_STATUS_ENDED else {},
@@ -6988,6 +7005,17 @@ func current_talk_dock_snapshot() -> Dictionary:
 		snapshot["environment_rect"] = _rect_to_dict(environment_canvas.get_global_rect())
 	if game_surface_canvas != null:
 		snapshot["game_surface_rect"] = _rect_to_dict(game_surface_canvas.get_global_rect())
+	return snapshot
+
+
+func current_item_found_popup_snapshot() -> Dictionary:
+	if item_found_popup == null:
+		return {"visible": false}
+	var snapshot := item_found_popup.current_snapshot()
+	if snapshot.has("panel_rect") and typeof(snapshot.get("panel_rect")) == TYPE_RECT2:
+		snapshot["panel_rect"] = _rect_to_dict(snapshot.get("panel_rect"))
+	if snapshot.has("screen_rect") and typeof(snapshot.get("screen_rect")) == TYPE_RECT2:
+		snapshot["screen_rect"] = _rect_to_dict(snapshot.get("screen_rect"))
 	return snapshot
 
 
@@ -8540,6 +8568,8 @@ func return_to_main_menu() -> void:
 	_hide_run_journal_popup()
 	_hide_world_map_overlay()
 	_hide_travel_transition()
+	if item_found_popup != null:
+		item_found_popup.clear_all()
 	_clear_selected_game_action()
 	_clear_selected_stake()
 	clear_interaction_focus()
@@ -10675,6 +10705,47 @@ func _run_journal_callbacks() -> Dictionary:
 		"game_display_name": Callable(self, "_game_display_name"),
 		"failure_summary_snapshot": Callable(self, "_failure_summary_snapshot"),
 	}
+
+
+func _show_event_item_found_popups(result: Dictionary, inventory_before: Dictionary) -> void:
+	if item_found_popup == null or library == null or run_state == null or not bool(result.get("ok", false)):
+		return
+	var deltas: Dictionary = result.get("deltas", {}) if typeof(result.get("deltas", {})) == TYPE_DICTIONARY else {}
+	var inventory_add: Array = deltas.get("inventory_add", []) if typeof(deltas.get("inventory_add", [])) == TYPE_ARRAY else []
+	if inventory_add.is_empty():
+		return
+	var inventory_after := _run_inventory_id_set()
+	var shown := {}
+	for item_value in inventory_add:
+		var item_id := _inventory_value_id(item_value)
+		if item_id.is_empty() or shown.has(item_id) or inventory_before.has(item_id) or not inventory_after.has(item_id):
+			continue
+		shown[item_id] = true
+		var definition := library.item(item_id)
+		if definition.is_empty():
+			definition = {
+				"id": item_id,
+				"display_name": item_id.replace("_", " ").capitalize(),
+			}
+		var asset_path := str(definition.get("asset_path", "")).strip_edges()
+		item_found_popup.show_item(definition, _texture_for_image_asset_path(asset_path))
+
+
+func _run_inventory_id_set() -> Dictionary:
+	var result := {}
+	if run_state == null:
+		return result
+	for item_value in run_state.inventory:
+		var item_id := _inventory_value_id(item_value)
+		if not item_id.is_empty():
+			result[item_id] = true
+	return result
+
+
+func _inventory_value_id(value: Variant) -> String:
+	if typeof(value) == TYPE_DICTIONARY:
+		return str((value as Dictionary).get("id", "")).strip_edges()
+	return str(value).strip_edges()
 
 
 func _inventory_item_view_list() -> Array:
