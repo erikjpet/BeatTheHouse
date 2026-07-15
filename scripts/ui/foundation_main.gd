@@ -6898,6 +6898,7 @@ func current_action_category_snapshot() -> Dictionary:
 
 
 func current_screen_snapshot() -> Dictionary:
+	var map_detail_badges: Array = world_map_overlay_controller.detail_badges() if world_map_overlay_controller != null else []
 	return {
 		"screen": current_screen,
 		"selected_category": selected_action_category,
@@ -6922,7 +6923,8 @@ func current_screen_snapshot() -> Dictionary:
 		"world_map_detail_popup_visible": world_map_detail_popup != null and world_map_detail_popup.visible,
 		"world_map_detail_popup_rect": _rect_to_dict(world_map_detail_popup.get_global_rect()) if world_map_detail_popup != null and world_map_detail_popup.visible else {},
 		"world_map_holder_rect": _rect_to_dict(world_map_holder.get_global_rect()) if world_map_holder != null else {},
-		"world_map_detail_badge_count": world_map_badge_slot.get_child_count() if world_map_badge_slot != null and world_map_badge_slot.visible else 0,
+		"world_map_detail_badge_count": map_detail_badges.size() if world_map_badge_slot != null and world_map_badge_slot.visible else 0,
+		"world_map_detail_badges": map_detail_badges,
 		"world_map_confirm_enabled": world_map_confirm_button != null and not world_map_confirm_button.disabled,
 		"world_map": _world_map_snapshot() if run_state != null else {},
 		"conclusion_animation": current_conclusion_animation_snapshot(),
@@ -11104,32 +11106,41 @@ func _refresh_world_map_detail() -> void:
 	var choice := _travel_choice(selected_world_map_node_id)
 	lines.append("Stop: %s" % str(node.get("label", selected_world_map_node_id)))
 	var node_archetype := _environment_archetype(str(node.get("archetype_id", selected_world_map_node_id)))
+	var destination_kind := str(node_archetype.get("kind", node.get("kind", "")))
 	var status_text := EnvironmentHours.travel_status_text(node_archetype, run_state.game_minute_of_day())
 	if bool(choice.get("locked", false)):
+		lines.append("Hours: %s" % str(choice.get("open_status_text", status_text)))
+		lines.append("Travel: %s" % _world_map_travel_method(choice))
+		var locked_blocks := int(choice.get("distance_blocks", 0))
+		var locked_distance := str(choice.get("distance", "near")).capitalize()
+		if locked_blocks > 0:
+			locked_distance = "%s / %d block%s" % [locked_distance, locked_blocks, "" if locked_blocks == 1 else "s"]
+		lines.append("Distance: %s" % locked_distance)
+		lines.append("Cost: $%d" % int(choice.get("cost", 0)))
 		lines.append("Locked: %s" % str(choice.get("disabled_reason", "That route is not available right now.")))
 		_set_world_map_confirm_enabled(false)
-		_set_world_map_detail_badges([])
+		_set_world_map_detail_badges(AttributeBadgesScript.for_world_map_detail(destination_kind, choice))
 		world_map_detail_label.text = "\n".join(lines)
 		return
-	var flavor := _world_map_node_flavor(node)
-	if not flavor.is_empty():
-		lines.append("Does: %s" % flavor)
 	if selected_world_map_node_id == current_id:
 		lines.append("Status: You are here.")
 		lines.append("Hours: %s" % status_text)
 		_set_world_map_confirm_enabled(false)
-		_set_world_map_detail_badges([])
+		_set_world_map_detail_badges(AttributeBadgesScript.for_world_map_detail(destination_kind))
 		world_map_detail_label.text = "\n".join(lines)
 		return
 	if choice.is_empty():
 		var path := WorldMapScript.path_between(run_state.world_map, current_id, selected_world_map_node_id, true)
-		if path.size() >= 2:
-			lines.append("Not on the route list from here right now.")
-		else:
-			lines.append("No known path from here.")
 		lines.append("Hours: %s" % status_text)
+		lines.append("Travel: Unavailable from here")
+		lines.append("Distance: Not available")
+		lines.append("Cost: Not available")
+		if path.size() >= 2:
+			lines.append("Status: Not on the current route list.")
+		else:
+			lines.append("Status: No known path from here.")
 		_set_world_map_confirm_enabled(false)
-		_set_world_map_detail_badges([])
+		_set_world_map_detail_badges(AttributeBadgesScript.for_world_map_detail(destination_kind))
 		world_map_detail_label.text = "\n".join(lines)
 		return
 	status_text = str(choice.get("open_status_text", status_text))
@@ -11138,24 +11149,17 @@ func _refresh_world_map_detail() -> void:
 	var distance_blocks := int(choice.get("distance_blocks", 0))
 	var distance_text := str(choice.get("distance", "near")).capitalize()
 	if distance_blocks > 0:
-		distance_text = "%s / %d blocks" % [distance_text, distance_blocks]
+		distance_text = "%s / %d block%s" % [distance_text, distance_blocks, "" if distance_blocks == 1 else "s"]
 	lines.append("Distance: %s" % distance_text)
-	lines.append("Cost: %d" % int(choice.get("cost", 0)))
-	var risk := _travel_risk_summary(choice)
-	if not risk.is_empty():
-		lines.append("Risk: %s" % risk)
+	lines.append("Cost: $%d" % int(choice.get("cost", 0)))
 	var unlock_summary := str(choice.get("unlock_summary", "")).strip_edges()
 	if not bool(choice.get("enabled", true)) and not unlock_summary.is_empty():
-		lines.append("Lock: %s" % unlock_summary)
+		lines.append("Status: %s" % unlock_summary)
 	elif bool(choice.get("enabled", true)):
 		lines.append("Status: Route open.")
-	for preview_line in _copy_array(choice.get("preview_lines", [])).slice(0, 3):
-		var preview_text := str(preview_line).strip_edges()
-		if not preview_text.is_empty():
-			lines.append("Intel: %s" % preview_text)
-	if not bool(choice.get("enabled", true)):
-		lines.append("Locked: %s" % str(choice.get("disabled_reason", "That route is not available right now.")))
-	_set_world_map_detail_badges(choice.get("attribute_badges", []))
+	else:
+		lines.append("Status: %s" % str(choice.get("disabled_reason", "That route is not available right now.")))
+	_set_world_map_detail_badges(AttributeBadgesScript.for_world_map_detail(destination_kind, choice))
 	_set_world_map_confirm_enabled(bool(choice.get("enabled", true)))
 	world_map_detail_label.text = "\n".join(lines)
 

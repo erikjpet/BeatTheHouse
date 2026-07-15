@@ -26,6 +26,7 @@ var badge_cells: Array = []
 var button_ids: Array = []
 var button_layout_size := Vector2(-1.0, -1.0)
 var detail_badges_key := "__unset__"
+var detail_badges_snapshot: Array = []
 var selected_node_id: String = ""
 var selected_travel_target_id: String = ""
 var selected_travel_label: String = ""
@@ -170,6 +171,7 @@ func set_detail_badges(badges_value: Variant) -> void:
 		return
 	_ensure_detail_badge_pool()
 	var badges := _copy_array(badges_value)
+	detail_badges_snapshot = badges.duplicate(true)
 	var should_show := not badges.is_empty()
 	var badges_key := JSON.stringify(badges)
 	if badges_key == detail_badges_key and badge_slot.visible == should_show:
@@ -184,21 +186,17 @@ func set_detail_badges(badges_value: Variant) -> void:
 
 
 func detail_badge_prewarm_sample() -> Array:
-	return AttributeBadgesScript.for_route({
-		"risk": "high",
-		"cost": 999,
-		"distance": "far",
-		"risk_decay": 2,
+	return AttributeBadgesScript.for_world_map_detail("casino", {
+		"risk_decay": 35,
 		"risk_event": {
 			"chance_percent": 75,
-			"bankroll_delta": -25,
 			"suspicion_delta": 2,
 		},
-	}, {
-		"chance_percent": 75,
-		"bankroll_delta": -25,
-		"suspicion_delta": 2,
 	})
+
+
+func detail_badges() -> Array:
+	return detail_badges_snapshot.duplicate(true)
 
 
 func handle_holder_gui_input(event: InputEvent) -> bool:

@@ -273,16 +273,18 @@ static func travel_choice(host: Variant, target_id: String, known_target_ids: Ar
 		var locked_reason = str(status.get("disabled_reason", route.get("condition_text", "This route is locked for now."))).strip_edges()
 		if locked_reason.is_empty():
 			locked_reason = "This route is locked for now."
-		return {
-			"id": target_id,
-			"label": label,
-			"condition_text": locked_reason,
-			"unlock_summary": str(status.get("unlock_summary", locked_reason)),
-			"enabled": false,
-			"disabled_reason": locked_reason,
-			"locked": true,
-			"attribute_badges": [],
-		}
+		choice["distance"] = str(status.get("distance", choice.get("distance", route.get("distance", "near"))))
+		choice["distance_blocks"] = int(route.get("distance_blocks", choice.get("distance_blocks", 0)))
+		choice["cost"] = int(status.get("cost", choice.get("cost", route.get("cost", 0))))
+		choice["risk_decay"] = int(status.get("risk_decay", route.get("risk_decay", 0)))
+		choice["risk_event"] = host._copy_dict(status.get("risk_event", {}))
+		choice["condition_text"] = locked_reason
+		choice["unlock_summary"] = str(status.get("unlock_summary", locked_reason))
+		choice["enabled"] = false
+		choice["disabled_reason"] = locked_reason
+		choice["locked"] = true
+		choice["attribute_badges"] = []
+		return choice
 	choice["distance"] = str(status.get("distance", choice.get("distance", "")))
 	choice["risk_decay"] = int(status.get("risk_decay", choice.get("risk_decay", 0)))
 	choice["risk_text"] = str(status.get("risk_text", ""))

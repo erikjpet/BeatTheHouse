@@ -4644,11 +4644,32 @@ func _run() -> void:
 		push_error("World map selection popup did not show travel method, distance, and cost.")
 		quit(1)
 		return
+	if detail_text.split("\n").size() > 6:
+		push_error("World map selection popup put required travel text below its six visible lines: %s" % detail_text)
+		quit(1)
+		return
 	if not _world_map_detail_popup_fits(selected_map_screen):
 		quit(1)
 		return
-	if int(selected_map_screen.get("world_map_detail_badge_count", 0)) <= 0:
-		push_error("World map selection popup did not render route attribute glyphs.")
+	var detail_badges: Array = _copy_array(selected_map_screen.get("world_map_detail_badges", []))
+	if detail_badges.is_empty() or detail_badges.size() > 2:
+		push_error("World map selection popup should show only a location-type icon and one heat icon: %s" % str(detail_badges))
+		quit(1)
+		return
+	var heat_badge_count := 0
+	var location_badge_count := 0
+	for badge_value in detail_badges:
+		var glyph_id := str(_copy_dict(badge_value).get("glyph_id", ""))
+		if glyph_id == "suspicion":
+			heat_badge_count += 1
+		elif ["environment_casino", "environment_shop"].has(glyph_id):
+			location_badge_count += 1
+		else:
+			push_error("World map selection popup retained a redundant route icon: %s" % glyph_id)
+			quit(1)
+			return
+	if heat_badge_count != 1 or location_badge_count > 1:
+		push_error("World map selection popup did not reduce its icons to destination type plus heat: %s" % str(detail_badges))
 		quit(1)
 		return
 	var badge_slot := app.get("world_map_badge_slot") as VBoxContainer

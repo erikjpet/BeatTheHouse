@@ -141,6 +141,15 @@ func _check_meta_home_launcher_opens_room(app: Control) -> bool:
 	if not _map_canvas_size_equal(meta_map_view, selected_meta_map_view):
 		push_error("Selecting a meta world-map node changed the canvas size: before %s after %s." % [JSON.stringify(meta_map_view.get("canvas_size", {})), JSON.stringify(selected_meta_map_view.get("canvas_size", {}))])
 		return false
+	var selected_meta_screen: Dictionary = app.call("current_screen_snapshot")
+	var selected_meta_detail := str(selected_meta_screen.get("world_map_detail_text", ""))
+	if not selected_meta_detail.contains("Travel: Walk") or not selected_meta_detail.contains("Distance: Near / 1 block") or not selected_meta_detail.contains("Cost: $0"):
+		push_error("Meta world-map detail omitted its travel method, distance, or cost: %s" % selected_meta_detail)
+		return false
+	var selected_meta_badges: Array = _copy_array(selected_meta_screen.get("world_map_detail_badges", []))
+	if selected_meta_badges.size() != 2 or str(_copy_dict(selected_meta_badges[0]).get("glyph_id", "")) != "environment_shop" or str(_copy_dict(selected_meta_badges[1]).get("glyph_id", "")) != "suspicion":
+		push_error("Meta pawn-shop detail should show only Shop and Heat icons: %s" % str(selected_meta_badges))
+		return false
 	app.call("close_world_map")
 	await process_frame
 	if not bool(app.call("activate_interactable_object", container_id)):

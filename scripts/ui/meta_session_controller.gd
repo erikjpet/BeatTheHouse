@@ -16,6 +16,7 @@ const MetaCollectionServiceScript := preload("res://scripts/core/meta_collection
 const CollectionItemResolverScript := preload("res://scripts/core/collection_item_resolver.gd")
 const MetaCollectionViewModelScript := preload("res://scripts/ui/meta_collection_view_model.gd")
 const WorldMapScript := preload("res://scripts/core/world_map.gd")
+const AttributeBadgesScript := preload("res://scripts/core/attribute_badges.gd")
 
 var library: ContentLibrary
 var meta_collection_service: MetaCollectionService
@@ -342,15 +343,18 @@ func world_map_detail_view(location_id: String, selected_node_id: String) -> Dic
 		lines.append("Select a revealed stop.")
 		return {"text": "\n".join(lines), "confirm_enabled": false, "badges": []}
 	var label := "Home" if selected_node_id == META_LOCATION_HOME else "Sal's Pawn Shop"
+	var destination_kind := "shop" if selected_node_id == pawn_location_id() else "home"
+	var route := travel_choice(selected_node_id, location_id)
 	lines.append("Stop: %s" % label)
 	lines.append("Travel: Walk")
-	lines.append("Cost: 0")
+	lines.append("Distance: Near / 1 block")
+	lines.append("Cost: $0")
 	lines.append("Clock: no time passes")
 	if selected_node_id == location_id:
 		lines.append("Status: You are here.")
-		return {"text": "\n".join(lines), "confirm_enabled": false, "badges": []}
+		return {"text": "\n".join(lines), "confirm_enabled": false, "badges": AttributeBadgesScript.for_world_map_detail(destination_kind)}
 	lines.append("Status: Route open.")
-	return {"text": "\n".join(lines), "confirm_enabled": true, "badges": []}
+	return {"text": "\n".join(lines), "confirm_enabled": true, "badges": AttributeBadgesScript.for_world_map_detail(destination_kind, route)}
 
 
 func _build_home_environment(run_state: RunState) -> Dictionary:

@@ -112,6 +112,51 @@ static func for_route(route: Dictionary, route_risk: Dictionary = {}) -> Array:
 	return _filtered_badges(badges)
 
 
+# Keeps the compact world-map legend limited to destination type and the one
+# travel consequence that benefits from a visual cue. Method, distance, cost,
+# and route risk remain explicit text in the location panel.
+static func for_world_map_detail(environment_kind: String, route: Dictionary = {}) -> Array:
+	var badges: Array = []
+	var clean_kind := environment_kind.strip_edges().to_lower()
+	if clean_kind == "boss":
+		clean_kind = "casino"
+	var environment_badge: Dictionary = {}
+	if clean_kind == "casino":
+		environment_badge = _badge("environment_casino", "Casino", "class", "Casino destination")
+	elif clean_kind == "shop":
+		environment_badge = _badge("environment_shop", "Shop", "class", "Shop destination")
+	if not environment_badge.is_empty():
+		badges.append(environment_badge)
+	if route.is_empty():
+		return _filtered_badges(badges)
+	var cooling_percent := clampi(int(route.get("risk_decay", 0)), 0, 100)
+	var route_heat := int(route.get("suspicion_delta", 0))
+	var risk_event := _copy_dict(route.get("risk_event", {}))
+	var event_heat := int(risk_event.get("suspicion_delta", 0))
+	var event_chance := clampi(int(risk_event.get("chance_percent", 0)), 0, 100)
+	var value_parts: Array[String] = []
+	var tooltip_parts: Array[String] = []
+	if cooling_percent > 0:
+		value_parts.append("-%d%%" % cooling_percent)
+		tooltip_parts.append("cools carried heat %d%%" % cooling_percent)
+	if route_heat != 0:
+		value_parts.append("%+d" % route_heat)
+		tooltip_parts.append("route heat %+d" % route_heat)
+	if event_heat != 0 and event_chance > 0:
+		tooltip_parts.append("%d%% chance of heat %+d" % [event_chance, event_heat])
+	if value_parts.is_empty():
+		value_parts.append("0")
+	if tooltip_parts.is_empty():
+		tooltip_parts.append("no guaranteed heat change")
+	var polarity := "neutral"
+	if route_heat > 0 and cooling_percent <= 0:
+		polarity = "bad"
+	elif cooling_percent > 0 and route_heat <= 0:
+		polarity = "good"
+	badges.append(_badge("suspicion", " / ".join(value_parts), polarity, "Travel heat: %s" % "; ".join(tooltip_parts)))
+	return _filtered_badges(badges)
+
+
 static func for_item(item: Dictionary) -> Array:
 	var source := item.duplicate(true)
 	var badges: Array = []
