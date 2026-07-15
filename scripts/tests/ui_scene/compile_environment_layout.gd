@@ -201,6 +201,59 @@ func _check_meta_home_launcher_opens_room(app: Control) -> bool:
 	return true
 
 
+func _check_run_pawn_credit_is_immediate(app: Control) -> bool:
+	app.call("start_foundation_run", "UI-PAWN-IMMEDIATE-CREDIT")
+	await process_frame
+	await process_frame
+	var run_state := app.get("run_state") as RunState
+	if run_state == null:
+		push_error("Pawn immediate-credit check could not start a run.")
+		return false
+	run_state.bankroll = 100
+	run_state.current_environment = {
+		"id": "ui_pawn_credit_room",
+		"display_name": "Sal's Pawn Shop",
+		"kind": "shop",
+		"tier": 2,
+		"archetype_id": "pawn_shop",
+		"service_ids": [],
+		"lender_hooks": ["sals_pawn_counter"],
+		"layout": {},
+	}
+	run_state.add_item("creased_luck_card")
+	app.call("_refresh_run_action_service")
+	var service := app.get("run_action_service") as RunActionService
+	var quote: Dictionary = {}
+	for quote_value in service.pawn_quote_options("sals_pawn_counter"):
+		if typeof(quote_value) == TYPE_DICTIONARY and str((quote_value as Dictionary).get("item_id", "")) == "creased_luck_card":
+			quote = (quote_value as Dictionary).duplicate(true)
+			break
+	var loan_amount := int(quote.get("loan_amount", 0))
+	if loan_amount <= 0:
+		push_error("Pawn immediate-credit check could not quote its collateral item.")
+		return false
+	# Reproduce the stale presentation state that previously survived the pawn
+	# transaction until a later navigation sync.
+	app.set("presented_bankroll_hold_active", true)
+	app.set("presented_bankroll_value", run_state.bankroll)
+	app.call("_pawn_counter_pawn_item", "sals_pawn_counter", "creased_luck_card")
+	var expected_bankroll := 100 + loan_amount
+	if run_state.bankroll != expected_bankroll:
+		push_error("Pawn transaction did not credit the authoritative bankroll immediately: expected %d, got %d." % [expected_bankroll, run_state.bankroll])
+		return false
+	var hud: Dictionary = app.call("current_run_status_hud_snapshot")
+	if int(hud.get("bankroll", -1)) != expected_bankroll or bool(app.get("presented_bankroll_hold_active")):
+		push_error("Pawn transaction left the live bankroll presentation stale: %s." % str(hud))
+		return false
+	var pawn_model: Dictionary = app.call("_run_inventory_popup_model", "pawn_counter", "sals_pawn_counter")
+	if str(pawn_model.get("summary", "")).find("Cash $%d" % expected_bankroll) == -1:
+		push_error("Pawn popup did not show the immediately credited cash balance: %s." % str(pawn_model.get("summary", "")))
+		return false
+	app.call("return_to_main_menu")
+	await process_frame
+	return true
+
+
 func _control_fits_viewport(control: Variant, viewport_rect, label: String) -> bool:
 	if control == null or not (control is Control):
 		push_error("%s was not available for viewport layout verification." % label)

@@ -3027,6 +3027,10 @@ func _pawn_counter_pawn_item(lender_id: String, item_id: String) -> void:
 		open_pawn_counter(lender_id)
 		return
 	var result: Dictionary = resolved.get("result", {}) if typeof(resolved.get("result", {})) == TYPE_DICTIONARY else {}
+	# Pawn transactions happen outside a game result surface. Clear any stale
+	# game-presentation hold before rebuilding Sal's popup so the credited cash
+	# is visible and available immediately, without waiting for travel.
+	_sync_presented_bankroll_to_actual()
 	last_hook_result = result.duplicate(true)
 	_start_conclusion_animation(result, _conclusion_animation_source_rect("lender:%s" % lender_id))
 	_show_message(str(result.get("message", "Pawn ticket opened.")))
@@ -3048,6 +3052,7 @@ func _pawn_counter_redeem_ticket(lender_id: String, debt_id: String) -> void:
 		_show_message(str(result.get("message", "Could not redeem that ticket.")))
 		open_pawn_counter(lender_id)
 		return
+	_sync_presented_bankroll_to_actual()
 	_show_message(str(result.get("message", "Ticket redeemed.")))
 	_autosave_foundation_run("Autosaved.")
 	open_pawn_counter(lender_id)

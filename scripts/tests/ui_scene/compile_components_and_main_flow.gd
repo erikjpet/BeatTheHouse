@@ -1240,6 +1240,9 @@ func _run() -> void:
 	if not await _check_meta_home_launcher_opens_room(app):
 		quit(1)
 		return
+	if not await _check_run_pawn_credit_is_immediate(app):
+		quit(1)
+		return
 	if not exit_game_button.visible or exit_game_button.disabled:
 		push_error("Main menu Exit Game button should be visible and enabled.")
 		quit(1)

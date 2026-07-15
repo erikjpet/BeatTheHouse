@@ -116,7 +116,7 @@ static func _summary_text(run_state: RunState, run_action_service: RunActionServ
 	if mode == "merchant_sale":
 		return "Sellable run items can be sold here."
 	if mode == "pawn_counter":
-		return "Pawn carried gear for cash, or redeem an open ticket before Sal shelves it."
+		return "Cash $%d. Pawn carried gear, or redeem an open ticket before Sal shelves it." % (run_state.bankroll if run_state != null else 0)
 	if mode == "place_container":
 		return "Select a carried container to place it as home storage."
 	if mode == "home_container":
