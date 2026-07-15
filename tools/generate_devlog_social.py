@@ -2,6 +2,7 @@
 
 Outputs branding/social/beat_the_house_<tag>_instagram.png (1080x1080) plus
 720x720 mobile png/jpg variants, matching the committed devlog #2/#3 cards.
+Showcase panels use fresh captures from tools/promo_screenshots_0_4.gd.
 """
 
 from pathlib import Path
@@ -10,6 +11,7 @@ from PIL import Image, ImageDraw, ImageFont
 
 ROOT = Path(__file__).resolve().parents[1]
 SOCIAL_DIR = ROOT / "branding" / "social"
+SHOTS = ROOT / "branding" / "screenshots"
 FONT_DIR = Path("C:/Windows/Fonts")
 
 BLACK = (5, 6, 10, 255)
@@ -29,51 +31,59 @@ DEVLOG = {
     "tag": "v0_4_0",
     "header_kicker": "DEVLOG #4",
     "hero": "v0.4 IS OUT",
-    "subtitle": "Act 1 completion: home, bags, talk, travel, stability",
+    "subtitle": "Home, Loadout, Time, New Content",
     "chips": [
         ("HOME", PINK),
-        ("BAGS", YELLOW),
-        ("DIALOGUE", CYAN),
-        ("TRAVEL", ORANGE),
+        ("LOADOUT", AMBER),
+        ("TIME", ORANGE),
+        ("NEW CONTENT", TEAL),
     ],
-    "panel_large": {
-        "image": ROOT / "branding/screenshots/11_meta_home_back_alley.png",
-        "caption": "WALKABLE HOME BASE",
+    # Crops are fractional (x0, y0, x1, y1) of the source image.
+    "panel_dialogue": {
+        "image": SHOTS / "14_dialogue_popup.png",
+        "crop": (0.035, 0.385, 0.680, 1.000),
+        "caption": "LIVE DIALOGUE",
         "border": CYAN,
+        "caption_top": True,
     },
-    "panel_right_top": {
-        "image": ROOT / "branding/screenshots/12_dialogue_talk_dock.png",
-        "caption": "DIALOGUE & TALK",
-        "border": AMBER,
+    "panel_house": {
+        "image": SHOTS / "13_house_with_items.png",
+        "crop": (0.100, 0.250, 0.930, 0.920),
+        "caption": "A HOUSE FULL OF FINDS",
+        "border": PINK,
     },
-    "panel_right_bottom": {
-        "image": ROOT / "assets/art/map_backgrounds/cyberpunk_city_overhead.png",
-        "caption": "PRICED WORLD TRAVEL",
+    "panel_beach": {
+        "image": SHOTS / "17_beach.png",
+        "crop": (0.580, 0.320, 0.990, 0.800),
+        "caption": "NEW: THE BEACH",
+        "border": TEAL,
+    },
+    "panel_pawn": {
+        "image": SHOTS / "18_pawn_shop.png",
+        "crop": (0.300, 0.250, 0.750, 0.640),
+        "caption": "NEW: PAWN SHOP",
         "border": YELLOW,
     },
-    "strip_label": "COLLECTIONS",
-    "strip_icons": [
-        ROOT / "assets/art/items/bag.png",
-        ROOT / "assets/art/items/backpack.png",
-        ROOT / "assets/art/items/suitcase.png",
-        ROOT / "assets/art/items/trunk.png",
-        ROOT / "assets/art/items/roadside_map.png",
-        ROOT / "assets/art/items/lucky_keychain.png",
-        ROOT / "assets/art/items/rabbits_foot.png",
-        ROOT / "assets/art/items/hot_streak_token.png",
-        ROOT / "assets/art/items/lucky_charm.png",
-        ROOT / "assets/art/items/cashout_envelope.png",
-    ],
+    "panel_map": {
+        "image": SHOTS / "15_world_map_hours.png",
+        "crop": (0.170, 0.480, 0.835, 0.840),
+        "caption": "ADDED: DAY/NIGHT CYCLE",
+        "border": ORANGE,
+    },
     "notes": [
-        ("HOUSING", PINK, "progression"),
-        ("BAGS", YELLOW, "drops"),
-        ("TALK", CYAN, "dialogue"),
-        ("HOURS", AMBER, "venues"),
-        ("TRAVEL", ORANGE, "pricing"),
-        ("STABILITY", TEAL, "gates"),
+        (PINK, "Get a home of your own and upgrade it"),
+        (YELLOW, "Bring your favorite items into each run"),
+        (TEAL, "Visit the new beach"),
+        (AMBER, "Sell spare items at the new pawn shop"),
+        (CYAN, "Talk with the people you meet"),
+        (ORANGE, "Venues open and close through the day"),
+        (TEAL, "Travel anywhere on the city map"),
+        (PURPLE, "Earn an invite to the Grand Casino"),
+        (CYAN, "Your saved runs are protected now"),
+        (PINK, "Lots of bug fixes and smoother play"),
     ],
-    "backdrop": ROOT / "branding/screenshots/12_dialogue_talk_dock.png",
-    "footer": "ACT 1 COMPLETION RELEASE AVAILABLE NOW",
+    "backdrop": SHOTS / "04_blackjack_in_play.png",
+    "footer": "ACT 1 COMPLETE - PLAY FREE IN THE BROWSER",
 }
 
 
@@ -81,18 +91,17 @@ def font(name, size):
     return ImageFont.truetype(str(FONT_DIR / name), size)
 
 
-F_KICKER = font("ariblk.ttf", 36)
-F_TITLE = font("ariblk.ttf", 42)
-F_HERO = font("ariblk.ttf", 116)
-F_SUB = font("arialbd.ttf", 33)
-F_CHIP = font("arialbd.ttf", 29)
-F_CAPTION = font("ariblk.ttf", 27)
-F_NOTES_H = font("ariblk.ttf", 42)
-F_NOTE = font("ariblk.ttf", 25)
-F_NOTE_DESC = font("arialbd.ttf", 22)
-F_FOOTER = font("ariblk.ttf", 33)
+F_KICKER = font("ariblk.ttf", 34)
+F_TITLE = font("ariblk.ttf", 40)
+F_HERO = font("ariblk.ttf", 100)
+F_SUB = font("arialbd.ttf", 30)
+F_CHIP = font("arialbd.ttf", 27)
+F_CAPTION = font("ariblk.ttf", 25)
+F_CAPTION_SM = font("ariblk.ttf", 19)
+F_NOTES_H = font("ariblk.ttf", 38)
+F_NOTE_LINE = font("arialbd.ttf", 20)
+F_FOOTER = font("ariblk.ttf", 30)
 F_PILL = font("ariblk.ttf", 30)
-F_STRIP = font("ariblk.ttf", 26)
 
 
 def rounded(d, box, radius, outline, width=4, fill=None):
@@ -101,6 +110,11 @@ def rounded(d, box, radius, outline, width=4, fill=None):
 
 def text_w(f, s):
     return int(f.getlength(s))
+
+
+def frac_crop(image, box):
+    w, h = image.size
+    return image.crop((int(box[0] * w), int(box[1] * h), int(box[2] * w), int(box[3] * h)))
 
 
 def paste_cover(canvas, image, box):
@@ -112,17 +126,27 @@ def paste_cover(canvas, image, box):
     top = (resized.height - h) // 2
     region = resized.crop((left, top, left + w, top + h))
     mask = Image.new("L", (w, h), 0)
-    ImageDraw.Draw(mask).rounded_rectangle((0, 0, w - 1, h - 1), radius=18, fill=255)
+    ImageDraw.Draw(mask).rounded_rectangle((0, 0, w - 1, h - 1), radius=16, fill=255)
     canvas.paste(region, (x0, y0), mask)
 
 
-def caption_bar(canvas, d, box, caption):
-    x0, _, x1, y1 = box
-    bar_h = 46
-    mask_box = (x0, y1 - bar_h, x1, y1)
-    overlay = Image.new("RGBA", (mask_box[2] - mask_box[0], bar_h), (5, 6, 10, 215))
-    canvas.alpha_composite(overlay, (mask_box[0], mask_box[1]))
-    d.text((x0 + 16, y1 - bar_h + 9), caption, font=F_CAPTION, fill=WHITE)
+def caption_bar(canvas, d, box, caption, bar_h=42, f=None, top=False):
+    x0, y0, x1, y1 = box
+    f = f or F_CAPTION
+    bar_y = y0 if top else y1 - bar_h
+    overlay = Image.new("RGBA", (x1 - x0, bar_h), (5, 6, 10, 215))
+    canvas.alpha_composite(overlay, (x0, bar_y))
+    d.text((x0 + 14, bar_y + (bar_h - f.size) // 2 - 2), caption, font=f, fill=WHITE)
+
+
+def image_panel(canvas, d, box, cfg, bar_h=42, f=None):
+    rounded(d, box, 20, cfg["border"], 4, fill=PANEL_SOFT)
+    inner = (box[0] + 6, box[1] + 6, box[2] - 6, box[3] - 6)
+    source = Image.open(cfg["image"]).convert("RGBA")
+    if "crop" in cfg:
+        source = frac_crop(source, cfg["crop"])
+    paste_cover(canvas, source, inner)
+    caption_bar(canvas, d, inner, cfg["caption"], bar_h, f, bool(cfg.get("caption_top", False)))
 
 
 def build():
@@ -130,104 +154,72 @@ def build():
     canvas = Image.new("RGBA", (1080, 1080), BLACK)
 
     backdrop = Image.open(c["backdrop"]).convert("RGBA")
+    backdrop = frac_crop(backdrop, (0.0, 0.20, 1.0, 1.0))
     ratio = 1080 / backdrop.width
     backdrop = backdrop.resize((1080, int(backdrop.height * ratio)), Image.NEAREST)
-    faded = Image.blend(Image.new("RGBA", backdrop.size, BLACK), backdrop, 0.30)
+    faded = Image.blend(Image.new("RGBA", backdrop.size, BLACK), backdrop, 0.24)
     canvas.alpha_composite(faded, (0, 0))
     d = ImageDraw.Draw(canvas)
-    d.rectangle((0, 620, 1080, 1080), fill=BLACK)
+    d.rectangle((0, 560, 1080, 1080), fill=BLACK)
 
     rounded(d, (10, 10, 1069, 1069), 42, PINK, 5)
     rounded(d, (22, 22, 1057, 1057), 34, CYAN, 3)
 
     # Header
-    d.text((64, 48), c["header_kicker"], font=F_KICKER, fill=AMBER)
-    d.text((64, 90), "BEAT THE HOUSE", font=F_TITLE, fill=WHITE)
-    rule_y = 146
-    d.line((64, rule_y, 560, rule_y), fill=PINK, width=4)
-    d.line((560, rule_y, 640, rule_y - 24), fill=PINK, width=4)
+    d.text((64, 44), c["header_kicker"], font=F_KICKER, fill=AMBER)
+    d.text((64, 84), "BEAT THE HOUSE", font=F_TITLE, fill=WHITE)
+    rule_y = 138
+    d.line((64, rule_y, 540, rule_y), fill=PINK, width=4)
+    d.line((540, rule_y, 616, rule_y - 22), fill=PINK, width=4)
     pill_w = text_w(F_PILL, "OUT NOW") + 56
-    rounded(d, (1016 - pill_w, 56, 1016, 110), 27, PINK, 4, fill=PANEL)
-    d.text((1016 - pill_w + 28, 66), "OUT NOW", font=F_PILL, fill=AMBER)
+    rounded(d, (1016 - pill_w, 52, 1016, 104), 26, PINK, 4, fill=PANEL)
+    d.text((1016 - pill_w + 28, 60), "OUT NOW", font=F_PILL, fill=AMBER)
 
     # Hero
     hero_w = text_w(F_HERO, c["hero"])
-    d.text(((1080 - hero_w) // 2, 158), c["hero"], font=F_HERO, fill=PINK)
+    d.text(((1080 - hero_w) // 2, 148), c["hero"], font=F_HERO, fill=PINK)
     sub_w = text_w(F_SUB, c["subtitle"])
-    d.text(((1080 - sub_w) // 2, 288), c["subtitle"], font=F_SUB, fill=WHITE)
+    d.text(((1080 - sub_w) // 2, 262), c["subtitle"], font=F_SUB, fill=WHITE)
 
     # Chips
-    chip_y, chip_h = 348, 52
-    widths = [text_w(F_CHIP, label) + 56 for label, _ in c["chips"]]
-    total = sum(widths) + 24 * (len(widths) - 1)
+    chip_y, chip_h = 310, 48
+    widths = [text_w(F_CHIP, label) + 52 for label, _ in c["chips"]]
+    total = sum(widths) + 22 * (len(widths) - 1)
     x = (1080 - total) // 2
     for (label, color), w in zip(c["chips"], widths):
-        rounded(d, (x, chip_y, x + w, chip_y + chip_h), 26, color, 4, fill=PANEL)
-        d.text((x + 28, chip_y + 12), label, font=F_CHIP, fill=WHITE)
-        x += w + 24
+        rounded(d, (x, chip_y, x + w, chip_y + chip_h), 24, color, 4, fill=PANEL)
+        d.text((x + 26, chip_y + 10), label, font=F_CHIP, fill=WHITE)
+        x += w + 22
 
-    # Panels
-    large_box = (64, 432, 660, 718)
-    rounded(d, large_box, 22, c["panel_large"]["border"], 4, fill=PANEL_SOFT)
-    inner = (large_box[0] + 7, large_box[1] + 7, large_box[2] - 7, large_box[3] - 7)
-    paste_cover(canvas, Image.open(c["panel_large"]["image"]).convert("RGBA"), inner)
-    caption_bar(canvas, d, inner, c["panel_large"]["caption"])
+    # Showcase panels: dialogue left; house + new places right.
+    image_panel(canvas, d, (64, 372, 536, 640), c["panel_dialogue"], 40)
+    image_panel(canvas, d, (560, 372, 1016, 516), c["panel_house"], 30, F_CAPTION_SM)
+    image_panel(canvas, d, (560, 532, 782, 640), c["panel_beach"], 28, F_CAPTION_SM)
+    image_panel(canvas, d, (794, 532, 1016, 640), c["panel_pawn"], 28, F_CAPTION_SM)
 
-    rt = (688, 432, 1016, 566)
-    rounded(d, rt, 22, c["panel_right_top"]["border"], 4, fill=PANEL_SOFT)
-    if "image" in c["panel_right_top"]:
-        inner_rt = (rt[0] + 7, rt[1] + 7, rt[2] - 7, rt[3] - 7)
-        paste_cover(canvas, Image.open(c["panel_right_top"]["image"]).convert("RGBA"), inner_rt)
-        caption_bar(canvas, d, inner_rt, c["panel_right_top"]["caption"])
-    else:
-        icons = c["panel_right_top"]["icons"]
-        size = 78
-        total_icons = len(icons) * size + (len(icons) - 1) * 28
-        ix = rt[0] + (rt[2] - rt[0] - total_icons) // 2
-        for icon_path in icons:
-            icon = Image.open(icon_path).convert("RGBA").resize((size, size), Image.NEAREST)
-            canvas.alpha_composite(icon, (ix, rt[1] + 16))
-            ix += size + 28
-        d.text((rt[0] + 16, rt[3] - 40), c["panel_right_top"]["caption"], font=F_CAPTION, fill=WHITE)
+    # Wide map panel with the hours popup visible.
+    image_panel(canvas, d, (64, 660, 1016, 832), c["panel_map"], 40)
 
-    rb = (688, 590, 1016, 718)
-    rounded(d, rb, 22, c["panel_right_bottom"]["border"], 4, fill=PANEL_SOFT)
-    inner_rb = (rb[0] + 7, rb[1] + 7, rb[2] - 7, rb[3] - 7)
-    paste_cover(canvas, Image.open(c["panel_right_bottom"]["image"]).convert("RGBA"), inner_rb)
-    caption_bar(canvas, d, inner_rb, c["panel_right_bottom"]["caption"])
-
-    # Icon strip
-    strip = (64, 742, 1016, 826)
-    rounded(d, strip, 22, CYAN, 4, fill=PANEL)
-    lines = c["strip_label"].split("\n")
-    for li, line_text in enumerate(lines):
-        d.text((strip[0] + 24, strip[1] + 18 + li * 28), line_text, font=F_STRIP, fill=CYAN)
-    tile, pad = 56, 14
-    tx = strip[0] + 230
-    for icon_path in c["strip_icons"]:
-        icon = Image.open(icon_path).convert("RGBA").resize((tile, tile), Image.NEAREST)
-        rounded(d, (tx - 4, strip[1] + 12, tx + tile + 4, strip[1] + 12 + tile + 8), 10, (0, 150, 166, 255), 2, fill=PANEL_SOFT)
-        canvas.alpha_composite(icon, (tx, strip[1] + 16))
-        tx += tile + pad + 8
-
-    # Release notes
-    notes = (64, 838, 1016, 974)
-    rounded(d, notes, 22, PINK, 4, fill=PANEL)
-    d.text((notes[0] + 28, notes[1] - 8), " RELEASE NOTES ", font=F_NOTES_H, fill=WHITE)
-    col_x = (notes[0] + 32, notes[0] + 500)
-    row_y = notes[1] + 40
-    for index, (name, color, desc) in enumerate(c["notes"]):
-        cx = col_x[index // 3]
-        cy = row_y + (index % 3) * 30
-        d.rectangle((cx, cy + 6, cx + 16, cy + 22), outline=color, width=3)
-        d.text((cx + 30, cy), name, font=F_NOTE, fill=color)
-        d.text((cx + 30 + text_w(F_NOTE, name) + 14, cy + 3), desc, font=F_NOTE_DESC, fill=SOFT)
+    # Release notes: ten entries, two columns of five.
+    notes = (64, 844, 1016, 1000)
+    rounded(d, notes, 20, PINK, 4, fill=PANEL)
+    heading = " WHAT'S NEW "
+    heading_w = text_w(F_NOTES_H, heading)
+    d.rectangle((notes[0] + 24, notes[1] - 14, notes[0] + 24 + heading_w, notes[1] + 30), fill=BLACK)
+    d.text((notes[0] + 28, notes[1] - 12), heading, font=F_NOTES_H, fill=WHITE)
+    col_x = (notes[0] + 36, notes[0] + 496)
+    row_y = notes[1] + 34
+    for index, (color, line) in enumerate(c["notes"]):
+        cx = col_x[index // 5]
+        cy = row_y + (index % 5) * 23
+        d.rectangle((cx, cy + 4, cx + 14, cy + 18), outline=color, width=3)
+        d.text((cx + 28, cy), line, font=F_NOTE_LINE, fill=SOFT)
 
     # Footer
-    footer_w = text_w(F_FOOTER, c["footer"]) + 80
+    footer_w = text_w(F_FOOTER, c["footer"]) + 72
     fx = (1080 - footer_w) // 2
-    rounded(d, (fx, 998, fx + footer_w, 1050), 24, AMBER, 4, fill=PANEL)
-    d.text((fx + 40, 1008), c["footer"], font=F_FOOTER, fill=AMBER)
+    rounded(d, (fx, 1008, fx + footer_w, 1052), 22, AMBER, 4, fill=PANEL)
+    d.text((fx + 36, 1016), c["footer"], font=F_FOOTER, fill=AMBER)
 
     SOCIAL_DIR.mkdir(parents=True, exist_ok=True)
     base = SOCIAL_DIR / f"beat_the_house_{c['tag']}_instagram"
