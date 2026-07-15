@@ -1999,6 +1999,7 @@ func _check_world_map_foundation(library: ContentLibrary, failures: Array) -> vo
 		failures.append("World map exposed more than two new travel targets from the start node.")
 	if _string_array(run_a.current_environment.get("travel_hooks", [])) != travel_targets or _string_array(run_a.current_environment.get("next_archetypes", [])) != travel_targets:
 		failures.append("Current environment travel hooks should mirror capped world-map travel targets.")
+	_check_closing_soon_world_travel(library, failures)
 	var layout: Dictionary = run_a.current_environment.get("layout", {}) if typeof(run_a.current_environment.get("layout", {})) == TYPE_DICTIONARY else {}
 	var object_rects: Dictionary = layout.get("object_rects", {}) if typeof(layout.get("object_rects", {})) == TYPE_DICTIONARY else {}
 	if not object_rects.has("travel:leave"):
@@ -2150,6 +2151,55 @@ func _check_world_map_foundation(library: ContentLibrary, failures: Array) -> vo
 	if JSON.stringify(loaded.world_map) != JSON.stringify(run_a.world_map):
 		failures.append("World map graph/discovery/path state did not survive RunState save/load.")
 	_check_unique_object_layout_classes(library, failures)
+
+
+func _check_closing_soon_world_travel(library: ContentLibrary, failures: Array) -> void:
+	var generator: RunGenerator = RunGeneratorScript.new(library)
+	var run_state: RunState = RunStateScript.new()
+	run_state.start_new("WORLD-MAP-CLOSING-SOON")
+	generator.next_environment(run_state)
+	var corner_archetype := _archetype_by_id(library, "corner_store")
+	var bar_archetype := _archetype_by_id(library, "bar")
+	if corner_archetype.is_empty() or bar_archetype.is_empty():
+		failures.append("Closing-soon travel fixture could not load the corner store and bar archetypes.")
+		return
+	var map_data := WorldMapScript.unlock_nodes(run_state.world_map, ["corner_store", "bar", RunState.GRAND_CASINO_ARCHETYPE_ID])
+	if not WorldMapScript.are_neighbors(map_data, "corner_store", "bar"):
+		failures.append("Closing-soon travel fixture requires the authored corner-store/bar world edge.")
+		return
+	var corner_environment := EnvironmentInstance.from_archetype(corner_archetype, 1, run_state.create_rng("closing_corner"), library).to_dict()
+	corner_environment["world_node_id"] = "corner_store"
+	map_data = WorldMapScript.enter_node(map_data, "corner_store", corner_environment)
+	run_state.set_world_map(map_data)
+	run_state.set_environment(corner_environment)
+	var route := generator.world_route_for_target(run_state, "bar")
+	if route.is_empty():
+		failures.append("Closing-soon travel fixture could not resolve the bar route.")
+		return
+	var travel_minutes := maxi(1, int(route.get("distance_blocks", 1)) * 6)
+	var hours: Dictionary = bar_archetype.get("open_hours", {}) if typeof(bar_archetype.get("open_hours", {})) == TYPE_DICTIONARY else {}
+	var close_minute := int(hours.get("close_minute", 0))
+	run_state.game_clock_minutes = EnvironmentHours.MINUTES_PER_DAY + close_minute - travel_minutes - 1
+	var arrival_minute := posmod(run_state.game_clock_minutes + travel_minutes, EnvironmentHours.MINUTES_PER_DAY)
+	var arrival_status := EnvironmentHours.status_at(bar_archetype, arrival_minute)
+	if not bool(arrival_status.get("open", false)) or not bool(arrival_status.get("closing_soon", false)):
+		failures.append("Closing-soon travel fixture did not arrive while the bar was still open.")
+		return
+	var post_advance_run: RunState = RunStateScript.new()
+	post_advance_run.from_dict(run_state.to_dict())
+	post_advance_run.advance_game_clock_minutes(travel_minutes)
+	var rejected_destination := generator.next_environment(post_advance_run, "bar")
+	if str(rejected_destination.archetype_id) == RunState.GRAND_CASINO_ARCHETYPE_ID or post_advance_run.current_world_node_id() != "corner_store":
+		failures.append("A stale closing-soon bar request silently rerouted to another world destination.")
+	var locked_run: RunState = RunStateScript.new()
+	locked_run.from_dict(run_state.to_dict())
+	var locked_destination := generator.next_environment(locked_run, RunState.GRAND_CASINO_ARCHETYPE_ID)
+	if str(locked_destination.archetype_id) == RunState.GRAND_CASINO_ARCHETYPE_ID or locked_run.current_world_node_id() != "corner_store":
+		failures.append("World generation entered the Grand Casino without its invitation flag.")
+	run_state.advance_game_clock_minutes(travel_minutes)
+	var destination := generator.next_environment(run_state, "bar", true)
+	if str(destination.archetype_id) != "bar" or run_state.current_world_node_id() != "bar":
+		failures.append("A bar route that is open at arrival did not preserve the player's selected destination.")
 
 
 func _check_meta_home_run_boundary(library: ContentLibrary, failures: Array) -> void:

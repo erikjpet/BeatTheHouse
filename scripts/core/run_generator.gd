@@ -11,11 +11,12 @@ func _init(p_library: ContentLibrary) -> void:
 	library = p_library
 
 
-# Builds and assigns the next environment for a run.
-func next_environment(run_state: RunState, target_archetype_id: String = "") -> EnvironmentInstance:
+# Builds and assigns the next environment for a run. A prevalidated target is
+# reserved for the travel UI after it validates arrival hours, then advances the clock.
+func next_environment(run_state: RunState, target_archetype_id: String = "", target_prevalidated: bool = false) -> EnvironmentInstance:
 	var rng := run_state.create_rng()
 	if run_state.has_world_map() or run_state.current_environment.is_empty():
-		return _next_world_environment(run_state, target_archetype_id, rng)
+		return _next_world_environment(run_state, target_archetype_id, rng, target_prevalidated)
 	var depth := run_state.environment_travel_count()
 	if not run_state.current_environment.is_empty():
 		depth += 1
@@ -52,26 +53,26 @@ func world_map_snapshot(run_state: RunState, selected_id: String = "") -> Dictio
 	return WorldMap.snapshot(run_state.world_map, selected_id)
 
 
-func _next_world_environment(run_state: RunState, target_archetype_id: String, rng: RngStream) -> EnvironmentInstance:
+func _next_world_environment(run_state: RunState, target_archetype_id: String, rng: RngStream, target_prevalidated: bool = false) -> EnvironmentInstance:
 	var map := WorldMap.new(library)
 	if not run_state.has_world_map():
 		run_state.set_world_map(map.build(run_state, rng.fork("world_map")))
-	if run_state.has_world_map() and not run_state.current_environment.is_empty():
-		run_state.store_current_world_node_environment()
 	var map_data := run_state.world_map
 	var target_id := target_archetype_id.strip_edges()
 	var current_node_id := run_state.current_world_node_id()
 	if run_state.current_environment.is_empty() and target_id.is_empty():
 		target_id = WorldMap.current_node_id(map_data)
-	elif not target_id.is_empty() and not _world_travel_target_ids(run_state, map_data, current_node_id).has(target_id):
-		target_id = _fallback_world_neighbor(run_state, map_data, current_node_id)
+	elif not target_id.is_empty() and not target_prevalidated and not _world_target_is_available(run_state, map_data, current_node_id, target_id):
+		return EnvironmentInstance.from_dict(run_state.current_environment)
 	elif target_id.is_empty():
 		target_id = _fallback_world_neighbor(run_state, map_data, current_node_id)
 	if target_id.is_empty():
-		return _legacy_next_environment(run_state, target_archetype_id, rng)
+		return EnvironmentInstance.from_dict(run_state.current_environment) if not run_state.current_environment.is_empty() else _legacy_next_environment(run_state, target_archetype_id, rng)
 	var node := WorldMap.node_by_id(map_data, target_id)
 	if node.is_empty():
-		return _legacy_next_environment(run_state, target_archetype_id, rng)
+		return EnvironmentInstance.from_dict(run_state.current_environment) if not run_state.current_environment.is_empty() else _legacy_next_environment(run_state, target_archetype_id, rng)
+	if run_state.has_world_map() and not run_state.current_environment.is_empty():
+		run_state.store_current_world_node_environment()
 	var environment_data := _world_environment_data_for_node(run_state, map_data, node, rng)
 	run_state.set_environment(environment_data)
 	run_state.enter_world_node(target_id, run_state.current_environment)
@@ -127,15 +128,9 @@ func _apply_world_travel_targets(environment_data: Dictionary, run_state: RunSta
 
 
 func _fallback_world_neighbor(run_state: RunState, map_data: Dictionary, source_id: String) -> String:
-	var travel_targets := _world_travel_target_ids(run_state, map_data, source_id)
+	var travel_targets := _available_world_travel_target_ids(run_state, map_data, source_id)
 	if not travel_targets.is_empty():
 		return str(travel_targets[0])
-	var visible_neighbors := WorldMap.neighbor_ids(map_data, source_id, true)
-	if not visible_neighbors.is_empty():
-		return str(visible_neighbors[0])
-	var all_neighbors := WorldMap.neighbor_ids(map_data, source_id, false)
-	if not all_neighbors.is_empty():
-		return str(all_neighbors[0])
 	return ""
 
 
@@ -143,7 +138,34 @@ func _world_travel_target_ids(run_state: RunState, map_data: Dictionary, source_
 	return WorldMap.travel_target_ids(map_data, source_id, WorldMap.TRAVEL_NEW_TARGET_LIMIT, WorldMap.TRAVEL_TOTAL_TARGET_LIMIT, _enabled_world_route_ids(run_state, map_data, source_id))
 
 
+func _available_world_travel_target_ids(run_state: RunState, map_data: Dictionary, source_id: String) -> Array:
+	return WorldMap.travel_target_ids(map_data, source_id, WorldMap.TRAVEL_NEW_TARGET_LIMIT, WorldMap.TRAVEL_TOTAL_TARGET_LIMIT, _available_world_route_ids(run_state, map_data, source_id))
+
+
+func _world_target_is_available(run_state: RunState, map_data: Dictionary, source_id: String, target_id: String) -> bool:
+	if not _world_travel_target_ids(run_state, map_data, source_id).has(target_id):
+		return false
+	var map := WorldMap.new(library)
+	var route := map.route_for_target(map_data, source_id, target_id)
+	if route.is_empty():
+		return false
+	var status := run_state.travel_route_status(route)
+	if not bool(status.get("available", false)) or bool(status.get("hidden", false)) or bool(status.get("locked", false)):
+		return false
+	var archetype := _archetype_by_id(target_id)
+	var arrival_minute := (run_state.game_minute_of_day() + maxi(1, int(route.get("distance_blocks", 1))) * 6) % EnvironmentHours.MINUTES_PER_DAY
+	return EnvironmentHours.environment_open_at(archetype, arrival_minute)
+
+
 func _enabled_world_route_ids(run_state: RunState, map_data: Dictionary, source_id: String) -> Array:
+	return _world_route_ids(run_state, map_data, source_id, true)
+
+
+func _available_world_route_ids(run_state: RunState, map_data: Dictionary, source_id: String) -> Array:
+	return _world_route_ids(run_state, map_data, source_id, false)
+
+
+func _world_route_ids(run_state: RunState, map_data: Dictionary, source_id: String, include_locked: bool) -> Array:
 	var result: Array = []
 	if run_state == null:
 		return result
@@ -160,7 +182,7 @@ func _enabled_world_route_ids(run_state: RunState, map_data: Dictionary, source_
 		if not EnvironmentHours.environment_open_at(archetype, arrival_minute):
 			continue
 		var status := run_state.travel_route_status(route)
-		if not bool(status.get("hidden", false)) and (bool(status.get("available", true)) or bool(status.get("locked", false))):
+		if not bool(status.get("hidden", false)) and (bool(status.get("available", true)) or (include_locked and bool(status.get("locked", false)))):
 			result.append(target_id)
 	return result
 

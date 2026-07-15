@@ -3333,7 +3333,7 @@ func _travel_to(target_id: String, target_label: String, choice_data: Dictionary
 	route["travel_minutes"] = travel_minutes
 	route["force_walk_fallback"] = force_walk
 	run_state.advance_game_clock_minutes(travel_minutes)
-	generator.next_environment(run_state, target_id)
+	generator.next_environment(run_state, target_id, true)
 	run_state.clear_closing_time_state()
 	var travel_decay := run_state.finish_travel_suspicion_decay(travel_heat)
 	_update_procedural_music()
