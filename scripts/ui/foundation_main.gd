@@ -280,6 +280,7 @@ var event_choice_popup_summary_label: Label
 var event_choice_popup_choices_list: VBoxContainer
 var talk_dock: TalkDock
 var item_found_popup: ItemFoundPopup
+var item_found_talk_dock_suspended := false
 var conclusion_animation_overlay: Control
 var conclusion_animation_snapshot: Dictionary = {}
 var conclusion_animation_tweens: Array[Tween] = []
@@ -1997,6 +1998,9 @@ func _refresh_talk_dock() -> void:
 		talk_dock.clear_entry()
 		return
 	talk_dock.set_entry(entry, option, run_state.pending_talk_event_count())
+	if item_found_popup != null and item_found_popup.is_open():
+		item_found_talk_dock_suspended = true
+		talk_dock.visible = false
 
 
 func _pending_talk_event_entry(event_id: String) -> Dictionary:
@@ -4312,7 +4316,24 @@ func _build_talk_dock() -> void:
 
 func _build_item_found_popup() -> void:
 	item_found_popup = ItemFoundPopupScript.new()
+	item_found_popup.display_started.connect(Callable(self, "_on_item_found_display_started"))
+	item_found_popup.display_finished.connect(Callable(self, "_on_item_found_display_finished"))
 	add_child(item_found_popup)
+
+
+func _on_item_found_display_started(_item_id: String) -> void:
+	if talk_dock != null and talk_dock.visible:
+		item_found_talk_dock_suspended = true
+		talk_dock.visible = false
+	if item_found_popup != null:
+		item_found_popup.move_to_front()
+
+
+func _on_item_found_display_finished() -> void:
+	if not item_found_talk_dock_suspended:
+		return
+	item_found_talk_dock_suspended = false
+	_refresh_talk_dock()
 
 
 func _build_conclusion_animation_overlay() -> void:
@@ -6992,6 +7013,7 @@ func current_item_found_popup_snapshot() -> Dictionary:
 	if item_found_popup == null:
 		return {"visible": false}
 	var snapshot := item_found_popup.current_snapshot()
+	snapshot["replaces_talk_portrait"] = item_found_talk_dock_suspended
 	if snapshot.has("panel_rect") and typeof(snapshot.get("panel_rect")) == TYPE_RECT2:
 		snapshot["panel_rect"] = _rect_to_dict(snapshot.get("panel_rect"))
 	if snapshot.has("screen_rect") and typeof(snapshot.get("screen_rect")) == TYPE_RECT2:

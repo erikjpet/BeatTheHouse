@@ -546,11 +546,24 @@ func _check_event_item_found_main_flow(app: Control) -> bool:
 	run_state.set_environment(environment)
 	run_state.set_story_flag("jazz_trio_backed_player", true)
 	var event_definition := library.event("jazz_after_hours_invitation")
-	var event_module := EventModuleScript.new()
-	event_module.setup(event_definition, library)
-	var inventory_before: Dictionary = app.call("_run_inventory_id_set")
-	var result := event_module.resolve(run_state, run_state.current_environment, "take_the_shades")
-	app.call("_show_event_item_found_popups", result, inventory_before)
+	var context := {
+		"trigger": "action",
+		"type": "action",
+		"turns": 3,
+		"environment_snapshot": run_state.current_environment.duplicate(true),
+	}
+	var overrides: Dictionary = app.call("_triggered_entry_overrides", event_definition, event_definition.get("speaker", {}) as Dictionary)
+	overrides["presentation"] = "talk"
+	if not run_state.enqueue_triggered_event("jazz_after_hours_invitation", "ui_item_found", context, overrides):
+		push_error("Item-found event fixture could not enqueue the authored item-grant event.")
+		return false
+	app.call("_refresh")
+	await process_frame
+	var talk_dock: TalkDock = app.get("talk_dock")
+	if not talk_dock.visible:
+		push_error("Item-found event fixture could not stage the speaker portrait being replaced.")
+		return false
+	app.call("resolve_event_choice", "jazz_after_hours_invitation", "take_the_shades")
 	await process_frame
 	var snapshot: Dictionary = app.call("current_item_found_popup_snapshot")
 	if not run_state.inventory.has("cheap_sunglasses") or not bool(snapshot.get("visible", false)) or str(snapshot.get("item_id", "")) != "cheap_sunglasses":
@@ -558,6 +571,9 @@ func _check_event_item_found_main_flow(app: Control) -> bool:
 		return false
 	if str(snapshot.get("display_name", "")) != "Cheap Sunglasses" or not bool(snapshot.get("has_item_texture", false)) or str(snapshot.get("message", "")) != "You found the Cheap Sunglasses item.":
 		push_error("Event item-found popup did not use the granted item's authored name and icon.")
+		return false
+	if talk_dock.visible or not bool(snapshot.get("replaces_talk_portrait", false)):
+		push_error("Event item-found popup did not replace the active speaker portrait during its internal-dialogue presentation.")
 		return false
 	var popup: ItemFoundPopup = app.get("item_found_popup")
 	popup.dismiss_current()

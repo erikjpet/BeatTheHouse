@@ -1,6 +1,9 @@
 class_name ItemFoundPopup
 extends Control
 
+signal display_started(item_id: String)
+signal display_finished
+
 const DISPLAY_SECONDS := 3.0
 const POPUP_SIZE := Vector2(390, 112)
 const VIEWPORT_MARGIN := Vector2(18, 18)
@@ -19,6 +22,7 @@ var attention_tween: Tween
 func _ready() -> void:
 	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
+	z_index = 100
 	visible = false
 	_build()
 	_position_panel()
@@ -36,6 +40,7 @@ func show_item(item: Dictionary, texture: Texture2D) -> void:
 
 
 func clear_all() -> void:
+	var was_active := not current_item.is_empty() or not pending_items.is_empty() or visible
 	pending_items.clear()
 	current_item = {}
 	visible = false
@@ -44,9 +49,12 @@ func clear_all() -> void:
 	_stop_attention_animation()
 	if item_icon != null:
 		item_icon.texture = null
+	if was_active:
+		display_finished.emit()
 
 
 func dismiss_current() -> void:
+	var was_active := not current_item.is_empty() or visible
 	if dismiss_timer != null:
 		dismiss_timer.stop()
 	_stop_attention_animation()
@@ -55,6 +63,8 @@ func dismiss_current() -> void:
 	if pending_items.is_empty():
 		if item_icon != null:
 			item_icon.texture = null
+		if was_active:
+			display_finished.emit()
 		return
 	call_deferred("_show_next_item")
 
@@ -73,6 +83,10 @@ func current_snapshot() -> Dictionary:
 		"panel_rect": panel.get_global_rect() if panel != null and visible else Rect2(),
 		"screen_rect": get_global_rect(),
 	}
+
+
+func is_open() -> bool:
+	return visible and not current_item.is_empty()
 
 
 func _build() -> void:
@@ -156,6 +170,7 @@ func _show_next_item() -> void:
 	_position_panel()
 	dismiss_timer.start(DISPLAY_SECONDS)
 	_play_attention_animation()
+	display_started.emit(item_id)
 
 
 func _notification(what: int) -> void:
