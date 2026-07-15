@@ -3253,10 +3253,65 @@ func _check_pull_tabs_surface_contract(game: GameModule, failures: Array) -> voi
 	var stack_surface := game.surface_state(run_state, environment, collect_click.get("ui_state", {}))
 	if int(stack_surface.get("pull_tab_stack_count", 0)) <= 0 or (stack_surface.get("pull_tab_stack", []) as Array).is_empty() or int(stack_surface.get("pull_tab_tray_count", 0)) != 0:
 		failures.append("Pull Tabs tray collection did not expose the collected ticket stack.")
+	var control_harness := SurfaceHarness.new()
+	control_harness.setup(stack_surface)
+	game.draw_surface(control_harness, stack_surface, {})
+	var open_button_rect := Rect2()
+	var auto_open_button_rect := Rect2()
+	var found_open_button := false
+	var found_auto_open_button := false
+	for hit_value in control_harness.hit_regions:
+		if typeof(hit_value) != TYPE_DICTIONARY:
+			continue
+		var hit: Dictionary = hit_value
+		if str(hit.get("action", "")) == "pull_tab_next_unopened":
+			open_button_rect = hit.get("rect", Rect2()) as Rect2
+			found_open_button = true
+		elif str(hit.get("action", "")) == "pull_tab_auto_open":
+			auto_open_button_rect = hit.get("rect", Rect2()) as Rect2
+			found_auto_open_button = true
+	if not found_auto_open_button or not control_harness.labels.has("AUTO OPEN"):
+		failures.append("Pull Tabs right panel did not draw an Auto Open button for a purchased ticket stack.")
+	elif not found_open_button or auto_open_button_rect.position.x <= open_button_rect.end.x or absf(auto_open_button_rect.position.y - open_button_rect.position.y) > 0.1:
+		failures.append("Pull Tabs Auto Open button was not positioned beside Open on the right panel.")
 	var second_buy_click := _check_surface_command_non_mutating(game, "pull_tab_buy", 1, false, {}, run_state, environment, "second pull-tab buy", failures)
 	if str(second_buy_click.get("action_id", "")) == "buy_tab":
 		game.resolve_with_context("buy_tab", int(second_buy_click.get("set_stake", 1)), run_state, environment, run_state.create_rng("pull_tab_second_buy"), second_buy_click.get("ui_state", {}))
 		game.surface_action_command("pull_tab_collect_tray", 0, false, {}, run_state, environment)
+	var auto_start_msec := 12000
+	var auto_toggle_state := {"surface_time_msec": auto_start_msec, "drunk_scaled_surface_time_msec": auto_start_msec}
+	var auto_toggle := _check_surface_command_non_mutating(game, "pull_tab_auto_open", 0, false, auto_toggle_state, run_state, environment, "pull-tab auto open toggle", failures)
+	var auto_state: Dictionary = auto_toggle.get("ui_state", {}) if typeof(auto_toggle.get("ui_state", {})) == TYPE_DICTIONARY else {}
+	var auto_due_msec := int(auto_state.get("pull_tab_auto_open_next_msec", 0))
+	if not bool(auto_state.get("pull_tab_auto_open_active", false)) or auto_due_msec <= auto_start_msec:
+		failures.append("Pull Tabs Auto Open did not activate and schedule its first simulated click.")
+	if game.surface_needs_auto_tick(auto_state, run_state, environment):
+		failures.append("Pull Tabs Auto Open requested work before its first scheduled click.")
+	var auto_tick_keys := game.surface_auto_tick_state_keys()
+	if not auto_tick_keys.has("pull_tab_auto_open_active") or not auto_tick_keys.has("pull_tab_auto_open_next_msec") or auto_tick_keys.has("pull_tab_reveals"):
+		failures.append("Pull Tabs Auto Open per-frame gate did not keep its state-key view minimal.")
+	var auto_due_state := auto_state.duplicate(true)
+	auto_due_state["surface_time_msec"] = auto_due_msec
+	auto_due_state["drunk_scaled_surface_time_msec"] = auto_due_msec
+	if not game.surface_needs_auto_tick(auto_due_state, run_state, environment):
+		failures.append("Pull Tabs Auto Open did not request its scheduled reveal click.")
+	var auto_reveal := game.surface_auto_action_command(auto_due_state, run_state, environment, {})
+	var auto_reveal_state: Dictionary = auto_reveal.get("ui_state", {}) if typeof(auto_reveal.get("ui_state", {})) == TYPE_DICTIONARY else {}
+	var auto_reveal_surface := game.surface_state(run_state, environment, auto_reveal_state)
+	var auto_reveal_stack: Array = auto_reveal_surface.get("pull_tab_stack", []) if typeof(auto_reveal_surface.get("pull_tab_stack", [])) == TYPE_ARRAY else []
+	if not bool(auto_reveal.get("handled", false)) or auto_reveal_stack.is_empty() or not bool((auto_reveal_stack[0] as Dictionary).get("fully_revealed", false)):
+		failures.append("Pull Tabs Auto Open did not route its first tick through the normal ticket reveal path.")
+	var auto_file_due_msec := int(auto_reveal_state.get("pull_tab_auto_open_next_msec", 0))
+	var auto_file_state := auto_reveal_state.duplicate(true)
+	auto_file_state["surface_time_msec"] = auto_file_due_msec
+	auto_file_state["drunk_scaled_surface_time_msec"] = auto_file_due_msec
+	var auto_file := game.surface_auto_action_command(auto_file_state, run_state, environment, {})
+	if str(auto_file.get("action_id", "")) != "sort_tab_ticket" or not bool(auto_file.get("direct_resolve", false)):
+		failures.append("Pull Tabs Auto Open did not route its next tick through the normal ticket filing path.")
+	var auto_off := game.surface_action_command("pull_tab_auto_open", 0, false, auto_file.get("ui_state", {}), run_state, environment)
+	var auto_off_state: Dictionary = auto_off.get("ui_state", {}) if typeof(auto_off.get("ui_state", {})) == TYPE_DICTIONARY else {}
+	if bool(auto_off_state.get("pull_tab_auto_open_active", true)) or int(auto_off_state.get("pull_tab_auto_open_next_msec", -1)) != 0:
+		failures.append("Pull Tabs Stop Auto did not cancel the repeating click schedule.")
 	var next_ticket_click := _check_surface_command_non_mutating(game, "pull_tab_next", 0, false, {}, run_state, environment, "pull-tab next ticket", failures)
 	var next_ticket_state: Dictionary = next_ticket_click.get("ui_state", {})
 	if int(next_ticket_state.get("pull_tab_stack_cursor", 0)) != mini(1, int(game.surface_state(run_state, environment, {}).get("pull_tab_stack_count", 1)) - 1):

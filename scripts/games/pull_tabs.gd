@@ -65,6 +65,10 @@ const PULL_TAB_MACHINE_COLUMN_COUNT := 4
 const PULL_TAB_BUY_SET_ACTION := "buy_tab_set"
 const PULL_TAB_COLLECT_TRAY_ACTION := "pull_tab_collect_tray"
 const PULL_TAB_FILE_TICKET_ACTION := "pull_tab_file_ticket"
+const PULL_TAB_AUTO_OPEN_ACTION := "pull_tab_auto_open"
+const PULL_TAB_AUTO_OPEN_INITIAL_DELAY_MSEC := 90
+const PULL_TAB_AUTO_OPEN_STEP_GAP_MSEC := 80
+const PULL_TAB_AUTO_TICK_STATE_KEYS := ["pull_tab_auto_open_active", "pull_tab_auto_open_next_msec"]
 const XRAY_GLASSES_ITEM_ID := "xray_glasses"
 const TAB_DETECTOR_ITEM_ID := "tab_detector"
 const TAROT_CARD_ITEM_ID := "tarot_card"
@@ -157,6 +161,7 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 		"pull_tab_file_animation_id": file_animation_id,
 		"pull_tab_file_animation_ticket": file_ticket,
 		"pull_tab_file_animation_pile": file_pile,
+		"pull_tab_auto_open_active": bool(ui_state.get("pull_tab_auto_open_active", false)),
 		"native_selected_surface_actions": _selected_surface_actions(ui_state),
 		"surface_action_bindings": {
 			"legal": {"action": "pull_tab_buy", "index": 0},
@@ -200,6 +205,7 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 				"pull_tab_buy_all": "ticket_dispenser",
 				PULL_TAB_COLLECT_TRAY_ACTION: "ticket_navigation",
 				"pull_tab_reveal_next": "ticket_peel",
+				PULL_TAB_AUTO_OPEN_ACTION: "ticket_navigation",
 				PULL_TAB_FILE_TICKET_ACTION: "ticket_navigation",
 				"pull_tab_prev": "ticket_navigation",
 				"pull_tab_next": "ticket_navigation",
@@ -564,7 +570,49 @@ func surface_action_command(surface_action: String, index: int, _confirm_request
 			return _stack_cursor_command(machine, ui_state, 0)
 		"pull_tab_next_unopened":
 			return _next_unopened_command(machine, ui_state)
+		PULL_TAB_AUTO_OPEN_ACTION:
+			return _toggle_auto_open_command(machine, ui_state)
 	return {"handled": false}
+
+
+func surface_needs_auto_tick(ui_state: Dictionary, _run_state: RunState, _environment: Dictionary) -> bool:
+	if not bool(ui_state.get("pull_tab_auto_open_active", false)):
+		return false
+	var surface_time := _pull_tab_surface_time_msec(ui_state)
+	var next_msec := int(ui_state.get("pull_tab_auto_open_next_msec", 0))
+	return next_msec <= 0 or surface_time >= next_msec
+
+
+func surface_auto_tick_state_keys() -> Array:
+	return PULL_TAB_AUTO_TICK_STATE_KEYS
+
+
+func surface_auto_action_command(ui_state: Dictionary, _run_state: RunState, environment: Dictionary, _surface_status: Dictionary = {}) -> Dictionary:
+	if not bool(ui_state.get("pull_tab_auto_open_active", false)):
+		return {"handled": false}
+	var surface_time := _pull_tab_surface_time_msec(ui_state)
+	var next_msec := int(ui_state.get("pull_tab_auto_open_next_msec", 0))
+	if next_msec > 0 and surface_time < next_msec:
+		return {"handled": false}
+	var machine := _read_machine_state(_run_state, environment)
+	var tickets := _array_view(machine.get("ticket_stack", []))
+	if tickets.is_empty():
+		return _stop_auto_open_command(ui_state, "Auto Open finished. No purchased tickets remain.")
+	var cursor := _stack_cursor(ui_state, tickets.size())
+	var ticket: Dictionary = tickets[cursor] if cursor >= 0 and cursor < tickets.size() and typeof(tickets[cursor]) == TYPE_DICTIONARY else {}
+	var ticket_id := str(ticket.get("id", ""))
+	var rows := _array_view(ticket.get("rows", []))
+	var reveals_value: Variant = ui_state.get("pull_tab_reveals", {})
+	var revealed_count := 0
+	if typeof(reveals_value) == TYPE_DICTIONARY:
+		revealed_count = clampi(int((reveals_value as Dictionary).get(ticket_id, 0)), 0, rows.size())
+	var command := _file_ticket_command(machine, ui_state) if not ticket_id.is_empty() and revealed_count >= rows.size() else _reveal_next_command(machine, ui_state)
+	var command_state: Dictionary = command.get("ui_state", {}) if typeof(command.get("ui_state", {})) == TYPE_DICTIONARY else ui_state.duplicate(true)
+	command_state["pull_tab_auto_open_active"] = true
+	var action_delay := PULL_TAB_FILE_DURATION_MSEC if str(command.get("action_id", "")) == SORT_TICKET_ACTION else PULL_TAB_REVEAL_TOTAL_MSEC
+	command_state["pull_tab_auto_open_next_msec"] = surface_time + action_delay + PULL_TAB_AUTO_OPEN_STEP_GAP_MSEC
+	command["ui_state"] = command_state
+	return GameModule.surface_command(command)
 
 
 # Resolves data-authored action buttons through the same finite-deal path used
@@ -1034,6 +1082,35 @@ func _deal_ui_state(ui_state: Dictionary, deal_index: int) -> Dictionary:
 	next_state["pull_tab_deal_index"] = deal_index
 	next_state["pull_tab_stack_cursor"] = 0
 	return next_state
+
+
+func _toggle_auto_open_command(machine: Dictionary, ui_state: Dictionary) -> Dictionary:
+	var next_state := ui_state.duplicate(true)
+	var next_active := not bool(next_state.get("pull_tab_auto_open_active", false))
+	if next_active and _array_size(machine.get("ticket_stack", [])) <= 0:
+		return _stop_auto_open_command(next_state, "Collect purchased tickets before starting Auto Open.")
+	next_state["pull_tab_auto_open_active"] = next_active
+	next_state["pull_tab_auto_open_next_msec"] = _pull_tab_surface_time_msec(ui_state) + PULL_TAB_AUTO_OPEN_INITIAL_DELAY_MSEC if next_active else 0
+	return GameModule.surface_command({
+		"handled": true,
+		"ui_state": next_state,
+		"message": "Auto Open started." if next_active else "Auto Open stopped.",
+	})
+
+
+func _stop_auto_open_command(ui_state: Dictionary, message: String) -> Dictionary:
+	var next_state := ui_state.duplicate(true)
+	next_state["pull_tab_auto_open_active"] = false
+	next_state["pull_tab_auto_open_next_msec"] = 0
+	return GameModule.surface_command({
+		"handled": true,
+		"ui_state": next_state,
+		"message": message,
+	})
+
+
+func _pull_tab_surface_time_msec(ui_state: Dictionary) -> int:
+	return int(ui_state.get("drunk_scaled_surface_time_msec", ui_state.get("surface_time_msec", Time.get_ticks_msec())))
 
 
 func _reveal_next_command(machine: Dictionary, ui_state: Dictionary) -> Dictionary:
@@ -3051,10 +3128,12 @@ func _draw_pull_tab_stack_panel(surface, rect: Rect2, surface_state: Dictionary,
 	surface.surface_label("TICKET PILE", rect.position + Vector2(14, 22), 18, C_CYAN)
 	surface.surface_label("%d/%d" % [mini(cursor + 1, maxi(1, count)), count], rect.position + Vector2(118, 22), 14, C_SOFT)
 	if pending_payout > 0:
-		surface.surface_label("CASH $%d" % pending_payout, rect.position + Vector2(312, 23), 11, C_YELLOW)
+		surface.surface_label("CASH $%d" % pending_payout, rect.position + Vector2(312, 42), 9, C_YELLOW)
 	_draw_pull_tab_nav_button(surface, Rect2(rect.position + Vector2(170, 8), Vector2(32, 24)), "<", "pull_tab_prev", count > 1 and cursor > 0)
 	_draw_pull_tab_nav_button(surface, Rect2(rect.position + Vector2(208, 8), Vector2(32, 24)), ">", "pull_tab_next", count > 1 and cursor < count - 1)
 	_draw_pull_tab_nav_button(surface, Rect2(rect.position + Vector2(246, 8), Vector2(54, 24)), "OPEN", "pull_tab_next_unopened", count > 0)
+	var auto_open_active := bool(surface_state.get("pull_tab_auto_open_active", false))
+	_draw_pull_tab_nav_button(surface, Rect2(rect.position + Vector2(306, 8), Vector2(90, 24)), "STOP AUTO" if auto_open_active else "AUTO OPEN", PULL_TAB_AUTO_OPEN_ACTION, count > 0, auto_open_active)
 	var display_start_index := 0
 	if bool(surface.surface_animation_active(PULL_TAB_DISPENSE_CHANNEL)) and not stack.is_empty():
 		var arriving: Dictionary = stack[0] as Dictionary
@@ -3075,10 +3154,13 @@ func _draw_pull_tab_stack_panel(surface, rect: Rect2, surface_state: Dictionary,
 	_draw_pull_tab_file_animation(surface, surface_state, active_rect, pile_rect)
 
 
-func _draw_pull_tab_nav_button(surface, rect: Rect2, label: String, action: String, enabled: bool) -> void:
-	surface.draw_rect(rect, Color("#13222a") if enabled else Color("#101317"))
-	surface.draw_rect(rect, Color(C_CYAN.r, C_CYAN.g, C_CYAN.b, 0.48 if enabled else 0.14), false, 2)
-	surface.surface_label(label, rect.position + Vector2(8, 17), 10, C_WHITE if enabled else C_SOFT)
+func _draw_pull_tab_nav_button(surface, rect: Rect2, label: String, action: String, enabled: bool, active: bool = false) -> void:
+	var base_color := Color("#26351f") if active else Color("#13222a") if enabled else Color("#101317")
+	var border_color := C_YELLOW if active else C_CYAN
+	surface.draw_rect(rect, base_color)
+	surface.draw_rect(rect, Color(border_color.r, border_color.g, border_color.b, 0.74 if active else 0.48 if enabled else 0.14), false, 2)
+	var font_size := 8 if label.length() > 6 else 10
+	surface.surface_label(label, rect.position + Vector2(7, 17), font_size, C_YELLOW if active else C_WHITE if enabled else C_SOFT)
 	if enabled:
 		surface.surface_add_invisible_hit(rect, action)
 
