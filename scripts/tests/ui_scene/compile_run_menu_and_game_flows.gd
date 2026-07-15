@@ -1620,7 +1620,6 @@ func _check_game_surface_touch_hit_policy() -> bool:
 	delayed_mouse_event.pressed = true
 	delayed_mouse_event.position = touch_position
 	touch_canvas.call("_gui_input", delayed_mouse_event)
-	touch_canvas.queue_free()
 	if control_rect.size.x < 44.0 or control_rect.size.y < 44.0:
 		push_error("Game surface touch controls should expand small hit regions to at least 44x44.")
 		return false
@@ -1629,6 +1628,14 @@ func _check_game_surface_touch_hit_policy() -> bool:
 		return false
 	if int(touch_activation.get("count", 0)) != 1 or str(touch_activation.get("action", "")) != "surface_stake_up" or not bool(touch_activation.get("confirm_requested", false)):
 		push_error("Game surface touch input did not activate the expected hit region exactly once.")
+		return false
+	touch_canvas.call("set_small_screen_mode", true)
+	touch_canvas.call("surface_add_hit", Rect2(12, 12, 12, 16), "small_screen_probe")
+	var small_snapshot: Dictionary = touch_canvas.call("current_view_snapshot")
+	var small_rect := _surface_hit_rect(small_snapshot.get("surface_hit_actions", []), "small_screen_probe")
+	touch_canvas.queue_free()
+	if not bool(small_snapshot.get("small_screen_mode", false)) or small_rect.size.x < SmallScreenPolicyScript.SURFACE_TOUCH_HIT_SIZE.x or small_rect.size.y < SmallScreenPolicyScript.SURFACE_TOUCH_HIT_SIZE.y:
+		push_error("Small-screen game surface did not expand ordinary controls to the phone/tablet hit-target policy.")
 		return false
 	return true
 

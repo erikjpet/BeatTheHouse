@@ -21,6 +21,7 @@ const RunActionServiceScript := preload("res://scripts/core/run_action_service.g
 const AttributeBadgesScript := preload("res://scripts/core/attribute_badges.gd")
 const EventModuleScript := preload("res://scripts/core/event_module.gd")
 const UserSettingsScript := preload("res://scripts/core/user_settings.gd")
+const SmallScreenPolicyScript := preload("res://scripts/ui/small_screen_policy.gd")
 const MetaCollectionServiceScript := preload("res://scripts/core/meta_collection_service.gd")
 const TEST_SETTINGS_PATH := "user://settings_ui_scene_compile_check.json"
 const TEST_META_COLLECTION_PATH := "user://ui_scene_compile_meta_collection.json"
@@ -35,7 +36,7 @@ func _player_facing_effect_summary_is_clean(text: String, label: String) -> bool
 	return true
 
 
-func _visible_buttons_meet_touch_target(node: Node, label: String) -> bool:
+func _visible_buttons_meet_touch_target(node: Node, label: String, minimum_height: float = 39.5) -> bool:
 	if node == null:
 		return true
 	if node is CanvasItem and not (node as CanvasItem).visible:
@@ -44,11 +45,11 @@ func _visible_buttons_meet_touch_target(node: Node, label: String) -> bool:
 		var button := node as Button
 		if button.visible and button.is_visible_in_tree():
 			var rect := button.get_global_rect()
-			if rect.size.y < 39.5:
+			if rect.size.y < minimum_height:
 				push_error("%s has a visible button below touch target height: %s at %s." % [label, button.text, str(rect)])
 				return false
 	for child in node.get_children():
-		if not _visible_buttons_meet_touch_target(child, label):
+		if not _visible_buttons_meet_touch_target(child, label, minimum_height):
 			return false
 	return true
 
@@ -175,6 +176,13 @@ func _check_run_inventory_screen_component() -> bool:
 		parent.queue_free()
 		push_error("Standalone run inventory did not auto-select the first item when selection was absent.")
 		return false
+	screen.set_small_screen_mode(true)
+	await process_frame
+	if not bool(screen.layout_rects().get("small_screen_mode", false)) or not _visible_buttons_meet_touch_target(screen, "small-screen run inventory", SmallScreenPolicyScript.CONTROL_TOUCH_TARGET_HEIGHT - 0.5):
+		parent.queue_free()
+		push_error("Standalone run inventory did not adopt the small-screen control target policy.")
+		return false
+	screen.set_small_screen_mode(false)
 	parent.size = Vector2(640, 360)
 	screen.size = parent.size
 	await process_frame
@@ -239,6 +247,13 @@ func _check_talk_dock_component() -> bool:
 		parent.queue_free()
 		push_error("Talk dock fixture did not expose the speaker, spoken line, and choice copy.")
 		return false
+	dock.set_small_screen_mode(true)
+	await process_frame
+	if not _visible_buttons_meet_touch_target(dock, "small-screen talk dock", SmallScreenPolicyScript.CONTROL_TOUCH_TARGET_HEIGHT - 0.5):
+		parent.queue_free()
+		return false
+	dock.set_small_screen_mode(false)
+	await process_frame
 	var key_event := InputEventKey.new()
 	key_event.pressed = true
 	key_event.keycode = KEY_2
@@ -1350,7 +1365,7 @@ func _run() -> void:
 		push_error("Settings button did not open the main menu settings panel.")
 		quit(1)
 		return
-	if settings_menu.get("resolution") == null or settings_menu.get("master") == null or settings_menu.get("music") == null or settings_menu.get("sfx") == null or settings_menu.get("drunk_effect") == null or settings_menu.get("high_contrast") == null:
+	if settings_menu.get("resolution") == null or settings_menu.get("master") == null or settings_menu.get("music") == null or settings_menu.get("sfx") == null or settings_menu.get("drunk_effect") == null or settings_menu.get("high_contrast") == null or settings_menu.get("play_on_small_screen") == null:
 		push_error("Settings menu did not expose resolution, audio, drunk visual, and high-contrast controls.")
 		quit(1)
 		return
@@ -1360,6 +1375,7 @@ func _run() -> void:
 	var high_contrast_check: CheckBox = settings_menu.get("high_contrast")
 	var reduce_motion_check: CheckBox = settings_menu.get("reduce_motion")
 	var audio_calm_check: CheckBox = settings_menu.get("audio_calm")
+	var small_screen_check: CheckBox = settings_menu.get("play_on_small_screen")
 	var ui_scale_slider: HSlider = settings_menu.get("ui")
 	var text_size_option: OptionButton = settings_menu.get("text_size")
 	if resolution_option.item_count < 2 or mode_option.item_count < 1:
@@ -1370,7 +1386,7 @@ func _run() -> void:
 		push_error("Settings menu did not populate the drunk visual mode choices.")
 		quit(1)
 		return
-	if high_contrast_check == null or reduce_motion_check == null or audio_calm_check == null or ui_scale_slider == null or text_size_option == null:
+	if high_contrast_check == null or reduce_motion_check == null or audio_calm_check == null or small_screen_check == null or ui_scale_slider == null or text_size_option == null:
 		push_error("Settings menu did not expose release accessibility controls.")
 		quit(1)
 		return
@@ -1391,6 +1407,8 @@ func _run() -> void:
 	reduce_motion_check.toggled.emit(true)
 	audio_calm_check.button_pressed = true
 	audio_calm_check.toggled.emit(true)
+	small_screen_check.button_pressed = true
+	small_screen_check.toggled.emit(true)
 	ui_scale_slider.value = 130
 	ui_scale_slider.value_changed.emit(130)
 	text_size_option.select(2)
@@ -1411,6 +1429,10 @@ func _run() -> void:
 			push_error("Settings apply did not persist calmer music.")
 			quit(1)
 			return
+		if not bool(user_settings.play_on_small_screen):
+			push_error("Settings apply did not persist Play on small screen.")
+			quit(1)
+			return
 		if str(user_settings.text_size) != "large" or absf(float(user_settings.ui_scale) - 1.3) > 0.001:
 			push_error("Settings apply did not persist large text and UI scale.")
 			quit(1)
@@ -1427,9 +1449,30 @@ func _run() -> void:
 		push_error("Settings did not document the haptics release cut.")
 		quit(1)
 		return
+	var small_screen_snapshot: Dictionary = accessibility_snapshot.get("small_screen", {}) if typeof(accessibility_snapshot.get("small_screen", {})) == TYPE_DICTIONARY else {}
+	if not bool(small_screen_snapshot.get("enabled", false)) or float(small_screen_snapshot.get("minimum_control_height", 0.0)) < SmallScreenPolicyScript.CONTROL_TOUCH_TARGET_HEIGHT:
+		push_error("Play on small screen did not expose the centralized larger-target policy.")
+		quit(1)
+		return
+	if not _visible_buttons_meet_touch_target(settings_menu, "small-screen settings", SmallScreenPolicyScript.CONTROL_TOUCH_TARGET_HEIGHT - 0.5):
+		quit(1)
+		return
+	var small_environment_snapshot: Dictionary = (app.get("environment_canvas") as Control).call("current_view_snapshot")
+	var small_game_snapshot: Dictionary = (app.get("game_surface_canvas") as Control).call("current_view_snapshot")
+	if not bool(small_environment_snapshot.get("small_screen_mode", false)) or not bool(small_game_snapshot.get("small_screen_mode", false)):
+		push_error("Play on small screen did not reach both canvas interaction layers.")
+		quit(1)
+		return
+	var map_controller: Variant = app.get("world_map_overlay_controller")
+	var map_mode_snapshot: Dictionary = map_controller.call("export_state") if map_controller != null else {}
+	var map_target_size: Variant = map_mode_snapshot.get("node_touch_target_size", Vector2.ZERO)
+	if not bool(map_mode_snapshot.get("small_screen_mode", false)) or typeof(map_target_size) != TYPE_VECTOR2 or (map_target_size as Vector2).x < SmallScreenPolicyScript.MAP_NODE_TOUCH_TARGET_SIZE:
+		push_error("Play on small screen did not enlarge world-map node targets.")
+		quit(1)
+		return
 	var reloaded_settings: UserSettings = UserSettingsScript.new()
 	reloaded_settings.load()
-	if bool(reloaded_settings.high_contrast) != target_high_contrast or not bool(reloaded_settings.reduce_motion) or not bool(reloaded_settings.audio_calm) or str(reloaded_settings.text_size) != "large":
+	if bool(reloaded_settings.high_contrast) != target_high_contrast or not bool(reloaded_settings.reduce_motion) or not bool(reloaded_settings.audio_calm) or not bool(reloaded_settings.play_on_small_screen) or str(reloaded_settings.text_size) != "large":
 		push_error("Settings save/load did not preserve accessibility settings after restart.")
 		quit(1)
 		return
@@ -2446,6 +2489,18 @@ func _run() -> void:
 	if not _selected_info_text_fits(environment_canvas, "beach sand pile info", ["Inspect the pile."]):
 		quit(1)
 		return
+	environment_canvas.call("set_small_screen_mode", true)
+	await process_frame
+	var small_environment_canvas_snapshot: Dictionary = environment_canvas.call("current_view_snapshot")
+	var minimum_environment_hit: Variant = small_environment_canvas_snapshot.get("minimum_environment_hit_size", Vector2.ZERO)
+	var small_selected_info: Dictionary = small_environment_canvas_snapshot.get("selected_info", {}) if typeof(small_environment_canvas_snapshot.get("selected_info", {})) == TYPE_DICTIONARY else {}
+	var small_info_actions: Array = small_selected_info.get("actions", []) if typeof(small_selected_info.get("actions", [])) == TYPE_ARRAY else []
+	var small_action_rect: Dictionary = (small_info_actions[0] as Dictionary).get("button_rect", {}) if not small_info_actions.is_empty() and typeof(small_info_actions[0]) == TYPE_DICTIONARY else {}
+	if not bool(small_environment_canvas_snapshot.get("small_screen_mode", false)) or typeof(minimum_environment_hit) != TYPE_VECTOR2 or (minimum_environment_hit as Vector2).x < SmallScreenPolicyScript.ENVIRONMENT_OBJECT_HIT_SIZE.x or float(small_action_rect.get("h", 0.0)) < SmallScreenPolicyScript.ENVIRONMENT_ACTION_HEIGHT:
+		push_error("Small-screen environment canvas did not enlarge object and selected-action hit targets.")
+		quit(1)
+		return
+	environment_canvas.call("set_small_screen_mode", false)
 	environment_canvas.call("render_environment_snapshot", {
 		"id": "classic_drunk_room",
 		"display_name": "Classic Drunk Room",

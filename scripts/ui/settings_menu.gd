@@ -8,6 +8,7 @@ signal settings_applied
 
 const UserSettingsScript := preload("res://scripts/core/user_settings.gd")
 const VisualStyleScript := preload("res://scripts/ui/visual_style.gd")
+const SmallScreenPolicyScript := preload("res://scripts/ui/small_screen_policy.gd")
 
 const WINDOW_MODE_LABELS := ["Windowed", "Fullscreen", "Borderless"]
 const TEXT_SIZE_LABELS := ["Small", "Normal", "Large"]
@@ -37,6 +38,7 @@ var text_size: OptionButton
 var reduce_motion: CheckBox
 var drunk_effect: OptionButton
 var high_contrast: CheckBox
+var play_on_small_screen: CheckBox
 var haptics_note: Label
 
 
@@ -103,6 +105,10 @@ func _build() -> void:
 	audio_calm.toggled.connect(_on_audio_calm)
 
 	_section(box, "Interface")
+	play_on_small_screen = _check(box, "Play on small screen")
+	play_on_small_screen.tooltip_text = "Larger controls and touch targets for phones and tablets."
+	play_on_small_screen.toggled.connect(_on_play_on_small_screen)
+	_note(box, "Enlarges controls and tap areas for phone or tablet play. Disabled by default.")
 	var ui_row := _slider(box, "UI Scale", 85, 130, 5)
 	ui = ui_row["slider"]
 	ui_text = ui_row["text"]
@@ -234,6 +240,7 @@ func _sync() -> void:
 	music.value = roundi(draft.music_volume * 100.0)
 	sfx.value = roundi(draft.sfx_volume * 100.0)
 	audio_calm.button_pressed = draft.audio_calm
+	play_on_small_screen.button_pressed = draft.play_on_small_screen
 	ui.value = roundi(draft.ui_scale * 100.0)
 	text_size.select(draft.text_index())
 	high_contrast.button_pressed = draft.high_contrast
@@ -309,6 +316,11 @@ func _on_audio_calm(enabled: bool) -> void:
 	draft.audio_calm = enabled
 
 
+func _on_play_on_small_screen(enabled: bool) -> void:
+	draft.play_on_small_screen = enabled
+	_apply_accessibility_settings()
+
+
 # Updates draft UI scale.
 func _on_ui(value: float) -> void:
 	_set_percent("ui_scale", value)
@@ -354,6 +366,7 @@ func current_settings_snapshot() -> Dictionary:
 		"audio_calm": bool(active_settings.audio_calm),
 		"drunk_effect_mode": str(active_settings.drunk_effect_mode),
 		"high_contrast": bool(active_settings.high_contrast),
+		"play_on_small_screen": bool(active_settings.play_on_small_screen),
 		"haptics_supported": false,
 		"haptics_cut_reason": UserSettingsScript.HAPTICS_CUT_REASON,
 	}
@@ -375,6 +388,9 @@ func _apply_accessibility_settings() -> void:
 	if active_settings != null:
 		font_scale = clampf(float(active_settings.text_scale()) * float(active_settings.ui_scale), 0.86, 1.35)
 		control_scale = clampf(float(active_settings.ui_scale), 0.90, 1.18)
+		if active_settings.play_on_small_screen:
+			font_scale = minf(1.5, font_scale * SmallScreenPolicyScript.FONT_SCALE)
+			control_scale = maxf(control_scale, SmallScreenPolicyScript.CONTROL_SCALE)
 		high_contrast_enabled = bool(active_settings.high_contrast)
 	VisualStyleScript.set_high_contrast_enabled(high_contrast_enabled)
 	_apply_accessibility_to_node(self, font_scale, control_scale)
@@ -406,7 +422,7 @@ func _apply_accessibility_font(control: Control, font_scale: float) -> void:
 
 
 func _apply_accessibility_minimum_size(control: Control, control_scale: float) -> void:
-	if not _control_uses_text(control):
+	if not _control_uses_text(control) and not (control is HSlider):
 		return
 	if not control.has_meta(ACCESSIBILITY_BASE_MIN_SIZE_META):
 		control.set_meta(ACCESSIBILITY_BASE_MIN_SIZE_META, control.custom_minimum_size)
@@ -414,9 +430,11 @@ func _apply_accessibility_minimum_size(control: Control, control_scale: float) -
 	if typeof(stored) != TYPE_VECTOR2:
 		return
 	var base_size: Vector2 = stored
-	if base_size == Vector2.ZERO:
-		return
-	control.custom_minimum_size = Vector2(base_size.x, base_size.y * control_scale)
+	var next_size := Vector2(base_size.x, base_size.y * control_scale)
+	var active_settings: UserSettings = draft if draft != null else settings
+	if active_settings != null and active_settings.play_on_small_screen and (control is BaseButton or control is LineEdit or control is SpinBox or control is HSlider):
+		next_size.y = maxf(next_size.y, SmallScreenPolicyScript.CONTROL_TOUCH_TARGET_HEIGHT)
+	control.custom_minimum_size = next_size
 
 
 func _apply_accessibility_colors(control: Control) -> void:

@@ -8,6 +8,7 @@ signal object_focused(object_id: String)
 signal object_activated(object_id: String)
 
 const VisualStyleScript := preload("res://scripts/ui/visual_style.gd")
+const SmallScreenPolicyScript := preload("res://scripts/ui/small_screen_policy.gd")
 const IconSpriteRendererScript := preload("res://scripts/ui/icon_sprite_renderer.gd")
 const AttributeBadgeRowScript := preload("res://scripts/ui/attribute_badge_row.gd")
 const DrunkDistortionOverlayScript := preload("res://scripts/ui/drunk_distortion_overlay.gd")
@@ -129,6 +130,7 @@ var selected_info_badge_hit_entries: Array = []
 var selected_info_badge_hover_text := ""
 var selected_info_badge_hover_local_position := Vector2.ZERO
 var reduce_motion := false
+var small_screen_mode := false
 var scene_idle_animation_redraw_accumulator := 0.0
 var scene_idle_animation_redraw_count := 0
 var last_touch_press_msec: int = -100000
@@ -177,6 +179,16 @@ func render_environment_snapshot(snapshot: Dictionary) -> void:
 		hovered_object_id = ""
 	_invalidate_camera_target()
 	_update_camera_target_if_needed()
+	queue_redraw()
+
+
+func set_small_screen_mode(enabled: bool) -> void:
+	if small_screen_mode == enabled:
+		return
+	small_screen_mode = enabled
+	info_card_visual_rect = Rect2()
+	info_card_visual_object_id = ""
+	_invalidate_camera_target()
 	queue_redraw()
 
 
@@ -262,7 +274,7 @@ func object_id_at_local_position(local_position: Vector2) -> String:
 		var object_data: Dictionary = objects[index]
 		if not bool(object_data.get("interactive", true)):
 			continue
-		if _board_rect_for_object(object_data).has_point(board_position):
+		if _interaction_rect_for_object(object_data).has_point(board_position):
 			return str(object_data.get("id", ""))
 	return ""
 
@@ -301,6 +313,8 @@ func current_view_snapshot() -> Dictionary:
 		"target_board_scale": _board_base_scale() * target_camera_zoom,
 		"board_aspect_ratio": float(BOARD_SIZE.x) / float(BOARD_SIZE.y),
 		"preserves_aspect_ratio": true,
+		"small_screen_mode": small_screen_mode,
+		"minimum_environment_hit_size": SmallScreenPolicyScript.environment_hit_size(small_screen_mode),
 		"objects": _copy_array(_active_scene_objects()),
 		"object_layout": _scene_object_layout_snapshot(_active_scene_objects()),
 		"selected_info": _selected_object_info_snapshot(),
@@ -2171,10 +2185,18 @@ func _selected_info_action_area_height(object_data: Dictionary) -> float:
 	var inline_actions := _selected_info_inline_actions(object_data)
 	if not inline_actions.is_empty():
 		var count := mini(inline_actions.size(), OBJECT_INFO_INLINE_ACTION_MAX)
-		return float(count) * (OBJECT_INFO_INLINE_ACTION_HEIGHT + OBJECT_INFO_INLINE_ACTION_DETAIL_HEIGHT) + float(maxi(0, count - 1)) * OBJECT_INFO_INLINE_ACTION_GAP
+		return float(count) * (_selected_info_inline_action_height() + OBJECT_INFO_INLINE_ACTION_DETAIL_HEIGHT) + float(maxi(0, count - 1)) * OBJECT_INFO_INLINE_ACTION_GAP
 	if _selected_info_has_single_action_button(object_data):
-		return OBJECT_INFO_ACTION_HEIGHT
+		return _selected_info_action_height()
 	return 0.0
+
+
+func _selected_info_action_height() -> float:
+	return SmallScreenPolicyScript.ENVIRONMENT_ACTION_HEIGHT if small_screen_mode else OBJECT_INFO_ACTION_HEIGHT
+
+
+func _selected_info_inline_action_height() -> float:
+	return SmallScreenPolicyScript.ENVIRONMENT_INLINE_ACTION_HEIGHT if small_screen_mode else OBJECT_INFO_INLINE_ACTION_HEIGHT
 
 
 func _selected_info_action_label(object_data: Dictionary) -> String:
@@ -2269,7 +2291,8 @@ func _selected_info_action_entries_for_rect(info: Dictionary, card: Rect2) -> Ar
 			if typeof(action) != TYPE_DICTIONARY:
 				continue
 			var action_data: Dictionary = action
-			var button_rect := Rect2(Vector2(left, y), Vector2(width, OBJECT_INFO_INLINE_ACTION_HEIGHT))
+			var button_height := _selected_info_inline_action_height()
+			var button_rect := Rect2(Vector2(left, y), Vector2(width, button_height))
 			var detail_rect := Rect2(Vector2(left, button_rect.end.y), Vector2(width, OBJECT_INFO_INLINE_ACTION_DETAIL_HEIGHT))
 			entries.append({
 				"inline": true,
@@ -2280,17 +2303,18 @@ func _selected_info_action_entries_for_rect(info: Dictionary, card: Rect2) -> Ar
 				"detail_rect": detail_rect,
 				"selected": bool(action_data.get("selected", false)),
 			})
-			y += OBJECT_INFO_INLINE_ACTION_HEIGHT + OBJECT_INFO_INLINE_ACTION_DETAIL_HEIGHT + OBJECT_INFO_INLINE_ACTION_GAP
+			y += button_height + OBJECT_INFO_INLINE_ACTION_DETAIL_HEIGHT + OBJECT_INFO_INLINE_ACTION_GAP
 		return entries
 	if _selected_info_has_single_action_button(object_data):
+		var action_height := _selected_info_action_height()
 		entries.append({
 			"inline": false,
 			"label": _selected_info_action_label(object_data),
 			"detail": "",
 			"emit_object_id": "",
 			"button_rect": Rect2(
-				card.position + Vector2(OBJECT_INFO_PADDING_X, card.size.y - OBJECT_INFO_BOTTOM_PADDING - OBJECT_INFO_ACTION_HEIGHT),
-				Vector2(width, OBJECT_INFO_ACTION_HEIGHT)
+				card.position + Vector2(OBJECT_INFO_PADDING_X, card.size.y - OBJECT_INFO_BOTTOM_PADDING - action_height),
+				Vector2(width, action_height)
 			),
 			"detail_rect": Rect2(),
 			"selected": false,
@@ -2819,6 +2843,21 @@ func _update_drunk_distortion_protected_rects() -> void:
 
 func _board_rect_for_object(object_data: Dictionary) -> Rect2:
 	return _board_rect_for_object_at_position(object_data, object_data.get("position", Vector2(0.5, 0.5)))
+
+
+func _interaction_rect_for_object(object_data: Dictionary) -> Rect2:
+	var rect := _board_rect_for_object(object_data)
+	if not small_screen_mode:
+		return rect
+	var minimum_size := SmallScreenPolicyScript.ENVIRONMENT_OBJECT_HIT_SIZE
+	var next_size := Vector2(maxf(rect.size.x, minimum_size.x), maxf(rect.size.y, minimum_size.y))
+	var board_size := Vector2(BOARD_SIZE)
+	next_size.x = minf(next_size.x, board_size.x)
+	next_size.y = minf(next_size.y, board_size.y)
+	var next_position := rect.get_center() - next_size * 0.5
+	next_position.x = clampf(next_position.x, 0.0, maxf(0.0, board_size.x - next_size.x))
+	next_position.y = clampf(next_position.y, 0.0, maxf(0.0, board_size.y - next_size.y))
+	return Rect2(next_position, next_size)
 
 
 func _board_rect_for_object_at_position(object_data: Dictionary, pos_norm: Vector2) -> Rect2:

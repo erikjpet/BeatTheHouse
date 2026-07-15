@@ -9,6 +9,7 @@ signal surface_action_blocked(action: String, reason: String)
 signal surface_music_cue(cue_id: String, context: Dictionary)
 
 const VisualStyleScript := preload("res://scripts/ui/visual_style.gd")
+const SmallScreenPolicyScript := preload("res://scripts/ui/small_screen_policy.gd")
 const SfxPlayerScript := preload("res://scripts/ui/sfx_player.gd")
 const DrunkDistortionOverlayScript := preload("res://scripts/ui/drunk_distortion_overlay.gd")
 
@@ -67,6 +68,7 @@ var active_design_scale := Vector2.ONE
 var active_design_offset := Vector2.ZERO
 var design_space_active := false
 var reduce_motion := false
+var small_screen_mode := false
 var drunk_time_scale := 1.0
 var last_mouse_press_msec: int = -100000
 var last_mouse_press_position := Vector2(-100000.0, -100000.0)
@@ -131,6 +133,14 @@ func set_selected_index(index: int) -> void:
 	queue_redraw()
 
 
+func set_small_screen_mode(enabled: bool) -> void:
+	if small_screen_mode == enabled:
+		return
+	small_screen_mode = enabled
+	hit_regions.clear()
+	queue_redraw()
+
+
 func current_view_snapshot() -> Dictionary:
 	perf_full_snapshot_calls += 1
 	return {
@@ -145,6 +155,8 @@ func current_view_snapshot() -> Dictionary:
 		"board_size": _vector_snapshot(_active_board_size()),
 		"board_aspect_ratio": _active_board_aspect_ratio(),
 		"preserves_aspect_ratio": true,
+		"small_screen_mode": small_screen_mode,
+		"minimum_touch_hit_size": SmallScreenPolicyScript.surface_hit_size(small_screen_mode, MIN_SURFACE_TOUCH_HIT_SIZE),
 		"surface_hit_actions": _hit_region_snapshots(),
 		"outcome_message": str(state.get("outcome_message", state.get("result_message", ""))),
 		"outcome_bankroll_delta": int(state.get("outcome_bankroll_delta", state.get("bankroll_delta", 0))),
@@ -978,7 +990,7 @@ func _touch_hit_rect(rect: Rect2, expand_touch_hit: bool) -> Rect2:
 	var board_rect := _design_rect_to_board(rect)
 	if not expand_touch_hit:
 		return board_rect
-	var min_size := MIN_SURFACE_TOUCH_HIT_SIZE
+	var min_size := SmallScreenPolicyScript.surface_hit_size(small_screen_mode, MIN_SURFACE_TOUCH_HIT_SIZE)
 	var next_size := Vector2(maxf(board_rect.size.x, min_size.x), maxf(board_rect.size.y, min_size.y))
 	var board_size := _active_board_size()
 	next_size.x = minf(next_size.x, board_size.x)

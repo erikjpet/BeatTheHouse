@@ -9,6 +9,7 @@ const EXPANDED_PORTRAIT_SIZE := Vector2(280, 390)
 const VIEWPORT_MARGIN := Vector2(18, 18)
 const MAX_CHOICES := 4
 const IGNORE_PENALTY_HEAT := 5
+const SmallScreenPolicyScript := preload("res://scripts/ui/small_screen_policy.gd")
 
 
 class PortraitModel:
@@ -169,6 +170,7 @@ var queue_count: int = 0
 var expanded := false
 var armed_choice_id := ""
 var reduce_motion := false
+var small_screen_mode := false
 
 var panel: PanelContainer
 var stack: VBoxContainer
@@ -280,6 +282,18 @@ func set_reduce_motion(enabled: bool) -> void:
 	if portrait_model != null:
 		portrait_model.set_reduce_motion(enabled)
 		portrait_model.set_animation_active(visible and expanded)
+
+
+func set_small_screen_mode(enabled: bool) -> void:
+	if small_screen_mode == enabled:
+		return
+	small_screen_mode = enabled
+	if collapsed_button != null:
+		collapsed_button.custom_minimum_size.y = SmallScreenPolicyScript.control_height(FoundationWidgets.MIN_NATIVE_TOUCH_TARGET_HEIGHT, enabled)
+	if collapse_button != null:
+		collapse_button.custom_minimum_size.y = SmallScreenPolicyScript.control_height(FoundationWidgets.MIN_NATIVE_TOUCH_TARGET_HEIGHT, enabled)
+	_render_choices()
+	_position_panel()
 
 
 func _notification(what: int) -> void:
@@ -413,7 +427,8 @@ func _render_choices() -> void:
 		return
 	var choices := _choices()
 	var compact_columns := mini(3, choices.size()) if choices.size() <= 3 else 2
-	choice_list.columns = maxi(1, mini(4 if size.x >= 1040.0 else compact_columns, choices.size()))
+	var maximum_columns := 2 if small_screen_mode else (4 if size.x >= 1040.0 else compact_columns)
+	choice_list.columns = maxi(1, mini(maximum_columns, choices.size()))
 	for choice in choices:
 		if typeof(choice) != TYPE_DICTIONARY:
 			continue
@@ -435,7 +450,7 @@ func _render_choices() -> void:
 			response.add_child(response_icon)
 			rendered_response_icon_kinds.append(icon_kind)
 		var button := FoundationWidgets.button(label, Callable(self, "_on_choice_pressed").bind(choice_id))
-		button.custom_minimum_size = Vector2(0, 40)
+		button.custom_minimum_size = Vector2(0, SmallScreenPolicyScript.control_height(40.0, small_screen_mode))
 		button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		button.size_flags_vertical = Control.SIZE_EXPAND_FILL
 		button.clip_text = true

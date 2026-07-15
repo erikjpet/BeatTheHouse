@@ -87,6 +87,7 @@ const PixelSceneCanvasScript := preload("res://scripts/ui/pixel_scene_canvas.gd"
 const GameSurfaceCanvasScript := preload("res://scripts/ui/game_surface_canvas.gd")
 const WorldMapCanvasScript := preload("res://scripts/ui/world_map_canvas.gd")
 const FoundationWidgetsScript := preload("res://scripts/ui/foundation_widgets.gd")
+const SmallScreenPolicyScript := preload("res://scripts/ui/small_screen_policy.gd")
 const AttributeBadgeRowScript := preload("res://scripts/ui/attribute_badge_row.gd")
 const RunInventoryScreenScript := preload("res://scripts/ui/run_inventory_screen.gd")
 const RunInventoryViewModelScript := preload("res://scripts/ui/run_inventory_view_model.gd")
@@ -267,6 +268,7 @@ var run_menu_settings_button: Button
 var run_menu_abandon_button: Button
 var run_menu_main_menu_button: Button
 var settings_overlay: Control
+var settings_margin: MarginContainer
 var settings_menu: SettingsMenu
 var procedural_music_player: ProceduralMusicPlayer
 var environment_sfx_player: Node
@@ -4248,18 +4250,18 @@ func _build_settings_overlay() -> void:
 	settings_overlay.add_theme_stylebox_override("panel", VisualStyle.pixel_box(Color("#03030a", 0.92), VisualStyle.CYAN, 1))
 	add_child(settings_overlay)
 
-	var margin := MarginContainer.new()
-	margin.set_anchors_preset(Control.PRESET_FULL_RECT)
-	margin.add_theme_constant_override("margin_left", 220)
-	margin.add_theme_constant_override("margin_right", 220)
-	margin.add_theme_constant_override("margin_top", 48)
-	margin.add_theme_constant_override("margin_bottom", 48)
-	settings_overlay.add_child(margin)
+	settings_margin = MarginContainer.new()
+	settings_margin.set_anchors_preset(Control.PRESET_FULL_RECT)
+	settings_margin.add_theme_constant_override("margin_left", 220)
+	settings_margin.add_theme_constant_override("margin_right", 220)
+	settings_margin.add_theme_constant_override("margin_top", 48)
+	settings_margin.add_theme_constant_override("margin_bottom", 48)
+	settings_overlay.add_child(settings_margin)
 
 	var panel := _panel_container(Color("#080817", 0.98), VisualStyle.PINK)
 	panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	panel.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	margin.add_child(panel)
+	settings_margin.add_child(panel)
 
 	settings_menu = SettingsMenuScript.new()
 	settings_menu.visible = false
@@ -4576,6 +4578,7 @@ func _ensure_world_map_overlay_controller() -> void:
 	if world_map_overlay_controller == null:
 		world_map_overlay_controller = WorldMapOverlayControllerScript.new()
 		world_map_overlay_controller.node_pressed.connect(Callable(self, "select_world_map_node"))
+	world_map_overlay_controller.set_small_screen_mode(_small_screen_enabled())
 
 
 func _sync_world_map_overlay_controller_from_host() -> void:
@@ -6971,6 +6974,7 @@ func current_accessibility_snapshot() -> Dictionary:
 			"haptics_cut_reason": UserSettingsScript.HAPTICS_CUT_REASON,
 		}
 	var settings_snapshot := user_settings.accessibility_snapshot()
+	settings_snapshot["small_screen"] = SmallScreenPolicyScript.snapshot(_small_screen_enabled())
 	settings_snapshot["effective_font_scale"] = _accessibility_font_scale()
 	settings_snapshot["control_scale"] = _accessibility_control_scale()
 	settings_snapshot["showdown_motion_enabled"] = not user_settings.reduce_motion
@@ -11434,21 +11438,46 @@ func _set_control_font_color(control: Control, color: Color) -> void:
 func _accessibility_font_scale() -> float:
 	if user_settings == null:
 		return 1.0
-	return clampf(user_settings.text_scale() * user_settings.ui_scale, 0.86, 1.35)
+	var scale := clampf(user_settings.text_scale() * user_settings.ui_scale, 0.86, 1.35)
+	if user_settings.play_on_small_screen:
+		scale = minf(1.5, scale * SmallScreenPolicyScript.FONT_SCALE)
+	return scale
 
 
 func _accessibility_control_scale() -> float:
 	if user_settings == null:
 		return 1.0
-	return clampf(user_settings.ui_scale, 0.90, 1.18)
+	var scale := clampf(user_settings.ui_scale, 0.90, 1.18)
+	if user_settings.play_on_small_screen:
+		scale = maxf(scale, SmallScreenPolicyScript.CONTROL_SCALE)
+	return scale
+
+
+func _small_screen_enabled() -> bool:
+	return user_settings != null and user_settings.play_on_small_screen
 
 
 func _apply_accessibility_settings() -> void:
 	if user_settings != null:
 		VisualStyle.set_high_contrast_enabled(user_settings.high_contrast)
+	var small_screen_enabled := _small_screen_enabled()
+	if settings_margin != null:
+		var side_margin := SmallScreenPolicyScript.SETTINGS_SIDE_MARGIN if small_screen_enabled else 220
+		settings_margin.add_theme_constant_override("margin_left", side_margin)
+		settings_margin.add_theme_constant_override("margin_right", side_margin)
 	if talk_dock != null:
 		talk_dock.set_reduce_motion(bool(user_settings.reduce_motion) if user_settings != null else false)
+		talk_dock.set_small_screen_mode(small_screen_enabled)
+	if environment_canvas != null:
+		environment_canvas.set_small_screen_mode(small_screen_enabled)
+	if game_surface_canvas != null:
+		game_surface_canvas.set_small_screen_mode(small_screen_enabled)
+	if run_inventory_screen != null:
+		run_inventory_screen.set_small_screen_mode(small_screen_enabled)
+	_ensure_world_map_overlay_controller()
+	world_map_overlay_controller.set_small_screen_mode(small_screen_enabled)
 	_apply_accessibility_to_node(self, _accessibility_font_scale(), _accessibility_control_scale())
+	_invalidate_run_screen_layout()
 
 
 func _apply_accessibility_to_node(node: Node, font_scale: float, control_scale: float) -> void:
@@ -11478,7 +11507,7 @@ func _apply_accessibility_font(control: Control, font_scale: float) -> void:
 
 
 func _apply_accessibility_minimum_size(control: Control, control_scale: float) -> void:
-	if not _control_uses_text(control):
+	if not _control_uses_text(control) and not (control is HSlider):
 		return
 	if not control.has_meta(ACCESSIBILITY_BASE_MIN_SIZE_META):
 		control.set_meta(ACCESSIBILITY_BASE_MIN_SIZE_META, control.custom_minimum_size)
@@ -11486,9 +11515,10 @@ func _apply_accessibility_minimum_size(control: Control, control_scale: float) -
 	if typeof(stored) != TYPE_VECTOR2:
 		return
 	var base_size: Vector2 = stored
-	if base_size == Vector2.ZERO:
-		return
-	control.custom_minimum_size = Vector2(base_size.x, base_size.y * control_scale)
+	var next_size := Vector2(base_size.x, base_size.y * control_scale)
+	if _small_screen_enabled() and (control is BaseButton or control is LineEdit or control is SpinBox or control is HSlider):
+		next_size.y = maxf(next_size.y, SmallScreenPolicyScript.CONTROL_TOUCH_TARGET_HEIGHT)
+	control.custom_minimum_size = next_size
 
 
 func _apply_accessibility_color(control: Control) -> void:
@@ -11561,6 +11591,7 @@ func _section(text: String) -> Label:
 
 func _button(text: String, callback: Callable) -> Button:
 	var button_node := FoundationWidgetsScript.button(text, callback)
+	button_node.custom_minimum_size.y = SmallScreenPolicyScript.control_height(button_node.custom_minimum_size.y, _small_screen_enabled())
 	_set_control_font_size(button_node, DEFAULT_CONTROL_FONT_SIZE)
 	return button_node
 

@@ -383,10 +383,13 @@ func _check_music_fx_foundation(library: ContentLibrary, failures: Array) -> voi
 
 	var settings := UserSettingsScript.new()
 	settings.audio_calm = true
+	settings.play_on_small_screen = true
 	var restored_settings: UserSettings = UserSettingsScript.new()
 	restored_settings.from_dict(settings.to_dict())
 	if not restored_settings.audio_calm:
 		failures.append("Audio-calm setting did not round-trip through UserSettings.")
+	if not restored_settings.play_on_small_screen:
+		failures.append("Play-on-small-screen setting did not round-trip through UserSettings.")
 	player.audio_calm = false
 	var intense_showdown: Dictionary = _music_fx_target(player, {
 		"environment": boss_environment,

@@ -2,12 +2,22 @@
 
 All notable public release changes for Beat the House are recorded here.
 
+## 0.5.0 - In development
+
+Status: **in development.**
+
+### Added
+
+- Adds the default-off **Play on small screen** setting as the first step in
+  the 0.5 interface rework. The persistent mode enlarges standard controls,
+  text, map nodes, dialogue and inventory actions, environment-object tap
+  regions, and gambling-surface hit regions for phone and tablet play while
+  preserving the existing desktop presentation when disabled.
+
 ## 0.4.0 - Act 1 completion release
 
-Status: **unreleased and in final development.** An earlier candidate was
-packaged and tagged, but game-breaking playtest defects sent 0.4.0 back into
-development. The fresh final-gate battery passed on 2026-07-14; owner playtest,
-export packaging, itch/GitHub upload, and the release tag are still pending.
+Status: **released on 2026-07-15.** The fresh final-gate battery passed on
+2026-07-14, followed by owner playtesting and publication.
 
 ### Release Notes
 

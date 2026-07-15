@@ -15,6 +15,7 @@ signal take_item_requested(container_id: String, item_id: String)
 const RUN_INVENTORY_POPUP_SIZE := Vector2(820, 500)
 const RUN_INVENTORY_POPUP_MARGIN := 12.0
 const AttributeBadgeRowScript := preload("res://scripts/ui/attribute_badge_row.gd")
+const SmallScreenPolicyScript := preload("res://scripts/ui/small_screen_policy.gd")
 
 var _texture_provider: Callable = Callable()
 var _model: Dictionary = {}
@@ -29,6 +30,8 @@ var _title_label: Label
 var _summary_label: Label
 var _item_grid: GridContainer
 var _detail_box: VBoxContainer
+var _close_button: Button
+var _small_screen_mode := false
 
 
 func _init() -> void:
@@ -37,6 +40,16 @@ func _init() -> void:
 
 func configure(texture_provider: Callable) -> void:
 	_texture_provider = texture_provider
+
+
+func set_small_screen_mode(enabled: bool) -> void:
+	if _small_screen_mode == enabled:
+		return
+	_small_screen_mode = enabled
+	if _close_button != null:
+		_close_button.custom_minimum_size.y = SmallScreenPolicyScript.control_height(FoundationWidgets.MIN_NATIVE_TOUCH_TARGET_HEIGHT, enabled)
+	_render()
+	_position_popup()
 
 
 func open(model: Dictionary) -> void:
@@ -88,6 +101,8 @@ func layout_rects() -> Dictionary:
 		"grid_rect": _items_scroll.get_global_rect() if _items_scroll != null else Rect2(),
 		"detail_rect": _detail_panel.get_global_rect() if _detail_panel != null else Rect2(),
 		"screen_rect": get_global_rect(),
+		"small_screen_mode": _small_screen_mode,
+		"minimum_control_height": SmallScreenPolicyScript.CONTROL_TOUCH_TARGET_HEIGHT if _small_screen_mode else FoundationWidgets.MIN_NATIVE_TOUCH_TARGET_HEIGHT,
 	}
 
 
@@ -135,9 +150,9 @@ func _build() -> void:
 	FoundationWidgets.set_control_font_color(_title_label, VisualStyle.YELLOW)
 	_title_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	header.add_child(_title_label)
-	var close_button := FoundationWidgets.button("Close", Callable(self, "_emit_close_requested"))
-	close_button.custom_minimum_size = Vector2(88, FoundationWidgets.MIN_NATIVE_TOUCH_TARGET_HEIGHT)
-	header.add_child(close_button)
+	_close_button = FoundationWidgets.button("Close", Callable(self, "_emit_close_requested"))
+	_close_button.custom_minimum_size = Vector2(88, FoundationWidgets.MIN_NATIVE_TOUCH_TARGET_HEIGHT)
+	header.add_child(_close_button)
 
 	_summary_label = FoundationWidgets.label("", 12)
 	FoundationWidgets.set_control_font_color(_summary_label, VisualStyle.CYAN)
@@ -213,6 +228,16 @@ func _render() -> void:
 	for item in items:
 		_add_item_card(item, merchant_mode)
 	_render_detail(_selected_item(items), merchant_mode)
+	_apply_small_screen_targets(self)
+
+
+func _apply_small_screen_targets(node: Node) -> void:
+	if _small_screen_mode:
+		var control := node as BaseButton
+		if control != null:
+			control.custom_minimum_size.y = maxf(control.custom_minimum_size.y, SmallScreenPolicyScript.CONTROL_TOUCH_TARGET_HEIGHT)
+	for child in node.get_children():
+		_apply_small_screen_targets(child)
 
 
 func _add_item_card(item: Dictionary, merchant_mode: bool = false) -> void:

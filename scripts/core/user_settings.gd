@@ -30,6 +30,7 @@ var text_size: String = "normal"
 var reduce_motion: bool = false
 var drunk_effect_mode: String = "distortion"
 var high_contrast: bool = false
+var play_on_small_screen: bool = false
 var selected_home_type_id: String = "random"
 
 
@@ -47,6 +48,7 @@ func reset() -> void:
 	reduce_motion = false
 	drunk_effect_mode = "distortion"
 	high_contrast = false
+	play_on_small_screen = false
 	selected_home_type_id = "random"
 
 
@@ -97,6 +99,7 @@ func to_dict() -> Dictionary:
 		"reduce_motion": reduce_motion,
 		"drunk_effect_mode": drunk_effect_mode,
 		"high_contrast": high_contrast,
+		"play_on_small_screen": play_on_small_screen,
 		"selected_home_type_id": selected_home_type_id,
 	}
 
@@ -126,6 +129,7 @@ func from_dict(data: Dictionary) -> void:
 	if not DRUNK_EFFECT_MODES.has(drunk_effect_mode):
 		drunk_effect_mode = "distortion"
 	high_contrast = bool(data.get("high_contrast", high_contrast))
+	play_on_small_screen = bool(data.get("play_on_small_screen", play_on_small_screen))
 	selected_home_type_id = str(data.get("selected_home_type_id", selected_home_type_id)).strip_edges()
 	if selected_home_type_id.is_empty():
 		selected_home_type_id = "random"
@@ -190,6 +194,7 @@ func accessibility_snapshot() -> Dictionary:
 		"audio_calm": audio_calm,
 		"drunk_effect_mode": drunk_effect_mode,
 		"high_contrast": high_contrast,
+		"play_on_small_screen": play_on_small_screen,
 		"haptics_supported": false,
 		"haptics_cut_reason": HAPTICS_CUT_REASON,
 	}

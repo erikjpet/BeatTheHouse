@@ -10,6 +10,7 @@ signal node_pressed(node_id: String)
 const WORLD_MAP_NODE_BUTTON_POOL_SIZE := 24
 const WORLD_MAP_DETAIL_BADGE_CELL_POOL_SIZE := 6
 const VisualStyle := preload("res://scripts/ui/visual_style.gd")
+const SmallScreenPolicyScript := preload("res://scripts/ui/small_screen_policy.gd")
 const AttributeBadgesScript := preload("res://scripts/core/attribute_badges.gd")
 const AttributeBadgeRowScript := preload("res://scripts/ui/attribute_badge_row.gd")
 
@@ -32,6 +33,7 @@ var selected_travel_target_id: String = ""
 var selected_travel_label: String = ""
 var snapshot_cache_key: String = ""
 var canvas_snapshot_key: String = ""
+var small_screen_mode := false
 
 
 func clear_selection() -> void:
@@ -52,6 +54,15 @@ func configure_nodes(overlay_node: Control, holder_node: Control, nodes_layer_no
 	detail_label = detail_node
 	badge_slot = badge_slot_node
 	confirm_button = confirm_node
+	_apply_small_screen_button_sizes()
+
+
+func set_small_screen_mode(enabled: bool) -> void:
+	if small_screen_mode == enabled:
+		return
+	small_screen_mode = enabled
+	_apply_small_screen_button_sizes()
+	reset_button_layout()
 
 
 func is_visible() -> bool:
@@ -297,6 +308,8 @@ func export_state() -> Dictionary:
 		"selected_travel_label": selected_travel_label,
 		"snapshot_cache_key": snapshot_cache_key,
 		"canvas_snapshot_key": canvas_snapshot_key,
+		"small_screen_mode": small_screen_mode,
+		"node_touch_target_size": SmallScreenPolicyScript.map_node_size(small_screen_mode),
 	}
 
 
@@ -326,8 +339,9 @@ func _add_node_buttons(snapshot: Dictionary) -> void:
 		var button := _pool_button(index)
 		if button == null:
 			continue
-		button.custom_minimum_size = Vector2(46, 46)
-		button.size = Vector2(46, 46)
+		var target_size := SmallScreenPolicyScript.map_node_size(small_screen_mode)
+		button.custom_minimum_size = target_size
+		button.size = target_size
 		button.position = _node_button_position(node_id, node) - button.size * 0.5
 		var in_view := _node_is_in_canvas_view(node_id)
 		button.visible = in_view
@@ -515,6 +529,19 @@ func _hit_button(callback: Callable) -> Button:
 	return button
 
 
+func _apply_small_screen_button_sizes() -> void:
+	var target_size := SmallScreenPolicyScript.map_node_size(small_screen_mode)
+	if nodes_layer != null:
+		for index in range(WORLD_MAP_NODE_BUTTON_POOL_SIZE):
+			var button := _pool_button(index)
+			if button == null:
+				continue
+			button.custom_minimum_size = target_size
+			button.size = target_size
+	if confirm_button != null:
+		confirm_button.custom_minimum_size.y = SmallScreenPolicyScript.control_height(40.0, small_screen_mode)
+
+
 func _ensure_node_button_pool() -> void:
 	if nodes_layer == null:
 		return
@@ -523,8 +550,9 @@ func _ensure_node_button_pool() -> void:
 			continue
 		var button := _hit_button(Callable(self, "_on_pool_button_pressed").bind(index))
 		button.name = "WorldMapNodePool_%02d" % index
-		button.custom_minimum_size = Vector2(46, 46)
-		button.size = Vector2(46, 46)
+		var target_size := SmallScreenPolicyScript.map_node_size(small_screen_mode)
+		button.custom_minimum_size = target_size
+		button.size = target_size
 		button.visible = false
 		button.disabled = true
 		button.set_meta("pool_index", index)
