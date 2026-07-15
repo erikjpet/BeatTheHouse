@@ -603,6 +603,9 @@ func _check_world_map_selection_stable_component() -> bool:
 	canvas.call("set_map_snapshot", base_snapshot)
 	var before_view: Dictionary = canvas.call("current_view_snapshot")
 	var before_bounds: Dictionary = before_view.get("map_bounds", {}) if typeof(before_view.get("map_bounds", {})) == TYPE_DICTIONARY else {}
+	if not _world_map_background_aspect_is_stable(before_view):
+		push_error("World map canvas stretched its background before the selected-location zoom: %s." % JSON.stringify(before_view))
+		return false
 	var selected_snapshot := base_snapshot.duplicate(true)
 	selected_snapshot["selected_node_id"] = "east"
 	selected_snapshot["map_focus_node_ids"] = ["east"]
@@ -610,6 +613,9 @@ func _check_world_map_selection_stable_component() -> bool:
 	var immediate_view: Dictionary = canvas.call("current_view_snapshot")
 	var immediate_bounds: Dictionary = immediate_view.get("map_bounds", {}) if typeof(immediate_view.get("map_bounds", {})) == TYPE_DICTIONARY else {}
 	var target_bounds: Dictionary = immediate_view.get("target_map_bounds", {}) if typeof(immediate_view.get("target_map_bounds", {})) == TYPE_DICTIONARY else {}
+	if not _world_map_background_aspect_is_stable(immediate_view):
+		push_error("World map canvas stretched its background at the start of the selected-location zoom: %s." % JSON.stringify(immediate_view))
+		return false
 	if not _map_bounds_equal(before_bounds, immediate_bounds):
 		push_error("World map canvas selected-location zoom snapped instead of starting from the previous view window: before %s immediate %s." % [JSON.stringify(before_bounds), JSON.stringify(immediate_bounds)])
 		return false
@@ -619,6 +625,9 @@ func _check_world_map_selection_stable_component() -> bool:
 	await process_frame
 	var animated_view: Dictionary = canvas.call("current_view_snapshot")
 	var animated_bounds: Dictionary = animated_view.get("map_bounds", {}) if typeof(animated_view.get("map_bounds", {})) == TYPE_DICTIONARY else {}
+	if not _world_map_background_aspect_is_stable(animated_view):
+		push_error("World map canvas changed its background aspect ratio during the selected-location zoom: %s." % JSON.stringify(animated_view))
+		return false
 	if _map_bounds_equal(before_bounds, animated_bounds) or _map_bounds_equal(animated_bounds, target_bounds):
 		push_error("World map canvas selected-location zoom did not move partway toward the focused icon.")
 		return false
@@ -647,7 +656,16 @@ func _check_world_map_selection_stable_component() -> bool:
 	if bool(after_view.get("selected_focus_zoom_animating", true)):
 		push_error("World map canvas selected-location zoom did not finish animating.")
 		return false
+	if not _world_map_background_aspect_is_stable(after_view):
+		push_error("World map canvas stretched its background after the selected-location zoom: %s." % JSON.stringify(after_view))
+		return false
 	return true
+
+
+func _world_map_background_aspect_is_stable(view: Dictionary) -> bool:
+	var source_aspect := float(view.get("background_source_aspect", 0.0))
+	var destination_aspect := float(view.get("background_destination_aspect", -1.0))
+	return source_aspect > 0.0 and bool(view.get("background_fills_canvas", false)) and absf(source_aspect - destination_aspect) <= 0.001
 
 
 func _check_performance_liveness_guard_component() -> bool:

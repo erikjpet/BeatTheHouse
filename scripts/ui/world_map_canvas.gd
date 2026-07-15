@@ -103,6 +103,17 @@ func current_view_snapshot() -> Dictionary:
 		"width": target_bounds.size.x,
 		"height": target_bounds.size.y,
 	}
+	var background_texture := _background_texture()
+	if background_texture != null:
+		var texture_size := background_texture.get_size()
+		var source_size := Vector2(bounds.size.x * texture_size.x, bounds.size.y * texture_size.y)
+		var destination_rect := _aspect_fitted_destination_rect(Rect2(Vector2.ZERO, size), source_size)
+		view["background_texture_size"] = {"x": texture_size.x, "y": texture_size.y}
+		view["background_source_size"] = {"x": source_size.x, "y": source_size.y}
+		view["background_source_aspect"] = source_size.x / maxf(1.0, source_size.y)
+		view["background_destination_size"] = {"x": destination_rect.size.x, "y": destination_rect.size.y}
+		view["background_destination_aspect"] = destination_rect.size.x / maxf(1.0, destination_rect.size.y)
+		view["background_fills_canvas"] = destination_rect.size.distance_to(size) <= 0.5
 	view["selected_focus_zoom_active"] = _selected_focus_zoom_active()
 	view["selected_focus_zoom_animating"] = not _map_bounds_equal(map_view_bounds_cache, target_map_view_bounds_cache)
 	return view
@@ -141,6 +152,7 @@ func _draw() -> void:
 
 
 func _draw_background(rect: Rect2) -> void:
+	draw_rect(rect, Color("#07091a"))
 	var texture := _background_texture()
 	if texture != null:
 		var bounds := map_view_bounds_cache
@@ -149,10 +161,22 @@ func _draw_background(rect: Rect2) -> void:
 			Vector2(bounds.position.x * texture_size.x, bounds.position.y * texture_size.y),
 			Vector2(bounds.size.x * texture_size.x, bounds.size.y * texture_size.y)
 		)
-		draw_texture_rect_region(texture, rect, source_rect, Color(1.0, 1.0, 1.0, 0.92))
-	else:
-		draw_rect(rect, Color("#07091a"))
+		var destination_rect := _aspect_fitted_destination_rect(rect, source_rect.size)
+		draw_texture_rect_region(texture, destination_rect, source_rect, Color(1.0, 1.0, 1.0, 0.92))
 	draw_rect(rect, Color("#03040a", 0.30))
+
+
+func _aspect_fitted_destination_rect(destination_rect: Rect2, source_size: Vector2) -> Rect2:
+	if destination_rect.size.x <= 0.0 or destination_rect.size.y <= 0.0 or source_size.x <= 0.0 or source_size.y <= 0.0:
+		return destination_rect
+	var source_aspect := source_size.x / source_size.y
+	var destination_aspect := destination_rect.size.x / destination_rect.size.y
+	var fitted_size := destination_rect.size
+	if source_aspect > destination_aspect:
+		fitted_size.y = fitted_size.x / source_aspect
+	else:
+		fitted_size.x = fitted_size.y * source_aspect
+	return Rect2(destination_rect.position + (destination_rect.size - fitted_size) * 0.5, fitted_size)
 
 
 func _draw_edges() -> void:
@@ -338,7 +362,7 @@ func _normalized_position(position: Dictionary) -> Vector2:
 func _compute_map_view_bounds() -> Rect2:
 	var nodes := _bounds_focus_nodes(map_view_focus_node_ids_cache)
 	if nodes.is_empty():
-		return Rect2(Vector2.ZERO, Vector2.ONE)
+		return _full_map_view_bounds()
 	var min_x := 1.0
 	var min_y := 1.0
 	var max_x := 0.0
@@ -360,15 +384,14 @@ func _compute_map_view_bounds() -> Rect2:
 	var center := Vector2((min_x + max_x) * 0.5, (min_y + max_y) * 0.5)
 	var width := maxf(0.34, (max_x - min_x) + 0.20)
 	var height := maxf(0.34, (max_y - min_y) + 0.20)
-	var layout_size := _stable_layout_size()
-	var drawable := Vector2(maxf(1.0, layout_size.x - 64.0), maxf(1.0, layout_size.y - 56.0))
-	var aspect := drawable.x / drawable.y
+	var aspect := _normalized_view_aspect()
 	if width / height < aspect:
 		width = height * aspect
 	else:
 		height = width / aspect
-	width = minf(1.0, width)
-	height = minf(1.0, height)
+	var fit_scale := minf(1.0, minf(1.0 / maxf(0.001, width), 1.0 / maxf(0.001, height)))
+	width *= fit_scale
+	height *= fit_scale
 	var x0 := clampf(center.x - width * 0.5, 0.0, 1.0 - width)
 	var y0 := clampf(center.y - height * 0.5, 0.0, 1.0 - height)
 	var base_bounds := Rect2(Vector2(x0, y0), Vector2(width, height))
@@ -387,14 +410,35 @@ func _selected_focus_bounds(base_bounds: Rect2) -> Rect2:
 		clampf(float(position.get("x", base_bounds.get_center().x)), 0.0, 1.0),
 		clampf(float(position.get("y", base_bounds.get_center().y)), 0.0, 1.0)
 	)
-	var zoom_size := Vector2(maxf(0.18, base_bounds.size.x * SELECTED_FOCUS_ZOOM), maxf(0.18, base_bounds.size.y * SELECTED_FOCUS_ZOOM))
-	zoom_size.x = minf(1.0, zoom_size.x)
-	zoom_size.y = minf(1.0, zoom_size.y)
+	var minimum_zoom_scale := maxf(0.18 / maxf(0.001, base_bounds.size.x), 0.18 / maxf(0.001, base_bounds.size.y))
+	var zoom_scale := clampf(maxf(SELECTED_FOCUS_ZOOM, minimum_zoom_scale), 0.0, 1.0)
+	var zoom_size := base_bounds.size * zoom_scale
 	var blend := 0.42
 	var center := base_bounds.get_center().lerp(focus, blend)
 	var x0 := clampf(center.x - zoom_size.x * 0.5, 0.0, 1.0 - zoom_size.x)
 	var y0 := clampf(center.y - zoom_size.y * 0.5, 0.0, 1.0 - zoom_size.y)
 	return Rect2(Vector2(x0, y0), zoom_size)
+
+
+func _full_map_view_bounds() -> Rect2:
+	var aspect := _normalized_view_aspect()
+	var bounds_size := Vector2.ONE
+	if aspect >= 1.0:
+		bounds_size.y = 1.0 / aspect
+	else:
+		bounds_size.x = aspect
+	return Rect2((Vector2.ONE - bounds_size) * 0.5, bounds_size)
+
+
+func _normalized_view_aspect() -> float:
+	var layout_size := _stable_layout_size()
+	var destination_aspect := layout_size.x / maxf(1.0, layout_size.y)
+	var texture := _background_texture()
+	if texture == null:
+		return destination_aspect
+	var texture_size := texture.get_size()
+	var texture_aspect := texture_size.x / maxf(1.0, texture_size.y)
+	return destination_aspect / maxf(0.001, texture_aspect)
 
 
 func _selected_focus_zoom_active() -> bool:
