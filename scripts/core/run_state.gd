@@ -1039,7 +1039,7 @@ func set_environment(environment_data: Dictionary) -> void:
 	var previous_was_grand_casino := _is_grand_casino_environment(current_environment)
 	if not current_environment.is_empty():
 		_store_current_local_suspicion()
-		environment_history.append(current_environment.duplicate(true))
+		environment_history.append(_environment_history_entry(current_environment))
 		_compact_environment_history()
 	current_environment = _normalize_environment(environment_data)
 	_apply_sals_forfeited_shelf_to_current_environment()
@@ -5115,7 +5115,18 @@ static func _normalize_environment_history(entries: Array) -> Array:
 	var result: Array = []
 	for entry in entries:
 		if typeof(entry) == TYPE_DICTIONARY:
-			result.append(_normalize_environment(entry as Dictionary))
+			result.append(_environment_history_entry(entry as Dictionary))
+	return result
+
+
+# History only feeds visited-location summaries and route progression. Keeping a
+# full environment instance here duplicated every machine's runtime state on
+# each trip, making autosaves grow throughout a run and eventually stall play.
+static func _environment_history_entry(environment: Dictionary) -> Dictionary:
+	var result: Dictionary = {}
+	for key in ["id", "archetype_id", "world_node_id", "display_name", "kind"]:
+		if environment.has(key):
+			result[key] = environment.get(key)
 	return result
 
 

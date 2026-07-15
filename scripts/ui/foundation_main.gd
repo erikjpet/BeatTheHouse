@@ -328,6 +328,11 @@ var world_map_snapshot_cache: Dictionary = {}
 var world_map_canvas_snapshot_key: String = ""
 var world_map_detail_badges_key: String = "__unset__"
 var rendered_environment_snapshot_signature: String = ""
+var action_panel_refresh_scheduled := false
+var pending_action_panel_object: Dictionary = {}
+var interactable_object_view_cache: Array = []
+var interactable_object_view_cache_valid := false
+var interactable_object_view_cache_key := ""
 var run_hud_panel: Panel
 var visual_panel_container: PanelContainer
 var title_label: Label
@@ -3150,11 +3155,10 @@ func _autosave_foundation_run(status_text: String = "Autosaved.", force: bool = 
 	if dev_game_test_mode:
 		save_status_message = "Practice sessions are not autosaved."
 		return false
-	if not force and _should_defer_autosave_for_game_surface():
-		_queue_pending_autosave(status_text, 0)
-		return true
-	if not force and _should_defer_autosave_for_web():
-		_queue_pending_autosave(status_text, 1)
+	# Never make a player action wait for disk I/O. The pending slot coalesces
+	# rapid/repeating actions and the game-surface guard waits out animations.
+	if not force:
+		_queue_pending_autosave(status_text, 1 if _should_defer_autosave_for_web() else 0)
 		return true
 	return _write_foundation_run_save(status_text)
 
@@ -5035,6 +5039,7 @@ func _build_victory_summary_panel(parent: BoxContainer) -> void:
 func _refresh() -> void:
 	_invalidate_run_screen_layout()
 	_invalidate_travel_view_cache()
+	interactable_object_view_cache_valid = false
 	var has_run := run_state != null
 	if not has_run or current_screen == SCREEN_START:
 		_hide_run_menu()
@@ -5043,7 +5048,8 @@ func _refresh() -> void:
 		return
 	_evaluate_run_terminal_state()
 	_render_environment_screen()
-	_refresh_run_menu()
+	if _run_menu_is_visible():
+		_refresh_run_menu()
 
 
 func _render_start_screen() -> void:
@@ -5066,12 +5072,13 @@ func _render_environment_screen() -> void:
 		action_heading_label.text = "Game surface" if game_focus_mode else "Room objects"
 	if action_hint_label != null:
 		action_hint_label.text = "Use the visible surface controls. Click the selected action again to resolve." if game_focus_mode else "Click room objects to inspect. Double-click glowing objects to act."
-	status_label.text = _hud_status_text()
+	var hud_model := _run_status_hud_model()
+	status_label.text = str(hud_model.get("status_text", ""))
 	if objective_label != null:
-		objective_label.text = _objective_hud_text()
+		objective_label.text = str(hud_model.get("objective_text", ""))
 	_style_hud_for_recent_consequence()
 	if save_status_label != null:
-		save_status_label.text = _save_status_text()
+		save_status_label.text = str(hud_model.get("save_text", ""))
 	_apply_hud_mode_visibility()
 	_refresh_active_item_slot()
 	_apply_focus_layout()
@@ -5081,7 +5088,7 @@ func _render_environment_screen() -> void:
 	_render_result_panel()
 	_render_foundation_snapshots()
 	_refresh_talk_dock()
-	_render_action_panel()
+	_schedule_action_panel_refresh()
 	_refresh_world_map_overlay()
 	_update_procedural_music()
 
@@ -5123,6 +5130,24 @@ func _refresh_world_header(selected_world_object_override: Dictionary = {}) -> v
 
 func _render_action_panel(focused_object_override: Dictionary = {}) -> void:
 	_rebuild_actions(focused_object_override)
+
+
+func _schedule_action_panel_refresh(focused_object_override: Dictionary = {}) -> void:
+	if not focused_object_override.is_empty():
+		pending_action_panel_object = focused_object_override.duplicate(true)
+	else:
+		pending_action_panel_object = {}
+	if action_panel_refresh_scheduled:
+		return
+	action_panel_refresh_scheduled = true
+	call_deferred("_flush_action_panel_refresh")
+
+
+func _flush_action_panel_refresh() -> void:
+	action_panel_refresh_scheduled = false
+	var focused_object := pending_action_panel_object
+	pending_action_panel_object = {}
+	_render_action_panel(focused_object)
 
 
 func _render_result_panel() -> void:
@@ -7195,7 +7220,7 @@ func _focus_interactable_object_with_data(object_id: String, object_data: Dictio
 		if run_state != null:
 			_refresh_world_header(object_data)
 	if actions_list != null:
-		_render_action_panel(object_data)
+		_schedule_action_panel_refresh(object_data)
 	return true
 
 
@@ -7544,7 +7569,7 @@ func clear_interaction_focus(animate_camera_return: bool = false) -> void:
 		if run_state != null:
 			_refresh_world_header()
 	if actions_list != null:
-		_render_action_panel()
+		_schedule_action_panel_refresh()
 
 
 func _on_environment_object_hovered(object_id: String) -> void:
@@ -7637,7 +7662,30 @@ func _environment_view_snapshot() -> Dictionary:
 
 
 func _interactable_object_view_list() -> Array:
-	return EnvironmentInteractionControllerScript.interactable_object_view_list(self)
+	var cache_key := _interactable_object_cache_key()
+	if interactable_object_view_cache_valid and interactable_object_view_cache_key == cache_key:
+		return interactable_object_view_cache
+	interactable_object_view_cache = EnvironmentInteractionControllerScript.interactable_object_view_list(self)
+	interactable_object_view_cache_valid = true
+	interactable_object_view_cache_key = cache_key
+	return interactable_object_view_cache
+
+
+func _interactable_object_cache_key() -> String:
+	if run_state == null:
+		return "no-run"
+	return "%d|%d|%s|%s|%s|%s|%s|%s|%s|%s" % [
+		run_state.get_instance_id(),
+		hash(run_state.current_environment),
+		current_screen,
+		hover_target_id,
+		focus_target_id,
+		selected_object_id,
+		selected_event_id,
+		selected_event_choice_id,
+		selected_item_offer_id,
+		selected_travel_target_id,
+	]
 
 
 func _filter_unique_interactable_objects(objects: Array) -> Array:
@@ -7835,7 +7883,6 @@ func _surface_cast_for_renderer(renderer: String) -> String:
 
 
 func _refresh_consequence_labels() -> void:
-	var snapshot := _consequence_view_snapshot()
 	var has_recent_consequence := false
 	if consequence_panel != null:
 		consequence_panel.visible = has_recent_consequence
@@ -7845,17 +7892,15 @@ func _refresh_consequence_labels() -> void:
 	if message_label != null:
 		message_label.visible = false
 	if consequence_state_label != null:
-		consequence_state_label.text = "%s | %s" % [str(snapshot.get("current_state_text", "")), str(snapshot.get("suspicion_text", ""))]
 		consequence_state_label.visible = false
 	if consequence_result_label != null:
-		consequence_result_label.text = str(snapshot.get("recent_result_text", ""))
 		consequence_result_label.visible = false
 	if consequence_story_label != null:
-		consequence_story_label.text = str(snapshot.get("story_text", ""))
 		consequence_story_label.visible = false
 	if consequence_cards_scroll != null:
 		consequence_cards_scroll.visible = has_recent_consequence
-	_refresh_consequence_cards(snapshot)
+	if consequence_cards_list != null and consequence_cards_list.get_child_count() > 0:
+		_clear(consequence_cards_list)
 
 
 func _refresh_consequence_cards(snapshot: Dictionary) -> void:

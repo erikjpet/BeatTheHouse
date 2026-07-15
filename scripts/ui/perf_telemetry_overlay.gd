@@ -311,6 +311,12 @@ func _measure_lb3_game_open(game_id: String, first_open: bool) -> void:
 func _measure_lb3_save_stall() -> void:
 	app.start_foundation_run("LB3-SAVE-STALL")
 	await _wait_frames(8)
+	var refresh_started_usec := Time.get_ticks_usec()
+	app.call("_refresh")
+	mark_event("lb3_action_refresh", {
+		"duration_ms": _duration_ms_since(refresh_started_usec),
+	})
+	_measure_lb3_refresh_phases("fresh")
 	var autosave_started_usec := Time.get_ticks_usec()
 	var autosave_accepted := bool(app.call("_autosave_foundation_run", "LB3 Autosave.", false))
 	mark_event("lb3_autosave_request", {
@@ -333,6 +339,78 @@ func _measure_lb3_save_stall() -> void:
 		"duration_ms": _duration_ms_since(save_started_usec),
 		"error": int(save_error),
 	})
+	_fill_lb3_late_run_save_fixture(run_state)
+	var late_refresh_started_usec := Time.get_ticks_usec()
+	app.call("_refresh")
+	mark_event("lb3_late_run_action_refresh", {
+		"duration_ms": _duration_ms_since(late_refresh_started_usec),
+		"story_entries": run_state.story_log.size(),
+		"environment_history_entries": run_state.environment_history.size(),
+	})
+	var late_request_started_usec := Time.get_ticks_usec()
+	var late_request_accepted := bool(app.call("_autosave_foundation_run", "LB3 late-run autosave.", false))
+	mark_event("lb3_late_run_autosave_request", {
+		"duration_ms": _duration_ms_since(late_request_started_usec),
+		"accepted": late_request_accepted,
+		"pending": bool(app.get("pending_autosave")),
+	})
+	await _wait_frames(4)
+	var late_save_started_usec := Time.get_ticks_usec()
+	var late_save_error := save_service.save_run(run_state, "lb3_late_run_save_probe")
+	mark_event("lb3_late_run_save_direct", {
+		"duration_ms": _duration_ms_since(late_save_started_usec),
+		"error": int(late_save_error),
+		"story_entries": run_state.story_log.size(),
+		"environment_history_entries": run_state.environment_history.size(),
+	})
+
+
+func _fill_lb3_late_run_save_fixture(run_state: RunState) -> void:
+	for index in range(RunState.MAX_STORY_LOG_ENTRIES):
+		run_state.log_story({
+			"type": "game_result",
+			"game_id": REQUIRED_GAME_IDS[index % REQUIRED_GAME_IDS.size()],
+			"message": "Representative late-run action result with enough player-facing context to exercise persistence.",
+			"bankroll_delta": (index % 17) - 8,
+			"suspicion_delta": index % 4,
+		})
+	for index in range(RunState.MAX_ENVIRONMENT_HISTORY_ENTRIES):
+		run_state.environment_history.append({
+			"id": "late_run_stop_%d" % index,
+			"archetype_id": "small_underground_casino",
+			"world_node_id": "late_run_node_%d" % index,
+			"display_name": "Late Run Stop %d" % index,
+			"kind": "casino",
+		})
+
+
+func _measure_lb3_refresh_phases(mode: String) -> void:
+	for method in [
+		"_evaluate_run_terminal_state",
+		"_run_status_hud_model",
+		"_refresh_world_header",
+		"_style_hud_for_recent_consequence",
+		"_apply_hud_mode_visibility",
+		"_refresh_active_item_slot",
+		"_apply_focus_layout",
+		"_refresh_environment_result_feedback",
+		"_render_victory_summary",
+		"_render_failure_summary",
+		"_render_result_panel",
+		"_render_foundation_snapshots",
+		"_refresh_talk_dock",
+		"_render_action_panel",
+		"_refresh_world_map_overlay",
+		"_update_procedural_music",
+		"_refresh_run_menu",
+	]:
+		var started_usec := Time.get_ticks_usec()
+		app.call(method)
+		mark_event("lb3_refresh_phase", {
+			"mode": mode,
+			"method": method,
+			"duration_ms": _duration_ms_since(started_usec),
+		})
 
 
 func _run_la1_plan() -> void:

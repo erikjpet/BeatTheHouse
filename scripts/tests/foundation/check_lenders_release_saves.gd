@@ -2669,6 +2669,15 @@ func _check_run_state_source_of_truth(library: ContentLibrary, failures: Array) 
 
 	var generator: RunGenerator = RunGeneratorScript.new(library)
 	var environment = generator.next_environment(run_a)
+	var history_probe: RunState = RunStateScript.new()
+	history_probe.start_new("HISTORY-COMPACTION-SEED", challenge)
+	var previous_environment: Dictionary = environment.duplicate(true)
+	previous_environment["runtime_state"] = {"large_transient_machine_state": [1, 2, 3, 4]}
+	history_probe.current_environment = previous_environment
+	history_probe.set_environment(environment)
+	var compact_history: Dictionary = history_probe.environment_history[0] if not history_probe.environment_history.is_empty() else {}
+	if compact_history.has("runtime_state") or not compact_history.has("id") or not compact_history.has("archetype_id"):
+		failures.append("RunState environment history retained full runtime state instead of a compact visited-location record.")
 	run_a.change_bankroll(-17)
 	run_a.add_item("fixture_item")
 	run_a.set_active_item("fixture_item")

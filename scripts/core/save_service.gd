@@ -18,11 +18,15 @@ var last_load_outcome: Dictionary = {
 	"backup_exists": false,
 	"backup_loadable": false,
 }
+var trusted_primary_fingerprints: Dictionary = {}
 
 
 # Checks whether a run save exists.
 func has_run(slot_id: String = "autosave") -> bool:
-	return bool(slot_status(slot_id).get("has_loadable", false))
+	var clean_slot := _slot_id(slot_id)
+	if _primary_fingerprint_is_trusted(clean_slot, run_save_path(clean_slot)):
+		return true
+	return bool(slot_status(clean_slot).get("has_loadable", false))
 
 
 # Writes run state to a save slot.
@@ -45,8 +49,16 @@ func save_run(run_state: RunState, slot_id: String = "autosave") -> Error:
 	if write_error != OK:
 		_remove_absolute_if_exists(temp_path)
 		return write_error
-	var primary_read := _read_run_state_from_path(path)
-	if bool(primary_read.get("loadable", false)):
+	var primary_loadable := false
+	if FileAccess.file_exists(path):
+		if _primary_fingerprint_is_trusted(clean_slot, path):
+			primary_loadable = true
+		else:
+			var primary_read := _read_run_state_from_path(path)
+			primary_loadable = bool(primary_read.get("loadable", false))
+			if primary_loadable:
+				_remember_primary_fingerprint(clean_slot, path)
+	if primary_loadable:
 		var backup_error := _rotate_primary_to_backup(path, backup_save_path(clean_slot))
 		if backup_error != OK:
 			_remove_absolute_if_exists(temp_path)
@@ -56,7 +68,12 @@ func save_run(run_state: RunState, slot_id: String = "autosave") -> Error:
 		if remove_error != OK:
 			_remove_absolute_if_exists(temp_path)
 			return remove_error
-	return DirAccess.rename_absolute(temp_path, absolute_path)
+	var install_error := DirAccess.rename_absolute(temp_path, absolute_path)
+	if install_error == OK:
+		_remember_primary_fingerprint(clean_slot, path)
+	else:
+		trusted_primary_fingerprints.erase(clean_slot)
+	return install_error
 
 
 # Loads run state from a save slot.
@@ -65,6 +82,7 @@ func load_run(slot_id: String = "autosave") -> Variant:
 	var primary := _read_run_state_from_path(run_save_path(clean_slot))
 	var backup := _read_run_state_from_path(backup_save_path(clean_slot))
 	if bool(primary.get("loadable", false)):
+		_remember_primary_fingerprint(clean_slot, run_save_path(clean_slot))
 		last_load_outcome = _load_outcome(clean_slot, LOAD_OUTCOME_PRIMARY, primary, backup)
 		return primary.get("run_state")
 	if bool(backup.get("loadable", false)):
@@ -84,6 +102,10 @@ func slot_status(slot_id: String = "autosave") -> Dictionary:
 	var backup := _read_run_state_from_path(backup_save_path(clean_slot))
 	var primary_loadable := bool(primary.get("loadable", false))
 	var backup_loadable := bool(backup.get("loadable", false))
+	if primary_loadable:
+		_remember_primary_fingerprint(clean_slot, run_save_path(clean_slot))
+	else:
+		trusted_primary_fingerprints.erase(clean_slot)
 	return {
 		"slot_id": clean_slot,
 		"has_loadable": primary_loadable or backup_loadable,
@@ -147,24 +169,33 @@ func _read_run_state_from_path(path: String) -> Dictionary:
 
 
 func _rotate_primary_to_backup(primary_path: String, backup_path: String) -> Error:
+	var primary_absolute := ProjectSettings.globalize_path(primary_path)
 	var backup_absolute := ProjectSettings.globalize_path(backup_path)
-	var backup_temp := "%s.tmp" % backup_absolute
-	var previous_text := FileAccess.get_file_as_string(primary_path)
-	var file := FileAccess.open(backup_temp, FileAccess.WRITE)
-	if file == null:
-		return FileAccess.get_open_error()
-	file.store_string(previous_text)
-	var write_error := file.get_error()
-	file.close()
-	if write_error != OK:
-		_remove_absolute_if_exists(backup_temp)
-		return write_error
 	if FileAccess.file_exists(backup_absolute):
 		var remove_error := DirAccess.remove_absolute(backup_absolute)
 		if remove_error != OK:
-			_remove_absolute_if_exists(backup_temp)
 			return remove_error
-	return DirAccess.rename_absolute(backup_temp, backup_absolute)
+	return DirAccess.rename_absolute(primary_absolute, backup_absolute)
+
+
+func _primary_fingerprint_is_trusted(slot_id: String, path: String) -> bool:
+	if not trusted_primary_fingerprints.has(slot_id):
+		return false
+	return str(trusted_primary_fingerprints.get(slot_id, "")) == _file_fingerprint(path)
+
+
+func _remember_primary_fingerprint(slot_id: String, path: String) -> void:
+	var fingerprint := _file_fingerprint(path)
+	if fingerprint.is_empty():
+		trusted_primary_fingerprints.erase(slot_id)
+	else:
+		trusted_primary_fingerprints[slot_id] = fingerprint
+
+
+func _file_fingerprint(path: String) -> String:
+	if not FileAccess.file_exists(path):
+		return ""
+	return "%d:%d" % [FileAccess.get_modified_time(path), FileAccess.get_size(path)]
 
 
 func _remove_absolute_if_exists(absolute_path: String) -> Error:
