@@ -66,6 +66,10 @@ func _check_run_inventory_screen_component() -> bool:
 		"active": "",
 		"sell": "",
 		"repair": "",
+		"pawn_lender": "",
+		"pawn_item": "",
+		"redeem_lender": "",
+		"redeem_debt": "",
 		"place": "",
 		"store": "",
 		"store_container": "",
@@ -84,6 +88,14 @@ func _check_run_inventory_screen_component() -> bool:
 	)
 	screen.repair_requested.connect(func(item_id: String) -> void:
 		emitted["repair"] = item_id
+	)
+	screen.pawn_requested.connect(func(lender_id: String, item_id: String) -> void:
+		emitted["pawn_lender"] = lender_id
+		emitted["pawn_item"] = item_id
+	)
+	screen.redeem_pawn_requested.connect(func(lender_id: String, debt_id: String) -> void:
+		emitted["redeem_lender"] = lender_id
+		emitted["redeem_debt"] = debt_id
 	)
 	screen.place_container_requested.connect(func(item_id: String) -> void:
 		emitted["place"] = item_id
@@ -115,6 +127,18 @@ func _check_run_inventory_screen_component() -> bool:
 	if not _click_visible_button(screen, "Sell for 12") or str(emitted.get("sell", "")) != "odds_notebook":
 		parent.queue_free()
 		push_error("Standalone run inventory merchant mode did not emit sale intent.")
+		return false
+	screen.update_model(_run_inventory_component_model("pawn_counter", "sals_pawn_counter"))
+	await process_frame
+	if not _click_visible_button(screen, "Pawn for $24") or str(emitted.get("pawn_lender", "")) != "sals_pawn_counter" or str(emitted.get("pawn_item", "")) != "odds_notebook":
+		parent.queue_free()
+		push_error("Standalone pawn counter did not match merchant overlay styling and emit pawn intent.")
+		return false
+	screen.select_item("lucky_coin", "pawn_ticket", false)
+	await process_frame
+	if not _click_visible_button(screen, "Redeem for $15") or str(emitted.get("redeem_lender", "")) != "sals_pawn_counter" or str(emitted.get("redeem_debt", "")) != "sals_lucky_coin_ticket":
+		parent.queue_free()
+		push_error("Standalone pawn counter did not render a redeemable ticket in the shared merchant overlay.")
 		return false
 	screen.update_model(_run_inventory_component_model("place_container"))
 	await process_frame
@@ -656,6 +680,19 @@ func _check_performance_liveness_guard_component() -> bool:
 func _run_inventory_component_model(mode: String, container_id: String = "", selected: Dictionary = {}) -> Dictionary:
 	var items: Array = []
 	match mode:
+		"pawn_counter":
+			var pawn_item := _run_inventory_component_item("odds_notebook", "Odds Notebook", "carried", false)
+			pawn_item["pawn_action"] = "pawn"
+			pawn_item["lender_id"] = container_id
+			pawn_item["loan_amount"] = 24
+			var ticket_item := _run_inventory_component_item("lucky_coin", "Lucky Coin", "pawn_ticket", false)
+			ticket_item["pawn_action"] = "redeem"
+			ticket_item["lender_id"] = container_id
+			ticket_item["debt_id"] = "sals_lucky_coin_ticket"
+			ticket_item["payoff_amount"] = 15
+			ticket_item["turns_remaining"] = 3
+			ticket_item["pawn_action_enabled"] = true
+			items = [pawn_item, ticket_item]
 		"place_container":
 			items = [_run_inventory_component_item("canvas_bag", "Canvas Bag", "carried", true)]
 		"home_container":
@@ -673,7 +710,7 @@ func _run_inventory_component_model(mode: String, container_id: String = "", sel
 		selected_value = {"id": str((items[0] as Dictionary).get("id", "")), "source": str((items[0] as Dictionary).get("storage_source", "carried"))}
 	return {
 		"mode": mode,
-		"title": "Sell Items" if mode == "merchant_sale" else "Place Storage" if mode == "place_container" else "Home Box" if mode == "home_container" else "Inventory",
+		"title": "Sell Items" if mode == "merchant_sale" else "Pawn Counter" if mode == "pawn_counter" else "Place Storage" if mode == "place_container" else "Home Box" if mode == "home_container" else "Inventory",
 		"summary": "Standalone inventory component fixture.",
 		"container_id": container_id,
 		"selected": selected_value,

@@ -50,6 +50,16 @@
 		"risk_decay": 35
 	},
 	{
+		"id": "pawn_shop",
+		"label": "Sal's Pawn Shop",
+		"destination_archetype": "pawn_shop",
+		"description": "Discount gear, pawn counter, and one old slot.",
+		"cost": 2,
+		"risk": "low",
+		"distance": "near",
+		"risk_decay": 28
+	},
+	{
 		"id": "jazz_club",
 		"label": "Jazz Club",
 		"destination_archetype": "jazz_club",

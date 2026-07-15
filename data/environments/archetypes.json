@@ -219,7 +219,13 @@
     ],
     "travel_hooks": [
       "bar",
-      "gas_station_casino"
+      "gas_station_casino",
+      "pawn_shop"
+    ],
+    "next_archetypes": [
+      "bar",
+      "gas_station_casino",
+      "pawn_shop"
     ],
     "local_narrative_flags": {
       "starting_stop": true,
@@ -2315,13 +2321,13 @@
   },
   {
     "id": "pawn_shop",
-    "kind": "pawn_shop",
+    "kind": "shop",
     "open_hours": {
       "open_minute": 540,
       "close_minute": 1260
     },
     "is_start": false,
-    "tier": 1,
+    "tier": 2,
     "display_name": "Sal's Pawn Shop",
     "name_prefixes": [
       "Sal's"
@@ -2365,6 +2371,20 @@
         [
           786,
           156
+        ],
+        [
+          110,
+          238
+        ],
+        [
+          794,
+          232
+        ]
+      ],
+      "game_spots": [
+        [
+          650,
+          286
         ]
       ],
       "event_spots": [
@@ -2425,13 +2445,18 @@
     "economic_profile": {
       "stake_floor": 0,
       "stake_ceiling": 0,
-      "shop_price_multiplier": 0.85,
+      "shop_price_multiplier": 0.65,
       "safehouse": true
     },
-    "game_pool": [],
+    "game_pool": [
+      "slot"
+    ],
+    "required_game_ids": [
+      "slot"
+    ],
     "game_count": [
-      0,
-      0
+      1,
+      1
     ],
     "item_pool": [
       "creased_luck_card",
@@ -2444,8 +2469,8 @@
       "roadside_map"
     ],
     "item_count": [
-      2,
-      4
+      6,
+      6
     ],
     "event_pool": [
       "suspicious_patron",

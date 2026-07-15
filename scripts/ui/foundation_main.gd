@@ -3010,54 +3010,7 @@ func open_pawn_counter(lender_id: String = "") -> bool:
 		_show_message("Pawn counter is not available.")
 		_refresh()
 		return false
-	_show_meta_popup("Pawn Counter", "Pawn gear for cash, or buy back a specific ticket before Sal shelves it.", "pawn_counter")
-	_add_meta_popup_line("Pawn")
-	var quotes := run_action_service.pawn_quote_options(lender_id)
-	if quotes.is_empty():
-		_add_meta_popup_line(str(option.get("disabled_reason", "Sal needs a sellable item as collateral.")))
-	else:
-		for quote_value in quotes:
-			if typeof(quote_value) != TYPE_DICTIONARY:
-				continue
-			var quote := quote_value as Dictionary
-			var item_id := str(quote.get("item_id", ""))
-			var loan_amount := maxi(0, int(quote.get("loan_amount", 0)))
-			var sale_price := maxi(0, int(quote.get("sale_price", 0)))
-			var item_name := str(quote.get("display_name", quote.get("item_name", item_id)))
-			_add_meta_action_card(
-				item_name,
-				"Loan $%d against this item." % loan_amount,
-				"Sale value $%d" % sale_price,
-				Callable(self, "_pawn_counter_pawn_item").bind(lender_id, item_id),
-				"Pawn",
-				true
-			)
-	_add_meta_popup_line("Redeem")
-	var tickets := run_state.pawn_tickets_for_lender(lender_id)
-	if tickets.is_empty():
-		_add_meta_popup_line("No open pawn tickets.")
-	else:
-		for ticket_value in tickets:
-			if typeof(ticket_value) != TYPE_DICTIONARY:
-				continue
-			var ticket := ticket_value as Dictionary
-			var debt_id := str(ticket.get("debt_id", ""))
-			var item_name := str(ticket.get("item_name", ticket.get("item_id", "ticket")))
-			var payoff := maxi(0, int(ticket.get("payoff_amount", 0)))
-			var turns := maxi(0, int(ticket.get("turns_remaining", 0)))
-			var due_text := "due now" if turns <= 0 else "due in %d turn%s" % [turns, "" if turns == 1 else "s"]
-			if bool(ticket.get("enabled", false)):
-				_add_meta_action_card(
-					item_name,
-					"Buy back for $%d; %s." % [payoff, due_text],
-					"Borrowed $%d + fee $%d" % [maxi(0, int(ticket.get("principal", 0))), maxi(0, int(ticket.get("redemption_fee", 0)))],
-					Callable(self, "_pawn_counter_redeem_ticket").bind(lender_id, debt_id),
-					"Redeem",
-					true
-				)
-			else:
-				_add_meta_popup_line("%s: buy back $%d, %s. %s" % [item_name, payoff, due_text, str(ticket.get("disabled_reason", ""))])
-	_add_meta_close_card()
+	_open_run_inventory_popup("pawn_counter", lender_id)
 	_refresh()
 	return true
 
@@ -4378,6 +4331,8 @@ func _build_run_inventory_overlay() -> void:
 	run_inventory_screen.set_active_requested.connect(Callable(self, "select_active_inventory_item"))
 	run_inventory_screen.sell_requested.connect(Callable(self, "sell_inventory_item"))
 	run_inventory_screen.repair_requested.connect(Callable(self, "repair_inventory_item"))
+	run_inventory_screen.pawn_requested.connect(Callable(self, "_pawn_counter_pawn_item"))
+	run_inventory_screen.redeem_pawn_requested.connect(Callable(self, "_pawn_counter_redeem_ticket"))
 	run_inventory_screen.place_container_requested.connect(Callable(self, "_place_home_container_from_popup"))
 	run_inventory_screen.store_item_requested.connect(Callable(self, "_store_home_container_item_from_popup"))
 	run_inventory_screen.take_item_requested.connect(Callable(self, "_take_home_container_item_from_popup"))
@@ -10937,6 +10892,8 @@ func _run_inventory_interaction_kind(mode: String) -> String:
 	match mode:
 		"merchant_sale":
 			return "merchant_sale"
+		"pawn_counter":
+			return "pawn_counter"
 		"place_container":
 			return "home_storage"
 		"home_container":

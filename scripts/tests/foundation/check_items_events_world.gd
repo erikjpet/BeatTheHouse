@@ -3817,25 +3817,32 @@ func _check_pawn_shop_run_environment(library: ContentLibrary, failures: Array) 
 	if pawn_archetype.is_empty():
 		failures.append("Pawn shop archetype is missing.")
 		return
-	if int(pawn_archetype.get("tier", 0)) != 1:
-		failures.append("Pawn shop run archetype must be tier 1.")
+	if int(pawn_archetype.get("tier", 0)) != 2 or str(pawn_archetype.get("kind", "")) != "shop":
+		failures.append("Pawn shop run archetype must be a tier 2 shop.")
 	if not _string_array(pawn_archetype.get("lender_hooks", [])).has("sals_pawn_counter"):
 		failures.append("Pawn shop run archetype does not expose Sal's pawn counter.")
 	if _string_array(pawn_archetype.get("event_scopes", [])).find("shop") < 0:
 		failures.append("Pawn shop run archetype does not use shop event scope.")
+	if _string_array(pawn_archetype.get("required_game_ids", [])) != ["slot"]:
+		failures.append("Pawn shop run archetype does not require its slot machine.")
+	var pawn_layout: Dictionary = pawn_archetype.get("layout", {}) if typeof(pawn_archetype.get("layout", {})) == TYPE_DICTIONARY else {}
+	if _copy_array(pawn_layout.get("item_spots", [])).size() < 6 or _copy_array(pawn_layout.get("game_spots", [])).is_empty():
+		failures.append("Pawn shop layout does not provide six item spots and a slot-machine spot.")
 	var run_state: RunState = RunStateScript.new()
 	run_state.start_new("PAWN-SHOP-DISCOUNT")
-	var pawn_environment := EnvironmentInstance.from_archetype(pawn_archetype, 1, run_state.create_rng("pawn_shop_discount"), library).to_dict()
+	var pawn_environment := EnvironmentInstance.from_archetype(pawn_archetype, 2, run_state.create_rng("pawn_shop_discount"), library).to_dict()
 	var pawn_offers: Array = pawn_environment.get("item_offers", [])
-	if pawn_offers.is_empty():
-		failures.append("Pawn shop did not roll discounted item offers.")
+	if pawn_offers.size() != 6:
+		failures.append("Pawn shop must roll exactly six discounted item offers, got %d." % pawn_offers.size())
+	if _string_array(pawn_environment.get("game_ids", [])) != ["slot"]:
+		failures.append("Pawn shop generated without its playable slot-machine game.")
 	for offer_value in pawn_offers:
 		if typeof(offer_value) != TYPE_DICTIONARY:
 			continue
 		var offer := offer_value as Dictionary
 		var item := library.item(str(offer.get("id", "")))
-		var expected_min := maxi(1, int(floor(float(item.get("price_min", 1)) * 0.85)))
-		var expected_max := maxi(1, int(floor(float(item.get("price_max", item.get("price_min", 1))) * 0.85)))
+		var expected_min := maxi(1, int(floor(float(item.get("price_min", 1)) * 0.65)))
+		var expected_max := maxi(1, int(floor(float(item.get("price_max", item.get("price_min", 1))) * 0.65)))
 		var price := int(offer.get("price", 0))
 		if price < expected_min or price > expected_max:
 			failures.append("Pawn shop offer %s price %d was outside discounted range %d..%d." % [str(offer.get("id", "")), price, expected_min, expected_max])
@@ -3850,8 +3857,15 @@ func _check_pawn_shop_run_environment(library: ContentLibrary, failures: Array) 
 			var price := int(offer.get("price", 0))
 			if price < int(item.get("price_min", 0)) or price > int(item.get("price_max", item.get("price_min", 0))):
 				failures.append("Non-discount shop offer was changed by pawn multiplier pricing.")
-	if bool(pawn_environment.get("meta_session", false)) or str(pawn_environment.get("kind", "")) != "pawn_shop":
+	if bool(pawn_environment.get("meta_session", false)) or str(pawn_environment.get("kind", "")) != "shop" or str(pawn_environment.get("archetype_id", "")) != "pawn_shop":
 		failures.append("Run pawn shop environment mixed with meta pawn session state.")
+	var world_map := WorldMap.new(library).build(run_state, run_state.create_rng("pawn_shop_world_route"))
+	if not WorldMap.are_neighbors(world_map, "corner_store", "pawn_shop"):
+		failures.append("Pawn shop is not connected to the corner store as a findable tier 2 world destination.")
+	else:
+		var entered_corner := WorldMap.enter_node(world_map, "corner_store")
+		if not WorldMap.visible_node_ids(entered_corner).has("pawn_shop"):
+			failures.append("Visiting the corner store did not reveal the connected pawn shop on the world map.")
 
 
 func _pawn_quote_by_item(quotes: Array, item_id: String) -> Dictionary:

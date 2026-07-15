@@ -6,6 +6,8 @@ signal item_selected(item_id: String, source: String)
 signal set_active_requested(item_id: String)
 signal sell_requested(item_id: String)
 signal repair_requested(item_id: String)
+signal pawn_requested(lender_id: String, item_id: String)
+signal redeem_pawn_requested(lender_id: String, debt_id: String)
 signal place_container_requested(item_id: String)
 signal store_item_requested(container_id: String, item_id: String)
 signal take_item_requested(container_id: String, item_id: String)
@@ -190,7 +192,7 @@ func _render() -> void:
 	if _detail_box != null:
 		FoundationWidgets.clear(_detail_box)
 	var mode := _mode()
-	var merchant_mode := mode == "merchant_sale"
+	var merchant_mode := mode == "merchant_sale" or mode == "pawn_counter"
 	if _title_label != null:
 		_title_label.text = str(_model.get("title", "Inventory"))
 	if _summary_label != null:
@@ -255,7 +257,7 @@ func _render_detail(item: Dictionary, merchant_mode: bool = false) -> void:
 	title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	header.add_child(title)
 	var source := str(item.get("storage_source", "carried"))
-	var location := "Stored" if source == "container" else "Carried"
+	var location := "Pawn ticket" if source == "pawn_ticket" else "Stored" if source == "container" else "Carried"
 	FoundationWidgets.add_detail_row(_detail_box, "Where", location)
 	FoundationWidgets.add_detail_row(_detail_box, "Type", "%s / %s" % [str(item.get("item_class", "unknown")).capitalize(), str(item.get("domain", "global")).capitalize()])
 	_add_attribute_badges(item)
@@ -264,6 +266,18 @@ func _render_detail(item: Dictionary, merchant_mode: bool = false) -> void:
 	var description := str(item.get("description", ""))
 	if not description.is_empty():
 		FoundationWidgets.add_detail_row(_detail_box, "Does", description)
+	if _mode() == "pawn_counter":
+		var pawn_action := str(item.get("pawn_action", ""))
+		if pawn_action == "pawn":
+			FoundationWidgets.add_card_button(_detail_box, "Pawn for $%d" % int(item.get("loan_amount", 0)), Callable(self, "_emit_pawn_requested").bind(str(item.get("lender_id", "")), str(item.get("id", ""))), false, true)
+		elif pawn_action == "redeem":
+			var turns := maxi(0, int(item.get("turns_remaining", 0)))
+			FoundationWidgets.add_detail_row(_detail_box, "Due", "Now" if turns <= 0 else "%d turn%s" % [turns, "" if turns == 1 else "s"])
+			if bool(item.get("pawn_action_enabled", false)):
+				FoundationWidgets.add_card_button(_detail_box, "Redeem for $%d" % int(item.get("payoff_amount", 0)), Callable(self, "_emit_redeem_pawn_requested").bind(str(item.get("lender_id", "")), str(item.get("debt_id", ""))), false, true)
+			else:
+				FoundationWidgets.add_detail_row(_detail_box, "Redeem", str(item.get("disabled_reason", "Unavailable")), true)
+		return
 	if merchant_mode:
 		if bool(item.get("repairable", false)):
 			FoundationWidgets.add_card_button(_detail_box, "Repair for %d" % int(item.get("repair_cost", 0)), Callable(self, "_emit_repair_requested").bind(str(item.get("id", ""))), false, true)
@@ -365,6 +379,14 @@ func _emit_repair_requested(item_id: String) -> void:
 	repair_requested.emit(item_id)
 
 
+func _emit_pawn_requested(lender_id: String, item_id: String) -> void:
+	pawn_requested.emit(lender_id, item_id)
+
+
+func _emit_redeem_pawn_requested(lender_id: String, debt_id: String) -> void:
+	redeem_pawn_requested.emit(lender_id, debt_id)
+
+
 func _emit_place_container_requested(item_id: String) -> void:
 	place_container_requested.emit(item_id)
 
@@ -385,7 +407,8 @@ func _texture_for_item(item: Dictionary) -> Texture2D:
 
 func _grid_button_text(item: Dictionary) -> String:
 	var display_name := str(item.get("display_name", item.get("id", "Item")))
-	var prefix := "STORED\n" if str(item.get("storage_source", "carried")) == "container" else ""
+	var source := str(item.get("storage_source", "carried"))
+	var prefix := "STORED\n" if source == "container" else "TICKET\n" if source == "pawn_ticket" else ""
 	return "%s%s" % [prefix, display_name.left(18)]
 
 

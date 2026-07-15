@@ -17,6 +17,8 @@ static func build(run_state: RunState, run_action_service: RunActionService, mod
 
 
 static func _inventory_popup_item_view_list(run_state: RunState, run_action_service: RunActionService, mode: String, container_id: String) -> Array:
+	if mode == "pawn_counter":
+		return _pawn_counter_item_details(run_state, run_action_service, container_id)
 	if mode == "place_container":
 		return _held_container_inventory_details(run_state, run_action_service)
 	if mode == "home_container":
@@ -24,6 +26,50 @@ static func _inventory_popup_item_view_list(run_state: RunState, run_action_serv
 	if run_action_service == null:
 		return []
 	return run_action_service.inventory_item_view_list()
+
+
+static func _pawn_counter_item_details(run_state: RunState, run_action_service: RunActionService, lender_id: String) -> Array:
+	var result: Array = []
+	if run_state == null or run_action_service == null:
+		return result
+	for quote_value in run_action_service.pawn_quote_options(lender_id):
+		if typeof(quote_value) != TYPE_DICTIONARY:
+			continue
+		var quote := quote_value as Dictionary
+		var item_id := str(quote.get("item_id", "")).strip_edges()
+		var detail := run_action_service.inventory_item_detail(item_id)
+		if detail.is_empty():
+			continue
+		detail["storage_source"] = "carried"
+		detail["pawn_action"] = "pawn"
+		detail["lender_id"] = lender_id
+		detail["loan_amount"] = maxi(0, int(quote.get("loan_amount", 0)))
+		result.append(detail)
+	for ticket_value in run_state.pawn_tickets_for_lender(lender_id):
+		if typeof(ticket_value) != TYPE_DICTIONARY:
+			continue
+		var ticket := ticket_value as Dictionary
+		var item_id := str(ticket.get("item_id", "")).strip_edges()
+		var detail := run_action_service.inventory_item_detail(item_id)
+		if detail.is_empty():
+			detail = {
+				"id": item_id,
+				"display_name": str(ticket.get("item_name", item_id.replace("_", " ").capitalize())),
+				"description": "Collateral held by Sal.",
+				"item_class": "pawn ticket",
+				"domain": "global",
+				"asset_path": "",
+			}
+		detail["storage_source"] = "pawn_ticket"
+		detail["pawn_action"] = "redeem"
+		detail["lender_id"] = lender_id
+		detail["debt_id"] = str(ticket.get("debt_id", ""))
+		detail["payoff_amount"] = maxi(0, int(ticket.get("payoff_amount", 0)))
+		detail["turns_remaining"] = maxi(0, int(ticket.get("turns_remaining", 0)))
+		detail["pawn_action_enabled"] = bool(ticket.get("enabled", false))
+		detail["disabled_reason"] = str(ticket.get("disabled_reason", ""))
+		result.append(detail)
+	return result
 
 
 static func _held_container_inventory_details(run_state: RunState, run_action_service: RunActionService) -> Array:
@@ -69,6 +115,8 @@ static func _home_container_inventory_details(run_state: RunState, run_action_se
 static func _summary_text(run_state: RunState, run_action_service: RunActionService, mode: String, container_id: String) -> String:
 	if mode == "merchant_sale":
 		return "Sellable run items can be sold here."
+	if mode == "pawn_counter":
+		return "Pawn carried gear for cash, or redeem an open ticket before Sal shelves it."
 	if mode == "place_container":
 		return "Select a carried container to place it as home storage."
 	if mode == "home_container":
@@ -86,6 +134,8 @@ static func _title_text(run_state: RunState, mode: String, container_id: String)
 	match mode:
 		"merchant_sale":
 			return "Sell Items"
+		"pawn_counter":
+			return "Pawn Counter"
 		"place_container":
 			return "Place Storage"
 		"home_container":
@@ -99,6 +149,8 @@ static func _empty_text(mode: String) -> String:
 	match mode:
 		"merchant_sale":
 			return "No sellable run items yet."
+		"pawn_counter":
+			return "No pawnable gear or open pawn tickets."
 		"place_container":
 			return "No carried containers. Pick up a bag, backpack, suitcase, or trunk first."
 		"home_container":
