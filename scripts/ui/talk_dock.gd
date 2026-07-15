@@ -4,7 +4,7 @@ extends Control
 signal choice_requested(event_id: String, choice_id: String)
 
 const COLLAPSED_SIZE := Vector2(420, 58)
-const EXPANDED_PANEL_SIZE := Vector2(620, 190)
+const EXPANDED_PANEL_SIZE := Vector2(540, 168)
 const EXPANDED_PORTRAIT_SIZE := Vector2(280, 390)
 const VIEWPORT_MARGIN := Vector2(18, 18)
 const MAX_CHOICES := 4
@@ -255,6 +255,8 @@ func current_snapshot() -> Dictionary:
 		"expanded": expanded,
 		"event_id": str(entry.get("event_id", "")),
 		"speaker": _speaker_name(),
+		"speaker_text": speaker_label.text if speaker_label != null else "",
+		"speaker_label_visible": speaker_label != null and speaker_label.is_visible_in_tree(),
 		"summary": str(option.get("summary", "")),
 		"queue_count": queue_count,
 		"choice_count": _choices().size(),
@@ -291,7 +293,7 @@ func _build() -> void:
 	add_child(panel)
 
 	stack = VBoxContainer.new()
-	stack.add_theme_constant_override("separation", 5)
+	stack.add_theme_constant_override("separation", 4)
 	stack.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	stack.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	panel.add_child(stack)
@@ -319,7 +321,8 @@ func _build() -> void:
 	header_text.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	header_row.add_child(header_text)
 
-	speaker_label = FoundationWidgets.label("", 20)
+	speaker_label = FoundationWidgets.label("", 17)
+	speaker_label.custom_minimum_size = Vector2(0, 22)
 	speaker_label.max_lines_visible = 1
 	speaker_label.clip_text = true
 	FoundationWidgets.set_control_font_color(speaker_label, VisualStyle.YELLOW)
@@ -330,9 +333,9 @@ func _build() -> void:
 	summary_label.clip_text = true
 	header_text.add_child(summary_label)
 
-	urgency_label = FoundationWidgets.label("", 12)
-	urgency_label.max_lines_visible = 2
-	urgency_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	urgency_label = FoundationWidgets.label("", 11)
+	urgency_label.max_lines_visible = 1
+	urgency_label.clip_text = true
 	FoundationWidgets.set_control_font_color(urgency_label, VisualStyle.PINK_2)
 	header_text.add_child(urgency_label)
 
@@ -345,7 +348,7 @@ func _build() -> void:
 	collapse_button.custom_minimum_size = Vector2(72, FoundationWidgets.MIN_NATIVE_TOUCH_TARGET_HEIGHT)
 	header_row.add_child(collapse_button)
 
-	body_label = FoundationWidgets.label("", 16)
+	body_label = FoundationWidgets.label("", 14)
 	body_label.max_lines_visible = 2
 	body_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	stack.add_child(body_label)
@@ -355,7 +358,7 @@ func _build() -> void:
 	urgency_bar.max_value = 1.0
 	urgency_bar.value = 1.0
 	urgency_bar.show_percentage = false
-	urgency_bar.custom_minimum_size = Vector2(0, 8)
+	urgency_bar.custom_minimum_size = Vector2(0, 5)
 	stack.add_child(urgency_bar)
 
 	choice_list = GridContainer.new()
@@ -377,8 +380,9 @@ func _render() -> void:
 		summary.left(52) if not summary.is_empty() else str(option.get("display_name", "Talk")),
 		"  +%d" % maxi(0, queue_count - 1) if queue_count > 1 else "",
 	]
-	speaker_label.text = speaker_name if not speaker_name.is_empty() else str(option.get("display_name", "Talk"))
+	speaker_label.text = "Speaking with %s" % (speaker_name if not speaker_name.is_empty() else "Someone")
 	summary_label.text = str(option.get("display_name", "Talk"))
+	summary_label.visible = false
 	body_label.text = summary
 	var timing: Dictionary = entry.get("timing", {}) if typeof(entry.get("timing", {})) == TYPE_DICTIONARY else {}
 	urgency_label.text = _urgency_text(timing)
@@ -408,7 +412,8 @@ func _render_choices() -> void:
 	if not expanded:
 		return
 	var choices := _choices()
-	choice_list.columns = maxi(1, mini(4 if size.x >= 1040.0 else 2, choices.size()))
+	var compact_columns := mini(3, choices.size()) if choices.size() <= 3 else 2
+	choice_list.columns = maxi(1, mini(4 if size.x >= 1040.0 else compact_columns, choices.size()))
 	for choice in choices:
 		if typeof(choice) != TYPE_DICTIONARY:
 			continue
@@ -430,7 +435,7 @@ func _render_choices() -> void:
 			response.add_child(response_icon)
 			rendered_response_icon_kinds.append(icon_kind)
 		var button := FoundationWidgets.button(label, Callable(self, "_on_choice_pressed").bind(choice_id))
-		button.custom_minimum_size = Vector2(0, 46)
+		button.custom_minimum_size = Vector2(0, 40)
 		button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		button.size_flags_vertical = Control.SIZE_EXPAND_FILL
 		button.clip_text = true
@@ -587,7 +592,7 @@ func _choice_requires_confirm(choice: Dictionary) -> bool:
 func _urgency_text(timing: Dictionary) -> String:
 	if bool(timing.get("expires", false)):
 		var remaining := maxi(0, int(timing.get("remaining_actions", timing.get("duration_actions", 0))))
-		return "They will not wait forever. Actions left: %d." % remaining
+		return "Respond soon - %d action%s left." % [remaining, "" if remaining == 1 else "s"]
 	return "Choose what to say or do."
 
 

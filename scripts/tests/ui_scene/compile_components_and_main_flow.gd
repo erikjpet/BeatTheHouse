@@ -193,6 +193,10 @@ func _check_talk_dock_component() -> bool:
 		parent.queue_free()
 		push_error("Talk dock fixture did not render an expanded timed entry.")
 		return false
+	if not bool(snapshot.get("speaker_label_visible", false)) or str(snapshot.get("speaker_text", "")).find("Mara") == -1:
+		parent.queue_free()
+		push_error("Expanded talk dock did not showcase the active speaker identity: %s." % str(snapshot.get("speaker_text", "")))
+		return false
 	var animation_redraw_before := int(snapshot.get("portrait_animation_redraw_count", 0))
 	for _frame in range(20):
 		await process_frame
@@ -243,7 +247,7 @@ func _check_talk_dock_component() -> bool:
 		parent.queue_free()
 		push_error("Talk dock did not clamp inside a small viewport: panel=%s screen=%s." % [str(panel_rect), str(screen_rect)])
 		return false
-	if panel_rect.size.x >= screen_rect.size.x - 80.0 or panel_rect.size.x < 280.0 or panel_rect.size.y > 280.0:
+	if panel_rect.size.x > 540.0 or panel_rect.size.x >= screen_rect.size.x - 80.0 or panel_rect.size.x < 280.0 or panel_rect.size.y > 220.0:
 		parent.queue_free()
 		push_error("Talk dock did not present a compact selection overlay: panel=%s screen=%s." % [str(panel_rect), str(screen_rect)])
 		return false
@@ -454,10 +458,13 @@ func _check_dialogue_dock_main_flow(app: Control) -> bool:
 	if not bool(snapshot.get("visible", false)) or str(snapshot.get("event_id", "")) != "dialogue:pull_tab_clerk":
 		push_error("Dialogue dock fixture did not expose the pilot dialogue.")
 		return false
+	if not bool(snapshot.get("speaker_label_visible", false)) or str(snapshot.get("speaker_text", "")).strip_edges().is_empty() or str(snapshot.get("speaker_text", "")) != "Speaking with %s" % str(snapshot.get("speaker", "")):
+		push_error("Dialogue dock fixture did not show the active speaker inside the expanded popup: %s." % str(snapshot.get("speaker_text", "")))
+		return false
 	var panel_rect := _snapshot_rect(snapshot.get("panel_rect", Rect2()))
 	var portrait_rect := _snapshot_rect(snapshot.get("portrait_rect", Rect2()))
 	var screen_rect := _snapshot_rect(snapshot.get("screen_rect", Rect2()))
-	if panel_rect.size.x < 420.0 or panel_rect.size.x > 660.0 or panel_rect.size.y > 260.0 or panel_rect.size.x >= screen_rect.size.x - 160.0:
+	if panel_rect.size.x < 420.0 or panel_rect.size.x > 540.0 or panel_rect.size.y > 220.0 or panel_rect.size.x >= screen_rect.size.x - 160.0:
 		push_error("Dialogue dock fixture did not use the compact selection overlay: panel=%s screen=%s." % [str(panel_rect), str(screen_rect)])
 		return false
 	if screen_rect.size.x <= 0.0 or screen_rect.size.y <= 0.0 or portrait_rect.position.x > screen_rect.position.x + 48.0 or panel_rect.position.x > portrait_rect.end.x + 2.0 or absf(panel_rect.end.y - screen_rect.end.y) > 28.0:
