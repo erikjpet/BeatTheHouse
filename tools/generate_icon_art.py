@@ -8,6 +8,7 @@ ITEM_DIR = ROOT / "assets" / "art" / "items"
 GAME_DIR = ROOT / "assets" / "art" / "games"
 MAP_ICON_DIR = ROOT / "assets" / "art" / "map_icons"
 MAP_BACKGROUND_DIR = ROOT / "assets" / "art" / "map_backgrounds"
+RUN_OUTCOME_DIR = ROOT / "assets" / "art" / "run_outcomes"
 SIZE = 32
 
 
@@ -1401,6 +1402,82 @@ GAME_ICONS = {
     "video_poker": draw_video_poker,
 }
 
+def draw_outcome_broke():
+    image, d = new_icon()
+    ellipse(d, (6, 8, 25, 24), DARK)
+    line(d, (8, 12, 23, 20), PINK, 3)
+    line(d, (23, 11, 9, 22), PINK, 3)
+    d.text((12, 9), "$", fill=YELLOW)
+    return image
+
+
+def draw_outcome_stranded():
+    image, d = new_icon()
+    line(d, (6, 24, 25, 7), AMBER, 3)
+    line(d, (7, 8, 24, 25), AMBER, 3)
+    ellipse(d, (13, 13, 19, 19), DARK)
+    return image
+
+
+def draw_outcome_police_capture():
+    image, d = new_icon()
+    ellipse(d, (5, 11, 15, 22), METAL)
+    ellipse(d, (17, 11, 27, 22), METAL)
+    line(d, (14, 16, 18, 16), CYAN, 2)
+    d.rectangle((7, 5, 24, 9), fill=PINK)
+    d.rectangle((9, 6, 14, 8), fill=CYAN)
+    return image
+
+
+def draw_outcome_taken_out_back():
+    image, d = new_icon()
+    rect(d, (8, 7, 24, 26), BLUE)
+    rect(d, (11, 10, 20, 26), DARK)
+    ellipse(d, (17, 17, 20, 20), PINK)
+    line(d, (5, 26, 27, 26), AMBER, 2)
+    return image
+
+
+def draw_outcome_walked_away():
+    image, d = new_icon()
+    ellipse(d, (13, 5, 19, 11), SOFT)
+    line(d, (16, 11, 16, 20), TEAL, 3)
+    line(d, (16, 14, 9, 18), TEAL, 2)
+    line(d, (16, 14, 24, 11), TEAL, 2)
+    line(d, (16, 20, 10, 27), TEAL, 2)
+    line(d, (16, 20, 24, 26), TEAL, 2)
+    return image
+
+
+def draw_outcome_players_card():
+    image, d = new_icon()
+    rect(d, (5, 8, 27, 24), BLUE)
+    d.rectangle((7, 10, 25, 13), fill=TEAL)
+    chip(d, 11, 19, YELLOW)
+    d.rectangle((16, 17, 24, 19), fill=SOFT)
+    glint(d, 25, 7, WHITE)
+    return image
+
+
+def draw_outcome_showdown_survived():
+    image, d = new_icon()
+    poly(d, [(16, 4), (26, 9), (24, 20), (16, 28), (8, 20), (6, 9)], PURPLE_2)
+    poly(d, [(16, 8), (22, 11), (21, 18), (16, 23), (11, 18), (10, 11)], DARK)
+    line(d, (10, 22, 24, 8), TEAL, 3)
+    return image
+
+
+RUN_OUTCOME_ICONS = {
+    "broke": draw_outcome_broke,
+    "stranded": draw_outcome_stranded,
+    "police_capture": draw_outcome_police_capture,
+    "taken_out_back": draw_outcome_taken_out_back,
+    "walked_away": draw_outcome_walked_away,
+    "players_card": draw_outcome_players_card,
+    "showdown_survived": draw_outcome_showdown_survived,
+}
+
+
 MAP_ICONS = {
     "apartment": draw_apartment_map,
     "back_alley": draw_back_alley_map,
@@ -1434,9 +1511,12 @@ def main():
         save(draw_func(), MAP_ICON_DIR / f"{name}.png")
     for name, draw_func in MAP_BACKGROUNDS.items():
         save(draw_func(), MAP_BACKGROUND_DIR / f"{name}.png")
+    for name, draw_func in RUN_OUTCOME_ICONS.items():
+        save(draw_func(), RUN_OUTCOME_DIR / f"{name}.png")
     print(
         f"Wrote {len(ITEM_ICONS)} item icons, {len(GAME_ICONS)} game icons, "
-        f"{len(MAP_ICONS)} map icons, and {len(MAP_BACKGROUNDS)} map backgrounds."
+        f"{len(MAP_ICONS)} map icons, {len(MAP_BACKGROUNDS)} map backgrounds, "
+        f"and {len(RUN_OUTCOME_ICONS)} run outcome icons."
     )
 
 

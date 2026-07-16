@@ -1,0 +1,9 @@
+[
+  {"id":"bankroll_zero","title":"Broke at the table","how":"Your bankroll hit zero with no way back into the action.","icon_key":"broke","icon_path":"res://assets/art/run_outcomes/broke.png"},
+  {"id":"stranded","title":"Stranded","how":"No stake, route, sale, loan, or cash event could keep the run alive.","icon_key":"stranded","icon_path":"res://assets/art/run_outcomes/stranded.png"},
+  {"id":"police_capture","title":"Captured by police","how":"Police closed the room before you could slip away.","icon_key":"police_capture","icon_path":"res://assets/art/run_outcomes/police_capture.png"},
+  {"id":"casino_taken_out_back","title":"Taken out back","how":"The casino ended the argument behind closed doors.","icon_key":"taken_out_back","icon_path":"res://assets/art/run_outcomes/taken_out_back.png"},
+  {"id":"abandoned","title":"Walked away","how":"You chose to leave the circuit before it chose for you.","icon_key":"walked_away","icon_path":"res://assets/art/run_outcomes/walked_away.png"},
+  {"id":"players_card","title":"Players Card earned","how":"You cashed out clean and left with the Grand Casino Players Card.","icon_key":"players_card","icon_path":"res://assets/art/run_outcomes/players_card.png"},
+  {"id":"showdown_survived","title":"Rourke showdown survived","how":"You survived Rourke's back-room pressure and walked out with your winnings.","icon_key":"showdown_survived","icon_path":"res://assets/art/run_outcomes/showdown_survived.png"}
+]
