@@ -76,6 +76,8 @@ const EVENT_CADENCE_BREATHER_ACTIONS := 1
 const EVENT_CADENCE_VISIT_EVENT_CHANCE_PERCENT := 45
 const MAX_ENVIRONMENT_HISTORY_ENTRIES := 48
 const MAX_STORY_LOG_ENTRIES := 240
+const MAX_HEAT_HISTORY_ENTRIES := 480
+const HEAT_HISTORY_COMPACT_TARGET := 360
 const STORY_SEEN_TYPE_FLAG_PREFIX := "_story_seen:"
 const STORY_SEEN_EVENT_FLAG_PREFIX := "_story_seen_event:"
 const STORY_SEEN_OBJECTIVE_FLAG_PREFIX := "_story_seen_objective:"
@@ -128,6 +130,7 @@ var narrative_flags: Dictionary = {}
 var story_flags: Dictionary = {}
 var story_log: Array = []
 var story_log_archive_count: int = 0
+var heat_history: Array = []
 var simulation_msec: int = 0
 var game_clock_minutes: int = GAME_CLOCK_START_MINUTE
 var closing_time_state: Dictionary = {}
@@ -180,6 +183,7 @@ func start_new(p_seed_text: String = "FOUNDATION-SEED", p_challenge_config: Dict
 	story_flags = {}
 	story_log = []
 	story_log_archive_count = 0
+	heat_history = []
 	simulation_msec = 0
 	game_clock_minutes = GAME_CLOCK_START_MINUTE
 	closing_time_state = {}
@@ -191,6 +195,7 @@ func start_new(p_seed_text: String = "FOUNDATION-SEED", p_challenge_config: Dict
 	run_spending_score = 0
 	defer_next_bankroll_zero_failure = false
 	_apply_starting_challenge_modifiers()
+	_record_heat_history(false)
 
 
 # Creates an RNG stream from the saved run RNG state.
@@ -1052,6 +1057,7 @@ func set_environment(environment_data: Dictionary) -> void:
 		_copy_array(next_environment.get("travel_hooks", [])) + _copy_array(next_environment.get("next_archetypes", []))
 	)
 	_activate_current_local_suspicion(false)
+	_record_heat_history(true)
 	if previous_was_grand_casino and not _is_grand_casino_environment(current_environment):
 		_clear_grand_casino_clean_cashout_ready()
 	event_cadence_begin_visit(current_environment)
@@ -1174,6 +1180,7 @@ func _apply_starting_challenge_modifiers() -> void:
 				"challenge_id": str(challenge_config.get("id", "")),
 			},
 		}]
+		_record_heat_history(false)
 	for debt_value in _copy_array(modifiers.get("starting_debt", [])):
 		if typeof(debt_value) == TYPE_DICTIONARY:
 			add_debt(debt_value)
@@ -1208,6 +1215,8 @@ func add_suspicion(cue_id: String, amount: int, visibility: String = "behavior",
 	else:
 		levels[location_id] = level
 		suspicion["local_levels"] = levels
+	if applied_amount != 0 and (location_id.is_empty() or location_id == current_location_id or current_location_id.is_empty()):
+		_record_heat_history(false)
 	var cues: Array = suspicion.get("cues", [])
 	cues.append({
 		"id": cue_id,
@@ -3337,6 +3346,8 @@ func begin_travel_suspicion_decay(route_data: Dictionary, destination_archetype_
 		levels[source_location_id] = source_after
 	suspicion["local_levels"] = levels
 	suspicion["level"] = clampi(source_after, 0, 100)
+	if source_after != before:
+		_record_heat_history(false)
 	var carried_heat := before if same_location else _decayed_suspicion_level(before, effective_route_decay)
 	return {
 		"distance": distance,
@@ -3369,6 +3380,7 @@ func finish_travel_suspicion_decay(travel_heat: Dictionary) -> Dictionary:
 		levels[destination_location_id] = destination_after
 	suspicion["local_levels"] = levels
 	suspicion["level"] = destination_after
+	_record_heat_history(false)
 	_evaluate_immediate_terminal_state()
 	var result := travel_heat.duplicate(true)
 	result["destination_location_id"] = destination_location_id
@@ -4583,13 +4595,104 @@ func _decrease_current_suspicion(amount: int) -> void:
 	if amount <= 0:
 		return
 	var location_id := current_suspicion_location_id()
+	var previous_level := suspicion_level()
 	var next_level := clampi(suspicion_level() - amount, 0, 100)
 	suspicion["level"] = next_level
+	if next_level != previous_level:
+		_record_heat_history(false)
 	if location_id.is_empty():
 		return
 	var levels := _local_suspicion_levels()
 	levels[location_id] = next_level
 	suspicion["local_levels"] = levels
+
+
+func _record_heat_history(environment_transition: bool) -> void:
+	var environment_id := str(current_environment.get("id", current_environment.get("world_node_id", current_environment.get("archetype_id", "")))).strip_edges()
+	var entry := {
+		"action_index": maxi(0, int(event_cadence.get("action_index", 0))),
+		"heat_value": suspicion_level(),
+		"environment_id": environment_id,
+		"world_node_id": str(current_environment.get("world_node_id", current_environment.get("archetype_id", ""))).strip_edges(),
+		"environment_name": str(current_environment.get("display_name", environment_id.replace("_", " ").capitalize())),
+		"transition": environment_transition,
+	}
+	if not heat_history.is_empty():
+		var last: Dictionary = heat_history[-1] if typeof(heat_history[-1]) == TYPE_DICTIONARY else {}
+		if not environment_transition and int(last.get("action_index", -1)) == int(entry["action_index"]) and int(last.get("heat_value", -1)) == int(entry["heat_value"]) and str(last.get("environment_id", "")) == environment_id:
+			return
+	heat_history.append(entry)
+	_compact_heat_history()
+
+
+func _compact_heat_history() -> void:
+	if heat_history.size() <= MAX_HEAT_HISTORY_ENTRIES:
+		return
+	heat_history = downsample_heat_history(heat_history, HEAT_HISTORY_COMPACT_TARGET)
+
+
+static func normalize_heat_history(entries: Array) -> Array:
+	var result: Array = []
+	for value in entries:
+		if typeof(value) != TYPE_DICTIONARY:
+			continue
+		var entry: Dictionary = value
+		result.append({
+			"action_index": maxi(0, int(entry.get("action_index", 0))),
+			"heat_value": clampi(int(entry.get("heat_value", entry.get("heat", 0))), 0, 100),
+			"environment_id": str(entry.get("environment_id", "")),
+			"world_node_id": str(entry.get("world_node_id", "")),
+			"environment_name": str(entry.get("environment_name", entry.get("environment_id", ""))).strip_edges(),
+			"transition": bool(entry.get("transition", false)),
+		})
+	return result
+
+
+static func downsample_heat_history(entries: Array, target_size: int = HEAT_HISTORY_COMPACT_TARGET) -> Array:
+	var normalized := normalize_heat_history(entries)
+	var target := maxi(2, target_size)
+	if normalized.size() <= target:
+		return normalized
+	var keep := {}
+	keep[0] = true
+	keep[normalized.size() - 1] = true
+	for index in range(normalized.size()):
+		var entry: Dictionary = normalized[index]
+		if bool(entry.get("transition", false)):
+			keep[index] = true
+		if index > 0 and index + 1 < normalized.size():
+			var before := int((normalized[index - 1] as Dictionary).get("heat_value", 0))
+			var current := int(entry.get("heat_value", 0))
+			var after := int((normalized[index + 1] as Dictionary).get("heat_value", 0))
+			if (current > before and current >= after) or (current < before and current <= after):
+				keep[index] = true
+	var required: Array = keep.keys()
+	required.sort()
+	if required.size() > target:
+		var reduced: Array = []
+		for slot in range(target):
+			var source_index := int(round(float(slot) * float(required.size() - 1) / float(target - 1)))
+			reduced.append(int(required[source_index]))
+		required = reduced
+	else:
+		var candidates: Array = []
+		for index in range(normalized.size()):
+			if not keep.has(index):
+				candidates.append(index)
+		var remaining := target - required.size()
+		for slot in range(mini(remaining, candidates.size())):
+			var source_index := int(floor(float(slot) * float(candidates.size()) / float(maxi(1, remaining))))
+			required.append(int(candidates[source_index]))
+		required.sort()
+	var result: Array = []
+	var seen := {}
+	for index_value in required:
+		var index := int(index_value)
+		if index < 0 or index >= normalized.size() or seen.has(index):
+			continue
+		seen[index] = true
+		result.append(normalized[index])
+	return result
 
 
 func _story_log_has_demo_victory(objective_id: String) -> bool:
@@ -4709,6 +4812,7 @@ func to_dict() -> Dictionary:
 		"story_flags": story_flags.duplicate(true),
 		"story_log": _normalize_story_log(story_log),
 		"story_log_archive_count": story_log_archive_count,
+		"heat_history": normalize_heat_history(heat_history),
 		"simulation_msec": simulation_msec,
 		"game_clock_minutes": game_clock_minutes,
 		"closing_time_state": _normalize_closing_time_state(closing_time_state),
@@ -4768,6 +4872,10 @@ func from_dict(data: Dictionary) -> void:
 		if typeof(story_entry_value) == TYPE_DICTIONARY:
 			_remember_story_seen_flags(story_entry_value as Dictionary)
 	_compact_story_log()
+	heat_history = normalize_heat_history(_copy_array(data.get("heat_history", [])))
+	if heat_history.is_empty():
+		_record_heat_history(not current_environment.is_empty())
+	_compact_heat_history()
 	simulation_msec = maxi(0, int(data.get("simulation_msec", int(_copy_dict(data.get("event_cadence", {})).get("action_index", 0)) * SIMULATION_ACTION_MSEC)))
 	game_clock_minutes = maxi(0, int(data.get("game_clock_minutes", GAME_CLOCK_START_MINUTE)))
 	closing_time_state = _normalize_closing_time_state(_copy_dict(data.get("closing_time_state", {})))
