@@ -560,6 +560,10 @@ func _check_music_stem_director_foundation(library: ContentLibrary, failures: Ar
 		failures.append("24-bit 8-bar WAV inspection did not derive the real data-chunk frame count.")
 	if not bool(wav_16.get("valid", false)) or int(wav_16.get("bits_per_sample", 0)) != 24 or int(wav_16.get("frames", 0)) != 1411200:
 		failures.append("24-bit 16-bar WAV inspection did not derive the real data-chunk frame count.")
+	if str(wav_8.get("inspection_mode", "")) != "streamed_chunk_headers" or int(wav_8.get("inspected_header_bytes", 99999999)) >= 256 or int(wav_8.get("inspected_header_bytes", 0)) * 1000 >= int(wav_8.get("data_bytes", 0)):
+		failures.append("WAV validation loaded more than bounded RIFF/chunk headers from the large PCM24 fixture.")
+	if int(wav_8.get("odd_sized_chunks", 0)) < 1 or int(wav_8.get("non_audio_chunks", 0)) < 1 or int(wav_8.get("riff_bytes", 0)) > int(wav_8.get("file_bytes", 0)):
+		failures.append("Streamed WAV validation did not prove odd-chunk padding/non-audio metadata bounds.")
 	for mismatch_fixture in [
 		{"property": "bits_per_sample", "value": 16},
 		{"property": "channels", "value": 2},

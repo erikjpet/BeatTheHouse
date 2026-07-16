@@ -1499,13 +1499,22 @@ func _validate_music_loop_asset(label: String, track_id: String, filename: Strin
 static func _wav_info(path: String) -> Dictionary:
 	if not FileAccess.file_exists(path):
 		return {"valid": false, "error": "file does not exist"}
-	var bytes := FileAccess.get_file_as_bytes(path)
-	if bytes.size() < 12:
+	var file := FileAccess.open(path, FileAccess.READ)
+	if file == null:
+		return {"valid": false, "error": "file could not be opened for inspection"}
+	file.big_endian = false
+	var file_size := file.get_length()
+	if file_size < 12:
 		return {"valid": false, "error": "file is shorter than a RIFF/WAVE header"}
-	if _ascii_from_bytes(bytes, 0, 4) != "RIFF" or _ascii_from_bytes(bytes, 8, 4) != "WAVE":
+	file.seek(0)
+	var riff_id := _file_fourcc(file)
+	var riff_size := file.get_32()
+	var wave_id := _file_fourcc(file)
+	var inspected_header_bytes := 12
+	if riff_id != "RIFF" or wave_id != "WAVE":
 		return {"valid": false, "error": "missing RIFF/WAVE signature"}
-	var riff_size := _u32_le(bytes, 4)
-	if riff_size < 4 or riff_size + 8 > bytes.size():
+	var riff_end := riff_size + 8
+	if riff_size < 4 or riff_end > file_size:
 		return {"valid": false, "error": "RIFF size exceeds the real file length"}
 	var offset := 12
 	var audio_format := 0
@@ -1517,26 +1526,42 @@ static func _wav_info(path: String) -> Dictionary:
 	var fmt_found := false
 	var data_start := -1
 	var data_size := 0
-	while offset + 8 <= bytes.size():
-		var chunk_id := _ascii_from_bytes(bytes, offset, 4)
-		var chunk_size := _u32_le(bytes, offset + 4)
+	var odd_sized_chunks := 0
+	var non_audio_chunks := 0
+	while offset < riff_end:
+		if offset + 8 > riff_end:
+			return {"valid": false, "error": "RIFF ends inside a chunk header"}
+		file.seek(offset)
+		var chunk_id := _file_fourcc(file)
+		var chunk_size := file.get_32()
+		inspected_header_bytes += 8
 		var chunk_data := offset + 8
-		if chunk_size < 0 or chunk_data + chunk_size > bytes.size():
-			return {"valid": false, "error": "chunk %s exceeds the real file length" % chunk_id}
+		var chunk_end := chunk_data + chunk_size
+		if chunk_end > riff_end:
+			return {"valid": false, "error": "chunk %s exceeds the declared RIFF length" % chunk_id}
+		var padded_end := chunk_end + (chunk_size % 2)
+		if chunk_size % 2 != 0:
+			odd_sized_chunks += 1
+		if chunk_id != "fmt " and chunk_id != "data":
+			non_audio_chunks += 1
+		if padded_end > riff_end:
+			return {"valid": false, "error": "odd-sized chunk %s is missing its RIFF padding byte" % chunk_id}
 		if chunk_id == "fmt ":
 			if chunk_size < 16:
 				return {"valid": false, "error": "fmt chunk is shorter than 16 bytes"}
-			audio_format = _u16_le(bytes, chunk_data)
-			channels = _u16_le(bytes, chunk_data + 2)
-			sample_rate = _u32_le(bytes, chunk_data + 4)
-			byte_rate = _u32_le(bytes, chunk_data + 8)
-			block_align = _u16_le(bytes, chunk_data + 12)
-			bits_per_sample = _u16_le(bytes, chunk_data + 14)
+			file.seek(chunk_data)
+			audio_format = file.get_16()
+			channels = file.get_16()
+			sample_rate = file.get_32()
+			byte_rate = file.get_32()
+			block_align = file.get_16()
+			bits_per_sample = file.get_16()
+			inspected_header_bytes += 16
 			fmt_found = true
 		elif chunk_id == "data" and data_start < 0:
 			data_start = chunk_data
 			data_size = chunk_size
-		offset = chunk_data + chunk_size + (chunk_size % 2)
+		offset = padded_end
 	if not fmt_found:
 		return {"valid": false, "error": "missing fmt chunk"}
 	if data_start < 0 or data_size <= 0:
@@ -1566,28 +1591,19 @@ static func _wav_info(path: String) -> Dictionary:
 		"data_offset": data_start,
 		"data_bytes": data_size,
 		"frames": int(data_size / frame_bytes),
+		"file_bytes": file_size,
+		"riff_bytes": riff_end,
+		"inspected_header_bytes": inspected_header_bytes,
+		"inspection_mode": "streamed_chunk_headers",
+		"odd_sized_chunks": odd_sized_chunks,
+		"non_audio_chunks": non_audio_chunks,
 		"error": "",
 	}
 
 
-static func _ascii_from_bytes(bytes: PackedByteArray, offset: int, length: int) -> String:
-	var chars := PackedByteArray()
-	chars.resize(length)
-	for index in range(length):
-		chars[index] = bytes[offset + index] if offset + index < bytes.size() else 0
-	return chars.get_string_from_ascii()
-
-
-static func _u16_le(bytes: PackedByteArray, offset: int) -> int:
-	if offset + 1 >= bytes.size():
-		return 0
-	return int(bytes[offset]) | (int(bytes[offset + 1]) << 8)
-
-
-static func _u32_le(bytes: PackedByteArray, offset: int) -> int:
-	if offset + 3 >= bytes.size():
-		return 0
-	return int(bytes[offset]) | (int(bytes[offset + 1]) << 8) | (int(bytes[offset + 2]) << 16) | (int(bytes[offset + 3]) << 24)
+static func _file_fourcc(file: FileAccess) -> String:
+	var bytes := file.get_buffer(4)
+	return bytes.get_string_from_ascii() if bytes.size() == 4 else ""
 
 
 static func _music_file_name(value: Variant) -> String:
