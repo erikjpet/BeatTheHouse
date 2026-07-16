@@ -2126,10 +2126,23 @@ func _ambient_pcm_data(context: Dictionary, token: int = -1) -> PackedByteArray:
 	var frames := int(context.get("frames", 0))
 	var data := PackedByteArray()
 	data.resize(maxi(0, frames * PCM_BYTES_PER_FRAME))
-	for i in range(frames):
+	# Match the full stem renderer's production sampling policy while retaining
+	# the preview stream's exact frame count, byte size, and loop duration.
+	var render_stride := maxi(1, AMBIENT_RENDER_STRIDE_FRAMES)
+	var i := 0
+	while i < frames:
 		if token > 0 and i % GENERATION_CANCEL_CHECK_FRAMES == 0 and _generation_was_cancelled(token):
 			return PackedByteArray()
 		_write_ambient_frame(data, context, i)
+		var source_byte_index := i * PCM_BYTES_PER_FRAME
+		var low_byte := data[source_byte_index]
+		var high_byte := data[source_byte_index + 1]
+		var repeat_count := mini(render_stride, frames - i)
+		for repeat_index in range(1, repeat_count):
+			var byte_index := (i + repeat_index) * PCM_BYTES_PER_FRAME
+			data[byte_index] = low_byte
+			data[byte_index + 1] = high_byte
+		i += render_stride
 	return data
 
 
