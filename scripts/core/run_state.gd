@@ -1036,7 +1036,8 @@ func event_cadence_advance_actions(amount: int = 1) -> void:
 # Returns whether a world-initiated event can be queued under the room budget.
 func event_cadence_allows_world_event(event_id: String, trigger_type: String, source: String, event_definition: Dictionary = {}) -> bool:
 	_ensure_event_cadence()
-	if not event_cadence_can_open_modal():
+	var cadence: Dictionary = _copy_dict(event_definition.get("cadence", {}))
+	if not event_cadence_can_open_modal() and not bool(cadence.get("queue_while_modal", false)):
 		return false
 	if event_cadence_event_bypasses_budget(event_id, trigger_type, source, event_definition):
 		return true
@@ -1057,6 +1058,9 @@ func event_cadence_allows_world_event(event_id: String, trigger_type: String, so
 # Debt collectors, showdown calls, and explicit chains can jump the quiet-visit budget.
 func event_cadence_event_bypasses_budget(event_id: String, trigger_type: String, source: String, event_definition: Dictionary = {}) -> bool:
 	var normalized_id := event_id.strip_edges()
+	var cadence: Dictionary = _copy_dict(event_definition.get("cadence", {}))
+	if bool(cadence.get("bypass_budget", false)):
+		return true
 	if [GRAND_CASINO_SHOWDOWN_EVENT_ID, GRAND_CASINO_HIGH_ROLLER_EVENT_ID, "the_collector", "family_loan"].has(normalized_id):
 		return true
 	if ["event_chain", "debt", "lender", "showdown"].has(source):

@@ -3424,6 +3424,11 @@ func _travel_to(target_id: String, target_label: String, choice_data: Dictionary
 	var route_risk := {} if local_casino_room_move else run_state.travel_route_risk(route, target_id)
 	var travel_heat := run_state.begin_travel_suspicion_decay(route, target_id)
 	var force_walk := bool(choice_data.get("force_walk_fallback", false))
+	var travel_method_kind := WorldMapScript.TRAVEL_METHOD_WALK if force_walk else WorldMapScript.travel_method_kind(route, str(choice_data.get("distance", route.get("distance", ""))))
+	route["travel_method_kind"] = travel_method_kind
+	route["travel_method"] = WorldMapScript.travel_method_label(travel_method_kind)
+	if str(route.get("method", "")).strip_edges().is_empty() or force_walk:
+		route["method"] = str(route.get("travel_method", ""))
 	var travel_minutes := maxi(1, int(choice_data.get("travel_minutes", _travel_clock_minutes_for_route(route, force_walk))))
 	var departed_game_clock_minutes := maxi(0, run_state.game_clock_minutes)
 	route["travel_minutes"] = travel_minutes
@@ -3496,16 +3501,23 @@ func _travel_to(target_id: String, target_label: String, choice_data: Dictionary
 		"type": "travel",
 		"source": "travel",
 		"target_id": target_id,
+		"travel_method_kind": travel_method_kind,
+		"travel_method": WorldMapScript.travel_method_label(travel_method_kind),
 		"turns": int(previous_environment.get("turns", 0)),
 	}
 	if _enqueue_triggered_events_for_context("travel", travel_context, previous_environment):
 		_autosave_foundation_run("Autosaved.")
 		if _show_next_pending_triggered_event():
 			_refresh()
+		else:
+			_refresh_talk_dock()
+			_refresh()
 
 
 func _travel_result(target_id: String, destination_name: String, route: Dictionary, previous_environment: Dictionary, destination_environment: Dictionary, travel_decay: Dictionary = {}, route_risk: Dictionary = {}) -> Dictionary:
 	var route_status := run_state.travel_route_status(route)
+	var travel_method_kind := WorldMapScript.travel_method_kind(route, str(route_status.get("distance", route.get("distance", ""))))
+	var travel_method := WorldMapScript.travel_method_label(travel_method_kind)
 	var cost := int(route_status.get("cost", 0))
 	var suspicion_delta := int(route_status.get("suspicion_delta", 0))
 	var risk_bankroll_delta := int(route_risk.get("bankroll_delta", 0)) if bool(route_risk.get("triggered", false)) else 0
@@ -3560,6 +3572,8 @@ func _travel_result(target_id: String, destination_name: String, route: Dictiona
 		"suspicion_delta": total_suspicion_delta,
 		"route_suspicion_delta": suspicion_delta,
 		"travel_distance": str(travel_decay.get("distance", route_status.get("distance", ""))),
+		"travel_method_kind": travel_method_kind,
+		"travel_method": travel_method,
 		"risk_decay": risk_decay,
 		"risk_cooled": cooled,
 		"route_risk": route_risk.duplicate(true),
@@ -3597,6 +3611,8 @@ func _travel_result(target_id: String, destination_name: String, route: Dictiona
 		"bankroll_delta": total_bankroll_delta,
 		"suspicion_delta": total_suspicion_delta,
 		"route_cost": cost,
+		"travel_method_kind": travel_method_kind,
+		"travel_method": travel_method,
 		"route_risk": route_risk.duplicate(true),
 		"deltas": deltas,
 		"message": message,
@@ -11246,22 +11262,16 @@ func _world_map_node_flavor(node: Dictionary) -> String:
 
 
 func _world_map_travel_method(choice: Dictionary) -> String:
+	return WorldMapScript.travel_method_label(_world_map_travel_method_kind(choice))
+
+
+func _world_map_travel_method_kind(choice: Dictionary) -> String:
+	if bool(choice.get("force_walk_fallback", false)):
+		return WorldMapScript.TRAVEL_METHOD_WALK
 	var route: Dictionary = choice.get("route", {}) if typeof(choice.get("route", {})) == TYPE_DICTIONARY else {}
-	var travel_method := str(route.get("travel_method", choice.get("travel_method", ""))).strip_edges()
-	if not travel_method.is_empty():
-		return travel_method
-	var method := str(route.get("method", "")).strip_edges()
-	if not method.is_empty():
-		return method
-	match str(choice.get("distance", "near")).strip_edges().to_lower():
-		"near":
-			return "Walk"
-		"local":
-			return "Bus ticket"
-		"far":
-			return "Taxi ride"
-		_:
-			return "Night cab"
+	if not route.is_empty():
+		return WorldMapScript.travel_method_kind(route, str(choice.get("distance", route.get("distance", "near"))))
+	return WorldMapScript.travel_method_kind(choice, str(choice.get("distance", "near")))
 
 
 func _world_map_travel_cost_line(choice: Dictionary) -> String:
@@ -11342,7 +11352,19 @@ func _travel_choice_view_list() -> Array:
 
 
 func _travel_choice(target_id: String, known_target_ids: Array = []) -> Dictionary:
-	return FoundationTravelViewModelScript.travel_choice(self, target_id, known_target_ids)
+	var choice: Dictionary = FoundationTravelViewModelScript.travel_choice(self, target_id, known_target_ids)
+	if choice.is_empty():
+		return choice
+	var method_kind := _world_map_travel_method_kind(choice)
+	var route: Dictionary = _copy_dict(choice.get("route", {}))
+	route["travel_method_kind"] = method_kind
+	route["travel_method"] = WorldMapScript.travel_method_label(method_kind)
+	if str(route.get("method", "")).strip_edges().is_empty() or bool(choice.get("force_walk_fallback", false)):
+		route["method"] = str(route.get("travel_method", ""))
+	choice["route"] = route
+	choice["travel_method_kind"] = method_kind
+	choice["travel_method"] = str(route.get("travel_method", ""))
+	return choice
 
 
 func _travel_target_ids() -> Array:
