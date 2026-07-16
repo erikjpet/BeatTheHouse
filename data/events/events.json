@@ -1936,7 +1936,7 @@
   },
   {
     "id": "high_roller_cashout",
-    "display_name": "Players Card Review",
+    "display_name": "Gold Players Card Review",
     "type": "landmark",
     "interaction_mode": "interactable",
     "scopes": [
@@ -1945,7 +1945,7 @@
     "asset_path": "res://assets/art/events/comped_suite_offer.png",
     "icon_key": "casino_host",
     "environment_prop": "casino_host",
-    "start_summary": "Claim the Players Card.",
+    "start_summary": "Complete Linda's Gold review.",
     "trigger": {
       "type": "manual"
     },
@@ -1956,13 +1956,13 @@
     },
     "payload": {
       "kind": "grand_casino_high_roller_cashout",
-      "summary": "Claim boss access.",
-      "success_message": "The host issues you a Grand Casino Players Card and lets you leave with your winnings. The Players Card opens quieter rooms; your name is now on the list.",
+      "summary": "Sign for the Gold card.",
+      "success_message": "Linda issues the Gold Players Card and lets you leave with your winnings. The card opens quieter rooms; your name is on the list.",
       "choices": [
         {
           "id": "high_roller_cashout",
-          "label": "Claim Card",
-          "text": "You accept the Players Card and leave before the floor changes its mind.",
+          "label": "Accept Gold Card",
+          "text": "You sign Linda's slip and leave with your winnings.",
           "consequence_summary": "Win the demo clean"
         },
         {

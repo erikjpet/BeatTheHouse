@@ -5,6 +5,7 @@ signal close_requested
 signal buy_chips_requested(amount: int)
 signal cash_out_requested
 signal review_requested
+signal comp_requested(comp_id: String)
 
 const POPUP_SIZE := Vector2(760, 460)
 const POPUP_MARGIN := 14.0
@@ -159,7 +160,7 @@ func _render() -> void:
 	FoundationWidgets.set_control_font_color(review_label, VisualStyle.CYAN if bool(card.get("can_review", false)) else VisualStyle.ORANGE)
 	_content_box.add_child(review_label)
 	_content_box.add_child(_content_label(str(card.get("review_detail", "")), 11))
-	var review_button := FoundationWidgets.button("Complete Players Card Review", Callable(self, "_emit_review"))
+	var review_button := FoundationWidgets.button("Complete Gold Review", Callable(self, "_emit_review"))
 	review_button.disabled = not bool(card.get("can_review", false))
 	_content_box.add_child(review_button)
 	_content_box.add_child(_section("Promotions / Comps"))
@@ -168,6 +169,16 @@ func _render() -> void:
 	for promotion_value in promotions:
 		promotion_labels.append(str(promotion_value))
 	_content_box.add_child(_content_label(str(_model.get("promotions_empty", "No promotions available.")), 11, true) if promotion_labels.is_empty() else _content_label(" | ".join(promotion_labels), 11))
+	var comp_row := HBoxContainer.new()
+	comp_row.add_theme_constant_override("separation", 6)
+	for comp_value in _model.get("comp_actions", []):
+		if typeof(comp_value) != TYPE_DICTIONARY:
+			continue
+		var comp: Dictionary = comp_value
+		var comp_button := FoundationWidgets.button(str(comp.get("label", "Use Comp")), Callable(self, "_emit_comp").bind(str(comp.get("id", ""))))
+		comp_button.disabled = not bool(comp.get("enabled", false))
+		comp_row.add_child(comp_button)
+	_content_box.add_child(comp_row)
 
 
 func _content_label(text: String, font_size: int, muted: bool = false) -> Label:
@@ -216,3 +227,7 @@ func _emit_cash_out() -> void:
 
 func _emit_review() -> void:
 	review_requested.emit()
+
+
+func _emit_comp(comp_id: String) -> void:
+	comp_requested.emit(comp_id)

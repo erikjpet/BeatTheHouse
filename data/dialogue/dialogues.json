@@ -197,5 +197,166 @@
         ]
       }
     }
+  },
+  {
+    "id": "linda_bronze_tier",
+    "display_name": "Bronze Recognition",
+    "speaker": {
+      "role": "staff",
+      "name": "Linda",
+      "mood": "warm",
+      "behavior": "keeping the count",
+      "silhouette": "vest",
+      "hair_color": "#2a1824",
+      "jacket_color": "#234052"
+    },
+    "start": "recognition",
+    "nodes": {
+      "recognition": {
+        "text": "One clean table, a tidy count. Bronze suits you.",
+        "choices": [
+          {
+            "id": "thank_linda",
+            "label": "Thank Linda",
+            "text": "Take the recognition and keep playing.",
+            "effects": {},
+            "effects_hidden": true,
+            "end": true
+          }
+        ]
+      }
+    }
+  },
+  {
+    "id": "linda_silver_tier",
+    "display_name": "Silver Recognition",
+    "speaker": {
+      "role": "staff",
+      "name": "Linda",
+      "mood": "warm",
+      "behavior": "opening the velvet rope",
+      "silhouette": "vest",
+      "hair_color": "#2a1824",
+      "jacket_color": "#234052"
+    },
+    "start": "recognition",
+    "nodes": {
+      "recognition": {
+        "text": "You held the ceiling. Silver opens the velvet rope.",
+        "choices": [
+          {
+            "id": "take_silver",
+            "label": "Take Silver",
+            "text": "Accept the room access and comps.",
+            "effects": {},
+            "effects_hidden": true,
+            "end": true
+          }
+        ]
+      }
+    }
+  },
+  {
+    "id": "linda_gold_review",
+    "display_name": "Gold Players Card Review",
+    "speaker": {
+      "role": "staff",
+      "name": "Linda",
+      "mood": "proud",
+      "behavior": "closing the clean account",
+      "silhouette": "vest",
+      "hair_color": "#2a1824",
+      "jacket_color": "#234052"
+    },
+    "start": "review",
+    "nodes": {
+      "review": {
+        "text": "Five settled games. Clean money. Sign here for Gold.",
+        "choices": [
+          {
+            "id": "accept_gold_card",
+            "label": "Accept Gold Card",
+            "text": "Take the card and leave with your winnings.",
+            "effects": {
+              "demo_finale": {
+                "event_id": "high_roller_cashout",
+                "branch": "win_clean",
+                "message": "Linda issues the Gold Players Card and lets you leave with your winnings."
+              }
+            },
+            "effects_hidden": true,
+            "end": true
+          },
+          {
+            "id": "wait_on_gold",
+            "label": "Keep Playing",
+            "text": "Leave the Gold review open at the Cage.",
+            "effects": {},
+            "effects_hidden": true,
+            "end": true
+          }
+        ]
+      }
+    }
+  },
+  {
+    "id": "linda_main_floor_ambient_1",
+    "display_name": "Linda at the Cage",
+    "speaker": {
+      "role": "staff",
+      "name": "Linda",
+      "mood": "warm",
+      "behavior": "sorting slips",
+      "silhouette": "vest",
+      "hair_color": "#2a1824",
+      "jacket_color": "#234052"
+    },
+    "start": "line",
+    "nodes": {
+      "line": {
+        "text": "Keep the slips flat. The Cage remembers clean hands.",
+        "choices": [{"id": "move_on", "label": "Move On", "effects": {}, "effects_hidden": true, "end": true}]
+      }
+    }
+  },
+  {
+    "id": "linda_main_floor_ambient_2",
+    "display_name": "Linda at the Cage",
+    "speaker": {
+      "role": "staff",
+      "name": "Linda",
+      "mood": "steady",
+      "behavior": "watching the floor",
+      "silhouette": "vest",
+      "hair_color": "#2a1824",
+      "jacket_color": "#234052"
+    },
+    "start": "line",
+    "nodes": {
+      "line": {
+        "text": "Rourke watches shortcuts. I watch who needs none.",
+        "choices": [{"id": "move_on", "label": "Move On", "effects": {}, "effects_hidden": true, "end": true}]
+      }
+    }
+  },
+  {
+    "id": "linda_main_floor_ambient_3",
+    "display_name": "Linda at the Cage",
+    "speaker": {
+      "role": "staff",
+      "name": "Linda",
+      "mood": "encouraging",
+      "behavior": "checking the list",
+      "silhouette": "vest",
+      "hair_color": "#2a1824",
+      "jacket_color": "#234052"
+    },
+    "start": "line",
+    "nodes": {
+      "line": {
+        "text": "The velvet rope opens for a record, not a story.",
+        "choices": [{"id": "move_on", "label": "Move On", "effects": {}, "effects_hidden": true, "end": true}]
+      }
+    }
   }
 ]

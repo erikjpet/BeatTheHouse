@@ -843,8 +843,21 @@ else {
             $failures.Add("grand_casino high_roller_target_bankroll must stay 0 because the Players Card is not gated by total bankroll.")
         }
         $highRollerNetWinnings = [int](Get-JsonProperty $objective "high_roller_net_winnings")
-        if ($highRollerNetWinnings -ne 10) {
-            $failures.Add("grand_casino high_roller_net_winnings must be exactly 10 for the release-tuned Players Card demo win.")
+        $highRollerMinGames = [int](Get-JsonProperty $objective "high_roller_min_grand_casino_games")
+        if ($highRollerNetWinnings -ne 30 -or $highRollerMinGames -ne 5) {
+            $failures.Add("grand_casino Gold review must require exactly five settled games and 30 net winnings.")
+        }
+        $bronzeGames = [int](Get-JsonProperty $objective "players_card_bronze_min_games")
+        $bronzeNet = [int](Get-JsonProperty $objective "players_card_bronze_net_winnings")
+        $silverGames = [int](Get-JsonProperty $objective "players_card_silver_min_games")
+        $silverNet = [int](Get-JsonProperty $objective "players_card_silver_net_winnings")
+        $goldGames = [int](Get-JsonProperty $objective "players_card_gold_min_games")
+        $goldNet = [int](Get-JsonProperty $objective "players_card_gold_net_winnings")
+        if ($bronzeGames -ne 1 -or $bronzeNet -ne 5 -or $silverGames -ne 3 -or $silverNet -ne 15 -or $goldGames -ne 5 -or $goldNet -ne 30) {
+            $failures.Add("grand_casino Players Card tiers must use Bronze 1/5, Silver 3/15, and Gold 5/30 thresholds.")
+        }
+        if ([int](Get-JsonProperty $objective "players_card_look_away_max_heat_gain") -ne 5) {
+            $failures.Add("grand_casino Linda look-away threshold must remain data-tuned at five heat.")
         }
     }
     $securityProfile = Get-JsonProperty $grandCasino "security_profile"

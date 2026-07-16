@@ -4413,6 +4413,7 @@ func _build_cage_window() -> void:
 	cage_window.buy_chips_requested.connect(Callable(self, "_buy_cage_chips"))
 	cage_window.cash_out_requested.connect(Callable(self, "_cash_out_cage_chips"))
 	cage_window.review_requested.connect(Callable(self, "_complete_cage_players_card_review"))
+	cage_window.comp_requested.connect(Callable(self, "_use_cage_players_card_comp"))
 	add_child(cage_window)
 	cage_window.set_reduce_motion(bool(user_settings.reduce_motion) if user_settings != null else false)
 	cage_window.set_small_screen_mode(_small_screen_enabled())
@@ -7169,8 +7170,11 @@ func activate_interactable_object(object_id: String) -> bool:
 
 
 func _inspect_casino_fixture(object_data: Dictionary) -> bool:
-	if str(object_data.get("source_id", "")).strip_edges() == "cage":
+	var fixture_id := str(object_data.get("source_id", "")).strip_edges()
+	if fixture_id == "cage":
 		return _open_cage_window()
+	if fixture_id == "host_desk":
+		return _start_linda_ambient_dialogue(object_data)
 	var message := str(object_data.get("interaction_message", object_data.get("short_description", "The casino staff acknowledge you."))).strip_edges()
 	if message.is_empty():
 		message = "The casino staff acknowledge you."
@@ -7243,19 +7247,53 @@ func _cash_out_cage_chips() -> void:
 func _complete_cage_players_card_review() -> void:
 	if run_state == null or library == null:
 		return
-	var definition := library.event(RunState.GRAND_CASINO_HIGH_ROLLER_EVENT_ID)
-	if definition.is_empty():
-		_show_message("The Players Card review is unavailable.")
+	var model := CageWindowViewModelScript.build(run_state)
+	var card: Dictionary = model.get("card", {}) if typeof(model.get("card", {})) == TYPE_DICTIONARY else {}
+	if not bool(card.get("can_review", false)):
+		_show_message(str(card.get("review_detail", "The Gold review is not ready.")))
+		_refresh_cage_window_after_state_change()
 		return
-	var event_module := EventModule.new()
-	event_module.setup(definition, library)
-	var result := event_module.resolve(run_state, run_state.current_environment, RunState.GRAND_CASINO_HIGH_ROLLER_EVENT_ID)
-	if bool(result.get("ok", false)):
-		run_state.advance_environment_turns(1)
 	_hide_cage_window()
-	_show_message(str(result.get("message", "Linda closes the review.")))
-	_autosave_foundation_run("Autosaved.")
-	_refresh()
+	if not start_dialogue("linda_gold_review", {"source": "cage_gold_review", "source_object_id": "casino_fixture:cage"}):
+		_show_message("Linda's Gold review is unavailable.")
+
+
+func _use_cage_players_card_comp(comp_id: String) -> void:
+	if run_state == null:
+		return
+	var result := run_state.grand_casino_players_card_comp_result(comp_id)
+	if bool(result.get("ok", false)):
+		GameModule.apply_result(run_state, result)
+		var duration_minutes := maxi(0, int(result.get("duration_minutes", 0)))
+		if duration_minutes > 0:
+			run_state.advance_game_clock_minutes(duration_minutes)
+		else:
+			run_state.advance_environment_turns(1)
+		last_hook_result = result.duplicate(true)
+		_advance_alcohol_absorption()
+		_autosave_foundation_run("Autosaved.")
+	_show_message(str(result.get("message", "Linda cannot use that comp right now.")))
+	_refresh_cage_window_after_state_change()
+	_refresh_runtime_environment_views()
+
+
+func _start_linda_ambient_dialogue(object_data: Dictionary) -> bool:
+	if run_state == null:
+		return false
+	var status := run_state.demo_objective_status()
+	var tier_id := str(status.get("players_card_tier", RunState.GRAND_CASINO_PLAYERS_CARD_TIER_NONE))
+	if not bool(status.get("players_card_eligible", false)) or RunState.GRAND_CASINO_PLAYERS_CARD_TIERS.find(tier_id) < RunState.GRAND_CASINO_PLAYERS_CARD_TIERS.find(RunState.GRAND_CASINO_PLAYERS_CARD_TIER_BRONZE):
+		_show_message("Linda keeps the account formal until Bronze recognition.")
+		_refresh()
+		return true
+	var ambient_ids := ["linda_main_floor_ambient_1", "linda_main_floor_ambient_2", "linda_main_floor_ambient_3"]
+	var encounter_index := maxi(0, int(run_state.narrative_flags.get("grand_casino_linda_ambient_count", 0)))
+	var dialogue_id := str(ambient_ids[encounter_index % ambient_ids.size()])
+	run_state.narrative_flags["grand_casino_linda_ambient_count"] = encounter_index + 1
+	return start_dialogue(dialogue_id, {
+		"source": "casino_host_desk",
+		"source_object_id": str(object_data.get("object_id", "casino_fixture:host_desk")),
+	})
 
 
 func _activate_event_response_action(action_object_id: String) -> bool:

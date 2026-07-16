@@ -1318,10 +1318,32 @@ func _check_final_demo_objective_hud_matrix(app: Control) -> bool:
 	var ready_cage_model: Dictionary = ready_cage.get("model", {}) if typeof(ready_cage.get("model", {})) == TYPE_DICTIONARY else {}
 	var ready_balance: Dictionary = ready_cage_model.get("balance", {}) if typeof(ready_cage_model.get("balance", {})) == TYPE_DICTIONARY else {}
 	var ready_card: Dictionary = ready_cage_model.get("card", {}) if typeof(ready_cage_model.get("card", {})) == TYPE_DICTIONARY else {}
-	if not bool(ready_cage.get("visible", false)) or not bool(ready_cage.get("portrait_animated", false)) or str((ready_cage_model.get("host", {}) as Dictionary).get("name", "")) != "Linda" or not ready_cage_model.has("promotions") or int(ready_balance.get("cash", -1)) < 0 or not bool(ready_card.get("can_review", false)):
+	if not bool(ready_cage.get("visible", false)) or not bool(ready_cage.get("portrait_animated", false)) or str((ready_cage_model.get("host", {}) as Dictionary).get("name", "")) != "Linda" or (ready_cage_model.get("promotions", []) as Array).is_empty() or int(ready_balance.get("cash", -1)) < 0 or not bool(ready_card.get("can_review", false)):
 		push_error("Ready Cage window did not expose animated Linda, balances, promotions, and the Players Card review action.")
 		return false
+	if str(ready_card.get("tier", "")) != "Gold" or str(ready_card.get("progress", "")).find("Gold earned") == -1 or (ready_cage_model.get("comp_actions", []) as Array).size() != 2:
+		push_error("Ready Cage window did not expose exact Gold progress, benefits, and comp controls.")
+		return false
+	while not high_roller_run.next_pending_talk_event().is_empty():
+		high_roller_run.complete_talk_event_resolution(str(high_roller_run.next_pending_talk_event().get("event_id", "")))
+	app.call("_refresh_talk_dock")
 	app.call("_hide_cage_window")
+	if not bool(app.call("_start_linda_ambient_dialogue", {"object_id": "casino_fixture:host_desk"})):
+		push_error("Bronze-or-better host desk did not open Linda's Main Floor ambient dialogue.")
+		return false
+	if str(high_roller_run.next_pending_talk_event().get("dialogue_id", "")) != "linda_main_floor_ambient_1":
+		push_error("Linda host-desk interaction did not use the authored ambient talk scene.")
+		return false
+	high_roller_run.complete_talk_event_resolution(str(high_roller_run.next_pending_talk_event().get("event_id", "")))
+	app.call("_refresh_talk_dock")
+	if not bool(app.call("_open_cage_window")):
+		push_error("Cage did not reopen after Linda's ambient host-desk scene.")
+		return false
+	app.call("_complete_cage_players_card_review")
+	var gold_review_talk: Dictionary = app.call("current_talk_dock_snapshot")
+	if not bool(gold_review_talk.get("visible", false)) or str(high_roller_run.next_pending_talk_event().get("dialogue_id", "")) != "linda_gold_review" or bool((app.call("current_cage_window_snapshot") as Dictionary).get("visible", true)):
+		push_error("Cage Gold review did not move into Linda's talk-dock dialogue scene.")
+		return false
 
 	var showdown_run := _grand_casino_fixture_run("UI-HUD-SHOWDOWN", grand_environment)
 	showdown_run.add_suspicion("ui_hud_showdown", showdown_heat_threshold, "behavior")
@@ -1502,8 +1524,8 @@ func _check_grand_casino_spatial_ui(app: Control) -> bool:
 		push_error("Grand Casino Back Room door was not visibly locked behind Rourke.")
 		return false
 	var high_choice: Dictionary = app.call("_travel_choice", RunState.GRAND_CASINO_HIGH_LIMIT_ARCHETYPE_ID)
-	if high_choice.is_empty() or not bool(high_choice.get("enabled", false)) or not bool(high_choice.get("local_casino_room", false)) or int(high_choice.get("cost", 0)) <= 0 or int(high_choice.get("travel_minutes", 0)) != 5:
-		push_error("Grand Casino High-Limit door did not expose its cash/card local access gate.")
+	if high_choice.is_empty() or not bool(high_choice.get("enabled", false)) or not bool(high_choice.get("local_casino_room", false)) or int(high_choice.get("cost", -1)) != 0 or bool(high_choice.get("high_limit_buy_in", true)) or int(high_choice.get("travel_minutes", 0)) != 5:
+		push_error("Grand Casino High-Limit door did not expose Silver-or-better card access without a buy-in.")
 		return false
 	var table_game: GameModule = app.call("_game_module_for_id", "blackjack")
 	if table_game == null or not bool(app.call("_casino_table_wager_needs_top_up", table_game, 25)):
