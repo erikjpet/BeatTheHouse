@@ -182,6 +182,19 @@ func wager_cost_for_context(action_id: String, _stake: int, run_state: RunState,
 	return maxi(0, int(selected.get("total_credits", 2)))
 
 
+func minimum_wager_return_for_context(action_id: String, _stake: int, wager_cost: int, run_state: RunState, environment: Dictionary, _ui_state: Dictionary = {}) -> int:
+	if _normalize_action(action_id) != "spin" or wager_cost <= 0:
+		return 0
+	var machine := _ensure_machine_state(run_state, environment, run_state.create_rng("slot_minimum_return") if run_state != null else null)
+	var item_effects := _slot_cross_game_item_effects(run_state, machine, false)
+	var guaranteed_return := maxi(0, int(item_effects.get("loss_reduction", 0)))
+	if str(machine.get("format_id", "")) == "classic_3_reel":
+		var refund_percent := maxi(0, int(item_effects.get("slot_three_reel_loss_refund_percent", 0)))
+		if refund_percent > 0:
+			guaranteed_return += mini(wager_cost, maxi(1, int(round(float(wager_cost) * float(refund_percent) / 100.0))))
+	return mini(wager_cost, guaranteed_return)
+
+
 func surface_action_command(surface_action: String, index: int, confirm_requested: bool, ui_state: Dictionary, run_state: RunState, environment: Dictionary) -> Dictionary:
 	var machine: Dictionary = _ensure_machine_state(run_state, environment, run_state.create_rng("slot_surface_action") if run_state != null else null)
 	if surface_action.begins_with(SELECT_BET_PREFIX):

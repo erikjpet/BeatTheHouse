@@ -12,6 +12,10 @@ func _check_run_report_foundation(failures: Array) -> void:
 	run_state.set_environment({"id": "casino_fixture", "world_node_id": "grand_casino", "archetype_id": "grand_casino", "display_name": "Grand Casino"})
 	if run_state.heat_history.size() < 3 or not bool((run_state.heat_history[-1] as Dictionary).get("transition", false)):
 		failures.append("Run report heat history did not record heat changes and environment transitions.")
+	if int((run_state.heat_history[-1] as Dictionary).get("game_clock_minutes", -1)) != run_state.game_clock_minutes:
+		failures.append("Run report heat history did not timestamp transitions with the existing game clock.")
+	if run_state.environment_history.is_empty() or int((run_state.environment_history[0] as Dictionary).get("entered_game_clock_minutes", -1)) != RunState.GAME_CLOCK_START_MINUTE or int(run_state.current_environment.get("entered_game_clock_minutes", -1)) != run_state.game_clock_minutes:
+		failures.append("Run environment visits did not retain their game-clock entry times.")
 	var saved := run_state.to_dict()
 	var restored: RunState = RunStateScript.new()
 	restored.from_dict(saved)
@@ -287,8 +291,8 @@ func _check_music_fx_foundation(library: ContentLibrary, failures: Array) -> voi
 
 	var graph_a: Dictionary = ProceduralMusicPlayerScript.ensure_music_fx_bus_graph()
 	var graph_b: Dictionary = ProceduralMusicPlayerScript.ensure_music_fx_bus_graph()
-	if int(graph_a.get("effect_count", 0)) != 6 or int(graph_b.get("effect_count", 0)) != 6:
-		failures.append("Music FX bus graph should contain exactly six effects.")
+	if int(graph_a.get("effect_count", 0)) != 3 or int(graph_b.get("effect_count", 0)) != 3:
+		failures.append("Music master bus should contain only low-pass, chorus, and safety limiter effects.")
 	if JSON.stringify(graph_a.get("effects", [])) != JSON.stringify(graph_b.get("effects", [])):
 		failures.append("Music FX bus graph was not idempotent across repeated startup calls.")
 	var effect_types: Array = []
@@ -302,15 +306,25 @@ func _check_music_fx_foundation(library: ContentLibrary, failures: Array) -> voi
 	var expected_types := [
 		"AudioEffectLowPassFilter",
 		"AudioEffectChorus",
-		"AudioEffectDistortion",
-		"AudioEffectReverb",
-		"AudioEffectCompressor",
 		"AudioEffectLimiter",
 	]
 	if JSON.stringify(effect_types) != JSON.stringify(expected_types):
 		failures.append("Music FX bus graph order/types changed: %s." % JSON.stringify(effect_types))
-	if enabled.size() == 6 and (bool(enabled[0]) or bool(enabled[1]) or bool(enabled[2]) or bool(enabled[3]) or not bool(enabled[4]) or not bool(enabled[5])):
-		failures.append("Music FX startup enabled state should bypass low-pass/chorus/distortion/reverb and keep compressor/limiter active.")
+	if enabled.size() == 3 and (bool(enabled[0]) or bool(enabled[1]) or not bool(enabled[2])):
+		failures.append("Music master bus should bypass low-pass/chorus and keep the safety limiter active.")
+	var send_graph: Dictionary = graph_b.get("send_buses", {}) as Dictionary
+	var send_buses: Dictionary = send_graph.get("buses", {}) as Dictionary
+	var expected_send_types := {
+		"band_pass": "AudioEffectBandPassFilter",
+		"delay": "AudioEffectDelay",
+		"distortion": "AudioEffectDistortion",
+		"reverb": "AudioEffectReverb",
+		"compressor": "AudioEffectCompressor",
+	}
+	for effect_key in expected_send_types.keys():
+		var send_bus: Dictionary = send_buses.get(effect_key, {}) as Dictionary
+		if str(send_bus.get("send", "")) != "Music" or str(send_bus.get("effect_type", "")) != str(expected_send_types.get(effect_key, "")) or not bool(send_bus.get("independent_role_sends", false)):
+			failures.append("Music %s send bus did not expose independent per-instrument routing." % effect_key)
 
 	var web_contract: Dictionary = WebAudioBridgeScript.mix_contract_snapshot()
 	if not bool(web_contract.get("stream_bridge_enabled", false)) or not bool(web_contract.get("pcm_stream_bridge_default", false)):
@@ -402,6 +416,8 @@ func _check_music_fx_foundation(library: ContentLibrary, failures: Array) -> voi
 		failures.append("Music FX drunk tier did not expose slow pitch wobble.")
 	if float(drunk.get("lowpass_cutoff_hz", 20000.0)) >= float(sober.get("lowpass_cutoff_hz", 0.0)) - 2000.0:
 		failures.append("Music FX drunk tier did not close the low-pass filter.")
+	if float(drunk.get("delay_amount", 0.0)) <= float(sober.get("delay_amount", 0.0)) + 0.20:
+		failures.append("Music FX drunk tier did not raise the per-instrument delay sends.")
 
 	var heat_low: Dictionary = _music_fx_target(player, {
 		"environment": first_environment,
@@ -434,6 +450,12 @@ func _check_music_fx_foundation(library: ContentLibrary, failures: Array) -> voi
 	})
 	if float(watched.get("watch_bandpass_amount", 0.0)) <= float(unwatched.get("watch_bandpass_amount", 0.0)) + 0.10:
 		failures.append("Music FX watch/staff attention did not expose the surveillance tinge.")
+	if float(watched.get("watch_bandpass_q", 0.0)) <= float(unwatched.get("watch_bandpass_q", 0.0)) + 0.5:
+		failures.append("Music FX attention did not narrow the true band-pass as attention rose.")
+	var watched_send_snapshot: Dictionary = player.music_fx_snapshot({"watched": true, "attention_level": 90.0})
+	var watched_send_matrix: Dictionary = watched_send_snapshot.get("send_matrix", {}) as Dictionary
+	if float(((watched_send_matrix.get("band_pass", {}) as Dictionary).get("lead", 0.0))) <= 0.2:
+		failures.append("Music FX attention did not route the lead into its band-pass send.")
 
 	var calm_boss: Dictionary = _music_fx_target(player, {
 		"environment": boss_environment,
@@ -529,6 +551,8 @@ func _check_music_stem_director_foundation(library: ContentLibrary, failures: Ar
 		failures.append("Authored music profile did not resolve the sparse authored provider.")
 	if not bool(authored_manifest.get("sync_ok", false)):
 		failures.append("Authored sparse stem set did not expose synchronized loop metadata.")
+	if int(authored_manifest.get("sample_rate", 0)) != 44100 or int(authored_manifest.get("bit_depth", 0)) != 16:
+		failures.append("Authored music did not preserve the native 16-bit/44.1 kHz delivery contract.")
 	if int(authored_manifest.get("loop_frames", 0)) < 44100 * 12:
 		failures.append("Authored corner-store music fixture should be a long ambient bed, not a short repeated loop.")
 	if int(authored_manifest.get("bars", 0)) < 8:
@@ -541,8 +565,22 @@ func _check_music_stem_director_foundation(library: ContentLibrary, failures: Ar
 	if bool((authored_roles.get("bass", {}) as Dictionary).get("present", false)):
 		failures.append("Sparse authored fixture should leave absent bass silent.")
 	var authored_hot: Dictionary = player.music_stem_manifest_snapshot_for_environment(authored_environment, 90)
-	if str(authored_hot.get("cache_key", "")) != str(authored_manifest.get("cache_key", "")):
-		failures.append("Authored music cache key changed across heat sweep.")
+	if str(authored_hot.get("cache_key", "")) == str(authored_manifest.get("cache_key", "")):
+		failures.append("Authored intensity bank did not select a new phrase-ready variation at high heat.")
+	if str(((authored_manifest.get("selected_variants", {}) as Dictionary).get("tension", {}) as Dictionary).get("id", "")) != "tension_low":
+		failures.append("Authored low-intensity bank did not select its low tension variant.")
+	if str(((authored_hot.get("selected_variants", {}) as Dictionary).get("tension", {}) as Dictionary).get("id", "")) != "tension_high":
+		failures.append("Authored high-intensity bank did not select its high tension variant.")
+	var authored_relative_key: Dictionary = player.music_stem_manifest_snapshot_for_environment(authored_environment, 20, {"harmonic_section": "B"})
+	if str(authored_relative_key.get("selection_key", "")) == str(authored_manifest.get("selection_key", "")) or str((authored_relative_key.get("selection_context", {}) as Dictionary).get("harmonic_section", "")) != "B":
+		failures.append("Authored harmonic bank did not preserve its relative-key section selection.")
+	var stinger_modes: Dictionary = authored_manifest.get("stinger_loop_modes", {}) as Dictionary
+	var fill_modes: Dictionary = authored_manifest.get("fill_loop_modes", {}) as Dictionary
+	if int(stinger_modes.get("win_fixture", -1)) != AudioStreamWAV.LOOP_DISABLED or int(fill_modes.get("drum_fill_fixture", -1)) != AudioStreamWAV.LOOP_DISABLED:
+		failures.append("Authored stingers and fills must load as one-shots unless explicitly declared looping.")
+	var transition_policy: Dictionary = player.music_transition_policy_snapshot_for_environment(authored_environment, 20)
+	if str(transition_policy.get("quantize", "")) != "phrase" or int(transition_policy.get("phrase_bars", 0)) != 4 or not bool(transition_policy.get("filler_clips", false)):
+		failures.append("Authored transition policy did not expose four-bar phrase and filler-aware switching.")
 
 	var fallback_environment := procedural_environment.duplicate(true)
 	var fallback_profile: Dictionary = (fallback_environment.get("music_profile", {}) as Dictionary).duplicate(true)
@@ -658,6 +696,22 @@ func _check_music_stem_director_foundation(library: ContentLibrary, failures: Ar
 		var stinger_after: Dictionary = feature_player.music_feature_snapshot({}, float(pending_stinger.get("target_position", 0.0)) + 0.01)
 		if (stinger_after.get("stinger_history", []) as Array).is_empty():
 			failures.append("Feature stinger did not resolve at its quantized beat.")
+	var one_shot_stream: AudioStreamWAV = feature_player.call("_feature_stinger_stream", "big_win", "arcade", 120.0)
+	if one_shot_stream == null or one_shot_stream.loop_mode != AudioStreamWAV.LOOP_DISABLED:
+		failures.append("Generated music stingers must be one-shot streams.")
+	var event_player: ProceduralMusicPlayer = ProceduralMusicPlayerScript.new()
+	event_player.update_music_state({"big_win": true, "last_bankroll_delta": 75, "big_win_event_token": "fixture:1"})
+	var event_start: Dictionary = event_player.music_event_envelope_snapshot({}, 0.0)
+	if int(event_start.get("bars_remaining", 0)) != 4:
+		failures.append("Big-win event did not schedule a four-musical-bar envelope.")
+	var event_bar_seconds := float((event_start.get("envelope", {}) as Dictionary).get("start_bar", 1)) * float(event_player.music_mix_snapshot().get("bar_seconds", 0.0))
+	var event_after: Dictionary = event_player.music_event_envelope_snapshot({}, event_bar_seconds + float(event_player.music_mix_snapshot().get("bar_seconds", 0.0)) * 4.01)
+	if bool(event_after.get("active", true)) or int(event_after.get("bars_remaining", -1)) != 0:
+		failures.append("Big-win event envelope did not expire after consuming four musical bars.")
+	event_player.update_music_state({"big_win": true, "last_bankroll_delta": 90, "big_win_event_token": "fixture:2"})
+	var cooldown_event: Dictionary = event_player.music_event_envelope_snapshot({}, event_bar_seconds + float(event_player.music_mix_snapshot().get("bar_seconds", 0.0)) * 4.01)
+	if str((cooldown_event.get("envelope", {}) as Dictionary).get("event_token", "")) != "fixture:1":
+		failures.append("Big-win event cooldown did not prevent an immediate envelope retrigger.")
 
 	var sfx_text := FileAccess.get_file_as_string("res://scripts/ui/sfx_player.gd")
 	if sfx_text.find("_sample_bonus_music") != -1:

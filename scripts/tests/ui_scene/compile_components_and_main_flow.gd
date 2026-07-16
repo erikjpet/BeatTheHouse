@@ -25,6 +25,7 @@ const SmallScreenPolicyScript := preload("res://scripts/ui/small_screen_policy.g
 const RunReportScreenScript := preload("res://scripts/ui/run_report_screen.gd")
 const RunReportViewModelScript := preload("res://scripts/ui/run_report_view_model.gd")
 const MetaCollectionServiceScript := preload("res://scripts/core/meta_collection_service.gd")
+const CollectionDropServiceScript := preload("res://scripts/core/collection_drop_service.gd")
 const TEST_SETTINGS_PATH := "user://settings_ui_scene_compile_check.json"
 const TEST_META_COLLECTION_PATH := "user://ui_scene_compile_meta_collection.json"
 
@@ -34,25 +35,50 @@ func _check_run_report_screen_component() -> bool:
 	screen.size = Vector2(1280, 720)
 	root.add_child(screen)
 	await process_frame
+	var claimed_marker_ids: Array[String] = []
+	screen.bag_claim_requested.connect(func(marker_id: String) -> void: claimed_marker_ids.append(marker_id))
+	var report_world_map := {"current_node_id": "casino", "visited_path": ["bar", "casino"], "nodes": [{"id": "bar", "display_name": "Bar", "icon_path": "res://assets/art/map_icons/bar.png", "state": "visited", "position": {"x": 0.2, "y": 0.4}}, {"id": "casino", "display_name": "Casino", "icon_path": "res://assets/art/map_icons/grand_casino.png", "state": "visited", "position": {"x": 0.8, "y": 0.5}}, {"id": "pawn", "display_name": "Pawn Shop", "icon_path": "res://assets/art/map_icons/pawn_shop.png", "state": "revealed", "position": {"x": 0.5, "y": 0.9}}], "edges": [{"a": "bar", "b": "casino", "distance": "near"}, {"a": "casino", "b": "pawn", "distance": "near"}]}
 	var timeline := RunReportViewModelScript.build_timeline([
-		{"action_index": 0, "heat_value": 4, "environment_id": "bar", "environment_name": "Bar", "world_node_id": "bar", "transition": true},
-		{"action_index": 4, "heat_value": 72, "environment_id": "casino", "environment_name": "Casino", "world_node_id": "casino", "transition": true},
-		{"action_index": 8, "heat_value": 18, "environment_id": "casino", "environment_name": "Casino", "world_node_id": "casino", "transition": false},
-	], {"current_node_id": "casino", "visited_path": ["bar", "casino"], "nodes": [{"id": "bar", "display_name": "Bar", "icon_path": "res://assets/art/map_icons/bar.png", "state": "visited", "position": {"x": 0.2, "y": 0.4}}, {"id": "casino", "display_name": "Casino", "icon_path": "res://assets/art/map_icons/grand_casino.png", "state": "visited", "position": {"x": 0.8, "y": 0.5}}], "edges": [{"a": "bar", "b": "casino", "distance": "near"}]}, 8)
+		{"action_index": 0, "game_clock_minutes": 720, "heat_value": 4, "environment_id": "bar", "environment_name": "Bar", "world_node_id": "bar", "transition": true},
+		{"action_index": 4, "game_clock_minutes": 748, "heat_value": 72, "environment_id": "casino", "environment_name": "Casino", "world_node_id": "casino", "transition": true},
+		{"action_index": 8, "game_clock_minutes": 788, "heat_value": 18, "environment_id": "casino", "environment_name": "Casino", "world_node_id": "casino", "transition": false},
+	], report_world_map, 8, [{"type": "travel", "from_world_node_id": "bar", "to_world_node_id": "casino", "travel_minutes": 12, "departed_game_clock_minutes": 736, "arrived_game_clock_minutes": 748}], 720, 788)
+	var report_map := RunReportViewModelScript.build_report_map_snapshot(report_world_map, timeline)
+	var replay_segments: Array = timeline.get("replay_segments", [])
+	if replay_segments.size() != 3 or str((replay_segments[0] as Dictionary).get("kind", "")) != "dwell" or str((replay_segments[1] as Dictionary).get("kind", "")) != "travel" or str((replay_segments[2] as Dictionary).get("kind", "")) != "dwell":
+		push_error("Run report timeline did not split venue dwell time from travel time.")
+		return false
+	if int((replay_segments[0] as Dictionary).get("end_game_clock_minutes", -1)) != 736 or int((replay_segments[1] as Dictionary).get("end_game_clock_minutes", -1)) != 748:
+		push_error("Run report timeline did not preserve the existing game-clock departure and arrival times.")
+		return false
+	if (report_map.get("nodes", []) as Array).size() != 2 or JSON.stringify(report_map).find("Pawn Shop") != -1:
+		push_error("Run report map did not limit its fitted content to visited environments.")
+		return false
 	screen.set_report({
 		"outcome": {"title": "Players Card earned", "how": "You cashed out clean.", "where": "Casino · Day 1, 20:00", "won": true},
 		"score": {"money_put_to_work": 40, "winner_bonus": 3, "show_winner_bonus": true, "final_score": 120},
 		"items": {"kept": [{"label": "Coffee", "count": 2, "fate": "kept", "icon_path": ""}], "pawned": [{"label": "Card", "fate": "forfeited", "icon_path": ""}], "sold": [{"label": "Watch", "count": 1, "price": 9, "icon_path": ""}]},
+		"bag_reward": {"visible": true, "pending": true, "choices": [{"marker_id": "run-victory-bag", "display_name": "Roadside Luck Blue Bag", "collection_name": "Roadside Luck", "tier_label": "Blue"}], "summary_lines": []},
 		"debts": [{"lender": "Sal", "amount": 20, "outcome": "redeemed", "tone": "settled"}],
 		"money_rows": [{"label": "Slots", "net": 100}, {"label": "Bar Dice", "net": -50}],
 		"timeline": timeline,
-		"map_snapshot": {"current_node_id": "casino", "visited_path": ["bar", "casino"], "nodes": [{"id": "bar", "display_name": "Bar", "icon_path": "res://assets/art/map_icons/bar.png", "state": "visited", "position": {"x": 0.2, "y": 0.4}}, {"id": "casino", "display_name": "Casino", "icon_path": "res://assets/art/map_icons/grand_casino.png", "state": "visited", "position": {"x": 0.8, "y": 0.5}}], "edges": [{"a": "bar", "b": "casino", "distance": "near"}]},
+		"map_snapshot": report_map,
 		"seed": "REPORT-UI",
 	})
 	await process_frame
 	var snapshot: Dictionary = screen.debug_layout_snapshot()
 	if bool(snapshot.get("has_scroll_container", true)):
 		push_error("Run report component contains a ScrollContainer.")
+		return false
+	if not bool(snapshot.get("bag_reward_visible", false)) or not bool(snapshot.get("bag_reward_pending", false)) or int(snapshot.get("bag_reward_choice_count", 0)) != 1:
+		push_error("Run report did not present the earned collection-bag choice.")
+		return false
+	if not bool(snapshot.get("new_run_disabled", false)) or not bool(snapshot.get("home_disabled", false)):
+		push_error("Run report allowed navigation before the earned collection bag was stored.")
+		return false
+	screen.call("_on_bag_claim_pressed")
+	if claimed_marker_ids != ["run-victory-bag"]:
+		push_error("Run report collection-bag action did not emit the selected marker id.")
 		return false
 	var bounds := Rect2(Vector2.ZERO, screen.size)
 	for rect_value in (snapshot.get("section_rects", {}) as Dictionary).values():
@@ -62,6 +88,20 @@ func _check_run_report_screen_component() -> bool:
 			return false
 	if int(snapshot.get("timeline_install_count", 0)) != 1:
 		push_error("Run report did not precompute/install its shared timeline exactly once.")
+		return false
+	screen.call("_on_timeline_seek", 0.1)
+	var dwell_replay: Dictionary = (screen.get("map_canvas") as Node).call("current_view_snapshot").get("run_report_replay", {})
+	if str(dwell_replay.get("kind", "")) != "dwell" or str(dwell_replay.get("node_id", "")) != "bar" or not is_zero_approx(float(dwell_replay.get("amount", -1.0))):
+		push_error("Run report replay marker moved while the player was still at the first venue.")
+		return false
+	screen.call("_on_timeline_seek", 22.0 / 68.0)
+	var travel_replay: Dictionary = (screen.get("map_canvas") as Node).call("current_view_snapshot").get("run_report_replay", {})
+	if str(travel_replay.get("kind", "")) != "travel" or absf(float(travel_replay.get("amount", 0.0)) - 0.5) > 0.01:
+		push_error("Run report replay marker did not move only during the recorded travel interval.")
+		return false
+	screen.call("_on_timeline_seek", 0.5)
+	if str(screen.debug_layout_snapshot().get("replay_clock_text", "")).find("Day 1 12:34 PM") == -1:
+		push_error("Run report replay did not showcase the existing game clock at the selected time.")
 		return false
 	await process_frame
 	if int(screen.debug_layout_snapshot().get("timeline_install_count", 0)) != 1:
@@ -1899,10 +1939,27 @@ func _run() -> void:
 	var music_fx_snapshot: Dictionary = procedural_music_player.call("music_fx_snapshot", music_fx_state)
 	var music_fx_graph: Dictionary = music_fx_snapshot.get("graph", {}) as Dictionary
 	var music_fx_target: Dictionary = music_fx_snapshot.get("target", {}) as Dictionary
-	if int(music_fx_graph.get("effect_count", 0)) != 6:
-		push_error("Procedural music FX graph did not expose the six-effect Music bus chain.")
+	if int(music_fx_graph.get("effect_count", 0)) != 3:
+		push_error("Procedural music FX graph did not expose the three-effect master character/safety chain.")
 		quit(1)
 		return
+	var music_send_graph: Dictionary = music_fx_graph.get("send_buses", {}) as Dictionary
+	var music_send_buses: Dictionary = music_send_graph.get("buses", {}) as Dictionary
+	var expected_music_sends := {
+		"band_pass": "AudioEffectBandPassFilter",
+		"delay": "AudioEffectDelay",
+		"distortion": "AudioEffectDistortion",
+		"reverb": "AudioEffectReverb",
+		"compressor": "AudioEffectCompressor",
+	}
+	for send_key in expected_music_sends.keys():
+		var send_bus: Dictionary = music_send_buses.get(send_key, {}) as Dictionary
+		if str(send_bus.get("send", "")) != "Music" \
+				or str(send_bus.get("effect_type", "")) != str(expected_music_sends.get(send_key, "")) \
+				or not bool(send_bus.get("independent_role_sends", false)):
+			push_error("Procedural music %s send bus did not expose independent per-instrument routing." % send_key)
+			quit(1)
+			return
 	if float(music_fx_target.get("reverb_size", 0.0)) <= 0.0 or not music_fx_target.has("lowpass_cutoff_hz"):
 		push_error("Procedural music FX snapshot did not expose mapped DSP parameters.")
 		quit(1)
@@ -2531,6 +2588,8 @@ func _run() -> void:
 				"source_id": "beach_sand_pile",
 				"label": "Sand Pile",
 				"short_description": "Inspect the pile.",
+				"effect_summary": "Hidden service effect.",
+				"impact_summary": "Hidden service impact.",
 				"enabled": true,
 				"prop": "sand_pile",
 				"surface": "floor",
@@ -2553,6 +2612,18 @@ func _run() -> void:
 		quit(1)
 		return
 	if not _selected_info_text_fits(environment_canvas, "beach sand pile info", ["Inspect the pile."]):
+		quit(1)
+		return
+	var beach_info: Dictionary = beach_canvas_snapshot.get("selected_info", {}) if typeof(beach_canvas_snapshot.get("selected_info", {})) == TYPE_DICTIONARY else {}
+	var beach_info_lines: Array = beach_info.get("lines", []) if typeof(beach_info.get("lines", [])) == TYPE_ARRAY else []
+	var beach_info_text := "\n".join(beach_info_lines)
+	if beach_info_text.find("Hidden service effect.") != -1 or beach_info_text.find("Hidden service impact.") != -1 or beach_info_text.find("Effect:") != -1 or beach_info_text.find("Impact:") != -1:
+		push_error("Non-item object summary exposed effect or impact copy: %s." % beach_info_text)
+		quit(1)
+		return
+	var beach_info_rect := _snapshot_rect(beach_info.get("rect", {}))
+	if beach_info_rect.size.x > 160.0 or beach_info_rect.size.y > 80.0:
+		push_error("Non-item object tooltip did not compact around its visible content: %s." % str(beach_info_rect))
 		quit(1)
 		return
 	environment_canvas.call("set_small_screen_mode", true)
@@ -3799,7 +3870,7 @@ func _run() -> void:
 		push_error("Selecting an event choice mutated serialized RunState.")
 		quit(1)
 		return
-	if not _selected_info_text_fits(app.get("environment_canvas"), "event object info", ["Choices / impact:", "Risk:"]):
+	if not _selected_info_text_fits(app.get("environment_canvas"), "event object info", ["Risk:"]):
 		quit(1)
 		return
 	var event_canvas_snapshot: Dictionary = (app.get("environment_canvas") as Control).call("current_view_snapshot")
@@ -3812,6 +3883,12 @@ func _run() -> void:
 		quit(1)
 		return
 	var event_selected_info: Dictionary = event_canvas_snapshot.get("selected_info", {})
+	var event_selected_info_lines: Array = event_selected_info.get("lines", []) if typeof(event_selected_info.get("lines", [])) == TYPE_ARRAY else []
+	var event_selected_info_text := "\n".join(event_selected_info_lines)
+	if event_selected_info_text.find("Choices:") != -1 or event_selected_info_text.find("Choices / impact:") != -1 or event_selected_info_text.find("Effect:") != -1 or event_selected_info_text.find("Impact:") != -1 or event_selected_info_text.find(str(event_choice.get("consequence_summary", ""))) != -1:
+		push_error("Event object tooltip exposed choice, effect, or impact summary copy: %s." % event_selected_info_text)
+		quit(1)
+		return
 	var event_info_actions: Array = event_selected_info.get("actions", [])
 	if event_info_actions.is_empty():
 		push_error("Expanded event card did not expose inline response actions on the canvas.")
@@ -3824,8 +3901,8 @@ func _run() -> void:
 		push_error("Expanded event card did not show the choice label in the selected canvas info tab.")
 		quit(1)
 		return
-	if first_event_info_detail.find(str(event_choice.get("text", ""))) == -1 or first_event_info_detail.find(str(event_choice.get("consequence_summary", ""))) == -1:
-		push_error("Expanded event card did not show choice text and impact as inline subtext.")
+	if first_event_info_detail.find(str(event_choice.get("text", ""))) == -1 or first_event_info_detail.find(str(event_choice.get("consequence_summary", ""))) != -1 or first_event_info_detail.find("Effect:") != -1 or first_event_info_detail.find("Impact:") != -1:
+		push_error("Expanded event card did not limit inline subtext to the player-facing choice text.")
 		quit(1)
 		return
 	if str(first_event_info_action.get("emit_object_id", "")) != expected_event_action_id:
@@ -3876,6 +3953,10 @@ func _run() -> void:
 	var popup_snapshot: Dictionary = app.call("current_event_choice_popup_snapshot")
 	if not bool(popup_snapshot.get("visible", false)) or bool(popup_snapshot.get("blocking", true)) or not bool(popup_snapshot.get("dismissible", false)):
 		push_error("Activating an interactable event should open a dismissible non-blocking popup.")
+		quit(1)
+		return
+	if _has_visible_text(app.get("event_choice_popup_overlay"), "Effect:") or _has_visible_text(app.get("event_choice_popup_overlay"), "Impact:"):
+		push_error("Interactable event popup exposed effect or impact copy.")
 		quit(1)
 		return
 	if serialized_before_event_activation != JSON.stringify(app.call("serialized_run_state")):
@@ -4129,13 +4210,19 @@ func _run() -> void:
 		push_error("Selecting an item offer reflowed environment objects.")
 		quit(1)
 		return
-	if not _selected_info_text_fits(app.get("environment_canvas"), "shop item object info", ["Cost:", str(item_offer.get("description", "")), item_purpose]):
+	if not _selected_info_text_fits(app.get("environment_canvas"), "shop item object info", ["Cost:", str(item_offer.get("description", ""))]):
 		quit(1)
 		return
 	var selected_item_info_snapshot: Dictionary = (app.get("environment_canvas") as Control).call("current_view_snapshot").get("selected_info", {})
 	var selected_item_info_lines: Array = selected_item_info_snapshot.get("lines", []) if typeof(selected_item_info_snapshot.get("lines", [])) == TYPE_ARRAY else []
-	if "\n".join(selected_item_info_lines).find("Buy item") != -1:
-		push_error("Shop item object info should explain item purpose instead of showing Buy item.")
+	var selected_item_info_text := "\n".join(selected_item_info_lines)
+	if selected_item_info_text.find("Effect:") != -1 or selected_item_info_text.find("Impact:") != -1 or selected_item_info_text.find(item_purpose) != -1:
+		push_error("Shop item object info still exposed effect or impact copy: %s." % selected_item_info_text)
+		quit(1)
+		return
+	var selected_item_info_rect := _snapshot_rect(selected_item_info_snapshot.get("rect", {}))
+	if selected_item_info_rect.size.x > 200.0 or selected_item_info_rect.size.y > 125.0:
+		push_error("Shop item object info did not compact around its remaining content: %s." % str(selected_item_info_rect))
 		quit(1)
 		return
 	var item_run_state: RunState = app.get("run_state")
@@ -5132,6 +5219,82 @@ func _run() -> void:
 		return
 	if typeof(victory_summary.get("items", {})) != TYPE_DICTIONARY or typeof(victory_summary.get("debts", [])) != TYPE_ARRAY or typeof(victory_summary.get("money_rows", [])) != TYPE_ARRAY:
 		push_error("Victory run report did not include items, debt, and money-flow sections.")
+		quit(1)
+		return
+	var victory_report_map: Dictionary = victory_summary.get("map_snapshot", {})
+	var visited_node_lookup := {}
+	for visited_node_id in victory_fixture_run.world_map.get("visited_path", []):
+		visited_node_lookup[str(visited_node_id)] = true
+	if (victory_report_map.get("nodes", []) as Array).size() != visited_node_lookup.size():
+		push_error("Victory run report map did not contain exactly the environments visited during the run.")
+		quit(1)
+		return
+	var victory_timeline: Dictionary = victory_summary.get("timeline", {})
+	var victory_replay_segments: Array = victory_timeline.get("replay_segments", []) if typeof(victory_timeline.get("replay_segments", [])) == TYPE_ARRAY else []
+	var recorded_travel: Dictionary = {}
+	for story_value in victory_fixture_run.story_log:
+		if typeof(story_value) == TYPE_DICTIONARY and str((story_value as Dictionary).get("type", "")) == "travel":
+			recorded_travel = story_value
+	var timed_travel_segment: Dictionary = {}
+	for segment_value in victory_replay_segments:
+		if typeof(segment_value) == TYPE_DICTIONARY and str((segment_value as Dictionary).get("kind", "")) == "travel":
+			timed_travel_segment = segment_value
+			break
+	if recorded_travel.is_empty() or timed_travel_segment.is_empty():
+		push_error("Victory run report did not retain its recorded travel interval.")
+		quit(1)
+		return
+	if int(recorded_travel.get("arrived_game_clock_minutes", -1)) - int(recorded_travel.get("departed_game_clock_minutes", -1)) != int(recorded_travel.get("travel_minutes", -2)):
+		push_error("Travel story timing did not match the game clock's travel duration.")
+		quit(1)
+		return
+	if int(timed_travel_segment.get("start_game_clock_minutes", -1)) != int(recorded_travel.get("departed_game_clock_minutes", -2)) or int(timed_travel_segment.get("end_game_clock_minutes", -1)) != int(recorded_travel.get("arrived_game_clock_minutes", -2)):
+		push_error("Victory replay movement was not limited to the recorded game-clock travel interval.")
+		quit(1)
+		return
+	var victory_bag_reward: Dictionary = victory_summary.get("bag_reward", {})
+	var victory_bag_choices: Array = victory_bag_reward.get("choices", []) if typeof(victory_bag_reward.get("choices", [])) == TYPE_ARRAY else []
+	if not bool(victory_bag_reward.get("pending", false)) or victory_bag_choices.is_empty():
+		push_error("Victory run report did not offer an earned collection bag.")
+		quit(1)
+		return
+	var victory_report_layout: Dictionary = victory_panel.call("debug_layout_snapshot")
+	if not bool(victory_report_layout.get("new_run_disabled", false)) or not bool(victory_report_layout.get("home_disabled", false)):
+		push_error("Victory run report allowed the earned collection bag to be skipped.")
+		quit(1)
+		return
+	var selected_bag_marker := str((victory_bag_choices[0] as Dictionary).get("marker_id", ""))
+	var victory_meta_service: Variant = app.get("meta_collection_service")
+	var unopened_bag_count_before: int = victory_meta_service.unopened_bags().size()
+	app.call("claim_victory_collection_bag", selected_bag_marker)
+	await process_frame
+	var unopened_bag_count_after: int = victory_meta_service.unopened_bags().size()
+	if unopened_bag_count_after != unopened_bag_count_before + 1:
+		push_error("Claiming the victory report reward did not immediately add exactly one unopened bag.")
+		quit(1)
+		return
+	if not victory_fixture_run.pending_bag_markers().is_empty() or not bool(victory_fixture_run.narrative_flags.get(CollectionDropServiceScript.FLUSHED_FLAG, false)):
+		push_error("Claiming the victory report reward did not finalize the run's pending bag state.")
+		quit(1)
+		return
+	var claimed_victory_summary: Dictionary = app.call("current_run_report_snapshot")
+	var claimed_bag_reward: Dictionary = claimed_victory_summary.get("bag_reward", {})
+	var claimed_report_layout: Dictionary = victory_panel.call("debug_layout_snapshot")
+	if bool(claimed_bag_reward.get("pending", true)) or (claimed_bag_reward.get("summary_lines", []) as Array).is_empty() or bool(claimed_report_layout.get("new_run_disabled", true)) or bool(claimed_report_layout.get("home_disabled", true)):
+		push_error("Victory report did not confirm the stored bag and release terminal navigation.")
+		quit(1)
+		return
+	var persisted_meta_value: Variant = JSON.parse_string(FileAccess.get_file_as_string(MetaCollectionServiceScript.store_path()))
+	var persisted_meta: Dictionary = persisted_meta_value if typeof(persisted_meta_value) == TYPE_DICTIONARY else {}
+	var persisted_bags: Array = persisted_meta.get("unopened_bags", []) if typeof(persisted_meta.get("unopened_bags", [])) == TYPE_ARRAY else []
+	if persisted_bags.size() != unopened_bag_count_after:
+		push_error("Claimed victory bag did not persist to the meta-home store immediately.")
+		quit(1)
+		return
+	app.call("claim_victory_collection_bag", selected_bag_marker)
+	await process_frame
+	if victory_meta_service.unopened_bags().size() != unopened_bag_count_after:
+		push_error("Repeated victory report bag claim duplicated the reward.")
 		quit(1)
 		return
 	if not _has_visible_text(app, "Players Card earned"):

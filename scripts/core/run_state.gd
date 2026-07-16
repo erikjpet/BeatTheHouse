@@ -1051,6 +1051,7 @@ func set_environment(environment_data: Dictionary) -> void:
 		environment_history.append(_environment_history_entry(current_environment))
 		_compact_environment_history()
 	current_environment = _normalize_environment(environment_data)
+	current_environment["entered_game_clock_minutes"] = maxi(0, game_clock_minutes)
 	_apply_sals_forfeited_shelf_to_current_environment()
 	var next_environment := current_environment
 	unlocked_travel = _unique_strings(
@@ -4611,6 +4612,7 @@ func _record_heat_history(environment_transition: bool) -> void:
 	var environment_id := str(current_environment.get("id", current_environment.get("world_node_id", current_environment.get("archetype_id", "")))).strip_edges()
 	var entry := {
 		"action_index": maxi(0, int(event_cadence.get("action_index", 0))),
+		"game_clock_minutes": maxi(0, game_clock_minutes),
 		"heat_value": suspicion_level(),
 		"environment_id": environment_id,
 		"world_node_id": str(current_environment.get("world_node_id", current_environment.get("archetype_id", ""))).strip_edges(),
@@ -4639,6 +4641,7 @@ static func normalize_heat_history(entries: Array) -> Array:
 		var entry: Dictionary = value
 		result.append({
 			"action_index": maxi(0, int(entry.get("action_index", 0))),
+			"game_clock_minutes": int(entry.get("game_clock_minutes", -1)),
 			"heat_value": clampi(int(entry.get("heat_value", entry.get("heat", 0))), 0, 100),
 			"environment_id": str(entry.get("environment_id", "")),
 			"world_node_id": str(entry.get("world_node_id", "")),
@@ -5236,7 +5239,7 @@ static func _normalize_environment_history(entries: Array) -> Array:
 # each trip, making autosaves grow throughout a run and eventually stall play.
 static func _environment_history_entry(environment: Dictionary) -> Dictionary:
 	var result: Dictionary = {}
-	for key in ["id", "archetype_id", "world_node_id", "display_name", "kind"]:
+	for key in ["id", "archetype_id", "world_node_id", "display_name", "kind", "entered_game_clock_minutes", "departed_game_clock_minutes"]:
 		if environment.has(key):
 			result[key] = environment.get(key)
 	return result

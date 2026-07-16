@@ -3343,9 +3343,14 @@ func _travel_to(target_id: String, target_label: String, choice_data: Dictionary
 	var travel_heat := run_state.begin_travel_suspicion_decay(route, target_id)
 	var force_walk := bool(choice_data.get("force_walk_fallback", false))
 	var travel_minutes := maxi(1, int(choice_data.get("travel_minutes", _travel_clock_minutes_for_route(route, force_walk))))
+	var departed_game_clock_minutes := maxi(0, run_state.game_clock_minutes)
 	route["travel_minutes"] = travel_minutes
 	route["force_walk_fallback"] = force_walk
+	route["departed_game_clock_minutes"] = departed_game_clock_minutes
+	previous_environment["departed_game_clock_minutes"] = departed_game_clock_minutes
+	run_state.current_environment["departed_game_clock_minutes"] = departed_game_clock_minutes
 	run_state.advance_game_clock_minutes(travel_minutes)
+	route["arrived_game_clock_minutes"] = maxi(departed_game_clock_minutes, run_state.game_clock_minutes)
 	generator.next_environment(run_state, target_id, true)
 	run_state.clear_closing_time_state()
 	var travel_decay := run_state.finish_travel_suspicion_decay(travel_heat)
@@ -3440,9 +3445,13 @@ func _travel_result(target_id: String, destination_name: String, route: Dictiona
 		"route_id": target_id,
 		"from_environment_id": str(previous_environment.get("id", "")),
 		"from_environment_name": str(previous_environment.get("display_name", "")),
+		"from_world_node_id": str(previous_environment.get("world_node_id", previous_environment.get("archetype_id", ""))),
 		"to_archetype_id": target_id,
 		"to_environment_id": str(destination_environment.get("id", "")),
 		"to_environment_name": destination_name,
+		"to_world_node_id": str(destination_environment.get("world_node_id", destination_environment.get("archetype_id", target_id))),
+		"departed_game_clock_minutes": maxi(0, int(route.get("departed_game_clock_minutes", run_state.game_clock_minutes - travel_minutes))),
+		"arrived_game_clock_minutes": maxi(0, int(route.get("arrived_game_clock_minutes", run_state.game_clock_minutes))),
 		"bankroll_delta": total_bankroll_delta,
 		"route_cost": cost,
 		"travel_minutes": travel_minutes,
@@ -4940,6 +4949,7 @@ func _build_run_report_screen(parent: BoxContainer) -> void:
 	run_report_screen.new_run_requested.connect(start_generated_foundation_run)
 	run_report_screen.home_requested.connect(_on_run_report_home_requested)
 	run_report_screen.copy_seed_requested.connect(_on_run_report_copy_seed_requested)
+	run_report_screen.bag_claim_requested.connect(claim_victory_collection_bag)
 	parent.add_child(run_report_screen)
 
 
@@ -5062,14 +5072,12 @@ func _render_result_panel() -> void:
 
 func _world_object_summary_text(object_data: Dictionary) -> String:
 	var parts: Array[String] = []
-	for key in ["short_description", "choice_summary", "cost_summary", "effect_summary", "impact_summary", "risk_summary", "action_summary", "disabled_reason"]:
+	for key in ["short_description", "cost_summary", "risk_summary", "action_summary", "disabled_reason"]:
 		var text := str(object_data.get(key, "")).strip_edges()
 		if text.is_empty():
 			continue
 		if key == "risk_summary" and not text.begins_with("Risk:"):
 			text = "Risk: %s" % text
-		elif key == "impact_summary" and not text.begins_with("Impact:"):
-			text = "Impact: %s" % text
 		parts.append(text)
 	if parts.is_empty():
 		return "Click another object to inspect, or double-click this one to act."
@@ -5174,6 +5182,7 @@ func music_fx_state_snapshot() -> Dictionary:
 		"win_streak": int(win_status.get("win_streak", 0)),
 		"big_win": bool(win_status.get("big_win", false)),
 		"big_win_bars_remaining": int(win_status.get("big_win_bars_remaining", 0)),
+		"big_win_event_token": str(win_status.get("big_win_event_token", "")),
 		"last_bankroll_delta": int(win_status.get("last_bankroll_delta", 0)),
 }
 
@@ -5272,6 +5281,7 @@ func _music_win_momentum_snapshot() -> Dictionary:
 		"win_streak": 0,
 		"big_win": false,
 		"big_win_bars_remaining": 0,
+		"big_win_event_token": "",
 		"last_bankroll_delta": 0,
 	}
 	if run_state == null:
@@ -5289,7 +5299,7 @@ func _music_win_momentum_snapshot() -> Dictionary:
 		if not captured_latest:
 			result["last_bankroll_delta"] = delta
 			result["big_win"] = delta >= 50
-			result["big_win_bars_remaining"] = 4 if delta >= 50 else 0
+			result["big_win_event_token"] = "%d:%s:%s:%d" % [index, str(entry.get("game_id", entry.get("source_id", "game"))), str(entry.get("action_id", "action")), delta]
 			captured_latest = true
 		if delta > 0:
 			streak += 1
@@ -5423,7 +5433,13 @@ func _render_run_report() -> void:
 	run_report_screen.visible = terminal
 	if not terminal or run_state == null:
 		return
-	var key := "%s|%s|%s|%s|%d|%d|%d|%d" % [run_state.seed_text, run_state.run_status, run_state.run_failure_reason, str(run_state.narrative_flags.get("demo_victory_route", "")), run_state.story_log_entry_count(), run_state.heat_history.size(), run_state.rng_state, run_state.bankroll]
+	var bag_reward_key := JSON.stringify({
+		"pending": run_state.pending_bag_markers(),
+		"grants": run_state.narrative_flags.get(CollectionDropServiceScript.GRANTS_FLAG, []),
+		"selected": run_state.narrative_flags.get(CollectionDropServiceScript.SELECTED_FLAG, ""),
+		"flushed": run_state.narrative_flags.get(CollectionDropServiceScript.FLUSHED_FLAG, false),
+	})
+	var key := "%s|%s|%s|%s|%d|%d|%d|%d|%d" % [run_state.seed_text, run_state.run_status, run_state.run_failure_reason, str(run_state.narrative_flags.get("demo_victory_route", "")), run_state.story_log_entry_count(), run_state.heat_history.size(), run_state.rng_state, run_state.bankroll, hash(bag_reward_key)]
 	if key == run_report_model_key:
 		return
 	run_report_model_key = key
@@ -5521,9 +5537,6 @@ func _render_selected_object_context(object_data: Dictionary) -> void:
 	var risk := str(object_data.get("risk_summary", ""))
 	if not risk.is_empty() and object_type != CONTEXT_MODE_TRAVEL:
 		_add_detail_row(card, "Risk", risk)
-	var choice_summary := str(object_data.get("choice_summary", ""))
-	if not choice_summary.is_empty():
-		_add_detail_row(card, "Choices", choice_summary)
 	if object_type == CONTEXT_MODE_TRAVEL:
 		for preview_line in _copy_array(object_data.get("preview_lines", [])).slice(0, 4):
 			var preview_text := str(preview_line).strip_edges()
@@ -5532,15 +5545,9 @@ func _render_selected_object_context(object_data: Dictionary) -> void:
 		var unlock_lines := _copy_array(object_data.get("unlock_conditions", []))
 		if not unlock_lines.is_empty():
 			_add_detail_row(card, "Unlock", "; ".join(unlock_lines.slice(0, 2)), true)
-	var effect := str(object_data.get("effect_summary", ""))
-	if not effect.is_empty():
-		_add_detail_row(card, "Effect", effect)
 	var status := str(object_data.get("status_summary", ""))
 	if not status.is_empty():
 		_add_detail_row(card, "Status", status, true)
-	var impact := str(object_data.get("impact_summary", ""))
-	if not impact.is_empty():
-		_add_detail_row(card, "Impact", impact, true)
 	if object_type == CONTEXT_MODE_GAME:
 		_add_game_object_context_details(card, str(object_data.get("source_id", "")))
 	var action_summary := str(object_data.get("action_summary", ""))
@@ -5674,9 +5681,6 @@ func _add_context_event_inline_actions(card: VBoxContainer, event_id: String, in
 			_set_control_font_color(detail_label, VisualStyle.SOFT)
 			card.add_child(detail_label)
 		_add_attribute_badge_row(card, action_data.get("attribute_badges", []), 16)
-		var impact := str(action_data.get("impact_summary", "")).strip_edges()
-		if not impact.is_empty():
-			card.add_child(_muted_label("Effect: %s" % impact, 11))
 		rendered = true
 	return rendered
 
@@ -5696,9 +5700,6 @@ func _add_event_choice_action_option(stack: VBoxContainer, event_id: String, cho
 		_set_control_font_color(detail_label, VisualStyle.SOFT)
 		stack.add_child(detail_label)
 	_add_attribute_badge_row(stack, choice_data.get("attribute_badges", []), 16)
-	var consequence_summary := str(choice_data.get("consequence_summary", "")).strip_edges()
-	if not consequence_summary.is_empty():
-		stack.add_child(_muted_label("Effect: %s" % consequence_summary, 11))
 
 
 func _event_choice_action_detail(choice_data: Dictionary) -> String:
@@ -6472,7 +6473,7 @@ func _show_wager_confirmation_popup(action_id: String, stake: int, wager_cost: i
 	call_deferred("_position_event_choice_popup")
 
 
-func _add_wager_confirmation_card(label: String, text: String, impact: String, callback: Callable, primary: bool, badges_value: Variant = []) -> void:
+func _add_wager_confirmation_card(label: String, text: String, _impact: String, callback: Callable, primary: bool, badges_value: Variant = []) -> void:
 	if event_choice_popup_choices_list == null:
 		return
 	var border := VisualStyle.YELLOW if primary else VisualStyle.CYAN_2
@@ -6488,7 +6489,6 @@ func _add_wager_confirmation_card(label: String, text: String, impact: String, c
 	stack.add_child(heading)
 	stack.add_child(_label(text, 13))
 	_add_attribute_badge_row(stack, badges_value, 16)
-	stack.add_child(_muted_label("Impact: %s" % impact, 12))
 	var button := _button(label, callback)
 	if primary:
 		_style_selected_button(button)
@@ -9615,6 +9615,7 @@ func claim_victory_collection_bag(marker_id: String) -> void:
 		if save_error == OK and not _copy_array(result.get("summary_lines", [])).is_empty():
 			save_status_message = "Collection bag stored."
 	_show_message(str(result.get("message", "Collection choice updated.")))
+	run_report_model_key = ""
 	_render_run_report()
 
 

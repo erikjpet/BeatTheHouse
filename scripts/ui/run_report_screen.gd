@@ -4,9 +4,11 @@ extends Control
 signal new_run_requested
 signal home_requested
 signal copy_seed_requested(seed: String)
+signal bag_claim_requested(marker_id: String)
 
 const WorldMapCanvasScript := preload("res://scripts/ui/world_map_canvas.gd")
 const TimelineCanvasScript := preload("res://scripts/ui/run_report_timeline_canvas.gd")
+const RunReportViewModelScript := preload("res://scripts/ui/run_report_view_model.gd")
 const REPLAY_SECONDS := 7.0
 
 var report_model: Dictionary = {}
@@ -27,11 +29,18 @@ var score_detail: Label
 var map_canvas: WorldMapCanvas
 var timeline_canvas: RunReportTimelineCanvas
 var play_button: Button
+var replay_clock_label: Label
 var story_rows: VBoxContainer
 var item_rows: GridContainer
+var bag_reward_row: VBoxContainer
+var bag_reward_label: Label
+var bag_reward_selector: OptionButton
+var bag_claim_button: Button
 var debt_rows: VBoxContainer
 var seed_label: Label
 var button_row: HBoxContainer
+var new_run_button: Button
+var home_button: Button
 
 
 func _ready() -> void:
@@ -63,15 +72,17 @@ func set_report(model: Dictionary) -> void:
 	score_detail.text = "Money put to work  ×  Winner's bonus  =  Final score" if bool(score.get("show_winner_bonus", false)) else "Money put to work  =  Final score"
 	seed_label.text = "Seed: %s" % str(model.get("seed", ""))
 	_render_story(model.get("money_rows", []))
+	_render_bag_reward(_dict(model.get("bag_reward", {})))
 	_render_items(_dict(model.get("items", {})))
 	_render_debts(model.get("debts", []))
 	var timeline := _dict(model.get("timeline", {}))
 	timeline_canvas.set_timeline(timeline)
 	timeline_install_count += 1
 	map_canvas.set_map_snapshot(_dict(model.get("map_snapshot", {})))
-	map_canvas.set_run_report_replay(timeline.get("travel_keyframes", []), reduce_motion)
+	map_canvas.set_run_report_replay(timeline.get("travel_keyframes", []), reduce_motion, timeline.get("replay_segments", []))
 	replay_progress = 1.0 if reduce_motion else 0.0
 	timeline_canvas.set_replay_progress(replay_progress)
+	_update_replay_clock()
 	play_button.text = "Replay ready" if reduce_motion else "▶ Play"
 	play_button.disabled = reduce_motion
 	play_button.visible = not reduce_motion
@@ -84,9 +95,10 @@ func set_reduce_motion(enabled: bool) -> void:
 	reduce_motion = enabled
 	if not report_model.is_empty():
 		var timeline := _dict(report_model.get("timeline", {}))
-		map_canvas.set_run_report_replay(timeline.get("travel_keyframes", []), reduce_motion)
+		map_canvas.set_run_report_replay(timeline.get("travel_keyframes", []), reduce_motion, timeline.get("replay_segments", []))
 		replay_progress = 1.0 if reduce_motion else 0.0
 		timeline_canvas.set_replay_progress(replay_progress)
+		_update_replay_clock()
 	play_button.visible = not reduce_motion
 	play_button.disabled = reduce_motion
 	replay_playing = false
@@ -99,6 +111,8 @@ func set_small_screen_mode(enabled: bool) -> void:
 	for child in button_row.get_children():
 		if child is Button:
 			(child as Button).custom_minimum_size.y = 52.0 if enabled else 42.0
+	bag_reward_selector.custom_minimum_size.y = 52.0 if enabled else 42.0
+	bag_claim_button.custom_minimum_size.y = 52.0 if enabled else 42.0
 	_layout_sections()
 
 
@@ -109,6 +123,7 @@ func _process(delta: float) -> void:
 	replay_progress = minf(1.0, replay_progress + delta / REPLAY_SECONDS)
 	map_canvas.set_run_report_replay_progress(replay_progress)
 	timeline_canvas.set_replay_progress(replay_progress)
+	_update_replay_clock()
 	if replay_progress >= 1.0:
 		replay_playing = false
 		play_button.text = "↻ Replay"
@@ -122,6 +137,7 @@ func _on_play_pressed() -> void:
 		replay_progress = 0.0
 	map_canvas.set_run_report_replay_progress(replay_progress)
 	timeline_canvas.set_replay_progress(replay_progress)
+	_update_replay_clock()
 	replay_playing = true
 	play_button.text = "Playing…"
 	set_process(true)
@@ -132,6 +148,7 @@ func _on_timeline_seek(progress: float) -> void:
 	replay_playing = false
 	map_canvas.set_run_report_replay_progress(replay_progress)
 	timeline_canvas.set_replay_progress(replay_progress)
+	_update_replay_clock()
 	play_button.text = "▶ Continue" if replay_progress < 1.0 else "↻ Replay"
 	set_process(false)
 
@@ -185,15 +202,47 @@ func _build() -> void:
 	play_button.custom_minimum_size = Vector2(104, 38)
 	play_button.pressed.connect(_on_play_pressed)
 	travel_holder.add_child(play_button)
+	replay_clock_label = _label("Day 1 12:00 PM · AT VENUE", 11, VisualStyle.WHITE)
+	replay_clock_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	replay_clock_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	replay_clock_label.set_anchors_preset(Control.PRESET_TOP_RIGHT)
+	replay_clock_label.offset_left = -230.0
+	replay_clock_label.offset_top = 9.0
+	replay_clock_label.offset_right = -9.0
+	replay_clock_label.offset_bottom = 31.0
+	replay_clock_label.add_theme_color_override("font_shadow_color", Color("#000000", 0.95))
+	replay_clock_label.add_theme_constant_override("shadow_offset_x", 2)
+	replay_clock_label.add_theme_constant_override("shadow_offset_y", 2)
+	travel_holder.add_child(replay_clock_label)
 
 	story_rows = _section("story", "STORY · MONEY FLOW", VisualStyle.TEAL)
+	var item_stack := _section("items", "ITEMS · KEPT / PAWNED / SOLD", VisualStyle.AMBER)
+	bag_reward_row = VBoxContainer.new()
+	bag_reward_row.add_theme_constant_override("separation", 5)
+	bag_reward_row.visible = false
+	item_stack.add_child(bag_reward_row)
+	bag_reward_label = _label("Choose one earned bag", 10, VisualStyle.YELLOW)
+	bag_reward_label.custom_minimum_size = Vector2(118, 0)
+	bag_reward_label.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+	bag_reward_row.add_child(bag_reward_label)
+	var bag_reward_actions := HBoxContainer.new()
+	bag_reward_actions.add_theme_constant_override("separation", 5)
+	bag_reward_row.add_child(bag_reward_actions)
+	bag_reward_selector = OptionButton.new()
+	bag_reward_selector.custom_minimum_size = Vector2(150, 42)
+	bag_reward_selector.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	bag_reward_actions.add_child(bag_reward_selector)
+	bag_claim_button = _action_button("Bring Home")
+	bag_claim_button.custom_minimum_size.x = 104
+	bag_claim_button.pressed.connect(_on_bag_claim_pressed)
+	bag_reward_actions.add_child(bag_claim_button)
 	item_rows = GridContainer.new()
 	item_rows.columns = 2
 	item_rows.add_theme_constant_override("h_separation", 5)
 	item_rows.add_theme_constant_override("v_separation", 3)
 	item_rows.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	item_rows.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	_section("items", "ITEMS · KEPT / PAWNED / SOLD", VisualStyle.AMBER).add_child(item_rows)
+	item_stack.add_child(item_rows)
 
 	var heat_stack := _section("heat", "HEAT TIMELINE · DRAG TO SEEK", VisualStyle.ORANGE)
 	timeline_canvas = TimelineCanvasScript.new()
@@ -208,12 +257,12 @@ func _build() -> void:
 	button_row.alignment = BoxContainer.ALIGNMENT_CENTER
 	button_row.add_theme_constant_override("separation", 9)
 	add_child(button_row)
-	var new_run := _action_button("New Run")
-	new_run.pressed.connect(func() -> void: new_run_requested.emit())
-	button_row.add_child(new_run)
-	var home := _action_button("Home")
-	home.pressed.connect(func() -> void: home_requested.emit())
-	button_row.add_child(home)
+	new_run_button = _action_button("New Run")
+	new_run_button.pressed.connect(func() -> void: new_run_requested.emit())
+	button_row.add_child(new_run_button)
+	home_button = _action_button("Home")
+	home_button.pressed.connect(func() -> void: home_requested.emit())
+	button_row.add_child(home_button)
 	var copy_seed := _action_button("Copy Seed")
 	copy_seed.pressed.connect(func() -> void: copy_seed_requested.emit(str(report_model.get("seed", ""))))
 	button_row.add_child(copy_seed)
@@ -222,6 +271,23 @@ func _build() -> void:
 	seed_label.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
 	button_row.add_child(seed_label)
 	_layout_sections()
+
+
+func _on_bag_claim_pressed() -> void:
+	if bag_reward_selector.item_count <= 0:
+		return
+	var marker_id := str(bag_reward_selector.get_item_metadata(bag_reward_selector.selected)).strip_edges()
+	if not marker_id.is_empty():
+		bag_claim_requested.emit(marker_id)
+
+
+func _update_replay_clock() -> void:
+	if replay_clock_label == null:
+		return
+	var timeline := _dict(report_model.get("timeline", {}))
+	var cursor: Dictionary = RunReportViewModelScript.cursor_for_progress(timeline, replay_progress)
+	var phase := "TRAVELING" if str(cursor.get("phase", "dwell")) == "travel" else "AT VENUE"
+	replay_clock_label.text = "%s · %s" % [RunReportViewModelScript.format_game_clock(int(cursor.get("game_clock_minutes", RunState.GAME_CLOCK_START_MINUTE))), phase]
 
 
 func _section(key: String, title_text: String, accent: Color) -> VBoxContainer:
@@ -316,10 +382,11 @@ func _render_story(rows_value: Variant) -> void:
 func _render_items(items: Dictionary) -> void:
 	_clear(item_rows)
 	var shown := 0
+	var maximum_shown := 4 if bag_claim_button.visible else 8
 	for group_key in ["kept", "pawned", "sold"]:
 		var rows: Array = items.get(group_key, []) if typeof(items.get(group_key, [])) == TYPE_ARRAY else []
 		for value in rows:
-			if typeof(value) != TYPE_DICTIONARY or shown >= 8:
+			if typeof(value) != TYPE_DICTIONARY or shown >= maximum_shown:
 				continue
 			var row: Dictionary = value
 			var cell := HBoxContainer.new()
@@ -338,6 +405,41 @@ func _render_items(items: Dictionary) -> void:
 			shown += 1
 	if shown == 0:
 		item_rows.add_child(_label("No items carried, pawned, or sold.", 10, VisualStyle.SOFT))
+
+
+func _render_bag_reward(reward: Dictionary) -> void:
+	bag_reward_selector.clear()
+	var choices: Array = reward.get("choices", []) if typeof(reward.get("choices", [])) == TYPE_ARRAY else []
+	for value in choices:
+		if typeof(value) != TYPE_DICTIONARY:
+			continue
+		var choice: Dictionary = value
+		var marker_id := str(choice.get("marker_id", "")).strip_edges()
+		if marker_id.is_empty():
+			continue
+		var display_name := str(choice.get("display_name", "Collection Bag")).strip_edges()
+		bag_reward_selector.add_item(display_name if not display_name.is_empty() else "Collection Bag")
+		var index := bag_reward_selector.item_count - 1
+		bag_reward_selector.set_item_metadata(index, marker_id)
+		var detail_parts: Array[String] = []
+		for detail_key in ["collection_name", "tier_label"]:
+			var detail := str(choice.get(detail_key, "")).strip_edges()
+			if not detail.is_empty() and not detail_parts.has(detail):
+				detail_parts.append(detail)
+		bag_reward_selector.set_item_tooltip(index, " · ".join(detail_parts))
+	var pending := bool(reward.get("pending", false)) and bag_reward_selector.item_count > 0
+	bag_reward_row.visible = bool(reward.get("visible", false))
+	bag_reward_selector.visible = pending
+	bag_claim_button.visible = pending
+	new_run_button.disabled = pending
+	home_button.disabled = pending
+	if pending:
+		bag_reward_label.text = "Choose one earned bag"
+		bag_reward_label.tooltip_text = "Choose one earned collection bag before leaving this report."
+	else:
+		var summary_lines: Array = reward.get("summary_lines", []) if typeof(reward.get("summary_lines", [])) == TYPE_ARRAY else []
+		bag_reward_label.text = "Stored: %s" % str(summary_lines[0]) if not summary_lines.is_empty() else "Collection bag stored"
+		bag_reward_label.tooltip_text = bag_reward_label.text
 
 
 func _render_debts(rows_value: Variant) -> void:
@@ -359,7 +461,7 @@ func debug_layout_snapshot() -> Dictionary:
 	var rects := {}
 	for key in section_panels.keys():
 		rects[str(key)] = (section_panels[key] as Control).get_rect()
-	return {"size": size, "section_rects": rects, "button_rect": button_row.get_rect(), "small_screen_mode": small_screen_mode, "reduce_motion": reduce_motion, "replay_progress": replay_progress, "timeline_install_count": timeline_install_count, "has_scroll_container": _has_scroll_container(self)}
+	return {"size": size, "section_rects": rects, "button_rect": button_row.get_rect(), "small_screen_mode": small_screen_mode, "reduce_motion": reduce_motion, "replay_progress": replay_progress, "replay_clock_text": replay_clock_label.text, "timeline_install_count": timeline_install_count, "has_scroll_container": _has_scroll_container(self), "bag_reward_visible": bag_reward_row.visible, "bag_reward_pending": bag_claim_button.visible, "bag_reward_choice_count": bag_reward_selector.item_count, "new_run_disabled": new_run_button.disabled, "home_disabled": home_button.disabled}
 
 
 func _has_scroll_container(node: Node) -> bool:

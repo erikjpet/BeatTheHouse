@@ -1979,18 +1979,9 @@ func _object_info_lines(object_data: Dictionary) -> Array:
 	var status := str(object_data.get("status_summary", "")).strip_edges()
 	if not status.is_empty():
 		_append_wrapped_info_lines(lines, status, max_chars, 1)
-	var choice_summary := str(object_data.get("choice_summary", "")).strip_edges()
-	if not choice_summary.is_empty():
-		_append_wrapped_info_lines(lines, choice_summary, max_chars, 2)
 	var cost := str(object_data.get("cost_summary", "")).strip_edges()
 	if not cost.is_empty():
 		_append_wrapped_info_lines(lines, cost, max_chars, 1)
-	var effect := str(object_data.get("effect_summary", "")).strip_edges()
-	if not effect.is_empty():
-		_append_wrapped_info_lines(lines, "Effect: %s" % effect, max_chars, 2)
-	var impact := str(object_data.get("impact_summary", "")).strip_edges()
-	if not impact.is_empty():
-		_append_wrapped_info_lines(lines, "Impact: %s" % impact, max_chars, 2)
 	var risk := str(object_data.get("risk_summary", "")).strip_edges()
 	if not risk.is_empty():
 		_append_wrapped_info_lines(lines, "Risk: %s" % risk if not risk.begins_with("Risk:") else risk, max_chars, 1)
@@ -2184,8 +2175,16 @@ func _selected_info_inline_actions(object_data: Dictionary) -> Array:
 func _selected_info_action_area_height(object_data: Dictionary) -> float:
 	var inline_actions := _selected_info_inline_actions(object_data)
 	if not inline_actions.is_empty():
-		var count := mini(inline_actions.size(), OBJECT_INFO_INLINE_ACTION_MAX)
-		return float(count) * (_selected_info_inline_action_height() + OBJECT_INFO_INLINE_ACTION_DETAIL_HEIGHT) + float(maxi(0, count - 1)) * OBJECT_INFO_INLINE_ACTION_GAP
+		var height := 0.0
+		for action_value in inline_actions:
+			if typeof(action_value) != TYPE_DICTIONARY:
+				continue
+			if height > 0.0:
+				height += OBJECT_INFO_INLINE_ACTION_GAP
+			height += _selected_info_inline_action_height()
+			if not _selected_info_inline_action_detail(action_value as Dictionary).is_empty():
+				height += OBJECT_INFO_INLINE_ACTION_DETAIL_HEIGHT
+		return height
 	if _selected_info_has_single_action_button(object_data):
 		return _selected_info_action_height()
 	return 0.0
@@ -2293,17 +2292,19 @@ func _selected_info_action_entries_for_rect(info: Dictionary, card: Rect2) -> Ar
 			var action_data: Dictionary = action
 			var button_height := _selected_info_inline_action_height()
 			var button_rect := Rect2(Vector2(left, y), Vector2(width, button_height))
-			var detail_rect := Rect2(Vector2(left, button_rect.end.y), Vector2(width, OBJECT_INFO_INLINE_ACTION_DETAIL_HEIGHT))
+			var detail := _selected_info_inline_action_detail(action_data)
+			var detail_height := OBJECT_INFO_INLINE_ACTION_DETAIL_HEIGHT if not detail.is_empty() else 0.0
+			var detail_rect := Rect2(Vector2(left, button_rect.end.y), Vector2(width, detail_height))
 			entries.append({
 				"inline": true,
 				"label": str(action_data.get("label", "")),
-				"detail": _selected_info_inline_action_detail(action_data),
+				"detail": detail,
 				"emit_object_id": str(action_data.get("emit_object_id", action_data.get("id", ""))),
 				"button_rect": button_rect,
 				"detail_rect": detail_rect,
 				"selected": bool(action_data.get("selected", false)),
 			})
-			y += button_height + OBJECT_INFO_INLINE_ACTION_DETAIL_HEIGHT + OBJECT_INFO_INLINE_ACTION_GAP
+			y += button_height + detail_height + OBJECT_INFO_INLINE_ACTION_GAP
 		return entries
 	if _selected_info_has_single_action_button(object_data):
 		var action_height := _selected_info_action_height()
@@ -2323,15 +2324,7 @@ func _selected_info_action_entries_for_rect(info: Dictionary, card: Rect2) -> Ar
 
 
 func _selected_info_inline_action_detail(action_data: Dictionary) -> String:
-	var text := str(action_data.get("text", "")).strip_edges()
-	var impact := str(action_data.get("impact_summary", action_data.get("consequence_summary", ""))).strip_edges()
-	if text.is_empty() and impact.is_empty():
-		return ""
-	if text.is_empty():
-		return "Effect: %s" % impact
-	if impact.is_empty():
-		return text
-	return "%s Effect: %s" % [text, impact]
+	return str(action_data.get("text", "")).strip_edges()
 
 
 func _selected_info_action_snapshot_list(entries: Array) -> Array:
@@ -2537,11 +2530,12 @@ func _object_info_size(title: String, lines: Array, object_type: String, visible
 	var content_width := _object_info_header_width(title_text, type_text, font)
 	for line in lines:
 		content_width = maxf(content_width, _draw_text_width(str(line), font, 9) + OBJECT_INFO_PADDING_X * 2.0)
+	content_width = maxf(content_width, _object_info_action_content_width(object_data, font))
 	if lines.is_empty():
 		content_width = maxf(content_width, min_width)
 	var badge_height := _object_info_badge_height(object_data)
 	if badge_height > 0.0:
-		content_width = maxf(content_width, min_width)
+		content_width = maxf(content_width, _object_info_badge_width(object_data))
 	var width := clampf(ceilf(content_width), min_width, max_width)
 	var line_count := maxi(1, lines.size())
 	var height := maxf(OBJECT_INFO_MIN_HEIGHT, OBJECT_INFO_BODY_Y + badge_height + float(line_count) * OBJECT_INFO_LINE_HEIGHT + OBJECT_INFO_BOTTOM_PADDING)
@@ -2554,6 +2548,30 @@ func _object_info_size(title: String, lines: Array, object_type: String, visible
 
 func _object_info_badge_height(object_data: Dictionary) -> float:
 	return 28.0 if not _array_view(object_data.get("attribute_badges", [])).is_empty() else 0.0
+
+
+func _object_info_badge_width(object_data: Dictionary) -> float:
+	var badge_count := _array_view(object_data.get("attribute_badges", [])).size()
+	if badge_count <= 0:
+		return 0.0
+	return float(badge_count) * 30.0 + OBJECT_INFO_PADDING_X * 2.0
+
+
+func _object_info_action_content_width(object_data: Dictionary, font: Font) -> float:
+	var content_width := 0.0
+	var inline_actions := _selected_info_inline_actions(object_data)
+	if not inline_actions.is_empty():
+		for action_value in inline_actions:
+			if typeof(action_value) != TYPE_DICTIONARY:
+				continue
+			var action_data: Dictionary = action_value
+			content_width = maxf(content_width, _draw_text_width(str(action_data.get("label", "")), font, 11) + 20.0)
+			var detail := _selected_info_inline_action_detail(action_data)
+			if not detail.is_empty():
+				content_width = maxf(content_width, _draw_text_width(detail, font, 8) + OBJECT_INFO_PADDING_X * 2.0)
+	elif _selected_info_has_single_action_button(object_data):
+		content_width = _draw_text_width(_selected_info_action_label(object_data), font, 9) + 20.0
+	return content_width
 
 
 func _object_info_header_width(title: String, type_text: String, font: Font) -> float:

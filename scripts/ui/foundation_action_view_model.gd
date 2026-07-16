@@ -551,7 +551,7 @@ static func event_choice(host: Variant, event_option: Dictionary, choice_id: Str
 	return {}
 
 
-static func event_choice_list_summary(host: Variant, choices: Array) -> String:
+static func event_choice_list_summary(_host: Variant, choices: Array) -> String:
 	var parts: Array = []
 	for choice in choices:
 		if typeof(choice) != TYPE_DICTIONARY:
@@ -560,15 +560,12 @@ static func event_choice_list_summary(host: Variant, choices: Array) -> String:
 		var label = str(choice_data.get("label", choice_data.get("id", ""))).strip_edges()
 		if label.is_empty():
 			continue
-		var impact = str(choice_data.get("consequence_summary", "")).strip_edges()
-		if impact.is_empty():
-			impact = "No immediate cost"
-		parts.append("%s -> %s" % [label, impact])
+		parts.append(label)
 		if parts.size() >= 3:
 			break
 	if parts.is_empty():
 		return ""
-	return "Choices / impact: %s" % "; ".join(parts)
+	return "Choices: %s" % "; ".join(parts)
 
 
 static func event_choice_consequence_summary(host: Variant, choice_data: Dictionary) -> String:

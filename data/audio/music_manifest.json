@@ -4,12 +4,82 @@
     "display_name": "Corner Store Sparse Fixture",
     "bpm": 120,
     "bars": 12,
+    "beats_per_bar": 4,
+    "sample_rate": 44100,
+    "bit_depth": 16,
+    "channels": 1,
+    "loop_begin": 0,
     "loop_frames": 1058400,
     "palette_id": "fluorescent_sparse",
+    "harmonic_sections": {
+      "A": {
+        "key": "C_major",
+        "relative_key": "A_minor",
+        "tonal_center": "C"
+      },
+      "B": {
+        "key": "A_minor",
+        "relative_key": "C_major",
+        "tonal_center": "A"
+      }
+    },
+    "arrangement": ["A", "A", "A", "A", "B", "B", "B", "B", "A", "A", "A", "A"],
     "stems": {
       "pad": "pad.wav",
       "tension": "tension.wav"
     },
-    "stingers": {}
+    "stem_banks": {
+      "tension": {
+        "seed_salt": "corner_store_tension",
+        "variants": [
+          {
+            "id": "tension_low",
+            "file": "tension.wav",
+            "weight": 3,
+            "tags": ["intensity_low", "harmonic_bed"],
+            "harmonic_sections": ["A", "B"],
+            "intensity_min": 0.0,
+            "intensity_max": 0.59
+          },
+          {
+            "id": "tension_high",
+            "file": "tension.wav",
+            "weight": 1,
+            "tags": ["intensity_high", "pressure"],
+            "harmonic_sections": ["A", "B"],
+            "intensity_min": 0.6,
+            "intensity_max": 1.0
+          }
+        ]
+      }
+    },
+    "selection_rules": {
+      "deterministic_weighted": true,
+      "respect_mutual_exclusion_groups": true,
+      "context_tags": ["intensity", "harmonic_section", "attention", "pressure", "showdown"]
+    },
+    "transitions": {
+      "quantize": "phrase",
+      "phrase_bars": 4,
+      "destination_time": "same_position",
+      "fade_beats": 0.25,
+      "default_fill": "drum_fill_fixture",
+      "fill_bars": 2,
+      "fill_rules": []
+    },
+    "fills": {
+      "drum_fill_fixture": {
+        "file": "tension.wav",
+        "loop": false,
+        "tags": ["drums", "transition", "two_bar"]
+      }
+    },
+    "stingers": {
+      "win_fixture": {
+        "file": "pad.wav",
+        "loop": false,
+        "tags": ["win", "on_beat"]
+      }
+    }
   }
 ]

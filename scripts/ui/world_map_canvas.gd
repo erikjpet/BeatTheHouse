@@ -30,6 +30,7 @@ var map_view_focus_node_ids_cache: Array = []
 var map_view_selected_node_id_cache := ""
 var stable_layout_size := Vector2(-1.0, -1.0)
 var replay_keyframes: Array = []
+var replay_segments: Array = []
 var replay_progress := 1.0
 var replay_reduce_motion := false
 
@@ -66,8 +67,9 @@ func set_map_snapshot(map_snapshot: Dictionary) -> void:
 	queue_redraw()
 
 
-func set_run_report_replay(keyframes: Array, reduce_motion: bool) -> void:
-	replay_keyframes = keyframes
+func set_run_report_replay(keyframes: Array, reduce_motion: bool, segments: Array = []) -> void:
+	replay_keyframes = keyframes.duplicate(true)
+	replay_segments = segments.duplicate(true)
 	replay_reduce_motion = reduce_motion
 	replay_progress = 1.0 if reduce_motion else 0.0
 	queue_redraw()
@@ -83,6 +85,7 @@ func set_run_report_replay_progress(progress: float) -> void:
 
 func clear_run_report_replay() -> void:
 	replay_keyframes = []
+	replay_segments = []
 	replay_progress = 1.0
 	replay_reduce_motion = false
 	queue_redraw()
@@ -141,6 +144,7 @@ func current_view_snapshot() -> Dictionary:
 		view["background_fills_canvas"] = destination_rect.size.distance_to(size) <= 0.5
 	view["selected_focus_zoom_active"] = _selected_focus_zoom_active()
 	view["selected_focus_zoom_animating"] = not _map_bounds_equal(map_view_bounds_cache, target_map_view_bounds_cache)
+	view["run_report_replay"] = _replay_marker_state()
 	return view
 
 
@@ -247,6 +251,10 @@ func _draw_path() -> void:
 			continue
 		var start_progress := float((replay_keyframes[index] as Dictionary).get("progress", 0.0)) if index < replay_keyframes.size() else float(index) / float(maxi(1, path.size() - 1))
 		var end_progress := float((replay_keyframes[index + 1] as Dictionary).get("progress", 1.0)) if index + 1 < replay_keyframes.size() else float(index + 1) / float(maxi(1, path.size() - 1))
+		var travel_segment := _travel_segment_for_leg(index)
+		if not travel_segment.is_empty():
+			start_progress = float(travel_segment.get("start_progress", start_progress))
+			end_progress = float(travel_segment.get("end_progress", end_progress))
 		if replay_progress <= start_progress:
 			continue
 		var leg_progress := clampf((replay_progress - start_progress) / maxf(0.0001, end_progress - start_progress), 0.0, 1.0)
@@ -255,6 +263,19 @@ func _draw_path() -> void:
 
 func _draw_replay_marker() -> void:
 	if replay_keyframes.is_empty():
+		return
+	var replay_state := _replay_marker_state()
+	if not replay_segments.is_empty() and not replay_state.is_empty():
+		var from_node_id := str(replay_state.get("from_node_id", replay_state.get("node_id", "")))
+		var to_node_id := str(replay_state.get("to_node_id", from_node_id))
+		var segment_a := _node_position(nodes_by_id_cache, from_node_id)
+		var segment_b := _node_position(nodes_by_id_cache, to_node_id)
+		if segment_a.x < 0.0:
+			return
+		if segment_b.x < 0.0:
+			segment_b = segment_a
+		var segment_marker := segment_a.lerp(segment_b, float(replay_state.get("amount", 0.0)))
+		_draw_replay_marker_at(segment_marker, str(replay_state.get("label", from_node_id.replace("_", " ").capitalize())))
 		return
 	var frame_a: Dictionary = replay_keyframes[0]
 	var frame_b: Dictionary = frame_a
@@ -275,13 +296,52 @@ func _draw_replay_marker() -> void:
 	var end_progress := float(frame_b.get("progress", start_progress))
 	var amount := clampf((replay_progress - start_progress) / maxf(0.0001, end_progress - start_progress), 0.0, 1.0)
 	var marker := a.lerp(b, amount)
-	draw_circle(marker, 10.0, Color("#05060a", 0.92))
-	draw_circle(marker, 8.0, Color("#00f5ff"))
-	draw_circle(marker, 11.0, Color("#ffffff", 0.74), false, 2.0)
 	var label := str(frame_a.get("label", frame_a.get("node_id", "Venue")))
 	if amount >= 0.5:
 		label = str(frame_b.get("label", frame_b.get("node_id", label)))
+	_draw_replay_marker_at(marker, label)
+
+
+func _draw_replay_marker_at(marker: Vector2, label: String) -> void:
+	draw_circle(marker, 10.0, Color("#05060a", 0.92))
+	draw_circle(marker, 8.0, Color("#00f5ff"))
+	draw_circle(marker, 11.0, Color("#ffffff", 0.74), false, 2.0)
 	draw_string(ThemeDB.fallback_font, marker + Vector2(14.0, -9.0), label.left(22), HORIZONTAL_ALIGNMENT_LEFT, 170.0, 11, Color("#ffffff"))
+
+
+func _replay_marker_state() -> Dictionary:
+	if replay_segments.is_empty():
+		return {"progress": replay_progress, "segment_count": 0}
+	var selected := _copy_dict(replay_segments[-1])
+	for segment_value in replay_segments:
+		if typeof(segment_value) != TYPE_DICTIONARY:
+			continue
+		var segment: Dictionary = segment_value
+		selected = segment
+		if replay_progress <= float(segment.get("end_progress", 1.0)) + 0.00001:
+			break
+	var kind := str(selected.get("kind", "dwell"))
+	var from_node_id := str(selected.get("from_node_id", selected.get("node_id", "")))
+	var to_node_id := str(selected.get("to_node_id", from_node_id))
+	var start_progress := float(selected.get("start_progress", 0.0))
+	var end_progress := float(selected.get("end_progress", start_progress))
+	var amount := 0.0
+	if kind == "travel":
+		amount = clampf((replay_progress - start_progress) / maxf(0.0001, end_progress - start_progress), 0.0, 1.0)
+	var label := str(selected.get("from_label", from_node_id.replace("_", " ").capitalize()))
+	if kind == "travel" and amount >= 1.0:
+		label = str(selected.get("to_label", to_node_id.replace("_", " ").capitalize()))
+	return {"progress": replay_progress, "segment_count": replay_segments.size(), "kind": kind, "node_id": from_node_id if kind == "dwell" else "", "from_node_id": from_node_id, "to_node_id": to_node_id, "amount": amount, "label": label, "leg_index": int(selected.get("leg_index", 0))}
+
+
+func _travel_segment_for_leg(leg_index: int) -> Dictionary:
+	for segment_value in replay_segments:
+		if typeof(segment_value) != TYPE_DICTIONARY:
+			continue
+		var segment: Dictionary = segment_value
+		if str(segment.get("kind", "")) == "travel" and int(segment.get("leg_index", -1)) == leg_index:
+			return segment
+	return {}
 
 
 func _draw_nodes() -> void:

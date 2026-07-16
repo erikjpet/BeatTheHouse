@@ -588,16 +588,16 @@ func _try_event_card_flow(prepared_fixture: bool = false) -> void:
 	var first_choice: Dictionary = event_choices[0]
 	var choice_label := str(first_choice.get("label", ""))
 	var choice_text := str(first_choice.get("text", ""))
-	var choice_impact := str(first_choice.get("consequence_summary", ""))
 	var selected_info: Dictionary = canvas_snapshot.get("selected_info", {})
 	var inline_actions: Array = selected_info.get("actions", [])
 	if not inline_actions.is_empty():
 		var first_action: Dictionary = inline_actions[0]
 		var first_action_detail := str(first_action.get("detail", ""))
+		var concealed_impact := str(first_choice.get("consequence_summary", ""))
 		var expected_emit_id := "event_response:%s:%s" % [event_id, str(first_choice.get("id", ""))]
 		_require(not choice_label.is_empty() and str(first_action.get("label", "")) == choice_label, "Event response panel did not show the choice label.")
-		_require(not choice_text.is_empty() and first_action_detail.find(choice_text) != -1, "Event response panel did not show the choice effect text.")
-		_require(not choice_impact.is_empty() and first_action_detail.find(choice_impact) != -1, "Event response panel did not show the choice impact text.")
+		_require(not choice_text.is_empty() and first_action_detail.find(choice_text) != -1, "Event response panel did not show the player-facing choice text.")
+		_require(first_action_detail.find("Effect:") == -1 and first_action_detail.find("Impact:") == -1 and (concealed_impact.is_empty() or first_action_detail.find(concealed_impact) == -1), "Event response panel exposed effect or impact copy.")
 		_require(str(first_action.get("emit_object_id", "")) == expected_emit_id, "Event response panel did not route the response through an inline canvas action.")
 	if not bool(app.call("current_event_choice_popup_snapshot").get("visible", false)):
 		_require(bool(app.call("activate_interactable_object", event_object_id)), "Event prop did not open its response popup.")

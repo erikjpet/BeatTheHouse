@@ -230,6 +230,12 @@ func wager_cost_for_context(_action_id: String, stake: int, _run_state: RunState
 	return maxi(0, stake)
 
 
+# Returns cash guaranteed to be credited back even in the action's worst
+# possible bankroll outcome. Games can override this for refund effects.
+func minimum_wager_return_for_context(_action_id: String, _stake: int, _wager_cost: int, _run_state: RunState, _environment: Dictionary, _ui_state: Dictionary = {}) -> int:
+	return 0
+
+
 # Returns the shared result-delta shape used by foundation modules.
 static func empty_result_deltas() -> Dictionary:
 	return {

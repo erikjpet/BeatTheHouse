@@ -2,6 +2,9 @@ class_name RunReportViewModel
 extends RefCounted
 
 const OUTCOME_REGISTRY_PATH := "res://data/art/run_outcome_icons.json"
+const BAG_GRANTS_FLAG := "_meta_bag_grants"
+const BAG_SELECTED_FLAG := "_meta_bag_selected"
+const BAG_FLUSHED_FLAG := "_meta_bag_grants_flushed"
 
 
 static func build(run_data: Dictionary, catalogs: Dictionary = {}) -> Dictionary:
@@ -16,8 +19,12 @@ static func build(run_data: Dictionary, catalogs: Dictionary = {}) -> Dictionary
 	var timeline := build_timeline(
 		_dict_array(run_data.get("heat_history", [])),
 		_copy_dict(run_data.get("world_map", {})),
-		maxi(0, int(_copy_dict(run_data.get("event_cadence", {})).get("action_index", 0)))
+		maxi(0, int(_copy_dict(run_data.get("event_cadence", {})).get("action_index", 0))),
+		story_log,
+		RunState.GAME_CLOCK_START_MINUTE,
+		maxi(RunState.GAME_CLOCK_START_MINUTE, int(run_data.get("game_clock_minutes", RunState.GAME_CLOCK_START_MINUTE)))
 	)
+	var report_map := build_report_map_snapshot(_copy_dict(run_data.get("world_map", {})), timeline)
 	return {
 		"outcome": outcome,
 		"score": {
@@ -27,11 +34,43 @@ static func build(run_data: Dictionary, catalogs: Dictionary = {}) -> Dictionary
 			"final_score": int(score.get("score", 0)),
 		},
 		"items": build_item_fates(_string_array(run_data.get("inventory", [])), _dict_array(run_data.get("debt", [])), story_log, _copy_dict(catalogs.get("items", {}))),
+		"bag_reward": build_bag_reward(run_data),
 		"debts": build_debt_ledger(_dict_array(run_data.get("debt", [])), story_log),
 		"money_rows": build_money_rows(story_log, catalogs),
 		"timeline": timeline,
-		"map_snapshot": _copy_dict(run_data.get("world_map", {})),
+		"map_snapshot": report_map,
 		"seed": _player_facing_seed(run_data),
+	}
+
+
+static func build_bag_reward(run_data: Dictionary) -> Dictionary:
+	var flags := _copy_dict(run_data.get("narrative_flags", {}))
+	var won := str(run_data.get("run_status", "")) == RunState.RUN_STATUS_ENDED and bool(flags.get("demo_victory", false))
+	var choices: Array = []
+	for marker_value in _dict_array(run_data.get("pending_bags", [])):
+		var marker := _copy_dict(marker_value)
+		var marker_id := str(marker.get("marker_id", "")).strip_edges()
+		if marker_id.is_empty():
+			continue
+		var display_name := str(marker.get("display_name", "Collection Bag")).strip_edges()
+		if display_name.is_empty():
+			display_name = "Collection Bag"
+		var collection_name := str(marker.get("collection_display_name", marker.get("collection_id", "Collection"))).strip_edges()
+		var tier_label := str(marker.get("tier_label", str(marker.get("tier", "")).capitalize())).strip_edges()
+		choices.append({
+			"marker_id": marker_id,
+			"display_name": display_name,
+			"collection_name": collection_name,
+			"tier_label": tier_label,
+		})
+	var summary_lines := _string_array(flags.get(BAG_GRANTS_FLAG, []))
+	var flushed := bool(flags.get(BAG_FLUSHED_FLAG, false))
+	return {
+		"visible": won and (not choices.is_empty() or flushed or not summary_lines.is_empty()),
+		"pending": won and not flushed and not choices.is_empty(),
+		"choices": choices,
+		"summary_lines": summary_lines,
+		"selected_marker_id": str(flags.get(BAG_SELECTED_FLAG, "")),
 	}
 
 
@@ -186,19 +225,29 @@ static func build_debt_ledger(live_debt: Array, story_log: Array) -> Array:
 	return rows
 
 
-static func build_timeline(heat_entries: Array, world_map: Dictionary, final_action_index: int = 0) -> Dictionary:
+static func build_timeline(heat_entries: Array, world_map: Dictionary, final_action_index: int = 0, story_log: Array = [], start_game_clock_minutes: int = RunState.GAME_CLOCK_START_MINUTE, end_game_clock_minutes: int = -1) -> Dictionary:
 	var samples := RunState.normalize_heat_history(heat_entries)
 	if samples.is_empty():
-		samples = [{"action_index": 0, "heat_value": 0, "environment_id": "", "environment_name": "", "world_node_id": "", "transition": true}]
+		samples = [{"action_index": 0, "game_clock_minutes": start_game_clock_minutes, "heat_value": 0, "environment_id": "", "environment_name": "", "world_node_id": "", "transition": true}]
 	var max_action := maxi(1, final_action_index)
 	for sample in samples:
 		max_action = maxi(max_action, int((sample as Dictionary).get("action_index", 0)))
+	var start_clock := maxi(0, start_game_clock_minutes)
+	var end_clock := end_game_clock_minutes
+	if end_clock < start_clock:
+		end_clock = start_clock + max_action * RunState.ACTION_CLOCK_MINUTES
+	end_clock = maxi(start_clock, end_clock)
+	var duration_minutes := maxi(1, end_clock - start_clock)
 	var normalized_samples: Array = []
 	var transitions: Array = []
 	for sample_value in samples:
 		var sample: Dictionary = sample_value
 		var row := sample.duplicate(false)
-		row["progress"] = clampf(float(int(sample.get("action_index", 0))) / float(max_action), 0.0, 1.0)
+		var sample_clock := int(sample.get("game_clock_minutes", -1))
+		if sample_clock >= start_clock:
+			row["progress"] = _clock_progress(sample_clock, start_clock, duration_minutes)
+		else:
+			row["progress"] = clampf(float(int(sample.get("action_index", 0))) / float(max_action), 0.0, 1.0)
 		normalized_samples.append(row)
 		if bool(sample.get("transition", false)):
 			transitions.append(row)
@@ -206,34 +255,125 @@ static func build_timeline(heat_entries: Array, world_map: Dictionary, final_act
 	for node_value in _dict_array(world_map.get("nodes", [])):
 		nodes_by_id[str(node_value.get("id", ""))] = node_value
 	var path := _string_array(world_map.get("visited_path", []))
+	if path.is_empty():
+		var current_node_id := str(world_map.get("current_node_id", "")).strip_edges()
+		if not current_node_id.is_empty():
+			path.append(current_node_id)
+	var travel_entries: Array = []
+	for entry_value in _dict_array(story_log):
+		if str(entry_value.get("type", "")) == "travel":
+			travel_entries.append(entry_value)
 	var keyframes: Array = []
+	var segments: Array = []
+	var arrival_clock := start_clock
 	for index in range(path.size()):
 		var node_id := str(path[index])
 		var node := _copy_dict(nodes_by_id.get(node_id, {}))
-		var action_index := int(round(float(index) * float(max_action) / float(maxi(1, path.size() - 1))))
-		if index < transitions.size():
-			action_index = int((transitions[index] as Dictionary).get("action_index", action_index))
+		var label := str(node.get("display_name", node.get("label", node_id.replace("_", " ").capitalize())))
 		var position := _copy_dict(node.get("position", {}))
 		keyframes.append({
 			"node_id": node_id,
-			"label": str(node.get("display_name", node.get("label", node_id.replace("_", " ").capitalize()))),
-			"action_index": action_index,
-			"progress": clampf(float(action_index) / float(max_action), 0.0, 1.0),
+			"label": label,
+			"action_index": int(round(_clock_progress(arrival_clock, start_clock, duration_minutes) * float(max_action))),
+			"game_clock_minutes": arrival_clock,
+			"progress": _clock_progress(arrival_clock, start_clock, duration_minutes),
 			"position": {"x": float(position.get("x", 0.5)), "y": float(position.get("y", 0.5))},
 		})
+		if index + 1 >= path.size():
+			_append_replay_segment(segments, "dwell", node_id, node_id, label, label, arrival_clock, end_clock, start_clock, duration_minutes, index)
+			continue
+		var next_node_id := str(path[index + 1])
+		var next_node := _copy_dict(nodes_by_id.get(next_node_id, {}))
+		var next_label := str(next_node.get("display_name", next_node.get("label", next_node_id.replace("_", " ").capitalize())))
+		var travel_entry := _copy_dict(travel_entries[index]) if index < travel_entries.size() else {}
+		var travel_minutes := maxi(1, int(travel_entry.get("travel_minutes", 1)))
+		var next_arrival_clock := int(travel_entry.get("arrived_game_clock_minutes", -1))
+		if next_arrival_clock < 0 and index + 1 < transitions.size():
+			var transition_clock := int((transitions[index + 1] as Dictionary).get("game_clock_minutes", -1))
+			if transition_clock >= 0:
+				next_arrival_clock = transition_clock
+		if next_arrival_clock < 0:
+			var transition_progress := float((transitions[index + 1] as Dictionary).get("progress", float(index + 1) / float(maxi(1, path.size() - 1)))) if index + 1 < transitions.size() else float(index + 1) / float(maxi(1, path.size() - 1))
+			next_arrival_clock = start_clock + int(round(transition_progress * float(duration_minutes)))
+		next_arrival_clock = clampi(next_arrival_clock, arrival_clock, end_clock)
+		var departure_clock := int(travel_entry.get("departed_game_clock_minutes", next_arrival_clock - travel_minutes))
+		departure_clock = clampi(departure_clock, arrival_clock, next_arrival_clock)
+		_append_replay_segment(segments, "dwell", node_id, node_id, label, label, arrival_clock, departure_clock, start_clock, duration_minutes, index)
+		_append_replay_segment(segments, "travel", node_id, next_node_id, label, next_label, departure_clock, next_arrival_clock, start_clock, duration_minutes, index)
+		arrival_clock = next_arrival_clock
+	if segments.is_empty() and not path.is_empty():
+		var only_node_id := str(path[0])
+		var only_node := _copy_dict(nodes_by_id.get(only_node_id, {}))
+		var only_label := str(only_node.get("display_name", only_node_id.replace("_", " ").capitalize()))
+		segments.append({"kind": "dwell", "node_id": only_node_id, "from_node_id": only_node_id, "to_node_id": only_node_id, "from_label": only_label, "to_label": only_label, "start_game_clock_minutes": start_clock, "end_game_clock_minutes": end_clock, "start_progress": 0.0, "end_progress": 1.0, "leg_index": 0})
 	var bands: Array = []
-	for index in range(transitions.size()):
-		var transition: Dictionary = transitions[index]
-		var start_action := int(transition.get("action_index", 0))
-		var end_action := max_action if index + 1 >= transitions.size() else int((transitions[index + 1] as Dictionary).get("action_index", max_action))
+	for segment_value in segments:
+		var segment: Dictionary = segment_value
+		if str(segment.get("kind", "")) != "dwell":
+			continue
 		bands.append({
-			"environment_id": str(transition.get("environment_id", "")),
-			"label": str(transition.get("environment_name", transition.get("environment_id", "Venue"))),
-			"start_progress": clampf(float(start_action) / float(max_action), 0.0, 1.0),
-			"end_progress": clampf(float(maxi(start_action, end_action)) / float(max_action), 0.0, 1.0),
-			"color_index": index % 6,
+			"environment_id": str(segment.get("node_id", "")),
+			"label": str(segment.get("from_label", "Venue")),
+			"start_progress": float(segment.get("start_progress", 0.0)),
+			"end_progress": float(segment.get("end_progress", 0.0)),
+			"color_index": int(segment.get("leg_index", 0)) % 6,
 		})
-	return {"max_action_index": max_action, "heat_samples": normalized_samples, "environment_bands": bands, "travel_keyframes": keyframes, "precomputed": true}
+	return {"max_action_index": max_action, "start_game_clock_minutes": start_clock, "end_game_clock_minutes": end_clock, "duration_minutes": end_clock - start_clock, "heat_samples": normalized_samples, "environment_bands": bands, "travel_keyframes": keyframes, "replay_segments": segments, "visited_node_ids": path, "precomputed": true}
+
+
+static func _append_replay_segment(segments: Array, kind: String, from_node_id: String, to_node_id: String, from_label: String, to_label: String, start_clock: int, end_clock: int, run_start_clock: int, duration_minutes: int, leg_index: int) -> void:
+	var safe_start := maxi(run_start_clock, start_clock)
+	var safe_end := maxi(safe_start, end_clock)
+	if safe_end == safe_start and not segments.is_empty():
+		return
+	segments.append({
+		"kind": kind,
+		"node_id": from_node_id if kind == "dwell" else "",
+		"from_node_id": from_node_id,
+		"to_node_id": to_node_id,
+		"from_label": from_label,
+		"to_label": to_label,
+		"start_game_clock_minutes": safe_start,
+		"end_game_clock_minutes": safe_end,
+		"start_progress": _clock_progress(safe_start, run_start_clock, duration_minutes),
+		"end_progress": _clock_progress(safe_end, run_start_clock, duration_minutes),
+		"leg_index": leg_index,
+	})
+
+
+static func _clock_progress(game_clock_minutes: int, start_clock: int, duration_minutes: int) -> float:
+	return clampf(float(game_clock_minutes - start_clock) / float(maxi(1, duration_minutes)), 0.0, 1.0)
+
+
+static func build_report_map_snapshot(world_map: Dictionary, timeline: Dictionary) -> Dictionary:
+	var report_map := world_map.duplicate(true)
+	var path := _string_array(timeline.get("visited_node_ids", world_map.get("visited_path", [])))
+	var visited_lookup := {}
+	for node_id in path:
+		visited_lookup[str(node_id)] = true
+	var nodes: Array = []
+	for node_value in _dict_array(world_map.get("nodes", [])):
+		var node_id := str(node_value.get("id", ""))
+		if not visited_lookup.has(node_id):
+			continue
+		var node: Dictionary = node_value.duplicate(true)
+		node["state"] = "visited"
+		node["travel_target"] = false
+		node["travel_enabled"] = false
+		nodes.append(node)
+	var edges: Array = []
+	for edge_value in _dict_array(world_map.get("edges", [])):
+		if visited_lookup.has(str(edge_value.get("a", ""))) and visited_lookup.has(str(edge_value.get("b", ""))):
+			edges.append(edge_value.duplicate(true))
+	report_map["nodes"] = nodes
+	report_map["edges"] = edges
+	report_map["visited_path"] = path
+	report_map["map_focus_node_ids"] = visited_lookup.keys()
+	report_map["travel_paths"] = []
+	report_map["selected_node_id"] = ""
+	if not path.is_empty():
+		report_map["current_node_id"] = str(path[-1])
+	return report_map
 
 
 static func cursor_for_action(timeline: Dictionary, action_index: int) -> Dictionary:
@@ -252,13 +392,36 @@ static func cursor_for_progress(timeline: Dictionary, progress: float) -> Dictio
 			sample_index = index
 		else:
 			break
-	var frames: Array = timeline.get("travel_keyframes", [])
-	for index in range(maxi(0, frames.size() - 1)):
-		if float((frames[index + 1] as Dictionary).get("progress", 1.0)) <= clamped:
-			leg_index = index + 1
-		else:
+	var phase := "dwell"
+	for segment_value in timeline.get("replay_segments", []):
+		if typeof(segment_value) != TYPE_DICTIONARY:
+			continue
+		var segment: Dictionary = segment_value
+		if str(segment.get("kind", "")) != "travel":
+			continue
+		var start := float(segment.get("start_progress", 0.0))
+		var finish := float(segment.get("end_progress", start))
+		if clamped >= finish:
+			leg_index = int(segment.get("leg_index", leg_index)) + 1
+		elif clamped >= start:
+			leg_index = int(segment.get("leg_index", leg_index))
+			phase = "travel"
 			break
-	return {"progress": clamped, "action_index": int(round(clamped * float(max_action))), "sample_index": sample_index, "leg_index": leg_index}
+	var start_clock := int(timeline.get("start_game_clock_minutes", RunState.GAME_CLOCK_START_MINUTE))
+	var end_clock := maxi(start_clock, int(timeline.get("end_game_clock_minutes", start_clock)))
+	return {"progress": clamped, "action_index": int(round(clamped * float(max_action))), "game_clock_minutes": int(round(lerpf(float(start_clock), float(end_clock), clamped))), "sample_index": sample_index, "leg_index": leg_index, "phase": phase}
+
+
+static func format_game_clock(game_clock_minutes: int) -> String:
+	var total_minutes := maxi(0, game_clock_minutes)
+	var day := int(floor(float(total_minutes) / 1440.0)) + 1
+	var minute_of_day := total_minutes % 1440
+	var hour_24 := int(floor(float(minute_of_day) / 60.0)) % 24
+	var hour_12 := hour_24 % 12
+	if hour_12 == 0:
+		hour_12 = 12
+	var suffix := "AM" if hour_24 < 12 else "PM"
+	return "Day %d %d:%02d %s" % [day, hour_12, minute_of_day % 60, suffix]
 
 
 static func load_outcome_registry() -> Dictionary:
