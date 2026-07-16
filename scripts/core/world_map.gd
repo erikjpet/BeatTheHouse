@@ -19,6 +19,10 @@ const DISTANCE_NEAR := "near"
 const DISTANCE_LOCAL := "local"
 const DISTANCE_FAR := "far"
 const DISTANCE_REMOTE := "remote"
+const TRAVEL_METHOD_WALK := "walk"
+const TRAVEL_METHOD_BUS := "bus"
+const TRAVEL_METHOD_TAXI := "taxi"
+const TRAVEL_METHOD_NIGHT_CAB := "night_cab"
 const MAP_BACKGROUND_PATH := "res://assets/art/map_backgrounds/cyberpunk_city_overhead.png"
 const TRAVEL_NEW_TARGET_LIMIT := 2
 const TRAVEL_TOTAL_TARGET_LIMIT := 3
@@ -154,7 +158,9 @@ func route_for_target(map_data: Dictionary, current_id: String, target_id: Strin
 	route["cost"] = generated_cost
 	route["risk_decay"] = risk_decay
 	route["path_stop_count"] = path.size()
-	route["travel_method"] = _travel_method_for_band(band)
+	var method_kind := travel_method_kind(route, band)
+	route["travel_method_kind"] = method_kind
+	route["travel_method"] = travel_method_label(method_kind)
 	if str(route.get("method", "")).strip_edges().is_empty():
 		route["method"] = str(route.get("travel_method", ""))
 	route["generated_world_route"] = true
@@ -879,6 +885,7 @@ func _add_edge(edges_by_id: Dictionary, a: String, b: String, positions: Diction
 		"base_cost": base_cost,
 		"cost": scaled_cost,
 		"risk_decay": clampi(risk_decay, 0, 100),
+		"travel_method_kind": _travel_method_kind_for_band(band),
 		"travel_method": _travel_method_for_band(band),
 	}
 
@@ -1250,6 +1257,7 @@ static func _normalize_edges(edges: Array) -> Array:
 			var authored_distance := str(source.get("distance", "")).strip_edges().to_lower()
 			if BAND_COST_SCALE.has(authored_distance):
 				distance_band = authored_distance
+		var method_kind := travel_method_kind(source, distance_band)
 		result.append({
 			"id": edge_id,
 			"a": a,
@@ -1259,7 +1267,8 @@ static func _normalize_edges(edges: Array) -> Array:
 			"base_cost": maxi(0, int(source.get("base_cost", source.get("cost", 0)))),
 			"cost": maxi(0, int(source.get("cost", 0))),
 			"risk_decay": clampi(int(source.get("risk_decay", _risk_decay_for_band(distance_band))), 0, 100),
-			"travel_method": str(source.get("travel_method", _travel_method_for_band(distance_band))),
+			"travel_method_kind": method_kind,
+			"travel_method": travel_method_label(method_kind),
 		})
 	return result
 
@@ -1589,15 +1598,53 @@ static func _last_index_of(values: Array, target_id: String) -> int:
 
 
 static func _travel_method_for_band(band: String) -> String:
-	match band:
-		DISTANCE_NEAR:
+	return travel_method_label(_travel_method_kind_for_band(band))
+
+
+# Returns a stable gameplay key while accepting legacy player-facing route copy.
+static func travel_method_kind(value: Variant, fallback_distance: String = "") -> String:
+	var source: Dictionary = value if typeof(value) == TYPE_DICTIONARY else {}
+	var explicit_kind := str(source.get("travel_method_kind", "")).strip_edges().to_lower()
+	if [TRAVEL_METHOD_WALK, TRAVEL_METHOD_BUS, TRAVEL_METHOD_TAXI, TRAVEL_METHOD_NIGHT_CAB].has(explicit_kind):
+		return explicit_kind
+	var method_text := str(value).strip_edges().to_lower() if typeof(value) == TYPE_STRING else str(source.get("travel_method", source.get("method", ""))).strip_edges().to_lower()
+	if method_text == TRAVEL_METHOD_WALK or method_text.contains("walk"):
+		return TRAVEL_METHOD_WALK
+	if method_text == TRAVEL_METHOD_BUS or method_text.contains("bus"):
+		return TRAVEL_METHOD_BUS
+	if method_text == TRAVEL_METHOD_TAXI or method_text.contains("taxi"):
+		return TRAVEL_METHOD_TAXI
+	if method_text == TRAVEL_METHOD_NIGHT_CAB or method_text.contains("night cab"):
+		return TRAVEL_METHOD_NIGHT_CAB
+	var distance := str(source.get("distance", fallback_distance)).strip_edges().to_lower()
+	return _travel_method_kind_for_band(distance)
+
+
+# Derives all route UI copy from the same canonical key used by event logic.
+static func travel_method_label(kind: String) -> String:
+	match kind.strip_edges().to_lower():
+		TRAVEL_METHOD_WALK:
 			return "Walk"
-		DISTANCE_LOCAL:
+		TRAVEL_METHOD_BUS:
 			return "Bus ticket"
-		DISTANCE_FAR:
+		TRAVEL_METHOD_TAXI:
 			return "Taxi ride"
-		_:
+		TRAVEL_METHOD_NIGHT_CAB:
 			return "Night cab"
+		_:
+			return "Travel"
+
+
+static func _travel_method_kind_for_band(band: String) -> String:
+	match band.strip_edges().to_lower():
+		DISTANCE_NEAR:
+			return TRAVEL_METHOD_WALK
+		DISTANCE_LOCAL:
+			return TRAVEL_METHOD_BUS
+		DISTANCE_FAR:
+			return TRAVEL_METHOD_TAXI
+		_:
+			return TRAVEL_METHOD_NIGHT_CAB
 
 
 static func _distance_band(blocks: int) -> String:
