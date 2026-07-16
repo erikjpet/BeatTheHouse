@@ -3,6 +3,8 @@ extends RefCounted
 
 # Loads and validates README-defined foundation content packs.
 
+const MusicDeliveryIndexScript := preload("res://scripts/core/music_delivery_index.gd")
+
 const ENVIRONMENT_ARCHETYPES_PATH := "res://data/environments/archetypes.json"
 const GAMES_PATH := "res://data/games/games.json"
 const ITEMS_PATH := "res://data/items/items.json"
@@ -17,7 +19,7 @@ const MUSIC_MANIFEST_PATH := "res://data/audio/music_manifest.json"
 const MUSIC_ASSET_ROOT := "res://assets/audio/music"
 const MIN_AUTHORED_MUSIC_LOOP_SECONDS := 12.0
 const AUTHORED_MUSIC_SAMPLE_RATE := 44100
-const AUTHORED_MUSIC_BITS_PER_SAMPLE := 16
+const AUTHORED_MUSIC_ALLOWED_BITS_PER_SAMPLE := [16, 24]
 const AUTHORED_MUSIC_BEATS_PER_BAR := 4
 
 var environment_archetypes: Array = []
@@ -427,6 +429,33 @@ func route(route_id: String) -> Dictionary:
 # Finds an authored music track manifest entry by id.
 func music_track(track_id: String) -> Dictionary:
 	return _lookup("music_tracks", music_tracks, track_id)
+
+
+# Scans one delivery folder on demand for editor/import tooling. Runtime audio
+# consumes the manifest and does not call this in its frame loop.
+func music_delivery_index(track_id: String) -> Dictionary:
+	var track := music_track(track_id)
+	if track.is_empty():
+		return {"track_id": track_id, "valid": false, "entries": [], "errors": ["unknown music track %s" % track_id]}
+	var delivery := track.get("delivery", {}) as Dictionary if typeof(track.get("delivery", {})) == TYPE_DICTIONARY else {}
+	return MusicDeliveryIndexScript.scan_track_folder(
+		track_id,
+		str(delivery.get("environment", "")).strip_edges(),
+		MUSIC_ASSET_ROOT,
+		delivery.get("classification_aliases", {}) as Dictionary if typeof(delivery.get("classification_aliases", {})) == TYPE_DICTIONARY else {}
+	)
+
+
+static func inspect_music_wav(path: String) -> Dictionary:
+	return _wav_info(path)
+
+
+static func synchronized_wav_mismatches(reference: Dictionary, candidate: Dictionary) -> Array[String]:
+	var mismatches: Array[String] = []
+	for property_name in ["sample_rate", "channels", "bits_per_sample", "frames"]:
+		if int(candidate.get(property_name, 0)) != int(reference.get(property_name, 0)):
+			mismatches.append(property_name)
+	return mismatches
 
 
 # Reads one JSON array content pack from disk.
@@ -1183,6 +1212,19 @@ func _validate_music_manifest_definitions() -> void:
 			continue
 		var track: Dictionary = track_value
 		var track_id := str(track.get("id", "")).strip_edges()
+		var delivery_value: Variant = track.get("delivery", {})
+		var delivery: Dictionary = delivery_value as Dictionary if typeof(delivery_value) == TYPE_DICTIONARY else {}
+		if typeof(delivery_value) != TYPE_DICTIONARY:
+			validation_errors.append("music_tracks %s delivery must be a dictionary when present." % track_id)
+		var delivery_environment := str(delivery.get("environment", "")).strip_edges()
+		var production_24_bit := str(delivery.get("master_contract", "")).strip_edges().to_lower() == "production_24_bit"
+		if production_24_bit:
+			if delivery_environment.is_empty():
+				validation_errors.append("music_tracks %s production delivery must declare its filename environment." % track_id)
+			if not [8, 16].has(int(track.get("bars", 0))):
+				validation_errors.append("music_tracks %s production loops must be exactly 8 or 16 bars." % track_id)
+			if int(track.get("bit_depth", 0)) != 24:
+				validation_errors.append("music_tracks %s production masters must declare 24-bit PCM." % track_id)
 		if float(track.get("bpm", 0.0)) <= 0.0:
 			validation_errors.append("music_tracks %s bpm must be positive." % track_id)
 		if int(track.get("bars", 0)) <= 0:
@@ -1238,6 +1280,7 @@ func _validate_music_manifest_definitions() -> void:
 						validation_errors.append("music_tracks %s stem variant %s %s must be an array." % [track_id, variant_id, list_key])
 				stem_descriptors.append({"role": role, "value": variant, "label": "music_tracks %s stem bank %s variant %s" % [track_id, role, variant_id]})
 		var reference_info := {}
+		var delivery_semantic_files := {}
 		var loop_frames := int(track.get("loop_frames", 0))
 		var loop_begin := int(track.get("loop_begin", 0))
 		if loop_begin != 0:
@@ -1247,6 +1290,8 @@ func _validate_music_manifest_definitions() -> void:
 			var value: Variant = descriptor.get("value")
 			var filename := _music_file_name(value)
 			var label := str(descriptor.get("label", "music_tracks %s stem" % track_id))
+			if not delivery.is_empty():
+				_validate_music_delivery_filename(label, track_id, filename, str(descriptor.get("role", "")), value, delivery, delivery_semantic_files)
 			_validate_music_stem_asset_file(label, track_id, filename)
 			var info := _validate_music_loop_asset(label, track_id, filename, loop_frames)
 			if info.is_empty():
@@ -1254,9 +1299,8 @@ func _validate_music_manifest_definitions() -> void:
 			if reference_info.is_empty():
 				reference_info = info.duplicate(true)
 			else:
-				for property_name in ["sample_rate", "channels", "bits_per_sample", "frames"]:
-					if int(info.get(property_name, 0)) != int(reference_info.get(property_name, 0)):
-						validation_errors.append("%s %s must match every other stem (%d, got %d)." % [label, property_name, int(reference_info.get(property_name, 0)), int(info.get(property_name, 0))])
+				for property_name in synchronized_wav_mismatches(reference_info, info):
+					validation_errors.append("%s %s must match every other stem (%d, got %d)." % [label, property_name, int(reference_info.get(property_name, 0)), int(info.get(property_name, 0))])
 			if typeof(value) == TYPE_DICTIONARY:
 				var stem_data: Dictionary = value
 				if int(stem_data.get("loop_begin", loop_begin)) != loop_begin or int(stem_data.get("loop_end", loop_frames)) != loop_frames:
@@ -1296,6 +1340,8 @@ func _validate_music_manifest_definitions() -> void:
 					validation_errors.append("music_tracks %s contains an empty stinger cue." % track_id)
 					continue
 				var stinger_value: Variant = stingers.get(cue_value)
+				if not delivery.is_empty():
+					_validate_music_delivery_filename("music_tracks %s stinger %s" % [track_id, cue_id], track_id, _music_file_name(stinger_value), "stinger", stinger_value, delivery, delivery_semantic_files)
 				_validate_music_asset_file("music_tracks %s stinger %s" % [track_id, cue_id], track_id, _music_file_name(stinger_value))
 				if typeof(stinger_value) == TYPE_DICTIONARY and (stinger_value as Dictionary).has("loop") and typeof((stinger_value as Dictionary).get("loop")) != TYPE_BOOL:
 					validation_errors.append("music_tracks %s stinger %s loop must be a boolean." % [track_id, cue_id])
@@ -1305,7 +1351,10 @@ func _validate_music_manifest_definitions() -> void:
 		if typeof(fills_value) == TYPE_DICTIONARY:
 			for fill_value in (fills_value as Dictionary).keys():
 				var fill_id := str(fill_value).strip_edges()
-				_validate_music_asset_file("music_tracks %s fill %s" % [track_id, fill_id], track_id, _music_file_name((fills_value as Dictionary).get(fill_value)))
+				var fill_data: Variant = (fills_value as Dictionary).get(fill_value)
+				if not delivery.is_empty():
+					_validate_music_delivery_filename("music_tracks %s fill %s" % [track_id, fill_id], track_id, _music_file_name(fill_data), "fill", fill_data, delivery, delivery_semantic_files)
+				_validate_music_asset_file("music_tracks %s fill %s" % [track_id, fill_id], track_id, _music_file_name(fill_data))
 		elif typeof(fills_value) != TYPE_NIL:
 			validation_errors.append("music_tracks %s fills must be a dictionary when present." % track_id)
 		var transitions := track.get("transitions", {}) as Dictionary if typeof(track.get("transitions", {})) == TYPE_DICTIONARY else {}
@@ -1316,6 +1365,43 @@ func _validate_music_manifest_definitions() -> void:
 			validation_errors.append("music_tracks %s transitions quantize must be beat, bar, or phrase." % track_id)
 		if int(transitions.get("phrase_bars", 4)) <= 0:
 			validation_errors.append("music_tracks %s transitions phrase_bars must be positive." % track_id)
+
+
+func _validate_music_delivery_filename(label: String, track_id: String, filename: String, expected_role: String, metadata: Variant, delivery: Dictionary, semantic_files: Dictionary) -> Dictionary:
+	var aliases := delivery.get("classification_aliases", {}) as Dictionary if typeof(delivery.get("classification_aliases", {})) == TYPE_DICTIONARY else {}
+	var parsed: Dictionary = MusicDeliveryIndexScript.parse_filename(filename, aliases)
+	if not bool(parsed.get("ok", false)):
+		validation_errors.append("%s has malformed delivery filename %s: %s." % [label, filename, str(parsed.get("error", "invalid filename"))])
+		return {}
+	var declared_environment := str(delivery.get("environment", "")).strip_edges()
+	if not declared_environment.is_empty() and str(parsed.get("environment", "")).to_lower() != declared_environment.to_lower():
+		validation_errors.append("%s filename environment %s disagrees with track %s delivery environment %s." % [label, str(parsed.get("environment", "")), track_id, declared_environment])
+	if not expected_role.is_empty() and str(parsed.get("role", "")) != expected_role:
+		validation_errors.append("%s classification %s maps to %s, not required role %s." % [label, str(parsed.get("classification", "")), str(parsed.get("role", "")), expected_role])
+	var semantic_id := str(parsed.get("semantic_id", ""))
+	if semantic_files.has(semantic_id) and str(semantic_files.get(semantic_id, "")).to_lower() != filename.to_lower():
+		validation_errors.append("%s duplicates semantic ID %s already declared by %s." % [label, semantic_id, str(semantic_files.get(semantic_id, ""))])
+	else:
+		semantic_files[semantic_id] = filename
+	if typeof(metadata) == TYPE_DICTIONARY:
+		var data: Dictionary = metadata
+		for pair_value in [
+			["classification", str(parsed.get("classification", ""))],
+			["role", str(parsed.get("role", ""))],
+			["instrument", str(parsed.get("instrument", ""))],
+		]:
+			var pair: Array = pair_value
+			var key := str(pair[0])
+			if data.has(key) and str(data.get(key, "")).to_lower() != str(pair[1]).to_lower():
+				validation_errors.append("%s metadata %s must match parsed filename value %s." % [label, key, str(pair[1])])
+		if data.has("pattern_number") and int(data.get("pattern_number", 0)) != int(parsed.get("pattern_number", 0)):
+			validation_errors.append("%s metadata pattern_number must match parsed filename value %d." % [label, int(parsed.get("pattern_number", 0))])
+		for list_key in ["tags", "progression_compatibility", "harmonic_sections"]:
+			if data.has(list_key) and typeof(data.get(list_key)) != TYPE_ARRAY:
+				validation_errors.append("%s metadata %s must be an array." % [label, list_key])
+		if data.has("dsp_sends") and typeof(data.get("dsp_sends")) != TYPE_DICTIONARY:
+			validation_errors.append("%s metadata dsp_sends must be a dictionary." % label)
+	return parsed
 
 
 func _validate_music_asset_file(label: String, track_id: String, filename: String) -> void:
@@ -1347,7 +1433,8 @@ func _validate_music_loop_asset(label: String, track_id: String, filename: Strin
 		return {}
 	var path := "%s/%s/%s" % [MUSIC_ASSET_ROOT, track_id, filename]
 	var info := _wav_info(path)
-	if info.is_empty():
+	if not bool(info.get("valid", false)):
+		validation_errors.append("%s has an invalid PCM WAV: %s." % [label, str(info.get("error", "unreadable header"))])
 		return {}
 	var sample_rate := int(info.get("sample_rate", 0))
 	var data_frames := int(info.get("frames", 0))
@@ -1355,8 +1442,8 @@ func _validate_music_loop_asset(label: String, track_id: String, filename: Strin
 		return {}
 	if sample_rate != AUTHORED_MUSIC_SAMPLE_RATE:
 		validation_errors.append("%s must be %d Hz, got %d Hz." % [label, AUTHORED_MUSIC_SAMPLE_RATE, sample_rate])
-	if int(info.get("bits_per_sample", 0)) != AUTHORED_MUSIC_BITS_PER_SAMPLE:
-		validation_errors.append("%s must be %d-bit PCM." % [label, AUTHORED_MUSIC_BITS_PER_SAMPLE])
+	if not AUTHORED_MUSIC_ALLOWED_BITS_PER_SAMPLE.has(int(info.get("bits_per_sample", 0))):
+		validation_errors.append("%s must be 16-bit legacy or 24-bit production PCM, got %d-bit." % [label, int(info.get("bits_per_sample", 0))])
 	if loop_frames != data_frames:
 		validation_errors.append("%s real WAV frame count must equal loop_frames %d, got %d." % [label, loop_frames, data_frames])
 	var min_loop_frames := int(float(sample_rate) * MIN_AUTHORED_MUSIC_LOOP_SECONDS)
@@ -1367,38 +1454,75 @@ func _validate_music_loop_asset(label: String, track_id: String, filename: Strin
 
 static func _wav_info(path: String) -> Dictionary:
 	if not FileAccess.file_exists(path):
-		return {}
+		return {"valid": false, "error": "file does not exist"}
 	var bytes := FileAccess.get_file_as_bytes(path)
-	if bytes.size() < 44:
-		return {}
+	if bytes.size() < 12:
+		return {"valid": false, "error": "file is shorter than a RIFF/WAVE header"}
 	if _ascii_from_bytes(bytes, 0, 4) != "RIFF" or _ascii_from_bytes(bytes, 8, 4) != "WAVE":
-		return {}
+		return {"valid": false, "error": "missing RIFF/WAVE signature"}
+	var riff_size := _u32_le(bytes, 4)
+	if riff_size < 4 or riff_size + 8 > bytes.size():
+		return {"valid": false, "error": "RIFF size exceeds the real file length"}
 	var offset := 12
-	var channels := 1
+	var audio_format := 0
+	var channels := 0
 	var sample_rate := 0
 	var bits_per_sample := 0
+	var block_align := 0
+	var byte_rate := 0
+	var fmt_found := false
+	var data_start := -1
 	var data_size := 0
 	while offset + 8 <= bytes.size():
 		var chunk_id := _ascii_from_bytes(bytes, offset, 4)
 		var chunk_size := _u32_le(bytes, offset + 4)
 		var chunk_data := offset + 8
-		if chunk_id == "fmt " and chunk_data + 16 <= bytes.size():
-			channels = maxi(1, _u16_le(bytes, chunk_data + 2))
-			sample_rate = maxi(1, _u32_le(bytes, chunk_data + 4))
+		if chunk_size < 0 or chunk_data + chunk_size > bytes.size():
+			return {"valid": false, "error": "chunk %s exceeds the real file length" % chunk_id}
+		if chunk_id == "fmt ":
+			if chunk_size < 16:
+				return {"valid": false, "error": "fmt chunk is shorter than 16 bytes"}
+			audio_format = _u16_le(bytes, chunk_data)
+			channels = _u16_le(bytes, chunk_data + 2)
+			sample_rate = _u32_le(bytes, chunk_data + 4)
+			byte_rate = _u32_le(bytes, chunk_data + 8)
+			block_align = _u16_le(bytes, chunk_data + 12)
 			bits_per_sample = _u16_le(bytes, chunk_data + 14)
-		elif chunk_id == "data":
-			data_size = mini(chunk_size, bytes.size() - chunk_data)
-			break
+			fmt_found = true
+		elif chunk_id == "data" and data_start < 0:
+			data_start = chunk_data
+			data_size = chunk_size
 		offset = chunk_data + chunk_size + (chunk_size % 2)
-	if sample_rate <= 0 or bits_per_sample <= 0 or data_size <= 0:
-		return {}
-	var bytes_per_sample := maxi(1, int(bits_per_sample / 8))
-	var frame_bytes := maxi(1, channels * bytes_per_sample)
+	if not fmt_found:
+		return {"valid": false, "error": "missing fmt chunk"}
+	if data_start < 0 or data_size <= 0:
+		return {"valid": false, "error": "missing or empty data chunk"}
+	if audio_format != 1:
+		return {"valid": false, "error": "audio format must be uncompressed integer PCM (format 1), got %d" % audio_format}
+	if channels < 1 or channels > 2:
+		return {"valid": false, "error": "channel count must be mono or stereo, got %d" % channels}
+	if sample_rate <= 0 or not AUTHORED_MUSIC_ALLOWED_BITS_PER_SAMPLE.has(bits_per_sample):
+		return {"valid": false, "error": "unsupported PCM format %d Hz/%d-bit" % [sample_rate, bits_per_sample]}
+	var bytes_per_sample := int(bits_per_sample / 8)
+	var frame_bytes := channels * bytes_per_sample
+	if block_align != frame_bytes:
+		return {"valid": false, "error": "block alignment is %d bytes; expected %d" % [block_align, frame_bytes]}
+	if byte_rate != sample_rate * frame_bytes:
+		return {"valid": false, "error": "byte rate is %d; expected %d" % [byte_rate, sample_rate * frame_bytes]}
+	if data_size % frame_bytes != 0:
+		return {"valid": false, "error": "data chunk length is not a whole number of audio frames"}
 	return {
+		"valid": true,
+		"audio_format": audio_format,
 		"sample_rate": sample_rate,
 		"channels": channels,
 		"bits_per_sample": bits_per_sample,
+		"block_align": block_align,
+		"byte_rate": byte_rate,
+		"data_offset": data_start,
+		"data_bytes": data_size,
 		"frames": int(data_size / frame_bytes),
+		"error": "",
 	}
 
 

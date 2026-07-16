@@ -5,9 +5,36 @@ It chooses parts, changes intensity, adds fills, and applies effects while the
 player is gambling. Steam and mobile use the full native Godot mix. The web
 version remains a reduced fallback and does not limit the master recordings.
 
-## What to deliver for one venue
+## Jazz Club filename and master checklist
 
-- 16-bit, 44.1 kHz WAV files.
+- [ ] Export uncompressed integer PCM WAV masters at 44.1 kHz and 24-bit.
+- [ ] Name every file `Environment_Classification_Instrument_PatternNumber.wav`.
+- [ ] Use a positive pattern number and a stable instrument name without spaces or underscores.
+- [ ] Render every looping file as exactly 8 or 16 bars in 4/4.
+- [ ] Keep every looping file at the same BPM, mono/stereo format, exact frame count, start, and end.
+- [ ] Leave every stem aligned to bar one; do not add different leading silence to individual files.
+- [ ] Put key, relative key, progression compatibility, intensity, weights, exclusions, tags, and DSP-send preferences in the manifest, not the filename.
+- [ ] Export fills and win/accent stingers as separate files; they play once unless deliberately marked to loop.
+
+Copyable filename examples:
+
+- `JazzClub_Lead_Trumpet_1.wav`
+- `JazzClub_Chords_Piano_1.wav`
+- `JazzClub_Bass_UprightBass_1.wav`
+- `JazzClub_DrumsHigh_BrushKit_1.wav`
+
+Supported classifications are `Chords`, `Bass`, `Lead`, `DrumsLow`,
+`DrumsHigh`, `Tension`, `Texture`, `Fill`, and `Stinger`. Classification
+aliases can be added in the track manifest without changing playback code.
+
+The file name only identifies the venue, musical role, instrument, and
+pattern number. For example, `JazzClub_Lead_Trumpet_1.wav` means Jazz Club,
+lead role, Trumpet instrument, pattern 1. It does not declare a key or chord
+progression.
+
+## What to deliver for a legacy venue
+
+- Internally consistent 16-bit, 44.1 kHz WAV sets remain supported.
 - Every looping stem must use the same mono/stereo format, exact frame count,
   start point, end point, BPM, and number of 4/4 bars.
 - Name each musical part by role: `pad`, `bass`, `lead`, `drums_low`,
@@ -54,3 +81,19 @@ Place one venue in `assets/audio/music/<track_id>/`. The accompanying entry in
 stems, banks, weights, tags, exclusions, keys, arrangement, fills, transitions,
 and stingers. The game rejects a delivery if synchronized stems differ, so a
 bad export cannot silently drift in play.
+
+The import helper reads the folder and proposes manifest records; it never
+silently rewrites the hand-authored manifest. The game validates the WAV data
+chunk itself, including metadata chunks and RIFF padding, so the reported
+frame count cannot hide a short or mismatched export.
+
+Godot's `AudioStreamWAV` playback container is 16-bit PCM. Native builds keep
+the engineer's 24-bit WAV master untouched, decode it once at load with signed
+round-to-nearest conversion, and retain its full 44.1 kHz rate, channel layout,
+loop length, and stem phase. Debug snapshots show both the 24-bit source format
+and the native playback-container format. This is independent of the reduced
+web packaging path; the web build never changes the source-master contract.
+
+The files under `assets/audio/music/jazz_club_delivery_fixture_*` are quiet
+deterministic test signals, clearly labelled fixtures. They prove 8- and
+16-bar 24-bit ingestion and are not the audio engineer's music.
