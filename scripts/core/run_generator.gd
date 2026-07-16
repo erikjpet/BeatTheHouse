@@ -40,6 +40,37 @@ func preview_environment(run_state: RunState, target_archetype_id: String = "") 
 	return environment.to_dict()
 
 
+# Swaps casino sub-environments without moving the world-map cursor.
+func enter_grand_casino_room(run_state: RunState, target_archetype_id: String) -> bool:
+	if run_state == null or not run_state.is_grand_casino_environment(run_state.current_environment):
+		return false
+	var target_id := target_archetype_id.strip_edges()
+	if not RunState.GRAND_CASINO_ARCHETYPE_IDS.has(target_id):
+		return false
+	var flags: Dictionary = run_state.current_environment.get("local_narrative_flags", {}) if typeof(run_state.current_environment.get("local_narrative_flags", {})) == TYPE_DICTIONARY else {}
+	var access := run_state.grand_casino_room_access_status(target_id, int(flags.get("casino_high_limit_buy_in", 60)))
+	if not bool(access.get("available", false)):
+		return false
+	run_state.store_grand_casino_room_environment(run_state.current_environment)
+	var environment_data := run_state.grand_casino_room_environment(target_id)
+	if environment_data.is_empty():
+		var archetype := _archetype_by_id(target_id)
+		if archetype.is_empty():
+			return false
+		var rng := run_state.create_rng()
+		var depth := maxi(0, int(run_state.current_environment.get("depth", run_state.environment_travel_count())))
+		var environment := EnvironmentInstance.from_archetype(archetype, depth, rng, library, run_state.challenge_config)
+		environment.game_states = _generated_game_states(run_state, environment.to_dict(), rng)
+		environment_data = environment.to_dict()
+		run_state.save_rng(rng)
+	environment_data["world_node_id"] = RunState.GRAND_CASINO_ARCHETYPE_ID
+	environment_data["world_map_travel"] = true
+	_apply_world_travel_targets(environment_data, run_state, run_state.world_map, RunState.GRAND_CASINO_ARCHETYPE_ID)
+	environment_data["layout"] = EnvironmentInstance.ensure_generated_layout(environment_data)
+	run_state.set_environment(environment_data)
+	return true
+
+
 func world_route_for_target(run_state: RunState, target_archetype_id: String) -> Dictionary:
 	if run_state == null or not run_state.has_world_map():
 		return library.route(target_archetype_id) if library != null else {}
@@ -122,9 +153,22 @@ func _world_environment_data_for_node(run_state: RunState, map_data: Dictionary,
 
 func _apply_world_travel_targets(environment_data: Dictionary, run_state: RunState, map_data: Dictionary, node_id: String) -> void:
 	var targets := _world_travel_target_ids(run_state, map_data, node_id)
+	for local_target_id in _grand_casino_local_target_ids(environment_data):
+		if not targets.has(local_target_id):
+			targets.append(local_target_id)
 	environment_data["next_archetypes"] = targets.duplicate(true)
 	environment_data["travel_hooks"] = targets.duplicate(true)
 	environment_data["world_map_travel"] = true
+
+
+func _grand_casino_local_target_ids(environment_data: Dictionary) -> Array:
+	var local_flags: Dictionary = environment_data.get("local_narrative_flags", {}) if typeof(environment_data.get("local_narrative_flags", {})) == TYPE_DICTIONARY else {}
+	var result: Array = []
+	for target_id_value in local_flags.get("casino_room_targets", []):
+		var target_id := str(target_id_value).strip_edges()
+		if not target_id.is_empty() and RunState.GRAND_CASINO_ARCHETYPE_IDS.has(target_id) and not result.has(target_id):
+			result.append(target_id)
+	return result
 
 
 func _fallback_world_neighbor(run_state: RunState, map_data: Dictionary, source_id: String) -> String:

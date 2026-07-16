@@ -29,6 +29,7 @@ const CONTEXT_MODE_LENDER := "lender"
 const CONTEXT_MODE_SHOPKEEPER := "shopkeeper"
 const CONTEXT_MODE_GAME_HOOK := "game_hook"
 const CONTEXT_MODE_DIALOGUE := "dialogue"
+const CONTEXT_MODE_CASINO_FIXTURE := "casino_fixture"
 const CONTEXT_MODE_HOME_TENURE := "home_tenure"
 const CONTEXT_MODE_HOME_SLEEP := "home_sleep"
 const CONTEXT_MODE_HOME_STORAGE := "home_storage"
@@ -3328,6 +3329,11 @@ func _travel_to(target_id: String, target_label: String, choice_data: Dictionary
 		_show_message(str(choice_data.get("disabled_reason", "That route is not available right now.")))
 		_refresh()
 		return
+	var local_casino_room_move := bool(choice_data.get("local_casino_room", false))
+	if local_casino_room_move and (not run_state.is_grand_casino_environment() or _environment_archetype(target_id).is_empty()):
+		_show_message("That interior casino door is not available.")
+		_refresh()
+		return
 	ignored_talk_entries = _pending_talk_entries()
 	if world_map_overlay != null:
 		world_map_overlay.visible = false
@@ -3339,7 +3345,7 @@ func _travel_to(target_id: String, target_label: String, choice_data: Dictionary
 	_refresh()
 	if _should_yield_for_travel_transition():
 		await get_tree().process_frame
-	var route_risk := run_state.travel_route_risk(route, target_id)
+	var route_risk := {} if local_casino_room_move else run_state.travel_route_risk(route, target_id)
 	var travel_heat := run_state.begin_travel_suspicion_decay(route, target_id)
 	var force_walk := bool(choice_data.get("force_walk_fallback", false))
 	var travel_minutes := maxi(1, int(choice_data.get("travel_minutes", _travel_clock_minutes_for_route(route, force_walk))))
@@ -3351,7 +3357,18 @@ func _travel_to(target_id: String, target_label: String, choice_data: Dictionary
 	run_state.current_environment["departed_game_clock_minutes"] = departed_game_clock_minutes
 	run_state.advance_game_clock_minutes(travel_minutes)
 	route["arrived_game_clock_minutes"] = maxi(departed_game_clock_minutes, run_state.game_clock_minutes)
-	generator.next_environment(run_state, target_id, true)
+	if local_casino_room_move:
+		if not generator.enter_grand_casino_room(run_state, target_id):
+			run_state.game_clock_minutes = departed_game_clock_minutes
+			_hide_travel_transition()
+			_show_message("The interior casino room could not be prepared.")
+			_refresh()
+			return
+		if bool(choice_data.get("high_limit_buy_in", false)):
+			run_state.narrative_flags["grand_casino_high_limit_access"] = true
+			run_state.narrative_flags["grand_casino_high_limit_access_method"] = "cash_buy_in"
+	else:
+		generator.next_environment(run_state, target_id, true)
 	run_state.clear_closing_time_state()
 	var travel_decay := run_state.finish_travel_suspicion_decay(travel_heat)
 	_update_procedural_music()
@@ -5594,6 +5611,8 @@ func _add_context_object_actions(card: VBoxContainer, object_data: Dictionary) -
 			_add_context_game_hook_actions(card, object_data)
 		CONTEXT_MODE_DIALOGUE:
 			_add_card_button(card, "Talk", Callable(self, "start_dialogue").bind(source_id, object_data), false, true)
+		CONTEXT_MODE_CASINO_FIXTURE:
+			_add_card_button(card, "Inspect", Callable(self, "_inspect_casino_fixture").bind(object_data), false, true)
 		CONTEXT_MODE_HOME_TENURE:
 			_add_card_button(card, str(object_data.get("label", "Pay")), Callable(self, "confirm_home_tenure_action"), false, true)
 		CONTEXT_MODE_HOME_SLEEP:
@@ -6985,6 +7004,8 @@ func activate_interactable_object(object_id: String) -> bool:
 			return use_game_environment_hook(str(object_data.get("parent_id", "")), source_id, str(object_data.get("confirm_action_id", "")))
 		CONTEXT_MODE_DIALOGUE:
 			return start_dialogue(source_id, object_data)
+		CONTEXT_MODE_CASINO_FIXTURE:
+			return _inspect_casino_fixture(object_data)
 		CONTEXT_MODE_HOME_TENURE:
 			return confirm_home_tenure_action()
 		CONTEXT_MODE_HOME_SLEEP:
@@ -7022,6 +7043,15 @@ func activate_interactable_object(object_id: String) -> bool:
 	_show_message("Inspect this first.")
 	_refresh()
 	return false
+
+
+func _inspect_casino_fixture(object_data: Dictionary) -> bool:
+	var message := str(object_data.get("interaction_message", object_data.get("short_description", "The casino staff acknowledge you."))).strip_edges()
+	if message.is_empty():
+		message = "The casino staff acknowledge you."
+	_show_message(message)
+	_refresh()
+	return true
 
 
 func _activate_event_response_action(action_object_id: String) -> bool:

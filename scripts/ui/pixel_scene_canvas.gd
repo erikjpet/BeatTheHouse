@@ -521,7 +521,7 @@ func _draw() -> void:
 				_draw_gas_station()
 			"small_underground_casino":
 				_draw_underground()
-			"grand_casino":
+			"grand_casino", "grand_casino_high_limit", "grand_casino_back_room":
 				_draw_grand_casino()
 			_:
 				_draw_corner_store()
@@ -1178,7 +1178,7 @@ func _draw_scene_life() -> void:
 			_draw_smoke_bands(24, 840, 92, C_PINK, 0.05)
 			_draw_string_lights()
 			_draw_sparkles(SCENE_SPARKLES_UNDERGROUND, C_TEAL, 0.16)
-		"grand_casino":
+		"grand_casino", "grand_casino_high_limit", "grand_casino_back_room":
 			for i in range(5):
 				var x := 250 + i * 100
 				draw_rect(Rect2(x, 124, 52, 8), Color(C_YELLOW.r, C_YELLOW.g, C_YELLOW.b, 0.14 + abs(sin(flicker * 5.0 + i)) * 0.20))
@@ -1231,7 +1231,7 @@ func _draw_familiar_characters() -> void:
 			_draw_named_character("ox", Vector2(794, 205), 1.02, "bouncer")
 		"pawn_shop":
 			_draw_named_character("sal", Vector2(450, 210), 0.74, "clerk")
-		"grand_casino":
+		"grand_casino", "grand_casino_high_limit", "grand_casino_back_room":
 			_draw_named_character("rourke", Vector2(450 + sin(flicker * 0.75) * 70.0, 222), 1.04, "pit_boss")
 			_draw_named_character("iris", Vector2(632, 180), 0.76, "dealer")
 

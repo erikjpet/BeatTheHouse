@@ -24,6 +24,7 @@ static func interactable_object_view_list(host: Variant) -> Array:
 	var before_travel_objects: Array = []
 	before_travel_objects.append_array(host._game_hook_interactable_objects())
 	before_travel_objects.append_array(host._home_interactable_objects())
+	before_travel_objects.append_array(casino_spatial_interactable_objects(host))
 	var after_travel_objects: Array = []
 	var room_return_object = host._parent_home_return_interactable_object()
 	if not room_return_object.is_empty():
@@ -324,6 +325,74 @@ static func parent_home_return_interactable_object(host: Variant) -> Dictionary:
 	})
 
 
+static func casino_spatial_interactable_objects(host: Variant) -> Array:
+	var objects: Array = []
+	if host.run_state == null or not host.run_state.is_grand_casino_environment():
+		return objects
+	var flags: Dictionary = host.run_state.current_environment.get("local_narrative_flags", {}) if typeof(host.run_state.current_environment.get("local_narrative_flags", {})) == TYPE_DICTIONARY else {}
+	var fixture_index := 0
+	for fixture_value in host._copy_array(flags.get("casino_fixtures", [])):
+		if typeof(fixture_value) != TYPE_DICTIONARY:
+			continue
+		var fixture: Dictionary = fixture_value
+		var fixture_id := str(fixture.get("id", "")).strip_edges()
+		if fixture_id.is_empty():
+			continue
+		var object_id := "casino_fixture:%s" % fixture_id
+		objects.append(host._make_interactable_object({
+			"object_id": object_id,
+			"object_type": host.CONTEXT_MODE_CASINO_FIXTURE,
+			"source_id": fixture_id,
+			"label": str(fixture.get("label", host._label_from_id(fixture_id))),
+			"short_description": str(fixture.get("description", "A Grand Casino fixture.")),
+			"presence": "fixture",
+			"interactive": true,
+			"enabled": true,
+			"action_summary": str(fixture.get("action_summary", "Inspect.")),
+			"interaction_message": str(fixture.get("interaction_message", "The casino staff acknowledge you.")),
+			"visual_key": str(fixture.get("visual_key", "casino_fixture")),
+			"prop": str(fixture.get("prop", "counter")),
+			"surface": str(fixture.get("surface", "counter_case")),
+			"icon_key": str(fixture.get("icon_key", "service")),
+			"available_actions": [{"id": "inspect_casino_fixture", "label": "Inspect"}],
+			"confirm_action_id": "inspect_casino_fixture",
+			"focus_rect": host._interaction_rect_for_object(object_id, host.CONTEXT_MODE_CASINO_FIXTURE, fixture_index),
+		}))
+		fixture_index += 1
+	var door_index := 0
+	for target_id_value in host._copy_array(flags.get("casino_room_targets", [])):
+		var target_id := str(target_id_value).strip_edges()
+		var choice := casino_room_door_travel_choice(host, target_id)
+		if choice.is_empty():
+			continue
+		var object_id := "travel:%s" % target_id
+		var enabled := bool(choice.get("enabled", true))
+		objects.append(host._make_interactable_object({
+			"object_id": object_id,
+			"object_type": host.CONTEXT_MODE_TRAVEL,
+			"source_id": target_id,
+			"label": str(choice.get("label", host._label_from_id(target_id))),
+			"short_description": str(choice.get("description", "An interior casino door.")),
+			"presence": "fixture",
+			"interactive": true,
+			"enabled": enabled,
+			"disabled_reason": str(choice.get("disabled_reason", "")),
+			"action_summary": "Enter room." if enabled else str(choice.get("disabled_reason", "Locked.")),
+			"cost_summary": "Cost: %d" % int(choice.get("cost", 0)),
+			"attribute_badges": host._copy_array(choice.get("attribute_badges", [])),
+			"preview_lines": host._copy_array(choice.get("preview_lines", [])),
+			"unlock_conditions": host._copy_array(choice.get("unlock_conditions", [])),
+			"visual_key": "travel",
+			"prop": "door",
+			"icon_key": "travel",
+			"available_actions": [{"id": "enter_room", "label": "Enter Room"}] if enabled else [],
+			"confirm_action_id": "enter_room" if enabled else "",
+			"focus_rect": host._interaction_rect_for_object(object_id, host.CONTEXT_MODE_TRAVEL, door_index + 1),
+		}))
+		door_index += 1
+	return objects
+
+
 static func travel_leave_interactable_object(host: Variant) -> Dictionary:
 	if host.run_state == null:
 		return {}
@@ -371,6 +440,9 @@ static func travel_leave_interactable_object(host: Variant) -> Dictionary:
 
 
 static func local_parent_home_door_travel_choice(host: Variant, target_id: String) -> Dictionary:
+	var casino_choice := casino_room_door_travel_choice(host, target_id)
+	if not casino_choice.is_empty():
+		return casino_choice
 	var door_kind = host._local_parent_home_door_kind(target_id)
 	if door_kind.is_empty():
 		return {}
@@ -424,6 +496,85 @@ static func local_parent_home_door_travel_choice(host: Variant, target_id: Strin
 		"disabled_reason": str(status.get("disabled_reason", "")),
 		"local_door": true,
 		"door_kind": door_kind,
+	}
+
+
+static func casino_room_door_travel_choice(host: Variant, target_id: String) -> Dictionary:
+	if host.run_state == null or not host.run_state.is_grand_casino_environment():
+		return {}
+	var clean_target_id := target_id.strip_edges()
+	var flags: Dictionary = host.run_state.current_environment.get("local_narrative_flags", {}) if typeof(host.run_state.current_environment.get("local_narrative_flags", {})) == TYPE_DICTIONARY else {}
+	if not host._string_array(flags.get("casino_room_targets", [])).has(clean_target_id):
+		return {}
+	var archetype = host._environment_archetype(clean_target_id)
+	if archetype.is_empty():
+		return {}
+	var travel_minutes := maxi(1, int(flags.get("casino_room_travel_minutes", 5)))
+	var buy_in := maxi(0, int(flags.get("casino_high_limit_buy_in", 60)))
+	var room_access: Dictionary = host.run_state.grand_casino_room_access_status(clean_target_id, buy_in)
+	var requires_buy_in := bool(room_access.get("cash_buy_in_required", false))
+	var locked_back_room := clean_target_id == RunState.GRAND_CASINO_BACK_ROOM_ARCHETYPE_ID
+	var route := {
+		"id": clean_target_id,
+		"destination_archetype": clean_target_id,
+		"target_node_id": RunState.GRAND_CASINO_ARCHETYPE_ID,
+		"cost": buy_in if requires_buy_in else 0,
+		"base_cost": buy_in if requires_buy_in else 0,
+		"distance": "near",
+		"distance_blocks": 0,
+		"risk": "",
+		"suspicion_delta": 0,
+		"risk_decay": 0,
+		"travel_method": "Inside",
+		"method": "Inside",
+		"travel_minutes": travel_minutes,
+		"local_casino_room": true,
+	}
+	var status = host.run_state.travel_route_status(route)
+	var enabled := bool(status.get("available", true)) and bool(room_access.get("available", false))
+	var disabled_reason := str(status.get("disabled_reason", room_access.get("reason", "")))
+	var unlock_conditions: Array = []
+	var preview_line := "Cross the Grand Casino interior in %d minutes." % travel_minutes
+	if locked_back_room:
+		enabled = false
+		disabled_reason = "Locked. Rourke opens the Back Room only for a showdown."
+		unlock_conditions = ["Rourke must take you there."]
+		preview_line = "The Back Room door is visible, but Rourke controls the lock."
+	elif requires_buy_in:
+		unlock_conditions = ["Silver Players Card or a $%d cash buy-in." % buy_in]
+		preview_line = "Pay the $%d cash buy-in, or enter later with Silver card access." % buy_in
+		if not bool(room_access.get("available", false)):
+			enabled = false
+			disabled_reason = str(room_access.get("reason", "High-Limit requires Silver card access or a $%d cash buy-in." % buy_in))
+	var label := str(archetype.get("display_name", "")).strip_edges()
+	if label.is_empty():
+		label = host._travel_label_from_archetype(archetype, clean_target_id)
+	return {
+		"id": clean_target_id,
+		"label": label,
+		"kind": str(archetype.get("kind", "boss")),
+		"tier": int(archetype.get("tier", 3)),
+		"description": str(archetype.get("room_description", "An interior Grand Casino room.")),
+		"route": route.duplicate(true),
+		"cost": int(route.get("cost", 0)),
+		"risk": "",
+		"suspicion_delta": 0,
+		"distance": "near",
+		"distance_blocks": 0,
+		"risk_decay": 0,
+		"travel_method": "Inside",
+		"travel_minutes": travel_minutes,
+		"local_door": true,
+		"local_casino_room": true,
+		"high_limit_buy_in": requires_buy_in,
+		"attribute_badges": host.AttributeBadgesScript.for_route(route, {}),
+		"unlock_conditions": unlock_conditions,
+		"unlock_summary": "; ".join(unlock_conditions),
+		"preview": {"level": "full", "lines": [preview_line]},
+		"preview_level": "full",
+		"preview_lines": [preview_line],
+		"enabled": enabled,
+		"disabled_reason": disabled_reason,
 	}
 
 

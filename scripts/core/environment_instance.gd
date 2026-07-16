@@ -195,6 +195,8 @@ static func ensure_generated_layout(environment_data: Dictionary) -> Dictionary:
 		_assign_item_offer_rects(object_rects, layout, _copy_array(environment_data.get("item_offers", [])), active_object_ids)
 	_assign_single_object_rect(object_rects, layout, "shopkeeper:merchant", "shopkeeper", 0, "shopkeeper_spots", _shopkeeper_should_exist(environment_data), active_object_ids)
 	_assign_single_object_rect(object_rects, layout, "travel:leave", "travel", 0, "travel_spots", not _travel_target_ids(environment_data).is_empty(), active_object_ids)
+	_assign_string_object_rects(object_rects, layout, "casino_fixture", _casino_fixture_ids(environment_data), "casino_fixture_spots", active_object_ids)
+	_assign_string_object_rects(object_rects, layout, "travel", _grand_casino_local_target_ids(environment_data), "casino_door_spots", active_object_ids)
 	_assign_string_object_rects(object_rects, layout, "service", _copy_array(environment_data.get("service_ids", [])), "service_spots", active_object_ids)
 	_assign_string_object_rects(object_rects, layout, "lender", _copy_array(environment_data.get("lender_hooks", [])), "lender_spots", active_object_ids)
 	_assign_object_layout_entries(object_rects, layout, _filter_unique_object_layout_entries(_game_hook_layout_entries(environment_data)), active_object_ids)
@@ -860,6 +862,8 @@ static func _active_object_layout_entries(environment_data: Dictionary) -> Array
 		entries.append({"object_id": "shopkeeper:merchant", "object_type": "shopkeeper", "index": 0, "spot_field": "shopkeeper_spots"})
 	if not _travel_target_ids(environment_data).is_empty():
 		entries.append({"object_id": "travel:leave", "object_type": "travel", "index": 0, "spot_field": "travel_spots"})
+	_append_string_layout_entries(entries, "casino_fixture", _casino_fixture_ids(environment_data), "casino_fixture_spots")
+	_append_string_layout_entries(entries, "travel", _grand_casino_local_target_ids(environment_data), "casino_door_spots")
 	_append_string_layout_entries(entries, "service", _copy_array(environment_data.get("service_ids", [])), "service_spots")
 	_append_string_layout_entries(entries, "lender", _copy_array(environment_data.get("lender_hooks", [])), "lender_spots")
 	entries.append_array(_game_hook_layout_entries(environment_data))
@@ -930,6 +934,10 @@ static func _active_object_ids(environment_data: Dictionary) -> Dictionary:
 		result["shopkeeper:merchant"] = true
 	if not _travel_target_ids(environment_data).is_empty():
 		result["travel:leave"] = true
+	for fixture_id in _casino_fixture_ids(environment_data):
+		result["casino_fixture:%s" % fixture_id] = true
+	for target_id in _grand_casino_local_target_ids(environment_data):
+		result["travel:%s" % target_id] = true
 	for service_id in _string_array(environment_data.get("service_ids", [])):
 		result["service:%s" % service_id] = true
 	for lender_id in _string_array(environment_data.get("lender_hooks", [])):
@@ -959,7 +967,7 @@ static func _prune_inactive_object_rects(object_rects: Dictionary, active_object
 
 
 static func _is_managed_object_id(object_id: String) -> bool:
-	for prefix in ["game:", "event:", "item:", "shopkeeper:", "travel:", "service:", "lender:", "game_hook:", "dialogue:", "home_tenure:", "home_sleep:", "home_storage:", "home_container:"]:
+	for prefix in ["game:", "event:", "item:", "shopkeeper:", "travel:", "service:", "lender:", "game_hook:", "dialogue:", "casino_fixture:", "home_tenure:", "home_sleep:", "home_storage:", "home_container:"]:
 		if object_id.begins_with(prefix):
 			return true
 	return false
@@ -976,6 +984,32 @@ static func _travel_target_ids(environment_data: Dictionary) -> Array:
 			if not result.has(target_id):
 				result.append(target_id)
 	return result
+
+
+static func _casino_fixture_ids(environment_data: Dictionary) -> Array:
+	if not _is_grand_casino_archetype(environment_data):
+		return []
+	var flags: Dictionary = environment_data.get("local_narrative_flags", {}) if typeof(environment_data.get("local_narrative_flags", {})) == TYPE_DICTIONARY else {}
+	var result: Array = []
+	for fixture_value in flags.get("casino_fixtures", []):
+		if typeof(fixture_value) != TYPE_DICTIONARY:
+			continue
+		var fixture_id := str((fixture_value as Dictionary).get("id", "")).strip_edges()
+		if not fixture_id.is_empty() and not result.has(fixture_id):
+			result.append(fixture_id)
+	return result
+
+
+static func _grand_casino_local_target_ids(environment_data: Dictionary) -> Array:
+	if not _is_grand_casino_archetype(environment_data):
+		return []
+	var flags: Dictionary = environment_data.get("local_narrative_flags", {}) if typeof(environment_data.get("local_narrative_flags", {})) == TYPE_DICTIONARY else {}
+	return _string_array(flags.get("casino_room_targets", []))
+
+
+static func _is_grand_casino_archetype(environment_data: Dictionary) -> bool:
+	var archetype_id := str(environment_data.get("archetype_id", environment_data.get("id", ""))).strip_edges()
+	return archetype_id == "grand_casino" or archetype_id == "grand_casino_high_limit" or archetype_id == "grand_casino_back_room"
 
 
 static func _game_hook_layout_entries(environment_data: Dictionary) -> Array:

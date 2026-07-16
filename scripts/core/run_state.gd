@@ -49,6 +49,13 @@ const POLICE_CAPTURE_FAILURE_MESSAGE := "Police flood the room and catch you bef
 const CASINO_TAKEN_OUT_BACK_FAILURE_MESSAGE := "The casino takes you out back. The run is over."
 const ABANDONED_FAILURE_MESSAGE := "You walk away from the table. The run is over."
 const GRAND_CASINO_ARCHETYPE_ID := "grand_casino"
+const GRAND_CASINO_HIGH_LIMIT_ARCHETYPE_ID := "grand_casino_high_limit"
+const GRAND_CASINO_BACK_ROOM_ARCHETYPE_ID := "grand_casino_back_room"
+const GRAND_CASINO_ARCHETYPE_IDS := [
+	GRAND_CASINO_ARCHETYPE_ID,
+	GRAND_CASINO_HIGH_LIMIT_ARCHETYPE_ID,
+	GRAND_CASINO_BACK_ROOM_ARCHETYPE_ID,
+]
 const GRAND_CASINO_OBJECTIVE_ID := "grand_casino_demo_bankroll"
 const GRAND_CASINO_SHOWDOWN_EVENT_ID := "the_house_calls"
 const GRAND_CASINO_HIGH_ROLLER_EVENT_ID := "high_roller_cashout"
@@ -119,6 +126,7 @@ var pending_drunk_absorption: Array = []
 var drunk_distortion_suppression_turns: int = 0
 var current_environment: Dictionary = {}
 var world_map: Dictionary = {}
+var grand_casino_room_states: Dictionary = {}
 var pending_triggered_events: Array = []
 var pending_bags: Array = []
 var active_triggered_event: Dictionary = {}
@@ -172,6 +180,7 @@ func start_new(p_seed_text: String = "FOUNDATION-SEED", p_challenge_config: Dict
 	drunk_distortion_suppression_turns = 0
 	current_environment = {}
 	world_map = {}
+	grand_casino_room_states = {}
 	pending_triggered_events = []
 	pending_bags = []
 	active_triggered_event = {}
@@ -1052,6 +1061,8 @@ func set_environment(environment_data: Dictionary) -> void:
 		_compact_environment_history()
 	current_environment = _normalize_environment(environment_data)
 	current_environment["entered_game_clock_minutes"] = maxi(0, game_clock_minutes)
+	if _is_grand_casino_environment(current_environment):
+		store_grand_casino_room_environment(current_environment)
 	_apply_sals_forfeited_shelf_to_current_environment()
 	var next_environment := current_environment
 	unlocked_travel = _unique_strings(
@@ -1088,7 +1099,48 @@ func store_current_world_node_environment() -> void:
 		node_id = str(current_environment.get("archetype_id", "")).strip_edges()
 	if node_id.is_empty():
 		return
-	world_map = WorldMap.store_environment(world_map, node_id, current_environment)
+	var stored_environment := current_environment
+	if _is_grand_casino_environment(current_environment):
+		store_grand_casino_room_environment(current_environment)
+		var main_floor := grand_casino_room_environment(GRAND_CASINO_ARCHETYPE_ID)
+		if not main_floor.is_empty():
+			stored_environment = main_floor
+	world_map = WorldMap.store_environment(world_map, node_id, stored_environment)
+
+
+func store_grand_casino_room_environment(environment: Dictionary) -> void:
+	if not _is_grand_casino_environment(environment):
+		return
+	var archetype_id := str(environment.get("archetype_id", GRAND_CASINO_ARCHETYPE_ID)).strip_edges()
+	if not GRAND_CASINO_ARCHETYPE_IDS.has(archetype_id):
+		return
+	# The active room is already an owned, normalized runtime dictionary. Keep
+	# that reference so game-state mutations remain live without a second deep
+	# copy on every environment refresh; room restoration still returns a copy.
+	grand_casino_room_states[archetype_id] = environment
+
+
+func grand_casino_room_environment(archetype_id: String) -> Dictionary:
+	var room: Variant = grand_casino_room_states.get(archetype_id.strip_edges(), {})
+	return (room as Dictionary).duplicate(true) if typeof(room) == TYPE_DICTIONARY else {}
+
+
+func grand_casino_room_access_status(target_archetype_id: String, high_limit_buy_in: int = 60) -> Dictionary:
+	var target_id := target_archetype_id.strip_edges()
+	if not is_grand_casino_environment():
+		return {"available": false, "reason": "The casino interior is not available here."}
+	if target_id == GRAND_CASINO_BACK_ROOM_ARCHETYPE_ID:
+		return {"available": false, "locked": true, "reason": "Locked. Rourke opens the Back Room only for a showdown."}
+	if target_id == GRAND_CASINO_HIGH_LIMIT_ARCHETYPE_ID:
+		if bool(narrative_flags.get("grand_casino_high_limit_access", false)):
+			return {"available": true, "access_method": str(narrative_flags.get("grand_casino_high_limit_access_method", "card")), "cost": 0}
+		var buy_in := maxi(0, high_limit_buy_in)
+		if bankroll < buy_in:
+			return {"available": false, "locked": true, "cash_buy_in_required": true, "cost": buy_in, "reason": "High-Limit requires Silver card access or a $%d cash buy-in." % buy_in}
+		return {"available": true, "cash_buy_in_required": true, "access_method": "cash_buy_in", "cost": buy_in}
+	if target_id == GRAND_CASINO_ARCHETYPE_ID:
+		return {"available": true, "access_method": "interior", "cost": 0}
+	return {"available": false, "reason": "That room is not part of the Grand Casino."}
 
 
 func enter_world_node(node_id: String, environment_data: Dictionary) -> void:
@@ -2563,7 +2615,7 @@ func _initialize_grand_casino_objective_runtime() -> void:
 	var objective := _copy_dict(current_environment.get("demo_objective", {}))
 	if not _is_grand_casino_objective(objective):
 		return
-	var environment_id := str(current_environment.get("id", GRAND_CASINO_ARCHETYPE_ID))
+	var environment_id := GRAND_CASINO_ARCHETYPE_ID
 	var previous_environment_id := str(narrative_flags.get("grand_casino_entry_environment_id", ""))
 	if previous_environment_id != environment_id:
 		narrative_flags["grand_casino_entry_environment_id"] = environment_id
@@ -2618,16 +2670,21 @@ func _is_grand_casino_objective(objective: Dictionary) -> bool:
 	return str(objective.get("id", "")).strip_edges() == GRAND_CASINO_OBJECTIVE_ID
 
 
+func is_grand_casino_environment(environment: Dictionary = {}) -> bool:
+	var source := current_environment if environment.is_empty() else environment
+	return _is_grand_casino_environment(source)
+
+
 func _is_grand_casino_environment(environment: Dictionary) -> bool:
 	if environment.is_empty():
 		return false
 	var archetype_id := str(environment.get("archetype_id", "")).strip_edges()
-	if archetype_id == GRAND_CASINO_ARCHETYPE_ID:
+	if GRAND_CASINO_ARCHETYPE_IDS.has(archetype_id):
 		return true
 	var environment_id := str(environment.get("id", "")).strip_edges()
-	if environment_id == GRAND_CASINO_ARCHETYPE_ID:
+	if GRAND_CASINO_ARCHETYPE_IDS.has(environment_id):
 		return true
-	return _location_id_from_generated_environment_id(environment_id) == GRAND_CASINO_ARCHETYPE_ID
+	return GRAND_CASINO_ARCHETYPE_IDS.has(_location_id_from_generated_environment_id(environment_id))
 
 
 func _grand_casino_active_security_event_sources(environment: Dictionary) -> Array:
@@ -3335,6 +3392,8 @@ func begin_travel_suspicion_decay(route_data: Dictionary, destination_archetype_
 	var destination_location_id := str(destination_archetype_id).strip_edges()
 	if destination_location_id.is_empty():
 		destination_location_id = str(route_data.get("destination_archetype", "")).strip_edges()
+	if GRAND_CASINO_ARCHETYPE_IDS.has(destination_location_id):
+		destination_location_id = GRAND_CASINO_ARCHETYPE_ID
 	var distance := str(route_data.get("distance", "near")).to_lower()
 	var route_decay_percent := travel_risk_decay(route_data)
 	var same_location := not destination_location_id.is_empty() and destination_location_id == source_location_id
@@ -4510,7 +4569,7 @@ func current_suspicion_location_id() -> String:
 func _suspicion_location_id_from_context(context: Dictionary) -> String:
 	var archetype_id := str(context.get("environment_archetype_id", "")).strip_edges()
 	if not archetype_id.is_empty():
-		return archetype_id
+		return GRAND_CASINO_ARCHETYPE_ID if GRAND_CASINO_ARCHETYPE_IDS.has(archetype_id) else archetype_id
 	var environment_id := str(context.get("environment_id", "")).strip_edges()
 	if environment_id.is_empty():
 		return current_suspicion_location_id()
@@ -4529,6 +4588,8 @@ func _suspicion_location_id_from_context(context: Dictionary) -> String:
 func _suspicion_location_id_for_environment(environment: Dictionary) -> String:
 	if environment.is_empty():
 		return ""
+	if _is_grand_casino_environment(environment):
+		return GRAND_CASINO_ARCHETYPE_ID
 	var archetype_id := str(environment.get("archetype_id", "")).strip_edges()
 	if not archetype_id.is_empty():
 		return archetype_id
@@ -4804,6 +4865,7 @@ func to_dict() -> Dictionary:
 		"drunk_distortion_suppression_turns": drunk_distortion_suppression_turns,
 		"current_environment": current_environment.duplicate(true),
 		"world_map": WorldMap.normalize(world_map),
+		"grand_casino_room_states": _grand_casino_room_states_for_save(),
 		"pending_triggered_events": pending_triggered_events.duplicate(true),
 		"pending_bags": pending_bags.duplicate(true),
 		"active_triggered_event": active_triggered_event.duplicate(true),
@@ -4853,6 +4915,9 @@ func from_dict(data: Dictionary) -> void:
 	current_environment = _normalize_environment(_copy_dict(data.get("current_environment", {})))
 	_apply_sals_forfeited_shelf_to_current_environment()
 	world_map = WorldMap.normalize(_copy_dict(data.get("world_map", {})))
+	grand_casino_room_states = _normalize_grand_casino_room_states(_copy_dict(data.get("grand_casino_room_states", {})))
+	if _is_grand_casino_environment(current_environment):
+		store_grand_casino_room_environment(current_environment)
 	pending_triggered_events = _normalize_triggered_event_queue(_copy_array(data.get("pending_triggered_events", [])))
 	var saved_pending_bags: Variant = data.get("pending_bags", data.get("pending_bag", []))
 	if typeof(saved_pending_bags) == TYPE_DICTIONARY:
@@ -5242,6 +5307,33 @@ static func _environment_history_entry(environment: Dictionary) -> Dictionary:
 	for key in ["id", "archetype_id", "world_node_id", "display_name", "kind", "entered_game_clock_minutes", "departed_game_clock_minutes"]:
 		if environment.has(key):
 			result[key] = environment.get(key)
+	return result
+
+
+static func _normalize_grand_casino_room_states(room_states: Dictionary) -> Dictionary:
+	var result: Dictionary = {}
+	for room_id_value in GRAND_CASINO_ARCHETYPE_IDS:
+		var room_id := str(room_id_value)
+		var room: Variant = room_states.get(room_id, {})
+		if typeof(room) == TYPE_DICTIONARY and not (room as Dictionary).is_empty():
+			result[room_id] = _normalize_environment((room as Dictionary).duplicate(true))
+	return result
+
+
+func _grand_casino_room_states_for_save() -> Dictionary:
+	var result: Dictionary = {}
+	var active_room_id := ""
+	if _is_grand_casino_environment(current_environment):
+		active_room_id = str(current_environment.get("archetype_id", GRAND_CASINO_ARCHETYPE_ID)).strip_edges()
+	for room_id_value in GRAND_CASINO_ARCHETYPE_IDS:
+		var room_id := str(room_id_value)
+		# current_environment already serializes the active room. Re-inserting it
+		# on load avoids duplicating that potentially large game/layout payload.
+		if room_id == active_room_id:
+			continue
+		var room: Variant = grand_casino_room_states.get(room_id, {})
+		if typeof(room) == TYPE_DICTIONARY and not (room as Dictionary).is_empty():
+			result[room_id] = (room as Dictionary).duplicate(true)
 	return result
 
 

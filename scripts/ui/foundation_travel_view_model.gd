@@ -343,6 +343,10 @@ static func travel_target_ids(host: Variant) -> Array:
 			for target_id in host._string_array(source):
 				if not result.has(target_id):
 					result.append(target_id)
+	var flags: Dictionary = host.run_state.current_environment.get("local_narrative_flags", {}) if typeof(host.run_state.current_environment.get("local_narrative_flags", {})) == TYPE_DICTIONARY else {}
+	for local_target_id in host._string_array(flags.get("casino_room_targets", [])):
+		if not result.has(local_target_id):
+			result.append(local_target_id)
 	host.travel_target_ids_cache_key = cache_key
 	host.travel_target_ids_cache = result.duplicate()
 	return result

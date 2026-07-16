@@ -2510,6 +2510,8 @@
   },
   {
     "id": "grand_casino",
+    "display_name": "Grand Casino Main Floor",
+    "room_description": "The public machine floor, casino bar, Cage, and doors deeper into the house.",
     "kind": "boss",
     "open_hours": null,
     "is_start": false,
@@ -2554,28 +2556,20 @@
     "layout": {
       "game_spots": [
         [
-          273,
-          134
+          160,
+          150
         ],
         [
-          178,
-          230
+          340,
+          150
         ],
         [
-          587,
-          134
+          520,
+          150
         ],
         [
-          302,
-          326
-        ],
-        [
-          622,
-          230
-        ],
-        [
-          742,
-          326
+          700,
+          150
         ]
       ],
       "event_spots": [
@@ -2599,27 +2593,43 @@
       "service_spots": [
         [
           450,
-          260
+          292
+        ]
+      ],
+      "casino_fixture_spots": [
+        [
+          150,
+          354
+        ],
+        [
+          650,
+          354
+        ]
+      ],
+      "casino_door_spots": [
+        [
+          808,
+          220
+        ],
+        [
+          808,
+          350
         ]
       ],
       "game_hook_spots": [
         [
-          820,
-          220
+          400,
+          260
+        ],
+        [
+          400,
+          260
         ]
       ],
       "travel_spots": [
         [
-          820,
-          228
-        ],
-        [
-          80,
-          380
-        ],
-        [
-          450,
-          86
+          78,
+          350
         ]
       ]
     },
@@ -2684,15 +2694,19 @@
     },
     "game_pool": [
       "slot",
-      "blackjack",
       "video_poker",
-      "bar_dice",
-      "roulette",
-      "baccarat"
+      "pull_tabs",
+      "bar_dice"
+    ],
+    "required_game_ids": [
+      "slot",
+      "video_poker",
+      "pull_tabs",
+      "bar_dice"
     ],
     "game_count": [
-      6,
-      6
+      4,
+      4
     ],
     "item_pool": [],
     "item_count": [
@@ -2737,12 +2751,374 @@
       "small_underground_casino"
     ],
     "local_narrative_flags": {
-      "boss_floor": true
+      "boss_floor": true,
+      "grand_casino_room": "main_floor",
+      "casino_room_travel_minutes": 5,
+      "casino_high_limit_buy_in": 60,
+      "casino_room_targets": [
+        "grand_casino_high_limit",
+        "grand_casino_back_room"
+      ],
+      "casino_fixtures": [
+        {
+          "id": "cage",
+          "label": "The Cage",
+          "description": "A barred teller window for chips, cash, and Players Card review.",
+          "action_summary": "Speak with the teller.",
+          "interaction_message": "The teller window is open. Linda's full Cage service arrives with the chips system.",
+          "surface": "wire_cage",
+          "icon_key": "service"
+        },
+        {
+          "id": "host_desk",
+          "label": "Host Desk",
+          "description": "The host keeps an eye on recognition, comps, and the velvet rope.",
+          "action_summary": "Inspect the host desk.",
+          "interaction_message": "The host desk tracks the Players Card list; Linda is handling the Cage.",
+          "surface": "counter_case",
+          "icon_key": "service"
+        }
+      ]
     },
     "moods": [
       "polished",
       "watched",
       "expensive"
+    ]
+  },
+  {
+    "id": "grand_casino_high_limit",
+    "display_name": "Grand Casino High-Limit Room",
+    "room_description": "Velvet-rope blackjack, baccarat, and roulette at the house's sharpest public stakes.",
+    "map_hidden": true,
+    "kind": "boss",
+    "open_hours": null,
+    "is_start": false,
+    "next_archetypes": [],
+    "tier": 3,
+    "name_prefixes": [
+      "Grand Casino"
+    ],
+    "name_nouns": [
+      "High-Limit Room"
+    ],
+    "visual_context": {
+      "perspective": "first_person",
+      "scene_type": "boss",
+      "asset_path": "res://assets/art/environments/grand_casino.png",
+      "description": "A velvet-rope table room under close cameras."
+    },
+    "objective_hint": "Win clean at the high-limit tables or stay ahead of Rourke.",
+    "demo_objective": {
+      "id": "grand_casino_demo_bankroll",
+      "type": "bankroll_target",
+      "title": "Beat the Grand Casino",
+      "summary": "Earn the Players Card clean or survive Rourke's back-room call.",
+      "target_bankroll": 0,
+      "high_roller_target_bankroll": 0,
+      "high_roller_net_winnings": 10,
+      "high_roller_min_grand_casino_games": 3,
+      "high_roller_max_heat": 30,
+      "showdown_heat_threshold": 70,
+      "forced_showdown_heat_threshold": 95,
+      "showdown_event_id": "the_house_calls",
+      "high_roller_event_id": "high_roller_cashout",
+      "victory_message": "Demo Victory: you earned the Grand Casino Players Card.",
+      "finale_event_id": "the_house_calls",
+      "finale_requires_kind": "boss",
+      "finale_requires_watched": true,
+      "finale_trigger_message": "Rourke calls you to the house table."
+    },
+    "layout": {
+      "game_spots": [
+        [
+          230,
+          190
+        ],
+        [
+          450,
+          160
+        ],
+        [
+          670,
+          190
+        ]
+      ],
+      "event_spots": [
+        [
+          450,
+          350
+        ],
+        [
+          650,
+          350
+        ]
+      ],
+      "casino_door_spots": [
+        [
+          92,
+          350
+        ]
+      ],
+      "travel_spots": [
+        [
+          808,
+          350
+        ]
+      ]
+    },
+    "security_profile": {
+      "strictness": "boss",
+      "visible_cues": [
+        "The high-limit dealers report every strange edge to Rourke."
+      ],
+      "pit_boss": {
+        "enabled": true,
+        "label": "Pit Boss Rourke",
+        "cycle_length": 4,
+        "watched_turns": 2,
+        "cheat_heat_bonus": 30,
+        "watched_text": "Rourke is watching; cheating heat spikes.",
+        "clear_text": "Rourke is elsewhere on the floor."
+      }
+    },
+    "music_profile": {
+      "theme": "boss casino high limit",
+      "ambience": 0.42,
+      "bpm": 78,
+      "mode": "harmonic_minor",
+      "progression": [
+        0,
+        5,
+        6,
+        4
+      ],
+      "motif": [
+        0,
+        -999,
+        3,
+        -999,
+        6,
+        -999,
+        5,
+        -999
+      ],
+      "root_midi": 42,
+      "safety": 0.08,
+      "texture": "boss",
+      "texture_rate": 0.15,
+      "volume": 0.26
+    },
+    "economic_profile": {
+      "stake_floor": 25,
+      "stake_ceiling": 150,
+      "game_stake_ceiling_overrides": {
+        "blackjack": 150,
+        "baccarat": 150,
+        "roulette": 150
+      },
+      "cashout_tone": "cage"
+    },
+    "game_pool": [
+      "blackjack",
+      "baccarat",
+      "roulette"
+    ],
+    "required_game_ids": [
+      "blackjack",
+      "baccarat",
+      "roulette"
+    ],
+    "game_count": [
+      3,
+      3
+    ],
+    "item_pool": [],
+    "item_count": [
+      0,
+      0
+    ],
+    "event_pool": [
+      "the_house_calls",
+      "pit_boss_sweep",
+      "eye_in_the_sky",
+      "rival_counter",
+      "counter_payoff",
+      "the_collector"
+    ],
+    "event_scopes": [
+      "boss"
+    ],
+    "event_count": [
+      1,
+      2
+    ],
+    "service_pool": [],
+    "lender_hooks": [],
+    "suspicion_cues": [
+      "The felt is quieter here, so every mistake travels farther."
+    ],
+    "travel_hooks": [],
+    "local_narrative_flags": {
+      "boss_floor": true,
+      "grand_casino_room": "high_limit",
+      "casino_room_travel_minutes": 5,
+      "casino_room_targets": [
+        "grand_casino"
+      ]
+    },
+    "moods": [
+      "hushed",
+      "velvet",
+      "watchful"
+    ]
+  },
+  {
+    "id": "grand_casino_back_room",
+    "display_name": "Grand Casino Back Room",
+    "room_description": "A locked boss room beyond the public floor.",
+    "map_hidden": true,
+    "kind": "boss",
+    "open_hours": null,
+    "is_start": false,
+    "next_archetypes": [],
+    "tier": 3,
+    "name_prefixes": [
+      "Grand Casino"
+    ],
+    "name_nouns": [
+      "Back Room"
+    ],
+    "visual_context": {
+      "perspective": "first_person",
+      "scene_type": "boss",
+      "asset_path": "res://assets/art/environments/grand_casino.png",
+      "description": "Private table, hard chairs, one controlled door."
+    },
+    "objective_hint": "Rourke controls what happens in this room.",
+    "demo_objective": {
+      "id": "grand_casino_demo_bankroll",
+      "type": "bankroll_target",
+      "title": "Beat the Grand Casino",
+      "summary": "Earn the Players Card clean or survive Rourke's back-room call.",
+      "target_bankroll": 0,
+      "high_roller_target_bankroll": 0,
+      "high_roller_net_winnings": 10,
+      "high_roller_min_grand_casino_games": 3,
+      "high_roller_max_heat": 30,
+      "showdown_heat_threshold": 70,
+      "forced_showdown_heat_threshold": 95,
+      "showdown_event_id": "the_house_calls",
+      "high_roller_event_id": "high_roller_cashout",
+      "victory_message": "Demo Victory: you earned the Grand Casino Players Card.",
+      "finale_event_id": "the_house_calls",
+      "finale_requires_kind": "boss",
+      "finale_requires_watched": true,
+      "finale_trigger_message": "Rourke calls you to the house table."
+    },
+    "layout": {
+      "game_spots": [
+        [
+          450,
+          220
+        ]
+      ],
+      "event_spots": [
+        [
+          450,
+          340
+        ]
+      ],
+      "travel_spots": [
+        [
+          92,
+          350
+        ]
+      ]
+    },
+    "security_profile": {
+      "strictness": "boss",
+      "visible_cues": [
+        "There is nowhere in the Back Room the house cannot see."
+      ],
+      "pit_boss": {
+        "enabled": true,
+        "label": "Pit Boss Rourke",
+        "cycle_length": 1,
+        "watched_turns": 1,
+        "cheat_heat_bonus": 30,
+        "watched_text": "Rourke is across the table.",
+        "clear_text": "Rourke is across the table."
+      }
+    },
+    "music_profile": {
+      "theme": "boss casino back room",
+      "ambience": 0.32,
+      "bpm": 72,
+      "mode": "harmonic_minor",
+      "progression": [
+        0,
+        6,
+        5,
+        4
+      ],
+      "motif": [
+        0,
+        -999,
+        1,
+        -999,
+        6,
+        -999,
+        3,
+        -999
+      ],
+      "root_midi": 40,
+      "safety": 0.05,
+      "texture": "boss",
+      "texture_rate": 0.12,
+      "volume": 0.24
+    },
+    "economic_profile": {
+      "stake_floor": 25,
+      "stake_ceiling": 150,
+      "cashout_tone": "locked"
+    },
+    "game_pool": [],
+    "game_count": [
+      0,
+      0
+    ],
+    "item_pool": [],
+    "item_count": [
+      0,
+      0
+    ],
+    "event_pool": [
+      "the_house_calls"
+    ],
+    "event_scopes": [
+      "boss"
+    ],
+    "event_count": [
+      1,
+      1
+    ],
+    "service_pool": [],
+    "lender_hooks": [],
+    "suspicion_cues": [
+      "The door shuts softly behind anyone Rourke brings inside."
+    ],
+    "travel_hooks": [],
+    "local_narrative_flags": {
+      "boss_floor": true,
+      "grand_casino_room": "back_room",
+      "casino_room_travel_minutes": 5,
+      "casino_room_targets": []
+    },
+    "moods": [
+      "private",
+      "still",
+      "final"
     ]
   },
   {

@@ -47,6 +47,8 @@ func build(run_state: RunState, rng: RngStream) -> Dictionary:
 	for id_value in _sorted_keys(archetypes_by_id):
 		var archetype_id := str(id_value)
 		var archetype: Dictionary = archetypes_by_id.get(archetype_id, {})
+		if bool(archetype.get("map_hidden", false)):
+			continue
 		if str(archetype.get("kind", "")) == "home" and archetype_id != start_id:
 			continue
 		ids.append(archetype_id)
