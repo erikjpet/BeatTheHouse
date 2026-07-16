@@ -81,21 +81,19 @@ func _run_probe() -> void:
 				matched_launch = true
 		if int(provider_snapshot.get("active_players", 0)) < 2 or not matched_launch:
 			failures.append("Two live float generator players did not share the authoritative zero-error launch frame.")
-		var playback_a := voice_a.get_stream_playback() as AudioStreamGeneratorPlayback
-		var playback_b := voice_b.get_stream_playback() as AudioStreamGeneratorPlayback
 		voice_a.stop()
 		voice_b.stop()
 		director.call("_feed_float_pcm_players")
 		voice_a.stream = null
 		voice_b.stream = null
+		# Headless process frames can advance faster than the audio mixing thread.
+		# Queue normal Node teardown, remove the director's playback references,
+		# then allow more than one generator buffer of real mixer time to elapse.
+		director.set("_float_pcm_player_states", {})
+		voice_a.queue_free()
+		voice_b.queue_free()
 		await process_frame
-		await process_frame
-		playback_a = null
-		playback_b = null
-		root.remove_child(voice_a)
-		root.remove_child(voice_b)
-		voice_a.free()
-		voice_b.free()
+		await create_timer(0.35).timeout
 
 	var report := {
 		"tool": "audio_float_pcm_probe",
@@ -116,6 +114,7 @@ func _run_probe() -> void:
 	jazz_16_manifest.clear()
 	director.free()
 	await process_frame
+	await create_timer(0.10).timeout
 	if failures.is_empty():
 		print("AUDIO_FLOAT_PCM_PROBE_PASS report=%s" % report_path)
 		quit(0)
