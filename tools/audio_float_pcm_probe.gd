@@ -12,8 +12,6 @@ func _run_probe() -> void:
 	var started_msec := Time.get_ticks_msec()
 	var failures: Array[String] = []
 	var director: ProceduralMusicPlayer = ProceduralMusicPlayerScript.new()
-	root.add_child(director)
-	await process_frame
 
 	var jazz_8_environment := {
 		"id": "jazz_delivery_8",
@@ -69,8 +67,8 @@ func _run_probe() -> void:
 	else:
 		var voice_a := AudioStreamPlayer.new()
 		var voice_b := AudioStreamPlayer.new()
-		director.add_child(voice_a)
-		director.add_child(voice_b)
+		root.add_child(voice_a)
+		root.add_child(voice_b)
 		voice_a.stream = pad_stream
 		voice_b.stream = pad_stream
 		director.call("_play_audio_player", voice_a, 3.125, "native_probe_stems")
@@ -83,10 +81,19 @@ func _run_probe() -> void:
 				matched_launch = true
 		if int(provider_snapshot.get("active_players", 0)) < 2 or not matched_launch:
 			failures.append("Two live float generator players did not share the authoritative zero-error launch frame.")
+		var playback_a := voice_a.get_stream_playback() as AudioStreamGeneratorPlayback
+		var playback_b := voice_b.get_stream_playback() as AudioStreamGeneratorPlayback
 		voice_a.stop()
 		voice_b.stop()
-		director.remove_child(voice_a)
-		director.remove_child(voice_b)
+		director.call("_feed_float_pcm_players")
+		voice_a.stream = null
+		voice_b.stream = null
+		await process_frame
+		await process_frame
+		playback_a = null
+		playback_b = null
+		root.remove_child(voice_a)
+		root.remove_child(voice_b)
 		voice_a.free()
 		voice_b.free()
 
@@ -103,13 +110,11 @@ func _run_probe() -> void:
 	}
 	var report_path := _report_path()
 	_write_report(report_path, report)
-	director.stop()
-	root.remove_child(director)
-	director.free()
 	pad_stream = null
 	contract.clear()
 	jazz_8_manifest.clear()
 	jazz_16_manifest.clear()
+	director.free()
 	await process_frame
 	if failures.is_empty():
 		print("AUDIO_FLOAT_PCM_PROBE_PASS report=%s" % report_path)
