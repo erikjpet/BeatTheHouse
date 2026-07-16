@@ -1,6 +1,7 @@
 extends "res://scripts/tests/foundation/check_items_events_world.gd"
 
 const RunReportViewModelScript := preload("res://scripts/ui/run_report_view_model.gd")
+const MusicDeliveryIndexScript := preload("res://scripts/core/music_delivery_index.gd")
 
 
 func _check_run_report_foundation(failures: Array) -> void:
@@ -528,6 +529,41 @@ func _check_music_stem_director_foundation(library: ContentLibrary, failures: Ar
 	var authored_track := library.music_track("corner_store_sparse_fixture")
 	if authored_track.is_empty():
 		failures.append("ContentLibrary did not load the authored sparse music track fixture.")
+	var jazz_8_track := library.music_track("jazz_club_delivery_fixture_8_bar")
+	var jazz_16_track := library.music_track("jazz_club_delivery_fixture_16_bar")
+	if jazz_8_track.is_empty() or jazz_16_track.is_empty():
+		failures.append("ContentLibrary did not load both 24-bit Jazz delivery fixtures.")
+	var parsed_delivery := MusicDeliveryIndexScript.parse_filename("JazzClub_Lead_Trumpet_1.WAV")
+	if not bool(parsed_delivery.get("ok", false)) or str(parsed_delivery.get("environment", "")) != "JazzClub" or str(parsed_delivery.get("role", "")) != "lead" or str(parsed_delivery.get("instrument", "")) != "Trumpet" or int(parsed_delivery.get("pattern_number", 0)) != 1:
+		failures.append("Jazz delivery filename parser did not expose environment/classification/instrument/pattern fields case-insensitively.")
+	for malformed_name in ["JazzClub_Lead_Trumpet.wav", "JazzClub_Unknown_Trumpet_1.wav", "JazzClub_Lead_Trumpet_0.wav", "JazzClub_Lead_Bad_Name_1.wav"]:
+		if bool(MusicDeliveryIndexScript.parse_filename(malformed_name).get("ok", false)):
+			failures.append("Jazz delivery filename parser accepted malformed name %s." % malformed_name)
+	var wrong_environment_index := MusicDeliveryIndexScript.build_index("jazz_fixture", "JazzClub", ["Motel_Lead_Trumpet_1.wav"])
+	if bool(wrong_environment_index.get("valid", true)) or JSON.stringify(wrong_environment_index.get("errors", [])).find("requires JazzClub") < 0:
+		failures.append("Jazz delivery index did not reject a filename from the wrong environment.")
+	var duplicate_index := MusicDeliveryIndexScript.build_index("jazz_fixture", "JazzClub", ["JazzClub_Lead_Trumpet_1.wav", "JazzClub_lead_trumpet_1.WAV"])
+	if bool(duplicate_index.get("valid", true)) or JSON.stringify(duplicate_index.get("errors", [])).find("duplicates semantic ID") < 0:
+		failures.append("Jazz delivery index did not reject a duplicate semantic instrument/pattern ID.")
+	var scanned_jazz := library.music_delivery_index("jazz_club_delivery_fixture_8_bar")
+	if not bool(scanned_jazz.get("valid", false)) or (scanned_jazz.get("entries", []) as Array).size() != 6 or (scanned_jazz.get("proposed_manifest_entries", []) as Array).size() != 6:
+		failures.append("Jazz delivery import helper did not index and propose all six 8-bar fixture records without rewriting the manifest.")
+	var wav_8 := ContentLibraryScript.inspect_music_wav("res://assets/audio/music/jazz_club_delivery_fixture_8_bar/JazzClub_Chords_Piano_1.wav")
+	var wav_16 := ContentLibraryScript.inspect_music_wav("res://assets/audio/music/jazz_club_delivery_fixture_16_bar/JazzClub_Chords_Piano_2.wav")
+	if not bool(wav_8.get("valid", false)) or int(wav_8.get("bits_per_sample", 0)) != 24 or int(wav_8.get("frames", 0)) != 705600:
+		failures.append("24-bit 8-bar WAV inspection did not derive the real data-chunk frame count.")
+	if not bool(wav_16.get("valid", false)) or int(wav_16.get("bits_per_sample", 0)) != 24 or int(wav_16.get("frames", 0)) != 1411200:
+		failures.append("24-bit 16-bar WAV inspection did not derive the real data-chunk frame count.")
+	for mismatch_fixture in [
+		{"property": "bits_per_sample", "value": 16},
+		{"property": "channels", "value": 2},
+		{"property": "frames", "value": 705599},
+		{"property": "sample_rate", "value": 48000},
+	]:
+		var candidate := wav_8.duplicate(true)
+		candidate[str(mismatch_fixture.get("property", ""))] = int(mismatch_fixture.get("value", 0))
+		if not ContentLibraryScript.synchronized_wav_mismatches(wav_8, candidate).has(str(mismatch_fixture.get("property", ""))):
+			failures.append("Synchronized WAV validation missed %s mismatch." % str(mismatch_fixture.get("property", "")))
 	var invalid_library: ContentLibrary = ContentLibraryScript.new()
 	invalid_library.music_tracks = [{
 		"id": "bad_music_entry",
@@ -744,6 +780,13 @@ func _check_music_stem_director_foundation(library: ContentLibrary, failures: Ar
 		var motel_palette: Dictionary = motel_theory.get("instrument_palette", {}) as Dictionary
 		if str(jazz_palette.get("id", "")) == str(grand_palette.get("id", "")) or str(motel_palette.get("id", "")) == str(grand_palette.get("id", "")):
 			failures.append("Music instrument palettes did not differ by venue archetype.")
+	# These headless-only Nodes are never inserted into a SceneTree, so free them
+	# synchronously and release cached float PCM resources before process exit.
+	player.free()
+	quantized_player.free()
+	feature_player.free()
+	event_player.free()
+	sfx.free()
 
 
 func _music_environment_with_authored_track(library: ContentLibrary) -> Dictionary:
