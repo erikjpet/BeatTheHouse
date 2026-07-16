@@ -524,6 +524,15 @@ func _music_fx_target(player: ProceduralMusicPlayer, snapshot: Dictionary) -> Di
 
 
 func _check_music_stem_director_foundation(library: ContentLibrary, failures: Array) -> void:
+	var attached_headless_player: ProceduralMusicPlayer = ProceduralMusicPlayerScript.new()
+	root.add_child(attached_headless_player)
+	if attached_headless_player.is_processing():
+		failures.append("Tree-attached ProceduralMusicPlayer kept an idle process callback active in headless mode.")
+	var attached_snapshot: Dictionary = attached_headless_player.music_fx_snapshot({"heat": 42})
+	if (attached_snapshot.get("target", {}) as Dictionary).is_empty() or not is_equal_approx(float((attached_snapshot.get("target", {}) as Dictionary).get("heat", -1.0)), 42.0):
+		failures.append("Disabling headless automatic music processing also disabled direct snapshot APIs.")
+	attached_headless_player.free()
+
 	var player: ProceduralMusicPlayer = ProceduralMusicPlayerScript.new()
 	var stem_buses: Dictionary = ProceduralMusicPlayerScript.ensure_music_stem_bus_graph()
 	var bus_roles: Dictionary = stem_buses.get("buses", {}) as Dictionary
