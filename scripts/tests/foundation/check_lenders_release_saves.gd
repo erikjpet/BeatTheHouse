@@ -1,5 +1,79 @@
 extends "res://scripts/tests/foundation/check_items_events_world.gd"
 
+const RunReportViewModelScript := preload("res://scripts/ui/run_report_view_model.gd")
+
+
+func _check_run_report_foundation(failures: Array) -> void:
+	var run_state: RunState = RunStateScript.new()
+	run_state.start_new("RUN-REPORT-FOUNDATION")
+	run_state.set_environment({"id": "bar_fixture", "world_node_id": "bar", "archetype_id": "bar", "display_name": "Fixture Bar"})
+	run_state.add_suspicion("report_spike", 34, "behavior", true, {"environment_id": "bar_fixture"})
+	run_state.advance_environment_turns(2)
+	run_state.set_environment({"id": "casino_fixture", "world_node_id": "grand_casino", "archetype_id": "grand_casino", "display_name": "Grand Casino"})
+	if run_state.heat_history.size() < 3 or not bool((run_state.heat_history[-1] as Dictionary).get("transition", false)):
+		failures.append("Run report heat history did not record heat changes and environment transitions.")
+	var saved := run_state.to_dict()
+	var restored: RunState = RunStateScript.new()
+	restored.from_dict(saved)
+	if JSON.stringify(restored.heat_history) != JSON.stringify(run_state.heat_history):
+		failures.append("Run report heat history did not survive save/load exactly.")
+	var oversized: Array = []
+	for index in range(600):
+		oversized.append({"action_index": index, "heat_value": 100 if index == 311 else index % 47, "environment_id": "venue_%d" % int(index / 100), "environment_name": "Venue", "transition": index % 100 == 0})
+	var compacted := RunStateScript.downsample_heat_history(oversized, RunStateScript.HEAT_HISTORY_COMPACT_TARGET)
+	if compacted.size() > RunStateScript.HEAT_HISTORY_COMPACT_TARGET:
+		failures.append("Run report heat history downsampling exceeded its compact target.")
+	var preserved_peak := false
+	for value in compacted:
+		if int((value as Dictionary).get("action_index", -1)) == 311 and int((value as Dictionary).get("heat_value", 0)) == 100:
+			preserved_peak = true
+	if not preserved_peak:
+		failures.append("Run report heat downsampling did not preserve an obvious spike.")
+
+	var story := [
+		{"type": "game_action", "game_id": "slot", "bankroll_delta": 120},
+		{"type": "game_action", "game_id": "slot", "bankroll_delta": -20},
+		{"type": "game_action", "game_id": "bar_dice", "bankroll_delta": -85},
+		{"type": "item_sale", "item_id": "instant_coffee", "sale_price": 7},
+		{"type": "item_purchase", "item_id": "creased_luck_card", "price": 9},
+		{"type": "lender_hook", "id": "sal", "label": "Sal", "bankroll_delta": 20, "debt_changes": [{"id": "pawn_redeemed", "lender_id": "sal", "principal": 20, "balance": 22, "debt_kind": "pawn", "collateral_item_id": "instant_coffee", "collateral_item_name": "Instant Coffee"}]},
+		{"type": "debt_paid", "debt_id": "pawn_redeemed", "lender_id": "sal", "collateral_item_id": "instant_coffee", "bankroll_delta": -22},
+		{"type": "lender_hook", "id": "sal", "label": "Sal", "bankroll_delta": 30, "debt_changes": [{"id": "pawn_forfeit", "lender_id": "sal", "principal": 30, "balance": 33, "debt_kind": "pawn", "collateral_item_id": "creased_luck_card", "collateral_item_name": "Creased Luck Card"}]},
+		{"type": "debt_default", "debt_id": "pawn_forfeit", "lender_id": "sal"},
+		{"type": "lender_hook", "id": "crew", "label": "The Crew", "bankroll_delta": 50, "debt_changes": [{"id": "cash_default", "lender_id": "crew", "principal": 50, "balance": 50, "debt_kind": "cash"}]},
+		{"type": "debt_default", "debt_id": "cash_default", "lender_id": "crew"},
+	]
+	var money := RunReportViewModelScript.build_money_rows(story, {"games": {"slot": {"display_name": "Slots"}, "bar_dice": {"display_name": "Bar Dice"}}})
+	if money.is_empty() or int((money[0] as Dictionary).get("net", 0)) != 100:
+		failures.append("Run report money aggregation did not net and absolute-sort scripted game results.")
+	var debts := RunReportViewModelScript.build_debt_ledger([], story)
+	if debts.size() != 3 or JSON.stringify(debts).find("redeemed") == -1 or JSON.stringify(debts).find("collateral kept") == -1 or JSON.stringify(debts).find("defaulted") == -1:
+		failures.append("Run report debt ledger did not reconstruct paid, defaulted, redeemed, and forfeited outcomes.")
+	var items := RunReportViewModelScript.build_item_fates(["instant_coffee", "instant_coffee"], [], story, {"instant_coffee": {"display_name": "Instant Coffee"}, "creased_luck_card": {"display_name": "Creased Luck Card"}})
+	if int(((items.get("kept", []) as Array)[0] as Dictionary).get("count", 0)) != 2 or JSON.stringify(items).find("forfeited") == -1 or JSON.stringify(items).find("sold") == -1:
+		failures.append("Run report item fate aggregation did not collapse kept duplicates or retain pawn/sale fates.")
+
+	var timeline := RunReportViewModelScript.build_timeline(run_state.heat_history, {"visited_path": ["bar", "grand_casino"], "nodes": [{"id": "bar", "display_name": "Bar", "position": {"x": 0.1, "y": 0.4}}, {"id": "grand_casino", "display_name": "Grand Casino", "position": {"x": 0.9, "y": 0.5}}]}, 8)
+	var boundary := RunReportViewModelScript.cursor_for_progress(timeline, 1.0)
+	if not bool(timeline.get("precomputed", false)) or int(boundary.get("action_index", -1)) != 8 or int(boundary.get("leg_index", -1)) != 1:
+		failures.append("Run report shared timeline did not map action, travel leg, and heat sample boundaries.")
+
+	var registry := RunReportViewModelScript.load_outcome_registry()
+	var base_data := run_state.to_dict()
+	for reason in [RunState.FAILURE_BANKROLL_ZERO, RunState.FAILURE_STRANDED, RunState.FAILURE_POLICE_CAPTURE, RunState.FAILURE_CASINO_TAKEN_OUT_BACK, RunState.FAILURE_ABANDONED]:
+		base_data["run_status"] = RunState.RUN_STATUS_FAILED
+		base_data["run_failure_reason"] = reason
+		base_data["run_failure_message"] = "Fixture ending for %s." % reason
+		var outcome := RunReportViewModelScript.build_outcome(base_data, registry)
+		if str(outcome.get("icon_key", "")).is_empty() or str(outcome.get("title", "")).is_empty() or str(outcome.get("how", "")).is_empty() or str(outcome.get("where", "")).find("Fixture Bar") == -1 and str(outcome.get("where", "")).find("Grand Casino") == -1:
+			failures.append("Run report failure outcome %s missed its icon/title/where/how contract." % reason)
+	for route in [RunState.GRAND_CASINO_HIGH_ROLLER_EVENT_ID, RunState.GRAND_CASINO_SHOWDOWN_ROUTE]:
+		base_data["run_status"] = RunState.RUN_STATUS_ENDED
+		base_data["narrative_flags"] = {"demo_victory": true, "demo_victory_route": route, "demo_victory_message": "Fixture victory."}
+		var outcome := RunReportViewModelScript.build_outcome(base_data, registry)
+		if str(outcome.get("icon_key", "")).is_empty() or not bool(outcome.get("won", false)) or str(outcome.get("where", "")).is_empty():
+			failures.append("Run report victory route %s missed its distinct outcome contract." % route)
+
 func _check_suspicion_security_foundation(failures: Array) -> void:
 	var run_state: RunState = RunStateScript.new()
 	run_state.start_new("SUSPICION-SECURITY")
