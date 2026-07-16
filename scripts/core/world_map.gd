@@ -1601,11 +1601,30 @@ static func _travel_method_for_band(band: String) -> String:
 
 # Returns a stable gameplay key while accepting legacy player-facing route copy.
 static func travel_method_kind(value: Variant, fallback_distance: String = "") -> String:
-	var source: Dictionary = value if typeof(value) == TYPE_DICTIONARY else {}
-	var explicit_kind := str(source.get("travel_method_kind", "")).strip_edges().to_lower()
-	if [TRAVEL_METHOD_WALK, TRAVEL_METHOD_BUS, TRAVEL_METHOD_TAXI, TRAVEL_METHOD_NIGHT_CAB].has(explicit_kind):
-		return explicit_kind
-	var method_text := str(value).strip_edges().to_lower() if typeof(value) == TYPE_STRING else str(source.get("travel_method", source.get("method", ""))).strip_edges().to_lower()
+	var method_value: Variant = value
+	var distance_value := fallback_distance
+	if typeof(value) == TYPE_DICTIONARY:
+		var source: Dictionary = value
+		var explicit_kind: Variant = source.get("travel_method_kind")
+		if typeof(explicit_kind) == TYPE_STRING and _is_canonical_travel_method_kind(explicit_kind as String):
+			return explicit_kind as String
+		if typeof(explicit_kind) == TYPE_STRING:
+			var normalized_kind := (explicit_kind as String).strip_edges().to_lower()
+			if _is_canonical_travel_method_kind(normalized_kind):
+				return normalized_kind
+		method_value = source.get("travel_method", source.get("method", ""))
+		distance_value = str(source.get("distance", fallback_distance))
+	var raw_method := str(method_value)
+	match raw_method:
+		TRAVEL_METHOD_WALK, "Walk":
+			return TRAVEL_METHOD_WALK
+		TRAVEL_METHOD_BUS, "Bus ticket":
+			return TRAVEL_METHOD_BUS
+		TRAVEL_METHOD_TAXI, "Taxi ride":
+			return TRAVEL_METHOD_TAXI
+		TRAVEL_METHOD_NIGHT_CAB, "Night cab":
+			return TRAVEL_METHOD_NIGHT_CAB
+	var method_text := raw_method.strip_edges().to_lower()
 	if method_text == TRAVEL_METHOD_WALK or method_text.contains("walk"):
 		return TRAVEL_METHOD_WALK
 	if method_text == TRAVEL_METHOD_BUS or method_text.contains("bus"):
@@ -1614,13 +1633,12 @@ static func travel_method_kind(value: Variant, fallback_distance: String = "") -
 		return TRAVEL_METHOD_TAXI
 	if method_text == TRAVEL_METHOD_NIGHT_CAB or method_text.contains("night cab"):
 		return TRAVEL_METHOD_NIGHT_CAB
-	var distance := str(source.get("distance", fallback_distance)).strip_edges().to_lower()
-	return _travel_method_kind_for_band(distance)
+	return _travel_method_kind_for_band(distance_value)
 
 
 # Derives all route UI copy from the same canonical key used by event logic.
 static func travel_method_label(kind: String) -> String:
-	match kind.strip_edges().to_lower():
+	match kind:
 		TRAVEL_METHOD_WALK:
 			return "Walk"
 		TRAVEL_METHOD_BUS:
@@ -1629,20 +1647,33 @@ static func travel_method_label(kind: String) -> String:
 			return "Taxi ride"
 		TRAVEL_METHOD_NIGHT_CAB:
 			return "Night cab"
-		_:
-			return "Travel"
+	var normalized := kind.strip_edges().to_lower()
+	if normalized != kind:
+		return travel_method_label(normalized)
+	return "Travel"
 
 
 static func _travel_method_kind_for_band(band: String) -> String:
-	match band.strip_edges().to_lower():
+	match band:
 		DISTANCE_NEAR:
 			return TRAVEL_METHOD_WALK
 		DISTANCE_LOCAL:
 			return TRAVEL_METHOD_BUS
 		DISTANCE_FAR:
 			return TRAVEL_METHOD_TAXI
-		_:
+		DISTANCE_REMOTE:
 			return TRAVEL_METHOD_NIGHT_CAB
+	var normalized := band.strip_edges().to_lower()
+	if normalized != band:
+		return _travel_method_kind_for_band(normalized)
+	return TRAVEL_METHOD_NIGHT_CAB
+
+
+static func _is_canonical_travel_method_kind(kind: String) -> bool:
+	match kind:
+		TRAVEL_METHOD_WALK, TRAVEL_METHOD_BUS, TRAVEL_METHOD_TAXI, TRAVEL_METHOD_NIGHT_CAB:
+			return true
+	return false
 
 
 static func _distance_band(blocks: int) -> String:
