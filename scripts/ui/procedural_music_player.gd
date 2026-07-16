@@ -4,6 +4,7 @@ extends Node
 const WebAudioBridgeScript := preload("res://scripts/ui/web_audio_bridge.gd")
 const MusicArrangementSelectorScript := preload("res://scripts/ui/music_arrangement_selector.gd")
 const MusicDeliveryIndexScript := preload("res://scripts/core/music_delivery_index.gd")
+const MusicFloatPcmStreamScript := preload("res://scripts/ui/music_float_pcm_stream.gd")
 
 # Procedural background music for the foundation UI.
 # The synth shape is ported from the old baseline: generated PCM WAV themes,
@@ -86,6 +87,7 @@ const MUSIC_FEATURE_ROLE_WEIGHTS := {
 const MUSIC_STINGER_PLAYER_COUNT := 4
 const MUSIC_STINGER_PENDING_LIMIT := 8
 const MUSIC_STINGER_CUE_COOLDOWN_BEATS := 2
+const FLOAT_PCM_FEED_MAX_FRAMES := 4096
 const BIG_WIN_ENVELOPE_BARS := 4
 const BIG_WIN_COOLDOWN_BARS := 2
 const MUSIC_FEATURE_ATTACK_SECONDS := 0.25
@@ -180,6 +182,8 @@ var _last_music_state: Dictionary = {}
 var _music_event_envelope: Dictionary = {}
 var _last_big_win_event_token := ""
 var _music_event_last_bar := -1
+var _float_pcm_player_states: Dictionary = {}
+var _float_pcm_phase_launches: Dictionary = {}
 
 
 func _ready() -> void:
@@ -202,6 +206,7 @@ func _ready() -> void:
 
 
 func _process(delta: float) -> void:
+	_feed_float_pcm_players()
 	_poll_generation_thread()
 	_poll_breakpoint_transition()
 	_advance_music_fx(delta)
@@ -386,6 +391,8 @@ func stop() -> void:
 	_music_event_envelope = {}
 	_last_big_win_event_token = ""
 	_music_event_last_bar = -1
+	_float_pcm_player_states.clear()
+	_float_pcm_phase_launches.clear()
 	_reset_music_fx()
 	_reset_music_mix()
 	_reset_feature_mix()
@@ -1370,6 +1377,7 @@ func _apply_music_send_matrix(matrix: Dictionary, stem_set: Dictionary, players:
 	if _running_headless() or WebAudioBridgeScript.available():
 		return
 	var stems := _copy_dict(stem_set.get("stems", {}))
+	var phase_group := "feature_sends" if feature else "venue_sends"
 	for effect_value in MUSIC_SEND_EFFECT_ORDER:
 		var effect_key := str(effect_value)
 		var role_sends := _copy_dict(matrix.get(effect_key, {}))
@@ -1392,9 +1400,9 @@ func _apply_music_send_matrix(matrix: Dictionary, stem_set: Dictionary, players:
 				players[key] = player
 			if player.stream != stream:
 				player.stream = stream
-				player.play(_director_playback_position())
+				_play_audio_player(player, _director_playback_position(), phase_group)
 			elif not player.playing:
-				player.play(_director_playback_position())
+				_play_audio_player(player, _director_playback_position(), phase_group)
 			player.volume_db = _gain_to_db(gain)
 
 
@@ -1405,6 +1413,132 @@ func _stop_music_send_players(players: Dictionary, clear_streams: bool) -> void:
 			player.stop()
 			if clear_streams:
 				player.stream = null
+
+
+func _play_audio_player(player: AudioStreamPlayer, source_position_seconds: float = 0.0, phase_group: String = "") -> void:
+	_float_pcm_player_states.erase(player.get_instance_id())
+	if not (player.stream is MusicFloatPcmStream):
+		player.play(maxf(0.0, source_position_seconds))
+		return
+	var stream := player.stream as MusicFloatPcmStream
+	player.play()
+	var playback := player.get_stream_playback() as AudioStreamGeneratorPlayback
+	if playback == null:
+		player.stop()
+		return
+	playback.clear_buffer()
+	var process_frame := Engine.get_process_frames()
+	var launch_key := "%s:%d" % [phase_group, process_frame] if not phase_group.is_empty() else ""
+	var authority_frame := -1
+	if not launch_key.is_empty() and _float_pcm_phase_launches.has(launch_key):
+		authority_frame = int((_float_pcm_phase_launches.get(launch_key, {}) as Dictionary).get("source_frame", -1))
+	var launch := float_pcm_launch_frame_snapshot(source_position_seconds, stream.mix_rate, stream.loop_begin_frame, stream.loop_end_frame, stream.loop_enabled, authority_frame)
+	var cursor := int(launch.get("source_frame", 0))
+	if not launch_key.is_empty():
+		var group_launch := _float_pcm_phase_launches.get(launch_key, {
+			"phase_group": phase_group,
+			"process_frame": process_frame,
+			"source_frame": cursor,
+			"max_phase_error_frames": 0,
+			"players": 0,
+		}) as Dictionary
+		group_launch["players"] = int(group_launch.get("players", 0)) + 1
+		group_launch["max_phase_error_frames"] = maxi(int(group_launch.get("max_phase_error_frames", 0)), int(launch.get("phase_error_frames", 0)))
+		_float_pcm_phase_launches[launch_key] = group_launch
+		while _float_pcm_phase_launches.size() > 32:
+			_float_pcm_phase_launches.erase(_float_pcm_phase_launches.keys()[0])
+	var state := {
+		"player": player,
+		"playback": playback,
+		"stream": stream,
+		"cursor": cursor,
+		"source_start_frame": cursor,
+		"phase_group": phase_group,
+		"launch_process_frame": process_frame,
+		"finished": false,
+		"drain_deadline_msec": 0,
+	}
+	_float_pcm_player_states[player.get_instance_id()] = state
+	_feed_float_pcm_player(player.get_instance_id(), true)
+
+
+static func float_pcm_launch_frame_snapshot(source_position_seconds: float, mix_rate: int, loop_begin: int, loop_end: int, loop_enabled: bool, authoritative_frame: int = -1) -> Dictionary:
+	var requested := maxi(0, int(round(maxf(0.0, source_position_seconds) * float(maxi(1, mix_rate)))))
+	var source_frame := requested
+	if loop_enabled:
+		var loop_length := maxi(1, loop_end - loop_begin)
+		source_frame = loop_begin + posmod(requested - loop_begin, loop_length)
+	else:
+		source_frame = mini(requested, maxi(loop_begin, loop_end))
+	var requested_wrapped := source_frame
+	if authoritative_frame >= 0:
+		source_frame = authoritative_frame
+	return {
+		"requested_frame": requested_wrapped,
+		"source_frame": source_frame,
+		"authoritative": authoritative_frame >= 0,
+		"phase_error_frames": absi(source_frame - (authoritative_frame if authoritative_frame >= 0 else requested_wrapped)),
+		"phase_model": "director_position_authoritative_group_launch",
+	}
+
+
+func float_pcm_provider_snapshot() -> Dictionary:
+	return {
+		"active_players": _float_pcm_player_states.size(),
+		"launches": _float_pcm_phase_launches.duplicate(true),
+		"phase_model": "director_position_authoritative_group_launch_then_native_mixer_clock",
+		"launch_phase_tolerance_frames": 0,
+	}
+
+
+func _feed_float_pcm_players() -> void:
+	if _float_pcm_player_states.is_empty():
+		return
+	for player_id_value in _float_pcm_player_states.keys():
+		_feed_float_pcm_player(int(player_id_value), false)
+
+
+func _feed_float_pcm_player(player_id: int, prefill: bool) -> void:
+	if not _float_pcm_player_states.has(player_id):
+		return
+	var state: Dictionary = _float_pcm_player_states.get(player_id, {})
+	var player: AudioStreamPlayer = state.get("player", null)
+	var playback: AudioStreamGeneratorPlayback = state.get("playback", null)
+	var stream: MusicFloatPcmStream = state.get("stream", null)
+	if player == null or playback == null or stream == null or not player.playing:
+		_float_pcm_player_states.erase(player_id)
+		return
+	if bool(state.get("finished", false)):
+		if Time.get_ticks_msec() >= int(state.get("drain_deadline_msec", 0)):
+			player.stop()
+			_float_pcm_player_states.erase(player_id)
+		return
+	var available := playback.get_frames_available()
+	if available <= 0:
+		return
+	var requested := available if prefill else mini(available, FLOAT_PCM_FEED_MAX_FRAMES)
+	var buffer := PackedVector2Array()
+	buffer.resize(requested)
+	var cursor := int(state.get("cursor", 0))
+	var written := 0
+	while written < requested:
+		if cursor >= stream.loop_end_frame:
+			if stream.loop_enabled:
+				cursor = stream.loop_begin_frame
+			else:
+				state["finished"] = true
+				break
+		buffer[written] = stream.frame_at(cursor)
+		cursor += 1
+		written += 1
+	if written > 0:
+		if written < buffer.size():
+			buffer.resize(written)
+		playback.push_buffer(buffer)
+	state["cursor"] = cursor
+	if bool(state.get("finished", false)):
+		state["drain_deadline_msec"] = Time.get_ticks_msec() + int(ceil(float(written) * 1000.0 / float(stream.mix_rate))) + 300
+	_float_pcm_player_states[player_id] = state
 
 
 static func _music_fx_state_from_environment(environment: Dictionary, heat_level: int, music_state: Dictionary) -> Dictionary:
@@ -2254,7 +2388,7 @@ func _play_transition_fill(fill_id: String) -> void:
 			var player := player_value as AudioStreamPlayer
 			player.stream = stream
 			player.volume_db = -1.5
-			player.play()
+			_play_audio_player(player)
 			return
 
 
@@ -2914,7 +3048,7 @@ func _play_feature_stem_set(stem_set: Dictionary, resume_position: float) -> voi
 			var player: AudioStreamPlayer = _feature_stem_players.get(role, null)
 			if player == null or player.stream == null:
 				continue
-			player.play(safe_position)
+			_play_audio_player(player, safe_position, "feature_stems")
 	_current_feature_stem_set = stem_set.duplicate(true)
 	_stop_music_send_players(_feature_send_players, true)
 	if _web_audio_stem_set_bridge_allowed(stem_set, "feature", AMBIENT_STAGE_FULL):
@@ -3097,14 +3231,14 @@ func _play_feature_stinger_now(cue_id: String, volume_db: float = -2.0) -> void:
 			var player := player_value as AudioStreamPlayer
 			player.stream = stream
 			player.volume_db = volume_db
-			player.play()
+			_play_audio_player(player)
 			return
 	if _feature_stinger_players[0] is AudioStreamPlayer:
 		var fallback := _feature_stinger_players[0] as AudioStreamPlayer
 		fallback.stop()
 		fallback.stream = stream
 		fallback.volume_db = volume_db
-		fallback.play()
+		_play_audio_player(fallback)
 
 
 func _feature_music_style(cue_id: String) -> String:
@@ -3168,6 +3302,7 @@ func _stem_manifest_from_contract(stem_set: Dictionary) -> Dictionary:
 	var roles := {}
 	var present_roles: Array = []
 	var missing_roles: Array = []
+	var float_pcm_precision := {}
 	var sync_ok := loop_frames > 0
 	for role_value in MUSIC_STEM_PLAYBACK_ROLES:
 		var role := str(role_value)
@@ -3176,7 +3311,13 @@ func _stem_manifest_from_contract(stem_set: Dictionary) -> Dictionary:
 		var frames := 0
 		var loop_begin := 0
 		var loop_end := 0
-		if value is AudioStreamWAV:
+		if value is MusicFloatPcmStream:
+			var float_stream := value as MusicFloatPcmStream
+			frames = float_stream.frame_count
+			loop_begin = float_stream.loop_begin_frame
+			loop_end = float_stream.loop_end_frame
+			float_pcm_precision[role] = float_stream.precision_snapshot()
+		elif value is AudioStreamWAV:
 			var stream := value as AudioStreamWAV
 			frames = int(stream.loop_end)
 			loop_begin = int(stream.loop_begin)
@@ -3223,6 +3364,7 @@ func _stem_manifest_from_contract(stem_set: Dictionary) -> Dictionary:
 		"source_audio_format": _copy_dict(stem_set.get("source_audio_format", {})),
 		"playback_audio_format": _copy_dict(stem_set.get("playback_audio_format", {})),
 		"preferred_dsp_sends": _copy_dict(stem_set.get("preferred_dsp_sends", {})),
+		"float_pcm_precision": float_pcm_precision,
 		"selection_key": str(stem_set.get("selection_key", "base")),
 		"selected_variants": _copy_dict(stem_set.get("selected_variants", {})),
 		"selected_tags": _copy_array(stem_set.get("selected_tags", [])),
@@ -3239,7 +3381,12 @@ func _audio_stream_loop_mode_snapshot(streams: Dictionary) -> Dictionary:
 	var result := {}
 	for cue_value in streams.keys():
 		var stream: AudioStream = streams.get(cue_value, null)
-		result[str(cue_value)] = int((stream as AudioStreamWAV).loop_mode) if stream is AudioStreamWAV else -1
+		if stream is AudioStreamWAV:
+			result[str(cue_value)] = int((stream as AudioStreamWAV).loop_mode)
+		elif stream is MusicFloatPcmStream:
+			result[str(cue_value)] = AudioStreamWAV.LOOP_FORWARD if (stream as MusicFloatPcmStream).loop_enabled else AudioStreamWAV.LOOP_DISABLED
+		else:
+			result[str(cue_value)] = -1
 	return result
 
 
@@ -3271,7 +3418,7 @@ func _play_stem_set(stem_set: Dictionary, resume_position: float, stage: String)
 			var player: AudioStreamPlayer = _stem_players.get(role, null)
 			if player == null or player.stream == null:
 				continue
-			player.play(safe_position)
+			_play_audio_player(player, safe_position, "venue_stems")
 	_current_stem_set = stem_set.duplicate(true)
 	_stop_music_send_players(_music_send_players, true)
 	_current_stem_stage = stage
@@ -3464,12 +3611,14 @@ func _authored_delivery_snapshot(entry: Dictionary, selected_stems: Dictionary) 
 			"master_preserved": true,
 		},
 		"playback_audio_format": {
-			"codec": "godot_audiostreamwav_pcm16",
+			"codec": "godot_audiostreamgenerator_float_pcm",
 			"sample_rate": int(entry.get("sample_rate", SAMPLE_RATE)),
 			"channels": int(entry.get("channels", 1)),
-			"bit_depth": 16,
+			"sample_type": "float32",
+			"bit_depth": 32,
 			"decoded_from_24_bit": source_bits == 24,
-			"decode_policy": "signed_round_to_nearest_once_at_load",
+			"decode_policy": "exact_signed_pcm24_normalization_cached_at_load",
+			"phase_alignment": "director_position_authoritative_group_launch_then_native_mixer_clock",
 		},
 	}
 
@@ -3591,8 +3740,8 @@ func _load_authored_audio_stream(path: String, loop_frames: int, loop_enabled: b
 	var lowered := path.to_lower()
 	if lowered.ends_with(".wav"):
 		# Decode the untouched source master ourselves. This keeps 24-bit source
-		# validation deterministic across editor/import settings and converts once
-		# into Godot's native AudioStreamWAV PCM16 playback container at full rate.
+		# validation deterministic across editor/import settings; 24-bit masters
+		# enter the cached float provider rather than a 16-bit WAV container.
 		return _load_authored_wav_stream(path, loop_frames, loop_enabled)
 	var loaded: Resource = load(path)
 	if loaded is AudioStreamWAV:
@@ -3652,23 +3801,32 @@ func _load_authored_wav_stream(path: String, loop_frames: int, loop_enabled: boo
 	var source_frames := int(data_size / source_frame_bytes)
 	if loop_enabled and loop_frames > 0 and source_frames != loop_frames:
 		return null
+	if bits_per_sample == 24:
+		var float_frames := PackedVector2Array()
+		float_frames.resize(source_frames)
+		var precision_samples := 0
+		var max_reconstruction_error_lsb := 0
+		for frame_index in range(source_frames):
+			var source_offset := data_start + frame_index * source_frame_bytes
+			var left_24 := _s24_le(bytes, source_offset)
+			var right_24 := _s24_le(bytes, source_offset + 3) if channels > 1 else left_24
+			var frame := Vector2(MusicFloatPcmStream.pcm24_to_float(left_24), MusicFloatPcmStream.pcm24_to_float(right_24))
+			float_frames[frame_index] = frame
+			if (left_24 & 0xff) != 0:
+				precision_samples += 1
+			if channels > 1 and (right_24 & 0xff) != 0:
+				precision_samples += 1
+			max_reconstruction_error_lsb = maxi(max_reconstruction_error_lsb, absi(int(round(float(frame.x) * 8388608.0)) - left_24))
+			if channels > 1:
+				max_reconstruction_error_lsb = maxi(max_reconstruction_error_lsb, absi(int(round(float(frame.y) * 8388608.0)) - right_24))
+		var float_stream := MusicFloatPcmStream.new()
+		float_stream.configure(float_frames, sample_rate, channels, loop_enabled, 0, loop_frames if loop_enabled and loop_frames > 0 else source_frames, precision_samples, max_reconstruction_error_lsb)
+		return float_stream
 	var data := PackedByteArray()
 	if bits_per_sample == 16:
 		data.resize(data_size)
 		for index in range(data_size):
 			data[index] = bytes[data_start + index]
-	else:
-		# AudioStreamWAV exposes PCM16 as its lossless integer playback format.
-		# Round signed 24-bit samples once, preserving rate/channels/phase and the
-		# original 24-bit file on disk for future higher-depth engine backends.
-		var sample_count := source_frames * channels
-		data.resize(sample_count * 2)
-		for sample_index in range(sample_count):
-			var source_offset := data_start + sample_index * 3
-			var sample_24 := _s24_le(bytes, source_offset)
-			var sample_16 := clampi(int(round(float(sample_24) / 256.0)), -32768, 32767)
-			data[sample_index * 2] = sample_16 & 0xff
-			data[sample_index * 2 + 1] = (sample_16 >> 8) & 0xff
 	var stream := AudioStreamWAV.new()
 	stream.format = AudioStreamWAV.FORMAT_16_BITS
 	stream.mix_rate = sample_rate

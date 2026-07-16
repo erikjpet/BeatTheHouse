@@ -8,6 +8,7 @@ const StaffRouletteGameScript := preload("res://scripts/games/roulette.gd")
 const StaffBarDiceGameScript := preload("res://scripts/games/bar_dice.gd")
 const GrandCasinoDuelModelScript := preload("res://scripts/core/grand_casino_duel_model.gd")
 const MusicDeliveryIndexScript := preload("res://scripts/core/music_delivery_index.gd")
+const MusicFloatPcmStreamScript := preload("res://scripts/ui/music_float_pcm_stream.gd")
 
 
 func _check_run_report_foundation(failures: Array) -> void:
@@ -592,8 +593,19 @@ func _check_music_stem_director_foundation(library: ContentLibrary, failures: Ar
 	var jazz_playback_format: Dictionary = jazz_8_manifest.get("playback_audio_format", {}) as Dictionary
 	if str(jazz_8_manifest.get("source", "")) != "authored" or not bool(jazz_8_manifest.get("sync_ok", false)) or int(jazz_8_manifest.get("loop_frames", 0)) != 705600:
 		failures.append("Native authored provider did not load the 24-bit 8-bar Jazz fixture as a synchronized set.")
-	if int(jazz_source_format.get("bit_depth", 0)) != 24 or not bool(jazz_source_format.get("master_preserved", false)) or int(jazz_playback_format.get("bit_depth", 0)) != 16 or not bool(jazz_playback_format.get("decoded_from_24_bit", false)):
-		failures.append("Jazz snapshot did not expose preserved 24-bit source and one-time native PCM16 decode formats.")
+	if int(jazz_source_format.get("bit_depth", 0)) != 24 or not bool(jazz_source_format.get("master_preserved", false)) or str(jazz_playback_format.get("sample_type", "")) != "float32" or not bool(jazz_playback_format.get("decoded_from_24_bit", false)):
+		failures.append("Jazz snapshot did not expose preserved 24-bit source and native float PCM playback formats.")
+	var jazz_precision: Dictionary = (jazz_8_manifest.get("float_pcm_precision", {}) as Dictionary).get("pad", {}) as Dictionary
+	if str(jazz_precision.get("provider", "")) != "cached_float_pcm_generator" or int(jazz_precision.get("samples_beyond_16_bit", 0)) <= 0 or not bool(jazz_precision.get("low_order_information_preserved", false)) or int(jazz_precision.get("max_reconstruction_error_lsb", 99)) > 1:
+		failures.append("Native Jazz float provider did not prove that loaded low-order 24-bit information survives beyond 16-bit quantization.")
+	var low_order_a := MusicFloatPcmStreamScript.pcm24_to_float(65536)
+	var low_order_b := MusicFloatPcmStreamScript.pcm24_to_float(65537)
+	if low_order_a == low_order_b or int(round(low_order_a * 32768.0)) != int(round(low_order_b * 32768.0)):
+		failures.append("24-bit float decoder did not preserve adjacent source values that collapse to the same 16-bit sample.")
+	var launch_authority := ProceduralMusicPlayerScript.float_pcm_launch_frame_snapshot(3.125, 44100, 0, 705600, true)
+	var aligned_launch := ProceduralMusicPlayerScript.float_pcm_launch_frame_snapshot(3.125 + 1.0 / 44100.0, 44100, 0, 705600, true, int(launch_authority.get("source_frame", -1)))
+	if int(aligned_launch.get("source_frame", -1)) != int(launch_authority.get("source_frame", -2)) or int(aligned_launch.get("phase_error_frames", 99)) != 0 or str(aligned_launch.get("phase_model", "")) != "director_position_authoritative_group_launch":
+		failures.append("Float PCM stem/send launch planner did not map simultaneous players onto one authoritative source frame with zero launch error.")
 	var jazz_delivery_files: Array = jazz_8_manifest.get("delivery_files", []) as Array
 	if jazz_delivery_files.size() != 4 or JSON.stringify(jazz_delivery_files).find("JazzClub_Lead_Trumpet_1.wav") < 0 or JSON.stringify(jazz_delivery_files).find("pattern_number") < 0:
 		failures.append("Jazz snapshot did not expose parsed delivery filename fields for selected stems.")
@@ -810,6 +822,13 @@ func _check_music_stem_director_foundation(library: ContentLibrary, failures: Ar
 		var motel_palette: Dictionary = motel_theory.get("instrument_palette", {}) as Dictionary
 		if str(jazz_palette.get("id", "")) == str(grand_palette.get("id", "")) or str(motel_palette.get("id", "")) == str(grand_palette.get("id", "")):
 			failures.append("Music instrument palettes did not differ by venue archetype.")
+	# These headless-only Nodes are never inserted into a SceneTree, so free them
+	# synchronously and release cached float PCM resources before process exit.
+	player.free()
+	quantized_player.free()
+	feature_player.free()
+	event_player.free()
+	sfx.free()
 
 
 func _music_environment_with_authored_track(library: ContentLibrary) -> Dictionary:
