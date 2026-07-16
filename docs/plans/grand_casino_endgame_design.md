@@ -67,9 +67,16 @@ D7 may retune values, but they must keep the ids and rule meanings.
 | Field | Initial value | Meaning |
 | --- | ---: | --- |
 | `high_roller_target_bankroll` | 0 | Legacy compatibility field; the clean route is no longer gated by total bankroll. |
-| `high_roller_net_winnings` | 10 | 0.3 release-tuned minimum net bankroll gained after entering the Grand Casino, measured after the Grand Casino travel buy-in is paid. |
-| `high_roller_min_grand_casino_games` | 3 | Minimum settled wagered game results on the Grand Casino floor. |
+| `high_roller_net_winnings` | 30 | Gold-tier net value target after entering the Grand Casino, measured after the travel buy-in and excluding chip-comp value through the adjusted entry baseline. |
+| `high_roller_min_grand_casino_games` | 5 | Gold-tier settled wagered game target on the Grand Casino floor. |
 | `high_roller_max_heat` | 30 | Maximum Grand Casino heat for clean cashout. |
+| `players_card_bronze_min_games` | 1 | Bronze settled-game target. |
+| `players_card_bronze_net_winnings` | 5 | Bronze net-winnings target. |
+| `players_card_silver_min_games` | 3 | Silver settled-game target. |
+| `players_card_silver_net_winnings` | 15 | Silver net-winnings target. |
+| `players_card_gold_min_games` | 5 | Gold settled-game target and clean-review gate. |
+| `players_card_gold_net_winnings` | 30 | Gold net-winnings target and clean-review gate. |
+| `players_card_look_away_max_heat_gain` | 5 | Largest one-shot heat gain Linda can forgive at Silver or Gold. |
 | `showdown_heat_threshold` | 70 | Heat that triggers showdown when staff attention is present. |
 | `forced_showdown_heat_threshold` | 95 | Heat that forces showdown even if no other attention source is currently true. |
 | `showdown_base_success_chance` | 95 | 0.3 release-tuned starting chance for the final showdown check before heat/evidence/debt penalties. |
@@ -128,16 +135,27 @@ resolution, and save-load restore. `RunState` remains the source of truth.
 
 ## Clean Route Criteria
 
-The clean route is available only in the Grand Casino and only when no showdown
-is pending or active.
+The clean route is a per-run Bronze, Silver, and Gold Players Card ladder. It is
+available only in the Grand Casino and only when no showdown is pending or
+active. Each tier requires its data-authored settled-game count, net winnings,
+and heat ceiling. Bronze grants Linda dialogue, a bar comp, and a small chip
+bonus. Silver grants high-limit access, improved comps, a suite rest, and one
+small-heat look-away. Gold opens the deliberate Cage review and is the clean
+victory.
 
-All of the following must be true:
+Gold review requires all of the following:
 
 - `(bankroll + grand_casino_chips) - grand_casino_entry_bankroll >= high_roller_net_winnings`
 - `grand_casino_games_played >= high_roller_min_grand_casino_games`
 - `suspicion_level() <= high_roller_max_heat`
 - `grand_casino_cheat_evidence != true`
 - `grand_casino_watched_cheat_evidence != true`
+
+Chip bonuses increase both chips and the remembered entry baseline by the same
+amount, preserving the canonical `(cash + chips) - entry` net-winnings formula.
+Cheat evidence permanently closes every card tier for the run, revokes
+Silver-card room access, and cannot be cleared by later clean play. A cash
+high-limit buy-in remains independent.
 
 Players Card blockers route to Rourke:
 
@@ -369,14 +387,14 @@ Failure:
 
 The clean route uses `high_roller_cashout`.
 
-When the clean criteria become true, the Grand Casino does not immediately end
-the run. It exposes a deliberate host interaction:
+When Gold criteria become true, the Grand Casino does not immediately end the
+run. It exposes Linda's deliberate Gold review at the Cage:
 
 - Event/action id: `high_roller_cashout`
 - Pending flag: `high_roller_cashout_pending`
 - State flag: `grand_casino_high_roller_ready`
 
-Resolving the Players Card review:
+Resolving Linda's Gold Players Card dialogue scene:
 
 - Sets `grand_casino_endgame_state = "victory"`.
 - Completes `grand_casino_demo_bankroll`.
@@ -388,6 +406,7 @@ Resolving the Players Card review:
   `finale_branch = "high_roller_cashout"`.
 - Player-facing outcome: the host issues the Grand Casino Players Card and the
   player leaves with winnings.
+- Set `act_two_seam_ready = true` and log the clean-route seam marker.
 
 ## Narrative Flags
 
@@ -410,6 +429,12 @@ Required flags:
 | `grand_casino_staff_attention_sources` | Array[String] | Active attention source keys. |
 | `grand_casino_high_roller_ready` | bool | Players Card review is available. |
 | `high_roller_cashout_pending` | bool | Players Card review event/action can be selected. |
+| `grand_casino_players_card_tier` | String | Current `none`, `bronze`, `silver`, or `gold` clean-path tier. |
+| `grand_casino_players_card_ineligible` | bool | Cheat evidence permanently closed the card program this run. |
+| `grand_casino_comp_drink_tokens` | int | Unspent free bar-drink comps. |
+| `grand_casino_comp_suite_rests` | int | Unspent suite-rest comps. |
+| `grand_casino_linda_look_away_available` | bool | Silver one-shot heat forgiveness is armed. |
+| `grand_casino_linda_look_away_consumed` | bool | Linda already forgave the run's one eligible heat gain. |
 | `grand_casino_showdown_pending` | bool | Rourke has called the player, but showdown UI is not active. |
 | `grand_casino_showdown_active` | bool | Showdown encounter is currently resolving. |
 | `grand_casino_showdown_attempt` | int | 1-based attempt count. |

@@ -638,7 +638,11 @@ static func apply_result(run_state: RunState, result: Dictionary, rng: RngStream
 		run_state.change_grand_casino_chips(chips_delta, defer_bankroll_zero)
 	var suspicion_delta := int(deltas.get("suspicion_delta", 0))
 	if suspicion_delta != 0:
-		var suspicion_context := {"environment_id": result.get("environment_id", "")}
+		var suspicion_context := {
+			"environment_id": result.get("environment_id", ""),
+			"action_kind": str(result.get("action_kind", "")),
+			"source_id": str(result.get("source_id", "")),
+		}
 		if result.has("environment_archetype_id"):
 			suspicion_context["environment_archetype_id"] = result.get("environment_archetype_id", "")
 		var applied_suspicion_delta := run_state.add_suspicion(
