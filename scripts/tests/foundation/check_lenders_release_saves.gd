@@ -525,6 +525,12 @@ func _check_music_stem_director_foundation(library: ContentLibrary, failures: Ar
 		var role_bus: Dictionary = bus_roles.get(role, {}) as Dictionary
 		if str(role_bus.get("send", "")) != "Music":
 			failures.append("Music stem bus %s was not routed into the Music bus." % role)
+	var send_matrix_fixture := {"reverb": {"lead": 0.1}, "delay": {"lead": 0.05}}
+	var merged_send_matrix: Dictionary = player.call("_merge_authored_send_preferences", send_matrix_fixture, {
+		"preferred_dsp_sends": {"lead": {"reverb": 0.4, "delay": 0.02}},
+	})
+	if merged_send_matrix.has("lead") or not is_equal_approx(float((merged_send_matrix.get("reverb", {}) as Dictionary).get("lead", 0.0)), 0.4) or not is_equal_approx(float((merged_send_matrix.get("delay", {}) as Dictionary).get("lead", 0.0)), 0.05):
+		failures.append("Authored DSP preferences did not merge into the effect-to-role send matrix without lowering the live mix.")
 
 	var authored_track := library.music_track("corner_store_sparse_fixture")
 	if authored_track.is_empty():
@@ -594,6 +600,9 @@ func _check_music_stem_director_foundation(library: ContentLibrary, failures: Ar
 		failures.append("Authored sparse stem set did not expose synchronized loop metadata.")
 	if int(authored_manifest.get("sample_rate", 0)) != 44100 or int(authored_manifest.get("bit_depth", 0)) != 16:
 		failures.append("Authored music did not preserve the native 16-bit/44.1 kHz delivery contract.")
+	var authored_playback_format: Dictionary = authored_manifest.get("playback_audio_format", {}) as Dictionary
+	if str(authored_playback_format.get("codec", "")) != "godot_imported_audiostreamwav_pcm16" or str(authored_playback_format.get("sample_type", "")) != "signed_pcm16" or bool(authored_playback_format.get("decoded_from_24_bit", true)):
+		failures.append("Legacy PCM16 authored music did not use Godot's native imported playback path.")
 	if int(authored_manifest.get("loop_frames", 0)) < 44100 * 12:
 		failures.append("Authored corner-store music fixture should be a long ambient bed, not a short repeated loop.")
 	if int(authored_manifest.get("bars", 0)) < 8:

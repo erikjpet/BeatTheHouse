@@ -5,6 +5,7 @@ const WebAudioBridgeScript := preload("res://scripts/ui/web_audio_bridge.gd")
 const MusicArrangementSelectorScript := preload("res://scripts/ui/music_arrangement_selector.gd")
 const MusicDeliveryIndexScript := preload("res://scripts/core/music_delivery_index.gd")
 const MusicFloatPcmStreamScript := preload("res://scripts/ui/music_float_pcm_stream.gd")
+const ContentLibraryScript := preload("res://scripts/core/content_library.gd")
 
 # Procedural background music for the foundation UI.
 # The synth shape is ported from the old baseline: generated PCM WAV themes,
@@ -1358,18 +1359,22 @@ static func _scaled_music_send_matrix(matrix: Dictionary, scale: float) -> Dicti
 
 
 static func _merge_authored_send_preferences(matrix: Dictionary, stem_set: Dictionary) -> Dictionary:
-	var result := matrix.duplicate(true)
+	if stem_set.is_empty():
+		return matrix
 	var preferences := stem_set.get("preferred_dsp_sends", {}) as Dictionary if typeof(stem_set.get("preferred_dsp_sends", {})) == TYPE_DICTIONARY else {}
+	if preferences.is_empty():
+		return matrix
+	var result := matrix.duplicate(true)
 	for role_value in preferences.keys():
 		var role := str(role_value)
 		var role_preferences := preferences.get(role_value, {}) as Dictionary if typeof(preferences.get(role_value, {})) == TYPE_DICTIONARY else {}
-		var role_matrix := result.get(role, {}) as Dictionary if typeof(result.get(role, {})) == TYPE_DICTIONARY else {}
 		for effect_value in role_preferences.keys():
 			var effect_key := str(effect_value)
 			if not MUSIC_SEND_EFFECT_ORDER.has(effect_key):
 				continue
-			role_matrix[effect_key] = maxf(float(role_matrix.get(effect_key, 0.0)), clampf(float(role_preferences.get(effect_value, 0.0)), 0.0, 1.0))
-		result[role] = role_matrix
+			var effect_roles := result.get(effect_key, {}) as Dictionary if typeof(result.get(effect_key, {})) == TYPE_DICTIONARY else {}
+			effect_roles[role] = maxf(float(effect_roles.get(role, 0.0)), clampf(float(role_preferences.get(effect_value, 0.0)), 0.0, 1.0))
+			result[effect_key] = effect_roles
 	return result
 
 
@@ -3601,6 +3606,7 @@ func _authored_delivery_snapshot(entry: Dictionary, selected_stems: Dictionary) 
 			if typeof(sends_value) == TYPE_DICTIONARY:
 				preferred_dsp_sends[role] = (sends_value as Dictionary).duplicate(true)
 	var source_bits := int(entry.get("bit_depth", 16))
+	var native_float_playback := source_bits == 24
 	return {
 		"files": files,
 		"preferred_dsp_sends": preferred_dsp_sends,
@@ -3612,14 +3618,14 @@ func _authored_delivery_snapshot(entry: Dictionary, selected_stems: Dictionary) 
 			"master_preserved": true,
 		},
 		"playback_audio_format": {
-			"codec": "godot_audiostreamgenerator_float_pcm",
+			"codec": "godot_audiostreamgenerator_float_pcm" if native_float_playback else "godot_imported_audiostreamwav_pcm16",
 			"sample_rate": int(entry.get("sample_rate", SAMPLE_RATE)),
 			"channels": int(entry.get("channels", 1)),
-			"sample_type": "float32",
-			"bit_depth": 32,
-			"decoded_from_24_bit": source_bits == 24,
-			"decode_policy": "exact_signed_pcm24_normalization_cached_at_load",
-			"phase_alignment": "director_position_authoritative_group_launch_then_native_mixer_clock",
+			"sample_type": "float32" if native_float_playback else "signed_pcm16",
+			"bit_depth": 32 if native_float_playback else 16,
+			"decoded_from_24_bit": native_float_playback,
+			"decode_policy": "exact_signed_pcm24_normalization_cached_at_load" if native_float_playback else "godot_native_imported_pcm16",
+			"phase_alignment": "director_position_authoritative_group_launch_then_native_mixer_clock" if native_float_playback else "godot_native_shared_playback_clock",
 		},
 	}
 
@@ -3740,10 +3746,17 @@ func _authored_music_path(track_id: String, filename: String) -> String:
 func _load_authored_audio_stream(path: String, loop_frames: int, loop_enabled: bool = true):
 	var lowered := path.to_lower()
 	if lowered.ends_with(".wav"):
-		# Decode the untouched source master ourselves. This keeps 24-bit source
-		# validation deterministic across editor/import settings; 24-bit masters
-		# enter the cached float provider rather than a 16-bit WAV container.
-		return _load_authored_wav_stream(path, loop_frames, loop_enabled)
+		var source_info := ContentLibraryScript.inspect_music_wav(path)
+		if not bool(source_info.get("valid", false)):
+			return null
+		if int(source_info.get("bits_per_sample", 0)) == 24:
+			# Decode untouched 24-bit masters ourselves so information below the
+			# 16-bit threshold reaches the native float mixer. Validated legacy
+			# PCM16 uses Godot's imported resource path below; routing it through
+			# the raw decoder would synchronously copy millions of bytes in script.
+			return _load_authored_wav_stream(path, loop_frames, loop_enabled)
+		if int(source_info.get("bits_per_sample", 0)) != 16:
+			return null
 	var loaded: Resource = load(path)
 	if loaded is AudioStreamWAV:
 		var wav_stream := (loaded as AudioStreamWAV).duplicate(true) as AudioStreamWAV
@@ -3751,6 +3764,10 @@ func _load_authored_audio_stream(path: String, loop_frames: int, loop_enabled: b
 		return wav_stream
 	if loaded is AudioStream:
 		return loaded
+	if lowered.ends_with(".wav"):
+		# Source-only deployments may deliberately skip Godot's WAV importer.
+		# Keep a strict PCM16 fallback, but make the normal project path native.
+		return _load_authored_wav_stream(path, loop_frames, loop_enabled)
 	return null
 
 
@@ -3825,9 +3842,7 @@ func _load_authored_wav_stream(path: String, loop_frames: int, loop_enabled: boo
 		return float_stream
 	var data := PackedByteArray()
 	if bits_per_sample == 16:
-		data.resize(data_size)
-		for index in range(data_size):
-			data[index] = bytes[data_start + index]
+		data = bytes.slice(data_start, data_start + data_size)
 	var stream := AudioStreamWAV.new()
 	stream.format = AudioStreamWAV.FORMAT_16_BITS
 	stream.mix_rate = sample_rate
