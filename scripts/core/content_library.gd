@@ -1652,7 +1652,7 @@ static func _store_music_wav_info_cache(cache_key: String, normalized_path: Stri
 	}
 	_music_wav_info_cache_order.append(cache_key)
 	while _music_wav_info_cache_order.size() > MUSIC_WAV_INFO_CACHE_MAX_ENTRIES:
-		var evicted_key := _music_wav_info_cache_order.pop_front()
+		var evicted_key := str(_music_wav_info_cache_order.pop_front())
 		_music_wav_info_cache.erase(evicted_key)
 
 
