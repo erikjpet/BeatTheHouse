@@ -568,6 +568,7 @@ func _check_music_stem_director_foundation(library: ContentLibrary, failures: Ar
 		candidate[str(mismatch_fixture.get("property", ""))] = int(mismatch_fixture.get("value", 0))
 		if not ContentLibraryScript.synchronized_wav_mismatches(wav_8, candidate).has(str(mismatch_fixture.get("property", ""))):
 			failures.append("Synchronized WAV validation missed %s mismatch." % str(mismatch_fixture.get("property", "")))
+	_check_music_wav_info_cache(failures)
 	var invalid_library: ContentLibrary = ContentLibraryScript.new()
 	invalid_library.music_tracks = [{
 		"id": "bad_music_entry",
@@ -791,6 +792,86 @@ func _check_music_stem_director_foundation(library: ContentLibrary, failures: Ar
 	feature_player.free()
 	event_player.free()
 	sfx.free()
+
+
+func _check_music_wav_info_cache(failures: Array) -> void:
+	var fixture_path := "user://music_wav_cache_fixture.wav"
+	var absolute_path := ProjectSettings.globalize_path(fixture_path)
+	DirAccess.remove_absolute(absolute_path)
+	ContentLibraryScript.clear_music_wav_info_cache()
+	var missing := ContentLibraryScript.inspect_music_wav(fixture_path)
+	var missing_snapshot := ContentLibraryScript.music_wav_info_cache_snapshot()
+	if bool(missing.get("valid", true)) or int(missing_snapshot.get("entries", -1)) != 0:
+		failures.append("WAV inspection cache retained a missing-file error that could poison a later delivery.")
+
+	if not _write_music_wav_cache_fixture(fixture_path, 1, true):
+		failures.append("WAV inspection cache test could not write its valid fixture.")
+		return
+	var first := ContentLibraryScript.inspect_music_wav(fixture_path)
+	var first_snapshot := ContentLibraryScript.music_wav_info_cache_snapshot()
+	first["frames"] = 999
+	var cached := ContentLibraryScript.inspect_music_wav(fixture_path)
+	var hit_snapshot := ContentLibraryScript.music_wav_info_cache_snapshot()
+	if not bool(cached.get("valid", false)) or int(cached.get("frames", 0)) != 1 or cached.has("path") or cached.has("_cache_path"):
+		failures.append("WAV inspection cache did not return an isolated copy of the cached validation result.")
+	if int(first_snapshot.get("entries", 0)) != 1 or int(first_snapshot.get("misses", 0)) != 1 or int(hit_snapshot.get("hits", 0)) != 1:
+		failures.append("WAV inspection cache did not record one miss followed by one hit for an unchanged file.")
+
+	if not _write_music_wav_cache_fixture(fixture_path, 2, true):
+		failures.append("WAV inspection cache test could not rewrite its valid fixture.")
+	else:
+		var rewritten := ContentLibraryScript.inspect_music_wav(fixture_path)
+		var rewritten_snapshot := ContentLibraryScript.music_wav_info_cache_snapshot()
+		if not bool(rewritten.get("valid", false)) or int(rewritten.get("frames", 0)) != 2 or int(rewritten_snapshot.get("misses", 0)) != 2 or int(rewritten_snapshot.get("entries", 0)) != 1:
+			failures.append("WAV inspection cache did not invalidate its stale entry after the file length changed.")
+
+	if not _write_music_wav_cache_fixture(fixture_path, 3, false):
+		failures.append("WAV inspection cache test could not write its invalid fixture.")
+	else:
+		var invalid_first := ContentLibraryScript.inspect_music_wav(fixture_path)
+		var invalid_cached := ContentLibraryScript.inspect_music_wav(fixture_path)
+		var invalid_snapshot := ContentLibraryScript.music_wav_info_cache_snapshot()
+		if bool(invalid_first.get("valid", true)) or invalid_first != invalid_cached or str(invalid_first.get("error", "")).is_empty():
+			failures.append("WAV inspection cache did not preserve an actionable invalid-file result on a cache hit.")
+		if int(invalid_snapshot.get("entries", 0)) != 1 or int(invalid_snapshot.get("misses", 0)) != 3 or int(invalid_snapshot.get("hits", 0)) != 2:
+			failures.append("WAV inspection cache counters or stale-entry replacement were incorrect after an invalid rewrite.")
+		if int(invalid_snapshot.get("max_entries", 0)) != ContentLibraryScript.MUSIC_WAV_INFO_CACHE_MAX_ENTRIES:
+			failures.append("WAV inspection cache did not expose its bounded-growth limit.")
+
+	ContentLibraryScript.clear_music_wav_info_cache()
+	var cleared_snapshot := ContentLibraryScript.music_wav_info_cache_snapshot()
+	if int(cleared_snapshot.get("entries", -1)) != 0 or int(cleared_snapshot.get("hits", -1)) != 0 or int(cleared_snapshot.get("misses", -1)) != 0:
+		failures.append("WAV inspection cache clear hook did not reset entries and diagnostics.")
+	DirAccess.remove_absolute(absolute_path)
+
+
+func _write_music_wav_cache_fixture(path: String, frames: int, valid_signature: bool) -> bool:
+	var file := FileAccess.open(path, FileAccess.WRITE)
+	if file == null:
+		return false
+	file.big_endian = false
+	var data_bytes := frames * 3
+	var padded_data_bytes := data_bytes + (data_bytes % 2)
+	var riff_size := 4 + 8 + 16 + 8 + padded_data_bytes
+	file.store_buffer(("RIFF" if valid_signature else "NOPE").to_ascii_buffer())
+	file.store_32(riff_size)
+	file.store_buffer("WAVE".to_ascii_buffer())
+	file.store_buffer("fmt ".to_ascii_buffer())
+	file.store_32(16)
+	file.store_16(1)
+	file.store_16(1)
+	file.store_32(44100)
+	file.store_32(132300)
+	file.store_16(3)
+	file.store_16(24)
+	file.store_buffer("data".to_ascii_buffer())
+	file.store_32(data_bytes)
+	for byte_index in range(data_bytes):
+		file.store_8((byte_index * 17) & 0xff)
+	if data_bytes % 2 != 0:
+		file.store_8(0)
+	file.close()
+	return true
 
 
 func _music_environment_with_authored_track(library: ContentLibrary) -> Dictionary:
