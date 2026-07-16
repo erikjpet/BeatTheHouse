@@ -1358,18 +1358,22 @@ static func _scaled_music_send_matrix(matrix: Dictionary, scale: float) -> Dicti
 
 
 static func _merge_authored_send_preferences(matrix: Dictionary, stem_set: Dictionary) -> Dictionary:
-	var result := matrix.duplicate(true)
+	if stem_set.is_empty():
+		return matrix
 	var preferences := stem_set.get("preferred_dsp_sends", {}) as Dictionary if typeof(stem_set.get("preferred_dsp_sends", {})) == TYPE_DICTIONARY else {}
+	if preferences.is_empty():
+		return matrix
+	var result := matrix.duplicate(true)
 	for role_value in preferences.keys():
 		var role := str(role_value)
 		var role_preferences := preferences.get(role_value, {}) as Dictionary if typeof(preferences.get(role_value, {})) == TYPE_DICTIONARY else {}
-		var role_matrix := result.get(role, {}) as Dictionary if typeof(result.get(role, {})) == TYPE_DICTIONARY else {}
 		for effect_value in role_preferences.keys():
 			var effect_key := str(effect_value)
 			if not MUSIC_SEND_EFFECT_ORDER.has(effect_key):
 				continue
-			role_matrix[effect_key] = maxf(float(role_matrix.get(effect_key, 0.0)), clampf(float(role_preferences.get(effect_value, 0.0)), 0.0, 1.0))
-		result[role] = role_matrix
+			var effect_roles := result.get(effect_key, {}) as Dictionary if typeof(result.get(effect_key, {})) == TYPE_DICTIONARY else {}
+			effect_roles[role] = maxf(float(effect_roles.get(role, 0.0)), clampf(float(role_preferences.get(effect_value, 0.0)), 0.0, 1.0))
+			result[effect_key] = effect_roles
 	return result
 
 
@@ -3825,9 +3829,7 @@ func _load_authored_wav_stream(path: String, loop_frames: int, loop_enabled: boo
 		return float_stream
 	var data := PackedByteArray()
 	if bits_per_sample == 16:
-		data.resize(data_size)
-		for index in range(data_size):
-			data[index] = bytes[data_start + index]
+		data = bytes.slice(data_start, data_start + data_size)
 	var stream := AudioStreamWAV.new()
 	stream.format = AudioStreamWAV.FORMAT_16_BITS
 	stream.mix_rate = sample_rate
