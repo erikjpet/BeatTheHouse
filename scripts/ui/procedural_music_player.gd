@@ -1426,7 +1426,8 @@ func _play_audio_player(player: AudioStreamPlayer, source_position_seconds: floa
 	if playback == null:
 		player.stop()
 		return
-	playback.clear_buffer()
+	# A newly instantiated generator playback starts empty. Godot rejects
+	# clear_buffer() after the playback becomes active, so prefill it directly.
 	var process_frame := Engine.get_process_frames()
 	var launch_key := "%s:%d" % [phase_group, process_frame] if not phase_group.is_empty() else ""
 	var authority_frame := -1
