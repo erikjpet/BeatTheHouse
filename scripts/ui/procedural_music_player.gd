@@ -201,7 +201,12 @@ func _ready() -> void:
 	_apply_music_fx_vector(_music_fx_live, true)
 	if WebAudioBridgeScript.available():
 		WebAudioBridgeScript.ensure()
-	if not _running_headless():
+	if _running_headless():
+		# Headless playback requests stop before creating players or generation
+		# work. Direct snapshot APIs remain callable, but there is no live audio
+		# transport for this per-frame callback to advance.
+		set_process(false)
+	else:
 		_ensure_stem_players()
 
 
