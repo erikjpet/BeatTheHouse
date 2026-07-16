@@ -436,7 +436,7 @@ func resolve_with_context(action_id: String, stake: int, run_state: RunState, en
 	var total_wager := _total_wager(bets)
 	if total_wager <= 0 and not sit_out:
 		return _empty_baccarat_result(action_id, stake, environment, "Place a baccarat bet first.")
-	if run_state != null and total_wager > run_state.bankroll:
+	if run_state != null and total_wager > run_state.wager_balance_for_game(get_id(), environment):
 		return _empty_baccarat_result(action_id, total_wager, environment, "You do not have enough bankroll for those baccarat chips.")
 	var min_total := int(table.get("table_minimum", 20))
 	if total_wager > 0 and total_wager < min_total:
@@ -1103,7 +1103,7 @@ func _place_bet_command(index: int, session: Dictionary, run_state: RunState, ta
 	var bet_id := str(target.get("id", ""))
 	var bets := _bet_dict(session.get("baccarat_bets", {}))
 	var chip := int(session.get("selected_chip", _chip_denominations(table)[0]))
-	var bankroll := run_state.bankroll if run_state != null else 0
+	var bankroll := run_state.wager_capacity_for_game(get_id()) if run_state != null else 0
 	if _total_wager(bets) + chip > bankroll:
 		return _message_command(session, "Those chips exceed your bankroll.")
 	if int(bets.get(bet_id, 0)) + chip > int(table.get("table_maximum", 500)):
@@ -1132,7 +1132,7 @@ func _patron_bet_command(index: int, session: Dictionary, run_state: RunState, t
 	var bet_id := _opposing_baccarat_bet(source_bet) if fade else source_bet
 	var wager := maxi(1, int(patron.get("cosmetic_bet", patron.get("chip_stack", int(table.get("table_minimum", 20))))))
 	var bets := _bet_dict(session.get("baccarat_bets", {}))
-	var bankroll := run_state.bankroll if run_state != null else wager
+	var bankroll := run_state.wager_capacity_for_game(get_id()) if run_state != null else wager
 	var available := maxi(0, bankroll - _total_wager(bets))
 	var table_room := maxi(0, int(table.get("table_maximum", 500)) - int(bets.get(bet_id, 0)))
 	var chip := mini(wager, mini(available, table_room))
@@ -1239,7 +1239,7 @@ func _rebet_command(session: Dictionary, run_state: RunState, table: Dictionary)
 	var rebet := _bet_dict(session.get("baccarat_rebet", table.get("last_bets", {})))
 	if rebet.is_empty():
 		return _message_command(session, "No previous baccarat bet to repeat.")
-	if run_state != null and _total_wager(rebet) > run_state.bankroll:
+	if run_state != null and _total_wager(rebet) > run_state.wager_capacity_for_game(get_id()):
 		return _message_command(session, "You do not have enough bankroll to repeat that bet.")
 	session["baccarat_undo_stack"] = _array(session.get("baccarat_undo_stack", [])) + [_bet_dict(session.get("baccarat_bets", {}))]
 	session["baccarat_bets"] = rebet
@@ -1251,7 +1251,7 @@ func _rebet_command(session: Dictionary, run_state: RunState, table: Dictionary)
 func _max_bet_command(session: Dictionary, run_state: RunState, table: Dictionary) -> Dictionary:
 	var bets := _bet_dict(session.get("baccarat_bets", {}))
 	var chip := maxi(int(table.get("table_minimum", 20)), int(session.get("selected_chip", 20)))
-	var bankroll := run_state.bankroll if run_state != null else chip
+	var bankroll := run_state.wager_capacity_for_game(get_id()) if run_state != null else chip
 	var allowed := mini(chip, maxi(0, bankroll - _total_wager(bets)))
 	if allowed <= 0:
 		return _message_command(session, "No bankroll left for another baccarat chip.")

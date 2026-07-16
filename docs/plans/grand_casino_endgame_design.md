@@ -133,7 +133,7 @@ is pending or active.
 
 All of the following must be true:
 
-- `bankroll - grand_casino_entry_bankroll >= high_roller_net_winnings`
+- `(bankroll + grand_casino_chips) - grand_casino_entry_bankroll >= high_roller_net_winnings`
 - `grand_casino_games_played >= high_roller_min_grand_casino_games`
 - `suspicion_level() <= high_roller_max_heat`
 - `grand_casino_cheat_evidence != true`
@@ -401,9 +401,9 @@ Required flags:
 | Flag | Type | Meaning |
 | --- | --- | --- |
 | `grand_casino_endgame_state` | String | Canonical state-machine state. |
-| `grand_casino_entry_bankroll` | int | Bankroll when this Grand Casino visit began, after the Grand Casino travel buy-in is paid. |
+| `grand_casino_entry_bankroll` | int | Total casino money value (cash plus chips) when this Grand Casino visit began, after the Grand Casino travel buy-in is paid. The canonical id is preserved for save compatibility. |
 | `grand_casino_games_played` | int | Settled wagered Grand Casino results. |
-| `grand_casino_net_winnings` | int | `bankroll - grand_casino_entry_bankroll`. |
+| `grand_casino_net_winnings` | int | `(bankroll + grand_casino_chips) - grand_casino_entry_bankroll`. Chip buys and cash-outs are transfers, so they do not change this value. |
 | `grand_casino_cheat_evidence` | bool | Any Grand Casino cheat evidence. |
 | `grand_casino_watched_cheat_evidence` | bool | Cheat evidence seen while watched or with pit-boss heat bonus. |
 | `grand_casino_staff_attention` | bool | Aggregate staff-attention status. |

@@ -97,7 +97,7 @@ func cheat_actions(run_state: RunState, environment: Dictionary) -> Array:
 # Packages all actions and stake bounds for the UI.
 func actions(run_state: RunState, environment: Dictionary) -> Dictionary:
 	var economic_profile: Dictionary = environment.get("economic_profile", {})
-	var base_stake_ceiling := stake_ceiling_for_game(environment, get_id(), run_state.bankroll)
+	var base_stake_ceiling := stake_ceiling_for_game(environment, get_id(), run_state.wager_capacity_for_game(get_id(), environment))
 	var economy_stake_ceiling := run_state.economy_stake_ceiling(base_stake_ceiling)
 	var wager_stake_ceiling := run_state.wager_stake_ceiling(base_stake_ceiling)
 	return {
@@ -240,6 +240,7 @@ func minimum_wager_return_for_context(_action_id: String, _stake: int, _wager_co
 static func empty_result_deltas() -> Dictionary:
 	return {
 		"bankroll_delta": 0,
+		"chips_delta": 0,
 		"suspicion_delta": 0,
 		"alcohol_intake": 0,
 		"drunk_delta": 0,
@@ -625,12 +626,16 @@ static func apply_result(run_state: RunState, result: Dictionary, rng: RngStream
 	normalize_skill_cheat_contract(result)
 	var deltas := _normalize_result_deltas(result.get("deltas", {}))
 	run_state.record_score_spending_from_result(result, deltas)
+	deltas = run_state.route_grand_casino_game_currency(result, deltas)
 	var defer_bankroll_zero := bool(result.get("defer_bankroll_zero_failure", false)) or run_state.defer_next_bankroll_zero_failure
 	if defer_bankroll_zero:
 		result["defer_bankroll_zero_failure"] = true
 	var bankroll_delta := int(deltas.get("bankroll_delta", 0))
 	if bankroll_delta != 0:
 		run_state.change_bankroll(bankroll_delta, defer_bankroll_zero)
+	var chips_delta := int(deltas.get("chips_delta", 0))
+	if chips_delta != 0:
+		run_state.change_grand_casino_chips(chips_delta, defer_bankroll_zero)
 	var suspicion_delta := int(deltas.get("suspicion_delta", 0))
 	if suspicion_delta != 0:
 		var suspicion_context := {"environment_id": result.get("environment_id", "")}
@@ -1190,7 +1195,7 @@ static func _normalize_result_deltas(value: Variant) -> Dictionary:
 	for key in result.keys():
 		if not source.has(key):
 			continue
-		if key == "bankroll_delta" or key == "suspicion_delta" or key == "alcohol_intake" or key == "drunk_delta" or key == "pending_drunk_absorption_delta" or key == "drunk_distortion_suppression_turns" or key == "heat_cooldown_actions" or key == "heat_cooldown_per_action" or key == "alcoholic_delta" or key == "baseline_luck_delta":
+		if key == "bankroll_delta" or key == "chips_delta" or key == "suspicion_delta" or key == "alcohol_intake" or key == "drunk_delta" or key == "pending_drunk_absorption_delta" or key == "drunk_distortion_suppression_turns" or key == "heat_cooldown_actions" or key == "heat_cooldown_per_action" or key == "alcoholic_delta" or key == "baseline_luck_delta":
 			result[key] = int(source[key])
 		elif key == "ended":
 			result[key] = bool(source[key])

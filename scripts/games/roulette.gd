@@ -173,7 +173,7 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 	var barred := bool(table.get("table_barred", false))
 	var visible_last_results := _roulette_visible_last_results(table, last_result_source, result_settled_for_display)
 	var recent_numbers := _roulette_recent_numbers_from_history(visible_last_results)
-	var visible_bankroll := _roulette_visible_bankroll(run_state, last_result_source, result_settled_for_display)
+	var visible_bankroll := _roulette_visible_bankroll(run_state, environment, last_result_source, result_settled_for_display)
 	var timer_active := not barred and not roulette_wheel_locked
 	var round_timer := GameModule.table_round_timer_status_peek(table, now_msec, "Next spin", ROULETTE_ROUND_DELAY_MSEC) if timer_active else {}
 	var table_notice := _table_notice(table, session, last_result, spin_active, payout_active or result_reveal_active or not result_settled_for_display, round_timer)
@@ -1400,7 +1400,7 @@ func _validate_roulette_bets(bets: Array, table: Dictionary, run_state: RunState
 	var max_table := int(rules.get("table_max", 100))
 	if total > max_table:
 		return {"ok": false, "message": "That exceeds the table maximum."}
-	var bankroll := maxi(0, run_state.bankroll if run_state != null else total)
+	var bankroll := maxi(0, run_state.wager_balance_for_game(get_id(), environment) if run_state != null else total)
 	if total > bankroll:
 		return {"ok": false, "message": "You do not have enough bankroll for those roulette chips."}
 	var outside_min := int(rules.get("outside_min_each", 1))
@@ -1501,7 +1501,7 @@ func _place_bet_command(index: int, state: Dictionary, table: Dictionary, run_st
 		var current_total := _total_wager(bets)
 		var outside_min := int(rules.get("outside_min_each", 1))
 		if chip < outside_min:
-			var bankroll_room := maxi(0, (run_state.bankroll if run_state != null else chip) - current_total)
+			var bankroll_room := maxi(0, (run_state.wager_capacity_for_game(get_id(), environment) if run_state != null else chip) - current_total)
 			var table_room := maxi(0, int(rules.get("table_max", 100)) - current_total)
 			var room_cap := mini(bankroll_room, table_room)
 			var room_ceiling := _roulette_room_ceiling(environment, int(rules.get("table_max", 100)))
@@ -1578,7 +1578,7 @@ func _patron_bet_command(index: int, state: Dictionary, table: Dictionary, run_s
 	var bets := _bet_array(state.get("roulette_bets", []))
 	var rules := _table_rules(table)
 	var wager := maxi(1, int(source_target.get("patron_stake", source_target.get("stake", 1))))
-	var bankroll_room := maxi(0, (run_state.bankroll if run_state != null else wager) - _total_wager(bets))
+	var bankroll_room := maxi(0, (run_state.wager_capacity_for_game(get_id(), environment) if run_state != null else wager) - _total_wager(bets))
 	var table_room := maxi(0, int(rules.get("table_max", 100)) - _total_wager(bets))
 	var chip := mini(wager, mini(bankroll_room, table_room))
 	if chip <= 0:
@@ -1792,7 +1792,7 @@ func _max_bet_command(state: Dictionary, table: Dictionary, run_state: RunState,
 	var max_chip := int(denoms[denoms.size() - 1])
 	max_chip = mini(max_chip, maxi(1, _roulette_room_ceiling(environment, max_chip)))
 	if run_state != null:
-		max_chip = mini(max_chip, maxi(1, run_state.bankroll))
+		max_chip = mini(max_chip, maxi(1, run_state.wager_capacity_for_game(get_id(), environment)))
 	state["selected_chip"] = max_chip
 	state["selected_stake"] = max_chip
 	return GameModule.surface_command({"handled": true, "ui_state": state, "set_stake": max_chip, "message": "$%d roulette chip selected." % max_chip})
@@ -2782,10 +2782,10 @@ func _roulette_result_settled_for_surface(last_result: Dictionary, phase_status:
 	return elapsed_msec >= SPIN_ANIMATION_DURATION_MSEC + PAYOUT_ANIMATION_DURATION_MSEC + ROULETTE_RESULT_REVEAL_MSEC
 
 
-func _roulette_visible_bankroll(run_state: RunState, last_result: Dictionary, result_settled: bool) -> int:
+func _roulette_visible_bankroll(run_state: RunState, environment: Dictionary, last_result: Dictionary, result_settled: bool) -> int:
 	if run_state == null:
 		return 0
-	var bankroll := run_state.bankroll
+	var bankroll := run_state.wager_balance_for_game(get_id(), environment)
 	if result_settled or last_result.is_empty():
 		return bankroll
 	return bankroll - _roulette_pending_display_bankroll_delta(last_result)

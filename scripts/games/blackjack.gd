@@ -150,7 +150,7 @@ func generate_environment_state(run_state: RunState, environment: Dictionary, rn
 	var dealer_profile: Dictionary = _generate_dealer_profile(rng, catch_base)
 	var patrons: Array = _generate_table_patrons(rng, int(environment.get("depth", 0)))
 	var distractions: Array = _generate_table_distractions(rng)
-	var table_limit := maxi(25, GameModule.stake_ceiling_for_game(environment, get_id(), run_state.bankroll if run_state != null else 25))
+	var table_limit := maxi(25, GameModule.stake_ceiling_for_game(environment, get_id(), run_state.wager_capacity_for_game(get_id(), environment) if run_state != null else 25))
 	var chip_denominations := [1, 5, 10, 25]
 	if table_limit >= 60:
 		chip_denominations.append(50)
@@ -689,9 +689,9 @@ func surface_action_command(surface_action: String, index: int, confirm_requeste
 			var dealt_state := next_state.duplicate(true)
 			_start_initial_hand(dealt_state, table, selected_stake, run_state)
 			var projected_cost: int = _wager_cost_from_session(selected_stake, dealt_state, table, run_state)
-			if projected_cost > maxi(0, run_state.bankroll if run_state != null else projected_cost):
+			if projected_cost > maxi(0, run_state.wager_capacity_for_game(get_id(), environment) if run_state != null else projected_cost):
 				return _message_command(next_state, "You do not have enough bankroll for those chips and side bets.")
-			if run_state != null and projected_cost >= maxi(0, run_state.bankroll):
+			if run_state != null and projected_cost >= maxi(0, run_state.wager_capacity_for_game(get_id(), environment)):
 				return GameModule.surface_command({
 					"handled": true,
 					"ui_state": _compact_session_for_ui(next_state),
@@ -838,9 +838,9 @@ func resolve_with_context(action_id: String, stake: int, run_state: RunState, en
 		_stand_all_hands(session)
 	var table_stake := 0 if sit_out else _session_stake(stake, session)
 	var total_wager: int = 0 if sit_out else _wager_cost_from_session(table_stake, session, table, run_state)
-	if total_wager > maxi(0, run_state.bankroll):
+	if total_wager > maxi(0, run_state.wager_balance_for_game(get_id(), environment)):
 		var debited_wager := _session_debited_wager(session)
-		if total_wager - debited_wager > maxi(0, run_state.bankroll):
+		if total_wager - debited_wager > maxi(0, run_state.wager_balance_for_game(get_id(), environment)):
 			return _empty_blackjack_result(action_id, stake, environment, "You do not have enough bankroll for that table action.")
 
 	session["dealer_hole_visible"] = true
@@ -1012,7 +1012,7 @@ func _resolve_place_bet(stake: int, run_state: RunState, environment: Dictionary
 		session["bankroll_wager_debited"] = true
 		session["wager_debited"] = maxi(already_debited, total_wager)
 		return _place_bet_result(run_state, environment, rng, session, 0, "Blackjack wager is already on the felt.")
-	if debit > maxi(0, run_state.bankroll if run_state != null else debit):
+	if debit > maxi(0, run_state.wager_balance_for_game(get_id(), environment) if run_state != null else debit):
 		return _empty_blackjack_result("blackjack_place_bet", stake, environment, "You do not have enough bankroll for that table action.")
 	session["bankroll_wager_debited"] = true
 	session["wager_debited"] = already_debited + debit
@@ -1053,7 +1053,7 @@ func _place_bet_result(run_state: RunState, environment: Dictionary, rng: RngStr
 	result["preserve_surface_ui_state"] = true
 	result["surface_embeds_outcomes"] = true
 	result["blackjack_wager_debited"] = int(session.get("wager_debited", 0))
-	if run_state != null and run_state.bankroll + bankroll_delta <= 0 and _has_dealt_hand(session):
+	if run_state != null and run_state.wager_balance_for_game(get_id(), environment) + bankroll_delta <= 0 and _has_dealt_hand(session):
 		result["defer_bankroll_zero_failure"] = true
 	GameModule.apply_result(run_state, result, rng)
 	return result
@@ -4316,12 +4316,12 @@ func _patron_bet_command(index: int, ui_state: Dictionary, table: Dictionary, ru
 	ui_state["selected_stake"] = target_stake
 	ui_state["blackjack_side_bets"] = _valid_side_bet_ids_for_session(active_side_bets, table, ui_state)
 	var total_cost := _wager_cost_from_session(target_stake, ui_state, table, run_state)
-	if run_state != null and total_cost > run_state.bankroll:
+	if run_state != null and total_cost > run_state.wager_capacity_for_game(get_id(), environment):
 		ui_state["blackjack_side_bets"] = []
 		target_stake = clampi(min_bet, 1, max_bet)
 		ui_state["selected_stake"] = target_stake
 		total_cost = _wager_cost_from_session(target_stake, ui_state, table, run_state)
-		if total_cost > run_state.bankroll:
+		if total_cost > run_state.wager_capacity_for_game(get_id(), environment):
 			return _message_command(ui_state, "You do not have the bankroll to take that blackjack table action.")
 	ui_state["table_social_alignment"] = {
 		"game": "blackjack",
@@ -4448,7 +4448,7 @@ func _effective_table_stake(stake: int, session: Dictionary, run_state: RunState
 func _blackjack_original_stake_ceiling(run_state: RunState, environment: Dictionary) -> int:
 	if run_state == null:
 		return 1
-	return maxi(1, GameModule.stake_ceiling_for_game(environment, get_id(), run_state.bankroll))
+	return maxi(1, GameModule.stake_ceiling_for_game(environment, get_id(), run_state.wager_capacity_for_game(get_id(), environment)))
 
 
 func _blackjack_base_stake_ceiling(run_state: RunState, environment: Dictionary) -> int:
@@ -4462,7 +4462,7 @@ func _surface_stake_ceiling(run_state: RunState, environment: Dictionary) -> int
 		return 1
 	var base_ceiling: int = _blackjack_base_stake_ceiling(run_state, environment)
 	var wager_ceiling: int = run_state.wager_stake_ceiling(base_ceiling)
-	return maxi(1, mini(wager_ceiling, run_state.bankroll))
+	return maxi(1, mini(wager_ceiling, run_state.wager_capacity_for_game(get_id(), environment)))
 
 
 func _surface_stake_floor(run_state: RunState, environment: Dictionary) -> int:
@@ -4989,7 +4989,7 @@ func _can_afford_extra_main_wager(session: Dictionary, table: Dictionary, run_st
 		return true
 	var projected_cost: int = _wager_cost_from_session(stake, session, table, run_state) + maxi(1, stake) * maxi(0, extra_units)
 	var additional_cost := maxi(0, projected_cost - _session_debited_wager(session))
-	return additional_cost <= maxi(0, run_state.bankroll)
+	return additional_cost <= maxi(0, run_state.wager_capacity_for_game(get_id()))
 
 
 func _can_change_side_bets(session: Dictionary) -> bool:

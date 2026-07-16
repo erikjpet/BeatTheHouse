@@ -56,6 +56,7 @@ const GRAND_CASINO_ARCHETYPE_IDS := [
 	GRAND_CASINO_HIGH_LIMIT_ARCHETYPE_ID,
 	GRAND_CASINO_BACK_ROOM_ARCHETYPE_ID,
 ]
+const GRAND_CASINO_TABLE_GAME_IDS := ["blackjack", "baccarat", "roulette"]
 const GRAND_CASINO_OBJECTIVE_ID := "grand_casino_demo_bankroll"
 const GRAND_CASINO_SHOWDOWN_EVENT_ID := "the_house_calls"
 const GRAND_CASINO_HIGH_ROLLER_EVENT_ID := "high_roller_cashout"
@@ -113,6 +114,7 @@ var rng_seed: int = 1
 var rng_state: int = 1
 var challenge_config: Dictionary = {}
 var bankroll: int = DEFAULT_BANKROLL
+var grand_casino_chips: int = 0
 var economic_state: String = "stable"
 var inventory: Array = []
 var active_item_id: String = ""
@@ -163,6 +165,7 @@ func start_new(p_seed_text: String = "FOUNDATION-SEED", p_challenge_config: Dict
 	rng_seed = seed_value
 	rng_state = seed_value
 	bankroll = DEFAULT_BANKROLL
+	grand_casino_chips = 0
 	economic_state = "stable"
 	inventory = []
 	active_item_id = ""
@@ -1167,6 +1170,91 @@ func change_bankroll(delta: int, defer_bankroll_zero: bool = false) -> void:
 	_refresh_economy(defer_bankroll_zero)
 
 
+func grand_casino_table_uses_chips(game_id: String, environment: Dictionary = {}) -> bool:
+	if not GRAND_CASINO_TABLE_GAME_IDS.has(game_id):
+		return false
+	var source := current_environment if environment.is_empty() else environment
+	var archetype_id := str(source.get("archetype_id", ""))
+	if GRAND_CASINO_ARCHETYPE_IDS.has(archetype_id):
+		return true
+	var environment_id := str(source.get("id", ""))
+	if not environment_id.begins_with("grand_casino_"):
+		return false
+	return _is_grand_casino_environment(source)
+
+
+func wager_balance_for_game(game_id: String, environment: Dictionary = {}) -> int:
+	return grand_casino_chips if grand_casino_table_uses_chips(game_id, environment) else bankroll
+
+
+func wager_capacity_for_game(game_id: String, environment: Dictionary = {}) -> int:
+	return bankroll + grand_casino_chips if grand_casino_table_uses_chips(game_id, environment) else bankroll
+
+
+func grand_casino_total_money() -> int:
+	return bankroll + grand_casino_chips
+
+
+func has_liquid_run_funds() -> bool:
+	return bankroll > 0 or (_is_grand_casino_environment(current_environment) and grand_casino_chips > 0)
+
+
+func grand_casino_chip_exchange_rate() -> int:
+	var flags: Dictionary = current_environment.get("local_narrative_flags", {}) if typeof(current_environment.get("local_narrative_flags", {})) == TYPE_DICTIONARY else {}
+	return maxi(1, int(flags.get("casino_chip_cash_rate", 1)))
+
+
+func buy_grand_casino_chips(chip_amount: int, cash_rate: int = 1) -> Dictionary:
+	if not _is_grand_casino_environment(current_environment):
+		return {"ok": false, "message": "Casino chips are only sold inside the Grand Casino."}
+	var amount := maxi(0, chip_amount)
+	var rate := maxi(1, cash_rate)
+	var cash_cost := amount * rate
+	if amount <= 0:
+		return {"ok": false, "message": "Choose a positive chip amount."}
+	if cash_cost > bankroll:
+		return {"ok": false, "message": "You need $%d cash for that buy-in." % cash_cost}
+	bankroll -= cash_cost
+	grand_casino_chips += amount
+	_refresh_economy()
+	return {"ok": true, "cash_delta": -cash_cost, "chips_delta": amount, "message": "Bought %d chips for $%d." % [amount, cash_cost]}
+
+
+func cash_out_grand_casino_chips(chip_amount: int = -1, cash_rate: int = 1) -> Dictionary:
+	if not _is_grand_casino_environment(current_environment):
+		return {"ok": false, "message": "The Cage is only available inside the Grand Casino."}
+	var amount := grand_casino_chips if chip_amount < 0 else mini(grand_casino_chips, maxi(0, chip_amount))
+	if amount <= 0:
+		return {"ok": false, "message": "You do not have any chips to cash out."}
+	var rate := maxi(1, cash_rate)
+	var cash_value := amount * rate
+	grand_casino_chips -= amount
+	bankroll += cash_value
+	_refresh_economy()
+	return {"ok": true, "cash_delta": cash_value, "chips_delta": -amount, "message": "Cashed out %d chips for $%d." % [amount, cash_value]}
+
+
+func route_grand_casino_game_currency(result: Dictionary, deltas: Dictionary) -> Dictionary:
+	var routed := deltas
+	var game_id := str(result.get("game_id", result.get("source_id", ""))).strip_edges()
+	if not grand_casino_table_uses_chips(game_id):
+		return routed
+	var chips_delta := int(routed.get("bankroll_delta", result.get("bankroll_delta", 0)))
+	routed["bankroll_delta"] = 0
+	routed["chips_delta"] = chips_delta
+	result["bankroll_delta"] = 0
+	result["chips_delta"] = chips_delta
+	result["cash_equivalent_delta"] = chips_delta
+	result["currency"] = "chips"
+	result["deltas"] = routed
+	return routed
+
+
+func change_grand_casino_chips(delta: int, defer_zero: bool = false) -> void:
+	grand_casino_chips = maxi(0, grand_casino_chips + delta)
+	_refresh_economy(defer_zero)
+
+
 func challenge_modifiers() -> Dictionary:
 	return _copy_dict(challenge_config.get("modifiers", {}))
 
@@ -1820,8 +1908,8 @@ func record_grand_casino_game_result(result: Dictionary) -> void:
 	if str(result.get("game_id", "")).strip_edges().is_empty():
 		return
 	_initialize_grand_casino_objective_runtime()
-	var entry_bankroll := int(narrative_flags.get("grand_casino_entry_bankroll", bankroll))
-	narrative_flags["grand_casino_net_winnings"] = bankroll - entry_bankroll
+	var entry_bankroll := int(narrative_flags.get("grand_casino_entry_bankroll", grand_casino_total_money()))
+	narrative_flags["grand_casino_net_winnings"] = grand_casino_total_money() - entry_bankroll
 	narrative_flags["grand_casino_max_heat"] = maxi(
 		int(narrative_flags.get("grand_casino_max_heat", 0)),
 		suspicion_level()
@@ -1857,6 +1945,8 @@ func record_profile_game_result(result: Dictionary) -> void:
 	narrative_flags["profile_games_played"] = tallies
 	var deltas := _copy_dict(result.get("deltas", {}))
 	var bankroll_delta := int(deltas.get("bankroll_delta", result.get("bankroll_delta", 0)))
+	if str(result.get("currency", "")) == "chips":
+		bankroll_delta = int(deltas.get("chips_delta", result.get("chips_delta", 0)))
 	if bankroll_delta > 0:
 		narrative_flags["profile_bankroll_won"] = maxi(0, int(narrative_flags.get("profile_bankroll_won", 0))) + bankroll_delta
 		narrative_flags["profile_biggest_single_win"] = maxi(maxi(0, int(narrative_flags.get("profile_biggest_single_win", 0))), bankroll_delta)
@@ -1873,8 +1963,9 @@ func _grand_casino_demo_objective_status(source: Dictionary, objective: Dictiona
 		}
 	var config := _grand_casino_objective_config(objective)
 	var target_bankroll := int(config.get("high_roller_target_bankroll", 0))
-	var entry_bankroll := int(narrative_flags.get("grand_casino_entry_bankroll", bankroll))
-	var net_winnings := bankroll - entry_bankroll
+	var total_money := grand_casino_total_money()
+	var entry_bankroll := int(narrative_flags.get("grand_casino_entry_bankroll", total_money))
+	var net_winnings := total_money - entry_bankroll
 	var required_net := int(config.get("high_roller_net_winnings", 0))
 	var games_played := maxi(0, int(narrative_flags.get("grand_casino_games_played", 0)))
 	var min_games := int(config.get("high_roller_min_grand_casino_games", 0))
@@ -1889,7 +1980,7 @@ func _grand_casino_demo_objective_status(source: Dictionary, objective: Dictiona
 	var watched_cheat_evidence := bool(narrative_flags.get("grand_casino_watched_cheat_evidence", false))
 	var money_target_met := net_winnings >= required_net
 	if required_net <= 0 and target_bankroll > 0:
-		money_target_met = bankroll >= target_bankroll
+		money_target_met = total_money >= target_bankroll
 	var game_target_met := games_played >= min_games
 	var heat_clean := max_visit_heat <= max_heat
 	var high_roller_ready := money_target_met and game_target_met and heat_clean and not cheat_evidence and not watched_cheat_evidence
@@ -1907,7 +1998,7 @@ func _grand_casino_demo_objective_status(source: Dictionary, objective: Dictiona
 	var dirty_money_showdown_ready := money_target_met and (cheat_evidence or watched_cheat_evidence or max_visit_heat > max_heat)
 	var objective_state := _grand_casino_derived_state(source, high_roller_ready or high_roller_pending, showdown_pending, showdown_active)
 	var complete := bool(narrative_flags.get("demo_victory", false))
-	var remaining_bankroll := maxi(0, target_bankroll - bankroll)
+	var remaining_bankroll := maxi(0, target_bankroll - total_money)
 	var remaining_net := maxi(0, required_net - net_winnings)
 	var remaining_games := maxi(0, min_games - games_played)
 	var summary := _grand_casino_objective_summary(
@@ -2026,7 +2117,6 @@ func _set_grand_casino_high_roller_ready(status: Dictionary) -> void:
 	narrative_flags["grand_casino_showdown_pending"] = false
 	narrative_flags["demo_objective_id"] = str(status.get("id", GRAND_CASINO_OBJECTIVE_ID))
 	narrative_flags["grand_casino_net_winnings"] = int(status.get("grand_casino_net_winnings", 0))
-	_ensure_current_event_id(high_roller_event_id)
 	if not _story_log_has_type("grand_casino_high_roller_ready", high_roller_event_id):
 		log_story({
 			"type": "grand_casino_high_roller_ready",
@@ -2035,6 +2125,7 @@ func _set_grand_casino_high_roller_ready(status: Dictionary) -> void:
 			"environment_id": str(current_environment.get("id", "")),
 			"environment_archetype_id": str(current_environment.get("archetype_id", "")),
 			"bankroll": bankroll,
+			"grand_casino_chips": grand_casino_chips,
 			"target_bankroll": int(status.get("high_roller_target_bankroll", status.get("target_bankroll", 0))),
 			"net_winnings": int(status.get("grand_casino_net_winnings", 0)),
 			"message": "The casino host is ready to issue the Players Card.",
@@ -2258,12 +2349,12 @@ func apply_demo_finale_result(finale_data: Dictionary) -> Dictionary:
 			_log_demo_finale_result(event_id, branch, message, true)
 		"lose", "lose_duel":
 			narrative_flags["demo_finale_last_branch"] = branch
-			narrative_flags["demo_finale_pending"] = bankroll > 0
+			narrative_flags["demo_finale_pending"] = has_liquid_run_funds()
 			if not event_id.is_empty():
 				narrative_flags["demo_finale_event_id"] = event_id
-				narrative_flags["%s_pending" % event_id] = bankroll > 0
+				narrative_flags["%s_pending" % event_id] = has_liquid_run_funds()
 				_ensure_current_event_id(event_id)
-			if bankroll <= 0:
+			if not has_liquid_run_funds():
 				_clear_demo_finale_pending(event_id)
 				fail_run(FAILURE_BANKROLL_ZERO, BANKROLL_ZERO_FAILURE_MESSAGE)
 				_log_demo_finale_result(event_id, branch, BANKROLL_ZERO_FAILURE_MESSAGE, true)
@@ -2619,16 +2710,16 @@ func _initialize_grand_casino_objective_runtime() -> void:
 	var previous_environment_id := str(narrative_flags.get("grand_casino_entry_environment_id", ""))
 	if previous_environment_id != environment_id:
 		narrative_flags["grand_casino_entry_environment_id"] = environment_id
-		narrative_flags["grand_casino_entry_bankroll"] = bankroll
+		narrative_flags["grand_casino_entry_bankroll"] = grand_casino_total_money()
 		narrative_flags["grand_casino_games_played"] = 0
 		narrative_flags["grand_casino_max_heat"] = suspicion_level()
 		narrative_flags["grand_casino_open_cheat_actions"] = 0
 	if not narrative_flags.has("grand_casino_entry_bankroll"):
-		narrative_flags["grand_casino_entry_bankroll"] = bankroll
+		narrative_flags["grand_casino_entry_bankroll"] = grand_casino_total_money()
 	if not narrative_flags.has("grand_casino_games_played"):
 		narrative_flags["grand_casino_games_played"] = 0
-	var entry_bankroll := int(narrative_flags.get("grand_casino_entry_bankroll", bankroll))
-	narrative_flags["grand_casino_net_winnings"] = bankroll - entry_bankroll
+	var entry_bankroll := int(narrative_flags.get("grand_casino_entry_bankroll", grand_casino_total_money()))
+	narrative_flags["grand_casino_net_winnings"] = grand_casino_total_money() - entry_bankroll
 	if not narrative_flags.has("grand_casino_max_heat"):
 		narrative_flags["grand_casino_max_heat"] = suspicion_level()
 	else:
@@ -2661,7 +2752,7 @@ func sync_grand_casino_entry_bankroll_after_travel_result(result: Dictionary) ->
 	if str(narrative_flags.get("grand_casino_entry_bankroll_after_travel_environment_id", "")) == environment_id:
 		return
 	_initialize_grand_casino_objective_runtime()
-	narrative_flags["grand_casino_entry_bankroll"] = bankroll
+	narrative_flags["grand_casino_entry_bankroll"] = grand_casino_total_money()
 	narrative_flags["grand_casino_net_winnings"] = 0
 	narrative_flags["grand_casino_entry_bankroll_after_travel_environment_id"] = environment_id
 
@@ -3779,7 +3870,7 @@ func recovery_pressure_status(recovery_available: bool = false, bankroll_zero_de
 			"terminal": true,
 			"reason": run_failure_reason,
 		}
-	if bankroll <= 0 and bankroll_zero_deferred:
+	if not has_liquid_run_funds() and bankroll_zero_deferred:
 		return {
 			"state": "recovery",
 			"title": "All-in result pending",
@@ -3788,7 +3879,7 @@ func recovery_pressure_status(recovery_available: bool = false, bankroll_zero_de
 			"recovery_available": true,
 			"terminal": false,
 		}
-	if bankroll <= 0:
+	if not has_liquid_run_funds():
 		return {
 			"state": "failed",
 			"title": "Run failed",
@@ -4807,7 +4898,7 @@ func _evaluate_immediate_terminal_state(defer_bankroll_zero: bool = false) -> vo
 			return
 		fail_run(FAILURE_POLICE_CAPTURE, POLICE_CAPTURE_FAILURE_MESSAGE)
 		return
-	if bankroll <= 0 and not defer_bankroll_zero and not closing_time_forced_travel_required():
+	if not has_liquid_run_funds() and not defer_bankroll_zero and not closing_time_forced_travel_required():
 		fail_run(FAILURE_BANKROLL_ZERO, BANKROLL_ZERO_FAILURE_MESSAGE)
 
 
@@ -4852,6 +4943,7 @@ func to_dict() -> Dictionary:
 		"rng_state": rng_state,
 		"challenge_config": challenge_config.duplicate(true),
 		"bankroll": bankroll,
+		"grand_casino_chips": grand_casino_chips,
 		"economic_state": economic_state,
 		"inventory": inventory.duplicate(true),
 		"active_item_id": active_item_id,
@@ -4899,6 +4991,7 @@ func from_dict(data: Dictionary) -> void:
 	rng_state = int(data.get("rng_state", rng_seed))
 	challenge_config = normalize_challenge(seed_text, _copy_dict(data.get("challenge_config", standard_challenge(seed_text))))
 	bankroll = int(data.get("bankroll", DEFAULT_BANKROLL))
+	grand_casino_chips = maxi(0, int(data.get("grand_casino_chips", 0)))
 	economic_state = str(data.get("economic_state", "stable"))
 	inventory = _copy_array(data.get("inventory", []))
 	active_item_id = str(data.get("active_item_id", ""))
@@ -5781,19 +5874,20 @@ func _fractional_bankroll_limit(divisor: int) -> int:
 func _refresh_economy(defer_bankroll_zero: bool = false) -> void:
 	if run_status == RUN_STATUS_ENDED or run_status == RUN_STATUS_FAILED:
 		return
-	if bankroll <= 0:
+	var economy_balance := bankroll + grand_casino_chips if _is_grand_casino_environment(current_environment) else bankroll
+	if economy_balance <= 0:
 		if defer_bankroll_zero:
 			bankroll = 0
 			economic_state = "insolvent"
 			return
 		fail_run(FAILURE_BANKROLL_ZERO, BANKROLL_ZERO_FAILURE_MESSAGE)
-	elif not debt.is_empty() and bankroll < DEFAULT_BANKROLL:
+	elif not debt.is_empty() and economy_balance < DEFAULT_BANKROLL:
 		economic_state = "distressed"
 		run_status = RUN_STATUS_ACTIVE
-	elif bankroll < DEFAULT_BANKROLL / 2:
+	elif economy_balance < DEFAULT_BANKROLL / 2:
 		economic_state = "volatile"
 		run_status = RUN_STATUS_ACTIVE
-	elif bankroll >= DEFAULT_BANKROLL * 2:
+	elif economy_balance >= DEFAULT_BANKROLL * 2:
 		economic_state = "growing"
 		run_status = RUN_STATUS_ACTIVE
 	else:

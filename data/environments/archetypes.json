@@ -2754,6 +2754,7 @@
       "boss_floor": true,
       "grand_casino_room": "main_floor",
       "casino_room_travel_minutes": 5,
+      "casino_chip_cash_rate": 1,
       "casino_high_limit_buy_in": 60,
       "casino_room_targets": [
         "grand_casino_high_limit",
@@ -2963,6 +2964,7 @@
       "boss_floor": true,
       "grand_casino_room": "high_limit",
       "casino_room_travel_minutes": 5,
+      "casino_chip_cash_rate": 1,
       "casino_room_targets": [
         "grand_casino"
       ]
@@ -3113,6 +3115,7 @@
       "boss_floor": true,
       "grand_casino_room": "back_room",
       "casino_room_travel_minutes": 5,
+      "casino_chip_cash_rate": 1,
       "casino_room_targets": []
     },
     "moods": [
