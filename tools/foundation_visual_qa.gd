@@ -833,6 +833,7 @@ func _verify_grand_casino_high_roller_cashout_snapshot() -> void:
 	_require(not has_cashout_event, "Players Card review remained on the event surface instead of moving to the Cage.")
 	app.call("_refresh")
 	await _settle()
+	await _resolve_blocking_talk_dock()
 	_return_to_room_view()
 	await _settle()
 	var canvas := app.get("environment_canvas") as Control
@@ -848,17 +849,21 @@ func _verify_grand_casino_high_roller_cashout_snapshot() -> void:
 	_require(bool(cage_snapshot.get("portrait_animated", false)), "Linda's Cage portrait was not alive while the window was open.")
 	_require(str((cage_model.get("host", {}) as Dictionary).get("name", "")) == "Linda", "Players Card Cage window did not identify Linda.")
 	_require(bool(cage_card.get("can_review", false)) and str(cage_card.get("review_state", "")) == "ready", "Players Card Cage window did not expose the ready review action.")
-	_require(cage_model.has("balance") and cage_model.has("promotions") and str(cage_model.get("promotions_empty", "")).strip_edges() != "", "Cage visual QA could not read every window section.")
+	_require(cage_model.has("balance") and not (cage_model.get("promotions", []) as Array).is_empty() and str(cage_card.get("tier", "")) == "Gold", "Cage visual QA could not read Gold tier benefits and promotions.")
+	var chips_before_buy := fixture_run.grand_casino_chips
 	_require(not _click_button_exact("Buy 25").is_empty(), "Cage visual QA could not buy chips through the visible control.")
 	await _settle()
-	_require(fixture_run.grand_casino_chips == 25, "Visible Cage buy-in did not credit chips.")
+	_require(fixture_run.grand_casino_chips == chips_before_buy + 25, "Visible Cage buy-in did not credit chips.")
 	_require(not _click_button_exact("Cash Out All").is_empty(), "Cage visual QA could not cash out through the visible control.")
 	await _settle()
 	_require(fixture_run.grand_casino_chips == 0, "Visible Cage cash-out did not return all chips to cash.")
 	_cover("grand_casino_high_roller_cashout")
-	_record_state("grand_casino_high_roller_cashout_available", "Grand Casino Cage shows animated Linda, chip transfers, Players Card readiness, and the promotions empty state.")
-	_require(not _click_button_exact("Complete Players Card Review").is_empty(), "Cage visual QA could not complete the ready Players Card review through the visible control.")
+	_record_state("grand_casino_high_roller_cashout_available", "Grand Casino Cage shows animated Linda, chip transfers, exact Gold progress, tier benefits, and comps.")
+	_require(not _click_button_exact("Complete Gold Review").is_empty(), "Cage visual QA could not start Linda's ready Gold review through the visible control.")
 	await _settle()
+	var gold_talk: Dictionary = app.call("current_talk_dock_snapshot")
+	_require(bool(gold_talk.get("visible", false)) and str(fixture_run.next_pending_talk_event().get("dialogue_id", "")) == "linda_gold_review", "Visible Cage Gold review did not open Linda's talk-dock scene.")
+	await _resolve_blocking_talk_dock()
 	_require(fixture_run.run_status == RunState.RUN_STATUS_ENDED and str(fixture_run.narrative_flags.get("demo_victory_route", "")) == RunState.GRAND_CASINO_HIGH_ROLLER_EVENT_ID, "Visible Cage Players Card action did not preserve the canonical clean victory transition.")
 
 

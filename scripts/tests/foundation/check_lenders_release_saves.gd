@@ -938,6 +938,7 @@ func _check_demo_boss_objective_foundation(library: ContentLibrary, failures: Ar
 		return
 	_check_grand_casino_spatial_split(library, boss_archetype, failures)
 	_check_grand_casino_chips_and_cage(library, boss_archetype, failures)
+	_check_grand_casino_players_card_tiers(library, boss_archetype, failures)
 	var objective: Dictionary = boss_archetype.get("demo_objective", {}) if typeof(boss_archetype.get("demo_objective", {})) == TYPE_DICTIONARY else {}
 	if objective.is_empty() or str(objective.get("type", "")) != "bankroll_target":
 		failures.append("Grand Casino must define a bankroll-target demo objective.")
@@ -982,8 +983,8 @@ func _check_demo_boss_objective_foundation(library: ContentLibrary, failures: Ar
 	var forced_showdown_heat_threshold := int(objective.get("forced_showdown_heat_threshold", 0))
 	if high_roller_target != 0:
 		failures.append("Grand Casino Players Card objective should be gated by net Grand Casino winnings, not total bankroll.")
-	if high_roller_net != 10:
-		failures.append("Grand Casino Players Card objective should require the release-tuned Grand Casino net winnings target.")
+	if high_roller_net != 30 or high_roller_min_games != 5:
+		failures.append("Grand Casino Gold review should use the data-tuned five-game, $30 net target.")
 	if high_roller_net <= 0 or high_roller_min_games <= 0 or high_roller_max_heat < 0:
 		failures.append("Grand Casino clean lane must define net winnings, game count, and max heat.")
 	if showdown_heat_threshold <= high_roller_max_heat or forced_showdown_heat_threshold <= showdown_heat_threshold:
@@ -1077,8 +1078,8 @@ func _check_demo_boss_objective_foundation(library: ContentLibrary, failures: Ar
 	var ready_card: Dictionary = ready_cage.get("card", {}) if typeof(ready_cage.get("card", {})) == TYPE_DICTIONARY else {}
 	if str(_copy_dict(ready_cage.get("host", {})).get("name", "")) != "Linda" or not bool(ready_card.get("can_review", false)) or str(ready_card.get("review_state", "")) != "ready":
 		failures.append("Cage view model did not expose Linda and the ready Players Card review.")
-	if not _copy_array(ready_cage.get("promotions", [])).is_empty() or str(ready_cage.get("promotions_empty", "")).is_empty():
-		failures.append("Cage view model did not expose its promotions empty state.")
+	if _copy_array(ready_cage.get("promotions", [])).is_empty():
+		failures.append("Cage view model did not populate Players Card tier benefits and comps.")
 
 	var save_service: SaveService = SaveServiceScript.new()
 	var clean_slot_id := "foundation_check_grand_casino_clean_ready"
@@ -1172,8 +1173,8 @@ func _check_demo_boss_objective_foundation(library: ContentLibrary, failures: Ar
 		failures.append("Grand Casino open cheat action count was not tracked.")
 	var blocked_cage := CageWindowViewModelScript.build(cheated_cashout_run)
 	var blocked_card: Dictionary = blocked_cage.get("card", {}) if typeof(blocked_cage.get("card", {})) == TYPE_DICTIONARY else {}
-	if str(blocked_card.get("review_state", "")) != "blocked" or bool(blocked_card.get("can_review", true)) or str(blocked_card.get("review_detail", "")).find("Rourke") == -1:
-		failures.append("Cage view model did not make the dirty-money route to Rourke visible.")
+	if str(blocked_card.get("review_state", "")) != "ineligible" or bool(blocked_card.get("can_review", true)) or str(blocked_card.get("review_detail", "")).find("permanently") == -1:
+		failures.append("Cage view model did not make permanent Players Card ineligibility visible.")
 
 	var hot_cashout_run: RunState = RunStateScript.new()
 	hot_cashout_run.start_new("M2-FUN-BOSS-HOT-CASHOUT")
@@ -1566,6 +1567,161 @@ func _check_demo_boss_objective_foundation(library: ContentLibrary, failures: Ar
 	])
 
 
+func _check_grand_casino_players_card_tiers(library: ContentLibrary, main_archetype: Dictionary, failures: Array) -> void:
+	var objective: Dictionary = main_archetype.get("demo_objective", {}) if typeof(main_archetype.get("demo_objective", {})) == TYPE_DICTIONARY else {}
+	var bronze_games := int(objective.get("players_card_bronze_min_games", 0))
+	var bronze_net := int(objective.get("players_card_bronze_net_winnings", 0))
+	var silver_games := int(objective.get("players_card_silver_min_games", 0))
+	var silver_net := int(objective.get("players_card_silver_net_winnings", 0))
+	var gold_games := int(objective.get("players_card_gold_min_games", 0))
+	var gold_net := int(objective.get("players_card_gold_net_winnings", 0))
+	if bronze_games <= 0 or bronze_net <= 0 or silver_games <= bronze_games or silver_net <= bronze_net or gold_games <= silver_games or gold_net <= silver_net:
+		failures.append("Players Card Bronze, Silver, and Gold thresholds must rise in data-authored order.")
+		return
+	var run_state: RunState = RunStateScript.new()
+	run_state.start_new("GC-PLAYERS-CARD-TIERS")
+	var environment := EnvironmentInstance.from_archetype(main_archetype, 3, run_state.create_rng("gc_card_tiers_environment"), library)
+	run_state.set_environment(environment.to_dict())
+	_record_players_card_clean_games(run_state, bronze_games)
+	var entry_bankroll := int(run_state.narrative_flags.get("grand_casino_entry_bankroll", run_state.grand_casino_total_money()))
+	run_state.bankroll = maxi(0, entry_bankroll + bronze_net - run_state.grand_casino_chips)
+	run_state.evaluate_environment_objective_state()
+	var bronze_status := run_state.demo_objective_status()
+	if str(bronze_status.get("players_card_tier", "")) != RunState.GRAND_CASINO_PLAYERS_CARD_TIER_BRONZE:
+		failures.append("Scripted clean play did not cross the Bronze Players Card threshold.")
+	if run_state.grand_casino_chips != int(objective.get("players_card_bronze_chip_bonus", 0)) or int(run_state.narrative_flags.get("grand_casino_comp_drink_tokens", 0)) != int(objective.get("players_card_bronze_drink_comps", 0)):
+		failures.append("Bronze did not grant its data-tuned chip and drink comps.")
+	if str(run_state.next_pending_talk_event().get("dialogue_id", "")) != "linda_bronze_tier":
+		failures.append("Bronze tier-up did not enqueue Linda's talk-dock scene.")
+	_record_players_card_clean_games(run_state, silver_games)
+	entry_bankroll = int(run_state.narrative_flags.get("grand_casino_entry_bankroll", run_state.grand_casino_total_money()))
+	run_state.bankroll = maxi(0, entry_bankroll + silver_net - run_state.grand_casino_chips)
+	run_state.evaluate_environment_objective_state()
+	var silver_status := run_state.demo_objective_status()
+	if str(silver_status.get("players_card_tier", "")) != RunState.GRAND_CASINO_PLAYERS_CARD_TIER_SILVER:
+		failures.append("Scripted clean play did not cross the Silver Players Card threshold.")
+	var silver_access := run_state.grand_casino_room_access_status(RunState.GRAND_CASINO_HIGH_LIMIT_ARCHETYPE_ID, 60)
+	if not bool(silver_access.get("available", false)) or str(silver_access.get("access_method", "")) != "silver_card" or int(silver_access.get("cost", -1)) != 0:
+		failures.append("Silver Players Card did not open the High-Limit Room without a cash buy-in.")
+	if not bool(run_state.narrative_flags.get("grand_casino_linda_look_away_available", false)) or int(run_state.narrative_flags.get("grand_casino_comp_suite_rests", 0)) != int(objective.get("players_card_silver_suite_rests", 0)):
+		failures.append("Silver did not grant Linda's look-away and suite-rest benefits.")
+	var expected_net_before_comps := int(silver_status.get("grand_casino_net_winnings", -1))
+	if expected_net_before_comps != silver_net:
+		failures.append("Tier chip comps incorrectly changed canonical Grand Casino net winnings.")
+	var silver_payload := run_state.to_dict()
+	var loaded_silver: RunState = RunStateScript.new()
+	loaded_silver.from_dict(silver_payload)
+	if str(loaded_silver.demo_objective_status().get("players_card_tier", "")) != RunState.GRAND_CASINO_PLAYERS_CARD_TIER_SILVER or not bool(loaded_silver.narrative_flags.get("grand_casino_high_limit_access", false)):
+		failures.append("Silver tier and benefits did not survive save/load.")
+	var legacy_payload := silver_payload.duplicate(true)
+	var legacy_flags: Dictionary = legacy_payload.get("narrative_flags", {}).duplicate(true)
+	var awarded_chip_comps := int(objective.get("players_card_bronze_chip_bonus", 0)) + int(objective.get("players_card_silver_chip_bonus", 0))
+	legacy_payload["grand_casino_chips"] = maxi(0, int(legacy_payload.get("grand_casino_chips", 0)) - awarded_chip_comps)
+	legacy_flags["grand_casino_entry_bankroll"] = maxi(0, int(legacy_flags.get("grand_casino_entry_bankroll", 0)) - awarded_chip_comps)
+	for key in legacy_flags.keys().duplicate():
+		var key_text := str(key)
+		if key_text.begins_with("grand_casino_players_card_") or key_text.begins_with("grand_casino_comp_") or key_text.begins_with("grand_casino_linda_look_away"):
+			legacy_flags.erase(key)
+	legacy_flags.erase("grand_casino_high_limit_access")
+	legacy_flags.erase("grand_casino_high_limit_access_method")
+	legacy_payload["narrative_flags"] = legacy_flags
+	var legacy_run: RunState = RunStateScript.new()
+	legacy_run.from_dict(legacy_payload)
+	if str(legacy_run.demo_objective_status().get("players_card_tier", "")) != RunState.GRAND_CASINO_PLAYERS_CARD_TIER_SILVER or not bool(legacy_run.narrative_flags.get("grand_casino_high_limit_access", false)):
+		failures.append("Legacy Grand Casino save did not derive Silver tier and benefits from existing counters.")
+	var look_away_max := int(objective.get("players_card_look_away_max_heat_gain", 0))
+	var too_large := run_state.add_suspicion("linda_large_heat", look_away_max + 1, "behavior", false, {"action_kind": "risky"})
+	if too_large != look_away_max + 1 or not bool(run_state.narrative_flags.get("grand_casino_linda_look_away_available", false)):
+		failures.append("Linda consumed the look-away on heat above its data threshold.")
+	run_state.add_suspicion("linda_large_heat_reset", -(look_away_max + 1), "recovery")
+	var cheat_heat := run_state.add_suspicion("linda_cheat_heat", look_away_max, "behavior", false, {"action_kind": "cheat"})
+	if cheat_heat != look_away_max or not bool(run_state.narrative_flags.get("grand_casino_linda_look_away_available", false)):
+		failures.append("Linda consumed the clean-path look-away on a cheat action.")
+	run_state.add_suspicion("linda_cheat_heat_reset", -look_away_max, "recovery")
+	var forgiven := run_state.add_suspicion("linda_small_heat", look_away_max, "behavior", false, {"action_kind": "risky"})
+	var second_gain := run_state.add_suspicion("linda_second_heat", look_away_max, "behavior", false, {"action_kind": "risky"})
+	if forgiven != 0 or second_gain != look_away_max or not bool(run_state.narrative_flags.get("grand_casino_linda_look_away_consumed", false)):
+		failures.append("Linda's Silver look-away did not forgive exactly one eligible small heat gain.")
+	var look_away_story := false
+	for story_value in run_state.story_log:
+		if typeof(story_value) == TYPE_DICTIONARY and str((story_value as Dictionary).get("type", "")) == "grand_casino_linda_look_away":
+			look_away_story = true
+			break
+	if not look_away_story:
+		failures.append("Linda's consumed look-away did not log its story line.")
+	var drink_before := int(run_state.narrative_flags.get("grand_casino_comp_drink_tokens", 0))
+	var drink_result := run_state.grand_casino_players_card_comp_result("drink")
+	GameModule.apply_result(run_state, drink_result)
+	if not bool(drink_result.get("ok", false)) or int(run_state.narrative_flags.get("grand_casino_comp_drink_tokens", 0)) != drink_before - 1:
+		failures.append("Players Card drink comp did not resolve through shared service deltas.")
+	run_state.change_drunk(50)
+	var heat_before_rest := run_state.suspicion_level()
+	var drunk_before_rest := run_state.drunk_level
+	var rest_result := run_state.grand_casino_players_card_comp_result("suite_rest")
+	GameModule.apply_result(run_state, rest_result)
+	run_state.advance_game_clock_minutes(int(rest_result.get("duration_minutes", 0)))
+	if not bool(rest_result.get("ok", false)) or run_state.suspicion_level() >= heat_before_rest or run_state.drunk_level >= drunk_before_rest or int(rest_result.get("duration_minutes", 0)) != int(objective.get("players_card_suite_rest_minutes", 0)):
+		failures.append("Players Card suite rest did not reuse service deltas for time, heat, and drunk recovery.")
+	_record_players_card_clean_games(run_state, gold_games)
+	entry_bankroll = int(run_state.narrative_flags.get("grand_casino_entry_bankroll", run_state.grand_casino_total_money()))
+	run_state.bankroll = maxi(0, entry_bankroll + gold_net - run_state.grand_casino_chips)
+	run_state.evaluate_environment_objective_state()
+	var gold_status := run_state.demo_objective_status()
+	if str(gold_status.get("players_card_tier", "")) != RunState.GRAND_CASINO_PLAYERS_CARD_TIER_GOLD or not bool(gold_status.get("high_roller_ready", false)):
+		failures.append("Scripted clean play did not cross Gold into deliberate Cage review readiness.")
+	var gold_result := run_state.apply_demo_finale_result({
+		"event_id": RunState.GRAND_CASINO_HIGH_ROLLER_EVENT_ID,
+		"branch": "win_clean",
+		"message": "Linda issues the Gold Players Card and lets you leave with your winnings.",
+	})
+	if not bool(gold_result.get("complete", false)) or run_state.run_status != RunState.RUN_STATUS_ENDED or str(run_state.narrative_flags.get("demo_victory_route", "")) != RunState.GRAND_CASINO_HIGH_ROLLER_EVENT_ID or not bool(run_state.narrative_flags.get("act_two_seam_ready", false)):
+		failures.append("Linda's Gold review did not complete the canonical clean victory end-to-end.")
+	var evidence_run: RunState = RunStateScript.new()
+	evidence_run.start_new("GC-PLAYERS-CARD-EVIDENCE")
+	evidence_run.set_environment(environment.to_dict())
+	_record_players_card_clean_games(evidence_run, silver_games)
+	entry_bankroll = int(evidence_run.narrative_flags.get("grand_casino_entry_bankroll", evidence_run.grand_casino_total_money()))
+	evidence_run.bankroll = maxi(0, entry_bankroll + silver_net - evidence_run.grand_casino_chips)
+	evidence_run.evaluate_environment_objective_state()
+	evidence_run.narrative_flags["grand_casino_cheat_evidence"] = true
+	evidence_run.evaluate_environment_objective_state()
+	var evidence_status := evidence_run.demo_objective_status()
+	var evidence_cage := CageWindowViewModelScript.build(evidence_run)
+	var evidence_card: Dictionary = evidence_cage.get("card", {}) if typeof(evidence_cage.get("card", {})) == TYPE_DICTIONARY else {}
+	if bool(evidence_status.get("players_card_eligible", true)) or str(evidence_card.get("review_state", "")) != "ineligible" or str(evidence_card.get("review_detail", "")).find("permanently") == -1:
+		failures.append("Cheat evidence did not permanently lock every Players Card tier in the Cage window.")
+	var evidence_access := evidence_run.grand_casino_room_access_status(RunState.GRAND_CASINO_HIGH_LIMIT_ARCHETYPE_ID, 60)
+	if not bool(evidence_access.get("cash_buy_in_required", false)) or str(evidence_access.get("access_method", "")) != "cash_buy_in":
+		failures.append("Cheat evidence did not revoke Silver access while preserving the independent cash buy-in path.")
+	for dialogue_id in ["linda_bronze_tier", "linda_silver_tier", "linda_gold_review", "linda_main_floor_ambient_1", "linda_main_floor_ambient_2", "linda_main_floor_ambient_3"]:
+		var dialogue := library.dialogue(dialogue_id)
+		var speaker: Dictionary = dialogue.get("speaker", {}) if typeof(dialogue.get("speaker", {})) == TYPE_DICTIONARY else {}
+		if dialogue.is_empty() or str(speaker.get("name", "")) != "Linda":
+			failures.append("Linda dialogue scene is missing or misattributed: %s." % dialogue_id)
+	print("GRAND_CASINO_CARD_TIERS bronze=%d/%d silver=%d/%d gold=%d/%d look_away=%d dialogues=6" % [bronze_games, bronze_net, silver_games, silver_net, gold_games, gold_net, look_away_max])
+
+
+func _record_players_card_clean_games(run_state: RunState, target_games: int) -> void:
+	var current_games := maxi(0, int(run_state.narrative_flags.get("grand_casino_games_played", 0)))
+	for game_index in range(current_games, maxi(current_games, target_games)):
+		var deltas := GameModule.empty_result_deltas()
+		deltas["story_log"] = [{"type": "game_action", "game_id": "blackjack", "stake_cost": 5 + game_index}]
+		var result := GameModule.build_action_result({
+			"ok": true,
+			"type": "game_action",
+			"source_id": "blackjack",
+			"game_id": "blackjack",
+			"action_id": "card_tier_clean_progress",
+			"action_kind": "legal",
+			"stake": 5 + game_index,
+			"deltas": deltas,
+			"environment_id": str(run_state.current_environment.get("id", "")),
+			"environment_archetype_id": str(run_state.current_environment.get("archetype_id", "")),
+			"message": "Clean Players Card progress.",
+		})
+		run_state.record_grand_casino_game_result(result)
+
+
 func _check_grand_casino_chips_and_cage(library: ContentLibrary, main_archetype: Dictionary, failures: Array) -> void:
 	var run_state: RunState = RunStateScript.new()
 	run_state.start_new("GC-CHIPS-CAGE")
@@ -1755,10 +1911,10 @@ func _check_grand_casino_spatial_split(library: ContentLibrary, main_archetype: 
 		failures.append("Grand Casino split clean-route fixture could not enter High-Limit.")
 		return
 	var objective := _copy_dict(clean_run.current_environment.get("demo_objective", {}))
-	var min_games := maxi(1, int(objective.get("high_roller_min_grand_casino_games", 3)))
+	var min_games := maxi(1, int(objective.get("high_roller_min_grand_casino_games", 5)))
 	for game_index in range(1, min_games):
 		clean_run.record_grand_casino_game_result({"ok": true, "game_id": "blackjack", "action_kind": "legal", "stake": 25})
-	clean_run.bankroll = int(clean_run.narrative_flags.get("grand_casino_entry_bankroll", clean_run.bankroll)) + maxi(1, int(objective.get("high_roller_net_winnings", 10)))
+	clean_run.bankroll = int(clean_run.narrative_flags.get("grand_casino_entry_bankroll", clean_run.bankroll)) + maxi(1, int(objective.get("high_roller_net_winnings", 30)))
 	var split_status := clean_run.evaluate_environment_objective_state()
 	if not bool(split_status.get("high_roller_ready", false)) or int(split_status.get("grand_casino_games_played", 0)) != min_games:
 		failures.append("Grand Casino clean route did not complete its ready transition with play split across rooms.")
