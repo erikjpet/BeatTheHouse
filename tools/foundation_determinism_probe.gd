@@ -318,6 +318,10 @@ func _install_all_game_environment(run_state: RunState, seed_index: int) -> void
 	run_state.set_environment(environment)
 	run_state.save_rng(fixture_rng)
 	run_state.bankroll = maxi(run_state.bankroll, 20000)
+	run_state.grand_casino_chips = 0
+	var buy_in := run_state.buy_grand_casino_chips(10000, run_state.grand_casino_chip_exchange_rate())
+	if not bool(buy_in.get("ok", false)):
+		failures.append("Determinism fixture could not buy Grand Casino chips: %s" % str(buy_in.get("message", "no message")))
 
 
 func _apply_all_game_resolves(run_state: RunState, checkpoints: Array, seed: String) -> void:

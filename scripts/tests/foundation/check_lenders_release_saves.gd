@@ -1,6 +1,7 @@
 extends "res://scripts/tests/foundation/check_items_events_world.gd"
 
 const RunReportViewModelScript := preload("res://scripts/ui/run_report_view_model.gd")
+const CageWindowViewModelScript := preload("res://scripts/ui/cage_window_view_model.gd")
 
 
 func _check_run_report_foundation(failures: Array) -> void:
@@ -936,6 +937,7 @@ func _check_demo_boss_objective_foundation(library: ContentLibrary, failures: Ar
 		failures.append("Grand Casino boss archetype is missing.")
 		return
 	_check_grand_casino_spatial_split(library, boss_archetype, failures)
+	_check_grand_casino_chips_and_cage(library, boss_archetype, failures)
 	var objective: Dictionary = boss_archetype.get("demo_objective", {}) if typeof(boss_archetype.get("demo_objective", {})) == TYPE_DICTIONARY else {}
 	if objective.is_empty() or str(objective.get("type", "")) != "bankroll_target":
 		failures.append("Grand Casino must define a bankroll-target demo objective.")
@@ -1071,6 +1073,12 @@ func _check_demo_boss_objective_foundation(library: ContentLibrary, failures: Ar
 		failures.append("Grand Casino clean lane did not report Players Card readiness.")
 	if bool(clean_run.narrative_flags.get("demo_victory", false)) or clean_run.run_status != RunState.RUN_STATUS_ACTIVE:
 		failures.append("Grand Casino clean lane should not set victory during A1 state reporting.")
+	var ready_cage := CageWindowViewModelScript.build(clean_run)
+	var ready_card: Dictionary = ready_cage.get("card", {}) if typeof(ready_cage.get("card", {})) == TYPE_DICTIONARY else {}
+	if str(_copy_dict(ready_cage.get("host", {})).get("name", "")) != "Linda" or not bool(ready_card.get("can_review", false)) or str(ready_card.get("review_state", "")) != "ready":
+		failures.append("Cage view model did not expose Linda and the ready Players Card review.")
+	if not _copy_array(ready_cage.get("promotions", [])).is_empty() or str(ready_cage.get("promotions_empty", "")).is_empty():
+		failures.append("Cage view model did not expose its promotions empty state.")
 
 	var save_service: SaveService = SaveServiceScript.new()
 	var clean_slot_id := "foundation_check_grand_casino_clean_ready"
@@ -1085,15 +1093,13 @@ func _check_demo_boss_objective_foundation(library: ContentLibrary, failures: Ar
 	var loaded_clean_status: Dictionary = loaded_clean.demo_objective_status()
 	if not bool(loaded_clean_status.get("high_roller_ready", false)) or int(loaded_clean_status.get("grand_casino_games_played", 0)) != high_roller_min_games:
 		failures.append("Grand Casino clean objective metadata did not survive SaveService load.")
-	if not _string_array(loaded_clean.current_environment.get("event_ids", [])).has("high_roller_cashout"):
-		failures.append("Players Card event was not injected into the Grand Casino event list.")
+	if _string_array(loaded_clean.current_environment.get("event_ids", [])).has("high_roller_cashout"):
+		failures.append("Players Card review should remain at the Cage instead of the Grand Casino event surface.")
 	var high_roller_module := EventModule.new()
 	high_roller_module.setup(high_roller_event)
-	if not high_roller_module.can_trigger(loaded_clean, loaded_clean.current_environment):
-		failures.append("Players Card event should trigger when clean readiness is pending.")
 	var high_roller_choices: Array = high_roller_module.choices(loaded_clean, loaded_clean.current_environment)
 	if high_roller_choices.size() != 1 or str((high_roller_choices[0] as Dictionary).get("id", "")) != "high_roller_cashout":
-		failures.append("Players Card event should expose one deliberate claim response.")
+		failures.append("Cage Players Card action should expose one deliberate claim response when clean readiness is pending.")
 	var cashout_result := high_roller_module.resolve(loaded_clean, loaded_clean.current_environment, "high_roller_cashout")
 	if not bool(cashout_result.get("ok", false)) or loaded_clean.run_status != RunState.RUN_STATUS_ENDED:
 		failures.append("Players Card claim did not end the run in demo victory.")
@@ -1164,6 +1170,10 @@ func _check_demo_boss_objective_foundation(library: ContentLibrary, failures: Ar
 		failures.append("Cheated Grand Casino money target should route to the Pit Boss Showdown.")
 	if int(cheated_cashout_status.get("grand_casino_open_cheat_actions", 0)) <= 0:
 		failures.append("Grand Casino open cheat action count was not tracked.")
+	var blocked_cage := CageWindowViewModelScript.build(cheated_cashout_run)
+	var blocked_card: Dictionary = blocked_cage.get("card", {}) if typeof(blocked_cage.get("card", {})) == TYPE_DICTIONARY else {}
+	if str(blocked_card.get("review_state", "")) != "blocked" or bool(blocked_card.get("can_review", true)) or str(blocked_card.get("review_detail", "")).find("Rourke") == -1:
+		failures.append("Cage view model did not make the dirty-money route to Rourke visible.")
 
 	var hot_cashout_run: RunState = RunStateScript.new()
 	hot_cashout_run.start_new("M2-FUN-BOSS-HOT-CASHOUT")
@@ -1554,6 +1564,102 @@ func _check_demo_boss_objective_foundation(library: ContentLibrary, failures: Ar
 		str(loaded_showdown.run_status),
 		str(loaded_clean_status.get("high_roller_ready", false)),
 	])
+
+
+func _check_grand_casino_chips_and_cage(library: ContentLibrary, main_archetype: Dictionary, failures: Array) -> void:
+	var run_state: RunState = RunStateScript.new()
+	run_state.start_new("GC-CHIPS-CAGE")
+	var environment := EnvironmentInstance.from_archetype(main_archetype, 3, run_state.create_rng("gc_chips_environment"), library)
+	run_state.set_environment(environment.to_dict())
+	run_state.bankroll = 100
+	var score_before := run_state.run_spending_score
+	var buy_result := run_state.buy_grand_casino_chips(40, run_state.grand_casino_chip_exchange_rate())
+	if not bool(buy_result.get("ok", false)) or run_state.bankroll != 60 or run_state.grand_casino_chips != 40 or run_state.grand_casino_total_money() != 100:
+		failures.append("Grand Casino 1:1 table buy-in did not conserve cash plus chips.")
+	if run_state.wager_balance_for_game("blackjack", run_state.current_environment) != 40 or run_state.wager_capacity_for_game("blackjack", run_state.current_environment) != 100:
+		failures.append("Grand Casino table balance did not keep actual chips separate from explicitly convertible cash capacity.")
+	if run_state.run_spending_score != score_before:
+		failures.append("Grand Casino chip buy-in incorrectly counted a currency transfer as score spending.")
+
+	for table_id in RunState.GRAND_CASINO_TABLE_GAME_IDS:
+		var table_deltas := GameModule.empty_result_deltas()
+		table_deltas["bankroll_delta"] = -2
+		var table_result := GameModule.build_action_result({
+			"ok": true,
+			"type": "game_action",
+			"source_id": table_id,
+			"game_id": table_id,
+			"action_id": "chips_fixture",
+			"action_kind": "legal",
+			"stake": 2,
+			"deltas": table_deltas,
+			"environment_id": str(run_state.current_environment.get("id", "")),
+			"message": "Casino table chips fixture.",
+		})
+		var cash_before := run_state.bankroll
+		var chips_before := run_state.grand_casino_chips
+		GameModule.apply_result(run_state, table_result)
+		if run_state.bankroll != cash_before or run_state.grand_casino_chips != chips_before - 2 or int(table_result.get("chips_delta", 0)) != -2 or str(table_result.get("currency", "")) != "chips":
+			failures.append("Grand Casino table result did not route %s from bankroll_delta to chips." % table_id)
+
+	var machine_deltas := GameModule.empty_result_deltas()
+	machine_deltas["bankroll_delta"] = 7
+	var machine_result := GameModule.build_action_result({
+		"ok": true,
+		"type": "game_action",
+		"source_id": "slot",
+		"game_id": "slot",
+		"action_id": "spin",
+		"action_kind": "legal",
+		"stake": 1,
+		"deltas": machine_deltas,
+		"environment_id": str(run_state.current_environment.get("id", "")),
+		"message": "Casino machine cash fixture.",
+	})
+	var machine_cash_before := run_state.bankroll
+	var machine_chips_before := run_state.grand_casino_chips
+	GameModule.apply_result(run_state, machine_result)
+	if run_state.bankroll != machine_cash_before + 7 or run_state.grand_casino_chips != machine_chips_before or machine_result.has("chips_delta"):
+		failures.append("Grand Casino machine result did not remain cash-only.")
+
+	var outside_environment := run_state.current_environment.duplicate(true)
+	outside_environment["id"] = "outside_table_currency_fixture"
+	outside_environment["archetype_id"] = "gas_station_casino"
+	outside_environment["world_node_id"] = "gas_station_casino"
+	run_state.set_environment(outside_environment)
+	var outside_deltas := GameModule.empty_result_deltas()
+	outside_deltas["bankroll_delta"] = -3
+	var outside_result := GameModule.build_action_result({
+		"ok": true,
+		"type": "game_action",
+		"source_id": "blackjack",
+		"game_id": "blackjack",
+		"action_id": "outside_cash_fixture",
+		"action_kind": "legal",
+		"stake": 3,
+		"deltas": outside_deltas,
+		"environment_id": "outside_table_currency_fixture",
+		"message": "Outside table cash fixture.",
+	})
+	var outside_cash_before := run_state.bankroll
+	var outside_chips_before := run_state.grand_casino_chips
+	GameModule.apply_result(run_state, outside_result)
+	if run_state.bankroll != outside_cash_before - 3 or run_state.grand_casino_chips != outside_chips_before or outside_result.has("chips_delta"):
+		failures.append("Blackjack outside the Grand Casino did not remain cash-only.")
+
+	run_state.set_environment(environment.to_dict())
+	var saved := run_state.to_dict()
+	var restored: RunState = RunStateScript.new()
+	restored.from_dict(saved)
+	if restored.grand_casino_chips != run_state.grand_casino_chips or str(restored.current_environment.get("archetype_id", "")) != RunState.GRAND_CASINO_ARCHETYPE_ID:
+		failures.append("Grand Casino chip balance or Cage availability did not survive save/load.")
+	var total_before_cash_out := restored.grand_casino_total_money()
+	var score_before_cash_out := restored.run_spending_score
+	var cash_out_result := restored.cash_out_grand_casino_chips(-1, restored.grand_casino_chip_exchange_rate())
+	if not bool(cash_out_result.get("ok", false)) or restored.grand_casino_chips != 0 or restored.grand_casino_total_money() != total_before_cash_out:
+		failures.append("Grand Casino cash-out did not conserve total money.")
+	if restored.run_spending_score != score_before_cash_out:
+		failures.append("Grand Casino chip cash-out incorrectly changed score spending.")
 
 
 func _check_grand_casino_spatial_split(library: ContentLibrary, main_archetype: Dictionary, failures: Array) -> void:

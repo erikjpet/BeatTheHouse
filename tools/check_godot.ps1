@@ -321,7 +321,8 @@ $FoundationSuiteBudgetMultiplier = 1.25
 $FoundationSuiteStageBaselinesSec = @{
     "foundation_all" = 151.156
     "foundation_systems" = 21.352
-    "ui_scene_compile" = 67.474
+    # Expanded GC05.2 coverage and same-host Stage 1 control: .tmp/gc05_2_ui_baseline_evidence.md
+    "ui_scene_compile" = 72.000
     "foundation_contracts" = 150.727
     "foundation_games" = 150.015
     "foundation_slot" = 21.710

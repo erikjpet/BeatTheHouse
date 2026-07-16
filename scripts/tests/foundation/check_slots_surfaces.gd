@@ -2323,6 +2323,8 @@ func _grand_casino_game_fixture_run(library: ContentLibrary, boss_archetype: Dic
 	if not generated_state.is_empty():
 		environment["game_states"] = {game_id: generated_state}
 	run_state.set_environment(environment)
+	if RunState.GRAND_CASINO_TABLE_GAME_IDS.has(game_id):
+		run_state.buy_grand_casino_chips(run_state.bankroll, run_state.grand_casino_chip_exchange_rate())
 	return run_state
 
 

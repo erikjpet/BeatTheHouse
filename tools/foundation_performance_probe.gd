@@ -473,7 +473,7 @@ func _probe_game_resolve_budgets() -> void:
 		var samples: Array = []
 		var ok_count := 0
 		for sample_index in range(resolve_sample_count):
-			_prepare_run_for_resolve_probe(run_state, baseline_environment, baseline_rng_seed, baseline_rng_state, baseline_suspicion)
+			_prepare_run_for_resolve_probe(run_state, game_id, baseline_environment, baseline_rng_seed, baseline_rng_state, baseline_suspicion)
 			var rng := run_state.create_rng("perf_resolve:%s:%d" % [game_id, sample_index])
 			var environment: Dictionary = run_state.current_environment
 			var ui_state := _resolve_probe_ui_state(game_id, sample_index)
@@ -922,9 +922,12 @@ func _synthetic_blackjack_idle_snapshot() -> Dictionary:
 	}
 
 
-func _prepare_run_for_resolve_probe(run_state: RunState, baseline_environment: Dictionary, baseline_rng_seed: int, baseline_rng_state: int, baseline_suspicion: Dictionary) -> void:
+func _prepare_run_for_resolve_probe(run_state: RunState, game_id: String, baseline_environment: Dictionary, baseline_rng_seed: int, baseline_rng_state: int, baseline_suspicion: Dictionary) -> void:
 	run_state.bankroll = 100000
+	run_state.grand_casino_chips = 0
 	run_state.current_environment = baseline_environment.duplicate(true)
+	if run_state.grand_casino_table_uses_chips(game_id, run_state.current_environment):
+		run_state.buy_grand_casino_chips(run_state.bankroll, run_state.grand_casino_chip_exchange_rate())
 	run_state.rng_seed = baseline_rng_seed
 	run_state.rng_state = baseline_rng_state
 	run_state.suspicion = baseline_suspicion.duplicate(true)

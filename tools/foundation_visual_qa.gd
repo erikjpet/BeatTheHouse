@@ -830,18 +830,36 @@ func _verify_grand_casino_high_roller_cashout_snapshot() -> void:
 		if str(event_id_value) == RunState.GRAND_CASINO_HIGH_ROLLER_EVENT_ID:
 			has_cashout_event = true
 			break
-	_require(has_cashout_event, "Players Card visual QA did not inject the review event.")
+	_require(not has_cashout_event, "Players Card review remained on the event surface instead of moving to the Cage.")
 	app.call("_refresh")
 	await _settle()
 	_return_to_room_view()
 	await _settle()
-	var event_label := await _double_click_first_canvas_object_type("event")
-	_require(not event_label.is_empty(), "Players Card visual QA could not focus the visible review event prop.")
-	var event_option := _event_option_by_id(RunState.GRAND_CASINO_HIGH_ROLLER_EVENT_ID)
-	var choices: Array = event_option.get("choices", [])
-	_require(choices.size() == 1 and str((choices[0] as Dictionary).get("id", "")) == RunState.GRAND_CASINO_HIGH_ROLLER_EVENT_ID, "Players Card visual QA did not expose the deliberate claim response.")
+	var canvas := app.get("environment_canvas") as Control
+	_require(canvas != null and canvas.visible, "Players Card visual QA could not reach the Grand Casino room canvas.")
+	var cage_object := _canvas_object_by_id(canvas, "casino_fixture:cage")
+	_require(not cage_object.is_empty(), "Players Card visual QA could not find the visible Cage fixture.")
+	var cage_label := await _double_click_canvas_object_data(canvas, cage_object, "casino_fixture")
+	_require(not cage_label.is_empty(), "Players Card visual QA could not open the Cage through its visible room fixture.")
+	var cage_snapshot: Dictionary = app.call("current_cage_window_snapshot")
+	var cage_model: Dictionary = cage_snapshot.get("model", {}) if typeof(cage_snapshot.get("model", {})) == TYPE_DICTIONARY else {}
+	var cage_card: Dictionary = cage_model.get("card", {}) if typeof(cage_model.get("card", {})) == TYPE_DICTIONARY else {}
+	_require(bool(cage_snapshot.get("visible", false)), "Players Card visual QA did not open the Cage window.")
+	_require(bool(cage_snapshot.get("portrait_animated", false)), "Linda's Cage portrait was not alive while the window was open.")
+	_require(str((cage_model.get("host", {}) as Dictionary).get("name", "")) == "Linda", "Players Card Cage window did not identify Linda.")
+	_require(bool(cage_card.get("can_review", false)) and str(cage_card.get("review_state", "")) == "ready", "Players Card Cage window did not expose the ready review action.")
+	_require(cage_model.has("balance") and cage_model.has("promotions") and str(cage_model.get("promotions_empty", "")).strip_edges() != "", "Cage visual QA could not read every window section.")
+	_require(not _click_button_exact("Buy 25").is_empty(), "Cage visual QA could not buy chips through the visible control.")
+	await _settle()
+	_require(fixture_run.grand_casino_chips == 25, "Visible Cage buy-in did not credit chips.")
+	_require(not _click_button_exact("Cash Out All").is_empty(), "Cage visual QA could not cash out through the visible control.")
+	await _settle()
+	_require(fixture_run.grand_casino_chips == 0, "Visible Cage cash-out did not return all chips to cash.")
 	_cover("grand_casino_high_roller_cashout")
-	_record_state("grand_casino_high_roller_cashout_available", "Grand Casino clean Players Card review is visible at the host event.")
+	_record_state("grand_casino_high_roller_cashout_available", "Grand Casino Cage shows animated Linda, chip transfers, Players Card readiness, and the promotions empty state.")
+	_require(not _click_button_exact("Complete Players Card Review").is_empty(), "Cage visual QA could not complete the ready Players Card review through the visible control.")
+	await _settle()
+	_require(fixture_run.run_status == RunState.RUN_STATUS_ENDED and str(fixture_run.narrative_flags.get("demo_victory_route", "")) == RunState.GRAND_CASINO_HIGH_ROLLER_EVENT_ID, "Visible Cage Players Card action did not preserve the canonical clean victory transition.")
 
 
 func _verify_terminal_victory_summary_snapshot() -> void:
@@ -2423,9 +2441,15 @@ func _assert_no_scroll_critical_path(context: String) -> void:
 	_assert_result_area_useful_or_hidden(context)
 	var environment_control := app.get("environment_canvas") as Control
 	var game_surface_control := app.get("game_surface_canvas") as Control
+	var cage_snapshot: Dictionary = app.call("current_cage_window_snapshot") if app.has_method("current_cage_window_snapshot") else {}
+	var cage_visible := bool(cage_snapshot.get("visible", false))
+	if cage_visible:
+		var cage_rect: Rect2 = cage_snapshot.get("popup_rect", Rect2())
+		_require(cage_rect.size.x > 0.0 and cage_rect.size.y > 0.0, "%s Cage popup has no visible bounds." % context)
+		_require(viewport_rect.encloses(cage_rect), "%s Cage popup is outside the visible viewport: popup=%s viewport=%s." % [context, str(cage_rect), str(viewport_rect)])
 	if environment_control != null and environment_control.visible:
 		_assert_environment_canvas_contained(context)
-		if str(screen_snapshot.get("screen", "")) == "ENVIRONMENT":
+		if str(screen_snapshot.get("screen", "")) == "ENVIRONMENT" and not cage_visible:
 			_require(_has_visible_text(app, "double-click glowing props to act"), "%s room mode does not show visible object interaction guidance." % context)
 	if game_surface_control != null and game_surface_control.visible:
 		_assert_game_surface_contained(context)

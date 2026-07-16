@@ -1273,6 +1273,12 @@ func _check_final_demo_objective_hud_matrix(app: Control) -> bool:
 	_set_ui_fixture_run(app, close_cashout_run)
 	if not _check_grand_casino_spatial_ui(app):
 		return false
+	close_cashout_run.grand_casino_chips = 17
+	var casino_status_hud: Dictionary = app.call("current_run_status_hud_snapshot")
+	if str(casino_status_hud.get("bankroll_text", "")).find("[CHIPS] 17") == -1:
+		push_error("Grand Casino HUD did not show chips alongside bankroll.")
+		return false
+	close_cashout_run.grand_casino_chips = 0
 	var close_snapshot: Dictionary = app.call("current_objective_hud_snapshot")
 	if not _assert_objective_state(close_snapshot, "grand-incomplete", "Grand Casino close cashout HUD"):
 		return false
@@ -1299,13 +1305,38 @@ func _check_final_demo_objective_hud_matrix(app: Control) -> bool:
 	var high_roller_snapshot: Dictionary = app.call("current_objective_hud_snapshot")
 	if not _assert_objective_state(high_roller_snapshot, "high-roller-ready", "High-roller ready objective HUD"):
 		return false
-	if not _assert_next_objective(high_roller_snapshot, "event", "event:high_roller_cashout", "High-roller ready objective HUD"):
+	if not _assert_next_objective(high_roller_snapshot, "casino_fixture", "casino_fixture:cage", "High-roller ready objective HUD"):
 		return false
+	high_roller_run.current_environment["event_ids"] = ["high_roller_cashout"]
+	if not (app.call("_eligible_event_option_view_list") as Array).is_empty():
+		push_error("High-roller Players Card review still appeared on the event surface instead of the Cage.")
+		return false
+	if not bool(app.call("_open_cage_window")):
+		push_error("High-roller Players Card review could not open the Cage window.")
+		return false
+	var ready_cage: Dictionary = app.call("current_cage_window_snapshot")
+	var ready_cage_model: Dictionary = ready_cage.get("model", {}) if typeof(ready_cage.get("model", {})) == TYPE_DICTIONARY else {}
+	var ready_balance: Dictionary = ready_cage_model.get("balance", {}) if typeof(ready_cage_model.get("balance", {})) == TYPE_DICTIONARY else {}
+	var ready_card: Dictionary = ready_cage_model.get("card", {}) if typeof(ready_cage_model.get("card", {})) == TYPE_DICTIONARY else {}
+	if not bool(ready_cage.get("visible", false)) or not bool(ready_cage.get("portrait_animated", false)) or str((ready_cage_model.get("host", {}) as Dictionary).get("name", "")) != "Linda" or not ready_cage_model.has("promotions") or int(ready_balance.get("cash", -1)) < 0 or not bool(ready_card.get("can_review", false)):
+		push_error("Ready Cage window did not expose animated Linda, balances, promotions, and the Players Card review action.")
+		return false
+	app.call("_hide_cage_window")
 
 	var showdown_run := _grand_casino_fixture_run("UI-HUD-SHOWDOWN", grand_environment)
 	showdown_run.add_suspicion("ui_hud_showdown", showdown_heat_threshold, "behavior")
 	showdown_run.evaluate_environment_objective_state()
 	_set_ui_fixture_run(app, showdown_run)
+	if not bool(app.call("_open_cage_window")):
+		push_error("Showdown fixture could not open the Cage to show its blocked review state.")
+		return false
+	var blocked_cage: Dictionary = app.call("current_cage_window_snapshot")
+	var blocked_model: Dictionary = blocked_cage.get("model", {}) if typeof(blocked_cage.get("model", {})) == TYPE_DICTIONARY else {}
+	var blocked_card: Dictionary = blocked_model.get("card", {}) if typeof(blocked_model.get("card", {})) == TYPE_DICTIONARY else {}
+	if str(blocked_card.get("review_state", "")) != "blocked" or bool(blocked_card.get("can_review", true)) or str(blocked_card.get("review_detail", "")).find("Rourke") == -1:
+		push_error("Cage did not visibly route the blocked Players Card review to Rourke.")
+		return false
+	app.call("_hide_cage_window")
 	var showdown_snapshot: Dictionary = app.call("current_objective_hud_snapshot")
 	if not _assert_objective_state(showdown_snapshot, "showdown-pending", "Showdown pending objective HUD"):
 		return false
@@ -1474,6 +1505,18 @@ func _check_grand_casino_spatial_ui(app: Control) -> bool:
 	if high_choice.is_empty() or not bool(high_choice.get("enabled", false)) or not bool(high_choice.get("local_casino_room", false)) or int(high_choice.get("cost", 0)) <= 0 or int(high_choice.get("travel_minutes", 0)) != 5:
 		push_error("Grand Casino High-Limit door did not expose its cash/card local access gate.")
 		return false
+	var table_game: GameModule = app.call("_game_module_for_id", "blackjack")
+	if table_game == null or not bool(app.call("_casino_table_wager_needs_top_up", table_game, 25)):
+		push_error("Grand Casino table did not detect a short chip balance for automatic top-up.")
+		return false
+	app.set("current_game", table_game)
+	app.call("_show_casino_chip_top_up_popup", "play_basic", 25, true, false)
+	var top_up_overlay: Dictionary = app.call("current_overlay_state_snapshot")
+	if not bool(top_up_overlay.get("event_choice_popup_visible", false)) or str(top_up_overlay.get("event_choice_popup_type", "")) != "casino_chip_top_up":
+		push_error("Grand Casino table chip shortage did not open the automatic top-up decision.")
+		return false
+	app.call("cancel_pending_casino_chip_top_up")
+	app.set("current_game", null)
 	return true
 
 
