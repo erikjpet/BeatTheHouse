@@ -11268,7 +11268,11 @@ func _world_map_travel_method(choice: Dictionary) -> String:
 func _world_map_travel_method_kind(choice: Dictionary) -> String:
 	if bool(choice.get("force_walk_fallback", false)):
 		return WorldMapScript.TRAVEL_METHOD_WALK
-	var route: Dictionary = choice.get("route", {}) if typeof(choice.get("route", {})) == TYPE_DICTIONARY else {}
+	var authored_kind: Variant = choice.get("travel_method_kind")
+	if typeof(authored_kind) == TYPE_STRING and not (authored_kind as String).is_empty():
+		return authored_kind as String
+	var route_value: Variant = choice.get("route")
+	var route: Dictionary = route_value if typeof(route_value) == TYPE_DICTIONARY else {}
 	if not route.is_empty():
 		return WorldMapScript.travel_method_kind(route, str(choice.get("distance", route.get("distance", "near"))))
 	return WorldMapScript.travel_method_kind(choice, str(choice.get("distance", "near")))
@@ -11356,14 +11360,17 @@ func _travel_choice(target_id: String, known_target_ids: Array = []) -> Dictiona
 	if choice.is_empty():
 		return choice
 	var method_kind := _world_map_travel_method_kind(choice)
-	var route: Dictionary = _copy_dict(choice.get("route", {}))
+	# FoundationTravelViewModel already gives this choice its own route duplicate.
+	var route_value: Variant = choice.get("route")
+	var route: Dictionary = route_value if typeof(route_value) == TYPE_DICTIONARY else {}
+	var method_label := WorldMapScript.travel_method_label(method_kind)
 	route["travel_method_kind"] = method_kind
-	route["travel_method"] = WorldMapScript.travel_method_label(method_kind)
+	route["travel_method"] = method_label
 	if str(route.get("method", "")).strip_edges().is_empty() or bool(choice.get("force_walk_fallback", false)):
-		route["method"] = str(route.get("travel_method", ""))
+		route["method"] = method_label
 	choice["route"] = route
 	choice["travel_method_kind"] = method_kind
-	choice["travel_method"] = str(route.get("travel_method", ""))
+	choice["travel_method"] = method_label
 	return choice
 
 
