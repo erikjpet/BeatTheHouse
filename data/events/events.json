@@ -706,6 +706,60 @@
     }
   },
   {
+    "id": "dave_bus_warning",
+    "display_name": "A Stranger on the Bus",
+    "type": "progression",
+    "interaction_mode": "triggered",
+    "presentation": "talk",
+    "speaker": {
+      "role": "stranger",
+      "name": "Dave",
+      "silhouette": "coat",
+      "bind": "none"
+    },
+    "scopes": [
+      "any"
+    ],
+    "asset_path": "res://assets/art/events/suspicious_patron.png",
+    "trigger": {
+      "type": "travel"
+    },
+    "cadence": {
+      "bypass_budget": true,
+      "queue_while_modal": true
+    },
+    "conditions": {
+      "requires_context": {
+        "travel_method_kind": "bus"
+      },
+      "missing_story_flags": [
+        "dave_bus_warning_seen"
+      ]
+    },
+    "payload": {
+      "summary": "Seek out the cruel and unusual.",
+      "choices": [
+        {
+          "id": "acknowledge",
+          "label": "Remember the warning",
+          "text": "You commit Dave's words to memory.",
+          "consequences": {
+            "set_story_flag": "dave_bus_warning_seen",
+            "story_log": [
+              {
+                "type": "story_lead",
+                "id": "dave_bus_warning",
+                "event_id": "dave_bus_warning",
+                "message": "Dave said: Seek out the cruel and unusual."
+              }
+            ],
+            "resolve_event": true
+          }
+        }
+      ]
+    }
+  },
+  {
     "id": "heat_at_exit",
     "display_name": "Heat at the Exit",
     "type": "security",
