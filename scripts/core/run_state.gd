@@ -72,6 +72,22 @@ const GRAND_CASINO_SHOWDOWN_STEP_PRESSURE := "pressure_choice"
 const GRAND_CASINO_SHOWDOWN_DEFAULT_SUCCESS_MESSAGE := "Rourke cannot prove enough to hold you. The casino lets you walk with your winnings. Rourke lets the elevator close; the house will remember your face."
 const GRAND_CASINO_SHOWDOWN_DEFAULT_FAILURE_MESSAGE := "The story falls apart in the back room. The casino takes you out back and the run ends."
 const GRAND_CASINO_HIGH_ROLLER_DEFAULT_SUCCESS_MESSAGE := "The host issues you a Grand Casino Players Card and lets you leave with your winnings. The Players Card opens quieter rooms; your name is now on the list."
+const ROURKE_MOVE_EVALUATION_ACTIONS := 3
+const ROURKE_OFF_FLOOR_ACTIONS := 4
+const ROURKE_HEAT_DECAY_PERCENT := 80
+const ROURKE_INERTIA_HEAT_MARGIN := 2
+const ROURKE_ESCORT_CHANCE_PERCENT := 12
+const RIVAL_CHEATER_MIN_COUNT := 1
+const RIVAL_CHEATER_MAX_COUNT := 3
+const ROURKE_ROOM_PATH := [
+	GRAND_CASINO_HIGH_LIMIT_ARCHETYPE_ID,
+	GRAND_CASINO_ARCHETYPE_ID,
+	GRAND_CASINO_BACK_ROOM_ARCHETYPE_ID,
+]
+const RIVAL_CHEATER_ROOMS := [
+	GRAND_CASINO_ARCHETYPE_ID,
+	GRAND_CASINO_HIGH_LIMIT_ARCHETYPE_ID,
+]
 const TERMINAL_SCORE_VICTORY_MULTIPLIER := 3
 const HEAT_COOLDOWN_ACTIONS_FLAG := "heat_cooldown_actions"
 const HEAT_COOLDOWN_PER_ACTION_FLAG := "heat_cooldown_per_action"
@@ -129,6 +145,16 @@ var drunk_distortion_suppression_turns: int = 0
 var current_environment: Dictionary = {}
 var world_map: Dictionary = {}
 var grand_casino_room_states: Dictionary = {}
+var rourke_current_room: String = ""
+var rourke_current_spot: String = ""
+var rourke_facing: String = "right"
+var rourke_actions_until_move: int = ROURKE_MOVE_EVALUATION_ACTIONS
+var rourke_off_floor_actions: int = 0
+var rourke_floor_action_index: int = 0
+var grand_casino_room_heat_accumulators: Dictionary = {}
+var rival_cheaters: Array = []
+var rival_cheater_day: int = 0
+var rourke_escort_state: Dictionary = {}
 var pending_triggered_events: Array = []
 var pending_bags: Array = []
 var active_triggered_event: Dictionary = {}
@@ -184,6 +210,16 @@ func start_new(p_seed_text: String = "FOUNDATION-SEED", p_challenge_config: Dict
 	current_environment = {}
 	world_map = {}
 	grand_casino_room_states = {}
+	rourke_current_room = ""
+	rourke_current_spot = ""
+	rourke_facing = "right"
+	rourke_actions_until_move = ROURKE_MOVE_EVALUATION_ACTIONS
+	rourke_off_floor_actions = 0
+	rourke_floor_action_index = 0
+	grand_casino_room_heat_accumulators = _empty_grand_casino_room_heat_accumulators()
+	rival_cheaters = []
+	rival_cheater_day = 0
+	rourke_escort_state = {}
 	pending_triggered_events = []
 	pending_bags = []
 	active_triggered_event = {}
@@ -1077,6 +1113,7 @@ func set_environment(environment_data: Dictionary) -> void:
 		_clear_grand_casino_clean_cashout_ready()
 	event_cadence_begin_visit(current_environment)
 	_initialize_grand_casino_objective_runtime()
+	_initialize_grand_casino_living_floor()
 	_evaluate_immediate_terminal_state()
 
 
@@ -1369,6 +1406,8 @@ func add_suspicion(cue_id: String, amount: int, visibility: String = "behavior",
 		"context": context.duplicate(true),
 	})
 	suspicion["cues"] = cues
+	if applied_amount > 0:
+		record_grand_casino_room_heat_gain(_grand_casino_room_id_from_context(context), applied_amount)
 	_evaluate_immediate_terminal_state(defer_bankroll_zero)
 	return applied_amount
 
@@ -2656,14 +2695,37 @@ func pit_boss_watch_status(environment: Dictionary = {}) -> Dictionary:
 	var boss := _copy_dict(security.get("pit_boss", {}))
 	if not bool(boss.get("enabled", false)):
 		return {"active": false}
+	var player_room := _grand_casino_room_id_for_environment(source)
+	var label := str(boss.get("label", "Pit boss"))
+	var base_bonus := maxi(0, int(boss.get("cheat_heat_bonus", 25)))
+	if rourke_off_floor_actions > 0 or rourke_current_room.is_empty():
+		return {
+			"active": false,
+			"watched": false,
+			"label": label,
+			"cheat_heat_bonus": 0,
+			"base_cheat_heat_bonus": base_bonus,
+			"rourke_room": "",
+			"rourke_off_floor_actions": rourke_off_floor_actions,
+			"summary": "%s is off the floor escorting a rival. This is the cleanest opening." % label,
+		}
+	if player_room.is_empty() or rourke_current_room != player_room:
+		return {
+			"active": false,
+			"watched": false,
+			"label": label,
+			"cheat_heat_bonus": 0,
+			"base_cheat_heat_bonus": base_bonus,
+			"rourke_room": rourke_current_room,
+			"rourke_spot": rourke_current_spot,
+			"summary": "%s is working the %s." % [label, _grand_casino_room_display_name(rourke_current_room)],
+		}
 	var cycle_length := maxi(1, int(boss.get("cycle_length", 4)))
 	var watched_turns := clampi(int(boss.get("watched_turns", 2)), 0, cycle_length)
 	var phase := int(source.get("turns", 0)) % cycle_length
 	if phase < 0:
 		phase += cycle_length
 	var watched := phase < watched_turns
-	var label := str(boss.get("label", "Pit boss"))
-	var base_bonus := maxi(0, int(boss.get("cheat_heat_bonus", 25)))
 	if int(narrative_flags.get("lights_out_unwatched_actions", 0)) > 0:
 		return {
 			"active": true,
@@ -2677,6 +2739,9 @@ func pit_boss_watch_status(environment: Dictionary = {}) -> Dictionary:
 			"summary": "The lights are out; staff cannot watch this action.",
 			"temporary_modifier": "lights_out",
 			"remaining_actions": int(narrative_flags.get("lights_out_unwatched_actions", 0)),
+			"rourke_room": rourke_current_room,
+			"rourke_spot": rourke_current_spot,
+			"rourke_facing": rourke_facing,
 		}
 	var shift_actions := maxi(0, int(narrative_flags.get("shift_change_rookie_actions", 0)))
 	var effective_base_bonus := maxi(0, base_bonus - (12 if shift_actions > 0 else 0))
@@ -2697,7 +2762,251 @@ func pit_boss_watch_status(environment: Dictionary = {}) -> Dictionary:
 		"summary": summary,
 		"temporary_modifier": "shift_change" if shift_actions > 0 else "",
 		"remaining_actions": shift_actions,
+		"rourke_room": rourke_current_room,
+		"rourke_spot": rourke_current_spot,
+		"rourke_facing": rourke_facing,
 	}
+
+
+func record_grand_casino_room_heat_gain(room_id: String, amount: int) -> void:
+	var normalized_room := room_id.strip_edges()
+	if not GRAND_CASINO_ARCHETYPE_IDS.has(normalized_room) or amount <= 0:
+		return
+	grand_casino_room_heat_accumulators = _normalize_grand_casino_room_heat_accumulators(grand_casino_room_heat_accumulators)
+	grand_casino_room_heat_accumulators[normalized_room] = maxi(0, int(grand_casino_room_heat_accumulators.get(normalized_room, 0)) + amount)
+
+
+func grand_casino_living_floor_snapshot(environment: Dictionary = {}) -> Dictionary:
+	var source := current_environment if environment.is_empty() else environment
+	var player_room := _grand_casino_room_id_for_environment(source)
+	if player_room.is_empty():
+		return {}
+	var visible_rivals: Array = []
+	for rival_value in rival_cheaters:
+		if typeof(rival_value) != TYPE_DICTIONARY:
+			continue
+		var rival := rival_value as Dictionary
+		if str(rival.get("room", "")) == player_room:
+			visible_rivals.append(rival.duplicate(true))
+	var escort := rourke_escort_state.duplicate(true)
+	var escort_visible := not escort.is_empty() and player_room == GRAND_CASINO_ARCHETYPE_ID and rourke_off_floor_actions > 0
+	if escort_visible:
+		escort["progress"] = clampf(1.0 - float(rourke_off_floor_actions) / float(maxi(1, ROURKE_OFF_FLOOR_ACTIONS)), 0.0, 1.0)
+	else:
+		escort = {}
+	return {
+		"player_room": player_room,
+		"room_heat": grand_casino_room_heat_accumulators.duplicate(true),
+		"rourke": {
+			"on_floor": rourke_off_floor_actions <= 0 and not rourke_current_room.is_empty(),
+			"present": rourke_off_floor_actions <= 0 and rourke_current_room == player_room,
+			"room": rourke_current_room,
+			"spot": rourke_current_spot,
+			"facing": rourke_facing,
+			"actions_until_move": rourke_actions_until_move,
+			"off_floor_actions": rourke_off_floor_actions,
+		},
+		"rivals": visible_rivals,
+		"rival_count": rival_cheaters.size(),
+		"rival_day": rival_cheater_day,
+		"escort": escort,
+	}
+
+
+func _initialize_grand_casino_living_floor() -> void:
+	if not _is_grand_casino_environment(current_environment):
+		return
+	grand_casino_room_heat_accumulators = _normalize_grand_casino_room_heat_accumulators(grand_casino_room_heat_accumulators)
+	if rourke_current_room.is_empty() and rourke_off_floor_actions <= 0:
+		var initial_rng := create_rng("rourke_floor").fork("initial:day:%d" % game_day())
+		rourke_current_room = GRAND_CASINO_ARCHETYPE_ID
+		rourke_current_spot = _rourke_spot_for_room(rourke_current_room, initial_rng)
+		rourke_facing = "left" if initial_rng.randi_range(0, 1) == 0 else "right"
+		rourke_actions_until_move = ROURKE_MOVE_EVALUATION_ACTIONS
+	if rival_cheater_day != game_day():
+		_seed_rival_cheater_cast(game_day())
+
+
+func _advance_grand_casino_living_floor(amount: int) -> void:
+	if amount <= 0 or not _is_grand_casino_environment(current_environment):
+		return
+	_initialize_grand_casino_living_floor()
+	for _action in range(amount):
+		rourke_floor_action_index += 1
+		_decay_grand_casino_room_heat()
+		_advance_rival_cheater_heat()
+		if rourke_off_floor_actions > 0:
+			rourke_off_floor_actions = maxi(0, rourke_off_floor_actions - 1)
+			if not rourke_escort_state.is_empty():
+				rourke_escort_state["actions_remaining"] = rourke_off_floor_actions
+			if rourke_off_floor_actions <= 0:
+				var return_rng := create_rng("rourke_floor").fork("escort_return:%d" % rourke_floor_action_index)
+				rourke_current_room = GRAND_CASINO_ARCHETYPE_ID
+				rourke_current_spot = _rourke_spot_for_room(rourke_current_room, return_rng)
+				rourke_facing = "left"
+				rourke_actions_until_move = ROURKE_MOVE_EVALUATION_ACTIONS
+				rourke_escort_state = {}
+			continue
+		rourke_actions_until_move = maxi(0, rourke_actions_until_move - 1)
+		if rourke_actions_until_move <= 0:
+			_evaluate_rourke_movement()
+			rourke_actions_until_move = ROURKE_MOVE_EVALUATION_ACTIONS
+		_evaluate_rourke_escort()
+
+
+func _decay_grand_casino_room_heat() -> void:
+	for room_id_value in GRAND_CASINO_ARCHETYPE_IDS:
+		var room_id := str(room_id_value)
+		var value := maxi(0, int(grand_casino_room_heat_accumulators.get(room_id, 0)))
+		grand_casino_room_heat_accumulators[room_id] = int(floor(float(value * ROURKE_HEAT_DECAY_PERCENT) / 100.0))
+
+
+func _advance_rival_cheater_heat() -> void:
+	for index in range(rival_cheaters.size()):
+		if typeof(rival_cheaters[index]) != TYPE_DICTIONARY:
+			continue
+		var rival := rival_cheaters[index] as Dictionary
+		var rival_id := str(rival.get("id", "rival_%d" % index))
+		var room_id := str(rival.get("room", ""))
+		var heat_rng := create_rng("rourke_floor").fork("rival_heat:%d:%s" % [rourke_floor_action_index, rival_id])
+		var heat_gain := heat_rng.randi_range(1, 2)
+		record_grand_casino_room_heat_gain(room_id, heat_gain)
+		rival["last_heat_gain"] = heat_gain
+		rival["last_heat_action"] = rourke_floor_action_index
+		rival_cheaters[index] = rival
+
+
+func _evaluate_rourke_movement() -> void:
+	if rourke_current_room.is_empty():
+		return
+	var current_heat := maxi(0, int(grand_casino_room_heat_accumulators.get(rourke_current_room, 0)))
+	var hottest_room := rourke_current_room
+	var hottest_heat := current_heat
+	for room_id_value in ROURKE_ROOM_PATH:
+		var room_id := str(room_id_value)
+		var room_heat := maxi(0, int(grand_casino_room_heat_accumulators.get(room_id, 0)))
+		if room_heat > hottest_heat:
+			hottest_room = room_id
+			hottest_heat = room_heat
+	if hottest_room == rourke_current_room or hottest_heat - current_heat <= ROURKE_INERTIA_HEAT_MARGIN:
+		return
+	var current_index := ROURKE_ROOM_PATH.find(rourke_current_room)
+	var hottest_index := ROURKE_ROOM_PATH.find(hottest_room)
+	if current_index < 0 or hottest_index < 0:
+		return
+	var next_index := current_index + signi(hottest_index - current_index)
+	var next_room := str(ROURKE_ROOM_PATH[next_index])
+	var move_rng := create_rng("rourke_floor").fork("move:%d:%s" % [rourke_floor_action_index, next_room])
+	rourke_facing = "right" if next_index > current_index else "left"
+	rourke_current_room = next_room
+	rourke_current_spot = _rourke_spot_for_room(next_room, move_rng)
+
+
+func _evaluate_rourke_escort() -> void:
+	if rourke_current_room.is_empty() or rival_cheaters.is_empty():
+		return
+	for index in range(rival_cheaters.size()):
+		if typeof(rival_cheaters[index]) != TYPE_DICTIONARY:
+			continue
+		var rival := rival_cheaters[index] as Dictionary
+		if str(rival.get("room", "")) != rourke_current_room:
+			continue
+		var escort_rng := create_rng("rourke_floor").fork("escort:%d:%s" % [rourke_floor_action_index, str(rival.get("id", index))])
+		if escort_rng.randi_range(1, 100) > ROURKE_ESCORT_CHANCE_PERCENT:
+			continue
+		_begin_rourke_escort(index, rival)
+		return
+
+
+func _begin_rourke_escort(index: int, rival: Dictionary) -> void:
+	var caught_room := rourke_current_room
+	var rival_name := str(rival.get("display_name", "a rival counter"))
+	rourke_escort_state = {
+		"cheater_id": str(rival.get("id", "")),
+		"cheater_name": rival_name,
+		"tell": str(rival.get("tell", "")),
+		"caught_room": caught_room,
+		"actions_remaining": ROURKE_OFF_FLOOR_ACTIONS,
+	}
+	rival_cheaters.remove_at(index)
+	rourke_current_room = ""
+	rourke_current_spot = ""
+	rourke_off_floor_actions = ROURKE_OFF_FLOOR_ACTIONS
+	log_story({
+		"type": "rourke_rival_escort",
+		"event_id": "rourke_rival_escort",
+		"environment_id": str(current_environment.get("id", "")),
+		"environment_archetype_id": str(current_environment.get("archetype_id", "")),
+		"caught_room": caught_room,
+		"cheater_id": str(rival.get("id", "")),
+		"message": "Rourke catches %s's tell and walks them across the Main Floor to the Back Room. He is off the floor for %d actions." % [rival_name, ROURKE_OFF_FLOOR_ACTIONS],
+	})
+
+
+func _seed_rival_cheater_cast(day_index: int) -> void:
+	var cast_rng := create_rng("rourke_floor").fork("cast:day:%d" % maxi(1, day_index))
+	var count := cast_rng.randi_range(RIVAL_CHEATER_MIN_COUNT, RIVAL_CHEATER_MAX_COUNT)
+	var names := ["Marlow", "Vega", "Kite", "Nix", "Bishop", "Juneau"]
+	var tells := ["chip_riffle", "sleeve_check", "heel_tap", "glance_loop", "ring_turn", "counting_lips"]
+	var cast: Array = []
+	for index in range(count):
+		var room_id := str(cast_rng.pick(RIVAL_CHEATER_ROOMS, GRAND_CASINO_ARCHETYPE_ID))
+		cast.append({
+			"id": "rival_cheater_d%d_%d" % [maxi(1, day_index), index],
+			"display_name": str(names[cast_rng.randi_range(0, names.size() - 1)]),
+			"room": room_id,
+			"spot": cast_rng.randi_range(0, 2),
+			"tell": str(tells[(index + cast_rng.randi_range(0, tells.size() - 1)) % tells.size()]),
+			"idle_phase": cast_rng.randi_range(0, 1000),
+		})
+	rival_cheaters = cast
+	rival_cheater_day = maxi(1, day_index)
+
+
+func _rourke_spot_for_room(room_id: String, rng: RngStream) -> String:
+	var spots := {
+		GRAND_CASINO_ARCHETYPE_ID: ["main_left", "main_center", "main_cage"],
+		GRAND_CASINO_HIGH_LIMIT_ARCHETYPE_ID: ["high_rail", "high_center", "high_door"],
+		GRAND_CASINO_BACK_ROOM_ARCHETYPE_ID: ["back_table", "back_door"],
+	}
+	var room_spots: Array = spots.get(room_id, ["main_center"])
+	return str(rng.pick(room_spots, room_spots[0]))
+
+
+func _grand_casino_room_id_from_context(context: Dictionary) -> String:
+	var archetype_id := str(context.get("environment_archetype_id", "")).strip_edges()
+	if GRAND_CASINO_ARCHETYPE_IDS.has(archetype_id):
+		return archetype_id
+	var environment_id := str(context.get("environment_id", "")).strip_edges()
+	for room_id_value in [GRAND_CASINO_BACK_ROOM_ARCHETYPE_ID, GRAND_CASINO_HIGH_LIMIT_ARCHETYPE_ID, GRAND_CASINO_ARCHETYPE_ID]:
+		var room_id := str(room_id_value)
+		if environment_id == room_id or environment_id.begins_with("%s_" % room_id):
+			return room_id
+	return _grand_casino_room_id_for_environment(current_environment)
+
+
+func _grand_casino_room_id_for_environment(environment: Dictionary) -> String:
+	if environment.is_empty():
+		return ""
+	var archetype_id := str(environment.get("archetype_id", "")).strip_edges()
+	if GRAND_CASINO_ARCHETYPE_IDS.has(archetype_id):
+		return archetype_id
+	var environment_id := str(environment.get("id", "")).strip_edges()
+	for room_id_value in [GRAND_CASINO_BACK_ROOM_ARCHETYPE_ID, GRAND_CASINO_HIGH_LIMIT_ARCHETYPE_ID, GRAND_CASINO_ARCHETYPE_ID]:
+		var room_id := str(room_id_value)
+		if environment_id == room_id or environment_id.begins_with("%s_" % room_id):
+			return room_id
+	return ""
+
+
+func _grand_casino_room_display_name(room_id: String) -> String:
+	match room_id:
+		GRAND_CASINO_HIGH_LIMIT_ARCHETYPE_ID:
+			return "High-Limit Room"
+		GRAND_CASINO_BACK_ROOM_ARCHETYPE_ID:
+			return "Back Room"
+		_:
+			return "Main Floor"
 
 
 func _initialize_grand_casino_objective_runtime() -> void:
@@ -3970,6 +4279,7 @@ func advance_environment_turns(amount: int = 1) -> void:
 	current_environment["turns"] = next_turns
 	_advance_travel_lock(safe_amount)
 	_advance_narrative_action_timers(safe_amount)
+	_advance_grand_casino_living_floor(safe_amount)
 	drunk_distortion_suppression_turns = maxi(0, drunk_distortion_suppression_turns - safe_amount)
 	var decay_interval := maxi(1, LOCAL_RISK_TURN_DECAY_INTERVAL + int(challenge_modifiers().get("local_heat_turn_decay_interval_delta", 0)))
 	var previous_decay_step := int(floor(float(previous_turns) / float(decay_interval)))
@@ -4958,6 +5268,16 @@ func to_dict() -> Dictionary:
 		"current_environment": current_environment.duplicate(true),
 		"world_map": WorldMap.normalize(world_map),
 		"grand_casino_room_states": _grand_casino_room_states_for_save(),
+		"rourke_current_room": rourke_current_room,
+		"rourke_current_spot": rourke_current_spot,
+		"rourke_facing": rourke_facing,
+		"rourke_actions_until_move": rourke_actions_until_move,
+		"rourke_off_floor_actions": rourke_off_floor_actions,
+		"rourke_floor_action_index": rourke_floor_action_index,
+		"grand_casino_room_heat_accumulators": grand_casino_room_heat_accumulators.duplicate(true),
+		"rival_cheaters": rival_cheaters.duplicate(true),
+		"rival_cheater_day": rival_cheater_day,
+		"rourke_escort_state": rourke_escort_state.duplicate(true),
 		"pending_triggered_events": pending_triggered_events.duplicate(true),
 		"pending_bags": pending_bags.duplicate(true),
 		"active_triggered_event": active_triggered_event.duplicate(true),
@@ -5009,6 +5329,16 @@ func from_dict(data: Dictionary) -> void:
 	_apply_sals_forfeited_shelf_to_current_environment()
 	world_map = WorldMap.normalize(_copy_dict(data.get("world_map", {})))
 	grand_casino_room_states = _normalize_grand_casino_room_states(_copy_dict(data.get("grand_casino_room_states", {})))
+	rourke_current_room = _normalize_grand_casino_room_id(str(data.get("rourke_current_room", "")))
+	rourke_current_spot = str(data.get("rourke_current_spot", "")).strip_edges()
+	rourke_facing = "left" if str(data.get("rourke_facing", "right")) == "left" else "right"
+	rourke_actions_until_move = clampi(int(data.get("rourke_actions_until_move", ROURKE_MOVE_EVALUATION_ACTIONS)), 0, ROURKE_MOVE_EVALUATION_ACTIONS)
+	rourke_off_floor_actions = clampi(int(data.get("rourke_off_floor_actions", 0)), 0, ROURKE_OFF_FLOOR_ACTIONS)
+	rourke_floor_action_index = maxi(0, int(data.get("rourke_floor_action_index", 0)))
+	grand_casino_room_heat_accumulators = _normalize_grand_casino_room_heat_accumulators(_copy_dict(data.get("grand_casino_room_heat_accumulators", {})))
+	rival_cheaters = _normalize_rival_cheaters(_copy_array(data.get("rival_cheaters", [])))
+	rival_cheater_day = maxi(0, int(data.get("rival_cheater_day", 0)))
+	rourke_escort_state = _normalize_rourke_escort_state(_copy_dict(data.get("rourke_escort_state", {})))
 	if _is_grand_casino_environment(current_environment):
 		store_grand_casino_room_environment(current_environment)
 	pending_triggered_events = _normalize_triggered_event_queue(_copy_array(data.get("pending_triggered_events", [])))
@@ -5050,6 +5380,7 @@ func from_dict(data: Dictionary) -> void:
 	_refresh_economy()
 	_activate_current_local_suspicion(true)
 	_initialize_grand_casino_objective_runtime()
+	_initialize_grand_casino_living_floor()
 	if saved_run_status != RUN_STATUS_ENDED and saved_run_status != RUN_STATUS_FAILED:
 		_evaluate_immediate_terminal_state()
 	if saved_run_status == RUN_STATUS_ENDED:
@@ -5411,6 +5742,65 @@ static func _normalize_grand_casino_room_states(room_states: Dictionary) -> Dict
 		if typeof(room) == TYPE_DICTIONARY and not (room as Dictionary).is_empty():
 			result[room_id] = _normalize_environment((room as Dictionary).duplicate(true))
 	return result
+
+
+static func _empty_grand_casino_room_heat_accumulators() -> Dictionary:
+	return {
+		GRAND_CASINO_ARCHETYPE_ID: 0,
+		GRAND_CASINO_HIGH_LIMIT_ARCHETYPE_ID: 0,
+		GRAND_CASINO_BACK_ROOM_ARCHETYPE_ID: 0,
+	}
+
+
+static func _normalize_grand_casino_room_heat_accumulators(room_heat: Dictionary) -> Dictionary:
+	var result := _empty_grand_casino_room_heat_accumulators()
+	for room_id_value in GRAND_CASINO_ARCHETYPE_IDS:
+		var room_id := str(room_id_value)
+		result[room_id] = maxi(0, int(room_heat.get(room_id, 0)))
+	return result
+
+
+static func _normalize_grand_casino_room_id(room_id: String) -> String:
+	var normalized := room_id.strip_edges()
+	return normalized if GRAND_CASINO_ARCHETYPE_IDS.has(normalized) else ""
+
+
+static func _normalize_rival_cheaters(entries: Array) -> Array:
+	var result: Array = []
+	var seen := {}
+	for entry_value in entries:
+		if typeof(entry_value) != TYPE_DICTIONARY:
+			continue
+		var entry := (entry_value as Dictionary).duplicate(true)
+		var rival_id := str(entry.get("id", "")).strip_edges()
+		var room_id := str(entry.get("room", "")).strip_edges()
+		if rival_id.is_empty() or seen.has(rival_id) or not RIVAL_CHEATER_ROOMS.has(room_id):
+			continue
+		seen[rival_id] = true
+		entry["id"] = rival_id
+		entry["display_name"] = str(entry.get("display_name", "Rival"))
+		entry["room"] = room_id
+		entry["spot"] = clampi(int(entry.get("spot", 0)), 0, 2)
+		entry["tell"] = str(entry.get("tell", "chip_riffle"))
+		entry["idle_phase"] = maxi(0, int(entry.get("idle_phase", 0)))
+		entry["last_heat_gain"] = clampi(int(entry.get("last_heat_gain", 0)), 0, 2)
+		entry["last_heat_action"] = maxi(0, int(entry.get("last_heat_action", 0)))
+		result.append(entry)
+		if result.size() >= RIVAL_CHEATER_MAX_COUNT:
+			break
+	return result
+
+
+static func _normalize_rourke_escort_state(data: Dictionary) -> Dictionary:
+	if data.is_empty() or str(data.get("cheater_id", "")).strip_edges().is_empty():
+		return {}
+	return {
+		"cheater_id": str(data.get("cheater_id", "")),
+		"cheater_name": str(data.get("cheater_name", "Rival")),
+		"tell": str(data.get("tell", "")),
+		"caught_room": _normalize_grand_casino_room_id(str(data.get("caught_room", ""))),
+		"actions_remaining": clampi(int(data.get("actions_remaining", 0)), 0, ROURKE_OFF_FLOOR_ACTIONS),
+	}
 
 
 func _grand_casino_room_states_for_save() -> Dictionary:
