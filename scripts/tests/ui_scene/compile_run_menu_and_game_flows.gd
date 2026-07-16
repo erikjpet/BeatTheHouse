@@ -166,7 +166,7 @@ func _check_in_run_menu_flow(app: Control, save_service: SaveService, viewport_r
 	if bool(app.call("current_run_menu_snapshot").get("visible", true)):
 		push_error("Abandon Run left the in-run menu visible over the terminal summary.")
 		return false
-	if not _has_visible_text(app, "Run abandoned"):
+	if not _has_visible_text(app, "Walked away"):
 		push_error("Abandon Run did not present a clear terminal summary title.")
 		return false
 	if not await _check_run_menu_main_menu_button_closes_overlay(app, "UI-RUN-MENU-MAIN", false):
@@ -474,6 +474,33 @@ func _check_all_in_wager_confirmation_recovery(app: Control) -> bool:
 	if int(run_state.bankroll) != 2:
 		push_error("Canceling the all-in confirmation changed bankroll.")
 		return false
+	run_state.add_item("coin_return_shim")
+	var refund_machine: Dictionary = SlotMachineStateScript.read_machine(run_state.current_environment, "slot")
+	refund_machine["format_id"] = "classic_3_reel"
+	SlotMachineStateScript.write_machine(run_state.current_environment, "slot", refund_machine)
+	var slot_game: GameModule = app.get("current_game")
+	var wager_cost := slot_game.wager_cost_for_context("spin", 0, run_state, run_state.current_environment, {})
+	var guaranteed_return := slot_game.minimum_wager_return_for_context("spin", 0, wager_cost, run_state, run_state.current_environment, {})
+	if wager_cost != 2 or guaranteed_return != 1:
+		push_error("Coin-Return Shim fixture did not report its guaranteed $1 return on a $2 three-reel spin.")
+		return false
+	if bool(app.call("_wager_needs_final_bankroll_confirmation", slot_game, "spin", 0, wager_cost, {})):
+		push_error("A guaranteed Coin-Return Shim refund still classified the slot spin as run-ending.")
+		return false
+	var refunded_spin_count_before := int(refund_machine.get("spin_count", 0))
+	app.call("_resolve_game_action", "spin", true, false, false)
+	await process_frame
+	popup = app.call("current_event_choice_popup_snapshot")
+	if bool(popup.get("visible", false)) and str(popup.get("popup_type", "")) == "wager_confirmation":
+		push_error("Coin-Return Shim's guaranteed survival still opened the all-in confirmation popup.")
+		return false
+	var refund_machine_after: Dictionary = SlotMachineStateScript.read_machine(run_state.current_environment, "slot")
+	if int(refund_machine_after.get("spin_count", 0)) != refunded_spin_count_before + 1:
+		push_error("The guaranteed-refund slot spin did not execute after skipping confirmation.")
+		return false
+	if int(run_state.bankroll) <= 0:
+		push_error("Coin-Return Shim did not preserve bankroll after the all-in slot spin.")
+		return false
 	app.call("return_to_main_menu")
 	await process_frame
 	app.set("run_state", original_run_state)
@@ -540,13 +567,13 @@ func _check_confirmed_all_in_wager_result_then_failure(app: Control) -> bool:
 	if str(screen_snapshot.get("screen", "")) != "FAILURE" or run_state.run_status != RunState.RUN_STATUS_FAILED:
 		push_error("Acknowledging a resolved losing all-in did not end the run.")
 		return false
-	var failure_summary: Dictionary = app.call("current_failure_summary_snapshot")
-	if str(failure_summary.get("reason", "")) != RunState.FAILURE_BANKROLL_ZERO:
+	var failure_summary: Dictionary = app.call("current_run_report_snapshot")
+	var outcome: Dictionary = failure_summary.get("outcome", {})
+	if str(outcome.get("key", "")) != RunState.FAILURE_BANKROLL_ZERO:
 		push_error("Resolved losing all-in did not fail for bankroll zero.")
 		return false
-	var recent_lines: Array = failure_summary.get("recent_result_lines", [])
-	if JSON.stringify(recent_lines).find("Fixture all-in wager lost") == -1:
-		push_error("Resolved losing all-in failure summary lost the wager result context.")
+	if str(outcome.get("how", "")).is_empty():
+		push_error("Resolved losing all-in run report lost its ending explanation.")
 		return false
 	app.call("return_to_main_menu")
 	await process_frame

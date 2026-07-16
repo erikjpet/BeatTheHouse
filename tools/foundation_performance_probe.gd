@@ -91,6 +91,7 @@ const NEW_SURFACE_BUDGETS := {
 	"talk_dock_active": {"frame_p95_ms": 16.0, "sample_frames": NEW_SURFACE_SAMPLE_FRAMES},
 	"dialogue_active": {"frame_p95_ms": 16.0, "sample_frames": NEW_SURFACE_SAMPLE_FRAMES},
 	"eviction_map_transition": {"frame_p95_ms": 16.0, "sample_frames": NEW_SURFACE_SAMPLE_FRAMES},
+	"run_report_replay": {"frame_p95_ms": 16.0, "sample_frames": NEW_SURFACE_SAMPLE_FRAMES},
 }
 const NEW_SURFACE_IDLE_LIVENESS := {
 	"meta_home_idle": ENVIRONMENT_IDLE_LIVENESS,
@@ -650,6 +651,7 @@ func _probe_new_surface_budgets() -> void:
 	await _probe_talk_dock_surface_budget()
 	await _probe_dialogue_surface_budget()
 	await _probe_eviction_map_transition_budget()
+	await _probe_run_report_replay_budget()
 
 
 func _probe_overlay_cost() -> void:
@@ -820,6 +822,27 @@ func _probe_eviction_map_transition_budget() -> void:
 		failures.append("Eviction/map transition performance probe did not expose forced world-map travel.")
 		return
 	await _record_new_surface_phase("eviction_map_transition", "Eviction map transition")
+
+
+func _probe_run_report_replay_budget() -> void:
+	app.call("start_foundation_run", "%s-run-report" % seed_prefix)
+	await _settle(4)
+	var run_state: RunState = app.get("run_state")
+	if run_state == null:
+		failures.append("Run report performance probe could not access RunState.")
+		return
+	for index in range(12):
+		run_state.advance_environment_turns(1)
+		run_state.add_suspicion("perf_report_%d" % index, 3 if index % 2 == 0 else -2, "probe", true, {"environment_id": str(run_state.current_environment.get("id", ""))})
+	run_state.fail_run(RunState.FAILURE_ABANDONED, RunState.ABANDONED_FAILURE_MESSAGE)
+	app.call("_refresh")
+	await _settle(6)
+	var report := app.get("run_report_screen") as Control
+	if report == null or not report.visible:
+		failures.append("Run report performance probe did not expose the terminal report.")
+		return
+	report.call("_on_play_pressed")
+	await _record_new_surface_phase("run_report_replay", "Run report replay")
 
 
 func _record_new_surface_phase(mode: String, label: String) -> void:

@@ -29,6 +29,9 @@ var map_view_basis_signature := ""
 var map_view_focus_node_ids_cache: Array = []
 var map_view_selected_node_id_cache := ""
 var stable_layout_size := Vector2(-1.0, -1.0)
+var replay_keyframes: Array = []
+var replay_progress := 1.0
+var replay_reduce_motion := false
 
 
 func _ready() -> void:
@@ -60,6 +63,28 @@ func set_map_snapshot(map_snapshot: Dictionary) -> void:
 	snapshot_signature = next_signature
 	snapshot = map_snapshot.duplicate(true)
 	_rebuild_snapshot_cache()
+	queue_redraw()
+
+
+func set_run_report_replay(keyframes: Array, reduce_motion: bool) -> void:
+	replay_keyframes = keyframes
+	replay_reduce_motion = reduce_motion
+	replay_progress = 1.0 if reduce_motion else 0.0
+	queue_redraw()
+
+
+func set_run_report_replay_progress(progress: float) -> void:
+	var next := clampf(progress, 0.0, 1.0)
+	if is_equal_approx(next, replay_progress):
+		return
+	replay_progress = next
+	queue_redraw()
+
+
+func clear_run_report_replay() -> void:
+	replay_keyframes = []
+	replay_progress = 1.0
+	replay_reduce_motion = false
 	queue_redraw()
 
 
@@ -148,6 +173,7 @@ func _draw() -> void:
 	_draw_edges()
 	_draw_path()
 	_draw_nodes()
+	_draw_replay_marker()
 	draw_rect(rect.grow(-1.0), Color("#2ee9ff", 0.32), false, 2.0)
 
 
@@ -216,7 +242,46 @@ func _draw_path() -> void:
 			continue
 		if not _segment_in_view(a, b):
 			continue
-		draw_line(a, b, Color("#ffd36a", 0.46), 4.0)
+		if replay_keyframes.is_empty() or replay_reduce_motion:
+			draw_line(a, b, Color("#ffd36a", 0.46), 4.0)
+			continue
+		var start_progress := float((replay_keyframes[index] as Dictionary).get("progress", 0.0)) if index < replay_keyframes.size() else float(index) / float(maxi(1, path.size() - 1))
+		var end_progress := float((replay_keyframes[index + 1] as Dictionary).get("progress", 1.0)) if index + 1 < replay_keyframes.size() else float(index + 1) / float(maxi(1, path.size() - 1))
+		if replay_progress <= start_progress:
+			continue
+		var leg_progress := clampf((replay_progress - start_progress) / maxf(0.0001, end_progress - start_progress), 0.0, 1.0)
+		draw_line(a, a.lerp(b, leg_progress), Color("#ffd36a", 0.78), 4.0)
+
+
+func _draw_replay_marker() -> void:
+	if replay_keyframes.is_empty():
+		return
+	var frame_a: Dictionary = replay_keyframes[0]
+	var frame_b: Dictionary = frame_a
+	for index in range(replay_keyframes.size() - 1):
+		var candidate_a: Dictionary = replay_keyframes[index]
+		var candidate_b: Dictionary = replay_keyframes[index + 1]
+		frame_a = candidate_a
+		frame_b = candidate_b
+		if replay_progress <= float(candidate_b.get("progress", 1.0)):
+			break
+	var a := _node_position(nodes_by_id_cache, str(frame_a.get("node_id", "")))
+	var b := _node_position(nodes_by_id_cache, str(frame_b.get("node_id", "")))
+	if a.x < 0.0:
+		return
+	if b.x < 0.0:
+		b = a
+	var start_progress := float(frame_a.get("progress", 0.0))
+	var end_progress := float(frame_b.get("progress", start_progress))
+	var amount := clampf((replay_progress - start_progress) / maxf(0.0001, end_progress - start_progress), 0.0, 1.0)
+	var marker := a.lerp(b, amount)
+	draw_circle(marker, 10.0, Color("#05060a", 0.92))
+	draw_circle(marker, 8.0, Color("#00f5ff"))
+	draw_circle(marker, 11.0, Color("#ffffff", 0.74), false, 2.0)
+	var label := str(frame_a.get("label", frame_a.get("node_id", "Venue")))
+	if amount >= 0.5:
+		label = str(frame_b.get("label", frame_b.get("node_id", label)))
+	draw_string(ThemeDB.fallback_font, marker + Vector2(14.0, -9.0), label.left(22), HORIZONTAL_ALIGNMENT_LEFT, 170.0, 11, Color("#ffffff"))
 
 
 func _draw_nodes() -> void:

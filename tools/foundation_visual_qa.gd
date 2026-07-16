@@ -27,7 +27,7 @@ var report := {
 	"direct_debug_helper_methods_used": false,
 	"screen_click_only_gameplay_enforced": true,
 	"prohibited_game_control_button_labels": ["Play it straight", "Try something risky"],
-	"screenshot_capture": "manual_non_headless",
+	"screenshot_capture": "headless_state_snapshot",
 	"states": [],
 	"input_events": [],
 	"architecture_checks": {},
@@ -285,6 +285,10 @@ func _run() -> void:
 
 	if fixed_price_surface:
 		await _reset_fixed_price_surface_for_risky_action()
+	var strict_surface_only_before_dialogue := strict_game_surface_only_active
+	strict_game_surface_only_active = false
+	await _resolve_blocking_talk_dock()
+	strict_game_surface_only_active = strict_surface_only_before_dialogue
 	var post_legal_snapshot: Dictionary = app.call("current_game_view_snapshot")
 	var has_cheat_surface_action := int(post_legal_snapshot.get("cheat_action_count", 0)) > 0
 	var cheat_binding := _game_surface_action_binding("cheat")
@@ -867,21 +871,35 @@ func _verify_terminal_victory_summary_snapshot() -> void:
 	var screen_snapshot: Dictionary = app.call("current_screen_snapshot")
 	_require(str(screen_snapshot.get("screen", "")) == "VICTORY", "Victory summary visual QA did not reach the VICTORY screen.")
 	_require(not bool(screen_snapshot.get("has_game", true)), "Victory summary visual QA left a game surface active.")
-	var summary: Dictionary = app.call("current_victory_summary_snapshot")
-	_require(str(summary.get("route", "")) == RunState.GRAND_CASINO_HIGH_ROLLER_EVENT_ID, "Victory summary visual QA did not preserve the Players Card route.")
-	_require(str(summary.get("next_act_line", "")).find("Players Card opens quieter rooms") >= 0, "Victory summary visual QA did not expose the Players Card Act 2 hook.")
+	var summary: Dictionary = app.call("current_run_report_snapshot")
+	var outcome: Dictionary = summary.get("outcome", {})
+	_require(str(outcome.get("key", "")) == "players_card", "Run report visual QA did not preserve the Players Card route.")
+	_require(str(outcome.get("icon_key", "")) == "players_card", "Run report visual QA did not expose the Players Card icon.")
 	fixture_run.narrative_flags["demo_victory_route"] = RunState.GRAND_CASINO_SHOWDOWN_ROUTE
 	fixture_run.narrative_flags["demo_victory_message"] = RunState.GRAND_CASINO_SHOWDOWN_DEFAULT_SUCCESS_MESSAGE
 	app.call("_refresh")
 	await _settle()
-	summary = app.call("current_victory_summary_snapshot")
-	_require(str(summary.get("route", "")) == RunState.GRAND_CASINO_SHOWDOWN_ROUTE, "Victory summary visual QA did not preserve the showdown route.")
-	_require(str(summary.get("next_act_line", "")).find("house will remember your face") >= 0, "Victory summary visual QA did not expose the showdown Act 2 hook.")
-	_require(_is_control_visible("victory_summary_panel"), "Victory summary panel is not visible.")
+	summary = app.call("current_run_report_snapshot")
+	outcome = summary.get("outcome", {})
+	_require(str(outcome.get("key", "")) == "showdown_survived", "Run report visual QA did not preserve the showdown route.")
+	_require(str(outcome.get("icon_key", "")) == "showdown_survived", "Run report visual QA did not expose the showdown icon.")
+	_require(_is_control_visible("run_report_screen"), "Unified victory run report is not visible.")
 	_require(not _is_control_visible("game_surface_canvas"), "Game surface remained visible over the victory summary.")
 	_cover("demo_victory")
 	_cover("terminal_victory_summary")
-	_record_state("terminal_victory_summary_screen", "Demo victory terminal summary shows route, run totals, story context, and next-act messaging.")
+	_record_state("terminal_victory_summary_screen", "Unified victory report shows result, score, travel replay, money flow, items, heat, and debt on one screen.")
+	fixture_run.narrative_flags["demo_victory"] = false
+	fixture_run.run_status = RunState.RUN_STATUS_FAILED
+	fixture_run.run_failure_reason = RunState.FAILURE_BANKROLL_ZERO
+	fixture_run.run_failure_message = RunState.BANKROLL_ZERO_FAILURE_MESSAGE
+	app.set("run_report_model_key", "")
+	app.call("_refresh")
+	await _settle()
+	var failure_report: Dictionary = app.call("current_run_report_snapshot")
+	var failure_outcome: Dictionary = failure_report.get("outcome", {})
+	_require(str(failure_outcome.get("key", "")) == RunState.FAILURE_BANKROLL_ZERO, "Run report visual QA did not capture the bankroll-zero failure.")
+	_require(_is_control_visible("run_report_screen"), "Unified failure run report is not visible.")
+	_record_state("terminal_failure_report_screen", "Unified bankroll-zero report uses the same one-screen result, score, replay, story, items, heat, and debt layout.")
 
 
 func _prepare_event_visual_qa_fixture() -> void:
@@ -1696,7 +1714,7 @@ func _resolve_blocking_talk_dock(max_count: int = 8) -> void:
 			if str(data.get("kind", "")) != "button" or bool(data.get("disabled", false)):
 				continue
 			var label := str(data.get("text", ""))
-			if label.begins_with("Talk now:") or label.begins_with("Talk to "):
+			if label == "Hide" or label.begins_with("Talk now:") or label.begins_with("Talk to "):
 				continue
 			_emit_button(data)
 			clicked = true
@@ -2374,6 +2392,24 @@ func _assert_no_scroll_critical_path(context: String) -> void:
 	if run_control == null or not run_control.visible:
 		return
 	_require(_control_fits_viewport(run_control, "%s run screen" % context), "%s run screen is outside the visible viewport." % context)
+	var screen_snapshot: Dictionary = app.call("current_screen_snapshot")
+	if ["FAILURE", "VICTORY"].has(str(screen_snapshot.get("screen", ""))):
+		var report_screen := app.get("run_report_screen") as Control
+		_require(report_screen != null and report_screen.visible and report_screen.is_visible_in_tree(), "%s unified run report is not visible." % context)
+		_require(_control_fits_viewport(report_screen, "%s unified run report" % context), "%s unified run report is outside the viewport." % context)
+		var layout: Dictionary = report_screen.call("debug_layout_snapshot")
+		_require(not bool(layout.get("has_scroll_container", true)), "%s unified run report contains a ScrollContainer." % context)
+		var report_size: Vector2 = layout.get("size", Vector2.ZERO)
+		var section_rects: Dictionary = layout.get("section_rects", {})
+		for section_key in ["result", "score", "travel", "story", "items", "heat", "debt"]:
+			_require(section_rects.has(section_key), "%s unified run report is missing section: %s." % [context, section_key])
+			var section_rect: Rect2 = section_rects.get(section_key, Rect2())
+			_require(section_rect.position.x >= 0.0 and section_rect.position.y >= 0.0 and section_rect.end.x <= report_size.x + 0.5 and section_rect.end.y <= report_size.y + 0.5, "%s unified run report section is clipped: %s." % [context, section_key])
+		var button_rect: Rect2 = layout.get("button_rect", Rect2())
+		_require(button_rect.position.x >= 0.0 and button_rect.position.y >= 0.0 and button_rect.end.x <= report_size.x + 0.5 and button_rect.end.y <= report_size.y + 0.5, "%s unified run report actions are clipped." % context)
+		_require(serialized_before == _serialized_run_text(), "%s run-report layout verification mutated serialized RunState." % context)
+		_cover("r100_stab_no_scroll_critical_path")
+		return
 	for entry in [
 		{"name": "status_label", "label": "HUD status"},
 		{"name": "objective_label", "label": "objective HUD"},
@@ -2389,7 +2425,6 @@ func _assert_no_scroll_critical_path(context: String) -> void:
 	var game_surface_control := app.get("game_surface_canvas") as Control
 	if environment_control != null and environment_control.visible:
 		_assert_environment_canvas_contained(context)
-		var screen_snapshot: Dictionary = app.call("current_screen_snapshot")
 		if str(screen_snapshot.get("screen", "")) == "ENVIRONMENT":
 			_require(_has_visible_text(app, "double-click glowing props to act"), "%s room mode does not show visible object interaction guidance." % context)
 	if game_surface_control != null and game_surface_control.visible:

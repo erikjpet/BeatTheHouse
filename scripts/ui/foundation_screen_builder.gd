@@ -257,8 +257,7 @@ static func build_run_screen(host: Variant) -> void:
 	visual_stack.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	visual_stack.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	host.visual_panel_container.add_child(visual_stack)
-	host._build_victory_summary_panel(visual_stack)
-	host._build_failure_summary_panel(visual_stack)
+	host._build_run_report_screen(visual_stack)
 	host.environment_canvas = PixelSceneCanvasScript.new()
 	host.environment_canvas.clip_contents = true
 	host.environment_canvas.custom_minimum_size = host.ENVIRONMENT_CANVAS_MIN_SIZE

@@ -93,6 +93,8 @@ const RunInventoryScreenScript := preload("res://scripts/ui/run_inventory_screen
 const RunInventoryViewModelScript := preload("res://scripts/ui/run_inventory_view_model.gd")
 const MetaCollectionViewModelScript := preload("res://scripts/ui/meta_collection_view_model.gd")
 const RunJournalViewModelScript := preload("res://scripts/ui/run_journal_view_model.gd")
+const RunReportViewModelScript := preload("res://scripts/ui/run_report_view_model.gd")
+const RunReportScreenScript := preload("res://scripts/ui/run_report_screen.gd")
 const TerminalConsequenceViewModelScript := preload("res://scripts/ui/terminal_consequence_view_model.gd")
 const EnvironmentInteractionViewModelScript := preload("res://scripts/ui/environment_interaction_view_model.gd")
 const EnvironmentInteractionControllerScript := preload("res://scripts/ui/environment_interaction_controller.gd")
@@ -343,14 +345,9 @@ var summary_label: Label
 var environment_result_panel: PanelContainer
 var environment_result_title_label: Label
 var environment_result_body_label: Label
-var failure_summary_panel: PanelContainer
-var failure_summary_title_label: Label
-var failure_summary_body_label: Label
-var failure_summary_list: VBoxContainer
-var victory_summary_panel: PanelContainer
-var victory_summary_title_label: Label
-var victory_summary_body_label: Label
-var victory_summary_list: VBoxContainer
+var run_report_screen: RunReportScreen
+var run_report_model: Dictionary = {}
+var run_report_model_key := ""
 var status_label: Label
 var objective_label: Label
 var message_label: Label
@@ -502,6 +499,8 @@ func start_foundation_run(seed_text: String = DEFAULT_SEED, challenge_config: Di
 	pending_autosave_status_text = "Autosaved."
 	pending_autosave_after_frame = -1
 	last_environment_runtime_result = {}
+	run_report_model = {}
+	run_report_model_key = ""
 	run_item_icon_texture_cache.clear()
 	close_content_group_config()
 	close_challenge_selection()
@@ -978,7 +977,7 @@ func _advance_environment_game_runtime() -> void:
 		if not game.environment_runtime_needs_tick(run_state, run_state.current_environment, now_msec):
 			continue
 		var runtime_wager_cost := maxi(0, game.wager_cost_for_context("spin", 0, run_state, run_state.current_environment, {}))
-		if _wager_needs_final_bankroll_confirmation(runtime_wager_cost):
+		if _wager_needs_final_bankroll_confirmation(game, "spin", 0, runtime_wager_cost, {}):
 			_pause_environment_runtime_for_wager_confirmation(game, game_id)
 			_show_wager_confirmation_popup("spin", runtime_wager_cost, runtime_wager_cost, true, false, game_id)
 			_show_message("%s autoplay needs your approval before risking your last cash." % game.get_display_name())
@@ -1050,8 +1049,7 @@ func _refresh_runtime_environment_views() -> void:
 		save_status_label.text = _save_status_text()
 	_style_hud_for_recent_consequence()
 	_refresh_environment_result_feedback()
-	_render_victory_summary()
-	_render_failure_summary()
+	_render_run_report()
 	_render_result_panel()
 	_render_foundation_snapshots()
 
@@ -3142,6 +3140,8 @@ func _write_foundation_run_save(status_text: String = "Autosaved.") -> bool:
 		pending_autosave_status_text = "Autosaved."
 		pending_autosave_after_frame = -1
 		save_status_message = status_text
+		if save_status_label != null:
+			save_status_label.text = _save_status_text()
 		_refresh_start_screen()
 		return true
 	save_status_message = "Autosave failed."
@@ -4932,94 +4932,15 @@ func _attribute_glyph_legend_panel() -> Control:
 	return panel
 
 
-func _build_failure_summary_panel(parent: BoxContainer) -> void:
-	failure_summary_panel = _panel_container(Color("#12050d", 0.98), VisualStyle.PINK_2)
-	failure_summary_panel.visible = false
-	failure_summary_panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	failure_summary_panel.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	parent.add_child(failure_summary_panel)
-
-	var stack := VBoxContainer.new()
-	stack.add_theme_constant_override("separation", 8)
-	stack.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	stack.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	failure_summary_panel.add_child(stack)
-
-	failure_summary_title_label = _label("Run Failed", 26)
-	_set_control_font_color(failure_summary_title_label, VisualStyle.PINK)
-	stack.add_child(failure_summary_title_label)
-
-	failure_summary_body_label = _label("", 14)
-	_set_control_font_color(failure_summary_body_label, VisualStyle.SOFT)
-	failure_summary_body_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	stack.add_child(failure_summary_body_label)
-
-	var scroll := ScrollContainer.new()
-	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
-	scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_AUTO
-	scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	stack.add_child(scroll)
-
-	failure_summary_list = VBoxContainer.new()
-	failure_summary_list.add_theme_constant_override("separation", 7)
-	failure_summary_list.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	scroll.add_child(failure_summary_list)
-
-	var button_row := HBoxContainer.new()
-	button_row.add_theme_constant_override("separation", 10)
-	stack.add_child(button_row)
-	var menu_button := _button("Main Menu", Callable(self, "return_to_main_menu"))
-	menu_button.custom_minimum_size = Vector2(160, MIN_NATIVE_TOUCH_TARGET_HEIGHT)
-	button_row.add_child(menu_button)
-	var fresh_button := _button("New Run", Callable(self, "start_generated_foundation_run"))
-	fresh_button.custom_minimum_size = Vector2(160, MIN_NATIVE_TOUCH_TARGET_HEIGHT)
-	button_row.add_child(fresh_button)
-
-
-func _build_victory_summary_panel(parent: BoxContainer) -> void:
-	victory_summary_panel = _panel_container(Color("#061410", 0.98), VisualStyle.TEAL)
-	victory_summary_panel.visible = false
-	victory_summary_panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	victory_summary_panel.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	parent.add_child(victory_summary_panel)
-
-	var stack := VBoxContainer.new()
-	stack.add_theme_constant_override("separation", 8)
-	stack.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	stack.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	victory_summary_panel.add_child(stack)
-
-	victory_summary_title_label = _label("Demo Victory", 26)
-	_set_control_font_color(victory_summary_title_label, VisualStyle.TEAL)
-	stack.add_child(victory_summary_title_label)
-
-	victory_summary_body_label = _label("", 14)
-	_set_control_font_color(victory_summary_body_label, VisualStyle.SOFT)
-	victory_summary_body_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	stack.add_child(victory_summary_body_label)
-
-	var scroll := ScrollContainer.new()
-	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
-	scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_AUTO
-	scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	stack.add_child(scroll)
-
-	victory_summary_list = VBoxContainer.new()
-	victory_summary_list.add_theme_constant_override("separation", 7)
-	victory_summary_list.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	scroll.add_child(victory_summary_list)
-
-	var button_row := HBoxContainer.new()
-	button_row.add_theme_constant_override("separation", 10)
-	stack.add_child(button_row)
-	var menu_button := _button("Main Menu", Callable(self, "return_to_main_menu"))
-	menu_button.custom_minimum_size = Vector2(160, MIN_NATIVE_TOUCH_TARGET_HEIGHT)
-	button_row.add_child(menu_button)
-	var fresh_button := _button("New Run", Callable(self, "start_generated_foundation_run"))
-	fresh_button.custom_minimum_size = Vector2(160, MIN_NATIVE_TOUCH_TARGET_HEIGHT)
-	button_row.add_child(fresh_button)
+func _build_run_report_screen(parent: BoxContainer) -> void:
+	run_report_screen = RunReportScreenScript.new()
+	run_report_screen.visible = false
+	run_report_screen.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	run_report_screen.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	run_report_screen.new_run_requested.connect(start_generated_foundation_run)
+	run_report_screen.home_requested.connect(_on_run_report_home_requested)
+	run_report_screen.copy_seed_requested.connect(_on_run_report_copy_seed_requested)
+	parent.add_child(run_report_screen)
 
 
 func _refresh() -> void:
@@ -5069,8 +4990,7 @@ func _render_environment_screen() -> void:
 	_refresh_active_item_slot()
 	_apply_focus_layout()
 	_refresh_environment_result_feedback()
-	_render_victory_summary()
-	_render_failure_summary()
+	_render_run_report()
 	_render_result_panel()
 	_render_foundation_snapshots()
 	_refresh_talk_dock()
@@ -5085,9 +5005,9 @@ func _refresh_world_header(selected_world_object_override: Dictionary = {}) -> v
 	var environment := run_state.current_environment
 	var game_focus_mode := _is_game_focus_mode()
 	if _is_victory_screen():
-		var victory_snapshot := _victory_summary_snapshot()
-		title_label.text = str(victory_snapshot.get("title", "Demo Victory"))
-		summary_label.text = str(victory_snapshot.get("message", "The run is complete."))
+		var outcome := _run_report_outcome_snapshot()
+		title_label.text = str(outcome.get("title", "Demo Victory"))
+		summary_label.text = str(outcome.get("how", "The run is complete."))
 		summary_label.max_lines_visible = 2
 		return
 	if _is_failure_screen():
@@ -5447,12 +5367,9 @@ func _apply_focus_layout() -> void:
 		game_surface_canvas.visible = game_mode and not failure_mode and not victory_mode
 		game_surface_canvas.custom_minimum_size = GAME_SURFACE_FOCUSED_MIN_SIZE if game_mode else GAME_SURFACE_PREVIEW_MIN_SIZE
 		game_surface_canvas.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	if failure_summary_panel != null:
-		failure_summary_panel.visible = failure_mode
-		failure_summary_panel.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	if victory_summary_panel != null:
-		victory_summary_panel.visible = victory_mode
-		victory_summary_panel.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	if run_report_screen != null:
+		run_report_screen.visible = failure_mode or victory_mode
+		run_report_screen.size_flags_vertical = Control.SIZE_EXPAND_FILL
 
 
 func _apply_run_screen_layout() -> void:
@@ -5460,15 +5377,19 @@ func _apply_run_screen_layout() -> void:
 		return
 	var screen_size := run_screen.size
 	if screen_size.x <= 0.0 or screen_size.y <= 0.0:
+		if not is_inside_tree():
+			return
 		screen_size = get_viewport_rect().size
 	if screen_size.x <= 0.0 or screen_size.y <= 0.0:
 		return
 	if not run_layout_dirty and run_layout_last_screen_size == screen_size:
 		return
+	var terminal_report := _is_failure_screen() or _is_victory_screen()
+	run_hud_panel.visible = not terminal_report
 	var proportional_info_height: float = floor(screen_size.y * RUN_INFO_BAND_RATIO)
 	var hud_content_height: float = ceil(run_hud_panel.get_combined_minimum_size().y)
 	var max_info_height: float = floor(screen_size.y * 0.35)
-	var info_height := minf(maxf(maxf(RUN_INFO_MIN_HEIGHT, proportional_info_height), hud_content_height), max_info_height)
+	var info_height := 0.0 if terminal_report else minf(maxf(maxf(RUN_INFO_MIN_HEIGHT, proportional_info_height), hud_content_height), max_info_height)
 	run_hud_panel.set_anchors_preset(Control.PRESET_FULL_RECT)
 	run_hud_panel.offset_left = 0.0
 	run_hud_panel.offset_top = 0.0
@@ -5495,248 +5416,27 @@ func _invalidate_run_screen_layout() -> void:
 	run_layout_dirty = true
 
 
-func _render_failure_summary() -> void:
-	if failure_summary_panel == null:
+func _render_run_report() -> void:
+	if run_report_screen == null:
 		return
-	if not _is_failure_screen():
-		failure_summary_panel.visible = false
-		if failure_summary_list != null and failure_summary_list.get_child_count() > 0:
-			_clear(failure_summary_list)
+	var terminal := _is_failure_screen() or _is_victory_screen()
+	run_report_screen.visible = terminal
+	if not terminal or run_state == null:
 		return
-	failure_summary_panel.visible = true
-	var snapshot := _failure_summary_snapshot()
-	if failure_summary_title_label != null:
-		failure_summary_title_label.text = str(snapshot.get("title", "Run Failed"))
-	if failure_summary_body_label != null:
-		failure_summary_body_label.text = str(snapshot.get("message", "The run is over."))
-	if failure_summary_list == null:
+	var key := "%s|%s|%s|%s|%d|%d|%d|%d" % [run_state.seed_text, run_state.run_status, run_state.run_failure_reason, str(run_state.narrative_flags.get("demo_victory_route", "")), run_state.story_log_entry_count(), run_state.heat_history.size(), run_state.rng_state, run_state.bankroll]
+	if key == run_report_model_key:
 		return
-	_clear(failure_summary_list)
-	_add_failure_summary_section("Failure", [
-		"Reason: %s" % str(snapshot.get("reason_label", "Run failed")),
-		"Status: %s" % str(snapshot.get("run_status", "")),
-		"Seed: %s" % str(snapshot.get("seed", "")),
-	])
-	_add_failure_summary_section("Money And Heat", [
-		"Bankroll: %d" % int(snapshot.get("bankroll", 0)),
-		"Economy: %s" % str(snapshot.get("economy", "")),
-		"Heat: %d / 100, %s" % [int(snapshot.get("heat", 0)), str(snapshot.get("heat_label", ""))],
-	])
-	_add_failure_summary_section("Score", _copy_array(snapshot.get("score_lines", [])))
-	_add_failure_summary_section("Alcohol And Luck", _copy_array(snapshot.get("alcohol_lines", [])))
-	_add_failure_summary_section("Where It Ended", [
-		"Current room: %s" % str(snapshot.get("current_environment", "")),
-		"Room type: %s" % str(snapshot.get("environment_kind", "")),
-		"Visited: %s" % str(snapshot.get("visited_summary", "")),
-	])
-	_add_failure_summary_section("Travel", _copy_array(snapshot.get("travel_lines", [])))
-	_add_failure_summary_section("Items", _copy_array(snapshot.get("item_lines", [])))
-	_add_failure_summary_section("Collections", _copy_array(snapshot.get("bag_lines", [])))
-	_add_failure_summary_section("Debt", _copy_array(snapshot.get("debt_lines", [])))
-	_add_failure_summary_section("Recent Result", _copy_array(snapshot.get("recent_result_lines", [])))
-	_add_failure_summary_section("Story", _copy_array(snapshot.get("story_lines", [])))
-
-
-func _render_victory_summary() -> void:
-	if victory_summary_panel == null:
-		return
-	if not _is_victory_screen():
-		victory_summary_panel.visible = false
-		if victory_summary_list != null and victory_summary_list.get_child_count() > 0:
-			_clear(victory_summary_list)
-		return
-	victory_summary_panel.visible = true
-	var snapshot := _victory_summary_snapshot()
-	if victory_summary_title_label != null:
-		victory_summary_title_label.text = str(snapshot.get("title", "Demo Victory"))
-	if victory_summary_body_label != null:
-		victory_summary_body_label.text = str(snapshot.get("message", "The run is complete."))
-	if victory_summary_list == null:
-		return
-	_clear(victory_summary_list)
-	_add_victory_summary_section("Victory", [
-		"Route: %s" % str(snapshot.get("route_label", snapshot.get("route", ""))),
-		"Status: %s" % str(snapshot.get("run_status", "")),
-		"Seed: %s" % str(snapshot.get("seed", "")),
-		str(snapshot.get("next_act_line", "")),
-	])
-	_add_victory_summary_section("Final Money And Heat", [
-		"Bankroll: %d" % int(snapshot.get("bankroll", 0)),
-		"Economy: %s" % str(snapshot.get("economy", "")),
-		"Heat: %d / 100, %s" % [int(snapshot.get("heat", 0)), str(snapshot.get("heat_label", ""))],
-	])
-	_add_victory_summary_section("Score", _copy_array(snapshot.get("score_lines", [])))
-	_add_victory_summary_section("Alcohol And Luck", _copy_array(snapshot.get("alcohol_lines", [])))
-	_add_victory_summary_section("Venues", [
-		"Current room: %s" % str(snapshot.get("current_environment", "")),
-		"Room type: %s" % str(snapshot.get("environment_kind", "")),
-		"Visited: %s" % str(snapshot.get("visited_summary", "")),
-	])
-	_add_victory_summary_section("Items", _copy_array(snapshot.get("item_lines", [])))
-	_add_victory_summary_section("Collections", _copy_array(snapshot.get("bag_lines", [])))
-	_add_victory_collection_bag_choice_section()
-	_add_victory_container_choice_section()
-	_add_victory_summary_section("Debt", _copy_array(snapshot.get("debt_lines", [])))
-	_add_victory_summary_section("Story", _copy_array(snapshot.get("story_lines", [])))
-
-
-func _add_victory_summary_section(title: String, lines: Array) -> void:
-	_add_terminal_summary_section(victory_summary_list, title, lines, VisualStyle.TEAL)
-
-
-func _add_failure_summary_section(title: String, lines: Array) -> void:
-	_add_terminal_summary_section(failure_summary_list, title, lines, VisualStyle.PINK if title == "Failure" else VisualStyle.CYAN)
-
-
-func _add_terminal_summary_section(target_list: VBoxContainer, title: String, lines: Array, accent: Color) -> void:
-	if target_list == null:
-		return
-	var clean_lines: Array[String] = []
-	for line in lines:
-		var text := _player_facing_text(str(line)).strip_edges()
-		if not text.is_empty():
-			clean_lines.append(text)
-	if clean_lines.is_empty():
-		return
-	var panel := _panel_container(VisualStyle.DARK_3, accent)
-	panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	target_list.add_child(panel)
-	var stack := VBoxContainer.new()
-	stack.add_theme_constant_override("separation", 3)
-	stack.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	panel.add_child(stack)
-	var title_label := _section(title)
-	_set_control_font_color(title_label, accent)
-	stack.add_child(title_label)
-	for line in clean_lines:
-		var label := _label(line, 12)
-		label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-		stack.add_child(label)
-
-
-func _add_victory_collection_bag_choice_section() -> void:
-	if victory_summary_list == null or run_state == null or run_state.run_status != RunState.RUN_STATUS_ENDED:
-		return
-	if bool(run_state.narrative_flags.get(CollectionDropServiceScript.FLUSHED_FLAG, false)):
-		return
-	var markers := run_state.pending_bag_markers()
-	if markers.is_empty():
-		return
-	var panel := _terminal_choice_panel("Bring Home One Collection Bag", "Choose one earned bag. Unchosen bags stay with the run.", VisualStyle.TEAL)
-	victory_summary_list.add_child(panel)
-	var stack := panel.get_child(0) as VBoxContainer
-	for marker_value in markers:
-		var marker := _copy_dict(marker_value)
-		var title := str(marker.get("display_name", "Collection Bag"))
-		var subtitle := "%s, %s" % [
-			str(marker.get("collection_display_name", marker.get("collection_id", "Collection"))),
-			str(marker.get("tier_label", marker.get("tier", "Tiered"))).capitalize(),
-		]
-		_add_terminal_choice_row(
-			stack,
-			title,
-			subtitle,
-			"",
-			str(marker.get("icon_key", "b" + "ag")),
-			"Bring Home",
-			Callable(self, "claim_victory_collection_bag").bind(str(marker.get("marker_id", "")))
-		)
-
-
-func _add_victory_container_choice_section() -> void:
-	if victory_summary_list == null or run_state == null or run_state.run_status != RunState.RUN_STATUS_ENDED:
-		return
-	if bool(run_state.narrative_flags.get("victory_container_extracted", false)):
-		return
-	var choices := _victory_container_item_choices()
-	if choices.is_empty():
-		return
-	var panel := _terminal_choice_panel("Bring Home One Container", "Choose one bag, backpack, suitcase, or trunk held at victory.", VisualStyle.AMBER)
-	victory_summary_list.add_child(panel)
-	var stack := panel.get_child(0) as VBoxContainer
-	for choice_value in choices:
-		var choice := _copy_dict(choice_value)
-		_add_terminal_choice_row(
-			stack,
-			str(choice.get("display_name", "Container")),
-			"Stores %d items." % int(choice.get("capacity", 0)),
-			str(choice.get("asset_path", "")),
-			str(choice.get("icon_key", "b" + "ag")),
-			"Bring Home",
-			Callable(self, "claim_victory_container_item").bind(str(choice.get("id", "")))
-		)
-
-
-func _terminal_choice_panel(title: String, subtitle: String, accent: Color) -> PanelContainer:
-	var panel := _panel_container(VisualStyle.DARK_3, accent)
-	panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	var stack := VBoxContainer.new()
-	stack.add_theme_constant_override("separation", 6)
-	stack.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	panel.add_child(stack)
-	var title_label := _section(title)
-	_set_control_font_color(title_label, accent)
-	stack.add_child(title_label)
-	var subtitle_label := _label(subtitle, 12)
-	subtitle_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	stack.add_child(subtitle_label)
-	return panel
-
-
-func _add_terminal_choice_row(stack: VBoxContainer, title: String, subtitle: String, asset_path: String, fallback_icon: String, button_text: String, callback: Callable) -> void:
-	var row := HBoxContainer.new()
-	row.add_theme_constant_override("separation", 8)
-	row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	stack.add_child(row)
-	var texture := _run_item_texture_for_asset_path(asset_path)
-	if texture != null:
-		var icon := TextureRect.new()
-		icon.texture = texture
-		icon.custom_minimum_size = Vector2(52, 52)
-		icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-		icon.tooltip_text = title
-		row.add_child(icon)
-	else:
-		var icon_panel := _panel(VisualStyle.DARK_2, VisualStyle.CYAN_2)
-		icon_panel.custom_minimum_size = Vector2(52, 52)
-		icon_panel.tooltip_text = title
-		row.add_child(icon_panel)
-		var icon_label := _label(_terminal_choice_icon_text(fallback_icon), 12)
-		icon_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-		icon_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-		icon_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		icon_label.size_flags_vertical = Control.SIZE_EXPAND_FILL
-		icon_panel.add_child(icon_label)
-	var text_stack := VBoxContainer.new()
-	text_stack.add_theme_constant_override("separation", 1)
-	text_stack.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	row.add_child(text_stack)
-	var title_label := _label(title, 13)
-	title_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	text_stack.add_child(title_label)
-	var subtitle_label := _label(subtitle, 11)
-	subtitle_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	_set_control_font_color(subtitle_label, VisualStyle.SOFT)
-	text_stack.add_child(subtitle_label)
-	var button := _button(button_text, callback)
-	button.custom_minimum_size = Vector2(112, FoundationWidgetsScript.MIN_NATIVE_TOUCH_TARGET_HEIGHT)
-	row.add_child(button)
-
-
-func _terminal_choice_icon_text(icon_key: String) -> String:
-	var clean := icon_key.strip_edges()
-	if clean.is_empty():
-		return "BAG"
-	var parts := clean.split("_", false)
-	var letters := ""
-	for part in parts:
-		var text := str(part)
-		if text.is_empty():
-			continue
-		letters += text.substr(0, 1).to_upper()
-		if letters.length() >= 3:
-			break
-	return letters if not letters.is_empty() else clean.substr(0, mini(3, clean.length())).to_upper()
+	run_report_model_key = key
+	var run_data := run_state.to_dict()
+	run_data["terminal_score"] = run_state.terminal_score_summary()
+	run_report_model = RunReportViewModelScript.build(run_data, {
+		"outcomes": RunReportViewModelScript.load_outcome_registry(),
+		"items": RunReportViewModelScript.catalog_by_id(library.items if library != null else []),
+		"games": RunReportViewModelScript.catalog_by_id(library.games if library != null else []),
+	})
+	run_report_screen.set_reduce_motion(_reduce_motion_enabled())
+	run_report_screen.set_small_screen_mode(_small_screen_enabled())
+	run_report_screen.set_report(run_report_model)
 
 
 func _screen_for_action_category(category_id: String) -> String:
@@ -6326,11 +6026,11 @@ func _resolve_game_action(action_id: String, skip_stake_validation: bool = false
 		_refresh_stake_input()
 		return
 	var wager_cost := _wager_cost_for_action(action_id, stake)
-	if not wager_confirmed and _wager_needs_final_bankroll_confirmation(wager_cost):
+	if not wager_confirmed and _wager_needs_final_bankroll_confirmation(current_game, action_id, stake, wager_cost, _current_game_surface_ui_state()):
 		_pause_repeating_surface_action_for_wager_confirmation()
 		_show_wager_confirmation_popup(action_id, stake, wager_cost, skip_stake_validation, preserve_surface_ui_state)
 		return
-	var confirmed_all_in_wager := wager_confirmed and _wager_needs_final_bankroll_confirmation(wager_cost)
+	var confirmed_all_in_wager := wager_confirmed and _wager_needs_final_bankroll_confirmation(current_game, action_id, stake, wager_cost, _current_game_surface_ui_state())
 	if confirmed_all_in_wager:
 		run_state.begin_deferred_bankroll_zero_resolution()
 	var bankroll_before_result := run_state.bankroll
@@ -6428,10 +6128,18 @@ func _wager_cost_for_action(action_id: String, stake: int) -> int:
 	return maxi(0, current_game.wager_cost_for_context(action_id, stake, run_state, run_state.current_environment, _current_game_surface_ui_state()))
 
 
-func _wager_needs_final_bankroll_confirmation(wager_cost: int) -> bool:
-	if run_state == null or wager_cost <= 0:
+func _wager_needs_final_bankroll_confirmation(game: GameModule, action_id: String, stake: int, wager_cost: int, ui_state: Dictionary = {}) -> bool:
+	if run_state == null or game == null or wager_cost <= 0:
 		return false
-	return run_state.bankroll > 0 and run_state.bankroll - wager_cost <= 0
+	var guaranteed_return := maxi(0, game.minimum_wager_return_for_context(
+		action_id,
+		stake,
+		wager_cost,
+		run_state,
+		run_state.current_environment,
+		ui_state
+	))
+	return run_state.bankroll > 0 and run_state.bankroll - wager_cost + guaranteed_return <= 0
 
 
 func _pause_environment_runtime_for_wager_confirmation(game: GameModule, _game_id: String) -> void:
@@ -6451,7 +6159,7 @@ func _resolve_environment_runtime_wager_action(game_id: String, action_id: Strin
 		_refresh()
 		return
 	var wager_cost := maxi(0, game.wager_cost_for_context(action_id, 0, run_state, run_state.current_environment, {}))
-	var confirmed_all_in_wager := wager_confirmed and _wager_needs_final_bankroll_confirmation(wager_cost)
+	var confirmed_all_in_wager := wager_confirmed and _wager_needs_final_bankroll_confirmation(game, action_id, 0, wager_cost, {})
 	if confirmed_all_in_wager:
 		run_state.begin_deferred_bankroll_zero_resolution()
 	var rng := run_state.create_rng()
@@ -6881,16 +6589,11 @@ func current_consequence_view_snapshot() -> Dictionary:
 	return _consequence_view_snapshot()
 
 
-func current_failure_summary_snapshot() -> Dictionary:
+func current_run_report_snapshot() -> Dictionary:
 	if run_state == null:
 		return {}
-	return _failure_summary_snapshot()
-
-
-func current_victory_summary_snapshot() -> Dictionary:
-	if run_state == null:
-		return {}
-	return _victory_summary_snapshot()
+	_render_run_report()
+	return run_report_model
 
 
 func current_action_category_snapshot() -> Dictionary:
@@ -6916,8 +6619,7 @@ func current_screen_snapshot() -> Dictionary:
 		"talk_dock": current_talk_dock_snapshot(),
 		"item_found_popup": current_item_found_popup_snapshot(),
 		"overlay_state": current_overlay_state_snapshot(),
-		"failure_summary": _failure_summary_snapshot() if run_state != null and run_state.run_status == RunState.RUN_STATUS_FAILED else {},
-		"victory_summary": _victory_summary_snapshot() if run_state != null and run_state.run_status == RunState.RUN_STATUS_ENDED else {},
+		"run_report": current_run_report_snapshot() if run_state != null and run_state.is_terminal() else {},
 		"travel_transition_active": travel_transition_active,
 		"travel_transition_target_id": travel_transition_target_id,
 		"travel_transition_target_label": travel_transition_target_label,
@@ -7944,63 +7646,11 @@ func _add_consequence_card(card: Dictionary) -> void:
 			break
 
 
-func _terminal_bag_summary_lines() -> Array:
-	if run_state == null:
-		return []
-	var lines := _copy_array(run_state.narrative_flags.get(CollectionDropServiceScript.GRANTS_FLAG, []))
-	if not lines.is_empty():
-		return lines
-	var markers := run_state.pending_bag_markers()
-	if markers.is_empty():
-		return []
-	if collection_drop_service == null:
-		collection_drop_service = CollectionDropServiceScript.new()
-	return collection_drop_service.summary_lines_for_markers(markers)
-
-
-func _failure_summary_snapshot() -> Dictionary:
+func _run_report_outcome_snapshot() -> Dictionary:
 	if run_state == null:
 		return {}
-	var pressure := _run_pressure_view()
-	var recent_result := _recent_result_snapshot()
-	var recent_message := _outcome_message(recent_result)
-	if recent_message.is_empty() and message_label != null:
-		recent_message = _player_facing_text(message_label.text)
-	var message := run_state.run_failure_message
-	if message.strip_edges().is_empty():
-		message = str(pressure.get("summary", "The run is over."))
-	return TerminalConsequenceViewModelScript.failure_summary(run_state, {
-		"pressure": pressure,
-		"recent_result": recent_result,
-		"recent_message": recent_message,
-		"player_facing_message": _player_facing_text(message),
-		"inventory_items": _inventory_view_list(),
-		"debt_items": _debt_view_list(),
-		"travel_choices": _travel_choice_view_list(),
-		"story_lines": _story_message_view_list(),
-		"visited_places": TerminalConsequenceViewModelScript.visited_environment_summary_lines(run_state),
-		"bag_lines": _terminal_bag_summary_lines(),
-		"flag_lines": _flag_view_list(),
-		"economy": _economy_cue_text(),
-		"label_from_id": Callable(self, "_label_from_id"),
-	})
-func _victory_summary_snapshot() -> Dictionary:
-	if run_state == null:
-		return {}
-	var pressure := _run_pressure_view()
-	var message := run_state.current_demo_victory_message() if bool(run_state.narrative_flags.get("demo_victory", false)) else str(pressure.get("summary", "You beat the house for now."))
-	return TerminalConsequenceViewModelScript.victory_summary(run_state, {
-		"pressure": pressure,
-		"player_facing_message": _player_facing_text(message),
-		"inventory_items": _inventory_view_list(),
-		"debt_items": _debt_view_list(),
-		"story_lines": _story_message_view_list(),
-		"visited_places": TerminalConsequenceViewModelScript.visited_environment_summary_lines(run_state),
-		"bag_lines": _terminal_bag_summary_lines(),
-		"flag_lines": _flag_view_list(),
-		"economy": _economy_cue_text(),
-		"label_from_id": Callable(self, "_label_from_id"),
-	})
+	_render_run_report()
+	return _copy_dict(run_report_model.get("outcome", {}))
 func _victory_container_item_choices() -> Array:
 	var result: Array = []
 	if run_state == null or library == null:
@@ -8542,6 +8192,19 @@ func start_generated_foundation_run() -> void:
 	if seed_input != null:
 		seed_input.text = seed_text
 	start_foundation_run(seed_text, _new_run_challenge_for_seed(seed_text))
+
+
+func _on_run_report_home_requested() -> void:
+	return_to_main_menu()
+	open_collection_browser()
+
+
+func _on_run_report_copy_seed_requested(seed: String) -> void:
+	if seed.strip_edges().is_empty() or seed == "Hidden daily challenge":
+		_show_message("This run's seed is hidden.")
+		return
+	DisplayServer.clipboard_set(seed)
+	_show_message("Seed copied.")
 
 
 func _challenge_with_meta_home_for_run(seed_text: String, config: Dictionary) -> Dictionary:
@@ -9902,7 +9565,7 @@ func _route_ended_run_if_needed(terminal_result: Dictionary = {}) -> bool:
 	_record_challenge_completion_if_needed()
 	var message := str(terminal_result.get("message", "")).strip_edges()
 	if message.is_empty():
-		message = str(_victory_summary_snapshot().get("message", "The run is complete."))
+		message = str(_run_report_outcome_snapshot().get("how", "The run is complete."))
 	_show_message(message)
 	return true
 
@@ -9952,7 +9615,7 @@ func claim_victory_collection_bag(marker_id: String) -> void:
 		if save_error == OK and not _copy_array(result.get("summary_lines", [])).is_empty():
 			save_status_message = "Collection bag stored."
 	_show_message(str(result.get("message", "Collection choice updated.")))
-	_render_victory_summary()
+	_render_run_report()
 
 
 func claim_victory_container_item(item_id: String) -> void:
@@ -9986,7 +9649,7 @@ func claim_victory_container_item(item_id: String) -> void:
 	if save_error == OK:
 		save_status_message = "Container stored at home."
 	_show_message("Brought home %s." % display_name)
-	_render_victory_summary()
+	_render_run_report()
 
 
 func _record_profile_run_result_once(terminal_result: Dictionary = {}) -> void:
@@ -10738,7 +10401,7 @@ func _run_journal_callbacks() -> Dictionary:
 		"story_entry_label": Callable(self, "_story_entry_label"),
 		"player_facing_text": Callable(self, "_player_facing_text"),
 		"game_display_name": Callable(self, "_game_display_name"),
-		"failure_summary_snapshot": Callable(self, "_failure_summary_snapshot"),
+		"failure_summary_snapshot": Callable(self, "_run_report_outcome_snapshot"),
 	}
 
 
@@ -11474,6 +11137,9 @@ func _apply_accessibility_settings() -> void:
 		game_surface_canvas.set_small_screen_mode(small_screen_enabled)
 	if run_inventory_screen != null:
 		run_inventory_screen.set_small_screen_mode(small_screen_enabled)
+	if run_report_screen != null:
+		run_report_screen.set_reduce_motion(bool(user_settings.reduce_motion) if user_settings != null else false)
+		run_report_screen.set_small_screen_mode(small_screen_enabled)
 	_ensure_world_map_overlay_controller()
 	world_map_overlay_controller.set_small_screen_mode(small_screen_enabled)
 	_apply_accessibility_to_node(self, _accessibility_font_scale(), _accessibility_control_scale())

@@ -22,9 +22,72 @@ const AttributeBadgesScript := preload("res://scripts/core/attribute_badges.gd")
 const EventModuleScript := preload("res://scripts/core/event_module.gd")
 const UserSettingsScript := preload("res://scripts/core/user_settings.gd")
 const SmallScreenPolicyScript := preload("res://scripts/ui/small_screen_policy.gd")
+const RunReportScreenScript := preload("res://scripts/ui/run_report_screen.gd")
+const RunReportViewModelScript := preload("res://scripts/ui/run_report_view_model.gd")
 const MetaCollectionServiceScript := preload("res://scripts/core/meta_collection_service.gd")
 const TEST_SETTINGS_PATH := "user://settings_ui_scene_compile_check.json"
 const TEST_META_COLLECTION_PATH := "user://ui_scene_compile_meta_collection.json"
+
+
+func _check_run_report_screen_component() -> bool:
+	var screen: RunReportScreen = RunReportScreenScript.new()
+	screen.size = Vector2(1280, 720)
+	root.add_child(screen)
+	await process_frame
+	var timeline := RunReportViewModelScript.build_timeline([
+		{"action_index": 0, "heat_value": 4, "environment_id": "bar", "environment_name": "Bar", "world_node_id": "bar", "transition": true},
+		{"action_index": 4, "heat_value": 72, "environment_id": "casino", "environment_name": "Casino", "world_node_id": "casino", "transition": true},
+		{"action_index": 8, "heat_value": 18, "environment_id": "casino", "environment_name": "Casino", "world_node_id": "casino", "transition": false},
+	], {"current_node_id": "casino", "visited_path": ["bar", "casino"], "nodes": [{"id": "bar", "display_name": "Bar", "icon_path": "res://assets/art/map_icons/bar.png", "state": "visited", "position": {"x": 0.2, "y": 0.4}}, {"id": "casino", "display_name": "Casino", "icon_path": "res://assets/art/map_icons/grand_casino.png", "state": "visited", "position": {"x": 0.8, "y": 0.5}}], "edges": [{"a": "bar", "b": "casino", "distance": "near"}]}, 8)
+	screen.set_report({
+		"outcome": {"title": "Players Card earned", "how": "You cashed out clean.", "where": "Casino · Day 1, 20:00", "won": true},
+		"score": {"money_put_to_work": 40, "winner_bonus": 3, "show_winner_bonus": true, "final_score": 120},
+		"items": {"kept": [{"label": "Coffee", "count": 2, "fate": "kept", "icon_path": ""}], "pawned": [{"label": "Card", "fate": "forfeited", "icon_path": ""}], "sold": [{"label": "Watch", "count": 1, "price": 9, "icon_path": ""}]},
+		"debts": [{"lender": "Sal", "amount": 20, "outcome": "redeemed", "tone": "settled"}],
+		"money_rows": [{"label": "Slots", "net": 100}, {"label": "Bar Dice", "net": -50}],
+		"timeline": timeline,
+		"map_snapshot": {"current_node_id": "casino", "visited_path": ["bar", "casino"], "nodes": [{"id": "bar", "display_name": "Bar", "icon_path": "res://assets/art/map_icons/bar.png", "state": "visited", "position": {"x": 0.2, "y": 0.4}}, {"id": "casino", "display_name": "Casino", "icon_path": "res://assets/art/map_icons/grand_casino.png", "state": "visited", "position": {"x": 0.8, "y": 0.5}}], "edges": [{"a": "bar", "b": "casino", "distance": "near"}]},
+		"seed": "REPORT-UI",
+	})
+	await process_frame
+	var snapshot: Dictionary = screen.debug_layout_snapshot()
+	if bool(snapshot.get("has_scroll_container", true)):
+		push_error("Run report component contains a ScrollContainer.")
+		return false
+	var bounds := Rect2(Vector2.ZERO, screen.size)
+	for rect_value in (snapshot.get("section_rects", {}) as Dictionary).values():
+		var rect: Rect2 = rect_value
+		if not bounds.encloses(rect) or rect.size.x <= 0.0 or rect.size.y <= 0.0:
+			push_error("Run report section is clipped outside the 1280x720 design surface: %s." % str(rect))
+			return false
+	if int(snapshot.get("timeline_install_count", 0)) != 1:
+		push_error("Run report did not precompute/install its shared timeline exactly once.")
+		return false
+	await process_frame
+	if int(screen.debug_layout_snapshot().get("timeline_install_count", 0)) != 1:
+		push_error("Run report rebuilt timeline keyframes during an idle frame.")
+		return false
+	screen.set_small_screen_mode(true)
+	await process_frame
+	var small_snapshot := screen.debug_layout_snapshot()
+	if not bool(small_snapshot.get("small_screen_mode", false)) or bool(small_snapshot.get("has_scroll_container", true)):
+		push_error("Run report small-screen mode did not remain a no-scroll surface.")
+		return false
+	screen.set_reduce_motion(true)
+	if float(screen.debug_layout_snapshot().get("replay_progress", 0.0)) != 1.0:
+		push_error("Run report reduce-motion mode did not show the full path instantly.")
+		return false
+	screen.call("_on_timeline_seek", 0.0)
+	if float(screen.debug_layout_snapshot().get("replay_progress", -1.0)) != 0.0:
+		push_error("Run report heat scrubber did not seek to the first action boundary.")
+		return false
+	screen.call("_on_timeline_seek", 1.0)
+	if float(screen.debug_layout_snapshot().get("replay_progress", -1.0)) != 1.0:
+		push_error("Run report heat scrubber did not seek to the final action boundary.")
+		return false
+	screen.queue_free()
+	await process_frame
+	return true
 
 
 func _player_facing_effect_summary_is_clean(text: String, label: String) -> bool:
@@ -1048,6 +1111,9 @@ func _run() -> void:
 		push_error("VisualStyle.HOT should alias the production hot/pink token.")
 		quit(1)
 		return
+	if not await _check_run_report_screen_component():
+		quit(1)
+		return
 	if not await _check_run_inventory_screen_component():
 		quit(1)
 		return
@@ -1558,7 +1624,7 @@ func _run() -> void:
 	daily_run_state.fail_run(RunState.FAILURE_ABANDONED, "")
 	app.call("_refresh")
 	await process_frame
-	var daily_failure_summary: Dictionary = app.call("current_failure_summary_snapshot")
+	var daily_failure_summary: Dictionary = app.call("current_run_report_snapshot")
 	if str(daily_failure_summary.get("seed", "")).find(expected_daily_seed) != -1 or str(daily_failure_summary.get("seed", "")) != "Hidden daily challenge":
 		push_error("Daily Run terminal summary did not hide the challenge seed.")
 		quit(1)
@@ -4928,42 +4994,39 @@ func _run() -> void:
 		push_error("Failure inside a game did not clear the active game surface.")
 		quit(1)
 		return
-	var failure_panel: Control = app.get("failure_summary_panel")
+	var failure_panel: Control = app.get("run_report_screen")
 	if failure_panel == null or not failure_panel.visible:
-		push_error("Dedicated failure summary panel was not visible.")
+		push_error("Unified run report was not visible for failure.")
 		quit(1)
 		return
 	if (app.get("game_surface_canvas") as Control).visible:
 		push_error("Game surface remained visible over the failure summary.")
 		quit(1)
 		return
-	var failure_summary: Dictionary = app.call("current_failure_summary_snapshot")
-	if str(failure_summary.get("reason", "")) != RunState.FAILURE_POLICE_CAPTURE:
-		push_error("Failure summary did not preserve the RunState failure reason.")
+	var failure_summary: Dictionary = app.call("current_run_report_snapshot")
+	var failure_outcome: Dictionary = failure_summary.get("outcome", {})
+	var failure_score: Dictionary = failure_summary.get("score", {})
+	if str(failure_outcome.get("key", "")) != RunState.FAILURE_POLICE_CAPTURE or str(failure_outcome.get("icon_key", "")) != "police_capture":
+		push_error("Run report did not preserve the police-capture reason and icon.")
 		quit(1)
 		return
-	if int(failure_summary.get("score_spending", -1)) != expected_failure_score or int(failure_summary.get("score_multiplier", -1)) != 1 or int(failure_summary.get("score", -1)) != expected_failure_score:
-		push_error("Failure summary did not show the unmultiplied run score.")
+	if int(failure_score.get("money_put_to_work", -1)) != expected_failure_score or int(failure_score.get("winner_bonus", -1)) != 1 or int(failure_score.get("final_score", -1)) != expected_failure_score:
+		push_error("Failure run report did not show the unmultiplied run score.")
 		quit(1)
 		return
-	if str(failure_summary.get("current_environment", "")).is_empty() or (failure_summary.get("story_lines", []) as Array).is_empty() or (failure_summary.get("travel_lines", []) as Array).is_empty():
-		push_error("Failure summary did not include environment, travel, and story context.")
+	if str(failure_outcome.get("where", "")).is_empty() or typeof(failure_summary.get("timeline", {})) != TYPE_DICTIONARY or typeof(failure_summary.get("money_rows", [])) != TYPE_ARRAY:
+		push_error("Failure run report did not include where, replay, and money-flow context.")
 		quit(1)
 		return
-	if not _has_visible_text(app, "Captured by police") or not _has_visible_text(app, "Money And Heat") or not _has_visible_text(app, "Run score: %d" % expected_failure_score):
-		push_error("Failure screen did not present player-facing fail reason and run details.")
-		quit(1)
-		return
-	var failure_summary_list := app.get("failure_summary_list") as Control
-	if failure_summary_list == null or failure_summary_list.get_child_count() == 0:
-		push_error("Failure summary lifecycle fixture did not create summary children.")
+	if not _has_visible_text(app, "Captured by police") or not _has_visible_text(app, "STORY · MONEY FLOW") or not _has_visible_text(app, "$%d = %d" % [expected_failure_score, expected_failure_score]):
+		push_error("Failure run report did not present player-facing reason, money flow, and score.")
 		quit(1)
 		return
 	app.call("start_foundation_run", "UI-FAILURE-SUMMARY-CLEANUP")
 	await process_frame
 	await process_frame
-	if failure_summary_list.get_child_count() != 0:
-		push_error("Starting a new run retained hidden failure summary children.")
+	if (app.get("run_report_screen") as Control).visible or not (app.get("run_report_model") as Dictionary).is_empty():
+		push_error("Starting a new run retained the prior terminal report.")
 		quit(1)
 		return
 	var cleared_failure_surface: Dictionary = (app.get("game_surface_canvas") as Node).call("debug_soak_snapshot")
@@ -4972,10 +5035,11 @@ func _run() -> void:
 		quit(1)
 		return
 	var failure_reason_cases := [
-		{"reason": RunState.FAILURE_BANKROLL_ZERO, "label": "Bankroll zero"},
-		{"reason": RunState.FAILURE_STRANDED, "label": "Stranded"},
-		{"reason": RunState.FAILURE_POLICE_CAPTURE, "label": "Police capture"},
-		{"reason": RunState.FAILURE_CASINO_TAKEN_OUT_BACK, "label": "Casino taken out back"},
+		{"reason": RunState.FAILURE_BANKROLL_ZERO, "icon": "broke"},
+		{"reason": RunState.FAILURE_STRANDED, "icon": "stranded"},
+		{"reason": RunState.FAILURE_POLICE_CAPTURE, "icon": "police_capture"},
+		{"reason": RunState.FAILURE_CASINO_TAKEN_OUT_BACK, "icon": "taken_out_back"},
+		{"reason": RunState.FAILURE_ABANDONED, "icon": "walked_away"},
 	]
 	for reason_case in failure_reason_cases:
 		var reason_data: Dictionary = reason_case
@@ -4987,15 +5051,14 @@ func _run() -> void:
 		app.call("_refresh")
 		await process_frame
 		var reason_screen_snapshot: Dictionary = app.call("current_screen_snapshot")
-		var reason_summary: Dictionary = app.call("current_failure_summary_snapshot")
+		var reason_summary: Dictionary = app.call("current_run_report_snapshot")
+		var reason_outcome: Dictionary = reason_summary.get("outcome", {})
 		if str(reason_screen_snapshot.get("screen", "")) != "FAILURE":
 			push_error("Failure reason %s did not route to the FAILURE screen." % reason)
 			quit(1)
 			return
-		var expected_reason_label := str(reason_data.get("label", "")).to_lower()
-		var actual_reason_label := str(reason_summary.get("reason_label", "")).to_lower()
-		if str(reason_summary.get("reason", "")) != reason or actual_reason_label != expected_reason_label:
-			push_error("Failure summary did not distinguish reason %s." % reason)
+		if str(reason_outcome.get("key", "")) != reason or str(reason_outcome.get("icon_key", "")) != str(reason_data.get("icon", "")) or str(reason_outcome.get("how", "")).is_empty() or str(reason_outcome.get("where", "")).is_empty():
+			push_error("Run report did not distinguish failure reason %s with icon/where/how." % reason)
 			quit(1)
 			return
 	app.call("start_foundation_run", "UI-VICTORY-SEED")
@@ -5043,66 +5106,55 @@ func _run() -> void:
 		push_error("Victory inside a game did not clear the active game surface.")
 		quit(1)
 		return
-	var victory_panel: Control = app.get("victory_summary_panel")
+	var victory_panel: Control = app.get("run_report_screen")
 	if victory_panel == null or not victory_panel.visible:
-		push_error("Dedicated victory summary panel was not visible.")
+		push_error("Unified run report was not visible for victory.")
 		quit(1)
 		return
 	if (app.get("game_surface_canvas") as Control).visible:
 		push_error("Game surface remained visible over the victory summary.")
 		quit(1)
 		return
-	var victory_summary: Dictionary = app.call("current_victory_summary_snapshot")
-	if str(victory_summary.get("route", "")) != "high_roller_cashout":
-		push_error("Victory summary did not preserve the route id.")
+	var victory_summary: Dictionary = app.call("current_run_report_snapshot")
+	var victory_outcome: Dictionary = victory_summary.get("outcome", {})
+	var victory_score: Dictionary = victory_summary.get("score", {})
+	if str(victory_outcome.get("key", "")) != "players_card" or str(victory_outcome.get("icon_key", "")) != "players_card":
+		push_error("Victory run report did not preserve the Players Card route/icon.")
 		quit(1)
 		return
-	if str(victory_summary.get("seed", "")) != "UI-VICTORY-SEED" or int(victory_summary.get("bankroll", 0)) != 540 or int(victory_summary.get("heat", 0)) != 18:
-		push_error("Victory summary did not include seed, final bankroll, and final heat.")
+	if str(victory_summary.get("seed", "")) != "UI-VICTORY-SEED" or str(victory_outcome.get("where", "")).is_empty():
+		push_error("Victory run report did not include seed and final location/time.")
 		quit(1)
 		return
-	if int(victory_summary.get("score_spending", -1)) != expected_victory_score_spending or int(victory_summary.get("score_multiplier", -1)) != 3 or int(victory_summary.get("score", -1)) != expected_victory_score_spending * 3:
-		push_error("Victory summary did not triple the run score.")
+	if int(victory_score.get("money_put_to_work", -1)) != expected_victory_score_spending or int(victory_score.get("winner_bonus", -1)) != 3 or int(victory_score.get("final_score", -1)) != expected_victory_score_spending * 3:
+		push_error("Victory run report did not triple the current score formula.")
 		quit(1)
 		return
-	if str(victory_summary.get("current_environment", "")).is_empty() or (victory_summary.get("story_lines", []) as Array).is_empty():
-		push_error("Victory summary did not include venue and story context.")
+	if typeof(victory_summary.get("items", {})) != TYPE_DICTIONARY or typeof(victory_summary.get("debts", [])) != TYPE_ARRAY or typeof(victory_summary.get("money_rows", [])) != TYPE_ARRAY:
+		push_error("Victory run report did not include items, debt, and money-flow sections.")
 		quit(1)
 		return
-	if (victory_summary.get("item_lines", []) as Array).is_empty() or (victory_summary.get("debt_lines", []) as Array).is_empty() or (victory_summary.get("alcohol_lines", []) as Array).is_empty():
-		push_error("Victory summary did not include item, debt, and alcohol state.")
-		quit(1)
-		return
-	if not _has_visible_text(app, "Demo Victory"):
-		push_error("Victory screen did not present the demo victory title.")
+	if not _has_visible_text(app, "Players Card earned"):
+		push_error("Victory screen did not present the Players Card outcome title.")
 		quit(1)
 		return
 	if not _has_visible_text(app, "Players Card"):
 		push_error("Victory screen did not present the Players Card victory route.")
 		quit(1)
 		return
-	if not _has_visible_text(app, "The Players Card opens quieter rooms. Your name is now on the list."):
-		push_error("Victory screen did not present the Players Card Act 2 hook.")
-		quit(1)
-		return
-	if not _has_visible_text(app, "Victory multiplier: x3") or not _has_visible_text(app, "Run score: %d" % (expected_victory_score_spending * 3)):
+	if not _has_visible_text(app, "$%d × 3 = %d" % [expected_victory_score_spending, expected_victory_score_spending * 3]):
 		push_error("Victory screen did not present the final score multiplier.")
 		quit(1)
 		return
-	if not _has_visible_text(app, "Main Menu") or not _has_visible_text(app, "New Run"):
+	if not _has_visible_text(app, "Home") or not _has_visible_text(app, "New Run") or not _has_visible_text(app, "Copy Seed"):
 		push_error("Victory screen did not present terminal actions.")
-		quit(1)
-		return
-	var victory_summary_list := app.get("victory_summary_list") as Control
-	if victory_summary_list == null or victory_summary_list.get_child_count() == 0:
-		push_error("Victory summary lifecycle fixture did not create summary children.")
 		quit(1)
 		return
 	app.call("start_foundation_run", "UI-VICTORY-SUMMARY-CLEANUP")
 	await process_frame
 	await process_frame
-	if victory_summary_list.get_child_count() != 0:
-		push_error("Starting a new run retained hidden victory summary children.")
+	if (app.get("run_report_screen") as Control).visible or not (app.get("run_report_model") as Dictionary).is_empty():
+		push_error("Starting a new run retained the prior victory report.")
 		quit(1)
 		return
 	var cleared_victory_surface: Dictionary = (app.get("game_surface_canvas") as Node).call("debug_soak_snapshot")
