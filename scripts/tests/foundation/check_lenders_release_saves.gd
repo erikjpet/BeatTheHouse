@@ -938,6 +938,7 @@ func _check_demo_boss_objective_foundation(library: ContentLibrary, failures: Ar
 		return
 	_check_grand_casino_spatial_split(library, boss_archetype, failures)
 	_check_grand_casino_chips_and_cage(library, boss_archetype, failures)
+	_check_grand_casino_living_floor(library, boss_archetype, failures)
 	var objective: Dictionary = boss_archetype.get("demo_objective", {}) if typeof(boss_archetype.get("demo_objective", {})) == TYPE_DICTIONARY else {}
 	if objective.is_empty() or str(objective.get("type", "")) != "bankroll_target":
 		failures.append("Grand Casino must define a bankroll-target demo objective.")
@@ -1660,6 +1661,104 @@ func _check_grand_casino_chips_and_cage(library: ContentLibrary, main_archetype:
 		failures.append("Grand Casino cash-out did not conserve total money.")
 	if restored.run_spending_score != score_before_cash_out:
 		failures.append("Grand Casino chip cash-out incorrectly changed score spending.")
+
+
+func _check_grand_casino_living_floor(library: ContentLibrary, main_archetype: Dictionary, failures: Array) -> void:
+	var run_state: RunState = RunStateScript.new()
+	run_state.start_new("GC-LIVING-FLOOR")
+	var environment := EnvironmentInstance.from_archetype(main_archetype, 3, run_state.create_rng("gc_living_environment"), library)
+	run_state.set_environment(environment.to_dict())
+	if run_state.rourke_current_room != RunState.GRAND_CASINO_ARCHETYPE_ID or run_state.rourke_current_spot.is_empty():
+		failures.append("Rourke did not initialize as a one-room living Grand Casino agent.")
+	if run_state.rival_cheaters.size() < RunState.RIVAL_CHEATER_MIN_COUNT or run_state.rival_cheaters.size() > RunState.RIVAL_CHEATER_MAX_COUNT:
+		failures.append("Grand Casino rival cast was outside the seeded 1-3 range.")
+
+	run_state.rival_cheater_day = run_state.game_day()
+	run_state.rival_cheaters = []
+	run_state.rourke_current_room = RunState.GRAND_CASINO_ARCHETYPE_ID
+	run_state.rourke_current_spot = "main_center"
+	run_state.rourke_actions_until_move = 1
+	run_state.grand_casino_room_heat_accumulators = {
+		RunState.GRAND_CASINO_ARCHETYPE_ID: 0,
+		RunState.GRAND_CASINO_HIGH_LIMIT_ARCHETYPE_ID: 30,
+		RunState.GRAND_CASINO_BACK_ROOM_ARCHETYPE_ID: 0,
+	}
+	run_state.advance_environment_turns(1)
+	if run_state.rourke_current_room != RunState.GRAND_CASINO_HIGH_LIMIT_ARCHETYPE_ID:
+		failures.append("Scripted High-Limit heat did not pull Rourke one room toward the hotspot.")
+	run_state.rourke_actions_until_move = 1
+	run_state.grand_casino_room_heat_accumulators = {
+		RunState.GRAND_CASINO_ARCHETYPE_ID: 11,
+		RunState.GRAND_CASINO_HIGH_LIMIT_ARCHETYPE_ID: 10,
+		RunState.GRAND_CASINO_BACK_ROOM_ARCHETYPE_ID: 0,
+	}
+	run_state.advance_environment_turns(1)
+	if run_state.rourke_current_room != RunState.GRAND_CASINO_HIGH_LIMIT_ARCHETYPE_ID:
+		failures.append("Rourke movement inertia did not hold on near-equal room heat.")
+	var restored: RunState = RunStateScript.new()
+	restored.from_dict(run_state.to_dict())
+	if restored.rourke_current_room != run_state.rourke_current_room or restored.rourke_current_spot != run_state.rourke_current_spot or restored.rourke_actions_until_move != run_state.rourke_actions_until_move or JSON.stringify(restored.grand_casino_room_heat_accumulators) != JSON.stringify(run_state.grand_casino_room_heat_accumulators):
+		failures.append("Rourke room, spot, movement timer, or room heat did not survive save/load.")
+
+	var away_run: RunState = RunStateScript.new()
+	away_run.start_new("GC-SPATIAL-WATCH")
+	away_run.set_environment(environment.to_dict())
+	away_run.rourke_current_room = RunState.GRAND_CASINO_HIGH_LIMIT_ARCHETYPE_ID
+	away_run.record_grand_casino_game_result({"ok": true, "game_id": "slot", "action_kind": "cheat", "stake": 1})
+	if bool(away_run.narrative_flags.get("grand_casino_watched_cheat_evidence", false)) or bool(away_run.pit_boss_watch_status().get("active", true)):
+		failures.append("A cheat while Rourke was in another room incorrectly recorded watched evidence.")
+	away_run.narrative_flags.erase("grand_casino_cheat_evidence")
+	away_run.narrative_flags.erase("grand_casino_watched_cheat_evidence")
+	away_run.narrative_flags.erase("grand_casino_attention_watched_cheat")
+	away_run.rourke_current_room = RunState.GRAND_CASINO_ARCHETYPE_ID
+	away_run.current_environment["turns"] = 0
+	away_run.record_grand_casino_game_result({"ok": true, "game_id": "slot", "action_kind": "cheat", "stake": 1})
+	if not bool(away_run.narrative_flags.get("grand_casino_watched_cheat_evidence", false)) or not bool(away_run.pit_boss_watch_status().get("active", false)):
+		failures.append("A cheat with Rourke present did not record spatial watched evidence.")
+
+	var escort_run: RunState = RunStateScript.new()
+	escort_run.start_new("GC-RIVAL-ESCORT")
+	escort_run.set_environment(environment.to_dict())
+	escort_run.rival_cheater_day = escort_run.game_day()
+	escort_run.rival_cheaters = [{"id": "escort_fixture", "display_name": "Vega", "room": RunState.GRAND_CASINO_ARCHETYPE_ID, "spot": 0, "tell": "heel_tap", "idle_phase": 0}]
+	escort_run.rourke_current_room = RunState.GRAND_CASINO_ARCHETYPE_ID
+	escort_run.grand_casino_room_heat_accumulators[RunState.GRAND_CASINO_ARCHETYPE_ID] = 100
+	var player_heat_before := escort_run.suspicion_level()
+	var room_heat_before := int(escort_run.grand_casino_room_heat_accumulators.get(RunState.GRAND_CASINO_ARCHETYPE_ID, 0))
+	escort_run.advance_environment_turns(1)
+	if escort_run.suspicion_level() != player_heat_before or int(escort_run.grand_casino_room_heat_accumulators.get(RunState.GRAND_CASINO_ARCHETYPE_ID, 0)) <= int(floor(float(room_heat_before * RunState.ROURKE_HEAT_DECAY_PERCENT) / 100.0)):
+		failures.append("Rival heat did not raise room pull independently of player suspicion.")
+	for _escort_action in range(100):
+		if escort_run.rourke_off_floor_actions > 0:
+			break
+		escort_run.advance_environment_turns(1)
+	if escort_run.rourke_off_floor_actions != RunState.ROURKE_OFF_FLOOR_ACTIONS or not escort_run.rival_cheaters.is_empty() or escort_run.rourke_escort_state.is_empty():
+		failures.append("Seeded rival escort did not remove the cheater and bench Rourke for the full window.")
+	elif bool(escort_run.pit_boss_watch_status().get("active", true)):
+		failures.append("Rourke remained an active watcher during the escort window.")
+	var escort_story_found := false
+	for story_value in escort_run.story_log:
+		if typeof(story_value) == TYPE_DICTIONARY and str((story_value as Dictionary).get("type", "")) == "rourke_rival_escort":
+			escort_story_found = true
+			break
+	if not escort_story_found:
+		failures.append("Rival escort did not log its visible Main Floor story moment.")
+
+	var cameo := library.event("rourke_scouting_cameo")
+	var kitty := _archetype_by_id(library, "kitty_cat_lounge")
+	var delta := _archetype_by_id(library, "delta_queen")
+	if cameo.is_empty() or str(cameo.get("presentation", "")) != "talk" or not _string_array(kitty.get("event_pool", [])).has("rourke_scouting_cameo") or not _string_array(delta.get("event_pool", [])).has("rourke_scouting_cameo"):
+		failures.append("Rare Rourke scouting talk was not authored into both tier-2 casino pools.")
+	else:
+		var cameo_run: RunState = RunStateScript.new()
+		cameo_run.start_new("GC-ROURKE-CAMEO")
+		var cameo_environment := EnvironmentInstance.from_archetype(delta, 2, cameo_run.create_rng("gc_cameo_environment"), library).to_dict()
+		cameo_run.set_environment(cameo_environment)
+		var cameo_module: EventModule = EventModule.new()
+		cameo_module.setup(cameo, library)
+		var cameo_result := cameo_module.resolve(cameo_run, cameo_environment, "read_his_route")
+		if not bool(cameo_result.get("ok", false)) or not bool(cameo_run.narrative_flags.get("grand_casino_event_pit_boss_sweep_lay_low", false)):
+			failures.append("Rourke scouting choice did not feed an existing prior-boss modifier flag.")
 
 
 func _check_grand_casino_spatial_split(library: ContentLibrary, main_archetype: Dictionary, failures: Array) -> void:
