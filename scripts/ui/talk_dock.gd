@@ -164,6 +164,10 @@ class ResponseIcon:
 			_:
 				return VisualStyle.SOFT
 
+
+static func create_portrait_model() -> Control:
+	return PortraitModel.new()
+
 var entry: Dictionary = {}
 var option: Dictionary = {}
 var queue_count: int = 0

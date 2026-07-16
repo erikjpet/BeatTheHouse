@@ -92,6 +92,8 @@ const SmallScreenPolicyScript := preload("res://scripts/ui/small_screen_policy.g
 const AttributeBadgeRowScript := preload("res://scripts/ui/attribute_badge_row.gd")
 const RunInventoryScreenScript := preload("res://scripts/ui/run_inventory_screen.gd")
 const RunInventoryViewModelScript := preload("res://scripts/ui/run_inventory_view_model.gd")
+const CageWindowScript := preload("res://scripts/ui/cage_window.gd")
+const CageWindowViewModelScript := preload("res://scripts/ui/cage_window_view_model.gd")
 const MetaCollectionViewModelScript := preload("res://scripts/ui/meta_collection_view_model.gd")
 const RunJournalViewModelScript := preload("res://scripts/ui/run_journal_view_model.gd")
 const RunReportViewModelScript := preload("res://scripts/ui/run_report_view_model.gd")
@@ -169,6 +171,10 @@ var pending_wager_confirm_skip_stake_validation := false
 var pending_wager_confirm_preserve_surface_ui_state := false
 var pending_wager_confirm_stake: int = 0
 var pending_wager_confirm_source_game_id: String = ""
+var pending_chip_top_up_action_id: String = ""
+var pending_chip_top_up_skip_stake_validation := false
+var pending_chip_top_up_preserve_surface_ui_state := false
+var pending_chip_top_up_required: int = 0
 var pending_all_in_result_terminal_check := false
 var terminal_evaluator_call_count := 0
 var presented_bankroll_hold_active := false
@@ -290,6 +296,7 @@ var conclusion_animation_overlay: Control
 var conclusion_animation_snapshot: Dictionary = {}
 var conclusion_animation_tweens: Array[Tween] = []
 var run_inventory_screen: RunInventoryScreen
+var cage_window: CageWindow
 var run_inventory_overlay: Control
 var run_inventory_panel: PanelContainer
 var run_inventory_items_scroll: ScrollContainer
@@ -506,6 +513,7 @@ func start_foundation_run(seed_text: String = DEFAULT_SEED, challenge_config: Di
 	close_content_group_config()
 	close_challenge_selection()
 	_hide_run_menu()
+	_hide_cage_window()
 	_hide_world_map_overlay()
 	_hide_run_journal_popup()
 	_hide_travel_transition()
@@ -530,6 +538,7 @@ func start_foundation_run(seed_text: String = DEFAULT_SEED, challenge_config: Di
 	selected_action_category = ACTION_CATEGORY_GAMES
 	_set_current_screen(SCREEN_ENVIRONMENT)
 	_hide_event_choice_popup()
+	_hide_cage_window()
 	_hide_run_inventory_popup()
 	_hide_run_journal_popup()
 	_hide_world_map_overlay()
@@ -4396,6 +4405,20 @@ func _build_run_inventory_overlay() -> void:
 	run_inventory_overlay = run_inventory_screen
 
 
+func _build_cage_window() -> void:
+	if cage_window != null:
+		return
+	cage_window = CageWindowScript.new()
+	cage_window.close_requested.connect(Callable(self, "_hide_cage_window"))
+	cage_window.buy_chips_requested.connect(Callable(self, "_buy_cage_chips"))
+	cage_window.cash_out_requested.connect(Callable(self, "_cash_out_cage_chips"))
+	cage_window.review_requested.connect(Callable(self, "_complete_cage_players_card_review"))
+	add_child(cage_window)
+	cage_window.set_reduce_motion(bool(user_settings.reduce_motion) if user_settings != null else false)
+	cage_window.set_small_screen_mode(_small_screen_enabled())
+	_apply_accessibility_to_node(cage_window, _accessibility_font_scale(), _accessibility_control_scale())
+
+
 func _build_run_journal_overlay() -> void:
 	run_journal_overlay = Control.new()
 	run_journal_overlay.visible = false
@@ -6002,7 +6025,10 @@ func _add_current_game_panel(environment: Dictionary) -> void:
 		description_label.max_lines_visible = 1
 		description_label.clip_text = true
 		actions_list.add_child(description_label)
-	actions_list.add_child(_label("Current bankroll: %d" % _presented_bankroll(), 12))
+	var balance_text := "Current bankroll: %d" % _presented_bankroll()
+	if run_state.grand_casino_table_uses_chips(current_game.get_id(), environment):
+		balance_text = "Current chips: %d  |  Cash: %d" % [run_state.grand_casino_chips, run_state.bankroll]
+	actions_list.add_child(_label(balance_text, 12))
 	actions_list.add_child(_button("Back to environment", Callable(self, "back_to_environment")))
 	actions_list.add_child(_section("Stake"))
 	_add_stake_controls(action_view)
@@ -6046,6 +6072,10 @@ func _resolve_game_action(action_id: String, skip_stake_validation: bool = false
 		_refresh_stake_input()
 		return
 	var wager_cost := _wager_cost_for_action(action_id, stake)
+	if not wager_confirmed and _casino_table_wager_needs_top_up(current_game, wager_cost):
+		_pause_repeating_surface_action_for_wager_confirmation()
+		_show_casino_chip_top_up_popup(action_id, wager_cost, skip_stake_validation, preserve_surface_ui_state)
+		return
 	if not wager_confirmed and _wager_needs_final_bankroll_confirmation(current_game, action_id, stake, wager_cost, _current_game_surface_ui_state()):
 		_pause_repeating_surface_action_for_wager_confirmation()
 		_show_wager_confirmation_popup(action_id, stake, wager_cost, skip_stake_validation, preserve_surface_ui_state)
@@ -6080,7 +6110,7 @@ func _resolve_game_action(action_id: String, skip_stake_validation: bool = false
 		_begin_presented_bankroll_hold(result, bankroll_before_result, wager_cost)
 	last_game_result = result.duplicate(true)
 	_play_result_surface_audio_cue(result)
-	pending_all_in_result_terminal_check = confirmed_all_in_wager and bool(result.get("ok", false)) and run_state != null and run_state.bankroll <= 0 and not bool(result.get("won", false))
+	pending_all_in_result_terminal_check = confirmed_all_in_wager and bool(result.get("ok", false)) and run_state != null and not run_state.has_liquid_run_funds() and not bool(result.get("won", false))
 	if runtime_tick_in_progress:
 		if game_surface_canvas != null and current_screen == SCREEN_GAME:
 			game_surface_canvas.render_game_snapshot(_game_view_snapshot())
@@ -6142,6 +6172,89 @@ func cancel_pending_wager_confirmation() -> void:
 	_refresh()
 
 
+func _casino_table_wager_needs_top_up(game: GameModule, wager_cost: int) -> bool:
+	return run_state != null \
+		and game != null \
+		and wager_cost > run_state.grand_casino_chips \
+		and run_state.grand_casino_table_uses_chips(game.get_id(), run_state.current_environment)
+
+
+func _show_casino_chip_top_up_popup(action_id: String, wager_cost: int, skip_stake_validation: bool, preserve_surface_ui_state: bool) -> void:
+	var required := maxi(0, wager_cost - run_state.grand_casino_chips)
+	var rate := run_state.grand_casino_chip_exchange_rate()
+	var cash_cost := required * rate
+	if required <= 0:
+		_resolve_game_action(action_id, skip_stake_validation, preserve_surface_ui_state)
+		return
+	if cash_cost > run_state.bankroll:
+		_show_message("That wager needs %d more chips, but you only have $%d cash available to convert." % [required, run_state.bankroll])
+		_refresh()
+		return
+	if event_choice_popup_overlay == null or event_choice_popup_choices_list == null:
+		_show_message("Buy %d chips for $%d at the Cage before placing this wager." % [required, cash_cost])
+		return
+	pending_chip_top_up_action_id = action_id
+	pending_chip_top_up_skip_stake_validation = skip_stake_validation
+	pending_chip_top_up_preserve_surface_ui_state = preserve_surface_ui_state
+	pending_chip_top_up_required = required
+	pending_event_choice_popup_event_id = ""
+	pending_event_choice_popup_focus_choice_id = ""
+	pending_event_choice_popup_snapshot = {
+		"visible": true,
+		"blocking": true,
+		"popup_type": "casino_chip_top_up",
+		"interaction_kind": "blocking_decision",
+		"dismissible": false,
+		"required_chips": required,
+		"cash_cost": cash_cost,
+		"summary": "This table needs %d more chips. Convert $%d at the casino's %d:1 rate?" % [required, cash_cost, rate],
+	}
+	if event_choice_popup_title_label != null:
+		event_choice_popup_title_label.text = "Buy Chips"
+	if event_choice_popup_summary_label != null:
+		event_choice_popup_summary_label.text = str(pending_event_choice_popup_snapshot.get("summary", ""))
+	_clear(event_choice_popup_choices_list)
+	_add_wager_confirmation_card("Buy %d chips" % required, "Convert only the amount this wager needs.", "", Callable(self, "confirm_pending_casino_chip_top_up"), true)
+	_add_wager_confirmation_card("Cancel", "Return to the table without placing the wager.", "", Callable(self, "cancel_pending_casino_chip_top_up"), false)
+	event_choice_popup_overlay.visible = true
+	event_choice_popup_overlay.move_to_front()
+	_position_event_choice_popup()
+	call_deferred("_position_event_choice_popup")
+
+
+func confirm_pending_casino_chip_top_up() -> void:
+	if pending_chip_top_up_action_id.is_empty() or run_state == null:
+		_hide_event_choice_popup()
+		return
+	var action_id := pending_chip_top_up_action_id
+	var skip_stake_validation := pending_chip_top_up_skip_stake_validation
+	var preserve_surface_ui_state := pending_chip_top_up_preserve_surface_ui_state
+	var required := pending_chip_top_up_required
+	_clear_pending_chip_top_up()
+	_hide_event_choice_popup()
+	var result := run_state.buy_grand_casino_chips(required, run_state.grand_casino_chip_exchange_rate())
+	if not bool(result.get("ok", false)):
+		_show_message(str(result.get("message", "The table buy-in could not be completed.")))
+		_refresh()
+		return
+	_show_message(str(result.get("message", "The table converted your cash to chips.")))
+	_resolve_game_action(action_id, skip_stake_validation, preserve_surface_ui_state)
+
+
+func cancel_pending_casino_chip_top_up() -> void:
+	_clear_pending_chip_top_up()
+	_hide_event_choice_popup()
+	_show_message("Table buy-in canceled. Choose a smaller wager or visit the Cage.")
+	_refresh()
+
+
+func _clear_pending_chip_top_up() -> void:
+	pending_chip_top_up_action_id = ""
+	pending_chip_top_up_skip_stake_validation = false
+	pending_chip_top_up_preserve_surface_ui_state = false
+	pending_chip_top_up_required = 0
+
+
 func _wager_cost_for_action(action_id: String, stake: int) -> int:
 	if current_game == null or run_state == null:
 		return 0
@@ -6159,7 +6272,8 @@ func _wager_needs_final_bankroll_confirmation(game: GameModule, action_id: Strin
 		run_state.current_environment,
 		ui_state
 	))
-	return run_state.bankroll > 0 and run_state.bankroll - wager_cost + guaranteed_return <= 0
+	var wager_balance := run_state.wager_capacity_for_game(game.get_id(), run_state.current_environment)
+	return wager_balance > 0 and wager_balance - wager_cost + guaranteed_return <= 0
 
 
 func _pause_environment_runtime_for_wager_confirmation(game: GameModule, _game_id: String) -> void:
@@ -6197,7 +6311,7 @@ func _resolve_environment_runtime_wager_action(game_id: String, action_id: Strin
 	last_environment_runtime_result = result.duplicate(true)
 	if current_game == null:
 		last_game_result = result.duplicate(true)
-	pending_all_in_result_terminal_check = confirmed_all_in_wager and bool(result.get("ok", false)) and run_state != null and run_state.bankroll <= 0 and not bool(result.get("won", false))
+	pending_all_in_result_terminal_check = confirmed_all_in_wager and bool(result.get("ok", false)) and run_state != null and not run_state.has_liquid_run_funds() and not bool(result.get("won", false))
 	var runtime_state := game.environment_runtime_state(run_state, run_state.current_environment)
 	if bool(runtime_state.get("slot_pending_feature", false)):
 		_play_environment_audio_cue(_slot_runtime_feature_audio_cue(runtime_state), float(runtime_state.get("slot_feature_audio_volume_db", -1.0)))
@@ -6220,7 +6334,7 @@ func _blocking_decision_popup_is_visible() -> bool:
 
 
 func _modal_contract_blocks_player_input() -> bool:
-	return travel_transition_active or _event_choice_popup_is_visible() or _run_inventory_popup_is_visible() or _run_journal_popup_is_visible() or _world_map_overlay_is_visible() or _run_menu_is_visible()
+	return travel_transition_active or _event_choice_popup_is_visible() or _cage_window_is_open() or _run_inventory_popup_is_visible() or _run_journal_popup_is_visible() or _world_map_overlay_is_visible() or _run_menu_is_visible()
 
 
 func _blocking_modal_message() -> String:
@@ -6228,6 +6342,8 @@ func _blocking_modal_message() -> String:
 		return "Travel is already in progress."
 	if _event_choice_popup_is_visible():
 		return "Choose a response before doing anything else."
+	if _cage_window_is_open():
+		return "Close the Cage before doing anything else."
 	if _world_map_overlay_is_visible():
 		return "Close the map before doing anything else."
 	if _run_inventory_popup_is_visible():
@@ -6328,6 +6444,7 @@ func current_overlay_state_snapshot() -> Dictionary:
 		"event_choice_popup_type": str(pending_event_choice_popup_snapshot.get("popup_type", "")),
 		"event_choice_popup_blocking": _blocking_decision_popup_is_visible(),
 		"talk_dock_visible": talk_dock != null and talk_dock.visible,
+		"cage_window_visible": _cage_window_is_open(),
 		"world_map_visible": _world_map_overlay_is_visible(),
 		"run_inventory_visible": _run_inventory_popup_is_visible(),
 		"run_inventory_mode": run_inventory_popup_mode,
@@ -6349,6 +6466,7 @@ func _overlay_state_contract_violations(snapshot: Dictionary = {}) -> Array:
 			"screen": current_screen,
 			"event_choice_popup_visible": _event_choice_popup_is_visible(),
 			"event_choice_popup_type": str(pending_event_choice_popup_snapshot.get("popup_type", "")),
+			"cage_window_visible": _cage_window_is_open(),
 			"world_map_visible": _world_map_overlay_is_visible(),
 			"run_inventory_visible": _run_inventory_popup_is_visible(),
 			"run_journal_visible": _run_journal_popup_is_visible(),
@@ -6358,6 +6476,7 @@ func _overlay_state_contract_violations(snapshot: Dictionary = {}) -> Array:
 		}
 	var violations: Array = []
 	var event_visible := bool(snapshot.get("event_choice_popup_visible", false))
+	var cage_visible := bool(snapshot.get("cage_window_visible", false))
 	var world_map_visible := bool(snapshot.get("world_map_visible", false))
 	var inventory_visible := bool(snapshot.get("run_inventory_visible", false))
 	var journal_visible := bool(snapshot.get("run_journal_visible", false))
@@ -6365,13 +6484,17 @@ func _overlay_state_contract_violations(snapshot: Dictionary = {}) -> Array:
 	var run_menu_visible := bool(snapshot.get("run_menu_visible", false))
 	var travel_visible := bool(snapshot.get("travel_transition_active", false))
 	if travel_visible:
-		for label in ["event_choice_popup_visible", "world_map_visible", "run_inventory_visible", "run_journal_visible", "run_menu_visible", "settings_visible"]:
+		for label in ["event_choice_popup_visible", "cage_window_visible", "world_map_visible", "run_inventory_visible", "run_journal_visible", "run_menu_visible", "settings_visible"]:
 			if bool(snapshot.get(label, false)):
 				violations.append("travel_transition overlaps %s" % label)
 	if event_visible:
-		for label in ["world_map_visible", "run_inventory_visible", "run_journal_visible", "run_menu_visible", "settings_visible"]:
+		for label in ["cage_window_visible", "world_map_visible", "run_inventory_visible", "run_journal_visible", "run_menu_visible", "settings_visible"]:
 			if bool(snapshot.get(label, false)):
 				violations.append("decision_popup overlaps %s" % label)
+	if cage_visible:
+		for label in ["world_map_visible", "run_inventory_visible", "run_journal_visible", "run_menu_visible", "settings_visible"]:
+			if bool(snapshot.get(label, false)):
+				violations.append("cage_window overlaps %s" % label)
 	if world_map_visible:
 		for label in ["run_inventory_visible", "run_journal_visible", "run_menu_visible", "settings_visible"]:
 			if bool(snapshot.get(label, false)):
@@ -7046,12 +7169,93 @@ func activate_interactable_object(object_id: String) -> bool:
 
 
 func _inspect_casino_fixture(object_data: Dictionary) -> bool:
+	if str(object_data.get("source_id", "")).strip_edges() == "cage":
+		return _open_cage_window()
 	var message := str(object_data.get("interaction_message", object_data.get("short_description", "The casino staff acknowledge you."))).strip_edges()
 	if message.is_empty():
 		message = "The casino staff acknowledge you."
 	_show_message(message)
 	_refresh()
 	return true
+
+
+func _open_cage_window() -> bool:
+	if run_state == null or str(run_state.current_environment.get("archetype_id", "")) != RunState.GRAND_CASINO_ARCHETYPE_ID:
+		_show_message("The Cage window is only available on the Grand Casino Main Floor.")
+		_refresh()
+		return false
+	_build_cage_window()
+	_hide_event_choice_popup()
+	_hide_run_inventory_popup()
+	_hide_run_journal_popup()
+	_hide_world_map_overlay()
+	var model := CageWindowViewModelScript.build(run_state)
+	if model.is_empty():
+		_show_message("Linda cannot open the Cage account right now.")
+		return false
+	cage_window.open(model)
+	_show_message("Linda opens your Cage account.")
+	return true
+
+
+func _hide_cage_window() -> void:
+	if cage_window != null:
+		cage_window.close()
+
+
+func _cage_window_is_open() -> bool:
+	return cage_window != null and cage_window.is_open()
+
+
+func current_cage_window_snapshot() -> Dictionary:
+	return cage_window.current_view_snapshot() if cage_window != null else {"visible": false}
+
+
+func _refresh_cage_window_after_state_change() -> void:
+	if _cage_window_is_open():
+		cage_window.update_model(CageWindowViewModelScript.build(run_state))
+
+
+func _buy_cage_chips(amount: int) -> void:
+	if run_state == null:
+		return
+	var result := run_state.buy_grand_casino_chips(amount, run_state.grand_casino_chip_exchange_rate())
+	if bool(result.get("ok", false)):
+		run_state.advance_environment_turns(1)
+		_autosave_foundation_run("Autosaved.")
+	_show_message(str(result.get("message", "The Cage could not complete that buy-in.")))
+	_refresh_cage_window_after_state_change()
+	_refresh_runtime_environment_views()
+
+
+func _cash_out_cage_chips() -> void:
+	if run_state == null:
+		return
+	var result := run_state.cash_out_grand_casino_chips(-1, run_state.grand_casino_chip_exchange_rate())
+	if bool(result.get("ok", false)):
+		run_state.advance_environment_turns(1)
+		_autosave_foundation_run("Autosaved.")
+	_show_message(str(result.get("message", "The Cage could not complete that cash-out.")))
+	_refresh_cage_window_after_state_change()
+	_refresh_runtime_environment_views()
+
+
+func _complete_cage_players_card_review() -> void:
+	if run_state == null or library == null:
+		return
+	var definition := library.event(RunState.GRAND_CASINO_HIGH_ROLLER_EVENT_ID)
+	if definition.is_empty():
+		_show_message("The Players Card review is unavailable.")
+		return
+	var event_module := EventModule.new()
+	event_module.setup(definition, library)
+	var result := event_module.resolve(run_state, run_state.current_environment, RunState.GRAND_CASINO_HIGH_ROLLER_EVENT_ID)
+	if bool(result.get("ok", false)):
+		run_state.advance_environment_turns(1)
+	_hide_cage_window()
+	_show_message(str(result.get("message", "Linda closes the review.")))
+	_autosave_foundation_run("Autosaved.")
+	_refresh()
 
 
 func _activate_event_response_action(action_object_id: String) -> bool:
@@ -9501,7 +9705,7 @@ func _run_pressure_view() -> Dictionary:
 func _has_deferred_bankroll_zero_failure() -> bool:
 	if _all_in_result_terminal_check_is_pending():
 		return true
-	if run_state == null or library == null or run_state.bankroll > 0 or run_state.current_environment.is_empty():
+	if run_state == null or library == null or run_state.has_liquid_run_funds() or run_state.current_environment.is_empty():
 		return false
 	for game_id in _string_array(run_state.current_environment.get("game_ids", [])):
 		var game := current_game if current_game != null and current_game.get_id() == game_id else _game_module_for_id(game_id)
@@ -9543,7 +9747,7 @@ func _all_in_result_terminal_check_is_pending() -> bool:
 		and run_state != null \
 		and run_state.run_status != RunState.RUN_STATUS_FAILED \
 		and run_state.run_status != RunState.RUN_STATUS_ENDED \
-		and run_state.bankroll <= 0
+		and not run_state.has_liquid_run_funds()
 
 
 func _resolve_pending_all_in_terminal_result() -> bool:
@@ -10213,6 +10417,7 @@ func _hide_event_choice_popup(clear_snapshot: bool = true) -> void:
 	if clear_snapshot:
 		pending_event_choice_popup_snapshot = {}
 	_clear_pending_wager_confirmation()
+	_clear_pending_chip_top_up()
 
 
 func _event_choice_popup_is_visible() -> bool:
@@ -11162,6 +11367,9 @@ func _apply_accessibility_settings() -> void:
 	if talk_dock != null:
 		talk_dock.set_reduce_motion(bool(user_settings.reduce_motion) if user_settings != null else false)
 		talk_dock.set_small_screen_mode(small_screen_enabled)
+	if cage_window != null:
+		cage_window.set_reduce_motion(bool(user_settings.reduce_motion) if user_settings != null else false)
+		cage_window.set_small_screen_mode(small_screen_enabled)
 	if environment_canvas != null:
 		environment_canvas.set_small_screen_mode(small_screen_enabled)
 	if game_surface_canvas != null:

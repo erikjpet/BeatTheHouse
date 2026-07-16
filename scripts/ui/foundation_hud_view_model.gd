@@ -20,6 +20,11 @@ static func run_status_model(run_state: RunState, data: Dictionary) -> Dictionar
 	var bankroll_text := "[$] Bankroll %d" % bankroll
 	if bankroll_delta != 0:
 		bankroll_text += " (%+d)" % bankroll_delta
+	if run_state.is_grand_casino_environment():
+		var chips_delta := int(recent_result.get("chips_delta", deltas.get("chips_delta", 0)))
+		bankroll_text += "  [CHIPS] %d" % run_state.grand_casino_chips
+		if chips_delta != 0:
+			bankroll_text += " (%+d)" % chips_delta
 	var heat_meter := hud_meter(run_state.suspicion_level(), 100, 10)
 	var heat_text := "[HEAT] Risk: %s %s" % [heat_meter, run_state.security_pressure_label().capitalize()]
 	if heat_delta != 0:
@@ -178,7 +183,7 @@ static func boss_floor_objective_goal_text(objective: Dictionary) -> String:
 	var state := str(objective.get("objective_state", "grand-incomplete"))
 	if state == "showdown-active": return "Rourke has you in back. Keep your story straight."
 	if state == "showdown-pending" or bool(objective.get("showdown_pending", false)): return "Rourke is calling. Answer the back-room event."
-	if state == "high-roller-ready" or bool(objective.get("high_roller_ready", false)): return "Players Card is ready. Claim it before heat rises."
+	if state == "high-roller-ready" or bool(objective.get("high_roller_ready", false)): return "Players Card is ready at the Cage. Claim it before heat rises."
 	if bool(objective.get("dirty_money_showdown_ready", false)): return "The card review is checking your win. Expect Rourke."
 	if boss_floor_heat_pressure_close(objective): return "Heat is loud. More pressure means Rourke's back room."
 	if boss_floor_progress_close(objective): return "Close to Players Card: keep play clean and finish the set."
@@ -201,7 +206,7 @@ static func objective_guidance_view(pressure: Dictionary, objective: Dictionary,
 	match state:
 		"victory": route = "summary"; text = "Victory is claimed. Review the run summary or start fresh."
 		"failure": route = "summary"; text = "The run is over. Return to the menu or start a new climb."
-		"high-roller-ready": route = "players_card"; text = "The host will issue the Players Card if you take the review now."
+		"high-roller-ready": route = "players_card"; text = "Linda will issue the Players Card if you take the Cage review now."
 		"showdown-pending": route = "pit_boss_showdown"; text = "Rourke is calling. Take the back-room event before more play."
 		"showdown-active": route = "pit_boss_showdown"; text = "Rourke has you off the floor. Choose one answer and stand by it."
 		"grand-incomplete": route = "boss_floor"; text = boss_floor_incomplete_guidance(objective)
@@ -252,8 +257,7 @@ static func next_objective_option_for_state(state: String, objective: Dictionary
 		var id := str(objective.get("showdown_event_id", objective.get("finale_event_id", ""))).strip_edges()
 		return objective_for_object("event", "event:%s" % (RunState.GRAND_CASINO_SHOWDOWN_EVENT_ID if id.is_empty() else id), "answer Rourke's back-room call", true, player_facing_text)
 	if state == "high-roller-ready":
-		var id := str(objective.get("high_roller_event_id", "")).strip_edges()
-		return objective_for_object("event", "event:%s" % (RunState.GRAND_CASINO_HIGH_ROLLER_EVENT_ID if id.is_empty() else id), "claim the Players Card", true, player_facing_text)
+		return objective_for_object("casino_fixture", "casino_fixture:cage", "claim the Players Card at the Cage", true, player_facing_text)
 	return {}
 
 

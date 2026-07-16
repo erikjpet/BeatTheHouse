@@ -475,6 +475,8 @@ static func eligible_event_option_view_list(host: Variant) -> Array:
 		return []
 	var options: Array = []
 	for event_id in host._string_array(host.run_state.current_environment.get("event_ids", [])):
+		if event_id == RunState.GRAND_CASINO_HIGH_ROLLER_EVENT_ID and host.run_state.is_grand_casino_environment():
+			continue
 		var option = host._eligible_event_option(event_id)
 		if option.is_empty():
 			continue
@@ -485,6 +487,8 @@ static func eligible_event_option_view_list(host: Variant) -> Array:
 
 
 static func eligible_event_option(host: Variant, event_id: String) -> Dictionary:
+	if host.run_state != null and event_id == RunState.GRAND_CASINO_HIGH_ROLLER_EVENT_ID and host.run_state.is_grand_casino_environment():
+		return {}
 	return host._eligible_event_option_with_context(event_id, {})
 
 
