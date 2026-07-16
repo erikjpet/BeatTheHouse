@@ -3647,13 +3647,13 @@ func _check_grand_casino_challenge_targets(library: ContentLibrary, failures: Ar
 	pacifist_run.start_new("PACIFIST-GRAND", library.challenge_config_for("pacifist", "PACIFIST-GRAND"))
 	pacifist_run.set_environment(EnvironmentInstance.from_archetype(grand_casino, 3, pacifist_run.create_rng("pacifist_grand"), library, pacifist_run.challenge_config).to_dict())
 	var pacifist_status := pacifist_run.demo_objective_status()
-	if int(pacifist_status.get("high_roller_net_winnings", 0)) != 5 or int(pacifist_status.get("high_roller_max_heat", 0)) != 35:
+	if int(pacifist_status.get("high_roller_net_winnings", 0)) != 25 or int(pacifist_status.get("high_roller_max_heat", 0)) != 35:
 		failures.append("Pacifist Grand Casino target modifiers were not applied.")
 	var card_run: RunState = RunStateScript.new()
 	card_run.start_new("CARD-SHARP-GRAND", library.challenge_config_for("card_sharp", "CARD-SHARP-GRAND"))
 	card_run.set_environment(EnvironmentInstance.from_archetype(grand_casino, 3, card_run.create_rng("card_grand"), library, card_run.challenge_config).to_dict())
 	var card_status := card_run.demo_objective_status()
-	if int(card_status.get("high_roller_net_winnings", 0)) != 30:
+	if int(card_status.get("high_roller_net_winnings", 0)) != 50:
 		failures.append("Card Sharp Grand Casino target modifier was not applied.")
 
 

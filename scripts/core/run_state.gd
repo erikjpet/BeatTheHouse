@@ -2411,7 +2411,7 @@ func complete_grand_casino_high_roller_cashout(config: Dictionary = {}) -> Dicti
 			"message": "Linda files the Gold card. Quieter rooms open beyond the demo.",
 		})
 	_log_demo_finale_result(high_roller_event_id, GRAND_CASINO_HIGH_ROLLER_EVENT_ID, message, true)
-	return {"ok": true, "success": true, "message": message, "status": demo_objective_status()}
+	return {"ok": true, "success": true, "complete": true, "message": message, "status": demo_objective_status()}
 
 
 func _trigger_grand_casino_showdown(status: Dictionary, trigger_reason: String) -> void:

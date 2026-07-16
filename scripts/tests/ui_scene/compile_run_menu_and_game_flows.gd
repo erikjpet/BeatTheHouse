@@ -1331,7 +1331,6 @@ func _check_final_demo_objective_hud_matrix(app: Control) -> bool:
 	if not bool(app.call("_start_linda_ambient_dialogue", {"object_id": "casino_fixture:host_desk"})):
 		push_error("Bronze-or-better host desk did not open Linda's Main Floor ambient dialogue.")
 		return false
-	await process_frame
 	if str(high_roller_run.next_pending_talk_event().get("dialogue_id", "")) != "linda_main_floor_ambient_1":
 		push_error("Linda host-desk interaction did not use the authored ambient talk scene.")
 		return false
@@ -1341,7 +1340,6 @@ func _check_final_demo_objective_hud_matrix(app: Control) -> bool:
 		push_error("Cage did not reopen after Linda's ambient host-desk scene.")
 		return false
 	app.call("_complete_cage_players_card_review")
-	await process_frame
 	var gold_review_talk: Dictionary = app.call("current_talk_dock_snapshot")
 	if not bool(gold_review_talk.get("visible", false)) or str(high_roller_run.next_pending_talk_event().get("dialogue_id", "")) != "linda_gold_review" or bool((app.call("current_cage_window_snapshot") as Dictionary).get("visible", true)):
 		push_error("Cage Gold review did not move into Linda's talk-dock dialogue scene.")
@@ -1526,8 +1524,8 @@ func _check_grand_casino_spatial_ui(app: Control) -> bool:
 		push_error("Grand Casino Back Room door was not visibly locked behind Rourke.")
 		return false
 	var high_choice: Dictionary = app.call("_travel_choice", RunState.GRAND_CASINO_HIGH_LIMIT_ARCHETYPE_ID)
-	if high_choice.is_empty() or not bool(high_choice.get("enabled", false)) or not bool(high_choice.get("local_casino_room", false)) or int(high_choice.get("cost", 0)) <= 0 or int(high_choice.get("travel_minutes", 0)) != 5:
-		push_error("Grand Casino High-Limit door did not expose its cash/card local access gate.")
+	if high_choice.is_empty() or not bool(high_choice.get("enabled", false)) or not bool(high_choice.get("local_casino_room", false)) or int(high_choice.get("cost", -1)) != 0 or bool(high_choice.get("high_limit_buy_in", true)) or int(high_choice.get("travel_minutes", 0)) != 5:
+		push_error("Grand Casino High-Limit door did not expose Silver-or-better card access without a buy-in.")
 		return false
 	var table_game: GameModule = app.call("_game_module_for_id", "blackjack")
 	if table_game == null or not bool(app.call("_casino_table_wager_needs_top_up", table_game, 25)):
