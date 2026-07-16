@@ -22,6 +22,12 @@ const MIN_AUTHORED_MUSIC_LOOP_SECONDS := 12.0
 const AUTHORED_MUSIC_SAMPLE_RATE := 44100
 const AUTHORED_MUSIC_ALLOWED_BITS_PER_SAMPLE := [16, 24]
 const AUTHORED_MUSIC_BEATS_PER_BAR := 4
+const MUSIC_WAV_INFO_CACHE_MAX_ENTRIES := 128
+
+static var _music_wav_info_cache: Dictionary = {}
+static var _music_wav_info_cache_order: Array[String] = []
+static var _music_wav_info_cache_hits := 0
+static var _music_wav_info_cache_misses := 0
 
 var environment_archetypes: Array = []
 var games: Array = []
@@ -466,6 +472,22 @@ func music_delivery_index(track_id: String) -> Dictionary:
 
 static func inspect_music_wav(path: String) -> Dictionary:
 	return _wav_info(path)
+
+
+static func music_wav_info_cache_snapshot() -> Dictionary:
+	return {
+		"entries": _music_wav_info_cache.size(),
+		"hits": _music_wav_info_cache_hits,
+		"misses": _music_wav_info_cache_misses,
+		"max_entries": MUSIC_WAV_INFO_CACHE_MAX_ENTRIES,
+	}
+
+
+static func clear_music_wav_info_cache() -> void:
+	_music_wav_info_cache.clear()
+	_music_wav_info_cache_order.clear()
+	_music_wav_info_cache_hits = 0
+	_music_wav_info_cache_misses = 0
 
 
 static func synchronized_wav_mismatches(reference: Dictionary, candidate: Dictionary) -> Array[String]:
@@ -1504,6 +1526,22 @@ static func _wav_info(path: String) -> Dictionary:
 		return {"valid": false, "error": "file could not be opened for inspection"}
 	file.big_endian = false
 	var file_size := file.get_length()
+	var normalized_path := ProjectSettings.globalize_path(path).replace("\\", "/").simplify_path()
+	var modified_time := FileAccess.get_modified_time(path)
+	var cache_key := "%s|%d|%d" % [normalized_path, file_size, modified_time]
+	if _music_wav_info_cache.has(cache_key):
+		_music_wav_info_cache_hits += 1
+		var cached_entry: Dictionary = _music_wav_info_cache.get(cache_key, {}) as Dictionary
+		file.close()
+		return (cached_entry.get("info", {}) as Dictionary).duplicate(true)
+	_music_wav_info_cache_misses += 1
+	var info := _inspect_wav_file(file, file_size)
+	file.close()
+	_store_music_wav_info_cache(cache_key, normalized_path, info)
+	return info.duplicate(true)
+
+
+static func _inspect_wav_file(file: FileAccess, file_size: int) -> Dictionary:
 	if file_size < 12:
 		return {"valid": false, "error": "file is shorter than a RIFF/WAVE header"}
 	file.seek(0)
@@ -1599,6 +1637,23 @@ static func _wav_info(path: String) -> Dictionary:
 		"non_audio_chunks": non_audio_chunks,
 		"error": "",
 	}
+
+
+static func _store_music_wav_info_cache(cache_key: String, normalized_path: String, info: Dictionary) -> void:
+	for existing_key_value in _music_wav_info_cache_order.duplicate():
+		var existing_key := str(existing_key_value)
+		var existing: Dictionary = _music_wav_info_cache.get(existing_key, {}) as Dictionary
+		if str(existing.get("path", "")) == normalized_path:
+			_music_wav_info_cache.erase(existing_key)
+			_music_wav_info_cache_order.erase(existing_key)
+	_music_wav_info_cache[cache_key] = {
+		"path": normalized_path,
+		"info": info.duplicate(true),
+	}
+	_music_wav_info_cache_order.append(cache_key)
+	while _music_wav_info_cache_order.size() > MUSIC_WAV_INFO_CACHE_MAX_ENTRIES:
+		var evicted_key := _music_wav_info_cache_order.pop_front()
+		_music_wav_info_cache.erase(evicted_key)
 
 
 static func _file_fourcc(file: FileAccess) -> String:
