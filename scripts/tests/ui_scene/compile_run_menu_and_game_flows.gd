@@ -1271,6 +1271,8 @@ func _check_final_demo_objective_hud_matrix(app: Control) -> bool:
 	close_cashout_run.bankroll = maxi(high_roller_target - 20, int(close_cashout_run.narrative_flags.get("grand_casino_entry_bankroll", 0)) + high_roller_net)
 	close_cashout_run.evaluate_environment_objective_state()
 	_set_ui_fixture_run(app, close_cashout_run)
+	if not _check_grand_casino_spatial_ui(app):
+		return false
 	var close_snapshot: Dictionary = app.call("current_objective_hud_snapshot")
 	if not _assert_objective_state(close_snapshot, "grand-incomplete", "Grand Casino close cashout HUD"):
 		return false
@@ -1451,6 +1453,28 @@ func _set_ui_fixture_run(app: Control, run_state: RunState) -> void:
 	app.set("current_game", null)
 	app.call("_refresh_run_action_service")
 	app.call("_refresh_runtime_environment_views")
+
+
+func _check_grand_casino_spatial_ui(app: Control) -> bool:
+	app.call("_invalidate_travel_view_cache")
+	var objects: Array = app.call("_interactable_object_view_list")
+	var objects_by_id: Dictionary = {}
+	for object_value in objects:
+		if typeof(object_value) == TYPE_DICTIONARY:
+			objects_by_id[str((object_value as Dictionary).get("object_id", ""))] = object_value
+	for object_id in ["casino_fixture:cage", "casino_fixture:host_desk", "travel:grand_casino_high_limit", "travel:grand_casino_back_room"]:
+		if not objects_by_id.has(object_id):
+			push_error("Grand Casino spatial UI did not expose authored object: %s." % object_id)
+			return false
+	var back_door: Dictionary = objects_by_id.get("travel:grand_casino_back_room", {})
+	if bool(back_door.get("enabled", true)) or str(back_door.get("disabled_reason", "")).find("Rourke") == -1:
+		push_error("Grand Casino Back Room door was not visibly locked behind Rourke.")
+		return false
+	var high_choice: Dictionary = app.call("_travel_choice", RunState.GRAND_CASINO_HIGH_LIMIT_ARCHETYPE_ID)
+	if high_choice.is_empty() or not bool(high_choice.get("enabled", false)) or not bool(high_choice.get("local_casino_room", false)) or int(high_choice.get("cost", 0)) <= 0 or int(high_choice.get("travel_minutes", 0)) != 5:
+		push_error("Grand Casino High-Limit door did not expose its cash/card local access gate.")
+		return false
+	return true
 
 
 func _grand_casino_fixture_run(seed_text: String, environment: Dictionary) -> RunState:

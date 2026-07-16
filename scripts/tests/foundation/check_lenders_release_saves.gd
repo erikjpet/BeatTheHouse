@@ -935,6 +935,7 @@ func _check_demo_boss_objective_foundation(library: ContentLibrary, failures: Ar
 	if boss_archetype.is_empty():
 		failures.append("Grand Casino boss archetype is missing.")
 		return
+	_check_grand_casino_spatial_split(library, boss_archetype, failures)
 	var objective: Dictionary = boss_archetype.get("demo_objective", {}) if typeof(boss_archetype.get("demo_objective", {})) == TYPE_DICTIONARY else {}
 	if objective.is_empty() or str(objective.get("type", "")) != "bankroll_target":
 		failures.append("Grand Casino must define a bankroll-target demo objective.")
@@ -1553,6 +1554,121 @@ func _check_demo_boss_objective_foundation(library: ContentLibrary, failures: Ar
 		str(loaded_showdown.run_status),
 		str(loaded_clean_status.get("high_roller_ready", false)),
 	])
+
+
+func _check_grand_casino_spatial_split(library: ContentLibrary, main_archetype: Dictionary, failures: Array) -> void:
+	var high_limit := _archetype_by_id(library, RunState.GRAND_CASINO_HIGH_LIMIT_ARCHETYPE_ID)
+	var back_room := _archetype_by_id(library, RunState.GRAND_CASINO_BACK_ROOM_ARCHETYPE_ID)
+	if high_limit.is_empty() or back_room.is_empty():
+		failures.append("Grand Casino spatial split is missing the High-Limit or Back Room archetype.")
+		return
+	if not bool(high_limit.get("map_hidden", false)) or not bool(back_room.get("map_hidden", false)):
+		failures.append("Grand Casino subrooms must be hidden from world-map node generation.")
+	var main_games := _string_array(main_archetype.get("game_pool", []))
+	var high_games := _string_array(high_limit.get("game_pool", []))
+	for machine_id in ["slot", "video_poker", "pull_tabs", "bar_dice"]:
+		if not main_games.has(machine_id):
+			failures.append("Grand Casino Main Floor is missing required machine/bar game: %s." % machine_id)
+	for table_id in ["blackjack", "baccarat", "roulette"]:
+		if main_games.has(table_id) or not high_games.has(table_id):
+			failures.append("Grand Casino table placement did not isolate %s to the High-Limit Room." % table_id)
+	if high_games.has("video_poker"):
+		failures.append("Grand Casino High-Limit Room incorrectly includes video poker.")
+	if int(_copy_dict(high_limit.get("economic_profile", {})).get("stake_floor", 0)) <= int(_copy_dict(main_archetype.get("economic_profile", {})).get("stake_floor", 0)):
+		failures.append("Grand Casino High-Limit Room stake floor is not higher than the Main Floor.")
+
+	for seed_index in range(12):
+		var map_run: RunState = RunStateScript.new()
+		map_run.start_new("GC-SPATIAL-MAP-%02d" % seed_index)
+		var map_data := WorldMapScript.new(library).build(map_run, map_run.create_rng("gc_spatial_map"))
+		var grand_node_count := 0
+		for node_value in _copy_array(map_data.get("nodes", [])):
+			if typeof(node_value) != TYPE_DICTIONARY:
+				continue
+			var node_id := str((node_value as Dictionary).get("id", ""))
+			if node_id.begins_with("grand_casino"):
+				grand_node_count += 1
+		if grand_node_count != 1 or not WorldMapScript.node_by_id(map_data, RunState.GRAND_CASINO_HIGH_LIMIT_ARCHETYPE_ID).is_empty() or not WorldMapScript.node_by_id(map_data, RunState.GRAND_CASINO_BACK_ROOM_ARCHETYPE_ID).is_empty():
+			failures.append("World map seed %d did not contain exactly one Grand Casino node." % seed_index)
+			break
+
+	var run_state := _grand_casino_spatial_fixture_run(library, "GC-SPATIAL-SHARED", failures)
+	if run_state == null:
+		return
+	var generator: RunGenerator = RunGeneratorScript.new(library)
+	var layout := _copy_dict(run_state.current_environment.get("layout", {}))
+	var object_rects := _copy_dict(layout.get("object_rects", {}))
+	for object_id in ["casino_fixture:cage", "casino_fixture:host_desk", "travel:grand_casino_high_limit", "travel:grand_casino_back_room"]:
+		if not object_rects.has(object_id):
+			failures.append("Grand Casino Main Floor layout is missing authored object placement: %s." % object_id)
+	var buy_in := int(_copy_dict(run_state.current_environment.get("local_narrative_flags", {})).get("casino_high_limit_buy_in", 60))
+	run_state.bankroll = maxi(0, buy_in - 1)
+	if bool(run_state.grand_casino_room_access_status(RunState.GRAND_CASINO_HIGH_LIMIT_ARCHETYPE_ID, buy_in).get("available", true)):
+		failures.append("Grand Casino High-Limit door admitted a player without card access or enough cash.")
+	run_state.bankroll = buy_in + 40
+	var cash_access := run_state.grand_casino_room_access_status(RunState.GRAND_CASINO_HIGH_LIMIT_ARCHETYPE_ID, buy_in)
+	if not bool(cash_access.get("available", false)) or int(cash_access.get("cost", 0)) != buy_in:
+		failures.append("Grand Casino High-Limit cash buy-in gate did not admit and price an eligible player.")
+	if bool(run_state.grand_casino_room_access_status(RunState.GRAND_CASINO_BACK_ROOM_ARCHETYPE_ID, buy_in).get("available", true)) or generator.enter_grand_casino_room(run_state, RunState.GRAND_CASINO_BACK_ROOM_ARCHETYPE_ID):
+		failures.append("Grand Casino Back Room was reachable without the showdown.")
+
+	run_state.add_suspicion("gc_room_shared_heat", 23, "behavior")
+	run_state.narrative_flags["grand_casino_attention_eye_in_the_sky"] = true
+	run_state.narrative_flags["grand_casino_cheat_evidence"] = true
+	run_state.record_grand_casino_game_result({"ok": true, "game_id": "slot", "action_kind": "legal", "stake": 5})
+	var entry_bankroll := int(run_state.narrative_flags.get("grand_casino_entry_bankroll", -1))
+	run_state.narrative_flags["grand_casino_high_limit_access"] = true
+	run_state.narrative_flags["grand_casino_high_limit_access_method"] = "fixture_card"
+	if not generator.enter_grand_casino_room(run_state, RunState.GRAND_CASINO_HIGH_LIMIT_ARCHETYPE_ID):
+		failures.append("Grand Casino room seam could not enter the High-Limit Room with access.")
+		return
+	if run_state.current_world_node_id() != RunState.GRAND_CASINO_ARCHETYPE_ID or str(run_state.current_environment.get("archetype_id", "")) != RunState.GRAND_CASINO_HIGH_LIMIT_ARCHETYPE_ID:
+		failures.append("Grand Casino local room move changed the world node or missed the High-Limit archetype.")
+	if run_state.suspicion_level() != 23 or not bool(run_state.narrative_flags.get("grand_casino_attention_eye_in_the_sky", false)) or not bool(run_state.narrative_flags.get("grand_casino_cheat_evidence", false)):
+		failures.append("Grand Casino room move did not preserve shared heat, attention, and evidence.")
+	if int(run_state.narrative_flags.get("grand_casino_games_played", 0)) != 1 or int(run_state.narrative_flags.get("grand_casino_entry_bankroll", -2)) != entry_bankroll:
+		failures.append("Grand Casino room move reset shared objective counters or entry bankroll.")
+	run_state.store_current_world_node_environment()
+	var stored_main := _copy_dict(WorldMapScript.node_by_id(run_state.world_map, RunState.GRAND_CASINO_ARCHETYPE_ID).get("environment", {}))
+	if str(stored_main.get("archetype_id", "")) != RunState.GRAND_CASINO_ARCHETYPE_ID:
+		failures.append("Grand Casino world node stored a subroom instead of the Main Floor snapshot.")
+	var restored: RunState = RunStateScript.new()
+	restored.from_dict(run_state.to_dict())
+	if str(restored.current_environment.get("archetype_id", "")) != RunState.GRAND_CASINO_HIGH_LIMIT_ARCHETYPE_ID or restored.grand_casino_room_environment(RunState.GRAND_CASINO_ARCHETYPE_ID).is_empty() or restored.suspicion_level() != 23:
+		failures.append("Grand Casino room cache, position, or shared heat did not survive save/load.")
+	if not generator.enter_grand_casino_room(restored, RunState.GRAND_CASINO_ARCHETYPE_ID):
+		failures.append("Grand Casino room seam could not return from High-Limit to Main Floor.")
+
+	var clean_run := _grand_casino_spatial_fixture_run(library, "GC-SPATIAL-CLEAN", failures)
+	if clean_run == null:
+		return
+	var clean_generator: RunGenerator = RunGeneratorScript.new(library)
+	clean_run.record_grand_casino_game_result({"ok": true, "game_id": "slot", "action_kind": "legal", "stake": 5})
+	clean_run.narrative_flags["grand_casino_high_limit_access"] = true
+	if not clean_generator.enter_grand_casino_room(clean_run, RunState.GRAND_CASINO_HIGH_LIMIT_ARCHETYPE_ID):
+		failures.append("Grand Casino split clean-route fixture could not enter High-Limit.")
+		return
+	var objective := _copy_dict(clean_run.current_environment.get("demo_objective", {}))
+	var min_games := maxi(1, int(objective.get("high_roller_min_grand_casino_games", 3)))
+	for game_index in range(1, min_games):
+		clean_run.record_grand_casino_game_result({"ok": true, "game_id": "blackjack", "action_kind": "legal", "stake": 25})
+	clean_run.bankroll = int(clean_run.narrative_flags.get("grand_casino_entry_bankroll", clean_run.bankroll)) + maxi(1, int(objective.get("high_roller_net_winnings", 10)))
+	var split_status := clean_run.evaluate_environment_objective_state()
+	if not bool(split_status.get("high_roller_ready", false)) or int(split_status.get("grand_casino_games_played", 0)) != min_games:
+		failures.append("Grand Casino clean route did not complete its ready transition with play split across rooms.")
+
+
+func _grand_casino_spatial_fixture_run(library: ContentLibrary, seed_text: String, failures: Array) -> RunState:
+	var run_state: RunState = RunStateScript.new()
+	run_state.start_new(seed_text)
+	var map_data := WorldMapScript.new(library).build(run_state, run_state.create_rng("gc_spatial_fixture_map"))
+	run_state.set_world_map(map_data)
+	var generator: RunGenerator = RunGeneratorScript.new(library)
+	var generated := generator.next_environment(run_state, RunState.GRAND_CASINO_ARCHETYPE_ID, true)
+	if generated == null or str(run_state.current_environment.get("archetype_id", "")) != RunState.GRAND_CASINO_ARCHETYPE_ID:
+		failures.append("Grand Casino spatial fixture could not generate the Main Floor under the world node.")
+		return null
+	return run_state
 
 
 # Checks bankrupt failure, supported lender recovery, save/load, and victory/failure separation.
@@ -2327,7 +2443,7 @@ func _all_environment_ids(archetypes: Array, field_name: String) -> Array:
 func _check_baccarat_grand_casino_only(library: ContentLibrary, failures: Array) -> void:
 	var found_baccarat_in_grand := false
 	var found_roulette_in_grand := false
-	var roulette_tier_two_rooms := ["kitty_cat_lounge", "delta_queen", "grand_casino"]
+	var roulette_rooms := ["kitty_cat_lounge", "delta_queen", RunState.GRAND_CASINO_HIGH_LIMIT_ARCHETYPE_ID]
 	for archetype_value in library.environment_archetypes:
 		if typeof(archetype_value) != TYPE_DICTIONARY:
 			continue
@@ -2335,23 +2451,23 @@ func _check_baccarat_grand_casino_only(library: ContentLibrary, failures: Array)
 		var archetype_id := str(archetype.get("id", ""))
 		var pool := _string_array(archetype.get("game_pool", []))
 		if pool.has("baccarat"):
-			if archetype_id != "grand_casino":
-				failures.append("Baccarat must only appear in Grand Casino, but %s includes it." % archetype_id)
+			if archetype_id != RunState.GRAND_CASINO_HIGH_LIMIT_ARCHETYPE_ID:
+				failures.append("Baccarat must only appear in the Grand Casino High-Limit Room, but %s includes it." % archetype_id)
 			else:
 				found_baccarat_in_grand = true
 		if pool.has("roulette"):
-			if not roulette_tier_two_rooms.has(archetype_id):
-				failures.append("Roulette must only appear in the Grand Casino or T4.1 tier-2 wheel venues, but %s includes it." % archetype_id)
-			if archetype_id == "grand_casino":
+			if not roulette_rooms.has(archetype_id):
+				failures.append("Roulette must only appear in the Grand Casino High-Limit Room or T4.1 tier-2 wheel venues, but %s includes it." % archetype_id)
+			if archetype_id == RunState.GRAND_CASINO_HIGH_LIMIT_ARCHETYPE_ID:
 				found_roulette_in_grand = true
-		if archetype_id == "grand_casino":
+		if archetype_id == RunState.GRAND_CASINO_HIGH_LIMIT_ARCHETYPE_ID:
 			var count_range: Array = archetype.get("game_count", []) if typeof(archetype.get("game_count", [])) == TYPE_ARRAY else []
 			if count_range.size() < 2 or int(count_range[0]) < pool.size() or int(count_range[1]) < pool.size():
-				failures.append("Grand Casino does not guarantee every premium game spot is present.")
+				failures.append("Grand Casino High-Limit Room does not guarantee every premium table is present.")
 	if not found_baccarat_in_grand:
-		failures.append("Baccarat must be present in the Grand Casino game pool.")
+		failures.append("Baccarat must be present in the Grand Casino High-Limit game pool.")
 	if not found_roulette_in_grand:
-		failures.append("Roulette must be present in the Grand Casino game pool.")
+		failures.append("Roulette must be present in the Grand Casino High-Limit game pool.")
 
 
 # Checks generated item offer prices.
