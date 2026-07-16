@@ -1855,6 +1855,14 @@ func _run() -> void:
 		push_error("Generated environment music stream should loop.")
 		quit(1)
 		return
+	if generated_music.format != AudioStreamWAV.FORMAT_16_BITS \
+			or generated_music.mix_rate != 44100 \
+			or generated_music.stereo \
+			or generated_music.loop_begin != 0 \
+			or generated_music.data.size() != generated_music.loop_end * 2:
+		push_error("Generated environment music stream did not preserve its exact mono PCM/loop contract.")
+		quit(1)
+		return
 	if generated_music.data.size() <= 22050:
 		push_error("Generated environment music stream did not contain enough PCM data.")
 		quit(1)
@@ -1863,6 +1871,26 @@ func _run() -> void:
 		push_error("Generated environment music should be a longer arranged theme, not a short repeated loop.")
 		quit(1)
 		return
+	var preview_profile: Dictionary = procedural_music_player.call("_music_profile_from_environment", app.get("run_state").current_environment, 70)
+	var preview_probe_context: Dictionary = procedural_music_player.call("_ambient_generation_context", preview_profile)
+	preview_probe_context["frames"] = 13
+	preview_probe_context["duration"] = 13.0 / 44100.0
+	var preview_probe_a: PackedByteArray = procedural_music_player.call("_ambient_pcm_data", preview_probe_context)
+	var preview_probe_b: PackedByteArray = procedural_music_player.call("_ambient_pcm_data", preview_probe_context)
+	if preview_probe_a != preview_probe_b or preview_probe_a.size() != 26:
+		push_error("Procedural music preview generation was not deterministic for identical context.")
+		quit(1)
+		return
+	for stride_start in range(0, 13, 4):
+		var stride_end := mini(stride_start + 4, 13)
+		for frame_index in range(stride_start + 1, stride_end):
+			var source_byte_index := stride_start * 2
+			var frame_byte_index := frame_index * 2
+			if preview_probe_a[source_byte_index] != preview_probe_a[frame_byte_index] \
+					or preview_probe_a[source_byte_index + 1] != preview_probe_a[frame_byte_index + 1]:
+				push_error("Procedural music preview render stride did not repeat exact PCM samples.")
+				quit(1)
+				return
 	var music_theory: Dictionary = procedural_music_player.call("music_theory_snapshot_for_environment", app.get("run_state").current_environment, 70)
 	if music_theory.is_empty() or str(music_theory.get("mode", "")).is_empty():
 		push_error("Procedural music player did not expose a generated mode/harmony plan.")
@@ -1895,6 +1923,10 @@ func _run() -> void:
 		return
 	if int(music_latency.get("primer_frames", 0)) <= 0 or int(music_latency.get("full_frames", 0)) <= 0:
 		push_error("Staged procedural music generation did not produce usable frame counts.")
+		quit(1)
+		return
+	if int(music_latency.get("full_frames", 0)) != generated_music.loop_end:
+		push_error("Generated environment music loop frames did not match its generation contract.")
 		quit(1)
 		return
 	if int(music_latency.get("instant_frames", 0)) <= 0:
