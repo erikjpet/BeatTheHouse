@@ -81,5 +81,197 @@
         "tags": ["win", "on_beat"]
       }
     }
+  },
+  {
+    "id": "jazz_club_delivery_fixture_8_bar",
+    "display_name": "Jazz Club 24-bit 8-bar delivery fixture (not production music)",
+    "bpm": 120,
+    "bars": 8,
+    "beats_per_bar": 4,
+    "sample_rate": 44100,
+    "bit_depth": 24,
+    "channels": 1,
+    "loop_begin": 0,
+    "loop_frames": 705600,
+    "palette_id": "jazz_club_delivery_fixture",
+    "delivery": {
+      "environment": "JazzClub",
+      "master_contract": "production_24_bit",
+      "fixture_only": true,
+      "classification_aliases": {
+        "Chords": "pad",
+        "Bass": "bass",
+        "Lead": "lead",
+        "DrumsLow": "drums_low",
+        "DrumsHigh": "drums_high",
+        "Tension": "tension",
+        "Texture": "texture",
+        "Fill": "fill",
+        "Stinger": "stinger"
+      }
+    },
+    "harmonic_sections": {
+      "A": {
+        "key": "C_major",
+        "relative_key": "A_minor",
+        "tonal_center": "C"
+      }
+    },
+    "arrangement": ["A", "A", "A", "A", "A", "A", "A", "A"],
+    "stems": {
+      "pad": {
+        "id": "jazz_chords_piano_1",
+        "file": "JazzClub_Chords_Piano_1.wav",
+        "classification": "Chords",
+        "role": "pad",
+        "instrument": "Piano",
+        "pattern_number": 1,
+        "weight": 1,
+        "tags": ["fixture", "warm", "core_progression"],
+        "progression_compatibility": ["jazz_a_1"],
+        "harmonic_sections": ["A"],
+        "key": "C_major",
+        "relative_key": "A_minor",
+        "intensity_min": 0.0,
+        "intensity_max": 1.0,
+        "mutual_exclusion_group": "jazz_chord_voice",
+        "loop_begin": 0,
+        "loop_end": 705600,
+        "dsp_sends": {"reverb": 0.12, "compressor": 0.05}
+      },
+      "bass": {
+        "id": "jazz_bass_upright_1",
+        "file": "JazzClub_Bass_UprightBass_1.wav",
+        "classification": "Bass",
+        "role": "bass",
+        "instrument": "UprightBass",
+        "pattern_number": 1,
+        "weight": 1,
+        "tags": ["fixture", "root_motion"],
+        "progression_compatibility": ["jazz_a_1"],
+        "harmonic_sections": ["A"],
+        "key": "C_major",
+        "relative_key": "A_minor",
+        "intensity_min": 0.0,
+        "intensity_max": 1.0,
+        "loop_begin": 0,
+        "loop_end": 705600,
+        "dsp_sends": {"compressor": 0.18, "reverb": 0.02}
+      },
+      "lead": {
+        "id": "jazz_lead_trumpet_1",
+        "file": "JazzClub_Lead_Trumpet_1.wav",
+        "classification": "Lead",
+        "role": "lead",
+        "instrument": "Trumpet",
+        "pattern_number": 1,
+        "weight": 1,
+        "tags": ["fixture", "melodic"],
+        "progression_compatibility": ["jazz_a_1"],
+        "harmonic_sections": ["A"],
+        "key": "C_major",
+        "relative_key": "A_minor",
+        "intensity_min": 0.0,
+        "intensity_max": 0.85,
+        "mutual_exclusion_group": "jazz_lead_voice",
+        "loop_begin": 0,
+        "loop_end": 705600,
+        "dsp_sends": {"reverb": 0.2, "delay": 0.04}
+      },
+      "drums_high": {
+        "id": "jazz_drums_high_brush_1",
+        "file": "JazzClub_DrumsHigh_BrushKit_1.wav",
+        "classification": "DrumsHigh",
+        "role": "drums_high",
+        "instrument": "BrushKit",
+        "pattern_number": 1,
+        "weight": 1,
+        "tags": ["fixture", "brushes"],
+        "progression_compatibility": ["jazz_a_1"],
+        "harmonic_sections": ["A"],
+        "key": "C_major",
+        "relative_key": "A_minor",
+        "intensity_min": 0.1,
+        "intensity_max": 1.0,
+        "loop_begin": 0,
+        "loop_end": 705600,
+        "dsp_sends": {"reverb": 0.08, "compressor": 0.1}
+      }
+    },
+    "fills": {
+      "jazz_fixture_fill": {
+        "file": "JazzClub_Fill_BrushKit_1.wav",
+        "classification": "Fill",
+        "role": "fill",
+        "instrument": "BrushKit",
+        "pattern_number": 1,
+        "loop": false,
+        "tags": ["fixture", "transition"],
+        "progression_compatibility": ["jazz_a_1"],
+        "harmonic_sections": ["A"],
+        "dsp_sends": {"reverb": 0.1}
+      }
+    },
+    "stingers": {
+      "jazz_fixture_win": {
+        "file": "JazzClub_Stinger_Trumpet_1.wav",
+        "classification": "Stinger",
+        "role": "stinger",
+        "instrument": "Trumpet",
+        "pattern_number": 1,
+        "loop": false,
+        "tags": ["fixture", "win"],
+        "progression_compatibility": ["jazz_a_1"],
+        "harmonic_sections": ["A"],
+        "dsp_sends": {"reverb": 0.22, "delay": 0.03}
+      }
+    }
+  },
+  {
+    "id": "jazz_club_delivery_fixture_16_bar",
+    "display_name": "Jazz Club 24-bit 16-bar delivery fixture (not production music)",
+    "bpm": 120,
+    "bars": 16,
+    "beats_per_bar": 4,
+    "sample_rate": 44100,
+    "bit_depth": 24,
+    "channels": 1,
+    "loop_begin": 0,
+    "loop_frames": 1411200,
+    "palette_id": "jazz_club_delivery_fixture_16",
+    "delivery": {
+      "environment": "JazzClub",
+      "master_contract": "production_24_bit",
+      "fixture_only": true
+    },
+    "harmonic_sections": {
+      "A": {
+        "key": "C_major",
+        "relative_key": "A_minor",
+        "tonal_center": "C"
+      }
+    },
+    "arrangement": ["A", "A", "A", "A", "A", "A", "A", "A", "A", "A", "A", "A", "A", "A", "A", "A"],
+    "stems": {
+      "pad": {
+        "id": "jazz_chords_piano_2",
+        "file": "JazzClub_Chords_Piano_2.wav",
+        "classification": "Chords",
+        "role": "pad",
+        "instrument": "Piano",
+        "pattern_number": 2,
+        "weight": 1,
+        "tags": ["fixture", "sixteen_bar"],
+        "progression_compatibility": ["jazz_a_1"],
+        "harmonic_sections": ["A"],
+        "key": "C_major",
+        "relative_key": "A_minor",
+        "intensity_min": 0.0,
+        "intensity_max": 1.0,
+        "loop_begin": 0,
+        "loop_end": 1411200,
+        "dsp_sends": {"reverb": 0.12}
+      }
+    }
   }
 ]

@@ -3,6 +3,7 @@ extends Node
 
 const WebAudioBridgeScript := preload("res://scripts/ui/web_audio_bridge.gd")
 const MusicArrangementSelectorScript := preload("res://scripts/ui/music_arrangement_selector.gd")
+const MusicDeliveryIndexScript := preload("res://scripts/core/music_delivery_index.gd")
 
 # Procedural background music for the foundation UI.
 # The synth shape is ported from the old baseline: generated PCM WAV themes,
@@ -1230,6 +1231,7 @@ func _apply_music_fx_vector(vector: Dictionary, _force: bool) -> void:
 		AudioServer.set_bus_effect_enabled(bus_index, limiter_index, true)
 	_configure_music_send_effects(vector)
 	_music_send_matrix = _music_send_matrix_from_vector(vector)
+	_music_send_matrix = _merge_authored_send_preferences(_music_send_matrix, _current_stem_set)
 	_apply_music_send_matrix(_music_send_matrix, _current_stem_set, _music_send_players, false)
 	_apply_music_send_matrix(_scaled_music_send_matrix(_music_send_matrix, 0.72), _current_feature_stem_set, _feature_send_players, true)
 	var wobble_cents := clampf(float(vector.get("pitch_wobble_cents", 0.0)), 0.0, 18.0)
@@ -1345,6 +1347,22 @@ static func _scaled_music_send_matrix(matrix: Dictionary, scale: float) -> Dicti
 		for role_value in roles.keys():
 			scaled_roles[role_value] = float(roles.get(role_value, 0.0)) * scale
 		result[effect_value] = scaled_roles
+	return result
+
+
+static func _merge_authored_send_preferences(matrix: Dictionary, stem_set: Dictionary) -> Dictionary:
+	var result := matrix.duplicate(true)
+	var preferences := stem_set.get("preferred_dsp_sends", {}) as Dictionary if typeof(stem_set.get("preferred_dsp_sends", {})) == TYPE_DICTIONARY else {}
+	for role_value in preferences.keys():
+		var role := str(role_value)
+		var role_preferences := preferences.get(role_value, {}) as Dictionary if typeof(preferences.get(role_value, {})) == TYPE_DICTIONARY else {}
+		var role_matrix := result.get(role, {}) as Dictionary if typeof(result.get(role, {})) == TYPE_DICTIONARY else {}
+		for effect_value in role_preferences.keys():
+			var effect_key := str(effect_value)
+			if not MUSIC_SEND_EFFECT_ORDER.has(effect_key):
+				continue
+			role_matrix[effect_key] = maxf(float(role_matrix.get(effect_key, 0.0)), clampf(float(role_preferences.get(effect_value, 0.0)), 0.0, 1.0))
+		result[role] = role_matrix
 	return result
 
 
@@ -3201,6 +3219,10 @@ func _stem_manifest_from_contract(stem_set: Dictionary) -> Dictionary:
 		"sample_rate": int(stem_set.get("sample_rate", SAMPLE_RATE)),
 		"channels": int(stem_set.get("channels", 1)),
 		"bit_depth": int(stem_set.get("bit_depth", 16)),
+		"delivery_files": _copy_array(stem_set.get("delivery_files", [])),
+		"source_audio_format": _copy_dict(stem_set.get("source_audio_format", {})),
+		"playback_audio_format": _copy_dict(stem_set.get("playback_audio_format", {})),
+		"preferred_dsp_sends": _copy_dict(stem_set.get("preferred_dsp_sends", {})),
 		"selection_key": str(stem_set.get("selection_key", "base")),
 		"selected_variants": _copy_dict(stem_set.get("selected_variants", {})),
 		"selected_tags": _copy_array(stem_set.get("selected_tags", [])),
@@ -3394,6 +3416,11 @@ func _authored_stem_set_from_profile(profile: Dictionary, music_state: Dictionar
 	contract["sample_rate"] = int(entry.get("sample_rate", SAMPLE_RATE))
 	contract["channels"] = int(entry.get("channels", 1))
 	contract["bit_depth"] = int(entry.get("bit_depth", 16))
+	var delivery_snapshot := _authored_delivery_snapshot(entry, stems_data)
+	contract["delivery_files"] = _copy_array(delivery_snapshot.get("files", []))
+	contract["source_audio_format"] = _copy_dict(delivery_snapshot.get("source_audio_format", {}))
+	contract["playback_audio_format"] = _copy_dict(delivery_snapshot.get("playback_audio_format", {}))
+	contract["preferred_dsp_sends"] = _copy_dict(delivery_snapshot.get("preferred_dsp_sends", {}))
 	contract["selection_key"] = selection_key
 	contract["selected_variants"] = _copy_dict(selection.get("selected_variants", {}))
 	contract["selected_tags"] = _copy_array(selection.get("selected_tags", []))
@@ -3403,6 +3430,48 @@ func _authored_stem_set_from_profile(profile: Dictionary, music_state: Dictionar
 	contract["step_period"] = _step_period_from_bpm(float(contract.get("bpm", 82.0)))
 	_authored_manifest_cache[cache_key] = contract.duplicate(true)
 	return contract
+
+
+func _authored_delivery_snapshot(entry: Dictionary, selected_stems: Dictionary) -> Dictionary:
+	var delivery := entry.get("delivery", {}) as Dictionary if typeof(entry.get("delivery", {})) == TYPE_DICTIONARY else {}
+	var aliases := delivery.get("classification_aliases", {}) as Dictionary if typeof(delivery.get("classification_aliases", {})) == TYPE_DICTIONARY else {}
+	var files: Array = []
+	var preferred_dsp_sends := {}
+	var roles := selected_stems.keys()
+	roles.sort_custom(func(a: Variant, b: Variant) -> bool: return str(a) < str(b))
+	for role_value in roles:
+		var role := str(role_value)
+		var metadata_value: Variant = selected_stems.get(role_value)
+		var filename := _authored_stem_filename(metadata_value)
+		var parsed := MusicDeliveryIndexScript.parse_filename(filename, aliases)
+		if bool(parsed.get("ok", false)):
+			files.append(parsed.duplicate(true))
+		else:
+			files.append({"ok": false, "original_filename": filename, "role": role, "error": str(parsed.get("error", "legacy filename"))})
+		if typeof(metadata_value) == TYPE_DICTIONARY:
+			var sends_value: Variant = (metadata_value as Dictionary).get("dsp_sends", {})
+			if typeof(sends_value) == TYPE_DICTIONARY:
+				preferred_dsp_sends[role] = (sends_value as Dictionary).duplicate(true)
+	var source_bits := int(entry.get("bit_depth", 16))
+	return {
+		"files": files,
+		"preferred_dsp_sends": preferred_dsp_sends,
+		"source_audio_format": {
+			"codec": "pcm_integer_wav",
+			"sample_rate": int(entry.get("sample_rate", SAMPLE_RATE)),
+			"channels": int(entry.get("channels", 1)),
+			"bit_depth": source_bits,
+			"master_preserved": true,
+		},
+		"playback_audio_format": {
+			"codec": "godot_audiostreamwav_pcm16",
+			"sample_rate": int(entry.get("sample_rate", SAMPLE_RATE)),
+			"channels": int(entry.get("channels", 1)),
+			"bit_depth": 16,
+			"decoded_from_24_bit": source_bits == 24,
+			"decode_policy": "signed_round_to_nearest_once_at_load",
+		},
+	}
 
 
 func _authored_track_entry(track_id: String) -> Dictionary:
@@ -3519,6 +3588,12 @@ func _authored_music_path(track_id: String, filename: String) -> String:
 
 
 func _load_authored_audio_stream(path: String, loop_frames: int, loop_enabled: bool = true):
+	var lowered := path.to_lower()
+	if lowered.ends_with(".wav"):
+		# Decode the untouched source master ourselves. This keeps 24-bit source
+		# validation deterministic across editor/import settings and converts once
+		# into Godot's native AudioStreamWAV PCM16 playback container at full rate.
+		return _load_authored_wav_stream(path, loop_frames, loop_enabled)
 	var loaded: Resource = load(path)
 	if loaded is AudioStreamWAV:
 		var wav_stream := (loaded as AudioStreamWAV).duplicate(true) as AudioStreamWAV
@@ -3526,9 +3601,6 @@ func _load_authored_audio_stream(path: String, loop_frames: int, loop_enabled: b
 		return wav_stream
 	if loaded is AudioStream:
 		return loaded
-	var lowered := path.to_lower()
-	if lowered.ends_with(".wav"):
-		return _load_authored_wav_stream(path, loop_frames, loop_enabled)
 	return null
 
 
@@ -3543,35 +3615,60 @@ func _load_authored_wav_stream(path: String, loop_frames: int, loop_enabled: boo
 	if not FileAccess.file_exists(path):
 		return null
 	var bytes := FileAccess.get_file_as_bytes(path)
-	if bytes.size() < 44:
+	if bytes.size() < 12:
 		return null
 	if _ascii_from_bytes(bytes, 0, 4) != "RIFF" or _ascii_from_bytes(bytes, 8, 4) != "WAVE":
 		return null
 	var offset := 12
-	var channels := 1
-	var sample_rate := SAMPLE_RATE
-	var bits_per_sample := 16
+	var audio_format := 0
+	var channels := 0
+	var sample_rate := 0
+	var bits_per_sample := 0
+	var block_align := 0
 	var data_start := -1
 	var data_size := 0
 	while offset + 8 <= bytes.size():
 		var chunk_id := _ascii_from_bytes(bytes, offset, 4)
 		var chunk_size := _u32_le(bytes, offset + 4)
 		var chunk_data := offset + 8
-		if chunk_id == "fmt " and chunk_data + 16 <= bytes.size():
-			channels = maxi(1, _u16_le(bytes, chunk_data + 2))
-			sample_rate = maxi(1, _u32_le(bytes, chunk_data + 4))
+		if chunk_data + chunk_size > bytes.size():
+			return null
+		if chunk_id == "fmt " and chunk_size >= 16:
+			audio_format = _u16_le(bytes, chunk_data)
+			channels = _u16_le(bytes, chunk_data + 2)
+			sample_rate = _u32_le(bytes, chunk_data + 4)
+			block_align = _u16_le(bytes, chunk_data + 12)
 			bits_per_sample = _u16_le(bytes, chunk_data + 14)
-		elif chunk_id == "data":
+		elif chunk_id == "data" and data_start < 0:
 			data_start = chunk_data
-			data_size = mini(chunk_size, bytes.size() - chunk_data)
-			break
+			data_size = chunk_size
 		offset = chunk_data + chunk_size + (chunk_size % 2)
-	if data_start < 0 or data_size <= 0 or bits_per_sample != 16:
+	if audio_format != 1 or channels < 1 or channels > 2 or sample_rate <= 0 or not [16, 24].has(bits_per_sample) or data_start < 0 or data_size <= 0:
+		return null
+	var source_bytes_per_sample := int(bits_per_sample / 8)
+	var source_frame_bytes := channels * source_bytes_per_sample
+	if block_align != source_frame_bytes or data_size % source_frame_bytes != 0:
+		return null
+	var source_frames := int(data_size / source_frame_bytes)
+	if loop_enabled and loop_frames > 0 and source_frames != loop_frames:
 		return null
 	var data := PackedByteArray()
-	data.resize(data_size)
-	for index in range(data_size):
-		data[index] = bytes[data_start + index]
+	if bits_per_sample == 16:
+		data.resize(data_size)
+		for index in range(data_size):
+			data[index] = bytes[data_start + index]
+	else:
+		# AudioStreamWAV exposes PCM16 as its lossless integer playback format.
+		# Round signed 24-bit samples once, preserving rate/channels/phase and the
+		# original 24-bit file on disk for future higher-depth engine backends.
+		var sample_count := source_frames * channels
+		data.resize(sample_count * 2)
+		for sample_index in range(sample_count):
+			var source_offset := data_start + sample_index * 3
+			var sample_24 := _s24_le(bytes, source_offset)
+			var sample_16 := clampi(int(round(float(sample_24) / 256.0)), -32768, 32767)
+			data[sample_index * 2] = sample_16 & 0xff
+			data[sample_index * 2 + 1] = (sample_16 >> 8) & 0xff
 	var stream := AudioStreamWAV.new()
 	stream.format = AudioStreamWAV.FORMAT_16_BITS
 	stream.mix_rate = sample_rate
@@ -3599,6 +3696,13 @@ static func _u32_le(bytes: PackedByteArray, offset: int) -> int:
 	if offset + 3 >= bytes.size():
 		return 0
 	return int(bytes[offset]) | (int(bytes[offset + 1]) << 8) | (int(bytes[offset + 2]) << 16) | (int(bytes[offset + 3]) << 24)
+
+
+static func _s24_le(bytes: PackedByteArray, offset: int) -> int:
+	if offset + 2 >= bytes.size():
+		return 0
+	var value := int(bytes[offset]) | (int(bytes[offset + 1]) << 8) | (int(bytes[offset + 2]) << 16)
+	return value - 0x1000000 if (value & 0x800000) != 0 else value
 
 
 func _midi_freq(midi_note: int) -> float:

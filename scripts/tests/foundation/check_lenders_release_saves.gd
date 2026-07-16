@@ -7,6 +7,7 @@ const StaffBaccaratGameScript := preload("res://scripts/games/baccarat.gd")
 const StaffRouletteGameScript := preload("res://scripts/games/roulette.gd")
 const StaffBarDiceGameScript := preload("res://scripts/games/bar_dice.gd")
 const GrandCasinoDuelModelScript := preload("res://scripts/core/grand_casino_duel_model.gd")
+const MusicDeliveryIndexScript := preload("res://scripts/core/music_delivery_index.gd")
 
 
 func _check_run_report_foundation(failures: Array) -> void:
@@ -534,6 +535,41 @@ func _check_music_stem_director_foundation(library: ContentLibrary, failures: Ar
 	var authored_track := library.music_track("corner_store_sparse_fixture")
 	if authored_track.is_empty():
 		failures.append("ContentLibrary did not load the authored sparse music track fixture.")
+	var jazz_8_track := library.music_track("jazz_club_delivery_fixture_8_bar")
+	var jazz_16_track := library.music_track("jazz_club_delivery_fixture_16_bar")
+	if jazz_8_track.is_empty() or jazz_16_track.is_empty():
+		failures.append("ContentLibrary did not load both 24-bit Jazz delivery fixtures.")
+	var parsed_delivery := MusicDeliveryIndexScript.parse_filename("JazzClub_Lead_Trumpet_1.WAV")
+	if not bool(parsed_delivery.get("ok", false)) or str(parsed_delivery.get("environment", "")) != "JazzClub" or str(parsed_delivery.get("role", "")) != "lead" or str(parsed_delivery.get("instrument", "")) != "Trumpet" or int(parsed_delivery.get("pattern_number", 0)) != 1:
+		failures.append("Jazz delivery filename parser did not expose environment/classification/instrument/pattern fields case-insensitively.")
+	for malformed_name in ["JazzClub_Lead_Trumpet.wav", "JazzClub_Unknown_Trumpet_1.wav", "JazzClub_Lead_Trumpet_0.wav", "JazzClub_Lead_Bad_Name_1.wav"]:
+		if bool(MusicDeliveryIndexScript.parse_filename(malformed_name).get("ok", false)):
+			failures.append("Jazz delivery filename parser accepted malformed name %s." % malformed_name)
+	var wrong_environment_index := MusicDeliveryIndexScript.build_index("jazz_fixture", "JazzClub", ["Motel_Lead_Trumpet_1.wav"])
+	if bool(wrong_environment_index.get("valid", true)) or JSON.stringify(wrong_environment_index.get("errors", [])).find("requires JazzClub") < 0:
+		failures.append("Jazz delivery index did not reject a filename from the wrong environment.")
+	var duplicate_index := MusicDeliveryIndexScript.build_index("jazz_fixture", "JazzClub", ["JazzClub_Lead_Trumpet_1.wav", "JazzClub_lead_trumpet_1.WAV"])
+	if bool(duplicate_index.get("valid", true)) or JSON.stringify(duplicate_index.get("errors", [])).find("duplicates semantic ID") < 0:
+		failures.append("Jazz delivery index did not reject a duplicate semantic instrument/pattern ID.")
+	var scanned_jazz := library.music_delivery_index("jazz_club_delivery_fixture_8_bar")
+	if not bool(scanned_jazz.get("valid", false)) or (scanned_jazz.get("entries", []) as Array).size() != 6 or (scanned_jazz.get("proposed_manifest_entries", []) as Array).size() != 6:
+		failures.append("Jazz delivery import helper did not index and propose all six 8-bar fixture records without rewriting the manifest.")
+	var wav_8 := ContentLibraryScript.inspect_music_wav("res://assets/audio/music/jazz_club_delivery_fixture_8_bar/JazzClub_Chords_Piano_1.wav")
+	var wav_16 := ContentLibraryScript.inspect_music_wav("res://assets/audio/music/jazz_club_delivery_fixture_16_bar/JazzClub_Chords_Piano_2.wav")
+	if not bool(wav_8.get("valid", false)) or int(wav_8.get("bits_per_sample", 0)) != 24 or int(wav_8.get("frames", 0)) != 705600:
+		failures.append("24-bit 8-bar WAV inspection did not derive the real data-chunk frame count.")
+	if not bool(wav_16.get("valid", false)) or int(wav_16.get("bits_per_sample", 0)) != 24 or int(wav_16.get("frames", 0)) != 1411200:
+		failures.append("24-bit 16-bar WAV inspection did not derive the real data-chunk frame count.")
+	for mismatch_fixture in [
+		{"property": "bits_per_sample", "value": 16},
+		{"property": "channels", "value": 2},
+		{"property": "frames", "value": 705599},
+		{"property": "sample_rate", "value": 48000},
+	]:
+		var candidate := wav_8.duplicate(true)
+		candidate[str(mismatch_fixture.get("property", ""))] = int(mismatch_fixture.get("value", 0))
+		if not ContentLibraryScript.synchronized_wav_mismatches(wav_8, candidate).has(str(mismatch_fixture.get("property", ""))):
+			failures.append("Synchronized WAV validation missed %s mismatch." % str(mismatch_fixture.get("property", "")))
 	var invalid_library: ContentLibrary = ContentLibraryScript.new()
 	invalid_library.music_tracks = [{
 		"id": "bad_music_entry",
@@ -545,6 +581,30 @@ func _check_music_stem_director_foundation(library: ContentLibrary, failures: Ar
 	var invalid_errors := invalid_library.validate()
 	if invalid_errors.is_empty():
 		failures.append("ContentLibrary music manifest validation did not reject a bad authored entry.")
+
+	var jazz_8_environment := {
+		"id": "jazz_delivery_8",
+		"archetype_id": "jazz_club",
+		"music_profile": {"authored_track_id": "jazz_club_delivery_fixture_8_bar", "palette_id": "jazz_delivery_8", "bpm": 120.0},
+	}
+	var jazz_8_manifest: Dictionary = player.music_stem_manifest_snapshot_for_environment(jazz_8_environment, 40)
+	var jazz_source_format: Dictionary = jazz_8_manifest.get("source_audio_format", {}) as Dictionary
+	var jazz_playback_format: Dictionary = jazz_8_manifest.get("playback_audio_format", {}) as Dictionary
+	if str(jazz_8_manifest.get("source", "")) != "authored" or not bool(jazz_8_manifest.get("sync_ok", false)) or int(jazz_8_manifest.get("loop_frames", 0)) != 705600:
+		failures.append("Native authored provider did not load the 24-bit 8-bar Jazz fixture as a synchronized set.")
+	if int(jazz_source_format.get("bit_depth", 0)) != 24 or not bool(jazz_source_format.get("master_preserved", false)) or int(jazz_playback_format.get("bit_depth", 0)) != 16 or not bool(jazz_playback_format.get("decoded_from_24_bit", false)):
+		failures.append("Jazz snapshot did not expose preserved 24-bit source and one-time native PCM16 decode formats.")
+	var jazz_delivery_files: Array = jazz_8_manifest.get("delivery_files", []) as Array
+	if jazz_delivery_files.size() != 4 or JSON.stringify(jazz_delivery_files).find("JazzClub_Lead_Trumpet_1.wav") < 0 or JSON.stringify(jazz_delivery_files).find("pattern_number") < 0:
+		failures.append("Jazz snapshot did not expose parsed delivery filename fields for selected stems.")
+	if float(((jazz_8_manifest.get("preferred_dsp_sends", {}) as Dictionary).get("lead", {}) as Dictionary).get("reverb", 0.0)) <= 0.0:
+		failures.append("Jazz authored delivery did not preserve preferred stem-specific DSP sends.")
+	var jazz_16_environment := jazz_8_environment.duplicate(true)
+	jazz_16_environment["id"] = "jazz_delivery_16"
+	jazz_16_environment["music_profile"] = {"authored_track_id": "jazz_club_delivery_fixture_16_bar", "palette_id": "jazz_delivery_16", "bpm": 120.0}
+	var jazz_16_manifest: Dictionary = player.music_stem_manifest_snapshot_for_environment(jazz_16_environment, 40)
+	if str(jazz_16_manifest.get("source", "")) != "authored" or not bool(jazz_16_manifest.get("sync_ok", false)) or int(jazz_16_manifest.get("loop_frames", 0)) != 1411200:
+		failures.append("Native authored provider did not load the 24-bit 16-bar Jazz fixture.")
 
 	var authored_environment := _music_environment_with_authored_track(library)
 	var procedural_environment := _music_environment_without_authored_track(library)
