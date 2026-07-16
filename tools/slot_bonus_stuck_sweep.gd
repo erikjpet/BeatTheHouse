@@ -656,6 +656,10 @@ func _fixture_context(game_modules: Dictionary, game_id: String, label: String) 
 	environment["game_states"] = game_states
 	run_state.set_environment(environment)
 	run_state.save_rng(state_rng)
+	if run_state.grand_casino_table_uses_chips(game_id, environment):
+		var buy_in := run_state.buy_grand_casino_chips(25000, run_state.grand_casino_chip_exchange_rate())
+		if not bool(buy_in.get("ok", false)):
+			return {"ok": false, "failure": "%s could not buy Grand Casino fixture chips: %s" % [label, str(buy_in.get("message", "no message"))]}
 	return {
 		"ok": true,
 		"game_id": game_id,
