@@ -87,12 +87,15 @@ silently rewrites the hand-authored manifest. The game validates the WAV data
 chunk itself, including metadata chunks and RIFF padding, so the reported
 frame count cannot hide a short or mismatched export.
 
-Godot's `AudioStreamWAV` playback container is 16-bit PCM. Native builds keep
-the engineer's 24-bit WAV master untouched, decode it once at load with signed
-round-to-nearest conversion, and retain its full 44.1 kHz rate, channel layout,
-loop length, and stem phase. Debug snapshots show both the 24-bit source format
-and the native playback-container format. This is independent of the reduced
-web packaging path; the web build never changes the source-master contract.
+Native builds keep the engineer's 24-bit WAV master untouched and decode every
+signed 24-bit sample once into cached float PCM. A shared source-frame cursor
+feeds Godot's float mixer, preserving information below the 16-bit threshold
+along with the full 44.1 kHz rate, channel layout, loop length, and parallel-
+stem phase. Debug snapshots show the 24-bit source, float playback provider,
+and an actual low-order reconstruction probe. This path avoids the 16-bit
+`AudioStreamWAV` container entirely for 24-bit masters. It is independent of
+the reduced web packaging path; the web build never changes the source-master
+contract.
 
 The files under `assets/audio/music/jazz_club_delivery_fixture_*` are quiet
 deterministic test signals, clearly labelled fixtures. They prove 8- and
