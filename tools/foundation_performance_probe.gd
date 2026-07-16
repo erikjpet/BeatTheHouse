@@ -9,6 +9,7 @@ extends SceneTree
 
 const MainScene := preload("res://scenes/main.tscn")
 const GameSurfaceCanvasScript := preload("res://scripts/ui/game_surface_canvas.gd")
+const PixelSceneCanvasScript := preload("res://scripts/ui/pixel_scene_canvas.gd")
 const PerfTelemetryOverlayScript := preload("res://scripts/ui/perf_telemetry_overlay.gd")
 const PerformanceLivenessGuardScript := preload("res://scripts/ui/performance_liveness_guard.gd")
 const VisualStyleScript := preload("res://scripts/ui/visual_style.gd")
@@ -51,6 +52,7 @@ const MAX_SEVERE_FOCUS_AVG_MS := 45.0
 const MAX_FOCUS_CALL_MS := 10.0
 const FOCUS_PROBE_FRAMES := 18
 const MAX_FOCUS_OBJECTS_PER_SEED := 4
+const GRAND_CASINO_LIVING_FLOOR_FRAME_P95_BUDGET_MS := 16.0
 const NEW_SURFACE_SAMPLE_FRAMES := 120
 const REQUIRED_GAME_IDS := [
 	"pull_tabs",
@@ -112,6 +114,7 @@ var liveness_guard_proof: Dictionary = {}
 var overlay_cost_observations: Array = []
 var slot_autoplay_checked := false
 var casino_slot_preview_checked := false
+var grand_casino_living_floor_idle_checked := false
 var run_count := DEFAULT_RUN_COUNT
 var frames_per_surface := DEFAULT_FRAMES_PER_SURFACE
 var resolve_sample_count := DEFAULT_RESOLVE_SAMPLE_COUNT
@@ -137,6 +140,7 @@ func _run() -> void:
 		await _probe_default_environment_focus_smoke()
 	await _probe_practice_game_surface_coverage()
 	await _probe_casino_slot_preview_coverage()
+	await _probe_grand_casino_living_floor_idle()
 	await _probe_game_resolve_budgets()
 	await _probe_synthetic_idle_surfaces()
 	await _probe_liveness_guard_regression()
@@ -448,6 +452,56 @@ func _probe_casino_slot_preview_coverage() -> void:
 		failures.append("Performance probe did not sample a casino room slot preview.")
 	if kind != "casino":
 		warnings.append("Slot preview practice room kind was %s, expected casino-like coverage." % kind)
+
+
+func _probe_grand_casino_living_floor_idle() -> void:
+	var canvas: Control = PixelSceneCanvasScript.new()
+	canvas.size = Vector2(VisualStyleScript.ENVIRONMENT_BOARD_SIZE)
+	root.add_child(canvas)
+	canvas.call("render_environment_snapshot", {
+		"id": "grand_casino_living_perf",
+		"archetype_id": "grand_casino",
+		"display_name": "Grand Casino Main Floor",
+		"pit_boss_watch": {"active": true, "watched": true},
+		"grand_casino_living_floor": {
+			"player_room": "grand_casino",
+			"rourke": {"present": true, "on_floor": true, "room": "grand_casino", "spot": "main_center", "facing": "right"},
+			"rivals": [
+				{"id": "perf_rival_one", "tell": "chip_riffle", "spot": 0, "idle_phase": 10},
+				{"id": "perf_rival_two", "tell": "heel_tap", "spot": 1, "idle_phase": 20},
+				{"id": "perf_rival_three", "tell": "glance_loop", "spot": 2, "idle_phase": 30},
+			],
+			"rival_count": 3,
+			"escort": {},
+		},
+		"interactable_objects": [],
+	})
+	await _settle(3)
+	canvas.call("reset_performance_counters")
+	var frame_stats := await _measure_frame_phase(frames_per_surface)
+	var live_status: Dictionary = canvas.call("performance_live_status")
+	var liveness_counter := str(ENVIRONMENT_IDLE_LIVENESS.get("counter", "scene_idle_animation_redraw_count"))
+	var liveness_floor := _scaled_liveness_floor(ENVIRONMENT_IDLE_LIVENESS, frames_per_surface)
+	var liveness_measured := int(live_status.get(liveness_counter, 0))
+	grand_casino_living_floor_idle_checked = true
+	observations.append({
+		"seed": "synthetic:grand_casino_living_floor",
+		"run_index": -1,
+		"environment_id": "grand_casino",
+		"mode": "grand_casino_living_floor_idle",
+		"frames": frames_per_surface,
+		"character_count": 5,
+		"frame_time": frame_stats,
+		"frame_p95_budget_ms": GRAND_CASINO_LIVING_FLOOR_FRAME_P95_BUDGET_MS,
+		"liveness_counter": liveness_counter,
+		"liveness_floor": liveness_floor,
+		"liveness_measured": liveness_measured,
+	})
+	if float(frame_stats.get("p95_ms", 0.0)) > GRAND_CASINO_LIVING_FLOOR_FRAME_P95_BUDGET_MS:
+		failures.append("Grand Casino living-floor idle frame p95 %.3f ms exceeded %.3f ms with Rourke and three rivals animating." % [float(frame_stats.get("p95_ms", 0.0)), GRAND_CASINO_LIVING_FLOOR_FRAME_P95_BUDGET_MS])
+	_assert_liveness("Grand Casino living floor", liveness_counter, liveness_floor, liveness_measured)
+	canvas.queue_free()
+	await _settle(1)
 
 
 func _probe_game_resolve_budgets() -> void:
@@ -1211,6 +1265,7 @@ func _write_report() -> void:
 		"new_surface_coverage": new_surface_coverage,
 		"slot_autoplay_checked": slot_autoplay_checked,
 		"casino_slot_preview_checked": casino_slot_preview_checked,
+		"grand_casino_living_floor_idle_checked": grand_casino_living_floor_idle_checked,
 		"observations": observations,
 		"resolve_observations": resolve_observations,
 		"resolve_sample_count": resolve_sample_count,

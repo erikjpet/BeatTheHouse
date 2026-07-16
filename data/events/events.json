@@ -191,6 +191,69 @@
     }
   },
   {
+    "id": "rourke_scouting_cameo",
+    "display_name": "Rourke Scouting",
+    "type": "social",
+    "interaction_mode": "triggered",
+    "presentation": "talk",
+    "speaker": {
+      "role": "pit_boss",
+      "name": "Rourke",
+      "silhouette": "vest",
+      "bind": "none"
+    },
+    "scopes": [
+      "casino"
+    ],
+    "asset_path": "res://assets/art/events/pit_boss_sweep.png",
+    "visual_key": "pit_boss",
+    "trigger": {
+      "type": "random",
+      "turns": 1,
+      "chance_percent": 6,
+      "unavoidable": true
+    },
+    "conditions": {
+      "archetype_ids": [
+        "delta_queen",
+        "kitty_cat_lounge"
+      ],
+      "blocked_by_flags": [
+        "grand_casino_event_pit_boss_sweep_lay_low",
+        "grand_casino_event_eye_in_the_sky_press_anyway"
+      ]
+    },
+    "payload": {
+      "summary": "Rourke scouts the room before returning home.",
+      "choices": [
+        {
+          "id": "read_his_route",
+          "label": "Read His Route",
+          "text": "You watch which noise pulls Rourke across the room and learn when to disappear.",
+          "effects_hidden": true,
+          "consequences": {
+            "flags": {
+              "grand_casino_event_pit_boss_sweep_lay_low": true
+            },
+            "resolve_event": true
+          }
+        },
+        {
+          "id": "flash_the_edge",
+          "label": "Flash the Edge",
+          "text": "You let Rourke catch one polished move. He files your face away for later.",
+          "effects_hidden": true,
+          "consequences": {
+            "flags": {
+              "grand_casino_event_eye_in_the_sky_press_anyway": true
+            },
+            "resolve_event": true
+          }
+        }
+      ]
+    }
+  },
+  {
     "id": "suspicious_patron",
     "display_name": "Suspicious Patron",
     "type": "social",

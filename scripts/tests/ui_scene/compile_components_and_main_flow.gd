@@ -2566,6 +2566,40 @@ func _run() -> void:
 		quit(1)
 		return
 	environment_canvas.call("render_environment_snapshot", {
+		"id": "grand_casino_living_fixture",
+		"archetype_id": "grand_casino",
+		"display_name": "Grand Casino Main Floor",
+		"pit_boss_watch": {"active": true, "watched": true},
+		"grand_casino_living_floor": {
+			"player_room": "grand_casino",
+			"rourke": {"present": true, "on_floor": true, "room": "grand_casino", "spot": "main_center", "facing": "right", "actions_until_move": 2, "off_floor_actions": 0},
+			"rivals": [
+				{"id": "rival_one", "tell": "chip_riffle", "spot": 0, "idle_phase": 10},
+				{"id": "rival_two", "tell": "heel_tap", "spot": 1, "idle_phase": 20},
+				{"id": "rival_three", "tell": "glance_loop", "spot": 2, "idle_phase": 30},
+			],
+			"rival_count": 3,
+			"escort": {},
+		},
+		"interactable_objects": [],
+	})
+	await process_frame
+	var living_canvas_snapshot: Dictionary = environment_canvas.call("current_view_snapshot")
+	var living_floor_snapshot: Dictionary = living_canvas_snapshot.get("grand_casino_living_floor", {}) if typeof(living_canvas_snapshot.get("grand_casino_living_floor", {})) == TYPE_DICTIONARY else {}
+	var living_rourke: Dictionary = living_floor_snapshot.get("rourke", {}) if typeof(living_floor_snapshot.get("rourke", {})) == TYPE_DICTIONARY else {}
+	if not bool(living_rourke.get("present", false)) or str(living_rourke.get("spot", "")) != "main_center" or str(living_rourke.get("facing", "")) != "right" or (living_floor_snapshot.get("rivals", []) as Array).size() != 3:
+		push_error("Grand Casino canvas did not retain the immutable Rourke/rival living-floor snapshot.")
+		quit(1)
+		return
+	var living_redraw_start := int(living_canvas_snapshot.get("scene_idle_animation_redraw_count", 0))
+	for _living_frame in range(6):
+		environment_canvas.call("_process", 1.0 / 60.0)
+	var living_redraw_end := int((environment_canvas.call("current_view_snapshot") as Dictionary).get("scene_idle_animation_redraw_count", 0))
+	if living_redraw_end - living_redraw_start < 6:
+		push_error("Rourke and rival character animation did not preserve idle-animation liveness.")
+		quit(1)
+		return
+	environment_canvas.call("render_environment_snapshot", {
 		"id": "beach",
 		"display_name": "The Beach",
 		"interactable_objects": [

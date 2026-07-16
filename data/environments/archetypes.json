@@ -1863,6 +1863,7 @@
       "door_bribe",
       "lucky_streak_temptation",
       "crew_favor_delivery",
+      "rourke_scouting_cameo",
       "grand_casino_invite"
     ],
     "event_scopes": [
@@ -2138,6 +2139,7 @@
       "door_bribe",
       "lucky_streak_temptation",
       "crew_favor_delivery",
+      "rourke_scouting_cameo",
       "grand_casino_invite"
     ],
     "event_scopes": [

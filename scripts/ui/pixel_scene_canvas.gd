@@ -330,6 +330,7 @@ func current_view_snapshot() -> Dictionary:
 		"outcome_popup_rect": outcome_view.get("popup_rect", {}),
 		"outcome_interaction_kind": str(outcome_view.get("interaction_kind", "")),
 		"pit_boss_watch": _pit_boss_watch_snapshot(),
+		"grand_casino_living_floor": _grand_casino_living_floor_snapshot(),
 		"reduce_motion": reduce_motion,
 	}
 
@@ -1055,10 +1056,9 @@ func _draw_grand_casino() -> void:
 		draw_line(Vector2(x, 246), Vector2(x, 294), C_AMBER, 4)
 	for x in [82, 340, 560]:
 		draw_line(Vector2(x, 254), Vector2(x + 220, 254), C_PINK_2, 3)
-	draw_rect(Rect2(392, 132, 116, 152), Color("#05050b"))
-	_silhouette(Vector2(450, 206), 1.38, Color("#05050b"))
-	draw_rect(Rect2(416, 154, 68, 8), C_PINK)
-	draw_rect(Rect2(426, 170, 48, 6), C_CYAN)
+	draw_rect(Rect2(392, 132, 116, 152), Color("#090914"))
+	draw_rect(Rect2(410, 154, 80, 8), Color(C_PINK.r, C_PINK.g, C_PINK.b, 0.25))
+	draw_rect(Rect2(420, 170, 60, 6), Color(C_CYAN.r, C_CYAN.g, C_CYAN.b, 0.20))
 	for x in [252, 450, 648]:
 		draw_line(Vector2(x, 40), Vector2(x, 74), C_SOFT.darkened(0.2), 2)
 		draw_rect(Rect2(x - 16, 74, 32, 18), C_SHADOW)
@@ -1190,12 +1190,11 @@ func _draw_scene_life() -> void:
 			_draw_camera_sweep(Vector2(450, 92), Vector2(sweep, 226), beam, primary_alpha)
 			_draw_camera_sweep(Vector2(252, 92), Vector2(170 + int(abs(sin(flicker * 1.0)) * 210.0), 220), C_CYAN, 0.18)
 			_draw_camera_sweep(Vector2(648, 92), Vector2(520 + int(abs(cos(flicker * 1.1)) * 210.0), 220), C_CYAN, 0.18)
-			var boss_x := 414 + sin(flicker * 0.75) * (32.0 if watched else 86.0)
-			_silhouette(Vector2(boss_x, 218), 0.70, Color("#05050b"))
 			var badge_color := C_POLICE_RED if watched else C_CYAN
 			draw_rect(Rect2(386, 150, 128, 18), Color(0.0, 0.0, 0.0, 0.50))
 			draw_rect(Rect2(392, 154, 116, 5), Color(badge_color.r, badge_color.g, badge_color.b, 0.34 + abs(sin(flicker * 2.4)) * 0.28))
-			_neon_text("WATCHED" if watched else "CLEAR", Vector2(414, 164), 12, badge_color)
+			var watch_active := bool(watch_status.get("active", false))
+			_neon_text("WATCHED" if watched else "ROURKE HERE" if watch_active else "ROURKE AWAY", Vector2(398 if watch_active else 396, 164), 10, badge_color)
 			_draw_sign_pulse(Rect2(336, 58, 226, 54), C_YELLOW, 0.14, 3.8)
 			_draw_sparkles(SCENE_SPARKLES_GRAND_CASINO, C_YELLOW, 0.18)
 
@@ -1232,11 +1231,11 @@ func _draw_familiar_characters() -> void:
 		"pawn_shop":
 			_draw_named_character("sal", Vector2(450, 210), 0.74, "clerk")
 		"grand_casino", "grand_casino_high_limit", "grand_casino_back_room":
-			_draw_named_character("rourke", Vector2(450 + sin(flicker * 0.75) * 70.0, 222), 1.04, "pit_boss")
 			_draw_named_character("iris", Vector2(632, 180), 0.76, "dealer")
+			_draw_grand_casino_living_characters()
 
 
-func _draw_named_character(id: String, foot: Vector2, scale_value: float, role: String) -> void:
+func _draw_named_character(id: String, foot: Vector2, scale_value: float, role: String, facing: String = "right") -> void:
 	var style := _character_style(id)
 	var skin: Color = style["skin"]
 	var hair: Color = style["hair"]
@@ -1256,6 +1255,8 @@ func _draw_named_character(id: String, foot: Vector2, scale_value: float, role: 
 	draw_rect(Rect2(head.position + Vector2(0, 0), Vector2(head.size.x, 7 * scale_value)), hair)
 	draw_rect(Rect2(head.position + Vector2(4, 9) * scale_value, Vector2(4, 3) * scale_value), Color("#05060a"))
 	draw_rect(Rect2(head.position + Vector2(13, 9) * scale_value, Vector2(4, 3) * scale_value), Color("#05060a"))
+	var nose_x := head.position.x - 2.0 * scale_value if facing == "left" else head.end.x
+	draw_rect(Rect2(nose_x, head.position.y + 12.0 * scale_value, 3.0 * scale_value, 3.0 * scale_value), skin)
 	draw_rect(Rect2(pos + Vector2(-15, -48) * scale_value, Vector2(30, 5) * scale_value), accent)
 	draw_line(Vector2(pos.x - 24 * scale_value, shoulder_y), Vector2(pos.x + 24 * scale_value, shoulder_y), Color(accent.r, accent.g, accent.b, 0.45), maxf(1.0, 3.0 * scale_value))
 	match role:
@@ -1267,6 +1268,96 @@ func _draw_named_character(id: String, foot: Vector2, scale_value: float, role: 
 			draw_rect(Rect2(pos + Vector2(16, -24) * scale_value, Vector2(7, 16) * scale_value), C_AMBER)
 		"regular", "fixer":
 			draw_rect(Rect2(pos + Vector2(-25, -20) * scale_value, Vector2(16, 5) * scale_value), C_CYAN)
+
+
+func _draw_grand_casino_living_characters() -> void:
+	var living_floor := _grand_casino_living_floor_snapshot()
+	if living_floor.is_empty():
+		return
+	var escort: Dictionary = living_floor.get("escort", {}) if typeof(living_floor.get("escort", {})) == TYPE_DICTIONARY else {}
+	if not escort.is_empty():
+		var progress := clampf(float(escort.get("progress", 0.0)), 0.0, 1.0)
+		var escort_x := lerpf(170.0, 760.0, progress)
+		_draw_named_character("rourke", Vector2(escort_x, 226), 1.04, "pit_boss", "right")
+		_draw_rival_cheater_tell(str(escort.get("tell", "heel_tap")), 0, Vector2(escort_x - 54.0, 226))
+		_neon_text("TO THE BACK ROOM", Vector2(330, 326), 14, C_PINK)
+		return
+	var rourke: Dictionary = living_floor.get("rourke", {}) if typeof(living_floor.get("rourke", {})) == TYPE_DICTIONARY else {}
+	if bool(rourke.get("present", false)):
+		_draw_named_character("rourke", _rourke_scene_foot(str(rourke.get("spot", ""))), 1.04, "pit_boss", str(rourke.get("facing", "right")))
+	var rivals: Array = living_floor.get("rivals", []) if typeof(living_floor.get("rivals", [])) == TYPE_ARRAY else []
+	for index in range(rivals.size()):
+		if typeof(rivals[index]) != TYPE_DICTIONARY:
+			continue
+		var rival := rivals[index] as Dictionary
+		var spot_index := clampi(int(rival.get("spot", index)), 0, 2)
+		_draw_rival_cheater(rival, _rival_scene_foot(spot_index))
+
+
+func _draw_rival_cheater(rival: Dictionary, foot: Vector2) -> void:
+	var tell := str(rival.get("tell", "chip_riffle"))
+	_draw_rival_cheater_tell(tell, int(rival.get("idle_phase", 0)), foot)
+
+
+func _draw_rival_cheater_tell(tell: String, idle_phase: int, foot: Vector2) -> void:
+	var style_id := "dot"
+	match tell:
+		"sleeve_check":
+			style_id = "marco"
+		"heel_tap":
+			style_id = "vince"
+		"glance_loop":
+			style_id = "lena"
+		"ring_turn":
+			style_id = "june"
+		"counting_lips":
+			style_id = "sable"
+	var phase := float(idle_phase % 628) / 100.0
+	var tell_motion := sin(flicker * (2.2 if tell == "heel_tap" else 1.4) + phase)
+	var animated_foot := foot + Vector2(0.0, tell_motion * (3.0 if tell == "heel_tap" else 1.2))
+	_draw_named_character(style_id, animated_foot, 0.74, "regular", "left" if tell == "glance_loop" and tell_motion < 0.0 else "right")
+	match tell:
+		"chip_riffle":
+			draw_circle(animated_foot + Vector2(-18, -18 + tell_motion * 3.0), 4, C_YELLOW)
+			draw_circle(animated_foot + Vector2(-10, -16 - tell_motion * 3.0), 4, C_PINK)
+		"sleeve_check":
+			draw_rect(Rect2(animated_foot + Vector2(16 + tell_motion * 4.0, -34), Vector2(12, 5)), C_CYAN)
+		"heel_tap":
+			draw_line(animated_foot + Vector2(8, -1), animated_foot + Vector2(22 + tell_motion * 5.0, 1), C_PINK, 3)
+		"glance_loop":
+			draw_line(animated_foot + Vector2(-10, -52), animated_foot + Vector2(12 * tell_motion, -52), C_CYAN, 2)
+		"ring_turn":
+			draw_circle(animated_foot + Vector2(19, -27), 4 + absf(tell_motion) * 2.0, C_AMBER, false, 2)
+		"counting_lips":
+			draw_rect(Rect2(animated_foot + Vector2(-6, -42), Vector2(12 + tell_motion * 3.0, 3)), C_PINK)
+
+
+func _rourke_scene_foot(spot: String) -> Vector2:
+	match spot:
+		"main_left":
+			return Vector2(210, 224)
+		"main_cage":
+			return Vector2(700, 222)
+		"high_rail":
+			return Vector2(220, 222)
+		"high_door":
+			return Vector2(730, 222)
+		"back_table":
+			return Vector2(390, 220)
+		"back_door":
+			return Vector2(700, 220)
+		_:
+			return Vector2(450, 222)
+
+
+func _rival_scene_foot(spot_index: int) -> Vector2:
+	match spot_index:
+		0:
+			return Vector2(250, 226)
+		1:
+			return Vector2(510, 224)
+		_:
+			return Vector2(752, 228)
 
 
 func _character_style(id: String) -> Dictionary:
@@ -1908,7 +1999,14 @@ func _pit_boss_watch_snapshot() -> Dictionary:
 	var value: Variant = foundation_snapshot.get("pit_boss_watch", {})
 	if typeof(value) != TYPE_DICTIONARY:
 		return {}
-	return (value as Dictionary).duplicate(true)
+	return value as Dictionary
+
+
+func _grand_casino_living_floor_snapshot() -> Dictionary:
+	if not uses_foundation_snapshot:
+		return {}
+	var value: Variant = foundation_snapshot.get("grand_casino_living_floor", {})
+	return value as Dictionary if typeof(value) == TYPE_DICTIONARY else {}
 
 
 func _selected_object_info_snapshot() -> Dictionary:
