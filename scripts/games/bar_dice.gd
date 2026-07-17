@@ -44,6 +44,7 @@ const CONTROLLED_ROLL_ITEM_EFFECT_KEYS := [
 	"bar_dice_controlled_roll_base_heat",
 	"skill_cheat_drunk_window_offset_msec",
 ]
+const PALMED_SWAP_ACTION_ID := "palmed_swap"
 const CONSOLE_Y := 344.0
 const CONSOLE_SELECT_BUTTON_WIDTHS := [108.0, 108.0, 100.0, 100.0]
 const CONSOLE_ROLL_BUTTON_WIDTHS := [108.0, 124.0, 116.0]
@@ -255,6 +256,9 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 	var controlled_roll: Dictionary = _normalized_controlled_roll(ui.get("controlled_roll", {})) if loaded_armed else {}
 	var controlled_roll_meter: Dictionary = _controlled_roll_meter(controlled_roll, ui) if not controlled_roll.is_empty() else {}
 	var controlled_roll_meter_active := not controlled_roll_meter.is_empty() and str(controlled_roll.get("skill_grade", "")).is_empty()
+	var palmed_swap: Dictionary = _normalized_palmed_swap_challenge(ui.get("palmed_swap_challenge", {})) if palm_armed else {}
+	var palmed_swap_meter: Dictionary = _palmed_swap_meter(palmed_swap, ui) if not palmed_swap.is_empty() else {}
+	var palmed_swap_meter_active := not palmed_swap_meter.is_empty() and str(palmed_swap.get("skill_grade", "")).is_empty()
 	var loaded_value := int(ui.get("loaded_value", 0))
 	if loaded_armed and loaded_value <= 0:
 		loaded_value = _loaded_value_for_ruleset(player_dice, "ship_captain_crew")
@@ -263,7 +267,7 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 	if rolled and not str(tumble.get("id", "")).is_empty() and animated_dice_indices.is_empty():
 		animated_dice_indices = _all_die_indices()
 	var tumble_active := not str(tumble.get("id", "")).is_empty()
-	var surface_motion_active := tumble_active or controlled_roll_meter_active
+	var surface_motion_active := tumble_active or controlled_roll_meter_active or palmed_swap_meter_active
 	var pit_boss := run_state.pit_boss_watch_status(environment) if run_state != null else {}
 	var press_offer := _copy_dict(last_result.get("press_offer", {}))
 	var press_available := phase == "settled" and bool(press_offer.get("available", false))
@@ -280,7 +284,9 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 		press_available,
 		int(press_offer.get("risk", 0)),
 		loaded_armed,
-		controlled_roll
+		controlled_roll,
+		palm_armed,
+		palmed_swap
 	)
 	var opponent_rows := _surface_opponent_rows(state, last_result, phase)
 
@@ -349,6 +355,12 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 		"controlled_roll_grade": str(controlled_roll.get("skill_grade", "")),
 		"controlled_roll_ready": loaded_armed and not controlled_roll.is_empty(),
 		"controlled_roll_item_modifiers": controlled_roll_item_modifiers,
+		"palmed_swap_challenge": palmed_swap,
+		"palmed_swap_meter": palmed_swap_meter,
+		"palmed_swap_grade": str(palmed_swap.get("skill_grade", "")),
+		"palmed_swap_ready": palm_armed and not palmed_swap.is_empty(),
+		"palmed_swap_heat_preview": int(palmed_swap.get("base_heat", _palmed_swap_base_heat(run_state))),
+		"palmed_swap_item_modifiers": controlled_roll_item_modifiers,
 		"player_score": player_score,
 		"player_blurb": _hand_blurb(player_score),
 		"house_blurb": _hand_blurb(opponent_score),
@@ -464,6 +476,7 @@ func surface_action_command(surface_action: String, index: int, confirm_requeste
 			next["loaded_armed"] = false
 			next["palm_armed"] = false
 			next.erase("controlled_roll")
+			next.erase("palmed_swap_challenge")
 			next.erase("loaded_value")
 			next["last_rerolled"] = _all_die_indices()
 			_set_tumble(next, "open", _all_die_indices())
@@ -516,6 +529,7 @@ func surface_action_command(surface_action: String, index: int, confirm_requeste
 			next["loaded_armed"] = false
 			next["palm_armed"] = false
 			next.erase("controlled_roll")
+			next.erase("palmed_swap_challenge")
 			next["last_rerolled"] = []
 			next.erase("loaded_value")
 			var select_message := "No dice marked. SHAKE AMBER rerolls suggested dice; SETTLE keeps the cup as shown." if marks.is_empty() else "Pink dice %s will reroll on SHAKE. Plain dice stay exactly where they are." % _reroll_summary(marks)
@@ -532,6 +546,7 @@ func surface_action_command(surface_action: String, index: int, confirm_requeste
 			next["loaded_armed"] = false
 			next["palm_armed"] = false
 			next.erase("controlled_roll")
+			next.erase("palmed_swap_challenge")
 			next.erase("loaded_value")
 			return _action_command("roll", "legal", confirm_requested, next, index, _resolve_prompt(next, "roll"))
 		"bar_dice_load":
@@ -543,6 +558,7 @@ func surface_action_command(surface_action: String, index: int, confirm_requeste
 				_set_tumble(next, "open", _all_die_indices())
 			next["loaded_armed"] = true
 			next["palm_armed"] = false
+			next.erase("palmed_swap_challenge")
 			next["loaded_value"] = _loaded_value_for_ruleset(_int_dice(next.get("dice", [])), "ship_captain_crew")
 			next["controlled_roll"] = _start_controlled_roll(next, run_state, state)
 			return _action_command("loaded_toss", "cheat", false, next, index, _resolve_prompt(next, "loaded_toss"))
@@ -556,6 +572,7 @@ func surface_action_command(surface_action: String, index: int, confirm_requeste
 			controlled = _grade_controlled_roll(controlled)
 			next["loaded_armed"] = true
 			next["palm_armed"] = false
+			next.erase("palmed_swap_challenge")
 			next["loaded_value"] = int(controlled.get("desired_face", _loaded_value_for_ruleset(_int_dice(next.get("dice", [])), "ship_captain_crew")))
 			next["controlled_roll"] = controlled
 			next.erase("controlled_roll_input_msec")
@@ -571,7 +588,33 @@ func surface_action_command(surface_action: String, index: int, confirm_requeste
 			next["palm_armed"] = true
 			next.erase("controlled_roll")
 			next.erase("loaded_value")
-			return _action_command("palmed_swap", "cheat", confirm_requested, next, index, _resolve_prompt(next, "palmed_swap"))
+			var palm_challenge := _normalized_palmed_swap_challenge(next.get("palmed_swap_challenge", {}))
+			if palm_challenge.is_empty() or not str(palm_challenge.get("skill_grade", "")).is_empty():
+				palm_challenge = _start_palmed_swap_challenge(next, run_state, state)
+				next["palmed_swap_challenge"] = palm_challenge
+				return GameModule.surface_command({
+					"handled": true,
+					"ui_state": next,
+					"action_id": PALMED_SWAP_ACTION_ID,
+					"action_kind": "cheat",
+					"resolve": false,
+					"preserve_surface_ui_state": true,
+					"selected_index": index,
+					"message": _resolve_prompt(next, PALMED_SWAP_ACTION_ID),
+				})
+			palm_challenge["input_msec"] = GameModule.deterministic_time_msec(run_state, next)
+			palm_challenge = _grade_palmed_swap_challenge(palm_challenge)
+			next["palmed_swap_challenge"] = palm_challenge
+			return GameModule.surface_command({
+				"handled": true,
+				"ui_state": next,
+				"action_id": PALMED_SWAP_ACTION_ID,
+				"action_kind": "cheat",
+				"resolve": true,
+				"preserve_surface_ui_state": false,
+				"selected_index": index,
+				"message": _resolve_prompt(next, PALMED_SWAP_ACTION_ID),
+			})
 		"bar_dice_press":
 			return _action_command("press", "legal", confirm_requested, next, index, "Press the last clean win. Click again to risk it.")
 	return {"handled": false}
@@ -636,6 +679,7 @@ func resolve_with_context(action_id: String, stake: int, run_state: RunState, en
 	var skill_accuracy := 0
 	var skill_margin_msec := 0
 	var controlled_roll: Dictionary = _copy_dict(table_result.get("controlled_roll", {}))
+	var palmed_swap: Dictionary = _copy_dict(table_result.get("palmed_swap_challenge", {}))
 	var patron_snitch_pressure := 0
 	var patron_snitch_heat_bonus := 0
 	if is_cheat:
@@ -646,11 +690,13 @@ func resolve_with_context(action_id: String, stake: int, run_state: RunState, en
 			skill_outcome = _controlled_roll_skill_outcome(skill_grade)
 			patron_snitch_pressure = int(controlled_roll.get("patron_snitch_pressure", 0))
 		else:
-			skill_grade = "swap"
-			skill_accuracy = 100
-			skill_margin_msec = 0
-			skill_outcome = "palmed_swap"
-		var heat := _cheat_heat(action_id, adjusted_stake, run_state, environment, controlled_roll)
+			skill_grade = str(palmed_swap.get("skill_grade", "miss"))
+			skill_accuracy = clampi(int(palmed_swap.get("skill_accuracy", 0)), 0, 100)
+			skill_margin_msec = int(palmed_swap.get("skill_margin_msec", 0))
+			skill_outcome = GameModule.skill_outcome_for_grade("palmed_swap", skill_grade)
+			patron_snitch_pressure = int(palmed_swap.get("patron_snitch_pressure", 0))
+		var skill_challenge := controlled_roll if action_id == "loaded_toss" else palmed_swap
+		var heat := _cheat_heat(action_id, adjusted_stake, run_state, environment, skill_challenge)
 		suspicion_delta = int(heat.get("suspicion_delta", 0))
 		base_suspicion_delta = int(heat.get("base_suspicion_delta", 0))
 		security_message = str(heat.get("security_message", ""))
@@ -707,6 +753,7 @@ func resolve_with_context(action_id: String, stake: int, run_state: RunState, en
 		"palmed": action_id == "palmed_swap",
 		"loaded_value": int(table_result.get("loaded_value", 0)),
 		"controlled_roll": controlled_roll if action_id == "loaded_toss" else {},
+		"palmed_swap_challenge": palmed_swap if action_id == PALMED_SWAP_ACTION_ID else {},
 		"controlled_roll_grade": skill_grade if action_id == "loaded_toss" else "",
 		"controlled_roll_margin_msec": skill_margin_msec if action_id == "loaded_toss" else 0,
 		"patron_snitch_pressure": patron_snitch_pressure,
@@ -747,6 +794,7 @@ func resolve_with_context(action_id: String, stake: int, run_state: RunState, en
 		"skill_margin_msec": skill_margin_msec,
 		"base_suspicion_delta": base_suspicion_delta,
 		"controlled_roll": controlled_roll if action_id == "loaded_toss" else {},
+		"palmed_swap_challenge": palmed_swap if action_id == PALMED_SWAP_ACTION_ID else {},
 		"patron_snitch_pressure": patron_snitch_pressure,
 		"patron_snitch_heat_bonus": patron_snitch_heat_bonus,
 		"pit_boss_watched": pit_boss_watched,
@@ -800,6 +848,8 @@ func resolve_with_context(action_id: String, stake: int, run_state: RunState, en
 			"security_pressure_checked": is_cheat,
 			"desired_face": int(controlled_roll.get("desired_face", 0)),
 			"desired_die_index": int(controlled_roll.get("desired_die_index", -1)),
+			"palmed_target_die_index": int(palmed_swap.get("target_die_index", -1)),
+			"palmed_target_face": int(palmed_swap.get("target_face", 0)),
 			"patron_snitch_pressure": patron_snitch_pressure,
 			"patron_snitch_heat_bonus": patron_snitch_heat_bonus,
 		},
@@ -819,6 +869,11 @@ func resolve_with_context(action_id: String, stake: int, run_state: RunState, en
 	result["bar_dice_controlled_roll_accuracy"] = skill_accuracy if action_id == "loaded_toss" else 0
 	result["bar_dice_controlled_roll_margin_msec"] = skill_margin_msec if action_id == "loaded_toss" else 0
 	result["bar_dice_controlled_roll_applied"] = action_id == "loaded_toss" and _controlled_roll_applies(skill_grade)
+	result["bar_dice_palmed_swap_challenge"] = palmed_swap if action_id == PALMED_SWAP_ACTION_ID else {}
+	result["bar_dice_palmed_swap_grade"] = skill_grade if action_id == PALMED_SWAP_ACTION_ID else ""
+	result["bar_dice_palmed_swap_accuracy"] = skill_accuracy if action_id == PALMED_SWAP_ACTION_ID else 0
+	result["bar_dice_palmed_swap_margin_msec"] = skill_margin_msec if action_id == PALMED_SWAP_ACTION_ID else 0
+	result["bar_dice_palmed_swap_applied"] = action_id == PALMED_SWAP_ACTION_ID and GameModule.skill_grade_applies(skill_grade)
 	result["bar_dice_patron_snitch_pressure"] = patron_snitch_pressure
 	result["bar_dice_patron_snitch_heat_bonus"] = patron_snitch_heat_bonus
 	result["bar_dice_match_legs"] = _copy_array(table_result.get("opponent_results", []))
@@ -883,12 +938,14 @@ func _resolve_table_round(action_id: String, stake: int, run_state: RunState, st
 	var player_dice := _player_final_dice(action_id, run_state, state, rng, ui_state)
 	var loaded_value := int(_loaded_value_for_ruleset(player_dice, "ship_captain_crew")) if action_id == "loaded_toss" else 0
 	var controlled_roll: Dictionary = {}
+	var palmed_swap: Dictionary = {}
 	if action_id == "loaded_toss":
 		controlled_roll = _finalize_controlled_roll(ui_state, run_state, state)
 		loaded_value = int(controlled_roll.get("desired_face", loaded_value))
 		player_dice = _apply_controlled_roll(player_dice, controlled_roll)
 	elif action_id == "palmed_swap":
-		player_dice = _apply_palmed_swap(player_dice, "ship_captain_crew")
+		palmed_swap = _finalize_palmed_swap_challenge(ui_state, run_state, state)
+		player_dice = _apply_palmed_swap(player_dice, "ship_captain_crew", palmed_swap)
 	var player_score := _score_ship(player_dice)
 	var opponent_results := _opponent_results(state, rng)
 	var seats: Array = [{
@@ -938,6 +995,7 @@ func _resolve_table_round(action_id: String, stake: int, run_state: RunState, st
 		"carryover_pot": carryover,
 		"loaded_value": loaded_value,
 		"controlled_roll": controlled_roll,
+		"palmed_swap_challenge": palmed_swap,
 	}
 
 
@@ -1107,20 +1165,21 @@ func _resolve_press(stake: int, run_state: RunState, environment: Dictionary, rn
 	return result
 
 
-func _cheat_heat(action_id: String, adjusted_stake: int, run_state: RunState, environment: Dictionary, controlled_roll: Dictionary = {}) -> Dictionary:
+func _cheat_heat(action_id: String, adjusted_stake: int, run_state: RunState, environment: Dictionary, skill_challenge: Dictionary = {}) -> Dictionary:
 	var cheat_def := _action_def(action_id)
 	var base_heat := int(cheat_def.get("suspicion_delta", 10))
-	var grade := ""
-	var patron_pressure := 0
+	var grade := str(skill_challenge.get("skill_grade", "miss"))
+	var patron_pressure := int(skill_challenge.get("patron_snitch_pressure", 0))
 	var patron_heat_bonus := 0
 	if action_id == "loaded_toss":
-		base_heat = int(controlled_roll.get("base_heat", _controlled_roll_base_heat(run_state)))
-		grade = str(controlled_roll.get("skill_grade", "miss"))
-		patron_pressure = int(controlled_roll.get("patron_snitch_pressure", 0))
-		patron_heat_bonus = _patron_snitch_heat_bonus(patron_pressure, grade)
+		base_heat = int(skill_challenge.get("base_heat", _controlled_roll_base_heat(run_state)))
+	elif action_id == PALMED_SWAP_ACTION_ID:
+		base_heat = int(skill_challenge.get("base_heat", _palmed_swap_base_heat(run_state)))
+	patron_heat_bonus = _patron_snitch_heat_bonus(patron_pressure, grade)
 	var pit_boss_status := run_state.pit_boss_watch_status(environment)
 	var pit_boss_bonus := int(pit_boss_status.get("cheat_heat_bonus", 0)) if bool(pit_boss_status.get("active", false)) else 0
-	var base_suspicion_delta := maxi(1, base_heat + _item_effect_total("cheat_suspicion_delta", run_state) + _controlled_roll_grade_heat_modifier(grade) + patron_heat_bonus)
+	var grade_heat := _controlled_roll_grade_heat_modifier(grade) if action_id == "loaded_toss" else _palmed_swap_grade_heat_modifier(grade)
+	var base_suspicion_delta := maxi(1, base_heat + _item_effect_total("cheat_suspicion_delta", run_state) + grade_heat + patron_heat_bonus)
 	var raw_heat := maxi(1, base_suspicion_delta + run_state.security_risk_bonus("cheat") + pit_boss_bonus)
 	var suspicion_delta := run_state.alcohol_adjusted_suspicion_delta(raw_heat)
 	var security_pressure := run_state.security_action_pressure("cheat", adjusted_stake, run_state.suspicion_level() + suspicion_delta)
@@ -1258,6 +1317,11 @@ func _normalized_ui_state(run_state: RunState, _environment: Dictionary, ui_stat
 		next.erase("controlled_roll")
 	elif bool(next.get("loaded_armed", false)):
 		next["controlled_roll"] = controlled_roll
+	var palmed_swap: Dictionary = _normalized_palmed_swap_challenge(next.get("palmed_swap_challenge", {}))
+	if palmed_swap.is_empty() or not bool(next.get("rolled", false)) or not bool(next.get("palm_armed", false)):
+		next.erase("palmed_swap_challenge")
+	elif bool(next.get("palm_armed", false)):
+		next["palmed_swap_challenge"] = palmed_swap
 	return next
 
 
@@ -1480,6 +1544,177 @@ func _controlled_roll_meter(challenge: Dictionary, ui_state: Dictionary) -> Dict
 		"desired_face": int(challenge.get("desired_face", 0)),
 		"skill_grade": str(challenge.get("skill_grade", "")),
 	}
+
+
+func _start_palmed_swap_challenge(ui_state: Dictionary, run_state: RunState, state: Dictionary) -> Dictionary:
+	var dice := _int_dice(ui_state.get("dice", []))
+	if dice.size() != DICE_COUNT:
+		dice = _generate_opening(run_state, state)
+	var target := _palmed_swap_target(dice, "ship_captain_crew")
+	var windows := _palmed_swap_windows(run_state)
+	var period := int(windows.get("period", 1500))
+	var now_msec := GameModule.deterministic_time_msec(run_state, ui_state)
+	var seed := "%s:%s:%d:%s:%d" % [
+		str(state.get("table_key", "")),
+		str(run_state.seed_text if run_state != null else "bar_dice"),
+		int(state.get("rounds_played", 0)),
+		JSON.stringify(dice),
+		int(ui_state.get("shake_number", 1)),
+	]
+	var started := now_msec - int(_stable_hash(seed) % period)
+	var target_index := clampi(int(target.get("index", 0)), 0, DICE_COUNT - 1)
+	var target_phase := int(round((float(target_index) + 0.5) * float(period) / float(DICE_COUNT)))
+	var watch_info := _patron_watch_info(state)
+	return {
+		"challenge_id": "bar_palm_%d" % _stable_hash(seed),
+		"dice_before": dice.duplicate(),
+		"target_die_index": target_index,
+		"target_face": clampi(int(target.get("face", dice[target_index])), 1, DIE_FACES),
+		"meter_started_msec": started,
+		"meter_period_msec": period,
+		"target_msec": started + target_phase,
+		"perfect_window_msec": int(windows.get("perfect", 90)),
+		"good_window_msec": int(windows.get("good", 220)),
+		"close_window_msec": int(windows.get("close", 360)),
+		"base_heat": _palmed_swap_base_heat(run_state),
+		"patron_snitch_pressure": int(watch_info.get("pressure", 0)),
+		"patron_watch_count": int(watch_info.get("watch_count", 0)),
+		"item_modifiers": skill_item_modifier_badges(run_state, CONTROLLED_ROLL_ITEM_EFFECT_KEYS),
+	}
+
+
+func _normalized_palmed_swap_challenge(value: Variant) -> Dictionary:
+	if typeof(value) != TYPE_DICTIONARY:
+		return {}
+	var source: Dictionary = (value as Dictionary).duplicate(true)
+	var challenge_id := str(source.get("challenge_id", "")).strip_edges()
+	if challenge_id.is_empty():
+		return {}
+	var started := maxi(0, int(source.get("meter_started_msec", 0)))
+	var period := maxi(600, int(source.get("meter_period_msec", 1500)))
+	var windows := GameModule.normalize_skill_timing_windows(
+		int(source.get("perfect_window_msec", 90)),
+		int(source.get("good_window_msec", 220)),
+		int(source.get("close_window_msec", 360)),
+		24
+	)
+	var result := {
+		"challenge_id": challenge_id,
+		"dice_before": _int_dice(source.get("dice_before", [])),
+		"target_die_index": clampi(int(source.get("target_die_index", 0)), 0, DICE_COUNT - 1),
+		"target_face": clampi(int(source.get("target_face", 1)), 1, DIE_FACES),
+		"meter_started_msec": started,
+		"meter_period_msec": period,
+		"target_msec": maxi(started, int(source.get("target_msec", started))),
+		"perfect_window_msec": int(windows.get("perfect_window_msec", 90)),
+		"good_window_msec": int(windows.get("good_window_msec", 220)),
+		"close_window_msec": int(windows.get("close_window_msec", 360)),
+		"base_heat": maxi(1, int(source.get("base_heat", 16))),
+		"patron_snitch_pressure": maxi(0, int(source.get("patron_snitch_pressure", 0))),
+		"patron_watch_count": maxi(0, int(source.get("patron_watch_count", 0))),
+		"item_modifiers": _copy_array(source.get("item_modifiers", [])),
+	}
+	if source.has("input_msec"):
+		result["input_msec"] = maxi(0, int(source.get("input_msec", 0)))
+	var grade := str(source.get("skill_grade", ""))
+	if ["perfect", "good", "partial", "miss", "blown"].has(grade):
+		result["skill_grade"] = grade
+		result["skill_accuracy"] = clampi(int(source.get("skill_accuracy", 0)), 0, 100)
+		result["skill_margin_msec"] = int(source.get("skill_margin_msec", 0))
+	return result
+
+
+func _palmed_swap_windows(run_state: RunState) -> Dictionary:
+	var action := _action_def(PALMED_SWAP_ACTION_ID)
+	var perfect := int(action.get("skill_perfect_msec", 90)) + _item_effect_total("bar_dice_controlled_roll_perfect_msec", run_state)
+	var good := int(action.get("skill_good_msec", 220)) + _item_effect_total("bar_dice_controlled_roll_good_msec", run_state)
+	var close := int(action.get("skill_close_msec", 360)) + _item_effect_total("bar_dice_controlled_roll_close_msec", run_state)
+	var period := int(action.get("skill_period_msec", 1500)) + _item_effect_total("bar_dice_controlled_roll_meter_period_msec", run_state)
+	var impairment := clampi(int(run_state.drunk_level / 4), 0, 30) if run_state != null else 0
+	impairment = maxi(0, impairment - _item_effect_total("skill_cheat_drunk_window_offset_msec", run_state))
+	perfect = maxi(36, perfect - impairment)
+	good = maxi(perfect + 48, good - impairment * 2)
+	close = maxi(good + 48, close - impairment * 3)
+	return {"perfect": perfect, "good": good, "close": close, "period": maxi(700, period)}
+
+
+func _palmed_swap_base_heat(run_state: RunState) -> int:
+	var action := _action_def(PALMED_SWAP_ACTION_ID)
+	return maxi(1, int(action.get("suspicion_delta", 16)) + _item_effect_total("bar_dice_controlled_roll_base_heat", run_state))
+
+
+func _grade_palmed_swap_challenge(value: Dictionary) -> Dictionary:
+	var challenge := _normalized_palmed_swap_challenge(value)
+	if challenge.is_empty():
+		return {}
+	if not challenge.has("input_msec") or int(challenge.get("input_msec", 0)) <= 0:
+		challenge["skill_grade"] = "miss"
+		challenge["skill_accuracy"] = 0
+		challenge["skill_margin_msec"] = 0
+		return challenge
+	var period := maxi(1, int(challenge.get("meter_period_msec", 1500)))
+	var started := int(challenge.get("meter_started_msec", 0))
+	var input_phase := (int(challenge.get("input_msec", 0)) - started) % period
+	var target_phase := (int(challenge.get("target_msec", started)) - started) % period
+	if input_phase < 0:
+		input_phase += period
+	if target_phase < 0:
+		target_phase += period
+	var margin := _circular_meter_margin(input_phase, target_phase, period)
+	var timing := GameModule.skill_timing_grade_from_distance(
+		absi(margin),
+		int(challenge.get("perfect_window_msec", 90)),
+		int(challenge.get("good_window_msec", 220)),
+		int(challenge.get("close_window_msec", 360)),
+		24
+	)
+	challenge["skill_grade"] = str(timing.get("skill_grade", "blown"))
+	challenge["skill_accuracy"] = clampi(int(timing.get("skill_accuracy", 0)), 0, 100)
+	challenge["skill_margin_msec"] = margin
+	return challenge
+
+
+func _finalize_palmed_swap_challenge(ui_state: Dictionary, run_state: RunState, state: Dictionary) -> Dictionary:
+	var challenge := _normalized_palmed_swap_challenge(ui_state.get("palmed_swap_challenge", {}))
+	if challenge.is_empty():
+		challenge = _start_palmed_swap_challenge(ui_state, run_state, state)
+	if ui_state.has("palmed_swap_input_msec") and not challenge.has("input_msec"):
+		challenge["input_msec"] = maxi(0, int(ui_state.get("palmed_swap_input_msec", 0)))
+	return _grade_palmed_swap_challenge(challenge)
+
+
+func _palmed_swap_meter(challenge: Dictionary, ui_state: Dictionary) -> Dictionary:
+	if challenge.is_empty():
+		return {}
+	var now_msec := int(ui_state.get("surface_time_msec", challenge.get("meter_started_msec", 0)))
+	var started := int(challenge.get("meter_started_msec", now_msec))
+	var period := maxi(1, int(challenge.get("meter_period_msec", 1500)))
+	var phase := (now_msec - started) % period
+	var target := (int(challenge.get("target_msec", started)) - started) % period
+	if phase < 0:
+		phase += period
+	if target < 0:
+		target += period
+	return {
+		"progress": float(phase) / float(period),
+		"target": float(target) / float(period),
+		"target_die_index": int(challenge.get("target_die_index", 0)),
+		"skill_grade": str(challenge.get("skill_grade", "")),
+	}
+
+
+func _palmed_swap_grade_heat_modifier(grade: String) -> int:
+	var action := _action_def(PALMED_SWAP_ACTION_ID)
+	match grade:
+		"perfect":
+			return -int(action.get("skill_perfect_heat_reduction", 3))
+		"partial":
+			return int(action.get("skill_partial_heat_bonus", 3))
+		"miss":
+			return int(action.get("skill_miss_heat_bonus", 6))
+		"blown":
+			return int(action.get("skill_blown_heat_bonus", 12))
+	return 0
 
 
 func _patron_watch_info(state: Dictionary) -> Dictionary:
@@ -1931,21 +2166,42 @@ func _apply_controlled_roll(dice_value: Variant, controlled_roll: Dictionary) ->
 	return dice
 
 
-func _apply_palmed_swap(dice_value: Variant, ruleset: String) -> Array:
+func _apply_palmed_swap(dice_value: Variant, ruleset: String, challenge: Dictionary = {}) -> Array:
 	var dice := _int_dice(dice_value)
 	if dice.size() != DICE_COUNT:
 		return dice
-	var best := dice.duplicate()
-	var best_score := _score_for_ruleset(best, ruleset)
+	var grade := str(challenge.get("skill_grade", "miss"))
+	if not GameModule.skill_grade_applies(grade):
+		return dice
+	var target := _palmed_swap_target(dice, ruleset)
+	var target_index := clampi(int(challenge.get("target_die_index", target.get("index", -1))), -1, DICE_COUNT - 1)
+	if target_index < 0:
+		return dice
+	var target_face := clampi(int(challenge.get("target_face", target.get("face", dice[target_index]))), 1, DIE_FACES)
+	if grade == "partial":
+		var current := int(dice[target_index])
+		target_face = current + signi(target_face - current)
+	dice[target_index] = target_face
+	return dice
+
+
+func _palmed_swap_target(dice_value: Variant, ruleset: String) -> Dictionary:
+	var dice := _int_dice(dice_value)
+	if dice.size() != DICE_COUNT:
+		return {"index": -1, "face": 0}
+	var best_score := _score_for_ruleset(dice, ruleset)
+	var best_index := -1
+	var best_face := 0
 	for i in range(dice.size()):
 		for face in range(1, DIE_FACES + 1):
 			var candidate := dice.duplicate()
 			candidate[i] = face
 			var score := _score_for_ruleset(candidate, ruleset)
 			if _compare_signatures(score.get("signature", []), best_score.get("signature", [])) > 0:
-				best = candidate
 				best_score = score
-	return best
+				best_index = i
+				best_face = face
+	return {"index": best_index, "face": best_face}
 
 
 func _score(dice: Array) -> Dictionary:
@@ -2146,7 +2402,7 @@ func _bar_dice_legend() -> Array:
 	]
 
 
-func _bar_dice_action_buttons(phase: String, remaining_shakes: int, reroll: Array, suggested: Array, can_shake: bool, press_available: bool, press_risk: int, loaded_armed: bool = false, controlled_roll: Dictionary = {}) -> Array:
+func _bar_dice_action_buttons(phase: String, remaining_shakes: int, reroll: Array, suggested: Array, can_shake: bool, press_available: bool, press_risk: int, loaded_armed: bool = false, controlled_roll: Dictionary = {}, palm_armed: bool = false, palmed_swap: Dictionary = {}) -> Array:
 	var buttons: Array = []
 	if phase == "select":
 		var suggested_count := suggested.size()
@@ -2189,10 +2445,11 @@ func _bar_dice_action_buttons(phase: String, remaining_shakes: int, reroll: Arra
 		buttons.append({
 			"action": "bar_dice_palm",
 			"index": 0,
-			"label": "CHEAT PALM SWAP",
-			"detail": "Improve one die",
+			"label": "SWAP NOW" if palm_armed else "CHEAT PALM SWAP",
+			"detail": "Lock the weak die" if palm_armed else "Time one hidden swap",
 			"accent": "orange",
 			"enabled": true,
+			"selected": palm_armed and str(palmed_swap.get("skill_grade", "")).is_empty(),
 		})
 		return buttons
 	buttons.append({
@@ -2355,7 +2612,12 @@ func _outcome_message(table_result: Dictionary, outcome: String, bankroll_delta:
 		var grade := str(controlled.get("skill_grade", "miss")).replace("_", " ").capitalize()
 		text += " Controlled roll %s; loaded die risk is visible." % grade
 	elif action_id == "palmed_swap":
-		text += " Palmed swap risk is visible."
+		var palm := _copy_dict(table_result.get("palmed_swap_challenge", {}))
+		var palm_grade := str(palm.get("skill_grade", "miss")).replace("_", " ").capitalize()
+		if GameModule.skill_grade_applies(str(palm.get("skill_grade", "miss"))):
+			text += " Palmed swap %s; the tracked die changes under the cup." % palm_grade
+		else:
+			text += " Palmed swap %s; no die changes and the reach is noticed." % palm_grade
 	if suspicion_delta > 0:
 		text += " Heat %+d." % suspicion_delta
 	if not pit_boss_summary.is_empty():
@@ -2388,7 +2650,21 @@ func _resolve_prompt(ui_state: Dictionary, action_id: String) -> String:
 				return "Controlled roll armed for %s. Hit RELEASE in the target band." % _word_single(int(controlled.get("desired_face", 6)))
 			return "Controlled roll %s locked. Settle the cup to risk the throw." % grade.replace("_", " ").capitalize()
 		"palmed_swap":
-			return "Palmed swap armed. Click again to improve one die and take heat."
+			var palm := _normalized_palmed_swap_challenge(ui_state.get("palmed_swap_challenge", {}))
+			if palm.is_empty():
+				return "Palmed swap armed. Track the weak die, then press SWAP NOW."
+			var palm_grade := str(palm.get("skill_grade", ""))
+			if palm_grade.is_empty():
+				return "Palm track live for die %d. Press SWAP NOW on its yellow band; heat +%d." % [int(palm.get("target_die_index", 0)) + 1, int(palm.get("base_heat", 16))]
+			match palm_grade:
+				"perfect", "good":
+					return "Palmed swap %s: the weak die changes cleanly." % palm_grade
+				"partial":
+					return "Palmed swap partial: the die improves, but the move is obvious."
+				"blown":
+					return "Palmed swap blown: the cup clacks and every watcher sees the reach."
+				_:
+					return "Palmed swap missed: no die changes, but the suspicious reach still draws heat."
 		_:
 			if bool(ui_state.get("rolled", false)):
 				return "Settle this cup: your 6-5-4 cargo is compared against every seat. Click again to confirm."
@@ -2484,7 +2760,7 @@ func _draw_dice_rows(surface, state: Dictionary) -> void:
 	if bool(state.get("loaded_armed", false)):
 		_draw_controlled_roll_meter(surface, state, Vector2(262, 282))
 	if bool(state.get("palm_armed", false)):
-		surface.surface_label("Palmed swap ready", Vector2(262, 286), 12, C_PINK_2)
+		_draw_palmed_swap_meter(surface, state, Vector2(262, 282))
 
 
 func _draw_controlled_roll_meter(surface, state: Dictionary, pos: Vector2) -> void:
@@ -2510,6 +2786,28 @@ func _draw_controlled_roll_meter(surface, state: Dictionary, pos: Vector2) -> vo
 		surface.draw_rect(Rect2(input_x - 1.0, bar.position.y - 6.0, 2.0, bar.size.y + 12.0), C_WHITE)
 		var grade := str(meter.get("skill_grade", "")).replace("_", " ").to_upper()
 		surface.surface_label(grade.left(18), pos + Vector2(154, 0), 8, C_CYAN)
+
+
+func _draw_palmed_swap_meter(surface, state: Dictionary, pos: Vector2) -> void:
+	var challenge := _copy_dict(state.get("palmed_swap_challenge", {}))
+	var meter := _copy_dict(state.get("palmed_swap_meter", {}))
+	if challenge.is_empty() or meter.is_empty():
+		return
+	var bar := Rect2(pos + Vector2(0, 12), Vector2(276, 10))
+	surface.surface_label("PALM TRACK: HIT WEAK DIE", pos, 8, C_PINK_2)
+	surface.draw_rect(bar, Color("#070812"))
+	surface.draw_rect(bar, Color(C_PINK.r, C_PINK.g, C_PINK.b, 0.38), false, 1)
+	for die_index in range(DICE_COUNT):
+		var x := bar.position.x + (float(die_index) + 0.5) * bar.size.x / float(DICE_COUNT)
+		var color := C_YELLOW if die_index == int(challenge.get("target_die_index", -1)) else Color(C_SOFT.r, C_SOFT.g, C_SOFT.b, 0.28)
+		surface.draw_rect(Rect2(x - 2.0, bar.position.y - 3.0, 4.0, bar.size.y + 6.0), color)
+	var progress_x := bar.position.x + bar.size.x * clampf(float(meter.get("progress", 0.0)), 0.0, 1.0)
+	surface.draw_rect(Rect2(progress_x - 2.0, bar.position.y - 5.0, 4.0, bar.size.y + 10.0), C_CYAN)
+	var grade := str(meter.get("skill_grade", "")).replace("_", " ").to_upper()
+	if not grade.is_empty():
+		surface.surface_label(grade.left(18), pos + Vector2(188, 0), 8, C_CYAN)
+	else:
+		surface.surface_label("HEAT +%d" % int(state.get("palmed_swap_heat_preview", 0)), pos + Vector2(204, 0), 7, C_PINK_2)
 
 
 func _draw_opponent_dice_rows(surface, state: Dictionary) -> void:
