@@ -72,5 +72,223 @@
 		"anchor": {"kind": "hud_element", "id": "objective"},
 		"copy": "Clean play earns recognition. Higher tiers open better comps.",
 		"completion": {"type": "any_action"}
+	},
+	{
+		"id": "tutorial_home_container",
+		"scope": "tutorial_run",
+		"trigger": {
+			"environment_archetype": "motel_room",
+			"state_predicates": [{"path": "run.challenge_id", "op": "equals", "value": "tutorial_first_card"}]
+		},
+		"anchor": {"kind": "interactable_object", "id": "home_container:backpack_01"},
+		"copy": "This backpack carries gear into the night. Open it and check that it starts empty.",
+		"completion": {"type": "anchored_action"},
+		"gating": {"allowed_action_ids": ["home_container:backpack_01"]}
+	},
+	{
+		"id": "tutorial_empty_loadout",
+		"scope": "tutorial_run",
+		"trigger": {
+			"depends_on": ["tutorial_home_container"],
+			"environment_archetype": "motel_room",
+			"state_predicates": [{"path": "run.inventory_count", "op": "equals", "value": 0}]
+		},
+		"anchor": {"kind": "hud_element", "id": "inventory"},
+		"copy": "Your carried inventory is empty. Open it now; the backpack remains separate storage.",
+		"completion": {"type": "anchored_action", "action_id": "inventory"},
+		"gating": {"allowed_action_ids": ["inventory"]}
+	},
+	{
+		"id": "tutorial_leave_home",
+		"scope": "tutorial_run",
+		"trigger": {
+			"depends_on": ["tutorial_empty_loadout"],
+			"environment_archetype": "motel_room",
+			"state_predicates": [{"path": "run.challenge_id", "op": "equals", "value": "tutorial_first_card"}]
+		},
+		"anchor": {"kind": "interactable_object", "id": "travel:leave"},
+		"copy": "The room is your safe start. Use the door to open the city map.",
+		"completion": {"type": "anchored_action"},
+		"gating": {"allowed_action_ids": ["travel:leave"]}
+	},
+	{
+		"id": "tutorial_leave_motel",
+		"scope": "tutorial_run",
+		"trigger": {
+			"depends_on": ["tutorial_leave_home"],
+			"environment_archetype": "motel",
+			"state_predicates": [{"path": "run.challenge_id", "op": "equals", "value": "tutorial_first_card"}]
+		},
+		"anchor": {"kind": "interactable_object", "id": "travel:leave"},
+		"copy": "You are in the motel lobby. Use its exit to open the city map and choose your first stop.",
+		"completion": {"type": "anchored_action"},
+		"gating": {"allowed_action_ids": ["travel:leave"]}
+	},
+	{
+		"id": "tutorial_map_store",
+		"scope": "tutorial_run",
+		"trigger": {
+			"depends_on": ["tutorial_leave_motel"],
+			"screen": "TRAVEL",
+			"state_predicates": [{"path": "ui.world_map_open", "op": "equals", "value": true}]
+		},
+		"anchor": {"kind": "hud_element", "id": "map"},
+		"copy": "Choose the Corner Store. The map lists travel time, method, and cost before you confirm.",
+		"completion": {"type": "anchored_action", "action_id": "travel:corner_store"},
+		"gating": {"allowed_action_ids": ["travel:corner_store"]}
+	},
+	{
+		"id": "tutorial_buy_coffee",
+		"scope": "tutorial_run",
+		"trigger": {
+			"depends_on": ["tutorial_map_store"],
+			"environment_archetype": "corner_store",
+			"state_predicates": [{"path": "run.inventory_count", "op": "equals", "value": 0}]
+		},
+		"anchor": {"kind": "interactable_object", "id": "item:instant_coffee"},
+		"copy": "Buy the Instant Coffee. Items describe their role without revealing exact hidden effects.",
+		"completion": {"type": "anchored_action"},
+		"gating": {"allowed_action_ids": ["ui:any", "item:instant_coffee"]}
+	},
+	{
+		"id": "tutorial_leave_store",
+		"scope": "tutorial_run",
+		"trigger": {
+			"depends_on": ["tutorial_buy_coffee"],
+			"environment_archetype": "corner_store",
+			"state_predicates": [{"path": "run.inventory_count", "op": "gt", "value": 0}]
+		},
+		"anchor": {"kind": "interactable_object", "id": "travel:leave"},
+		"copy": "You have one useful item and enough cash left to play. Open the map again.",
+		"completion": {"type": "anchored_action"},
+		"gating": {"allowed_action_ids": ["travel:leave"]}
+	},
+	{
+		"id": "tutorial_map_bar",
+		"scope": "tutorial_run",
+		"trigger": {
+			"depends_on": ["tutorial_leave_store"],
+			"screen": "TRAVEL",
+			"state_predicates": [{"path": "ui.world_map_open", "op": "equals", "value": true}]
+		},
+		"anchor": {"kind": "hud_element", "id": "map"},
+		"copy": "Travel to the Low Tide Bar for a low-stakes hand and a little local conversation.",
+		"completion": {"type": "anchored_action", "action_id": "travel:bar"},
+		"gating": {"allowed_action_ids": ["travel:bar"]}
+	},
+	{
+		"id": "tutorial_enter_blackjack",
+		"scope": "tutorial_run",
+		"trigger": {
+			"depends_on": ["tutorial_map_bar"],
+			"environment_archetype": "bar",
+			"state_predicates": [{"path": "run.challenge_id", "op": "equals", "value": "tutorial_first_card"}]
+		},
+		"anchor": {"kind": "interactable_object", "id": "game:blackjack"},
+		"copy": "Sit at blackjack. This lesson uses the same table and rules as every normal run.",
+		"completion": {"type": "anchored_action"},
+		"gating": {"allowed_action_ids": ["game:blackjack"]}
+	},
+	{
+		"id": "tutorial_count_toggle",
+		"scope": "tutorial_run",
+		"trigger": {
+			"depends_on": ["tutorial_enter_blackjack"],
+			"game_id": "blackjack",
+			"state_predicates": [{"path": "run.challenge_id", "op": "equals", "value": "tutorial_first_card"}]
+		},
+		"anchor": {"kind": "surface_action", "id": "blackjack_count_toggle"},
+		"copy": "Try the count display. It is information, not a promise, and watching it can carry risk.",
+		"completion": {"type": "anchored_action"},
+		"gating": {"allowed_action_ids": ["blackjack_count_toggle", "ui:any"]}
+	},
+	{
+		"id": "tutorial_blackjack_deal",
+		"scope": "tutorial_run",
+		"trigger": {
+			"depends_on": ["tutorial_count_toggle"],
+			"game_id": "blackjack",
+			"state_predicates": [{"path": "run.challenge_id", "op": "equals", "value": "tutorial_first_card"}]
+		},
+		"anchor": {"kind": "surface_action", "id": "blackjack_deal"},
+		"copy": "Keep the stake low and deal one hand. The wager is paid only when the hand begins.",
+		"completion": {"type": "anchored_action"},
+		"gating": {"allowed_action_ids": ["blackjack_deal", "ui:any"]}
+	},
+	{
+		"id": "tutorial_blackjack_stand",
+		"scope": "tutorial_run",
+		"trigger": {
+			"depends_on": ["tutorial_blackjack_deal"],
+			"game_id": "blackjack",
+			"state_predicates": [{"path": "run.challenge_id", "op": "equals", "value": "tutorial_first_card"}]
+		},
+		"anchor": {"kind": "surface_action", "id": "blackjack_stand"},
+		"copy": "Stand to finish the hand. Completed bets always resolve before closing-time travel.",
+		"completion": {"type": "anchored_action"},
+		"gating": {"allowed_action_ids": ["blackjack_stand", "blackjack_deal", "ui:any"]}
+	},
+	{
+		"id": "tutorial_heat_result",
+		"scope": "tutorial_run",
+		"trigger": {
+			"depends_on": ["tutorial_blackjack_stand"],
+			"game_id": "blackjack",
+			"state_predicates": [{"path": "run.challenge_id", "op": "equals", "value": "tutorial_first_card"}]
+		},
+		"anchor": {"kind": "hud_element", "id": "heat"},
+		"copy": "Heat measures attention. Clean play is quieter; risky moves can make later rooms harder.",
+		"completion": {"type": "explicit_ok"}
+	},
+	{
+		"id": "tutorial_leave_table",
+		"scope": "tutorial_run",
+		"trigger": {
+			"depends_on": ["tutorial_heat_result"],
+			"game_id": "blackjack",
+			"state_predicates": [{"path": "run.challenge_id", "op": "equals", "value": "tutorial_first_card"}]
+		},
+		"anchor": {"kind": "surface_action", "id": "surface_back"},
+		"copy": "Leave the table and speak with the people in the room. Conversation can open routes.",
+		"completion": {"type": "anchored_action"},
+		"gating": {"allowed_action_ids": ["surface_back"]}
+	},
+	{
+		"id": "tutorial_friendly_talk",
+		"scope": "tutorial_run",
+		"trigger": {
+			"depends_on": ["tutorial_leave_table"],
+			"environment_archetype": "bar",
+			"state_predicates": [{"path": "run.tutorial_friendly_choice_done", "op": "equals", "value": false}]
+		},
+		"anchor": {"kind": "interactable_object", "id": "event:tutorial_friendly_choice"},
+		"copy": "Talk to the friendly regular. Choose what you want to say, not a displayed numeric effect.",
+		"completion": {"type": "anchored_action"},
+		"gating": {"allowed_action_ids": ["event:tutorial_friendly_choice"]}
+	},
+	{
+		"id": "tutorial_invitation",
+		"scope": "tutorial_run",
+		"trigger": {
+			"depends_on": ["tutorial_friendly_talk"],
+			"environment_archetype": "bar",
+			"state_predicates": [{"path": "run.tutorial_friendly_choice_done", "op": "equals", "value": true}]
+		},
+		"anchor": {"kind": "interactable_object", "id": "event:tutorial_grand_casino_invitation"},
+		"copy": "The host is holding a Grand Casino invitation. Speak with them and accept when ready.",
+		"completion": {"type": "anchored_action"},
+		"gating": {"allowed_action_ids": ["event:tutorial_grand_casino_invitation"]}
+	},
+	{
+		"id": "tutorial_invitation_complete",
+		"scope": "tutorial_run",
+		"trigger": {
+			"depends_on": ["tutorial_invitation"],
+			"environment_archetype": "bar",
+			"state_predicates": [{"path": "run.tutorial_invited", "op": "equals", "value": true}]
+		},
+		"anchor": {"kind": "hud_element", "id": "objective"},
+		"copy": "The Grand Casino is now on your map. The next lesson begins on its main floor.",
+		"completion": {"type": "explicit_ok"}
 	}
 ]

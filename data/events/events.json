@@ -2962,5 +2962,85 @@
         }
       ]
     }
+  },
+  {
+    "id": "tutorial_friendly_choice",
+    "display_name": "Friendly Regular",
+    "type": "social",
+    "interaction_mode": "interactable",
+    "scopes": ["casino"],
+    "asset_path": "res://assets/art/events/rowdy_regular.png",
+    "icon_key": "conversation",
+    "environment_prop": "bar_patron",
+    "start_summary": "A regular makes room at the bar.",
+    "trigger": {"type": "manual"},
+    "conditions": {
+      "requires_flags": {"tutorial_active": true},
+      "blocked_by_flags": ["tutorial_friendly_choice_done"]
+    },
+    "payload": {
+      "summary": "The regular asks what brought you to town.",
+      "choices": [
+        {
+          "id": "keep_it_light",
+          "label": "Keep It Light",
+          "text": "Say you are only looking for a friendly game.",
+          "response_type": "calm",
+          "consequences": {
+            "flags": {"tutorial_friendly_choice_done": true},
+            "resolve_event": true
+          }
+        },
+        {
+          "id": "ask_about_action",
+          "label": "Ask About the Action",
+          "text": "Ask where a careful player might find a bigger room.",
+          "response_type": "curious",
+          "consequences": {
+            "flags": {"tutorial_friendly_choice_done": true},
+            "resolve_event": true
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "tutorial_grand_casino_invitation",
+    "display_name": "A Host's Invitation",
+    "type": "progression",
+    "interaction_mode": "interactable",
+    "scopes": ["casino"],
+    "asset_path": "res://assets/art/events/parking_lot_tip.png",
+    "icon_key": "invitation",
+    "environment_prop": "casino_host",
+    "start_summary": "A host waits with a cream-colored card.",
+    "trigger": {"type": "manual"},
+    "conditions": {
+      "requires_flags": {
+        "tutorial_active": true,
+        "tutorial_friendly_choice_done": true
+      },
+      "blocked_by_flags": ["grand_casino_invite"]
+    },
+    "payload": {
+      "summary": "The card bears the Grand Casino crest.",
+      "choices": [
+        {
+          "id": "accept_first_invitation",
+          "label": "Accept the Invitation",
+          "text": "Take the card and thank the host.",
+          "response_type": "warm",
+          "consequences": {
+            "add_next_archetypes": ["grand_casino"],
+            "flags": {
+              "grand_casino_invite": true,
+              "tutorial_invitation_complete": true
+            },
+            "resolve_event": true,
+            "messages": ["The Grand Casino is open to you."]
+          }
+        }
+      ]
+    }
   }
 ]

@@ -10,8 +10,11 @@ static func trigger_matches(lesson: Dictionary, context: Dictionary, seen: Dicti
 	var lesson_id := str(lesson.get("id", "")).strip_edges()
 	if lesson_id.is_empty() or bool(seen.get(lesson_id, false)):
 		return false
-	var gating := _dict(lesson.get("gating", {}))
-	if not tips_enabled and gating.is_empty():
+	if not tips_enabled:
+		return false
+	var tutorial_context: bool = _path_value(context, "run.tutorial") == true
+	var tutorial_lesson := str(lesson.get("scope", "")).strip_edges() == "tutorial_run"
+	if tutorial_context != tutorial_lesson:
 		return false
 	var trigger := _dict(lesson.get("trigger", {}))
 	if trigger.is_empty():

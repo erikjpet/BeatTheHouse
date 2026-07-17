@@ -61,7 +61,8 @@ func _ready() -> void:
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
 	z_index = 90
 	visible = false
-	_build()
+	if panel == null:
+		_build()
 
 
 func set_lessons(next_lessons: Array) -> void:
@@ -88,16 +89,15 @@ func set_tips_enabled(enabled: bool) -> void:
 	tips_enabled = enabled
 	if enabled:
 		return
-	var retained: Array = []
-	for entry_value in queued_lessons:
-		var entry := _dict(entry_value)
-		var lesson := _dict(entry.get("lesson", {}))
-		if not _dict(lesson.get("gating", {})).is_empty():
-			retained.append(entry)
-	queued_lessons = retained
-	_rebuild_queued_ids()
-	if not active_lesson.is_empty() and _dict(active_lesson.get("gating", {})).is_empty():
-		_finish_active()
+	suspend()
+
+
+func begin_tutorial_run() -> void:
+	for lesson_value in lessons:
+		var lesson := _dict(lesson_value)
+		if str(lesson.get("scope", "")).strip_edges() == "tutorial_run":
+			seen.erase(str(lesson.get("id", "")).strip_edges())
+	suspend()
 
 
 func set_reduce_motion(enabled: bool) -> void:
@@ -115,6 +115,8 @@ func set_small_screen_mode(enabled: bool) -> void:
 
 
 func evaluate_at_boundary(context: Dictionary) -> void:
+	if panel == null:
+		_build()
 	var observed_context := context.duplicate(true)
 	observed_context["reduce_motion"] = reduce_motion
 	observed_context["small_screen"] = small_screen
@@ -205,7 +207,8 @@ func _show_next() -> void:
 		active_context = {}
 		prepared_snapshot = {}
 		visible = false
-		focus_layer.set_snapshot({})
+		if focus_layer != null:
+			focus_layer.set_snapshot({})
 		return
 	var entry: Dictionary = queued_lessons.pop_front()
 	active_lesson = _dict(entry.get("lesson", {})).duplicate(true)
