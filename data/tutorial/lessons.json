@@ -81,7 +81,7 @@
 			"state_predicates": [{"path": "run.challenge_id", "op": "equals", "value": "tutorial_first_card"}]
 		},
 		"anchor": {"kind": "interactable_object", "id": "home_container:backpack_01"},
-		"copy": "Open the backpack. It carries gear into each run.",
+		"copy": "Open the highlighted backpack. It carries gear into each run.",
 		"completion": {"type": "anchored_action"},
 		"gating": {"allowed_action_ids": ["home_container:backpack_01"]}
 	},

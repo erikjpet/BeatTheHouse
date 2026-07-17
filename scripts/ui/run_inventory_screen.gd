@@ -31,6 +31,7 @@ var _summary_label: Label
 var _item_grid: GridContainer
 var _detail_box: VBoxContainer
 var _close_button: Button
+var _empty_label: Label
 var _small_screen_mode := false
 
 
@@ -100,6 +101,7 @@ func layout_rects() -> Dictionary:
 		"popup_rect": _panel.get_global_rect() if _panel != null else Rect2(),
 		"grid_rect": _items_scroll.get_global_rect() if _items_scroll != null else Rect2(),
 		"detail_rect": _detail_panel.get_global_rect() if _detail_panel != null else Rect2(),
+		"empty_text_rect": _empty_label.get_global_rect() if _empty_label != null else Rect2(),
 		"screen_rect": get_global_rect(),
 		"small_screen_mode": _small_screen_mode,
 		"minimum_control_height": SmallScreenPolicyScript.CONTROL_TOUCH_TARGET_HEIGHT if _small_screen_mode else FoundationWidgets.MIN_NATIVE_TOUCH_TARGET_HEIGHT,
@@ -178,7 +180,7 @@ func _build() -> void:
 	_item_grid.columns = 2
 	_item_grid.add_theme_constant_override("h_separation", 8)
 	_item_grid.add_theme_constant_override("v_separation", 8)
-	_item_grid.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	_item_grid.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_items_scroll.add_child(_item_grid)
 
 	_detail_panel = FoundationWidgets.panel_container(VisualStyle.DARK_2, VisualStyle.CYAN_2)
@@ -204,6 +206,7 @@ func _render() -> void:
 	if _item_grid == null:
 		return
 	FoundationWidgets.clear(_item_grid)
+	_empty_label = null
 	if _detail_box != null:
 		FoundationWidgets.clear(_detail_box)
 	var mode := _mode()
@@ -215,7 +218,9 @@ func _render() -> void:
 	_item_grid.columns = _configured_columns()
 	var items := _item_array(_model.get("items", []))
 	if items.is_empty():
-		_item_grid.add_child(FoundationWidgets.muted_label(str(_model.get("empty_text", "No run items yet.")), 13))
+		_empty_label = FoundationWidgets.muted_label(str(_model.get("empty_text", "No run items yet.")), 13)
+		_empty_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		_item_grid.add_child(_empty_label)
 		_render_detail({})
 		return
 	if not _has_selection(items):

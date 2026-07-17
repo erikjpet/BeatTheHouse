@@ -24,6 +24,19 @@ func _check_onboarding_tutorial_ui_flow(app: Control) -> bool:
 	if str(coach_snapshot.get("lesson_id", "")) != "tutorial_home_container" or not bool(coach_snapshot.get("gating", false)):
 		push_error("Tutorial UI did not focus and gate the first Home beat.")
 		return false
+	if not bool(app.call("activate_interactable_object", "home_container:backpack_01")):
+		push_error("Tutorial UI could not activate the highlighted Home backpack through the real object route.")
+		return false
+	await process_frame
+	if not bool(app.get("run_inventory_screen").call("is_open")):
+		push_error("Tutorial Home backpack did not open the shared inventory surface.")
+		return false
+	app.call("close_run_inventory")
+	await process_frame
+	coach_snapshot = app.get("coach_overlay").call("current_snapshot")
+	if str(coach_snapshot.get("lesson_id", "")) != "tutorial_empty_loadout" or not bool(coach_snapshot.get("gating", false)):
+		push_error("Tutorial did not advance from the backpack to the carried-inventory lesson.")
+		return false
 	app.call("open_run_menu")
 	await process_frame
 	var skip_button: Button = app.get("run_menu_skip_tutorial_button")

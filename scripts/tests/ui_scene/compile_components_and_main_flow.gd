@@ -293,6 +293,16 @@ func _check_run_inventory_screen_component() -> bool:
 		parent.queue_free()
 		push_error("Standalone run inventory did not adopt the small-screen control target policy.")
 		return false
+	var empty_model := _run_inventory_component_model("home_container", "home_box")
+	empty_model["items"] = []
+	empty_model["empty_text"] = "No movable items. Carried items appear here."
+	screen.update_model(empty_model)
+	await process_frame
+	var empty_rect := _snapshot_rect(screen.layout_rects().get("empty_text_rect", Rect2()))
+	if empty_rect.size.x < 120.0 or empty_rect.size.y > 100.0:
+		parent.queue_free()
+		push_error("Small-screen empty inventory text collapsed into a narrow column: %s." % str(empty_rect))
+		return false
 	screen.set_small_screen_mode(false)
 	parent.size = Vector2(640, 360)
 	screen.size = parent.size

@@ -2679,6 +2679,7 @@ func open_run_inventory() -> void:
 
 func close_run_inventory() -> void:
 	_hide_run_inventory_popup()
+	_refresh()
 
 
 func open_run_journal() -> void:
@@ -5925,7 +5926,7 @@ func _add_context_object_actions(card: VBoxContainer, object_data: Dictionary) -
 			if _is_meta_session():
 				_add_card_button(card, "Open contents", Callable(self, "open_meta_container").bind(source_id), false, true)
 			else:
-				_add_card_button(card, "Open storage", Callable(self, "_show_home_container_popup").bind(source_id), false, true)
+				_add_card_button(card, "Open storage", Callable(self, "activate_interactable_object").bind(str(object_data.get("object_id", ""))), false, true)
 		CONTEXT_MODE_META_BAG:
 			_add_card_button(card, "Open bag", Callable(self, "open_meta_bag").bind(int(source_id)), false, true)
 		CONTEXT_MODE_META_UPGRADE:
