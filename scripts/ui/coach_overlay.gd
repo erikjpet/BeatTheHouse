@@ -21,9 +21,9 @@ class FocusLayer:
 	func _draw() -> void:
 		if snapshot.is_empty() or not bool(snapshot.get("visible", false)):
 			return
-		var anchor := CoachFocusViewModelScript._rect(snapshot.get("anchor_rect", {}))
+		var anchor: Rect2 = CoachFocusViewModelScript._rect(snapshot.get("anchor_rect", {}))
 		var alpha := 0.40 if bool(snapshot.get("gating", false)) else 0.10
-		if anchor.is_empty():
+		if not anchor.has_area():
 			draw_rect(Rect2(Vector2.ZERO, size), Color(0.0, 0.0, 0.0, alpha), true)
 			return
 		var top_height := maxf(0.0, anchor.position.y)
@@ -287,7 +287,7 @@ func _layout_key(lesson: Dictionary, context: Dictionary) -> int:
 	var anchor := _dict(lesson.get("anchor", {}))
 	var kind := str(anchor.get("kind", "none"))
 	var anchor_id := str(anchor.get("id", ""))
-	var group_name := {"interactable_object": "interactable_objects", "hud_element": "hud_elements", "surface_action": "surface_actions"}.get(kind, "")
+	var group_name: String = str({"interactable_object": "interactable_objects", "hud_element": "hud_elements", "surface_action": "surface_actions"}.get(kind, ""))
 	var anchor_rects := _dict(context.get("anchor_rects", {}))
 	var group := _dict(anchor_rects.get(group_name, {}))
 	return hash([

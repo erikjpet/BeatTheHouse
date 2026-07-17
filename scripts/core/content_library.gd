@@ -2154,7 +2154,7 @@ func _validate_tutorial_gating(lesson_id: String, value: Variant) -> void:
 		validation_errors.append("tutorial_lessons %s gating must be a dictionary when present." % lesson_id)
 		return
 	var gating: Dictionary = value
-	var allowed := gating.get("allowed_action_ids", [])
+	var allowed: Variant = gating.get("allowed_action_ids", [])
 	if typeof(allowed) != TYPE_ARRAY or _string_array(allowed).is_empty():
 		validation_errors.append("tutorial_lessons %s gating requires allowed_action_ids." % lesson_id)
 

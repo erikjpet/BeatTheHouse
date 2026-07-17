@@ -11771,7 +11771,7 @@ func _coach_anchor_rects() -> Dictionary:
 			var region: Dictionary = region_value
 			var action_id := str(region.get("action", "")).strip_edges()
 			var local_rect: Rect2 = region.get("rect", Rect2()) if typeof(region.get("rect", Rect2())) == TYPE_RECT2 else Rect2()
-			if not action_id.is_empty() and not local_rect.is_empty() and not surface_actions.has(action_id):
+			if not action_id.is_empty() and local_rect.has_area() and not surface_actions.has(action_id):
 				surface_actions[action_id] = Rect2(surface_origin + local_rect.position, local_rect.size)
 	return {"hud_elements": hud, "interactable_objects": objects, "surface_actions": surface_actions}
 

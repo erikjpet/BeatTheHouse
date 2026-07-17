@@ -64,7 +64,7 @@ static func build(lesson: Dictionary, context: Dictionary) -> Dictionary:
 		"copy": str(lesson.get("copy", "")),
 		"anchor_kind": anchor_kind,
 		"anchor_id": anchor_id,
-		"anchor_found": anchor_kind == "none" or not anchor_rect.is_empty(),
+		"anchor_found": anchor_kind == "none" or anchor_rect.has_area(),
 		"anchor_rect": _rect_dict(anchor_rect),
 		"bubble_rect": _rect_dict(bubble_rect),
 		"viewport_rect": _rect_dict(viewport_rect),
@@ -135,18 +135,18 @@ static func _anchor_rect(kind: String, anchor_id: String, context: Dictionary) -
 	if kind == "none":
 		return Rect2()
 	var anchor_rects := _dict(context.get("anchor_rects", {}))
-	var group_name := {
+	var group_name: String = str({
 		"interactable_object": "interactable_objects",
 		"hud_element": "hud_elements",
 		"surface_action": "surface_actions",
-	}.get(kind, "")
+	}.get(kind, ""))
 	var group := _dict(anchor_rects.get(group_name, {}))
 	return _rect(group.get(anchor_id, Rect2()))
 
 
 static func _bubble_rect(viewport_rect: Rect2, anchor_rect: Rect2, bubble_size: Vector2) -> Rect2:
 	var position := viewport_rect.get_center() - bubble_size * 0.5
-	if not anchor_rect.is_empty():
+	if anchor_rect.has_area():
 		var below_y := anchor_rect.end.y + 10.0
 		var above_y := anchor_rect.position.y - bubble_size.y - 10.0
 		if below_y + bubble_size.y <= viewport_rect.end.y - VIEWPORT_MARGIN:
