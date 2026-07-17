@@ -1015,7 +1015,7 @@
 		"display_name": "X-Ray Glasses",
 		"class": "permanent",
 		"domain": "games",
-		"content_groups": ["pull_tabs_pack"],
+		"content_groups": ["pull_tabs_pack", "scratch_tickets_pack"],
 		"sellable": true,
 		"sale_price": 18,
 		"price_min": 26,
@@ -1024,8 +1024,8 @@
 		"icon_key": "xray_glasses",
 		"environment_prop": "glasses",
 		"surface": "counter_case",
-		"description": "Marks buried winners.",
-		"effect": {}
+		"description": "Marks buried winners and peeks through scratch latex.",
+		"effect": {"scratch_peek_cells": 3, "scratch_peek_heat": 6}
 	},
 	{
 		"id": "tab_detector",
@@ -1049,7 +1049,7 @@
 		"display_name": "Tarot Card",
 		"class": "consumable",
 		"domain": "games",
-		"content_groups": ["pull_tabs_pack"],
+		"content_groups": ["pull_tabs_pack", "scratch_tickets_pack"],
 		"sellable": true,
 		"sale_price": 9,
 		"price_min": 14,
@@ -1058,8 +1058,25 @@
 		"icon_key": "tarot_card",
 		"environment_prop": "loose_card",
 		"surface": "felt_table",
-		"description": "Previews pull tabs.",
-		"effect": {"active_item": true, "active_mode": "consumable", "active_target": "pull_tabs"}
+		"description": "Previews pull tabs and reads a scratcher's fortune.",
+		"effect": {"active_item": true, "active_mode": "consumable", "active_target": "pull_tabs", "scratch_fortune_hint": 1}
+	},
+	{
+		"id": "lucky_penny",
+		"display_name": "Lucky Penny",
+		"class": "permanent",
+		"domain": "games",
+		"content_groups": ["scratch_tickets_pack"],
+		"sellable": true,
+		"sale_price": 11,
+		"price_min": 18,
+		"price_max": 30,
+		"asset_path": "res://assets/art/items/lucky_penny.png",
+		"icon_key": "lucky_penny",
+		"environment_prop": "coin",
+		"surface": "counter_case",
+		"description": "Shields one scratch-ticket penalty.",
+		"effect": {"scratch_penalty_shields": 1}
 	},
 	{
 		"id": "jazz_sax_lucky_coin",
