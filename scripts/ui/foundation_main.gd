@@ -4551,7 +4551,7 @@ func _build_cage_window() -> void:
 	if cage_window != null:
 		return
 	cage_window = CageWindowScript.new()
-	cage_window.close_requested.connect(Callable(self, "_hide_cage_window"))
+	cage_window.close_requested.connect(Callable(self, "_request_close_cage_window"))
 	cage_window.buy_chips_requested.connect(Callable(self, "_buy_cage_chips"))
 	cage_window.cash_out_requested.connect(Callable(self, "_cash_out_cage_chips"))
 	cage_window.review_requested.connect(Callable(self, "_complete_cage_players_card_review"))
@@ -5138,7 +5138,7 @@ func _build_run_report_screen(parent: BoxContainer) -> void:
 	run_report_screen.visible = false
 	run_report_screen.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	run_report_screen.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	run_report_screen.new_run_requested.connect(start_generated_foundation_run)
+	run_report_screen.new_run_requested.connect(_on_run_report_new_run_requested)
 	run_report_screen.home_requested.connect(_on_run_report_home_requested)
 	run_report_screen.copy_seed_requested.connect(_on_run_report_copy_seed_requested)
 	run_report_screen.bag_claim_requested.connect(claim_victory_collection_bag)
@@ -7496,7 +7496,18 @@ func _open_cage_window() -> bool:
 		return false
 	cage_window.open(model)
 	_show_message("Linda opens your Cage account.")
+	_refresh_coach_at_boundary()
 	return true
+
+
+func _request_close_cage_window() -> void:
+	if coach_overlay != null and not coach_overlay.input_allowed("cage:close"):
+		_show_message("Follow the highlighted advice first.")
+		return
+	if coach_overlay != null:
+		coach_overlay.notify_action("cage:close")
+	_hide_cage_window()
+	_refresh_coach_at_boundary()
 
 
 func _hide_cage_window() -> void:
@@ -7520,8 +7531,13 @@ func _refresh_cage_window_after_state_change() -> void:
 func _buy_cage_chips(amount: int) -> void:
 	if run_state == null:
 		return
+	if coach_overlay != null and not coach_overlay.input_allowed("cage:buy_chips"):
+		_show_message("Follow the highlighted advice first.")
+		return
 	var result := run_state.buy_grand_casino_chips(amount, run_state.grand_casino_chip_exchange_rate())
 	if bool(result.get("ok", false)):
+		if coach_overlay != null:
+			coach_overlay.notify_action("cage:buy_chips")
 		run_state.advance_environment_turns(1)
 		_autosave_foundation_run("Autosaved.")
 	_show_message(str(result.get("message", "The Cage could not complete that buy-in.")))
@@ -7532,8 +7548,13 @@ func _buy_cage_chips(amount: int) -> void:
 func _cash_out_cage_chips() -> void:
 	if run_state == null:
 		return
+	if coach_overlay != null and not coach_overlay.input_allowed("cage:cash_out"):
+		_show_message("Follow the highlighted advice first.")
+		return
 	var result := run_state.cash_out_grand_casino_chips(-1, run_state.grand_casino_chip_exchange_rate())
 	if bool(result.get("ok", false)):
+		if coach_overlay != null:
+			coach_overlay.notify_action("cage:cash_out")
 		run_state.advance_environment_turns(1)
 		_autosave_foundation_run("Autosaved.")
 	_show_message(str(result.get("message", "The Cage could not complete that cash-out.")))
@@ -7544,14 +7565,20 @@ func _cash_out_cage_chips() -> void:
 func _complete_cage_players_card_review() -> void:
 	if run_state == null or library == null:
 		return
+	if coach_overlay != null and not coach_overlay.input_allowed("cage:review"):
+		_show_message("Follow the highlighted advice first.")
+		return
 	var model := CageWindowViewModelScript.build(run_state)
 	var card: Dictionary = model.get("card", {}) if typeof(model.get("card", {})) == TYPE_DICTIONARY else {}
 	if not bool(card.get("can_review", false)):
 		_show_message(str(card.get("review_detail", "The Gold review is not ready.")))
 		_refresh_cage_window_after_state_change()
 		return
+	if coach_overlay != null:
+		coach_overlay.notify_action("cage:review")
 	_hide_cage_window()
-	if not start_dialogue("linda_gold_review", {"source": "cage_gold_review", "source_object_id": "casino_fixture:cage"}):
+	var dialogue_id := "tutorial_linda_gold_review" if run_state.is_tutorial_run() else "linda_gold_review"
+	if not start_dialogue(dialogue_id, {"source": "cage_gold_review", "source_object_id": "casino_fixture:cage"}):
 		_show_message("Linda's Gold review is unavailable.")
 
 
@@ -8813,9 +8840,35 @@ func start_generated_foundation_run() -> void:
 	start_foundation_run(seed_text, _new_run_challenge_for_seed(seed_text))
 
 
+func _on_run_report_new_run_requested() -> void:
+	if run_state != null and run_state.is_tutorial_run() and run_state.run_status == RunState.RUN_STATUS_FAILED:
+		start_tutorial_run()
+		return
+	start_generated_foundation_run()
+
+
 func _on_run_report_home_requested() -> void:
+	if run_state != null and run_state.is_tutorial_run() and run_state.run_status == RunState.RUN_STATUS_FAILED:
+		if not _complete_tutorial_profile():
+			return
+		start_generated_foundation_run()
+		return
 	return_to_main_menu()
 	open_collection_browser()
+
+
+func _complete_tutorial_profile() -> bool:
+	if profile_inventory == null:
+		_initialize_profile_inventory()
+	if profile_inventory.tutorial_completed:
+		return true
+	profile_inventory.tutorial_completed = true
+	var error := profile_inventory.save()
+	if error == OK:
+		return true
+	profile_inventory.tutorial_completed = false
+	_show_message("Could not save lesson completion.")
+	return false
 
 
 func _on_run_report_copy_seed_requested(seed: String) -> void:
@@ -9063,6 +9116,9 @@ func _enter_meta_location(location_id: String) -> void:
 	if game_test_menu != null:
 		game_test_menu.visible = false
 	_apply_meta_environment(clean_location)
+	if coach_overlay != null:
+		coach_overlay.suspend()
+	_configure_coach_for_run()
 	_clear_selected_game_action()
 	_clear_selected_stake()
 	_clear_selected_travel()
@@ -10240,7 +10296,10 @@ func _route_failed_run_if_needed(terminal_result: Dictionary = {}) -> bool:
 func _process_terminal_meta_bag_drops() -> void:
 	if run_state == null or not run_state.is_terminal():
 		return
-	if not run_state.meta_collection_enabled_for_run():
+	var tutorial_card_victory := run_state.is_tutorial_run() \
+		and run_state.run_status == RunState.RUN_STATUS_ENDED \
+		and str(run_state.narrative_flags.get("demo_victory_route", "")) == RunState.GRAND_CASINO_HIGH_ROLLER_EVENT_ID
+	if not run_state.meta_collection_enabled_for_run() and not tutorial_card_victory:
 		return
 	if meta_collection_service == null or collection_drop_service == null:
 		_initialize_meta_collection()
@@ -10249,6 +10308,10 @@ func _process_terminal_meta_bag_drops() -> void:
 		var special_save_error := meta_collection_service.save()
 		if special_save_error == OK:
 			save_status_message = "Meta collection updated."
+			if tutorial_card_victory and not _copy_dict(special_outcome.get("card_reward", {})).is_empty():
+				_complete_tutorial_profile()
+	if not run_state.meta_collection_enabled_for_run():
+		return
 	if run_state.run_status == RunState.RUN_STATUS_FAILED:
 		return
 	if run_state.run_status == RunState.RUN_STATUS_ENDED:
@@ -11801,6 +11864,7 @@ func _coach_context_snapshot() -> Dictionary:
 	var archetype_id := str(environment.get("archetype_id", ""))
 	var archetype := library.environment_archetype(archetype_id) if library != null else {}
 	var objective := run_state.demo_objective_status() if run_state != null else {}
+	var starter_card_count := _starter_card_count()
 	var result_type := str(last_item_result.get("type", ""))
 	if result_type.is_empty():
 		result_type = str(last_hook_result.get("type", last_game_result.get("type", "")))
@@ -11821,10 +11885,16 @@ func _coach_context_snapshot() -> Dictionary:
 			"closing_time_active": run_state.closing_time_active() if run_state != null else false,
 			"grand_casino_chips": run_state.grand_casino_chips if run_state != null else 0,
 			"players_card_tier": str(objective.get("players_card_tier", "none")),
+			"high_roller_ready": bool(objective.get("high_roller_ready", false)),
 		},
 		"ui": {
 			"pawn_counter_open": _run_inventory_popup_is_visible() and run_inventory_popup_mode == "pawn_counter",
 			"world_map_open": _world_map_overlay_is_visible(),
+			"cage_window_open": _cage_window_is_open(),
+		},
+		"meta": {
+			"home": _is_meta_session() and meta_session_location_id == META_LOCATION_HOME,
+			"starter_card_count": starter_card_count,
 		},
 		"action": {"last_result_type": result_type},
 		"viewport_rect": Rect2(Vector2.ZERO, size),
@@ -11832,6 +11902,18 @@ func _coach_context_snapshot() -> Dictionary:
 		"reduce_motion": _reduce_motion_enabled(),
 		"small_screen": _small_screen_enabled(),
 	}
+
+
+func _starter_card_count() -> int:
+	if meta_collection_service == null:
+		return 0
+	var count := 0
+	for instance_value in _copy_array(meta_collection_service.snapshot().get("owned_instances", [])):
+		var instance := _copy_dict(instance_value)
+		var stamp := _copy_dict(instance.get("instance_data", {}))
+		if bool(stamp.get("starter_card", false)):
+			count += 1
+	return count
 
 
 func _coach_anchor_rects() -> Dictionary:

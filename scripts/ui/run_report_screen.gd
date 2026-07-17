@@ -53,6 +53,11 @@ func _ready() -> void:
 
 func set_report(model: Dictionary) -> void:
 	report_model = model
+	var tutorial_failure := bool(model.get("tutorial_failure", false))
+	new_run_button.text = "Replay Lessons" if tutorial_failure else "New Run"
+	home_button.text = "Start Normal Run" if tutorial_failure else "Home"
+	new_run_button.tooltip_text = "Restart First Night in Town from the beginning." if tutorial_failure else "Start a new run."
+	home_button.tooltip_text = "Leave the tutorial and begin a normal run." if tutorial_failure else "Return to the collection home."
 	var outcome := _dict(model.get("outcome", {}))
 	var outcome_accent := VisualStyle.TEAL if bool(outcome.get("won", false)) else VisualStyle.PINK
 	var result_panel := section_panels.get("result") as PanelContainer

@@ -290,5 +290,181 @@
 		"anchor": {"kind": "hud_element", "id": "objective"},
 		"copy": "The Grand Casino is now on your map. The next lesson begins on its main floor.",
 		"completion": {"type": "explicit_ok"}
+	},
+	{
+		"id": "tutorial_map_grand_casino",
+		"scope": "tutorial_run",
+		"trigger": {
+			"depends_on": ["tutorial_invitation_complete"],
+			"screen": "TRAVEL",
+			"state_predicates": [{"path": "ui.world_map_open", "op": "equals", "value": true}]
+		},
+		"anchor": {"kind": "hud_element", "id": "map"},
+		"copy": "Travel to the Grand Casino. This lesson stays on the Main Floor; the other rooms belong to later runs.",
+		"completion": {"type": "anchored_action", "action_id": "travel:grand_casino"},
+		"gating": {"allowed_action_ids": ["travel:grand_casino"]}
+	},
+	{
+		"id": "tutorial_open_cage_buy_in",
+		"scope": "tutorial_run",
+		"trigger": {
+			"depends_on": ["tutorial_map_grand_casino"],
+			"environment_archetype": "grand_casino",
+			"state_predicates": [{"path": "run.grand_casino_chips", "op": "equals", "value": 0}]
+		},
+		"anchor": {"kind": "interactable_object", "id": "casino_fixture:cage"},
+		"copy": "Start at the Cage. Linda exchanges cash for casino chips and handles the Players Card review.",
+		"completion": {"type": "anchored_action"},
+		"gating": {"allowed_action_ids": ["casino_fixture:cage"]}
+	},
+	{
+		"id": "tutorial_buy_cage_chips",
+		"scope": "tutorial_run",
+		"trigger": {
+			"depends_on": ["tutorial_open_cage_buy_in"],
+			"environment_archetype": "grand_casino",
+			"state_predicates": [
+				{"path": "ui.cage_window_open", "op": "equals", "value": true},
+				{"path": "run.grand_casino_chips", "op": "equals", "value": 0}
+			]
+		},
+		"anchor": {"kind": "surface_action", "id": "cage:buy_chips"},
+		"copy": "Buy the smallest chip stack. Chips are separate from cash, and the Cage can exchange them back.",
+		"completion": {"type": "anchored_action", "action_id": "cage:buy_chips"},
+		"gating": {"allowed_action_ids": ["cage:buy_chips"]}
+	},
+	{
+		"id": "tutorial_chips_and_cash",
+		"scope": "tutorial_run",
+		"trigger": {
+			"depends_on": ["tutorial_buy_cage_chips"],
+			"environment_archetype": "grand_casino",
+			"state_predicates": [{"path": "run.grand_casino_chips", "op": "gt", "value": 0}]
+		},
+		"anchor": {"kind": "hud_element", "id": "chips"},
+		"copy": "The HUD tracks chips beside your cash. Main Floor machines still spend cash; tables deeper inside use chips.",
+		"completion": {"type": "explicit_ok"}
+	},
+	{
+		"id": "tutorial_close_cage_for_game",
+		"scope": "tutorial_run",
+		"trigger": {
+			"depends_on": ["tutorial_chips_and_cash"],
+			"environment_archetype": "grand_casino",
+			"state_predicates": [{"path": "ui.cage_window_open", "op": "equals", "value": true}]
+		},
+		"anchor": {"kind": "surface_action", "id": "cage:close"},
+		"copy": "Close the Cage and find the highlighted Main Floor machine.",
+		"completion": {"type": "anchored_action", "action_id": "cage:close"},
+		"gating": {"allowed_action_ids": ["cage:close"]}
+	},
+	{
+		"id": "tutorial_enter_grand_slot",
+		"scope": "tutorial_run",
+		"trigger": {
+			"depends_on": ["tutorial_close_cage_for_game"],
+			"environment_archetype": "grand_casino",
+			"state_predicates": [{"path": "ui.cage_window_open", "op": "equals", "value": false}]
+		},
+		"anchor": {"kind": "interactable_object", "id": "game:slot"},
+		"copy": "Use the Main Floor slot. One short, clean spin is enough if you finish at least one dollar ahead.",
+		"completion": {"type": "anchored_action"},
+		"gating": {"allowed_action_ids": ["game:slot"]}
+	},
+	{
+		"id": "tutorial_spin_grand_slot",
+		"scope": "tutorial_run",
+		"trigger": {
+			"depends_on": ["tutorial_enter_grand_slot"],
+			"game_id": "slot",
+			"state_predicates": [{"path": "run.challenge_id", "op": "equals", "value": "tutorial_first_card"}]
+		},
+		"anchor": {"kind": "surface_action", "id": "spin"},
+		"copy": "Keep the minimum bet and spin. The First Night match keeps this opening wager forgiving.",
+		"completion": {"type": "anchored_action"},
+		"gating": {"allowed_action_ids": ["spin", "slot_spin", "ui:any"]}
+	},
+	{
+		"id": "tutorial_gold_target",
+		"scope": "tutorial_run",
+		"trigger": {
+			"depends_on": ["tutorial_spin_grand_slot"],
+			"game_id": "slot",
+			"state_predicates": [{"path": "run.high_roller_ready", "op": "equals", "value": true}]
+		},
+		"anchor": {"kind": "hud_element", "id": "objective"},
+		"copy": "You finished ahead and reached Gold for this lesson. Leave the machine and return to the Cage.",
+		"completion": {"type": "explicit_ok"}
+	},
+	{
+		"id": "tutorial_leave_grand_slot",
+		"scope": "tutorial_run",
+		"trigger": {
+			"depends_on": ["tutorial_gold_target"],
+			"game_id": "slot",
+			"state_predicates": [{"path": "run.high_roller_ready", "op": "equals", "value": true}]
+		},
+		"anchor": {"kind": "surface_action", "id": "surface_back"},
+		"copy": "Return to the Main Floor. Linda has your Gold review ready.",
+		"completion": {"type": "anchored_action"},
+		"gating": {"allowed_action_ids": ["surface_back"]}
+	},
+	{
+		"id": "tutorial_return_to_cage",
+		"scope": "tutorial_run",
+		"trigger": {
+			"depends_on": ["tutorial_leave_grand_slot"],
+			"environment_archetype": "grand_casino",
+			"state_predicates": [{"path": "run.high_roller_ready", "op": "equals", "value": true}]
+		},
+		"anchor": {"kind": "interactable_object", "id": "casino_fixture:cage"},
+		"copy": "Open the Cage again. Cash out the lesson chips before Linda completes your review.",
+		"completion": {"type": "anchored_action"},
+		"gating": {"allowed_action_ids": ["casino_fixture:cage"]}
+	},
+	{
+		"id": "tutorial_cash_out_chips",
+		"scope": "tutorial_run",
+		"trigger": {
+			"depends_on": ["tutorial_return_to_cage"],
+			"environment_archetype": "grand_casino",
+			"state_predicates": [
+				{"path": "ui.cage_window_open", "op": "equals", "value": true},
+				{"path": "run.grand_casino_chips", "op": "gt", "value": 0}
+			]
+		},
+		"anchor": {"kind": "surface_action", "id": "cage:cash_out"},
+		"copy": "Cash out all chips. The total moves back into your spendable cash immediately.",
+		"completion": {"type": "anchored_action", "action_id": "cage:cash_out"},
+		"gating": {"allowed_action_ids": ["cage:cash_out"]}
+	},
+	{
+		"id": "tutorial_start_linda_review",
+		"scope": "tutorial_run",
+		"trigger": {
+			"depends_on": ["tutorial_cash_out_chips"],
+			"environment_archetype": "grand_casino",
+			"state_predicates": [
+				{"path": "ui.cage_window_open", "op": "equals", "value": true},
+				{"path": "run.grand_casino_chips", "op": "equals", "value": 0},
+				{"path": "run.high_roller_ready", "op": "equals", "value": true}
+			]
+		},
+		"anchor": {"kind": "surface_action", "id": "cage:review"},
+		"copy": "Choose Complete Gold Review. Linda will explain what your first Players Card means.",
+		"completion": {"type": "anchored_action", "action_id": "cage:review"},
+		"gating": {"allowed_action_ids": ["cage:review"]}
+	},
+	{
+		"id": "tip_starter_card_home",
+		"trigger": {
+			"state_predicates": [
+				{"path": "meta.home", "op": "equals", "value": true},
+				{"path": "meta.starter_card_count", "op": "gt", "value": 0}
+			]
+		},
+		"anchor": {"kind": "hud_element", "id": "inventory"},
+		"copy": "Your first card is in the collection. Carry it for recognition; lose that run and the card is gone forever.",
+		"completion": {"type": "explicit_ok"}
 	}
 ]

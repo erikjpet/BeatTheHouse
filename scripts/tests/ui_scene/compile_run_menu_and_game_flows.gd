@@ -63,6 +63,63 @@ func _check_onboarding_tutorial_ui_flow(app: Control) -> bool:
 	if app.get("run_state") == null or not (app.get("run_state") as RunState).is_tutorial_run():
 		push_error("Completed profile could not replay Lessons from the main menu.")
 		return false
+	profile.tutorial_completed = false
+	run_state = app.get("run_state")
+	run_state.run_status = RunState.RUN_STATUS_ENDED
+	run_state.narrative_flags["demo_victory"] = true
+	run_state.narrative_flags["demo_victory_route"] = RunState.GRAND_CASINO_HIGH_ROLLER_EVENT_ID
+	run_state.narrative_flags["grand_casino_players_card_tier"] = RunState.GRAND_CASINO_PLAYERS_CARD_TIER_GOLD
+	app.call("_process_terminal_meta_bag_drops")
+	var meta_service: MetaCollectionService = app.get("meta_collection_service")
+	var starter_id := 0
+	for instance_value in meta_service.owned_instances():
+		if typeof(instance_value) != TYPE_DICTIONARY:
+			continue
+		var instance: Dictionary = instance_value
+		var stamp: Dictionary = instance.get("instance_data", {}) if typeof(instance.get("instance_data", {})) == TYPE_DICTIONARY else {}
+		if bool(stamp.get("starter_card", false)):
+			starter_id = int(instance.get("instance_id", 0))
+			break
+	if not profile.tutorial_completed or starter_id <= 0:
+		push_error("Tutorial victory did not complete the profile and mint a starter card through the UI terminal route.")
+		return false
+	app.call("_on_run_report_home_requested")
+	await process_frame
+	await process_frame
+	coach_snapshot = app.get("coach_overlay").call("current_snapshot")
+	if str(coach_snapshot.get("lesson_id", "")) != "tip_starter_card_home" or not str(coach_snapshot.get("copy", "")).contains("gone forever"):
+		push_error("Tutorial victory did not fire the starter-card fragility handoff back home.")
+		return false
+	meta_service.remove_instance(starter_id)
+	meta_service.save()
+	app.call("start_tutorial_run")
+	await process_frame
+	profile.tutorial_completed = false
+	run_state = app.get("run_state")
+	run_state.fail_run(RunState.FAILURE_BANKROLL_ZERO, "The tutorial bankroll ran out.")
+	app.call("_route_failed_run_if_needed")
+	app.call("_refresh")
+	await process_frame
+	var report_screen: RunReportScreen = app.get("run_report_screen")
+	if profile.tutorial_completed or report_screen == null or report_screen.new_run_button.text != "Replay Lessons" or report_screen.home_button.text != "Start Normal Run" or not str(report_screen.outcome_how.text).contains("Replay the lesson"):
+		push_error("Tutorial failure did not preserve incomplete state and offer replay or normal-start encouragement.")
+		return false
+	app.call("_on_run_report_new_run_requested")
+	await process_frame
+	run_state = app.get("run_state")
+	if run_state == null or not run_state.is_tutorial_run() or profile.tutorial_completed:
+		push_error("Tutorial failure replay did not restart First Night without completing onboarding.")
+		return false
+	run_state.fail_run(RunState.FAILURE_BANKROLL_ZERO, "The tutorial bankroll ran out again.")
+	app.call("_route_failed_run_if_needed")
+	app.call("_refresh")
+	await process_frame
+	app.call("_on_run_report_home_requested")
+	await process_frame
+	run_state = app.get("run_state")
+	if run_state == null or run_state.is_tutorial_run() or not profile.tutorial_completed:
+		push_error("Declining tutorial replay did not persist completion and start a normal run.")
+		return false
 	app.set("run_state", null)
 	app.call("return_to_main_menu")
 	return true

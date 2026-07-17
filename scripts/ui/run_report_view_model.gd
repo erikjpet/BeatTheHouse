@@ -45,6 +45,7 @@ static func build(run_data: Dictionary, catalogs: Dictionary = {}) -> Dictionary
 		"timeline": timeline,
 		"map_snapshot": report_map,
 		"seed": _player_facing_seed(run_data),
+		"tutorial_failure": str(run_data.get("run_status", "")) == RunState.RUN_STATUS_FAILED and bool(_copy_dict(run_data.get("challenge_config", {})).get("tutorial", false)),
 	}
 
 
@@ -124,6 +125,7 @@ static func build_bag_reward(run_data: Dictionary) -> Dictionary:
 static func build_outcome(run_data: Dictionary, registry: Dictionary) -> Dictionary:
 	var flags := _copy_dict(run_data.get("narrative_flags", {}))
 	var won := str(run_data.get("run_status", "")) == "ended" and bool(flags.get("demo_victory", false))
+	var tutorial_failure := str(run_data.get("run_status", "")) == RunState.RUN_STATUS_FAILED and bool(_copy_dict(run_data.get("challenge_config", {})).get("tutorial", false))
 	var outcome_key := str(run_data.get("run_failure_reason", RunState.FAILURE_BANKROLL_ZERO))
 	if won:
 		outcome_key = "players_card" if str(flags.get("demo_victory_route", "")) == RunState.GRAND_CASINO_HIGH_ROLLER_EVENT_ID else "showdown_survived"
@@ -131,6 +133,9 @@ static func build_outcome(run_data: Dictionary, registry: Dictionary) -> Diction
 	var definition := _copy_dict(entries.get(outcome_key, {}))
 	var title := str(definition.get("title", outcome_key.replace("_", " ").capitalize()))
 	var how := str(run_data.get("run_failure_message", ""))
+	if tutorial_failure:
+		title = "First Night Interrupted"
+		how = "That hand got away from you. Replay the lesson now, or carry what you learned into a normal run."
 	if won:
 		how = str(flags.get("demo_victory_message", definition.get("how", "You beat the house and made it out.")))
 	elif how.strip_edges().is_empty():
