@@ -31,6 +31,7 @@ var reduce_motion: bool = false
 var drunk_effect_mode: String = "distortion"
 var high_contrast: bool = false
 var play_on_small_screen: bool = false
+var coach_tips_enabled: bool = true
 var selected_home_type_id: String = "random"
 
 
@@ -49,6 +50,7 @@ func reset() -> void:
 	drunk_effect_mode = "distortion"
 	high_contrast = false
 	play_on_small_screen = false
+	coach_tips_enabled = true
 	selected_home_type_id = "random"
 
 
@@ -100,6 +102,7 @@ func to_dict() -> Dictionary:
 		"drunk_effect_mode": drunk_effect_mode,
 		"high_contrast": high_contrast,
 		"play_on_small_screen": play_on_small_screen,
+		"coach_tips_enabled": coach_tips_enabled,
 		"selected_home_type_id": selected_home_type_id,
 	}
 
@@ -130,6 +133,7 @@ func from_dict(data: Dictionary) -> void:
 		drunk_effect_mode = "distortion"
 	high_contrast = bool(data.get("high_contrast", high_contrast))
 	play_on_small_screen = bool(data.get("play_on_small_screen", play_on_small_screen))
+	coach_tips_enabled = bool(data.get("coach_tips_enabled", coach_tips_enabled))
 	selected_home_type_id = str(data.get("selected_home_type_id", selected_home_type_id)).strip_edges()
 	if selected_home_type_id.is_empty():
 		selected_home_type_id = "random"
@@ -195,6 +199,7 @@ func accessibility_snapshot() -> Dictionary:
 		"drunk_effect_mode": drunk_effect_mode,
 		"high_contrast": high_contrast,
 		"play_on_small_screen": play_on_small_screen,
+		"coach_tips_enabled": coach_tips_enabled,
 		"haptics_supported": false,
 		"haptics_cut_reason": HAPTICS_CUT_REASON,
 	}
