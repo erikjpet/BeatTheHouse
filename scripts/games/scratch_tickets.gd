@@ -20,6 +20,8 @@ const TICKET_RECT := Rect2(342, 66, 530, 304)
 const GRID_RECT := Rect2(370, 132, 474, 190)
 const MACHINE_RECT := Rect2(18, 18, 292, 394)
 const BIG_WIN_THRESHOLD := 100
+const STOCK_SLOT_COUNT := 4
+const COLLECTION_TOTAL := 10
 
 
 func gameplay_model() -> String:
@@ -58,6 +60,7 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 	var active_ticket := _copy_dict(machine.get("active_ticket", {}))
 	var stock := _stock_view(machine)
 	var crumbs := _dictionary_array(ui_state.get("scratch_crumbs", []))
+	var discovered := _string_array(run_state.narrative_flags.get("scratch_ticket_types_discovered", [])) if run_state != null else []
 	return GameModule.surface_spec({
 		"surface_renderer": "scratch_tickets",
 		"surface_life": "scratch_vending_machine",
@@ -77,6 +80,11 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 		"scratch_drag_active": bool(ui_state.get("scratch_drag_active", false)),
 		"scratch_last_pointer": ui_state.get("scratch_last_pointer", Vector2.ZERO),
 		"scratch_drunk_level": run_state.drunk_level if run_state != null else 0,
+		"scratch_collection_count": discovered.size(),
+		"scratch_collection_total": COLLECTION_TOTAL,
+		"scratch_xray_peeks": _dictionary_array(active_ticket.get("xray_peeks", [])),
+		"scratch_fortune": str(active_ticket.get("fortune_tier", "")),
+		"scratch_penalty_shields": int(machine.get("penalty_shields_remaining", 0)),
 		"scratch_rules": "Drag to scrub. A click alone reveals nothing. Cleared cells snap clean; winners cash at the clerk.",
 		"surface_ui_protected_regions": [
 			{"x": MACHINE_RECT.position.x, "y": MACHINE_RECT.position.y, "w": MACHINE_RECT.size.x, "h": MACHINE_RECT.size.y},
@@ -203,7 +211,7 @@ func resolve_with_context(action_id: String, stake: int, run_state: RunState, en
 			return _resolve_reveal(run_state, environment, rng, false)
 		SETTLE_ACTION:
 			return _resolve_reveal(run_state, environment, rng, true)
-	return _empty_result(action_id, environment, "That scratch-ticket action is unavailable.")
+	return _scratch_empty_result(action_id, environment, "That scratch-ticket action is unavailable.")
 
 
 func environment_interactable_objects(run_state: RunState, environment: Dictionary) -> Array:
@@ -266,7 +274,7 @@ func simulate_ticket_type(type_id: String, rng: RngStream, luck_modifier: int = 
 		"price": int(ticket_type.get("price", 0)),
 		"payout": int(prize.get("payout", 0)),
 		"penalty": penalty,
-		"net_return": int(prize.get("payout", 0)) - penalty,
+		"net_return": int(prize.get("audit_return", prize.get("payout", 0))) - penalty,
 		"symbols": symbols,
 	}
 
@@ -343,7 +351,7 @@ func measure_rtp(type_id: String, samples: int = 20000, seed_text: String = "SCR
 			var entry: Dictionary = entry_value
 			cursor += maxi(0, int(entry.get("weight", 0)))
 			if roll <= cursor:
-				payout = maxi(0, int(entry.get("payout", 0)))
+				payout = maxi(0, int(entry.get("audit_return", entry.get("payout", 0))))
 				winning = not str(entry.get("winning_symbol", "")).is_empty()
 				break
 		var penalty := 0
@@ -408,23 +416,32 @@ func _penalty_lookup(probabilities: Array, slots: int = 10000) -> Array:
 func _resolve_purchase(_stake: int, run_state: RunState, environment: Dictionary, rng: RngStream, ui_state: Dictionary) -> Dictionary:
 	var machine := _ensure_machine_state(run_state, environment, true)
 	if not _copy_dict(machine.get("active_ticket", {})).is_empty():
-		return _empty_result(BUY_ACTION, environment, "Finish the active ticket first.")
+		return _scratch_empty_result(BUY_ACTION, environment, "Finish the active ticket first.")
 	var stock := _dictionary_array(machine.get("stock", []))
 	var stock_index := int(ui_state.get("scratch_stock_index", 0))
 	if stock_index < 0 or stock_index >= stock.size():
-		return _empty_result(BUY_ACTION, environment, "That vending slot is empty.")
+		return _scratch_empty_result(BUY_ACTION, environment, "That vending slot is empty.")
 	var slot: Dictionary = stock[stock_index]
 	var price := maxi(1, int(slot.get("price", 1)))
 	if int(slot.get("remaining", 0)) <= 0:
-		return _empty_result(BUY_ACTION, environment, "%s is sold out." % str(slot.get("display_name", "That ticket")))
+		return _scratch_empty_result(BUY_ACTION, environment, "%s is sold out." % str(slot.get("display_name", "That ticket")))
 	if run_state.bankroll < price:
-		return _empty_result(BUY_ACTION, environment, "Not enough cash for this ticket.")
+		return _scratch_empty_result(BUY_ACTION, environment, "Not enough cash for this ticket.")
 	var ticket_type := _ticket_type(str(slot.get("type_id", "")))
 	if ticket_type.is_empty():
-		return _empty_result(BUY_ACTION, environment, "That ticket type is unavailable.")
+		return _scratch_empty_result(BUY_ACTION, environment, "That ticket type is unavailable.")
 	var purchase_number := int(machine.get("purchased_count", 0)) + 1
 	var luck := run_state.effective_luck() if run_state != null else 0
 	var ticket := _roll_ticket(ticket_type, rng, luck, "%s:%d" % [str(environment.get("id", "room")), purchase_number])
+	var xray_capacity := maxi(0, run_state.item_effect_total("scratch_peek_cells", get_family()) if run_state != null else 0)
+	if xray_capacity > 0:
+		ticket["xray_peeks"] = _xray_peeks(ticket, mini(xray_capacity, rng.randi_range(2, 3)), rng)
+	var tarot_strength := maxi(0, run_state.item_effect_total("scratch_fortune_hint", get_family()) if run_state != null else 0)
+	if tarot_strength > 0:
+		ticket["fortune_tier"] = _fortune_tier(ticket)
+	var shield_capacity := maxi(0, run_state.item_effect_total("scratch_penalty_shields", get_family()) if run_state != null else 0)
+	_reserve_penalty_shields(ticket, shield_capacity)
+	machine["penalty_shields_remaining"] = shield_capacity
 	slot["remaining"] = maxi(0, int(slot.get("remaining", 0)) - 1)
 	stock[stock_index] = slot
 	machine["stock"] = stock
@@ -433,8 +450,14 @@ func _resolve_purchase(_stake: int, run_state: RunState, environment: Dictionary
 	machine["last_ticket_id"] = str(ticket.get("id", ""))
 	_write_machine_state(environment, machine)
 	var message := "%s slides onto the counter. Drag across the silver latex to reveal it." % str(ticket.get("display_name", "A scratch ticket"))
+	if not _dictionary_array(ticket.get("xray_peeks", [])).is_empty():
+		message += " X-Ray Glasses ghost %d symbols through the coating." % _dictionary_array(ticket.get("xray_peeks", [])).size()
+	if not str(ticket.get("fortune_tier", "")).is_empty():
+		message += " The tarot reads %s." % str(ticket.get("fortune_tier", "")).to_upper()
+	var xray_heat := maxi(0, run_state.item_effect_total("scratch_peek_heat", get_family(), "cheat") if run_state != null and xray_capacity > 0 else 0)
 	var deltas := GameModule.empty_result_deltas()
 	deltas["bankroll_delta"] = -price
+	deltas["suspicion_delta"] = xray_heat
 	deltas["messages"] = [message]
 	deltas["story_log"] = [{
 		"type": "game_action",
@@ -446,6 +469,8 @@ func _resolve_purchase(_stake: int, run_state: RunState, environment: Dictionary
 		"bankroll_delta": -price,
 		"luck_modifier": luck,
 		"outcome_fixed_at_purchase": true,
+		"xray_peek_count": _dictionary_array(ticket.get("xray_peeks", [])).size(),
+		"xray_surveillance_heat": xray_heat,
 		"environment_id": str(environment.get("id", "")),
 	}]
 	var result := GameModule.build_action_result({
@@ -457,6 +482,7 @@ func _resolve_purchase(_stake: int, run_state: RunState, environment: Dictionary
 		"action_kind": "legal",
 		"stake": price,
 		"bankroll_delta": -price,
+		"suspicion_delta": xray_heat,
 		"deltas": deltas,
 		"won": false,
 		"environment_id": str(environment.get("id", "")),
@@ -465,6 +491,8 @@ func _resolve_purchase(_stake: int, run_state: RunState, environment: Dictionary
 	result["scratch_ticket"] = ticket.duplicate(true)
 	result["scratch_outcome_fixed_at_purchase"] = true
 	result["scratch_luck_modifier"] = luck
+	result["scratch_xray_peeks"] = _dictionary_array(ticket.get("xray_peeks", [])).duplicate(true)
+	result["scratch_fortune"] = str(ticket.get("fortune_tier", ""))
 	result["defer_bankroll_zero_failure"] = true
 	GameModule.apply_result(run_state, result, rng)
 	return result
@@ -474,15 +502,18 @@ func _resolve_reveal(run_state: RunState, environment: Dictionary, rng: RngStrea
 	var machine := _ensure_machine_state(run_state, environment, true)
 	var ticket := _copy_dict(machine.get("active_ticket", {}))
 	if ticket.is_empty():
-		return _empty_result(SETTLE_ACTION if settle else REVEAL_ACTION, environment, "There is no ticket on the scratch surface.")
+		return _scratch_empty_result(SETTLE_ACTION if settle else REVEAL_ACTION, environment, "There is no ticket on the scratch surface.")
 	var pending_penalty := maxi(0, int(machine.get("pending_penalty", 0)))
 	machine["pending_penalty"] = 0
 	var penalty_paid := mini(pending_penalty, maxi(0, run_state.bankroll)) if run_state != null else pending_penalty
 	var payout := int(ticket.get("payout", 0))
+	var settle_heat := 0
+	var free_ticket: Dictionary = {}
+	var luck_buff := 0
 	var message := "A SHOCK symbol zaps $%d." % penalty_paid if penalty_paid > 0 else "The printed symbol comes clean."
 	if settle:
 		if not _ticket_complete(ticket):
-			return _empty_result(SETTLE_ACTION, environment, "Some latex still covers this ticket.")
+			return _scratch_empty_result(SETTLE_ACTION, environment, "Some latex still covers this ticket.")
 		ticket["settled"] = true
 		ticket["penalty_paid"] = int(ticket.get("penalty_paid", 0)) + penalty_paid
 		var pile_name := "winner_pile" if payout > 0 else "loser_pile"
@@ -491,11 +522,31 @@ func _resolve_reveal(run_state: RunState, environment: Dictionary, rng: RngStrea
 		machine[pile_name] = pile
 		machine["active_ticket"] = {}
 		message = "%s wins $%d. The clerk must cash it." % [str(ticket.get("display_name", "Ticket")), payout] if payout > 0 else "%s is a loser." % str(ticket.get("display_name", "Ticket"))
+		var gimmick := _copy_dict(ticket.get("gimmick", {}))
+		if str(gimmick.get("type", "")) == "devils_cut" and int(ticket.get("cut", 0)) > 0:
+			settle_heat = maxi(0, int(gimmick.get("heat", 0)))
+			message += " The DEVIL keeps $%d from the printed $%d and draws +%d heat." % [int(ticket.get("cut", 0)), int(ticket.get("gross_payout", payout)), settle_heat]
+		luck_buff = maxi(0, int(ticket.get("luck_buff", 0)))
+		if luck_buff > 0 and run_state != null:
+			var luck_turns := maxi(1, int(ticket.get("luck_turns", 1)))
+			var current_turn := maxi(0, int(run_state.current_environment.get("turns", 0)))
+			run_state.narrative_flags["scratch_midnight_luck_bonus"] = luck_buff
+			run_state.narrative_flags["scratch_midnight_luck_expires_turn"] = current_turn + luck_turns + 1
+			message += " Midnight luck rises +%d for %d turns." % [luck_buff, luck_turns]
+		if payout <= 0 and bool(ticket.get("second_chance", false)):
+			var free_type := _ticket_type(str(gimmick.get("free_type_id", "lucky_7s")))
+			if not free_type.is_empty():
+				free_ticket = _roll_ticket(free_type, rng.fork("second-chance:%s" % str(ticket.get("id", "ticket"))), run_state.effective_luck() if run_state != null else 0, "free:%s" % str(ticket.get("id", "ticket")))
+				free_ticket["price"] = 0
+				free_ticket["free_ticket"] = true
+				machine["active_ticket"] = free_ticket
+				message += " SECOND CHANCE immediately dispenses a free Lucky 7s."
 		if penalty_paid > 0:
 			message += " SHOCK symbols already took $%d." % penalty_paid
 	_write_machine_state(environment, machine)
 	var deltas := GameModule.empty_result_deltas()
 	deltas["bankroll_delta"] = -penalty_paid
+	deltas["suspicion_delta"] = settle_heat
 	deltas["messages"] = [message]
 	deltas["story_log"] = [{
 		"type": "scratch_ticket_settle" if settle else "scratch_ticket_reveal",
@@ -505,7 +556,11 @@ func _resolve_reveal(run_state: RunState, environment: Dictionary, rng: RngStrea
 		"ticket_type": str(ticket.get("type_id", "")),
 		"pending_clerk_payout": payout if settle else 0,
 		"penalty": penalty_paid,
+		"devils_cut_heat": settle_heat,
+		"luck_buff": luck_buff,
+		"second_chance_dispensed": not free_ticket.is_empty(),
 		"bankroll_delta": -penalty_paid,
+		"suspicion_delta": settle_heat,
 		"environment_id": str(environment.get("id", "")),
 	}]
 	var result := GameModule.build_action_result({
@@ -525,6 +580,10 @@ func _resolve_reveal(run_state: RunState, environment: Dictionary, rng: RngStrea
 		"message": message,
 	})
 	result["defer_bankroll_zero_failure"] = not _copy_dict(machine.get("active_ticket", {})).is_empty() or _pending_payout(machine) > 0
+	if settle:
+		result["scratch_discovered_type_id"] = str(ticket.get("type_id", ""))
+	result["scratch_second_chance_ticket"] = free_ticket.duplicate(true)
+	result["scratch_luck_buff"] = luck_buff
 	GameModule.apply_result(run_state, result, rng)
 	return result
 
@@ -533,7 +592,7 @@ func _resolve_redemption(run_state: RunState, environment: Dictionary, rng: RngS
 	var machine := _ensure_machine_state(run_state, environment, true)
 	var winners := _dictionary_array(machine.get("winner_pile", []))
 	if winners.is_empty():
-		return _empty_result(REDEEM_ACTION_ID, environment, "The clerk has no winning scratchers to cash.")
+		return _scratch_empty_result(REDEEM_ACTION_ID, environment, "The clerk has no winning scratchers to cash.")
 	var payout := 0
 	var big_wins := 0
 	for ticket_value in winners:
@@ -575,9 +634,10 @@ func _resolve_redemption(run_state: RunState, environment: Dictionary, rng: RngS
 
 
 func _generate_machine_state(_run_state: RunState, environment: Dictionary, rng: RngStream) -> Dictionary:
-	var machine_rng := rng if rng != null else _seeded_rng("scratch-stock:%s" % str(environment.get("id", "room")))
+	var day_key := int(environment.get("generated_day", environment.get("day", 0)))
+	var machine_rng := rng if rng != null else _seeded_rng("scratch-stock:%s:day:%d" % [str(environment.get("id", "room")), day_key])
 	var stock: Array = []
-	for ticket_type_value in _ticket_types():
+	for ticket_type_value in _weighted_stock_types(machine_rng, STOCK_SLOT_COUNT):
 		var ticket_type: Dictionary = ticket_type_value
 		var count_range := _int_array(ticket_type.get("stock_count", [2, 4]))
 		var minimum := int(count_range[0]) if not count_range.is_empty() else 2
@@ -600,9 +660,30 @@ func _generate_machine_state(_run_state: RunState, environment: Dictionary, rng:
 		"winner_pile": [],
 		"loser_pile": [],
 		"pending_penalty": 0,
+		"penalty_shields_remaining": 0,
 		"purchased_count": 0,
 		"redeemed_count": 0,
 	}
+
+
+func _weighted_stock_types(rng: RngStream, count: int) -> Array:
+	var candidates := _ticket_types().duplicate(true)
+	var selected: Array = []
+	while not candidates.is_empty() and selected.size() < maxi(0, count):
+		var total_weight := 0
+		for candidate_value in candidates:
+			total_weight += maxi(1, int((candidate_value as Dictionary).get("stock_weight", 1)))
+		var roll := rng.randi_range(1, maxi(1, total_weight))
+		var cursor := 0
+		var selected_index := candidates.size() - 1
+		for index in range(candidates.size()):
+			cursor += maxi(1, int((candidates[index] as Dictionary).get("stock_weight", 1)))
+			if roll <= cursor:
+				selected_index = index
+				break
+		selected.append(candidates[selected_index])
+		candidates.remove_at(selected_index)
+	return selected
 
 
 func _roll_ticket(ticket_type: Dictionary, rng: RngStream, luck_modifier: int, purchase_key: String) -> Dictionary:
@@ -622,6 +703,15 @@ func _roll_ticket(ticket_type: Dictionary, rng: RngStream, luck_modifier: int, p
 		"scratch": _copy_dict(ticket_type.get("scratch", {})),
 		"outcome_id": str(prize.get("id", "blank")),
 		"payout": maxi(0, int(prize.get("payout", 0))),
+		"outcome": prize.duplicate(true),
+		"gross_payout": maxi(0, int(prize.get("gross_payout", prize.get("payout", 0)))),
+		"cut": maxi(0, int(prize.get("cut", 0))),
+		"second_chance": bool(prize.get("second_chance", false)),
+		"audit_return": maxi(0, int(prize.get("audit_return", prize.get("payout", 0)))),
+		"multiplier_symbol": str(prize.get("multiplier_symbol", "")),
+		"winning_word": str(prize.get("winning_word", "")),
+		"luck_buff": maxi(0, int(prize.get("luck_buff", 0))),
+		"luck_turns": maxi(0, int(prize.get("luck_turns", 0))),
 		"cells": cells,
 		"outcome_fixed_at_purchase": true,
 		"luck_modifier": luck_modifier,
@@ -656,8 +746,13 @@ func _build_cells(ticket_type: Dictionary, prize: Dictionary, columns: int, rows
 	for _index in range(total):
 		symbols.append(str(rng.pick(pool, "STAR")))
 	var winning_symbol := str(prize.get("winning_symbol", ""))
+	var winning_word := str(prize.get("winning_word", ""))
 	var protected: Dictionary = {}
-	if not winning_symbol.is_empty() and total >= 3:
+	if not winning_word.is_empty() and columns >= winning_word.length():
+		for column in range(mini(columns, winning_word.length())):
+			symbols[column] = winning_word.substr(column, 1)
+			protected[column] = true
+	elif not winning_symbol.is_empty() and total >= 3:
 		var row := rng.randi_range(0, rows - 1)
 		for column in range(mini(3, columns)):
 			var index := row * columns + column
@@ -666,6 +761,17 @@ func _build_cells(ticket_type: Dictionary, prize: Dictionary, columns: int, rows
 	else:
 		_break_accidental_matches(symbols, columns, rows, rng, pool)
 	var gimmick := _copy_dict(ticket_type.get("gimmick", {}))
+	var gimmick_type := str(gimmick.get("type", ""))
+	if gimmick_type == "multiplier_lines" and not str(prize.get("multiplier_symbol", "")).is_empty():
+		_place_special_symbol(symbols, protected, str(prize.get("multiplier_symbol", "")))
+	elif gimmick_type == "bonus_box" and not winning_symbol.is_empty():
+		_place_special_symbol(symbols, protected, str(gimmick.get("bonus_symbol", "BONUS")))
+	elif gimmick_type == "second_chance" and bool(prize.get("second_chance", false)):
+		_place_special_symbol(symbols, protected, "FREE")
+	elif gimmick_type == "devils_cut" and int(prize.get("cut", 0)) > 0:
+		_place_special_symbol(symbols, protected, str(gimmick.get("devil_symbol", "DEVIL")))
+	elif gimmick_type == "rare_luck" and int(prize.get("luck_buff", 0)) > 0:
+		_place_special_symbol(symbols, protected, str(gimmick.get("rare_symbol", "RARE")))
 	if str(gimmick.get("type", "")) == "shock_penalty":
 		var chance := clampi(int(gimmick.get("penalty_chance_percent", 0)), 0, 100)
 		for index in range(total):
@@ -688,8 +794,28 @@ func _build_cells(ticket_type: Dictionary, prize: Dictionary, columns: int, rows
 		var mask: Array = []
 		for _sample in range(mask_columns * mask_rows):
 			mask.append(1)
-		cells.append({"index": index, "symbol": symbol, "penalty": penalty, "penalty_queued": false, "revealed": false, "mask": mask, "scratched_ratio": 0.0})
+		var role := "bonus_area" if symbol == str(gimmick.get("bonus_symbol", "BONUS")) else "play_area"
+		cells.append({"index": index, "symbol": symbol, "role": role, "penalty": penalty, "penalty_queued": false, "penalty_shielded": false, "revealed": false, "mask": mask, "scratched_ratio": 0.0})
 	return cells
+
+
+func _place_special_symbol(symbols: Array, protected: Dictionary, symbol: String) -> void:
+	for index in range(symbols.size() - 1, -1, -1):
+		if not protected.has(index):
+			symbols[index] = symbol
+			protected[index] = true
+			return
+
+
+func _reserve_penalty_shields(ticket: Dictionary, count: int) -> void:
+	var cells := _dictionary_array(ticket.get("cells", []))
+	var remaining := maxi(0, count)
+	for cell_value in cells:
+		var cell: Dictionary = cell_value
+		cell["penalty_shield_reserved"] = int(cell.get("penalty", 0)) > 0 and remaining > 0
+		if bool(cell.get("penalty_shield_reserved", false)):
+			remaining -= 1
+	ticket["cells"] = cells
 
 
 func _break_accidental_matches(symbols: Array, columns: int, rows: int, rng: RngStream, pool: Array) -> void:
@@ -720,6 +846,7 @@ func _scratch_segment(machine: Dictionary, from: Vector2, to: Vector2) -> Dictio
 	var erased := 0
 	var revealed: Array = []
 	var penalty := 0
+	var shielded_penalties := 0
 	for index in range(cells.size()):
 		var cell: Dictionary = cells[index]
 		if bool(cell.get("revealed", false)):
@@ -749,9 +876,17 @@ func _scratch_segment(machine: Dictionary, from: Vector2, to: Vector2) -> Dictio
 			cell["mask"] = _zero_mask(mask.size())
 			cell["scratched_ratio"] = 1.0
 			revealed.append(index)
+			var gimmick := _copy_dict(ticket.get("gimmick", {}))
+			if str(gimmick.get("type", "")) == "bonus_box" and str(cell.get("symbol", "")) == str(gimmick.get("key_symbol", "KEY")):
+				ticket["bonus_unlocked"] = true
 			if int(cell.get("penalty", 0)) > 0 and not bool(cell.get("penalty_queued", false)):
 				cell["penalty_queued"] = true
-				penalty += int(cell.get("penalty", 0))
+				if bool(cell.get("penalty_shield_reserved", false)) and int(machine.get("penalty_shields_remaining", 0)) > 0:
+					machine["penalty_shields_remaining"] = int(machine.get("penalty_shields_remaining", 0)) - 1
+					cell["penalty_shielded"] = true
+					shielded_penalties += 1
+				else:
+					penalty += int(cell.get("penalty", 0))
 		cells[index] = cell
 	ticket["cells"] = cells
 	machine["active_ticket"] = ticket
@@ -763,7 +898,9 @@ func _scratch_segment(machine: Dictionary, from: Vector2, to: Vector2) -> Dictio
 		message = "%d symbol%s snap%s clean." % [revealed.size(), "" if revealed.size() == 1 else "s", "s" if revealed.size() == 1 else ""]
 	if penalty > 0:
 		message += " SHOCK zaps $%d now." % penalty
-	return {"erased_samples": erased, "revealed_cells": revealed, "penalty": penalty, "ticket_complete": complete, "message": message}
+	if shielded_penalties > 0:
+		message += " The Lucky Penny grounds one SHOCK."
+	return {"erased_samples": erased, "revealed_cells": revealed, "penalty": penalty, "shielded_penalties": shielded_penalties, "ticket_complete": complete, "message": message}
 
 
 func _reveal_all(machine: Dictionary) -> void:
@@ -777,7 +914,14 @@ func _reveal_all(machine: Dictionary) -> void:
 		cell["mask"] = _zero_mask(_int_array(cell.get("mask", [])).size())
 		if int(cell.get("penalty", 0)) > 0 and not bool(cell.get("penalty_queued", false)):
 			cell["penalty_queued"] = true
-			penalty += int(cell.get("penalty", 0))
+			if bool(cell.get("penalty_shield_reserved", false)) and int(machine.get("penalty_shields_remaining", 0)) > 0:
+				machine["penalty_shields_remaining"] = int(machine.get("penalty_shields_remaining", 0)) - 1
+				cell["penalty_shielded"] = true
+			else:
+				penalty += int(cell.get("penalty", 0))
+		var gimmick := _copy_dict(ticket.get("gimmick", {}))
+		if str(gimmick.get("type", "")) == "bonus_box" and str(cell.get("symbol", "")) == str(gimmick.get("key_symbol", "KEY")):
+			ticket["bonus_unlocked"] = true
 		cells[index] = cell
 	ticket["cells"] = cells
 	machine["active_ticket"] = ticket
@@ -792,16 +936,17 @@ func _draw_machine(surface, state: Dictionary) -> void:
 	var stock := _dictionary_array(state.get("scratch_stock", []))
 	for index in range(stock.size()):
 		var slot: Dictionary = stock[index]
-		var rect := Rect2(34, 88 + index * 88, 260, 74)
+		var rect := Rect2(34, 82 + index * 67, 260, 60)
 		var palette := _copy_dict(slot.get("palette", {}))
 		var accent := Color(str(palette.get("accent", "#35e0ff")))
 		surface.draw_rect(rect, Color(accent.r, accent.g, accent.b, 0.13))
 		surface.draw_rect(rect, accent, false, 2)
-		surface.surface_label(str(slot.get("display_name", "Ticket")), rect.position + Vector2(10, 24), 17, C_WHITE)
-		surface.surface_label("$%d  |  %d left" % [int(slot.get("price", 1)), int(slot.get("remaining", 0))], rect.position + Vector2(10, 50), 13, C_SOFT)
+		surface.surface_label(str(slot.get("display_name", "Ticket")), rect.position + Vector2(10, 20), 15, C_WHITE)
+		surface.surface_label("$%d  |  %d left" % [int(slot.get("price", 1)), int(slot.get("remaining", 0))], rect.position + Vector2(10, 43), 12, C_SOFT)
 		if int(slot.get("remaining", 0)) > 0:
 			surface.surface_add_hit(rect, "scratch_buy", index)
-	surface.surface_label_centered("WINNERS CASH AT CLERK", Rect2(32, 372, 264, 24), 12, C_PINK)
+	surface.surface_label_centered("%d/%d COLLECTED" % [int(state.get("scratch_collection_count", 0)), int(state.get("scratch_collection_total", COLLECTION_TOTAL))], Rect2(32, 352, 264, 18), 12, C_YELLOW)
+	surface.surface_label_centered("WINNERS CASH AT CLERK", Rect2(32, 378, 264, 20), 11, C_PINK)
 
 
 func _draw_ticket(surface, state: Dictionary) -> void:
@@ -823,6 +968,14 @@ func _draw_ticket(surface, state: Dictionary) -> void:
 	surface.draw_rect(TICKET_RECT, trim, false, 4)
 	surface.surface_label_centered(str(ticket.get("display_name", "SCRATCH TICKET")).to_upper(), Rect2(360, 78, 494, 38), 25, accent)
 	surface.surface_label("$%d" % int(ticket.get("price", 1)), Vector2(814, 112), 16, ink)
+	var gimmick := _copy_dict(ticket.get("gimmick", {}))
+	var gimmick_label := str(gimmick.get("type", "match_three")).replace("_", " ").to_upper()
+	surface.surface_label(gimmick_label, Vector2(370, 116), 10, ink)
+	var fortune := str(state.get("scratch_fortune", ""))
+	if not fortune.is_empty():
+		surface.surface_label("TAROT: %s" % fortune.to_upper(), Vector2(690, 116), 10, accent)
+	if int(state.get("scratch_penalty_shields", 0)) > 0:
+		surface.surface_label("PENNY SHIELD", Vector2(580, 116), 10, accent)
 	var grid := _copy_dict(ticket.get("grid", {}))
 	var columns := maxi(1, int(grid.get("columns", 3)))
 	var rows := maxi(1, int(grid.get("rows", 3)))
@@ -830,13 +983,18 @@ func _draw_ticket(surface, state: Dictionary) -> void:
 	var scratch := _copy_dict(ticket.get("scratch", {}))
 	var mask_columns := maxi(2, int(scratch.get("mask_columns", 6)))
 	var mask_rows := maxi(2, int(scratch.get("mask_rows", 4)))
+	var xray_peeks := _dictionary_array(state.get("scratch_xray_peeks", []))
+	var drunk_level := maxi(0, int(state.get("scratch_drunk_level", 0)))
 	for index in range(cells.size()):
 		var cell: Dictionary = cells[index]
 		var rect := _cell_rect(index, columns, rows)
 		surface.draw_rect(rect, Color(paper.r * 0.94, paper.g * 0.94, paper.b * 0.94))
 		surface.draw_rect(rect, accent, false, 1)
+		if str(cell.get("role", "")) == "bonus_area":
+			surface.draw_rect(rect.grow(-3), trim, false, 2)
 		if bool(cell.get("revealed", false)):
-			_draw_symbol(surface, str(cell.get("symbol", "?")), rect, ink, accent)
+			var wobble := Vector2(float((index % 3) - 1), float((index % 2) * 2 - 1)) * float(drunk_level) / 35.0
+			_draw_symbol(surface, str(cell.get("symbol", "?")), Rect2(rect.position + wobble, rect.size), ink, accent)
 		else:
 			surface.draw_rect(rect.grow(-2), latex)
 			var mask := _int_array(cell.get("mask", []))
@@ -847,6 +1005,9 @@ func _draw_ticket(surface, state: Dictionary) -> void:
 				var sample_row := sample_index / mask_columns
 				var hole := Rect2(rect.position + Vector2(float(sample_column) * rect.size.x / float(mask_columns), float(sample_row) * rect.size.y / float(mask_rows)), Vector2(rect.size.x / float(mask_columns) + 1.0, rect.size.y / float(mask_rows) + 1.0)).grow(-1)
 				surface.draw_rect(hole, paper)
+			var peek := _peek_for_cell(xray_peeks, index)
+			if not peek.is_empty():
+				surface.surface_label_centered(str(peek.get("symbol", "?")).left(8), rect.grow(-8), 14, Color(accent.r, accent.g, accent.b, 0.46))
 	surface.surface_add_drag_hit(GRID_RECT, SCRUB_ACTION, 0)
 	var button := Rect2(682, 334, 162, 28)
 	surface.draw_rect(button, Color(accent.r, accent.g, accent.b, 0.18))
@@ -861,8 +1022,36 @@ func _draw_ticket(surface, state: Dictionary) -> void:
 
 
 func _draw_symbol(surface, symbol: String, rect: Rect2, ink: Color, accent: Color) -> void:
-	var color := C_YELLOW if symbol == "SHOCK" else accent if symbol in ["7", "VOLT", "COW"] else ink
+	var color := C_YELLOW if symbol in ["SHOCK", "BONUS", "2X", "5X", "10X"] else accent if symbol in ["7", "VOLT", "COW", "KEY", "FREE", "DEVIL", "RARE"] else ink
 	surface.surface_label_centered(symbol.left(8), rect.grow(-4), 17, color)
+
+
+func _xray_peeks(ticket: Dictionary, count: int, rng: RngStream) -> Array:
+	var cells := _dictionary_array(ticket.get("cells", []))
+	var available := range(cells.size())
+	var result: Array = []
+	while not available.is_empty() and result.size() < maxi(0, count):
+		var pick_index := rng.randi_range(0, available.size() - 1)
+		var cell_index := int(available[pick_index])
+		available.remove_at(pick_index)
+		result.append({"index": cell_index, "symbol": str((cells[cell_index] as Dictionary).get("symbol", ""))})
+	return result
+
+
+func _peek_for_cell(peeks: Array, index: int) -> Dictionary:
+	for peek_value in peeks:
+		var peek: Dictionary = peek_value
+		if int(peek.get("index", -1)) == index:
+			return peek
+	return {}
+
+
+func _fortune_tier(ticket: Dictionary) -> String:
+	var payout := maxi(0, int(ticket.get("payout", 0)))
+	var price := maxi(1, int(ticket.get("price", 1)))
+	if payout <= 0:
+		return "cold"
+	return "hot" if payout >= price * 5 else "warm"
 
 
 func _stock_view(machine: Dictionary) -> Array:
@@ -984,7 +1173,7 @@ func _zero_mask(size: int) -> Array:
 	return result
 
 
-func _empty_result(action_id: String, environment: Dictionary, message: String) -> Dictionary:
+func _scratch_empty_result(action_id: String, environment: Dictionary, message: String) -> Dictionary:
 	return GameModule.build_action_result({
 		"ok": false,
 		"type": "game_action",
@@ -1006,10 +1195,6 @@ func _seeded_rng(stream_key: String) -> RngStream:
 	var seed := RunState.text_to_seed(stream_key)
 	rng.configure(seed, seed)
 	return rng
-
-
-func _copy_dict(value: Variant) -> Dictionary:
-	return (value as Dictionary).duplicate(true) if typeof(value) == TYPE_DICTIONARY else {}
 
 
 func _dictionary_array(value: Variant) -> Array:
