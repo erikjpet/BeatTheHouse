@@ -43,6 +43,7 @@ const SlotRendererScript := preload("res://scripts/games/slots/slot_renderer.gd"
 const MainScene := preload("res://scenes/main.tscn")
 
 const FOUNDATION_DEFAULT_REPORT_PATH := "res://.tmp/foundation_check/report.json"
+const TUTORIAL_META_STORE_PATH := "user://foundation_tutorial_meta_store.json"
 const SAVE_COMPAT_030_FIXTURE_PATH := "res://scripts/tests/fixtures/run_state_0_3_0_save.json"
 const SAVE_COMPAT_033_FIXTURE_PATH := "res://scripts/tests/fixtures/run_state_0_3_3_save.json"
 const SLOT_ACCEPTANCE_MONTE_CARLO_SPINS := 10000
@@ -2321,9 +2322,9 @@ func _check_coach_engine_foundation(library: ContentLibrary, failures: Array) ->
 	for lesson_value in library.tutorial_lessons:
 		if typeof(lesson_value) == TYPE_DICTIONARY and str((lesson_value as Dictionary).get("scope", "")).strip_edges() != "tutorial_run":
 			normal_lessons.append(lesson_value)
-	if normal_lessons.size() != 8:
-		failures.append("Coach lesson pack must ship exactly eight first-time tips.")
-	for expected_id in ["tip_first_heat_gain", "tip_first_debt_taken", "tip_first_closing_warning", "tip_first_pawn_interaction", "tip_first_item_purchase", "tip_first_map_open", "tip_first_chips_gained", "tip_first_card_tier"]:
+	if normal_lessons.size() != 9:
+		failures.append("Coach lesson pack must ship exactly nine first-time tips after the starter-card handoff.")
+	for expected_id in ["tip_first_heat_gain", "tip_first_debt_taken", "tip_first_closing_warning", "tip_first_pawn_interaction", "tip_first_item_purchase", "tip_first_map_open", "tip_first_chips_gained", "tip_first_card_tier", "tip_starter_card_home"]:
 		if library.tutorial_lesson(expected_id).is_empty():
 			failures.append("Coach lesson pack is missing %s." % expected_id)
 	var duplicate_library := ContentLibraryScript.new()
@@ -2353,6 +2354,7 @@ func _check_coach_engine_foundation(library: ContentLibrary, failures: Array) ->
 		"tip_first_map_open": {"screen": "TRAVEL", "ui": {"world_map_open": true}},
 		"tip_first_chips_gained": {"environment_archetype": "grand_casino", "run": {"grand_casino_chips": 1}},
 		"tip_first_card_tier": {"run": {"players_card_tier": "bronze"}},
+		"tip_starter_card_home": {"meta": {"home": true, "starter_card_count": 1}},
 	}
 	for lesson_value in normal_lessons:
 		var lesson: Dictionary = lesson_value
@@ -2462,6 +2464,73 @@ func _check_onboarding_tutorial_arc(library: ContentLibrary, failures: Array) ->
 		failures.append("Tutorial end-to-end arc did not accept the Grand Casino invitation.")
 	elif not WorldMapScript.is_node_visible(run_a.world_map, "grand_casino"):
 		failures.append("Tutorial invitation did not reveal the Grand Casino on the real world map.")
+	generator_a.next_environment(run_a, "grand_casino", true)
+	if str(run_a.current_environment.get("archetype_id", "")) != RunState.GRAND_CASINO_ARCHETYPE_ID or run_a.current_environment.get("game_ids", []) != ["slot"]:
+		failures.append("Tutorial finale did not generate exactly one Main Floor slot.")
+	var tutorial_status := run_a.demo_objective_status()
+	if int(tutorial_status.get("high_roller_net_winnings", -1)) != 1 or int(tutorial_status.get("high_roller_min_grand_casino_games", -1)) != 1 or int(tutorial_status.get("high_roller_max_heat", -1)) != 90:
+		failures.append("Tutorial Grand Casino objective did not preserve the 1 game / $1 net / 90 heat contract.")
+	var normal_grand := library.environment_archetype(RunState.GRAND_CASINO_ARCHETYPE_ID)
+	var normal_objective: Dictionary = normal_grand.get("demo_objective", {}) if typeof(normal_grand.get("demo_objective", {})) == TYPE_DICTIONARY else {}
+	if int(normal_objective.get("high_roller_net_winnings", -1)) != 30 or int(normal_objective.get("high_roller_min_grand_casino_games", -1)) != 5 or int(normal_objective.get("high_roller_max_heat", -1)) != 30:
+		failures.append("Tutorial tier compression changed normal Grand Casino objective balance.")
+	var normal_slot_run := RunStateScript.new()
+	normal_slot_run.start_new("TUTORIAL-NORMAL-SLOT-CONTROL")
+	var normal_slot_environment := run_a.current_environment.duplicate(true)
+	normal_slot_environment["game_states"] = {}
+	normal_slot_run.set_environment(normal_slot_environment)
+	var normal_slot: GameModule = SlotGameScript.new()
+	normal_slot.setup(library.game("slot"), library)
+	normal_slot.enter(normal_slot_run, normal_slot_run.current_environment)
+	var normal_spin: Dictionary = normal_slot.resolve_with_context("spin", 2, normal_slot_run, normal_slot_run.current_environment, normal_slot_run.create_rng(), {})
+	if bool(normal_spin.get("tutorial_first_night_match", false)):
+		failures.append("Tutorial first-night match leaked into a normal run.")
+	var high_limit_access := run_a.grand_casino_room_access_status(RunState.GRAND_CASINO_HIGH_LIMIT_ARCHETYPE_ID, 60)
+	var back_room_access := run_a.grand_casino_room_access_status(RunState.GRAND_CASINO_BACK_ROOM_ARCHETYPE_ID, 60)
+	if bool(high_limit_access.get("available", true)) or not str(high_limit_access.get("reason", "")).contains("Main Floor") or bool(back_room_access.get("available", true)):
+		failures.append("Tutorial did not keep both deeper Grand Casino rooms behind teaching locks.")
+	run_a.suspicion["level"] = 100
+	run_a.narrative_flags["grand_casino_showdown_pending"] = true
+	run_a.narrative_flags["the_house_calls_pending"] = true
+	if run_a.grand_casino_heat_reroute_available() or run_a.handle_grand_casino_heat_reroute("foundation_tutorial") or bool(run_a.start_grand_casino_showdown().get("ok", false)):
+		failures.append("Tutorial Grand Casino accepted a showdown route at forced heat.")
+	run_a.narrative_flags.erase("grand_casino_showdown_pending")
+	run_a.narrative_flags.erase("the_house_calls_pending")
+	run_a.suspicion["level"] = 0
+	var tutorial_slot: GameModule = SlotGameScript.new()
+	tutorial_slot.setup(library.game("slot"), library)
+	tutorial_slot.enter(run_a, run_a.current_environment)
+	var tutorial_spin_rng := run_a.create_rng()
+	var tutorial_spin: Dictionary = tutorial_slot.resolve_with_context("spin", 2, run_a, run_a.current_environment, tutorial_spin_rng, {})
+	GameModule.apply_result(run_a, tutorial_spin, tutorial_spin_rng)
+	var ready_status := run_a.demo_objective_status()
+	if not bool(tutorial_spin.get("tutorial_first_night_match", false)) or int(ready_status.get("grand_casino_games_played", 0)) != 1 or int(ready_status.get("grand_casino_net_winnings", 0)) < 1 or str(ready_status.get("players_card_tier", "")) != RunState.GRAND_CASINO_PLAYERS_CARD_TIER_GOLD or not bool(ready_status.get("high_roller_ready", false)):
+		failures.append("Tutorial fixed-seed Main Floor spin did not reach the compressed Gold review: %s" % JSON.stringify(ready_status))
+	var tutorial_cashout := run_a.complete_grand_casino_high_roller_cashout({"success_message": "Tutorial card issued."})
+	if not bool(tutorial_cashout.get("ok", false)) or run_a.run_status != RunState.RUN_STATUS_ENDED:
+		failures.append("Tutorial Linda review did not complete the real clean-victory route.")
+	var tutorial_linda := library.dialogue("tutorial_linda_gold_review")
+	var linda_speaker: Dictionary = tutorial_linda.get("speaker", {}) if typeof(tutorial_linda.get("speaker", {})) == TYPE_DICTIONARY else {}
+	var linda_nodes: Dictionary = tutorial_linda.get("nodes", {}) if typeof(tutorial_linda.get("nodes", {})) == TYPE_DICTIONARY else {}
+	var linda_review: Dictionary = linda_nodes.get("review", {}) if typeof(linda_nodes.get("review", {})) == TYPE_DICTIONARY else {}
+	if str(linda_speaker.get("name", "")) != "Linda" or not str(linda_review.get("text", "")).contains("card goes with it"):
+		failures.append("Tutorial Linda review is missing its warmer card meaning and fragility explanation.")
+	OS.set_environment(MetaCollectionServiceScript.STORE_PATH_ENV, TUTORIAL_META_STORE_PATH)
+	_remove_tutorial_meta_store()
+	var tutorial_meta := MetaCollectionServiceScript.new()
+	tutorial_meta.load()
+	var tutorial_drop := CollectionDropServiceScript.new()
+	var tutorial_reward: Dictionary = tutorial_drop.apply_terminal_special_outcome(run_a, tutorial_meta)
+	var tutorial_owned: Array = tutorial_meta.owned_instances()
+	var tutorial_card := (tutorial_owned[0] as Dictionary).duplicate(true) if not tutorial_owned.is_empty() and typeof(tutorial_owned[0]) == TYPE_DICTIONARY else {}
+	var tutorial_stamp: Dictionary = tutorial_card.get("instance_data", {}) if typeof(tutorial_card.get("instance_data", {})) == TYPE_DICTIONARY else {}
+	if not bool(tutorial_reward.get("mutated", false)) or tutorial_owned.size() != 1 or not bool(tutorial_stamp.get("starter_card", false)) or not bool(tutorial_stamp.get("tutorial", false)) or str(tutorial_stamp.get("tutorial_challenge_id", "")) != "tutorial_first_card":
+		failures.append("Tutorial victory did not mint exactly one correctly stamped starter card through the meta service.")
+	var tutorial_report := RunReportViewModel.build(run_a.to_dict())
+	if str((tutorial_report.get("meta_reward", {}) as Dictionary).get("kind", "")) != "players_card_minted":
+		failures.append("Tutorial run report did not show the Players Card reward.")
+	_remove_tutorial_meta_store()
+	OS.set_environment(MetaCollectionServiceScript.STORE_PATH_ENV, "")
 	var fresh_profile := ProfileInventoryScript.new()
 	fresh_profile.from_dict({})
 	var fresh_meta := {"owned_instances": [], "unopened_bags": [], "loadout": [], "gold_balance": 0, "housing_tier": "back_alley"}
@@ -2485,6 +2554,14 @@ func _check_onboarding_tutorial_arc(library: ContentLibrary, failures: Array) ->
 		var lesson: Dictionary = lesson_value
 		if CoachViewModelScript.trigger_matches(lesson, {"run": {"tutorial": true}}, {}, false):
 			failures.append("Tutorial coach lesson fired with tips disabled: %s" % str(lesson.get("id", "")))
+	if tutorial_lessons.size() < 28:
+		failures.append("Tutorial coach data did not cover the full seven-beat arc through Linda's review.")
+
+
+func _remove_tutorial_meta_store() -> void:
+	var absolute := ProjectSettings.globalize_path(TUTORIAL_META_STORE_PATH)
+	if FileAccess.file_exists(TUTORIAL_META_STORE_PATH):
+		DirAccess.remove_absolute(absolute)
 
 
 func _coach_lesson_fixture(lesson_id: String) -> Dictionary:

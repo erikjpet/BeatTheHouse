@@ -157,6 +157,8 @@ func resolve_with_context(action_id: String, _stake: int, run_state: RunState, e
 	var selected_bet: Dictionary = StateScript.selected_bet(machine)
 	var resolved: Dictionary = resolver.resolve_spin(machine, normalized_action, selected_bet, rng, definition, environment, true, false, run_state, _slot_cross_game_item_effects(run_state, machine, normalized_action == "nudge"), _ui_state)
 	var resolved_machine: Dictionary = _slot_copy_dict(resolved.get("machine", machine))
+	resolved = _apply_tutorial_first_night_match(resolved, resolved_machine, normalized_action, run_state)
+	resolved_machine = _slot_copy_dict(resolved.get("machine", resolved_machine))
 	if _slot_feature_pending(resolved_machine):
 		resolved_machine = _mark_slot_feature_pending(resolved_machine, GameModule.deterministic_time_msec(run_state, _ui_state))
 	elif bool(resolved_machine.get("slot_autoplay_active", false)):
@@ -167,6 +169,51 @@ func resolve_with_context(action_id: String, _stake: int, run_state: RunState, e
 		resolved_machine["slot_bonus_auto_next_msec"] = _slot_bonus_auto_next_msec(resolved_machine, _ui_state, run_state)
 	StateScript.write_machine(environment, get_id(), resolved_machine)
 	return _slot_copy_dict(resolved.get("result", {}))
+
+
+func _apply_tutorial_first_night_match(resolved: Dictionary, machine: Dictionary, action_id: String, run_state: RunState) -> Dictionary:
+	if run_state == null or action_id != "spin" or not run_state.is_tutorial_run():
+		return resolved
+	var friendly_net := maxi(0, int(run_state.challenge_modifiers().get("tutorial_first_slot_net", 0)))
+	if friendly_net <= 0 or maxi(0, int(machine.get("spin_count", 0))) != 1:
+		return resolved
+	var adjusted := resolved.duplicate(true)
+	var result := _slot_copy_dict(adjusted.get("result", {}))
+	if not bool(result.get("ok", false)):
+		return resolved
+	var stake_cost := maxi(0, int(result.get("slot_stake_cost", result.get("stake", 0))))
+	var payout := stake_cost + friendly_net
+	var deltas := _slot_copy_dict(result.get("deltas", {}))
+	deltas["bankroll_delta"] = friendly_net
+	var story_log := _slot_copy_array(deltas.get("story_log", []))
+	if not story_log.is_empty() and typeof(story_log[story_log.size() - 1]) == TYPE_DICTIONARY:
+		var story := _slot_copy_dict(story_log[story_log.size() - 1])
+		story["bankroll_delta"] = friendly_net
+		story["payout"] = payout
+		story["classification"] = "tutorial_match"
+		story["outcome_id"] = "tutorial_first_night_match"
+		story["tutorial_first_night_match"] = true
+		story_log[story_log.size() - 1] = story
+	deltas["story_log"] = story_log
+	deltas["messages"] = ["The First Night match adds $%d, leaving this spin $%d ahead." % [payout, friendly_net]]
+	result["deltas"] = deltas
+	result["bankroll_delta"] = friendly_net
+	result["message"] = str(deltas["messages"][0])
+	result["messages"] = deltas["messages"]
+	result["won"] = true
+	result["slot_net"] = friendly_net
+	result["slot_payout"] = payout
+	result["slot_classification"] = "tutorial_match"
+	result["slot_outcome_id"] = "tutorial_first_night_match"
+	result["tutorial_first_night_match"] = true
+	var adjusted_machine := machine.duplicate(true)
+	adjusted_machine["last_net"] = friendly_net
+	adjusted_machine["last_payout"] = payout
+	adjusted_machine["last_classification"] = "tutorial_match"
+	adjusted_machine["last_outcome_id"] = "tutorial_first_night_match"
+	adjusted["machine"] = adjusted_machine
+	adjusted["result"] = result
+	return adjusted
 
 
 func wager_cost_for_context(action_id: String, _stake: int, run_state: RunState, environment: Dictionary, _ui_state: Dictionary = {}) -> int:

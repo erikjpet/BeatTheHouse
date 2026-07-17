@@ -25,7 +25,10 @@ const HIGH_HEAT_CLEAN_ESCAPE_CHANCE_PERCENT := 35
 func apply_terminal_special_outcome(run_state: RunState, meta_collection_service: Variant) -> Dictionary:
 	if run_state == null or meta_collection_service == null or not run_state.is_terminal():
 		return {"ok": false, "mutated": false}
-	if not run_state.meta_collection_enabled_for_run():
+	var tutorial_card_victory := run_state.is_tutorial_run() \
+		and run_state.run_status == RunState.RUN_STATUS_ENDED \
+		and str(run_state.narrative_flags.get("demo_victory_route", "")) == RunState.GRAND_CASINO_HIGH_ROLLER_EVENT_ID
+	if not run_state.meta_collection_enabled_for_run() and not tutorial_card_victory:
 		return {"ok": true, "mutated": false}
 	if bool(run_state.narrative_flags.get(SPECIAL_OUTCOME_PROCESSED_FLAG, false)):
 		return {
@@ -354,7 +357,7 @@ func _players_card_stamp(run_state: RunState) -> Dictionary:
 			"net_winnings": int(entry.get("net_winnings", 0)),
 		})
 	var seed_hidden := run_state.seed_is_hidden()
-	return {
+	var stamp := {
 		"seed": "Hidden challenge" if seed_hidden else run_state.seed_text,
 		"seed_hidden": seed_hidden,
 		"final_score": int(run_state.terminal_score_summary().get("score", 0)),
@@ -363,6 +366,11 @@ func _players_card_stamp(run_state: RunState) -> Dictionary:
 		"tier_timeline": timeline,
 		"route": RunState.GRAND_CASINO_HIGH_ROLLER_EVENT_ID,
 	}
+	if run_state.is_tutorial_run():
+		stamp["starter_card"] = true
+		stamp["tutorial"] = true
+		stamp["tutorial_challenge_id"] = str(run_state.challenge_config.get("id", "tutorial_first_card"))
+	return stamp
 
 
 func _run_drop_rng(run_state: RunState) -> RngStream:

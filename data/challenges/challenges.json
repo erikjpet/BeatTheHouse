@@ -110,6 +110,7 @@
 			"tutorial_run": true,
 			"tutorial_main_floor_only": true,
 			"tutorial_shop_item_pool_strict": true,
+			"tutorial_first_slot_net": 2,
 			"home_archetype_id": "motel_room",
 			"starting_bankroll": 80,
 			"tutorial_environment_overrides": {
@@ -133,6 +134,28 @@
 					"event_pool": ["tutorial_friendly_choice", "tutorial_grand_casino_invitation"],
 					"required_event_ids": ["tutorial_friendly_choice", "tutorial_grand_casino_invitation"],
 					"event_count": [2, 2]
+				},
+				"grand_casino": {
+					"game_pool": ["slot"],
+					"required_game_ids": ["slot"],
+					"game_count": [1, 1],
+					"demo_objective": {
+						"title": "Earn Your First Players Card",
+						"summary": "Settle one clean Main Floor spin, finish at least $1 ahead, then return to Linda at the Cage.",
+						"high_roller_net_winnings": 1,
+						"high_roller_min_grand_casino_games": 1,
+						"high_roller_max_heat": 90,
+						"players_card_bronze_min_games": 1,
+						"players_card_bronze_net_winnings": 0,
+						"players_card_bronze_max_heat": 90,
+						"players_card_silver_min_games": 1,
+						"players_card_silver_net_winnings": 1,
+						"players_card_silver_max_heat": 90,
+						"players_card_gold_min_games": 1,
+						"players_card_gold_net_winnings": 1,
+						"players_card_gold_max_heat": 90,
+						"victory_message": "Tutorial Victory: Linda issued your first Grand Casino Players Card."
+					}
 				}
 			}
 		}

@@ -36,6 +36,7 @@ func _run() -> void:
 	_test_pawn_sale_and_trade_up(resolver)
 	_test_failure_decay_and_run_modifiers(resolver)
 	_test_players_card_mint_and_profile_lifecycle()
+	_test_tutorial_starter_card_fragility()
 	_test_uncashed_grand_casino_chips_pawn_flow()
 	_test_prestige_run_modifiers_and_drop_depth()
 	_test_terminal_drop_determinism()
@@ -338,6 +339,39 @@ func _test_players_card_mint_and_profile_lifecycle() -> void:
 	var hidden_card := _copy_dict(hidden_service.owned_instances()[0]) if not hidden_service.owned_instances().is_empty() else {}
 	var hidden_stamp := _copy_dict(hidden_card.get("instance_data", {}))
 	_check(bool(hidden_stamp.get("seed_hidden", false)) and str(hidden_stamp.get("seed", "")).find("owner-secret-seed") < 0, "Hidden challenge seed leaked into the Players Card stamp.")
+	_remove_user_file(TEST_STORE_PATH)
+	OS.set_environment(MetaCollectionServiceScript.STORE_PATH_ENV, "")
+
+
+func _test_tutorial_starter_card_fragility() -> void:
+	OS.set_environment(MetaCollectionServiceScript.STORE_PATH_ENV, TEST_STORE_PATH)
+	_remove_user_file(TEST_STORE_PATH)
+	var service: Variant = MetaCollectionServiceScript.new()
+	service.load()
+	var drop_service: Variant = CollectionDropServiceScript.new()
+	var tutorial_run: Variant = RunStateScript.new()
+	tutorial_run.start_new("FIRST-NIGHT-ACE-17", {
+		"mode": "custom",
+		"id": "tutorial_first_card",
+		"seed_text": "FIRST-NIGHT-ACE-17",
+		"tutorial": true,
+		"exclude_profile_stats": true,
+		"completion_flag": "challenge_tutorial_first_card_complete",
+		"modifiers": {"tutorial_run": true, "tutorial_main_floor_only": true},
+	})
+	tutorial_run.run_status = RunStateScript.RUN_STATUS_ENDED
+	tutorial_run.narrative_flags["demo_victory"] = true
+	tutorial_run.narrative_flags["demo_victory_route"] = RunStateScript.GRAND_CASINO_HIGH_ROLLER_EVENT_ID
+	tutorial_run.narrative_flags["grand_casino_players_card_tier"] = RunStateScript.GRAND_CASINO_PLAYERS_CARD_TIER_GOLD
+	var reward: Dictionary = drop_service.apply_terminal_special_outcome(tutorial_run, service)
+	var owned: Array = service.owned_instances()
+	var card := _copy_dict(owned[0]) if not owned.is_empty() else {}
+	var stamp := _copy_dict(card.get("instance_data", {}))
+	_check(bool(reward.get("mutated", false)) and owned.size() == 1 and bool(stamp.get("starter_card", false)) and bool(stamp.get("tutorial", false)), "Tutorial clean victory did not mint one starter-stamped Players Card.")
+	var normal_modifiers: Dictionary = service.normal_run_start_modifiers()
+	var normal_loss: Variant = _terminal_run_with_modifiers("starter-card-loss", normal_modifiers, RunStateScript.RUN_STATUS_FAILED, "")
+	var loss_result: Dictionary = drop_service.apply_terminal_special_outcome(normal_loss, service)
+	_check(_copy_array(loss_result.get("destroyed_cards", [])).size() == 1 and service.owned_instances().is_empty(), "Starter Players Card did not use normal carried-card fragility on a later loss.")
 	_remove_user_file(TEST_STORE_PATH)
 	OS.set_environment(MetaCollectionServiceScript.STORE_PATH_ENV, "")
 

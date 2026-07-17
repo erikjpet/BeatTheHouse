@@ -1349,6 +1349,13 @@ func grand_casino_room_access_status(target_archetype_id: String, high_limit_buy
 	var target_id := target_archetype_id.strip_edges()
 	if not is_grand_casino_environment():
 		return {"available": false, "reason": "The casino interior is not available here."}
+	if tutorial_main_floor_only():
+		if target_id == GRAND_CASINO_HIGH_LIMIT_ARCHETYPE_ID:
+			return {"available": false, "locked": true, "reason": "Locked for this lesson. The Main Floor has everything you need; a Players Card can open High-Limit on later runs."}
+		if target_id == GRAND_CASINO_BACK_ROOM_ARCHETYPE_ID:
+			return {"available": false, "locked": true, "reason": "Locked for this lesson. Rourke's Back Room belongs to later runs."}
+		if target_id == GRAND_CASINO_ARCHETYPE_ID:
+			return {"available": true, "access_method": "tutorial_main_floor", "cost": 0}
 	if bool(narrative_flags.get("grand_casino_showdown_active", false)):
 		if target_id == GRAND_CASINO_BACK_ROOM_ARCHETYPE_ID and str(narrative_flags.get("grand_casino_showdown_step", "")) == GRAND_CASINO_SHOWDOWN_STEP_DUEL:
 			return {"available": true, "access_method": "showdown", "cost": 0}
@@ -1567,6 +1574,10 @@ func challenge_completion_flag() -> String:
 
 func is_tutorial_run() -> bool:
 	return bool(challenge_config.get("tutorial", false)) or bool(challenge_modifiers().get("tutorial_run", false))
+
+
+func tutorial_main_floor_only() -> bool:
+	return is_tutorial_run() and bool(challenge_modifiers().get("tutorial_main_floor_only", false))
 
 
 func excludes_profile_stats() -> bool:
@@ -2111,6 +2122,8 @@ func security_action_pressure(action_kind: String, stake: int, projected_level: 
 func grand_casino_heat_reroute_available() -> bool:
 	if run_status == RUN_STATUS_ENDED or run_status == RUN_STATUS_FAILED:
 		return false
+	if tutorial_main_floor_only():
+		return false
 	if not _is_grand_casino_environment(current_environment):
 		return false
 	var status := demo_objective_status()
@@ -2124,6 +2137,8 @@ func grand_casino_heat_reroute_available() -> bool:
 # Queues the Grand Casino back-room showdown when heat has crossed its route threshold.
 func handle_grand_casino_heat_reroute(trigger_context: String = "") -> bool:
 	if run_status == RUN_STATUS_ENDED or run_status == RUN_STATUS_FAILED:
+		return false
+	if tutorial_main_floor_only():
 		return false
 	if not _is_grand_casino_environment(current_environment):
 		return false
@@ -2373,15 +2388,17 @@ func _grand_casino_demo_objective_status(source: Dictionary, objective: Dictiona
 	var high_roller_pending := bool(narrative_flags.get("high_roller_cashout_pending", false))
 	var showdown_event_id := str(config.get("showdown_event_id", GRAND_CASINO_SHOWDOWN_EVENT_ID))
 	var high_roller_event_id := str(config.get("high_roller_event_id", GRAND_CASINO_HIGH_ROLLER_EVENT_ID))
-	var showdown_pending := bool(narrative_flags.get("grand_casino_showdown_pending", false))
+	var showdown_disabled := tutorial_main_floor_only()
+	var showdown_pending := false if showdown_disabled else bool(narrative_flags.get("grand_casino_showdown_pending", false))
 	showdown_pending = showdown_pending or (
-		bool(narrative_flags.get("demo_finale_pending", false))
+		not showdown_disabled
+		and bool(narrative_flags.get("demo_finale_pending", false))
 		and str(narrative_flags.get("demo_finale_event_id", "")) == showdown_event_id
 	)
-	var showdown_active := bool(narrative_flags.get("grand_casino_showdown_active", false))
+	var showdown_active := false if showdown_disabled else bool(narrative_flags.get("grand_casino_showdown_active", false))
 	var staff_attention_active := bool(staff_attention.get("active", false))
-	var heat_route_ready := (current_heat >= showdown_threshold and staff_attention_active) or current_heat >= forced_threshold
-	var dirty_money_showdown_ready := money_target_met and (cheat_evidence or watched_cheat_evidence or max_visit_heat > max_heat)
+	var heat_route_ready := not showdown_disabled and ((current_heat >= showdown_threshold and staff_attention_active) or current_heat >= forced_threshold)
+	var dirty_money_showdown_ready := not showdown_disabled and money_target_met and (cheat_evidence or watched_cheat_evidence or max_visit_heat > max_heat)
 	var objective_state := _grand_casino_derived_state(source, high_roller_ready or high_roller_pending, showdown_pending, showdown_active)
 	var complete := bool(narrative_flags.get("demo_victory", false))
 	var remaining_bankroll := maxi(0, target_bankroll - total_money)
@@ -2497,6 +2514,10 @@ func _evaluate_grand_casino_objective_state(status: Dictionary) -> void:
 		return
 	_initialize_grand_casino_objective_runtime()
 	_update_grand_casino_players_card_state(status)
+	if tutorial_main_floor_only():
+		if bool(status.get("high_roller_ready", false)):
+			_set_grand_casino_high_roller_ready(status)
+		return
 	if bool(status.get("showdown_pending", false)) or bool(status.get("showdown_active", false)):
 		return
 	if bool(status.get("dirty_money_showdown_ready", false)):
@@ -2549,7 +2570,7 @@ func _advance_grand_casino_players_card_tier(current_tier: String, target_tier: 
 			"environment_archetype_id": str(current_environment.get("archetype_id", "")),
 			"message": "Linda marks the Players Card %s." % tier_id.capitalize(),
 		})
-		if queue_dialogue and GRAND_CASINO_LINDA_TIER_DIALOGUES.has(tier_id):
+		if queue_dialogue and not is_tutorial_run() and GRAND_CASINO_LINDA_TIER_DIALOGUES.has(tier_id):
 			var dialogue_id := str(GRAND_CASINO_LINDA_TIER_DIALOGUES[tier_id])
 			enqueue_dialogue(dialogue_id, "dialogue:%s" % dialogue_id, GRAND_CASINO_LINDA_SPEAKER, "recognition", "players_card_tier", {
 				"tier": tier_id,
@@ -2779,6 +2800,8 @@ func start_grand_casino_showdown(config: Dictionary = {}) -> Dictionary:
 		return {"ok": false, "message": "The run is already over."}
 	if not _is_grand_casino_environment(current_environment):
 		return {"ok": false, "message": "Rourke is not here."}
+	if tutorial_main_floor_only():
+		return {"ok": false, "message": "Rourke is only watching tonight. The tutorial stays on the Main Floor."}
 	if not bool(narrative_flags.get("grand_casino_showdown_pending", false)) and not bool(narrative_flags.get("the_house_calls_pending", false)) and not bool(narrative_flags.get("grand_casino_showdown_active", false)):
 		return {"ok": false, "message": "Rourke has not called yet."}
 	_initialize_grand_casino_objective_runtime()

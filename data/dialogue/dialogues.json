@@ -300,6 +300,41 @@
     }
   },
   {
+    "id": "tutorial_linda_gold_review",
+    "display_name": "Your First Players Card",
+    "speaker": {
+      "role": "staff",
+      "name": "Linda",
+      "mood": "warm",
+      "behavior": "sliding your first card across the counter",
+      "silhouette": "vest",
+      "hair_color": "#2a1824",
+      "jacket_color": "#234052"
+    },
+    "start": "review",
+    "nodes": {
+      "review": {
+        "text": "You kept the play clean and finished ahead. This card tells the house you have a history here. Carry it on a later run for recognition, but remember: if that run goes bad, the card goes with it.",
+        "choices": [
+          {
+            "id": "accept_first_card",
+            "label": "Take My First Card",
+            "text": "Accept the card and finish the lesson.",
+            "effects": {
+              "demo_finale": {
+                "event_id": "high_roller_cashout",
+                "branch": "win_clean",
+                "message": "Linda issues your first Players Card and welcomes you back to the Grand Casino."
+              }
+            },
+            "effects_hidden": true,
+            "end": true
+          }
+        ]
+      }
+    }
+  },
+  {
     "id": "linda_main_floor_ambient_1",
     "display_name": "Linda at the Cage",
     "speaker": {

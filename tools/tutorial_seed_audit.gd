@@ -3,7 +3,9 @@ extends SceneTree
 const ContentLibraryScript := preload("res://scripts/core/content_library.gd")
 const RunGeneratorScript := preload("res://scripts/core/run_generator.gd")
 const RunStateScript := preload("res://scripts/core/run_state.gd")
+const GameModuleScript := preload("res://scripts/core/game_module.gd")
 const BlackjackScript := preload("res://scripts/games/blackjack.gd")
+const SlotGameScript := preload("res://scripts/games/slot.gd")
 
 const OUTPUT_JSON := "res://.tmp/tutorial_seed_audit/tutorial_first_card.json"
 const OUTPUT_MARKDOWN := "res://.tmp/tutorial_seed_audit/tutorial_first_card.md"
@@ -68,6 +70,35 @@ func _run() -> void:
 	var opening_cards: Array = deal_command.get("ui_state", {}).get("initial_player_cards", []) if typeof(deal_command.get("ui_state", {}).get("initial_player_cards", [])) == TYPE_ARRAY else []
 	_check(opening_cards.size() == 2, "Fixed seed did not produce a normal two-card opening hand.", failures)
 
+	generator.next_environment(run_state, "grand_casino", true)
+	var grand_casino := run_state.current_environment.duplicate(true)
+	_check(str(grand_casino.get("archetype_id", "")) == "grand_casino", "Tutorial finale did not reach the Grand Casino Main Floor.", failures)
+	_check((grand_casino.get("game_ids", []) as Array) == ["slot"], "Tutorial finale did not generate exactly one Main Floor slot.", failures)
+	var opening_objective := run_state.demo_objective_status()
+	_check(int(opening_objective.get("high_roller_net_winnings", -1)) == 1, "Tutorial finale net target was not $1.", failures)
+	_check(int(opening_objective.get("high_roller_min_grand_casino_games", -1)) == 1, "Tutorial finale did not require one settled game.", failures)
+	var slot := SlotGameScript.new()
+	slot.setup(library.game("slot"), library)
+	var slot_enter: Dictionary = slot.enter(run_state, grand_casino)
+	_check(bool(slot_enter.get("ok", false)), "Tutorial Main Floor slot could not be entered.", failures)
+	var spin_results: Array = []
+	for spin_index in range(1):
+		var spin_rng := run_state.create_rng()
+		var spin_result: Dictionary = slot.resolve_with_context("spin", 2, run_state, grand_casino, spin_rng, {})
+		_check(bool(spin_result.get("ok", false)), "Tutorial Main Floor slot spin %d did not resolve." % [spin_index + 1], failures)
+		spin_results.append(spin_result)
+		GameModuleScript.apply_result(run_state, spin_result, spin_rng)
+	var finale_status := run_state.demo_objective_status()
+	_check(int(finale_status.get("grand_casino_games_played", 0)) == 1, "Tutorial finale did not settle exactly one spin.", failures)
+	_check(int(finale_status.get("grand_casino_net_winnings", 0)) >= 1, "Fixed seed did not finish the tutorial spin at least $1 ahead.", failures)
+	_check(bool(finale_status.get("high_roller_ready", false)), "Fixed seed did not open Linda's tutorial Gold review.", failures)
+	run_state.suspicion["level"] = 100
+	run_state.narrative_flags["grand_casino_showdown_pending"] = true
+	run_state.narrative_flags["the_house_calls_pending"] = true
+	_check(not run_state.grand_casino_heat_reroute_available(), "Tutorial exposed the heat reroute at forced heat.", failures)
+	_check(not run_state.handle_grand_casino_heat_reroute("tutorial_audit"), "Tutorial accepted a forced-heat showdown reroute.", failures)
+	_check(not bool(run_state.start_grand_casino_showdown().get("ok", false)), "Tutorial started Rourke's showdown from fabricated pending flags.", failures)
+
 	var report := {
 		"challenge_id": "tutorial_first_card",
 		"fixed_seed": str(config.get("seed_text", "")),
@@ -79,6 +110,9 @@ func _run() -> void:
 		"bar_game_ids": bar.get("game_ids", []),
 		"bar_event_ids": event_ids,
 		"blackjack_opening_ui": deal_command.get("ui_state", {}),
+		"grand_casino_game_ids": grand_casino.get("game_ids", []),
+		"grand_casino_spins": spin_results,
+		"grand_casino_finale_status": finale_status,
 		"failures": failures,
 		"passed": failures.is_empty(),
 	}
@@ -113,6 +147,8 @@ func _write_report(report: Dictionary) -> void:
 		"- Store offers: `%s`" % JSON.stringify(report.get("store_offers", [])),
 		"- Bar games: `%s`" % ", ".join(report.get("bar_game_ids", [])),
 		"- Bar events: `%s`" % ", ".join(report.get("bar_event_ids", [])),
+		"- Grand Casino games: `%s`" % ", ".join(report.get("grand_casino_game_ids", [])),
+		"- Grand Casino spin net: `$%d`" % int(_copy_dict(report.get("grand_casino_finale_status", {})).get("grand_casino_net_winnings", 0)),
 	]
 	if not report.get("failures", []).is_empty():
 		lines.append("")
@@ -122,3 +158,7 @@ func _write_report(report: Dictionary) -> void:
 	var markdown_file := FileAccess.open(OUTPUT_MARKDOWN, FileAccess.WRITE)
 	markdown_file.store_string("\n".join(lines) + "\n")
 	markdown_file.close()
+
+
+func _copy_dict(value: Variant) -> Dictionary:
+	return (value as Dictionary).duplicate(true) if typeof(value) == TYPE_DICTIONARY else {}

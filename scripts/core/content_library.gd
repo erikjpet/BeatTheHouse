@@ -937,6 +937,7 @@ func _validate_challenge_modifiers(challenge_id: String, modifiers: Dictionary, 
 		"tutorial_run": true,
 		"tutorial_main_floor_only": true,
 		"tutorial_shop_item_pool_strict": true,
+		"tutorial_first_slot_net": true,
 		"tutorial_environment_overrides": true,
 	}
 	for key_value in modifiers.keys():
@@ -945,7 +946,7 @@ func _validate_challenge_modifiers(challenge_id: String, modifiers: Dictionary, 
 			validation_errors.append("challenges %s modifiers has unknown key: %s" % [challenge_id, key])
 	if modifiers.has("content_groups"):
 		_validate_id_references("challenges %s modifiers.content_groups" % challenge_id, modifiers.get("content_groups", []), group_ids)
-	for key in ["starting_bankroll", "starting_bankroll_delta", "baseline_luck_delta", "starting_heat", "local_risk_decay_percent_delta", "local_heat_turn_decay_interval_delta", "grand_casino_high_roller_net_delta", "grand_casino_high_roller_max_heat_delta"]:
+	for key in ["starting_bankroll", "starting_bankroll_delta", "baseline_luck_delta", "starting_heat", "local_risk_decay_percent_delta", "local_heat_turn_decay_interval_delta", "grand_casino_high_roller_net_delta", "grand_casino_high_roller_max_heat_delta", "tutorial_first_slot_net"]:
 		if modifiers.has(key) and not _variant_is_number(modifiers.get(key, 0)):
 			validation_errors.append("challenges %s modifiers.%s must be numeric." % [challenge_id, key])
 	if modifiers.has("starting_bankroll") and int(modifiers.get("starting_bankroll", 0)) <= 0:
