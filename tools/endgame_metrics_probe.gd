@@ -410,17 +410,50 @@ func _try_claim_or_resolve_endgame(run_state: RunState, run: Dictionary) -> bool
 			choice = "take_the_edge"
 		elif policy == "clean":
 			choice = "hold_steady"
-		var started: Dictionary = run_state.start_grand_casino_showdown()
+		var showdown_event := library.event(RunState.GRAND_CASINO_SHOWDOWN_EVENT_ID)
+		var showdown_module: EventModule = EventModuleScript.new()
+		showdown_module.setup(showdown_event, library)
+		var started: Dictionary = showdown_module.resolve(run_state, run_state.current_environment, "enter_back_room")
 		if not bool(started.get("ok", false)) and not bool(run_state.narrative_flags.get("grand_casino_showdown_active", false)):
 			return false
-		run_state.narrative_flags["grand_casino_showdown_roll"] = _metrics_showdown_roll(run)
-		var resolved: Dictionary = run_state.resolve_grand_casino_showdown_pressure(choice)
+		var resolved: Dictionary = started
+		while bool(run_state.narrative_flags.get("grand_casino_showdown_active", false)) and not run_state.is_terminal():
+			var step := str(run_state.narrative_flags.get("grand_casino_showdown_step", ""))
+			var step_choice := ""
+			match step:
+				RunState.GRAND_CASINO_SHOWDOWN_STEP_WALK:
+					step_choice = "keep_everything"
+					if policy == "cheat":
+						step_choice = _metrics_showdown_choice_id(showdown_module.choices(run_state, run_state.current_environment), "trash_item__", step_choice)
+				RunState.GRAND_CASINO_SHOWDOWN_STEP_PAT_DOWN:
+					step_choice = "face_rourke"
+				RunState.GRAND_CASINO_SHOWDOWN_STEP_INTERROGATION:
+					var interrogation := run_state.grand_casino_showdown_interrogation_status({"interrogation": _dict(_dict(showdown_event.get("payload", {})).get("interrogation", {}))})
+					if int(interrogation.get("beat_index", 0)) + 1 >= int(interrogation.get("beat_count", 3)):
+						run_state.narrative_flags["grand_casino_showdown_roll"] = _metrics_showdown_roll(run)
+					step_choice = choice
+				_:
+					break
+			if step_choice.is_empty():
+				break
+			resolved = showdown_module.resolve(run_state, run_state.current_environment, step_choice)
+			if not bool(resolved.get("ok", false)):
+				break
 		run["showdown_attempted"] = true
 		run["showdown_won"] = bool(resolved.get("success", false))
-		var check: Dictionary = _dict(resolved.get("check", {}))
+		var check: Dictionary = _dict(resolved.get("showdown_check", resolved.get("check", {})))
 		run["showdown_success_chance"] = int(check.get("success_chance", 0))
 		return bool(resolved.get("ok", false))
 	return false
+
+
+func _metrics_showdown_choice_id(choices: Array, prefix: String, fallback: String) -> String:
+	for choice_value in choices:
+		if typeof(choice_value) == TYPE_DICTIONARY:
+			var choice_id := str((choice_value as Dictionary).get("id", ""))
+			if choice_id.begins_with(prefix):
+				return choice_id
+	return fallback
 
 
 func _try_buy_helpful_item(run_state: RunState, run: Dictionary, policy: String) -> bool:

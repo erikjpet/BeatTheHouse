@@ -735,6 +735,8 @@ func _verify_grand_casino_showdown_event_snapshot() -> void:
 	grand_environment["travel_hooks"] = []
 	fixture_run.set_environment(grand_environment)
 	fixture_run.current_environment["turns"] = 0
+	fixture_run.add_item("marked_cards")
+	fixture_run.add_item("foil_sleeve")
 	var objective: Dictionary = {}
 	var objective_value: Variant = grand_environment.get("demo_objective", {})
 	if typeof(objective_value) == TYPE_DICTIONARY:
@@ -767,11 +769,25 @@ func _verify_grand_casino_showdown_event_snapshot() -> void:
 	})
 	await _settle()
 	_require(bool(fixture_run.narrative_flags.get("grand_casino_showdown_active", false)), "Visible arrival response did not start the active showdown.")
+	var walk_option := _event_option_by_id(RunState.GRAND_CASINO_SHOWDOWN_EVENT_ID)
+	var walk_choices: Array = walk_option.get("choices", [])
+	_require(_choice_list_has_id(walk_choices, "keep_everything"), "Active showdown visual snapshot did not expose the one-ditch walk.")
+	var walk_popup: Dictionary = app.call("current_event_choice_popup_snapshot")
+	_require(bool(walk_popup.get("visible", false)) and bool(walk_popup.get("blocking", false)), "Showdown walk did not stay visible as a blocking scene.")
+	_require(not _click_button_exact("Keep Everything").is_empty(), "Showdown visual QA could not keep the dirty inventory through the walk.")
+	await _settle()
+	var pat_down := fixture_run.narrative_flags.get("grand_casino_showdown_pat_down", {}) as Dictionary
+	_require(str(pat_down.get("tier", "")) == "serious" and int(pat_down.get("handicap", 0)) > 0, "Dirty showdown visual QA did not reach the serious pat-down scene.")
+	var pat_down_popup: Dictionary = app.call("current_event_choice_popup_snapshot")
+	_require(str(pat_down_popup.get("summary", "")).findn("Pat-down: Serious") != -1, "Dirty showdown visual QA did not name the visible serious punishment tier.")
+	_require(not _click_button_exact("Take the Chair").is_empty(), "Showdown visual QA could not continue from the pat-down scene.")
+	await _settle()
 	var pressure_option := _event_option_by_id(RunState.GRAND_CASINO_SHOWDOWN_EVENT_ID)
 	var pressure_choices: Array = pressure_option.get("choices", [])
-	_require(pressure_choices.size() == 3, "Active showdown visual snapshot did not expose pressure responses.")
+	var interrogation_popup: Dictionary = app.call("current_event_choice_popup_snapshot")
+	_require(pressure_choices.size() == 3 and str(interrogation_popup.get("summary", "")).find("Beat 1/3") != -1 and str(interrogation_popup.get("summary", "")).find("Stakes:") != -1, "Active showdown visual snapshot did not expose the first evidence beat and visible stakes.")
 	_cover("grand_casino_showdown_event")
-	_record_state("grand_casino_showdown_pressure_screen", "Grand Casino back-room showdown is active with pressure responses visible.")
+	_record_state("grand_casino_showdown_interrogation_screen", "Grand Casino back-room interrogation is active after a serious pat-down.")
 
 
 func _verify_grand_casino_high_roller_cashout_snapshot() -> void:
@@ -2979,6 +2995,13 @@ func _snapshot_has_object_type(objects: Array, object_type: String) -> bool:
 		var object_data: Dictionary = item
 		var type_value := _object_type_value(object_data)
 		if type_value == object_type:
+			return true
+	return false
+
+
+func _choice_list_has_id(choices: Array, choice_id: String) -> bool:
+	for choice_value in choices:
+		if typeof(choice_value) == TYPE_DICTIONARY and str((choice_value as Dictionary).get("id", "")) == choice_id:
 			return true
 	return false
 

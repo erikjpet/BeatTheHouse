@@ -149,6 +149,8 @@ func _check_in_run_menu_flow(app: Control, save_service: SaveService, viewport_r
 	if str(app.call("current_screen_snapshot").get("screen", "")) == "START":
 		push_error("Game-surface in-run load incorrectly returned to the main menu.")
 		return false
+	if not await _check_showdown_phase_ui(app):
+		return false
 
 	app.call("start_foundation_run", "UI-RUN-MENU-ABANDON")
 	await process_frame
@@ -174,6 +176,62 @@ func _check_in_run_menu_flow(app: Control, save_service: SaveService, viewport_r
 	if not await _check_run_menu_main_menu_button_closes_overlay(app, "UI-RUN-MENU-META", true):
 		return false
 	return true
+
+
+func _check_showdown_phase_ui(app: Control) -> bool:
+	var environment := _grand_casino_environment_for_ui(app)
+	if environment.is_empty():
+		push_error("Showdown phase UI fixture could not load the Grand Casino.")
+		return false
+	environment["event_ids"] = [RunState.GRAND_CASINO_SHOWDOWN_EVENT_ID]
+	var run_state := _grand_casino_fixture_run("UI-HOUSE-CALLS-PHASES", environment)
+	run_state.current_environment["turns"] = 0
+	var objective := _copy_dict(run_state.current_environment.get("demo_objective", {}))
+	run_state.add_suspicion("ui_showdown_phase", int(objective.get("showdown_heat_threshold", 70)), "behavior")
+	run_state.evaluate_environment_objective_state()
+	_set_ui_fixture_run(app, run_state)
+	app.call("_set_current_screen", "EVENT")
+	app.call("_refresh")
+	if not bool(app.call("_show_interactable_event_popup", RunState.GRAND_CASINO_SHOWDOWN_EVENT_ID)):
+		push_error("Showdown phase UI could not open Rourke's call.")
+		return false
+	var arrival_popup: Dictionary = app.call("current_event_choice_popup_snapshot")
+	if not _popup_has_choice(arrival_popup, "enter_back_room"):
+		push_error("Showdown phase UI did not present the back-room arrival.")
+		return false
+	app.call("resolve_event_choice", RunState.GRAND_CASINO_SHOWDOWN_EVENT_ID, "enter_back_room")
+	await process_frame
+	var walk_popup: Dictionary = app.call("current_event_choice_popup_snapshot")
+	if not bool(walk_popup.get("visible", false)) or not bool(walk_popup.get("blocking", false)) or bool(walk_popup.get("dismissible", true)) or not _popup_has_choice(walk_popup, "keep_everything"):
+		push_error("Showdown walk did not auto-open as a blocking one-choice scene.")
+		return false
+	app.call("resolve_event_choice", RunState.GRAND_CASINO_SHOWDOWN_EVENT_ID, "keep_everything")
+	await process_frame
+	var pat_down_popup: Dictionary = app.call("current_event_choice_popup_snapshot")
+	if not _popup_has_choice(pat_down_popup, "face_rourke") or str(pat_down_popup.get("summary", "")).findn("Pat-down: Clean") == -1:
+		push_error("Showdown pat-down tier was not visible before interrogation.")
+		return false
+	app.call("resolve_event_choice", RunState.GRAND_CASINO_SHOWDOWN_EVENT_ID, "face_rourke")
+	await process_frame
+	var first_beat: Dictionary = app.call("current_event_choice_popup_snapshot")
+	if str(first_beat.get("summary", "")).find("Beat 1/3") == -1 or str(first_beat.get("summary", "")).find("Stakes:") == -1 or not _popup_has_choice(first_beat, "hold_steady") or not _popup_has_choice(first_beat, "talk_down") or not _popup_has_choice(first_beat, "take_the_edge"):
+		push_error("Showdown interrogation did not show real evidence, visible stakes, and three responses.")
+		return false
+	app.call("resolve_event_choice", RunState.GRAND_CASINO_SHOWDOWN_EVENT_ID, "hold_steady")
+	await process_frame
+	var second_beat: Dictionary = app.call("current_event_choice_popup_snapshot")
+	if str(second_beat.get("summary", "")).find("Beat 2/3") == -1:
+		push_error("Showdown interrogation did not advance and auto-open beat two.")
+		return false
+	app.call("_hide_event_choice_popup")
+	return true
+
+
+func _popup_has_choice(snapshot: Dictionary, choice_id: String) -> bool:
+	for choice_value in _copy_array(snapshot.get("choices", [])):
+		if typeof(choice_value) == TYPE_DICTIONARY and str((choice_value as Dictionary).get("id", "")) == choice_id:
+			return true
+	return false
 
 
 func _check_run_menu_main_menu_button_closes_overlay(app: Control, seed: String, meta_session: bool) -> bool:
