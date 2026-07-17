@@ -223,6 +223,7 @@ var pending_triggered_events: Array = []
 var pending_bags: Array = []
 var active_triggered_event: Dictionary = {}
 var event_cadence: Dictionary = {}
+var music_arrangement_state: Dictionary = {}
 var environment_history: Array = []
 var environment_history_archive_count: int = 0
 var unlocked_travel: Array = []
@@ -289,6 +290,7 @@ func start_new(p_seed_text: String = "FOUNDATION-SEED", p_challenge_config: Dict
 	pending_bags = []
 	active_triggered_event = {}
 	_reset_event_cadence_state()
+	music_arrangement_state = {}
 	environment_history = []
 	environment_history_archive_count = 0
 	unlocked_travel = []
@@ -1182,6 +1184,20 @@ func set_environment(environment_data: Dictionary) -> void:
 	if previous_was_grand_casino and not _is_grand_casino_environment(current_environment):
 		_clear_grand_casino_clean_cashout_ready()
 	event_cadence_begin_visit(current_environment)
+	music_arrangement_state = {
+		"visit_id": _event_cadence_visit_key(current_environment),
+		"track_id": "",
+		"recipe_id": "",
+		"cursor": 0,
+		"harmonic_section": "A",
+		"last_phrase_event_index": -1,
+		"last_phrase_event_token": "",
+		"phrase_slot": 0,
+		"section_history": [],
+		"selected_variant_ids": {},
+		"role_epochs": {},
+		"selected_role_epochs": {},
+	}
 	_initialize_grand_casino_objective_runtime()
 	_initialize_grand_casino_staffing()
 	_initialize_grand_casino_living_floor()
@@ -1191,6 +1207,82 @@ func set_environment(environment_data: Dictionary) -> void:
 
 func set_world_map(map_data: Dictionary) -> void:
 	world_map = WorldMap.normalize(map_data)
+
+
+# Returns the compact, saveable authored-music recipe cursor for this visit.
+# A different track/recipe starts a fresh cursor without consuming a phrase.
+func ensure_music_arrangement_state(track_id: String, recipe_id: String, first_section: String = "A") -> Dictionary:
+	var visit_id := _event_cadence_visit_key(current_environment)
+	if str(music_arrangement_state.get("visit_id", "")) != visit_id \
+		or str(music_arrangement_state.get("track_id", "")) != track_id \
+		or str(music_arrangement_state.get("recipe_id", "")) != recipe_id:
+		music_arrangement_state = {
+			"visit_id": visit_id,
+			"track_id": track_id,
+			"recipe_id": recipe_id,
+			"cursor": 0,
+			"harmonic_section": first_section.strip_edges().to_upper() if not first_section.strip_edges().is_empty() else "A",
+			"last_phrase_event_index": -1,
+			"last_phrase_event_token": "",
+			"phrase_slot": 0,
+			"section_history": [],
+			"selected_variant_ids": {},
+			"role_epochs": {},
+			"selected_role_epochs": {},
+		}
+	return music_arrangement_state.duplicate(true)
+
+
+# Consumes one ordered phrase event. Duplicate, stale, and skipped events are
+# deliberately idempotent so timing callbacks cannot move the form twice.
+func advance_music_arrangement_phrase(track_id: String, recipe_id: String, sections: Array, phrase_event: Dictionary, role_policies: Dictionary = {}) -> Dictionary:
+	var normalized_sections: Array[String] = []
+	for section_value in sections:
+		var section := str(section_value).strip_edges().to_upper()
+		if not section.is_empty():
+			normalized_sections.append(section)
+	if normalized_sections.is_empty():
+		return {"event_accepted": false}
+	ensure_music_arrangement_state(track_id, recipe_id, normalized_sections[0])
+	var event_index := int(phrase_event.get("phrase_event_index", phrase_event.get("index", -1)))
+	var event_token := str(phrase_event.get("event_token", phrase_event.get("token", ""))).strip_edges()
+	var last_index := int(music_arrangement_state.get("last_phrase_event_index", -1))
+	if event_index < 0 or event_index <= last_index or event_index != last_index + 1:
+		var rejected := music_arrangement_state.duplicate(true)
+		rejected["event_accepted"] = false
+		return rejected
+	if not event_token.is_empty() and event_token == str(music_arrangement_state.get("last_phrase_event_token", "")):
+		var duplicate := music_arrangement_state.duplicate(true)
+		duplicate["event_accepted"] = false
+		return duplicate
+	var cursor := int(music_arrangement_state.get("cursor", -1)) + 1
+	var section := normalized_sections[posmod(cursor, normalized_sections.size())]
+	var history := _string_array(_copy_array(music_arrangement_state.get("section_history", [])))
+	history.append(section)
+	while history.size() > 8:
+		history.pop_front()
+	music_arrangement_state["cursor"] = cursor
+	music_arrangement_state["harmonic_section"] = section
+	music_arrangement_state["last_phrase_event_index"] = event_index
+	music_arrangement_state["last_phrase_event_token"] = event_token
+	music_arrangement_state["phrase_slot"] = maxi(0, int(phrase_event.get("phrase_slot", music_arrangement_state.get("phrase_slot", 0))))
+	music_arrangement_state["section_history"] = history
+	var role_epochs := _copy_dict(music_arrangement_state.get("role_epochs", {}))
+	for role_value in role_policies.keys():
+		var policy := _copy_dict(role_policies.get(role_value, {}))
+		var change_every := maxi(1, int(policy.get("change_every", 1)))
+		role_epochs[str(role_value)] = maxi(0, cursor) / change_every
+	music_arrangement_state["role_epochs"] = role_epochs
+	var accepted := music_arrangement_state.duplicate(true)
+	accepted["event_accepted"] = true
+	return accepted
+
+
+func remember_music_arrangement_selection(track_id: String, selected_variant_ids: Dictionary, selected_role_epochs: Dictionary) -> void:
+	if str(music_arrangement_state.get("track_id", "")) != track_id:
+		return
+	music_arrangement_state["selected_variant_ids"] = selected_variant_ids.duplicate(true)
+	music_arrangement_state["selected_role_epochs"] = selected_role_epochs.duplicate(true)
 
 
 func has_world_map() -> bool:
@@ -6478,6 +6570,7 @@ func to_dict() -> Dictionary:
 		"pending_bags": pending_bags.duplicate(true),
 		"active_triggered_event": active_triggered_event.duplicate(true),
 		"event_cadence": _normalize_event_cadence(event_cadence),
+		"music_arrangement_state": _normalize_music_arrangement_state(music_arrangement_state),
 		"environment_history": environment_history.duplicate(true),
 		"environment_history_archive_count": environment_history_archive_count,
 		"unlocked_travel": unlocked_travel.duplicate(true),
@@ -6546,6 +6639,7 @@ func from_dict(data: Dictionary) -> void:
 		pending_bags = _normalize_pending_bag_markers(_copy_array(saved_pending_bags))
 	active_triggered_event = _normalize_triggered_event_entry(data.get("active_triggered_event", {}))
 	event_cadence = _normalize_event_cadence(_copy_dict(data.get("event_cadence", {})))
+	music_arrangement_state = _normalize_music_arrangement_state(_copy_dict(data.get("music_arrangement_state", {})))
 	environment_history_archive_count = maxi(0, int(data.get("environment_history_archive_count", 0)))
 	environment_history = _normalize_environment_history(_copy_array(data.get("environment_history", [])))
 	_compact_environment_history()
@@ -7359,6 +7453,48 @@ func _normalize_event_cadence(data: Dictionary) -> Dictionary:
 	normalized["visit_count"] = maxi(0, int(normalized.get("visit_count", 0)))
 	normalized["quiet_visit_count"] = maxi(0, int(normalized.get("quiet_visit_count", 0)))
 	return normalized
+
+
+static func _normalize_music_arrangement_state(data: Dictionary) -> Dictionary:
+	if data.is_empty():
+		return {}
+	var history := _string_array(_copy_array(data.get("section_history", [])))
+	while history.size() > 8:
+		history.pop_front()
+	return {
+		"visit_id": str(data.get("visit_id", "")).strip_edges(),
+		"track_id": str(data.get("track_id", "")).strip_edges(),
+		"recipe_id": str(data.get("recipe_id", "")).strip_edges(),
+		"cursor": maxi(0, int(data.get("cursor", 0))),
+		"harmonic_section": str(data.get("harmonic_section", "A")).strip_edges().to_upper(),
+		"last_phrase_event_index": maxi(-1, int(data.get("last_phrase_event_index", -1))),
+		"last_phrase_event_token": str(data.get("last_phrase_event_token", "")).strip_edges(),
+		"phrase_slot": maxi(0, int(data.get("phrase_slot", 0))),
+		"section_history": history,
+		"selected_variant_ids": _normalize_music_variant_ids(data.get("selected_variant_ids", {})),
+		"role_epochs": _normalize_music_role_epochs(data.get("role_epochs", {})),
+		"selected_role_epochs": _normalize_music_role_epochs(data.get("selected_role_epochs", {})),
+	}
+
+
+static func _normalize_music_variant_ids(value: Variant) -> Dictionary:
+	var source := _copy_dict(value)
+	var result := {}
+	for key_value in source.keys():
+		var key := str(key_value).strip_edges()
+		if not key.is_empty():
+			result[key] = str(source.get(key_value, "")).strip_edges()
+	return result
+
+
+static func _normalize_music_role_epochs(value: Variant) -> Dictionary:
+	var source := _copy_dict(value)
+	var result := {}
+	for key_value in source.keys():
+		var key := str(key_value).strip_edges()
+		if not key.is_empty():
+			result[key] = maxi(0, int(source.get(key_value, 0)))
+	return result
 
 
 # Normalizes generated item offers after JSON save/load.

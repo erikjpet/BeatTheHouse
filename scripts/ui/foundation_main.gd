@@ -3320,6 +3320,8 @@ func _load_foundation_run_from_slot(return_to_start_on_missing: bool) -> bool:
 	var loaded_from_backup := str(load_result.get("outcome", "")) == SaveService.LOAD_OUTCOME_BACKUP
 	save_status_message = "Loaded backup save." if loaded_from_backup else "Loaded run."
 	_set_current_screen(SCREEN_ENVIRONMENT)
+	if procedural_music_player != null:
+		procedural_music_player.sync_authored_arrangement_state(run_state.music_arrangement_state)
 	_show_message("%s: %s." % ["Recovered run from backup" if loaded_from_backup else "Run loaded", str(run_state.current_environment.get("display_name", "Environment"))])
 	_hide_run_menu()
 	_refresh()
@@ -3795,6 +3797,8 @@ func _initialize_meta_collection() -> void:
 func _initialize_procedural_music() -> void:
 	procedural_music_player = ProceduralMusicPlayerScript.new()
 	procedural_music_player.audio_calm = user_settings != null and bool(user_settings.audio_calm)
+	procedural_music_player.authored_phrase_event.connect(_on_authored_music_phrase_event)
+	procedural_music_player.authored_arrangement_selected.connect(_on_authored_music_arrangement_selected)
 	add_child(procedural_music_player)
 
 
@@ -5244,6 +5248,7 @@ func _update_procedural_music() -> void:
 	if run_state == null or current_screen == SCREEN_START:
 		procedural_music_player.stop()
 		return
+	_ensure_run_music_arrangement_state()
 	procedural_music_player.play_for_environment_state(run_state.current_environment, run_state.suspicion_level(), music_fx_state_snapshot())
 
 
@@ -5331,7 +5336,57 @@ func music_fx_state_snapshot() -> Dictionary:
 		"big_win_bars_remaining": int(win_status.get("big_win_bars_remaining", 0)),
 		"big_win_event_token": str(win_status.get("big_win_event_token", "")),
 		"last_bankroll_delta": int(win_status.get("last_bankroll_delta", 0)),
-}
+		"run_seed": run_state.seed_value,
+		"music_visit_id": str(run_state.music_arrangement_state.get("visit_id", "")),
+		"music_arrangement_state": run_state.music_arrangement_state.duplicate(true),
+	}
+
+
+func _ensure_run_music_arrangement_state() -> void:
+	if run_state == null or library == null:
+		return
+	var profile := _copy_dict(run_state.current_environment.get("music_profile", {}))
+	var track_id := str(profile.get("authored_track_id", "")).strip_edges()
+	if track_id.is_empty():
+		return
+	var entry := library.music_track(track_id)
+	var recipes_value: Variant = entry.get("arrangement_recipes", [])
+	if typeof(recipes_value) != TYPE_ARRAY or (recipes_value as Array).is_empty() or typeof((recipes_value as Array)[0]) != TYPE_DICTIONARY:
+		return
+	var recipe: Dictionary = (recipes_value as Array)[0]
+	var sections := _string_array(recipe.get("sections", []))
+	if sections.is_empty():
+		return
+	run_state.ensure_music_arrangement_state(track_id, str(recipe.get("id", "")), str(sections[0]))
+
+
+func _on_authored_music_phrase_event(event: Dictionary) -> void:
+	if run_state == null or library == null:
+		return
+	var track_id := str(event.get("track_id", "")).strip_edges()
+	var recipe_id := str(event.get("recipe_id", "")).strip_edges()
+	var entry := library.music_track(track_id)
+	var recipes_value: Variant = entry.get("arrangement_recipes", [])
+	if typeof(recipes_value) != TYPE_ARRAY:
+		return
+	for recipe_value in recipes_value as Array:
+		if typeof(recipe_value) != TYPE_DICTIONARY:
+			continue
+		var recipe: Dictionary = recipe_value
+		if str(recipe.get("id", "")) != recipe_id:
+			continue
+		var phrase_event := event.duplicate(true)
+		phrase_event["event_token"] = "%s:%s" % [str(run_state.music_arrangement_state.get("visit_id", "")), str(event.get("event_token", ""))]
+		var state := run_state.advance_music_arrangement_phrase(track_id, recipe_id, _copy_array(recipe.get("sections", [])), phrase_event, _copy_dict(recipe.get("role_policies", {})))
+		if bool(state.get("event_accepted", false)):
+			_update_procedural_music()
+		return
+
+
+func _on_authored_music_arrangement_selected(selection: Dictionary) -> void:
+	if run_state == null:
+		return
+	run_state.remember_music_arrangement_selection(str(selection.get("track_id", "")), _copy_dict(selection.get("selected_variant_ids", {})), _copy_dict(selection.get("selected_role_epochs", {})))
 
 
 func _music_environment_payload(environment: Dictionary) -> Dictionary:

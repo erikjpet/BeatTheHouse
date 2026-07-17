@@ -1,6 +1,9 @@
 class_name ProceduralMusicPlayer
 extends Node
 
+signal authored_phrase_event(event: Dictionary)
+signal authored_arrangement_selected(selection: Dictionary)
+
 const WebAudioBridgeScript := preload("res://scripts/ui/web_audio_bridge.gd")
 const MusicArrangementSelectorScript := preload("res://scripts/ui/music_arrangement_selector.gd")
 const MusicDeliveryIndexScript := preload("res://scripts/core/music_delivery_index.gd")
@@ -94,6 +97,7 @@ const MUSIC_FEATURE_ATTACK_SECONDS := 0.25
 const MUSIC_FEATURE_RELEASE_SECONDS := 2.0
 const MUSIC_AUTHORED_MANIFEST_PATH := "res://data/audio/music_manifest.json"
 const MUSIC_AUTHORED_ROOT := "res://assets/audio/music"
+const AUTHORED_MANIFEST_CACHE_LIMIT := 32
 const MUSIC_MIN_VOLUME_DB := -80.0
 const WEB_AUDIO_MUSIC_STEM_MAX_PCM_BYTES := 393216
 const WEB_AUDIO_MUSIC_BED_SECONDS := 60.0
@@ -160,6 +164,10 @@ var _music_mix_applied_target: Dictionary = {}
 var _music_mix_pending: Dictionary = {}
 var _music_mix_input_snapshot: Dictionary = {}
 var _authored_manifest_cache: Dictionary = {}
+var _authored_manifest_cache_order: Array[String] = []
+var _authored_manifest_entries_cache: Array = []
+var _authored_manifest_entries_by_id: Dictionary = {}
+var _authored_manifest_entries_loaded := false
 var _feature_stem_players: Dictionary = {}
 var _feature_stinger_players: Array = []
 var _feature_stem_cache: Dictionary = {}
@@ -184,6 +192,15 @@ var _last_big_win_event_token := ""
 var _music_event_last_bar := -1
 var _float_pcm_player_states: Dictionary = {}
 var _float_pcm_phase_launches: Dictionary = {}
+var _authored_phrase_track_id := ""
+var _authored_phrase_visit_id := ""
+var _authored_phrase_slot := -1
+var _authored_phrase_event_index := -1
+var _last_arrangement_selection_notice := ""
+var _authored_phrase_boundary_dispatch := false
+var _last_authored_boundary_applied_cache_key := ""
+var _authored_phrase_boundary_position := -1.0
+var _pending_authored_arrangement_restore: Dictionary = {}
 
 
 func _ready() -> void:
@@ -231,6 +248,10 @@ func _exit_tree() -> void:
 	_web_music_bed_cache.clear()
 	_ambient_profile_cache.clear()
 	_authored_manifest_cache.clear()
+	_authored_manifest_cache_order.clear()
+	_authored_manifest_entries_cache.clear()
+	_authored_manifest_entries_by_id.clear()
+	_authored_manifest_entries_loaded = false
 
 
 func debug_soak_snapshot() -> Dictionary:
@@ -241,6 +262,7 @@ func debug_soak_snapshot() -> Dictionary:
 		"web_music_bed_cache_size": _web_music_bed_cache.size(),
 		"ambient_profile_cache_size": _ambient_profile_cache.size(),
 		"authored_manifest_cache_size": _authored_manifest_cache.size(),
+		"authored_manifest_cache_limit": AUTHORED_MANIFEST_CACHE_LIMIT,
 		"feature_stem_cache_size": _feature_stem_cache.size(),
 		"feature_stinger_pending_count": _feature_stinger_pending.size(),
 		"feature_stinger_history_count": _feature_stinger_history.size(),
@@ -250,6 +272,7 @@ func debug_soak_snapshot() -> Dictionary:
 		"current_cache_key": _current_cache_key,
 		"pending_cache_key": _pending_cache_key,
 		"thread_cache_key": _thread_cache_key,
+		"last_authored_boundary_applied_cache_key": _last_authored_boundary_applied_cache_key,
 	}
 
 
@@ -276,12 +299,18 @@ func play_for_environment_state(environment: Dictionary, heat_level: int, music_
 	_remember_profile(cache_key, profile)
 	if not authored_stem_set.is_empty():
 		_ambient_stream_cache[cache_key] = authored_stem_set
+		if _pending_restore_matches_authored_stem_set(authored_stem_set):
+			_apply_pending_authored_arrangement_restore(cache_key, authored_stem_set)
+			return
 		if cache_key == _current_cache_key and _music_is_playing() and not _current_stream_is_primer:
 			if WebAudioBridgeScript.available() and _current_web_music_bed_cache_key != cache_key:
 				_play_web_music_bed_for_cache(cache_key, _director_playback_position(), _current_stem_set)
 			return
 		if WebAudioBridgeScript.available():
 			_play_web_music_bed_for_cache(cache_key, 0.0, authored_stem_set)
+		if _authored_phrase_boundary_dispatch:
+			_accept_authored_boundary_stem_set(cache_key, authored_stem_set)
+			return
 		if _should_defer_music_change(cache_key):
 			_transition_target_cache_key = cache_key
 			_transition_target_profile = profile.duplicate(true)
@@ -396,6 +425,15 @@ func stop() -> void:
 	_music_event_envelope = {}
 	_last_big_win_event_token = ""
 	_music_event_last_bar = -1
+	_authored_phrase_track_id = ""
+	_authored_phrase_visit_id = ""
+	_authored_phrase_slot = -1
+	_authored_phrase_event_index = -1
+	_last_arrangement_selection_notice = ""
+	_authored_phrase_boundary_dispatch = false
+	_last_authored_boundary_applied_cache_key = ""
+	_authored_phrase_boundary_position = -1.0
+	_pending_authored_arrangement_restore = {}
 	_float_pcm_player_states.clear()
 	_float_pcm_phase_launches.clear()
 	_reset_music_fx()
@@ -720,8 +758,10 @@ func _advance_authored_arrangement() -> void:
 	if str(_current_stem_set.get("source", "")) != "authored" or _current_cache_key.is_empty():
 		return
 	var track_id := str(_current_stem_set.get("track_id", ""))
-	var entry := _authored_track_entry(track_id)
-	var arrangement_value: Variant = entry.get("arrangement", [])
+	if not str(_current_stem_set.get("harmony_recipe_id", "")).is_empty():
+		_advance_harmony_recipe_phrase_event(track_id)
+		return
+	var arrangement_value: Variant = _current_stem_set.get("authored_arrangement", [])
 	if typeof(arrangement_value) != TYPE_ARRAY or (arrangement_value as Array).is_empty():
 		return
 	var arrangement: Array = arrangement_value
@@ -749,6 +789,91 @@ func _advance_authored_arrangement() -> void:
 	_transition_target_cache_key = next_cache_key
 	_transition_target_profile = profile.duplicate(true)
 	_set_deferred_transition_stem_set(next_cache_key, next_stem_set)
+
+
+func _advance_harmony_recipe_phrase_event(track_id: String) -> void:
+	var recipe_id := str(_current_stem_set.get("harmony_recipe_id", ""))
+	if recipe_id.is_empty():
+		return
+	var phrase_bars := maxi(1, int(_current_stem_set.get("harmony_phrase_bars", 4)))
+	var current_bar := floori(_director_playback_position() / maxf(0.001, _music_director_bar_seconds()))
+	var phrase_slot := current_bar / phrase_bars
+	_emit_harmony_phrase_boundaries(track_id, phrase_slot, current_bar)
+
+
+func _emit_harmony_phrase_boundaries(track_id: String, phrase_slot: int, current_bar: int) -> void:
+	var recipe_id := str(_current_stem_set.get("harmony_recipe_id", ""))
+	var phrase_bars := maxi(1, int(_current_stem_set.get("harmony_phrase_bars", 4)))
+	var visit_id := str(_current_stem_set.get("harmony_visit_id", ""))
+	if _authored_phrase_track_id != track_id or _authored_phrase_visit_id != visit_id:
+		_authored_phrase_track_id = track_id
+		_authored_phrase_visit_id = visit_id
+		_authored_phrase_slot = phrase_slot
+		_authored_phrase_event_index = int(_current_stem_set.get("harmony_last_phrase_event_index", -1))
+		return
+	if phrase_slot == _authored_phrase_slot:
+		return
+	var phrase_slots_per_loop := maxi(1, ceili(float(maxi(1, int(_current_stem_set.get("bars", phrase_bars)))) / float(phrase_bars)))
+	var crossed := posmod(phrase_slot - _authored_phrase_slot, phrase_slots_per_loop)
+	if crossed <= 0:
+		crossed = 1
+	for step in range(crossed):
+		_authored_phrase_event_index += 1
+		var recipe_length := maxi(1, int(_current_stem_set.get("harmony_recipe_length", 1)))
+		var phrase_index := posmod(_authored_phrase_event_index, recipe_length)
+		var event_token := "%s:%s:%d" % [track_id, visit_id, _authored_phrase_event_index]
+		_authored_phrase_boundary_dispatch = true
+		_authored_phrase_boundary_position = float(current_bar) * _music_director_bar_seconds()
+		authored_phrase_event.emit({
+			"track_id": track_id,
+			"recipe_id": recipe_id,
+			"phrase_event_index": _authored_phrase_event_index,
+			"phrase_index": phrase_index,
+			"cycle_index": _authored_phrase_event_index / recipe_length,
+			"event_token": event_token,
+			"phrase_slot": posmod(_authored_phrase_slot + step + 1, phrase_slots_per_loop),
+			"musical_bar": current_bar,
+			"boundary_position": _authored_phrase_boundary_position,
+		})
+		_authored_phrase_boundary_dispatch = false
+		_authored_phrase_boundary_position = -1.0
+	_authored_phrase_slot = phrase_slot
+
+
+# Rebinds the live phrase counter after a RunState load without rebuilding the
+# transport. The next boundary continues from the restored event index.
+func sync_authored_arrangement_state(state: Dictionary) -> void:
+	_pending_authored_arrangement_restore = state.duplicate(true)
+	_authored_phrase_track_id = ""
+	_authored_phrase_visit_id = ""
+	_authored_phrase_slot = -1
+	_authored_phrase_event_index = int(state.get("last_phrase_event_index", -1))
+	_last_arrangement_selection_notice = ""
+
+
+func _pending_restore_matches_authored_stem_set(stem_set: Dictionary) -> bool:
+	return not _pending_authored_arrangement_restore.is_empty() and str(_pending_authored_arrangement_restore.get("track_id", "")) == str(stem_set.get("track_id", ""))
+
+
+func _apply_pending_authored_arrangement_restore(cache_key: String, stem_set: Dictionary) -> void:
+	var restored := _pending_authored_arrangement_restore.duplicate(true)
+	_pending_authored_arrangement_restore = {}
+	_authored_phrase_track_id = str(restored.get("track_id", ""))
+	_authored_phrase_visit_id = str(restored.get("visit_id", ""))
+	_authored_phrase_slot = maxi(0, int(restored.get("phrase_slot", 0)))
+	_authored_phrase_event_index = int(restored.get("last_phrase_event_index", -1))
+	var resume_position := _phrase_slot_music_position(stem_set, _authored_phrase_slot)
+	_play_full_stem_set(cache_key, stem_set, resume_position)
+
+
+static func _phrase_slot_music_position(stem_set: Dictionary, phrase_slot: int) -> float:
+	var sample_rate := maxi(1, int(stem_set.get("sample_rate", SAMPLE_RATE)))
+	var loop_frames := maxi(1, int(stem_set.get("loop_frames", 1)))
+	var bars := maxi(1, int(stem_set.get("bars", 1)))
+	var phrase_bars := maxi(1, int(stem_set.get("harmony_phrase_bars", 1)))
+	var loop_seconds := float(loop_frames) / float(sample_rate)
+	var bar_seconds := loop_seconds / float(bars)
+	return fmod(float(maxi(0, phrase_slot) * phrase_bars) * bar_seconds, loop_seconds)
 
 
 func music_fx_snapshot(music_state: Dictionary = {}) -> Dictionary:
@@ -1745,6 +1870,9 @@ static func _normalize_music_mix_input(music_state: Dictionary) -> Dictionary:
 		"music_tags": _copy_array_static(music_state.get("music_tags", [])),
 		"harmonic_section": str(music_state.get("harmonic_section", "")).strip_edges().to_upper(),
 		"musical_bar": maxi(0, int(music_state.get("musical_bar", 0))),
+		"run_seed": str(music_state.get("run_seed", "")),
+		"music_visit_id": str(music_state.get("music_visit_id", "")),
+		"music_arrangement_state": _copy_dict_static(music_state.get("music_arrangement_state", music_state.get("arrangement_state", {}))),
 		"source_environment_id": str(fx_input.get("environment_id", "")),
 	}
 
@@ -2340,6 +2468,17 @@ func _accept_full_stem_set(cache_key: String, stem_set: Dictionary) -> void:
 	_play_full_stem_set(cache_key, stem_set)
 
 
+func _accept_authored_boundary_stem_set(cache_key: String, stem_set: Dictionary) -> void:
+	_deferred_transition_cache_key = ""
+	_deferred_transition_stem_set = {}
+	_deferred_transition_plan = {}
+	_transition_target_cache_key = ""
+	_transition_target_profile = {}
+	var exact_position := _authored_phrase_boundary_position if _authored_phrase_boundary_position >= 0.0 else _director_playback_position()
+	if _play_full_stem_set(cache_key, stem_set, exact_position):
+		_last_authored_boundary_applied_cache_key = cache_key
+
+
 func _set_deferred_transition_stem_set(cache_key: String, stem_set: Dictionary) -> void:
 	if not _stem_set_contract_valid(stem_set):
 		return
@@ -2783,18 +2922,19 @@ func _play_primer_stem_set(cache_key: String, stem_set: Dictionary) -> void:
 	_play_stem_set(stem_set, 0.0, AMBIENT_STAGE_PRIMER)
 
 
-func _play_full_stem_set(cache_key: String, stem_set: Dictionary, resume_position_override: float = -1.0) -> void:
+func _play_full_stem_set(cache_key: String, stem_set: Dictionary, resume_position_override: float = -1.0) -> bool:
 	_pending_cache_key = ""
 	var resume_position := maxf(0.0, resume_position_override) if resume_position_override >= 0.0 else 0.0
 	if resume_position_override < 0.0 and _music_is_playing() and _current_cache_key == cache_key and _current_stream_is_primer:
 		resume_position = maxf(0.0, _director_playback_position())
 	if _stem_players.is_empty() or not _stem_set_contract_valid(stem_set):
-		return
+		return false
 	_current_cache_key = cache_key
 	_current_stream_is_primer = false
 	_remember_current_music_context(cache_key)
 	_play_stem_set(stem_set, resume_position, AMBIENT_STAGE_FULL)
 	_play_web_music_bed_for_cache(cache_key, resume_position, stem_set)
+	return true
 
 
 func _play_web_music_bed_for_cache(cache_key: String, resume_position: float, source_stem_set: Dictionary = {}) -> void:
@@ -3390,8 +3530,16 @@ func _stem_manifest_from_contract(stem_set: Dictionary) -> Dictionary:
 		"float_pcm_precision": float_pcm_precision,
 		"selection_key": str(stem_set.get("selection_key", "base")),
 		"selected_variants": _copy_dict(stem_set.get("selected_variants", {})),
+		"selected_role_epochs": _copy_dict(stem_set.get("selected_role_epochs", {})),
 		"selected_tags": _copy_array(stem_set.get("selected_tags", [])),
 		"selection_context": _copy_dict(stem_set.get("selection_context", {})),
+		"compatibility_set_id": str(stem_set.get("compatibility_set_id", "")),
+		"progression_id": str(stem_set.get("progression_id", "")),
+		"recipe_state": _copy_dict(stem_set.get("recipe_state", {})),
+		"recipe_id": str(stem_set.get("recipe_id", "")),
+		"phrase_index": int(stem_set.get("phrase_index", 0)),
+		"cycle_index": int(stem_set.get("cycle_index", 0)),
+		"excluded_candidates": _copy_array(stem_set.get("excluded_candidates", [])),
 		"transitions": _copy_dict(stem_set.get("transitions", {})),
 		"stinger_loop_modes": _audio_stream_loop_mode_snapshot(_copy_dict(stem_set.get("stingers", {}))),
 		"fill_loop_modes": _audio_stream_loop_mode_snapshot(_copy_dict(stem_set.get("fills", {}))),
@@ -3556,10 +3704,27 @@ func _authored_stem_set_from_profile(profile: Dictionary, music_state: Dictionar
 	if entry.is_empty() or not _authored_track_entry_valid(entry):
 		return {}
 	var selection := MusicArrangementSelectorScript.select(entry, profile, music_state)
+	_notify_authored_arrangement_selection(track_id, selection)
 	var selection_key := str(selection.get("selection_key", "base"))
 	var cache_key := "authored:%s:%s" % [track_id, selection_key]
 	if _authored_manifest_cache.has(cache_key):
-		return (_authored_manifest_cache.get(cache_key, {}) as Dictionary).duplicate(true)
+		var cached := (_authored_manifest_cache.get(cache_key, {}) as Dictionary).duplicate(true)
+		cached["recipe_state"] = _copy_dict(selection.get("recipe_state", {}))
+		cached["selected_role_epochs"] = _copy_dict(selection.get("selected_role_epochs", {}))
+		cached["selection_context"] = _copy_dict(selection.get("selection_context", {}))
+		cached["recipe_id"] = str((cached.get("recipe_state", {}) as Dictionary).get("recipe_id", ""))
+		var cached_cursor := int((cached.get("recipe_state", {}) as Dictionary).get("cursor", -1)) if typeof(cached.get("recipe_state", {})) == TYPE_DICTIONARY else -1
+		var cached_recipe := MusicArrangementSelectorScript.recipe_definition(entry, str((cached.get("recipe_state", {}) as Dictionary).get("recipe_id", "")) if typeof(cached.get("recipe_state", {})) == TYPE_DICTIONARY else "")
+		var cached_recipe_length := maxi(1, _copy_array(cached_recipe.get("sections", [])).size())
+		cached["phrase_index"] = posmod(maxi(0, cached_cursor), cached_recipe_length)
+		cached["cycle_index"] = maxi(0, cached_cursor) / cached_recipe_length
+		cached["harmony_recipe_id"] = str(cached_recipe.get("id", ""))
+		cached["harmony_phrase_bars"] = maxi(1, int(cached_recipe.get("phrase_bars", 4)))
+		cached["harmony_recipe_length"] = cached_recipe_length
+		cached["harmony_visit_id"] = str((cached.get("recipe_state", {}) as Dictionary).get("visit_id", ""))
+		cached["harmony_last_phrase_event_index"] = int((cached.get("recipe_state", {}) as Dictionary).get("last_phrase_event_index", -1))
+		cached["excluded_candidates"] = _copy_array(selection.get("excluded_candidates", []))
+		return cached
 	var stems_value: Variant = selection.get("stems", {})
 	if typeof(stems_value) != TYPE_DICTIONARY:
 		return {}
@@ -3593,13 +3758,51 @@ func _authored_stem_set_from_profile(profile: Dictionary, music_state: Dictionar
 	contract["preferred_dsp_sends"] = _copy_dict(delivery_snapshot.get("preferred_dsp_sends", {}))
 	contract["selection_key"] = selection_key
 	contract["selected_variants"] = _copy_dict(selection.get("selected_variants", {}))
+	contract["selected_role_epochs"] = _copy_dict(selection.get("selected_role_epochs", {}))
 	contract["selected_tags"] = _copy_array(selection.get("selected_tags", []))
 	contract["selection_context"] = _copy_dict(selection.get("selection_context", {}))
+	contract["compatibility_set_id"] = str(selection.get("compatibility_set_id", ""))
+	contract["progression_id"] = str(selection.get("progression_id", ""))
+	contract["recipe_state"] = _copy_dict(selection.get("recipe_state", {}))
+	contract["recipe_id"] = str((contract.get("recipe_state", {}) as Dictionary).get("recipe_id", ""))
+	var recipe_cursor := int((contract.get("recipe_state", {}) as Dictionary).get("cursor", -1)) if typeof(contract.get("recipe_state", {})) == TYPE_DICTIONARY else -1
+	var recipe := MusicArrangementSelectorScript.recipe_definition(entry, str((contract.get("recipe_state", {}) as Dictionary).get("recipe_id", "")) if typeof(contract.get("recipe_state", {})) == TYPE_DICTIONARY else "")
+	var recipe_length := maxi(1, _copy_array(recipe.get("sections", [])).size())
+	contract["phrase_index"] = posmod(maxi(0, recipe_cursor), recipe_length)
+	contract["cycle_index"] = maxi(0, recipe_cursor) / recipe_length
+	contract["harmony_recipe_id"] = str(recipe.get("id", ""))
+	contract["harmony_phrase_bars"] = maxi(1, int(recipe.get("phrase_bars", 4)))
+	contract["harmony_recipe_length"] = recipe_length
+	contract["harmony_visit_id"] = str((contract.get("recipe_state", {}) as Dictionary).get("visit_id", ""))
+	contract["harmony_last_phrase_event_index"] = int((contract.get("recipe_state", {}) as Dictionary).get("last_phrase_event_index", -1))
+	contract["excluded_candidates"] = _copy_array(selection.get("excluded_candidates", []))
 	contract["transitions"] = _copy_dict(entry.get("transitions", {}))
+	contract["authored_arrangement"] = _copy_array(entry.get("arrangement", []))
 	contract["fills"] = _authored_one_shots(track_id, _copy_dict(entry.get("fills", {})))
 	contract["step_period"] = _step_period_from_bpm(float(contract.get("bpm", 82.0)))
-	_authored_manifest_cache[cache_key] = contract.duplicate(true)
+	_store_authored_manifest_cache(cache_key, contract)
 	return contract
+
+
+func _notify_authored_arrangement_selection(track_id: String, selection: Dictionary) -> void:
+	if str(selection.get("compatibility_set_id", "")).is_empty():
+		return
+	var recipe_state := _copy_dict(selection.get("recipe_state", {}))
+	var notice := "%s|%s|%d|%s" % [track_id, str(recipe_state.get("visit_id", "")), int(recipe_state.get("cursor", -1)), str(selection.get("selection_key", ""))]
+	if notice == _last_arrangement_selection_notice:
+		return
+	_last_arrangement_selection_notice = notice
+	authored_arrangement_selected.emit({"track_id": track_id, "selected_variant_ids": _copy_dict(selection.get("selection_memory_ids", {})), "selected_role_epochs": _copy_dict(selection.get("selection_memory_epochs", {})), "selection_key": str(selection.get("selection_key", ""))})
+
+
+func _store_authored_manifest_cache(cache_key: String, contract: Dictionary) -> void:
+	if _authored_manifest_cache.has(cache_key):
+		_authored_manifest_cache_order.erase(cache_key)
+	_authored_manifest_cache[cache_key] = contract.duplicate(true)
+	_authored_manifest_cache_order.append(cache_key)
+	while _authored_manifest_cache_order.size() > AUTHORED_MANIFEST_CACHE_LIMIT:
+		var evicted: String = str(_authored_manifest_cache_order.pop_front())
+		_authored_manifest_cache.erase(evicted)
 
 
 func _authored_delivery_snapshot(entry: Dictionary, selected_stems: Dictionary) -> Dictionary:
@@ -3647,29 +3850,30 @@ func _authored_delivery_snapshot(entry: Dictionary, selected_stems: Dictionary) 
 
 
 func _authored_track_entry(track_id: String) -> Dictionary:
-	var manifest := _authored_manifest_entries()
-	for entry_value in manifest:
-		if typeof(entry_value) != TYPE_DICTIONARY:
-			continue
-		var entry: Dictionary = entry_value
-		if str(entry.get("id", "")).strip_edges() == track_id:
-			return entry.duplicate(true)
-	return {}
+	if not _authored_manifest_entries_loaded:
+		_authored_manifest_entries()
+	return (_authored_manifest_entries_by_id.get(track_id, {}) as Dictionary).duplicate(true) if _authored_manifest_entries_by_id.has(track_id) else {}
 
 
 func _authored_manifest_entries() -> Array:
-	if _authored_manifest_cache.has("manifest_entries"):
-		return (_authored_manifest_cache.get("manifest_entries", []) as Array).duplicate(true)
+	if _authored_manifest_entries_loaded:
+		return _authored_manifest_entries_cache.duplicate(true)
+	_authored_manifest_entries_loaded = true
 	if not FileAccess.file_exists(MUSIC_AUTHORED_MANIFEST_PATH):
-		_authored_manifest_cache["manifest_entries"] = []
 		return []
 	var text := FileAccess.get_file_as_string(MUSIC_AUTHORED_MANIFEST_PATH)
 	var parsed: Variant = JSON.parse_string(text)
 	if typeof(parsed) != TYPE_ARRAY:
-		_authored_manifest_cache["manifest_entries"] = []
 		return []
-	_authored_manifest_cache["manifest_entries"] = (parsed as Array).duplicate(true)
-	return (parsed as Array).duplicate(true)
+	_authored_manifest_entries_cache = (parsed as Array).duplicate(true)
+	_authored_manifest_entries_by_id = {}
+	for entry_value in _authored_manifest_entries_cache:
+		if typeof(entry_value) == TYPE_DICTIONARY:
+			var entry: Dictionary = entry_value
+			var track_id := str(entry.get("id", "")).strip_edges()
+			if not track_id.is_empty():
+				_authored_manifest_entries_by_id[track_id] = entry
+	return _authored_manifest_entries_cache.duplicate(true)
 
 
 func _authored_track_entry_valid(entry: Dictionary) -> bool:

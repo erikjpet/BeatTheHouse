@@ -1316,6 +1316,7 @@ func _validate_music_manifest_definitions() -> void:
 				continue
 			stem_descriptors.append({"role": role, "value": stems.get(role_value), "label": "music_tracks %s stem %s" % [track_id, role]})
 		var variant_ids := {}
+		var variant_records := {}
 		for role_value in (stem_banks_value as Dictionary).keys():
 			var role := str(role_value).strip_edges()
 			if not bool(allowed_roles.get(role, false)):
@@ -1335,6 +1336,7 @@ func _validate_music_manifest_definitions() -> void:
 					validation_errors.append("music_tracks %s stem variant ids must be present and unique: %s." % [track_id, variant_id])
 				else:
 					variant_ids[variant_id] = true
+					variant_records[variant_id] = {"role": role, "data": variant.duplicate(true)}
 				if float(variant.get("weight", 1.0)) <= 0.0:
 					validation_errors.append("music_tracks %s stem variant %s weight must be positive." % [track_id, variant_id])
 				var intensity_min := float(variant.get("intensity_min", 0.0))
@@ -1397,6 +1399,7 @@ func _validate_music_manifest_definitions() -> void:
 					validation_errors.append("music_tracks %s arrangement references unknown harmonic section %s." % [track_id, str(section_value)])
 		elif typeof(arrangement_value) != TYPE_NIL:
 			validation_errors.append("music_tracks %s arrangement must be an array." % track_id)
+		_validate_music_compatibility_sets(track, track_id, harmonic_sections, variant_records, allowed_roles)
 		var stingers_value: Variant = track.get("stingers", {})
 		if typeof(stingers_value) == TYPE_DICTIONARY:
 			var stingers: Dictionary = stingers_value
@@ -1431,6 +1434,176 @@ func _validate_music_manifest_definitions() -> void:
 			validation_errors.append("music_tracks %s transitions quantize must be beat, bar, or phrase." % track_id)
 		if int(transitions.get("phrase_bars", 4)) <= 0:
 			validation_errors.append("music_tracks %s transitions phrase_bars must be positive." % track_id)
+
+
+func _validate_music_compatibility_sets(track: Dictionary, track_id: String, harmonic_sections: Dictionary, variant_records: Dictionary, allowed_roles: Dictionary) -> void:
+	var sets_value: Variant = track.get("compatibility_sets", [])
+	if typeof(sets_value) == TYPE_NIL:
+		return
+	if typeof(sets_value) != TYPE_ARRAY:
+		validation_errors.append("music_tracks %s compatibility_sets must be an array." % track_id)
+		return
+	var sets: Array = sets_value
+	if sets.is_empty():
+		return
+	var required_roles := _string_array(track.get("compatibility_required_roles", []))
+	var set_ids := {}
+	var set_records := {}
+	for set_value in sets:
+		if typeof(set_value) != TYPE_DICTIONARY:
+			validation_errors.append("music_tracks %s compatibility set must be a dictionary." % track_id)
+			continue
+		var set_data: Dictionary = set_value
+		var set_id := str(set_data.get("id", "")).strip_edges()
+		if set_id.is_empty() or set_ids.has(set_id):
+			validation_errors.append("music_tracks %s compatibility set ids must be present and unique: %s." % [track_id, set_id])
+			continue
+		set_ids[set_id] = true
+		set_records[set_id] = set_data
+		var progression_id := str(set_data.get("progression_id", set_id)).strip_edges()
+		if progression_id.is_empty():
+			validation_errors.append("music_tracks %s compatibility set %s must declare progression_id." % [track_id, set_id])
+		var set_key := str(set_data.get("key", "")).strip_edges()
+		if set_key.is_empty():
+			validation_errors.append("music_tracks %s compatibility set %s must declare key." % [track_id, set_id])
+		var sections := _string_array(set_data.get("harmonic_sections", set_data.get("sections", [])))
+		if sections.is_empty():
+			validation_errors.append("music_tracks %s compatibility set %s must declare harmonic_sections." % [track_id, set_id])
+		for section_id in sections:
+			if not harmonic_sections.has(section_id):
+				validation_errors.append("music_tracks %s compatibility set %s references unknown harmonic section %s." % [track_id, set_id, section_id])
+				continue
+			var section: Dictionary = harmonic_sections.get(section_id, {}) as Dictionary
+			if not set_key.is_empty() and str(section.get("key", "")) != set_key:
+				validation_errors.append("music_tracks %s compatibility set %s key %s crosses harmonic section %s key %s." % [track_id, set_id, set_key, section_id, str(section.get("key", ""))])
+		var roles_value: Variant = set_data.get("roles", {})
+		if typeof(roles_value) != TYPE_DICTIONARY:
+			validation_errors.append("music_tracks %s compatibility set %s roles must be a dictionary." % [track_id, set_id])
+			continue
+		var roles: Dictionary = roles_value
+		var chord_voicings_value: Variant = set_data.get("chord_voicings", [])
+		var bass_roots := _string_array(set_data.get("bass_roots", []))
+		if typeof(chord_voicings_value) != TYPE_ARRAY or (chord_voicings_value as Array).is_empty() or bass_roots.size() != (chord_voicings_value as Array).size():
+			validation_errors.append("music_tracks %s compatibility set %s must pair ordered chord_voicings with bass_roots." % [track_id, set_id])
+		else:
+			for voicing_value in chord_voicings_value as Array:
+				if typeof(voicing_value) != TYPE_ARRAY or (voicing_value as Array).size() < 3 or (voicing_value as Array).size() > 4:
+					validation_errors.append("music_tracks %s compatibility set %s chord voicings must contain 3 or 4 notes." % [track_id, set_id])
+		if bool(set_data.get("instrument_choice_required", false)) and _string_array(roles.get("pad", [])).size() < 2:
+			validation_errors.append("music_tracks %s compatibility set %s requires at least two chord-instrument choices." % [track_id, set_id])
+		for role_value in roles.keys():
+			var role := str(role_value)
+			if not bool(allowed_roles.get(role, false)):
+				validation_errors.append("music_tracks %s compatibility set %s has unknown role %s." % [track_id, set_id, role])
+				continue
+			var references := _string_array(roles.get(role_value, []))
+			for variant_id in references:
+				if not variant_records.has(variant_id):
+					validation_errors.append("music_tracks %s compatibility set %s role %s references unknown variant %s." % [track_id, set_id, role, variant_id])
+					continue
+				var record: Dictionary = variant_records.get(variant_id, {}) as Dictionary
+				var variant: Dictionary = record.get("data", {}) as Dictionary
+				if str(record.get("role", "")) != role:
+					validation_errors.append("music_tracks %s compatibility set %s role %s references %s from role %s." % [track_id, set_id, role, variant_id, str(record.get("role", ""))])
+				var variant_sections := _string_array(variant.get("harmonic_sections", variant.get("sections", [])))
+				for section_id in sections:
+					if not variant_sections.has(section_id):
+						validation_errors.append("music_tracks %s compatibility set %s variant %s crosses section %s." % [track_id, set_id, variant_id, section_id])
+				if not set_key.is_empty() and str(variant.get("key", "")) != set_key:
+					validation_errors.append("music_tracks %s compatibility set %s variant %s key %s crosses set key %s." % [track_id, set_id, variant_id, str(variant.get("key", "")), set_key])
+				if not _string_array(variant.get("progression_compatibility", [])).has(progression_id):
+					validation_errors.append("music_tracks %s compatibility set %s variant %s does not declare that progression compatibility." % [track_id, set_id, variant_id])
+		for required_role in required_roles:
+			var positive_candidates := 0
+			for variant_id in _string_array(roles.get(required_role, [])):
+				var record: Dictionary = variant_records.get(variant_id, {}) as Dictionary
+				var variant: Dictionary = record.get("data", {}) as Dictionary
+				if str(record.get("role", "")) == required_role and bool(variant.get("enabled", true)) and float(variant.get("weight", 1.0)) > 0.0 and _string_array(variant.get("progression_compatibility", [])).has(progression_id):
+					positive_candidates += 1
+			if positive_candidates <= 0:
+				validation_errors.append("music_tracks %s compatibility set %s required role %s has no positive compatible candidates." % [track_id, set_id, required_role])
+	for set_value in sets:
+		if typeof(set_value) != TYPE_DICTIONARY:
+			continue
+		var set_data: Dictionary = set_value
+		var set_id := str(set_data.get("id", ""))
+		var contrast_set_id := str(set_data.get("contrast_with_set_id", "")).strip_edges()
+		if not contrast_set_id.is_empty() and not set_ids.has(contrast_set_id):
+			validation_errors.append("music_tracks %s compatibility set %s contrasts unknown set %s." % [track_id, set_id, contrast_set_id])
+		elif not contrast_set_id.is_empty():
+			var contrast_set: Dictionary = _as_dict(set_records.get(contrast_set_id, {}))
+			if str(contrast_set.get("progression_id", contrast_set_id)) != str(set_data.get("progression_id", set_id)):
+				validation_errors.append("music_tracks %s compatibility set %s contrast must keep progression %s." % [track_id, set_id, str(contrast_set.get("progression_id", contrast_set_id))])
+		if set_data.has("force_change_roles") and typeof(set_data.get("force_change_roles")) != TYPE_ARRAY:
+			validation_errors.append("music_tracks %s compatibility set %s force_change_roles must be an array." % [track_id, set_id])
+		for role in _string_array(set_data.get("force_change_roles", [])):
+			if not bool(allowed_roles.get(role, false)):
+				validation_errors.append("music_tracks %s compatibility set %s force_change_roles contains unknown role %s." % [track_id, set_id, role])
+	var recipes_value: Variant = track.get("arrangement_recipes", [])
+	if typeof(recipes_value) != TYPE_ARRAY or (recipes_value as Array).is_empty():
+		validation_errors.append("music_tracks %s compatibility sets require arrangement_recipes." % track_id)
+		return
+	var recipe_ids := {}
+	for recipe_value in recipes_value as Array:
+		if typeof(recipe_value) != TYPE_DICTIONARY:
+			validation_errors.append("music_tracks %s arrangement recipe must be a dictionary." % track_id)
+			continue
+		var recipe: Dictionary = recipe_value
+		var recipe_id := str(recipe.get("id", "")).strip_edges()
+		if recipe_id.is_empty() or recipe_ids.has(recipe_id):
+			validation_errors.append("music_tracks %s arrangement recipe ids must be present and unique: %s." % [track_id, recipe_id])
+		else:
+			recipe_ids[recipe_id] = true
+		var recipe_sections := _string_array(recipe.get("sections", []))
+		if recipe_sections.is_empty():
+			validation_errors.append("music_tracks %s arrangement recipe %s must contain sections." % [track_id, recipe_id])
+		for section_id in recipe_sections:
+			if not harmonic_sections.has(section_id):
+				validation_errors.append("music_tracks %s arrangement recipe %s references unknown harmonic section %s." % [track_id, recipe_id, section_id])
+			var complete_sets := 0
+			for set_value in sets:
+				if typeof(set_value) != TYPE_DICTIONARY:
+					continue
+				var set_data: Dictionary = set_value
+				if not bool(set_data.get("enabled", true)) or float(set_data.get("weight", 1.0)) <= 0.0 or not _string_array(set_data.get("harmonic_sections", set_data.get("sections", []))).has(section_id):
+					continue
+				var roles: Dictionary = _as_dict(set_data.get("roles", {}))
+				var complete := true
+				var progression_id := str(set_data.get("progression_id", set_data.get("id", "")))
+				for required_role in required_roles:
+					var found := false
+					for variant_id in _string_array(roles.get(required_role, [])):
+						var record: Dictionary = _as_dict(variant_records.get(variant_id, {}))
+						var variant: Dictionary = _as_dict(record.get("data", {}))
+						if str(record.get("role", "")) == required_role and bool(variant.get("enabled", true)) and float(variant.get("weight", 1.0)) > 0.0 and _string_array(variant.get("progression_compatibility", [])).has(progression_id):
+							found = true
+							break
+					if not found:
+						complete = false
+						break
+				if complete:
+					complete_sets += 1
+			if complete_sets <= 0:
+				validation_errors.append("music_tracks %s arrangement recipe %s section %s has no enabled positive complete compatibility set." % [track_id, recipe_id, section_id])
+		if int(recipe.get("phrase_bars", 0)) <= 0:
+			validation_errors.append("music_tracks %s arrangement recipe %s phrase_bars must be positive." % [track_id, recipe_id])
+		var role_policies_value: Variant = recipe.get("role_policies", {})
+		if typeof(role_policies_value) != TYPE_DICTIONARY:
+			validation_errors.append("music_tracks %s arrangement recipe %s role_policies must be a dictionary." % [track_id, recipe_id])
+		else:
+			for role_value in (role_policies_value as Dictionary).keys():
+				var role := str(role_value)
+				var policy_value: Variant = (role_policies_value as Dictionary).get(role_value)
+				if not bool(allowed_roles.get(role, false)):
+					validation_errors.append("music_tracks %s arrangement recipe %s role_policies contains unknown role %s." % [track_id, recipe_id, role])
+				if typeof(policy_value) != TYPE_DICTIONARY:
+					validation_errors.append("music_tracks %s arrangement recipe %s role policy %s must be a dictionary." % [track_id, recipe_id, role])
+					continue
+				var policy: Dictionary = policy_value
+				if int(policy.get("change_every", 0)) <= 0:
+					validation_errors.append("music_tracks %s arrangement recipe %s role policy %s change_every must be positive." % [track_id, recipe_id, role])
+				if policy.has("retain") and typeof(policy.get("retain")) != TYPE_BOOL:
+					validation_errors.append("music_tracks %s arrangement recipe %s role policy %s retain must be boolean." % [track_id, recipe_id, role])
 
 
 func _validate_music_delivery_filename(label: String, track_id: String, filename: String, expected_role: String, metadata: Variant, delivery: Dictionary, semantic_files: Dictionary) -> Dictionary:

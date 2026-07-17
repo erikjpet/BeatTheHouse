@@ -115,9 +115,28 @@
         "key": "C_major",
         "relative_key": "A_minor",
         "tonal_center": "C"
+      },
+      "B": {
+        "key": "A_minor",
+        "relative_key": "C_major",
+        "tonal_center": "A"
+      },
+      "C": {
+        "key": "C_major",
+        "relative_key": "A_minor",
+        "tonal_center": "C"
       }
     },
     "arrangement": ["A", "A", "A", "A", "A", "A", "A", "A"],
+    "arrangement_recipes": [
+      {"id": "jazz_aaba_aaca", "sections": ["A", "A", "B", "A", "A", "A", "C", "A"], "phrase_bars": 4, "role_policies": {"pad": {"retain": true, "change_every": 4}, "bass": {"retain": true, "change_every": 8}, "lead": {"retain": true, "change_every": 8}, "drums_high": {"retain": true, "change_every": 8}}}
+    ],
+    "compatibility_required_roles": ["pad", "bass"],
+    "compatibility_sets": [
+      {"id": "jazz_a_1", "progression_id": "jazz_a_1", "key": "C_major", "harmonic_sections": ["A"], "weight": 1, "instrument_choice_required": true, "chord_voicings": [["C3", "E3", "G3", "B3"], ["A2", "C3", "E3", "G3"], ["D3", "F3", "A3", "C4"], ["G2", "B2", "D3", "F3"]], "bass_roots": ["C2", "A1", "D2", "G1"], "roles": {"pad": ["jazz_chords_a", "jazz_chords_a_guitar"], "bass": ["jazz_bass_a"], "lead": ["jazz_lead_a"], "drums_high": ["jazz_drums_a"]}},
+      {"id": "jazz_b_1", "progression_id": "jazz_b_1", "key": "A_minor", "harmonic_sections": ["B"], "weight": 1, "chord_voicings": [["A2", "C3", "E3", "G3"], ["D3", "F3", "A3", "C4"], ["F2", "A2", "C3", "E3"], ["E2", "G#2", "B2", "D3"]], "bass_roots": ["A1", "D2", "F1", "E1"], "roles": {"pad": ["jazz_chords_b"], "bass": ["jazz_bass_b"]}},
+      {"id": "jazz_c_instrument_contrast", "progression_id": "jazz_a_1", "key": "C_major", "harmonic_sections": ["C"], "weight": 1, "contrast_with_set_id": "jazz_a_1", "force_change_roles": ["pad"], "chord_voicings": [["C3", "E3", "G3", "B3"], ["A2", "C3", "E3", "G3"], ["D3", "F3", "A3", "C4"], ["G2", "B2", "D3", "F3"]], "bass_roots": ["C2", "A1", "D2", "G1"], "roles": {"pad": ["jazz_chords_a", "jazz_chords_a_guitar"], "bass": ["jazz_bass_a"]}}
+    ],
     "stems": {
       "pad": {
         "id": "jazz_chords_piano_1",
@@ -196,6 +215,30 @@
         "loop_begin": 0,
         "loop_end": 705600,
         "dsp_sends": {"reverb": 0.08, "compressor": 0.1}
+      }
+    },
+    "stem_banks": {
+      "pad": {
+        "seed_salt": "jazz_chords",
+        "variants": [
+          {"id": "jazz_chords_a", "file": "JazzClub_Chords_Piano_1.wav", "weight": 1, "harmonic_sections": ["A", "C"], "key": "C_major", "progression_compatibility": ["jazz_a_1"], "tags": ["core_progression"]},
+          {"id": "jazz_chords_a_guitar", "file": "JazzClub_Chords_Guitar_1.wav", "weight": 1, "harmonic_sections": ["A", "C"], "key": "C_major", "progression_compatibility": ["jazz_a_1"], "tags": ["core_progression", "alternate_instrument"]},
+          {"id": "jazz_chords_b", "file": "JazzClub_Chords_Piano_2.wav", "weight": 1, "harmonic_sections": ["B"], "key": "A_minor", "progression_compatibility": ["jazz_b_1"], "tags": ["core_progression"]}
+        ]
+      },
+      "bass": {
+        "seed_salt": "jazz_bass",
+        "variants": [
+          {"id": "jazz_bass_a", "file": "JazzClub_Bass_UprightBass_1.wav", "weight": 1, "harmonic_sections": ["A", "C"], "key": "C_major", "progression_compatibility": ["jazz_a_1"], "tags": ["root_motion"]},
+          {"id": "jazz_bass_b", "file": "JazzClub_Bass_UprightBass_2.wav", "weight": 1, "harmonic_sections": ["B"], "key": "A_minor", "progression_compatibility": ["jazz_b_1"], "tags": ["root_motion"]},
+          {"id": "jazz_bass_incompatible", "file": "JazzClub_Bass_UprightBass_3.wav", "weight": 50, "harmonic_sections": ["A"], "key": "D_major", "progression_compatibility": ["never_with_jazz_a"], "tags": ["fixture_incompatible"]}
+        ]
+      },
+      "lead": {"variants": [{"id": "jazz_lead_a", "file": "JazzClub_Lead_Trumpet_1.wav", "weight": 1, "harmonic_sections": ["A"], "key": "C_major", "progression_compatibility": ["jazz_a_1"]}]},
+      "drums_high": {
+        "variants": [
+          {"id": "jazz_drums_a", "file": "JazzClub_DrumsHigh_BrushKit_1.wav", "weight": 1, "harmonic_sections": ["A"], "key": "C_major", "progression_compatibility": ["jazz_a_1"]}
+        ]
       }
     },
     "fills": {

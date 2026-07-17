@@ -76,7 +76,11 @@ $eightBarFrames = 705600
 $sixteenBarFrames = 1411200
 
 Write-Pcm24Fixture (Join-Path $fixture8 "JazzClub_Chords_Piano_1.wav") $eightBarFrames 130.81
+Write-Pcm24Fixture (Join-Path $fixture8 "JazzClub_Chords_Guitar_1.wav") $eightBarFrames 164.81
+Write-Pcm24Fixture (Join-Path $fixture8 "JazzClub_Chords_Piano_2.wav") $eightBarFrames 110.00
 Write-Pcm24Fixture (Join-Path $fixture8 "JazzClub_Bass_UprightBass_1.wav") $eightBarFrames 65.41
+Write-Pcm24Fixture (Join-Path $fixture8 "JazzClub_Bass_UprightBass_2.wav") $eightBarFrames 55.00
+Write-Pcm24Fixture (Join-Path $fixture8 "JazzClub_Bass_UprightBass_3.wav") $eightBarFrames 73.42
 Write-Pcm24Fixture (Join-Path $fixture8 "JazzClub_Lead_Trumpet_1.wav") $eightBarFrames 261.63
 Write-Pcm24Fixture (Join-Path $fixture8 "JazzClub_DrumsHigh_BrushKit_1.wav") $eightBarFrames 196.00
 Write-Pcm24Fixture (Join-Path $fixture8 "JazzClub_Fill_BrushKit_1.wav") 44100 174.61

@@ -32,6 +32,26 @@ pattern number. For example, `JazzClub_Lead_Trumpet_1.wav` means Jazz Club,
 lead role, Trumpet instrument, pattern 1. It does not declare a key or chord
 progression.
 
+## Harmony-safe Jazz bundles
+
+For each chord progression, deliver a named compatibility bundle. A bundle
+states the key, ordered 3- or 4-note chord voicings, one matching bass root per
+chord, and the exact chord and bass recordings allowed to play together. The
+game chooses the bundle first, then chooses instruments inside it. It will not
+randomly pair a bass line with a different chord progression.
+
+When possible, give the main A progression at least two chord-instrument
+recordings, such as piano and guitar. The game can retain one instrument for a
+declared number of phrases and deliberately change it at the scheduled
+contrast. A section label and progression are separate: the Jazz fixture's C
+contrast keeps the A progression/key/root motion but forces its alternate
+chord instrument. A true B progression gets its own chord and bass files.
+
+The current test form is `A A B A / A A C A`. It advances only when the music
+transport reports a completed phrase. Saving during the form preserves the
+current phrase, chosen instruments, and change schedule, so loading continues
+with the same next phrase and parts.
+
 ## What to deliver for a legacy venue
 
 - Internally consistent 16-bit, 44.1 kHz WAV sets remain supported.
@@ -58,6 +78,8 @@ progression.
 
 - Selects weighted instrument and pattern variants deterministically, so a
   room has an identity while still changing from run to run.
+- Selects a compatible chord/bass bundle before selecting instruments, retains
+  eligible instruments for their authored hold, and forces scheduled changes.
 - Uses intensity, harmonic section, heat, attention, alcohol, bankroll
   pressure, showdown state, and slot-feature state as selection tags.
 - Prevents mutually exclusive parts from being selected together.

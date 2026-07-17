@@ -567,8 +567,8 @@ func _check_music_stem_director_foundation(library: ContentLibrary, failures: Ar
 	if bool(duplicate_index.get("valid", true)) or JSON.stringify(duplicate_index.get("errors", [])).find("duplicates semantic ID") < 0:
 		failures.append("Jazz delivery index did not reject a duplicate semantic instrument/pattern ID.")
 	var scanned_jazz := library.music_delivery_index("jazz_club_delivery_fixture_8_bar")
-	if not bool(scanned_jazz.get("valid", false)) or (scanned_jazz.get("entries", []) as Array).size() != 6 or (scanned_jazz.get("proposed_manifest_entries", []) as Array).size() != 6:
-		failures.append("Jazz delivery import helper did not index and propose all six 8-bar fixture records without rewriting the manifest.")
+	if not bool(scanned_jazz.get("valid", false)) or (scanned_jazz.get("entries", []) as Array).size() != 10 or (scanned_jazz.get("proposed_manifest_entries", []) as Array).size() != 10:
+		failures.append("Jazz delivery import helper did not index and propose all nine 8-bar fixture records without rewriting the manifest.")
 	var wav_8 := ContentLibraryScript.inspect_music_wav("res://assets/audio/music/jazz_club_delivery_fixture_8_bar/JazzClub_Chords_Piano_1.wav")
 	var wav_16 := ContentLibraryScript.inspect_music_wav("res://assets/audio/music/jazz_club_delivery_fixture_16_bar/JazzClub_Chords_Piano_2.wav")
 	if not bool(wav_8.get("valid", false)) or int(wav_8.get("bits_per_sample", 0)) != 24 or int(wav_8.get("frames", 0)) != 705600:
@@ -601,6 +601,26 @@ func _check_music_stem_director_foundation(library: ContentLibrary, failures: Ar
 	var invalid_errors := invalid_library.validate()
 	if invalid_errors.is_empty():
 		failures.append("ContentLibrary music manifest validation did not reject a bad authored entry.")
+	var bad_policy_track := jazz_8_track.duplicate(true)
+	var bad_policy_recipes: Array = bad_policy_track.get("arrangement_recipes", []) as Array
+	(bad_policy_recipes[0] as Dictionary)["role_policies"] = {"pad": {"retain": true, "change_every": 0}}
+	bad_policy_track["arrangement_recipes"] = bad_policy_recipes
+	if JSON.stringify(_music_track_validation_errors(bad_policy_track)).find("change_every must be positive") < 0:
+		failures.append("Music validation did not reject a non-positive role-policy change_every.")
+	var bad_progression_track := jazz_8_track.duplicate(true)
+	var bad_sets: Array = bad_progression_track.get("compatibility_sets", []) as Array
+	((bad_sets[0] as Dictionary).get("roles", {}) as Dictionary)["bass"] = ["jazz_bass_incompatible"]
+	bad_progression_track["compatibility_sets"] = bad_sets
+	if JSON.stringify(_music_track_validation_errors(bad_progression_track)).find("does not declare that progression compatibility") < 0:
+		failures.append("Music validation did not reject a cross-progression bass reference.")
+	var incomplete_track := jazz_8_track.duplicate(true)
+	var incomplete_banks: Dictionary = incomplete_track.get("stem_banks", {}) as Dictionary
+	for variant_value in ((incomplete_banks.get("bass", {}) as Dictionary).get("variants", []) as Array):
+		if str((variant_value as Dictionary).get("id", "")) == "jazz_bass_b":
+			(variant_value as Dictionary)["enabled"] = false
+	incomplete_track["stem_banks"] = incomplete_banks
+	if JSON.stringify(_music_track_validation_errors(incomplete_track)).find("no enabled positive complete compatibility set") < 0:
+		failures.append("Music validation did not reject a recipe section without a complete positive set.")
 
 	var authored_environment := _music_environment_with_authored_track(library)
 	var procedural_environment := _music_environment_without_authored_track(library)
@@ -636,6 +656,22 @@ func _check_music_stem_director_foundation(library: ContentLibrary, failures: Ar
 	var authored_relative_key: Dictionary = player.music_stem_manifest_snapshot_for_environment(authored_environment, 20, {"harmonic_section": "B"})
 	if str(authored_relative_key.get("selection_key", "")) == str(authored_manifest.get("selection_key", "")) or str((authored_relative_key.get("selection_context", {}) as Dictionary).get("harmonic_section", "")) != "B":
 		failures.append("Authored harmonic bank did not preserve its relative-key section selection.")
+	var jazz_recipe := MusicArrangementSelectorScript.recipe_definition(jazz_8_track)
+	if _copy_array(jazz_recipe.get("sections", [])) != ["A", "A", "B", "A", "A", "A", "C", "A"]:
+		failures.append("Jazz harmony recipe did not encode AABA followed by AACA.")
+	var jazz_state := MusicArrangementSelectorScript.initial_recipe_state(jazz_8_track, 17, "fixture_visit")
+	var jazz_sections: Array = [str(jazz_state.get("harmonic_section", "A"))]
+	var jazz_c_state: Dictionary = {}
+	for phrase_index in range(7):
+		jazz_state = MusicArrangementSelectorScript.advance_recipe_state(jazz_8_track, jazz_state, {"phrase_event_index": phrase_index, "event_token": "fixture:%d" % phrase_index})
+		jazz_sections.append(str(jazz_state.get("harmonic_section", "")))
+		if phrase_index == 5:
+			jazz_c_state = jazz_state.duplicate(true)
+	if jazz_sections != ["A", "A", "B", "A", "A", "A", "C", "A"]:
+		failures.append("Jazz phrase events did not advance the exact AABA/AACA sequence: %s." % [jazz_sections])
+	var jazz_selection := MusicArrangementSelectorScript.select(jazz_8_track, {"environment_id": "jazz_fixture"}, {"run_seed": 17, "music_visit_id": "fixture_visit", "music_arrangement_state": jazz_c_state})
+	if not bool(jazz_selection.get("valid", false)) or str(jazz_selection.get("compatibility_set_id", "")) != "jazz_c_instrument_contrast" or str(jazz_selection.get("progression_id", "")) != "jazz_a_1":
+		failures.append("Jazz C contrast did not preserve A progression authority through its distinct arrangement set: %s." % [jazz_selection])
 	var stinger_modes: Dictionary = authored_manifest.get("stinger_loop_modes", {}) as Dictionary
 	var fill_modes: Dictionary = authored_manifest.get("fill_loop_modes", {}) as Dictionary
 	if int(stinger_modes.get("win_fixture", -1)) != AudioStreamWAV.LOOP_DISABLED or int(fill_modes.get("drum_fill_fixture", -1)) != AudioStreamWAV.LOOP_DISABLED:
@@ -4750,3 +4786,7 @@ func _check_contracts(library: ContentLibrary, failures: Array) -> void:
 		failures.append("Event module did not apply flag consequences.")
 
 	var item_effect := ItemEffect.new()
+func _music_track_validation_errors(track: Dictionary) -> Array:
+	var fixture: ContentLibrary = ContentLibraryScript.new()
+	fixture.music_tracks = [track]
+	return fixture.validate()
