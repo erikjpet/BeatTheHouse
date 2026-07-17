@@ -12,7 +12,7 @@ const WorldMapScript := preload("res://scripts/core/world_map.gd")
 const DEFAULT_SEED_COUNT := 10
 const DEFAULT_SEED_PREFIX := "FOUNDATION-DETERMINISM"
 const DEFAULT_OUTPUT_JSON := "res://.tmp/foundation_determinism_probe/report.json"
-const GAME_IDS := ["slot", "pull_tabs", "blackjack", "baccarat", "roulette", "video_poker", "bar_dice"]
+const GAME_IDS := ["slot", "pull_tabs", "scratch_tickets", "blackjack", "baccarat", "roulette", "video_poker", "bar_dice"]
 const HASH_MOD := 4294967296
 
 var library: ContentLibrary
@@ -327,6 +327,7 @@ func _install_all_game_environment(run_state: RunState, seed_index: int) -> void
 func _apply_all_game_resolves(run_state: RunState, checkpoints: Array, seed: String) -> void:
 	_resolve_game(run_state, checkpoints, seed, "slot", "spin", 0, _timed_ui(run_state, "slot_spin"))
 	_resolve_game(run_state, checkpoints, seed, "pull_tabs", "buy_tab", 0, _timed_ui(run_state, "pull_tabs_buy", {"pull_tab_deal_index": 0}))
+	_resolve_game(run_state, checkpoints, seed, "scratch_tickets", "buy_scratch_ticket", 2, _timed_ui(run_state, "scratch_ticket_buy", {"scratch_stock_index": 0}))
 	_resolve_game(run_state, checkpoints, seed, "blackjack", "play_basic", 20, _timed_ui(run_state, "blackjack_play", {"selected_stake": 20}))
 	_resolve_game(run_state, checkpoints, seed, "baccarat", "deal_baccarat", 20, _timed_ui(run_state, "baccarat_deal", {"baccarat_bets": {"player": 20}}))
 	_resolve_game(run_state, checkpoints, seed, "roulette", "spin_roulette", 20, _timed_ui(run_state, "roulette_spin", {"roulette_bets": [_roulette_bet(20)]}))

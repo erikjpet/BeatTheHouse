@@ -524,6 +524,7 @@ func start_foundation_run(seed_text: String = DEFAULT_SEED, challenge_config: Di
 	var resolved_challenge_config := _challenge_with_meta_home_for_run(resolved_seed, challenge_config)
 	run_state = RunState.new()
 	run_state.start_new(resolved_seed, resolved_challenge_config)
+	_sync_scratch_ticket_discovery_to_run()
 	_sync_presented_bankroll_to_actual()
 	_apply_meta_collection_loadout_to_run()
 	run_state.begin_act(1)
@@ -758,6 +759,17 @@ func _on_game_surface_action_blocked(_action: String, reason: String) -> void:
 		message = "That action is not available right now."
 	_show_message(message)
 	_refresh()
+
+
+func _on_game_surface_pointer_action(action: String, index: int, phase: String, board_position: Vector2) -> void:
+	if current_game == null or _guard_player_input_route():
+		return
+	var ui_state := _current_game_surface_ui_state()
+	ui_state["selected_action_id"] = selected_action_id
+	ui_state["selected_action_kind"] = selected_action_kind
+	ui_state["selected_stake"] = _current_selected_stake()
+	var command := current_game.surface_pointer_command(action, index, phase, board_position, ui_state, run_state, run_state.current_environment)
+	_apply_game_surface_command(command, index, false)
 
 
 func _handle_module_surface_action(action: String, index: int, confirm_requested: bool) -> bool:
@@ -3741,6 +3753,21 @@ func _initialize_profile_inventory() -> void:
 	profile_inventory.load()
 
 
+func _sync_scratch_ticket_discovery_to_run() -> void:
+	if run_state == null or profile_inventory == null:
+		return
+	run_state.narrative_flags["scratch_ticket_types_discovered"] = profile_inventory.scratch_ticket_types_discovered.duplicate()
+
+
+func _record_scratch_ticket_discovery(type_id: String) -> void:
+	var normalized := type_id.strip_edges()
+	if normalized.is_empty() or profile_inventory == null:
+		return
+	if profile_inventory.discover_scratch_ticket_type(normalized):
+		profile_inventory.save()
+	_sync_scratch_ticket_discovery_to_run()
+
+
 func _initialize_meta_collection() -> void:
 	meta_collection_service = MetaCollectionServiceScript.new()
 	meta_collection_service.load()
@@ -6150,6 +6177,8 @@ func _resolve_game_action(action_id: String, skip_stake_validation: bool = false
 	var bankroll_before_result := run_state.bankroll
 	var rng := run_state.create_rng()
 	var result := current_game.resolve_with_context(action_id, stake, run_state, run_state.current_environment, rng, _current_game_surface_ui_state())
+	if bool(result.get("ok", false)):
+		_record_scratch_ticket_discovery(str(result.get("scratch_discovered_type_id", "")))
 	if confirmed_all_in_wager:
 		result["defer_bankroll_zero_failure"] = true
 	var result_updates_surface_ui := result.has("ui_state") and typeof(result.get("ui_state")) == TYPE_DICTIONARY

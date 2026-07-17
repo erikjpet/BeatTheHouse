@@ -2991,7 +2991,7 @@ func _preferred_canvas_game_object(canvas: Control) -> Dictionary:
 		game_objects.append(object_data.duplicate(true))
 	if game_objects.is_empty():
 		return {}
-	for preferred_id in ["blackjack", "video_poker", "roulette", "baccarat", "slot", "pull_tabs", "bar_dice"]:
+	for preferred_id in ["blackjack", "video_poker", "roulette", "baccarat", "slot", "scratch_tickets", "pull_tabs", "bar_dice"]:
 		for item in game_objects:
 			var game_object: Dictionary = item
 			var source_id := str(game_object.get("source_id", "")).strip_edges()
@@ -3110,6 +3110,8 @@ func _visual_qa_game_preference_score(game_id: String) -> int:
 			return 60
 		"pull_tabs":
 			return 30
+		"scratch_tickets":
+			return 35
 		"bar_dice":
 			return 10
 		_:

@@ -70,6 +70,7 @@ const FOUNDATION_SUITES := [
 	"video_poker",
 	"bar_dice",
 	"pull_tabs",
+	"scratch_tickets",
 	"audit",
 	"all",
 ]
@@ -210,6 +211,9 @@ class SurfaceHarness:
 
 	func surface_add_exact_invisible_hit(rect: Rect2, action: String, index: int = -1) -> void:
 		surface_add_invisible_hit(rect, action, index)
+
+	func surface_add_drag_hit(rect: Rect2, action: String, index: int = -1) -> void:
+		hit_regions.append({"rect": rect, "action": action, "index": index, "drag": true, "exact": true})
 
 	func draw_rect(_rect: Rect2, _color: Color, _filled: bool = true, _width: float = -1.0, _antialiased: bool = false) -> void:
 		pass
@@ -389,7 +393,7 @@ func _foundation_run_suite(suite: String, content_library: ContentLibrary, fixtu
 		"all":
 			_foundation_run_all_suite(content_library, fixture_library, failures, report)
 		_:
-			if ["blackjack", "roulette", "baccarat", "video_poker", "bar_dice", "pull_tabs"].has(suite):
+			if ["blackjack", "roulette", "baccarat", "video_poker", "bar_dice", "pull_tabs", "scratch_tickets"].has(suite):
 				_foundation_run_check(report, failures, "content", Callable(self, "_check_content"), [content_library])
 				_foundation_run_check(report, failures, "%s_game_suite" % suite, Callable(self, "_check_target_game_suite"), [content_library, suite])
 			else:
@@ -2042,6 +2046,10 @@ func _t4_4_consumed_item_effect_keys() -> Dictionary:
 		"roulette_past_post_good_msec",
 		"roulette_past_post_perfect_msec",
 		"roulette_past_post_window_msec",
+		"scratch_fortune_hint",
+		"scratch_peek_cells",
+		"scratch_peek_heat",
+		"scratch_penalty_shields",
 		"skill_cheat_drunk_memory_offset",
 		"skill_cheat_drunk_window_offset_msec",
 		"slot_cold_quarter_heat_reduction",
@@ -2097,7 +2105,7 @@ func _check_content_group_modularity(library: ContentLibrary, failures: Array) -
 	var default_groups := library.default_content_group_ids()
 	if default_groups.is_empty():
 		failures.append("Content groups should expose default-enabled run packs.")
-	for required_group in ["universal_passive_items", "universal_active_items", "pull_tabs_pack", "slot_pack", "bar_dice_pack", "blackjack_pack", "baccarat_pack", "roulette_pack", "video_poker_pack"]:
+	for required_group in ["universal_passive_items", "universal_active_items", "pull_tabs_pack", "scratch_tickets_pack", "slot_pack", "bar_dice_pack", "blackjack_pack", "baccarat_pack", "roulette_pack", "video_poker_pack"]:
 		if library.content_group(required_group).is_empty():
 			failures.append("Content group is missing: %s." % required_group)
 	if not library.game_enabled_for_challenge("pull_tabs", {}):
@@ -2122,7 +2130,9 @@ func _check_content_group_modularity(library: ContentLibrary, failures: Array) -
 	var no_pull_tabs_challenge := RunState.custom_challenge("no_pull_tabs", "CONTENT-GROUPS", {"content_groups": no_pull_tabs_groups})
 	if library.game_enabled_for_challenge("pull_tabs", no_pull_tabs_challenge):
 		failures.append("Disabled pull-tabs content group still enabled the pull-tabs game.")
-	if library.item_enabled_for_challenge("xray_glasses", no_pull_tabs_challenge):
+	if not library.item_enabled_for_challenge("xray_glasses", no_pull_tabs_challenge):
+		failures.append("Shared X-Ray Glasses disappeared while the scratch-tickets group remained enabled.")
+	if library.item_enabled_for_challenge("tab_detector", no_pull_tabs_challenge):
 		failures.append("Disabled pull-tabs content group still enabled pull-tab-only items.")
 	if not library.game_enabled_for_challenge("slot", no_pull_tabs_challenge):
 		failures.append("Disabling pull tabs should not disable unrelated slot games.")
@@ -2148,7 +2158,7 @@ func _check_content_group_modularity(library: ContentLibrary, failures: Array) -
 		var environment := EnvironmentInstance.from_archetype(pull_tab_archetype, 1, run_state.create_rng("no_pull_tabs"), library, run_state.challenge_config)
 		if _string_array(environment.game_ids).has("pull_tabs"):
 			failures.append("Generated environment still spawned pull tabs after its content group was disabled.")
-	var shop_archetype := _first_archetype_with_item(library, "xray_glasses")
+	var shop_archetype := _first_archetype_with_item(library, "tab_detector")
 	if shop_archetype.is_empty():
 		failures.append("No archetype exposes xray_glasses for content-group filtering.")
 	else:
@@ -2156,7 +2166,7 @@ func _check_content_group_modularity(library: ContentLibrary, failures: Array) -
 		run_state_items.start_new("NO-PULL-TAB-ITEMS", no_pull_tabs_challenge)
 		var item_environment := EnvironmentInstance.from_archetype(shop_archetype, 0, run_state_items.create_rng("no_pull_tab_items"), library, run_state_items.challenge_config)
 		for offer_value in item_environment.item_offers:
-			if typeof(offer_value) == TYPE_DICTIONARY and str((offer_value as Dictionary).get("id", "")) == "xray_glasses":
+			if typeof(offer_value) == TYPE_DICTIONARY and str((offer_value as Dictionary).get("id", "")) == "tab_detector":
 				failures.append("Generated shop still offered a pull-tab-only item after its group was disabled.")
 	var saved := RunStateScript.new()
 	saved.start_new("CONTENT-GROUP-SAVE", only_pull_tabs_challenge)
@@ -2550,6 +2560,9 @@ func _check_game_surface_contracts(library: ContentLibrary, failures: Array) -> 
 	var pull_tabs: GameModule = _load_surface_contract_game(library, "pull_tabs", failures)
 	if pull_tabs != null:
 		_check_pull_tabs_surface_contract(pull_tabs, failures)
+	var scratch_tickets: GameModule = _load_surface_contract_game(library, "scratch_tickets", failures)
+	if scratch_tickets != null:
+		_check_scratch_tickets_surface_contract(scratch_tickets, failures)
 	var bar_dice: GameModule = _load_surface_contract_game(library, "bar_dice", failures)
 	if bar_dice != null:
 		_check_bar_dice_surface_contract(bar_dice, failures)
@@ -2847,6 +2860,10 @@ func _check_target_game_suite(library: ContentLibrary, game_id: String, failures
 			var pull_tabs: GameModule = _load_surface_contract_game(library, "pull_tabs", failures)
 			if pull_tabs != null:
 				_check_pull_tabs_surface_contract(pull_tabs, failures)
+		"scratch_tickets":
+			var scratch_tickets: GameModule = _load_surface_contract_game(library, "scratch_tickets", failures)
+			if scratch_tickets != null:
+				_check_scratch_tickets_surface_contract(scratch_tickets, failures)
 		_:
 			failures.append("Unknown target game suite: %s." % game_id)
 

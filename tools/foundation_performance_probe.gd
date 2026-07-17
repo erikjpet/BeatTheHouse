@@ -30,9 +30,11 @@ const MAX_IDLE_SURFACE_DRAW_P95_MS := 1.5
 const IDLE_SURFACE_DRAW_WAIVERS := {}
 const ANIMATED_IDLE_SURFACE_DRAW_BUDGETS := {
 	"roulette": 7.0,
+	"scratch_tickets": 5.0,
 }
 const GAME_IDLE_LIVENESS := {
 	"pull_tabs": {"counter": "surface_animation_redraw_count", "minimum_per_120_frames": 8},
+	"scratch_tickets": {"counter": "surface_animation_redraw_count", "minimum_per_120_frames": 8},
 	"slot": {"counter": "surface_animation_redraw_count", "minimum_per_120_frames": 0, "zero_reason": "The idle slot cabinet is static until autoplay or a spin animation starts."},
 	"bar_dice": {"counter": "surface_animation_redraw_count", "minimum_per_120_frames": 8},
 	"blackjack": {"counter": "surface_animation_redraw_count", "minimum_per_120_frames": 8},
@@ -56,6 +58,7 @@ const GRAND_CASINO_LIVING_FLOOR_FRAME_P95_BUDGET_MS := 16.0
 const NEW_SURFACE_SAMPLE_FRAMES := 120
 const REQUIRED_GAME_IDS := [
 	"pull_tabs",
+	"scratch_tickets",
 	"slot",
 	"bar_dice",
 	"blackjack",
@@ -65,6 +68,7 @@ const REQUIRED_GAME_IDS := [
 ]
 const RESOLVE_PROBE_CONFIGS := {
 	"pull_tabs": {"action_id": "buy_tab", "stake": 1},
+	"scratch_tickets": {"action_id": "buy_scratch_ticket", "stake": 2},
 	"slot": {"action_id": "spin", "stake": 10},
 	"bar_dice": {"action_id": "roll", "stake": 10},
 	"blackjack": {"action_id": "play_basic", "stake": 10},
@@ -74,6 +78,7 @@ const RESOLVE_PROBE_CONFIGS := {
 }
 const RESOLVE_BUDGETS := {
 	"pull_tabs": {"avg_ms": 1.5, "p95_ms": 2.5, "max_ms": 4.0},
+	"scratch_tickets": {"avg_ms": 1.5, "p95_ms": 2.5, "max_ms": 4.0},
 	"slot": {"avg_ms": 6.0, "p95_ms": 8.0, "max_ms": 10.0},
 	"bar_dice": {"avg_ms": 1.5, "p95_ms": 3.0, "max_ms": 4.0},
 	"blackjack": {"avg_ms": 4.5, "p95_ms": 5.5, "max_ms": 7.0},
@@ -1061,6 +1066,8 @@ func _resolve_probe_ui_state(game_id: String, sample_index: int) -> Dictionary:
 	match game_id:
 		"pull_tabs":
 			return {"pull_tab_deal_index": sample_index % 4}
+		"scratch_tickets":
+			return {"scratch_stock_index": sample_index % 4}
 		"video_poker":
 			return {"bet_level": 1}
 		_:

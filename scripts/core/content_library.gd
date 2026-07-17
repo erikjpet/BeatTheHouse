@@ -5,6 +5,7 @@ extends RefCounted
 
 const ENVIRONMENT_ARCHETYPES_PATH := "res://data/environments/archetypes.json"
 const GAMES_PATH := "res://data/games/games.json"
+const SCRATCH_TICKETS_PATH := "res://data/games/scratch_tickets.json"
 const ITEMS_PATH := "res://data/items/items.json"
 const CONTENT_GROUPS_PATH := "res://data/content_groups/groups.json"
 const EVENTS_PATH := "res://data/events/events.json"
@@ -22,6 +23,7 @@ const AUTHORED_MUSIC_BEATS_PER_BAR := 4
 
 var environment_archetypes: Array = []
 var games: Array = []
+var scratch_ticket_types: Array = []
 var items: Array = []
 var content_groups: Array = []
 var events: Array = []
@@ -44,6 +46,7 @@ static func required_pack_paths() -> Dictionary:
 	return {
 		"environment_archetypes": ENVIRONMENT_ARCHETYPES_PATH,
 		"games": GAMES_PATH,
+		"scratch_ticket_types": SCRATCH_TICKETS_PATH,
 		"items": ITEMS_PATH,
 		"content_groups": CONTENT_GROUPS_PATH,
 		"events": EVENTS_PATH,
@@ -69,6 +72,7 @@ func load() -> Dictionary:
 	_load_pack_timings = []
 	environment_archetypes = _load_array(ENVIRONMENT_ARCHETYPES_PATH, true)
 	games = _load_array(GAMES_PATH, true)
+	scratch_ticket_types = _load_array(SCRATCH_TICKETS_PATH, true)
 	items = _load_array(ITEMS_PATH, true)
 	content_groups = _load_array(CONTENT_GROUPS_PATH, true)
 	events = _normalize_event_definitions(_load_array(EVENTS_PATH, true))
@@ -93,6 +97,7 @@ func load() -> Dictionary:
 	return {
 		"environment_archetypes": environment_archetypes,
 		"games": games,
+		"scratch_ticket_types": scratch_ticket_types,
 		"items": items,
 		"content_groups": content_groups,
 		"events": events,
@@ -139,6 +144,18 @@ func validate() -> Array:
 		"module_path",
 		"legal_actions",
 		"cheat_actions",
+	])
+	_validate_collection("scratch_ticket_types", scratch_ticket_types, [
+		"id",
+		"display_name",
+		"price",
+		"face",
+		"grid",
+		"symbol_pool",
+		"prize_table",
+		"gimmick",
+		"stock_weight",
+		"rtp_band",
 	])
 	_validate_collection("items", items, [
 		"id",
@@ -210,6 +227,7 @@ func validate() -> Array:
 		"stems",
 	])
 	_validate_game_definitions()
+	_validate_scratch_ticket_definitions()
 	_validate_item_definitions()
 	_validate_content_group_definitions()
 	_validate_challenge_definitions()
@@ -647,6 +665,32 @@ func _validate_game_definitions() -> void:
 			validation_errors.append("games %s references missing module_path: %s" % [game_id, module_path])
 		_validate_actions("games %s legal_actions" % game_id, game_def.get("legal_actions", []))
 		_validate_actions("games %s cheat_actions" % game_id, game_def.get("cheat_actions", []))
+
+
+func _validate_scratch_ticket_definitions() -> void:
+	for value in scratch_ticket_types:
+		if typeof(value) != TYPE_DICTIONARY:
+			continue
+		var ticket: Dictionary = value
+		var ticket_id := str(ticket.get("id", "")).strip_edges()
+		if int(ticket.get("price", 0)) <= 0:
+			validation_errors.append("scratch_ticket_types %s price must be positive." % ticket_id)
+		var grid: Dictionary = ticket.get("grid", {}) if typeof(ticket.get("grid", {})) == TYPE_DICTIONARY else {}
+		if int(grid.get("columns", 0)) <= 0 or int(grid.get("rows", 0)) <= 0:
+			validation_errors.append("scratch_ticket_types %s grid must have positive columns and rows." % ticket_id)
+		var prizes: Array = ticket.get("prize_table", []) if typeof(ticket.get("prize_table", [])) == TYPE_ARRAY else []
+		var total_weight := 0
+		for prize_value in prizes:
+			if typeof(prize_value) == TYPE_DICTIONARY:
+				total_weight += maxi(0, int((prize_value as Dictionary).get("weight", 0)))
+		if prizes.is_empty() or total_weight <= 0:
+			validation_errors.append("scratch_ticket_types %s prize_table must have positive weighted entries." % ticket_id)
+		var band: Array = ticket.get("rtp_band", []) if typeof(ticket.get("rtp_band", [])) == TYPE_ARRAY else []
+		if band.size() != 2 or float(band[0]) < 0.0 or float(band[1]) < float(band[0]):
+			validation_errors.append("scratch_ticket_types %s rtp_band must be [minimum, maximum]." % ticket_id)
+		var scratch: Dictionary = ticket.get("scratch", {}) if typeof(ticket.get("scratch", {})) == TYPE_DICTIONARY else {}
+		if float(scratch.get("brush_radius", 0.0)) <= 0.0 or float(scratch.get("snap_threshold", 0.0)) <= 0.0:
+			validation_errors.append("scratch_ticket_types %s must define forgiving scratch tuning." % ticket_id)
 
 
 # Validates an action list without interpreting game-specific rules.

@@ -282,6 +282,16 @@ def draw_lucky_keychain():
     return image
 
 
+def draw_lucky_penny():
+    image, d = new_icon()
+    ellipse(d, (7, 7, 25, 25), AMBER, BROWN)
+    ellipse(d, (10, 10, 22, 22), ORANGE, AMBER)
+    d.text((13, 10), "1", fill=YELLOW)
+    d.rectangle((14, 18, 18, 20), fill=BROWN)
+    glint(d, 23, 8, CYAN)
+    return image
+
+
 def draw_marked_cards():
     image, d = new_icon()
     card(d, 8, 9, 10, 15)
@@ -1352,6 +1362,7 @@ ITEM_ICONS = {
     "lucky_charm": draw_lucky_charm,
     "lucky_cigarette": draw_lucky_cigarette,
     "lucky_keychain": draw_lucky_keychain,
+    "lucky_penny": draw_lucky_penny,
     "lucky_ladies_compact": draw_lucky_ladies_compact,
     "lucky_reel_grease": draw_lucky_reel_grease,
     "marked_cards": draw_marked_cards,

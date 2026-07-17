@@ -176,6 +176,7 @@
       "xray_glasses",
       "tab_detector",
       "tarot_card",
+      "lucky_penny",
       "lucky_keychain",
       "lucky_bar_napkin",
       "payment_calendar",
@@ -1111,7 +1112,8 @@
     "game_pool": [
       "slot",
       "video_poker",
-      "pull_tabs"
+      "pull_tabs",
+      "scratch_tickets"
     ],
     "required_game_ids": [
       "pull_tabs"
@@ -2459,6 +2461,7 @@
       "creased_luck_card",
       "cheap_sunglasses",
       "tarot_card",
+      "lucky_penny",
       "lucky_keychain",
       "scratch_pad",
       "side_bet_chart",

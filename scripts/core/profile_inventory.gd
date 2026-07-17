@@ -5,7 +5,7 @@ extends RefCounted
 
 const INVENTORY_PATH := "user://profile_inventory.json"
 const INVENTORY_PATH_ENV := "BTH_PROFILE_INVENTORY_PATH"
-const SCHEMA_VERSION := 3
+const SCHEMA_VERSION := 4
 const RUN_HISTORY_LIMIT := 20
 const REFERENCE_CHIP_ID := "profile_poker_chip"
 const REFERENCE_CHIP := {
@@ -22,6 +22,7 @@ var run_history: Array = []
 var daily_runs: Dictionary = {}
 var lifetime_stats: Dictionary = {}
 var act_seam: Dictionary = {}
+var scratch_ticket_types_discovered: Array = []
 var _unknown_fields: Dictionary = {}
 
 
@@ -66,13 +67,14 @@ func to_dict() -> Dictionary:
 		"daily_runs": daily_runs.duplicate(true),
 		"lifetime_stats": lifetime_stats.duplicate(true),
 		"act_seam": act_seam.duplicate(true),
+		"scratch_ticket_types_discovered": scratch_ticket_types_discovered.duplicate(),
 	}, true)
 	return data
 
 
 func from_dict(data: Dictionary) -> void:
 	_unknown_fields = data.duplicate(true)
-	for key in ["schema_version", "act", "items", "challenge_completions", "completed_challenge_flags", "run_history", "daily_runs", "lifetime_stats", "act_seam"]:
+	for key in ["schema_version", "act", "items", "challenge_completions", "completed_challenge_flags", "run_history", "daily_runs", "lifetime_stats", "act_seam", "scratch_ticket_types_discovered"]:
 		_unknown_fields.erase(key)
 	items = []
 	challenge_completions = _normalize_challenge_completions(data.get("challenge_completions", data.get("completed_challenge_flags", {})))
@@ -80,6 +82,7 @@ func from_dict(data: Dictionary) -> void:
 	daily_runs = _normalize_daily_runs(data.get("daily_runs", {}))
 	lifetime_stats = _normalize_lifetime_stats(data.get("lifetime_stats", {}))
 	act_seam = _normalize_act_seam(data.get("act_seam", {}))
+	scratch_ticket_types_discovered = _normalize_string_set(data.get("scratch_ticket_types_discovered", []))
 	var loaded: Variant = data.get("items", [])
 	if typeof(loaded) != TYPE_ARRAY:
 		return
@@ -138,6 +141,23 @@ func item_quantity(item_id: String) -> int:
 		if typeof(entry) == TYPE_DICTIONARY and str((entry as Dictionary).get("id", "")) == item_id:
 			return int((entry as Dictionary).get("quantity", 0))
 	return 0
+
+
+func discover_scratch_ticket_type(type_id: String) -> bool:
+	var normalized := type_id.strip_edges()
+	if normalized.is_empty() or scratch_ticket_types_discovered.has(normalized):
+		return false
+	scratch_ticket_types_discovered.append(normalized)
+	scratch_ticket_types_discovered.sort()
+	return true
+
+
+func has_discovered_scratch_ticket_type(type_id: String) -> bool:
+	return scratch_ticket_types_discovered.has(type_id.strip_edges())
+
+
+func scratch_ticket_discovery_count() -> int:
+	return scratch_ticket_types_discovered.size()
 
 
 func mark_challenge_completed(completion_flag: String, challenge_id: String = "", title: String = "") -> void:
@@ -364,6 +384,18 @@ static func _normalize_int_dictionary(value: Variant) -> Dictionary:
 		if key.is_empty():
 			continue
 		result[key] = maxi(0, int(source.get(key_value, 0)))
+	return result
+
+
+static func _normalize_string_set(value: Variant) -> Array:
+	var result: Array = []
+	if typeof(value) != TYPE_ARRAY:
+		return result
+	for entry_value in value as Array:
+		var entry := str(entry_value).strip_edges()
+		if not entry.is_empty() and not result.has(entry):
+			result.append(entry)
+	result.sort()
 	return result
 
 

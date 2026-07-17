@@ -98,6 +98,7 @@
     "xray_glasses": {"path": "res://assets/art/items/xray_glasses.png"},
     "tab_detector": {"path": "res://assets/art/items/tab_detector.png"},
     "tarot_card": {"path": "res://assets/art/items/tarot_card.png"},
+	"lucky_penny": {"path": "res://assets/art/items/lucky_penny.png"},
     "slot": {"path": "res://assets/art/games/slot.png"},
     "blackjack": {"path": "res://assets/art/games/blackjack.png"},
     "baccarat": {"path": "res://assets/art/games/baccarat.png"},
