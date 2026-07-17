@@ -57,6 +57,6 @@
 		"scratch": {"brush_radius": 38.0, "snap_threshold": 0.58, "mask_columns": 6, "mask_rows": 4, "crumb_count": 7},
 		"stock_weight": 45,
 		"stock_count": [2, 4],
-		"rtp_band": [0.74, 0.80]
+		"rtp_band": [0.68, 0.84]
 	}
 ]

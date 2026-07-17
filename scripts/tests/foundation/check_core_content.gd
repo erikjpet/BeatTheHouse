@@ -70,6 +70,7 @@ const FOUNDATION_SUITES := [
 	"video_poker",
 	"bar_dice",
 	"pull_tabs",
+	"scratch_tickets",
 	"audit",
 	"all",
 ]
@@ -210,6 +211,9 @@ class SurfaceHarness:
 
 	func surface_add_exact_invisible_hit(rect: Rect2, action: String, index: int = -1) -> void:
 		surface_add_invisible_hit(rect, action, index)
+
+	func surface_add_drag_hit(rect: Rect2, action: String, index: int = -1) -> void:
+		hit_regions.append({"rect": rect, "action": action, "index": index, "drag": true, "exact": true})
 
 	func draw_rect(_rect: Rect2, _color: Color, _filled: bool = true, _width: float = -1.0, _antialiased: bool = false) -> void:
 		pass
@@ -389,7 +393,7 @@ func _foundation_run_suite(suite: String, content_library: ContentLibrary, fixtu
 		"all":
 			_foundation_run_all_suite(content_library, fixture_library, failures, report)
 		_:
-			if ["blackjack", "roulette", "baccarat", "video_poker", "bar_dice", "pull_tabs"].has(suite):
+			if ["blackjack", "roulette", "baccarat", "video_poker", "bar_dice", "pull_tabs", "scratch_tickets"].has(suite):
 				_foundation_run_check(report, failures, "content", Callable(self, "_check_content"), [content_library])
 				_foundation_run_check(report, failures, "%s_game_suite" % suite, Callable(self, "_check_target_game_suite"), [content_library, suite])
 			else:
@@ -2097,7 +2101,7 @@ func _check_content_group_modularity(library: ContentLibrary, failures: Array) -
 	var default_groups := library.default_content_group_ids()
 	if default_groups.is_empty():
 		failures.append("Content groups should expose default-enabled run packs.")
-	for required_group in ["universal_passive_items", "universal_active_items", "pull_tabs_pack", "slot_pack", "bar_dice_pack", "blackjack_pack", "baccarat_pack", "roulette_pack", "video_poker_pack"]:
+	for required_group in ["universal_passive_items", "universal_active_items", "pull_tabs_pack", "scratch_tickets_pack", "slot_pack", "bar_dice_pack", "blackjack_pack", "baccarat_pack", "roulette_pack", "video_poker_pack"]:
 		if library.content_group(required_group).is_empty():
 			failures.append("Content group is missing: %s." % required_group)
 	if not library.game_enabled_for_challenge("pull_tabs", {}):
@@ -2550,6 +2554,9 @@ func _check_game_surface_contracts(library: ContentLibrary, failures: Array) -> 
 	var pull_tabs: GameModule = _load_surface_contract_game(library, "pull_tabs", failures)
 	if pull_tabs != null:
 		_check_pull_tabs_surface_contract(pull_tabs, failures)
+	var scratch_tickets: GameModule = _load_surface_contract_game(library, "scratch_tickets", failures)
+	if scratch_tickets != null:
+		_check_scratch_tickets_surface_contract(scratch_tickets, failures)
 	var bar_dice: GameModule = _load_surface_contract_game(library, "bar_dice", failures)
 	if bar_dice != null:
 		_check_bar_dice_surface_contract(bar_dice, failures)
@@ -2847,6 +2854,10 @@ func _check_target_game_suite(library: ContentLibrary, game_id: String, failures
 			var pull_tabs: GameModule = _load_surface_contract_game(library, "pull_tabs", failures)
 			if pull_tabs != null:
 				_check_pull_tabs_surface_contract(pull_tabs, failures)
+		"scratch_tickets":
+			var scratch_tickets: GameModule = _load_surface_contract_game(library, "scratch_tickets", failures)
+			if scratch_tickets != null:
+				_check_scratch_tickets_surface_contract(scratch_tickets, failures)
 		_:
 			failures.append("Unknown target game suite: %s." % game_id)
 

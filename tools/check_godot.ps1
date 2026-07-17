@@ -33,6 +33,7 @@ $validFoundationSuites = @(
     "video_poker",
     "bar_dice",
     "pull_tabs",
+    "scratch_tickets",
     "audit",
     "all",
     "full"
@@ -231,7 +232,8 @@ function Get-FoundationSplitRunnerPath {
         "scripts/tests/foundation/check_slots_surfaces.gd",
         "scripts/tests/foundation/check_table_games.gd",
         "scripts/tests/foundation/check_items_events_world.gd",
-        "scripts/tests/foundation/check_lenders_release_saves.gd"
+        "scripts/tests/foundation/check_lenders_release_saves.gd",
+        "scripts/tests/foundation/check_scratch_tickets.gd"
     )
 }
 
@@ -334,6 +336,7 @@ $FoundationSuiteStageBaselinesSec = @{
     "foundation_video_poker" = 65.390
     "foundation_bar_dice" = 38.103
     "foundation_pull_tabs" = 9.140
+    "foundation_scratch_tickets" = 12.000
 }
 
 function Get-FoundationSuiteStageBaselineSec {
