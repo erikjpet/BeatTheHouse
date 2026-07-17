@@ -388,6 +388,8 @@ func filter_item_ids_for_challenge(ids: Variant, challenge_config: Dictionary = 
 # modular item packs are reachable without hand-editing every shop archetype.
 func shop_item_pool_for_challenge(archetype_item_pool: Variant, challenge_config: Dictionary = {}) -> Array:
 	var result := filter_item_ids_for_challenge(archetype_item_pool, challenge_config)
+	if bool(_as_dict(challenge_config.get("modifiers", {})).get("tutorial_shop_item_pool_strict", false)):
+		return result
 	var seen := _string_set(result)
 	var enabled := enabled_content_group_ids(challenge_config)
 	for item_value in items:
@@ -434,7 +436,7 @@ func challenge_options(selected_challenge_id: String = "") -> Array:
 			continue
 		var challenge_def: Dictionary = challenge_value
 		var challenge_id := str(challenge_def.get("id", "")).strip_edges()
-		if challenge_id.is_empty():
+		if challenge_id.is_empty() or not bool(challenge_def.get("menu_visible", true)):
 			continue
 		result.append({
 			"id": challenge_id,
@@ -452,11 +454,28 @@ func challenge_config_for(challenge_id: String, seed_text: String) -> Dictionary
 	var challenge_def := challenge(challenge_id)
 	if challenge_def.is_empty():
 		return RunState.standard_challenge(seed_text)
-	var config := RunState.custom_challenge(challenge_id, seed_text, _as_dict(challenge_def.get("modifiers", {})))
+	var fixed_seed := str(challenge_def.get("fixed_seed", "")).strip_edges()
+	var resolved_seed := fixed_seed if not fixed_seed.is_empty() else seed_text
+	var config := RunState.custom_challenge(challenge_id, resolved_seed, _as_dict(challenge_def.get("modifiers", {})))
 	config["title"] = str(challenge_def.get("title", challenge_id.capitalize()))
 	config["description"] = str(challenge_def.get("description", ""))
 	config["completion_flag"] = str(challenge_def.get("completion_flag", ""))
+	config["tutorial"] = bool(challenge_def.get("tutorial", false))
+	config["exclude_profile_stats"] = bool(challenge_def.get("exclude_profile_stats", false))
 	return config
+
+
+# Applies challenge-scoped authored changes before an environment instance is generated.
+func environment_archetype_for_challenge(archetype: Dictionary, challenge_config: Dictionary) -> Dictionary:
+	if archetype.is_empty():
+		return {}
+	var modifiers := _as_dict(challenge_config.get("modifiers", {}))
+	var overrides := _as_dict(modifiers.get("tutorial_environment_overrides", {}))
+	var archetype_id := str(archetype.get("id", "")).strip_edges()
+	var override := _as_dict(overrides.get(archetype_id, {}))
+	if override.is_empty():
+		return archetype
+	return _deep_merge_dict(archetype, override)
 
 
 # Finds a lender definition by id.
@@ -870,6 +889,7 @@ func _validate_content_group_tags(label: String, ids: Variant, valid_ids: Dictio
 # Validates challenge definitions and the modifier vocabulary consumed by RunState.
 func _validate_challenge_definitions() -> void:
 	var group_ids := _ids_for(content_groups)
+	var environment_ids := _ids_for(environment_archetypes)
 	for challenge_value in challenges:
 		if typeof(challenge_value) != TYPE_DICTIONARY:
 			continue
@@ -882,6 +902,11 @@ func _validate_challenge_definitions() -> void:
 			validation_errors.append("challenges %s title must be non-empty." % challenge_id)
 		if str(challenge_def.get("description", "")).strip_edges().is_empty():
 			validation_errors.append("challenges %s description must be non-empty." % challenge_id)
+		for boolean_key in ["menu_visible", "tutorial", "exclude_profile_stats"]:
+			if challenge_def.has(boolean_key) and typeof(challenge_def.get(boolean_key)) != TYPE_BOOL:
+				validation_errors.append("challenges %s %s must be a boolean." % [challenge_id, boolean_key])
+		if challenge_def.has("fixed_seed") and str(challenge_def.get("fixed_seed", "")).strip_edges().is_empty():
+			validation_errors.append("challenges %s fixed_seed must be non-empty when present." % challenge_id)
 		var modifiers_value: Variant = challenge_def.get("modifiers", {})
 		if typeof(modifiers_value) != TYPE_DICTIONARY:
 			validation_errors.append("challenges %s modifiers must be a dictionary." % challenge_id)
@@ -890,10 +915,10 @@ func _validate_challenge_definitions() -> void:
 		if modifiers.is_empty():
 			validation_errors.append("challenges %s modifiers must not be empty." % challenge_id)
 			continue
-		_validate_challenge_modifiers(challenge_id, modifiers, group_ids)
+		_validate_challenge_modifiers(challenge_id, modifiers, group_ids, environment_ids)
 
 
-func _validate_challenge_modifiers(challenge_id: String, modifiers: Dictionary, group_ids: Dictionary) -> void:
+func _validate_challenge_modifiers(challenge_id: String, modifiers: Dictionary, group_ids: Dictionary, environment_ids: Dictionary) -> void:
 	var known_keys := {
 		"content_groups": true,
 		"starting_bankroll": true,
@@ -908,6 +933,11 @@ func _validate_challenge_modifiers(challenge_id: String, modifiers: Dictionary, 
 		"local_heat_turn_decay_interval_delta": true,
 		"grand_casino_high_roller_net_delta": true,
 		"grand_casino_high_roller_max_heat_delta": true,
+		"home_archetype_id": true,
+		"tutorial_run": true,
+		"tutorial_main_floor_only": true,
+		"tutorial_shop_item_pool_strict": true,
+		"tutorial_environment_overrides": true,
 	}
 	for key_value in modifiers.keys():
 		var key := str(key_value)
@@ -932,6 +962,21 @@ func _validate_challenge_modifiers(challenge_id: String, modifiers: Dictionary, 
 		_validate_challenge_service_cost_multipliers(challenge_id, modifiers.get("service_cost_multipliers", {}))
 	if modifiers.has("disable_cheat_actions") and typeof(modifiers.get("disable_cheat_actions", false)) != TYPE_BOOL:
 		validation_errors.append("challenges %s modifiers.disable_cheat_actions must be a boolean." % challenge_id)
+	for boolean_key in ["tutorial_run", "tutorial_main_floor_only", "tutorial_shop_item_pool_strict"]:
+		if modifiers.has(boolean_key) and typeof(modifiers.get(boolean_key)) != TYPE_BOOL:
+			validation_errors.append("challenges %s modifiers.%s must be a boolean." % [challenge_id, boolean_key])
+	if modifiers.has("home_archetype_id"):
+		_validate_id_references("challenges %s modifiers.home_archetype_id" % challenge_id, [modifiers.get("home_archetype_id", "")], environment_ids)
+	if modifiers.has("tutorial_environment_overrides"):
+		var overrides_value: Variant = modifiers.get("tutorial_environment_overrides", {})
+		if typeof(overrides_value) != TYPE_DICTIONARY:
+			validation_errors.append("challenges %s modifiers.tutorial_environment_overrides must be a dictionary." % challenge_id)
+		else:
+			for environment_id_value in (overrides_value as Dictionary).keys():
+				var environment_id := str(environment_id_value).strip_edges()
+				_validate_id_references("challenges %s tutorial_environment_overrides" % challenge_id, [environment_id], environment_ids)
+				if typeof((overrides_value as Dictionary).get(environment_id_value)) != TYPE_DICTIONARY:
+					validation_errors.append("challenges %s tutorial_environment_overrides.%s must be a dictionary." % [challenge_id, environment_id])
 
 
 func _validate_challenge_starting_debt(challenge_id: String, debts: Variant) -> void:
@@ -2309,6 +2354,18 @@ static func _as_dict(value: Variant) -> Dictionary:
 	if typeof(value) != TYPE_DICTIONARY:
 		return {}
 	return (value as Dictionary).duplicate(true)
+
+
+# Recursively combines dictionaries without mutating either authored source.
+static func _deep_merge_dict(base: Dictionary, override: Dictionary) -> Dictionary:
+	var merged := base.duplicate(true)
+	for key in override.keys():
+		var override_value: Variant = override.get(key)
+		if typeof(override_value) == TYPE_DICTIONARY and typeof(merged.get(key)) == TYPE_DICTIONARY:
+			merged[key] = _deep_merge_dict(merged.get(key, {}), override_value)
+		else:
+			merged[key] = override_value.duplicate(true) if typeof(override_value) in [TYPE_ARRAY, TYPE_DICTIONARY] else override_value
+	return merged
 
 
 # Returns a dictionary by id through the cached lookup table.

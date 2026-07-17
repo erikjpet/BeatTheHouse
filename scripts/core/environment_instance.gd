@@ -52,6 +52,8 @@ var travel_lock_remaining: int = 0
 
 # Builds one environment from an archetype and content library.
 static func from_archetype(archetype: Dictionary, p_depth: int, rng: RngStream, library: ContentLibrary = null, challenge_config: Dictionary = {}) -> EnvironmentInstance:
+	if library != null:
+		archetype = library.environment_archetype_for_challenge(archetype, challenge_config)
 	var environment := EnvironmentInstance.new()
 	environment.depth = p_depth
 	environment.tier = int(archetype.get("tier", 1))

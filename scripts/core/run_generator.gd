@@ -349,10 +349,11 @@ func _weighted_pick_archetype(archetypes: Array, rng: RngStream) -> Dictionary:
 
 
 func _apply_home_profile(run_state: RunState, environment_data: Dictionary, archetype: Dictionary, node_id: String, rng: RngStream) -> void:
-	var profile := _copy_dict(archetype.get("home_profile", {}))
+	var effective_archetype := library.environment_archetype_for_challenge(archetype, run_state.challenge_config) if library != null else archetype
+	var profile := _copy_dict(environment_data.get("home_profile", effective_archetype.get("home_profile", {})))
 	if profile.is_empty():
 		return
-	run_state.initialize_home_from_profile(archetype, node_id, profile)
+	run_state.initialize_home_from_profile(effective_archetype, node_id, profile)
 	var cash_range := _int_range(profile.get("starting_cash", [RunState.DEFAULT_BANKROLL, RunState.DEFAULT_BANKROLL]), RunState.DEFAULT_BANKROLL, RunState.DEFAULT_BANKROLL)
 	var starting_cash := rng.randi_range(int(cash_range[0]), int(cash_range[1]))
 	run_state.change_bankroll(starting_cash - run_state.bankroll)

@@ -313,6 +313,9 @@ func start_new(p_seed_text: String = "FOUNDATION-SEED", p_challenge_config: Dict
 	run_spending_score = 0
 	defer_next_bankroll_zero_failure = false
 	_apply_starting_challenge_modifiers()
+	if is_tutorial_run():
+		narrative_flags["tutorial_active"] = true
+		narrative_flags["tutorial_beat"] = 1
 	_record_heat_history(false)
 
 
@@ -1560,6 +1563,14 @@ func challenge_modifiers() -> Dictionary:
 
 func challenge_completion_flag() -> String:
 	return str(challenge_config.get("completion_flag", "")).strip_edges()
+
+
+func is_tutorial_run() -> bool:
+	return bool(challenge_config.get("tutorial", false)) or bool(challenge_modifiers().get("tutorial_run", false))
+
+
+func excludes_profile_stats() -> bool:
+	return bool(challenge_config.get("exclude_profile_stats", false)) or is_tutorial_run()
 
 
 func meta_collection_enabled_for_run() -> bool:
@@ -6766,6 +6777,10 @@ static func normalize_challenge(p_seed_text: String, config: Dictionary = {}) ->
 	normalized["daily_id"] = normalized.get("daily_id", "")
 	normalized["modifiers"] = _copy_dict(normalized.get("modifiers", {}))
 	normalized["hidden_seed"] = bool(normalized.get("hidden_seed", false))
+	if normalized.has("tutorial"):
+		normalized["tutorial"] = bool(normalized.get("tutorial", false))
+	if normalized.has("exclude_profile_stats"):
+		normalized["exclude_profile_stats"] = bool(normalized.get("exclude_profile_stats", false))
 	return normalized
 
 

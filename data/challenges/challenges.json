@@ -96,5 +96,45 @@
 			],
 			"grand_casino_high_roller_net_delta": 20
 		}
+	},
+	{
+		"id": "tutorial_first_card",
+		"title": "First Night in Town",
+		"description": "A short, guided first run from the motel room to a Grand Casino invitation.",
+		"completion_flag": "challenge_tutorial_first_card_complete",
+		"fixed_seed": "FIRST-NIGHT-ACE-17",
+		"menu_visible": false,
+		"tutorial": true,
+		"exclude_profile_stats": true,
+		"modifiers": {
+			"tutorial_run": true,
+			"tutorial_main_floor_only": true,
+			"tutorial_shop_item_pool_strict": true,
+			"home_archetype_id": "motel_room",
+			"starting_bankroll": 80,
+			"tutorial_environment_overrides": {
+				"motel_room": {
+					"home_profile": {
+						"starting_cash": [80, 80],
+						"starting_items": 0,
+						"starting_containers": [
+							{"item_id": "backpack", "capacity": 5}
+						]
+					}
+				},
+				"corner_store": {
+					"item_pool": ["instant_coffee"],
+					"item_count": [1, 1]
+				},
+				"bar": {
+					"game_pool": ["blackjack"],
+					"required_game_ids": ["blackjack"],
+					"game_count": [1, 1],
+					"event_pool": ["tutorial_friendly_choice", "tutorial_grand_casino_invitation"],
+					"required_event_ids": ["tutorial_friendly_choice", "tutorial_grand_casino_invitation"],
+					"event_count": [2, 2]
+				}
+			}
+		}
 	}
 ]
