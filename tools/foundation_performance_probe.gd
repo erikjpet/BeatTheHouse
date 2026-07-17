@@ -1067,7 +1067,7 @@ func _resolve_probe_ui_state(game_id: String, sample_index: int) -> Dictionary:
 		"pull_tabs":
 			return {"pull_tab_deal_index": sample_index % 4}
 		"scratch_tickets":
-			return {"scratch_stock_index": sample_index % 3}
+			return {"scratch_stock_index": sample_index % 4}
 		"video_poker":
 			return {"bet_level": 1}
 		_:

@@ -1818,10 +1818,17 @@ func change_baseline_luck(delta: int) -> void:
 func effective_luck() -> int:
 	var gap := maxi(0, alcoholic_level - drunk_level)
 	return clampi(
-		baseline_luck + _drunk_luck_bonus() - _alcohol_dependency_penalty(gap),
+		baseline_luck + _drunk_luck_bonus() - _alcohol_dependency_penalty(gap) + _scratch_temporary_luck_bonus(),
 		EFFECTIVE_LUCK_MIN,
 		EFFECTIVE_LUCK_MAX
 	)
+
+
+func _scratch_temporary_luck_bonus() -> int:
+	var bonus := int(narrative_flags.get("scratch_midnight_luck_bonus", 0))
+	var expires_turn := int(narrative_flags.get("scratch_midnight_luck_expires_turn", 0))
+	var current_turn := maxi(0, int(current_environment.get("turns", 0)))
+	return bonus if bonus != 0 and current_turn < expires_turn else 0
 
 
 # Returns the chance modifier games should apply to outcome rolls.
