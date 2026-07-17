@@ -110,6 +110,7 @@ const WorldMapOverlayControllerScript := preload("res://scripts/ui/world_map_ove
 const WagerConfirmationControllerScript := preload("res://scripts/ui/wager_confirmation_controller.gd")
 const TalkDockScript := preload("res://scripts/ui/talk_dock.gd")
 const ItemFoundPopupScript := preload("res://scripts/ui/item_found_popup.gd")
+const CoachOverlayScript := preload("res://scripts/ui/coach_overlay.gd")
 const SfxPlayerScript := preload("res://scripts/ui/sfx_player.gd")
 const ProceduralMusicPlayerScript := preload("res://scripts/ui/procedural_music_player.gd")
 const PerfTelemetryOverlayScript := preload("res://scripts/ui/perf_telemetry_overlay.gd")
@@ -292,6 +293,7 @@ var event_choice_popup_summary_label: Label
 var event_choice_popup_choices_list: VBoxContainer
 var talk_dock: TalkDock
 var item_found_popup: ItemFoundPopup
+var coach_overlay: CoachOverlay
 var item_found_talk_dock_suspended := false
 var conclusion_animation_overlay: Control
 var conclusion_animation_snapshot: Dictionary = {}
@@ -617,7 +619,7 @@ func enter_first_available_game() -> void:
 
 # Enters a game through its data-routed GameModule.
 func enter_game(game_id: String) -> void:
-	if _guard_player_input_route():
+	if _guard_player_input_route(false, "game:%s" % game_id):
 		return
 	var definition := library.game(game_id)
 	if definition.is_empty():
@@ -705,7 +707,7 @@ func select_game_action(action_id: String, action_kind: String) -> void:
 	if current_game == null:
 		_show_message("Enter a game before choosing an action.")
 		return
-	if _guard_player_input_route():
+	if _guard_player_input_route(false, "game_action:%s" % action_id):
 		return
 	var action := _available_game_action(action_id, action_kind)
 	if action.is_empty():
@@ -724,7 +726,7 @@ func _on_game_surface_action(action: String, index: int, confirm_requested: bool
 		_show_message("Choose a game first.")
 		_refresh()
 		return
-	if _guard_player_input_route():
+	if _guard_player_input_route(false, action):
 		return
 	match action:
 		"surface_back":
@@ -763,7 +765,7 @@ func _on_game_surface_action_blocked(_action: String, reason: String) -> void:
 
 
 func _on_game_surface_pointer_action(action: String, index: int, phase: String, board_position: Vector2) -> void:
-	if current_game == null or _guard_player_input_route():
+	if current_game == null or _guard_player_input_route(false, action):
 		return
 	var ui_state := _current_game_surface_ui_state()
 	ui_state["selected_action_id"] = selected_action_id
@@ -1187,7 +1189,7 @@ func resolve_selected_game_action() -> void:
 	if selected_action_id.is_empty():
 		_show_message("Select a game action first.")
 		return
-	if _guard_player_input_route():
+	if _guard_player_input_route(false, "game_action:%s" % selected_action_id):
 		return
 	_resolve_game_action(selected_action_id)
 
@@ -1267,7 +1269,7 @@ func confirm_selected_travel() -> void:
 func open_world_map(force_closing_allowed: bool = false) -> bool:
 	if run_state == null:
 		return false
-	if _guard_player_input_route(force_closing_allowed):
+	if _guard_player_input_route(force_closing_allowed, "map"):
 		return false
 	selected_action_category = ACTION_CATEGORY_TRAVEL
 	_set_current_screen(SCREEN_TRAVEL)
@@ -2517,7 +2519,7 @@ func confirm_selected_item_offer() -> bool:
 
 # Buys one item offer and applies it through ItemEffect.
 func apply_item_offer(item_id: String) -> bool:
-	if _guard_player_input_route():
+	if _guard_player_input_route(false, "item:%s" % item_id):
 		return false
 	_refresh_run_action_service()
 	var resolved := run_action_service.buy_item_offer(item_id)
@@ -3081,7 +3083,7 @@ func repay_lender_debt(lender_id: String) -> bool:
 func open_pawn_counter(lender_id: String = "") -> bool:
 	if run_state == null:
 		return false
-	if _guard_player_input_route():
+	if _guard_player_input_route(false, "lender:%s" % lender_id):
 		return false
 	_refresh_run_action_service()
 	if lender_id.strip_edges().is_empty():
@@ -3855,6 +3857,7 @@ func _build_ui() -> void:
 	_build_travel_transition_overlay()
 	_build_world_map_overlay()
 	_build_item_found_popup()
+	_build_coach_overlay()
 	_apply_accessibility_settings()
 
 
@@ -4422,6 +4425,7 @@ func _build_settings_overlay() -> void:
 	settings_menu.setup(user_settings)
 	settings_menu.back_requested.connect(close_settings_menu)
 	settings_menu.settings_applied.connect(_on_settings_applied)
+	settings_menu.reset_tips_requested.connect(_on_reset_coach_tips_requested)
 	panel.add_child(settings_menu)
 
 
@@ -4480,6 +4484,15 @@ func _build_item_found_popup() -> void:
 	item_found_popup.display_started.connect(Callable(self, "_on_item_found_display_started"))
 	item_found_popup.display_finished.connect(Callable(self, "_on_item_found_display_finished"))
 	add_child(item_found_popup)
+
+
+func _build_coach_overlay() -> void:
+	coach_overlay = CoachOverlayScript.new()
+	coach_overlay.lesson_seen.connect(Callable(self, "_on_coach_lesson_seen"))
+	add_child(coach_overlay)
+	coach_overlay.set_lessons(library.tutorial_lessons if library != null else [])
+	coach_overlay.restore_seen(profile_inventory.tips_seen if profile_inventory != null else {})
+	coach_overlay.set_tips_enabled(user_settings == null or user_settings.coach_tips_enabled)
 
 
 func _on_item_found_display_started(_item_id: String) -> void:
@@ -5117,6 +5130,8 @@ func _refresh() -> void:
 	interactable_object_view_cache_valid = false
 	var has_run := run_state != null
 	if not has_run or current_screen == SCREEN_START:
+		if coach_overlay != null:
+			coach_overlay.suspend()
 		_hide_run_menu()
 		_set_current_screen(SCREEN_START)
 		_render_start_screen()
@@ -5125,6 +5140,7 @@ func _refresh() -> void:
 	_render_environment_screen()
 	if _run_menu_is_visible():
 		_refresh_run_menu()
+	_refresh_coach_at_boundary()
 
 
 func _render_start_screen() -> void:
@@ -6603,14 +6619,19 @@ func _blocking_modal_message() -> String:
 	return ""
 
 
-func _guard_player_input_route(force_closing_allowed: bool = false) -> bool:
+func _guard_player_input_route(force_closing_allowed: bool = false, coach_action_id: String = "ui:any") -> bool:
 	var message := _blocking_modal_message()
 	if message.is_empty():
-		if force_closing_allowed or not _closing_time_blocks_environment_actions():
-			return false
-		if not _ensure_closing_time_departure_talk():
-			_show_message(_closing_time_disabled_reason())
-		return true
+		if not force_closing_allowed and _closing_time_blocks_environment_actions():
+			if not _ensure_closing_time_departure_talk():
+				_show_message(_closing_time_disabled_reason())
+			return true
+		if coach_overlay != null:
+			if not coach_overlay.input_allowed(coach_action_id):
+				_show_message("Follow the highlighted advice first.")
+				return true
+			coach_overlay.notify_action(coach_action_id)
+		return false
 	_show_message(message)
 	_refresh_modal_contract_owner()
 	return true
@@ -7010,6 +7031,7 @@ func current_screen_snapshot() -> Dictionary:
 		"run_journal_visible": _run_journal_popup_is_visible(),
 		"talk_dock": current_talk_dock_snapshot(),
 		"item_found_popup": current_item_found_popup_snapshot(),
+		"coach": current_coach_snapshot(),
 		"overlay_state": current_overlay_state_snapshot(),
 		"run_report": current_run_report_snapshot() if run_state != null and run_state.is_terminal() else {},
 		"travel_transition_active": travel_transition_active,
@@ -7029,6 +7051,10 @@ func current_screen_snapshot() -> Dictionary:
 		"conclusion_animation": current_conclusion_animation_snapshot(),
 		"accessibility": current_accessibility_snapshot(),
 	}
+
+
+func current_coach_snapshot() -> Dictionary:
+	return coach_overlay.current_snapshot() if coach_overlay != null else {"visible": false}
 
 
 func current_start_menu_snapshot() -> Dictionary:
@@ -7310,7 +7336,7 @@ func _focus_interactable_object_with_data(object_id: String, object_data: Dictio
 
 
 func activate_interactable_object(object_id: String) -> bool:
-	if _guard_player_input_route():
+	if _guard_player_input_route(false, object_id):
 		return false
 	if _is_meta_session():
 		return _activate_meta_interactable_object(object_id)
@@ -8855,12 +8881,29 @@ func close_settings_menu() -> void:
 
 func _on_settings_applied() -> void:
 	_apply_accessibility_settings()
+	if coach_overlay != null and user_settings != null:
+		coach_overlay.set_tips_enabled(user_settings.coach_tips_enabled)
 	if procedural_music_player != null and user_settings != null:
 		procedural_music_player.audio_calm = bool(user_settings.audio_calm)
 		_update_procedural_music()
 	if run_state != null:
 		_render_foundation_snapshots()
 		_refresh_world_header()
+
+
+func _on_reset_coach_tips_requested() -> void:
+	if profile_inventory == null:
+		return
+	profile_inventory.reset_tips()
+	profile_inventory.save()
+	if coach_overlay != null:
+		coach_overlay.reset_seen()
+
+
+func _on_coach_lesson_seen(lesson_id: String) -> void:
+	if profile_inventory == null or not profile_inventory.mark_tip_seen(lesson_id):
+		return
+	profile_inventory.save()
 
 
 func _drunk_effect_mode() -> String:
@@ -11660,6 +11703,101 @@ func _small_screen_enabled() -> bool:
 	return user_settings != null and user_settings.play_on_small_screen
 
 
+func _refresh_coach_at_boundary() -> void:
+	if coach_overlay == null or run_state == null or current_screen == SCREEN_START:
+		return
+	coach_overlay.evaluate_at_boundary(_coach_context_snapshot())
+
+
+func _coach_context_snapshot() -> Dictionary:
+	var environment := run_state.current_environment if run_state != null else {}
+	var archetype_id := str(environment.get("archetype_id", ""))
+	var archetype := library.environment_archetype(archetype_id) if library != null else {}
+	var objective := run_state.demo_objective_status() if run_state != null else {}
+	var result_type := str(last_item_result.get("type", ""))
+	if result_type.is_empty():
+		result_type = str(last_hook_result.get("type", last_game_result.get("type", "")))
+	return {
+		"screen": current_screen,
+		"environment_kind": str(environment.get("kind", archetype.get("kind", ""))),
+		"environment_archetype": archetype_id,
+		"game_id": current_game.get_id() if current_game != null else "",
+		"run": {
+			"heat": run_state.suspicion_level() if run_state != null else 0,
+			"heat_gain_count": _coach_heat_gain_count(),
+			"debt_count": run_state.debt.size() if run_state != null else 0,
+			"closing_time_active": run_state.closing_time_active() if run_state != null else false,
+			"grand_casino_chips": run_state.grand_casino_chips if run_state != null else 0,
+			"players_card_tier": str(objective.get("players_card_tier", "none")),
+		},
+		"ui": {
+			"pawn_counter_open": _run_inventory_popup_is_visible() and run_inventory_popup_mode == "pawn_counter",
+			"world_map_open": _world_map_overlay_is_visible(),
+		},
+		"action": {"last_result_type": result_type},
+		"viewport_rect": Rect2(Vector2.ZERO, size),
+		"anchor_rects": _coach_anchor_rects(),
+		"reduce_motion": _reduce_motion_enabled(),
+		"small_screen": _small_screen_enabled(),
+	}
+
+
+func _coach_anchor_rects() -> Dictionary:
+	var hud: Dictionary = {}
+	_coach_store_control_rect(hud, "heat", status_label)
+	_coach_store_control_rect(hud, "debt", status_label)
+	_coach_store_control_rect(hud, "clock", status_label)
+	_coach_store_control_rect(hud, "chips", status_label)
+	_coach_store_control_rect(hud, "objective", objective_label)
+	_coach_store_control_rect(hud, "inventory", top_inventory_button)
+	_coach_store_control_rect(hud, "map", world_map_title_label if _world_map_overlay_is_visible() else title_label)
+	var objects: Dictionary = {}
+	if environment_canvas != null:
+		var canvas_rect := environment_canvas.get_global_rect()
+		for object_value in _interactable_object_view_list():
+			if typeof(object_value) != TYPE_DICTIONARY:
+				continue
+			var object_data: Dictionary = object_value
+			var normalized_rect := _rect_from_dict(object_data.get("focus_rect", {}))
+			if normalized_rect.size.x <= 0.0 or normalized_rect.size.y <= 0.0:
+				continue
+			objects[str(object_data.get("object_id", ""))] = Rect2(canvas_rect.position + normalized_rect.position * canvas_rect.size, normalized_rect.size * canvas_rect.size)
+	var surface_actions: Dictionary = {}
+	if game_surface_canvas != null:
+		var surface_origin := game_surface_canvas.get_global_rect().position
+		for region_value in game_surface_canvas.hit_regions:
+			if typeof(region_value) != TYPE_DICTIONARY:
+				continue
+			var region: Dictionary = region_value
+			var action_id := str(region.get("action", "")).strip_edges()
+			var local_rect: Rect2 = region.get("rect", Rect2()) if typeof(region.get("rect", Rect2())) == TYPE_RECT2 else Rect2()
+			if not action_id.is_empty() and not local_rect.is_empty() and not surface_actions.has(action_id):
+				surface_actions[action_id] = Rect2(surface_origin + local_rect.position, local_rect.size)
+	return {"hud_elements": hud, "interactable_objects": objects, "surface_actions": surface_actions}
+
+
+func _coach_store_control_rect(target: Dictionary, key: String, control: Control) -> void:
+	if control != null and control.is_visible_in_tree():
+		target[key] = control.get_global_rect()
+
+
+func _coach_heat_gain_count() -> int:
+	if run_state == null:
+		return 0
+	var gains := 0
+	var previous := 0
+	var has_previous := false
+	for entry_value in run_state.heat_history:
+		if typeof(entry_value) != TYPE_DICTIONARY:
+			continue
+		var heat := int((entry_value as Dictionary).get("heat_value", 0))
+		if has_previous and heat > previous:
+			gains += 1
+		previous = heat
+		has_previous = true
+	return gains
+
+
 func _apply_accessibility_settings() -> void:
 	if user_settings != null:
 		VisualStyle.set_high_contrast_enabled(user_settings.high_contrast)
@@ -11671,6 +11809,9 @@ func _apply_accessibility_settings() -> void:
 	if talk_dock != null:
 		talk_dock.set_reduce_motion(bool(user_settings.reduce_motion) if user_settings != null else false)
 		talk_dock.set_small_screen_mode(small_screen_enabled)
+	if coach_overlay != null:
+		coach_overlay.set_reduce_motion(bool(user_settings.reduce_motion) if user_settings != null else false)
+		coach_overlay.set_small_screen_mode(small_screen_enabled)
 	if cage_window != null:
 		cage_window.set_reduce_motion(bool(user_settings.reduce_motion) if user_settings != null else false)
 		cage_window.set_small_screen_mode(small_screen_enabled)
