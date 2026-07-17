@@ -4,7 +4,8 @@ All notable public release changes for Beat the House are recorded here.
 
 ## 0.5.0 - In development
 
-Status: **in development.**
+Status: **in development.** The Grand Casino feature queue is implemented;
+repository release verification and owner playtesting are still in progress.
 
 ### Added
 
@@ -13,6 +14,43 @@ Status: **in development.**
   text, map nodes, dialogue and inventory actions, environment-object tap
   regions, and gambling-surface hit regions for phone and tablet play while
   preserving the existing desktop presentation when disabled.
+- Rebuilds the Grand Casino as three connected rooms: a machine-and-Cage Main
+  Floor, a Silver-card or paid-entry High-Limit Room, and a locked Back Room
+  for the boss duel. Room movement advances the existing clock while all
+  casino heat, memory, progression, chips, and finale state remain shared.
+- Adds Grand Casino chips for blackjack, baccarat, and roulette plus Linda's
+  Cage window for chip exchange, Players Card progress, comps, and the
+  deliberate clean-route Gold review. Machines and bar dice continue to use
+  cash.
+- Makes Pit Boss Rourke a visible, spatial agent who moves at deterministic
+  action boundaries toward room heat. Seeded rival cheaters can draw him away
+  or be escorted off the floor, while daily seeded dealer/bartender rotation
+  and re-entry memory make the casino persist across visits and days.
+- Adds Linda's data-driven Bronze/Silver/Gold Players Card ladder with chip and
+  drink comps, suite recovery, Silver high-limit access, a one-shot low-heat
+  look-away, and permanent card ineligibility after cheat evidence.
+- Replaces the old showdown check with a saveable four-phase encounter: ditch
+  one item on the walk, face a visible contraband pat-down tier, answer three
+  questions drawn from the run ledger, then play a five-hand heads-up
+  blackjack duel against Rourke's readable edges.
+- Adds the showdown outcome ladder: cash out and walk clean, be shown the door
+  with uncashed chips, or be taken out back. The successful uncashed ending
+  keeps half the rack's value for score and mints the full rack as a stack Sal
+  can fence for gold.
+- Adds unique Gold Players Card meta items stamped with run results. Cards stay
+  at critical condition, are destroyed if carried into a failed prestige run,
+  and provide recognition heat relief, a tighter clean heat ceiling, and a
+  one-tier collection-drop bonus when carried.
+- Records the Act 2 seam on a Gold-card victory while keeping the run terminal
+  in Act 1; the victory report states that the Gold card opens doors beyond
+  this city without exposing unimplemented Act 2 UI.
+
+### Changed
+
+- Tunes Rourke edge callouts from an 8-chip to an 18-chip swing so preparation
+  materially matters, and moves the shown-the-door lower margin from -8 to -60
+  so all three duel endings occupy meaningful measured bands. Full before/
+  after seed evidence will be cited with the 0.5 release-readiness battery.
 
 ## 0.4.0 - Act 1 completion release
 

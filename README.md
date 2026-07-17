@@ -7,16 +7,13 @@ play full simulations of Pull Tabs, Slots, Bar Dice, Blackjack, Baccarat,
 Roulette, and Video Poker. Every win, cheat, drink, loan, and bad exit pushes
 the run state forward.
 
-The runnable 0.2.0 demo and the 0.3 source line are historical releases. Version
-0.4.0 is still in final development: an earlier release candidate exposed
-game-breaking defects, so all subsequent gameplay, performance, stability, and
-architecture work remains part of this same unreleased Act 1 completion cut.
-It includes the 0.3 low-end/web cleanup line, a walkable meta home, housing
-progression, local collection bags/loadouts, profile persistence, dialogue/talk
-content, and jazz/beach/world-map content. The new boss fight/final scene is
-explicitly outside 0.4; the existing Grand Casino cashout and Rourke showdown
-remain the Act 1 ending. The final gate battery, owner playtest, fresh export
-packaging, uploads, and release tag are still pending.
+Versions 0.2.0 through 0.4.0 are historical releases. Version 0.5.0 is in
+development. It keeps the released Act 1 foundation and reworks the Grand
+Casino into a three-room endgame with a living Rourke, a chips-and-Cage economy,
+Linda's Bronze/Silver/Gold Players Card ladder, a four-phase back-room showdown,
+a playable heads-up blackjack duel, and persistent card/chip meta rewards. The
+0.5 repository gate battery, owner playtest, fresh export packaging, uploads,
+and release tag remain release-owner actions until recorded otherwise.
 Beat the House is not a real-money gambling product. It has no real-money
 wagering, cash prizes, gambling monetization, or store credentials checked into
 the repository.
@@ -28,16 +25,16 @@ the repository.
 | Engine | Godot 4.x project with Godot 4.6 project feature metadata |
 | Main scene | `res://scenes/main.tscn` |
 | Main UI shell | `res://scripts/ui/foundation_main.gd` |
-| Prior release line | 0.3.3 GitHub source release; 0.4.0 is not released |
-| Active planning target | 0.4.0 Act 1 completion release |
-| Current release readiness | 0.4.0 stamped in `project.godot` and export presets; final gates, owner playtest, fresh packages, uploads, and release tag remain pending |
+| Prior release line | 0.4.0 Act 1 completion release |
+| Active planning target | 0.5.0 Grand Casino rework |
+| Current release readiness | 0.5 implementation complete; repository gates and release-owner playtest/packaging/publishing remain pending until cited in the 0.5 changelog |
 | Viewport | 1280x720, non-resizable, canvas stretch with kept aspect |
 | Renderer | Godot mobile renderer |
 | Input model | Single pointer interaction with mouse/touch parity |
-| Target exports | 0.4.0 targets Web/itch.io and Windows desktop; Android/iOS presets remain credential-blocked |
+| Target exports | Web/itch.io and Windows desktop; Android/iOS presets remain credential-blocked |
 | Run model | Seeded deterministic run state with forked RNG streams |
-| Current win target | Reach the Grand Casino, then win either clean (net +$10 while staying low-heat for a Players Card) or by surviving Pit Boss Rourke's back-room showdown |
-| Prestige content | Removed from the Act 1 runtime; real prestige meta-progression is deferred to a future act |
+| Current win target | Reach the Grand Casino, then earn Gold clean (five settled games, net +$30, heat at most 30) or survive Pit Boss Rourke's four-phase back-room showdown |
+| Prestige content | A clean Gold win mints a fragile Players Card; carrying it grants recognition, tightens the clean heat ceiling, improves collection drops, and risks permanent loss on failure |
 
 The player starts in a generated low-stakes environment, buys or uses items,
 plays full-simulation casino games, takes services or lender offers when needed,
@@ -65,11 +62,11 @@ Production content is JSON under `data/`.
 
 | Pack | Count | Path | Notes |
 | --- | ---: | --- | --- |
-| Environments | 15 | `data/environments/archetypes.json` | Shops, homes, tier-1 casinos, tier-2 venues, jazz club, beach, pawn shop, and the Grand Casino boss destination |
+| Environments | 17 | `data/environments/archetypes.json` | Shops, homes, tier-1 casinos, tier-2 venues, jazz club, beach, pawn shop, and the Grand Casino's three connected rooms |
 | Games | 7 | `data/games/games.json` | All current games are full-simulation modules |
 | Items | 64 | `data/items/items.json` | Permanent, temporary, consumable, contraband, active, game, security, travel, slot, pinball, container, and build-synergy effects |
 | Content groups | 9 | `data/content_groups/groups.json` | Modular run packs that enable/disable games and their related item pools |
-| Events | 45 | `data/events/events.json` | Scoped room events with choices and consequences, including unavoidable pressure events, triggered follow-ups, and the boss-floor `the_house_calls` and `high_roller_cashout` |
+| Events | 46 | `data/events/events.json` | Scoped room events with choices and consequences, including unavoidable pressure events, triggered follow-ups, and the boss-floor `the_house_calls` and `high_roller_cashout` |
 | Services | 14 | `data/services/services.json` | `cashier_tip`, `house_drink`, `call_brother_in_law`, jazz-club round/tip/show services, and tier-2 lounge/riverboat services |
 | Lenders | 5 | `data/debt/lenders.json` | `street_lender`, `motel_friend`, `the_crew`, `brother_in_law`, `sals_pawn_counter` |
 | Travel route templates | 11 | `data/travel/routes.json` | Destination templates for shops, casinos, tier-2 venues, the jazz club, beach, the underground casino, and the Grand Casino; `WorldMap` turns them into seeded graph paths with costs, unlocks, scouting previews, travel locks, and route-risk events |
@@ -110,16 +107,21 @@ The current environment pack contains:
 | `delta_queen` | casino | 2 | Riverboat mid-stakes rung with scheduled boarding and temporary travel lock |
 | `beach` | recovery | 2 | Low Tide Beach route environment and recovery stop |
 | `pawn_shop` | pawn_shop | 1 | Sal's run-side pawn counter and item-backed lender stop |
-| `grand_casino` | boss | 3 | Demo objective destination |
+| `grand_casino` | boss | 3 | Grand Casino Main Floor: machines, bar dice, Cage, host desk, and room doors |
+| `grand_casino_high_limit` | boss | 3 | Silver-card or paid-entry blackjack, baccarat, and roulette room |
+| `grand_casino_back_room` | boss | 3 | Locked Rourke showdown and heads-up blackjack duel room |
 | `motel_room` | home | 1 | First paid housing tier |
 | `apartment` | home | 1 | Mid-tier home with collection facilities |
 | `house` | home | 1 | Final current housing tier |
 
 Environment archetypes define name parts, visual context, layout points,
 security/economic/music profiles, object pools, route hooks, local narrative
-flags, and demo objective data. The Grand Casino objective is
-`grand_casino_demo_bankroll`: win `$10` on that floor, stay clean enough for
-the host to issue a Players Card, or survive Rourke's back-room showdown.
+flags, and demo objective data. The Grand Casino's three archetypes share the
+`grand_casino_demo_bankroll` objective. The clean route climbs Linda's
+Bronze/Silver/Gold ladder and claims Gold at the Main Floor Cage; the cheat
+route reads Rourke's spatial watch and survives the saveable walk, pat-down,
+three-beat interrogation, and five-hand blackjack duel. Grand Casino table
+games use chips, while its machines and bar dice continue to use cash.
 
 ## World Map And Travel
 
@@ -244,11 +246,15 @@ shared state, autosave, and terminal presentation.
   back-room showdown), and `abandoned` (the player walks away).
 - Demo victory is driven by environment `demo_objective` data and has two Grand
   Casino routes: the clean `high_roller_cashout` Players Card route and the
-  `pit_boss_showdown` (`the_house_calls`) back-room route. See
+  `pit_boss_showdown` (`the_house_calls`) back-room route. The duel records
+  `walk_out_clean`, `shown_the_door`, or `taken_out_back`; the middle outcome
+  is a successful exit that converts the uncashed rack into a Sal-pawnable
+  meta item. See
   `docs/plans/grand_casino_endgame_design.md` for the authoritative endgame
   contract.
-- Prestige meta-progression is out of Act 1 scope and no prestige content pack
-  is loaded in the runtime.
+- Gold clean victories mint unique, critical-condition Players Cards. Carrying
+  one starts a prestige run with recognition heat relief, a tighter clean heat
+  ceiling, improved collection drops, and permanent card loss if the run fails.
 
 ## Repository Layout
 
@@ -372,8 +378,9 @@ context:
   contract and feel targets. Use these with the live slot stack when touching
   pinball or shared slot release work.
 - `docs/plans/grand_casino_endgame_design.md` - the authoritative Grand Casino
-  endgame design lock (dual victory routes, showdown structure, state machine,
-  and canonical ids).
+  endgame design lock (three rooms, chips/Cage, Linda's card ladder, living
+  Rourke, four-phase showdown, duel outcome ladder, meta rewards, and canonical
+  ids).
 - `docs/plans/content_style_guide.md` - the active release voice and
   player-facing copy rules for Act 1 content.
 - `docs/plans/dead_code_audit_report.md` - the release cleanup audit and
