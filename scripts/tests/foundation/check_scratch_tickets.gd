@@ -21,6 +21,9 @@ func _check_scratch_tickets_surface_contract(game: GameModule, failures: Array) 
 		failures.append("Scratch Tickets launch roster did not expose all ten ticket types.")
 	if _scratch_test_dictionary_array(machine.get("stock", [])).size() != 4:
 		failures.append("Scratch Tickets machine did not draw its four-slot weighted subset.")
+	var environment_hooks := _scratch_test_dictionary_array(machine.get("environment_hooks", []))
+	if environment_hooks.size() != 1 or str((environment_hooks[0] as Dictionary).get("id", "")) != "scratch_ticket_clerk" or str((environment_hooks[0] as Dictionary).get("unique_object_class", "")) != "scratch_ticket_clerk":
+		failures.append("Scratch Tickets machine did not persist its clerk hook for collision-safe room layout.")
 	environment["game_states"] = {"scratch_tickets": machine}
 	run_state.current_environment = environment.duplicate(true)
 	var surface := game.surface_state(run_state, environment, {})

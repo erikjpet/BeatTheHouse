@@ -656,6 +656,13 @@ func _generate_machine_state(_run_state: RunState, environment: Dictionary, rng:
 		"machine_name": "Highway Scratch Center",
 		"stock_day": int(environment.get("generated_day", environment.get("day", 0))),
 		"stock": stock,
+		"environment_hooks": [{
+			"id": REDEEM_HOOK_ID,
+			"kind": "redeemer",
+			"label": "Scratch-Ticket Clerk",
+			"unique_object_class": "scratch_ticket_clerk",
+			"unique_object_priority": 100,
+		}],
 		"active_ticket": {},
 		"winner_pile": [],
 		"loser_pile": [],
