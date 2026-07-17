@@ -7,6 +7,7 @@ const BAG_SELECTED_FLAG := "_meta_bag_selected"
 const BAG_FLUSHED_FLAG := "_meta_bag_grants_flushed"
 const PLAYERS_CARD_REWARD_FLAG := "_meta_players_card_reward"
 const PLAYERS_CARD_DESTROYED_FLAG := "_meta_players_card_destroyed"
+const GRAND_CASINO_CHIPS_REWARD_FLAG := "_meta_grand_casino_chips_reward"
 const PRESTIGE_RESULT_FLAG := "_meta_prestige_result"
 
 
@@ -50,16 +51,26 @@ static func build(run_data: Dictionary, catalogs: Dictionary = {}) -> Dictionary
 static func build_meta_reward(run_data: Dictionary) -> Dictionary:
 	var flags := _copy_dict(run_data.get("narrative_flags", {}))
 	var card := _copy_dict(flags.get(PLAYERS_CARD_REWARD_FLAG, {}))
+	var chips := _copy_dict(flags.get(GRAND_CASINO_CHIPS_REWARD_FLAG, {}))
 	var destroyed := _dict_array(flags.get(PLAYERS_CARD_DESTROYED_FLAG, []))
 	var prestige := _copy_dict(flags.get(PRESTIGE_RESULT_FLAG, {}))
+	var prestige_suffix := " · Prestige card retained" if bool(prestige.get("active", false)) else ""
 	if not card.is_empty():
 		var stamp := _copy_dict(card.get("instance_data", {}))
 		return {
 			"visible": true,
 			"kind": "players_card_minted",
 			"title": "CARD MINTED · %s" % str(card.get("display_name", "Grand Casino Players Card")),
-			"detail": "Gold · Score %d · Day %d · %s" % [int(stamp.get("final_score", 0)), int(stamp.get("days_survived", 1)), str(stamp.get("seed", ""))],
+			"detail": "Gold · Score %d · Day %d · %s%s" % [int(stamp.get("final_score", 0)), int(stamp.get("days_survived", 1)), str(stamp.get("seed", "")), prestige_suffix],
 			"instance_id": int(card.get("instance_id", 0)),
+		}
+	if not chips.is_empty():
+		return {
+			"visible": true,
+			"kind": "grand_casino_chips",
+			"title": "CHIPS KEPT · Grand Casino Chips ×%d" % maxi(0, int(chips.get("stack_amount", 0))),
+			"detail": "Face value %d · Sal offers %d gold%s" % [maxi(0, int(chips.get("face_value", 0))), maxi(0, int(chips.get("fenced_gold_value", 0))), prestige_suffix],
+			"instance_id": int(chips.get("instance_id", 0)),
 		}
 	if not destroyed.is_empty():
 		return {

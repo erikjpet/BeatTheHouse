@@ -59,6 +59,7 @@ func _check_run_report_screen_component() -> bool:
 		"score": {"money_put_to_work": 40, "winner_bonus": 3, "show_winner_bonus": true, "final_score": 120},
 		"items": {"kept": [{"label": "Coffee", "count": 2, "fate": "kept", "icon_path": ""}], "pawned": [{"label": "Card", "fate": "forfeited", "icon_path": ""}], "sold": [{"label": "Watch", "count": 1, "price": 9, "icon_path": ""}]},
 		"bag_reward": {"visible": true, "pending": true, "choices": [{"marker_id": "run-victory-bag", "display_name": "Roadside Luck Blue Bag", "collection_name": "Roadside Luck", "tier_label": "Blue"}], "summary_lines": []},
+		"meta_reward": {"visible": true, "kind": "grand_casino_chips", "title": "CHIPS KEPT · Grand Casino Chips ×37", "detail": "Face value 37 · Sal offers 22 gold"},
 		"debts": [{"lender": "Sal", "amount": 20, "outcome": "redeemed", "tone": "settled"}],
 		"money_rows": [{"label": "Slots", "net": 100}, {"label": "Bar Dice", "net": -50}],
 		"timeline": timeline,
@@ -72,6 +73,9 @@ func _check_run_report_screen_component() -> bool:
 		return false
 	if not bool(snapshot.get("bag_reward_visible", false)) or not bool(snapshot.get("bag_reward_pending", false)) or int(snapshot.get("bag_reward_choice_count", 0)) != 1:
 		push_error("Run report did not present the earned collection-bag choice.")
+		return false
+	if not bool(snapshot.get("meta_reward_visible", false)) or not str(snapshot.get("meta_reward_text", "")).contains("Grand Casino Chips ×37"):
+		push_error("Run report RESULT did not present the uncashed Grand Casino Chips reward.")
 		return false
 	if not bool(snapshot.get("new_run_disabled", false)) or not bool(snapshot.get("home_disabled", false)):
 		push_error("Run report allowed navigation before the earned collection bag was stored.")

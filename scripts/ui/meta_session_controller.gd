@@ -141,6 +141,10 @@ func owned_item_rows() -> Array:
 			var stamp := _copy_dict(instance.get("instance_data", {}))
 			collection_name = "Grand Casino Rewards"
 			float_summary = "Critical · Score %d · Day %d · %s" % [int(stamp.get("final_score", 0)), int(stamp.get("days_survived", 1)), str(stamp.get("seed", ""))]
+		elif item_class == CollectionItemResolverScript.ITEM_CLASS_CHIP_STACK:
+			var quote: Dictionary = meta_collection_service.sale_quote(MetaCollectionServiceScript.SALE_KIND_ITEM, int(instance.get("instance_id", 0)))
+			collection_name = "Grand Casino Rewards"
+			float_summary = "%d chips face value · Sal offers %d gold" % [maxi(0, int(instance.get("face_value", 0))), maxi(0, int(quote.get("price", 0)))]
 		rows.append({
 			"instance_id": int(instance.get("instance_id", 0)),
 			"itemdef_id": itemdef_id,
@@ -150,6 +154,7 @@ func owned_item_rows() -> Array:
 			"condition_band": str(meta.get("condition_band", "")),
 			"float_summary": float_summary,
 			"packed": packed_ids.has(int(instance.get("instance_id", 0))),
+			"packable": bool(definition.get("loadout_eligible", true)),
 		})
 	return rows
 

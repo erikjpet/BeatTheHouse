@@ -8942,6 +8942,9 @@ func open_meta_container(container_id: String = "") -> void:
 	else:
 		for row_value in rows.slice(0, 10):
 			var row := _copy_dict(row_value)
+			if not bool(row.get("packable", true)):
+				_add_meta_popup_line("%s · %s. Meta-only; sell this stack at Sal's Pawn Shop." % [str(row.get("display_name", "Grand Casino Chips")), str(row.get("float_summary", ""))])
+				continue
 			_add_meta_action_card(
 				str(row.get("display_name", "Collection Item")),
 				"%s. %s" % [str(row.get("collection_display_name", "Collection")), str(row.get("float_summary", ""))],
