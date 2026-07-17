@@ -506,6 +506,7 @@ static func eligible_event_option_with_context(host: Variant, event_id: String, 
 		return {}
 	var payload: Dictionary = event_definition.get("payload", {})
 	var option_choices: Array = []
+	var scene_summary := str(payload.get("summary", ""))
 	for choice in choices:
 		if typeof(choice) != TYPE_DICTIONARY:
 			continue
@@ -513,6 +514,12 @@ static func eligible_event_option_with_context(host: Variant, event_id: String, 
 		var choice_id = str(choice_data.get("id", ""))
 		if choice_id.is_empty():
 			continue
+		var choice_scene_summary := str(choice_data.get("scene_summary", "")).strip_edges()
+		if not choice_scene_summary.is_empty():
+			scene_summary = choice_scene_summary
+		var consequence_summary := str(choice_data.get("presentation_consequence_summary", "")).strip_edges()
+		if consequence_summary.is_empty():
+			consequence_summary = host._event_choice_consequence_summary(choice_data)
 		option_choices.append({
 			"id": choice_id,
 			"label": str(choice_data.get("label", choice_id)),
@@ -520,10 +527,10 @@ static func eligible_event_option_with_context(host: Variant, event_id: String, 
 			"event_type": event_module.get_event_type(),
 			"consequences": host._copy_dict(choice_data.get("consequences", {})),
 			"check": host._copy_dict(choice_data.get("check", {})),
-			"consequence_summary": host._event_choice_consequence_summary(choice_data),
+			"consequence_summary": consequence_summary,
 			"requires_confirm": host._event_choice_requires_confirmation(choice_data),
 			"identity_summary": "Choice ID: %s" % choice_id,
-			"impact_summary": host._event_choice_consequence_summary(choice_data),
+			"impact_summary": consequence_summary,
 			"selected": event_id == host.selected_event_id and choice_id == host.selected_event_choice_id,
 		})
 		var last_index = option_choices.size() - 1
@@ -535,7 +542,7 @@ static func eligible_event_option_with_context(host: Variant, event_id: String, 
 		"display_name": event_module.get_display_name(),
 		"type": event_module.get_event_type(),
 		"interaction_mode": event_module.get_interaction_mode(),
-		"summary": str(payload.get("summary", "")),
+		"summary": scene_summary,
 		"asset_path": str(event_definition.get("asset_path", "")),
 		"visual_key": str(event_definition.get("visual_key", event_definition.get("type", "event"))),
 		"icon_key": str(event_definition.get("icon_key", event_id)),

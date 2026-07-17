@@ -1425,6 +1425,12 @@ func resolve_event_choice(event_id: String, choice_id: String) -> void:
 	var return_to_game_after_event := _event_resolution_returns_to_active_game(popup_type, event_context)
 	var inventory_before := _run_inventory_id_set()
 	var result := event_module.resolve(run_state, event_environment, choice_id)
+	var showdown_continues := (
+		event_id == RunState.GRAND_CASINO_SHOWDOWN_EVENT_ID
+		and run_state != null
+		and bool(run_state.narrative_flags.get("grand_casino_showdown_active", false))
+		and not run_state.is_terminal()
+	)
 	_show_item_found_popups(result, inventory_before)
 	_start_conclusion_animation(result, popup_rect)
 	if was_triggered_popup and run_state != null:
@@ -1439,6 +1445,12 @@ func resolve_event_choice(event_id: String, choice_id: String) -> void:
 	_advance_alcohol_absorption()
 	_autosave_foundation_run("Autosaved.")
 	_refresh_talk_dock()
+	if showdown_continues:
+		_set_current_screen(SCREEN_EVENT)
+		_refresh()
+		if not _show_interactable_event_popup(event_id):
+			_show_message("Rourke's next showdown beat could not open.")
+		return
 	if bool(result.get("ok", false)) and _apply_post_action_environment_interrupt("event"):
 		_refresh()
 		return
@@ -7382,12 +7394,13 @@ func _show_interactable_event_popup(event_id: String) -> bool:
 		return false
 	pending_event_choice_popup_event_id = event_id
 	pending_event_choice_popup_focus_choice_id = ""
+	var showdown_sequence := event_id == RunState.GRAND_CASINO_SHOWDOWN_EVENT_ID and run_state != null and bool(run_state.narrative_flags.get("grand_casino_showdown_active", false))
 	pending_event_choice_popup_snapshot = {
 		"visible": true,
-		"blocking": false,
+		"blocking": showdown_sequence,
 		"popup_type": "interactable_event",
 		"interaction_kind": "event",
-		"dismissible": true,
+		"dismissible": not showdown_sequence,
 		"event_id": event_id,
 		"trigger_context": {},
 		"summary": str(event_option.get("summary", "")),
@@ -7411,7 +7424,7 @@ func _show_interactable_event_popup(event_id: String) -> bool:
 			Callable(self, "resolve_event_choice").bind(event_id, str(choice.get("id", ""))),
 			false
 		)
-	if not has_explicit_dismissal:
+	if not has_explicit_dismissal and not showdown_sequence:
 		_add_wager_confirmation_card(
 			"Leave It",
 			"Walk away without changing the run.",
