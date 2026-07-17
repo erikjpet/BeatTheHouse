@@ -6,6 +6,7 @@ extends Control
 
 signal surface_action(action: String, index: int, confirm_requested: bool)
 signal surface_action_blocked(action: String, reason: String)
+signal surface_pointer_action(action: String, index: int, phase: String, board_position: Vector2)
 signal surface_music_cue(cue_id: String, context: Dictionary)
 
 const VisualStyleScript := preload("res://scripts/ui/visual_style.gd")
@@ -52,6 +53,8 @@ var flicker: float = 0.0
 var hit_regions: Array = []
 var hovered_surface_action: String = ""
 var hovered_surface_index: int = -1
+var captured_surface_action: String = ""
+var captured_surface_index: int = -1
 var surface_animation_channels: Dictionary = {}
 var surface_sfx_player: Node
 var drunk_distortion_overlay: DrunkDistortionOverlay
@@ -100,6 +103,8 @@ func clear_runtime_state() -> void:
 	hit_regions = []
 	hovered_surface_action = ""
 	hovered_surface_index = -1
+	captured_surface_action = ""
+	captured_surface_index = -1
 	surface_animation_channels = {}
 	continuous_redraw_was_active = false
 	last_audio_profile_id = ""
@@ -497,6 +502,10 @@ func surface_add_exact_invisible_hit(rect: Rect2, action: String, index: int = -
 	surface_add_invisible_hit(rect, action, index, false)
 
 
+func surface_add_drag_hit(rect: Rect2, action: String, index: int = -1) -> void:
+	hit_regions.append({"rect": rect, "action": action, "index": index, "drag": true})
+
+
 func surface_region_hovered(action: String, index: int = -1) -> bool:
 	return hovered_surface_action == action and (index < 0 or hovered_surface_index == index)
 
@@ -624,6 +633,8 @@ func _gui_input(event: InputEvent) -> void:
 	var motion_event := event as InputEventMouseMotion
 	if motion_event != null:
 		_set_hovered_surface_region(motion_event.position)
+		if not captured_surface_action.is_empty() and (motion_event.button_mask & MOUSE_BUTTON_MASK_LEFT) != 0:
+			_emit_captured_surface_pointer("move", motion_event.position)
 		return
 	var mouse_event := event as InputEventMouseButton
 	if mouse_event != null:
@@ -633,6 +644,8 @@ func _gui_input(event: InputEvent) -> void:
 				return
 			_remember_mouse_press(mouse_event.position)
 			_activate_surface_at_position(mouse_event.position, mouse_event.double_click)
+		elif not mouse_event.pressed and mouse_event.button_index == MOUSE_BUTTON_LEFT and not captured_surface_action.is_empty():
+			_emit_captured_surface_pointer("end", mouse_event.position)
 		return
 	var touch_event := event as InputEventScreenTouch
 	if touch_event != null:
@@ -642,6 +655,12 @@ func _gui_input(event: InputEvent) -> void:
 				return
 			_remember_touch_press(touch_event.position)
 			_activate_surface_at_position(touch_event.position, touch_event.double_tap)
+		elif not touch_event.pressed and not captured_surface_action.is_empty():
+			_emit_captured_surface_pointer("end", touch_event.position)
+		return
+	var drag_event := event as InputEventScreenDrag
+	if drag_event != null and not captured_surface_action.is_empty():
+		_emit_captured_surface_pointer("move", drag_event.position)
 		return
 
 
@@ -682,6 +701,12 @@ func _activate_surface_at_position(position: Vector2, confirm_requested: bool) -
 				surface_action_blocked.emit(hovered_surface_action, block_reason)
 				accept_event()
 				return
+			if bool(region.get("drag", false)):
+				captured_surface_action = hovered_surface_action
+				captured_surface_index = hovered_surface_index
+				surface_pointer_action.emit(captured_surface_action, captured_surface_index, "begin", board_point)
+				accept_event()
+				return
 			var audio_cue := _surface_action_audio_cue(hovered_surface_action)
 			if not audio_cue.is_empty():
 				surface_play_audio_cue(audio_cue, {
@@ -691,6 +716,18 @@ func _activate_surface_at_position(position: Vector2, confirm_requested: bool) -
 			surface_action.emit(str(region.get("action", "")), int(region.get("index", -1)), confirm_requested)
 			accept_event()
 			return
+
+
+func _emit_captured_surface_pointer(phase: String, screen_position: Vector2) -> void:
+	if captured_surface_action.is_empty():
+		return
+	var action := captured_surface_action
+	var index := captured_surface_index
+	surface_pointer_action.emit(action, index, phase, _screen_to_board(screen_position))
+	if phase == "end":
+		captured_surface_action = ""
+		captured_surface_index = -1
+	accept_event()
 
 
 func _process(delta: float) -> void:
