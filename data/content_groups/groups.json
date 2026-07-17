@@ -44,7 +44,7 @@
 		"description": "Gas-station scratch tickets and scratch-specific tools.",
 		"default_enabled": true,
 		"game_ids": ["scratch_tickets"],
-		"item_ids": []
+		"item_ids": ["xray_glasses", "tarot_card", "lucky_penny"]
 	},
 	{
 		"id": "pull_tabs_pack",
