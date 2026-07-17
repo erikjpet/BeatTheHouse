@@ -102,6 +102,8 @@ func begin_tutorial_run() -> void:
 
 func set_reduce_motion(enabled: bool) -> void:
 	reduce_motion = enabled
+	if enabled:
+		_stop_attention_motion()
 	if not prepared_snapshot.is_empty():
 		active_context["reduce_motion"] = enabled
 		_render_active(false)

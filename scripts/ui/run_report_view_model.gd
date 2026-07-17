@@ -135,7 +135,7 @@ static func build_outcome(run_data: Dictionary, registry: Dictionary) -> Diction
 	var how := str(run_data.get("run_failure_message", ""))
 	if tutorial_failure:
 		title = "First Night Interrupted"
-		how = "That hand got away from you. Replay the lesson now, or carry what you learned into a normal run."
+		how = "That hand got away. Replay the lesson, or start a normal run."
 	if won:
 		how = str(flags.get("demo_victory_message", definition.get("how", "You beat the house and made it out.")))
 	elif how.strip_edges().is_empty():

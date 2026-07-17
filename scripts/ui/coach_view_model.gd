@@ -47,16 +47,23 @@ static func build(lesson: Dictionary, context: Dictionary) -> Dictionary:
 		anchor_kind = "none"
 	var anchor_id := str(anchor.get("id", "")).strip_edges()
 	var anchor_rect := _anchor_rect(anchor_kind, anchor_id, context)
+	if anchor_rect.has_area():
+		anchor_rect = anchor_rect.intersection(viewport_rect)
 	var small_screen := bool(context.get("small_screen", false))
 	var completion := _dict(lesson.get("completion", {}))
 	var completion_type := str(completion.get("type", "any_action"))
 	if not COMPLETION_TYPES.has(completion_type):
 		completion_type = "any_action"
-	var bubble_width := minf(viewport_rect.size.x - VIEWPORT_MARGIN * 2.0, 420.0 if small_screen else 360.0)
+	var available_width := maxf(1.0, viewport_rect.size.x - VIEWPORT_MARGIN * 2.0)
+	var preferred_width := 400.0 if small_screen else 360.0
+	var bubble_width := minf(available_width, preferred_width)
 	var bubble_height := 148.0 if completion_type == "explicit_ok" else 112.0
 	if small_screen:
 		bubble_height += 14.0
-	var bubble_size := Vector2(maxf(240.0, bubble_width), minf(bubble_height, viewport_rect.size.y - VIEWPORT_MARGIN * 2.0))
+	var bubble_size := Vector2(
+		maxf(1.0, bubble_width),
+		minf(bubble_height, maxf(1.0, viewport_rect.size.y - VIEWPORT_MARGIN * 2.0))
+	)
 	var bubble_rect := _bubble_rect(viewport_rect, anchor_rect, bubble_size)
 	var gating := _dict(lesson.get("gating", {}))
 	return {

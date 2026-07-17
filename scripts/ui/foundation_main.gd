@@ -5088,7 +5088,7 @@ func _build_run_menu_overlay() -> void:
 
 	tutorial_skip_dialog = ConfirmationDialog.new()
 	tutorial_skip_dialog.title = "Skip the lessons?"
-	tutorial_skip_dialog.dialog_text = "End this guided run and return to the main menu? You can replay Lessons at any time."
+	tutorial_skip_dialog.dialog_text = "End this guided run? You can replay Lessons from the main menu."
 	tutorial_skip_dialog.confirmed.connect(_confirm_skip_tutorial)
 	add_child(tutorial_skip_dialog)
 

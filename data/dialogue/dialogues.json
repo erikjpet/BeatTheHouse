@@ -314,7 +314,7 @@
     "start": "review",
     "nodes": {
       "review": {
-        "text": "You kept the play clean and finished ahead. This card tells the house you have a history here. Carry it on a later run for recognition, but remember: if that run goes bad, the card goes with it.",
+        "text": "You finished ahead and kept it clean. Carry this card for recognition. Lose that run, and the card goes with it.",
         "choices": [
           {
             "id": "accept_first_card",

@@ -87,9 +87,21 @@ func _check_onboarding_tutorial_ui_flow(app: Control) -> bool:
 	await process_frame
 	await process_frame
 	coach_snapshot = app.get("coach_overlay").call("current_snapshot")
-	if str(coach_snapshot.get("lesson_id", "")) != "tip_starter_card_home" or not str(coach_snapshot.get("copy", "")).contains("gone forever"):
+	if str(coach_snapshot.get("lesson_id", "")) != "tip_starter_card_home" or not str(coach_snapshot.get("copy", "")).contains("recognition") or not str(coach_snapshot.get("copy", "")).contains("gone forever"):
 		push_error("Tutorial victory did not fire the starter-card fragility handoff back home.")
 		return false
+	app.call("return_to_main_menu")
+	await process_frame
+	app.call("_on_start_pressed")
+	await process_frame
+	run_state = app.get("run_state")
+	coach_snapshot = app.get("coach_overlay").call("current_snapshot")
+	if run_state == null or run_state.is_tutorial_run() or not bool(run_state.challenge_modifiers().get("grand_casino_prestige", false)) or str(coach_snapshot.get("lesson_id", "")) == "tip_starter_card_home":
+		push_error("First normal run after the tutorial did not carry prestige or repeated the starter-card tip.")
+		return false
+	app.set("run_state", null)
+	app.call("return_to_main_menu")
+	await process_frame
 	meta_service.remove_instance(starter_id)
 	meta_service.save()
 	app.call("start_tutorial_run")

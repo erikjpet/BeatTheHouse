@@ -5,7 +5,7 @@
 			"state_predicates": [{"path": "run.heat_gain_count", "op": "gt", "value": 0}]
 		},
 		"anchor": {"kind": "hud_element", "id": "heat"},
-		"copy": "Heat draws eyes. Let a quiet room cool it.",
+		"copy": "Heat draws eyes. Quiet rooms let it cool.",
 		"completion": {"type": "any_action"}
 	},
 	{
@@ -14,7 +14,7 @@
 			"state_predicates": [{"path": "run.debt_count", "op": "gt", "value": 0}]
 		},
 		"anchor": {"kind": "hud_element", "id": "debt"},
-		"copy": "Debt buys time. Every lender collects later.",
+		"copy": "Debt buys time. Lenders collect later.",
 		"completion": {"type": "any_action"}
 	},
 	{
@@ -23,7 +23,7 @@
 			"state_predicates": [{"path": "run.closing_time_active", "op": "equals", "value": true}]
 		},
 		"anchor": {"kind": "hud_element", "id": "clock"},
-		"copy": "Closing time is final. Finish your wager, then leave.",
+		"copy": "Closing time is final. Your active wager resolves first.",
 		"completion": {"type": "any_action"}
 	},
 	{
@@ -42,7 +42,7 @@
 			"state_predicates": [{"path": "action.last_result_type", "op": "equals", "value": "item_purchase"}]
 		},
 		"anchor": {"kind": "hud_element", "id": "inventory"},
-		"copy": "Gear changes the run. Read its glyphs before buying.",
+		"copy": "Gear changes a run. Check its glyphs before buying.",
 		"completion": {"type": "any_action"}
 	},
 	{
@@ -52,7 +52,7 @@
 			"state_predicates": [{"path": "ui.world_map_open", "op": "equals", "value": true}]
 		},
 		"anchor": {"kind": "hud_element", "id": "map"},
-		"copy": "Routes spend time. Check cost and closing hours first.",
+		"copy": "Routes cost time. Check price and closing hours.",
 		"completion": {"type": "any_action"}
 	},
 	{
@@ -61,7 +61,7 @@
 			"state_predicates": [{"path": "run.grand_casino_chips", "op": "gt", "value": 0}]
 		},
 		"anchor": {"kind": "hud_element", "id": "chips"},
-		"copy": "Grand Casino tables use chips. The Cage handles cash.",
+		"copy": "Grand Casino tables use chips. Exchange cash at the Cage.",
 		"completion": {"type": "any_action"}
 	},
 	{
@@ -70,7 +70,7 @@
 			"state_predicates": [{"path": "run.players_card_tier", "op": "one_of", "value": ["bronze", "silver", "gold"]}]
 		},
 		"anchor": {"kind": "hud_element", "id": "objective"},
-		"copy": "Clean play earns recognition. Higher tiers open better comps.",
+		"copy": "Clean play raises your card tier and earns better comps.",
 		"completion": {"type": "any_action"}
 	},
 	{
@@ -81,7 +81,7 @@
 			"state_predicates": [{"path": "run.challenge_id", "op": "equals", "value": "tutorial_first_card"}]
 		},
 		"anchor": {"kind": "interactable_object", "id": "home_container:backpack_01"},
-		"copy": "This backpack carries gear into the night. Open it and check that it starts empty.",
+		"copy": "Open the backpack. It carries gear into each run.",
 		"completion": {"type": "anchored_action"},
 		"gating": {"allowed_action_ids": ["home_container:backpack_01"]}
 	},
@@ -94,7 +94,7 @@
 			"state_predicates": [{"path": "run.inventory_count", "op": "equals", "value": 0}]
 		},
 		"anchor": {"kind": "hud_element", "id": "inventory"},
-		"copy": "Your carried inventory is empty. Open it now; the backpack remains separate storage.",
+		"copy": "Open your carried inventory. The backpack is separate storage.",
 		"completion": {"type": "anchored_action", "action_id": "inventory"},
 		"gating": {"allowed_action_ids": ["inventory"]}
 	},
@@ -107,7 +107,7 @@
 			"state_predicates": [{"path": "run.challenge_id", "op": "equals", "value": "tutorial_first_card"}]
 		},
 		"anchor": {"kind": "interactable_object", "id": "travel:leave"},
-		"copy": "The room is your safe start. Use the door to open the city map.",
+		"copy": "Use the room door to reach the motel lobby.",
 		"completion": {"type": "anchored_action"},
 		"gating": {"allowed_action_ids": ["travel:leave"]}
 	},
@@ -120,7 +120,7 @@
 			"state_predicates": [{"path": "run.challenge_id", "op": "equals", "value": "tutorial_first_card"}]
 		},
 		"anchor": {"kind": "interactable_object", "id": "travel:leave"},
-		"copy": "You are in the motel lobby. Use its exit to open the city map and choose your first stop.",
+		"copy": "Use the lobby exit to open the city map.",
 		"completion": {"type": "anchored_action"},
 		"gating": {"allowed_action_ids": ["travel:leave"]}
 	},
@@ -133,7 +133,7 @@
 			"state_predicates": [{"path": "ui.world_map_open", "op": "equals", "value": true}]
 		},
 		"anchor": {"kind": "hud_element", "id": "map"},
-		"copy": "Choose the Corner Store. The map lists travel time, method, and cost before you confirm.",
+		"copy": "Choose Corner Store. Check its travel time, method, and cost.",
 		"completion": {"type": "anchored_action", "action_id": "travel:corner_store"},
 		"gating": {"allowed_action_ids": ["travel:corner_store"]}
 	},
@@ -146,7 +146,7 @@
 			"state_predicates": [{"path": "run.inventory_count", "op": "equals", "value": 0}]
 		},
 		"anchor": {"kind": "interactable_object", "id": "item:instant_coffee"},
-		"copy": "Buy the Instant Coffee. Items describe their role without revealing exact hidden effects.",
+		"copy": "Buy Instant Coffee. Its glyphs show its role.",
 		"completion": {"type": "anchored_action"},
 		"gating": {"allowed_action_ids": ["ui:any", "item:instant_coffee"]}
 	},
@@ -159,7 +159,7 @@
 			"state_predicates": [{"path": "run.inventory_count", "op": "gt", "value": 0}]
 		},
 		"anchor": {"kind": "interactable_object", "id": "travel:leave"},
-		"copy": "You have one useful item and enough cash left to play. Open the map again.",
+		"copy": "Open the map. You still have cash for the tables.",
 		"completion": {"type": "anchored_action"},
 		"gating": {"allowed_action_ids": ["travel:leave"]}
 	},
@@ -172,7 +172,7 @@
 			"state_predicates": [{"path": "ui.world_map_open", "op": "equals", "value": true}]
 		},
 		"anchor": {"kind": "hud_element", "id": "map"},
-		"copy": "Travel to the Low Tide Bar for a low-stakes hand and a little local conversation.",
+		"copy": "Travel to Low Tide Bar for a low-stakes hand.",
 		"completion": {"type": "anchored_action", "action_id": "travel:bar"},
 		"gating": {"allowed_action_ids": ["travel:bar"]}
 	},
@@ -185,7 +185,7 @@
 			"state_predicates": [{"path": "run.challenge_id", "op": "equals", "value": "tutorial_first_card"}]
 		},
 		"anchor": {"kind": "interactable_object", "id": "game:blackjack"},
-		"copy": "Sit at blackjack. This lesson uses the same table and rules as every normal run.",
+		"copy": "Sit at blackjack. Normal runs use these same rules.",
 		"completion": {"type": "anchored_action"},
 		"gating": {"allowed_action_ids": ["game:blackjack"]}
 	},
@@ -198,7 +198,7 @@
 			"state_predicates": [{"path": "run.challenge_id", "op": "equals", "value": "tutorial_first_card"}]
 		},
 		"anchor": {"kind": "surface_action", "id": "blackjack_count_toggle"},
-		"copy": "Try the count display. It is information, not a promise, and watching it can carry risk.",
+		"copy": "Open the count display. Reading the table can draw attention.",
 		"completion": {"type": "anchored_action"},
 		"gating": {"allowed_action_ids": ["blackjack_count_toggle", "ui:any"]}
 	},
@@ -211,7 +211,7 @@
 			"state_predicates": [{"path": "run.challenge_id", "op": "equals", "value": "tutorial_first_card"}]
 		},
 		"anchor": {"kind": "surface_action", "id": "blackjack_deal"},
-		"copy": "Keep the stake low and deal one hand. The wager is paid only when the hand begins.",
+		"copy": "Keep the minimum stake and deal one hand.",
 		"completion": {"type": "anchored_action"},
 		"gating": {"allowed_action_ids": ["blackjack_deal", "ui:any"]}
 	},
@@ -224,7 +224,7 @@
 			"state_predicates": [{"path": "run.challenge_id", "op": "equals", "value": "tutorial_first_card"}]
 		},
 		"anchor": {"kind": "surface_action", "id": "blackjack_stand"},
-		"copy": "Stand to finish the hand. Completed bets always resolve before closing-time travel.",
+		"copy": "Stand to finish the hand.",
 		"completion": {"type": "anchored_action"},
 		"gating": {"allowed_action_ids": ["blackjack_stand", "blackjack_deal", "ui:any"]}
 	},
@@ -237,7 +237,7 @@
 			"state_predicates": [{"path": "run.challenge_id", "op": "equals", "value": "tutorial_first_card"}]
 		},
 		"anchor": {"kind": "hud_element", "id": "heat"},
-		"copy": "Heat measures attention. Clean play is quieter; risky moves can make later rooms harder.",
+		"copy": "Heat measures attention. Risky moves make later rooms harder.",
 		"completion": {"type": "explicit_ok"}
 	},
 	{
@@ -249,7 +249,7 @@
 			"state_predicates": [{"path": "run.challenge_id", "op": "equals", "value": "tutorial_first_card"}]
 		},
 		"anchor": {"kind": "surface_action", "id": "surface_back"},
-		"copy": "Leave the table and speak with the people in the room. Conversation can open routes.",
+		"copy": "Leave the table and speak with someone in the bar.",
 		"completion": {"type": "anchored_action"},
 		"gating": {"allowed_action_ids": ["surface_back"]}
 	},
@@ -262,7 +262,7 @@
 			"state_predicates": [{"path": "run.tutorial_friendly_choice_done", "op": "equals", "value": false}]
 		},
 		"anchor": {"kind": "interactable_object", "id": "event:tutorial_friendly_choice"},
-		"copy": "Talk to the friendly regular. Choose what you want to say, not a displayed numeric effect.",
+		"copy": "Talk to the regular. Choose what you would say.",
 		"completion": {"type": "anchored_action"},
 		"gating": {"allowed_action_ids": ["event:tutorial_friendly_choice"]}
 	},
@@ -275,7 +275,7 @@
 			"state_predicates": [{"path": "run.tutorial_friendly_choice_done", "op": "equals", "value": true}]
 		},
 		"anchor": {"kind": "interactable_object", "id": "event:tutorial_grand_casino_invitation"},
-		"copy": "The host is holding a Grand Casino invitation. Speak with them and accept when ready.",
+		"copy": "The host has an invitation. Speak with them.",
 		"completion": {"type": "anchored_action"},
 		"gating": {"allowed_action_ids": ["event:tutorial_grand_casino_invitation"]}
 	},
@@ -288,7 +288,7 @@
 			"state_predicates": [{"path": "run.tutorial_invited", "op": "equals", "value": true}]
 		},
 		"anchor": {"kind": "hud_element", "id": "objective"},
-		"copy": "The Grand Casino is now on your map. The next lesson begins on its main floor.",
+		"copy": "The Grand Casino is now visible on your map.",
 		"completion": {"type": "explicit_ok"}
 	},
 	{
@@ -300,7 +300,7 @@
 			"state_predicates": [{"path": "ui.world_map_open", "op": "equals", "value": true}]
 		},
 		"anchor": {"kind": "hud_element", "id": "map"},
-		"copy": "Travel to the Grand Casino. This lesson stays on the Main Floor; the other rooms belong to later runs.",
+		"copy": "Travel to the Grand Casino. This lesson stays on the Main Floor.",
 		"completion": {"type": "anchored_action", "action_id": "travel:grand_casino"},
 		"gating": {"allowed_action_ids": ["travel:grand_casino"]}
 	},
@@ -313,7 +313,7 @@
 			"state_predicates": [{"path": "run.grand_casino_chips", "op": "equals", "value": 0}]
 		},
 		"anchor": {"kind": "interactable_object", "id": "casino_fixture:cage"},
-		"copy": "Start at the Cage. Linda exchanges cash for casino chips and handles the Players Card review.",
+		"copy": "Start at the Cage. Linda exchanges cash and chips.",
 		"completion": {"type": "anchored_action"},
 		"gating": {"allowed_action_ids": ["casino_fixture:cage"]}
 	},
@@ -329,7 +329,7 @@
 			]
 		},
 		"anchor": {"kind": "surface_action", "id": "cage:buy_chips"},
-		"copy": "Buy the smallest chip stack. Chips are separate from cash, and the Cage can exchange them back.",
+		"copy": "Buy the smallest chip stack.",
 		"completion": {"type": "anchored_action", "action_id": "cage:buy_chips"},
 		"gating": {"allowed_action_ids": ["cage:buy_chips"]}
 	},
@@ -342,7 +342,7 @@
 			"state_predicates": [{"path": "run.grand_casino_chips", "op": "gt", "value": 0}]
 		},
 		"anchor": {"kind": "hud_element", "id": "chips"},
-		"copy": "The HUD tracks chips beside your cash. Main Floor machines still spend cash; tables deeper inside use chips.",
+		"copy": "Chips and cash stay separate. This Main Floor slot uses cash.",
 		"completion": {"type": "explicit_ok"}
 	},
 	{
@@ -354,7 +354,7 @@
 			"state_predicates": [{"path": "ui.cage_window_open", "op": "equals", "value": true}]
 		},
 		"anchor": {"kind": "surface_action", "id": "cage:close"},
-		"copy": "Close the Cage and find the highlighted Main Floor machine.",
+		"copy": "Close the Cage and find the highlighted slot.",
 		"completion": {"type": "anchored_action", "action_id": "cage:close"},
 		"gating": {"allowed_action_ids": ["cage:close"]}
 	},
@@ -367,7 +367,7 @@
 			"state_predicates": [{"path": "ui.cage_window_open", "op": "equals", "value": false}]
 		},
 		"anchor": {"kind": "interactable_object", "id": "game:slot"},
-		"copy": "Use the Main Floor slot. One short, clean spin is enough if you finish at least one dollar ahead.",
+		"copy": "Use the Main Floor slot. Finish one dollar ahead.",
 		"completion": {"type": "anchored_action"},
 		"gating": {"allowed_action_ids": ["game:slot"]}
 	},
@@ -380,7 +380,7 @@
 			"state_predicates": [{"path": "run.challenge_id", "op": "equals", "value": "tutorial_first_card"}]
 		},
 		"anchor": {"kind": "surface_action", "id": "spin"},
-		"copy": "Keep the minimum bet and spin. The First Night match keeps this opening wager forgiving.",
+		"copy": "Keep the minimum bet and spin once.",
 		"completion": {"type": "anchored_action"},
 		"gating": {"allowed_action_ids": ["spin", "slot_spin", "ui:any"]}
 	},
@@ -393,7 +393,7 @@
 			"state_predicates": [{"path": "run.high_roller_ready", "op": "equals", "value": true}]
 		},
 		"anchor": {"kind": "hud_element", "id": "objective"},
-		"copy": "You finished ahead and reached Gold for this lesson. Leave the machine and return to the Cage.",
+		"copy": "You reached Gold. Return to Linda at the Cage.",
 		"completion": {"type": "explicit_ok"}
 	},
 	{
@@ -405,7 +405,7 @@
 			"state_predicates": [{"path": "run.high_roller_ready", "op": "equals", "value": true}]
 		},
 		"anchor": {"kind": "surface_action", "id": "surface_back"},
-		"copy": "Return to the Main Floor. Linda has your Gold review ready.",
+		"copy": "Leave the slot and return to the Main Floor.",
 		"completion": {"type": "anchored_action"},
 		"gating": {"allowed_action_ids": ["surface_back"]}
 	},
@@ -418,7 +418,7 @@
 			"state_predicates": [{"path": "run.high_roller_ready", "op": "equals", "value": true}]
 		},
 		"anchor": {"kind": "interactable_object", "id": "casino_fixture:cage"},
-		"copy": "Open the Cage again. Cash out the lesson chips before Linda completes your review.",
+		"copy": "Open the Cage for Linda's Gold review.",
 		"completion": {"type": "anchored_action"},
 		"gating": {"allowed_action_ids": ["casino_fixture:cage"]}
 	},
@@ -434,7 +434,7 @@
 			]
 		},
 		"anchor": {"kind": "surface_action", "id": "cage:cash_out"},
-		"copy": "Cash out all chips. The total moves back into your spendable cash immediately.",
+		"copy": "Cash out all chips before the review.",
 		"completion": {"type": "anchored_action", "action_id": "cage:cash_out"},
 		"gating": {"allowed_action_ids": ["cage:cash_out"]}
 	},
@@ -451,7 +451,7 @@
 			]
 		},
 		"anchor": {"kind": "surface_action", "id": "cage:review"},
-		"copy": "Choose Complete Gold Review. Linda will explain what your first Players Card means.",
+		"copy": "Choose Complete Gold Review to speak with Linda.",
 		"completion": {"type": "anchored_action", "action_id": "cage:review"},
 		"gating": {"allowed_action_ids": ["cage:review"]}
 	},
@@ -464,7 +464,7 @@
 			]
 		},
 		"anchor": {"kind": "hud_element", "id": "inventory"},
-		"copy": "Your first card is in the collection. Carry it for recognition; lose that run and the card is gone forever.",
+		"copy": "Carry your first card for recognition. Lose that run and it is gone forever.",
 		"completion": {"type": "explicit_ok"}
 	}
 ]

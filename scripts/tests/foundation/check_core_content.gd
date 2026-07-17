@@ -2544,6 +2544,9 @@ func _check_onboarding_tutorial_arc(library: ContentLibrary, failures: Array) ->
 	legacy_profile.loaded_from_disk = true
 	if TutorialFlowScript.should_auto_start(legacy_profile, fresh_meta):
 		failures.append("Legacy profile without onboarding state was forced into the tutorial.")
+	var legacy_heat_tip := library.tutorial_lesson("tip_first_heat_gain")
+	if not CoachViewModelScript.trigger_matches(legacy_heat_tip, {"run": {"heat_gain_count": 1}}, legacy_profile.tips_seen, true):
+		failures.append("Legacy profile did not retain normal first-time coach tips.")
 	var tutorial_lessons: Array = []
 	for lesson_value in library.tutorial_lessons:
 		if typeof(lesson_value) == TYPE_DICTIONARY and str((lesson_value as Dictionary).get("scope", "")) == "tutorial_run":
@@ -2556,6 +2559,49 @@ func _check_onboarding_tutorial_arc(library: ContentLibrary, failures: Array) ->
 			failures.append("Tutorial coach lesson fired with tips disabled: %s" % str(lesson.get("id", "")))
 	if tutorial_lessons.size() < 28:
 		failures.append("Tutorial coach data did not cover the full seven-beat arc through Linda's review.")
+	var tutorial_copy_words := 0
+	var small_viewport := Rect2(Vector2.ZERO, Vector2(360, 640))
+	for lesson_index in range(tutorial_lessons.size()):
+		var lesson: Dictionary = tutorial_lessons[lesson_index]
+		var lesson_copy := str(lesson.get("copy", "")).strip_edges()
+		tutorial_copy_words += lesson_copy.split(" ", false).size()
+		if lesson_copy.length() > 80:
+			failures.append("Tutorial coach copy exceeded the compact bubble limit: %s." % str(lesson.get("id", "")))
+		var anchor: Dictionary = lesson.get("anchor", {}) if typeof(lesson.get("anchor", {})) == TYPE_DICTIONARY else {}
+		var anchor_kind := str(anchor.get("kind", "none"))
+		var anchor_id := str(anchor.get("id", ""))
+		var anchor_group := str({
+			"interactable_object": "interactable_objects",
+			"hud_element": "hud_elements",
+			"surface_action": "surface_actions",
+		}.get(anchor_kind, ""))
+		var anchor_rects := {"interactable_objects": {}, "hud_elements": {}, "surface_actions": {}}
+		if not anchor_group.is_empty():
+			var anchor_y := 12.0 if lesson_index % 3 == 0 else (292.0 if lesson_index % 3 == 1 else 576.0)
+			var group_rects: Dictionary = anchor_rects[anchor_group]
+			group_rects[anchor_id] = Rect2(24.0, anchor_y, 88.0, 52.0)
+		var small_model := CoachViewModelScript.build(lesson, {
+			"viewport_rect": small_viewport,
+			"anchor_rects": anchor_rects,
+			"small_screen": true,
+			"reduce_motion": true,
+		})
+		var small_bubble := CoachViewModelScript._rect(small_model.get("bubble_rect", {}))
+		if not small_viewport.encloses(small_bubble):
+			failures.append("Tutorial coach bubble escaped small-screen bounds: %s." % str(lesson.get("id", "")))
+		if not anchor_group.is_empty() and not bool(small_model.get("anchor_found", false)):
+			failures.append("Tutorial coach anchor failed in small-screen mode: %s." % str(lesson.get("id", "")))
+		if not bool(small_model.get("small_screen", false)) or not bool(small_model.get("reduce_motion", false)) or float(small_model.get("minimum_control_height", 0.0)) < 52.0:
+			failures.append("Tutorial coach accessibility state drifted: %s." % str(lesson.get("id", "")))
+	if tutorial_copy_words > 280:
+		failures.append("Tutorial coach copy exceeded the paced 280-word budget: %d words." % tutorial_copy_words)
+	var narrow_model := CoachViewModelScript.build(_coach_lesson_fixture("narrow_phone"), {
+		"viewport_rect": Rect2(Vector2.ZERO, Vector2(240, 320)),
+		"small_screen": true,
+		"reduce_motion": true,
+	})
+	if not Rect2(Vector2.ZERO, Vector2(240, 320)).encloses(CoachViewModelScript._rect(narrow_model.get("bubble_rect", {}))):
+		failures.append("Coach bubble did not clamp to a narrow phone viewport.")
 
 
 func _remove_tutorial_meta_store() -> void:

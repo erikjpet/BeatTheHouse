@@ -472,9 +472,23 @@ func _check_coach_overlay_component() -> bool:
 		push_error("Coach overlay gating did not block only undeclared actions.")
 		return false
 	overlay.set_reduce_motion(true)
-	if not bool(overlay.current_snapshot().get("reduce_motion", false)):
+	var attention_tween: Tween = overlay.get("attention_tween")
+	var coach_panel: PanelContainer = overlay.get("panel")
+	if not bool(overlay.current_snapshot().get("reduce_motion", false)) or (attention_tween != null and attention_tween.is_running()) or coach_panel == null or coach_panel.modulate != Color.WHITE:
 		parent.queue_free()
-		push_error("Coach overlay did not apply reduce-motion instantly.")
+		push_error("Coach overlay did not apply reduce-motion instantly and without attention animation.")
+		return false
+	overlay.restore_seen({})
+	overlay.set_lessons([
+		{"id": "tips_off_normal", "trigger": {"state_predicates": []}, "anchor": {"kind": "none"}, "copy": "Normal advice.", "completion": {"type": "any_action"}},
+		{"id": "tips_off_tutorial", "scope": "tutorial_run", "trigger": {"state_predicates": []}, "anchor": {"kind": "none"}, "copy": "Tutorial advice.", "completion": {"type": "any_action"}},
+	])
+	overlay.set_tips_enabled(false)
+	overlay.evaluate_at_boundary({"viewport_rect": Rect2(Vector2.ZERO, parent.size), "run": {"tutorial": false}})
+	overlay.evaluate_at_boundary({"viewport_rect": Rect2(Vector2.ZERO, parent.size), "run": {"tutorial": true}})
+	if bool(overlay.current_snapshot().get("visible", false)) or int(overlay.current_snapshot().get("queued_count", 0)) != 0:
+		parent.queue_free()
+		push_error("Tips-off coach profile displayed normal or tutorial guidance.")
 		return false
 	parent.queue_free()
 	await process_frame

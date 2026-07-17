@@ -100,7 +100,7 @@
 	{
 		"id": "tutorial_first_card",
 		"title": "First Night in Town",
-		"description": "A short, guided first run from the motel room to a Grand Casino invitation.",
+		"description": "A guided first run ending with your Players Card.",
 		"completion_flag": "challenge_tutorial_first_card_complete",
 		"fixed_seed": "FIRST-NIGHT-ACE-17",
 		"menu_visible": false,
@@ -141,7 +141,7 @@
 					"game_count": [1, 1],
 					"demo_objective": {
 						"title": "Earn Your First Players Card",
-						"summary": "Settle one clean Main Floor spin, finish at least $1 ahead, then return to Linda at the Cage.",
+						"summary": "Finish one clean Main Floor spin $1 ahead, then return to Linda.",
 						"high_roller_net_winnings": 1,
 						"high_roller_min_grand_casino_games": 1,
 						"high_roller_max_heat": 90,
@@ -154,7 +154,7 @@
 						"players_card_gold_min_games": 1,
 						"players_card_gold_net_winnings": 1,
 						"players_card_gold_max_heat": 90,
-						"victory_message": "Tutorial Victory: Linda issued your first Grand Casino Players Card."
+						"victory_message": "Linda issued your first Players Card."
 					}
 				}
 			}
