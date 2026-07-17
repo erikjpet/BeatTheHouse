@@ -4,6 +4,7 @@ extends RefCounted
 # Source of truth for one active run in the foundation path.
 
 const GrandCasinoShowdownModelScript := preload("res://scripts/core/grand_casino_showdown_model.gd")
+const GrandCasinoDuelModelScript := preload("res://scripts/core/grand_casino_duel_model.gd")
 
 const DEFAULT_BANKROLL := 100
 const LOCAL_RISK_DECAY_BY_DISTANCE := {
@@ -73,6 +74,7 @@ const GRAND_CASINO_SHOWDOWN_ROUTE := "pit_boss_showdown"
 const GRAND_CASINO_SHOWDOWN_STEP_WALK := "walk"
 const GRAND_CASINO_SHOWDOWN_STEP_PAT_DOWN := "pat_down"
 const GRAND_CASINO_SHOWDOWN_STEP_INTERROGATION := "interrogation"
+const GRAND_CASINO_SHOWDOWN_STEP_DUEL := "duel"
 const GRAND_CASINO_SHOWDOWN_STEP_LEGACY_CHECK := "legacy_phase_4"
 const GRAND_CASINO_SHOWDOWN_STEP_PRESSURE := "pressure_choice"
 const GRAND_CASINO_PLAYERS_CARD_TIER_NONE := "none"
@@ -1234,6 +1236,10 @@ func grand_casino_room_access_status(target_archetype_id: String, high_limit_buy
 	var target_id := target_archetype_id.strip_edges()
 	if not is_grand_casino_environment():
 		return {"available": false, "reason": "The casino interior is not available here."}
+	if bool(narrative_flags.get("grand_casino_showdown_active", false)):
+		if target_id == GRAND_CASINO_BACK_ROOM_ARCHETYPE_ID and str(narrative_flags.get("grand_casino_showdown_step", "")) == GRAND_CASINO_SHOWDOWN_STEP_DUEL:
+			return {"available": true, "access_method": "showdown", "cost": 0}
+		return {"available": false, "locked": true, "reason": "Rourke keeps the Back Room door shut until the duel ends."}
 	if target_id == GRAND_CASINO_BACK_ROOM_ARCHETYPE_ID:
 		return {"available": false, "locked": true, "reason": "Locked. Rourke opens the Back Room only for a showdown."}
 	if target_id == GRAND_CASINO_HIGH_LIMIT_ARCHETYPE_ID:
@@ -1309,6 +1315,8 @@ func grand_casino_chip_exchange_rate() -> int:
 func buy_grand_casino_chips(chip_amount: int, cash_rate: int = 1) -> Dictionary:
 	if not _is_grand_casino_environment(current_environment):
 		return {"ok": false, "message": "Casino chips are only sold inside the Grand Casino."}
+	if bool(narrative_flags.get("grand_casino_showdown_active", false)):
+		return {"ok": false, "message": "The Cage is locked while Rourke's duel is active."}
 	var amount := maxi(0, chip_amount)
 	var rate := maxi(1, cash_rate)
 	var cash_cost := amount * rate
@@ -1325,6 +1333,10 @@ func buy_grand_casino_chips(chip_amount: int, cash_rate: int = 1) -> Dictionary:
 func cash_out_grand_casino_chips(chip_amount: int = -1, cash_rate: int = 1) -> Dictionary:
 	if not _is_grand_casino_environment(current_environment):
 		return {"ok": false, "message": "The Cage is only available inside the Grand Casino."}
+	if bool(narrative_flags.get("grand_casino_walked_with_chips", false)):
+		return {"ok": false, "message": "Rourke closed the Cage account when you were shown the door."}
+	if bool(narrative_flags.get("grand_casino_showdown_active", false)) and str(narrative_flags.get("grand_casino_duel_outcome", "")) != GrandCasinoDuelModelScript.OUTCOME_WALK_OUT_CLEAN:
+		return {"ok": false, "message": "The Cage is locked while Rourke's duel is active."}
 	var amount := grand_casino_chips if chip_amount < 0 else mini(grand_casino_chips, maxi(0, chip_amount))
 	if amount <= 0:
 		return {"ok": false, "message": "You do not have any chips to cash out."}
@@ -2544,13 +2556,9 @@ func _log_grand_casino_heat_reroute(showdown_event_id: String, trigger_reason: S
 	})
 
 
-# Returns the current serialized back-room phase and temporary check preview.
-func grand_casino_showdown_status(config: Dictionary = {}, preview_choice_id: String = "") -> Dictionary:
-	var choice_id := preview_choice_id.strip_edges()
-	if choice_id.is_empty():
-		choice_id = str(narrative_flags.get("grand_casino_showdown_pressure_choice", "hold_steady"))
+# Returns the current serialized back-room phase and playable duel state.
+func grand_casino_showdown_status(config: Dictionary = {}, _preview_choice_id: String = "") -> Dictionary:
 	var duel_terms := _copy_dict(narrative_flags.get("grand_casino_duel_terms", {}))
-	var check := _grand_casino_showdown_check(choice_id, config) if not duel_terms.is_empty() else {}
 	return {
 		"event_id": GRAND_CASINO_SHOWDOWN_EVENT_ID,
 		"pending": bool(narrative_flags.get("grand_casino_showdown_pending", false)),
@@ -2559,12 +2567,11 @@ func grand_casino_showdown_status(config: Dictionary = {}, preview_choice_id: St
 		"attempt": maxi(0, int(narrative_flags.get("grand_casino_showdown_attempt", 0))),
 		"trigger_reason": str(narrative_flags.get("grand_casino_showdown_trigger_reason", "")),
 		"pressure_choice": str(narrative_flags.get("grand_casino_showdown_pressure_choice", "")),
-		"preview_choice": choice_id,
-		"check": check,
 		"walk": grand_casino_showdown_walk_status(),
 		"pat_down": _copy_dict(narrative_flags.get("grand_casino_showdown_pat_down", {})),
 		"interrogation": grand_casino_showdown_interrogation_status(config),
 		"duel_terms": duel_terms,
+		"duel": _copy_dict(narrative_flags.get("grand_casino_duel_state", {})),
 	}
 
 
@@ -2668,6 +2675,12 @@ func start_grand_casino_showdown(config: Dictionary = {}) -> Dictionary:
 	narrative_flags.erase("grand_casino_showdown_interrogation_beat")
 	narrative_flags.erase("grand_casino_showdown_interrogation_answers")
 	narrative_flags.erase("grand_casino_duel_terms")
+	narrative_flags.erase("grand_casino_duel_state")
+	narrative_flags.erase("grand_casino_duel_outcome")
+	narrative_flags.erase("grand_casino_walked_with_chips")
+	narrative_flags.erase("grand_casino_uncashed_chip_amount")
+	narrative_flags.erase("grand_casino_uncashed_chip_score_percent")
+	narrative_flags.erase("grand_casino_uncashed_chip_score_value")
 	log_story({
 		"type": "grand_casino_showdown_arrival",
 		"event_id": GRAND_CASINO_SHOWDOWN_EVENT_ID,
@@ -2805,7 +2818,7 @@ func resolve_grand_casino_showdown_interrogation(choice_id: String, config: Dict
 		}
 	var terms := _build_grand_casino_duel_terms(config)
 	narrative_flags["grand_casino_duel_terms"] = terms
-	narrative_flags["grand_casino_showdown_step"] = GRAND_CASINO_SHOWDOWN_STEP_LEGACY_CHECK
+	var duel := _begin_grand_casino_duel(terms)
 	log_story({
 		"type": "grand_casino_duel_terms",
 		"event_id": GRAND_CASINO_SHOWDOWN_EVENT_ID,
@@ -2815,34 +2828,184 @@ func resolve_grand_casino_showdown_interrogation(choice_id: String, config: Dict
 		"rourke_cheat_level": int(terms.get("rourke_cheat_level", 0)),
 		"message": "The questions set the chips and Rourke's edge.",
 	})
-	return resolve_grand_casino_showdown_pressure(choice_id, config)
+	return {
+		"ok": true,
+		"duel_ready": true,
+		"message": str(duel.get("last_bark", "Rourke cuts the cards in the Back Room.")),
+		"duel": duel,
+		"status": grand_casino_showdown_status(config),
+	}
 
 
-# Temporary slice-6 phase-four stand-in. Slice 7 replaces this with the duel.
+# Migrates a slice-6 boundary save into the playable duel without rolling an
+# outcome. No current event path calls this compatibility entry point.
 func resolve_grand_casino_showdown_pressure(choice_id: String, config: Dictionary = {}) -> Dictionary:
 	if not bool(narrative_flags.get("grand_casino_showdown_active", false)):
 		return {"ok": false, "message": "The showdown is not active."}
 	if str(narrative_flags.get("grand_casino_showdown_step", "")) != GRAND_CASINO_SHOWDOWN_STEP_LEGACY_CHECK or _copy_dict(narrative_flags.get("grand_casino_duel_terms", {})).is_empty():
 		return {"ok": false, "message": "Rourke still has questions before the game."}
-	var pressure_choice := choice_id.strip_edges()
-	var check := _grand_casino_showdown_check(pressure_choice, config)
-	var success := bool(check.get("success", false))
-	narrative_flags["grand_casino_showdown_roll"] = int(check.get("roll", 0))
-	narrative_flags["grand_casino_showdown_success_chance"] = int(check.get("success_chance", 0))
-	narrative_flags["grand_casino_showdown_margin"] = int(check.get("margin", 0))
-	narrative_flags["grand_casino_showdown_success"] = success
-	narrative_flags["grand_casino_showdown_modifiers"] = _copy_dict(check.get("modifiers", {}))
-	var success_message := str(config.get("success_message", GRAND_CASINO_SHOWDOWN_DEFAULT_SUCCESS_MESSAGE)).strip_edges()
-	if success_message.is_empty():
-		success_message = GRAND_CASINO_SHOWDOWN_DEFAULT_SUCCESS_MESSAGE
-	var failure_message := str(config.get("failure_message", GRAND_CASINO_SHOWDOWN_DEFAULT_FAILURE_MESSAGE)).strip_edges()
-	if failure_message.is_empty():
-		failure_message = GRAND_CASINO_SHOWDOWN_DEFAULT_FAILURE_MESSAGE
-	if success:
-		_complete_grand_casino_showdown_success(success_message)
-		return {"ok": true, "success": true, "message": success_message, "check": check, "duel_terms": _copy_dict(narrative_flags.get("grand_casino_duel_terms", {}))}
-	_complete_grand_casino_showdown_failure(failure_message)
-	return {"ok": true, "success": false, "message": failure_message, "check": check, "duel_terms": _copy_dict(narrative_flags.get("grand_casino_duel_terms", {}))}
+	if not choice_id.strip_edges().is_empty():
+		narrative_flags["grand_casino_showdown_pressure_choice"] = choice_id.strip_edges()
+	var duel := _begin_grand_casino_duel(_copy_dict(narrative_flags.get("grand_casino_duel_terms", {})))
+	return {"ok": true, "duel_ready": true, "message": str(duel.get("last_bark", "Rourke cuts the cards.")), "duel": duel}
+
+
+func _begin_grand_casino_duel(terms: Dictionary) -> Dictionary:
+	var existing := _copy_dict(narrative_flags.get("grand_casino_duel_state", {}))
+	if not existing.is_empty() and str(existing.get("status", "")) == "active":
+		narrative_flags["grand_casino_showdown_step"] = GRAND_CASINO_SHOWDOWN_STEP_DUEL
+		return existing
+	var attempt := maxi(1, int(narrative_flags.get("grand_casino_showdown_attempt", 1)))
+	var duel_rng := create_rng("grand_casino_duel").fork("attempt:%d:setup" % attempt)
+	var duel := GrandCasinoDuelModelScript.initialize(terms, duel_rng)
+	duel["attempt"] = attempt
+	duel["input_index"] = 0
+	narrative_flags["grand_casino_duel_state"] = duel.duplicate(true)
+	narrative_flags["grand_casino_showdown_step"] = GRAND_CASINO_SHOWDOWN_STEP_DUEL
+	narrative_flags.erase("grand_casino_showdown_roll")
+	narrative_flags.erase("grand_casino_showdown_success_chance")
+	narrative_flags.erase("grand_casino_showdown_modifiers")
+	return duel
+
+
+func grand_casino_duel_active(environment: Dictionary = {}) -> bool:
+	var source := current_environment if environment.is_empty() else environment
+	return (
+		_is_grand_casino_environment(source)
+		and bool(narrative_flags.get("grand_casino_showdown_active", false))
+		and str(narrative_flags.get("grand_casino_showdown_step", "")) == GRAND_CASINO_SHOWDOWN_STEP_DUEL
+		and str(_copy_dict(narrative_flags.get("grand_casino_duel_state", {})).get("status", "")) == "active"
+	)
+
+
+func grand_casino_duel_status() -> Dictionary:
+	var state := _copy_dict(narrative_flags.get("grand_casino_duel_state", {}))
+	if state.is_empty() and bool(narrative_flags.get("grand_casino_showdown_active", false)) and not _copy_dict(narrative_flags.get("grand_casino_duel_terms", {})).is_empty():
+		state = _begin_grand_casino_duel(_copy_dict(narrative_flags.get("grand_casino_duel_terms", {})))
+	return state
+
+
+func grand_casino_duel_terms() -> Dictionary:
+	return _copy_dict(narrative_flags.get("grand_casino_duel_terms", {}))
+
+
+func grand_casino_duel_session() -> Dictionary:
+	return _copy_dict(grand_casino_duel_status().get("blackjack_session", {}))
+
+
+func persist_grand_casino_duel_session(session: Dictionary) -> void:
+	var state := grand_casino_duel_status()
+	if str(state.get("status", "")) != "active":
+		return
+	var saved := session.duplicate(true)
+	for key in ["surface_time_msec", "drunk_scaled_surface_time_msec"]:
+		saved.erase(key)
+	state["blackjack_session"] = saved
+	narrative_flags["grand_casino_duel_state"] = state
+
+
+func grand_casino_duel_action_time_msec() -> int:
+	var state := grand_casino_duel_status()
+	var input_index := maxi(0, int(state.get("input_index", 0))) + 1
+	state["input_index"] = input_index
+	narrative_flags["grand_casino_duel_state"] = state
+	return simulation_time_msec() + input_index * 250
+
+
+func grand_casino_duel_current_edge() -> Dictionary:
+	return GrandCasinoDuelModelScript.current_edge(grand_casino_duel_status())
+
+
+func grand_casino_duel_call_out(edge_id: String) -> Dictionary:
+	var terms := grand_casino_duel_terms()
+	var outcome := GrandCasinoDuelModelScript.call_out(grand_casino_duel_status(), edge_id, terms)
+	if not bool(outcome.get("ok", false)):
+		return outcome
+	var state := _copy_dict(outcome.get("state", {}))
+	narrative_flags["grand_casino_duel_state"] = state
+	log_story({
+		"type": "grand_casino_duel_callout",
+		"event_id": GRAND_CASINO_SHOWDOWN_EVENT_ID,
+		"hand": int(state.get("hand_index", 0)) + 1,
+		"edge_id": edge_id,
+		"correct": bool(outcome.get("correct", false)),
+		"stack_swing": int(outcome.get("swing", 0)),
+		"message": str(outcome.get("message", "Rourke marks the call.")),
+	})
+	_finalize_grand_casino_duel_if_complete(state)
+	outcome["state"] = state
+	return outcome
+
+
+func apply_grand_casino_duel_hand(hand_result: Dictionary) -> Dictionary:
+	var terms := grand_casino_duel_terms()
+	var outcome := GrandCasinoDuelModelScript.apply_hand(grand_casino_duel_status(), hand_result, terms)
+	if not bool(outcome.get("ok", false)):
+		return outcome
+	var state := _copy_dict(outcome.get("state", {}))
+	narrative_flags["grand_casino_duel_state"] = state
+	var recorded_hands := _copy_array(state.get("hands", []))
+	var recorded := _copy_dict(recorded_hands.back()) if not recorded_hands.is_empty() else {}
+	log_story({
+		"type": "grand_casino_duel_hand",
+		"event_id": GRAND_CASINO_SHOWDOWN_EVENT_ID,
+		"hand": int(recorded.get("hand_index", 0)) + 1,
+		"transfer": int(recorded.get("transfer", 0)),
+		"player_stack": int(state.get("player_stack", 0)),
+		"rourke_stack": int(state.get("rourke_stack", 0)),
+		"player_cheat_caught": bool(recorded.get("player_cheat_caught", false)),
+		"message": str(hand_result.get("message", "The house table settles one hand.")),
+	})
+	_finalize_grand_casino_duel_if_complete(state)
+	outcome["state"] = state
+	return outcome
+
+
+func _finalize_grand_casino_duel_if_complete(state: Dictionary) -> void:
+	if str(state.get("status", "")) != "complete":
+		return
+	var outcome := str(state.get("outcome", ""))
+	var margin := int(state.get("margin", int(state.get("player_stack", 0)) - int(state.get("rourke_stack", 0))))
+	narrative_flags["grand_casino_duel_outcome"] = outcome
+	narrative_flags["grand_casino_showdown_margin"] = margin
+	narrative_flags["grand_casino_showdown_success"] = outcome != GrandCasinoDuelModelScript.OUTCOME_TAKEN_OUT_BACK
+	narrative_flags["grand_casino_duel_hands_played"] = _copy_array(state.get("hands", [])).size()
+	match outcome:
+		GrandCasinoDuelModelScript.OUTCOME_WALK_OUT_CLEAN:
+			var cashed_chips := grand_casino_chips
+			if cashed_chips > 0:
+				cash_out_grand_casino_chips(cashed_chips, grand_casino_chip_exchange_rate())
+			narrative_flags["grand_casino_duel_cashed_chip_amount"] = cashed_chips
+			_complete_grand_casino_showdown_success("You take Rourke's stack. Linda cashes the rack, and the elevator opens.")
+		GrandCasinoDuelModelScript.OUTCOME_SHOWN_THE_DOOR:
+			_complete_grand_casino_showdown_shown_door()
+		_:
+			_complete_grand_casino_showdown_failure("Rourke takes the last hand. The casino takes you out back, and the run ends.")
+
+
+func _complete_grand_casino_showdown_shown_door() -> void:
+	var chip_amount := maxi(0, grand_casino_chips)
+	var rules := _copy_dict(grand_casino_duel_terms().get("rules", {}))
+	var score_percent := clampi(int(rules.get("uncashed_chip_score_percent", 50)), 0, 100)
+	var score_value := int(floor(float(chip_amount * score_percent) / 100.0))
+	narrative_flags["grand_casino_walked_with_chips"] = true
+	narrative_flags["grand_casino_uncashed_chip_amount"] = chip_amount
+	narrative_flags["grand_casino_uncashed_chip_score_percent"] = score_percent
+	narrative_flags["grand_casino_uncashed_chip_score_value"] = score_value
+	narrative_flags["demo_finale_last_branch"] = GrandCasinoDuelModelScript.OUTCOME_SHOWN_THE_DOOR
+	_return_grand_casino_crew_handoff()
+	_clear_grand_casino_showdown_terminal_flags()
+	narrative_flags["grand_casino_endgame_state"] = GRAND_CASINO_STATE_VICTORY
+	var message := "Rourke opens the service door but closes the Cage. You leave with %d uncashed house chips." % chip_amount
+	var status := demo_objective_status()
+	if not bool(status.get("grand_casino_objective", false)):
+		status = {"id": GRAND_CASINO_OBJECTIVE_ID, "target_bankroll": bankroll, "victory_message": message}
+	_complete_demo_objective(status, message, {
+		"finale_event_id": GRAND_CASINO_SHOWDOWN_EVENT_ID,
+		"finale_branch": GrandCasinoDuelModelScript.OUTCOME_SHOWN_THE_DOOR,
+		"demo_victory_route": GRAND_CASINO_SHOWDOWN_ROUTE,
+	})
+	_log_demo_finale_result(GRAND_CASINO_SHOWDOWN_EVENT_ID, GrandCasinoDuelModelScript.OUTCOME_SHOWN_THE_DOOR, message, true)
 
 
 func _apply_grand_casino_showdown_pat_down(config: Dictionary) -> Dictionary:
@@ -3076,59 +3239,6 @@ func _clear_grand_casino_clean_cashout_ready() -> void:
 	if not bool(narrative_flags.get("grand_casino_showdown_pending", false)) and not bool(narrative_flags.get("grand_casino_showdown_active", false)):
 		if run_status == RUN_STATUS_ACTIVE or run_status == RUN_STATUS_DISTRESSED:
 			narrative_flags["grand_casino_endgame_state"] = GRAND_CASINO_STATE_PRE
-
-
-func _grand_casino_showdown_check(choice_id: String, config: Dictionary = {}) -> Dictionary:
-	var attempt := maxi(1, int(narrative_flags.get("grand_casino_showdown_attempt", 1)))
-	var roll := int(narrative_flags.get("grand_casino_showdown_roll", 0))
-	if roll <= 0:
-		var showdown_rng := create_rng("grand_casino_showdown").fork("attempt:%d" % attempt)
-		roll = showdown_rng.randi_range(1, 100)
-	var tuning := _grand_casino_showdown_tuning(config)
-	var terms := _copy_dict(narrative_flags.get("grand_casino_duel_terms", {}))
-	var modifiers := _copy_dict(terms.get("legacy_modifiers", {})) if not terms.is_empty() else _grand_casino_showdown_modifier_breakdown(choice_id)
-	var raw_modifier := int(terms.get("legacy_success_modifier", 0))
-	if terms.is_empty():
-		raw_modifier = (
-			int(modifiers.get("pressure_choice_modifier", 0))
-			+ int(modifiers.get("clean_play_modifier", 0))
-			+ int(modifiers.get("item_modifier", 0))
-			+ int(modifiers.get("prior_boss_event_modifier", 0))
-			- int(modifiers.get("heat_penalty", 0))
-			- int(modifiers.get("evidence_penalty", 0))
-			- int(modifiers.get("alcohol_debt_penalty", 0))
-		)
-	var success_chance := clampi(
-		int(tuning.get("base_success_chance", 95)) + raw_modifier,
-		int(tuning.get("min_success_chance", 5)),
-		int(tuning.get("max_success_chance", 95))
-	)
-	var margin := success_chance - roll
-	return {
-		"choice_id": choice_id,
-		"attempt": attempt,
-		"roll": roll,
-		"success_chance": success_chance,
-		"margin": margin,
-		"success": roll <= success_chance,
-		"modifiers": modifiers,
-		"duel_terms_applied": not terms.is_empty(),
-	}
-
-
-func _grand_casino_showdown_tuning(config: Dictionary) -> Dictionary:
-	var min_chance := clampi(int(config.get("min_success_chance", config.get("showdown_min_success_chance", 5))), 0, 100)
-	var max_chance := clampi(int(config.get("max_success_chance", config.get("showdown_max_success_chance", 95))), 0, 100)
-	if max_chance < min_chance:
-		var previous_min := min_chance
-		min_chance = max_chance
-		max_chance = previous_min
-	var base_chance := clampi(int(config.get("base_success_chance", config.get("showdown_base_success_chance", 95))), min_chance, max_chance)
-	return {
-		"base_success_chance": base_chance,
-		"min_success_chance": min_chance,
-		"max_success_chance": max_chance,
-	}
 
 
 func _grand_casino_showdown_modifier_breakdown(choice_id: String) -> Dictionary:
@@ -5930,15 +6040,20 @@ func terminal_score_multiplier() -> int:
 
 
 func terminal_score() -> int:
-	return run_spending_score * terminal_score_multiplier()
+	return (run_spending_score + maxi(0, int(narrative_flags.get("grand_casino_uncashed_chip_score_value", 0)))) * terminal_score_multiplier()
 
 
 func terminal_score_summary() -> Dictionary:
 	var multiplier := terminal_score_multiplier()
+	var uncashed_chip_value := maxi(0, int(narrative_flags.get("grand_casino_uncashed_chip_score_value", 0)))
+	var base_score := run_spending_score + uncashed_chip_value
 	return {
-		"base_spending": run_spending_score,
+		"base_spending": base_score,
+		"run_spending": run_spending_score,
+		"uncashed_chip_score_value": uncashed_chip_value,
+		"uncashed_chip_amount": maxi(0, int(narrative_flags.get("grand_casino_uncashed_chip_amount", 0))),
 		"multiplier": multiplier,
-		"score": run_spending_score * multiplier,
+		"score": base_score * multiplier,
 	}
 
 
@@ -6396,6 +6511,8 @@ func from_dict(data: Dictionary) -> void:
 		_record_heat_history(not current_environment.is_empty())
 	_compact_heat_history()
 	simulation_msec = maxi(0, int(data.get("simulation_msec", int(_copy_dict(data.get("event_cadence", {})).get("action_index", 0)) * SIMULATION_ACTION_MSEC)))
+	if bool(narrative_flags.get("grand_casino_showdown_active", false)) and str(narrative_flags.get("grand_casino_showdown_step", "")) == GRAND_CASINO_SHOWDOWN_STEP_LEGACY_CHECK and not _copy_dict(narrative_flags.get("grand_casino_duel_terms", {})).is_empty():
+		_begin_grand_casino_duel(_copy_dict(narrative_flags.get("grand_casino_duel_terms", {})))
 	game_clock_minutes = maxi(0, int(data.get("game_clock_minutes", GAME_CLOCK_START_MINUTE)))
 	closing_time_state = _normalize_closing_time_state(_copy_dict(data.get("closing_time_state", {})))
 	act_index = maxi(1, int(data.get("act", data.get("act_index", 1))))

@@ -52,6 +52,7 @@ const BJ_CONSOLE_Y := 342.0
 const BJ_CONSOLE_H := 84.0
 const BJ_TABLE_BOTTOM := 334.0
 const DRAW_DEAL_EVENTS_CACHE_KEY := "_blackjack_draw_deal_events"
+const ROURKE_DUEL_VARIANT := "rourke_duel"
 const BJ_RAIL_POINTS := [
 	Vector2(46, 142), Vector2(156, 92), Vector2(334, 76), Vector2(566, 76),
 	Vector2(744, 92), Vector2(854, 142), Vector2(822, BJ_TABLE_BOTTOM), Vector2(78, BJ_TABLE_BOTTOM),
@@ -82,6 +83,10 @@ var draw_patron_character_style: Dictionary = {}
 func enter(run_state: RunState, environment: Dictionary) -> Dictionary:
 	var result: Dictionary = super.enter(run_state, environment)
 	var table: Dictionary = _table_state(run_state, environment)
+	if _is_rourke_duel(run_state, environment):
+		var duel := run_state.grand_casino_duel_status()
+		result["message"] = str(duel.get("last_bark", "Sit down. Five hands. Then the door decides."))
+		return result
 	if bool(table.get("barred", false)):
 		result["message"] = str(table.get("barred_reason", "The dealer refuses to let you play this table after the cheating confrontation."))
 		return result
@@ -156,7 +161,7 @@ func generate_environment_state(run_state: RunState, environment: Dictionary, rn
 		chip_denominations.append(50)
 	if table_limit >= 150:
 		chip_denominations.append(100)
-	return {
+	var state := {
 		"schema": "blackjack_table_state",
 		"version": 2,
 		"table_name": str(rng.pick(["Neon Felt", "Back Room 21", "Hot Shoe", "Midnight Double"], "Neon Felt")),
@@ -188,6 +193,64 @@ func generate_environment_state(run_state: RunState, environment: Dictionary, rn
 		"last_result": {},
 		"table_round_timer_started_msec": 0,
 	}
+	return _configure_rourke_duel_table(state, run_state, environment)
+
+
+func _configure_rourke_duel_table(table: Dictionary, run_state: RunState, environment: Dictionary) -> Dictionary:
+	if not _is_rourke_duel(run_state, environment):
+		return table
+	var duel := run_state.grand_casino_duel_status()
+	var terms := run_state.grand_casino_duel_terms()
+	var attempt := maxi(1, int(duel.get("attempt", run_state.narrative_flags.get("grand_casino_showdown_attempt", 1))))
+	var table_rng := run_state.create_rng("grand_casino_duel").fork("attempt:%d:table" % attempt)
+	var deck_count := 2
+	var shoe := _build_shoe(deck_count, table_rng)
+	table["boss_variant"] = ROURKE_DUEL_VARIANT
+	table["table_name"] = "Rourke's House Table"
+	table["dealer_name"] = "Rourke"
+	table["deck_count"] = deck_count
+	table["shoe"] = shoe
+	table["shoe_cursor"] = 0
+	table["shoe_remaining"] = shoe.size()
+	table["shoe_composition"] = CardShoeScript.remaining_composition(shoe)
+	table["shoe_label"] = CardShoeScript.shoe_label(deck_count)
+	table["count_efficiency"] = CardShoeScript.count_efficiency_label(deck_count)
+	table["cut_card_at"] = shoe.size()
+	table["cut_card_remaining"] = 0
+	table["rules"] = {
+		"dealer_hits_soft_17": false,
+		"double_after_split": false,
+		"split_aces_one_card": true,
+		"max_split_hands": 1,
+		"late_surrender": false,
+	}
+	table["side_bets"] = []
+	table["patrons"] = []
+	table["distractions"] = []
+	table["counting_enabled"] = false
+	table["dealer_catch_base"] = clampi(
+		int(_local_copy_dict(terms.get("rules", {})).get("player_cheat_detection_base", 55))
+		+ int(terms.get("rourke_aggression", 1)) * 5,
+		55,
+		95
+	)
+	table["catch_heat"] = 0
+	table["dealer_profile"] = {
+		"style_id": "rourke",
+		"tell": "His eyes stay on your hands.",
+		"body_language": "Still shoulders; one thumb on the shoe.",
+		"attention": 100,
+		"blink_offset": int(table_rng.randi_range(0, 900)),
+		"uniform_accent": "house_gold",
+	}
+	return table
+
+
+func _is_rourke_duel(run_state: RunState, environment: Dictionary) -> bool:
+	if run_state == null:
+		return false
+	var flags: Dictionary = environment.get("local_narrative_flags", {}) if typeof(environment.get("local_narrative_flags", {})) == TYPE_DICTIONARY else {}
+	return str(flags.get("blackjack_boss_variant", "")) == ROURKE_DUEL_VARIANT and run_state.grand_casino_duel_active(environment)
 
 
 func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dictionary = {}) -> Dictionary:
@@ -292,7 +355,7 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 	var total_wager_cost := _wager_cost_from_session(selected_stake, session, table, run_state)
 	var shoe_remaining_value := _shoe_remaining(table)
 	var shoe_label_value := str(table.get("shoe_label", CardShoeScript.shoe_label(int(table.get("deck_count", 6)))))
-	return GameModule.surface_spec({
+	var spec := GameModule.surface_spec({
 		"surface_renderer": "blackjack",
 		"surface_life": "immersive_table",
 		"surface_cast": "dealer_table",
@@ -458,6 +521,57 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 			},
 		}),
 	})
+	return _rourke_duel_surface_state(spec, run_state, environment, session, table)
+
+
+func _rourke_duel_surface_state(spec: Dictionary, run_state: RunState, environment: Dictionary, session: Dictionary, _table: Dictionary) -> Dictionary:
+	if not _is_rourke_duel(run_state, environment):
+		return spec
+	var duel := run_state.grand_casino_duel_status()
+	var terms := run_state.grand_casino_duel_terms()
+	var edge := run_state.grand_casino_duel_current_edge()
+	var callouts: Array = []
+	for edge_value in _dictionary_array(terms.get("edge_catalog", [])):
+		var edge_entry: Dictionary = edge_value
+		callouts.append({
+			"id": str(edge_entry.get("id", "")),
+			"label": str(edge_entry.get("callout_label", edge_entry.get("label", "Call it"))),
+		})
+	var ante := maxi(1, int(duel.get("ante", 20)))
+	spec["boss_variant"] = ROURKE_DUEL_VARIANT
+	spec["boss_duel_active"] = true
+	spec["boss_player_stack"] = maxi(0, int(duel.get("player_stack", 0)))
+	spec["boss_rourke_stack"] = maxi(0, int(duel.get("rourke_stack", 0)))
+	spec["boss_hand_number"] = mini(int(duel.get("hand_index", 0)) + 1, int(duel.get("hand_limit", 5)))
+	spec["boss_hand_limit"] = int(duel.get("hand_limit", 5))
+	spec["boss_bark"] = str(duel.get("last_bark", "Rourke waits for the cut."))
+	spec["boss_tell"] = str(edge.get("tell", "Rourke gives nothing away.")) if bool(edge.get("active", false)) and not bool(edge.get("stripped", false)) else "Rourke gives nothing away."
+	spec["boss_callouts"] = callouts
+	spec["boss_callout_used"] = bool(edge.get("called", false))
+	spec["selected_stake"] = ante
+	spec["main_wager_cost"] = ante
+	spec["total_wager_cost"] = ante
+	spec["surface_stake_controls_required"] = false
+	spec["surface_ui_preference_keys"] = []
+	spec["side_bets_available"] = []
+	spec["side_bets_active"] = []
+	spec["distractions"] = []
+	spec["patrons"] = []
+	spec["can_split"] = false
+	spec["can_surrender"] = false
+	spec["can_double"] = _can_double(session, _table, ante, run_state)
+	spec["table_rules_text"] = "Five fixed-ante hands. Final stack margin decides the door."
+	spec["table_notice"] = str(session.get("table_notice", duel.get("last_bark", "Rourke cuts the cards.")))
+	spec["surface_ui_protected_regions"] = _rourke_duel_ui_protected_regions()
+	return spec
+
+
+func _rourke_duel_ui_protected_regions() -> Array:
+	return [
+		_blackjack_ui_rect(18, 10, 860, 78),
+		_blackjack_ui_rect(18, BJ_CONSOLE_Y + 4.0, 860, BJ_CONSOLE_H - 8.0),
+		_blackjack_ui_rect(586, 286, 292, 50),
+	]
 
 
 func wager_activity_incomplete(run_state: RunState, environment: Dictionary, ui_state: Dictionary = {}) -> bool:
@@ -502,17 +616,22 @@ func draw_surface(surface, surface_state: Dictionary, _render_context: Dictionar
 	surface.surface_begin_design_space(surface.surface_board_size())
 	_draw_blackjack_room(surface, surface_state)
 	_draw_blackjack_table(surface, surface_state)
-	_draw_table_patrons(surface, surface_state)
+	if not bool(surface_state.get("boss_duel_active", false)):
+		_draw_table_patrons(surface, surface_state)
 	_draw_dealer_station(surface, surface_state)
 	_draw_player_station(surface, surface_state)
 	_draw_blackjack_table_notice(surface, surface_state)
 	_draw_blackjack_round_timer(surface, surface_state)
-	_draw_blackjack_ambient_event(surface, surface_state)
-	_draw_chip_rack(surface, surface_state)
+	if bool(surface_state.get("boss_duel_active", false)):
+		_draw_rourke_duel_hud(surface, surface_state)
+	else:
+		_draw_blackjack_ambient_event(surface, surface_state)
+		_draw_chip_rack(surface, surface_state)
 	_draw_table_actions(surface, surface_state)
 	_draw_basic_strategy_advice(surface, surface_state)
 	_draw_blackjack_result_board(surface, surface_state)
-	_draw_side_bet_rule_overlay(surface, surface_state)
+	if not bool(surface_state.get("boss_duel_active", false)):
+		_draw_side_bet_rule_overlay(surface, surface_state)
 	_draw_deal_animation(surface, surface_state)
 	_draw_chip_payout_animation(surface, surface_state)
 	_draw_count_challenge(surface, surface_state)
@@ -638,6 +757,12 @@ func _blackjack_table_motion_active(table: Dictionary, now_msec: int) -> bool:
 
 
 func surface_action_command(surface_action: String, index: int, confirm_requested: bool, ui_state: Dictionary, run_state: RunState, environment: Dictionary) -> Dictionary:
+	if _is_rourke_duel(run_state, environment):
+		return _rourke_duel_surface_action_command(surface_action, index, confirm_requested, ui_state, run_state, environment)
+	return _blackjack_surface_action_command(surface_action, index, confirm_requested, ui_state, run_state, environment)
+
+
+func _blackjack_surface_action_command(surface_action: String, index: int, confirm_requested: bool, ui_state: Dictionary, run_state: RunState, environment: Dictionary) -> Dictionary:
 	var table: Dictionary = _table_state(run_state, environment)
 	var next_state: Dictionary = _normalized_session(run_state, environment, ui_state, table)
 	var selected_stake: int = _effective_table_stake(_session_stake(int(ui_state.get("selected_stake", next_state.get("selected_stake", 1))), next_state), next_state, run_state, environment)
@@ -813,11 +938,65 @@ func surface_action_command(surface_action: String, index: int, confirm_requeste
 	return {"handled": false}
 
 
+func _rourke_duel_surface_action_command(surface_action: String, index: int, confirm_requested: bool, ui_state: Dictionary, run_state: RunState, environment: Dictionary) -> Dictionary:
+	var table := _table_state(run_state, environment)
+	var next_state := _normalized_session(run_state, environment, ui_state, table)
+	var duel := run_state.grand_casino_duel_status()
+	var ante := maxi(1, int(duel.get("ante", 20)))
+	next_state["boss_duel_session"] = true
+	next_state["selected_stake"] = ante
+	next_state["locked_stake"] = ante
+	var command: Dictionary
+	match surface_action:
+		"blackjack_deal":
+			if _has_dealt_hand(next_state):
+				if not _all_hands_complete(next_state):
+					_stand_all_hands(next_state)
+				command = _settle_completed_round_command(next_state, index, "Rourke turns the hole card and settles the hand.", table, run_state)
+			else:
+				var deal_time_msec := int(next_state.get("surface_time_msec", run_state.grand_casino_duel_action_time_msec()))
+				_start_initial_hand(next_state, table, ante, run_state, deal_time_msec)
+				command = _opening_deal_command(next_state, index, str(run_state.grand_casino_duel_status().get("last_bark", "Rourke deals.")))
+		"blackjack_boss_callout":
+			if not _has_dealt_hand(next_state):
+				command = _message_command(next_state, "See the cards before you call Rourke's move.")
+			else:
+				var catalog := _dictionary_array(run_state.grand_casino_duel_terms().get("edge_catalog", []))
+				if index < 0 or index >= catalog.size():
+					command = _message_command(next_state, "That call is not available.")
+				else:
+					var call := run_state.grand_casino_duel_call_out(str((catalog[index] as Dictionary).get("id", "")))
+					if bool(call.get("correct", false)):
+						_restore_rourke_edge_session(next_state)
+						if bool(next_state.get("counting_enabled", false)):
+							_start_count_challenge(next_state, table, run_state, int(next_state.get("surface_time_msec", 0)))
+					command = _message_command(next_state, str(call.get("message", "Rourke marks the call.")))
+		"blackjack_peek":
+			if not _has_dealt_hand(next_state):
+				command = _message_command(next_state, "Deal before trying to read Rourke's hole card.")
+			elif bool(next_state.get("dealer_hole_visible", false)):
+				command = _message_command(next_state, "The hole card is already exposed.")
+			else:
+				var cheats := _local_copy_dict(next_state.get("cheats_used", {}))
+				cheats["peek_hole_card"] = true
+				next_state["cheats_used"] = cheats
+				next_state["dealer_hole_visible"] = true
+				command = _message_command(next_state, "You steal a look. Rourke watches your hands.")
+		_:
+			command = _blackjack_surface_action_command(surface_action, index, confirm_requested, next_state, run_state, environment)
+	var saved_state: Variant = command.get("ui_state", next_state)
+	if typeof(saved_state) == TYPE_DICTIONARY:
+		run_state.persist_grand_casino_duel_session(saved_state as Dictionary)
+	return command
+
+
 func resolve(action_id: String, stake: int, run_state: RunState, environment: Dictionary, rng: RngStream) -> Dictionary:
 	return resolve_with_context(action_id, stake, run_state, environment, rng, {})
 
 
 func resolve_with_context(action_id: String, stake: int, run_state: RunState, environment: Dictionary, rng: RngStream, ui_state: Dictionary = {}) -> Dictionary:
+	if _is_rourke_duel(run_state, environment):
+		return _resolve_rourke_duel_hand(action_id, run_state, environment, ui_state)
 	if action_id == "blackjack_place_bet":
 		return _resolve_place_bet(stake, run_state, environment, rng, ui_state)
 	if action_id == "peek_hole_card" or action_id == "count_cards":
@@ -976,6 +1155,108 @@ func resolve_with_context(action_id: String, stake: int, run_state: RunState, en
 	result["blackjack_running_count"] = int(table.get("running_count", 0))
 	result["blackjack_recorded_count"] = int(table.get("recorded_running_count", 0))
 	GameModule.apply_result(run_state, result, rng)
+	return result
+
+
+func _resolve_rourke_duel_hand(action_id: String, run_state: RunState, environment: Dictionary, ui_state: Dictionary) -> Dictionary:
+	if action_id != "play_basic":
+		return _empty_blackjack_result(action_id, 0, environment, "Rourke is waiting for the hand to settle.")
+	var table := _table_state(run_state, environment)
+	var session := _normalized_session(run_state, environment, ui_state, table)
+	if not _has_dealt_hand(session):
+		return _empty_blackjack_result(action_id, 0, environment, "Deal a hand before settling Rourke's table.")
+	if not _all_hands_complete(session):
+		_stand_all_hands(session)
+	session["dealer_hole_visible"] = true
+	var dealer_cards := _dealer_final_cards(session, table)
+	var hands := _hand_array(session.get("player_hands", []))
+	var duel := run_state.grand_casino_duel_status()
+	var terms := run_state.grand_casino_duel_terms()
+	var ante := maxi(1, int(duel.get("ante", 20)))
+	var hand_results: Array = []
+	var transfer := 0
+	for hand_value in hands:
+		var settled := _settle_hand(hand_value as Dictionary, dealer_cards, ante)
+		hand_results.append(settled)
+		transfer += int(settled.get("bankroll_delta", 0))
+	if not bool(session.get("count_answered", false)) and not _local_copy_dict(session.get("count_challenge", {})).is_empty():
+		var action_msec := run_state.grand_casino_duel_action_time_msec()
+		_sync_count_challenge_icons(session, run_state, action_msec)
+		_finalize_count_challenge(session, run_state, action_msec)
+	var cheats := _local_copy_dict(session.get("cheats_used", {}))
+	var used_player_cheat := (
+		bool(cheats.get("peek_hole_card", false))
+		or bool(cheats.get("count_cards", false))
+		or bool(session.get("count_attempted", false))
+		or bool(session.get("count_answered", false))
+	)
+	var caught := false
+	var catch_chance := 0
+	if used_player_cheat:
+		var rules := _local_copy_dict(terms.get("rules", {}))
+		catch_chance = clampi(
+			int(rules.get("player_cheat_detection_base", 55))
+			+ int(terms.get("rourke_aggression", 1)) * int(rules.get("player_cheat_detection_per_aggression", 5))
+			+ int(terms.get("rourke_cheat_level", 0)) * int(rules.get("player_cheat_detection_per_cheat_level", 5)),
+			2,
+			95
+		)
+		var attempt := maxi(1, int(duel.get("attempt", 1)))
+		var hand_index := maxi(0, int(duel.get("hand_index", 0)))
+		var detection_rng := run_state.create_rng("grand_casino_duel").fork("attempt:%d:hand:%d:player_cheat_detection" % [attempt, hand_index])
+		caught = detection_rng.randi_range(1, 100) <= catch_chance
+	var caught_penalty := maxi(0, int(_local_copy_dict(terms.get("rules", {})).get("player_cheat_caught_penalty", 18))) if caught else 0
+	var outcome_word := "wins" if transfer > 0 else "loses" if transfer < 0 else "pushes"
+	var message := "The hand %s %d duel chips." % [outcome_word, absi(transfer)]
+	if caught:
+		message = "%s Rourke catches the move and takes %d more." % [message, caught_penalty]
+	var hand_index_for_rng := maxi(0, int(duel.get("hand_index", 0)))
+	var settlement_rng := run_state.create_rng("grand_casino_duel").fork("attempt:%d:hand:%d:settlement" % [maxi(1, int(duel.get("attempt", 1))), hand_index_for_rng])
+	var used_cards := _cards_used_for_counting(hands, dealer_cards, [])
+	_update_table_after_hand(table, session, dealer_cards, _count_cards_delta(used_cards), int(session.get("count_delta", 0)), settlement_rng, run_state.grand_casino_duel_action_time_msec())
+	table["last_result"] = _blackjack_last_result_payload(message, hand_results, [], transfer, 0, transfer - caught_penalty, 0, dealer_cards, hands, [], [], {"caught": caught}, run_state.simulation_time_msec())
+	_update_environment_table(environment, table)
+	var applied := run_state.apply_grand_casino_duel_hand({
+		"transfer": transfer,
+		"caught_penalty": caught_penalty,
+		"player_cheat_used": used_player_cheat,
+		"player_cheat_caught": caught,
+		"catch_chance": catch_chance,
+		"hand_results": hand_results,
+		"dealer_total": int(_hand_total_info(dealer_cards).get("total", 0)),
+		"message": message,
+	})
+	var next_duel := _local_copy_dict(applied.get("state", run_state.grand_casino_duel_status()))
+	var result_deltas := GameModule.empty_result_deltas()
+	result_deltas["ended"] = run_state.is_terminal()
+	result_deltas["messages"] = [message]
+	var result := GameModule.build_action_result({
+		"ok": bool(applied.get("ok", false)),
+		"type": "game_action",
+		"source_id": get_id(),
+		"game_id": get_id(),
+		"action_id": action_id,
+		"action_kind": "cheat" if used_player_cheat else "legal",
+		"stake": ante,
+		"bankroll_delta": 0,
+		"suspicion_delta": 0,
+		"deltas": result_deltas,
+		"won": transfer - caught_penalty > 0,
+		"environment_id": environment.get("id", ""),
+		"environment_archetype_id": environment.get("archetype_id", ""),
+		"message": message,
+		"ended": run_state.is_terminal(),
+	})
+	result["blackjack_boss_duel"] = true
+	result["blackjack_player_hands"] = hands
+	result["blackjack_dealer"] = dealer_cards
+	result["blackjack_hand_results"] = hand_results
+	result["blackjack_cheat_caught"] = caught
+	result["grand_casino_duel_status"] = next_duel
+	result["grand_casino_duel_outcome"] = str(next_duel.get("outcome", ""))
+	result["preserve_surface_ui_state"] = false
+	if run_state.is_terminal():
+		result["state"] = GameModule.RESULT_ENDED
 	return result
 
 
@@ -1744,6 +2025,9 @@ func _draw_chip_rack(surface, surface_state: Dictionary) -> void:
 func _draw_table_actions(surface, surface_state: Dictionary) -> void:
 	var panel := Rect2(586, BJ_CONSOLE_Y + 8.0, 292, BJ_CONSOLE_H - 16.0)
 	_draw_neon_panel(surface, panel, C_CYAN, 0.10)
+	if bool(surface_state.get("boss_duel_active", false)):
+		_draw_rourke_duel_actions(surface, surface_state, panel)
+		return
 	surface.surface_label("HAND ACTIONS", panel.position + Vector2(10, 15), 10, C_SOFT)
 	if bool(surface_state.get("table_barred", false)):
 		surface.surface_label("TABLE CLOSED", panel.position + Vector2(14, 42), 16, C_PINK)
@@ -1778,6 +2062,40 @@ func _draw_table_actions(surface, surface_state: Dictionary) -> void:
 		var distraction: Dictionary = distractions[i]
 		var label := str(distraction.get("label", "Distract")).replace(" ", "").to_upper().left(5)
 		_draw_table_button(surface, Rect2(strip.position.x + 64 + i * 34, strip.position.y + 8, 30, 18), label, "blackjack_distraction", i, C_TEAL, true)
+
+
+func _draw_rourke_duel_hud(surface, surface_state: Dictionary) -> void:
+	var hud := Rect2(18, 12, 860, 62)
+	_draw_neon_panel(surface, hud, C_YELLOW, 0.12)
+	surface.surface_label("ROURKE'S TABLE", hud.position + Vector2(14, 18), 13, C_YELLOW)
+	surface.surface_label("HAND %d / %d" % [int(surface_state.get("boss_hand_number", 1)), int(surface_state.get("boss_hand_limit", 5))], hud.position + Vector2(14, 40), 10, C_SOFT)
+	surface.surface_label("YOU  %d" % int(surface_state.get("boss_player_stack", 0)), hud.position + Vector2(178, 29), 18, C_CYAN)
+	surface.surface_label("ROURKE  %d" % int(surface_state.get("boss_rourke_stack", 0)), hud.position + Vector2(326, 29), 18, C_PINK)
+	surface.surface_label(str(surface_state.get("boss_bark", "Rourke waits.")).left(42), hud.position + Vector2(510, 22), 10, C_WHITE)
+	surface.surface_label(str(surface_state.get("boss_tell", "")).left(48), hud.position + Vector2(510, 42), 9, C_SOFT)
+
+
+func _draw_rourke_duel_actions(surface, surface_state: Dictionary, panel: Rect2) -> void:
+	surface.surface_label("DUEL ACTIONS", panel.position + Vector2(10, 15), 10, C_SOFT)
+	var counting_enabled := bool(surface_state.get("counting_enabled", false))
+	_draw_table_button(surface, Rect2(panel.position.x + 184, panel.position.y + 6, 92, 18), "COUNT ON" if counting_enabled else "COUNT OFF", "blackjack_count_toggle", 0, C_PINK_2 if counting_enabled else C_SOFT, true, counting_enabled)
+	if bool(surface_state.get("can_deal", false)):
+		_draw_table_button(surface, Rect2(panel.position.x + 12, panel.position.y + 28, 116, 38), "DEAL", "blackjack_deal", 0, C_YELLOW, true)
+	else:
+		_draw_table_button(surface, Rect2(panel.position.x + 8, panel.position.y + 28, 62, 24), "HIT", "blackjack_hit", 0, C_TEAL, bool(surface_state.get("can_hit", false)))
+		_draw_table_button(surface, Rect2(panel.position.x + 74, panel.position.y + 28, 62, 24), "STAND", "blackjack_stand", 0, C_CYAN, bool(surface_state.get("can_stand", false)))
+		_draw_table_button(surface, Rect2(panel.position.x + 140, panel.position.y + 28, 62, 24), "DOUBLE", "blackjack_double", 0, C_YELLOW, bool(surface_state.get("can_double", false)))
+		_draw_table_button(surface, Rect2(panel.position.x + 206, panel.position.y + 28, 70, 24), "PEEK", "blackjack_peek", 0, C_PINK, bool(surface_state.get("peek_available", false)))
+		if bool(surface_state.get("settle_available", false)):
+			_draw_table_button(surface, Rect2(panel.position.x + 206, panel.position.y + 54, 70, 18), "SETTLE", "blackjack_deal", 0, C_YELLOW, true)
+	var callouts_value: Variant = surface_state.get("boss_callouts", [])
+	var callouts: Array = callouts_value as Array if typeof(callouts_value) == TYPE_ARRAY else []
+	for i in range(mini(callouts.size(), 2)):
+		if typeof(callouts[i]) != TYPE_DICTIONARY:
+			continue
+		var callout: Dictionary = callouts[i] as Dictionary
+		var enabled := not bool(surface_state.get("boss_callout_used", false)) and not bool(surface_state.get("can_deal", false))
+		_draw_table_button(surface, Rect2(590 + i * 142, 294, 136, 28), str(callout.get("label", "CALL")).to_upper().left(16), "blackjack_boss_callout", i, C_ORANGE, enabled)
 
 
 func _draw_basic_strategy_advice(surface, surface_state: Dictionary) -> void:
@@ -2389,6 +2707,8 @@ func _table_state(run_state: RunState, environment: Dictionary) -> Dictionary:
 func _apply_grand_casino_dealer_assignment(table: Dictionary, run_state: RunState, environment: Dictionary) -> void:
 	if run_state == null:
 		return
+	if _is_rourke_duel(run_state, environment):
+		return
 	var assignment := run_state.grand_casino_staff_member_for_game(get_id(), environment)
 	var assignment_id := str(assignment.get("id", "")).strip_edges()
 	if assignment_id.is_empty():
@@ -2630,9 +2950,15 @@ func _normalize_table_state(table: Dictionary) -> Dictionary:
 
 
 func _normalized_session(run_state: RunState, environment: Dictionary, ui_state: Dictionary, table: Dictionary) -> Dictionary:
-	var session: Dictionary = {}
+	var session: Dictionary = run_state.grand_casino_duel_session() if _is_rourke_duel(run_state, environment) else {}
 	for key in ui_state.keys():
 		session[str(key)] = ui_state[key]
+	if _is_rourke_duel(run_state, environment):
+		var duel := run_state.grand_casino_duel_status()
+		session["boss_duel_session"] = true
+		session["selected_stake"] = maxi(1, int(duel.get("ante", 20)))
+		session["locked_stake"] = maxi(1, int(duel.get("ante", 20)))
+		session["blackjack_side_bets"] = []
 	var hands: Array = _hand_array(session.get("player_hands", session.get("blackjack_hands", [])))
 	var dealer_cards: Array = _card_array(session.get("dealer_cards", session.get("dealer", [])))
 	var patron_hands: Array = _hand_array(session.get("patron_hands", []))
@@ -2750,10 +3076,21 @@ func _has_dealt_hand(session: Dictionary) -> bool:
 func _start_initial_hand(session: Dictionary, table: Dictionary, stake: int = 1, run_state: RunState = null, result_msec: int = -1) -> void:
 	if _has_dealt_hand(session):
 		return
-	session.erase("shoe")
+	var boss_duel := bool(session.get("boss_duel_session", false)) and run_state != null
+	if boss_duel:
+		var duel := run_state.grand_casino_duel_status()
+		var hand_rng := run_state.create_rng("grand_casino_duel").fork("attempt:%d:hand:%d:draws" % [
+			maxi(1, int(duel.get("attempt", 1))),
+			maxi(0, int(duel.get("hand_index", 0))),
+		])
+		session["shoe"] = _build_shoe(int(table.get("deck_count", 2)), hand_rng)
+		session["shoe_refilled_during_hand"] = true
+	else:
+		session.erase("shoe")
 	session["cards_consumed"] = 0
 	session["shoe_emergency_shuffle_count"] = 0
-	session["shoe_refilled_during_hand"] = false
+	if not boss_duel:
+		session["shoe_refilled_during_hand"] = false
 	var initial: Dictionary = _initial_deal(session, table)
 	var hands: Array = _hand_array(initial.get("player_hands", []))
 	var dealer_cards: Array = _card_array(initial.get("dealer_cards", []))
@@ -2764,8 +3101,11 @@ func _start_initial_hand(session: Dictionary, table: Dictionary, stake: int = 1,
 	session["patron_action_events"] = []
 	session["settlement_deal_animation_events"] = []
 	session["cards_consumed"] = int(initial.get("cards_consumed", 4))
-	session.erase("shoe")
-	session["shoe_remaining"] = _shoe_remaining_for_cursor(table, int(session.get("cards_consumed", 0)))
+	if not boss_duel:
+		session.erase("shoe")
+		session["shoe_remaining"] = _shoe_remaining_for_cursor(table, int(session.get("cards_consumed", 0)))
+	else:
+		session["shoe_remaining"] = _card_array(session.get("shoe", [])).size()
 	session["active_hand_index"] = 0
 	session["moves_made"] = false
 	session["locked_stake"] = maxi(1, stake)
@@ -2776,6 +3116,13 @@ func _start_initial_hand(session: Dictionary, table: Dictionary, stake: int = 1,
 	else:
 		session["initial_player_cards"] = []
 	session["initial_dealer_cards"] = _first_cards(dealer_cards, 2)
+	if boss_duel:
+		_apply_rourke_edge_to_session(session, run_state.grand_casino_duel_current_edge())
+		hands = _hand_array(session.get("player_hands", []))
+		dealer_cards = _card_array(session.get("dealer_cards", []))
+		if not hands.is_empty():
+			session["initial_player_cards"] = _first_cards(_card_array((hands[0] as Dictionary).get("cards", [])), 2)
+		session["initial_dealer_cards"] = _first_cards(dealer_cards, 2)
 	_mark_deal_animation(session, "initial", _initial_deal_animation_events(hands, dealer_cards, patron_hands), result_msec)
 	if bool(table.get("counting_enabled", false)):
 		_start_count_challenge(session, table, run_state)
@@ -2872,11 +3219,81 @@ func _remaining_shoe_after_session(table: Dictionary, session: Dictionary) -> Ar
 
 
 func _compact_session_for_ui(ui_state: Dictionary) -> Dictionary:
-	if not bool(ui_state.get("shoe_refilled_during_hand", false)):
+	if not bool(ui_state.get("shoe_refilled_during_hand", false)) and not bool(ui_state.get("boss_duel_session", false)):
 		ui_state.erase("shoe")
 		if ui_state.has("cards_consumed"):
 			ui_state["shoe_remaining"] = maxi(0, int(ui_state.get("shoe_remaining", 0)))
 	return ui_state
+
+
+func _apply_rourke_edge_to_session(session: Dictionary, edge: Dictionary) -> void:
+	if not bool(edge.get("active", false)) or bool(edge.get("stripped", false)):
+		return
+	var hands := _hand_array(session.get("player_hands", []))
+	var dealer := _card_array(session.get("dealer_cards", []))
+	var shoe := _card_array(session.get("shoe", []))
+	if hands.is_empty() or dealer.size() < 2 or shoe.is_empty():
+		return
+	session["boss_edge_original"] = {
+		"player_hands": hands.duplicate(true),
+		"dealer_cards": dealer.duplicate(true),
+		"shoe": shoe.duplicate(true),
+	}
+	var high_index := _rourke_shoe_card_index(shoe, true)
+	var low_index := _rourke_shoe_card_index(shoe, false)
+	match str(edge.get("id", "")):
+		"deck_stack":
+			var player_hand: Dictionary = hands[0]
+			var player_cards := _card_array(player_hand.get("cards", []))
+			if not player_cards.is_empty() and low_index >= 0:
+				var replaced_player: Dictionary = player_cards[0]
+				player_cards[0] = shoe[low_index]
+				shoe[low_index] = replaced_player
+				player_hand["cards"] = player_cards
+				hands[0] = player_hand
+			if high_index >= 0:
+				var replaced_upcard: Dictionary = dealer[0]
+				dealer[0] = shoe[high_index]
+				shoe[high_index] = replaced_upcard
+		"hole_swap":
+			if high_index >= 0:
+				var replaced_hole: Dictionary = dealer[1]
+				dealer[1] = shoe[high_index]
+				shoe[high_index] = replaced_hole
+	session["player_hands"] = hands
+	session["dealer_cards"] = dealer
+	session["shoe"] = shoe
+	session["boss_edge_applied"] = str(edge.get("id", ""))
+
+
+func _restore_rourke_edge_session(session: Dictionary) -> void:
+	var original := _local_copy_dict(session.get("boss_edge_original", {}))
+	if original.is_empty():
+		return
+	session["player_hands"] = _hand_array(original.get("player_hands", []))
+	session["dealer_cards"] = _card_array(original.get("dealer_cards", []))
+	session["shoe"] = _card_array(original.get("shoe", []))
+	var hands := _hand_array(session.get("player_hands", []))
+	if not hands.is_empty():
+		session["initial_player_cards"] = _first_cards(_card_array((hands[0] as Dictionary).get("cards", [])), 2)
+	session["initial_dealer_cards"] = _first_cards(_card_array(session.get("dealer_cards", [])), 2)
+	session["count_challenge"] = {}
+	session["count_answered"] = false
+	session.erase("boss_edge_original")
+	session.erase("boss_edge_applied")
+
+
+func _rourke_shoe_card_index(shoe: Array, highest: bool) -> int:
+	var best_index := -1
+	var best_value := -1 if highest else 99
+	for i in range(shoe.size()):
+		if typeof(shoe[i]) != TYPE_DICTIONARY:
+			continue
+		var value := mini(10, int((shoe[i] as Dictionary).get("rank", 2)))
+		if (highest and value > best_value) or (not highest and value < best_value):
+			best_value = value
+			best_index = i
+	return best_index
 
 
 func _first_cards(cards: Array, count: int) -> Array:
@@ -5014,6 +5431,8 @@ func _can_surrender(session: Dictionary, table: Dictionary) -> bool:
 
 
 func _can_afford_extra_main_wager(session: Dictionary, table: Dictionary, run_state: RunState, stake: int, extra_units: int) -> bool:
+	if bool(session.get("boss_duel_session", false)):
+		return true
 	if run_state == null:
 		return true
 	var projected_cost: int = _wager_cost_from_session(stake, session, table, run_state) + maxi(1, stake) * maxi(0, extra_units)

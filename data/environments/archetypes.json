@@ -3180,10 +3180,12 @@
       "stake_ceiling": 150,
       "cashout_tone": "locked"
     },
-    "game_pool": [],
+    "game_pool": [
+      "blackjack"
+    ],
     "game_count": [
-      0,
-      0
+      1,
+      1
     ],
     "item_pool": [],
     "item_count": [
@@ -3209,6 +3211,7 @@
     "local_narrative_flags": {
       "boss_floor": true,
       "grand_casino_room": "back_room",
+      "blackjack_boss_variant": "rourke_duel",
       "casino_room_travel_minutes": 5,
       "casino_chip_cash_rate": 1,
       "casino_room_targets": []

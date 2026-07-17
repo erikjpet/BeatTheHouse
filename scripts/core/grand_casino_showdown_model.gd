@@ -173,6 +173,9 @@ static func build_duel_terms(snapshot: Dictionary, pat_down_data: Dictionary, an
 		"rourke_aggression": aggression,
 		"rourke_cheat_level": cheat_level,
 		"margin_thresholds": margin_thresholds,
+		"rules": _copy_dict(config.get("rules", {})),
+		"edge_catalog": _copy_array(config.get("edge_catalog", [])),
+		"barks": _copy_dict(config.get("barks", {})),
 		"pat_down": pat_down_data.duplicate(true),
 		"interrogation": {
 			"evidence_ids": evidence_ids.duplicate(true),
@@ -182,8 +185,6 @@ static func build_duel_terms(snapshot: Dictionary, pat_down_data: Dictionary, an
 			"leverage": leverage,
 			"social_support": social_support,
 		},
-		"legacy_success_modifier": leverage,
-		"legacy_modifiers": modifiers,
 	}
 
 

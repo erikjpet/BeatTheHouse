@@ -2175,6 +2175,40 @@
         "base_stack": 100,
         "rourke_stack_per_aggression": 5,
         "serious_forced_ante": 5,
+        "rules": {
+          "hand_limit": 5,
+          "base_ante": 20,
+          "rourke_edge_base_chance": 10,
+          "rourke_edge_chance_per_level": 20,
+          "correct_call_swing": 8,
+          "false_call_cost": 6,
+          "player_cheat_detection_base": 55,
+          "player_cheat_detection_per_aggression": 5,
+          "player_cheat_detection_per_cheat_level": 5,
+          "player_cheat_caught_penalty": 18,
+          "uncashed_chip_score_percent": 50
+        },
+        "edge_catalog": [
+          {
+            "id": "deck_stack",
+            "label": "Call the Stack",
+            "tell": "Rourke squares one slug twice."
+          },
+          {
+            "id": "hole_swap",
+            "label": "Call the Swap",
+            "tell": "His thumb stays under the down card."
+          }
+        ],
+        "barks": {
+          "intro": "Sit down. Five hands. Then the door decides.",
+          "deal": "Read the felt, not my face.",
+          "player_win": "One hand. The house is still here.",
+          "rourke_win": "That is what the room does to a story.",
+          "push": "Nothing moves. Deal again.",
+          "caught_edge": "Good eye. The hand plays straight.",
+          "false_call": "Wrong tell. Pay for the noise."
+        },
         "margin_thresholds": {
           "walk_out_clean_min": 12,
           "shown_the_door_min": -8

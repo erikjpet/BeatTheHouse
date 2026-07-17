@@ -656,6 +656,8 @@ func _resolve_grand_casino_showdown(run_state: RunState, environment: Dictionary
 	result["showdown"] = _copy_dict(outcome.get("status", run_state.grand_casino_showdown_status(config)))
 	result["showdown_check"] = _copy_dict(outcome.get("check", {}))
 	result["grand_casino_duel_terms"] = _copy_dict(run_state.narrative_flags.get("grand_casino_duel_terms", {}))
+	result["duel_ready"] = bool(outcome.get("duel_ready", false))
+	result["grand_casino_duel"] = _copy_dict(outcome.get("duel", {}))
 	if outcome.has("success"):
 		result["success"] = bool(outcome.get("success", false))
 	if run_state.is_terminal():
