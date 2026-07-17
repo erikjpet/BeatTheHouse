@@ -3396,6 +3396,14 @@ func _travel_to(target_id: String, target_label: String, choice_data: Dictionary
 	clear_interaction_focus()
 	var destination_name := str(run_state.current_environment.get("display_name", target_label))
 	var travel_result := _travel_result(target_id, destination_name, route, previous_environment, run_state.current_environment, travel_decay, route_risk)
+	var grand_casino_entry_cue := run_state.consume_grand_casino_entry_cue()
+	if not grand_casino_entry_cue.is_empty():
+		var cue_message := str(grand_casino_entry_cue.get("message", "")).strip_edges()
+		if not cue_message.is_empty():
+			travel_result["message"] = "%s %s" % [str(travel_result.get("message", "")), cue_message]
+			var cue_deltas: Dictionary = travel_result.get("deltas", {}) if typeof(travel_result.get("deltas", {})) == TYPE_DICTIONARY else {}
+			cue_deltas["messages"] = [str(travel_result.get("message", ""))]
+			travel_result["deltas"] = cue_deltas
 	if not ignored_talk_entries.is_empty():
 		var ignore_message := _talk_ignore_message(ignored_talk_entries, "travel")
 		travel_result["message"] = "%s %s" % [str(travel_result.get("message", "")), ignore_message]

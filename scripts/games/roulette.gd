@@ -2504,9 +2504,34 @@ func _table_state(run_state: RunState, environment: Dictionary) -> Dictionary:
 	var table: Dictionary = game_states.get(get_id(), {}) if typeof(game_states.get(get_id(), {})) == TYPE_DICTIONARY else {}
 	if table.is_empty():
 		table = _fallback_table_state(run_state, environment)
+		game_states[get_id()] = table
+		environment["game_states"] = game_states
+	_apply_grand_casino_dealer_assignment(table, run_state, environment)
 	if _table_state_is_current(table):
 		return table
 	return _normalize_table_state(table)
+
+
+func _apply_grand_casino_dealer_assignment(table: Dictionary, run_state: RunState, environment: Dictionary) -> void:
+	if run_state == null:
+		return
+	var assignment := run_state.grand_casino_staff_member_for_game(get_id(), environment)
+	var assignment_id := str(assignment.get("id", "")).strip_edges()
+	if assignment_id.is_empty():
+		return
+	var assignment_day := maxi(1, int(assignment.get("day", run_state.game_day())))
+	var previous_id := str(table.get("staff_assignment_id", "")).strip_edges()
+	table["staff_assignment_day"] = assignment_day
+	if previous_id == assignment_id:
+		return
+	var profile_rng := run_state.grand_casino_staff_profile_rng(get_id(), assignment_id, assignment_day)
+	var profile := _generate_dealer_profile(profile_rng, int(table.get("dealer_catch_base", 12)))
+	profile["name"] = str(assignment.get("name", "Croupier"))
+	profile["identity_id"] = assignment_id
+	profile["style_id"] = str(assignment.get("style_id", "vince"))
+	table["dealer_name"] = str(assignment.get("name", "Croupier"))
+	table["dealer_profile"] = profile
+	table["staff_assignment_id"] = assignment_id
 
 
 func _fallback_table_state(run_state: RunState, environment: Dictionary) -> Dictionary:

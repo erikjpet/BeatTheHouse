@@ -2777,6 +2777,42 @@
       "casino_room_travel_minutes": 5,
       "casino_chip_cash_rate": 1,
       "casino_high_limit_buy_in": 60,
+      "grand_casino_staff_rotation": {
+        "rotation_chance_percent": 50,
+        "memory_high_heat_threshold": 50,
+        "rosters": {
+          "blackjack": [
+            {"id": "mara", "name": "Mara", "style_id": "mara"},
+            {"id": "lee", "name": "Lee", "style_id": "lena"},
+            {"id": "june", "name": "June", "style_id": "june"}
+          ],
+          "baccarat": [
+            {"id": "sable", "name": "Sable", "style_id": "sable"},
+            {"id": "noor", "name": "Noor", "style_id": "dot"},
+            {"id": "camille", "name": "Camille", "style_id": "iris"}
+          ],
+          "roulette": [
+            {"id": "vega", "name": "Vega", "style_id": "vince"},
+            {"id": "rook", "name": "Rook", "style_id": "marco"},
+            {"id": "sal", "name": "Sal", "style_id": "sal"}
+          ],
+          "bartender": [
+            {"id": "rafi", "name": "Rafi", "style_id": "rafi"},
+            {"id": "nora", "name": "Nora", "style_id": "nell"},
+            {"id": "cal", "name": "Cal", "style_id": "mara"}
+          ]
+        },
+        "memory_lines": {
+          "pending_review": "Linda has your prior review slip waiting at the Cage.",
+          "showdown_pressure": "The floor remembers Rourke's interest in you.",
+          "cheat_evidence": "The dealers remember the move that put your hands on watch.",
+          "high_heat": "The staff remember how hot your last visit became.",
+          "returning": "A floor attendant recognizes you before you reach the felt."
+        },
+        "rotation_cue_lines": [
+          "New faces have taken their places at the felt."
+        ]
+      },
       "casino_room_targets": [
         "grand_casino_high_limit",
         "grand_casino_back_room"

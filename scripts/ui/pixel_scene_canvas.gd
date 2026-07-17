@@ -331,6 +331,8 @@ func current_view_snapshot() -> Dictionary:
 		"outcome_interaction_kind": str(outcome_view.get("interaction_kind", "")),
 		"pit_boss_watch": _pit_boss_watch_snapshot(),
 		"grand_casino_living_floor": _grand_casino_living_floor_snapshot(),
+		"grand_casino_staffing": _grand_casino_staffing_snapshot(),
+		"grand_casino_entry_cue": foundation_snapshot.get("grand_casino_entry_cue", {}) if uses_foundation_snapshot else {},
 		"reduce_motion": reduce_motion,
 	}
 
@@ -1230,8 +1232,25 @@ func _draw_familiar_characters() -> void:
 			_draw_named_character("ox", Vector2(794, 205), 1.02, "bouncer")
 		"pawn_shop":
 			_draw_named_character("sal", Vector2(450, 210), 0.74, "clerk")
-		"grand_casino", "grand_casino_high_limit", "grand_casino_back_room":
-			_draw_named_character("iris", Vector2(632, 180), 0.76, "dealer")
+		"grand_casino":
+			_draw_named_character("iris", Vector2(632, 180), 0.76, "host")
+			var bartender := _grand_casino_staff_member("bartender")
+			if not bartender.is_empty():
+				_draw_named_character(str(bartender.get("style_id", "rafi")), Vector2(188, 184), 0.72, "bartender")
+			_draw_grand_casino_living_characters()
+		"grand_casino_high_limit":
+			var dealer_spots := {
+				"blackjack": Vector2(246, 188),
+				"baccarat": Vector2(450, 170),
+				"roulette": Vector2(654, 188),
+			}
+			for role_value in ["blackjack", "baccarat", "roulette"]:
+				var role_id := str(role_value)
+				var dealer := _grand_casino_staff_member(role_id)
+				if not dealer.is_empty():
+					_draw_named_character(str(dealer.get("style_id", "mara")), dealer_spots[role_id], 0.70, "dealer")
+			_draw_grand_casino_living_characters()
+		"grand_casino_back_room":
 			_draw_grand_casino_living_characters()
 
 
@@ -2006,6 +2025,20 @@ func _grand_casino_living_floor_snapshot() -> Dictionary:
 	if not uses_foundation_snapshot:
 		return {}
 	var value: Variant = foundation_snapshot.get("grand_casino_living_floor", {})
+	return value as Dictionary if typeof(value) == TYPE_DICTIONARY else {}
+
+
+func _grand_casino_staffing_snapshot() -> Dictionary:
+	if not uses_foundation_snapshot:
+		return {}
+	var value: Variant = foundation_snapshot.get("grand_casino_staffing", {})
+	return value as Dictionary if typeof(value) == TYPE_DICTIONARY else {}
+
+
+func _grand_casino_staff_member(role_id: String) -> Dictionary:
+	var staffing := _grand_casino_staffing_snapshot()
+	var assignments: Dictionary = staffing.get("assignments", {}) if typeof(staffing.get("assignments", {})) == TYPE_DICTIONARY else {}
+	var value: Variant = assignments.get(role_id, {})
 	return value as Dictionary if typeof(value) == TYPE_DICTIONARY else {}
 
 

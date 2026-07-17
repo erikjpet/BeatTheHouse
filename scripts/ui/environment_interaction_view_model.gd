@@ -33,6 +33,7 @@ static func snapshot_signature(run_state: RunState) -> String:
 		str(run_state.grand_casino_room_heat_accumulators),
 		str(run_state.rival_cheaters),
 		str(run_state.rourke_escort_state),
+		str(run_state.grand_casino_staffing),
 		str(run_state.game_clock_minutes),
 		str(run_state.closing_time_status()),
 	])
@@ -62,6 +63,8 @@ static func environment_snapshot(run_state: RunState, data: Dictionary) -> Dicti
 	snapshot["demo_objective"] = run_state.demo_objective_status()
 	snapshot["pit_boss_watch"] = run_state.pit_boss_watch_status(run_state.current_environment)
 	snapshot["grand_casino_living_floor"] = run_state.grand_casino_living_floor_snapshot(run_state.current_environment)
+	snapshot["grand_casino_staffing"] = run_state.grand_casino_staffing_snapshot(run_state.current_environment)
+	snapshot["grand_casino_entry_cue"] = run_state.pending_grand_casino_entry_cue()
 	snapshot["travel_choices"] = data.get("travel_choices", [])
 	snapshot["selected_travel_target_id"] = str(data.get("selected_travel_target_id", ""))
 	snapshot["selected_travel_label"] = str(data.get("selected_travel_label", ""))

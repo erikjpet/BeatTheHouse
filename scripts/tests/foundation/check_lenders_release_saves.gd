@@ -2,6 +2,10 @@ extends "res://scripts/tests/foundation/check_items_events_world.gd"
 
 const RunReportViewModelScript := preload("res://scripts/ui/run_report_view_model.gd")
 const CageWindowViewModelScript := preload("res://scripts/ui/cage_window_view_model.gd")
+const StaffBlackjackGameScript := preload("res://scripts/games/blackjack.gd")
+const StaffBaccaratGameScript := preload("res://scripts/games/baccarat.gd")
+const StaffRouletteGameScript := preload("res://scripts/games/roulette.gd")
+const StaffBarDiceGameScript := preload("res://scripts/games/bar_dice.gd")
 
 
 func _check_run_report_foundation(failures: Array) -> void:
@@ -939,6 +943,7 @@ func _check_demo_boss_objective_foundation(library: ContentLibrary, failures: Ar
 	_check_grand_casino_spatial_split(library, boss_archetype, failures)
 	_check_grand_casino_chips_and_cage(library, boss_archetype, failures)
 	_check_grand_casino_living_floor(library, boss_archetype, failures)
+	_check_grand_casino_staff_rotation(library, boss_archetype, failures)
 	_check_grand_casino_players_card_tiers(library, boss_archetype, failures)
 	var objective: Dictionary = boss_archetype.get("demo_objective", {}) if typeof(boss_archetype.get("demo_objective", {})) == TYPE_DICTIONARY else {}
 	if objective.is_empty() or str(objective.get("type", "")) != "bankroll_target":
@@ -1915,6 +1920,167 @@ func _check_grand_casino_living_floor(library: ContentLibrary, main_archetype: D
 		var cameo_result := cameo_module.resolve(cameo_run, cameo_environment, "read_his_route")
 		if not bool(cameo_result.get("ok", false)) or not bool(cameo_run.narrative_flags.get("grand_casino_event_pit_boss_sweep_lay_low", false)):
 			failures.append("Rourke scouting choice did not feed an existing prior-boss modifier flag.")
+
+
+func _check_grand_casino_staff_rotation(library: ContentLibrary, main_archetype: Dictionary, failures: Array) -> void:
+	var main_environment := EnvironmentInstance.from_archetype(main_archetype, 3, RunStateScript.new().create_rng("gc_staff_main"), library).to_dict()
+	var outside_environment := {"id": "gc_staff_outside", "archetype_id": "motel", "world_node_id": "motel", "display_name": "Motel"}
+	var run_a: RunState = RunStateScript.new()
+	var run_b: RunState = RunStateScript.new()
+	run_a.start_new("GC-STAFF-TIMELINE")
+	run_b.start_new("GC-STAFF-TIMELINE")
+	run_a.set_environment(main_environment.duplicate(true))
+	run_b.set_environment(main_environment.duplicate(true))
+	var first_staffing := run_a.grand_casino_staffing_snapshot()
+	var first_assignments: Dictionary = first_staffing.get("assignments", {}) if typeof(first_staffing.get("assignments", {})) == TYPE_DICTIONARY else {}
+	var constants: Dictionary = first_staffing.get("constants", {}) if typeof(first_staffing.get("constants", {})) == TYPE_DICTIONARY else {}
+	if first_assignments.size() != 4:
+		failures.append("Grand Casino day-one staffing did not assign all three dealers and the bartender.")
+	if str(_copy_dict(constants.get("rourke", {})).get("id", "")) != "rourke" or str(_copy_dict(constants.get("linda", {})).get("id", "")) != "linda":
+		failures.append("Grand Casino staffing treated Rourke or Linda as a rotating role.")
+	for assignment_value in first_assignments.values():
+		if typeof(assignment_value) == TYPE_DICTIONARY and ["rourke", "linda"].has(str((assignment_value as Dictionary).get("id", ""))):
+			failures.append("Grand Casino rotating roster included Rourke or Linda.")
+
+	for day_step in range(1, 6):
+		var action_rng := run_b.create_rng()
+		for _draw in range(day_step + 2):
+			action_rng.randi_range(1, 1000)
+		run_b.save_rng(action_rng)
+		run_b.set_environment(outside_environment.duplicate(true))
+		run_b.set_environment(main_environment.duplicate(true))
+		run_a.advance_game_clock_minutes(1440)
+		run_b.advance_game_clock_minutes(1440)
+		var staffing_a := run_a.grand_casino_staffing_snapshot()
+		var staffing_b := run_b.grand_casino_staffing_snapshot()
+		if JSON.stringify(staffing_a.get("assignments", {})) != JSON.stringify(staffing_b.get("assignments", {})) or JSON.stringify(staffing_a.get("rotated_roles", [])) != JSON.stringify(staffing_b.get("rotated_roles", [])):
+			failures.append("Grand Casino staffing timeline changed with visit order or action RNG state on day %d." % run_a.game_day())
+			break
+		if JSON.stringify(run_a.rival_cheaters) != JSON.stringify(run_b.rival_cheaters) or run_a.rival_cheater_day != run_b.rival_cheater_day:
+			failures.append("Grand Casino rival cast was not aligned to the same seeded day timeline.")
+			break
+
+	var saved_staffing := run_a.grand_casino_staffing.duplicate(true)
+	var restored: RunState = RunStateScript.new()
+	restored.from_dict(run_a.to_dict())
+	if JSON.stringify(restored.grand_casino_staffing) != JSON.stringify(saved_staffing):
+		failures.append("Grand Casino staffing assignment did not survive a mid-day save/load exactly.")
+
+	var saw_rotation := false
+	var saw_no_change := false
+	for seed_index in range(24):
+		var sample: RunState = RunStateScript.new()
+		sample.start_new("GC-STAFF-SAMPLE-%02d" % seed_index)
+		sample.set_environment(main_environment.duplicate(true))
+		for _sample_day in range(6):
+			sample.advance_game_clock_minutes(1440)
+			var staffing := sample.grand_casino_staffing_snapshot()
+			if bool(staffing.get("rotation_occurred", false)):
+				saw_rotation = true
+			else:
+				saw_no_change = true
+		if saw_rotation and saw_no_change:
+			break
+	if not saw_rotation or not saw_no_change:
+		failures.append("Grand Casino 50% independent rotation tunable did not produce both changed and no-change days in the deterministic sample.")
+
+	_check_grand_casino_staff_game_state_reset(library, main_environment, failures)
+	_check_grand_casino_memory_entry_lines(main_environment, outside_environment, failures)
+
+
+func _check_grand_casino_staff_game_state_reset(library: ContentLibrary, main_environment: Dictionary, failures: Array) -> void:
+	var high_archetype := _archetype_by_id(library, RunState.GRAND_CASINO_HIGH_LIMIT_ARCHETYPE_ID)
+	if high_archetype.is_empty():
+		failures.append("Grand Casino staff rotation could not find the High-Limit Room.")
+		return
+	var run_state: RunState = RunStateScript.new()
+	run_state.start_new("GC-STAFF-RESET")
+	run_state.set_environment(main_environment.duplicate(true))
+	var bar_game: GameModule = StaffBarDiceGameScript.new()
+	bar_game.setup(library.game("bar_dice"), library)
+	var bar_surface := bar_game.surface_state(run_state, run_state.current_environment, {})
+	var bartender := run_state.grand_casino_staff_member_for_game("bar_dice")
+	if str(bar_surface.get("dealer_name", "")) != str(bartender.get("name", "")):
+		failures.append("Grand Casino bar surface did not display the assigned bartender identity.")
+
+	var high_environment := EnvironmentInstance.from_archetype(high_archetype, 3, run_state.create_rng("gc_staff_high"), library).to_dict()
+	run_state.set_environment(high_environment)
+	var table_games := {
+		"blackjack": StaffBlackjackGameScript.new(),
+		"baccarat": StaffBaccaratGameScript.new(),
+		"roulette": StaffRouletteGameScript.new(),
+	}
+	for game_id_value in table_games.keys():
+		var game_id := str(game_id_value)
+		var game := table_games[game_id] as GameModule
+		game.setup(library.game(game_id), library)
+		var surface := game.surface_state(run_state, run_state.current_environment, {})
+		var assignment := run_state.grand_casino_staff_member_for_game(game_id)
+		var profile: Dictionary = surface.get("dealer_profile", {}) if typeof(surface.get("dealer_profile", {})) == TYPE_DICTIONARY else {}
+		if str(surface.get("dealer_name", "")) != str(assignment.get("name", "")) or str(profile.get("identity_id", "")) != str(assignment.get("id", "")):
+			failures.append("Grand Casino %s surface did not display its assigned dealer identity." % game_id)
+
+	var blackjack := table_games.get("blackjack") as GameModule
+	var blackjack_states: Dictionary = run_state.current_environment.get("game_states", {}) if typeof(run_state.current_environment.get("game_states", {})) == TYPE_DICTIONARY else {}
+	var blackjack_table: Dictionary = blackjack_states.get("blackjack", {}) if typeof(blackjack_states.get("blackjack", {})) == TYPE_DICTIONARY else {}
+	blackjack_table["strategy_deviation_strikes"] = 7
+	blackjack_table["strategy_watch_pressure"] = 31
+	blackjack_table["strategy_last_notice"] = "Dealer questioned the line."
+	blackjack_table["hands_played"] = 9
+	blackjack_table["running_count"] = 4
+	blackjack_table["barred"] = true
+	blackjack_table["barred_reason"] = "Casino memory persists."
+	var first_blackjack_id := str(run_state.grand_casino_staff_member_for_game("blackjack").get("id", ""))
+	run_state.add_suspicion("gc_staff_reset_heat", 28, "behavior", true, {"environment_id": str(run_state.current_environment.get("id", ""))})
+	run_state.narrative_flags["grand_casino_games_played"] = 4
+	run_state.narrative_flags["grand_casino_cheat_evidence"] = true
+	run_state.narrative_flags["grand_casino_players_card_ineligible"] = true
+	run_state.narrative_flags["grand_casino_players_card_tier"] = RunState.GRAND_CASINO_PLAYERS_CARD_TIER_NONE
+	run_state.narrative_flags["grand_casino_players_card_highest_tier"] = RunState.GRAND_CASINO_PLAYERS_CARD_TIER_SILVER
+	run_state.narrative_flags["grand_casino_comp_drink_tokens"] = 2
+	var rotated := false
+	for _day_index in range(20):
+		run_state.advance_game_clock_minutes(1440)
+		if str(run_state.grand_casino_staff_member_for_game("blackjack").get("id", "")) == first_blackjack_id:
+			continue
+		blackjack.surface_state(run_state, run_state.current_environment, {})
+		rotated = true
+		break
+	if not rotated:
+		failures.append("Grand Casino staff reset fixture did not reach a seeded blackjack dealer rotation.")
+		return
+	if int(blackjack_table.get("strategy_deviation_strikes", -1)) != 0 or int(blackjack_table.get("strategy_watch_pressure", -1)) != 0 or not str(blackjack_table.get("strategy_last_notice", "missing")).is_empty():
+		failures.append("Fresh blackjack dealer did not reset exactly the existing dealer-local strategy familiarity state.")
+	if int(blackjack_table.get("hands_played", 0)) != 9 or int(blackjack_table.get("running_count", 0)) != 4 or not bool(blackjack_table.get("barred", false)) or str(blackjack_table.get("barred_reason", "")) != "Casino memory persists.":
+		failures.append("Dealer rotation reset physical table history or durable casino ban state.")
+	if run_state.suspicion_level() != 28 or int(run_state.narrative_flags.get("grand_casino_games_played", 0)) != 4 or not bool(run_state.narrative_flags.get("grand_casino_cheat_evidence", false)) or str(run_state.narrative_flags.get("grand_casino_players_card_highest_tier", "")) != RunState.GRAND_CASINO_PLAYERS_CARD_TIER_SILVER or int(run_state.narrative_flags.get("grand_casino_comp_drink_tokens", 0)) != 2:
+		failures.append("Dealer rotation changed heat, evidence, counters, Players Card progress, or durable comp tokens.")
+
+
+func _check_grand_casino_memory_entry_lines(main_environment: Dictionary, outside_environment: Dictionary, failures: Array) -> void:
+	var cases := [
+		{"key": "returning", "flags": {}, "heat": 0},
+		{"key": "high_heat", "flags": {"grand_casino_max_heat": 58}, "heat": 0},
+		{"key": "cheat_evidence", "flags": {"grand_casino_cheat_evidence": true}, "heat": 0},
+		{"key": "showdown_pressure", "flags": {"grand_casino_attention_pit_boss_sweep": true}, "heat": 0},
+		{"key": "pending_review", "flags": {"grand_casino_entry_bankroll": 100, "grand_casino_games_played": 5}, "heat": 0, "bankroll": 140},
+	]
+	for case_value in cases:
+		var case: Dictionary = case_value
+		var run_state: RunState = RunStateScript.new()
+		run_state.start_new("GC-MEMORY-%s" % str(case.get("key", "fixture")))
+		run_state.set_environment(main_environment.duplicate(true))
+		for flag_key in (case.get("flags", {}) as Dictionary).keys():
+			run_state.narrative_flags[str(flag_key)] = (case.get("flags", {}) as Dictionary)[flag_key]
+		if case.has("bankroll"):
+			run_state.bankroll = int(case.get("bankroll", run_state.bankroll))
+		if int(case.get("heat", 0)) > 0:
+			run_state.add_suspicion("gc_memory_heat", int(case.get("heat", 0)), "behavior", true, {"environment_id": str(run_state.current_environment.get("id", ""))})
+		run_state.set_environment(outside_environment.duplicate(true))
+		run_state.set_environment(main_environment.duplicate(true))
+		var cue := run_state.pending_grand_casino_entry_cue()
+		if str(cue.get("memory_key", "")) != str(case.get("key", "")) or str(cue.get("message", "")).strip_edges().is_empty():
+			failures.append("Grand Casino re-entry memory line selected %s instead of dominant state %s." % [str(cue.get("memory_key", "none")), str(case.get("key", ""))])
 
 
 func _check_grand_casino_spatial_split(library: ContentLibrary, main_archetype: Dictionary, failures: Array) -> void:
@@ -3321,6 +3487,7 @@ func _check_run_state_source_of_truth(library: ContentLibrary, failures: Array) 
 	_assert_json_equal(run_a.debt, restored.debt, "RunState debt did not survive round-trip.", failures)
 	_assert_json_equal(run_a.suspicion, restored.suspicion, "RunState suspicion did not survive round-trip.", failures)
 	_assert_json_equal(run_a.current_environment, restored.current_environment, "RunState current environment did not survive round-trip.", failures)
+	_assert_json_equal(run_a.grand_casino_staffing, restored.grand_casino_staffing, "RunState Grand Casino staffing did not survive round-trip.", failures)
 	_assert_json_equal(run_a.environment_history, restored.environment_history, "RunState environment history did not survive round-trip.", failures)
 	_assert_json_equal(run_a.unlocked_travel, restored.unlocked_travel, "RunState travel hooks did not survive round-trip.", failures)
 	_assert_json_equal(run_a.narrative_flags, restored.narrative_flags, "RunState narrative flags did not survive round-trip.", failures)
@@ -4203,6 +4370,7 @@ func _check_run_state_snapshot_keys(snapshot: Dictionary, failures: Array) -> vo
 		"suspicion",
 		"current_environment",
 		"world_map",
+		"grand_casino_staffing",
 		"environment_history",
 		"unlocked_travel",
 		"narrative_flags",

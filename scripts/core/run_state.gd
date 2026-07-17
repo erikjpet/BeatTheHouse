@@ -92,6 +92,37 @@ const GRAND_CASINO_LINDA_TIER_DIALOGUES := {
 	GRAND_CASINO_PLAYERS_CARD_TIER_BRONZE: "linda_bronze_tier",
 	GRAND_CASINO_PLAYERS_CARD_TIER_SILVER: "linda_silver_tier",
 }
+const GRAND_CASINO_STAFF_ROTATION_CHANCE_PERCENT := 50
+const GRAND_CASINO_STAFF_ROLE_IDS := ["blackjack", "baccarat", "roulette", "bartender"]
+const GRAND_CASINO_STAFF_DEFAULT_ROSTERS := {
+	"blackjack": [
+		{"id": "mara", "name": "Mara", "style_id": "mara"},
+		{"id": "lee", "name": "Lee", "style_id": "lena"},
+		{"id": "june", "name": "June", "style_id": "june"},
+	],
+	"baccarat": [
+		{"id": "sable", "name": "Sable", "style_id": "sable"},
+		{"id": "noor", "name": "Noor", "style_id": "dot"},
+		{"id": "camille", "name": "Camille", "style_id": "iris"},
+	],
+	"roulette": [
+		{"id": "vega", "name": "Vega", "style_id": "vince"},
+		{"id": "rook", "name": "Rook", "style_id": "marco"},
+		{"id": "sal", "name": "Sal", "style_id": "sal"},
+	],
+	"bartender": [
+		{"id": "rafi", "name": "Rafi", "style_id": "rafi"},
+		{"id": "nora", "name": "Nora", "style_id": "nell"},
+		{"id": "cal", "name": "Cal", "style_id": "mara"},
+	],
+}
+const GRAND_CASINO_MEMORY_DEFAULT_LINES := {
+	"pending_review": "Linda has your prior review slip waiting at the Cage.",
+	"showdown_pressure": "The floor remembers Rourke's interest in you.",
+	"cheat_evidence": "The dealers remember the move that put your hands on watch.",
+	"high_heat": "The staff remember how hot your last visit became.",
+	"returning": "A floor attendant recognizes you before you reach the felt.",
+}
 const GRAND_CASINO_SHOWDOWN_DEFAULT_SUCCESS_MESSAGE := "Rourke cannot prove enough to hold you. The casino lets you walk with your winnings. Rourke lets the elevator close; the house will remember your face."
 const GRAND_CASINO_SHOWDOWN_DEFAULT_FAILURE_MESSAGE := "The story falls apart in the back room. The casino takes you out back and the run ends."
 const GRAND_CASINO_HIGH_ROLLER_DEFAULT_SUCCESS_MESSAGE := "Linda issues the Gold Players Card and lets you leave with your winnings. The card opens quieter rooms; your name is on the list."
@@ -168,6 +199,7 @@ var drunk_distortion_suppression_turns: int = 0
 var current_environment: Dictionary = {}
 var world_map: Dictionary = {}
 var grand_casino_room_states: Dictionary = {}
+var grand_casino_staffing: Dictionary = {}
 var rourke_current_room: String = ""
 var rourke_current_spot: String = ""
 var rourke_facing: String = "right"
@@ -233,6 +265,7 @@ func start_new(p_seed_text: String = "FOUNDATION-SEED", p_challenge_config: Dict
 	current_environment = {}
 	world_map = {}
 	grand_casino_room_states = {}
+	grand_casino_staffing = {}
 	rourke_current_room = ""
 	rourke_current_spot = ""
 	rourke_facing = "right"
@@ -447,6 +480,7 @@ func advance_game_clock_minutes(amount: int) -> void:
 	game_clock_minutes = maxi(0, game_clock_minutes + amount)
 	var next_day := game_day()
 	if next_day > previous_day:
+		_advance_grand_casino_staff_day_rollovers(previous_day, next_day)
 		_advance_home_day_rollovers(previous_day, next_day)
 
 
@@ -1136,7 +1170,9 @@ func set_environment(environment_data: Dictionary) -> void:
 		_clear_grand_casino_clean_cashout_ready()
 	event_cadence_begin_visit(current_environment)
 	_initialize_grand_casino_objective_runtime()
+	_initialize_grand_casino_staffing()
 	_initialize_grand_casino_living_floor()
+	_queue_grand_casino_entry_cue(previous_was_grand_casino)
 	_evaluate_immediate_terminal_state()
 
 
@@ -3063,6 +3099,251 @@ func grand_casino_living_floor_snapshot(environment: Dictionary = {}) -> Diction
 	}
 
 
+func grand_casino_staffing_snapshot(environment: Dictionary = {}) -> Dictionary:
+	var source := current_environment if environment.is_empty() else environment
+	if not _is_grand_casino_environment(source):
+		return {}
+	_initialize_grand_casino_staffing()
+	return grand_casino_staffing.duplicate(true)
+
+
+func grand_casino_staff_member_for_game(game_id: String, environment: Dictionary = {}) -> Dictionary:
+	var source := current_environment if environment.is_empty() else environment
+	if not _is_grand_casino_environment(source):
+		return {}
+	_initialize_grand_casino_staffing()
+	var role_id := "bartender" if game_id == "bar_dice" else game_id.strip_edges()
+	var assignments: Dictionary = grand_casino_staffing.get("assignments", {}) if typeof(grand_casino_staffing.get("assignments", {})) == TYPE_DICTIONARY else {}
+	var assignment: Variant = assignments.get(role_id, {})
+	return assignment if typeof(assignment) == TYPE_DICTIONARY else {}
+
+
+func grand_casino_staff_profile_rng(role_id: String, assignment_id: String, day_index: int) -> RngStream:
+	return _create_seeded_run_rng("gc_staff_profile:%s:%s:%d" % [role_id.strip_edges(), assignment_id.strip_edges(), maxi(1, day_index)])
+
+
+func pending_grand_casino_entry_cue() -> Dictionary:
+	var cue: Variant = grand_casino_staffing.get("entry_cue", {})
+	return (cue as Dictionary).duplicate(true) if typeof(cue) == TYPE_DICTIONARY else {}
+
+
+func consume_grand_casino_entry_cue() -> Dictionary:
+	var cue := pending_grand_casino_entry_cue()
+	if cue.is_empty():
+		return {}
+	grand_casino_staffing["entry_cue"] = {}
+	if bool(cue.get("rotation", false)):
+		grand_casino_staffing["rotation_cue_shown_day"] = maxi(1, int(cue.get("day", game_day())))
+	return cue
+
+
+func _initialize_grand_casino_staffing() -> void:
+	if not _is_grand_casino_environment(current_environment):
+		return
+	var current_day := game_day()
+	if int(grand_casino_staffing.get("day", 0)) == current_day and not _grand_casino_staff_assignments(grand_casino_staffing).is_empty():
+		return
+	var prior_cue: Dictionary = grand_casino_staffing.get("entry_cue", {}) if typeof(grand_casino_staffing.get("entry_cue", {})) == TYPE_DICTIONARY else {}
+	var shown_day := maxi(0, int(grand_casino_staffing.get("rotation_cue_shown_day", 0)))
+	grand_casino_staffing = _grand_casino_staffing_for_day(current_day)
+	grand_casino_staffing["entry_cue"] = prior_cue
+	grand_casino_staffing["rotation_cue_shown_day"] = shown_day
+
+
+func _advance_grand_casino_staff_day_rollovers(previous_day: int, next_day: int) -> void:
+	if previous_day >= next_day:
+		return
+	for day_index in range(previous_day + 1, next_day + 1):
+		grand_casino_staffing = _grand_casino_staffing_for_day(day_index)
+		_seed_rival_cheater_cast(day_index)
+
+
+func _grand_casino_staffing_for_day(day_index: int) -> Dictionary:
+	var target_day := maxi(1, day_index)
+	var config := _grand_casino_staff_config()
+	var chance := clampi(int(config.get("rotation_chance_percent", GRAND_CASINO_STAFF_ROTATION_CHANCE_PERCENT)), 0, 100)
+	var assignments: Dictionary = {}
+	for timeline_day in range(1, target_day + 1):
+		var day_rng := _create_seeded_run_rng("gc_staff_day:%d" % timeline_day)
+		var next_assignments: Dictionary = {}
+		for role_value in GRAND_CASINO_STAFF_ROLE_IDS:
+			var role_id := str(role_value)
+			var roster := _grand_casino_staff_roster(config, role_id)
+			var previous: Dictionary = assignments.get(role_id, {}) if typeof(assignments.get(role_id, {})) == TYPE_DICTIONARY else {}
+			var role_rng := day_rng.fork(role_id)
+			var rotate := timeline_day == 1 or previous.is_empty() or role_rng.randi_range(1, 100) <= chance
+			var selected := _grand_casino_staff_pick(roster, previous, role_rng, rotate)
+			selected["role_id"] = role_id
+			selected["day"] = timeline_day
+			next_assignments[role_id] = selected
+		assignments = next_assignments
+	var prior_assignments := _grand_casino_staff_assignments(grand_casino_staffing)
+	var rotated_roles: Array = []
+	if target_day > 1:
+		var previous_timeline := _grand_casino_staffing_for_previous_day(target_day - 1, config, chance)
+		for role_value in GRAND_CASINO_STAFF_ROLE_IDS:
+			var role_id := str(role_value)
+			var previous_id := str(_copy_dict(previous_timeline.get(role_id, {})).get("id", ""))
+			var current_id := str(_copy_dict(assignments.get(role_id, {})).get("id", ""))
+			if not current_id.is_empty() and current_id != previous_id:
+				rotated_roles.append(role_id)
+	if not prior_assignments.is_empty() and int(grand_casino_staffing.get("day", 0)) == target_day:
+		rotated_roles = _copy_array(grand_casino_staffing.get("rotated_roles", rotated_roles))
+	return {
+		"day": target_day,
+		"rotation_chance_percent": chance,
+		"assignments": assignments,
+		"rotated_roles": rotated_roles,
+		"rotation_occurred": not rotated_roles.is_empty(),
+		"constants": {
+			"rourke": {"id": "rourke", "name": "Rourke"},
+			"linda": {"id": "linda", "name": "Linda"},
+		},
+		"entry_cue": {},
+		"rotation_cue_shown_day": maxi(0, int(grand_casino_staffing.get("rotation_cue_shown_day", 0))),
+	}
+
+
+func _grand_casino_staffing_for_previous_day(day_index: int, config: Dictionary, chance: int) -> Dictionary:
+	var assignments: Dictionary = {}
+	for timeline_day in range(1, maxi(1, day_index) + 1):
+		var day_rng := _create_seeded_run_rng("gc_staff_day:%d" % timeline_day)
+		var next_assignments: Dictionary = {}
+		for role_value in GRAND_CASINO_STAFF_ROLE_IDS:
+			var role_id := str(role_value)
+			var roster := _grand_casino_staff_roster(config, role_id)
+			var previous: Dictionary = assignments.get(role_id, {}) if typeof(assignments.get(role_id, {})) == TYPE_DICTIONARY else {}
+			var role_rng := day_rng.fork(role_id)
+			var rotate := timeline_day == 1 or previous.is_empty() or role_rng.randi_range(1, 100) <= chance
+			var selected := _grand_casino_staff_pick(roster, previous, role_rng, rotate)
+			selected["role_id"] = role_id
+			selected["day"] = timeline_day
+			next_assignments[role_id] = selected
+		assignments = next_assignments
+	return assignments
+
+
+func _grand_casino_staff_pick(roster: Array, previous: Dictionary, rng: RngStream, rotate: bool) -> Dictionary:
+	if roster.is_empty():
+		return {}
+	if not rotate and not previous.is_empty():
+		return previous.duplicate(true)
+	var choices: Array = []
+	var previous_id := str(previous.get("id", ""))
+	for member_value in roster:
+		if typeof(member_value) != TYPE_DICTIONARY:
+			continue
+		var member := member_value as Dictionary
+		if roster.size() > 1 and str(member.get("id", "")) == previous_id:
+			continue
+		choices.append(member)
+	if choices.is_empty():
+		choices = roster
+	var selected: Variant = rng.pick(choices, choices[0])
+	return (selected as Dictionary).duplicate(true) if typeof(selected) == TYPE_DICTIONARY else {}
+
+
+func _grand_casino_staff_config() -> Dictionary:
+	for environment_value in [current_environment, grand_casino_room_states.get(GRAND_CASINO_ARCHETYPE_ID, {})]:
+		if typeof(environment_value) != TYPE_DICTIONARY:
+			continue
+		var environment := environment_value as Dictionary
+		var flags: Dictionary = environment.get("local_narrative_flags", {}) if typeof(environment.get("local_narrative_flags", {})) == TYPE_DICTIONARY else {}
+		var config: Variant = flags.get("grand_casino_staff_rotation", {})
+		if typeof(config) == TYPE_DICTIONARY and not (config as Dictionary).is_empty():
+			return (config as Dictionary).duplicate(true)
+	return {
+		"rotation_chance_percent": GRAND_CASINO_STAFF_ROTATION_CHANCE_PERCENT,
+		"rosters": GRAND_CASINO_STAFF_DEFAULT_ROSTERS.duplicate(true),
+		"memory_lines": GRAND_CASINO_MEMORY_DEFAULT_LINES.duplicate(true),
+		"rotation_cue_lines": ["New faces have taken their places at the felt."],
+		"memory_high_heat_threshold": 50,
+	}
+
+
+func _grand_casino_staff_roster(config: Dictionary, role_id: String) -> Array:
+	var rosters: Dictionary = config.get("rosters", {}) if typeof(config.get("rosters", {})) == TYPE_DICTIONARY else {}
+	var roster: Variant = rosters.get(role_id, GRAND_CASINO_STAFF_DEFAULT_ROSTERS.get(role_id, []))
+	return (roster as Array).duplicate(true) if typeof(roster) == TYPE_ARRAY else []
+
+
+func _queue_grand_casino_entry_cue(previous_was_grand_casino: bool) -> void:
+	if not _is_grand_casino_environment(current_environment):
+		return
+	var config := _grand_casino_staff_config()
+	var parts: Array = []
+	var cue := {"day": game_day(), "rotation": false, "memory_key": ""}
+	if bool(grand_casino_staffing.get("rotation_occurred", false)) and int(grand_casino_staffing.get("rotation_cue_shown_day", 0)) != game_day():
+		var rotation_lines: Array = config.get("rotation_cue_lines", []) if typeof(config.get("rotation_cue_lines", [])) == TYPE_ARRAY else []
+		if not rotation_lines.is_empty():
+			parts.append(str(rotation_lines[0]))
+		cue["rotation"] = true
+	if not previous_was_grand_casino and _grand_casino_has_prior_visit():
+		var memory_key := _grand_casino_dominant_memory_key(config)
+		var memory_lines: Dictionary = config.get("memory_lines", {}) if typeof(config.get("memory_lines", {})) == TYPE_DICTIONARY else {}
+		var memory_line := str(memory_lines.get(memory_key, GRAND_CASINO_MEMORY_DEFAULT_LINES.get(memory_key, ""))).strip_edges()
+		if not memory_line.is_empty():
+			parts.append(memory_line)
+		cue["memory_key"] = memory_key
+	if parts.is_empty():
+		return
+	cue["message"] = " ".join(parts)
+	grand_casino_staffing["entry_cue"] = cue
+	log_story({
+		"type": "grand_casino_entry_memory",
+		"day": game_day(),
+		"memory_key": str(cue.get("memory_key", "")),
+		"rotation": bool(cue.get("rotation", false)),
+		"message": str(cue.get("message", "")),
+	})
+
+
+func _grand_casino_has_prior_visit() -> bool:
+	for entry_value in environment_history:
+		if typeof(entry_value) != TYPE_DICTIONARY:
+			continue
+		var entry := entry_value as Dictionary
+		if GRAND_CASINO_ARCHETYPE_IDS.has(str(entry.get("archetype_id", ""))):
+			return true
+	return false
+
+
+func _grand_casino_dominant_memory_key(config: Dictionary) -> String:
+	var remembered_pressure := bool(narrative_flags.get("grand_casino_showdown_pending", false)) \
+		or bool(narrative_flags.get("grand_casino_showdown_active", false)) \
+		or bool(narrative_flags.get("grand_casino_staff_attention", false)) \
+		or bool(narrative_flags.get("grand_casino_attention_pit_boss_sweep", false)) \
+		or bool(narrative_flags.get("grand_casino_attention_eye_in_the_sky", false)) \
+		or bool(narrative_flags.get("grand_casino_attention_watched_risky", false)) \
+		or bool(narrative_flags.get("grand_casino_attention_host", false)) \
+		or bool(narrative_flags.get("grand_casino_attention_high_roller_review", false)) \
+		or bool(narrative_flags.get("grand_casino_attention_forced_heat", false))
+	if remembered_pressure:
+		return "showdown_pressure"
+	var objective_status := demo_objective_status()
+	if bool(narrative_flags.get("grand_casino_high_roller_ready", false)) \
+		or bool(narrative_flags.get("high_roller_cashout_pending", false)) \
+		or bool(objective_status.get("players_card_ready", false)):
+		return "pending_review"
+	if bool(narrative_flags.get("grand_casino_cheat_evidence", false)) or bool(narrative_flags.get("grand_casino_watched_cheat_evidence", false)):
+		return "cheat_evidence"
+	var high_heat_threshold := clampi(int(config.get("memory_high_heat_threshold", 50)), 0, 100)
+	if maxi(suspicion_level(), int(narrative_flags.get("grand_casino_max_heat", 0))) >= high_heat_threshold:
+		return "high_heat"
+	return "returning"
+
+
+func _create_seeded_run_rng(stream_key: String) -> RngStream:
+	var rng := RngStream.new()
+	rng.configure(seed_value, seed_value)
+	return rng.fork(stream_key)
+
+
+static func _grand_casino_staff_assignments(staffing: Dictionary) -> Dictionary:
+	var assignments: Variant = staffing.get("assignments", {})
+	return assignments if typeof(assignments) == TYPE_DICTIONARY else {}
+
+
 func _initialize_grand_casino_living_floor() -> void:
 	if not _is_grand_casino_environment(current_environment):
 		return
@@ -3194,7 +3475,7 @@ func _begin_rourke_escort(index: int, rival: Dictionary) -> void:
 
 
 func _seed_rival_cheater_cast(day_index: int) -> void:
-	var cast_rng := create_rng("rourke_floor").fork("cast:day:%d" % maxi(1, day_index))
+	var cast_rng := _create_seeded_run_rng("rourke_floor:cast:day:%d" % maxi(1, day_index))
 	var count := cast_rng.randi_range(RIVAL_CHEATER_MIN_COUNT, RIVAL_CHEATER_MAX_COUNT)
 	var names := ["Marlow", "Vega", "Kite", "Nix", "Bishop", "Juneau"]
 	var tells := ["chip_riffle", "sleeve_check", "heel_tap", "glance_loop", "ring_turn", "counting_lips"]
@@ -5657,6 +5938,7 @@ func to_dict() -> Dictionary:
 		"current_environment": current_environment.duplicate(true),
 		"world_map": WorldMap.normalize(world_map),
 		"grand_casino_room_states": _grand_casino_room_states_for_save(),
+		"grand_casino_staffing": grand_casino_staffing.duplicate(true),
 		"rourke_current_room": rourke_current_room,
 		"rourke_current_spot": rourke_current_spot,
 		"rourke_facing": rourke_facing,
@@ -5718,6 +6000,7 @@ func from_dict(data: Dictionary) -> void:
 	_apply_sals_forfeited_shelf_to_current_environment()
 	world_map = WorldMap.normalize(_copy_dict(data.get("world_map", {})))
 	grand_casino_room_states = _normalize_grand_casino_room_states(_copy_dict(data.get("grand_casino_room_states", {})))
+	grand_casino_staffing = _normalize_grand_casino_staffing(_copy_dict(data.get("grand_casino_staffing", {})))
 	rourke_current_room = _normalize_grand_casino_room_id(str(data.get("rourke_current_room", "")))
 	rourke_current_spot = str(data.get("rourke_current_spot", "")).strip_edges()
 	rourke_facing = "left" if str(data.get("rourke_facing", "right")) == "left" else "right"
@@ -5769,6 +6052,7 @@ func from_dict(data: Dictionary) -> void:
 	_refresh_economy()
 	_activate_current_local_suspicion(true)
 	_initialize_grand_casino_objective_runtime()
+	_initialize_grand_casino_staffing()
 	_initialize_grand_casino_living_floor()
 	if saved_run_status != RUN_STATUS_ENDED and saved_run_status != RUN_STATUS_FAILED:
 		_evaluate_immediate_terminal_state()
@@ -6131,6 +6415,42 @@ static func _normalize_grand_casino_room_states(room_states: Dictionary) -> Dict
 		if typeof(room) == TYPE_DICTIONARY and not (room as Dictionary).is_empty():
 			result[room_id] = _normalize_environment((room as Dictionary).duplicate(true))
 	return result
+
+
+static func _normalize_grand_casino_staffing(staffing: Dictionary) -> Dictionary:
+	if staffing.is_empty():
+		return {}
+	var assignments: Dictionary = {}
+	var source_assignments: Dictionary = staffing.get("assignments", {}) if typeof(staffing.get("assignments", {})) == TYPE_DICTIONARY else {}
+	for role_value in GRAND_CASINO_STAFF_ROLE_IDS:
+		var role_id := str(role_value)
+		var member_value: Variant = source_assignments.get(role_id, {})
+		if typeof(member_value) != TYPE_DICTIONARY:
+			continue
+		var member := (member_value as Dictionary).duplicate(true)
+		var member_id := str(member.get("id", "")).strip_edges()
+		if member_id.is_empty() or member_id == "rourke" or member_id == "linda":
+			continue
+		member["id"] = member_id
+		member["name"] = str(member.get("name", member_id.capitalize()))
+		member["style_id"] = str(member.get("style_id", "mara"))
+		member["role_id"] = role_id
+		member["day"] = maxi(1, int(member.get("day", staffing.get("day", 1))))
+		assignments[role_id] = member
+	var entry_cue: Dictionary = staffing.get("entry_cue", {}) if typeof(staffing.get("entry_cue", {})) == TYPE_DICTIONARY else {}
+	return {
+		"day": maxi(0, int(staffing.get("day", 0))),
+		"rotation_chance_percent": clampi(int(staffing.get("rotation_chance_percent", GRAND_CASINO_STAFF_ROTATION_CHANCE_PERCENT)), 0, 100),
+		"assignments": assignments,
+		"rotated_roles": _string_array(_copy_array(staffing.get("rotated_roles", []))),
+		"rotation_occurred": bool(staffing.get("rotation_occurred", false)),
+		"constants": {
+			"rourke": {"id": "rourke", "name": "Rourke"},
+			"linda": {"id": "linda", "name": "Linda"},
+		},
+		"entry_cue": entry_cue,
+		"rotation_cue_shown_day": maxi(0, int(staffing.get("rotation_cue_shown_day", 0))),
+	}
 
 
 static func _empty_grand_casino_room_heat_accumulators() -> Dictionary:

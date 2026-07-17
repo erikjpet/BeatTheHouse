@@ -1143,15 +1143,39 @@ func _dice_state(run_state: RunState, environment: Dictionary) -> Dictionary:
 	var state: Dictionary = game_states.get(get_id(), {}) if typeof(game_states.get(get_id(), {})) == TYPE_DICTIONARY else {}
 	if state.is_empty():
 		state = _fallback_state(run_state, environment)
+		_apply_grand_casino_bartender_assignment(state, run_state, environment)
 		game_states[get_id()] = state
 		environment["game_states"] = game_states
 		return state
+	_apply_grand_casino_bartender_assignment(state, run_state, environment)
 	if _state_is_current(state):
 		return state
 	var normalized := _normalize_state(state)
 	game_states[get_id()] = normalized
 	environment["game_states"] = game_states
 	return normalized
+
+
+func _apply_grand_casino_bartender_assignment(state: Dictionary, run_state: RunState, environment: Dictionary) -> void:
+	if run_state == null:
+		return
+	var assignment := run_state.grand_casino_staff_member_for_game(get_id(), environment)
+	var assignment_id := str(assignment.get("id", "")).strip_edges()
+	if assignment_id.is_empty():
+		return
+	var assignment_day := maxi(1, int(assignment.get("day", run_state.game_day())))
+	var previous_id := str(state.get("staff_assignment_id", "")).strip_edges()
+	state["staff_assignment_day"] = assignment_day
+	if previous_id == assignment_id:
+		return
+	var profile_rng := run_state.grand_casino_staff_profile_rng("bartender", assignment_id, assignment_day)
+	var dealer_name := str(assignment.get("name", "Bartender"))
+	var profile := _generate_dealer_profile(profile_rng, dealer_name, str(state.get("edge_tier", "standard")))
+	profile["identity_id"] = assignment_id
+	profile["style_id"] = str(assignment.get("style_id", "rafi"))
+	state["dealer_name"] = dealer_name
+	state["dealer_profile"] = profile
+	state["staff_assignment_id"] = assignment_id
 
 
 func _fallback_state(run_state: RunState, environment: Dictionary) -> Dictionary:
