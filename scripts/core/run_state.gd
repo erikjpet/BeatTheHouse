@@ -133,7 +133,8 @@ const GRAND_CASINO_MEMORY_DEFAULT_LINES := {
 }
 const GRAND_CASINO_SHOWDOWN_DEFAULT_SUCCESS_MESSAGE := "Rourke cannot prove enough to hold you. The casino lets you walk with your winnings. Rourke lets the elevator close; the house will remember your face."
 const GRAND_CASINO_SHOWDOWN_DEFAULT_FAILURE_MESSAGE := "The story falls apart in the back room. The casino takes you out back and the run ends."
-const GRAND_CASINO_HIGH_ROLLER_DEFAULT_SUCCESS_MESSAGE := "Linda issues the Gold Players Card and lets you leave with your winnings. The card opens quieter rooms; your name is on the list."
+const GRAND_CASINO_HIGH_ROLLER_DEFAULT_SUCCESS_MESSAGE := "Linda issues the Gold Players Card and lets you leave with your winnings."
+const GRAND_CASINO_ACT_TWO_SEAM_MESSAGE := "The Gold card opens doors beyond this city."
 const ROURKE_MOVE_EVALUATION_ACTIONS := 3
 const ROURKE_OFF_FLOOR_ACTIONS := 4
 const ROURKE_HEAT_DECAY_PERCENT := 80
@@ -2518,7 +2519,7 @@ func complete_grand_casino_high_roller_cashout(config: Dictionary = {}) -> Dicti
 			"route": GRAND_CASINO_HIGH_ROLLER_EVENT_ID,
 			"tier": GRAND_CASINO_PLAYERS_CARD_TIER_GOLD,
 			"environment_id": str(current_environment.get("id", "")),
-			"message": "Linda files the Gold card. Quieter rooms open beyond the demo.",
+			"message": GRAND_CASINO_ACT_TWO_SEAM_MESSAGE,
 		})
 	_log_demo_finale_result(high_roller_event_id, GRAND_CASINO_HIGH_ROLLER_EVENT_ID, message, true)
 	return {"ok": true, "success": true, "complete": true, "message": message, "status": demo_objective_status()}

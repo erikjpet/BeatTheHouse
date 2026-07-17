@@ -1804,6 +1804,19 @@ func _check_grand_casino_players_card_tiers(library: ContentLibrary, main_archet
 	})
 	if not bool(gold_result.get("complete", false)) or run_state.run_status != RunState.RUN_STATUS_ENDED or str(run_state.narrative_flags.get("demo_victory_route", "")) != RunState.GRAND_CASINO_HIGH_ROLLER_EVENT_ID or not bool(run_state.narrative_flags.get("act_two_seam_ready", false)):
 		failures.append("Linda's Gold review did not complete the canonical clean victory end-to-end.")
+	var seam_story_count := 0
+	for story_value in run_state.story_log:
+		if typeof(story_value) != TYPE_DICTIONARY:
+			continue
+		var story_entry := story_value as Dictionary
+		if str(story_entry.get("type", "")) == "act_two_seam_ready":
+			seam_story_count += 1
+			if str(story_entry.get("message", "")) != RunState.GRAND_CASINO_ACT_TWO_SEAM_MESSAGE or str(story_entry.get("tier", "")) != RunState.GRAND_CASINO_PLAYERS_CARD_TIER_GOLD:
+				failures.append("Gold victory logged an incorrect Act 2 seam story marker.")
+	var seam_report := RunReportViewModelScript.build(run_state.to_dict(), {"outcomes": RunReportViewModelScript.load_outcome_registry()})
+	var seam_outcome := _copy_dict(seam_report.get("outcome", {}))
+	if seam_story_count != 1 or str(seam_outcome.get("seam_line", "")) != RunState.GRAND_CASINO_ACT_TWO_SEAM_MESSAGE or str(seam_outcome.get("how", "")).count(RunState.GRAND_CASINO_ACT_TWO_SEAM_MESSAGE) != 1:
+		failures.append("Gold victory did not log and present exactly one truthful Act 2 seam line.")
 	var evidence_run: RunState = RunStateScript.new()
 	evidence_run.start_new("GC-PLAYERS-CARD-EVIDENCE")
 	evidence_run.set_environment(environment.to_dict())

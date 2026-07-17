@@ -135,6 +135,11 @@ static func build_outcome(run_data: Dictionary, registry: Dictionary) -> Diction
 		how = str(flags.get("demo_victory_message", definition.get("how", "You beat the house and made it out.")))
 	elif how.strip_edges().is_empty():
 		how = str(definition.get("how", "The run ended here."))
+	var seam_line := ""
+	if won and str(flags.get("demo_victory_route", "")) == RunState.GRAND_CASINO_HIGH_ROLLER_EVENT_ID and bool(flags.get("act_two_seam_ready", false)):
+		seam_line = RunState.GRAND_CASINO_ACT_TWO_SEAM_MESSAGE
+		if how.find(seam_line) == -1:
+			how = "%s %s" % [how.strip_edges(), seam_line]
 	var environment := _copy_dict(run_data.get("current_environment", {}))
 	var environment_name := str(environment.get("display_name", environment.get("id", "Unknown room")))
 	var total_minutes := maxi(0, int(run_data.get("game_clock_minutes", RunState.GAME_CLOCK_START_MINUTE)))
@@ -147,6 +152,7 @@ static func build_outcome(run_data: Dictionary, registry: Dictionary) -> Diction
 		"won": won,
 		"title": title,
 		"how": how,
+		"seam_line": seam_line,
 		"where": "%s · Day %d, %02d:%02d" % [environment_name, day, hour, minute],
 		"environment_name": environment_name,
 		"icon_key": str(definition.get("icon_key", outcome_key)),
