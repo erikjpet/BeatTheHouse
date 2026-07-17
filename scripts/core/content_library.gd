@@ -1294,6 +1294,7 @@ func _validate_music_manifest_definitions() -> void:
 		if float(track.get("bpm", 0.0)) <= 0.0:
 			validation_errors.append("music_tracks %s bpm must be positive." % track_id)
 		_validate_music_adaptive_tempo(track_id, float(track.get("bpm", 0.0)), track.get("adaptive_tempo", {}))
+		_validate_music_layer_choreography(track_id, track.get("layer_choreography", {}), track.get("fills", {}))
 		if int(track.get("bars", 0)) <= 0:
 			validation_errors.append("music_tracks %s bars must be positive." % track_id)
 		if int(track.get("loop_frames", 0)) <= 0:
@@ -1647,6 +1648,55 @@ func _validate_music_adaptive_tempo(track_id: String, track_bpm: float, value: V
 			validation_errors.append("music_tracks %s adaptive_tempo heat_curve BPM values must rise inside the profile range." % track_id)
 		previous_heat = heat
 		previous_bpm = bpm
+
+
+func _validate_music_layer_choreography(track_id: String, value: Variant, fills_value: Variant) -> void:
+	if typeof(value) != TYPE_DICTIONARY:
+		validation_errors.append("music_tracks %s layer_choreography must be a dictionary when present." % track_id)
+		return
+	var recipe: Dictionary = value
+	if recipe.is_empty():
+		return
+	if int(recipe.get("cycle_bars", 0)) <= 0 or float(recipe.get("fade_beats", 0.0)) <= 0.0:
+		validation_errors.append("music_tracks %s layer_choreography requires positive cycle_bars and fade_beats." % track_id)
+	if not [1, 2, 4].has(int(recipe.get("default_lead_in_bars", 2))):
+		validation_errors.append("music_tracks %s layer_choreography lead-in must be 1, 2, or 4 bars." % track_id)
+	var stages_value: Variant = recipe.get("stages", [])
+	if typeof(stages_value) != TYPE_ARRAY or (stages_value as Array).is_empty():
+		validation_errors.append("music_tracks %s layer_choreography must declare stages." % track_id)
+		return
+	var stage_ids := {}
+	var previous_start := -1
+	for stage_value in stages_value as Array:
+		if typeof(stage_value) != TYPE_DICTIONARY:
+			validation_errors.append("music_tracks %s layer_choreography stages must be dictionaries." % track_id)
+			continue
+		var stage: Dictionary = stage_value
+		var stage_id := str(stage.get("id", "")).strip_edges()
+		var start_bar := int(stage.get("start_bar", -1))
+		if stage_id.is_empty() or stage_ids.has(stage_id):
+			validation_errors.append("music_tracks %s layer_choreography stage ids must be present and unique: %s." % [track_id, stage_id])
+		stage_ids[stage_id] = true
+		if start_bar <= previous_start or int(stage.get("duration_bars", 0)) <= 0:
+			validation_errors.append("music_tracks %s layer_choreography stages must have increasing starts and positive durations." % track_id)
+		previous_start = start_bar
+		var roles_value: Variant = stage.get("roles", {})
+		if typeof(roles_value) != TYPE_DICTIONARY:
+			validation_errors.append("music_tracks %s layer_choreography stage %s roles must be a dictionary." % [track_id, stage_id])
+			continue
+		for gain_value in (roles_value as Dictionary).values():
+			var gain := float(gain_value)
+			if gain < 0.0 or gain > 1.0:
+				validation_errors.append("music_tracks %s layer_choreography stage %s role gains must stay inside 0..1." % [track_id, stage_id])
+	var fills: Dictionary = fills_value as Dictionary if typeof(fills_value) == TYPE_DICTIONARY else {}
+	for fill_value in fills.values():
+		if typeof(fill_value) != TYPE_DICTIONARY:
+			continue
+		var fill: Dictionary = fill_value
+		if fill.has("lead_in_bars") and not [1, 2, 4].has(int(fill.get("lead_in_bars", 0))):
+			validation_errors.append("music_tracks %s choreography fill lead_in_bars must be 1, 2, or 4." % track_id)
+		if fill.has("lead_in_bars") and bool(fill.get("loop", false)):
+			validation_errors.append("music_tracks %s choreography fills must be one-shots." % track_id)
 
 
 func _validate_music_delivery_filename(label: String, track_id: String, filename: String, expected_role: String, metadata: Variant, delivery: Dictionary, semantic_files: Dictionary) -> Dictionary:

@@ -225,6 +225,7 @@ var active_triggered_event: Dictionary = {}
 var event_cadence: Dictionary = {}
 var music_arrangement_state: Dictionary = {}
 var music_tempo_state: Dictionary = {}
+var music_choreography_state: Dictionary = {}
 var environment_history: Array = []
 var environment_history_archive_count: int = 0
 var unlocked_travel: Array = []
@@ -293,6 +294,7 @@ func start_new(p_seed_text: String = "FOUNDATION-SEED", p_challenge_config: Dict
 	_reset_event_cadence_state()
 	music_arrangement_state = {}
 	music_tempo_state = {}
+	music_choreography_state = {}
 	environment_history = []
 	environment_history_archive_count = 0
 	unlocked_travel = []
@@ -1201,6 +1203,7 @@ func set_environment(environment_data: Dictionary) -> void:
 		"selected_role_epochs": {},
 	}
 	music_tempo_state = {}
+	music_choreography_state = {}
 	_initialize_grand_casino_objective_runtime()
 	_initialize_grand_casino_staffing()
 	_initialize_grand_casino_living_floor()
@@ -1290,6 +1293,10 @@ func remember_music_arrangement_selection(track_id: String, selected_variant_ids
 
 func remember_music_tempo_state(state: Dictionary) -> void:
 	music_tempo_state = _normalize_music_tempo_state(state)
+
+
+func remember_music_choreography_state(state: Dictionary) -> void:
+	music_choreography_state = _normalize_music_choreography_state(state)
 
 
 func has_world_map() -> bool:
@@ -6579,6 +6586,7 @@ func to_dict() -> Dictionary:
 		"event_cadence": _normalize_event_cadence(event_cadence),
 		"music_arrangement_state": _normalize_music_arrangement_state(music_arrangement_state),
 		"music_tempo_state": _normalize_music_tempo_state(music_tempo_state),
+		"music_choreography_state": _normalize_music_choreography_state(music_choreography_state),
 		"environment_history": environment_history.duplicate(true),
 		"environment_history_archive_count": environment_history_archive_count,
 		"unlocked_travel": unlocked_travel.duplicate(true),
@@ -6649,6 +6657,7 @@ func from_dict(data: Dictionary) -> void:
 	event_cadence = _normalize_event_cadence(_copy_dict(data.get("event_cadence", {})))
 	music_arrangement_state = _normalize_music_arrangement_state(_copy_dict(data.get("music_arrangement_state", {})))
 	music_tempo_state = _normalize_music_tempo_state(_copy_dict(data.get("music_tempo_state", {})))
+	music_choreography_state = _normalize_music_choreography_state(_copy_dict(data.get("music_choreography_state", {})))
 	environment_history_archive_count = maxi(0, int(data.get("environment_history_archive_count", 0)))
 	environment_history = _normalize_environment_history(_copy_array(data.get("environment_history", [])))
 	_compact_environment_history()
@@ -7498,6 +7507,33 @@ static func _normalize_music_tempo_state(data: Dictionary) -> Dictionary:
 		"transport_beats": maxf(0.0, float(data.get("transport_beats", 0.0))),
 		"source_position": maxf(0.0, float(data.get("source_position", 0.0))),
 	}
+
+
+static func _normalize_music_choreography_state(data: Dictionary) -> Dictionary:
+	if data.is_empty():
+		return {}
+	return {
+		"profile_id": str(data.get("profile_id", "")).strip_edges(),
+		"visit_bar": maxi(0, int(data.get("visit_bar", 0))),
+		"stage_id": str(data.get("stage_id", "")).strip_edges(),
+		"stage_index": maxi(-1, int(data.get("stage_index", -1))),
+		"next_boundary_bar": maxi(-1, int(data.get("next_boundary_bar", -1))),
+		"last_fill_bar": int(data.get("last_fill_bar", -9999)),
+		"scheduled_transition": _copy_dict(data.get("scheduled_transition", {})),
+		"feature_release_bar": maxi(-1, int(data.get("feature_release_bar", -1))),
+		"role_target": _normalize_music_role_gains(data.get("role_target", {})),
+		"role_live": _normalize_music_role_gains(data.get("role_live", {})),
+	}
+
+
+static func _normalize_music_role_gains(value: Variant) -> Dictionary:
+	var source := _copy_dict(value)
+	var result := {}
+	for key_value in source.keys():
+		var key := str(key_value).strip_edges()
+		if not key.is_empty():
+			result[key] = clampf(float(source.get(key_value, 1.0)), 0.0, 1.0)
+	return result
 
 
 static func _normalize_music_variant_ids(value: Variant) -> Dictionary:

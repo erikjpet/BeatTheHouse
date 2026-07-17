@@ -8,6 +8,7 @@ const StaffRouletteGameScript := preload("res://scripts/games/roulette.gd")
 const StaffBarDiceGameScript := preload("res://scripts/games/bar_dice.gd")
 const GrandCasinoDuelModelScript := preload("res://scripts/core/grand_casino_duel_model.gd")
 const MusicDeliveryIndexScript := preload("res://scripts/core/music_delivery_index.gd")
+const MusicLayerChoreographyScript := preload("res://scripts/ui/music_layer_choreography.gd")
 
 
 func _check_run_report_foundation(failures: Array) -> void:
@@ -671,6 +672,32 @@ func _check_music_stem_director_foundation(library: ContentLibrary, failures: Ar
 	restored_tempo_run.from_dict(tempo_save_run.to_dict())
 	if JSON.stringify(restored_tempo_run.music_tempo_state) != JSON.stringify(tempo_save_run.music_tempo_state):
 		failures.append("Adaptive-tempo current/target transport state did not survive a RunState save/load round trip.")
+	var jazz_layer_recipe: Dictionary = jazz_8_track.get("layer_choreography", {}) as Dictionary
+	var jazz_layer_timeline := MusicLayerChoreographyScript.timeline_snapshot(jazz_layer_recipe, 32)
+	var jazz_layer_stage_changes: Array = []
+	for row_value in jazz_layer_timeline:
+		var stage_id := str((row_value as Dictionary).get("stage_id", ""))
+		if jazz_layer_stage_changes.is_empty() or str(jazz_layer_stage_changes[-1]) != stage_id:
+			jazz_layer_stage_changes.append(stage_id)
+	if jazz_layer_stage_changes != ["sparse", "build_bass", "build_drums", "peak", "release", "rebuild"]:
+		failures.append("Jazz layer choreography did not encode its sparse/build/peak/release/rebuild dwell arc in order.")
+	var fill_requests := [
+		{"id": "layer", "kind": "layer", "priority": 40, "source_section": "A", "destination_section": "B", "destination_progression_id": "jazz_b_1", "change_roles": ["drums_high"]},
+		{"id": "section", "kind": "section", "priority": 100, "source_section": "A", "destination_section": "B", "destination_progression_id": "jazz_b_1"},
+	]
+	var fill_resolution := MusicLayerChoreographyScript.resolve_fill_request(jazz_8_track.get("fills", {}), fill_requests, 2)
+	if str(fill_resolution.get("request_id", "")) != "section" or str(fill_resolution.get("fill_id", "")) != "jazz_fixture_fill" or int(fill_resolution.get("lead_in_bars", 0)) != 2:
+		failures.append("Jazz section/layer fill requests did not resolve to one compatible two-bar section-priority fill.")
+	var incompatible_fill := MusicLayerChoreographyScript.resolve_fill_request({"wrong": {"loop": false, "source_sections": ["C"], "destination_sections": ["C"], "progression_compatibility": ["wrong"]}}, fill_requests, 2)
+	if not bool(incompatible_fill.get("quiet_fallback", false)) or not str(incompatible_fill.get("fill_id", "")).is_empty():
+		failures.append("Jazz incompatible fill request did not degrade to the quiet authored-safe exit/entry.")
+	var choreography_save_run := RunStateScript.new()
+	choreography_save_run.start_new("MUSIC-CHOREOGRAPHY-ROUNDTRIP")
+	choreography_save_run.remember_music_choreography_state({"profile_id": "jazz", "visit_bar": 6, "stage_id": "build_bass", "stage_index": 1, "next_boundary_bar": 8, "last_fill_bar": 6, "scheduled_transition": {"destination_bar": 8, "fill_id": "jazz_fixture_fill", "started": true}, "feature_release_bar": 8, "role_target": {"drums_low": 0.0}, "role_live": {"drums_low": 0.1}})
+	var restored_choreography_run := RunStateScript.new()
+	restored_choreography_run.from_dict(choreography_save_run.to_dict())
+	if JSON.stringify(restored_choreography_run.music_choreography_state) != JSON.stringify(choreography_save_run.music_choreography_state):
+		failures.append("Layer stage and scheduled fill boundary did not survive a RunState save/load round trip.")
 	if _copy_array(jazz_recipe.get("sections", [])) != ["A", "A", "B", "A", "A", "A", "C", "A"]:
 		failures.append("Jazz harmony recipe did not encode AABA followed by AACA.")
 	var jazz_state := MusicArrangementSelectorScript.initial_recipe_state(jazz_8_track, 17, "fixture_visit")

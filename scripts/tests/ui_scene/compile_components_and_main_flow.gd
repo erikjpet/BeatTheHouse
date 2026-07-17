@@ -26,6 +26,7 @@ const RunReportScreenScript := preload("res://scripts/ui/run_report_screen.gd")
 const RunReportViewModelScript := preload("res://scripts/ui/run_report_view_model.gd")
 const MetaCollectionServiceScript := preload("res://scripts/core/meta_collection_service.gd")
 const CollectionDropServiceScript := preload("res://scripts/core/collection_drop_service.gd")
+const MusicLayerChoreographyScript := preload("res://scripts/ui/music_layer_choreography.gd")
 const TEST_SETTINGS_PATH := "user://settings_ui_scene_compile_check.json"
 const TEST_META_COLLECTION_PATH := "user://ui_scene_compile_meta_collection.json"
 
@@ -1848,6 +1849,18 @@ func _run() -> void:
 	var procedural_music_player = app.get("procedural_music_player")
 	if procedural_music_player == null:
 		push_error("Main UI did not create the procedural music player.")
+		quit(1)
+		return
+	var ui_library = app.get("library")
+	var jazz_choreography_track: Dictionary = ui_library.call("music_track", "jazz_club_delivery_fixture_8_bar")
+	var choreography_timeline := MusicLayerChoreographyScript.timeline_snapshot(jazz_choreography_track.get("layer_choreography", {}), 32)
+	var choreography_stage_changes: Array = []
+	for choreography_row_value in choreography_timeline:
+		var choreography_stage_id := str((choreography_row_value as Dictionary).get("stage_id", ""))
+		if choreography_stage_changes.is_empty() or str(choreography_stage_changes[-1]) != choreography_stage_id:
+			choreography_stage_changes.append(choreography_stage_id)
+	if choreography_stage_changes != ["sparse", "build_bass", "build_drums", "peak", "release", "rebuild"]:
+		push_error("Main UI music player did not expose the declared Jazz dwell choreography in order.")
 		quit(1)
 		return
 	var generated_music: AudioStreamWAV = procedural_music_player.call("preview_stream_for_environment", app.get("run_state").current_environment, 70)

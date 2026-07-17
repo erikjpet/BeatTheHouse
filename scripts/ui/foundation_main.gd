@@ -3210,6 +3210,7 @@ func _write_foundation_run_save(status_text: String = "Autosaved.") -> bool:
 		return false
 	if procedural_music_player != null:
 		run_state.remember_music_tempo_state(procedural_music_player.adaptive_tempo_save_state())
+		run_state.remember_music_choreography_state(procedural_music_player.music_choreography_save_state())
 	var error := save_service.save_run(run_state, autosave_slot_id)
 	if error == OK:
 		pending_autosave = false
@@ -3325,6 +3326,7 @@ func _load_foundation_run_from_slot(return_to_start_on_missing: bool) -> bool:
 	if procedural_music_player != null:
 		procedural_music_player.sync_authored_arrangement_state(run_state.music_arrangement_state)
 		procedural_music_player.sync_adaptive_tempo_state(run_state.music_tempo_state)
+		procedural_music_player.sync_music_choreography_state(run_state.music_choreography_state)
 	_show_message("%s: %s." % ["Recovered run from backup" if loaded_from_backup else "Run loaded", str(run_state.current_environment.get("display_name", "Environment"))])
 	_hide_run_menu()
 	_refresh()

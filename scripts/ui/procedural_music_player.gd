@@ -3,11 +3,13 @@ extends Node
 
 signal authored_phrase_event(event: Dictionary)
 signal authored_arrangement_selected(selection: Dictionary)
+signal authored_transition_notice(event: Dictionary)
 
 const WebAudioBridgeScript := preload("res://scripts/ui/web_audio_bridge.gd")
 const MusicArrangementSelectorScript := preload("res://scripts/ui/music_arrangement_selector.gd")
 const MusicDeliveryIndexScript := preload("res://scripts/core/music_delivery_index.gd")
 const MusicFloatPcmStreamScript := preload("res://scripts/ui/music_float_pcm_stream.gd")
+const MusicLayerChoreographyScript := preload("res://scripts/ui/music_layer_choreography.gd")
 
 # Procedural background music for the foundation UI.
 # The synth shape is ported from the old baseline: generated PCM WAV themes,
@@ -49,6 +51,7 @@ const MUSIC_FX_EFFECT_TYPES := {
 const ADAPTIVE_TEMPO_BEATS_PER_BAR := 4
 const ADAPTIVE_TEMPO_BARS_PER_PHRASE := 4
 const ADAPTIVE_TEMPO_EPSILON := 0.0001
+const CHOREOGRAPHY_FILL_HISTORY_LIMIT := 16
 const MUSIC_SEND_BUS_PREFIX := "MusicSend"
 const MUSIC_SEND_EFFECT_ORDER := ["band_pass", "delay", "distortion", "reverb", "compressor"]
 const MUSIC_SEND_EFFECT_TYPES := {
@@ -220,6 +223,22 @@ var _adaptive_tempo_transport_beats := 0.0
 var _adaptive_tempo_restore_source_position := -1.0
 var _music_fx_pitch_wobble_scale := 1.0
 var _adaptive_tempo_debug_snapshot: Dictionary = {}
+var _pending_music_choreography_restore: Dictionary = {}
+var _music_choreography_recipe: Dictionary = {}
+var _music_choreography_profile_id := ""
+var _music_choreography_visit_bar := 0
+var _music_choreography_last_source_bar := -1
+var _music_choreography_stage_id := ""
+var _music_choreography_stage_index := -1
+var _music_choreography_next_boundary_bar := -1
+var _music_choreography_role_target: Dictionary = {}
+var _music_choreography_role_live: Dictionary = {}
+var _music_choreography_transition: Dictionary = {}
+var _music_choreography_last_fill_bar := -9999
+var _music_choreography_fill_history: Array = []
+var _music_choreography_feature_release_bar := -1
+var _active_transition_fill_player: AudioStreamPlayer
+var _music_choreography_debug_snapshot: Dictionary = {}
 
 
 func _ready() -> void:
@@ -235,6 +254,7 @@ func _ready() -> void:
 	_feature_mix_live = _neutral_feature_mix_vector()
 	_feature_mix_applied_target = _feature_mix_target.duplicate(true)
 	_reset_adaptive_tempo()
+	_reset_music_choreography()
 	_apply_music_fx_vector(_music_fx_live, true)
 	if WebAudioBridgeScript.available():
 		WebAudioBridgeScript.ensure()
@@ -253,10 +273,11 @@ func _process(delta: float) -> void:
 	_poll_breakpoint_transition()
 	_advance_adaptive_tempo(delta)
 	_advance_music_fx(delta)
+	_advance_authored_arrangement()
+	_advance_music_choreography(delta)
 	_advance_music_mix(delta)
 	_advance_feature_mix(delta)
 	_advance_music_event_envelope()
-	_advance_authored_arrangement()
 	_poll_feature_stingers()
 
 
@@ -316,6 +337,7 @@ func play_for_environment_state(environment: Dictionary, heat_level: int, music_
 	authored_selection_state["musical_bar"] = floori(_director_playback_position() / maxf(0.001, _music_director_bar_seconds()))
 	var authored_stem_set := _authored_stem_set_from_profile(profile, authored_selection_state)
 	_configure_adaptive_tempo(profile, authored_stem_set)
+	_configure_music_choreography(profile, authored_stem_set)
 	if not authored_stem_set.is_empty():
 		cache_key = "%s:selection:%s" % [cache_key, str(authored_stem_set.get("selection_key", "base"))]
 	_remember_profile(cache_key, profile)
@@ -459,6 +481,7 @@ func stop() -> void:
 	_float_pcm_player_states.clear()
 	_float_pcm_phase_launches.clear()
 	_reset_adaptive_tempo()
+	_reset_music_choreography()
 	_reset_music_fx()
 	_reset_music_mix()
 	_reset_feature_mix()
@@ -617,9 +640,12 @@ func stop_feature_music() -> void:
 	_feature_stinger_pending = []
 	_feature_stinger_history = []
 	_stinger_last_target_by_cue = {}
-	_reset_feature_mix()
 	_stop_feature_stem_players()
 	_stop_feature_stinger_players()
+	if _music_choreography_recipe.is_empty():
+		_reset_feature_mix()
+	else:
+		_schedule_music_choreography_feature_release()
 
 
 func play_feature_stinger(cue_id: String, context: Dictionary = {}) -> void:
@@ -883,6 +909,10 @@ func sync_adaptive_tempo_state(state: Dictionary) -> void:
 	_adaptive_tempo_restore_source_position = maxf(-1.0, float(state.get("source_position", -1.0)))
 
 
+func sync_music_choreography_state(state: Dictionary) -> void:
+	_pending_music_choreography_restore = state.duplicate(true)
+
+
 # Called only on save paths. The live debug accessor below intentionally
 # returns its stable dictionary directly and remains allocation-free.
 func adaptive_tempo_save_state() -> Dictionary:
@@ -901,6 +931,34 @@ func adaptive_tempo_save_state() -> Dictionary:
 func adaptive_tempo_debug_snapshot() -> Dictionary:
 	_update_adaptive_tempo_debug_snapshot()
 	return _adaptive_tempo_debug_snapshot
+
+
+func music_choreography_save_state() -> Dictionary:
+	return {
+		"profile_id": _music_choreography_profile_id,
+		"visit_bar": _music_choreography_visit_bar,
+		"stage_id": _music_choreography_stage_id,
+		"stage_index": _music_choreography_stage_index,
+		"next_boundary_bar": _music_choreography_next_boundary_bar,
+		"last_fill_bar": _music_choreography_last_fill_bar,
+		"scheduled_transition": _music_choreography_transition.duplicate(true),
+		"feature_release_bar": _music_choreography_feature_release_bar,
+		"role_target": _music_choreography_role_target.duplicate(true),
+		"role_live": _music_choreography_role_live.duplicate(true),
+	}
+
+
+func music_choreography_debug_snapshot() -> Dictionary:
+	_update_music_choreography_debug_snapshot()
+	return _music_choreography_debug_snapshot
+
+
+static func music_choreography_timeline_snapshot(recipe: Dictionary, bar_count: int) -> Array:
+	return MusicLayerChoreographyScript.timeline_snapshot(recipe, bar_count)
+
+
+static func resolve_music_fill_request(fill_metadata: Dictionary, requests: Array, default_lead_in_bars: int = 2) -> Dictionary:
+	return MusicLayerChoreographyScript.resolve_fill_request(fill_metadata, requests, default_lead_in_bars)
 
 
 func _pending_restore_matches_authored_stem_set(stem_set: Dictionary) -> bool:
@@ -1116,6 +1174,271 @@ func _apply_adaptive_pitch_compensation() -> void:
 	# Keep the FFT processor engaged throughout an adaptive track so crossing
 	# the base BPM cannot toggle latency or create a transient seam.
 	AudioServer.set_bus_effect_enabled(bus_index, pitch_shift_index, _adaptive_tempo_native_enabled)
+
+
+func _configure_music_choreography(profile: Dictionary, stem_set: Dictionary = {}) -> void:
+	var recipe_value: Variant = stem_set.get("layer_choreography", profile.get("layer_choreography", {}))
+	var recipe := MusicLayerChoreographyScript.normalize_recipe(recipe_value)
+	if recipe.is_empty():
+		if not _music_choreography_recipe.is_empty():
+			_reset_music_choreography()
+		return
+	var visit_id := str(_last_music_state.get("music_visit_id", (_last_music_state.get("music_arrangement_state", {}) as Dictionary).get("visit_id", ""))) if typeof(_last_music_state.get("music_arrangement_state", {})) == TYPE_DICTIONARY else str(_last_music_state.get("music_visit_id", ""))
+	var profile_id := "%s|%s|%s|%s" % [
+		str(profile.get("environment_id", profile.get("archetype_id", ""))),
+		str(stem_set.get("track_id", profile.get("authored_track_id", profile.get("palette_id", "procedural")))),
+		visit_id,
+		str(recipe.get("id", "layer_choreography")),
+	]
+	var profile_changed := profile_id != _music_choreography_profile_id
+	_music_choreography_recipe = recipe
+	_music_choreography_profile_id = profile_id
+	if not profile_changed:
+		return
+	_music_choreography_visit_bar = 0
+	_music_choreography_last_source_bar = -1
+	_music_choreography_last_fill_bar = -9999
+	_music_choreography_transition = {}
+	_music_choreography_fill_history = []
+	_music_choreography_feature_release_bar = -1
+	var restored := str(_pending_music_choreography_restore.get("profile_id", "")) == profile_id
+	if restored:
+		_music_choreography_visit_bar = maxi(0, int(_pending_music_choreography_restore.get("visit_bar", 0)))
+		_music_choreography_last_fill_bar = int(_pending_music_choreography_restore.get("last_fill_bar", -9999))
+		_music_choreography_transition = _copy_dict(_pending_music_choreography_restore.get("scheduled_transition", {}))
+		_music_choreography_feature_release_bar = int(_pending_music_choreography_restore.get("feature_release_bar", -1))
+		_music_choreography_role_target = _normalized_choreography_role_gains(_pending_music_choreography_restore.get("role_target", {}))
+		_music_choreography_role_live = _normalized_choreography_role_gains(_pending_music_choreography_restore.get("role_live", {}))
+		_pending_music_choreography_restore = {}
+	var stage := MusicLayerChoreographyScript.stage_for_bar(recipe, _music_choreography_visit_bar)
+	if restored:
+		_music_choreography_stage_id = str(stage.get("id", ""))
+		_music_choreography_stage_index = int(stage.get("index", 0))
+	else:
+		_set_music_choreography_stage(stage, true)
+	_music_choreography_next_boundary_bar = int(stage.get("next_boundary_bar", -1))
+	_update_music_choreography_debug_snapshot()
+
+
+func _advance_music_choreography(delta: float) -> void:
+	if _music_choreography_recipe.is_empty() or _current_stem_set.is_empty():
+		return
+	var bar_seconds := _music_director_bar_seconds()
+	var loop_bars := maxi(1, int(_current_stem_set.get("bars", 1)))
+	var source_bar := clampi(floori(_director_playback_position() / maxf(0.001, bar_seconds)), 0, loop_bars - 1)
+	if _music_choreography_last_source_bar < 0:
+		_music_choreography_last_source_bar = source_bar
+		_process_music_choreography_bar()
+	elif source_bar != _music_choreography_last_source_bar:
+		var crossed := posmod(source_bar - _music_choreography_last_source_bar, loop_bars)
+		if crossed <= 0:
+			crossed = 1
+		for _step in range(crossed):
+			_music_choreography_visit_bar += 1
+			_process_music_choreography_bar()
+		_music_choreography_last_source_bar = source_bar
+	_start_music_choreography_transition_if_due()
+	if _music_choreography_feature_release_bar >= 0 and _music_choreography_visit_bar >= _music_choreography_feature_release_bar:
+		_finish_music_choreography_feature_release()
+	var fade_beats := float(_music_choreography_recipe.get("fade_beats", 1.0))
+	var fade_seconds := maxf(0.001, (_music_live_bar_seconds() / 4.0) * fade_beats)
+	var amount := clampf(maxf(0.0, delta) / fade_seconds, 0.0, 1.0)
+	for role_value in MUSIC_STEM_PLAYBACK_ROLES:
+		var role := str(role_value)
+		var live := float(_music_choreography_role_live.get(role, 1.0))
+		var target := float(_music_choreography_role_target.get(role, 1.0))
+		_music_choreography_role_live[role] = lerpf(live, target, amount)
+	_update_music_choreography_debug_snapshot()
+
+
+func _process_music_choreography_bar() -> void:
+	if not _music_choreography_transition.is_empty() and _music_choreography_visit_bar >= int(_music_choreography_transition.get("destination_bar", 999999)):
+		_complete_music_choreography_transition()
+	var stage := MusicLayerChoreographyScript.stage_for_bar(_music_choreography_recipe, _music_choreography_visit_bar)
+	if str(stage.get("id", "")) != _music_choreography_stage_id:
+		_set_music_choreography_stage(stage, false)
+	_music_choreography_next_boundary_bar = int(stage.get("next_boundary_bar", -1))
+	_plan_upcoming_music_choreography_transition()
+
+
+func _plan_upcoming_music_choreography_transition() -> void:
+	if not _music_choreography_transition.is_empty():
+		return
+	var default_lead := int(_music_choreography_recipe.get("default_lead_in_bars", 2))
+	var candidate_boundaries: Array[int] = []
+	var stage_boundary := MusicLayerChoreographyScript.next_stage_boundary_bar(_music_choreography_recipe, _music_choreography_visit_bar)
+	if stage_boundary > _music_choreography_visit_bar and stage_boundary - _music_choreography_visit_bar <= 4:
+		candidate_boundaries.append(stage_boundary)
+	var phrase_bars := maxi(1, int(_current_stem_set.get("harmony_phrase_bars", 4)))
+	var phrase_boundary := (floori(float(_music_choreography_visit_bar) / float(phrase_bars)) + 1) * phrase_bars
+	if phrase_boundary - _music_choreography_visit_bar <= 4 and not candidate_boundaries.has(phrase_boundary):
+		candidate_boundaries.append(phrase_boundary)
+	if candidate_boundaries.is_empty():
+		return
+	candidate_boundaries.sort()
+	for boundary in candidate_boundaries:
+		var requests: Array = []
+		var recipe_state := _copy_dict(_current_stem_set.get("recipe_state", {}))
+		var sections := _copy_array(_current_stem_set.get("harmony_recipe_sections", []))
+		var source_section := str(recipe_state.get("harmonic_section", "")).to_upper()
+		var destination_section := source_section
+		if boundary == phrase_boundary and not sections.is_empty():
+			destination_section = str(sections[posmod(int(recipe_state.get("cursor", 0)) + 1, sections.size())]).to_upper()
+			if destination_section != source_section:
+				var section_progressions := _copy_dict(_current_stem_set.get("harmony_section_progressions", {}))
+				requests.append({
+					"id": "section_%s_to_%s_%d" % [source_section, destination_section, boundary],
+					"kind": "section",
+					"priority": 100,
+					"source_section": source_section,
+					"destination_section": destination_section,
+					"source_progression_id": str(_current_stem_set.get("progression_id", "")),
+					"destination_progression_id": str(section_progressions.get(destination_section, "")),
+					"lead_in_bars": default_lead,
+				})
+		if boundary == stage_boundary:
+			var next_stage := MusicLayerChoreographyScript.stage_for_bar(_music_choreography_recipe, boundary)
+			if bool(next_stage.get("request_fill", false)):
+				requests.append({
+					"id": "layer_%s_%d" % [str(next_stage.get("id", "stage")), boundary],
+					"kind": "layer",
+					"priority": int(next_stage.get("fill_priority", 20)),
+					"source_section": source_section,
+					"destination_section": destination_section,
+					"destination_progression_id": str(_current_stem_set.get("progression_id", "")),
+					"change_roles": _copy_array(next_stage.get("change_roles", [])),
+					"lead_in_bars": default_lead,
+				})
+		if requests.is_empty():
+			continue
+		var fill_metadata := _copy_dict(_current_stem_set.get("fill_metadata", {}))
+		var resolution := MusicLayerChoreographyScript.resolve_fill_request(fill_metadata, requests, default_lead)
+		var cooldown := int(_music_choreography_recipe.get("fill_cooldown_bars", 4))
+		if str(resolution.get("request_kind", "")) != "section" and boundary - _music_choreography_last_fill_bar < cooldown:
+			resolution["fill_id"] = ""
+			resolution["quiet_fallback"] = true
+			resolution["compatible"] = false
+			resolution["cooldown_suppressed"] = true
+		var lead_in_bars := int(resolution.get("lead_in_bars", default_lead))
+		_music_choreography_transition = resolution
+		_music_choreography_transition["destination_bar"] = boundary
+		_music_choreography_transition["start_bar"] = boundary - lead_in_bars
+		_music_choreography_transition["source_section"] = source_section
+		_music_choreography_transition["destination_section"] = destination_section
+		_music_choreography_transition["requests"] = requests
+		_music_choreography_transition["started"] = false
+		_music_choreography_transition["token"] = "%s:%d:%s" % [_music_choreography_profile_id, boundary, str(resolution.get("fill_id", "quiet"))]
+		authored_transition_notice.emit(_music_choreography_transition.duplicate(true))
+		_start_music_choreography_transition_if_due()
+		return
+
+
+func _start_music_choreography_transition_if_due() -> void:
+	if _music_choreography_transition.is_empty() or bool(_music_choreography_transition.get("started", false)):
+		return
+	if _music_choreography_visit_bar < int(_music_choreography_transition.get("start_bar", 999999)):
+		return
+	_music_choreography_transition["started"] = true
+	for role in ["drums_low", "drums_high", "drums_high_double"]:
+		_music_choreography_role_target[role] = 0.0
+	var fill_id := str(_music_choreography_transition.get("fill_id", ""))
+	var history := {
+		"token": str(_music_choreography_transition.get("token", "")),
+		"fill_id": fill_id,
+		"start_bar": _music_choreography_visit_bar,
+		"destination_bar": int(_music_choreography_transition.get("destination_bar", -1)),
+		"quiet_fallback": bool(_music_choreography_transition.get("quiet_fallback", false)),
+		"request_id": str(_music_choreography_transition.get("request_id", "")),
+	}
+	_music_choreography_fill_history.append(history)
+	while _music_choreography_fill_history.size() > CHOREOGRAPHY_FILL_HISTORY_LIMIT:
+		_music_choreography_fill_history.pop_front()
+	if not fill_id.is_empty():
+		_music_choreography_last_fill_bar = _music_choreography_visit_bar
+		_play_transition_fill(fill_id)
+
+
+func _complete_music_choreography_transition() -> void:
+	if _active_transition_fill_player != null:
+		_active_transition_fill_player.stop()
+		_active_transition_fill_player.stream = null
+		_active_transition_fill_player = null
+	_music_choreography_transition = {}
+	var stage := MusicLayerChoreographyScript.stage_for_bar(_music_choreography_recipe, _music_choreography_visit_bar)
+	_set_music_choreography_stage(stage, false)
+
+
+func _set_music_choreography_stage(stage: Dictionary, immediate: bool) -> void:
+	if stage.is_empty():
+		return
+	_music_choreography_stage_id = str(stage.get("id", ""))
+	_music_choreography_stage_index = int(stage.get("index", -1))
+	_music_choreography_next_boundary_bar = int(stage.get("next_boundary_bar", -1))
+	_music_choreography_role_target = _normalized_choreography_role_gains(stage.get("roles", {}))
+	if immediate or _music_choreography_role_live.is_empty():
+		_music_choreography_role_live = _music_choreography_role_target.duplicate(true)
+
+
+func _schedule_music_choreography_feature_release() -> void:
+	var phrase_bars := maxi(1, int(_current_stem_set.get("harmony_phrase_bars", 4)))
+	_music_choreography_feature_release_bar = (floori(float(_music_choreography_visit_bar) / float(phrase_bars)) + 1) * phrase_bars
+	_feature_mix_pending = {}
+	_feature_mix_target = _feature_mix_live.duplicate(true)
+	_feature_mix_target["feature"] = 0.0
+
+
+func _finish_music_choreography_feature_release() -> void:
+	_music_choreography_feature_release_bar = -1
+	_feature_input_snapshot = _normalize_feature_music_input({})
+	_feature_mix_target = _neutral_feature_mix_vector()
+	_feature_mix_pending = {}
+	_feature_mix_applied_target = _feature_mix_target.duplicate(true)
+
+
+func _reset_music_choreography() -> void:
+	if _active_transition_fill_player != null:
+		_active_transition_fill_player.stop()
+		_active_transition_fill_player.stream = null
+	_active_transition_fill_player = null
+	_music_choreography_recipe = {}
+	_music_choreography_profile_id = ""
+	_music_choreography_visit_bar = 0
+	_music_choreography_last_source_bar = -1
+	_music_choreography_stage_id = ""
+	_music_choreography_stage_index = -1
+	_music_choreography_next_boundary_bar = -1
+	_music_choreography_role_target = _normalized_choreography_role_gains({})
+	_music_choreography_role_live = _music_choreography_role_target.duplicate(true)
+	_music_choreography_transition = {}
+	_music_choreography_last_fill_bar = -9999
+	_music_choreography_fill_history = []
+	_music_choreography_feature_release_bar = -1
+	_music_choreography_debug_snapshot.clear()
+	_update_music_choreography_debug_snapshot()
+
+
+func _update_music_choreography_debug_snapshot() -> void:
+	_music_choreography_debug_snapshot["profile_id"] = _music_choreography_profile_id
+	_music_choreography_debug_snapshot["enabled"] = not _music_choreography_recipe.is_empty()
+	_music_choreography_debug_snapshot["visit_bar"] = _music_choreography_visit_bar
+	_music_choreography_debug_snapshot["stage_id"] = _music_choreography_stage_id
+	_music_choreography_debug_snapshot["stage_index"] = _music_choreography_stage_index
+	_music_choreography_debug_snapshot["next_boundary_bar"] = _music_choreography_next_boundary_bar
+	_music_choreography_debug_snapshot["role_target"] = _music_choreography_role_target
+	_music_choreography_debug_snapshot["role_live"] = _music_choreography_role_live
+	_music_choreography_debug_snapshot["scheduled_transition"] = _music_choreography_transition
+	_music_choreography_debug_snapshot["last_fill_bar"] = _music_choreography_last_fill_bar
+	_music_choreography_debug_snapshot["fill_history"] = _music_choreography_fill_history
+	_music_choreography_debug_snapshot["feature_release_bar"] = _music_choreography_feature_release_bar
+
+
+func _normalized_choreography_role_gains(value: Variant) -> Dictionary:
+	var source := _copy_dict(value)
+	var result := {}
+	for role_value in MUSIC_STEM_PLAYBACK_ROLES:
+		var role := str(role_value)
+		result[role] = clampf(float(source.get(role, 1.0)), 0.0, 1.0)
+	return result
 
 
 func music_fx_snapshot(music_state: Dictionary = {}) -> Dictionary:
@@ -1386,6 +1709,7 @@ func _music_role_volume_db_map(vector: Dictionary) -> Dictionary:
 	for role_value in MUSIC_STEM_PLAYBACK_ROLES:
 		var role := str(role_value)
 		var gain := clampf(float(vector.get(role, 0.0)), 0.0, 1.35)
+		gain *= clampf(float(_music_choreography_role_live.get(role, 1.0)), 0.0, 1.0)
 		if role == "pad":
 			gain *= lerpf(1.0, 0.42, duck)
 		elif role == "lead" or role == "texture":
@@ -2341,6 +2665,7 @@ func _music_profile_from_environment(environment: Dictionary, heat_level: int) -
 		"volume": float(source.get("volume", 0.26)),
 		"arrangement_phrases": clampi(int(source.get("arrangement_phrases", DEFAULT_ARRANGEMENT_PHRASES)), MIN_ARRANGEMENT_PHRASES, MAX_ARRANGEMENT_PHRASES),
 		"adaptive_tempo": adaptive_tempo,
+		"layer_choreography": _copy_dict(source.get("layer_choreography", {})),
 	}
 	profile["progression"] = _number_array(source.get("progression", _theme_progression(theme)), _theme_progression(theme))
 	profile["motif"] = _number_array(source.get("motif", _theme_motif(theme)), _theme_motif(theme))
@@ -2801,6 +3126,7 @@ func _play_transition_fill(fill_id: String) -> void:
 			player.stream = stream
 			player.volume_db = -1.5
 			_play_audio_player(player)
+			_active_transition_fill_player = player
 			return
 
 
@@ -4025,15 +4351,39 @@ func _authored_stem_set_from_profile(profile: Dictionary, music_state: Dictionar
 	contract["harmony_recipe_id"] = str(recipe.get("id", ""))
 	contract["harmony_phrase_bars"] = maxi(1, int(recipe.get("phrase_bars", 4)))
 	contract["harmony_recipe_length"] = recipe_length
+	contract["harmony_recipe_sections"] = _copy_array(recipe.get("sections", []))
+	contract["harmony_section_progressions"] = _authored_section_progressions(entry)
 	contract["harmony_visit_id"] = str((contract.get("recipe_state", {}) as Dictionary).get("visit_id", ""))
 	contract["harmony_last_phrase_event_index"] = int((contract.get("recipe_state", {}) as Dictionary).get("last_phrase_event_index", -1))
 	contract["excluded_candidates"] = _copy_array(selection.get("excluded_candidates", []))
 	contract["transitions"] = _copy_dict(entry.get("transitions", {}))
+	contract["fill_metadata"] = _copy_dict(entry.get("fills", {}))
+	contract["layer_choreography"] = _copy_dict(entry.get("layer_choreography", {}))
 	contract["authored_arrangement"] = _copy_array(entry.get("arrangement", []))
 	contract["fills"] = _authored_one_shots(track_id, _copy_dict(entry.get("fills", {})))
 	contract["step_period"] = _step_period_from_bpm(float(contract.get("bpm", 82.0)))
 	_store_authored_manifest_cache(cache_key, contract)
 	return contract
+
+
+static func _authored_section_progressions(entry: Dictionary) -> Dictionary:
+	var result := {}
+	var sets_value: Variant = entry.get("compatibility_sets", [])
+	if typeof(sets_value) != TYPE_ARRAY:
+		return result
+	for set_value in sets_value as Array:
+		if typeof(set_value) != TYPE_DICTIONARY:
+			continue
+		var compatibility: Dictionary = set_value
+		var progression_id := str(compatibility.get("progression_id", ""))
+		var sections_value: Variant = compatibility.get("harmonic_sections", [])
+		if progression_id.is_empty() or typeof(sections_value) != TYPE_ARRAY:
+			continue
+		for section_value in sections_value as Array:
+			var section := str(section_value).strip_edges().to_upper()
+			if not section.is_empty() and not result.has(section):
+				result[section] = progression_id
+	return result
 
 
 func _notify_authored_arrangement_selection(track_id: String, selection: Dictionary) -> void:

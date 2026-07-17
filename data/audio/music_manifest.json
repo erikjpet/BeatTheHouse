@@ -159,6 +159,30 @@
       {"id": "jazz_b_1", "progression_id": "jazz_b_1", "key": "A_minor", "harmonic_sections": ["B"], "weight": 1, "chord_voicings": [["A2", "C3", "E3", "G3"], ["D3", "F3", "A3", "C4"], ["F2", "A2", "C3", "E3"], ["E2", "G#2", "B2", "D3"]], "bass_roots": ["A1", "D2", "F1", "E1"], "roles": {"pad": ["jazz_chords_b"], "bass": ["jazz_bass_b"]}},
       {"id": "jazz_c_instrument_contrast", "progression_id": "jazz_a_1", "key": "C_major", "harmonic_sections": ["C"], "weight": 1, "contrast_with_set_id": "jazz_a_1", "force_change_roles": ["pad"], "chord_voicings": [["C3", "E3", "G3", "B3"], ["A2", "C3", "E3", "G3"], ["D3", "F3", "A3", "C4"], ["G2", "B2", "D3", "F3"]], "bass_roots": ["C2", "A1", "D2", "G1"], "roles": {"pad": ["jazz_chords_a", "jazz_chords_a_guitar"], "bass": ["jazz_bass_a"]}}
     ],
+    "transitions": {
+      "quantize": "phrase",
+      "phrase_bars": 4,
+      "destination_time": "same_position",
+      "fade_beats": 1,
+      "look_ahead": true,
+      "default_fill": "jazz_fixture_fill",
+      "fill_bars": 2
+    },
+    "layer_choreography": {
+      "id": "jazz_club_dwell_arc_32",
+      "cycle_bars": 32,
+      "fade_beats": 1,
+      "default_lead_in_bars": 2,
+      "fill_cooldown_bars": 4,
+      "stages": [
+        {"id": "sparse", "start_bar": 0, "duration_bars": 4, "roles": {"pad": 0.9, "bass": 0.0, "lead": 0.0, "drums_low": 0.28, "drums_high": 0.0, "drums_high_double": 0.0, "tension": 0.0, "texture": 0.18}},
+        {"id": "build_bass", "start_bar": 4, "duration_bars": 4, "request_fill": true, "fill_priority": 24, "change_roles": ["bass"], "roles": {"pad": 0.92, "bass": 0.66, "lead": 0.0, "drums_low": 0.30, "drums_high": 0.0, "drums_high_double": 0.0, "tension": 0.0, "texture": 0.20}},
+        {"id": "build_drums", "start_bar": 8, "duration_bars": 4, "request_fill": true, "fill_priority": 28, "change_roles": ["drums_low", "drums_high"], "roles": {"pad": 0.94, "bass": 0.72, "lead": 0.0, "drums_low": 0.70, "drums_high": 0.32, "drums_high_double": 0.0, "tension": 0.0, "texture": 0.22}},
+        {"id": "peak", "start_bar": 12, "duration_bars": 8, "request_fill": true, "fill_priority": 38, "change_roles": ["lead", "drums_high"], "roles": {"pad": 1.0, "bass": 0.82, "lead": 1.0, "drums_low": 0.86, "drums_high": 0.88, "drums_high_double": 0.34, "tension": 0.20, "texture": 0.28}},
+        {"id": "release", "start_bar": 20, "duration_bars": 4, "roles": {"pad": 0.88, "bass": 0.52, "lead": 0.08, "drums_low": 0.38, "drums_high": 0.0, "drums_high_double": 0.0, "tension": 0.0, "texture": 0.16}},
+        {"id": "rebuild", "start_bar": 24, "duration_bars": 8, "request_fill": true, "fill_priority": 44, "change_roles": ["pad", "bass", "drums_high"], "roles": {"pad": 1.0, "bass": 0.76, "lead": 0.64, "drums_low": 0.74, "drums_high": 0.58, "drums_high_double": 0.0, "tension": 0.12, "texture": 0.24}}
+      ]
+    },
     "stems": {
       "pad": {
         "id": "jazz_chords_piano_1",
@@ -272,8 +296,13 @@
         "pattern_number": 1,
         "loop": false,
         "tags": ["fixture", "transition"],
-        "progression_compatibility": ["jazz_a_1"],
-        "harmonic_sections": ["A"],
+        "source_sections": ["A", "B", "C"],
+        "destination_sections": ["A", "B", "C"],
+        "progression_compatibility": ["jazz_a_1", "jazz_b_1"],
+        "harmonic_sections": ["A", "B", "C"],
+        "introduces_roles": ["pad", "bass", "lead", "drums_low", "drums_high"],
+        "lead_in_bars": 2,
+        "priority": 10,
         "dsp_sends": {"reverb": 0.1}
       }
     },
@@ -339,6 +368,21 @@
       }
     },
     "arrangement": ["A", "A", "A", "A", "A", "A", "A", "A", "A", "A", "A", "A", "A", "A", "A", "A"],
+    "layer_choreography": {
+      "id": "jazz_club_dwell_arc_32",
+      "cycle_bars": 32,
+      "fade_beats": 1,
+      "default_lead_in_bars": 2,
+      "fill_cooldown_bars": 4,
+      "stages": [
+        {"id": "sparse", "start_bar": 0, "duration_bars": 4, "roles": {"pad": 0.9, "bass": 0.0, "lead": 0.0, "drums_low": 0.28, "drums_high": 0.0}},
+        {"id": "build_bass", "start_bar": 4, "duration_bars": 4, "request_fill": true, "change_roles": ["bass"], "roles": {"pad": 0.92, "bass": 0.66, "lead": 0.0, "drums_low": 0.30, "drums_high": 0.0}},
+        {"id": "build_drums", "start_bar": 8, "duration_bars": 4, "request_fill": true, "change_roles": ["drums_low", "drums_high"], "roles": {"pad": 0.94, "bass": 0.72, "lead": 0.0, "drums_low": 0.70, "drums_high": 0.32}},
+        {"id": "peak", "start_bar": 12, "duration_bars": 8, "request_fill": true, "change_roles": ["lead", "drums_high"], "roles": {"pad": 1.0, "bass": 0.82, "lead": 1.0, "drums_low": 0.86, "drums_high": 0.88}},
+        {"id": "release", "start_bar": 20, "duration_bars": 4, "roles": {"pad": 0.88, "bass": 0.52, "lead": 0.08, "drums_low": 0.38, "drums_high": 0.0}},
+        {"id": "rebuild", "start_bar": 24, "duration_bars": 8, "request_fill": true, "change_roles": ["pad", "bass", "drums_high"], "roles": {"pad": 1.0, "bass": 0.76, "lead": 0.64, "drums_low": 0.74, "drums_high": 0.58}}
+      ]
+    },
     "stems": {
       "pad": {
         "id": "jazz_chords_piano_2",

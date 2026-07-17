@@ -146,3 +146,35 @@ ceiling; live beat/bar/phrase math; the four-bar outcome envelope; and exact
 save/load continuation. Final headphone review should use the same four heat
 conditions and listen specifically for stable pitch, drum flamming, transient
 smear, and artifacts while the ratio is moving.
+
+## Phrase fills and room-dwell choreography
+
+`layer_choreography` is a musical-bar recipe, not a wall-clock automation.
+Each stage declares its starting bar, duration, target role gains, and optional
+fill request. Jazz Club's 32-bar fixture moves through sparse, bass build,
+drum build, full-band peak, release, and an alternate-instrument rebuild.
+Gameplay music may duck or override those gains, but it does not reset the
+underlying visit bar or stage. Gain changes are smoothed over the declared
+number of beats and all source players remain phase locked.
+
+Section and layer changes publish their destination up to four bars ahead.
+The default is two bars: regular loop drums leave at the lead-in boundary, one
+compatible authored fill may play, then the destination section and intended
+drum pattern land together. Fill metadata must declare a 1-, 2-, or 4-bar
+lead, `loop: false`, valid source/destination sections, compatible progression
+IDs, and any roles it introduces. Section requests outrank layer requests;
+same-boundary requests share one fill. If no candidate matches, the director
+uses a quiet drum exit and entry instead of substituting an incompatible fill.
+
+Saving preserves the visit bar, stage, live/target gains, fill cooldown, and
+scheduled destination. Feature music releases at the next valid phrase
+boundary and resumes that same future. Adaptive tempo changes when the boundary
+is heard but never changes its authored bar number.
+
+Run `tools/audio_jazz_choreography_probe.ps1` for the deterministic native
+timeline, compatibility, arbitration, tempo, save/load, and feature-recovery
+checks. Headphone QA should listen through sparse-to-build, the two-bar drum
+exit and fill, simultaneous section/drum arrival, peak-to-release, the C-form
+instrument rebuild, and feature recovery. Reject doubled fills, incompatible
+harmony, abrupt gain steps, late drums, restarts, or seams at any of those
+boundaries.
