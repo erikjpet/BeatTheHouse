@@ -268,6 +268,23 @@ func _check_scratch_ticket_items(game: GameModule, failures: Array) -> void:
 	game.call("_reveal_all", shield_machine)
 	if int(shield_machine.get("pending_penalty", -1)) != 0 or int(shield_machine.get("penalty_shields_remaining", -1)) != 0 or not bool((_scratch_test_dictionary_array((shield_machine.get("active_ticket", {}) as Dictionary).get("cells", []))[0] as Dictionary).get("penalty_shielded", false)):
 		failures.append("Lucky Penny did not consume exactly one shield against a penalty symbol.")
+	var fixed_ticket: Dictionary = game.call("_roll_ticket", game.call("_ticket_type", "high_voltage"), _scratch_test_rng("penny-fixed-order"), 0, "fixed-order")
+	var fixed_cells := _scratch_test_dictionary_array(fixed_ticket.get("cells", []))
+	for index in range(fixed_cells.size()):
+		var cell: Dictionary = fixed_cells[index]
+		cell["revealed"] = index not in [0, fixed_cells.size() - 1]
+		cell["mask"] = [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
+		cell["penalty"] = 0
+		cell["penalty_queued"] = false
+		cell["penalty_shield_reserved"] = false
+	fixed_cells[0]["penalty"] = 3
+	fixed_cells[0]["penalty_shield_reserved"] = true
+	fixed_cells[fixed_cells.size() - 1]["penalty"] = 1
+	fixed_ticket["cells"] = fixed_cells
+	var forward_penalty := _scratch_penalty_for_order(game, fixed_ticket, [0, fixed_cells.size() - 1])
+	var reverse_penalty := _scratch_penalty_for_order(game, fixed_ticket, [fixed_cells.size() - 1, 0])
+	if forward_penalty != 1 or reverse_penalty != forward_penalty:
+		failures.append("Lucky Penny penalty result changed with scratch order instead of staying fixed at purchase.")
 	var penny := game.library.item("lucky_penny")
 	if penny.is_empty() or not bool(penny.get("sellable", false)) or not FileAccess.file_exists(str(penny.get("asset_path", ""))):
 		failures.append("Lucky Penny did not complete the sellable item/icon pipeline.")
@@ -347,6 +364,18 @@ func _scratch_settle_fixture(game: GameModule, ticket: Dictionary, seed_text: St
 	run_state.current_environment = environment.duplicate(true)
 	var result := game.resolve_with_context("settle_scratch_ticket", 0, run_state, environment, _scratch_test_rng("%s:resolve" % seed_text), {})
 	return {"result": result, "machine": (environment.get("game_states", {}) as Dictionary).get("scratch_tickets", {}), "run_state": run_state}
+
+
+func _scratch_penalty_for_order(game: GameModule, ticket: Dictionary, order: Array) -> int:
+	var machine := {"active_ticket": ticket.duplicate(true), "pending_penalty": 0, "penalty_shields_remaining": 1}
+	var grid := ticket.get("grid", {}) as Dictionary
+	var columns := int(grid.get("columns", 3))
+	var rows := int(grid.get("rows", 3))
+	for index_value in order:
+		var index := int(index_value)
+		var rect: Rect2 = game.call("_cell_rect", index, columns, rows)
+		game.call("_scratch_segment", machine, Vector2(rect.position.x + 3.0, rect.get_center().y), Vector2(rect.end.x - 3.0, rect.get_center().y))
+	return int(machine.get("pending_penalty", 0))
 
 
 func _scratch_archetype(library: ContentLibrary, archetype_id: String) -> Dictionary:
