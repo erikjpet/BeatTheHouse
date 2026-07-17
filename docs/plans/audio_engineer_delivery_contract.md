@@ -14,6 +14,7 @@ version remains a reduced fallback and does not limit the master recordings.
 - [ ] Keep every looping file at the same BPM, mono/stereo format, exact frame count, start, and end.
 - [ ] Leave every stem aligned to bar one; do not add different leading silence to individual files.
 - [ ] Put key, relative key, progression compatibility, intensity, weights, exclusions, tags, and DSP-send preferences in the manifest, not the filename.
+- [ ] A stem variation may override its role's effect preferences. If it omits them, it inherits the base role preferences; an explicit empty preference keeps that variation dry.
 - [ ] Export fills and win/accent stingers as separate files; they play once unless deliberately marked to loop.
 
 Copyable filename examples:

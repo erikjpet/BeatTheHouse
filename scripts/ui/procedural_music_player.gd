@@ -4692,6 +4692,7 @@ func _store_authored_manifest_cache(cache_key: String, contract: Dictionary) -> 
 func _authored_delivery_snapshot(entry: Dictionary, selected_stems: Dictionary) -> Dictionary:
 	var delivery := entry.get("delivery", {}) as Dictionary if typeof(entry.get("delivery", {})) == TYPE_DICTIONARY else {}
 	var aliases := delivery.get("classification_aliases", {}) as Dictionary if typeof(delivery.get("classification_aliases", {})) == TYPE_DICTIONARY else {}
+	var role_defaults := entry.get("stems", {}) as Dictionary if typeof(entry.get("stems", {})) == TYPE_DICTIONARY else {}
 	var files: Array = []
 	var preferred_dsp_sends := {}
 	var roles := selected_stems.keys()
@@ -4705,10 +4706,20 @@ func _authored_delivery_snapshot(entry: Dictionary, selected_stems: Dictionary) 
 			files.append(parsed.duplicate(true))
 		else:
 			files.append({"ok": false, "original_filename": filename, "role": role, "error": str(parsed.get("error", "legacy filename"))})
-		if typeof(metadata_value) == TYPE_DICTIONARY:
-			var sends_value: Variant = (metadata_value as Dictionary).get("dsp_sends", {})
-			if typeof(sends_value) == TYPE_DICTIONARY:
-				preferred_dsp_sends[role] = (sends_value as Dictionary).duplicate(true)
+		var sends_value: Variant = null
+		if typeof(metadata_value) == TYPE_DICTIONARY and (metadata_value as Dictionary).has("dsp_sends"):
+			# An explicit variant value wins, including an empty dictionary when the
+			# engineer deliberately wants the variation dry.
+			sends_value = (metadata_value as Dictionary).get("dsp_sends")
+		else:
+			# Stem-bank variants inherit the role's base preference when they do not
+			# declare an override. Harmony selection must not silently erase the
+			# engineer's mix intent.
+			var role_default: Variant = role_defaults.get(role)
+			if typeof(role_default) == TYPE_DICTIONARY:
+				sends_value = (role_default as Dictionary).get("dsp_sends")
+		if typeof(sends_value) == TYPE_DICTIONARY:
+			preferred_dsp_sends[role] = (sends_value as Dictionary).duplicate(true)
 	var source_bits := int(entry.get("bit_depth", 16))
 	return {
 		"files": files,

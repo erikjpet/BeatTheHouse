@@ -571,7 +571,7 @@ func _check_music_stem_director_foundation(library: ContentLibrary, failures: Ar
 		failures.append("Jazz delivery index did not reject a duplicate semantic instrument/pattern ID.")
 	var scanned_jazz := library.music_delivery_index("jazz_club_delivery_fixture_8_bar")
 	if not bool(scanned_jazz.get("valid", false)) or (scanned_jazz.get("entries", []) as Array).size() != 10 or (scanned_jazz.get("proposed_manifest_entries", []) as Array).size() != 10:
-		failures.append("Jazz delivery import helper did not index and propose all nine 8-bar fixture records without rewriting the manifest.")
+		failures.append("Jazz delivery import helper did not index and propose all ten 8-bar fixture records without rewriting the manifest.")
 	var wav_8 := ContentLibraryScript.inspect_music_wav("res://assets/audio/music/jazz_club_delivery_fixture_8_bar/JazzClub_Chords_Piano_1.wav")
 	var wav_16 := ContentLibraryScript.inspect_music_wav("res://assets/audio/music/jazz_club_delivery_fixture_16_bar/JazzClub_Chords_Piano_2.wav")
 	if not bool(wav_8.get("valid", false)) or int(wav_8.get("bits_per_sample", 0)) != 24 or int(wav_8.get("frames", 0)) != 705600:
@@ -624,6 +624,20 @@ func _check_music_stem_director_foundation(library: ContentLibrary, failures: Ar
 	incomplete_track["stem_banks"] = incomplete_banks
 	if JSON.stringify(_music_track_validation_errors(incomplete_track)).find("no enabled positive complete compatibility set") < 0:
 		failures.append("Music validation did not reject a recipe section without a complete positive set.")
+	var unknown_send_track := jazz_8_track.duplicate(true)
+	var unknown_send_banks: Dictionary = unknown_send_track.get("stem_banks", {}) as Dictionary
+	var unknown_send_variants: Array = (unknown_send_banks.get("lead", {}) as Dictionary).get("variants", []) as Array
+	(unknown_send_variants[0] as Dictionary)["dsp_sends"] = {"mystery_wash": 0.5}
+	unknown_send_track["stem_banks"] = unknown_send_banks
+	if JSON.stringify(_music_track_validation_errors(unknown_send_track)).find("unknown effect mystery_wash") < 0:
+		failures.append("Music validation did not reject an unknown engineer DSP-send name.")
+	var invalid_send_track := jazz_8_track.duplicate(true)
+	var invalid_send_banks: Dictionary = invalid_send_track.get("stem_banks", {}) as Dictionary
+	var invalid_send_variants: Array = (invalid_send_banks.get("lead", {}) as Dictionary).get("variants", []) as Array
+	(invalid_send_variants[0] as Dictionary)["dsp_sends"] = {"reverb": 1.5}
+	invalid_send_track["stem_banks"] = invalid_send_banks
+	if JSON.stringify(_music_track_validation_errors(invalid_send_track)).find("reverb must be a number inside 0..1") < 0:
+		failures.append("Music validation did not reject an out-of-range engineer DSP send.")
 
 	var authored_environment := _music_environment_with_authored_track(library)
 	var procedural_environment := _music_environment_without_authored_track(library)

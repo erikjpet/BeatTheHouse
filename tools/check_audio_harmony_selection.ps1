@@ -23,7 +23,13 @@ function Stop-OwnedProcessTree([System.Diagnostics.Process]$Process) {
     # taskkill /T is scoped to the exact PID created below and its descendants;
     # it cannot match or terminate an unrelated Godot process by name.
     $taskkill = Join-Path $env:SystemRoot "System32\taskkill.exe"
-    & $taskkill /PID $Process.Id /T /F 1>$null 2>$null
+    $previousErrorPreference = $ErrorActionPreference
+    try {
+        $ErrorActionPreference = "SilentlyContinue"
+        & $taskkill /PID $Process.Id /T /F 1>$null 2>$null
+    } finally {
+        $ErrorActionPreference = $previousErrorPreference
+    }
     if (-not $Process.WaitForExit(5000) -and -not $Process.HasExited) {
         $Process.Kill()
         $Process.WaitForExit()
@@ -35,7 +41,8 @@ function Invoke-Probe([string]$Godot) {
     if ($TimeoutSec -le 0) { throw "TimeoutSec must be a positive number of seconds." }
     $startInfo = [System.Diagnostics.ProcessStartInfo]::new()
     $startInfo.FileName = $Godot
-    $startInfo.Arguments = '--headless --path "{0}" --script "res://tools/audio_harmony_selection_probe.gd"' -f ($root -replace '"', '\"')
+    $logPath = Join-Path $root (".tmp\audio_harmony_selection_{0}.godot.log" -f [Guid]::NewGuid().ToString("N"))
+    $startInfo.Arguments = '--headless --disable-crash-handler --log-file "{0}" --path "{1}" --script "res://tools/audio_harmony_selection_probe.gd"' -f ($logPath -replace '"', '\"'), ($root -replace '"', '\"')
     $startInfo.UseShellExecute = $false
     $startInfo.CreateNoWindow = $true
     $startInfo.RedirectStandardOutput = $true
@@ -69,5 +76,10 @@ $godot = Find-Godot
 $first = Invoke-Probe $godot
 $second = Invoke-Probe $godot
 if ($first -ne $second) { throw "Fresh-process harmony selection output differed.`nFIRST: $first`nSECOND: $second" }
-Write-Host $first
-Write-Host "Audio harmony selection probe passed twice with identical canonical output."
+$sha = [System.Security.Cryptography.SHA256]::Create()
+try {
+    $digest = ([BitConverter]::ToString($sha.ComputeHash([Text.Encoding]::UTF8.GetBytes($first)))).Replace("-", "").ToLowerInvariant()
+} finally {
+    $sha.Dispose()
+}
+Write-Host "Audio harmony selection probe passed twice with identical canonical output (sha256=$digest)."

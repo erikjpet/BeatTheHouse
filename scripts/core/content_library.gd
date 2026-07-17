@@ -1814,6 +1814,14 @@ func _validate_music_delivery_filename(label: String, track_id: String, filename
 				validation_errors.append("%s metadata %s must be an array." % [label, list_key])
 		if data.has("dsp_sends") and typeof(data.get("dsp_sends")) != TYPE_DICTIONARY:
 			validation_errors.append("%s metadata dsp_sends must be a dictionary." % label)
+		elif data.has("dsp_sends"):
+			for effect_value in (data.get("dsp_sends", {}) as Dictionary).keys():
+				var effect_name := str(effect_value).strip_edges().to_lower()
+				var send_value: Variant = (data.get("dsp_sends", {}) as Dictionary).get(effect_value)
+				if not ["band_pass", "delay", "distortion", "reverb", "compressor"].has(effect_name):
+					validation_errors.append("%s metadata dsp_sends contains unknown effect %s." % [label, effect_name])
+				elif not [TYPE_INT, TYPE_FLOAT].has(typeof(send_value)) or float(send_value) < 0.0 or float(send_value) > 1.0:
+					validation_errors.append("%s metadata dsp_sends %s must be a number inside 0..1." % [label, effect_name])
 	return parsed
 
 

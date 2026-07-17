@@ -37,11 +37,20 @@ func _run_probe() -> void:
 	var jazz_delivery_files: Array = jazz_8_manifest.get("delivery_files", []) as Array
 	if jazz_delivery_files.size() != 4 or JSON.stringify(jazz_delivery_files).find("JazzClub_Lead_Trumpet_1.wav") < 0 or JSON.stringify(jazz_delivery_files).find("pattern_number") < 0:
 		failures.append("Jazz snapshot did not expose parsed delivery filename fields for selected stems.")
-	if float(((jazz_8_manifest.get("preferred_dsp_sends", {}) as Dictionary).get("lead", {}) as Dictionary).get("reverb", 0.0)) <= 0.0:
+	var preferred_sends: Dictionary = jazz_8_manifest.get("preferred_dsp_sends", {}) as Dictionary
+	if float((preferred_sends.get("lead", {}) as Dictionary).get("reverb", 0.0)) <= 0.0 or float((preferred_sends.get("pad", {}) as Dictionary).get("reverb", 0.0)) <= 0.0:
 		failures.append("Jazz authored delivery did not preserve preferred stem-specific DSP sends.")
+	var inherited_sends: Dictionary = director.call("_authored_delivery_snapshot", {"stems": {"lead": {"dsp_sends": {"reverb": 0.33}}}}, {"lead": {"file": "JazzClub_Lead_Trumpet_1.wav"}})
+	var overridden_sends: Dictionary = director.call("_authored_delivery_snapshot", {"stems": {"lead": {"dsp_sends": {"reverb": 0.33}}}}, {"lead": {"file": "JazzClub_Lead_Trumpet_1.wav", "dsp_sends": {"reverb": 0.44}}})
+	var dry_sends: Dictionary = director.call("_authored_delivery_snapshot", {"stems": {"lead": {"dsp_sends": {"reverb": 0.33}}}}, {"lead": {"file": "JazzClub_Lead_Trumpet_1.wav", "dsp_sends": {}}})
+	if not is_equal_approx(float((((inherited_sends.get("preferred_dsp_sends", {}) as Dictionary).get("lead", {}) as Dictionary).get("reverb", 0.0))), 0.33) or not is_equal_approx(float((((overridden_sends.get("preferred_dsp_sends", {}) as Dictionary).get("lead", {}) as Dictionary).get("reverb", 0.0))), 0.44) or not ((dry_sends.get("preferred_dsp_sends", {}) as Dictionary).get("lead", {}) as Dictionary).is_empty():
+		failures.append("Authored variant DSP preferences did not inherit, override, and explicitly clear role defaults.")
 	var stinger_modes: Dictionary = jazz_8_manifest.get("stinger_loop_modes", {}) as Dictionary
 	var fill_modes: Dictionary = jazz_8_manifest.get("fill_loop_modes", {}) as Dictionary
-	if int(stinger_modes.get("jazz_fixture_win", -1)) != AudioStreamWAV.LOOP_DISABLED or int(fill_modes.get("jazz_fixture_fill", -1)) != AudioStreamWAV.LOOP_DISABLED:
+	for cue_id in ["jazz_fixture_small_win", "jazz_fixture_loss", "jazz_fixture_big_win"]:
+		if int(stinger_modes.get(cue_id, -1)) != AudioStreamWAV.LOOP_DISABLED:
+			failures.append("24-bit Jazz outcome stinger %s did not load as a one-shot float stream." % cue_id)
+	if int(fill_modes.get("jazz_fixture_fill", -1)) != AudioStreamWAV.LOOP_DISABLED:
 		failures.append("24-bit Jazz stingers and fills did not load as one-shot float streams.")
 
 	var jazz_16_environment := jazz_8_environment.duplicate(true)

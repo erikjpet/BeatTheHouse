@@ -98,7 +98,7 @@ func _initialize() -> void:
 	_check_integrated_foundation_save_restore(entry, recipe, failures)
 	_check_tag_exclusion_contracts(failures)
 	_check_mix_normalization(failures)
-	_check_player_phrase_timing(recipe, failures)
+	await _check_player_phrase_timing(recipe, failures)
 	_finish(failures, canonical)
 
 
@@ -375,6 +375,10 @@ func _check_mix_normalization(failures: Array[String]) -> void:
 func _check_player_phrase_timing(recipe: Dictionary, failures: Array[String]) -> void:
 	var player := PlayerScript.new()
 	root.add_child(player)
+	# AudioStreamPlayer playback is only valid after the owning director has
+	# completed one scene-tree frame. Waiting here keeps this acceptance probe
+	# aligned with real runtime startup and prevents false engine errors.
+	await process_frame
 	var stem_player := AudioStreamPlayer.new()
 	player.add_child(stem_player)
 	player.set("_stem_players", {"pad": stem_player})
@@ -438,6 +442,7 @@ func _check_player_phrase_timing(recipe: Dictionary, failures: Array[String]) ->
 	if int(debug.get("authored_manifest_cache_size", 999)) > int(debug.get("authored_manifest_cache_limit", 0)) or int(debug.get("authored_manifest_cache_size", 0)) != 32:
 		failures.append("Authored audible cache exceeded or misreported its hard bound.")
 	player.queue_free()
+	await process_frame
 
 
 func _track_entry() -> Dictionary:
