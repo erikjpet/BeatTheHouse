@@ -1111,7 +1111,8 @@
     "game_pool": [
       "slot",
       "video_poker",
-      "pull_tabs"
+      "pull_tabs",
+      "scratch_tickets"
     ],
     "required_game_ids": [
       "pull_tabs"

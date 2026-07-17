@@ -39,6 +39,14 @@
 		]
 	},
 	{
+		"id": "scratch_tickets_pack",
+		"display_name": "Scratch Tickets Pack",
+		"description": "Gas-station scratch tickets and scratch-specific tools.",
+		"default_enabled": true,
+		"game_ids": ["scratch_tickets"],
+		"item_ids": []
+	},
+	{
 		"id": "pull_tabs_pack",
 		"display_name": "Pull Tabs Pack",
 		"description": "Pull-tab machines plus detector, tarot, and glasses tools that only affect pull tabs.",
