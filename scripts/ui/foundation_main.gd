@@ -760,6 +760,17 @@ func _on_game_surface_action_blocked(_action: String, reason: String) -> void:
 	_refresh()
 
 
+func _on_game_surface_pointer_action(action: String, index: int, phase: String, board_position: Vector2) -> void:
+	if current_game == null or _guard_player_input_route():
+		return
+	var ui_state := _current_game_surface_ui_state()
+	ui_state["selected_action_id"] = selected_action_id
+	ui_state["selected_action_kind"] = selected_action_kind
+	ui_state["selected_stake"] = _current_selected_stake()
+	var command := current_game.surface_pointer_command(action, index, phase, board_position, ui_state, run_state, run_state.current_environment)
+	_apply_game_surface_command(command, index, false)
+
+
 func _handle_module_surface_action(action: String, index: int, confirm_requested: bool) -> bool:
 	if current_game == null:
 		return false

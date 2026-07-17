@@ -273,6 +273,7 @@ static func build_run_screen(host: Variant) -> void:
 	host.game_surface_canvas.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	host.game_surface_canvas.surface_action.connect(host._on_game_surface_action)
 	host.game_surface_canvas.surface_action_blocked.connect(host._on_game_surface_action_blocked)
+	host.game_surface_canvas.surface_pointer_action.connect(host._on_game_surface_pointer_action)
 	host.game_surface_canvas.surface_music_cue.connect(host._on_game_surface_music_cue)
 	visual_stack.add_child(host.game_surface_canvas)
 
