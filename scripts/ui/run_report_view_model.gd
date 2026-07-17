@@ -5,6 +5,9 @@ const OUTCOME_REGISTRY_PATH := "res://data/art/run_outcome_icons.json"
 const BAG_GRANTS_FLAG := "_meta_bag_grants"
 const BAG_SELECTED_FLAG := "_meta_bag_selected"
 const BAG_FLUSHED_FLAG := "_meta_bag_grants_flushed"
+const PLAYERS_CARD_REWARD_FLAG := "_meta_players_card_reward"
+const PLAYERS_CARD_DESTROYED_FLAG := "_meta_players_card_destroyed"
+const PRESTIGE_RESULT_FLAG := "_meta_prestige_result"
 
 
 static func build(run_data: Dictionary, catalogs: Dictionary = {}) -> Dictionary:
@@ -35,12 +38,45 @@ static func build(run_data: Dictionary, catalogs: Dictionary = {}) -> Dictionary
 		},
 		"items": build_item_fates(_string_array(run_data.get("inventory", [])), _dict_array(run_data.get("debt", [])), story_log, _copy_dict(catalogs.get("items", {}))),
 		"bag_reward": build_bag_reward(run_data),
+		"meta_reward": build_meta_reward(run_data),
 		"debts": build_debt_ledger(_dict_array(run_data.get("debt", [])), story_log),
 		"money_rows": build_money_rows(story_log, catalogs),
 		"timeline": timeline,
 		"map_snapshot": report_map,
 		"seed": _player_facing_seed(run_data),
 	}
+
+
+static func build_meta_reward(run_data: Dictionary) -> Dictionary:
+	var flags := _copy_dict(run_data.get("narrative_flags", {}))
+	var card := _copy_dict(flags.get(PLAYERS_CARD_REWARD_FLAG, {}))
+	var destroyed := _dict_array(flags.get(PLAYERS_CARD_DESTROYED_FLAG, []))
+	var prestige := _copy_dict(flags.get(PRESTIGE_RESULT_FLAG, {}))
+	if not card.is_empty():
+		var stamp := _copy_dict(card.get("instance_data", {}))
+		return {
+			"visible": true,
+			"kind": "players_card_minted",
+			"title": "CARD MINTED · %s" % str(card.get("display_name", "Grand Casino Players Card")),
+			"detail": "Gold · Score %d · Day %d · %s" % [int(stamp.get("final_score", 0)), int(stamp.get("days_survived", 1)), str(stamp.get("seed", ""))],
+			"instance_id": int(card.get("instance_id", 0)),
+		}
+	if not destroyed.is_empty():
+		return {
+			"visible": true,
+			"kind": "players_card_destroyed",
+			"title": "CARD LOST FOREVER · Grand Casino Players Card",
+			"detail": "The prestige card carried into this failed run was destroyed.",
+			"instance_id": int(_copy_dict(destroyed[0]).get("instance_id", 0)),
+		}
+	if bool(prestige.get("active", false)):
+		return {
+			"visible": true,
+			"kind": "prestige_retained",
+			"title": "PRESTIGE RUN · Players Card retained",
+			"detail": "Recognition applied; the carried card returned safely.",
+		}
+	return {"visible": false}
 
 
 static func build_bag_reward(run_data: Dictionary) -> Dictionary:

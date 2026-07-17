@@ -24,6 +24,7 @@ var outcome_icon: TextureRect
 var outcome_title: Label
 var outcome_how: Label
 var outcome_where: Label
+var outcome_meta_reward: Label
 var score_formula: Label
 var score_detail: Label
 var map_canvas: WorldMapCanvas
@@ -63,6 +64,10 @@ func set_report(model: Dictionary) -> void:
 	outcome_title.text = str(outcome.get("title", "Run complete"))
 	outcome_how.text = str(outcome.get("how", "The run ended here."))
 	outcome_where.text = str(outcome.get("where", "Unknown room"))
+	var meta_reward := _dict(model.get("meta_reward", {}))
+	outcome_meta_reward.visible = bool(meta_reward.get("visible", false))
+	outcome_meta_reward.text = "%s — %s" % [str(meta_reward.get("title", "")), str(meta_reward.get("detail", ""))]
+	outcome_meta_reward.tooltip_text = outcome_meta_reward.text
 	_set_icon(outcome_icon, str(outcome.get("icon_path", "")))
 	var score := _dict(model.get("score", {}))
 	var base := int(score.get("money_put_to_work", 0))
@@ -173,9 +178,13 @@ func _build() -> void:
 	outcome_how.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	outcome_how.max_lines_visible = 2
 	outcome_where = _label("", 11, VisualStyle.CYAN_2)
+	outcome_meta_reward = _label("", 10, VisualStyle.YELLOW)
+	outcome_meta_reward.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+	outcome_meta_reward.visible = false
 	result_copy.add_child(outcome_title)
 	result_copy.add_child(outcome_how)
 	result_copy.add_child(outcome_where)
+	result_copy.add_child(outcome_meta_reward)
 
 	var score_stack := _section("score", "SCORE", VisualStyle.YELLOW)
 	score_formula = _label("0 = 0", 28, VisualStyle.YELLOW)
@@ -461,7 +470,7 @@ func debug_layout_snapshot() -> Dictionary:
 	var rects := {}
 	for key in section_panels.keys():
 		rects[str(key)] = (section_panels[key] as Control).get_rect()
-	return {"size": size, "section_rects": rects, "button_rect": button_row.get_rect(), "small_screen_mode": small_screen_mode, "reduce_motion": reduce_motion, "replay_progress": replay_progress, "replay_clock_text": replay_clock_label.text, "timeline_install_count": timeline_install_count, "has_scroll_container": _has_scroll_container(self), "bag_reward_visible": bag_reward_row.visible, "bag_reward_pending": bag_claim_button.visible, "bag_reward_choice_count": bag_reward_selector.item_count, "new_run_disabled": new_run_button.disabled, "home_disabled": home_button.disabled}
+	return {"size": size, "section_rects": rects, "button_rect": button_row.get_rect(), "small_screen_mode": small_screen_mode, "reduce_motion": reduce_motion, "replay_progress": replay_progress, "replay_clock_text": replay_clock_label.text, "timeline_install_count": timeline_install_count, "has_scroll_container": _has_scroll_container(self), "bag_reward_visible": bag_reward_row.visible, "bag_reward_pending": bag_claim_button.visible, "bag_reward_choice_count": bag_reward_selector.item_count, "meta_reward_visible": outcome_meta_reward.visible, "meta_reward_text": outcome_meta_reward.text, "new_run_disabled": new_run_button.disabled, "home_disabled": home_button.disabled}
 
 
 func _has_scroll_container(node: Node) -> bool:

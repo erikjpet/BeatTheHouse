@@ -9928,14 +9928,12 @@ func _process_terminal_meta_bag_drops() -> void:
 		return
 	if meta_collection_service == null or collection_drop_service == null:
 		_initialize_meta_collection()
-	if run_state.run_status == RunState.RUN_STATUS_FAILED and not bool(run_state.narrative_flags.get(MetaCollectionServiceScript.FAILURE_DECAY_FLAG, false)):
-		var carried_ids := _copy_array(run_state.challenge_modifiers().get("meta_collection_carried_instance_ids", []))
-		meta_collection_service.apply_failure_decay(carried_ids, "%s|failure" % run_state.seed_text)
-		run_state.narrative_flags[MetaCollectionServiceScript.FAILURE_DECAY_FLAG] = true
-		run_state.clear_pending_bag_markers()
-		var failure_save_error := meta_collection_service.save()
-		if failure_save_error == OK:
-			save_status_message = "Collection durability updated."
+	var special_outcome: Dictionary = collection_drop_service.apply_terminal_special_outcome(run_state, meta_collection_service)
+	if bool(special_outcome.get("mutated", false)):
+		var special_save_error := meta_collection_service.save()
+		if special_save_error == OK:
+			save_status_message = "Meta collection updated."
+	if run_state.run_status == RunState.RUN_STATUS_FAILED:
 		return
 	if run_state.run_status == RunState.RUN_STATUS_ENDED:
 		collection_drop_service.ensure_run_end_pending_bags(run_state, profile_inventory)

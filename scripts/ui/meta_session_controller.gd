@@ -134,14 +134,21 @@ func owned_item_rows() -> Array:
 		var collection: Dictionary = resolver.collection_definition(str(definition.get("collection_id", "")))
 		var run_item: Dictionary = resolver.resolve_run_item(instance)
 		var meta: Dictionary = _copy_dict(run_item.get("meta_collection", {}))
+		var item_class := str(definition.get("item_class", CollectionItemResolverScript.ITEM_CLASS_COLLECTION))
+		var collection_name := str(collection.get("display_name", "Collection"))
+		var float_summary := MetaCollectionViewModelScript._float_summary(instance)
+		if item_class == CollectionItemResolverScript.ITEM_CLASS_PLAYERS_CARD:
+			var stamp := _copy_dict(instance.get("instance_data", {}))
+			collection_name = "Grand Casino Rewards"
+			float_summary = "Critical · Score %d · Day %d · %s" % [int(stamp.get("final_score", 0)), int(stamp.get("days_survived", 1)), str(stamp.get("seed", ""))]
 		rows.append({
 			"instance_id": int(instance.get("instance_id", 0)),
 			"itemdef_id": itemdef_id,
 			"display_name": str(definition.get("display_name", "Collection Item")),
-			"collection_display_name": str(collection.get("display_name", "Collection")),
+			"collection_display_name": collection_name,
 			"tier": str(definition.get("tier", "")),
 			"condition_band": str(meta.get("condition_band", "")),
-			"float_summary": MetaCollectionViewModelScript._float_summary(instance),
+			"float_summary": float_summary,
 			"packed": packed_ids.has(int(instance.get("instance_id", 0))),
 		})
 	return rows

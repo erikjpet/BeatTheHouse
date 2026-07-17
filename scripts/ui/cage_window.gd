@@ -156,6 +156,12 @@ func _render() -> void:
 	_content_box.add_child(_section("Players Card - %s" % str(card.get("tier", "Unranked"))))
 	_content_box.add_child(_content_label(str(card.get("progress", "")), 12))
 	_content_box.add_child(_content_label(str(card.get("benefit", "")), 11, true))
+	var prestige: Dictionary = card.get("prestige", {}) if typeof(card.get("prestige", {})) == TYPE_DICTIONARY else {}
+	if bool(prestige.get("active", false)):
+		var prestige_label := _content_label(str(prestige.get("title", "Prestige run")), 13)
+		FoundationWidgets.set_control_font_color(prestige_label, VisualStyle.YELLOW)
+		_content_box.add_child(prestige_label)
+		_content_box.add_child(_content_label(str(prestige.get("summary", "")), 11, true))
 	var review_label := _content_label(str(card.get("review_title", "Review in progress")), 13)
 	FoundationWidgets.set_control_font_color(review_label, VisualStyle.CYAN if bool(card.get("can_review", false)) else VisualStyle.ORANGE)
 	_content_box.add_child(review_label)

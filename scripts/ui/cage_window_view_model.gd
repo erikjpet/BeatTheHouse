@@ -7,6 +7,7 @@ static func build(run_state: RunState) -> Dictionary:
 		return {}
 	var objective := run_state.demo_objective_status()
 	var flags := run_state.narrative_flags
+	var prestige := run_state.grand_casino_prestige_status()
 	var card_eligible := bool(objective.get("players_card_eligible", true))
 	var review_blocked := bool(flags.get("grand_casino_attention_high_roller_review", false)) or bool(objective.get("showdown_pending", false)) or bool(objective.get("showdown_active", false))
 	var review_ready := card_eligible and not review_blocked and (bool(objective.get("high_roller_ready", false)) or bool(flags.get("high_roller_cashout_pending", false)))
@@ -69,6 +70,11 @@ static func build(run_state: RunState) -> Dictionary:
 			"review_title": review_title,
 			"review_detail": review_detail,
 			"can_review": review_ready,
+			"prestige": {
+				"active": bool(prestige.get("active", false)),
+				"title": "Prestige run recognized",
+				"summary": "Linda recognizes your carried card. Initial attention is lower, the clean standard is tighter, and collection drops reach deeper tiers.",
+			},
 		},
 		"promotions": promotions,
 		"promotions_empty": promotions_empty,
