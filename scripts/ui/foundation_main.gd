@@ -132,6 +132,7 @@ var platform_services: PlatformServices
 var run_action_service: RunActionService
 var current_game: GameModule
 var last_game_result: Dictionary = {}
+var last_music_outcome_schedule: Dictionary = {}
 var last_environment_runtime_result: Dictionary = {}
 var selected_action_id: String = ""
 var selected_action_kind: String = ""
@@ -3804,6 +3805,7 @@ func _initialize_procedural_music() -> void:
 	procedural_music_player.audio_calm = user_settings != null and bool(user_settings.audio_calm)
 	procedural_music_player.authored_phrase_event.connect(_on_authored_music_phrase_event)
 	procedural_music_player.authored_arrangement_selected.connect(_on_authored_music_arrangement_selected)
+	procedural_music_player.music_outcome_scheduled.connect(_on_music_outcome_scheduled)
 	add_child(procedural_music_player)
 
 
@@ -5512,13 +5514,82 @@ func _music_win_momentum_snapshot() -> Dictionary:
 			streak += 1
 			continue
 		break
+	var scheduled_outcome: Dictionary = last_game_result.get("music_outcome_schedule", {}) as Dictionary if typeof(last_game_result.get("music_outcome_schedule", {})) == TYPE_DICTIONARY else {}
+	if str(scheduled_outcome.get("outcome_class", "")) == "big_win" and not str(scheduled_outcome.get("event_token", "")).is_empty():
+		result["big_win"] = true
+		result["big_win_event_token"] = str(scheduled_outcome.get("event_token", ""))
 	result["win_streak"] = streak
 	return result
+
+
+func _schedule_game_result_music_outcome(result: Dictionary, action_id: String) -> Dictionary:
+	if procedural_music_player == null or run_state == null or result.is_empty():
+		return {}
+	var delta := _music_result_bankroll_delta(result)
+	var outcome_class := "neutral"
+	var result_outcome := str(result.get("outcome", result.get("slot_classification", ""))).strip_edges().to_lower()
+	if delta >= 50 or result_outcome.find("jackpot") >= 0 or result_outcome.find("grand") >= 0:
+		outcome_class = "big_win"
+	elif delta > 0 or bool(result.get("won", false)):
+		outcome_class = "small_win"
+	elif delta < 0 or result_outcome in ["lose", "loss"]:
+		outcome_class = "loss"
+	elif result_outcome in ["push", "carry", "tie"]:
+		outcome_class = "push"
+	var game_id := str(result.get("game_id", result.get("source_id", current_game.get_id() if current_game != null else "game")))
+	var resolved_action_id := str(result.get("action_id", action_id))
+	var action_index := int(run_state.event_cadence.get("action_index", 0))
+	var explicit_token := str(result.get("music_event_token", result.get("outcome_event_token", ""))).strip_edges()
+	var token := explicit_token if not explicit_token.is_empty() else "%s:%d:%s:%s:%d" % [str(run_state.seed_value), action_index, game_id, resolved_action_id, run_state.story_log.size()]
+	var tier := str(result.get("tier", "")).strip_edges().to_lower()
+	var attribution_value: Variant = result.get("win_attribution", {})
+	if tier.is_empty() and typeof(attribution_value) == TYPE_DICTIONARY:
+		tier = str((attribution_value as Dictionary).get("tier", "")).strip_edges().to_lower()
+	if tier.is_empty():
+		tier = "jackpot" if outcome_class == "big_win" else "standard"
+	return procedural_music_player.schedule_music_outcome_event({
+		"event_token": token,
+		"outcome_class": outcome_class,
+		"magnitude": absi(delta),
+		"tier": tier,
+		"source_game": game_id,
+		"result_time": run_state.game_clock_minutes,
+		"requested_quantization": str(result.get("music_quantization", "")),
+	})
+
+
+func _music_result_bankroll_delta(result: Dictionary) -> int:
+	var deltas: Dictionary = result.get("deltas", {}) as Dictionary if typeof(result.get("deltas", {})) == TYPE_DICTIONARY else {}
+	return int(result.get("bankroll_delta", deltas.get("bankroll_delta", result.get("slot_net", 0))))
+
+
+func _on_music_outcome_scheduled(schedule: Dictionary) -> void:
+	last_music_outcome_schedule = schedule.duplicate(true)
+
+
+func _schedule_surface_music_event(outcome_class: String, cue_id: String, context: Dictionary) -> Dictionary:
+	if procedural_music_player == null:
+		return {}
+	var action_index := int(run_state.event_cadence.get("action_index", 0)) if run_state != null else 0
+	var scene: Dictionary = _copy_dict(context.get("feature_scene", {}))
+	var marker := str(context.get("marker", context.get("normalized_event_id", cue_id))).strip_edges()
+	var scene_id := str(scene.get("scene_id", scene.get("mode", "feature"))).strip_edges()
+	var token := "%d:%s:%s:%s" % [action_index, scene_id, cue_id, marker]
+	return procedural_music_player.schedule_music_outcome_event({
+		"event_token": token,
+		"outcome_class": outcome_class,
+		"magnitude": maxf(0.0, float(context.get("award", context.get("magnitude", 0.0)))),
+		"tier": str(context.get("tier", "feature")),
+		"source_game": current_game.get_id() if current_game != null else str(context.get("source_game", "feature")),
+		"result_time": run_state.game_clock_minutes if run_state != null else 0,
+		"cue_id": cue_id,
+	})
 
 
 func _stop_procedural_music() -> void:
 	if procedural_music_player != null:
 		procedural_music_player.stop()
+	last_music_outcome_schedule = {}
 
 
 func _sync_surface_feature_music_state(surface_state: Dictionary) -> void:
@@ -5545,16 +5616,20 @@ func _set_surface_feature_music_state(active: bool, ducking: bool) -> void:
 	surface_feature_music_ducking = ducking
 	if procedural_music_player != null and was_active and not active:
 		procedural_music_player.stop_feature_music()
+		_schedule_surface_music_event("feature_end", "feature_end", {"marker": "feature_end"})
 	if was_ducking and not ducking:
 		_update_procedural_music()
 
 
 func _stop_surface_feature_music() -> void:
+	var was_active := surface_feature_music_active
 	var was_ducking := surface_feature_music_ducking
 	surface_feature_music_active = false
 	surface_feature_music_ducking = false
 	if procedural_music_player != null:
 		procedural_music_player.stop_feature_music()
+		if was_active:
+			_schedule_surface_music_event("feature_end", "feature_end", {"marker": "feature_stop"})
 	if was_ducking:
 		_update_procedural_music()
 
@@ -6278,6 +6353,10 @@ func _resolve_game_action(action_id: String, skip_stake_validation: bool = false
 	if bool(result.get("ok", false)) and embeds_result_feedback and not runtime_tick_in_progress:
 		_begin_presented_bankroll_hold(result, bankroll_before_result, wager_cost)
 	last_game_result = result.duplicate(true)
+	if bool(result.get("ok", false)) and (not runtime_tick_in_progress or _music_result_bankroll_delta(result) != 0):
+		var outcome_schedule := _schedule_game_result_music_outcome(result, action_id)
+		if not outcome_schedule.is_empty():
+			last_game_result["music_outcome_schedule"] = outcome_schedule
 	_play_result_surface_audio_cue(result)
 	pending_all_in_result_terminal_check = confirmed_all_in_wager and bool(result.get("ok", false)) and run_state != null and not run_state.has_liquid_run_funds() and not bool(result.get("won", false))
 	if runtime_tick_in_progress:
@@ -6723,6 +6802,7 @@ func _on_game_surface_music_cue(cue_id: String, context: Dictionary) -> void:
 		var feature_scene: Dictionary = _copy_dict(context.get("feature_scene", {}))
 		var feature_music: Dictionary = _copy_dict(context.get("feature_music", feature_scene.get("feature_music", {})))
 		var should_duck := bool(feature_music.get("duck_background_music", false))
+		_schedule_surface_music_event("feature_start", normalized_cue, context)
 		procedural_music_player.update_feature_music_state({
 			"active": true,
 			"feature_scene": feature_scene,
@@ -6732,7 +6812,8 @@ func _on_game_surface_music_cue(cue_id: String, context: Dictionary) -> void:
 		})
 		_set_surface_feature_music_state(true, should_duck)
 		return
-	procedural_music_player.play_feature_stinger(normalized_cue, context)
+	var outcome_class := "big_win" if normalized_cue.to_lower().find("jackpot") >= 0 or normalized_cue.to_lower().find("grand") >= 0 else "feature_end" if normalized_cue.to_lower().find("feature_end") >= 0 or normalized_cue.to_lower().find("bonus_end") >= 0 else "small_win"
+	_schedule_surface_music_event(outcome_class, normalized_cue, context)
 
 
 func _slot_runtime_feature_audio_cue(runtime_state: Dictionary) -> String:
@@ -8227,6 +8308,7 @@ func _environment_result_feedback_view() -> Dictionary:
 		"bankroll_delta": bankroll_delta,
 		"suspicion_delta": suspicion_delta,
 		"object_id": _outcome_object_id(result),
+		"music_outcome_schedule": _copy_dict(result.get("music_outcome_schedule", last_music_outcome_schedule)),
 		"result": result.duplicate(true),
 	}
 

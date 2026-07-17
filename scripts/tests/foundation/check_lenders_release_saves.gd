@@ -9,6 +9,7 @@ const StaffBarDiceGameScript := preload("res://scripts/games/bar_dice.gd")
 const GrandCasinoDuelModelScript := preload("res://scripts/core/grand_casino_duel_model.gd")
 const MusicDeliveryIndexScript := preload("res://scripts/core/music_delivery_index.gd")
 const MusicLayerChoreographyScript := preload("res://scripts/ui/music_layer_choreography.gd")
+const MusicOutcomeDirectorModelScript := preload("res://scripts/ui/music_outcome_director_model.gd")
 
 
 func _check_run_report_foundation(failures: Array) -> void:
@@ -698,6 +699,38 @@ func _check_music_stem_director_foundation(library: ContentLibrary, failures: Ar
 	restored_choreography_run.from_dict(choreography_save_run.to_dict())
 	if JSON.stringify(restored_choreography_run.music_choreography_state) != JSON.stringify(choreography_save_run.music_choreography_state):
 		failures.append("Layer stage and scheduled fill boundary did not survive a RunState save/load round trip.")
+	var jazz_outcome_stingers: Dictionary = jazz_8_track.get("stingers", {}) as Dictionary
+	for outcome_cue_id in ["jazz_fixture_small_win", "jazz_fixture_loss", "jazz_fixture_big_win"]:
+		var outcome_cue: Dictionary = jazz_outcome_stingers.get(outcome_cue_id, {}) as Dictionary
+		if outcome_cue.is_empty() or bool(outcome_cue.get("loop", true)) or (outcome_cue.get("outcome_classes", []) as Array).is_empty() or (outcome_cue.get("reverb_pulse", {}) as Dictionary).is_empty():
+			failures.append("Jazz outcome fixture %s did not declare a one-shot class and controlled reverb pulse." % outcome_cue_id)
+	var deadline_boundary := MusicOutcomeDirectorModelScript.quantized_boundary(1.25, "phrase", 4, 1.0)
+	if str(deadline_boundary.get("quantization", "")) != "half_bar" or not bool(deadline_boundary.get("fallback_used", false)) or absf(float(deadline_boundary.get("target_transport_beat", 0.0)) - 2.0) > 0.000001:
+		failures.append("Outcome quantization did not fall back from a distant phrase to the largest deadline-safe subdivision.")
+	var bad_outcome_track := jazz_8_track.duplicate(true)
+	var bad_outcome_stingers: Dictionary = bad_outcome_track.get("stingers", {}) as Dictionary
+	var bad_outcome_cue: Dictionary = bad_outcome_stingers.get("jazz_fixture_small_win", {}) as Dictionary
+	var bad_outcome_pulse: Dictionary = bad_outcome_cue.get("reverb_pulse", {}) as Dictionary
+	bad_outcome_pulse["peak_send"] = 0.9
+	bad_outcome_cue["reverb_pulse"] = bad_outcome_pulse
+	bad_outcome_stingers["jazz_fixture_small_win"] = bad_outcome_cue
+	bad_outcome_track["stingers"] = bad_outcome_stingers
+	if JSON.stringify(_music_track_validation_errors(bad_outcome_track)).find("peak_send must stay inside 0..0.45") < 0:
+		failures.append("Music validation did not reject an outcome reverb send above its clarity ceiling.")
+	var outcome_player: ProceduralMusicPlayer = ProceduralMusicPlayerScript.new()
+	outcome_player.set("_current_stem_set", {"stinger_metadata": jazz_outcome_stingers, "harmony_phrase_bars": 4})
+	var scheduled_small := outcome_player.schedule_music_outcome_event({"event_token": "systems:small", "outcome_class": "small_win", "magnitude": 8, "tier": "small", "source_game": "roulette", "result_time": 760, "transport_beat": 1.25})
+	var duplicate_small := outcome_player.schedule_music_outcome_event({"event_token": "systems:small", "outcome_class": "small_win", "magnitude": 8, "source_game": "roulette", "result_time": 760, "transport_beat": 1.25})
+	var small_pulse_peak := outcome_player.music_outcome_director_snapshot(2.5)
+	var small_pulse_end := outcome_player.music_outcome_director_snapshot(4.01)
+	if not bool(scheduled_small.get("accepted", false)) or bool(scheduled_small.get("controls_blocked", true)) or bool(duplicate_small.get("accepted", true)) or not bool(duplicate_small.get("deduplicated", false)):
+		failures.append("Outcome director did not schedule immediately and deduplicate a stable gameplay event token.")
+	if absf(float(small_pulse_peak.get("reverb_send", 0.0)) - 0.24) > 0.0001 or float(small_pulse_end.get("reverb_send", -1.0)) != 0.0 or bool(small_pulse_peak.get("shared_full_mix_reverb", true)):
+		failures.append("Outcome reverb did not stay role-selected, bounded, and return to baseline on musical beats.")
+	var scheduled_big := outcome_player.schedule_music_outcome_event({"event_token": "systems:big", "outcome_class": "big_win", "magnitude": 80, "tier": "big", "source_game": "slot", "result_time": 764, "transport_beat": 10.2})
+	var big_envelope: Dictionary = outcome_player.get("_music_event_envelope")
+	if not bool(scheduled_big.get("accepted", false)) or float(big_envelope.get("end_beat", 0.0)) - float(big_envelope.get("start_beat", 0.0)) != 16.0:
+		failures.append("Explicit big-win outcome did not preserve the true four-musical-bar envelope.")
 	if _copy_array(jazz_recipe.get("sections", [])) != ["A", "A", "B", "A", "A", "A", "C", "A"]:
 		failures.append("Jazz harmony recipe did not encode AABA followed by AACA.")
 	var jazz_state := MusicArrangementSelectorScript.initial_recipe_state(jazz_8_track, 17, "fixture_visit")

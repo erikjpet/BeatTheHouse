@@ -1863,6 +1863,19 @@ func _run() -> void:
 		push_error("Main UI music player did not expose the declared Jazz dwell choreography in order.")
 		quit(1)
 		return
+	var ui_outcome_schedule: Dictionary = app.call("_schedule_game_result_music_outcome", {
+		"ok": true,
+		"game_id": "baccarat",
+		"action_id": "stand",
+		"outcome": "push",
+		"bankroll_delta": 0,
+		"music_event_token": "ui:outcome:push",
+	}, "stand")
+	var ui_published_schedule: Dictionary = app.get("last_music_outcome_schedule")
+	if not bool(ui_outcome_schedule.get("accepted", false)) or bool(ui_outcome_schedule.get("accented", true)) or bool(ui_outcome_schedule.get("controls_blocked", true)) or not bool(ui_outcome_schedule.get("authoritative_state_resolved", false)) or str(ui_published_schedule.get("event_token", "")) != "ui:outcome:push":
+		push_error("Main result presentation could not access the immediate MusicDirector boundary contract.")
+		quit(1)
+		return
 	var generated_music: AudioStreamWAV = procedural_music_player.call("preview_stream_for_environment", app.get("run_state").current_environment, 70)
 	if generated_music == null:
 		push_error("Procedural music player did not generate an environment stream.")
@@ -2100,10 +2113,13 @@ func _run() -> void:
 		push_error("Slot feature music did not clear when the surface bonus scene ended.")
 		quit(1)
 		return
-	if not (stopped_feature_snapshot.get("pending_stingers", []) as Array).is_empty():
-		push_error("Slot feature stingers did not clear when feature music was force-stopped.")
-		quit(1)
-		return
+	var stopped_pending_stingers: Array = stopped_feature_snapshot.get("pending_stingers", []) as Array
+	for stopped_pending_value in stopped_pending_stingers:
+		var stopped_pending: Dictionary = stopped_pending_value as Dictionary
+		if str(stopped_pending.get("time_domain", "")) != "transport_beats" or str(stopped_pending.get("outcome_class", "")) != "feature_end":
+			push_error("Slot feature stop retained a stale sampler cue instead of only its quantized feature-end event.")
+			quit(1)
+			return
 	var slot_sfx := SfxPlayerScript.new()
 	var lever_sfx: AudioStreamWAV = slot_sfx.preview_event_stream("lever")
 	var reel_loop_sfx: AudioStreamWAV = slot_sfx.preview_event_stream("reel_loop")

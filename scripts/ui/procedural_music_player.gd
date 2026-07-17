@@ -4,12 +4,14 @@ extends Node
 signal authored_phrase_event(event: Dictionary)
 signal authored_arrangement_selected(selection: Dictionary)
 signal authored_transition_notice(event: Dictionary)
+signal music_outcome_scheduled(event: Dictionary)
 
 const WebAudioBridgeScript := preload("res://scripts/ui/web_audio_bridge.gd")
 const MusicArrangementSelectorScript := preload("res://scripts/ui/music_arrangement_selector.gd")
 const MusicDeliveryIndexScript := preload("res://scripts/core/music_delivery_index.gd")
 const MusicFloatPcmStreamScript := preload("res://scripts/ui/music_float_pcm_stream.gd")
 const MusicLayerChoreographyScript := preload("res://scripts/ui/music_layer_choreography.gd")
+const MusicOutcomeDirectorModelScript := preload("res://scripts/ui/music_outcome_director_model.gd")
 
 # Procedural background music for the foundation UI.
 # The synth shape is ported from the old baseline: generated PCM WAV themes,
@@ -100,6 +102,9 @@ const MUSIC_STINGER_CUE_COOLDOWN_BEATS := 2
 const FLOAT_PCM_FEED_MAX_FRAMES := 4096
 const BIG_WIN_ENVELOPE_BARS := 4
 const BIG_WIN_COOLDOWN_BARS := 2
+const MUSIC_OUTCOME_TOKEN_LIMIT := 256
+const MUSIC_OUTCOME_HISTORY_LIMIT := 32
+const MUSIC_OUTCOME_REVERB_MAX_SEND := 0.45
 const MUSIC_FEATURE_ATTACK_SECONDS := 0.25
 const MUSIC_FEATURE_RELEASE_SECONDS := 2.0
 const MUSIC_AUTHORED_MANIFEST_PATH := "res://data/audio/music_manifest.json"
@@ -197,6 +202,13 @@ var _last_music_state: Dictionary = {}
 var _music_event_envelope: Dictionary = {}
 var _last_big_win_event_token := ""
 var _music_event_last_bar := -1
+var _music_outcome_tokens: Dictionary = {}
+var _music_outcome_token_order: Array[String] = []
+var _music_outcome_history: Array = []
+var _music_outcome_last_schedule: Dictionary = {}
+var _music_outcome_last_target_by_cue: Dictionary = {}
+var _music_outcome_reverb_envelope: Dictionary = {}
+var _music_outcome_reverb_last_start_by_class: Dictionary = {}
 var _float_pcm_player_states: Dictionary = {}
 var _float_pcm_phase_launches: Dictionary = {}
 var _authored_phrase_track_id := ""
@@ -255,6 +267,7 @@ func _ready() -> void:
 	_feature_mix_applied_target = _feature_mix_target.duplicate(true)
 	_reset_adaptive_tempo()
 	_reset_music_choreography()
+	_reset_music_outcome_director()
 	_apply_music_fx_vector(_music_fx_live, true)
 	if WebAudioBridgeScript.available():
 		WebAudioBridgeScript.ensure()
@@ -277,7 +290,7 @@ func _process(delta: float) -> void:
 	_advance_music_choreography(delta)
 	_advance_music_mix(delta)
 	_advance_feature_mix(delta)
-	_advance_music_event_envelope()
+	_advance_music_outcome_director()
 	_poll_feature_stingers()
 
 
@@ -308,6 +321,9 @@ func debug_soak_snapshot() -> Dictionary:
 		"feature_stem_cache_size": _feature_stem_cache.size(),
 		"feature_stinger_pending_count": _feature_stinger_pending.size(),
 		"feature_stinger_history_count": _feature_stinger_history.size(),
+		"music_outcome_token_count": _music_outcome_tokens.size(),
+		"music_outcome_token_limit": MUSIC_OUTCOME_TOKEN_LIMIT,
+		"music_outcome_history_count": _music_outcome_history.size(),
 		"stem_player_count": _stem_players.size(),
 		"feature_stem_player_count": _feature_stem_players.size(),
 		"feature_stinger_player_count": _feature_stinger_players.size(),
@@ -469,6 +485,7 @@ func stop() -> void:
 	_music_event_envelope = {}
 	_last_big_win_event_token = ""
 	_music_event_last_bar = -1
+	_reset_music_outcome_director()
 	_authored_phrase_track_id = ""
 	_authored_phrase_visit_id = ""
 	_authored_phrase_slot = -1
@@ -637,8 +654,14 @@ func update_feature_music_state(feature_state: Dictionary) -> void:
 func stop_feature_music() -> void:
 	_current_feature_music_id = ""
 	_current_feature_stem_set = {}
-	_feature_stinger_pending = []
-	_feature_stinger_history = []
+	var retained_outcomes: Array = []
+	for pending_value in _feature_stinger_pending:
+		if typeof(pending_value) != TYPE_DICTIONARY:
+			continue
+		var pending: Dictionary = pending_value
+		if str(pending.get("time_domain", "")) == "transport_beats" and str(pending.get("outcome_class", "")) != "feature_start":
+			retained_outcomes.append(pending)
+	_feature_stinger_pending = retained_outcomes
 	_stinger_last_target_by_cue = {}
 	_stop_feature_stem_players()
 	_stop_feature_stinger_players()
@@ -727,7 +750,7 @@ func update_music_state(music_state: Dictionary) -> void:
 	_last_music_state = music_state.duplicate(true)
 	_set_adaptive_tempo_target(float(music_state.get("heat", music_state.get("suspicion_level", 0.0))))
 	_consume_music_events(_last_music_state, _director_playback_position())
-	var effective_state := _music_state_with_event_envelope(_last_music_state, _director_playback_position())
+	var effective_state := _music_state_with_event_envelope_at_beat(_last_music_state, _adaptive_tempo_transport_beats)
 	_music_fx_input_snapshot = _normalize_music_fx_input(effective_state)
 	_music_fx_target = _music_fx_vector_from_input(_music_fx_input_snapshot)
 	if audio_calm:
@@ -741,7 +764,8 @@ func music_event_envelope_snapshot(music_state: Dictionary = {}, playback_positi
 	var position := _director_playback_position() if playback_position < 0.0 else maxf(0.0, playback_position)
 	if not music_state.is_empty():
 		_consume_music_events(music_state, position)
-	var effective := _music_state_with_event_envelope(_last_music_state if music_state.is_empty() else music_state, position)
+	var transport_beat := position / maxf(0.001, _music_director_bar_seconds() / 4.0)
+	var effective := _music_state_with_event_envelope_at_beat(_last_music_state if music_state.is_empty() else music_state, transport_beat)
 	return {
 		"envelope": _copy_dict(_music_event_envelope),
 		"event_token": _last_big_win_event_token,
@@ -753,55 +777,209 @@ func music_event_envelope_snapshot(music_state: Dictionary = {}, playback_positi
 	}
 
 
+func schedule_music_outcome_event(event_value: Dictionary) -> Dictionary:
+	var event := MusicOutcomeDirectorModelScript.normalize_event(event_value)
+	var token := str(event.get("event_token", ""))
+	if token.is_empty():
+		return {"accepted": false, "reason": "missing_event_token", "controls_blocked": false, "authoritative_state_resolved": true}
+	if _music_outcome_tokens.has(token):
+		var duplicate := _copy_dict(_music_outcome_tokens.get(token, {}))
+		duplicate["accepted"] = false
+		duplicate["deduplicated"] = true
+		duplicate["reason"] = "duplicate_event_token"
+		return duplicate
+	var transport_beat := maxf(0.0, float(event.get("transport_beat", 0.0))) if event_value.has("transport_beat") else maxf(0.0, _adaptive_tempo_transport_beats)
+	event["transport_beat"] = transport_beat
+	var cue := MusicOutcomeDirectorModelScript.select_cue(_current_stem_set.get("stinger_metadata", {}), event)
+	var requested_quantization := str(event.get("requested_quantization", ""))
+	if requested_quantization.is_empty():
+		requested_quantization = str(cue.get("quantize", "beat"))
+	var phrase_bars := maxi(1, int(_current_stem_set.get("harmony_phrase_bars", ADAPTIVE_TEMPO_BARS_PER_PHRASE)))
+	var boundary := MusicOutcomeDirectorModelScript.quantized_boundary(transport_beat, requested_quantization, phrase_bars, float(cue.get("max_latency_beats", 1.0)))
+	var target_beat := float(boundary.get("target_transport_beat", transport_beat))
+	var latency_beats := maxf(0.0, target_beat - transport_beat)
+	var live_bpm := maxf(1.0, _adaptive_tempo_current_bpm)
+	var schedule := {
+		"accepted": true,
+		"deduplicated": false,
+		"event_token": token,
+		"outcome_class": str(event.get("outcome_class", "neutral")),
+		"magnitude": float(event.get("magnitude", 0.0)),
+		"tier": str(event.get("tier", "standard")),
+		"source_game": str(event.get("source_game", "")),
+		"result_time": event.get("result_time", 0),
+		"cue_id": str(cue.get("cue_id", "")),
+		"requested_quantization": str(boundary.get("requested_quantization", requested_quantization)),
+		"quantization": str(boundary.get("quantization", requested_quantization)),
+		"fallback_used": bool(boundary.get("fallback_used", false)),
+		"scheduled_transport_beat": snappedf(target_beat, 0.000001),
+		"scheduled_bar": floori(target_beat / 4.0),
+		"scheduled_beat_in_bar": snappedf(fposmod(target_beat, 4.0), 0.000001),
+		"latency_beats": snappedf(latency_beats, 0.000001),
+		"estimated_live_latency_seconds": snappedf(latency_beats * 60.0 / live_bpm, 0.000001),
+		"maximum_live_latency_seconds": snappedf(float(cue.get("max_latency_beats", 1.0)) * 60.0 / live_bpm, 0.000001),
+		"controls_blocked": false,
+		"authoritative_state_resolved": true,
+		"voice_limit": MUSIC_STINGER_PLAYER_COUNT,
+		"pending_voice_limit": MUSIC_STINGER_PENDING_LIMIT,
+		"accented": not str(cue.get("cue_id", "")).is_empty(),
+	}
+	if str(cue.get("cue_id", "")).is_empty():
+		schedule["scheduled_transport_beat"] = snappedf(transport_beat, 0.000001)
+		schedule["latency_beats"] = 0.0
+		schedule["estimated_live_latency_seconds"] = 0.0
+		schedule["quantization"] = "none"
+		_remember_music_outcome_schedule(token, schedule)
+		return schedule.duplicate(true)
+	var cue_id := str(cue.get("cue_id", ""))
+	var cue_cooldown := maxf(0.0, float(cue.get("cooldown_beats", 0.0)))
+	var last_cue_target := float(_music_outcome_last_target_by_cue.get(cue_id, -999999.0))
+	if target_beat - last_cue_target < cue_cooldown - 0.000001:
+		schedule["accepted"] = false
+		schedule["reason"] = "cue_cooldown"
+		_remember_music_outcome_schedule(token, schedule)
+		return schedule.duplicate(true)
+	if str(event.get("outcome_class", "")) == "big_win" and not _music_event_envelope.is_empty() and transport_beat < float(_music_event_envelope.get("cooldown_until_beat", 0.0)):
+		schedule["accepted"] = false
+		schedule["reason"] = "big_win_cooldown"
+		_remember_music_outcome_schedule(token, schedule)
+		return schedule.duplicate(true)
+	var outcome_pending_count := 0
+	for pending_value in _feature_stinger_pending:
+		if typeof(pending_value) == TYPE_DICTIONARY and str((pending_value as Dictionary).get("time_domain", "")) == "transport_beats":
+			outcome_pending_count += 1
+	if outcome_pending_count >= MUSIC_STINGER_PENDING_LIMIT:
+		schedule["accepted"] = false
+		schedule["reason"] = "pending_voice_limit"
+		_remember_music_outcome_schedule(token, schedule)
+		return schedule.duplicate(true)
+	_music_outcome_last_target_by_cue[cue_id] = target_beat
+	_feature_stinger_pending.append({
+		"time_domain": "transport_beats",
+		"cue_id": cue_id,
+		"event_token": token,
+		"outcome_class": str(event.get("outcome_class", "neutral")),
+		"target_transport_beat": target_beat,
+		"volume_db": float(cue.get("volume_db", -3.0)),
+		"reverb_pulse": _copy_dict(cue.get("reverb_pulse", {})),
+	})
+	if str(event.get("outcome_class", "")) == "big_win":
+		_last_big_win_event_token = token
+		_music_event_envelope = {
+			"type": "big_win",
+			"event_token": token,
+			"start_beat": target_beat,
+			"end_beat": target_beat + float(BIG_WIN_ENVELOPE_BARS * ADAPTIVE_TEMPO_BEATS_PER_BAR),
+			"cooldown_until_beat": target_beat + float((BIG_WIN_ENVELOPE_BARS + BIG_WIN_COOLDOWN_BARS) * ADAPTIVE_TEMPO_BEATS_PER_BAR),
+			"start_bar": floori(target_beat / 4.0),
+			"end_bar": floori(target_beat / 4.0) + BIG_WIN_ENVELOPE_BARS,
+			"cooldown_until_bar": floori(target_beat / 4.0) + BIG_WIN_ENVELOPE_BARS + BIG_WIN_COOLDOWN_BARS,
+			"trigger_delta": float(event.get("magnitude", 0.0)),
+		}
+		_music_event_last_bar = floori(transport_beat / 4.0)
+	_remember_music_outcome_schedule(token, schedule)
+	return schedule.duplicate(true)
+
+
+func music_outcome_director_snapshot(transport_beat: float = -1.0) -> Dictionary:
+	var beat := maxf(0.0, _adaptive_tempo_transport_beats) if transport_beat < 0.0 else maxf(0.0, transport_beat)
+	_apply_outcome_stingers_for_transport(beat, false)
+	var reverb_level := MusicOutcomeDirectorModelScript.reverb_level(_music_outcome_reverb_envelope, beat)
+	var effective := _music_state_with_event_envelope_at_beat(_last_music_state, beat)
+	return {
+		"transport_beat": snappedf(beat, 0.000001),
+		"last_schedule": _copy_dict(_music_outcome_last_schedule),
+		"pending": _copy_array(_feature_stinger_pending),
+		"history": _copy_array(_music_outcome_history),
+		"stinger_history": _copy_array(_feature_stinger_history),
+		"deduplicated_token_count": _music_outcome_tokens.size(),
+		"deduplicated_token_limit": MUSIC_OUTCOME_TOKEN_LIMIT,
+		"voice_limit": MUSIC_STINGER_PLAYER_COUNT,
+		"pending_voice_limit": MUSIC_STINGER_PENDING_LIMIT,
+		"reverb_envelope": _copy_dict(_music_outcome_reverb_envelope),
+		"reverb_send": snappedf(reverb_level, 0.000001),
+		"reverb_send_limit": MUSIC_OUTCOME_REVERB_MAX_SEND,
+		"shared_full_mix_reverb": false,
+		"big_win_active": bool(effective.get("big_win", false)),
+		"big_win_bars_remaining": int(effective.get("big_win_bars_remaining", 0)),
+	}
+
+
 func _consume_music_events(music_state: Dictionary, playback_position: float) -> void:
 	var event_token := str(music_state.get("big_win_event_token", music_state.get("win_event_token", ""))).strip_edges()
 	var delta := int(music_state.get("last_bankroll_delta", 0))
 	var is_big_win := bool(music_state.get("big_win", false)) or delta >= int(music_state.get("big_win_threshold", 50))
 	if event_token.is_empty() or event_token == _last_big_win_event_token or not is_big_win:
 		return
-	_last_big_win_event_token = event_token
-	var bar_seconds := _music_director_bar_seconds()
-	var current_bar := floori(maxf(0.0, playback_position) / maxf(0.001, bar_seconds))
-	if not _music_event_envelope.is_empty() and current_bar < int(_music_event_envelope.get("cooldown_until_bar", 0)):
-		return
-	var start_bar := current_bar + 1
-	_music_event_envelope = {
-		"type": "big_win",
+	var transport_beat := maxf(0.0, playback_position) / maxf(0.001, _music_director_bar_seconds() / 4.0)
+	schedule_music_outcome_event({
 		"event_token": event_token,
-		"start_bar": start_bar,
-		"end_bar": start_bar + BIG_WIN_ENVELOPE_BARS,
-		"cooldown_until_bar": start_bar + BIG_WIN_ENVELOPE_BARS + BIG_WIN_COOLDOWN_BARS,
-		"trigger_delta": delta,
-	}
-	_music_event_last_bar = current_bar
-	play_feature_stinger("big_win", {"volume_db": -1.0, "cooldown_beats": STEPS_PER_BAR})
+		"outcome_class": "big_win",
+		"magnitude": delta,
+		"tier": "big",
+		"source_game": str(music_state.get("source_game", "")),
+		"result_time": music_state.get("result_time", 0),
+		"transport_beat": transport_beat,
+	})
 
 
 func _music_state_with_event_envelope(music_state: Dictionary, playback_position: float) -> Dictionary:
+	var transport_beat := maxf(0.0, playback_position) / maxf(0.001, _music_director_bar_seconds() / 4.0)
+	return _music_state_with_event_envelope_at_beat(music_state, transport_beat)
+
+
+func _music_state_with_event_envelope_at_beat(music_state: Dictionary, transport_beat: float) -> Dictionary:
 	var result := music_state.duplicate(true)
 	result["big_win"] = false
 	result["big_win_bars_remaining"] = 0
 	if _music_event_envelope.is_empty():
 		return result
-	var bar_seconds := _music_director_bar_seconds()
-	var current_bar := floori(maxf(0.0, playback_position) / maxf(0.001, bar_seconds))
-	var start_bar := int(_music_event_envelope.get("start_bar", 0))
-	var end_bar := int(_music_event_envelope.get("end_bar", 0))
-	if current_bar < end_bar:
+	var beat := maxf(0.0, transport_beat)
+	var start_beat := float(_music_event_envelope.get("start_beat", float(int(_music_event_envelope.get("start_bar", 0)) * 4)))
+	var end_beat := float(_music_event_envelope.get("end_beat", float(int(_music_event_envelope.get("end_bar", 0)) * 4)))
+	if beat < end_beat:
 		result["big_win"] = true
-		result["big_win_bars_remaining"] = BIG_WIN_ENVELOPE_BARS if current_bar < start_bar else maxi(0, end_bar - current_bar)
+		result["big_win_bars_remaining"] = BIG_WIN_ENVELOPE_BARS if beat < start_beat else maxi(0, ceili((end_beat - beat) / 4.0))
 	return result
 
 
-func _advance_music_event_envelope() -> void:
+func _advance_music_outcome_director() -> void:
+	var beat := maxf(0.0, _adaptive_tempo_transport_beats)
+	if not _music_outcome_reverb_envelope.is_empty() and beat >= float(_music_outcome_reverb_envelope.get("end_beat", 0.0)):
+		_music_outcome_reverb_envelope = {}
 	if _music_event_envelope.is_empty() or _last_music_state.is_empty():
 		return
-	var position := _director_playback_position()
-	var current_bar := floori(position / maxf(0.001, _music_director_bar_seconds()))
+	var current_bar := floori(beat / 4.0)
 	if current_bar == _music_event_last_bar:
 		return
 	_music_event_last_bar = current_bar
-	_update_music_mix_state(_music_state_with_event_envelope(_last_music_state, position))
+	_update_music_mix_state(_music_state_with_event_envelope_at_beat(_last_music_state, beat))
+
+
+func _remember_music_outcome_schedule(token: String, schedule: Dictionary) -> void:
+	_music_outcome_tokens[token] = schedule.duplicate(true)
+	_music_outcome_token_order.append(token)
+	while _music_outcome_token_order.size() > MUSIC_OUTCOME_TOKEN_LIMIT:
+		var evicted := str(_music_outcome_token_order.pop_front())
+		_music_outcome_tokens.erase(evicted)
+	_music_outcome_last_schedule = schedule.duplicate(true)
+	_music_outcome_history.append(schedule.duplicate(true))
+	while _music_outcome_history.size() > MUSIC_OUTCOME_HISTORY_LIMIT:
+		_music_outcome_history.pop_front()
+	music_outcome_scheduled.emit(schedule.duplicate(true))
+
+
+func _reset_music_outcome_director() -> void:
+	_music_event_envelope.clear()
+	_last_big_win_event_token = ""
+	_music_event_last_bar = -1
+	_music_outcome_tokens.clear()
+	_music_outcome_token_order.clear()
+	_music_outcome_history.clear()
+	_music_outcome_last_schedule.clear()
+	_music_outcome_last_target_by_cue.clear()
+	_music_outcome_reverb_envelope.clear()
+	_music_outcome_reverb_last_start_by_class.clear()
 
 
 func _advance_authored_arrangement() -> void:
@@ -1003,6 +1181,8 @@ func _configure_adaptive_tempo(profile: Dictionary, stem_set: Dictionary = {}) -
 		str(normalized.get("id", "default")),
 	]
 	var profile_changed := profile_id != _adaptive_tempo_profile_id
+	if profile_changed:
+		_reset_music_outcome_director()
 	_adaptive_tempo_profile = normalized
 	_adaptive_tempo_profile_id = profile_id
 	_adaptive_tempo_enabled = bool(normalized.get("enabled", false))
@@ -1099,6 +1279,8 @@ func _advance_adaptive_tempo(delta: float) -> void:
 	if not _adaptive_tempo_native_enabled or _adaptive_tempo_profile.is_empty():
 		_adaptive_tempo_ratio = 1.0
 		_adaptive_tempo_slew_direction = "steady"
+		if safe_delta > 0.0 and (not _current_stem_set.is_empty() or not _current_music_context.is_empty()):
+			_adaptive_tempo_transport_beats += (_adaptive_tempo_base_bpm / 60.0) * safe_delta
 		_update_adaptive_tempo_debug_snapshot()
 		return
 	var previous_bpm := _adaptive_tempo_current_bpm
@@ -1936,6 +2118,7 @@ func _apply_music_fx_vector(vector: Dictionary, _force: bool) -> void:
 	_configure_music_send_effects(vector)
 	_music_send_matrix = _music_send_matrix_from_vector(vector)
 	_music_send_matrix = _merge_authored_send_preferences(_music_send_matrix, _current_stem_set)
+	_apply_music_outcome_reverb_to_send_matrix(_music_send_matrix, _adaptive_tempo_transport_beats)
 	_apply_music_send_matrix(_music_send_matrix, _current_stem_set, _music_send_players, false)
 	_apply_music_send_matrix(_scaled_music_send_matrix(_music_send_matrix, 0.72), _current_feature_stem_set, _feature_send_players, true)
 	var wobble_cents := clampf(float(vector.get("pitch_wobble_cents", 0.0)), 0.0, 18.0)
@@ -1999,6 +2182,22 @@ func _music_send_effect(effect_key: String) -> AudioEffect:
 	if bus_index < 0 or AudioServer.get_bus_effect_count(bus_index) <= 0:
 		return null
 	return AudioServer.get_bus_effect(bus_index, 0)
+
+
+func _apply_music_outcome_reverb_to_send_matrix(matrix: Dictionary, transport_beat: float) -> void:
+	if _music_outcome_reverb_envelope.is_empty():
+		return
+	var level := MusicOutcomeDirectorModelScript.reverb_level(_music_outcome_reverb_envelope, transport_beat)
+	if level <= 0.0:
+		return
+	var reverb_value: Variant = matrix.get("reverb", {})
+	if typeof(reverb_value) != TYPE_DICTIONARY:
+		return
+	var reverb: Dictionary = reverb_value
+	for role_value in _music_outcome_reverb_envelope.get("eligible_roles", []) as Array:
+		var role := str(role_value)
+		if MUSIC_STEM_PLAYBACK_ROLES.has(role):
+			reverb[role] = maxf(float(reverb.get(role, 0.0)), minf(level, MUSIC_OUTCOME_REVERB_MAX_SEND))
 
 
 static func _music_send_matrix_from_vector(vector: Dictionary) -> Dictionary:
@@ -3932,6 +4131,7 @@ func _poll_feature_stingers() -> void:
 	if _feature_stinger_pending.is_empty():
 		return
 	_apply_feature_stingers_for_position(_director_playback_position(), true)
+	_apply_outcome_stingers_for_transport(_adaptive_tempo_transport_beats, true)
 
 
 func _apply_feature_stingers_for_position(playback_position: float, play_audio: bool) -> void:
@@ -3942,6 +4142,9 @@ func _apply_feature_stingers_for_position(playback_position: float, play_audio: 
 		if typeof(pending_value) != TYPE_DICTIONARY:
 			continue
 		var pending: Dictionary = pending_value
+		if str(pending.get("time_domain", "position")) == "transport_beats":
+			remaining.append(pending)
+			continue
 		if playback_position + 0.0001 < float(pending.get("target_position", 0.0)):
 			remaining.append(pending)
 			continue
@@ -3955,6 +4158,83 @@ func _apply_feature_stingers_for_position(playback_position: float, play_audio: 
 		if play_audio and audio_enabled and not _running_headless():
 			_play_feature_stinger_now(str(pending.get("cue_id", "")), float(pending.get("volume_db", -2.0)))
 	_feature_stinger_pending = remaining
+
+
+func _apply_outcome_stingers_for_transport(transport_beat: float, play_audio: bool) -> void:
+	if _feature_stinger_pending.is_empty():
+		return
+	var remaining: Array = []
+	for pending_value in _feature_stinger_pending:
+		if typeof(pending_value) != TYPE_DICTIONARY:
+			continue
+		var pending: Dictionary = pending_value
+		if str(pending.get("time_domain", "position")) != "transport_beats":
+			remaining.append(pending)
+			continue
+		var target_beat := float(pending.get("target_transport_beat", 0.0))
+		if transport_beat + 0.000001 < target_beat:
+			remaining.append(pending)
+			continue
+		var reverb_started := _activate_music_outcome_reverb(pending, target_beat)
+		_feature_stinger_history.append({
+			"cue_id": str(pending.get("cue_id", "")),
+			"event_token": str(pending.get("event_token", "")),
+			"outcome_class": str(pending.get("outcome_class", "")),
+			"played_transport_beat": snappedf(transport_beat, 0.000001),
+			"target_transport_beat": snappedf(target_beat, 0.000001),
+			"reverb_started": reverb_started,
+		})
+		while _feature_stinger_history.size() > MUSIC_OUTCOME_HISTORY_LIMIT:
+			_feature_stinger_history.pop_front()
+		if play_audio and audio_enabled and not _running_headless():
+			_play_feature_stinger_now(str(pending.get("cue_id", "")), float(pending.get("volume_db", -2.0)))
+	_feature_stinger_pending = remaining
+
+
+func _activate_music_outcome_reverb(pending: Dictionary, target_beat: float) -> bool:
+	var pulse := _copy_dict(pending.get("reverb_pulse", {}))
+	if pulse.is_empty():
+		return false
+	var outcome_class := str(pending.get("outcome_class", "neutral"))
+	var eligible_classes := _music_outcome_string_array(pulse.get("outcome_classes", []))
+	if not eligible_classes.is_empty() and not eligible_classes.has(outcome_class):
+		return false
+	var cooldown := maxf(0.0, float(pulse.get("cooldown_beats", 0.0)))
+	var last_start := float(_music_outcome_reverb_last_start_by_class.get(outcome_class, -999999.0))
+	if target_beat - last_start < cooldown - 0.000001:
+		return false
+	var attack := maxf(0.0, float(pulse.get("attack_beats", 0.0)))
+	var hold := maxf(0.0, float(pulse.get("hold_beats", 0.0)))
+	var release := maxf(0.0, float(pulse.get("release_beats", 0.0)))
+	var peak := clampf(float(pulse.get("peak_send", 0.0)), 0.0, MUSIC_OUTCOME_REVERB_MAX_SEND)
+	if attack + hold + release <= 0.0 or peak <= 0.0:
+		return false
+	var current_level := MusicOutcomeDirectorModelScript.reverb_level(_music_outcome_reverb_envelope, target_beat)
+	_music_outcome_reverb_envelope = {
+		"event_token": str(pending.get("event_token", "")),
+		"outcome_class": outcome_class,
+		"start_beat": target_beat,
+		"end_beat": target_beat + attack + hold + release,
+		"attack_beats": attack,
+		"hold_beats": hold,
+		"release_beats": release,
+		"start_level": minf(current_level, peak),
+		"peak_send": peak,
+		"eligible_roles": _music_outcome_string_array(pulse.get("eligible_roles", [])),
+	}
+	_music_outcome_reverb_last_start_by_class[outcome_class] = target_beat
+	return true
+
+
+func _music_outcome_string_array(value: Variant) -> Array[String]:
+	var result: Array[String] = []
+	if typeof(value) != TYPE_ARRAY:
+		return result
+	for item in value as Array:
+		var text := str(item).strip_edges().to_lower()
+		if not text.is_empty() and not result.has(text):
+			result.append(text)
+	return result
 
 
 func _play_feature_stinger_now(cue_id: String, volume_db: float = -2.0) -> void:
@@ -4117,6 +4397,7 @@ func _stem_manifest_from_contract(stem_set: Dictionary) -> Dictionary:
 		"cycle_index": int(stem_set.get("cycle_index", 0)),
 		"excluded_candidates": _copy_array(stem_set.get("excluded_candidates", [])),
 		"transitions": _copy_dict(stem_set.get("transitions", {})),
+		"stinger_metadata": _copy_dict(stem_set.get("stinger_metadata", {})),
 		"stinger_loop_modes": _audio_stream_loop_mode_snapshot(_copy_dict(stem_set.get("stingers", {}))),
 		"fill_loop_modes": _audio_stream_loop_mode_snapshot(_copy_dict(stem_set.get("fills", {}))),
 		"step_period": snappedf(float(stem_set.get("step_period", _step_period_from_bpm(float(stem_set.get("bpm", 82.0))))), 0.0001),
@@ -4357,6 +4638,7 @@ func _authored_stem_set_from_profile(profile: Dictionary, music_state: Dictionar
 	contract["harmony_last_phrase_event_index"] = int((contract.get("recipe_state", {}) as Dictionary).get("last_phrase_event_index", -1))
 	contract["excluded_candidates"] = _copy_array(selection.get("excluded_candidates", []))
 	contract["transitions"] = _copy_dict(entry.get("transitions", {}))
+	contract["stinger_metadata"] = _copy_dict(entry.get("stingers", {}))
 	contract["fill_metadata"] = _copy_dict(entry.get("fills", {}))
 	contract["layer_choreography"] = _copy_dict(entry.get("layer_choreography", {}))
 	contract["authored_arrangement"] = _copy_array(entry.get("arrangement", []))
@@ -4527,6 +4809,7 @@ func _authored_stem_filename(value: Variant) -> String:
 
 func _authored_stingers(track_id: String, entry: Dictionary) -> Dictionary:
 	var result := {}
+	var stream_by_file := {}
 	var stingers_value: Variant = entry.get("stingers", {})
 	if typeof(stingers_value) != TYPE_DICTIONARY:
 		return result
@@ -4539,7 +4822,12 @@ func _authored_stingers(track_id: String, entry: Dictionary) -> Dictionary:
 			continue
 		var loop_enabled := typeof(stinger_value) == TYPE_DICTIONARY and bool((stinger_value as Dictionary).get("loop", false))
 		var loop_frames := int((stinger_value as Dictionary).get("loop_frames", 0)) if loop_enabled else 0
-		var stream: AudioStream = _load_authored_audio_stream(_authored_music_path(track_id, filename), loop_frames, loop_enabled)
+		var stream_key := "%s|%d|%s" % [filename.to_lower(), loop_frames, str(loop_enabled)]
+		var stream: AudioStream = stream_by_file.get(stream_key, null)
+		if stream == null:
+			stream = _load_authored_audio_stream(_authored_music_path(track_id, filename), loop_frames, loop_enabled)
+			if stream != null:
+				stream_by_file[stream_key] = stream
 		if stream != null:
 			result[cue_id] = stream
 	return result

@@ -1414,8 +1414,11 @@ func _validate_music_manifest_definitions() -> void:
 				if not delivery.is_empty():
 					_validate_music_delivery_filename("music_tracks %s stinger %s" % [track_id, cue_id], track_id, _music_file_name(stinger_value), "stinger", stinger_value, delivery, delivery_semantic_files)
 				_validate_music_asset_file("music_tracks %s stinger %s" % [track_id, cue_id], track_id, _music_file_name(stinger_value))
-				if typeof(stinger_value) == TYPE_DICTIONARY and (stinger_value as Dictionary).has("loop") and typeof((stinger_value as Dictionary).get("loop")) != TYPE_BOOL:
-					validation_errors.append("music_tracks %s stinger %s loop must be a boolean." % [track_id, cue_id])
+				if typeof(stinger_value) == TYPE_DICTIONARY:
+					var stinger_data: Dictionary = stinger_value
+					if stinger_data.has("loop") and typeof(stinger_data.get("loop")) != TYPE_BOOL:
+						validation_errors.append("music_tracks %s stinger %s loop must be a boolean." % [track_id, cue_id])
+					_validate_music_outcome_stinger(track_id, cue_id, stinger_data, allowed_roles)
 		elif typeof(stingers_value) != TYPE_NIL:
 			validation_errors.append("music_tracks %s stingers must be a dictionary when present." % track_id)
 		var fills_value: Variant = track.get("fills", {})
@@ -1436,6 +1439,57 @@ func _validate_music_manifest_definitions() -> void:
 			validation_errors.append("music_tracks %s transitions quantize must be beat, bar, or phrase." % track_id)
 		if int(transitions.get("phrase_bars", 4)) <= 0:
 			validation_errors.append("music_tracks %s transitions phrase_bars must be positive." % track_id)
+
+
+func _validate_music_outcome_stinger(track_id: String, cue_id: String, stinger: Dictionary, allowed_roles: Dictionary) -> void:
+	if not stinger.has("outcome_classes"):
+		return
+	var allowed_classes := ["small_win", "loss", "big_win", "feature_start", "feature_end", "neutral", "push"]
+	var outcome_classes_value: Variant = stinger.get("outcome_classes", [])
+	if typeof(outcome_classes_value) != TYPE_ARRAY or (outcome_classes_value as Array).is_empty():
+		validation_errors.append("music_tracks %s outcome stinger %s must declare outcome_classes." % [track_id, cue_id])
+	else:
+		for class_value in outcome_classes_value as Array:
+			if not allowed_classes.has(str(class_value).strip_edges().to_lower()):
+				validation_errors.append("music_tracks %s outcome stinger %s has unknown outcome class %s." % [track_id, cue_id, str(class_value)])
+	var quantize := str(stinger.get("quantize", "")).strip_edges().to_lower()
+	if not ["beat", "half_bar", "bar", "phrase"].has(quantize):
+		validation_errors.append("music_tracks %s outcome stinger %s quantize must be beat, half_bar, bar, or phrase." % [track_id, cue_id])
+	if float(stinger.get("max_latency_beats", 0.0)) < 1.0:
+		validation_errors.append("music_tracks %s outcome stinger %s max_latency_beats must be at least one beat." % [track_id, cue_id])
+	if float(stinger.get("cooldown_beats", 0.0)) < 0.0:
+		validation_errors.append("music_tracks %s outcome stinger %s cooldown_beats must be non-negative." % [track_id, cue_id])
+	var pulse_value: Variant = stinger.get("reverb_pulse", {})
+	if typeof(pulse_value) != TYPE_DICTIONARY:
+		validation_errors.append("music_tracks %s outcome stinger %s reverb_pulse must be a dictionary." % [track_id, cue_id])
+		return
+	var pulse: Dictionary = pulse_value
+	for key in ["attack_beats", "hold_beats", "release_beats", "peak_send", "eligible_roles", "outcome_classes", "cooldown_beats"]:
+		if not pulse.has(key):
+			validation_errors.append("music_tracks %s outcome stinger %s reverb_pulse must declare %s." % [track_id, cue_id, key])
+	for key in ["attack_beats", "hold_beats", "release_beats", "cooldown_beats"]:
+		if float(pulse.get(key, -1.0)) < 0.0:
+			validation_errors.append("music_tracks %s outcome stinger %s reverb_pulse %s must be non-negative." % [track_id, cue_id, key])
+	var pulse_duration := float(pulse.get("attack_beats", 0.0)) + float(pulse.get("hold_beats", 0.0)) + float(pulse.get("release_beats", 0.0))
+	if pulse_duration <= 0.0:
+		validation_errors.append("music_tracks %s outcome stinger %s reverb_pulse must have a positive musical duration." % [track_id, cue_id])
+	var peak_send := float(pulse.get("peak_send", -1.0))
+	if peak_send < 0.0 or peak_send > 0.45:
+		validation_errors.append("music_tracks %s outcome stinger %s reverb_pulse peak_send must stay inside 0..0.45." % [track_id, cue_id])
+	var roles_value: Variant = pulse.get("eligible_roles", [])
+	if typeof(roles_value) != TYPE_ARRAY or (roles_value as Array).is_empty():
+		validation_errors.append("music_tracks %s outcome stinger %s reverb_pulse must declare eligible_roles." % [track_id, cue_id])
+	else:
+		for role_value in roles_value as Array:
+			if not bool(allowed_roles.get(str(role_value).strip_edges(), false)):
+				validation_errors.append("music_tracks %s outcome stinger %s reverb_pulse has unknown role %s." % [track_id, cue_id, str(role_value)])
+	var pulse_classes_value: Variant = pulse.get("outcome_classes", [])
+	if typeof(pulse_classes_value) != TYPE_ARRAY or (pulse_classes_value as Array).is_empty():
+		validation_errors.append("music_tracks %s outcome stinger %s reverb_pulse must declare outcome_classes." % [track_id, cue_id])
+	else:
+		for class_value in pulse_classes_value as Array:
+			if not allowed_classes.has(str(class_value).strip_edges().to_lower()):
+				validation_errors.append("music_tracks %s outcome stinger %s reverb_pulse has unknown outcome class %s." % [track_id, cue_id, str(class_value)])
 
 
 func _validate_music_compatibility_sets(track: Dictionary, track_id: String, harmonic_sections: Dictionary, variant_records: Dictionary, allowed_roles: Dictionary) -> void:

@@ -178,3 +178,38 @@ exit and fill, simultaneous section/drum arrival, peak-to-release, the C-form
 instrument rebuild, and feature recovery. Reject doubled fills, incompatible
 harmony, abrupt gain steps, late drums, restarts, or seams at any of those
 boundaries.
+
+## Beat-synchronized gameplay outcomes
+
+Gameplay resolves immediately, then submits one outcome event containing a
+stable token, class, magnitude/tier, source game, game-clock result time, and
+optional requested quantization. The music director returns the scheduled
+transport beat/bar to result presentation code; this may align a flash or
+count-up, but it never holds input or authoritative state. Stable tokens are
+deduplicated, and the bounded queue keeps at most eight pending cues feeding a
+four-voice one-shot pool.
+
+Outcome stinger metadata declares `outcome_classes`, `quantize` (`beat`,
+`half_bar`, `bar`, or `phrase`), `max_latency_beats`, `cooldown_beats`, and
+`volume_db`. A distant requested boundary falls back through smaller safe
+subdivisions until it meets the latency ceiling. The unwrapped saved musical
+transport is authoritative, so a loop wrap or adaptive-tempo ramp cannot move
+the selected beat. Big-win intensity consumes exactly 16 beats (four 4/4
+bars), regardless of how long those beats take in real time. Feature start/end
+and feature stingers use this same event path.
+
+`reverb_pulse` metadata controls attack, hold, and release in musical beats,
+peak send, eligible instrument roles, eligible outcome classes, and its own
+cooldown. The pulse raises only those role sends into the existing reverb bus;
+it never opens permanent reverb on the complete Music mix. Overlap replaces a
+single normalized pulse rather than accumulating, the outcome contribution is
+clamped to 0.45, and it returns to the live baseline at the declared end.
+
+The three Jazz outcome definitions are explicitly quiet non-production
+fixtures: small win on a beat, darker loss on a half-bar, and big win on a bar.
+They reuse the labelled fixture recording and are not final engineer audio.
+Run `tools/audio_jazz_outcome_probe.ps1` for boundary, tempo-ramp,
+deduplication, cooldown, voice-cap, reverb, four-bar, and immediate-resolution
+acceptance. Headphone QA should check all three cues, rapid wins, and feature
+start/end while listening for a clear underlying band, exact landings, no
+wash buildup, and a complete return to the room's baseline ambience.

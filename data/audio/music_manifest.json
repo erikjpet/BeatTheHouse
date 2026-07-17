@@ -307,17 +307,59 @@
       }
     },
     "stingers": {
-      "jazz_fixture_win": {
+      "jazz_fixture_small_win": {
         "file": "JazzClub_Stinger_Trumpet_1.wav",
         "classification": "Stinger",
         "role": "stinger",
         "instrument": "Trumpet",
         "pattern_number": 1,
         "loop": false,
-        "tags": ["fixture", "win"],
+        "tags": ["fixture", "small_win"],
         "progression_compatibility": ["jazz_a_1"],
         "harmonic_sections": ["A"],
+        "outcome_classes": ["small_win"],
+        "quantize": "beat",
+        "max_latency_beats": 1,
+        "cooldown_beats": 2,
+        "volume_db": -3,
+        "reverb_pulse": {"attack_beats": 0.25, "hold_beats": 0.5, "release_beats": 1.25, "peak_send": 0.24, "eligible_roles": ["lead", "pad"], "outcome_classes": ["small_win"], "cooldown_beats": 2},
         "dsp_sends": {"reverb": 0.22, "delay": 0.03}
+      },
+      "jazz_fixture_loss": {
+        "file": "JazzClub_Stinger_Trumpet_1.wav",
+        "classification": "Stinger",
+        "role": "stinger",
+        "instrument": "Trumpet",
+        "pattern_number": 1,
+        "loop": false,
+        "tags": ["fixture", "loss"],
+        "progression_compatibility": ["jazz_a_1"],
+        "harmonic_sections": ["A"],
+        "outcome_classes": ["loss"],
+        "quantize": "half_bar",
+        "max_latency_beats": 2,
+        "cooldown_beats": 2,
+        "volume_db": -5,
+        "reverb_pulse": {"attack_beats": 0.25, "hold_beats": 0.25, "release_beats": 1.5, "peak_send": 0.14, "eligible_roles": ["pad", "bass"], "outcome_classes": ["loss"], "cooldown_beats": 2},
+        "dsp_sends": {"reverb": 0.12}
+      },
+      "jazz_fixture_big_win": {
+        "file": "JazzClub_Stinger_Trumpet_1.wav",
+        "classification": "Stinger",
+        "role": "stinger",
+        "instrument": "Trumpet",
+        "pattern_number": 1,
+        "loop": false,
+        "tags": ["fixture", "big_win"],
+        "progression_compatibility": ["jazz_a_1"],
+        "harmonic_sections": ["A"],
+        "outcome_classes": ["big_win"],
+        "quantize": "bar",
+        "max_latency_beats": 4,
+        "cooldown_beats": 8,
+        "volume_db": -1,
+        "reverb_pulse": {"attack_beats": 0.5, "hold_beats": 2, "release_beats": 3.5, "peak_send": 0.38, "eligible_roles": ["lead", "pad", "drums_high"], "outcome_classes": ["big_win"], "cooldown_beats": 8},
+        "dsp_sends": {"reverb": 0.28, "delay": 0.04}
       }
     }
   },
