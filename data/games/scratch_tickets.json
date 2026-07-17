@@ -1,0 +1,62 @@
+[
+	{
+		"id": "lucky_7s",
+		"display_name": "Lucky 7s",
+		"price": 2,
+		"face": {"layout": "classic_nine", "symbol_set": "neon_sevens", "palette": {"paper": "#fff2c7", "ink": "#35152e", "accent": "#ef3156", "latex": "#b9bcc8", "trim": "#ffd447"}},
+		"grid": {"columns": 3, "rows": 3},
+		"symbol_pool": ["7", "CHERRY", "BELL", "STAR", "BAR"],
+		"prize_table": [
+			{"id": "blank", "weight": 5400, "payout": 0},
+			{"id": "push", "weight": 3000, "payout": 2, "winning_symbol": "CHERRY"},
+			{"id": "small", "weight": 1300, "payout": 4, "winning_symbol": "BELL"},
+			{"id": "bright", "weight": 280, "payout": 10, "winning_symbol": "STAR"},
+			{"id": "top", "weight": 20, "payout": 50, "winning_symbol": "7"}
+		],
+		"gimmick": {"type": "match_three"},
+		"scratch": {"brush_radius": 34.0, "snap_threshold": 0.60, "mask_columns": 6, "mask_rows": 4, "crumb_count": 5},
+		"stock_weight": 100,
+		"stock_count": [4, 7],
+		"rtp_band": [0.73, 0.77]
+	},
+	{
+		"id": "cash_cow",
+		"display_name": "Cash Cow",
+		"price": 2,
+		"face": {"layout": "pasture_nine", "symbol_set": "farm_cash", "palette": {"paper": "#e9ffd2", "ink": "#173822", "accent": "#38a852", "latex": "#c9d8c4", "trim": "#fff16b"}},
+		"grid": {"columns": 3, "rows": 3},
+		"symbol_pool": ["COW", "MILK", "CLOVER", "BELL", "HAY"],
+		"prize_table": [
+			{"id": "blank", "weight": 3000, "payout": 0},
+			{"id": "milk_money", "weight": 5000, "payout": 2, "winning_symbol": "MILK"},
+			{"id": "steady", "weight": 1800, "payout": 3, "winning_symbol": "COW"},
+			{"id": "cream", "weight": 190, "payout": 8, "winning_symbol": "CLOVER"},
+			{"id": "bell_cow", "weight": 10, "payout": 40, "winning_symbol": "BELL"}
+		],
+		"gimmick": {"type": "match_three"},
+		"scratch": {"brush_radius": 36.0, "snap_threshold": 0.58, "mask_columns": 6, "mask_rows": 4, "crumb_count": 5},
+		"stock_weight": 110,
+		"stock_count": [5, 8],
+		"rtp_band": [0.84, 0.89]
+	},
+	{
+		"id": "high_voltage",
+		"display_name": "High Voltage",
+		"price": 10,
+		"face": {"layout": "warning_nine", "symbol_set": "electric_hazard", "palette": {"paper": "#17182b", "ink": "#f7fbff", "accent": "#2de2ff", "latex": "#737a91", "trim": "#fff13b"}},
+		"grid": {"columns": 3, "rows": 3},
+		"symbol_pool": ["VOLT", "COIL", "BOLT", "FUSE", "PLUG"],
+		"prize_table": [
+			{"id": "blackout", "weight": 6500, "payout": 0},
+			{"id": "live_wire", "weight": 2200, "payout": 10, "winning_symbol": "PLUG"},
+			{"id": "surge", "weight": 1000, "payout": 25, "winning_symbol": "BOLT"},
+			{"id": "transformer", "weight": 270, "payout": 100, "winning_symbol": "COIL"},
+			{"id": "grid_jackpot", "weight": 30, "payout": 1000, "winning_symbol": "VOLT"}
+		],
+		"gimmick": {"type": "shock_penalty", "penalty_symbol": "SHOCK", "penalty_chance_percent": 15, "penalty_amount": [1, 3]},
+		"scratch": {"brush_radius": 38.0, "snap_threshold": 0.58, "mask_columns": 6, "mask_rows": 4, "crumb_count": 7},
+		"stock_weight": 45,
+		"stock_count": [2, 4],
+		"rtp_band": [0.74, 0.80]
+	}
+]

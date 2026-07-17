@@ -1,5 +1,22 @@
 [
 	{
+		"id": "scratch_tickets",
+		"display_name": "Scratch Tickets",
+		"family": "novelty",
+		"content_groups": ["scratch_tickets_pack"],
+		"gameplay_model": "full_simulation",
+		"module_path": "res://scripts/games/scratch_tickets.gd",
+		"asset_path": "res://assets/art/games/pull_tabs.png",
+		"scene_asset_path": "res://assets/art/game_scenes/pull_tabs.png",
+		"environment_prop": "machine",
+		"intro": "A bright scratch-ticket vending machine hums beside the clerk.",
+		"description": "Buy, scrub, and cash winners.",
+		"legal_actions": [
+			{"id": "buy_scratch_ticket", "label": "Buy Ticket", "summary": "Buy a fixed-outcome ticket from the selected vending slot.", "win_chance": 0, "payout_mult": 0}
+		],
+		"cheat_actions": []
+	},
+	{
 		"id": "pull_tabs",
 		"display_name": "Pull Tabs",
 		"family": "novelty",

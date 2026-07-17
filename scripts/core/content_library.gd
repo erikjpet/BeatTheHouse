@@ -5,6 +5,7 @@ extends RefCounted
 
 const ENVIRONMENT_ARCHETYPES_PATH := "res://data/environments/archetypes.json"
 const GAMES_PATH := "res://data/games/games.json"
+const SCRATCH_TICKETS_PATH := "res://data/games/scratch_tickets.json"
 const ITEMS_PATH := "res://data/items/items.json"
 const CONTENT_GROUPS_PATH := "res://data/content_groups/groups.json"
 const EVENTS_PATH := "res://data/events/events.json"
@@ -22,6 +23,7 @@ const AUTHORED_MUSIC_BEATS_PER_BAR := 4
 
 var environment_archetypes: Array = []
 var games: Array = []
+var scratch_ticket_types: Array = []
 var items: Array = []
 var content_groups: Array = []
 var events: Array = []
@@ -44,6 +46,7 @@ static func required_pack_paths() -> Dictionary:
 	return {
 		"environment_archetypes": ENVIRONMENT_ARCHETYPES_PATH,
 		"games": GAMES_PATH,
+		"scratch_ticket_types": SCRATCH_TICKETS_PATH,
 		"items": ITEMS_PATH,
 		"content_groups": CONTENT_GROUPS_PATH,
 		"events": EVENTS_PATH,
@@ -69,6 +72,7 @@ func load() -> Dictionary:
 	_load_pack_timings = []
 	environment_archetypes = _load_array(ENVIRONMENT_ARCHETYPES_PATH, true)
 	games = _load_array(GAMES_PATH, true)
+	scratch_ticket_types = _load_array(SCRATCH_TICKETS_PATH, true)
 	items = _load_array(ITEMS_PATH, true)
 	content_groups = _load_array(CONTENT_GROUPS_PATH, true)
 	events = _normalize_event_definitions(_load_array(EVENTS_PATH, true))
@@ -93,6 +97,7 @@ func load() -> Dictionary:
 	return {
 		"environment_archetypes": environment_archetypes,
 		"games": games,
+		"scratch_ticket_types": scratch_ticket_types,
 		"items": items,
 		"content_groups": content_groups,
 		"events": events,
@@ -139,6 +144,18 @@ func validate() -> Array:
 		"module_path",
 		"legal_actions",
 		"cheat_actions",
+	])
+	_validate_collection("scratch_ticket_types", scratch_ticket_types, [
+		"id",
+		"display_name",
+		"price",
+		"face",
+		"grid",
+		"symbol_pool",
+		"prize_table",
+		"gimmick",
+		"stock_weight",
+		"rtp_band",
 	])
 	_validate_collection("items", items, [
 		"id",
