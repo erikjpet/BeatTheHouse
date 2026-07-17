@@ -1510,6 +1510,34 @@ func _set_ui_fixture_run(app: Control, run_state: RunState) -> void:
 
 func _check_grand_casino_spatial_ui(app: Control) -> bool:
 	app.call("_invalidate_travel_view_cache")
+	var run_state: RunState = app.get("run_state")
+	var staffing := run_state.grand_casino_staffing_snapshot()
+	var assignments: Dictionary = staffing.get("assignments", {}) if typeof(staffing.get("assignments", {})) == TYPE_DICTIONARY else {}
+	var constants: Dictionary = staffing.get("constants", {}) if typeof(staffing.get("constants", {})) == TYPE_DICTIONARY else {}
+	if assignments.size() != 4 or str((constants.get("rourke", {}) as Dictionary).get("name", "")) != "Rourke" or str((constants.get("linda", {}) as Dictionary).get("name", "")) != "Linda":
+		push_error("Grand Casino scene snapshot did not expose rotating staff while keeping Rourke and Linda constant.")
+		return false
+	var rotated := false
+	for _day_index in range(20):
+		run_state.advance_game_clock_minutes(1440)
+		if bool(run_state.grand_casino_staffing_snapshot().get("rotation_occurred", false)):
+			rotated = true
+			break
+	if not rotated:
+		push_error("Grand Casino UI fixture did not reach a seeded staff rotation day.")
+		return false
+	run_state.set_environment(run_state.current_environment.duplicate(true))
+	app.call("_refresh")
+	var environment_canvas: Variant = app.get("environment_canvas")
+	if environment_canvas == null or not environment_canvas.has_method("current_view_snapshot"):
+		push_error("Grand Casino staff presentation fixture could not inspect the environment canvas.")
+		return false
+	var scene_snapshot: Dictionary = environment_canvas.call("current_view_snapshot")
+	var scene_staffing: Dictionary = scene_snapshot.get("grand_casino_staffing", {}) if typeof(scene_snapshot.get("grand_casino_staffing", {})) == TYPE_DICTIONARY else {}
+	var entry_cue: Dictionary = scene_snapshot.get("grand_casino_entry_cue", {}) if typeof(scene_snapshot.get("grand_casino_entry_cue", {})) == TYPE_DICTIONARY else {}
+	if int(scene_staffing.get("day", 0)) != run_state.game_day() or not bool(scene_staffing.get("rotation_occurred", false)) or str(entry_cue.get("message", "")).find("New faces") == -1:
+		push_error("Grand Casino rotated staff or first-entry new-day cue did not reach the environment presentation snapshot.")
+		return false
 	var objects: Array = app.call("_interactable_object_view_list")
 	var objects_by_id: Dictionary = {}
 	for object_value in objects:

@@ -2181,11 +2181,16 @@ func _empty_baccarat_result(action_id: String, stake: int, environment: Dictiona
 func _table_state(run_state: RunState, environment: Dictionary) -> Dictionary:
 	var states: Dictionary = environment.get("game_states", {}) if typeof(environment.get("game_states", {})) == TYPE_DICTIONARY else {}
 	if states.has(get_id()) and typeof(states.get(get_id(), {})) == TYPE_DICTIONARY:
-		return _stored_table_state(states, get_id(), environment)
+		var table := _stored_table_state(states, get_id(), environment)
+		_apply_grand_casino_dealer_assignment(table, run_state, environment)
+		return table
 	if states.has("baccarat") and typeof(states.get("baccarat", {})) == TYPE_DICTIONARY:
-		return _stored_table_state(states, "baccarat", environment)
+		var legacy_table := _stored_table_state(states, "baccarat", environment)
+		_apply_grand_casino_dealer_assignment(legacy_table, run_state, environment)
+		return legacy_table
 	var rng := run_state.create_rng("baccarat_table_fallback") if run_state != null else _default_table_rng({}, "fallback")
 	var generated := generate_environment_state(run_state, environment, rng)
+	_apply_grand_casino_dealer_assignment(generated, run_state, environment)
 	_update_environment_table(environment, generated)
 	return generated
 
@@ -2193,11 +2198,39 @@ func _table_state(run_state: RunState, environment: Dictionary) -> Dictionary:
 func _table_state_preview(run_state: RunState, environment: Dictionary) -> Dictionary:
 	var states: Dictionary = environment.get("game_states", {}) if typeof(environment.get("game_states", {})) == TYPE_DICTIONARY else {}
 	if states.has(get_id()) and typeof(states.get(get_id(), {})) == TYPE_DICTIONARY:
-		return _normalize_table_state(states.get(get_id(), {}), environment)
+		var table := _normalize_table_state(states.get(get_id(), {}), environment)
+		_apply_grand_casino_dealer_assignment(table, run_state, environment)
+		return table
 	if states.has("baccarat") and typeof(states.get("baccarat", {})) == TYPE_DICTIONARY:
-		return _normalize_table_state(states.get("baccarat", {}), environment)
+		var legacy_table := _normalize_table_state(states.get("baccarat", {}), environment)
+		_apply_grand_casino_dealer_assignment(legacy_table, run_state, environment)
+		return legacy_table
 	var rng := run_state.create_rng("baccarat_table_preview") if run_state != null else _default_table_rng({}, "preview")
-	return generate_environment_state(run_state, environment, rng)
+	var generated := generate_environment_state(run_state, environment, rng)
+	_apply_grand_casino_dealer_assignment(generated, run_state, environment)
+	return generated
+
+
+func _apply_grand_casino_dealer_assignment(table: Dictionary, run_state: RunState, environment: Dictionary) -> void:
+	if run_state == null:
+		return
+	var assignment := run_state.grand_casino_staff_member_for_game(get_id(), environment)
+	var assignment_id := str(assignment.get("id", "")).strip_edges()
+	if assignment_id.is_empty():
+		return
+	var assignment_day := maxi(1, int(assignment.get("day", run_state.game_day())))
+	var previous_id := str(table.get("staff_assignment_id", "")).strip_edges()
+	table["staff_assignment_day"] = assignment_day
+	if previous_id == assignment_id:
+		return
+	var profile_rng := run_state.grand_casino_staff_profile_rng(get_id(), assignment_id, assignment_day)
+	var profile := _generate_dealer_profile(profile_rng, int(table.get("dealer_catch_base", 18)))
+	profile["name"] = str(assignment.get("name", "Croupier"))
+	profile["identity_id"] = assignment_id
+	profile["style_id"] = str(assignment.get("style_id", "sable"))
+	table["dealer_name"] = str(assignment.get("name", "Croupier"))
+	table["dealer_profile"] = profile
+	table["staff_assignment_id"] = assignment_id
 
 
 func _stored_table_state(states: Dictionary, key: String, environment: Dictionary) -> Dictionary:

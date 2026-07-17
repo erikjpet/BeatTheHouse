@@ -838,6 +838,12 @@ func _verify_grand_casino_high_roller_cashout_snapshot() -> void:
 	await _settle()
 	var canvas := app.get("environment_canvas") as Control
 	_require(canvas != null and canvas.visible, "Players Card visual QA could not reach the Grand Casino room canvas.")
+	var scene_snapshot: Dictionary = app.call("current_spatial_interaction_snapshot")
+	var staffing: Dictionary = scene_snapshot.get("grand_casino_staffing", {}) if typeof(scene_snapshot.get("grand_casino_staffing", {})) == TYPE_DICTIONARY else {}
+	var assignments: Dictionary = staffing.get("assignments", {}) if typeof(staffing.get("assignments", {})) == TYPE_DICTIONARY else {}
+	var constants: Dictionary = staffing.get("constants", {}) if typeof(staffing.get("constants", {})) == TYPE_DICTIONARY else {}
+	_require(assignments.size() == 4, "Grand Casino visual QA did not receive the rotating dealer and bartender cast.")
+	_require(str((constants.get("rourke", {}) as Dictionary).get("name", "")) == "Rourke" and str((constants.get("linda", {}) as Dictionary).get("name", "")) == "Linda", "Grand Casino visual QA did not keep Rourke and Linda constant.")
 	var cage_object := _canvas_object_by_id(canvas, "casino_fixture:cage")
 	_require(not cage_object.is_empty(), "Players Card visual QA could not find the visible Cage fixture.")
 	var cage_label := await _double_click_canvas_object_data(canvas, cage_object, "casino_fixture")
