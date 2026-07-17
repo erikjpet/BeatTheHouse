@@ -276,7 +276,7 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 		"wheel_read_challenge": wheel_read_challenge,
 		"wheel_read_meter": _wheel_read_meter(wheel_read_challenge, session),
 		"wheel_read_active": wheel_read_active,
-		"wheel_read_heat_preview": _wheel_read_heat(table, run_state),
+		"wheel_read_heat_preview": _read_wheel_heat(table, run_state),
 		"wheel_read_item_modifiers": wheel_read_item_modifiers,
 		"result_reveal_active": result_reveal_active,
 		"roulette_result_settled": result_settled_for_display,
@@ -1870,12 +1870,12 @@ func _read_wheel_command(index: int, state: Dictionary, table: Dictionary, run_s
 		challenge = _grade_wheel_read_challenge(challenge)
 		var cheats := _copy_dict(state.get("cheats_used", {}))
 		cheats[WHEEL_READ_ACTION_ID] = true
-		cheats["read_wheel_heat"] = maxi(1, int(challenge.get("base_heat", _wheel_read_heat(table, run_state))) + _wheel_read_grade_heat_modifier(str(challenge.get("skill_grade", "miss"))))
+		cheats["read_wheel_heat"] = maxi(1, int(challenge.get("base_heat", _read_wheel_heat(table, run_state))) + _wheel_read_grade_heat_modifier(str(challenge.get("skill_grade", "miss"))))
 		state["cheats_used"] = cheats
 		state["bias_read"] = _wheel_read_context_for_grade(table, challenge)
 	state["wheel_read_challenge"] = challenge
 	var watch := _roulette_table_watch_status(table, run_state, environment)
-	var risk := "Heat +%d" % int(challenge.get("base_heat", _wheel_read_heat(table, run_state)))
+	var risk := "Heat +%d" % int(challenge.get("base_heat", _read_wheel_heat(table, run_state)))
 	if bool(watch.get("watched", false)):
 		risk = "%s; WATCHED" % risk
 	var message := "Wheel read armed. Stop the cyan tick on the low-side marker. %s." % risk
@@ -1923,7 +1923,7 @@ func _start_wheel_read_challenge(ui_state: Dictionary, table: Dictionary, run_st
 		"perfect_window_msec": int(windows.get("perfect_window_msec", perfect)),
 		"good_window_msec": int(windows.get("good_window_msec", good)),
 		"close_window_msec": int(windows.get("close_window_msec", close)),
-		"base_heat": _wheel_read_heat(table, run_state),
+		"base_heat": _read_wheel_heat(table, run_state),
 		"pit_boss_watched_start": bool(_roulette_table_watch_status(table, run_state, environment).get("watched", false)),
 		"item_modifiers": skill_item_modifier_badges(run_state, WHEEL_READ_ITEM_EFFECT_KEYS),
 	}
@@ -2076,7 +2076,7 @@ func _resolve_read_wheel(action_id: String, run_state: RunState, environment: Di
 	var grade := str(challenge.get("skill_grade", "miss"))
 	var pit_boss_status := run_state.pit_boss_watch_status(environment) if run_state != null else {}
 	var pit_boss_bonus := int(pit_boss_status.get("cheat_heat_bonus", 0)) if bool(pit_boss_status.get("active", false)) else 0
-	var base_suspicion_delta := maxi(1, int(challenge.get("base_heat", _wheel_read_heat(table, run_state))) + _item_effect_total("cheat_suspicion_delta", run_state) + _wheel_read_grade_heat_modifier(grade))
+	var base_suspicion_delta := maxi(1, int(challenge.get("base_heat", _read_wheel_heat(table, run_state))) + _item_effect_total("cheat_suspicion_delta", run_state) + _wheel_read_grade_heat_modifier(grade))
 	var raw_heat := maxi(1, base_suspicion_delta + (run_state.security_risk_bonus("cheat") if run_state != null else 0) + pit_boss_bonus)
 	var suspicion_delta := run_state.alcohol_adjusted_suspicion_delta(raw_heat) if run_state != null else raw_heat
 	var security_pressure: Dictionary = run_state.security_action_pressure("cheat", 0, run_state.suspicion_level() + suspicion_delta) if run_state != null else {}
