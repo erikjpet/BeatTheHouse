@@ -873,7 +873,7 @@ func resolve_with_context(action_id: String, stake: int, run_state: RunState, en
 	result["bar_dice_palmed_swap_grade"] = skill_grade if action_id == PALMED_SWAP_ACTION_ID else ""
 	result["bar_dice_palmed_swap_accuracy"] = skill_accuracy if action_id == PALMED_SWAP_ACTION_ID else 0
 	result["bar_dice_palmed_swap_margin_msec"] = skill_margin_msec if action_id == PALMED_SWAP_ACTION_ID else 0
-	result["bar_dice_palmed_swap_applied"] = action_id == PALMED_SWAP_ACTION_ID and GameModule.skill_grade_applies(skill_grade)
+	result["bar_dice_palmed_swap_applied"] = action_id == PALMED_SWAP_ACTION_ID and bool(table_result.get("palmed_swap_applied", false))
 	result["bar_dice_patron_snitch_pressure"] = patron_snitch_pressure
 	result["bar_dice_patron_snitch_heat_bonus"] = patron_snitch_heat_bonus
 	result["bar_dice_match_legs"] = _copy_array(table_result.get("opponent_results", []))
@@ -939,13 +939,16 @@ func _resolve_table_round(action_id: String, stake: int, run_state: RunState, st
 	var loaded_value := int(_loaded_value_for_ruleset(player_dice, "ship_captain_crew")) if action_id == "loaded_toss" else 0
 	var controlled_roll: Dictionary = {}
 	var palmed_swap: Dictionary = {}
+	var palmed_swap_applied := false
 	if action_id == "loaded_toss":
 		controlled_roll = _finalize_controlled_roll(ui_state, run_state, state)
 		loaded_value = int(controlled_roll.get("desired_face", loaded_value))
 		player_dice = _apply_controlled_roll(player_dice, controlled_roll)
 	elif action_id == "palmed_swap":
 		palmed_swap = _finalize_palmed_swap_challenge(ui_state, run_state, state)
+		var dice_before_swap := player_dice.duplicate()
 		player_dice = _apply_palmed_swap(player_dice, "ship_captain_crew", palmed_swap)
+		palmed_swap_applied = player_dice != dice_before_swap
 	var player_score := _score_ship(player_dice)
 	var opponent_results := _opponent_results(state, rng)
 	var seats: Array = [{
@@ -996,6 +999,7 @@ func _resolve_table_round(action_id: String, stake: int, run_state: RunState, st
 		"loaded_value": loaded_value,
 		"controlled_roll": controlled_roll,
 		"palmed_swap_challenge": palmed_swap,
+		"palmed_swap_applied": palmed_swap_applied,
 	}
 
 
@@ -2614,8 +2618,10 @@ func _outcome_message(table_result: Dictionary, outcome: String, bankroll_delta:
 	elif action_id == "palmed_swap":
 		var palm := _copy_dict(table_result.get("palmed_swap_challenge", {}))
 		var palm_grade := str(palm.get("skill_grade", "miss")).replace("_", " ").capitalize()
-		if GameModule.skill_grade_applies(str(palm.get("skill_grade", "miss"))):
+		if bool(table_result.get("palmed_swap_applied", false)):
 			text += " Palmed swap %s; the tracked die changes under the cup." % palm_grade
+		elif GameModule.skill_grade_applies(str(palm.get("skill_grade", "miss"))):
+			text += " Palmed swap %s; the cup was already showing its best useful faces." % palm_grade
 		else:
 			text += " Palmed swap %s; no die changes and the reach is noticed." % palm_grade
 	if suspicion_delta > 0:
