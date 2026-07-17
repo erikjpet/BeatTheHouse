@@ -7020,6 +7020,7 @@ func current_spatial_interaction_snapshot() -> Dictionary:
 		"selected_stake": _current_selected_stake() if run_state != null else selected_stake,
 		"selected_action_id": selected_action_id,
 		"objects": _interactable_object_view_list(),
+		"grand_casino_staffing": run_state.grand_casino_staffing_snapshot(run_state.current_environment) if run_state != null else {},
 	}
 
 
