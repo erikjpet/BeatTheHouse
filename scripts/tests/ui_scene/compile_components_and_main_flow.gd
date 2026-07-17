@@ -26,6 +26,7 @@ const RunReportScreenScript := preload("res://scripts/ui/run_report_screen.gd")
 const RunReportViewModelScript := preload("res://scripts/ui/run_report_view_model.gd")
 const MetaCollectionServiceScript := preload("res://scripts/core/meta_collection_service.gd")
 const CollectionDropServiceScript := preload("res://scripts/core/collection_drop_service.gd")
+const MusicLayerChoreographyScript := preload("res://scripts/ui/music_layer_choreography.gd")
 const TEST_SETTINGS_PATH := "user://settings_ui_scene_compile_check.json"
 const TEST_META_COLLECTION_PATH := "user://ui_scene_compile_meta_collection.json"
 
@@ -1850,6 +1851,31 @@ func _run() -> void:
 		push_error("Main UI did not create the procedural music player.")
 		quit(1)
 		return
+	var ui_library = app.get("library")
+	var jazz_choreography_track: Dictionary = ui_library.call("music_track", "jazz_club_delivery_fixture_8_bar")
+	var choreography_timeline := MusicLayerChoreographyScript.timeline_snapshot(jazz_choreography_track.get("layer_choreography", {}), 32)
+	var choreography_stage_changes: Array = []
+	for choreography_row_value in choreography_timeline:
+		var choreography_stage_id := str((choreography_row_value as Dictionary).get("stage_id", ""))
+		if choreography_stage_changes.is_empty() or str(choreography_stage_changes[-1]) != choreography_stage_id:
+			choreography_stage_changes.append(choreography_stage_id)
+	if choreography_stage_changes != ["sparse", "build_bass", "build_drums", "peak", "release", "rebuild"]:
+		push_error("Main UI music player did not expose the declared Jazz dwell choreography in order.")
+		quit(1)
+		return
+	var ui_outcome_schedule: Dictionary = app.call("_schedule_game_result_music_outcome", {
+		"ok": true,
+		"game_id": "baccarat",
+		"action_id": "stand",
+		"outcome": "push",
+		"bankroll_delta": 0,
+		"music_event_token": "ui:outcome:push",
+	}, "stand")
+	var ui_published_schedule: Dictionary = app.get("last_music_outcome_schedule")
+	if not bool(ui_outcome_schedule.get("accepted", false)) or bool(ui_outcome_schedule.get("accented", true)) or bool(ui_outcome_schedule.get("controls_blocked", true)) or not bool(ui_outcome_schedule.get("authoritative_state_resolved", false)) or str(ui_published_schedule.get("event_token", "")) != "ui:outcome:push":
+		push_error("Main result presentation could not access the immediate MusicDirector boundary contract.")
+		quit(1)
+		return
 	var generated_music: AudioStreamWAV = procedural_music_player.call("preview_stream_for_environment", app.get("run_state").current_environment, 70)
 	if generated_music == null:
 		push_error("Procedural music player did not generate an environment stream.")
@@ -1857,6 +1883,14 @@ func _run() -> void:
 		return
 	if generated_music.loop_mode != AudioStreamWAV.LOOP_FORWARD:
 		push_error("Generated environment music stream should loop.")
+		quit(1)
+		return
+	if generated_music.format != AudioStreamWAV.FORMAT_16_BITS \
+			or generated_music.mix_rate != 44100 \
+			or generated_music.stereo \
+			or generated_music.loop_begin != 0 \
+			or generated_music.data.size() != generated_music.loop_end * 2:
+		push_error("Generated environment music stream did not preserve its exact mono PCM/loop contract.")
 		quit(1)
 		return
 	if generated_music.data.size() <= 22050:
@@ -1867,6 +1901,26 @@ func _run() -> void:
 		push_error("Generated environment music should be a longer arranged theme, not a short repeated loop.")
 		quit(1)
 		return
+	var preview_profile: Dictionary = procedural_music_player.call("_music_profile_from_environment", app.get("run_state").current_environment, 70)
+	var preview_probe_context: Dictionary = procedural_music_player.call("_ambient_generation_context", preview_profile)
+	preview_probe_context["frames"] = 13
+	preview_probe_context["duration"] = 13.0 / 44100.0
+	var preview_probe_a: PackedByteArray = procedural_music_player.call("_ambient_pcm_data", preview_probe_context)
+	var preview_probe_b: PackedByteArray = procedural_music_player.call("_ambient_pcm_data", preview_probe_context)
+	if preview_probe_a != preview_probe_b or preview_probe_a.size() != 26:
+		push_error("Procedural music preview generation was not deterministic for identical context.")
+		quit(1)
+		return
+	for stride_start in range(0, 13, 4):
+		var stride_end := mini(stride_start + 4, 13)
+		for frame_index in range(stride_start + 1, stride_end):
+			var source_byte_index := stride_start * 2
+			var frame_byte_index := frame_index * 2
+			if preview_probe_a[source_byte_index] != preview_probe_a[frame_byte_index] \
+					or preview_probe_a[source_byte_index + 1] != preview_probe_a[frame_byte_index + 1]:
+				push_error("Procedural music preview render stride did not repeat exact PCM samples.")
+				quit(1)
+				return
 	var music_theory: Dictionary = procedural_music_player.call("music_theory_snapshot_for_environment", app.get("run_state").current_environment, 70)
 	if music_theory.is_empty() or str(music_theory.get("mode", "")).is_empty():
 		push_error("Procedural music player did not expose a generated mode/harmony plan.")
@@ -1899,6 +1953,10 @@ func _run() -> void:
 		return
 	if int(music_latency.get("primer_frames", 0)) <= 0 or int(music_latency.get("full_frames", 0)) <= 0:
 		push_error("Staged procedural music generation did not produce usable frame counts.")
+		quit(1)
+		return
+	if int(music_latency.get("full_frames", 0)) != generated_music.loop_end:
+		push_error("Generated environment music loop frames did not match its generation contract.")
 		quit(1)
 		return
 	if int(music_latency.get("instant_frames", 0)) <= 0:
@@ -1943,8 +2001,8 @@ func _run() -> void:
 	var music_fx_snapshot: Dictionary = procedural_music_player.call("music_fx_snapshot", music_fx_state)
 	var music_fx_graph: Dictionary = music_fx_snapshot.get("graph", {}) as Dictionary
 	var music_fx_target: Dictionary = music_fx_snapshot.get("target", {}) as Dictionary
-	if int(music_fx_graph.get("effect_count", 0)) != 3:
-		push_error("Procedural music FX graph did not expose the three-effect master character/safety chain.")
+	if int(music_fx_graph.get("effect_count", 0)) != 4 or JSON.stringify(music_fx_graph.get("effects", [])).find("AudioEffectPitchShift") < 0:
+		push_error("Procedural music FX graph did not expose shared pitch compensation plus the character/safety chain.")
 		quit(1)
 		return
 	var music_send_graph: Dictionary = music_fx_graph.get("send_buses", {}) as Dictionary
@@ -2055,10 +2113,13 @@ func _run() -> void:
 		push_error("Slot feature music did not clear when the surface bonus scene ended.")
 		quit(1)
 		return
-	if not (stopped_feature_snapshot.get("pending_stingers", []) as Array).is_empty():
-		push_error("Slot feature stingers did not clear when feature music was force-stopped.")
-		quit(1)
-		return
+	var stopped_pending_stingers: Array = stopped_feature_snapshot.get("pending_stingers", []) as Array
+	for stopped_pending_value in stopped_pending_stingers:
+		var stopped_pending: Dictionary = stopped_pending_value as Dictionary
+		if str(stopped_pending.get("time_domain", "")) != "transport_beats" or str(stopped_pending.get("outcome_class", "")) != "feature_end":
+			push_error("Slot feature stop retained a stale sampler cue instead of only its quantized feature-end event.")
+			quit(1)
+			return
 	var slot_sfx := SfxPlayerScript.new()
 	var lever_sfx: AudioStreamWAV = slot_sfx.preview_event_stream("lever")
 	var reel_loop_sfx: AudioStreamWAV = slot_sfx.preview_event_stream("reel_loop")

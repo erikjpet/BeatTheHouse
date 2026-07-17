@@ -132,6 +132,7 @@ var platform_services: PlatformServices
 var run_action_service: RunActionService
 var current_game: GameModule
 var last_game_result: Dictionary = {}
+var last_music_outcome_schedule: Dictionary = {}
 var last_environment_runtime_result: Dictionary = {}
 var selected_action_id: String = ""
 var selected_action_kind: String = ""
@@ -3208,6 +3209,9 @@ func _write_foundation_run_save(status_text: String = "Autosaved.") -> bool:
 	if save_service == null:
 		save_status_message = "Autosave unavailable."
 		return false
+	if procedural_music_player != null:
+		run_state.remember_music_tempo_state(procedural_music_player.adaptive_tempo_save_state())
+		run_state.remember_music_choreography_state(procedural_music_player.music_choreography_save_state())
 	var error := save_service.save_run(run_state, autosave_slot_id)
 	if error == OK:
 		pending_autosave = false
@@ -3320,6 +3324,10 @@ func _load_foundation_run_from_slot(return_to_start_on_missing: bool) -> bool:
 	var loaded_from_backup := str(load_result.get("outcome", "")) == SaveService.LOAD_OUTCOME_BACKUP
 	save_status_message = "Loaded backup save." if loaded_from_backup else "Loaded run."
 	_set_current_screen(SCREEN_ENVIRONMENT)
+	if procedural_music_player != null:
+		procedural_music_player.sync_authored_arrangement_state(run_state.music_arrangement_state)
+		procedural_music_player.sync_adaptive_tempo_state(run_state.music_tempo_state)
+		procedural_music_player.sync_music_choreography_state(run_state.music_choreography_state)
 	_show_message("%s: %s." % ["Recovered run from backup" if loaded_from_backup else "Run loaded", str(run_state.current_environment.get("display_name", "Environment"))])
 	_hide_run_menu()
 	_refresh()
@@ -3424,6 +3432,11 @@ func _travel_to(target_id: String, target_label: String, choice_data: Dictionary
 	var route_risk := {} if local_casino_room_move else run_state.travel_route_risk(route, target_id)
 	var travel_heat := run_state.begin_travel_suspicion_decay(route, target_id)
 	var force_walk := bool(choice_data.get("force_walk_fallback", false))
+	var travel_method_kind := WorldMapScript.TRAVEL_METHOD_WALK if force_walk else WorldMapScript.travel_method_kind(route, str(choice_data.get("distance", route.get("distance", ""))))
+	route["travel_method_kind"] = travel_method_kind
+	route["travel_method"] = WorldMapScript.travel_method_label(travel_method_kind)
+	if str(route.get("method", "")).strip_edges().is_empty() or force_walk:
+		route["method"] = str(route.get("travel_method", ""))
 	var travel_minutes := maxi(1, int(choice_data.get("travel_minutes", _travel_clock_minutes_for_route(route, force_walk))))
 	var departed_game_clock_minutes := maxi(0, run_state.game_clock_minutes)
 	route["travel_minutes"] = travel_minutes
@@ -3496,16 +3509,23 @@ func _travel_to(target_id: String, target_label: String, choice_data: Dictionary
 		"type": "travel",
 		"source": "travel",
 		"target_id": target_id,
+		"travel_method_kind": travel_method_kind,
+		"travel_method": WorldMapScript.travel_method_label(travel_method_kind),
 		"turns": int(previous_environment.get("turns", 0)),
 	}
 	if _enqueue_triggered_events_for_context("travel", travel_context, previous_environment):
 		_autosave_foundation_run("Autosaved.")
 		if _show_next_pending_triggered_event():
 			_refresh()
+		else:
+			_refresh_talk_dock()
+			_refresh()
 
 
 func _travel_result(target_id: String, destination_name: String, route: Dictionary, previous_environment: Dictionary, destination_environment: Dictionary, travel_decay: Dictionary = {}, route_risk: Dictionary = {}) -> Dictionary:
 	var route_status := run_state.travel_route_status(route)
+	var travel_method_kind := WorldMapScript.travel_method_kind(route, str(route_status.get("distance", route.get("distance", ""))))
+	var travel_method := WorldMapScript.travel_method_label(travel_method_kind)
 	var cost := int(route_status.get("cost", 0))
 	var suspicion_delta := int(route_status.get("suspicion_delta", 0))
 	var risk_bankroll_delta := int(route_risk.get("bankroll_delta", 0)) if bool(route_risk.get("triggered", false)) else 0
@@ -3560,6 +3580,8 @@ func _travel_result(target_id: String, destination_name: String, route: Dictiona
 		"suspicion_delta": total_suspicion_delta,
 		"route_suspicion_delta": suspicion_delta,
 		"travel_distance": str(travel_decay.get("distance", route_status.get("distance", ""))),
+		"travel_method_kind": travel_method_kind,
+		"travel_method": travel_method,
 		"risk_decay": risk_decay,
 		"risk_cooled": cooled,
 		"route_risk": route_risk.duplicate(true),
@@ -3597,6 +3619,8 @@ func _travel_result(target_id: String, destination_name: String, route: Dictiona
 		"bankroll_delta": total_bankroll_delta,
 		"suspicion_delta": total_suspicion_delta,
 		"route_cost": cost,
+		"travel_method_kind": travel_method_kind,
+		"travel_method": travel_method,
 		"route_risk": route_risk.duplicate(true),
 		"deltas": deltas,
 		"message": message,
@@ -3779,6 +3803,9 @@ func _initialize_meta_collection() -> void:
 func _initialize_procedural_music() -> void:
 	procedural_music_player = ProceduralMusicPlayerScript.new()
 	procedural_music_player.audio_calm = user_settings != null and bool(user_settings.audio_calm)
+	procedural_music_player.authored_phrase_event.connect(_on_authored_music_phrase_event)
+	procedural_music_player.authored_arrangement_selected.connect(_on_authored_music_arrangement_selected)
+	procedural_music_player.music_outcome_scheduled.connect(_on_music_outcome_scheduled)
 	add_child(procedural_music_player)
 
 
@@ -5228,6 +5255,7 @@ func _update_procedural_music() -> void:
 	if run_state == null or current_screen == SCREEN_START:
 		procedural_music_player.stop()
 		return
+	_ensure_run_music_arrangement_state()
 	procedural_music_player.play_for_environment_state(run_state.current_environment, run_state.suspicion_level(), music_fx_state_snapshot())
 
 
@@ -5315,7 +5343,57 @@ func music_fx_state_snapshot() -> Dictionary:
 		"big_win_bars_remaining": int(win_status.get("big_win_bars_remaining", 0)),
 		"big_win_event_token": str(win_status.get("big_win_event_token", "")),
 		"last_bankroll_delta": int(win_status.get("last_bankroll_delta", 0)),
-}
+		"run_seed": run_state.seed_value,
+		"music_visit_id": str(run_state.music_arrangement_state.get("visit_id", "")),
+		"music_arrangement_state": run_state.music_arrangement_state.duplicate(true),
+	}
+
+
+func _ensure_run_music_arrangement_state() -> void:
+	if run_state == null or library == null:
+		return
+	var profile := _copy_dict(run_state.current_environment.get("music_profile", {}))
+	var track_id := str(profile.get("authored_track_id", "")).strip_edges()
+	if track_id.is_empty():
+		return
+	var entry := library.music_track(track_id)
+	var recipes_value: Variant = entry.get("arrangement_recipes", [])
+	if typeof(recipes_value) != TYPE_ARRAY or (recipes_value as Array).is_empty() or typeof((recipes_value as Array)[0]) != TYPE_DICTIONARY:
+		return
+	var recipe: Dictionary = (recipes_value as Array)[0]
+	var sections := _string_array(recipe.get("sections", []))
+	if sections.is_empty():
+		return
+	run_state.ensure_music_arrangement_state(track_id, str(recipe.get("id", "")), str(sections[0]))
+
+
+func _on_authored_music_phrase_event(event: Dictionary) -> void:
+	if run_state == null or library == null:
+		return
+	var track_id := str(event.get("track_id", "")).strip_edges()
+	var recipe_id := str(event.get("recipe_id", "")).strip_edges()
+	var entry := library.music_track(track_id)
+	var recipes_value: Variant = entry.get("arrangement_recipes", [])
+	if typeof(recipes_value) != TYPE_ARRAY:
+		return
+	for recipe_value in recipes_value as Array:
+		if typeof(recipe_value) != TYPE_DICTIONARY:
+			continue
+		var recipe: Dictionary = recipe_value
+		if str(recipe.get("id", "")) != recipe_id:
+			continue
+		var phrase_event := event.duplicate(true)
+		phrase_event["event_token"] = "%s:%s" % [str(run_state.music_arrangement_state.get("visit_id", "")), str(event.get("event_token", ""))]
+		var state := run_state.advance_music_arrangement_phrase(track_id, recipe_id, _copy_array(recipe.get("sections", [])), phrase_event, _copy_dict(recipe.get("role_policies", {})))
+		if bool(state.get("event_accepted", false)):
+			_update_procedural_music()
+		return
+
+
+func _on_authored_music_arrangement_selected(selection: Dictionary) -> void:
+	if run_state == null:
+		return
+	run_state.remember_music_arrangement_selection(str(selection.get("track_id", "")), _copy_dict(selection.get("selected_variant_ids", {})), _copy_dict(selection.get("selected_role_epochs", {})))
 
 
 func _music_environment_payload(environment: Dictionary) -> Dictionary:
@@ -5436,13 +5514,82 @@ func _music_win_momentum_snapshot() -> Dictionary:
 			streak += 1
 			continue
 		break
+	var scheduled_outcome: Dictionary = last_game_result.get("music_outcome_schedule", {}) as Dictionary if typeof(last_game_result.get("music_outcome_schedule", {})) == TYPE_DICTIONARY else {}
+	if str(scheduled_outcome.get("outcome_class", "")) == "big_win" and not str(scheduled_outcome.get("event_token", "")).is_empty():
+		result["big_win"] = true
+		result["big_win_event_token"] = str(scheduled_outcome.get("event_token", ""))
 	result["win_streak"] = streak
 	return result
+
+
+func _schedule_game_result_music_outcome(result: Dictionary, action_id: String) -> Dictionary:
+	if procedural_music_player == null or run_state == null or result.is_empty():
+		return {}
+	var delta := _music_result_bankroll_delta(result)
+	var outcome_class := "neutral"
+	var result_outcome := str(result.get("outcome", result.get("slot_classification", ""))).strip_edges().to_lower()
+	if delta >= 50 or result_outcome.find("jackpot") >= 0 or result_outcome.find("grand") >= 0:
+		outcome_class = "big_win"
+	elif delta > 0 or bool(result.get("won", false)):
+		outcome_class = "small_win"
+	elif delta < 0 or result_outcome in ["lose", "loss"]:
+		outcome_class = "loss"
+	elif result_outcome in ["push", "carry", "tie"]:
+		outcome_class = "push"
+	var game_id := str(result.get("game_id", result.get("source_id", current_game.get_id() if current_game != null else "game")))
+	var resolved_action_id := str(result.get("action_id", action_id))
+	var action_index := int(run_state.event_cadence.get("action_index", 0))
+	var explicit_token := str(result.get("music_event_token", result.get("outcome_event_token", ""))).strip_edges()
+	var token := explicit_token if not explicit_token.is_empty() else "%s:%d:%s:%s:%d" % [str(run_state.seed_value), action_index, game_id, resolved_action_id, run_state.story_log.size()]
+	var tier := str(result.get("tier", "")).strip_edges().to_lower()
+	var attribution_value: Variant = result.get("win_attribution", {})
+	if tier.is_empty() and typeof(attribution_value) == TYPE_DICTIONARY:
+		tier = str((attribution_value as Dictionary).get("tier", "")).strip_edges().to_lower()
+	if tier.is_empty():
+		tier = "jackpot" if outcome_class == "big_win" else "standard"
+	return procedural_music_player.schedule_music_outcome_event({
+		"event_token": token,
+		"outcome_class": outcome_class,
+		"magnitude": absi(delta),
+		"tier": tier,
+		"source_game": game_id,
+		"result_time": run_state.game_clock_minutes,
+		"requested_quantization": str(result.get("music_quantization", "")),
+	})
+
+
+func _music_result_bankroll_delta(result: Dictionary) -> int:
+	var deltas: Dictionary = result.get("deltas", {}) as Dictionary if typeof(result.get("deltas", {})) == TYPE_DICTIONARY else {}
+	return int(result.get("bankroll_delta", deltas.get("bankroll_delta", result.get("slot_net", 0))))
+
+
+func _on_music_outcome_scheduled(schedule: Dictionary) -> void:
+	last_music_outcome_schedule = schedule.duplicate(true)
+
+
+func _schedule_surface_music_event(outcome_class: String, cue_id: String, context: Dictionary) -> Dictionary:
+	if procedural_music_player == null:
+		return {}
+	var action_index := int(run_state.event_cadence.get("action_index", 0)) if run_state != null else 0
+	var scene: Dictionary = _copy_dict(context.get("feature_scene", {}))
+	var marker := str(context.get("marker", context.get("normalized_event_id", cue_id))).strip_edges()
+	var scene_id := str(scene.get("scene_id", scene.get("mode", "feature"))).strip_edges()
+	var token := "%d:%s:%s:%s" % [action_index, scene_id, cue_id, marker]
+	return procedural_music_player.schedule_music_outcome_event({
+		"event_token": token,
+		"outcome_class": outcome_class,
+		"magnitude": maxf(0.0, float(context.get("award", context.get("magnitude", 0.0)))),
+		"tier": str(context.get("tier", "feature")),
+		"source_game": current_game.get_id() if current_game != null else str(context.get("source_game", "feature")),
+		"result_time": run_state.game_clock_minutes if run_state != null else 0,
+		"cue_id": cue_id,
+	})
 
 
 func _stop_procedural_music() -> void:
 	if procedural_music_player != null:
 		procedural_music_player.stop()
+	last_music_outcome_schedule = {}
 
 
 func _sync_surface_feature_music_state(surface_state: Dictionary) -> void:
@@ -5469,16 +5616,20 @@ func _set_surface_feature_music_state(active: bool, ducking: bool) -> void:
 	surface_feature_music_ducking = ducking
 	if procedural_music_player != null and was_active and not active:
 		procedural_music_player.stop_feature_music()
+		_schedule_surface_music_event("feature_end", "feature_end", {"marker": "feature_end"})
 	if was_ducking and not ducking:
 		_update_procedural_music()
 
 
 func _stop_surface_feature_music() -> void:
+	var was_active := surface_feature_music_active
 	var was_ducking := surface_feature_music_ducking
 	surface_feature_music_active = false
 	surface_feature_music_ducking = false
 	if procedural_music_player != null:
 		procedural_music_player.stop_feature_music()
+		if was_active:
+			_schedule_surface_music_event("feature_end", "feature_end", {"marker": "feature_stop"})
 	if was_ducking:
 		_update_procedural_music()
 
@@ -6202,6 +6353,10 @@ func _resolve_game_action(action_id: String, skip_stake_validation: bool = false
 	if bool(result.get("ok", false)) and embeds_result_feedback and not runtime_tick_in_progress:
 		_begin_presented_bankroll_hold(result, bankroll_before_result, wager_cost)
 	last_game_result = result.duplicate(true)
+	if bool(result.get("ok", false)) and (not runtime_tick_in_progress or _music_result_bankroll_delta(result) != 0):
+		var outcome_schedule := _schedule_game_result_music_outcome(result, action_id)
+		if not outcome_schedule.is_empty():
+			last_game_result["music_outcome_schedule"] = outcome_schedule
 	_play_result_surface_audio_cue(result)
 	pending_all_in_result_terminal_check = confirmed_all_in_wager and bool(result.get("ok", false)) and run_state != null and not run_state.has_liquid_run_funds() and not bool(result.get("won", false))
 	if runtime_tick_in_progress:
@@ -6647,6 +6802,7 @@ func _on_game_surface_music_cue(cue_id: String, context: Dictionary) -> void:
 		var feature_scene: Dictionary = _copy_dict(context.get("feature_scene", {}))
 		var feature_music: Dictionary = _copy_dict(context.get("feature_music", feature_scene.get("feature_music", {})))
 		var should_duck := bool(feature_music.get("duck_background_music", false))
+		_schedule_surface_music_event("feature_start", normalized_cue, context)
 		procedural_music_player.update_feature_music_state({
 			"active": true,
 			"feature_scene": feature_scene,
@@ -6656,7 +6812,8 @@ func _on_game_surface_music_cue(cue_id: String, context: Dictionary) -> void:
 		})
 		_set_surface_feature_music_state(true, should_duck)
 		return
-	procedural_music_player.play_feature_stinger(normalized_cue, context)
+	var outcome_class := "big_win" if normalized_cue.to_lower().find("jackpot") >= 0 or normalized_cue.to_lower().find("grand") >= 0 else "feature_end" if normalized_cue.to_lower().find("feature_end") >= 0 or normalized_cue.to_lower().find("bonus_end") >= 0 else "small_win"
+	_schedule_surface_music_event(outcome_class, normalized_cue, context)
 
 
 func _slot_runtime_feature_audio_cue(runtime_state: Dictionary) -> String:
@@ -8151,6 +8308,7 @@ func _environment_result_feedback_view() -> Dictionary:
 		"bankroll_delta": bankroll_delta,
 		"suspicion_delta": suspicion_delta,
 		"object_id": _outcome_object_id(result),
+		"music_outcome_schedule": _copy_dict(result.get("music_outcome_schedule", last_music_outcome_schedule)),
 		"result": result.duplicate(true),
 	}
 
@@ -11246,22 +11404,20 @@ func _world_map_node_flavor(node: Dictionary) -> String:
 
 
 func _world_map_travel_method(choice: Dictionary) -> String:
-	var route: Dictionary = choice.get("route", {}) if typeof(choice.get("route", {})) == TYPE_DICTIONARY else {}
-	var travel_method := str(route.get("travel_method", choice.get("travel_method", ""))).strip_edges()
-	if not travel_method.is_empty():
-		return travel_method
-	var method := str(route.get("method", "")).strip_edges()
-	if not method.is_empty():
-		return method
-	match str(choice.get("distance", "near")).strip_edges().to_lower():
-		"near":
-			return "Walk"
-		"local":
-			return "Bus ticket"
-		"far":
-			return "Taxi ride"
-		_:
-			return "Night cab"
+	return WorldMapScript.travel_method_label(_world_map_travel_method_kind(choice))
+
+
+func _world_map_travel_method_kind(choice: Dictionary) -> String:
+	if bool(choice.get("force_walk_fallback", false)):
+		return WorldMapScript.TRAVEL_METHOD_WALK
+	var authored_kind: Variant = choice.get("travel_method_kind")
+	if typeof(authored_kind) == TYPE_STRING and not (authored_kind as String).is_empty():
+		return authored_kind as String
+	var route_value: Variant = choice.get("route")
+	var route: Dictionary = route_value if typeof(route_value) == TYPE_DICTIONARY else {}
+	if not route.is_empty():
+		return WorldMapScript.travel_method_kind(route, str(choice.get("distance", route.get("distance", "near"))))
+	return WorldMapScript.travel_method_kind(choice, str(choice.get("distance", "near")))
 
 
 func _world_map_travel_cost_line(choice: Dictionary) -> String:
@@ -11342,7 +11498,22 @@ func _travel_choice_view_list() -> Array:
 
 
 func _travel_choice(target_id: String, known_target_ids: Array = []) -> Dictionary:
-	return FoundationTravelViewModelScript.travel_choice(self, target_id, known_target_ids)
+	var choice: Dictionary = FoundationTravelViewModelScript.travel_choice(self, target_id, known_target_ids)
+	if choice.is_empty():
+		return choice
+	var method_kind := _world_map_travel_method_kind(choice)
+	# FoundationTravelViewModel already gives this choice its own route duplicate.
+	var route_value: Variant = choice.get("route")
+	var route: Dictionary = route_value if typeof(route_value) == TYPE_DICTIONARY else {}
+	var method_label := WorldMapScript.travel_method_label(method_kind)
+	route["travel_method_kind"] = method_kind
+	route["travel_method"] = method_label
+	if str(route.get("method", "")).strip_edges().is_empty() or bool(choice.get("force_walk_fallback", false)):
+		route["method"] = method_label
+	choice["route"] = route
+	choice["travel_method_kind"] = method_kind
+	choice["travel_method"] = method_label
+	return choice
 
 
 func _travel_target_ids() -> Array:

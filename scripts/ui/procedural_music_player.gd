@@ -1,8 +1,17 @@
 class_name ProceduralMusicPlayer
 extends Node
 
+signal authored_phrase_event(event: Dictionary)
+signal authored_arrangement_selected(selection: Dictionary)
+signal authored_transition_notice(event: Dictionary)
+signal music_outcome_scheduled(event: Dictionary)
+
 const WebAudioBridgeScript := preload("res://scripts/ui/web_audio_bridge.gd")
 const MusicArrangementSelectorScript := preload("res://scripts/ui/music_arrangement_selector.gd")
+const MusicDeliveryIndexScript := preload("res://scripts/core/music_delivery_index.gd")
+const MusicFloatPcmStreamScript := preload("res://scripts/ui/music_float_pcm_stream.gd")
+const MusicLayerChoreographyScript := preload("res://scripts/ui/music_layer_choreography.gd")
+const MusicOutcomeDirectorModelScript := preload("res://scripts/ui/music_outcome_director_model.gd")
 
 # Procedural background music for the foundation UI.
 # The synth shape is ported from the old baseline: generated PCM WAV themes,
@@ -10,7 +19,7 @@ const MusicArrangementSelectorScript := preload("res://scripts/ui/music_arrangem
 
 const MUSIC_BUS := "Music"
 const AMBIENT_VERSION := 11
-const MUSIC_FX_GRAPH_VERSION := 2
+const MUSIC_FX_GRAPH_VERSION := 3
 const MUSIC_STEM_CONTRACT_VERSION := 2
 const SAMPLE_RATE := 44100
 const EMPTY_NOTE := -999.0
@@ -34,12 +43,17 @@ const MUSIC_MIX_ATTACK_SECONDS := 0.25
 const MUSIC_MIX_RELEASE_SECONDS := 2.0
 const MUSIC_FX_RESOURCE_PREFIX := "BTHMusicFx"
 const MUSIC_STEM_BUS_PREFIX := "MusicStem"
-const MUSIC_FX_EFFECT_ORDER := ["low_pass", "chorus", "limiter"]
+const MUSIC_FX_EFFECT_ORDER := ["pitch_shift", "low_pass", "chorus", "limiter"]
 const MUSIC_FX_EFFECT_TYPES := {
+	"pitch_shift": "AudioEffectPitchShift",
 	"low_pass": "AudioEffectLowPassFilter",
 	"chorus": "AudioEffectChorus",
 	"limiter": "AudioEffectLimiter",
 }
+const ADAPTIVE_TEMPO_BEATS_PER_BAR := 4
+const ADAPTIVE_TEMPO_BARS_PER_PHRASE := 4
+const ADAPTIVE_TEMPO_EPSILON := 0.0001
+const CHOREOGRAPHY_FILL_HISTORY_LIMIT := 16
 const MUSIC_SEND_BUS_PREFIX := "MusicSend"
 const MUSIC_SEND_EFFECT_ORDER := ["band_pass", "delay", "distortion", "reverb", "compressor"]
 const MUSIC_SEND_EFFECT_TYPES := {
@@ -85,12 +99,17 @@ const MUSIC_FEATURE_ROLE_WEIGHTS := {
 const MUSIC_STINGER_PLAYER_COUNT := 4
 const MUSIC_STINGER_PENDING_LIMIT := 8
 const MUSIC_STINGER_CUE_COOLDOWN_BEATS := 2
+const FLOAT_PCM_FEED_MAX_FRAMES := 4096
 const BIG_WIN_ENVELOPE_BARS := 4
 const BIG_WIN_COOLDOWN_BARS := 2
+const MUSIC_OUTCOME_TOKEN_LIMIT := 256
+const MUSIC_OUTCOME_HISTORY_LIMIT := 32
+const MUSIC_OUTCOME_REVERB_MAX_SEND := 0.45
 const MUSIC_FEATURE_ATTACK_SECONDS := 0.25
 const MUSIC_FEATURE_RELEASE_SECONDS := 2.0
 const MUSIC_AUTHORED_MANIFEST_PATH := "res://data/audio/music_manifest.json"
 const MUSIC_AUTHORED_ROOT := "res://assets/audio/music"
+const AUTHORED_MANIFEST_CACHE_LIMIT := 32
 const MUSIC_MIN_VOLUME_DB := -80.0
 const WEB_AUDIO_MUSIC_STEM_MAX_PCM_BYTES := 393216
 const WEB_AUDIO_MUSIC_BED_SECONDS := 60.0
@@ -157,6 +176,10 @@ var _music_mix_applied_target: Dictionary = {}
 var _music_mix_pending: Dictionary = {}
 var _music_mix_input_snapshot: Dictionary = {}
 var _authored_manifest_cache: Dictionary = {}
+var _authored_manifest_cache_order: Array[String] = []
+var _authored_manifest_entries_cache: Array = []
+var _authored_manifest_entries_by_id: Dictionary = {}
+var _authored_manifest_entries_loaded := false
 var _feature_stem_players: Dictionary = {}
 var _feature_stinger_players: Array = []
 var _feature_stem_cache: Dictionary = {}
@@ -179,6 +202,55 @@ var _last_music_state: Dictionary = {}
 var _music_event_envelope: Dictionary = {}
 var _last_big_win_event_token := ""
 var _music_event_last_bar := -1
+var _music_outcome_tokens: Dictionary = {}
+var _music_outcome_token_order: Array[String] = []
+var _music_outcome_history: Array = []
+var _music_outcome_last_schedule: Dictionary = {}
+var _music_outcome_last_target_by_cue: Dictionary = {}
+var _music_outcome_reverb_envelope: Dictionary = {}
+var _music_outcome_reverb_last_start_by_class: Dictionary = {}
+var _float_pcm_player_states: Dictionary = {}
+var _float_pcm_phase_launches: Dictionary = {}
+var _authored_phrase_track_id := ""
+var _authored_phrase_visit_id := ""
+var _authored_phrase_slot := -1
+var _authored_phrase_event_index := -1
+var _last_arrangement_selection_notice := ""
+var _authored_phrase_boundary_dispatch := false
+var _last_authored_boundary_applied_cache_key := ""
+var _authored_phrase_boundary_position := -1.0
+var _pending_authored_arrangement_restore: Dictionary = {}
+var _pending_adaptive_tempo_restore: Dictionary = {}
+var _adaptive_tempo_profile: Dictionary = {}
+var _adaptive_tempo_profile_id := ""
+var _adaptive_tempo_enabled := false
+var _adaptive_tempo_native_enabled := false
+var _adaptive_tempo_base_bpm := 82.0
+var _adaptive_tempo_current_bpm := 82.0
+var _adaptive_tempo_target_bpm := 82.0
+var _adaptive_tempo_ratio := 1.0
+var _adaptive_tempo_source_heat := 0.0
+var _adaptive_tempo_slew_direction := "steady"
+var _adaptive_tempo_transport_beats := 0.0
+var _adaptive_tempo_restore_source_position := -1.0
+var _music_fx_pitch_wobble_scale := 1.0
+var _adaptive_tempo_debug_snapshot: Dictionary = {}
+var _pending_music_choreography_restore: Dictionary = {}
+var _music_choreography_recipe: Dictionary = {}
+var _music_choreography_profile_id := ""
+var _music_choreography_visit_bar := 0
+var _music_choreography_last_source_bar := -1
+var _music_choreography_stage_id := ""
+var _music_choreography_stage_index := -1
+var _music_choreography_next_boundary_bar := -1
+var _music_choreography_role_target: Dictionary = {}
+var _music_choreography_role_live: Dictionary = {}
+var _music_choreography_transition: Dictionary = {}
+var _music_choreography_last_fill_bar := -9999
+var _music_choreography_fill_history: Array = []
+var _music_choreography_feature_release_bar := -1
+var _active_transition_fill_player: AudioStreamPlayer
+var _music_choreography_debug_snapshot: Dictionary = {}
 
 
 func _ready() -> void:
@@ -193,21 +265,32 @@ func _ready() -> void:
 	_feature_mix_target = _neutral_feature_mix_vector()
 	_feature_mix_live = _neutral_feature_mix_vector()
 	_feature_mix_applied_target = _feature_mix_target.duplicate(true)
+	_reset_adaptive_tempo()
+	_reset_music_choreography()
+	_reset_music_outcome_director()
 	_apply_music_fx_vector(_music_fx_live, true)
 	if WebAudioBridgeScript.available():
 		WebAudioBridgeScript.ensure()
-	if not _running_headless():
+	if _running_headless():
+		# Headless playback requests stop before creating players or generation
+		# work. Direct snapshot APIs remain callable, but there is no live audio
+		# transport for this per-frame callback to advance.
+		set_process(false)
+	else:
 		_ensure_stem_players()
 
 
 func _process(delta: float) -> void:
+	_feed_float_pcm_players()
 	_poll_generation_thread()
 	_poll_breakpoint_transition()
+	_advance_adaptive_tempo(delta)
 	_advance_music_fx(delta)
+	_advance_authored_arrangement()
+	_advance_music_choreography(delta)
 	_advance_music_mix(delta)
 	_advance_feature_mix(delta)
-	_advance_music_event_envelope()
-	_advance_authored_arrangement()
+	_advance_music_outcome_director()
 	_poll_feature_stingers()
 
 
@@ -220,6 +303,10 @@ func _exit_tree() -> void:
 	_web_music_bed_cache.clear()
 	_ambient_profile_cache.clear()
 	_authored_manifest_cache.clear()
+	_authored_manifest_cache_order.clear()
+	_authored_manifest_entries_cache.clear()
+	_authored_manifest_entries_by_id.clear()
+	_authored_manifest_entries_loaded = false
 
 
 func debug_soak_snapshot() -> Dictionary:
@@ -230,15 +317,20 @@ func debug_soak_snapshot() -> Dictionary:
 		"web_music_bed_cache_size": _web_music_bed_cache.size(),
 		"ambient_profile_cache_size": _ambient_profile_cache.size(),
 		"authored_manifest_cache_size": _authored_manifest_cache.size(),
+		"authored_manifest_cache_limit": AUTHORED_MANIFEST_CACHE_LIMIT,
 		"feature_stem_cache_size": _feature_stem_cache.size(),
 		"feature_stinger_pending_count": _feature_stinger_pending.size(),
 		"feature_stinger_history_count": _feature_stinger_history.size(),
+		"music_outcome_token_count": _music_outcome_tokens.size(),
+		"music_outcome_token_limit": MUSIC_OUTCOME_TOKEN_LIMIT,
+		"music_outcome_history_count": _music_outcome_history.size(),
 		"stem_player_count": _stem_players.size(),
 		"feature_stem_player_count": _feature_stem_players.size(),
 		"feature_stinger_player_count": _feature_stinger_players.size(),
 		"current_cache_key": _current_cache_key,
 		"pending_cache_key": _pending_cache_key,
 		"thread_cache_key": _thread_cache_key,
+		"last_authored_boundary_applied_cache_key": _last_authored_boundary_applied_cache_key,
 	}
 
 
@@ -260,17 +352,25 @@ func play_for_environment_state(environment: Dictionary, heat_level: int, music_
 	var authored_selection_state := _music_mix_input_snapshot.duplicate(true)
 	authored_selection_state["musical_bar"] = floori(_director_playback_position() / maxf(0.001, _music_director_bar_seconds()))
 	var authored_stem_set := _authored_stem_set_from_profile(profile, authored_selection_state)
+	_configure_adaptive_tempo(profile, authored_stem_set)
+	_configure_music_choreography(profile, authored_stem_set)
 	if not authored_stem_set.is_empty():
 		cache_key = "%s:selection:%s" % [cache_key, str(authored_stem_set.get("selection_key", "base"))]
 	_remember_profile(cache_key, profile)
 	if not authored_stem_set.is_empty():
 		_ambient_stream_cache[cache_key] = authored_stem_set
+		if _pending_restore_matches_authored_stem_set(authored_stem_set):
+			_apply_pending_authored_arrangement_restore(cache_key, authored_stem_set)
+			return
 		if cache_key == _current_cache_key and _music_is_playing() and not _current_stream_is_primer:
 			if WebAudioBridgeScript.available() and _current_web_music_bed_cache_key != cache_key:
 				_play_web_music_bed_for_cache(cache_key, _director_playback_position(), _current_stem_set)
 			return
 		if WebAudioBridgeScript.available():
 			_play_web_music_bed_for_cache(cache_key, 0.0, authored_stem_set)
+		if _authored_phrase_boundary_dispatch:
+			_accept_authored_boundary_stem_set(cache_key, authored_stem_set)
+			return
 		if _should_defer_music_change(cache_key):
 			_transition_target_cache_key = cache_key
 			_transition_target_profile = profile.duplicate(true)
@@ -385,6 +485,20 @@ func stop() -> void:
 	_music_event_envelope = {}
 	_last_big_win_event_token = ""
 	_music_event_last_bar = -1
+	_reset_music_outcome_director()
+	_authored_phrase_track_id = ""
+	_authored_phrase_visit_id = ""
+	_authored_phrase_slot = -1
+	_authored_phrase_event_index = -1
+	_last_arrangement_selection_notice = ""
+	_authored_phrase_boundary_dispatch = false
+	_last_authored_boundary_applied_cache_key = ""
+	_authored_phrase_boundary_position = -1.0
+	_pending_authored_arrangement_restore = {}
+	_float_pcm_player_states.clear()
+	_float_pcm_phase_launches.clear()
+	_reset_adaptive_tempo()
+	_reset_music_choreography()
 	_reset_music_fx()
 	_reset_music_mix()
 	_reset_feature_mix()
@@ -540,12 +654,21 @@ func update_feature_music_state(feature_state: Dictionary) -> void:
 func stop_feature_music() -> void:
 	_current_feature_music_id = ""
 	_current_feature_stem_set = {}
-	_feature_stinger_pending = []
-	_feature_stinger_history = []
+	var retained_outcomes: Array = []
+	for pending_value in _feature_stinger_pending:
+		if typeof(pending_value) != TYPE_DICTIONARY:
+			continue
+		var pending: Dictionary = pending_value
+		if str(pending.get("time_domain", "")) == "transport_beats" and str(pending.get("outcome_class", "")) != "feature_start":
+			retained_outcomes.append(pending)
+	_feature_stinger_pending = retained_outcomes
 	_stinger_last_target_by_cue = {}
-	_reset_feature_mix()
 	_stop_feature_stem_players()
 	_stop_feature_stinger_players()
+	if _music_choreography_recipe.is_empty():
+		_reset_feature_mix()
+	else:
+		_schedule_music_choreography_feature_release()
 
 
 func play_feature_stinger(cue_id: String, context: Dictionary = {}) -> void:
@@ -625,8 +748,9 @@ func music_transition_policy_snapshot_for_environment(environment: Dictionary, h
 # audio playback, so headless tests can drive the mapping safely.
 func update_music_state(music_state: Dictionary) -> void:
 	_last_music_state = music_state.duplicate(true)
+	_set_adaptive_tempo_target(float(music_state.get("heat", music_state.get("suspicion_level", 0.0))))
 	_consume_music_events(_last_music_state, _director_playback_position())
-	var effective_state := _music_state_with_event_envelope(_last_music_state, _director_playback_position())
+	var effective_state := _music_state_with_event_envelope_at_beat(_last_music_state, _adaptive_tempo_transport_beats)
 	_music_fx_input_snapshot = _normalize_music_fx_input(effective_state)
 	_music_fx_target = _music_fx_vector_from_input(_music_fx_input_snapshot)
 	if audio_calm:
@@ -640,7 +764,8 @@ func music_event_envelope_snapshot(music_state: Dictionary = {}, playback_positi
 	var position := _director_playback_position() if playback_position < 0.0 else maxf(0.0, playback_position)
 	if not music_state.is_empty():
 		_consume_music_events(music_state, position)
-	var effective := _music_state_with_event_envelope(_last_music_state if music_state.is_empty() else music_state, position)
+	var transport_beat := position / maxf(0.001, _music_director_bar_seconds() / 4.0)
+	var effective := _music_state_with_event_envelope_at_beat(_last_music_state if music_state.is_empty() else music_state, transport_beat)
 	return {
 		"envelope": _copy_dict(_music_event_envelope),
 		"event_token": _last_big_win_event_token,
@@ -652,63 +777,219 @@ func music_event_envelope_snapshot(music_state: Dictionary = {}, playback_positi
 	}
 
 
+func schedule_music_outcome_event(event_value: Dictionary) -> Dictionary:
+	var event := MusicOutcomeDirectorModelScript.normalize_event(event_value)
+	var token := str(event.get("event_token", ""))
+	if token.is_empty():
+		return {"accepted": false, "reason": "missing_event_token", "controls_blocked": false, "authoritative_state_resolved": true}
+	if _music_outcome_tokens.has(token):
+		var duplicate := _copy_dict(_music_outcome_tokens.get(token, {}))
+		duplicate["accepted"] = false
+		duplicate["deduplicated"] = true
+		duplicate["reason"] = "duplicate_event_token"
+		return duplicate
+	var transport_beat := maxf(0.0, float(event.get("transport_beat", 0.0))) if event_value.has("transport_beat") else maxf(0.0, _adaptive_tempo_transport_beats)
+	event["transport_beat"] = transport_beat
+	var cue := MusicOutcomeDirectorModelScript.select_cue(_current_stem_set.get("stinger_metadata", {}), event)
+	var requested_quantization := str(event.get("requested_quantization", ""))
+	if requested_quantization.is_empty():
+		requested_quantization = str(cue.get("quantize", "beat"))
+	var phrase_bars := maxi(1, int(_current_stem_set.get("harmony_phrase_bars", ADAPTIVE_TEMPO_BARS_PER_PHRASE)))
+	var boundary := MusicOutcomeDirectorModelScript.quantized_boundary(transport_beat, requested_quantization, phrase_bars, float(cue.get("max_latency_beats", 1.0)))
+	var target_beat := float(boundary.get("target_transport_beat", transport_beat))
+	var latency_beats := maxf(0.0, target_beat - transport_beat)
+	var live_bpm := maxf(1.0, _adaptive_tempo_current_bpm)
+	var schedule := {
+		"accepted": true,
+		"deduplicated": false,
+		"event_token": token,
+		"outcome_class": str(event.get("outcome_class", "neutral")),
+		"magnitude": float(event.get("magnitude", 0.0)),
+		"tier": str(event.get("tier", "standard")),
+		"source_game": str(event.get("source_game", "")),
+		"result_time": event.get("result_time", 0),
+		"cue_id": str(cue.get("cue_id", "")),
+		"requested_quantization": str(boundary.get("requested_quantization", requested_quantization)),
+		"quantization": str(boundary.get("quantization", requested_quantization)),
+		"fallback_used": bool(boundary.get("fallback_used", false)),
+		"scheduled_transport_beat": snappedf(target_beat, 0.000001),
+		"scheduled_bar": floori(target_beat / 4.0),
+		"scheduled_beat_in_bar": snappedf(fposmod(target_beat, 4.0), 0.000001),
+		"latency_beats": snappedf(latency_beats, 0.000001),
+		"estimated_live_latency_seconds": snappedf(latency_beats * 60.0 / live_bpm, 0.000001),
+		"maximum_live_latency_seconds": snappedf(float(cue.get("max_latency_beats", 1.0)) * 60.0 / live_bpm, 0.000001),
+		"controls_blocked": false,
+		"authoritative_state_resolved": true,
+		"voice_limit": MUSIC_STINGER_PLAYER_COUNT,
+		"pending_voice_limit": MUSIC_STINGER_PENDING_LIMIT,
+		"accented": not str(cue.get("cue_id", "")).is_empty(),
+	}
+	if str(cue.get("cue_id", "")).is_empty():
+		schedule["scheduled_transport_beat"] = snappedf(transport_beat, 0.000001)
+		schedule["latency_beats"] = 0.0
+		schedule["estimated_live_latency_seconds"] = 0.0
+		schedule["quantization"] = "none"
+		_remember_music_outcome_schedule(token, schedule)
+		return schedule.duplicate(true)
+	var cue_id := str(cue.get("cue_id", ""))
+	var cue_cooldown := maxf(0.0, float(cue.get("cooldown_beats", 0.0)))
+	var last_cue_target := float(_music_outcome_last_target_by_cue.get(cue_id, -999999.0))
+	if target_beat - last_cue_target < cue_cooldown - 0.000001:
+		schedule["accepted"] = false
+		schedule["reason"] = "cue_cooldown"
+		_remember_music_outcome_schedule(token, schedule)
+		return schedule.duplicate(true)
+	if str(event.get("outcome_class", "")) == "big_win" and not _music_event_envelope.is_empty() and transport_beat < float(_music_event_envelope.get("cooldown_until_beat", 0.0)):
+		schedule["accepted"] = false
+		schedule["reason"] = "big_win_cooldown"
+		_remember_music_outcome_schedule(token, schedule)
+		return schedule.duplicate(true)
+	var outcome_pending_count := 0
+	for pending_value in _feature_stinger_pending:
+		if typeof(pending_value) == TYPE_DICTIONARY and str((pending_value as Dictionary).get("time_domain", "")) == "transport_beats":
+			outcome_pending_count += 1
+	if outcome_pending_count >= MUSIC_STINGER_PENDING_LIMIT:
+		schedule["accepted"] = false
+		schedule["reason"] = "pending_voice_limit"
+		_remember_music_outcome_schedule(token, schedule)
+		return schedule.duplicate(true)
+	_music_outcome_last_target_by_cue[cue_id] = target_beat
+	_feature_stinger_pending.append({
+		"time_domain": "transport_beats",
+		"cue_id": cue_id,
+		"event_token": token,
+		"outcome_class": str(event.get("outcome_class", "neutral")),
+		"target_transport_beat": target_beat,
+		"volume_db": float(cue.get("volume_db", -3.0)),
+		"reverb_pulse": _copy_dict(cue.get("reverb_pulse", {})),
+	})
+	if str(event.get("outcome_class", "")) == "big_win":
+		_last_big_win_event_token = token
+		_music_event_envelope = {
+			"type": "big_win",
+			"event_token": token,
+			"start_beat": target_beat,
+			"end_beat": target_beat + float(BIG_WIN_ENVELOPE_BARS * ADAPTIVE_TEMPO_BEATS_PER_BAR),
+			"cooldown_until_beat": target_beat + float((BIG_WIN_ENVELOPE_BARS + BIG_WIN_COOLDOWN_BARS) * ADAPTIVE_TEMPO_BEATS_PER_BAR),
+			"start_bar": floori(target_beat / 4.0),
+			"end_bar": floori(target_beat / 4.0) + BIG_WIN_ENVELOPE_BARS,
+			"cooldown_until_bar": floori(target_beat / 4.0) + BIG_WIN_ENVELOPE_BARS + BIG_WIN_COOLDOWN_BARS,
+			"trigger_delta": float(event.get("magnitude", 0.0)),
+		}
+		_music_event_last_bar = floori(transport_beat / 4.0)
+	_remember_music_outcome_schedule(token, schedule)
+	return schedule.duplicate(true)
+
+
+func music_outcome_director_snapshot(transport_beat: float = -1.0) -> Dictionary:
+	var beat := maxf(0.0, _adaptive_tempo_transport_beats) if transport_beat < 0.0 else maxf(0.0, transport_beat)
+	_apply_outcome_stingers_for_transport(beat, false)
+	var reverb_level := MusicOutcomeDirectorModelScript.reverb_level(_music_outcome_reverb_envelope, beat)
+	var effective := _music_state_with_event_envelope_at_beat(_last_music_state, beat)
+	return {
+		"transport_beat": snappedf(beat, 0.000001),
+		"last_schedule": _copy_dict(_music_outcome_last_schedule),
+		"pending": _copy_array(_feature_stinger_pending),
+		"history": _copy_array(_music_outcome_history),
+		"stinger_history": _copy_array(_feature_stinger_history),
+		"deduplicated_token_count": _music_outcome_tokens.size(),
+		"deduplicated_token_limit": MUSIC_OUTCOME_TOKEN_LIMIT,
+		"voice_limit": MUSIC_STINGER_PLAYER_COUNT,
+		"pending_voice_limit": MUSIC_STINGER_PENDING_LIMIT,
+		"reverb_envelope": _copy_dict(_music_outcome_reverb_envelope),
+		"reverb_send": snappedf(reverb_level, 0.000001),
+		"reverb_send_limit": MUSIC_OUTCOME_REVERB_MAX_SEND,
+		"shared_full_mix_reverb": false,
+		"big_win_active": bool(effective.get("big_win", false)),
+		"big_win_bars_remaining": int(effective.get("big_win_bars_remaining", 0)),
+	}
+
+
 func _consume_music_events(music_state: Dictionary, playback_position: float) -> void:
 	var event_token := str(music_state.get("big_win_event_token", music_state.get("win_event_token", ""))).strip_edges()
 	var delta := int(music_state.get("last_bankroll_delta", 0))
 	var is_big_win := bool(music_state.get("big_win", false)) or delta >= int(music_state.get("big_win_threshold", 50))
 	if event_token.is_empty() or event_token == _last_big_win_event_token or not is_big_win:
 		return
-	_last_big_win_event_token = event_token
-	var bar_seconds := _music_director_bar_seconds()
-	var current_bar := floori(maxf(0.0, playback_position) / maxf(0.001, bar_seconds))
-	if not _music_event_envelope.is_empty() and current_bar < int(_music_event_envelope.get("cooldown_until_bar", 0)):
-		return
-	var start_bar := current_bar + 1
-	_music_event_envelope = {
-		"type": "big_win",
+	var transport_beat := maxf(0.0, playback_position) / maxf(0.001, _music_director_bar_seconds() / 4.0)
+	schedule_music_outcome_event({
 		"event_token": event_token,
-		"start_bar": start_bar,
-		"end_bar": start_bar + BIG_WIN_ENVELOPE_BARS,
-		"cooldown_until_bar": start_bar + BIG_WIN_ENVELOPE_BARS + BIG_WIN_COOLDOWN_BARS,
-		"trigger_delta": delta,
-	}
-	_music_event_last_bar = current_bar
-	play_feature_stinger("big_win", {"volume_db": -1.0, "cooldown_beats": STEPS_PER_BAR})
+		"outcome_class": "big_win",
+		"magnitude": delta,
+		"tier": "big",
+		"source_game": str(music_state.get("source_game", "")),
+		"result_time": music_state.get("result_time", 0),
+		"transport_beat": transport_beat,
+	})
 
 
 func _music_state_with_event_envelope(music_state: Dictionary, playback_position: float) -> Dictionary:
+	var transport_beat := maxf(0.0, playback_position) / maxf(0.001, _music_director_bar_seconds() / 4.0)
+	return _music_state_with_event_envelope_at_beat(music_state, transport_beat)
+
+
+func _music_state_with_event_envelope_at_beat(music_state: Dictionary, transport_beat: float) -> Dictionary:
 	var result := music_state.duplicate(true)
 	result["big_win"] = false
 	result["big_win_bars_remaining"] = 0
 	if _music_event_envelope.is_empty():
 		return result
-	var bar_seconds := _music_director_bar_seconds()
-	var current_bar := floori(maxf(0.0, playback_position) / maxf(0.001, bar_seconds))
-	var start_bar := int(_music_event_envelope.get("start_bar", 0))
-	var end_bar := int(_music_event_envelope.get("end_bar", 0))
-	if current_bar < end_bar:
+	var beat := maxf(0.0, transport_beat)
+	var start_beat := float(_music_event_envelope.get("start_beat", float(int(_music_event_envelope.get("start_bar", 0)) * 4)))
+	var end_beat := float(_music_event_envelope.get("end_beat", float(int(_music_event_envelope.get("end_bar", 0)) * 4)))
+	if beat < end_beat:
 		result["big_win"] = true
-		result["big_win_bars_remaining"] = BIG_WIN_ENVELOPE_BARS if current_bar < start_bar else maxi(0, end_bar - current_bar)
+		result["big_win_bars_remaining"] = BIG_WIN_ENVELOPE_BARS if beat < start_beat else maxi(0, ceili((end_beat - beat) / 4.0))
 	return result
 
 
-func _advance_music_event_envelope() -> void:
+func _advance_music_outcome_director() -> void:
+	var beat := maxf(0.0, _adaptive_tempo_transport_beats)
+	if not _music_outcome_reverb_envelope.is_empty() and beat >= float(_music_outcome_reverb_envelope.get("end_beat", 0.0)):
+		_music_outcome_reverb_envelope = {}
 	if _music_event_envelope.is_empty() or _last_music_state.is_empty():
 		return
-	var position := _director_playback_position()
-	var current_bar := floori(position / maxf(0.001, _music_director_bar_seconds()))
+	var current_bar := floori(beat / 4.0)
 	if current_bar == _music_event_last_bar:
 		return
 	_music_event_last_bar = current_bar
-	_update_music_mix_state(_music_state_with_event_envelope(_last_music_state, position))
+	_update_music_mix_state(_music_state_with_event_envelope_at_beat(_last_music_state, beat))
+
+
+func _remember_music_outcome_schedule(token: String, schedule: Dictionary) -> void:
+	_music_outcome_tokens[token] = schedule.duplicate(true)
+	_music_outcome_token_order.append(token)
+	while _music_outcome_token_order.size() > MUSIC_OUTCOME_TOKEN_LIMIT:
+		var evicted := str(_music_outcome_token_order.pop_front())
+		_music_outcome_tokens.erase(evicted)
+	_music_outcome_last_schedule = schedule.duplicate(true)
+	_music_outcome_history.append(schedule.duplicate(true))
+	while _music_outcome_history.size() > MUSIC_OUTCOME_HISTORY_LIMIT:
+		_music_outcome_history.pop_front()
+	music_outcome_scheduled.emit(schedule.duplicate(true))
+
+
+func _reset_music_outcome_director() -> void:
+	_music_event_envelope.clear()
+	_last_big_win_event_token = ""
+	_music_event_last_bar = -1
+	_music_outcome_tokens.clear()
+	_music_outcome_token_order.clear()
+	_music_outcome_history.clear()
+	_music_outcome_last_schedule.clear()
+	_music_outcome_last_target_by_cue.clear()
+	_music_outcome_reverb_envelope.clear()
+	_music_outcome_reverb_last_start_by_class.clear()
 
 
 func _advance_authored_arrangement() -> void:
 	if str(_current_stem_set.get("source", "")) != "authored" or _current_cache_key.is_empty():
 		return
 	var track_id := str(_current_stem_set.get("track_id", ""))
-	var entry := _authored_track_entry(track_id)
-	var arrangement_value: Variant = entry.get("arrangement", [])
+	if not str(_current_stem_set.get("harmony_recipe_id", "")).is_empty():
+		_advance_harmony_recipe_phrase_event(track_id)
+		return
+	var arrangement_value: Variant = _current_stem_set.get("authored_arrangement", [])
 	if typeof(arrangement_value) != TYPE_ARRAY or (arrangement_value as Array).is_empty():
 		return
 	var arrangement: Array = arrangement_value
@@ -736,6 +1017,610 @@ func _advance_authored_arrangement() -> void:
 	_transition_target_cache_key = next_cache_key
 	_transition_target_profile = profile.duplicate(true)
 	_set_deferred_transition_stem_set(next_cache_key, next_stem_set)
+
+
+func _advance_harmony_recipe_phrase_event(track_id: String) -> void:
+	var recipe_id := str(_current_stem_set.get("harmony_recipe_id", ""))
+	if recipe_id.is_empty():
+		return
+	var phrase_bars := maxi(1, int(_current_stem_set.get("harmony_phrase_bars", 4)))
+	var current_bar := floori(_director_playback_position() / maxf(0.001, _music_director_bar_seconds()))
+	var phrase_slot := current_bar / phrase_bars
+	_emit_harmony_phrase_boundaries(track_id, phrase_slot, current_bar)
+
+
+func _emit_harmony_phrase_boundaries(track_id: String, phrase_slot: int, current_bar: int) -> void:
+	var recipe_id := str(_current_stem_set.get("harmony_recipe_id", ""))
+	var phrase_bars := maxi(1, int(_current_stem_set.get("harmony_phrase_bars", 4)))
+	var visit_id := str(_current_stem_set.get("harmony_visit_id", ""))
+	if _authored_phrase_track_id != track_id or _authored_phrase_visit_id != visit_id:
+		_authored_phrase_track_id = track_id
+		_authored_phrase_visit_id = visit_id
+		_authored_phrase_slot = phrase_slot
+		_authored_phrase_event_index = int(_current_stem_set.get("harmony_last_phrase_event_index", -1))
+		return
+	if phrase_slot == _authored_phrase_slot:
+		return
+	var phrase_slots_per_loop := maxi(1, ceili(float(maxi(1, int(_current_stem_set.get("bars", phrase_bars)))) / float(phrase_bars)))
+	var crossed := posmod(phrase_slot - _authored_phrase_slot, phrase_slots_per_loop)
+	if crossed <= 0:
+		crossed = 1
+	for step in range(crossed):
+		_authored_phrase_event_index += 1
+		var recipe_length := maxi(1, int(_current_stem_set.get("harmony_recipe_length", 1)))
+		var phrase_index := posmod(_authored_phrase_event_index, recipe_length)
+		var event_token := "%s:%s:%d" % [track_id, visit_id, _authored_phrase_event_index]
+		_authored_phrase_boundary_dispatch = true
+		_authored_phrase_boundary_position = float(current_bar) * _music_director_bar_seconds()
+		authored_phrase_event.emit({
+			"track_id": track_id,
+			"recipe_id": recipe_id,
+			"phrase_event_index": _authored_phrase_event_index,
+			"phrase_index": phrase_index,
+			"cycle_index": _authored_phrase_event_index / recipe_length,
+			"event_token": event_token,
+			"phrase_slot": posmod(_authored_phrase_slot + step + 1, phrase_slots_per_loop),
+			"musical_bar": current_bar,
+			"boundary_position": _authored_phrase_boundary_position,
+		})
+		_authored_phrase_boundary_dispatch = false
+		_authored_phrase_boundary_position = -1.0
+	_authored_phrase_slot = phrase_slot
+
+
+# Rebinds the live phrase counter after a RunState load without rebuilding the
+# transport. The next boundary continues from the restored event index.
+func sync_authored_arrangement_state(state: Dictionary) -> void:
+	_pending_authored_arrangement_restore = state.duplicate(true)
+	_authored_phrase_track_id = ""
+	_authored_phrase_visit_id = ""
+	_authored_phrase_slot = -1
+	_authored_phrase_event_index = int(state.get("last_phrase_event_index", -1))
+	_last_arrangement_selection_notice = ""
+
+
+# Restores the compact live-tempo state before the next track/profile binds.
+# No audio stream is restarted here; the pending state is consumed only when
+# its matching profile is configured.
+func sync_adaptive_tempo_state(state: Dictionary) -> void:
+	_pending_adaptive_tempo_restore = state.duplicate(true)
+	_adaptive_tempo_restore_source_position = maxf(-1.0, float(state.get("source_position", -1.0)))
+
+
+func sync_music_choreography_state(state: Dictionary) -> void:
+	_pending_music_choreography_restore = state.duplicate(true)
+
+
+# Called only on save paths. The live debug accessor below intentionally
+# returns its stable dictionary directly and remains allocation-free.
+func adaptive_tempo_save_state() -> Dictionary:
+	var source_position := _director_playback_position()
+	return {
+		"profile_id": _adaptive_tempo_profile_id,
+		"enabled": _adaptive_tempo_enabled,
+		"current_bpm": snappedf(_adaptive_tempo_current_bpm, 0.000001),
+		"target_bpm": snappedf(_adaptive_tempo_target_bpm, 0.000001),
+		"source_heat": snappedf(_adaptive_tempo_source_heat, 0.0001),
+		"transport_beats": snappedf(_adaptive_tempo_transport_beats, 0.000001),
+		"source_position": snappedf(source_position, 0.000001),
+	}
+
+
+func adaptive_tempo_debug_snapshot() -> Dictionary:
+	_update_adaptive_tempo_debug_snapshot()
+	return _adaptive_tempo_debug_snapshot
+
+
+func music_choreography_save_state() -> Dictionary:
+	return {
+		"profile_id": _music_choreography_profile_id,
+		"visit_bar": _music_choreography_visit_bar,
+		"stage_id": _music_choreography_stage_id,
+		"stage_index": _music_choreography_stage_index,
+		"next_boundary_bar": _music_choreography_next_boundary_bar,
+		"last_fill_bar": _music_choreography_last_fill_bar,
+		"scheduled_transition": _music_choreography_transition.duplicate(true),
+		"feature_release_bar": _music_choreography_feature_release_bar,
+		"role_target": _music_choreography_role_target.duplicate(true),
+		"role_live": _music_choreography_role_live.duplicate(true),
+	}
+
+
+func music_choreography_debug_snapshot() -> Dictionary:
+	_update_music_choreography_debug_snapshot()
+	return _music_choreography_debug_snapshot
+
+
+static func music_choreography_timeline_snapshot(recipe: Dictionary, bar_count: int) -> Array:
+	return MusicLayerChoreographyScript.timeline_snapshot(recipe, bar_count)
+
+
+static func resolve_music_fill_request(fill_metadata: Dictionary, requests: Array, default_lead_in_bars: int = 2) -> Dictionary:
+	return MusicLayerChoreographyScript.resolve_fill_request(fill_metadata, requests, default_lead_in_bars)
+
+
+func _pending_restore_matches_authored_stem_set(stem_set: Dictionary) -> bool:
+	return not _pending_authored_arrangement_restore.is_empty() and str(_pending_authored_arrangement_restore.get("track_id", "")) == str(stem_set.get("track_id", ""))
+
+
+func _apply_pending_authored_arrangement_restore(cache_key: String, stem_set: Dictionary) -> void:
+	var restored := _pending_authored_arrangement_restore.duplicate(true)
+	_pending_authored_arrangement_restore = {}
+	_authored_phrase_track_id = str(restored.get("track_id", ""))
+	_authored_phrase_visit_id = str(restored.get("visit_id", ""))
+	_authored_phrase_slot = maxi(0, int(restored.get("phrase_slot", 0)))
+	_authored_phrase_event_index = int(restored.get("last_phrase_event_index", -1))
+	var resume_position := _phrase_slot_music_position(stem_set, _authored_phrase_slot)
+	if _adaptive_tempo_restore_source_position >= 0.0:
+		var loop_seconds := float(maxi(1, int(stem_set.get("loop_frames", 1)))) / float(maxi(1, int(stem_set.get("sample_rate", SAMPLE_RATE))))
+		resume_position = fposmod(_adaptive_tempo_restore_source_position, maxf(0.001, loop_seconds))
+		_adaptive_tempo_restore_source_position = -1.0
+	_play_full_stem_set(cache_key, stem_set, resume_position)
+
+
+static func _phrase_slot_music_position(stem_set: Dictionary, phrase_slot: int) -> float:
+	var sample_rate := maxi(1, int(stem_set.get("sample_rate", SAMPLE_RATE)))
+	var loop_frames := maxi(1, int(stem_set.get("loop_frames", 1)))
+	var bars := maxi(1, int(stem_set.get("bars", 1)))
+	var phrase_bars := maxi(1, int(stem_set.get("harmony_phrase_bars", 1)))
+	var loop_seconds := float(loop_frames) / float(sample_rate)
+	var bar_seconds := loop_seconds / float(bars)
+	return fmod(float(maxi(0, phrase_slot) * phrase_bars) * bar_seconds, loop_seconds)
+
+
+func _configure_adaptive_tempo(profile: Dictionary, stem_set: Dictionary = {}) -> void:
+	var track_profile := _copy_dict(stem_set.get("adaptive_tempo", {}))
+	var environment_profile := _copy_dict(profile.get("adaptive_tempo", {}))
+	var combined := track_profile
+	combined.merge(environment_profile, true)
+	var base_fallback := float(stem_set.get("bpm", profile.get("bpm", 82.0)))
+	var normalized := _normalize_adaptive_tempo_profile(combined, base_fallback)
+	var profile_id := "%s|%s|%s" % [
+		str(profile.get("environment_id", profile.get("archetype_id", ""))),
+		str(stem_set.get("track_id", profile.get("authored_track_id", "procedural"))),
+		str(normalized.get("id", "default")),
+	]
+	var profile_changed := profile_id != _adaptive_tempo_profile_id
+	if profile_changed:
+		_reset_music_outcome_director()
+	_adaptive_tempo_profile = normalized
+	_adaptive_tempo_profile_id = profile_id
+	_adaptive_tempo_enabled = bool(normalized.get("enabled", false))
+	_adaptive_tempo_native_enabled = _adaptive_tempo_enabled and not OS.has_feature("web")
+	_adaptive_tempo_base_bpm = float(normalized.get("base_bpm", base_fallback))
+	if profile_changed:
+		_adaptive_tempo_current_bpm = _adaptive_tempo_base_bpm
+		_adaptive_tempo_target_bpm = _adaptive_tempo_base_bpm
+		_adaptive_tempo_transport_beats = 0.0
+		_adaptive_tempo_slew_direction = "steady"
+		if str(_pending_adaptive_tempo_restore.get("profile_id", "")) == profile_id:
+			_adaptive_tempo_current_bpm = clampf(float(_pending_adaptive_tempo_restore.get("current_bpm", _adaptive_tempo_base_bpm)), float(normalized.get("min_bpm", _adaptive_tempo_base_bpm)), float(normalized.get("max_bpm", _adaptive_tempo_base_bpm)))
+			_adaptive_tempo_target_bpm = clampf(float(_pending_adaptive_tempo_restore.get("target_bpm", _adaptive_tempo_base_bpm)), float(normalized.get("min_bpm", _adaptive_tempo_base_bpm)), float(normalized.get("max_bpm", _adaptive_tempo_base_bpm)))
+			_adaptive_tempo_source_heat = clampf(float(_pending_adaptive_tempo_restore.get("source_heat", 0.0)), 0.0, 100.0)
+			_adaptive_tempo_transport_beats = maxf(0.0, float(_pending_adaptive_tempo_restore.get("transport_beats", 0.0)))
+			_pending_adaptive_tempo_restore = {}
+	if not _adaptive_tempo_native_enabled:
+		_adaptive_tempo_current_bpm = _adaptive_tempo_base_bpm
+		_adaptive_tempo_target_bpm = _adaptive_tempo_base_bpm
+	_set_adaptive_tempo_target(float(_last_music_state.get("heat", _last_music_state.get("suspicion_level", _adaptive_tempo_source_heat))))
+	_adaptive_tempo_ratio = _adaptive_tempo_current_bpm / maxf(1.0, _adaptive_tempo_base_bpm) if _adaptive_tempo_native_enabled else 1.0
+	_apply_adaptive_pitch_compensation()
+	_update_adaptive_tempo_debug_snapshot()
+
+
+static func _normalize_adaptive_tempo_profile(source: Dictionary, base_fallback: float) -> Dictionary:
+	var base_bpm := clampf(float(source.get("base_bpm", base_fallback)), 40.0, 260.0)
+	var min_bpm := clampf(float(source.get("min_bpm", base_bpm)), 40.0, base_bpm)
+	var max_bpm := clampf(float(source.get("max_bpm", base_bpm)), base_bpm, 260.0)
+	var curve: Array = []
+	var curve_value: Variant = source.get("heat_curve", [])
+	if typeof(curve_value) == TYPE_ARRAY:
+		for point_value in curve_value as Array:
+			if typeof(point_value) != TYPE_DICTIONARY:
+				continue
+			var point: Dictionary = point_value
+			curve.append({
+				"heat": clampf(float(point.get("heat", 0.0)), 0.0, 100.0),
+				"bpm": clampf(float(point.get("bpm", base_bpm)), min_bpm, max_bpm),
+			})
+	curve.sort_custom(func(a: Dictionary, b: Dictionary) -> bool: return float(a.get("heat", 0.0)) < float(b.get("heat", 0.0)))
+	if curve.is_empty():
+		curve = [{"heat": 0.0, "bpm": min_bpm}, {"heat": 50.0, "bpm": base_bpm}, {"heat": 100.0, "bpm": max_bpm}]
+	return {
+		"id": str(source.get("id", "adaptive_tempo")),
+		"enabled": bool(source.get("enabled", false)),
+		"base_bpm": base_bpm,
+		"min_bpm": min_bpm,
+		"max_bpm": max_bpm,
+		"heat_curve": curve,
+		"max_bpm_per_second": maxf(0.001, float(source.get("max_bpm_per_second", 0.5))),
+		"max_bpm_per_bar": maxf(0.001, float(source.get("max_bpm_per_bar", 0.75))),
+		"attack_seconds": maxf(0.001, float(source.get("attack_seconds", 6.0))),
+		"release_seconds": maxf(0.001, float(source.get("release_seconds", 9.0))),
+		"hysteresis_bpm": maxf(0.0, float(source.get("hysteresis_bpm", 0.18))),
+		"stakes_classification": str(source.get("stakes_classification", "")),
+		"native_processing": str(source.get("native_processing", "player_rate_shared_bus_pitch_compensation")),
+		"web_fallback": str(source.get("web_fallback", "fixed_base_bpm")),
+	}
+
+
+static func adaptive_tempo_bpm_for_heat(profile: Dictionary, heat: float) -> float:
+	var normalized := _normalize_adaptive_tempo_profile(profile, float(profile.get("base_bpm", 82.0)))
+	var curve: Array = normalized.get("heat_curve", []) as Array
+	var safe_heat := clampf(heat, 0.0, 100.0)
+	if curve.size() == 1:
+		return float((curve[0] as Dictionary).get("bpm", normalized.get("base_bpm", 82.0)))
+	var first: Dictionary = curve[0]
+	if safe_heat <= float(first.get("heat", 0.0)):
+		return float(first.get("bpm", normalized.get("min_bpm", 82.0)))
+	for index in range(1, curve.size()):
+		var right: Dictionary = curve[index]
+		if safe_heat > float(right.get("heat", 100.0)):
+			continue
+		var left: Dictionary = curve[index - 1]
+		var width := maxf(0.001, float(right.get("heat", 100.0)) - float(left.get("heat", 0.0)))
+		var amount := clampf((safe_heat - float(left.get("heat", 0.0))) / width, 0.0, 1.0)
+		return lerpf(float(left.get("bpm", 82.0)), float(right.get("bpm", 82.0)), amount)
+	return float((curve[curve.size() - 1] as Dictionary).get("bpm", normalized.get("max_bpm", 82.0)))
+
+
+func _set_adaptive_tempo_target(heat: float) -> void:
+	_adaptive_tempo_source_heat = clampf(heat, 0.0, 100.0)
+	if _adaptive_tempo_profile.is_empty() or not _adaptive_tempo_native_enabled:
+		return
+	var candidate := adaptive_tempo_bpm_for_heat(_adaptive_tempo_profile, _adaptive_tempo_source_heat)
+	var deadband := float(_adaptive_tempo_profile.get("hysteresis_bpm", 0.0))
+	if absf(candidate - _adaptive_tempo_target_bpm) >= deadband:
+		_adaptive_tempo_target_bpm = candidate
+
+
+func _advance_adaptive_tempo(delta: float) -> void:
+	var safe_delta := maxf(0.0, delta)
+	if not _adaptive_tempo_native_enabled or _adaptive_tempo_profile.is_empty():
+		_adaptive_tempo_ratio = 1.0
+		_adaptive_tempo_slew_direction = "steady"
+		if safe_delta > 0.0 and (not _current_stem_set.is_empty() or not _current_music_context.is_empty()):
+			_adaptive_tempo_transport_beats += (_adaptive_tempo_base_bpm / 60.0) * safe_delta
+		_update_adaptive_tempo_debug_snapshot()
+		return
+	var previous_bpm := _adaptive_tempo_current_bpm
+	var difference := _adaptive_tempo_target_bpm - previous_bpm
+	if absf(difference) <= ADAPTIVE_TEMPO_EPSILON or safe_delta <= 0.0:
+		_adaptive_tempo_current_bpm = _adaptive_tempo_target_bpm if absf(difference) <= ADAPTIVE_TEMPO_EPSILON else previous_bpm
+		_adaptive_tempo_slew_direction = "steady" if absf(difference) <= ADAPTIVE_TEMPO_EPSILON else "rising" if difference > 0.0 else "falling"
+	else:
+		var response_seconds := float(_adaptive_tempo_profile.get("attack_seconds", 6.0)) if difference > 0.0 else float(_adaptive_tempo_profile.get("release_seconds", 9.0))
+		var response_rate := absf(difference) / maxf(0.001, response_seconds)
+		var live_bar_seconds := 60.0 * float(ADAPTIVE_TEMPO_BEATS_PER_BAR) / maxf(1.0, previous_bpm)
+		var per_bar_rate := float(_adaptive_tempo_profile.get("max_bpm_per_bar", 0.75)) / maxf(0.001, live_bar_seconds)
+		var rate_limit := minf(float(_adaptive_tempo_profile.get("max_bpm_per_second", 0.5)), per_bar_rate)
+		var change := minf(absf(difference), minf(response_rate, rate_limit) * safe_delta)
+		_adaptive_tempo_current_bpm = previous_bpm + change * signf(difference)
+		_adaptive_tempo_slew_direction = "rising" if difference > 0.0 else "falling"
+	_adaptive_tempo_current_bpm = clampf(_adaptive_tempo_current_bpm, float(_adaptive_tempo_profile.get("min_bpm", _adaptive_tempo_base_bpm)), float(_adaptive_tempo_profile.get("max_bpm", _adaptive_tempo_base_bpm)))
+	_adaptive_tempo_ratio = _adaptive_tempo_current_bpm / maxf(1.0, _adaptive_tempo_base_bpm)
+	_adaptive_tempo_transport_beats += ((_adaptive_tempo_current_bpm + previous_bpm) * 0.5 / 60.0) * safe_delta
+	_update_adaptive_tempo_debug_snapshot()
+
+
+func _update_adaptive_tempo_debug_snapshot() -> void:
+	var beat_index := floori(_adaptive_tempo_transport_beats)
+	var bar_index := beat_index / ADAPTIVE_TEMPO_BEATS_PER_BAR
+	_adaptive_tempo_debug_snapshot["profile_id"] = _adaptive_tempo_profile_id
+	_adaptive_tempo_debug_snapshot["enabled"] = _adaptive_tempo_enabled
+	_adaptive_tempo_debug_snapshot["native_enabled"] = _adaptive_tempo_native_enabled
+	_adaptive_tempo_debug_snapshot["current_bpm"] = snappedf(_adaptive_tempo_current_bpm, 0.000001)
+	_adaptive_tempo_debug_snapshot["target_bpm"] = snappedf(_adaptive_tempo_target_bpm, 0.000001)
+	_adaptive_tempo_debug_snapshot["ratio"] = snappedf(_adaptive_tempo_ratio, 0.000001)
+	_adaptive_tempo_debug_snapshot["slew_direction"] = _adaptive_tempo_slew_direction
+	_adaptive_tempo_debug_snapshot["source_heat"] = snappedf(_adaptive_tempo_source_heat, 0.0001)
+	_adaptive_tempo_debug_snapshot["min_bpm"] = float(_adaptive_tempo_profile.get("min_bpm", _adaptive_tempo_base_bpm))
+	_adaptive_tempo_debug_snapshot["max_bpm"] = float(_adaptive_tempo_profile.get("max_bpm", _adaptive_tempo_base_bpm))
+	_adaptive_tempo_debug_snapshot["transport_beats"] = snappedf(_adaptive_tempo_transport_beats, 0.000001)
+	_adaptive_tempo_debug_snapshot["transport_beat"] = beat_index
+	_adaptive_tempo_debug_snapshot["transport_bar"] = bar_index
+	_adaptive_tempo_debug_snapshot["transport_phrase"] = bar_index / ADAPTIVE_TEMPO_BARS_PER_PHRASE
+	_adaptive_tempo_debug_snapshot["live_beat_seconds"] = 60.0 / maxf(1.0, _adaptive_tempo_current_bpm)
+	_adaptive_tempo_debug_snapshot["live_bar_seconds"] = 60.0 * float(ADAPTIVE_TEMPO_BEATS_PER_BAR) / maxf(1.0, _adaptive_tempo_current_bpm)
+	_adaptive_tempo_debug_snapshot["processing"] = str(_adaptive_tempo_profile.get("native_processing", "player_rate_shared_bus_pitch_compensation"))
+	_adaptive_tempo_debug_snapshot["fallback"] = str(_adaptive_tempo_profile.get("web_fallback", "fixed_base_bpm"))
+
+
+func _reset_adaptive_tempo() -> void:
+	_adaptive_tempo_profile = {}
+	_adaptive_tempo_profile_id = ""
+	_adaptive_tempo_enabled = false
+	_adaptive_tempo_native_enabled = false
+	_adaptive_tempo_base_bpm = 82.0
+	_adaptive_tempo_current_bpm = 82.0
+	_adaptive_tempo_target_bpm = 82.0
+	_adaptive_tempo_ratio = 1.0
+	_adaptive_tempo_source_heat = 0.0
+	_adaptive_tempo_slew_direction = "steady"
+	_adaptive_tempo_transport_beats = 0.0
+	_music_fx_pitch_wobble_scale = 1.0
+	_adaptive_tempo_debug_snapshot.clear()
+	_update_adaptive_tempo_debug_snapshot()
+
+
+func _apply_adaptive_pitch_compensation() -> void:
+	var bus_index := _ensure_music_fx_runtime_refs()
+	if bus_index < 0:
+		return
+	var pitch_shift_index := int(_music_fx_runtime_indices.get("pitch_shift", -1))
+	if pitch_shift_index < 0:
+		return
+	var pitch_shift := AudioServer.get_bus_effect(bus_index, pitch_shift_index)
+	var compensation := 1.0 / maxf(0.001, _adaptive_tempo_ratio) if _adaptive_tempo_native_enabled else 1.0
+	_set_effect_property(pitch_shift, "pitch_scale", compensation)
+	# Keep the FFT processor engaged throughout an adaptive track so crossing
+	# the base BPM cannot toggle latency or create a transient seam.
+	AudioServer.set_bus_effect_enabled(bus_index, pitch_shift_index, _adaptive_tempo_native_enabled)
+
+
+func _configure_music_choreography(profile: Dictionary, stem_set: Dictionary = {}) -> void:
+	var recipe_value: Variant = stem_set.get("layer_choreography", profile.get("layer_choreography", {}))
+	var recipe := MusicLayerChoreographyScript.normalize_recipe(recipe_value)
+	if recipe.is_empty():
+		if not _music_choreography_recipe.is_empty():
+			_reset_music_choreography()
+		return
+	var visit_id := str(_last_music_state.get("music_visit_id", (_last_music_state.get("music_arrangement_state", {}) as Dictionary).get("visit_id", ""))) if typeof(_last_music_state.get("music_arrangement_state", {})) == TYPE_DICTIONARY else str(_last_music_state.get("music_visit_id", ""))
+	var profile_id := "%s|%s|%s|%s" % [
+		str(profile.get("environment_id", profile.get("archetype_id", ""))),
+		str(stem_set.get("track_id", profile.get("authored_track_id", profile.get("palette_id", "procedural")))),
+		visit_id,
+		str(recipe.get("id", "layer_choreography")),
+	]
+	var profile_changed := profile_id != _music_choreography_profile_id
+	_music_choreography_recipe = recipe
+	_music_choreography_profile_id = profile_id
+	if not profile_changed:
+		return
+	_music_choreography_visit_bar = 0
+	_music_choreography_last_source_bar = -1
+	_music_choreography_last_fill_bar = -9999
+	_music_choreography_transition = {}
+	_music_choreography_fill_history = []
+	_music_choreography_feature_release_bar = -1
+	var restored := str(_pending_music_choreography_restore.get("profile_id", "")) == profile_id
+	if restored:
+		_music_choreography_visit_bar = maxi(0, int(_pending_music_choreography_restore.get("visit_bar", 0)))
+		_music_choreography_last_fill_bar = int(_pending_music_choreography_restore.get("last_fill_bar", -9999))
+		_music_choreography_transition = _copy_dict(_pending_music_choreography_restore.get("scheduled_transition", {}))
+		_music_choreography_feature_release_bar = int(_pending_music_choreography_restore.get("feature_release_bar", -1))
+		_music_choreography_role_target = _normalized_choreography_role_gains(_pending_music_choreography_restore.get("role_target", {}))
+		_music_choreography_role_live = _normalized_choreography_role_gains(_pending_music_choreography_restore.get("role_live", {}))
+		_pending_music_choreography_restore = {}
+	var stage := MusicLayerChoreographyScript.stage_for_bar(recipe, _music_choreography_visit_bar)
+	if restored:
+		_music_choreography_stage_id = str(stage.get("id", ""))
+		_music_choreography_stage_index = int(stage.get("index", 0))
+	else:
+		_set_music_choreography_stage(stage, true)
+	_music_choreography_next_boundary_bar = int(stage.get("next_boundary_bar", -1))
+	_update_music_choreography_debug_snapshot()
+
+
+func _advance_music_choreography(delta: float) -> void:
+	if _music_choreography_recipe.is_empty() or _current_stem_set.is_empty():
+		return
+	var bar_seconds := _music_director_bar_seconds()
+	var loop_bars := maxi(1, int(_current_stem_set.get("bars", 1)))
+	var source_bar := clampi(floori(_director_playback_position() / maxf(0.001, bar_seconds)), 0, loop_bars - 1)
+	if _music_choreography_last_source_bar < 0:
+		_music_choreography_last_source_bar = source_bar
+		_process_music_choreography_bar()
+	elif source_bar != _music_choreography_last_source_bar:
+		var crossed := posmod(source_bar - _music_choreography_last_source_bar, loop_bars)
+		if crossed <= 0:
+			crossed = 1
+		for _step in range(crossed):
+			_music_choreography_visit_bar += 1
+			_process_music_choreography_bar()
+		_music_choreography_last_source_bar = source_bar
+	_start_music_choreography_transition_if_due()
+	if _music_choreography_feature_release_bar >= 0 and _music_choreography_visit_bar >= _music_choreography_feature_release_bar:
+		_finish_music_choreography_feature_release()
+	var fade_beats := float(_music_choreography_recipe.get("fade_beats", 1.0))
+	var fade_seconds := maxf(0.001, (_music_live_bar_seconds() / 4.0) * fade_beats)
+	var amount := clampf(maxf(0.0, delta) / fade_seconds, 0.0, 1.0)
+	for role_value in MUSIC_STEM_PLAYBACK_ROLES:
+		var role := str(role_value)
+		var live := float(_music_choreography_role_live.get(role, 1.0))
+		var target := float(_music_choreography_role_target.get(role, 1.0))
+		_music_choreography_role_live[role] = lerpf(live, target, amount)
+	_update_music_choreography_debug_snapshot()
+
+
+func _process_music_choreography_bar() -> void:
+	if not _music_choreography_transition.is_empty() and _music_choreography_visit_bar >= int(_music_choreography_transition.get("destination_bar", 999999)):
+		_complete_music_choreography_transition()
+	var stage := MusicLayerChoreographyScript.stage_for_bar(_music_choreography_recipe, _music_choreography_visit_bar)
+	if str(stage.get("id", "")) != _music_choreography_stage_id:
+		_set_music_choreography_stage(stage, false)
+	_music_choreography_next_boundary_bar = int(stage.get("next_boundary_bar", -1))
+	_plan_upcoming_music_choreography_transition()
+
+
+func _plan_upcoming_music_choreography_transition() -> void:
+	if not _music_choreography_transition.is_empty():
+		return
+	var default_lead := int(_music_choreography_recipe.get("default_lead_in_bars", 2))
+	var candidate_boundaries: Array[int] = []
+	var stage_boundary := MusicLayerChoreographyScript.next_stage_boundary_bar(_music_choreography_recipe, _music_choreography_visit_bar)
+	if stage_boundary > _music_choreography_visit_bar and stage_boundary - _music_choreography_visit_bar <= 4:
+		candidate_boundaries.append(stage_boundary)
+	var phrase_bars := maxi(1, int(_current_stem_set.get("harmony_phrase_bars", 4)))
+	var phrase_boundary := (floori(float(_music_choreography_visit_bar) / float(phrase_bars)) + 1) * phrase_bars
+	if phrase_boundary - _music_choreography_visit_bar <= 4 and not candidate_boundaries.has(phrase_boundary):
+		candidate_boundaries.append(phrase_boundary)
+	if candidate_boundaries.is_empty():
+		return
+	candidate_boundaries.sort()
+	for boundary in candidate_boundaries:
+		var requests: Array = []
+		var recipe_state := _copy_dict(_current_stem_set.get("recipe_state", {}))
+		var sections := _copy_array(_current_stem_set.get("harmony_recipe_sections", []))
+		var source_section := str(recipe_state.get("harmonic_section", "")).to_upper()
+		var destination_section := source_section
+		if boundary == phrase_boundary and not sections.is_empty():
+			destination_section = str(sections[posmod(int(recipe_state.get("cursor", 0)) + 1, sections.size())]).to_upper()
+			if destination_section != source_section:
+				var section_progressions := _copy_dict(_current_stem_set.get("harmony_section_progressions", {}))
+				requests.append({
+					"id": "section_%s_to_%s_%d" % [source_section, destination_section, boundary],
+					"kind": "section",
+					"priority": 100,
+					"source_section": source_section,
+					"destination_section": destination_section,
+					"source_progression_id": str(_current_stem_set.get("progression_id", "")),
+					"destination_progression_id": str(section_progressions.get(destination_section, "")),
+					"lead_in_bars": default_lead,
+				})
+		if boundary == stage_boundary:
+			var next_stage := MusicLayerChoreographyScript.stage_for_bar(_music_choreography_recipe, boundary)
+			if bool(next_stage.get("request_fill", false)):
+				requests.append({
+					"id": "layer_%s_%d" % [str(next_stage.get("id", "stage")), boundary],
+					"kind": "layer",
+					"priority": int(next_stage.get("fill_priority", 20)),
+					"source_section": source_section,
+					"destination_section": destination_section,
+					"destination_progression_id": str(_current_stem_set.get("progression_id", "")),
+					"change_roles": _copy_array(next_stage.get("change_roles", [])),
+					"lead_in_bars": default_lead,
+				})
+		if requests.is_empty():
+			continue
+		var fill_metadata := _copy_dict(_current_stem_set.get("fill_metadata", {}))
+		var resolution := MusicLayerChoreographyScript.resolve_fill_request(fill_metadata, requests, default_lead)
+		var cooldown := int(_music_choreography_recipe.get("fill_cooldown_bars", 4))
+		if str(resolution.get("request_kind", "")) != "section" and boundary - _music_choreography_last_fill_bar < cooldown:
+			resolution["fill_id"] = ""
+			resolution["quiet_fallback"] = true
+			resolution["compatible"] = false
+			resolution["cooldown_suppressed"] = true
+		var lead_in_bars := int(resolution.get("lead_in_bars", default_lead))
+		_music_choreography_transition = resolution
+		_music_choreography_transition["destination_bar"] = boundary
+		_music_choreography_transition["start_bar"] = boundary - lead_in_bars
+		_music_choreography_transition["source_section"] = source_section
+		_music_choreography_transition["destination_section"] = destination_section
+		_music_choreography_transition["requests"] = requests
+		_music_choreography_transition["started"] = false
+		_music_choreography_transition["token"] = "%s:%d:%s" % [_music_choreography_profile_id, boundary, str(resolution.get("fill_id", "quiet"))]
+		authored_transition_notice.emit(_music_choreography_transition.duplicate(true))
+		_start_music_choreography_transition_if_due()
+		return
+
+
+func _start_music_choreography_transition_if_due() -> void:
+	if _music_choreography_transition.is_empty() or bool(_music_choreography_transition.get("started", false)):
+		return
+	if _music_choreography_visit_bar < int(_music_choreography_transition.get("start_bar", 999999)):
+		return
+	_music_choreography_transition["started"] = true
+	for role in ["drums_low", "drums_high", "drums_high_double"]:
+		_music_choreography_role_target[role] = 0.0
+	var fill_id := str(_music_choreography_transition.get("fill_id", ""))
+	var history := {
+		"token": str(_music_choreography_transition.get("token", "")),
+		"fill_id": fill_id,
+		"start_bar": _music_choreography_visit_bar,
+		"destination_bar": int(_music_choreography_transition.get("destination_bar", -1)),
+		"quiet_fallback": bool(_music_choreography_transition.get("quiet_fallback", false)),
+		"request_id": str(_music_choreography_transition.get("request_id", "")),
+	}
+	_music_choreography_fill_history.append(history)
+	while _music_choreography_fill_history.size() > CHOREOGRAPHY_FILL_HISTORY_LIMIT:
+		_music_choreography_fill_history.pop_front()
+	if not fill_id.is_empty():
+		_music_choreography_last_fill_bar = _music_choreography_visit_bar
+		_play_transition_fill(fill_id)
+
+
+func _complete_music_choreography_transition() -> void:
+	if _active_transition_fill_player != null:
+		_active_transition_fill_player.stop()
+		_active_transition_fill_player.stream = null
+		_active_transition_fill_player = null
+	_music_choreography_transition = {}
+	var stage := MusicLayerChoreographyScript.stage_for_bar(_music_choreography_recipe, _music_choreography_visit_bar)
+	_set_music_choreography_stage(stage, false)
+
+
+func _set_music_choreography_stage(stage: Dictionary, immediate: bool) -> void:
+	if stage.is_empty():
+		return
+	_music_choreography_stage_id = str(stage.get("id", ""))
+	_music_choreography_stage_index = int(stage.get("index", -1))
+	_music_choreography_next_boundary_bar = int(stage.get("next_boundary_bar", -1))
+	_music_choreography_role_target = _normalized_choreography_role_gains(stage.get("roles", {}))
+	if immediate or _music_choreography_role_live.is_empty():
+		_music_choreography_role_live = _music_choreography_role_target.duplicate(true)
+
+
+func _schedule_music_choreography_feature_release() -> void:
+	var phrase_bars := maxi(1, int(_current_stem_set.get("harmony_phrase_bars", 4)))
+	_music_choreography_feature_release_bar = (floori(float(_music_choreography_visit_bar) / float(phrase_bars)) + 1) * phrase_bars
+	_feature_mix_pending = {}
+	_feature_mix_target = _feature_mix_live.duplicate(true)
+	_feature_mix_target["feature"] = 0.0
+
+
+func _finish_music_choreography_feature_release() -> void:
+	_music_choreography_feature_release_bar = -1
+	_feature_input_snapshot = _normalize_feature_music_input({})
+	_feature_mix_target = _neutral_feature_mix_vector()
+	_feature_mix_pending = {}
+	_feature_mix_applied_target = _feature_mix_target.duplicate(true)
+
+
+func _reset_music_choreography() -> void:
+	if _active_transition_fill_player != null:
+		_active_transition_fill_player.stop()
+		_active_transition_fill_player.stream = null
+	_active_transition_fill_player = null
+	_music_choreography_recipe = {}
+	_music_choreography_profile_id = ""
+	_music_choreography_visit_bar = 0
+	_music_choreography_last_source_bar = -1
+	_music_choreography_stage_id = ""
+	_music_choreography_stage_index = -1
+	_music_choreography_next_boundary_bar = -1
+	_music_choreography_role_target = _normalized_choreography_role_gains({})
+	_music_choreography_role_live = _music_choreography_role_target.duplicate(true)
+	_music_choreography_transition = {}
+	_music_choreography_last_fill_bar = -9999
+	_music_choreography_fill_history = []
+	_music_choreography_feature_release_bar = -1
+	_music_choreography_debug_snapshot.clear()
+	_update_music_choreography_debug_snapshot()
+
+
+func _update_music_choreography_debug_snapshot() -> void:
+	_music_choreography_debug_snapshot["profile_id"] = _music_choreography_profile_id
+	_music_choreography_debug_snapshot["enabled"] = not _music_choreography_recipe.is_empty()
+	_music_choreography_debug_snapshot["visit_bar"] = _music_choreography_visit_bar
+	_music_choreography_debug_snapshot["stage_id"] = _music_choreography_stage_id
+	_music_choreography_debug_snapshot["stage_index"] = _music_choreography_stage_index
+	_music_choreography_debug_snapshot["next_boundary_bar"] = _music_choreography_next_boundary_bar
+	_music_choreography_debug_snapshot["role_target"] = _music_choreography_role_target
+	_music_choreography_debug_snapshot["role_live"] = _music_choreography_role_live
+	_music_choreography_debug_snapshot["scheduled_transition"] = _music_choreography_transition
+	_music_choreography_debug_snapshot["last_fill_bar"] = _music_choreography_last_fill_bar
+	_music_choreography_debug_snapshot["fill_history"] = _music_choreography_fill_history
+	_music_choreography_debug_snapshot["feature_release_bar"] = _music_choreography_feature_release_bar
+
+
+func _normalized_choreography_role_gains(value: Variant) -> Dictionary:
+	var source := _copy_dict(value)
+	var result := {}
+	for role_value in MUSIC_STEM_PLAYBACK_ROLES:
+		var role := str(role_value)
+		result[role] = clampf(float(source.get(role, 1.0)), 0.0, 1.0)
+	return result
 
 
 func music_fx_snapshot(music_state: Dictionary = {}) -> Dictionary:
@@ -1006,6 +1891,7 @@ func _music_role_volume_db_map(vector: Dictionary) -> Dictionary:
 	for role_value in MUSIC_STEM_PLAYBACK_ROLES:
 		var role := str(role_value)
 		var gain := clampf(float(vector.get(role, 0.0)), 0.0, 1.35)
+		gain *= clampf(float(_music_choreography_role_live.get(role, 1.0)), 0.0, 1.0)
 		if role == "pad":
 			gain *= lerpf(1.0, 0.42, duck)
 		elif role == "lead" or role == "texture":
@@ -1163,6 +2049,7 @@ func _apply_music_fx_vector(vector: Dictionary, _force: bool) -> void:
 	var bus_index := _ensure_music_fx_runtime_refs()
 	if bus_index < 0:
 		return
+	_apply_adaptive_pitch_compensation()
 	var lowpass_amount := clampf(float(vector.get("lowpass_amount", 0.0)), 0.0, 1.0)
 	var chorus_depth := clampf(float(vector.get("chorus_depth", 0.0)), 0.0, 1.0)
 	var distortion_drive := clampf(float(vector.get("distortion_drive", 0.0)), 0.0, 1.0)
@@ -1230,13 +2117,16 @@ func _apply_music_fx_vector(vector: Dictionary, _force: bool) -> void:
 		AudioServer.set_bus_effect_enabled(bus_index, limiter_index, true)
 	_configure_music_send_effects(vector)
 	_music_send_matrix = _music_send_matrix_from_vector(vector)
+	_music_send_matrix = _merge_authored_send_preferences(_music_send_matrix, _current_stem_set)
+	_apply_music_outcome_reverb_to_send_matrix(_music_send_matrix, _adaptive_tempo_transport_beats)
 	_apply_music_send_matrix(_music_send_matrix, _current_stem_set, _music_send_players, false)
 	_apply_music_send_matrix(_scaled_music_send_matrix(_music_send_matrix, 0.72), _current_feature_stem_set, _feature_send_players, true)
 	var wobble_cents := clampf(float(vector.get("pitch_wobble_cents", 0.0)), 0.0, 18.0)
-	var pitch_scale := 1.0
+	_music_fx_pitch_wobble_scale = 1.0
 	if wobble_cents > 0.001:
 		var wobble := sin(TAU * 0.18 * (float(Time.get_ticks_msec()) / 1000.0))
-		pitch_scale = pow(2.0, (wobble_cents * wobble) / 1200.0)
+		_music_fx_pitch_wobble_scale = pow(2.0, (wobble_cents * wobble) / 1200.0)
+	var pitch_scale := _live_playback_pitch_scale()
 	for player_value in _stem_players.values():
 		if player_value is AudioStreamPlayer:
 			(player_value as AudioStreamPlayer).pitch_scale = pitch_scale
@@ -1245,6 +2135,9 @@ func _apply_music_fx_vector(vector: Dictionary, _force: bool) -> void:
 			(player_value as AudioStreamPlayer).pitch_scale = pitch_scale
 	if _ambient_player != null:
 		_ambient_player.pitch_scale = pitch_scale
+	for player_value in _feature_stinger_players:
+		if player_value is AudioStreamPlayer:
+			(player_value as AudioStreamPlayer).pitch_scale = pitch_scale
 	for group_value in [_music_send_players, _feature_send_players]:
 		for player_value in (group_value as Dictionary).values():
 			if player_value is AudioStreamPlayer:
@@ -1258,7 +2151,7 @@ func _configure_music_send_effects(vector: Dictionary) -> void:
 	var band_pass := _music_send_effect("band_pass")
 	_set_effect_property(band_pass, "cutoff_hz", lerpf(1250.0, 2250.0, watch_tinge))
 	_set_effect_property(band_pass, "resonance", clampf(bandpass_q / (bandpass_q + 1.0), 0.18, 0.82))
-	var quarter_note_ms := (_music_director_bar_seconds() / 4.0) * 1000.0
+	var quarter_note_ms := (_music_live_bar_seconds() / 4.0) * 1000.0
 	var delay := _music_send_effect("delay")
 	_set_effect_property(delay, "dry", 0.0)
 	_set_effect_property(delay, "tap1_delay_ms", clampf(quarter_note_ms * 0.75, 1.0, 1500.0))
@@ -1289,6 +2182,22 @@ func _music_send_effect(effect_key: String) -> AudioEffect:
 	if bus_index < 0 or AudioServer.get_bus_effect_count(bus_index) <= 0:
 		return null
 	return AudioServer.get_bus_effect(bus_index, 0)
+
+
+func _apply_music_outcome_reverb_to_send_matrix(matrix: Dictionary, transport_beat: float) -> void:
+	if _music_outcome_reverb_envelope.is_empty():
+		return
+	var level := MusicOutcomeDirectorModelScript.reverb_level(_music_outcome_reverb_envelope, transport_beat)
+	if level <= 0.0:
+		return
+	var reverb_value: Variant = matrix.get("reverb", {})
+	if typeof(reverb_value) != TYPE_DICTIONARY:
+		return
+	var reverb: Dictionary = reverb_value
+	for role_value in _music_outcome_reverb_envelope.get("eligible_roles", []) as Array:
+		var role := str(role_value)
+		if MUSIC_STEM_PLAYBACK_ROLES.has(role):
+			reverb[role] = maxf(float(reverb.get(role, 0.0)), minf(level, MUSIC_OUTCOME_REVERB_MAX_SEND))
 
 
 static func _music_send_matrix_from_vector(vector: Dictionary) -> Dictionary:
@@ -1348,10 +2257,31 @@ static func _scaled_music_send_matrix(matrix: Dictionary, scale: float) -> Dicti
 	return result
 
 
+static func _merge_authored_send_preferences(matrix: Dictionary, stem_set: Dictionary) -> Dictionary:
+	if stem_set.is_empty():
+		return matrix
+	var preferences := stem_set.get("preferred_dsp_sends", {}) as Dictionary if typeof(stem_set.get("preferred_dsp_sends", {})) == TYPE_DICTIONARY else {}
+	if preferences.is_empty():
+		return matrix
+	var result := matrix.duplicate(true)
+	for role_value in preferences.keys():
+		var role := str(role_value)
+		var role_preferences := preferences.get(role_value, {}) as Dictionary if typeof(preferences.get(role_value, {})) == TYPE_DICTIONARY else {}
+		for effect_value in role_preferences.keys():
+			var effect_key := str(effect_value)
+			if not MUSIC_SEND_EFFECT_ORDER.has(effect_key):
+				continue
+			var effect_roles := result.get(effect_key, {}) as Dictionary if typeof(result.get(effect_key, {})) == TYPE_DICTIONARY else {}
+			effect_roles[role] = maxf(float(effect_roles.get(role, 0.0)), clampf(float(role_preferences.get(effect_value, 0.0)), 0.0, 1.0))
+			result[effect_key] = effect_roles
+	return result
+
+
 func _apply_music_send_matrix(matrix: Dictionary, stem_set: Dictionary, players: Dictionary, feature: bool) -> void:
 	if _running_headless() or WebAudioBridgeScript.available():
 		return
 	var stems := _copy_dict(stem_set.get("stems", {}))
+	var phase_group := "feature_sends" if feature else "venue_sends"
 	for effect_value in MUSIC_SEND_EFFECT_ORDER:
 		var effect_key := str(effect_value)
 		var role_sends := _copy_dict(matrix.get(effect_key, {}))
@@ -1374,9 +2304,9 @@ func _apply_music_send_matrix(matrix: Dictionary, stem_set: Dictionary, players:
 				players[key] = player
 			if player.stream != stream:
 				player.stream = stream
-				player.play(_director_playback_position())
+				_play_audio_player(player, _director_playback_position(), phase_group)
 			elif not player.playing:
-				player.play(_director_playback_position())
+				_play_audio_player(player, _director_playback_position(), phase_group)
 			player.volume_db = _gain_to_db(gain)
 
 
@@ -1387,6 +2317,134 @@ func _stop_music_send_players(players: Dictionary, clear_streams: bool) -> void:
 			player.stop()
 			if clear_streams:
 				player.stream = null
+
+
+func _play_audio_player(player: AudioStreamPlayer, source_position_seconds: float = 0.0, phase_group: String = "") -> void:
+	_float_pcm_player_states.erase(player.get_instance_id())
+	player.pitch_scale = _live_playback_pitch_scale()
+	if not (player.stream is MusicFloatPcmStream):
+		player.play(maxf(0.0, source_position_seconds))
+		return
+	var stream := player.stream as MusicFloatPcmStream
+	player.play()
+	var playback := player.get_stream_playback() as AudioStreamGeneratorPlayback
+	if playback == null:
+		player.stop()
+		return
+	# A newly instantiated generator playback starts empty. Godot rejects
+	# clear_buffer() after the playback becomes active, so prefill it directly.
+	var process_frame := Engine.get_process_frames()
+	var launch_key := "%s:%d" % [phase_group, process_frame] if not phase_group.is_empty() else ""
+	var authority_frame := -1
+	if not launch_key.is_empty() and _float_pcm_phase_launches.has(launch_key):
+		authority_frame = int((_float_pcm_phase_launches.get(launch_key, {}) as Dictionary).get("source_frame", -1))
+	var launch := float_pcm_launch_frame_snapshot(source_position_seconds, stream.mix_rate, stream.loop_begin_frame, stream.loop_end_frame, stream.loop_enabled, authority_frame)
+	var cursor := int(launch.get("source_frame", 0))
+	if not launch_key.is_empty():
+		var group_launch := _float_pcm_phase_launches.get(launch_key, {
+			"phase_group": phase_group,
+			"process_frame": process_frame,
+			"source_frame": cursor,
+			"max_phase_error_frames": 0,
+			"players": 0,
+		}) as Dictionary
+		group_launch["players"] = int(group_launch.get("players", 0)) + 1
+		group_launch["max_phase_error_frames"] = maxi(int(group_launch.get("max_phase_error_frames", 0)), int(launch.get("phase_error_frames", 0)))
+		_float_pcm_phase_launches[launch_key] = group_launch
+		while _float_pcm_phase_launches.size() > 32:
+			_float_pcm_phase_launches.erase(_float_pcm_phase_launches.keys()[0])
+	var state := {
+		"player": player,
+		"playback": playback,
+		"stream": stream,
+		"cursor": cursor,
+		"source_start_frame": cursor,
+		"phase_group": phase_group,
+		"launch_process_frame": process_frame,
+		"finished": false,
+		"drain_deadline_msec": 0,
+	}
+	_float_pcm_player_states[player.get_instance_id()] = state
+	_feed_float_pcm_player(player.get_instance_id(), true)
+
+
+static func float_pcm_launch_frame_snapshot(source_position_seconds: float, mix_rate: int, loop_begin: int, loop_end: int, loop_enabled: bool, authoritative_frame: int = -1) -> Dictionary:
+	var requested := maxi(0, int(round(maxf(0.0, source_position_seconds) * float(maxi(1, mix_rate)))))
+	var source_frame := requested
+	if loop_enabled:
+		var loop_length := maxi(1, loop_end - loop_begin)
+		source_frame = loop_begin + posmod(requested - loop_begin, loop_length)
+	else:
+		source_frame = mini(requested, maxi(loop_begin, loop_end))
+	var requested_wrapped := source_frame
+	if authoritative_frame >= 0:
+		source_frame = authoritative_frame
+	return {
+		"requested_frame": requested_wrapped,
+		"source_frame": source_frame,
+		"authoritative": authoritative_frame >= 0,
+		"phase_error_frames": absi(source_frame - (authoritative_frame if authoritative_frame >= 0 else requested_wrapped)),
+		"phase_model": "director_position_authoritative_group_launch",
+	}
+
+
+func float_pcm_provider_snapshot() -> Dictionary:
+	return {
+		"active_players": _float_pcm_player_states.size(),
+		"launches": _float_pcm_phase_launches.duplicate(true),
+		"phase_model": "director_position_authoritative_group_launch_then_native_mixer_clock",
+		"launch_phase_tolerance_frames": 0,
+	}
+
+
+func _feed_float_pcm_players() -> void:
+	if _float_pcm_player_states.is_empty():
+		return
+	for player_id_value in _float_pcm_player_states.keys():
+		_feed_float_pcm_player(int(player_id_value), false)
+
+
+func _feed_float_pcm_player(player_id: int, prefill: bool) -> void:
+	if not _float_pcm_player_states.has(player_id):
+		return
+	var state: Dictionary = _float_pcm_player_states.get(player_id, {})
+	var player: AudioStreamPlayer = state.get("player", null)
+	var playback: AudioStreamGeneratorPlayback = state.get("playback", null)
+	var stream: MusicFloatPcmStream = state.get("stream", null)
+	if player == null or playback == null or stream == null or not player.playing:
+		_float_pcm_player_states.erase(player_id)
+		return
+	if bool(state.get("finished", false)):
+		if Time.get_ticks_msec() >= int(state.get("drain_deadline_msec", 0)):
+			player.stop()
+			_float_pcm_player_states.erase(player_id)
+		return
+	var available := playback.get_frames_available()
+	if available <= 0:
+		return
+	var requested := available if prefill else mini(available, FLOAT_PCM_FEED_MAX_FRAMES)
+	var buffer := PackedVector2Array()
+	buffer.resize(requested)
+	var cursor := int(state.get("cursor", 0))
+	var written := 0
+	while written < requested:
+		if cursor >= stream.loop_end_frame:
+			if stream.loop_enabled:
+				cursor = stream.loop_begin_frame
+			else:
+				state["finished"] = true
+				break
+		buffer[written] = stream.frame_at(cursor)
+		cursor += 1
+		written += 1
+	if written > 0:
+		if written < buffer.size():
+			buffer.resize(written)
+		playback.push_buffer(buffer)
+	state["cursor"] = cursor
+	if bool(state.get("finished", false)):
+		state["drain_deadline_msec"] = Time.get_ticks_msec() + int(ceil(float(written) * 1000.0 / float(stream.mix_rate))) + 300
+	_float_pcm_player_states[player_id] = state
 
 
 static func _music_fx_state_from_environment(environment: Dictionary, heat_level: int, music_state: Dictionary) -> Dictionary:
@@ -1583,6 +2641,9 @@ static func _normalize_music_mix_input(music_state: Dictionary) -> Dictionary:
 		"music_tags": _copy_array_static(music_state.get("music_tags", [])),
 		"harmonic_section": str(music_state.get("harmonic_section", "")).strip_edges().to_upper(),
 		"musical_bar": maxi(0, int(music_state.get("musical_bar", 0))),
+		"run_seed": str(music_state.get("run_seed", "")),
+		"music_visit_id": str(music_state.get("music_visit_id", "")),
+		"music_arrangement_state": _copy_dict_static(music_state.get("music_arrangement_state", music_state.get("arrangement_state", {}))),
 		"source_environment_id": str(fx_input.get("environment_id", "")),
 	}
 
@@ -1771,7 +2832,8 @@ func _music_profile_from_environment(environment: Dictionary, heat_level: int) -
 	var base_safety := clampf(float(source.get("safety", _safety_from_security(security))), 0.0, 1.0)
 	var effective_safety := base_safety
 	var base_bpm := float(source.get("bpm", _theme_bpm(theme)))
-	var bpm := clampf(base_bpm + (1.0 - base_safety) * 3.0, 58.0, 112.0)
+	var adaptive_tempo := _copy_dict(source.get("adaptive_tempo", {}))
+	var bpm := clampf(float(adaptive_tempo.get("base_bpm", base_bpm)), 58.0, 180.0) if bool(adaptive_tempo.get("enabled", false)) else clampf(base_bpm + (1.0 - base_safety) * 3.0, 58.0, 112.0)
 	var palette_id := str(source.get("palette_id", _theme_texture(theme))).strip_edges()
 	if palette_id.is_empty():
 		palette_id = _theme_texture(theme)
@@ -1801,6 +2863,8 @@ func _music_profile_from_environment(environment: Dictionary, heat_level: int) -
 		"heat_band": 0,
 		"volume": float(source.get("volume", 0.26)),
 		"arrangement_phrases": clampi(int(source.get("arrangement_phrases", DEFAULT_ARRANGEMENT_PHRASES)), MIN_ARRANGEMENT_PHRASES, MAX_ARRANGEMENT_PHRASES),
+		"adaptive_tempo": adaptive_tempo,
+		"layer_choreography": _copy_dict(source.get("layer_choreography", {})),
 	}
 	profile["progression"] = _number_array(source.get("progression", _theme_progression(theme)), _theme_progression(theme))
 	profile["motif"] = _number_array(source.get("motif", _theme_motif(theme)), _theme_motif(theme))
@@ -1964,10 +3028,23 @@ func _ambient_pcm_data(context: Dictionary, token: int = -1) -> PackedByteArray:
 	var frames := int(context.get("frames", 0))
 	var data := PackedByteArray()
 	data.resize(maxi(0, frames * PCM_BYTES_PER_FRAME))
-	for i in range(frames):
+	# Match the full stem renderer's production sampling policy while retaining
+	# the preview stream's exact frame count, byte size, and loop duration.
+	var render_stride := maxi(1, AMBIENT_RENDER_STRIDE_FRAMES)
+	var i := 0
+	while i < frames:
 		if token > 0 and i % GENERATION_CANCEL_CHECK_FRAMES == 0 and _generation_was_cancelled(token):
 			return PackedByteArray()
 		_write_ambient_frame(data, context, i)
+		var source_byte_index := i * PCM_BYTES_PER_FRAME
+		var low_byte := data[source_byte_index]
+		var high_byte := data[source_byte_index + 1]
+		var repeat_count := mini(render_stride, frames - i)
+		for repeat_index in range(1, repeat_count):
+			var byte_index := (i + repeat_index) * PCM_BYTES_PER_FRAME
+			data[byte_index] = low_byte
+			data[byte_index + 1] = high_byte
+		i += render_stride
 	return data
 
 
@@ -2165,6 +3242,17 @@ func _accept_full_stem_set(cache_key: String, stem_set: Dictionary) -> void:
 	_play_full_stem_set(cache_key, stem_set)
 
 
+func _accept_authored_boundary_stem_set(cache_key: String, stem_set: Dictionary) -> void:
+	_deferred_transition_cache_key = ""
+	_deferred_transition_stem_set = {}
+	_deferred_transition_plan = {}
+	_transition_target_cache_key = ""
+	_transition_target_profile = {}
+	var exact_position := _authored_phrase_boundary_position if _authored_phrase_boundary_position >= 0.0 else _director_playback_position()
+	if _play_full_stem_set(cache_key, stem_set, exact_position):
+		_last_authored_boundary_applied_cache_key = cache_key
+
+
 func _set_deferred_transition_stem_set(cache_key: String, stem_set: Dictionary) -> void:
 	if not _stem_set_contract_valid(stem_set):
 		return
@@ -2236,7 +3324,8 @@ func _play_transition_fill(fill_id: String) -> void:
 			var player := player_value as AudioStreamPlayer
 			player.stream = stream
 			player.volume_db = -1.5
-			player.play()
+			_play_audio_player(player)
+			_active_transition_fill_player = player
 			return
 
 
@@ -2608,18 +3697,19 @@ func _play_primer_stem_set(cache_key: String, stem_set: Dictionary) -> void:
 	_play_stem_set(stem_set, 0.0, AMBIENT_STAGE_PRIMER)
 
 
-func _play_full_stem_set(cache_key: String, stem_set: Dictionary, resume_position_override: float = -1.0) -> void:
+func _play_full_stem_set(cache_key: String, stem_set: Dictionary, resume_position_override: float = -1.0) -> bool:
 	_pending_cache_key = ""
 	var resume_position := maxf(0.0, resume_position_override) if resume_position_override >= 0.0 else 0.0
 	if resume_position_override < 0.0 and _music_is_playing() and _current_cache_key == cache_key and _current_stream_is_primer:
 		resume_position = maxf(0.0, _director_playback_position())
 	if _stem_players.is_empty() or not _stem_set_contract_valid(stem_set):
-		return
+		return false
 	_current_cache_key = cache_key
 	_current_stream_is_primer = false
 	_remember_current_music_context(cache_key)
 	_play_stem_set(stem_set, resume_position, AMBIENT_STAGE_FULL)
 	_play_web_music_bed_for_cache(cache_key, resume_position, stem_set)
+	return true
 
 
 func _play_web_music_bed_for_cache(cache_key: String, resume_position: float, source_stem_set: Dictionary = {}) -> void:
@@ -2896,7 +3986,7 @@ func _play_feature_stem_set(stem_set: Dictionary, resume_position: float) -> voi
 			var player: AudioStreamPlayer = _feature_stem_players.get(role, null)
 			if player == null or player.stream == null:
 				continue
-			player.play(safe_position)
+			_play_audio_player(player, safe_position, "feature_stems")
 	_current_feature_stem_set = stem_set.duplicate(true)
 	_stop_music_send_players(_feature_send_players, true)
 	if _web_audio_stem_set_bridge_allowed(stem_set, "feature", AMBIENT_STAGE_FULL):
@@ -3041,6 +4131,7 @@ func _poll_feature_stingers() -> void:
 	if _feature_stinger_pending.is_empty():
 		return
 	_apply_feature_stingers_for_position(_director_playback_position(), true)
+	_apply_outcome_stingers_for_transport(_adaptive_tempo_transport_beats, true)
 
 
 func _apply_feature_stingers_for_position(playback_position: float, play_audio: bool) -> void:
@@ -3051,6 +4142,9 @@ func _apply_feature_stingers_for_position(playback_position: float, play_audio: 
 		if typeof(pending_value) != TYPE_DICTIONARY:
 			continue
 		var pending: Dictionary = pending_value
+		if str(pending.get("time_domain", "position")) == "transport_beats":
+			remaining.append(pending)
+			continue
 		if playback_position + 0.0001 < float(pending.get("target_position", 0.0)):
 			remaining.append(pending)
 			continue
@@ -3066,6 +4160,83 @@ func _apply_feature_stingers_for_position(playback_position: float, play_audio: 
 	_feature_stinger_pending = remaining
 
 
+func _apply_outcome_stingers_for_transport(transport_beat: float, play_audio: bool) -> void:
+	if _feature_stinger_pending.is_empty():
+		return
+	var remaining: Array = []
+	for pending_value in _feature_stinger_pending:
+		if typeof(pending_value) != TYPE_DICTIONARY:
+			continue
+		var pending: Dictionary = pending_value
+		if str(pending.get("time_domain", "position")) != "transport_beats":
+			remaining.append(pending)
+			continue
+		var target_beat := float(pending.get("target_transport_beat", 0.0))
+		if transport_beat + 0.000001 < target_beat:
+			remaining.append(pending)
+			continue
+		var reverb_started := _activate_music_outcome_reverb(pending, target_beat)
+		_feature_stinger_history.append({
+			"cue_id": str(pending.get("cue_id", "")),
+			"event_token": str(pending.get("event_token", "")),
+			"outcome_class": str(pending.get("outcome_class", "")),
+			"played_transport_beat": snappedf(transport_beat, 0.000001),
+			"target_transport_beat": snappedf(target_beat, 0.000001),
+			"reverb_started": reverb_started,
+		})
+		while _feature_stinger_history.size() > MUSIC_OUTCOME_HISTORY_LIMIT:
+			_feature_stinger_history.pop_front()
+		if play_audio and audio_enabled and not _running_headless():
+			_play_feature_stinger_now(str(pending.get("cue_id", "")), float(pending.get("volume_db", -2.0)))
+	_feature_stinger_pending = remaining
+
+
+func _activate_music_outcome_reverb(pending: Dictionary, target_beat: float) -> bool:
+	var pulse := _copy_dict(pending.get("reverb_pulse", {}))
+	if pulse.is_empty():
+		return false
+	var outcome_class := str(pending.get("outcome_class", "neutral"))
+	var eligible_classes := _music_outcome_string_array(pulse.get("outcome_classes", []))
+	if not eligible_classes.is_empty() and not eligible_classes.has(outcome_class):
+		return false
+	var cooldown := maxf(0.0, float(pulse.get("cooldown_beats", 0.0)))
+	var last_start := float(_music_outcome_reverb_last_start_by_class.get(outcome_class, -999999.0))
+	if target_beat - last_start < cooldown - 0.000001:
+		return false
+	var attack := maxf(0.0, float(pulse.get("attack_beats", 0.0)))
+	var hold := maxf(0.0, float(pulse.get("hold_beats", 0.0)))
+	var release := maxf(0.0, float(pulse.get("release_beats", 0.0)))
+	var peak := clampf(float(pulse.get("peak_send", 0.0)), 0.0, MUSIC_OUTCOME_REVERB_MAX_SEND)
+	if attack + hold + release <= 0.0 or peak <= 0.0:
+		return false
+	var current_level := MusicOutcomeDirectorModelScript.reverb_level(_music_outcome_reverb_envelope, target_beat)
+	_music_outcome_reverb_envelope = {
+		"event_token": str(pending.get("event_token", "")),
+		"outcome_class": outcome_class,
+		"start_beat": target_beat,
+		"end_beat": target_beat + attack + hold + release,
+		"attack_beats": attack,
+		"hold_beats": hold,
+		"release_beats": release,
+		"start_level": minf(current_level, peak),
+		"peak_send": peak,
+		"eligible_roles": _music_outcome_string_array(pulse.get("eligible_roles", [])),
+	}
+	_music_outcome_reverb_last_start_by_class[outcome_class] = target_beat
+	return true
+
+
+func _music_outcome_string_array(value: Variant) -> Array[String]:
+	var result: Array[String] = []
+	if typeof(value) != TYPE_ARRAY:
+		return result
+	for item in value as Array:
+		var text := str(item).strip_edges().to_lower()
+		if not text.is_empty() and not result.has(text):
+			result.append(text)
+	return result
+
+
 func _play_feature_stinger_now(cue_id: String, volume_db: float = -2.0) -> void:
 	_ensure_feature_stinger_players()
 	var stream := _feature_stinger_stream_for_cue(cue_id)
@@ -3079,14 +4250,14 @@ func _play_feature_stinger_now(cue_id: String, volume_db: float = -2.0) -> void:
 			var player := player_value as AudioStreamPlayer
 			player.stream = stream
 			player.volume_db = volume_db
-			player.play()
+			_play_audio_player(player)
 			return
 	if _feature_stinger_players[0] is AudioStreamPlayer:
 		var fallback := _feature_stinger_players[0] as AudioStreamPlayer
 		fallback.stop()
 		fallback.stream = stream
 		fallback.volume_db = volume_db
-		fallback.play()
+		_play_audio_player(fallback)
 
 
 func _feature_music_style(cue_id: String) -> String:
@@ -3150,6 +4321,7 @@ func _stem_manifest_from_contract(stem_set: Dictionary) -> Dictionary:
 	var roles := {}
 	var present_roles: Array = []
 	var missing_roles: Array = []
+	var float_pcm_precision := {}
 	var sync_ok := loop_frames > 0
 	for role_value in MUSIC_STEM_PLAYBACK_ROLES:
 		var role := str(role_value)
@@ -3158,7 +4330,13 @@ func _stem_manifest_from_contract(stem_set: Dictionary) -> Dictionary:
 		var frames := 0
 		var loop_begin := 0
 		var loop_end := 0
-		if value is AudioStreamWAV:
+		if value is MusicFloatPcmStream:
+			var float_stream := value as MusicFloatPcmStream
+			frames = float_stream.frame_count
+			loop_begin = float_stream.loop_begin_frame
+			loop_end = float_stream.loop_end_frame
+			float_pcm_precision[role] = float_stream.precision_snapshot()
+		elif value is AudioStreamWAV:
 			var stream := value as AudioStreamWAV
 			frames = int(stream.loop_end)
 			loop_begin = int(stream.loop_begin)
@@ -3201,11 +4379,25 @@ func _stem_manifest_from_contract(stem_set: Dictionary) -> Dictionary:
 		"sample_rate": int(stem_set.get("sample_rate", SAMPLE_RATE)),
 		"channels": int(stem_set.get("channels", 1)),
 		"bit_depth": int(stem_set.get("bit_depth", 16)),
+		"delivery_files": _copy_array(stem_set.get("delivery_files", [])),
+		"source_audio_format": _copy_dict(stem_set.get("source_audio_format", {})),
+		"playback_audio_format": _copy_dict(stem_set.get("playback_audio_format", {})),
+		"preferred_dsp_sends": _copy_dict(stem_set.get("preferred_dsp_sends", {})),
+		"float_pcm_precision": float_pcm_precision,
 		"selection_key": str(stem_set.get("selection_key", "base")),
 		"selected_variants": _copy_dict(stem_set.get("selected_variants", {})),
+		"selected_role_epochs": _copy_dict(stem_set.get("selected_role_epochs", {})),
 		"selected_tags": _copy_array(stem_set.get("selected_tags", [])),
 		"selection_context": _copy_dict(stem_set.get("selection_context", {})),
+		"compatibility_set_id": str(stem_set.get("compatibility_set_id", "")),
+		"progression_id": str(stem_set.get("progression_id", "")),
+		"recipe_state": _copy_dict(stem_set.get("recipe_state", {})),
+		"recipe_id": str(stem_set.get("recipe_id", "")),
+		"phrase_index": int(stem_set.get("phrase_index", 0)),
+		"cycle_index": int(stem_set.get("cycle_index", 0)),
+		"excluded_candidates": _copy_array(stem_set.get("excluded_candidates", [])),
 		"transitions": _copy_dict(stem_set.get("transitions", {})),
+		"stinger_metadata": _copy_dict(stem_set.get("stinger_metadata", {})),
 		"stinger_loop_modes": _audio_stream_loop_mode_snapshot(_copy_dict(stem_set.get("stingers", {}))),
 		"fill_loop_modes": _audio_stream_loop_mode_snapshot(_copy_dict(stem_set.get("fills", {}))),
 		"step_period": snappedf(float(stem_set.get("step_period", _step_period_from_bpm(float(stem_set.get("bpm", 82.0))))), 0.0001),
@@ -3217,7 +4409,12 @@ func _audio_stream_loop_mode_snapshot(streams: Dictionary) -> Dictionary:
 	var result := {}
 	for cue_value in streams.keys():
 		var stream: AudioStream = streams.get(cue_value, null)
-		result[str(cue_value)] = int((stream as AudioStreamWAV).loop_mode) if stream is AudioStreamWAV else -1
+		if stream is AudioStreamWAV:
+			result[str(cue_value)] = int((stream as AudioStreamWAV).loop_mode)
+		elif stream is MusicFloatPcmStream:
+			result[str(cue_value)] = AudioStreamWAV.LOOP_FORWARD if (stream as MusicFloatPcmStream).loop_enabled else AudioStreamWAV.LOOP_DISABLED
+		else:
+			result[str(cue_value)] = -1
 	return result
 
 
@@ -3249,7 +4446,7 @@ func _play_stem_set(stem_set: Dictionary, resume_position: float, stage: String)
 			var player: AudioStreamPlayer = _stem_players.get(role, null)
 			if player == null or player.stream == null:
 				continue
-			player.play(safe_position)
+			_play_audio_player(player, safe_position, "venue_stems")
 	_current_stem_set = stem_set.duplicate(true)
 	_stop_music_send_players(_music_send_players, true)
 	_current_stem_stage = stage
@@ -3364,10 +4561,27 @@ func _authored_stem_set_from_profile(profile: Dictionary, music_state: Dictionar
 	if entry.is_empty() or not _authored_track_entry_valid(entry):
 		return {}
 	var selection := MusicArrangementSelectorScript.select(entry, profile, music_state)
+	_notify_authored_arrangement_selection(track_id, selection)
 	var selection_key := str(selection.get("selection_key", "base"))
 	var cache_key := "authored:%s:%s" % [track_id, selection_key]
 	if _authored_manifest_cache.has(cache_key):
-		return (_authored_manifest_cache.get(cache_key, {}) as Dictionary).duplicate(true)
+		var cached := (_authored_manifest_cache.get(cache_key, {}) as Dictionary).duplicate(true)
+		cached["recipe_state"] = _copy_dict(selection.get("recipe_state", {}))
+		cached["selected_role_epochs"] = _copy_dict(selection.get("selected_role_epochs", {}))
+		cached["selection_context"] = _copy_dict(selection.get("selection_context", {}))
+		cached["recipe_id"] = str((cached.get("recipe_state", {}) as Dictionary).get("recipe_id", ""))
+		var cached_cursor := int((cached.get("recipe_state", {}) as Dictionary).get("cursor", -1)) if typeof(cached.get("recipe_state", {})) == TYPE_DICTIONARY else -1
+		var cached_recipe := MusicArrangementSelectorScript.recipe_definition(entry, str((cached.get("recipe_state", {}) as Dictionary).get("recipe_id", "")) if typeof(cached.get("recipe_state", {})) == TYPE_DICTIONARY else "")
+		var cached_recipe_length := maxi(1, _copy_array(cached_recipe.get("sections", [])).size())
+		cached["phrase_index"] = posmod(maxi(0, cached_cursor), cached_recipe_length)
+		cached["cycle_index"] = maxi(0, cached_cursor) / cached_recipe_length
+		cached["harmony_recipe_id"] = str(cached_recipe.get("id", ""))
+		cached["harmony_phrase_bars"] = maxi(1, int(cached_recipe.get("phrase_bars", 4)))
+		cached["harmony_recipe_length"] = cached_recipe_length
+		cached["harmony_visit_id"] = str((cached.get("recipe_state", {}) as Dictionary).get("visit_id", ""))
+		cached["harmony_last_phrase_event_index"] = int((cached.get("recipe_state", {}) as Dictionary).get("last_phrase_event_index", -1))
+		cached["excluded_candidates"] = _copy_array(selection.get("excluded_candidates", []))
+		return cached
 	var stems_value: Variant = selection.get("stems", {})
 	if typeof(stems_value) != TYPE_DICTIONARY:
 		return {}
@@ -3394,41 +4608,156 @@ func _authored_stem_set_from_profile(profile: Dictionary, music_state: Dictionar
 	contract["sample_rate"] = int(entry.get("sample_rate", SAMPLE_RATE))
 	contract["channels"] = int(entry.get("channels", 1))
 	contract["bit_depth"] = int(entry.get("bit_depth", 16))
+	contract["profile"] = profile.duplicate(true)
+	contract["adaptive_tempo"] = _copy_dict(entry.get("adaptive_tempo", {}))
+	var delivery_snapshot := _authored_delivery_snapshot(entry, stems_data)
+	contract["delivery_files"] = _copy_array(delivery_snapshot.get("files", []))
+	contract["source_audio_format"] = _copy_dict(delivery_snapshot.get("source_audio_format", {}))
+	contract["playback_audio_format"] = _copy_dict(delivery_snapshot.get("playback_audio_format", {}))
+	contract["preferred_dsp_sends"] = _copy_dict(delivery_snapshot.get("preferred_dsp_sends", {}))
 	contract["selection_key"] = selection_key
 	contract["selected_variants"] = _copy_dict(selection.get("selected_variants", {}))
+	contract["selected_role_epochs"] = _copy_dict(selection.get("selected_role_epochs", {}))
 	contract["selected_tags"] = _copy_array(selection.get("selected_tags", []))
 	contract["selection_context"] = _copy_dict(selection.get("selection_context", {}))
+	contract["compatibility_set_id"] = str(selection.get("compatibility_set_id", ""))
+	contract["progression_id"] = str(selection.get("progression_id", ""))
+	contract["recipe_state"] = _copy_dict(selection.get("recipe_state", {}))
+	contract["recipe_id"] = str((contract.get("recipe_state", {}) as Dictionary).get("recipe_id", ""))
+	var recipe_cursor := int((contract.get("recipe_state", {}) as Dictionary).get("cursor", -1)) if typeof(contract.get("recipe_state", {})) == TYPE_DICTIONARY else -1
+	var recipe := MusicArrangementSelectorScript.recipe_definition(entry, str((contract.get("recipe_state", {}) as Dictionary).get("recipe_id", "")) if typeof(contract.get("recipe_state", {})) == TYPE_DICTIONARY else "")
+	var recipe_length := maxi(1, _copy_array(recipe.get("sections", [])).size())
+	contract["phrase_index"] = posmod(maxi(0, recipe_cursor), recipe_length)
+	contract["cycle_index"] = maxi(0, recipe_cursor) / recipe_length
+	contract["harmony_recipe_id"] = str(recipe.get("id", ""))
+	contract["harmony_phrase_bars"] = maxi(1, int(recipe.get("phrase_bars", 4)))
+	contract["harmony_recipe_length"] = recipe_length
+	contract["harmony_recipe_sections"] = _copy_array(recipe.get("sections", []))
+	contract["harmony_section_progressions"] = _authored_section_progressions(entry)
+	contract["harmony_visit_id"] = str((contract.get("recipe_state", {}) as Dictionary).get("visit_id", ""))
+	contract["harmony_last_phrase_event_index"] = int((contract.get("recipe_state", {}) as Dictionary).get("last_phrase_event_index", -1))
+	contract["excluded_candidates"] = _copy_array(selection.get("excluded_candidates", []))
 	contract["transitions"] = _copy_dict(entry.get("transitions", {}))
+	contract["stinger_metadata"] = _copy_dict(entry.get("stingers", {}))
+	contract["fill_metadata"] = _copy_dict(entry.get("fills", {}))
+	contract["layer_choreography"] = _copy_dict(entry.get("layer_choreography", {}))
+	contract["authored_arrangement"] = _copy_array(entry.get("arrangement", []))
 	contract["fills"] = _authored_one_shots(track_id, _copy_dict(entry.get("fills", {})))
 	contract["step_period"] = _step_period_from_bpm(float(contract.get("bpm", 82.0)))
-	_authored_manifest_cache[cache_key] = contract.duplicate(true)
+	_store_authored_manifest_cache(cache_key, contract)
 	return contract
 
 
-func _authored_track_entry(track_id: String) -> Dictionary:
-	var manifest := _authored_manifest_entries()
-	for entry_value in manifest:
-		if typeof(entry_value) != TYPE_DICTIONARY:
+static func _authored_section_progressions(entry: Dictionary) -> Dictionary:
+	var result := {}
+	var sets_value: Variant = entry.get("compatibility_sets", [])
+	if typeof(sets_value) != TYPE_ARRAY:
+		return result
+	for set_value in sets_value as Array:
+		if typeof(set_value) != TYPE_DICTIONARY:
 			continue
-		var entry: Dictionary = entry_value
-		if str(entry.get("id", "")).strip_edges() == track_id:
-			return entry.duplicate(true)
-	return {}
+		var compatibility: Dictionary = set_value
+		var progression_id := str(compatibility.get("progression_id", ""))
+		var sections_value: Variant = compatibility.get("harmonic_sections", [])
+		if progression_id.is_empty() or typeof(sections_value) != TYPE_ARRAY:
+			continue
+		for section_value in sections_value as Array:
+			var section := str(section_value).strip_edges().to_upper()
+			if not section.is_empty() and not result.has(section):
+				result[section] = progression_id
+	return result
+
+
+func _notify_authored_arrangement_selection(track_id: String, selection: Dictionary) -> void:
+	if str(selection.get("compatibility_set_id", "")).is_empty():
+		return
+	var recipe_state := _copy_dict(selection.get("recipe_state", {}))
+	var notice := "%s|%s|%d|%s" % [track_id, str(recipe_state.get("visit_id", "")), int(recipe_state.get("cursor", -1)), str(selection.get("selection_key", ""))]
+	if notice == _last_arrangement_selection_notice:
+		return
+	_last_arrangement_selection_notice = notice
+	authored_arrangement_selected.emit({"track_id": track_id, "selected_variant_ids": _copy_dict(selection.get("selection_memory_ids", {})), "selected_role_epochs": _copy_dict(selection.get("selection_memory_epochs", {})), "selection_key": str(selection.get("selection_key", ""))})
+
+
+func _store_authored_manifest_cache(cache_key: String, contract: Dictionary) -> void:
+	if _authored_manifest_cache.has(cache_key):
+		_authored_manifest_cache_order.erase(cache_key)
+	_authored_manifest_cache[cache_key] = contract.duplicate(true)
+	_authored_manifest_cache_order.append(cache_key)
+	while _authored_manifest_cache_order.size() > AUTHORED_MANIFEST_CACHE_LIMIT:
+		var evicted: String = str(_authored_manifest_cache_order.pop_front())
+		_authored_manifest_cache.erase(evicted)
+
+
+func _authored_delivery_snapshot(entry: Dictionary, selected_stems: Dictionary) -> Dictionary:
+	var delivery := entry.get("delivery", {}) as Dictionary if typeof(entry.get("delivery", {})) == TYPE_DICTIONARY else {}
+	var aliases := delivery.get("classification_aliases", {}) as Dictionary if typeof(delivery.get("classification_aliases", {})) == TYPE_DICTIONARY else {}
+	var files: Array = []
+	var preferred_dsp_sends := {}
+	var roles := selected_stems.keys()
+	roles.sort_custom(func(a: Variant, b: Variant) -> bool: return str(a) < str(b))
+	for role_value in roles:
+		var role := str(role_value)
+		var metadata_value: Variant = selected_stems.get(role_value)
+		var filename := _authored_stem_filename(metadata_value)
+		var parsed := MusicDeliveryIndexScript.parse_filename(filename, aliases)
+		if bool(parsed.get("ok", false)):
+			files.append(parsed.duplicate(true))
+		else:
+			files.append({"ok": false, "original_filename": filename, "role": role, "error": str(parsed.get("error", "legacy filename"))})
+		if typeof(metadata_value) == TYPE_DICTIONARY:
+			var sends_value: Variant = (metadata_value as Dictionary).get("dsp_sends", {})
+			if typeof(sends_value) == TYPE_DICTIONARY:
+				preferred_dsp_sends[role] = (sends_value as Dictionary).duplicate(true)
+	var source_bits := int(entry.get("bit_depth", 16))
+	return {
+		"files": files,
+		"preferred_dsp_sends": preferred_dsp_sends,
+		"source_audio_format": {
+			"codec": "pcm_integer_wav",
+			"sample_rate": int(entry.get("sample_rate", SAMPLE_RATE)),
+			"channels": int(entry.get("channels", 1)),
+			"bit_depth": source_bits,
+			"master_preserved": true,
+		},
+		"playback_audio_format": {
+			"codec": "godot_audiostreamgenerator_float_pcm",
+			"sample_rate": int(entry.get("sample_rate", SAMPLE_RATE)),
+			"channels": int(entry.get("channels", 1)),
+			"sample_type": "float32",
+			"bit_depth": 32,
+			"decoded_from_24_bit": source_bits == 24,
+			"decode_policy": "exact_signed_pcm24_normalization_cached_at_load",
+			"phase_alignment": "director_position_authoritative_group_launch_then_native_mixer_clock",
+		},
+	}
+
+
+func _authored_track_entry(track_id: String) -> Dictionary:
+	if not _authored_manifest_entries_loaded:
+		_authored_manifest_entries()
+	return (_authored_manifest_entries_by_id.get(track_id, {}) as Dictionary).duplicate(true) if _authored_manifest_entries_by_id.has(track_id) else {}
 
 
 func _authored_manifest_entries() -> Array:
-	if _authored_manifest_cache.has("manifest_entries"):
-		return (_authored_manifest_cache.get("manifest_entries", []) as Array).duplicate(true)
+	if _authored_manifest_entries_loaded:
+		return _authored_manifest_entries_cache.duplicate(true)
+	_authored_manifest_entries_loaded = true
 	if not FileAccess.file_exists(MUSIC_AUTHORED_MANIFEST_PATH):
-		_authored_manifest_cache["manifest_entries"] = []
 		return []
 	var text := FileAccess.get_file_as_string(MUSIC_AUTHORED_MANIFEST_PATH)
 	var parsed: Variant = JSON.parse_string(text)
 	if typeof(parsed) != TYPE_ARRAY:
-		_authored_manifest_cache["manifest_entries"] = []
 		return []
-	_authored_manifest_cache["manifest_entries"] = (parsed as Array).duplicate(true)
-	return (parsed as Array).duplicate(true)
+	_authored_manifest_entries_cache = (parsed as Array).duplicate(true)
+	_authored_manifest_entries_by_id = {}
+	for entry_value in _authored_manifest_entries_cache:
+		if typeof(entry_value) == TYPE_DICTIONARY:
+			var entry: Dictionary = entry_value
+			var track_id := str(entry.get("id", "")).strip_edges()
+			if not track_id.is_empty():
+				_authored_manifest_entries_by_id[track_id] = entry
+	return _authored_manifest_entries_cache.duplicate(true)
 
 
 func _authored_track_entry_valid(entry: Dictionary) -> bool:
@@ -3480,6 +4809,7 @@ func _authored_stem_filename(value: Variant) -> String:
 
 func _authored_stingers(track_id: String, entry: Dictionary) -> Dictionary:
 	var result := {}
+	var stream_by_file := {}
 	var stingers_value: Variant = entry.get("stingers", {})
 	if typeof(stingers_value) != TYPE_DICTIONARY:
 		return result
@@ -3492,7 +4822,12 @@ func _authored_stingers(track_id: String, entry: Dictionary) -> Dictionary:
 			continue
 		var loop_enabled := typeof(stinger_value) == TYPE_DICTIONARY and bool((stinger_value as Dictionary).get("loop", false))
 		var loop_frames := int((stinger_value as Dictionary).get("loop_frames", 0)) if loop_enabled else 0
-		var stream: AudioStream = _load_authored_audio_stream(_authored_music_path(track_id, filename), loop_frames, loop_enabled)
+		var stream_key := "%s|%d|%s" % [filename.to_lower(), loop_frames, str(loop_enabled)]
+		var stream: AudioStream = stream_by_file.get(stream_key, null)
+		if stream == null:
+			stream = _load_authored_audio_stream(_authored_music_path(track_id, filename), loop_frames, loop_enabled)
+			if stream != null:
+				stream_by_file[stream_key] = stream
 		if stream != null:
 			result[cue_id] = stream
 	return result
@@ -3519,6 +4854,12 @@ func _authored_music_path(track_id: String, filename: String) -> String:
 
 
 func _load_authored_audio_stream(path: String, loop_frames: int, loop_enabled: bool = true):
+	var lowered := path.to_lower()
+	if lowered.ends_with(".wav"):
+		# Decode the untouched source master ourselves. This keeps 24-bit source
+		# validation deterministic across editor/import settings; 24-bit masters
+		# enter the cached float provider rather than a 16-bit WAV container.
+		return _load_authored_wav_stream(path, loop_frames, loop_enabled)
 	var loaded: Resource = load(path)
 	if loaded is AudioStreamWAV:
 		var wav_stream := (loaded as AudioStreamWAV).duplicate(true) as AudioStreamWAV
@@ -3526,9 +4867,6 @@ func _load_authored_audio_stream(path: String, loop_frames: int, loop_enabled: b
 		return wav_stream
 	if loaded is AudioStream:
 		return loaded
-	var lowered := path.to_lower()
-	if lowered.ends_with(".wav"):
-		return _load_authored_wav_stream(path, loop_frames, loop_enabled)
 	return null
 
 
@@ -3543,35 +4881,67 @@ func _load_authored_wav_stream(path: String, loop_frames: int, loop_enabled: boo
 	if not FileAccess.file_exists(path):
 		return null
 	var bytes := FileAccess.get_file_as_bytes(path)
-	if bytes.size() < 44:
+	if bytes.size() < 12:
 		return null
 	if _ascii_from_bytes(bytes, 0, 4) != "RIFF" or _ascii_from_bytes(bytes, 8, 4) != "WAVE":
 		return null
 	var offset := 12
-	var channels := 1
-	var sample_rate := SAMPLE_RATE
-	var bits_per_sample := 16
+	var audio_format := 0
+	var channels := 0
+	var sample_rate := 0
+	var bits_per_sample := 0
+	var block_align := 0
 	var data_start := -1
 	var data_size := 0
 	while offset + 8 <= bytes.size():
 		var chunk_id := _ascii_from_bytes(bytes, offset, 4)
 		var chunk_size := _u32_le(bytes, offset + 4)
 		var chunk_data := offset + 8
-		if chunk_id == "fmt " and chunk_data + 16 <= bytes.size():
-			channels = maxi(1, _u16_le(bytes, chunk_data + 2))
-			sample_rate = maxi(1, _u32_le(bytes, chunk_data + 4))
+		if chunk_data + chunk_size > bytes.size():
+			return null
+		if chunk_id == "fmt " and chunk_size >= 16:
+			audio_format = _u16_le(bytes, chunk_data)
+			channels = _u16_le(bytes, chunk_data + 2)
+			sample_rate = _u32_le(bytes, chunk_data + 4)
+			block_align = _u16_le(bytes, chunk_data + 12)
 			bits_per_sample = _u16_le(bytes, chunk_data + 14)
-		elif chunk_id == "data":
+		elif chunk_id == "data" and data_start < 0:
 			data_start = chunk_data
-			data_size = mini(chunk_size, bytes.size() - chunk_data)
-			break
+			data_size = chunk_size
 		offset = chunk_data + chunk_size + (chunk_size % 2)
-	if data_start < 0 or data_size <= 0 or bits_per_sample != 16:
+	if audio_format != 1 or channels < 1 or channels > 2 or sample_rate <= 0 or not [16, 24].has(bits_per_sample) or data_start < 0 or data_size <= 0:
 		return null
+	var source_bytes_per_sample := int(bits_per_sample / 8)
+	var source_frame_bytes := channels * source_bytes_per_sample
+	if block_align != source_frame_bytes or data_size % source_frame_bytes != 0:
+		return null
+	var source_frames := int(data_size / source_frame_bytes)
+	if loop_enabled and loop_frames > 0 and source_frames != loop_frames:
+		return null
+	if bits_per_sample == 24:
+		var float_frames := PackedVector2Array()
+		float_frames.resize(source_frames)
+		var precision_samples := 0
+		var max_reconstruction_error_lsb := 0
+		for frame_index in range(source_frames):
+			var source_offset := data_start + frame_index * source_frame_bytes
+			var left_24 := _s24_le(bytes, source_offset)
+			var right_24 := _s24_le(bytes, source_offset + 3) if channels > 1 else left_24
+			var frame := Vector2(MusicFloatPcmStream.pcm24_to_float(left_24), MusicFloatPcmStream.pcm24_to_float(right_24))
+			float_frames[frame_index] = frame
+			if (left_24 & 0xff) != 0:
+				precision_samples += 1
+			if channels > 1 and (right_24 & 0xff) != 0:
+				precision_samples += 1
+			max_reconstruction_error_lsb = maxi(max_reconstruction_error_lsb, absi(int(round(float(frame.x) * 8388608.0)) - left_24))
+			if channels > 1:
+				max_reconstruction_error_lsb = maxi(max_reconstruction_error_lsb, absi(int(round(float(frame.y) * 8388608.0)) - right_24))
+		var float_stream := MusicFloatPcmStream.new()
+		float_stream.configure(float_frames, sample_rate, channels, loop_enabled, 0, loop_frames if loop_enabled and loop_frames > 0 else source_frames, precision_samples, max_reconstruction_error_lsb)
+		return float_stream
 	var data := PackedByteArray()
-	data.resize(data_size)
-	for index in range(data_size):
-		data[index] = bytes[data_start + index]
+	if bits_per_sample == 16:
+		data = bytes.slice(data_start, data_start + data_size)
 	var stream := AudioStreamWAV.new()
 	stream.format = AudioStreamWAV.FORMAT_16_BITS
 	stream.mix_rate = sample_rate
@@ -3599,6 +4969,13 @@ static func _u32_le(bytes: PackedByteArray, offset: int) -> int:
 	if offset + 3 >= bytes.size():
 		return 0
 	return int(bytes[offset]) | (int(bytes[offset + 1]) << 8) | (int(bytes[offset + 2]) << 16) | (int(bytes[offset + 3]) << 24)
+
+
+static func _s24_le(bytes: PackedByteArray, offset: int) -> int:
+	if offset + 2 >= bytes.size():
+		return 0
+	var value := int(bytes[offset]) | (int(bytes[offset + 1]) << 8) | (int(bytes[offset + 2]) << 16)
+	return value - 0x1000000 if (value & 0x800000) != 0 else value
 
 
 func _midi_freq(midi_note: int) -> float:
@@ -4374,6 +5751,8 @@ static func _music_fx_graph_matches(bus_index: int) -> bool:
 
 static func _new_music_fx_effect(key: String) -> AudioEffect:
 	match key:
+		"pitch_shift":
+			return AudioEffectPitchShift.new()
 		"low_pass":
 			return AudioEffectLowPassFilter.new()
 		"band_pass":
@@ -4396,6 +5775,10 @@ static func _new_music_fx_effect(key: String) -> AudioEffect:
 
 static func _configure_music_fx_effect(key: String, effect: AudioEffect) -> void:
 	match key:
+		"pitch_shift":
+			_set_effect_property(effect, "pitch_scale", 1.0)
+			_set_effect_property(effect, "oversampling", 4)
+			_set_effect_property(effect, "fft_size", AudioEffectPitchShift.FFT_SIZE_1024)
 		"low_pass":
 			_set_effect_property(effect, "cutoff_hz", 18000.0)
 			_set_effect_property(effect, "resonance", 0.18)
@@ -4499,6 +5882,14 @@ func _music_director_step_seconds() -> float:
 	if not _current_stem_set.is_empty():
 		return maxf(0.001, _step_period_from_bpm(float(_current_stem_set.get("bpm", 82.0))))
 	return _step_period_from_bpm(82.0)
+
+
+func _music_live_bar_seconds() -> float:
+	return _music_director_bar_seconds() / maxf(0.001, _adaptive_tempo_ratio)
+
+
+func _live_playback_pitch_scale() -> float:
+	return maxf(0.001, _adaptive_tempo_ratio * _music_fx_pitch_wobble_scale)
 
 
 func _music_is_playing() -> bool:

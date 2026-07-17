@@ -3,6 +3,8 @@ extends RefCounted
 
 # Loads and validates README-defined foundation content packs.
 
+const MusicDeliveryIndexScript := preload("res://scripts/core/music_delivery_index.gd")
+
 const ENVIRONMENT_ARCHETYPES_PATH := "res://data/environments/archetypes.json"
 const GAMES_PATH := "res://data/games/games.json"
 const SCRATCH_TICKETS_PATH := "res://data/games/scratch_tickets.json"
@@ -18,8 +20,14 @@ const MUSIC_MANIFEST_PATH := "res://data/audio/music_manifest.json"
 const MUSIC_ASSET_ROOT := "res://assets/audio/music"
 const MIN_AUTHORED_MUSIC_LOOP_SECONDS := 12.0
 const AUTHORED_MUSIC_SAMPLE_RATE := 44100
-const AUTHORED_MUSIC_BITS_PER_SAMPLE := 16
+const AUTHORED_MUSIC_ALLOWED_BITS_PER_SAMPLE := [16, 24]
 const AUTHORED_MUSIC_BEATS_PER_BAR := 4
+const MUSIC_WAV_INFO_CACHE_MAX_ENTRIES := 128
+
+static var _music_wav_info_cache: Dictionary = {}
+static var _music_wav_info_cache_order: Array[String] = []
+static var _music_wav_info_cache_hits := 0
+static var _music_wav_info_cache_misses := 0
 
 var environment_archetypes: Array = []
 var games: Array = []
@@ -445,6 +453,49 @@ func route(route_id: String) -> Dictionary:
 # Finds an authored music track manifest entry by id.
 func music_track(track_id: String) -> Dictionary:
 	return _lookup("music_tracks", music_tracks, track_id)
+
+
+# Scans one delivery folder on demand for editor/import tooling. Runtime audio
+# consumes the manifest and does not call this in its frame loop.
+func music_delivery_index(track_id: String) -> Dictionary:
+	var track := music_track(track_id)
+	if track.is_empty():
+		return {"track_id": track_id, "valid": false, "entries": [], "errors": ["unknown music track %s" % track_id]}
+	var delivery := track.get("delivery", {}) as Dictionary if typeof(track.get("delivery", {})) == TYPE_DICTIONARY else {}
+	return MusicDeliveryIndexScript.scan_track_folder(
+		track_id,
+		str(delivery.get("environment", "")).strip_edges(),
+		MUSIC_ASSET_ROOT,
+		delivery.get("classification_aliases", {}) as Dictionary if typeof(delivery.get("classification_aliases", {})) == TYPE_DICTIONARY else {}
+	)
+
+
+static func inspect_music_wav(path: String) -> Dictionary:
+	return _wav_info(path)
+
+
+static func music_wav_info_cache_snapshot() -> Dictionary:
+	return {
+		"entries": _music_wav_info_cache.size(),
+		"hits": _music_wav_info_cache_hits,
+		"misses": _music_wav_info_cache_misses,
+		"max_entries": MUSIC_WAV_INFO_CACHE_MAX_ENTRIES,
+	}
+
+
+static func clear_music_wav_info_cache() -> void:
+	_music_wav_info_cache.clear()
+	_music_wav_info_cache_order.clear()
+	_music_wav_info_cache_hits = 0
+	_music_wav_info_cache_misses = 0
+
+
+static func synchronized_wav_mismatches(reference: Dictionary, candidate: Dictionary) -> Array[String]:
+	var mismatches: Array[String] = []
+	for property_name in ["sample_rate", "channels", "bits_per_sample", "frames"]:
+		if int(candidate.get(property_name, 0)) != int(reference.get(property_name, 0)):
+			mismatches.append(property_name)
+	return mismatches
 
 
 # Reads one JSON array content pack from disk.
@@ -1227,8 +1278,23 @@ func _validate_music_manifest_definitions() -> void:
 			continue
 		var track: Dictionary = track_value
 		var track_id := str(track.get("id", "")).strip_edges()
+		var delivery_value: Variant = track.get("delivery", {})
+		var delivery: Dictionary = delivery_value as Dictionary if typeof(delivery_value) == TYPE_DICTIONARY else {}
+		if typeof(delivery_value) != TYPE_DICTIONARY:
+			validation_errors.append("music_tracks %s delivery must be a dictionary when present." % track_id)
+		var delivery_environment := str(delivery.get("environment", "")).strip_edges()
+		var production_24_bit := str(delivery.get("master_contract", "")).strip_edges().to_lower() == "production_24_bit"
+		if production_24_bit:
+			if delivery_environment.is_empty():
+				validation_errors.append("music_tracks %s production delivery must declare its filename environment." % track_id)
+			if not [8, 16].has(int(track.get("bars", 0))):
+				validation_errors.append("music_tracks %s production loops must be exactly 8 or 16 bars." % track_id)
+			if int(track.get("bit_depth", 0)) != 24:
+				validation_errors.append("music_tracks %s production masters must declare 24-bit PCM." % track_id)
 		if float(track.get("bpm", 0.0)) <= 0.0:
 			validation_errors.append("music_tracks %s bpm must be positive." % track_id)
+		_validate_music_adaptive_tempo(track_id, float(track.get("bpm", 0.0)), track.get("adaptive_tempo", {}))
+		_validate_music_layer_choreography(track_id, track.get("layer_choreography", {}), track.get("fills", {}))
 		if int(track.get("bars", 0)) <= 0:
 			validation_errors.append("music_tracks %s bars must be positive." % track_id)
 		if int(track.get("loop_frames", 0)) <= 0:
@@ -1252,6 +1318,7 @@ func _validate_music_manifest_definitions() -> void:
 				continue
 			stem_descriptors.append({"role": role, "value": stems.get(role_value), "label": "music_tracks %s stem %s" % [track_id, role]})
 		var variant_ids := {}
+		var variant_records := {}
 		for role_value in (stem_banks_value as Dictionary).keys():
 			var role := str(role_value).strip_edges()
 			if not bool(allowed_roles.get(role, false)):
@@ -1271,6 +1338,7 @@ func _validate_music_manifest_definitions() -> void:
 					validation_errors.append("music_tracks %s stem variant ids must be present and unique: %s." % [track_id, variant_id])
 				else:
 					variant_ids[variant_id] = true
+					variant_records[variant_id] = {"role": role, "data": variant.duplicate(true)}
 				if float(variant.get("weight", 1.0)) <= 0.0:
 					validation_errors.append("music_tracks %s stem variant %s weight must be positive." % [track_id, variant_id])
 				var intensity_min := float(variant.get("intensity_min", 0.0))
@@ -1282,6 +1350,7 @@ func _validate_music_manifest_definitions() -> void:
 						validation_errors.append("music_tracks %s stem variant %s %s must be an array." % [track_id, variant_id, list_key])
 				stem_descriptors.append({"role": role, "value": variant, "label": "music_tracks %s stem bank %s variant %s" % [track_id, role, variant_id]})
 		var reference_info := {}
+		var delivery_semantic_files := {}
 		var loop_frames := int(track.get("loop_frames", 0))
 		var loop_begin := int(track.get("loop_begin", 0))
 		if loop_begin != 0:
@@ -1291,6 +1360,8 @@ func _validate_music_manifest_definitions() -> void:
 			var value: Variant = descriptor.get("value")
 			var filename := _music_file_name(value)
 			var label := str(descriptor.get("label", "music_tracks %s stem" % track_id))
+			if not delivery.is_empty():
+				_validate_music_delivery_filename(label, track_id, filename, str(descriptor.get("role", "")), value, delivery, delivery_semantic_files)
 			_validate_music_stem_asset_file(label, track_id, filename)
 			var info := _validate_music_loop_asset(label, track_id, filename, loop_frames)
 			if info.is_empty():
@@ -1298,9 +1369,8 @@ func _validate_music_manifest_definitions() -> void:
 			if reference_info.is_empty():
 				reference_info = info.duplicate(true)
 			else:
-				for property_name in ["sample_rate", "channels", "bits_per_sample", "frames"]:
-					if int(info.get(property_name, 0)) != int(reference_info.get(property_name, 0)):
-						validation_errors.append("%s %s must match every other stem (%d, got %d)." % [label, property_name, int(reference_info.get(property_name, 0)), int(info.get(property_name, 0))])
+				for property_name in synchronized_wav_mismatches(reference_info, info):
+					validation_errors.append("%s %s must match every other stem (%d, got %d)." % [label, property_name, int(reference_info.get(property_name, 0)), int(info.get(property_name, 0))])
 			if typeof(value) == TYPE_DICTIONARY:
 				var stem_data: Dictionary = value
 				if int(stem_data.get("loop_begin", loop_begin)) != loop_begin or int(stem_data.get("loop_end", loop_frames)) != loop_frames:
@@ -1331,6 +1401,7 @@ func _validate_music_manifest_definitions() -> void:
 					validation_errors.append("music_tracks %s arrangement references unknown harmonic section %s." % [track_id, str(section_value)])
 		elif typeof(arrangement_value) != TYPE_NIL:
 			validation_errors.append("music_tracks %s arrangement must be an array." % track_id)
+		_validate_music_compatibility_sets(track, track_id, harmonic_sections, variant_records, allowed_roles)
 		var stingers_value: Variant = track.get("stingers", {})
 		if typeof(stingers_value) == TYPE_DICTIONARY:
 			var stingers: Dictionary = stingers_value
@@ -1340,16 +1411,24 @@ func _validate_music_manifest_definitions() -> void:
 					validation_errors.append("music_tracks %s contains an empty stinger cue." % track_id)
 					continue
 				var stinger_value: Variant = stingers.get(cue_value)
+				if not delivery.is_empty():
+					_validate_music_delivery_filename("music_tracks %s stinger %s" % [track_id, cue_id], track_id, _music_file_name(stinger_value), "stinger", stinger_value, delivery, delivery_semantic_files)
 				_validate_music_asset_file("music_tracks %s stinger %s" % [track_id, cue_id], track_id, _music_file_name(stinger_value))
-				if typeof(stinger_value) == TYPE_DICTIONARY and (stinger_value as Dictionary).has("loop") and typeof((stinger_value as Dictionary).get("loop")) != TYPE_BOOL:
-					validation_errors.append("music_tracks %s stinger %s loop must be a boolean." % [track_id, cue_id])
+				if typeof(stinger_value) == TYPE_DICTIONARY:
+					var stinger_data: Dictionary = stinger_value
+					if stinger_data.has("loop") and typeof(stinger_data.get("loop")) != TYPE_BOOL:
+						validation_errors.append("music_tracks %s stinger %s loop must be a boolean." % [track_id, cue_id])
+					_validate_music_outcome_stinger(track_id, cue_id, stinger_data, allowed_roles)
 		elif typeof(stingers_value) != TYPE_NIL:
 			validation_errors.append("music_tracks %s stingers must be a dictionary when present." % track_id)
 		var fills_value: Variant = track.get("fills", {})
 		if typeof(fills_value) == TYPE_DICTIONARY:
 			for fill_value in (fills_value as Dictionary).keys():
 				var fill_id := str(fill_value).strip_edges()
-				_validate_music_asset_file("music_tracks %s fill %s" % [track_id, fill_id], track_id, _music_file_name((fills_value as Dictionary).get(fill_value)))
+				var fill_data: Variant = (fills_value as Dictionary).get(fill_value)
+				if not delivery.is_empty():
+					_validate_music_delivery_filename("music_tracks %s fill %s" % [track_id, fill_id], track_id, _music_file_name(fill_data), "fill", fill_data, delivery, delivery_semantic_files)
+				_validate_music_asset_file("music_tracks %s fill %s" % [track_id, fill_id], track_id, _music_file_name(fill_data))
 		elif typeof(fills_value) != TYPE_NIL:
 			validation_errors.append("music_tracks %s fills must be a dictionary when present." % track_id)
 		var transitions := track.get("transitions", {}) as Dictionary if typeof(track.get("transitions", {})) == TYPE_DICTIONARY else {}
@@ -1360,6 +1439,355 @@ func _validate_music_manifest_definitions() -> void:
 			validation_errors.append("music_tracks %s transitions quantize must be beat, bar, or phrase." % track_id)
 		if int(transitions.get("phrase_bars", 4)) <= 0:
 			validation_errors.append("music_tracks %s transitions phrase_bars must be positive." % track_id)
+
+
+func _validate_music_outcome_stinger(track_id: String, cue_id: String, stinger: Dictionary, allowed_roles: Dictionary) -> void:
+	if not stinger.has("outcome_classes"):
+		return
+	var allowed_classes := ["small_win", "loss", "big_win", "feature_start", "feature_end", "neutral", "push"]
+	var outcome_classes_value: Variant = stinger.get("outcome_classes", [])
+	if typeof(outcome_classes_value) != TYPE_ARRAY or (outcome_classes_value as Array).is_empty():
+		validation_errors.append("music_tracks %s outcome stinger %s must declare outcome_classes." % [track_id, cue_id])
+	else:
+		for class_value in outcome_classes_value as Array:
+			if not allowed_classes.has(str(class_value).strip_edges().to_lower()):
+				validation_errors.append("music_tracks %s outcome stinger %s has unknown outcome class %s." % [track_id, cue_id, str(class_value)])
+	var quantize := str(stinger.get("quantize", "")).strip_edges().to_lower()
+	if not ["beat", "half_bar", "bar", "phrase"].has(quantize):
+		validation_errors.append("music_tracks %s outcome stinger %s quantize must be beat, half_bar, bar, or phrase." % [track_id, cue_id])
+	if float(stinger.get("max_latency_beats", 0.0)) < 1.0:
+		validation_errors.append("music_tracks %s outcome stinger %s max_latency_beats must be at least one beat." % [track_id, cue_id])
+	if float(stinger.get("cooldown_beats", 0.0)) < 0.0:
+		validation_errors.append("music_tracks %s outcome stinger %s cooldown_beats must be non-negative." % [track_id, cue_id])
+	var pulse_value: Variant = stinger.get("reverb_pulse", {})
+	if typeof(pulse_value) != TYPE_DICTIONARY:
+		validation_errors.append("music_tracks %s outcome stinger %s reverb_pulse must be a dictionary." % [track_id, cue_id])
+		return
+	var pulse: Dictionary = pulse_value
+	for key in ["attack_beats", "hold_beats", "release_beats", "peak_send", "eligible_roles", "outcome_classes", "cooldown_beats"]:
+		if not pulse.has(key):
+			validation_errors.append("music_tracks %s outcome stinger %s reverb_pulse must declare %s." % [track_id, cue_id, key])
+	for key in ["attack_beats", "hold_beats", "release_beats", "cooldown_beats"]:
+		if float(pulse.get(key, -1.0)) < 0.0:
+			validation_errors.append("music_tracks %s outcome stinger %s reverb_pulse %s must be non-negative." % [track_id, cue_id, key])
+	var pulse_duration := float(pulse.get("attack_beats", 0.0)) + float(pulse.get("hold_beats", 0.0)) + float(pulse.get("release_beats", 0.0))
+	if pulse_duration <= 0.0:
+		validation_errors.append("music_tracks %s outcome stinger %s reverb_pulse must have a positive musical duration." % [track_id, cue_id])
+	var peak_send := float(pulse.get("peak_send", -1.0))
+	if peak_send < 0.0 or peak_send > 0.45:
+		validation_errors.append("music_tracks %s outcome stinger %s reverb_pulse peak_send must stay inside 0..0.45." % [track_id, cue_id])
+	var roles_value: Variant = pulse.get("eligible_roles", [])
+	if typeof(roles_value) != TYPE_ARRAY or (roles_value as Array).is_empty():
+		validation_errors.append("music_tracks %s outcome stinger %s reverb_pulse must declare eligible_roles." % [track_id, cue_id])
+	else:
+		for role_value in roles_value as Array:
+			if not bool(allowed_roles.get(str(role_value).strip_edges(), false)):
+				validation_errors.append("music_tracks %s outcome stinger %s reverb_pulse has unknown role %s." % [track_id, cue_id, str(role_value)])
+	var pulse_classes_value: Variant = pulse.get("outcome_classes", [])
+	if typeof(pulse_classes_value) != TYPE_ARRAY or (pulse_classes_value as Array).is_empty():
+		validation_errors.append("music_tracks %s outcome stinger %s reverb_pulse must declare outcome_classes." % [track_id, cue_id])
+	else:
+		for class_value in pulse_classes_value as Array:
+			if not allowed_classes.has(str(class_value).strip_edges().to_lower()):
+				validation_errors.append("music_tracks %s outcome stinger %s reverb_pulse has unknown outcome class %s." % [track_id, cue_id, str(class_value)])
+
+
+func _validate_music_compatibility_sets(track: Dictionary, track_id: String, harmonic_sections: Dictionary, variant_records: Dictionary, allowed_roles: Dictionary) -> void:
+	var sets_value: Variant = track.get("compatibility_sets", [])
+	if typeof(sets_value) == TYPE_NIL:
+		return
+	if typeof(sets_value) != TYPE_ARRAY:
+		validation_errors.append("music_tracks %s compatibility_sets must be an array." % track_id)
+		return
+	var sets: Array = sets_value
+	if sets.is_empty():
+		return
+	var required_roles := _string_array(track.get("compatibility_required_roles", []))
+	var set_ids := {}
+	var set_records := {}
+	for set_value in sets:
+		if typeof(set_value) != TYPE_DICTIONARY:
+			validation_errors.append("music_tracks %s compatibility set must be a dictionary." % track_id)
+			continue
+		var set_data: Dictionary = set_value
+		var set_id := str(set_data.get("id", "")).strip_edges()
+		if set_id.is_empty() or set_ids.has(set_id):
+			validation_errors.append("music_tracks %s compatibility set ids must be present and unique: %s." % [track_id, set_id])
+			continue
+		set_ids[set_id] = true
+		set_records[set_id] = set_data
+		var progression_id := str(set_data.get("progression_id", set_id)).strip_edges()
+		if progression_id.is_empty():
+			validation_errors.append("music_tracks %s compatibility set %s must declare progression_id." % [track_id, set_id])
+		var set_key := str(set_data.get("key", "")).strip_edges()
+		if set_key.is_empty():
+			validation_errors.append("music_tracks %s compatibility set %s must declare key." % [track_id, set_id])
+		var sections := _string_array(set_data.get("harmonic_sections", set_data.get("sections", [])))
+		if sections.is_empty():
+			validation_errors.append("music_tracks %s compatibility set %s must declare harmonic_sections." % [track_id, set_id])
+		for section_id in sections:
+			if not harmonic_sections.has(section_id):
+				validation_errors.append("music_tracks %s compatibility set %s references unknown harmonic section %s." % [track_id, set_id, section_id])
+				continue
+			var section: Dictionary = harmonic_sections.get(section_id, {}) as Dictionary
+			if not set_key.is_empty() and str(section.get("key", "")) != set_key:
+				validation_errors.append("music_tracks %s compatibility set %s key %s crosses harmonic section %s key %s." % [track_id, set_id, set_key, section_id, str(section.get("key", ""))])
+		var roles_value: Variant = set_data.get("roles", {})
+		if typeof(roles_value) != TYPE_DICTIONARY:
+			validation_errors.append("music_tracks %s compatibility set %s roles must be a dictionary." % [track_id, set_id])
+			continue
+		var roles: Dictionary = roles_value
+		var chord_voicings_value: Variant = set_data.get("chord_voicings", [])
+		var bass_roots := _string_array(set_data.get("bass_roots", []))
+		if typeof(chord_voicings_value) != TYPE_ARRAY or (chord_voicings_value as Array).is_empty() or bass_roots.size() != (chord_voicings_value as Array).size():
+			validation_errors.append("music_tracks %s compatibility set %s must pair ordered chord_voicings with bass_roots." % [track_id, set_id])
+		else:
+			for voicing_value in chord_voicings_value as Array:
+				if typeof(voicing_value) != TYPE_ARRAY or (voicing_value as Array).size() < 3 or (voicing_value as Array).size() > 4:
+					validation_errors.append("music_tracks %s compatibility set %s chord voicings must contain 3 or 4 notes." % [track_id, set_id])
+		if bool(set_data.get("instrument_choice_required", false)) and _string_array(roles.get("pad", [])).size() < 2:
+			validation_errors.append("music_tracks %s compatibility set %s requires at least two chord-instrument choices." % [track_id, set_id])
+		for role_value in roles.keys():
+			var role := str(role_value)
+			if not bool(allowed_roles.get(role, false)):
+				validation_errors.append("music_tracks %s compatibility set %s has unknown role %s." % [track_id, set_id, role])
+				continue
+			var references := _string_array(roles.get(role_value, []))
+			for variant_id in references:
+				if not variant_records.has(variant_id):
+					validation_errors.append("music_tracks %s compatibility set %s role %s references unknown variant %s." % [track_id, set_id, role, variant_id])
+					continue
+				var record: Dictionary = variant_records.get(variant_id, {}) as Dictionary
+				var variant: Dictionary = record.get("data", {}) as Dictionary
+				if str(record.get("role", "")) != role:
+					validation_errors.append("music_tracks %s compatibility set %s role %s references %s from role %s." % [track_id, set_id, role, variant_id, str(record.get("role", ""))])
+				var variant_sections := _string_array(variant.get("harmonic_sections", variant.get("sections", [])))
+				for section_id in sections:
+					if not variant_sections.has(section_id):
+						validation_errors.append("music_tracks %s compatibility set %s variant %s crosses section %s." % [track_id, set_id, variant_id, section_id])
+				if not set_key.is_empty() and str(variant.get("key", "")) != set_key:
+					validation_errors.append("music_tracks %s compatibility set %s variant %s key %s crosses set key %s." % [track_id, set_id, variant_id, str(variant.get("key", "")), set_key])
+				if not _string_array(variant.get("progression_compatibility", [])).has(progression_id):
+					validation_errors.append("music_tracks %s compatibility set %s variant %s does not declare that progression compatibility." % [track_id, set_id, variant_id])
+		for required_role in required_roles:
+			var positive_candidates := 0
+			for variant_id in _string_array(roles.get(required_role, [])):
+				var record: Dictionary = variant_records.get(variant_id, {}) as Dictionary
+				var variant: Dictionary = record.get("data", {}) as Dictionary
+				if str(record.get("role", "")) == required_role and bool(variant.get("enabled", true)) and float(variant.get("weight", 1.0)) > 0.0 and _string_array(variant.get("progression_compatibility", [])).has(progression_id):
+					positive_candidates += 1
+			if positive_candidates <= 0:
+				validation_errors.append("music_tracks %s compatibility set %s required role %s has no positive compatible candidates." % [track_id, set_id, required_role])
+	for set_value in sets:
+		if typeof(set_value) != TYPE_DICTIONARY:
+			continue
+		var set_data: Dictionary = set_value
+		var set_id := str(set_data.get("id", ""))
+		var contrast_set_id := str(set_data.get("contrast_with_set_id", "")).strip_edges()
+		if not contrast_set_id.is_empty() and not set_ids.has(contrast_set_id):
+			validation_errors.append("music_tracks %s compatibility set %s contrasts unknown set %s." % [track_id, set_id, contrast_set_id])
+		elif not contrast_set_id.is_empty():
+			var contrast_set: Dictionary = _as_dict(set_records.get(contrast_set_id, {}))
+			if str(contrast_set.get("progression_id", contrast_set_id)) != str(set_data.get("progression_id", set_id)):
+				validation_errors.append("music_tracks %s compatibility set %s contrast must keep progression %s." % [track_id, set_id, str(contrast_set.get("progression_id", contrast_set_id))])
+		if set_data.has("force_change_roles") and typeof(set_data.get("force_change_roles")) != TYPE_ARRAY:
+			validation_errors.append("music_tracks %s compatibility set %s force_change_roles must be an array." % [track_id, set_id])
+		for role in _string_array(set_data.get("force_change_roles", [])):
+			if not bool(allowed_roles.get(role, false)):
+				validation_errors.append("music_tracks %s compatibility set %s force_change_roles contains unknown role %s." % [track_id, set_id, role])
+	var recipes_value: Variant = track.get("arrangement_recipes", [])
+	if typeof(recipes_value) != TYPE_ARRAY or (recipes_value as Array).is_empty():
+		validation_errors.append("music_tracks %s compatibility sets require arrangement_recipes." % track_id)
+		return
+	var recipe_ids := {}
+	for recipe_value in recipes_value as Array:
+		if typeof(recipe_value) != TYPE_DICTIONARY:
+			validation_errors.append("music_tracks %s arrangement recipe must be a dictionary." % track_id)
+			continue
+		var recipe: Dictionary = recipe_value
+		var recipe_id := str(recipe.get("id", "")).strip_edges()
+		if recipe_id.is_empty() or recipe_ids.has(recipe_id):
+			validation_errors.append("music_tracks %s arrangement recipe ids must be present and unique: %s." % [track_id, recipe_id])
+		else:
+			recipe_ids[recipe_id] = true
+		var recipe_sections := _string_array(recipe.get("sections", []))
+		if recipe_sections.is_empty():
+			validation_errors.append("music_tracks %s arrangement recipe %s must contain sections." % [track_id, recipe_id])
+		for section_id in recipe_sections:
+			if not harmonic_sections.has(section_id):
+				validation_errors.append("music_tracks %s arrangement recipe %s references unknown harmonic section %s." % [track_id, recipe_id, section_id])
+			var complete_sets := 0
+			for set_value in sets:
+				if typeof(set_value) != TYPE_DICTIONARY:
+					continue
+				var set_data: Dictionary = set_value
+				if not bool(set_data.get("enabled", true)) or float(set_data.get("weight", 1.0)) <= 0.0 or not _string_array(set_data.get("harmonic_sections", set_data.get("sections", []))).has(section_id):
+					continue
+				var roles: Dictionary = _as_dict(set_data.get("roles", {}))
+				var complete := true
+				var progression_id := str(set_data.get("progression_id", set_data.get("id", "")))
+				for required_role in required_roles:
+					var found := false
+					for variant_id in _string_array(roles.get(required_role, [])):
+						var record: Dictionary = _as_dict(variant_records.get(variant_id, {}))
+						var variant: Dictionary = _as_dict(record.get("data", {}))
+						if str(record.get("role", "")) == required_role and bool(variant.get("enabled", true)) and float(variant.get("weight", 1.0)) > 0.0 and _string_array(variant.get("progression_compatibility", [])).has(progression_id):
+							found = true
+							break
+					if not found:
+						complete = false
+						break
+				if complete:
+					complete_sets += 1
+			if complete_sets <= 0:
+				validation_errors.append("music_tracks %s arrangement recipe %s section %s has no enabled positive complete compatibility set." % [track_id, recipe_id, section_id])
+		if int(recipe.get("phrase_bars", 0)) <= 0:
+			validation_errors.append("music_tracks %s arrangement recipe %s phrase_bars must be positive." % [track_id, recipe_id])
+		var role_policies_value: Variant = recipe.get("role_policies", {})
+		if typeof(role_policies_value) != TYPE_DICTIONARY:
+			validation_errors.append("music_tracks %s arrangement recipe %s role_policies must be a dictionary." % [track_id, recipe_id])
+		else:
+			for role_value in (role_policies_value as Dictionary).keys():
+				var role := str(role_value)
+				var policy_value: Variant = (role_policies_value as Dictionary).get(role_value)
+				if not bool(allowed_roles.get(role, false)):
+					validation_errors.append("music_tracks %s arrangement recipe %s role_policies contains unknown role %s." % [track_id, recipe_id, role])
+				if typeof(policy_value) != TYPE_DICTIONARY:
+					validation_errors.append("music_tracks %s arrangement recipe %s role policy %s must be a dictionary." % [track_id, recipe_id, role])
+					continue
+				var policy: Dictionary = policy_value
+				if int(policy.get("change_every", 0)) <= 0:
+					validation_errors.append("music_tracks %s arrangement recipe %s role policy %s change_every must be positive." % [track_id, recipe_id, role])
+				if policy.has("retain") and typeof(policy.get("retain")) != TYPE_BOOL:
+					validation_errors.append("music_tracks %s arrangement recipe %s role policy %s retain must be boolean." % [track_id, recipe_id, role])
+
+
+func _validate_music_adaptive_tempo(track_id: String, track_bpm: float, value: Variant) -> void:
+	if typeof(value) != TYPE_DICTIONARY:
+		validation_errors.append("music_tracks %s adaptive_tempo must be a dictionary when present." % track_id)
+		return
+	var profile: Dictionary = value
+	if profile.is_empty():
+		return
+	if typeof(profile.get("enabled", false)) != TYPE_BOOL:
+		validation_errors.append("music_tracks %s adaptive_tempo enabled must be boolean." % track_id)
+	var base_bpm := float(profile.get("base_bpm", 0.0))
+	var min_bpm := float(profile.get("min_bpm", 0.0))
+	var max_bpm := float(profile.get("max_bpm", 0.0))
+	if min_bpm <= 0.0 or base_bpm < min_bpm or max_bpm < base_bpm:
+		validation_errors.append("music_tracks %s adaptive_tempo must satisfy 0 < min_bpm <= base_bpm <= max_bpm." % track_id)
+	if absf(base_bpm - track_bpm) > 0.001:
+		validation_errors.append("music_tracks %s adaptive_tempo base_bpm must match the authored track BPM." % track_id)
+	for key in ["max_bpm_per_second", "max_bpm_per_bar", "attack_seconds", "release_seconds"]:
+		if float(profile.get(key, 0.0)) <= 0.0:
+			validation_errors.append("music_tracks %s adaptive_tempo %s must be positive." % [track_id, key])
+	if float(profile.get("hysteresis_bpm", -1.0)) < 0.0:
+		validation_errors.append("music_tracks %s adaptive_tempo hysteresis_bpm must be non-negative." % track_id)
+	var curve_value: Variant = profile.get("heat_curve", [])
+	if typeof(curve_value) != TYPE_ARRAY or (curve_value as Array).size() < 2:
+		validation_errors.append("music_tracks %s adaptive_tempo heat_curve must contain at least two points." % track_id)
+		return
+	var previous_heat := -1.0
+	var previous_bpm := -1.0
+	for point_value in curve_value as Array:
+		if typeof(point_value) != TYPE_DICTIONARY:
+			validation_errors.append("music_tracks %s adaptive_tempo heat_curve points must be dictionaries." % track_id)
+			continue
+		var point: Dictionary = point_value
+		var heat := float(point.get("heat", -1.0))
+		var bpm := float(point.get("bpm", 0.0))
+		if heat < 0.0 or heat > 100.0 or heat <= previous_heat:
+			validation_errors.append("music_tracks %s adaptive_tempo heat_curve heat values must increase inside 0..100." % track_id)
+		if bpm < min_bpm or bpm > max_bpm or bpm < previous_bpm:
+			validation_errors.append("music_tracks %s adaptive_tempo heat_curve BPM values must rise inside the profile range." % track_id)
+		previous_heat = heat
+		previous_bpm = bpm
+
+
+func _validate_music_layer_choreography(track_id: String, value: Variant, fills_value: Variant) -> void:
+	if typeof(value) != TYPE_DICTIONARY:
+		validation_errors.append("music_tracks %s layer_choreography must be a dictionary when present." % track_id)
+		return
+	var recipe: Dictionary = value
+	if recipe.is_empty():
+		return
+	if int(recipe.get("cycle_bars", 0)) <= 0 or float(recipe.get("fade_beats", 0.0)) <= 0.0:
+		validation_errors.append("music_tracks %s layer_choreography requires positive cycle_bars and fade_beats." % track_id)
+	if not [1, 2, 4].has(int(recipe.get("default_lead_in_bars", 2))):
+		validation_errors.append("music_tracks %s layer_choreography lead-in must be 1, 2, or 4 bars." % track_id)
+	var stages_value: Variant = recipe.get("stages", [])
+	if typeof(stages_value) != TYPE_ARRAY or (stages_value as Array).is_empty():
+		validation_errors.append("music_tracks %s layer_choreography must declare stages." % track_id)
+		return
+	var stage_ids := {}
+	var previous_start := -1
+	for stage_value in stages_value as Array:
+		if typeof(stage_value) != TYPE_DICTIONARY:
+			validation_errors.append("music_tracks %s layer_choreography stages must be dictionaries." % track_id)
+			continue
+		var stage: Dictionary = stage_value
+		var stage_id := str(stage.get("id", "")).strip_edges()
+		var start_bar := int(stage.get("start_bar", -1))
+		if stage_id.is_empty() or stage_ids.has(stage_id):
+			validation_errors.append("music_tracks %s layer_choreography stage ids must be present and unique: %s." % [track_id, stage_id])
+		stage_ids[stage_id] = true
+		if start_bar <= previous_start or int(stage.get("duration_bars", 0)) <= 0:
+			validation_errors.append("music_tracks %s layer_choreography stages must have increasing starts and positive durations." % track_id)
+		previous_start = start_bar
+		var roles_value: Variant = stage.get("roles", {})
+		if typeof(roles_value) != TYPE_DICTIONARY:
+			validation_errors.append("music_tracks %s layer_choreography stage %s roles must be a dictionary." % [track_id, stage_id])
+			continue
+		for gain_value in (roles_value as Dictionary).values():
+			var gain := float(gain_value)
+			if gain < 0.0 or gain > 1.0:
+				validation_errors.append("music_tracks %s layer_choreography stage %s role gains must stay inside 0..1." % [track_id, stage_id])
+	var fills: Dictionary = fills_value as Dictionary if typeof(fills_value) == TYPE_DICTIONARY else {}
+	for fill_value in fills.values():
+		if typeof(fill_value) != TYPE_DICTIONARY:
+			continue
+		var fill: Dictionary = fill_value
+		if fill.has("lead_in_bars") and not [1, 2, 4].has(int(fill.get("lead_in_bars", 0))):
+			validation_errors.append("music_tracks %s choreography fill lead_in_bars must be 1, 2, or 4." % track_id)
+		if fill.has("lead_in_bars") and bool(fill.get("loop", false)):
+			validation_errors.append("music_tracks %s choreography fills must be one-shots." % track_id)
+
+
+func _validate_music_delivery_filename(label: String, track_id: String, filename: String, expected_role: String, metadata: Variant, delivery: Dictionary, semantic_files: Dictionary) -> Dictionary:
+	var aliases := delivery.get("classification_aliases", {}) as Dictionary if typeof(delivery.get("classification_aliases", {})) == TYPE_DICTIONARY else {}
+	var parsed: Dictionary = MusicDeliveryIndexScript.parse_filename(filename, aliases)
+	if not bool(parsed.get("ok", false)):
+		validation_errors.append("%s has malformed delivery filename %s: %s." % [label, filename, str(parsed.get("error", "invalid filename"))])
+		return {}
+	var declared_environment := str(delivery.get("environment", "")).strip_edges()
+	if not declared_environment.is_empty() and str(parsed.get("environment", "")).to_lower() != declared_environment.to_lower():
+		validation_errors.append("%s filename environment %s disagrees with track %s delivery environment %s." % [label, str(parsed.get("environment", "")), track_id, declared_environment])
+	if not expected_role.is_empty() and str(parsed.get("role", "")) != expected_role:
+		validation_errors.append("%s classification %s maps to %s, not required role %s." % [label, str(parsed.get("classification", "")), str(parsed.get("role", "")), expected_role])
+	var semantic_id := str(parsed.get("semantic_id", ""))
+	if semantic_files.has(semantic_id) and str(semantic_files.get(semantic_id, "")).to_lower() != filename.to_lower():
+		validation_errors.append("%s duplicates semantic ID %s already declared by %s." % [label, semantic_id, str(semantic_files.get(semantic_id, ""))])
+	else:
+		semantic_files[semantic_id] = filename
+	if typeof(metadata) == TYPE_DICTIONARY:
+		var data: Dictionary = metadata
+		for pair_value in [
+			["classification", str(parsed.get("classification", ""))],
+			["role", str(parsed.get("role", ""))],
+			["instrument", str(parsed.get("instrument", ""))],
+		]:
+			var pair: Array = pair_value
+			var key := str(pair[0])
+			if data.has(key) and str(data.get(key, "")).to_lower() != str(pair[1]).to_lower():
+				validation_errors.append("%s metadata %s must match parsed filename value %s." % [label, key, str(pair[1])])
+		if data.has("pattern_number") and int(data.get("pattern_number", 0)) != int(parsed.get("pattern_number", 0)):
+			validation_errors.append("%s metadata pattern_number must match parsed filename value %d." % [label, int(parsed.get("pattern_number", 0))])
+		for list_key in ["tags", "progression_compatibility", "harmonic_sections"]:
+			if data.has(list_key) and typeof(data.get(list_key)) != TYPE_ARRAY:
+				validation_errors.append("%s metadata %s must be an array." % [label, list_key])
+		if data.has("dsp_sends") and typeof(data.get("dsp_sends")) != TYPE_DICTIONARY:
+			validation_errors.append("%s metadata dsp_sends must be a dictionary." % label)
+	return parsed
 
 
 func _validate_music_asset_file(label: String, track_id: String, filename: String) -> void:
@@ -1391,7 +1819,8 @@ func _validate_music_loop_asset(label: String, track_id: String, filename: Strin
 		return {}
 	var path := "%s/%s/%s" % [MUSIC_ASSET_ROOT, track_id, filename]
 	var info := _wav_info(path)
-	if info.is_empty():
+	if not bool(info.get("valid", false)):
+		validation_errors.append("%s has an invalid PCM WAV: %s." % [label, str(info.get("error", "unreadable header"))])
 		return {}
 	var sample_rate := int(info.get("sample_rate", 0))
 	var data_frames := int(info.get("frames", 0))
@@ -1399,8 +1828,8 @@ func _validate_music_loop_asset(label: String, track_id: String, filename: Strin
 		return {}
 	if sample_rate != AUTHORED_MUSIC_SAMPLE_RATE:
 		validation_errors.append("%s must be %d Hz, got %d Hz." % [label, AUTHORED_MUSIC_SAMPLE_RATE, sample_rate])
-	if int(info.get("bits_per_sample", 0)) != AUTHORED_MUSIC_BITS_PER_SAMPLE:
-		validation_errors.append("%s must be %d-bit PCM." % [label, AUTHORED_MUSIC_BITS_PER_SAMPLE])
+	if not AUTHORED_MUSIC_ALLOWED_BITS_PER_SAMPLE.has(int(info.get("bits_per_sample", 0))):
+		validation_errors.append("%s must be 16-bit legacy or 24-bit production PCM, got %d-bit." % [label, int(info.get("bits_per_sample", 0))])
 	if loop_frames != data_frames:
 		validation_errors.append("%s real WAV frame count must equal loop_frames %d, got %d." % [label, loop_frames, data_frames])
 	var min_loop_frames := int(float(sample_rate) * MIN_AUTHORED_MUSIC_LOOP_SECONDS)
@@ -1411,59 +1840,145 @@ func _validate_music_loop_asset(label: String, track_id: String, filename: Strin
 
 static func _wav_info(path: String) -> Dictionary:
 	if not FileAccess.file_exists(path):
-		return {}
-	var bytes := FileAccess.get_file_as_bytes(path)
-	if bytes.size() < 44:
-		return {}
-	if _ascii_from_bytes(bytes, 0, 4) != "RIFF" or _ascii_from_bytes(bytes, 8, 4) != "WAVE":
-		return {}
+		return {"valid": false, "error": "file does not exist"}
+	var file := FileAccess.open(path, FileAccess.READ)
+	if file == null:
+		return {"valid": false, "error": "file could not be opened for inspection"}
+	file.big_endian = false
+	var file_size := file.get_length()
+	var normalized_path := ProjectSettings.globalize_path(path).replace("\\", "/").simplify_path()
+	var modified_time := FileAccess.get_modified_time(path)
+	var cache_key := "%s|%d|%d" % [normalized_path, file_size, modified_time]
+	if _music_wav_info_cache.has(cache_key):
+		_music_wav_info_cache_hits += 1
+		var cached_entry: Dictionary = _music_wav_info_cache.get(cache_key, {}) as Dictionary
+		file.close()
+		return (cached_entry.get("info", {}) as Dictionary).duplicate(true)
+	_music_wav_info_cache_misses += 1
+	var info := _inspect_wav_file(file, file_size)
+	file.close()
+	_store_music_wav_info_cache(cache_key, normalized_path, info)
+	return info.duplicate(true)
+
+
+static func _inspect_wav_file(file: FileAccess, file_size: int) -> Dictionary:
+	if file_size < 12:
+		return {"valid": false, "error": "file is shorter than a RIFF/WAVE header"}
+	file.seek(0)
+	var riff_id := _file_fourcc(file)
+	var riff_size := file.get_32()
+	var wave_id := _file_fourcc(file)
+	var inspected_header_bytes := 12
+	if riff_id != "RIFF" or wave_id != "WAVE":
+		return {"valid": false, "error": "missing RIFF/WAVE signature"}
+	var riff_end := riff_size + 8
+	if riff_size < 4 or riff_end > file_size:
+		return {"valid": false, "error": "RIFF size exceeds the real file length"}
 	var offset := 12
-	var channels := 1
+	var audio_format := 0
+	var channels := 0
 	var sample_rate := 0
 	var bits_per_sample := 0
+	var block_align := 0
+	var byte_rate := 0
+	var fmt_found := false
+	var data_start := -1
 	var data_size := 0
-	while offset + 8 <= bytes.size():
-		var chunk_id := _ascii_from_bytes(bytes, offset, 4)
-		var chunk_size := _u32_le(bytes, offset + 4)
+	var odd_sized_chunks := 0
+	var non_audio_chunks := 0
+	while offset < riff_end:
+		if offset + 8 > riff_end:
+			return {"valid": false, "error": "RIFF ends inside a chunk header"}
+		file.seek(offset)
+		var chunk_id := _file_fourcc(file)
+		var chunk_size := file.get_32()
+		inspected_header_bytes += 8
 		var chunk_data := offset + 8
-		if chunk_id == "fmt " and chunk_data + 16 <= bytes.size():
-			channels = maxi(1, _u16_le(bytes, chunk_data + 2))
-			sample_rate = maxi(1, _u32_le(bytes, chunk_data + 4))
-			bits_per_sample = _u16_le(bytes, chunk_data + 14)
-		elif chunk_id == "data":
-			data_size = mini(chunk_size, bytes.size() - chunk_data)
-			break
-		offset = chunk_data + chunk_size + (chunk_size % 2)
-	if sample_rate <= 0 or bits_per_sample <= 0 or data_size <= 0:
-		return {}
-	var bytes_per_sample := maxi(1, int(bits_per_sample / 8))
-	var frame_bytes := maxi(1, channels * bytes_per_sample)
+		var chunk_end := chunk_data + chunk_size
+		if chunk_end > riff_end:
+			return {"valid": false, "error": "chunk %s exceeds the declared RIFF length" % chunk_id}
+		var padded_end := chunk_end + (chunk_size % 2)
+		if chunk_size % 2 != 0:
+			odd_sized_chunks += 1
+		if chunk_id != "fmt " and chunk_id != "data":
+			non_audio_chunks += 1
+		if padded_end > riff_end:
+			return {"valid": false, "error": "odd-sized chunk %s is missing its RIFF padding byte" % chunk_id}
+		if chunk_id == "fmt ":
+			if chunk_size < 16:
+				return {"valid": false, "error": "fmt chunk is shorter than 16 bytes"}
+			file.seek(chunk_data)
+			audio_format = file.get_16()
+			channels = file.get_16()
+			sample_rate = file.get_32()
+			byte_rate = file.get_32()
+			block_align = file.get_16()
+			bits_per_sample = file.get_16()
+			inspected_header_bytes += 16
+			fmt_found = true
+		elif chunk_id == "data" and data_start < 0:
+			data_start = chunk_data
+			data_size = chunk_size
+		offset = padded_end
+	if not fmt_found:
+		return {"valid": false, "error": "missing fmt chunk"}
+	if data_start < 0 or data_size <= 0:
+		return {"valid": false, "error": "missing or empty data chunk"}
+	if audio_format != 1:
+		return {"valid": false, "error": "audio format must be uncompressed integer PCM (format 1), got %d" % audio_format}
+	if channels < 1 or channels > 2:
+		return {"valid": false, "error": "channel count must be mono or stereo, got %d" % channels}
+	if sample_rate <= 0 or not AUTHORED_MUSIC_ALLOWED_BITS_PER_SAMPLE.has(bits_per_sample):
+		return {"valid": false, "error": "unsupported PCM format %d Hz/%d-bit" % [sample_rate, bits_per_sample]}
+	var bytes_per_sample := int(bits_per_sample / 8)
+	var frame_bytes := channels * bytes_per_sample
+	if block_align != frame_bytes:
+		return {"valid": false, "error": "block alignment is %d bytes; expected %d" % [block_align, frame_bytes]}
+	if byte_rate != sample_rate * frame_bytes:
+		return {"valid": false, "error": "byte rate is %d; expected %d" % [byte_rate, sample_rate * frame_bytes]}
+	if data_size % frame_bytes != 0:
+		return {"valid": false, "error": "data chunk length is not a whole number of audio frames"}
 	return {
+		"valid": true,
+		"audio_format": audio_format,
 		"sample_rate": sample_rate,
 		"channels": channels,
 		"bits_per_sample": bits_per_sample,
+		"block_align": block_align,
+		"byte_rate": byte_rate,
+		"data_offset": data_start,
+		"data_bytes": data_size,
 		"frames": int(data_size / frame_bytes),
+		"file_bytes": file_size,
+		"riff_bytes": riff_end,
+		"inspected_header_bytes": inspected_header_bytes,
+		"inspection_mode": "streamed_chunk_headers",
+		"odd_sized_chunks": odd_sized_chunks,
+		"non_audio_chunks": non_audio_chunks,
+		"error": "",
 	}
 
 
-static func _ascii_from_bytes(bytes: PackedByteArray, offset: int, length: int) -> String:
-	var chars := PackedByteArray()
-	chars.resize(length)
-	for index in range(length):
-		chars[index] = bytes[offset + index] if offset + index < bytes.size() else 0
-	return chars.get_string_from_ascii()
+static func _store_music_wav_info_cache(cache_key: String, normalized_path: String, info: Dictionary) -> void:
+	for existing_key_value in _music_wav_info_cache_order.duplicate():
+		var existing_key := str(existing_key_value)
+		var existing: Dictionary = _music_wav_info_cache.get(existing_key, {}) as Dictionary
+		if str(existing.get("path", "")) == normalized_path:
+			_music_wav_info_cache.erase(existing_key)
+			_music_wav_info_cache_order.erase(existing_key)
+	_music_wav_info_cache[cache_key] = {
+		"path": normalized_path,
+		"info": info.duplicate(true),
+	}
+	_music_wav_info_cache_order.append(cache_key)
+	while _music_wav_info_cache_order.size() > MUSIC_WAV_INFO_CACHE_MAX_ENTRIES:
+		var evicted_key := str(_music_wav_info_cache_order.pop_front())
+		_music_wav_info_cache.erase(evicted_key)
 
 
-static func _u16_le(bytes: PackedByteArray, offset: int) -> int:
-	if offset + 1 >= bytes.size():
-		return 0
-	return int(bytes[offset]) | (int(bytes[offset + 1]) << 8)
-
-
-static func _u32_le(bytes: PackedByteArray, offset: int) -> int:
-	if offset + 3 >= bytes.size():
-		return 0
-	return int(bytes[offset]) | (int(bytes[offset + 1]) << 8) | (int(bytes[offset + 2]) << 16) | (int(bytes[offset + 3]) << 24)
+static func _file_fourcc(file: FileAccess) -> String:
+	var bytes := file.get_buffer(4)
+	return bytes.get_string_from_ascii() if bytes.size() == 4 else ""
 
 
 static func _music_file_name(value: Variant) -> String:

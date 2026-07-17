@@ -1565,7 +1565,45 @@
       "texture": "jazz",
       "texture_rate": 0.46,
       "volume": 0.28,
-      "arrangement_phrases": 5
+      "arrangement_phrases": 5,
+      "bpm": 120,
+      "adaptive_tempo": {
+        "id": "jazz_club_native_116_124",
+        "enabled": true,
+        "base_bpm": 120,
+        "min_bpm": 116,
+        "max_bpm": 124,
+        "heat_curve": [
+          {"heat": 0, "bpm": 116},
+          {"heat": 35, "bpm": 118.5},
+          {"heat": 50, "bpm": 120},
+          {"heat": 75, "bpm": 122},
+          {"heat": 100, "bpm": 124}
+        ],
+        "max_bpm_per_second": 0.5,
+        "max_bpm_per_bar": 0.75,
+        "attack_seconds": 8,
+        "release_seconds": 12,
+        "hysteresis_bpm": 0.2,
+        "stakes_classification": "mid_stakes",
+        "native_processing": "player_rate_shared_bus_pitch_compensation",
+        "web_fallback": "fixed_base_bpm"
+      },
+      "layer_choreography": {
+        "id": "jazz_club_dwell_arc_32",
+        "cycle_bars": 32,
+        "fade_beats": 1,
+        "default_lead_in_bars": 2,
+        "fill_cooldown_bars": 4,
+        "stages": [
+          {"id": "sparse", "start_bar": 0, "duration_bars": 4, "roles": {"pad": 0.9, "bass": 0.0, "lead": 0.0, "drums_low": 0.28, "drums_high": 0.0}},
+          {"id": "build_bass", "start_bar": 4, "duration_bars": 4, "request_fill": true, "change_roles": ["bass"], "roles": {"pad": 0.92, "bass": 0.66, "lead": 0.0, "drums_low": 0.30, "drums_high": 0.0}},
+          {"id": "build_drums", "start_bar": 8, "duration_bars": 4, "request_fill": true, "change_roles": ["drums_low", "drums_high"], "roles": {"pad": 0.94, "bass": 0.72, "lead": 0.0, "drums_low": 0.70, "drums_high": 0.32}},
+          {"id": "peak", "start_bar": 12, "duration_bars": 8, "request_fill": true, "change_roles": ["lead", "drums_high"], "roles": {"pad": 1.0, "bass": 0.82, "lead": 1.0, "drums_low": 0.86, "drums_high": 0.88}},
+          {"id": "release", "start_bar": 20, "duration_bars": 4, "roles": {"pad": 0.88, "bass": 0.52, "lead": 0.08, "drums_low": 0.38, "drums_high": 0.0}},
+          {"id": "rebuild", "start_bar": 24, "duration_bars": 8, "request_fill": true, "change_roles": ["pad", "bass", "drums_high"], "roles": {"pad": 1.0, "bass": 0.76, "lead": 0.64, "drums_low": 0.74, "drums_high": 0.58}}
+        ]
+      }
     },
     "economic_profile": {
       "price_tone": "rare",

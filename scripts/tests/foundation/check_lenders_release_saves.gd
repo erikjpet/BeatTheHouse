@@ -7,6 +7,9 @@ const StaffBaccaratGameScript := preload("res://scripts/games/baccarat.gd")
 const StaffRouletteGameScript := preload("res://scripts/games/roulette.gd")
 const StaffBarDiceGameScript := preload("res://scripts/games/bar_dice.gd")
 const GrandCasinoDuelModelScript := preload("res://scripts/core/grand_casino_duel_model.gd")
+const MusicDeliveryIndexScript := preload("res://scripts/core/music_delivery_index.gd")
+const MusicLayerChoreographyScript := preload("res://scripts/ui/music_layer_choreography.gd")
+const MusicOutcomeDirectorModelScript := preload("res://scripts/ui/music_outcome_director_model.gd")
 
 
 func _check_run_report_foundation(failures: Array) -> void:
@@ -297,8 +300,8 @@ func _check_music_fx_foundation(library: ContentLibrary, failures: Array) -> voi
 
 	var graph_a: Dictionary = ProceduralMusicPlayerScript.ensure_music_fx_bus_graph()
 	var graph_b: Dictionary = ProceduralMusicPlayerScript.ensure_music_fx_bus_graph()
-	if int(graph_a.get("effect_count", 0)) != 3 or int(graph_b.get("effect_count", 0)) != 3:
-		failures.append("Music master bus should contain only low-pass, chorus, and safety limiter effects.")
+	if int(graph_a.get("effect_count", 0)) != 4 or int(graph_b.get("effect_count", 0)) != 4:
+		failures.append("Music master bus should contain shared pitch compensation, low-pass, chorus, and the safety limiter.")
 	if JSON.stringify(graph_a.get("effects", [])) != JSON.stringify(graph_b.get("effects", [])):
 		failures.append("Music FX bus graph was not idempotent across repeated startup calls.")
 	var effect_types: Array = []
@@ -310,14 +313,15 @@ func _check_music_fx_foundation(library: ContentLibrary, failures: Array) -> voi
 		effect_types.append(str(effect.get("type", "")))
 		enabled.append(bool(effect.get("enabled", false)))
 	var expected_types := [
+		"AudioEffectPitchShift",
 		"AudioEffectLowPassFilter",
 		"AudioEffectChorus",
 		"AudioEffectLimiter",
 	]
 	if JSON.stringify(effect_types) != JSON.stringify(expected_types):
 		failures.append("Music FX bus graph order/types changed: %s." % JSON.stringify(effect_types))
-	if enabled.size() == 3 and (bool(enabled[0]) or bool(enabled[1]) or not bool(enabled[2])):
-		failures.append("Music master bus should bypass low-pass/chorus and keep the safety limiter active.")
+	if enabled.size() == 4 and (bool(enabled[0]) or bool(enabled[1]) or bool(enabled[2]) or not bool(enabled[3])):
+		failures.append("Music master bus should bypass idle pitch/low-pass/chorus processing and keep the safety limiter active.")
 	var send_graph: Dictionary = graph_b.get("send_buses", {}) as Dictionary
 	var send_buses: Dictionary = send_graph.get("buses", {}) as Dictionary
 	var expected_send_types := {
@@ -523,6 +527,15 @@ func _music_fx_target(player: ProceduralMusicPlayer, snapshot: Dictionary) -> Di
 
 
 func _check_music_stem_director_foundation(library: ContentLibrary, failures: Array) -> void:
+	var attached_headless_player: ProceduralMusicPlayer = ProceduralMusicPlayerScript.new()
+	root.add_child(attached_headless_player)
+	if attached_headless_player.is_processing():
+		failures.append("Tree-attached ProceduralMusicPlayer kept an idle process callback active in headless mode.")
+	var attached_snapshot: Dictionary = attached_headless_player.music_fx_snapshot({"heat": 42})
+	if (attached_snapshot.get("target", {}) as Dictionary).is_empty() or not is_equal_approx(float((attached_snapshot.get("target", {}) as Dictionary).get("heat", -1.0)), 42.0):
+		failures.append("Disabling headless automatic music processing also disabled direct snapshot APIs.")
+	attached_headless_player.free()
+
 	var player: ProceduralMusicPlayer = ProceduralMusicPlayerScript.new()
 	var stem_buses: Dictionary = ProceduralMusicPlayerScript.ensure_music_stem_bus_graph()
 	var bus_roles: Dictionary = stem_buses.get("buses", {}) as Dictionary
@@ -530,10 +543,56 @@ func _check_music_stem_director_foundation(library: ContentLibrary, failures: Ar
 		var role_bus: Dictionary = bus_roles.get(role, {}) as Dictionary
 		if str(role_bus.get("send", "")) != "Music":
 			failures.append("Music stem bus %s was not routed into the Music bus." % role)
+	var send_matrix_fixture := {"reverb": {"lead": 0.1}, "delay": {"lead": 0.05}}
+	var merged_send_matrix: Dictionary = player.call("_merge_authored_send_preferences", send_matrix_fixture, {
+		"preferred_dsp_sends": {"lead": {"reverb": 0.4, "delay": 0.02}},
+	})
+	if merged_send_matrix.has("lead") or not is_equal_approx(float((merged_send_matrix.get("reverb", {}) as Dictionary).get("lead", 0.0)), 0.4) or not is_equal_approx(float((merged_send_matrix.get("delay", {}) as Dictionary).get("lead", 0.0)), 0.05):
+		failures.append("Authored DSP preferences did not merge into the effect-to-role send matrix without lowering the live mix.")
 
 	var authored_track := library.music_track("corner_store_sparse_fixture")
 	if authored_track.is_empty():
 		failures.append("ContentLibrary did not load the authored sparse music track fixture.")
+	var jazz_8_track := library.music_track("jazz_club_delivery_fixture_8_bar")
+	var jazz_16_track := library.music_track("jazz_club_delivery_fixture_16_bar")
+	if jazz_8_track.is_empty() or jazz_16_track.is_empty():
+		failures.append("ContentLibrary did not load both 24-bit Jazz delivery fixtures.")
+	var parsed_delivery := MusicDeliveryIndexScript.parse_filename("JazzClub_Lead_Trumpet_1.WAV")
+	if not bool(parsed_delivery.get("ok", false)) or str(parsed_delivery.get("environment", "")) != "JazzClub" or str(parsed_delivery.get("role", "")) != "lead" or str(parsed_delivery.get("instrument", "")) != "Trumpet" or int(parsed_delivery.get("pattern_number", 0)) != 1:
+		failures.append("Jazz delivery filename parser did not expose environment/classification/instrument/pattern fields case-insensitively.")
+	for malformed_name in ["JazzClub_Lead_Trumpet.wav", "JazzClub_Unknown_Trumpet_1.wav", "JazzClub_Lead_Trumpet_0.wav", "JazzClub_Lead_Bad_Name_1.wav"]:
+		if bool(MusicDeliveryIndexScript.parse_filename(malformed_name).get("ok", false)):
+			failures.append("Jazz delivery filename parser accepted malformed name %s." % malformed_name)
+	var wrong_environment_index := MusicDeliveryIndexScript.build_index("jazz_fixture", "JazzClub", ["Motel_Lead_Trumpet_1.wav"])
+	if bool(wrong_environment_index.get("valid", true)) or JSON.stringify(wrong_environment_index.get("errors", [])).find("requires JazzClub") < 0:
+		failures.append("Jazz delivery index did not reject a filename from the wrong environment.")
+	var duplicate_index := MusicDeliveryIndexScript.build_index("jazz_fixture", "JazzClub", ["JazzClub_Lead_Trumpet_1.wav", "JazzClub_lead_trumpet_1.WAV"])
+	if bool(duplicate_index.get("valid", true)) or JSON.stringify(duplicate_index.get("errors", [])).find("duplicates semantic ID") < 0:
+		failures.append("Jazz delivery index did not reject a duplicate semantic instrument/pattern ID.")
+	var scanned_jazz := library.music_delivery_index("jazz_club_delivery_fixture_8_bar")
+	if not bool(scanned_jazz.get("valid", false)) or (scanned_jazz.get("entries", []) as Array).size() != 10 or (scanned_jazz.get("proposed_manifest_entries", []) as Array).size() != 10:
+		failures.append("Jazz delivery import helper did not index and propose all nine 8-bar fixture records without rewriting the manifest.")
+	var wav_8 := ContentLibraryScript.inspect_music_wav("res://assets/audio/music/jazz_club_delivery_fixture_8_bar/JazzClub_Chords_Piano_1.wav")
+	var wav_16 := ContentLibraryScript.inspect_music_wav("res://assets/audio/music/jazz_club_delivery_fixture_16_bar/JazzClub_Chords_Piano_2.wav")
+	if not bool(wav_8.get("valid", false)) or int(wav_8.get("bits_per_sample", 0)) != 24 or int(wav_8.get("frames", 0)) != 705600:
+		failures.append("24-bit 8-bar WAV inspection did not derive the real data-chunk frame count.")
+	if not bool(wav_16.get("valid", false)) or int(wav_16.get("bits_per_sample", 0)) != 24 or int(wav_16.get("frames", 0)) != 1411200:
+		failures.append("24-bit 16-bar WAV inspection did not derive the real data-chunk frame count.")
+	if str(wav_8.get("inspection_mode", "")) != "streamed_chunk_headers" or int(wav_8.get("inspected_header_bytes", 99999999)) >= 256 or int(wav_8.get("inspected_header_bytes", 0)) * 1000 >= int(wav_8.get("data_bytes", 0)):
+		failures.append("WAV validation loaded more than bounded RIFF/chunk headers from the large PCM24 fixture.")
+	if int(wav_8.get("odd_sized_chunks", 0)) < 1 or int(wav_8.get("non_audio_chunks", 0)) < 1 or int(wav_8.get("riff_bytes", 0)) > int(wav_8.get("file_bytes", 0)):
+		failures.append("Streamed WAV validation did not prove odd-chunk padding/non-audio metadata bounds.")
+	for mismatch_fixture in [
+		{"property": "bits_per_sample", "value": 16},
+		{"property": "channels", "value": 2},
+		{"property": "frames", "value": 705599},
+		{"property": "sample_rate", "value": 48000},
+	]:
+		var candidate := wav_8.duplicate(true)
+		candidate[str(mismatch_fixture.get("property", ""))] = int(mismatch_fixture.get("value", 0))
+		if not ContentLibraryScript.synchronized_wav_mismatches(wav_8, candidate).has(str(mismatch_fixture.get("property", ""))):
+			failures.append("Synchronized WAV validation missed %s mismatch." % str(mismatch_fixture.get("property", "")))
+	_check_music_wav_info_cache(failures)
 	var invalid_library: ContentLibrary = ContentLibraryScript.new()
 	invalid_library.music_tracks = [{
 		"id": "bad_music_entry",
@@ -545,6 +604,26 @@ func _check_music_stem_director_foundation(library: ContentLibrary, failures: Ar
 	var invalid_errors := invalid_library.validate()
 	if invalid_errors.is_empty():
 		failures.append("ContentLibrary music manifest validation did not reject a bad authored entry.")
+	var bad_policy_track := jazz_8_track.duplicate(true)
+	var bad_policy_recipes: Array = bad_policy_track.get("arrangement_recipes", []) as Array
+	(bad_policy_recipes[0] as Dictionary)["role_policies"] = {"pad": {"retain": true, "change_every": 0}}
+	bad_policy_track["arrangement_recipes"] = bad_policy_recipes
+	if JSON.stringify(_music_track_validation_errors(bad_policy_track)).find("change_every must be positive") < 0:
+		failures.append("Music validation did not reject a non-positive role-policy change_every.")
+	var bad_progression_track := jazz_8_track.duplicate(true)
+	var bad_sets: Array = bad_progression_track.get("compatibility_sets", []) as Array
+	((bad_sets[0] as Dictionary).get("roles", {}) as Dictionary)["bass"] = ["jazz_bass_incompatible"]
+	bad_progression_track["compatibility_sets"] = bad_sets
+	if JSON.stringify(_music_track_validation_errors(bad_progression_track)).find("does not declare that progression compatibility") < 0:
+		failures.append("Music validation did not reject a cross-progression bass reference.")
+	var incomplete_track := jazz_8_track.duplicate(true)
+	var incomplete_banks: Dictionary = incomplete_track.get("stem_banks", {}) as Dictionary
+	for variant_value in ((incomplete_banks.get("bass", {}) as Dictionary).get("variants", []) as Array):
+		if str((variant_value as Dictionary).get("id", "")) == "jazz_bass_b":
+			(variant_value as Dictionary)["enabled"] = false
+	incomplete_track["stem_banks"] = incomplete_banks
+	if JSON.stringify(_music_track_validation_errors(incomplete_track)).find("no enabled positive complete compatibility set") < 0:
+		failures.append("Music validation did not reject a recipe section without a complete positive set.")
 
 	var authored_environment := _music_environment_with_authored_track(library)
 	var procedural_environment := _music_environment_without_authored_track(library)
@@ -580,6 +659,93 @@ func _check_music_stem_director_foundation(library: ContentLibrary, failures: Ar
 	var authored_relative_key: Dictionary = player.music_stem_manifest_snapshot_for_environment(authored_environment, 20, {"harmonic_section": "B"})
 	if str(authored_relative_key.get("selection_key", "")) == str(authored_manifest.get("selection_key", "")) or str((authored_relative_key.get("selection_context", {}) as Dictionary).get("harmonic_section", "")) != "B":
 		failures.append("Authored harmonic bank did not preserve its relative-key section selection.")
+	var jazz_recipe := MusicArrangementSelectorScript.recipe_definition(jazz_8_track)
+	var jazz_tempo_profile: Dictionary = jazz_8_track.get("adaptive_tempo", {}) as Dictionary
+	var jazz_tempo_low := ProceduralMusicPlayerScript.adaptive_tempo_bpm_for_heat(jazz_tempo_profile, 0.0)
+	var jazz_tempo_mid := ProceduralMusicPlayerScript.adaptive_tempo_bpm_for_heat(jazz_tempo_profile, 50.0)
+	var jazz_tempo_high := ProceduralMusicPlayerScript.adaptive_tempo_bpm_for_heat(jazz_tempo_profile, 100.0)
+	if not bool(jazz_tempo_profile.get("enabled", false)) or not (jazz_tempo_low < jazz_tempo_mid and jazz_tempo_mid < jazz_tempo_high) or str(jazz_tempo_profile.get("native_processing", "")) != "player_rate_shared_bus_pitch_compensation":
+		failures.append("Jazz authored delivery did not expose a monotonic, data-driven native adaptive-tempo profile.")
+	var tempo_save_run := RunStateScript.new()
+	tempo_save_run.start_new("MUSIC-TEMPO-ROUNDTRIP")
+	tempo_save_run.remember_music_tempo_state({"profile_id": "jazz", "enabled": true, "current_bpm": 121.25, "target_bpm": 123.0, "source_heat": 80.0, "transport_beats": 13.75, "source_position": 6.875})
+	var restored_tempo_run := RunStateScript.new()
+	restored_tempo_run.from_dict(tempo_save_run.to_dict())
+	if JSON.stringify(restored_tempo_run.music_tempo_state) != JSON.stringify(tempo_save_run.music_tempo_state):
+		failures.append("Adaptive-tempo current/target transport state did not survive a RunState save/load round trip.")
+	var jazz_layer_recipe: Dictionary = jazz_8_track.get("layer_choreography", {}) as Dictionary
+	var jazz_layer_timeline := MusicLayerChoreographyScript.timeline_snapshot(jazz_layer_recipe, 32)
+	var jazz_layer_stage_changes: Array = []
+	for row_value in jazz_layer_timeline:
+		var stage_id := str((row_value as Dictionary).get("stage_id", ""))
+		if jazz_layer_stage_changes.is_empty() or str(jazz_layer_stage_changes[-1]) != stage_id:
+			jazz_layer_stage_changes.append(stage_id)
+	if jazz_layer_stage_changes != ["sparse", "build_bass", "build_drums", "peak", "release", "rebuild"]:
+		failures.append("Jazz layer choreography did not encode its sparse/build/peak/release/rebuild dwell arc in order.")
+	var fill_requests := [
+		{"id": "layer", "kind": "layer", "priority": 40, "source_section": "A", "destination_section": "B", "destination_progression_id": "jazz_b_1", "change_roles": ["drums_high"]},
+		{"id": "section", "kind": "section", "priority": 100, "source_section": "A", "destination_section": "B", "destination_progression_id": "jazz_b_1"},
+	]
+	var fill_resolution := MusicLayerChoreographyScript.resolve_fill_request(jazz_8_track.get("fills", {}), fill_requests, 2)
+	if str(fill_resolution.get("request_id", "")) != "section" or str(fill_resolution.get("fill_id", "")) != "jazz_fixture_fill" or int(fill_resolution.get("lead_in_bars", 0)) != 2:
+		failures.append("Jazz section/layer fill requests did not resolve to one compatible two-bar section-priority fill.")
+	var incompatible_fill := MusicLayerChoreographyScript.resolve_fill_request({"wrong": {"loop": false, "source_sections": ["C"], "destination_sections": ["C"], "progression_compatibility": ["wrong"]}}, fill_requests, 2)
+	if not bool(incompatible_fill.get("quiet_fallback", false)) or not str(incompatible_fill.get("fill_id", "")).is_empty():
+		failures.append("Jazz incompatible fill request did not degrade to the quiet authored-safe exit/entry.")
+	var choreography_save_run := RunStateScript.new()
+	choreography_save_run.start_new("MUSIC-CHOREOGRAPHY-ROUNDTRIP")
+	choreography_save_run.remember_music_choreography_state({"profile_id": "jazz", "visit_bar": 6, "stage_id": "build_bass", "stage_index": 1, "next_boundary_bar": 8, "last_fill_bar": 6, "scheduled_transition": {"destination_bar": 8, "fill_id": "jazz_fixture_fill", "started": true}, "feature_release_bar": 8, "role_target": {"drums_low": 0.0}, "role_live": {"drums_low": 0.1}})
+	var restored_choreography_run := RunStateScript.new()
+	restored_choreography_run.from_dict(choreography_save_run.to_dict())
+	if JSON.stringify(restored_choreography_run.music_choreography_state) != JSON.stringify(choreography_save_run.music_choreography_state):
+		failures.append("Layer stage and scheduled fill boundary did not survive a RunState save/load round trip.")
+	var jazz_outcome_stingers: Dictionary = jazz_8_track.get("stingers", {}) as Dictionary
+	for outcome_cue_id in ["jazz_fixture_small_win", "jazz_fixture_loss", "jazz_fixture_big_win"]:
+		var outcome_cue: Dictionary = jazz_outcome_stingers.get(outcome_cue_id, {}) as Dictionary
+		if outcome_cue.is_empty() or bool(outcome_cue.get("loop", true)) or (outcome_cue.get("outcome_classes", []) as Array).is_empty() or (outcome_cue.get("reverb_pulse", {}) as Dictionary).is_empty():
+			failures.append("Jazz outcome fixture %s did not declare a one-shot class and controlled reverb pulse." % outcome_cue_id)
+	var deadline_boundary := MusicOutcomeDirectorModelScript.quantized_boundary(1.25, "phrase", 4, 1.0)
+	if str(deadline_boundary.get("quantization", "")) != "half_bar" or not bool(deadline_boundary.get("fallback_used", false)) or absf(float(deadline_boundary.get("target_transport_beat", 0.0)) - 2.0) > 0.000001:
+		failures.append("Outcome quantization did not fall back from a distant phrase to the largest deadline-safe subdivision.")
+	var bad_outcome_track := jazz_8_track.duplicate(true)
+	var bad_outcome_stingers: Dictionary = bad_outcome_track.get("stingers", {}) as Dictionary
+	var bad_outcome_cue: Dictionary = bad_outcome_stingers.get("jazz_fixture_small_win", {}) as Dictionary
+	var bad_outcome_pulse: Dictionary = bad_outcome_cue.get("reverb_pulse", {}) as Dictionary
+	bad_outcome_pulse["peak_send"] = 0.9
+	bad_outcome_cue["reverb_pulse"] = bad_outcome_pulse
+	bad_outcome_stingers["jazz_fixture_small_win"] = bad_outcome_cue
+	bad_outcome_track["stingers"] = bad_outcome_stingers
+	if JSON.stringify(_music_track_validation_errors(bad_outcome_track)).find("peak_send must stay inside 0..0.45") < 0:
+		failures.append("Music validation did not reject an outcome reverb send above its clarity ceiling.")
+	var outcome_player: ProceduralMusicPlayer = ProceduralMusicPlayerScript.new()
+	outcome_player.set("_current_stem_set", {"stinger_metadata": jazz_outcome_stingers, "harmony_phrase_bars": 4})
+	var scheduled_small := outcome_player.schedule_music_outcome_event({"event_token": "systems:small", "outcome_class": "small_win", "magnitude": 8, "tier": "small", "source_game": "roulette", "result_time": 760, "transport_beat": 1.25})
+	var duplicate_small := outcome_player.schedule_music_outcome_event({"event_token": "systems:small", "outcome_class": "small_win", "magnitude": 8, "source_game": "roulette", "result_time": 760, "transport_beat": 1.25})
+	var small_pulse_peak := outcome_player.music_outcome_director_snapshot(2.5)
+	var small_pulse_end := outcome_player.music_outcome_director_snapshot(4.01)
+	if not bool(scheduled_small.get("accepted", false)) or bool(scheduled_small.get("controls_blocked", true)) or bool(duplicate_small.get("accepted", true)) or not bool(duplicate_small.get("deduplicated", false)):
+		failures.append("Outcome director did not schedule immediately and deduplicate a stable gameplay event token.")
+	if absf(float(small_pulse_peak.get("reverb_send", 0.0)) - 0.24) > 0.0001 or float(small_pulse_end.get("reverb_send", -1.0)) != 0.0 or bool(small_pulse_peak.get("shared_full_mix_reverb", true)):
+		failures.append("Outcome reverb did not stay role-selected, bounded, and return to baseline on musical beats.")
+	var scheduled_big := outcome_player.schedule_music_outcome_event({"event_token": "systems:big", "outcome_class": "big_win", "magnitude": 80, "tier": "big", "source_game": "slot", "result_time": 764, "transport_beat": 10.2})
+	var big_envelope: Dictionary = outcome_player.get("_music_event_envelope")
+	if not bool(scheduled_big.get("accepted", false)) or float(big_envelope.get("end_beat", 0.0)) - float(big_envelope.get("start_beat", 0.0)) != 16.0:
+		failures.append("Explicit big-win outcome did not preserve the true four-musical-bar envelope.")
+	if _copy_array(jazz_recipe.get("sections", [])) != ["A", "A", "B", "A", "A", "A", "C", "A"]:
+		failures.append("Jazz harmony recipe did not encode AABA followed by AACA.")
+	var jazz_state := MusicArrangementSelectorScript.initial_recipe_state(jazz_8_track, 17, "fixture_visit")
+	var jazz_sections: Array = [str(jazz_state.get("harmonic_section", "A"))]
+	var jazz_c_state: Dictionary = {}
+	for phrase_index in range(7):
+		jazz_state = MusicArrangementSelectorScript.advance_recipe_state(jazz_8_track, jazz_state, {"phrase_event_index": phrase_index, "event_token": "fixture:%d" % phrase_index})
+		jazz_sections.append(str(jazz_state.get("harmonic_section", "")))
+		if phrase_index == 5:
+			jazz_c_state = jazz_state.duplicate(true)
+	if jazz_sections != ["A", "A", "B", "A", "A", "A", "C", "A"]:
+		failures.append("Jazz phrase events did not advance the exact AABA/AACA sequence: %s." % [jazz_sections])
+	var jazz_selection := MusicArrangementSelectorScript.select(jazz_8_track, {"environment_id": "jazz_fixture"}, {"run_seed": 17, "music_visit_id": "fixture_visit", "music_arrangement_state": jazz_c_state})
+	if not bool(jazz_selection.get("valid", false)) or str(jazz_selection.get("compatibility_set_id", "")) != "jazz_c_instrument_contrast" or str(jazz_selection.get("progression_id", "")) != "jazz_a_1":
+		failures.append("Jazz C contrast did not preserve A progression authority through its distinct arrangement set: %s." % [jazz_selection])
 	var stinger_modes: Dictionary = authored_manifest.get("stinger_loop_modes", {}) as Dictionary
 	var fill_modes: Dictionary = authored_manifest.get("fill_loop_modes", {}) as Dictionary
 	if int(stinger_modes.get("win_fixture", -1)) != AudioStreamWAV.LOOP_DISABLED or int(fill_modes.get("drum_fill_fixture", -1)) != AudioStreamWAV.LOOP_DISABLED:
@@ -750,6 +916,93 @@ func _check_music_stem_director_foundation(library: ContentLibrary, failures: Ar
 		var motel_palette: Dictionary = motel_theory.get("instrument_palette", {}) as Dictionary
 		if str(jazz_palette.get("id", "")) == str(grand_palette.get("id", "")) or str(motel_palette.get("id", "")) == str(grand_palette.get("id", "")):
 			failures.append("Music instrument palettes did not differ by venue archetype.")
+	# These headless-only Nodes are never inserted into a SceneTree, so free them
+	# synchronously and release cached float PCM resources before process exit.
+	player.free()
+	quantized_player.free()
+	feature_player.free()
+	event_player.free()
+	sfx.free()
+
+
+func _check_music_wav_info_cache(failures: Array) -> void:
+	var fixture_path := "user://music_wav_cache_fixture.wav"
+	var absolute_path := ProjectSettings.globalize_path(fixture_path)
+	DirAccess.remove_absolute(absolute_path)
+	ContentLibraryScript.clear_music_wav_info_cache()
+	var missing := ContentLibraryScript.inspect_music_wav(fixture_path)
+	var missing_snapshot := ContentLibraryScript.music_wav_info_cache_snapshot()
+	if bool(missing.get("valid", true)) or int(missing_snapshot.get("entries", -1)) != 0:
+		failures.append("WAV inspection cache retained a missing-file error that could poison a later delivery.")
+
+	if not _write_music_wav_cache_fixture(fixture_path, 1, true):
+		failures.append("WAV inspection cache test could not write its valid fixture.")
+		return
+	var first := ContentLibraryScript.inspect_music_wav(fixture_path)
+	var first_snapshot := ContentLibraryScript.music_wav_info_cache_snapshot()
+	first["frames"] = 999
+	var cached := ContentLibraryScript.inspect_music_wav(fixture_path)
+	var hit_snapshot := ContentLibraryScript.music_wav_info_cache_snapshot()
+	if not bool(cached.get("valid", false)) or int(cached.get("frames", 0)) != 1 or cached.has("path") or cached.has("_cache_path"):
+		failures.append("WAV inspection cache did not return an isolated copy of the cached validation result.")
+	if int(first_snapshot.get("entries", 0)) != 1 or int(first_snapshot.get("misses", 0)) != 1 or int(hit_snapshot.get("hits", 0)) != 1:
+		failures.append("WAV inspection cache did not record one miss followed by one hit for an unchanged file.")
+
+	if not _write_music_wav_cache_fixture(fixture_path, 2, true):
+		failures.append("WAV inspection cache test could not rewrite its valid fixture.")
+	else:
+		var rewritten := ContentLibraryScript.inspect_music_wav(fixture_path)
+		var rewritten_snapshot := ContentLibraryScript.music_wav_info_cache_snapshot()
+		if not bool(rewritten.get("valid", false)) or int(rewritten.get("frames", 0)) != 2 or int(rewritten_snapshot.get("misses", 0)) != 2 or int(rewritten_snapshot.get("entries", 0)) != 1:
+			failures.append("WAV inspection cache did not invalidate its stale entry after the file length changed.")
+
+	if not _write_music_wav_cache_fixture(fixture_path, 3, false):
+		failures.append("WAV inspection cache test could not write its invalid fixture.")
+	else:
+		var invalid_first := ContentLibraryScript.inspect_music_wav(fixture_path)
+		var invalid_cached := ContentLibraryScript.inspect_music_wav(fixture_path)
+		var invalid_snapshot := ContentLibraryScript.music_wav_info_cache_snapshot()
+		if bool(invalid_first.get("valid", true)) or invalid_first != invalid_cached or str(invalid_first.get("error", "")).is_empty():
+			failures.append("WAV inspection cache did not preserve an actionable invalid-file result on a cache hit.")
+		if int(invalid_snapshot.get("entries", 0)) != 1 or int(invalid_snapshot.get("misses", 0)) != 3 or int(invalid_snapshot.get("hits", 0)) != 2:
+			failures.append("WAV inspection cache counters or stale-entry replacement were incorrect after an invalid rewrite.")
+		if int(invalid_snapshot.get("max_entries", 0)) != ContentLibraryScript.MUSIC_WAV_INFO_CACHE_MAX_ENTRIES:
+			failures.append("WAV inspection cache did not expose its bounded-growth limit.")
+
+	ContentLibraryScript.clear_music_wav_info_cache()
+	var cleared_snapshot := ContentLibraryScript.music_wav_info_cache_snapshot()
+	if int(cleared_snapshot.get("entries", -1)) != 0 or int(cleared_snapshot.get("hits", -1)) != 0 or int(cleared_snapshot.get("misses", -1)) != 0:
+		failures.append("WAV inspection cache clear hook did not reset entries and diagnostics.")
+	DirAccess.remove_absolute(absolute_path)
+
+
+func _write_music_wav_cache_fixture(path: String, frames: int, valid_signature: bool) -> bool:
+	var file := FileAccess.open(path, FileAccess.WRITE)
+	if file == null:
+		return false
+	file.big_endian = false
+	var data_bytes := frames * 3
+	var padded_data_bytes := data_bytes + (data_bytes % 2)
+	var riff_size := 4 + 8 + 16 + 8 + padded_data_bytes
+	file.store_buffer(("RIFF" if valid_signature else "NOPE").to_ascii_buffer())
+	file.store_32(riff_size)
+	file.store_buffer("WAVE".to_ascii_buffer())
+	file.store_buffer("fmt ".to_ascii_buffer())
+	file.store_32(16)
+	file.store_16(1)
+	file.store_16(1)
+	file.store_32(44100)
+	file.store_32(132300)
+	file.store_16(3)
+	file.store_16(24)
+	file.store_buffer("data".to_ascii_buffer())
+	file.store_32(data_bytes)
+	for byte_index in range(data_bytes):
+		file.store_8((byte_index * 17) & 0xff)
+	if data_bytes % 2 != 0:
+		file.store_8(0)
+	file.close()
+	return true
 
 
 func _music_environment_with_authored_track(library: ContentLibrary) -> Dictionary:
@@ -4607,3 +4860,7 @@ func _check_contracts(library: ContentLibrary, failures: Array) -> void:
 		failures.append("Event module did not apply flag consequences.")
 
 	var item_effect := ItemEffect.new()
+func _music_track_validation_errors(track: Dictionary) -> Array:
+	var fixture: ContentLibrary = ContentLibraryScript.new()
+	fixture.music_tracks = [track]
+	return fixture.validate()
