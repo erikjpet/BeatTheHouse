@@ -5,7 +5,8 @@ All notable public release changes for Beat the House are recorded here.
 ## 0.5.0 - In development
 
 Status: **in development.** The Grand Casino feature queue is implemented;
-repository release verification and owner playtesting are still in progress.
+the full repository release battery passed on 2026-07-17. Owner playtesting,
+packaging, publication, and tagging are still in progress.
 
 ### Added
 
@@ -49,8 +50,13 @@ repository release verification and owner playtesting are still in progress.
 
 - Tunes Rourke edge callouts from an 8-chip to an 18-chip swing so preparation
   materially matters, and moves the shown-the-door lower margin from -8 to -60
-  so all three duel endings occupy meaningful measured bands. Full before/
-  after seed evidence will be cited with the 0.5 release-readiness battery.
+  so all three duel endings occupy meaningful measured bands.
+- Final 0.5 repository-gate evidence: **PASS** on 2026-07-17. The complete
+  suite matrix, timeout policy, before/after balance table, route and ending
+  rates, performance results, zero-warning visual QA, strict 60-run mouse
+  batch, Web smoke, and report paths are recorded in
+  `.tmp/release_readiness_0_5_0.md`; owner playtest and publishing remain
+  manual.
 
 ## 0.4.0 - Act 1 completion release
 
