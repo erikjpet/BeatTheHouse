@@ -20,6 +20,7 @@ const FAILURE_DECAY_FLAG := "_meta_collection_failure_decay_applied"
 const FIXTURE_POLLUTION_MIGRATION_FLAG := "_fixture_pollution_quarantined_v1"
 const FAILURE_DURABILITY_LOSS := 0.10
 const PLAYERS_CARD_ITEMDEF_ID := 9500
+const GRAND_CASINO_CHIPS_ITEMDEF_ID := 9501
 const PRESTIGE_RECOGNITION_HEAT_DELTA := -10
 const PRESTIGE_CLEAN_HEAT_CEILING_DELTA := -5
 const PRESTIGE_DROP_TIER_BONUS_STEPS := 1
@@ -113,6 +114,28 @@ func mint_players_card(instance_data: Dictionary) -> Dictionary:
 		"source": "grand_casino_players_card",
 		"source_id": str(instance_data.get("route", "high_roller_cashout")),
 		"instance_data": instance_data.duplicate(true),
+	}
+	return grant_instance(instance)
+
+
+func mint_grand_casino_chip_stack(chip_amount: int, instance_data: Dictionary = {}) -> Dictionary:
+	var amount := maxi(0, chip_amount)
+	if amount <= 0:
+		return {}
+	var stamp := instance_data.duplicate(true)
+	stamp["chip_amount"] = amount
+	stamp["face_value"] = amount
+	var instance := {
+		"itemdef_id": GRAND_CASINO_CHIPS_ITEMDEF_ID,
+		"potency": 1.0,
+		"condition": 1.0,
+		"resonance": 1.0,
+		"usage": 1.0,
+		"stack_amount": amount,
+		"face_value": amount,
+		"source": "grand_casino_shown_the_door",
+		"source_id": str(stamp.get("route", "pit_boss_showdown")),
+		"instance_data": stamp,
 	}
 	return grant_instance(instance)
 
@@ -291,9 +314,12 @@ func grant_container(item_id: String) -> Dictionary:
 func pack_instance(instance_id: int) -> Dictionary:
 	_store = _normalize_store(_store)
 	if housing_tier() == HOUSING_BACK_ALLEY:
-		return {"ok": true, "message": "Homeless runs carry every owned item.", "packed_instance_ids": carried_instance_ids()}
+		return {"ok": true, "message": "Homeless runs carry every loadout-eligible item.", "packed_instance_ids": carried_instance_ids()}
 	if instance_id <= 0 or not _owned_instance_ids().has(instance_id):
 		return {"ok": false, "message": "That item is not owned."}
+	var resolver: Variant = CollectionItemResolverScript.new()
+	if not resolver.is_loadout_eligible(_owned_instance(instance_id)):
+		return {"ok": false, "message": "Grand Casino Chips stay in meta storage until Sal fences them."}
 	var loadout := _filtered_packed_ids(_copy_array(_store.get("loadout", [])))
 	if loadout.has(instance_id):
 		return {"ok": true, "message": "Item is already packed.", "packed_instance_ids": loadout}
@@ -317,7 +343,7 @@ func unpack_instance(instance_id: int) -> Dictionary:
 func carried_instance_ids() -> Array:
 	_store = _normalize_store(_store)
 	if housing_tier() == HOUSING_BACK_ALLEY:
-		return _owned_instance_ids()
+		return _loadout_eligible_owned_instance_ids()
 	return _filtered_packed_ids(_copy_array(_store.get("loadout", [])))
 
 
@@ -343,7 +369,7 @@ func normal_run_start_modifiers() -> Dictionary:
 		"meta_collection_containers": carried_container_rows(),
 	}
 	if not prestige_card_ids.is_empty():
-		var prestige := resolver.prestige_config()
+		var prestige: Dictionary = resolver.prestige_config()
 		result["grand_casino_prestige"] = true
 		result["grand_casino_prestige_card_instance_ids"] = prestige_card_ids
 		result["grand_casino_prestige_recognition_heat_delta"] = mini(0, int(prestige.get("recognition_heat_delta", PRESTIGE_RECOGNITION_HEAT_DELTA)))
@@ -845,10 +871,11 @@ func _filtered_packed_ids(values: Array) -> Array:
 
 func _filtered_packed_ids_for(values: Array, owned_instances: Array, tier: String, containers: Array) -> Array:
 	var owned_lookup := {}
+	var resolver: Variant = CollectionItemResolverScript.new()
 	for instance_value in owned_instances:
 		var instance := _copy_dict(instance_value)
 		var instance_id := int(instance.get("instance_id", 0))
-		if instance_id > 0:
+		if instance_id > 0 and resolver.is_loadout_eligible(instance):
 			owned_lookup[instance_id] = true
 	var result: Array = []
 	for value in values:
@@ -870,6 +897,17 @@ func _owned_instance_ids() -> Array:
 		var instance := _copy_dict(instance_value)
 		var id := int(instance.get("instance_id", 0))
 		if id > 0 and not ids.has(id):
+			ids.append(id)
+	return ids
+
+
+func _loadout_eligible_owned_instance_ids() -> Array:
+	var resolver: Variant = CollectionItemResolverScript.new()
+	var ids: Array = []
+	for instance_value in _copy_array(_store.get("owned_instances", [])):
+		var instance := _copy_dict(instance_value)
+		var id := int(instance.get("instance_id", 0))
+		if id > 0 and resolver.is_loadout_eligible(instance) and not ids.has(id):
 			ids.append(id)
 	return ids
 
@@ -904,6 +942,21 @@ func _item_sale_quote(instance_id: int) -> Dictionary:
 	var definition: Dictionary = resolver.item_definition(int(instance.get("itemdef_id", -1)))
 	if definition.is_empty():
 		return {"ok": false, "message": "That item cannot be sold."}
+	if resolver.is_chip_stack_instance(instance):
+		var face_value := maxi(0, int(instance.get("face_value", instance.get("stack_amount", 0))))
+		var policy := _copy_dict(definition.get("sale_policy", {}))
+		var gold_rate := clampf(float(policy.get("gold_rate", 0.6)), 0.0, 1.0)
+		var fenced_price := maxi(1, int(round(float(face_value) * gold_rate))) if face_value > 0 else 0
+		return {
+			"ok": fenced_price > 0,
+			"kind": SALE_KIND_ITEM,
+			"instance_id": instance_id,
+			"price": fenced_price,
+			"display_name": str(definition.get("display_name", "Grand Casino Chips")),
+			"tier": str(definition.get("tier", "gold")),
+			"face_value": face_value,
+			"gold_rate": gold_rate,
+		}
 	var tier := str(definition.get("tier", "blue"))
 	var prices := _copy_dict(_copy_dict(_meta_home_config().get("sale_prices", {})).get("items", {}))
 	var base_price := maxi(1, int(prices.get(tier, 1)))

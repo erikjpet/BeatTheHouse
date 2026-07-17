@@ -7208,6 +7208,8 @@ static func _normalize_pending_bag_marker(value: Variant) -> Dictionary:
 		"collection_id": str(source.get("collection_id", "")).strip_edges(),
 		"collection_display_name": str(source.get("collection_display_name", "")).strip_edges(),
 		"tier": str(source.get("tier", "")).strip_edges(),
+		"rolled_tier": str(source.get("rolled_tier", source.get("tier", ""))).strip_edges(),
+		"tier_bonus_steps": maxi(0, int(source.get("tier_bonus_steps", 0))),
 		"tier_label": str(source.get("tier_label", "")).strip_edges(),
 		"display_name": str(source.get("display_name", "Collection Bag")).strip_edges(),
 		"icon_key": str(source.get("icon_key", "")).strip_edges(),

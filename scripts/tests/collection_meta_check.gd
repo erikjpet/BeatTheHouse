@@ -36,6 +36,7 @@ func _run() -> void:
 	_test_pawn_sale_and_trade_up(resolver)
 	_test_failure_decay_and_run_modifiers(resolver)
 	_test_players_card_mint_and_profile_lifecycle()
+	_test_uncashed_grand_casino_chips_pawn_flow()
 	_test_prestige_run_modifiers_and_drop_depth()
 	_test_terminal_drop_determinism()
 	_test_victory_selection_grants_one_bag()
@@ -89,7 +90,7 @@ func _test_collection_schema(resolver: Variant) -> void:
 
 func _test_players_card_schema_and_fragility(resolver: Variant) -> void:
 	var special_items: Array = resolver.special_item_definitions()
-	_check(special_items.size() == 1, "Collection schema must define the Players Card special item.")
+	_check(special_items.size() == 2, "Collection schema must define Players Card and chip-stack special items.")
 	var definition: Dictionary = resolver.item_definition(MetaCollectionServiceScript.PLAYERS_CARD_ITEMDEF_ID)
 	_check(str(definition.get("item_class", "")) == CollectionItemResolverScript.ITEM_CLASS_PLAYERS_CARD, "Players Card is not a first-class players_card item.")
 	var normalized: Dictionary = resolver.normalize_instance_for_definition({
@@ -106,6 +107,10 @@ func _test_players_card_schema_and_fragility(resolver: Variant) -> void:
 	_check(is_equal_approx(float(rolled.get("condition", 1.0)), float(normalized.get("condition", 0.0))), "Players Card roll boundary did not keep durability pinned.")
 	var run_item: Dictionary = resolver.resolve_run_item(normalized)
 	_check(str(_copy_dict(run_item.get("meta_collection", {})).get("condition_band", "")) == "critical", "Players Card did not resolve in the critical durability band.")
+	var chip_definition: Dictionary = resolver.item_definition(MetaCollectionServiceScript.GRAND_CASINO_CHIPS_ITEMDEF_ID)
+	_check(str(chip_definition.get("item_class", "")) == CollectionItemResolverScript.ITEM_CLASS_CHIP_STACK and not bool(chip_definition.get("loadout_eligible", true)), "Grand Casino Chips are not a first-class meta-only chip stack.")
+	var chip_policy := _copy_dict(chip_definition.get("sale_policy", {}))
+	_check(str(chip_policy.get("kind", "")) == "face_value_rate" and is_equal_approx(float(chip_policy.get("gold_rate", 0.0)), 0.6), "Grand Casino Chips do not carry Sal's tuned 60% fenced rate.")
 
 
 func _test_float_determinism(resolver: Variant) -> void:
@@ -290,11 +295,14 @@ func _test_players_card_mint_and_profile_lifecycle() -> void:
 	var mint_result: Dictionary = drop_service.apply_terminal_special_outcome(clean_run, service)
 	var mint_repeat: Dictionary = drop_service.apply_terminal_special_outcome(clean_run, service)
 	_check(bool(mint_result.get("mutated", false)) and not bool(mint_repeat.get("mutated", true)), "Clean win did not mint exactly one Players Card.")
-	var owned := service.owned_instances()
+	var owned: Array = service.owned_instances()
 	_check(owned.size() == 1, "Clean win did not add one Players Card instance to the profile.")
 	var card := _copy_dict(owned[0]) if not owned.is_empty() else {}
 	var stamp := _copy_dict(card.get("instance_data", {}))
-	_check(str(stamp.get("seed", "")) == "players-card-clean" and int(stamp.get("final_score", 0)) == 74 and int(stamp.get("days_survived", 0)) == 2, "Players Card stamp did not preserve seed, score, and days.")
+	_check(
+		str(stamp.get("seed", "")) == "players-card-clean" and int(stamp.get("final_score", 0)) == int(clean_run.terminal_score_summary().get("score", 0)) and int(stamp.get("days_survived", 0)) == 2,
+		"Players Card stamp did not preserve seed, score, and days: %s" % JSON.stringify(stamp)
+	)
 	_check(_copy_array(stamp.get("tier_timeline", [])).size() == 3 and str(stamp.get("route", "")) == RunStateScript.GRAND_CASINO_HIGH_ROLLER_EVENT_ID, "Players Card stamp did not preserve tier timeline and route.")
 	var report_reward := _copy_dict(RunReportViewModelScript.build(clean_run.to_dict()).get("meta_reward", {}))
 	_check(bool(report_reward.get("visible", false)) and str(report_reward.get("kind", "")) == "players_card_minted", "Run report did not surface the minted Players Card in RESULT.")
@@ -334,6 +342,58 @@ func _test_players_card_mint_and_profile_lifecycle() -> void:
 	OS.set_environment(MetaCollectionServiceScript.STORE_PATH_ENV, "")
 
 
+func _test_uncashed_grand_casino_chips_pawn_flow() -> void:
+	OS.set_environment(MetaCollectionServiceScript.STORE_PATH_ENV, TEST_STORE_PATH)
+	_remove_user_file(TEST_STORE_PATH)
+	var service: Variant = MetaCollectionServiceScript.new()
+	service.load()
+	var drop_service: Variant = CollectionDropServiceScript.new()
+	var shown_run: Variant = _terminal_run("shown-door-chip-stack")
+	shown_run.bankroll = 123
+	shown_run.grand_casino_chips = 37
+	shown_run.narrative_flags["grand_casino_walked_with_chips"] = true
+	shown_run.narrative_flags["grand_casino_duel_outcome"] = "shown_the_door"
+	shown_run.narrative_flags["grand_casino_uncashed_chip_amount"] = 37
+	var grant_result: Dictionary = drop_service.apply_terminal_special_outcome(shown_run, service)
+	var repeated_result: Dictionary = drop_service.apply_terminal_special_outcome(shown_run, service)
+	_check(bool(grant_result.get("mutated", false)) and not bool(repeated_result.get("mutated", true)), "Shown-door ending did not grant exactly one chip stack.")
+	var owned: Array = service.owned_instances()
+	_check(owned.size() == 1, "Shown-door ending did not add one Grand Casino Chips stack to meta storage.")
+	var chip_stack := _copy_dict(owned[0]) if not owned.is_empty() else {}
+	_check(str(chip_stack.get("item_class", "")) == CollectionItemResolverScript.ITEM_CLASS_CHIP_STACK and int(chip_stack.get("stack_amount", 0)) == 37 and int(chip_stack.get("face_value", 0)) == 37, "Grand Casino Chips stack did not preserve the exact uncashed amount as face value.")
+	var run_modifiers: Dictionary = service.normal_run_start_modifiers()
+	_check(not _copy_array(run_modifiers.get("meta_collection_carried_instance_ids", [])).has(int(chip_stack.get("instance_id", 0))) and _copy_array(run_modifiers.get("meta_collection_loadout", [])).is_empty(), "Grand Casino Chips leaked from meta storage into a run loadout.")
+	var markers: Array = drop_service.ensure_run_end_pending_bags(shown_run, null)
+	_check(not markers.is_empty(), "Shown-door chip stack was not granted alongside the existing run-end drop flow.")
+	var report_reward := _copy_dict(RunReportViewModelScript.build(shown_run.to_dict()).get("meta_reward", {}))
+	_check(str(report_reward.get("kind", "")) == "grand_casino_chips" and str(report_reward.get("title", "")).contains("×37"), "Run report did not surface the uncashed Grand Casino Chips stack.")
+	_check(service.save() == OK, "Grand Casino Chips profile save failed.")
+	var restored: Variant = MetaCollectionServiceScript.new()
+	restored.load()
+	var restored_owned: Array = restored.owned_instances()
+	_check(restored_owned.size() == 1 and int(_copy_dict(restored_owned[0]).get("face_value", 0)) == 37, "Grand Casino Chips did not survive profile restart with exact face value.")
+	var instance_id := int(_copy_dict(restored_owned[0]).get("instance_id", 0)) if not restored_owned.is_empty() else 0
+	var quote: Dictionary = restored.sale_quote(MetaCollectionServiceScript.SALE_KIND_ITEM, instance_id)
+	_check(bool(quote.get("ok", false)) and int(quote.get("price", 0)) == 22 and is_equal_approx(float(quote.get("gold_rate", 0.0)), 0.6), "Sal did not price the 37-chip stack at the tuned 60% fenced rate.")
+	var run_cash_before: int = shown_run.bankroll
+	var run_chips_before: int = shown_run.grand_casino_chips
+	var armed: Dictionary = restored.arm_sale(MetaCollectionServiceScript.SALE_KIND_ITEM, instance_id)
+	var sold: Dictionary = restored.confirm_sale(str(armed.get("token", "")))
+	_check(bool(sold.get("ok", false)) and int(sold.get("gold_balance", 0)) == 22 and restored.owned_instances().is_empty(), "Sal's existing sale flow did not consume the chip stack and grant fenced gold.")
+	_check(shown_run.bankroll == run_cash_before and shown_run.grand_casino_chips == run_chips_before, "Selling the meta chip stack mutated run cash or run chips.")
+	var clean_showdown: Variant = _terminal_run("clean-showdown-no-chip-stack")
+	drop_service.apply_terminal_special_outcome(clean_showdown, restored)
+	var failed_showdown: Variant = _terminal_run("failed-showdown-no-chip-stack")
+	failed_showdown.run_status = RunStateScript.RUN_STATUS_FAILED
+	failed_showdown.narrative_flags["grand_casino_walked_with_chips"] = true
+	failed_showdown.narrative_flags["grand_casino_duel_outcome"] = "taken_out_back"
+	failed_showdown.narrative_flags["grand_casino_uncashed_chip_amount"] = 99
+	drop_service.apply_terminal_special_outcome(failed_showdown, restored)
+	_check(restored.owned_instances().is_empty(), "Clean or failed showdown route incorrectly granted a Grand Casino Chips stack.")
+	_remove_user_file(TEST_STORE_PATH)
+	OS.set_environment(MetaCollectionServiceScript.STORE_PATH_ENV, "")
+
+
 func _test_prestige_run_modifiers_and_drop_depth() -> void:
 	OS.set_environment(MetaCollectionServiceScript.STORE_PATH_ENV, TEST_STORE_PATH)
 	_remove_user_file(TEST_STORE_PATH)
@@ -354,8 +414,8 @@ func _test_prestige_run_modifiers_and_drop_depth() -> void:
 	})
 	prestige_run.suspicion["local_levels"] = {RunStateScript.GRAND_CASINO_ARCHETYPE_ID: 20}
 	prestige_run.set_environment(_grand_casino_environment_fixture())
-	var prestige_status := prestige_run.grand_casino_prestige_status()
-	var objective := prestige_run.demo_objective_status()
+	var prestige_status: Dictionary = prestige_run.grand_casino_prestige_status()
+	var objective: Dictionary = prestige_run.demo_objective_status()
 	_check(bool(prestige_status.get("recognition_applied", false)) and prestige_run.suspicion_level() == 10, "Prestige recognition did not reduce initial Grand Casino attention by the tuned amount.")
 	_check(int(objective.get("high_roller_max_heat", 30)) == 25 and int(objective.get("players_card_next_max_heat", 30)) == 25, "Prestige expectations did not tighten the clean-route heat ceiling.")
 	var drop_service: Variant = CollectionDropServiceScript.new()
@@ -365,10 +425,16 @@ func _test_prestige_run_modifiers_and_drop_depth() -> void:
 	var prestige_markers: Array = drop_service.ensure_run_end_pending_bags(prestige_drop_run, null)
 	_check(regular_markers.size() == prestige_markers.size() and not regular_markers.is_empty(), "Prestige drop comparison did not produce matching deterministic marker counts.")
 	for index in range(mini(regular_markers.size(), prestige_markers.size())):
-		var regular_tier := str(_copy_dict(regular_markers[index]).get("tier", "blue"))
-		var prestige_tier := str(_copy_dict(prestige_markers[index]).get("tier", "blue"))
-		var expected_index := mini(CollectionItemResolverScript.TIERS.size() - 1, CollectionItemResolverScript.TIERS.find(regular_tier) + int(prestige_modifiers.get("meta_collection_drop_tier_bonus_steps", 0)))
-		_check(CollectionItemResolverScript.TIERS.find(prestige_tier) == expected_index, "Prestige drop did not promote the existing deterministic tier roll.")
+		var regular_marker := _copy_dict(regular_markers[index])
+		var regular_rolled_tier := str(regular_marker.get("rolled_tier", ""))
+		var regular_tier := str(regular_marker.get("tier", ""))
+		_check(regular_tier == regular_rolled_tier and int(regular_marker.get("tier_bonus_steps", -1)) == 0, "Non-prestige drop changed its existing deterministic tier roll.")
+		var prestige_marker := _copy_dict(prestige_markers[index])
+		var prestige_rolled_tier := str(prestige_marker.get("rolled_tier", ""))
+		var prestige_tier := str(prestige_marker.get("tier", ""))
+		var bonus_steps := int(prestige_modifiers.get("meta_collection_drop_tier_bonus_steps", 0))
+		var expected_index := mini(CollectionItemResolverScript.TIERS.size() - 1, CollectionItemResolverScript.TIERS.find(prestige_rolled_tier) + bonus_steps)
+		_check(int(prestige_marker.get("tier_bonus_steps", -1)) == bonus_steps and CollectionItemResolverScript.TIERS.find(prestige_tier) == expected_index, "Prestige drop did not promote its existing deterministic tier roll.")
 	_remove_user_file(TEST_STORE_PATH)
 	OS.set_environment(MetaCollectionServiceScript.STORE_PATH_ENV, "")
 

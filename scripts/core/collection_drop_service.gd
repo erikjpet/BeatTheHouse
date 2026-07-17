@@ -5,6 +5,7 @@ extends RefCounted
 # terminal run outcomes into meta collection grants.
 
 const CollectionItemResolverScript := preload("res://scripts/core/collection_item_resolver.gd")
+const GrandCasinoDuelModelScript := preload("res://scripts/core/grand_casino_duel_model.gd")
 const MetaCollectionServiceScript := preload("res://scripts/core/meta_collection_service.gd")
 const RngStreamScript := preload("res://scripts/core/rng_stream.gd")
 
@@ -15,6 +16,7 @@ const SELECTED_FLAG := "_meta_bag_selected"
 const SPECIAL_OUTCOME_PROCESSED_FLAG := "_meta_special_outcome_processed"
 const PLAYERS_CARD_REWARD_FLAG := "_meta_players_card_reward"
 const PLAYERS_CARD_DESTROYED_FLAG := "_meta_players_card_destroyed"
+const GRAND_CASINO_CHIPS_REWARD_FLAG := "_meta_grand_casino_chips_reward"
 const PRESTIGE_RESULT_FLAG := "_meta_prestige_result"
 const HIGH_HEAT_CLEAN_ESCAPE_THRESHOLD := 65
 const HIGH_HEAT_CLEAN_ESCAPE_CHANCE_PERCENT := 35
@@ -30,9 +32,10 @@ func apply_terminal_special_outcome(run_state: RunState, meta_collection_service
 			"ok": true,
 			"mutated": false,
 			"card_reward": _copy_dict(run_state.narrative_flags.get(PLAYERS_CARD_REWARD_FLAG, {})),
+			"chips_reward": _copy_dict(run_state.narrative_flags.get(GRAND_CASINO_CHIPS_REWARD_FLAG, {})),
 			"destroyed_cards": _copy_array(run_state.narrative_flags.get(PLAYERS_CARD_DESTROYED_FLAG, [])),
 		}
-	var result := {"ok": true, "mutated": false, "card_reward": {}, "destroyed_cards": []}
+	var result := {"ok": true, "mutated": false, "card_reward": {}, "chips_reward": {}, "destroyed_cards": []}
 	var modifiers := run_state.challenge_modifiers()
 	var prestige := bool(modifiers.get("grand_casino_prestige", false))
 	if run_state.run_status == RunState.RUN_STATUS_FAILED:
@@ -85,6 +88,38 @@ func apply_terminal_special_outcome(run_state: RunState, meta_collection_service
 				})
 				result["card_reward"] = reward
 				result["mutated"] = true
+		if _shown_door_has_uncashed_chips(run_state):
+			var chip_amount := maxi(0, int(run_state.narrative_flags.get("grand_casino_uncashed_chip_amount", 0)))
+			var chip_stamp := {
+				"seed": "Hidden challenge" if run_state.seed_is_hidden() else run_state.seed_text,
+				"seed_hidden": run_state.seed_is_hidden(),
+				"route": RunState.GRAND_CASINO_SHOWDOWN_ROUTE,
+				"ending": GrandCasinoDuelModelScript.OUTCOME_SHOWN_THE_DOOR,
+				"chip_amount": chip_amount,
+			}
+			var chip_stack: Dictionary = meta_collection_service.mint_grand_casino_chip_stack(chip_amount, chip_stamp)
+			if not chip_stack.is_empty():
+				var sale_quote: Dictionary = meta_collection_service.sale_quote(MetaCollectionServiceScript.SALE_KIND_ITEM, int(chip_stack.get("instance_id", 0)))
+				var chip_reward := {
+					"instance_id": int(chip_stack.get("instance_id", 0)),
+					"itemdef_id": int(chip_stack.get("itemdef_id", -1)),
+					"item_class": str(chip_stack.get("item_class", "")),
+					"display_name": "Grand Casino Chips",
+					"stack_amount": chip_amount,
+					"face_value": chip_amount,
+					"fenced_gold_value": maxi(0, int(sale_quote.get("price", 0))),
+					"fenced_gold_rate": float(sale_quote.get("gold_rate", 0.0)),
+					"instance_data": chip_stamp,
+				}
+				run_state.narrative_flags[GRAND_CASINO_CHIPS_REWARD_FLAG] = chip_reward
+				run_state.log_story({
+					"type": "meta_grand_casino_chips_granted",
+					"instance_id": int(chip_stack.get("instance_id", 0)),
+					"chip_amount": chip_amount,
+					"message": "%d uncashed Grand Casino chips were stored for Sal's Pawn Shop." % chip_amount,
+				})
+				result["chips_reward"] = chip_reward
+				result["mutated"] = true
 		if prestige:
 			var card_ids := _copy_array(modifiers.get("grand_casino_prestige_card_instance_ids", []))
 			var prestige_result := {
@@ -97,6 +132,13 @@ func apply_terminal_special_outcome(run_state: RunState, meta_collection_service
 	result["prestige"] = prestige
 	run_state.narrative_flags[SPECIAL_OUTCOME_PROCESSED_FLAG] = true
 	return result
+
+
+func _shown_door_has_uncashed_chips(run_state: RunState) -> bool:
+	return bool(run_state.narrative_flags.get("grand_casino_walked_with_chips", false)) \
+		and str(run_state.narrative_flags.get("grand_casino_duel_outcome", "")) == GrandCasinoDuelModelScript.OUTCOME_SHOWN_THE_DOOR \
+		and str(run_state.narrative_flags.get("demo_victory_route", "")) == RunState.GRAND_CASINO_SHOWDOWN_ROUTE \
+		and maxi(0, int(run_state.narrative_flags.get("grand_casino_uncashed_chip_amount", 0))) > 0
 
 
 func ensure_run_end_pending_bags(run_state: RunState, profile_inventory: Variant = null) -> Array:
@@ -240,8 +282,9 @@ func _roll_bag_marker(run_state: RunState, source: String, source_id: String, rn
 		return {}
 	var collection_index := rng.randi_range(0, collections.size() - 1)
 	var collection := _copy_dict(collections[collection_index])
-	var tier := _roll_tier(collection, rng)
-	tier = _promote_tier(tier, maxi(0, int(run_state.challenge_modifiers().get("meta_collection_drop_tier_bonus_steps", 0))))
+	var rolled_tier := _roll_tier(collection, rng)
+	var tier_bonus_steps := maxi(0, int(run_state.challenge_modifiers().get("meta_collection_drop_tier_bonus_steps", 0)))
+	var tier := _promote_tier(rolled_tier, tier_bonus_steps)
 	var collection_id := str(collection.get("id", ""))
 	var bag_defs: Array = resolver.bag_item_definitions(collection_id, tier)
 	if bag_defs.is_empty():
@@ -261,6 +304,8 @@ func _roll_bag_marker(run_state: RunState, source: String, source_id: String, rn
 		"bagdef_id": bagdef_id,
 		"collection_id": collection_id,
 		"tier": tier,
+		"rolled_tier": rolled_tier,
+		"tier_bonus_steps": tier_bonus_steps,
 		"source": source,
 		"source_id": source_id,
 		"rng_seed": seed_text,

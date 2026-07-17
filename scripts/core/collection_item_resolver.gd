@@ -9,6 +9,7 @@ const INSTANCE_ID_SPAN := 900000000
 const FLOAT_KEYS := ["potency", "condition", "resonance", "usage"]
 const ITEM_CLASS_COLLECTION := "collection"
 const ITEM_CLASS_PLAYERS_CARD := "players_card"
+const ITEM_CLASS_CHIP_STACK := "chip_stack"
 const TIERS := ["blue", "purple", "pink", "red", "gold"]
 const TIER_COUNTS := {
 	"blue": 4,
@@ -195,7 +196,7 @@ func apply_usage_decay(instance: Dictionary, rng_seed: String) -> Dictionary:
 	var definition := item_definition(itemdef_id)
 	if definition.is_empty():
 		return next
-	if str(definition.get("item_class", ITEM_CLASS_COLLECTION)) == ITEM_CLASS_PLAYERS_CARD:
+	if str(definition.get("item_class", ITEM_CLASS_COLLECTION)) != ITEM_CLASS_COLLECTION:
 		return next
 	var usage_binding := _copy_dict(_copy_dict(definition.get("float_bindings", {})).get("usage", {}))
 	var decay_min := maxf(0.0, float(usage_binding.get("decay_min", 0.02)))
@@ -217,15 +218,15 @@ func resolve_run_item(instance: Dictionary) -> Dictionary:
 	var effect := _scaled_effect(definition, normalized)
 	var instance_id := int(normalized.get("instance_id", 0))
 	var item_id := str(definition.get("id", "collection_item"))
-	var display_name := "%s (%s)" % [
-		str(definition.get("display_name", "Collection Item")),
-		str(band.get("display_name", "Unknown")),
-	]
+	var item_class := str(definition.get("item_class", ITEM_CLASS_COLLECTION))
+	var display_name := "%s (%s)" % [str(definition.get("display_name", "Collection Item")), str(band.get("display_name", "Unknown"))]
+	if item_class == ITEM_CLASS_CHIP_STACK:
+		display_name = "%s ×%d" % [str(definition.get("display_name", "Grand Casino Chips")), maxi(0, int(normalized.get("stack_amount", 0)))]
 	return {
 		"id": "meta_%s_%d" % [item_id, instance_id],
 		"display_name": display_name,
-		"class": "permanent",
-		"domain": "global",
+		"class": "meta_only" if item_class == ITEM_CLASS_CHIP_STACK else "permanent",
+		"domain": "meta" if item_class == ITEM_CLASS_CHIP_STACK else "global",
 		"content_groups": ["meta_collection"],
 		"sellable": false,
 		"sale_price": 0,
@@ -236,19 +237,24 @@ func resolve_run_item(instance: Dictionary) -> Dictionary:
 		"effect": effect,
 		"meta_collection": {
 			"schema_version": SCHEMA_VERSION,
-			"item_class": str(definition.get("item_class", ITEM_CLASS_COLLECTION)),
+			"item_class": item_class,
 			"collection_id": str(definition.get("collection_id", "")),
 			"itemdef_id": itemdef_id,
 			"instance_id": instance_id,
 			"tier": str(definition.get("tier", "")),
 			"condition_band": str(band.get("id", "")),
 			"instance_data": _copy_dict(normalized.get("instance_data", {})),
+			"stack_amount": maxi(0, int(normalized.get("stack_amount", 0))),
+			"face_value": maxi(0, int(normalized.get("face_value", 0))),
+			"loadout_eligible": bool(definition.get("loadout_eligible", true)),
 		},
 		"meta_value_multiplier": value_multiplier(definition, normalized),
 	}
 
 
 func condition_band(definition: Dictionary, instance: Dictionary) -> Dictionary:
+	if str(definition.get("item_class", ITEM_CLASS_COLLECTION)) == ITEM_CLASS_CHIP_STACK:
+		return {"id": "stack", "display_name": "Stack", "max": 1.0, "value_multiplier": 1.0}
 	if str(definition.get("item_class", ITEM_CLASS_COLLECTION)) == ITEM_CLASS_PLAYERS_CARD:
 		return {
 			"id": "critical",
@@ -272,7 +278,7 @@ func condition_band(definition: Dictionary, instance: Dictionary) -> Dictionary:
 
 
 func value_multiplier(definition: Dictionary, instance: Dictionary) -> float:
-	if str(definition.get("item_class", ITEM_CLASS_COLLECTION)) == ITEM_CLASS_PLAYERS_CARD:
+	if str(definition.get("item_class", ITEM_CLASS_COLLECTION)) != ITEM_CLASS_COLLECTION:
 		return 1.0
 	var condition_binding := _copy_dict(_copy_dict(definition.get("float_bindings", {})).get("condition", {}))
 	var spent_value_multiplier := maxf(0.0, float(condition_binding.get("spent_value_multiplier", 0.08)))
@@ -306,12 +312,29 @@ func normalize_instance_for_definition(instance: Dictionary) -> Dictionary:
 		normalized["usage"] = 1.0
 		normalized["durability_pinned"] = true
 		normalized["instance_data"] = _copy_dict(normalized.get("instance_data", {}))
+	elif item_class == ITEM_CLASS_CHIP_STACK:
+		var stack_amount := maxi(0, int(normalized.get("stack_amount", normalized.get("face_value", 0))))
+		normalized["stack_amount"] = stack_amount
+		normalized["face_value"] = maxi(0, int(normalized.get("face_value", stack_amount)))
+		normalized["condition"] = 1.0
+		normalized["usage"] = 1.0
+		normalized["instance_data"] = _copy_dict(normalized.get("instance_data", {}))
 	return normalized
 
 
 func is_players_card_instance(instance: Dictionary) -> bool:
 	var definition := item_definition(int(instance.get("itemdef_id", -1)))
 	return str(definition.get("item_class", "")) == ITEM_CLASS_PLAYERS_CARD
+
+
+func is_chip_stack_instance(instance: Dictionary) -> bool:
+	var definition := item_definition(int(instance.get("itemdef_id", -1)))
+	return str(definition.get("item_class", "")) == ITEM_CLASS_CHIP_STACK
+
+
+func is_loadout_eligible(instance: Dictionary) -> bool:
+	var definition := item_definition(int(instance.get("itemdef_id", -1)))
+	return not definition.is_empty() and bool(definition.get("loadout_eligible", true))
 
 
 func _ensure_loaded() -> void:
@@ -353,15 +376,23 @@ func _index_special_items(items: Array, used_itemdef_ids: Dictionary) -> void:
 		if used_itemdef_ids.has(itemdef_id):
 			_validation_errors.append("Duplicate itemdef_id %d." % itemdef_id)
 			continue
-		if item_class != ITEM_CLASS_PLAYERS_CARD:
+		if not [ITEM_CLASS_PLAYERS_CARD, ITEM_CLASS_CHIP_STACK].has(item_class):
 			_validation_errors.append("Special item %s has unknown item_class '%s'." % [item_id, item_class])
 			continue
-		var durability := _copy_dict(item.get("durability_policy", {}))
-		var condition := float(durability.get("condition", -1.0))
-		if condition <= 0.0 or condition > 0.10:
-			_validation_errors.append("Players Card %s must pin condition inside the critical band (0, 0.10]." % item_id)
-		if bool(durability.get("normal_decay", true)) or bool(durability.get("repairable", true)) or not bool(durability.get("destroy_on_carried_failure", false)):
-			_validation_errors.append("Players Card %s has an invalid fragility policy." % item_id)
+		if item_class == ITEM_CLASS_PLAYERS_CARD:
+			var durability := _copy_dict(item.get("durability_policy", {}))
+			var condition := float(durability.get("condition", -1.0))
+			if condition <= 0.0 or condition > 0.10:
+				_validation_errors.append("Players Card %s must pin condition inside the critical band (0, 0.10]." % item_id)
+			if bool(durability.get("normal_decay", true)) or bool(durability.get("repairable", true)) or not bool(durability.get("destroy_on_carried_failure", false)):
+				_validation_errors.append("Players Card %s has an invalid fragility policy." % item_id)
+		elif bool(item.get("loadout_eligible", true)):
+			_validation_errors.append("Chip stack %s must remain meta-only." % item_id)
+		else:
+			var sale_policy := _copy_dict(item.get("sale_policy", {}))
+			var gold_rate := float(sale_policy.get("gold_rate", -1.0))
+			if str(sale_policy.get("kind", "")) != "face_value_rate" or gold_rate <= 0.0 or gold_rate > 1.0:
+				_validation_errors.append("Chip stack %s has an invalid fenced sale policy." % item_id)
 		used_itemdef_ids[itemdef_id] = true
 		item["item_class"] = item_class
 		_special_items.append(item)

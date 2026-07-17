@@ -70,6 +70,23 @@
 					"repairable": false,
 					"destroy_on_carried_failure": true
 				}
+			},
+			{
+				"itemdef_id": 9501,
+				"id": "grand_casino_chips",
+				"display_name": "Grand Casino Chips",
+				"item_class": "chip_stack",
+				"collection_id": "grand_casino_rewards",
+				"tier": "gold",
+				"icon_key": "poker_chip",
+				"flavor": "A rack the Grand Casino refused to cash. Sal knows another market.",
+				"base_effect": {},
+				"loadout_eligible": false,
+				"sale_policy": {
+					"kind": "face_value_rate",
+					"gold_rate": 0.6,
+					"seller": "sal"
+				}
 			}
 		],
 		"collections": [
