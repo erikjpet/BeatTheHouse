@@ -92,6 +92,19 @@ func load_run(slot_id: String = "autosave") -> Variant:
 	return null
 
 
+# Removes both generations of a slot so a deliberately skipped tutorial cannot resume.
+func clear_run(slot_id: String = "autosave") -> Error:
+	var clean_slot := _slot_id(slot_id)
+	for path in [run_save_path(clean_slot), backup_save_path(clean_slot)]:
+		var absolute_path := ProjectSettings.globalize_path(path)
+		if FileAccess.file_exists(absolute_path):
+			var remove_error := DirAccess.remove_absolute(absolute_path)
+			if remove_error != OK:
+				return remove_error
+	trusted_primary_fingerprints.erase(clean_slot)
+	return OK
+
+
 func last_load_result() -> Dictionary:
 	return last_load_outcome.duplicate(true)
 

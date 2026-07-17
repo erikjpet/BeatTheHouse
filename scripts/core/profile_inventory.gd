@@ -25,10 +25,16 @@ var act_seam: Dictionary = {}
 var scratch_ticket_types_discovered: Array = []
 var tips_seen: Dictionary = {}
 var tutorial_completed := false
+var loaded_from_disk := false
+var loaded_schema_version := 0
+var tutorial_field_present := false
 var _unknown_fields: Dictionary = {}
 
 
 func load() -> void:
+	loaded_from_disk = false
+	loaded_schema_version = 0
+	tutorial_field_present = false
 	from_dict({})
 	var path := store_path()
 	if not FileAccess.file_exists(path):
@@ -37,6 +43,7 @@ func load() -> void:
 	var parsed: Variant = JSON.parse_string(text)
 	if typeof(parsed) == TYPE_DICTIONARY:
 		from_dict(parsed)
+		loaded_from_disk = true
 
 
 func save() -> Error:
@@ -77,6 +84,8 @@ func to_dict() -> Dictionary:
 
 
 func from_dict(data: Dictionary) -> void:
+	loaded_schema_version = int(data.get("schema_version", 0))
+	tutorial_field_present = data.has("tutorial_completed")
 	_unknown_fields = data.duplicate(true)
 	for key in ["schema_version", "act", "items", "challenge_completions", "completed_challenge_flags", "run_history", "daily_runs", "lifetime_stats", "act_seam", "scratch_ticket_types_discovered", "tips_seen", "tutorial_completed"]:
 		_unknown_fields.erase(key)
@@ -106,6 +115,10 @@ func from_dict(data: Dictionary) -> void:
 			"icon_key": str(item_data.get("icon_key", "")),
 			"quantity": max(1, int(item_data.get("quantity", 1))),
 		})
+
+
+func legacy_without_tutorial_state() -> bool:
+	return loaded_from_disk and not tutorial_field_present
 
 
 static func store_path() -> String:

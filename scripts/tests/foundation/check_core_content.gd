@@ -10,10 +10,12 @@ const PlatformServicesScript := preload("res://scripts/core/platform_services.gd
 const WorldMapScript := preload("res://scripts/core/world_map.gd")
 const CardShoeScript := preload("res://scripts/core/card_shoe.gd")
 const ProfileInventoryScript := preload("res://scripts/core/profile_inventory.gd")
+const TutorialFlowScript := preload("res://scripts/core/tutorial_flow.gd")
 const MetaCollectionServiceScript := preload("res://scripts/core/meta_collection_service.gd")
 const CollectionDropServiceScript := preload("res://scripts/core/collection_drop_service.gd")
 const RunTerminalEvaluatorScript := preload("res://scripts/core/run_terminal_evaluator.gd")
 const RunActionServiceScript := preload("res://scripts/core/run_action_service.gd")
+const EventModuleScript := preload("res://scripts/core/event_module.gd")
 const AttributeBadgesScript := preload("res://scripts/core/attribute_badges.gd")
 const ArtContractsScript := preload("res://scripts/core/art_contracts.gd")
 const EnvironmentHoursScript := preload("res://scripts/core/environment_hours.gd")
@@ -367,6 +369,7 @@ func _foundation_run_suite(suite: String, content_library: ContentLibrary, fixtu
 		"smoke":
 			_foundation_run_check(report, failures, "content", Callable(self, "_check_content"), [content_library])
 			_foundation_run_check(report, failures, "coach_engine_foundation", Callable(self, "_check_coach_engine_foundation"), [content_library])
+			_foundation_run_check(report, failures, "onboarding_tutorial_arc", Callable(self, "_check_onboarding_tutorial_arc"), [content_library])
 			_foundation_run_check(report, failures, "profile_inventory_boundary", Callable(self, "_check_profile_inventory_boundary"), [])
 			_foundation_run_check(report, failures, "foundation_contract_smoke", Callable(self, "_check_foundation_contract_smoke_for_suite"), [content_library])
 			_foundation_run_check(report, failures, "fixture_rng", Callable(self, "_check_rng"), [fixture_library])
@@ -418,6 +421,7 @@ func _foundation_run_contract_suite(content_library: ContentLibrary, fixture_lib
 func _foundation_run_system_suite(content_library: ContentLibrary, fixture_library: ContentLibrary, failures: Array, report: Dictionary) -> void:
 	_foundation_run_check(report, failures, "content", Callable(self, "_check_content"), [content_library])
 	_foundation_run_check(report, failures, "coach_engine_foundation", Callable(self, "_check_coach_engine_foundation"), [content_library])
+	_foundation_run_check(report, failures, "onboarding_tutorial_arc", Callable(self, "_check_onboarding_tutorial_arc"), [content_library])
 	_foundation_run_check(report, failures, "attribute_glyph_foundation", Callable(self, "_check_attribute_glyph_foundation"), [content_library])
 	_foundation_run_check(report, failures, "profile_inventory_boundary", Callable(self, "_check_profile_inventory_boundary"), [])
 	_foundation_run_check(report, failures, "fixture_rng", Callable(self, "_check_rng"), [fixture_library])
@@ -464,6 +468,7 @@ func _foundation_run_system_suite(content_library: ContentLibrary, fixture_libra
 func _foundation_run_all_suite(content_library: ContentLibrary, fixture_library: ContentLibrary, failures: Array, report: Dictionary) -> void:
 	_foundation_run_check(report, failures, "content", Callable(self, "_check_content"), [content_library])
 	_foundation_run_check(report, failures, "coach_engine_foundation", Callable(self, "_check_coach_engine_foundation"), [content_library])
+	_foundation_run_check(report, failures, "onboarding_tutorial_arc", Callable(self, "_check_onboarding_tutorial_arc"), [content_library])
 	_foundation_run_check(report, failures, "attribute_glyph_foundation", Callable(self, "_check_attribute_glyph_foundation"), [content_library])
 	_foundation_run_check(report, failures, "foundation_contracts_all", Callable(self, "_check_foundation_contract_smoke_for_suite"), [content_library])
 	_foundation_run_check(report, failures, "profile_inventory_boundary", Callable(self, "_check_profile_inventory_boundary"), [])
@@ -2197,8 +2202,10 @@ func _check_challenge_pack_content(library: ContentLibrary, failures: Array) -> 
 			if typeof(option_value) == TYPE_DICTIONARY and str((option_value as Dictionary).get("id", "")) == challenge_id:
 				option_matches = true
 				break
-		if not option_matches:
+		if bool(challenge_def.get("menu_visible", true)) and not option_matches:
 			failures.append("Challenge %s did not appear in ContentLibrary.challenge_options()." % challenge_id)
+		if not bool(challenge_def.get("menu_visible", true)) and option_matches:
+			failures.append("Hidden challenge %s appeared in ContentLibrary.challenge_options()." % challenge_id)
 		var completion_flag := str(challenge_def.get("completion_flag", "")).strip_edges()
 		if not completion_flag.begins_with("challenge_") or not completion_flag.ends_with("_complete"):
 			failures.append("Challenge %s completion_flag should use the challenge_*_complete profile convention." % challenge_id)
@@ -2310,7 +2317,11 @@ func _check_foundation_contract_smoke(library: ContentLibrary, failures: Array, 
 
 
 func _check_coach_engine_foundation(library: ContentLibrary, failures: Array) -> void:
-	if library.tutorial_lessons.size() != 8:
+	var normal_lessons: Array = []
+	for lesson_value in library.tutorial_lessons:
+		if typeof(lesson_value) == TYPE_DICTIONARY and str((lesson_value as Dictionary).get("scope", "")).strip_edges() != "tutorial_run":
+			normal_lessons.append(lesson_value)
+	if normal_lessons.size() != 8:
 		failures.append("Coach lesson pack must ship exactly eight first-time tips.")
 	for expected_id in ["tip_first_heat_gain", "tip_first_debt_taken", "tip_first_closing_warning", "tip_first_pawn_interaction", "tip_first_item_purchase", "tip_first_map_open", "tip_first_chips_gained", "tip_first_card_tier"]:
 		if library.tutorial_lesson(expected_id).is_empty():
@@ -2343,7 +2354,7 @@ func _check_coach_engine_foundation(library: ContentLibrary, failures: Array) ->
 		"tip_first_chips_gained": {"environment_archetype": "grand_casino", "run": {"grand_casino_chips": 1}},
 		"tip_first_card_tier": {"run": {"players_card_tier": "bronze"}},
 	}
-	for lesson_value in library.tutorial_lessons:
+	for lesson_value in normal_lessons:
 		var lesson: Dictionary = lesson_value
 		var lesson_id := str(lesson.get("id", ""))
 		var context: Dictionary = contexts.get(lesson_id, {})
@@ -2391,6 +2402,89 @@ func _check_coach_engine_foundation(library: ContentLibrary, failures: Array) ->
 	restored_settings.from_dict(settings.to_dict())
 	if restored_settings.coach_tips_enabled:
 		failures.append("Coach tips setting did not round-trip disabled state.")
+
+
+func _check_onboarding_tutorial_arc(library: ContentLibrary, failures: Array) -> void:
+	var challenge := library.challenge("tutorial_first_card")
+	if challenge.is_empty() or bool(challenge.get("menu_visible", true)):
+		failures.append("Tutorial challenge was missing or visible in the generic challenge picker.")
+	var visible_ids: Array = []
+	for option_value in library.challenge_options():
+		if typeof(option_value) == TYPE_DICTIONARY:
+			visible_ids.append(str((option_value as Dictionary).get("id", "")))
+	if visible_ids.has("tutorial_first_card"):
+		failures.append("Tutorial challenge leaked into challenge_options.")
+	var config_a := library.challenge_config_for("tutorial_first_card", "FIRST-REQUEST")
+	var config_b := library.challenge_config_for("tutorial_first_card", "SECOND-REQUEST")
+	if str(config_a.get("seed_text", "")) != "FIRST-NIGHT-ACE-17" or config_a != config_b:
+		failures.append("Tutorial challenge did not enforce one deterministic fixed seed.")
+	var run_a := RunStateScript.new()
+	run_a.start_new("IGNORED", config_a)
+	run_a.begin_act(1)
+	var generator_a := RunGeneratorScript.new(library)
+	generator_a.next_environment(run_a)
+	var run_b := RunStateScript.new()
+	run_b.start_new("ALSO-IGNORED", config_b)
+	run_b.begin_act(1)
+	var generator_b := RunGeneratorScript.new(library)
+	generator_b.next_environment(run_b)
+	if JSON.stringify(run_a.to_dict()) != JSON.stringify(run_b.to_dict()):
+		failures.append("Tutorial fixed seed generated divergent initial runs.")
+	if not run_a.is_tutorial_run() or not run_a.excludes_profile_stats():
+		failures.append("Tutorial run did not exclude profile and challenge statistics.")
+	if str(run_a.current_environment.get("archetype_id", "")) != "motel_room" or run_a.bankroll != 80 or not run_a.inventory.is_empty():
+		failures.append("Tutorial initial home, bankroll, or carried loadout contract drifted.")
+	var containers: Array = run_a.current_environment.get("home_containers", []) if typeof(run_a.current_environment.get("home_containers", [])) == TYPE_ARRAY else []
+	if containers.size() != 1 or not (containers[0] as Dictionary).get("item_ids", []).is_empty():
+		failures.append("Tutorial did not start with one empty backpack.")
+	generator_a.next_environment(run_a, "motel", true)
+	generator_a.next_environment(run_a, "corner_store", true)
+	var item_service := RunActionServiceScript.new()
+	item_service.setup(library, run_a)
+	var purchase: Dictionary = item_service.buy_item_offer("instant_coffee")
+	if not bool(purchase.get("ok", false)) or run_a.inventory.is_empty():
+		failures.append("Tutorial end-to-end arc could not buy its cheap store item through RunActionService.")
+	generator_a.next_environment(run_a, "bar", true)
+	if run_a.current_environment.get("game_ids", []) != ["blackjack"]:
+		failures.append("Tutorial end-to-end arc did not reach its real blackjack table.")
+	var friendly_event := EventModuleScript.new()
+	friendly_event.setup(library.event("tutorial_friendly_choice"), library)
+	if not friendly_event.can_trigger(run_a, run_a.current_environment, {"type": "manual"}):
+		failures.append("Tutorial friendly conversation was not eligible at the bar.")
+	else:
+		var friendly_result: Dictionary = friendly_event.resolve(run_a, run_a.current_environment, "keep_it_light")
+		if not bool(friendly_result.get("ok", false)) or not bool(run_a.narrative_flags.get("tutorial_friendly_choice_done", false)):
+			failures.append("Tutorial friendly conversation did not resolve its authored flag.")
+	var invite_event := EventModuleScript.new()
+	invite_event.setup(library.event("tutorial_grand_casino_invitation"), library)
+	var invite_result: Dictionary = invite_event.resolve(run_a, run_a.current_environment, "accept_first_invitation")
+	if not bool(invite_result.get("ok", false)) or not bool(run_a.narrative_flags.get("grand_casino_invite", false)):
+		failures.append("Tutorial end-to-end arc did not accept the Grand Casino invitation.")
+	elif not WorldMapScript.is_node_visible(run_a.world_map, "grand_casino"):
+		failures.append("Tutorial invitation did not reveal the Grand Casino on the real world map.")
+	var fresh_profile := ProfileInventoryScript.new()
+	fresh_profile.from_dict({})
+	var fresh_meta := {"owned_instances": [], "unopened_bags": [], "loadout": [], "gold_balance": 0, "housing_tier": "back_alley"}
+	if not TutorialFlowScript.should_auto_start(fresh_profile, fresh_meta):
+		failures.append("Fresh profile did not qualify for automatic tutorial start.")
+	fresh_profile.tutorial_completed = true
+	if TutorialFlowScript.should_auto_start(fresh_profile, fresh_meta):
+		failures.append("Completed tutorial profile qualified for automatic replay.")
+	var legacy_profile := ProfileInventoryScript.new()
+	legacy_profile.from_dict({"schema_version": 4})
+	legacy_profile.loaded_from_disk = true
+	if TutorialFlowScript.should_auto_start(legacy_profile, fresh_meta):
+		failures.append("Legacy profile without onboarding state was forced into the tutorial.")
+	var tutorial_lessons: Array = []
+	for lesson_value in library.tutorial_lessons:
+		if typeof(lesson_value) == TYPE_DICTIONARY and str((lesson_value as Dictionary).get("scope", "")) == "tutorial_run":
+			tutorial_lessons.append(lesson_value)
+	if tutorial_lessons.size() < 16:
+		failures.append("Tutorial arc did not cover the full Home-to-invitation beat sequence.")
+	for lesson_value in tutorial_lessons:
+		var lesson: Dictionary = lesson_value
+		if CoachViewModelScript.trigger_matches(lesson, {"run": {"tutorial": true}}, {}, false):
+			failures.append("Tutorial coach lesson fired with tips disabled: %s" % str(lesson.get("id", "")))
 
 
 func _coach_lesson_fixture(lesson_id: String) -> Dictionary:

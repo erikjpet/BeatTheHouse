@@ -80,6 +80,7 @@ const GAME_SURFACE_UI_PREFERENCE_KEYS := [
 ]
 const UserSettingsScript := preload("res://scripts/core/user_settings.gd")
 const ProfileInventoryScript := preload("res://scripts/core/profile_inventory.gd")
+const TutorialFlowScript := preload("res://scripts/core/tutorial_flow.gd")
 const MetaCollectionServiceScript := preload("res://scripts/core/meta_collection_service.gd")
 const CollectionDropServiceScript := preload("res://scripts/core/collection_drop_service.gd")
 const CollectionItemResolverScript := preload("res://scripts/core/collection_item_resolver.gd")
@@ -262,6 +263,7 @@ var content_validation_error_count := 0
 var new_run_button: Button
 var daily_run_button: Button
 var continue_button: Button
+var replay_tutorial_button: Button
 var settings_button: Button
 var exit_game_button: Button
 var top_menu_button: Button
@@ -278,6 +280,8 @@ var run_menu_journal_button: Button
 var run_menu_settings_button: Button
 var run_menu_abandon_button: Button
 var run_menu_main_menu_button: Button
+var run_menu_skip_tutorial_button: Button
+var tutorial_skip_dialog: ConfirmationDialog
 var settings_overlay: Control
 var settings_margin: MarginContainer
 var settings_menu: SettingsMenu
@@ -527,6 +531,7 @@ func start_foundation_run(seed_text: String = DEFAULT_SEED, challenge_config: Di
 	var resolved_challenge_config := _challenge_with_meta_home_for_run(resolved_seed, challenge_config)
 	run_state = RunState.new()
 	run_state.start_new(resolved_seed, resolved_challenge_config)
+	_configure_coach_for_run()
 	_sync_scratch_ticket_discovery_to_run()
 	_sync_presented_bankroll_to_actual()
 	_apply_meta_collection_loadout_to_run()
@@ -1360,6 +1365,10 @@ func confirm_world_map_travel() -> void:
 	if _is_meta_session():
 		_confirm_meta_world_map_travel()
 		return
+	var coach_travel_action := "travel:%s" % confirmed_target_id
+	if coach_overlay != null and not coach_overlay.input_allowed(coach_travel_action):
+		_show_message("Follow the highlighted advice first.")
+		return
 	var choice := _travel_choice(confirmed_target_id)
 	var result := world_map_overlay_controller.confirm_run_selection(choice)
 	_sync_world_map_overlay_controller_to_host()
@@ -1372,6 +1381,8 @@ func confirm_world_map_travel() -> void:
 		return
 	if world_map_overlay != null:
 		world_map_overlay.visible = false
+	if coach_overlay != null:
+		coach_overlay.notify_action(coach_travel_action)
 	_travel_to(str(result.get("target_id", "")), str(result.get("label", result.get("target_id", ""))), result.get("choice", {}) as Dictionary)
 
 
@@ -2659,7 +2670,7 @@ func open_run_inventory() -> void:
 	if run_state == null:
 		_show_message("No active run to inspect.")
 		return
-	if _guard_player_input_route():
+	if _guard_player_input_route(false, "inventory"):
 		return
 	_reset_game_surface_runtime_state()
 	_hide_run_journal_popup()
@@ -3301,6 +3312,7 @@ func _load_foundation_run_from_slot(return_to_start_on_missing: bool) -> bool:
 	pending_autosave_after_frame = -1
 	run_item_icon_texture_cache.clear()
 	run_state = loaded
+	_configure_coach_for_run()
 	_sync_presented_bankroll_to_actual()
 	dev_game_test_mode = false
 	_refresh_run_action_service()
@@ -5070,6 +5082,15 @@ func _build_run_menu_overlay() -> void:
 	run_menu_main_menu_button = _button("Main Menu", Callable(self, "return_to_main_menu"))
 	run_menu_main_menu_button.custom_minimum_size = Vector2(0, 42)
 	button_grid.add_child(run_menu_main_menu_button)
+	run_menu_skip_tutorial_button = _button("Skip Lessons", Callable(self, "request_skip_tutorial"))
+	run_menu_skip_tutorial_button.custom_minimum_size = Vector2(0, 42)
+	button_grid.add_child(run_menu_skip_tutorial_button)
+
+	tutorial_skip_dialog = ConfirmationDialog.new()
+	tutorial_skip_dialog.title = "Skip the lessons?"
+	tutorial_skip_dialog.dialog_text = "End this guided run and return to the main menu? You can replay Lessons at any time."
+	tutorial_skip_dialog.confirmed.connect(_confirm_skip_tutorial)
+	add_child(tutorial_skip_dialog)
 
 
 func _attribute_glyph_legend_panel() -> Control:
@@ -8734,7 +8755,55 @@ func _on_start_pressed() -> void:
 	if seed_text.is_empty():
 		seed_text = _generate_menu_seed_text()
 		seed_input.text = seed_text
+	if selected_challenge_id.is_empty() and _fresh_profile_needs_tutorial():
+		start_tutorial_run()
+		return
 	start_foundation_run(seed_text, _new_run_challenge_for_seed(seed_text))
+
+
+func start_tutorial_run() -> void:
+	var config := TutorialFlowScript.challenge_config(library)
+	if config.is_empty():
+		_show_message("The First Night lesson is unavailable.")
+		return
+	selected_challenge_id = ""
+	start_foundation_run(str(config.get("seed_text", "FIRST-NIGHT-ACE-17")), config)
+
+
+func _fresh_profile_needs_tutorial() -> bool:
+	if profile_inventory == null:
+		_initialize_profile_inventory()
+	if meta_collection_service == null:
+		_initialize_meta_collection()
+	return TutorialFlowScript.should_auto_start(profile_inventory, meta_collection_service.snapshot())
+
+
+func request_skip_tutorial() -> void:
+	if run_state == null or not run_state.is_tutorial_run() or tutorial_skip_dialog == null:
+		return
+	tutorial_skip_dialog.popup_centered(Vector2i(520, 190))
+
+
+func _confirm_skip_tutorial() -> void:
+	if run_state == null or not run_state.is_tutorial_run():
+		return
+	if profile_inventory == null:
+		_initialize_profile_inventory()
+	profile_inventory.tutorial_completed = true
+	var profile_save_error := profile_inventory.save()
+	if profile_save_error != OK:
+		profile_inventory.tutorial_completed = false
+		_show_message("Could not save lesson completion.")
+		return
+	if save_service != null:
+		var clear_error := save_service.clear_run(autosave_slot_id)
+		if clear_error != OK:
+			_show_message("Could not clear the tutorial Resume Slot.")
+			return
+	if coach_overlay != null:
+		coach_overlay.suspend()
+	run_state = null
+	return_to_main_menu()
 
 
 func start_generated_foundation_run() -> void:
@@ -8901,6 +8970,8 @@ func _on_reset_coach_tips_requested() -> void:
 
 
 func _on_coach_lesson_seen(lesson_id: String) -> void:
+	if library != null and TutorialFlowScript.lesson_is_tutorial(lesson_id, library.tutorial_lessons):
+		return
 	if profile_inventory == null or not profile_inventory.mark_tip_seen(lesson_id):
 		return
 	profile_inventory.save()
@@ -9718,6 +9789,18 @@ func _refresh_run_menu() -> void:
 		run_menu_abandon_button.tooltip_text = "End this run immediately." if can_abandon else "This run is already over."
 	if run_menu_main_menu_button != null:
 		run_menu_main_menu_button.disabled = false
+	if run_menu_skip_tutorial_button != null:
+		run_menu_skip_tutorial_button.visible = run_state != null and run_state.is_tutorial_run()
+		run_menu_skip_tutorial_button.disabled = not run_menu_skip_tutorial_button.visible
+
+
+func _configure_coach_for_run() -> void:
+	if coach_overlay == null:
+		return
+	coach_overlay.restore_seen(profile_inventory.tips_seen if profile_inventory != null else {})
+	coach_overlay.set_tips_enabled(user_settings == null or user_settings.coach_tips_enabled)
+	if run_state != null and run_state.is_tutorial_run():
+		coach_overlay.begin_tutorial_run()
 
 
 func current_run_menu_snapshot() -> Dictionary:
@@ -10224,6 +10307,8 @@ func claim_victory_container_item(item_id: String) -> void:
 func _record_profile_run_result_once(terminal_result: Dictionary = {}) -> void:
 	if run_state == null or not run_state.is_terminal():
 		return
+	if run_state.excludes_profile_stats():
+		return
 	if bool(run_state.narrative_flags.get("profile_run_result_recorded", false)):
 		return
 	if profile_inventory == null:
@@ -10291,6 +10376,8 @@ func _profile_victory_route() -> String:
 
 func _record_challenge_completion_if_needed() -> void:
 	if run_state == null or run_state.run_status != RunState.RUN_STATUS_ENDED:
+		return
+	if run_state.excludes_profile_stats():
 		return
 	var completion_flag := run_state.challenge_completion_flag()
 	if completion_flag.is_empty():
@@ -11723,7 +11810,12 @@ func _coach_context_snapshot() -> Dictionary:
 		"environment_archetype": archetype_id,
 		"game_id": current_game.get_id() if current_game != null else "",
 		"run": {
+			"challenge_id": str(run_state.challenge_config.get("id", "")) if run_state != null else "",
+			"tutorial": run_state.is_tutorial_run() if run_state != null else false,
 			"heat": run_state.suspicion_level() if run_state != null else 0,
+			"inventory_count": run_state.inventory.size() if run_state != null else 0,
+			"tutorial_friendly_choice_done": bool(run_state.narrative_flags.get("tutorial_friendly_choice_done", false)) if run_state != null else false,
+			"tutorial_invited": TutorialFlowScript.invitation_received(run_state),
 			"heat_gain_count": _coach_heat_gain_count(),
 			"debt_count": run_state.debt.size() if run_state != null else 0,
 			"closing_time_active": run_state.closing_time_active() if run_state != null else false,

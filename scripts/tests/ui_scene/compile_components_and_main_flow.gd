@@ -26,10 +26,12 @@ const SmallScreenPolicyScript := preload("res://scripts/ui/small_screen_policy.g
 const RunReportScreenScript := preload("res://scripts/ui/run_report_screen.gd")
 const RunReportViewModelScript := preload("res://scripts/ui/run_report_view_model.gd")
 const MetaCollectionServiceScript := preload("res://scripts/core/meta_collection_service.gd")
+const ProfileInventoryScript := preload("res://scripts/core/profile_inventory.gd")
 const CollectionDropServiceScript := preload("res://scripts/core/collection_drop_service.gd")
 const MusicLayerChoreographyScript := preload("res://scripts/ui/music_layer_choreography.gd")
 const TEST_SETTINGS_PATH := "user://settings_ui_scene_compile_check.json"
 const TEST_META_COLLECTION_PATH := "user://ui_scene_compile_meta_collection.json"
+const TEST_PROFILE_INVENTORY_PATH := "user://ui_scene_compile_profile_inventory.json"
 
 
 func _check_run_report_screen_component() -> bool:
@@ -1209,8 +1211,11 @@ func _init() -> void:
 func _run() -> void:
 	_use_isolated_user_settings(TEST_SETTINGS_PATH)
 	OS.set_environment(MetaCollectionServiceScript.STORE_PATH_ENV, TEST_META_COLLECTION_PATH)
+	OS.set_environment(ProfileInventoryScript.INVENTORY_PATH_ENV, TEST_PROFILE_INVENTORY_PATH)
 	if FileAccess.file_exists(TEST_META_COLLECTION_PATH):
 		DirAccess.remove_absolute(ProjectSettings.globalize_path(TEST_META_COLLECTION_PATH))
+	if FileAccess.file_exists(TEST_PROFILE_INVENTORY_PATH):
+		DirAccess.remove_absolute(ProjectSettings.globalize_path(TEST_PROFILE_INVENTORY_PATH))
 	if VisualStyleScript.HOT != VisualStyleScript.PINK:
 		push_error("VisualStyle.HOT should alias the production hot/pink token.")
 		quit(1)
@@ -1259,6 +1264,9 @@ func _run() -> void:
 		return
 	if app.get("run_state") != null:
 		push_error("Foundation UI shell should wait for player start before creating RunState.")
+		quit(1)
+		return
+	if not await _check_onboarding_tutorial_ui_flow(app):
 		quit(1)
 		return
 	var start_screen_snapshot: Dictionary = app.call("current_screen_snapshot")

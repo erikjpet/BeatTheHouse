@@ -1,5 +1,72 @@
 extends "res://scripts/tests/ui_scene/compile_environment_layout.gd"
 
+
+func _check_onboarding_tutorial_ui_flow(app: Control) -> bool:
+	var profile: ProfileInventory = app.get("profile_inventory")
+	var save_service: SaveService = app.get("save_service")
+	if profile == null or save_service == null:
+		push_error("Tutorial UI test could not access profile or save services.")
+		return false
+	var history_before := JSON.stringify(profile.run_history)
+	if not bool(app.call("_fresh_profile_needs_tutorial")):
+		push_error("Fresh profile was not eligible for automatic Lessons start.")
+		return false
+	app.call("_on_start_pressed")
+	await process_frame
+	var run_state: RunState = app.get("run_state")
+	if run_state == null or not run_state.is_tutorial_run() or str(run_state.challenge_config.get("id", "")) != "tutorial_first_card":
+		push_error("Lessons replay did not start the fixed tutorial challenge.")
+		return false
+	if str(run_state.current_environment.get("archetype_id", "")) != "motel_room" or run_state.bankroll != 80:
+		push_error("Tutorial UI did not start with the authored First Night framing.")
+		return false
+	var coach_snapshot: Dictionary = app.get("coach_overlay").call("current_snapshot")
+	if str(coach_snapshot.get("lesson_id", "")) != "tutorial_home_container" or not bool(coach_snapshot.get("gating", false)):
+		push_error("Tutorial UI did not focus and gate the first Home beat.")
+		return false
+	app.call("open_run_menu")
+	await process_frame
+	var skip_button: Button = app.get("run_menu_skip_tutorial_button")
+	if skip_button == null or not skip_button.visible or not _has_visible_text(app, "Skip Lessons"):
+		push_error("Tutorial Run Menu did not expose Skip Lessons.")
+		return false
+	app.call("close_run_menu")
+	var tutorial_lesson_ids: Array = []
+	var library: ContentLibrary = app.get("library")
+	for lesson_value in library.tutorial_lessons:
+		if typeof(lesson_value) == TYPE_DICTIONARY and str((lesson_value as Dictionary).get("scope", "")) == "tutorial_run":
+			tutorial_lesson_ids.append(str((lesson_value as Dictionary).get("id", "")))
+	for lesson_id in tutorial_lesson_ids:
+		if app.get("run_state") == null:
+			app.call("start_tutorial_run")
+			run_state = app.get("run_state")
+		run_state.narrative_flags["tutorial_test_skip_beat"] = lesson_id
+		if save_service.save_run(run_state, str(app.get("autosave_slot_id"))) != OK:
+			push_error("Tutorial skip test could not seed a Resume Slot at %s." % lesson_id)
+			return false
+		app.call("_confirm_skip_tutorial")
+		await process_frame
+		if app.get("run_state") != null or save_service.has_run(str(app.get("autosave_slot_id"))):
+			push_error("Tutorial skip left resumable run residue at %s." % lesson_id)
+			return false
+		if JSON.stringify(profile.run_history) != history_before:
+			push_error("Tutorial skip changed profile run statistics at %s." % lesson_id)
+			return false
+		if lesson_id != tutorial_lesson_ids.back():
+			app.call("start_tutorial_run")
+			run_state = app.get("run_state")
+	if not profile.tutorial_completed:
+		push_error("Skipping Lessons did not persist onboarding completion.")
+		return false
+	app.call("start_tutorial_run")
+	await process_frame
+	if app.get("run_state") == null or not (app.get("run_state") as RunState).is_tutorial_run():
+		push_error("Completed profile could not replay Lessons from the main menu.")
+		return false
+	app.set("run_state", null)
+	app.call("return_to_main_menu")
+	return true
+
 func _check_in_run_menu_flow(app: Control, save_service: SaveService, viewport_rect: Rect2) -> bool:
 	if save_service == null:
 		push_error("Run menu flow test could not access SaveService.")

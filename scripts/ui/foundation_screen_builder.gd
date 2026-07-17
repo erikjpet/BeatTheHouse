@@ -132,6 +132,8 @@ static func build_start_screen(host: Variant) -> void:
 	run_row.add_child(host.daily_run_button)
 	host.continue_button = host._main_menu_button("Continue", "Load the saved run", Callable(host, "load_foundation_run"))
 	run_row.add_child(host.continue_button)
+	host.replay_tutorial_button = host._main_menu_button("Replay Lessons", "Replay the guided First Night", Callable(host, "start_tutorial_run"))
+	run_row.add_child(host.replay_tutorial_button)
 
 	var utility_row := HFlowContainer.new()
 	utility_row.add_theme_constant_override("h_separation", 12)
