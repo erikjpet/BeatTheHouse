@@ -87,7 +87,7 @@ foreach ($ticketType in $ticketTypes) {
         foreach ($entry in $table) {
             $cursor += [int]$entry.weight
             if ($roll -le $cursor) {
-                $payout = [int]$entry.payout
+                $payout = if ($null -ne $entry.audit_return) { [int]$entry.audit_return } else { [int]$entry.payout }
                 $winning = -not [string]::IsNullOrWhiteSpace([string]$entry.winning_symbol)
                 break
             }
