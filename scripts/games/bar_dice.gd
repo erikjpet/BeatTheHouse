@@ -586,6 +586,8 @@ func surface_action_command(surface_action: String, index: int, confirm_requeste
 				_set_tumble(next, "open", _all_die_indices())
 			next["loaded_armed"] = false
 			next["palm_armed"] = true
+			next["selected_action_id"] = PALMED_SWAP_ACTION_ID
+			next["selected_action_kind"] = "cheat"
 			next.erase("controlled_roll")
 			next.erase("loaded_value")
 			var palm_challenge := _normalized_palmed_swap_challenge(next.get("palmed_swap_challenge", {}))
