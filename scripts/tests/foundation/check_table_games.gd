@@ -317,7 +317,7 @@ func _check_roulette_surface_contract(game: GameModule, failures: Array, library
 	nudge_run_state.start_new("ROULETTE-NUDGE-CONTRACT")
 	nudge_run_state.bankroll = 1000
 	var nudge_environment := _surface_contract_environment()
-	nudge_environment["archetype_id"] = "grand_casino"
+	nudge_environment["archetype_id"] = "grand_casino_high_limit"
 	nudge_environment["game_ids"] = ["roulette"]
 	nudge_environment["economic_profile"] = {"stake_floor": 1, "stake_ceiling": 200}
 	nudge_environment["security_profile"] = {"strictness": "boss"}
@@ -333,13 +333,18 @@ func _check_roulette_surface_contract(game: GameModule, failures: Array, library
 	nudge_table["patrons"] = nudge_patrons
 	nudge_environment["game_states"] = {"roulette": nudge_table}
 	nudge_run_state.current_environment = nudge_environment.duplicate(true)
+	nudge_run_state.grand_casino_chips = 1000
 	var nudge_bet_click := game.surface_action_command("roulette_bet", straight_17_index, false, {"selected_chip": contract_chip}, nudge_run_state, nudge_environment)
 	var nudge_ui: Dictionary = nudge_bet_click.get("ui_state", {})
 	var nudge_click := game.surface_action_command("roulette_nudge", 0, false, nudge_ui, nudge_run_state, nudge_environment)
 	nudge_ui = nudge_click.get("ui_state", {})
 	var nudge_result := game.resolve_with_context("spin_roulette", contract_chip, nudge_run_state, nudge_environment, nudge_run_state.create_rng("roulette_nudge_spin"), nudge_ui)
 	if not bool(nudge_result.get("roulette_wheel_nudge", false)) or str(nudge_result.get("roulette_winning_number", "")) != "17" or int(nudge_result.get("suspicion_delta", 0)) < 10:
-		failures.append("Roulette nudge did not retarget a working bet and apply significant watched heat.")
+		failures.append("Roulette nudge did not retarget a working bet and apply significant watched heat: nudge=%s number=%s suspicion=%d." % [
+			str(nudge_result.get("roulette_wheel_nudge", false)),
+			str(nudge_result.get("roulette_winning_number", "")),
+			int(nudge_result.get("suspicion_delta", 0)),
+		])
 
 	var read_run_state: RunState = RunStateScript.new()
 	read_run_state.start_new("ROULETTE-READ-WHEEL-CONTRACT")
@@ -443,19 +448,24 @@ func _check_roulette_past_post_contract(game: GameModule, library: ContentLibrar
 	clean_run.start_new("ROULETTE-CLEAN-EVIDENCE")
 	clean_run.bankroll = 100000
 	var clean_environment := _surface_contract_environment()
-	clean_environment["archetype_id"] = "grand_casino"
+	clean_environment["archetype_id"] = "grand_casino_high_limit"
 	clean_environment["kind"] = "boss"
 	clean_environment["game_ids"] = ["roulette"]
 	clean_environment["game_states"] = {"roulette": game.generate_environment_state(clean_run, clean_environment, clean_run.create_rng("roulette_clean_state"))}
 	clean_run.set_environment(clean_environment)
+	clean_run.grand_casino_chips = 1000
 	var clean_result := game.resolve_with_context("spin_roulette", 10, clean_run, clean_run.current_environment, clean_run.create_rng("roulette_clean_spin"), {"roulette_bets": [game.call("_default_smoke_bet", 10)]})
 	if str(clean_result.get("action_kind", "")) != "legal" or bool(clean_result.get("skill_cheat_contract", false)) or bool(clean_run.narrative_flags.get("grand_casino_cheat_evidence", false)):
-		failures.append("Roulette clean spin left open-cheat evidence.")
+		failures.append("Roulette clean spin left open-cheat evidence: action_kind=%s skill_contract=%s evidence=%s." % [
+			str(clean_result.get("action_kind", "")),
+			str(clean_result.get("skill_cheat_contract", false)),
+			str(clean_run.narrative_flags.get("grand_casino_cheat_evidence", false)),
+		])
 
 	if library != null:
-		var boss_archetype := _archetype_by_id(library, "grand_casino")
+		var boss_archetype := _archetype_by_id(library, "grand_casino_high_limit")
 		if boss_archetype.is_empty():
-			failures.append("Roulette past-post Grand Casino fixture requires the grand_casino archetype.")
+			failures.append("Roulette past-post Grand Casino fixture requires the grand_casino_high_limit archetype.")
 		else:
 			var grand := _roulette_past_post_result(game, "ROULETTE-PAST-GRAND", 900, true, library)
 			var grand_result: Dictionary = grand.get("result", {})
@@ -2955,12 +2965,14 @@ func _check_video_poker_cheat(game: GameModule, failures: Array) -> void:
 func _check_video_poker_item_luck_alcohol(game: GameModule, failures: Array) -> void:
 	var sober: RunState = _vp_fresh(game, "jacks_or_better", "VIDEO-POKER-ALCOHOL", 100000, "standard", 1, 1)
 	sober.current_environment["security_profile"] = {"strictness": "tight", "pit_boss": {"enabled": true, "cycle_length": 2, "watched_turns": 1, "cheat_heat_bonus": 20}}
+	_xgame_apply_watched_spatial_state(sober, "video_poker", true)
 	var sober_deal := game.surface_action_command("video_poker_deal", 0, false, {}, sober, sober.current_environment)
 	var sober_ui: Dictionary = _video_poker_holdout_timed_ui(game, sober, sober_deal.get("ui_state", {}), 0)
 	var sober_result := game.resolve_with_context("mark_holds", 5, sober, sober.current_environment, sober.create_rng("vp_sober_cheat"), sober_ui)
 	var drunk: RunState = _vp_fresh(game, "jacks_or_better", "VIDEO-POKER-ALCOHOL", 100000, "standard", 1, 1)
 	drunk.drunk_level = 85
 	drunk.current_environment["security_profile"] = sober.current_environment["security_profile"]
+	_xgame_apply_watched_spatial_state(drunk, "video_poker", true)
 	var drunk_deal := game.surface_action_command("video_poker_deal", 0, false, {}, drunk, drunk.current_environment)
 	var drunk_ui: Dictionary = _video_poker_holdout_timed_ui(game, drunk, drunk_deal.get("ui_state", {}), 0)
 	var drunk_result := game.resolve_with_context("mark_holds", 5, drunk, drunk.current_environment, drunk.create_rng("vp_sober_cheat"), drunk_ui)
@@ -2971,6 +2983,7 @@ func _check_video_poker_item_luck_alcohol(game: GameModule, failures: Array) -> 
 	var item_run: RunState = _vp_fresh(game, "jacks_or_better", "VIDEO-POKER-ITEM", 100000, "standard", 1, 1)
 	item_run.add_item("cheap_sunglasses")
 	item_run.current_environment["security_profile"] = sober.current_environment["security_profile"]
+	_xgame_apply_watched_spatial_state(item_run, "video_poker", true)
 	var item_deal := game.surface_action_command("video_poker_deal", 0, false, {}, item_run, item_run.current_environment)
 	var item_ui: Dictionary = _video_poker_holdout_timed_ui(game, item_run, item_deal.get("ui_state", {}), 0)
 	var item_result := game.resolve_with_context("mark_holds", 5, item_run, item_run.current_environment, item_run.create_rng("vp_item_cheat"), item_ui)
@@ -4244,6 +4257,7 @@ func _check_bar_dice_item_luck_alcohol(game: GameModule, failures: Array) -> voi
 	sober_environment["security_profile"] = {"pit_boss": {"enabled": true, "cycle_length": 2, "watched_turns": 1, "cheat_heat_bonus": 20}}
 	sober_environment["game_states"] = {"bar_dice": _bar_dice_state_for(game, sober, sober_environment, "ship_captain_crew", "standard", "pot_rake")}
 	sober.current_environment = sober_environment.duplicate(true)
+	_xgame_apply_watched_spatial_state(sober, "bar_dice", true)
 	var sober_roll: Dictionary = game.surface_action_command("bar_dice_roll", 0, false, {}, sober, sober.current_environment)
 	var sober_ui: Dictionary = _bar_dice_controlled_roll_timed_ui(game, sober, sober_roll.get("ui_state", {}), 0)
 	var sober_result := game.resolve_with_context("loaded_toss", 10, sober, sober.current_environment, sober.create_rng("bar_dice_sober"), sober_ui)
@@ -4255,6 +4269,7 @@ func _check_bar_dice_item_luck_alcohol(game: GameModule, failures: Array) -> voi
 	drunk_environment["security_profile"] = sober_environment["security_profile"]
 	drunk_environment["game_states"] = {"bar_dice": _bar_dice_state_for(game, drunk, drunk_environment, "ship_captain_crew", "standard", "pot_rake")}
 	drunk.current_environment = drunk_environment.duplicate(true)
+	_xgame_apply_watched_spatial_state(drunk, "bar_dice", true)
 	var drunk_roll: Dictionary = game.surface_action_command("bar_dice_roll", 0, false, {}, drunk, drunk.current_environment)
 	var drunk_ui: Dictionary = _bar_dice_controlled_roll_timed_ui(game, drunk, drunk_roll.get("ui_state", {}), 0)
 	var drunk_result := game.resolve_with_context("loaded_toss", 10, drunk, drunk.current_environment, drunk.create_rng("bar_dice_sober"), drunk_ui)

@@ -223,7 +223,28 @@ func _check_showdown_phase_ui(app: Control) -> bool:
 	if str(second_beat.get("summary", "")).find("Beat 2/3") == -1:
 		push_error("Showdown interrogation did not advance and auto-open beat two.")
 		return false
-	app.call("_hide_event_choice_popup")
+	app.call("resolve_event_choice", RunState.GRAND_CASINO_SHOWDOWN_EVENT_ID, "hold_steady")
+	await process_frame
+	var third_beat: Dictionary = app.call("current_event_choice_popup_snapshot")
+	if str(third_beat.get("summary", "")).find("Beat 3/3") == -1:
+		push_error("Showdown interrogation did not advance and auto-open beat three.")
+		return false
+	app.call("resolve_event_choice", RunState.GRAND_CASINO_SHOWDOWN_EVENT_ID, "hold_steady")
+	await process_frame
+	var duel_run: RunState = app.get("run_state")
+	var duel_snapshot: Dictionary = app.call("current_game_view_snapshot")
+	var duel_surface := duel_snapshot
+	if str(app.get("current_screen")) != "GAME" or duel_run == null or str(duel_run.current_environment.get("archetype_id", "")) != RunState.GRAND_CASINO_BACK_ROOM_ARCHETYPE_ID:
+		push_error("Final interrogation beat did not move the player into the Back Room game surface.")
+		return false
+	var closed_popup: Dictionary = app.call("current_event_choice_popup_snapshot")
+	if not bool(duel_surface.get("boss_duel_active", false)) or str(duel_surface.get("dealer_name", "")) != "Rourke" or bool(closed_popup.get("visible", false)):
+		push_error("Back Room transition did not expose Rourke's boss blackjack surface and close the event popup.")
+		return false
+	app.call("back_to_environment")
+	if str(app.get("current_screen")) != "GAME":
+		push_error("Rourke's active duel allowed the player to back out of the locked game surface.")
+		return false
 	return true
 
 

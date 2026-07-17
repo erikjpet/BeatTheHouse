@@ -6,6 +6,7 @@ const StaffBlackjackGameScript := preload("res://scripts/games/blackjack.gd")
 const StaffBaccaratGameScript := preload("res://scripts/games/baccarat.gd")
 const StaffRouletteGameScript := preload("res://scripts/games/roulette.gd")
 const StaffBarDiceGameScript := preload("res://scripts/games/bar_dice.gd")
+const GrandCasinoDuelModelScript := preload("res://scripts/core/grand_casino_duel_model.gd")
 
 
 func _check_run_report_foundation(failures: Array) -> void:
@@ -1429,11 +1430,55 @@ func _check_demo_boss_objective_foundation(library: ContentLibrary, failures: Ar
 	if loaded_interrogation == null or int(loaded_interrogation.narrative_flags.get("grand_casino_showdown_interrogation_beat", 0)) != 1 or JSON.stringify(loaded_interrogation.narrative_flags.get("grand_casino_showdown_interrogation_evidence", [])) != JSON.stringify(clean_evidence):
 		failures.append("Interrogation beat/evidence state did not survive SaveService load.")
 		return
-	loaded_interrogation.narrative_flags["grand_casino_showdown_roll"] = 1
 	var win_result := _finish_showdown_interrogation(finale_module, loaded_interrogation, "hold_steady")
 	var win_run: RunState = loaded_interrogation
-	if not bool(win_result.get("ok", false)) or win_run.run_status != RunState.RUN_STATUS_ENDED or str(win_run.narrative_flags.get("demo_victory_route", "")) != RunState.GRAND_CASINO_SHOWDOWN_ROUTE:
-		failures.append("The phased showdown's temporary final check did not preserve the canonical win route.")
+	if not bool(win_result.get("ok", false)) or not bool(win_result.get("duel_ready", false)) or win_run.run_status != RunState.RUN_STATUS_ACTIVE or str(win_run.narrative_flags.get("grand_casino_showdown_step", "")) != RunState.GRAND_CASINO_SHOWDOWN_STEP_DUEL:
+		failures.append("The interrogation did not hand off to the playable serialized Rourke duel.")
+	var duel_state := win_run.grand_casino_duel_status()
+	if str(duel_state.get("status", "")) != "active" or int(duel_state.get("hand_limit", 0)) <= 0 or int(duel_state.get("ante", 0)) <= 0:
+		failures.append("Rourke duel terms did not initialize active stacks, hand limit, and ante.")
+	var blocked_duel_cashout := win_run.cash_out_grand_casino_chips()
+	if bool(blocked_duel_cashout.get("ok", false)):
+		failures.append("The Cage allowed cashout while Rourke's duel was active.")
+	var duel_generator := RunGenerator.new(library)
+	if game == null or not duel_generator.enter_grand_casino_room(win_run, RunState.GRAND_CASINO_BACK_ROOM_ARCHETYPE_ID):
+		failures.append("The active duel did not unlock and enter the Grand Casino Back Room.")
+	else:
+		var duel_surface := game.surface_state(win_run, win_run.current_environment, {})
+		if not bool(duel_surface.get("boss_duel_active", false)) or str(duel_surface.get("dealer_name", "")) != "Rourke" or bool(duel_surface.get("surface_stake_controls_required", true)):
+			failures.append("Back Room blackjack did not expose Rourke's fixed-ante boss surface: active=%s step=%s room=%s local=%s duel=%s surface=%s dealer=%s stake_controls=%s." % [
+				str(win_run.grand_casino_duel_active(win_run.current_environment)),
+				str(win_run.narrative_flags.get("grand_casino_showdown_step", "")),
+				str(win_run.current_environment.get("archetype_id", "")),
+				JSON.stringify(win_run.current_environment.get("local_narrative_flags", {})),
+				JSON.stringify(win_run.grand_casino_duel_status()),
+				str(duel_surface.get("boss_duel_active", false)),
+				str(duel_surface.get("dealer_name", "")),
+				str(duel_surface.get("surface_stake_controls_required", true)),
+			])
+		var replay_run: RunState = RunStateScript.new()
+		replay_run.from_dict(win_run.to_dict())
+		var deterministic_ui := {"surface_time_msec": 5000, "drunk_scaled_surface_time_msec": 5000}
+		var deal_command := game.surface_action_command("blackjack_deal", 0, false, deterministic_ui, win_run, win_run.current_environment)
+		var replay_deal := game.surface_action_command("blackjack_deal", 0, false, deterministic_ui, replay_run, replay_run.current_environment)
+		var dealt_ui := _copy_dict(deal_command.get("ui_state", {}))
+		var replay_ui := _copy_dict(replay_deal.get("ui_state", {}))
+		if not bool(deal_command.get("handled", false)) or _copy_array(dealt_ui.get("player_hands", [])).is_empty() or _copy_array(dealt_ui.get("dealer_cards", [])).size() != 2:
+			failures.append("Rourke boss surface did not deal a playable deterministic blackjack hand.")
+		if JSON.stringify(_save_load_canonical_value([dealt_ui.get("player_hands", []), dealt_ui.get("dealer_cards", []), win_run.grand_casino_duel_status().get("edge_schedule", [])])) != JSON.stringify(_save_load_canonical_value([replay_ui.get("player_hands", []), replay_ui.get("dealer_cards", []), replay_run.grand_casino_duel_status().get("edge_schedule", [])])):
+			failures.append("Identical Rourke duel seeds/actions did not reproduce hands and edge schedule.")
+		var mid_duel_slot_id := "foundation_check_rourke_mid_duel"
+		save_error = save_service.save_run(win_run, mid_duel_slot_id)
+		var loaded_mid_duel = save_service.load_run(mid_duel_slot_id)
+		if save_error != OK or loaded_mid_duel == null or JSON.stringify(_save_load_canonical_value(loaded_mid_duel.narrative_flags.get("grand_casino_duel_state", {}))) != JSON.stringify(_save_load_canonical_value(win_run.narrative_flags.get("grand_casino_duel_state", {}))):
+			failures.append("Rourke's exact dealt hand/session did not survive SaveService load.")
+		var loaded_surface := game.surface_state(loaded_mid_duel, loaded_mid_duel.current_environment, {}) if loaded_mid_duel != null else {}
+		if loaded_mid_duel != null and _copy_array(loaded_surface.get("player_hands", [])).is_empty():
+			failures.append("Rourke's saved mid-hand cards did not reopen on the boss surface.")
+		var settled_replay := game.resolve_with_context("play_basic", int(duel_state.get("ante", 20)), replay_run, replay_run.current_environment, replay_run.create_rng("duel_test_unused"), replay_ui)
+		var settled_original := game.resolve_with_context("play_basic", int(duel_state.get("ante", 20)), win_run, win_run.current_environment, win_run.create_rng("duel_test_unused"), dealt_ui)
+		if JSON.stringify(_save_load_canonical_value([settled_original.get("blackjack_hand_results", []), win_run.grand_casino_duel_status()])) != JSON.stringify(_save_load_canonical_value([settled_replay.get("blackjack_hand_results", []), replay_run.grand_casino_duel_status()])):
+			failures.append("Identical Rourke duel actions did not reproduce the settled hand and duel state.")
 
 	var crew_run := _new_showdown_phase_run("M2-FUN-HOUSE-CALLS-CREW", environment.to_dict(), finale_module, ["cheap_sunglasses"], {"crew_marker_open": true})
 	var crew_choice_id := _showdown_choice_id(finale_module.choices(crew_run, crew_run.current_environment), "hand_to_crew__cheap_sunglasses")
@@ -1447,16 +1492,16 @@ func _check_demo_boss_objective_foundation(library: ContentLibrary, failures: Ar
 		if bool(second_ditch.get("ok", false)):
 			failures.append("RunState allowed a second ditch after the walk choice was committed.")
 		finale_module.resolve(crew_run, crew_run.current_environment, "face_rourke")
-		crew_run.narrative_flags["grand_casino_showdown_roll"] = 1
 		_finish_showdown_interrogation(finale_module, crew_run, "hold_steady")
+		_force_rourke_duel_outcome(crew_run, "walk_out_clean")
 		if crew_run.run_status != RunState.RUN_STATUS_ENDED or not crew_run.inventory.has("cheap_sunglasses") or str(crew_run.narrative_flags.get("grand_casino_showdown_crew_handoff_returned", "")) != "cheap_sunglasses":
 			failures.append("Crew handoff did not return the saved item after survival.")
 	var crew_failure_run := _new_showdown_phase_run("M2-FUN-HOUSE-CALLS-CREW-FAIL", environment.to_dict(), finale_module, ["scratch_pad"], {"crew_favor_completed": true})
 	var crew_failure_choice := _showdown_choice_id(finale_module.choices(crew_failure_run, crew_failure_run.current_environment), "hand_to_crew__scratch_pad")
 	finale_module.resolve(crew_failure_run, crew_failure_run.current_environment, crew_failure_choice)
 	finale_module.resolve(crew_failure_run, crew_failure_run.current_environment, "face_rourke")
-	crew_failure_run.narrative_flags["grand_casino_showdown_roll"] = 100
 	_finish_showdown_interrogation(finale_module, crew_failure_run, "take_the_edge")
+	_force_rourke_duel_outcome(crew_failure_run, "taken_out_back")
 	if crew_failure_run.run_status != RunState.RUN_STATUS_FAILED or crew_failure_run.inventory.has("scratch_pad") or str(crew_failure_run.narrative_flags.get("grand_casino_showdown_crew_handoff_lost_on_failure", "")) != "scratch_pad":
 		failures.append("Crew handoff failure did not retain the documented interim lost-item state.")
 
@@ -1503,7 +1548,6 @@ func _check_demo_boss_objective_foundation(library: ContentLibrary, failures: Ar
 	var dirty_evidence := _string_array(serious_run.narrative_flags.get("grand_casino_showdown_interrogation_evidence", []))
 	if dirty_evidence.size() != 3 or dirty_evidence.has("clean_record"):
 		failures.append("Dirty interrogation selected evidence inconsistent with the scripted run.")
-	serious_run.narrative_flags["grand_casino_showdown_roll"] = 100
 	var failure_result := _finish_showdown_interrogation(finale_module, serious_run, "take_the_edge")
 	var failure_run: RunState = serious_run
 	var clean_terms := _copy_dict(win_run.narrative_flags.get("grand_casino_duel_terms", {}))
@@ -1521,8 +1565,56 @@ func _check_demo_boss_objective_foundation(library: ContentLibrary, failures: Ar
 	var expected_response_modifier := int(round(float(clean_strength_total) / float(maxi(1, clean_answers.size()))))
 	if clean_answers.size() != 3 or int(clean_interrogation_terms.get("response_modifier", -999)) != expected_response_modifier:
 		failures.append("Serialized duel terms did not consume the three recorded fact-derived response strengths.")
-	if not bool(failure_result.get("ok", false)) or failure_run.run_status != RunState.RUN_STATUS_FAILED or failure_run.run_failure_reason != RunState.FAILURE_CASINO_TAKEN_OUT_BACK:
-		failures.append("The temporary phase-four check did not preserve the canonical failure route.")
+	if not bool(failure_result.get("ok", false)) or not bool(failure_result.get("duel_ready", false)) or failure_run.run_status != RunState.RUN_STATUS_ACTIVE:
+		failures.append("Dirty interrogation did not enter the playable duel boundary.")
+	var clean_rules := _copy_dict(clean_terms.get("rules", {}))
+	var dirty_rules := _copy_dict(dirty_terms.get("rules", {}))
+	var clean_detection := int(clean_rules.get("player_cheat_detection_base", 0)) + int(clean_terms.get("rourke_aggression", 0)) * int(clean_rules.get("player_cheat_detection_per_aggression", 0)) + int(clean_terms.get("rourke_cheat_level", 0)) * int(clean_rules.get("player_cheat_detection_per_cheat_level", 0))
+	var dirty_detection := int(dirty_rules.get("player_cheat_detection_base", 0)) + int(dirty_terms.get("rourke_aggression", 0)) * int(dirty_rules.get("player_cheat_detection_per_aggression", 0)) + int(dirty_terms.get("rourke_cheat_level", 0)) * int(dirty_rules.get("player_cheat_detection_per_cheat_level", 0))
+	if int(_copy_dict(dirty_terms.get("starting_stacks", {})).get("player", 0)) >= int(_copy_dict(clean_terms.get("starting_stacks", {})).get("player", 0)) or dirty_detection < clean_detection:
+		failures.append("Pat-down/interrogation terms did not visibly worsen the player's stack and Rourke detection sensitivity.")
+
+	var edge_rng_a := RngStream.new()
+	edge_rng_a.configure(7717)
+	var edge_rng_b := RngStream.new()
+	edge_rng_b.configure(7717)
+	var replay_a := GrandCasinoDuelModelScript.initialize(dirty_terms, edge_rng_a)
+	var replay_b := GrandCasinoDuelModelScript.initialize(dirty_terms, edge_rng_b)
+	if JSON.stringify(replay_a.get("edge_schedule", [])) != JSON.stringify(replay_b.get("edge_schedule", [])):
+		failures.append("Rourke's named seeded edge schedule drifted across identical replays.")
+	var schedule := _copy_array(replay_a.get("edge_schedule", []))
+	if not schedule.is_empty():
+		var authored_edge := _copy_dict(schedule[0])
+		authored_edge.merge({"id": "deck_stack", "active": true, "called": false, "stripped": false}, true)
+		schedule[0] = authored_edge
+		replay_a["edge_schedule"] = schedule
+		var correct_call := GrandCasinoDuelModelScript.call_out(replay_a, "deck_stack", dirty_terms)
+		var false_call := GrandCasinoDuelModelScript.call_out(replay_a, "hole_swap", dirty_terms)
+		if not bool(correct_call.get("correct", false)) or not bool(_copy_dict(correct_call.get("edge", {})).get("stripped", false)) or int(correct_call.get("swing", 0)) <= 0:
+			failures.append("A correct Rourke call-out did not strip the authored edge and swing momentum.")
+		if bool(false_call.get("correct", true)) or int(false_call.get("swing", 0)) >= 0:
+			failures.append("A false Rourke accusation did not cost the authored duel chips.")
+
+	_force_rourke_duel_outcome(win_run, "walk_out_clean")
+	if win_run.run_status != RunState.RUN_STATUS_ENDED or str(win_run.narrative_flags.get("demo_victory_route", "")) != RunState.GRAND_CASINO_SHOWDOWN_ROUTE or str(win_run.narrative_flags.get("grand_casino_duel_outcome", "")) != "walk_out_clean":
+		failures.append("Decisive Rourke victory did not cash out into the canonical showdown route.")
+	var shown_run := _new_showdown_phase_run("M2-FUN-HOUSE-CALLS-SHOWN", environment.to_dict(), finale_module, ["scratch_pad"], {"crew_favor_completed": true})
+	var shown_handoff := _showdown_choice_id(finale_module.choices(shown_run, shown_run.current_environment), "hand_to_crew__scratch_pad")
+	finale_module.resolve(shown_run, shown_run.current_environment, shown_handoff)
+	finale_module.resolve(shown_run, shown_run.current_environment, "face_rourke")
+	_finish_showdown_interrogation(finale_module, shown_run, "hold_steady")
+	shown_run.grand_casino_chips = 37
+	_force_rourke_duel_outcome(shown_run, "shown_the_door")
+	var shown_score := shown_run.terminal_score_summary()
+	if shown_run.run_status != RunState.RUN_STATUS_ENDED or not bool(shown_run.narrative_flags.get("grand_casino_walked_with_chips", false)) or int(shown_run.narrative_flags.get("grand_casino_uncashed_chip_amount", 0)) != 37 or shown_run.grand_casino_chips != 37:
+		failures.append("Shown-the-door ending did not end successfully with the exact uncashed chip amount.")
+	if int(shown_score.get("uncashed_chip_score_value", 0)) != 18 or bool(shown_run.cash_out_grand_casino_chips().get("ok", false)):
+		failures.append("Shown-the-door ending did not apply reduced chip score and permanent Cage lockout.")
+	if not shown_run.inventory.has("scratch_pad") or str(shown_run.narrative_flags.get("grand_casino_showdown_crew_handoff_returned", "")) != "scratch_pad":
+		failures.append("Crew handoff item did not return for the shown-the-door success ending.")
+	_force_rourke_duel_outcome(failure_run, "taken_out_back")
+	if failure_run.run_status != RunState.RUN_STATUS_FAILED or failure_run.run_failure_reason != RunState.FAILURE_CASINO_TAKEN_OUT_BACK or str(failure_run.narrative_flags.get("grand_casino_duel_outcome", "")) != "taken_out_back":
+		failures.append("Losing Rourke's duel did not preserve casino_taken_out_back.")
 
 	var failure_slot_id := "foundation_check_house_calls_failure"
 	save_error = save_service.save_run(failure_run, failure_slot_id)
@@ -1544,6 +1636,26 @@ func _check_demo_boss_objective_foundation(library: ContentLibrary, failures: Ar
 		str(not dirty_terms.is_empty()),
 		str(failure_run.run_failure_reason),
 	])
+
+
+func _force_rourke_duel_outcome(run_state: RunState, outcome: String) -> void:
+	var state := run_state.grand_casino_duel_status()
+	if str(state.get("status", "")) != "active":
+		return
+	match outcome:
+		"walk_out_clean":
+			state["player_stack"] = 100
+			state["rourke_stack"] = 1
+		"shown_the_door":
+			state["player_stack"] = 100
+			state["rourke_stack"] = 100
+			state["hand_index"] = maxi(0, int(state.get("hand_limit", 5)) - 1)
+		_:
+			state["player_stack"] = 1
+			state["rourke_stack"] = 100
+	run_state.narrative_flags["grand_casino_duel_state"] = state
+	var transfer := 1 if outcome == "walk_out_clean" else -1 if outcome == "taken_out_back" else 0
+	run_state.apply_grand_casino_duel_hand({"transfer": transfer, "message": "Scripted ladder fixture."})
 
 
 func _new_showdown_phase_run(seed: String, environment: Dictionary, finale_module: EventModule, item_ids: Array = [], flags: Dictionary = {}) -> RunState:

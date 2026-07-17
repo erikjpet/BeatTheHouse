@@ -641,8 +641,43 @@ func enter_game(game_id: String) -> void:
 	_refresh_stake_input()
 
 
+func _enter_grand_casino_duel_surface() -> bool:
+	if run_state == null or not run_state.grand_casino_duel_active(run_state.current_environment):
+		return false
+	if str(run_state.current_environment.get("archetype_id", "")) != RunState.GRAND_CASINO_BACK_ROOM_ARCHETYPE_ID:
+		if not generator.enter_grand_casino_room(run_state, RunState.GRAND_CASINO_BACK_ROOM_ARCHETYPE_ID):
+			return false
+	var duel_game_ids := _string_array(run_state.current_environment.get("game_ids", []))
+	if duel_game_ids.is_empty():
+		return false
+	var duel_game_id := str(duel_game_ids[0])
+	var game_module := _game_module_for_id(duel_game_id)
+	if game_module == null:
+		return false
+	current_game = game_module
+	_sync_presented_bankroll_to_actual()
+	_reset_game_surface_runtime_state()
+	selected_action_category = ACTION_CATEGORY_GAMES
+	_set_current_screen(SCREEN_GAME)
+	focus_interactable_object("game:%s" % duel_game_id)
+	_clear_selected_game_action()
+	var result := current_game.enter(run_state, run_state.current_environment)
+	last_game_result = result.duplicate(true)
+	var duel := run_state.grand_casino_duel_status()
+	selected_stake = maxi(1, int(duel.get("ante", 20)))
+	_show_message(str(result.get("message", "Rourke cuts the cards.")))
+	_autosave_foundation_run("Duel autosaved.")
+	_refresh()
+	_refresh_stake_input()
+	return true
+
+
 func back_to_environment() -> void:
 	if _resolve_pending_all_in_terminal_result():
+		return
+	if run_state != null and current_game != null and run_state.grand_casino_duel_active(run_state.current_environment):
+		_show_message("Rourke keeps the Back Room door shut until the duel ends.")
+		_refresh()
 		return
 	if _guard_blocking_decision_or_transition():
 		return
@@ -1445,6 +1480,11 @@ func resolve_event_choice(event_id: String, choice_id: String) -> void:
 	_advance_alcohol_absorption()
 	_autosave_foundation_run("Autosaved.")
 	_refresh_talk_dock()
+	if bool(result.get("duel_ready", false)):
+		if not _enter_grand_casino_duel_surface():
+			_show_message("Rourke's Back Room table could not open.")
+			_refresh()
+		return
 	if showdown_continues:
 		_set_current_screen(SCREEN_EVENT)
 		_refresh()
@@ -3271,6 +3311,9 @@ func _load_foundation_run_from_slot(return_to_start_on_missing: bool) -> bool:
 	_show_message("%s: %s." % ["Recovered run from backup" if loaded_from_backup else "Run loaded", str(run_state.current_environment.get("display_name", "Environment"))])
 	_hide_run_menu()
 	_refresh()
+	if run_state.grand_casino_duel_active(run_state.current_environment):
+		if _enter_grand_casino_duel_surface():
+			return true
 	if _show_next_pending_triggered_event():
 		_refresh()
 	return true

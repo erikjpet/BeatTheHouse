@@ -94,6 +94,7 @@ const NEW_SURFACE_BUDGETS := {
 	"dialogue_active": {"frame_p95_ms": 16.0, "sample_frames": NEW_SURFACE_SAMPLE_FRAMES},
 	"eviction_map_transition": {"frame_p95_ms": 16.0, "sample_frames": NEW_SURFACE_SAMPLE_FRAMES},
 	"run_report_replay": {"frame_p95_ms": 16.0, "sample_frames": NEW_SURFACE_SAMPLE_FRAMES},
+	"grand_casino_duel_idle": {"draw_p95_ms": MAX_SURFACE_DRAW_P95_MS, "sample_frames": NEW_SURFACE_SAMPLE_FRAMES},
 }
 const NEW_SURFACE_IDLE_LIVENESS := {
 	"meta_home_idle": ENVIRONMENT_IDLE_LIVENESS,
@@ -706,6 +707,52 @@ func _probe_new_surface_budgets() -> void:
 	await _probe_dialogue_surface_budget()
 	await _probe_eviction_map_transition_budget()
 	await _probe_run_report_replay_budget()
+	await _probe_rourke_duel_surface_budget()
+
+
+func _probe_rourke_duel_surface_budget() -> void:
+	var mode := "grand_casino_duel_idle"
+	var budget := _dict(NEW_SURFACE_BUDGETS.get(mode, {}))
+	var sample_frames := maxi(1, int(budget.get("sample_frames", NEW_SURFACE_SAMPLE_FRAMES)))
+	var canvas: Control = GameSurfaceCanvasScript.new()
+	canvas.size = Vector2(VisualStyleScript.GAME_BOARD_SIZE)
+	root.add_child(canvas)
+	canvas.call("render_game_snapshot", _synthetic_rourke_duel_idle_snapshot())
+	await _settle(3)
+	canvas.call("reset_performance_counters")
+	for _frame_index in range(sample_frames):
+		await process_frame
+	var counters := _canvas_counters(canvas)
+	var draw_p95 := float(counters.get("draw_p95_ms", 0.0))
+	var draw_samples := _array_size(counters.get("draw_frame_usec_samples", []))
+	var measured := int(counters.get("surface_animation_redraw_count", 0))
+	var floor_count := _scaled_liveness_floor(_dict(GAME_IDLE_LIVENESS.get("blackjack", {})), sample_frames)
+	observations.append({
+		"seed": "new_surface:%s" % mode,
+		"run_index": -1,
+		"environment_id": "grand_casino_back_room",
+		"game_id": "blackjack",
+		"mode": mode,
+		"label": "Grand Casino Rourke duel idle",
+		"frames": sample_frames,
+		"draw_avg_ms": float(counters.get("draw_avg_ms", 0.0)),
+		"draw_p95_ms": draw_p95,
+		"draw_max_ms": float(counters.get("draw_max_ms", 0.0)),
+		"draw_samples": draw_samples,
+		"liveness_counter": "surface_animation_redraw_count",
+		"liveness_floor": floor_count,
+		"liveness_measured": measured,
+		"full_snapshot_calls": int(counters.get("full_snapshot_calls", 0)),
+		"budget": budget,
+	})
+	new_surface_coverage[mode] = int(new_surface_coverage.get(mode, 0)) + 1
+	if draw_samples <= 0:
+		failures.append("Grand Casino Rourke duel idle did not record draw samples.")
+	elif draw_p95 > float(budget.get("draw_p95_ms", 0.0)):
+		failures.append("Grand Casino Rourke duel idle draw p95 %.3f ms exceeded %.3f ms." % [draw_p95, float(budget.get("draw_p95_ms", 0.0))])
+	_assert_liveness("Grand Casino Rourke duel idle", "surface_animation_redraw_count", floor_count, measured)
+	canvas.queue_free()
+	await _settle(1)
 
 
 func _probe_overlay_cost() -> void:
@@ -974,6 +1021,24 @@ func _synthetic_blackjack_idle_snapshot() -> Dictionary:
 			"remaining_msec": 12000,
 		},
 	}
+
+
+func _synthetic_rourke_duel_idle_snapshot() -> Dictionary:
+	var snapshot := _synthetic_blackjack_idle_snapshot()
+	snapshot["boss_variant"] = "rourke_duel"
+	snapshot["boss_duel_active"] = true
+	snapshot["dealer_name"] = "Rourke"
+	snapshot["dealer_profile"] = {"style_id": "rourke", "attention_base": 100, "blink_offset": 120, "uniform_accent": "house_gold"}
+	snapshot["patrons"] = []
+	snapshot["boss_player_stack"] = 92
+	snapshot["boss_rourke_stack"] = 108
+	snapshot["boss_hand_number"] = 3
+	snapshot["boss_hand_limit"] = 5
+	snapshot["boss_bark"] = "Read the felt, not my face."
+	snapshot["boss_tell"] = "His thumb stays under the down card."
+	snapshot["boss_callouts"] = [{"id": "deck_stack", "label": "Call the Stack"}, {"id": "hole_swap", "label": "Call the Swap"}]
+	snapshot["can_deal"] = true
+	return snapshot
 
 
 func _prepare_run_for_resolve_probe(run_state: RunState, game_id: String, baseline_environment: Dictionary, baseline_rng_seed: int, baseline_rng_state: int, baseline_suspicion: Dictionary) -> void:

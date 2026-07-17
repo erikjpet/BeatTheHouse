@@ -2717,6 +2717,8 @@ func _check_single_table_environment_entry_contract(library: ContentLibrary, app
 		return
 
 	run_state.set_environment(environment)
+	if run_state.grand_casino_table_uses_chips(game_id, environment):
+		run_state.buy_grand_casino_chips(250, run_state.grand_casino_chip_exchange_rate())
 	app.set("run_state", run_state)
 	app.set("current_game", null)
 	app.set("last_game_result", {})
@@ -2758,10 +2760,11 @@ func _check_single_table_environment_entry_contract(library: ContentLibrary, app
 	if action_id.is_empty():
 		failures.append("Table environment entry could not find a resolvable action for %s." % game_id)
 		return
-	var stake := clampi(int(snapshot.get("stake_min", actions.get("stake_floor", 1))), 1, maxi(1, run_state.bankroll))
+	var wager_balance := run_state.wager_balance_for_game(game_id, run_state.current_environment)
+	var stake := clampi(int(snapshot.get("stake_min", actions.get("stake_floor", 1))), 1, maxi(1, wager_balance))
 	var result := game.resolve_with_context(action_id, stake, run_state, run_state.current_environment, run_state.create_rng("table_resolve:%s" % game_id), {})
 	if not bool(result.get("ok", false)):
-		failures.append("Table environment explicit action did not resolve for %s action %s." % [game_id, action_id])
+		failures.append("Table environment explicit action did not resolve for %s action %s: %s" % [game_id, action_id, str(result.get("message", "no result message"))])
 	if str(app.get("current_screen")) != "GAME":
 		failures.append("Table environment explicit module resolve should not auto-close the UI for %s." % game_id)
 

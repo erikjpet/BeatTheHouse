@@ -2315,7 +2315,7 @@ func _grand_casino_game_fixture_run(library: ContentLibrary, boss_archetype: Dic
 	var environment := EnvironmentInstance.from_archetype(boss_archetype, 3, run_state.create_rng("c1_grand_environment"), library).to_dict()
 	environment["id"] = "c1_grand_%s_fixture" % game_id
 	environment["display_name"] = "Grand Casino"
-	environment["archetype_id"] = "grand_casino"
+	environment["archetype_id"] = str(boss_archetype.get("id", "grand_casino"))
 	environment["kind"] = "boss"
 	environment["game_ids"] = [game_id]
 	environment["turns"] = 0
@@ -2323,6 +2323,8 @@ func _grand_casino_game_fixture_run(library: ContentLibrary, boss_archetype: Dic
 	if not generated_state.is_empty():
 		environment["game_states"] = {game_id: generated_state}
 	run_state.set_environment(environment)
+	run_state.rourke_current_room = str(environment.get("archetype_id", "grand_casino"))
+	run_state.rourke_current_spot = "high_center" if run_state.rourke_current_room == RunState.GRAND_CASINO_HIGH_LIMIT_ARCHETYPE_ID else "main_center"
 	if RunState.GRAND_CASINO_TABLE_GAME_IDS.has(game_id):
 		run_state.buy_grand_casino_chips(run_state.bankroll, run_state.grand_casino_chip_exchange_rate())
 	return run_state
@@ -2407,12 +2409,12 @@ func _roulette_past_post_contract_result(game: GameModule, run_state: RunState, 
 
 
 func _check_premium_grand_casino_table_contract(library: ContentLibrary, game_id: String, game: GameModule, failures: Array) -> void:
-	var boss_archetype := _archetype_by_id(library, "grand_casino")
+	var boss_archetype := _archetype_by_id(library, "grand_casino_high_limit")
 	if boss_archetype.is_empty():
-		failures.append("Grand Casino premium %s audit requires the grand_casino archetype." % game_id)
+		failures.append("Grand Casino premium %s audit requires the grand_casino_high_limit archetype." % game_id)
 		return
 	if not _string_array(boss_archetype.get("game_pool", [])).has(game_id):
-		failures.append("Grand Casino premium audit expected %s in the boss-floor game pool." % game_id)
+		failures.append("Grand Casino premium audit expected %s in the High Limit game pool." % game_id)
 		return
 
 	var progress_run := _grand_casino_game_fixture_run(library, boss_archetype, game_id, game, "C3-GRAND-PROGRESS-%s" % game_id.to_upper())
@@ -2424,7 +2426,8 @@ func _check_premium_grand_casino_table_contract(library: ContentLibrary, game_id
 		var progress_status: Dictionary = progress_run.demo_objective_status()
 		if int(progress_status.get("grand_casino_games_played", 0)) != 1:
 			failures.append("Grand Casino premium %s result did not count toward high-roller games." % game_id)
-		if int(progress_status.get("grand_casino_net_winnings", 999999)) != progress_run.bankroll - entry_bankroll:
+		var effective_entry := int(progress_run.narrative_flags.get("grand_casino_entry_bankroll", entry_bankroll))
+		if int(progress_status.get("grand_casino_net_winnings", 999999)) != progress_run.grand_casino_total_money() - effective_entry:
 			failures.append("Grand Casino premium %s result did not update high-roller net winnings." % game_id)
 		if progress_run.run_status == RunState.RUN_STATUS_FAILED:
 			failures.append("Grand Casino premium %s legal result unexpectedly failed the run." % game_id)
@@ -2460,11 +2463,11 @@ func _premium_grand_casino_legal_result(game_id: String, game: GameModule, run_s
 	var environment: Dictionary = run_state.current_environment
 	match game_id:
 		"baccarat":
-			var baccarat_ui := {"baccarat_bets": {"player": 20}}
-			return game.resolve_with_context("deal_baccarat", 20, run_state, environment, run_state.create_rng("c3_baccarat_legal"), baccarat_ui)
+			var baccarat_ui := {"baccarat_bets": {"player": 25}}
+			return game.resolve_with_context("deal_baccarat", 25, run_state, environment, run_state.create_rng("c3_baccarat_legal"), baccarat_ui)
 		"roulette":
-			var roulette_ui := {"roulette_bets": [game.call("_default_smoke_bet", 10)]}
-			return game.resolve_with_context("spin_roulette", 10, run_state, environment, run_state.create_rng("c3_roulette_legal"), roulette_ui)
+			var roulette_ui := {"roulette_bets": [game.call("_default_smoke_bet", 25)]}
+			return game.resolve_with_context("spin_roulette", 25, run_state, environment, run_state.create_rng("c3_roulette_legal"), roulette_ui)
 	return {}
 
 
@@ -2582,12 +2585,24 @@ func _xgame_environment(game_id: String, watched: bool) -> Dictionary:
 	return environment
 
 
+func _xgame_apply_watched_spatial_state(run_state: RunState, game_id: String, watched: bool) -> void:
+	if not watched:
+		return
+	run_state.current_environment["id"] = "grand_casino_xgame_%s" % game_id
+	run_state.current_environment["archetype_id"] = RunState.GRAND_CASINO_ARCHETYPE_ID
+	run_state.rourke_current_room = RunState.GRAND_CASINO_ARCHETYPE_ID
+	run_state.rourke_current_spot = "main_center"
+	if RunState.GRAND_CASINO_TABLE_GAME_IDS.has(game_id):
+		run_state.grand_casino_chips = maxi(run_state.grand_casino_chips, run_state.bankroll)
+
+
 func _xgame_bar_dice_run(game: GameModule, seed: String, luck: int, drunk: bool, watched: bool, item_id: String) -> RunState:
 	var run_state: RunState = _xgame_run(seed, 100000, drunk, item_id)
 	run_state.baseline_luck = luck
 	var environment: Dictionary = _xgame_environment("bar_dice", watched)
 	environment["game_states"] = {"bar_dice": _bar_dice_state_for(game, run_state, environment, "ship_captain_crew", "standard", "pot_rake")}
 	run_state.current_environment = environment.duplicate(true)
+	_xgame_apply_watched_spatial_state(run_state, "bar_dice", watched)
 	return run_state
 
 
@@ -2615,6 +2630,7 @@ func _xgame_video_poker_run(game: GameModule, seed: String, luck: int, drunk: bo
 		run_state.add_item(item_id)
 	run_state.current_environment["security_profile"] = _xgame_environment("video_poker", watched).get("security_profile", {})
 	run_state.current_environment["turns"] = 0 if watched else 1
+	_xgame_apply_watched_spatial_state(run_state, "video_poker", watched)
 	return run_state
 
 
@@ -2638,6 +2654,7 @@ func _xgame_blackjack_run(game: GameModule, seed: String, luck: int, drunk: bool
 	var environment: Dictionary = _xgame_environment("blackjack", watched)
 	environment["game_states"] = {"blackjack": game.generate_environment_state(run_state, environment, run_state.create_rng("xgame_blackjack_state"))}
 	run_state.current_environment = environment.duplicate(true)
+	_xgame_apply_watched_spatial_state(run_state, "blackjack", watched)
 	return run_state
 
 
@@ -2685,6 +2702,7 @@ func _xgame_pull_tabs_run(game: GameModule, seed: String, luck: int, drunk: bool
 	var environment: Dictionary = _xgame_environment("pull_tabs", watched)
 	environment["game_states"] = {"pull_tabs": game.generate_environment_state(run_state, environment, run_state.create_rng("xgame_pull_tabs_state"))}
 	run_state.current_environment = environment.duplicate(true)
+	_xgame_apply_watched_spatial_state(run_state, "pull_tabs", watched)
 	return run_state
 
 
@@ -2719,6 +2737,7 @@ func _xgame_slot_run(seed: String, luck: int, drunk: bool, watched: bool, item_i
 	environment["security_profile"] = _xgame_environment("slot", watched).get("security_profile", {})
 	environment["turns"] = 0 if watched else 1
 	run_state.current_environment = environment.duplicate(true)
+	_xgame_apply_watched_spatial_state(run_state, "slot", watched)
 	return run_state
 
 
