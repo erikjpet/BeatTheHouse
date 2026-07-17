@@ -159,6 +159,12 @@ func surface_action_command(_surface_action: String, _index: int, _confirm_reque
 	return {"handled": false}
 
 
+# Optional pointer-capture path for drag-native surfaces. Positions are in the
+# shared board design space and phases are begin, move, or end.
+func surface_pointer_command(_surface_action: String, _index: int, _phase: String, _board_position: Vector2, _ui_state: Dictionary, _run_state: RunState, _environment: Dictionary) -> Dictionary:
+	return {"handled": false}
+
+
 # Optional per-frame game-surface automation hook. The foundation UI provides
 # only UI-local state, the current environment, and a surface snapshot; modules
 # decide whether to request a resolved action.
