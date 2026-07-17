@@ -24,6 +24,7 @@ const SfxPlayerScript := preload("res://scripts/ui/sfx_player.gd")
 const WebAudioBridgeScript := preload("res://scripts/ui/web_audio_bridge.gd")
 const GameSurfaceCanvasScript := preload("res://scripts/ui/game_surface_canvas.gd")
 const RunInventoryViewModelScript := preload("res://scripts/ui/run_inventory_view_model.gd")
+const CoachViewModelScript := preload("res://scripts/ui/coach_view_model.gd")
 const SlotGameScript := preload("res://scripts/games/slot.gd")
 const SlotMachineGeneratorScript := preload("res://scripts/games/slots/slot_machine_generator.gd")
 const SlotMachineStateScript := preload("res://scripts/games/slots/slot_machine_state.gd")
@@ -365,6 +366,7 @@ func _foundation_run_suite(suite: String, content_library: ContentLibrary, fixtu
 	match suite:
 		"smoke":
 			_foundation_run_check(report, failures, "content", Callable(self, "_check_content"), [content_library])
+			_foundation_run_check(report, failures, "coach_engine_foundation", Callable(self, "_check_coach_engine_foundation"), [content_library])
 			_foundation_run_check(report, failures, "profile_inventory_boundary", Callable(self, "_check_profile_inventory_boundary"), [])
 			_foundation_run_check(report, failures, "foundation_contract_smoke", Callable(self, "_check_foundation_contract_smoke_for_suite"), [content_library])
 			_foundation_run_check(report, failures, "fixture_rng", Callable(self, "_check_rng"), [fixture_library])
@@ -403,6 +405,7 @@ func _foundation_run_suite(suite: String, content_library: ContentLibrary, fixtu
 
 func _foundation_run_contract_suite(content_library: ContentLibrary, fixture_library: ContentLibrary, failures: Array, report: Dictionary) -> void:
 	_foundation_run_check(report, failures, "content", Callable(self, "_check_content"), [content_library])
+	_foundation_run_check(report, failures, "coach_engine_foundation", Callable(self, "_check_coach_engine_foundation"), [content_library])
 	_foundation_run_check(report, failures, "foundation_contracts", Callable(self, "_check_foundation_contract_smoke_for_suite"), [content_library])
 	_foundation_run_check(report, failures, "profile_inventory_boundary", Callable(self, "_check_profile_inventory_boundary"), [])
 	_foundation_run_check(report, failures, "fixture_rng", Callable(self, "_check_rng"), [fixture_library])
@@ -414,6 +417,7 @@ func _foundation_run_contract_suite(content_library: ContentLibrary, fixture_lib
 
 func _foundation_run_system_suite(content_library: ContentLibrary, fixture_library: ContentLibrary, failures: Array, report: Dictionary) -> void:
 	_foundation_run_check(report, failures, "content", Callable(self, "_check_content"), [content_library])
+	_foundation_run_check(report, failures, "coach_engine_foundation", Callable(self, "_check_coach_engine_foundation"), [content_library])
 	_foundation_run_check(report, failures, "attribute_glyph_foundation", Callable(self, "_check_attribute_glyph_foundation"), [content_library])
 	_foundation_run_check(report, failures, "profile_inventory_boundary", Callable(self, "_check_profile_inventory_boundary"), [])
 	_foundation_run_check(report, failures, "fixture_rng", Callable(self, "_check_rng"), [fixture_library])
@@ -459,6 +463,7 @@ func _foundation_run_system_suite(content_library: ContentLibrary, fixture_libra
 
 func _foundation_run_all_suite(content_library: ContentLibrary, fixture_library: ContentLibrary, failures: Array, report: Dictionary) -> void:
 	_foundation_run_check(report, failures, "content", Callable(self, "_check_content"), [content_library])
+	_foundation_run_check(report, failures, "coach_engine_foundation", Callable(self, "_check_coach_engine_foundation"), [content_library])
 	_foundation_run_check(report, failures, "attribute_glyph_foundation", Callable(self, "_check_attribute_glyph_foundation"), [content_library])
 	_foundation_run_check(report, failures, "foundation_contracts_all", Callable(self, "_check_foundation_contract_smoke_for_suite"), [content_library])
 	_foundation_run_check(report, failures, "profile_inventory_boundary", Callable(self, "_check_profile_inventory_boundary"), [])
@@ -2304,12 +2309,115 @@ func _check_foundation_contract_smoke(library: ContentLibrary, failures: Array, 
 	_check_recovery_loss_pressure_foundation(library, failures)
 
 
+func _check_coach_engine_foundation(library: ContentLibrary, failures: Array) -> void:
+	if library.tutorial_lessons.size() != 8:
+		failures.append("Coach lesson pack must ship exactly eight first-time tips.")
+	for expected_id in ["tip_first_heat_gain", "tip_first_debt_taken", "tip_first_closing_warning", "tip_first_pawn_interaction", "tip_first_item_purchase", "tip_first_map_open", "tip_first_chips_gained", "tip_first_card_tier"]:
+		if library.tutorial_lesson(expected_id).is_empty():
+			failures.append("Coach lesson pack is missing %s." % expected_id)
+	var duplicate_library := ContentLibraryScript.new()
+	duplicate_library.tutorial_lessons = [_coach_lesson_fixture("duplicate"), _coach_lesson_fixture("duplicate")]
+	if not _coach_errors_contain(duplicate_library.validate(), "duplicate id"):
+		failures.append("Coach lesson validation accepted duplicate ids.")
+	var anchor_library := ContentLibraryScript.new()
+	var bad_anchor := _coach_lesson_fixture("bad_anchor")
+	bad_anchor["anchor"] = {"kind": "corner_box", "id": "heat"}
+	anchor_library.tutorial_lessons = [bad_anchor]
+	if not _coach_errors_contain(anchor_library.validate(), "unknown kind"):
+		failures.append("Coach lesson validation accepted an unknown anchor kind.")
+	var cycle_library := ContentLibraryScript.new()
+	var cycle_a := _coach_lesson_fixture("cycle_a")
+	var cycle_b := _coach_lesson_fixture("cycle_b")
+	cycle_a["trigger"] = {"depends_on": ["cycle_b"], "state_predicates": []}
+	cycle_b["trigger"] = {"depends_on": ["cycle_a"], "state_predicates": []}
+	cycle_library.tutorial_lessons = [cycle_a, cycle_b]
+	if not _coach_errors_contain(cycle_library.validate(), "dependency cycle"):
+		failures.append("Coach lesson validation accepted a dependency cycle.")
+	var contexts := {
+		"tip_first_heat_gain": {"run": {"heat_gain_count": 1}},
+		"tip_first_debt_taken": {"run": {"debt_count": 1}},
+		"tip_first_closing_warning": {"run": {"closing_time_active": true}},
+		"tip_first_pawn_interaction": {"ui": {"pawn_counter_open": true}},
+		"tip_first_item_purchase": {"screen": "RESULT", "action": {"last_result_type": "item_purchase"}},
+		"tip_first_map_open": {"screen": "TRAVEL", "ui": {"world_map_open": true}},
+		"tip_first_chips_gained": {"environment_archetype": "grand_casino", "run": {"grand_casino_chips": 1}},
+		"tip_first_card_tier": {"run": {"players_card_tier": "bronze"}},
+	}
+	for lesson_value in library.tutorial_lessons:
+		var lesson: Dictionary = lesson_value
+		var lesson_id := str(lesson.get("id", ""))
+		var context: Dictionary = contexts.get(lesson_id, {})
+		if not CoachViewModelScript.trigger_matches(lesson, context, {}, true):
+			failures.append("Coach tip %s did not fire for its truthful state fixture." % lesson_id)
+		var seen_fixture: Dictionary = {}
+		seen_fixture[lesson_id] = true
+		if CoachViewModelScript.trigger_matches(lesson, context, seen_fixture, true):
+			failures.append("Coach tip %s fired more than once after seen-state." % lesson_id)
+		if CoachViewModelScript.trigger_matches(lesson, context, {}, false):
+			failures.append("Coach tip %s fired while normal tips were disabled." % lesson_id)
+	var hud_lesson := _coach_lesson_fixture("hud_anchor")
+	hud_lesson["anchor"] = {"kind": "hud_element", "id": "heat"}
+	var hud_context := {
+		"viewport_rect": Rect2(Vector2.ZERO, Vector2(360, 640)),
+		"anchor_rects": {"hud_elements": {"heat": Rect2(12, 12, 160, 48)}},
+		"small_screen": true,
+	}
+	var hud_lesson_before := hud_lesson.duplicate(true)
+	var hud_context_before := hud_context.duplicate(true)
+	var hud_model := CoachViewModelScript.build(hud_lesson, hud_context)
+	var hud_bubble := CoachViewModelScript._rect(hud_model.get("bubble_rect", {}))
+	if not bool(hud_model.get("anchor_found", false)) or not Rect2(Vector2.ZERO, Vector2(360, 640)).encloses(hud_bubble):
+		failures.append("Coach HUD anchor or small-screen bubble did not fit the viewport.")
+	if hud_lesson != hud_lesson_before or hud_context != hud_context_before:
+		failures.append("Coach pure view-model builder mutated its lesson or context input.")
+	var object_lesson := _coach_lesson_fixture("object_anchor")
+	object_lesson["anchor"] = {"kind": "interactable_object", "id": "fixture:door"}
+	var object_model := CoachViewModelScript.build(object_lesson, {
+		"viewport_rect": Rect2(Vector2.ZERO, Vector2(1280, 720)),
+		"anchor_rects": {"interactable_objects": {"fixture:door": Rect2(100, 200, 90, 100)}},
+	})
+	if not bool(object_model.get("anchor_found", false)):
+		failures.append("Coach room-object anchor did not resolve through focus rects.")
+	var gating_lesson := _coach_lesson_fixture("gating")
+	gating_lesson["gating"] = {"allowed_action_ids": ["fixture:door"]}
+	var gating_model := CoachViewModelScript.build(gating_lesson, {"viewport_rect": Rect2(Vector2.ZERO, Vector2(1280, 720))})
+	if CoachViewModelScript.input_allowed(gating_model, "wrong:door") or not CoachViewModelScript.input_allowed(gating_model, "fixture:door"):
+		failures.append("Coach gating did not restrict only undeclared input routes.")
+	if not CoachViewModelScript.input_allowed(object_model, "wrong:door"):
+		failures.append("Non-gating coach tip blocked player input.")
+	var settings := UserSettingsScript.new()
+	settings.coach_tips_enabled = false
+	var restored_settings := UserSettingsScript.new()
+	restored_settings.from_dict(settings.to_dict())
+	if restored_settings.coach_tips_enabled:
+		failures.append("Coach tips setting did not round-trip disabled state.")
+
+
+func _coach_lesson_fixture(lesson_id: String) -> Dictionary:
+	return {
+		"id": lesson_id,
+		"trigger": {"state_predicates": []},
+		"anchor": {"kind": "none"},
+		"copy": "Fixture advice.",
+		"completion": {"type": "any_action"},
+	}
+
+
+func _coach_errors_contain(errors: Array, fragment: String) -> bool:
+	for error_value in errors:
+		if str(error_value).to_lower().contains(fragment.to_lower()):
+			return true
+	return false
+
+
 func _check_profile_inventory_boundary(failures: Array) -> void:
 	OS.set_environment(ProfileInventoryScript.INVENTORY_PATH_ENV, "user://foundation_profile_inventory_check.json")
 	_remove_profile_inventory_test_file()
 	var profile_inventory: ProfileInventory = ProfileInventoryScript.new()
 	profile_inventory.load()
 	profile_inventory.add_reference_chip()
+	profile_inventory.mark_tip_seen("tip_first_heat_gain")
+	profile_inventory.tutorial_completed = true
 	if not profile_inventory.has_item(ProfileInventory.REFERENCE_CHIP_ID):
 		failures.append("ProfileInventory did not store the reference poker chip.")
 	profile_inventory.mark_challenge_completed("challenge_fixture_complete", "fixture_challenge", "Fixture Challenge")
@@ -2326,6 +2434,8 @@ func _check_profile_inventory_boundary(failures: Array) -> void:
 		failures.append("ProfileInventory did not round-trip the reference poker chip.")
 	if not restored.has_challenge_completion("challenge_fixture_complete"):
 		failures.append("ProfileInventory did not round-trip challenge completion flags.")
+	if not restored.has_seen_tip("tip_first_heat_gain") or not restored.tutorial_completed:
+		failures.append("ProfileInventory did not round-trip coach seen-state and tutorial completion.")
 	if restored.completed_challenge_rows().is_empty():
 		failures.append("ProfileInventory did not surface completed challenge rows.")
 	if restored.run_history.size() != 5:
@@ -2389,6 +2499,8 @@ func _check_profile_inventory_boundary(failures: Array) -> void:
 	old_profile.from_dict({"schema_version": 2, "items": []})
 	if int(old_profile.to_dict().get("act", 0)) != 1 or not _copy_dict(old_profile.to_dict().get("act_seam", {})).is_empty():
 		failures.append("ProfileInventory markerless profile did not normalize Act 1 with empty act_seam.")
+	if not old_profile.tips_seen.is_empty() or old_profile.tutorial_completed:
+		failures.append("ProfileInventory legacy profile did not default coach fields compatibly.")
 	_check_act_two_seam_payloads(failures)
 	_remove_profile_inventory_test_file()
 	OS.set_environment(ProfileInventoryScript.INVENTORY_PATH_ENV, "")

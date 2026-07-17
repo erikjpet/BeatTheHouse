@@ -1,0 +1,76 @@
+[
+	{
+		"id": "tip_first_heat_gain",
+		"trigger": {
+			"state_predicates": [{"path": "run.heat_gain_count", "op": "gt", "value": 0}]
+		},
+		"anchor": {"kind": "hud_element", "id": "heat"},
+		"copy": "Heat draws eyes. Let a quiet room cool it.",
+		"completion": {"type": "any_action"}
+	},
+	{
+		"id": "tip_first_debt_taken",
+		"trigger": {
+			"state_predicates": [{"path": "run.debt_count", "op": "gt", "value": 0}]
+		},
+		"anchor": {"kind": "hud_element", "id": "debt"},
+		"copy": "Debt buys time. Every lender collects later.",
+		"completion": {"type": "any_action"}
+	},
+	{
+		"id": "tip_first_closing_warning",
+		"trigger": {
+			"state_predicates": [{"path": "run.closing_time_active", "op": "equals", "value": true}]
+		},
+		"anchor": {"kind": "hud_element", "id": "clock"},
+		"copy": "Closing time is final. Finish your wager, then leave.",
+		"completion": {"type": "any_action"}
+	},
+	{
+		"id": "tip_first_pawn_interaction",
+		"trigger": {
+			"state_predicates": [{"path": "ui.pawn_counter_open", "op": "equals", "value": true}]
+		},
+		"anchor": {"kind": "hud_element", "id": "inventory"},
+		"copy": "Pawned gear becomes a ticket. Redeem it before default.",
+		"completion": {"type": "any_action"}
+	},
+	{
+		"id": "tip_first_item_purchase",
+		"trigger": {
+			"screen": "RESULT",
+			"state_predicates": [{"path": "action.last_result_type", "op": "equals", "value": "item_purchase"}]
+		},
+		"anchor": {"kind": "hud_element", "id": "inventory"},
+		"copy": "Gear changes the run. Read its glyphs before buying.",
+		"completion": {"type": "any_action"}
+	},
+	{
+		"id": "tip_first_map_open",
+		"trigger": {
+			"screen": "TRAVEL",
+			"state_predicates": [{"path": "ui.world_map_open", "op": "equals", "value": true}]
+		},
+		"anchor": {"kind": "hud_element", "id": "map"},
+		"copy": "Routes spend time. Check cost and closing hours first.",
+		"completion": {"type": "any_action"}
+	},
+	{
+		"id": "tip_first_chips_gained",
+		"trigger": {
+			"state_predicates": [{"path": "run.grand_casino_chips", "op": "gt", "value": 0}]
+		},
+		"anchor": {"kind": "hud_element", "id": "chips"},
+		"copy": "Grand Casino tables use chips. The Cage handles cash.",
+		"completion": {"type": "any_action"}
+	},
+	{
+		"id": "tip_first_card_tier",
+		"trigger": {
+			"state_predicates": [{"path": "run.players_card_tier", "op": "one_of", "value": ["bronze", "silver", "gold"]}]
+		},
+		"anchor": {"kind": "hud_element", "id": "objective"},
+		"copy": "Clean play earns recognition. Higher tiers open better comps.",
+		"completion": {"type": "any_action"}
+	}
+]

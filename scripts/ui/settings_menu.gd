@@ -5,6 +5,7 @@ extends VBoxContainer
 
 signal back_requested
 signal settings_applied
+signal reset_tips_requested
 
 const UserSettingsScript := preload("res://scripts/core/user_settings.gd")
 const VisualStyleScript := preload("res://scripts/ui/visual_style.gd")
@@ -39,6 +40,8 @@ var reduce_motion: CheckBox
 var drunk_effect: OptionButton
 var high_contrast: CheckBox
 var play_on_small_screen: CheckBox
+var coach_tips: CheckBox
+var reset_tips: Button
 var haptics_note: Label
 
 
@@ -109,6 +112,13 @@ func _build() -> void:
 	play_on_small_screen.tooltip_text = "Larger controls and touch targets for phones and tablets."
 	play_on_small_screen.toggled.connect(_on_play_on_small_screen)
 	_note(box, "Enlarges controls and tap areas for phone or tablet play. Disabled by default.")
+	coach_tips = _check(box, "Coach tips")
+	coach_tips.tooltip_text = "Show one-time dealer advice during normal runs."
+	coach_tips.toggled.connect(_on_coach_tips)
+	reset_tips = _button("Reset tips")
+	reset_tips.tooltip_text = "Show first-time coach tips again."
+	reset_tips.pressed.connect(_on_reset_tips)
+	box.add_child(reset_tips)
 	var ui_row := _slider(box, "UI Scale", 85, 130, 5)
 	ui = ui_row["slider"]
 	ui_text = ui_row["text"]
@@ -241,6 +251,7 @@ func _sync() -> void:
 	sfx.value = roundi(draft.sfx_volume * 100.0)
 	audio_calm.button_pressed = draft.audio_calm
 	play_on_small_screen.button_pressed = draft.play_on_small_screen
+	coach_tips.button_pressed = draft.coach_tips_enabled
 	ui.value = roundi(draft.ui_scale * 100.0)
 	text_size.select(draft.text_index())
 	high_contrast.button_pressed = draft.high_contrast
@@ -321,6 +332,15 @@ func _on_play_on_small_screen(enabled: bool) -> void:
 	_apply_accessibility_settings()
 
 
+func _on_coach_tips(enabled: bool) -> void:
+	draft.coach_tips_enabled = enabled
+
+
+func _on_reset_tips() -> void:
+	reset_tips_requested.emit()
+	status.text = "Coach tips reset."
+
+
 # Updates draft UI scale.
 func _on_ui(value: float) -> void:
 	_set_percent("ui_scale", value)
@@ -367,6 +387,8 @@ func current_settings_snapshot() -> Dictionary:
 		"drunk_effect_mode": str(active_settings.drunk_effect_mode),
 		"high_contrast": bool(active_settings.high_contrast),
 		"play_on_small_screen": bool(active_settings.play_on_small_screen),
+		"coach_tips_enabled": bool(active_settings.coach_tips_enabled),
+		"reset_tips_available": reset_tips != null and not reset_tips.disabled,
 		"haptics_supported": false,
 		"haptics_cut_reason": UserSettingsScript.HAPTICS_CUT_REASON,
 	}

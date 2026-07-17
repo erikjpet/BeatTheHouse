@@ -17,12 +17,14 @@ const LENDERS_PATH := "res://data/debt/lenders.json"
 const SERVICES_PATH := "res://data/services/services.json"
 const TRAVEL_ROUTES_PATH := "res://data/travel/routes.json"
 const MUSIC_MANIFEST_PATH := "res://data/audio/music_manifest.json"
+const TUTORIAL_LESSONS_PATH := "res://data/tutorial/lessons.json"
 const MUSIC_ASSET_ROOT := "res://assets/audio/music"
 const MIN_AUTHORED_MUSIC_LOOP_SECONDS := 12.0
 const AUTHORED_MUSIC_SAMPLE_RATE := 44100
 const AUTHORED_MUSIC_ALLOWED_BITS_PER_SAMPLE := [16, 24]
 const AUTHORED_MUSIC_BEATS_PER_BAR := 4
 const MUSIC_WAV_INFO_CACHE_MAX_ENTRIES := 128
+const TUTORIAL_HUD_ANCHOR_KEYS := ["heat", "debt", "clock", "chips", "objective", "inventory", "map"]
 
 static var _music_wav_info_cache: Dictionary = {}
 static var _music_wav_info_cache_order: Array[String] = []
@@ -41,6 +43,7 @@ var lenders: Array = []
 var services: Array = []
 var travel_routes: Array = []
 var music_tracks: Array = []
+var tutorial_lessons: Array = []
 var validation_errors: Array = []
 var validation_warnings: Array = []
 var _load_errors: Array = []
@@ -59,6 +62,7 @@ static func required_pack_paths() -> Dictionary:
 		"content_groups": CONTENT_GROUPS_PATH,
 		"events": EVENTS_PATH,
 		"dialogues": DIALOGUES_PATH,
+		"tutorial_lessons": TUTORIAL_LESSONS_PATH,
 	}
 
 
@@ -90,6 +94,7 @@ func load() -> Dictionary:
 	services = _load_array(SERVICES_PATH, false)
 	travel_routes = _load_array(TRAVEL_ROUTES_PATH, false)
 	music_tracks = _load_array(MUSIC_MANIFEST_PATH, false)
+	tutorial_lessons = _load_array(TUTORIAL_LESSONS_PATH, true)
 	var parse_complete_usec := Time.get_ticks_usec()
 	_rebuild_indexes()
 	var index_complete_usec := Time.get_ticks_usec()
@@ -115,6 +120,7 @@ func load() -> Dictionary:
 		"services": services,
 		"travel_routes": travel_routes,
 		"music_tracks": music_tracks,
+		"tutorial_lessons": tutorial_lessons,
 	}
 
 
@@ -234,6 +240,13 @@ func validate() -> Array:
 		"loop_frames",
 		"stems",
 	])
+	_validate_collection("tutorial_lessons", tutorial_lessons, [
+		"id",
+		"trigger",
+		"anchor",
+		"copy",
+		"completion",
+	])
 	_validate_game_definitions()
 	_validate_scratch_ticket_definitions()
 	_validate_item_definitions()
@@ -245,6 +258,7 @@ func validate() -> Array:
 	_validate_service_definitions()
 	_validate_travel_route_definitions()
 	_validate_music_manifest_definitions()
+	_validate_tutorial_lesson_definitions()
 	_validate_environment_references()
 	return validation_errors.duplicate(true)
 
@@ -256,6 +270,11 @@ func archetypes_for(tier: int) -> Array:
 		if int(archetype.get("tier", 1)) <= tier:
 			candidates.append(archetype)
 	return candidates
+
+
+# Finds an environment archetype definition by id.
+func environment_archetype(archetype_id: String) -> Dictionary:
+	return _lookup("environment_archetypes", environment_archetypes, archetype_id)
 
 
 # Finds a game definition by id.
@@ -395,6 +414,11 @@ func event(event_id: String) -> Dictionary:
 # Finds a dialogue definition by id.
 func dialogue(dialogue_id: String) -> Dictionary:
 	return _lookup("dialogues", dialogues, dialogue_id)
+
+
+# Finds one data-driven tutorial or coach-tip lesson by stable id.
+func tutorial_lesson(lesson_id: String) -> Dictionary:
+	return _lookup("tutorial_lessons", tutorial_lessons, lesson_id)
 
 
 # Finds a challenge definition by id.
@@ -631,6 +655,7 @@ static func _normalize_event_timing(value: Variant) -> Dictionary:
 # arrays directly; _lookup refreshes a stale or missing index on demand.
 func _rebuild_indexes() -> void:
 	_indexes = {
+		"environment_archetypes": _index_by_id(environment_archetypes),
 		"games": _index_by_id(games),
 		"items": _index_by_id(items),
 		"content_groups": _index_by_id(content_groups),
@@ -641,6 +666,7 @@ func _rebuild_indexes() -> void:
 		"services": _index_by_id(services),
 		"travel_routes": _index_by_id(travel_routes),
 		"music_tracks": _index_by_id(music_tracks),
+		"tutorial_lessons": _index_by_id(tutorial_lessons),
 	}
 
 
@@ -663,6 +689,7 @@ func debug_soak_snapshot() -> Dictionary:
 			"services": services.size(),
 			"travel_routes": travel_routes.size(),
 			"music_tracks": music_tracks.size(),
+			"tutorial_lessons": tutorial_lessons.size(),
 		},
 		"index_sizes": index_sizes,
 		"validation_errors": validation_errors.size(),
@@ -2030,6 +2057,130 @@ func _validate_environment_references() -> void:
 		var authored_track_id := str(music_profile.get("authored_track_id", "")).strip_edges()
 		if not authored_track_id.is_empty() and music_track(authored_track_id).is_empty():
 			validation_warnings.append("environment %s references unavailable authored_track_id %s; procedural music will be used." % [archetype_id, authored_track_id])
+
+
+func _validate_tutorial_lesson_definitions() -> void:
+	var lesson_ids := _ids_for(tutorial_lessons)
+	var archetype_ids := _ids_for(environment_archetypes)
+	var game_ids := _ids_for(games)
+	var dependency_graph: Dictionary = {}
+	for lesson_value in tutorial_lessons:
+		if typeof(lesson_value) != TYPE_DICTIONARY:
+			continue
+		var lesson: Dictionary = lesson_value
+		var lesson_id := str(lesson.get("id", "")).strip_edges()
+		if lesson_id.is_empty():
+			continue
+		var trigger: Dictionary = _as_dict(lesson.get("trigger", {}))
+		if trigger.is_empty():
+			validation_errors.append("tutorial_lessons %s trigger must be a non-empty dictionary." % lesson_id)
+		_validate_tutorial_trigger_reference(lesson_id, "environment_archetype", trigger.get("environment_archetype", ""), archetype_ids)
+		_validate_tutorial_trigger_reference(lesson_id, "game_id", trigger.get("game_id", ""), game_ids)
+		var dependencies := _string_array(trigger.get("depends_on", []))
+		dependency_graph[lesson_id] = dependencies
+		for dependency_id in dependencies:
+			if not lesson_ids.has(dependency_id):
+				validation_errors.append("tutorial_lessons %s depends on unknown lesson id: %s" % [lesson_id, dependency_id])
+		_validate_tutorial_state_predicates(lesson_id, trigger.get("state_predicates", []))
+		_validate_tutorial_anchor(lesson_id, lesson.get("anchor", {}))
+		_validate_tutorial_completion(lesson_id, lesson.get("completion", {}), lesson.get("anchor", {}))
+		_validate_tutorial_gating(lesson_id, lesson.get("gating", null))
+		var lesson_copy := str(lesson.get("copy", "")).strip_edges()
+		if lesson_copy.is_empty():
+			validation_errors.append("tutorial_lessons %s copy must not be empty." % lesson_id)
+		elif lesson_copy.length() > 120:
+			validation_errors.append("tutorial_lessons %s copy exceeds 120 characters." % lesson_id)
+	_validate_tutorial_dependency_cycles(dependency_graph)
+
+
+func _validate_tutorial_trigger_reference(lesson_id: String, field: String, value: Variant, valid_ids: Dictionary) -> void:
+	var reference_id := str(value).strip_edges()
+	if not reference_id.is_empty() and not valid_ids.has(reference_id):
+		validation_errors.append("tutorial_lessons %s trigger.%s references unknown id: %s" % [lesson_id, field, reference_id])
+
+
+func _validate_tutorial_state_predicates(lesson_id: String, value: Variant) -> void:
+	if typeof(value) != TYPE_ARRAY:
+		validation_errors.append("tutorial_lessons %s trigger.state_predicates must be an array." % lesson_id)
+		return
+	for index in range((value as Array).size()):
+		var predicate_value: Variant = (value as Array)[index]
+		if typeof(predicate_value) != TYPE_DICTIONARY:
+			validation_errors.append("tutorial_lessons %s state_predicates[%d] must be a dictionary." % [lesson_id, index])
+			continue
+		var predicate: Dictionary = predicate_value
+		if str(predicate.get("path", "")).strip_edges().is_empty():
+			validation_errors.append("tutorial_lessons %s state_predicates[%d] is missing path." % [lesson_id, index])
+		var operator := str(predicate.get("op", "equals")).strip_edges().to_lower()
+		if not ["equals", "not_equals", "gt", "gte", "lt", "lte", "truthy", "one_of"].has(operator):
+			validation_errors.append("tutorial_lessons %s state_predicates[%d] has unknown op: %s" % [lesson_id, index, operator])
+		if operator != "truthy" and not predicate.has("value"):
+			validation_errors.append("tutorial_lessons %s state_predicates[%d] is missing value." % [lesson_id, index])
+
+
+func _validate_tutorial_anchor(lesson_id: String, value: Variant) -> void:
+	if typeof(value) != TYPE_DICTIONARY:
+		validation_errors.append("tutorial_lessons %s anchor must be a dictionary." % lesson_id)
+		return
+	var anchor: Dictionary = value
+	var kind := str(anchor.get("kind", "")).strip_edges()
+	if not ["interactable_object", "hud_element", "surface_action", "none"].has(kind):
+		validation_errors.append("tutorial_lessons %s anchor has unknown kind: %s" % [lesson_id, kind])
+		return
+	if kind != "none" and str(anchor.get("id", "")).strip_edges().is_empty():
+		validation_errors.append("tutorial_lessons %s anchor %s is missing id." % [lesson_id, kind])
+	elif kind == "hud_element" and not TUTORIAL_HUD_ANCHOR_KEYS.has(str(anchor.get("id", "")).strip_edges()):
+		validation_errors.append("tutorial_lessons %s anchor references unknown HUD key: %s" % [lesson_id, str(anchor.get("id", ""))])
+
+
+func _validate_tutorial_completion(lesson_id: String, value: Variant, anchor_value: Variant) -> void:
+	if typeof(value) != TYPE_DICTIONARY:
+		validation_errors.append("tutorial_lessons %s completion must be a dictionary." % lesson_id)
+		return
+	var completion: Dictionary = value
+	var completion_type := str(completion.get("type", "")).strip_edges()
+	if not ["anchored_action", "any_action", "explicit_ok"].has(completion_type):
+		validation_errors.append("tutorial_lessons %s completion has unknown type: %s" % [lesson_id, completion_type])
+	elif completion_type == "anchored_action":
+		var anchor: Dictionary = _as_dict(anchor_value)
+		if str(anchor.get("kind", "none")) == "none":
+			validation_errors.append("tutorial_lessons %s anchored_action completion requires an anchor." % lesson_id)
+
+
+func _validate_tutorial_gating(lesson_id: String, value: Variant) -> void:
+	if value == null:
+		return
+	if typeof(value) != TYPE_DICTIONARY:
+		validation_errors.append("tutorial_lessons %s gating must be a dictionary when present." % lesson_id)
+		return
+	var gating: Dictionary = value
+	var allowed := gating.get("allowed_action_ids", [])
+	if typeof(allowed) != TYPE_ARRAY or _string_array(allowed).is_empty():
+		validation_errors.append("tutorial_lessons %s gating requires allowed_action_ids." % lesson_id)
+
+
+func _validate_tutorial_dependency_cycles(graph: Dictionary) -> void:
+	var visiting: Dictionary = {}
+	var visited: Dictionary = {}
+	for lesson_id_value in graph.keys():
+		var lesson_id := str(lesson_id_value)
+		if _tutorial_dependency_cycle_from(lesson_id, graph, visiting, visited):
+			validation_errors.append("tutorial_lessons dependency cycle includes: %s" % lesson_id)
+			return
+
+
+func _tutorial_dependency_cycle_from(lesson_id: String, graph: Dictionary, visiting: Dictionary, visited: Dictionary) -> bool:
+	if bool(visiting.get(lesson_id, false)):
+		return true
+	if bool(visited.get(lesson_id, false)):
+		return false
+	visiting[lesson_id] = true
+	for dependency_id in _string_array(graph.get(lesson_id, [])):
+		if graph.has(dependency_id) and _tutorial_dependency_cycle_from(dependency_id, graph, visiting, visited):
+			return true
+	visiting.erase(lesson_id)
+	visited[lesson_id] = true
+	return false
 
 
 func _validate_environment_open_hours(archetype_id: String, value: Variant) -> void:

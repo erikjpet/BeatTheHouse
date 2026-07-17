@@ -5,7 +5,7 @@ extends RefCounted
 
 const INVENTORY_PATH := "user://profile_inventory.json"
 const INVENTORY_PATH_ENV := "BTH_PROFILE_INVENTORY_PATH"
-const SCHEMA_VERSION := 4
+const SCHEMA_VERSION := 5
 const RUN_HISTORY_LIMIT := 20
 const REFERENCE_CHIP_ID := "profile_poker_chip"
 const REFERENCE_CHIP := {
@@ -23,6 +23,8 @@ var daily_runs: Dictionary = {}
 var lifetime_stats: Dictionary = {}
 var act_seam: Dictionary = {}
 var scratch_ticket_types_discovered: Array = []
+var tips_seen: Dictionary = {}
+var tutorial_completed := false
 var _unknown_fields: Dictionary = {}
 
 
@@ -68,13 +70,15 @@ func to_dict() -> Dictionary:
 		"lifetime_stats": lifetime_stats.duplicate(true),
 		"act_seam": act_seam.duplicate(true),
 		"scratch_ticket_types_discovered": scratch_ticket_types_discovered.duplicate(),
+		"tips_seen": tips_seen.duplicate(true),
+		"tutorial_completed": tutorial_completed,
 	}, true)
 	return data
 
 
 func from_dict(data: Dictionary) -> void:
 	_unknown_fields = data.duplicate(true)
-	for key in ["schema_version", "act", "items", "challenge_completions", "completed_challenge_flags", "run_history", "daily_runs", "lifetime_stats", "act_seam", "scratch_ticket_types_discovered"]:
+	for key in ["schema_version", "act", "items", "challenge_completions", "completed_challenge_flags", "run_history", "daily_runs", "lifetime_stats", "act_seam", "scratch_ticket_types_discovered", "tips_seen", "tutorial_completed"]:
 		_unknown_fields.erase(key)
 	items = []
 	challenge_completions = _normalize_challenge_completions(data.get("challenge_completions", data.get("completed_challenge_flags", {})))
@@ -83,6 +87,8 @@ func from_dict(data: Dictionary) -> void:
 	lifetime_stats = _normalize_lifetime_stats(data.get("lifetime_stats", {}))
 	act_seam = _normalize_act_seam(data.get("act_seam", {}))
 	scratch_ticket_types_discovered = _normalize_string_set(data.get("scratch_ticket_types_discovered", []))
+	tips_seen = _normalize_seen_map(data.get("tips_seen", {}))
+	tutorial_completed = bool(data.get("tutorial_completed", false))
 	var loaded: Variant = data.get("items", [])
 	if typeof(loaded) != TYPE_ARRAY:
 		return
@@ -116,6 +122,22 @@ func reference_chip() -> Dictionary:
 func add_reference_chip(quantity: int = 1) -> void:
 	var chip: Dictionary = reference_chip()
 	add_item(chip, quantity)
+
+
+func has_seen_tip(lesson_id: String) -> bool:
+	return bool(tips_seen.get(lesson_id.strip_edges(), false))
+
+
+func mark_tip_seen(lesson_id: String) -> bool:
+	var normalized := lesson_id.strip_edges()
+	if normalized.is_empty() or has_seen_tip(normalized):
+		return false
+	tips_seen[normalized] = true
+	return true
+
+
+func reset_tips() -> void:
+	tips_seen.clear()
 
 
 func add_item(item: Dictionary, quantity: int = 1) -> void:
@@ -396,6 +418,21 @@ static func _normalize_string_set(value: Variant) -> Array:
 		if not entry.is_empty() and not result.has(entry):
 			result.append(entry)
 	result.sort()
+	return result
+
+
+static func _normalize_seen_map(value: Variant) -> Dictionary:
+	var result: Dictionary = {}
+	if typeof(value) == TYPE_DICTIONARY:
+		for key_value in (value as Dictionary).keys():
+			var key := str(key_value).strip_edges()
+			if not key.is_empty() and bool((value as Dictionary).get(key_value, false)):
+				result[key] = true
+	elif typeof(value) == TYPE_ARRAY:
+		for key_value in value:
+			var key := str(key_value).strip_edges()
+			if not key.is_empty():
+				result[key] = true
 	return result
 
 
