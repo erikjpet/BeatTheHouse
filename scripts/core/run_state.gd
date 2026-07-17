@@ -185,7 +185,6 @@ const CREW_MAX_LOAN_LOCATIONS := 3
 const LENDER_REPAY_HEAT_REDUCTION := 3
 const SALS_PAWN_COUNTER_ID := "sals_pawn_counter"
 const PAWN_SHOP_ARCHETYPE_ID := "pawn_shop"
-const PAWN_SHOP_MAX_OFFERS := 4
 
 var seed_text: String = ""
 var seed_value: int = 1
@@ -6884,18 +6883,18 @@ func _apply_sals_forfeited_shelf_to_current_environment() -> void:
 			continue
 		base_offers.append(offer)
 	var displayed := base_offers.duplicate(true)
-	var remaining_slots := maxi(0, PAWN_SHOP_MAX_OFFERS - displayed.size())
 	for item_value in sals_forfeited_item_ids:
-		if remaining_slots <= 0:
-			break
 		var item_id := str(item_value).strip_edges()
-		if item_id.is_empty() or _offer_list_has_item(displayed, item_id):
+		if item_id.is_empty():
 			continue
 		var shelf_offer := _sals_forfeited_shelf_offer(item_id)
 		if shelf_offer.is_empty():
 			continue
-		displayed.append(shelf_offer)
-		remaining_slots -= 1
+		var existing_index := _offer_list_item_index(displayed, item_id)
+		if existing_index >= 0:
+			displayed[existing_index] = shelf_offer
+		else:
+			displayed.append(shelf_offer)
 	current_environment["item_offers"] = displayed
 	if current_environment.has("layout"):
 		current_environment["layout"] = EnvironmentInstance.ensure_generated_layout(current_environment)
@@ -6916,11 +6915,12 @@ func _sals_forfeited_shelf_offer(item_id: String) -> Dictionary:
 	}
 
 
-static func _offer_list_has_item(offers: Array, item_id: String) -> bool:
-	for offer_value in offers:
+static func _offer_list_item_index(offers: Array, item_id: String) -> int:
+	for index in range(offers.size()):
+		var offer_value: Variant = offers[index]
 		if typeof(offer_value) == TYPE_DICTIONARY and str((offer_value as Dictionary).get("id", "")) == item_id:
-			return true
-	return false
+			return index
+	return -1
 
 
 static func _inventory_item_id(entry: Variant) -> String:

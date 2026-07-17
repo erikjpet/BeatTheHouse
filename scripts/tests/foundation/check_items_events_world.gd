@@ -3874,6 +3874,16 @@ func _check_pawn_lender_lifecycle(library: ContentLibrary, failures: Array) -> v
 	var tickets := run_state.pawn_tickets_for_lender("sals_pawn_counter")
 	if tickets.size() != 3:
 		failures.append("Pawn ticket ledger did not expose all tickets.")
+	var ticket_save_service: SaveService = SaveServiceScript.new()
+	run_state.sals_forfeited_item_ids = ["payment_calendar"]
+	var ticket_save_error: Error = ticket_save_service.save_run(run_state, "foundation_check_pawn_ticket_ledger")
+	if ticket_save_error != OK:
+		failures.append("Save service could not save pawn tickets and forfeited shelf state: %s." % ticket_save_error)
+	else:
+		var ticket_loaded = ticket_save_service.load_run("foundation_check_pawn_ticket_ledger")
+		if ticket_loaded == null or ticket_loaded.pawn_tickets_for_lender("sals_pawn_counter").size() != 3 or not ticket_loaded.sals_forfeited_item_ids.has("payment_calendar"):
+			failures.append("Pawn tickets and forfeited shelf state did not round-trip together through SaveService.")
+	run_state.sals_forfeited_item_ids.clear()
 	var middle_debt: Dictionary = run_state.debt[1] as Dictionary
 	var middle_id := str(middle_debt.get("id", ""))
 	var middle_item := str(middle_debt.get("collateral_item_id", ""))
@@ -3892,21 +3902,21 @@ func _check_pawn_lender_lifecycle(library: ContentLibrary, failures: Array) -> v
 	default_state.advance_environment_turns(5)
 	if default_state.inventory.has("creased_luck_card") or not default_state.debt.is_empty() or not bool(default_state.narrative_flags.get("sals_pawn_defaulted", false)) or not default_state.sals_forfeited_item_ids.has("creased_luck_card"):
 		failures.append("Pawn default did not forfeit collateral, clear the loan, and record Sal's shelf.")
-	default_state.set_environment({
-		"id": "pawn_shop_forfeit_fixture",
-		"kind": "pawn_shop",
-		"archetype_id": "pawn_shop",
-		"display_name": "Sal's Pawn Shop",
-		"item_offers": [],
-		"layout": {},
-	})
+	var pawn_archetype := _archetype_by_id(library, "pawn_shop")
+	var generated_pawn_shop := EnvironmentInstance.from_archetype(pawn_archetype, 2, default_state.create_rng("pawn_forfeit_real_shop"), library).to_dict()
+	var base_offer_count := _copy_array(generated_pawn_shop.get("item_offers", [])).size()
+	var base_had_forfeited_item := not _item_offer_by_id(generated_pawn_shop.get("item_offers", []), "creased_luck_card").is_empty()
+	default_state.set_environment(generated_pawn_shop)
 	var shelf_offer := _item_offer_by_id(default_state.current_environment.get("item_offers", []), "creased_luck_card")
 	if shelf_offer.is_empty():
-		failures.append("Forfeited pawn item did not appear on Sal's shelf.")
+		failures.append("Forfeited pawn item did not appear alongside a real generated Sal inventory.")
 	else:
 		var item_definition := library.item("creased_luck_card")
-		if int(shelf_offer.get("price", 0)) != int(item_definition.get("price_max", 0)):
+		if not bool(shelf_offer.get("forfeited_pawn_shelf", false)) or int(shelf_offer.get("price", 0)) != int(item_definition.get("price_max", 0)):
 			failures.append("Forfeited pawn shelf item was not priced at retail price_max.")
+	var expected_offer_count := base_offer_count if base_had_forfeited_item else base_offer_count + 1
+	if _copy_array(default_state.current_environment.get("item_offers", [])).size() != expected_offer_count:
+		failures.append("Forfeited pawn shelf injection hid or discarded a real generated Sal offer.")
 	default_state.bankroll = 500
 	var buy_back := default_resolver.buy_item_offer("creased_luck_card")
 	if not bool(buy_back.get("ok", false)) or default_state.sals_forfeited_item_ids.has("creased_luck_card"):
