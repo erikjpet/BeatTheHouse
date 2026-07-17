@@ -45,8 +45,33 @@
 				{"id": "home", "label": "Home", "kind": "home"},
 				{"id": "pawn_shop", "label": "Sal's Pawn Counter", "kind": "pawn_shop"}
 			],
-			"design_note": "Meta housing is bought once with gold and has no rent. Future rent or upkeep belongs in a separate owner-approved economy pass."
+			"design_note": "Meta housing is bought once with gold and has no rent. Future rent or upkeep belongs in a separate owner-approved economy pass.",
+			"prestige": {
+				"recognition_heat_delta": -10,
+				"clean_heat_ceiling_delta": -5,
+				"drop_tier_bonus_steps": 1
+			}
 		},
+		"special_items": [
+			{
+				"itemdef_id": 9500,
+				"id": "grand_casino_players_card",
+				"display_name": "Grand Casino Players Card",
+				"item_class": "players_card",
+				"collection_id": "grand_casino_rewards",
+				"tier": "gold",
+				"icon_key": "basic_strategy_card",
+				"flavor": "Linda's Gold card, stamped with the run that earned it.",
+				"base_effect": {},
+				"durability_policy": {
+					"condition": 0.08,
+					"band_id": "critical",
+					"normal_decay": false,
+					"repairable": false,
+					"destroy_on_carried_failure": true
+				}
+			}
+		],
 		"collections": [
 			{
 				"id": "roadside_luck",

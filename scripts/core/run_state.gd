@@ -1461,6 +1461,19 @@ func meta_collection_enabled_for_run() -> bool:
 	return bool(challenge_modifiers().get("meta_collection_enabled", false))
 
 
+func grand_casino_prestige_status() -> Dictionary:
+	var modifiers := challenge_modifiers()
+	var active := bool(modifiers.get("grand_casino_prestige", false))
+	return {
+		"active": active,
+		"card_instance_ids": _copy_array(modifiers.get("grand_casino_prestige_card_instance_ids", [])) if active else [],
+		"recognition_heat_delta": mini(0, int(modifiers.get("grand_casino_prestige_recognition_heat_delta", 0))) if active else 0,
+		"clean_heat_ceiling_delta": mini(0, int(modifiers.get("grand_casino_prestige_clean_heat_ceiling_delta", 0))) if active else 0,
+		"drop_tier_bonus_steps": maxi(0, int(modifiers.get("meta_collection_drop_tier_bonus_steps", 0))) if active else 0,
+		"recognition_applied": bool(narrative_flags.get("grand_casino_prestige_recognition_applied", false)),
+	}
+
+
 func challenge_cheat_actions_disabled() -> bool:
 	return bool(challenge_modifiers().get("disable_cheat_actions", false))
 
@@ -1490,6 +1503,9 @@ func _apply_starting_challenge_modifiers() -> void:
 	var modifiers := challenge_modifiers()
 	if modifiers.is_empty():
 		return
+	if bool(modifiers.get("grand_casino_prestige", false)):
+		narrative_flags["grand_casino_prestige_run"] = true
+		narrative_flags["grand_casino_prestige_card_instance_ids"] = _copy_array(modifiers.get("grand_casino_prestige_card_instance_ids", []))
 	if modifiers.has("starting_bankroll"):
 		bankroll = maxi(1, int(modifiers.get("starting_bankroll", DEFAULT_BANKROLL)))
 	if modifiers.has("starting_bankroll_delta"):
@@ -2306,6 +2322,7 @@ func _grand_casino_demo_objective_status(source: Dictionary, objective: Dictiona
 		"players_card_drink_comps": maxi(0, int(narrative_flags.get("grand_casino_comp_drink_tokens", 0))),
 		"players_card_suite_rests": maxi(0, int(narrative_flags.get("grand_casino_comp_suite_rests", 0))),
 		"players_card_look_away_available": bool(narrative_flags.get("grand_casino_linda_look_away_available", false)),
+		"prestige": grand_casino_prestige_status(),
 		"cheat_evidence": cheat_evidence,
 		"watched_cheat_evidence": watched_cheat_evidence,
 		"showdown_heat_threshold": showdown_threshold,
@@ -4012,6 +4029,7 @@ func _initialize_grand_casino_objective_runtime() -> void:
 	var previous_environment_id := str(narrative_flags.get("grand_casino_entry_environment_id", ""))
 	if previous_environment_id != environment_id:
 		narrative_flags["grand_casino_entry_environment_id"] = environment_id
+		_apply_grand_casino_prestige_recognition()
 		narrative_flags["grand_casino_entry_bankroll"] = grand_casino_total_money()
 		narrative_flags["grand_casino_games_played"] = 0
 		narrative_flags["grand_casino_max_heat"] = suspicion_level()
@@ -4064,6 +4082,27 @@ func _initialize_grand_casino_objective_runtime() -> void:
 			_advance_grand_casino_players_card_tier(GRAND_CASINO_PLAYERS_CARD_TIER_NONE, legacy_tier, false)
 		else:
 			narrative_flags["grand_casino_players_card_ineligible"] = true
+
+
+func _apply_grand_casino_prestige_recognition() -> void:
+	var prestige := grand_casino_prestige_status()
+	if not bool(prestige.get("active", false)) or bool(prestige.get("recognition_applied", false)):
+		return
+	var requested_delta := mini(0, int(prestige.get("recognition_heat_delta", 0)))
+	var applied_delta := 0
+	if requested_delta < 0:
+		applied_delta = add_suspicion("grand_casino_prestige_recognition", requested_delta, "recognition", true, {
+			"action_kind": "prestige_recognition",
+			"environment_id": str(current_environment.get("id", "")),
+			"environment_archetype_id": str(current_environment.get("archetype_id", "")),
+		})
+	narrative_flags["grand_casino_prestige_recognition_applied"] = true
+	narrative_flags["grand_casino_prestige_recognition_heat_delta"] = applied_delta
+	log_story({
+		"type": "grand_casino_prestige_recognition",
+		"suspicion_delta": applied_delta,
+		"message": "Linda recognizes the carried Players Card; the floor starts this visit with less attention.",
+	})
 
 
 func sync_grand_casino_entry_bankroll_after_travel_result(result: Dictionary) -> void:
@@ -4122,8 +4161,9 @@ func _grand_casino_objective_config(objective: Dictionary) -> Dictionary:
 	var target_bankroll := maxi(0, int(objective.get("target_bankroll", objective.get("high_roller_target_bankroll", 0))))
 	var high_roller_target := maxi(0, int(objective.get("high_roller_target_bankroll", target_bankroll)))
 	var modifiers := challenge_modifiers()
+	var prestige_heat_delta := mini(0, int(modifiers.get("grand_casino_prestige_clean_heat_ceiling_delta", 0))) if bool(modifiers.get("grand_casino_prestige", false)) else 0
 	var high_roller_net := maxi(0, int(objective.get("high_roller_net_winnings", 0)) + int(modifiers.get("grand_casino_high_roller_net_delta", 0)))
-	var high_roller_max_heat := clampi(int(objective.get("high_roller_max_heat", 100)) + int(modifiers.get("grand_casino_high_roller_max_heat_delta", 0)), 0, 100)
+	var high_roller_max_heat := clampi(int(objective.get("high_roller_max_heat", 100)) + int(modifiers.get("grand_casino_high_roller_max_heat_delta", 0)) + prestige_heat_delta, 0, 100)
 	var config := {
 		"target_bankroll": target_bankroll,
 		"high_roller_target_bankroll": high_roller_target,
@@ -4158,6 +4198,8 @@ func _grand_casino_objective_config(objective: Dictionary) -> Dictionary:
 	}
 	for key in card_defaults:
 		config[key] = maxi(0, int(objective.get(key, card_defaults[key])))
+	for heat_key in ["players_card_bronze_max_heat", "players_card_silver_max_heat", "players_card_gold_max_heat"]:
+		config[heat_key] = clampi(int(objective.get(heat_key, card_defaults[heat_key])) + prestige_heat_delta, 0, 100)
 	config["players_card_gold_min_games"] = maxi(int(config.get("players_card_gold_min_games", 0)), int(config.get("high_roller_min_grand_casino_games", 0)))
 	config["players_card_gold_net_winnings"] = maxi(int(config.get("players_card_gold_net_winnings", 0)), high_roller_net)
 	config["players_card_gold_max_heat"] = clampi(int(config.get("players_card_gold_max_heat", high_roller_max_heat)), 0, 100)

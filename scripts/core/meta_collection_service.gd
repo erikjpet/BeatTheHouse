@@ -19,6 +19,10 @@ const SALE_KIND_BAG := "bag"
 const FAILURE_DECAY_FLAG := "_meta_collection_failure_decay_applied"
 const FIXTURE_POLLUTION_MIGRATION_FLAG := "_fixture_pollution_quarantined_v1"
 const FAILURE_DURABILITY_LOSS := 0.10
+const PLAYERS_CARD_ITEMDEF_ID := 9500
+const PRESTIGE_RECOGNITION_HEAT_DELTA := -10
+const PRESTIGE_CLEAN_HEAT_CEILING_DELTA := -5
+const PRESTIGE_DROP_TIER_BONUS_STEPS := 1
 
 const FIXTURE_PROVENANCE_TOKENS := [
 	"ui-",
@@ -88,7 +92,8 @@ func save() -> Error:
 
 func grant_instance(instance: Dictionary) -> Dictionary:
 	_store = _normalize_store(_store)
-	var normalized := CollectionItemResolverScript.normalize_instance(instance)
+	var resolver: Variant = CollectionItemResolverScript.new()
+	var normalized: Dictionary = resolver.normalize_instance_for_definition(instance)
 	var instance_id := _take_next_instance_id()
 	normalized["schema_version"] = SCHEMA_VERSION
 	normalized["instance_id"] = instance_id
@@ -96,6 +101,20 @@ func grant_instance(instance: Dictionary) -> Dictionary:
 	instances.append(normalized)
 	_store["owned_instances"] = instances
 	return normalized.duplicate(true)
+
+
+func mint_players_card(instance_data: Dictionary) -> Dictionary:
+	var instance := {
+		"itemdef_id": PLAYERS_CARD_ITEMDEF_ID,
+		"potency": 1.0,
+		"condition": 0.08,
+		"resonance": 1.0,
+		"usage": 1.0,
+		"source": "grand_casino_players_card",
+		"source_id": str(instance_data.get("route", "high_roller_cashout")),
+		"instance_data": instance_data.duplicate(true),
+	}
+	return grant_instance(instance)
 
 
 func grant_bag(bagdef_id: int, rng_seed: String = "", metadata: Dictionary = {}) -> Dictionary:
@@ -306,20 +325,43 @@ func normal_run_start_modifiers() -> Dictionary:
 	var carried_ids := carried_instance_ids()
 	var resolver: Variant = CollectionItemResolverScript.new()
 	var run_items: Array = []
+	var prestige_card_ids: Array = []
 	for instance_value in owned_instances():
 		var instance := _copy_dict(instance_value)
 		if not carried_ids.has(int(instance.get("instance_id", 0))):
 			continue
+		if resolver.is_players_card_instance(instance):
+			prestige_card_ids.append(int(instance.get("instance_id", 0)))
 		var run_item: Dictionary = resolver.resolve_run_item(instance)
 		if not run_item.is_empty():
 			run_items.append(run_item)
-	return {
+	var result := {
 		"home_archetype_id": str(housing_definition().get("archetype_id", HOUSING_BACK_ALLEY)),
 		"meta_collection_enabled": true,
 		"meta_collection_carried_instance_ids": carried_ids,
 		"meta_collection_loadout": run_items,
 		"meta_collection_containers": carried_container_rows(),
 	}
+	if not prestige_card_ids.is_empty():
+		var prestige := resolver.prestige_config()
+		result["grand_casino_prestige"] = true
+		result["grand_casino_prestige_card_instance_ids"] = prestige_card_ids
+		result["grand_casino_prestige_recognition_heat_delta"] = mini(0, int(prestige.get("recognition_heat_delta", PRESTIGE_RECOGNITION_HEAT_DELTA)))
+		result["grand_casino_prestige_clean_heat_ceiling_delta"] = mini(0, int(prestige.get("clean_heat_ceiling_delta", PRESTIGE_CLEAN_HEAT_CEILING_DELTA)))
+		result["meta_collection_drop_tier_bonus_steps"] = maxi(0, int(prestige.get("drop_tier_bonus_steps", PRESTIGE_DROP_TIER_BONUS_STEPS)))
+	return result
+
+
+func players_card_carried_instance_ids() -> Array:
+	var resolver: Variant = CollectionItemResolverScript.new()
+	var carried_ids := carried_instance_ids()
+	var result: Array = []
+	for instance_value in owned_instances():
+		var instance := _copy_dict(instance_value)
+		var instance_id := int(instance.get("instance_id", 0))
+		if carried_ids.has(instance_id) and resolver.is_players_card_instance(instance):
+			result.append(instance_id)
+	return result
 
 
 # Builds the one authoritative packed-container manifest used by both the
@@ -380,11 +422,19 @@ func apply_failure_decay(carried_ids: Array, rng_seed: String) -> Array:
 	var next_instances: Array = []
 	var decayed: Array = []
 	var deleted_ids: Array = []
+	var resolver: Variant = CollectionItemResolverScript.new()
 	for instance_value in _copy_array(_store.get("owned_instances", [])):
 		var instance := _copy_dict(instance_value)
 		var instance_id := int(instance.get("instance_id", 0))
 		if wanted_ids.has(instance_id):
-			var after: Dictionary = CollectionItemResolverScript.normalize_instance(instance)
+			var after: Dictionary = resolver.normalize_instance_for_definition(instance)
+			if resolver.is_players_card_instance(after):
+				after["deleted"] = true
+				after["destroyed_forever"] = true
+				after["failure_rng_seed"] = "%s|%d" % [rng_seed, instance_id]
+				deleted_ids.append(instance_id)
+				decayed.append(after.duplicate(true))
+				continue
 			var before_condition := clampf(float(after.get("condition", 0.0)), 0.0, 1.0)
 			after["condition"] = 0.0 if before_condition <= FAILURE_DURABILITY_LOSS else clampf(before_condition - FAILURE_DURABILITY_LOSS, 0.0, 1.0)
 			after["failure_durability_loss"] = FAILURE_DURABILITY_LOSS
@@ -713,8 +763,9 @@ func _normalized_containers(value: Variant) -> Array:
 
 func _normalized_instances(value: Variant) -> Array:
 	var normalized: Array = []
+	var resolver: Variant = CollectionItemResolverScript.new()
 	for instance_value in _copy_array(value):
-		var instance := CollectionItemResolverScript.normalize_instance(_copy_dict(instance_value))
+		var instance: Dictionary = resolver.normalize_instance_for_definition(_copy_dict(instance_value))
 		if int(instance.get("itemdef_id", -1)) < 0:
 			continue
 		normalized.append(instance)

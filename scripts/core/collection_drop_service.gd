@@ -5,14 +5,98 @@ extends RefCounted
 # terminal run outcomes into meta collection grants.
 
 const CollectionItemResolverScript := preload("res://scripts/core/collection_item_resolver.gd")
+const MetaCollectionServiceScript := preload("res://scripts/core/meta_collection_service.gd")
 const RngStreamScript := preload("res://scripts/core/rng_stream.gd")
 
 const EVALUATED_FLAG := "_meta_bag_drops_evaluated"
 const FLUSHED_FLAG := "_meta_bag_grants_flushed"
 const GRANTS_FLAG := "_meta_bag_grants"
 const SELECTED_FLAG := "_meta_bag_selected"
+const SPECIAL_OUTCOME_PROCESSED_FLAG := "_meta_special_outcome_processed"
+const PLAYERS_CARD_REWARD_FLAG := "_meta_players_card_reward"
+const PLAYERS_CARD_DESTROYED_FLAG := "_meta_players_card_destroyed"
+const PRESTIGE_RESULT_FLAG := "_meta_prestige_result"
 const HIGH_HEAT_CLEAN_ESCAPE_THRESHOLD := 65
 const HIGH_HEAT_CLEAN_ESCAPE_CHANCE_PERCENT := 35
+
+
+func apply_terminal_special_outcome(run_state: RunState, meta_collection_service: Variant) -> Dictionary:
+	if run_state == null or meta_collection_service == null or not run_state.is_terminal():
+		return {"ok": false, "mutated": false}
+	if not run_state.meta_collection_enabled_for_run():
+		return {"ok": true, "mutated": false}
+	if bool(run_state.narrative_flags.get(SPECIAL_OUTCOME_PROCESSED_FLAG, false)):
+		return {
+			"ok": true,
+			"mutated": false,
+			"card_reward": _copy_dict(run_state.narrative_flags.get(PLAYERS_CARD_REWARD_FLAG, {})),
+			"destroyed_cards": _copy_array(run_state.narrative_flags.get(PLAYERS_CARD_DESTROYED_FLAG, [])),
+		}
+	var result := {"ok": true, "mutated": false, "card_reward": {}, "destroyed_cards": []}
+	var modifiers := run_state.challenge_modifiers()
+	var prestige := bool(modifiers.get("grand_casino_prestige", false))
+	if run_state.run_status == RunState.RUN_STATUS_FAILED:
+		if bool(run_state.narrative_flags.get(MetaCollectionServiceScript.FAILURE_DECAY_FLAG, false)):
+			run_state.narrative_flags[SPECIAL_OUTCOME_PROCESSED_FLAG] = true
+			return result
+		var carried_ids := _copy_array(modifiers.get("meta_collection_carried_instance_ids", []))
+		var consequences: Array = meta_collection_service.apply_failure_decay(carried_ids, "%s|failure" % run_state.seed_text)
+		var destroyed_cards: Array = []
+		for consequence_value in consequences:
+			var consequence := _copy_dict(consequence_value)
+			if str(consequence.get("item_class", "")) != CollectionItemResolverScript.ITEM_CLASS_PLAYERS_CARD or not bool(consequence.get("destroyed_forever", false)):
+				continue
+			var stamp := _copy_dict(consequence.get("instance_data", {}))
+			destroyed_cards.append({
+				"instance_id": int(consequence.get("instance_id", 0)),
+				"display_name": "Grand Casino Players Card",
+				"earned_route": str(stamp.get("route", "")),
+			})
+		if not destroyed_cards.is_empty():
+			run_state.narrative_flags[PLAYERS_CARD_DESTROYED_FLAG] = destroyed_cards
+			run_state.log_story({
+				"type": "meta_players_card_destroyed",
+				"count": destroyed_cards.size(),
+				"message": "The Grand Casino Players Card carried into this run is gone forever.",
+			})
+		result["destroyed_cards"] = destroyed_cards
+		result["mutated"] = not consequences.is_empty()
+		run_state.narrative_flags[MetaCollectionServiceScript.FAILURE_DECAY_FLAG] = true
+		run_state.clear_pending_bag_markers()
+	elif run_state.run_status == RunState.RUN_STATUS_ENDED:
+		if str(run_state.narrative_flags.get("demo_victory_route", "")) == RunState.GRAND_CASINO_HIGH_ROLLER_EVENT_ID:
+			var stamp := _players_card_stamp(run_state)
+			var card: Dictionary = meta_collection_service.mint_players_card(stamp)
+			if not card.is_empty():
+				var reward := {
+					"instance_id": int(card.get("instance_id", 0)),
+					"itemdef_id": int(card.get("itemdef_id", -1)),
+					"item_class": str(card.get("item_class", "")),
+					"display_name": "Grand Casino Players Card",
+					"condition": float(card.get("condition", 0.0)),
+					"instance_data": stamp,
+				}
+				run_state.narrative_flags[PLAYERS_CARD_REWARD_FLAG] = reward
+				run_state.log_story({
+					"type": "meta_players_card_minted",
+					"instance_id": int(card.get("instance_id", 0)),
+					"route": RunState.GRAND_CASINO_HIGH_ROLLER_EVENT_ID,
+					"message": "Linda's Gold Players Card was added to the collection.",
+				})
+				result["card_reward"] = reward
+				result["mutated"] = true
+		if prestige:
+			var card_ids := _copy_array(modifiers.get("grand_casino_prestige_card_instance_ids", []))
+			var prestige_result := {
+				"active": true,
+				"status": "retained",
+				"card_count": card_ids.size(),
+				"drop_tier_bonus_steps": maxi(0, int(modifiers.get("meta_collection_drop_tier_bonus_steps", 0))),
+			}
+			run_state.narrative_flags[PRESTIGE_RESULT_FLAG] = prestige_result
+	result["prestige"] = prestige
+	run_state.narrative_flags[SPECIAL_OUTCOME_PROCESSED_FLAG] = true
+	return result
 
 
 func ensure_run_end_pending_bags(run_state: RunState, profile_inventory: Variant = null) -> Array:
@@ -157,6 +241,7 @@ func _roll_bag_marker(run_state: RunState, source: String, source_id: String, rn
 	var collection_index := rng.randi_range(0, collections.size() - 1)
 	var collection := _copy_dict(collections[collection_index])
 	var tier := _roll_tier(collection, rng)
+	tier = _promote_tier(tier, maxi(0, int(run_state.challenge_modifiers().get("meta_collection_drop_tier_bonus_steps", 0))))
 	var collection_id := str(collection.get("id", ""))
 	var bag_defs: Array = resolver.bag_item_definitions(collection_id, tier)
 	if bag_defs.is_empty():
@@ -203,6 +288,36 @@ func _roll_tier(collection: Dictionary, rng: RngStream) -> String:
 		if roll <= running:
 			return str(entry.get("tier", "blue"))
 	return "blue"
+
+
+func _promote_tier(tier: String, bonus_steps: int) -> String:
+	var index := CollectionItemResolverScript.TIERS.find(tier)
+	if index < 0:
+		index = 0
+	return str(CollectionItemResolverScript.TIERS[mini(CollectionItemResolverScript.TIERS.size() - 1, index + maxi(0, bonus_steps))])
+
+
+func _players_card_stamp(run_state: RunState) -> Dictionary:
+	var timeline: Array = []
+	for entry_value in run_state.story_log:
+		var entry := _copy_dict(entry_value)
+		if str(entry.get("type", "")) != "grand_casino_players_card_tier":
+			continue
+		timeline.append({
+			"tier": str(entry.get("tier", "")),
+			"games_played": maxi(0, int(entry.get("games_played", 0))),
+			"net_winnings": int(entry.get("net_winnings", 0)),
+		})
+	var seed_hidden := run_state.seed_is_hidden()
+	return {
+		"seed": "Hidden challenge" if seed_hidden else run_state.seed_text,
+		"seed_hidden": seed_hidden,
+		"final_score": int(run_state.terminal_score_summary().get("score", 0)),
+		"days_survived": run_state.game_day(),
+		"tier_reached": str(run_state.narrative_flags.get("grand_casino_players_card_highest_tier", run_state.narrative_flags.get("grand_casino_players_card_tier", RunState.GRAND_CASINO_PLAYERS_CARD_TIER_GOLD))),
+		"tier_timeline": timeline,
+		"route": RunState.GRAND_CASINO_HIGH_ROLLER_EVENT_ID,
+	}
 
 
 func _run_drop_rng(run_state: RunState) -> RngStream:

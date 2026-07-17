@@ -7,6 +7,8 @@ const HASH_MODULUS := 4294967296
 const INSTANCE_ID_BASE := 1000000
 const INSTANCE_ID_SPAN := 900000000
 const FLOAT_KEYS := ["potency", "condition", "resonance", "usage"]
+const ITEM_CLASS_COLLECTION := "collection"
+const ITEM_CLASS_PLAYERS_CARD := "players_card"
 const TIERS := ["blue", "purple", "pink", "red", "gold"]
 const TIER_COUNTS := {
 	"blue": 4,
@@ -40,6 +42,7 @@ const KNOWN_EFFECT_KEYS := [
 var _loaded := false
 var _root: Dictionary = {}
 var _collections: Array = []
+var _special_items: Array = []
 var _items_by_itemdef_id: Dictionary = {}
 var _bags_by_itemdef_id: Dictionary = {}
 var _validation_errors: Array[String] = []
@@ -49,6 +52,7 @@ func load_definitions() -> void:
 	_loaded = true
 	_root = {}
 	_collections = []
+	_special_items = []
 	_items_by_itemdef_id = {}
 	_bags_by_itemdef_id = {}
 	_validation_errors = []
@@ -90,6 +94,11 @@ func item_definitions() -> Array:
 	for itemdef_id in _items_by_itemdef_id.keys():
 		items.append(_copy_dict(_items_by_itemdef_id[itemdef_id]))
 	return items
+
+
+func special_item_definitions() -> Array:
+	_ensure_loaded()
+	return _special_items.duplicate(true)
 
 
 func item_definition(itemdef_id: int) -> Dictionary:
@@ -150,6 +159,10 @@ func meta_home_config() -> Dictionary:
 	return _copy_dict(_root.get("meta_home", {}))
 
 
+func prestige_config() -> Dictionary:
+	return _copy_dict(meta_home_config().get("prestige", {}))
+
+
 func bag_item_options_for_bag(bagdef_id: int) -> Array:
 	var bag := bag_definition(bagdef_id)
 	if bag.is_empty():
@@ -177,10 +190,12 @@ func roll_instance(itemdef_id: int, rng_seed: String) -> Dictionary:
 
 func apply_usage_decay(instance: Dictionary, rng_seed: String) -> Dictionary:
 	_ensure_loaded()
-	var next := normalize_instance(instance)
+	var next := normalize_instance_for_definition(instance)
 	var itemdef_id := int(next.get("itemdef_id", -1))
 	var definition := item_definition(itemdef_id)
 	if definition.is_empty():
+		return next
+	if str(definition.get("item_class", ITEM_CLASS_COLLECTION)) == ITEM_CLASS_PLAYERS_CARD:
 		return next
 	var usage_binding := _copy_dict(_copy_dict(definition.get("float_bindings", {})).get("usage", {}))
 	var decay_min := maxf(0.0, float(usage_binding.get("decay_min", 0.02)))
@@ -193,7 +208,7 @@ func apply_usage_decay(instance: Dictionary, rng_seed: String) -> Dictionary:
 
 func resolve_run_item(instance: Dictionary) -> Dictionary:
 	_ensure_loaded()
-	var normalized := normalize_instance(instance)
+	var normalized := normalize_instance_for_definition(instance)
 	var itemdef_id := int(normalized.get("itemdef_id", -1))
 	var definition := item_definition(itemdef_id)
 	if definition.is_empty():
@@ -221,17 +236,26 @@ func resolve_run_item(instance: Dictionary) -> Dictionary:
 		"effect": effect,
 		"meta_collection": {
 			"schema_version": SCHEMA_VERSION,
+			"item_class": str(definition.get("item_class", ITEM_CLASS_COLLECTION)),
 			"collection_id": str(definition.get("collection_id", "")),
 			"itemdef_id": itemdef_id,
 			"instance_id": instance_id,
 			"tier": str(definition.get("tier", "")),
 			"condition_band": str(band.get("id", "")),
+			"instance_data": _copy_dict(normalized.get("instance_data", {})),
 		},
 		"meta_value_multiplier": value_multiplier(definition, normalized),
 	}
 
 
 func condition_band(definition: Dictionary, instance: Dictionary) -> Dictionary:
+	if str(definition.get("item_class", ITEM_CLASS_COLLECTION)) == ITEM_CLASS_PLAYERS_CARD:
+		return {
+			"id": "critical",
+			"display_name": "Critical",
+			"max": _players_card_condition(definition),
+			"value_multiplier": 1.0,
+		}
 	var condition := clampf(float(instance.get("condition", 0.0)), 0.0, 1.0)
 	var condition_binding := _copy_dict(_copy_dict(definition.get("float_bindings", {})).get("condition", {}))
 	var bands := _copy_array(condition_binding.get("bands", []))
@@ -248,6 +272,8 @@ func condition_band(definition: Dictionary, instance: Dictionary) -> Dictionary:
 
 
 func value_multiplier(definition: Dictionary, instance: Dictionary) -> float:
+	if str(definition.get("item_class", ITEM_CLASS_COLLECTION)) == ITEM_CLASS_PLAYERS_CARD:
+		return 1.0
 	var condition_binding := _copy_dict(_copy_dict(definition.get("float_bindings", {})).get("condition", {}))
 	var spent_value_multiplier := maxf(0.0, float(condition_binding.get("spent_value_multiplier", 0.08)))
 	var usage := clampf(float(instance.get("usage", 0.0)), 0.0, 1.0)
@@ -266,6 +292,26 @@ static func normalize_instance(instance: Dictionary) -> Dictionary:
 	for float_key in FLOAT_KEYS:
 		normalized[float_key] = clampf(float(normalized.get(float_key, 0.0)), 0.0, 1.0)
 	return normalized
+
+
+func normalize_instance_for_definition(instance: Dictionary) -> Dictionary:
+	var normalized := normalize_instance(instance)
+	var definition := item_definition(int(normalized.get("itemdef_id", -1)))
+	if definition.is_empty():
+		return normalized
+	var item_class := str(definition.get("item_class", ITEM_CLASS_COLLECTION)).strip_edges().to_lower()
+	normalized["item_class"] = item_class
+	if item_class == ITEM_CLASS_PLAYERS_CARD:
+		normalized["condition"] = _players_card_condition(definition)
+		normalized["usage"] = 1.0
+		normalized["durability_pinned"] = true
+		normalized["instance_data"] = _copy_dict(normalized.get("instance_data", {}))
+	return normalized
+
+
+func is_players_card_instance(instance: Dictionary) -> bool:
+	var definition := item_definition(int(instance.get("itemdef_id", -1)))
+	return str(definition.get("item_class", "")) == ITEM_CLASS_PLAYERS_CARD
 
 
 func _ensure_loaded() -> void:
@@ -289,6 +335,37 @@ func _index_definitions() -> void:
 			_validation_errors.append("Collection is missing id.")
 			continue
 		_index_collection(collection, collection_id, used_itemdef_ids)
+	_index_special_items(_copy_array(_root.get("special_items", [])), used_itemdef_ids)
+
+
+func _index_special_items(items: Array, used_itemdef_ids: Dictionary) -> void:
+	for item_value in items:
+		var item := _copy_dict(item_value)
+		var item_id := str(item.get("id", "")).strip_edges()
+		var itemdef_id := int(item.get("itemdef_id", -1))
+		var item_class := str(item.get("item_class", "")).strip_edges().to_lower()
+		if item_id.is_empty():
+			_validation_errors.append("Special collection item is missing id.")
+			continue
+		if itemdef_id <= 0:
+			_validation_errors.append("Special item %s is missing a positive itemdef_id." % item_id)
+			continue
+		if used_itemdef_ids.has(itemdef_id):
+			_validation_errors.append("Duplicate itemdef_id %d." % itemdef_id)
+			continue
+		if item_class != ITEM_CLASS_PLAYERS_CARD:
+			_validation_errors.append("Special item %s has unknown item_class '%s'." % [item_id, item_class])
+			continue
+		var durability := _copy_dict(item.get("durability_policy", {}))
+		var condition := float(durability.get("condition", -1.0))
+		if condition <= 0.0 or condition > 0.10:
+			_validation_errors.append("Players Card %s must pin condition inside the critical band (0, 0.10]." % item_id)
+		if bool(durability.get("normal_decay", true)) or bool(durability.get("repairable", true)) or not bool(durability.get("destroy_on_carried_failure", false)):
+			_validation_errors.append("Players Card %s has an invalid fragility policy." % item_id)
+		used_itemdef_ids[itemdef_id] = true
+		item["item_class"] = item_class
+		_special_items.append(item)
+		_items_by_itemdef_id[itemdef_id] = item
 
 
 func _index_collection(collection: Dictionary, collection_id: String, used_itemdef_ids: Dictionary) -> void:
@@ -382,6 +459,11 @@ func _scaled_effect(definition: Dictionary, instance: Dictionary) -> Dictionary:
 	if not resonance_key.is_empty() and clampf(float(instance.get("resonance", 0.0)), 0.0, 1.0) >= clampf(float(resonance.get("threshold", 1.0)), 0.0, 1.0):
 		effect[resonance_key] = int(effect.get(resonance_key, 0)) + int(resonance.get("value", 0))
 	return effect
+
+
+func _players_card_condition(definition: Dictionary) -> float:
+	var policy := _copy_dict(definition.get("durability_policy", {}))
+	return clampf(float(policy.get("condition", 0.08)), 0.001, 0.10)
 
 
 static func _unit_float(seed: String, channel: String) -> float:

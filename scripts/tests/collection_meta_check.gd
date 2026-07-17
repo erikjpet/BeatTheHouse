@@ -4,6 +4,7 @@ const CollectionItemResolverScript := preload("res://scripts/core/collection_ite
 const MetaCollectionServiceScript := preload("res://scripts/core/meta_collection_service.gd")
 const CollectionDropServiceScript := preload("res://scripts/core/collection_drop_service.gd")
 const MetaCollectionViewModelScript := preload("res://scripts/ui/meta_collection_view_model.gd")
+const RunReportViewModelScript := preload("res://scripts/ui/run_report_view_model.gd")
 const RunStateScript := preload("res://scripts/core/run_state.gd")
 
 const TEST_STORE_PATH := "user://collection_meta_check_store.json"
@@ -26,6 +27,7 @@ func _init() -> void:
 func _run() -> void:
 	var resolver: Variant = CollectionItemResolverScript.new()
 	_test_collection_schema(resolver)
+	_test_players_card_schema_and_fragility(resolver)
 	_test_float_determinism(resolver)
 	_test_usage_decay(resolver)
 	_test_resolve_run_item(resolver)
@@ -33,6 +35,8 @@ func _run() -> void:
 	_test_meta_home_rules(resolver)
 	_test_pawn_sale_and_trade_up(resolver)
 	_test_failure_decay_and_run_modifiers(resolver)
+	_test_players_card_mint_and_profile_lifecycle()
+	_test_prestige_run_modifiers_and_drop_depth()
 	_test_terminal_drop_determinism()
 	_test_victory_selection_grants_one_bag()
 	_test_failed_run_discards_pending_bags()
@@ -81,6 +85,25 @@ func _test_collection_schema(resolver: Variant) -> void:
 		for tier in TIERS:
 			_check(int(tier_counts.get(tier, 0)) == int(EXPECTED_TIER_COUNTS.get(tier, 0)), "Collection %s tier %s count mismatch." % [collection_id, tier])
 	_check(total_items == 28, "Expected exactly 28 draft collection items.")
+
+
+func _test_players_card_schema_and_fragility(resolver: Variant) -> void:
+	var special_items: Array = resolver.special_item_definitions()
+	_check(special_items.size() == 1, "Collection schema must define the Players Card special item.")
+	var definition: Dictionary = resolver.item_definition(MetaCollectionServiceScript.PLAYERS_CARD_ITEMDEF_ID)
+	_check(str(definition.get("item_class", "")) == CollectionItemResolverScript.ITEM_CLASS_PLAYERS_CARD, "Players Card is not a first-class players_card item.")
+	var normalized: Dictionary = resolver.normalize_instance_for_definition({
+		"itemdef_id": MetaCollectionServiceScript.PLAYERS_CARD_ITEMDEF_ID,
+		"potency": 0.4,
+		"condition": 1.0,
+		"resonance": 0.6,
+		"usage": 0.2,
+	})
+	_check(float(normalized.get("condition", 1.0)) <= 0.10 and bool(normalized.get("durability_pinned", false)), "Players Card condition was not pinned to the critical band.")
+	var decayed: Dictionary = resolver.apply_usage_decay(normalized, "players-card-no-decay")
+	_check(is_equal_approx(float(decayed.get("condition", 0.0)), float(normalized.get("condition", 1.0))) and is_equal_approx(float(decayed.get("usage", 0.0)), 1.0), "Players Card was not exempt from normal usage decay.")
+	var run_item: Dictionary = resolver.resolve_run_item(normalized)
+	_check(str(_copy_dict(run_item.get("meta_collection", {})).get("condition_band", "")) == "critical", "Players Card did not resolve in the critical durability band.")
 
 
 func _test_float_determinism(resolver: Variant) -> void:
@@ -247,6 +270,107 @@ func _test_failure_decay_and_run_modifiers(resolver: Variant) -> void:
 	OS.set_environment(MetaCollectionServiceScript.STORE_PATH_ENV, "")
 
 
+func _test_players_card_mint_and_profile_lifecycle() -> void:
+	OS.set_environment(MetaCollectionServiceScript.STORE_PATH_ENV, TEST_STORE_PATH)
+	_remove_user_file(TEST_STORE_PATH)
+	var service: Variant = MetaCollectionServiceScript.new()
+	service.load()
+	var drop_service: Variant = CollectionDropServiceScript.new()
+	var clean_run: Variant = _terminal_run("players-card-clean")
+	clean_run.narrative_flags["demo_victory_route"] = RunStateScript.GRAND_CASINO_HIGH_ROLLER_EVENT_ID
+	clean_run.narrative_flags["grand_casino_players_card_tier"] = RunStateScript.GRAND_CASINO_PLAYERS_CARD_TIER_GOLD
+	clean_run.narrative_flags["grand_casino_players_card_highest_tier"] = RunStateScript.GRAND_CASINO_PLAYERS_CARD_TIER_GOLD
+	clean_run.run_spending_score = 37
+	clean_run.game_clock_minutes = 1440 + 900
+	clean_run.log_story({"type": "grand_casino_players_card_tier", "tier": "bronze", "games_played": 1, "net_winnings": 5})
+	clean_run.log_story({"type": "grand_casino_players_card_tier", "tier": "silver", "games_played": 3, "net_winnings": 15})
+	clean_run.log_story({"type": "grand_casino_players_card_tier", "tier": "gold", "games_played": 5, "net_winnings": 30})
+	var mint_result: Dictionary = drop_service.apply_terminal_special_outcome(clean_run, service)
+	var mint_repeat: Dictionary = drop_service.apply_terminal_special_outcome(clean_run, service)
+	_check(bool(mint_result.get("mutated", false)) and not bool(mint_repeat.get("mutated", true)), "Clean win did not mint exactly one Players Card.")
+	var owned := service.owned_instances()
+	_check(owned.size() == 1, "Clean win did not add one Players Card instance to the profile.")
+	var card := _copy_dict(owned[0]) if not owned.is_empty() else {}
+	var stamp := _copy_dict(card.get("instance_data", {}))
+	_check(str(stamp.get("seed", "")) == "players-card-clean" and int(stamp.get("final_score", 0)) == 74 and int(stamp.get("days_survived", 0)) == 2, "Players Card stamp did not preserve seed, score, and days.")
+	_check(_copy_array(stamp.get("tier_timeline", [])).size() == 3 and str(stamp.get("route", "")) == RunStateScript.GRAND_CASINO_HIGH_ROLLER_EVENT_ID, "Players Card stamp did not preserve tier timeline and route.")
+	var report_reward := _copy_dict(RunReportViewModelScript.build(clean_run.to_dict()).get("meta_reward", {}))
+	_check(bool(report_reward.get("visible", false)) and str(report_reward.get("kind", "")) == "players_card_minted", "Run report did not surface the minted Players Card in RESULT.")
+	var showdown_run: Variant = _terminal_run("players-card-showdown")
+	drop_service.apply_terminal_special_outcome(showdown_run, service)
+	var failed_run: Variant = _terminal_run("players-card-failed")
+	failed_run.run_status = RunStateScript.RUN_STATUS_FAILED
+	drop_service.apply_terminal_special_outcome(failed_run, service)
+	_check(service.owned_instances().size() == 1, "Showdown or failed route incorrectly minted a Players Card.")
+	var save_error: Error = service.save()
+	_check(save_error == OK, "Players Card profile save failed.")
+	var restored_service: Variant = MetaCollectionServiceScript.new()
+	restored_service.load()
+	_check(restored_service.owned_instances().size() == 1, "Players Card did not survive profile restart.")
+	var prestige_modifiers: Dictionary = restored_service.normal_run_start_modifiers()
+	var prestige_win: Variant = _terminal_run_with_modifiers("players-card-survival", prestige_modifiers, RunStateScript.RUN_STATUS_ENDED, RunStateScript.GRAND_CASINO_SHOWDOWN_ROUTE)
+	drop_service.apply_terminal_special_outcome(prestige_win, restored_service)
+	_check(restored_service.owned_instances().size() == 1 and str(_copy_dict(prestige_win.narrative_flags.get(CollectionDropServiceScript.PRESTIGE_RESULT_FLAG, {})).get("status", "")) == "retained", "Carried Players Card was not retained after a successful prestige run.")
+	var prestige_run: Variant = _terminal_run_with_modifiers("players-card-loss", prestige_modifiers, RunStateScript.RUN_STATUS_FAILED, "")
+	var loss_result: Dictionary = drop_service.apply_terminal_special_outcome(prestige_run, restored_service)
+	_check(_copy_array(loss_result.get("destroyed_cards", [])).size() == 1 and restored_service.owned_instances().is_empty(), "Carried Players Card was not destroyed forever on run loss.")
+	_check(restored_service.save() == OK, "Destroyed Players Card profile save failed.")
+	var post_loss_service: Variant = MetaCollectionServiceScript.new()
+	post_loss_service.load()
+	_check(post_loss_service.owned_instances().is_empty(), "Destroyed Players Card returned after profile restart.")
+	var hidden_service: Variant = MetaCollectionServiceScript.new()
+	_remove_user_file(TEST_STORE_PATH)
+	hidden_service.load()
+	var hidden_run: Variant = _terminal_run("owner-secret-seed")
+	hidden_run.challenge_config["hidden_seed"] = true
+	hidden_run.narrative_flags["demo_victory_route"] = RunStateScript.GRAND_CASINO_HIGH_ROLLER_EVENT_ID
+	drop_service.apply_terminal_special_outcome(hidden_run, hidden_service)
+	var hidden_card := _copy_dict(hidden_service.owned_instances()[0]) if not hidden_service.owned_instances().is_empty() else {}
+	var hidden_stamp := _copy_dict(hidden_card.get("instance_data", {}))
+	_check(bool(hidden_stamp.get("seed_hidden", false)) and str(hidden_stamp.get("seed", "")).find("owner-secret-seed") < 0, "Hidden challenge seed leaked into the Players Card stamp.")
+	_remove_user_file(TEST_STORE_PATH)
+	OS.set_environment(MetaCollectionServiceScript.STORE_PATH_ENV, "")
+
+
+func _test_prestige_run_modifiers_and_drop_depth() -> void:
+	OS.set_environment(MetaCollectionServiceScript.STORE_PATH_ENV, TEST_STORE_PATH)
+	_remove_user_file(TEST_STORE_PATH)
+	var ordinary: Variant = MetaCollectionServiceScript.new()
+	ordinary.load()
+	var ordinary_modifiers: Dictionary = ordinary.normal_run_start_modifiers()
+	_check(not bool(ordinary_modifiers.get("grand_casino_prestige", false)), "Non-prestige profile received prestige run modifiers.")
+	ordinary.mint_players_card({"seed": "prestige-origin", "final_score": 80, "days_survived": 2, "tier_timeline": [], "route": RunStateScript.GRAND_CASINO_HIGH_ROLLER_EVENT_ID})
+	var prestige_modifiers: Dictionary = ordinary.normal_run_start_modifiers()
+	_check(bool(prestige_modifiers.get("grand_casino_prestige", false)), "Carried Players Card did not mark the run as prestige.")
+	_check(int(prestige_modifiers.get("grand_casino_prestige_recognition_heat_delta", 0)) < 0 and int(prestige_modifiers.get("grand_casino_prestige_clean_heat_ceiling_delta", 0)) < 0 and int(prestige_modifiers.get("meta_collection_drop_tier_bonus_steps", 0)) > 0, "Prestige tunables were not injected into run modifiers.")
+	var prestige_run: Variant = RunStateScript.new()
+	prestige_run.start_new("prestige-entry", {
+		"mode": "standard",
+		"id": "standard",
+		"seed_text": "prestige-entry",
+		"modifiers": prestige_modifiers,
+	})
+	prestige_run.suspicion["local_levels"] = {RunStateScript.GRAND_CASINO_ARCHETYPE_ID: 20}
+	prestige_run.set_environment(_grand_casino_environment_fixture())
+	var prestige_status := prestige_run.grand_casino_prestige_status()
+	var objective := prestige_run.demo_objective_status()
+	_check(bool(prestige_status.get("recognition_applied", false)) and prestige_run.suspicion_level() == 10, "Prestige recognition did not reduce initial Grand Casino attention by the tuned amount.")
+	_check(int(objective.get("high_roller_max_heat", 30)) == 25 and int(objective.get("players_card_next_max_heat", 30)) == 25, "Prestige expectations did not tighten the clean-route heat ceiling.")
+	var drop_service: Variant = CollectionDropServiceScript.new()
+	var regular_drop_run: Variant = _terminal_run("prestige-drop-depth")
+	var prestige_drop_run: Variant = _terminal_run_with_modifiers("prestige-drop-depth", prestige_modifiers, RunStateScript.RUN_STATUS_ENDED, RunStateScript.GRAND_CASINO_SHOWDOWN_ROUTE)
+	var regular_markers: Array = drop_service.ensure_run_end_pending_bags(regular_drop_run, null)
+	var prestige_markers: Array = drop_service.ensure_run_end_pending_bags(prestige_drop_run, null)
+	_check(regular_markers.size() == prestige_markers.size() and not regular_markers.is_empty(), "Prestige drop comparison did not produce matching deterministic marker counts.")
+	for index in range(mini(regular_markers.size(), prestige_markers.size())):
+		var regular_tier := str(_copy_dict(regular_markers[index]).get("tier", "blue"))
+		var prestige_tier := str(_copy_dict(prestige_markers[index]).get("tier", "blue"))
+		var expected_index := mini(CollectionItemResolverScript.TIERS.size() - 1, CollectionItemResolverScript.TIERS.find(regular_tier) + int(prestige_modifiers.get("meta_collection_drop_tier_bonus_steps", 0)))
+		_check(CollectionItemResolverScript.TIERS.find(prestige_tier) == expected_index, "Prestige drop did not promote the existing deterministic tier roll.")
+	_remove_user_file(TEST_STORE_PATH)
+	OS.set_environment(MetaCollectionServiceScript.STORE_PATH_ENV, "")
+
+
 func _test_terminal_drop_determinism() -> void:
 	var drop_service: Variant = CollectionDropServiceScript.new()
 	var run_a: Variant = _terminal_run("p1-deterministic-seed")
@@ -384,6 +508,43 @@ func _terminal_run(seed: String, completion_flag: String = "", meta_enabled: boo
 	run_state.narrative_flags["demo_victory"] = true
 	run_state.narrative_flags["demo_victory_route"] = RunStateScript.GRAND_CASINO_SHOWDOWN_ROUTE
 	return run_state
+
+
+func _terminal_run_with_modifiers(seed: String, modifiers: Dictionary, status: String, route: String) -> Variant:
+	var run_state: Variant = RunStateScript.new()
+	run_state.start_new(seed, {
+		"mode": "standard",
+		"id": "standard",
+		"title": "P1 Meta",
+		"seed_text": seed,
+		"modifiers": modifiers.duplicate(true),
+	})
+	run_state.bankroll = 500
+	run_state.run_status = status
+	if status == RunStateScript.RUN_STATUS_ENDED:
+		run_state.narrative_flags["demo_victory"] = true
+		run_state.narrative_flags["demo_victory_route"] = route
+	return run_state
+
+
+func _grand_casino_environment_fixture() -> Dictionary:
+	return {
+		"id": RunStateScript.GRAND_CASINO_ARCHETYPE_ID,
+		"archetype_id": RunStateScript.GRAND_CASINO_ARCHETYPE_ID,
+		"display_name": "Grand Casino",
+		"demo_objective": {
+			"id": RunStateScript.GRAND_CASINO_OBJECTIVE_ID,
+			"type": "bankroll",
+			"target_bankroll": 500,
+			"high_roller_target_bankroll": 500,
+			"high_roller_net_winnings": 30,
+			"high_roller_min_grand_casino_games": 5,
+			"high_roller_max_heat": 30,
+			"players_card_bronze_max_heat": 30,
+			"players_card_silver_max_heat": 30,
+			"players_card_gold_max_heat": 30,
+		},
+	}
 
 
 func _instance_ids(instances: Array) -> Array:
