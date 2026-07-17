@@ -1008,10 +1008,12 @@ func _prepare_multi_game_visual_qa_fixture() -> void:
 
 func _reset_fixed_price_surface_for_risky_action() -> void:
 	await _resolve_blocking_event_popups()
+	await _resolve_blocking_talk_dock_for_surface_flow()
 	_return_to_room_view()
 	await _settle()
 	await _prepare_risky_game_visual_qa_fixture()
 	await _resolve_blocking_event_popups()
+	await _resolve_blocking_talk_dock_for_surface_flow()
 	_record_state("risky_game_fixture_risky_reset", "Reopened deterministic fixed-price game surface for visible risky-action coverage.")
 	var entered_label := await _double_click_first_play_object_type("game")
 	_require(not entered_label.is_empty(), "Could not re-enter deterministic fixed-price game surface for risky-action QA.")
@@ -1554,6 +1556,7 @@ func _try_service_hook_flow(prepared_fixture: bool = false) -> void:
 
 func _try_lender_hook_flow(prepared_fixture: bool = false) -> void:
 	await _resolve_blocking_event_popups()
+	await _resolve_blocking_talk_dock()
 	_return_to_room_view()
 	await _settle()
 	var canvas := app.get("environment_canvas") as Control
@@ -1599,6 +1602,7 @@ func _try_lender_hook_flow(prepared_fixture: bool = false) -> void:
 
 func _try_lender_object_in_current_room(lender_object: Dictionary, prepared_fixture: bool = false) -> void:
 	await _resolve_blocking_event_popups()
+	await _resolve_blocking_talk_dock()
 	var object_enabled := not bool(lender_object.get("disabled", false))
 	if not object_enabled:
 		if not prepared_fixture:
@@ -1769,6 +1773,13 @@ func _resolve_blocking_talk_dock(max_count: int = 8) -> void:
 			return
 		await _settle()
 	_require(dock == null or not dock.visible, "Talk dock response chain did not clear within the visual QA action bound.")
+
+
+func _resolve_blocking_talk_dock_for_surface_flow() -> void:
+	var strict_surface_before := strict_game_surface_only_active
+	strict_game_surface_only_active = false
+	await _resolve_blocking_talk_dock()
+	strict_game_surface_only_active = strict_surface_before
 
 
 func _wait_for_room_camera(max_frames: int = 18) -> void:
@@ -2285,6 +2296,7 @@ func _drive_risky_surface_until_heat(min_heat: int, max_attempts: int, first_vis
 			_require(false, "Resolving a high-heat risky action did not update serialized RunState.")
 			return false
 		await _resolve_blocking_event_popups(2)
+		await _resolve_blocking_talk_dock_for_surface_flow()
 		var game_snapshot: Dictionary = app.call("current_game_view_snapshot")
 		var visible_text := " ".join(_visible_text(app)).to_lower()
 		var consequence_text := JSON.stringify(app.call("current_consequence_view_snapshot")).to_lower()
