@@ -177,7 +177,7 @@ func roll_instance(itemdef_id: int, rng_seed: String) -> Dictionary:
 		return {}
 	var seed := "%s|%d" % [rng_seed, itemdef_id]
 	var instance_id := INSTANCE_ID_BASE + (_hash_u32("%s|instance" % seed) % INSTANCE_ID_SPAN)
-	return {
+	return normalize_instance_for_definition({
 		"schema_version": SCHEMA_VERSION,
 		"instance_id": instance_id,
 		"itemdef_id": itemdef_id,
@@ -185,7 +185,7 @@ func roll_instance(itemdef_id: int, rng_seed: String) -> Dictionary:
 		"condition": _unit_float(seed, "condition"),
 		"resonance": _unit_float(seed, "resonance"),
 		"usage": clampf(0.82 + (_unit_float(seed, "usage") * 0.18), 0.0, 1.0),
-	}
+	})
 
 
 func apply_usage_decay(instance: Dictionary, rng_seed: String) -> Dictionary:

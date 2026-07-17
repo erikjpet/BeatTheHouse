@@ -102,6 +102,8 @@ func _test_players_card_schema_and_fragility(resolver: Variant) -> void:
 	_check(float(normalized.get("condition", 1.0)) <= 0.10 and bool(normalized.get("durability_pinned", false)), "Players Card condition was not pinned to the critical band.")
 	var decayed: Dictionary = resolver.apply_usage_decay(normalized, "players-card-no-decay")
 	_check(is_equal_approx(float(decayed.get("condition", 0.0)), float(normalized.get("condition", 1.0))) and is_equal_approx(float(decayed.get("usage", 0.0)), 1.0), "Players Card was not exempt from normal usage decay.")
+	var rolled: Dictionary = resolver.roll_instance(MetaCollectionServiceScript.PLAYERS_CARD_ITEMDEF_ID, "players-card-roll")
+	_check(is_equal_approx(float(rolled.get("condition", 1.0)), float(normalized.get("condition", 0.0))), "Players Card roll boundary did not keep durability pinned.")
 	var run_item: Dictionary = resolver.resolve_run_item(normalized)
 	_check(str(_copy_dict(run_item.get("meta_collection", {})).get("condition_band", "")) == "critical", "Players Card did not resolve in the critical durability band.")
 
