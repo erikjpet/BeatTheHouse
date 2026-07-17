@@ -34,6 +34,10 @@ func _check_scratch_tickets_surface_contract(game: GameModule, failures: Array) 
 		failures.append("Scratch Tickets did not expose fixed-price native controls.")
 	if not bool(surface.get("surface_animates_idle", false)) or bool(surface.get("surface_realtime_state_refresh", true)):
 		failures.append("Scratch Tickets idle liveness/zero-copy flags are incorrect.")
+	if str(surface.get("scratch_machine_style", "")) != "physical_lottery_vending_cabinet" or str(surface.get("scratch_ticket_face_style", "")) != "portrait_printed_lottery_ticket":
+		failures.append("Scratch Tickets regressed to a menu/grid presentation instead of its physical cabinet and printed-ticket contract.")
+	if not surface.has("scratch_winner_pile") or not surface.has("scratch_loser_pile"):
+		failures.append("Scratch Tickets surface did not expose the pull-tab-style sorted piles.")
 	var harness := SurfaceHarness.new()
 	harness.setup(surface)
 	game.draw_surface(harness, surface, {"contract_harness": true})
@@ -49,6 +53,8 @@ func _check_scratch_tickets_surface_contract(game: GameModule, failures: Array) 
 	if run_state.bankroll != before_bankroll - int(purchase.get("stake", 0)):
 		failures.append("Scratch Tickets purchase did not charge cash exactly once.")
 	var purchased_machine: Dictionary = (environment.get("game_states", {}) as Dictionary).get("scratch_tickets", {})
+	if str(purchased_machine.get("last_dispense_id", "")).is_empty() or int(purchased_machine.get("dispense_started_msec", 0)) <= 0:
+		failures.append("Scratch Tickets purchase did not queue its visible cabinet dispense animation.")
 	var active_ticket: Dictionary = purchased_machine.get("active_ticket", {})
 	var original_cells := _scratch_test_dictionary_array(active_ticket.get("cells", [])).duplicate(true)
 	var begin := game.surface_pointer_command("scratch_scrub", 0, "begin", Vector2(400, 160), {}, run_state, environment)
