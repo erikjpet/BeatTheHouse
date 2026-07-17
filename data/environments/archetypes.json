@@ -1116,7 +1116,8 @@
       "scratch_tickets"
     ],
     "required_game_ids": [
-      "pull_tabs"
+      "pull_tabs",
+      "scratch_tickets"
     ],
     "game_count": [
       3,

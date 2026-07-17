@@ -513,7 +513,7 @@ func _play_rourke_duel_hand(run_state: RunState, run: Dictionary, policy: String
 	if not bool(deal.get("handled", false)) or _array(ui_state.get("player_hands", [])).is_empty():
 		failures.append("Rourke duel metrics did not receive a playable dealt hand.")
 		return false
-	if _policy_allows_cheat(policy):
+	if policy == "cheat":
 		var edge := run_state.grand_casino_duel_current_edge()
 		if bool(edge.get("active", false)):
 			var edge_id := str(edge.get("id", ""))
@@ -528,6 +528,9 @@ func _play_rourke_duel_hand(run_state: RunState, run: Dictionary, policy: String
 				ui_state = _dict(call.get("ui_state", ui_state))
 				run["duel_callouts"] = int(run.get("duel_callouts", 0)) + 1
 				run["duel_correct_callouts"] = int(run.get("duel_correct_callouts", 0)) + 1
+				if str(run_state.grand_casino_duel_status().get("status", "")) != "active":
+					_record_duel_terminal_state(run_state, run)
+					return true
 	ui_state = _play_metrics_blackjack_hand(game, run_state, ui_state)
 	var ante := maxi(1, int(duel_before.get("ante", 20)))
 	var result := game.resolve_with_context("play_basic", ante, run_state, run_state.current_environment, run_state.create_rng("duel_metrics_unused"), ui_state)
@@ -905,7 +908,8 @@ func _try_play_game(run_state: RunState, run: Dictionary, policy: String) -> boo
 	if stake <= 0:
 		return false
 	var rng := run_state.create_rng()
-	var result: Dictionary = game.resolve_with_context(action_id, stake, run_state, run_state.current_environment, rng, _ui_state_for_game(game_id, action_id, stake, policy))
+	var ui_state := _prepared_metrics_ui_state(game, run_state, game_id, action_id, stake, policy)
+	var result: Dictionary = game.resolve_with_context(action_id, stake, run_state, run_state.current_environment, rng, ui_state)
 	if not bool(result.get("ok", false)):
 		return false
 	if bool(result.get("host_apply_result", false)):
@@ -1144,6 +1148,46 @@ func _ui_state_for_game(game_id: String, action_id: String, stake: int, policy: 
 			return ui_state
 		_:
 			return ui_state
+
+
+func _prepared_metrics_ui_state(game: GameModule, run_state: RunState, game_id: String, action_id: String, stake: int, policy: String) -> Dictionary:
+	var ui_state := _ui_state_for_game(game_id, action_id, stake, policy)
+	var environment := run_state.current_environment
+	match action_id:
+		"read_wheel_bias":
+			var wheel_start := game.surface_action_command("roulette_read_wheel", 0, false, ui_state, run_state, environment)
+			ui_state = _dict(wheel_start.get("ui_state", ui_state))
+			var wheel_challenge := _dict(ui_state.get("wheel_read_challenge", {}))
+			if not wheel_challenge.is_empty():
+				ui_state["surface_time_msec"] = int(wheel_challenge.get("target_msec", ui_state.get("surface_time_msec", 0)))
+				var wheel_lock := game.surface_action_command("roulette_read_wheel", 0, false, ui_state, run_state, environment)
+				ui_state = _dict(wheel_lock.get("ui_state", ui_state))
+		"read_baccarat_shoe":
+			var shoe_start := game.surface_action_command("baccarat_read_shoe", 0, false, ui_state, run_state, environment)
+			ui_state = _dict(shoe_start.get("ui_state", ui_state))
+			var shoe_challenge := _dict(ui_state.get("shoe_read_challenge", {}))
+			if not shoe_challenge.is_empty():
+				ui_state["surface_time_msec"] = int(shoe_challenge.get("started_msec", ui_state.get("surface_time_msec", 0))) + int(shoe_challenge.get("reveal_msec", 0))
+				var answer_index := ["low", "neutral", "zero"].find(str(shoe_challenge.get("hidden_answer", "")))
+				var shoe_answer := game.surface_action_command("baccarat_shoe_read_answer", maxi(0, answer_index), false, ui_state, run_state, environment)
+				ui_state = _dict(shoe_answer.get("ui_state", ui_state))
+		"palmed_swap":
+			var dice_roll := game.surface_action_command("bar_dice_roll", 0, false, ui_state, run_state, environment)
+			ui_state = _dict(dice_roll.get("ui_state", ui_state))
+			for _shake_index in range(2):
+				var dice_surface := game.surface_state(run_state, environment, ui_state)
+				if not bool(dice_surface.get("can_shake_again", false)):
+					break
+				var dice_shake := game.surface_action_command("bar_dice_shake", 0, false, ui_state, run_state, environment)
+				ui_state = _dict(dice_shake.get("ui_state", ui_state))
+			var palm_start := game.surface_action_command("bar_dice_palm", 0, false, ui_state, run_state, environment)
+			ui_state = _dict(palm_start.get("ui_state", ui_state))
+			var palm_challenge := _dict(ui_state.get("palmed_swap_challenge", {}))
+			if not palm_challenge.is_empty():
+				ui_state["surface_time_msec"] = int(palm_challenge.get("target_msec", ui_state.get("surface_time_msec", 0)))
+				var palm_lock := game.surface_action_command("bar_dice_palm", 0, false, ui_state, run_state, environment)
+				ui_state = _dict(palm_lock.get("ui_state", ui_state))
+	return ui_state
 
 
 func _metrics_surface_time_msec(game_id: String, action_id: String, stake: int, policy: String) -> int:

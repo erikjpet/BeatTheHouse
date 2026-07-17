@@ -2,6 +2,7 @@ extends "res://scripts/tests/foundation/check_lenders_release_saves.gd"
 
 
 func _check_scratch_tickets_surface_contract(game: GameModule, failures: Array) -> void:
+	_check_scratch_ticket_gas_station_generation(failures)
 	var run_state: RunState = RunStateScript.new()
 	run_state.start_new("SCRATCH-TICKET-CONTRACT")
 	run_state.bankroll = 5000
@@ -72,6 +73,29 @@ func _check_scratch_tickets_surface_contract(game: GameModule, failures: Array) 
 	_check_scratch_ticket_items(game, failures)
 	_check_scratch_ticket_stock_and_collection(game, failures)
 	_check_scratch_ticket_rtp(game, failures)
+
+
+func _check_scratch_ticket_gas_station_generation(failures: Array) -> void:
+	var library: ContentLibrary = ContentLibraryScript.new()
+	library.load()
+	var archetype := library.environment_archetype("gas_station_casino")
+	if archetype.is_empty():
+		failures.append("Scratch Tickets gas-station generation audit requires the gas_station_casino archetype.")
+		return
+	var required_ids := _scratch_test_string_array(archetype.get("required_game_ids", []))
+	if not required_ids.has("scratch_tickets"):
+		failures.append("Gas stations do not require a Scratch Tickets machine.")
+		return
+	for seed_index in range(100):
+		var environment := EnvironmentInstance.from_archetype(
+			archetype,
+			seed_index,
+			_scratch_test_rng("scratch-gas-station:%03d" % seed_index),
+			library
+		)
+		if not environment.game_ids.has("scratch_tickets"):
+			failures.append("Gas station seed %03d omitted its required Scratch Tickets machine." % seed_index)
+			return
 
 
 func _check_scratch_ticket_determinism(game: GameModule, failures: Array) -> void:
