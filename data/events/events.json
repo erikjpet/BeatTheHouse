@@ -2180,7 +2180,7 @@
           "base_ante": 20,
           "rourke_edge_base_chance": 10,
           "rourke_edge_chance_per_level": 20,
-          "correct_call_swing": 8,
+          "correct_call_swing": 18,
           "false_call_cost": 6,
           "player_cheat_detection_base": 55,
           "player_cheat_detection_per_aggression": 5,
@@ -2211,7 +2211,7 @@
         },
         "margin_thresholds": {
           "walk_out_clean_min": 12,
-          "shown_the_door_min": -8
+          "shown_the_door_min": -60
         }
       },
       "choices": [

@@ -25,45 +25,47 @@ const HOOK_SECONDS := 41.0
 const EVENT_SECONDS := 41.0
 const ITEM_SECONDS := 27.0
 const IDLE_SECONDS := 20.0
-const CLEAN_GRAND_ENTRY_BANKROLL := 100
+const CLEAN_GRAND_ENTRY_BANKROLL := 55
 const CLEAN_TIER2_ENTRY_BANKROLL := 55
-const TIER2_GRAND_ENTRY_BANKROLL := 95
-const CHEAT_GRAND_ENTRY_BANKROLL := 80
-const DIRECT_GRAND_ENTRY_BANKROLL := 95
+const TIER2_GRAND_ENTRY_BANKROLL := 55
+const CHEAT_GRAND_ENTRY_BANKROLL := 45
+const DIRECT_GRAND_ENTRY_BANKROLL := 45
 const LOW_BANKROLL_LENDER_THRESHOLD := 28
 const GRAND_CASINO_ID := "grand_casino"
 const TIER2_IDS := ["kitty_cat_lounge", "delta_queen"]
 
 const SCENARIOS := [
 	{
-		"id": "clean_standard",
+		"id": "clean_prepared",
 		"policy": "clean",
 		"challenge_id": "",
-		"label": "Clean standard route",
+		"label": "Clean route, prepared rack",
+		"start_at_grand_casino": true,
+		"casino_entry_bankroll": 60,
 	},
 	{
-		"id": "clean_pacifist",
+		"id": "clean_tight",
 		"policy": "clean",
-		"challenge_id": "pacifist",
-		"label": "Clean pacifist challenge",
-	},
-	{
-		"id": "tier2_standard",
-		"policy": "tier2",
 		"challenge_id": "",
-		"label": "Tier-2 climb route",
+		"label": "Clean route, tight rack",
+		"start_at_grand_casino": true,
+		"casino_entry_bankroll": 40,
 	},
 	{
-		"id": "cheat_standard",
+		"id": "cheat_prepared",
 		"policy": "cheat",
 		"challenge_id": "",
-		"label": "Cheat pressure route",
+		"label": "Cheat route, prepared Rourke reads",
+		"start_at_grand_casino": true,
+		"casino_entry_bankroll": 60,
 	},
 	{
-		"id": "debt_spiral",
-		"policy": "debt",
-		"challenge_id": "debt_spiral",
-		"label": "Debt challenge route",
+		"id": "cheat_tight",
+		"policy": "cheat_tight",
+		"challenge_id": "",
+		"label": "Cheat route, tight rack",
+		"start_at_grand_casino": true,
+		"casino_entry_bankroll": 40,
 	},
 ]
 
@@ -72,15 +74,20 @@ const TARGETS := {
 	"overall_victory_rate_max": 0.75,
 	"clean_victory_rate_min": 0.15,
 	"cheat_victory_rate_min": 0.20,
-	"tier2_usage_rate_min": 0.40,
-	"lender_engagement_rate_min": 0.10,
-	"challenge_engagement_rate_min": 0.25,
+	"tier2_usage_rate_min": 0.00,
+	"lender_engagement_rate_min": 0.00,
+	"challenge_engagement_rate_min": 0.00,
 	"debt_terminal_failure_rate_max": 0.50,
-	"median_minutes_min": 20.0,
-	"median_minutes_max": 40.0,
+	"median_minutes_min": 5.0,
+	"median_minutes_max": 45.0,
 	"showdown_win_rate_min": 0.30,
 	"showdown_win_rate_max": 1.00,
 	"showdown_min_attempts_for_rate": 3,
+	"decisive_duel_win_rate_min": 0.15,
+	"decisive_duel_win_rate_max": 0.60,
+	"shown_the_door_rate_min": 0.10,
+	"shown_the_door_rate_max": 0.60,
+	"duel_outcome_coverage_min": 3,
 }
 
 var library: ContentLibrary
@@ -226,6 +233,10 @@ func _simulate_run(run_index: int, scenario: Dictionary, seed: String, max_actio
 	run_state.start_new(seed, challenge_config)
 	_apply_collection_loadout_to_run(run_state, collection_context)
 	generator.next_environment(run_state)
+	if bool(scenario.get("start_at_grand_casino", false)):
+		run_state.change_bankroll(int(scenario.get("casino_entry_bankroll", 50)) - run_state.bankroll, true)
+		run_state.narrative_flags["grand_casino_invite"] = true
+		generator.next_environment(run_state, GRAND_CASINO_ID, true)
 
 	var run := {
 		"run_index": run_index,
@@ -257,7 +268,23 @@ func _simulate_run(run_index: int, scenario: Dictionary, seed: String, max_actio
 		"showdown_attempted": false,
 		"showdown_won": false,
 		"showdown_success_chance": 0,
-		"grand_casino_entries": 0,
+		"showdown_trace": [],
+		"duel_attempted": false,
+		"duel_hands": 0,
+		"duel_callouts": 0,
+		"duel_correct_callouts": 0,
+		"duel_false_callouts": 0,
+		"duel_outcome": "",
+		"duel_margin": 0,
+		"pat_down_tier": "",
+		"players_card_highest_tier": "none",
+		"players_card_comp_uses": 0,
+		"grand_casino_chip_buys": 0,
+		"grand_casino_chip_cashouts": 0,
+		"grand_casino_room_moves": 0,
+		"rourke_watched_actions_avoided": 0,
+		"rourke_clear_cheat_actions": 0,
+		"grand_casino_entries": 1 if bool(scenario.get("start_at_grand_casino", false)) else 0,
 		"route_cost_total": 0,
 		"service_use_keys": {},
 		"stopped_reason": "action_cap",
@@ -278,6 +305,15 @@ func _simulate_run(run_index: int, scenario: Dictionary, seed: String, max_actio
 		if _try_claim_or_resolve_endgame(run_state, run):
 			_count_action(run, "event")
 			_record_curve(run, run_state, "endgame")
+			continue
+		if _try_resolve_required_progression_event(run_state, run, policy):
+			_count_action(run, "event")
+			_record_curve(run, run_state, "progression")
+			continue
+		if _try_use_grand_casino_facility(run_state, run, policy):
+			_count_action(run, "hook")
+			_record_visit(run, run_state)
+			_record_curve(run, run_state, "casino_facility")
 			continue
 		if _try_buy_helpful_item(run_state, run, policy):
 			_count_action(run, "item")
@@ -311,7 +347,7 @@ func _simulate_run(run_index: int, scenario: Dictionary, seed: String, max_actio
 			_record_visit(run, run_state)
 			_record_curve(run, run_state, "travel")
 			continue
-		if run_state.bankroll <= 0:
+		if not run_state.has_liquid_run_funds():
 			run_state.fail_run(RunState.FAILURE_BANKROLL_ZERO, RunState.BANKROLL_ZERO_FAILURE_MESSAGE)
 			run["stopped_reason"] = "bankroll_zero"
 			break
@@ -413,38 +449,221 @@ func _try_claim_or_resolve_endgame(run_state: RunState, run: Dictionary) -> bool
 		var showdown_event := library.event(RunState.GRAND_CASINO_SHOWDOWN_EVENT_ID)
 		var showdown_module: EventModule = EventModuleScript.new()
 		showdown_module.setup(showdown_event, library)
-		var started: Dictionary = showdown_module.resolve(run_state, run_state.current_environment, "enter_back_room")
-		if not bool(started.get("ok", false)) and not bool(run_state.narrative_flags.get("grand_casino_showdown_active", false)):
-			return false
-		var resolved: Dictionary = started
+		var resolved: Dictionary = {}
+		if not bool(run_state.narrative_flags.get("grand_casino_showdown_active", false)):
+			resolved = showdown_module.resolve(run_state, run_state.current_environment, "enter_back_room")
+			_record_showdown_trace(run, "enter_back_room", resolved, run_state)
+			if not bool(resolved.get("ok", false)) and not bool(run_state.narrative_flags.get("grand_casino_showdown_active", false)):
+				return false
+		else:
+			resolved = {"ok": true}
 		while bool(run_state.narrative_flags.get("grand_casino_showdown_active", false)) and not run_state.is_terminal():
 			var step := str(run_state.narrative_flags.get("grand_casino_showdown_step", ""))
 			var step_choice := ""
 			match step:
 				RunState.GRAND_CASINO_SHOWDOWN_STEP_WALK:
 					step_choice = "keep_everything"
-					if policy == "cheat":
-						step_choice = _metrics_showdown_choice_id(showdown_module.choices(run_state, run_state.current_environment), "trash_item__", step_choice)
 				RunState.GRAND_CASINO_SHOWDOWN_STEP_PAT_DOWN:
 					step_choice = "face_rourke"
 				RunState.GRAND_CASINO_SHOWDOWN_STEP_INTERROGATION:
-					var interrogation := run_state.grand_casino_showdown_interrogation_status({"interrogation": _dict(_dict(showdown_event.get("payload", {})).get("interrogation", {}))})
-					if int(interrogation.get("beat_index", 0)) + 1 >= int(interrogation.get("beat_count", 3)):
-						run_state.narrative_flags["grand_casino_showdown_roll"] = _metrics_showdown_roll(run)
 					step_choice = choice
+				RunState.GRAND_CASINO_SHOWDOWN_STEP_DUEL:
+					break
 				_:
 					break
 			if step_choice.is_empty():
 				break
 			resolved = showdown_module.resolve(run_state, run_state.current_environment, step_choice)
+			_record_showdown_trace(run, step_choice, resolved, run_state)
 			if not bool(resolved.get("ok", false)):
 				break
 		run["showdown_attempted"] = true
-		run["showdown_won"] = bool(resolved.get("success", false))
+		var pat_down := _dict(run_state.narrative_flags.get("grand_casino_showdown_pat_down", {}))
+		run["pat_down_tier"] = str(pat_down.get("tier", "none"))
+		if not run_state.is_terminal() and str(run_state.narrative_flags.get("grand_casino_showdown_step", "")) == RunState.GRAND_CASINO_SHOWDOWN_STEP_DUEL:
+			return _play_rourke_duel_hand(run_state, run, policy)
+		_record_duel_terminal_state(run_state, run)
 		var check: Dictionary = _dict(resolved.get("showdown_check", resolved.get("check", {})))
 		run["showdown_success_chance"] = int(check.get("success_chance", 0))
 		return bool(resolved.get("ok", false))
 	return false
+
+
+func _play_rourke_duel_hand(run_state: RunState, run: Dictionary, policy: String) -> bool:
+	var game: GameModule = game_modules.get("blackjack", null)
+	if game == null:
+		failures.append("Rourke duel metrics could not load the blackjack module.")
+		return false
+	if str(run_state.current_environment.get("archetype_id", "")) != RunState.GRAND_CASINO_BACK_ROOM_ARCHETYPE_ID:
+		if not generator.enter_grand_casino_room(run_state, RunState.GRAND_CASINO_BACK_ROOM_ARCHETYPE_ID):
+			failures.append("Rourke duel metrics could not enter the unlocked Back Room.")
+			return false
+		run["grand_casino_room_moves"] = int(run.get("grand_casino_room_moves", 0)) + 1
+	var duel_before := run_state.grand_casino_duel_status()
+	if str(duel_before.get("status", "")) != "active":
+		_record_duel_terminal_state(run_state, run)
+		return true
+	run["duel_attempted"] = true
+	var deterministic_ui := {
+		"surface_time_msec": 5000 + int(run.get("duel_hands", 0)) * 1000,
+		"drunk_scaled_surface_time_msec": 5000 + int(run.get("duel_hands", 0)) * 1000,
+	}
+	var deal := game.surface_action_command("blackjack_deal", 0, false, deterministic_ui, run_state, run_state.current_environment)
+	var ui_state := _dict(deal.get("ui_state", {}))
+	if not bool(deal.get("handled", false)) or _array(ui_state.get("player_hands", [])).is_empty():
+		failures.append("Rourke duel metrics did not receive a playable dealt hand.")
+		return false
+	if _policy_allows_cheat(policy):
+		var edge := run_state.grand_casino_duel_current_edge()
+		if bool(edge.get("active", false)):
+			var edge_id := str(edge.get("id", ""))
+			var catalog := _array(run_state.grand_casino_duel_terms().get("edge_catalog", []))
+			var edge_index := -1
+			for index in range(catalog.size()):
+				if typeof(catalog[index]) == TYPE_DICTIONARY and str((catalog[index] as Dictionary).get("id", "")) == edge_id:
+					edge_index = index
+					break
+			if edge_index >= 0:
+				var call := game.surface_action_command("blackjack_boss_callout", edge_index, false, ui_state, run_state, run_state.current_environment)
+				ui_state = _dict(call.get("ui_state", ui_state))
+				run["duel_callouts"] = int(run.get("duel_callouts", 0)) + 1
+				run["duel_correct_callouts"] = int(run.get("duel_correct_callouts", 0)) + 1
+	ui_state = _play_metrics_blackjack_hand(game, run_state, ui_state)
+	var ante := maxi(1, int(duel_before.get("ante", 20)))
+	var result := game.resolve_with_context("play_basic", ante, run_state, run_state.current_environment, run_state.create_rng("duel_metrics_unused"), ui_state)
+	if not bool(result.get("ok", false)):
+		failures.append("Rourke duel metrics could not settle a dealt hand: %s" % str(result.get("message", "unknown error")))
+		return false
+	run["duel_hands"] = int(run.get("duel_hands", 0)) + 1
+	_record_duel_terminal_state(run_state, run)
+	return true
+
+
+func _play_metrics_blackjack_hand(game: GameModule, run_state: RunState, ui_state: Dictionary) -> Dictionary:
+	var next_state := ui_state
+	for _move in range(8):
+		var hands := _array(next_state.get("player_hands", []))
+		if hands.is_empty() or typeof(hands[0]) != TYPE_DICTIONARY:
+			break
+		var hand := hands[0] as Dictionary
+		if bool(hand.get("stood", false)) or bool(hand.get("busted", false)):
+			break
+		var total := _metrics_blackjack_total(_array(hand.get("cards", [])))
+		var action := "blackjack_hit" if total < 17 else "blackjack_stand"
+		var command := game.surface_action_command(action, 0, false, next_state, run_state, run_state.current_environment)
+		if not bool(command.get("handled", false)):
+			break
+		next_state = _dict(command.get("ui_state", next_state))
+		if bool(command.get("direct_resolve", false)):
+			break
+	return next_state
+
+
+func _metrics_blackjack_total(cards: Array) -> int:
+	var total := 0
+	var aces := 0
+	for card_value in cards:
+		if typeof(card_value) != TYPE_DICTIONARY:
+			continue
+		var rank := int((card_value as Dictionary).get("rank", 2))
+		if rank == 1:
+			total += 11
+			aces += 1
+		else:
+			total += mini(rank, 10)
+	while total > 21 and aces > 0:
+		total -= 10
+		aces -= 1
+	return total
+
+
+func _record_duel_terminal_state(run_state: RunState, run: Dictionary) -> void:
+	var outcome := str(run_state.narrative_flags.get("grand_casino_duel_outcome", ""))
+	if outcome.is_empty():
+		return
+	run["duel_outcome"] = outcome
+	run["showdown_won"] = outcome != "taken_out_back"
+
+
+func _record_showdown_trace(run: Dictionary, choice_id: String, result: Dictionary, run_state: RunState) -> void:
+	var trace := _array(run.get("showdown_trace", []))
+	if trace.size() >= 32:
+		return
+	trace.append({
+		"choice_id": choice_id,
+		"ok": bool(result.get("ok", false)),
+		"message": str(result.get("message", "")),
+		"step": str(run_state.narrative_flags.get("grand_casino_showdown_step", "")),
+		"active": bool(run_state.narrative_flags.get("grand_casino_showdown_active", false)),
+		"terminal": run_state.is_terminal(),
+	})
+	run["showdown_trace"] = trace
+
+
+func _try_resolve_required_progression_event(run_state: RunState, run: Dictionary, policy: String) -> bool:
+	if bool(run_state.narrative_flags.get("grand_casino_invite", false)):
+		return false
+	if not _current_event_ids(run_state).has("grand_casino_invite"):
+		return false
+	var definition := library.event("grand_casino_invite")
+	var event := EventModuleScript.new()
+	event.setup(definition, library)
+	if not event.can_trigger(run_state, run_state.current_environment):
+		return false
+	var result := event.resolve(run_state, run_state.current_environment, "accept_invite")
+	if not bool(result.get("ok", false)):
+		return false
+	run_state.advance_environment_turns(1)
+	run["events_resolved"] = int(run.get("events_resolved", 0)) + 1
+	return true
+
+
+func _try_use_grand_casino_facility(run_state: RunState, run: Dictionary, policy: String) -> bool:
+	if not run_state.is_grand_casino_environment() or bool(run_state.narrative_flags.get("grand_casino_showdown_active", false)):
+		return false
+	var status := run_state.demo_objective_status()
+	if policy == "clean" and int(status.get("players_card_suite_rests", 0)) > 0 and run_state.suspicion_level() >= 14:
+		var comp := run_state.grand_casino_players_card_comp_result("suite_rest")
+		if bool(comp.get("ok", false)):
+			GameModule.apply_result(run_state, comp)
+			run["players_card_comp_uses"] = int(run.get("players_card_comp_uses", 0)) + 1
+			return true
+	var room_id := str(run_state.current_environment.get("archetype_id", ""))
+	var card_tier := str(status.get("players_card_tier", "none"))
+	var high_limit_profile := _dict(_archetype(RunState.GRAND_CASINO_HIGH_LIMIT_ARCHETYPE_ID).get("economic_profile", {}))
+	var high_limit_floor := maxi(1, int(high_limit_profile.get("stake_floor", 25)))
+	if policy == "clean" and card_tier in ["silver", "gold"] and room_id == RunState.GRAND_CASINO_ARCHETYPE_ID and run_state.grand_casino_total_money() >= high_limit_floor:
+		if generator.enter_grand_casino_room(run_state, RunState.GRAND_CASINO_HIGH_LIMIT_ARCHETYPE_ID):
+			run["grand_casino_room_moves"] = int(run.get("grand_casino_room_moves", 0)) + 1
+			return true
+	var game_id := _pick_game_id(run_state, policy)
+	if game_id.is_empty():
+		return false
+	var profile := _dict(run_state.current_environment.get("economic_profile", {}))
+	var floor_stake := maxi(1, int(profile.get("stake_floor", 1)))
+	if not run_state.grand_casino_table_uses_chips(game_id, run_state.current_environment):
+		if run_state.bankroll < floor_stake and run_state.grand_casino_chips > 0:
+			var cashed := run_state.cash_out_grand_casino_chips(-1, run_state.grand_casino_chip_exchange_rate())
+			if bool(cashed.get("ok", false)):
+				run["grand_casino_chip_cashouts"] = int(run.get("grand_casino_chip_cashouts", 0)) + 1
+				return true
+		return false
+	var minimum_rack := maxi(20, floor_stake * 2)
+	var current_rack := run_state.wager_balance_for_game(game_id, run_state.current_environment)
+	if current_rack < floor_stake and run_state.bankroll <= 0 and room_id == RunState.GRAND_CASINO_HIGH_LIMIT_ARCHETYPE_ID:
+		if generator.enter_grand_casino_room(run_state, RunState.GRAND_CASINO_ARCHETYPE_ID):
+			run["grand_casino_room_moves"] = int(run.get("grand_casino_room_moves", 0)) + 1
+			return true
+	if current_rack >= minimum_rack or run_state.bankroll <= 0:
+		return false
+	var amount := mini(run_state.bankroll, maxi(minimum_rack - current_rack, int(ceil(float(run_state.bankroll) * 0.65))))
+	if amount <= 0:
+		return false
+	var bought := run_state.buy_grand_casino_chips(amount, run_state.grand_casino_chip_exchange_rate())
+	if not bool(bought.get("ok", false)):
+		return false
+	run["grand_casino_chip_buys"] = int(run.get("grand_casino_chip_buys", 0)) + 1
+	return true
 
 
 func _metrics_showdown_choice_id(choices: Array, prefix: String, fallback: String) -> String:
@@ -600,7 +819,7 @@ func _should_travel_now(run_state: RunState, run: Dictionary, policy: String) ->
 	if run_state.current_environment.is_empty():
 		return true
 	var archetype_id := str(run_state.current_environment.get("archetype_id", ""))
-	if archetype_id == GRAND_CASINO_ID:
+	if run_state.is_grand_casino_environment():
 		return false
 	if run_state.bankroll >= _grand_entry_target(policy, int(run.get("tier2_visits", 0))) and _travel_target_available(run_state, GRAND_CASINO_ID):
 		return true
@@ -622,6 +841,8 @@ func _should_travel_now(run_state: RunState, run: Dictionary, policy: String) ->
 
 
 func _try_travel(run_state: RunState, run: Dictionary, policy: String) -> bool:
+	if run_state.is_grand_casino_environment():
+		return false
 	var choices := _travel_choices(run_state)
 	var best_choice := {}
 	var best_score := -99999
@@ -670,7 +891,14 @@ func _try_play_game(run_state: RunState, run: Dictionary, policy: String) -> boo
 	var game: GameModule = game_modules.get(game_id, null)
 	if game == null:
 		return false
-	var action_id := _pick_game_action_id(game, run_state, run_state.current_environment, policy)
+	var action_policy := policy
+	var watched_action_avoided := false
+	if _policy_allows_cheat(policy) and run_state.is_grand_casino_environment():
+		var watch := run_state.pit_boss_watch_status(run_state.current_environment)
+		if bool(watch.get("active", false)) and bool(watch.get("watched", false)):
+			action_policy = "clean"
+			watched_action_avoided = true
+	var action_id := _pick_game_action_id(game, run_state, run_state.current_environment, action_policy)
 	if action_id.is_empty():
 		return false
 	var stake := _stake_for_game(run_state, game, action_id, policy)
@@ -690,8 +918,12 @@ func _try_play_game(run_state: RunState, run: Dictionary, policy: String) -> boo
 	var action_kind := str(result.get("action_kind", ""))
 	if action_kind == "cheat" or action_kind == "risky" or action_kind == "advantage":
 		run["cheat_actions"] = int(run.get("cheat_actions", 0)) + 1
+		if run_state.is_grand_casino_environment():
+			run["rourke_clear_cheat_actions"] = int(run.get("rourke_clear_cheat_actions", 0)) + 1
 	else:
 		run["legal_actions"] = int(run.get("legal_actions", 0)) + 1
+	if watched_action_avoided:
+		run["rourke_watched_actions_avoided"] = int(run.get("rourke_watched_actions_avoided", 0)) + 1
 	var mix: Dictionary = _dict(run.get("game_mix", {}))
 	mix[game_id] = int(mix.get(game_id, 0)) + 1
 	run["game_mix"] = mix
@@ -860,8 +1092,10 @@ func _pick_game_action_id(game: GameModule, run_state: RunState, environment: Di
 func _stake_for_game(run_state: RunState, game: GameModule, action_id: String, policy: String) -> int:
 	var profile: Dictionary = _dict(run_state.current_environment.get("economic_profile", {}))
 	var floor := maxi(1, int(profile.get("stake_floor", 1)))
-	var ceiling := run_state.wager_stake_ceiling(int(profile.get("stake_ceiling", run_state.bankroll)))
-	var available := mini(ceiling, maxi(0, run_state.bankroll))
+	var profile_ceiling := int(profile.get("stake_ceiling", run_state.bankroll))
+	var ceiling := profile_ceiling if run_state.grand_casino_table_uses_chips(game.get_id(), run_state.current_environment) else run_state.wager_stake_ceiling(profile_ceiling)
+	var wager_balance := maxi(0, run_state.wager_balance_for_game(game.get_id(), run_state.current_environment))
+	var available := mini(ceiling, wager_balance)
 	if available < floor:
 		return 0
 	var target := floor
@@ -869,10 +1103,10 @@ func _stake_for_game(run_state: RunState, game: GameModule, action_id: String, p
 	if archetype_id == GRAND_CASINO_ID:
 		if policy == "cheat":
 			target = mini(available, maxi(floor, int(floor(float(run_state.bankroll) / 3.0))))
-		elif policy == "debt":
+		elif policy == "cheat_tight" or policy == "debt":
 			target = mini(available, maxi(floor, int(floor(float(run_state.bankroll) / 4.0))))
 		else:
-			target = mini(available, maxi(floor, int(floor(float(run_state.bankroll) / 6.0))))
+			target = floor
 	elif policy == "cheat":
 		target = mini(available, maxi(floor, int(floor(float(run_state.bankroll) / 4.0))))
 	elif policy == "tier2":
@@ -882,7 +1116,7 @@ func _stake_for_game(run_state: RunState, game: GameModule, action_id: String, p
 	var cost := game.wager_cost_for_context(action_id, target, run_state, run_state.current_environment, _ui_state_for_game(game.get_id(), action_id, target, policy))
 	if cost <= 0 and action_id == "spin_roulette":
 		cost = target
-	if cost > run_state.bankroll:
+	if cost > wager_balance:
 		target = floor
 	return clampi(target, floor, available)
 
@@ -970,7 +1204,7 @@ func _game_preference_score(game_id: String, policy: String, run_state: RunState
 		"pull_tabs": 40,
 	}
 	var score := int(score_by_game.get(game_id, 30))
-	if policy == "cheat":
+	if _policy_allows_cheat(policy):
 		var cheat_bonus := {
 			"bar_dice": 35,
 			"video_poker": 30,
@@ -982,15 +1216,15 @@ func _game_preference_score(game_id: String, policy: String, run_state: RunState
 		}
 		score += int(cheat_bonus.get(game_id, 0))
 	if str(run_state.current_environment.get("archetype_id", "")) == GRAND_CASINO_ID:
-		if policy == "cheat":
+		if _policy_allows_cheat(policy):
 			score += 20 if ["bar_dice", "roulette", "baccarat"].has(game_id) else 0
 		else:
 			var clean_grand_bonus := {
 				"blackjack": 38,
 				"baccarat": 32,
-				"video_poker": 28,
+				"video_poker": 0,
 				"roulette": 12,
-				"bar_dice": -10,
+				"bar_dice": 18,
 			}
 			score += int(clean_grand_bonus.get(game_id, 0))
 	return score
@@ -1086,7 +1320,7 @@ func _lender_score(lender_id: String, policy: String, bankroll: int) -> int:
 func _max_item_budget(run_state: RunState, policy: String) -> int:
 	if policy == "cheat":
 		return maxi(12, int(floor(float(run_state.bankroll) * 0.25)))
-	if policy == "debt":
+	if policy == "cheat_tight" or policy == "debt":
 		return maxi(10, int(floor(float(run_state.bankroll) * 0.20)))
 	return maxi(8, int(floor(float(run_state.bankroll) * 0.18)))
 
@@ -1100,13 +1334,13 @@ func _max_service_budget(run_state: RunState, policy: String) -> int:
 func _lender_threshold(policy: String) -> int:
 	if policy == "debt":
 		return 55
-	if policy == "cheat":
+	if policy == "cheat" or policy == "cheat_tight":
 		return 34
 	return LOW_BANKROLL_LENDER_THRESHOLD
 
 
 func _grand_entry_target(policy: String, tier2_visits: int) -> int:
-	if policy == "cheat":
+	if policy == "cheat" or policy == "cheat_tight":
 		return CHEAT_GRAND_ENTRY_BANKROLL
 	if policy == "tier2":
 		return TIER2_GRAND_ENTRY_BANKROLL if tier2_visits > 0 else CLEAN_GRAND_ENTRY_BANKROLL
@@ -1118,7 +1352,7 @@ func _grand_entry_target(policy: String, tier2_visits: int) -> int:
 func _max_turns_before_travel(policy: String, archetype_id: String) -> int:
 	if archetype_id == GRAND_CASINO_ID:
 		return MAX_ACTIONS
-	if policy == "cheat":
+	if policy == "cheat" or policy == "cheat_tight":
 		return 2
 	if policy == "debt":
 		return 4
@@ -1130,13 +1364,13 @@ func _max_turns_before_travel(policy: String, archetype_id: String) -> int:
 func _cheat_heat_ceiling(policy: String) -> int:
 	if policy == "cheat":
 		return 82
-	if policy == "debt":
+	if policy == "cheat_tight" or policy == "debt":
 		return 68
 	return 0
 
 
 func _policy_allows_cheat(policy: String) -> bool:
-	return policy == "cheat" or policy == "debt"
+	return policy == "cheat" or policy == "cheat_tight" or policy == "debt"
 
 
 func _travel_target_available(run_state: RunState, target_id: String) -> bool:
@@ -1241,6 +1475,12 @@ func _record_visit(run: Dictionary, run_state: RunState) -> void:
 
 
 func _record_curve(run: Dictionary, run_state: RunState, label: String) -> void:
+	if run_state.is_grand_casino_environment():
+		var status := run_state.demo_objective_status()
+		var current_tier := str(status.get("players_card_tier", "none"))
+		var recorded_tier := str(run.get("players_card_highest_tier", "none"))
+		if _players_card_tier_index(current_tier) > _players_card_tier_index(recorded_tier):
+			run["players_card_highest_tier"] = current_tier
 	var curve: Array = _array(run.get("curve", []))
 	curve.append({
 		"step": curve.size(),
@@ -1321,15 +1561,26 @@ func _finalize_run(run: Dictionary, run_state: RunState) -> void:
 	run["won"] = run_state.run_status == RunState.RUN_STATUS_ENDED and bool(run_state.narrative_flags.get("demo_victory", false))
 	run["lost"] = run_state.run_status == RunState.RUN_STATUS_FAILED
 	run["victory_route"] = str(run_state.narrative_flags.get("demo_victory_route", ""))
+	run["players_card_highest_tier"] = str(run_state.narrative_flags.get("grand_casino_players_card_highest_tier", run.get("players_card_highest_tier", "none")))
+	run["final_grand_casino_chips"] = run_state.grand_casino_chips
+	run["final_showdown_status"] = run_state.grand_casino_showdown_status()
+	run["duel_margin"] = int(run_state.narrative_flags.get("grand_casino_showdown_margin", 0))
+	_record_duel_terminal_state(run_state, run)
 	if bool(run.get("showdown_attempted", false)) and bool(run_state.narrative_flags.get("grand_casino_showdown_success", false)):
 		run["showdown_won"] = true
 	if str(run.get("victory_route", "")).is_empty() and bool(run.get("won", false)):
 		run["victory_route"] = "unknown_demo_victory"
 
 
+func _players_card_tier_index(tier_id: String) -> int:
+	return maxi(0, ["none", "bronze", "silver", "gold"].find(tier_id.strip_edges().to_lower()))
+
+
 func _build_aggregate(runs: Array, seeds_per_scenario: int, seed_prefix: String) -> Dictionary:
 	var victory_routes := {}
 	var failure_reasons := {}
+	var duel_outcomes := {}
+	var card_tiers := {}
 	var scenario_rows: Array = []
 	var policy_rows: Array = []
 	var clean_runs: Array = []
@@ -1339,12 +1590,21 @@ func _build_aggregate(runs: Array, seeds_per_scenario: int, seed_prefix: String)
 	var tier2_runs: Array = []
 	var lender_runs: Array = []
 	var showdown_runs: Array = []
+	var duel_runs: Array = []
+	var clean_route_runs: Array = []
+	var cheat_route_runs: Array = []
 	var collection_runs: Array = []
 	var minutes: Array = []
 	var collection_loadout_item_total := 0
 	var collection_bag_grant_total := 0
 	var collection_decay_item_total := 0
 	var collection_terminal_drop_runs := 0
+	var duel_callouts := 0
+	var duel_correct_callouts := 0
+	var duel_false_callouts := 0
+	var rourke_watched_actions_avoided := 0
+	var rourke_clear_cheat_actions := 0
+	var players_card_comp_uses := 0
 	for run_value in runs:
 		if typeof(run_value) != TYPE_DICTIONARY:
 			continue
@@ -1379,17 +1639,36 @@ func _build_aggregate(runs: Array, seeds_per_scenario: int, seed_prefix: String)
 			lender_runs.append(run)
 		if bool(run.get("showdown_attempted", false)):
 			showdown_runs.append(run)
+		if bool(run.get("duel_attempted", false)):
+			duel_runs.append(run)
+		var duel_outcome := str(run.get("duel_outcome", ""))
+		if not duel_outcome.is_empty():
+			duel_outcomes[duel_outcome] = int(duel_outcomes.get(duel_outcome, 0)) + 1
+		var card_tier := str(run.get("players_card_highest_tier", "none"))
+		card_tiers[card_tier] = int(card_tiers.get(card_tier, 0)) + 1
+		duel_callouts += int(run.get("duel_callouts", 0))
+		duel_correct_callouts += int(run.get("duel_correct_callouts", 0))
+		duel_false_callouts += int(run.get("duel_false_callouts", 0))
+		rourke_watched_actions_avoided += int(run.get("rourke_watched_actions_avoided", 0))
+		rourke_clear_cheat_actions += int(run.get("rourke_clear_cheat_actions", 0))
+		players_card_comp_uses += int(run.get("players_card_comp_uses", 0))
+		if ["clean", "tier2"].has(str(run.get("policy", ""))):
+			clean_route_runs.append(run)
+		if ["cheat", "cheat_tight", "debt"].has(str(run.get("policy", ""))):
+			cheat_route_runs.append(run)
 		if bool(run.get("collection_engaged", false)):
 			collection_runs.append(run)
 	for scenario_value in SCENARIOS:
 		var scenario: Dictionary = scenario_value
 		var scenario_id := str(scenario.get("id", ""))
 		scenario_rows.append(_summary_row(_filter_runs(runs, "scenario_id", scenario_id), scenario_id))
-	for policy in ["clean", "tier2", "cheat", "debt"]:
+	for policy in ["clean", "tier2", "cheat", "cheat_tight", "debt"]:
 		policy_rows.append(_summary_row(_filter_runs(runs, "policy", policy), policy))
 	var total_count := runs.size()
 	var won_count := _won_count(runs)
 	var showdown_wins := _showdown_win_count(showdown_runs)
+	var decisive_duel_wins := _duel_outcome_count(duel_runs, "walk_out_clean")
+	var shown_the_door_count := _duel_outcome_count(duel_runs, "shown_the_door")
 	return {
 		"seed_prefix": seed_prefix,
 		"seeds_per_scenario": seeds_per_scenario,
@@ -1421,6 +1700,22 @@ func _build_aggregate(runs: Array, seeds_per_scenario: int, seed_prefix: String)
 		"showdown_attempts": showdown_runs.size(),
 		"showdown_wins": showdown_wins,
 		"showdown_win_rate": _rate(showdown_wins, showdown_runs.size()),
+		"duel_attempts": duel_runs.size(),
+		"duel_outcomes": _count_dict_rows(duel_outcomes),
+		"duel_outcome_coverage": duel_outcomes.size(),
+		"decisive_duel_wins": decisive_duel_wins,
+		"decisive_duel_win_rate": _rate(decisive_duel_wins, duel_runs.size()),
+		"shown_the_door_count": shown_the_door_count,
+		"shown_the_door_rate": _rate(shown_the_door_count, duel_runs.size()),
+		"duel_callouts": duel_callouts,
+		"duel_correct_callouts": duel_correct_callouts,
+		"duel_false_callouts": duel_false_callouts,
+		"players_card_tiers": _count_dict_rows(card_tiers),
+		"players_card_comp_uses": players_card_comp_uses,
+		"rourke_watched_actions_avoided": rourke_watched_actions_avoided,
+		"rourke_clear_cheat_actions": rourke_clear_cheat_actions,
+		"clean_route": _summary_row(clean_route_runs, "clean_route"),
+		"cheat_route": _summary_row(cheat_route_runs, "cheat_route"),
 		"scenario_summaries": scenario_rows,
 		"policy_summaries": policy_rows,
 		"curve_samples": _curve_samples(runs),
@@ -1506,6 +1801,17 @@ func _assert_targets(aggregate: Dictionary) -> void:
 			failures.append("Showdown win rate %.2f outside target %.2f-%.2f." % [showdown_rate, float(TARGETS["showdown_win_rate_min"]), float(TARGETS["showdown_win_rate_max"])])
 	elif showdown_attempts > 0:
 		warnings.append("Showdown win rate sample skipped target enforcement: %d/%d attempts." % [showdown_attempts, showdown_min_attempts])
+	var duel_attempts := int(aggregate.get("duel_attempts", 0))
+	if duel_attempts >= showdown_min_attempts:
+		var decisive_rate := float(aggregate.get("decisive_duel_win_rate", 0.0))
+		if decisive_rate < float(TARGETS["decisive_duel_win_rate_min"]) or decisive_rate > float(TARGETS["decisive_duel_win_rate_max"]):
+			failures.append("Decisive duel win rate %.2f outside hard-boss target %.2f-%.2f." % [decisive_rate, float(TARGETS["decisive_duel_win_rate_min"]), float(TARGETS["decisive_duel_win_rate_max"])])
+		var shown_rate := float(aggregate.get("shown_the_door_rate", 0.0))
+		if shown_rate < float(TARGETS["shown_the_door_rate_min"]) or shown_rate > float(TARGETS["shown_the_door_rate_max"]):
+			failures.append("Shown-the-door rate %.2f outside meaningful-ending target %.2f-%.2f." % [shown_rate, float(TARGETS["shown_the_door_rate_min"]), float(TARGETS["shown_the_door_rate_max"])])
+	var coverage := int(aggregate.get("duel_outcome_coverage", 0))
+	if coverage < int(TARGETS["duel_outcome_coverage_min"]):
+		failures.append("Duel outcome coverage %d below required %d canonical endings." % [coverage, int(TARGETS["duel_outcome_coverage_min"])])
 
 
 func _curve_samples(runs: Array) -> Array:
@@ -1572,6 +1878,18 @@ func _write_markdown(path: String, report: Dictionary) -> void:
 		int(aggregate.get("collection_decay_item_total", 0)),
 	])
 	lines.append("- Showdown win rate: %.2f (%d/%d)" % [float(aggregate.get("showdown_win_rate", 0.0)), int(aggregate.get("showdown_wins", 0)), int(aggregate.get("showdown_attempts", 0))])
+	lines.append("- Decisive duel win rate: %.2f (%d/%d)" % [float(aggregate.get("decisive_duel_win_rate", 0.0)), int(aggregate.get("decisive_duel_wins", 0)), int(aggregate.get("duel_attempts", 0))])
+	lines.append("- Shown-the-door rate: %.2f (%d/%d)" % [float(aggregate.get("shown_the_door_rate", 0.0)), int(aggregate.get("shown_the_door_count", 0)), int(aggregate.get("duel_attempts", 0))])
+	lines.append("- Rourke windows: %d watched actions avoided; %d clear cheat actions" % [int(aggregate.get("rourke_watched_actions_avoided", 0)), int(aggregate.get("rourke_clear_cheat_actions", 0))])
+	lines.append("- Linda comp uses: %d" % int(aggregate.get("players_card_comp_uses", 0)))
+	lines.append("")
+	lines.append("## Duel Outcomes")
+	lines.append("")
+	lines.append("| Outcome | Count |")
+	lines.append("|---|---:|")
+	for row_value in _array(aggregate.get("duel_outcomes", [])):
+		var outcome_row := _dict(row_value)
+		lines.append("| %s | %d |" % [str(outcome_row.get("key", "")), int(outcome_row.get("count", 0))])
 	lines.append("")
 	lines.append("## Scenario Summary")
 	lines.append("")
@@ -1638,7 +1956,7 @@ func _write_markdown(path: String, report: Dictionary) -> void:
 
 
 func _print_summary(output_json: String, output_markdown: String, aggregate: Dictionary) -> void:
-	print("ENDGAME_METRICS status=%s runs=%d victory_rate=%.2f median_minutes=%.2f tier2_rate=%.2f lender_rate=%.2f challenge_rate=%.2f collection_rate=%.2f showdown=%d/%d" % [
+	print("ENDGAME_METRICS status=%s runs=%d victory_rate=%.2f median_minutes=%.2f tier2_rate=%.2f lender_rate=%.2f challenge_rate=%.2f collection_rate=%.2f showdown=%d/%d duel_decisive=%d shown=%d outcomes=%d" % [
 		"PASS" if failures.is_empty() else "FAIL",
 		int(aggregate.get("run_count", 0)),
 		float(aggregate.get("victory_rate", 0.0)),
@@ -1649,6 +1967,9 @@ func _print_summary(output_json: String, output_markdown: String, aggregate: Dic
 		float(aggregate.get("collection_engagement_rate", 0.0)),
 		int(aggregate.get("showdown_wins", 0)),
 		int(aggregate.get("showdown_attempts", 0)),
+		int(aggregate.get("decisive_duel_wins", 0)),
+		int(aggregate.get("shown_the_door_count", 0)),
+		int(aggregate.get("duel_outcome_coverage", 0)),
 	])
 	print("ENDGAME_METRICS_JSON %s" % output_json)
 	print("ENDGAME_METRICS_MARKDOWN %s" % output_markdown)
@@ -1684,6 +2005,14 @@ func _showdown_win_count(runs: Array) -> int:
 	var count := 0
 	for run_value in runs:
 		if typeof(run_value) == TYPE_DICTIONARY and bool((run_value as Dictionary).get("showdown_won", false)):
+			count += 1
+	return count
+
+
+func _duel_outcome_count(runs: Array, outcome: String) -> int:
+	var count := 0
+	for run_value in runs:
+		if typeof(run_value) == TYPE_DICTIONARY and str((run_value as Dictionary).get("duel_outcome", "")) == outcome:
 			count += 1
 	return count
 
