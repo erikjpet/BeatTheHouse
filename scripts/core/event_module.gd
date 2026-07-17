@@ -585,32 +585,56 @@ func _grand_casino_showdown_choices(payload: Dictionary, run_state: RunState, en
 		return all_choices
 	var active := bool(run_state.narrative_flags.get("grand_casino_showdown_active", false))
 	var pending := bool(run_state.narrative_flags.get("grand_casino_showdown_pending", false)) or bool(run_state.narrative_flags.get("the_house_calls_pending", false))
-	var result: Array = []
-	for choice_value in all_choices:
-		if typeof(choice_value) != TYPE_DICTIONARY:
-			continue
-		var choice_data := (choice_value as Dictionary).duplicate(true)
-		var choice_id := str(choice_data.get("id", ""))
-		if active and ["hold_steady", "talk_down", "take_the_edge"].has(choice_id):
-			result.append(choice_data)
-		elif not active and pending and choice_id == "enter_back_room":
-			result.append(choice_data)
-	return result
+	if not active and pending:
+		return _grand_casino_showdown_presented_choices(all_choices)
+	if not active:
+		return []
+	var config := _grand_casino_showdown_config(payload)
+	var step := str(run_state.narrative_flags.get("grand_casino_showdown_step", ""))
+	match step:
+		RunState.GRAND_CASINO_SHOWDOWN_STEP_WALK:
+			return _grand_casino_showdown_walk_choices(payload, run_state)
+		RunState.GRAND_CASINO_SHOWDOWN_STEP_PAT_DOWN:
+			var pat_down_config := _copy_dict(payload.get("pat_down", {}))
+			var continue_choice := _copy_dict(pat_down_config.get("continue_choice", {}))
+			if continue_choice.is_empty():
+				return []
+			var pat_down := _copy_dict(run_state.narrative_flags.get("grand_casino_showdown_pat_down", {}))
+			var tier := str(pat_down.get("tier", "clean"))
+			var tier_message := str(_copy_dict(pat_down_config.get("tier_messages", {})).get(tier, "Rourke's search ends."))
+			continue_choice["scene_summary"] = "Pat-down: %s. %s" % [tier.capitalize(), tier_message]
+			continue_choice["presentation_consequence_summary"] = str(continue_choice.get("consequence_summary", ""))
+			return [continue_choice]
+		RunState.GRAND_CASINO_SHOWDOWN_STEP_INTERROGATION:
+			var choices := run_state.grand_casino_showdown_interrogation_choices(config)
+			var scene_summary := _grand_casino_interrogation_scene_summary(run_state.grand_casino_showdown_interrogation_status(config))
+			for index in range(choices.size()):
+				if typeof(choices[index]) == TYPE_DICTIONARY:
+					var choice_data := (choices[index] as Dictionary).duplicate(true)
+					choice_data["scene_summary"] = scene_summary
+					choice_data["presentation_consequence_summary"] = str(choice_data.get("consequence_summary", ""))
+					choices[index] = choice_data
+			return choices
+	return []
 
 
 func _resolve_grand_casino_showdown(run_state: RunState, environment: Dictionary, payload: Dictionary, choice_id: String) -> Dictionary:
 	var selected_choice := choice(choice_id, run_state, environment)
 	if selected_choice.is_empty():
 		return _empty_result(choice_id, environment, "Showdown choice is not available.")
-	var config := _copy_dict(payload.get("showdown_tuning", {}))
-	config["success_message"] = str(payload.get("success_message", ""))
-	config["failure_message"] = str(payload.get("failure_message", ""))
+	var config := _grand_casino_showdown_config(payload)
 	var choice_key := str(selected_choice.get("id", choice_id))
 	var outcome := {}
 	if choice_key == "enter_back_room":
 		outcome = run_state.start_grand_casino_showdown(config)
+	elif str(run_state.narrative_flags.get("grand_casino_showdown_step", "")) == RunState.GRAND_CASINO_SHOWDOWN_STEP_WALK:
+		outcome = run_state.resolve_grand_casino_showdown_walk(str(selected_choice.get("showdown_method", "")), str(selected_choice.get("item_id", "")), config)
+	elif str(run_state.narrative_flags.get("grand_casino_showdown_step", "")) == RunState.GRAND_CASINO_SHOWDOWN_STEP_PAT_DOWN:
+		outcome = run_state.continue_grand_casino_showdown_pat_down(config)
+	elif str(run_state.narrative_flags.get("grand_casino_showdown_step", "")) == RunState.GRAND_CASINO_SHOWDOWN_STEP_INTERROGATION:
+		outcome = run_state.resolve_grand_casino_showdown_interrogation(choice_key, config)
 	else:
-		outcome = run_state.resolve_grand_casino_showdown_pressure(choice_key, config)
+		outcome = {"ok": false, "message": "The showdown cannot advance from here."}
 	var ok := bool(outcome.get("ok", false))
 	var message := str(outcome.get("message", selected_choice.get("text", get_display_name())))
 	var deltas := GameModule.empty_result_deltas()
@@ -629,11 +653,100 @@ func _resolve_grand_casino_showdown(run_state: RunState, environment: Dictionary
 	})
 	result["event_id"] = get_id()
 	result["choice_id"] = choice_key
-	result["showdown"] = _copy_dict(outcome.get("status", {}))
+	result["showdown"] = _copy_dict(outcome.get("status", run_state.grand_casino_showdown_status(config)))
 	result["showdown_check"] = _copy_dict(outcome.get("check", {}))
+	result["grand_casino_duel_terms"] = _copy_dict(run_state.narrative_flags.get("grand_casino_duel_terms", {}))
+	if outcome.has("success"):
+		result["success"] = bool(outcome.get("success", false))
 	if run_state.is_terminal():
 		result["state"] = GameModule.RESULT_ENDED
 	return result
+
+
+func _grand_casino_showdown_config(payload: Dictionary) -> Dictionary:
+	var config := _copy_dict(payload.get("showdown_tuning", {}))
+	for key in ["walk", "pat_down", "interrogation", "duel_terms"]:
+		config[key] = _copy_dict(payload.get(key, {}))
+	config["success_message"] = str(payload.get("success_message", ""))
+	config["failure_message"] = str(payload.get("failure_message", ""))
+	return config
+
+
+func _grand_casino_showdown_presented_choices(choices: Array) -> Array:
+	var result: Array = []
+	for choice_value in choices:
+		if typeof(choice_value) != TYPE_DICTIONARY:
+			continue
+		var choice_data := (choice_value as Dictionary).duplicate(true)
+		choice_data["presentation_consequence_summary"] = str(choice_data.get("consequence_summary", ""))
+		result.append(choice_data)
+	return result
+
+
+func _grand_casino_showdown_walk_choices(payload: Dictionary, run_state: RunState) -> Array:
+	var walk_config := _copy_dict(payload.get("walk", {}))
+	var status := run_state.grand_casino_showdown_walk_status()
+	if bool(status.get("ditch_used", false)):
+		return []
+	var inventory_items := _copy_array(status.get("inventory", []))
+	var result: Array = []
+	for option_value in _copy_array(walk_config.get("choices", [])):
+		if typeof(option_value) != TYPE_DICTIONARY:
+			continue
+		var option: Dictionary = option_value
+		var method := str(option.get("method", ""))
+		if method == "keep":
+			var keep_choice := option.duplicate(true)
+			keep_choice["showdown_method"] = method
+			keep_choice["item_id"] = ""
+			keep_choice["scene_summary"] = "The walk: change one pocket before Rourke's door."
+			keep_choice["presentation_consequence_summary"] = str(keep_choice.get("consequence_summary", ""))
+			result.append(keep_choice)
+			continue
+		if bool(option.get("requires_crew", false)) and not bool(status.get("crew_available", false)):
+			continue
+		for item_value in inventory_items:
+			var item_id := str(item_value)
+			if item_id.is_empty():
+				continue
+			var item_label := _grand_casino_showdown_item_label(item_id)
+			var choice_data := option.duplicate(true)
+			choice_data["id"] = "%s__%s" % [str(option.get("id", method)), item_id]
+			choice_data["label"] = str(option.get("label", item_label)).replace("{item}", item_label)
+			choice_data["text"] = str(option.get("text", "")).replace("{item}", item_label)
+			choice_data["showdown_method"] = method
+			choice_data["item_id"] = item_id
+			choice_data["scene_summary"] = "The walk: change one pocket before Rourke's door."
+			choice_data["presentation_consequence_summary"] = str(choice_data.get("consequence_summary", ""))
+			result.append(choice_data)
+	return result
+
+
+func _grand_casino_showdown_item_label(item_id: String) -> String:
+	if content_library != null:
+		var definition := content_library.item(item_id)
+		if not definition.is_empty():
+			return str(definition.get("display_name", item_id.replace("_", " ").capitalize()))
+	return item_id.replace("_", " ").capitalize()
+
+
+func _grand_casino_interrogation_scene_summary(status: Dictionary) -> String:
+	var stakes := _copy_dict(status.get("stakes", {}))
+	return "Beat %d/%d. Rourke: %s Stakes: heat %s; proof %s; clean %s; items %s; drink/debt %s; history %s." % [
+		int(status.get("beat_number", 0)),
+		int(status.get("beat_count", 0)),
+		str(status.get("evidence_text", "Rourke opens the ledger.")),
+		_signed_value(-int(stakes.get("heat_penalty", 0))),
+		_signed_value(-int(stakes.get("evidence_penalty", 0))),
+		_signed_value(int(stakes.get("clean_play_modifier", 0))),
+		_signed_value(int(stakes.get("item_modifier", 0))),
+		_signed_value(-int(stakes.get("alcohol_debt_penalty", 0))),
+		_signed_value(int(stakes.get("prior_boss_event_modifier", 0))),
+	]
+
+
+func _signed_value(value: int) -> String:
+	return "+%d" % value if value > 0 else str(value)
 
 
 func _grand_casino_high_roller_choices(payload: Dictionary, run_state: RunState, _environment: Dictionary) -> Array:

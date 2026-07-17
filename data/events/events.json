@@ -1996,7 +1996,7 @@
     },
     "payload": {
       "kind": "grand_casino_showdown",
-      "summary": "Final house call.",
+      "summary": "Rourke controls the room.",
       "success_message": "Rourke cannot prove enough to hold you. The casino lets you walk with your winnings. Rourke lets the elevator close; the house will remember your face.",
       "failure_message": "The story falls apart in the back room. The casino takes you out back and the run ends.",
       "showdown_tuning": {
@@ -2004,30 +2004,188 @@
         "min_success_chance": 5,
         "max_success_chance": 95
       },
+      "walk": {
+        "trash_seen_chance_percent": 15,
+        "trash_seen_heat": 4,
+        "trash_flavors": [
+          {
+            "id": "planter",
+            "message": "The planter swallows it under black leaves."
+          },
+          {
+            "id": "service_bin",
+            "message": "A service bin carries it off the floor."
+          },
+          {
+            "id": "washroom",
+            "message": "The washroom cistern takes it without a sound."
+          }
+        ],
+        "choices": [
+          {
+            "id": "hand_to_crew",
+            "method": "crew",
+            "label": "Crew: {item}",
+            "text": "The Crew holds {item} outside.",
+            "consequence_summary": "Saved if you survive",
+            "requires_crew": true
+          },
+          {
+            "id": "trash_item",
+            "method": "trash",
+            "label": "Trash: {item}",
+            "text": "Lose {item} before the search.",
+            "consequence_summary": "Lost; small heat risk"
+          },
+          {
+            "id": "keep_everything",
+            "method": "keep",
+            "label": "Keep Everything",
+            "text": "Carry everything through Rourke's door.",
+            "consequence_summary": "Pat-down checks every item"
+          }
+        ]
+      },
+      "pat_down": {
+        "blatant_min_items": 3,
+        "serious_handicap": 18,
+        "classifications": [
+          {
+            "id": "contraband",
+            "item_ids": [
+              "marked_cards",
+              "foil_sleeve",
+              "weighted_keyring"
+            ]
+          },
+          {
+            "id": "surveillance",
+            "item_ids": [
+              "xray_glasses",
+              "tab_detector",
+              "tarot_card"
+            ]
+          }
+        ],
+        "tier_messages": {
+          "clean": "The pat-down finds nothing worth Rourke's time.",
+          "minor": "One crooked tool lands on Rourke's desk.",
+          "serious": "The search strips your kit and the terms harden.",
+          "blatant": "The search finds a loaded cheating kit. Rourke ends the meeting before cards reach the table."
+        },
+        "continue_choice": {
+          "id": "face_rourke",
+          "label": "Take the Chair",
+          "text": "Rourke opens the run ledger.",
+          "consequence_summary": "Three questions follow"
+        },
+        "blatant_failure_message": "Rourke finds a loaded cheating kit. The casino takes you out back before the game begins."
+      },
+      "interrogation": {
+        "beat_count": 3,
+        "evidence": [
+          {
+            "id": "watched_cheat",
+            "condition": "watched_cheat",
+            "text": "I watched that move under my own lights."
+          },
+          {
+            "id": "cheat_evidence",
+            "condition": "cheat_evidence",
+            "text": "The floor logged an edge in your hands."
+          },
+          {
+            "id": "attention",
+            "condition": "attention",
+            "text": "My floor kept writing your name down."
+          },
+          {
+            "id": "open_debt",
+            "condition": "open_debt",
+            "text": "Your {open_debt_count} open markers explain the pressure."
+          },
+          {
+            "id": "drunk",
+            "condition": "drunk",
+            "text": "Your hands put the drinks at {drunk_level}."
+          },
+          {
+            "id": "prior_cameo",
+            "condition": "prior_cameo",
+            "text": "We met before you reached my floor."
+          },
+          {
+            "id": "card_ineligible",
+            "condition": "card_ineligible",
+            "text": "Linda closed her ledger when your edge showed."
+          },
+          {
+            "id": "clean_record",
+            "condition": "clean_play",
+            "text": "The ledger shows {games_played} settled clean games."
+          },
+          {
+            "id": "linda_standing",
+            "condition": "linda_standing",
+            "text": "Linda still put her name beside yours."
+          },
+          {
+            "id": "crew_ties",
+            "condition": "crew_ties",
+            "text": "The Crew already carried part of your story."
+          },
+          {
+            "id": "heat_ledger",
+            "condition": "always",
+            "text": "Your heat reached {heat} before this door."
+          },
+          {
+            "id": "winnings_ledger",
+            "condition": "always",
+            "text": "The cage has your run at {net_winnings} net."
+          },
+          {
+            "id": "table_ledger",
+            "condition": "always",
+            "text": "Every one of your {games_played} games is logged."
+          }
+        ],
+        "choices": [
+          {
+            "id": "hold_steady",
+            "label": "Hold Steady",
+            "text": "Let the run record answer.",
+            "consequence_summary": "Record strength {strength}"
+          },
+          {
+            "id": "talk_down",
+            "label": "Name Your People",
+            "text": "Put Linda and the Crew between the claims.",
+            "consequence_summary": "Social strength {strength}"
+          },
+          {
+            "id": "take_the_edge",
+            "label": "Take the Edge",
+            "text": "Risk one fresh tell under Rourke's stare.",
+            "consequence_summary": "Edge strength {strength}; watched"
+          }
+        ]
+      },
+      "duel_terms": {
+        "base_stack": 100,
+        "rourke_stack_per_aggression": 5,
+        "serious_forced_ante": 5,
+        "margin_thresholds": {
+          "walk_out_clean_min": 12,
+          "shown_the_door_min": -8
+        }
+      },
       "choices": [
         {
           "id": "enter_back_room",
           "label": "Enter Back Room",
-          "text": "You follow Rourke off the floor and take the chair across from him.",
-          "consequence_summary": "Showdown starts"
-        },
-        {
-          "id": "hold_steady",
-          "label": "Hold Steady",
-          "text": "You keep the story simple and let the record speak.",
-          "consequence_summary": "Clean play helps if the floor has no proof"
-        },
-        {
-          "id": "talk_down",
-          "label": "Talk Down",
-          "text": "You frame the win as comps, manners, and lucky timing.",
-          "consequence_summary": "A modest social edge"
-        },
-        {
-          "id": "take_the_edge",
-          "label": "Take Edge",
-          "text": "You try one last hidden edge under Rourke's stare.",
-          "consequence_summary": "High upside, creates watched evidence"
+          "text": "Rourke leads you off the floor.",
+          "consequence_summary": "The walk begins"
         }
       ]
     }

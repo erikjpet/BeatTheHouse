@@ -247,6 +247,14 @@ only to `grand_casino`.
 
 The showdown uses the existing event id `the_house_calls`.
 
+The 0.5 front half now serializes `walk`, `pat_down`, and three
+`interrogation` beats before the phase-four game. A Crew handoff is removed
+from run inventory during the walk and returned on survival. Until slice 8
+lands the meta-side return path, a `casino_taken_out_back` result leaves that
+handoff lost and records `grand_casino_showdown_crew_handoff_lost_on_failure`.
+The three beats produce the saved `grand_casino_duel_terms` contract consumed
+by the phase-four duel.
+
 ### Beat 1: Arrival
 
 State enters `showdown-active`. Rourke calls the player away from the floor to
@@ -439,6 +447,14 @@ Required flags:
 | `grand_casino_showdown_active` | bool | Showdown encounter is currently resolving. |
 | `grand_casino_showdown_attempt` | int | 1-based attempt count. |
 | `grand_casino_showdown_trigger_reason` | String | Heat, forced heat, dirty money, or resume trigger. |
+| `grand_casino_showdown_step` | String | Current `walk`, `pat_down`, `interrogation`, or temporary `legacy_phase_4` boundary. |
+| `grand_casino_showdown_ditch_used` | bool | The one walk-phase ditch decision is committed. |
+| `grand_casino_showdown_crew_handoff_item_id` | String | Item held safely by the Crew until survival resolves. |
+| `grand_casino_showdown_pat_down` | Dictionary | Visible punishment tier, classified/confiscated items, and handicap. |
+| `grand_casino_showdown_interrogation_evidence` | Array[String] | Three deterministically selected run-fact evidence ids. |
+| `grand_casino_showdown_interrogation_beat` | int | Zero-based next interrogation beat. |
+| `grand_casino_showdown_interrogation_answers` | Array[Dictionary] | Serialized evidence/choice/strength result for each answered beat. |
+| `grand_casino_duel_terms` | Dictionary | Starting stacks, handicaps, Rourke pressure, margin thresholds, and temporary-check modifier. |
 | `grand_casino_showdown_pressure_choice` | String | Selected pressure response. |
 | `grand_casino_showdown_edge_taken` | bool | Player chose `take_the_edge`. |
 | `grand_casino_showdown_roll` | int | Deterministic final roll. |

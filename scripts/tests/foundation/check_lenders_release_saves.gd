@@ -1347,230 +1347,240 @@ func _check_demo_boss_objective_foundation(library: ContentLibrary, failures: Ar
 	var showdown_tuning_value: Variant = finale_payload.get("showdown_tuning", {})
 	if typeof(showdown_tuning_value) == TYPE_DICTIONARY:
 		showdown_config = (showdown_tuning_value as Dictionary).duplicate(true)
+	for showdown_key in ["walk", "pat_down", "interrogation", "duel_terms"]:
+		showdown_config[showdown_key] = _copy_dict(finale_payload.get(showdown_key, {}))
 	showdown_config["success_message"] = str(finale_payload.get("success_message", ""))
 	showdown_config["failure_message"] = str(finale_payload.get("failure_message", ""))
 
-	var active_run: RunState = RunStateScript.new()
-	active_run.start_new("M2-FUN-HOUSE-CALLS-ACTIVE")
-	active_run.set_environment(environment.to_dict())
-	active_run.current_environment["turns"] = 0
-	active_run.add_suspicion("boss_heat_fixture", showdown_heat_threshold, "behavior")
-	active_run.evaluate_environment_objective_state()
-	if not finale_module.can_trigger(active_run, active_run.current_environment):
-		failures.append("The House Calls should trigger from the pending showdown flag.")
-	var pending_choices: Array = finale_module.choices(active_run, active_run.current_environment)
-	if pending_choices.size() != 1 or str((pending_choices[0] as Dictionary).get("id", "")) != "enter_back_room":
-		failures.append("Pending showdown should expose only the back-room arrival beat.")
-	var arrival_result := finale_module.resolve(active_run, active_run.current_environment, "enter_back_room")
-	if not bool(arrival_result.get("ok", false)) or not bool(active_run.narrative_flags.get("grand_casino_showdown_active", false)):
-		failures.append("Back-room arrival did not start the active Pit Boss Showdown.")
-	if str(active_run.narrative_flags.get("grand_casino_showdown_step", "")) != "pressure_choice":
-		failures.append("Back-room arrival did not preserve the pressure-choice showdown step.")
-	var pressure_choices: Array = finale_module.choices(active_run, active_run.current_environment)
-	var pressure_choice_ids: Array = []
-	for pressure_choice_value in pressure_choices:
-		if typeof(pressure_choice_value) == TYPE_DICTIONARY:
-			pressure_choice_ids.append(str((pressure_choice_value as Dictionary).get("id", "")))
-	if not pressure_choice_ids.has("hold_steady") or not pressure_choice_ids.has("talk_down") or not pressure_choice_ids.has("take_the_edge"):
-		failures.append("Active showdown did not expose all pressure choices.")
-	var active_slot_id := "foundation_check_house_calls_active"
+	var pat_down_config := _copy_dict(showdown_config.get("pat_down", {}))
+	var classifications := _copy_array(pat_down_config.get("classifications", []))
+	if classifications.size() != 2 or int(pat_down_config.get("blatant_min_items", 0)) != 3:
+		failures.append("Showdown contraband tiers were not data-authored with the locked blatant threshold.")
+	var classification_items := {}
+	for classification_value in classifications:
+		if typeof(classification_value) == TYPE_DICTIONARY:
+			var classification: Dictionary = classification_value
+			classification_items[str(classification.get("id", ""))] = _string_array(classification.get("item_ids", []))
+	if JSON.stringify(classification_items.get("contraband", [])) != JSON.stringify(["marked_cards", "foil_sleeve", "weighted_keyring"]) or JSON.stringify(classification_items.get("surveillance", [])) != JSON.stringify(["xray_glasses", "tab_detector", "tarot_card"]):
+		failures.append("Showdown pat-down data drifted from the canonical item-modifier classification sets.")
+
+	var active_run := _new_showdown_phase_run("M2-FUN-HOUSE-CALLS-ACTIVE", environment.to_dict(), finale_module)
+	if active_run == null:
+		failures.append("Back-room arrival did not start the phased Pit Boss Showdown.")
+		return
+	if str(active_run.narrative_flags.get("grand_casino_showdown_step", "")) != RunState.GRAND_CASINO_SHOWDOWN_STEP_WALK:
+		failures.append("Back-room arrival did not enter the serialized walk phase.")
+	var walk_choices := finale_module.choices(active_run, active_run.current_environment)
+	if _showdown_choice_id(walk_choices, "keep_everything").is_empty() or not _showdown_choice_id(walk_choices, "hand_to_crew__").is_empty():
+		failures.append("The walk did not expose Keep while correctly gating Crew handoff.")
+	var crew_debt_run := _new_showdown_phase_run("M2-FUN-HOUSE-CALLS-CREW-DEBT", environment.to_dict(), finale_module, ["scratch_pad"])
+	crew_debt_run.add_debt({"id": "crew_walk_marker", "lender_id": "the_crew", "balance": 30, "status": "active"})
+	if _showdown_choice_id(finale_module.choices(crew_debt_run, crew_debt_run.current_environment), "hand_to_crew__scratch_pad").is_empty():
+		failures.append("A real Crew lender marker did not prove interaction for the walk handoff.")
+	var active_slot_id := "foundation_check_house_calls_walk"
 	save_error = save_service.save_run(active_run, active_slot_id)
 	if save_error != OK:
-		failures.append("Save service could not save active showdown state: %s." % save_error)
+		failures.append("Save service could not save the walk phase: %s." % save_error)
 		return
-	var loaded_active = save_service.load_run(active_slot_id)
-	if loaded_active == null:
-		failures.append("Save service could not reload active showdown state.")
+	var loaded_walk = save_service.load_run(active_slot_id)
+	if loaded_walk == null or str(loaded_walk.narrative_flags.get("grand_casino_showdown_step", "")) != RunState.GRAND_CASINO_SHOWDOWN_STEP_WALK:
+		failures.append("The walk phase did not survive SaveService load.")
 		return
-	if not bool(loaded_active.narrative_flags.get("grand_casino_showdown_active", false)) or str(loaded_active.narrative_flags.get("grand_casino_showdown_step", "")) != "pressure_choice":
-		failures.append("Active showdown step did not survive SaveService load.")
-	var loaded_pressure_choices: Array = finale_module.choices(loaded_active, loaded_active.current_environment)
-	if loaded_pressure_choices.size() != 3:
-		failures.append("Loaded active showdown did not preserve pressure choices.")
 
-	var clean_preview := active_run.grand_casino_showdown_status(showdown_config, "hold_steady")
-	var clean_check: Dictionary = {}
-	var clean_check_value: Variant = clean_preview.get("check", {})
-	if typeof(clean_check_value) == TYPE_DICTIONARY:
-		clean_check = clean_check_value as Dictionary
-	var item_run: RunState = RunStateScript.new()
-	item_run.start_new("M2-FUN-HOUSE-CALLS-ITEM")
-	item_run.set_environment(environment.to_dict())
-	item_run.current_environment["turns"] = 0
-	item_run.add_item("cheap_sunglasses")
-	item_run.add_item("card_counters_notes")
-	item_run.add_suspicion("boss_heat_fixture", showdown_heat_threshold, "behavior")
-	item_run.evaluate_environment_objective_state()
-	finale_module.resolve(item_run, item_run.current_environment, "enter_back_room")
-	var item_preview := item_run.grand_casino_showdown_status(showdown_config, "hold_steady")
-	var item_check: Dictionary = {}
-	var item_check_value: Variant = item_preview.get("check", {})
-	if typeof(item_check_value) == TYPE_DICTIONARY:
-		item_check = item_check_value as Dictionary
-	if int(item_check.get("success_chance", 0)) <= int(clean_check.get("success_chance", 0)):
-		failures.append("Item-assisted showdown preview did not improve the check chance.")
-	var dirty_preview_run: RunState = RunStateScript.new()
-	dirty_preview_run.start_new("M2-FUN-HOUSE-CALLS-DIRTY-PREVIEW")
-	dirty_preview_run.set_environment(environment.to_dict())
-	dirty_preview_run.current_environment["turns"] = 0
-	dirty_preview_run.narrative_flags["grand_casino_cheat_evidence"] = true
-	dirty_preview_run.add_suspicion("boss_heat_fixture", showdown_heat_threshold, "behavior")
-	dirty_preview_run.evaluate_environment_objective_state()
-	finale_module.resolve(dirty_preview_run, dirty_preview_run.current_environment, "enter_back_room")
-	var dirty_preview := dirty_preview_run.grand_casino_showdown_status(showdown_config, "hold_steady")
-	var dirty_check: Dictionary = {}
-	var dirty_check_value: Variant = dirty_preview.get("check", {})
-	if typeof(dirty_check_value) == TYPE_DICTIONARY:
-		dirty_check = dirty_check_value as Dictionary
-	if int(clean_check.get("success_chance", 0)) <= int(dirty_check.get("success_chance", 0)):
-		failures.append("Clean-play showdown preview did not beat the dirty-evidence check chance.")
+	var walk_result := finale_module.resolve(active_run, active_run.current_environment, "keep_everything")
+	if not bool(walk_result.get("ok", false)) or str(active_run.narrative_flags.get("grand_casino_showdown_step", "")) != RunState.GRAND_CASINO_SHOWDOWN_STEP_PAT_DOWN:
+		failures.append("Keeping every item did not advance to the pat-down boundary.")
+	var clean_pat_down := _copy_dict(active_run.narrative_flags.get("grand_casino_showdown_pat_down", {}))
+	if str(clean_pat_down.get("tier", "")) != "clean" or not _copy_array(clean_pat_down.get("confiscated_items", [])).is_empty():
+		failures.append("A clean inventory did not produce the clean pat-down tier.")
+	var pat_down_slot_id := "foundation_check_house_calls_pat_down"
+	save_error = save_service.save_run(active_run, pat_down_slot_id)
+	if save_error != OK:
+		failures.append("Save service could not save the pat-down boundary: %s." % save_error)
+		return
+	var loaded_pat_down = save_service.load_run(pat_down_slot_id)
+	if loaded_pat_down == null or str(loaded_pat_down.narrative_flags.get("grand_casino_showdown_step", "")) != RunState.GRAND_CASINO_SHOWDOWN_STEP_PAT_DOWN:
+		failures.append("The pat-down boundary did not survive SaveService load.")
+		return
+	var pat_choices := finale_module.choices(loaded_pat_down, loaded_pat_down.current_environment)
+	if _showdown_choice_id(pat_choices, "face_rourke").is_empty():
+		failures.append("The visible pat-down phase did not expose its interrogation transition.")
+	finale_module.resolve(loaded_pat_down, loaded_pat_down.current_environment, "face_rourke")
+	if str(loaded_pat_down.narrative_flags.get("grand_casino_showdown_step", "")) != RunState.GRAND_CASINO_SHOWDOWN_STEP_INTERROGATION:
+		failures.append("The pat-down did not advance to interrogation.")
+	var clean_evidence := _string_array(loaded_pat_down.narrative_flags.get("grand_casino_showdown_interrogation_evidence", []))
+	if clean_evidence.size() != 3 or clean_evidence.has("watched_cheat") or clean_evidence.has("cheat_evidence") or clean_evidence.has("open_debt") or clean_evidence.has("drunk"):
+		failures.append("Clean interrogation selected evidence that was not present in the scripted run.")
+	var evidence_twin := _new_showdown_phase_run("M2-FUN-HOUSE-CALLS-ACTIVE", environment.to_dict(), finale_module)
+	finale_module.resolve(evidence_twin, evidence_twin.current_environment, "keep_everything")
+	finale_module.resolve(evidence_twin, evidence_twin.current_environment, "face_rourke")
+	if JSON.stringify(evidence_twin.narrative_flags.get("grand_casino_showdown_interrogation_evidence", [])) != JSON.stringify(clean_evidence):
+		failures.append("Interrogation evidence selection changed for an identical seeded run.")
+	var interrogation_choices := finale_module.choices(loaded_pat_down, loaded_pat_down.current_environment)
+	if interrogation_choices.size() != 3 or JSON.stringify(interrogation_choices).find("{strength}") != -1:
+		failures.append("Interrogation did not expose three fact-strength responses with visible stakes.")
+	finale_module.resolve(loaded_pat_down, loaded_pat_down.current_environment, "hold_steady")
+	var interrogation_slot_id := "foundation_check_house_calls_interrogation"
+	save_error = save_service.save_run(loaded_pat_down, interrogation_slot_id)
+	if save_error != OK:
+		failures.append("Save service could not save the interrogation boundary: %s." % save_error)
+		return
+	var loaded_interrogation = save_service.load_run(interrogation_slot_id)
+	if loaded_interrogation == null or int(loaded_interrogation.narrative_flags.get("grand_casino_showdown_interrogation_beat", 0)) != 1 or JSON.stringify(loaded_interrogation.narrative_flags.get("grand_casino_showdown_interrogation_evidence", [])) != JSON.stringify(clean_evidence):
+		failures.append("Interrogation beat/evidence state did not survive SaveService load.")
+		return
+	loaded_interrogation.narrative_flags["grand_casino_showdown_roll"] = 1
+	var win_result := _finish_showdown_interrogation(finale_module, loaded_interrogation, "hold_steady")
+	var win_run: RunState = loaded_interrogation
+	if not bool(win_result.get("ok", false)) or win_run.run_status != RunState.RUN_STATUS_ENDED or str(win_run.narrative_flags.get("demo_victory_route", "")) != RunState.GRAND_CASINO_SHOWDOWN_ROUTE:
+		failures.append("The phased showdown's temporary final check did not preserve the canonical win route.")
 
-	var win_run: RunState = null
-	var win_result: Dictionary = {}
-	for index in range(80):
-		var candidate: RunState = RunStateScript.new()
-		candidate.start_new("M2-FUN-HOUSE-CALLS-WIN-%d" % index)
-		candidate.set_environment(environment.to_dict())
-		candidate.current_environment["turns"] = 0
-		candidate.add_item("cheap_sunglasses")
-		candidate.add_item("card_counters_notes")
-		candidate.narrative_flags["grand_casino_event_pit_boss_sweep_lay_low"] = true
-		candidate.narrative_flags["grand_casino_event_eye_in_the_sky_change_table"] = true
-		candidate.add_suspicion("boss_heat_fixture", showdown_heat_threshold, "behavior")
-		candidate.evaluate_environment_objective_state()
-		finale_module.resolve(candidate, candidate.current_environment, "enter_back_room")
-		var preview := candidate.grand_casino_showdown_status(showdown_config, "hold_steady")
-		var preview_check: Dictionary = {}
-		var preview_check_value: Variant = preview.get("check", {})
-		if typeof(preview_check_value) == TYPE_DICTIONARY:
-			preview_check = preview_check_value as Dictionary
-		if bool(preview_check.get("success", false)):
-			win_run = candidate
-			win_result = finale_module.resolve(win_run, win_run.current_environment, "hold_steady")
-			break
-	if win_run == null:
-		failures.append("Could not find a deterministic successful Pit Boss Showdown fixture.")
+	var crew_run := _new_showdown_phase_run("M2-FUN-HOUSE-CALLS-CREW", environment.to_dict(), finale_module, ["cheap_sunglasses"], {"crew_marker_open": true})
+	var crew_choice_id := _showdown_choice_id(finale_module.choices(crew_run, crew_run.current_environment), "hand_to_crew__cheap_sunglasses")
+	if crew_choice_id.is_empty():
+		failures.append("A provable Crew interaction did not unlock item handoff.")
 	else:
-		if not bool(win_result.get("ok", false)) or win_run.run_status != RunState.RUN_STATUS_ENDED:
-			failures.append("Pit Boss Showdown success did not end in demo victory.")
-		if not bool(win_run.narrative_flags.get("demo_victory", false)) or str(win_run.narrative_flags.get("demo_victory_route", "")) != "pit_boss_showdown":
-			failures.append("Pit Boss Showdown success did not set the canonical victory route.")
-		if bool(win_run.narrative_flags.get("grand_casino_showdown_pending", true)) or bool(win_run.narrative_flags.get("grand_casino_showdown_active", true)):
-			failures.append("Pit Boss Showdown success did not clear pending/active flags.")
-		if str(win_run.current_demo_victory_message()).find("winnings") == -1:
-			failures.append("Pit Boss Showdown victory message did not mention walking with winnings.")
-		var win_status := win_run.demo_objective_status()
-		if str(win_status.get("objective_state", "")) != "victory":
-			failures.append("Grand Casino objective status did not report victory after showdown success.")
-		var win_slot_id := "foundation_check_house_calls_win"
-		save_error = save_service.save_run(win_run, win_slot_id)
-		if save_error != OK:
-			failures.append("Save service could not save House Calls win state: %s." % save_error)
-			return
-		var loaded_win = save_service.load_run(win_slot_id)
-		if loaded_win == null:
-			failures.append("Save service could not reload House Calls win state.")
-			return
-		if loaded_win.run_status != RunState.RUN_STATUS_ENDED or not bool(loaded_win.narrative_flags.get("demo_victory", false)):
-			failures.append("House Calls win status did not survive SaveService load.")
+		var crew_walk := finale_module.resolve(crew_run, crew_run.current_environment, crew_choice_id)
+		if not bool(crew_walk.get("ok", false)) or crew_run.inventory.has("cheap_sunglasses") or str(crew_run.narrative_flags.get("grand_casino_showdown_crew_handoff_item_id", "")) != "cheap_sunglasses":
+			failures.append("Crew handoff did not save and remove exactly one selected item.")
+		var second_ditch := crew_run.resolve_grand_casino_showdown_walk("trash", "cheap_sunglasses", showdown_config)
+		if bool(second_ditch.get("ok", false)):
+			failures.append("RunState allowed a second ditch after the walk choice was committed.")
+		finale_module.resolve(crew_run, crew_run.current_environment, "face_rourke")
+		crew_run.narrative_flags["grand_casino_showdown_roll"] = 1
+		_finish_showdown_interrogation(finale_module, crew_run, "hold_steady")
+		if crew_run.run_status != RunState.RUN_STATUS_ENDED or not crew_run.inventory.has("cheap_sunglasses") or str(crew_run.narrative_flags.get("grand_casino_showdown_crew_handoff_returned", "")) != "cheap_sunglasses":
+			failures.append("Crew handoff did not return the saved item after survival.")
+	var crew_failure_run := _new_showdown_phase_run("M2-FUN-HOUSE-CALLS-CREW-FAIL", environment.to_dict(), finale_module, ["scratch_pad"], {"crew_favor_completed": true})
+	var crew_failure_choice := _showdown_choice_id(finale_module.choices(crew_failure_run, crew_failure_run.current_environment), "hand_to_crew__scratch_pad")
+	finale_module.resolve(crew_failure_run, crew_failure_run.current_environment, crew_failure_choice)
+	finale_module.resolve(crew_failure_run, crew_failure_run.current_environment, "face_rourke")
+	crew_failure_run.narrative_flags["grand_casino_showdown_roll"] = 100
+	_finish_showdown_interrogation(finale_module, crew_failure_run, "take_the_edge")
+	if crew_failure_run.run_status != RunState.RUN_STATUS_FAILED or crew_failure_run.inventory.has("scratch_pad") or str(crew_failure_run.narrative_flags.get("grand_casino_showdown_crew_handoff_lost_on_failure", "")) != "scratch_pad":
+		failures.append("Crew handoff failure did not retain the documented interim lost-item state.")
 
-	var failure_run: RunState = null
-	var failure_result: Dictionary = {}
-	for index in range(80):
-		var candidate: RunState = RunStateScript.new()
-		candidate.start_new("M2-FUN-HOUSE-CALLS-FAIL-%d" % index)
-		candidate.set_environment(environment.to_dict())
-		candidate.current_environment["turns"] = 0
-		candidate.add_item("marked_cards")
-		candidate.add_item("foil_sleeve")
-		candidate.add_item("weighted_keyring")
-		candidate.add_item("xray_glasses")
-		candidate.add_item("tab_detector")
-		candidate.drunk_level = 75
-		candidate.alcoholic_level = 100
-		candidate.add_debt({"id": "showdown_debt_one", "lender_id": "street_lender", "balance": 40, "status": "active"})
-		candidate.add_debt({"id": "showdown_debt_two", "lender_id": "motel_friend", "balance": 30, "status": "overdue"})
-		candidate.narrative_flags["grand_casino_event_pit_boss_sweep_act_natural"] = true
-		candidate.narrative_flags["grand_casino_event_eye_in_the_sky_press_anyway"] = true
-		candidate.narrative_flags["grand_casino_event_comped_suite_offer_take_comp"] = true
-		candidate.add_suspicion("boss_heat_fixture", 100, "behavior")
-		candidate.evaluate_environment_objective_state()
-		finale_module.resolve(candidate, candidate.current_environment, "enter_back_room")
-		var preview := candidate.grand_casino_showdown_status(showdown_config, "take_the_edge")
-		var preview_check: Dictionary = {}
-		var preview_check_value: Variant = preview.get("check", {})
-		if typeof(preview_check_value) == TYPE_DICTIONARY:
-			preview_check = preview_check_value as Dictionary
-		if not bool(preview_check.get("success", true)):
-			failure_run = candidate
-			failure_result = finale_module.resolve(failure_run, failure_run.current_environment, "take_the_edge")
+	var trash_a := _new_showdown_phase_run("M2-FUN-HOUSE-CALLS-TRASH", environment.to_dict(), finale_module, ["scratch_pad"])
+	var trash_b := _new_showdown_phase_run("M2-FUN-HOUSE-CALLS-TRASH", environment.to_dict(), finale_module, ["scratch_pad"])
+	var trash_choice_a := _showdown_choice_id(finale_module.choices(trash_a, trash_a.current_environment), "trash_item__scratch_pad")
+	var trash_choice_b := _showdown_choice_id(finale_module.choices(trash_b, trash_b.current_environment), "trash_item__scratch_pad")
+	finale_module.resolve(trash_a, trash_a.current_environment, trash_choice_a)
+	finale_module.resolve(trash_b, trash_b.current_environment, trash_choice_b)
+	if trash_a.inventory.has("scratch_pad") or JSON.stringify(trash_a.grand_casino_showdown_walk_status()) != JSON.stringify(trash_b.grand_casino_showdown_walk_status()):
+		failures.append("Trash loss, flavor, or seen chance was not deterministic for the same seed.")
+
+	var minor_run := _new_showdown_phase_run("M2-FUN-HOUSE-CALLS-MINOR", environment.to_dict(), finale_module, ["marked_cards"])
+	finale_module.resolve(minor_run, minor_run.current_environment, "keep_everything")
+	if str(_copy_dict(minor_run.narrative_flags.get("grand_casino_showdown_pat_down", {})).get("tier", "")) != "minor" or minor_run.inventory.has("marked_cards"):
+		failures.append("One contraband item did not produce confiscating minor pat-down.")
+	var serious_run := _new_showdown_phase_run("M2-FUN-HOUSE-CALLS-SERIOUS", environment.to_dict(), finale_module, ["marked_cards", "foil_sleeve"])
+	finale_module.resolve(serious_run, serious_run.current_environment, "keep_everything")
+	var serious_pat_down := _copy_dict(serious_run.narrative_flags.get("grand_casino_showdown_pat_down", {}))
+	if str(serious_pat_down.get("tier", "")) != "serious" or int(serious_pat_down.get("handicap", 0)) <= 0 or serious_run.inventory.has("marked_cards") or serious_run.inventory.has("foil_sleeve"):
+		failures.append("Multiple contraband did not produce confiscation plus a serious handicap.")
+	var surveillance_run := _new_showdown_phase_run("M2-FUN-HOUSE-CALLS-SURVEILLANCE", environment.to_dict(), finale_module, ["xray_glasses"])
+	finale_module.resolve(surveillance_run, surveillance_run.current_environment, "keep_everything")
+	if str(_copy_dict(surveillance_run.narrative_flags.get("grand_casino_showdown_pat_down", {})).get("tier", "")) != "serious":
+		failures.append("Carried surveillance gear did not produce the serious pat-down tier.")
+	var watched_surveillance_run := _new_showdown_phase_run("M2-FUN-HOUSE-CALLS-WATCHED-SURVEILLANCE", environment.to_dict(), finale_module, ["xray_glasses"], {"grand_casino_watched_cheat_evidence": true})
+	finale_module.resolve(watched_surveillance_run, watched_surveillance_run.current_environment, "keep_everything")
+	if watched_surveillance_run.is_terminal() or str(_copy_dict(watched_surveillance_run.narrative_flags.get("grand_casino_showdown_pat_down", {})).get("tier", "")) != "serious":
+		failures.append("Watched evidence incorrectly promoted surveillance-only gear above the serious tier.")
+	var blatant_run := _new_showdown_phase_run("M2-FUN-HOUSE-CALLS-BLATANT", environment.to_dict(), finale_module, ["marked_cards", "foil_sleeve", "weighted_keyring"])
+	var blatant_result := finale_module.resolve(blatant_run, blatant_run.current_environment, "keep_everything")
+	if blatant_run.run_status != RunState.RUN_STATUS_FAILED or blatant_run.run_failure_reason != RunState.FAILURE_CASINO_TAKEN_OUT_BACK or str(blatant_result.get("message", "")).find("before the game") == -1 or not _copy_dict(blatant_run.narrative_flags.get("grand_casino_duel_terms", {})).is_empty():
+		failures.append("Blatant contraband did not fail immediately with its distinct pre-duel message.")
+	var watched_blatant_run := _new_showdown_phase_run("M2-FUN-HOUSE-CALLS-WATCHED-BLATANT", environment.to_dict(), finale_module, ["marked_cards"], {"grand_casino_watched_cheat_evidence": true, "grand_casino_cheat_evidence": true})
+	finale_module.resolve(watched_blatant_run, watched_blatant_run.current_environment, "keep_everything")
+	if watched_blatant_run.run_status != RunState.RUN_STATUS_FAILED or str(_copy_dict(watched_blatant_run.narrative_flags.get("grand_casino_showdown_pat_down", {})).get("tier", "")) != "blatant":
+		failures.append("Watched evidence plus carried contraband did not trigger blatant failure.")
+
+	serious_run.drunk_level = 75
+	serious_run.alcoholic_level = 100
+	serious_run.add_debt({"id": "showdown_debt_one", "lender_id": "street_lender", "balance": 40, "status": "active"})
+	serious_run.narrative_flags["grand_casino_cheat_evidence"] = true
+	finale_module.resolve(serious_run, serious_run.current_environment, "face_rourke")
+	var dirty_evidence := _string_array(serious_run.narrative_flags.get("grand_casino_showdown_interrogation_evidence", []))
+	if dirty_evidence.size() != 3 or dirty_evidence.has("clean_record"):
+		failures.append("Dirty interrogation selected evidence inconsistent with the scripted run.")
+	serious_run.narrative_flags["grand_casino_showdown_roll"] = 100
+	var failure_result := _finish_showdown_interrogation(finale_module, serious_run, "take_the_edge")
+	var failure_run: RunState = serious_run
+	var clean_terms := _copy_dict(win_run.narrative_flags.get("grand_casino_duel_terms", {}))
+	var dirty_terms := _copy_dict(failure_run.narrative_flags.get("grand_casino_duel_terms", {}))
+	if clean_terms.is_empty() or dirty_terms.is_empty() or not clean_terms.has("starting_stacks") or not dirty_terms.has("handicaps") or not dirty_terms.has("margin_thresholds"):
+		failures.append("Interrogation did not serialize the complete duel_terms schema.")
+	elif int(_copy_dict(dirty_terms.get("handicaps", {})).get("player", 0)) <= 0 or int(dirty_terms.get("rourke_aggression", 0)) < int(clean_terms.get("rourke_aggression", 0)):
+		failures.append("Dirty/serious facts did not harden the serialized duel terms.")
+	var clean_interrogation_terms := _copy_dict(clean_terms.get("interrogation", {}))
+	var clean_answers := _copy_array(clean_interrogation_terms.get("answers", []))
+	var clean_strength_total := 0
+	for answer_value in clean_answers:
+		if typeof(answer_value) == TYPE_DICTIONARY:
+			clean_strength_total += int((answer_value as Dictionary).get("strength", 0))
+	var expected_response_modifier := int(round(float(clean_strength_total) / float(maxi(1, clean_answers.size()))))
+	if clean_answers.size() != 3 or int(clean_interrogation_terms.get("response_modifier", -999)) != expected_response_modifier:
+		failures.append("Serialized duel terms did not consume the three recorded fact-derived response strengths.")
+	if not bool(failure_result.get("ok", false)) or failure_run.run_status != RunState.RUN_STATUS_FAILED or failure_run.run_failure_reason != RunState.FAILURE_CASINO_TAKEN_OUT_BACK:
+		failures.append("The temporary phase-four check did not preserve the canonical failure route.")
+
+	var failure_slot_id := "foundation_check_house_calls_failure"
+	save_error = save_service.save_run(failure_run, failure_slot_id)
+	if save_error != OK:
+		failures.append("Save service could not save the phased House Calls failure: %s." % save_error)
+		return
+	var loaded_failure = save_service.load_run(failure_slot_id)
+	var loaded_failure_terms: Dictionary = {}
+	if loaded_failure != null:
+		loaded_failure_terms = _save_load_canonical_value(loaded_failure.narrative_flags.get("grand_casino_duel_terms", {})) as Dictionary
+	if loaded_failure == null or loaded_failure.run_failure_reason != RunState.FAILURE_CASINO_TAKEN_OUT_BACK or JSON.stringify(loaded_failure_terms) != JSON.stringify(_save_load_canonical_value(dirty_terms)):
+		failures.append("Terminal phased showdown state/duel terms did not survive SaveService load.")
+
+	print("HOUSE_CALLS_PHASES walk=%s pat_down=%s evidence=%s clean_terms=%s dirty_terms=%s failure=%s" % [
+		str(RunState.GRAND_CASINO_SHOWDOWN_STEP_WALK),
+		str(clean_pat_down.get("tier", "")),
+		",".join(clean_evidence),
+		str(not clean_terms.is_empty()),
+		str(not dirty_terms.is_empty()),
+		str(failure_run.run_failure_reason),
+	])
+
+
+func _new_showdown_phase_run(seed: String, environment: Dictionary, finale_module: EventModule, item_ids: Array = [], flags: Dictionary = {}) -> RunState:
+	var run_state: RunState = RunStateScript.new()
+	run_state.start_new(seed)
+	run_state.set_environment(environment.duplicate(true))
+	run_state.current_environment["turns"] = 0
+	for item_value in item_ids:
+		run_state.add_item(str(item_value))
+	for flag_id in flags.keys():
+		run_state.narrative_flags[str(flag_id)] = flags[flag_id]
+	var objective := _copy_dict(run_state.current_environment.get("demo_objective", {}))
+	run_state.add_suspicion("boss_heat_fixture", int(objective.get("showdown_heat_threshold", 70)), "behavior")
+	run_state.evaluate_environment_objective_state()
+	var arrival := finale_module.resolve(run_state, run_state.current_environment, "enter_back_room")
+	if not bool(arrival.get("ok", false)) or not bool(run_state.narrative_flags.get("grand_casino_showdown_active", false)):
+		return null
+	return run_state
+
+
+func _showdown_choice_id(choices: Array, prefix: String) -> String:
+	for choice_value in choices:
+		if typeof(choice_value) != TYPE_DICTIONARY:
+			continue
+		var choice_id := str((choice_value as Dictionary).get("id", ""))
+		if choice_id == prefix or choice_id.begins_with(prefix):
+			return choice_id
+	return ""
+
+
+func _finish_showdown_interrogation(finale_module: EventModule, run_state: RunState, choice_id: String) -> Dictionary:
+	var result: Dictionary = {}
+	while str(run_state.narrative_flags.get("grand_casino_showdown_step", "")) == RunState.GRAND_CASINO_SHOWDOWN_STEP_INTERROGATION and not run_state.is_terminal():
+		result = finale_module.resolve(run_state, run_state.current_environment, choice_id)
+		if not bool(result.get("ok", false)):
 			break
-	if failure_run == null:
-		failures.append("Could not find a deterministic failed Pit Boss Showdown fixture.")
-	else:
-		if not bool(failure_result.get("ok", false)) or failure_run.run_status != RunState.RUN_STATUS_FAILED:
-			failures.append("Pit Boss Showdown failure did not fail the run.")
-		if failure_run.run_failure_reason != RunState.FAILURE_CASINO_TAKEN_OUT_BACK:
-			failures.append("Pit Boss Showdown failure did not record casino_taken_out_back.")
-		if str(failure_run.run_failure_message).find("police") != -1 or str(failure_run.run_failure_message).find("cuffs") != -1:
-			failures.append("Pit Boss Showdown failure used generic police-capture copy.")
-		if bool(failure_run.narrative_flags.get("grand_casino_showdown_pending", true)) or bool(failure_run.narrative_flags.get("grand_casino_showdown_active", true)):
-			failures.append("Pit Boss Showdown failure did not clear pending/active flags.")
-		var failure_status := failure_run.demo_objective_status()
-		if str(failure_status.get("objective_state", "")) != "failure":
-			failures.append("Grand Casino objective status did not report failure after showdown loss.")
-		var failure_slot_id := "foundation_check_house_calls_failure"
-		save_error = save_service.save_run(failure_run, failure_slot_id)
-		if save_error != OK:
-			failures.append("Save service could not save House Calls failure state: %s." % save_error)
-			return
-		var loaded_failure = save_service.load_run(failure_slot_id)
-		if loaded_failure == null:
-			failures.append("Save service could not reload House Calls failure state.")
-			return
-		if loaded_failure.run_status != RunState.RUN_STATUS_FAILED or loaded_failure.run_failure_reason != RunState.FAILURE_CASINO_TAKEN_OUT_BACK:
-			failures.append("House Calls failure status did not survive SaveService load.")
-	print("GRAND_CASINO_OBJECTIVE_LANES clean_ready=%s showdown_pending=%s outside_active=%s games=%d" % [
-		str(clean_status.get("high_roller_ready", false)),
-		str(showdown_status.get("showdown_pending", false)),
-		str(non_boss_status.get("active", false)),
-		int(loaded_clean_status.get("grand_casino_games_played", 0)),
-	])
-	print("GRAND_CASINO_HEAT_REROUTE watched_pending=%s forced_pending=%s outside_reason=%s duplicate_events=%d" % [
-		str(watched_heat_status.get("showdown_pending", false)),
-		str(forced_heat_status.get("showdown_pending", false)),
-		str(outside_heat_run.run_failure_reason),
-		event_count_after_repeat,
-	])
-	var showdown_win_status := "missing"
-	if win_run != null:
-		showdown_win_status = str(win_run.run_status)
-	var showdown_failure_reason := "missing"
-	if failure_run != null:
-		showdown_failure_reason = str(failure_run.run_failure_reason)
-	print("HOUSE_CALLS_SHOWDOWN trigger=%s active_step=%s win=%s failure=%s item_chance=%d clean_chance=%d dirty_chance=%d" % [
-		str(run_state.narrative_flags.get("demo_finale_event_id", "")),
-		str(active_run.narrative_flags.get("grand_casino_showdown_step", "")),
-		showdown_win_status,
-		showdown_failure_reason,
-		int(item_check.get("success_chance", 0)),
-		int(clean_check.get("success_chance", 0)),
-		int(dirty_check.get("success_chance", 0)),
-	])
-	print("HIGH_ROLLER_CASHOUT route=%s cheated_pending=%s hot_pending=%s max_heat=%d event_visible=%s" % [
-		str(loaded_clean.narrative_flags.get("demo_victory_route", "")),
-		str(cheated_cashout_status.get("showdown_pending", false)),
-		str(hot_cashout_status.get("showdown_pending", false)),
-		int(hot_cashout_status.get("grand_casino_max_heat", 0)),
-		str(_string_array(clean_run.current_environment.get("event_ids", [])).has("high_roller_cashout")),
-	])
-	print("GRAND_CASINO_ENDGAME_MATRIX high_roller_loaded=%s showdown_loaded=%s taken_out_back_loaded=%s pending_loaded=%s clean_ready_loaded=%s" % [
-		high_roller_victory_round_trip_status,
-		showdown_win_status,
-		showdown_failure_reason,
-		str(loaded_showdown.run_status),
-		str(loaded_clean_status.get("high_roller_ready", false)),
-	])
+	return result
 
 
 func _check_grand_casino_players_card_tiers(library: ContentLibrary, main_archetype: Dictionary, failures: Array) -> void:
