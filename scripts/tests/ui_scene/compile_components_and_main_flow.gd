@@ -12,6 +12,7 @@ const PerformanceLivenessGuardScript := preload("res://scripts/ui/performance_li
 const RunInventoryScreenScript := preload("res://scripts/ui/run_inventory_screen.gd")
 const TalkDockScript := preload("res://scripts/ui/talk_dock.gd")
 const ItemFoundPopupScript := preload("res://scripts/ui/item_found_popup.gd")
+const CoachOverlayScript := preload("res://scripts/ui/coach_overlay.gd")
 const SfxPlayerScript := preload("res://scripts/ui/sfx_player.gd")
 const WorldMapCanvasScript := preload("res://scripts/ui/world_map_canvas.gd")
 const SlotMachineStateScript := preload("res://scripts/games/slots/slot_machine_state.gd")
@@ -417,6 +418,64 @@ func _check_talk_dock_component() -> bool:
 		push_error("Talk dock clear_entry did not hide the dock.")
 		return false
 	parent.queue_free()
+	return true
+
+
+func _check_coach_overlay_component() -> bool:
+	var parent := Control.new()
+	parent.size = Vector2(360, 640)
+	root.add_child(parent)
+	var overlay: CoachOverlay = CoachOverlayScript.new()
+	parent.add_child(overlay)
+	await process_frame
+	overlay.set_small_screen_mode(true)
+	overlay.set_lessons([
+		{"id": "coach_hud", "trigger": {"state_predicates": []}, "anchor": {"kind": "hud_element", "id": "heat"}, "copy": "Watch the heat.", "completion": {"type": "any_action"}},
+		{"id": "coach_object", "trigger": {"state_predicates": []}, "anchor": {"kind": "interactable_object", "id": "fixture:door"}, "copy": "Use the marked door.", "completion": {"type": "any_action"}},
+	])
+	var context := {
+		"viewport_rect": Rect2(Vector2.ZERO, parent.size),
+		"small_screen": true,
+		"anchor_rects": {
+			"hud_elements": {"heat": Rect2(12, 12, 150, 48)},
+			"interactable_objects": {"fixture:door": Rect2(40, 220, 80, 120)},
+		},
+	}
+	overlay.evaluate_at_boundary(context)
+	await process_frame
+	var snapshot := overlay.current_snapshot()
+	var bubble_rect := _snapshot_rect(snapshot.get("bubble_rect", {}))
+	if not bool(snapshot.get("visible", false)) or str(snapshot.get("anchor_kind", "")) != "hud_element" or not bool(snapshot.get("anchor_found", false)) or not Rect2(Vector2.ZERO, parent.size).encloses(bubble_rect):
+		parent.queue_free()
+		push_error("Coach overlay did not anchor its first HUD bubble inside small-screen bounds.")
+		return false
+	if not overlay.input_allowed("anything"):
+		parent.queue_free()
+		push_error("Non-gating coach bubble blocked normal input.")
+		return false
+	overlay.notify_action("anything")
+	overlay.evaluate_at_boundary(context)
+	await process_frame
+	snapshot = overlay.current_snapshot()
+	if str(snapshot.get("lesson_id", "")) != "coach_object" or str(snapshot.get("anchor_kind", "")) != "interactable_object" or not bool(snapshot.get("anchor_found", false)):
+		parent.queue_free()
+		push_error("Coach overlay did not advance its queue to the room-object anchor.")
+		return false
+	overlay.restore_seen({})
+	overlay.set_lessons([{"id": "coach_gate", "trigger": {"state_predicates": []}, "anchor": {"kind": "interactable_object", "id": "fixture:door"}, "copy": "Use this door.", "completion": {"type": "anchored_action"}, "gating": {"allowed_action_ids": ["fixture:door"]}}])
+	overlay.evaluate_at_boundary(context)
+	await process_frame
+	if overlay.input_allowed("wrong:door") or not overlay.input_allowed("fixture:door"):
+		parent.queue_free()
+		push_error("Coach overlay gating did not block only undeclared actions.")
+		return false
+	overlay.set_reduce_motion(true)
+	if not bool(overlay.current_snapshot().get("reduce_motion", false)):
+		parent.queue_free()
+		push_error("Coach overlay did not apply reduce-motion instantly.")
+		return false
+	parent.queue_free()
+	await process_frame
 	return true
 
 
@@ -1163,6 +1222,9 @@ func _run() -> void:
 		quit(1)
 		return
 	if not await _check_talk_dock_component():
+		quit(1)
+		return
+	if not await _check_coach_overlay_component():
 		quit(1)
 		return
 	if not await _check_item_found_popup_component():
