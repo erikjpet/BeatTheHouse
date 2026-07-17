@@ -298,8 +298,8 @@ func _check_music_fx_foundation(library: ContentLibrary, failures: Array) -> voi
 
 	var graph_a: Dictionary = ProceduralMusicPlayerScript.ensure_music_fx_bus_graph()
 	var graph_b: Dictionary = ProceduralMusicPlayerScript.ensure_music_fx_bus_graph()
-	if int(graph_a.get("effect_count", 0)) != 3 or int(graph_b.get("effect_count", 0)) != 3:
-		failures.append("Music master bus should contain only low-pass, chorus, and safety limiter effects.")
+	if int(graph_a.get("effect_count", 0)) != 4 or int(graph_b.get("effect_count", 0)) != 4:
+		failures.append("Music master bus should contain shared pitch compensation, low-pass, chorus, and the safety limiter.")
 	if JSON.stringify(graph_a.get("effects", [])) != JSON.stringify(graph_b.get("effects", [])):
 		failures.append("Music FX bus graph was not idempotent across repeated startup calls.")
 	var effect_types: Array = []
@@ -311,14 +311,15 @@ func _check_music_fx_foundation(library: ContentLibrary, failures: Array) -> voi
 		effect_types.append(str(effect.get("type", "")))
 		enabled.append(bool(effect.get("enabled", false)))
 	var expected_types := [
+		"AudioEffectPitchShift",
 		"AudioEffectLowPassFilter",
 		"AudioEffectChorus",
 		"AudioEffectLimiter",
 	]
 	if JSON.stringify(effect_types) != JSON.stringify(expected_types):
 		failures.append("Music FX bus graph order/types changed: %s." % JSON.stringify(effect_types))
-	if enabled.size() == 3 and (bool(enabled[0]) or bool(enabled[1]) or not bool(enabled[2])):
-		failures.append("Music master bus should bypass low-pass/chorus and keep the safety limiter active.")
+	if enabled.size() == 4 and (bool(enabled[0]) or bool(enabled[1]) or bool(enabled[2]) or not bool(enabled[3])):
+		failures.append("Music master bus should bypass idle pitch/low-pass/chorus processing and keep the safety limiter active.")
 	var send_graph: Dictionary = graph_b.get("send_buses", {}) as Dictionary
 	var send_buses: Dictionary = send_graph.get("buses", {}) as Dictionary
 	var expected_send_types := {
@@ -657,6 +658,19 @@ func _check_music_stem_director_foundation(library: ContentLibrary, failures: Ar
 	if str(authored_relative_key.get("selection_key", "")) == str(authored_manifest.get("selection_key", "")) or str((authored_relative_key.get("selection_context", {}) as Dictionary).get("harmonic_section", "")) != "B":
 		failures.append("Authored harmonic bank did not preserve its relative-key section selection.")
 	var jazz_recipe := MusicArrangementSelectorScript.recipe_definition(jazz_8_track)
+	var jazz_tempo_profile: Dictionary = jazz_8_track.get("adaptive_tempo", {}) as Dictionary
+	var jazz_tempo_low := ProceduralMusicPlayerScript.adaptive_tempo_bpm_for_heat(jazz_tempo_profile, 0.0)
+	var jazz_tempo_mid := ProceduralMusicPlayerScript.adaptive_tempo_bpm_for_heat(jazz_tempo_profile, 50.0)
+	var jazz_tempo_high := ProceduralMusicPlayerScript.adaptive_tempo_bpm_for_heat(jazz_tempo_profile, 100.0)
+	if not bool(jazz_tempo_profile.get("enabled", false)) or not (jazz_tempo_low < jazz_tempo_mid and jazz_tempo_mid < jazz_tempo_high) or str(jazz_tempo_profile.get("native_processing", "")) != "player_rate_shared_bus_pitch_compensation":
+		failures.append("Jazz authored delivery did not expose a monotonic, data-driven native adaptive-tempo profile.")
+	var tempo_save_run := RunStateScript.new()
+	tempo_save_run.start_new("MUSIC-TEMPO-ROUNDTRIP")
+	tempo_save_run.remember_music_tempo_state({"profile_id": "jazz", "enabled": true, "current_bpm": 121.25, "target_bpm": 123.0, "source_heat": 80.0, "transport_beats": 13.75, "source_position": 6.875})
+	var restored_tempo_run := RunStateScript.new()
+	restored_tempo_run.from_dict(tempo_save_run.to_dict())
+	if JSON.stringify(restored_tempo_run.music_tempo_state) != JSON.stringify(tempo_save_run.music_tempo_state):
+		failures.append("Adaptive-tempo current/target transport state did not survive a RunState save/load round trip.")
 	if _copy_array(jazz_recipe.get("sections", [])) != ["A", "A", "B", "A", "A", "A", "C", "A"]:
 		failures.append("Jazz harmony recipe did not encode AABA followed by AACA.")
 	var jazz_state := MusicArrangementSelectorScript.initial_recipe_state(jazz_8_track, 17, "fixture_visit")

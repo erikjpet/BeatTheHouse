@@ -1975,8 +1975,8 @@ func _run() -> void:
 	var music_fx_snapshot: Dictionary = procedural_music_player.call("music_fx_snapshot", music_fx_state)
 	var music_fx_graph: Dictionary = music_fx_snapshot.get("graph", {}) as Dictionary
 	var music_fx_target: Dictionary = music_fx_snapshot.get("target", {}) as Dictionary
-	if int(music_fx_graph.get("effect_count", 0)) != 3:
-		push_error("Procedural music FX graph did not expose the three-effect master character/safety chain.")
+	if int(music_fx_graph.get("effect_count", 0)) != 4 or JSON.stringify(music_fx_graph.get("effects", [])).find("AudioEffectPitchShift") < 0:
+		push_error("Procedural music FX graph did not expose shared pitch compensation plus the character/safety chain.")
 		quit(1)
 		return
 	var music_send_graph: Dictionary = music_fx_graph.get("send_buses", {}) as Dictionary

@@ -15,7 +15,7 @@ const MusicFloatPcmStreamScript := preload("res://scripts/ui/music_float_pcm_str
 
 const MUSIC_BUS := "Music"
 const AMBIENT_VERSION := 11
-const MUSIC_FX_GRAPH_VERSION := 2
+const MUSIC_FX_GRAPH_VERSION := 3
 const MUSIC_STEM_CONTRACT_VERSION := 2
 const SAMPLE_RATE := 44100
 const EMPTY_NOTE := -999.0
@@ -39,12 +39,16 @@ const MUSIC_MIX_ATTACK_SECONDS := 0.25
 const MUSIC_MIX_RELEASE_SECONDS := 2.0
 const MUSIC_FX_RESOURCE_PREFIX := "BTHMusicFx"
 const MUSIC_STEM_BUS_PREFIX := "MusicStem"
-const MUSIC_FX_EFFECT_ORDER := ["low_pass", "chorus", "limiter"]
+const MUSIC_FX_EFFECT_ORDER := ["pitch_shift", "low_pass", "chorus", "limiter"]
 const MUSIC_FX_EFFECT_TYPES := {
+	"pitch_shift": "AudioEffectPitchShift",
 	"low_pass": "AudioEffectLowPassFilter",
 	"chorus": "AudioEffectChorus",
 	"limiter": "AudioEffectLimiter",
 }
+const ADAPTIVE_TEMPO_BEATS_PER_BAR := 4
+const ADAPTIVE_TEMPO_BARS_PER_PHRASE := 4
+const ADAPTIVE_TEMPO_EPSILON := 0.0001
 const MUSIC_SEND_BUS_PREFIX := "MusicSend"
 const MUSIC_SEND_EFFECT_ORDER := ["band_pass", "delay", "distortion", "reverb", "compressor"]
 const MUSIC_SEND_EFFECT_TYPES := {
@@ -201,6 +205,21 @@ var _authored_phrase_boundary_dispatch := false
 var _last_authored_boundary_applied_cache_key := ""
 var _authored_phrase_boundary_position := -1.0
 var _pending_authored_arrangement_restore: Dictionary = {}
+var _pending_adaptive_tempo_restore: Dictionary = {}
+var _adaptive_tempo_profile: Dictionary = {}
+var _adaptive_tempo_profile_id := ""
+var _adaptive_tempo_enabled := false
+var _adaptive_tempo_native_enabled := false
+var _adaptive_tempo_base_bpm := 82.0
+var _adaptive_tempo_current_bpm := 82.0
+var _adaptive_tempo_target_bpm := 82.0
+var _adaptive_tempo_ratio := 1.0
+var _adaptive_tempo_source_heat := 0.0
+var _adaptive_tempo_slew_direction := "steady"
+var _adaptive_tempo_transport_beats := 0.0
+var _adaptive_tempo_restore_source_position := -1.0
+var _music_fx_pitch_wobble_scale := 1.0
+var _adaptive_tempo_debug_snapshot: Dictionary = {}
 
 
 func _ready() -> void:
@@ -215,6 +234,7 @@ func _ready() -> void:
 	_feature_mix_target = _neutral_feature_mix_vector()
 	_feature_mix_live = _neutral_feature_mix_vector()
 	_feature_mix_applied_target = _feature_mix_target.duplicate(true)
+	_reset_adaptive_tempo()
 	_apply_music_fx_vector(_music_fx_live, true)
 	if WebAudioBridgeScript.available():
 		WebAudioBridgeScript.ensure()
@@ -231,6 +251,7 @@ func _process(delta: float) -> void:
 	_feed_float_pcm_players()
 	_poll_generation_thread()
 	_poll_breakpoint_transition()
+	_advance_adaptive_tempo(delta)
 	_advance_music_fx(delta)
 	_advance_music_mix(delta)
 	_advance_feature_mix(delta)
@@ -294,6 +315,7 @@ func play_for_environment_state(environment: Dictionary, heat_level: int, music_
 	var authored_selection_state := _music_mix_input_snapshot.duplicate(true)
 	authored_selection_state["musical_bar"] = floori(_director_playback_position() / maxf(0.001, _music_director_bar_seconds()))
 	var authored_stem_set := _authored_stem_set_from_profile(profile, authored_selection_state)
+	_configure_adaptive_tempo(profile, authored_stem_set)
 	if not authored_stem_set.is_empty():
 		cache_key = "%s:selection:%s" % [cache_key, str(authored_stem_set.get("selection_key", "base"))]
 	_remember_profile(cache_key, profile)
@@ -436,6 +458,7 @@ func stop() -> void:
 	_pending_authored_arrangement_restore = {}
 	_float_pcm_player_states.clear()
 	_float_pcm_phase_launches.clear()
+	_reset_adaptive_tempo()
 	_reset_music_fx()
 	_reset_music_mix()
 	_reset_feature_mix()
@@ -676,6 +699,7 @@ func music_transition_policy_snapshot_for_environment(environment: Dictionary, h
 # audio playback, so headless tests can drive the mapping safely.
 func update_music_state(music_state: Dictionary) -> void:
 	_last_music_state = music_state.duplicate(true)
+	_set_adaptive_tempo_target(float(music_state.get("heat", music_state.get("suspicion_level", 0.0))))
 	_consume_music_events(_last_music_state, _director_playback_position())
 	var effective_state := _music_state_with_event_envelope(_last_music_state, _director_playback_position())
 	_music_fx_input_snapshot = _normalize_music_fx_input(effective_state)
@@ -851,6 +875,34 @@ func sync_authored_arrangement_state(state: Dictionary) -> void:
 	_last_arrangement_selection_notice = ""
 
 
+# Restores the compact live-tempo state before the next track/profile binds.
+# No audio stream is restarted here; the pending state is consumed only when
+# its matching profile is configured.
+func sync_adaptive_tempo_state(state: Dictionary) -> void:
+	_pending_adaptive_tempo_restore = state.duplicate(true)
+	_adaptive_tempo_restore_source_position = maxf(-1.0, float(state.get("source_position", -1.0)))
+
+
+# Called only on save paths. The live debug accessor below intentionally
+# returns its stable dictionary directly and remains allocation-free.
+func adaptive_tempo_save_state() -> Dictionary:
+	var source_position := _director_playback_position()
+	return {
+		"profile_id": _adaptive_tempo_profile_id,
+		"enabled": _adaptive_tempo_enabled,
+		"current_bpm": snappedf(_adaptive_tempo_current_bpm, 0.000001),
+		"target_bpm": snappedf(_adaptive_tempo_target_bpm, 0.000001),
+		"source_heat": snappedf(_adaptive_tempo_source_heat, 0.0001),
+		"transport_beats": snappedf(_adaptive_tempo_transport_beats, 0.000001),
+		"source_position": snappedf(source_position, 0.000001),
+	}
+
+
+func adaptive_tempo_debug_snapshot() -> Dictionary:
+	_update_adaptive_tempo_debug_snapshot()
+	return _adaptive_tempo_debug_snapshot
+
+
 func _pending_restore_matches_authored_stem_set(stem_set: Dictionary) -> bool:
 	return not _pending_authored_arrangement_restore.is_empty() and str(_pending_authored_arrangement_restore.get("track_id", "")) == str(stem_set.get("track_id", ""))
 
@@ -863,6 +915,10 @@ func _apply_pending_authored_arrangement_restore(cache_key: String, stem_set: Di
 	_authored_phrase_slot = maxi(0, int(restored.get("phrase_slot", 0)))
 	_authored_phrase_event_index = int(restored.get("last_phrase_event_index", -1))
 	var resume_position := _phrase_slot_music_position(stem_set, _authored_phrase_slot)
+	if _adaptive_tempo_restore_source_position >= 0.0:
+		var loop_seconds := float(maxi(1, int(stem_set.get("loop_frames", 1)))) / float(maxi(1, int(stem_set.get("sample_rate", SAMPLE_RATE))))
+		resume_position = fposmod(_adaptive_tempo_restore_source_position, maxf(0.001, loop_seconds))
+		_adaptive_tempo_restore_source_position = -1.0
 	_play_full_stem_set(cache_key, stem_set, resume_position)
 
 
@@ -874,6 +930,192 @@ static func _phrase_slot_music_position(stem_set: Dictionary, phrase_slot: int) 
 	var loop_seconds := float(loop_frames) / float(sample_rate)
 	var bar_seconds := loop_seconds / float(bars)
 	return fmod(float(maxi(0, phrase_slot) * phrase_bars) * bar_seconds, loop_seconds)
+
+
+func _configure_adaptive_tempo(profile: Dictionary, stem_set: Dictionary = {}) -> void:
+	var track_profile := _copy_dict(stem_set.get("adaptive_tempo", {}))
+	var environment_profile := _copy_dict(profile.get("adaptive_tempo", {}))
+	var combined := track_profile
+	combined.merge(environment_profile, true)
+	var base_fallback := float(stem_set.get("bpm", profile.get("bpm", 82.0)))
+	var normalized := _normalize_adaptive_tempo_profile(combined, base_fallback)
+	var profile_id := "%s|%s|%s" % [
+		str(profile.get("environment_id", profile.get("archetype_id", ""))),
+		str(stem_set.get("track_id", profile.get("authored_track_id", "procedural"))),
+		str(normalized.get("id", "default")),
+	]
+	var profile_changed := profile_id != _adaptive_tempo_profile_id
+	_adaptive_tempo_profile = normalized
+	_adaptive_tempo_profile_id = profile_id
+	_adaptive_tempo_enabled = bool(normalized.get("enabled", false))
+	_adaptive_tempo_native_enabled = _adaptive_tempo_enabled and not OS.has_feature("web")
+	_adaptive_tempo_base_bpm = float(normalized.get("base_bpm", base_fallback))
+	if profile_changed:
+		_adaptive_tempo_current_bpm = _adaptive_tempo_base_bpm
+		_adaptive_tempo_target_bpm = _adaptive_tempo_base_bpm
+		_adaptive_tempo_transport_beats = 0.0
+		_adaptive_tempo_slew_direction = "steady"
+		if str(_pending_adaptive_tempo_restore.get("profile_id", "")) == profile_id:
+			_adaptive_tempo_current_bpm = clampf(float(_pending_adaptive_tempo_restore.get("current_bpm", _adaptive_tempo_base_bpm)), float(normalized.get("min_bpm", _adaptive_tempo_base_bpm)), float(normalized.get("max_bpm", _adaptive_tempo_base_bpm)))
+			_adaptive_tempo_target_bpm = clampf(float(_pending_adaptive_tempo_restore.get("target_bpm", _adaptive_tempo_base_bpm)), float(normalized.get("min_bpm", _adaptive_tempo_base_bpm)), float(normalized.get("max_bpm", _adaptive_tempo_base_bpm)))
+			_adaptive_tempo_source_heat = clampf(float(_pending_adaptive_tempo_restore.get("source_heat", 0.0)), 0.0, 100.0)
+			_adaptive_tempo_transport_beats = maxf(0.0, float(_pending_adaptive_tempo_restore.get("transport_beats", 0.0)))
+			_pending_adaptive_tempo_restore = {}
+	if not _adaptive_tempo_native_enabled:
+		_adaptive_tempo_current_bpm = _adaptive_tempo_base_bpm
+		_adaptive_tempo_target_bpm = _adaptive_tempo_base_bpm
+	_set_adaptive_tempo_target(float(_last_music_state.get("heat", _last_music_state.get("suspicion_level", _adaptive_tempo_source_heat))))
+	_adaptive_tempo_ratio = _adaptive_tempo_current_bpm / maxf(1.0, _adaptive_tempo_base_bpm) if _adaptive_tempo_native_enabled else 1.0
+	_apply_adaptive_pitch_compensation()
+	_update_adaptive_tempo_debug_snapshot()
+
+
+static func _normalize_adaptive_tempo_profile(source: Dictionary, base_fallback: float) -> Dictionary:
+	var base_bpm := clampf(float(source.get("base_bpm", base_fallback)), 40.0, 260.0)
+	var min_bpm := clampf(float(source.get("min_bpm", base_bpm)), 40.0, base_bpm)
+	var max_bpm := clampf(float(source.get("max_bpm", base_bpm)), base_bpm, 260.0)
+	var curve: Array = []
+	var curve_value: Variant = source.get("heat_curve", [])
+	if typeof(curve_value) == TYPE_ARRAY:
+		for point_value in curve_value as Array:
+			if typeof(point_value) != TYPE_DICTIONARY:
+				continue
+			var point: Dictionary = point_value
+			curve.append({
+				"heat": clampf(float(point.get("heat", 0.0)), 0.0, 100.0),
+				"bpm": clampf(float(point.get("bpm", base_bpm)), min_bpm, max_bpm),
+			})
+	curve.sort_custom(func(a: Dictionary, b: Dictionary) -> bool: return float(a.get("heat", 0.0)) < float(b.get("heat", 0.0)))
+	if curve.is_empty():
+		curve = [{"heat": 0.0, "bpm": min_bpm}, {"heat": 50.0, "bpm": base_bpm}, {"heat": 100.0, "bpm": max_bpm}]
+	return {
+		"id": str(source.get("id", "adaptive_tempo")),
+		"enabled": bool(source.get("enabled", false)),
+		"base_bpm": base_bpm,
+		"min_bpm": min_bpm,
+		"max_bpm": max_bpm,
+		"heat_curve": curve,
+		"max_bpm_per_second": maxf(0.001, float(source.get("max_bpm_per_second", 0.5))),
+		"max_bpm_per_bar": maxf(0.001, float(source.get("max_bpm_per_bar", 0.75))),
+		"attack_seconds": maxf(0.001, float(source.get("attack_seconds", 6.0))),
+		"release_seconds": maxf(0.001, float(source.get("release_seconds", 9.0))),
+		"hysteresis_bpm": maxf(0.0, float(source.get("hysteresis_bpm", 0.18))),
+		"stakes_classification": str(source.get("stakes_classification", "")),
+		"native_processing": str(source.get("native_processing", "player_rate_shared_bus_pitch_compensation")),
+		"web_fallback": str(source.get("web_fallback", "fixed_base_bpm")),
+	}
+
+
+static func adaptive_tempo_bpm_for_heat(profile: Dictionary, heat: float) -> float:
+	var normalized := _normalize_adaptive_tempo_profile(profile, float(profile.get("base_bpm", 82.0)))
+	var curve: Array = normalized.get("heat_curve", []) as Array
+	var safe_heat := clampf(heat, 0.0, 100.0)
+	if curve.size() == 1:
+		return float((curve[0] as Dictionary).get("bpm", normalized.get("base_bpm", 82.0)))
+	var first: Dictionary = curve[0]
+	if safe_heat <= float(first.get("heat", 0.0)):
+		return float(first.get("bpm", normalized.get("min_bpm", 82.0)))
+	for index in range(1, curve.size()):
+		var right: Dictionary = curve[index]
+		if safe_heat > float(right.get("heat", 100.0)):
+			continue
+		var left: Dictionary = curve[index - 1]
+		var width := maxf(0.001, float(right.get("heat", 100.0)) - float(left.get("heat", 0.0)))
+		var amount := clampf((safe_heat - float(left.get("heat", 0.0))) / width, 0.0, 1.0)
+		return lerpf(float(left.get("bpm", 82.0)), float(right.get("bpm", 82.0)), amount)
+	return float((curve[curve.size() - 1] as Dictionary).get("bpm", normalized.get("max_bpm", 82.0)))
+
+
+func _set_adaptive_tempo_target(heat: float) -> void:
+	_adaptive_tempo_source_heat = clampf(heat, 0.0, 100.0)
+	if _adaptive_tempo_profile.is_empty() or not _adaptive_tempo_native_enabled:
+		return
+	var candidate := adaptive_tempo_bpm_for_heat(_adaptive_tempo_profile, _adaptive_tempo_source_heat)
+	var deadband := float(_adaptive_tempo_profile.get("hysteresis_bpm", 0.0))
+	if absf(candidate - _adaptive_tempo_target_bpm) >= deadband:
+		_adaptive_tempo_target_bpm = candidate
+
+
+func _advance_adaptive_tempo(delta: float) -> void:
+	var safe_delta := maxf(0.0, delta)
+	if not _adaptive_tempo_native_enabled or _adaptive_tempo_profile.is_empty():
+		_adaptive_tempo_ratio = 1.0
+		_adaptive_tempo_slew_direction = "steady"
+		_update_adaptive_tempo_debug_snapshot()
+		return
+	var previous_bpm := _adaptive_tempo_current_bpm
+	var difference := _adaptive_tempo_target_bpm - previous_bpm
+	if absf(difference) <= ADAPTIVE_TEMPO_EPSILON or safe_delta <= 0.0:
+		_adaptive_tempo_current_bpm = _adaptive_tempo_target_bpm if absf(difference) <= ADAPTIVE_TEMPO_EPSILON else previous_bpm
+		_adaptive_tempo_slew_direction = "steady" if absf(difference) <= ADAPTIVE_TEMPO_EPSILON else "rising" if difference > 0.0 else "falling"
+	else:
+		var response_seconds := float(_adaptive_tempo_profile.get("attack_seconds", 6.0)) if difference > 0.0 else float(_adaptive_tempo_profile.get("release_seconds", 9.0))
+		var response_rate := absf(difference) / maxf(0.001, response_seconds)
+		var live_bar_seconds := 60.0 * float(ADAPTIVE_TEMPO_BEATS_PER_BAR) / maxf(1.0, previous_bpm)
+		var per_bar_rate := float(_adaptive_tempo_profile.get("max_bpm_per_bar", 0.75)) / maxf(0.001, live_bar_seconds)
+		var rate_limit := minf(float(_adaptive_tempo_profile.get("max_bpm_per_second", 0.5)), per_bar_rate)
+		var change := minf(absf(difference), minf(response_rate, rate_limit) * safe_delta)
+		_adaptive_tempo_current_bpm = previous_bpm + change * signf(difference)
+		_adaptive_tempo_slew_direction = "rising" if difference > 0.0 else "falling"
+	_adaptive_tempo_current_bpm = clampf(_adaptive_tempo_current_bpm, float(_adaptive_tempo_profile.get("min_bpm", _adaptive_tempo_base_bpm)), float(_adaptive_tempo_profile.get("max_bpm", _adaptive_tempo_base_bpm)))
+	_adaptive_tempo_ratio = _adaptive_tempo_current_bpm / maxf(1.0, _adaptive_tempo_base_bpm)
+	_adaptive_tempo_transport_beats += ((_adaptive_tempo_current_bpm + previous_bpm) * 0.5 / 60.0) * safe_delta
+	_update_adaptive_tempo_debug_snapshot()
+
+
+func _update_adaptive_tempo_debug_snapshot() -> void:
+	var beat_index := floori(_adaptive_tempo_transport_beats)
+	var bar_index := beat_index / ADAPTIVE_TEMPO_BEATS_PER_BAR
+	_adaptive_tempo_debug_snapshot["profile_id"] = _adaptive_tempo_profile_id
+	_adaptive_tempo_debug_snapshot["enabled"] = _adaptive_tempo_enabled
+	_adaptive_tempo_debug_snapshot["native_enabled"] = _adaptive_tempo_native_enabled
+	_adaptive_tempo_debug_snapshot["current_bpm"] = snappedf(_adaptive_tempo_current_bpm, 0.000001)
+	_adaptive_tempo_debug_snapshot["target_bpm"] = snappedf(_adaptive_tempo_target_bpm, 0.000001)
+	_adaptive_tempo_debug_snapshot["ratio"] = snappedf(_adaptive_tempo_ratio, 0.000001)
+	_adaptive_tempo_debug_snapshot["slew_direction"] = _adaptive_tempo_slew_direction
+	_adaptive_tempo_debug_snapshot["source_heat"] = snappedf(_adaptive_tempo_source_heat, 0.0001)
+	_adaptive_tempo_debug_snapshot["min_bpm"] = float(_adaptive_tempo_profile.get("min_bpm", _adaptive_tempo_base_bpm))
+	_adaptive_tempo_debug_snapshot["max_bpm"] = float(_adaptive_tempo_profile.get("max_bpm", _adaptive_tempo_base_bpm))
+	_adaptive_tempo_debug_snapshot["transport_beats"] = snappedf(_adaptive_tempo_transport_beats, 0.000001)
+	_adaptive_tempo_debug_snapshot["transport_beat"] = beat_index
+	_adaptive_tempo_debug_snapshot["transport_bar"] = bar_index
+	_adaptive_tempo_debug_snapshot["transport_phrase"] = bar_index / ADAPTIVE_TEMPO_BARS_PER_PHRASE
+	_adaptive_tempo_debug_snapshot["live_beat_seconds"] = 60.0 / maxf(1.0, _adaptive_tempo_current_bpm)
+	_adaptive_tempo_debug_snapshot["live_bar_seconds"] = 60.0 * float(ADAPTIVE_TEMPO_BEATS_PER_BAR) / maxf(1.0, _adaptive_tempo_current_bpm)
+	_adaptive_tempo_debug_snapshot["processing"] = str(_adaptive_tempo_profile.get("native_processing", "player_rate_shared_bus_pitch_compensation"))
+	_adaptive_tempo_debug_snapshot["fallback"] = str(_adaptive_tempo_profile.get("web_fallback", "fixed_base_bpm"))
+
+
+func _reset_adaptive_tempo() -> void:
+	_adaptive_tempo_profile = {}
+	_adaptive_tempo_profile_id = ""
+	_adaptive_tempo_enabled = false
+	_adaptive_tempo_native_enabled = false
+	_adaptive_tempo_base_bpm = 82.0
+	_adaptive_tempo_current_bpm = 82.0
+	_adaptive_tempo_target_bpm = 82.0
+	_adaptive_tempo_ratio = 1.0
+	_adaptive_tempo_source_heat = 0.0
+	_adaptive_tempo_slew_direction = "steady"
+	_adaptive_tempo_transport_beats = 0.0
+	_music_fx_pitch_wobble_scale = 1.0
+	_adaptive_tempo_debug_snapshot.clear()
+	_update_adaptive_tempo_debug_snapshot()
+
+
+func _apply_adaptive_pitch_compensation() -> void:
+	var bus_index := _ensure_music_fx_runtime_refs()
+	if bus_index < 0:
+		return
+	var pitch_shift_index := int(_music_fx_runtime_indices.get("pitch_shift", -1))
+	if pitch_shift_index < 0:
+		return
+	var pitch_shift := AudioServer.get_bus_effect(bus_index, pitch_shift_index)
+	var compensation := 1.0 / maxf(0.001, _adaptive_tempo_ratio) if _adaptive_tempo_native_enabled else 1.0
+	_set_effect_property(pitch_shift, "pitch_scale", compensation)
+	# Keep the FFT processor engaged throughout an adaptive track so crossing
+	# the base BPM cannot toggle latency or create a transient seam.
+	AudioServer.set_bus_effect_enabled(bus_index, pitch_shift_index, _adaptive_tempo_native_enabled)
 
 
 func music_fx_snapshot(music_state: Dictionary = {}) -> Dictionary:
@@ -1301,6 +1543,7 @@ func _apply_music_fx_vector(vector: Dictionary, _force: bool) -> void:
 	var bus_index := _ensure_music_fx_runtime_refs()
 	if bus_index < 0:
 		return
+	_apply_adaptive_pitch_compensation()
 	var lowpass_amount := clampf(float(vector.get("lowpass_amount", 0.0)), 0.0, 1.0)
 	var chorus_depth := clampf(float(vector.get("chorus_depth", 0.0)), 0.0, 1.0)
 	var distortion_drive := clampf(float(vector.get("distortion_drive", 0.0)), 0.0, 1.0)
@@ -1372,10 +1615,11 @@ func _apply_music_fx_vector(vector: Dictionary, _force: bool) -> void:
 	_apply_music_send_matrix(_music_send_matrix, _current_stem_set, _music_send_players, false)
 	_apply_music_send_matrix(_scaled_music_send_matrix(_music_send_matrix, 0.72), _current_feature_stem_set, _feature_send_players, true)
 	var wobble_cents := clampf(float(vector.get("pitch_wobble_cents", 0.0)), 0.0, 18.0)
-	var pitch_scale := 1.0
+	_music_fx_pitch_wobble_scale = 1.0
 	if wobble_cents > 0.001:
 		var wobble := sin(TAU * 0.18 * (float(Time.get_ticks_msec()) / 1000.0))
-		pitch_scale = pow(2.0, (wobble_cents * wobble) / 1200.0)
+		_music_fx_pitch_wobble_scale = pow(2.0, (wobble_cents * wobble) / 1200.0)
+	var pitch_scale := _live_playback_pitch_scale()
 	for player_value in _stem_players.values():
 		if player_value is AudioStreamPlayer:
 			(player_value as AudioStreamPlayer).pitch_scale = pitch_scale
@@ -1384,6 +1628,9 @@ func _apply_music_fx_vector(vector: Dictionary, _force: bool) -> void:
 			(player_value as AudioStreamPlayer).pitch_scale = pitch_scale
 	if _ambient_player != null:
 		_ambient_player.pitch_scale = pitch_scale
+	for player_value in _feature_stinger_players:
+		if player_value is AudioStreamPlayer:
+			(player_value as AudioStreamPlayer).pitch_scale = pitch_scale
 	for group_value in [_music_send_players, _feature_send_players]:
 		for player_value in (group_value as Dictionary).values():
 			if player_value is AudioStreamPlayer:
@@ -1397,7 +1644,7 @@ func _configure_music_send_effects(vector: Dictionary) -> void:
 	var band_pass := _music_send_effect("band_pass")
 	_set_effect_property(band_pass, "cutoff_hz", lerpf(1250.0, 2250.0, watch_tinge))
 	_set_effect_property(band_pass, "resonance", clampf(bandpass_q / (bandpass_q + 1.0), 0.18, 0.82))
-	var quarter_note_ms := (_music_director_bar_seconds() / 4.0) * 1000.0
+	var quarter_note_ms := (_music_live_bar_seconds() / 4.0) * 1000.0
 	var delay := _music_send_effect("delay")
 	_set_effect_property(delay, "dry", 0.0)
 	_set_effect_property(delay, "tap1_delay_ms", clampf(quarter_note_ms * 0.75, 1.0, 1500.0))
@@ -1551,6 +1798,7 @@ func _stop_music_send_players(players: Dictionary, clear_streams: bool) -> void:
 
 func _play_audio_player(player: AudioStreamPlayer, source_position_seconds: float = 0.0, phase_group: String = "") -> void:
 	_float_pcm_player_states.erase(player.get_instance_id())
+	player.pitch_scale = _live_playback_pitch_scale()
 	if not (player.stream is MusicFloatPcmStream):
 		player.play(maxf(0.0, source_position_seconds))
 		return
@@ -2061,7 +2309,8 @@ func _music_profile_from_environment(environment: Dictionary, heat_level: int) -
 	var base_safety := clampf(float(source.get("safety", _safety_from_security(security))), 0.0, 1.0)
 	var effective_safety := base_safety
 	var base_bpm := float(source.get("bpm", _theme_bpm(theme)))
-	var bpm := clampf(base_bpm + (1.0 - base_safety) * 3.0, 58.0, 112.0)
+	var adaptive_tempo := _copy_dict(source.get("adaptive_tempo", {}))
+	var bpm := clampf(float(adaptive_tempo.get("base_bpm", base_bpm)), 58.0, 180.0) if bool(adaptive_tempo.get("enabled", false)) else clampf(base_bpm + (1.0 - base_safety) * 3.0, 58.0, 112.0)
 	var palette_id := str(source.get("palette_id", _theme_texture(theme))).strip_edges()
 	if palette_id.is_empty():
 		palette_id = _theme_texture(theme)
@@ -2091,6 +2340,7 @@ func _music_profile_from_environment(environment: Dictionary, heat_level: int) -
 		"heat_band": 0,
 		"volume": float(source.get("volume", 0.26)),
 		"arrangement_phrases": clampi(int(source.get("arrangement_phrases", DEFAULT_ARRANGEMENT_PHRASES)), MIN_ARRANGEMENT_PHRASES, MAX_ARRANGEMENT_PHRASES),
+		"adaptive_tempo": adaptive_tempo,
 	}
 	profile["progression"] = _number_array(source.get("progression", _theme_progression(theme)), _theme_progression(theme))
 	profile["motif"] = _number_array(source.get("motif", _theme_motif(theme)), _theme_motif(theme))
@@ -3751,6 +4001,8 @@ func _authored_stem_set_from_profile(profile: Dictionary, music_state: Dictionar
 	contract["sample_rate"] = int(entry.get("sample_rate", SAMPLE_RATE))
 	contract["channels"] = int(entry.get("channels", 1))
 	contract["bit_depth"] = int(entry.get("bit_depth", 16))
+	contract["profile"] = profile.duplicate(true)
+	contract["adaptive_tempo"] = _copy_dict(entry.get("adaptive_tempo", {}))
 	var delivery_snapshot := _authored_delivery_snapshot(entry, stems_data)
 	contract["delivery_files"] = _copy_array(delivery_snapshot.get("files", []))
 	contract["source_audio_format"] = _copy_dict(delivery_snapshot.get("source_audio_format", {}))
@@ -4861,6 +5113,8 @@ static func _music_fx_graph_matches(bus_index: int) -> bool:
 
 static func _new_music_fx_effect(key: String) -> AudioEffect:
 	match key:
+		"pitch_shift":
+			return AudioEffectPitchShift.new()
 		"low_pass":
 			return AudioEffectLowPassFilter.new()
 		"band_pass":
@@ -4883,6 +5137,10 @@ static func _new_music_fx_effect(key: String) -> AudioEffect:
 
 static func _configure_music_fx_effect(key: String, effect: AudioEffect) -> void:
 	match key:
+		"pitch_shift":
+			_set_effect_property(effect, "pitch_scale", 1.0)
+			_set_effect_property(effect, "oversampling", 4)
+			_set_effect_property(effect, "fft_size", AudioEffectPitchShift.FFT_SIZE_1024)
 		"low_pass":
 			_set_effect_property(effect, "cutoff_hz", 18000.0)
 			_set_effect_property(effect, "resonance", 0.18)
@@ -4986,6 +5244,14 @@ func _music_director_step_seconds() -> float:
 	if not _current_stem_set.is_empty():
 		return maxf(0.001, _step_period_from_bpm(float(_current_stem_set.get("bpm", 82.0))))
 	return _step_period_from_bpm(82.0)
+
+
+func _music_live_bar_seconds() -> float:
+	return _music_director_bar_seconds() / maxf(0.001, _adaptive_tempo_ratio)
+
+
+func _live_playback_pitch_scale() -> float:
+	return maxf(0.001, _adaptive_tempo_ratio * _music_fx_pitch_wobble_scale)
 
 
 func _music_is_playing() -> bool:

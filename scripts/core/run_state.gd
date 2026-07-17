@@ -224,6 +224,7 @@ var pending_bags: Array = []
 var active_triggered_event: Dictionary = {}
 var event_cadence: Dictionary = {}
 var music_arrangement_state: Dictionary = {}
+var music_tempo_state: Dictionary = {}
 var environment_history: Array = []
 var environment_history_archive_count: int = 0
 var unlocked_travel: Array = []
@@ -291,6 +292,7 @@ func start_new(p_seed_text: String = "FOUNDATION-SEED", p_challenge_config: Dict
 	active_triggered_event = {}
 	_reset_event_cadence_state()
 	music_arrangement_state = {}
+	music_tempo_state = {}
 	environment_history = []
 	environment_history_archive_count = 0
 	unlocked_travel = []
@@ -1198,6 +1200,7 @@ func set_environment(environment_data: Dictionary) -> void:
 		"role_epochs": {},
 		"selected_role_epochs": {},
 	}
+	music_tempo_state = {}
 	_initialize_grand_casino_objective_runtime()
 	_initialize_grand_casino_staffing()
 	_initialize_grand_casino_living_floor()
@@ -1283,6 +1286,10 @@ func remember_music_arrangement_selection(track_id: String, selected_variant_ids
 		return
 	music_arrangement_state["selected_variant_ids"] = selected_variant_ids.duplicate(true)
 	music_arrangement_state["selected_role_epochs"] = selected_role_epochs.duplicate(true)
+
+
+func remember_music_tempo_state(state: Dictionary) -> void:
+	music_tempo_state = _normalize_music_tempo_state(state)
 
 
 func has_world_map() -> bool:
@@ -6571,6 +6578,7 @@ func to_dict() -> Dictionary:
 		"active_triggered_event": active_triggered_event.duplicate(true),
 		"event_cadence": _normalize_event_cadence(event_cadence),
 		"music_arrangement_state": _normalize_music_arrangement_state(music_arrangement_state),
+		"music_tempo_state": _normalize_music_tempo_state(music_tempo_state),
 		"environment_history": environment_history.duplicate(true),
 		"environment_history_archive_count": environment_history_archive_count,
 		"unlocked_travel": unlocked_travel.duplicate(true),
@@ -6640,6 +6648,7 @@ func from_dict(data: Dictionary) -> void:
 	active_triggered_event = _normalize_triggered_event_entry(data.get("active_triggered_event", {}))
 	event_cadence = _normalize_event_cadence(_copy_dict(data.get("event_cadence", {})))
 	music_arrangement_state = _normalize_music_arrangement_state(_copy_dict(data.get("music_arrangement_state", {})))
+	music_tempo_state = _normalize_music_tempo_state(_copy_dict(data.get("music_tempo_state", {})))
 	environment_history_archive_count = maxi(0, int(data.get("environment_history_archive_count", 0)))
 	environment_history = _normalize_environment_history(_copy_array(data.get("environment_history", [])))
 	_compact_environment_history()
@@ -7474,6 +7483,20 @@ static func _normalize_music_arrangement_state(data: Dictionary) -> Dictionary:
 		"selected_variant_ids": _normalize_music_variant_ids(data.get("selected_variant_ids", {})),
 		"role_epochs": _normalize_music_role_epochs(data.get("role_epochs", {})),
 		"selected_role_epochs": _normalize_music_role_epochs(data.get("selected_role_epochs", {})),
+	}
+
+
+static func _normalize_music_tempo_state(data: Dictionary) -> Dictionary:
+	if data.is_empty():
+		return {}
+	return {
+		"profile_id": str(data.get("profile_id", "")).strip_edges(),
+		"enabled": bool(data.get("enabled", false)),
+		"current_bpm": clampf(float(data.get("current_bpm", 82.0)), 40.0, 260.0),
+		"target_bpm": clampf(float(data.get("target_bpm", 82.0)), 40.0, 260.0),
+		"source_heat": clampf(float(data.get("source_heat", 0.0)), 0.0, 100.0),
+		"transport_beats": maxf(0.0, float(data.get("transport_beats", 0.0))),
+		"source_position": maxf(0.0, float(data.get("source_position", 0.0))),
 	}
 
 

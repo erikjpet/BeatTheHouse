@@ -122,3 +122,27 @@ contract.
 The files under `assets/audio/music/jazz_club_delivery_fixture_*` are quiet
 deterministic test signals, clearly labelled fixtures. They prove 8- and
 16-bar 24-bit ingestion and are not the audio engineer's music.
+
+## Native adaptive-tempo handoff
+
+Jazz Club's first tunable profile is centered on 120 BPM and currently spans
+116-124 BPM. Track metadata owns the heat curve, per-second and per-bar rate
+limits, attack/release time, hysteresis, stakes classification, enable flag,
+and web fallback; an environment profile may override those same fields.
+
+Native Godot playback uses one authoritative ratio for venue stems, feature
+stems, effect-send mirrors, fills, and music stingers. Every player advances
+at that same ratio. One `AudioEffectPitchShift` on the shared Music bus applies
+the inverse ratio after the stems have mixed, preserving musical pitch without
+introducing per-stem phase processors or restarting a loop. Beat, bar, phrase,
+fill, stinger, and four-bar outcome boundaries stay in source musical time;
+the shared player ratio makes those boundaries occur at the live BPM. The web
+build deliberately remains at the authored base BPM.
+
+`tools/audio_adaptive_tempo_probe.ps1` is the native stress and acceptance
+fixture. It covers low, rising, high, and falling heat; monotonic mapping;
+slew/deadband behavior; a long up/down ramp with a 0.001-frame phase-error
+ceiling; live beat/bar/phrase math; the four-bar outcome envelope; and exact
+save/load continuation. Final headphone review should use the same four heat
+conditions and listen specifically for stable pitch, drum flamming, transient
+smear, and artifacts while the ratio is moving.

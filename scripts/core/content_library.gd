@@ -1293,6 +1293,7 @@ func _validate_music_manifest_definitions() -> void:
 				validation_errors.append("music_tracks %s production masters must declare 24-bit PCM." % track_id)
 		if float(track.get("bpm", 0.0)) <= 0.0:
 			validation_errors.append("music_tracks %s bpm must be positive." % track_id)
+		_validate_music_adaptive_tempo(track_id, float(track.get("bpm", 0.0)), track.get("adaptive_tempo", {}))
 		if int(track.get("bars", 0)) <= 0:
 			validation_errors.append("music_tracks %s bars must be positive." % track_id)
 		if int(track.get("loop_frames", 0)) <= 0:
@@ -1604,6 +1605,48 @@ func _validate_music_compatibility_sets(track: Dictionary, track_id: String, har
 					validation_errors.append("music_tracks %s arrangement recipe %s role policy %s change_every must be positive." % [track_id, recipe_id, role])
 				if policy.has("retain") and typeof(policy.get("retain")) != TYPE_BOOL:
 					validation_errors.append("music_tracks %s arrangement recipe %s role policy %s retain must be boolean." % [track_id, recipe_id, role])
+
+
+func _validate_music_adaptive_tempo(track_id: String, track_bpm: float, value: Variant) -> void:
+	if typeof(value) != TYPE_DICTIONARY:
+		validation_errors.append("music_tracks %s adaptive_tempo must be a dictionary when present." % track_id)
+		return
+	var profile: Dictionary = value
+	if profile.is_empty():
+		return
+	if typeof(profile.get("enabled", false)) != TYPE_BOOL:
+		validation_errors.append("music_tracks %s adaptive_tempo enabled must be boolean." % track_id)
+	var base_bpm := float(profile.get("base_bpm", 0.0))
+	var min_bpm := float(profile.get("min_bpm", 0.0))
+	var max_bpm := float(profile.get("max_bpm", 0.0))
+	if min_bpm <= 0.0 or base_bpm < min_bpm or max_bpm < base_bpm:
+		validation_errors.append("music_tracks %s adaptive_tempo must satisfy 0 < min_bpm <= base_bpm <= max_bpm." % track_id)
+	if absf(base_bpm - track_bpm) > 0.001:
+		validation_errors.append("music_tracks %s adaptive_tempo base_bpm must match the authored track BPM." % track_id)
+	for key in ["max_bpm_per_second", "max_bpm_per_bar", "attack_seconds", "release_seconds"]:
+		if float(profile.get(key, 0.0)) <= 0.0:
+			validation_errors.append("music_tracks %s adaptive_tempo %s must be positive." % [track_id, key])
+	if float(profile.get("hysteresis_bpm", -1.0)) < 0.0:
+		validation_errors.append("music_tracks %s adaptive_tempo hysteresis_bpm must be non-negative." % track_id)
+	var curve_value: Variant = profile.get("heat_curve", [])
+	if typeof(curve_value) != TYPE_ARRAY or (curve_value as Array).size() < 2:
+		validation_errors.append("music_tracks %s adaptive_tempo heat_curve must contain at least two points." % track_id)
+		return
+	var previous_heat := -1.0
+	var previous_bpm := -1.0
+	for point_value in curve_value as Array:
+		if typeof(point_value) != TYPE_DICTIONARY:
+			validation_errors.append("music_tracks %s adaptive_tempo heat_curve points must be dictionaries." % track_id)
+			continue
+		var point: Dictionary = point_value
+		var heat := float(point.get("heat", -1.0))
+		var bpm := float(point.get("bpm", 0.0))
+		if heat < 0.0 or heat > 100.0 or heat <= previous_heat:
+			validation_errors.append("music_tracks %s adaptive_tempo heat_curve heat values must increase inside 0..100." % track_id)
+		if bpm < min_bpm or bpm > max_bpm or bpm < previous_bpm:
+			validation_errors.append("music_tracks %s adaptive_tempo heat_curve BPM values must rise inside the profile range." % track_id)
+		previous_heat = heat
+		previous_bpm = bpm
 
 
 func _validate_music_delivery_filename(label: String, track_id: String, filename: String, expected_role: String, metadata: Variant, delivery: Dictionary, semantic_files: Dictionary) -> Dictionary:

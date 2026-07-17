@@ -1565,7 +1565,30 @@
       "texture": "jazz",
       "texture_rate": 0.46,
       "volume": 0.28,
-      "arrangement_phrases": 5
+      "arrangement_phrases": 5,
+      "bpm": 120,
+      "adaptive_tempo": {
+        "id": "jazz_club_native_116_124",
+        "enabled": true,
+        "base_bpm": 120,
+        "min_bpm": 116,
+        "max_bpm": 124,
+        "heat_curve": [
+          {"heat": 0, "bpm": 116},
+          {"heat": 35, "bpm": 118.5},
+          {"heat": 50, "bpm": 120},
+          {"heat": 75, "bpm": 122},
+          {"heat": 100, "bpm": 124}
+        ],
+        "max_bpm_per_second": 0.5,
+        "max_bpm_per_bar": 0.75,
+        "attack_seconds": 8,
+        "release_seconds": 12,
+        "hysteresis_bpm": 0.2,
+        "stakes_classification": "mid_stakes",
+        "native_processing": "player_rate_shared_bus_pitch_compensation",
+        "web_fallback": "fixed_base_bpm"
+      }
     },
     "economic_profile": {
       "price_tone": "rare",
