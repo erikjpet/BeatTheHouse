@@ -55,6 +55,14 @@ const PAST_POST_ITEM_EFFECT_KEYS := [
 	"roulette_past_post_base_heat",
 	"skill_cheat_drunk_window_offset_msec",
 ]
+const WHEEL_READ_ACTION_ID := "read_wheel_bias"
+const WHEEL_READ_ITEM_EFFECT_KEYS := [
+	"roulette_past_post_perfect_msec",
+	"roulette_past_post_good_msec",
+	"roulette_past_post_window_msec",
+	"roulette_past_post_base_heat",
+	"skill_cheat_drunk_window_offset_msec",
+]
 
 const AMERICAN_SEQUENCE := [
 	"0", "28", "9", "26", "30", "11", "7", "20", "32", "17", "5", "22", "34", "15", "3", "24", "36", "13", "1", "00", "27", "10", "25", "29", "12", "8", "19", "31", "18", "6", "21", "33", "16", "4", "23", "35", "14", "2"
@@ -168,7 +176,9 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 	var past_post_window := _past_post_window_status(table, session, last_result, now_msec, run_state)
 	var past_post_challenge := _normalized_past_post_challenge(session.get("past_post_challenge", {}))
 	var past_post_available := bool(past_post_window.get("available", false))
-	var roulette_motion_active := roulette_wheel_locked or past_post_available
+	var wheel_read_challenge := _normalized_wheel_read_challenge(session.get("wheel_read_challenge", {}))
+	var wheel_read_active := not wheel_read_challenge.is_empty() and str(wheel_read_challenge.get("skill_grade", "")).is_empty()
+	var roulette_motion_active := roulette_wheel_locked or past_post_available or wheel_read_active
 	var rules := _table_rules(table)
 	var barred := bool(table.get("table_barred", false))
 	var visible_last_results := _roulette_visible_last_results(table, last_result_source, result_settled_for_display)
@@ -179,12 +189,15 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 	var table_notice := _table_notice(table, session, last_result, spin_active, payout_active or result_reveal_active or not result_settled_for_display, round_timer)
 	if past_post_available:
 		table_notice = "The payout lock is open. A late chip could still slide."
+	elif wheel_read_active:
+		table_notice = "Track the cyan tick and lock it over the low-side marker."
 	if barred:
 		table_notice = str(table.get("barred_reason", "The roulette wheel is closed to you."))
 	var surface_patrons := GameModule.patrons_with_talk_focus(_patrons_for_surface(table, last_result, now_msec), ui_state.get("focused_talk_speaker", {}))
 	var patron_layout := _roulette_patron_layout(surface_patrons)
 	var cheat_binding_action := "roulette_past_post" if past_post_available else "roulette_nudge"
 	var past_post_item_modifiers := skill_item_modifier_badges(run_state, PAST_POST_ITEM_EFFECT_KEYS)
+	var wheel_read_item_modifiers := skill_item_modifier_badges(run_state, WHEEL_READ_ITEM_EFFECT_KEYS)
 	return GameModule.surface_spec({
 		"surface_renderer": "roulette",
 		"surface_life": "immersive_table",
@@ -260,6 +273,11 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 		"past_post_window": past_post_window,
 		"past_post_challenge": past_post_challenge,
 		"past_post_item_modifiers": past_post_item_modifiers,
+		"wheel_read_challenge": wheel_read_challenge,
+		"wheel_read_meter": _wheel_read_meter(wheel_read_challenge, session),
+		"wheel_read_active": wheel_read_active,
+		"wheel_read_heat_preview": _wheel_read_heat(table, run_state),
+		"wheel_read_item_modifiers": wheel_read_item_modifiers,
 		"result_reveal_active": result_reveal_active,
 		"roulette_result_settled": result_settled_for_display,
 		"roulette_motion_active": roulette_motion_active,
@@ -433,7 +451,7 @@ func surface_action_command(surface_action: String, index: int, confirm_requeste
 		"roulette_nudge":
 			return _nudge_wheel_command(index, next_state, table, run_state, environment)
 		"roulette_read_wheel":
-			return _read_wheel_command(index, next_state, table, run_state)
+			return _read_wheel_command(index, next_state, table, run_state, environment, confirm_requested)
 	return {"handled": false}
 
 
@@ -1840,38 +1858,234 @@ func _nudge_wheel_command(index: int, state: Dictionary, table: Dictionary, run_
 	})
 
 
-func _read_wheel_command(index: int, state: Dictionary, table: Dictionary, run_state: RunState) -> Dictionary:
-	var cheats := _copy_dict(state.get("cheats_used", {}))
-	var heat := _read_wheel_heat(table, run_state)
-	cheats["read_wheel_bias"] = true
-	cheats["read_wheel_heat"] = heat
-	state["cheats_used"] = cheats
-	var profile := _normalize_physics_profile(table.get("physics_profile", {}))
-	state["bias_read"] = {
-		"tilt_degrees": float(profile.get("tilt_degrees", 0.0)),
-		"scatter": float(profile.get("diamond_scatter_degrees", 0.0)),
-		"message": "The ball favors late scatter near the low side." if absf(float(profile.get("tilt_degrees", 0.0))) > 0.05 else "The wheel looks level, but the diamonds are lively.",
-	}
+func _read_wheel_command(index: int, state: Dictionary, table: Dictionary, run_state: RunState, environment: Dictionary, confirm_requested: bool) -> Dictionary:
+	var challenge := _normalized_wheel_read_challenge(state.get("wheel_read_challenge", {}))
+	var selected := str(state.get("selected_action_id", "")) == WHEEL_READ_ACTION_ID and str(state.get("selected_action_kind", "")) == "cheat"
+	var resolving := confirm_requested or selected or (not challenge.is_empty() and str(challenge.get("skill_grade", "")).is_empty())
+	if challenge.is_empty() or not str(challenge.get("skill_grade", "")).is_empty():
+		challenge = _start_wheel_read_challenge(state, table, run_state, environment)
+		resolving = false
+	if resolving:
+		challenge["input_msec"] = GameModule.deterministic_time_msec(run_state, state)
+		challenge = _grade_wheel_read_challenge(challenge)
+		var cheats := _copy_dict(state.get("cheats_used", {}))
+		cheats[WHEEL_READ_ACTION_ID] = true
+		cheats["read_wheel_heat"] = maxi(1, int(challenge.get("base_heat", _wheel_read_heat(table, run_state))) + _wheel_read_grade_heat_modifier(str(challenge.get("skill_grade", "miss"))))
+		state["cheats_used"] = cheats
+		state["bias_read"] = _wheel_read_context_for_grade(table, challenge)
+	state["wheel_read_challenge"] = challenge
+	var watch := _roulette_table_watch_status(table, run_state, environment)
+	var risk := "Heat +%d" % int(challenge.get("base_heat", _wheel_read_heat(table, run_state)))
+	if bool(watch.get("watched", false)):
+		risk = "%s; WATCHED" % risk
+	var message := "Wheel read armed. Stop the cyan tick on the low-side marker. %s." % risk
+	if resolving:
+		message = _wheel_read_input_message(str(challenge.get("skill_grade", "miss")), risk)
 	return GameModule.surface_command({
 		"handled": true,
 		"ui_state": state,
-		"action_id": "read_wheel_bias",
+		"action_id": WHEEL_READ_ACTION_ID,
 		"action_kind": "cheat",
-		"resolve": false,
+		"resolve": resolving,
+		"preserve_surface_ui_state": not resolving,
 		"selected_index": index,
-		"message": "You clock the rotor and the diamond pattern. Heat risk rises if you keep staring.",
+		"message": message,
 	})
+
+
+func _start_wheel_read_challenge(ui_state: Dictionary, table: Dictionary, run_state: RunState, environment: Dictionary) -> Dictionary:
+	var action := _action(WHEEL_READ_ACTION_ID)
+	var now_msec := GameModule.deterministic_time_msec(run_state, ui_state)
+	var period := maxi(600, int(action.get("skill_period_msec", 1400)))
+	var perfect := int(action.get("skill_perfect_msec", 90)) + _item_effect_total("roulette_past_post_perfect_msec", run_state)
+	var good := int(action.get("skill_good_msec", 220)) + _item_effect_total("roulette_past_post_good_msec", run_state)
+	var close := int(action.get("skill_close_msec", 360)) + int(round(float(_item_effect_total("roulette_past_post_window_msec", run_state)) * 0.5))
+	var impairment := clampi(int(run_state.drunk_level / 4), 0, 30) if run_state != null else 0
+	impairment = maxi(0, impairment - _item_effect_total("skill_cheat_drunk_window_offset_msec", run_state))
+	perfect = maxi(36, perfect - impairment)
+	good = maxi(perfect + 48, good - impairment * 2)
+	close = maxi(good + 48, close - impairment * 3)
+	var windows := GameModule.normalize_skill_timing_windows(perfect, good, close, 24)
+	var profile := _normalize_physics_profile(table.get("physics_profile", {}))
+	var seed := "%s:%s:%s:%d:%.4f" % [
+		str(run_state.seed_text if run_state != null else "roulette"),
+		str(environment.get("id", "")),
+		str(table.get("table_name", "roulette")),
+		int(table.get("spin_count", 0)),
+		float(profile.get("tilt_degrees", 0.0)),
+	]
+	var target_phase := int(_stable_hash(seed) % period)
+	return {
+		"challenge_id": "wheel_read_%d" % _stable_hash(seed),
+		"meter_started_msec": now_msec,
+		"meter_period_msec": period,
+		"target_msec": now_msec + target_phase,
+		"perfect_window_msec": int(windows.get("perfect_window_msec", perfect)),
+		"good_window_msec": int(windows.get("good_window_msec", good)),
+		"close_window_msec": int(windows.get("close_window_msec", close)),
+		"base_heat": _wheel_read_heat(table, run_state),
+		"pit_boss_watched_start": bool(_roulette_table_watch_status(table, run_state, environment).get("watched", false)),
+		"item_modifiers": skill_item_modifier_badges(run_state, WHEEL_READ_ITEM_EFFECT_KEYS),
+	}
+
+
+func _normalized_wheel_read_challenge(value: Variant) -> Dictionary:
+	if typeof(value) != TYPE_DICTIONARY:
+		return {}
+	var source: Dictionary = (value as Dictionary).duplicate(true)
+	var challenge_id := str(source.get("challenge_id", "")).strip_edges()
+	if challenge_id.is_empty():
+		return {}
+	var started := maxi(0, int(source.get("meter_started_msec", 0)))
+	var period := maxi(600, int(source.get("meter_period_msec", 1400)))
+	var windows := GameModule.normalize_skill_timing_windows(
+		int(source.get("perfect_window_msec", 90)),
+		int(source.get("good_window_msec", 220)),
+		int(source.get("close_window_msec", 360)),
+		24
+	)
+	var result := {
+		"challenge_id": challenge_id,
+		"meter_started_msec": started,
+		"meter_period_msec": period,
+		"target_msec": maxi(started, int(source.get("target_msec", started))),
+		"perfect_window_msec": int(windows.get("perfect_window_msec", 90)),
+		"good_window_msec": int(windows.get("good_window_msec", 220)),
+		"close_window_msec": int(windows.get("close_window_msec", 360)),
+		"base_heat": maxi(1, int(source.get("base_heat", 8))),
+		"pit_boss_watched_start": bool(source.get("pit_boss_watched_start", false)),
+		"item_modifiers": _array(source.get("item_modifiers", [])),
+	}
+	if source.has("input_msec"):
+		result["input_msec"] = maxi(0, int(source.get("input_msec", 0)))
+	var grade := str(source.get("skill_grade", ""))
+	if ["perfect", "good", "partial", "miss", "blown"].has(grade):
+		result["skill_grade"] = grade
+		result["skill_accuracy"] = clampi(int(source.get("skill_accuracy", 0)), 0, 100)
+		result["skill_margin_msec"] = int(source.get("skill_margin_msec", 0))
+	return result
+
+
+func _grade_wheel_read_challenge(value: Dictionary) -> Dictionary:
+	var challenge := _normalized_wheel_read_challenge(value)
+	if challenge.is_empty():
+		return {}
+	if not challenge.has("input_msec") or int(challenge.get("input_msec", 0)) <= 0:
+		challenge["skill_grade"] = "miss"
+		challenge["skill_accuracy"] = 0
+		challenge["skill_margin_msec"] = 0
+		return challenge
+	var period := maxi(1, int(challenge.get("meter_period_msec", 1400)))
+	var started := int(challenge.get("meter_started_msec", 0))
+	var input_phase := (int(challenge.get("input_msec", 0)) - started) % period
+	var target_phase := (int(challenge.get("target_msec", started)) - started) % period
+	if input_phase < 0:
+		input_phase += period
+	if target_phase < 0:
+		target_phase += period
+	var margin := input_phase - target_phase
+	var half_period := int(period / 2)
+	if margin > half_period:
+		margin -= period
+	elif margin < -half_period:
+		margin += period
+	var timing := GameModule.skill_timing_grade_from_distance(
+		absi(margin),
+		int(challenge.get("perfect_window_msec", 90)),
+		int(challenge.get("good_window_msec", 220)),
+		int(challenge.get("close_window_msec", 360)),
+		24
+	)
+	challenge["skill_grade"] = str(timing.get("skill_grade", "blown"))
+	challenge["skill_accuracy"] = clampi(int(timing.get("skill_accuracy", 0)), 0, 100)
+	challenge["skill_margin_msec"] = margin
+	return challenge
+
+
+func _wheel_read_meter(challenge: Dictionary, ui_state: Dictionary) -> Dictionary:
+	if challenge.is_empty():
+		return {}
+	var started := int(challenge.get("meter_started_msec", 0))
+	var period := maxi(1, int(challenge.get("meter_period_msec", 1400)))
+	var now_msec := int(ui_state.get("surface_time_msec", started))
+	var phase := (now_msec - started) % period
+	var target := (int(challenge.get("target_msec", started)) - started) % period
+	if phase < 0:
+		phase += period
+	if target < 0:
+		target += period
+	return {
+		"progress": float(phase) / float(period),
+		"target": float(target) / float(period),
+		"skill_grade": str(challenge.get("skill_grade", "")),
+	}
+
+
+func _wheel_read_grade_heat_modifier(grade: String) -> int:
+	var action := _action(WHEEL_READ_ACTION_ID)
+	match grade:
+		"perfect":
+			return -int(action.get("skill_perfect_heat_reduction", 2))
+		"partial":
+			return int(action.get("skill_partial_heat_bonus", 2))
+		"miss":
+			return int(action.get("skill_miss_heat_bonus", 5))
+		"blown":
+			return int(action.get("skill_blown_heat_bonus", 10))
+	return 0
+
+
+func _wheel_read_context_for_grade(table: Dictionary, challenge: Dictionary) -> Dictionary:
+	var grade := str(challenge.get("skill_grade", "miss"))
+	var profile := _normalize_physics_profile(table.get("physics_profile", {}))
+	var tilted := absf(float(profile.get("tilt_degrees", 0.0))) > 0.05
+	var base_message := "The ball favors late scatter near the low side." if tilted else "The wheel looks level, but the diamonds are lively."
+	match grade:
+		"perfect":
+			return {"tilt_degrees": float(profile.get("tilt_degrees", 0.0)), "scatter": float(profile.get("diamond_scatter_degrees", 0.0)), "quality": "exact", "message": "Perfect rotor read. %s" % base_message}
+		"good":
+			return {"tilt_degrees": float(profile.get("tilt_degrees", 0.0)), "scatter": 0.0, "quality": "strong", "message": "Clean rotor read. %s" % base_message}
+		"partial":
+			return {"tilt_degrees": 0.0, "scatter": 0.0, "quality": "vague", "message": "You catch only a vague low-side tell before the rotor gets away."}
+		"blown":
+			return {"quality": "blown", "message": "The croupier catches your stare; the apparent wheel tell is useless."}
+		_:
+			return {"quality": "miss", "message": "Your eyes lose the low-side tick and the wheel read gives you nothing."}
+
+
+func _wheel_read_input_message(grade: String, risk: String) -> String:
+	match grade:
+		"perfect":
+			return "Perfect wheel read locked. %s." % risk
+		"good":
+			return "Clean wheel read locked. %s." % risk
+		"partial":
+			return "Only a vague wheel tell sticks. %s." % risk
+		"blown":
+			return "The croupier catches your stare before the tick lines up. %s." % risk
+		_:
+			return "The low-side tick gets away from you. %s." % risk
 
 
 func _resolve_read_wheel(action_id: String, run_state: RunState, environment: Dictionary, rng: RngStream, ui_state: Dictionary) -> Dictionary:
 	var table := _table_state(run_state, environment)
-	var heat := _read_wheel_heat(table, run_state)
-	var suspicion_delta := run_state.alcohol_adjusted_suspicion_delta(heat) if run_state != null else heat
+	var challenge := _normalized_wheel_read_challenge(ui_state.get("wheel_read_challenge", {}))
+	if challenge.is_empty():
+		challenge = _start_wheel_read_challenge(ui_state, table, run_state, environment)
+	challenge = _grade_wheel_read_challenge(challenge)
+	var grade := str(challenge.get("skill_grade", "miss"))
 	var pit_boss_status := run_state.pit_boss_watch_status(environment) if run_state != null else {}
 	var pit_boss_bonus := int(pit_boss_status.get("cheat_heat_bonus", 0)) if bool(pit_boss_status.get("active", false)) else 0
+	var base_suspicion_delta := maxi(1, int(challenge.get("base_heat", _wheel_read_heat(table, run_state))) + _item_effect_total("cheat_suspicion_delta", run_state) + _wheel_read_grade_heat_modifier(grade))
+	var raw_heat := maxi(1, base_suspicion_delta + (run_state.security_risk_bonus("cheat") if run_state != null else 0) + pit_boss_bonus)
+	var suspicion_delta := run_state.alcohol_adjusted_suspicion_delta(raw_heat) if run_state != null else raw_heat
 	var security_pressure: Dictionary = run_state.security_action_pressure("cheat", 0, run_state.suspicion_level() + suspicion_delta) if run_state != null else {}
 	var bankroll_delta := int(security_pressure.get("bankroll_delta", 0))
-	var message := "You read the roulette wheel's rhythm."
+	var read := _copy_dict(ui_state.get("bias_read", {}))
+	if read.is_empty():
+		read = _wheel_read_context_for_grade(table, challenge)
+	var message := str(read.get("message", "Your wheel read breaks down."))
+	message = "%s Heat +%d." % [message, suspicion_delta]
 	var pit_boss_summary := str(pit_boss_status.get("summary", "")) if bool(pit_boss_status.get("active", false)) else ""
 	if not pit_boss_summary.is_empty():
 		message = "%s %s" % [message, pit_boss_summary]
@@ -1891,6 +2105,11 @@ func _resolve_read_wheel(action_id: String, run_state: RunState, environment: Di
 		"action_kind": "cheat",
 		"bankroll_delta": bankroll_delta,
 		"suspicion_delta": suspicion_delta,
+		"base_suspicion_delta": base_suspicion_delta,
+		"skill_outcome": GameModule.skill_outcome_for_grade("wheel_read", grade),
+		"skill_grade": grade,
+		"skill_accuracy": int(challenge.get("skill_accuracy", 0)),
+		"skill_margin_msec": int(challenge.get("skill_margin_msec", 0)),
 		"environment_id": environment.get("id", ""),
 		"pit_boss_watched": bool(pit_boss_status.get("watched", false)),
 		"pit_boss_heat_bonus": pit_boss_bonus,
@@ -1913,8 +2132,35 @@ func _resolve_read_wheel(action_id: String, run_state: RunState, environment: Di
 		"environment_id": environment.get("id", ""),
 		"environment_archetype_id": environment.get("archetype_id", ""),
 		"message": message,
+		"pit_boss_watched": bool(pit_boss_status.get("watched", false)),
+		"pit_boss_heat_bonus": pit_boss_bonus,
+		"base_suspicion_delta": base_suspicion_delta,
+		"skill_outcome": GameModule.skill_outcome_for_grade("wheel_read", grade),
+		"skill_grade": grade,
+		"skill_accuracy": int(challenge.get("skill_accuracy", 0)),
+		"skill_margin_msec": int(challenge.get("skill_margin_msec", 0)),
+		"skill_security_pressure_checked": true,
+		"security_message": str(security_pressure.get("message", "")),
+		"skill_story_context": {
+			"game_id": get_id(),
+			"action_id": action_id,
+			"action_kind": "cheat",
+			"skill_outcome": GameModule.skill_outcome_for_grade("wheel_read", grade),
+			"skill_grade": grade,
+			"skill_accuracy": int(challenge.get("skill_accuracy", 0)),
+			"skill_margin_msec": int(challenge.get("skill_margin_msec", 0)),
+			"suspicion_delta": suspicion_delta,
+			"base_suspicion_delta": base_suspicion_delta,
+			"bankroll_delta": bankroll_delta,
+			"watched": bool(pit_boss_status.get("watched", false)),
+			"pit_boss_heat_bonus": pit_boss_bonus,
+			"security_pressure_checked": true,
+		},
 	})
-	result["roulette_bias_read"] = _copy_dict(ui_state.get("bias_read", {}))
+	result["roulette_bias_read"] = read
+	result["roulette_wheel_read_challenge"] = challenge
+	result["roulette_wheel_read_grade"] = grade
+	result["roulette_wheel_read_applied"] = GameModule.skill_grade_applies(grade)
 	result["roulette_pit_boss_watched"] = bool(pit_boss_status.get("watched", false))
 	result["roulette_pit_boss_heat_bonus"] = pit_boss_bonus
 	result["roulette_table_pressure"] = table_pressure
@@ -2401,8 +2647,25 @@ func _draw_table_actions(surface, surface_state: Dictionary) -> void:
 	_draw_table_button(surface, Rect2(panel.position.x + 234, panel.position.y + 24, 54, 30), "REBET", "roulette_rebet", 0, C_TEAL, bool(surface_state.get("can_rebet", false)))
 	_draw_table_button(surface, Rect2(panel.position.x + 296, panel.position.y + 24, 44, 30), "2X", "roulette_double", 0, C_AMBER, bool(surface_state.get("can_clear", false)))
 	_draw_table_button(surface, Rect2(panel.position.x + 12, panel.position.y + 56, 70, 18), "NUDGE", "roulette_nudge", 0, C_PINK, true, selected_actions.has("roulette_nudge"))
-	_draw_table_button(surface, Rect2(panel.position.x + 90, panel.position.y + 56, 88, 18), "READ WHEEL", "roulette_read_wheel", 0, C_PINK_2, true)
-	surface.surface_label("Inside $%d  Outside $%d" % [int(surface_state.get("inside_wager_total", 0)), int(surface_state.get("outside_wager_total", 0))], panel.position + Vector2(188, 69), 8, C_SOFT)
+	var read_active := bool(surface_state.get("wheel_read_active", false))
+	_draw_table_button(surface, Rect2(panel.position.x + 90, panel.position.y + 56, 88, 18), "LOCK READ" if read_active else "READ WHEEL", "roulette_read_wheel", 0, C_PINK_2, true, read_active)
+	if read_active:
+		_draw_wheel_read_meter(surface, surface_state, Rect2(panel.position.x + 188, panel.position.y + 58, 150, 12))
+	else:
+		surface.surface_label("Inside $%d  Outside $%d" % [int(surface_state.get("inside_wager_total", 0)), int(surface_state.get("outside_wager_total", 0))], panel.position + Vector2(188, 69), 8, C_SOFT)
+
+
+func _draw_wheel_read_meter(surface, state: Dictionary, rect: Rect2) -> void:
+	var meter := _copy_dict(state.get("wheel_read_meter", {}))
+	if meter.is_empty():
+		return
+	surface.draw_rect(rect, Color("#070812"))
+	surface.draw_rect(rect, Color(C_PINK_2.r, C_PINK_2.g, C_PINK_2.b, 0.42), false, 1)
+	var target_x := rect.position.x + rect.size.x * clampf(float(meter.get("target", 0.0)), 0.0, 1.0)
+	var progress_x := rect.position.x + rect.size.x * clampf(float(meter.get("progress", 0.0)), 0.0, 1.0)
+	surface.draw_rect(Rect2(target_x - 4.0, rect.position.y - 2.0, 8.0, rect.size.y + 4.0), Color(C_YELLOW.r, C_YELLOW.g, C_YELLOW.b, 0.46))
+	surface.draw_rect(Rect2(progress_x - 2.0, rect.position.y - 3.0, 4.0, rect.size.y + 6.0), C_CYAN)
+	surface.surface_label("HEAT +%d" % int(state.get("wheel_read_heat_preview", 0)), rect.position + Vector2(96, -1), 7, C_PINK_2)
 
 
 func _draw_spin_result(surface, surface_state: Dictionary) -> void:
@@ -2648,6 +2911,11 @@ func _normalized_session(_run_state: RunState, _environment: Dictionary, ui_stat
 		session.erase("past_post_challenge")
 	else:
 		session["past_post_challenge"] = past_post_challenge
+	var wheel_read_challenge := _normalized_wheel_read_challenge(session.get("wheel_read_challenge", {}))
+	if wheel_read_challenge.is_empty():
+		session.erase("wheel_read_challenge")
+	else:
+		session["wheel_read_challenge"] = wheel_read_challenge
 	return session
 
 
@@ -2875,6 +3143,9 @@ func _selected_surface_actions(session: Dictionary) -> Array:
 		result.append("roulette_nudge")
 	if bool(session.get("past_post_armed", false)) or (str(session.get("selected_action_id", "")) == PAST_POST_ACTION_ID and str(session.get("selected_action_kind", "")) == "cheat"):
 		result.append("roulette_past_post")
+	var wheel_read := _normalized_wheel_read_challenge(session.get("wheel_read_challenge", {}))
+	if not wheel_read.is_empty() and str(wheel_read.get("skill_grade", "")).is_empty():
+		result.append("roulette_read_wheel")
 	if int(session.get("focused_patron_index", -1)) >= 0:
 		result.append("roulette_patron_focus")
 	return result
@@ -3367,12 +3638,8 @@ func _roulette_room_info(surface_state: Dictionary) -> String:
 func _read_wheel_heat(table: Dictionary, run_state: RunState) -> int:
 	var profile := _copy_dict(table.get("dealer_profile", {}))
 	var base := int(table.get("dealer_catch_base", 12)) + int(profile.get("late_bet_scrutiny", 10))
-	if run_state != null:
-		base += run_state.security_risk_bonus("cheat")
-		var pit := run_state.pit_boss_watch_status(run_state.current_environment)
-		if bool(pit.get("active", false)):
-			base += int(pit.get("cheat_heat_bonus", 0))
-	return clampi(base / 3, 4, 36)
+	base = int(round(float(base) / 3.0)) + _item_effect_total("roulette_past_post_base_heat", run_state)
+	return clampi(base, 1, 36)
 
 
 func _chip_denominations(table: Dictionary) -> Array:

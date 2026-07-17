@@ -491,7 +491,7 @@
 		],
 		"cheat_actions": [
 			{"id": "loaded_toss", "label": "Loaded Toss", "summary": "Force the next needed Ship, Captain, or Crew face; raises heat if watched.", "win_chance": 54, "payout_mult": 3, "suspicion_delta": 10},
-			{"id": "palmed_swap", "label": "Palmed Swap", "summary": "Swap one die after the shake to improve cargo; raises heat if watched.", "win_chance": 60, "payout_mult": 3, "suspicion_delta": 16}
+			{"id": "palmed_swap", "label": "Palmed Swap", "summary": "Track the weak die and time one hidden swap; a bad palm still raises heat.", "win_chance": 60, "payout_mult": 3, "suspicion_delta": 16, "skill_period_msec": 1500, "skill_perfect_msec": 90, "skill_good_msec": 220, "skill_close_msec": 360, "skill_perfect_heat_reduction": 3, "skill_partial_heat_bonus": 3, "skill_miss_heat_bonus": 6, "skill_blown_heat_bonus": 12}
 		]
 	},
 	{
@@ -530,7 +530,7 @@
 			{"id": "deal_baccarat", "label": "Deal", "summary": "Place Player, Banker, Tie, or pair chips before the croupier deals from the shoe.", "win_chance": 0, "payout_mult": 0}
 		],
 		"cheat_actions": [
-			{"id": "read_baccarat_shoe", "label": "Read Shoe", "summary": "Try to read shoe tempo and burn-card information before betting; raises heat", "win_chance": 0, "payout_mult": 0, "suspicion_delta": 8},
+			{"id": "read_baccarat_shoe", "label": "Read Shoe", "summary": "Memorize the dealer's brief shoe cues to earn a read; mistakes raise heat.", "win_chance": 0, "payout_mult": 0, "suspicion_delta": 8, "skill_cue_count": 5, "skill_reveal_msec": 1100, "skill_perfect_heat_reduction": 2, "skill_partial_heat_bonus": 2, "skill_miss_heat_bonus": 5, "skill_blown_heat_bonus": 9},
 			{"id": "edge_sort", "label": "Edge Sort", "summary": "Track card-back cues across hands for a short betting edge; watched failures raise heat", "win_chance": 0, "payout_mult": 0, "suspicion_delta": 8}
 		]
 	},
@@ -550,7 +550,7 @@
 			{"id": "spin_roulette", "label": "Spin", "summary": "Place roulette chips across the layout, then spin the wheel.", "win_chance": 0, "payout_mult": 0}
 		],
 		"cheat_actions": [
-			{"id": "read_wheel_bias", "label": "Read Wheel", "summary": "Try to read the wheel's physical bias before betting; raises heat", "win_chance": 0, "payout_mult": 0, "suspicion_delta": 8},
+			{"id": "read_wheel_bias", "label": "Read Wheel", "summary": "Track the rotor's low-side tick and stop on it; missed reads still raise heat.", "win_chance": 0, "payout_mult": 0, "suspicion_delta": 8, "skill_period_msec": 1400, "skill_perfect_msec": 90, "skill_good_msec": 220, "skill_close_msec": 360, "skill_perfect_heat_reduction": 2, "skill_partial_heat_bonus": 2, "skill_miss_heat_bonus": 5, "skill_blown_heat_bonus": 10},
 			{"id": "past_post", "label": "Past-Post", "summary": "Slide one late chip after the ball settles; timing can pay, but caught moves spike heat", "win_chance": 0, "payout_mult": 0, "suspicion_delta": 18}
 		]
 	},

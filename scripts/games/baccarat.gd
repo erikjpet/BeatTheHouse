@@ -57,6 +57,14 @@ const EDGE_SORT_ITEM_EFFECT_KEYS := [
 	"baccarat_edge_sort_heat_delta",
 	"skill_cheat_drunk_memory_offset",
 ]
+const SHOE_READ_ACTION_ID := "read_baccarat_shoe"
+const SHOE_READ_CUES := ["low", "neutral", "zero"]
+const SHOE_READ_ITEM_EFFECT_KEYS := [
+	"baccarat_edge_sort_cue_count",
+	"baccarat_edge_sort_memory_tolerance",
+	"baccarat_edge_sort_heat_delta",
+	"skill_cheat_drunk_memory_offset",
+]
 
 
 func enter(run_state: RunState, environment: Dictionary) -> Dictionary:
@@ -151,6 +159,10 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 	var edge := _normalized_edge_sort_edge(table.get("edge_sort_edge", {}), table)
 	var edge_status := _edge_sort_surface_status(table, edge_challenge, edge, session)
 	var edge_sort_item_modifiers := skill_item_modifier_badges(run_state, EDGE_SORT_ITEM_EFFECT_KEYS)
+	var shoe_read_challenge := _normalized_shoe_read_challenge(session.get("shoe_read_challenge", {}))
+	var shoe_read_status := _shoe_read_status(shoe_read_challenge, now_msec)
+	var shoe_read_active := not shoe_read_challenge.is_empty() and str(shoe_read_challenge.get("skill_grade", "")).is_empty()
+	var shoe_read_item_modifiers := skill_item_modifier_badges(run_state, SHOE_READ_ITEM_EFFECT_KEYS)
 	var road_state := _baccarat_road_state(table.get("hand_history", []))
 	var shoe_penetration := _baccarat_shoe_penetration(table)
 	var squeeze_state := _baccarat_squeeze_state(last_result)
@@ -164,7 +176,7 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 		"surface_suppresses_game_result_burst": true,
 		"surface_animates_idle": true,
 		"surface_dynamic_overlay_channels": [BACCARAT_DEAL_CHANNEL, BACCARAT_PAYOUT_CHANNEL],
-		"surface_realtime_state_refresh": deal_active or payout_active,
+		"surface_realtime_state_refresh": deal_active or payout_active or shoe_read_active,
 		"surface_state_labels": [
 			{"label": "Wager", "value": "$%d" % total_wager},
 			{"label": "Shoe", "value": str(table.get("shoe_label", "8-deck shoe"))},
@@ -233,10 +245,15 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 		"edge_sort_ready": bool(edge_status.get("ready", false)),
 		"edge_sort_active": bool(edge_status.get("active", false)),
 		"edge_sort_item_modifiers": edge_sort_item_modifiers,
+		"shoe_read_challenge": shoe_read_challenge,
+		"shoe_read_status": shoe_read_status,
+		"shoe_read_active": shoe_read_active,
+		"shoe_read_item_modifiers": shoe_read_item_modifiers,
+		"shoe_read_heat_preview": int(shoe_read_challenge.get("base_heat", _shoe_read_base_heat(run_state))),
 		"result_message": str(last_result.get("summary", "")) if not deal_active else "",
 		"table_notice": table_notice,
 		"table_round_timer": round_timer,
-		"native_selected_surface_actions": _selected_surface_actions(bets),
+		"native_selected_surface_actions": _selected_surface_actions(bets, session),
 		"surface_action_bindings": {
 			"legal": {"action": "baccarat_deal", "index": 0},
 			"cheat": {"action": "baccarat_edge_sort", "index": 0},
@@ -255,6 +272,7 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 				"baccarat_rebet": "baccarat_chip",
 				"baccarat_deal": "baccarat_deal",
 				"baccarat_read_shoe": "baccarat_read_shoe",
+				"baccarat_shoe_read_answer": "baccarat_chip",
 				"baccarat_edge_sort": "baccarat_edge_sort",
 				"baccarat_edge_sort_answer": "baccarat_chip",
 				"surface_stake_up": "baccarat_chip",
@@ -355,7 +373,7 @@ func surface_auto_action_command(ui_state: Dictionary, run_state: RunState, envi
 	})
 
 
-func surface_action_command(surface_action: String, index: int, _confirm_requested: bool, ui_state: Dictionary, run_state: RunState, environment: Dictionary) -> Dictionary:
+func surface_action_command(surface_action: String, index: int, confirm_requested: bool, ui_state: Dictionary, run_state: RunState, environment: Dictionary) -> Dictionary:
 	var table := _table_state(run_state, environment)
 	var session := _normalized_session(run_state, environment, ui_state, table)
 	if _surface_locked(table, session):
@@ -395,16 +413,9 @@ func surface_action_command(surface_action: String, index: int, _confirm_request
 				"preserve_surface_ui_state": false,
 			})
 		"baccarat_read_shoe":
-			session["shoe_read"] = _shoe_read_context(table)
-			return GameModule.surface_command({
-				"handled": true,
-				"ui_state": session,
-				"action_id": "read_baccarat_shoe",
-				"action_kind": "cheat",
-				"resolve": false,
-				"skip_stake_validation": true,
-				"message": str((session["shoe_read"] as Dictionary).get("message", "You study the shoe.")),
-			})
+			return _shoe_read_command(index, session, run_state, environment, table, confirm_requested)
+		"baccarat_shoe_read_answer":
+			return _shoe_read_answer_command(index, session, run_state, table)
 		"baccarat_edge_sort":
 			return _edge_sort_command(session, run_state, environment, table)
 		"baccarat_edge_sort_answer":
@@ -523,22 +534,28 @@ func environment_object_state(_run_state: RunState, environment: Dictionary) -> 
 
 
 func _resolve_read_shoe(action_id: String, stake: int, run_state: RunState, environment: Dictionary, rng: RngStream, ui_state: Dictionary) -> Dictionary:
-	var action := _action(action_id)
+	var table := _table_state(run_state, environment)
+	var challenge := _normalized_shoe_read_challenge(ui_state.get("shoe_read_challenge", {}))
+	if challenge.is_empty():
+		challenge = _start_shoe_read_challenge(ui_state, run_state, environment, table)
+	challenge = _grade_shoe_read_challenge(challenge)
+	var grade := str(challenge.get("skill_grade", "miss"))
 	var pit_boss_status := run_state.pit_boss_watch_status(environment) if run_state != null else {}
 	var pit_bonus := int(pit_boss_status.get("cheat_heat_bonus", 0)) if bool(pit_boss_status.get("active", false)) else 0
-	var raw_heat := maxi(0, int(action.get("suspicion_delta", 8)) + (run_state.security_risk_bonus("cheat") if run_state != null else 0) + pit_bonus)
+	var base_suspicion_delta := maxi(1, int(challenge.get("base_heat", _shoe_read_base_heat(run_state))) + _item_effect_total("cheat_suspicion_delta", run_state) + _shoe_read_grade_heat_modifier(grade))
+	var raw_heat := maxi(1, base_suspicion_delta + (run_state.security_risk_bonus("cheat") if run_state != null else 0) + pit_bonus)
 	var suspicion_delta := run_state.alcohol_adjusted_suspicion_delta(raw_heat) if run_state != null and raw_heat > 0 else raw_heat
-	var security_pressure: Dictionary = run_state.security_action_pressure("cheat", maxi(1, stake), run_state.suspicion_level() + suspicion_delta) if run_state != null and suspicion_delta > 0 else {}
+	var security_pressure: Dictionary = run_state.security_action_pressure("cheat", maxi(1, stake), run_state.suspicion_level() + suspicion_delta) if run_state != null else {}
 	var bankroll_delta := int(security_pressure.get("bankroll_delta", 0))
 	var security_message := str(security_pressure.get("message", ""))
 	var pit_boss_summary := str(pit_boss_status.get("summary", "")) if bool(pit_boss_status.get("active", false)) else ""
 	var read := _copy_dict(ui_state.get("shoe_read", {}))
 	if read.is_empty():
-		read = _shoe_read_context(_table_state(run_state, environment))
-	var message := "%s Heat %+d." % [str(read.get("message", "You read the shoe tempo.")), suspicion_delta]
+		read = _shoe_read_context_for_grade(table, challenge)
+	var message := "%s Heat +%d." % [str(read.get("message", "Your shoe read breaks down.")), suspicion_delta]
 	if not pit_boss_summary.is_empty():
 		message = "%s %s" % [message, pit_boss_summary]
-	var table_pressure := _baccarat_pressure_message(_table_state(run_state, environment), pit_boss_status)
+	var table_pressure := _baccarat_pressure_message(table, pit_boss_status)
 	if not table_pressure.is_empty():
 		message = "%s %s" % [message, table_pressure]
 	if not security_message.is_empty():
@@ -555,6 +572,11 @@ func _resolve_read_shoe(action_id: String, stake: int, run_state: RunState, envi
 		"won": false,
 		"bankroll_delta": bankroll_delta,
 		"suspicion_delta": suspicion_delta,
+		"base_suspicion_delta": base_suspicion_delta,
+		"skill_outcome": GameModule.skill_outcome_for_grade("shoe_read", grade),
+		"skill_grade": grade,
+		"skill_accuracy": int(challenge.get("skill_accuracy", 0)),
+		"skill_margin_msec": 0,
 		"environment_id": environment.get("id", ""),
 		"pit_boss_watched": bool(pit_boss_status.get("watched", false)),
 		"pit_boss_heat_bonus": pit_bonus,
@@ -577,8 +599,35 @@ func _resolve_read_shoe(action_id: String, stake: int, run_state: RunState, envi
 		"environment_id": environment.get("id", ""),
 		"environment_archetype_id": environment.get("archetype_id", ""),
 		"message": message,
+		"pit_boss_watched": bool(pit_boss_status.get("watched", false)),
+		"pit_boss_heat_bonus": pit_bonus,
+		"base_suspicion_delta": base_suspicion_delta,
+		"skill_outcome": GameModule.skill_outcome_for_grade("shoe_read", grade),
+		"skill_grade": grade,
+		"skill_accuracy": int(challenge.get("skill_accuracy", 0)),
+		"skill_margin_msec": 0,
+		"skill_security_pressure_checked": true,
+		"security_message": security_message,
+		"skill_story_context": {
+			"game_id": get_id(),
+			"action_id": action_id,
+			"action_kind": "cheat",
+			"skill_outcome": GameModule.skill_outcome_for_grade("shoe_read", grade),
+			"skill_grade": grade,
+			"skill_accuracy": int(challenge.get("skill_accuracy", 0)),
+			"skill_margin_msec": 0,
+			"suspicion_delta": suspicion_delta,
+			"base_suspicion_delta": base_suspicion_delta,
+			"bankroll_delta": bankroll_delta,
+			"watched": bool(pit_boss_status.get("watched", false)),
+			"pit_boss_heat_bonus": pit_bonus,
+			"security_pressure_checked": true,
+		},
 	})
 	result["baccarat_shoe_read"] = read
+	result["baccarat_shoe_read_challenge"] = challenge
+	result["baccarat_shoe_read_grade"] = grade
+	result["baccarat_shoe_read_applied"] = GameModule.skill_grade_applies(grade)
 	result["baccarat_pit_boss_watched"] = bool(pit_boss_status.get("watched", false))
 	result["baccarat_pit_boss_heat_bonus"] = pit_bonus
 	result["baccarat_table_pressure"] = table_pressure
@@ -1278,6 +1327,234 @@ func _shoe_read_context(table: Dictionary) -> Dictionary:
 	}
 
 
+func _shoe_read_command(index: int, session: Dictionary, run_state: RunState, environment: Dictionary, table: Dictionary, confirm_requested: bool) -> Dictionary:
+	var challenge := _normalized_shoe_read_challenge(session.get("shoe_read_challenge", {}))
+	var selected := str(session.get("selected_action_id", "")) == SHOE_READ_ACTION_ID and str(session.get("selected_action_kind", "")) == "cheat"
+	if challenge.is_empty() or not str(challenge.get("skill_grade", "")).is_empty():
+		challenge = _start_shoe_read_challenge(session, run_state, environment, table)
+		session["shoe_read_challenge"] = challenge
+		session.erase("shoe_read")
+		return GameModule.surface_command({
+			"handled": true,
+			"ui_state": session,
+			"action_id": SHOE_READ_ACTION_ID,
+			"action_kind": "cheat",
+			"resolve": false,
+			"skip_stake_validation": true,
+			"preserve_surface_ui_state": true,
+			"selected_index": index,
+			"message": _shoe_read_risk_message(challenge, run_state, environment, "Memorize the brief L / N / Z shoe cues, then choose the one that repeats most."),
+		})
+	if confirm_requested or selected:
+		return _shoe_read_finalize_command(session, run_state, table, "")
+	return _message_command(session, "The shoe cue is armed. Wait for the cards to hide, then choose L, N, or Z.")
+
+
+func _shoe_read_answer_command(index: int, session: Dictionary, run_state: RunState, table: Dictionary) -> Dictionary:
+	var challenge := _normalized_shoe_read_challenge(session.get("shoe_read_challenge", {}))
+	if challenge.is_empty():
+		return _message_command(session, "Start a shoe read before calling a cue.")
+	var now_msec := GameModule.deterministic_time_msec(run_state, session)
+	var status := _shoe_read_status(challenge, now_msec)
+	if bool(status.get("revealing", false)):
+		return _message_command(session, "Hold the cue in memory until the card backs turn down.")
+	if index < 0 or index >= SHOE_READ_CUES.size():
+		return _message_command(session, "That shoe cue is not available.")
+	return _shoe_read_finalize_command(session, run_state, table, str(SHOE_READ_CUES[index]))
+
+
+func _shoe_read_finalize_command(session: Dictionary, run_state: RunState, table: Dictionary, answer: String) -> Dictionary:
+	var challenge := _normalized_shoe_read_challenge(session.get("shoe_read_challenge", {}))
+	if challenge.is_empty():
+		return _message_command(session, "There is no shoe cue to resolve.")
+	challenge["answer"] = answer
+	challenge["input_msec"] = GameModule.deterministic_time_msec(run_state, session)
+	challenge = _grade_shoe_read_challenge(challenge)
+	session["shoe_read_challenge"] = challenge
+	session["shoe_read"] = _shoe_read_context_for_grade(table, challenge)
+	var grade := str(challenge.get("skill_grade", "miss"))
+	var message := _shoe_read_grade_message(grade)
+	return GameModule.surface_command({
+		"handled": true,
+		"ui_state": session,
+		"action_id": SHOE_READ_ACTION_ID,
+		"action_kind": "cheat",
+		"resolve": true,
+		"skip_stake_validation": true,
+		"preserve_surface_ui_state": false,
+		"message": message,
+	})
+
+
+func _start_shoe_read_challenge(ui_state: Dictionary, run_state: RunState, environment: Dictionary, table: Dictionary) -> Dictionary:
+	var action := _action(SHOE_READ_ACTION_ID)
+	var now_msec := GameModule.deterministic_time_msec(run_state, ui_state)
+	var drunk_extra := clampi(int(run_state.drunk_level / 35), 0, 2) if run_state != null else 0
+	drunk_extra = maxi(0, drunk_extra - _item_effect_total("skill_cheat_drunk_memory_offset", run_state))
+	var cue_count := clampi(int(action.get("skill_cue_count", 5)) + drunk_extra + _item_effect_total("baccarat_edge_sort_cue_count", run_state), 3, 8)
+	var tolerance := clampi(_item_effect_total("baccarat_edge_sort_memory_tolerance", run_state), 0, 2)
+	var reveal_msec := maxi(650, int(action.get("skill_reveal_msec", 1100)) + tolerance * 140 - drunk_extra * 90)
+	var shoe_id := str(table.get("shoe_id", ""))
+	var seed := "%s:%s:%s:%d" % [
+		str(run_state.seed_text if run_state != null else "baccarat"),
+		str(environment.get("id", "")),
+		shoe_id,
+		int(table.get("hands_played", 0)),
+	]
+	var answer_index := int(_stable_hash(seed) % SHOE_READ_CUES.size())
+	var hidden_answer := str(SHOE_READ_CUES[answer_index])
+	var sequence := _shoe_read_cue_sequence(seed, hidden_answer, cue_count)
+	return {
+		"challenge_id": "shoe_read_%d" % _stable_hash(seed),
+		"shoe_id": shoe_id,
+		"started_msec": now_msec,
+		"reveal_msec": reveal_msec,
+		"cue_sequence": sequence,
+		"hidden_answer": hidden_answer,
+		"memory_tolerance": tolerance,
+		"base_heat": _shoe_read_base_heat(run_state),
+		"pit_boss_watched_start": bool(run_state.pit_boss_watch_status(environment).get("watched", false)) if run_state != null else false,
+		"item_modifiers": skill_item_modifier_badges(run_state, SHOE_READ_ITEM_EFFECT_KEYS),
+	}
+
+
+func _shoe_read_cue_sequence(seed: String, hidden_answer: String, cue_count: int) -> Array:
+	var count := clampi(cue_count, 3, 8)
+	var majority := int(ceil(float(count) * 0.5))
+	var result: Array = []
+	for _index in range(majority):
+		result.append(hidden_answer)
+	var others: Array = []
+	for cue_value in SHOE_READ_CUES:
+		if str(cue_value) != hidden_answer:
+			others.append(str(cue_value))
+	for index in range(count - majority):
+		result.append(str(others[index % others.size()]))
+	for index in range(result.size() - 1, 0, -1):
+		var swap_index := int(_stable_hash("%s:%d" % [seed, index]) % (index + 1))
+		var swap_value: Variant = result[index]
+		result[index] = result[swap_index]
+		result[swap_index] = swap_value
+	return result
+
+
+func _normalized_shoe_read_challenge(value: Variant) -> Dictionary:
+	if typeof(value) != TYPE_DICTIONARY:
+		return {}
+	var source: Dictionary = (value as Dictionary).duplicate(true)
+	var challenge_id := str(source.get("challenge_id", "")).strip_edges()
+	if challenge_id.is_empty():
+		return {}
+	var result := {
+		"challenge_id": challenge_id,
+		"shoe_id": str(source.get("shoe_id", "")),
+		"started_msec": maxi(0, int(source.get("started_msec", 0))),
+		"reveal_msec": maxi(1, int(source.get("reveal_msec", 1100))),
+		"cue_sequence": _string_array(source.get("cue_sequence", [])),
+		"hidden_answer": str(source.get("hidden_answer", "neutral")),
+		"memory_tolerance": clampi(int(source.get("memory_tolerance", 0)), 0, 2),
+		"base_heat": maxi(1, int(source.get("base_heat", 8))),
+		"pit_boss_watched_start": bool(source.get("pit_boss_watched_start", false)),
+		"item_modifiers": _array(source.get("item_modifiers", [])),
+	}
+	if source.has("answer"):
+		result["answer"] = str(source.get("answer", ""))
+	if source.has("input_msec"):
+		result["input_msec"] = maxi(0, int(source.get("input_msec", 0)))
+	var grade := str(source.get("skill_grade", ""))
+	if ["perfect", "good", "partial", "miss", "blown"].has(grade):
+		result["skill_grade"] = grade
+		result["skill_accuracy"] = clampi(int(source.get("skill_accuracy", 0)), 0, 100)
+	return result
+
+
+func _grade_shoe_read_challenge(value: Dictionary) -> Dictionary:
+	var challenge := _normalized_shoe_read_challenge(value)
+	if challenge.is_empty():
+		return {}
+	var answer := str(challenge.get("answer", ""))
+	var hidden := str(challenge.get("hidden_answer", "neutral"))
+	var grade := "miss"
+	var accuracy := 0
+	if not answer.is_empty() and answer == hidden:
+		grade = "perfect"
+		accuracy = 100
+	elif not answer.is_empty() and int(challenge.get("memory_tolerance", 0)) > 0:
+		grade = "partial"
+		accuracy = 45
+	elif not answer.is_empty():
+		grade = "blown"
+	challenge["skill_grade"] = grade
+	challenge["skill_accuracy"] = accuracy
+	return challenge
+
+
+func _shoe_read_status(challenge: Dictionary, now_msec: int) -> Dictionary:
+	if challenge.is_empty():
+		return {}
+	var reveal_end := int(challenge.get("started_msec", 0)) + int(challenge.get("reveal_msec", 1100))
+	return {
+		"active": str(challenge.get("skill_grade", "")).is_empty(),
+		"revealing": now_msec < reveal_end and str(challenge.get("skill_grade", "")).is_empty(),
+		"answer_ready": now_msec >= reveal_end and str(challenge.get("skill_grade", "")).is_empty(),
+		"remaining_msec": maxi(0, reveal_end - now_msec),
+	}
+
+
+func _shoe_read_context_for_grade(table: Dictionary, challenge: Dictionary) -> Dictionary:
+	var grade := str(challenge.get("skill_grade", "miss"))
+	var read := _shoe_read_context(table)
+	match grade:
+		"perfect":
+			read["quality"] = "exact"
+			read["message"] = "Perfect shoe recall. %s" % str(read.get("message", "You read the shoe."))
+			return read
+		"partial":
+			return {"remaining": int(read.get("remaining", 0)), "bias": 0, "lean": "uncertain", "quality": "vague", "message": "A support item saves a vague shoe lean, but the exact cue is gone."}
+		"blown":
+			return {"quality": "blown", "message": "You call the wrong card-back cue and the dealer catches the prolonged stare."}
+		_:
+			return {"quality": "miss", "message": "The shoe cues fade before you commit a read."}
+
+
+func _shoe_read_base_heat(run_state: RunState) -> int:
+	var action := _action(SHOE_READ_ACTION_ID)
+	return maxi(1, int(action.get("suspicion_delta", 8)) + _item_effect_total("baccarat_edge_sort_heat_delta", run_state))
+
+
+func _shoe_read_grade_heat_modifier(grade: String) -> int:
+	var action := _action(SHOE_READ_ACTION_ID)
+	match grade:
+		"perfect":
+			return -int(action.get("skill_perfect_heat_reduction", 2))
+		"partial":
+			return int(action.get("skill_partial_heat_bonus", 2))
+		"miss":
+			return int(action.get("skill_miss_heat_bonus", 5))
+		"blown":
+			return int(action.get("skill_blown_heat_bonus", 9))
+	return 0
+
+
+func _shoe_read_grade_message(grade: String) -> String:
+	match grade:
+		"perfect":
+			return "Perfect shoe cue recalled. The real composition read is yours."
+		"partial":
+			return "Your gear rescues a vague lean from the wrong cue."
+		"blown":
+			return "Wrong cue. The dealer notices exactly how long you studied the card backs."
+		_:
+			return "The shoe cue slips away before you can use it."
+
+
+func _shoe_read_risk_message(challenge: Dictionary, run_state: RunState, environment: Dictionary, prefix: String) -> String:
+	var text := "%s Heat +%d" % [prefix, int(challenge.get("base_heat", _shoe_read_base_heat(run_state)))]
+	if run_state != null and bool(run_state.pit_boss_watch_status(environment).get("watched", false)):
+		text += "; WATCHED"
+	return "%s." % text
+
+
 func _edge_sort_command(session: Dictionary, run_state: RunState, environment: Dictionary, table: Dictionary) -> Dictionary:
 	var challenge := _normalized_edge_sort_challenge(table.get("edge_sort_challenge", {}))
 	if challenge.is_empty() or bool(challenge.get("resolved", false)):
@@ -1930,7 +2207,7 @@ func _message_command(ui_state: Dictionary, message: String) -> Dictionary:
 
 
 func _surface_action_blocks() -> Array:
-	var actions := ["baccarat_bet", "baccarat_patron_bet", "baccarat_chip", "baccarat_clear", "baccarat_undo", "baccarat_rebet", "baccarat_deal", "baccarat_read_shoe", "baccarat_edge_sort", "baccarat_edge_sort_answer", "baccarat_max_bet"]
+	var actions := ["baccarat_bet", "baccarat_patron_bet", "baccarat_chip", "baccarat_clear", "baccarat_undo", "baccarat_rebet", "baccarat_deal", "baccarat_read_shoe", "baccarat_shoe_read_answer", "baccarat_edge_sort", "baccarat_edge_sort_answer", "baccarat_max_bet"]
 	return [
 		{"actions": actions, "while_animation": BACCARAT_DEAL_CHANNEL, "reason": "No more bets while the hand is being dealt."},
 		{"actions": actions, "while_animation": BACCARAT_PAYOUT_CHANNEL, "reason": "The croupier is settling the hand."},
@@ -1946,8 +2223,12 @@ func _surface_locked(table: Dictionary, session: Dictionary) -> bool:
 	return elapsed_msec >= 0 and elapsed_msec < DEAL_ANIMATION_DURATION_MSEC + PAYOUT_ANIMATION_DURATION_MSEC
 
 
-func _selected_surface_actions(bets: Dictionary) -> Array:
-	return ["baccarat_deal"] if not bets.is_empty() else []
+func _selected_surface_actions(bets: Dictionary, session: Dictionary = {}) -> Array:
+	var result: Array = ["baccarat_deal"] if not bets.is_empty() else []
+	var shoe_read := _normalized_shoe_read_challenge(session.get("shoe_read_challenge", {}))
+	if not shoe_read.is_empty() and str(shoe_read.get("skill_grade", "")).is_empty():
+		result.append("baccarat_read_shoe")
+	return result
 
 
 func _table_notice(table: Dictionary, session: Dictionary, last_result: Dictionary, deal_active: bool, payout_active: bool, round_timer: Dictionary = {}) -> String:
@@ -2326,6 +2607,11 @@ func _normalized_session(_run_state: RunState, _environment: Dictionary, ui_stat
 		session["baccarat_undo_stack"] = []
 	session["edge_sort_answers"] = _string_array(session.get("edge_sort_answers", []))
 	session["edge_sort_challenge"] = _normalized_edge_sort_challenge(session.get("edge_sort_challenge", table.get("edge_sort_challenge", {})))
+	var shoe_read_challenge := _normalized_shoe_read_challenge(session.get("shoe_read_challenge", {}))
+	if shoe_read_challenge.is_empty():
+		session.erase("shoe_read_challenge")
+	else:
+		session["shoe_read_challenge"] = shoe_read_challenge
 	return session
 
 
@@ -2794,6 +3080,9 @@ func _road_winner_mark(winner: String) -> String:
 
 
 func _draw_edge_sort_panel(surface, state: Dictionary) -> void:
+	if bool(state.get("shoe_read_active", false)):
+		_draw_shoe_read_panel(surface, state)
+		return
 	var status := _copy_dict(state.get("edge_sort_status", state.get("baccarat_edge_sort_status", {})))
 	var challenge := _copy_dict(state.get("edge_sort_challenge", state.get("baccarat_edge_sort_challenge", {})))
 	var edge := _copy_dict(state.get("edge_sort_edge", state.get("baccarat_edge_sort_edge", {})))
@@ -2826,6 +3115,39 @@ func _draw_edge_sort_panel(surface, state: Dictionary) -> void:
 		_draw_table_button(surface, Rect2(rect.position + Vector2(408, 5), Vector2(70, 18)), "COMMIT", "baccarat_edge_sort", 0, C_YELLOW, true)
 	else:
 		_draw_table_button(surface, Rect2(rect.position + Vector2(396, 5), Vector2(82, 18)), "EDGE", "baccarat_edge_sort", 0, accent, true)
+
+
+func _draw_shoe_read_panel(surface, state: Dictionary) -> void:
+	var challenge := _copy_dict(state.get("shoe_read_challenge", {}))
+	var status := _copy_dict(state.get("shoe_read_status", {}))
+	if challenge.is_empty():
+		return
+	var rect := Rect2(202, 72, 492, 28)
+	_draw_neon_panel(surface, rect, C_PINK_2, 0.18)
+	surface.surface_label("SHOE", rect.position + Vector2(8, 8), 10, C_PINK_2)
+	if bool(status.get("revealing", false)):
+		var cue_texts: Array = []
+		for cue_value in _string_array(challenge.get("cue_sequence", [])):
+			cue_texts.append(_shoe_read_cue_label(str(cue_value)))
+		var detail := "  ".join(cue_texts)
+		surface.surface_label_centered(detail.left(34), Rect2(rect.position + Vector2(54, 5), Vector2(280, 18)), 11, C_WHITE)
+		surface.surface_label("MEMORIZE", rect.position + Vector2(390, 9), 8, C_YELLOW)
+		return
+	surface.surface_label("Which cue repeated most?", rect.position + Vector2(58, 10), 9, C_WHITE)
+	for index in range(SHOE_READ_CUES.size()):
+		var cue_rect := Rect2(rect.position + Vector2(302 + index * 42, 5), Vector2(36, 18))
+		_draw_table_button(surface, cue_rect, _shoe_read_cue_label(str(SHOE_READ_CUES[index])), "baccarat_shoe_read_answer", index, C_PINK_2, true)
+	surface.surface_label("HEAT +%d" % int(state.get("shoe_read_heat_preview", 0)), rect.position + Vector2(432, 10), 7, C_PINK_2)
+
+
+func _shoe_read_cue_label(cue: String) -> String:
+	match cue:
+		"low":
+			return "L"
+		"zero":
+			return "Z"
+		_:
+			return "N"
 
 
 func _draw_table_notice(surface, state: Dictionary) -> void:
@@ -2861,7 +3183,7 @@ func _draw_action_console(surface, state: Dictionary) -> void:
 	_draw_table_button(surface, Rect2(590, CONSOLE_Y + 15, 62, 42), "UNDO", "baccarat_undo", 0, C_CYAN, bool(state.get("can_undo", false)))
 	_draw_table_button(surface, Rect2(660, CONSOLE_Y + 15, 70, 42), "REBET", "baccarat_rebet", 0, C_TEAL, bool(state.get("can_rebet", false)))
 	_draw_table_button(surface, Rect2(738, CONSOLE_Y + 15, 64, 42), "DEAL", "baccarat_deal", 0, C_YELLOW, bool(state.get("can_deal", false)), bool(state.get("can_deal", false)))
-	_draw_table_button(surface, Rect2(810, CONSOLE_Y + 15, 38, 42), "READ", "baccarat_read_shoe", 0, C_PINK_2, true)
+	_draw_table_button(surface, Rect2(810, CONSOLE_Y + 15, 38, 42), "CUES" if bool(state.get("shoe_read_active", false)) else "READ", "baccarat_read_shoe", 0, C_PINK_2, true, bool(state.get("shoe_read_active", false)))
 	_draw_table_button(surface, Rect2(856, CONSOLE_Y + 15, 38, 42), "EDGE", "baccarat_edge_sort", 0, C_TEAL, true)
 
 

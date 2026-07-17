@@ -2126,6 +2126,12 @@ func _check_skill_cheat_action_presentation(game_id: String, cheat_actions: Arra
 		if summary.is_empty():
 			failures.append("Skill-cheat %s cheat action is missing payoff/risk summary copy." % game_id)
 		_check_no_release_placeholder_text(summary, "Skill-cheat %s cheat action" % game_id, failures)
+		if not action.has("base_suspicion_delta") or not action.has("suspicion_delta"):
+			failures.append("Skill-cheat %s cheat action did not expose a heat preview." % game_id)
+		if not action.has("pit_boss_watched") or not action.has("pit_boss_heat_bonus"):
+			failures.append("Skill-cheat %s cheat action did not expose watched-status relevance." % game_id)
+		if str(action.get("security_pressure_summary", "")).strip_edges().is_empty():
+			failures.append("Skill-cheat %s cheat action did not expose security-pressure summary copy." % game_id)
 
 
 func _check_skill_cheat_result_contract(game_id: String, registered_action_id: String, result: Dictionary, expected_watched: bool, failures: Array) -> void:
@@ -2367,8 +2373,8 @@ func _grand_casino_game_cheat_result_for_action(game_id: String, action_id: Stri
 			var roll_command: Dictionary = game.surface_action_command("bar_dice_roll", 0, false, {}, run_state, environment)
 			var dice_ui: Dictionary = roll_command.get("ui_state", {})
 			if action_id == "palmed_swap":
-				var palm_command: Dictionary = game.surface_action_command("bar_dice_palm", 0, false, dice_ui, run_state, environment)
-				return game.resolve_with_context("palmed_swap", 10, run_state, environment, rng, palm_command.get("ui_state", dice_ui))
+				dice_ui = _skill_contract_bar_dice_palm_ui(game, run_state, environment, dice_ui)
+				return game.resolve_with_context("palmed_swap", 10, run_state, environment, rng, dice_ui)
 			var load_command: Dictionary = game.surface_action_command("bar_dice_load", 0, false, dice_ui, run_state, environment)
 			dice_ui = _bar_dice_controlled_roll_timed_ui(game, run_state, load_command.get("ui_state", dice_ui), 999)
 			return game.resolve_with_context("loaded_toss", 10, run_state, environment, rng, dice_ui)
@@ -2392,13 +2398,11 @@ func _grand_casino_game_cheat_result_for_action(game_id: String, action_id: Stri
 		"baccarat":
 			if action_id == "edge_sort":
 				return _baccarat_edge_sort_contract_result(game, run_state, environment, rng)
-			var baccarat_command: Dictionary = game.surface_action_command("baccarat_read_shoe", 0, false, {}, run_state, environment)
-			return game.resolve_with_context("read_baccarat_shoe", 0, run_state, environment, rng, baccarat_command.get("ui_state", {}))
+			return _skill_contract_baccarat_shoe_read_result(game, run_state, environment, rng)
 		"roulette":
 			if action_id == "past_post":
 				return _roulette_past_post_contract_result(game, run_state, environment, rng)
-			var roulette_command: Dictionary = game.surface_action_command("roulette_read_wheel", 0, false, {}, run_state, environment)
-			return game.resolve_with_context("read_wheel_bias", 0, run_state, environment, rng, roulette_command.get("ui_state", {}))
+			return _skill_contract_roulette_wheel_read_result(game, run_state, environment, rng)
 	return {}
 
 
@@ -2431,6 +2435,36 @@ func _roulette_past_post_contract_result(game: GameModule, run_state: RunState, 
 	arm_ui["selected_action_kind"] = "cheat"
 	var confirm_command: Dictionary = game.surface_action_command("roulette_past_post", 0, false, arm_ui, run_state, environment)
 	return game.resolve_with_context("past_post", chip, run_state, environment, rng, confirm_command.get("ui_state", arm_ui))
+
+
+func _skill_contract_roulette_wheel_read_result(game: GameModule, run_state: RunState, environment: Dictionary, rng: RngStream) -> Dictionary:
+	var start_command: Dictionary = game.surface_action_command("roulette_read_wheel", 0, false, {"surface_time_msec": 12000}, run_state, environment)
+	var read_ui: Dictionary = start_command.get("ui_state", {})
+	var challenge: Dictionary = read_ui.get("wheel_read_challenge", {}) if typeof(read_ui.get("wheel_read_challenge", {})) == TYPE_DICTIONARY else {}
+	read_ui["surface_time_msec"] = int(challenge.get("target_msec", 12000))
+	var lock_command: Dictionary = game.surface_action_command("roulette_read_wheel", 0, false, read_ui, run_state, environment)
+	return game.resolve_with_context("read_wheel_bias", 0, run_state, environment, rng, lock_command.get("ui_state", read_ui))
+
+
+func _skill_contract_baccarat_shoe_read_result(game: GameModule, run_state: RunState, environment: Dictionary, rng: RngStream) -> Dictionary:
+	var start_command: Dictionary = game.surface_action_command("baccarat_read_shoe", 0, false, {"surface_time_msec": 16000}, run_state, environment)
+	var read_ui: Dictionary = start_command.get("ui_state", {})
+	var challenge: Dictionary = read_ui.get("shoe_read_challenge", {}) if typeof(read_ui.get("shoe_read_challenge", {})) == TYPE_DICTIONARY else {}
+	read_ui["surface_time_msec"] = int(challenge.get("started_msec", 16000)) + int(challenge.get("reveal_msec", 0))
+	var answer_index := ["low", "neutral", "zero"].find(str(challenge.get("hidden_answer", "")))
+	var answer_command: Dictionary = game.surface_action_command("baccarat_shoe_read_answer", answer_index, false, read_ui, run_state, environment)
+	return game.resolve_with_context("read_baccarat_shoe", 0, run_state, environment, rng, answer_command.get("ui_state", read_ui))
+
+
+func _skill_contract_bar_dice_palm_ui(game: GameModule, run_state: RunState, environment: Dictionary, base_ui: Dictionary) -> Dictionary:
+	var ui: Dictionary = base_ui.duplicate(true)
+	ui["surface_time_msec"] = int(ui.get("surface_time_msec", 18000))
+	var start_command: Dictionary = game.surface_action_command("bar_dice_palm", 0, false, ui, run_state, environment)
+	var palm_ui: Dictionary = start_command.get("ui_state", ui)
+	var challenge: Dictionary = palm_ui.get("palmed_swap_challenge", {}) if typeof(palm_ui.get("palmed_swap_challenge", {})) == TYPE_DICTIONARY else {}
+	palm_ui["surface_time_msec"] = int(challenge.get("target_msec", int(palm_ui.get("surface_time_msec", 18000))))
+	var lock_command: Dictionary = game.surface_action_command("bar_dice_palm", 0, false, palm_ui, run_state, environment)
+	return lock_command.get("ui_state", palm_ui)
 
 
 func _check_premium_grand_casino_table_contract(library: ContentLibrary, game_id: String, game: GameModule, failures: Array) -> void:
@@ -2500,11 +2534,9 @@ func _premium_grand_casino_read_result(game_id: String, game: GameModule, run_st
 	var environment: Dictionary = run_state.current_environment
 	match game_id:
 		"baccarat":
-			var baccarat_command: Dictionary = game.surface_action_command("baccarat_read_shoe", 0, false, {}, run_state, environment)
-			return game.resolve_with_context("read_baccarat_shoe", 0, run_state, environment, run_state.create_rng("c3_baccarat_read"), baccarat_command.get("ui_state", {}))
+			return _skill_contract_baccarat_shoe_read_result(game, run_state, environment, run_state.create_rng("c3_baccarat_read"))
 		"roulette":
-			var roulette_command: Dictionary = game.surface_action_command("roulette_read_wheel", 0, false, {}, run_state, environment)
-			return game.resolve_with_context("read_wheel_bias", 0, run_state, environment, run_state.create_rng("c3_roulette_read"), roulette_command.get("ui_state", {}))
+			return _skill_contract_roulette_wheel_read_result(game, run_state, environment, run_state.create_rng("c3_roulette_read"))
 	return {}
 
 
