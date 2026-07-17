@@ -447,9 +447,11 @@ func _check_coach_overlay_component() -> bool:
 	await process_frame
 	var snapshot := overlay.current_snapshot()
 	var bubble_rect := _snapshot_rect(snapshot.get("bubble_rect", {}))
-	if not bool(snapshot.get("visible", false)) or str(snapshot.get("anchor_kind", "")) != "hud_element" or not bool(snapshot.get("anchor_found", false)) or not Rect2(Vector2.ZERO, parent.size).encloses(bubble_rect):
+	var rendered_panel: Panel = overlay.get("panel")
+	var rendered_rect := rendered_panel.get_rect() if rendered_panel != null else Rect2()
+	if not bool(snapshot.get("visible", false)) or str(snapshot.get("anchor_kind", "")) != "hud_element" or not bool(snapshot.get("anchor_found", false)) or not Rect2(Vector2.ZERO, parent.size).encloses(bubble_rect) or not Rect2(Vector2.ZERO, parent.size).encloses(rendered_rect) or rendered_rect.size != bubble_rect.size:
 		parent.queue_free()
-		push_error("Coach overlay did not anchor its first HUD bubble inside small-screen bounds.")
+		push_error("Coach overlay did not render its first HUD bubble inside small-screen bounds: model=%s rendered=%s." % [str(bubble_rect), str(rendered_rect)])
 		return false
 	if not overlay.input_allowed("anything"):
 		parent.queue_free()
@@ -473,7 +475,7 @@ func _check_coach_overlay_component() -> bool:
 		return false
 	overlay.set_reduce_motion(true)
 	var attention_tween: Tween = overlay.get("attention_tween")
-	var coach_panel: PanelContainer = overlay.get("panel")
+	var coach_panel: Panel = overlay.get("panel")
 	if not bool(overlay.current_snapshot().get("reduce_motion", false)) or (attention_tween != null and attention_tween.is_running()) or coach_panel == null or coach_panel.modulate != Color.WHITE:
 		parent.queue_free()
 		push_error("Coach overlay did not apply reduce-motion instantly and without attention animation.")

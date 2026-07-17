@@ -49,7 +49,7 @@ var reduce_motion := false
 var small_screen := false
 
 var focus_layer: FocusLayer
-var panel: PanelContainer
+var panel: Panel
 var eyebrow_label: Label
 var copy_label: Label
 var ok_button: Button
@@ -179,10 +179,12 @@ func _build() -> void:
 	focus_layer.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	focus_layer.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(focus_layer)
-	panel = FoundationWidgets.panel_container(Color("#11101f", 0.98), VisualStyle.YELLOW)
+	panel = FoundationWidgets.panel(Color("#11101f", 0.98), VisualStyle.YELLOW)
 	panel.mouse_filter = Control.MOUSE_FILTER_STOP
+	panel.clip_contents = true
 	add_child(panel)
 	var margin := MarginContainer.new()
+	margin.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	margin.add_theme_constant_override("margin_left", 12)
 	margin.add_theme_constant_override("margin_right", 12)
 	margin.add_theme_constant_override("margin_top", 10)
@@ -235,8 +237,8 @@ func _render_active(play_motion: bool) -> void:
 	ok_button.custom_minimum_size.y = float(prepared_snapshot.get("minimum_control_height", 40.0))
 	var bubble_rect := CoachViewModelScript._rect(prepared_snapshot.get("bubble_rect", {}))
 	panel.position = bubble_rect.position
-	panel.size = bubble_rect.size
 	panel.custom_minimum_size = bubble_rect.size
+	panel.size = bubble_rect.size
 	focus_layer.set_snapshot(prepared_snapshot)
 	visible = true
 	move_to_front()
