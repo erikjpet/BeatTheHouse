@@ -255,25 +255,104 @@ func simulate_ticket_type(type_id: String, rng: RngStream, luck_modifier: int = 
 	var ticket_type := _ticket_type(type_id)
 	if ticket_type.is_empty() or rng == null:
 		return {}
-	var ticket := _roll_ticket(ticket_type, rng, luck_modifier, "audit")
+	var prize := _weighted_prize(ticket_type, rng, luck_modifier)
+	var grid := _copy_dict(ticket_type.get("grid", {}))
+	var columns := maxi(1, int(grid.get("columns", 3)))
+	var rows := maxi(1, int(grid.get("rows", 3)))
+	var symbols := _simulated_symbols(ticket_type, prize, columns, rows, rng)
+	var penalty := _simulated_penalty(ticket_type, symbols, rng)
 	return {
 		"type_id": type_id,
-		"price": int(ticket.get("price", 0)),
-		"payout": int(ticket.get("payout", 0)),
-		"penalty": _ticket_penalty_total(ticket),
-		"net_return": int(ticket.get("payout", 0)) - _ticket_penalty_total(ticket),
-		"symbols": _ticket_symbols(ticket),
+		"price": int(ticket_type.get("price", 0)),
+		"payout": int(prize.get("payout", 0)),
+		"penalty": penalty,
+		"net_return": int(prize.get("payout", 0)) - penalty,
+		"symbols": symbols,
 	}
 
 
+func _simulated_symbols(ticket_type: Dictionary, prize: Dictionary, columns: int, rows: int, rng: RngStream) -> Array:
+	var pool := _string_array(ticket_type.get("symbol_pool", []))
+	if pool.is_empty():
+		pool = ["STAR", "BAR", "BELL", "7"]
+	var symbols: Array = []
+	for _index in range(columns * rows):
+		symbols.append(str(rng.pick(pool, "STAR")))
+	var winning_symbol := str(prize.get("winning_symbol", ""))
+	var protected: Dictionary = {}
+	if not winning_symbol.is_empty() and symbols.size() >= 3:
+		var row := rng.randi_range(0, rows - 1)
+		for column in range(mini(3, columns)):
+			var index := row * columns + column
+			symbols[index] = winning_symbol
+			protected[index] = true
+	else:
+		_break_accidental_matches(symbols, columns, rows, rng, pool)
+	var gimmick := _copy_dict(ticket_type.get("gimmick", {}))
+	if str(gimmick.get("type", "")) == "shock_penalty":
+		var chance := clampi(int(gimmick.get("penalty_chance_percent", 0)), 0, 100)
+		for index in range(symbols.size()):
+			if not protected.has(index) and rng.randi_range(1, 100) <= chance:
+				symbols[index] = str(gimmick.get("penalty_symbol", "SHOCK"))
+	return symbols
+
+
+func _simulated_penalty(ticket_type: Dictionary, symbols: Array, rng: RngStream) -> int:
+	var gimmick := _copy_dict(ticket_type.get("gimmick", {}))
+	var penalty_symbol := str(gimmick.get("penalty_symbol", "SHOCK"))
+	var amount := _int_array(gimmick.get("penalty_amount", [1, 1]))
+	var minimum := int(amount[0]) if not amount.is_empty() else 1
+	var maximum := int(amount[1]) if amount.size() > 1 else minimum
+	var total := 0
+	for symbol_value in symbols:
+		if str(symbol_value) == penalty_symbol:
+			total += rng.randi_range(minimum, maximum)
+	return total
+
+
 func measure_rtp(type_id: String, samples: int = 20000, seed_text: String = "SCRATCH-RTP") -> Dictionary:
-	var rng := _seeded_rng("%s:%s" % [seed_text, type_id])
+	var ticket_type := _ticket_type(type_id)
+	var table := _dictionary_array(ticket_type.get("prize_table", []))
+	var total_weight := 0
+	for entry_value in table:
+		total_weight += maxi(0, int((entry_value as Dictionary).get("weight", 0)))
+	var grid := _copy_dict(ticket_type.get("grid", {}))
+	var cell_count := maxi(1, int(grid.get("columns", 3)) * int(grid.get("rows", 3)))
+	var gimmick := _copy_dict(ticket_type.get("gimmick", {}))
+	var shock := str(gimmick.get("type", "")) == "shock_penalty"
+	var shock_chance := clampi(int(gimmick.get("penalty_chance_percent", 0)), 0, 100)
+	var shock_amount := _int_array(gimmick.get("penalty_amount", [1, 1]))
+	var shock_minimum := int(shock_amount[0]) if not shock_amount.is_empty() else 1
+	var shock_maximum := int(shock_amount[1]) if shock_amount.size() > 1 else shock_minimum
+	var losing_penalty_lookup := _penalty_lookup(_penalty_distribution(cell_count, shock_chance, shock_minimum, shock_maximum)) if shock else []
+	var winning_penalty_lookup := _penalty_lookup(_penalty_distribution(maxi(0, cell_count - 3), shock_chance, shock_minimum, shock_maximum)) if shock else []
+	var price := maxi(1, int(ticket_type.get("price", 1)))
+	var stream_seed := RunState.text_to_seed("%s:%s" % [seed_text, type_id])
+	var stream_state := posmod(stream_seed, RngStream.MODULUS)
+	if stream_state == 0:
+		stream_state = 1
 	var total_cost := 0
 	var total_return := 0
 	for _sample in range(maxi(1, samples)):
-		var result := simulate_ticket_type(type_id, rng, 0)
-		total_cost += int(result.get("price", 0))
-		total_return += int(result.get("net_return", 0))
+		stream_state = int((stream_state * RngStream.MULTIPLIER) % RngStream.MODULUS)
+		var roll := 1 + int(stream_state % maxi(1, total_weight))
+		var cursor := 0
+		var payout := 0
+		var winning := false
+		for entry_value in table:
+			var entry: Dictionary = entry_value
+			cursor += maxi(0, int(entry.get("weight", 0)))
+			if roll <= cursor:
+				payout = maxi(0, int(entry.get("payout", 0)))
+				winning = not str(entry.get("winning_symbol", "")).is_empty()
+				break
+		var penalty := 0
+		if shock:
+			stream_state = int((stream_state * RngStream.MULTIPLIER) % RngStream.MODULUS)
+			var lookup: Array = winning_penalty_lookup if winning else losing_penalty_lookup
+			penalty = int(lookup[int(stream_state % lookup.size())])
+		total_cost += price
+		total_return += payout - penalty
 	return {
 		"type_id": type_id,
 		"samples": maxi(1, samples),
@@ -281,6 +360,49 @@ func measure_rtp(type_id: String, samples: int = 20000, seed_text: String = "SCR
 		"return": total_return,
 		"rtp": float(total_return) / float(maxi(1, total_cost)),
 	}
+
+
+func _penalty_distribution(cell_count: int, chance_percent: int, minimum: int, maximum: int) -> Array:
+	var probabilities: Array = [1.0]
+	var amount_count := maxi(1, maximum - minimum + 1)
+	var hit_probability := clampf(float(chance_percent) / 100.0, 0.0, 1.0)
+	var amount_probability := hit_probability / float(amount_count)
+	for _cell in range(maxi(0, cell_count)):
+		var next: Array = []
+		for _index in range(probabilities.size() + maximum):
+			next.append(0.0)
+		for total in range(probabilities.size()):
+			var probability := float(probabilities[total])
+			next[total] = float(next[total]) + probability * (1.0 - hit_probability)
+			for amount in range(minimum, maximum + 1):
+				next[total + amount] = float(next[total + amount]) + probability * amount_probability
+		probabilities = next
+	return probabilities
+
+
+func _sample_penalty_distribution(probabilities: Array, rng: RngStream) -> int:
+	if probabilities.is_empty():
+		return 0
+	var roll := float(rng.randi_range(1, 1000000)) / 1000000.0
+	var cumulative := 0.0
+	for penalty in range(probabilities.size()):
+		cumulative += float(probabilities[penalty])
+		if roll <= cumulative:
+			return penalty
+	return probabilities.size() - 1
+
+
+func _penalty_lookup(probabilities: Array, slots: int = 10000) -> Array:
+	var result: Array = []
+	var cumulative := 0.0
+	var penalty := 0
+	for slot in range(maxi(1, slots)):
+		var target := (float(slot) + 0.5) / float(maxi(1, slots))
+		while penalty < probabilities.size() - 1 and target > cumulative + float(probabilities[penalty]):
+			cumulative += float(probabilities[penalty])
+			penalty += 1
+		result.append(penalty)
+	return result
 
 
 func _resolve_purchase(_stake: int, run_state: RunState, environment: Dictionary, rng: RngStream, ui_state: Dictionary) -> Dictionary:
