@@ -7,6 +7,7 @@ docs/plans/0.3.2_function_census.md
 *.translation
 *.uid
 *.import
+!assets/audio/music/**/*.wav.import
 .tmp/
 tmp/
 

@@ -198,6 +198,25 @@ foreach ($entry in $expectedClasses.GetEnumerator()) {
     }
 }
 
+$exportPresets = Get-Content -LiteralPath (Join-Path $root "export_presets.cfg") -Raw
+$windowsPresetPattern = '(?s)name="Windows Steam".*?\[preset\.0\.options\].*?binary_format/embed_pck=true'
+if ($exportPresets -notmatch $windowsPresetPattern) {
+    $failures.Add("Windows Steam export must embed its PCK so BeatTheHouse.exe is standalone.")
+}
+
+$authoredMusicRoot = Join-Path $root "assets/audio/music"
+foreach ($wavFile in Get-ChildItem -LiteralPath $authoredMusicRoot -Filter "*.wav" -File -Recurse -ErrorAction SilentlyContinue) {
+    $importPath = "$($wavFile.FullName).import"
+    if (-not (Test-Path -LiteralPath $importPath)) {
+        $failures.Add("Authored music source is missing its portable Keep File import contract: $(Get-ProjectRelativePath $wavFile.FullName)")
+        continue
+    }
+    $importContent = Get-Content -LiteralPath $importPath -Raw
+    if ($importContent -notmatch '(?m)^importer="keep"\s*$') {
+        $failures.Add("Authored music source must use Keep File for exact runtime PCM decoding: $(Get-ProjectRelativePath $wavFile.FullName)")
+    }
+}
+
 $trackedGeneratedFiles = @()
 try {
     $trackedGeneratedFiles = @(git -C $root ls-files "*.import" "*.uid" 2>$null)
@@ -207,7 +226,8 @@ catch {
 }
 foreach ($trackedGeneratedFile in $trackedGeneratedFiles) {
     $relativeGeneratedPath = ([string]$trackedGeneratedFile).Trim()
-    if (-not [string]::IsNullOrWhiteSpace($relativeGeneratedPath)) {
+    $isAuthoredMusicKeepContract = $relativeGeneratedPath -match '^assets/audio/music/.+\.wav\.import$'
+    if (-not [string]::IsNullOrWhiteSpace($relativeGeneratedPath) -and -not $isAuthoredMusicKeepContract) {
         $failures.Add("Generated Godot metadata must not be git-tracked: $relativeGeneratedPath")
     }
 }

@@ -758,7 +758,7 @@ func _validate_game_definitions() -> void:
 		var module_path := str(game_def.get("module_path", "")).strip_edges()
 		if module_path.is_empty():
 			validation_errors.append("games %s is missing module_path." % game_id)
-		elif not FileAccess.file_exists(module_path):
+		elif not ResourceLoader.exists(module_path):
 			validation_errors.append("games %s references missing module_path: %s" % [game_id, module_path])
 		_validate_actions("games %s legal_actions" % game_id, game_def.get("legal_actions", []))
 		_validate_actions("games %s cheat_actions" % game_id, game_def.get("cheat_actions", []))
@@ -1252,7 +1252,7 @@ func _validate_art_asset(label: String, entry: Dictionary) -> void:
 	if not asset_path.begins_with("res://assets/art/"):
 		validation_errors.append("%s asset_path must stay under res://assets/art/." % label)
 		return
-	if not FileAccess.file_exists(asset_path):
+	if not ResourceLoader.exists(asset_path):
 		validation_errors.append("%s references missing asset_path: %s" % [label, asset_path])
 
 
