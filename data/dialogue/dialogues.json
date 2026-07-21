@@ -444,5 +444,110 @@
         ]
       }
     }
+  },
+  {
+    "id": "sal_shop_talk",
+    "display_name": "Sal at the Pawn Shop",
+    "speaker": {
+      "role": "shopkeeper",
+      "name": "Sal",
+      "mood": "dry",
+      "behavior": "working behind the barred counter",
+      "silhouette": "featureless",
+      "presentation": "faceless_silhouette",
+      "face_layers": []
+    },
+    "start": "counter",
+    "nodes": {
+      "counter": {
+        "text": "Buy behind glass. Sell at the tray. I price the edges, not the story.",
+        "choices": [{"id": "move_on", "label": "Step Away", "effects": {}, "effects_hidden": true, "end": true}]
+      }
+    }
+  },
+  {
+    "id": "sal_purchase_1",
+    "display_name": "Sal · Purchase",
+    "speaker": {
+      "role": "shopkeeper", "name": "Sal", "mood": "opportunistic",
+      "behavior": "unlocking one shelf door", "silhouette": "featureless",
+      "presentation": "faceless_silhouette", "face_layers": []
+    },
+    "start": "line",
+    "nodes": {"line": {"text": "Exact piece, exact numbers. Glass opens once.", "choices": [{"id": "move_on", "label": "Take It", "effects": {}, "effects_hidden": true, "end": true}]}}
+  },
+  {
+    "id": "sal_purchase_2",
+    "display_name": "Sal · Purchase",
+    "speaker": {
+      "role": "shopkeeper", "name": "Sal", "mood": "dry",
+      "behavior": "sliding a collection item under the bars", "silhouette": "featureless",
+      "presentation": "faceless_silhouette", "face_layers": []
+    },
+    "start": "line",
+    "nodes": {"line": {"text": "You bought the readings too. Don't sand off the interesting part.", "choices": [{"id": "move_on", "label": "Pocket It", "effects": {}, "effects_hidden": true, "end": true}]}}
+  },
+  {
+    "id": "sal_sale_1",
+    "display_name": "Sal · Sale",
+    "speaker": {
+      "role": "shopkeeper", "name": "Sal", "mood": "dry",
+      "behavior": "pulling the sold item behind the barred counter", "silhouette": "featureless",
+      "presentation": "faceless_silhouette", "face_layers": []
+    },
+    "start": "line",
+    "nodes": {"line": {"text": "That's my quote. The shelf price will be my business.", "choices": [{"id": "move_on", "label": "Take the Gold", "effects": {}, "effects_hidden": true, "end": true}]}}
+  },
+  {
+    "id": "sal_sale_2",
+    "display_name": "Sal · Sale",
+    "speaker": {
+      "role": "shopkeeper", "name": "Sal", "mood": "opportunistic",
+      "behavior": "counting gold beside the sell tray", "silhouette": "featureless",
+      "presentation": "faceless_silhouette", "face_layers": []
+    },
+    "start": "line",
+    "nodes": {"line": {"text": "Clean transfer. You get gold; I get possibilities.", "choices": [{"id": "move_on", "label": "Take the Gold", "effects": {}, "effects_hidden": true, "end": true}]}}
+  },
+  {
+    "id": "sal_starter_offer",
+    "display_name": "Sal · Edge Sample",
+    "speaker": {
+      "role": "shopkeeper", "name": "Sal", "mood": "opportunistic",
+      "behavior": "leaning over the barred counter", "silhouette": "featureless",
+      "presentation": "faceless_silhouette", "face_layers": []
+    },
+    "start": "offer",
+    "nodes": {
+      "offer": {
+        "text": "Sal makes a one-time offer on the exact starter item.",
+        "choices": [
+          {"id": "sal_starter_sell_back", "label": "Sell it back", "text": "Accept the exact 1.25x buyback.", "effects": {}, "effects_hidden": true, "end": true},
+          {"id": "sal_starter_keep", "label": "Keep it", "text": "Keep the exact starter item.", "effects": {}, "effects_hidden": true, "end": true}
+        ]
+      }
+    }
+  },
+  {
+    "id": "sal_starter_mocking_relist",
+    "display_name": "Sal · Back Behind Glass",
+    "speaker": {
+      "role": "shopkeeper", "name": "Sal", "mood": "dry",
+      "behavior": "locking the same item back behind glass", "silhouette": "featureless",
+      "presentation": "faceless_silhouette", "face_layers": []
+    },
+    "start": "line",
+    "nodes": {"line": {"text": "Same edge sample. Ten times my pawn quote if you want it twice.", "choices": [{"id": "move_on", "label": "Look at the Shelf", "effects": {}, "effects_hidden": true, "end": true}]}}
+  },
+  {
+    "id": "sal_starter_kept",
+    "display_name": "Sal · Keep the Edge",
+    "speaker": {
+      "role": "shopkeeper", "name": "Sal", "mood": "dry",
+      "behavior": "closing the sell tray", "silhouette": "featureless",
+      "presentation": "faceless_silhouette", "face_layers": []
+    },
+    "start": "line",
+    "nodes": {"line": {"text": "Keep it, then. Edge pieces don't need my permission to be rare.", "choices": [{"id": "move_on", "label": "Keep It", "effects": {}, "effects_hidden": true, "end": true}]}}
   }
 ]

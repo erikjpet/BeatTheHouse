@@ -2377,9 +2377,9 @@
       "perspective": "first_person",
       "scene_type": "pawn_shop",
       "art_key": "pawn_shop",
-      "description": "Barred glass, locked shelves, and one sell tray."
+      "description": "Six locked resale spots, barred counter, sell tray."
     },
-    "objective_hint": "Pawn gear for cash, or buy it back before Sal keeps it.",
+    "objective_hint": "Inspect six resale spots, buy exact collection items, or sell at Sal's tray.",
     "layout": {
       "pawn_counter_spots": [
         [

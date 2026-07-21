@@ -187,9 +187,73 @@ func _check_meta_home_launcher_opens_room(app: Control) -> bool:
 		return false
 	var pawn_spatial: Dictionary = app.call("current_spatial_interaction_snapshot")
 	var pawn_objects := _copy_array(pawn_spatial.get("objects", []))
-	if _object_by_id(pawn_objects, "meta_pawn_counter:sell").is_empty() or _object_by_id(pawn_objects, "travel:leave").is_empty():
-		push_error("Custom pawn-shop room did not expose the sell counter and map door.")
+	if _object_by_id(pawn_objects, "meta_pawn_counter:sell").is_empty() or _object_by_id(pawn_objects, "meta_sal:talk").is_empty() or _object_by_id(pawn_objects, "travel:leave").is_empty():
+		push_error("Custom pawn-shop room did not expose separate Sal, sell-counter, and map-door interactions.")
 		return false
+	var shelf_offer_ids: Array = []
+	for offer_value in _copy_array(pawn_environment.get("item_offers", [])):
+		shelf_offer_ids.append(str(_copy_dict(offer_value).get("id", "")))
+	for slot_index in range(6):
+		if _object_by_id(pawn_objects, "meta_sal_shelf:%d" % slot_index).is_empty() or not shelf_offer_ids.has("sal_shelf_%d" % slot_index):
+			push_error("Custom pawn-shop room did not preserve stable shelf slot %d." % slot_index)
+			return false
+	if _copy_array(pawn_environment.get("item_offers", [])).size() != 6:
+		push_error("Custom pawn-shop room did not author exactly six physical shelf spots.")
+		return false
+	var meta_service: Variant = app.get("meta_collection_service")
+	var starter := _copy_dict(meta_service.sal_shelf_row(0))
+	var starter_item := _copy_dict(starter.get("item", {}))
+	var starter_price := int(starter.get("asking_price", 0))
+	meta_service.add_gold(starter_price)
+	var starter_arm: Dictionary = meta_service.arm_sal_shelf_purchase(0)
+	app.call("_confirm_meta_sal_purchase", str(starter_arm.get("token", "")))
+	await process_frame
+	run_state = app.get("run_state")
+	var starter_entry: Dictionary = run_state.pending_talk_event("dialogue:sal_starter_offer")
+	var starter_option := _copy_dict(app.call("_dialogue_option_for_entry", starter_entry))
+	var pending_offer := _copy_dict(meta_service.pending_starter_buyback())
+	var expected_float_text := str(pending_offer.get("rare_channel", "")).replace("_", " ").capitalize()
+	if starter_entry.is_empty() or str(starter_option.get("summary", "")).find(expected_float_text) < 0 or str(starter_option.get("summary", "")).find(str(int(pending_offer.get("offer_price", 0)))) < 0:
+		push_error("Starter purchase did not open persisted Sal dialogue naming the exact rare float and offer: %s" % str(starter_option))
+		return false
+	app.call("resolve_event_choice", "dialogue:sal_starter_offer", "sal_starter_keep")
+	await process_frame
+	if not meta_service.pending_starter_buyback().is_empty() or meta_service.owned_instances().filter(func(instance: Dictionary) -> bool: return int(instance.get("instance_id", 0)) == int(starter_item.get("instance_id", -1))).is_empty():
+		push_error("Starter Keep dialogue did not retain the exact item and resolve the offer.")
+		return false
+	app.call("resolve_event_choice", "dialogue:sal_starter_kept", "move_on")
+	await process_frame
+	meta_service.generate_and_insert_sal_stock("ui-sal-normal-purchase")
+	app.call("_apply_meta_environment", app.get("meta_session_location_id"))
+	var normal := {}
+	for row_value in meta_service.sal_shelf_rows():
+		var candidate := _copy_dict(row_value)
+		if bool(candidate.get("occupied", false)) and str(candidate.get("listing_mode", "")) == "normal":
+			normal = candidate
+			break
+	var normal_price := int(normal.get("asking_price", 0))
+	meta_service.add_gold(normal_price)
+	var normal_arm: Dictionary = meta_service.arm_sal_shelf_purchase(int(normal.get("slot_index", -1)))
+	app.call("_confirm_meta_sal_purchase", str(normal_arm.get("token", "")))
+	await process_frame
+	var normal_dialogue_open := not run_state.pending_talk_event("dialogue:sal_purchase_1").is_empty() or not run_state.pending_talk_event("dialogue:sal_purchase_2").is_empty()
+	if not normal_dialogue_open:
+		push_error("Committed ordinary Sal purchase did not open an authored purchase reaction.")
+		return false
+	var purchase_dialogue_id := "sal_purchase_1" if not run_state.pending_talk_event("dialogue:sal_purchase_1").is_empty() else "sal_purchase_2"
+	app.call("resolve_event_choice", "dialogue:%s" % purchase_dialogue_id, "move_on")
+	await process_frame
+	var normal_instance_id := int(_copy_dict(normal.get("item", {})).get("instance_id", 0))
+	var shelf_before_sale := JSON.stringify(meta_service.sal_shelf_rows())
+	var sale_arm: Dictionary = meta_service.arm_sale("item", normal_instance_id)
+	app.call("_confirm_meta_sale", str(sale_arm.get("token", "")))
+	await process_frame
+	var sale_dialogue_open := not run_state.pending_talk_event("dialogue:sal_sale_1").is_empty() or not run_state.pending_talk_event("dialogue:sal_sale_2").is_empty()
+	if not sale_dialogue_open or JSON.stringify(meta_service.sal_shelf_rows()) != shelf_before_sale:
+		push_error("Committed ordinary Sal sale did not trigger dialogue or changed resale stock.")
+		return false
+	meta_service.remove_instance(int(starter_item.get("instance_id", 0)))
+	meta_service.save()
 	app.call("return_to_main_menu")
 	await process_frame
 	if app.get("run_state") != null:

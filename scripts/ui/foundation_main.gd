@@ -38,6 +38,8 @@ const CONTEXT_MODE_META_BAG := "meta_bag"
 const CONTEXT_MODE_META_UPGRADE := "meta_upgrade"
 const CONTEXT_MODE_META_TRADE_UP := "meta_trade_up"
 const CONTEXT_MODE_META_PAWN_COUNTER := "meta_pawn_counter"
+const CONTEXT_MODE_META_SAL_SHELF := "meta_sal_shelf"
+const CONTEXT_MODE_META_SAL_TALK := "meta_sal_talk"
 const META_LOCATION_HOME := "home"
 const RUN_INFO_BAND_RATIO := 0.15
 const RUN_SURFACE_BAND_RATIO := 0.85
@@ -2206,6 +2208,16 @@ func _dialogue_option_for_entry(entry: Dictionary) -> Dictionary:
 	var summary := str(node.get("text", ""))
 	if dialogue_id == "linda_cage_services":
 		summary = CageCounterViewModelScript.service_summary(run_state, node_id)
+	elif dialogue_id == "sal_starter_offer":
+		summary = _sal_starter_offer_summary()
+	elif dialogue_id == "sal_starter_mocking_relist" and meta_collection_service != null:
+		for row_value in meta_collection_service.sal_shelf_rows():
+			var row := _copy_dict(row_value)
+			if str(row.get("listing_mode", "")) != MetaCollectionServiceScript.LISTING_MODE_MOCKING_RELIST:
+				continue
+			var relist_quote := _copy_dict(row.get("quote_basis", {}))
+			summary = "Same exact item. Pawn quote %d gold; asking price ceil(%d × 10) = %d gold." % [int(relist_quote.get("pawn_quote", 0)), int(relist_quote.get("pawn_quote", 0)), int(row.get("asking_price", 0))]
+			break
 	return {
 		"id": str(entry.get("event_id", "dialogue:%s" % dialogue_id)),
 		"dialogue_id": dialogue_id,
@@ -2274,6 +2286,12 @@ func _dialogue_choice_views(dialogue_id: String, node: Dictionary) -> Array:
 			if not service_status.is_empty():
 				option_choice["enabled"] = bool(service_status.get("enabled", true))
 				option_choice["disabled_reason"] = str(service_status.get("reason", ""))
+		elif dialogue_id == "sal_starter_offer" and choice_id == "sal_starter_sell_back":
+			var pending_offer := meta_collection_service.pending_starter_buyback() if meta_collection_service != null else {}
+			option_choice["label"] = "Sell it back · %d gold" % int(pending_offer.get("offer_price", 0))
+			option_choice["consequence_summary"] = "Exact one-time buyback"
+		elif dialogue_id == "sal_starter_offer" and choice_id == "sal_starter_keep":
+			option_choice["consequence_summary"] = "Keep the exact item"
 		option_choice["attribute_badges"] = [] if bool(choice.get("effects_hidden", false)) else AttributeBadgesScript.for_event_choice(option_choice)
 		result.append(option_choice)
 	return result
@@ -2324,6 +2342,9 @@ func _resolve_dialogue_choice(entry: Dictionary, choice_id: String) -> void:
 	if str(entry.get("dialogue_id", "")) == "linda_cage_services" and choice_id.begins_with("cage_"):
 		_resolve_linda_cage_service_choice(entry, choice_id)
 		return
+	if str(entry.get("dialogue_id", "")) == "sal_starter_offer" and choice_id in ["sal_starter_sell_back", "sal_starter_keep"]:
+		_resolve_sal_starter_dialogue_choice(entry, choice_id)
+		return
 	var option := _dialogue_option_for_entry(entry)
 	var option_choice := _event_choice(option, choice_id)
 	if option_choice.is_empty():
@@ -2368,6 +2389,87 @@ func _resolve_dialogue_choice(entry: Dictionary, choice_id: String) -> void:
 	if bool(result.get("ok", false)) and _apply_post_action_environment_interrupt("dialogue"):
 		_refresh()
 		return
+	_refresh()
+
+
+func _sal_starter_offer_summary() -> String:
+	if meta_collection_service == null:
+		return "Sal's offer is unavailable."
+	var pending := meta_collection_service.pending_starter_buyback()
+	if pending.is_empty():
+		return "Sal has already closed the offer."
+	var channel := str(pending.get("rare_channel", "edge")).replace("_", " ").capitalize()
+	return "Sal taps the %s reading: %.2f%%. ‘Edge sample. I'll pay %d gold right now. Sell it back?’" % [
+		channel,
+		float(pending.get("rare_value", 0.0)) * 100.0,
+		int(pending.get("offer_price", 0)),
+	]
+
+
+func _sal_starter_offer_is_pending() -> bool:
+	return meta_collection_service != null and not meta_collection_service.pending_starter_buyback().is_empty()
+
+
+func _resume_sal_starter_offer() -> bool:
+	if not _sal_starter_offer_is_pending():
+		return false
+	_hide_event_choice_popup()
+	return start_dialogue("sal_starter_offer", {
+		"event_id": "dialogue:sal_starter_offer",
+		"source": "sal_resale_tutorial",
+		"source_object_id": "meta_sal:talk",
+	})
+
+
+func _talk_to_sal() -> bool:
+	if _sal_starter_offer_is_pending():
+		return _resume_sal_starter_offer()
+	return start_dialogue("sal_shop_talk", {
+		"source": "sal_pawn_shop",
+		"source_object_id": "meta_sal:talk",
+	})
+
+
+func _start_sal_routine_dialogue(kind: String) -> bool:
+	if meta_collection_service == null:
+		return false
+	var snapshot := meta_collection_service.snapshot()
+	var pool: Array[String] = ["sal_purchase_1", "sal_purchase_2"]
+	var count := _copy_array(_copy_dict(snapshot.get("sal_resale", {})).get("purchase_history", [])).size()
+	if kind == "sale":
+		pool = ["sal_sale_1", "sal_sale_2"]
+		count = _copy_array(snapshot.get("sale_history", [])).size()
+	var index := posmod(maxi(0, count - 1), pool.size())
+	return start_dialogue(pool[index], {
+		"source": "sal_%s" % kind,
+		"source_object_id": "meta_sal:talk",
+	})
+
+
+func _resolve_sal_starter_dialogue_choice(entry: Dictionary, choice_id: String) -> void:
+	var choice := "sell_back" if choice_id == "sal_starter_sell_back" else "keep"
+	var result: Dictionary = meta_collection_service.resolve_starter_buyback(choice)
+	if not bool(result.get("ok", false)):
+		_show_message(str(result.get("message", "Sal's offer could not be resolved.")))
+		_refresh_talk_dock()
+		_refresh()
+		return
+	var save_error := meta_collection_service.save()
+	if save_error != OK:
+		meta_collection_service.load()
+		_show_message("Sal's offer could not be saved, so nothing changed.")
+		_refresh_talk_dock()
+		_refresh()
+		return
+	run_state.complete_talk_event_resolution(str(entry.get("event_id", "dialogue:sal_starter_offer")))
+	_apply_meta_environment(meta_session_location_id)
+	_refresh_talk_dock()
+	_show_message(str(result.get("message", "Sal's offer is closed.")))
+	var continuation := "sal_starter_mocking_relist" if choice == "sell_back" else "sal_starter_kept"
+	start_dialogue(continuation, {
+		"source": "sal_resale_tutorial",
+		"source_object_id": "meta_sal:talk",
+	})
 	_refresh()
 
 
@@ -3238,6 +3340,8 @@ func save_foundation_run() -> void:
 
 func _autosave_foundation_run(status_text: String = "Autosaved.", force: bool = false) -> bool:
 	if run_state == null:
+		return false
+	if _is_meta_session():
 		return false
 	if dev_game_test_mode:
 		save_status_message = "Practice sessions are not autosaved."
@@ -6017,6 +6121,10 @@ func _add_context_object_actions(card: VBoxContainer, object_data: Dictionary) -
 			_add_card_button(card, "Review trades", Callable(self, "open_meta_trade_up"), false, true)
 		CONTEXT_MODE_META_PAWN_COUNTER:
 			_add_card_button(card, "Sell", Callable(self, "open_meta_sell_counter"), false, true)
+		CONTEXT_MODE_META_SAL_SHELF:
+			_add_card_button(card, "Inspect", Callable(self, "open_meta_sal_shelf").bind(int(source_id)), false, true)
+		CONTEXT_MODE_META_SAL_TALK:
+			_add_card_button(card, "Talk", Callable(self, "_talk_to_sal"), false, true)
 		CONTEXT_MODE_TRAVEL:
 			_add_context_travel_actions(card, source_id)
 		CONTEXT_MODE_SERVICE:
@@ -7707,6 +7815,9 @@ func _activate_event_response_action(action_object_id: String) -> bool:
 
 
 func _activate_meta_interactable_object(object_id: String) -> bool:
+	if _sal_starter_offer_is_pending():
+		_resume_sal_starter_offer()
+		return true
 	if object_id == "travel:leave":
 		focus_interactable_object(object_id)
 		return open_world_map()
@@ -7741,6 +7852,11 @@ func _activate_meta_interactable_object(object_id: String) -> bool:
 		CONTEXT_MODE_META_PAWN_COUNTER:
 			open_meta_sell_counter()
 			return true
+		CONTEXT_MODE_META_SAL_SHELF:
+			open_meta_sal_shelf(int(source_id))
+			return true
+		CONTEXT_MODE_META_SAL_TALK:
+			return _talk_to_sal()
 		CONTEXT_MODE_TRAVEL:
 			return open_world_map()
 	_show_message("Inspect this first.")
@@ -9210,6 +9326,8 @@ func _enter_meta_location(location_id: String) -> void:
 	clear_interaction_focus()
 	_show_message("Home is ready." if clean_location == META_LOCATION_HOME else "Sal's Pawn Shop is open.")
 	_refresh()
+	if clean_location == pawn_location and _sal_starter_offer_is_pending():
+		_resume_sal_starter_offer()
 
 
 func _exit_meta_session() -> void:
@@ -9440,7 +9558,104 @@ func open_meta_trade_up() -> void:
 	_add_meta_close_card()
 
 
+func open_meta_sal_shelf(slot_index: int) -> void:
+	if _sal_starter_offer_is_pending():
+		_resume_sal_starter_offer()
+		return
+	_ensure_meta_session_controller()
+	var rows := meta_session_controller.sal_shelf_rows()
+	if slot_index < 0 or slot_index >= rows.size():
+		_show_meta_popup("Sal's Shelf", "That shelf spot does not exist.", "meta_sal_shelf")
+		_add_meta_close_card()
+		return
+	var row := _copy_dict(rows[slot_index])
+	if not bool(row.get("occupied", false)):
+		_show_meta_popup("Empty Shelf", "This locked shelf spot is empty. A later victory may restock it.", "meta_sal_shelf")
+		_add_meta_close_card()
+		return
+	var item := _copy_dict(row.get("item", {}))
+	var quote := _copy_dict(row.get("quote_basis", {}))
+	var floats := _copy_dict(quote.get("clamped_floats", {}))
+	var contributions := _copy_dict(quote.get("rarity_contributions", {}))
+	var mode := str(row.get("listing_mode", "normal"))
+	var policy := "Normal shelf: ceil(max(quote + 1, quote × 1.5))."
+	if mode == MetaCollectionServiceScript.LISTING_MODE_STARTER_DISCOUNT:
+		policy = "Starter discount: max(1, round(quote × 0.75))."
+	elif mode == MetaCollectionServiceScript.LISTING_MODE_MOCKING_RELIST:
+		policy = "Sal's relist: ceil(quote × 10)."
+	var summary := "%s · %s · %s\nPotency %.2f%% · Condition %.2f%% · Resonance %.2f%% · Usage %.2f%%\nRarity contributions P %.4f · C %.4f · R %.4f · U %.4f\nRarity multiplier %.6fx · Pawn quote %d gold\n%s\nAsking price %d gold · You have %d gold" % [
+		str(row.get("display_name", "Collection Item")),
+		str(row.get("collection_display_name", "Collection")),
+		str(row.get("tier", "")).capitalize(),
+		float(floats.get("potency", item.get("potency", 0.0))) * 100.0,
+		float(floats.get("condition", item.get("condition", 0.0))) * 100.0,
+		float(floats.get("resonance", item.get("resonance", 0.0))) * 100.0,
+		float(floats.get("usage", item.get("usage", 0.0))) * 100.0,
+		float(contributions.get("potency", 0.0)),
+		float(contributions.get("condition", 0.0)),
+		float(contributions.get("resonance", 0.0)),
+		float(contributions.get("usage", 0.0)),
+		float(quote.get("rarity_multiplier", 1.0)),
+		int(quote.get("pawn_quote", 0)),
+		policy,
+		int(row.get("asking_price", 0)),
+		int(row.get("gold_balance", 0)),
+	]
+	_show_meta_popup("Sal's Shelf · Slot %d" % (slot_index + 1), summary, "meta_sal_shelf")
+	_add_meta_action_card(
+		"Buy exact item",
+		"Transfer instance %d with all four displayed values unchanged." % int(item.get("instance_id", 0)),
+		"Costs %d gold." % int(row.get("asking_price", 0)),
+		Callable(self, "_show_meta_sal_purchase_confirm").bind(slot_index),
+		"Buy",
+		true
+	)
+	_add_meta_close_card()
+
+
+func _show_meta_sal_purchase_confirm(slot_index: int) -> void:
+	var quote: Dictionary = meta_collection_service.arm_sal_shelf_purchase(slot_index)
+	if not bool(quote.get("ok", false)):
+		_show_meta_popup("Sal's Shelf", str(quote.get("message", "Purchase unavailable.")), "meta_sal_shelf")
+		_add_meta_close_card()
+		return
+	_show_meta_popup(
+		"Confirm Purchase",
+		"Buy %s for %d gold? The exact saved instance moves to your collection." % [str(quote.get("display_name", "collection item")), int(quote.get("asking_price", 0))],
+		"meta_sal_shelf"
+	)
+	_add_meta_action_card("Confirm Purchase", "The listing leaves Sal's shelf.", "Permanent", Callable(self, "_confirm_meta_sal_purchase").bind(str(quote.get("token", ""))), "Confirm", true)
+	_add_meta_close_card()
+
+
+func _confirm_meta_sal_purchase(token: String) -> void:
+	var result: Dictionary = meta_collection_service.confirm_sal_shelf_purchase(token)
+	if not bool(result.get("ok", false)):
+		_show_meta_popup("Sal's Shelf", str(result.get("message", "Purchase unavailable.")), "meta_sal_shelf")
+		_add_meta_close_card()
+		_refresh()
+		return
+	var save_error := meta_collection_service.save()
+	if save_error != OK:
+		meta_collection_service.load()
+		_show_meta_popup("Sal's Shelf", "The purchase could not be saved, so nothing changed.", "meta_sal_shelf")
+		_add_meta_close_card()
+		_refresh()
+		return
+	meta_last_panel_message = str(result.get("message", "Purchase complete."))
+	_apply_meta_environment(meta_session_location_id)
+	_hide_event_choice_popup()
+	if not _copy_dict(result.get("starter_offer", {})).is_empty():
+		_resume_sal_starter_offer()
+	else:
+		_start_sal_routine_dialogue("purchase")
+	_refresh()
+
+
 func open_meta_sell_counter() -> void:
+	if _sal_starter_offer_is_pending():
+		_resume_sal_starter_offer()
+		return
 	_show_meta_popup("Sell Counter", "Choose one collection item or unopened bag to sell for gold.", "meta_pawn_counter")
 	var rows := _meta_sale_rows()
 	if rows.is_empty():
@@ -9506,12 +9721,24 @@ func _show_meta_sale_confirm(kind: String, instance_id: int) -> void:
 
 func _confirm_meta_sale(token: String) -> void:
 	var result: Dictionary = meta_collection_service.confirm_sale(token)
-	if bool(result.get("ok", false)):
-		meta_collection_service.save()
-		_apply_meta_environment(meta_session_location_id)
+	if not bool(result.get("ok", false)):
+		_show_meta_popup("Sell Counter", str(result.get("message", "Sale unavailable.")), "meta_pawn_counter")
+		_add_meta_close_card()
+		_refresh()
+		return
+	var save_error := meta_collection_service.save()
+	if save_error != OK:
+		meta_collection_service.load()
+		_show_meta_popup("Sell Counter", "The sale could not be saved, so nothing changed.", "meta_pawn_counter")
+		_add_meta_close_card()
+		_refresh()
+		return
+	_apply_meta_environment(meta_session_location_id)
 	_show_meta_popup("Sell Counter", str(result.get("message", "Sale complete.")), "meta_pawn_counter")
 	_add_meta_close_card()
 	_refresh()
+	_hide_event_choice_popup()
+	_start_sal_routine_dialogue("sale")
 
 
 func _show_meta_popup(title: String, summary: String, popup_type: String) -> void:
