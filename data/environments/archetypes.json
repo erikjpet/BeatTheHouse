@@ -2555,7 +2555,7 @@
   {
     "id": "grand_casino",
     "display_name": "Grand Casino Main Floor",
-    "room_description": "The public machine floor, casino bar, Cage, and doors deeper into the house.",
+    "room_description": "The public machine floor, casino bar, host desk, and doors deeper into the house.",
     "kind": "boss",
     "open_hours": null,
     "is_start": false,
@@ -2676,6 +2676,10 @@
         ],
         [
           808,
+          350
+        ],
+        [
+          700,
           350
         ]
       ],
@@ -2857,18 +2861,10 @@
       },
       "casino_room_targets": [
         "grand_casino_high_limit",
-        "grand_casino_back_room"
+        "grand_casino_back_room",
+        "grand_casino_cage"
       ],
       "casino_fixtures": [
-        {
-          "id": "cage",
-          "label": "The Cage",
-          "description": "A barred teller window for chips, cash, and Players Card review.",
-          "action_summary": "Speak with the teller.",
-          "interaction_message": "Linda keeps chips, comps, and card reviews behind the glass.",
-          "surface": "wire_cage",
-          "icon_key": "service"
-        },
         {
           "id": "host_desk",
           "label": "Host Desk",
@@ -3262,6 +3258,237 @@
       "private",
       "still",
       "final"
+    ]
+  },
+  {
+    "id": "grand_casino_cage",
+    "display_name": "Grand Casino Cage",
+    "room_description": "Barred teller windows, the house ATM, and a small locked-glass gift case sit apart from the casino floor.",
+    "map_hidden": true,
+    "kind": "boss",
+    "open_hours": null,
+    "is_start": false,
+    "next_archetypes": [],
+    "tier": 3,
+    "name_prefixes": [
+      "Grand Casino"
+    ],
+    "name_nouns": [
+      "Cage"
+    ],
+    "visual_context": {
+      "perspective": "first_person",
+      "scene_type": "grand_casino_cage",
+      "art_key": "grand_casino_cage",
+      "description": "Private barred service room under cold teller lamps."
+    },
+    "objective_hint": "Speak with Linda, settle the marker, and manage chips at the counter.",
+    "demo_objective": {
+      "id": "grand_casino_demo_bankroll",
+      "type": "bankroll_target",
+      "title": "Beat the Grand Casino",
+      "summary": "Earn the Players Card clean or survive Rourke's back-room call.",
+      "target_bankroll": 0,
+      "high_roller_target_bankroll": 0,
+      "high_roller_net_winnings": 30,
+      "high_roller_min_grand_casino_games": 5,
+      "high_roller_max_heat": 30,
+      "players_card_bronze_min_games": 1,
+      "players_card_bronze_net_winnings": 5,
+      "players_card_bronze_max_heat": 30,
+      "players_card_bronze_chip_bonus": 5,
+      "players_card_bronze_drink_comps": 1,
+      "players_card_silver_min_games": 3,
+      "players_card_silver_net_winnings": 15,
+      "players_card_silver_max_heat": 30,
+      "players_card_silver_chip_bonus": 10,
+      "players_card_silver_drink_comps": 1,
+      "players_card_silver_suite_rests": 1,
+      "players_card_gold_min_games": 5,
+      "players_card_gold_net_winnings": 30,
+      "players_card_gold_max_heat": 30,
+      "players_card_look_away_max_heat_gain": 5,
+      "players_card_comp_drink_alcohol": 8,
+      "players_card_suite_rest_minutes": 240,
+      "players_card_suite_heat_recovery": 12,
+      "players_card_suite_drunk_recovery": 24,
+      "showdown_heat_threshold": 70,
+      "forced_showdown_heat_threshold": 95,
+      "showdown_event_id": "the_house_calls",
+      "high_roller_event_id": "high_roller_cashout",
+      "victory_message": "Demo Victory: you earned the Grand Casino Players Card.",
+      "finale_event_id": "the_house_calls",
+      "finale_requires_kind": "boss",
+      "finale_requires_watched": true,
+      "finale_trigger_message": "Rourke calls you to the house table."
+    },
+    "layout": {
+      "casino_fixture_spots": [
+        [
+          342,
+          298
+        ],
+        [
+          724,
+          250
+        ],
+        [
+          132,
+          258
+        ]
+      ],
+      "casino_door_spots": [
+        [
+          824,
+          350
+        ]
+      ],
+      "travel_spots": [
+        [
+          824,
+          350
+        ]
+      ]
+    },
+    "security_profile": {
+      "strictness": "boss",
+      "visible_cues": [
+        "The bars hide Linda from the floor without hiding the cameras."
+      ],
+      "pit_boss": {
+        "enabled": false,
+        "label": "Pit Boss Rourke"
+      }
+    },
+    "music_profile": {
+      "theme": "boss casino cage",
+      "ambience": 0.38,
+      "bpm": 76,
+      "mode": "harmonic_minor",
+      "progression": [
+        0,
+        5,
+        6,
+        4
+      ],
+      "motif": [
+        0,
+        -999,
+        3,
+        -999,
+        6,
+        -999,
+        4,
+        -999
+      ],
+      "root_midi": 42,
+      "safety": 0.12,
+      "texture": "boss",
+      "texture_rate": 0.13,
+      "volume": 0.24
+    },
+    "economic_profile": {
+      "stake_floor": 0,
+      "stake_ceiling": 0,
+      "cashout_tone": "cage"
+    },
+    "game_pool": [],
+    "game_count": [
+      0,
+      0
+    ],
+    "item_pool": [],
+    "item_count": [
+      0,
+      0
+    ],
+    "event_pool": [],
+    "event_scopes": [
+      "boss"
+    ],
+    "event_count": [
+      0,
+      0
+    ],
+    "service_pool": [],
+    "lender_hooks": [],
+    "suspicion_cues": [
+      "The teller room is quiet enough for every chip to sound loud."
+    ],
+    "travel_hooks": [],
+    "local_narrative_flags": {
+      "boss_floor": true,
+      "grand_casino_room": "cage",
+      "casino_room_travel_minutes": 5,
+      "casino_chip_cash_rate": 1,
+      "casino_room_targets": [
+        "grand_casino"
+      ],
+      "casino_atm": {
+        "loan_increment": 50,
+        "loan_cap": 500,
+        "origination_fee": 0,
+        "daily_interest_rate": 0.05,
+        "interest_minute_of_day": 180
+      },
+      "casino_gift_shop": {
+        "stock_count": [
+          3,
+          4
+        ],
+        "candidate_offers": [
+          {"item_id": "instant_coffee", "chip_price": 8},
+          {"item_id": "cashout_envelope", "chip_price": 12},
+          {"item_id": "thermos_black_coffee", "chip_price": 18},
+          {"item_id": "pickled_olive_jar", "chip_price": 10},
+          {"item_id": "cheap_sunglasses", "chip_price": 14},
+          {"item_id": "scratch_pad", "chip_price": 11},
+          {"item_id": "card_counters_notes", "chip_price": 20},
+          {"item_id": "side_bet_chart", "chip_price": 16},
+          {"item_id": "lucky_penny", "chip_price": 9},
+          {"item_id": "lucky_keychain", "chip_price": 13},
+          {"item_id": "lucky_bar_napkin", "chip_price": 7},
+          {"item_id": "payment_calendar", "chip_price": 15},
+          {"item_id": "roadside_map", "chip_price": 17}
+        ]
+      },
+      "casino_fixtures": [
+        {
+          "id": "cage_counter",
+          "label": "Cashout Counter",
+          "description": "Linda handles chips, cards, comps, and quiet promotions behind the barred windows.",
+          "action_summary": "Speak with Linda.",
+          "interaction_message": "Linda waits behind the bars with a ledger open.",
+          "surface": "wire_cage",
+          "prop": "counter",
+          "icon_key": "service"
+        },
+        {
+          "id": "cage_atm",
+          "label": "Casino ATM",
+          "description": "The house marker terminal advances cash and accepts direct repayment.",
+          "action_summary": "Manage the house marker.",
+          "interaction_message": "The ATM shows the marker balance and the next 3:00 AM interest time.",
+          "surface": "machine",
+          "prop": "terminal",
+          "icon_key": "debt"
+        },
+        {
+          "id": "cage_gift_shop",
+          "label": "Gift Shop",
+          "description": "A locked-glass case holds a few chip-priced, pat-down-safe goods.",
+          "action_summary": "Inspect the remaining stock.",
+          "interaction_message": "Every item sits tagged in chips behind locked glass.",
+          "surface": "glass_case",
+          "prop": "display",
+          "icon_key": "item"
+        }
+      ]
+    },
+    "moods": [
+      "barred",
+      "private",
+      "cold-lit"
     ]
   },
   {

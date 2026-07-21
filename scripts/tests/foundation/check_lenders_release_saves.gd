@@ -2579,11 +2579,14 @@ func _check_grand_casino_memory_entry_lines(main_environment: Dictionary, outsid
 func _check_grand_casino_spatial_split(library: ContentLibrary, main_archetype: Dictionary, failures: Array) -> void:
 	var high_limit := _archetype_by_id(library, RunState.GRAND_CASINO_HIGH_LIMIT_ARCHETYPE_ID)
 	var back_room := _archetype_by_id(library, RunState.GRAND_CASINO_BACK_ROOM_ARCHETYPE_ID)
-	if high_limit.is_empty() or back_room.is_empty():
-		failures.append("Grand Casino spatial split is missing the High-Limit or Back Room archetype.")
+	var cage := _archetype_by_id(library, RunState.GRAND_CASINO_CAGE_ARCHETYPE_ID)
+	if high_limit.is_empty() or back_room.is_empty() or cage.is_empty():
+		failures.append("Grand Casino spatial split is missing the High-Limit, Back Room, or Cage archetype.")
 		return
-	if not bool(high_limit.get("map_hidden", false)) or not bool(back_room.get("map_hidden", false)):
+	if not bool(high_limit.get("map_hidden", false)) or not bool(back_room.get("map_hidden", false)) or not bool(cage.get("map_hidden", false)):
 		failures.append("Grand Casino subrooms must be hidden from world-map node generation.")
+	if not _string_array(cage.get("game_pool", [])).is_empty() or RunState.ROURKE_ROOM_PATH.has(RunState.GRAND_CASINO_CAGE_ARCHETYPE_ID) or RunState.RIVAL_CHEATER_ROOMS.has(RunState.GRAND_CASINO_CAGE_ARCHETYPE_ID):
+		failures.append("Grand Casino Cage leaked into a game, Rourke patrol, or rival-cheater room set.")
 	var main_games := _string_array(main_archetype.get("game_pool", []))
 	var high_games := _string_array(high_limit.get("game_pool", []))
 	for machine_id in ["slot", "video_poker", "pull_tabs", "bar_dice"]:
@@ -2608,7 +2611,7 @@ func _check_grand_casino_spatial_split(library: ContentLibrary, main_archetype: 
 			var node_id := str((node_value as Dictionary).get("id", ""))
 			if node_id.begins_with("grand_casino"):
 				grand_node_count += 1
-		if grand_node_count != 1 or not WorldMapScript.node_by_id(map_data, RunState.GRAND_CASINO_HIGH_LIMIT_ARCHETYPE_ID).is_empty() or not WorldMapScript.node_by_id(map_data, RunState.GRAND_CASINO_BACK_ROOM_ARCHETYPE_ID).is_empty():
+		if grand_node_count != 1 or not WorldMapScript.node_by_id(map_data, RunState.GRAND_CASINO_HIGH_LIMIT_ARCHETYPE_ID).is_empty() or not WorldMapScript.node_by_id(map_data, RunState.GRAND_CASINO_BACK_ROOM_ARCHETYPE_ID).is_empty() or not WorldMapScript.node_by_id(map_data, RunState.GRAND_CASINO_CAGE_ARCHETYPE_ID).is_empty():
 			failures.append("World map seed %d did not contain exactly one Grand Casino node." % seed_index)
 			break
 
@@ -2618,7 +2621,7 @@ func _check_grand_casino_spatial_split(library: ContentLibrary, main_archetype: 
 	var generator: RunGenerator = RunGeneratorScript.new(library)
 	var layout := _copy_dict(run_state.current_environment.get("layout", {}))
 	var object_rects := _copy_dict(layout.get("object_rects", {}))
-	for object_id in ["casino_fixture:cage", "casino_fixture:host_desk", "travel:grand_casino_high_limit", "travel:grand_casino_back_room"]:
+	for object_id in ["casino_fixture:host_desk", "travel:grand_casino_high_limit", "travel:grand_casino_back_room", "travel:grand_casino_cage"]:
 		if not object_rects.has(object_id):
 			failures.append("Grand Casino Main Floor layout is missing authored object placement: %s." % object_id)
 	var buy_in := int(_copy_dict(run_state.current_environment.get("local_narrative_flags", {})).get("casino_high_limit_buy_in", 60))
@@ -2631,6 +2634,18 @@ func _check_grand_casino_spatial_split(library: ContentLibrary, main_archetype: 
 		failures.append("Grand Casino High-Limit cash buy-in gate did not admit and price an eligible player.")
 	if bool(run_state.grand_casino_room_access_status(RunState.GRAND_CASINO_BACK_ROOM_ARCHETYPE_ID, buy_in).get("available", true)) or generator.enter_grand_casino_room(run_state, RunState.GRAND_CASINO_BACK_ROOM_ARCHETYPE_ID):
 		failures.append("Grand Casino Back Room was reachable without the showdown.")
+	if not bool(run_state.grand_casino_room_access_status(RunState.GRAND_CASINO_CAGE_ARCHETYPE_ID, buy_in).get("available", false)):
+		failures.append("Grand Casino Cage was not freely accessible from the Main Floor.")
+	if not generator.enter_grand_casino_room(run_state, RunState.GRAND_CASINO_CAGE_ARCHETYPE_ID):
+		failures.append("Grand Casino room seam could not enter the freely accessible Cage.")
+		return
+	var cage_rects := _copy_dict(_copy_dict(run_state.current_environment.get("layout", {})).get("object_rects", {}))
+	for object_id in ["casino_fixture:cage_counter", "casino_fixture:cage_atm", "casino_fixture:cage_gift_shop", "travel:grand_casino"]:
+		if not cage_rects.has(object_id):
+			failures.append("Grand Casino Cage layout is missing authored object placement: %s." % object_id)
+	if not generator.enter_grand_casino_room(run_state, RunState.GRAND_CASINO_ARCHETYPE_ID):
+		failures.append("Grand Casino Cage return door could not restore the Main Floor.")
+		return
 
 	run_state.add_suspicion("gc_room_shared_heat", 23, "behavior")
 	run_state.narrative_flags["grand_casino_attention_eye_in_the_sky"] = true

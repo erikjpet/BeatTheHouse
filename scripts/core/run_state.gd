@@ -54,10 +54,12 @@ const ABANDONED_FAILURE_MESSAGE := "You walk away from the table. The run is ove
 const GRAND_CASINO_ARCHETYPE_ID := "grand_casino"
 const GRAND_CASINO_HIGH_LIMIT_ARCHETYPE_ID := "grand_casino_high_limit"
 const GRAND_CASINO_BACK_ROOM_ARCHETYPE_ID := "grand_casino_back_room"
+const GRAND_CASINO_CAGE_ARCHETYPE_ID := "grand_casino_cage"
 const GRAND_CASINO_ARCHETYPE_IDS := [
 	GRAND_CASINO_ARCHETYPE_ID,
 	GRAND_CASINO_HIGH_LIMIT_ARCHETYPE_ID,
 	GRAND_CASINO_BACK_ROOM_ARCHETYPE_ID,
+	GRAND_CASINO_CAGE_ARCHETYPE_ID,
 ]
 const GRAND_CASINO_TABLE_GAME_IDS := ["blackjack", "baccarat", "roulette"]
 const GRAND_CASINO_CHIP_GAME_IDS := ["blackjack", "baccarat", "roulette", "slot", "video_poker", "pull_tabs", "bar_dice"]
@@ -1370,7 +1372,7 @@ func grand_casino_room_access_status(target_archetype_id: String, high_limit_buy
 			return {"available": false, "locked": true, "reason": "Locked for this lesson. The Main Floor has everything you need; a Players Card can open High-Limit on later runs."}
 		if target_id == GRAND_CASINO_BACK_ROOM_ARCHETYPE_ID:
 			return {"available": false, "locked": true, "reason": "Locked for this lesson. Rourke's Back Room belongs to later runs."}
-		if target_id == GRAND_CASINO_ARCHETYPE_ID:
+		if target_id == GRAND_CASINO_ARCHETYPE_ID or target_id == GRAND_CASINO_CAGE_ARCHETYPE_ID:
 			return {"available": true, "access_method": "tutorial_main_floor", "cost": 0}
 	if bool(narrative_flags.get("grand_casino_showdown_active", false)):
 		if target_id == GRAND_CASINO_BACK_ROOM_ARCHETYPE_ID and str(narrative_flags.get("grand_casino_showdown_step", "")) == GRAND_CASINO_SHOWDOWN_STEP_DUEL:
@@ -1385,7 +1387,7 @@ func grand_casino_room_access_status(target_archetype_id: String, high_limit_buy
 		if bankroll < buy_in:
 			return {"available": false, "locked": true, "cash_buy_in_required": true, "cost": buy_in, "reason": "High-Limit requires Silver card access or a $%d cash buy-in." % buy_in}
 		return {"available": true, "cash_buy_in_required": true, "access_method": "cash_buy_in", "cost": buy_in}
-	if target_id == GRAND_CASINO_ARCHETYPE_ID:
+	if target_id == GRAND_CASINO_ARCHETYPE_ID or target_id == GRAND_CASINO_CAGE_ARCHETYPE_ID:
 		return {"available": true, "access_method": "interior", "cost": 0}
 	return {"available": false, "reason": "That room is not part of the Grand Casino."}
 
@@ -7515,6 +7517,7 @@ static func _empty_grand_casino_room_heat_accumulators() -> Dictionary:
 		GRAND_CASINO_ARCHETYPE_ID: 0,
 		GRAND_CASINO_HIGH_LIMIT_ARCHETYPE_ID: 0,
 		GRAND_CASINO_BACK_ROOM_ARCHETYPE_ID: 0,
+		GRAND_CASINO_CAGE_ARCHETYPE_ID: 0,
 	}
 
 
