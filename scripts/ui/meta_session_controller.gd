@@ -16,6 +16,7 @@ const META_LOCATION_HOME := "home"
 
 const MetaCollectionServiceScript := preload("res://scripts/core/meta_collection_service.gd")
 const CollectionItemResolverScript := preload("res://scripts/core/collection_item_resolver.gd")
+const EnvironmentInstanceScript := preload("res://scripts/core/environment_instance.gd")
 const MetaCollectionViewModelScript := preload("res://scripts/ui/meta_collection_view_model.gd")
 const WorldMapScript := preload("res://scripts/core/world_map.gd")
 const AttributeBadgesScript := preload("res://scripts/core/attribute_badges.gd")
@@ -722,7 +723,7 @@ func _pawn_interactable_objects(run_state: RunState, hover_target_id: String, fo
 			"icon_key": "travel",
 			"available_actions": [{"id": "open_meta_map", "label": "Open Map"}],
 			"confirm_action_id": "open_meta_map",
-			"focus_rect": _interaction_rect_for_object(run_state, "travel:leave", CONTEXT_MODE_TRAVEL, 0),
+			"focus_rect": _pawn_exit_interaction_rect(run_state),
 		}, hover_target_id, focus_target_id, selected_object_id),
 	])
 	return objects
@@ -746,10 +747,22 @@ func _sal_layout_item_offers() -> Array:
 
 
 func _sal_shelf_interaction_rect(run_state: RunState, index: int) -> Rect2:
-	var generated := _generated_object_interaction_rect(run_state, "item:sal_shelf_%d" % index)
-	if generated.size.x > 0.0 and generated.size.y > 0.0:
-		return generated
+	var layout := _current_environment_layout(run_state)
+	var authored: Rect2 = EnvironmentInstanceScript._object_rect_from_layout(layout, "item", index, "item_spots")
+	if authored.size.x > 0.0 and authored.size.y > 0.0:
+		var center := authored.position + authored.size * 0.5
+		var board_size := Vector2(VisualStyle.ENVIRONMENT_BOARD_SIZE)
+		var shelf_size := Vector2(46.0 / board_size.x, 44.0 / board_size.y)
+		return Rect2(center - shelf_size * 0.5, shelf_size)
 	return _normalized_interaction_rect(CONTEXT_MODE_META_SAL_SHELF, index)
+
+
+func _pawn_exit_interaction_rect(run_state: RunState) -> Rect2:
+	var layout := _current_environment_layout(run_state)
+	var authored: Rect2 = EnvironmentInstanceScript._object_rect_from_layout(layout, "travel", 0, "travel_spots")
+	if authored.size.x > 0.0 and authored.size.y > 0.0:
+		return authored
+	return _normalized_interaction_rect(CONTEXT_MODE_TRAVEL, 0)
 
 
 func _world_map_node(node_id: String, position: Vector2, selected_id: String, location_id: String) -> Dictionary:
@@ -915,7 +928,7 @@ func _normalized_interaction_rect(object_type: String, index: int) -> Rect2:
 			center = Vector2(0.16 + float(index % 2) * 0.08 if index < 2 else 0.78 + float(index % 2) * 0.08, 0.34 + float(index / 2) * 0.16)
 			size = Vector2(62.0 / board_size.x, 52.0 / board_size.y)
 		CONTEXT_MODE_META_SAL_TALK:
-			center = Vector2(0.50, 0.40)
+			center = Vector2(0.50, 0.23)
 			size = Vector2(96.0 / board_size.x, 76.0 / board_size.y)
 	return Rect2(center - size * 0.5, size)
 

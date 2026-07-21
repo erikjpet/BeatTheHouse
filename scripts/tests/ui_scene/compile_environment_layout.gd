@@ -197,6 +197,27 @@ func _check_meta_home_launcher_opens_room(app: Control) -> bool:
 		if _object_by_id(pawn_objects, "meta_sal_shelf:%d" % slot_index).is_empty() or not shelf_offer_ids.has("sal_shelf_%d" % slot_index):
 			push_error("Custom pawn-shop room did not preserve stable shelf slot %d." % slot_index)
 			return false
+	var authored_shelf_points := [
+		Vector2(120.0 / 900.0, 164.0 / 430.0),
+		Vector2(186.0 / 900.0, 164.0 / 430.0),
+		Vector2(720.0 / 900.0, 156.0 / 430.0),
+		Vector2(786.0 / 900.0, 156.0 / 430.0),
+		Vector2(110.0 / 900.0, 238.0 / 430.0),
+		Vector2(794.0 / 900.0, 232.0 / 430.0),
+	]
+	for slot_index in range(authored_shelf_points.size()):
+		var shelf_object := _object_by_id(pawn_objects, "meta_sal_shelf:%d" % slot_index)
+		var focus_point := _copy_dict(shelf_object.get("focus_point", {}))
+		var actual_point := Vector2(float(focus_point.get("x", -1.0)), float(focus_point.get("y", -1.0)))
+		if actual_point.distance_to(authored_shelf_points[slot_index]) > 0.0001:
+			push_error("Sal shelf slot %d moved off its authored item spot: expected %s got %s." % [slot_index, str(authored_shelf_points[slot_index]), str(actual_point)])
+			return false
+	var pawn_canvas := app.get("environment_canvas") as Control
+	var pawn_canvas_view: Dictionary = pawn_canvas.call("current_view_snapshot")
+	var pawn_layout := _copy_dict(pawn_canvas_view.get("object_layout", {}))
+	if int(pawn_layout.get("overlap_count", -1)) != 0:
+		push_error("Sal shelf fixtures overlap in the authored pawn-shop layout: %s." % JSON.stringify(pawn_layout.get("overlaps", [])))
+		return false
 	if _copy_array(pawn_environment.get("item_offers", [])).size() != 6:
 		push_error("Custom pawn-shop room did not author exactly six physical shelf spots.")
 		return false

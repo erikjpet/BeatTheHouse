@@ -372,6 +372,7 @@ func _run() -> void:
 	await _verify_grand_casino_showdown_event_snapshot()
 	await _verify_terminal_victory_summary_snapshot()
 	await _verify_t4_7_event_visual_model()
+	await _verify_sal_resale_shelf_visual_states()
 
 	_write_report()
 	quit(0)
@@ -417,6 +418,78 @@ func _use_isolated_meta_collection_store(path: String) -> void:
 		"next_instance_id": 1,
 	}, "\t"))
 	file.close()
+
+
+func _verify_sal_resale_shelf_visual_states() -> void:
+	_use_isolated_meta_collection_store(TEST_META_COLLECTION_PATH)
+	app.call("_initialize_meta_collection")
+	app.call("open_meta_home")
+	app.call("_enter_meta_location", "pawn_shop")
+	await _settle()
+	var service: Variant = app.get("meta_collection_service")
+	_require(service != null, "Sal visual QA could not access the isolated meta collection service.")
+	var rows: Array = service.sal_shelf_rows()
+	var shelf_objects: Array = app.call("current_spatial_interaction_snapshot").get("objects", []).filter(func(object_data: Dictionary) -> bool: return str(object_data.get("object_id", "")).begins_with("meta_sal_shelf:"))
+	_require(rows.size() == 6 and shelf_objects.size() == 6, "Fresh Sal visual QA did not expose exactly six persistent shelf spots.")
+	_require(rows.filter(func(row: Dictionary) -> bool: return bool(row.get("occupied", false))).size() == 1, "Fresh Sal visual QA did not show one starter and five empty spots.")
+	_record_state("sal_fresh_shelf", "Fresh Sal room shows one discounted damaged starter, five empty locked spots, Sal, the sell tray, and the exit.")
+
+	service.generate_and_insert_sal_stock("visual-sal-partial-1")
+	service.generate_and_insert_sal_stock("visual-sal-partial-2")
+	service.save()
+	app.call("_apply_meta_environment", "pawn_shop")
+	await _settle()
+	_record_state("sal_partially_filled_shelf", "Three occupied physical shelf spots remain distinct from three empty spots and the sell counter.")
+
+	var fill_index := 0
+	while service.sal_shelf_rows().filter(func(row: Dictionary) -> bool: return bool(row.get("occupied", false))).size() < 6:
+		service.generate_and_insert_sal_stock("visual-sal-full-%d" % fill_index)
+		fill_index += 1
+	service.save()
+	app.call("_apply_meta_environment", "pawn_shop")
+	await _settle()
+	_record_state("sal_full_shelf", "All six authored item spots show persistent resale listings without obscuring Sal, the sell tray, or exit.")
+
+	app.call("open_meta_sal_shelf", 0)
+	await _settle()
+	var inspect_popup: Dictionary = app.call("current_event_choice_popup_snapshot")
+	_require(str(inspect_popup.get("summary", "")).contains("Rarity multiplier") and str(inspect_popup.get("summary", "")).contains("Pawn quote"), "Sal inspect visual did not expose rarity and price breakdown copy.")
+	_record_state("sal_inspected_float_breakdown", "Starter inspection shows collection, tier, all four percentages, edge contributions, multiplier, pawn quote, policy, price, and gold.")
+	app.call("_hide_event_choice_popup")
+
+	var starter: Dictionary = service.sal_shelf_row(0)
+	var starter_price := int(starter.get("asking_price", 0))
+	service.add_gold(starter_price)
+	var purchase: Dictionary = service.arm_sal_shelf_purchase(0)
+	app.call("_confirm_meta_sal_purchase", str(purchase.get("token", "")))
+	await _settle()
+	var talk: Dictionary = app.call("current_talk_dock_snapshot")
+	_require(str(talk.get("summary", "")).contains("1.00%") and str(talk.get("summary", "")).contains(str(int(service.pending_starter_buyback().get("offer_price", 0)))), "Starter purchase visual did not show the exact rare float and buyback amount.")
+	_record_state("sal_starter_purchase_dialogue", "Buying the starter immediately opens blocking authored Sal dialogue naming the one-percent edge.")
+	_record_state("sal_starter_buyback_choice", "The persisted special offer visibly presents Sell it back and Keep it with the exact gold amount.")
+	_record_state("sal_empty_slot_after_purchase", "The purchased starter's original physical shelf spot remains visibly empty until future stock or buyback.")
+
+	app.call("resolve_event_choice", "dialogue:sal_starter_offer", "sal_starter_sell_back")
+	await _settle()
+	var relisted: Dictionary = service.sal_shelf_row(0)
+	_require(str(relisted.get("listing_mode", "")) == "mocking_relist", "Sal visual QA did not restore the exact starter as a mocking relist.")
+	_record_state("sal_mocking_ten_x_relist", "Accepted buyback returns the exact item to its original spot and Sal's continuation shows the exact ten-times relist policy.")
+	app.call("resolve_event_choice", "dialogue:sal_starter_mocking_relist", "move_on")
+	await _settle()
+
+	var settings: Variant = app.get("user_settings")
+	if settings != null:
+		settings.play_on_small_screen = true
+		app.call("_apply_accessibility_settings")
+		await _settle()
+		_record_state("sal_small_screen_shelf", "All six shelf spots and transaction fixtures remain usable with small-screen hit targets.")
+		settings.play_on_small_screen = false
+		settings.reduce_motion = true
+		app.call("_apply_accessibility_settings")
+		await _settle()
+		_record_state("sal_reduced_motion_shelf", "Reduced motion preserves Sal's room, shelf rarity cues, and all transaction information.")
+		settings.reduce_motion = false
+		app.call("_apply_accessibility_settings")
 
 
 func _try_follow_visible_objective_once() -> bool:
@@ -1903,6 +1976,9 @@ func _record_state(name: String, description: String) -> void:
 		"environment": _environment_summary(app.call("current_environment_view_snapshot")),
 		"game": _game_summary(app.call("current_game_view_snapshot")),
 		"consequence": _consequence_summary(app.call("current_consequence_view_snapshot")),
+		"spatial": app.call("current_spatial_interaction_snapshot") if app.has_method("current_spatial_interaction_snapshot") else {},
+		"popup": app.call("current_event_choice_popup_snapshot") if app.has_method("current_event_choice_popup_snapshot") else {},
+		"talk": app.call("current_talk_dock_snapshot") if app.has_method("current_talk_dock_snapshot") else {},
 	})
 
 

@@ -43,6 +43,8 @@ const CAMERA_OFFSET_SNAP_EPSILON := 0.35
 const OBJECT_LAYOUT_MARGIN := 16.0
 const OBJECT_LAYOUT_GAP := 8.0
 const OBJECT_LAYOUT_MAX_OVERLAP_AREA := 0.01
+const DEFAULT_OBJECT_VISUAL_MIN_SIZE := Vector2(72.0, 48.0)
+const SAL_SHELF_VISUAL_MIN_SIZE := Vector2(44.0, 44.0)
 const OBJECT_INFO_WIDTH := 326.0
 const OBJECT_INFO_ITEM_WIDTH := 286.0
 const OBJECT_INFO_MIN_WIDTH := 148.0
@@ -1909,6 +1911,7 @@ func _objects_from_interactable_records(records: Array) -> Array:
 		var object_type := str(record.get("visual_type", interaction_type))
 		var normalized_rect := _normalized_rect_from_record(record)
 		var focus_point := normalized_rect.position + normalized_rect.size * 0.5
+		var minimum_visual_size := _minimum_object_visual_size(object_type)
 		var scene_object := {
 			"id": object_id,
 			"type": object_type,
@@ -1922,8 +1925,8 @@ func _objects_from_interactable_records(records: Array) -> Array:
 			"decorative": bool(record.get("decorative", not bool(record.get("interactive", true)))),
 			"position": focus_point,
 			"size": Vector2(
-				maxf(normalized_rect.size.x * float(BOARD_SIZE.x), 72.0),
-				maxf(normalized_rect.size.y * float(BOARD_SIZE.y), 48.0)
+				maxf(normalized_rect.size.x * float(BOARD_SIZE.x), minimum_visual_size.x),
+				maxf(normalized_rect.size.y * float(BOARD_SIZE.y), minimum_visual_size.y)
 			),
 			"disabled": not bool(record.get("enabled", true)),
 			"disabled_reason": str(record.get("disabled_reason", "")),
@@ -2048,13 +2051,28 @@ func _apply_draw_hints(object_data: Dictionary, object_type: String, index: int)
 
 func _normalized_rect_from_record(record: Dictionary) -> Rect2:
 	var rect := _rect_from_dict(record.get("normalized_rect", record.get("focus_rect", {})))
+	var object_type := str(record.get("visual_type", record.get("object_type", "info")))
+	var minimum_visual_size := _minimum_object_visual_size(object_type)
+	var minimum_normalized_size := Vector2(
+		minimum_visual_size.x / float(BOARD_SIZE.x),
+		minimum_visual_size.y / float(BOARD_SIZE.y)
+	)
 	if rect.size.x <= 0.0 or rect.size.y <= 0.0:
 		var focus_point := _vector2_from_dict(record.get("focus_point", {}), Vector2(0.5, 0.5))
 		rect = Rect2(focus_point - Vector2(0.08, 0.14) * 0.5, Vector2(0.08, 0.14))
 	return Rect2(
 		Vector2(clampf(rect.position.x, 0.02, 0.96), clampf(rect.position.y, 0.04, 0.92)),
-		Vector2(clampf(rect.size.x, 0.08, 0.22), clampf(rect.size.y, 0.12, 0.28))
+		Vector2(
+			clampf(rect.size.x, minimum_normalized_size.x, 0.22),
+			clampf(rect.size.y, minimum_normalized_size.y, 0.28)
+		)
 	)
+
+
+func _minimum_object_visual_size(object_type: String) -> Vector2:
+	if object_type == "meta_sal_shelf":
+		return SAL_SHELF_VISUAL_MIN_SIZE
+	return DEFAULT_OBJECT_VISUAL_MIN_SIZE
 
 
 func _string_array(value: Variant) -> Array:
