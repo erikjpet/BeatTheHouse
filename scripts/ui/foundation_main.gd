@@ -10381,13 +10381,21 @@ func _route_failed_run_if_needed(terminal_result: Dictionary = {}) -> bool:
 func _process_terminal_meta_bag_drops() -> void:
 	if run_state == null or not run_state.is_terminal():
 		return
+	if meta_collection_service == null or collection_drop_service == null:
+		_initialize_meta_collection()
+	var sal_stock: Dictionary = collection_drop_service.stock_sal_after_success(run_state, meta_collection_service)
+	if bool(sal_stock.get("stocked", false)) or bool(sal_stock.get("recovered", false)):
+		run_report_model_key = ""
+		save_status_message = "Sal's shelf updated."
+		if save_service != null:
+			var receipt_save_error := save_service.save_run(run_state, autosave_slot_id)
+			if receipt_save_error != OK:
+				save_status_message = "Sal stocked; terminal receipt save failed."
 	var tutorial_card_victory := run_state.is_tutorial_run() \
 		and run_state.run_status == RunState.RUN_STATUS_ENDED \
 		and str(run_state.narrative_flags.get("demo_victory_route", "")) == RunState.GRAND_CASINO_HIGH_ROLLER_EVENT_ID
 	if not run_state.meta_collection_enabled_for_run() and not tutorial_card_victory:
 		return
-	if meta_collection_service == null or collection_drop_service == null:
-		_initialize_meta_collection()
 	var special_outcome: Dictionary = collection_drop_service.apply_terminal_special_outcome(run_state, meta_collection_service)
 	if bool(special_outcome.get("mutated", false)):
 		var special_save_error := meta_collection_service.save()

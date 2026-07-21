@@ -9,6 +9,7 @@ const PLAYERS_CARD_REWARD_FLAG := "_meta_players_card_reward"
 const PLAYERS_CARD_DESTROYED_FLAG := "_meta_players_card_destroyed"
 const GRAND_CASINO_CHIPS_REWARD_FLAG := "_meta_grand_casino_chips_reward"
 const PRESTIGE_RESULT_FLAG := "_meta_prestige_result"
+const SAL_STOCK_SUMMARY_FLAG := "_sal_resale_stock_summary"
 
 
 static func build(run_data: Dictionary, catalogs: Dictionary = {}) -> Dictionary:
@@ -112,6 +113,9 @@ static func build_bag_reward(run_data: Dictionary) -> Dictionary:
 			"tier_label": tier_label,
 		})
 	var summary_lines := _string_array(flags.get(BAG_GRANTS_FLAG, []))
+	var sal_line := str(flags.get(SAL_STOCK_SUMMARY_FLAG, "")).strip_edges()
+	if not sal_line.is_empty() and not summary_lines.has(sal_line):
+		summary_lines.append(sal_line)
 	var flushed := bool(flags.get(BAG_FLUSHED_FLAG, false))
 	return {
 		"visible": won and (not choices.is_empty() or flushed or not summary_lines.is_empty()),
