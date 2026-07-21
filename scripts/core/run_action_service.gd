@@ -208,6 +208,119 @@ func buy_item_offer(item_id: String) -> Dictionary:
 	return _service_success(result)
 
 
+func cage_gift_shop_offer_view_list() -> Array:
+	if not is_ready() or str(run_state.current_environment.get("archetype_id", "")) != RunState.GRAND_CASINO_CAGE_ARCHETYPE_ID:
+		return []
+	var shop_state: Dictionary = run_state.current_environment.get("cage_gift_shop_state", {}) if typeof(run_state.current_environment.get("cage_gift_shop_state", {})) == TYPE_DICTIONARY else {}
+	var result: Array = []
+	for stock_value in _copy_array(shop_state.get("stock", [])):
+		if typeof(stock_value) != TYPE_DICTIONARY:
+			continue
+		var stock: Dictionary = stock_value
+		var item_id := str(stock.get("item_id", stock.get("id", "")))
+		var definition := library.item(item_id)
+		if definition.is_empty():
+			continue
+		var price := maxi(1, int(stock.get("chip_price", 1)))
+		var sold := bool(stock.get("sold", false))
+		result.append({
+			"id": item_id,
+			"item_id": item_id,
+			"display_name": str(definition.get("display_name", item_id)),
+			"description": str(definition.get("description", "")),
+			"purpose_summary": _item_purpose_summary(definition),
+			"icon_key": str(definition.get("icon_key", item_id)),
+			"asset_path": str(definition.get("asset_path", "")),
+			"chip_price": price,
+			"sold": sold,
+			"affordable": not sold and run_state.grand_casino_chips >= price,
+			"enabled": not sold and run_state.grand_casino_chips >= price,
+			"disabled_reason": "Sold." if sold else "Need %d chips." % price if run_state.grand_casino_chips < price else "",
+		})
+	return result
+
+
+func buy_cage_gift_shop_offer(item_id: String) -> Dictionary:
+	if not is_ready() or str(run_state.current_environment.get("archetype_id", "")) != RunState.GRAND_CASINO_CAGE_ARCHETYPE_ID:
+		return _service_error("The Grand Casino gift case is inside the Cage.")
+	var offer: Dictionary = {}
+	for offer_value in cage_gift_shop_offer_view_list():
+		if typeof(offer_value) == TYPE_DICTIONARY and str((offer_value as Dictionary).get("item_id", "")) == item_id:
+			offer = (offer_value as Dictionary).duplicate(true)
+			break
+	if offer.is_empty() or bool(offer.get("sold", false)):
+		return _service_error("That gift-case item is no longer available.")
+	var price := maxi(1, int(offer.get("chip_price", 1)))
+	if run_state.grand_casino_chips < price:
+		return _service_error("Need %d chips for %s." % [price, str(offer.get("display_name", item_id))])
+	var item_definition := library.item(item_id)
+	if item_definition.is_empty() or not _item_enabled_for_run(item_id):
+		return _service_error("That item is not part of this run.")
+	var item_effect := ItemEffectScript.new()
+	item_effect.setup(item_definition)
+	var effect_result := item_effect.apply({
+		"domain": str(item_definition.get("domain", "global")),
+		"domains": [str(item_definition.get("domain", "global")), "global"],
+		"environment_id": str(run_state.current_environment.get("id", "")),
+		"action_id": "buy_item",
+	})
+	var result := purchase_item_result(effect_result, item_definition, {"id": item_id, "price": 0})
+	var deltas := copy_result_deltas(result.get("deltas", {}))
+	deltas["bankroll_delta"] = 0
+	deltas["chips_delta"] = int(deltas.get("chips_delta", 0)) - price
+	var display_name := str(offer.get("display_name", item_id))
+	var message := "Bought %s for %d Grand Casino chips." % [display_name, price]
+	var story: Array = []
+	for story_value in _copy_array(deltas.get("story_log", [])):
+		if typeof(story_value) != TYPE_DICTIONARY or str((story_value as Dictionary).get("type", "")) != "item_purchase":
+			story.append(story_value)
+	story.append({
+		"type": "item_purchase",
+		"item_id": item_id,
+		"item_name": display_name,
+		"price": price,
+		"currency": "chips",
+		"environment_id": str(run_state.current_environment.get("id", "")),
+		"message": message,
+	})
+	deltas["story_log"] = story
+	deltas["messages"] = [message]
+	result["ok"] = bool(effect_result.get("ok", true))
+	result["type"] = "item_purchase"
+	result["action_id"] = "buy_item"
+	result["action_kind"] = "merchant"
+	result["currency"] = "chips"
+	result["price"] = price
+	result["bankroll_delta"] = 0
+	result["chips_delta"] = -price
+	result["deltas"] = deltas
+	result["message"] = message
+	if not bool(result.get("ok", false)):
+		return _service_error(str(result.get("message", "The gift case declines the purchase.")))
+	run_state.advance_environment_turns(1)
+	GameModule.apply_result(run_state, result)
+	if _definition_is_active_item(item_definition):
+		_auto_select_active_item_after_gain(item_id)
+	_mark_cage_gift_shop_offer_sold(item_id)
+	return _service_success(result)
+
+
+func _mark_cage_gift_shop_offer_sold(item_id: String) -> void:
+	var shop_state: Dictionary = run_state.current_environment.get("cage_gift_shop_state", {}) if typeof(run_state.current_environment.get("cage_gift_shop_state", {})) == TYPE_DICTIONARY else {}
+	var stock: Array = _copy_array(shop_state.get("stock", []))
+	for index in range(stock.size()):
+		if typeof(stock[index]) != TYPE_DICTIONARY:
+			continue
+		var entry := (stock[index] as Dictionary).duplicate(true)
+		if str(entry.get("item_id", entry.get("id", ""))) != item_id:
+			continue
+		entry["sold"] = true
+		stock[index] = entry
+		break
+	shop_state["stock"] = stock
+	run_state.current_environment["cage_gift_shop_state"] = shop_state
+
+
 # Builds presentation data for current run inventory.
 func inventory_item_view_list() -> Array:
 	if not is_ready():

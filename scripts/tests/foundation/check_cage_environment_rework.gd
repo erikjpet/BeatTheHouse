@@ -1,12 +1,14 @@
 extends "res://scripts/tests/foundation/check_scratch_tickets.gd"
 
 const CageEconomyModelScript := preload("res://scripts/core/cage_economy_model.gd")
+const GrandCasinoShowdownModelScript := preload("res://scripts/core/grand_casino_showdown_model.gd")
 
 
 func _check_cage_environment_rework(_library: ContentLibrary, failures: Array) -> void:
 	_check_cage_linda_simulation(_library, failures)
 	_check_cage_atm_state(failures)
 	_check_cage_debt_first_cashout(failures)
+	_check_cage_gift_shop(_library, failures)
 	var exact_cashout := CageEconomyModelScript.cashout_preview(200, 200, 1, 150, 20)
 	if not bool(exact_cashout.get("ok", false)) or int(exact_cashout.get("debt_after", -1)) != 0 or int(exact_cashout.get("chips_after", -1)) != 0 or int(exact_cashout.get("cash_paid", -1)) != 50:
 		failures.append("Cage debt-first cashout contract did not settle debt 150/chips 200 into $50 cash.")
@@ -54,6 +56,18 @@ func _check_cage_atm_state(failures: Array) -> void:
 			marker_count += 1
 	if marker_count != 1 or int(run_state.to_dict().get("grand_casino_atm_debt", -1)) != 200:
 		failures.append("Cage ATM marker did not have one authoritative debt entry and derived save balance.")
+	var debt_rows := RunReportViewModelScript.build_debt_ledger(run_state.debt, run_state.story_log)
+	var marker_rows := debt_rows.filter(func(row: Dictionary) -> bool: return str(row.get("id", "")) == CageEconomyModelScript.ATM_DEBT_ID)
+	if marker_rows.size() != 1 or int((marker_rows[0] as Dictionary).get("amount", -1)) != 200:
+		failures.append("Cage ATM marker did not appear exactly once with its live balance in report debt rows.")
+	var cap_run: RunState = RunStateScript.new()
+	cap_run.start_new("CAGE-ATM-CAP")
+	cap_run.set_environment({"id": "cage_atm_cap", "archetype_id": RunState.GRAND_CASINO_CAGE_ARCHETYPE_ID, "world_node_id": RunState.GRAND_CASINO_ARCHETYPE_ID, "kind": "boss", "turns": 0})
+	if not bool(cap_run.borrow_from_grand_casino_atm(500).get("ok", false)):
+		failures.append("Cage ATM did not allow borrowing exactly to the $500 new-credit cap.")
+	var cap_before := JSON.stringify(cap_run.to_dict())
+	if bool(cap_run.borrow_from_grand_casino_atm(50).get("ok", true)) or JSON.stringify(cap_run.to_dict()) != cap_before:
+		failures.append("Cage ATM draw above the $500 new-credit cap mutated state.")
 	var next_boundary := CageEconomyModelScript.next_interest_boundary(run_state.game_clock_minutes)
 	run_state.advance_game_clock_minutes(next_boundary - run_state.game_clock_minutes)
 	if run_state.grand_casino_atm_debt() != 210:
@@ -70,6 +84,27 @@ func _check_cage_atm_state(failures: Array) -> void:
 	var notifications := restored.grand_casino_atm_pending_interest_notifications()
 	if notifications.size() != 2 or int((notifications[0] as Dictionary).get("interest_added", -1)) != 10 or int((notifications[1] as Dictionary).get("interest_added", -1)) != 11:
 		failures.append("Cage ATM did not retain every crossed interest notification through save/load.")
+	var just_after: RunState = RunStateScript.new()
+	just_after.start_new("CAGE-ATM-JUST-AFTER")
+	just_after.set_environment({"id": "cage_atm_just_after", "archetype_id": RunState.GRAND_CASINO_CAGE_ARCHETYPE_ID, "world_node_id": RunState.GRAND_CASINO_ARCHETYPE_ID, "kind": "boss", "turns": 0})
+	var first_boundary := CageEconomyModelScript.next_interest_boundary(just_after.game_clock_minutes)
+	just_after.advance_game_clock_minutes(first_boundary - just_after.game_clock_minutes + 1)
+	just_after.borrow_from_grand_casino_atm(50)
+	var following_boundary := CageEconomyModelScript.next_interest_boundary(just_after.game_clock_minutes)
+	just_after.advance_game_clock_minutes(following_boundary - just_after.game_clock_minutes - 1)
+	if just_after.grand_casino_atm_debt() != 50:
+		failures.append("Cage ATM borrowing just after 3 AM accrued before the following 3 AM boundary.")
+	just_after.advance_game_clock_minutes(1)
+	if just_after.grand_casino_atm_debt() != 53:
+		failures.append("Cage ATM borrowing just after 3 AM did not accrue at the following boundary.")
+	var jump_run: RunState = RunStateScript.new()
+	jump_run.start_new("CAGE-ATM-MULTI-BOUNDARY")
+	jump_run.set_environment({"id": "cage_atm_jump", "archetype_id": RunState.GRAND_CASINO_CAGE_ARCHETYPE_ID, "world_node_id": RunState.GRAND_CASINO_ARCHETYPE_ID, "kind": "boss", "turns": 0})
+	jump_run.borrow_from_grand_casino_atm(200)
+	var jump_first := CageEconomyModelScript.next_interest_boundary(jump_run.game_clock_minutes)
+	jump_run.advance_game_clock_minutes(jump_first - jump_run.game_clock_minutes + 1440)
+	if jump_run.grand_casino_atm_debt() != 221 or jump_run.grand_casino_atm_pending_interest_notifications().size() != 2:
+		failures.append("Cage ATM large clock jump did not compound every crossed 3 AM boundary in order.")
 	var payment := restored.repay_grand_casino_atm_debt(1)
 	if not bool(payment.get("ok", false)) or restored.grand_casino_atm_debt() != 220 or restored.bankroll != money_before + 199:
 		failures.append("Cage ATM did not accept an exact $1 partial cash repayment.")
@@ -119,6 +154,103 @@ func _check_cage_debt_first_cashout(failures: Array) -> void:
 	var blocked_result := blocked.cash_out_grand_casino_chips()
 	if bool(blocked_result.get("ok", true)) or JSON.stringify(blocked.to_dict()) != blocked_before:
 		failures.append("Active Rourke duel cashout mutated chips, cash, debt, or save state.")
+
+
+func _check_cage_gift_shop(library: ContentLibrary, failures: Array) -> void:
+	var main_archetype := library.environment_archetype(RunState.GRAND_CASINO_ARCHETYPE_ID)
+	var showdown_event := library.event(RunState.GRAND_CASINO_SHOWDOWN_EVENT_ID)
+	var showdown_payload: Dictionary = showdown_event.get("payload", {}) if typeof(showdown_event.get("payload", {})) == TYPE_DICTIONARY else {}
+	var pat_down: Dictionary = showdown_payload.get("pat_down", {}) if typeof(showdown_payload.get("pat_down", {})) == TYPE_DICTIONARY else {}
+	var cage_archetype := library.environment_archetype(RunState.GRAND_CASINO_CAGE_ARCHETYPE_ID)
+	var cage_flags: Dictionary = cage_archetype.get("local_narrative_flags", {}) if typeof(cage_archetype.get("local_narrative_flags", {})) == TYPE_DICTIONARY else {}
+	var shop_config: Dictionary = cage_flags.get("casino_gift_shop", {}) if typeof(cage_flags.get("casino_gift_shop", {})) == TYPE_DICTIONARY else {}
+	var valid_authored_candidates := 0
+	for candidate_value in shop_config.get("candidate_offers", []):
+		if typeof(candidate_value) != TYPE_DICTIONARY:
+			continue
+		var candidate_id := str((candidate_value as Dictionary).get("item_id", ""))
+		if not library.item(candidate_id).is_empty() and not GrandCasinoShowdownModelScript.item_forbidden_by_pat_down(candidate_id, pat_down):
+			valid_authored_candidates += 1
+	if valid_authored_candidates < 3:
+		failures.append("Cage gift-shop content validation found fewer than three authored pat-down-safe item candidates.")
+	var signatures := {}
+	var purchase_run: RunState = null
+	for seed_index in range(40):
+		var run_state: RunState = RunStateScript.new()
+		run_state.start_new("CAGE-GIFT-%d" % seed_index)
+		var main := EnvironmentInstance.from_archetype(main_archetype, 3, run_state.create_rng("cage_gift_main"), library)
+		run_state.set_environment(main.to_dict())
+		var generator: RunGenerator = RunGenerator.new(library)
+		if not generator.enter_grand_casino_room(run_state, RunState.GRAND_CASINO_CAGE_ARCHETYPE_ID):
+			failures.append("Cage gift-shop fixture could not enter the Cage.")
+			return
+		var shop_state: Dictionary = run_state.current_environment.get("cage_gift_shop_state", {}) if typeof(run_state.current_environment.get("cage_gift_shop_state", {})) == TYPE_DICTIONARY else {}
+		var stock: Array = shop_state.get("stock", []) if typeof(shop_state.get("stock", [])) == TYPE_ARRAY else []
+		if stock.size() < 3 or stock.size() > 4:
+			failures.append("Cage gift shop did not generate exactly 3-4 offers for seed %d." % seed_index)
+			continue
+		var ids: Array = []
+		for stock_value in stock:
+			if typeof(stock_value) != TYPE_DICTIONARY:
+				continue
+			var item_id := str((stock_value as Dictionary).get("item_id", ""))
+			if ids.has(item_id):
+				failures.append("Cage gift shop generated a duplicate item for seed %d." % seed_index)
+			if GrandCasinoShowdownModelScript.item_forbidden_by_pat_down(item_id, pat_down):
+				failures.append("Cage gift shop admitted pat-down-forbidden item %s." % item_id)
+			ids.append(item_id)
+		var signature := ",".join(ids)
+		signatures[signature] = true
+		if seed_index == 0:
+			purchase_run = run_state
+	if signatures.size() < 2:
+		failures.append("Cage gift shop stock did not vary across the seeded sample.")
+	if purchase_run == null:
+		return
+	var saved_stock := JSON.stringify(purchase_run.current_environment.get("cage_gift_shop_state", {}))
+	var same_seed: RunState = RunStateScript.new()
+	same_seed.start_new("CAGE-GIFT-0")
+	var same_main := EnvironmentInstance.from_archetype(main_archetype, 3, same_seed.create_rng("cage_gift_main"), library)
+	same_seed.set_environment(same_main.to_dict())
+	var same_generator := RunGenerator.new(library)
+	if not same_generator.enter_grand_casino_room(same_seed, RunState.GRAND_CASINO_CAGE_ARCHETYPE_ID) or JSON.stringify(same_seed.current_environment.get("cage_gift_shop_state", {})) != saved_stock:
+		failures.append("Cage gift-shop stock diverged for the same seed and named action-boundary fork.")
+	var travel_generator := RunGenerator.new(library)
+	if not travel_generator.enter_grand_casino_room(purchase_run, RunState.GRAND_CASINO_ARCHETYPE_ID) or not travel_generator.enter_grand_casino_room(purchase_run, RunState.GRAND_CASINO_CAGE_ARCHETYPE_ID) or JSON.stringify(purchase_run.current_environment.get("cage_gift_shop_state", {})) != saved_stock:
+		failures.append("Cage gift-shop stock rerolled across local room travel.")
+	var restored: RunState = RunStateScript.new()
+	restored.from_dict(purchase_run.to_dict())
+	if JSON.stringify(restored.current_environment.get("cage_gift_shop_state", {})) != saved_stock:
+		failures.append("Cage gift shop stock rerolled or lost sold state on save/load.")
+	var action_service := RunActionService.new()
+	action_service.setup(library, restored)
+	var offers := action_service.cage_gift_shop_offer_view_list()
+	if offers.is_empty():
+		failures.append("Cage gift shop generated stock but exposed no purchasable view entries.")
+		return
+	var offer: Dictionary = offers[0]
+	var item_id := str(offer.get("item_id", ""))
+	var price := int(offer.get("chip_price", 0))
+	restored.grand_casino_chips = maxi(0, price - 1)
+	var failed_before := JSON.stringify(restored.to_dict())
+	var failed_purchase := action_service.buy_cage_gift_shop_offer(item_id)
+	if bool(failed_purchase.get("ok", true)) or JSON.stringify(restored.to_dict()) != failed_before:
+		failures.append("Failed Cage gift purchase mutated chips, inventory, or saved stock.")
+	restored.grand_casino_chips = price + 5
+	restored.borrow_from_grand_casino_atm(50)
+	var cash_before := restored.bankroll
+	var debt_before := restored.grand_casino_atm_debt()
+	var result := action_service.buy_cage_gift_shop_offer(item_id)
+	if not bool(result.get("ok", false)) or restored.bankroll != cash_before or restored.grand_casino_chips != 5 or restored.grand_casino_atm_debt() != debt_before or not restored.inventory.has(item_id):
+		failures.append("Cage gift purchase did not debit chips only through standard item acquisition while indebted.")
+	var after_purchase := RunStateScript.new()
+	after_purchase.from_dict(restored.to_dict())
+	var sold_found := false
+	for sold_value in (after_purchase.current_environment.get("cage_gift_shop_state", {}) as Dictionary).get("stock", []):
+		if typeof(sold_value) == TYPE_DICTIONARY and str((sold_value as Dictionary).get("item_id", "")) == item_id:
+			sold_found = bool((sold_value as Dictionary).get("sold", false))
+	if not sold_found:
+		failures.append("Cage gift purchase sold state did not survive save/load.")
 
 
 func _check_cage_linda_simulation(library: ContentLibrary, failures: Array) -> void:

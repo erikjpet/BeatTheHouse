@@ -7401,6 +7401,8 @@ func activate_interactable_object(object_id: String) -> bool:
 		return _activate_event_response_action(object_id)
 	if object_id.begins_with("cage_atm_action:"):
 		return _activate_cage_atm_action(object_id)
+	if object_id.begins_with("cage_gift_action:"):
+		return _activate_cage_gift_shop_action(object_id)
 	if not focus_interactable_object(object_id):
 		return false
 	var object_data := _interactable_object(object_id)
@@ -7496,6 +7498,15 @@ func _inspect_casino_fixture(object_data: Dictionary) -> bool:
 		_show_message(str(atm.get("summary", "The ATM shows the house marker account.")))
 		_refresh()
 		return true
+	if fixture_id == "cage_gift_shop":
+		var offers := _cage_gift_shop_offer_view_list()
+		var available_count := 0
+		for offer_value in offers:
+			if typeof(offer_value) == TYPE_DICTIONARY and not bool((offer_value as Dictionary).get("sold", false)):
+				available_count += 1
+		_show_message("The gift case has %d chip-priced item%s available." % [available_count, "" if available_count == 1 else "s"])
+		_refresh()
+		return true
 	if fixture_id == "host_desk":
 		_show_message("The host desk points you toward Linda's barred counter in the Cage.")
 		_refresh()
@@ -7530,6 +7541,43 @@ func _activate_cage_atm_action(object_id: String) -> bool:
 		_autosave_foundation_run("Autosaved.")
 	_show_message(str(result.get("message", "The ATM declines the transaction.")))
 	_refresh_talk_dock()
+	_refresh_runtime_environment_views()
+	return bool(result.get("ok", false))
+
+
+func _cage_gift_shop_offer_view_list() -> Array:
+	_refresh_run_action_service()
+	return run_action_service.cage_gift_shop_offer_view_list() if run_action_service != null else []
+
+
+func _cage_gift_shop_inline_actions() -> Array:
+	var actions: Array = []
+	for offer_value in _cage_gift_shop_offer_view_list():
+		if typeof(offer_value) != TYPE_DICTIONARY:
+			continue
+		var offer: Dictionary = offer_value
+		actions.append({
+			"id": "buy_%s" % str(offer.get("item_id", "")),
+			"emit_object_id": "cage_gift_action:buy:%s" % str(offer.get("item_id", "")),
+			"label": "%s · %d chips" % [str(offer.get("display_name", "Gift")), int(offer.get("chip_price", 0))],
+			"detail": str(offer.get("purpose_summary", "A useful run item.")),
+			"enabled": bool(offer.get("enabled", false)),
+			"disabled_reason": str(offer.get("disabled_reason", "")),
+		})
+	return actions
+
+
+func _activate_cage_gift_shop_action(object_id: String) -> bool:
+	if run_state == null or str(run_state.current_environment.get("archetype_id", "")) != RunState.GRAND_CASINO_CAGE_ARCHETYPE_ID:
+		return false
+	var parts := object_id.split(":", false, 3)
+	if parts.size() < 3 or str(parts[1]) != "buy":
+		return false
+	_refresh_run_action_service()
+	var result := run_action_service.buy_cage_gift_shop_offer(str(parts[2]))
+	if bool(result.get("ok", false)):
+		_autosave_foundation_run("Autosaved.")
+	_show_message(str(result.get("message", "The gift case declines the purchase.")))
 	_refresh_runtime_environment_views()
 	return bool(result.get("ok", false))
 
@@ -10141,10 +10189,10 @@ func _next_objective_option() -> Dictionary:
 
 
 func _next_objective_option_for_state(state: String, demo_objective: Dictionary) -> Dictionary:
-	if state == "high-roller-ready" and run_state != null:
+	if run_state != null and bool(demo_objective.get("players_card_ready_to_claim", false)):
 		if str(run_state.current_environment.get("archetype_id", "")) == RunState.GRAND_CASINO_CAGE_ARCHETYPE_ID:
-			return _objective_for_object(CONTEXT_MODE_CASINO_FIXTURE, "casino_fixture:cage_counter", "claim the Players Card from Linda", true)
-		return _objective_for_object(CONTEXT_MODE_TRAVEL, "travel:grand_casino_cage", "enter the Cage and speak with Linda", true)
+			return _objective_for_object(CONTEXT_MODE_CASINO_FIXTURE, "casino_fixture:cage_counter", "settle any marker and claim the next tier from Linda", true)
+		return _objective_for_object(CONTEXT_MODE_TRAVEL, "travel:grand_casino_cage", "enter the Cage to settle or claim the next tier", true)
 	return FoundationHudViewModelScript.next_objective_option_for_state(state, demo_objective, Callable(self, "_player_facing_text"))
 
 

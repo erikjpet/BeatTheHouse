@@ -24,6 +24,7 @@ static func snapshot_signature(run_state: RunState) -> String:
 		str(environment.get("travel_hooks", [])),
 		str(environment.get("object_fixtures", [])),
 		str(environment.get("home_containers", [])),
+		str(environment.get("cage_gift_shop_state", {})),
 		str(environment.get("layout", {})),
 		str(run_state.rourke_current_room),
 		str(run_state.rourke_current_spot),

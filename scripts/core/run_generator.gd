@@ -3,6 +3,8 @@ extends RefCounted
 
 # Builds deterministic environments from library data.
 
+const GrandCasinoShowdownModelScript := preload("res://scripts/core/grand_casino_showdown_model.gd")
+
 var library: ContentLibrary
 
 
@@ -63,12 +65,59 @@ func enter_grand_casino_room(run_state: RunState, target_archetype_id: String) -
 		environment.game_states = _generated_game_states(run_state, environment.to_dict(), rng)
 		environment_data = environment.to_dict()
 		run_state.save_rng(rng)
+	_apply_cage_gift_shop_stock(run_state, environment_data)
 	environment_data["world_node_id"] = RunState.GRAND_CASINO_ARCHETYPE_ID
 	environment_data["world_map_travel"] = true
 	_apply_world_travel_targets(environment_data, run_state, run_state.world_map, RunState.GRAND_CASINO_ARCHETYPE_ID)
 	environment_data["layout"] = EnvironmentInstance.ensure_generated_layout(environment_data)
 	run_state.set_environment(environment_data)
 	return true
+
+
+func _apply_cage_gift_shop_stock(run_state: RunState, environment_data: Dictionary) -> void:
+	if str(environment_data.get("archetype_id", "")) != RunState.GRAND_CASINO_CAGE_ARCHETYPE_ID:
+		return
+	if typeof(environment_data.get("cage_gift_shop_state", {})) == TYPE_DICTIONARY and not (environment_data.get("cage_gift_shop_state", {}) as Dictionary).is_empty():
+		return
+	var flags: Dictionary = environment_data.get("local_narrative_flags", {}) if typeof(environment_data.get("local_narrative_flags", {})) == TYPE_DICTIONARY else {}
+	var shop_config: Dictionary = flags.get("casino_gift_shop", {}) if typeof(flags.get("casino_gift_shop", {})) == TYPE_DICTIONARY else {}
+	var showdown_event := library.event(RunState.GRAND_CASINO_SHOWDOWN_EVENT_ID) if library != null else {}
+	var showdown_payload: Dictionary = showdown_event.get("payload", {}) if typeof(showdown_event.get("payload", {})) == TYPE_DICTIONARY else {}
+	var pat_down_config: Dictionary = showdown_payload.get("pat_down", {}) if typeof(showdown_payload.get("pat_down", {})) == TYPE_DICTIONARY else {}
+	var allowed: Array = []
+	var seen := {}
+	for candidate_value in _copy_array(shop_config.get("candidate_offers", [])):
+		if typeof(candidate_value) != TYPE_DICTIONARY:
+			continue
+		var candidate := (candidate_value as Dictionary).duplicate(true)
+		var item_id := str(candidate.get("item_id", candidate.get("id", ""))).strip_edges()
+		if item_id.is_empty() or seen.has(item_id) or library.item(item_id).is_empty():
+			continue
+		if GrandCasinoShowdownModelScript.item_forbidden_by_pat_down(item_id, pat_down_config):
+			continue
+		seen[item_id] = true
+		candidate["id"] = item_id
+		candidate["item_id"] = item_id
+		candidate["chip_price"] = maxi(1, int(candidate.get("chip_price", 1)))
+		candidate["sold"] = false
+		allowed.append(candidate)
+	var stock_range := _int_range(shop_config.get("stock_count", [3, 4]), 3, 4)
+	var minimum := clampi(int(stock_range[0]), 3, 4)
+	var maximum := clampi(int(stock_range[1]), minimum, 4)
+	if allowed.size() < minimum:
+		environment_data["cage_gift_shop_state"] = {"version": 1, "stock": [], "error": "Fewer than three pat-down-safe candidates."}
+		return
+	var stock_rng := run_state.create_rng("cage_gift_shop").fork("stock:%s:%d" % [run_state.seed_text, int(environment_data.get("depth", 0))])
+	var count := stock_rng.randi_range(minimum, mini(maximum, allowed.size()))
+	var stock: Array = []
+	for selected_value in stock_rng.pick_many(allowed, count):
+		stock.append((selected_value as Dictionary).duplicate(true))
+	environment_data["cage_gift_shop_state"] = {
+		"version": 1,
+		"stock": stock,
+		"stock_count": stock.size(),
+		"fork_state": stock_rng.state_value,
+	}
 
 
 func world_route_for_target(run_state: RunState, target_archetype_id: String) -> Dictionary:

@@ -53,20 +53,21 @@ The duel's outcome ladder has its own canonical ids:
 | Shown the door | `shown_the_door` | Showdown-route victory with uncashed chips kept as a meta item. |
 | Taken out back | `taken_out_back` | Failure through `casino_taken_out_back`. |
 
-## Three-Room Casino
+## Four-Room Casino
 
-The casino is one stateful venue split into three walkable sub-environments:
+The casino is one stateful venue split into four walkable sub-environments:
 
 | Room | Contents | Access |
 | --- | --- | --- |
-| Main Floor (`grand_casino`) | Slots, video poker, pull tabs, bar dice, the Cage, Linda's host desk, and room doors. | World-map arrival. |
+| Main Floor (`grand_casino`) | Slots, video poker, pull tabs, bar dice, Linda's host desk, and room doors. | World-map arrival. |
 | High-Limit Room (`grand_casino_high_limit`) | Boss-config blackjack, baccarat, and roulette tables. | Silver Players Card or a $60 cash buy-in. |
 | Back Room (`grand_casino_back_room`) | The Rourke heads-up blackjack duel. | Only while the showdown duel is active. |
+| Cage (`grand_casino_cage`) | Linda's service counter, the Grand Casino ATM, and a chip-priced gift case. | Freely accessible from the Main Floor. |
 
 Room movement takes five in-world minutes and is not world-map travel. Heat,
 attention, evidence, chips, card progress, staff memory, and showdown state are
-shared across all three rooms. The Cage is a Main Floor interaction, not a
-fourth room.
+shared across all four rooms. The Cage is a physical fourth room and does not
+open a modal window.
 
 ## Chips and the Cage
 
@@ -83,14 +84,17 @@ objective always measures:
 Linda's tier chip bonuses increase the rack and the remembered entry baseline
 by the same amount, so comps cannot manufacture objective profit.
 
-The Cage window is the single surface for buying chips, cashing chips to
-bankroll, reading current/next tier progress, claiming drink and suite comps,
-and completing the deliberate Gold review. During a showdown it is locked.
-After `shown_the_door`, its cash-out is permanently denied for that ending.
+Linda's Cage counter is the single service point for buying chips, settling
+casino ATM marker debt before cashing excess chips to bankroll, reading exact
+next-tier progress, claiming drink and suite comps, and completing the
+deliberate sequential Players Card claims. The Cage ATM issues $50 marker
+increments and accrues 5% interest (rounded up) at each crossed 3:00 AM. During
+a showdown the counter is locked. After `shown_the_door`, cash-out remains
+permanently denied for that ending.
 
 ## Objective and Players Card Ladder
 
-The following values are current data, repeated on all three room archetypes:
+The following values are current data, repeated on all four room archetypes:
 
 | Field | Value | Meaning |
 | --- | ---: | --- |
@@ -338,7 +342,7 @@ reintroduced:
 
 - One `grand_casino` boss room containing both machines and public tables.
 - A fixed alternating watch cycle unrelated to Rourke's spatial room state.
-- An abstract clean cashout event away from Linda's Cage window.
+- An abstract clean cashout event away from Linda's physical Cage counter.
 - A single deterministic `showdown_roll` checked against a synthesized
   `showdown_success_chance`.
 - A binary pass/fail showdown without `walk_out_clean`, `shown_the_door`, and

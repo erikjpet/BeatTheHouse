@@ -2104,7 +2104,7 @@ func _check_grand_casino_players_card_tiers(library: ContentLibrary, main_archet
 	var evidence_cage := CageCounterViewModelScript.build(evidence_run)
 	var evidence_card: Dictionary = evidence_cage.get("card", {}) if typeof(evidence_cage.get("card", {})) == TYPE_DICTIONARY else {}
 	if bool(evidence_status.get("players_card_eligible", true)) or str(evidence_card.get("review_state", "")) != "ineligible" or str(evidence_card.get("review_detail", "")).find("permanently") == -1:
-		failures.append("Cheat evidence did not permanently lock every Players Card tier in the Cage window.")
+		failures.append("Cheat evidence did not permanently lock every Players Card tier at Linda's Cage counter.")
 	var evidence_access := evidence_run.grand_casino_room_access_status(RunState.GRAND_CASINO_HIGH_LIMIT_ARCHETYPE_ID, 60)
 	if not bool(evidence_access.get("cash_buy_in_required", false)) or str(evidence_access.get("access_method", "")) != "cash_buy_in":
 		failures.append("Cheat evidence did not revoke Silver access while preserving the independent cash buy-in path.")

@@ -300,36 +300,46 @@
 			"state_predicates": [{"path": "ui.world_map_open", "op": "equals", "value": true}]
 		},
 		"anchor": {"kind": "hud_element", "id": "map"},
-		"copy": "Travel to the Grand Casino. This lesson stays on the Main Floor.",
+		"copy": "Travel to the Grand Casino Main Floor.",
 		"completion": {"type": "anchored_action", "action_id": "travel:grand_casino"},
 		"gating": {"allowed_action_ids": ["travel:grand_casino"]}
 	},
 	{
-		"id": "tutorial_open_cage_buy_in",
+		"id": "tutorial_enter_cage_buy_in",
 		"scope": "tutorial_run",
 		"trigger": {
 			"depends_on": ["tutorial_map_grand_casino"],
 			"environment_archetype": "grand_casino",
 			"state_predicates": [{"path": "run.grand_casino_chips", "op": "equals", "value": 0}]
 		},
-		"anchor": {"kind": "interactable_object", "id": "casino_fixture:cage"},
-		"copy": "Start at the Cage. Linda exchanges cash and chips.",
+		"anchor": {"kind": "interactable_object", "id": "travel:grand_casino_cage"},
+		"copy": "Enter the Cage. Linda works behind its barred counter.",
 		"completion": {"type": "anchored_action"},
-		"gating": {"allowed_action_ids": ["casino_fixture:cage"]}
+		"gating": {"allowed_action_ids": ["travel:grand_casino_cage"]}
+	},
+	{
+		"id": "tutorial_open_cage_counter",
+		"scope": "tutorial_run",
+		"trigger": {
+			"depends_on": ["tutorial_enter_cage_buy_in"],
+			"environment_archetype": "grand_casino_cage",
+			"state_predicates": [{"path": "run.grand_casino_chips", "op": "equals", "value": 0}]
+		},
+		"anchor": {"kind": "interactable_object", "id": "casino_fixture:cage_counter"},
+		"copy": "Speak with Linda at the Cashout Counter.",
+		"completion": {"type": "anchored_action"},
+		"gating": {"allowed_action_ids": ["casino_fixture:cage_counter"]}
 	},
 	{
 		"id": "tutorial_buy_cage_chips",
 		"scope": "tutorial_run",
 		"trigger": {
-			"depends_on": ["tutorial_open_cage_buy_in"],
-			"environment_archetype": "grand_casino",
-			"state_predicates": [
-				{"path": "ui.cage_window_open", "op": "equals", "value": true},
-				{"path": "run.grand_casino_chips", "op": "equals", "value": 0}
-			]
+			"depends_on": ["tutorial_open_cage_counter"],
+			"environment_archetype": "grand_casino_cage",
+			"state_predicates": [{"path": "run.grand_casino_chips", "op": "equals", "value": 0}]
 		},
 		"anchor": {"kind": "surface_action", "id": "cage:buy_chips"},
-		"copy": "Buy the smallest chip stack.",
+		"copy": "Choose Chips and Cashout, then buy the smallest stack.",
 		"completion": {"type": "anchored_action", "action_id": "cage:buy_chips"},
 		"gating": {"allowed_action_ids": ["cage:buy_chips"]}
 	},
@@ -338,7 +348,7 @@
 		"scope": "tutorial_run",
 		"trigger": {
 			"depends_on": ["tutorial_buy_cage_chips"],
-			"environment_archetype": "grand_casino",
+			"environment_archetype": "grand_casino_cage",
 			"state_predicates": [{"path": "run.grand_casino_chips", "op": "gt", "value": 0}]
 		},
 		"anchor": {"kind": "hud_element", "id": "chips"},
@@ -346,25 +356,25 @@
 		"completion": {"type": "explicit_ok"}
 	},
 	{
-		"id": "tutorial_close_cage_for_game",
+		"id": "tutorial_leave_cage_for_game",
 		"scope": "tutorial_run",
 		"trigger": {
 			"depends_on": ["tutorial_chips_and_cash"],
-			"environment_archetype": "grand_casino",
-			"state_predicates": [{"path": "ui.cage_window_open", "op": "equals", "value": true}]
+			"environment_archetype": "grand_casino_cage",
+			"state_predicates": [{"path": "run.grand_casino_chips", "op": "gt", "value": 0}]
 		},
-		"anchor": {"kind": "surface_action", "id": "cage:close"},
-		"copy": "Close the Cage and find the highlighted slot.",
-		"completion": {"type": "anchored_action", "action_id": "cage:close"},
-		"gating": {"allowed_action_ids": ["cage:close"]}
+		"anchor": {"kind": "interactable_object", "id": "travel:grand_casino"},
+		"copy": "Use the return door to reach the Main Floor slot.",
+		"completion": {"type": "anchored_action"},
+		"gating": {"allowed_action_ids": ["travel:grand_casino"]}
 	},
 	{
 		"id": "tutorial_enter_grand_slot",
 		"scope": "tutorial_run",
 		"trigger": {
-			"depends_on": ["tutorial_close_cage_for_game"],
+			"depends_on": ["tutorial_leave_cage_for_game"],
 			"environment_archetype": "grand_casino",
-			"state_predicates": [{"path": "ui.cage_window_open", "op": "equals", "value": false}]
+			"state_predicates": [{"path": "run.grand_casino_chips", "op": "gt", "value": 0}]
 		},
 		"anchor": {"kind": "interactable_object", "id": "game:slot"},
 		"copy": "Use the Main Floor slot. Finish one dollar ahead.",
@@ -393,7 +403,7 @@
 			"state_predicates": [{"path": "run.high_roller_ready", "op": "equals", "value": true}]
 		},
 		"anchor": {"kind": "hud_element", "id": "objective"},
-		"copy": "You reached Gold. Return to Linda at the Cage.",
+		"copy": "Gold is ready. Return to Linda at the Cage.",
 		"completion": {"type": "explicit_ok"}
 	},
 	{
@@ -417,21 +427,31 @@
 			"environment_archetype": "grand_casino",
 			"state_predicates": [{"path": "run.high_roller_ready", "op": "equals", "value": true}]
 		},
-		"anchor": {"kind": "interactable_object", "id": "casino_fixture:cage"},
-		"copy": "Open the Cage for Linda's Gold review.",
+		"anchor": {"kind": "interactable_object", "id": "travel:grand_casino_cage"},
+		"copy": "Return through the Cage door for Linda's Gold review.",
 		"completion": {"type": "anchored_action"},
-		"gating": {"allowed_action_ids": ["casino_fixture:cage"]}
+		"gating": {"allowed_action_ids": ["travel:grand_casino_cage"]}
+	},
+	{
+		"id": "tutorial_reopen_cage_counter",
+		"scope": "tutorial_run",
+		"trigger": {
+			"depends_on": ["tutorial_return_to_cage"],
+			"environment_archetype": "grand_casino_cage",
+			"state_predicates": [{"path": "run.high_roller_ready", "op": "equals", "value": true}]
+		},
+		"anchor": {"kind": "interactable_object", "id": "casino_fixture:cage_counter"},
+		"copy": "Speak with Linda to settle the chips and finish the review.",
+		"completion": {"type": "anchored_action"},
+		"gating": {"allowed_action_ids": ["casino_fixture:cage_counter"]}
 	},
 	{
 		"id": "tutorial_cash_out_chips",
 		"scope": "tutorial_run",
 		"trigger": {
-			"depends_on": ["tutorial_return_to_cage"],
-			"environment_archetype": "grand_casino",
-			"state_predicates": [
-				{"path": "ui.cage_window_open", "op": "equals", "value": true},
-				{"path": "run.grand_casino_chips", "op": "gt", "value": 0}
-			]
+			"depends_on": ["tutorial_reopen_cage_counter"],
+			"environment_archetype": "grand_casino_cage",
+			"state_predicates": [{"path": "run.grand_casino_chips", "op": "gt", "value": 0}]
 		},
 		"anchor": {"kind": "surface_action", "id": "cage:cash_out"},
 		"copy": "Cash out all chips before the review.",
@@ -443,15 +463,14 @@
 		"scope": "tutorial_run",
 		"trigger": {
 			"depends_on": ["tutorial_cash_out_chips"],
-			"environment_archetype": "grand_casino",
+			"environment_archetype": "grand_casino_cage",
 			"state_predicates": [
-				{"path": "ui.cage_window_open", "op": "equals", "value": true},
 				{"path": "run.grand_casino_chips", "op": "equals", "value": 0},
 				{"path": "run.high_roller_ready", "op": "equals", "value": true}
 			]
 		},
 		"anchor": {"kind": "surface_action", "id": "cage:review"},
-		"copy": "Choose Complete Gold Review to speak with Linda.",
+		"copy": "Choose Players Card, then Claim Ready Tier to speak with Linda.",
 		"completion": {"type": "anchored_action", "action_id": "cage:review"},
 		"gating": {"allowed_action_ids": ["cage:review"]}
 	},

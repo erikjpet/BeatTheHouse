@@ -6,6 +6,7 @@ extends SceneTree
 const MainScene := preload("res://scenes/main.tscn")
 const VisualStyleScript := preload("res://scripts/ui/visual_style.gd")
 const UserSettingsScript := preload("res://scripts/core/user_settings.gd")
+const CageCounterViewModelScript := preload("res://scripts/ui/cage_counter_view_model.gd")
 const REPORT_PATH := "user://foundation_visual_qa_report.json"
 const TEST_SETTINGS_PATH := "user://settings_foundation_visual_qa.json"
 const TEST_META_COLLECTION_PATH := "user://foundation_visual_qa_meta_collection.json"
@@ -860,28 +861,83 @@ func _verify_grand_casino_high_roller_cashout_snapshot() -> void:
 	var constants: Dictionary = staffing.get("constants", {}) if typeof(staffing.get("constants", {})) == TYPE_DICTIONARY else {}
 	_require(assignments.size() == 4, "Grand Casino visual QA did not receive the rotating dealer and bartender cast.")
 	_require(str((constants.get("rourke", {}) as Dictionary).get("name", "")) == "Rourke" and str((constants.get("linda", {}) as Dictionary).get("name", "")) == "Linda", "Grand Casino visual QA did not keep Rourke and Linda constant.")
-	var cage_object := _canvas_object_by_id(canvas, "casino_fixture:cage")
-	_require(not cage_object.is_empty(), "Players Card visual QA could not find the visible Cage fixture.")
-	var cage_label := await _double_click_canvas_object_data(canvas, cage_object, "casino_fixture")
-	_require(not cage_label.is_empty(), "Players Card visual QA could not open the Cage through its visible room fixture.")
-	var cage_snapshot: Dictionary = app.call("current_cage_window_snapshot")
-	var cage_model: Dictionary = cage_snapshot.get("model", {}) if typeof(cage_snapshot.get("model", {})) == TYPE_DICTIONARY else {}
+	var generator := app.get("generator") as RunGenerator
+	_require(generator != null and generator.enter_grand_casino_room(fixture_run, RunState.GRAND_CASINO_CAGE_ARCHETYPE_ID), "Players Card visual QA could not enter the walkable Cage room.")
+	app.call("_refresh")
+	await _settle()
+	_return_to_room_view()
+	await _settle()
+	canvas = app.get("environment_canvas") as Control
+	_require(canvas != null and canvas.visible, "Players Card visual QA could not render the walkable Cage room.")
+	for fixture_id in ["casino_fixture:cage_counter", "casino_fixture:cage_atm", "casino_fixture:cage_gift_shop"]:
+		_require(not _canvas_object_by_id(canvas, fixture_id).is_empty(), "Walkable Cage visual QA could not find fixture %s." % fixture_id)
+	var cage_model: Dictionary = CageCounterViewModelScript.build(fixture_run)
 	var cage_card: Dictionary = cage_model.get("card", {}) if typeof(cage_model.get("card", {})) == TYPE_DICTIONARY else {}
-	_require(bool(cage_snapshot.get("visible", false)), "Players Card visual QA did not open the Cage window.")
-	_require(bool(cage_snapshot.get("portrait_animated", false)), "Linda's Cage portrait was not alive while the window was open.")
-	_require(str((cage_model.get("host", {}) as Dictionary).get("name", "")) == "Linda", "Players Card Cage window did not identify Linda.")
-	_require(bool(cage_card.get("can_review", false)) and str(cage_card.get("review_state", "")) == "ready", "Players Card Cage window did not expose the ready review action.")
-	_require(cage_model.has("balance") and not (cage_model.get("promotions", []) as Array).is_empty() and str(cage_card.get("tier", "")) == "Gold", "Cage visual QA could not read Gold tier benefits and promotions.")
+	var cage_host: Dictionary = cage_model.get("host", {}) if typeof(cage_model.get("host", {})) == TYPE_DICTIONARY else {}
+	_require(str(cage_host.get("name", "")) == "Linda" and str(cage_host.get("presentation", "")) == "faceless_silhouette", "Players Card Cage counter did not identify faceless-silhouette Linda.")
+	_require(bool(cage_card.get("can_review", false)) and str(cage_card.get("review_state", "")) == "ready", "Players Card Cage counter did not expose the ready review action.")
+	_require(cage_model.has("balance") and not (cage_model.get("promotions", []) as Array).is_empty() and str(cage_card.get("next_tier", "")) == "Gold", "Cage visual QA could not read exact Gold progress, benefits, and promotions.")
+	var counter_object := _canvas_object_by_id(canvas, "casino_fixture:cage_counter")
+	_require(not (await _double_click_canvas_object_data(canvas, counter_object, "casino_fixture")).is_empty(), "Cage visual QA could not speak with Linda through her physical counter.")
+	await _settle()
+	var cage_talk: Dictionary = app.call("current_talk_dock_snapshot")
+	_require(bool(cage_talk.get("visible", false)) and bool(cage_talk.get("portrait_animation_active", false)), "Linda's physical Cage-counter silhouette was not alive in the talk dock.")
 	var chips_before_buy := fixture_run.grand_casino_chips
-	_require(not _click_button_exact("Buy 25").is_empty(), "Cage visual QA could not buy chips through the visible control.")
+	_require(not _click_button_exact("Chips and Cashout").is_empty(), "Cage visual QA could not open Linda's chip services through the visible control.")
+	await _settle()
+	_require(not _click_button_exact("Buy 25 Chips").is_empty(), "Cage visual QA could not buy chips through the visible control.")
 	await _settle()
 	_require(fixture_run.grand_casino_chips == chips_before_buy + 25, "Visible Cage buy-in did not credit chips.")
-	_require(not _click_button_exact("Cash Out All").is_empty(), "Cage visual QA could not cash out through the visible control.")
+	_require(not _click_button_exact("Redeem All Chips").is_empty(), "Cage visual QA could not cash out through the visible control.")
 	await _settle()
 	_require(fixture_run.grand_casino_chips == 0, "Visible Cage cash-out did not return all chips to cash.")
 	_cover("grand_casino_high_roller_cashout")
-	_record_state("grand_casino_high_roller_cashout_available", "Grand Casino Cage shows animated Linda, chip transfers, exact Gold progress, tier benefits, and comps.")
-	_require(not _click_button_exact("Complete Gold Review").is_empty(), "Cage visual QA could not start Linda's ready Gold review through the visible control.")
+	_record_state("grand_casino_cage_room", "The fourth walkable Grand Casino room shows Linda's counter, ATM, and chip-priced gift case.")
+	_record_state("grand_casino_cage_normal_shop", "The saved gift case presents three or four focused chip-priced offers.")
+	var normal_shop_state: Dictionary = fixture_run.current_environment.get("cage_gift_shop_state", {}).duplicate(true)
+	var empty_shop_state := normal_shop_state.duplicate(true)
+	var empty_stock: Array = empty_shop_state.get("stock", []).duplicate(true)
+	for stock_index in range(empty_stock.size()):
+		if typeof(empty_stock[stock_index]) == TYPE_DICTIONARY:
+			var sold_entry := (empty_stock[stock_index] as Dictionary).duplicate(true)
+			sold_entry["sold"] = true
+			empty_stock[stock_index] = sold_entry
+	empty_shop_state["stock"] = empty_stock
+	fixture_run.current_environment["cage_gift_shop_state"] = empty_shop_state
+	app.call("_refresh")
+	await _settle()
+	_record_state("grand_casino_cage_empty_shop", "The sold-out gift case visibly empties without changing the room or merging with another service.")
+	fixture_run.current_environment["cage_gift_shop_state"] = normal_shop_state
+	app.call("_refresh")
+	await _settle()
+	var cage_settings: Variant = app.get("user_settings")
+	if cage_settings != null:
+		cage_settings.play_on_small_screen = true
+		app.call("_apply_accessibility_settings")
+		await _settle()
+		_record_state("grand_casino_cage_small_screen", "The Cage room and focused fixture controls remain usable with small-screen hit targets.")
+		cage_settings.play_on_small_screen = false
+		cage_settings.reduce_motion = true
+		app.call("_apply_accessibility_settings")
+		await _settle()
+		_record_state("grand_casino_cage_reduced_motion", "Reduced motion keeps Linda and all Cage account information visible without motion dependence.")
+		cage_settings.reduce_motion = false
+		app.call("_apply_accessibility_settings")
+		await _settle()
+	fixture_run.borrow_from_grand_casino_atm(50)
+	app.call("_refresh")
+	await _settle()
+	_record_state("grand_casino_cage_indebted_atm_counter", "The Cage ATM and counter expose the exact active marker balance.")
+	_record_state("grand_casino_cage_debt_blocked_tier", "Linda preserves ready Players Card progress while the casino marker blocks the claim.")
+	fixture_run.repay_grand_casino_atm_debt(-1)
+	app.call("_refresh_talk_dock")
+	await _settle()
+	_record_state("grand_casino_cage_debt_free_claim", "Clearing the marker immediately restores Linda's ready Players Card claim.")
+	_require(not _click_button_exact("Back").is_empty(), "Cage visual QA could not return to Linda's counter menu.")
+	await _settle()
+	_require(not _click_button_exact("Players Card").is_empty(), "Cage visual QA could not open Linda's Players Card controls.")
+	await _settle()
+	_require(not _click_button_exact("Claim Ready Tier").is_empty(), "Cage visual QA could not start Linda's ready Gold review through the visible control.")
 	await _settle()
 	var gold_talk: Dictionary = app.call("current_talk_dock_snapshot")
 	_require(bool(gold_talk.get("visible", false)) and str(fixture_run.next_pending_talk_event().get("dialogue_id", "")) == "linda_gold_review", "Visible Cage Gold review did not open Linda's talk-dock scene.")
@@ -2480,15 +2536,9 @@ func _assert_no_scroll_critical_path(context: String) -> void:
 	_assert_result_area_useful_or_hidden(context)
 	var environment_control := app.get("environment_canvas") as Control
 	var game_surface_control := app.get("game_surface_canvas") as Control
-	var cage_snapshot: Dictionary = app.call("current_cage_window_snapshot") if app.has_method("current_cage_window_snapshot") else {}
-	var cage_visible := bool(cage_snapshot.get("visible", false))
-	if cage_visible:
-		var cage_rect: Rect2 = cage_snapshot.get("popup_rect", Rect2())
-		_require(cage_rect.size.x > 0.0 and cage_rect.size.y > 0.0, "%s Cage popup has no visible bounds." % context)
-		_require(viewport_rect.encloses(cage_rect), "%s Cage popup is outside the visible viewport: popup=%s viewport=%s." % [context, str(cage_rect), str(viewport_rect)])
 	if environment_control != null and environment_control.visible:
 		_assert_environment_canvas_contained(context)
-		if str(screen_snapshot.get("screen", "")) == "ENVIRONMENT" and not cage_visible:
+		if str(screen_snapshot.get("screen", "")) == "ENVIRONMENT":
 			_require(_has_visible_text(app, "double-click glowing props to act"), "%s room mode does not show visible object interaction guidance." % context)
 	if game_surface_control != null and game_surface_control.visible:
 		_assert_game_surface_contained(context)

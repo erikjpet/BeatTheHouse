@@ -67,6 +67,7 @@ static func build(run_state: RunState) -> Dictionary:
 		"cashout_preview": cashout,
 		"card": {
 			"tier": str(objective.get("players_card_tier_label", "Unranked")),
+			"next_tier": next_tier_label,
 			"progress": _card_progress(objective),
 			"benefit": benefit_text,
 			"benefits": benefits,

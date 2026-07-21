@@ -360,6 +360,8 @@ static func casino_spatial_interactable_objects(host: Variant) -> Array:
 		}
 		if fixture_id == "cage_atm":
 			object_data["inline_actions"] = host._cage_atm_inline_actions()
+		elif fixture_id == "cage_gift_shop":
+			object_data["inline_actions"] = host._cage_gift_shop_inline_actions()
 		objects.append(host._make_interactable_object(object_data))
 		fixture_index += 1
 	var door_index := 0

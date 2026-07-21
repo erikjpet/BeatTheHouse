@@ -136,10 +136,10 @@ static func next_objective_option(run_state: RunState, data: Dictionary) -> Dict
 		return objective_for_object("menu", "main_menu", "return to the menu to continue or start over", true, data.get("player_facing_text", Callable()))
 	var objective: Dictionary = data.get("demo_objective", {})
 	var state := objective_presentation_state(pressure, objective)
-	if state == "high-roller-ready":
+	if bool(objective.get("players_card_ready_to_claim", false)):
 		if str(run_state.current_environment.get("archetype_id", "")) == RunState.GRAND_CASINO_CAGE_ARCHETYPE_ID:
-			return objective_for_object("casino_fixture", "casino_fixture:cage_counter", "claim the Players Card from Linda", true, data.get("player_facing_text", Callable()))
-		return objective_for_object("travel", "travel:grand_casino_cage", "enter the Cage and speak with Linda", true, data.get("player_facing_text", Callable()))
+			return objective_for_object("casino_fixture", "casino_fixture:cage_counter", "settle any marker and claim the next tier from Linda", true, data.get("player_facing_text", Callable()))
+		return objective_for_object("travel", "travel:grand_casino_cage", "enter the Cage to settle or claim the next tier", true, data.get("player_facing_text", Callable()))
 	var state_option := next_objective_option_for_state(state, objective, data.get("player_facing_text", Callable()))
 	if not state_option.is_empty():
 		return state_option
@@ -187,11 +187,14 @@ static func boss_floor_objective_goal_text(objective: Dictionary) -> String:
 	var state := str(objective.get("objective_state", "grand-incomplete"))
 	if state == "showdown-active": return "Rourke has you in back. Keep your story straight."
 	if state == "showdown-pending" or bool(objective.get("showdown_pending", false)): return "Rourke is calling. Answer the back-room event."
-	if state == "high-roller-ready" or bool(objective.get("high_roller_ready", false)): return "Players Card is ready at the Cage. Claim it before heat rises."
+	if bool(objective.get("players_card_ready_to_claim", false)):
+		var next_label := str(objective.get("players_card_next_tier_label", "Next tier"))
+		var debt := int(objective.get("grand_casino_atm_debt", 0))
+		return "%s ready. Settle the $%d marker at the Cage first." % [next_label, debt] if debt > 0 else "%s ready. Claim it from Linda in the Cage." % next_label
 	if bool(objective.get("dirty_money_showdown_ready", false)): return "The card review is checking your win. Expect Rourke."
 	if boss_floor_heat_pressure_close(objective): return "Heat is loud. More pressure means Rourke's back room."
 	if boss_floor_progress_close(objective): return "Close to Players Card: keep play clean and finish the set."
-	return "Win $200 here for a Players Card, or survive Rourke."
+	return "Build the next Players Card tier cleanly, or survive Rourke."
 
 
 static func objective_presentation_state(pressure: Dictionary, objective: Dictionary) -> String:
@@ -218,10 +221,24 @@ static func objective_guidance_view(pressure: Dictionary, objective: Dictionary,
 
 
 static func boss_floor_incomplete_guidance(objective: Dictionary) -> String:
+	if bool(objective.get("players_card_ready_to_claim", false)):
+		var block_reason := str(objective.get("players_card_claim_block_reason", "")).strip_edges()
+		if not block_reason.is_empty():
+			return block_reason
+		return "%s is ready at Linda's Cage counter." % str(objective.get("players_card_next_tier_label", "The next Players Card tier"))
 	if bool(objective.get("dirty_money_showdown_ready", false)): return "The money is there, but the floor wants Rourke to review it."
 	if boss_floor_heat_pressure_close(objective): return "Rourke is close enough to matter. Keep heat down or prepare for the back room."
 	if boss_floor_progress_close(objective): return "The host is nearly ready to issue the card. Finish clean play and avoid loud heat."
-	return "Win clean toward the Players Card, or survive Rourke if attention turns."
+	var next_label := str(objective.get("players_card_next_tier_label", "Next tier"))
+	return "%s progress: %d/%d games, $%d/$%d segment net, heat %d/%d." % [
+		next_label,
+		int(objective.get("players_card_segment_games", 0)),
+		int(objective.get("players_card_next_min_games", 0)),
+		int(objective.get("players_card_segment_net_winnings", 0)),
+		int(objective.get("players_card_next_net_winnings", 0)),
+		int(objective.get("players_card_segment_max_heat", objective.get("current_heat", 0))),
+		int(objective.get("players_card_next_max_heat", 0)),
+	]
 
 
 static func boss_floor_progress_close(objective: Dictionary) -> bool:
@@ -230,9 +247,9 @@ static func boss_floor_progress_close(objective: Dictionary) -> bool:
 	if bool(objective.get("cheat_evidence", false)) or bool(objective.get("watched_cheat_evidence", false)): return false
 	if int(objective.get(boss_floor_status_key("max_heat"), 0)) > int(objective.get("high_roller_max_heat", 100)): return false
 	if bool(objective.get("high_roller_ready", false)): return true
-	var remaining_games := int(objective.get("high_roller_remaining_games", 0))
+	var remaining_games := int(objective.get("players_card_next_remaining_games", objective.get("high_roller_remaining_games", 0)))
 	var remaining_bankroll := int(objective.get("remaining_bankroll", 0))
-	var remaining_net := int(objective.get("high_roller_remaining_net_winnings", 0))
+	var remaining_net := int(objective.get("players_card_next_remaining_net_winnings", objective.get("high_roller_remaining_net_winnings", 0)))
 	var target := int(objective.get("high_roller_target_bankroll", objective.get("target_bankroll", 0)))
 	return remaining_games <= 1 and ((target > 0 and remaining_bankroll <= 50) or remaining_net <= 25)
 

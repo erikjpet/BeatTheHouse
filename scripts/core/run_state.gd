@@ -2683,7 +2683,7 @@ func _grand_casino_demo_objective_status(source: Dictionary, objective: Dictiona
 		claim_block_reason = "Settle the $%d Grand Casino ATM marker before Linda can issue %s." % [card_debt, next_tier_label]
 	elif not ready_to_claim:
 		claim_block_reason = "%s requirements are still in progress." % next_tier_label if not next_tier_label.is_empty() else "No later Players Card tier remains."
-	var card_benefits := _grand_casino_players_card_benefits(config, card_tier) if card_eligible else []
+	var card_benefits := _grand_casino_players_card_benefits(config, card_tier)
 	var money_target_met := net_winnings >= required_net
 	if required_net <= 0 and target_bankroll > 0:
 		money_target_met = total_money >= target_bankroll

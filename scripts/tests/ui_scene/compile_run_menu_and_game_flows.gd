@@ -1515,8 +1515,10 @@ func _check_final_demo_objective_hud_matrix(app: Control) -> bool:
 	var close_snapshot: Dictionary = app.call("current_objective_hud_snapshot")
 	if not _assert_objective_state(close_snapshot, "grand-incomplete", "Grand Casino close cashout HUD"):
 		return false
-	if str(close_snapshot.get("goal", "")).find("Close to Players Card") == -1 or not bool((close_snapshot.get("guidance", {}) as Dictionary).get("clean_progress_close", false)):
-		push_error("Grand Casino close Players Card HUD did not present clean progress guidance.")
+	if str(close_snapshot.get("goal", "")).find("Bronze ready") == -1 or str(((close_snapshot.get("guidance", {}) as Dictionary).get("text", ""))).find("Bronze is ready") == -1:
+		push_error("Grand Casino sequential Players Card HUD did not direct a frozen Bronze claim to Linda.")
+		return false
+	if not _assert_next_objective(close_snapshot, "travel", "travel:grand_casino_cage", "Grand Casino Bronze-ready HUD"):
 		return false
 
 	var heat_close_run := _grand_casino_fixture_run("UI-HUD-GRAND-HEAT", grand_environment)
@@ -1575,6 +1577,10 @@ func _check_final_demo_objective_hud_matrix(app: Control) -> bool:
 	if not bool(app.call("activate_interactable_object", "cage_atm_action:repay:full")) or high_roller_run.bankroll != atm_cash_before or high_roller_run.grand_casino_atm_debt() != 0:
 		push_error("Cage ATM inline Pay in Full did not clear the marker from cash.")
 		return false
+	var gift_actions: Array = (cage_objects.get("casino_fixture:cage_gift_shop", {}) as Dictionary).get("inline_actions", [])
+	if gift_actions.size() < 3 or gift_actions.size() > 4 or str((gift_actions[0] as Dictionary).get("emit_object_id", "")).find("cage_gift_action:buy:") != 0:
+		push_error("Cage gift case did not expose its 3-4 saved chip-priced offers as focused room controls.")
+		return false
 	if not bool(app.call("_start_linda_cage_services", {"object_id": "casino_fixture:cage_counter"})):
 		push_error("High-roller Players Card review could not open Linda's talk menu.")
 		return false
@@ -1586,7 +1592,7 @@ func _check_final_demo_objective_hud_matrix(app: Control) -> bool:
 		push_error("Ready Cage counter did not expose animated silhouette Linda, balances, promotions, and the Players Card review action.")
 		return false
 	if str(ready_card.get("tier", "")) != "Silver" or str(ready_card.get("progress", "")).find("Gold") == -1 or (ready_cage_model.get("comp_actions", []) as Array).size() != 2:
-		push_error("Ready Cage window did not expose exact Gold progress, benefits, and comp controls.")
+		push_error("Ready Cage counter did not expose exact Gold progress, benefits, and comp controls.")
 		return false
 	while not high_roller_run.next_pending_talk_event().is_empty():
 		high_roller_run.complete_talk_event_resolution(str(high_roller_run.next_pending_talk_event().get("event_id", "")))

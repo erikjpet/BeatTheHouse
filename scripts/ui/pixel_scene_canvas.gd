@@ -1088,11 +1088,18 @@ func _draw_grand_casino_cage() -> void:
 	draw_rect(Rect2(62, 132, 174, 112), Color(C_CYAN.r, C_CYAN.g, C_CYAN.b, 0.13))
 	for shelf_y in [170, 214]:
 		draw_line(Vector2(66, shelf_y), Vector2(232, shelf_y), C_SOFT.darkened(0.35), 3)
-	for index in range(4):
+	var shop_state: Dictionary = foundation_snapshot.get("cage_gift_shop_state", {}) if typeof(foundation_snapshot.get("cage_gift_shop_state", {})) == TYPE_DICTIONARY else {}
+	var available_stock: Array = []
+	for stock_value in shop_state.get("stock", []):
+		if typeof(stock_value) == TYPE_DICTIONARY and not bool((stock_value as Dictionary).get("sold", false)):
+			available_stock.append(stock_value)
+	for index in range(mini(4, available_stock.size())):
 		var item_x := 82 + (index % 2) * 86
 		var item_y := 144 + int(index / 2) * 44
 		draw_rect(Rect2(item_x, item_y, 34, 23), _cycle_color(index + 4).darkened(0.2))
 		draw_rect(Rect2(item_x + 7, item_y + 24, 20, 4), C_YELLOW)
+	if available_stock.is_empty():
+		_neon_text("EMPTY", Vector2(116, 198), 13, C_SOFT.darkened(0.25))
 	draw_rect(Rect2(60, 246, 178, 20), Color("#241331"))
 	_neon_text("CHIPS ONLY", Vector2(92, 260), 12, C_PINK)
 	# Counter, trays, ledger, and barred teller windows.
