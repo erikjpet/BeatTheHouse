@@ -7,8 +7,14 @@ const RngStreamScript := preload("res://scripts/core/rng_stream.gd")
 const STORE_PATH := "user://meta_collection.json"
 const STORE_PATH_ENV := "BTH_META_COLLECTION_PATH"
 const ITEMS_PATH := "res://data/items/items.json"
-const SCHEMA_VERSION := 2
+const SCHEMA_VERSION := 3
 const FIRST_INSTANCE_ID := 1
+const SAL_RESALE_SCHEMA_VERSION := 1
+const SAL_SHELF_SLOT_COUNT := 6
+const SAL_HISTORY_LIMIT := 64
+const SAL_RECEIPT_LIMIT := 256
+const SAL_STARTER_CONDITION := 0.18
+const SAL_STARTER_RARE_VALUE := 0.01
 const REVEAL_BAG_KEY := "bag"
 const HOUSING_BACK_ALLEY := "back_alley"
 const HOUSING_MOTEL_ROOM := "motel_room"
@@ -507,10 +513,10 @@ func ordinary_collection_price_breakdown(instance: Dictionary, listing_mode: Str
 		"resonance": clampf(float(normalized.get("resonance", 0.0)), 0.0, 1.0),
 		"usage": clampf(float(normalized.get("usage", 0.0)), 0.0, 1.0),
 	}
-	var potency_score := pow(absf(2.0 * float(floats.get("potency", 0.0)) - 1.0), 4.0)
-	var resonance_score := pow(absf(2.0 * float(floats.get("resonance", 0.0)) - 1.0), 4.0)
-	var usage_score := pow(absf(2.0 * float(floats.get("usage", 0.0)) - 1.0), 4.0)
-	var condition_score := pow(float(floats.get("condition", 0.0)), 4.0)
+	var potency_score := snappedf(pow(absf(2.0 * float(floats.get("potency", 0.0)) - 1.0), 4.0), 0.000000000001)
+	var resonance_score := snappedf(pow(absf(2.0 * float(floats.get("resonance", 0.0)) - 1.0), 4.0), 0.000000000001)
+	var usage_score := snappedf(pow(absf(2.0 * float(floats.get("usage", 0.0)) - 1.0), 4.0), 0.000000000001)
+	var condition_score := snappedf(pow(float(floats.get("condition", 0.0)), 4.0), 0.000000000001)
 	var scores := {
 		"potency": potency_score,
 		"condition": condition_score,
@@ -518,12 +524,12 @@ func ordinary_collection_price_breakdown(instance: Dictionary, listing_mode: Str
 		"usage": usage_score,
 	}
 	var contributions := {
-		"potency": 0.5 * potency_score,
-		"condition": 0.5 * condition_score,
-		"resonance": 0.5 * resonance_score,
-		"usage": 0.5 * usage_score,
+		"potency": snappedf(0.5 * potency_score, 0.000000000001),
+		"condition": snappedf(0.5 * condition_score, 0.000000000001),
+		"resonance": snappedf(0.5 * resonance_score, 0.000000000001),
+		"usage": snappedf(0.5 * usage_score, 0.000000000001),
 	}
-	var rarity_multiplier := clampf(
+	var rarity_multiplier := snappedf(clampf(
 		1.0
 		+ float(contributions.get("potency", 0.0))
 		+ float(contributions.get("condition", 0.0))
@@ -531,7 +537,7 @@ func ordinary_collection_price_breakdown(instance: Dictionary, listing_mode: Str
 		+ float(contributions.get("usage", 0.0)),
 		1.0,
 		3.0
-	)
+	), 0.000000000001)
 	var tier := str(definition.get("tier", "blue"))
 	var prices := _copy_dict(_copy_dict(_meta_home_config().get("sale_prices", {})).get("items", {}))
 	var tier_base := maxi(1, int(prices.get(tier, 1)))
@@ -571,6 +577,122 @@ func ordinary_collection_price_breakdown(instance: Dictionary, listing_mode: Str
 		"listing_multiplier": listing_multiplier,
 		"final_price": final_price,
 		"price": final_price,
+	}
+
+
+func sal_shelf_rows() -> Array:
+	var resale := _copy_dict(_store.get("sal_resale", {}))
+	var result: Array = []
+	for slot_value in _copy_array(resale.get("slots", [])):
+		var slot := _copy_dict(slot_value)
+		if bool(slot.get("occupied", false)):
+			var mode := str(slot.get("listing_mode", LISTING_MODE_NORMAL))
+			var breakdown := ordinary_collection_price_breakdown(_copy_dict(slot.get("item", {})), mode)
+			slot["quote_basis"] = breakdown
+			slot["asking_price"] = int(breakdown.get("final_price", slot.get("asking_price", 0)))
+		result.append(slot)
+	return result
+
+
+func sal_shelf_row(slot_index: int) -> Dictionary:
+	if slot_index < 0 or slot_index >= SAL_SHELF_SLOT_COUNT:
+		return {}
+	var rows := sal_shelf_rows()
+	if slot_index >= rows.size():
+		return {}
+	return _copy_dict(rows[slot_index])
+
+
+func sal_resale_rng_snapshot() -> Dictionary:
+	return _copy_dict(_copy_dict(_store.get("sal_resale", {})).get("rng_streams", {}))
+
+
+func allocate_sal_run_receipt(seed_text: String) -> String:
+	_store = _normalize_store(_store)
+	var resale := _copy_dict(_store.get("sal_resale", {}))
+	var next_id := maxi(1, int(resale.get("next_run_receipt_id", 1)))
+	resale["next_run_receipt_id"] = next_id + 1
+	_store["sal_resale"] = resale
+	return "sal-run:%d:%s" % [next_id, seed_text.strip_edges()]
+
+
+func sal_run_receipt_processed(receipt: String) -> bool:
+	var clean := receipt.strip_edges()
+	return not clean.is_empty() and _copy_array(_copy_dict(_store.get("sal_resale", {})).get("processed_run_receipts", [])).has(clean)
+
+
+func generate_and_insert_sal_stock(run_receipt: String) -> Dictionary:
+	_store = _normalize_store(_store)
+	var receipt := run_receipt.strip_edges()
+	if receipt.is_empty():
+		return {"ok": false, "stocked": false, "message": "Sal stock needs a run receipt."}
+	if sal_run_receipt_processed(receipt):
+		return {"ok": true, "stocked": false, "receipt": receipt, "message": "Sal already stocked this run."}
+	var resale := _copy_dict(_store.get("sal_resale", {}))
+	var streams := _copy_dict(resale.get("rng_streams", {}))
+	var stock_rng := _rng_from_snapshot(_copy_dict(streams.get("sal_resale_stock", {})))
+	var resolver: Variant = CollectionItemResolverScript.new()
+	var rolled: Dictionary = resolver.roll_virtual_bag_item(stock_rng, "sal_resale_stock|%s" % receipt)
+	if rolled.is_empty():
+		return {"ok": false, "stocked": false, "receipt": receipt, "message": "Sal could not generate stock."}
+	streams["sal_resale_stock"] = stock_rng.snapshot()
+	var item: Dictionary = resolver.normalize_instance_for_definition(_copy_dict(rolled.get("item", {})))
+	item["schema_version"] = SCHEMA_VERSION
+	item["instance_id"] = _take_next_instance_id()
+	item["source"] = "sal_run_stock"
+	item["source_id"] = receipt
+	item["generation_seed"] = str(rolled.get("generation_seed", ""))
+	var provenance := _sal_roll_provenance(rolled, "sal_run_stock", receipt)
+	var listing := _sal_listing_from_item(item, LISTING_MODE_NORMAL, provenance)
+	var slots := _copy_array(resale.get("slots", []))
+	var slot_index := -1
+	for index in range(slots.size()):
+		if not bool(_copy_dict(slots[index]).get("occupied", false)):
+			slot_index = index
+			break
+	var replaced: Dictionary = {}
+	if slot_index < 0:
+		var eligible: Array = []
+		for index in range(slots.size()):
+			var candidate := _copy_dict(slots[index])
+			if bool(candidate.get("occupied", false)) and not bool(candidate.get("protected", false)):
+				eligible.append(index)
+		if eligible.is_empty():
+			return {"ok": false, "stocked": false, "receipt": receipt, "message": "No eligible Sal shelf slot can be replaced."}
+		var replacement_rng := _rng_from_snapshot(_copy_dict(streams.get("sal_resale_replacement", {})))
+		slot_index = int(eligible[replacement_rng.randi_range(0, eligible.size() - 1)])
+		streams["sal_resale_replacement"] = replacement_rng.snapshot()
+		replaced = _copy_dict(slots[slot_index])
+	listing["slot_index"] = slot_index
+	slots[slot_index] = listing
+	resale["slots"] = slots
+	resale["rng_streams"] = streams
+	var receipts := _copy_array(resale.get("processed_run_receipts", []))
+	receipts.append(receipt)
+	resale["processed_run_receipts"] = _bounded_array(receipts, SAL_RECEIPT_LIMIT)
+	var history := _copy_array(resale.get("stock_history", []))
+	history.append({
+		"receipt": receipt,
+		"slot_index": slot_index,
+		"instance_id": int(item.get("instance_id", 0)),
+		"itemdef_id": int(item.get("itemdef_id", -1)),
+		"virtual_bagdef_id": int(provenance.get("virtual_bagdef_id", -1)),
+		"collection_id": str(provenance.get("collection_id", "")),
+		"tier": str(provenance.get("tier", "")),
+		"generation_seed": str(provenance.get("generation_seed", "")),
+		"replaced_instance_id": int(_copy_dict(replaced.get("item", {})).get("instance_id", 0)),
+	})
+	resale["stock_history"] = _bounded_array(history, SAL_HISTORY_LIMIT)
+	resale["revision"] = maxi(0, int(resale.get("revision", 0))) + 1
+	_store["sal_resale"] = resale
+	return {
+		"ok": true,
+		"stocked": true,
+		"receipt": receipt,
+		"slot_index": slot_index,
+		"listing": listing.duplicate(true),
+		"replaced": replaced,
+		"summary_line": "Sal stocked something new.",
 	}
 
 
@@ -774,7 +896,194 @@ func _normalize_store(data: Dictionary) -> Dictionary:
 		maxi(FIRST_INSTANCE_ID, int(normalized.get("next_instance_id", FIRST_INSTANCE_ID))),
 		_max_recorded_instance_id(normalized) + 1
 	)
+	normalized["sal_resale"] = _normalize_sal_resale(normalized.get("sal_resale", {}), normalized)
+	normalized["next_instance_id"] = maxi(
+		maxi(FIRST_INSTANCE_ID, int(normalized.get("next_instance_id", FIRST_INSTANCE_ID))),
+		_max_recorded_instance_id(normalized) + 1
+	)
 	return normalized
+
+
+func _normalize_sal_resale(value: Variant, root: Dictionary) -> Dictionary:
+	var resale := _copy_dict(value)
+	var initialized := bool(resale.get("initialized", false))
+	resale["schema_version"] = SAL_RESALE_SCHEMA_VERSION
+	resale["initialized"] = true
+	resale["rng_streams"] = _normalized_sal_rng_streams(resale.get("rng_streams", {}))
+	var source_slots := _copy_array(resale.get("slots", []))
+	var slots: Array = []
+	for index in range(SAL_SHELF_SLOT_COUNT):
+		slots.append(_empty_sal_slot(index))
+	for slot_value in source_slots:
+		var source := _copy_dict(slot_value)
+		var index := int(source.get("slot_index", -1))
+		if index < 0 or index >= SAL_SHELF_SLOT_COUNT:
+			continue
+		slots[index] = _normalize_sal_slot(source, index)
+	resale["slots"] = slots
+	resale["starter_seeded"] = bool(resale.get("starter_seeded", initialized))
+	resale["starter_first_purchased"] = bool(resale.get("starter_first_purchased", false))
+	resale["starter_tutorial_resolved"] = bool(resale.get("starter_tutorial_resolved", false))
+	resale["pending_starter_buyback"] = _copy_dict(resale.get("pending_starter_buyback", {}))
+	resale["pending_purchase"] = _copy_dict(resale.get("pending_purchase", {}))
+	resale["stock_history"] = _bounded_array(_copy_array(resale.get("stock_history", [])), SAL_HISTORY_LIMIT)
+	resale["purchase_history"] = _bounded_array(_copy_array(resale.get("purchase_history", [])), SAL_HISTORY_LIMIT)
+	resale["processed_run_receipts"] = _bounded_unique_strings(_copy_array(resale.get("processed_run_receipts", [])), SAL_RECEIPT_LIMIT)
+	resale["next_run_receipt_id"] = maxi(1, int(resale.get("next_run_receipt_id", 1)))
+	resale["dialogue_counts"] = _copy_dict(resale.get("dialogue_counts", {}))
+	resale["revision"] = maxi(0, int(resale.get("revision", 0)))
+	if not initialized:
+		var starter := _seed_sal_starter_listing(resale, root)
+		if not starter.is_empty():
+			starter["slot_index"] = 0
+			slots[0] = starter
+			resale["slots"] = slots
+			resale["starter_seeded"] = true
+			resale["revision"] = maxi(1, int(resale.get("revision", 0)) + 1)
+	return resale
+
+
+func _normalize_sal_slot(value: Dictionary, slot_index: int) -> Dictionary:
+	var slot := value.duplicate(true)
+	slot["slot_index"] = slot_index
+	var item := _copy_dict(slot.get("item", {}))
+	var resolver: Variant = CollectionItemResolverScript.new()
+	item = resolver.normalize_instance_for_definition(item)
+	var definition: Dictionary = resolver.item_definition(int(item.get("itemdef_id", -1)))
+	if item.is_empty() or definition.is_empty() or str(definition.get("item_class", CollectionItemResolverScript.ITEM_CLASS_COLLECTION)) != CollectionItemResolverScript.ITEM_CLASS_COLLECTION:
+		return _empty_sal_slot(slot_index)
+	slot["occupied"] = true
+	slot["item"] = item
+	var mode := str(slot.get("listing_mode", LISTING_MODE_NORMAL)).strip_edges().to_lower()
+	if not [LISTING_MODE_NORMAL, LISTING_MODE_STARTER_DISCOUNT, LISTING_MODE_MOCKING_RELIST].has(mode):
+		mode = LISTING_MODE_NORMAL
+	slot["listing_mode"] = mode
+	var normalized_provenance := _copy_dict(slot.get("provenance", {}))
+	normalized_provenance["virtual_bagdef_id"] = int(normalized_provenance.get("virtual_bagdef_id", -1))
+	slot["provenance"] = normalized_provenance
+	slot["protected"] = bool(slot.get("protected", mode == LISTING_MODE_STARTER_DISCOUNT))
+	slot["starter_tutorial_eligible"] = bool(slot.get("starter_tutorial_eligible", mode == LISTING_MODE_STARTER_DISCOUNT))
+	slot["starter_rare_channel"] = str(slot.get("starter_rare_channel", ""))
+	slot["starter_rare_value"] = clampf(float(slot.get("starter_rare_value", item.get(str(slot.get("starter_rare_channel", "")), 0.0))), 0.0, 1.0)
+	var provenance := _copy_dict(slot.get("provenance", {}))
+	slot["virtual_bagdef_id"] = int(slot.get("virtual_bagdef_id", provenance.get("virtual_bagdef_id", -1)))
+	var breakdown := ordinary_collection_price_breakdown(item, mode)
+	slot["quote_basis"] = breakdown
+	slot["asking_price"] = int(breakdown.get("final_price", slot.get("asking_price", 0)))
+	return slot
+
+
+func _seed_sal_starter_listing(resale: Dictionary, root: Dictionary) -> Dictionary:
+	var streams := _copy_dict(resale.get("rng_streams", {}))
+	var rng := _rng_from_snapshot(_copy_dict(streams.get("sal_starter_item", {})))
+	var resolver: Variant = CollectionItemResolverScript.new()
+	var rolled: Dictionary = resolver.roll_virtual_bag_item(rng, "sal_starter_item")
+	if rolled.is_empty():
+		return {}
+	var rare_channels := ["potency", "resonance", "usage"]
+	var rare_channel := str(rare_channels[rng.randi_range(0, rare_channels.size() - 1)])
+	streams["sal_starter_item"] = rng.snapshot()
+	resale["rng_streams"] = streams
+	var item: Dictionary = resolver.normalize_instance_for_definition(_copy_dict(rolled.get("item", {})))
+	var instance_id := maxi(FIRST_INSTANCE_ID, int(root.get("next_instance_id", FIRST_INSTANCE_ID)))
+	root["next_instance_id"] = instance_id + 1
+	item["schema_version"] = SCHEMA_VERSION
+	item["instance_id"] = instance_id
+	item["condition"] = SAL_STARTER_CONDITION
+	item[rare_channel] = SAL_STARTER_RARE_VALUE
+	item["source"] = "sal_starter_stock"
+	item["source_id"] = "starter"
+	item["generation_seed"] = str(rolled.get("generation_seed", ""))
+	var provenance := _sal_roll_provenance(rolled, "sal_starter_stock", "starter")
+	var listing := _sal_listing_from_item(item, LISTING_MODE_STARTER_DISCOUNT, provenance)
+	listing["protected"] = true
+	listing["starter_tutorial_eligible"] = true
+	listing["starter_rare_channel"] = rare_channel
+	listing["starter_rare_value"] = SAL_STARTER_RARE_VALUE
+	return listing
+
+
+func _sal_listing_from_item(item: Dictionary, listing_mode: String, provenance: Dictionary) -> Dictionary:
+	var breakdown := ordinary_collection_price_breakdown(item, listing_mode)
+	return {
+		"slot_index": -1,
+		"occupied": true,
+		"item": item.duplicate(true),
+		"provenance": provenance.duplicate(true),
+		"listing_mode": listing_mode,
+		"quote_basis": breakdown,
+		"asking_price": int(breakdown.get("final_price", 0)),
+		"protected": false,
+		"starter_tutorial_eligible": false,
+		"starter_rare_channel": "",
+		"starter_rare_value": 0.0,
+		"virtual_bagdef_id": int(provenance.get("virtual_bagdef_id", -1)),
+	}
+
+
+func _sal_roll_provenance(rolled: Dictionary, source: String, source_id: String) -> Dictionary:
+	var collection := _copy_dict(rolled.get("collection", {}))
+	var bag := _copy_dict(rolled.get("virtual_bag", {}))
+	return {
+		"source": source,
+		"source_id": source_id,
+		"run_receipt": source_id if source == "sal_run_stock" else "",
+		"virtual_bagdef_id": int(bag.get("itemdef_id", -1)),
+		"virtual_bag_id": str(bag.get("id", "")),
+		"collection_id": str(collection.get("id", bag.get("collection_id", ""))),
+		"tier": str(rolled.get("tier", bag.get("tier", ""))),
+		"generation_seed": str(rolled.get("generation_seed", "")),
+	}
+
+
+func _empty_sal_slot(slot_index: int) -> Dictionary:
+	return {
+		"slot_index": slot_index,
+		"occupied": false,
+		"item": {},
+		"provenance": {},
+		"listing_mode": "",
+		"quote_basis": {},
+		"asking_price": 0,
+		"protected": false,
+		"starter_tutorial_eligible": false,
+		"starter_rare_channel": "",
+		"starter_rare_value": 0.0,
+		"virtual_bagdef_id": -1,
+	}
+
+
+func _normalized_sal_rng_streams(value: Variant) -> Dictionary:
+	var streams := _copy_dict(value)
+	for key in ["sal_resale_stock", "sal_resale_replacement", "sal_starter_item"]:
+		var fallback_seed := RngStreamScript.derive_seed(904613, 904613, key)
+		var source := _copy_dict(streams.get(key, {}))
+		var rng := RngStreamScript.new()
+		rng.configure(int(source.get("seed", fallback_seed)), int(source.get("state", source.get("seed", fallback_seed))))
+		streams[key] = rng.snapshot()
+	return streams
+
+
+func _rng_from_snapshot(snapshot_value: Dictionary) -> RngStream:
+	var rng: RngStream = RngStreamScript.new()
+	rng.restore(snapshot_value)
+	return rng
+
+
+func _bounded_array(values: Array, limit: int) -> Array:
+	var result := values.duplicate(true)
+	while result.size() > maxi(0, limit):
+		result.pop_front()
+	return result
+
+
+func _bounded_unique_strings(values: Array, limit: int) -> Array:
+	var result: Array = []
+	for value in values:
+		var clean := str(value).strip_edges()
+		if not clean.is_empty() and not result.has(clean):
+			result.append(clean)
+	return _bounded_array(result, limit)
 
 
 func _migrate_fixture_pollution(data: Dictionary) -> Dictionary:
@@ -1131,11 +1440,16 @@ func _max_recorded_instance_id(data: Dictionary) -> int:
 	for bag_value in _copy_array(data.get("unopened_bags", [])):
 		var bag := _copy_dict(bag_value)
 		max_id = maxi(max_id, int(bag.get("instance_id", 0)))
+	var resale := _copy_dict(data.get("sal_resale", {}))
+	for slot_value in _copy_array(resale.get("slots", [])):
+		var slot := _copy_dict(slot_value)
+		max_id = maxi(max_id, int(_copy_dict(slot.get("item", {})).get("instance_id", 0)))
+	max_id = maxi(max_id, int(_copy_dict(_copy_dict(resale.get("pending_starter_buyback", {})).get("item", {})).get("instance_id", 0)))
 	return max_id
 
 
 func _default_store() -> Dictionary:
-	return {
+	return _normalize_store({
 		"schema_version": SCHEMA_VERSION,
 		"owned_instances": [],
 		"unopened_bags": [],
@@ -1153,7 +1467,7 @@ func _default_store() -> Dictionary:
 			"state": 904613,
 		},
 		"next_instance_id": FIRST_INSTANCE_ID,
-	}
+	})
 
 
 static func _copy_dict(value: Variant) -> Dictionary:
