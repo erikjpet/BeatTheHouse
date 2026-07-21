@@ -16,6 +16,11 @@ const HOUSING_APARTMENT := "apartment"
 const HOUSING_HOUSE := "house"
 const SALE_KIND_ITEM := "item"
 const SALE_KIND_BAG := "bag"
+const LISTING_MODE_PAWN := "pawn"
+const LISTING_MODE_NORMAL := "normal"
+const LISTING_MODE_STARTER_DISCOUNT := "starter_discount"
+const LISTING_MODE_STARTER_BUYBACK := "starter_buyback"
+const LISTING_MODE_MOCKING_RELIST := "mocking_relist"
 const FAILURE_DECAY_FLAG := "_meta_collection_failure_decay_applied"
 const FIXTURE_POLLUTION_MIGRATION_FLAG := "_fixture_pollution_quarantined_v1"
 const FAILURE_DURABILITY_LOSS := 0.10
@@ -490,6 +495,85 @@ func sale_quote(kind: String, instance_id: int) -> Dictionary:
 	return _item_sale_quote(instance_id)
 
 
+func ordinary_collection_price_breakdown(instance: Dictionary, listing_mode: String = LISTING_MODE_PAWN) -> Dictionary:
+	var resolver: Variant = CollectionItemResolverScript.new()
+	var normalized: Dictionary = resolver.normalize_instance_for_definition(instance)
+	var definition: Dictionary = resolver.item_definition(int(normalized.get("itemdef_id", -1)))
+	if definition.is_empty() or str(definition.get("item_class", CollectionItemResolverScript.ITEM_CLASS_COLLECTION)) != CollectionItemResolverScript.ITEM_CLASS_COLLECTION:
+		return {"ok": false, "message": "That item does not use Sal's collection price curve."}
+	var floats := {
+		"potency": clampf(float(normalized.get("potency", 0.0)), 0.0, 1.0),
+		"condition": clampf(float(normalized.get("condition", 0.0)), 0.0, 1.0),
+		"resonance": clampf(float(normalized.get("resonance", 0.0)), 0.0, 1.0),
+		"usage": clampf(float(normalized.get("usage", 0.0)), 0.0, 1.0),
+	}
+	var potency_score := pow(absf(2.0 * float(floats.get("potency", 0.0)) - 1.0), 4.0)
+	var resonance_score := pow(absf(2.0 * float(floats.get("resonance", 0.0)) - 1.0), 4.0)
+	var usage_score := pow(absf(2.0 * float(floats.get("usage", 0.0)) - 1.0), 4.0)
+	var condition_score := pow(float(floats.get("condition", 0.0)), 4.0)
+	var scores := {
+		"potency": potency_score,
+		"condition": condition_score,
+		"resonance": resonance_score,
+		"usage": usage_score,
+	}
+	var contributions := {
+		"potency": 0.5 * potency_score,
+		"condition": 0.5 * condition_score,
+		"resonance": 0.5 * resonance_score,
+		"usage": 0.5 * usage_score,
+	}
+	var rarity_multiplier := clampf(
+		1.0
+		+ float(contributions.get("potency", 0.0))
+		+ float(contributions.get("condition", 0.0))
+		+ float(contributions.get("resonance", 0.0))
+		+ float(contributions.get("usage", 0.0)),
+		1.0,
+		3.0
+	)
+	var tier := str(definition.get("tier", "blue"))
+	var prices := _copy_dict(_copy_dict(_meta_home_config().get("sale_prices", {})).get("items", {}))
+	var tier_base := maxi(1, int(prices.get(tier, 1)))
+	var pawn_quote := maxi(1, int(round(float(tier_base) * rarity_multiplier)))
+	var mode := listing_mode.strip_edges().to_lower()
+	if not [LISTING_MODE_PAWN, LISTING_MODE_NORMAL, LISTING_MODE_STARTER_DISCOUNT, LISTING_MODE_STARTER_BUYBACK, LISTING_MODE_MOCKING_RELIST].has(mode):
+		mode = LISTING_MODE_PAWN
+	var listing_multiplier := 1.0
+	var final_price := pawn_quote
+	match mode:
+		LISTING_MODE_NORMAL:
+			listing_multiplier = 1.5
+			final_price = maxi(pawn_quote + 1, int(ceil(float(pawn_quote) * listing_multiplier)))
+		LISTING_MODE_STARTER_DISCOUNT:
+			listing_multiplier = 0.75
+			final_price = maxi(1, int(round(float(pawn_quote) * listing_multiplier)))
+		LISTING_MODE_STARTER_BUYBACK:
+			listing_multiplier = 1.25
+			final_price = maxi(1, int(ceil(float(pawn_quote) * listing_multiplier)))
+		LISTING_MODE_MOCKING_RELIST:
+			listing_multiplier = 10.0
+			final_price = maxi(1, int(ceil(float(pawn_quote) * listing_multiplier)))
+	return {
+		"ok": true,
+		"itemdef_id": int(normalized.get("itemdef_id", -1)),
+		"instance_id": int(normalized.get("instance_id", 0)),
+		"display_name": str(definition.get("display_name", "Collection Item")),
+		"collection_id": str(definition.get("collection_id", "")),
+		"tier": tier,
+		"tier_base": tier_base,
+		"clamped_floats": floats,
+		"rarity_scores": scores,
+		"rarity_contributions": contributions,
+		"rarity_multiplier": rarity_multiplier,
+		"pawn_quote": pawn_quote,
+		"listing_mode": mode,
+		"listing_multiplier": listing_multiplier,
+		"final_price": final_price,
+		"price": final_price,
+	}
+
+
 func arm_sale(kind: String, instance_id: int) -> Dictionary:
 	var quote := sale_quote(kind, instance_id)
 	if not bool(quote.get("ok", false)):
@@ -957,18 +1041,11 @@ func _item_sale_quote(instance_id: int) -> Dictionary:
 			"face_value": face_value,
 			"gold_rate": gold_rate,
 		}
-	var tier := str(definition.get("tier", "blue"))
-	var prices := _copy_dict(_copy_dict(_meta_home_config().get("sale_prices", {})).get("items", {}))
-	var base_price := maxi(1, int(prices.get(tier, 1)))
-	var price := maxi(1, int(round(float(base_price) * float(resolver.value_multiplier(definition, instance)))))
-	return {
-		"ok": true,
-		"kind": SALE_KIND_ITEM,
-		"instance_id": instance_id,
-		"price": price,
-		"display_name": str(definition.get("display_name", "Collection Item")),
-		"tier": tier,
-	}
+	var breakdown := ordinary_collection_price_breakdown(instance, LISTING_MODE_PAWN)
+	if not bool(breakdown.get("ok", false)):
+		return breakdown
+	breakdown["kind"] = SALE_KIND_ITEM
+	return breakdown
 
 
 func _bag_sale_quote(instance_id: int) -> Dictionary:
