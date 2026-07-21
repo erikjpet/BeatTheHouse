@@ -3589,7 +3589,7 @@ func _linda_cage_choice_status(choice_id: String) -> Dictionary:
 		"cage_cashout_all":
 			return {"enabled": run_state.grand_casino_chips > 0, "reason": "No chips to redeem."}
 		"cage_claim_card":
-			return {"enabled": bool(card.get("can_review", false)), "reason": str(card.get("review_detail", "No tier is ready."))}
+			return {"enabled": bool(card.get("can_claim", false)), "reason": str(card.get("review_detail", "No tier is ready."))}
 		"cage_comp_drink":
 			var drink_status := run_state.grand_casino_players_card_comp_result("drink")
 			return {"enabled": bool(drink_status.get("ok", false)), "reason": str(drink_status.get("message", "No drink comp is ready."))}
@@ -7551,14 +7551,20 @@ func _complete_cage_players_card_review() -> void:
 	if coach_overlay != null and not coach_overlay.input_allowed("cage:review"):
 		_show_message("Follow the highlighted advice first.")
 		return
-	var model := CageCounterViewModelScript.build(run_state)
-	var card: Dictionary = model.get("card", {}) if typeof(model.get("card", {})) == TYPE_DICTIONARY else {}
-	if not bool(card.get("can_review", false)):
-		_show_message(str(card.get("review_detail", "The Gold review is not ready.")))
+	var claim_result := run_state.claim_grand_casino_players_card_tier()
+	if not bool(claim_result.get("ok", false)):
+		_show_message(str(claim_result.get("message", "The Players Card tier is not ready.")))
 		_refresh_talk_dock()
 		return
 	if coach_overlay != null:
 		coach_overlay.notify_action("cage:review")
+	if not bool(claim_result.get("review_required", false)):
+		run_state.advance_environment_turns(1)
+		_autosave_foundation_run("Autosaved.")
+		_show_message(str(claim_result.get("message", "Linda issues the next Players Card tier.")))
+		_refresh_talk_dock()
+		_refresh_runtime_environment_views()
+		return
 	var dialogue_id := "tutorial_linda_gold_review" if run_state.is_tutorial_run() else "linda_gold_review"
 	if not start_dialogue(dialogue_id, {"source": "cage_gold_review", "source_object_id": "casino_fixture:cage_counter"}):
 		_show_message("Linda's Gold review is unavailable.")

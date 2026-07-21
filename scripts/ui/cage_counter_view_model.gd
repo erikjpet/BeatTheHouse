@@ -12,15 +12,20 @@ static func build(run_state: RunState) -> Dictionary:
 	var prestige := run_state.grand_casino_prestige_status()
 	var card_eligible := bool(objective.get("players_card_eligible", true))
 	var review_blocked := bool(flags.get("grand_casino_attention_high_roller_review", false)) or bool(objective.get("showdown_pending", false)) or bool(objective.get("showdown_active", false))
-	var review_ready := card_eligible and not review_blocked and (bool(objective.get("high_roller_ready", false)) or bool(flags.get("high_roller_cashout_pending", false)))
+	var claim_ready := bool(objective.get("players_card_ready_to_claim", false))
+	var can_claim := bool(objective.get("players_card_can_claim", false)) and not review_blocked
+	var next_tier_label := str(objective.get("players_card_next_tier_label", "Next"))
 	var review_state := "progress"
 	var review_title := "Tier progress"
 	if not card_eligible:
 		review_state = "ineligible"
 		review_title = "Card program closed"
-	elif review_ready:
+	elif can_claim:
 		review_state = "ready"
-		review_title = "Gold review ready"
+		review_title = "%s ready" % next_tier_label
+	elif claim_ready:
+		review_state = "blocked"
+		review_title = "%s claim on hold" % next_tier_label
 	elif review_blocked:
 		review_state = "blocked"
 		review_title = "Review routed to Rourke"
@@ -69,7 +74,9 @@ static func build(run_state: RunState) -> Dictionary:
 			"review_state": review_state,
 			"review_title": review_title,
 			"review_detail": _review_detail(objective, flags, review_state),
-			"can_review": review_ready,
+			"ready_to_claim": claim_ready,
+			"can_claim": can_claim,
+			"can_review": can_claim,
 			"prestige": {
 				"active": bool(prestige.get("active", false)),
 				"title": "Prestige run recognized",
@@ -124,13 +131,13 @@ static func _card_progress(objective: Dictionary) -> String:
 	var next_label := str(objective.get("players_card_next_tier_label", ""))
 	if next_label.is_empty():
 		return "Gold earned. Complete Linda's review at the Cage."
-	return "%s: %d/%d games, $%d/$%d net, heat %d/%d." % [
+	return "%s: %d/%d games, $%d/$%d segment net, heat %d/%d." % [
 		next_label,
-		int(objective.get("grand_casino_games_played", 0)),
+		int(objective.get("players_card_segment_games", 0)),
 		int(objective.get("players_card_next_min_games", 0)),
-		int(objective.get("grand_casino_net_winnings", 0)),
+		int(objective.get("players_card_segment_net_winnings", 0)),
 		int(objective.get("players_card_next_net_winnings", 0)),
-		int(objective.get("grand_casino_max_heat", objective.get("current_heat", 0))),
+		int(objective.get("players_card_segment_max_heat", objective.get("current_heat", 0))),
 		int(objective.get("players_card_next_max_heat", 0)),
 	]
 
@@ -139,9 +146,9 @@ static func _review_detail(objective: Dictionary, flags: Dictionary, state: Stri
 	if state == "ineligible":
 		return "Cheat evidence permanently closes every Players Card tier this run."
 	if state == "ready":
-		return "Clean play is verified. Complete Linda's Gold review here."
+		return "Clean play is verified. Linda can issue the next tier here."
 	if state == "blocked":
-		return "Casino attention has frozen the review and routed the account to Rourke."
+		return str(objective.get("players_card_claim_block_reason", "Casino attention has frozen the review."))
 	return "Keep play clean and heat controlled. Current heat: %d." % int(objective.get("current_heat", 0))
 
 
@@ -149,7 +156,7 @@ static func _linda_line(objective: Dictionary, state: String) -> String:
 	if state == "ineligible":
 		return "I cannot put a card on an account with evidence."
 	if state == "ready":
-		return "Your Gold review is ready. I can finish it here."
+		return "Your next tier is ready. I can issue it here."
 	if state == "blocked":
 		return "Rourke put a hold on this review. The floor will come for you."
 	return "%s is on the account. Keep the count clean." % str(objective.get("players_card_tier_label", "Unranked"))

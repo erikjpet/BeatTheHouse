@@ -1531,6 +1531,13 @@ func _check_final_demo_objective_hud_matrix(app: Control) -> bool:
 		return false
 
 	var high_roller_run := _grand_casino_fixture_run("UI-HUD-HIGH-ROLLER", grand_environment)
+	high_roller_run.narrative_flags["grand_casino_players_card_awarded_tier"] = RunState.GRAND_CASINO_PLAYERS_CARD_TIER_SILVER
+	high_roller_run.narrative_flags["grand_casino_players_card_tier"] = RunState.GRAND_CASINO_PLAYERS_CARD_TIER_SILVER
+	high_roller_run.narrative_flags["grand_casino_players_card_highest_tier"] = RunState.GRAND_CASINO_PLAYERS_CARD_TIER_SILVER
+	high_roller_run.narrative_flags["grand_casino_players_card_segment_start_games"] = 0
+	high_roller_run.narrative_flags["grand_casino_players_card_segment_start_net_winnings"] = 0
+	high_roller_run.narrative_flags["grand_casino_comp_drink_tokens"] = 1
+	high_roller_run.narrative_flags["grand_casino_comp_suite_rests"] = 1
 	_record_grand_casino_clean_games(high_roller_run, high_roller_min_games)
 	high_roller_run.bankroll = maxi(high_roller_target, int(high_roller_run.narrative_flags.get("grand_casino_entry_bankroll", 0)) + high_roller_net)
 	high_roller_run.evaluate_environment_objective_state()
@@ -1567,7 +1574,7 @@ func _check_final_demo_objective_hud_matrix(app: Control) -> bool:
 	if not bool(ready_talk.get("visible", false)) or not bool(ready_talk.get("portrait_animation_active", false)) or str((ready_cage_model.get("host", {}) as Dictionary).get("name", "")) != "Linda" or str((ready_cage_model.get("host", {}) as Dictionary).get("presentation", "")) != "faceless_silhouette" or (ready_cage_model.get("promotions", []) as Array).is_empty() or int(ready_balance.get("cash", -1)) < 0 or not bool(ready_card.get("can_review", false)):
 		push_error("Ready Cage counter did not expose animated silhouette Linda, balances, promotions, and the Players Card review action.")
 		return false
-	if str(ready_card.get("tier", "")) != "Gold" or str(ready_card.get("progress", "")).find("Gold earned") == -1 or (ready_cage_model.get("comp_actions", []) as Array).size() != 2:
+	if str(ready_card.get("tier", "")) != "Silver" or str(ready_card.get("progress", "")).find("Gold") == -1 or (ready_cage_model.get("comp_actions", []) as Array).size() != 2:
 		push_error("Ready Cage window did not expose exact Gold progress, benefits, and comp controls.")
 		return false
 	while not high_roller_run.next_pending_talk_event().is_empty():
@@ -1747,7 +1754,17 @@ func _set_ui_fixture_run(app: Control, run_state: RunState) -> void:
 
 func _check_grand_casino_spatial_ui(app: Control) -> bool:
 	app.call("_invalidate_travel_view_cache")
-	var run_state: RunState = app.get("run_state")
+	var original_run_state: RunState = app.get("run_state")
+	var run_state: RunState = RunStateScript.new()
+	run_state.from_dict(original_run_state.to_dict())
+	_set_ui_fixture_run(app, run_state)
+	# This fixture is about door presentation, not card progression. Model an
+	# already-issued sequential Silver card explicitly instead of relying on the
+	# removed cumulative auto-tier derivation.
+	run_state.narrative_flags["grand_casino_players_card_awarded_tier"] = RunState.GRAND_CASINO_PLAYERS_CARD_TIER_SILVER
+	run_state.narrative_flags["grand_casino_players_card_tier"] = RunState.GRAND_CASINO_PLAYERS_CARD_TIER_SILVER
+	run_state.narrative_flags["grand_casino_high_limit_access"] = true
+	run_state.narrative_flags["grand_casino_high_limit_access_method"] = "silver_card"
 	var staffing := run_state.grand_casino_staffing_snapshot()
 	var assignments: Dictionary = staffing.get("assignments", {}) if typeof(staffing.get("assignments", {})) == TYPE_DICTIONARY else {}
 	var constants: Dictionary = staffing.get("constants", {}) if typeof(staffing.get("constants", {})) == TYPE_DICTIONARY else {}
@@ -1807,6 +1824,7 @@ func _check_grand_casino_spatial_ui(app: Control) -> bool:
 	if bool(funding_overlay.get("event_choice_popup_visible", false)) and str(funding_overlay.get("event_choice_popup_type", "")) == "casino_chip_top_up":
 		push_error("Grand Casino cash fallback still opened the removed chip top-up decision.")
 		return false
+	_set_ui_fixture_run(app, original_run_state)
 	return true
 
 

@@ -1540,6 +1540,13 @@ func cash_out_grand_casino_chips(chip_amount: int = -1, cash_rate: int = 1) -> D
 	return {"ok": true, "cash_delta": cash_value, "chips_delta": -amount, "message": "Cashed out %d chips for $%d." % [amount, cash_value]}
 
 
+func grand_casino_atm_debt() -> int:
+	# The ATM slice replaces this compatibility default with the authoritative
+	# house-marker debt entry. Keeping the accessor stable lets card claims and
+	# counter copy use one source before that migration lands.
+	return 0
+
+
 func grand_casino_players_card_comp_result(comp_id: String) -> Dictionary:
 	if not _is_grand_casino_environment(current_environment):
 		return {"ok": false, "message": "Players Card comps are available only inside the Grand Casino."}
@@ -2454,31 +2461,37 @@ func _grand_casino_demo_objective_status(source: Dictionary, objective: Dictiona
 	var cheat_evidence := bool(narrative_flags.get("grand_casino_cheat_evidence", false))
 	var watched_cheat_evidence := bool(narrative_flags.get("grand_casino_watched_cheat_evidence", false))
 	var card_eligible := not bool(narrative_flags.get("grand_casino_players_card_ineligible", false)) and not cheat_evidence and not watched_cheat_evidence
-	var derived_tier := _grand_casino_players_card_derived_tier(config, games_played, net_winnings, max_visit_heat, card_eligible)
-	var stored_tier := str(narrative_flags.get("grand_casino_players_card_tier", GRAND_CASINO_PLAYERS_CARD_TIER_NONE)).strip_edges().to_lower()
-	if not GRAND_CASINO_PLAYERS_CARD_TIERS.has(stored_tier):
-		stored_tier = GRAND_CASINO_PLAYERS_CARD_TIER_NONE
-	var card_tier := stored_tier
-	if _grand_casino_players_card_tier_index(derived_tier) > _grand_casino_players_card_tier_index(card_tier):
-		card_tier = derived_tier
-	if not card_eligible:
-		card_tier = GRAND_CASINO_PLAYERS_CARD_TIER_NONE
+	var card_tier := _grand_casino_players_card_awarded_tier()
 	var card_tier_label := card_tier.capitalize() if card_tier != GRAND_CASINO_PLAYERS_CARD_TIER_NONE else "Unranked"
 	if not card_eligible:
-		card_tier_label = "Ineligible"
+		card_tier_label = "%s (program closed)" % card_tier_label
 	var next_tier := _grand_casino_players_card_next_definition(config, card_tier) if card_eligible else {}
 	var next_tier_id := str(next_tier.get("id", ""))
 	var next_tier_label := str(next_tier.get("label", ""))
 	var next_tier_min_games := int(next_tier.get("min_games", min_games))
 	var next_tier_net := int(next_tier.get("net_winnings", required_net))
 	var next_tier_max_heat := int(next_tier.get("max_heat", max_heat))
+	var segment_games := maxi(0, int(narrative_flags.get("grand_casino_players_card_segment_games", 0)))
+	var segment_net := int(narrative_flags.get("grand_casino_players_card_segment_net_winnings", 0))
+	var segment_max_heat := clampi(int(narrative_flags.get("grand_casino_players_card_segment_max_heat", current_heat)), 0, 100)
+	var ready_to_claim := bool(narrative_flags.get("grand_casino_players_card_ready_to_claim", false)) and not next_tier_id.is_empty() and card_eligible
+	var card_debt := grand_casino_atm_debt() if has_method("grand_casino_atm_debt") else 0
+	var claim_block_reason := ""
+	if not card_eligible:
+		claim_block_reason = "Cheat evidence permanently closes the Players Card program for this run."
+	elif bool(narrative_flags.get("grand_casino_showdown_pending", false)) or bool(narrative_flags.get("grand_casino_showdown_active", false)):
+		claim_block_reason = "Rourke's showdown has priority over the Players Card program."
+	elif card_debt > 0:
+		claim_block_reason = "Settle the $%d Grand Casino ATM marker before Linda can issue %s." % [card_debt, next_tier_label]
+	elif not ready_to_claim:
+		claim_block_reason = "%s requirements are still in progress." % next_tier_label if not next_tier_label.is_empty() else "No later Players Card tier remains."
 	var card_benefits := _grand_casino_players_card_benefits(config, card_tier) if card_eligible else []
 	var money_target_met := net_winnings >= required_net
 	if required_net <= 0 and target_bankroll > 0:
 		money_target_met = total_money >= target_bankroll
 	var game_target_met := games_played >= min_games
 	var heat_clean := max_visit_heat <= max_heat
-	var high_roller_ready := card_tier == GRAND_CASINO_PLAYERS_CARD_TIER_GOLD and money_target_met and game_target_met and heat_clean and card_eligible
+	var high_roller_ready := next_tier_id == GRAND_CASINO_PLAYERS_CARD_TIER_GOLD and ready_to_claim and card_debt <= 0 and claim_block_reason.is_empty()
 	var high_roller_pending := bool(narrative_flags.get("high_roller_cashout_pending", false))
 	var showdown_event_id := str(config.get("showdown_event_id", GRAND_CASINO_SHOWDOWN_EVENT_ID))
 	var high_roller_event_id := str(config.get("high_roller_event_id", GRAND_CASINO_HIGH_ROLLER_EVENT_ID))
@@ -2546,6 +2559,7 @@ func _grand_casino_demo_objective_status(source: Dictionary, objective: Dictiona
 		"players_card_required_net_winnings": required_net,
 		"players_card_remaining_net_winnings": remaining_net,
 		"players_card_tier": card_tier,
+		"players_card_awarded_tier": card_tier,
 		"players_card_tier_label": card_tier_label,
 		"players_card_eligible": card_eligible,
 		"players_card_ineligible_reason": "Cheat evidence permanently closes the Players Card program for this run." if not card_eligible else "",
@@ -2554,8 +2568,15 @@ func _grand_casino_demo_objective_status(source: Dictionary, objective: Dictiona
 		"players_card_next_min_games": next_tier_min_games,
 		"players_card_next_net_winnings": next_tier_net,
 		"players_card_next_max_heat": next_tier_max_heat,
-		"players_card_next_remaining_games": maxi(0, next_tier_min_games - games_played),
-		"players_card_next_remaining_net_winnings": maxi(0, next_tier_net - net_winnings),
+		"players_card_segment_games": segment_games,
+		"players_card_segment_net_winnings": segment_net,
+		"players_card_segment_max_heat": segment_max_heat,
+		"players_card_next_remaining_games": maxi(0, next_tier_min_games - segment_games),
+		"players_card_next_remaining_net_winnings": maxi(0, next_tier_net - segment_net),
+		"players_card_ready_to_claim": ready_to_claim,
+		"players_card_can_claim": ready_to_claim and claim_block_reason.is_empty(),
+		"players_card_claim_block_reason": claim_block_reason,
+		"grand_casino_atm_debt": card_debt,
 		"players_card_benefits": card_benefits,
 		"players_card_next_benefits": _copy_array(next_tier.get("benefits", [])),
 		"players_card_drink_comps": maxi(0, int(narrative_flags.get("grand_casino_comp_drink_tokens", 0))),
@@ -2608,6 +2629,9 @@ func _evaluate_grand_casino_objective_state(status: Dictionary) -> void:
 		return
 	_initialize_grand_casino_objective_runtime()
 	_update_grand_casino_players_card_state(status)
+	# Segment readiness is an action-boundary mutation. Rebuild the read-only
+	# objective snapshot before deciding whether Gold or the showdown is ready.
+	status = demo_objective_status()
 	if tutorial_main_floor_only():
 		if bool(status.get("high_roller_ready", false)):
 			_set_grand_casino_high_roller_ready(status)
@@ -2630,46 +2654,104 @@ func _update_grand_casino_players_card_state(status: Dictionary) -> void:
 	narrative_flags["grand_casino_net_winnings"] = int(status.get("grand_casino_net_winnings", narrative_flags.get("grand_casino_net_winnings", 0)))
 	if not bool(status.get("players_card_eligible", true)):
 		narrative_flags["grand_casino_players_card_ineligible"] = true
-		narrative_flags["grand_casino_players_card_tier"] = GRAND_CASINO_PLAYERS_CARD_TIER_NONE
 		narrative_flags["grand_casino_linda_look_away_available"] = false
 		if str(narrative_flags.get("grand_casino_high_limit_access_method", "")) == "silver_card":
 			narrative_flags["grand_casino_high_limit_access"] = false
 			narrative_flags["grand_casino_high_limit_access_method"] = ""
 		return
 	narrative_flags["grand_casino_players_card_ineligible"] = false
-	var target_tier := str(status.get("players_card_tier", GRAND_CASINO_PLAYERS_CARD_TIER_NONE))
-	var current_tier := str(narrative_flags.get("grand_casino_players_card_tier", GRAND_CASINO_PLAYERS_CARD_TIER_NONE))
-	_advance_grand_casino_players_card_tier(current_tier, target_tier, true)
+	if bool(narrative_flags.get("grand_casino_players_card_ready_to_claim", false)):
+		return
+	var card_tier := _grand_casino_players_card_awarded_tier()
+	var config := _grand_casino_objective_config(_copy_dict(current_environment.get("demo_objective", {})))
+	var next_definition := _grand_casino_players_card_next_definition(config, card_tier)
+	if next_definition.is_empty():
+		return
+	var total_games := maxi(0, int(narrative_flags.get("grand_casino_games_played", 0)))
+	var total_net := int(narrative_flags.get("grand_casino_net_winnings", 0))
+	var baseline_games := maxi(0, int(narrative_flags.get("grand_casino_players_card_segment_start_games", total_games)))
+	var baseline_net := int(narrative_flags.get("grand_casino_players_card_segment_start_net_winnings", total_net))
+	var segment_games := maxi(0, total_games - baseline_games)
+	var segment_net := total_net - baseline_net
+	var segment_max_heat := maxi(
+		clampi(int(narrative_flags.get("grand_casino_players_card_segment_max_heat", suspicion_level())), 0, 100),
+		suspicion_level()
+	)
+	narrative_flags["grand_casino_players_card_segment_games"] = segment_games
+	narrative_flags["grand_casino_players_card_segment_net_winnings"] = segment_net
+	narrative_flags["grand_casino_players_card_segment_max_heat"] = segment_max_heat
+	var ready := (
+		segment_games >= int(next_definition.get("min_games", 0))
+		and segment_net >= int(next_definition.get("net_winnings", 0))
+		and segment_max_heat <= int(next_definition.get("max_heat", 100))
+	)
+	if ready:
+		narrative_flags["grand_casino_players_card_ready_to_claim"] = true
+		narrative_flags["grand_casino_players_card_ready_tier"] = str(next_definition.get("id", ""))
+		log_story({
+			"type": "grand_casino_players_card_ready",
+			"tier": str(next_definition.get("id", "")),
+			"segment_games": segment_games,
+			"segment_net_winnings": segment_net,
+			"segment_max_heat": segment_max_heat,
+			"message": "%s Players Card qualification is ready for Linda." % str(next_definition.get("label", "Next")),
+		})
 
 
-func _advance_grand_casino_players_card_tier(current_tier: String, target_tier: String, queue_dialogue: bool) -> void:
+func _grant_grand_casino_players_card_tier(target_tier: String, queue_dialogue: bool) -> bool:
+	var current_tier := _grand_casino_players_card_awarded_tier()
 	var current_index := _grand_casino_players_card_tier_index(current_tier)
 	var target_index := _grand_casino_players_card_tier_index(target_tier)
-	if target_index <= current_index:
-		narrative_flags["grand_casino_players_card_tier"] = GRAND_CASINO_PLAYERS_CARD_TIERS[current_index]
-		return
+	if target_index != current_index + 1:
+		return false
 	var config := _grand_casino_objective_config(_copy_dict(current_environment.get("demo_objective", {})))
-	for tier_index in range(current_index + 1, target_index + 1):
-		var tier_id := str(GRAND_CASINO_PLAYERS_CARD_TIERS[tier_index])
-		var definition := _grand_casino_players_card_tier_definition(config, tier_id)
-		_apply_grand_casino_players_card_tier_benefits(definition)
-		narrative_flags["grand_casino_players_card_tier"] = tier_id
-		narrative_flags["grand_casino_players_card_highest_tier"] = tier_id
-		log_story({
-			"type": "grand_casino_players_card_tier",
+	var tier_id := str(GRAND_CASINO_PLAYERS_CARD_TIERS[target_index])
+	var definition := _grand_casino_players_card_tier_definition(config, tier_id)
+	_apply_grand_casino_players_card_tier_benefits(definition)
+	narrative_flags["grand_casino_players_card_awarded_tier"] = tier_id
+	narrative_flags["grand_casino_players_card_tier"] = tier_id
+	narrative_flags["grand_casino_players_card_highest_tier"] = tier_id
+	narrative_flags["grand_casino_players_card_ready_to_claim"] = false
+	narrative_flags.erase("grand_casino_players_card_ready_tier")
+	narrative_flags["grand_casino_players_card_segment_start_games"] = maxi(0, int(narrative_flags.get("grand_casino_games_played", 0)))
+	narrative_flags["grand_casino_players_card_segment_start_net_winnings"] = int(narrative_flags.get("grand_casino_net_winnings", 0))
+	narrative_flags["grand_casino_players_card_segment_games"] = 0
+	narrative_flags["grand_casino_players_card_segment_net_winnings"] = 0
+	narrative_flags["grand_casino_players_card_segment_max_heat"] = suspicion_level()
+	log_story({
+		"type": "grand_casino_players_card_tier",
+		"tier": tier_id,
+		"games_played": maxi(0, int(narrative_flags.get("grand_casino_games_played", 0))),
+		"net_winnings": int(narrative_flags.get("grand_casino_net_winnings", 0)),
+		"environment_id": str(current_environment.get("id", "")),
+		"environment_archetype_id": str(current_environment.get("archetype_id", "")),
+		"message": "Linda awards the %s Players Card tier." % tier_id.capitalize(),
+	})
+	if queue_dialogue and not is_tutorial_run() and GRAND_CASINO_LINDA_TIER_DIALOGUES.has(tier_id):
+		var dialogue_id := str(GRAND_CASINO_LINDA_TIER_DIALOGUES[tier_id])
+		enqueue_dialogue(dialogue_id, "dialogue:%s" % dialogue_id, GRAND_CASINO_LINDA_SPEAKER, "recognition", "players_card_tier", {
 			"tier": tier_id,
-			"games_played": maxi(0, int(narrative_flags.get("grand_casino_games_played", 0))),
-			"net_winnings": int(narrative_flags.get("grand_casino_net_winnings", 0)),
-			"environment_id": str(current_environment.get("id", "")),
-			"environment_archetype_id": str(current_environment.get("archetype_id", "")),
-			"message": "Linda marks the Players Card %s." % tier_id.capitalize(),
+			"environment_snapshot": current_environment.duplicate(true),
 		})
-		if queue_dialogue and not is_tutorial_run() and GRAND_CASINO_LINDA_TIER_DIALOGUES.has(tier_id):
-			var dialogue_id := str(GRAND_CASINO_LINDA_TIER_DIALOGUES[tier_id])
-			enqueue_dialogue(dialogue_id, "dialogue:%s" % dialogue_id, GRAND_CASINO_LINDA_SPEAKER, "recognition", "players_card_tier", {
-				"tier": tier_id,
-				"environment_snapshot": current_environment.duplicate(true),
-			})
+	return true
+
+
+func claim_grand_casino_players_card_tier() -> Dictionary:
+	if str(current_environment.get("archetype_id", "")) != GRAND_CASINO_CAGE_ARCHETYPE_ID:
+		return {"ok": false, "message": "Linda awards Players Card tiers only at the Cage counter."}
+	var status := demo_objective_status()
+	if not bool(status.get("players_card_eligible", false)):
+		return {"ok": false, "message": str(status.get("players_card_claim_block_reason", "Cheat evidence closed the Players Card program."))}
+	if not bool(status.get("players_card_ready_to_claim", false)):
+		return {"ok": false, "message": str(status.get("players_card_claim_block_reason", "The next tier is not ready."))}
+	if not bool(status.get("players_card_can_claim", false)):
+		return {"ok": false, "message": str(status.get("players_card_claim_block_reason", "Linda cannot issue the tier yet."))}
+	var next_tier := str(status.get("players_card_next_tier", ""))
+	if next_tier == GRAND_CASINO_PLAYERS_CARD_TIER_GOLD:
+		return {"ok": true, "review_required": true, "tier": next_tier, "message": "Linda is ready to complete the Gold review."}
+	if not _grant_grand_casino_players_card_tier(next_tier, true):
+		return {"ok": false, "message": "The Players Card tier sequence is invalid."}
+	return {"ok": true, "tier": next_tier, "message": "Linda awards the %s Players Card tier." % next_tier.capitalize(), "status": demo_objective_status()}
 
 
 func _apply_grand_casino_players_card_tier_benefits(definition: Dictionary) -> void:
@@ -2726,18 +2808,24 @@ func _set_grand_casino_high_roller_ready(status: Dictionary) -> void:
 func complete_grand_casino_high_roller_cashout(config: Dictionary = {}) -> Dictionary:
 	if run_status == RUN_STATUS_ENDED or run_status == RUN_STATUS_FAILED:
 		return {"ok": false, "message": "The run is already over."}
-	if not _is_grand_casino_environment(current_environment):
-		return {"ok": false, "message": "The Players Card desk is only available in the Grand Casino."}
+	if str(current_environment.get("archetype_id", "")) != GRAND_CASINO_CAGE_ARCHETYPE_ID:
+		return {"ok": false, "message": "Linda completes the Gold review only at the Cage counter."}
 	var status := demo_objective_status()
 	if not bool(status.get("grand_casino_objective", false)):
 		return {"ok": false, "message": "The Players Card is not available here."}
 	if bool(status.get("showdown_pending", false)) or bool(status.get("showdown_active", false)):
 		return {"ok": false, "message": "Rourke's call has priority now."}
+	if grand_casino_atm_debt() > 0:
+		return {"ok": false, "message": "Settle the $%d Grand Casino ATM marker before Linda can complete Gold." % grand_casino_atm_debt()}
 	if not bool(status.get("high_roller_ready", false)) and not bool(narrative_flags.get("high_roller_cashout_pending", false)):
 		evaluate_environment_objective_state()
 		status = demo_objective_status()
 	if not bool(status.get("high_roller_ready", false)) and not bool(narrative_flags.get("high_roller_cashout_pending", false)):
 		return {"ok": false, "message": "The host is not ready to issue the Players Card yet."}
+	if str(status.get("players_card_next_tier", "")) != GRAND_CASINO_PLAYERS_CARD_TIER_GOLD or not bool(status.get("players_card_ready_to_claim", false)):
+		return {"ok": false, "message": "Gold has not completed its sequential qualification segment."}
+	if not _grant_grand_casino_players_card_tier(GRAND_CASINO_PLAYERS_CARD_TIER_GOLD, false):
+		return {"ok": false, "message": "Linda could not issue Gold without the prior Players Card tiers."}
 	var high_roller_event_id := str(status.get("high_roller_event_id", GRAND_CASINO_HIGH_ROLLER_EVENT_ID)).strip_edges()
 	if high_roller_event_id.is_empty():
 		high_roller_event_id = GRAND_CASINO_HIGH_ROLLER_EVENT_ID
@@ -4318,7 +4406,7 @@ func _initialize_grand_casino_objective_runtime() -> void:
 	var objective := _copy_dict(current_environment.get("demo_objective", {}))
 	if not _is_grand_casino_objective(objective):
 		return
-	var had_players_card_tier := narrative_flags.has("grand_casino_players_card_tier")
+	var had_sequential_card_state := narrative_flags.has("grand_casino_players_card_awarded_tier")
 	var environment_id := GRAND_CASINO_ARCHETYPE_ID
 	var previous_environment_id := str(narrative_flags.get("grand_casino_entry_environment_id", ""))
 	if previous_environment_id != environment_id:
@@ -4361,21 +4449,53 @@ func _initialize_grand_casino_objective_runtime() -> void:
 		narrative_flags["grand_casino_comp_suite_rests"] = 0
 	if not narrative_flags.has("grand_casino_linda_look_away_consumed"):
 		narrative_flags["grand_casino_linda_look_away_consumed"] = false
-	if not had_players_card_tier:
-		var config := _grand_casino_objective_config(objective)
-		var eligible := not bool(narrative_flags.get("grand_casino_players_card_ineligible", false)) and not bool(narrative_flags.get("grand_casino_cheat_evidence", false)) and not bool(narrative_flags.get("grand_casino_watched_cheat_evidence", false))
-		var legacy_tier := _grand_casino_players_card_derived_tier(
-			config,
-			maxi(0, int(narrative_flags.get("grand_casino_games_played", 0))),
-			int(narrative_flags.get("grand_casino_net_winnings", 0)),
-			maxi(suspicion_level(), int(narrative_flags.get("grand_casino_max_heat", suspicion_level()))),
-			eligible
-		)
-		narrative_flags["grand_casino_players_card_tier"] = GRAND_CASINO_PLAYERS_CARD_TIER_NONE
-		if eligible:
-			_advance_grand_casino_players_card_tier(GRAND_CASINO_PLAYERS_CARD_TIER_NONE, legacy_tier, false)
+	var total_games := maxi(0, int(narrative_flags.get("grand_casino_games_played", 0)))
+	var total_net := int(narrative_flags.get("grand_casino_net_winnings", 0))
+	if not had_sequential_card_state:
+		var legacy_tier := str(narrative_flags.get("grand_casino_players_card_tier", GRAND_CASINO_PLAYERS_CARD_TIER_NONE)).strip_edges().to_lower()
+		if not GRAND_CASINO_PLAYERS_CARD_TIERS.has(legacy_tier):
+			legacy_tier = GRAND_CASINO_PLAYERS_CARD_TIER_NONE
+		# The old cumulative system marked Gold before Linda's review. Preserve an
+		# open review as Silver + a frozen Gold claim; otherwise retain a genuinely
+		# awarded legacy tier without deriving anything from excess totals.
+		if bool(narrative_flags.get("high_roller_cashout_pending", false)) and legacy_tier == GRAND_CASINO_PLAYERS_CARD_TIER_GOLD:
+			narrative_flags["grand_casino_players_card_awarded_tier"] = GRAND_CASINO_PLAYERS_CARD_TIER_SILVER
+			narrative_flags["grand_casino_players_card_ready_to_claim"] = true
+			narrative_flags["grand_casino_players_card_ready_tier"] = GRAND_CASINO_PLAYERS_CARD_TIER_GOLD
 		else:
-			narrative_flags["grand_casino_players_card_ineligible"] = true
+			narrative_flags["grand_casino_players_card_awarded_tier"] = legacy_tier
+			narrative_flags["grand_casino_players_card_ready_to_claim"] = false
+		if is_tutorial_run():
+			# The authored tutorial is deliberately compressed to one clean game and
+			# the canonical Gold review. Its hidden training account starts at Silver;
+			# standard and prestige runs always begin Unranked.
+			narrative_flags["grand_casino_players_card_awarded_tier"] = GRAND_CASINO_PLAYERS_CARD_TIER_SILVER
+			narrative_flags["grand_casino_players_card_ready_to_claim"] = false
+	# A carried meta Gold card keeps its prestige recognition modifiers, but a
+	# new run's card program begins Unranked. This is deliberate: prestige makes
+	# the standards tighter/safer; it never skips a run-local Linda award.
+	var awarded_tier := _grand_casino_players_card_awarded_tier()
+	narrative_flags["grand_casino_players_card_tier"] = awarded_tier
+	if not narrative_flags.has("grand_casino_players_card_highest_tier"):
+		narrative_flags["grand_casino_players_card_highest_tier"] = awarded_tier
+	if not narrative_flags.has("grand_casino_players_card_segment_start_games"):
+		narrative_flags["grand_casino_players_card_segment_start_games"] = total_games
+	if not narrative_flags.has("grand_casino_players_card_segment_start_net_winnings"):
+		narrative_flags["grand_casino_players_card_segment_start_net_winnings"] = total_net
+	if not narrative_flags.has("grand_casino_players_card_segment_games"):
+		narrative_flags["grand_casino_players_card_segment_games"] = 0
+	if not narrative_flags.has("grand_casino_players_card_segment_net_winnings"):
+		narrative_flags["grand_casino_players_card_segment_net_winnings"] = 0
+	if not narrative_flags.has("grand_casino_players_card_segment_max_heat"):
+		narrative_flags["grand_casino_players_card_segment_max_heat"] = suspicion_level()
+	if not narrative_flags.has("grand_casino_players_card_ready_to_claim"):
+		narrative_flags["grand_casino_players_card_ready_to_claim"] = false
+	if bool(narrative_flags.get("grand_casino_players_card_ready_to_claim", false)) and not narrative_flags.has("grand_casino_players_card_ready_tier"):
+		var config := _grand_casino_objective_config(objective)
+		var next_definition := _grand_casino_players_card_next_definition(config, awarded_tier)
+		narrative_flags["grand_casino_players_card_ready_tier"] = str(next_definition.get("id", ""))
+	if bool(narrative_flags.get("grand_casino_cheat_evidence", false)) or bool(narrative_flags.get("grand_casino_watched_cheat_evidence", false)):
+		narrative_flags["grand_casino_players_card_ineligible"] = true
 
 
 func _apply_grand_casino_prestige_recognition() -> void:
@@ -4498,6 +4618,14 @@ func _grand_casino_objective_config(objective: Dictionary) -> Dictionary:
 	config["players_card_gold_net_winnings"] = maxi(int(config.get("players_card_gold_net_winnings", 0)), high_roller_net)
 	config["players_card_gold_max_heat"] = clampi(int(config.get("players_card_gold_max_heat", high_roller_max_heat)), 0, 100)
 	return config
+
+
+func _grand_casino_players_card_awarded_tier() -> String:
+	var tier_id := str(narrative_flags.get(
+		"grand_casino_players_card_awarded_tier",
+		narrative_flags.get("grand_casino_players_card_tier", GRAND_CASINO_PLAYERS_CARD_TIER_NONE)
+	)).strip_edges().to_lower()
+	return tier_id if GRAND_CASINO_PLAYERS_CARD_TIERS.has(tier_id) else GRAND_CASINO_PLAYERS_CARD_TIER_NONE
 
 
 func _grand_casino_players_card_tier_index(tier_id: String) -> int:
