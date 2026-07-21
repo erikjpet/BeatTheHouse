@@ -2352,10 +2352,14 @@ func _check_grand_casino_chips_and_cage(library: ContentLibrary, main_archetype:
 		failures.append("Slot play outside the Grand Casino did not remain cash-only.")
 
 	run_state.set_environment(environment.to_dict())
+	var cashout_generator: RunGenerator = RunGeneratorScript.new(library)
+	if not cashout_generator.enter_grand_casino_room(run_state, RunState.GRAND_CASINO_CAGE_ARCHETYPE_ID):
+		failures.append("Grand Casino chip fixture could not enter the Cage for redemption.")
+		return
 	var saved := run_state.to_dict()
 	var restored: RunState = RunStateScript.new()
 	restored.from_dict(saved)
-	if restored.grand_casino_chips != run_state.grand_casino_chips or str(restored.current_environment.get("archetype_id", "")) != RunState.GRAND_CASINO_ARCHETYPE_ID:
+	if restored.grand_casino_chips != run_state.grand_casino_chips or str(restored.current_environment.get("archetype_id", "")) != RunState.GRAND_CASINO_CAGE_ARCHETYPE_ID:
 		failures.append("Grand Casino chip balance or Cage availability did not survive save/load.")
 	var total_before_cash_out := restored.grand_casino_total_money()
 	var score_before_cash_out := restored.run_spending_score

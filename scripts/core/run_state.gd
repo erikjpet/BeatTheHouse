@@ -1530,21 +1530,49 @@ func buy_grand_casino_chips(chip_amount: int, cash_rate: int = 1) -> Dictionary:
 
 
 func cash_out_grand_casino_chips(chip_amount: int = -1, cash_rate: int = 1) -> Dictionary:
-	if not _is_grand_casino_environment(current_environment):
-		return {"ok": false, "message": "The Cage is only available inside the Grand Casino."}
+	if str(current_environment.get("archetype_id", "")) != GRAND_CASINO_CAGE_ARCHETYPE_ID:
+		return {"ok": false, "message": "Chip redemption is available at Linda's Cage counter."}
 	if bool(narrative_flags.get("grand_casino_walked_with_chips", false)):
 		return {"ok": false, "message": "Rourke closed the Cage account when you were shown the door."}
 	if bool(narrative_flags.get("grand_casino_showdown_active", false)) and str(narrative_flags.get("grand_casino_duel_outcome", "")) != GrandCasinoDuelModelScript.OUTCOME_WALK_OUT_CLEAN:
 		return {"ok": false, "message": "The Cage is locked while Rourke's duel is active."}
-	var amount := grand_casino_chips if chip_amount < 0 else mini(grand_casino_chips, maxi(0, chip_amount))
-	if amount <= 0:
-		return {"ok": false, "message": "You do not have any chips to cash out."}
+	var amount := grand_casino_chips if chip_amount < 0 else chip_amount
 	var rate := maxi(1, cash_rate)
-	var cash_value := amount * rate
-	grand_casino_chips -= amount
-	bankroll += cash_value
-	_refresh_economy()
-	return {"ok": true, "cash_delta": cash_value, "chips_delta": -amount, "message": "Cashed out %d chips for $%d." % [amount, cash_value]}
+	var preview := CageEconomyModelScript.cashout_preview(
+		grand_casino_chips,
+		amount,
+		rate,
+		grand_casino_atm_debt(),
+		bankroll
+	)
+	if not bool(preview.get("ok", false)):
+		return {"ok": false, "message": str(preview.get("reason", "You do not have that many chips to redeem.")), "preview": preview}
+	var debt_paid := int(preview.get("debt_paid", 0))
+	grand_casino_chips = int(preview.get("chips_after", grand_casino_chips))
+	bankroll = int(preview.get("cash_after", bankroll))
+	_set_grand_casino_atm_debt(int(preview.get("debt_after", grand_casino_atm_debt())))
+	if debt_paid > 0 and narrative_flags.has("grand_casino_entry_bankroll"):
+		narrative_flags["grand_casino_entry_bankroll"] = int(narrative_flags.get("grand_casino_entry_bankroll", 0)) - debt_paid
+	_refresh_economy(true)
+	log_story({
+		"type": "grand_casino_chip_cashout",
+		"chips_redeemed": amount,
+		"exchange_rate": rate,
+		"gross_value": int(preview.get("gross_value", 0)),
+		"debt_paid": debt_paid,
+		"debt_remaining": grand_casino_atm_debt(),
+		"cash_paid": int(preview.get("cash_paid", 0)),
+		"bankroll_delta": int(preview.get("cash_paid", 0)),
+		"chips_delta": -amount,
+		"message": "Linda redeems %d chips: $%d to the marker, $%d cash, $%d marker remaining." % [amount, debt_paid, int(preview.get("cash_paid", 0)), grand_casino_atm_debt()],
+	})
+	evaluate_environment_objective_state()
+	return preview.merged({
+		"ok": true,
+		"cash_delta": int(preview.get("cash_paid", 0)),
+		"chips_delta": -amount,
+		"message": "Redeemed %d chips. Marker paid $%d; cash paid $%d; marker remaining $%d." % [amount, debt_paid, int(preview.get("cash_paid", 0)), grand_casino_atm_debt()],
+	}, true)
 
 
 func grand_casino_atm_debt() -> int:

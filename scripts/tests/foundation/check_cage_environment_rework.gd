@@ -6,6 +6,7 @@ const CageEconomyModelScript := preload("res://scripts/core/cage_economy_model.g
 func _check_cage_environment_rework(_library: ContentLibrary, failures: Array) -> void:
 	_check_cage_linda_simulation(_library, failures)
 	_check_cage_atm_state(failures)
+	_check_cage_debt_first_cashout(failures)
 	var exact_cashout := CageEconomyModelScript.cashout_preview(200, 200, 1, 150, 20)
 	if not bool(exact_cashout.get("ok", false)) or int(exact_cashout.get("debt_after", -1)) != 0 or int(exact_cashout.get("chips_after", -1)) != 0 or int(exact_cashout.get("cash_paid", -1)) != 50:
 		failures.append("Cage debt-first cashout contract did not settle debt 150/chips 200 into $50 cash.")
@@ -85,6 +86,39 @@ func _check_cage_atm_state(failures: Array) -> void:
 	legacy.advance_game_clock_minutes(1)
 	if legacy.grand_casino_atm_debt() != legacy_balance:
 		failures.append("Legacy Cage ATM save retroactively charged its loaded clock history.")
+
+
+func _check_cage_debt_first_cashout(failures: Array) -> void:
+	var cases := [
+		{"seed": "CAGE-CASHOUT-200", "debt": 150, "chips": 200, "request": 200, "rate": 1, "debt_after": 0, "cash_paid": 50},
+		{"seed": "CAGE-CASHOUT-100", "debt": 150, "chips": 100, "request": 100, "rate": 1, "debt_after": 50, "cash_paid": 0},
+		{"seed": "CAGE-CASHOUT-RATE", "debt": 50, "chips": 100, "request": 40, "rate": 2, "debt_after": 0, "cash_paid": 30},
+	]
+	for case_value in cases:
+		var case: Dictionary = case_value
+		var run_state: RunState = RunStateScript.new()
+		run_state.start_new(str(case.get("seed", "CAGE-CASHOUT")))
+		run_state.set_environment({"id": "cage_cashout_fixture", "archetype_id": RunState.GRAND_CASINO_CAGE_ARCHETYPE_ID, "world_node_id": RunState.GRAND_CASINO_ARCHETYPE_ID, "kind": "boss", "turns": 0})
+		var debt_amount := int(case.get("debt", 0))
+		var borrow := run_state.borrow_from_grand_casino_atm(debt_amount)
+		if not bool(borrow.get("ok", false)):
+			failures.append("Debt-first cashout fixture could not establish its marker.")
+			continue
+		run_state.change_bankroll(-debt_amount, true)
+		run_state.grand_casino_chips = int(case.get("chips", 0))
+		var cash_before := run_state.bankroll
+		var result := run_state.cash_out_grand_casino_chips(int(case.get("request", 0)), int(case.get("rate", 1)))
+		if not bool(result.get("ok", false)) or run_state.grand_casino_atm_debt() != int(case.get("debt_after", -1)) or int(result.get("cash_paid", -1)) != int(case.get("cash_paid", -1)) or run_state.bankroll != cash_before + int(case.get("cash_paid", 0)):
+			failures.append("Debt-first chip cashout committed a result that disagreed with its exact preview: %s" % JSON.stringify(case))
+	var blocked: RunState = RunStateScript.new()
+	blocked.start_new("CAGE-CASHOUT-BLOCKED")
+	blocked.set_environment({"id": "cage_cashout_blocked", "archetype_id": RunState.GRAND_CASINO_CAGE_ARCHETYPE_ID, "world_node_id": RunState.GRAND_CASINO_ARCHETYPE_ID, "kind": "boss", "turns": 0})
+	blocked.grand_casino_chips = 25
+	blocked.narrative_flags["grand_casino_showdown_active"] = true
+	var blocked_before := JSON.stringify(blocked.to_dict())
+	var blocked_result := blocked.cash_out_grand_casino_chips()
+	if bool(blocked_result.get("ok", true)) or JSON.stringify(blocked.to_dict()) != blocked_before:
+		failures.append("Active Rourke duel cashout mutated chips, cash, debt, or save state.")
 
 
 func _check_cage_linda_simulation(library: ContentLibrary, failures: Array) -> void:
