@@ -34,6 +34,8 @@ func _check_scratch_tickets_surface_contract(game: GameModule, failures: Array) 
 		failures.append("Scratch Tickets did not expose fixed-price native controls.")
 	if not bool(surface.get("surface_animates_idle", false)) or bool(surface.get("surface_realtime_state_refresh", true)):
 		failures.append("Scratch Tickets idle liveness/zero-copy flags are incorrect.")
+	if not bool(surface.get("surface_pointer_coalesce_moves", false)) or not game.surface_pointer_uses_lightweight_ui_state("scratch_scrub"):
+		failures.append("Scratch Tickets did not opt into its coalesced lightweight pointer path.")
 	if str(surface.get("scratch_machine_style", "")) != "physical_lottery_vending_cabinet" or str(surface.get("scratch_ticket_face_style", "")) != "portrait_printed_lottery_ticket":
 		failures.append("Scratch Tickets regressed to a menu/grid presentation instead of its physical cabinet and printed-ticket contract.")
 	if not surface.has("scratch_winner_pile") or not surface.has("scratch_loser_pile"):
@@ -62,6 +64,15 @@ func _check_scratch_tickets_surface_contract(game: GameModule, failures: Array) 
 	var after_click_ticket: Dictionary = ((environment.get("game_states", {}) as Dictionary).get("scratch_tickets", {}) as Dictionary).get("active_ticket", {})
 	if _scratch_test_dictionary_array(after_click_ticket.get("cells", [])) != original_cells:
 		failures.append("Scratch Tickets bare click changed the latex mask; reveal must require drag motion.")
+	if not bool(begin.get("surface_transient", false)) or typeof(begin.get("surface_state_patch", {})) != TYPE_DICTIONARY:
+		failures.append("Scratch Tickets pointer begin rebuilt full UI state instead of returning a transient canvas patch.")
+	var drag_begin := game.surface_pointer_command("scratch_scrub", 0, "begin", Vector2(342, 160), {}, run_state, environment)
+	var drag_move := game.surface_pointer_command("scratch_scrub", 0, "move", Vector2(430, 160), drag_begin.get("ui_state", {}), run_state, environment)
+	if not bool(drag_move.get("surface_transient", false)) or (drag_move.get("surface_state_patch", {}) as Dictionary).is_empty() or str(drag_move.get("surface_audio_loop_start", "")) != "scratch_scrape_loop":
+		failures.append("Scratch Tickets drag did not use the canvas-only patch and cached scratch-audio loop.")
+	var drag_end := game.surface_pointer_command("scratch_scrub", 0, "end", Vector2(430, 160), drag_move.get("ui_state", {}), run_state, environment)
+	if str(drag_end.get("surface_audio_loop_stop", "")) != "scratch_scrape_loop":
+		failures.append("Scratch Tickets pointer release did not stop scratch audio.")
 
 	var active_surface := game.surface_state(run_state, environment, {})
 	harness.setup(active_surface)
@@ -79,6 +90,104 @@ func _check_scratch_tickets_surface_contract(game: GameModule, failures: Array) 
 	_check_scratch_ticket_items(game, failures)
 	_check_scratch_ticket_stock_and_collection(game, failures)
 	_check_scratch_ticket_rtp(game, failures)
+	_check_scratch_ticket_portable_inventory(game, failures)
+
+
+func _check_scratch_ticket_portable_inventory(game: GameModule, failures: Array) -> void:
+	var run_state: RunState = RunStateScript.new()
+	run_state.start_new("SCRATCH-PORTABLE-INVENTORY")
+	run_state.bankroll = 500
+	var origin := {
+		"id": "portable_gas_a",
+		"world_node_id": "roadside-node-a",
+		"display_name": "Roadside Gas A",
+		"archetype_id": "gas_station_casino",
+		"kind": "casino",
+		"game_ids": ["scratch_tickets"],
+		"game_states": {},
+		"economic_profile": {"stake_floor": 1, "stake_ceiling": 18},
+		"visual_context": {"scene_type": "gas_station_casino"},
+	}
+	origin["game_states"] = {"scratch_tickets": game.generate_environment_state(run_state, origin, run_state.create_rng("portable-stock-a"))}
+	run_state.current_environment = origin
+	var buy_command := game.surface_action_command("scratch_buy", 0, false, {}, run_state, run_state.current_environment)
+	game.resolve_with_context("buy_scratch_ticket", int(buy_command.get("set_stake", 1)), run_state, run_state.current_environment, run_state.create_rng("portable-buy-a"), buy_command.get("ui_state", {}))
+	if not run_state.inventory.has(RunState.SCRATCH_TICKET_PILE_ITEM_ID):
+		failures.append("Scratch Tickets purchase did not add the Pile of Scratch Tickets inventory item.")
+	var active_before: Dictionary = run_state.portable_ticket_state("scratch_tickets", run_state.current_environment).get("active_ticket", {})
+	if str(active_before.get("origin_key", "")) != RunState.portable_ticket_origin_key(run_state.current_environment):
+		failures.append("Scratch Tickets portable record did not stamp its purchase origin on the ticket.")
+	var pointer_begin := game.surface_pointer_command("scratch_scrub", 0, "begin", Vector2(342, 160), {}, run_state, run_state.current_environment)
+	game.surface_pointer_command("scratch_scrub", 0, "move", Vector2(430, 160), pointer_begin.get("ui_state", {}), run_state, run_state.current_environment)
+	var partial_ticket: Dictionary = run_state.portable_ticket_state("scratch_tickets", run_state.current_environment).get("active_ticket", {})
+	var partial_cells_json := JSON.stringify(partial_ticket.get("cells", []))
+	var origin_return := run_state.current_environment.duplicate(true)
+	var elsewhere := {
+		"id": "portable_gas_b",
+		"world_node_id": "roadside-node-b",
+		"display_name": "Roadside Gas B",
+		"archetype_id": "gas_station_casino",
+		"kind": "casino",
+		"game_ids": ["scratch_tickets"],
+		"game_states": {},
+	}
+	elsewhere["game_states"] = {"scratch_tickets": game.generate_environment_state(run_state, elsewhere, run_state.create_rng("portable-stock-b"))}
+	run_state.set_environment(elsewhere)
+	if not (game.surface_state(run_state, run_state.current_environment, {}).get("scratch_ticket", {}) as Dictionary).is_empty():
+		failures.append("Scratch Tickets exposed another location's owned ticket on the wrong machine.")
+	var wrong_clerk: Dictionary = game.environment_action_command("scratch_ticket_clerk", "redeem_scratch_winners", run_state, run_state.current_environment, run_state.create_rng("portable-wrong-clerk")).get("result", {})
+	if int(wrong_clerk.get("bankroll_delta", 0)) != 0:
+		failures.append("Scratch Tickets allowed a ticket to be redeemed away from its purchase location.")
+	var loaded: RunState = RunStateScript.new()
+	loaded.from_dict(run_state.to_dict())
+	if JSON.stringify((loaded.portable_ticket_state("scratch_tickets", origin_return).get("active_ticket", {}) as Dictionary).get("cells", [])) != partial_cells_json:
+		failures.append("Scratch Tickets portable pile did not save/load its exact partial latex mask.")
+	loaded.set_environment(origin_return)
+	var returned_ticket: Dictionary = game.surface_state(loaded, loaded.current_environment, {}).get("scratch_ticket", {})
+	if JSON.stringify(returned_ticket.get("cells", [])) != partial_cells_json:
+		failures.append("Scratch Tickets did not restore the exact partial ticket when returning to its origin.")
+	var origin_state := loaded.portable_ticket_state("scratch_tickets", loaded.current_environment).duplicate(true)
+	var origin_winner := returned_ticket.duplicate(true)
+	origin_winner["id"] = "portable-origin-winner"
+	origin_winner["payout"] = 25
+	origin_winner["settled"] = true
+	origin_state["winner_pile"] = [origin_winner]
+	loaded.remember_portable_ticket_state("scratch_tickets", loaded.current_environment, origin_state)
+	game.surface_state(loaded, loaded.current_environment, {})
+	var origin_cash_before := loaded.bankroll
+	game.environment_action_command("scratch_ticket_clerk", "redeem_scratch_winners", loaded, loaded.current_environment, loaded.create_rng("portable-origin-clerk"))
+	if loaded.bankroll != origin_cash_before + 25:
+		failures.append("Scratch Tickets origin clerk did not redeem a returned winning ticket.")
+	var origin_for_sal := loaded.current_environment.duplicate(true)
+	var pawn_environment := {
+		"id": "portable_pawn",
+		"world_node_id": "pawn-node",
+		"display_name": "Sal's Pawn Shop",
+		"archetype_id": "pawn_shop",
+		"kind": "shop",
+		"lender_hooks": ["sals_pawn_counter"],
+		"game_states": {},
+	}
+	loaded.set_environment(pawn_environment)
+	var sal_state := loaded.portable_ticket_state("scratch_tickets", origin_for_sal).duplicate(true)
+	var sal_winner := origin_winner.duplicate(true)
+	sal_winner["id"] = "portable-sal-winner"
+	sal_winner["payout"] = 50
+	sal_state["winner_pile"] = [sal_winner]
+	loaded.remember_portable_ticket_state("scratch_tickets", origin_for_sal, sal_state)
+	var library: ContentLibrary = ContentLibraryScript.new()
+	library.load()
+	var service: RunActionService = RunActionServiceScript.new()
+	service.setup(library, loaded)
+	if not bool(service.hook_option("lender", "sals_pawn_counter").get("enabled", false)):
+		failures.append("Sal's Pawn Counter did not open when revealed portable winners were the only eligible inventory.")
+	var sal_before := loaded.bankroll
+	var sal_result := service.pawn_inventory_item(RunState.SCRATCH_TICKET_PILE_ITEM_ID, "sals_pawn_counter")
+	if not bool(sal_result.get("ok", false)) or loaded.bankroll != sal_before + 10:
+		failures.append("Sal did not cash revealed Scratch Tickets winners at exactly 20 percent of face value.")
+	var remaining_summary := loaded.portable_ticket_pile_summary(RunState.SCRATCH_TICKET_PILE_ITEM_ID)
+	if int(remaining_summary.get("winner_count", -1)) != 0 or int(remaining_summary.get("unplayed_count", 0)) <= 0 or not loaded.inventory.has(RunState.SCRATCH_TICKET_PILE_ITEM_ID):
+		failures.append("Sal's fallback removed unfinished Scratch Tickets or their inventory pile along with the winners.")
 
 
 func _check_scratch_ticket_gas_station_generation(failures: Array) -> void:
@@ -187,6 +296,7 @@ func _check_scratch_ticket_penalty_and_clerk(game: GameModule, run_state: RunSta
 	var machine := {"schema": "scratch_ticket_machine_state", "version": 1, "stock": [], "active_ticket": shock_ticket, "winner_pile": [], "loser_pile": [], "pending_penalty": 0}
 	game.call("_reveal_all", machine)
 	environment["game_states"] = {"scratch_tickets": machine}
+	run_state.capture_portable_ticket_piles_from_environment(environment)
 	var before := run_state.bankroll
 	var settle := game.resolve_with_context("settle_scratch_ticket", 0, run_state, environment, run_state.create_rng("shock_settle"), {})
 	var paid := -int(settle.get("bankroll_delta", 0))
@@ -199,6 +309,7 @@ func _check_scratch_ticket_penalty_and_clerk(game: GameModule, run_state: RunSta
 		forced["settled"] = true
 		settled["winner_pile"] = [forced]
 		environment["game_states"] = {"scratch_tickets": settled}
+		run_state.capture_portable_ticket_piles_from_environment(environment)
 	var pending := int(game.call("_pending_payout", settled))
 	var cash_before := run_state.bankroll
 	var clerk: Dictionary = game.environment_action_command("scratch_ticket_clerk", "redeem_scratch_winners", run_state, environment, run_state.create_rng("scratch_clerk")).get("result", {})

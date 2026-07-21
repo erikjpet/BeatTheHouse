@@ -95,6 +95,7 @@ func enter(run_state: RunState, environment: Dictionary) -> Dictionary:
 
 # Pull tabs are priced per deal row, not by the venue's table stake.
 func actions(run_state: RunState, _environment: Dictionary) -> Dictionary:
+	var wager_capacity := run_state.wager_capacity_for_game(get_id(), _environment)
 	return {
 		"ok": true,
 		"type": "game_actions",
@@ -102,8 +103,8 @@ func actions(run_state: RunState, _environment: Dictionary) -> Dictionary:
 		"legal_actions": legal_actions(run_state, _environment),
 		"cheat_actions": cheat_actions(run_state, _environment),
 		"stake_floor": 1,
-		"stake_ceiling": maxi(1, run_state.bankroll),
-		"base_stake_ceiling": maxi(1, run_state.bankroll),
+		"stake_ceiling": maxi(1, wager_capacity),
+		"base_stake_ceiling": maxi(1, wager_capacity),
 		"economy_state": run_state.economy(),
 		"economy_pressure_applied": false,
 	}
@@ -295,7 +296,7 @@ func environment_runtime_state(run_state: RunState, environment: Dictionary) -> 
 	var stack_count := _array_size(machine.get("ticket_stack", []))
 	var tray_count := _array_size(machine.get("tray_stack", []))
 	var unresolved_count := _unresolved_pull_tab_ticket_count(machine)
-	var deferred := run_state != null and run_state.bankroll <= 0 and _pull_tab_bankroll_zero_failure_deferred(machine)
+	var deferred := run_state != null and not run_state.has_liquid_run_funds() and _pull_tab_bankroll_zero_failure_deferred(machine)
 	var status_bits: Array[String] = []
 	if pending_payout > 0:
 		status_bits.append("CASH $%d" % pending_payout)
@@ -386,7 +387,7 @@ func _resolve_tab_detector_scan(run_state: RunState, environment: Dictionary, rn
 		next_active = not bool(item_state.get("tab_detector_active", false))
 		item_state["tab_detector_active"] = next_active
 		machine["item_state"] = item_state
-		_write_machine_state(environment, machine)
+		_write_machine_state(environment, machine, run_state)
 	var base_heat := int(action_def.get("suspicion_delta", TAB_DETECTOR_BASE_HEAT))
 	if has_detector and not next_active:
 		base_heat = 0
@@ -454,7 +455,7 @@ func _toggle_tab_detector_active_item(machine: Dictionary, run_state: RunState, 
 	var next_active := not bool(item_state.get("tab_detector_active", false))
 	item_state["tab_detector_active"] = next_active
 	machine["item_state"] = item_state
-	_write_machine_state(environment, machine)
+	_write_machine_state(environment, machine, run_state)
 	var message := "Tab Detector switched on. Winning buys will draw rising heat." if next_active else "Tab Detector switched off."
 	return _pull_tab_active_item_result(TAB_DETECTOR_ITEM_ID, "toggle_tab_detector", next_active, message, environment, [])
 
@@ -466,7 +467,7 @@ func _arm_tarot_card_active_item(machine: Dictionary, run_state: RunState, envir
 	item_state["tarot_armed"] = true
 	item_state["tarot_read_count"] = TAROT_READING_COUNT
 	machine["item_state"] = item_state
-	_write_machine_state(environment, machine)
+	_write_machine_state(environment, machine, run_state)
 	var message := "Tarot Card armed. The next bought ticket burns itself and reads the five tickets behind it."
 	return _pull_tab_active_item_result(TAROT_CARD_ITEM_ID, "arm_tarot_card", true, message, environment, [TAROT_CARD_ITEM_ID])
 
@@ -518,7 +519,7 @@ func surface_action_command(surface_action: String, index: int, _confirm_request
 			var price := int(deal.get("price", 1))
 			if int(deal.get("remaining", 0)) <= 0:
 				return {"handled": true, "message": "%s is sold out." % str(deal.get("display_name", "That deal"))}
-			if run_state != null and run_state.bankroll < price:
+			if run_state != null and run_state.wager_capacity_for_game(get_id(), environment) < price:
 				return {"handled": true, "message": "Not enough bankroll for a %s ticket." % str(deal.get("display_name", "pull-tab"))}
 			return {
 				"handled": true,
@@ -537,7 +538,7 @@ func surface_action_command(surface_action: String, index: int, _confirm_request
 			for deal_index in range(mini(PULL_TAB_MACHINE_COLUMN_COUNT, deals.size())):
 				var deal: Dictionary = deals[deal_index]
 				var price := maxi(1, int(deal.get("price", 1)))
-				if int(deal.get("remaining", 0)) <= 0 or run_state.bankroll < total_price + price:
+				if int(deal.get("remaining", 0)) <= 0 or run_state.wager_capacity_for_game(get_id(), environment) < total_price + price:
 					continue
 				available_indices.append(deal_index)
 				total_price += price
@@ -557,9 +558,9 @@ func surface_action_command(surface_action: String, index: int, _confirm_request
 				"message": "The master button starts a four-column dispense cycle.",
 			}
 		PULL_TAB_COLLECT_TRAY_ACTION:
-			return _collect_tray_surface_command(machine, ui_state, environment)
+			return _collect_tray_surface_command(machine, ui_state, run_state, environment)
 		"pull_tab_reveal_next":
-			return _reveal_next_command(machine, ui_state)
+			return _reveal_next_command(machine, ui_state, run_state, environment)
 		PULL_TAB_FILE_TICKET_ACTION:
 			return _file_ticket_command(machine, ui_state)
 		"pull_tab_prev":
@@ -573,6 +574,29 @@ func surface_action_command(surface_action: String, index: int, _confirm_request
 		PULL_TAB_AUTO_OPEN_ACTION:
 			return _toggle_auto_open_command(machine, ui_state)
 	return {"handled": false}
+
+
+func checkpoint_surface_ui_state(ui_state: Dictionary, run_state: RunState, environment: Dictionary) -> void:
+	var reveals := _pt_copy_dict(ui_state.get("pull_tab_reveals", {}))
+	if reveals.is_empty():
+		return
+	var machine := _ensure_machine_state(run_state, environment, true)
+	var tickets := _ticket_array(machine.get("ticket_stack", []))
+	var changed := false
+	for index in range(tickets.size()):
+		var ticket: Dictionary = tickets[index]
+		var ticket_id := str(ticket.get("id", ""))
+		var rows := _pt_copy_array(ticket.get("rows", []))
+		var revealed := clampi(int(reveals.get(ticket_id, ticket.get("revealed_count", 0))), 0, rows.size())
+		if revealed == int(ticket.get("revealed_count", 0)):
+			continue
+		ticket["revealed_count"] = revealed
+		ticket["fully_revealed"] = revealed >= rows.size()
+		tickets[index] = ticket
+		changed = true
+	if changed:
+		machine["ticket_stack"] = tickets
+		_write_machine_state(environment, machine, run_state)
 
 
 func surface_needs_auto_tick(ui_state: Dictionary, _run_state: RunState, _environment: Dictionary) -> bool:
@@ -603,10 +627,10 @@ func surface_auto_action_command(ui_state: Dictionary, _run_state: RunState, env
 	var ticket_id := str(ticket.get("id", ""))
 	var rows := _array_view(ticket.get("rows", []))
 	var reveals_value: Variant = ui_state.get("pull_tab_reveals", {})
-	var revealed_count := 0
+	var revealed_count := clampi(int(ticket.get("revealed_count", 0)), 0, rows.size())
 	if typeof(reveals_value) == TYPE_DICTIONARY:
-		revealed_count = clampi(int((reveals_value as Dictionary).get(ticket_id, 0)), 0, rows.size())
-	var command := _file_ticket_command(machine, ui_state) if not ticket_id.is_empty() and revealed_count >= rows.size() else _reveal_next_command(machine, ui_state)
+		revealed_count = maxi(revealed_count, clampi(int((reveals_value as Dictionary).get(ticket_id, 0)), 0, rows.size()))
+	var command := _file_ticket_command(machine, ui_state) if not ticket_id.is_empty() and revealed_count >= rows.size() else _reveal_next_command(machine, ui_state, _run_state, environment)
 	var command_state: Dictionary = command.get("ui_state", {}) if typeof(command.get("ui_state", {})) == TYPE_DICTIONARY else ui_state.duplicate(true)
 	command_state["pull_tab_auto_open_active"] = true
 	var action_delay := PULL_TAB_FILE_DURATION_MSEC if str(command.get("action_id", "")) == SORT_TICKET_ACTION else PULL_TAB_REVEAL_TOTAL_MSEC
@@ -657,7 +681,7 @@ func resolve_with_context(action_id: String, _stake: int, run_state: RunState, e
 		return _empty_result(action_id, 0, environment, "The pull-tab box is empty.")
 	var deal: Dictionary = deals[deal_index]
 	var price := maxi(1, int(deal.get("price", 1)))
-	if run_state.bankroll < price:
+	if run_state.wager_capacity_for_game(get_id(), environment) < price:
 		return _empty_result(action_id, price, environment, "Not enough bankroll for this ticket.")
 	if int(deal.get("remaining", 0)) <= 0:
 		return _empty_result(action_id, price, environment, "%s is sold out." % str(deal.get("display_name", "That deal")))
@@ -667,6 +691,7 @@ func resolve_with_context(action_id: String, _stake: int, run_state: RunState, e
 	if ticket.is_empty():
 		return _empty_result(action_id, price, environment, "%s is sold out." % str(deal.get("display_name", "That deal")))
 	ticket["deal_index"] = deal_index
+	_stamp_ticket_origin(ticket, environment)
 	var item_effects := _apply_pull_tab_item_purchase_effects(machine, deal, ticket, deal_index, run_state)
 	deals[deal_index] = deal
 	machine["deals"] = deals
@@ -677,7 +702,7 @@ func resolve_with_context(action_id: String, _stake: int, run_state: RunState, e
 	machine["last_ticket_id"] = str(ticket.get("id", ""))
 	machine["last_deal_id"] = str(deal.get("id", ""))
 	_queue_dispense_events(machine, [ticket], [deal_index], GameModule.deterministic_time_msec(run_state, ui_state))
-	_write_machine_state(environment, machine)
+	_write_machine_state(environment, machine, run_state)
 
 	var payout := int(ticket.get("payout", 0))
 	var bankroll_delta := -price
@@ -777,12 +802,13 @@ func _resolve_ticket_set_purchase(run_state: RunState, environment: Dictionary, 
 		var price := maxi(1, int(deal.get("price", 1)))
 		if int(deal.get("remaining", 0)) <= 0:
 			continue
-		if run_state.bankroll < total_price + price:
+		if run_state.wager_capacity_for_game(get_id(), environment) < total_price + price:
 			continue
 		var ticket := _draw_ticket_from_deal(deal, machine, false)
 		if ticket.is_empty():
 			continue
 		ticket["deal_index"] = deal_index
+		_stamp_ticket_origin(ticket, environment)
 		var item_effects := _apply_pull_tab_item_purchase_effects(machine, deal, ticket, deal_index, run_state)
 		if bool(item_effects.get("tarot_applied", false)):
 			tarot_applied_count += 1
@@ -804,7 +830,7 @@ func _resolve_ticket_set_purchase(run_state: RunState, environment: Dictionary, 
 	machine["last_ticket_id"] = str((tickets[tickets.size() - 1] as Dictionary).get("id", ""))
 	machine["last_deal_id"] = str((ticket_deals[ticket_deals.size() - 1] as Dictionary).get("id", ""))
 	_queue_dispense_events(machine, tickets, deal_indices, GameModule.deterministic_time_msec(run_state, ui_state))
-	_write_machine_state(environment, machine)
+	_write_machine_state(environment, machine, run_state)
 
 	var story_log: Array = []
 	var ticket_numbers: Array = []
@@ -884,7 +910,7 @@ func _resolve_ticket_set_purchase(run_state: RunState, environment: Dictionary, 
 	return result
 
 
-func _collect_tray_surface_command(machine: Dictionary, ui_state: Dictionary, environment: Dictionary) -> Dictionary:
+func _collect_tray_surface_command(machine: Dictionary, ui_state: Dictionary, run_state: RunState, environment: Dictionary) -> Dictionary:
 	var tray_stack := _ticket_array(machine.get("tray_stack", []))
 	if tray_stack.is_empty():
 		return GameModule.surface_command({
@@ -895,7 +921,7 @@ func _collect_tray_surface_command(machine: Dictionary, ui_state: Dictionary, en
 		play_stack.push_front((tray_stack[i] as Dictionary).duplicate(true))
 	machine["ticket_stack"] = play_stack
 	machine["tray_stack"] = []
-	_write_machine_state(environment, machine)
+	_write_machine_state(environment, machine, run_state)
 	var next_state := ui_state.duplicate(true)
 	next_state["pull_tab_stack_cursor"] = 0
 	return GameModule.surface_command({
@@ -927,7 +953,7 @@ func _resolve_ticket_sort(run_state: RunState, environment: Dictionary, rng: Rng
 		var ticket: Dictionary = stack[index]
 		var ticket_id := str(ticket.get("id", ""))
 		var rows := _pt_copy_array(ticket.get("rows", []))
-		if int(reveals.get(ticket_id, 0)) < rows.size():
+		if maxi(int(ticket.get("revealed_count", 0)), int(reveals.get(ticket_id, 0))) < rows.size():
 			continue
 		stack.remove_at(index)
 		ticket["sorted"] = true
@@ -939,7 +965,7 @@ func _resolve_ticket_sort(run_state: RunState, environment: Dictionary, rng: Rng
 		pile.append(ticket)
 		machine[pile_name] = pile
 		machine["ticket_stack"] = stack
-		_write_machine_state(environment, machine)
+		_write_machine_state(environment, machine, run_state)
 		var deal := _deal_for_ticket(machine, ticket)
 		var message := "%s %s is a dead pull. It drops into the loser pile." % [str(ticket.get("display_name", "Pull-tab")), str(ticket.get("ticket_number", ""))]
 		if payout > 0:
@@ -1018,7 +1044,7 @@ func _resolve_winner_redemption(run_state: RunState, environment: Dictionary, rn
 	machine["redeemed_pile"] = _redeemed_ticket_history(machine, winner_pile)
 	machine["last_redeemed_payout"] = payout
 	machine["last_redeemed_count"] = winner_pile.size()
-	_write_machine_state(environment, machine)
+	_write_machine_state(environment, machine, run_state)
 	var story_entry := {
 		"type": "pull_tab_redeem",
 		"game_id": get_id(),
@@ -1113,7 +1139,7 @@ func _pull_tab_surface_time_msec(ui_state: Dictionary) -> int:
 	return int(ui_state.get("drunk_scaled_surface_time_msec", ui_state.get("surface_time_msec", Time.get_ticks_msec())))
 
 
-func _reveal_next_command(machine: Dictionary, ui_state: Dictionary) -> Dictionary:
+func _reveal_next_command(machine: Dictionary, ui_state: Dictionary, _run_state: RunState, _environment: Dictionary) -> Dictionary:
 	var next_state := ui_state.duplicate(true)
 	var reveals := _pt_copy_dict(next_state.get("pull_tab_reveals", {}))
 	var tickets := _ticket_array(machine.get("ticket_stack", []))
@@ -1132,7 +1158,7 @@ func _reveal_next_command(machine: Dictionary, ui_state: Dictionary) -> Dictiona
 		if ticket_id.is_empty():
 			continue
 		var rows := _pt_copy_array(ticket.get("rows", []))
-		var revealed := clampi(int(reveals.get(ticket_id, 0)), 0, rows.size())
+		var revealed := maxi(clampi(int(ticket.get("revealed_count", 0)), 0, rows.size()), clampi(int(reveals.get(ticket_id, 0)), 0, rows.size()))
 		if revealed >= rows.size():
 			continue
 		reveals[ticket_id] = rows.size()
@@ -1171,7 +1197,7 @@ func _file_ticket_command(machine: Dictionary, ui_state: Dictionary) -> Dictiona
 		if ticket_id.is_empty():
 			continue
 		var rows := _pt_copy_array(ticket.get("rows", []))
-		if int(reveals.get(ticket_id, 0)) < rows.size():
+		if maxi(int(ticket.get("revealed_count", 0)), int(reveals.get(ticket_id, 0))) < rows.size():
 			continue
 		var payout := int(ticket.get("payout", 0))
 		var pile_name := "winner_pile" if payout > 0 else "loser_pile"
@@ -1239,7 +1265,7 @@ func _next_unopened_command(machine: Dictionary, ui_state: Dictionary) -> Dictio
 		var ticket: Dictionary = tickets[index]
 		var ticket_id := str(ticket.get("id", ""))
 		var rows := _pt_copy_array(ticket.get("rows", []))
-		if int(reveals.get(ticket_id, 0)) < rows.size():
+		if maxi(int(ticket.get("revealed_count", 0)), int(reveals.get(ticket_id, 0))) < rows.size():
 			return _stack_cursor_command(machine, ui_state, index)
 	return {"handled": true, "message": "Every ticket in the stack has been opened."}
 
@@ -1371,8 +1397,10 @@ func _ensure_machine_state(run_state: RunState, environment: Dictionary, persist
 			if persist:
 				game_states[get_id()] = existing
 				environment["game_states"] = game_states
+		_sync_portable_ticket_state(run_state, environment, existing)
 		return existing
 	var generated := _generate_machine_state(run_state, environment)
+	_sync_portable_ticket_state(run_state, environment, generated)
 	if persist:
 		game_states[get_id()] = generated
 		environment["game_states"] = game_states
@@ -1385,8 +1413,12 @@ func _read_machine_state(run_state: RunState, environment: Dictionary) -> Dictio
 		var game_states: Dictionary = game_states_value
 		var machine_value: Variant = game_states.get(get_id(), {})
 		if typeof(machine_value) == TYPE_DICTIONARY and not (machine_value as Dictionary).is_empty():
-			return machine_value as Dictionary
-	return _generate_machine_state(run_state, environment)
+			var machine := machine_value as Dictionary
+			_sync_portable_ticket_state(run_state, environment, machine)
+			return machine
+	var generated := _generate_machine_state(run_state, environment)
+	_sync_portable_ticket_state(run_state, environment, generated)
+	return generated
 
 
 func _game_states_for_write(environment: Dictionary) -> Dictionary:
@@ -1412,10 +1444,55 @@ func _machine_state_needs_normalization(machine: Dictionary) -> bool:
 	return false
 
 
-func _write_machine_state(environment: Dictionary, machine: Dictionary) -> void:
+func _write_machine_state(environment: Dictionary, machine: Dictionary, run_state: RunState = null) -> void:
 	var game_states := _game_states_for_write(environment)
 	game_states[get_id()] = machine
 	environment["game_states"] = game_states
+	if run_state != null:
+		run_state.remember_portable_ticket_state(get_id(), environment, _portable_ticket_player_state(machine))
+
+
+func _sync_portable_ticket_state(run_state: RunState, environment: Dictionary, machine: Dictionary) -> void:
+	if run_state == null:
+		return
+	var portable := run_state.portable_ticket_state(get_id(), environment)
+	if portable.is_empty():
+		_stamp_machine_ticket_origins(machine, environment)
+		var legacy := _portable_ticket_player_state(machine)
+		if _portable_ticket_count(legacy) > 0:
+			run_state.remember_portable_ticket_state(get_id(), environment, legacy)
+			portable = run_state.portable_ticket_state(get_id(), environment)
+	if portable.is_empty():
+		return
+	for field in ["tray_stack", "ticket_stack", "winner_pile", "loser_pile"]:
+		machine[field] = portable.get(field, [])
+
+
+func _portable_ticket_player_state(machine: Dictionary) -> Dictionary:
+	return {
+		"tray_stack": _array_view(machine.get("tray_stack", [])),
+		"ticket_stack": _array_view(machine.get("ticket_stack", [])),
+		"winner_pile": _array_view(machine.get("winner_pile", [])),
+		"loser_pile": _array_view(machine.get("loser_pile", [])),
+	}
+
+
+func _portable_ticket_count(state: Dictionary) -> int:
+	return _array_size(state.get("tray_stack", [])) + _array_size(state.get("ticket_stack", [])) + _array_size(state.get("winner_pile", [])) + _array_size(state.get("loser_pile", []))
+
+
+func _stamp_ticket_origin(ticket: Dictionary, environment: Dictionary) -> void:
+	ticket["origin_key"] = RunState.portable_ticket_origin_key(environment)
+	ticket["origin_name"] = RunState.portable_ticket_origin_name(environment)
+	ticket["origin_environment_id"] = str(environment.get("id", "")).strip_edges()
+	ticket["origin_world_node_id"] = str(environment.get("world_node_id", "")).strip_edges()
+
+
+func _stamp_machine_ticket_origins(machine: Dictionary, environment: Dictionary) -> void:
+	for field in ["tray_stack", "ticket_stack", "winner_pile", "loser_pile"]:
+		for ticket_value in _array_view(machine.get(field, [])):
+			if typeof(ticket_value) == TYPE_DICTIONARY:
+				_stamp_ticket_origin(ticket_value as Dictionary, environment)
 
 
 func _normalize_machine_state(machine: Dictionary) -> Dictionary:
@@ -2090,7 +2167,7 @@ func _deal_view_list(machine: Dictionary, run_state: RunState, item_surface: Dic
 			"remaining": remaining,
 			"sold": int(deal.get("sold", 0)),
 			"initial_removed_count": int(deal.get("initial_removed_count", 0)),
-			"enabled": run_state != null and run_state.bankroll >= price and remaining > 0,
+			"enabled": run_state != null and run_state.wager_capacity_for_game(get_id()) >= price and remaining > 0,
 			"prize_rows": _prize_rows_for_view(prizes),
 			"palette": _pt_copy_dict(deal.get("palette", {})),
 			"xray_target": _xray_target_for_deal(machine, index) if bool(item_surface.get("xray_available", false)) else {},
@@ -2198,7 +2275,7 @@ func _ticket_stack_view(machine: Dictionary, ui_state: Dictionary) -> Array:
 			continue
 		var ticket_id := str(ticket.get("id", ""))
 		var rows := _pt_copy_array(ticket.get("rows", []))
-		var revealed := clampi(int(reveals.get(ticket_id, 0)), 0, rows.size())
+		var revealed := maxi(clampi(int(ticket.get("revealed_count", 0)), 0, rows.size()), clampi(int(reveals.get(ticket_id, 0)), 0, rows.size()))
 		var deal := _deal_for_ticket(machine, ticket)
 		var ticket_view := _ticket_display_payload(ticket, deal)
 		ticket_view["stack_index"] = source_index
@@ -2395,7 +2472,7 @@ func _pull_tab_bankroll_zero_failure_deferred(machine: Dictionary) -> bool:
 func _should_defer_bankroll_zero_failure(run_state: RunState, bankroll_delta: int, machine: Dictionary) -> bool:
 	if run_state == null:
 		return false
-	return run_state.bankroll + bankroll_delta <= 0 and _pull_tab_bankroll_zero_failure_deferred(machine)
+	return run_state.wager_balance_for_game(get_id()) + bankroll_delta <= 0 and _pull_tab_bankroll_zero_failure_deferred(machine)
 
 
 func _ticket_payout_total(tickets: Array) -> int:
@@ -2773,6 +2850,8 @@ func _ticket_dict(value: Variant) -> Dictionary:
 	ticket_data["tainted"] = bool(ticket_data.get("tainted", false))
 	ticket_data["fake"] = bool(ticket_data.get("fake", false))
 	ticket_data["sorted"] = bool(ticket_data.get("sorted", false))
+	ticket_data["revealed_count"] = clampi(int(ticket_data.get("revealed_count", 0)), 0, _array_size(ticket_data.get("rows", [])))
+	ticket_data["fully_revealed"] = bool(ticket_data.get("fully_revealed", false)) or int(ticket_data.get("revealed_count", 0)) >= _array_size(ticket_data.get("rows", []))
 	return ticket_data
 
 

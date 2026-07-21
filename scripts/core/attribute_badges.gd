@@ -429,6 +429,8 @@ static func _class_value_text(kind: String, class_id: String) -> String:
 			return "Dmg"
 		"item:permanent":
 			return "Perm"
+		"item:ticket pile":
+			return "Tix"
 		"item:temporary":
 			return "Temp"
 		"route:low":

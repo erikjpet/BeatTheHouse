@@ -284,7 +284,7 @@ func inventory_item_detail(item_id: String) -> Dictionary:
 	var item_context := definition.duplicate(true)
 	item_context["item_class"] = item_class
 	item_context["sale_price"] = sale_price
-	return {
+	var detail := {
 		"id": item_id,
 		"display_name": str(definition.get("display_name", item_id.capitalize())),
 		"description": str(definition.get("description", "")),
@@ -305,6 +305,60 @@ func inventory_item_detail(item_id: String) -> Dictionary:
 		"repair_cost": maxi(0, int(effect.get("repair_cost", 0))),
 		"repair_to_item": str(effect.get("repair_to_item", "")),
 	}
+	if run_state != null and RunState.is_portable_ticket_pile_item(item_id):
+		var summary := run_state.portable_ticket_pile_summary(item_id)
+		var ticket_count := maxi(0, int(summary.get("ticket_count", 0)))
+		var unplayed_count := maxi(0, int(summary.get("unplayed_count", 0)))
+		var winner_count := maxi(0, int(summary.get("winner_count", 0)))
+		var face_value := maxi(0, int(summary.get("face_value", 0)))
+		var origin_count := maxi(0, int(summary.get("origin_count", 0)))
+		var status := "%d ticket%s from %d location%s" % [ticket_count, "" if ticket_count == 1 else "s", origin_count, "" if origin_count == 1 else "s"]
+		if unplayed_count > 0:
+			status += "; %d still unopened" % unplayed_count
+		if winner_count > 0:
+			status += "; %d revealed winner%s worth $%d" % [winner_count, "" if winner_count == 1 else "s", face_value]
+		detail["description"] = status + ". Return winners to their purchase location, or let Sal cash revealed winners for 20%."
+		detail["ticket_count"] = ticket_count
+		detail["ticket_origin_count"] = origin_count
+		detail["ticket_origin_names"] = summary.get("origin_names", [])
+		detail["ticket_unplayed_count"] = unplayed_count
+		detail["ticket_winner_count"] = winner_count
+		detail["ticket_face_value"] = face_value
+		detail["sal_cash_value"] = maxi(0, int(summary.get("sal_cash_value", 0)))
+	return detail
+
+
+func portable_ticket_cash_options(lender_id: String = SALS_PAWN_COUNTER_ID) -> Array:
+	if not is_ready():
+		return []
+	var definition := hook_definition("lender", lender_id)
+	if definition.is_empty() or str(definition.get("lender_type", "")) != "pawn":
+		return []
+	var result: Array = []
+	for item_id in [RunState.PULL_TAB_PILE_ITEM_ID, RunState.SCRATCH_TICKET_PILE_ITEM_ID]:
+		if not run_state.inventory.has(item_id):
+			continue
+		var summary := run_state.portable_ticket_pile_summary(item_id)
+		var cash_value := maxi(0, int(summary.get("sal_cash_value", 0)))
+		if int(summary.get("winner_count", 0)) <= 0 or cash_value <= 0:
+			continue
+		result.append({
+			"item_id": item_id,
+			"ticket_count": maxi(0, int(summary.get("winner_count", 0))),
+			"face_value": maxi(0, int(summary.get("face_value", 0))),
+			"cash_value": cash_value,
+		})
+	return result
+
+
+func _portable_ticket_cashout_available() -> bool:
+	if run_state == null:
+		return false
+	for item_id in [RunState.PULL_TAB_PILE_ITEM_ID, RunState.SCRATCH_TICKET_PILE_ITEM_ID]:
+		var summary := run_state.portable_ticket_pile_summary(item_id)
+		if int(summary.get("winner_count", 0)) > 0 and int(summary.get("sal_cash_value", 0)) > 0:
+			return true
+	return false
 
 
 func pawn_quote_options(lender_id: String = SALS_PAWN_COUNTER_ID) -> Array:
@@ -325,6 +379,44 @@ func pawn_inventory_item(item_id: String, lender_id: String = SALS_PAWN_COUNTER_
 	var status := hook_run_status("lender", definition)
 	if not bool(status.get("available", true)):
 		return _service_error(str(status.get("disabled_reason", "Pawn counter is not available.")))
+	if RunState.is_portable_ticket_pile_item(item_id):
+		var surrendered := run_state.surrender_portable_ticket_winners_to_sal(item_id)
+		if not bool(surrendered.get("ok", false)):
+			return _service_error(str(surrendered.get("message", "Sal cannot cash those tickets.")))
+		var ticket_count := maxi(0, int(surrendered.get("ticket_count", 0)))
+		var face_value := maxi(0, int(surrendered.get("face_value", 0)))
+		var cash_value := maxi(0, int(surrendered.get("cash_value", 0)))
+		var item_name := str(inventory_item_detail(item_id).get("display_name", item_id.replace("_", " ").capitalize()))
+		var message := "Sal takes %d revealed winner%s from your %s and pays $%d (20%% of $%d)." % [ticket_count, "" if ticket_count == 1 else "s", item_name, cash_value, face_value]
+		var deltas := GameModule.empty_result_deltas()
+		deltas["bankroll_delta"] = cash_value
+		deltas["messages"] = [message]
+		deltas["story_log"] = [{
+			"type": "portable_ticket_sal_cashout",
+			"lender_id": lender_id,
+			"item_id": item_id,
+			"ticket_count": ticket_count,
+			"face_value": face_value,
+			"bankroll_delta": cash_value,
+			"environment_id": str(run_state.current_environment.get("id", "")),
+		}]
+		var cashout_result := GameModule.build_action_result({
+			"ok": true,
+			"type": "portable_ticket_sal_cashout",
+			"source_id": lender_id,
+			"action_id": "cash_portable_tickets",
+			"action_kind": "legal",
+			"stake": 0,
+			"bankroll_delta": cash_value,
+			"payout": cash_value,
+			"won": cash_value > 0,
+			"deltas": deltas,
+			"environment_id": str(run_state.current_environment.get("id", "")),
+			"message": message,
+		})
+		run_state.advance_environment_turns(1)
+		GameModule.apply_result(run_state, cashout_result)
+		return _service_success(cashout_result)
 	var quote := _pawn_quote_for_item(item_id, _copy_dict(definition.get("debt_profile", {})))
 	if quote.is_empty():
 		return _service_error("Sal needs a sellable item as collateral.")
@@ -1083,11 +1175,11 @@ func _dynamic_lender_status(definition: Dictionary, base_status: Dictionary) -> 
 	var profile := _copy_dict(definition.get("debt_profile", {}))
 	if lender_type == "pawn":
 		var collateral := _pawn_collateral_option(profile)
-		if collateral.is_empty():
+		if collateral.is_empty() and not _portable_ticket_cashout_available():
 			status["available"] = false
 			status["disabled_reason"] = "Sal needs a sellable item as collateral."
 			status["availability_class"] = RunState.AVAILABILITY_TRANSIENT_BLOCKED
-		else:
+		elif not collateral.is_empty():
 			status["collateral_item_id"] = str(collateral.get("item_id", ""))
 			status["collateral_item_name"] = str(collateral.get("item_name", ""))
 			status["loan_amount"] = int(collateral.get("loan_amount", 0))

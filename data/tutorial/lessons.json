@@ -61,7 +61,7 @@
 			"state_predicates": [{"path": "run.grand_casino_chips", "op": "gt", "value": 0}]
 		},
 		"anchor": {"kind": "hud_element", "id": "chips"},
-		"copy": "Grand Casino tables use chips. Exchange cash at the Cage.",
+		"copy": "Grand Casino tables spend chips first, then cash. Winnings return as chips for the Cage.",
 		"completion": {"type": "any_action"}
 	},
 	{
@@ -342,7 +342,7 @@
 			"state_predicates": [{"path": "run.grand_casino_chips", "op": "gt", "value": 0}]
 		},
 		"anchor": {"kind": "hud_element", "id": "chips"},
-		"copy": "Chips and cash stay separate. This Main Floor slot uses cash.",
+		"copy": "Grand Casino games spend chips, then cash. Redeem every payout at Linda's Cage.",
 		"completion": {"type": "explicit_ok"}
 	},
 	{

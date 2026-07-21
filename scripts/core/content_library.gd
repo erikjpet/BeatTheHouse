@@ -611,6 +611,8 @@ static func _normalize_event_definition(event_def: Dictionary) -> Dictionary:
 		trigger_type = "manual"
 	trigger["type"] = trigger_type
 	match trigger_type:
+		"travel", "random":
+			trigger["chance_percent"] = clampi(int(trigger.get("chance_percent", 100)), 0, 100)
 		"heat_threshold":
 			trigger["level"] = clampi(int(trigger.get("level", 65)), 0, 100)
 		"table_approach":
@@ -1080,6 +1082,12 @@ func _validate_event_definitions() -> void:
 		var trigger_type := str(trigger.get("type", "manual")).strip_edges()
 		if not ["manual", "timed", "travel", "random", "heat_threshold", "table_approach"].has(trigger_type):
 			validation_errors.append("events %s has unknown trigger type: %s" % [event_id, trigger_type])
+		if ["travel", "random"].has(trigger_type):
+			var chance_value: Variant = trigger.get("chance_percent", 100)
+			if not _variant_is_number(chance_value):
+				validation_errors.append("events %s %s chance_percent must be numeric." % [event_id, trigger_type])
+			elif int(chance_value) < 0 or int(chance_value) > 100:
+				validation_errors.append("events %s %s chance_percent must be between 0 and 100." % [event_id, trigger_type])
 		if trigger_type == "heat_threshold":
 			var level := int(trigger.get("level", 0))
 			if level <= 0 or level > 100:

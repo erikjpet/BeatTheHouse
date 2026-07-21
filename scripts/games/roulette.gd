@@ -1418,7 +1418,7 @@ func _validate_roulette_bets(bets: Array, table: Dictionary, run_state: RunState
 	var max_table := int(rules.get("table_max", 100))
 	if total > max_table:
 		return {"ok": false, "message": "That exceeds the table maximum."}
-	var bankroll := maxi(0, run_state.wager_balance_for_game(get_id(), environment) if run_state != null else total)
+	var bankroll := maxi(0, run_state.wager_capacity_for_game(get_id(), environment) if run_state != null else total)
 	if total > bankroll:
 		return {"ok": false, "message": "You do not have enough bankroll for those roulette chips."}
 	var outside_min := int(rules.get("outside_min_each", 1))
@@ -3078,7 +3078,7 @@ func _roulette_result_settled_for_surface(last_result: Dictionary, phase_status:
 func _roulette_visible_bankroll(run_state: RunState, environment: Dictionary, last_result: Dictionary, result_settled: bool) -> int:
 	if run_state == null:
 		return 0
-	var bankroll := run_state.wager_balance_for_game(get_id(), environment)
+	var bankroll := run_state.wager_capacity_for_game(get_id(), environment)
 	if result_settled or last_result.is_empty():
 		return bankroll
 	return bankroll - _roulette_pending_display_bankroll_delta(last_result)

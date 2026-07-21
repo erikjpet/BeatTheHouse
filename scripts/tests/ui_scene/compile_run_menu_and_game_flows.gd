@@ -726,8 +726,11 @@ func _check_all_in_wager_confirmation_recovery(app: Control) -> bool:
 	if int(refund_machine_after.get("spin_count", 0)) != refunded_spin_count_before + 1:
 		push_error("The guaranteed-refund slot spin did not execute after skipping confirmation.")
 		return false
-	if int(run_state.bankroll) <= 0:
-		push_error("Coin-Return Shim did not preserve bankroll after the all-in slot spin.")
+	if not run_state.has_liquid_run_funds():
+		push_error("Coin-Return Shim did not preserve spendable funds after the all-in slot spin.")
+		return false
+	if run_state.grand_casino_game_uses_chips("slot", run_state.current_environment) and run_state.grand_casino_chips <= 0:
+		push_error("Grand Casino Coin-Return Shim refund did not return as a redeemable chip.")
 		return false
 	app.call("return_to_main_menu")
 	await process_frame
@@ -1784,17 +1787,20 @@ func _check_grand_casino_spatial_ui(app: Control) -> bool:
 		push_error("Grand Casino High-Limit door did not expose Silver-or-better card access without a buy-in.")
 		return false
 	var table_game: GameModule = app.call("_game_module_for_id", "blackjack")
-	if table_game == null or not bool(app.call("_casino_table_wager_needs_top_up", table_game, 25)):
-		push_error("Grand Casino table did not detect a short chip balance for automatic top-up.")
+	if table_game == null:
+		push_error("Grand Casino spatial UI could not load blackjack for cash-fallback coverage.")
 		return false
-	app.set("current_game", table_game)
-	app.call("_show_casino_chip_top_up_popup", "play_basic", 25, true, false)
-	var top_up_overlay: Dictionary = app.call("current_overlay_state_snapshot")
-	if not bool(top_up_overlay.get("event_choice_popup_visible", false)) or str(top_up_overlay.get("event_choice_popup_type", "")) != "casino_chip_top_up":
-		push_error("Grand Casino table chip shortage did not open the automatic top-up decision.")
+	var funding_run := _grand_casino_fixture_run("GC-SPATIAL-CASH-FALLBACK", run_state.current_environment)
+	funding_run.bankroll = 100
+	funding_run.grand_casino_chips = 5
+	var funding: Dictionary = funding_run.fund_grand_casino_table_wager(table_game.get_id(), 25, funding_run.current_environment)
+	if not bool(funding.get("ok", false)) or int(funding.get("existing_chips_used", -1)) != 5 or int(funding.get("cash_used", -1)) != 20 or funding_run.bankroll != 80 or funding_run.grand_casino_chips != 25:
+		push_error("Grand Casino table UI path did not cover a short chip balance directly from cash.")
 		return false
-	app.call("cancel_pending_casino_chip_top_up")
-	app.set("current_game", null)
+	var funding_overlay: Dictionary = app.call("current_overlay_state_snapshot")
+	if bool(funding_overlay.get("event_choice_popup_visible", false)) and str(funding_overlay.get("event_choice_popup_type", "")) == "casino_chip_top_up":
+		push_error("Grand Casino cash fallback still opened the removed chip top-up decision.")
+		return false
 	return true
 
 

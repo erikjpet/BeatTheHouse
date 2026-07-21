@@ -300,6 +300,9 @@ func _render_detail(item: Dictionary, merchant_mode: bool = false) -> void:
 		var pawn_action := str(item.get("pawn_action", ""))
 		if pawn_action == "pawn":
 			FoundationWidgets.add_card_button(_detail_box, "Pawn for $%d" % int(item.get("loan_amount", 0)), Callable(self, "_emit_pawn_requested").bind(str(item.get("lender_id", "")), str(item.get("id", ""))), false, true)
+		elif pawn_action == "cash_ticket_pile":
+			FoundationWidgets.add_detail_row(_detail_box, "Winning value", "$%d" % int(item.get("ticket_face_value", 0)))
+			FoundationWidgets.add_card_button(_detail_box, "Cash winners for $%d" % int(item.get("sal_cash_value", 0)), Callable(self, "_emit_pawn_requested").bind(str(item.get("lender_id", "")), str(item.get("id", ""))), false, true)
 		elif pawn_action == "redeem":
 			var turns := maxi(0, int(item.get("turns_remaining", 0)))
 			FoundationWidgets.add_detail_row(_detail_box, "Due", "Now" if turns <= 0 else "%d turn%s" % [turns, "" if turns == 1 else "s"])

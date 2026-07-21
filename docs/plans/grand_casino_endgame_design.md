@@ -70,9 +70,10 @@ fourth room.
 
 ## Chips and the Cage
 
-Grand Casino blackjack, baccarat, and roulette use `grand_casino_chips`.
-Machines and bar dice use bankroll cash. Chip purchase and cash-out are 1:1
-transfers, so neither operation changes Grand Casino net winnings. The clean
+Every Grand Casino game uses `grand_casino_chips` for payouts. Wagers consume
+the chip rack first and seamlessly cover any shortage from bankroll cash;
+outside the Grand Casino those same games remain cash-only. Chip purchase and
+cash-out are 1:1 transfers, so neither operation changes Grand Casino net winnings. The clean
 objective always measures:
 
 ```text

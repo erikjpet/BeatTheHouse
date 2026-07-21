@@ -2140,10 +2140,81 @@ func _check_grand_casino_chips_and_cage(library: ContentLibrary, main_archetype:
 	var buy_result := run_state.buy_grand_casino_chips(40, run_state.grand_casino_chip_exchange_rate())
 	if not bool(buy_result.get("ok", false)) or run_state.bankroll != 60 or run_state.grand_casino_chips != 40 or run_state.grand_casino_total_money() != 100:
 		failures.append("Grand Casino 1:1 table buy-in did not conserve cash plus chips.")
-	if run_state.wager_balance_for_game("blackjack", run_state.current_environment) != 40 or run_state.wager_capacity_for_game("blackjack", run_state.current_environment) != 100:
-		failures.append("Grand Casino table balance did not keep actual chips separate from explicitly convertible cash capacity.")
+	if run_state.wager_balance_for_game("blackjack", run_state.current_environment) != 100 or run_state.wager_capacity_for_game("blackjack", run_state.current_environment) != 100:
+		failures.append("Grand Casino table wager balance did not include cash available for seamless chip fallback.")
 	if run_state.run_spending_score != score_before:
 		failures.append("Grand Casino chip buy-in incorrectly counted a currency transfer as score spending.")
+	var fallback_run: RunState = RunStateScript.new()
+	fallback_run.start_new("GC-CASH-FALLBACK")
+	fallback_run.set_environment(environment.to_dict())
+	fallback_run.bankroll = 50
+	fallback_run.grand_casino_chips = 5
+	var fallback_total_before := fallback_run.grand_casino_total_money()
+	var fallback_funding := fallback_run.fund_grand_casino_table_wager("roulette", 20, fallback_run.current_environment)
+	if not bool(fallback_funding.get("ok", false)) \
+		or int(fallback_funding.get("existing_chips_used", -1)) != 5 \
+		or int(fallback_funding.get("chips_bought", -1)) != 15 \
+		or int(fallback_funding.get("cash_used", -1)) != 15 \
+		or fallback_run.bankroll != 35 \
+		or fallback_run.grand_casino_chips != 20 \
+		or fallback_run.grand_casino_total_money() != fallback_total_before:
+		failures.append("Grand Casino wager funding did not spend existing chips first and cover only the shortage with cash.")
+	var winning_deltas := GameModule.empty_result_deltas()
+	winning_deltas["bankroll_delta"] = 20
+	var winning_result := GameModule.build_action_result({
+		"ok": true,
+		"type": "game_action",
+		"source_id": "roulette",
+		"game_id": "roulette",
+		"action_id": "cash_fallback_win_fixture",
+		"action_kind": "legal",
+		"stake": 20,
+		"deltas": winning_deltas,
+		"environment_id": str(fallback_run.current_environment.get("id", "")),
+		"message": "Cash fallback win fixture.",
+	})
+	GameModule.apply_result(fallback_run, winning_result)
+	if fallback_run.bankroll != 35 or fallback_run.grand_casino_chips != 40 or fallback_run.grand_casino_total_money() != fallback_total_before + 20:
+		failures.append("A cash-funded Grand Casino winning wager did not return the stake and winnings as redeemable chips.")
+	var direct_run: RunState = RunStateScript.new()
+	direct_run.start_new("GC-CASH-FALLBACK-DIRECT")
+	direct_run.set_environment(environment.to_dict())
+	direct_run.bankroll = 50
+	direct_run.grand_casino_chips = 0
+	var direct_deltas := GameModule.empty_result_deltas()
+	direct_deltas["bankroll_delta"] = 10
+	var direct_result := GameModule.build_action_result({
+		"ok": true,
+		"type": "game_action",
+		"source_id": "roulette",
+		"game_id": "roulette",
+		"action_id": "direct_cash_fallback_fixture",
+		"action_kind": "legal",
+		"stake": 10,
+		"deltas": direct_deltas,
+		"environment_id": str(direct_run.current_environment.get("id", "")),
+		"message": "Direct cash fallback fixture.",
+	})
+	GameModule.apply_result(direct_run, direct_result)
+	if direct_run.bankroll != 40 or direct_run.grand_casino_chips != 20 or int(direct_result.get("wager_cash_used", 0)) != 10:
+		failures.append("Direct Grand Casino settlement did not fund a zero-chip cash wager before returning its gross payout as chips.")
+	var machine_funding_run: RunState = RunStateScript.new()
+	machine_funding_run.start_new("GC-MACHINE-CASH-FALLBACK")
+	machine_funding_run.set_environment(environment.to_dict())
+	machine_funding_run.bankroll = 20
+	machine_funding_run.grand_casino_chips = 0
+	var machine_funding := machine_funding_run.fund_grand_casino_table_wager("slot", 10, machine_funding_run.current_environment)
+	if not bool(machine_funding.get("ok", false)) or int(machine_funding.get("cash_used", -1)) != 10 or machine_funding_run.bankroll != 10 or machine_funding_run.grand_casino_chips != 10:
+		failures.append("A Grand Casino machine did not use seamless cash fallback when its chip rack was empty.")
+	var insufficient_run: RunState = RunStateScript.new()
+	insufficient_run.start_new("GC-CASH-FALLBACK-INSUFFICIENT")
+	insufficient_run.set_environment(environment.to_dict())
+	insufficient_run.bankroll = 4
+	insufficient_run.grand_casino_chips = 3
+	var insufficient_before := insufficient_run.grand_casino_total_money()
+	var insufficient_funding := insufficient_run.fund_grand_casino_table_wager("baccarat", 8, insufficient_run.current_environment)
+	if bool(insufficient_funding.get("ok", true)) or insufficient_run.grand_casino_total_money() != insufficient_before:
+		failures.append("Grand Casino cash fallback accepted an unaffordable wager or mutated funds on rejection.")
 
 	for table_id in RunState.GRAND_CASINO_TABLE_GAME_IDS:
 		var table_deltas := GameModule.empty_result_deltas()
@@ -2178,13 +2249,13 @@ func _check_grand_casino_chips_and_cage(library: ContentLibrary, main_archetype:
 		"stake": 1,
 		"deltas": machine_deltas,
 		"environment_id": str(run_state.current_environment.get("id", "")),
-		"message": "Casino machine cash fixture.",
+		"message": "Casino machine chip fixture.",
 	})
 	var machine_cash_before := run_state.bankroll
 	var machine_chips_before := run_state.grand_casino_chips
 	GameModule.apply_result(run_state, machine_result)
-	if run_state.bankroll != machine_cash_before + 7 or run_state.grand_casino_chips != machine_chips_before or machine_result.has("chips_delta"):
-		failures.append("Grand Casino machine result did not remain cash-only.")
+	if run_state.bankroll != machine_cash_before or run_state.grand_casino_chips != machine_chips_before + 7 or int(machine_result.get("chips_delta", 0)) != 7 or str(machine_result.get("currency", "")) != "chips":
+		failures.append("Grand Casino machine payout did not remain in chips for Cage redemption.")
 
 	var outside_environment := run_state.current_environment.duplicate(true)
 	outside_environment["id"] = "outside_table_currency_fixture"
@@ -2210,6 +2281,25 @@ func _check_grand_casino_chips_and_cage(library: ContentLibrary, main_archetype:
 	GameModule.apply_result(run_state, outside_result)
 	if run_state.bankroll != outside_cash_before - 3 or run_state.grand_casino_chips != outside_chips_before or outside_result.has("chips_delta"):
 		failures.append("Blackjack outside the Grand Casino did not remain cash-only.")
+	var outside_machine_deltas := GameModule.empty_result_deltas()
+	outside_machine_deltas["bankroll_delta"] = 4
+	var outside_machine_result := GameModule.build_action_result({
+		"ok": true,
+		"type": "game_action",
+		"source_id": "slot",
+		"game_id": "slot",
+		"action_id": "outside_machine_cash_fixture",
+		"action_kind": "legal",
+		"stake": 2,
+		"deltas": outside_machine_deltas,
+		"environment_id": "outside_table_currency_fixture",
+		"message": "Outside machine cash fixture.",
+	})
+	outside_cash_before = run_state.bankroll
+	outside_chips_before = run_state.grand_casino_chips
+	GameModule.apply_result(run_state, outside_machine_result)
+	if run_state.bankroll != outside_cash_before + 4 or run_state.grand_casino_chips != outside_chips_before or outside_machine_result.has("chips_delta"):
+		failures.append("Slot play outside the Grand Casino did not remain cash-only.")
 
 	run_state.set_environment(environment.to_dict())
 	var saved := run_state.to_dict()
@@ -2767,6 +2857,7 @@ func _check_broke_pull_tab_deferred_terminal_boundary(library: ContentLibrary, f
 	stored_machine["winner_pile"] = []
 	states["pull_tabs"] = stored_machine
 	run_state.current_environment["game_states"] = states
+	run_state.capture_portable_ticket_piles_from_environment(run_state.current_environment)
 	var failed_status := RunTerminalEvaluatorScript.evaluate_and_apply(run_state, library)
 	if not bool(failed_status.get("failed", false)) or run_state.run_failure_reason != RunState.FAILURE_BANKROLL_ZERO:
 		failures.append("Clearing zero-bankroll pull-tab recovery did not fail at the action boundary with bankroll-zero reason.")

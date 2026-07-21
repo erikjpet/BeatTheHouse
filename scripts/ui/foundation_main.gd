@@ -174,10 +174,6 @@ var pending_wager_confirm_skip_stake_validation := false
 var pending_wager_confirm_preserve_surface_ui_state := false
 var pending_wager_confirm_stake: int = 0
 var pending_wager_confirm_source_game_id: String = ""
-var pending_chip_top_up_action_id: String = ""
-var pending_chip_top_up_skip_stake_validation := false
-var pending_chip_top_up_preserve_surface_ui_state := false
-var pending_chip_top_up_required: int = 0
 var pending_all_in_result_terminal_check := false
 var terminal_evaluator_call_count := 0
 var presented_bankroll_hold_active := false
@@ -634,9 +630,9 @@ func enter_game(game_id: String) -> void:
 	if game_module == null:
 		_show_message("This game is not ready here.")
 		return
+	_reset_game_surface_runtime_state()
 	current_game = game_module
 	_sync_presented_bankroll_to_actual()
-	_reset_game_surface_runtime_state()
 	selected_action_category = ACTION_CATEGORY_GAMES
 	_set_current_screen(SCREEN_GAME)
 	focus_interactable_object("game:%s" % game_id)
@@ -653,6 +649,7 @@ func enter_game(game_id: String) -> void:
 func _enter_grand_casino_duel_surface() -> bool:
 	if run_state == null or not run_state.grand_casino_duel_active(run_state.current_environment):
 		return false
+	_reset_game_surface_runtime_state()
 	if str(run_state.current_environment.get("archetype_id", "")) != RunState.GRAND_CASINO_BACK_ROOM_ARCHETYPE_ID:
 		if not generator.enter_grand_casino_room(run_state, RunState.GRAND_CASINO_BACK_ROOM_ARCHETYPE_ID):
 			return false
@@ -665,7 +662,6 @@ func _enter_grand_casino_duel_surface() -> bool:
 		return false
 	current_game = game_module
 	_sync_presented_bankroll_to_actual()
-	_reset_game_surface_runtime_state()
 	selected_action_category = ACTION_CATEGORY_GAMES
 	_set_current_screen(SCREEN_GAME)
 	focus_interactable_object("game:%s" % duel_game_id)
@@ -772,7 +768,8 @@ func _on_game_surface_action_blocked(_action: String, reason: String) -> void:
 func _on_game_surface_pointer_action(action: String, index: int, phase: String, board_position: Vector2) -> void:
 	if current_game == null or _guard_player_input_route(false, action):
 		return
-	var ui_state := _current_game_surface_ui_state()
+	var lightweight_state := current_game.surface_pointer_uses_lightweight_ui_state(action)
+	var ui_state := game_surface_ui_state.duplicate(false) if lightweight_state else _current_game_surface_ui_state()
 	ui_state["selected_action_id"] = selected_action_id
 	ui_state["selected_action_kind"] = selected_action_kind
 	ui_state["selected_stake"] = _current_selected_stake()
@@ -797,7 +794,7 @@ func _apply_game_surface_command(command: Dictionary, index: int = -1, confirm_r
 	if not game_surface_auto_resolving and _guard_player_input_route():
 		return true
 	if command.has("ui_state") and typeof(command.get("ui_state")) == TYPE_DICTIONARY:
-		_store_current_game_surface_ui_state(command.get("ui_state", {}) as Dictionary)
+		_store_current_game_surface_ui_state(command.get("ui_state", {}) as Dictionary, not bool(command.get("surface_transient", false)))
 	if command.has("selected_index") and game_surface_canvas != null:
 		game_surface_canvas.set_selected_index(int(command.get("selected_index", index)))
 	if command.has("stake_multiplier"):
@@ -821,6 +818,10 @@ func _apply_game_surface_command(command: Dictionary, index: int = -1, confirm_r
 			return true
 	elif command.has("message"):
 		_show_message(str(command.get("message", "")))
+	var surface_patch_value: Variant = command.get("surface_state_patch", {})
+	if typeof(surface_patch_value) == TYPE_DICTIONARY and not (surface_patch_value as Dictionary).is_empty() and game_surface_canvas != null:
+		game_surface_canvas.apply_surface_state_patch(surface_patch_value as Dictionary)
+		return true
 	if environment_changed:
 		_autosave_foundation_run("Autosaved.")
 	_refresh()
@@ -830,6 +831,12 @@ func _apply_game_surface_command(command: Dictionary, index: int = -1, confirm_r
 func _play_surface_command_audio(command: Dictionary, fallback_index: int) -> void:
 	if game_surface_canvas == null:
 		return
+	var loop_stop := str(command.get("surface_audio_loop_stop", "")).strip_edges()
+	if not loop_stop.is_empty():
+		game_surface_canvas.surface_stop_audio_loop(loop_stop)
+	var loop_start := str(command.get("surface_audio_loop_start", "")).strip_edges()
+	if not loop_start.is_empty():
+		game_surface_canvas.surface_start_audio_loop(loop_start, float(command.get("surface_audio_loop_volume_db", -10.0)), float(command.get("surface_audio_loop_pitch", 1.0)))
 	var cue_id := str(command.get("surface_audio_cue", "")).strip_edges()
 	if cue_id.is_empty():
 		return
@@ -1141,7 +1148,13 @@ func _current_game_surface_auto_tick_state() -> Dictionary:
 	return _apply_game_surface_time_fields(ui_state)
 
 
+func _checkpoint_current_game_surface_ui_state() -> void:
+	if current_game != null and run_state != null and not run_state.current_environment.is_empty() and not game_surface_ui_state.is_empty():
+		current_game.checkpoint_surface_ui_state(game_surface_ui_state, run_state, run_state.current_environment)
+
+
 func _reset_game_surface_runtime_state() -> void:
+	_checkpoint_current_game_surface_ui_state()
 	if game_surface_canvas != null:
 		game_surface_canvas.clear_runtime_state()
 	_stop_surface_feature_music()
@@ -1494,6 +1507,7 @@ func resolve_event_choice(event_id: String, choice_id: String) -> void:
 	)
 	_show_item_found_popups(result, inventory_before)
 	_start_conclusion_animation(result, popup_rect)
+	_play_result_drink_audio_cue(result)
 	if was_triggered_popup and run_state != null:
 		run_state.complete_triggered_event_resolution(event_id)
 	if resolving_talk and run_state != null:
@@ -1765,6 +1779,12 @@ func _enqueue_triggered_events_for_context(source: String, context: Dictionary, 
 		if trigger_type == "random":
 			candidates.append({"id": event_id, "trigger": trigger, "event": event_definition})
 		elif ["timed", "travel"].has(trigger_type):
+			if trigger_type == "travel":
+				var travel_chance := clampi(int(trigger.get("chance_percent", 100)), 0, 100)
+				if travel_chance <= 0:
+					continue
+				if travel_chance < 100 and cadence_rng.randi_range(1, 100) > travel_chance:
+					continue
 			if run_state.enqueue_triggered_event(event_id, source, _event_context_with_environment(context, environment), _triggered_entry_overrides(event_definition)):
 				run_state.event_cadence_note_event_enqueued(event_id, not run_state.event_cadence_event_bypasses_budget(event_id, trigger_type, source, event_definition))
 				enqueued = true
@@ -2323,6 +2343,7 @@ func _resolve_dialogue_choice(entry: Dictionary, choice_id: String) -> void:
 	var result := event_module.resolve(run_state, event_environment, choice_id)
 	_show_item_found_popups(result, inventory_before)
 	_start_conclusion_animation(result, _talk_dock_panel_rect())
+	_play_result_drink_audio_cue(result)
 	if bool(result.get("ok", false)):
 		var goto_id := str(choice_definition.get("goto", "")).strip_edges()
 		if not goto_id.is_empty():
@@ -2539,6 +2560,7 @@ func apply_item_offer(item_id: String) -> bool:
 		return false
 	var result: Dictionary = resolved.get("result", {})
 	last_item_result = result.duplicate(true)
+	_play_result_drink_audio_cue(result)
 	last_game_result = {}
 	last_hook_result = {}
 	_clear_selected_item_offer()
@@ -2774,6 +2796,7 @@ func _use_active_item(item_id: String) -> bool:
 		if bool(result.get("ok", false)):
 			run_state.advance_environment_turns(1)
 		GameModule.apply_result(run_state, result, run_state.create_rng("active_item_apply:%s" % item_id))
+		_play_result_drink_audio_cue(result)
 		last_item_result = result.duplicate(true)
 		last_game_result = {}
 		last_hook_result = {}
@@ -2805,6 +2828,7 @@ func _use_global_active_item(item_id: String, detail: Dictionary) -> bool:
 		"action_id": "use_active_item",
 		"action_kind": "item",
 	}, run_state)
+	_play_result_drink_audio_cue(result)
 	last_item_result = result.duplicate(true)
 	last_game_result = {}
 	last_hook_result = {}
@@ -2988,6 +3012,7 @@ func use_service_hook(service_id: String) -> bool:
 		return false
 	var result: Dictionary = resolved.get("result", {})
 	_show_item_found_popups(result, inventory_before)
+	_play_result_drink_audio_cue(result)
 	last_hook_result = result.duplicate(true)
 	_clear_selected_service_hook()
 	_set_current_screen(SCREEN_RESULT)
@@ -3180,6 +3205,7 @@ func use_game_environment_hook(game_id: String, hook_id: String, action_id: Stri
 	if bool(result.get("ok", false)):
 		run_state.advance_environment_turns(1)
 		GameModule.apply_result(run_state, result, rng)
+		_play_result_drink_audio_cue(result)
 		_advance_alcohol_absorption()
 	last_hook_result = result.duplicate(true)
 	last_game_result = {}
@@ -3219,6 +3245,7 @@ func _autosave_foundation_run(status_text: String = "Autosaved.", force: bool = 
 func _write_foundation_run_save(status_text: String = "Autosaved.") -> bool:
 	if run_state == null:
 		return false
+	_checkpoint_current_game_surface_ui_state()
 	_evaluate_run_terminal_state()
 	if save_service == null:
 		save_status_message = "Autosave unavailable."
@@ -3415,7 +3442,6 @@ func _travel_to(target_id: String, target_label: String, choice_data: Dictionary
 		return
 	if travel_transition_active:
 		return
-	var previous_environment := run_state.current_environment.duplicate(true)
 	var ignored_talk_entries: Array = []
 	if choice_data.is_empty():
 		choice_data = _travel_choice(target_id)
@@ -3433,6 +3459,10 @@ func _travel_to(target_id: String, target_label: String, choice_data: Dictionary
 		_show_message("That interior casino door is not available.")
 		_refresh()
 		return
+	# Persist UI-local ticket reveals while the module still points at the
+	# environment where the tickets were purchased.
+	_reset_game_surface_runtime_state()
+	var previous_environment := run_state.current_environment.duplicate(true)
 	ignored_talk_entries = _pending_talk_entries()
 	if world_map_overlay != null:
 		world_map_overlay.visible = false
@@ -3476,7 +3506,6 @@ func _travel_to(target_id: String, target_label: String, choice_data: Dictionary
 	run_state.clear_closing_time_state()
 	var travel_decay := run_state.finish_travel_suspicion_decay(travel_heat)
 	_update_procedural_music()
-	_reset_game_surface_runtime_state()
 	current_game = null
 	last_game_result = {}
 	last_item_result = {}
@@ -6306,7 +6335,7 @@ func _add_current_game_panel(environment: Dictionary) -> void:
 		description_label.clip_text = true
 		actions_list.add_child(description_label)
 	var balance_text := "Current bankroll: %d" % _presented_bankroll()
-	if run_state.grand_casino_table_uses_chips(current_game.get_id(), environment):
+	if run_state.grand_casino_game_uses_chips(current_game.get_id(), environment):
 		balance_text = "Current chips: %d  |  Cash: %d" % [run_state.grand_casino_chips, run_state.bankroll]
 	actions_list.add_child(_label(balance_text, 12))
 	actions_list.add_child(_button("Back to environment", Callable(self, "back_to_environment")))
@@ -6352,10 +6381,6 @@ func _resolve_game_action(action_id: String, skip_stake_validation: bool = false
 		_refresh_stake_input()
 		return
 	var wager_cost := _wager_cost_for_action(action_id, stake)
-	if not wager_confirmed and _casino_table_wager_needs_top_up(current_game, wager_cost):
-		_pause_repeating_surface_action_for_wager_confirmation()
-		_show_casino_chip_top_up_popup(action_id, wager_cost, skip_stake_validation, preserve_surface_ui_state)
-		return
 	if not wager_confirmed and _wager_needs_final_bankroll_confirmation(current_game, action_id, stake, wager_cost, _current_game_surface_ui_state()):
 		_pause_repeating_surface_action_for_wager_confirmation()
 		_show_wager_confirmation_popup(action_id, stake, wager_cost, skip_stake_validation, preserve_surface_ui_state)
@@ -6363,6 +6388,13 @@ func _resolve_game_action(action_id: String, skip_stake_validation: bool = false
 	var confirmed_all_in_wager := wager_confirmed and _wager_needs_final_bankroll_confirmation(current_game, action_id, stake, wager_cost, _current_game_surface_ui_state())
 	if confirmed_all_in_wager:
 		run_state.begin_deferred_bankroll_zero_resolution()
+	var wager_funding := run_state.fund_grand_casino_wager(current_game.get_id(), wager_cost, run_state.current_environment)
+	if not bool(wager_funding.get("ok", false)):
+		if confirmed_all_in_wager:
+			run_state.clear_deferred_bankroll_zero_resolution()
+		_show_message(str(wager_funding.get("message", "You do not have enough cash or chips for that wager.")))
+		_refresh()
+		return
 	var bankroll_before_result := run_state.bankroll
 	var rng := run_state.create_rng()
 	var result := current_game.resolve_with_context(action_id, stake, run_state, run_state.current_environment, rng, _current_game_surface_ui_state())
@@ -6396,6 +6428,7 @@ func _resolve_game_action(action_id: String, skip_stake_validation: bool = false
 		if not outcome_schedule.is_empty():
 			last_game_result["music_outcome_schedule"] = outcome_schedule
 	_play_result_surface_audio_cue(result)
+	_play_result_drink_audio_cue(result)
 	pending_all_in_result_terminal_check = confirmed_all_in_wager and bool(result.get("ok", false)) and run_state != null and not run_state.has_liquid_run_funds() and not bool(result.get("won", false))
 	if runtime_tick_in_progress:
 		if game_surface_canvas != null and current_screen == SCREEN_GAME:
@@ -6435,6 +6468,22 @@ func _play_result_surface_audio_cue(result: Dictionary) -> void:
 	game_surface_canvas.surface_play_audio_cue(cue_id, context)
 
 
+func _play_result_drink_audio_cue(result: Dictionary) -> void:
+	if not _result_consumed_alcohol(result) or game_surface_canvas == null:
+		return
+	game_surface_canvas.surface_play_audio_cue("drink_consumed", {
+		"action": "drink_consumed",
+		"volume_db": -2.0,
+	})
+
+
+func _result_consumed_alcohol(result: Dictionary) -> bool:
+	if result.is_empty() or not bool(result.get("ok", false)):
+		return false
+	var deltas: Dictionary = result.get("deltas", {}) if typeof(result.get("deltas", {})) == TYPE_DICTIONARY else {}
+	return int(deltas.get("alcohol_intake", result.get("alcohol_intake", 0))) > 0
+
+
 func confirm_pending_wager_action() -> void:
 	if pending_wager_confirm_action_id.is_empty():
 		_hide_event_choice_popup()
@@ -6456,89 +6505,6 @@ func cancel_pending_wager_confirmation() -> void:
 	_hide_event_choice_popup()
 	_show_message("All-in wager canceled. Choose a smaller stake or another action.")
 	_refresh()
-
-
-func _casino_table_wager_needs_top_up(game: GameModule, wager_cost: int) -> bool:
-	return run_state != null \
-		and game != null \
-		and wager_cost > run_state.grand_casino_chips \
-		and run_state.grand_casino_table_uses_chips(game.get_id(), run_state.current_environment)
-
-
-func _show_casino_chip_top_up_popup(action_id: String, wager_cost: int, skip_stake_validation: bool, preserve_surface_ui_state: bool) -> void:
-	var required := maxi(0, wager_cost - run_state.grand_casino_chips)
-	var rate := run_state.grand_casino_chip_exchange_rate()
-	var cash_cost := required * rate
-	if required <= 0:
-		_resolve_game_action(action_id, skip_stake_validation, preserve_surface_ui_state)
-		return
-	if cash_cost > run_state.bankroll:
-		_show_message("That wager needs %d more chips, but you only have $%d cash available to convert." % [required, run_state.bankroll])
-		_refresh()
-		return
-	if event_choice_popup_overlay == null or event_choice_popup_choices_list == null:
-		_show_message("Buy %d chips for $%d at the Cage before placing this wager." % [required, cash_cost])
-		return
-	pending_chip_top_up_action_id = action_id
-	pending_chip_top_up_skip_stake_validation = skip_stake_validation
-	pending_chip_top_up_preserve_surface_ui_state = preserve_surface_ui_state
-	pending_chip_top_up_required = required
-	pending_event_choice_popup_event_id = ""
-	pending_event_choice_popup_focus_choice_id = ""
-	pending_event_choice_popup_snapshot = {
-		"visible": true,
-		"blocking": true,
-		"popup_type": "casino_chip_top_up",
-		"interaction_kind": "blocking_decision",
-		"dismissible": false,
-		"required_chips": required,
-		"cash_cost": cash_cost,
-		"summary": "This table needs %d more chips. Convert $%d at the casino's %d:1 rate?" % [required, cash_cost, rate],
-	}
-	if event_choice_popup_title_label != null:
-		event_choice_popup_title_label.text = "Buy Chips"
-	if event_choice_popup_summary_label != null:
-		event_choice_popup_summary_label.text = str(pending_event_choice_popup_snapshot.get("summary", ""))
-	_clear(event_choice_popup_choices_list)
-	_add_wager_confirmation_card("Buy %d chips" % required, "Convert only the amount this wager needs.", "", Callable(self, "confirm_pending_casino_chip_top_up"), true)
-	_add_wager_confirmation_card("Cancel", "Return to the table without placing the wager.", "", Callable(self, "cancel_pending_casino_chip_top_up"), false)
-	event_choice_popup_overlay.visible = true
-	event_choice_popup_overlay.move_to_front()
-	_position_event_choice_popup()
-	call_deferred("_position_event_choice_popup")
-
-
-func confirm_pending_casino_chip_top_up() -> void:
-	if pending_chip_top_up_action_id.is_empty() or run_state == null:
-		_hide_event_choice_popup()
-		return
-	var action_id := pending_chip_top_up_action_id
-	var skip_stake_validation := pending_chip_top_up_skip_stake_validation
-	var preserve_surface_ui_state := pending_chip_top_up_preserve_surface_ui_state
-	var required := pending_chip_top_up_required
-	_clear_pending_chip_top_up()
-	_hide_event_choice_popup()
-	var result := run_state.buy_grand_casino_chips(required, run_state.grand_casino_chip_exchange_rate())
-	if not bool(result.get("ok", false)):
-		_show_message(str(result.get("message", "The table buy-in could not be completed.")))
-		_refresh()
-		return
-	_show_message(str(result.get("message", "The table converted your cash to chips.")))
-	_resolve_game_action(action_id, skip_stake_validation, preserve_surface_ui_state)
-
-
-func cancel_pending_casino_chip_top_up() -> void:
-	_clear_pending_chip_top_up()
-	_hide_event_choice_popup()
-	_show_message("Table buy-in canceled. Choose a smaller wager or visit the Cage.")
-	_refresh()
-
-
-func _clear_pending_chip_top_up() -> void:
-	pending_chip_top_up_action_id = ""
-	pending_chip_top_up_skip_stake_validation = false
-	pending_chip_top_up_preserve_surface_ui_state = false
-	pending_chip_top_up_required = 0
 
 
 func _wager_cost_for_action(action_id: String, stake: int) -> int:
@@ -7589,6 +7555,7 @@ func _use_cage_players_card_comp(comp_id: String) -> void:
 	var result := run_state.grand_casino_players_card_comp_result(comp_id)
 	if bool(result.get("ok", false)):
 		GameModule.apply_result(run_state, result)
+		_play_result_drink_audio_cue(result)
 		var duration_minutes := maxi(0, int(result.get("duration_minutes", 0)))
 		if duration_minutes > 0:
 			run_state.advance_game_clock_minutes(duration_minutes)
@@ -8152,8 +8119,8 @@ func _current_game_embeds_result_feedback() -> bool:
 	return FoundationActionViewModelScript.current_game_embeds_result_feedback(self)
 
 
-func _store_current_game_surface_ui_state(ui_state: Dictionary) -> void:
-	game_surface_ui_state = ui_state.duplicate(true)
+func _store_current_game_surface_ui_state(ui_state: Dictionary, deep_copy: bool = true) -> void:
+	game_surface_ui_state = ui_state.duplicate(deep_copy)
 
 
 func _preserved_game_surface_preference_state(ui_state: Dictionary) -> Dictionary:
@@ -10902,7 +10869,6 @@ func _hide_event_choice_popup(clear_snapshot: bool = true) -> void:
 	if clear_snapshot:
 		pending_event_choice_popup_snapshot = {}
 	_clear_pending_wager_confirmation()
-	_clear_pending_chip_top_up()
 
 
 func _event_choice_popup_is_visible() -> bool:

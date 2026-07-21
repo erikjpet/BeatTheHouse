@@ -333,6 +333,7 @@
       "contraband": "class_item",
       "damaged": "class_item",
       "permanent": "class_item",
+	  "ticket pile": "class_item",
       "temporary": "class_item"
     },
     "event": {

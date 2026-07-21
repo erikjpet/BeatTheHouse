@@ -59,7 +59,7 @@ func actions(run_state: RunState, environment: Dictionary) -> Dictionary:
 	_ensure_machine_state(run_state, environment, run_state.create_rng("slot_actions") if run_state != null else null)
 	var machine: Dictionary = StateScript.read_machine(environment, get_id())
 	var selected: Dictionary = StateScript.selected_bet(machine)
-	var ceiling := run_state.wager_stake_ceiling(maxi(20, run_state.bankroll)) if run_state != null else 20
+	var ceiling := run_state.wager_stake_ceiling(maxi(20, run_state.wager_capacity_for_game(get_id(), environment))) if run_state != null else 20
 	return {
 		"ok": true,
 		"type": "game_actions",

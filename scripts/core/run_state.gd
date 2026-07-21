@@ -60,6 +60,7 @@ const GRAND_CASINO_ARCHETYPE_IDS := [
 	GRAND_CASINO_BACK_ROOM_ARCHETYPE_ID,
 ]
 const GRAND_CASINO_TABLE_GAME_IDS := ["blackjack", "baccarat", "roulette"]
+const GRAND_CASINO_CHIP_GAME_IDS := ["blackjack", "baccarat", "roulette", "slot", "video_poker", "pull_tabs", "bar_dice"]
 const GRAND_CASINO_OBJECTIVE_ID := "grand_casino_demo_bankroll"
 const GRAND_CASINO_SHOWDOWN_EVENT_ID := "the_house_calls"
 const GRAND_CASINO_HIGH_ROLLER_EVENT_ID := "high_roller_cashout"
@@ -185,6 +186,17 @@ const CREW_MAX_LOAN_LOCATIONS := 3
 const LENDER_REPAY_HEAT_REDUCTION := 3
 const SALS_PAWN_COUNTER_ID := "sals_pawn_counter"
 const PAWN_SHOP_ARCHETYPE_ID := "pawn_shop"
+const PULL_TAB_PILE_ITEM_ID := "pile_of_pull_tabs"
+const SCRATCH_TICKET_PILE_ITEM_ID := "pile_of_scratch_tickets"
+const PORTABLE_TICKET_KINDS := ["pull_tabs", "scratch_tickets"]
+const PORTABLE_TICKET_ITEM_IDS := {
+	"pull_tabs": PULL_TAB_PILE_ITEM_ID,
+	"scratch_tickets": SCRATCH_TICKET_PILE_ITEM_ID,
+}
+const PORTABLE_TICKET_PLAYER_FIELDS := {
+	"pull_tabs": ["tray_stack", "ticket_stack", "winner_pile", "loser_pile"],
+	"scratch_tickets": ["active_ticket", "winner_pile", "loser_pile", "pending_penalty", "penalty_shields_remaining", "last_settled_ticket", "last_settled_pile", "last_file_id", "file_started_msec"],
+}
 
 var seed_text: String = ""
 var seed_value: int = 1
@@ -195,6 +207,7 @@ var bankroll: int = DEFAULT_BANKROLL
 var grand_casino_chips: int = 0
 var economic_state: String = "stable"
 var inventory: Array = []
+var portable_ticket_piles: Dictionary = {}
 var active_item_id: String = ""
 var debt: Array = []
 var sals_forfeited_item_ids: Array = []
@@ -260,6 +273,7 @@ func start_new(p_seed_text: String = "FOUNDATION-SEED", p_challenge_config: Dict
 	grand_casino_chips = 0
 	economic_state = "stable"
 	inventory = []
+	portable_ticket_piles = {}
 	active_item_id = ""
 	debt = []
 	sals_forfeited_item_ids = []
@@ -1173,10 +1187,12 @@ func _event_cadence_visit_key(environment_data: Dictionary) -> String:
 func set_environment(environment_data: Dictionary) -> void:
 	var previous_was_grand_casino := _is_grand_casino_environment(current_environment)
 	if not current_environment.is_empty():
+		capture_portable_ticket_piles_from_environment(current_environment)
 		_store_current_local_suspicion()
 		environment_history.append(_environment_history_entry(current_environment))
 		_compact_environment_history()
 	current_environment = _normalize_environment(environment_data)
+	restore_portable_ticket_piles_to_environment(current_environment)
 	current_environment["entered_game_clock_minutes"] = maxi(0, game_clock_minutes)
 	if _is_grand_casino_environment(current_environment):
 		store_grand_casino_room_environment(current_environment)
@@ -1399,7 +1415,11 @@ func change_bankroll(delta: int, defer_bankroll_zero: bool = false) -> void:
 
 
 func grand_casino_table_uses_chips(game_id: String, environment: Dictionary = {}) -> bool:
-	if not GRAND_CASINO_TABLE_GAME_IDS.has(game_id):
+	return grand_casino_game_uses_chips(game_id, environment)
+
+
+func grand_casino_game_uses_chips(game_id: String, environment: Dictionary = {}) -> bool:
+	if not GRAND_CASINO_CHIP_GAME_IDS.has(game_id):
 		return false
 	var source := current_environment if environment.is_empty() else environment
 	var archetype_id := str(source.get("archetype_id", ""))
@@ -1412,11 +1432,59 @@ func grand_casino_table_uses_chips(game_id: String, environment: Dictionary = {}
 
 
 func wager_balance_for_game(game_id: String, environment: Dictionary = {}) -> int:
-	return grand_casino_chips if grand_casino_table_uses_chips(game_id, environment) else bankroll
+	return bankroll + grand_casino_chips if grand_casino_game_uses_chips(game_id, environment) else bankroll
 
 
 func wager_capacity_for_game(game_id: String, environment: Dictionary = {}) -> int:
-	return bankroll + grand_casino_chips if grand_casino_table_uses_chips(game_id, environment) else bankroll
+	return bankroll + grand_casino_chips if grand_casino_game_uses_chips(game_id, environment) else bankroll
+
+
+func fund_grand_casino_wager(game_id: String, wager_amount: int, environment: Dictionary = {}) -> Dictionary:
+	var amount := maxi(0, wager_amount)
+	if amount <= 0 or not grand_casino_game_uses_chips(game_id, environment):
+		return {
+			"ok": true,
+			"wager": amount,
+			"existing_chips_used": 0,
+			"chips_bought": 0,
+			"cash_used": 0,
+		}
+	var existing_chips_used := mini(grand_casino_chips, amount)
+	var required_chips := maxi(0, amount - grand_casino_chips)
+	if required_chips <= 0:
+		return {
+			"ok": true,
+			"wager": amount,
+			"existing_chips_used": existing_chips_used,
+			"chips_bought": 0,
+			"cash_used": 0,
+		}
+	var rate := grand_casino_chip_exchange_rate()
+	var cash_cost := required_chips * rate
+	if cash_cost > bankroll:
+		return {
+			"ok": false,
+			"wager": amount,
+			"existing_chips_used": existing_chips_used,
+			"chips_bought": 0,
+			"cash_used": 0,
+			"message": "That wager needs %d chips plus $%d cash, but you only have $%d cash available." % [existing_chips_used, cash_cost, bankroll],
+		}
+	var buy_result := buy_grand_casino_chips(required_chips, rate)
+	if not bool(buy_result.get("ok", false)):
+		return buy_result
+	return {
+		"ok": true,
+		"wager": amount,
+		"existing_chips_used": existing_chips_used,
+		"chips_bought": required_chips,
+		"cash_used": cash_cost,
+		"message": "Wagered %d chips first and covered the remaining %d with cash." % [existing_chips_used, required_chips],
+	}
+
+
+func fund_grand_casino_table_wager(game_id: String, wager_amount: int, environment: Dictionary = {}) -> Dictionary:
+	return fund_grand_casino_wager(game_id, wager_amount, environment)
 
 
 func grand_casino_total_money() -> int:
@@ -1546,9 +1614,16 @@ func grand_casino_players_card_comp_result(comp_id: String) -> Dictionary:
 func route_grand_casino_game_currency(result: Dictionary, deltas: Dictionary) -> Dictionary:
 	var routed := deltas
 	var game_id := str(result.get("game_id", result.get("source_id", ""))).strip_edges()
-	if not grand_casino_table_uses_chips(game_id):
+	if not grand_casino_game_uses_chips(game_id):
 		return routed
 	var chips_delta := int(routed.get("bankroll_delta", result.get("bankroll_delta", 0)))
+	var funding_amount := _grand_casino_result_wager_funding_amount(result, chips_delta)
+	if funding_amount > grand_casino_chips:
+		var funding := fund_grand_casino_wager(game_id, funding_amount, current_environment)
+		if bool(funding.get("ok", false)):
+			result["wager_existing_chips_used"] = int(funding.get("existing_chips_used", 0))
+			result["wager_chips_bought"] = int(funding.get("chips_bought", 0))
+			result["wager_cash_used"] = int(funding.get("cash_used", 0))
 	routed["bankroll_delta"] = 0
 	routed["chips_delta"] = chips_delta
 	result["bankroll_delta"] = 0
@@ -1557,6 +1632,21 @@ func route_grand_casino_game_currency(result: Dictionary, deltas: Dictionary) ->
 	result["currency"] = "chips"
 	result["deltas"] = routed
 	return routed
+
+
+func _grand_casino_result_wager_funding_amount(result: Dictionary, bankroll_delta: int) -> int:
+	var game_id := str(result.get("game_id", result.get("source_id", ""))).strip_edges()
+	var action_id := str(result.get("action_id", "")).strip_edges()
+	if game_id == "blackjack":
+		if action_id != "blackjack_place_bet":
+			return 0
+		return maxi(0, -bankroll_delta)
+	var wager := maxi(0, int(result.get("stake", 0)))
+	if game_id == "roulette":
+		wager = maxi(wager, int(result.get("roulette_total_wager", 0)))
+	elif game_id == "baccarat":
+		wager = maxi(wager, int(result.get("baccarat_total_wager", 0)))
+	return maxi(wager, maxi(0, -bankroll_delta))
 
 
 func change_grand_casino_chips(delta: int, defer_zero: bool = false) -> void:
@@ -4522,6 +4612,201 @@ func current_demo_victory_message() -> String:
 	return str(demo_objective_status().get("victory_message", "Demo Victory: you beat the house for now."))
 
 
+# Returns the stable purchase-location identity used by portable tickets.
+# World nodes take priority so two instances of the same archetype never share
+# tickets, while fixtures and legacy saves without a map still have a fallback.
+static func portable_ticket_origin_key(environment: Dictionary) -> String:
+	var world_node_id := str(environment.get("world_node_id", "")).strip_edges()
+	if not world_node_id.is_empty():
+		return "world:%s" % world_node_id
+	var environment_id := str(environment.get("id", "")).strip_edges()
+	if not environment_id.is_empty():
+		return "environment:%s" % environment_id
+	var archetype_id := str(environment.get("archetype_id", "")).strip_edges()
+	return "archetype:%s" % archetype_id if not archetype_id.is_empty() else ""
+
+
+static func portable_ticket_origin_name(environment: Dictionary) -> String:
+	var fallback := str(environment.get("archetype_id", environment.get("id", "location"))).replace("_", " ").capitalize()
+	return str(environment.get("display_name", fallback)).strip_edges()
+
+
+static func portable_ticket_kind_for_item(item_id: String) -> String:
+	var clean_id := item_id.strip_edges()
+	for kind_value in PORTABLE_TICKET_ITEM_IDS.keys():
+		var kind := str(kind_value)
+		if str(PORTABLE_TICKET_ITEM_IDS.get(kind, "")) == clean_id:
+			return kind
+	return ""
+
+
+static func is_portable_ticket_pile_item(item_id: String) -> bool:
+	return not portable_ticket_kind_for_item(item_id).is_empty()
+
+
+# Returns the live per-origin ticket record. Callers must not replace fields
+# without following with remember_portable_ticket_state(). Ticket cell/window
+# dictionaries intentionally remain shared so pointer scratching stays O(1).
+func portable_ticket_state(kind: String, environment: Dictionary) -> Dictionary:
+	var clean_kind := kind.strip_edges()
+	var origin_key := portable_ticket_origin_key(environment)
+	if not PORTABLE_TICKET_KINDS.has(clean_kind) or origin_key.is_empty():
+		return {}
+	var origins_value: Variant = portable_ticket_piles.get(clean_kind, {})
+	if typeof(origins_value) != TYPE_DICTIONARY:
+		return {}
+	var state_value: Variant = (origins_value as Dictionary).get(origin_key, {})
+	return state_value as Dictionary if typeof(state_value) == TYPE_DICTIONARY else {}
+
+
+# Stores the player-owned portion of a ticket machine without copying its
+# location-owned stock/deals. This is called at action boundaries, never per
+# frame, and adds/removes the inventory marker as appropriate.
+func remember_portable_ticket_state(kind: String, environment: Dictionary, state: Dictionary) -> void:
+	var clean_kind := kind.strip_edges()
+	var origin_key := portable_ticket_origin_key(environment)
+	if not PORTABLE_TICKET_KINDS.has(clean_kind) or origin_key.is_empty():
+		return
+	# Machine modules hand over their owned arrays at an action boundary. Keep
+	# those live references here; save serialization is the deep-copy boundary.
+	# Re-copying an accumulated ticket pile after every purchase is quadratic.
+	var stored := state.duplicate(false)
+	stored["origin_key"] = origin_key
+	stored["origin_name"] = portable_ticket_origin_name(environment)
+	stored["origin_environment_id"] = str(environment.get("id", "")).strip_edges()
+	stored["origin_world_node_id"] = str(environment.get("world_node_id", "")).strip_edges()
+	stored["origin_archetype_id"] = str(environment.get("archetype_id", "")).strip_edges()
+	var origins_value: Variant = portable_ticket_piles.get(clean_kind, {})
+	var origins: Dictionary = (origins_value as Dictionary).duplicate(false) if typeof(origins_value) == TYPE_DICTIONARY else {}
+	origins[origin_key] = stored
+	portable_ticket_piles[clean_kind] = origins
+	_sync_portable_ticket_inventory_markers()
+
+
+func capture_portable_ticket_piles_from_environment(environment: Dictionary) -> void:
+	if environment.is_empty():
+		return
+	var game_states_value: Variant = environment.get("game_states", {})
+	if typeof(game_states_value) != TYPE_DICTIONARY:
+		return
+	var game_states: Dictionary = game_states_value
+	for kind_value in PORTABLE_TICKET_KINDS:
+		var kind := str(kind_value)
+		var machine_value: Variant = game_states.get(kind, {})
+		if typeof(machine_value) != TYPE_DICTIONARY or (machine_value as Dictionary).is_empty():
+			continue
+		var player_state := _portable_ticket_player_state(kind, machine_value as Dictionary)
+		if _portable_ticket_state_count(kind, player_state) > 0 or not portable_ticket_state(kind, environment).is_empty():
+			remember_portable_ticket_state(kind, environment, player_state)
+
+
+func restore_portable_ticket_piles_to_environment(environment: Dictionary) -> void:
+	if environment.is_empty():
+		return
+	var game_states_value: Variant = environment.get("game_states", {})
+	if typeof(game_states_value) != TYPE_DICTIONARY:
+		return
+	var game_states: Dictionary = (game_states_value as Dictionary).duplicate(false)
+	var changed := false
+	for kind_value in PORTABLE_TICKET_KINDS:
+		var kind := str(kind_value)
+		var portable := portable_ticket_state(kind, environment)
+		if portable.is_empty():
+			continue
+		var machine_value: Variant = game_states.get(kind, {})
+		if typeof(machine_value) != TYPE_DICTIONARY or (machine_value as Dictionary).is_empty():
+			continue
+		var machine: Dictionary = machine_value
+		_apply_portable_ticket_state_to_machine(kind, portable, machine)
+		game_states[kind] = machine
+		changed = true
+	if changed:
+		environment["game_states"] = game_states
+
+
+func portable_ticket_pile_summary(item_id: String) -> Dictionary:
+	var kind := portable_ticket_kind_for_item(item_id)
+	if kind.is_empty():
+		return {}
+	var total_count := 0
+	var unplayed_count := 0
+	var winner_count := 0
+	var face_value := 0
+	var origin_names: Array = []
+	var origins_value: Variant = portable_ticket_piles.get(kind, {})
+	if typeof(origins_value) == TYPE_DICTIONARY:
+		for state_value in (origins_value as Dictionary).values():
+			if typeof(state_value) != TYPE_DICTIONARY:
+				continue
+			var state: Dictionary = state_value
+			var state_count := _portable_ticket_state_count(kind, state)
+			if state_count <= 0:
+				continue
+			total_count += state_count
+			var origin_name := str(state.get("origin_name", "Unknown location")).strip_edges()
+			if not origin_name.is_empty() and not origin_names.has(origin_name):
+				origin_names.append(origin_name)
+			var winners := _portable_ticket_dictionary_array(state.get("winner_pile", []))
+			winner_count += winners.size()
+			for ticket in winners:
+				face_value += maxi(0, int((ticket as Dictionary).get("payout", 0)))
+			if kind == "pull_tabs":
+				unplayed_count += _portable_ticket_array_size(state.get("tray_stack", []))
+				for ticket in _portable_ticket_dictionary_array(state.get("ticket_stack", [])):
+					var ticket_data: Dictionary = ticket
+					var rows := _copy_array(ticket_data.get("rows", []))
+					if int(ticket_data.get("revealed_count", 0)) < rows.size():
+						unplayed_count += 1
+			else:
+				var active := _copy_dict(state.get("active_ticket", {}))
+				if not active.is_empty():
+					unplayed_count += 1
+	return {
+		"kind": kind,
+		"item_id": str(PORTABLE_TICKET_ITEM_IDS.get(kind, "")),
+		"ticket_count": total_count,
+		"unplayed_count": unplayed_count,
+		"winner_count": winner_count,
+		"face_value": face_value,
+		"sal_cash_value": int(face_value / 5),
+		"origin_count": origin_names.size(),
+		"origin_names": origin_names,
+	}
+
+
+# Removes only completed, verified winners. Unknown outcomes and partially
+# opened tickets remain playable, preventing Sal's fallback from becoming an
+# outcome-inspection exploit.
+func surrender_portable_ticket_winners_to_sal(item_id: String) -> Dictionary:
+	var summary := portable_ticket_pile_summary(item_id)
+	var kind := str(summary.get("kind", ""))
+	var face_value := maxi(0, int(summary.get("face_value", 0)))
+	var cash_value := maxi(0, int(summary.get("sal_cash_value", 0)))
+	if kind.is_empty() or int(summary.get("winner_count", 0)) <= 0:
+		return {"ok": false, "message": "There are no revealed winning tickets for Sal to cash."}
+	if cash_value <= 0:
+		return {"ok": false, "message": "Those winning tickets are worth less than $5; Sal cannot pay a whole dollar for them."}
+	var removed_count := 0
+	var origins_value: Variant = portable_ticket_piles.get(kind, {})
+	if typeof(origins_value) == TYPE_DICTIONARY:
+		for origin_key_value in (origins_value as Dictionary).keys():
+			var state_value: Variant = (origins_value as Dictionary).get(origin_key_value, {})
+			if typeof(state_value) != TYPE_DICTIONARY:
+				continue
+			var state: Dictionary = state_value
+			removed_count += _portable_ticket_array_size(state.get("winner_pile", []))
+			state["winner_pile"] = []
+	_sync_portable_ticket_inventory_markers()
+	return {
+		"ok": true,
+		"kind": kind,
+		"item_id": item_id,
+		"ticket_count": removed_count,
+		"face_value": face_value,
+		"cash_value": cash_value,
+	}
+
+
 # Adds a run item if it is not already owned.
 func add_item(item_id: String) -> void:
 	if item_id.is_empty():
@@ -4533,6 +4818,8 @@ func add_item(item_id: String) -> void:
 # Removes a run item and clears the active slot if that item was equipped.
 func remove_item(item_id: String) -> void:
 	if item_id.is_empty():
+		return
+	if is_portable_ticket_pile_item(item_id) and int(portable_ticket_pile_summary(item_id).get("ticket_count", 0)) > 0:
 		return
 	inventory.erase(item_id)
 	if active_item_id == item_id:
@@ -5456,7 +5743,8 @@ func economy_stake_ceiling(base_ceiling: int = -1) -> int:
 # Returns the hard wager ceiling. Economy pressure may recommend smaller bets,
 # but wager actions can still risk any cash the player actually has.
 func wager_stake_ceiling(base_ceiling: int = -1) -> int:
-	var available := bankroll if base_ceiling < 0 else mini(base_ceiling, bankroll)
+	var liquid_balance := bankroll + grand_casino_chips if _is_grand_casino_environment(current_environment) else bankroll
+	var available := liquid_balance if base_ceiling < 0 else mini(base_ceiling, liquid_balance)
 	return maxi(0, available)
 
 
@@ -6590,6 +6878,7 @@ func to_dict() -> Dictionary:
 		"grand_casino_chips": grand_casino_chips,
 		"economic_state": economic_state,
 		"inventory": inventory.duplicate(true),
+		"portable_ticket_piles": portable_ticket_piles.duplicate(true),
 		"active_item_id": active_item_id,
 		"debt": debt.duplicate(true),
 		"sals_forfeited_item_ids": sals_forfeited_item_ids.duplicate(true),
@@ -6652,6 +6941,7 @@ func from_dict(data: Dictionary) -> void:
 	grand_casino_chips = maxi(0, int(data.get("grand_casino_chips", 0)))
 	economic_state = str(data.get("economic_state", "stable"))
 	inventory = _copy_array(data.get("inventory", []))
+	portable_ticket_piles = _normalize_portable_ticket_piles(_copy_dict(data.get("portable_ticket_piles", {})))
 	active_item_id = str(data.get("active_item_id", ""))
 	if not inventory.has(active_item_id):
 		active_item_id = ""
@@ -6664,6 +6954,11 @@ func from_dict(data: Dictionary) -> void:
 	pending_drunk_absorption = _normalize_pending_drunk_absorption(_copy_array(data.get("pending_drunk_absorption", [])))
 	drunk_distortion_suppression_turns = maxi(0, int(data.get("drunk_distortion_suppression_turns", 0)))
 	current_environment = _normalize_environment(_copy_dict(data.get("current_environment", {})))
+	# Import current-room machine ownership from pre-portable saves, then make
+	# the portable record authoritative for the restored surface.
+	capture_portable_ticket_piles_from_environment(current_environment)
+	restore_portable_ticket_piles_to_environment(current_environment)
+	_sync_portable_ticket_inventory_markers()
 	_apply_sals_forfeited_shelf_to_current_environment()
 	world_map = WorldMap.normalize(_copy_dict(data.get("world_map", {})))
 	grand_casino_room_states = _normalize_grand_casino_room_states(_copy_dict(data.get("grand_casino_room_states", {})))
@@ -6959,6 +7254,91 @@ static func _offer_list_item_index(offers: Array, item_id: String) -> int:
 		if typeof(offer_value) == TYPE_DICTIONARY and str((offer_value as Dictionary).get("id", "")) == item_id:
 			return index
 	return -1
+
+
+func _sync_portable_ticket_inventory_markers() -> void:
+	for kind_value in PORTABLE_TICKET_KINDS:
+		var kind := str(kind_value)
+		var item_id := str(PORTABLE_TICKET_ITEM_IDS.get(kind, ""))
+		var count := 0
+		var origins_value: Variant = portable_ticket_piles.get(kind, {})
+		if typeof(origins_value) == TYPE_DICTIONARY:
+			for state_value in (origins_value as Dictionary).values():
+				if typeof(state_value) == TYPE_DICTIONARY:
+					count += _portable_ticket_state_count(kind, state_value as Dictionary)
+		if count > 0:
+			if not inventory.has(item_id):
+				inventory.append(item_id)
+		elif inventory.has(item_id):
+			inventory.erase(item_id)
+			if active_item_id == item_id:
+				active_item_id = ""
+
+
+static func _portable_ticket_player_state(kind: String, machine: Dictionary) -> Dictionary:
+	var result := {}
+	for field_value in _copy_array(PORTABLE_TICKET_PLAYER_FIELDS.get(kind, [])):
+		var field := str(field_value)
+		var value: Variant = machine.get(field, [] if field.ends_with("pile") or field.ends_with("stack") else {})
+		if typeof(value) == TYPE_ARRAY:
+			result[field] = (value as Array).duplicate(true)
+		elif typeof(value) == TYPE_DICTIONARY:
+			result[field] = (value as Dictionary).duplicate(true)
+		else:
+			result[field] = value
+	return result
+
+
+static func _apply_portable_ticket_state_to_machine(kind: String, portable: Dictionary, machine: Dictionary) -> void:
+	for field_value in _copy_array(PORTABLE_TICKET_PLAYER_FIELDS.get(kind, [])):
+		var field := str(field_value)
+		if portable.has(field):
+			# Keep live array/dictionary references. Scratch pointer moves mutate
+			# only the active ticket's masks and must not copy the whole pile.
+			machine[field] = portable[field]
+
+
+static func _portable_ticket_state_count(kind: String, state: Dictionary) -> int:
+	var count := _portable_ticket_array_size(state.get("winner_pile", [])) + _portable_ticket_array_size(state.get("loser_pile", []))
+	if kind == "pull_tabs":
+		return count + _portable_ticket_array_size(state.get("tray_stack", [])) + _portable_ticket_array_size(state.get("ticket_stack", []))
+	if kind == "scratch_tickets" and not _copy_dict(state.get("active_ticket", {})).is_empty():
+		count += 1
+	return count
+
+
+static func _portable_ticket_array_size(value: Variant) -> int:
+	return (value as Array).size() if typeof(value) == TYPE_ARRAY else 0
+
+
+static func _portable_ticket_dictionary_array(value: Variant) -> Array:
+	var result: Array = []
+	if typeof(value) != TYPE_ARRAY:
+		return result
+	for entry in value as Array:
+		if typeof(entry) == TYPE_DICTIONARY:
+			result.append(entry)
+	return result
+
+
+static func _normalize_portable_ticket_piles(value: Dictionary) -> Dictionary:
+	var result := {}
+	for kind_value in PORTABLE_TICKET_KINDS:
+		var kind := str(kind_value)
+		var origins_value: Variant = value.get(kind, {})
+		var origins := {}
+		if typeof(origins_value) == TYPE_DICTIONARY:
+			for origin_key_value in (origins_value as Dictionary).keys():
+				var origin_key := str(origin_key_value).strip_edges()
+				var state_value: Variant = (origins_value as Dictionary).get(origin_key_value, {})
+				if origin_key.is_empty() or typeof(state_value) != TYPE_DICTIONARY:
+					continue
+				var state: Dictionary = (state_value as Dictionary).duplicate(true)
+				state["origin_key"] = origin_key
+				origins[origin_key] = state
+		if not origins.is_empty() or value.has(kind):
+			result[kind] = origins
+	return result
 
 
 static func _inventory_item_id(entry: Variant) -> String:

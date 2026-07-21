@@ -785,7 +785,8 @@
     ],
     "asset_path": "res://assets/art/events/suspicious_patron.png",
     "trigger": {
-      "type": "travel"
+      "type": "travel",
+      "chance_percent": 1
     },
     "cadence": {
       "bypass_budget": true,

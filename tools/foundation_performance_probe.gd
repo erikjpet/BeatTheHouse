@@ -20,6 +20,8 @@ const DEFAULT_SEED_PREFIX := "FOUNDATION-PERF"
 const DEFAULT_RUN_COUNT := 8
 const DEFAULT_FRAMES_PER_SURFACE := 120
 const DEFAULT_RESOLVE_SAMPLE_COUNT := 48
+const SCRATCH_POINTER_SAMPLE_COUNT := 60
+const SCRATCH_POINTER_BUDGET := {"avg_ms": 0.75, "p95_ms": 1.5, "max_ms": 5.0}
 const LOW_END_SCALE_FACTOR := 10.2
 const LOW_END_FRAME_BUDGET_MS := 16.6
 const MAX_SURFACE_DRAW_P95_MS := 5.0
@@ -114,6 +116,7 @@ var budget_headroom_checks: Array = []
 var renderer_coverage := {}
 var game_surface_coverage := {}
 var resolve_coverage := {}
+var scratch_pointer_checked := false
 var new_surface_coverage := {}
 var liveness_observations: Array = []
 var liveness_guard_proof: Dictionary = {}
@@ -148,6 +151,7 @@ func _run() -> void:
 	await _probe_casino_slot_preview_coverage()
 	await _probe_grand_casino_living_floor_idle()
 	await _probe_game_resolve_budgets()
+	await _probe_scratch_pointer_budget()
 	await _probe_synthetic_idle_surfaces()
 	await _probe_liveness_guard_regression()
 	await _probe_new_surface_budgets()
@@ -532,17 +536,22 @@ func _probe_game_resolve_budgets() -> void:
 		var baseline_suspicion: Dictionary = run_state.suspicion.duplicate(true)
 		var samples: Array = []
 		var ok_count := 0
+		var failure_messages: Array = []
 		for sample_index in range(resolve_sample_count):
 			_prepare_run_for_resolve_probe(run_state, game_id, baseline_environment, baseline_rng_seed, baseline_rng_state, baseline_suspicion)
 			var rng := run_state.create_rng("perf_resolve:%s:%d" % [game_id, sample_index])
 			var environment: Dictionary = run_state.current_environment
-			var ui_state := _resolve_probe_ui_state(game_id, sample_index)
+			var ui_state := _resolve_probe_ui_state(game_id, sample_index, game, run_state, environment)
 			var start_usec := Time.get_ticks_usec()
 			var result: Dictionary = game.resolve_with_context(action_id, stake, run_state, environment, rng, ui_state)
 			var elapsed_usec := Time.get_ticks_usec() - start_usec
 			samples.append(float(elapsed_usec) / 1000.0)
 			if bool(result.get("ok", false)):
 				ok_count += 1
+			elif failure_messages.size() < 3:
+				var failure_message := str(result.get("message", "Resolve returned ok=false.")).strip_edges()
+				if not failure_messages.has(failure_message):
+					failure_messages.append(failure_message)
 		var stats := _timing_stats(samples)
 		var budget := _dict(RESOLVE_BUDGETS.get(game_id, {}))
 		stats["seed"] = "practice:%s" % game_id
@@ -552,15 +561,54 @@ func _probe_game_resolve_budgets() -> void:
 		stats["mode"] = "resolve_path"
 		stats["sample_count"] = samples.size()
 		stats["ok_count"] = ok_count
+		stats["failure_messages"] = failure_messages
 		stats["budget"] = budget
 		resolve_observations.append(stats)
 		observations.append(stats)
 		resolve_coverage[game_id] = int(resolve_coverage.get(game_id, 0)) + 1
 		if ok_count <= 0:
-			failures.append("Resolve performance probe did not get a successful %s result." % game_id)
+			failures.append("Resolve performance probe did not get a successful %s result: %s" % [game_id, "; ".join(failure_messages)])
 		elif ok_count < samples.size():
 			failures.append("Resolve performance probe only got %d/%d successful %s results." % [ok_count, samples.size(), game_id])
 		_assert_resolve_budget(game_id, stats, budget)
+
+
+func _probe_scratch_pointer_budget() -> void:
+	app.call("start_game_test_session", "scratch_tickets")
+	await _settle(4)
+	var run_state: RunState = app.get("run_state")
+	var game: GameModule = app.get("current_game") as GameModule
+	if run_state == null or game == null:
+		failures.append("Scratch pointer performance probe could not enter Scratch Tickets.")
+		return
+	var environment: Dictionary = run_state.current_environment
+	var machine: Dictionary = game.call("_ensure_machine_state", run_state, environment, true)
+	var ticket_type: Dictionary = game.call("_ticket_type", "cash_cow")
+	var ticket: Dictionary = game.call("_roll_ticket", ticket_type, run_state.create_rng("perf_scratch_pointer"), 0, "pointer-budget")
+	if ticket.is_empty():
+		failures.append("Scratch pointer performance probe could not build its ticket fixture.")
+		return
+	machine["active_ticket"] = ticket
+	app.call("_refresh")
+	var start := Vector2(342.0, 160.0)
+	app.call("_on_game_surface_pointer_action", "scratch_scrub", 0, "begin", start)
+	var samples: Array = []
+	for sample_index in range(SCRATCH_POINTER_SAMPLE_COUNT):
+		var point := Vector2(342.0 + float((sample_index * 17) % 278), 160.0 + float((sample_index % 3) * 4))
+		var started_usec := Time.get_ticks_usec()
+		app.call("_on_game_surface_pointer_action", "scratch_scrub", 0, "move", point)
+		samples.append(float(Time.get_ticks_usec() - started_usec) / 1000.0)
+	app.call("_on_game_surface_pointer_action", "scratch_scrub", 0, "end", Vector2(620.0, 168.0))
+	var stats := _timing_stats(samples)
+	stats["seed"] = "practice:scratch_pointer"
+	stats["run_index"] = -1
+	stats["game_id"] = "scratch_tickets"
+	stats["mode"] = "scratch_pointer_path"
+	stats["sample_count"] = samples.size()
+	stats["budget"] = SCRATCH_POINTER_BUDGET
+	observations.append(stats)
+	scratch_pointer_checked = true
+	_assert_resolve_budget("scratch pointer", stats, SCRATCH_POINTER_BUDGET)
 
 
 func _probe_synthetic_idle_surfaces() -> void:
@@ -1049,6 +1097,13 @@ func _synthetic_rourke_duel_idle_snapshot() -> Dictionary:
 func _prepare_run_for_resolve_probe(run_state: RunState, game_id: String, baseline_environment: Dictionary, baseline_rng_seed: int, baseline_rng_state: int, baseline_suspicion: Dictionary) -> void:
 	run_state.bankroll = 100000
 	run_state.grand_casino_chips = 0
+	if game_id == "pull_tabs" or game_id == "scratch_tickets":
+		# Each timing sample is an independent first purchase. Portable player
+		# ownership intentionally outlives the room, so reset that ownership with
+		# the baseline machine instead of measuring an ever-growing pile.
+		run_state.portable_ticket_piles = {}
+		run_state.inventory.erase(RunState.PULL_TAB_PILE_ITEM_ID)
+		run_state.inventory.erase(RunState.SCRATCH_TICKET_PILE_ITEM_ID)
 	run_state.current_environment = baseline_environment.duplicate(true)
 	if run_state.grand_casino_table_uses_chips(game_id, run_state.current_environment):
 		run_state.buy_grand_casino_chips(run_state.bankroll, run_state.grand_casino_chip_exchange_rate())
@@ -1062,14 +1117,35 @@ func _prepare_run_for_resolve_probe(run_state: RunState, game_id: String, baseli
 	run_state.defer_next_bankroll_zero_failure = false
 
 
-func _resolve_probe_ui_state(game_id: String, sample_index: int) -> Dictionary:
+func _resolve_probe_ui_state(game_id: String, sample_index: int, game: GameModule, run_state: RunState, environment: Dictionary) -> Dictionary:
 	match game_id:
 		"pull_tabs":
 			return {"pull_tab_deal_index": sample_index % 4}
 		"scratch_tickets":
 			return {"scratch_stock_index": sample_index % 4}
+		"bar_dice":
+			var roll_command := game.surface_action_command("bar_dice_roll", 0, false, {}, run_state, environment)
+			var ui: Dictionary = roll_command.get("ui_state", {})
+			while int(ui.get("shake_number", 0)) < 3:
+				var dice: Array = ui.get("dice", []) if typeof(ui.get("dice", [])) == TYPE_ARRAY else []
+				if dice.size() != 5:
+					break
+				var suggested: Array = game.call("_suggested_reroll_for_ruleset", dice, "ship_captain_crew")
+				if suggested.is_empty():
+					break
+				ui["reroll"] = suggested
+				var shake_command := game.surface_action_command("bar_dice_shake", 0, false, ui, run_state, environment)
+				ui = shake_command.get("ui_state", ui)
+			return ui
 		"video_poker":
-			return {"bet_level": 1}
+			var bet_command := game.surface_action_command("video_poker_bet_max", 0, false, {}, run_state, environment)
+			var ui: Dictionary = bet_command.get("ui_state", {})
+			ui["hand_active"] = true
+			var machine: Dictionary = game.call("_machine_state", run_state, environment)
+			var variant: Dictionary = game.call("_variant", machine)
+			var hand: Array = game.call("_opening_hand", run_state, machine)
+			ui["holds"] = game.call("_suggested_holds", hand, variant)
+			return ui
 		_:
 			return {}
 
@@ -1090,6 +1166,8 @@ func _assert_required_resolve_coverage() -> void:
 		var game_id := str(game_id_value)
 		if int(resolve_coverage.get(game_id, 0)) <= 0:
 			failures.append("Performance probe did not cover resolve path %s." % game_id)
+	if not scratch_pointer_checked:
+		failures.append("Performance probe did not cover the Scratch Tickets pointer path.")
 
 
 func _assert_required_new_surface_coverage() -> void:
@@ -1334,6 +1412,8 @@ func _write_report() -> void:
 		"renderer_coverage": renderer_coverage,
 		"game_surface_coverage": game_surface_coverage,
 		"resolve_coverage": resolve_coverage,
+		"scratch_pointer_checked": scratch_pointer_checked,
+		"scratch_pointer_budget": SCRATCH_POINTER_BUDGET,
 		"new_surface_coverage": new_surface_coverage,
 		"slot_autoplay_checked": slot_autoplay_checked,
 		"casino_slot_preview_checked": casino_slot_preview_checked,
