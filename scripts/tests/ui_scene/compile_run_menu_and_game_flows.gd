@@ -1564,6 +1564,17 @@ func _check_final_demo_objective_hud_matrix(app: Control) -> bool:
 		if not cage_objects.has(cage_object_id):
 			push_error("Walkable Cage did not expose authored object %s." % cage_object_id)
 			return false
+	var atm_object: Dictionary = cage_objects.get("casino_fixture:cage_atm", {})
+	if (atm_object.get("inline_actions", []) as Array).size() != 4:
+		push_error("Cage ATM did not expose compact borrow, partial repayment, and payoff controls.")
+		return false
+	var atm_cash_before := high_roller_run.bankroll
+	if not bool(app.call("activate_interactable_object", "cage_atm_action:borrow:50")) or high_roller_run.bankroll != atm_cash_before + 50 or high_roller_run.grand_casino_atm_debt() != 50:
+		push_error("Cage ATM inline borrow did not atomically add matching cash and marker debt.")
+		return false
+	if not bool(app.call("activate_interactable_object", "cage_atm_action:repay:full")) or high_roller_run.bankroll != atm_cash_before or high_roller_run.grand_casino_atm_debt() != 0:
+		push_error("Cage ATM inline Pay in Full did not clear the marker from cash.")
+		return false
 	if not bool(app.call("_start_linda_cage_services", {"object_id": "casino_fixture:cage_counter"})):
 		push_error("High-roller Players Card review could not open Linda's talk menu.")
 		return false

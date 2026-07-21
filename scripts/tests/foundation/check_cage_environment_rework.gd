@@ -5,6 +5,7 @@ const CageEconomyModelScript := preload("res://scripts/core/cage_economy_model.g
 
 func _check_cage_environment_rework(_library: ContentLibrary, failures: Array) -> void:
 	_check_cage_linda_simulation(_library, failures)
+	_check_cage_atm_state(failures)
 	var exact_cashout := CageEconomyModelScript.cashout_preview(200, 200, 1, 150, 20)
 	if not bool(exact_cashout.get("ok", false)) or int(exact_cashout.get("debt_after", -1)) != 0 or int(exact_cashout.get("chips_after", -1)) != 0 or int(exact_cashout.get("cash_paid", -1)) != 50:
 		failures.append("Cage debt-first cashout contract did not settle debt 150/chips 200 into $50 cash.")
@@ -33,6 +34,57 @@ func _check_cage_environment_rework(_library: ContentLibrary, failures: Array) -
 	var invalid_borrow := CageEconomyModelScript.borrow_preview(0, 25)
 	if not bool(valid_borrow.get("ok", false)) or int(valid_borrow.get("debt_after", 0)) != 500 or bool(capped_borrow.get("ok", true)) or bool(invalid_borrow.get("ok", true)):
 		failures.append("Cage ATM borrowing contract did not enforce $50 increments and the $500 new-credit cap.")
+
+
+func _check_cage_atm_state(failures: Array) -> void:
+	var run_state: RunState = RunStateScript.new()
+	run_state.start_new("CAGE-ATM-STATE")
+	run_state.set_environment({"id": "cage_atm_fixture", "archetype_id": RunState.GRAND_CASINO_CAGE_ARCHETYPE_ID, "world_node_id": RunState.GRAND_CASINO_ARCHETYPE_ID, "kind": "boss", "turns": 0})
+	var money_before := run_state.bankroll
+	var invalid := run_state.borrow_from_grand_casino_atm(25)
+	if bool(invalid.get("ok", true)) or run_state.bankroll != money_before or run_state.grand_casino_atm_debt() != 0:
+		failures.append("Invalid Cage ATM increment mutated cash or debt.")
+	var borrowed := run_state.borrow_from_grand_casino_atm(200)
+	if not bool(borrowed.get("ok", false)) or run_state.bankroll != money_before + 200 or run_state.grand_casino_atm_debt() != 200:
+		failures.append("Cage ATM did not atomically exchange a $200 marker for $200 cash.")
+	var marker_count := 0
+	for debt_value in run_state.debt:
+		if typeof(debt_value) == TYPE_DICTIONARY and str((debt_value as Dictionary).get("id", "")) == CageEconomyModelScript.ATM_DEBT_ID:
+			marker_count += 1
+	if marker_count != 1 or int(run_state.to_dict().get("grand_casino_atm_debt", -1)) != 200:
+		failures.append("Cage ATM marker did not have one authoritative debt entry and derived save balance.")
+	var next_boundary := CageEconomyModelScript.next_interest_boundary(run_state.game_clock_minutes)
+	run_state.advance_game_clock_minutes(next_boundary - run_state.game_clock_minutes)
+	if run_state.grand_casino_atm_debt() != 210:
+		failures.append("Cage ATM did not accrue $200 to $210 at the next absolute 3 AM boundary.")
+	var after_first := run_state.to_dict()
+	var restored: RunState = RunStateScript.new()
+	restored.from_dict(after_first)
+	restored.advance_game_clock_minutes(1439)
+	if restored.grand_casino_atm_debt() != 210:
+		failures.append("Cage ATM save/load replayed interest before the next 3 AM boundary.")
+	restored.advance_game_clock_minutes(1)
+	if restored.grand_casino_atm_debt() != 221:
+		failures.append("Cage ATM did not compound $210 to $221 at the second 3 AM boundary.")
+	var notifications := restored.grand_casino_atm_pending_interest_notifications()
+	if notifications.size() != 2 or int((notifications[0] as Dictionary).get("interest_added", -1)) != 10 or int((notifications[1] as Dictionary).get("interest_added", -1)) != 11:
+		failures.append("Cage ATM did not retain every crossed interest notification through save/load.")
+	var payment := restored.repay_grand_casino_atm_debt(1)
+	if not bool(payment.get("ok", false)) or restored.grand_casino_atm_debt() != 220 or restored.bankroll != money_before + 199:
+		failures.append("Cage ATM did not accept an exact $1 partial cash repayment.")
+	var payoff_cash_before := restored.bankroll
+	var payoff := restored.repay_grand_casino_atm_debt(-1)
+	if not bool(payoff.get("ok", false)) or restored.grand_casino_atm_debt() != 0 or restored.bankroll != payoff_cash_before - 220 or not restored.grand_casino_atm_debt_entry().is_empty():
+		failures.append("Cage ATM Pay in Full did not clear the marker entry atomically.")
+	var legacy_payload := after_first.duplicate(true)
+	legacy_payload.erase("grand_casino_atm_interest_boundary_index")
+	legacy_payload.erase("grand_casino_atm_interest_notifications")
+	var legacy: RunState = RunStateScript.new()
+	legacy.from_dict(legacy_payload)
+	var legacy_balance := legacy.grand_casino_atm_debt()
+	legacy.advance_game_clock_minutes(1)
+	if legacy.grand_casino_atm_debt() != legacy_balance:
+		failures.append("Legacy Cage ATM save retroactively charged its loaded clock history.")
 
 
 func _check_cage_linda_simulation(library: ContentLibrary, failures: Array) -> void:

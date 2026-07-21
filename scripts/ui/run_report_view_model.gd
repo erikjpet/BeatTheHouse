@@ -275,6 +275,8 @@ static func build_debt_ledger(live_debt: Array, story_log: Array) -> Array:
 		var debt_entry: Dictionary = value
 		var debt_id := str(debt_entry.get("id", ""))
 		var existing := _copy_dict(loans.get(debt_id, _loan_row(debt_entry, str(debt_entry.get("lender_id", "Lender")))))
+		if str(debt_entry.get("debt_kind", "")) == "casino_marker":
+			existing["amount"] = maxi(0, int(debt_entry.get("balance", 0)))
 		existing["outcome"] = "still held" if str(debt_entry.get("debt_kind", "")) == "pawn" else "outstanding"
 		existing["tone"] = "outstanding"
 		loans[debt_id] = existing
@@ -554,7 +556,8 @@ static func _pawn_row(debt_entry: Dictionary, fate: String, item_catalog: Dictio
 
 static func _loan_row(debt_entry: Dictionary, lender_label: String) -> Dictionary:
 	var kind := str(debt_entry.get("debt_kind", "cash"))
-	return {"id": str(debt_entry.get("id", "")), "lender": lender_label.replace("_", " ").capitalize(), "amount": maxi(0, int(debt_entry.get("principal", debt_entry.get("balance", 0)))), "kind": kind, "outcome": "still held" if kind == "pawn" else "outstanding", "tone": "outstanding"}
+	var amount := int(debt_entry.get("balance", 0)) if kind == "casino_marker" else int(debt_entry.get("principal", debt_entry.get("balance", 0)))
+	return {"id": str(debt_entry.get("id", "")), "lender": lender_label.replace("_", " ").capitalize(), "amount": maxi(0, amount), "kind": kind, "outcome": "still held" if kind == "pawn" else "outstanding", "tone": "outstanding"}
 
 
 static func _player_facing_seed(run_data: Dictionary) -> String:

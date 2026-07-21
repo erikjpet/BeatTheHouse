@@ -1978,6 +1978,14 @@ func _check_grand_casino_players_card_tiers(library: ContentLibrary, main_archet
 	if not generator.enter_grand_casino_room(run_state, RunState.GRAND_CASINO_CAGE_ARCHETYPE_ID):
 		failures.append("Players Card fixture could not enter the Cage for Bronze claim.")
 		return
+	var marker_draw := run_state.borrow_from_grand_casino_atm(50)
+	var debt_blocked_claim := run_state.claim_grand_casino_players_card_tier()
+	var debt_blocked_status := run_state.demo_objective_status()
+	if not bool(marker_draw.get("ok", false)) or bool(debt_blocked_claim.get("ok", true)) or not bool(debt_blocked_status.get("players_card_ready_to_claim", false)) or str(debt_blocked_status.get("players_card_claim_block_reason", "")).find("$50") == -1:
+		failures.append("Grand Casino ATM debt did not temporarily block Bronze while preserving readiness and exact balance copy.")
+	var marker_payoff := run_state.repay_grand_casino_atm_debt(-1)
+	if not bool(marker_payoff.get("ok", false)) or not bool(run_state.demo_objective_status().get("players_card_can_claim", false)):
+		failures.append("Clearing the Grand Casino ATM marker did not immediately re-enable the pending Bronze claim.")
 	var bronze_claim := run_state.claim_grand_casino_players_card_tier()
 	if not bool(bronze_claim.get("ok", false)) or str(bronze_claim.get("tier", "")) != RunState.GRAND_CASINO_PLAYERS_CARD_TIER_BRONZE:
 		failures.append("Linda did not issue Bronze at the Cage.")

@@ -5,6 +5,7 @@ extends RefCounted
 
 const GrandCasinoShowdownModelScript := preload("res://scripts/core/grand_casino_showdown_model.gd")
 const GrandCasinoDuelModelScript := preload("res://scripts/core/grand_casino_duel_model.gd")
+const CageEconomyModelScript := preload("res://scripts/core/cage_economy_model.gd")
 
 const DEFAULT_BANKROLL := 100
 const LOCAL_RISK_DECAY_BY_DISTANCE := {
@@ -251,6 +252,8 @@ var story_log_archive_count: int = 0
 var heat_history: Array = []
 var simulation_msec: int = 0
 var game_clock_minutes: int = GAME_CLOCK_START_MINUTE
+var grand_casino_atm_interest_boundary_index: int = -1
+var grand_casino_atm_interest_notifications: Array = []
 var closing_time_state: Dictionary = {}
 var act_index: int = 0
 var home_state: Dictionary = {}
@@ -322,6 +325,8 @@ func start_new(p_seed_text: String = "FOUNDATION-SEED", p_challenge_config: Dict
 	heat_history = []
 	simulation_msec = 0
 	game_clock_minutes = GAME_CLOCK_START_MINUTE
+	grand_casino_atm_interest_boundary_index = CageEconomyModelScript.boundary_index_at_or_before(game_clock_minutes)
+	grand_casino_atm_interest_notifications = []
 	closing_time_state = {}
 	act_index = 0
 	home_state = {}
@@ -511,8 +516,10 @@ func clock_display_text(include_day: bool = true) -> String:
 func advance_game_clock_minutes(amount: int) -> void:
 	if amount <= 0 or is_terminal():
 		return
+	var previous_minutes := game_clock_minutes
 	var previous_day := game_day()
 	game_clock_minutes = maxi(0, game_clock_minutes + amount)
+	_process_grand_casino_atm_interest_boundaries(previous_minutes, game_clock_minutes)
 	var next_day := game_day()
 	if next_day > previous_day:
 		_advance_grand_casino_staff_day_rollovers(previous_day, next_day)
@@ -1541,10 +1548,173 @@ func cash_out_grand_casino_chips(chip_amount: int = -1, cash_rate: int = 1) -> D
 
 
 func grand_casino_atm_debt() -> int:
-	# The ATM slice replaces this compatibility default with the authoritative
-	# house-marker debt entry. Keeping the accessor stable lets card claims and
-	# counter copy use one source before that migration lands.
-	return 0
+	var index := _debt_index(CageEconomyModelScript.ATM_DEBT_ID)
+	if index < 0 or typeof(debt[index]) != TYPE_DICTIONARY:
+		return 0
+	return maxi(0, int((debt[index] as Dictionary).get("balance", 0)))
+
+
+func grand_casino_atm_debt_entry() -> Dictionary:
+	var index := _debt_index(CageEconomyModelScript.ATM_DEBT_ID)
+	return (debt[index] as Dictionary).duplicate(true) if index >= 0 and typeof(debt[index]) == TYPE_DICTIONARY else {}
+
+
+func grand_casino_atm_status() -> Dictionary:
+	var balance := grand_casino_atm_debt()
+	var next_boundary := CageEconomyModelScript.next_interest_boundary(game_clock_minutes)
+	return {
+		"debt": balance,
+		"cash": bankroll,
+		"loan_increment": CageEconomyModelScript.LOAN_INCREMENT,
+		"loan_cap": CageEconomyModelScript.LOAN_CAP,
+		"origination_fee": CageEconomyModelScript.ORIGINATION_FEE,
+		"daily_interest_rate": CageEconomyModelScript.DAILY_INTEREST_RATE,
+		"interest_minute_of_day": CageEconomyModelScript.INTEREST_MINUTE_OF_DAY,
+		"next_interest_absolute_minute": next_boundary,
+		"projected_next_balance": CageEconomyModelScript.interest_balance(balance),
+		"available_credit": maxi(0, CageEconomyModelScript.LOAN_CAP - balance),
+		"interest_boundary_index": grand_casino_atm_interest_boundary_index,
+	}
+
+
+func borrow_from_grand_casino_atm(amount: int) -> Dictionary:
+	if str(current_environment.get("archetype_id", "")) != GRAND_CASINO_CAGE_ARCHETYPE_ID:
+		return {"ok": false, "message": "The Grand Casino ATM is inside the Cage."}
+	var preview := CageEconomyModelScript.borrow_preview(grand_casino_atm_debt(), amount)
+	if not bool(preview.get("ok", false)):
+		return {"ok": false, "message": str(preview.get("reason", "The ATM declines that draw.")), "preview": preview}
+	var cash_received := int(preview.get("cash_received", 0))
+	_set_grand_casino_atm_debt(int(preview.get("debt_after", 0)))
+	bankroll += cash_received
+	if narrative_flags.has("grand_casino_entry_bankroll"):
+		narrative_flags["grand_casino_entry_bankroll"] = int(narrative_flags.get("grand_casino_entry_bankroll", 0)) + cash_received
+	_refresh_economy(true)
+	log_story({
+		"type": "lender_hook",
+		"id": "grand_casino_atm",
+		"label": "Grand Casino ATM",
+		"debt_id": CageEconomyModelScript.ATM_DEBT_ID,
+		"lender_id": "grand_casino_atm",
+		"debt_changes": [grand_casino_atm_debt_entry()],
+		"amount": cash_received,
+		"bankroll_delta": cash_received,
+		"balance": grand_casino_atm_debt(),
+		"message": "The Grand Casino ATM advances $%d cash. House marker: $%d." % [cash_received, grand_casino_atm_debt()],
+	})
+	return preview.merged({
+		"ok": true,
+		"cash_delta": cash_received,
+		"message": "Borrowed $%d cash. Grand Casino marker: $%d." % [cash_received, grand_casino_atm_debt()],
+	}, true)
+
+
+func repay_grand_casino_atm_debt(amount: int = -1) -> Dictionary:
+	if str(current_environment.get("archetype_id", "")) != GRAND_CASINO_CAGE_ARCHETYPE_ID:
+		return {"ok": false, "message": "Cash marker payments are accepted at the Cage ATM."}
+	var balance := grand_casino_atm_debt()
+	var requested := mini(balance, bankroll) if amount < 0 else amount
+	var preview := CageEconomyModelScript.repayment_preview(balance, bankroll, requested)
+	if not bool(preview.get("ok", false)):
+		return {"ok": false, "message": str(preview.get("reason", "The ATM cannot accept that payment.")), "preview": preview}
+	var payment := int(preview.get("amount", 0))
+	bankroll -= payment
+	_set_grand_casino_atm_debt(int(preview.get("debt_after", 0)))
+	if narrative_flags.has("grand_casino_entry_bankroll"):
+		narrative_flags["grand_casino_entry_bankroll"] = int(narrative_flags.get("grand_casino_entry_bankroll", 0)) - payment
+	_refresh_economy(true)
+	log_story({
+		"type": "debt_paid" if grand_casino_atm_debt() <= 0 else "debt_payment",
+		"debt_id": CageEconomyModelScript.ATM_DEBT_ID,
+		"lender_id": "grand_casino_atm",
+		"payment": payment,
+		"bankroll_delta": -payment,
+		"balance": grand_casino_atm_debt(),
+		"message": "Paid $%d cash toward the Grand Casino marker. Balance: $%d." % [payment, grand_casino_atm_debt()],
+	})
+	evaluate_environment_objective_state()
+	return preview.merged({
+		"ok": true,
+		"cash_delta": -payment,
+		"payment": payment,
+		"paid_off": grand_casino_atm_debt() <= 0,
+		"message": "Paid $%d. Grand Casino marker: $%d." % [payment, grand_casino_atm_debt()],
+	}, true)
+
+
+func grand_casino_atm_pending_interest_notifications() -> Array:
+	return grand_casino_atm_interest_notifications.duplicate(true)
+
+
+func consume_grand_casino_atm_interest_notifications() -> Array:
+	var result := grand_casino_atm_interest_notifications.duplicate(true)
+	grand_casino_atm_interest_notifications.clear()
+	return result
+
+
+func _set_grand_casino_atm_debt(balance: int) -> void:
+	var normalized_balance := maxi(0, balance)
+	var index := _debt_index(CageEconomyModelScript.ATM_DEBT_ID)
+	if normalized_balance <= 0:
+		if index >= 0:
+			debt.remove_at(index)
+		return
+	var entry := {
+		"id": CageEconomyModelScript.ATM_DEBT_ID,
+		"lender_id": "grand_casino_atm",
+		"lender_name": "Grand Casino ATM",
+		"status": "active",
+		"debt_kind": "casino_marker",
+		"balance": normalized_balance,
+		"principal": normalized_balance,
+		"deadline_turns": 0,
+		"turns_remaining": 0,
+		"no_default": true,
+		"no_collector": true,
+		"stackable": false,
+	}
+	if index >= 0:
+		var existing := (debt[index] as Dictionary).duplicate(true)
+		entry["principal"] = maxi(int(existing.get("principal", 0)), normalized_balance)
+		debt[index] = entry
+	else:
+		debt.append(entry)
+
+
+func _process_grand_casino_atm_interest_boundaries(previous_minutes: int, current_minutes: int) -> void:
+	var crossings := CageEconomyModelScript.crossed_interest_boundary_indices(
+		previous_minutes,
+		current_minutes,
+		grand_casino_atm_interest_boundary_index
+	)
+	for boundary_value in crossings:
+		var boundary_index := int(boundary_value)
+		grand_casino_atm_interest_boundary_index = maxi(grand_casino_atm_interest_boundary_index, boundary_index)
+		var old_balance := grand_casino_atm_debt()
+		if old_balance <= 0:
+			continue
+		var new_balance := CageEconomyModelScript.interest_balance(old_balance)
+		var interest_added := new_balance - old_balance
+		_set_grand_casino_atm_debt(new_balance)
+		var notification := {
+			"boundary_index": boundary_index,
+			"absolute_minute": CageEconomyModelScript.INTEREST_MINUTE_OF_DAY + boundary_index * CageEconomyModelScript.MINUTES_PER_DAY,
+			"old_balance": old_balance,
+			"rate": CageEconomyModelScript.DAILY_INTEREST_RATE,
+			"interest_added": interest_added,
+			"new_balance": new_balance,
+			"message": "3:00 AM marker interest added $%d. Grand Casino ATM balance: $%d." % [interest_added, new_balance],
+		}
+		grand_casino_atm_interest_notifications.append(notification)
+		log_story({
+			"type": "debt_interest",
+			"debt_id": CageEconomyModelScript.ATM_DEBT_ID,
+			"old_balance": old_balance,
+			"rate": CageEconomyModelScript.DAILY_INTEREST_RATE,
+			"interest_added": interest_added,
+			"new_balance": new_balance,
+			"boundary_index": boundary_index,
+			"message": str(notification.get("message", "")),
+		})
 
 
 func grand_casino_players_card_comp_result(comp_id: String) -> Dictionary:
@@ -6147,6 +6317,8 @@ func _advance_debt_clocks(amount: int) -> void:
 		if index >= debt.size() or typeof(debt[index]) != TYPE_DICTIONARY:
 			continue
 		var debt_data := (debt[index] as Dictionary).duplicate(true)
+		if str(debt_data.get("debt_kind", "")) == "casino_marker" or bool(debt_data.get("no_default", false)):
+			continue
 		var status := str(debt_data.get("status", "active"))
 		if status == "active":
 			var remaining := int(debt_data.get("turns_remaining", debt_data.get("deadline_turns", 0)))
@@ -6200,6 +6372,8 @@ func _tick_recurring_debt_pressure(index: int, debt_data: Dictionary, amount: in
 
 
 func _apply_debt_item_modifiers_to_new_debt(debt_data: Dictionary) -> void:
+	if str(debt_data.get("debt_kind", "")) == "casino_marker":
+		return
 	if str(debt_data.get("status", "active")) != "active":
 		return
 	var grace_bonus := item_effect_total("debt_grace_turns")
@@ -7057,6 +7231,7 @@ func to_dict() -> Dictionary:
 		"challenge_config": challenge_config.duplicate(true),
 		"bankroll": bankroll,
 		"grand_casino_chips": grand_casino_chips,
+		"grand_casino_atm_debt": grand_casino_atm_debt(),
 		"economic_state": economic_state,
 		"inventory": inventory.duplicate(true),
 		"portable_ticket_piles": portable_ticket_piles.duplicate(true),
@@ -7101,6 +7276,8 @@ func to_dict() -> Dictionary:
 		"heat_history": normalize_heat_history(heat_history),
 		"simulation_msec": simulation_msec,
 		"game_clock_minutes": game_clock_minutes,
+		"grand_casino_atm_interest_boundary_index": grand_casino_atm_interest_boundary_index,
+		"grand_casino_atm_interest_notifications": grand_casino_atm_interest_notifications.duplicate(true),
 		"closing_time_state": _normalize_closing_time_state(closing_time_state),
 		"act": act_marker(),
 		"act_index": act_marker(),
@@ -7128,6 +7305,8 @@ func from_dict(data: Dictionary) -> void:
 	if not inventory.has(active_item_id):
 		active_item_id = ""
 	debt = _normalize_debt_entries(_copy_array(data.get("debt", [])))
+	if _debt_index(CageEconomyModelScript.ATM_DEBT_ID) < 0 and int(data.get("grand_casino_atm_debt", 0)) > 0:
+		_set_grand_casino_atm_debt(int(data.get("grand_casino_atm_debt", 0)))
 	sals_forfeited_item_ids = _string_array(_copy_array(data.get("sals_forfeited_item_ids", [])))
 	suspicion = _normalize_suspicion(_copy_dict(data.get("suspicion", {"level": 0, "cues": []})))
 	baseline_luck = clampi(int(data.get("baseline_luck", 0)), BASELINE_LUCK_MIN, BASELINE_LUCK_MAX)
@@ -7191,6 +7370,11 @@ func from_dict(data: Dictionary) -> void:
 	if bool(narrative_flags.get("grand_casino_showdown_active", false)) and str(narrative_flags.get("grand_casino_showdown_step", "")) == GRAND_CASINO_SHOWDOWN_STEP_LEGACY_CHECK and not _copy_dict(narrative_flags.get("grand_casino_duel_terms", {})).is_empty():
 		_begin_grand_casino_duel(_copy_dict(narrative_flags.get("grand_casino_duel_terms", {})))
 	game_clock_minutes = maxi(0, int(data.get("game_clock_minutes", GAME_CLOCK_START_MINUTE)))
+	grand_casino_atm_interest_boundary_index = int(data.get(
+		"grand_casino_atm_interest_boundary_index",
+		CageEconomyModelScript.boundary_index_at_or_before(game_clock_minutes)
+	))
+	grand_casino_atm_interest_notifications = _copy_array(data.get("grand_casino_atm_interest_notifications", []))
 	closing_time_state = _normalize_closing_time_state(_copy_dict(data.get("closing_time_state", {})))
 	act_index = maxi(1, int(data.get("act", data.get("act_index", 1))))
 	home_state = _normalize_home_state(_copy_dict(data.get("home_state", {})))

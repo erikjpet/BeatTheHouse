@@ -94,6 +94,7 @@ const AttributeBadgeRowScript := preload("res://scripts/ui/attribute_badge_row.g
 const RunInventoryScreenScript := preload("res://scripts/ui/run_inventory_screen.gd")
 const RunInventoryViewModelScript := preload("res://scripts/ui/run_inventory_view_model.gd")
 const CageCounterViewModelScript := preload("res://scripts/ui/cage_counter_view_model.gd")
+const CageAtmViewModelScript := preload("res://scripts/ui/cage_atm_view_model.gd")
 const MetaCollectionViewModelScript := preload("res://scripts/ui/meta_collection_view_model.gd")
 const RunJournalViewModelScript := preload("res://scripts/ui/run_journal_view_model.gd")
 const RunReportViewModelScript := preload("res://scripts/ui/run_report_view_model.gd")
@@ -7398,6 +7399,8 @@ func activate_interactable_object(object_id: String) -> bool:
 		return open_world_map()
 	if object_id.begins_with("event_response:"):
 		return _activate_event_response_action(object_id)
+	if object_id.begins_with("cage_atm_action:"):
+		return _activate_cage_atm_action(object_id)
 	if not focus_interactable_object(object_id):
 		return false
 	var object_data := _interactable_object(object_id)
@@ -7488,6 +7491,11 @@ func _inspect_casino_fixture(object_data: Dictionary) -> bool:
 		return _start_linda_cage_services(object_data)
 	if fixture_id == "cage_counter":
 		return _start_linda_cage_services(object_data)
+	if fixture_id == "cage_atm":
+		var atm := CageAtmViewModelScript.build(run_state)
+		_show_message(str(atm.get("summary", "The ATM shows the house marker account.")))
+		_refresh()
+		return true
 	if fixture_id == "host_desk":
 		_show_message("The host desk points you toward Linda's barred counter in the Cage.")
 		_refresh()
@@ -7498,6 +7506,32 @@ func _inspect_casino_fixture(object_data: Dictionary) -> bool:
 	_show_message(message)
 	_refresh()
 	return true
+
+
+func _cage_atm_inline_actions() -> Array:
+	return CageAtmViewModelScript.inline_actions(run_state) if run_state != null else []
+
+
+func _activate_cage_atm_action(object_id: String) -> bool:
+	if run_state == null or str(run_state.current_environment.get("archetype_id", "")) != RunState.GRAND_CASINO_CAGE_ARCHETYPE_ID:
+		return false
+	var parts := object_id.split(":")
+	if parts.size() < 3:
+		return false
+	var result: Dictionary = {}
+	if str(parts[1]) == "borrow":
+		result = run_state.borrow_from_grand_casino_atm(int(parts[2]))
+	elif str(parts[1]) == "repay":
+		result = run_state.repay_grand_casino_atm_debt(-1 if str(parts[2]) == "full" else int(parts[2]))
+	else:
+		return false
+	if bool(result.get("ok", false)):
+		run_state.advance_environment_turns(1)
+		_autosave_foundation_run("Autosaved.")
+	_show_message(str(result.get("message", "The ATM declines the transaction.")))
+	_refresh_talk_dock()
+	_refresh_runtime_environment_views()
+	return bool(result.get("ok", false))
 
 
 func _start_linda_cage_services(object_data: Dictionary) -> bool:
@@ -8728,7 +8762,17 @@ func _default_stake() -> int:
 
 
 func _show_message(text: String) -> void:
-	var display_text := _player_facing_text(text)
+	var notice_lines: Array = []
+	if run_state != null and run_state.has_method("grand_casino_atm_pending_interest_notifications"):
+		var pending_notices: Array = run_state.grand_casino_atm_pending_interest_notifications()
+		if not pending_notices.is_empty() and not _event_choice_popup_is_visible():
+			for notice_value in run_state.consume_grand_casino_atm_interest_notifications():
+				if typeof(notice_value) == TYPE_DICTIONARY:
+					notice_lines.append(str((notice_value as Dictionary).get("message", "")))
+	var combined_text := text
+	if not notice_lines.is_empty():
+		combined_text = "%s %s" % [" ".join(notice_lines), text]
+	var display_text := _player_facing_text(combined_text.strip_edges())
 	if message_label != null:
 		message_label.text = display_text
 	if start_status_label != null and run_state == null:
