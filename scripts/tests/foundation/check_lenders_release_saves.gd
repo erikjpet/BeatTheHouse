@@ -1209,6 +1209,7 @@ func _check_demo_boss_objective_foundation(library: ContentLibrary, failures: Ar
 		failures.append("Grand Casino boss archetype is missing.")
 		return
 	_check_grand_casino_spatial_split(library, boss_archetype, failures)
+	_check_cage_environment_rework(library, failures)
 	_check_grand_casino_chips_and_cage(library, boss_archetype, failures)
 	_check_grand_casino_living_floor(library, boss_archetype, failures)
 	_check_grand_casino_staff_rotation(library, boss_archetype, failures)
