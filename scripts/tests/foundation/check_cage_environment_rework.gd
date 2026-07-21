@@ -5,6 +5,7 @@ const GrandCasinoShowdownModelScript := preload("res://scripts/core/grand_casino
 
 
 func _check_cage_environment_rework(_library: ContentLibrary, failures: Array) -> void:
+	_check_cage_terminal_exit(_library, failures)
 	_check_cage_linda_simulation(_library, failures)
 	_check_cage_atm_state(failures)
 	_check_cage_debt_first_cashout(failures)
@@ -37,6 +38,21 @@ func _check_cage_environment_rework(_library: ContentLibrary, failures: Array) -
 	var invalid_borrow := CageEconomyModelScript.borrow_preview(0, 25)
 	if not bool(valid_borrow.get("ok", false)) or int(valid_borrow.get("debt_after", 0)) != 500 or bool(capped_borrow.get("ok", true)) or bool(invalid_borrow.get("ok", true)):
 		failures.append("Cage ATM borrowing contract did not enforce $50 increments and the $500 new-credit cap.")
+
+
+func _check_cage_terminal_exit(library: ContentLibrary, failures: Array) -> void:
+	var run_state: RunState = RunStateScript.new()
+	run_state.start_new("CAGE-TERMINAL-EXIT")
+	var main_archetype := library.environment_archetype(RunState.GRAND_CASINO_ARCHETYPE_ID)
+	var main := EnvironmentInstance.from_archetype(main_archetype, 3, run_state.create_rng("cage_terminal_main"), library)
+	run_state.set_environment(main.to_dict())
+	var generator := RunGenerator.new(library)
+	if not generator.enter_grand_casino_room(run_state, RunState.GRAND_CASINO_CAGE_ARCHETYPE_ID):
+		failures.append("Cage terminal-exit fixture could not enter the walkable room.")
+		return
+	var terminal := RunTerminalEvaluatorScript.evaluate(run_state, library)
+	if bool(terminal.get("failed", false)) or not bool(terminal.get("local_room_travel_available", false)) or not bool(terminal.get("recovery_available", false)):
+		failures.append("The wagerless Cage was falsely classified as stranded despite its free Main Floor return door.")
 
 
 func _check_cage_atm_state(failures: Array) -> void:

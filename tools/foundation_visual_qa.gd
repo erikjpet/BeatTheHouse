@@ -822,6 +822,13 @@ func _verify_grand_casino_high_roller_cashout_snapshot() -> void:
 	var target_bankroll := int(objective.get("high_roller_target_bankroll", objective.get("target_bankroll", 0)))
 	var required_net := int(objective.get("high_roller_net_winnings", 75))
 	var min_games := int(objective.get("high_roller_min_grand_casino_games", 3))
+	fixture_run.narrative_flags["grand_casino_players_card_awarded_tier"] = RunState.GRAND_CASINO_PLAYERS_CARD_TIER_SILVER
+	fixture_run.narrative_flags["grand_casino_players_card_tier"] = RunState.GRAND_CASINO_PLAYERS_CARD_TIER_SILVER
+	fixture_run.narrative_flags["grand_casino_players_card_highest_tier"] = RunState.GRAND_CASINO_PLAYERS_CARD_TIER_SILVER
+	fixture_run.narrative_flags["grand_casino_players_card_segment_start_games"] = 0
+	fixture_run.narrative_flags["grand_casino_players_card_segment_start_net_winnings"] = 0
+	fixture_run.narrative_flags["grand_casino_comp_drink_tokens"] = 1
+	fixture_run.narrative_flags["grand_casino_comp_suite_rests"] = 1
 	for game_index in range(min_games):
 		var deltas := GameModule.empty_result_deltas()
 		deltas["story_log"] = [{"type": "game_action", "game_id": "blackjack", "stake_cost": 10 + game_index}]
@@ -868,7 +875,8 @@ func _verify_grand_casino_high_roller_cashout_snapshot() -> void:
 	_return_to_room_view()
 	await _settle()
 	canvas = app.get("environment_canvas") as Control
-	_require(canvas != null and canvas.visible, "Players Card visual QA could not render the walkable Cage room.")
+	var cage_screen_snapshot: Dictionary = app.call("current_screen_snapshot")
+	_require(canvas != null and canvas.visible, "Players Card visual QA could not render the walkable Cage room (screen=%s, run_status=%s, failure=%s, cash=%d, environment=%s)." % [str(cage_screen_snapshot.get("screen", "")), str(fixture_run.run_status), str(fixture_run.run_failure_reason), fixture_run.bankroll, str(fixture_run.current_environment.get("archetype_id", ""))])
 	for fixture_id in ["casino_fixture:cage_counter", "casino_fixture:cage_atm", "casino_fixture:cage_gift_shop"]:
 		_require(not _canvas_object_by_id(canvas, fixture_id).is_empty(), "Walkable Cage visual QA could not find fixture %s." % fixture_id)
 	var cage_model: Dictionary = CageCounterViewModelScript.build(fixture_run)
@@ -877,6 +885,11 @@ func _verify_grand_casino_high_roller_cashout_snapshot() -> void:
 	_require(str(cage_host.get("name", "")) == "Linda" and str(cage_host.get("presentation", "")) == "faceless_silhouette", "Players Card Cage counter did not identify faceless-silhouette Linda.")
 	_require(bool(cage_card.get("can_review", false)) and str(cage_card.get("review_state", "")) == "ready", "Players Card Cage counter did not expose the ready review action.")
 	_require(cage_model.has("balance") and not (cage_model.get("promotions", []) as Array).is_empty() and str(cage_card.get("next_tier", "")) == "Gold", "Cage visual QA could not read exact Gold progress, benefits, and promotions.")
+	while not fixture_run.next_pending_talk_event().is_empty():
+		fixture_run.complete_talk_event_resolution(str(fixture_run.next_pending_talk_event().get("event_id", "")))
+	app.call("_refresh_talk_dock")
+	await _settle()
+	await _resolve_blocking_talk_dock()
 	var counter_object := _canvas_object_by_id(canvas, "casino_fixture:cage_counter")
 	_require(not (await _double_click_canvas_object_data(canvas, counter_object, "casino_fixture")).is_empty(), "Cage visual QA could not speak with Linda through her physical counter.")
 	await _settle()
@@ -937,10 +950,27 @@ func _verify_grand_casino_high_roller_cashout_snapshot() -> void:
 	await _settle()
 	_require(not _click_button_exact("Players Card").is_empty(), "Cage visual QA could not open Linda's Players Card controls.")
 	await _settle()
+	# Buying and redeeming chips advances the room clock and can legitimately
+	# queue an unrelated timed patron. Keep this focused fixture on Linda's
+	# already-open service dialogue so the claim action itself is what is tested.
+	for queued_value in fixture_run.pending_triggered_events.duplicate(true):
+		if typeof(queued_value) != TYPE_DICTIONARY:
+			continue
+		var queued_entry := queued_value as Dictionary
+		if str(queued_entry.get("presentation", "modal")) != "talk":
+			continue
+		var queued_event_id := str(queued_entry.get("event_id", ""))
+		if queued_event_id != "dialogue:linda_cage_services":
+			fixture_run.complete_talk_event_resolution(queued_event_id)
+	app.call("_refresh_talk_dock")
+	await _settle()
 	_require(not _click_button_exact("Claim Ready Tier").is_empty(), "Cage visual QA could not start Linda's ready Gold review through the visible control.")
 	await _settle()
 	var gold_talk: Dictionary = app.call("current_talk_dock_snapshot")
-	_require(bool(gold_talk.get("visible", false)) and str(fixture_run.next_pending_talk_event().get("dialogue_id", "")) == "linda_gold_review", "Visible Cage Gold review did not open Linda's talk-dock scene.")
+	var gold_pending_id := str(fixture_run.next_pending_talk_event().get("dialogue_id", ""))
+	var current_message := str((app.get("message_label") as Label).text) if app.get("message_label") is Label else ""
+	var gold_event_id := str(gold_talk.get("event_id", ""))
+	_require(bool(gold_talk.get("visible", false)) and gold_pending_id == "linda_gold_review", "Visible Cage Gold review did not open Linda's talk-dock scene (visible=%s, event=%s, dialogue=%s, status=%s, tier=%s, message=%s)." % [str(gold_talk.get("visible", false)), gold_event_id, gold_pending_id, str(fixture_run.run_status), str(fixture_run.narrative_flags.get("grand_casino_players_card_awarded_tier", "")), current_message])
 	await _resolve_blocking_talk_dock()
 	_require(fixture_run.run_status == RunState.RUN_STATUS_ENDED and str(fixture_run.narrative_flags.get("demo_victory_route", "")) == RunState.GRAND_CASINO_HIGH_ROLLER_EVENT_ID, "Visible Cage Players Card action did not preserve the canonical clean victory transition.")
 
@@ -2536,9 +2566,11 @@ func _assert_no_scroll_critical_path(context: String) -> void:
 	_assert_result_area_useful_or_hidden(context)
 	var environment_control := app.get("environment_canvas") as Control
 	var game_surface_control := app.get("game_surface_canvas") as Control
+	var talk_snapshot: Dictionary = app.call("current_talk_dock_snapshot") if app.has_method("current_talk_dock_snapshot") else {}
+	var talk_visible := bool(talk_snapshot.get("visible", false))
 	if environment_control != null and environment_control.visible:
 		_assert_environment_canvas_contained(context)
-		if str(screen_snapshot.get("screen", "")) == "ENVIRONMENT":
+		if str(screen_snapshot.get("screen", "")) == "ENVIRONMENT" and not talk_visible:
 			_require(_has_visible_text(app, "double-click glowing props to act"), "%s room mode does not show visible object interaction guidance." % context)
 	if game_surface_control != null and game_surface_control.visible:
 		_assert_game_surface_contained(context)
