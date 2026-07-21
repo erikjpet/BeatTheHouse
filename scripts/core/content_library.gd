@@ -650,12 +650,18 @@ static func _normalize_event_speaker(value: Variant) -> Dictionary:
 	var bind := str(source.get("bind", "none")).strip_edges().to_lower()
 	if not ["table_patron", "none"].has(bind):
 		bind = "none"
-	return {
+	var result := {
 		"role": role,
 		"name": str(source.get("name", "")).strip_edges(),
 		"silhouette": str(source.get("silhouette", "")).strip_edges(),
 		"bind": bind,
 	}
+	var presentation := str(source.get("presentation", "")).strip_edges()
+	if not presentation.is_empty():
+		result["presentation"] = presentation
+	if typeof(source.get("face_layers", [])) == TYPE_ARRAY:
+		result["face_layers"] = (source.get("face_layers", []) as Array).duplicate(true)
+	return result
 
 
 static func _normalize_event_timing(value: Variant) -> Dictionary:

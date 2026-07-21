@@ -229,6 +229,7 @@ var rourke_facing: String = "right"
 var rourke_actions_until_move: int = ROURKE_MOVE_EVALUATION_ACTIONS
 var rourke_off_floor_actions: int = 0
 var rourke_floor_action_index: int = 0
+var linda_cage_state: Dictionary = {}
 var grand_casino_room_heat_accumulators: Dictionary = {}
 var rival_cheaters: Array = []
 var rival_cheater_day: int = 0
@@ -299,6 +300,7 @@ func start_new(p_seed_text: String = "FOUNDATION-SEED", p_challenge_config: Dict
 	rourke_actions_until_move = ROURKE_MOVE_EVALUATION_ACTIONS
 	rourke_off_floor_actions = 0
 	rourke_floor_action_index = 0
+	linda_cage_state = _default_linda_cage_state()
 	grand_casino_room_heat_accumulators = _empty_grand_casino_room_heat_accumulators()
 	rival_cheaters = []
 	rival_cheater_day = 0
@@ -4085,6 +4087,7 @@ func _advance_grand_casino_living_floor(amount: int) -> void:
 	_initialize_grand_casino_living_floor()
 	for _action in range(amount):
 		rourke_floor_action_index += 1
+		_advance_linda_cage_simulation()
 		_decay_grand_casino_room_heat()
 		_advance_rival_cheater_heat()
 		if rourke_off_floor_actions > 0:
@@ -4104,6 +4107,54 @@ func _advance_grand_casino_living_floor(amount: int) -> void:
 			_evaluate_rourke_movement()
 			rourke_actions_until_move = ROURKE_MOVE_EVALUATION_ACTIONS
 		_evaluate_rourke_escort()
+
+
+func linda_cage_snapshot() -> Dictionary:
+	if linda_cage_state.is_empty():
+		linda_cage_state = _default_linda_cage_state()
+	return linda_cage_state.duplicate(true)
+
+
+func _advance_linda_cage_simulation() -> void:
+	if linda_cage_state.is_empty():
+		linda_cage_state = _default_linda_cage_state()
+	var action_index := maxi(0, int(linda_cage_state.get("action_index", 0))) + 1
+	var remaining := maxi(0, int(linda_cage_state.get("actions_until_move", 1)) - 1)
+	linda_cage_state["action_index"] = action_index
+	if remaining > 0:
+		linda_cage_state["actions_until_move"] = remaining
+		return
+	var pose_rng := create_rng("linda_cage").fork("pose:%d" % action_index)
+	var previous_pose := clampi(int(linda_cage_state.get("pose_index", 1)), 0, 3)
+	var step := 1 if pose_rng.randi_range(0, 1) == 1 else -1
+	var next_pose := clampi(previous_pose + step, 0, 3)
+	if next_pose == previous_pose:
+		next_pose = clampi(previous_pose - step, 0, 3)
+	linda_cage_state["pose_index"] = next_pose
+	linda_cage_state["facing"] = "right" if next_pose > previous_pose else "left"
+	linda_cage_state["actions_until_move"] = pose_rng.randi_range(2, 4)
+	linda_cage_state["fork_state"] = pose_rng.snapshot()
+
+
+static func _default_linda_cage_state() -> Dictionary:
+	return {
+		"pose_index": 1,
+		"facing": "left",
+		"actions_until_move": 2,
+		"action_index": 0,
+		"fork_state": {},
+		"presentation": "faceless_silhouette",
+	}
+
+
+static func _normalize_linda_cage_state(value: Dictionary) -> Dictionary:
+	var normalized := _default_linda_cage_state()
+	normalized["pose_index"] = clampi(int(value.get("pose_index", normalized["pose_index"])), 0, 3)
+	normalized["facing"] = "right" if str(value.get("facing", normalized["facing"])) == "right" else "left"
+	normalized["actions_until_move"] = clampi(int(value.get("actions_until_move", normalized["actions_until_move"])), 0, 4)
+	normalized["action_index"] = maxi(0, int(value.get("action_index", 0)))
+	normalized["fork_state"] = _copy_dict(value.get("fork_state", {}))
+	return normalized
 
 
 func _decay_grand_casino_room_heat() -> void:
@@ -6900,6 +6951,7 @@ func to_dict() -> Dictionary:
 		"rourke_actions_until_move": rourke_actions_until_move,
 		"rourke_off_floor_actions": rourke_off_floor_actions,
 		"rourke_floor_action_index": rourke_floor_action_index,
+		"linda_cage_state": linda_cage_snapshot(),
 		"grand_casino_room_heat_accumulators": grand_casino_room_heat_accumulators.duplicate(true),
 		"rival_cheaters": rival_cheaters.duplicate(true),
 		"rival_cheater_day": rival_cheater_day,
@@ -6971,6 +7023,7 @@ func from_dict(data: Dictionary) -> void:
 	rourke_actions_until_move = clampi(int(data.get("rourke_actions_until_move", ROURKE_MOVE_EVALUATION_ACTIONS)), 0, ROURKE_MOVE_EVALUATION_ACTIONS)
 	rourke_off_floor_actions = clampi(int(data.get("rourke_off_floor_actions", 0)), 0, ROURKE_OFF_FLOOR_ACTIONS)
 	rourke_floor_action_index = maxi(0, int(data.get("rourke_floor_action_index", 0)))
+	linda_cage_state = _normalize_linda_cage_state(_copy_dict(data.get("linda_cage_state", {})))
 	grand_casino_room_heat_accumulators = _normalize_grand_casino_room_heat_accumulators(_copy_dict(data.get("grand_casino_room_heat_accumulators", {})))
 	rival_cheaters = _normalize_rival_cheaters(_copy_array(data.get("rival_cheaters", [])))
 	rival_cheater_day = maxi(0, int(data.get("rival_cheater_day", 0)))

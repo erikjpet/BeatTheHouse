@@ -93,8 +93,7 @@ const SmallScreenPolicyScript := preload("res://scripts/ui/small_screen_policy.g
 const AttributeBadgeRowScript := preload("res://scripts/ui/attribute_badge_row.gd")
 const RunInventoryScreenScript := preload("res://scripts/ui/run_inventory_screen.gd")
 const RunInventoryViewModelScript := preload("res://scripts/ui/run_inventory_view_model.gd")
-const CageWindowScript := preload("res://scripts/ui/cage_window.gd")
-const CageWindowViewModelScript := preload("res://scripts/ui/cage_window_view_model.gd")
+const CageCounterViewModelScript := preload("res://scripts/ui/cage_counter_view_model.gd")
 const MetaCollectionViewModelScript := preload("res://scripts/ui/meta_collection_view_model.gd")
 const RunJournalViewModelScript := preload("res://scripts/ui/run_journal_view_model.gd")
 const RunReportViewModelScript := preload("res://scripts/ui/run_report_view_model.gd")
@@ -299,7 +298,6 @@ var conclusion_animation_overlay: Control
 var conclusion_animation_snapshot: Dictionary = {}
 var conclusion_animation_tweens: Array[Tween] = []
 var run_inventory_screen: RunInventoryScreen
-var cage_window: CageWindow
 var run_inventory_overlay: Control
 var run_inventory_panel: PanelContainer
 var run_inventory_items_scroll: ScrollContainer
@@ -516,7 +514,6 @@ func start_foundation_run(seed_text: String = DEFAULT_SEED, challenge_config: Di
 	close_content_group_config()
 	close_challenge_selection()
 	_hide_run_menu()
-	_hide_cage_window()
 	_hide_world_map_overlay()
 	_hide_run_journal_popup()
 	_hide_travel_transition()
@@ -543,7 +540,6 @@ func start_foundation_run(seed_text: String = DEFAULT_SEED, challenge_config: Di
 	selected_action_category = ACTION_CATEGORY_GAMES
 	_set_current_screen(SCREEN_ENVIRONMENT)
 	_hide_event_choice_popup()
-	_hide_cage_window()
 	_hide_run_inventory_popup()
 	_hide_run_journal_popup()
 	_hide_world_map_overlay()
@@ -2206,13 +2202,16 @@ func _dialogue_option_for_entry(entry: Dictionary) -> Dictionary:
 			"enabled": true,
 			"attribute_badges": [],
 		})
+	var summary := str(node.get("text", ""))
+	if dialogue_id == "linda_cage_services":
+		summary = CageCounterViewModelScript.service_summary(run_state, node_id)
 	return {
 		"id": str(entry.get("event_id", "dialogue:%s" % dialogue_id)),
 		"dialogue_id": dialogue_id,
 		"display_name": str(dialogue.get("display_name", dialogue_id.replace("_", " ").capitalize())),
 		"type": "dialogue",
 		"interaction_mode": "triggered",
-		"summary": str(node.get("text", "")),
+		"summary": summary,
 		"choices": choices,
 	}
 
@@ -2269,6 +2268,11 @@ func _dialogue_choice_views(dialogue_id: String, node: Dictionary) -> Array:
 			"enabled": bool(requirement.get("enabled", true)),
 			"disabled_reason": str(requirement.get("reason", "")),
 		}
+		if dialogue_id == "linda_cage_services":
+			var service_status := _linda_cage_choice_status(choice_id)
+			if not service_status.is_empty():
+				option_choice["enabled"] = bool(service_status.get("enabled", true))
+				option_choice["disabled_reason"] = str(service_status.get("reason", ""))
 		option_choice["attribute_badges"] = [] if bool(choice.get("effects_hidden", false)) else AttributeBadgesScript.for_event_choice(option_choice)
 		result.append(option_choice)
 	return result
@@ -2315,6 +2319,9 @@ func _resolve_dialogue_choice(entry: Dictionary, choice_id: String) -> void:
 	if travel_transition_active:
 		_show_message("Travel is already in progress.")
 		_refresh_modal_contract_owner()
+		return
+	if str(entry.get("dialogue_id", "")) == "linda_cage_services" and choice_id.begins_with("cage_"):
+		_resolve_linda_cage_service_choice(entry, choice_id)
 		return
 	var option := _dialogue_option_for_entry(entry)
 	var option_choice := _event_choice(option, choice_id)
@@ -3566,6 +3573,66 @@ func _travel_to(target_id: String, target_label: String, choice_data: Dictionary
 			_refresh()
 
 
+func _linda_cage_choice_status(choice_id: String) -> Dictionary:
+	if run_state == null:
+		return {"enabled": false, "reason": "No active run."}
+	var model := CageCounterViewModelScript.build(run_state)
+	var balance: Dictionary = model.get("balance", {}) if typeof(model.get("balance", {})) == TYPE_DICTIONARY else {}
+	var card: Dictionary = model.get("card", {}) if typeof(model.get("card", {})) == TYPE_DICTIONARY else {}
+	match choice_id:
+		"cage_buy_25":
+			var cost_25 := 25 * maxi(1, int(balance.get("rate", 1)))
+			return {"enabled": run_state.bankroll >= cost_25, "reason": "Needs $%d cash." % cost_25}
+		"cage_buy_50":
+			var cost_50 := 50 * maxi(1, int(balance.get("rate", 1)))
+			return {"enabled": run_state.bankroll >= cost_50, "reason": "Needs $%d cash." % cost_50}
+		"cage_cashout_all":
+			return {"enabled": run_state.grand_casino_chips > 0, "reason": "No chips to redeem."}
+		"cage_claim_card":
+			return {"enabled": bool(card.get("can_review", false)), "reason": str(card.get("review_detail", "No tier is ready."))}
+		"cage_comp_drink":
+			var drink_status := run_state.grand_casino_players_card_comp_result("drink")
+			return {"enabled": bool(drink_status.get("ok", false)), "reason": str(drink_status.get("message", "No drink comp is ready."))}
+		"cage_comp_suite":
+			var suite_status := run_state.grand_casino_players_card_comp_result("suite_rest")
+			return {"enabled": bool(suite_status.get("ok", false)), "reason": str(suite_status.get("message", "No suite rest is ready."))}
+		"cage_comp_look_away":
+			return {"enabled": bool(run_state.narrative_flags.get("grand_casino_linda_look_away_available", false)), "reason": "Linda has no look-away ready."}
+	return {}
+
+
+func _resolve_linda_cage_service_choice(entry: Dictionary, choice_id: String) -> void:
+	var status := _linda_cage_choice_status(choice_id)
+	if not bool(status.get("enabled", true)):
+		_show_message(str(status.get("reason", "That counter action is unavailable.")))
+		_refresh_talk_dock()
+		_refresh()
+		return
+	match choice_id:
+		"cage_buy_25":
+			_buy_cage_chips(25)
+		"cage_buy_50":
+			_buy_cage_chips(50)
+		"cage_cashout_all":
+			_cash_out_cage_chips()
+		"cage_claim_card":
+			run_state.complete_talk_event_resolution(str(entry.get("event_id", "")))
+			_refresh_talk_dock()
+			_complete_cage_players_card_review()
+		"cage_comp_drink":
+			_use_cage_players_card_comp("drink")
+		"cage_comp_suite":
+			_use_cage_players_card_comp("suite_rest")
+		"cage_comp_look_away":
+			_show_message("Linda will look away automatically from the next small heat gain. It is ready now.")
+		"cage_ambient":
+			run_state.complete_talk_event_resolution(str(entry.get("event_id", "")))
+			_refresh_talk_dock()
+			_start_linda_ambient_dialogue({"object_id": "casino_fixture:cage_counter"})
+	_refresh_talk_dock()
+	_refresh()
+
+
 func _travel_result(target_id: String, destination_name: String, route: Dictionary, previous_environment: Dictionary, destination_environment: Dictionary, travel_decay: Dictionary = {}, route_risk: Dictionary = {}) -> Dictionary:
 	var route_status := run_state.travel_route_status(route)
 	var travel_method_kind := WorldMapScript.travel_method_kind(route, str(route_status.get("distance", route.get("distance", ""))))
@@ -4575,21 +4642,6 @@ func _build_run_inventory_overlay() -> void:
 	run_inventory_screen.take_item_requested.connect(Callable(self, "_take_home_container_item_from_popup"))
 	add_child(run_inventory_screen)
 	run_inventory_overlay = run_inventory_screen
-
-
-func _build_cage_window() -> void:
-	if cage_window != null:
-		return
-	cage_window = CageWindowScript.new()
-	cage_window.close_requested.connect(Callable(self, "_request_close_cage_window"))
-	cage_window.buy_chips_requested.connect(Callable(self, "_buy_cage_chips"))
-	cage_window.cash_out_requested.connect(Callable(self, "_cash_out_cage_chips"))
-	cage_window.review_requested.connect(Callable(self, "_complete_cage_players_card_review"))
-	cage_window.comp_requested.connect(Callable(self, "_use_cage_players_card_comp"))
-	add_child(cage_window)
-	cage_window.set_reduce_motion(bool(user_settings.reduce_motion) if user_settings != null else false)
-	cage_window.set_small_screen_mode(_small_screen_enabled())
-	_apply_accessibility_to_node(cage_window, _accessibility_font_scale(), _accessibility_control_scale())
 
 
 func _build_run_journal_overlay() -> void:
@@ -6586,7 +6638,7 @@ func _blocking_decision_popup_is_visible() -> bool:
 
 
 func _modal_contract_blocks_player_input() -> bool:
-	return travel_transition_active or _event_choice_popup_is_visible() or _cage_window_is_open() or _run_inventory_popup_is_visible() or _run_journal_popup_is_visible() or _world_map_overlay_is_visible() or _run_menu_is_visible()
+	return travel_transition_active or _event_choice_popup_is_visible() or _run_inventory_popup_is_visible() or _run_journal_popup_is_visible() or _world_map_overlay_is_visible() or _run_menu_is_visible()
 
 
 func _blocking_modal_message() -> String:
@@ -6594,8 +6646,6 @@ func _blocking_modal_message() -> String:
 		return "Travel is already in progress."
 	if _event_choice_popup_is_visible():
 		return "Choose a response before doing anything else."
-	if _cage_window_is_open():
-		return "Close the Cage before doing anything else."
 	if _world_map_overlay_is_visible():
 		return "Close the map before doing anything else."
 	if _run_inventory_popup_is_visible():
@@ -6701,7 +6751,6 @@ func current_overlay_state_snapshot() -> Dictionary:
 		"event_choice_popup_type": str(pending_event_choice_popup_snapshot.get("popup_type", "")),
 		"event_choice_popup_blocking": _blocking_decision_popup_is_visible(),
 		"talk_dock_visible": talk_dock != null and talk_dock.visible,
-		"cage_window_visible": _cage_window_is_open(),
 		"world_map_visible": _world_map_overlay_is_visible(),
 		"run_inventory_visible": _run_inventory_popup_is_visible(),
 		"run_inventory_mode": run_inventory_popup_mode,
@@ -6723,7 +6772,6 @@ func _overlay_state_contract_violations(snapshot: Dictionary = {}) -> Array:
 			"screen": current_screen,
 			"event_choice_popup_visible": _event_choice_popup_is_visible(),
 			"event_choice_popup_type": str(pending_event_choice_popup_snapshot.get("popup_type", "")),
-			"cage_window_visible": _cage_window_is_open(),
 			"world_map_visible": _world_map_overlay_is_visible(),
 			"run_inventory_visible": _run_inventory_popup_is_visible(),
 			"run_journal_visible": _run_journal_popup_is_visible(),
@@ -6733,7 +6781,6 @@ func _overlay_state_contract_violations(snapshot: Dictionary = {}) -> Array:
 		}
 	var violations: Array = []
 	var event_visible := bool(snapshot.get("event_choice_popup_visible", false))
-	var cage_visible := bool(snapshot.get("cage_window_visible", false))
 	var world_map_visible := bool(snapshot.get("world_map_visible", false))
 	var inventory_visible := bool(snapshot.get("run_inventory_visible", false))
 	var journal_visible := bool(snapshot.get("run_journal_visible", false))
@@ -6741,17 +6788,13 @@ func _overlay_state_contract_violations(snapshot: Dictionary = {}) -> Array:
 	var run_menu_visible := bool(snapshot.get("run_menu_visible", false))
 	var travel_visible := bool(snapshot.get("travel_transition_active", false))
 	if travel_visible:
-		for label in ["event_choice_popup_visible", "cage_window_visible", "world_map_visible", "run_inventory_visible", "run_journal_visible", "run_menu_visible", "settings_visible"]:
+		for label in ["event_choice_popup_visible", "world_map_visible", "run_inventory_visible", "run_journal_visible", "run_menu_visible", "settings_visible"]:
 			if bool(snapshot.get(label, false)):
 				violations.append("travel_transition overlaps %s" % label)
 	if event_visible:
-		for label in ["cage_window_visible", "world_map_visible", "run_inventory_visible", "run_journal_visible", "run_menu_visible", "settings_visible"]:
-			if bool(snapshot.get(label, false)):
-				violations.append("decision_popup overlaps %s" % label)
-	if cage_visible:
 		for label in ["world_map_visible", "run_inventory_visible", "run_journal_visible", "run_menu_visible", "settings_visible"]:
 			if bool(snapshot.get(label, false)):
-				violations.append("cage_window overlaps %s" % label)
+				violations.append("decision_popup overlaps %s" % label)
 	if world_map_visible:
 		for label in ["run_inventory_visible", "run_journal_visible", "run_menu_visible", "settings_visible"]:
 			if bool(snapshot.get(label, false)):
@@ -7436,9 +7479,19 @@ func activate_interactable_object(object_id: String) -> bool:
 func _inspect_casino_fixture(object_data: Dictionary) -> bool:
 	var fixture_id := str(object_data.get("source_id", "")).strip_edges()
 	if fixture_id == "cage":
-		return _open_cage_window()
+		# Compatibility alias for old tutorial/save anchors. It routes to the new
+		# room and never constructs the retired modal.
+		if run_state != null and str(run_state.current_environment.get("archetype_id", "")) == RunState.GRAND_CASINO_ARCHETYPE_ID:
+			if select_travel_option(RunState.GRAND_CASINO_CAGE_ARCHETYPE_ID):
+				confirm_selected_travel()
+				return true
+		return _start_linda_cage_services(object_data)
+	if fixture_id == "cage_counter":
+		return _start_linda_cage_services(object_data)
 	if fixture_id == "host_desk":
-		return _start_linda_ambient_dialogue(object_data)
+		_show_message("The host desk points you toward Linda's barred counter in the Cage.")
+		_refresh()
+		return true
 	var message := str(object_data.get("interaction_message", object_data.get("short_description", "The casino staff acknowledge you."))).strip_edges()
 	if message.is_empty():
 		message = "The casino staff acknowledge you."
@@ -7447,52 +7500,15 @@ func _inspect_casino_fixture(object_data: Dictionary) -> bool:
 	return true
 
 
-func _open_cage_window() -> bool:
-	if run_state == null or str(run_state.current_environment.get("archetype_id", "")) != RunState.GRAND_CASINO_ARCHETYPE_ID:
-		_show_message("The Cage window is only available on the Grand Casino Main Floor.")
+func _start_linda_cage_services(object_data: Dictionary) -> bool:
+	if run_state == null or str(run_state.current_environment.get("archetype_id", "")) != RunState.GRAND_CASINO_CAGE_ARCHETYPE_ID:
+		_show_message("Linda serves the account from the walkable Cage room.")
 		_refresh()
 		return false
-	_build_cage_window()
-	_hide_event_choice_popup()
-	_hide_run_inventory_popup()
-	_hide_run_journal_popup()
-	_hide_world_map_overlay()
-	var model := CageWindowViewModelScript.build(run_state)
-	if model.is_empty():
-		_show_message("Linda cannot open the Cage account right now.")
-		return false
-	cage_window.open(model)
-	_show_message("Linda opens your Cage account.")
-	_refresh_coach_at_boundary()
-	return true
-
-
-func _request_close_cage_window() -> void:
-	if coach_overlay != null and not coach_overlay.input_allowed("cage:close"):
-		_show_message("Follow the highlighted advice first.")
-		return
-	if coach_overlay != null:
-		coach_overlay.notify_action("cage:close")
-	_hide_cage_window()
-	_refresh_coach_at_boundary()
-
-
-func _hide_cage_window() -> void:
-	if cage_window != null:
-		cage_window.close()
-
-
-func _cage_window_is_open() -> bool:
-	return cage_window != null and cage_window.is_open()
-
-
-func current_cage_window_snapshot() -> Dictionary:
-	return cage_window.current_view_snapshot() if cage_window != null else {"visible": false}
-
-
-func _refresh_cage_window_after_state_change() -> void:
-	if _cage_window_is_open():
-		cage_window.update_model(CageWindowViewModelScript.build(run_state))
+	return start_dialogue("linda_cage_services", {
+		"source": "casino_cage_counter",
+		"source_object_id": str(object_data.get("object_id", "casino_fixture:cage_counter")),
+	})
 
 
 func _buy_cage_chips(amount: int) -> void:
@@ -7508,7 +7524,7 @@ func _buy_cage_chips(amount: int) -> void:
 		run_state.advance_environment_turns(1)
 		_autosave_foundation_run("Autosaved.")
 	_show_message(str(result.get("message", "The Cage could not complete that buy-in.")))
-	_refresh_cage_window_after_state_change()
+	_refresh_talk_dock()
 	_refresh_runtime_environment_views()
 
 
@@ -7525,7 +7541,7 @@ func _cash_out_cage_chips() -> void:
 		run_state.advance_environment_turns(1)
 		_autosave_foundation_run("Autosaved.")
 	_show_message(str(result.get("message", "The Cage could not complete that cash-out.")))
-	_refresh_cage_window_after_state_change()
+	_refresh_talk_dock()
 	_refresh_runtime_environment_views()
 
 
@@ -7535,17 +7551,16 @@ func _complete_cage_players_card_review() -> void:
 	if coach_overlay != null and not coach_overlay.input_allowed("cage:review"):
 		_show_message("Follow the highlighted advice first.")
 		return
-	var model := CageWindowViewModelScript.build(run_state)
+	var model := CageCounterViewModelScript.build(run_state)
 	var card: Dictionary = model.get("card", {}) if typeof(model.get("card", {})) == TYPE_DICTIONARY else {}
 	if not bool(card.get("can_review", false)):
 		_show_message(str(card.get("review_detail", "The Gold review is not ready.")))
-		_refresh_cage_window_after_state_change()
+		_refresh_talk_dock()
 		return
 	if coach_overlay != null:
 		coach_overlay.notify_action("cage:review")
-	_hide_cage_window()
 	var dialogue_id := "tutorial_linda_gold_review" if run_state.is_tutorial_run() else "linda_gold_review"
-	if not start_dialogue(dialogue_id, {"source": "cage_gold_review", "source_object_id": "casino_fixture:cage"}):
+	if not start_dialogue(dialogue_id, {"source": "cage_gold_review", "source_object_id": "casino_fixture:cage_counter"}):
 		_show_message("Linda's Gold review is unavailable.")
 
 
@@ -7565,7 +7580,7 @@ func _use_cage_players_card_comp(comp_id: String) -> void:
 		_advance_alcohol_absorption()
 		_autosave_foundation_run("Autosaved.")
 	_show_message(str(result.get("message", "Linda cannot use that comp right now.")))
-	_refresh_cage_window_after_state_change()
+	_refresh_talk_dock()
 	_refresh_runtime_environment_views()
 
 
@@ -10076,6 +10091,10 @@ func _next_objective_option() -> Dictionary:
 
 
 func _next_objective_option_for_state(state: String, demo_objective: Dictionary) -> Dictionary:
+	if state == "high-roller-ready" and run_state != null:
+		if str(run_state.current_environment.get("archetype_id", "")) == RunState.GRAND_CASINO_CAGE_ARCHETYPE_ID:
+			return _objective_for_object(CONTEXT_MODE_CASINO_FIXTURE, "casino_fixture:cage_counter", "claim the Players Card from Linda", true)
+		return _objective_for_object(CONTEXT_MODE_TRAVEL, "travel:grand_casino_cage", "enter the Cage and speak with Linda", true)
 	return FoundationHudViewModelScript.next_objective_option_for_state(state, demo_objective, Callable(self, "_player_facing_text"))
 
 
@@ -11857,7 +11876,7 @@ func _coach_context_snapshot() -> Dictionary:
 		"ui": {
 			"pawn_counter_open": _run_inventory_popup_is_visible() and run_inventory_popup_mode == "pawn_counter",
 			"world_map_open": _world_map_overlay_is_visible(),
-			"cage_window_open": _cage_window_is_open(),
+			"cage_counter_talking": not run_state.pending_talk_event("dialogue:linda_cage_services").is_empty() if run_state != null else false,
 		},
 		"meta": {
 			"home": _is_meta_session() and meta_session_location_id == META_LOCATION_HOME,
@@ -11953,9 +11972,6 @@ func _apply_accessibility_settings() -> void:
 	if coach_overlay != null:
 		coach_overlay.set_reduce_motion(bool(user_settings.reduce_motion) if user_settings != null else false)
 		coach_overlay.set_small_screen_mode(small_screen_enabled)
-	if cage_window != null:
-		cage_window.set_reduce_motion(bool(user_settings.reduce_motion) if user_settings != null else false)
-		cage_window.set_small_screen_mode(small_screen_enabled)
 	if environment_canvas != null:
 		environment_canvas.set_small_screen_mode(small_screen_enabled)
 	if game_surface_canvas != null:

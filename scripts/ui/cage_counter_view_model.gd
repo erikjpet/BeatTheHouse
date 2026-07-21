@@ -1,5 +1,7 @@
-class_name CageWindowViewModel
+class_name CageCounterViewModel
 extends RefCounted
+
+const CageEconomyModelScript := preload("res://scripts/core/cage_economy_model.gd")
 
 
 static func build(run_state: RunState) -> Dictionary:
@@ -22,8 +24,6 @@ static func build(run_state: RunState) -> Dictionary:
 	elif review_blocked:
 		review_state = "blocked"
 		review_title = "Review routed to Rourke"
-	var review_detail := _review_detail(objective, flags, review_state)
-	var linda_line := _linda_line(objective, review_state)
 	var rate := run_state.grand_casino_chip_exchange_rate()
 	var benefits := _copy_strings(objective.get("players_card_benefits", []))
 	var promotions := benefits.duplicate()
@@ -38,28 +38,28 @@ static func build(run_state: RunState) -> Dictionary:
 	var benefit_text := "No tier benefits yet."
 	if not benefits.is_empty():
 		benefit_text = "Benefits: %s" % ", ".join(benefits)
-	var promotions_empty := "No promotions or comps are available right now."
-	if not card_eligible:
-		promotions_empty = "Cheat evidence closed this account for the run."
+	var cashout := CageEconomyModelScript.cashout_preview(run_state.grand_casino_chips, run_state.grand_casino_chips, rate, _atm_debt(run_state), run_state.bankroll)
 	return {
-		"title": "The Cage",
+		"title": "Cashout Counter",
 		"host": {
 			"id": "linda",
 			"name": "Linda",
 			"role": "cage_host",
-			"silhouette": "vest",
-			"hair_color": "#2a1824",
-			"jacket_color": "#234052",
-			"line": linda_line,
+			"silhouette": "featureless",
+			"presentation": "faceless_silhouette",
+			"face_layers": [],
+			"line": _linda_line(objective, review_state),
 		},
 		"balance": {
 			"cash": run_state.bankroll,
 			"chips": run_state.grand_casino_chips,
 			"rate": rate,
+			"atm_debt": _atm_debt(run_state),
 			"total": run_state.grand_casino_total_money(),
 		},
 		"buy_options": _buy_options(run_state.bankroll, rate),
 		"can_cash_out": run_state.grand_casino_chips > 0,
+		"cashout_preview": cashout,
 		"card": {
 			"tier": str(objective.get("players_card_tier_label", "Unranked")),
 			"progress": _card_progress(objective),
@@ -68,21 +68,43 @@ static func build(run_state: RunState) -> Dictionary:
 			"eligible": card_eligible,
 			"review_state": review_state,
 			"review_title": review_title,
-			"review_detail": review_detail,
+			"review_detail": _review_detail(objective, flags, review_state),
 			"can_review": review_ready,
 			"prestige": {
 				"active": bool(prestige.get("active", false)),
 				"title": "Prestige run recognized",
-				"summary": "Linda recognizes your carried card. Initial attention is lower, the clean standard is tighter, and collection drops reach deeper tiers.",
+				"summary": "Linda recognizes your carried card. Initial attention is lower and the clean standard is tighter.",
 			},
 		},
 		"promotions": promotions,
-		"promotions_empty": promotions_empty,
+		"promotions_empty": "Cheat evidence closed this account for the run." if not card_eligible else "No promotions or comps are available right now.",
 		"comp_actions": [
 			{"id": "drink", "label": "Use Drink Comp", "enabled": card_eligible and drink_comps > 0},
 			{"id": "suite_rest", "label": "Use Suite Rest", "enabled": card_eligible and suite_rests > 0},
 		],
 	}
+
+
+static func service_summary(run_state: RunState, node_id: String) -> String:
+	var model := build(run_state)
+	if model.is_empty():
+		return "Linda keeps the account closed."
+	var balance: Dictionary = model.get("balance", {})
+	var card: Dictionary = model.get("card", {})
+	match node_id:
+		"chips":
+			var preview: Dictionary = model.get("cashout_preview", {})
+			return "Cash $%d. Chips %d at %d:1. Cashout pays $%d to the marker and $%d to you." % [int(balance.get("cash", 0)), int(balance.get("chips", 0)), int(balance.get("rate", 1)), int(preview.get("debt_paid", 0)), int(preview.get("cash_paid", 0))]
+		"card":
+			return "%s. %s %s" % [str(card.get("tier", "Unranked")), str(card.get("progress", "")), str(card.get("review_detail", ""))]
+		"comps":
+			var promotions: Array = model.get("promotions", [])
+			return ", ".join(promotions) if not promotions.is_empty() else str(model.get("promotions_empty", "No promotions are ready."))
+	return "Cash $%d. Chips %d. Casino marker $%d. %s" % [int(balance.get("cash", 0)), int(balance.get("chips", 0)), int(balance.get("atm_debt", 0)), str(card.get("progress", ""))]
+
+
+static func _atm_debt(run_state: RunState) -> int:
+	return int(run_state.call("grand_casino_atm_debt")) if run_state.has_method("grand_casino_atm_debt") else 0
 
 
 static func _buy_options(bankroll: int, rate: int) -> Array:
@@ -117,14 +139,10 @@ static func _review_detail(objective: Dictionary, flags: Dictionary, state: Stri
 	if state == "ineligible":
 		return "Cheat evidence permanently closes every Players Card tier this run."
 	if state == "ready":
-		return "Clean play is verified. Complete Linda's Gold review before heat changes it."
+		return "Clean play is verified. Complete Linda's Gold review here."
 	if state == "blocked":
-		var reason := str(flags.get("grand_casino_showdown_trigger_reason", "")).strip_edges()
-		if reason == "dirty_money" or bool(flags.get("grand_casino_cheat_evidence", false)):
-			return "The win cannot clear clean review; Linda has routed the account to Rourke."
 		return "Casino attention has frozen the review and routed the account to Rourke."
-	var heat := int(objective.get("current_heat", 0))
-	return "Keep play clean and heat controlled. Current heat: %d." % heat
+	return "Keep play clean and heat controlled. Current heat: %d." % int(objective.get("current_heat", 0))
 
 
 static func _linda_line(objective: Dictionary, state: String) -> String:
@@ -134,8 +152,7 @@ static func _linda_line(objective: Dictionary, state: String) -> String:
 		return "Your Gold review is ready. I can finish it here."
 	if state == "blocked":
 		return "Rourke put a hold on this review. The floor will come for you."
-	var tier := str(objective.get("players_card_tier_label", "Unranked"))
-	return "%s is on the account. Keep the count clean." % tier
+	return "%s is on the account. Keep the count clean." % str(objective.get("players_card_tier_label", "Unranked"))
 
 
 static func _copy_strings(value: Variant) -> Array:

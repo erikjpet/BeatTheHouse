@@ -206,9 +206,9 @@
       "name": "Linda",
       "mood": "warm",
       "behavior": "keeping the count",
-      "silhouette": "vest",
-      "hair_color": "#2a1824",
-      "jacket_color": "#234052"
+      "silhouette": "featureless",
+      "presentation": "faceless_silhouette",
+      "face_layers": []
     },
     "start": "recognition",
     "nodes": {
@@ -235,9 +235,9 @@
       "name": "Linda",
       "mood": "warm",
       "behavior": "opening the velvet rope",
-      "silhouette": "vest",
-      "hair_color": "#2a1824",
-      "jacket_color": "#234052"
+      "silhouette": "featureless",
+      "presentation": "faceless_silhouette",
+      "face_layers": []
     },
     "start": "recognition",
     "nodes": {
@@ -264,9 +264,9 @@
       "name": "Linda",
       "mood": "proud",
       "behavior": "closing the clean account",
-      "silhouette": "vest",
-      "hair_color": "#2a1824",
-      "jacket_color": "#234052"
+      "silhouette": "featureless",
+      "presentation": "faceless_silhouette",
+      "face_layers": []
     },
     "start": "review",
     "nodes": {
@@ -307,9 +307,9 @@
       "name": "Linda",
       "mood": "warm",
       "behavior": "sliding your first card across the counter",
-      "silhouette": "vest",
-      "hair_color": "#2a1824",
-      "jacket_color": "#234052"
+      "silhouette": "featureless",
+      "presentation": "faceless_silhouette",
+      "face_layers": []
     },
     "start": "review",
     "nodes": {
@@ -342,9 +342,9 @@
       "name": "Linda",
       "mood": "warm",
       "behavior": "sorting slips",
-      "silhouette": "vest",
-      "hair_color": "#2a1824",
-      "jacket_color": "#234052"
+      "silhouette": "featureless",
+      "presentation": "faceless_silhouette",
+      "face_layers": []
     },
     "start": "line",
     "nodes": {
@@ -362,9 +362,9 @@
       "name": "Linda",
       "mood": "steady",
       "behavior": "watching the floor",
-      "silhouette": "vest",
-      "hair_color": "#2a1824",
-      "jacket_color": "#234052"
+      "silhouette": "featureless",
+      "presentation": "faceless_silhouette",
+      "face_layers": []
     },
     "start": "line",
     "nodes": {
@@ -382,15 +382,66 @@
       "name": "Linda",
       "mood": "encouraging",
       "behavior": "checking the list",
-      "silhouette": "vest",
-      "hair_color": "#2a1824",
-      "jacket_color": "#234052"
+      "silhouette": "featureless",
+      "presentation": "faceless_silhouette",
+      "face_layers": []
     },
     "start": "line",
     "nodes": {
       "line": {
         "text": "The velvet rope opens for a record, not a story.",
         "choices": [{"id": "move_on", "label": "Move On", "effects": {}, "effects_hidden": true, "end": true}]
+      }
+    }
+  },
+  {
+    "id": "linda_cage_services",
+    "display_name": "Linda at the Cashout Counter",
+    "speaker": {
+      "role": "staff",
+      "name": "Linda",
+      "mood": "warm",
+      "behavior": "working behind the barred teller windows",
+      "silhouette": "featureless",
+      "presentation": "faceless_silhouette",
+      "face_layers": []
+    },
+    "start": "main",
+    "nodes": {
+      "main": {
+        "text": "Linda turns from the ledger. The barred window keeps her face in shadow.",
+        "choices": [
+          {"id": "open_chips", "label": "Chips and Cashout", "text": "Manage chips.", "effects": {}, "effects_hidden": true, "goto": "chips"},
+          {"id": "open_card", "label": "Players Card", "text": "Review card progress.", "effects": {}, "effects_hidden": true, "goto": "card"},
+          {"id": "open_comps", "label": "Comps", "text": "Review earned comps.", "effects": {}, "effects_hidden": true, "goto": "comps"},
+          {"id": "leave_counter", "label": "Step Away", "text": "Leave the counter.", "effects": {}, "effects_hidden": true, "end": true}
+        ]
+      },
+      "chips": {
+        "text": "Linda rests one hand beside the chip tray.",
+        "choices": [
+          {"id": "cage_buy_25", "label": "Buy 25 Chips", "text": "Exchange cash for 25 chips.", "effects": {}, "effects_hidden": true, "goto": "chips"},
+          {"id": "cage_buy_50", "label": "Buy 50 Chips", "text": "Exchange cash for 50 chips.", "effects": {}, "effects_hidden": true, "goto": "chips"},
+          {"id": "cage_cashout_all", "label": "Redeem All Chips", "text": "Redeem all chips; the marker is paid first.", "effects": {}, "effects_hidden": true, "goto": "chips"},
+          {"id": "back_main", "label": "Back", "text": "Return to the counter menu.", "effects": {}, "effects_hidden": true, "goto": "main"}
+        ]
+      },
+      "card": {
+        "text": "Linda checks the card ledger without looking up.",
+        "choices": [
+          {"id": "cage_claim_card", "label": "Claim Ready Tier", "text": "Ask Linda to issue the ready tier.", "effects": {}, "effects_hidden": true, "goto": "card"},
+          {"id": "cage_ambient", "label": "Ask Linda", "text": "Hear Linda's read of the floor.", "effects": {}, "effects_hidden": true, "goto": "card"},
+          {"id": "back_main", "label": "Back", "text": "Return to the counter menu.", "effects": {}, "effects_hidden": true, "goto": "main"}
+        ]
+      },
+      "comps": {
+        "text": "Linda checks the promotions written beside your name.",
+        "choices": [
+          {"id": "cage_comp_drink", "label": "Drink Comp", "text": "Use one earned drink comp.", "effects": {}, "effects_hidden": true, "goto": "comps"},
+          {"id": "cage_comp_suite", "label": "Suite Rest", "text": "Use one earned suite rest.", "effects": {}, "effects_hidden": true, "goto": "comps"},
+          {"id": "cage_comp_look_away", "label": "Look Away", "text": "Use Linda's one-time look-away.", "effects": {}, "effects_hidden": true, "goto": "comps"},
+          {"id": "back_main", "label": "Back", "text": "Return to the counter menu.", "effects": {}, "effects_hidden": true, "goto": "main"}
+        ]
       }
     }
   }

@@ -136,6 +136,10 @@ static func next_objective_option(run_state: RunState, data: Dictionary) -> Dict
 		return objective_for_object("menu", "main_menu", "return to the menu to continue or start over", true, data.get("player_facing_text", Callable()))
 	var objective: Dictionary = data.get("demo_objective", {})
 	var state := objective_presentation_state(pressure, objective)
+	if state == "high-roller-ready":
+		if str(run_state.current_environment.get("archetype_id", "")) == RunState.GRAND_CASINO_CAGE_ARCHETYPE_ID:
+			return objective_for_object("casino_fixture", "casino_fixture:cage_counter", "claim the Players Card from Linda", true, data.get("player_facing_text", Callable()))
+		return objective_for_object("travel", "travel:grand_casino_cage", "enter the Cage and speak with Linda", true, data.get("player_facing_text", Callable()))
 	var state_option := next_objective_option_for_state(state, objective, data.get("player_facing_text", Callable()))
 	if not state_option.is_empty():
 		return state_option
@@ -256,8 +260,6 @@ static func next_objective_option_for_state(state: String, objective: Dictionary
 	if state == "showdown-pending" or state == "showdown-active":
 		var id := str(objective.get("showdown_event_id", objective.get("finale_event_id", ""))).strip_edges()
 		return objective_for_object("event", "event:%s" % (RunState.GRAND_CASINO_SHOWDOWN_EVENT_ID if id.is_empty() else id), "answer Rourke's back-room call", true, player_facing_text)
-	if state == "high-roller-ready":
-		return objective_for_object("casino_fixture", "casino_fixture:cage", "claim the Players Card at the Cage", true, player_facing_text)
 	return {}
 
 

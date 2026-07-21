@@ -1,7 +1,7 @@
 extends "res://scripts/tests/foundation/check_items_events_world.gd"
 
 const RunReportViewModelScript := preload("res://scripts/ui/run_report_view_model.gd")
-const CageWindowViewModelScript := preload("res://scripts/ui/cage_window_view_model.gd")
+const CageCounterViewModelScript := preload("res://scripts/ui/cage_counter_view_model.gd")
 const StaffBlackjackGameScript := preload("res://scripts/games/blackjack.gd")
 const StaffBaccaratGameScript := preload("res://scripts/games/baccarat.gd")
 const StaffRouletteGameScript := preload("res://scripts/games/roulette.gd")
@@ -1349,7 +1349,7 @@ func _check_demo_boss_objective_foundation(library: ContentLibrary, failures: Ar
 		failures.append("Grand Casino clean lane did not report Players Card readiness.")
 	if bool(clean_run.narrative_flags.get("demo_victory", false)) or clean_run.run_status != RunState.RUN_STATUS_ACTIVE:
 		failures.append("Grand Casino clean lane should not set victory during A1 state reporting.")
-	var ready_cage := CageWindowViewModelScript.build(clean_run)
+	var ready_cage := CageCounterViewModelScript.build(clean_run)
 	var ready_card: Dictionary = ready_cage.get("card", {}) if typeof(ready_cage.get("card", {})) == TYPE_DICTIONARY else {}
 	if str(_copy_dict(ready_cage.get("host", {})).get("name", "")) != "Linda" or not bool(ready_card.get("can_review", false)) or str(ready_card.get("review_state", "")) != "ready":
 		failures.append("Cage view model did not expose Linda and the ready Players Card review.")
@@ -1446,7 +1446,7 @@ func _check_demo_boss_objective_foundation(library: ContentLibrary, failures: Ar
 		failures.append("Cheated Grand Casino money target should route to the Pit Boss Showdown.")
 	if int(cheated_cashout_status.get("grand_casino_open_cheat_actions", 0)) <= 0:
 		failures.append("Grand Casino open cheat action count was not tracked.")
-	var blocked_cage := CageWindowViewModelScript.build(cheated_cashout_run)
+	var blocked_cage := CageCounterViewModelScript.build(cheated_cashout_run)
 	var blocked_card: Dictionary = blocked_cage.get("card", {}) if typeof(blocked_cage.get("card", {})) == TYPE_DICTIONARY else {}
 	if str(blocked_card.get("review_state", "")) != "ineligible" or bool(blocked_card.get("can_review", true)) or str(blocked_card.get("review_detail", "")).find("permanently") == -1:
 		failures.append("Cage view model did not make permanent Players Card ineligibility visible.")
@@ -2095,7 +2095,7 @@ func _check_grand_casino_players_card_tiers(library: ContentLibrary, main_archet
 	evidence_run.narrative_flags["grand_casino_cheat_evidence"] = true
 	evidence_run.evaluate_environment_objective_state()
 	var evidence_status := evidence_run.demo_objective_status()
-	var evidence_cage := CageWindowViewModelScript.build(evidence_run)
+	var evidence_cage := CageCounterViewModelScript.build(evidence_run)
 	var evidence_card: Dictionary = evidence_cage.get("card", {}) if typeof(evidence_cage.get("card", {})) == TYPE_DICTIONARY else {}
 	if bool(evidence_status.get("players_card_eligible", true)) or str(evidence_card.get("review_state", "")) != "ineligible" or str(evidence_card.get("review_detail", "")).find("permanently") == -1:
 		failures.append("Cheat evidence did not permanently lock every Players Card tier in the Cage window.")

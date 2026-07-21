@@ -1,5 +1,7 @@
 extends "res://scripts/tests/ui_scene/compile_environment_layout.gd"
 
+const CageCounterViewModelScript := preload("res://scripts/ui/cage_counter_view_model.gd")
+
 
 func _check_onboarding_tutorial_ui_flow(app: Control) -> bool:
 	var profile: ProfileInventory = app.get("profile_inventory")
@@ -1536,21 +1538,34 @@ func _check_final_demo_objective_hud_matrix(app: Control) -> bool:
 	var high_roller_snapshot: Dictionary = app.call("current_objective_hud_snapshot")
 	if not _assert_objective_state(high_roller_snapshot, "high-roller-ready", "High-roller ready objective HUD"):
 		return false
-	if not _assert_next_objective(high_roller_snapshot, "casino_fixture", "casino_fixture:cage", "High-roller ready objective HUD"):
+	if not _assert_next_objective(high_roller_snapshot, "travel", "travel:grand_casino_cage", "High-roller ready objective HUD"):
 		return false
 	high_roller_run.current_environment["event_ids"] = ["high_roller_cashout"]
 	if not (app.call("_eligible_event_option_view_list") as Array).is_empty():
 		push_error("High-roller Players Card review still appeared on the event surface instead of the Cage.")
 		return false
-	if not bool(app.call("_open_cage_window")):
-		push_error("High-roller Players Card review could not open the Cage window.")
+	var ui_generator: RunGenerator = app.get("generator")
+	if ui_generator == null or not ui_generator.enter_grand_casino_room(high_roller_run, RunState.GRAND_CASINO_CAGE_ARCHETYPE_ID):
+		push_error("High-roller Players Card review could not enter the walkable Cage room.")
 		return false
-	var ready_cage: Dictionary = app.call("current_cage_window_snapshot")
-	var ready_cage_model: Dictionary = ready_cage.get("model", {}) if typeof(ready_cage.get("model", {})) == TYPE_DICTIONARY else {}
+	app.call("_refresh")
+	var cage_objects: Dictionary = {}
+	for cage_object_value in app.call("_interactable_object_view_list"):
+		if typeof(cage_object_value) == TYPE_DICTIONARY:
+			cage_objects[str((cage_object_value as Dictionary).get("object_id", ""))] = cage_object_value
+	for cage_object_id in ["casino_fixture:cage_counter", "casino_fixture:cage_atm", "casino_fixture:cage_gift_shop", "travel:grand_casino"]:
+		if not cage_objects.has(cage_object_id):
+			push_error("Walkable Cage did not expose authored object %s." % cage_object_id)
+			return false
+	if not bool(app.call("_start_linda_cage_services", {"object_id": "casino_fixture:cage_counter"})):
+		push_error("High-roller Players Card review could not open Linda's talk menu.")
+		return false
+	var ready_cage_model: Dictionary = CageCounterViewModelScript.build(high_roller_run)
 	var ready_balance: Dictionary = ready_cage_model.get("balance", {}) if typeof(ready_cage_model.get("balance", {})) == TYPE_DICTIONARY else {}
 	var ready_card: Dictionary = ready_cage_model.get("card", {}) if typeof(ready_cage_model.get("card", {})) == TYPE_DICTIONARY else {}
-	if not bool(ready_cage.get("visible", false)) or not bool(ready_cage.get("portrait_animated", false)) or str((ready_cage_model.get("host", {}) as Dictionary).get("name", "")) != "Linda" or (ready_cage_model.get("promotions", []) as Array).is_empty() or int(ready_balance.get("cash", -1)) < 0 or not bool(ready_card.get("can_review", false)):
-		push_error("Ready Cage window did not expose animated Linda, balances, promotions, and the Players Card review action.")
+	var ready_talk: Dictionary = app.call("current_talk_dock_snapshot")
+	if not bool(ready_talk.get("visible", false)) or not bool(ready_talk.get("portrait_animation_active", false)) or str((ready_cage_model.get("host", {}) as Dictionary).get("name", "")) != "Linda" or str((ready_cage_model.get("host", {}) as Dictionary).get("presentation", "")) != "faceless_silhouette" or (ready_cage_model.get("promotions", []) as Array).is_empty() or int(ready_balance.get("cash", -1)) < 0 or not bool(ready_card.get("can_review", false)):
+		push_error("Ready Cage counter did not expose animated silhouette Linda, balances, promotions, and the Players Card review action.")
 		return false
 	if str(ready_card.get("tier", "")) != "Gold" or str(ready_card.get("progress", "")).find("Gold earned") == -1 or (ready_cage_model.get("comp_actions", []) as Array).size() != 2:
 		push_error("Ready Cage window did not expose exact Gold progress, benefits, and comp controls.")
@@ -1558,21 +1573,17 @@ func _check_final_demo_objective_hud_matrix(app: Control) -> bool:
 	while not high_roller_run.next_pending_talk_event().is_empty():
 		high_roller_run.complete_talk_event_resolution(str(high_roller_run.next_pending_talk_event().get("event_id", "")))
 	app.call("_refresh_talk_dock")
-	app.call("_hide_cage_window")
-	if not bool(app.call("_start_linda_ambient_dialogue", {"object_id": "casino_fixture:host_desk"})):
-		push_error("Bronze-or-better host desk did not open Linda's Main Floor ambient dialogue.")
+	if not bool(app.call("_start_linda_ambient_dialogue", {"object_id": "casino_fixture:cage_counter"})):
+		push_error("Bronze-or-better Cage counter did not open Linda's ambient dialogue.")
 		return false
 	if str(high_roller_run.next_pending_talk_event().get("dialogue_id", "")) != "linda_main_floor_ambient_1":
-		push_error("Linda host-desk interaction did not use the authored ambient talk scene.")
+		push_error("Linda Cage-counter interaction did not use the authored ambient talk scene.")
 		return false
 	high_roller_run.complete_talk_event_resolution(str(high_roller_run.next_pending_talk_event().get("event_id", "")))
 	app.call("_refresh_talk_dock")
-	if not bool(app.call("_open_cage_window")):
-		push_error("Cage did not reopen after Linda's ambient host-desk scene.")
-		return false
 	app.call("_complete_cage_players_card_review")
 	var gold_review_talk: Dictionary = app.call("current_talk_dock_snapshot")
-	if not bool(gold_review_talk.get("visible", false)) or str(high_roller_run.next_pending_talk_event().get("dialogue_id", "")) != "linda_gold_review" or bool((app.call("current_cage_window_snapshot") as Dictionary).get("visible", true)):
+	if not bool(gold_review_talk.get("visible", false)) or str(high_roller_run.next_pending_talk_event().get("dialogue_id", "")) != "linda_gold_review":
 		push_error("Cage Gold review did not move into Linda's talk-dock dialogue scene.")
 		return false
 
@@ -1580,16 +1591,11 @@ func _check_final_demo_objective_hud_matrix(app: Control) -> bool:
 	showdown_run.add_suspicion("ui_hud_showdown", showdown_heat_threshold, "behavior")
 	showdown_run.evaluate_environment_objective_state()
 	_set_ui_fixture_run(app, showdown_run)
-	if not bool(app.call("_open_cage_window")):
-		push_error("Showdown fixture could not open the Cage to show its blocked review state.")
-		return false
-	var blocked_cage: Dictionary = app.call("current_cage_window_snapshot")
-	var blocked_model: Dictionary = blocked_cage.get("model", {}) if typeof(blocked_cage.get("model", {})) == TYPE_DICTIONARY else {}
+	var blocked_model: Dictionary = CageCounterViewModelScript.build(showdown_run)
 	var blocked_card: Dictionary = blocked_model.get("card", {}) if typeof(blocked_model.get("card", {})) == TYPE_DICTIONARY else {}
 	if str(blocked_card.get("review_state", "")) != "blocked" or bool(blocked_card.get("can_review", true)) or str(blocked_card.get("review_detail", "")).find("Rourke") == -1:
 		push_error("Cage did not visibly route the blocked Players Card review to Rourke.")
 		return false
-	app.call("_hide_cage_window")
 	var showdown_snapshot: Dictionary = app.call("current_objective_hud_snapshot")
 	if not _assert_objective_state(showdown_snapshot, "showdown-pending", "Showdown pending objective HUD"):
 		return false
@@ -1774,7 +1780,7 @@ func _check_grand_casino_spatial_ui(app: Control) -> bool:
 	for object_value in objects:
 		if typeof(object_value) == TYPE_DICTIONARY:
 			objects_by_id[str((object_value as Dictionary).get("object_id", ""))] = object_value
-	for object_id in ["casino_fixture:cage", "casino_fixture:host_desk", "travel:grand_casino_high_limit", "travel:grand_casino_back_room"]:
+	for object_id in ["casino_fixture:host_desk", "travel:grand_casino_high_limit", "travel:grand_casino_back_room", "travel:grand_casino_cage"]:
 		if not objects_by_id.has(object_id):
 			push_error("Grand Casino spatial UI did not expose authored object: %s." % object_id)
 			return false
