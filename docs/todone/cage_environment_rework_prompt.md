@@ -1,3 +1,43 @@
+## Execution Record
+
+Completion date: 2026-07-20
+
+Implementing commits:
+
+- `1fbc24fc` — Add Cage rework state contracts and focused tests.
+- `dd1e6c8b` — Build the walkable Grand Casino Cage room.
+- `36ede5f3` — Move Linda services into the walkable Cage.
+- `64d30c3a` — Make Players Card tiers sequential Linda claims.
+- `4317d15f` — Add Grand Casino ATM marker and interest clock.
+- `6aed6593` — Settle casino markers before chip cashout.
+- `c10c30b5` — Finish Cage gift shop tutorial and visual evidence.
+- `c3f4ed76` — Fix Cage recovery and visual gate coverage.
+
+Verification gates:
+
+- `tools/validate_project.ps1` — PASS (22.1 s in the final UI suite run).
+- `tools/check_godot.ps1 -RequireGodot -FoundationSuite all -TimeoutSec 300` — PASS (183.9 s total; `foundation_all` 134.842 s), report `.tmp/cage_gates/foundation_all/summary.json`.
+- `tools/check_godot.ps1 -RequireGodot -FoundationSuite systems -TimeoutSec 300` — PASS (73.9 s total; `foundation_systems` 24.935 s), report `.tmp/cage_gates/foundation_systems_isolated/summary.json`.
+- `tools/check_godot.ps1 -RequireGodot -FoundationSuite ui -TimeoutSec 300` — PASS (103.1 s total; UI 48.917 s and Dave 5.064 s), report `.tmp/cage_gates/foundation_ui_isolated/summary.json`.
+- `tools/foundation_determinism_probe.ps1 -RequireGodot -SeedCount 10` — PASS (34.236 s; 326 checkpoints per run and identical hash `365228681`).
+- `tools/foundation_performance_probe.ps1 -RequireGodot` — PASS (36.201 s; 62 observations, every renderer/game/resolve surface covered, no failures).
+- `tools/foundation_visual_qa.ps1 -RequireGodot` — PASS (30.430 s; 41 states, all eight required Cage states, zero warnings), report `.tmp/cage_gates/foundation_visual_qa_report.json`.
+- `tools/foundation_stuck_state_sweep.ps1 -RequireGodot -SeedCount 100` — PASS (24.089 s; 0 stuck states).
+- `tools/foundation_mouse_playtest.ps1 -RequireGodot -CleanSave -Seed CAGE-REWORK-FINAL` — PASS (28.921 s; 57 visible-control events and clean victory reached), report `.tmp/cage_mouse_playtest/cage_strict_mouse.json`.
+- `tools/collection_meta_check.ps1 -RequireGodot` — PASS (6.121 s).
+
+Evidence:
+
+- Migration map: `.tmp/cage_environment_rework_migration_map.md`.
+- Final readiness report: `.tmp/cage_environment_rework_readiness.md`.
+
+Deviations:
+
+- The compressed tutorial starts its hidden run-local training account at Silver so one clean authored game still reaches the canonical Gold review. Standard and prestige runs remain sequential from Unranked.
+- A live current-project debug window was launched for desktop inspection, but Windows Graphics Capture returned `SetIsBorderRequired failed: No such interface supported (0x80004002)`. No blind clicks were sent. The 1280×720 and small-screen evidence is retained through the engine's visible-control visual snapshots and strict mouse playtest.
+- The performance probe retains its established informational no-game-room/slot-preview warnings and documented slot-autoplay waiver; it passed with no failure and no Cage regression. The mouse report retains one informational continued-state economy-wording warning and no error.
+- No economy value, canonical ending, test, performance budget, or baseline was weakened.
+
 # Agent Prompt — Cage Rework: Full Room, Silhouette Linda, ATM Debt, and Gift Shop
 
 Copy everything below this line into the worker agent.
