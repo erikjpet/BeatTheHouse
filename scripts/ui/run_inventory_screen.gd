@@ -205,10 +205,10 @@ func _build() -> void:
 	stack.add_child(_body)
 
 	_inventory_panel = FoundationWidgets.panel_container(Color("#0b0b18", 0.96), VisualStyle.AMBER)
-	_inventory_panel.custom_minimum_size = Vector2(660, 360)
+	_inventory_panel.custom_minimum_size = Vector2(420, 360)
 	_inventory_panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_inventory_panel.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	_inventory_panel.size_flags_stretch_ratio = 1.55
+	_inventory_panel.size_flags_stretch_ratio = 0.95
 	_body.add_child(_inventory_panel)
 
 	var inventory_stack := VBoxContainer.new()
@@ -237,10 +237,10 @@ func _build() -> void:
 	inventory_stack.add_child(_items_scroll)
 
 	_detail_panel = FoundationWidgets.panel_container(VisualStyle.DARK_2, VisualStyle.CYAN_2)
-	_detail_panel.custom_minimum_size = Vector2(360, 260)
+	_detail_panel.custom_minimum_size = Vector2(520, 260)
 	_detail_panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_detail_panel.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	_detail_panel.size_flags_stretch_ratio = 0.95
+	_detail_panel.size_flags_stretch_ratio = 1.25
 	_body.add_child(_detail_panel)
 	_detail_scroll = ScrollContainer.new()
 	_detail_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
@@ -384,7 +384,7 @@ func _render_detail(item: Dictionary, merchant_mode: bool = false) -> void:
 	match _mode():
 		"place_container":
 			_add_section_header("Action", "Place this carried container into your home.")
-			FoundationWidgets.add_card_button(_detail_box, "Place this container at home", Callable(self, "_emit_place_container_requested").bind(str(item.get("id", ""))), false, true)
+			FoundationWidgets.add_card_button(_detail_box, "Place at Home", Callable(self, "_emit_place_container_requested").bind(str(item.get("id", ""))), false, true)
 		"home_container":
 			_render_home_storage_actions(item)
 		_:
@@ -441,7 +441,7 @@ func _render_pawn_actions(item: Dictionary) -> void:
 	_add_section_header("Counter Action", "Pawn, cash, or redeem the selected item.")
 	var pawn_action := str(item.get("pawn_action", ""))
 	if pawn_action == "pawn":
-		FoundationWidgets.add_card_button(_detail_box, "Pawn this item for $%d" % int(item.get("loan_amount", 0)), Callable(self, "_emit_pawn_requested").bind(str(item.get("lender_id", "")), str(item.get("id", ""))), false, true)
+		FoundationWidgets.add_card_button(_detail_box, "Pawn for $%d" % int(item.get("loan_amount", 0)), Callable(self, "_emit_pawn_requested").bind(str(item.get("lender_id", "")), str(item.get("id", ""))), false, true)
 	elif pawn_action == "cash_ticket_pile":
 		FoundationWidgets.add_detail_row(_detail_box, "Winning value", "$%d" % int(item.get("ticket_face_value", 0)))
 		FoundationWidgets.add_card_button(_detail_box, "Cash winners for $%d" % int(item.get("sal_cash_value", 0)), Callable(self, "_emit_pawn_requested").bind(str(item.get("lender_id", "")), str(item.get("id", ""))), false, true)
@@ -449,7 +449,7 @@ func _render_pawn_actions(item: Dictionary) -> void:
 		var turns := maxi(0, int(item.get("turns_remaining", 0)))
 		FoundationWidgets.add_detail_row(_detail_box, "Due", "Now" if turns <= 0 else "%d turn%s" % [turns, "" if turns == 1 else "s"])
 		if bool(item.get("pawn_action_enabled", false)):
-			FoundationWidgets.add_card_button(_detail_box, "Redeem ticket for $%d" % int(item.get("payoff_amount", 0)), Callable(self, "_emit_redeem_pawn_requested").bind(str(item.get("lender_id", "")), str(item.get("debt_id", ""))), false, true)
+			FoundationWidgets.add_card_button(_detail_box, "Redeem for $%d" % int(item.get("payoff_amount", 0)), Callable(self, "_emit_redeem_pawn_requested").bind(str(item.get("lender_id", "")), str(item.get("debt_id", ""))), false, true)
 		else:
 			FoundationWidgets.add_detail_row(_detail_box, "Redeem", str(item.get("disabled_reason", "Unavailable")), true)
 	else:
@@ -473,7 +473,7 @@ func _render_inventory_actions(item: Dictionary) -> void:
 	_add_section_header("Actions", "What you can do with this inventory item right now.")
 	if bool(item.get("active_item", false)):
 		var selected := bool(item.get("active_selected", false))
-		FoundationWidgets.add_card_button(_detail_box, "Currently active" if selected else "Set as active item", Callable(self, "_emit_set_active_requested").bind(str(item.get("id", ""))), selected, selected)
+		FoundationWidgets.add_card_button(_detail_box, "Currently active" if selected else "Set Active", Callable(self, "_emit_set_active_requested").bind(str(item.get("id", ""))), selected, selected)
 	else:
 		FoundationWidgets.add_detail_row(_detail_box, "Active item", "Passive, stored, or not usable as an active item.", true)
 	if bool(item.get("repairable", false)):
@@ -489,13 +489,13 @@ func _render_home_storage_actions(item: Dictionary) -> void:
 	if source == "carried" and bool(item.get("active_item", false)):
 		_add_section_header("Use", "Carried active items can still be equipped before you store them.")
 		var selected := bool(item.get("active_selected", false))
-		FoundationWidgets.add_card_button(_detail_box, "Currently active" if selected else "Set as active item", Callable(self, "_emit_set_active_requested").bind(str(item.get("id", ""))), selected, selected)
+		FoundationWidgets.add_card_button(_detail_box, "Currently active" if selected else "Set Active", Callable(self, "_emit_set_active_requested").bind(str(item.get("id", ""))), selected, selected)
 	_add_section_header("Move Item", _transfer_help_for_item(item))
 	var container_id := str(item.get("container_id", _model.get("container_id", "")))
 	if bool(item.get("container_read_only", false)) or source == "loadout":
 		FoundationWidgets.add_detail_row(_detail_box, "Transfer", str(item.get("disabled_reason", "Packed meta-home items are read-only during this run.")), true)
 	elif source == "container":
-		FoundationWidgets.add_card_button(_detail_box, "Take into carried inventory", Callable(self, "_emit_take_item_requested").bind(container_id, str(item.get("id", ""))), false, true)
+		FoundationWidgets.add_card_button(_detail_box, "Move to Inventory", Callable(self, "_emit_take_item_requested").bind(container_id, str(item.get("id", ""))), false, true)
 		_add_storage_destination_buttons(item, container_id)
 	elif bool(item.get("container_full", false)):
 		FoundationWidgets.add_detail_row(_detail_box, "Store", "Every available home container is full.", true)
@@ -530,21 +530,30 @@ func _position_popup() -> void:
 		minf(preferred_size.x, available_size.x),
 		minf(preferred_size.y, available_size.y)
 	)
+	var stacked_layout := popup_size.x < 820.0
 	if _items_scroll != null:
-		_items_scroll.custom_minimum_size = Vector2(minf(700.0, maxf(360.0, popup_size.x * 0.58)), 0.0)
+		_items_scroll.custom_minimum_size = Vector2(0.0, maxf(96.0, popup_size.y * 0.24)) if stacked_layout else Vector2(minf(460.0, maxf(320.0, popup_size.x * 0.38)), 0.0)
 	if _body != null:
-		_body.vertical = popup_size.x < 820.0
+		_body.vertical = stacked_layout
+	if _inventory_panel != null:
+		_inventory_panel.custom_minimum_size = Vector2(maxf(240.0, popup_size.x - 16.0), maxf(118.0, popup_size.y * 0.34)) if stacked_layout else Vector2(420.0, 360.0)
 	if _detail_panel != null:
-		_detail_panel.custom_minimum_size = Vector2(minf(390.0, maxf(300.0, popup_size.x * 0.34)), minf(250.0, maxf(96.0, popup_size.y * 0.34)))
-	_panel.set_deferred("custom_minimum_size", popup_size)
-	var centered_position := Vector2(
-		floorf((overlay_rect.size.x - popup_size.x) * 0.5),
-		floorf((overlay_rect.size.y - popup_size.y) * 0.5)
+		_detail_panel.custom_minimum_size = Vector2(maxf(240.0, popup_size.x - 16.0), maxf(82.0, popup_size.y * 0.22)) if stacked_layout else Vector2(minf(560.0, maxf(480.0, popup_size.x * 0.48)), minf(250.0, maxf(96.0, popup_size.y * 0.34)))
+	var minimum_popup_size := _panel.get_combined_minimum_size()
+	var final_popup_size := Vector2(
+		minf(maxf(popup_size.x, minimum_popup_size.x), overlay_rect.size.x),
+		minf(maxf(popup_size.y, minimum_popup_size.y), overlay_rect.size.y)
 	)
-	_panel.custom_minimum_size = popup_size
-	_panel.set_size(popup_size)
+	var centered_position := Vector2(
+		floorf((overlay_rect.size.x - final_popup_size.x) * 0.5),
+		floorf((overlay_rect.size.y - final_popup_size.y) * 0.5)
+	)
+	centered_position.x = clampf(centered_position.x, 0.0, maxf(0.0, overlay_rect.size.x - final_popup_size.x))
+	centered_position.y = clampf(centered_position.y, 0.0, maxf(0.0, overlay_rect.size.y - final_popup_size.y))
+	_panel.custom_minimum_size = final_popup_size
+	_panel.set_size(final_popup_size)
 	_panel.position = centered_position
-	_panel.size = popup_size
+	_panel.size = final_popup_size
 
 
 func _configured_columns() -> int:
@@ -682,7 +691,7 @@ func _add_storage_destination_buttons(item: Dictionary, from_container_id: Strin
 		if from_container_id.is_empty():
 			var fallback_container_id := str(_model.get("container_id", ""))
 			if not fallback_container_id.is_empty():
-				FoundationWidgets.add_card_button(_detail_box, "Store in selected container", Callable(self, "_emit_store_item_requested").bind(fallback_container_id, str(item.get("id", ""))), false, true)
+				FoundationWidgets.add_card_button(_detail_box, "Move to Storage", Callable(self, "_emit_store_item_requested").bind(fallback_container_id, str(item.get("id", ""))), false, true)
 		else:
 			FoundationWidgets.add_detail_row(_detail_box, "Move", "No other home containers are available.", true)
 		return

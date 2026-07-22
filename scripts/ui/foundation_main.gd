@@ -646,7 +646,8 @@ func enter_game(game_id: String, state_key: String = "") -> void:
 	if game_module == null:
 		_show_message("This game is not ready here.")
 		return
-	_set_active_game_state_key(clean_game_id, clean_state_key)
+	if clean_state_key != clean_game_id:
+		_set_active_game_state_key(clean_game_id, clean_state_key)
 	_reset_game_surface_runtime_state()
 	current_game = game_module
 	_sync_presented_bankroll_to_actual()

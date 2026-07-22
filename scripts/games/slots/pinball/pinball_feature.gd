@@ -480,11 +480,15 @@ func _momentum_hit_count(events: Array) -> int:
 func _apply_momentum_step_bonus(step_result: Dictionary, hit_count: int, bonus: int) -> void:
 	var safe_hits := maxi(0, hit_count)
 	var safe_bonus := maxi(0, bonus)
+	var active: Dictionary = _dict(step_result.get("active_bonus", {}))
+	var session_cap := maxi(0, int(active.get("session_cap", 0)))
+	if session_cap > 0:
+		var feature_total := maxi(maxi(0, int(active.get("feature_total", 0))), maxi(0, int(active.get("awarded", 0))))
+		safe_bonus = mini(safe_bonus, maxi(0, session_cap - feature_total))
 	if safe_hits <= 0 or safe_bonus <= 0:
 		return
 	step_result["pinball_momentum_hit_count"] = safe_hits
 	step_result["pinball_momentum_bonus"] = safe_bonus
-	var active: Dictionary = _dict(step_result.get("active_bonus", {}))
 	active["last_momentum_hit_count"] = safe_hits
 	active["last_momentum_bonus"] = safe_bonus
 	step_result["active_bonus"] = active
