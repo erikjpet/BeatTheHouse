@@ -150,7 +150,7 @@
 		"price": 100,
 		"size_id": "tall",
 		"face": {"layout": "golden_vault", "symbol_set": "vault_gold", "palette": {"paper": "#171622", "ink": "#fff1bc", "accent": "#c89428", "latex": "#77727b", "trim": "#ffe27a"}},
-		"mechanic": {"type": "multi_game_vault", "rules": ["Reveal a 2x–20x multiplier.", "Match cash on five ladder rungs.", "GOLD BAR wins all; the final vault holds the top prize."], "multipliers": [2, 3, 5, 10, 20], "ladder_rungs": 5},
+		"mechanic": {"type": "multi_game_vault", "rules": ["Matched rungs pay the revealed 2x–20x multiplier.", "Match cash on five ladder rungs.", "GOLD BAR wins every ladder rung.", "The final vault holds the top prize."], "multipliers": [2, 3, 5, 10, 20], "ladder_rungs": 5},
 		"sections": [
 			{"id": "multiplier", "label": "MULTIPLIER", "rect": [0.12, 0.03, 0.76, 0.15]},
 			{"id": "cash_ladder", "label": "CASH LADDER", "rect": [0.10, 0.22, 0.80, 0.43]},
@@ -162,9 +162,9 @@
 			{"id": "first_rung", "weight": 1500, "payout": 100, "multiplier": 2, "ladder_hits": 1},
 			{"id": "ladder", "weight": 650, "payout": 200, "multiplier": 2, "ladder_hits": 2},
 			{"id": "multiplied", "weight": 250, "payout": 500, "multiplier": 5, "ladder_hits": 2},
-			{"id": "gold_bar", "weight": 80, "payout": 2000, "multiplier": 10, "ladder_hits": 5, "gold_bar": true},
+			{"id": "gold_bar", "weight": 80, "payout": 2000, "multiplier": 10, "ladder_hits": 0, "gold_bar": true},
 			{"id": "vault_prize", "weight": 19, "payout": 10000, "multiplier": 20, "ladder_hits": 5, "vault_win": true},
-			{"id": "top_vault", "weight": 1, "payout": 100000, "multiplier": 20, "ladder_hits": 5, "gold_bar": true, "vault_win": true}
+			{"id": "top_vault", "weight": 1, "payout": 100000, "multiplier": 20, "ladder_hits": 0, "gold_bar": true, "vault_win": true}
 		],
 		"scratch": {"brush_radius": 13.0, "pass_removal": 0.66, "sweep_threshold": 0.80, "mask_columns": 42, "mask_rows": 56, "crumb_count": 9},
 		"stock_weight": 20,

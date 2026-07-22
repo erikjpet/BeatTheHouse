@@ -32,6 +32,11 @@ func _check_scratch_tickets_surface_contract(game: GameModule, failures: Array) 
 	var compact_surface := game.surface_state(run_state, environment, {"surface_runtime_status": {"small_screen_mode": true}})
 	if str(compact_surface.get("scratch_ui_mode", "")) != "compact_tabs" or bool(compact_surface.get("scratch_core_surface_scroll", true)):
 		failures.append("Scratch Tickets small-screen UI did not compact without scrolling.")
+	var compact_harness := SurfaceHarness.new()
+	compact_harness.setup(compact_surface)
+	game.draw_surface(compact_harness, compact_surface, {"contract_harness": true})
+	if not _surface_harness_has_action(compact_harness, "scratch_compact_machine") or not _surface_harness_has_action(compact_harness, "scratch_compact_ticket"):
+		failures.append("Scratch Tickets small-screen mode labels compact tabs without drawing both tab controls.")
 	var art_features: Array = surface.get("scratch_machine_art_features", []) if typeof(surface.get("scratch_machine_art_features", [])) == TYPE_ARRAY else []
 	for feature in ["floor_unit", "jackpot_marquee", "glass_stock_rows", "branded_side_panel", "selection_buttons", "dispensing_tray"]:
 		if not art_features.has(feature):
@@ -43,6 +48,7 @@ func _check_scratch_tickets_surface_contract(game: GameModule, failures: Array) 
 		failures.append("Scratch Tickets machine exposed no spatial buy targets.")
 	_check_scratch_purchase_and_input(game, run_state, environment, failures)
 	_check_scratch_determinism(game, failures)
+	_check_scratch_luck_hook(game, failures)
 	_check_scratch_mechanics(game, failures)
 	_check_scratch_mask_feel(game, failures)
 	_check_scratch_section_sweeps(game, failures)
@@ -104,6 +110,18 @@ func _check_scratch_purchase_and_input(game: GameModule, run_state: RunState, en
 	game.draw_surface(active_harness, reduced, {"contract_harness": true})
 	if not _surface_harness_has_action(active_harness, "scratch_all"):
 		failures.append("Scratch Tickets active HUD did not expose Scratch All.")
+	var leave_rect := Rect2(776, 22, 86, 34)
+	for region_value in active_harness.hit_regions:
+		var region: Dictionary = region_value
+		var region_rect: Rect2 = region.get("rect", Rect2())
+		if str(region.get("action", "")) == "scratch_all" and region_rect.intersects(leave_rect):
+			failures.append("Scratch All overlaps the native Leave control.")
+	var compact_active := game.surface_state(run_state, environment, {"surface_runtime_status": {"small_screen_mode": true}, "scratch_compact_tab": "ticket", "reduce_motion": true})
+	var compact_active_harness := SurfaceHarness.new()
+	compact_active_harness.setup(compact_active)
+	game.draw_surface(compact_active_harness, compact_active, {"contract_harness": true})
+	if not _surface_harness_has_action(compact_active_harness, "scratch_all") or _surface_harness_has_action(compact_active_harness, "scratch_buy"):
+		failures.append("Scratch Tickets compact ticket tab did not isolate the scratch surface from machine buy rows.")
 
 
 func _check_scratch_determinism(game: GameModule, failures: Array) -> void:
@@ -118,6 +136,19 @@ func _check_scratch_determinism(game: GameModule, failures: Array) -> void:
 		game.call("_scratch_segment", machine, Vector2(610, 315), Vector2(350, 170))
 		if JSON.stringify(first.get("mechanic_result", {})) != outcome_json or int(game.call("_evaluate_mechanic", first)) != int(first.get("payout", -1)):
 			failures.append("Scratch path/order altered the purchase-fixed %s result." % type_id)
+
+
+func _check_scratch_luck_hook(game: GameModule, failures: Array) -> void:
+	var definition: Dictionary = game.call("_ticket_type", "two_fer")
+	var shifted := false
+	for seed_index in range(256):
+		var low: Dictionary = game.call("_weighted_prize", definition, _scratch_rng("luck-shift:%d" % seed_index), -20)
+		var high: Dictionary = game.call("_weighted_prize", definition, _scratch_rng("luck-shift:%d" % seed_index), 20)
+		if str(low.get("id", "")) != str(high.get("id", "")):
+			shifted = true
+			break
+	if not shifted:
+		failures.append("Scratch effective_luck no longer shifts the purchase-time prize roll.")
 
 
 func _check_scratch_mechanics(game: GameModule, failures: Array) -> void:
@@ -138,6 +169,54 @@ func _check_scratch_mechanics(game: GameModule, failures: Array) -> void:
 	var your_seven := {"mechanic": lucky_mechanic, "mechanic_result": {"winning_numbers": [12, 22], "your_numbers": [{"number": 7, "prize": 25}, {"number": 3, "prize": 99}]}}
 	if int(game.call("_evaluate_mechanic", your_seven)) != 25:
 		failures.append("Lucky 7s Your Number 7 did not auto-win independently.")
+	_check_bingo_caller_integrity(game, failures)
+	var holdem_definition: Dictionary = game.call("_ticket_type", "high_roller_holdem")
+	var holdem_mechanic: Dictionary = holdem_definition.get("mechanic", {})
+	var wild_content: Dictionary = game.call("_build_mechanic_content", "beat_dealer_poker", holdem_mechanic, {"payout": 500, "your_rank": "FLUSH", "dealer_rank": "STRAIGHT", "wild": true}, _scratch_rng("wild-upgrade"))
+	var ranks: Array = holdem_mechanic.get("rank_order", [])
+	if not bool(wild_content.get("wild", false)) or ranks.find(str(wild_content.get("your_rank", ""))) <= ranks.find(str(wild_content.get("base_your_rank", ""))):
+		failures.append("High Roller Hold'em wild slot did not improve the player's printed hand.")
+	var vault_definition: Dictionary = game.call("_ticket_type", "golden_vault")
+	var vault_mechanic: Dictionary = vault_definition.get("mechanic", {})
+	var multiplier_fixture := {"mechanic": vault_mechanic, "mechanic_result": {"multiplier": 5, "ladder": [{"match": true, "base_prize": 10, "payout": 50}], "gold_bar": false, "vault_win": false, "vault_payout": 0}}
+	if int(game.call("_evaluate_mechanic", multiplier_fixture)) != 50:
+		failures.append("Golden Vault multiplier did not multiply a matched ladder prize.")
+	var gold_bar_fixture := {"mechanic": vault_mechanic, "mechanic_result": {"multiplier": 2, "ladder": [{"match": false, "base_prize": 3, "payout": 6}, {"match": false, "base_prize": 4, "payout": 8}], "gold_bar": true, "vault_win": false, "vault_payout": 0}}
+	if int(game.call("_evaluate_mechanic", gold_bar_fixture)) != 14:
+		failures.append("Golden Vault GOLD BAR did not win every ladder rung.")
+	var vault_fixture := {"mechanic": vault_mechanic, "mechanic_result": {"multiplier": 2, "ladder": [], "gold_bar": false, "vault_win": true, "vault_payout": 900}}
+	if int(game.call("_evaluate_mechanic", vault_fixture)) != 900:
+		failures.append("Golden Vault final reveal did not pay its vault prize.")
+
+
+func _check_bingo_caller_integrity(game: GameModule, failures: Array) -> void:
+	var definition: Dictionary = game.call("_ticket_type", "bonus_bingo")
+	var mechanic: Dictionary = definition.get("mechanic", {})
+	for prize_value in _dict_array(definition.get("prize_table", [])):
+		var prize: Dictionary = prize_value
+		var content: Dictionary = game.call("_build_mechanic_content", "bingo", mechanic, prize, _scratch_rng("bingo-integrity:%s" % str(prize.get("id", ""))))
+		var callers: Array = content.get("caller_numbers", [])
+		if callers.size() != 24:
+			failures.append("Bonus Bingo did not print exactly 24 caller numbers.")
+			return
+		for card_value in _dict_array(content.get("cards", [])):
+			var card: Dictionary = card_value
+			var numbers: Array = card.get("numbers", [])
+			var daubed: Array = card.get("daubed", [])
+			if numbers.size() != 25 or daubed.size() != 25:
+				failures.append("Bonus Bingo card did not contain a full 5x5 grid.")
+				return
+			for cell_index in range(25):
+				var expected_daub := cell_index == 12 or callers.has(int(numbers[cell_index]))
+				if bool(daubed[cell_index]) != expected_daub:
+					failures.append("Bonus Bingo daub state was not derived from its printed caller numbers.")
+					return
+			if int(card.get("completed_lines", -1)) != int(game.call("_bingo_completed_line_count", daubed)):
+				failures.append("Bonus Bingo printed line count did not match its daubed grid.")
+				return
+			if bool(card.get("blackout", false)) and daubed.has(false):
+				failures.append("Bonus Bingo blackout did not daub the full card.")
+				return
 
 
 func _check_scratch_mask_feel(game: GameModule, failures: Array) -> void:
@@ -262,6 +341,14 @@ func _check_scratch_stock(game: GameModule, failures: Array) -> void:
 		for definition_value in selected:
 			var type_id := str((definition_value as Dictionary).get("id", ""))
 			appearances[type_id] = int(appearances.get(type_id, 0)) + 1
+	var previous_appearances := 1000000
+	for type_id in SCRATCH_IDS:
+		var count := int(appearances.get(type_id, 0))
+		if count <= 0:
+			failures.append("Scratch stock made %s impossible to find." % type_id)
+		if count >= previous_appearances:
+			failures.append("Scratch seeded stock rarity no longer rises with price at %s: %s" % [type_id, JSON.stringify(appearances)])
+		previous_appearances = count
 	if int(appearances.get("golden_vault", 0)) <= 0 or int(appearances.get("golden_vault", 0)) >= int(appearances.get("two_fer", 0)) / 4:
 		failures.append("Scratch stock mass sample did not make the $100 vault a rare but possible find: %s" % JSON.stringify(appearances))
 	var rotated := false

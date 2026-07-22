@@ -27,7 +27,7 @@ const MACHINE_RECT := Rect2(18, 13, 278, 404)
 const PLAY_SURFACE_RECT := Rect2(306, 48, 586, 370)
 const DEFAULT_TICKET_RECT := Rect2(422, 54, 354, 356)
 const DEFAULT_SCRATCH_RECT := Rect2(444, 169, 310, 176)
-const STATUS_HUD_RECT := Rect2(306, 8, 586, 34)
+const STATUS_HUD_RECT := Rect2(306, 8, 460, 34)
 const BIG_WIN_THRESHOLD := 100
 const STOCK_SLOT_COUNT := 4
 const COLLECTION_TOTAL := 7
@@ -82,6 +82,9 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 	var last_file_id := str(machine.get("last_file_id", ""))
 	var reduce_motion := _reduce_motion_enabled(ui_state)
 	var compact_mode := _small_screen_enabled(ui_state)
+	var compact_tab := str(ui_state.get("scratch_compact_tab", "ticket" if not active_ticket.is_empty() else "machine"))
+	if compact_tab not in ["machine", "ticket"]:
+		compact_tab = "ticket" if not active_ticket.is_empty() else "machine"
 	var sweep_duration := 0 if reduce_motion else SWEEP_DURATION_MSEC
 	_configure_active_ticket_layout(active_ticket, compact_mode)
 	return GameModule.surface_spec({
@@ -116,6 +119,7 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 		"scratch_last_pointer": ui_state.get("scratch_last_pointer", Vector2.ZERO),
 		"scratch_reduce_motion": reduce_motion,
 		"scratch_compact_mode": compact_mode,
+		"scratch_compact_tab": compact_tab,
 		"scratch_ui_mode": "compact_tabs" if compact_mode else "machine_surface_split",
 		"scratch_core_surface_scroll": false,
 		"scratch_all_available": not active_ticket.is_empty(),
@@ -155,17 +159,32 @@ func draw_surface(surface, state: Dictionary, _render_context: Dictionary = {}) 
 	if str(state.get("surface_renderer", "")) != "scratch_tickets":
 		return false
 	surface.surface_begin_design_space(SURFACE_DESIGN_SIZE)
-	_draw_machine(surface, state)
-	_draw_ticket(surface, state)
-	_draw_surface_hud(surface, state)
-	_draw_dispense_animation(surface, state)
-	_draw_file_animation(surface, state)
+	if bool(state.get("scratch_compact_mode", false)):
+		var compact_tab := str(state.get("scratch_compact_tab", "machine"))
+		_draw_compact_tabs(surface, compact_tab)
+		if compact_tab == "machine":
+			_draw_machine(surface, state)
+		else:
+			_draw_ticket(surface, state)
+			_draw_surface_hud(surface, state)
+			_draw_dispense_animation(surface, state)
+			_draw_file_animation(surface, state)
+	else:
+		_draw_machine(surface, state)
+		_draw_ticket(surface, state)
+		_draw_surface_hud(surface, state)
+		_draw_dispense_animation(surface, state)
+		_draw_file_animation(surface, state)
 	return true
 
 
 func surface_action_command(surface_action: String, index: int, _confirm_requested: bool, ui_state: Dictionary, run_state: RunState, environment: Dictionary) -> Dictionary:
 	var machine := _ensure_machine_state(run_state, environment, true)
 	match surface_action:
+		"scratch_compact_machine", "scratch_compact_ticket":
+			var tab_state := ui_state.duplicate(false)
+			tab_state["scratch_compact_tab"] = "machine" if surface_action.ends_with("machine") else "ticket"
+			return GameModule.surface_command({"ui_state": tab_state, "message": "Ticket machine." if surface_action.ends_with("machine") else "Scratch surface."})
 		"scratch_buy":
 			var stock := _dictionary_array(machine.get("stock", []))
 			if index < 0 or index >= stock.size():
@@ -180,6 +199,7 @@ func surface_action_command(surface_action: String, index: int, _confirm_request
 				return GameModule.surface_command({"message": "You need $%d for that ticket." % price})
 			var next_state := ui_state.duplicate(true)
 			next_state["scratch_stock_index"] = index
+			next_state["scratch_compact_tab"] = "ticket"
 			return GameModule.surface_command({
 				"ui_state": next_state,
 				"action_id": BUY_ACTION,
@@ -776,7 +796,7 @@ func _build_mechanic_content(mechanic_type: String, mechanic: Dictionary, prize:
 		"bingo":
 			return _build_bingo_content(prize)
 		"beat_dealer_poker":
-			return _build_holdem_content(prize)
+			return _build_holdem_content(mechanic, prize)
 		"multi_game_vault":
 			return _build_vault_content(prize)
 	return {"spots": []}
@@ -871,9 +891,7 @@ func _build_crossword_content(mechanic: Dictionary, prize: Dictionary) -> Dictio
 
 
 func _build_bingo_content(prize: Dictionary) -> Dictionary:
-	var caller_numbers: Array = []
-	for number in range(1, 25):
-		caller_numbers.append(number)
+	var caller_numbers := _bingo_called_numbers()
 	var total_lines := maxi(0, int(prize.get("line_count", 0)))
 	var blackout_cards := clampi(int(prize.get("blackout_cards", 0)), 0, 4)
 	var cards: Array = []
@@ -883,23 +901,25 @@ func _build_bingo_content(prize: Dictionary) -> Dictionary:
 	var paying_card_count := blackout_cards if blackout_cards > 0 else mini(4, int(ceil(float(total_lines) / 2.0)))
 	var card_payouts := _split_amount(maxi(0, int(prize.get("payout", 0))), maxi(1, paying_card_count))
 	var payout_cursor := 0
-	var remaining_lines := total_lines
+	var remaining_lines := 0 if blackout_cards > 0 else total_lines
 	for card_index in range(4):
-		var numbers: Array = []
-		for cell_index in range(25):
-			numbers.append(1 + ((card_index * 17 + cell_index * 7) % 75))
 		var blackout := card_index < blackout_cards
-		var card_lines := 12 if blackout else mini(remaining_lines, 2)
-		remaining_lines -= mini(remaining_lines, card_lines)
 		var daubed: Array = []
 		daubed.resize(25)
 		daubed.fill(false)
 		if blackout:
 			daubed.fill(true)
 		else:
-			for line_index in range(card_lines):
+			daubed[12] = true
+			var requested_card_lines := mini(remaining_lines, 2)
+			remaining_lines -= requested_card_lines
+			for line_index in range(requested_card_lines):
 				for column in range(5):
 					daubed[line_index * 5 + column] = true
+		var numbers := _bingo_card_numbers(card_index, daubed, caller_numbers)
+		for cell_index in range(25):
+			daubed[cell_index] = cell_index == 12 or caller_numbers.has(int(numbers[cell_index]))
+		var card_lines := _bingo_completed_line_count(daubed)
 		var pays := blackout or card_lines > 0
 		var card_payout := int(card_payouts[payout_cursor]) if pays and payout_cursor < card_payouts.size() else 0
 		if pays:
@@ -911,19 +931,78 @@ func _build_bingo_content(prize: Dictionary) -> Dictionary:
 	return {"spots": spots, "caller_numbers": caller_numbers, "cards": cards, "line_count": total_lines, "blackout_cards": blackout_cards}
 
 
-func _build_holdem_content(prize: Dictionary) -> Dictionary:
+func _bingo_called_numbers() -> Array:
+	return [1, 4, 7, 10, 13, 16, 19, 22, 25, 28, 31, 35, 39, 43, 46, 49, 52, 55, 58, 61, 64, 67, 70, 73]
+
+
+func _bingo_card_numbers(card_index: int, daubed: Array, caller_numbers: Array) -> Array:
+	var numbers: Array = []
+	numbers.resize(25)
+	var called_by_column: Array = [[], [], [], [], []]
+	var uncalled_by_column: Array = [[], [], [], [], []]
+	for column in range(5):
+		for number in range(column * 15 + 1, column * 15 + 16):
+			if caller_numbers.has(number):
+				(called_by_column[column] as Array).append(number)
+			else:
+				(uncalled_by_column[column] as Array).append(number)
+	var called_cursor := [0, 0, 0, 0, 0]
+	var uncalled_cursor := [0, 0, 0, 0, 0]
+	for cell_index in range(25):
+		if cell_index == 12:
+			numbers[cell_index] = 0
+			continue
+		var column := cell_index % 5
+		var pool: Array = called_by_column[column] if bool(daubed[cell_index]) else uncalled_by_column[column]
+		var cursor: Array = called_cursor if bool(daubed[cell_index]) else uncalled_cursor
+		var pool_index := (int(cursor[column]) + card_index) % pool.size()
+		numbers[cell_index] = int(pool[pool_index])
+		cursor[column] = int(cursor[column]) + 1
+	return numbers
+
+
+func _bingo_completed_line_count(daubed: Array) -> int:
+	if daubed.size() < 25:
+		return 0
+	var lines := 0
+	for row in range(5):
+		var row_complete := true
+		for column in range(5):
+			row_complete = row_complete and bool(daubed[row * 5 + column])
+		lines += 1 if row_complete else 0
+	for column in range(5):
+		var column_complete := true
+		for row in range(5):
+			column_complete = column_complete and bool(daubed[row * 5 + column])
+		lines += 1 if column_complete else 0
+	var diagonal_a := true
+	var diagonal_b := true
+	for index in range(5):
+		diagonal_a = diagonal_a and bool(daubed[index * 5 + index])
+		diagonal_b = diagonal_b and bool(daubed[index * 5 + (4 - index)])
+	lines += 1 if diagonal_a else 0
+	lines += 1 if diagonal_b else 0
+	return lines
+
+
+func _build_holdem_content(mechanic: Dictionary, prize: Dictionary) -> Dictionary:
 	var your_rank := str(prize.get("your_rank", "HIGH CARD"))
 	var dealer_rank := str(prize.get("dealer_rank", "PAIR"))
+	var rank_order := _string_array(mechanic.get("rank_order", []))
+	var wild := bool(prize.get("wild", false))
+	var base_your_rank := your_rank
+	var final_rank_index := rank_order.find(your_rank)
+	if wild and final_rank_index > 0:
+		base_your_rank = str(rank_order[final_rank_index - 1])
 	var your_hand := _poker_hand_for_rank(your_rank, bool(prize.get("pocket_aces", false)))
 	var dealer_hand := _poker_hand_for_rank(dealer_rank, false)
-	var wild := bool(prize.get("wild", false))
 	var spots: Array = []
 	for card_value in your_hand:
 		spots.append({"index": spots.size(), "section_id": "your_hand", "card": str(card_value), "role": "your_card"})
 	for card_value in dealer_hand:
 		spots.append({"index": spots.size(), "section_id": "dealer_hand", "card": str(card_value), "role": "dealer_card"})
 	spots.append({"index": spots.size(), "section_id": "wild", "card": "WILD" if wild else "NO WILD", "role": "wild"})
-	return {"spots": spots, "your_hand": your_hand, "dealer_hand": dealer_hand, "your_rank": your_rank, "dealer_rank": dealer_rank, "wild": wild, "pocket_aces": bool(prize.get("pocket_aces", false)), "printed_prize": maxi(0, int(prize.get("payout", 0)))}
+	return {"spots": spots, "your_hand": your_hand, "dealer_hand": dealer_hand, "base_your_rank": base_your_rank, "your_rank": your_rank, "dealer_rank": dealer_rank, "wild": wild, "pocket_aces": bool(prize.get("pocket_aces", false)), "printed_prize": maxi(0, int(prize.get("payout", 0)))}
 
 
 func _build_vault_content(prize: Dictionary) -> Dictionary:
@@ -932,24 +1011,24 @@ func _build_vault_content(prize: Dictionary) -> Dictionary:
 	var hit_count := clampi(int(prize.get("ladder_hits", 0)), 0, 5)
 	var gold_bar := bool(prize.get("gold_bar", false))
 	var vault_win := bool(prize.get("vault_win", false))
-	var ladder_total := payout
-	var gold_payout := 0
-	var vault_payout := 0
-	if vault_win:
-		ladder_total = payout / 10
-		gold_payout = payout * 2 / 10 if gold_bar else 0
-		vault_payout = payout - ladder_total - gold_payout
-	var ladder_payouts := _split_amount(ladder_total, hit_count)
+	var winning_rungs := 5 if gold_bar else hit_count
+	var ladder_total := payout / 5 if vault_win else payout
+	var vault_payout := payout - ladder_total
+	var ladder_base_total := ladder_total / multiplier
+	var ladder_remainder := ladder_total - ladder_base_total * multiplier
+	var ladder_base_prizes := _split_amount(ladder_base_total, winning_rungs)
 	var ladder: Array = []
 	var spots: Array = [{"index": 0, "section_id": "multiplier", "multiplier": multiplier, "role": "multiplier"}]
 	for rung in range(5):
-		var amount := int(ladder_payouts[rung]) if rung < ladder_payouts.size() else 0
-		var entry := {"rung": rung + 1, "match": rung < hit_count, "payout": amount}
+		var match_win := rung < winning_rungs
+		var base_prize := int(ladder_base_prizes[rung]) if rung < ladder_base_prizes.size() else 0
+		var multiplied_prize := base_prize * multiplier + (ladder_remainder if rung == 0 and match_win else 0)
+		var entry := {"rung": rung + 1, "match": match_win, "base_prize": base_prize, "payout": multiplied_prize}
 		ladder.append(entry)
-		spots.append({"index": spots.size(), "section_id": "cash_ladder", "rung": rung + 1, "match": bool(entry.get("match", false)), "payout": amount, "role": "ladder"})
-	spots.append({"index": spots.size(), "section_id": "gold_bar", "symbol": "GOLD BAR" if gold_bar else "BRASS", "payout": gold_payout, "role": "gold_bar"})
+		spots.append({"index": spots.size(), "section_id": "cash_ladder", "rung": rung + 1, "match": match_win, "base_prize": base_prize, "payout": multiplied_prize, "role": "ladder"})
+	spots.append({"index": spots.size(), "section_id": "gold_bar", "symbol": "GOLD BAR" if gold_bar else "BRASS", "win_all": gold_bar, "role": "gold_bar"})
 	spots.append({"index": spots.size(), "section_id": "final_vault", "symbol": "OPEN" if vault_win else "SEALED", "payout": vault_payout, "role": "vault"})
-	return {"spots": spots, "multiplier": multiplier, "ladder": ladder, "gold_bar": gold_bar, "gold_payout": gold_payout, "vault_win": vault_win, "vault_payout": vault_payout}
+	return {"spots": spots, "multiplier": multiplier, "ladder": ladder, "gold_bar": gold_bar, "vault_win": vault_win, "vault_payout": vault_payout}
 
 
 func _evaluate_mechanic(ticket: Dictionary) -> int:
@@ -994,9 +1073,15 @@ func _evaluate_mechanic(ticket: Dictionary) -> int:
 			var dealer_rank := rank_order.find(str(result.get("dealer_rank", "")))
 			return maxi(0, int(result.get("printed_prize", 0))) if pocket_aces or your_rank > dealer_rank else 0
 		"multi_game_vault":
-			var total := maxi(0, int(result.get("gold_payout", 0))) + maxi(0, int(result.get("vault_payout", 0)))
+			var total := maxi(0, int(result.get("vault_payout", 0))) if bool(result.get("vault_win", false)) else 0
+			var multiplier := clampi(int(result.get("multiplier", 2)), 2, 20)
+			var gold_bar := bool(result.get("gold_bar", false))
 			for rung_value in _dictionary_array(result.get("ladder", [])):
-				total += maxi(0, int((rung_value as Dictionary).get("payout", 0)))
+				var rung: Dictionary = rung_value
+				if bool(rung.get("match", false)) or gold_bar:
+					total += maxi(0, int(rung.get("base_prize", 0)) * multiplier)
+					if int(rung.get("base_prize", 0)) * multiplier != int(rung.get("payout", 0)):
+						total += maxi(0, int(rung.get("payout", 0)) - int(rung.get("base_prize", 0)) * multiplier)
 			return total
 	return 0
 
@@ -1225,6 +1310,19 @@ func _draw_machine(surface, state: Dictionary) -> void:
 	surface.surface_label_centered("%d/%d PRINTS FOUND" % [int(state.get("scratch_collection_count", 0)), int(state.get("scratch_collection_total", COLLECTION_TOTAL))], Rect2(MACHINE_RECT.position + Vector2(91, 399), Vector2(150, 10)), 6, C_YELLOW)
 
 
+func _draw_compact_tabs(surface, active_tab: String) -> void:
+	var origin := Vector2(306, 8) if active_tab == "machine" else Vector2(18, 8)
+	_draw_compact_tab(surface, Rect2(origin, Vector2(118, 30)), "MACHINE", "scratch_compact_machine", active_tab == "machine")
+	_draw_compact_tab(surface, Rect2(origin + Vector2(124, 0), Vector2(118, 30)), "TICKET", "scratch_compact_ticket", active_tab == "ticket")
+
+
+func _draw_compact_tab(surface, rect: Rect2, label: String, action: String, selected: bool) -> void:
+	surface.draw_rect(rect, Color("#17644c") if selected else Color("#171313"))
+	surface.draw_rect(rect, Color("#69efb3") if selected else Color("#7d6249"), false, 2)
+	surface.surface_label_centered(label, rect, 9, C_WHITE if selected else C_SOFT)
+	surface.surface_add_hit(rect, action, 0)
+
+
 func _draw_vending_window(surface, slot: Dictionary, rect: Rect2, index: int) -> void:
 	var palette := _dict_ref(slot.get("palette", {}))
 	var paper := Color(str(palette.get("paper", "#fff2c7")))
@@ -1243,7 +1341,7 @@ func _draw_vending_window(surface, slot: Dictionary, rect: Rect2, index: int) ->
 	for mark_index in range(6):
 		var mark_center := ticket.position + Vector2(ticket.size.x * (0.25 + float(mark_index % 3) * 0.25), ticket.size.y * (0.56 + float(mark_index / 3) * 0.25))
 		surface.draw_circle(mark_center, maxf(2.0, minf(ticket.size.x, ticket.size.y) * 0.07), Color(accent.r, accent.g, accent.b, 0.22 if sold_out else 0.72))
-	surface.surface_label(str(slot.get("display_name", "Ticket")).to_upper().left(18), rect.position + Vector2(72, 16), 8, C_SOFT)
+	surface.surface_label(str(slot.get("display_name", "Ticket")).to_upper().left(20), rect.position + Vector2(72, 16), 7, C_SOFT)
 	surface.surface_label("SOLD OUT" if sold_out else "$%d • %d LEFT" % [int(slot.get("price", 1)), int(slot.get("remaining", 0))], rect.position + Vector2(72, 35), 8, C_PINK if sold_out else C_WHITE)
 	var button := Rect2(rect.end - Vector2(31, 39), Vector2(23, 29))
 	surface.draw_rect(button, Color("#4a111b") if sold_out else Color("#14734e"))
@@ -1374,7 +1472,8 @@ func _draw_mechanic_result(surface, ticket: Dictionary, ink: Color, accent: Colo
 			_draw_poker_hand(surface, result.get("dealer_hand", []) if typeof(result.get("dealer_hand", [])) == TYPE_ARRAY else [], play_rect.position + Vector2(5, play_rect.size.y * 0.47), ink, Color("#8e9d98"), play_rect.size.x)
 			surface.surface_label("YOU: %s" % str(result.get("your_rank", "")), play_rect.position + Vector2(5, 10), 7, trim)
 			surface.surface_label("HOUSE: %s" % str(result.get("dealer_rank", "")), play_rect.position + Vector2(5, play_rect.size.y * 0.44), 7, ink)
-			surface.surface_label_centered("POCKET ACES — WIN ALL" if bool(result.get("pocket_aces", false)) else "WILD" if bool(result.get("wild", false)) else "NO WILD", Rect2(play_rect.position + Vector2(12, play_rect.size.y - 21), Vector2(play_rect.size.x - 24, 18)), 8, trim)
+			var wild_label := "WILD %s → %s" % [str(result.get("base_your_rank", "")), str(result.get("your_rank", ""))] if bool(result.get("wild", false)) else "NO WILD"
+			surface.surface_label_centered("POCKET ACES — WIN ALL" if bool(result.get("pocket_aces", false)) else wild_label, Rect2(play_rect.position + Vector2(12, play_rect.size.y - 21), Vector2(play_rect.size.x - 24, 18)), 8, trim)
 		"golden_vault":
 			surface.surface_label_centered("%d×" % int(result.get("multiplier", 2)), Rect2(play_rect.position + Vector2(play_rect.size.x * 0.20, 1), Vector2(play_rect.size.x * 0.60, play_rect.size.y * 0.14)), 18, trim)
 			var ladder := _array_ref(result.get("ladder", []))
@@ -1383,7 +1482,8 @@ func _draw_mechanic_result(surface, ticket: Dictionary, ink: Color, accent: Colo
 				var rect := Rect2(play_rect.position + Vector2(play_rect.size.x * 0.10, play_rect.size.y * (0.18 + float(index) * 0.105)), Vector2(play_rect.size.x * 0.80, play_rect.size.y * 0.085))
 				surface.draw_rect(rect, Color(accent.r, accent.g, accent.b, 0.12 + float(index) * 0.025))
 				surface.surface_label("RUNG %d" % int(rung.get("rung", index + 1)), rect.position + Vector2(7, 14), 8, ink)
-				surface.surface_label("MATCH  $%d" % int(rung.get("payout", 0)) if bool(rung.get("match", false)) else "LOCKED", rect.position + Vector2(112, 14), 8, trim if bool(rung.get("match", false)) else ink)
+				var rung_text := "$%d × %d = $%d" % [int(rung.get("base_prize", 0)), int(result.get("multiplier", 2)), int(rung.get("payout", 0))] if bool(rung.get("match", false)) else "LOCKED"
+				surface.surface_label(rung_text, rect.position + Vector2(76, 14), 7, trim if bool(rung.get("match", false)) else ink)
 			surface.surface_label_centered("GOLD BAR — WIN ALL" if bool(result.get("gold_bar", false)) else "BRASS BAR", Rect2(play_rect.position + Vector2(play_rect.size.x * 0.10, play_rect.size.y * 0.74), Vector2(play_rect.size.x * 0.80, play_rect.size.y * 0.09)), 8, trim)
 			surface.surface_label_centered("VAULT OPEN  $%d" % int(result.get("vault_payout", 0)) if bool(result.get("vault_win", false)) else "VAULT SEALED", Rect2(play_rect.position + Vector2(play_rect.size.x * 0.10, play_rect.size.y * 0.88), Vector2(play_rect.size.x * 0.80, play_rect.size.y * 0.09)), 8, trim)
 
@@ -1403,7 +1503,7 @@ func _draw_bingo_card(surface, card: Dictionary, rect: Rect2, ink: Color, accent
 		var cell := Rect2(rect.position + Vector2(float(index % 5) * rect.size.x / 5.0, float(index / 5) * rect.size.y / 5.0), rect.size / 5.0)
 		if index < daubed.size() and bool(daubed[index]):
 			surface.draw_circle(cell.get_center(), 6, Color(accent.r, accent.g, accent.b, 0.42))
-		surface.surface_label_centered(str(numbers[index]), cell, 5, ink)
+		surface.surface_label_centered("FREE" if index == 12 else str(numbers[index]), cell, 4 if index == 12 else 5, ink)
 
 
 func _draw_poker_hand(surface, cards: Array, origin: Vector2, ink: Color, accent: Color, available_width: float) -> void:
@@ -1563,9 +1663,9 @@ func _draw_surface_hud(surface, state: Dictionary) -> void:
 	surface.draw_rect(STATUS_HUD_RECT, Color("#7d6249"), false, 2)
 	var name := str(ticket.get("display_name", "SELECT A TICKET")).to_upper()
 	var price := int(ticket.get("price", 0))
-	surface.surface_label(name.left(24), STATUS_HUD_RECT.position + Vector2(10, 22), 11, C_WHITE)
-	surface.surface_label("PRICE $%d" % price if price > 0 else "ROW BUTTONS BUY", STATUS_HUD_RECT.position + Vector2(190, 22), 9, C_YELLOW)
-	surface.surface_label("WINNERS DUE $%d" % pending, STATUS_HUD_RECT.position + Vector2(308, 22), 9, Color("#62e3a2") if pending > 0 else C_SOFT)
+	surface.surface_label(name.left(22), STATUS_HUD_RECT.position + Vector2(10, 22), 9, C_WHITE)
+	surface.surface_label("PRICE $%d" % price if price > 0 else "SELECT ROW", STATUS_HUD_RECT.position + Vector2(145, 22), 8, C_YELLOW)
+	surface.surface_label("DUE $%d" % pending, STATUS_HUD_RECT.position + Vector2(215, 22), 8, Color("#62e3a2") if pending > 0 else C_SOFT)
 	var clerk_rect := Rect2(STATUS_HUD_RECT.end - Vector2(166, 29), Vector2(84, 24))
 	surface.draw_rect(clerk_rect, Color("#16452f") if pending > 0 else Color("#25211d"))
 	surface.draw_rect(clerk_rect, Color("#62e3a2") if pending > 0 else Color("#756858"), false, 1)
@@ -1635,7 +1735,7 @@ func _draw_file_animation(surface, state: Dictionary) -> void:
 	var progress := _ease_in_out_cubic(surface.surface_animation_progress(FILE_CHANNEL))
 	var winner := str(state.get("scratch_last_settled_pile", "")) == "winner_pile"
 	var width: float = 110.0
-	var target: Vector2 = STATUS_HUD_RECT.position + Vector2(430.0, 2.0) if winner else STATUS_HUD_RECT.position + Vector2(522.0, 2.0)
+	var target: Vector2 = STATUS_HUD_RECT.position + Vector2(294.0, 2.0) if winner else STATUS_HUD_RECT.position + Vector2(382.0, 2.0)
 	var source := active_ticket_rect.position + Vector2(24, 72)
 	var position := source.lerp(target, progress)
 	var size := Vector2(244, 280).lerp(Vector2(width - 22, 38), progress)
