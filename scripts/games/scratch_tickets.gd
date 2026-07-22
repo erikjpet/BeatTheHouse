@@ -106,6 +106,7 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 		"scratch_last_settled_ticket": _copy_dict(machine.get("last_settled_ticket", {})),
 		"scratch_last_settled_pile": str(machine.get("last_settled_pile", "")),
 		"scratch_machine_style": "physical_lottery_vending_cabinet",
+		"scratch_machine_art_features": ["floor_unit", "jackpot_marquee", "glass_stock_rows", "branded_side_panel", "selection_buttons", "dispensing_tray"],
 		"scratch_ticket_face_style": "portrait_printed_lottery_ticket",
 		"scratch_dispense_animation": not last_dispense_id.is_empty(),
 		"scratch_crumbs": crumbs,
@@ -1141,40 +1142,52 @@ func _reveal_all(machine: Dictionary) -> void:
 
 
 func _draw_machine(surface, state: Dictionary) -> void:
-	var shadow := Rect2(MACHINE_RECT.position + Vector2(7, 6), MACHINE_RECT.size)
-	surface.draw_rect(shadow, Color(0.0, 0.0, 0.0, 0.36))
-	surface.draw_polygon([
-		MACHINE_RECT.position + Vector2(10, 0), MACHINE_RECT.position + Vector2(MACHINE_RECT.size.x - 12, 0),
-		MACHINE_RECT.position + Vector2(MACHINE_RECT.size.x, 13), MACHINE_RECT.end - Vector2(0, 13),
-		MACHINE_RECT.end - Vector2(12, 0), MACHINE_RECT.position + Vector2(12, MACHINE_RECT.size.y),
-		MACHINE_RECT.position + Vector2(0, MACHINE_RECT.size.y - 15), MACHINE_RECT.position + Vector2(0, 14),
-	], [Color("#b61f2b")])
-	surface.draw_rect(Rect2(MACHINE_RECT.position + Vector2(9, 10), Vector2(MACHINE_RECT.size.x - 18, 56)), Color("#e8343e"))
-	surface.draw_rect(Rect2(MACHINE_RECT.position + Vector2(15, 72), Vector2(MACHINE_RECT.size.x - 30, 236)), Color("#171822"))
-	surface.draw_rect(Rect2(MACHINE_RECT.position + Vector2(19, 76), Vector2(MACHINE_RECT.size.x - 38, 228)), Color("#080a0f"))
-	surface.surface_label_centered("HIGHWAY LOTTERY", Rect2(MACHINE_RECT.position + Vector2(16, 18), Vector2(MACHINE_RECT.size.x - 32, 22)), 18, C_WHITE)
-	surface.surface_label_centered("SCRATCH TICKET CENTER", Rect2(MACHINE_RECT.position + Vector2(16, 42), Vector2(MACHINE_RECT.size.x - 32, 15)), 10, C_YELLOW)
+	var shadow := Rect2(MACHINE_RECT.position + Vector2(8, 7), MACHINE_RECT.size)
+	surface.draw_rect(shadow, Color(0.0, 0.0, 0.0, 0.42))
+	var cabinet := [MACHINE_RECT.position + Vector2(8, 0), MACHINE_RECT.position + Vector2(MACHINE_RECT.size.x - 9, 0), MACHINE_RECT.position + Vector2(MACHINE_RECT.size.x, 12), MACHINE_RECT.end - Vector2(0, 11), MACHINE_RECT.end - Vector2(12, 0), MACHINE_RECT.position + Vector2(10, MACHINE_RECT.size.y), MACHINE_RECT.position + Vector2(0, MACHINE_RECT.size.y - 13), MACHINE_RECT.position + Vector2(0, 14)]
+	surface.draw_polygon(cabinet, [Color("#9f1d2c")])
+	var marquee := Rect2(MACHINE_RECT.position + Vector2(8, 8), Vector2(MACHINE_RECT.size.x - 16, 58))
+	surface.draw_rect(marquee, Color("#ef3649"))
+	surface.draw_rect(marquee, Color("#ffcf49"), false, 3)
+	for ray in range(12):
+		var angle := float(ray) * TAU / 12.0
+		surface.draw_line(marquee.get_center(), marquee.get_center() + Vector2(cos(angle), sin(angle)) * 36.0, Color(1.0, 0.85, 0.25, 0.16), 3)
+	surface.surface_label_centered("GOLD ROAD", Rect2(marquee.position + Vector2(8, 8), Vector2(marquee.size.x - 16, 22)), 19, C_WHITE)
+	surface.surface_label_centered("NIGHT OWL JACKPOT • SCRATCH HERE", Rect2(marquee.position + Vector2(8, 34), Vector2(marquee.size.x - 16, 14)), 8, C_YELLOW)
+	var side_panel := Rect2(MACHINE_RECT.position + Vector2(9, 72), Vector2(48, 250))
+	surface.draw_rect(side_panel, Color("#0c8d88"))
+	surface.draw_rect(side_panel, Color("#72eee0"), false, 2)
+	for stripe in range(7):
+		surface.draw_polygon([side_panel.position + Vector2(0, stripe * 38), side_panel.position + Vector2(48, stripe * 38 + 15), side_panel.position + Vector2(48, stripe * 38 + 29), side_panel.position + Vector2(0, stripe * 38 + 14)], [Color(1.0, 0.85, 0.25, 0.10)])
+	for index in range(4):
+		surface.surface_label_centered(["GOLD", "ROAD", "LUCK", "CO." ][index], Rect2(side_panel.position + Vector2(3, 22 + index * 52), Vector2(42, 22)), 10, C_WHITE)
+	var glass := Rect2(MACHINE_RECT.position + Vector2(63, 72), Vector2(204, 250))
+	surface.draw_rect(glass, Color("#070b12"))
+	surface.draw_rect(glass, Color("#90a8b5"), false, 3)
+	surface.draw_polygon([glass.position + Vector2(7, 4), glass.position + Vector2(36, 4), glass.position + Vector2(112, glass.size.y - 4), glass.position + Vector2(82, glass.size.y - 4)], [Color(0.65, 0.90, 1.0, 0.055)])
 	var stock := _dictionary_array(state.get("scratch_stock", []))
 	for index in range(stock.size()):
 		var slot: Dictionary = stock[index]
-		var column := index % 2
-		var row := index / 2
-		var rect := Rect2(MACHINE_RECT.position + Vector2(26 + column * 119, 82 + row * 108), Vector2(108, 96))
+		var rect := Rect2(glass.position + Vector2(7, 7 + index * 59), Vector2(glass.size.x - 14, 54))
 		_draw_vending_window(surface, slot, rect, index)
 		if int(slot.get("remaining", 0)) > 0:
 			surface.surface_add_hit(rect, "scratch_buy", index)
-	var control := Rect2(MACHINE_RECT.position + Vector2(20, 317), Vector2(MACHINE_RECT.size.x - 40, 28))
-	surface.draw_rect(control, Color("#66121d"))
-	surface.draw_rect(control, Color("#ff5964"), false, 2)
-	surface.surface_label("DISPENSE", control.position + Vector2(10, 19), 11, C_WHITE)
-	for light_index in range(4):
-		surface.draw_circle(control.position + Vector2(105 + light_index * 21, 14), 4, Color("#62f6bb") if light_index < stock.size() else Color("#39151a"))
-	var chute := Rect2(MACHINE_RECT.position + Vector2(39, 353), Vector2(MACHINE_RECT.size.x - 78, 30))
-	surface.draw_rect(chute, Color("#28070c"))
-	surface.draw_rect(chute, Color("#ff9b6b"), false, 2)
-	surface.draw_rect(chute.grow(-7), Color("#060609"))
-	surface.surface_label_centered("TICKET CHUTE", chute, 9, C_SOFT)
-	surface.surface_label_centered("%d/%d DESIGNS FOUND" % [int(state.get("scratch_collection_count", 0)), int(state.get("scratch_collection_total", COLLECTION_TOTAL))], Rect2(MACHINE_RECT.position + Vector2(20, 386), Vector2(MACHINE_RECT.size.x - 40, 12)), 8, C_YELLOW)
+	var payment := Rect2(MACHINE_RECT.position + Vector2(17, 329), Vector2(68, 31))
+	surface.draw_rect(payment, Color("#361019"))
+	surface.draw_rect(payment, Color("#ff6070"), false, 2)
+	surface.surface_label_centered("CASH", payment, 9, C_WHITE)
+	surface.draw_rect(Rect2(payment.position + Vector2(48, 8), Vector2(10, 15)), Color("#050608"))
+	var status := Rect2(MACHINE_RECT.position + Vector2(93, 329), Vector2(166, 31))
+	surface.draw_rect(status, Color("#15241f"))
+	surface.surface_label_centered("SELECT A LIT ROW", status, 9, Color("#66f0ad"))
+	var chute := Rect2(MACHINE_RECT.position + Vector2(42, 367), Vector2(MACHINE_RECT.size.x - 84, 27))
+	surface.draw_rect(chute, Color("#24070d"))
+	surface.draw_rect(chute, Color("#ffb05f"), false, 2)
+	surface.draw_rect(chute.grow(-6), Color("#040507"))
+	surface.surface_label_centered("TAKE TICKET", chute, 8, C_SOFT)
+	for foot_x in [24.0, MACHINE_RECT.size.x - 38.0]:
+		surface.draw_rect(Rect2(MACHINE_RECT.position + Vector2(foot_x, 397), Vector2(14, 7)), Color("#32151a"))
+	surface.surface_label_centered("%d/%d PRINTS FOUND" % [int(state.get("scratch_collection_count", 0)), int(state.get("scratch_collection_total", COLLECTION_TOTAL))], Rect2(MACHINE_RECT.position + Vector2(91, 399), Vector2(150, 10)), 6, C_YELLOW)
 
 
 func _draw_vending_window(surface, slot: Dictionary, rect: Rect2, index: int) -> void:
@@ -1183,10 +1196,11 @@ func _draw_vending_window(surface, slot: Dictionary, rect: Rect2, index: int) ->
 	var ink := Color(str(palette.get("ink", "#35152e")))
 	var accent := Color(str(palette.get("accent", "#ef3156")))
 	var sold_out := int(slot.get("remaining", 0)) <= 0
-	surface.draw_rect(rect, Color("#252731"))
-	surface.draw_rect(rect, Color("#808392"), false, 2)
+	surface.draw_rect(rect, Color("#171c25"))
+	surface.draw_rect(rect, Color("#4f5f6b"), false, 1)
 	var mini_size := _dispenser_ticket_size(str(slot.get("size_id", "medium_square")))
-	var ticket := Rect2(rect.position + Vector2((rect.size.x - mini_size.x) * 0.5, 5.0 + (68.0 - mini_size.y) * 0.5), mini_size)
+	mini_size *= 0.68
+	var ticket := Rect2(rect.position + Vector2(8.0 + (58.0 - mini_size.x) * 0.5, (rect.size.y - mini_size.y) * 0.5), mini_size)
 	surface.draw_rect(Rect2(ticket.position + Vector2(3, 3), ticket.size), Color(0.0, 0.0, 0.0, 0.42))
 	surface.draw_rect(ticket, Color(paper.r * (0.42 if sold_out else 1.0), paper.g * (0.42 if sold_out else 1.0), paper.b * (0.42 if sold_out else 1.0)))
 	surface.draw_rect(Rect2(ticket.position, Vector2(ticket.size.x, minf(18.0, ticket.size.y * 0.30))), Color(accent.r, accent.g, accent.b, 0.45 if sold_out else 1.0))
@@ -1194,10 +1208,12 @@ func _draw_vending_window(surface, slot: Dictionary, rect: Rect2, index: int) ->
 	for mark_index in range(6):
 		var mark_center := ticket.position + Vector2(ticket.size.x * (0.25 + float(mark_index % 3) * 0.25), ticket.size.y * (0.56 + float(mark_index / 3) * 0.25))
 		surface.draw_circle(mark_center, maxf(2.0, minf(ticket.size.x, ticket.size.y) * 0.07), Color(accent.r, accent.g, accent.b, 0.22 if sold_out else 0.72))
-	surface.draw_rect(Rect2(rect.position + Vector2(7, 77), Vector2(94, 14)), Color("#08090d"))
-	surface.surface_label("%d" % (index + 1), rect.position + Vector2(10, 88), 8, C_SOFT)
-	surface.surface_label_centered("SOLD OUT" if sold_out else "$%d  /  %d LEFT" % [int(slot.get("price", 1)), int(slot.get("remaining", 0))], Rect2(rect.position + Vector2(21, 77), Vector2(76, 14)), 8, C_PINK if sold_out else C_WHITE)
-	surface.draw_circle(rect.position + Vector2(99, 84), 3, Color("#ff3d50") if sold_out else Color("#54f39c"))
+	surface.surface_label(str(slot.get("display_name", "Ticket")).to_upper().left(18), rect.position + Vector2(72, 16), 8, C_SOFT)
+	surface.surface_label("SOLD OUT" if sold_out else "$%d • %d LEFT" % [int(slot.get("price", 1)), int(slot.get("remaining", 0))], rect.position + Vector2(72, 35), 8, C_PINK if sold_out else C_WHITE)
+	var button := Rect2(rect.end - Vector2(31, 39), Vector2(23, 29))
+	surface.draw_rect(button, Color("#4a111b") if sold_out else Color("#14734e"))
+	surface.draw_rect(button, C_PINK if sold_out else Color("#65f2ac"), false, 2)
+	surface.surface_label_centered(str(index + 1), button, 10, C_WHITE)
 
 
 func _dispenser_ticket_size(size_id: String) -> Vector2:
@@ -1592,8 +1608,8 @@ func _draw_dispense_animation(surface, state: Dictionary) -> void:
 		return
 	var slot := clampi(int(surface.surface_animation_metadata(DISPENSE_CHANNEL).get("slot", 0)), 0, 3)
 	var progress := _ease_out_cubic(surface.surface_animation_progress(DISPENSE_CHANNEL))
-	var source := MACHINE_RECT.position + Vector2(80 + (slot % 2) * 119, 160 + (slot / 2) * 108)
-	var chute := MACHINE_RECT.position + Vector2(95, 354)
+	var source := MACHINE_RECT.position + Vector2(170, 106 + slot * 59)
+	var chute := MACHINE_RECT.position + Vector2(MACHINE_RECT.size.x * 0.5, 381)
 	var target := active_ticket_rect.get_center()
 	var position := source.lerp(chute, clampf(progress * 2.0, 0.0, 1.0)) if progress < 0.5 else chute.lerp(target, clampf((progress - 0.5) * 2.0, 0.0, 1.0))
 	var size := Vector2(80, 56).lerp(active_ticket_rect.size * 0.82, progress)

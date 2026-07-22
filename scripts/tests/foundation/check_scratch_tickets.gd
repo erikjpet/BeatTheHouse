@@ -26,6 +26,10 @@ func _check_scratch_tickets_surface_contract(game: GameModule, failures: Array) 
 		failures.append("Scratch Tickets idle liveness/zero-copy flags are incorrect.")
 	if not bool(surface.get("surface_pointer_coalesce_moves", false)) or not game.surface_pointer_uses_lightweight_ui_state("scratch_scrub"):
 		failures.append("Scratch Tickets did not retain coalesced lightweight pointer input.")
+	var art_features: Array = surface.get("scratch_machine_art_features", []) if typeof(surface.get("scratch_machine_art_features", [])) == TYPE_ARRAY else []
+	for feature in ["floor_unit", "jackpot_marquee", "glass_stock_rows", "branded_side_panel", "selection_buttons", "dispensing_tray"]:
+		if not art_features.has(feature):
+			failures.append("Scratch vending-machine art contract is missing %s." % feature)
 	var harness := SurfaceHarness.new()
 	harness.setup(surface)
 	game.draw_surface(harness, surface, {"contract_harness": true})
