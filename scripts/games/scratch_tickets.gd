@@ -580,7 +580,9 @@ func _resolve_redemption(run_state: RunState, environment: Dictionary, rng: RngS
 
 func _generate_machine_state(_run_state: RunState, environment: Dictionary, rng: RngStream) -> Dictionary:
 	var day_key := int(environment.get("generated_day", environment.get("day", 0)))
-	var machine_rng := rng if rng != null else _seeded_rng("scratch-stock:%s:day:%d" % [str(environment.get("id", "room")), day_key])
+	var stream_key := "scratch-stock:%s:day:%d" % [str(environment.get("id", "room")), day_key]
+	var root_rng := rng if rng != null else _seeded_rng("scratch-stock-root:%s" % str(environment.get("id", "room")))
+	var machine_rng := root_rng.fork(stream_key)
 	var stock: Array = []
 	for ticket_type_value in _weighted_stock_types(machine_rng, STOCK_SLOT_COUNT):
 		var ticket_type: Dictionary = ticket_type_value
@@ -601,6 +603,8 @@ func _generate_machine_state(_run_state: RunState, environment: Dictionary, rng:
 		"version": 1,
 		"machine_name": "Highway Scratch Center",
 		"stock_day": int(environment.get("generated_day", environment.get("day", 0))),
+		"stock_stream_key": stream_key,
+		"stock_weighting": "inverse_price_without_replacement",
 		"stock": stock,
 		"environment_hooks": [{
 			"id": REDEEM_HOOK_ID,

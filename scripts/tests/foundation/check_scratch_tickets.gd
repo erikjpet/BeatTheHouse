@@ -221,6 +221,15 @@ func _check_scratch_stock(game: GameModule, failures: Array) -> void:
 	var second: Dictionary = game.call("_generate_machine_state", null, {"id": "stock", "day": 4}, _scratch_rng("stock-root"))
 	if first.get("stock", []) != second.get("stock", []):
 		failures.append("Scratch stock was not deterministic for seed and day.")
+	if str(first.get("stock_stream_key", "")) != "scratch-stock:stock:day:4" or str(first.get("stock_weighting", "")) != "inverse_price_without_replacement":
+		failures.append("Scratch stock did not record its named day-keyed weighted fork.")
+	var previous_weight := 1000000
+	for type_id in SCRATCH_IDS:
+		var definition: Dictionary = game.call("_ticket_type", type_id)
+		var weight := int(definition.get("stock_weight", 0))
+		if weight <= 0 or weight >= previous_weight:
+			failures.append("Scratch stock weights are not strictly inverse to price at %s." % type_id)
+		previous_weight = weight
 	var appearances: Dictionary = {}
 	for type_id in SCRATCH_IDS:
 		appearances[type_id] = 0
