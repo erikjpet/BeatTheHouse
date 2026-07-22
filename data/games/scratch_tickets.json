@@ -132,12 +132,12 @@
 		],
 		"prize_table": [
 			{"id": "dealer_wins", "weight": 7150, "payout": 0, "your_rank": "HIGH CARD", "dealer_rank": "PAIR"},
-			{"id": "pair_wins", "weight": 1600, "payout": 50, "your_rank": "PAIR", "dealer_rank": "HIGH CARD"},
+			{"id": "pair_wins", "weight": 1600, "payout": 60, "your_rank": "PAIR", "dealer_rank": "HIGH CARD"},
 			{"id": "two_pair", "weight": 800, "payout": 100, "your_rank": "TWO PAIR", "dealer_rank": "PAIR"},
 			{"id": "straight", "weight": 300, "payout": 250, "your_rank": "STRAIGHT", "dealer_rank": "TWO PAIR"},
 			{"id": "wild_flush", "weight": 120, "payout": 500, "your_rank": "FLUSH", "dealer_rank": "STRAIGHT", "wild": true},
 			{"id": "pocket_aces", "weight": 28, "payout": 2500, "your_rank": "PAIR", "dealer_rank": "FULL HOUSE", "pocket_aces": true},
-			{"id": "royal", "weight": 2, "payout": 25000, "your_rank": "ROYAL FLUSH", "dealer_rank": "FULL HOUSE", "wild": true}
+			{"id": "royal", "weight": 2, "payout": 15000, "your_rank": "ROYAL FLUSH", "dealer_rank": "FULL HOUSE", "wild": true}
 		],
 		"scratch": {"brush_radius": 13.5, "pass_removal": 0.66, "sweep_threshold": 0.80, "mask_columns": 42, "mask_rows": 54, "crumb_count": 8},
 		"stock_weight": 50,

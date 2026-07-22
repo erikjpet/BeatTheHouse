@@ -472,7 +472,10 @@ func _resolve_purchase(_stake: int, run_state: RunState, environment: Dictionary
 		"environment_id": str(environment.get("id", "")),
 		"message": message,
 	})
-	result["scratch_ticket"] = ticket.duplicate(true)
+	# The result and machine state share the purchase-fixed ticket. Consumers
+	# treat action results as immutable, so copying the full latex mask here only
+	# adds a second allocation at the purchase boundary.
+	result["scratch_ticket"] = ticket
 	result["scratch_outcome_fixed_at_purchase"] = true
 	result["scratch_luck_modifier"] = luck
 	result["scratch_xray_peeks"] = _dictionary_array(ticket.get("xray_peeks", [])).duplicate(true)
@@ -728,15 +731,33 @@ func _initialize_ticket_mask(ticket: Dictionary, ticket_type: Dictionary) -> voi
 		})
 	var mask: Array = []
 	mask.resize(mask_columns * mask_rows)
-	for sample_index in range(mask.size()):
-		var normalized := _mask_sample_normalized(sample_index, mask_columns, mask_rows)
-		var section_index := _section_index_at_normalized(sections, normalized)
-		mask[sample_index] = 255 if section_index >= 0 else 0
-		if section_index >= 0:
-			var section: Dictionary = sections[section_index]
-			section["sample_total"] = int(section.get("sample_total", 0)) + 1
-			section["mask_remaining_units"] = int(section.get("mask_remaining_units", 0)) + 255
-			sections[section_index] = section
+	mask.fill(0)
+	# Section rectangles are non-overlapping normalized print areas. Rasterize
+	# their integer bounds directly instead of re-running dictionary lookups for
+	# every mask sample; the mask remains ticket-wide and presentation-only.
+	for section_index in range(sections.size()):
+		var section: Dictionary = sections[section_index]
+		var values: Array = section.get("rect", [])
+		var left := float(values[0])
+		var top := float(values[1])
+		var right := minf(1.0, left + float(values[2]))
+		var bottom := minf(1.0, top + float(values[3]))
+		var column_start := clampi(int(ceil(left * float(mask_columns) - 0.5)), 0, mask_columns)
+		var column_end := clampi(int(ceil(right * float(mask_columns) - 0.5)), column_start, mask_columns)
+		var row_start := clampi(int(ceil(top * float(mask_rows) - 0.5)), 0, mask_rows)
+		var row_end := clampi(int(ceil(bottom * float(mask_rows) - 0.5)), row_start, mask_rows)
+		var sample_total := 0
+		for row in range(row_start, row_end):
+			var row_offset := row * mask_columns
+			for column in range(column_start, column_end):
+				var sample_index := row_offset + column
+				if int(mask[sample_index]) != 0:
+					continue
+				mask[sample_index] = 255
+				sample_total += 1
+		section["sample_total"] = sample_total
+		section["mask_remaining_units"] = sample_total * 255
+		sections[section_index] = section
 	ticket["sections"] = sections
 	ticket["latex_mask"] = mask
 	ticket["mask_revision"] = 0
@@ -1502,7 +1523,7 @@ func _draw_brush_feedback(surface, state: Dictionary, latex: Color) -> void:
 func _draw_sweep_feedback(surface, state: Dictionary, trim: Color) -> void:
 	if bool(state.get("scratch_reduce_motion", false)) or not bool(surface.surface_animation_active(SWEEP_CHANNEL)):
 		return
-	var progress := surface.surface_animation_progress(SWEEP_CHANNEL)
+	var progress: float = float(surface.surface_animation_progress(SWEEP_CHANNEL))
 	var rect := _ticket_scratch_rect(state.get("scratch_ticket", {}) if typeof(state.get("scratch_ticket", {})) == TYPE_DICTIONARY else {})
 	var x := lerpf(rect.position.x, rect.end.x, progress)
 	surface.draw_rect(Rect2(Vector2(x - 8.0, rect.position.y), Vector2(16.0, rect.size.y)), Color(trim.r, trim.g, trim.b, 0.24 * (1.0 - progress)))
@@ -1613,9 +1634,8 @@ func _draw_file_animation(surface, state: Dictionary) -> void:
 		return
 	var progress := _ease_in_out_cubic(surface.surface_animation_progress(FILE_CHANNEL))
 	var winner := str(state.get("scratch_last_settled_pile", "")) == "winner_pile"
-	var gap := 8.0
-	var width := (PILES_RECT.size.x - gap - 12.0) * 0.5
-	var target := PILES_RECT.position + Vector2(17, 150) if winner else PILES_RECT.position + Vector2(21 + width, 158)
+	var width: float = 110.0
+	var target: Vector2 = STATUS_HUD_RECT.position + Vector2(430.0, 2.0) if winner else STATUS_HUD_RECT.position + Vector2(522.0, 2.0)
 	var source := active_ticket_rect.position + Vector2(24, 72)
 	var position := source.lerp(target, progress)
 	var size := Vector2(244, 280).lerp(Vector2(width - 22, 38), progress)

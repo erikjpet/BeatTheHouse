@@ -1,6 +1,7 @@
 extends "res://scripts/tests/foundation/check_lenders_release_saves.gd"
 
 const ScratchSfxPlayerScript := preload("res://scripts/ui/sfx_player.gd")
+const ScratchRngStreamScript := preload("res://scripts/core/rng_stream.gd")
 const SCRATCH_IDS := ["two_fer", "lucky_7s", "tic_tac_gold", "crossword_corner", "bonus_bingo", "high_roller_holdem", "golden_vault"]
 const SCRATCH_PRICES := [2, 5, 10, 15, 20, 50, 100]
 const SCRATCH_MECHANICS := ["match_two_of_three", "key_number_match", "tic_tac_toe", "crossword", "bingo", "beat_dealer_poker", "multi_game_vault"]
@@ -85,11 +86,14 @@ func _check_scratch_purchase_and_input(game: GameModule, run_state: RunState, en
 	game.surface_pointer_command("scratch_scrub", 0, "end", Vector2(400, 160), begin.get("ui_state", {}), run_state, environment)
 	if (ticket.get("latex_mask", []) as Array) != original_mask:
 		failures.append("Scratch Tickets bare click changed the mask.")
-	var drag_begin := game.surface_pointer_command("scratch_scrub", 0, "begin", Vector2(342, 190), {}, run_state, environment)
-	var drag_move := game.surface_pointer_command("scratch_scrub", 0, "move", Vector2(560, 190), drag_begin.get("ui_state", {}), run_state, environment)
+	var active_scratch_rect: Rect2 = game.call("_ticket_scratch_rect", ticket)
+	var drag_from := Vector2(active_scratch_rect.position.x + 10.0, active_scratch_rect.get_center().y)
+	var drag_to := Vector2(active_scratch_rect.end.x - 10.0, active_scratch_rect.get_center().y)
+	var drag_begin := game.surface_pointer_command("scratch_scrub", 0, "begin", drag_from, {}, run_state, environment)
+	var drag_move := game.surface_pointer_command("scratch_scrub", 0, "move", drag_to, drag_begin.get("ui_state", {}), run_state, environment)
 	if not bool(drag_move.get("surface_transient", false)) or str(drag_move.get("surface_audio_loop_start", "")) != "scratch_paper_foley_loop":
 		failures.append("Scratch drag did not use its transient paper-foley route.")
-	var drag_end := game.surface_pointer_command("scratch_scrub", 0, "end", Vector2(560, 190), drag_move.get("ui_state", {}), run_state, environment)
+	var drag_end := game.surface_pointer_command("scratch_scrub", 0, "end", drag_to, drag_move.get("ui_state", {}), run_state, environment)
 	if str(drag_end.get("surface_audio_loop_stop", "")) != "scratch_paper_foley_loop":
 		failures.append("Scratch pointer release did not stop the paper-foley loop.")
 	var reduced := game.surface_state(run_state, environment, {"reduce_motion": true})
@@ -167,8 +171,14 @@ func _check_scratch_section_sweeps(game: GameModule, failures: Array) -> void:
 			_prime_section_just_below_sweep(game, ticket, section_index)
 			var values: Array = (sections[section_index] as Dictionary).get("rect", [])
 			var scratch_rect: Rect2 = game.call("_ticket_scratch_rect", ticket)
-			var center := scratch_rect.position + Vector2(float(values[0]) + float(values[2]) * 0.5, float(values[1]) + float(values[3]) * 0.5) * scratch_rect.size
-			var result: Dictionary = game.call("_scratch_segment", machine, center - Vector2(8, 0), center + Vector2(8, 0))
+			var section: Dictionary = sections[section_index]
+			if bool(section.get("revealed", false)) or float(section.get("coverage", 1.0)) >= 0.80:
+				failures.append("Scratch section %s/%d swept before the 80%% threshold." % [type_id, section_index])
+				break
+			var center_y := scratch_rect.position.y + (float(values[1]) + float(values[3]) * 0.5) * scratch_rect.size.y
+			var from_x := scratch_rect.position.x + (float(values[0]) + float(values[2]) * 0.15) * scratch_rect.size.x
+			var to_x := scratch_rect.position.x + (float(values[0]) + float(values[2]) * 0.85) * scratch_rect.size.x
+			var result: Dictionary = game.call("_scratch_segment", machine, Vector2(from_x, center_y), Vector2(to_x, center_y))
 			if _dict_array(result.get("swept_sections", [])).is_empty() or not bool((sections[section_index] as Dictionary).get("revealed", false)):
 				failures.append("Scratch section %s/%d did not auto-sweep at 80%%." % [type_id, section_index])
 				break
@@ -337,7 +347,7 @@ func _check_scratch_gas_station_generation(failures: Array) -> void:
 	var library: ContentLibrary = ContentLibraryScript.new()
 	library.load()
 	var archetype := library.environment_archetype("gas_station_casino")
-	if archetype.is_empty() or not _string_array(archetype.get("required_game_ids", [])).has("scratch_tickets"):
+	if archetype.is_empty() or not _scratch_string_array(archetype.get("required_game_ids", [])).has("scratch_tickets"):
 		failures.append("Gas-station casinos no longer require Scratch Tickets.")
 
 
@@ -346,7 +356,7 @@ func _scratch_environment(environment_id: String) -> Dictionary:
 
 
 func _scratch_rng(seed_text: String) -> RngStream:
-	var rng: RngStream = RngStreamScript.new()
+	var rng: RngStream = ScratchRngStreamScript.new()
 	var seed := RunState.text_to_seed(seed_text)
 	rng.configure(seed, seed)
 	return rng
@@ -361,7 +371,7 @@ func _dict_array(value: Variant) -> Array:
 	return result
 
 
-func _string_array(value: Variant) -> Array:
+func _scratch_string_array(value: Variant) -> Array:
 	var result: Array = []
 	if typeof(value) == TYPE_ARRAY:
 		for entry in value as Array:
