@@ -202,10 +202,13 @@ func _check_scratch_save_restore(game: GameModule, failures: Array) -> void:
 
 func _check_scratch_sizes(game: GameModule, failures: Array) -> void:
 	var expected := {"two_fer": "small_rectangle", "lucky_7s": "medium_square", "tic_tac_gold": "medium_square", "crossword_corner": "large_rectangle", "bonus_bingo": "large_rectangle", "high_roller_holdem": "tall", "golden_vault": "tall"}
+	var orientations := {"small_rectangle": "wide_short", "medium_square": "balanced", "large_rectangle": "wide_tall", "tall": "narrow_tall"}
 	for type_id in expected:
 		var ticket: Dictionary = game.call("_roll_ticket", game.call("_ticket_type", type_id), _scratch_rng("size:%s" % type_id), 0, "size")
 		if str(ticket.get("size_id", "")) != str(expected[type_id]):
 			failures.append("Scratch ticket %s has the wrong physical size." % type_id)
+		if str(game.call("_size_orientation", str(expected[type_id]))) != str(orientations[expected[type_id]]):
+			failures.append("Scratch size %s has the wrong orientation." % str(expected[type_id]))
 		if game.has_method("_ticket_rect_for_size"):
 			var rect: Rect2 = game.call("_ticket_rect_for_size", str(expected[type_id]), false)
 			var small_rect: Rect2 = game.call("_ticket_rect_for_size", str(expected[type_id]), true)

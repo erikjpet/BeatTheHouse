@@ -114,6 +114,7 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 		"scratch_reduce_motion": reduce_motion,
 		"scratch_compact_mode": compact_mode,
 		"scratch_size_id": str(active_ticket.get("size_id", "")),
+		"scratch_size_orientation": _size_orientation(str(active_ticket.get("size_id", ""))),
 		"scratch_ticket_rect": {"x": active_ticket_rect.position.x, "y": active_ticket_rect.position.y, "w": active_ticket_rect.size.x, "h": active_ticket_rect.size.y},
 		"scratch_brush_radius": float(_copy_dict(active_ticket.get("scratch", {})).get("brush_radius", DEFAULT_BRUSH_RADIUS)),
 		"scratch_drunk_level": run_state.drunk_level if run_state != null else 0,
@@ -1794,6 +1795,15 @@ func _ticket_rect_for_size(size_id: String, _compact: bool = false) -> Rect2:
 		"large_rectangle": size = Vector2(548, 356)
 		"tall": size = Vector2(292, 366)
 	return Rect2(PLAY_SURFACE_RECT.get_center() - size * 0.5, size)
+
+
+func _size_orientation(size_id: String) -> String:
+	match size_id:
+		"small_rectangle": return "wide_short"
+		"medium_square": return "balanced"
+		"large_rectangle": return "wide_tall"
+		"tall": return "narrow_tall"
+	return "balanced"
 
 
 func _scratch_rect_for_ticket_rect(size_id: String, rect: Rect2) -> Rect2:

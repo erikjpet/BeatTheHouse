@@ -214,6 +214,7 @@ func surface_runtime_status() -> Dictionary:
 		"board_size": _vector_snapshot(_active_board_size()),
 		"board_aspect_ratio": _active_board_aspect_ratio(),
 		"preserves_aspect_ratio": true,
+		"small_screen_mode": small_screen_mode,
 		"outcome_message": str(state.get("outcome_message", state.get("result_message", ""))),
 		"outcome_bankroll_delta": int(state.get("outcome_bankroll_delta", state.get("bankroll_delta", 0))),
 		"outcome_suspicion_delta": int(state.get("outcome_suspicion_delta", state.get("suspicion_delta", 0))),
