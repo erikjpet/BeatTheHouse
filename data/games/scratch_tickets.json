@@ -1,201 +1,174 @@
 [
 	{
+		"id": "two_fer",
+		"display_name": "2-fer",
+		"price": 2,
+		"size_id": "small_rectangle",
+		"face": {"layout": "two_fer_burst", "symbol_set": "roadside_pairs", "palette": {"paper": "#fff1ba", "ink": "#392039", "accent": "#ed3f68", "latex": "#b9bcc2", "trim": "#ffcf3f"}},
+		"mechanic": {"type": "match_two_of_three", "rules": ["Scratch three symbols.", "Any matching pair wins its legend prize."], "legend": {"CLOVER": 2, "BELL": 4, "STAR": 10, "2FER": 50}},
+		"sections": [{"id": "play", "label": "THREE SPOTS", "rect": [0.08, 0.15, 0.84, 0.70]}],
+		"prize_table": [
+			{"id": "no_pair", "weight": 5200, "payout": 0},
+			{"id": "clover_pair", "weight": 3500, "payout": 2, "match_symbol": "CLOVER"},
+			{"id": "bell_pair", "weight": 1000, "payout": 4, "match_symbol": "BELL"},
+			{"id": "star_pair", "weight": 280, "payout": 10, "match_symbol": "STAR"},
+			{"id": "top_pair", "weight": 20, "payout": 50, "match_symbol": "2FER"}
+		],
+		"scratch": {"brush_radius": 15.0, "pass_removal": 0.66, "sweep_threshold": 0.80, "mask_columns": 48, "mask_rows": 32, "crumb_count": 5},
+		"stock_weight": 1000,
+		"stock_count": [6, 10],
+		"rtp_band": [0.72, 0.76]
+	},
+	{
 		"id": "lucky_7s",
 		"display_name": "Lucky 7s",
-		"price": 2,
-		"face": {"layout": "classic_nine", "symbol_set": "neon_sevens", "palette": {"paper": "#fff2c7", "ink": "#35152e", "accent": "#ef3156", "latex": "#b9bcc8", "trim": "#ffd447"}},
-		"grid": {"columns": 3, "rows": 3},
-		"symbol_pool": ["7", "CHERRY", "BELL", "STAR", "BAR"],
-		"prize_table": [
-			{"id": "blank", "weight": 5400, "payout": 0},
-			{"id": "push", "weight": 3000, "payout": 2, "winning_symbol": "CHERRY"},
-			{"id": "small", "weight": 1300, "payout": 4, "winning_symbol": "BELL"},
-			{"id": "bright", "weight": 280, "payout": 10, "winning_symbol": "STAR"},
-			{"id": "top", "weight": 20, "payout": 50, "winning_symbol": "7"}
-		],
-		"gimmick": {"type": "match_three"},
-		"scratch": {"brush_radius": 15.0, "pass_removal": 0.66, "sweep_threshold": 0.80, "snap_threshold": 0.80, "mask_columns": 48, "mask_rows": 32, "crumb_count": 5},
-		"stock_weight": 100,
-		"stock_count": [4, 7],
-		"rtp_band": [0.73, 0.77]
-	},
-	{
-		"id": "cash_cow",
-		"display_name": "Cash Cow",
-		"price": 2,
-		"face": {"layout": "pasture_nine", "symbol_set": "farm_cash", "palette": {"paper": "#e9ffd2", "ink": "#173822", "accent": "#38a852", "latex": "#c9d8c4", "trim": "#fff16b"}},
-		"grid": {"columns": 3, "rows": 3},
-		"symbol_pool": ["COW", "MILK", "CLOVER", "BELL", "HAY"],
-		"prize_table": [
-			{"id": "blank", "weight": 3000, "payout": 0},
-			{"id": "milk_money", "weight": 5000, "payout": 2, "winning_symbol": "MILK"},
-			{"id": "steady", "weight": 1800, "payout": 3, "winning_symbol": "COW"},
-			{"id": "cream", "weight": 190, "payout": 8, "winning_symbol": "CLOVER"},
-			{"id": "bell_cow", "weight": 10, "payout": 40, "winning_symbol": "BELL"}
-		],
-		"gimmick": {"type": "match_three"},
-		"scratch": {"brush_radius": 15.0, "pass_removal": 0.66, "sweep_threshold": 0.80, "snap_threshold": 0.80, "mask_columns": 48, "mask_rows": 32, "crumb_count": 5},
-		"stock_weight": 110,
-		"stock_count": [5, 8],
-		"rtp_band": [0.84, 0.89]
-	},
-	{
-		"id": "high_voltage",
-		"display_name": "High Voltage",
-		"price": 10,
-		"face": {"layout": "warning_nine", "symbol_set": "electric_hazard", "palette": {"paper": "#17182b", "ink": "#f7fbff", "accent": "#2de2ff", "latex": "#737a91", "trim": "#fff13b"}},
-		"grid": {"columns": 3, "rows": 3},
-		"symbol_pool": ["VOLT", "COIL", "BOLT", "FUSE", "PLUG"],
-		"prize_table": [
-			{"id": "blackout", "weight": 6500, "payout": 0},
-			{"id": "live_wire", "weight": 2200, "payout": 10, "winning_symbol": "PLUG"},
-			{"id": "surge", "weight": 1000, "payout": 25, "winning_symbol": "BOLT"},
-			{"id": "transformer", "weight": 270, "payout": 100, "winning_symbol": "COIL"},
-			{"id": "grid_jackpot", "weight": 30, "payout": 1000, "winning_symbol": "VOLT"}
-		],
-		"gimmick": {"type": "shock_penalty", "penalty_symbol": "SHOCK", "penalty_chance_percent": 15, "penalty_amount": [1, 3]},
-		"scratch": {"brush_radius": 15.0, "pass_removal": 0.66, "sweep_threshold": 0.80, "snap_threshold": 0.80, "mask_columns": 48, "mask_rows": 32, "crumb_count": 7},
-		"stock_weight": 45,
-		"stock_count": [2, 4],
-		"rtp_band": [0.68, 0.84]
-	},
-	{
-		"id": "gold_rush_doubler",
-		"display_name": "Gold Rush Doubler",
 		"price": 5,
-		"face": {"layout": "gold_lines", "symbol_set": "prospector", "palette": {"paper": "#fff0ad", "ink": "#3d2512", "accent": "#d98b19", "latex": "#c6aa70", "trim": "#fff45e"}},
-		"grid": {"columns": 3, "rows": 3},
-		"symbol_pool": ["GOLD", "PAN", "PICK", "BOOT", "NUGGET"],
-		"prize_table": [
-			{"id": "dust", "weight": 6000, "payout": 0},
-			{"id": "two_x", "weight": 2500, "base_payout": 2.5, "multiplier": 2, "payout": 5, "winning_symbol": "PAN", "multiplier_symbol": "2X"},
-			{"id": "five_x", "weight": 1000, "base_payout": 2, "multiplier": 5, "payout": 10, "winning_symbol": "PICK", "multiplier_symbol": "5X"},
-			{"id": "ten_x", "weight": 450, "base_payout": 2.5, "multiplier": 10, "payout": 25, "winning_symbol": "NUGGET", "multiplier_symbol": "10X"},
-			{"id": "mother_lode", "weight": 50, "base_payout": 10, "multiplier": 10, "payout": 100, "winning_symbol": "GOLD", "multiplier_symbol": "10X"}
+		"size_id": "medium_square",
+		"face": {"layout": "lucky_seven_neon", "symbol_set": "number_sevens", "palette": {"paper": "#fff6d8", "ink": "#34132e", "accent": "#f02f59", "latex": "#c2c3ca", "trim": "#ffe13c"}},
+		"mechanic": {"type": "key_number_match", "rules": ["Match either Winning Number to win that prize.", "Winning 7 wins all prizes.", "Your 7 wins its prize automatically."], "winning_number_count": 2, "your_number_count": 6},
+		"sections": [
+			{"id": "winning_numbers", "label": "WINNING NUMBERS", "rect": [0.12, 0.05, 0.76, 0.22]},
+			{"id": "your_numbers", "label": "YOUR NUMBERS", "rect": [0.06, 0.34, 0.88, 0.60]}
 		],
-		"gimmick": {"type": "multiplier_lines"},
-		"scratch": {"brush_radius": 15.0, "pass_removal": 0.66, "sweep_threshold": 0.80, "snap_threshold": 0.80, "mask_columns": 48, "mask_rows": 32, "crumb_count": 6},
-		"stock_weight": 72,
+		"prize_table": [
+			{"id": "no_match", "weight": 6300, "payout": 0},
+			{"id": "your_seven", "weight": 2000, "payout": 5, "your_seven_count": 1},
+			{"id": "one_match", "weight": 1200, "payout": 10, "match_count": 1},
+			{"id": "seven_and_match", "weight": 400, "payout": 25, "your_seven_count": 1, "match_count": 1},
+			{"id": "winning_seven", "weight": 90, "payout": 60, "winning_seven": true},
+			{"id": "seven_jackpot", "weight": 10, "payout": 250, "winning_seven": true}
+		],
+		"scratch": {"brush_radius": 15.0, "pass_removal": 0.66, "sweep_threshold": 0.80, "mask_columns": 48, "mask_rows": 36, "crumb_count": 6},
+		"stock_weight": 500,
+		"stock_count": [4, 8],
+		"rtp_band": [0.77, 0.83]
+	},
+	{
+		"id": "tic_tac_gold",
+		"display_name": "Tic Tac Gold",
+		"price": 10,
+		"size_id": "medium_square",
+		"face": {"layout": "tic_tac_gold", "symbol_set": "gold_marks", "palette": {"paper": "#18213a", "ink": "#fff4c2", "accent": "#e8a928", "latex": "#737b8c", "trim": "#55d7d0"}},
+		"mechanic": {"type": "tic_tac_toe", "rules": ["Each full WIN line pays its printed prize.", "Multiple lines add up.", "BONUS is an instant win."], "board_columns": 3, "board_rows": 3},
+		"sections": [
+			{"id": "board", "label": "GOLD GRID", "rect": [0.08, 0.08, 0.67, 0.84]},
+			{"id": "bonus", "label": "BONUS", "rect": [0.79, 0.30, 0.16, 0.40]}
+		],
+		"prize_table": [
+			{"id": "empty_grid", "weight": 6200, "payout": 0, "line_count": 0},
+			{"id": "bonus_hit", "weight": 1900, "payout": 10, "line_count": 0, "bonus": true},
+			{"id": "one_line", "weight": 1400, "payout": 20, "line_count": 1},
+			{"id": "two_lines", "weight": 400, "payout": 50, "line_count": 2},
+			{"id": "gold_cross", "weight": 90, "payout": 100, "line_count": 4},
+			{"id": "gold_board", "weight": 10, "payout": 500, "line_count": 8}
+		],
+		"scratch": {"brush_radius": 15.0, "pass_removal": 0.66, "sweep_threshold": 0.80, "mask_columns": 48, "mask_rows": 36, "crumb_count": 7},
+		"stock_weight": 250,
 		"stock_count": [3, 6],
-		"rtp_band": [0.75, 0.80]
+		"rtp_band": [0.78, 0.84]
 	},
 	{
-		"id": "bonus_box",
-		"display_name": "Bonus Box",
-		"price": 5,
-		"face": {"layout": "key_and_bonus", "symbol_set": "locked_box", "palette": {"paper": "#dff8ff", "ink": "#172d45", "accent": "#347fd1", "latex": "#aebfce", "trim": "#ffcc55"}},
-		"grid": {"columns": 3, "rows": 3},
-		"symbol_pool": ["BOX", "LOCK", "COIN", "GEM", "MAP"],
-		"prize_table": [
-			{"id": "locked", "weight": 6500, "payout": 0},
-			{"id": "key_small", "weight": 2300, "payout": 5, "winning_symbol": "KEY"},
-			{"id": "key_blue", "weight": 900, "payout": 15, "winning_symbol": "KEY"},
-			{"id": "key_gold", "weight": 280, "payout": 40, "winning_symbol": "KEY"},
-			{"id": "vault", "weight": 20, "payout": 200, "winning_symbol": "KEY"}
-		],
-		"gimmick": {"type": "bonus_box", "key_symbol": "KEY", "bonus_symbol": "BONUS"},
-		"scratch": {"brush_radius": 15.0, "pass_removal": 0.66, "sweep_threshold": 0.80, "snap_threshold": 0.80, "mask_columns": 48, "mask_rows": 32, "crumb_count": 6},
-		"stock_weight": 68,
-		"stock_count": [3, 5],
-		"rtp_band": [0.78, 0.83]
-	},
-	{
-		"id": "word_hunt",
-		"display_name": "Word Hunt",
-		"price": 5,
-		"face": {"layout": "crossword_grid", "symbol_set": "letters", "palette": {"paper": "#f5f0df", "ink": "#263238", "accent": "#8b5e3c", "latex": "#b9b4aa", "trim": "#57b7a4"}},
-		"grid": {"columns": 4, "rows": 4},
-		"symbol_pool": ["A", "E", "I", "O", "R", "S", "T", "N", "L", "C"],
-		"prize_table": [
-			{"id": "no_words", "weight": 7000, "payout": 0},
-			{"id": "one_word", "weight": 1800, "payout": 5, "winning_word": "CASH"},
-			{"id": "two_words", "weight": 900, "payout": 15, "winning_word": "LUCK"},
-			{"id": "three_words", "weight": 280, "payout": 50, "winning_word": "GOLD"},
-			{"id": "full_grid", "weight": 20, "payout": 250, "winning_word": "RICH"}
-		],
-		"gimmick": {"type": "word_hunt", "words": ["CASH", "LUCK", "GOLD", "RICH"]},
-		"scratch": {"brush_radius": 15.0, "pass_removal": 0.66, "sweep_threshold": 0.80, "snap_threshold": 0.80, "mask_columns": 48, "mask_rows": 32, "crumb_count": 5},
-		"stock_weight": 62,
-		"stock_count": [3, 5],
-		"rtp_band": [0.80, 0.86]
-	},
-	{
-		"id": "second_chance",
-		"display_name": "Second Chance",
-		"price": 5,
-		"face": {"layout": "double_arrow", "symbol_set": "encore", "palette": {"paper": "#ffe8f4", "ink": "#47213a", "accent": "#d94f92", "latex": "#c9b1c1", "trim": "#6ce5d5"}},
-		"grid": {"columns": 3, "rows": 3},
-		"symbol_pool": ["AGAIN", "ARROW", "STAR", "COIN", "TICKET"],
-		"prize_table": [
-			{"id": "done", "weight": 5000, "payout": 0},
-			{"id": "free_ticket", "weight": 1500, "payout": 0, "audit_return": 2, "second_chance": true},
-			{"id": "small", "weight": 2500, "payout": 5, "winning_symbol": "AGAIN"},
-			{"id": "encore", "weight": 900, "payout": 15, "winning_symbol": "TICKET"},
-			{"id": "standing_ovation", "weight": 100, "payout": 100, "winning_symbol": "STAR"}
-		],
-		"gimmick": {"type": "second_chance", "free_type_id": "lucky_7s"},
-		"scratch": {"brush_radius": 15.0, "pass_removal": 0.66, "sweep_threshold": 0.80, "snap_threshold": 0.80, "mask_columns": 48, "mask_rows": 32, "crumb_count": 6},
-		"stock_weight": 58,
-		"stock_count": [3, 5],
-		"rtp_band": [0.76, 0.80]
-	},
-	{
-		"id": "devils_cut",
-		"display_name": "Devil's Cut",
-		"price": 10,
-		"face": {"layout": "infernal_contract", "symbol_set": "devil_deal", "palette": {"paper": "#2a1017", "ink": "#fff0d5", "accent": "#e23b32", "latex": "#72545b", "trim": "#ff9d37"}},
-		"grid": {"columns": 3, "rows": 3},
-		"symbol_pool": ["FIRE", "HORN", "DEAL", "COIN", "TRIDENT"],
-		"prize_table": [
-			{"id": "ashes", "weight": 6500, "payout": 0},
-			{"id": "small_deal", "weight": 2200, "gross_payout": 10, "payout": 8, "winning_symbol": "DEAL", "cut": 2},
-			{"id": "hot_deal", "weight": 900, "gross_payout": 30, "payout": 23, "winning_symbol": "FIRE", "cut": 7},
-			{"id": "blood_contract", "weight": 350, "gross_payout": 100, "payout": 75, "winning_symbol": "TRIDENT", "cut": 25},
-			{"id": "devils_due", "weight": 50, "gross_payout": 500, "payout": 375, "winning_symbol": "HORN", "cut": 125}
-		],
-		"gimmick": {"type": "devils_cut", "devil_symbol": "DEVIL", "heat": 6},
-		"scratch": {"brush_radius": 15.0, "pass_removal": 0.66, "sweep_threshold": 0.80, "snap_threshold": 0.80, "mask_columns": 48, "mask_rows": 32, "crumb_count": 7},
-		"stock_weight": 38,
-		"stock_count": [2, 4],
-		"rtp_band": [0.77, 0.86]
-	},
-	{
-		"id": "fools_gold",
-		"display_name": "Fool's Gold",
+		"id": "crossword_corner",
+		"display_name": "Crossword Corner",
 		"price": 15,
-		"face": {"layout": "premium_filigree", "symbol_set": "fake_gold", "palette": {"paper": "#fff1a6", "ink": "#5c4216", "accent": "#ffc400", "latex": "#d8bd69", "trim": "#fff8c9"}},
-		"grid": {"columns": 3, "rows": 3},
-		"symbol_pool": ["GLINT", "ROCK", "PAN", "CROWN", "GOLD?"],
-		"prize_table": [
-			{"id": "rocks", "weight": 9000, "payout": 0},
-			{"id": "glint", "weight": 800, "payout": 5, "winning_symbol": "GLINT"},
-			{"id": "tiny", "weight": 180, "payout": 15, "winning_symbol": "GOLD?"},
-			{"id": "not_quite", "weight": 20, "payout": 50, "winning_symbol": "CROWN"}
+		"size_id": "large_rectangle",
+		"face": {"layout": "corner_crossword", "symbol_set": "newsprint_letters", "palette": {"paper": "#f5eddb", "ink": "#26343a", "accent": "#b7553b", "latex": "#b9b4aa", "trim": "#4da58e"}},
+		"mechanic": {"type": "crossword", "rules": ["Reveal the 18-letter bank.", "Completed grid words pay by count."], "letter_bank_count": 18, "words": ["CASH", "LUCK", "GOLD", "NEON", "RISK", "VAULT", "HOUSE"], "legend": {"3": 15, "4": 30, "5": 75, "6": 250, "7": 1500}},
+		"sections": [
+			{"id": "letter_bank", "label": "LETTER BANK", "rect": [0.04, 0.06, 0.24, 0.88]},
+			{"id": "crossword", "label": "CROSSWORD", "rect": [0.33, 0.05, 0.63, 0.90]}
 		],
-		"gimmick": {"type": "read_the_table", "warning": "Premium price. Tiny prizes."},
-		"scratch": {"brush_radius": 15.0, "pass_removal": 0.66, "sweep_threshold": 0.80, "snap_threshold": 0.80, "mask_columns": 48, "mask_rows": 32, "crumb_count": 7},
-		"stock_weight": 30,
-		"stock_count": [2, 4],
-		"rtp_band": [0.04, 0.07]
+		"prize_table": [
+			{"id": "under_three", "weight": 6000, "payout": 0, "word_count": 2},
+			{"id": "three_words", "weight": 2500, "payout": 15, "word_count": 3},
+			{"id": "four_words", "weight": 1100, "payout": 30, "word_count": 4},
+			{"id": "five_words", "weight": 350, "payout": 75, "word_count": 5},
+			{"id": "six_words", "weight": 45, "payout": 250, "word_count": 6},
+			{"id": "seven_words", "weight": 5, "payout": 1500, "word_count": 7}
+		],
+		"scratch": {"brush_radius": 14.0, "pass_removal": 0.66, "sweep_threshold": 0.80, "mask_columns": 56, "mask_rows": 38, "crumb_count": 7},
+		"stock_weight": 165,
+		"stock_count": [2, 5],
+		"rtp_band": [0.74, 0.81]
 	},
 	{
-		"id": "midnight_rare",
-		"display_name": "Midnight Rare",
-		"price": 10,
-		"face": {"layout": "moon_constellation", "symbol_set": "midnight", "palette": {"paper": "#11162f", "ink": "#eef2ff", "accent": "#8d79ff", "latex": "#5d6488", "trim": "#66e5ff"}},
-		"grid": {"columns": 3, "rows": 3},
-		"symbol_pool": ["MOON", "STAR", "OWL", "NIGHT", "COMET"],
-		"prize_table": [
-			{"id": "clouds", "weight": 7000, "payout": 0},
-			{"id": "moonlight", "weight": 1800, "payout": 10, "winning_symbol": "MOON"},
-			{"id": "constellation", "weight": 900, "payout": 30, "winning_symbol": "STAR"},
-			{"id": "rare_owl", "weight": 280, "payout": 100, "winning_symbol": "OWL", "luck_buff": 3, "luck_turns": 6},
-			{"id": "midnight_jackpot", "weight": 20, "payout": 1000, "winning_symbol": "COMET", "luck_buff": 5, "luck_turns": 8}
+		"id": "bonus_bingo",
+		"display_name": "Bonus Bingo",
+		"price": 20,
+		"size_id": "large_rectangle",
+		"face": {"layout": "four_card_bingo", "symbol_set": "bingo_numbers", "palette": {"paper": "#e9f4e6", "ink": "#17382c", "accent": "#2a9b67", "latex": "#b5c3b8", "trim": "#f2b632"}},
+		"mechanic": {"type": "bingo", "rules": ["Reveal 24 caller numbers.", "Every completed card line pays.", "A blackout pays the large prize."], "caller_count": 24, "card_count": 4},
+		"sections": [
+			{"id": "callers", "label": "CALLER NUMBERS", "rect": [0.03, 0.05, 0.22, 0.90]},
+			{"id": "card_1", "label": "CARD 1", "rect": [0.29, 0.05, 0.31, 0.41]},
+			{"id": "card_2", "label": "CARD 2", "rect": [0.65, 0.05, 0.31, 0.41]},
+			{"id": "card_3", "label": "CARD 3", "rect": [0.29, 0.54, 0.31, 0.41]},
+			{"id": "card_4", "label": "CARD 4", "rect": [0.65, 0.54, 0.31, 0.41]}
 		],
-		"gimmick": {"type": "rare_luck", "rare_symbol": "RARE"},
-		"scratch": {"brush_radius": 15.0, "pass_removal": 0.66, "sweep_threshold": 0.80, "snap_threshold": 0.80, "mask_columns": 48, "mask_rows": 32, "crumb_count": 6},
-		"stock_weight": 3,
-		"stock_count": [1, 2],
-		"rtp_band": [0.84, 1.02]
+		"prize_table": [
+			{"id": "no_line", "weight": 6500, "payout": 0, "line_count": 0},
+			{"id": "one_line", "weight": 2400, "payout": 20, "line_count": 1},
+			{"id": "two_lines", "weight": 800, "payout": 50, "line_count": 2},
+			{"id": "four_lines", "weight": 250, "payout": 100, "line_count": 4},
+			{"id": "blackout", "weight": 45, "payout": 500, "line_count": 4, "blackout_cards": 1},
+			{"id": "four_blackouts", "weight": 5, "payout": 5000, "line_count": 8, "blackout_cards": 4}
+		],
+		"scratch": {"brush_radius": 14.0, "pass_removal": 0.66, "sweep_threshold": 0.80, "mask_columns": 56, "mask_rows": 38, "crumb_count": 8},
+		"stock_weight": 125,
+		"stock_count": [2, 4],
+		"rtp_band": [0.77, 0.84]
+	},
+	{
+		"id": "high_roller_holdem",
+		"display_name": "High Roller Hold'em",
+		"price": 50,
+		"size_id": "tall",
+		"face": {"layout": "high_roller_felt", "symbol_set": "poker_cards", "palette": {"paper": "#12372e", "ink": "#fff4da", "accent": "#d7354f", "latex": "#78857f", "trim": "#e7bd4d"}},
+		"mechanic": {"type": "beat_dealer_poker", "rules": ["Reveal both five-card hands.", "Beat the dealer to win your hand prize.", "Wild improves your hand; pocket aces win all."], "rank_order": ["HIGH CARD", "PAIR", "TWO PAIR", "STRAIGHT", "FLUSH", "FULL HOUSE", "FOUR KIND", "STRAIGHT FLUSH", "ROYAL FLUSH"]},
+		"sections": [
+			{"id": "your_hand", "label": "YOUR HAND", "rect": [0.08, 0.05, 0.84, 0.34]},
+			{"id": "dealer_hand", "label": "DEALER HAND", "rect": [0.08, 0.47, 0.84, 0.34]},
+			{"id": "wild", "label": "WILD / ACES", "rect": [0.18, 0.84, 0.64, 0.13]}
+		],
+		"prize_table": [
+			{"id": "dealer_wins", "weight": 7150, "payout": 0, "your_rank": "HIGH CARD", "dealer_rank": "PAIR"},
+			{"id": "pair_wins", "weight": 1600, "payout": 50, "your_rank": "PAIR", "dealer_rank": "HIGH CARD"},
+			{"id": "two_pair", "weight": 800, "payout": 100, "your_rank": "TWO PAIR", "dealer_rank": "PAIR"},
+			{"id": "straight", "weight": 300, "payout": 250, "your_rank": "STRAIGHT", "dealer_rank": "TWO PAIR"},
+			{"id": "wild_flush", "weight": 120, "payout": 500, "your_rank": "FLUSH", "dealer_rank": "STRAIGHT", "wild": true},
+			{"id": "pocket_aces", "weight": 28, "payout": 2500, "your_rank": "PAIR", "dealer_rank": "FULL HOUSE", "pocket_aces": true},
+			{"id": "royal", "weight": 2, "payout": 25000, "your_rank": "ROYAL FLUSH", "dealer_rank": "FULL HOUSE", "wild": true}
+		],
+		"scratch": {"brush_radius": 13.5, "pass_removal": 0.66, "sweep_threshold": 0.80, "mask_columns": 42, "mask_rows": 54, "crumb_count": 8},
+		"stock_weight": 50,
+		"stock_count": [1, 3],
+		"rtp_band": [0.79, 0.87]
+	},
+	{
+		"id": "golden_vault",
+		"display_name": "The Golden Vault",
+		"price": 100,
+		"size_id": "tall",
+		"face": {"layout": "golden_vault", "symbol_set": "vault_gold", "palette": {"paper": "#171622", "ink": "#fff1bc", "accent": "#c89428", "latex": "#77727b", "trim": "#ffe27a"}},
+		"mechanic": {"type": "multi_game_vault", "rules": ["Reveal a 2x–20x multiplier.", "Match cash on five ladder rungs.", "GOLD BAR wins all; the final vault holds the top prize."], "multipliers": [2, 3, 5, 10, 20], "ladder_rungs": 5},
+		"sections": [
+			{"id": "multiplier", "label": "MULTIPLIER", "rect": [0.12, 0.03, 0.76, 0.15]},
+			{"id": "cash_ladder", "label": "CASH LADDER", "rect": [0.10, 0.22, 0.80, 0.43]},
+			{"id": "gold_bar", "label": "GOLD BAR", "rect": [0.10, 0.69, 0.80, 0.12]},
+			{"id": "final_vault", "label": "FINAL VAULT", "rect": [0.10, 0.85, 0.80, 0.12]}
+		],
+		"prize_table": [
+			{"id": "sealed", "weight": 7500, "payout": 0, "multiplier": 2, "ladder_hits": 0},
+			{"id": "first_rung", "weight": 1500, "payout": 100, "multiplier": 2, "ladder_hits": 1},
+			{"id": "ladder", "weight": 650, "payout": 200, "multiplier": 2, "ladder_hits": 2},
+			{"id": "multiplied", "weight": 250, "payout": 500, "multiplier": 5, "ladder_hits": 2},
+			{"id": "gold_bar", "weight": 80, "payout": 2000, "multiplier": 10, "ladder_hits": 5, "gold_bar": true},
+			{"id": "vault_prize", "weight": 19, "payout": 10000, "multiplier": 20, "ladder_hits": 5, "vault_win": true},
+			{"id": "top_vault", "weight": 1, "payout": 100000, "multiplier": 20, "ladder_hits": 5, "gold_bar": true, "vault_win": true}
+		],
+		"scratch": {"brush_radius": 13.0, "pass_removal": 0.66, "sweep_threshold": 0.80, "mask_columns": 42, "mask_rows": 56, "crumb_count": 9},
+		"stock_weight": 20,
+		"stock_count": [1, 1],
+		"rtp_band": [0.80, 0.91]
 	}
 ]

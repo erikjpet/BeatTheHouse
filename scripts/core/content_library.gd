@@ -164,10 +164,13 @@ func validate() -> Array:
 		"display_name",
 		"price",
 		"face",
-		"grid",
-		"symbol_pool",
+		"size_id",
+		"mechanic",
+		"sections",
 		"prize_table",
-		"gimmick",
+		"scratch",
+		"stock_weight",
+		"rtp_band",
 		"stock_weight",
 		"rtp_band",
 	])
@@ -780,9 +783,12 @@ func _validate_scratch_ticket_definitions() -> void:
 		var ticket_id := str(ticket.get("id", "")).strip_edges()
 		if int(ticket.get("price", 0)) <= 0:
 			validation_errors.append("scratch_ticket_types %s price must be positive." % ticket_id)
-		var grid: Dictionary = ticket.get("grid", {}) if typeof(ticket.get("grid", {})) == TYPE_DICTIONARY else {}
-		if int(grid.get("columns", 0)) <= 0 or int(grid.get("rows", 0)) <= 0:
-			validation_errors.append("scratch_ticket_types %s grid must have positive columns and rows." % ticket_id)
+		var mechanic: Dictionary = ticket.get("mechanic", {}) if typeof(ticket.get("mechanic", {})) == TYPE_DICTIONARY else {}
+		if str(mechanic.get("type", "")).strip_edges().is_empty():
+			validation_errors.append("scratch_ticket_types %s mechanic must declare a type." % ticket_id)
+		var sections: Array = ticket.get("sections", []) if typeof(ticket.get("sections", [])) == TYPE_ARRAY else []
+		if sections.is_empty():
+			validation_errors.append("scratch_ticket_types %s must declare result-bearing sections." % ticket_id)
 		var prizes: Array = ticket.get("prize_table", []) if typeof(ticket.get("prize_table", [])) == TYPE_ARRAY else []
 		var total_weight := 0
 		for prize_value in prizes:
@@ -794,8 +800,8 @@ func _validate_scratch_ticket_definitions() -> void:
 		if band.size() != 2 or float(band[0]) < 0.0 or float(band[1]) < float(band[0]):
 			validation_errors.append("scratch_ticket_types %s rtp_band must be [minimum, maximum]." % ticket_id)
 		var scratch: Dictionary = ticket.get("scratch", {}) if typeof(ticket.get("scratch", {})) == TYPE_DICTIONARY else {}
-		if float(scratch.get("brush_radius", 0.0)) <= 0.0 or float(scratch.get("snap_threshold", 0.0)) <= 0.0:
-			validation_errors.append("scratch_ticket_types %s must define forgiving scratch tuning." % ticket_id)
+		if float(scratch.get("brush_radius", 0.0)) <= 0.0 or float(scratch.get("pass_removal", 0.0)) <= 0.0 or float(scratch.get("sweep_threshold", 0.0)) <= 0.0:
+			validation_errors.append("scratch_ticket_types %s must define free-form scratch tuning." % ticket_id)
 
 
 # Validates an action list without interpreting game-specific rules.
