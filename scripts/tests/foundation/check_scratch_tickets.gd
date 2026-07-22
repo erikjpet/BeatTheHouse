@@ -68,10 +68,10 @@ func _check_scratch_tickets_surface_contract(game: GameModule, failures: Array) 
 		failures.append("Scratch Tickets pointer begin rebuilt full UI state instead of returning a transient canvas patch.")
 	var drag_begin := game.surface_pointer_command("scratch_scrub", 0, "begin", Vector2(342, 160), {}, run_state, environment)
 	var drag_move := game.surface_pointer_command("scratch_scrub", 0, "move", Vector2(430, 160), drag_begin.get("ui_state", {}), run_state, environment)
-	if not bool(drag_move.get("surface_transient", false)) or (drag_move.get("surface_state_patch", {}) as Dictionary).is_empty() or str(drag_move.get("surface_audio_loop_start", "")) != "scratch_scrape_loop":
+	if not bool(drag_move.get("surface_transient", false)) or (drag_move.get("surface_state_patch", {}) as Dictionary).is_empty() or str(drag_move.get("surface_audio_loop_start", "")) != "scratch_paper_foley_loop":
 		failures.append("Scratch Tickets drag did not use the canvas-only patch and cached scratch-audio loop.")
 	var drag_end := game.surface_pointer_command("scratch_scrub", 0, "end", Vector2(430, 160), drag_move.get("ui_state", {}), run_state, environment)
-	if str(drag_end.get("surface_audio_loop_stop", "")) != "scratch_scrape_loop":
+	if str(drag_end.get("surface_audio_loop_stop", "")) != "scratch_paper_foley_loop":
 		failures.append("Scratch Tickets pointer release did not stop scratch audio.")
 
 	var active_surface := game.surface_state(run_state, environment, {})

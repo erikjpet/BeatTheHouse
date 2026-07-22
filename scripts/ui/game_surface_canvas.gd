@@ -41,6 +41,7 @@ const EMULATED_TOUCH_SUPPRESS_MS := 750
 const EMULATED_TOUCH_SUPPRESS_DISTANCE := 18.0
 const SURFACE_ANIMATION_FPS := 60.0
 const SURFACE_ANIMATION_INTERVAL_SEC := 1.0 / SURFACE_ANIMATION_FPS
+const TRANSIENT_SURFACE_LOOP_HOLD_MSEC := 95
 
 var game_id: String = ""
 var state: Dictionary = {}
@@ -83,6 +84,8 @@ var surface_animation_redraw_accumulator := 0.0
 var surface_animation_redraw_count := 0
 var surface_animation_handoff_until_msec := 0
 var surface_render_elapsed_sec := 0.0
+var transient_surface_loop_deadline_msec := 0
+var transient_surface_loop_id := ""
 
 
 func set_game_module(game_module: GameModule) -> void:
@@ -119,6 +122,8 @@ func clear_runtime_state() -> void:
 	surface_animation_redraw_count = 0
 	surface_animation_handoff_until_msec = 0
 	surface_render_elapsed_sec = 0.0
+	transient_surface_loop_deadline_msec = 0
+	transient_surface_loop_id = ""
 	_update_drunk_distortion_overlay()
 	queue_redraw()
 
@@ -143,6 +148,8 @@ func apply_surface_state_patch(patch: Dictionary) -> void:
 	for key in patch.keys():
 		view_data[key] = patch[key]
 	state = view_data
+	if patch.has("surface_animation_channels"):
+		_update_surface_animation_channels()
 	queue_redraw()
 
 
@@ -484,11 +491,16 @@ func surface_start_audio_loop(cue_id: String, volume_db: float = -10.0, pitch: f
 	if normalized_cue.is_empty():
 		return
 	_ensure_surface_sfx_player()
+	if normalized_cue == "scratch_paper_foley_loop":
+		transient_surface_loop_id = normalized_cue
+		transient_surface_loop_deadline_msec = Time.get_ticks_msec() + TRANSIENT_SURFACE_LOOP_HOLD_MSEC
 	if surface_sfx_player.has_method("start_surface_loop"):
 		surface_sfx_player.call("start_surface_loop", normalized_cue, volume_db, pitch)
 
 
 func surface_stop_audio_loop(cue_id: String = "") -> void:
+	transient_surface_loop_deadline_msec = 0
+	transient_surface_loop_id = ""
 	if surface_sfx_player != null and surface_sfx_player.has_method("stop_surface_loop"):
 		surface_sfx_player.call("stop_surface_loop", cue_id)
 
@@ -780,6 +792,8 @@ func _process(delta: float) -> void:
 	if not is_visible_in_tree():
 		return
 	_flush_captured_pointer_move()
+	if transient_surface_loop_deadline_msec > 0 and Time.get_ticks_msec() >= transient_surface_loop_deadline_msec:
+		surface_stop_audio_loop(transient_surface_loop_id)
 	if reduce_motion:
 		flicker = 0.0
 		surface_render_elapsed_sec = 0.0

@@ -198,7 +198,7 @@ const PORTABLE_TICKET_ITEM_IDS := {
 }
 const PORTABLE_TICKET_PLAYER_FIELDS := {
 	"pull_tabs": ["tray_stack", "ticket_stack", "winner_pile", "loser_pile"],
-	"scratch_tickets": ["active_ticket", "winner_pile", "loser_pile", "pending_penalty", "penalty_shields_remaining", "last_settled_ticket", "last_settled_pile", "last_file_id", "file_started_msec"],
+	"scratch_tickets": ["active_ticket", "winner_pile", "loser_pile", "pending_penalty", "penalty_shields_remaining", "last_settled_ticket", "last_settled_pile", "last_file_id", "file_started_msec", "last_sweep_id", "last_sweep_section", "sweep_started_msec"],
 }
 
 var seed_text: String = ""

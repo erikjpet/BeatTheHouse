@@ -16,8 +16,11 @@ const SETTLE_ACTION := "settle_scratch_ticket"
 const REVEAL_ACTION := "scratch_reveal"
 const DISPENSE_CHANNEL := "scratch_ticket_dispense"
 const FILE_CHANNEL := "scratch_ticket_file"
+const SWEEP_CHANNEL := "scratch_section_sweep"
 const DISPENSE_DURATION_MSEC := 760
 const FILE_DURATION_MSEC := 620
+const SWEEP_DURATION_MSEC := 280
+const SCRATCH_AUDIO_LOOP := "scratch_paper_foley_loop"
 const REDEEM_HOOK_ID := "scratch_ticket_clerk"
 const REDEEM_ACTION_ID := "redeem_scratch_winners"
 const MACHINE_RECT := Rect2(18, 13, 278, 404)
@@ -27,6 +30,11 @@ const PILES_RECT := Rect2(664, 196, 218, 221)
 const BIG_WIN_THRESHOLD := 100
 const STOCK_SLOT_COUNT := 4
 const COLLECTION_TOTAL := 10
+const DEFAULT_BRUSH_RADIUS := 15.0
+const DEFAULT_PASS_REMOVAL := 0.66
+const DEFAULT_SWEEP_THRESHOLD := 0.80
+const DEFAULT_MASK_COLUMNS := 48
+const DEFAULT_MASK_ROWS := 32
 
 
 func gameplay_model() -> String:
@@ -68,6 +76,8 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 	var discovered := _string_array(run_state.narrative_flags.get("scratch_ticket_types_discovered", [])) if run_state != null else []
 	var last_dispense_id := str(machine.get("last_dispense_id", ""))
 	var last_file_id := str(machine.get("last_file_id", ""))
+	var reduce_motion := _reduce_motion_enabled(ui_state)
+	var sweep_duration := 0 if reduce_motion else SWEEP_DURATION_MSEC
 	return GameModule.surface_spec({
 		"surface_renderer": "scratch_tickets",
 		"surface_life": "scratch_vending_machine",
@@ -95,16 +105,19 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 		"scratch_crumbs": crumbs,
 		"scratch_drag_active": bool(ui_state.get("scratch_drag_active", false)),
 		"scratch_last_pointer": ui_state.get("scratch_last_pointer", Vector2.ZERO),
+		"scratch_reduce_motion": reduce_motion,
+		"scratch_brush_radius": float(_copy_dict(active_ticket.get("scratch", {})).get("brush_radius", DEFAULT_BRUSH_RADIUS)),
 		"scratch_drunk_level": run_state.drunk_level if run_state != null else 0,
 		"scratch_collection_count": discovered.size(),
 		"scratch_collection_total": COLLECTION_TOTAL,
 		"scratch_xray_peeks": _dictionary_array(active_ticket.get("xray_peeks", [])),
 		"scratch_fortune": str(active_ticket.get("fortune_tier", "")),
 		"scratch_penalty_shields": int(machine.get("penalty_shields_remaining", 0)),
-		"scratch_rules": "Drag to scrub. A click alone reveals nothing. Cleared cells snap clean; winners cash at the clerk.",
+		"scratch_rules": "Drag anywhere on the latex. Rework each patch; sections sweep clean at 80%. Winners cash at the clerk.",
 		"surface_animation_channels": [
 			GameModule.surface_animation_channel(DISPENSE_CHANNEL, last_dispense_id, DISPENSE_DURATION_MSEC, int(machine.get("dispense_started_msec", 0)), {"metadata": {"ticket_id": str(active_ticket.get("id", "")), "slot": int(machine.get("last_dispense_slot", 0))}}),
 			GameModule.surface_animation_channel(FILE_CHANNEL, last_file_id, FILE_DURATION_MSEC, int(machine.get("file_started_msec", 0)), {"metadata": {"pile": str(machine.get("last_settled_pile", ""))}}),
+			GameModule.surface_animation_channel(SWEEP_CHANNEL, str(machine.get("last_sweep_id", "")), sweep_duration, int(machine.get("sweep_started_msec", 0)), {"metadata": {"section": str(machine.get("last_sweep_section", ""))}}),
 		],
 		"surface_ui_protected_regions": [
 			{"x": MACHINE_RECT.position.x, "y": MACHINE_RECT.position.y, "w": MACHINE_RECT.size.x, "h": MACHINE_RECT.size.y},
@@ -187,7 +200,7 @@ func surface_pointer_command(surface_action: String, _index: int, phase: String,
 	if phase == "end":
 		next_state["scratch_drag_active"] = false
 		next_state.erase("scratch_last_pointer")
-		return _scratch_pointer_surface_command(machine, next_state, {"surface_audio_loop_stop": "scratch_scrape_loop"})
+		return _scratch_pointer_surface_command(machine, next_state, {"surface_audio_loop_stop": SCRATCH_AUDIO_LOOP})
 	if phase != "move" or not bool(next_state.get("scratch_drag_active", false)):
 		return _scratch_pointer_surface_command(machine, next_state)
 	var previous: Vector2 = next_state.get("scratch_last_pointer", board_position)
@@ -197,19 +210,26 @@ func surface_pointer_command(surface_action: String, _index: int, phase: String,
 	next_state["scratch_drag_moved"] = true
 	var scratch_result := _scratch_segment(machine, previous, board_position)
 	if int(scratch_result.get("erased_samples", 0)) <= 0:
-		return _scratch_pointer_surface_command(machine, next_state, {"surface_audio_loop_stop": "scratch_scrape_loop"})
-	next_state["scratch_crumbs"] = _crumbs_for_segment(previous, board_position, int(scratch_result.get("erased_samples", 0)))
+		return _scratch_pointer_surface_command(machine, next_state, {"surface_audio_loop_stop": SCRATCH_AUDIO_LOOP})
+	var reduce_motion := _reduce_motion_enabled(next_state)
+	next_state["scratch_crumbs"] = [] if reduce_motion else _crumbs_for_segment(previous, board_position, int(scratch_result.get("erased_samples", 0)))
+	if not _dictionary_array(scratch_result.get("swept_sections", [])).is_empty():
+		machine["sweep_started_msec"] = GameModule.deterministic_time_msec(run_state, next_state)
+	_write_machine_state(environment, machine, run_state)
 	var completed := bool(scratch_result.get("ticket_complete", false))
 	var penalty := int(scratch_result.get("penalty", 0))
+	var distance := previous.distance_to(board_position)
+	var activity := clampf(distance / 24.0, 0.0, 1.0)
 	var command := {
 		"environment_changed": false,
 		"message": str(scratch_result.get("message", "Latex flakes away.")),
-		"surface_audio_loop_start": "scratch_scrape_loop",
-		"surface_audio_loop_volume_db": -11.0,
+		"surface_audio_loop_start": SCRATCH_AUDIO_LOOP,
+		"surface_audio_loop_volume_db": lerpf(-19.0, -10.5, activity),
+		"surface_audio_loop_pitch": lerpf(0.92, 1.06, activity),
 	}
 	if completed or penalty > 0:
 		command.erase("surface_audio_loop_start")
-		command["surface_audio_loop_stop"] = "scratch_scrape_loop"
+		command["surface_audio_loop_stop"] = SCRATCH_AUDIO_LOOP
 		command["action_id"] = SETTLE_ACTION if completed else REVEAL_ACTION
 		command["action_kind"] = "legal"
 		command["direct_resolve"] = true
@@ -227,6 +247,8 @@ func _scratch_pointer_surface_command(machine: Dictionary, ui_state: Dictionary,
 		"scratch_drag_active": bool(ui_state.get("scratch_drag_active", false)),
 		"scratch_last_pointer": ui_state.get("scratch_last_pointer", Vector2.ZERO),
 		"scratch_penalty_shields": int(machine.get("penalty_shields_remaining", 0)),
+		"scratch_reduce_motion": _reduce_motion_enabled(ui_state),
+		"surface_animation_channels": _scratch_animation_channels(machine, _reduce_motion_enabled(ui_state)),
 	}
 	return GameModule.surface_command(command, true)
 
@@ -729,6 +751,9 @@ func _generate_machine_state(_run_state: RunState, environment: Dictionary, rng:
 		"last_settled_pile": "",
 		"last_file_id": "",
 		"file_started_msec": 0,
+		"last_sweep_id": "",
+		"last_sweep_section": "",
+		"sweep_started_msec": 0,
 	}
 
 
@@ -758,7 +783,7 @@ func _roll_ticket(ticket_type: Dictionary, rng: RngStream, luck_modifier: int, p
 	var rows := maxi(1, int(_copy_dict(ticket_type.get("grid", {})).get("rows", 3)))
 	var cells := _build_cells(ticket_type, prize, columns, rows, rng)
 	var ticket_id := "%s:%s:%s" % [str(ticket_type.get("id", "ticket")), purchase_key, str(rng.randi_range(100000, 999999))]
-	return {
+	var ticket := {
 		"id": ticket_id,
 		"type_id": str(ticket_type.get("id", "")),
 		"display_name": str(ticket_type.get("display_name", "Scratch Ticket")),
@@ -784,6 +809,49 @@ func _roll_ticket(ticket_type: Dictionary, rng: RngStream, luck_modifier: int, p
 		"settled": false,
 		"penalty_paid": 0,
 	}
+	_initialize_ticket_mask(ticket, ticket_type)
+	return ticket
+
+
+func _initialize_ticket_mask(ticket: Dictionary, ticket_type: Dictionary) -> void:
+	var scratch := _copy_dict(ticket_type.get("scratch", {}))
+	var mask_columns := maxi(24, int(scratch.get("mask_columns", DEFAULT_MASK_COLUMNS)))
+	var mask_rows := maxi(18, int(scratch.get("mask_rows", DEFAULT_MASK_ROWS)))
+	scratch["mask_columns"] = mask_columns
+	scratch["mask_rows"] = mask_rows
+	scratch["brush_radius"] = maxf(8.0, float(scratch.get("brush_radius", DEFAULT_BRUSH_RADIUS)))
+	scratch["pass_removal"] = clampf(float(scratch.get("pass_removal", DEFAULT_PASS_REMOVAL)), 0.10, 0.90)
+	scratch["sweep_threshold"] = clampf(float(scratch.get("sweep_threshold", DEFAULT_SWEEP_THRESHOLD)), 0.50, 0.98)
+	ticket["scratch"] = scratch
+	var definitions := _dictionary_array(ticket_type.get("sections", []))
+	if definitions.is_empty():
+		definitions = [{"id": "play", "label": "PLAY AREA", "rect": [0.0, 0.0, 1.0, 1.0]}]
+	var sections: Array = []
+	for index in range(definitions.size()):
+		var definition: Dictionary = definitions[index]
+		sections.append({
+			"id": str(definition.get("id", "section_%d" % index)),
+			"label": str(definition.get("label", "SECTION %d" % (index + 1))),
+			"rect": _normalized_rect_array(definition.get("rect", [0.0, 0.0, 1.0, 1.0])),
+			"sample_total": 0,
+			"mask_remaining_units": 0,
+			"coverage": 0.0,
+			"revealed": false,
+		})
+	var mask: Array = []
+	mask.resize(mask_columns * mask_rows)
+	for sample_index in range(mask.size()):
+		var normalized := _mask_sample_normalized(sample_index, mask_columns, mask_rows)
+		var section_index := _section_index_at_normalized(sections, normalized)
+		mask[sample_index] = 255 if section_index >= 0 else 0
+		if section_index >= 0:
+			var section: Dictionary = sections[section_index]
+			section["sample_total"] = int(section.get("sample_total", 0)) + 1
+			section["mask_remaining_units"] = int(section.get("mask_remaining_units", 0)) + 255
+			sections[section_index] = section
+	ticket["sections"] = sections
+	ticket["latex_mask"] = mask
+	ticket["mask_revision"] = 0
 
 
 func _weighted_prize(ticket_type: Dictionary, rng: RngStream, luck_modifier: int) -> Dictionary:
@@ -901,84 +969,87 @@ func _scratch_segment(machine: Dictionary, from: Vector2, to: Vector2) -> Dictio
 	if typeof(ticket_value) != TYPE_DICTIONARY or (ticket_value as Dictionary).is_empty():
 		return {"erased_samples": 0, "message": "Buy a ticket first."}
 	var ticket: Dictionary = ticket_value
-	var cells_value: Variant = ticket.get("cells", [])
-	var cells: Array = cells_value if typeof(cells_value) == TYPE_ARRAY else []
 	var scratch: Dictionary = ticket.get("scratch", {}) if typeof(ticket.get("scratch", {})) == TYPE_DICTIONARY else {}
-	var brush_radius := maxf(8.0, float(scratch.get("brush_radius", 34.0)))
+	var brush_radius := maxf(8.0, float(scratch.get("brush_radius", DEFAULT_BRUSH_RADIUS)))
 	var brush_radius_squared := brush_radius * brush_radius
-	var snap_threshold := clampf(float(scratch.get("snap_threshold", 0.60)), 0.15, 0.95)
-	var mask_columns := maxi(2, int(scratch.get("mask_columns", 6)))
-	var mask_rows := maxi(2, int(scratch.get("mask_rows", 4)))
-	var grid: Dictionary = ticket.get("grid", {}) if typeof(ticket.get("grid", {})) == TYPE_DICTIONARY else {}
-	var columns := maxi(1, int(grid.get("columns", 3)))
-	var rows := maxi(1, int(grid.get("rows", 3)))
-	var segment_bounds := Rect2(Vector2(minf(from.x, to.x), minf(from.y, to.y)), Vector2(absf(to.x - from.x), absf(to.y - from.y))).grow(1.0)
-	var gimmick: Dictionary = ticket.get("gimmick", {}) if typeof(ticket.get("gimmick", {})) == TYPE_DICTIONARY else {}
-	var erased := 0
-	var revealed: Array = []
-	var penalty := 0
-	var shielded_penalties := 0
-	for index in range(cells.size()):
-		var cell: Dictionary = cells[index]
-		if bool(cell.get("revealed", false)):
+	var removal := clampf(float(scratch.get("pass_removal", DEFAULT_PASS_REMOVAL)), 0.10, 0.90)
+	var threshold := clampf(float(scratch.get("sweep_threshold", DEFAULT_SWEEP_THRESHOLD)), 0.50, 0.98)
+	var mask_columns := maxi(24, int(scratch.get("mask_columns", DEFAULT_MASK_COLUMNS)))
+	var mask_rows := maxi(18, int(scratch.get("mask_rows", DEFAULT_MASK_ROWS)))
+	var mask: Array = ticket.get("latex_mask", []) if typeof(ticket.get("latex_mask", [])) == TYPE_ARRAY else []
+	var sections: Array = ticket.get("sections", []) if typeof(ticket.get("sections", [])) == TYPE_ARRAY else []
+	if mask.size() != mask_columns * mask_rows or sections.is_empty():
+		return {"erased_samples": 0, "message": "This ticket's coating is damaged."}
+	var scratch_rect := _ticket_scratch_rect(ticket)
+	var segment_bounds := Rect2(Vector2(minf(from.x, to.x), minf(from.y, to.y)), Vector2(absf(to.x - from.x), absf(to.y - from.y))).grow(brush_radius)
+	if not scratch_rect.intersects(segment_bounds):
+		return {"erased_samples": 0, "message": "Drag across the printed latex."}
+	var erased_samples := 0
+	var erased_units := 0
+	var interpolated_dabs := maxi(1, int(ceil(from.distance_to(to) / maxf(2.0, brush_radius * 0.35))))
+	for sample_index in range(mask.size()):
+		var old_alpha := int(mask[sample_index])
+		if old_alpha <= 0:
 			continue
-		var rect := _cell_rect(index, columns, rows)
-		if not rect.grow(brush_radius).intersects(segment_bounds):
+		var normalized := _mask_sample_normalized(sample_index, mask_columns, mask_rows)
+		var sample_point := scratch_rect.position + normalized * scratch_rect.size
+		if not segment_bounds.has_point(sample_point) or _distance_squared_to_segment(sample_point, from, to) > brush_radius_squared:
 			continue
-		var mask_value: Variant = cell.get("mask", [])
-		var mask: Array = mask_value if typeof(mask_value) == TYPE_ARRAY else []
-		var remaining := int(cell.get("mask_remaining", -1))
-		if remaining < 0:
-			remaining = 0
-			for value in mask:
-				remaining += int(value)
-		for sample_index in range(mask.size()):
-			if int(mask[sample_index]) == 0:
-				continue
-			var sample_column := sample_index % mask_columns
-			var sample_row := sample_index / mask_columns
-			var sample_point := rect.position + Vector2((float(sample_column) + 0.5) * rect.size.x / float(mask_columns), (float(sample_row) + 0.5) * rect.size.y / float(mask_rows))
-			if _distance_squared_to_segment(sample_point, from, to) <= brush_radius_squared:
-				mask[sample_index] = 0
-				remaining -= 1
-				erased += 1
-		var scratched_ratio := 1.0 - float(remaining) / float(maxi(1, mask.size()))
-		cell["mask"] = mask
-		cell["mask_remaining"] = remaining
-		cell["scratched_ratio"] = scratched_ratio
-		if scratched_ratio >= snap_threshold:
-			cell["revealed"] = true
-			cell["mask"] = _zero_mask(mask.size())
-			cell["mask_remaining"] = 0
-			cell["scratched_ratio"] = 1.0
-			revealed.append(index)
-			if str(gimmick.get("type", "")) == "bonus_box" and str(cell.get("symbol", "")) == str(gimmick.get("key_symbol", "KEY")):
-				ticket["bonus_unlocked"] = true
-			if int(cell.get("penalty", 0)) > 0 and not bool(cell.get("penalty_queued", false)):
-				cell["penalty_queued"] = true
-				if bool(cell.get("penalty_shield_reserved", false)) and int(machine.get("penalty_shields_remaining", 0)) > 0:
-					machine["penalty_shields_remaining"] = int(machine.get("penalty_shields_remaining", 0)) - 1
-					cell["penalty_shielded"] = true
-					shielded_penalties += 1
-				else:
-					penalty += int(cell.get("penalty", 0))
-		cells[index] = cell
-	ticket["cells"] = cells
-	if penalty > 0:
-		machine["pending_penalty"] = int(machine.get("pending_penalty", 0)) + penalty
+		var section_index := _section_index_at_normalized(sections, normalized)
+		if section_index < 0 or bool((sections[section_index] as Dictionary).get("revealed", false)):
+			continue
+		var new_alpha := 0 if old_alpha <= 2 else clampi(int(round(float(old_alpha) * (1.0 - removal))), 0, old_alpha - 1)
+		var removed_units := old_alpha - new_alpha
+		mask[sample_index] = new_alpha
+		erased_samples += 1
+		erased_units += removed_units
+		var section: Dictionary = sections[section_index]
+		section["mask_remaining_units"] = maxi(0, int(section.get("mask_remaining_units", 0)) - removed_units)
+		sections[section_index] = section
+	var swept_sections: Array = []
+	for section_index in range(sections.size()):
+		var section: Dictionary = sections[section_index]
+		if bool(section.get("revealed", false)):
+			continue
+		var total_units := maxi(1, int(section.get("sample_total", 0)) * 255)
+		var coverage := 1.0 - float(section.get("mask_remaining_units", total_units)) / float(total_units)
+		section["coverage"] = clampf(coverage, 0.0, 1.0)
+		if coverage >= threshold:
+			_clear_mask_section(mask, sections, section_index, mask_columns, mask_rows)
+			section = sections[section_index]
+			section["revealed"] = true
+			section["coverage"] = 1.0
+			section["mask_remaining_units"] = 0
+			sections[section_index] = section
+			swept_sections.append(section)
+			machine["last_sweep_section"] = str(section.get("id", "section_%d" % section_index))
+			machine["last_sweep_id"] = "scratch-sweep:%s:%s:%d" % [str(ticket.get("id", "ticket")), str(section.get("id", section_index)), int(ticket.get("mask_revision", 0)) + 1]
+	ticket["latex_mask"] = mask
+	ticket["sections"] = sections
+	ticket["mask_revision"] = int(ticket.get("mask_revision", 0)) + 1
+	if not swept_sections.is_empty():
+		_reveal_legacy_cells_for_completed_ticket_sections(ticket)
 	var complete := _ticket_complete(ticket)
-	var message := "Latex flakes away."
-	if not revealed.is_empty():
-		message = "%d symbol%s snap%s clean." % [revealed.size(), "" if revealed.size() == 1 else "s", "s" if revealed.size() == 1 else ""]
-	if penalty > 0:
-		message += " SHOCK zaps $%d now." % penalty
-	if shielded_penalties > 0:
-		message += " The Lucky Penny grounds one SHOCK."
-	return {"erased_samples": erased, "revealed_cells": revealed, "penalty": penalty, "shielded_penalties": shielded_penalties, "ticket_complete": complete, "message": message}
+	var message := "Soft flakes lift; another pass will open the patch."
+	if not swept_sections.is_empty():
+		message = "%s sweeps clean." % str((swept_sections[0] as Dictionary).get("label", "The section"))
+	return {"erased_samples": erased_samples, "erased_units": erased_units, "interpolated_dabs": interpolated_dabs, "swept_sections": swept_sections, "penalty": 0, "ticket_complete": complete, "message": message}
 
 
 func _reveal_all(machine: Dictionary) -> void:
 	var ticket := _copy_dict(machine.get("active_ticket", {}))
+	var mask: Array = ticket.get("latex_mask", []) if typeof(ticket.get("latex_mask", [])) == TYPE_ARRAY else []
+	for sample_index in range(mask.size()):
+		mask[sample_index] = 0
+	ticket["latex_mask"] = mask
+	var sections: Array = ticket.get("sections", []) if typeof(ticket.get("sections", [])) == TYPE_ARRAY else []
+	for section_index in range(sections.size()):
+		var section: Dictionary = sections[section_index]
+		section["revealed"] = true
+		section["coverage"] = 1.0
+		section["mask_remaining_units"] = 0
+		sections[section_index] = section
+	ticket["sections"] = sections
 	var cells := _dictionary_array(ticket.get("cells", []))
 	var penalty := 0
 	for index in range(cells.size()):
@@ -1104,31 +1175,18 @@ func _draw_ticket(surface, state: Dictionary) -> void:
 	var rows := maxi(1, int(grid.get("rows", 3)))
 	var cells := _dictionary_array(ticket.get("cells", []))
 	var scratch := _copy_dict(ticket.get("scratch", {}))
-	var mask_columns := maxi(2, int(scratch.get("mask_columns", 6)))
-	var mask_rows := maxi(2, int(scratch.get("mask_rows", 4)))
 	var xray_peeks := _dictionary_array(state.get("scratch_xray_peeks", []))
-	var drunk_level := maxi(0, int(state.get("scratch_drunk_level", 0)))
 	for index in range(cells.size()):
 		var cell: Dictionary = cells[index]
 		var rect := _ticket_cell_rect(ticket, index)
 		_draw_play_field(surface, str(face.get("layout", "classic_nine")), rect, index, paper, accent, trim, str(cell.get("role", "")))
-		if bool(cell.get("revealed", false)):
-			var wobble := Vector2(float((index % 3) - 1), float((index % 2) * 2 - 1)) * float(drunk_level) / 35.0
-			_draw_symbol(surface, str(cell.get("symbol", "?")), Rect2(rect.position + wobble, rect.size), ink, accent)
-		else:
-			_draw_latex_field(surface, str(face.get("layout", "classic_nine")), rect.grow(-2), latex, index)
-			var mask := _int_array(cell.get("mask", []))
-			for sample_index in range(mask.size()):
-				if int(mask[sample_index]) != 0:
-					continue
-				var sample_column := sample_index % mask_columns
-				var sample_row := sample_index / mask_columns
-				var hole := Rect2(rect.position + Vector2(float(sample_column) * rect.size.x / float(mask_columns), float(sample_row) * rect.size.y / float(mask_rows)), Vector2(rect.size.x / float(mask_columns) + 1.0, rect.size.y / float(mask_rows) + 1.0)).grow(-1)
-				surface.draw_rect(hole, Color(paper.r, paper.g, paper.b, 0.92))
-			var peek := _peek_for_cell(xray_peeks, index)
-			if not peek.is_empty():
-				surface.surface_label_centered(str(peek.get("symbol", "?")).left(8), rect.grow(-8), 14, Color(accent.r, accent.g, accent.b, 0.46))
-	surface.surface_add_drag_hit(GRID_RECT.grow(5), SCRUB_ACTION, 0)
+		_draw_symbol(surface, str(cell.get("symbol", "?")), rect, ink, accent)
+		var peek := _peek_for_cell(xray_peeks, index)
+		if not peek.is_empty():
+			surface.draw_rect(rect.grow(-5), Color(accent.r, accent.g, accent.b, 0.08))
+	_draw_ticket_latex_mask(surface, ticket, latex)
+	var scratch_rect := _ticket_scratch_rect(ticket)
+	surface.surface_add_drag_hit(scratch_rect.grow(5), SCRUB_ACTION, 0)
 	_draw_ticket_rules(surface, ticket, ink, accent, trim)
 	var button := Rect2(TICKET_RECT.position + Vector2(224, 363), Vector2(91, 24))
 	surface.draw_circle(button.position + Vector2(12, 12), 11, trim)
@@ -1141,6 +1199,8 @@ func _draw_ticket(surface, state: Dictionary) -> void:
 		var crumb: Dictionary = crumb_value
 		var point := Vector2(float(crumb.get("x", 0.0)), float(crumb.get("y", 0.0)))
 		surface.draw_circle(point, float(crumb.get("r", 2.0)), latex)
+	_draw_brush_feedback(surface, state, latex)
+	_draw_sweep_feedback(surface, state, trim)
 
 
 func _draw_symbol(surface, symbol: String, rect: Rect2, ink: Color, accent: Color) -> void:
@@ -1253,6 +1313,53 @@ func _draw_latex_field(surface, layout: String, rect: Rect2, latex: Color, _inde
 	for fleck in range(3):
 		var point := rect.position + Vector2(7 + (fleck * 19 + _index * 7) % maxi(8, int(rect.size.x - 12)), 7 + (fleck * 13 + _index * 5) % maxi(8, int(rect.size.y - 12)))
 		surface.draw_circle(point, 1, Color(1.0, 1.0, 1.0, 0.30))
+
+
+func _draw_ticket_latex_mask(surface, ticket: Dictionary, latex: Color) -> void:
+	var scratch: Dictionary = ticket.get("scratch", {}) if typeof(ticket.get("scratch", {})) == TYPE_DICTIONARY else {}
+	var columns := maxi(24, int(scratch.get("mask_columns", DEFAULT_MASK_COLUMNS)))
+	var rows := maxi(18, int(scratch.get("mask_rows", DEFAULT_MASK_ROWS)))
+	var mask: Array = ticket.get("latex_mask", []) if typeof(ticket.get("latex_mask", [])) == TYPE_ARRAY else []
+	if mask.size() != columns * rows:
+		return
+	var rect := _ticket_scratch_rect(ticket)
+	var sample_size := Vector2(rect.size.x / float(columns), rect.size.y / float(rows))
+	# Runs of equal alpha keep the high-resolution buffer cheap to draw without copying it.
+	for row in range(rows):
+		var column := 0
+		while column < columns:
+			var alpha := int(mask[row * columns + column])
+			if alpha <= 0:
+				column += 1
+				continue
+			var run_end := column + 1
+			while run_end < columns and int(mask[row * columns + run_end]) == alpha:
+				run_end += 1
+			var run_rect := Rect2(rect.position + Vector2(float(column) * sample_size.x, float(row) * sample_size.y), Vector2(float(run_end - column) * sample_size.x + 0.5, sample_size.y + 0.5))
+			surface.draw_rect(run_rect, Color(latex.r, latex.g, latex.b, float(alpha) / 255.0))
+			column = run_end
+
+
+func _draw_brush_feedback(surface, state: Dictionary, latex: Color) -> void:
+	if not bool(state.get("scratch_drag_active", false)):
+		return
+	var point: Vector2 = state.get("scratch_last_pointer", Vector2.ZERO)
+	var drunk_level := maxi(0, int(state.get("scratch_drunk_level", 0)))
+	if drunk_level > 0 and not bool(state.get("scratch_reduce_motion", false)):
+		var time := float(surface.surface_render_elapsed_sec)
+		point += Vector2(sin(time * 9.0), cos(time * 7.0)) * minf(4.0, float(drunk_level) * 0.08)
+	var radius := maxf(8.0, float(state.get("scratch_brush_radius", DEFAULT_BRUSH_RADIUS)))
+	surface.draw_circle(point, radius, Color(1.0, 1.0, 1.0, 0.12), false, 2)
+	surface.draw_circle(point + Vector2(-radius * 0.25, -radius * 0.18), 2.0, Color(latex.r, latex.g, latex.b, 0.85))
+
+
+func _draw_sweep_feedback(surface, state: Dictionary, trim: Color) -> void:
+	if bool(state.get("scratch_reduce_motion", false)) or not bool(surface.surface_animation_active(SWEEP_CHANNEL)):
+		return
+	var progress := surface.surface_animation_progress(SWEEP_CHANNEL)
+	var rect := _ticket_scratch_rect(state.get("scratch_ticket", {}) if typeof(state.get("scratch_ticket", {})) == TYPE_DICTIONARY else {})
+	var x := lerpf(rect.position.x, rect.end.x, progress)
+	surface.draw_rect(Rect2(Vector2(x - 8.0, rect.position.y), Vector2(16.0, rect.size.y)), Color(trim.r, trim.g, trim.b, 0.24 * (1.0 - progress)))
 
 
 func _draw_pill(surface, rect: Rect2, fill: Color, border: Color) -> void:
@@ -1497,7 +1604,7 @@ func _sync_portable_ticket_state(run_state: RunState, environment: Dictionary, m
 			portable = run_state.portable_ticket_state(get_id(), environment)
 	if portable.is_empty():
 		return
-	for field in ["active_ticket", "winner_pile", "loser_pile", "pending_penalty", "penalty_shields_remaining", "last_settled_ticket", "last_settled_pile", "last_file_id", "file_started_msec"]:
+	for field in ["active_ticket", "winner_pile", "loser_pile", "pending_penalty", "penalty_shields_remaining", "last_settled_ticket", "last_settled_pile", "last_file_id", "file_started_msec", "last_sweep_id", "last_sweep_section", "sweep_started_msec"]:
 		if portable.has(field):
 			machine[field] = portable[field]
 
@@ -1513,6 +1620,9 @@ func _portable_ticket_player_state(machine: Dictionary) -> Dictionary:
 		"last_settled_pile": str(machine.get("last_settled_pile", "")),
 		"last_file_id": str(machine.get("last_file_id", "")),
 		"file_started_msec": maxi(0, int(machine.get("file_started_msec", 0))),
+		"last_sweep_id": str(machine.get("last_sweep_id", "")),
+		"last_sweep_section": str(machine.get("last_sweep_section", "")),
+		"sweep_started_msec": maxi(0, int(machine.get("sweep_started_msec", 0))),
 	}
 
 
@@ -1565,6 +1675,12 @@ func _pending_payout(machine: Dictionary) -> int:
 
 
 func _ticket_complete(ticket: Dictionary) -> bool:
+	var sections_value: Variant = ticket.get("sections", [])
+	if typeof(sections_value) == TYPE_ARRAY and not (sections_value as Array).is_empty():
+		for section_value in sections_value as Array:
+			if typeof(section_value) != TYPE_DICTIONARY or not bool((section_value as Dictionary).get("revealed", false)):
+				return false
+		return true
 	var cells_value: Variant = ticket.get("cells", [])
 	var cells: Array = cells_value if typeof(cells_value) == TYPE_ARRAY else []
 	if cells.is_empty():
@@ -1587,6 +1703,68 @@ func _ticket_symbols(ticket: Dictionary) -> Array:
 	for value in _dictionary_array(ticket.get("cells", [])):
 		result.append(str((value as Dictionary).get("symbol", "")))
 	return result
+
+
+func _ticket_scratch_rect(_ticket: Dictionary) -> Rect2:
+	return GRID_RECT
+
+
+func _mask_sample_normalized(sample_index: int, columns: int, rows: int) -> Vector2:
+	return Vector2((float(sample_index % columns) + 0.5) / float(columns), (float(sample_index / columns) + 0.5) / float(rows))
+
+
+func _normalized_rect_array(value: Variant) -> Array:
+	if typeof(value) != TYPE_ARRAY or (value as Array).size() < 4:
+		return [0.0, 0.0, 1.0, 1.0]
+	var source := value as Array
+	return [clampf(float(source[0]), 0.0, 1.0), clampf(float(source[1]), 0.0, 1.0), clampf(float(source[2]), 0.01, 1.0), clampf(float(source[3]), 0.01, 1.0)]
+
+
+func _section_index_at_normalized(sections: Array, normalized: Vector2) -> int:
+	for index in range(sections.size()):
+		var section: Dictionary = sections[index]
+		var values: Array = section.get("rect", []) if typeof(section.get("rect", [])) == TYPE_ARRAY else []
+		if values.size() < 4:
+			continue
+		var rect := Rect2(float(values[0]), float(values[1]), float(values[2]), float(values[3]))
+		if rect.has_point(normalized):
+			return index
+	return -1
+
+
+func _clear_mask_section(mask: Array, sections: Array, section_index: int, columns: int, rows: int) -> void:
+	for sample_index in range(mask.size()):
+		if int(mask[sample_index]) <= 0:
+			continue
+		if _section_index_at_normalized(sections, _mask_sample_normalized(sample_index, columns, rows)) == section_index:
+			mask[sample_index] = 0
+
+
+func _reveal_legacy_cells_for_completed_ticket_sections(ticket: Dictionary) -> void:
+	if not _ticket_complete(ticket):
+		return
+	var cells: Array = ticket.get("cells", []) if typeof(ticket.get("cells", [])) == TYPE_ARRAY else []
+	for index in range(cells.size()):
+		var cell: Dictionary = cells[index]
+		cell["revealed"] = true
+		cell["scratched_ratio"] = 1.0
+		cells[index] = cell
+	ticket["cells"] = cells
+
+
+func _reduce_motion_enabled(ui_state: Dictionary) -> bool:
+	if bool(ui_state.get("reduce_motion", false)):
+		return true
+	var runtime: Dictionary = ui_state.get("surface_runtime_status", {}) if typeof(ui_state.get("surface_runtime_status", {})) == TYPE_DICTIONARY else {}
+	return bool(runtime.get("reduce_motion", false))
+
+
+func _scratch_animation_channels(machine: Dictionary, reduce_motion: bool) -> Array:
+	return [
+		GameModule.surface_animation_channel(DISPENSE_CHANNEL, str(machine.get("last_dispense_id", "")), DISPENSE_DURATION_MSEC, int(machine.get("dispense_started_msec", 0)), {"metadata": {"ticket_id": str(_copy_dict(machine.get("active_ticket", {})).get("id", "")), "slot": int(machine.get("last_dispense_slot", 0))}}),
+		GameModule.surface_animation_channel(FILE_CHANNEL, str(machine.get("last_file_id", "")), FILE_DURATION_MSEC, int(machine.get("file_started_msec", 0)), {"metadata": {"pile": str(machine.get("last_settled_pile", ""))}}),
+		GameModule.surface_animation_channel(SWEEP_CHANNEL, str(machine.get("last_sweep_id", "")), 0 if reduce_motion else SWEEP_DURATION_MSEC, int(machine.get("sweep_started_msec", 0)), {"metadata": {"section": str(machine.get("last_sweep_section", ""))}}),
+	]
 
 
 func _cell_rect(index: int, columns: int, rows: int) -> Rect2:

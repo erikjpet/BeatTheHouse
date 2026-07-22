@@ -14,7 +14,7 @@
 			{"id": "top", "weight": 20, "payout": 50, "winning_symbol": "7"}
 		],
 		"gimmick": {"type": "match_three"},
-		"scratch": {"brush_radius": 34.0, "snap_threshold": 0.60, "mask_columns": 6, "mask_rows": 4, "crumb_count": 5},
+		"scratch": {"brush_radius": 15.0, "pass_removal": 0.66, "sweep_threshold": 0.80, "snap_threshold": 0.80, "mask_columns": 48, "mask_rows": 32, "crumb_count": 5},
 		"stock_weight": 100,
 		"stock_count": [4, 7],
 		"rtp_band": [0.73, 0.77]
@@ -34,7 +34,7 @@
 			{"id": "bell_cow", "weight": 10, "payout": 40, "winning_symbol": "BELL"}
 		],
 		"gimmick": {"type": "match_three"},
-		"scratch": {"brush_radius": 36.0, "snap_threshold": 0.58, "mask_columns": 6, "mask_rows": 4, "crumb_count": 5},
+		"scratch": {"brush_radius": 15.0, "pass_removal": 0.66, "sweep_threshold": 0.80, "snap_threshold": 0.80, "mask_columns": 48, "mask_rows": 32, "crumb_count": 5},
 		"stock_weight": 110,
 		"stock_count": [5, 8],
 		"rtp_band": [0.84, 0.89]
@@ -54,7 +54,7 @@
 			{"id": "grid_jackpot", "weight": 30, "payout": 1000, "winning_symbol": "VOLT"}
 		],
 		"gimmick": {"type": "shock_penalty", "penalty_symbol": "SHOCK", "penalty_chance_percent": 15, "penalty_amount": [1, 3]},
-		"scratch": {"brush_radius": 38.0, "snap_threshold": 0.58, "mask_columns": 6, "mask_rows": 4, "crumb_count": 7},
+		"scratch": {"brush_radius": 15.0, "pass_removal": 0.66, "sweep_threshold": 0.80, "snap_threshold": 0.80, "mask_columns": 48, "mask_rows": 32, "crumb_count": 7},
 		"stock_weight": 45,
 		"stock_count": [2, 4],
 		"rtp_band": [0.68, 0.84]
@@ -74,7 +74,7 @@
 			{"id": "mother_lode", "weight": 50, "base_payout": 10, "multiplier": 10, "payout": 100, "winning_symbol": "GOLD", "multiplier_symbol": "10X"}
 		],
 		"gimmick": {"type": "multiplier_lines"},
-		"scratch": {"brush_radius": 36.0, "snap_threshold": 0.58, "mask_columns": 6, "mask_rows": 4, "crumb_count": 6},
+		"scratch": {"brush_radius": 15.0, "pass_removal": 0.66, "sweep_threshold": 0.80, "snap_threshold": 0.80, "mask_columns": 48, "mask_rows": 32, "crumb_count": 6},
 		"stock_weight": 72,
 		"stock_count": [3, 6],
 		"rtp_band": [0.75, 0.80]
@@ -94,7 +94,7 @@
 			{"id": "vault", "weight": 20, "payout": 200, "winning_symbol": "KEY"}
 		],
 		"gimmick": {"type": "bonus_box", "key_symbol": "KEY", "bonus_symbol": "BONUS"},
-		"scratch": {"brush_radius": 38.0, "snap_threshold": 0.56, "mask_columns": 6, "mask_rows": 4, "crumb_count": 6},
+		"scratch": {"brush_radius": 15.0, "pass_removal": 0.66, "sweep_threshold": 0.80, "snap_threshold": 0.80, "mask_columns": 48, "mask_rows": 32, "crumb_count": 6},
 		"stock_weight": 68,
 		"stock_count": [3, 5],
 		"rtp_band": [0.78, 0.83]
@@ -114,7 +114,7 @@
 			{"id": "full_grid", "weight": 20, "payout": 250, "winning_word": "RICH"}
 		],
 		"gimmick": {"type": "word_hunt", "words": ["CASH", "LUCK", "GOLD", "RICH"]},
-		"scratch": {"brush_radius": 40.0, "snap_threshold": 0.54, "mask_columns": 5, "mask_rows": 4, "crumb_count": 5},
+		"scratch": {"brush_radius": 15.0, "pass_removal": 0.66, "sweep_threshold": 0.80, "snap_threshold": 0.80, "mask_columns": 48, "mask_rows": 32, "crumb_count": 5},
 		"stock_weight": 62,
 		"stock_count": [3, 5],
 		"rtp_band": [0.80, 0.86]
@@ -134,7 +134,7 @@
 			{"id": "standing_ovation", "weight": 100, "payout": 100, "winning_symbol": "STAR"}
 		],
 		"gimmick": {"type": "second_chance", "free_type_id": "lucky_7s"},
-		"scratch": {"brush_radius": 37.0, "snap_threshold": 0.57, "mask_columns": 6, "mask_rows": 4, "crumb_count": 6},
+		"scratch": {"brush_radius": 15.0, "pass_removal": 0.66, "sweep_threshold": 0.80, "snap_threshold": 0.80, "mask_columns": 48, "mask_rows": 32, "crumb_count": 6},
 		"stock_weight": 58,
 		"stock_count": [3, 5],
 		"rtp_band": [0.76, 0.80]
@@ -154,7 +154,7 @@
 			{"id": "devils_due", "weight": 50, "gross_payout": 500, "payout": 375, "winning_symbol": "HORN", "cut": 125}
 		],
 		"gimmick": {"type": "devils_cut", "devil_symbol": "DEVIL", "heat": 6},
-		"scratch": {"brush_radius": 38.0, "snap_threshold": 0.58, "mask_columns": 6, "mask_rows": 4, "crumb_count": 7},
+		"scratch": {"brush_radius": 15.0, "pass_removal": 0.66, "sweep_threshold": 0.80, "snap_threshold": 0.80, "mask_columns": 48, "mask_rows": 32, "crumb_count": 7},
 		"stock_weight": 38,
 		"stock_count": [2, 4],
 		"rtp_band": [0.77, 0.86]
@@ -173,7 +173,7 @@
 			{"id": "not_quite", "weight": 20, "payout": 50, "winning_symbol": "CROWN"}
 		],
 		"gimmick": {"type": "read_the_table", "warning": "Premium price. Tiny prizes."},
-		"scratch": {"brush_radius": 38.0, "snap_threshold": 0.58, "mask_columns": 6, "mask_rows": 4, "crumb_count": 7},
+		"scratch": {"brush_radius": 15.0, "pass_removal": 0.66, "sweep_threshold": 0.80, "snap_threshold": 0.80, "mask_columns": 48, "mask_rows": 32, "crumb_count": 7},
 		"stock_weight": 30,
 		"stock_count": [2, 4],
 		"rtp_band": [0.04, 0.07]
@@ -193,7 +193,7 @@
 			{"id": "midnight_jackpot", "weight": 20, "payout": 1000, "winning_symbol": "COMET", "luck_buff": 5, "luck_turns": 8}
 		],
 		"gimmick": {"type": "rare_luck", "rare_symbol": "RARE"},
-		"scratch": {"brush_radius": 39.0, "snap_threshold": 0.56, "mask_columns": 6, "mask_rows": 4, "crumb_count": 6},
+		"scratch": {"brush_radius": 15.0, "pass_removal": 0.66, "sweep_threshold": 0.80, "snap_threshold": 0.80, "mask_columns": 48, "mask_rows": 32, "crumb_count": 6},
 		"stock_weight": 3,
 		"stock_count": [1, 2],
 		"rtp_band": [0.84, 1.02]
