@@ -48,7 +48,7 @@ const ROULETTE_PREWARM_EVENTS := [
 ]
 const ENVIRONMENT_PREWARM_EVENTS := [
 	"drink_consumed",
-	"scratch_scrape_loop",
+	"scratch_paper_foley_loop",
 ]
 const ROULETTE_RIM_TIMES := [0.42, 0.82, 1.26, 1.78, 2.34, 2.94, 3.32]
 const ROULETTE_SCATTER_TIMES := [3.66, 3.86, 4.08, 4.32]
@@ -129,6 +129,7 @@ var _baccarat_deal_id: String = ""
 var _baccarat_payout_id: String = ""
 var _web_surface_loop_active := false
 var _surface_loop_event_id := ""
+var _surface_loop_fade_tween: Tween
 var _played_markers: Dictionary = {}
 var _normalized_event_cache: Dictionary = {}
 
@@ -185,6 +186,11 @@ func start_surface_loop(cue_id: String, volume_db: float = -10.0, pitch: float =
 	var normalized_cue := _normalized_event_id(clean_cue)
 	_ensure_players()
 	if normalized_cue == _surface_loop_event_id and ((_loop_player != null and _loop_player.playing) or _web_surface_loop_active):
+		if _surface_loop_fade_tween != null and _surface_loop_fade_tween.is_valid():
+			_surface_loop_fade_tween.kill()
+		if _loop_player != null:
+			_loop_player.volume_db = volume_db
+			_loop_player.pitch_scale = pitch
 		return
 	_stop_reel_loop()
 	_start_reel_loop(normalized_cue, volume_db, pitch)
@@ -193,6 +199,13 @@ func start_surface_loop(cue_id: String, volume_db: float = -10.0, pitch: float =
 func stop_surface_loop(cue_id: String = "") -> void:
 	var normalized_cue := _normalized_event_id(cue_id.strip_edges()) if not cue_id.strip_edges().is_empty() else ""
 	if not normalized_cue.is_empty() and normalized_cue != _surface_loop_event_id:
+		return
+	if _surface_loop_event_id == "scratch_paper_foley_loop" and not _web_surface_loop_active and _loop_player != null and _loop_player.playing:
+		if _surface_loop_fade_tween != null and _surface_loop_fade_tween.is_valid():
+			_surface_loop_fade_tween.kill()
+		_surface_loop_fade_tween = create_tween()
+		_surface_loop_fade_tween.tween_property(_loop_player, "volume_db", -36.0, 0.07)
+		_surface_loop_fade_tween.tween_callback(Callable(self, "_stop_reel_loop"))
 		return
 	_stop_reel_loop()
 
@@ -1015,6 +1028,9 @@ func _start_reel_loop(event_id: String = "reel_loop", volume_db: float = -13.0, 
 
 
 func _stop_reel_loop() -> void:
+	if _surface_loop_fade_tween != null and _surface_loop_fade_tween.is_valid():
+		_surface_loop_fade_tween.kill()
+	_surface_loop_fade_tween = null
 	if WebAudioBridgeScript.available() and _web_surface_loop_active:
 		WebAudioBridgeScript.stop_loop(WEB_SURFACE_LOOP_ID)
 		_web_surface_loop_active = false
@@ -1099,7 +1115,7 @@ func _event_stream(event_id: String) -> AudioStreamWAV:
 	stream.format = AudioStreamWAV.FORMAT_16_BITS
 	stream.mix_rate = SAMPLE_RATE
 	stream.data = data
-	stream.loop_mode = AudioStreamWAV.LOOP_FORWARD if normalized.begins_with("reel_loop") or normalized in ["roulette_ball_loop", "scratch_scrape_loop"] else AudioStreamWAV.LOOP_DISABLED
+	stream.loop_mode = AudioStreamWAV.LOOP_FORWARD if normalized.begins_with("reel_loop") or normalized in ["roulette_ball_loop", "scratch_paper_foley_loop"] else AudioStreamWAV.LOOP_DISABLED
 	stream.loop_begin = 0
 	stream.loop_end = frames
 	_stream_cache[normalized] = stream
@@ -1193,7 +1209,7 @@ func _normalized_event_id_uncached(event_id: String) -> String:
 		})
 	if family_event == "drink_consumed":
 		return family_event
-	if family_event == "scratch_scrape_loop":
+	if family_event == "scratch_paper_foley_loop":
 		return family_event
 	match family_event:
 		"button", "button_pinball", "button_buffalo", "button_digital", "lever", "lever_buffalo", "lever_digital", "nudge", "nudge_pinball", "nudge_buffalo", "nudge_digital", "reel_loop", "reel_loop_pinball", "reel_loop_buffalo", "reel_loop_digital", "reel_stop", "reel_stop_pinball", "reel_stop_buffalo", "reel_stop_digital", "gold_coin_tease", "double_gold_coin_tease", "bonus_start", "bonus_start_pinball", "bonus_start_buffalo", "bonus_start_digital", "bumper", "pinball_money_ding", "bonus_step_buffalo", "bonus_step_digital", "jackpot_hit", "jackpot_hit_buffalo", "jackpot_hit_digital", "payout", "payout_digital", "bonus_total", "bonus_total_buffalo", "bonus_total_digital", "jackpot", "jackpot_buffalo", "jackpot_digital", "lose", "pull_tab_click", "pull_tab_thump", "paper_peek", "paper_peel", "blackjack_card", "blackjack_chip", "blackjack_felt", "blackjack_payout", "blackjack_bust", "blackjack_peek", "blackjack_count", "blackjack_distraction", "roulette_chip_select", "roulette_chip_place", "roulette_chip_lift", "roulette_chip_stack", "roulette_chip_sweep", "roulette_rotor_launch", "roulette_ball_loop", "roulette_ball_rim_tick", "roulette_ball_roll", "roulette_ball_drop", "roulette_ball_scatter", "roulette_ball_bounce", "roulette_ball_pocket", "roulette_dolly_tap", "roulette_payout":
@@ -1246,7 +1262,7 @@ func _event_seconds(event_id: String) -> float:
 			return 0.09
 		"drink_consumed":
 			return 0.56
-		"scratch_scrape_loop":
+		"scratch_paper_foley_loop":
 			return 0.28
 		"lever", "lever_buffalo", "lever_digital":
 			return 0.34
@@ -1344,8 +1360,8 @@ func _event_sample(event_id: String, t: float, frame: int, seconds: float) -> fl
 			return _sample_digital_button(t, frame, seconds)
 		"drink_consumed":
 			return _sample_drink_consumed(t, frame, seconds)
-		"scratch_scrape_loop":
-			return _sample_scratch_scrape_loop(t, frame, seconds)
+		"scratch_paper_foley_loop":
+			return _sample_scratch_paper_foley_loop(t, frame, seconds)
 		"lever":
 			return _sample_lever(t, frame, seconds)
 		"lever_buffalo":
@@ -1496,15 +1512,15 @@ func _sample_drink_consumed(t: float, frame: int, seconds: float) -> float:
 	return glass + liquid + bubbles + swallow + settle
 
 
-func _sample_scratch_scrape_loop(t: float, frame: int, seconds: float) -> float:
-	# Coin-on-latex friction: broadband grit with a lightly pulsing metallic edge.
-	# The stream is cached and looped, so pointer moves never synthesize audio.
+func _sample_scratch_paper_foley_loop(t: float, frame: int, seconds: float) -> float:
+	# Dry cardstock friction: filtered broadband grains, with no pitched metal edge.
 	var cycle := t / maxf(0.001, seconds)
-	var pressure := 0.72 + 0.28 * sin(TAU * cycle * 3.0)
-	var coarse_grit := _noise(frame / 3, 2719) * 0.12
-	var fine_grit := _noise(frame, 3253) * 0.075
-	var coin_edge := sin(TAU * (1850.0 + 240.0 * sin(TAU * cycle * 5.0)) * t) * 0.045
-	return (coarse_grit + fine_grit + coin_edge) * pressure
+	var grain_phase := fmod(cycle * 19.0, 1.0)
+	var grain_envelope := sin(PI * clampf(grain_phase, 0.0, 1.0))
+	var coarse := (_noise(frame / 5, 2719) - _noise(frame / 13, 2729)) * 0.070
+	var fiber := (_noise(frame, 3253) - _noise(frame / 2, 3259)) * 0.035
+	var pressure := 0.60 + 0.22 * _noise(frame / 71, 3301)
+	return (coarse + fiber * grain_envelope) * pressure
 
 
 func _sample_lever(t: float, frame: int, seconds: float) -> float:

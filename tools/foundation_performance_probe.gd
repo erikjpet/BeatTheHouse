@@ -583,7 +583,7 @@ func _probe_scratch_pointer_budget() -> void:
 		return
 	var environment: Dictionary = run_state.current_environment
 	var machine: Dictionary = game.call("_ensure_machine_state", run_state, environment, true)
-	var ticket_type: Dictionary = game.call("_ticket_type", "cash_cow")
+	var ticket_type: Dictionary = game.call("_ticket_type", "two_fer")
 	var ticket: Dictionary = game.call("_roll_ticket", ticket_type, run_state.create_rng("perf_scratch_pointer"), 0, "pointer-budget")
 	if ticket.is_empty():
 		failures.append("Scratch pointer performance probe could not build its ticket fixture.")
