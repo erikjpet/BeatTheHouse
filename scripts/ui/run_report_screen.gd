@@ -109,6 +109,10 @@ func set_report(model: Dictionary) -> void:
 
 func set_reduce_motion(enabled: bool) -> void:
 	reduce_motion = enabled
+	if play_button == null or map_canvas == null or timeline_canvas == null:
+		replay_playing = false
+		set_process(false)
+		return
 	if not report_model.is_empty():
 		var timeline := _dict(report_model.get("timeline", {}))
 		map_canvas.set_run_report_replay(timeline.get("travel_keyframes", []), reduce_motion, timeline.get("replay_segments", []))
@@ -123,14 +127,20 @@ func set_reduce_motion(enabled: bool) -> void:
 
 func set_small_screen_mode(enabled: bool) -> void:
 	small_screen_mode = enabled
+	if button_row == null:
+		return
 	button_row.add_theme_constant_override("separation", 12 if enabled else 9)
 	for child in button_row.get_children():
 		if child is Button:
 			(child as Button).custom_minimum_size.y = 52.0 if enabled else 42.0
-	bag_reward_selector.custom_minimum_size.y = 52.0 if enabled else 42.0
-	bag_claim_button.custom_minimum_size.y = 52.0 if enabled else 42.0
-	take_home_item_reward_selector.custom_minimum_size.y = 52.0 if enabled else 42.0
-	take_home_item_claim_button.custom_minimum_size.y = 52.0 if enabled else 42.0
+	if bag_reward_selector != null:
+		bag_reward_selector.custom_minimum_size.y = 52.0 if enabled else 42.0
+	if bag_claim_button != null:
+		bag_claim_button.custom_minimum_size.y = 52.0 if enabled else 42.0
+	if take_home_item_reward_selector != null:
+		take_home_item_reward_selector.custom_minimum_size.y = 52.0 if enabled else 42.0
+	if take_home_item_claim_button != null:
+		take_home_item_claim_button.custom_minimum_size.y = 52.0 if enabled else 42.0
 	_layout_sections()
 
 

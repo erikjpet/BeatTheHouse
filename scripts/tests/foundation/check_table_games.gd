@@ -1373,6 +1373,27 @@ func _check_blackjack_surface_contract(game: GameModule, failures: Array) -> voi
 	game.draw_surface(blackjack_harness, surface, {"contract_harness": true})
 	var blackjack_deal_hit := _surface_harness_first_hit(blackjack_harness, "blackjack_deal", 0)
 	_check_canvas_hit_dispatch(surface, blackjack_deal_hit.get("rect", Rect2()), "blackjack_deal", 0, "Blackjack deal canvas dispatch", failures)
+	_check_canvas_hit_dispatch(surface, Rect2(128, 258, 26, 42), "surface_stake_up", -1, "Blackjack bound stake-up chip dispatch", failures, "blackjack_chip", 0)
+	var spam_ui: Dictionary = {}
+	var spam_chips: Array = surface.get("chip_denominations", []) as Array
+	if spam_chips.is_empty():
+		failures.append("Blackjack chip-spam regression had no chip denominations to press.")
+	else:
+		for click_index in range(180):
+			var chip_index := click_index % spam_chips.size()
+			var chip_click := game.surface_action_command("blackjack_chip", chip_index, false, spam_ui, run_state, environment)
+			if not bool(chip_click.get("handled", false)):
+				failures.append("Blackjack chip-spam click %d on chip index %d was not handled." % [click_index, chip_index])
+				break
+			spam_ui = chip_click.get("ui_state", {}) if typeof(chip_click.get("ui_state", {})) == TYPE_DICTIONARY else {}
+			var spam_surface := game.surface_state(run_state, environment, spam_ui)
+			var spam_stake := int(spam_surface.get("selected_stake", 0))
+			if spam_stake < int(spam_surface.get("stake_floor", 1)) or spam_stake > int(spam_surface.get("stake_ceiling", 1)):
+				failures.append("Blackjack chip-spam click %d pushed stake out of bounds: %d not in %d-%d." % [click_index, spam_stake, int(spam_surface.get("stake_floor", 1)), int(spam_surface.get("stake_ceiling", 1))])
+				break
+		var spam_deal := game.surface_action_command("blackjack_deal", 0, false, spam_ui, run_state, environment)
+		if str(spam_deal.get("action_id", "")) != "blackjack_place_bet" or not bool(spam_deal.get("direct_resolve", false)):
+			failures.append("Blackjack chip-spam state did not remain dealable after rapid chip presses.")
 	var side_bet_hover_harness := SurfaceHarness.new()
 	side_bet_hover_harness.setup(surface)
 	side_bet_hover_harness.hovered_action = "blackjack_side_bet"

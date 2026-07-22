@@ -747,6 +747,11 @@ func _on_game_surface_action(action: String, index: int, confirm_requested: bool
 		return
 	if _guard_player_input_route(false, action):
 		return
+	if _surface_action_uses_game_binding(action):
+		var bound_action := _current_game_bound_surface_action(action, index)
+		if str(bound_action.get("action", action)) != action or int(bound_action.get("index", index)) != index:
+			if _handle_module_surface_action(str(bound_action.get("action", action)), int(bound_action.get("index", index)), confirm_requested):
+				return
 	match action:
 		"surface_back":
 			back_to_environment()
@@ -773,6 +778,32 @@ func _on_game_surface_action(action: String, index: int, confirm_requested: bool
 		game_surface_canvas.set_selected_index(index)
 	_show_message("That part of the game is only visual right now.")
 	_refresh()
+
+
+func _surface_action_uses_game_binding(action: String) -> bool:
+	return action == "surface_legal" \
+		or action == "surface_cheat" \
+		or action == "surface_stake_down" \
+		or action == "surface_stake_up" \
+		or action == "surface_stake_max"
+
+
+func _current_game_bound_surface_action(action: String, index: int) -> Dictionary:
+	if current_game == null or run_state == null:
+		return {"action": action, "index": index}
+	var surface_state := current_game.surface_state(run_state, run_state.current_environment, _current_game_surface_ui_state())
+	var bindings: Dictionary = surface_state.get("surface_action_bindings", {}) if typeof(surface_state.get("surface_action_bindings", {})) == TYPE_DICTIONARY else {}
+	var binding_value: Variant = bindings.get(action, {})
+	if typeof(binding_value) != TYPE_DICTIONARY or (binding_value as Dictionary).is_empty():
+		return {"action": action, "index": index}
+	var binding: Dictionary = binding_value
+	var resolved_action := str(binding.get("action", action))
+	if resolved_action.is_empty():
+		resolved_action = action
+	return {
+		"action": resolved_action,
+		"index": int(binding.get("index", index)),
+	}
 
 
 func _on_game_surface_action_blocked(_action: String, reason: String) -> void:

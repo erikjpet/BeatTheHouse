@@ -756,8 +756,11 @@ func _activate_surface_at_position(position: Vector2, confirm_requested: bool) -
 		var region: Dictionary = hit_regions[i]
 		var rect: Rect2 = region.get("rect", Rect2())
 		if rect.has_point(board_point):
-			hovered_surface_action = str(region.get("action", ""))
-			hovered_surface_index = int(region.get("index", -1))
+			var raw_action := str(region.get("action", ""))
+			var raw_index := int(region.get("index", -1))
+			var resolved := _resolved_surface_action_binding(raw_action, raw_index)
+			hovered_surface_action = str(resolved.get("action", raw_action))
+			hovered_surface_index = int(resolved.get("index", raw_index))
 			var block_reason := _surface_action_block_reason(hovered_surface_action)
 			if not block_reason.is_empty():
 				surface_action_blocked.emit(hovered_surface_action, block_reason)
@@ -773,9 +776,9 @@ func _activate_surface_at_position(position: Vector2, confirm_requested: bool) -
 			if not audio_cue.is_empty():
 				surface_play_audio_cue(audio_cue, {
 					"action": hovered_surface_action,
-					"index": int(region.get("index", -1)),
+					"index": hovered_surface_index,
 				})
-			surface_action.emit(str(region.get("action", "")), int(region.get("index", -1)), confirm_requested)
+			surface_action.emit(hovered_surface_action, hovered_surface_index, confirm_requested)
 			accept_event()
 			return
 

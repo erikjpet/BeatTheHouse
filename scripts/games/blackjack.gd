@@ -351,6 +351,11 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 	var live_recorded_count := _recorded_count_for_surface(table, session)
 	var live_true_count := _true_count_for_surface(table, session)
 	var rules_for_surface: Dictionary = _table_rules(table)
+	var effective_stake_ceiling := _max_table_stake_for_blackjack(session, table, run_state, environment)
+	if not dealt and not bool(session.get("locked_stake", false)):
+		var effective_floor := _surface_stake_floor(run_state, environment)
+		selected_stake = effective_floor if effective_stake_ceiling < effective_floor else clampi(selected_stake, effective_floor, effective_stake_ceiling)
+		session["selected_stake"] = selected_stake
 	var main_wager_cost := _main_wager_cost(selected_stake, session)
 	var total_wager_cost := _wager_cost_from_session(selected_stake, session, table, run_state)
 	var shoe_remaining_value := _shoe_remaining(table)
@@ -432,6 +437,8 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 		"distractions": _dictionary_array(table.get("distractions", [])),
 		"chip_denominations": chip_denominations,
 		"selected_stake": selected_stake,
+		"stake_ceiling": effective_stake_ceiling,
+		"economy_stake_ceiling": effective_stake_ceiling,
 		"chip_stack": _chip_stack_for_stake(selected_stake, chip_denominations),
 		"rules": rules_for_surface,
 		"table_rules_text": _table_rules_text_from_values(rules_for_surface, total_wager_cost, shoe_label_value, shoe_remaining_value),

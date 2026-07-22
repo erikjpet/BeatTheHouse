@@ -3809,7 +3809,7 @@ func _surface_harness_first_hit(harness, action_id: String, index: int = -999999
 	return {}
 
 
-func _check_canvas_hit_dispatch(surface: Dictionary, rect: Rect2, action: String, index: int, label: String, failures: Array) -> void:
+func _check_canvas_hit_dispatch(surface: Dictionary, rect: Rect2, action: String, index: int, label: String, failures: Array, expected_action: String = "", expected_index: int = -999999) -> void:
 	if rect.size.x <= 0.0 or rect.size.y <= 0.0:
 		failures.append("%s could not dispatch because the hit rect was empty." % label)
 		return
@@ -3837,8 +3837,10 @@ func _check_canvas_hit_dispatch(surface: Dictionary, rect: Rect2, action: String
 		failures.append("%s did not emit a surface action from its registered hit region." % label)
 	else:
 		var event: Dictionary = dispatched[0]
-		if str(event.get("action", "")) != action or int(event.get("index", -1)) != index:
-			failures.append("%s emitted %s[%d] instead of %s[%d]." % [label, str(event.get("action", "")), int(event.get("index", -1)), action, index])
+		var target_action := action if expected_action.is_empty() else expected_action
+		var target_index := index if expected_index == -999999 else expected_index
+		if str(event.get("action", "")) != target_action or int(event.get("index", -1)) != target_index:
+			failures.append("%s emitted %s[%d] instead of %s[%d]." % [label, str(event.get("action", "")), int(event.get("index", -1)), target_action, target_index])
 	root.remove_child(canvas)
 	canvas.free()
 
