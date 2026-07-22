@@ -5,6 +5,7 @@ signal new_run_requested
 signal home_requested
 signal copy_seed_requested(seed: String)
 signal bag_claim_requested(marker_id: String)
+signal take_home_item_claim_requested(item_id: String)
 
 const WorldMapCanvasScript := preload("res://scripts/ui/world_map_canvas.gd")
 const TimelineCanvasScript := preload("res://scripts/ui/run_report_timeline_canvas.gd")
@@ -33,6 +34,10 @@ var play_button: Button
 var replay_clock_label: Label
 var story_rows: VBoxContainer
 var item_rows: GridContainer
+var take_home_item_reward_row: HBoxContainer
+var take_home_item_reward_label: Label
+var take_home_item_reward_selector: OptionButton
+var take_home_item_claim_button: Button
 var bag_reward_row: VBoxContainer
 var bag_reward_label: Label
 var bag_reward_selector: OptionButton
@@ -82,6 +87,7 @@ func set_report(model: Dictionary) -> void:
 	score_detail.text = "Money put to work  ×  Winner's bonus  =  Final score" if bool(score.get("show_winner_bonus", false)) else "Money put to work  =  Final score"
 	seed_label.text = "Seed: %s" % str(model.get("seed", ""))
 	_render_story(model.get("money_rows", []))
+	_render_take_home_item_reward(_dict(model.get("take_home_item_reward", {})))
 	_render_bag_reward(_dict(model.get("bag_reward", {})))
 	_render_items(_dict(model.get("items", {})))
 	_render_debts(model.get("debts", []))
@@ -123,6 +129,8 @@ func set_small_screen_mode(enabled: bool) -> void:
 			(child as Button).custom_minimum_size.y = 52.0 if enabled else 42.0
 	bag_reward_selector.custom_minimum_size.y = 52.0 if enabled else 42.0
 	bag_claim_button.custom_minimum_size.y = 52.0 if enabled else 42.0
+	take_home_item_reward_selector.custom_minimum_size.y = 52.0 if enabled else 42.0
+	take_home_item_claim_button.custom_minimum_size.y = 52.0 if enabled else 42.0
 	_layout_sections()
 
 
@@ -231,6 +239,22 @@ func _build() -> void:
 
 	story_rows = _section("story", "STORY · MONEY FLOW", VisualStyle.TEAL)
 	var item_stack := _section("items", "ITEMS · KEPT / PAWNED / SOLD", VisualStyle.AMBER)
+	take_home_item_reward_row = HBoxContainer.new()
+	take_home_item_reward_row.add_theme_constant_override("separation", 5)
+	take_home_item_reward_row.visible = false
+	item_stack.add_child(take_home_item_reward_row)
+	take_home_item_reward_label = _label("ITEM EARNED", 10, VisualStyle.YELLOW)
+	take_home_item_reward_label.custom_minimum_size = Vector2(92, 0)
+	take_home_item_reward_label.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+	take_home_item_reward_row.add_child(take_home_item_reward_label)
+	take_home_item_reward_selector = OptionButton.new()
+	take_home_item_reward_selector.custom_minimum_size = Vector2(138, 42)
+	take_home_item_reward_selector.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	take_home_item_reward_row.add_child(take_home_item_reward_selector)
+	take_home_item_claim_button = _action_button("Take Home")
+	take_home_item_claim_button.custom_minimum_size.x = 96
+	take_home_item_claim_button.pressed.connect(_on_take_home_item_claim_pressed)
+	take_home_item_reward_row.add_child(take_home_item_claim_button)
 	bag_reward_row = VBoxContainer.new()
 	bag_reward_row.add_theme_constant_override("separation", 5)
 	bag_reward_row.visible = false
@@ -293,6 +317,14 @@ func _on_bag_claim_pressed() -> void:
 	var marker_id := str(bag_reward_selector.get_item_metadata(bag_reward_selector.selected)).strip_edges()
 	if not marker_id.is_empty():
 		bag_claim_requested.emit(marker_id)
+
+
+func _on_take_home_item_claim_pressed() -> void:
+	if take_home_item_reward_selector.item_count <= 0:
+		return
+	var item_id := str(take_home_item_reward_selector.get_item_metadata(take_home_item_reward_selector.selected)).strip_edges()
+	if not item_id.is_empty():
+		take_home_item_claim_requested.emit(item_id)
 
 
 func _update_replay_clock() -> void:
@@ -396,7 +428,7 @@ func _render_story(rows_value: Variant) -> void:
 func _render_items(items: Dictionary) -> void:
 	_clear(item_rows)
 	var shown := 0
-	var maximum_shown := 4 if bag_claim_button.visible else 8
+	var maximum_shown := 4 if _reward_selection_pending() else 8
 	for group_key in ["kept", "pawned", "sold"]:
 		var rows: Array = items.get(group_key, []) if typeof(items.get(group_key, [])) == TYPE_ARRAY else []
 		for value in rows:
@@ -419,6 +451,39 @@ func _render_items(items: Dictionary) -> void:
 			shown += 1
 	if shown == 0:
 		item_rows.add_child(_label("No items carried, pawned, or sold.", 10, VisualStyle.SOFT))
+
+
+func _render_take_home_item_reward(reward: Dictionary) -> void:
+	take_home_item_reward_selector.clear()
+	var choices: Array = reward.get("choices", []) if typeof(reward.get("choices", [])) == TYPE_ARRAY else []
+	for value in choices:
+		if typeof(value) != TYPE_DICTIONARY:
+			continue
+		var choice: Dictionary = value
+		var item_id := str(choice.get("id", "")).strip_edges()
+		if item_id.is_empty():
+			continue
+		var display_name := str(choice.get("display_name", item_id.replace("_", " ").capitalize()))
+		var capacity := maxi(0, int(choice.get("capacity", 0)))
+		take_home_item_reward_selector.add_item(display_name)
+		var index := take_home_item_reward_selector.item_count - 1
+		take_home_item_reward_selector.set_item_metadata(index, item_id)
+		take_home_item_reward_selector.set_item_tooltip(index, "%s · stores %d items" % [display_name, capacity])
+		var icon_path := str(choice.get("icon_path", "")).strip_edges()
+		if not icon_path.is_empty() and ResourceLoader.exists(icon_path):
+			take_home_item_reward_selector.set_item_icon(index, load(icon_path) as Texture2D)
+	var pending := bool(reward.get("pending", false)) and take_home_item_reward_selector.item_count > 0
+	take_home_item_reward_row.visible = bool(reward.get("visible", false))
+	take_home_item_reward_selector.visible = pending
+	take_home_item_claim_button.visible = pending
+	if pending:
+		take_home_item_reward_label.text = "ITEM EARNED"
+		take_home_item_reward_label.tooltip_text = "Choose one earned container item to keep at home before leaving this report."
+	else:
+		var summary := str(reward.get("summary_line", "")).strip_edges()
+		take_home_item_reward_label.text = summary if not summary.is_empty() else "Item stored at home"
+		take_home_item_reward_label.tooltip_text = take_home_item_reward_label.text
+	_update_reward_navigation_lock()
 
 
 func _render_bag_reward(reward: Dictionary) -> void:
@@ -445,8 +510,6 @@ func _render_bag_reward(reward: Dictionary) -> void:
 	bag_reward_row.visible = bool(reward.get("visible", false))
 	bag_reward_selector.visible = pending
 	bag_claim_button.visible = pending
-	new_run_button.disabled = pending
-	home_button.disabled = pending
 	if pending:
 		bag_reward_label.text = "Choose one earned bag"
 		bag_reward_label.tooltip_text = "Choose one earned collection bag before leaving this report."
@@ -454,6 +517,17 @@ func _render_bag_reward(reward: Dictionary) -> void:
 		var summary_lines: Array = reward.get("summary_lines", []) if typeof(reward.get("summary_lines", [])) == TYPE_ARRAY else []
 		bag_reward_label.text = "Stored: %s" % str(summary_lines[0]) if not summary_lines.is_empty() else "Collection bag stored"
 		bag_reward_label.tooltip_text = bag_reward_label.text
+	_update_reward_navigation_lock()
+
+
+func _reward_selection_pending() -> bool:
+	return (bag_claim_button != null and bag_claim_button.visible) or (take_home_item_claim_button != null and take_home_item_claim_button.visible)
+
+
+func _update_reward_navigation_lock() -> void:
+	var pending := _reward_selection_pending()
+	new_run_button.disabled = pending
+	home_button.disabled = pending
 
 
 func _render_debts(rows_value: Variant) -> void:
@@ -475,7 +549,7 @@ func debug_layout_snapshot() -> Dictionary:
 	var rects := {}
 	for key in section_panels.keys():
 		rects[str(key)] = (section_panels[key] as Control).get_rect()
-	return {"size": size, "section_rects": rects, "button_rect": button_row.get_rect(), "small_screen_mode": small_screen_mode, "reduce_motion": reduce_motion, "replay_progress": replay_progress, "replay_clock_text": replay_clock_label.text, "timeline_install_count": timeline_install_count, "has_scroll_container": _has_scroll_container(self), "bag_reward_visible": bag_reward_row.visible, "bag_reward_pending": bag_claim_button.visible, "bag_reward_choice_count": bag_reward_selector.item_count, "meta_reward_visible": outcome_meta_reward.visible, "meta_reward_text": outcome_meta_reward.text, "new_run_disabled": new_run_button.disabled, "home_disabled": home_button.disabled}
+	return {"size": size, "section_rects": rects, "button_rect": button_row.get_rect(), "small_screen_mode": small_screen_mode, "reduce_motion": reduce_motion, "replay_progress": replay_progress, "replay_clock_text": replay_clock_label.text, "timeline_install_count": timeline_install_count, "has_scroll_container": _has_scroll_container(self), "bag_reward_visible": bag_reward_row.visible, "bag_reward_pending": bag_claim_button.visible, "bag_reward_choice_count": bag_reward_selector.item_count, "take_home_item_reward_visible": take_home_item_reward_row.visible, "take_home_item_reward_pending": take_home_item_claim_button.visible, "take_home_item_reward_choice_count": take_home_item_reward_selector.item_count, "take_home_item_reward_label": take_home_item_reward_label.text, "meta_reward_visible": outcome_meta_reward.visible, "meta_reward_text": outcome_meta_reward.text, "new_run_disabled": new_run_button.disabled, "home_disabled": home_button.disabled}
 
 
 func _has_scroll_container(node: Node) -> bool:

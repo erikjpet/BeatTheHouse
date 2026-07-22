@@ -1918,6 +1918,18 @@ func _check_travel_route_foundation(library: ContentLibrary, failures: Array) ->
 			failures.append("Beach should route back to the Delta Queen.")
 		if not _string_array(beach_archetype.get("service_pool", [])).has("beach_relax") or not _string_array(beach_archetype.get("service_pool", [])).has("beach_sand_pile"):
 			failures.append("Beach should expose relax and sand-pile service hooks.")
+		if _string_array(beach_archetype.get("game_pool", [])) != ["slot"] or _string_array(beach_archetype.get("required_game_ids", [])) != ["slot"]:
+			failures.append("Beach should always expose its lone boardwalk slot for the Cumquat Sandwich.")
+		var beach_layout := _copy_dict(beach_archetype.get("layout", {}))
+		var beach_game_spots := _copy_array(beach_layout.get("game_spots", []))
+		var beach_slot_spot := _copy_array(beach_game_spots[0]) if beach_game_spots.size() == 1 else []
+		if beach_slot_spot.size() < 2 or int(beach_slot_spot[0]) != 740 or int(beach_slot_spot[1]) != 171:
+			failures.append("Beach boardwalk slot hotspot is not aligned with the authored kiosk.")
+		var beach_generation_run: RunState = RunStateScript.new()
+		beach_generation_run.start_new("BEACH-SLOT-GENERATION")
+		var generated_beach := EnvironmentInstance.from_archetype(beach_archetype, 2, beach_generation_run.create_rng("beach_slot_generation"), library).to_dict()
+		if _string_array(generated_beach.get("game_ids", [])) != ["slot"] or not _copy_dict(_copy_dict(generated_beach.get("layout", {})).get("object_rects", {})).has("game:slot"):
+			failures.append("Generated Beach did not create the playable slot fixture and stable hotspot.")
 
 	var scout_run: RunState = RunStateScript.new()
 	scout_run.start_new("TRAVEL-SCOUTING")
@@ -3026,18 +3038,21 @@ func _check_service_hook_foundation(library: ContentLibrary, failures: Array) ->
 
 	var beach_relax := library.service("beach_relax")
 	var beach_sand_pile := library.service("beach_sand_pile")
-	if beach_relax.is_empty() or beach_sand_pile.is_empty():
+	var beach_archetype := _archetype_by_id(library, "beach")
+	if beach_relax.is_empty() or beach_sand_pile.is_empty() or beach_archetype.is_empty():
 		failures.append("Beach service fixture is missing.")
 	else:
 		if int(beach_relax.get("duration_minutes", 0)) != 60:
 			failures.append("Beach relax service should author exactly one hour of elapsed time.")
 		var beach_run: RunState = RunStateScript.new()
 		beach_run.start_new("SERVICE-BEACH")
-		beach_run.set_environment({
-			"id": "service_beach_room",
-			"archetype_id": "beach",
-			"service_ids": ["beach_relax", "beach_sand_pile"],
-		})
+		var beach_slot_game: GameModule = _slot_game(library, failures)
+		var beach_environment := EnvironmentInstance.from_archetype(beach_archetype, 2, beach_run.create_rng("service_beach_room"), library).to_dict()
+		if beach_slot_game != null:
+			beach_environment["game_states"] = {
+				"slot": beach_slot_game.generate_environment_state(beach_run, beach_environment, beach_run.create_rng("service_beach_slot_machine")),
+			}
+		beach_run.set_environment(beach_environment)
 		beach_run.add_suspicion("beach_heat_fixture", 8)
 		var beach_heat_before := beach_run.suspicion_level()
 		var relax_status := beach_run.service_hook_status(beach_relax)
@@ -3069,6 +3084,22 @@ func _check_service_hook_foundation(library: ContentLibrary, failures: Array) ->
 		beach_loaded.from_dict(beach_run.to_dict())
 		if not beach_loaded.inventory.has("cumquat_sandwich") or not bool(beach_loaded.narrative_flags.get("beach_sand_pile_found", false)):
 			failures.append("Beach sand pile inventory/flag state did not survive RunState round-trip.")
+		if beach_slot_game != null:
+			var cumquat_command := beach_slot_game.active_item_command("cumquat_sandwich", beach_run, beach_run.current_environment, beach_run.create_rng("beach_cumquat_arm"))
+			var cumquat_result := _copy_dict(cumquat_command.get("result", {}))
+			if not bool(cumquat_command.get("handled", false)) or not bool(cumquat_result.get("ok", false)):
+				failures.append("Cumquat Sandwich found on the Beach could not be used on its boardwalk slot.")
+			else:
+				GameModule.apply_result(beach_run, cumquat_result, beach_run.create_rng("beach_cumquat_apply"))
+				var armed_machine := SlotMachineStateScript.read_machine(beach_run.current_environment, "slot")
+				var armed_item_state := _copy_dict(armed_machine.get("slot_item_state", {}))
+				if beach_run.inventory.has("cumquat_sandwich") or not bool(armed_item_state.get("cumquat_force_bonus_pending", false)):
+					failures.append("Beach slot did not consume the Cumquat Sandwich and arm its forced bonus.")
+				var armed_loaded: RunState = RunStateScript.new()
+				armed_loaded.from_dict(beach_run.to_dict())
+				var loaded_machine := SlotMachineStateScript.read_machine(armed_loaded.current_environment, "slot")
+				if not bool(_copy_dict(loaded_machine.get("slot_item_state", {})).get("cumquat_force_bonus_pending", false)):
+					failures.append("Beach slot Cumquat Sandwich state did not survive save/load.")
 
 	var unsupported_run: RunState = RunStateScript.new()
 	unsupported_run.start_new("SERVICE-UNSUPPORTED")

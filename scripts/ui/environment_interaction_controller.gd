@@ -20,6 +20,7 @@ static func interactable_object_view_list(host: Variant) -> Array:
 			"definition": host.library.game(game_id),
 			"runtime_state": host._environment_game_runtime_state(game_id),
 			"object_state": host._environment_game_object_state(game_id),
+			"fixture_object_states": host._environment_game_fixture_object_states(game_id),
 		})
 	var before_travel_objects: Array = []
 	before_travel_objects.append_array(host._game_hook_interactable_objects())

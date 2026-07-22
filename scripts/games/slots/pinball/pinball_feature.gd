@@ -35,6 +35,8 @@ const DISPLAY_TRAJECTORY_CAP := 24
 const HISTORY_CAP := 24
 const HISTORY_EVENT_CAP := 6
 const HISTORY_TRAJECTORY_CAP := 8
+const MOMENTUM_HIT_BONUS := 1
+const MOMENTUM_EVENT_TYPES := ["bumper", "slingshot", "launcher", "flipper"]
 
 
 class RuntimeSession:
@@ -228,13 +230,21 @@ func step(machine: Dictionary, action_id: String, rng: RngStream, _definition: D
 	local_events = base_events + _sequence_events_to_log(_array(active.get("sequence_events", [])), base_events, sim)
 	local_events.append_array(_hook_events_to_log(_array(active.get("pinball_item_hooks", [])).slice(before_hooks), base_events, sim))
 	var step_award := maxi(0, int(sim.total_awarded) - before_total)
+	var momentum_hit_count := _momentum_hit_count(base_events)
+	var momentum_bonus := momentum_hit_count * MOMENTUM_HIT_BONUS
 	_refresh_active(active, sim, local_events, local_trajectory)
+	active["last_momentum_hit_count"] = momentum_hit_count
+	active["last_momentum_bonus"] = momentum_bonus
 	if int(active.get("balls_remaining", 0)) <= 0 and sim.active_ball_count() <= 0:
 		complete = true
 	if complete:
-		return _finish(machine, active, sim, message)
+		var finish_result := _finish(machine, active, sim, message)
+		_apply_momentum_step_bonus(finish_result, momentum_hit_count, momentum_bonus)
+		return finish_result
 	machine["active_bonus"] = active
-	return _bonus_step_result(false, step_award, "%s in play." % message if sim.active_ball_count() > 0 else "%s %d balls left." % [message, int(active.get("balls_remaining", 0))], active)
+	var step_result := _bonus_step_result(false, step_award, "%s in play." % message if sim.active_ball_count() > 0 else "%s %d balls left." % [message, int(active.get("balls_remaining", 0))], active)
+	_apply_momentum_step_bonus(step_result, momentum_hit_count, momentum_bonus)
+	return step_result
 
 
 func preview(machine: Dictionary, stake: int, definition: Dictionary, rng: RngStream, inputs: Array) -> int:
@@ -456,6 +466,31 @@ func _logged_award(events: Array) -> int:
 	for event_value in events:
 		total += maxi(0, int(_dict(event_value).get("award", 0)))
 	return total
+
+
+func _momentum_hit_count(events: Array) -> int:
+	var count := 0
+	for event_value in events:
+		var event: Dictionary = _dict(event_value)
+		if MOMENTUM_EVENT_TYPES.has(str(event.get("element_type", ""))):
+			count += 1
+	return count
+
+
+func _apply_momentum_step_bonus(step_result: Dictionary, hit_count: int, bonus: int) -> void:
+	var safe_hits := maxi(0, hit_count)
+	var safe_bonus := maxi(0, bonus)
+	if safe_hits <= 0 or safe_bonus <= 0:
+		return
+	step_result["pinball_momentum_hit_count"] = safe_hits
+	step_result["pinball_momentum_bonus"] = safe_bonus
+	var active: Dictionary = _dict(step_result.get("active_bonus", {}))
+	active["last_momentum_hit_count"] = safe_hits
+	active["last_momentum_bonus"] = safe_bonus
+	step_result["active_bonus"] = active
+	var message := str(step_result.get("message", "")).strip_edges()
+	var bonus_text := "Momentum bonus +$%d." % safe_bonus
+	step_result["message"] = "%s %s" % [message, bonus_text] if not message.is_empty() else bonus_text
 
 
 func _finish(machine: Dictionary, active: Dictionary, sim, message: String) -> Dictionary:

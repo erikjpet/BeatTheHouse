@@ -431,18 +431,6 @@ func _penalty_distribution(cell_count: int, chance_percent: int, minimum: int, m
 	return probabilities
 
 
-func _sample_penalty_distribution(probabilities: Array, rng: RngStream) -> int:
-	if probabilities.is_empty():
-		return 0
-	var roll := float(rng.randi_range(1, 1000000)) / 1000000.0
-	var cumulative := 0.0
-	for penalty in range(probabilities.size()):
-		cumulative += float(probabilities[penalty])
-		if roll <= cumulative:
-			return penalty
-	return probabilities.size() - 1
-
-
 func _penalty_lookup(probabilities: Array, slots: int = 10000) -> Array:
 	var result: Array = []
 	var cumulative := 0.0
@@ -1582,13 +1570,6 @@ func _ticket_penalty_total(ticket: Dictionary) -> int:
 	return total
 
 
-func _ticket_symbols(ticket: Dictionary) -> Array:
-	var result: Array = []
-	for value in _dictionary_array(ticket.get("cells", [])):
-		result.append(str((value as Dictionary).get("symbol", "")))
-	return result
-
-
 func _cell_rect(index: int, columns: int, rows: int) -> Rect2:
 	var column := index % maxi(1, columns)
 	var row := index / maxi(1, columns)
@@ -1596,10 +1577,6 @@ func _cell_rect(index: int, columns: int, rows: int) -> Rect2:
 	var width := (GRID_RECT.size.x - gap * float(columns - 1)) / float(columns)
 	var height := (GRID_RECT.size.y - gap * float(rows - 1)) / float(rows)
 	return Rect2(GRID_RECT.position + Vector2(float(column) * (width + gap), float(row) * (height + gap)), Vector2(width, height))
-
-
-func _distance_to_segment(point: Vector2, from: Vector2, to: Vector2) -> float:
-	return sqrt(_distance_squared_to_segment(point, from, to))
 
 
 func _distance_squared_to_segment(point: Vector2, from: Vector2, to: Vector2) -> float:

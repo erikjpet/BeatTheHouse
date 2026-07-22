@@ -1,0 +1,111 @@
+[
+  {
+    "container_type": "bag",
+    "display_name": "Bag",
+    "background_path": "res://assets/art/ui/inventory_containers/bag_open.png",
+    "capacity_item_id": "bag",
+    "item_icon_scale": 0.96,
+    "label_anchor": [0.5, 0.05],
+    "empty_slot_style": "integrated_recess",
+    "fallback": "generated_frame_and_slots",
+    "slots": [
+      [0.259, 0.298, 0.198, 0.204],
+      [0.548, 0.298, 0.198, 0.204],
+      [0.402, 0.535, 0.198, 0.204]
+    ]
+  },
+  {
+    "container_type": "backpack",
+    "display_name": "Backpack",
+    "background_path": "res://assets/art/ui/inventory_containers/backpack_open.png",
+    "capacity_item_id": "backpack",
+    "item_icon_scale": 0.96,
+    "label_anchor": [0.5, 0.05],
+    "empty_slot_style": "integrated_recess",
+    "fallback": "generated_frame_and_slots",
+    "slots": [
+      [0.177, 0.294, 0.194, 0.214],
+      [0.404, 0.294, 0.194, 0.214],
+      [0.632, 0.294, 0.194, 0.214],
+      [0.202, 0.550, 0.270, 0.178],
+      [0.531, 0.550, 0.270, 0.178]
+    ]
+  },
+  {
+    "container_type": "suitcase",
+    "display_name": "Suitcase",
+    "background_path": "res://assets/art/ui/inventory_containers/suitcase_open.png",
+    "capacity_item_id": "suitcase",
+    "item_icon_scale": 0.98,
+    "label_anchor": [0.5, 0.05],
+    "empty_slot_style": "integrated_recess",
+    "fallback": "generated_frame_and_slots",
+    "slots": [
+      [0.123, 0.374, 0.147, 0.190],
+      [0.318, 0.374, 0.147, 0.190],
+      [0.516, 0.374, 0.147, 0.190],
+      [0.711, 0.374, 0.147, 0.190],
+      [0.170, 0.596, 0.178, 0.190],
+      [0.412, 0.596, 0.178, 0.190],
+      [0.654, 0.596, 0.178, 0.190]
+    ]
+  },
+  {
+    "container_type": "trunk",
+    "display_name": "Trunk",
+    "background_path": "res://assets/art/ui/inventory_containers/trunk_open.png",
+    "capacity_item_id": "trunk",
+    "item_icon_scale": 0.98,
+    "label_anchor": [0.5, 0.05],
+    "empty_slot_style": "integrated_recess",
+    "fallback": "generated_frame_and_slots",
+    "slots": [
+      [0.137, 0.404, 0.118, 0.167],
+      [0.285, 0.404, 0.118, 0.167],
+      [0.433, 0.404, 0.118, 0.167],
+      [0.581, 0.404, 0.118, 0.167],
+      [0.729, 0.404, 0.118, 0.167],
+      [0.137, 0.606, 0.118, 0.167],
+      [0.285, 0.606, 0.118, 0.167],
+      [0.433, 0.606, 0.118, 0.167],
+      [0.581, 0.606, 0.118, 0.167],
+      [0.729, 0.606, 0.118, 0.167]
+    ]
+  },
+  {
+    "container_type": "loose_carry",
+    "display_name": "Loose Carry",
+    "background_path": "res://assets/art/ui/inventory_containers/loose_carry.png",
+    "dynamic_bounds": [0.175, 0.205, 0.650, 0.635],
+    "dynamic_columns": 4,
+    "item_icon_scale": 0.92,
+    "label_anchor": [0.5, 0.05],
+    "empty_slot_style": "open_surface",
+    "fallback": "generated_frame_and_slots",
+    "slots": []
+  },
+  {
+    "container_type": "home_storage",
+    "display_name": "Home Storage",
+    "background_path": "res://assets/art/ui/inventory_containers/home_storage.png",
+    "dynamic_bounds": [0.145, 0.350, 0.710, 0.385],
+    "dynamic_columns": 5,
+    "item_icon_scale": 0.90,
+    "label_anchor": [0.5, 0.05],
+    "empty_slot_style": "open_surface",
+    "fallback": "generated_frame_and_slots",
+    "slots": []
+  },
+  {
+    "container_type": "pawn_tray",
+    "display_name": "Pawn Tickets",
+    "background_path": "res://assets/art/ui/inventory_containers/home_storage.png",
+    "dynamic_bounds": [0.145, 0.350, 0.710, 0.385],
+    "dynamic_columns": 4,
+    "item_icon_scale": 0.90,
+    "label_anchor": [0.5, 0.05],
+    "empty_slot_style": "counter_sleeve",
+    "fallback": "generated_frame_and_slots",
+    "slots": []
+  }
+]

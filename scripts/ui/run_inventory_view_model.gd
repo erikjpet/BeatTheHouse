@@ -4,6 +4,9 @@ extends RefCounted
 
 static func build(run_state: RunState, run_action_service: RunActionService, mode: String, container_id: String, selected: Dictionary) -> Dictionary:
 	var items := _inventory_popup_item_view_list(run_state, run_action_service, mode, container_id)
+	var containers := _spatial_container_models(run_state, mode, container_id, items)
+	var spatial_items := _flatten_container_items(containers)
+	var selected_key := _selected_spatial_key(spatial_items, selected)
 	return {
 		"mode": mode,
 		"title": _title_text(run_state, mode, container_id),
@@ -11,9 +14,183 @@ static func build(run_state: RunState, run_action_service: RunActionService, mod
 		"container_id": container_id,
 		"selected": selected.duplicate(true),
 		"empty_text": _empty_text(mode),
-		"items": items,
-		"layout": {"columns": 2},
+		"items": spatial_items,
+		"containers": containers,
+		"selected_key": selected_key,
+		"active_container_key": _active_container_key(containers, selected_key),
+		"layout": {"columns": 2, "presentation": "spatial_container", "stable_view": true},
 	}
+
+
+static func _flatten_container_items(containers: Array) -> Array:
+	var result: Array = []
+	for container_value in containers:
+		if typeof(container_value) != TYPE_DICTIONARY:
+			continue
+		for slot_value in _dictionary_array((container_value as Dictionary).get("slots", [])):
+			var item: Dictionary = slot_value.get("item", {}) if typeof(slot_value.get("item", {})) == TYPE_DICTIONARY else {}
+			if not item.is_empty():
+				result.append(item.duplicate(true))
+	return result
+
+
+static func _spatial_container_models(run_state: RunState, mode: String, container_id: String, items: Array) -> Array:
+	var carried: Array = []
+	var stored: Array = []
+	var tickets: Array = []
+	for item_value in items:
+		if typeof(item_value) != TYPE_DICTIONARY:
+			continue
+		var item: Dictionary = item_value
+		match str(item.get("storage_source", "carried")):
+			"container", "loadout":
+				stored.append(item)
+			"pawn_ticket":
+				tickets.append(item)
+			_:
+				carried.append(item)
+	var result: Array = []
+	if mode == "home_container":
+		result.append(_container_model("run_carried", "loose_carry", "Carried Items", 0, carried, false))
+		for home_container_value in _dictionary_array(run_state.current_home_containers() if run_state != null else []):
+			var home_container: Dictionary = home_container_value
+			var home_container_id := str(home_container.get("id", ""))
+			var container_type := str(home_container.get("item_id", "home_storage")).strip_edges().to_lower()
+			if container_type.is_empty():
+				container_type = "home_storage"
+			var container_items: Array = []
+			for item_value in stored:
+				if typeof(item_value) == TYPE_DICTIONARY and str((item_value as Dictionary).get("container_id", "")) == home_container_id:
+					container_items.append((item_value as Dictionary).duplicate(true))
+			result.append(_container_model(
+				"run_home:%s" % home_container_id,
+				container_type,
+				str(home_container.get("display_name", "Home Storage")),
+				maxi(0, int(home_container.get("capacity", 0))),
+				container_items,
+				bool(home_container.get("meta_loadout", false))
+			))
+		return result
+	if mode == "pawn_counter":
+		result.append(_container_model("run_carried", "loose_carry", "Carried Items", 0, carried, false))
+		if not tickets.is_empty():
+			result.append(_container_model("run_pawn_tickets", "pawn_tray", "Pawn Tickets", 0, tickets, false))
+		return result
+	if mode != "place_container":
+		var projected := _meta_loadout_container_models(run_state, items)
+		if not projected.is_empty():
+			return projected
+	var label := "Containers to Place" if mode == "place_container" else "Carried Items"
+	result.append(_container_model("run_carried", "loose_carry", label, 0, items, false))
+	return result
+
+
+static func _container_model(key: String, container_type: String, display_name: String, capacity: int, items: Array, read_only: bool) -> Dictionary:
+	var slots: Array = []
+	for item_value in items:
+		if typeof(item_value) != TYPE_DICTIONARY:
+			continue
+		var item: Dictionary = item_value
+		var selection_key := _item_selection_key(item, slots.size())
+		item["selection_key"] = selection_key
+		slots.append({
+			"slot_index": slots.size(),
+			"occupied": true,
+			"selection_key": selection_key,
+			"item": item.duplicate(true),
+			"actionable": not read_only,
+			"disabled_reason": "Packed meta-home items are read-only during this run." if read_only else str(item.get("disabled_reason", "")),
+		})
+	return {
+		"key": key,
+		"container_type": container_type,
+		"display_name": display_name,
+		"capacity": maxi(0, capacity),
+		"read_only": read_only,
+		"slots": slots,
+	}
+
+
+static func _meta_loadout_container_models(run_state: RunState, items: Array) -> Array:
+	if run_state == null:
+		return []
+	var modifiers := run_state.challenge_modifiers()
+	var rows := _dictionary_array(modifiers.get("meta_collection_containers", []))
+	if rows.is_empty():
+		return []
+	var remaining := items.duplicate(true)
+	var result: Array = []
+	for row_value in rows:
+		var row: Dictionary = row_value
+		var assigned: Array = []
+		for item_id_value in _string_array(row.get("items", [])):
+			var item_id := str(item_id_value)
+			for index in range(remaining.size()):
+				if typeof(remaining[index]) != TYPE_DICTIONARY or str((remaining[index] as Dictionary).get("id", "")) != item_id:
+					continue
+				var item := (remaining[index] as Dictionary).duplicate(true)
+				item["storage_source"] = "loadout"
+				assigned.append(item)
+				remaining.remove_at(index)
+				break
+		result.append(_container_model(
+			"run_meta:%s" % str(row.get("id", result.size())),
+			str(row.get("item_id", "bag")),
+			str(row.get("item_id", "bag")).replace("_", " ").capitalize(),
+			maxi(0, int(row.get("capacity", 0))),
+			assigned,
+			false
+		))
+	if not remaining.is_empty():
+		result.append(_container_model("run_carried", "loose_carry", "Loose Carry", 0, remaining, false))
+	return result
+
+
+static func _selected_spatial_key(items: Array, selected: Dictionary) -> String:
+	var explicit_key := str(selected.get("selection_key", "")).strip_edges()
+	if not explicit_key.is_empty():
+		for item_value in items:
+			if typeof(item_value) != TYPE_DICTIONARY:
+				continue
+			var keyed_item: Dictionary = item_value
+			if str(keyed_item.get("selection_key", "")) == explicit_key:
+				return explicit_key
+	var wanted_id := str(selected.get("id", "")).strip_edges()
+	var wanted_source := str(selected.get("source", "carried")).strip_edges()
+	if wanted_source.is_empty():
+		wanted_source = "carried"
+	for item_value in items:
+		if typeof(item_value) != TYPE_DICTIONARY:
+			continue
+		var item: Dictionary = item_value
+		if str(item.get("id", "")) == wanted_id and str(item.get("storage_source", "carried")) == wanted_source:
+			return str(item.get("selection_key", _item_selection_key(item)))
+	return ""
+
+
+static func _item_selection_key(item: Dictionary, slot_index: int = 0) -> String:
+	var source := str(item.get("storage_source", "carried")).strip_edges()
+	if source == "pawn_ticket":
+		var debt_id := str(item.get("debt_id", "")).strip_edges()
+		if not debt_id.is_empty():
+			return "pawn:ticket:%s" % debt_id
+	if source == "container" or source == "loadout":
+		var container_id := str(item.get("container_id", "")).strip_edges()
+		return "run:%s:%s:%s:%d" % [source, container_id, str(item.get("id", "")), slot_index]
+	return "run:%s:%s" % [source if not source.is_empty() else "carried", str(item.get("id", ""))]
+
+
+static func _active_container_key(containers: Array, selected_key: String) -> String:
+	for container_value in containers:
+		if typeof(container_value) != TYPE_DICTIONARY:
+			continue
+		var container: Dictionary = container_value
+		for slot_value in container.get("slots", []):
+			if typeof(slot_value) == TYPE_DICTIONARY and str((slot_value as Dictionary).get("selection_key", "")) == selected_key:
+				return str(container.get("key", ""))
+	if not containers.is_empty() and typeof(containers[0]) == TYPE_DICTIONARY:
+		return str((containers[0] as Dictionary).get("key", ""))
+	return ""
 
 
 static func _inventory_popup_item_view_list(run_state: RunState, run_action_service: RunActionService, mode: String, container_id: String) -> Array:
@@ -108,25 +285,73 @@ static func _home_container_inventory_details(run_state: RunState, run_action_se
 	var result: Array = []
 	if run_state == null or run_action_service == null:
 		return result
-	var container := _home_container_by_id(run_state, container_id)
-	var stored_items := _string_array(container.get("items", []))
-	var meta_loadout := bool(container.get("meta_loadout", false))
-	if not meta_loadout:
-		for item_id in _storable_inventory_item_ids(run_state, run_action_service):
-			var carried_detail := run_action_service.inventory_item_detail(str(item_id))
-			if carried_detail.is_empty():
-				continue
-			carried_detail["storage_source"] = "carried"
-			result.append(carried_detail)
-	for item_id in stored_items:
-		var stored_detail := run_action_service.inventory_item_detail(str(item_id))
-		if stored_detail.is_empty():
+	var containers := _dictionary_array(run_state.current_home_containers())
+	var destinations := _storage_destinations(containers)
+	for item_id in _storable_inventory_item_ids(run_state, run_action_service):
+		var carried_detail := run_action_service.inventory_item_detail(str(item_id))
+		if carried_detail.is_empty():
 			continue
-		stored_detail["storage_source"] = "loadout" if meta_loadout else "container"
-		stored_detail["sellable"] = false
-		stored_detail["active_selected"] = false
-		result.append(stored_detail)
+		carried_detail["storage_source"] = "carried"
+		carried_detail["container_full"] = _all_destinations_full(destinations)
+		carried_detail["storage_destinations"] = destinations.duplicate(true)
+		result.append(carried_detail)
+	for container_value in containers:
+		var container: Dictionary = container_value
+		var home_container_id := str(container.get("id", ""))
+		var stored_items := _string_array(container.get("items", []))
+		var meta_loadout := bool(container.get("meta_loadout", false))
+		var other_destinations := _storage_destinations(containers, home_container_id)
+		for item_index in range(stored_items.size()):
+			var item_id := str(stored_items[item_index])
+			var stored_detail := run_action_service.inventory_item_detail(item_id)
+			if stored_detail.is_empty():
+				continue
+			stored_detail["storage_source"] = "loadout" if meta_loadout else "container"
+			stored_detail["container_id"] = home_container_id
+			stored_detail["container_display_name"] = str(container.get("display_name", "Container"))
+			stored_detail["container_slot_index"] = item_index
+			stored_detail["storage_destinations"] = other_destinations.duplicate(true)
+			stored_detail["sellable"] = false
+			stored_detail["active_selected"] = false
+			stored_detail["container_read_only"] = meta_loadout
+			stored_detail["disabled_reason"] = "Packed meta-home items are read-only during this run." if meta_loadout else ""
+			result.append(stored_detail)
 	return result
+
+
+static func _storage_destinations(containers: Array, excluded_container_id: String = "") -> Array:
+	var result: Array = []
+	for container_value in containers:
+		if typeof(container_value) != TYPE_DICTIONARY:
+			continue
+		var container: Dictionary = container_value
+		var home_container_id := str(container.get("id", ""))
+		if home_container_id.is_empty() or home_container_id == excluded_container_id:
+			continue
+		var items := _string_array(container.get("items", []))
+		var capacity := maxi(0, int(container.get("capacity", 0)))
+		var meta_loadout := bool(container.get("meta_loadout", false))
+		result.append({
+			"container_id": home_container_id,
+			"display_name": str(container.get("display_name", "Container")),
+			"capacity": capacity,
+			"used": items.size(),
+			"full": capacity > 0 and items.size() >= capacity,
+			"read_only": meta_loadout,
+		})
+	return result
+
+
+static func _all_destinations_full(destinations: Array) -> bool:
+	if destinations.is_empty():
+		return true
+	for destination_value in destinations:
+		if typeof(destination_value) != TYPE_DICTIONARY:
+			continue
+		var destination: Dictionary = destination_value
+		if not bool(destination.get("read_only", false)) and not bool(destination.get("full", false)):
+			return false
+	return true
 
 
 static func _summary_text(run_state: RunState, run_action_service: RunActionService, mode: String, container_id: String) -> String:
@@ -137,12 +362,13 @@ static func _summary_text(run_state: RunState, run_action_service: RunActionServ
 	if mode == "place_container":
 		return "Select a carried container to place it as home storage."
 	if mode == "home_container":
-		var container := _home_container_by_id(run_state, container_id)
-		var stored_items := _string_array(container.get("items", []))
-		var capacity := maxi(0, int(container.get("capacity", 0)))
-		if bool(container.get("meta_loadout", false)):
-			return "%d/%d packed from the meta-home. These item effects are active for this run." % [stored_items.size(), capacity]
-		return "%d/%d stored. Stored item effects do not apply until moved back to inventory." % [stored_items.size(), capacity]
+		var total_stored := 0
+		var total_capacity := 0
+		for container_value in _dictionary_array(run_state.current_home_containers() if run_state != null else []):
+			var home_container: Dictionary = container_value
+			total_stored += _string_array(home_container.get("items", [])).size()
+			total_capacity += maxi(0, int(home_container.get("capacity", 0)))
+		return "%d/%d stored across home containers. Stored item effects do not apply until moved back to inventory." % [total_stored, total_capacity]
 	var count := 0
 	if run_action_service != null:
 		count = run_action_service.inventory_item_view_list().size()
@@ -158,8 +384,7 @@ static func _title_text(run_state: RunState, mode: String, container_id: String)
 		"place_container":
 			return "Place Storage"
 		"home_container":
-			var container := _home_container_by_id(run_state, container_id)
-			return str(container.get("display_name", "Storage"))
+			return "Home Storage"
 		_:
 			return "Inventory"
 
@@ -231,4 +456,14 @@ static func _string_array(value: Variant) -> Array:
 		var id := str((entry as Dictionary).get("id", "")) if typeof(entry) == TYPE_DICTIONARY else str(entry)
 		if not id.is_empty():
 			result.append(id)
+	return result
+
+
+static func _dictionary_array(value: Variant) -> Array:
+	var result: Array = []
+	if typeof(value) != TYPE_ARRAY:
+		return result
+	for entry in value as Array:
+		if typeof(entry) == TYPE_DICTIONARY:
+			result.append((entry as Dictionary).duplicate(true))
 	return result

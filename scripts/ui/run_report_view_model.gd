@@ -10,6 +10,9 @@ const PLAYERS_CARD_DESTROYED_FLAG := "_meta_players_card_destroyed"
 const GRAND_CASINO_CHIPS_REWARD_FLAG := "_meta_grand_casino_chips_reward"
 const PRESTIGE_RESULT_FLAG := "_meta_prestige_result"
 const SAL_STOCK_SUMMARY_FLAG := "_sal_resale_stock_summary"
+const TAKE_HOME_ITEM_EXTRACTED_FLAG := "victory_container_extracted"
+const TAKE_HOME_ITEM_ID_FLAG := "victory_container_extracted_item_id"
+const TAKE_HOME_ITEM_LINE_FLAG := "victory_container_extracted_line"
 
 
 static func build(run_data: Dictionary, catalogs: Dictionary = {}) -> Dictionary:
@@ -38,7 +41,8 @@ static func build(run_data: Dictionary, catalogs: Dictionary = {}) -> Dictionary
 			"show_winner_bonus": bool(outcome.get("won", false)),
 			"final_score": int(score.get("score", 0)),
 		},
-		"items": build_item_fates(_string_array(run_data.get("inventory", [])), _dict_array(run_data.get("debt", [])), story_log, _copy_dict(catalogs.get("items", {}))),
+		"items": build_item_fates(_inventory_item_ids(run_data.get("inventory", [])), _dict_array(run_data.get("debt", [])), story_log, _copy_dict(catalogs.get("items", {}))),
+		"take_home_item_reward": build_take_home_item_reward(run_data, _copy_dict(catalogs.get("items", {}))),
 		"bag_reward": build_bag_reward(run_data),
 		"meta_reward": build_meta_reward(run_data),
 		"debts": build_debt_ledger(_dict_array(run_data.get("debt", [])), story_log),
@@ -123,6 +127,51 @@ static func build_bag_reward(run_data: Dictionary) -> Dictionary:
 		"choices": choices,
 		"summary_lines": summary_lines,
 		"selected_marker_id": str(flags.get(BAG_SELECTED_FLAG, "")),
+	}
+
+
+static func build_take_home_item_reward(run_data: Dictionary, item_catalog: Dictionary = {}) -> Dictionary:
+	var flags := _copy_dict(run_data.get("narrative_flags", {}))
+	var won := str(run_data.get("run_status", "")) == RunState.RUN_STATUS_ENDED and bool(flags.get("demo_victory", false))
+	var challenge := _copy_dict(run_data.get("challenge_config", {}))
+	var modifiers := _copy_dict(challenge.get("modifiers", {}))
+	var meta_enabled := str(challenge.get("mode", "standard")).strip_edges().to_lower() == "standard" \
+		and str(challenge.get("completion_flag", "")).strip_edges().is_empty() \
+		and bool(modifiers.get("meta_collection_enabled", false))
+	var choices: Array = []
+	var seen := {}
+	for item_id_value in _inventory_item_ids(run_data.get("inventory", [])):
+		var item_id := str(item_id_value).strip_edges()
+		if item_id.is_empty() or seen.has(item_id):
+			continue
+		seen[item_id] = true
+		var definition := _copy_dict(item_catalog.get(item_id, {}))
+		if definition.is_empty():
+			continue
+		var effect := _copy_dict(definition.get("effect", {}))
+		var capacity := maxi(0, int(definition.get("container_capacity", effect.get("container_capacity", 0))))
+		if str(definition.get("class", "")).strip_edges().to_lower() != "container" and capacity <= 0:
+			continue
+		if capacity <= 0:
+			continue
+		choices.append({
+			"id": item_id,
+			"display_name": str(definition.get("display_name", item_id.replace("_", " ").capitalize())),
+			"capacity": capacity,
+			"icon_path": str(definition.get("asset_path", "")),
+		})
+	choices.sort_custom(func(a: Dictionary, b: Dictionary) -> bool:
+		var capacity_a := int(a.get("capacity", 0))
+		var capacity_b := int(b.get("capacity", 0))
+		return capacity_a > capacity_b if capacity_a != capacity_b else str(a.get("display_name", "")) < str(b.get("display_name", ""))
+	)
+	var extracted := bool(flags.get(TAKE_HOME_ITEM_EXTRACTED_FLAG, false))
+	return {
+		"visible": won and meta_enabled and (not choices.is_empty() or extracted),
+		"pending": won and meta_enabled and not extracted and not choices.is_empty(),
+		"choices": choices,
+		"selected_item_id": str(flags.get(TAKE_HOME_ITEM_ID_FLAG, "")),
+		"summary_line": str(flags.get(TAKE_HOME_ITEM_LINE_FLAG, "")),
 	}
 
 
@@ -318,15 +367,11 @@ static func build_timeline(heat_entries: Array, world_map: Dictionary, final_act
 	var nodes_by_id := {}
 	for node_value in _dict_array(world_map.get("nodes", [])):
 		nodes_by_id[str(node_value.get("id", ""))] = node_value
-	var path := _string_array(world_map.get("visited_path", []))
-	if path.is_empty():
-		var current_node_id := str(world_map.get("current_node_id", "")).strip_edges()
-		if not current_node_id.is_empty():
-			path.append(current_node_id)
 	var travel_entries: Array = []
 	for entry_value in _dict_array(story_log):
 		if str(entry_value.get("type", "")) == "travel":
 			travel_entries.append(entry_value)
+	var path := _resolved_report_path(world_map, transitions, travel_entries)
 	var keyframes: Array = []
 	var segments: Array = []
 	var arrival_clock := start_clock
@@ -349,7 +394,7 @@ static func build_timeline(heat_entries: Array, world_map: Dictionary, final_act
 		var next_node_id := str(path[index + 1])
 		var next_node := _copy_dict(nodes_by_id.get(next_node_id, {}))
 		var next_label := str(next_node.get("display_name", next_node.get("label", next_node_id.replace("_", " ").capitalize())))
-		var travel_entry := _copy_dict(travel_entries[index]) if index < travel_entries.size() else {}
+		var travel_entry := _travel_entry_for_report_leg(travel_entries, node_id, next_node_id, index)
 		var travel_minutes := maxi(1, int(travel_entry.get("travel_minutes", 1)))
 		var next_arrival_clock := int(travel_entry.get("arrived_game_clock_minutes", -1))
 		if next_arrival_clock < 0 and index + 1 < transitions.size():
@@ -385,6 +430,76 @@ static func build_timeline(heat_entries: Array, world_map: Dictionary, final_act
 	return {"max_action_index": max_action, "start_game_clock_minutes": start_clock, "end_game_clock_minutes": end_clock, "duration_minutes": end_clock - start_clock, "heat_samples": normalized_samples, "environment_bands": bands, "travel_keyframes": keyframes, "replay_segments": segments, "visited_node_ids": path, "precomputed": true}
 
 
+static func _resolved_report_path(world_map: Dictionary, transitions: Array, travel_entries: Array) -> Array:
+	var path := _string_array(world_map.get("visited_path", []))
+	var recorded_path: Array = []
+	for transition_value in transitions:
+		if typeof(transition_value) != TYPE_DICTIONARY:
+			continue
+		_append_distinct_report_node(recorded_path, str((transition_value as Dictionary).get("world_node_id", "")))
+	var traveled_path: Array = []
+	for entry_value in travel_entries:
+		if typeof(entry_value) != TYPE_DICTIONARY:
+			continue
+		var entry: Dictionary = entry_value
+		_append_distinct_report_node(traveled_path, str(entry.get("from_world_node_id", "")))
+		_append_distinct_report_node(traveled_path, str(entry.get("to_world_node_id", "")))
+	_merge_missing_report_nodes(recorded_path, traveled_path)
+	if path.is_empty():
+		path = recorded_path.duplicate()
+	else:
+		_merge_missing_report_nodes(path, recorded_path)
+	var current_node_id := str(world_map.get("current_node_id", "")).strip_edges()
+	if not current_node_id.is_empty() and not path.has(current_node_id):
+		path.append(current_node_id)
+	return path
+
+
+static func _append_distinct_report_node(path: Array, node_id_value: String) -> void:
+	var node_id := node_id_value.strip_edges()
+	if node_id.is_empty() or (not path.is_empty() and str(path[-1]) == node_id):
+		return
+	path.append(node_id)
+
+
+static func _merge_missing_report_nodes(path: Array, evidence_path: Array) -> void:
+	for evidence_index in range(evidence_path.size()):
+		var node_id := str(evidence_path[evidence_index]).strip_edges()
+		if node_id.is_empty() or path.has(node_id):
+			continue
+		var insertion_index := path.size()
+		var found_anchor := false
+		for previous_index in range(evidence_index - 1, -1, -1):
+			var previous_node_id := str(evidence_path[previous_index])
+			var path_index := path.rfind(previous_node_id)
+			if path_index >= 0:
+				insertion_index = path_index + 1
+				found_anchor = true
+				break
+		if not found_anchor:
+			for next_index in range(evidence_index + 1, evidence_path.size()):
+				var next_node_id := str(evidence_path[next_index])
+				var path_index := path.find(next_node_id)
+				if path_index >= 0:
+					insertion_index = path_index
+					break
+		path.insert(insertion_index, node_id)
+
+
+static func _travel_entry_for_report_leg(travel_entries: Array, from_node_id: String, to_node_id: String, preferred_index: int) -> Dictionary:
+	for index in range(maxi(0, preferred_index), travel_entries.size()):
+		var candidate: Dictionary = travel_entries[index]
+		if str(candidate.get("from_world_node_id", "")) == from_node_id and str(candidate.get("to_world_node_id", "")) == to_node_id:
+			return candidate.duplicate(false)
+	for index in range(0, mini(maxi(0, preferred_index), travel_entries.size())):
+		var candidate: Dictionary = travel_entries[index]
+		if str(candidate.get("from_world_node_id", "")) == from_node_id and str(candidate.get("to_world_node_id", "")) == to_node_id:
+			return candidate.duplicate(false)
+	if preferred_index >= 0 and preferred_index < travel_entries.size():
+		return (travel_entries[preferred_index] as Dictionary).duplicate(false)
+	return {}
+
+
 static func _append_replay_segment(segments: Array, kind: String, from_node_id: String, to_node_id: String, from_label: String, to_label: String, start_clock: int, end_clock: int, run_start_clock: int, duration_minutes: int, leg_index: int) -> void:
 	var safe_start := maxi(run_start_clock, start_clock)
 	var safe_end := maxi(safe_start, end_clock)
@@ -413,14 +528,26 @@ static func build_report_map_snapshot(world_map: Dictionary, timeline: Dictionar
 	var report_map := world_map.duplicate(true)
 	var path := _string_array(timeline.get("visited_node_ids", world_map.get("visited_path", [])))
 	var visited_lookup := {}
+	var visited_focus_ids: Array = []
 	for node_id in path:
-		visited_lookup[str(node_id)] = true
-	var nodes: Array = []
+		var visited_node_id := str(node_id)
+		visited_lookup[visited_node_id] = true
+		if not visited_focus_ids.has(visited_node_id):
+			visited_focus_ids.append(visited_node_id)
+	var source_nodes_by_id: Dictionary = {}
 	for node_value in _dict_array(world_map.get("nodes", [])):
-		var node_id := str(node_value.get("id", ""))
-		if not visited_lookup.has(node_id):
+		var node_id := str(node_value.get("id", "")).strip_edges()
+		if not node_id.is_empty():
+			source_nodes_by_id[node_id] = node_value.duplicate(true)
+	var timeline_positions_by_id := _timeline_positions_by_id(timeline)
+	var nodes: Array = []
+	for node_id_value in path:
+		var node_id := str(node_id_value).strip_edges()
+		if node_id.is_empty() or not visited_lookup.has(node_id):
 			continue
-		var node: Dictionary = node_value.duplicate(true)
+		var node: Dictionary = _copy_dict(source_nodes_by_id.get(node_id, {}))
+		if node.is_empty():
+			node = _synthetic_report_node(node_id, path.find(node_id), path.size(), _copy_dict(timeline_positions_by_id.get(node_id, {})))
 		node["state"] = "visited"
 		node["travel_target"] = false
 		node["travel_enabled"] = false
@@ -429,15 +556,97 @@ static func build_report_map_snapshot(world_map: Dictionary, timeline: Dictionar
 	for edge_value in _dict_array(world_map.get("edges", [])):
 		if visited_lookup.has(str(edge_value.get("a", ""))) and visited_lookup.has(str(edge_value.get("b", ""))):
 			edges.append(edge_value.duplicate(true))
+	var edge_lookup: Dictionary = {}
+	for edge_value in edges:
+		if typeof(edge_value) != TYPE_DICTIONARY:
+			continue
+		var edge: Dictionary = edge_value
+		edge_lookup[_edge_id(str(edge.get("a", "")), str(edge.get("b", "")))] = true
+	var route_geometry: Array = []
+	for index in range(path.size() - 1):
+		var a := str(path[index])
+		var b := str(path[index + 1])
+		var edge_id := _edge_id(a, b)
+		if not edge_id.is_empty() and not edge_lookup.has(edge_id):
+			edges.append({"id": edge_id, "a": a, "b": b, "distance": "near", "report_path": true})
+			edge_lookup[edge_id] = true
+		_append_report_route_geometry(route_geometry, nodes, a, b)
 	report_map["nodes"] = nodes
 	report_map["edges"] = edges
 	report_map["visited_path"] = path
-	report_map["map_focus_node_ids"] = visited_lookup.keys()
+	report_map["map_focus_node_ids"] = visited_focus_ids
 	report_map["travel_paths"] = []
+	report_map["route_path_geometry"] = route_geometry
 	report_map["selected_node_id"] = ""
 	if not path.is_empty():
 		report_map["current_node_id"] = str(path[-1])
 	return report_map
+
+
+static func _timeline_positions_by_id(timeline: Dictionary) -> Dictionary:
+	var result: Dictionary = {}
+	for frame_value in _dict_array(timeline.get("travel_keyframes", [])):
+		var node_id := str(frame_value.get("node_id", "")).strip_edges()
+		if node_id.is_empty():
+			continue
+		var position: Dictionary = frame_value.get("position", {}) if typeof(frame_value.get("position", {})) == TYPE_DICTIONARY else {}
+		result[node_id] = position.duplicate(true)
+	return result
+
+
+static func _synthetic_report_node(node_id: String, index: int, count: int, position: Dictionary = {}) -> Dictionary:
+	var safe_count := maxi(1, count)
+	var fallback_x := 0.14 + 0.72 * (float(maxi(0, index)) / float(maxi(1, safe_count - 1)))
+	var fallback_y := 0.52 + sin(float(maxi(0, index)) * 1.7) * 0.18
+	return {
+		"id": node_id,
+		"archetype_id": node_id,
+		"display_name": node_id.replace("_", " ").capitalize(),
+		"icon_path": "res://assets/art/map_icons/motel_room.png",
+		"position": {
+			"x": clampf(float(position.get("x", fallback_x)), 0.06, 0.94),
+			"y": clampf(float(position.get("y", fallback_y)), 0.08, 0.92),
+		},
+		"state": "visited",
+	}
+
+
+static func _append_report_route_geometry(result: Array, nodes: Array, from_id: String, to_id: String) -> void:
+	var from_node := _node_from_array(nodes, from_id)
+	var to_node := _node_from_array(nodes, to_id)
+	if from_node.is_empty() or to_node.is_empty():
+		return
+	var from_position: Dictionary = from_node.get("position", {}) if typeof(from_node.get("position", {})) == TYPE_DICTIONARY else {}
+	var to_position: Dictionary = to_node.get("position", {}) if typeof(to_node.get("position", {})) == TYPE_DICTIONARY else {}
+	result.append({
+		"target_id": to_id,
+		"path": [from_id, to_id],
+		"enabled": true,
+		"points": [
+			{"id": from_id, "x": clampf(float(from_position.get("x", 0.5)), 0.0, 1.0), "y": clampf(float(from_position.get("y", 0.5)), 0.0, 1.0)},
+			{"id": to_id, "x": clampf(float(to_position.get("x", 0.5)), 0.0, 1.0), "y": clampf(float(to_position.get("y", 0.5)), 0.0, 1.0)},
+		],
+	})
+
+
+static func _node_from_array(nodes: Array, node_id: String) -> Dictionary:
+	for node_value in nodes:
+		if typeof(node_value) != TYPE_DICTIONARY:
+			continue
+		var node: Dictionary = node_value
+		if str(node.get("id", "")) == node_id:
+			return node
+	return {}
+
+
+static func _edge_id(a: String, b: String) -> String:
+	var left := a.strip_edges()
+	var right := b.strip_edges()
+	if left.is_empty() or right.is_empty() or left == right:
+		return ""
+	if left < right:
+		return "%s--%s" % [left, right]
+	return "%s--%s" % [right, left]
 
 
 static func cursor_for_action(timeline: Dictionary, action_index: int) -> Dictionary:
@@ -584,6 +793,17 @@ static func _string_array(value: Variant) -> Array:
 	if typeof(value) == TYPE_ARRAY:
 		for entry in value as Array:
 			result.append(str(entry))
+	return result
+
+
+static func _inventory_item_ids(value: Variant) -> Array:
+	var result: Array = []
+	if typeof(value) != TYPE_ARRAY:
+		return result
+	for entry in value as Array:
+		var item_id := str((entry as Dictionary).get("id", "")).strip_edges() if typeof(entry) == TYPE_DICTIONARY else str(entry).strip_edges()
+		if not item_id.is_empty():
+			result.append(item_id)
 	return result
 
 

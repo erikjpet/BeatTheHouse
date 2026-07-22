@@ -135,15 +135,18 @@ func current_view_snapshot() -> Dictionary:
 	if background_texture != null:
 		var texture_size := background_texture.get_size()
 		var source_size := Vector2(bounds.size.x * texture_size.x, bounds.size.y * texture_size.y)
-		var destination_rect := _aspect_fitted_destination_rect(Rect2(Vector2.ZERO, size), source_size)
+		var destination_rect := _background_destination_rect(Rect2(Vector2.ZERO, size), bounds)
 		view["background_texture_size"] = {"x": texture_size.x, "y": texture_size.y}
 		view["background_source_size"] = {"x": source_size.x, "y": source_size.y}
 		view["background_source_aspect"] = source_size.x / maxf(1.0, source_size.y)
 		view["background_destination_size"] = {"x": destination_rect.size.x, "y": destination_rect.size.y}
+		view["background_destination_rect"] = {"x": destination_rect.position.x, "y": destination_rect.position.y, "width": destination_rect.size.x, "height": destination_rect.size.y}
+		view["node_transform_rect"] = {"x": destination_rect.position.x, "y": destination_rect.position.y, "width": destination_rect.size.x, "height": destination_rect.size.y}
 		view["background_destination_aspect"] = destination_rect.size.x / maxf(1.0, destination_rect.size.y)
 		view["background_fills_canvas"] = destination_rect.size.distance_to(size) <= 0.5
 	view["selected_focus_zoom_active"] = _selected_focus_zoom_active()
 	view["selected_focus_zoom_animating"] = not _map_bounds_equal(map_view_bounds_cache, target_map_view_bounds_cache)
+	view["visible_route_segments"] = _visible_route_segment_snapshots()
 	view["run_report_replay"] = _replay_marker_state()
 	return view
 
@@ -175,6 +178,7 @@ func _draw() -> void:
 	var rect := Rect2(Vector2.ZERO, size)
 	_draw_background(rect)
 	_draw_edges()
+	_draw_route_path_geometry()
 	_draw_path()
 	_draw_nodes()
 	_draw_replay_marker()
@@ -191,9 +195,18 @@ func _draw_background(rect: Rect2) -> void:
 			Vector2(bounds.position.x * texture_size.x, bounds.position.y * texture_size.y),
 			Vector2(bounds.size.x * texture_size.x, bounds.size.y * texture_size.y)
 		)
-		var destination_rect := _aspect_fitted_destination_rect(rect, source_rect.size)
+		var destination_rect := _background_destination_rect(rect, bounds)
 		draw_texture_rect_region(texture, destination_rect, source_rect, Color(1.0, 1.0, 1.0, 0.92))
 	draw_rect(rect, Color("#03040a", 0.30))
+
+
+func _background_destination_rect(destination_rect: Rect2, bounds: Rect2) -> Rect2:
+	var texture := _background_texture()
+	if texture == null:
+		return destination_rect
+	var texture_size := texture.get_size()
+	var source_size := Vector2(bounds.size.x * texture_size.x, bounds.size.y * texture_size.y)
+	return _aspect_fitted_destination_rect(destination_rect, source_size)
 
 
 func _aspect_fitted_destination_rect(destination_rect: Rect2, source_size: Vector2) -> Rect2:
@@ -219,7 +232,8 @@ func _draw_edges() -> void:
 		var b := _node_position(nodes, str(edge.get("b", "")))
 		if a.x < 0.0 or b.x < 0.0:
 			continue
-		if not _segment_in_view(a, b):
+		var clipped := _clipped_segment_to_view(a, b)
+		if clipped.is_empty():
 			continue
 		var distance := str(edge.get("distance", "near"))
 		var edge_id := str(edge.get("id", _edge_id(str(edge.get("a", "")), str(edge.get("b", "")))))
@@ -233,7 +247,26 @@ func _draw_edges() -> void:
 		if enabled_travel_edge_ids_cache.has(edge_id):
 			color = Color("#5df2a2", 0.86)
 			width = 3.0
-		draw_line(a, b, color, width)
+		draw_line(clipped[0] as Vector2, clipped[1] as Vector2, color, width)
+
+
+func _draw_route_path_geometry() -> void:
+	for geometry_value in _array_view(snapshot.get("route_path_geometry", [])):
+		if typeof(geometry_value) != TYPE_DICTIONARY:
+			continue
+		var geometry: Dictionary = geometry_value
+		var points := _array_view(geometry.get("points", []))
+		if points.size() < 2:
+			continue
+		var color := Color("#5df2a2", 0.86) if bool(geometry.get("enabled", false)) else Color("#ffd36a", 0.54)
+		var width := 3.2 if bool(geometry.get("enabled", false)) else 2.3
+		for index in range(points.size() - 1):
+			var a := _geometry_point_position(points[index])
+			var b := _geometry_point_position(points[index + 1])
+			var clipped := _clipped_segment_to_view(a, b)
+			if clipped.is_empty():
+				continue
+			draw_line(clipped[0] as Vector2, clipped[1] as Vector2, color, width)
 
 
 func _draw_path() -> void:
@@ -244,10 +277,11 @@ func _draw_path() -> void:
 		var b := _node_position(nodes, str(path[index + 1]))
 		if a.x < 0.0 or b.x < 0.0:
 			continue
-		if not _segment_in_view(a, b):
+		var clipped := _clipped_segment_to_view(a, b)
+		if clipped.is_empty():
 			continue
 		if replay_keyframes.is_empty() or replay_reduce_motion:
-			draw_line(a, b, Color("#ffd36a", 0.46), 4.0)
+			draw_line(clipped[0] as Vector2, clipped[1] as Vector2, Color("#ffd36a", 0.46), 4.0)
 			continue
 		var start_progress := float((replay_keyframes[index] as Dictionary).get("progress", 0.0)) if index < replay_keyframes.size() else float(index) / float(maxi(1, path.size() - 1))
 		var end_progress := float((replay_keyframes[index + 1] as Dictionary).get("progress", 1.0)) if index + 1 < replay_keyframes.size() else float(index + 1) / float(maxi(1, path.size() - 1))
@@ -258,7 +292,9 @@ func _draw_path() -> void:
 		if replay_progress <= start_progress:
 			continue
 		var leg_progress := clampf((replay_progress - start_progress) / maxf(0.0001, end_progress - start_progress), 0.0, 1.0)
-		draw_line(a, a.lerp(b, leg_progress), Color("#ffd36a", 0.78), 4.0)
+		var replay_clipped := _clipped_segment_to_view(a, a.lerp(b, leg_progress))
+		if not replay_clipped.is_empty():
+			draw_line(replay_clipped[0] as Vector2, replay_clipped[1] as Vector2, Color("#ffd36a", 0.78), 4.0)
 
 
 func _draw_replay_marker() -> void:
@@ -430,14 +466,15 @@ func _ensure_layout_cache() -> void:
 func _rebuild_layout_cache() -> void:
 	var next_basis_signature := _map_view_basis_signature()
 	var next_selected_node_id := str(snapshot.get("selected_node_id", "")).strip_edges()
-	if next_selected_node_id.is_empty():
-		map_view_selected_node_id_cache = ""
-		map_view_focus_node_ids_cache = []
-	elif next_basis_signature != map_view_basis_signature or map_view_selected_node_id_cache != next_selected_node_id:
+	var next_focus_node_ids := _string_array(snapshot.get("map_focus_node_ids", []))
+	var next_layout_size := _current_or_default_layout_size()
+	var layout_size_changed := stable_layout_size.x <= 0.0 or stable_layout_size.y <= 0.0 or absf(stable_layout_size.x - next_layout_size.x) > 2.0 or absf(stable_layout_size.y - next_layout_size.y) > 2.0
+	if next_basis_signature != map_view_basis_signature or map_view_selected_node_id_cache != next_selected_node_id or map_view_focus_node_ids_cache != next_focus_node_ids or layout_size_changed:
 		map_view_basis_signature = next_basis_signature
-		map_view_focus_node_ids_cache = _string_array(snapshot.get("map_focus_node_ids", []))
+		map_view_focus_node_ids_cache = next_focus_node_ids
 		map_view_selected_node_id_cache = next_selected_node_id
-		stable_layout_size = _current_or_default_layout_size()
+		if layout_size_changed:
+			stable_layout_size = next_layout_size
 	var next_bounds_signature := _map_view_bounds_signature(next_basis_signature)
 	if next_bounds_signature != map_view_bounds_signature:
 		var first_bounds := map_view_bounds_signature.is_empty()
@@ -473,15 +510,13 @@ func _normalized_position_from_variant(value: Variant) -> Vector2:
 
 
 func _normalized_position(position: Dictionary) -> Vector2:
-	var inset := Vector2(32.0, 28.0)
-	var layout_size := _stable_layout_size()
-	var drawable := Vector2(maxf(1.0, layout_size.x - inset.x * 2.0), maxf(1.0, layout_size.y - inset.y * 2.0))
 	var bounds := map_view_bounds_cache
+	var destination_rect := _background_destination_rect(Rect2(Vector2.ZERO, _current_or_default_layout_size()), bounds)
 	var x := clampf(float(position.get("x", 0.5)), 0.0, 1.0)
 	var y := clampf(float(position.get("y", 0.5)), 0.0, 1.0)
 	var local_x := (x - bounds.position.x) / maxf(0.001, bounds.size.x)
 	var local_y := (y - bounds.position.y) / maxf(0.001, bounds.size.y)
-	return inset + Vector2(local_x, local_y) * drawable
+	return destination_rect.position + Vector2(local_x, local_y) * destination_rect.size
 
 
 func _compute_map_view_bounds() -> Rect2:
@@ -653,19 +688,81 @@ func _sorted_string_keys(values: Dictionary) -> Array[String]:
 
 
 func _point_in_view(point: Vector2, margin: float = 0.0) -> bool:
-	var layout_size := _stable_layout_size()
+	var layout_size := _current_or_default_layout_size()
 	return point.x >= -margin and point.y >= -margin and point.x <= layout_size.x + margin and point.y <= layout_size.y + margin
 
 
 func _segment_in_view(a: Vector2, b: Vector2) -> bool:
-	if _point_in_view(a) or _point_in_view(b):
-		return true
-	var min_x := minf(a.x, b.x)
-	var max_x := maxf(a.x, b.x)
-	var min_y := minf(a.y, b.y)
-	var max_y := maxf(a.y, b.y)
-	var layout_size := _stable_layout_size()
-	return max_x >= 0.0 and min_x <= layout_size.x and max_y >= 0.0 and min_y <= layout_size.y
+	return not _clipped_segment_to_view(a, b).is_empty()
+
+
+func _clipped_segment_to_view(a: Vector2, b: Vector2, margin: float = 0.0) -> Array:
+	var layout_size := _current_or_default_layout_size()
+	var min_x := -margin
+	var min_y := -margin
+	var max_x := layout_size.x + margin
+	var max_y := layout_size.y + margin
+	var delta := b - a
+	var t0 := 0.0
+	var t1 := 1.0
+	var tests := [
+		[-delta.x, a.x - min_x],
+		[delta.x, max_x - a.x],
+		[-delta.y, a.y - min_y],
+		[delta.y, max_y - a.y],
+	]
+	for test_value in tests:
+		var p := float((test_value as Array)[0])
+		var q := float((test_value as Array)[1])
+		if is_zero_approx(p):
+			if q < 0.0:
+				return []
+			continue
+		var r := q / p
+		if p < 0.0:
+			if r > t1:
+				return []
+			t0 = maxf(t0, r)
+		else:
+			if r < t0:
+				return []
+			t1 = minf(t1, r)
+	if t0 > t1:
+		return []
+	return [a + delta * t0, a + delta * t1]
+
+
+func _geometry_point_position(value: Variant) -> Vector2:
+	if typeof(value) != TYPE_DICTIONARY:
+		return Vector2(-1.0, -1.0)
+	var point: Dictionary = value
+	return _normalized_position({
+		"x": clampf(float(point.get("x", 0.5)), 0.0, 1.0),
+		"y": clampf(float(point.get("y", 0.5)), 0.0, 1.0),
+	})
+
+
+func _visible_route_segment_snapshots() -> Array:
+	_ensure_layout_cache()
+	var result: Array = []
+	for geometry_value in _array_view(snapshot.get("route_path_geometry", [])):
+		if typeof(geometry_value) != TYPE_DICTIONARY:
+			continue
+		var geometry: Dictionary = geometry_value
+		var points := _array_view(geometry.get("points", []))
+		for index in range(points.size() - 1):
+			var a := _geometry_point_position(points[index])
+			var b := _geometry_point_position(points[index + 1])
+			var clipped := _clipped_segment_to_view(a, b)
+			if clipped.is_empty():
+				continue
+			result.append({
+				"target_id": str(geometry.get("target_id", "")),
+				"enabled": bool(geometry.get("enabled", false)),
+				"from": {"x": (clipped[0] as Vector2).x, "y": (clipped[0] as Vector2).y},
+				"to": {"x": (clipped[1] as Vector2).x, "y": (clipped[1] as Vector2).y},
+			})
+	return result
 
 
 func _travel_edge_ids(enabled_only: bool) -> Array:

@@ -143,6 +143,16 @@ func apply_surface_state_patch(patch: Dictionary) -> void:
 	for key in patch.keys():
 		view_data[key] = patch[key]
 	state = view_data
+	if patch.has("reduce_motion"):
+		reduce_motion = bool(state.get("reduce_motion", false))
+	if patch.has("drunk_time_scale"):
+		drunk_time_scale = clampf(float(state.get("drunk_time_scale", 1.0)), DRUNK_TIME_SCALE_MIN, 1.0)
+	if patch.has("drunk_effect_mode"):
+		drunk_effect_mode = _normalized_drunk_effect_mode(str(state.get("drunk_effect_mode", drunk_effect_mode)))
+	if patch.has("drunk_level") or patch.has("drunk_effect_mode") or patch.has("reduce_motion"):
+		_update_drunk_distortion_overlay()
+	if patch.has("surface_animation_channels"):
+		_update_surface_animation_channels()
 	queue_redraw()
 
 
@@ -194,6 +204,10 @@ func current_view_snapshot() -> Dictionary:
 	}
 
 
+func realtime_surface_state() -> Dictionary:
+	return state
+
+
 func surface_runtime_status() -> Dictionary:
 	perf_runtime_status_calls += 1
 	return {
@@ -221,6 +235,14 @@ func surface_runtime_status() -> Dictionary:
 		"surface_animation_redraw_count": surface_animation_redraw_count,
 		"surface_continuous_redraw_active": _needs_continuous_redraw(),
 		"surface_animation_liveness_active": surface_animation_liveness_active(),
+		"surface_animation_handoff_active": _surface_animation_handoff_active(),
+	}
+
+
+func surface_realtime_ui_status() -> Dictionary:
+	perf_runtime_status_calls += 1
+	return {
+		"surface_animations": _surface_animation_status_snapshot(),
 		"surface_animation_handoff_active": _surface_animation_handoff_active(),
 	}
 

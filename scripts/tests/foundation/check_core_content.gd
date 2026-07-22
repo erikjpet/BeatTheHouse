@@ -1197,7 +1197,7 @@ func _check_high_risk_table_limit_overrides(library: ContentLibrary, failures: A
 		"small_underground_casino": {"blackjack": 60},
 		"delta_queen": {"blackjack": 80, "roulette": 100},
 		"kitty_cat_lounge": {"roulette": 90},
-		"grand_casino": {"blackjack": 150, "roulette": 150},
+		"grand_casino": {"roulette": 150},
 	}
 	var blackjack: GameModule = _load_surface_contract_game(library, "blackjack", failures)
 	var roulette: GameModule = _load_surface_contract_game(library, "roulette", failures)
@@ -1240,6 +1240,21 @@ func _check_high_risk_table_limit_overrides(library: ContentLibrary, failures: A
 				failures.append("%s roulette high-limit table should expose a $50 chip." % str(venue_id))
 			if int(venue_expected.get("roulette", 0)) >= 150 and not chips.has(100):
 				failures.append("%s roulette top-limit table should expose a $100 chip." % str(venue_id))
+	var grand_main := _archetype_by_id(library, "grand_casino")
+	var grand_high := _archetype_by_id(library, "grand_casino_high_limit")
+	var main_profile: Dictionary = grand_main.get("economic_profile", {}) if typeof(grand_main.get("economic_profile", {})) == TYPE_DICTIONARY else {}
+	var main_overrides: Dictionary = main_profile.get("game_stake_ceiling_overrides", {}) if typeof(main_profile.get("game_stake_ceiling_overrides", {})) == TYPE_DICTIONARY else {}
+	var high_profile: Dictionary = grand_high.get("economic_profile", {}) if typeof(grand_high.get("economic_profile", {})) == TYPE_DICTIONARY else {}
+	if int(main_profile.get("stake_floor", 0)) != 5 or int(main_profile.get("stake_ceiling", 0)) != 35 or main_overrides.has("blackjack"):
+		failures.append("Grand Casino Main Floor blackjack should use the public $5-$35 limits without a high-limit override.")
+	if GameModule.stake_ceiling_for_game({"economic_profile": main_profile}, "blackjack", run_state.bankroll) != 35:
+		failures.append("Grand Casino Main Floor blackjack did not resolve its $35 public table ceiling.")
+	if blackjack != null:
+		var main_blackjack_actions := blackjack.actions(run_state, {"economic_profile": main_profile})
+		if int(main_blackjack_actions.get("base_stake_ceiling", 0)) != 35:
+			failures.append("Grand Casino Main Floor blackjack action view did not expose its $35 public table ceiling.")
+	if GameModule.stake_ceiling_for_game({"economic_profile": high_profile}, "blackjack", run_state.bankroll) != 150:
+		failures.append("Grand Casino High-Limit Room blackjack did not preserve its $150 table ceiling.")
 
 
 func _check_environment_open_hours(library: ContentLibrary, failures: Array) -> void:

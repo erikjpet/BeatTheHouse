@@ -47,7 +47,7 @@ func gameplay_model() -> String:
 func enter(run_state: RunState, environment: Dictionary) -> Dictionary:
 	_ensure_machine_state(run_state, environment, run_state.create_rng("slot_enter") if run_state != null else null)
 	var result: Dictionary = super.enter(run_state, environment)
-	var machine: Dictionary = StateScript.read_machine(environment, get_id())
+	var machine: Dictionary = _read_machine(environment)
 	result["message"] = "%s %s machine waits." % [
 		str(machine.get("type_id", "pinball")).capitalize(),
 		str(machine.get("format_id", "classic_3_reel")).replace("_", " "),
@@ -57,7 +57,7 @@ func enter(run_state: RunState, environment: Dictionary) -> Dictionary:
 
 func actions(run_state: RunState, environment: Dictionary) -> Dictionary:
 	_ensure_machine_state(run_state, environment, run_state.create_rng("slot_actions") if run_state != null else null)
-	var machine: Dictionary = StateScript.read_machine(environment, get_id())
+	var machine: Dictionary = _read_machine(environment)
 	var selected: Dictionary = StateScript.selected_bet(machine)
 	var ceiling := run_state.wager_stake_ceiling(maxi(20, run_state.wager_capacity_for_game(get_id(), environment))) if run_state != null else 20
 	return {
@@ -82,7 +82,7 @@ func legal_actions(_run_state: RunState, _environment: Dictionary) -> Array:
 
 func cheat_actions(run_state: RunState, environment: Dictionary) -> Array:
 	var actions: Array = super.cheat_actions(run_state, environment)
-	var machine: Dictionary = StateScript.read_machine(environment, get_id())
+	var machine: Dictionary = _read_machine(environment)
 	var nudge_ready := not _slot_copy_dict(machine.get("last_nudge_offer", {})).is_empty()
 	for i in range(actions.size()):
 		if typeof(actions[i]) != TYPE_DICTIONARY:
@@ -96,6 +96,45 @@ func cheat_actions(run_state: RunState, environment: Dictionary) -> Array:
 
 func generate_environment_state(run_state: RunState, environment: Dictionary, rng: RngStream) -> Dictionary:
 	return generator.generate_machine(run_state, environment, rng, definition, get_id())
+
+
+func generate_environment_fixture_states(_run_state: RunState, environment: Dictionary, rng: RngStream, fixture_count: int) -> Dictionary:
+	if str(environment.get("archetype_id", "")) != RunState.GRAND_CASINO_ARCHETYPE_ID or fixture_count < 3:
+		return {}
+	var fixture_specs := [
+		{"format_id": "classic_3_reel", "type_id": "pinball", "math_variant_id": "steady", "cabinet_variant_id": "neon_magenta", "bonus_variant_id": "plain"},
+		{"format_id": "line_5x3", "type_id": "buffalo", "math_variant_id": "standard", "cabinet_variant_id": "cyan_gold", "bonus_variant_id": "retrigger"},
+		{"format_id": "video_feature", "type_id": "pinball", "math_variant_id": "volatile", "cabinet_variant_id": "blacklight", "bonus_variant_id": "jackpot_chase"},
+	]
+	var result: Dictionary = {}
+	for fixture_index in range(mini(fixture_count, fixture_specs.size())):
+		var key := get_id() if fixture_index == 0 else "%s:%d" % [get_id(), fixture_index + 1]
+		var spec: Dictionary = fixture_specs[fixture_index]
+		result[key] = generator.build_machine_from_ids(definition, spec, rng.fork("grand_casino_slot_fixture:%d" % fixture_index))
+	return result
+
+
+func _machine_state_key(environment: Dictionary) -> String:
+	var default_key := get_id()
+	var active_keys_value: Variant = environment.get("active_game_state_keys", {})
+	if typeof(active_keys_value) != TYPE_DICTIONARY:
+		return default_key
+	var active_key := str((active_keys_value as Dictionary).get(default_key, default_key)).strip_edges()
+	if active_key == default_key or active_key.begins_with("%s:" % default_key):
+		return active_key
+	return default_key
+
+
+func _read_machine(environment: Dictionary) -> Dictionary:
+	return StateScript.read_machine(environment, _machine_state_key(environment))
+
+
+func _peek_machine(environment: Dictionary) -> Dictionary:
+	return StateScript.peek_machine(environment, _machine_state_key(environment))
+
+
+func _write_machine(environment: Dictionary, machine: Dictionary) -> void:
+	StateScript.write_machine(environment, _machine_state_key(environment), machine)
 
 
 func active_item_command(item_id: String, run_state: RunState, environment: Dictionary, _rng: RngStream) -> Dictionary:
@@ -150,7 +189,7 @@ func resolve_with_context(action_id: String, _stake: int, run_state: RunState, e
 			bonus_machine.erase("slot_bonus_auto_next_msec")
 		else:
 			bonus_machine["slot_bonus_auto_next_msec"] = _slot_bonus_auto_next_msec(bonus_machine, _ui_state, run_state)
-		StateScript.write_machine(environment, get_id(), bonus_machine)
+		_write_machine(environment, bonus_machine)
 		return _slot_copy_dict(bonus_resolved.get("result", {}))
 	if normalized_action != "spin" and normalized_action != "nudge":
 		return _empty_slot_result(normalized_action, environment, "That slot action is not available.")
@@ -167,7 +206,7 @@ func resolve_with_context(action_id: String, _stake: int, run_state: RunState, e
 		resolved_machine.erase("slot_bonus_auto_next_msec")
 	else:
 		resolved_machine["slot_bonus_auto_next_msec"] = _slot_bonus_auto_next_msec(resolved_machine, _ui_state, run_state)
-	StateScript.write_machine(environment, get_id(), resolved_machine)
+	_write_machine(environment, resolved_machine)
 	return _slot_copy_dict(resolved.get("result", {}))
 
 
@@ -247,7 +286,7 @@ func surface_action_command(surface_action: String, index: int, confirm_requeste
 	if surface_action.begins_with(SELECT_BET_PREFIX):
 		var bet_id := surface_action.substr(SELECT_BET_PREFIX.length())
 		machine = StateScript.set_selected_bet(machine, bet_id)
-		StateScript.write_machine(environment, get_id(), machine)
+		_write_machine(environment, machine)
 		return GameModule.surface_command({
 			"handled": true,
 			"environment_changed": true,
@@ -291,7 +330,7 @@ func surface_action_command(surface_action: String, index: int, confirm_requeste
 			})
 		"slot_bet":
 			machine = StateScript.set_selected_bet_by_index(machine, index)
-			StateScript.write_machine(environment, get_id(), machine)
+			_write_machine(environment, machine)
 			return GameModule.surface_command({
 				"handled": true,
 				"environment_changed": true,
@@ -305,7 +344,7 @@ func surface_action_command(surface_action: String, index: int, confirm_requeste
 				machine["slot_autoplay_next_msec"] = _slot_autoplay_next_msec(machine, ui_state, run_state)
 			else:
 				machine["slot_autoplay_next_msec"] = 0
-			StateScript.write_machine(environment, get_id(), machine)
+			_write_machine(environment, machine)
 			return GameModule.surface_command({
 				"handled": true,
 				"environment_changed": true,
@@ -327,7 +366,7 @@ func surface_action_command(surface_action: String, index: int, confirm_requeste
 
 func surface_needs_auto_tick(ui_state: Dictionary, run_state: RunState, environment: Dictionary) -> bool:
 	# Per-frame check: peek (zero-copy, read-only) instead of deep-copying the machine.
-	var machine: Dictionary = StateScript.peek_machine(environment, get_id())
+	var machine: Dictionary = _peek_machine(environment)
 	var buffalo_bonus_action := _buffalo_bonus_auto_action(machine)
 	if not buffalo_bonus_action.is_empty():
 		var bonus_surface_time := _surface_timing_msec(ui_state)
@@ -344,7 +383,7 @@ func surface_needs_auto_tick(ui_state: Dictionary, run_state: RunState, environm
 
 
 func surface_auto_action_command(ui_state: Dictionary, _run_state: RunState, environment: Dictionary, _surface_status: Dictionary = {}) -> Dictionary:
-	var machine: Dictionary = StateScript.read_machine(environment, get_id())
+	var machine: Dictionary = _read_machine(environment)
 	if machine.is_empty():
 		return {"handled": false}
 	var surface_time := _surface_timing_msec(ui_state)
@@ -355,7 +394,7 @@ func surface_auto_action_command(ui_state: Dictionary, _run_state: RunState, env
 		var next_msec := int(machine.get("slot_bonus_auto_next_msec", 0))
 		if next_msec <= 0:
 			machine["slot_bonus_auto_next_msec"] = surface_time + _slot_bonus_auto_delay_msec(machine)
-			StateScript.write_machine(environment, get_id(), machine)
+			_write_machine(environment, machine)
 			return GameModule.surface_command({
 				"handled": true,
 				"environment_changed": true,
@@ -381,7 +420,7 @@ func surface_auto_action_command(ui_state: Dictionary, _run_state: RunState, env
 		if surface_time <= 0:
 			surface_time = Time.get_ticks_msec()
 		machine["slot_bonus_watchdog_since_msec"] = surface_time
-		StateScript.write_machine(environment, get_id(), machine)
+		_write_machine(environment, machine)
 		return GameModule.surface_command({
 			"handled": true,
 			"environment_changed": true,
@@ -407,7 +446,7 @@ func surface_auto_action_command(ui_state: Dictionary, _run_state: RunState, env
 		var paused_family := _slot_active_bonus_family(machine)
 		machine["slot_autoplay_active"] = false
 		machine["slot_autoplay_next_msec"] = 0
-		StateScript.write_machine(environment, get_id(), machine)
+		_write_machine(environment, machine)
 		return GameModule.surface_command({
 			"handled": true,
 			"environment_changed": true,
@@ -428,12 +467,12 @@ func surface_auto_action_command(ui_state: Dictionary, _run_state: RunState, env
 
 
 func surface_pause_repeating_action_for_confirmation(_ui_state: Dictionary, _run_state: RunState, environment: Dictionary) -> Dictionary:
-	var machine: Dictionary = StateScript.read_machine(environment, get_id())
+	var machine: Dictionary = _read_machine(environment)
 	if machine.is_empty() or not bool(machine.get("slot_autoplay_active", false)):
 		return {"handled": false}
 	machine["slot_autoplay_active"] = false
 	machine["slot_autoplay_next_msec"] = 0
-	StateScript.write_machine(environment, get_id(), machine)
+	_write_machine(environment, machine)
 	return GameModule.surface_command({
 		"handled": true,
 		"environment_changed": true,
@@ -443,7 +482,7 @@ func surface_pause_repeating_action_for_confirmation(_ui_state: Dictionary, _run
 
 func environment_runtime_needs_tick(_run_state: RunState, environment: Dictionary, now_msec: int) -> bool:
 	# Per-frame check: peek (zero-copy, read-only) instead of deep-copying the machine.
-	var machine: Dictionary = StateScript.peek_machine(environment, get_id())
+	var machine: Dictionary = _peek_machine(environment)
 	if machine.is_empty() or not bool(machine.get("slot_autoplay_active", false)):
 		return false
 	var next_msec := int(machine.get("slot_autoplay_next_msec", 0))
@@ -457,7 +496,7 @@ func environment_runtime_tick(run_state: RunState, environment: Dictionary, rng:
 	if StateScript.active_bonus_incomplete(machine):
 		var paused_family := _slot_active_bonus_family(machine)
 		machine = _mark_slot_feature_pending(machine, now_msec)
-		StateScript.write_machine(environment, get_id(), machine)
+		_write_machine(environment, machine)
 		return {
 			"handled": true,
 			"message": "Autoplay paused for %s bonus." % paused_family.capitalize(),
@@ -466,7 +505,7 @@ func environment_runtime_tick(run_state: RunState, environment: Dictionary, rng:
 			"audio_cue_volume_db": _slot_feature_audio_volume_db(machine),
 		}
 	machine["slot_autoplay_next_msec"] = now_msec + _slot_autoplay_delay_msec(machine)
-	StateScript.write_machine(environment, get_id(), machine)
+	_write_machine(environment, machine)
 	var selected_bet: Dictionary = StateScript.selected_bet(machine)
 	var resolved: Dictionary = resolver.resolve_spin(machine, "spin", selected_bet, rng, definition, environment, true, false, run_state, _slot_cross_game_item_effects(run_state, machine, false))
 	var resolved_machine: Dictionary = _slot_copy_dict(resolved.get("machine", machine))
@@ -476,7 +515,7 @@ func environment_runtime_tick(run_state: RunState, environment: Dictionary, rng:
 	else:
 		resolved_machine["slot_autoplay_active"] = true
 		resolved_machine["slot_autoplay_next_msec"] = now_msec + _slot_autoplay_delay_msec(resolved_machine)
-	StateScript.write_machine(environment, get_id(), resolved_machine)
+	_write_machine(environment, resolved_machine)
 	var result: Dictionary = _slot_copy_dict(resolved.get("result", {}))
 	if feature_pending:
 		result["slot_pending_feature"] = true
@@ -491,16 +530,34 @@ func environment_runtime_tick(run_state: RunState, environment: Dictionary, rng:
 
 
 func environment_runtime_state(_run_state: RunState, environment: Dictionary) -> Dictionary:
-	var machine: Dictionary = StateScript.read_machine(environment, get_id())
+	var machine: Dictionary = _read_machine(environment)
+	if machine.is_empty():
+		return {}
+	return _slot_environment_runtime_state_for_machine(machine)
+
+
+func environment_runtime_state_for_state_key(_run_state: RunState, environment: Dictionary, state_key: String) -> Dictionary:
+	var machine: Dictionary = StateScript.read_machine(environment, _normalized_fixture_state_key(state_key))
 	if machine.is_empty():
 		return {}
 	return _slot_environment_runtime_state_for_machine(machine)
 
 
 func environment_object_state(_run_state: RunState, environment: Dictionary) -> Dictionary:
-	var machine: Dictionary = StateScript.read_machine(environment, get_id())
+	var machine: Dictionary = _read_machine(environment)
 	if machine.is_empty():
 		return {}
+	return _slot_environment_object_state_for_machine(machine)
+
+
+func environment_object_state_for_state_key(_run_state: RunState, environment: Dictionary, state_key: String) -> Dictionary:
+	var machine: Dictionary = StateScript.read_machine(environment, _normalized_fixture_state_key(state_key))
+	if machine.is_empty():
+		return {}
+	return _slot_environment_object_state_for_machine(machine)
+
+
+func _slot_environment_object_state_for_machine(machine: Dictionary) -> Dictionary:
 	var preview := _slot_environment_preview(machine)
 	var runtime := _slot_environment_runtime_state_for_machine(machine, preview)
 	return {
@@ -509,6 +566,13 @@ func environment_object_state(_run_state: RunState, environment: Dictionary) -> 
 		"runtime_state": runtime,
 		"visual_state": _slot_environment_visual_state(machine, preview),
 	}
+
+
+func _normalized_fixture_state_key(state_key: String) -> String:
+	var clean_key := state_key.strip_edges()
+	if clean_key == get_id() or clean_key.begins_with("%s:" % get_id()):
+		return clean_key
+	return get_id()
 
 
 func _slot_environment_runtime_state_for_machine(machine: Dictionary, preview: Dictionary = {}, now_msec: int = -1) -> Dictionary:
@@ -832,7 +896,7 @@ func _slot_feature_pending(machine: Dictionary) -> bool:
 
 
 func wager_activity_incomplete(run_state: RunState, environment: Dictionary, _ui_state: Dictionary = {}) -> bool:
-	return StateScript.active_bonus_incomplete(StateScript.read_machine(environment, get_id()))
+	return StateScript.active_bonus_incomplete(_read_machine(environment))
 
 
 func _mark_slot_feature_pending(machine: Dictionary, now_msec: int) -> Dictionary:
@@ -864,7 +928,7 @@ func _arm_lucky_reel_grease(machine: Dictionary, environment: Dictionary) -> Dic
 	item_state["lucky_reel_grease_near_misses"] = 0
 	item_state["lucky_reel_grease_failed_nudge_heat_bonus"] = 14
 	machine["slot_item_state"] = item_state
-	StateScript.write_machine(environment, get_id(), machine)
+	_write_machine(environment, machine)
 	return _slot_active_item_result(
 		LUCKY_REEL_GREASE_ITEM_ID,
 		"arm_lucky_reel_grease",
@@ -880,7 +944,7 @@ func _load_cold_quarters(machine: Dictionary, environment: Dictionary) -> Dictio
 	item_state["cold_quarters_charges"] = maxi(6, int(item_state.get("cold_quarters_charges", 0)))
 	item_state["cold_quarter_heat_reduction"] = 6
 	machine["slot_item_state"] = item_state
-	StateScript.write_machine(environment, get_id(), machine)
+	_write_machine(environment, machine)
 	return _slot_active_item_result(
 		COLD_QUARTERS_ITEM_ID,
 		"load_cold_quarters",
@@ -897,7 +961,7 @@ func _arm_split_reel_note(machine: Dictionary, run_state: RunState, environment:
 	item_state["split_reel_note_perfect_msec_bonus"] = 55
 	item_state["split_reel_note_close_msec_bonus"] = 90
 	machine["slot_item_state"] = item_state
-	StateScript.write_machine(environment, get_id(), machine)
+	_write_machine(environment, machine)
 	var heat_delta := 0
 	if run_state != null:
 		var watch_status: Dictionary = run_state.pit_boss_watch_status(environment)
@@ -933,7 +997,7 @@ func _arm_cumquat_sandwich(machine: Dictionary, environment: Dictionary) -> Dict
 	item_state["cumquat_force_bonus_pending"] = true
 	item_state["cumquat_force_bonus_item_id"] = CUMQUAT_SANDWICH_ITEM_ID
 	machine["slot_item_state"] = item_state
-	StateScript.write_machine(environment, get_id(), machine)
+	_write_machine(environment, machine)
 	return _slot_active_item_result(
 		CUMQUAT_SANDWICH_ITEM_ID,
 		"arm_cumquat_sandwich",
@@ -981,7 +1045,7 @@ func _slot_active_item_result(item_id: String, action_id: String, message: Strin
 
 
 func _ensure_machine_state(run_state: RunState, environment: Dictionary, rng: RngStream) -> Dictionary:
-	var machine: Dictionary = StateScript.read_machine(environment, get_id())
+	var machine: Dictionary = _read_machine(environment)
 	if machine.is_empty():
 		var generation_rng: RngStream = rng
 		if generation_rng == null and run_state != null:
@@ -990,10 +1054,10 @@ func _ensure_machine_state(run_state: RunState, environment: Dictionary, rng: Rn
 			generation_rng = RngStream.new()
 			generation_rng.configure(1)
 		machine = generator.generate_machine(run_state, environment, generation_rng, definition, get_id())
-		StateScript.write_machine(environment, get_id(), machine)
+		_write_machine(environment, machine)
 	else:
 		machine = StateScript.normalize(machine)
-		StateScript.write_machine(environment, get_id(), machine)
+		_write_machine(environment, machine)
 	return machine
 
 

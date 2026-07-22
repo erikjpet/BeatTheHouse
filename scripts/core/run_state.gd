@@ -928,6 +928,55 @@ func transfer_item_from_home_container(container_id: String, item_id: String) ->
 	return {"ok": true, "message": message, "container_id": clean_container_id, "item_id": clean_item_id}
 
 
+func transfer_item_between_home_containers(from_container_id: String, to_container_id: String, item_id: String) -> Dictionary:
+	var clean_from_container_id := from_container_id.strip_edges()
+	var clean_to_container_id := to_container_id.strip_edges()
+	var clean_item_id := item_id.strip_edges()
+	if clean_from_container_id.is_empty() or clean_to_container_id.is_empty() or clean_item_id.is_empty():
+		return {"ok": false, "message": "Storage transfer is not configured."}
+	if clean_from_container_id == clean_to_container_id:
+		return {"ok": false, "message": "Choose another container."}
+	if not is_current_home_environment():
+		return {"ok": false, "message": "Home storage is not available here."}
+	var containers := current_home_containers()
+	var from_index := _home_container_index(containers, clean_from_container_id)
+	var to_index := _home_container_index(containers, clean_to_container_id)
+	if from_index < 0 or to_index < 0:
+		return {"ok": false, "message": "Container is no longer available."}
+	var from_container: Dictionary = containers[from_index]
+	var to_container: Dictionary = containers[to_index]
+	if bool(from_container.get("meta_loadout", false)):
+		return {"ok": false, "message": "These items are already carried from the meta-home loadout."}
+	if bool(to_container.get("meta_loadout", false)):
+		return {"ok": false, "message": "Meta-home loadout bags are read-only during this run."}
+	var from_items := _copy_array(from_container.get("items", []))
+	var to_items := _copy_array(to_container.get("items", []))
+	if not from_items.has(clean_item_id):
+		return {"ok": false, "message": "That item is not stored here."}
+	var to_capacity := maxi(0, int(to_container.get("capacity", 0)))
+	if to_capacity > 0 and to_items.size() >= to_capacity:
+		return {"ok": false, "message": "%s is full." % str(to_container.get("display_name", "Container"))}
+	from_items.erase(clean_item_id)
+	to_items.append(clean_item_id)
+	from_container["items"] = from_items
+	to_container["items"] = to_items
+	containers[from_index] = from_container
+	containers[to_index] = to_container
+	_set_current_home_containers(containers)
+	var message := "Moved %s from %s to %s." % [
+		clean_item_id.replace("_", " ").capitalize(),
+		str(from_container.get("display_name", "Container")),
+		str(to_container.get("display_name", "Container")),
+	]
+	return {
+		"ok": true,
+		"message": message,
+		"from_container_id": clean_from_container_id,
+		"to_container_id": clean_to_container_id,
+		"item_id": clean_item_id,
+	}
+
+
 func lose_home(reason: String = "lost") -> Dictionary:
 	if home_state.is_empty() or bool(home_state.get("lost", false)):
 		return {"ok": false, "message": "Home access is already gone."}

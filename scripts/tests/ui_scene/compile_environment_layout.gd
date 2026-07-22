@@ -156,16 +156,16 @@ func _check_meta_home_launcher_opens_room(app: Control) -> bool:
 		push_error("Meta home container prop did not activate.")
 		return false
 	await process_frame
-	var popup: Dictionary = app.call("current_event_choice_popup_snapshot")
-	if not bool(popup.get("visible", false)) or str(popup.get("popup_type", "")) != "meta_container":
-		push_error("Meta home container did not open its contents popup.")
+	var popup: Dictionary = app.call("current_meta_item_interaction_snapshot")
+	if not bool(popup.get("visible", false)) or str(popup.get("mode", "")) != "meta_container":
+		push_error("Meta home container did not open its spatial item surface.")
 		return false
 	var popup_rect := _snapshot_rect(popup.get("popup_rect", {}))
 	var screen_rect := _snapshot_rect(popup.get("screen_rect", {}))
 	if popup_rect.size.x <= 0.0 or popup_rect.size.y <= 0.0 or not screen_rect.grow(1.0).encloses(popup_rect):
-		push_error("Meta home popup did not fit inside the viewport: popup=%s screen=%s." % [str(popup_rect), str(screen_rect)])
+		push_error("Meta home spatial surface did not fit inside the viewport: popup=%s screen=%s." % [str(popup_rect), str(screen_rect)])
 		return false
-	app.call("_hide_event_choice_popup")
+	app.call("close_meta_item_interaction")
 	await process_frame
 	if not bool(app.call("open_world_map", true)):
 		push_error("Meta home could not reopen the shared world map for pawn-shop travel.")

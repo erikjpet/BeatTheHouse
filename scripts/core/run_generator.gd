@@ -533,16 +533,32 @@ func _int_range(value: Variant, fallback_min: int, fallback_max: int) -> Array:
 func _generated_game_states(run_state: RunState, environment_data: Dictionary, rng: RngStream) -> Dictionary:
 	var states := _copy_dict(environment_data.get("game_states", {}))
 	for game_id in _string_array(environment_data.get("game_ids", [])):
-		if states.has(game_id):
-			continue
 		var definition := library.game(game_id)
 		var game: GameModule = _create_game_module(definition)
 		if game == null:
 			continue
 		var state_rng := rng.fork("environment_game_state:%s:%s" % [str(environment_data.get("id", "")), game_id])
-		var generated: Dictionary = game.generate_environment_state(run_state, environment_data, state_rng)
-		if typeof(generated) == TYPE_DICTIONARY and not (generated as Dictionary).is_empty():
-			states[game_id] = (generated as Dictionary).duplicate(true)
+		var generated_base := false
+		if not states.has(game_id):
+			var generated: Dictionary = game.generate_environment_state(run_state, environment_data, state_rng)
+			if typeof(generated) == TYPE_DICTIONARY and not (generated as Dictionary).is_empty():
+				states[game_id] = (generated as Dictionary).duplicate(true)
+				generated_base = true
+		var fixture_count := maxi(1, int(_copy_dict(_copy_dict(environment_data.get("layout", {})).get("game_fixture_counts", {})).get(game_id, 1)))
+		if fixture_count <= 1 or not game.has_method("generate_environment_fixture_states"):
+			continue
+		var fixture_states_value: Variant = game.call("generate_environment_fixture_states", run_state, environment_data, state_rng.fork("fixtures"), fixture_count)
+		if typeof(fixture_states_value) != TYPE_DICTIONARY:
+			continue
+		for fixture_key_value in (fixture_states_value as Dictionary).keys():
+			var fixture_key := str(fixture_key_value)
+			if fixture_key.is_empty():
+				continue
+			if states.has(fixture_key) and not (fixture_key == game_id and generated_base):
+				continue
+			var fixture_state_value: Variant = (fixture_states_value as Dictionary).get(fixture_key, {})
+			if typeof(fixture_state_value) == TYPE_DICTIONARY and not (fixture_state_value as Dictionary).is_empty():
+				states[fixture_key] = (fixture_state_value as Dictionary).duplicate(true)
 	return states
 
 

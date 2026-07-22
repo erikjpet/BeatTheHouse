@@ -982,9 +982,17 @@ func _draw_beach() -> void:
 	draw_line(Vector2(270, 238), Vector2(330, 238), C_CYAN, 4)
 	draw_rect(Rect2(616, 192, 130, 42), Color("#080d16"))
 	_neon_text("BEACH", Vector2(634, 220), 21, C_YELLOW)
+	# A patched-in boardwalk arcade kiosk keeps the lone machine above the tide.
+	draw_rect(Rect2(676, 96, 128, 142), Color("#10131d"))
+	draw_rect(Rect2(668, 92, 144, 10), Color("#493116"))
+	draw_line(Vector2(676, 96), Vector2(676, 238), C_AMBER.darkened(0.28), 4)
+	draw_line(Vector2(804, 96), Vector2(804, 238), C_AMBER.darkened(0.28), 4)
 	draw_rect(Rect2(650, 66, 132, 44), Color("#101a25"))
 	draw_rect(Rect2(662, 76, 108, 16), C_AMBER.darkened(0.10))
+	_neon_text("TIDE SLOT", Vector2(668, 92), 12, C_CYAN)
 	_slot_machine(Rect2(704, 112, 72, 118), C_CYAN)
+	draw_line(Vector2(776, 218), Vector2(824, 232), Color(C_CYAN.r, C_CYAN.g, C_CYAN.b, 0.45), 2)
+	draw_rect(Rect2(690, 230, 100, 8), Color("#6b4624"))
 	_floor_reflections()
 
 
@@ -1051,7 +1059,8 @@ func _draw_grand_casino() -> void:
 		draw_rect(Rect2(x, 46, 64, 118), Color("#120b24"))
 		draw_rect(Rect2(x + 8, 56, 48, 74), Color("#251044"))
 		draw_rect(Rect2(x + 18, 132, 28, 10), C_AMBER)
-	for x in [238, 348, 552, 662]:
+	var slot_positions := [40, 190, 340] if environment_id == "grand_casino" else [238, 348, 552, 662]
+	for x in slot_positions:
 		_slot_machine(Rect2(x, 124, 70, 116), _cycle_color(x))
 	draw_rect(Rect2(82, 184, 258, 82), Color("#123f30"))
 	draw_rect(Rect2(104, 198, 214, 46), Color("#1a7755"))

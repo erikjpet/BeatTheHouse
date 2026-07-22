@@ -2251,8 +2251,14 @@
       "scene_type": "beach",
       "description": "Dockside beach and quiet surf."
     },
-    "objective_hint": "Cool off near the riverboat before returning to the circuit.",
+    "objective_hint": "Cool off, search the tide line, or try the weathered boardwalk slot before returning to the circuit.",
     "layout": {
+      "game_spots": [
+        [
+          740,
+          171
+        ]
+      ],
       "service_spots": [
         [
           224,
@@ -2306,15 +2312,20 @@
       "volume": 0.22
     },
     "economic_profile": {
-      "stake_floor": 0,
-      "stake_ceiling": 0,
+      "stake_floor": 2,
+      "stake_ceiling": 20,
       "price_tone": "quiet",
-      "cashout_tone": "none"
+      "cashout_tone": "machine"
     },
-    "game_pool": [],
+    "game_pool": [
+      "slot"
+    ],
+    "required_game_ids": [
+      "slot"
+    ],
     "game_count": [
-      0,
-      0
+      1,
+      1
     ],
     "item_pool": [],
     "item_count": [
@@ -2619,22 +2630,33 @@
     "layout": {
       "game_spots": [
         [
-          160,
+          85,
           150
         ],
         [
-          340,
+          220,
           150
         ],
         [
-          520,
+          355,
           150
         ],
         [
-          700,
+          525,
+          150
+        ],
+        [
+          675,
+          150
+        ],
+        [
+          825,
           150
         ]
       ],
+      "game_fixture_counts": {
+        "slot": 3
+      },
       "event_spots": [
         [
           80,
@@ -2754,7 +2776,6 @@
       "stake_floor": 5,
       "stake_ceiling": 35,
       "game_stake_ceiling_overrides": {
-        "blackjack": 150,
         "roulette": 150
       },
       "cashout_tone": "cage"
@@ -2763,13 +2784,13 @@
       "slot",
       "video_poker",
       "pull_tabs",
-      "bar_dice"
+      "blackjack"
     ],
     "required_game_ids": [
       "slot",
       "video_poker",
       "pull_tabs",
-      "bar_dice"
+      "blackjack"
     ],
     "game_count": [
       4,
@@ -2973,6 +2994,10 @@
         [
           92,
           350
+        ],
+        [
+          808,
+          350
         ]
       ],
       "travel_spots": [
@@ -3080,7 +3105,8 @@
       "casino_room_travel_minutes": 5,
       "casino_chip_cash_rate": 1,
       "casino_room_targets": [
-        "grand_casino"
+        "grand_casino",
+        "grand_casino_cage"
       ]
     },
     "moods": [

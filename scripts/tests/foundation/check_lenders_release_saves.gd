@@ -2,6 +2,8 @@ extends "res://scripts/tests/foundation/check_items_events_world.gd"
 
 const RunReportViewModelScript := preload("res://scripts/ui/run_report_view_model.gd")
 const CageCounterViewModelScript := preload("res://scripts/ui/cage_counter_view_model.gd")
+const EnvironmentInteractionViewModelScript := preload("res://scripts/ui/environment_interaction_view_model.gd")
+const FoundationActionViewModelScript := preload("res://scripts/ui/foundation_action_view_model.gd")
 const StaffBlackjackGameScript := preload("res://scripts/games/blackjack.gd")
 const StaffBaccaratGameScript := preload("res://scripts/games/baccarat.gd")
 const StaffRouletteGameScript := preload("res://scripts/games/roulette.gd")
@@ -10,6 +12,20 @@ const GrandCasinoDuelModelScript := preload("res://scripts/core/grand_casino_due
 const MusicDeliveryIndexScript := preload("res://scripts/core/music_delivery_index.gd")
 const MusicLayerChoreographyScript := preload("res://scripts/ui/music_layer_choreography.gd")
 const MusicOutcomeDirectorModelScript := preload("res://scripts/ui/music_outcome_director_model.gd")
+
+
+class BlackjackChipStakeRangeGame:
+	func get_id() -> String:
+		return "blackjack"
+
+
+class BlackjackChipStakeRangeHost:
+	var run_state: RunState
+	var current_game = BlackjackChipStakeRangeGame.new()
+	var presented_cash := 0
+
+	func _presented_bankroll() -> int:
+		return presented_cash
 
 
 func _check_run_report_foundation(failures: Array) -> void:
@@ -65,6 +81,26 @@ func _check_run_report_foundation(failures: Array) -> void:
 	var items := RunReportViewModelScript.build_item_fates(["instant_coffee", "instant_coffee"], [], story, {"instant_coffee": {"display_name": "Instant Coffee"}, "creased_luck_card": {"display_name": "Creased Luck Card"}})
 	if int(((items.get("kept", []) as Array)[0] as Dictionary).get("count", 0)) != 2 or JSON.stringify(items).find("forfeited") == -1 or JSON.stringify(items).find("sold") == -1:
 		failures.append("Run report item fate aggregation did not collapse kept duplicates or retain pawn/sale fates.")
+	var take_home_data := run_state.to_dict()
+	take_home_data["run_status"] = RunState.RUN_STATUS_ENDED
+	take_home_data["inventory"] = ["instant_coffee", "bag", "backpack"]
+	take_home_data["narrative_flags"] = {"demo_victory": true}
+	take_home_data["challenge_config"] = {"mode": "standard", "completion_flag": "", "modifiers": {"meta_collection_enabled": true}}
+	var take_home_reward := RunReportViewModelScript.build_take_home_item_reward(take_home_data, {
+		"instant_coffee": {"display_name": "Instant Coffee", "class": "consumable"},
+		"bag": {"display_name": "Bag", "class": "container", "container_capacity": 3, "asset_path": "res://assets/art/items/bag.png"},
+		"backpack": {"display_name": "Backpack", "class": "container", "container_capacity": 5, "asset_path": "res://assets/art/items/backpack.png"},
+	})
+	if not bool(take_home_reward.get("visible", false)) or not bool(take_home_reward.get("pending", false)) or (take_home_reward.get("choices", []) as Array).size() != 2 or str(((take_home_reward.get("choices", []) as Array)[0] as Dictionary).get("id", "")) != "backpack":
+		failures.append("Run report did not present earned container items as a required take-home choice.")
+	var stored_take_home_flags := {"demo_victory": true}
+	stored_take_home_flags[RunReportViewModelScript.TAKE_HOME_ITEM_EXTRACTED_FLAG] = true
+	stored_take_home_flags[RunReportViewModelScript.TAKE_HOME_ITEM_ID_FLAG] = "backpack"
+	stored_take_home_flags[RunReportViewModelScript.TAKE_HOME_ITEM_LINE_FLAG] = "Brought home Backpack."
+	take_home_data["narrative_flags"] = stored_take_home_flags
+	var stored_take_home_reward := RunReportViewModelScript.build_take_home_item_reward(take_home_data, {"backpack": {"display_name": "Backpack", "class": "container", "container_capacity": 5}})
+	if bool(stored_take_home_reward.get("pending", true)) or str(stored_take_home_reward.get("summary_line", "")) != "Brought home Backpack.":
+		failures.append("Run report did not replace the take-home selector with its stored-item confirmation.")
 
 	var timeline := RunReportViewModelScript.build_timeline(run_state.heat_history, {"visited_path": ["bar", "grand_casino"], "nodes": [{"id": "bar", "display_name": "Bar", "position": {"x": 0.1, "y": 0.4}}, {"id": "grand_casino", "display_name": "Grand Casino", "position": {"x": 0.9, "y": 0.5}}]}, 8)
 	var boundary := RunReportViewModelScript.cursor_for_progress(timeline, 1.0)
@@ -2642,16 +2678,127 @@ func _check_grand_casino_spatial_split(library: ContentLibrary, main_archetype: 
 		failures.append("Grand Casino Cage leaked into a game, Rourke patrol, or rival-cheater room set.")
 	var main_games := _string_array(main_archetype.get("game_pool", []))
 	var high_games := _string_array(high_limit.get("game_pool", []))
-	for machine_id in ["slot", "video_poker", "pull_tabs", "bar_dice"]:
+	for machine_id in ["slot", "video_poker", "pull_tabs", "blackjack"]:
 		if not main_games.has(machine_id):
-			failures.append("Grand Casino Main Floor is missing required machine/bar game: %s." % machine_id)
-	for table_id in ["blackjack", "baccarat", "roulette"]:
+			failures.append("Grand Casino Main Floor is missing required low-limit game: %s." % machine_id)
+	if main_games.has("bar_dice"):
+		failures.append("Grand Casino Main Floor still includes the removed bar dice game.")
+	for table_id in ["baccarat", "roulette"]:
 		if main_games.has(table_id) or not high_games.has(table_id):
 			failures.append("Grand Casino table placement did not isolate %s to the High-Limit Room." % table_id)
+	if not high_games.has("blackjack"):
+		failures.append("Grand Casino High-Limit Room lost its blackjack table while adding the Main Floor low-limit table.")
 	if high_games.has("video_poker"):
 		failures.append("Grand Casino High-Limit Room incorrectly includes video poker.")
-	if int(_copy_dict(high_limit.get("economic_profile", {})).get("stake_floor", 0)) <= int(_copy_dict(main_archetype.get("economic_profile", {})).get("stake_floor", 0)):
+	var main_economic := _copy_dict(main_archetype.get("economic_profile", {}))
+	var high_economic := _copy_dict(high_limit.get("economic_profile", {}))
+	if int(high_economic.get("stake_floor", 0)) <= int(main_economic.get("stake_floor", 0)):
 		failures.append("Grand Casino High-Limit Room stake floor is not higher than the Main Floor.")
+	var main_blackjack_ceiling := GameModule.stake_ceiling_for_game({"economic_profile": main_economic}, "blackjack", 0)
+	var high_blackjack_ceiling := GameModule.stake_ceiling_for_game({"economic_profile": high_economic}, "blackjack", 0)
+	if main_blackjack_ceiling != 35 or high_blackjack_ceiling <= main_blackjack_ceiling:
+		failures.append("Grand Casino blackjack limits are not split between the $5-$35 Main Floor table and the higher-limit room.")
+	var chip_stake_run: RunState = RunStateScript.new()
+	chip_stake_run.start_new("GC-BLACKJACK-CHIP-STAKE-RANGE")
+	chip_stake_run.bankroll = 30
+	chip_stake_run.grand_casino_chips = 70
+	chip_stake_run.set_environment({
+		"id": "grand_casino_chip_stake_range",
+		"archetype_id": RunState.GRAND_CASINO_HIGH_LIMIT_ARCHETYPE_ID,
+		"economic_profile": {
+			"stake_floor": 5,
+			"stake_ceiling": 150,
+			"game_stake_ceiling_overrides": {"blackjack": 150},
+		},
+	})
+	var chip_stake_host := BlackjackChipStakeRangeHost.new()
+	chip_stake_host.run_state = chip_stake_run
+	chip_stake_host.presented_cash = 30
+	var chip_stake_range := FoundationActionViewModelScript.stake_range_from_action_view(chip_stake_host, {
+		"stake_floor": 5,
+		"stake_ceiling": 150,
+		"base_stake_ceiling": 150,
+		"economy_stake_ceiling": 150,
+		"economy_pressure_applied": false,
+	})
+	if int(chip_stake_range.get("max", 0)) != 100:
+		failures.append("Grand Casino blackjack stake range ignored chips; $30 cash plus 70 chips should allow a $100 stake, got $%d." % int(chip_stake_range.get("max", 0)))
+	var main_layout := _copy_dict(main_archetype.get("layout", {}))
+	var fixture_counts := _copy_dict(main_layout.get("game_fixture_counts", {}))
+	if int(fixture_counts.get("slot", 0)) != 3 or _copy_array(main_layout.get("game_spots", [])).size() < 6:
+		failures.append("Grand Casino Main Floor does not author three slot fixtures plus its other three games.")
+	var fixture_run: RunState = RunStateScript.new()
+	fixture_run.start_new("GC-MAIN-LOW-LIMIT-FIXTURES")
+	var fixture_environment := EnvironmentInstance.from_archetype(main_archetype, 3, fixture_run.create_rng("gc_main_low_limit_fixtures"), library).to_dict()
+	var fixture_rects := _copy_dict(_copy_dict(fixture_environment.get("layout", {})).get("object_rects", {}))
+	for fixture_id in ["game:slot", "game:slot:2", "game:slot:3"]:
+		if not fixture_rects.has(fixture_id):
+			failures.append("Grand Casino Main Floor generated layout is missing slot fixture %s." % fixture_id)
+	var slot_centers: Array = []
+	for fixture_id in ["game:slot", "game:slot:2", "game:slot:3"]:
+		var rect := _copy_dict(fixture_rects.get(fixture_id, {}))
+		if rect.is_empty():
+			continue
+		slot_centers.append(Vector2(float(rect.get("x", 0.0)) + float(rect.get("w", 0.0)) * 0.5, float(rect.get("y", 0.0)) + float(rect.get("h", 0.0)) * 0.5))
+	if slot_centers.size() == 3:
+		var first_gap := absf((slot_centers[1] as Vector2).x - (slot_centers[0] as Vector2).x)
+		var second_gap := absf((slot_centers[2] as Vector2).x - (slot_centers[1] as Vector2).x)
+		if absf((slot_centers[0] as Vector2).y - (slot_centers[1] as Vector2).y) > 0.01 or absf((slot_centers[1] as Vector2).y - (slot_centers[2] as Vector2).y) > 0.01 or first_gap > 0.16 or second_gap > 0.16 or absf(first_gap - second_gap) > 0.02:
+			failures.append("Grand Casino Main Floor slot fixtures are not placed as a tight three-across bank.")
+	var slot_variant_run := _grand_casino_spatial_fixture_run(library, "GC-MAIN-SLOT-VARIANTS", failures)
+	var slot_game_states := _copy_dict(slot_variant_run.current_environment.get("game_states", {})) if slot_variant_run != null else {}
+	var slot_machine_keys: Dictionary = {}
+	var slot_cabinet_variants: Dictionary = {}
+	for state_key in ["slot", "slot:2", "slot:3"]:
+		var machine := _copy_dict(slot_game_states.get(state_key, {}))
+		if machine.is_empty():
+			failures.append("Grand Casino Main Floor did not generate machine state for %s." % state_key)
+			continue
+		slot_machine_keys[str(machine.get("machine_key", ""))] = true
+		slot_cabinet_variants[str(machine.get("cabinet_variant_id", ""))] = true
+	if slot_machine_keys.size() != 3 or slot_cabinet_variants.size() != 3:
+		failures.append("Grand Casino Main Floor slot fixtures did not generate three distinct slot machine variants.")
+	var fixture_slot_object_states: Dictionary = {}
+	for state_key in ["slot", "slot:2", "slot:3"]:
+		var machine := _copy_dict(slot_game_states.get(state_key, {}))
+		if machine.is_empty():
+			continue
+		fixture_slot_object_states["game:%s" % state_key] = {
+			"status_summary": "fixture %s" % state_key,
+			"runtime_state": {"status_label": str(machine.get("format_id", ""))},
+			"visual_state": {
+				"machine_key": str(machine.get("machine_key", "")),
+				"cabinet_variant_id": str(machine.get("cabinet_variant_id", "")),
+			},
+		}
+	var game_sources: Array = []
+	for game_index in range(_string_array(fixture_environment.get("game_ids", [])).size()):
+		var fixture_game_id := str(_string_array(fixture_environment.get("game_ids", []))[game_index])
+		game_sources.append({"id": fixture_game_id, "index": game_index, "definition": library.game(fixture_game_id), "runtime_state": {}, "object_state": {}, "fixture_object_states": fixture_slot_object_states if fixture_game_id == "slot" else {}})
+	var fixture_objects := EnvironmentInteractionViewModelScript.interactable_object_view_list(fixture_run, library, {
+		"selection": {},
+		"layout": fixture_environment.get("layout", {}),
+		"game_sources": game_sources,
+	})
+	var slot_fixture_ids: Array = []
+	for fixture_object_value in fixture_objects:
+		if typeof(fixture_object_value) != TYPE_DICTIONARY:
+			continue
+		var fixture_object: Dictionary = fixture_object_value
+		if str(fixture_object.get("object_type", "")) == "game" and str(fixture_object.get("source_id", "")) == "slot":
+			slot_fixture_ids.append(str(fixture_object.get("object_id", "")))
+	if slot_fixture_ids != ["game:slot", "game:slot:2", "game:slot:3"]:
+		failures.append("Grand Casino Main Floor interaction view did not expose exactly three clickable slot fixtures.")
+	var slot_fixture_visual_keys: Dictionary = {}
+	for fixture_object_value in fixture_objects:
+		if typeof(fixture_object_value) != TYPE_DICTIONARY:
+			continue
+		var fixture_object: Dictionary = fixture_object_value
+		if str(fixture_object.get("object_type", "")) != "game" or str(fixture_object.get("source_id", "")) != "slot":
+			continue
+		slot_fixture_visual_keys[str(_copy_dict(fixture_object.get("visual_state", {})).get("machine_key", ""))] = true
+	if slot_fixture_visual_keys.size() != 3:
+		failures.append("Grand Casino Main Floor interaction view did not preserve distinct slot fixture visual states.")
 
 	for seed_index in range(12):
 		var map_run: RunState = RunStateScript.new()

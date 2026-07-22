@@ -6,7 +6,7 @@ extends RefCounted
 const ArtContractsScript := preload("res://scripts/core/art_contracts.gd")
 
 const ENVIRONMENT_BOARD_SIZE := Vector2(ArtContractsScript.ENVIRONMENT_BOARD_SIZE)
-const GENERATED_LAYOUT_VERSION := 10
+const GENERATED_LAYOUT_VERSION := 11
 const EMPTY_MUSIC_NOTE := -999
 const SALS_PAWN_COUNTER_ID := "sals_pawn_counter"
 const PAWN_SHOP_ARCHETYPE_ID := "pawn_shop"
@@ -191,7 +191,7 @@ static func ensure_generated_layout(environment_data: Dictionary) -> Dictionary:
 	var active_object_ids := _active_object_ids_from_entries(active_entries)
 	var prioritize_services := bool(layout.get("prioritize_service_spots", false))
 	_prune_inactive_object_rects(object_rects, active_object_ids)
-	_assign_string_object_rects(object_rects, layout, "game", _copy_array(environment_data.get("game_ids", [])), "game_spots", active_object_ids)
+	_assign_object_layout_entries(object_rects, layout, _game_layout_entries(environment_data), active_object_ids)
 	_assign_string_object_rects(object_rects, layout, "event", _copy_array(environment_data.get("event_ids", [])), "event_spots", active_object_ids)
 	if not prioritize_services:
 		_assign_item_offer_rects(object_rects, layout, _copy_array(environment_data.get("item_offers", [])), active_object_ids)
@@ -511,6 +511,26 @@ static func _assign_string_object_rects(object_rects: Dictionary, layout: Dictio
 	var stable_ids := _string_array(ids)
 	for index in range(stable_ids.size()):
 		_assign_single_object_rect(object_rects, layout, "%s:%s" % [object_type, stable_ids[index]], object_type, index, spot_field, true, active_object_ids)
+
+
+# Expands authored fixture counts without duplicating game simulation state.
+# Extra fixtures route to the same game id while receiving stable object ids and spots.
+static func _game_layout_entries(environment_data: Dictionary) -> Array:
+	var entries: Array = []
+	var layout := _copy_dict(environment_data.get("layout", {}))
+	var fixture_counts := _copy_dict(layout.get("game_fixture_counts", {}))
+	var layout_index := 0
+	for game_id in _string_array(environment_data.get("game_ids", [])):
+		var fixture_count := maxi(1, int(fixture_counts.get(game_id, 1)))
+		for fixture_index in range(fixture_count):
+			entries.append({
+				"object_id": "game:%s" % game_id if fixture_index == 0 else "game:%s:%d" % [game_id, fixture_index + 1],
+				"object_type": "game",
+				"index": layout_index,
+				"spot_field": "game_spots",
+			})
+			layout_index += 1
+	return entries
 
 
 static func _assign_object_layout_entries(object_rects: Dictionary, layout: Dictionary, entries: Array, active_object_ids: Dictionary) -> void:
@@ -854,7 +874,7 @@ static func _sort_layout_rect_candidate(a: Variant, b: Variant) -> bool:
 
 static func _active_object_layout_entries(environment_data: Dictionary) -> Array:
 	var entries: Array = []
-	_append_string_layout_entries(entries, "game", _copy_array(environment_data.get("game_ids", [])), "game_spots")
+	entries.append_array(_game_layout_entries(environment_data))
 	_append_string_layout_entries(entries, "event", _copy_array(environment_data.get("event_ids", [])), "event_spots")
 	var layout := _copy_dict(environment_data.get("layout", {}))
 	var prioritize_services := bool(layout.get("prioritize_service_spots", false))
@@ -922,8 +942,12 @@ static func _active_object_ids_from_entries(entries: Array) -> Dictionary:
 
 static func _active_object_ids(environment_data: Dictionary) -> Dictionary:
 	var result: Dictionary = {}
-	for game_id in _string_array(environment_data.get("game_ids", [])):
-		result["game:%s" % game_id] = true
+	for entry_value in _game_layout_entries(environment_data):
+		if typeof(entry_value) != TYPE_DICTIONARY:
+			continue
+		var object_id := str((entry_value as Dictionary).get("object_id", ""))
+		if not object_id.is_empty():
+			result[object_id] = true
 	for event_id in _string_array(environment_data.get("event_ids", [])):
 		result["event:%s" % event_id] = true
 	for offer in _copy_array(environment_data.get("item_offers", [])):

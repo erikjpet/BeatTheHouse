@@ -379,7 +379,10 @@ static func stake_range_from_action_view(host: Variant, action_view: Dictionary 
 		return {"min": 1, "max": 1, "default": 1, "has_valid": false}
 	var floor = 1
 	var display_bankroll = host._presented_bankroll()
-	var ceiling = display_bankroll
+	var wager_balance = display_bankroll
+	if host.current_game != null and host.run_state.grand_casino_game_uses_chips(host.current_game.get_id(), host.run_state.current_environment):
+		wager_balance = maxi(0, display_bankroll) + maxi(0, int(host.run_state.grand_casino_chips))
+	var ceiling = wager_balance
 	var economic_profile: Dictionary = host.run_state.current_environment.get("economic_profile", {})
 	floor = int(economic_profile.get("stake_floor", floor))
 	ceiling = int(economic_profile.get("stake_ceiling", ceiling))
@@ -387,7 +390,7 @@ static func stake_range_from_action_view(host: Variant, action_view: Dictionary 
 		floor = int(action_view.get("stake_floor", floor))
 		ceiling = int(action_view.get("stake_ceiling", ceiling))
 	var min_stake = maxi(1, floor)
-	var max_stake = mini(ceiling, display_bankroll)
+	var max_stake = mini(ceiling, wager_balance)
 	var has_valid = max_stake >= min_stake
 	return {
 		"min": min_stake,
@@ -397,7 +400,7 @@ static func stake_range_from_action_view(host: Variant, action_view: Dictionary 
 		"default": min_stake if has_valid else 0,
 		"has_valid": has_valid,
 		"economy_state": host.run_state.economy(),
-		"economy_pressure_applied": bool(action_view.get("economy_pressure_applied", false)) if not action_view.is_empty() else max_stake < mini(ceiling, display_bankroll),
+		"economy_pressure_applied": bool(action_view.get("economy_pressure_applied", false)) if not action_view.is_empty() else max_stake < mini(ceiling, wager_balance),
 	}
 
 

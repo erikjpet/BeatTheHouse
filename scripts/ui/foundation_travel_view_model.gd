@@ -40,9 +40,18 @@ static func enriched_world_map_snapshot(host: Variant, snapshot: Dictionary) -> 
 	var travel_disabled_ids: Array = []
 	var visible_target_ids: Array = []
 	var travel_paths: Array = []
+	var route_path_geometry: Array = []
 	var displayed_lookup: Dictionary = {}
 	var visible_node_ids: Array = []
 	var nodes: Array = []
+	var source_nodes_by_id: Dictionary = {}
+	for source_node_value in host._copy_array(enriched.get("nodes", [])):
+		if typeof(source_node_value) != TYPE_DICTIONARY:
+			continue
+		var source_node: Dictionary = source_node_value
+		var source_node_id := str(source_node.get("id", "")).strip_edges()
+		if not source_node_id.is_empty():
+			source_nodes_by_id[source_node_id] = source_node.duplicate(true)
 	for node_value in host._copy_array(enriched.get("nodes", [])):
 		if typeof(node_value) != TYPE_DICTIONARY:
 			continue
@@ -88,6 +97,7 @@ static func enriched_world_map_snapshot(host: Variant, snapshot: Dictionary) -> 
 						"path": locked_route_path,
 						"enabled": false,
 					})
+					_append_route_path_geometry(route_path_geometry, source_nodes_by_id, node_id, locked_route_path, false)
 				nodes.append(node)
 				displayed_lookup[node_id] = true
 				visible_node_ids.append(node_id)
@@ -124,6 +134,7 @@ static func enriched_world_map_snapshot(host: Variant, snapshot: Dictionary) -> 
 					"path": route_path,
 					"enabled": enabled,
 				})
+				_append_route_path_geometry(route_path_geometry, source_nodes_by_id, node_id, route_path, enabled)
 		elif not is_current:
 			node["travel_disabled_reason"] = "Not on the route list from here right now."
 		nodes.append(node)
@@ -162,10 +173,33 @@ static func enriched_world_map_snapshot(host: Variant, snapshot: Dictionary) -> 
 	enriched["travel_enabled_node_ids"] = travel_enabled_ids
 	enriched["travel_disabled_node_ids"] = travel_disabled_ids
 	enriched["travel_paths"] = travel_paths
+	enriched["route_path_geometry"] = route_path_geometry
 	enriched["map_focus_node_ids"] = focus_node_ids
 	if str(enriched.get("background_path", "")).strip_edges().is_empty():
 		enriched["background_path"] = host.WorldMapScript.MAP_BACKGROUND_PATH
 	return enriched
+
+
+static func _append_route_path_geometry(result: Array, nodes_by_id: Dictionary, target_id: String, path: Array, enabled: bool) -> void:
+	var points: Array = []
+	for node_id_value in path:
+		var node_id := str(node_id_value).strip_edges()
+		if node_id.is_empty() or not nodes_by_id.has(node_id):
+			continue
+		var node: Dictionary = nodes_by_id.get(node_id, {})
+		var position: Dictionary = node.get("position", {}) if typeof(node.get("position", {})) == TYPE_DICTIONARY else {}
+		points.append({
+			"id": node_id,
+			"x": clampf(float(position.get("x", 0.5)), 0.0, 1.0),
+			"y": clampf(float(position.get("y", 0.5)), 0.0, 1.0),
+		})
+	if points.size() >= 2:
+		result.append({
+			"target_id": target_id,
+			"path": path.duplicate(true),
+			"points": points,
+			"enabled": enabled,
+		})
 
 
 static func world_map_node_should_render(host: Variant, node: Dictionary, is_current: bool, is_available_target: bool) -> bool:

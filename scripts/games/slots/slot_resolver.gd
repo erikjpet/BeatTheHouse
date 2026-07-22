@@ -231,6 +231,8 @@ func resolve_bonus_action(machine: Dictionary, action_id: String, rng: RngStream
 	var luck_payout_bonus := 0
 	var item_payout_bonus := 0
 	var first_bonus_item_award := 0
+	var pinball_momentum_hit_count := maxi(0, int(step.get("pinball_momentum_hit_count", 0))) if family_id == "pinball" else 0
+	var pinball_momentum_bonus := maxi(0, int(step.get("pinball_momentum_bonus", 0))) if family_id == "pinball" else 0
 	if award > 0:
 		luck_payout_bonus = run_state.luck_payout_bonus(maxi(1, int(active_before.get("stake", 1))), true) if run_state != null else 0
 		item_payout_bonus = int(item_effects.get("win_bonus", 0)) + int(item_effects.get("payout_delta", 0))
@@ -245,6 +247,9 @@ func resolve_bonus_action(machine: Dictionary, action_id: String, rng: RngStream
 			award += first_bonus_item_award
 			step["award"] = award
 			step["slot_first_bonus_item_award"] = first_bonus_item_award
+	if pinball_momentum_bonus > 0:
+		award += pinball_momentum_bonus
+		step["award"] = award
 	if complete:
 		machine["coin_out"] = maxi(0, int(machine.get("coin_out", 0))) + award
 		machine["last_bonus_complete"] = true
@@ -295,6 +300,8 @@ func resolve_bonus_action(machine: Dictionary, action_id: String, rng: RngStream
 		"luck_payout_bonus": luck_payout_bonus,
 		"item_payout_bonus": item_payout_bonus,
 		"slot_first_bonus_item_award": first_bonus_item_award,
+		"pinball_momentum_hit_count": pinball_momentum_hit_count,
+		"pinball_momentum_bonus": pinball_momentum_bonus,
 		"bankroll_delta": award,
 		"suspicion_delta": 0,
 		"won": award > 0,
@@ -318,7 +325,18 @@ func resolve_bonus_action(machine: Dictionary, action_id: String, rng: RngStream
 	result["slot_bonus_complete"] = complete
 	result["slot_bonus_award"] = award
 	result["slot_bonus_family"] = family_id
-	if family_id == "pinball" and award > 0 and complete:
+	result["pinball_momentum_hit_count"] = pinball_momentum_hit_count
+	result["pinball_momentum_bonus"] = pinball_momentum_bonus
+	if family_id == "pinball" and pinball_momentum_hit_count > 0:
+		result["surface_audio_cue"] = "pinball_bumper_pop"
+		result["surface_audio_context"] = {
+			"action": "pinball_bumper_pop",
+			"volume_db": -5.5,
+			"pitch": clampf(0.96 + minf(0.18, float(pinball_momentum_hit_count) * 0.035), 0.96, 1.14),
+			"hit_count": pinball_momentum_hit_count,
+			"bonus": pinball_momentum_bonus,
+		}
+	elif family_id == "pinball" and award > 0 and complete:
 		result["surface_audio_cue"] = "pinball_money_ding"
 		result["surface_audio_context"] = {
 			"action": "pinball_money_ding",

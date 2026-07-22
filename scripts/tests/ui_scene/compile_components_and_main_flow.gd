@@ -40,7 +40,9 @@ func _check_run_report_screen_component() -> bool:
 	root.add_child(screen)
 	await process_frame
 	var claimed_marker_ids: Array[String] = []
+	var claimed_take_home_item_ids: Array[String] = []
 	screen.bag_claim_requested.connect(func(marker_id: String) -> void: claimed_marker_ids.append(marker_id))
+	screen.take_home_item_claim_requested.connect(func(item_id: String) -> void: claimed_take_home_item_ids.append(item_id))
 	var report_world_map := {"current_node_id": "casino", "visited_path": ["bar", "casino"], "nodes": [{"id": "bar", "display_name": "Bar", "icon_path": "res://assets/art/map_icons/bar.png", "state": "visited", "position": {"x": 0.2, "y": 0.4}}, {"id": "casino", "display_name": "Casino", "icon_path": "res://assets/art/map_icons/grand_casino.png", "state": "visited", "position": {"x": 0.8, "y": 0.5}}, {"id": "pawn", "display_name": "Pawn Shop", "icon_path": "res://assets/art/map_icons/pawn_shop.png", "state": "revealed", "position": {"x": 0.5, "y": 0.9}}], "edges": [{"a": "bar", "b": "casino", "distance": "near"}, {"a": "casino", "b": "pawn", "distance": "near"}]}
 	var timeline := RunReportViewModelScript.build_timeline([
 		{"action_index": 0, "game_clock_minutes": 720, "heat_value": 4, "environment_id": "bar", "environment_name": "Bar", "world_node_id": "bar", "transition": true},
@@ -48,6 +50,26 @@ func _check_run_report_screen_component() -> bool:
 		{"action_index": 8, "game_clock_minutes": 788, "heat_value": 18, "environment_id": "casino", "environment_name": "Casino", "world_node_id": "casino", "transition": false},
 	], report_world_map, 8, [{"type": "travel", "from_world_node_id": "bar", "to_world_node_id": "casino", "travel_minutes": 12, "departed_game_clock_minutes": 736, "arrived_game_clock_minutes": 748}], 720, 788)
 	var report_map := RunReportViewModelScript.build_report_map_snapshot(report_world_map, timeline)
+	var incomplete_loss_world_map := {
+		"current_node_id": "casino",
+		"visited_path": ["bar", "casino"],
+		"nodes": [
+			{"id": "bar", "display_name": "Bar", "icon_path": "res://assets/art/map_icons/bar.png", "state": "visited", "position": {"x": 0.12, "y": 0.36}},
+			{"id": "corner_store", "display_name": "Corner Store", "icon_path": "res://assets/art/map_icons/corner_store.png", "state": "visited", "position": {"x": 0.48, "y": 0.74}},
+			{"id": "casino", "display_name": "Casino", "icon_path": "res://assets/art/map_icons/grand_casino.png", "state": "visited", "position": {"x": 0.88, "y": 0.28}},
+			{"id": "pawn", "display_name": "Pawn Shop", "icon_path": "res://assets/art/map_icons/pawn_shop.png", "state": "revealed", "position": {"x": 0.5, "y": 0.9}},
+		],
+		"edges": [{"a": "bar", "b": "corner_store", "distance": "near"}, {"a": "corner_store", "b": "casino", "distance": "near"}],
+	}
+	var incomplete_loss_timeline := RunReportViewModelScript.build_timeline([
+		{"action_index": 0, "game_clock_minutes": 720, "heat_value": 4, "environment_id": "bar", "environment_name": "Bar", "world_node_id": "bar", "transition": true},
+		{"action_index": 3, "game_clock_minutes": 742, "heat_value": 20, "environment_id": "corner_store", "environment_name": "Corner Store", "world_node_id": "corner_store", "transition": true},
+		{"action_index": 7, "game_clock_minutes": 775, "heat_value": 100, "environment_id": "casino", "environment_name": "Casino", "world_node_id": "casino", "transition": true},
+	], incomplete_loss_world_map, 7, [
+		{"type": "travel", "from_world_node_id": "bar", "to_world_node_id": "corner_store", "travel_minutes": 8, "departed_game_clock_minutes": 734, "arrived_game_clock_minutes": 742},
+		{"type": "travel", "from_world_node_id": "corner_store", "to_world_node_id": "casino", "travel_minutes": 11, "departed_game_clock_minutes": 764, "arrived_game_clock_minutes": 775},
+	], 720, 775)
+	var incomplete_loss_report_map := RunReportViewModelScript.build_report_map_snapshot(incomplete_loss_world_map, incomplete_loss_timeline)
 	var replay_segments: Array = timeline.get("replay_segments", [])
 	if replay_segments.size() != 3 or str((replay_segments[0] as Dictionary).get("kind", "")) != "dwell" or str((replay_segments[1] as Dictionary).get("kind", "")) != "travel" or str((replay_segments[2] as Dictionary).get("kind", "")) != "dwell":
 		push_error("Run report timeline did not split venue dwell time from travel time.")
@@ -58,10 +80,31 @@ func _check_run_report_screen_component() -> bool:
 	if (report_map.get("nodes", []) as Array).size() != 2 or JSON.stringify(report_map).find("Pawn Shop") != -1:
 		push_error("Run report map did not limit its fitted content to visited environments.")
 		return false
+	if (incomplete_loss_timeline.get("visited_node_ids", []) as Array) != ["bar", "corner_store", "casino"] or (incomplete_loss_report_map.get("nodes", []) as Array).size() != 3 or JSON.stringify(incomplete_loss_report_map).find("Pawn Shop") != -1:
+		push_error("Lost-run report map did not recover every traveled environment from recorded run history.")
+		return false
+	var incomplete_loss_canvas: Control = WorldMapCanvasScript.new()
+	incomplete_loss_canvas.size = Vector2(612.0, 246.0)
+	root.add_child(incomplete_loss_canvas)
+	incomplete_loss_canvas.call("set_map_snapshot", incomplete_loss_report_map)
+	await process_frame
+	var incomplete_loss_view: Dictionary = incomplete_loss_canvas.call("current_view_snapshot")
+	if not _world_map_markers_align_to_background(incomplete_loss_view):
+		push_error("Lost-run report map did not render every recovered icon against the fitted map picture: %s." % JSON.stringify(incomplete_loss_view))
+		return false
+	incomplete_loss_canvas.size = Vector2(438.0, 272.0)
+	await process_frame
+	var narrow_loss_view: Dictionary = incomplete_loss_canvas.call("current_view_snapshot")
+	root.remove_child(incomplete_loss_canvas)
+	incomplete_loss_canvas.free()
+	if not _world_map_markers_align_to_background(narrow_loss_view):
+		push_error("Lost-run report map image and icons diverged after a narrow-screen resize: %s." % JSON.stringify(narrow_loss_view))
+		return false
 	screen.set_report({
 		"outcome": {"title": "Players Card earned", "how": "You cashed out clean.", "where": "Casino · Day 1, 20:00", "won": true},
 		"score": {"money_put_to_work": 40, "winner_bonus": 3, "show_winner_bonus": true, "final_score": 120},
 		"items": {"kept": [{"label": "Coffee", "count": 2, "fate": "kept", "icon_path": ""}], "pawned": [{"label": "Card", "fate": "forfeited", "icon_path": ""}], "sold": [{"label": "Watch", "count": 1, "price": 9, "icon_path": ""}]},
+		"take_home_item_reward": {"visible": true, "pending": true, "choices": [{"id": "backpack", "display_name": "Backpack", "capacity": 5, "icon_path": "res://assets/art/items/backpack.png"}, {"id": "bag", "display_name": "Bag", "capacity": 3, "icon_path": "res://assets/art/items/bag.png"}], "summary_line": ""},
 		"bag_reward": {"visible": true, "pending": true, "choices": [{"marker_id": "run-victory-bag", "display_name": "Roadside Luck Blue Bag", "collection_name": "Roadside Luck", "tier_label": "Blue"}], "summary_lines": []},
 		"meta_reward": {"visible": true, "kind": "grand_casino_chips", "title": "CHIPS KEPT · Grand Casino Chips ×37", "detail": "Face value 37 · Sal offers 22 gold"},
 		"debts": [{"lender": "Sal", "amount": 20, "outcome": "redeemed", "tone": "settled"}],
@@ -72,11 +115,18 @@ func _check_run_report_screen_component() -> bool:
 	})
 	await process_frame
 	var snapshot: Dictionary = screen.debug_layout_snapshot()
+	var report_map_view: Dictionary = (screen.get("map_canvas") as Node).call("current_view_snapshot")
+	if not _world_map_markers_align_to_background(report_map_view):
+		push_error("Lost-run report map icons did not use the same fitted transform as the map picture: %s." % JSON.stringify(report_map_view))
+		return false
 	if bool(snapshot.get("has_scroll_container", true)):
 		push_error("Run report component contains a ScrollContainer.")
 		return false
 	if not bool(snapshot.get("bag_reward_visible", false)) or not bool(snapshot.get("bag_reward_pending", false)) or int(snapshot.get("bag_reward_choice_count", 0)) != 1:
 		push_error("Run report did not present the earned collection-bag choice.")
+		return false
+	if not bool(snapshot.get("take_home_item_reward_visible", false)) or not bool(snapshot.get("take_home_item_reward_pending", false)) or int(snapshot.get("take_home_item_reward_choice_count", 0)) != 2 or str(snapshot.get("take_home_item_reward_label", "")) != "ITEM EARNED":
+		push_error("Run report did not clearly present the required earned-item take-home choice.")
 		return false
 	if not bool(snapshot.get("meta_reward_visible", false)) or not str(snapshot.get("meta_reward_text", "")).contains("Grand Casino Chips ×37"):
 		push_error("Run report RESULT did not present the uncashed Grand Casino Chips reward.")
@@ -87,6 +137,10 @@ func _check_run_report_screen_component() -> bool:
 	screen.call("_on_bag_claim_pressed")
 	if claimed_marker_ids != ["run-victory-bag"]:
 		push_error("Run report collection-bag action did not emit the selected marker id.")
+		return false
+	screen.call("_on_take_home_item_claim_pressed")
+	if claimed_take_home_item_ids != ["backpack"]:
+		push_error("Run report take-home action did not emit the selected earned item id.")
 		return false
 	var bounds := Rect2(Vector2.ZERO, screen.size)
 	for rect_value in (snapshot.get("section_rects", {}) as Dictionary).values():
@@ -120,6 +174,9 @@ func _check_run_report_screen_component() -> bool:
 	var small_snapshot := screen.debug_layout_snapshot()
 	if not bool(small_snapshot.get("small_screen_mode", false)) or bool(small_snapshot.get("has_scroll_container", true)):
 		push_error("Run report small-screen mode did not remain a no-scroll surface.")
+		return false
+	if not _world_map_markers_align_to_background((screen.get("map_canvas") as Node).call("current_view_snapshot")):
+		push_error("Run report map image and icons diverged in small-screen mode.")
 		return false
 	screen.set_reduce_motion(true)
 	if float(screen.debug_layout_snapshot().get("replay_progress", 0.0)) != 1.0:
@@ -917,6 +974,33 @@ func _world_map_background_aspect_is_stable(view: Dictionary) -> bool:
 	var source_aspect := float(view.get("background_source_aspect", 0.0))
 	var destination_aspect := float(view.get("background_destination_aspect", -1.0))
 	return source_aspect > 0.0 and bool(view.get("background_fills_canvas", false)) and absf(source_aspect - destination_aspect) <= 0.001
+
+
+func _world_map_markers_align_to_background(view: Dictionary) -> bool:
+	var nodes: Array = view.get("nodes", []) if typeof(view.get("nodes", [])) == TYPE_ARRAY else []
+	var markers: Array = view.get("icon_markers", []) if typeof(view.get("icon_markers", [])) == TYPE_ARRAY else []
+	if nodes.is_empty() or markers.size() != nodes.size():
+		return false
+	var bounds_data: Dictionary = view.get("map_bounds", {}) if typeof(view.get("map_bounds", {})) == TYPE_DICTIONARY else {}
+	var rect_data: Dictionary = view.get("background_destination_rect", {}) if typeof(view.get("background_destination_rect", {})) == TYPE_DICTIONARY else {}
+	var transform_data: Dictionary = view.get("node_transform_rect", {}) if typeof(view.get("node_transform_rect", {})) == TYPE_DICTIONARY else {}
+	if rect_data != transform_data:
+		return false
+	var bounds := Rect2(Vector2(float(bounds_data.get("x", 0.0)), float(bounds_data.get("y", 0.0))), Vector2(float(bounds_data.get("width", 0.0)), float(bounds_data.get("height", 0.0))))
+	var destination_rect := Rect2(Vector2(float(rect_data.get("x", 0.0)), float(rect_data.get("y", 0.0))), Vector2(float(rect_data.get("width", 0.0)), float(rect_data.get("height", 0.0))))
+	if bounds.size.x <= 0.0 or bounds.size.y <= 0.0 or destination_rect.size.x <= 0.0 or destination_rect.size.y <= 0.0:
+		return false
+	for marker_value in markers:
+		var marker: Dictionary = marker_value
+		var position: Dictionary = marker.get("position", {}) if typeof(marker.get("position", {})) == TYPE_DICTIONARY else {}
+		var center: Dictionary = marker.get("screen_center", {}) if typeof(marker.get("screen_center", {})) == TYPE_DICTIONARY else {}
+		var local_x := (float(position.get("x", 0.5)) - bounds.position.x) / bounds.size.x
+		var local_y := (float(position.get("y", 0.5)) - bounds.position.y) / bounds.size.y
+		var expected := destination_rect.position + Vector2(local_x, local_y) * destination_rect.size
+		var actual := Vector2(float(center.get("x", -9999.0)), float(center.get("y", -9999.0)))
+		if actual.distance_to(expected) > 0.75:
+			return false
+	return true
 
 
 func _check_performance_liveness_guard_component() -> bool:

@@ -320,6 +320,85 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 	})
 
 
+func surface_realtime_state_patch(run_state: RunState, environment: Dictionary, ui_state: Dictionary, current_surface_state: Dictionary = {}) -> Dictionary:
+	var table := _peek_table_state(environment)
+	if table.is_empty():
+		return {}
+	var session := _normalized_session(run_state, environment, ui_state, table)
+	var bets: Array = _bet_array(session.get("roulette_bets", current_surface_state.get("roulette_bets", [])))
+	var last_result_source := _last_result_source(table)
+	var last_result := _surface_last_result(last_result_source)
+	var now_msec := _surface_time_msec_for_result(ui_state, last_result_source)
+	var phase_status := _roulette_phase_status_for_result(last_result_source, now_msec)
+	var spin_active := bool(phase_status.get("spin_active", false))
+	var payout_active := bool(phase_status.get("payout_active", false))
+	var result_reveal_active := bool(phase_status.get("result_reveal_active", false))
+	var roulette_wheel_locked := bool(phase_status.get("motion_active", false))
+	var result_settled_for_display := _roulette_result_settled_for_surface(last_result_source, phase_status)
+	var past_post_window := _past_post_window_status(table, session, last_result, now_msec, run_state)
+	var past_post_available := bool(past_post_window.get("available", false))
+	var wheel_read_challenge := _normalized_wheel_read_challenge(session.get("wheel_read_challenge", current_surface_state.get("wheel_read_challenge", {})))
+	var wheel_read_active := not wheel_read_challenge.is_empty() and str(wheel_read_challenge.get("skill_grade", "")).is_empty()
+	var roulette_motion_active := roulette_wheel_locked or past_post_available or wheel_read_active
+	var barred := bool(table.get("table_barred", false))
+	var visible_last_results := _roulette_visible_last_results(table, last_result_source, result_settled_for_display)
+	var recent_numbers := _roulette_recent_numbers_from_history(visible_last_results)
+	var timer_active := not barred and not roulette_wheel_locked
+	var round_timer := GameModule.table_round_timer_status_peek(table, now_msec, "Next spin", ROULETTE_ROUND_DELAY_MSEC) if timer_active else {}
+	var table_notice := _table_notice(table, session, last_result, spin_active, payout_active or result_reveal_active or not result_settled_for_display, round_timer)
+	if past_post_available:
+		table_notice = "The payout lock is open. A late chip could still slide."
+	elif wheel_read_active:
+		table_notice = "Track the cyan tick and lock it over the low-side marker."
+	if barred:
+		table_notice = str(table.get("barred_reason", "The roulette wheel is closed to you."))
+	return {
+		"surface_realtime_state_refresh": roulette_motion_active,
+		"surface_time_msec": now_msec,
+		"surface_animation_channels": [
+			GameModule.surface_animation_channel(
+				ROULETTE_SPIN_CHANNEL,
+				str(last_result.get("spin_id", "")) if spin_active else "",
+				SPIN_ANIMATION_DURATION_MSEC if spin_active else 0,
+				int(last_result.get("resolved_at_msec", 0)),
+				{"metadata": {"winning_number": str(last_result.get("winning_number", ""))}}
+			),
+			GameModule.surface_animation_channel(
+				ROULETTE_PAYOUT_CHANNEL,
+				str(last_result.get("payout_animation_id", "")) if payout_active else "",
+				PAYOUT_ANIMATION_DURATION_MSEC if payout_active else 0,
+				int(last_result.get("resolved_at_msec", 0)) + SPIN_ANIMATION_DURATION_MSEC
+			),
+		],
+		"surface_action_blocks": _surface_action_blocks(roulette_wheel_locked),
+		"phase": "barred" if barred else "spinning" if spin_active else "payout" if payout_active or result_reveal_active else "betting",
+		"dealer_attention_pressure": 12 if spin_active else 8 if payout_active else 0,
+		"can_spin": not barred and not roulette_wheel_locked,
+		"can_undo": not barred and not roulette_wheel_locked and not (_array(session.get("roulette_undo_stack", [])).is_empty()),
+		"can_clear": not barred and not roulette_wheel_locked and not bets.is_empty(),
+		"can_rebet": not barred and not roulette_wheel_locked and not _bet_array(session.get("roulette_rebet", table.get("last_bets", []))).is_empty(),
+		"bankroll": _roulette_visible_bankroll(run_state, environment, last_result_source, result_settled_for_display),
+		"last_result": last_result,
+		"last_results": visible_last_results,
+		"recent_numbers": recent_numbers,
+		"roulette_recent_numbers": recent_numbers,
+		"past_post_available": past_post_available,
+		"past_post_window": past_post_window,
+		"wheel_read_challenge": wheel_read_challenge,
+		"wheel_read_meter": _wheel_read_meter(wheel_read_challenge, session),
+		"wheel_read_active": wheel_read_active,
+		"result_reveal_active": result_reveal_active,
+		"roulette_result_settled": result_settled_for_display,
+		"roulette_motion_active": roulette_motion_active,
+		"result_message": str(last_result.get("summary", "")) if result_settled_for_display else "",
+		"table_notice": table_notice,
+		"table_round_timer": round_timer,
+		"spin_elapsed_msec": int(phase_status.get("elapsed_msec", -1)),
+		"spin_trajectory": _dictionary_array(last_result_source.get("trajectory", [])),
+		"native_selected_surface_actions": _selected_surface_actions(session),
+	}
+
+
 func draw_surface(surface, surface_state: Dictionary, _render_context: Dictionary = {}) -> bool:
 	if str(surface_state.get("surface_renderer", "")) != "roulette":
 		return false

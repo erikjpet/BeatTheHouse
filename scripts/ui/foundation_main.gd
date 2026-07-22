@@ -41,6 +41,7 @@ const CONTEXT_MODE_META_PAWN_COUNTER := "meta_pawn_counter"
 const CONTEXT_MODE_META_SAL_SHELF := "meta_sal_shelf"
 const CONTEXT_MODE_META_SAL_TALK := "meta_sal_talk"
 const META_LOCATION_HOME := "home"
+const META_LOCATION_START_RUN := "start_run"
 const RUN_INFO_BAND_RATIO := 0.15
 const RUN_SURFACE_BAND_RATIO := 0.85
 const RUN_INFO_MIN_HEIGHT := 144.0
@@ -68,7 +69,11 @@ const ACCESSIBILITY_BASE_COLOR_META := "accessibility_base_font_color"
 const ACCESSIBILITY_STYLEBOX_META_PREFIX := "accessibility_base_stylebox_"
 const DEFAULT_CONTROL_FONT_SIZE := 13
 const MIN_NATIVE_TOUCH_TARGET_HEIGHT := 40.0
-const RUN_INVENTORY_POPUP_SIZE := Vector2(820, 500)
+const EVENT_CHOICE_POPUP_BASE_SIZE := Vector2(460, 320)
+const EVENT_CHOICE_POPUP_MAX_SIZE := Vector2(640, 500)
+const EVENT_CHOICE_TEXT_MAX_LINES := 2
+const EVENT_CHOICE_SUMMARY_MAX_LINES := 3
+const RUN_INVENTORY_POPUP_SIZE := Vector2(1120, 620)
 const RUN_INVENTORY_POPUP_MARGIN := 12.0
 const RUN_INVENTORY_ITEM_CARD_SIZE := Vector2(118, 104)
 const WORLD_MAP_NODE_BUTTON_POOL_SIZE := 12
@@ -95,6 +100,8 @@ const SmallScreenPolicyScript := preload("res://scripts/ui/small_screen_policy.g
 const AttributeBadgeRowScript := preload("res://scripts/ui/attribute_badge_row.gd")
 const RunInventoryScreenScript := preload("res://scripts/ui/run_inventory_screen.gd")
 const RunInventoryViewModelScript := preload("res://scripts/ui/run_inventory_view_model.gd")
+const MetaItemInteractionScreenScript := preload("res://scripts/ui/meta_item_interaction_screen.gd")
+const MetaItemInteractionViewModelScript := preload("res://scripts/ui/meta_item_interaction_view_model.gd")
 const CageCounterViewModelScript := preload("res://scripts/ui/cage_counter_view_model.gd")
 const CageAtmViewModelScript := preload("res://scripts/ui/cage_atm_view_model.gd")
 const MetaCollectionViewModelScript := preload("res://scripts/ui/meta_collection_view_model.gd")
@@ -302,6 +309,10 @@ var conclusion_animation_snapshot: Dictionary = {}
 var conclusion_animation_tweens: Array[Tween] = []
 var run_inventory_screen: RunInventoryScreen
 var run_inventory_overlay: Control
+var meta_item_interaction_screen: MetaItemInteractionScreen
+var meta_item_interaction_mode := ""
+var selected_meta_item_key := ""
+var meta_trade_selected_instance_ids: Array = []
 var run_inventory_panel: PanelContainer
 var run_inventory_items_scroll: ScrollContainer
 var run_inventory_detail_panel: PanelContainer
@@ -498,7 +509,7 @@ func uses_foundation_runtime() -> bool:
 
 
 # Starts a deterministic foundation run.
-func start_foundation_run(seed_text: String = DEFAULT_SEED, challenge_config: Dictionary = {}) -> void:
+func start_foundation_run(seed_text: String = DEFAULT_SEED, challenge_config: Dictionary = {}, include_meta_home_modifiers: bool = true) -> void:
 	if library == null:
 		_initialize_foundation()
 	_finish_conclusion_animation()
@@ -518,13 +529,14 @@ func start_foundation_run(seed_text: String = DEFAULT_SEED, challenge_config: Di
 	close_challenge_selection()
 	_hide_run_menu()
 	_hide_world_map_overlay()
+	close_meta_item_interaction()
 	_hide_run_journal_popup()
 	_hide_travel_transition()
 	_reset_game_surface_runtime_state()
 	var resolved_seed := seed_text.strip_edges()
 	if resolved_seed.is_empty():
 		resolved_seed = DEFAULT_SEED
-	var resolved_challenge_config := _challenge_with_meta_home_for_run(resolved_seed, challenge_config)
+	var resolved_challenge_config := _challenge_with_meta_home_for_run(resolved_seed, challenge_config) if include_meta_home_modifiers else RunState.normalize_challenge(resolved_seed, challenge_config)
 	run_state = RunState.new()
 	run_state.start_new(resolved_seed, resolved_challenge_config)
 	_configure_coach_for_run()
@@ -618,23 +630,29 @@ func enter_first_available_game() -> void:
 
 
 # Enters a game through its data-routed GameModule.
-func enter_game(game_id: String) -> void:
-	if _guard_player_input_route(false, "game:%s" % game_id):
+func enter_game(game_id: String, state_key: String = "") -> void:
+	var clean_game_id := game_id.strip_edges()
+	var clean_state_key := state_key.strip_edges()
+	if clean_state_key.is_empty():
+		clean_state_key = clean_game_id
+	var object_id := "game:%s" % clean_state_key
+	if _guard_player_input_route(false, object_id):
 		return
-	var definition := library.game(game_id)
+	var definition := library.game(clean_game_id)
 	if definition.is_empty():
 		_show_message("Game definition is missing.")
 		return
-	var game_module := _game_module_for_id(game_id)
+	var game_module := _game_module_for_id(clean_game_id)
 	if game_module == null:
 		_show_message("This game is not ready here.")
 		return
+	_set_active_game_state_key(clean_game_id, clean_state_key)
 	_reset_game_surface_runtime_state()
 	current_game = game_module
 	_sync_presented_bankroll_to_actual()
 	selected_action_category = ACTION_CATEGORY_GAMES
 	_set_current_screen(SCREEN_GAME)
-	focus_interactable_object("game:%s" % game_id)
+	focus_interactable_object(object_id)
 	_clear_selected_game_action()
 	var result := current_game.enter(run_state, run_state.current_environment)
 	last_game_result = result.duplicate(true)
@@ -923,7 +941,10 @@ func _advance_game_surface_realtime_state() -> void:
 	if last_game_surface_realtime_refresh_msec > 0 and now_msec - last_game_surface_realtime_refresh_msec < GAME_SURFACE_REALTIME_REFRESH_INTERVAL_MSEC:
 		return
 	last_game_surface_realtime_refresh_msec = now_msec
-	game_surface_canvas.render_game_snapshot(_game_view_snapshot())
+	var patch := _game_surface_realtime_state_patch(now_msec)
+	if patch.is_empty():
+		return
+	game_surface_canvas.apply_surface_state_patch(patch)
 
 
 func _advance_presented_bankroll() -> void:
@@ -1017,73 +1038,143 @@ func _advance_environment_game_runtime() -> void:
 		return
 	if (current_screen != SCREEN_ENVIRONMENT and current_screen != SCREEN_GAME) or meta_session_active:
 		return
-	var game_ids_value: Variant = run_state.current_environment.get("game_ids", [])
-	if typeof(game_ids_value) != TYPE_ARRAY or (game_ids_value as Array).is_empty():
-		return
-	var current_game_id := current_game.get_id() if current_game != null else ""
-	var has_runtime_candidate := false
-	for candidate_value in game_ids_value as Array:
-		var candidate_id := str(candidate_value)
-		if candidate_id.is_empty() or candidate_id == current_game_id:
-			continue
-		has_runtime_candidate = true
-		break
-	if not has_runtime_candidate:
-		return
 	if _foreground_game_blocks_environment_runtime():
 		return
 	if _modal_contract_blocks_player_input():
 		return
-	environment_game_runtime_scan_count += 1
 	var now_msec := Time.get_ticks_msec()
+	var scanned := _advance_environment_game_runtime_for_environment(run_state.current_environment, now_msec)
+	if run_state.is_terminal() or _modal_contract_blocks_player_input():
+		return
+	scanned = _advance_grand_casino_stored_main_floor_slot_runtime(now_msec) or scanned
+	if scanned:
+		environment_game_runtime_scan_count += 1
+
+
+func _advance_environment_game_runtime_for_environment(environment_data: Dictionary, now_msec: int, game_ids_override: Array = []) -> bool:
+	var game_ids_value: Variant = game_ids_override if not game_ids_override.is_empty() else environment_data.get("game_ids", [])
+	if typeof(game_ids_value) != TYPE_ARRAY or (game_ids_value as Array).is_empty():
+		return false
+	var current_environment_id := str(run_state.current_environment.get("id", ""))
+	var environment_id := str(environment_data.get("id", ""))
+	var same_environment := current_environment_id == environment_id
+	var current_game_id := current_game.get_id() if current_game != null else ""
+	var has_runtime_candidate := false
+	for candidate_value in game_ids_value as Array:
+		var candidate_id := str(candidate_value)
+		if candidate_id.is_empty() or (same_environment and candidate_id == current_game_id):
+			continue
+		has_runtime_candidate = true
+		break
+	if not has_runtime_candidate:
+		return false
+	var original_active_game_state_keys := _copy_dict(environment_data.get("active_game_state_keys", {}))
 	for game_id_value in game_ids_value as Array:
 		var game_id := str(game_id_value)
 		if game_id.is_empty():
 			continue
-		if current_game != null and game_id == current_game.get_id():
+		if same_environment and current_game != null and game_id == current_game.get_id():
 			continue
 		var game := _game_module_for_id(game_id)
 		if game == null:
 			continue
-		if not game.environment_runtime_needs_tick(run_state, run_state.current_environment, now_msec):
-			continue
-		var runtime_wager_cost := maxi(0, game.wager_cost_for_context("spin", 0, run_state, run_state.current_environment, {}))
-		if _wager_needs_final_bankroll_confirmation(game, "spin", 0, runtime_wager_cost, {}):
-			_pause_environment_runtime_for_wager_confirmation(game, game_id)
-			_show_wager_confirmation_popup("spin", runtime_wager_cost, runtime_wager_cost, true, false, game_id)
-			_show_message("%s autoplay needs your approval before risking your last cash." % game.get_display_name())
-			_refresh_runtime_environment_views()
-			return
-		var rng := run_state.create_rng()
-		var command := game.environment_runtime_tick(run_state, run_state.current_environment, rng, now_msec)
-		if command.is_empty() or not bool(command.get("handled", false)):
-			continue
-		var audio_cue := str(command.get("audio_cue", ""))
-		if not audio_cue.is_empty():
-			_play_environment_audio_cue(audio_cue, float(command.get("audio_cue_volume_db", -1.0)))
-		var result: Dictionary = command.get("result", {})
-		if not result.is_empty():
-			if bool(result.get("ok", false)):
-				run_state.advance_environment_turns(1)
-				if bool(result.get("host_apply_result", false)):
-					GameModule.apply_result(run_state, result, rng)
-				_evaluate_run_terminal_state()
-				if run_state.is_terminal():
-					_render_environment_screen()
-					return
-			last_environment_runtime_result = result.duplicate(true)
-			if current_game == null:
-				last_game_result = result.duplicate(true)
-				last_item_result = {}
-				last_hook_result = {}
-				_show_message(str(result.get("message", "")))
-			elif bool(command.get("attention", false)) or bool(result.get("slot_pending_feature", false)):
-				_show_message(str(result.get("message", command.get("message", ""))))
-			_advance_alcohol_absorption()
-			_autosave_foundation_run("Autosaved.")
-		elif command.has("message"):
-			_show_message(str(command.get("message", "")))
-			_refresh_runtime_environment_views()
+		for state_key in _environment_runtime_state_keys(environment_data, game_id):
+			_set_environment_active_game_state_key(environment_data, game_id, state_key)
+			if not game.environment_runtime_needs_tick(run_state, environment_data, now_msec):
+				continue
+			var runtime_wager_cost := maxi(0, game.wager_cost_for_context("spin", 0, run_state, environment_data, {}))
+			if _wager_needs_final_bankroll_confirmation(game, "spin", 0, runtime_wager_cost, {}, environment_data):
+				_pause_environment_runtime_for_wager_confirmation(game, game_id, environment_data)
+				_show_wager_confirmation_popup("spin", runtime_wager_cost, runtime_wager_cost, true, false, game_id)
+				_show_message("%s autoplay needs your approval before risking your last cash." % game.get_display_name())
+				_restore_environment_active_game_state_keys(environment_data, original_active_game_state_keys)
+				_refresh_runtime_environment_views()
+				return true
+			var rng := run_state.create_rng()
+			var command := game.environment_runtime_tick(run_state, environment_data, rng, now_msec)
+			if command.is_empty() or not bool(command.get("handled", false)):
+				continue
+			var audio_cue := str(command.get("audio_cue", ""))
+			if not audio_cue.is_empty():
+				_play_environment_audio_cue(audio_cue, float(command.get("audio_cue_volume_db", -1.0)))
+			var result: Dictionary = command.get("result", {})
+			if not result.is_empty():
+				if bool(result.get("ok", false)):
+					run_state.advance_environment_turns(1)
+					if bool(result.get("host_apply_result", false)):
+						GameModule.apply_result(run_state, result, rng)
+					_evaluate_run_terminal_state()
+					if run_state.is_terminal():
+						_restore_environment_active_game_state_keys(environment_data, original_active_game_state_keys)
+						_render_environment_screen()
+						return true
+				last_environment_runtime_result = result.duplicate(true)
+				if current_game == null:
+					last_game_result = result.duplicate(true)
+					last_item_result = {}
+					last_hook_result = {}
+					_show_message(str(result.get("message", "")))
+				elif bool(command.get("attention", false)) or bool(result.get("slot_pending_feature", false)):
+					_show_message(str(result.get("message", command.get("message", ""))))
+				_advance_alcohol_absorption()
+				_autosave_foundation_run("Autosaved.")
+			elif command.has("message"):
+				_show_message(str(command.get("message", "")))
+				_refresh_runtime_environment_views()
+	_restore_environment_active_game_state_keys(environment_data, original_active_game_state_keys)
+	return true
+
+
+func _advance_grand_casino_stored_main_floor_slot_runtime(now_msec: int) -> bool:
+	var current_archetype_id := str(run_state.current_environment.get("archetype_id", "")).strip_edges()
+	if current_archetype_id == RunState.GRAND_CASINO_ARCHETYPE_ID or not RunState.GRAND_CASINO_ARCHETYPE_IDS.has(current_archetype_id):
+		return false
+	var main_floor := run_state.grand_casino_room_environment(RunState.GRAND_CASINO_ARCHETYPE_ID)
+	var main_floor_slot_id := _main_floor_slot_game_id()
+	if main_floor_slot_id.is_empty() or main_floor.is_empty() or not _string_array(main_floor.get("game_ids", [])).has(main_floor_slot_id):
+		return false
+	var scanned := _advance_environment_game_runtime_for_environment(main_floor, now_msec, [main_floor_slot_id])
+	if scanned:
+		run_state.store_grand_casino_room_environment(main_floor)
+	return scanned
+
+
+func _main_floor_slot_game_id() -> String:
+	if library == null:
+		return ""
+	for game_value in library.games:
+		var game_def := _copy_dict(game_value)
+		if str(game_def.get("module_path", "")).ends_with("scripts/games/slot.gd"):
+			return str(game_def.get("id", "")).strip_edges()
+	return ""
+
+
+func _environment_runtime_state_keys(environment_data: Dictionary, game_id: String) -> Array:
+	var result: Array = [game_id]
+	var layout := _copy_dict(environment_data.get("layout", {}))
+	var fixture_counts := _copy_dict(layout.get("game_fixture_counts", {}))
+	var fixture_count := maxi(1, int(fixture_counts.get(game_id, 1)))
+	for fixture_index in range(1, fixture_count):
+		result.append("%s:%d" % [game_id, fixture_index + 1])
+	var game_states := _copy_dict(environment_data.get("game_states", {}))
+	for key_value in game_states.keys():
+		var key := str(key_value)
+		if key.begins_with("%s:" % game_id) and not result.has(key):
+			result.append(key)
+	return result
+
+
+func _set_environment_active_game_state_key(environment_data: Dictionary, game_id: String, state_key: String) -> void:
+	var active_keys := _copy_dict(environment_data.get("active_game_state_keys", {}))
+	active_keys[game_id] = state_key
+	environment_data["active_game_state_keys"] = active_keys
+
+
+func _restore_environment_active_game_state_keys(environment_data: Dictionary, active_keys: Dictionary) -> void:
+	if active_keys.is_empty():
+		environment_data.erase("active_game_state_keys")
+	else:
+		environment_data["active_game_state_keys"] = active_keys.duplicate(true)
 
 
 func _foreground_game_blocks_environment_runtime() -> bool:
@@ -1145,6 +1236,56 @@ func _current_game_surface_auto_tick_state() -> Dictionary:
 		if not key.is_empty() and game_surface_ui_state.has(key):
 			ui_state[key] = game_surface_ui_state[key]
 	return _apply_game_surface_time_fields(ui_state)
+
+
+func _current_game_surface_realtime_ui_state(now_msec: int) -> Dictionary:
+	var ui_state := game_surface_ui_state.duplicate(false)
+	ui_state["selected_action_id"] = selected_action_id
+	ui_state["selected_action_kind"] = selected_action_kind
+	ui_state["selected_stake"] = _current_selected_stake()
+	ui_state["surface_runtime_status"] = game_surface_canvas.surface_realtime_ui_status() if game_surface_canvas != null else {}
+	ui_state["focused_talk_speaker"] = _focused_talk_speaker_snapshot()
+	return _apply_game_surface_time_fields(ui_state, now_msec)
+
+
+func _game_surface_realtime_state_patch(now_msec: int) -> Dictionary:
+	if current_game == null or run_state == null or game_surface_canvas == null:
+		return {}
+	var ui_state := _current_game_surface_realtime_ui_state(now_msec)
+	if current_game.has_method("surface_realtime_state_patch"):
+		var module_patch: Variant = current_game.surface_realtime_state_patch(run_state, run_state.current_environment, ui_state, game_surface_canvas.realtime_surface_state())
+		if typeof(module_patch) == TYPE_DICTIONARY:
+			var typed_patch: Dictionary = module_patch
+			_augment_game_surface_realtime_patch(typed_patch, ui_state)
+			return typed_patch
+	var module_surface_state: Variant = current_game.surface_state(run_state, run_state.current_environment, ui_state)
+	if typeof(module_surface_state) != TYPE_DICTIONARY:
+		return {}
+	var patch: Dictionary = module_surface_state
+	_augment_game_surface_realtime_patch(patch, ui_state)
+	return patch
+
+
+func _augment_game_surface_realtime_patch(patch: Dictionary, ui_state: Dictionary) -> void:
+	_sync_surface_feature_music_state(patch)
+	if patch.has("surface_renderer"):
+		var surface_renderer := str(patch.get("surface_renderer", ""))
+		patch["surface_life"] = str(patch.get("surface_life", _surface_life_for_renderer(surface_renderer)))
+		patch["surface_cast"] = str(patch.get("surface_cast", _surface_cast_for_renderer(surface_renderer)))
+	patch["bankroll"] = _presented_bankroll()
+	patch["suspicion_level"] = run_state.suspicion_level()
+	patch["drunk_level"] = run_state.drunk_level
+	patch["drunk_time_scale"] = float(ui_state.get("drunk_time_scale", _current_drunk_time_scale()))
+	patch["drunk_time_scale_percent"] = int(ui_state.get("drunk_time_scale_percent", 100))
+	patch["drunk_world_speed_percent"] = int(ui_state.get("drunk_world_speed_percent", 100))
+	patch["pending_drunk_absorption"] = run_state.pending_drunk_absorption_amount()
+	patch["drunk_distortion_suppression_turns"] = run_state.drunk_distortion_suppression_turns
+	patch["drunk_effect_mode"] = _drunk_effect_mode()
+	patch["reduce_motion"] = _reduce_motion_enabled()
+	patch["selected_action_id"] = selected_action_id
+	patch["selected_action_kind"] = selected_action_kind
+	patch["selected_action_label"] = selected_action_label
+	patch["selected_stake"] = int(ui_state.get("selected_stake", _current_selected_stake()))
 
 
 func _checkpoint_current_game_surface_ui_state() -> void:
@@ -1423,7 +1564,11 @@ func _confirm_meta_world_map_travel() -> void:
 		return
 	if world_map_overlay != null:
 		world_map_overlay.visible = false
-	_enter_meta_location(str(result.get("target_id", META_LOCATION_HOME)))
+	var target_id := str(result.get("target_id", META_LOCATION_HOME))
+	if target_id == META_LOCATION_START_RUN:
+		start_meta_quick_run()
+		return
+	_enter_meta_location(target_id)
 
 
 # Selects an event choice without mutating simulation state.
@@ -2463,6 +2608,7 @@ func _resolve_sal_starter_dialogue_choice(entry: Dictionary, choice_id: String) 
 		return
 	run_state.complete_talk_event_resolution(str(entry.get("event_id", "dialogue:sal_starter_offer")))
 	_apply_meta_environment(meta_session_location_id)
+	_refresh_meta_item_interaction()
 	_refresh_talk_dock()
 	_show_message(str(result.get("message", "Sal's offer is closed.")))
 	var continuation := "sal_starter_mocking_relist" if choice == "sell_back" else "sal_starter_kept"
@@ -2788,6 +2934,16 @@ func _take_home_container_item_from_popup(container_id: String, item_id: String)
 	_autosave_foundation_run("Autosaved.")
 	if _run_inventory_popup_is_visible():
 		_open_run_inventory_popup("home_container", container_id)
+		return
+	_refresh()
+
+
+func _transfer_home_container_item_from_popup(from_container_id: String, to_container_id: String, item_id: String) -> void:
+	var result: Dictionary = run_state.transfer_item_between_home_containers(from_container_id, to_container_id, item_id) if run_state != null else {"ok": false, "message": "No active home."}
+	_show_message(str(result.get("message", "Transfer failed.")))
+	_autosave_foundation_run("Autosaved.")
+	if _run_inventory_popup_is_visible():
+		_open_run_inventory_popup("home_container", str(result.get("to_container_id", to_container_id)) if bool(result.get("ok", false)) else from_container_id)
 		return
 	_refresh()
 
@@ -3566,6 +3722,13 @@ func _travel_to(target_id: String, target_label: String, choice_data: Dictionary
 		_show_message(str(choice_data.get("disabled_reason", "That route is not available right now.")))
 		_refresh()
 		return
+	if _is_meta_session():
+		var meta_target_id := target_id.strip_edges()
+		if meta_target_id == META_LOCATION_START_RUN:
+			start_meta_quick_run()
+			return
+		_enter_meta_location(meta_target_id)
+		return
 	var local_casino_room_move := bool(choice_data.get("local_casino_room", false))
 	if local_casino_room_move and (not run_state.is_grand_casino_environment() or _environment_archetype(target_id).is_empty()):
 		_show_message("That interior casino door is not available.")
@@ -4067,6 +4230,7 @@ func _build_ui() -> void:
 	_build_event_choice_popup_overlay()
 	_build_conclusion_animation_overlay()
 	_build_run_inventory_overlay()
+	_build_meta_item_interaction_overlay()
 	_build_run_journal_overlay()
 	_build_travel_transition_overlay()
 	_build_world_map_overlay()
@@ -4651,7 +4815,8 @@ func _build_event_choice_popup_overlay() -> void:
 	add_child(event_choice_popup_overlay)
 
 	event_choice_popup_panel = _panel_container(Color("#080817", 0.98), VisualStyle.AMBER)
-	event_choice_popup_panel.custom_minimum_size = Vector2(460, 260)
+	event_choice_popup_panel.custom_minimum_size = EVENT_CHOICE_POPUP_BASE_SIZE
+	event_choice_popup_panel.clip_contents = true
 	event_choice_popup_panel.mouse_filter = Control.MOUSE_FILTER_STOP
 	event_choice_popup_overlay.add_child(event_choice_popup_panel)
 
@@ -4668,6 +4833,8 @@ func _build_event_choice_popup_overlay() -> void:
 	event_choice_popup_summary_label = _label("", 12)
 	_set_control_font_color(event_choice_popup_summary_label, VisualStyle.CYAN)
 	event_choice_popup_summary_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	event_choice_popup_summary_label.max_lines_visible = EVENT_CHOICE_SUMMARY_MAX_LINES
+	event_choice_popup_summary_label.clip_text = true
 	stack.add_child(event_choice_popup_summary_label)
 
 	var separator := HSeparator.new()
@@ -4745,8 +4912,18 @@ func _build_run_inventory_overlay() -> void:
 	run_inventory_screen.place_container_requested.connect(Callable(self, "_place_home_container_from_popup"))
 	run_inventory_screen.store_item_requested.connect(Callable(self, "_store_home_container_item_from_popup"))
 	run_inventory_screen.take_item_requested.connect(Callable(self, "_take_home_container_item_from_popup"))
+	run_inventory_screen.transfer_item_requested.connect(Callable(self, "_transfer_home_container_item_from_popup"))
 	add_child(run_inventory_screen)
 	run_inventory_overlay = run_inventory_screen
+
+
+func _build_meta_item_interaction_overlay() -> void:
+	meta_item_interaction_screen = MetaItemInteractionScreenScript.new()
+	meta_item_interaction_screen.configure(Callable(self, "_run_item_texture_for_asset_path"))
+	meta_item_interaction_screen.close_requested.connect(Callable(self, "close_meta_item_interaction"))
+	meta_item_interaction_screen.selection_changed.connect(Callable(self, "_on_meta_item_selection_changed"))
+	meta_item_interaction_screen.action_requested.connect(Callable(self, "_on_meta_item_action_requested"))
+	add_child(meta_item_interaction_screen)
 
 
 func _build_run_journal_overlay() -> void:
@@ -5329,6 +5506,7 @@ func _build_run_report_screen(parent: BoxContainer) -> void:
 	run_report_screen.home_requested.connect(_on_run_report_home_requested)
 	run_report_screen.copy_seed_requested.connect(_on_run_report_copy_seed_requested)
 	run_report_screen.bag_claim_requested.connect(claim_victory_collection_bag)
+	run_report_screen.take_home_item_claim_requested.connect(claim_victory_container_item)
 	parent.add_child(run_report_screen)
 
 
@@ -5944,6 +6122,9 @@ func _render_run_report() -> void:
 		"grants": run_state.narrative_flags.get(CollectionDropServiceScript.GRANTS_FLAG, []),
 		"selected": run_state.narrative_flags.get(CollectionDropServiceScript.SELECTED_FLAG, ""),
 		"flushed": run_state.narrative_flags.get(CollectionDropServiceScript.FLUSHED_FLAG, false),
+		"take_home_item_extracted": run_state.narrative_flags.get(RunReportViewModelScript.TAKE_HOME_ITEM_EXTRACTED_FLAG, false),
+		"take_home_item_id": run_state.narrative_flags.get(RunReportViewModelScript.TAKE_HOME_ITEM_ID_FLAG, ""),
+		"inventory": run_state.inventory,
 	})
 	var key := "%s|%s|%s|%s|%d|%d|%d|%d|%d" % [run_state.seed_text, run_state.run_status, run_state.run_failure_reason, str(run_state.narrative_flags.get("demo_victory_route", "")), run_state.story_log_entry_count(), run_state.heat_history.size(), run_state.rng_state, run_state.bankroll, hash(bag_reward_key)]
 	if key == run_report_model_key:
@@ -6191,6 +6372,9 @@ func _add_context_event_inline_actions(card: VBoxContainer, event_id: String, in
 		if not detail.is_empty():
 			var detail_label := _muted_label(detail, 11)
 			_set_control_font_color(detail_label, VisualStyle.SOFT)
+			detail_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+			detail_label.max_lines_visible = EVENT_CHOICE_TEXT_MAX_LINES
+			detail_label.clip_text = true
 			card.add_child(detail_label)
 		_add_attribute_badge_row(card, action_data.get("attribute_badges", []), 16)
 		rendered = true
@@ -6210,6 +6394,9 @@ func _add_event_choice_action_option(stack: VBoxContainer, event_id: String, cho
 	if not detail.is_empty():
 		var detail_label := _muted_label(detail, 11)
 		_set_control_font_color(detail_label, VisualStyle.SOFT)
+		detail_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		detail_label.max_lines_visible = EVENT_CHOICE_TEXT_MAX_LINES
+		detail_label.clip_text = true
 		stack.add_child(detail_label)
 	_add_attribute_badge_row(stack, choice_data.get("attribute_badges", []), 16)
 
@@ -6674,25 +6861,27 @@ func _wager_cost_for_action(action_id: String, stake: int) -> int:
 	return maxi(0, current_game.wager_cost_for_context(action_id, stake, run_state, run_state.current_environment, _current_game_surface_ui_state()))
 
 
-func _wager_needs_final_bankroll_confirmation(game: GameModule, action_id: String, stake: int, wager_cost: int, ui_state: Dictionary = {}) -> bool:
+func _wager_needs_final_bankroll_confirmation(game: GameModule, action_id: String, stake: int, wager_cost: int, ui_state: Dictionary = {}, environment_data: Dictionary = {}) -> bool:
 	if run_state == null or game == null or wager_cost <= 0:
 		return false
+	var wager_environment := environment_data if not environment_data.is_empty() else run_state.current_environment
 	var guaranteed_return := maxi(0, game.minimum_wager_return_for_context(
 		action_id,
 		stake,
 		wager_cost,
 		run_state,
-		run_state.current_environment,
+		wager_environment,
 		ui_state
 	))
-	var wager_balance := run_state.wager_capacity_for_game(game.get_id(), run_state.current_environment)
+	var wager_balance := run_state.wager_capacity_for_game(game.get_id(), wager_environment)
 	return wager_balance > 0 and wager_balance - wager_cost + guaranteed_return <= 0
 
 
-func _pause_environment_runtime_for_wager_confirmation(game: GameModule, _game_id: String) -> void:
+func _pause_environment_runtime_for_wager_confirmation(game: GameModule, _game_id: String, environment_data: Dictionary = {}) -> void:
 	if game == null or run_state == null:
 		return
-	var command := game.surface_pause_repeating_action_for_confirmation({}, run_state, run_state.current_environment)
+	var wager_environment := environment_data if not environment_data.is_empty() else run_state.current_environment
+	var command := game.surface_pause_repeating_action_for_confirmation({}, run_state, wager_environment)
 	if not command.is_empty() and bool(command.get("handled", false)):
 		_show_message(str(command.get("message", "Autoplay paused for confirmation.")))
 
@@ -6747,7 +6936,7 @@ func _blocking_decision_popup_is_visible() -> bool:
 
 
 func _modal_contract_blocks_player_input() -> bool:
-	return travel_transition_active or _event_choice_popup_is_visible() or _run_inventory_popup_is_visible() or _run_journal_popup_is_visible() or _world_map_overlay_is_visible() or _run_menu_is_visible()
+	return travel_transition_active or _event_choice_popup_is_visible() or _meta_item_interaction_is_visible() or _run_inventory_popup_is_visible() or _run_journal_popup_is_visible() or _world_map_overlay_is_visible() or _run_menu_is_visible()
 
 
 func _blocking_modal_message() -> String:
@@ -6757,6 +6946,8 @@ func _blocking_modal_message() -> String:
 		return "Choose a response before doing anything else."
 	if _world_map_overlay_is_visible():
 		return "Close the map before doing anything else."
+	if _meta_item_interaction_is_visible():
+		return "Close the item view before doing anything else."
 	if _run_inventory_popup_is_visible():
 		return "Close inventory before doing anything else."
 	if _run_journal_popup_is_visible():
@@ -6833,6 +7024,8 @@ func _refresh_modal_contract_owner() -> void:
 		_refresh_world_map_overlay()
 	if _run_inventory_popup_is_visible():
 		_render_run_inventory_popup_contents()
+	if _meta_item_interaction_is_visible():
+		_refresh_meta_item_interaction()
 	if _run_journal_popup_is_visible():
 		_render_run_journal_contents()
 	if _run_menu_is_visible():
@@ -6861,6 +7054,7 @@ func current_overlay_state_snapshot() -> Dictionary:
 		"event_choice_popup_blocking": _blocking_decision_popup_is_visible(),
 		"talk_dock_visible": talk_dock != null and talk_dock.visible,
 		"world_map_visible": _world_map_overlay_is_visible(),
+		"meta_item_interaction_visible": _meta_item_interaction_is_visible(),
 		"run_inventory_visible": _run_inventory_popup_is_visible(),
 		"run_inventory_mode": run_inventory_popup_mode,
 		"run_journal_visible": _run_journal_popup_is_visible(),
@@ -7039,8 +7233,14 @@ func _add_wager_confirmation_card(label: String, text: String, _impact: String, 
 	card.add_child(stack)
 	var heading := _label(label, 16)
 	_set_control_font_color(heading, border)
+	heading.max_lines_visible = 1
+	heading.clip_text = true
 	stack.add_child(heading)
-	stack.add_child(_label(text, 13))
+	var body := _label(text, 13)
+	body.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	body.max_lines_visible = EVENT_CHOICE_TEXT_MAX_LINES
+	body.clip_text = true
+	stack.add_child(body)
 	_add_attribute_badge_row(stack, badges_value, 16)
 	var button := _button(label, callback)
 	if primary:
@@ -7331,6 +7531,9 @@ func current_run_inventory_snapshot() -> Dictionary:
 		"selected_item_source": selected_run_inventory_item_source,
 		"selected_item": selected_item,
 		"container_id": run_inventory_context_container_id,
+		"containers": _copy_array(popup_model.get("containers", [])),
+		"selected_key": str(popup_model.get("selected_key", "")),
+		"active_container_key": str(popup_model.get("active_container_key", "")),
 		"merchant_available": _shopkeeper_available() if run_state != null else false,
 		"shop_description": _shop_description() if run_state != null else "",
 	}
@@ -7340,12 +7543,23 @@ func current_run_inventory_snapshot() -> Dictionary:
 		snapshot["interaction_kind"] = _run_inventory_interaction_kind(run_inventory_popup_mode)
 		if run_inventory_screen != null:
 			var layout_rects: Dictionary = run_inventory_screen.layout_rects()
+			snapshot["spatial"] = _copy_dict(layout_rects.get("spatial", {}))
 			snapshot["popup_rect"] = _rect_to_dict(_rect_from_dict(layout_rects.get("popup_rect", Rect2())))
 			snapshot["grid_rect"] = _rect_to_dict(_rect_from_dict(layout_rects.get("grid_rect", Rect2())))
 			snapshot["detail_rect"] = _rect_to_dict(_rect_from_dict(layout_rects.get("detail_rect", Rect2())))
 			snapshot["screen_rect"] = _rect_to_dict(_rect_from_dict(layout_rects.get("screen_rect", Rect2())))
 		if environment_canvas != null:
 			snapshot["environment_rect"] = _rect_to_dict(environment_canvas.get_global_rect())
+	return snapshot
+
+
+func current_meta_item_interaction_snapshot() -> Dictionary:
+	if meta_item_interaction_screen == null:
+		return {"visible": false, "mode": "", "selected_key": "", "item_count": 0}
+	var snapshot := meta_item_interaction_screen.layout_snapshot()
+	snapshot["mode"] = meta_item_interaction_mode
+	snapshot["selected_key"] = selected_meta_item_key
+	snapshot["trade_selected_instance_ids"] = meta_trade_selected_instance_ids.duplicate()
 	return snapshot
 
 
@@ -7534,7 +7748,7 @@ func activate_interactable_object(object_id: String) -> bool:
 	var source_id := str(object_data.get("source_id", ""))
 	match object_type:
 		CONTEXT_MODE_GAME:
-			enter_game(source_id)
+			enter_game(source_id, _game_state_key_from_object_id(object_id, source_id))
 			return true
 		CONTEXT_MODE_EVENT:
 			return _activate_event_object(source_id)
@@ -8236,6 +8450,47 @@ func _environment_game_object_state(game_id: String) -> Dictionary:
 	return state.duplicate(true) if typeof(state) == TYPE_DICTIONARY else {}
 
 
+func _environment_game_fixture_object_states(game_id: String) -> Dictionary:
+	var result: Dictionary = {}
+	var game := _game_module_for_id(game_id)
+	if game == null or run_state == null:
+		return result
+	if not game.has_method("environment_object_state_for_state_key"):
+		return result
+	var layout := _current_environment_layout()
+	var fixture_counts := _copy_dict(layout.get("game_fixture_counts", {}))
+	var fixture_count := maxi(1, int(fixture_counts.get(game_id, 1)))
+	for fixture_index in range(fixture_count):
+		var state_key := game_id if fixture_index == 0 else "%s:%d" % [game_id, fixture_index + 1]
+		var object_id := "game:%s" % state_key
+		var state_value: Variant = game.call("environment_object_state_for_state_key", run_state, run_state.current_environment, state_key)
+		if typeof(state_value) == TYPE_DICTIONARY:
+			result[object_id] = (state_value as Dictionary).duplicate(true)
+	return result
+
+
+func _set_active_game_state_key(game_id: String, state_key: String) -> void:
+	if run_state == null:
+		return
+	var clean_game_id := game_id.strip_edges()
+	if clean_game_id.is_empty():
+		return
+	var clean_state_key := state_key.strip_edges()
+	if clean_state_key.is_empty():
+		clean_state_key = clean_game_id
+	var active_keys := _copy_dict(run_state.current_environment.get("active_game_state_keys", {}))
+	active_keys[clean_game_id] = clean_state_key
+	run_state.current_environment["active_game_state_keys"] = active_keys
+
+
+func _game_state_key_from_object_id(object_id: String, game_id: String) -> String:
+	if object_id.begins_with("game:"):
+		var key := object_id.substr("game:".length()).strip_edges()
+		if not key.is_empty():
+			return key
+	return game_id
+
+
 func _make_interactable_object(source: Dictionary) -> Dictionary:
 	return EnvironmentInteractionViewModelScript.make_interactable_object(source, {
 		"hover_target_id": hover_target_id,
@@ -8440,8 +8695,9 @@ func _victory_container_item_choices() -> Array:
 	if run_state == null or library == null:
 		return result
 	var seen := {}
-	for item_id in _string_array(run_state.inventory):
-		if seen.has(item_id):
+	for inventory_value in run_state.inventory:
+		var item_id := _inventory_value_id(inventory_value)
+		if item_id.is_empty() or seen.has(item_id):
 			continue
 		seen[item_id] = true
 		var definition := library.item(item_id)
@@ -9037,7 +9293,17 @@ func start_generated_foundation_run() -> void:
 	start_foundation_run(seed_text, _new_run_challenge_for_seed(seed_text))
 
 
+func start_meta_quick_run() -> void:
+	var seed_text := _generate_menu_seed_text()
+	if seed_input != null:
+		seed_input.text = seed_text
+	start_foundation_run(seed_text, {}, false)
+
+
 func _on_run_report_new_run_requested() -> void:
+	if _terminal_reward_selection_pending():
+		_show_message("Choose and store each earned reward before leaving the run report.")
+		return
 	if run_state != null and run_state.is_tutorial_run() and run_state.run_status == RunState.RUN_STATUS_FAILED:
 		start_tutorial_run()
 		return
@@ -9045,6 +9311,9 @@ func _on_run_report_new_run_requested() -> void:
 
 
 func _on_run_report_home_requested() -> void:
+	if _terminal_reward_selection_pending():
+		_show_message("Choose and store each earned reward before leaving the run report.")
+		return
 	if run_state != null and run_state.is_tutorial_run() and run_state.run_status == RunState.RUN_STATUS_FAILED:
 		if not _complete_tutorial_profile():
 			return
@@ -9272,6 +9541,9 @@ func open_meta_home() -> void:
 
 func _enter_meta_location(location_id: String) -> void:
 	var clean_location := location_id.strip_edges()
+	if clean_location == META_LOCATION_START_RUN:
+		start_meta_quick_run()
+		return
 	var pawn_location := _meta_pawn_location_id()
 	if clean_location != pawn_location:
 		clean_location = META_LOCATION_HOME
@@ -9333,6 +9605,7 @@ func _enter_meta_location(location_id: String) -> void:
 func _exit_meta_session() -> void:
 	_hide_run_menu()
 	_hide_event_choice_popup()
+	close_meta_item_interaction()
 	_hide_run_inventory_popup()
 	_hide_run_journal_popup()
 	_hide_world_map_overlay()
@@ -9485,47 +9758,14 @@ func _meta_pawn_interactable_objects() -> Array:
 
 
 func open_meta_container(container_id: String = "") -> void:
-	var view: Dictionary = MetaCollectionViewModelScript.build(meta_collection_service)
-	var home := _copy_dict(view.get("home", {}))
-	var lines: Array[String] = [
-		"%s storage. Gold: %d." % [str(home.get("display_name", "Home")), int(view.get("gold_balance", 0))],
-		"Carry: %d / %d. Home storage: %d." % [int(home.get("carried_count", 0)), int(home.get("carry_capacity", 0)), int(home.get("storage_slots", 0))],
-	]
-	_show_meta_popup("Container", "\n".join(lines), "meta_container")
-	var rows := _meta_owned_item_rows()
-	if rows.is_empty():
-		_add_meta_popup_line("No collection items owned yet.")
-	else:
-		for row_value in rows.slice(0, 10):
-			var row := _copy_dict(row_value)
-			if not bool(row.get("packable", true)):
-				_add_meta_popup_line("%s · %s. Meta-only; sell this stack at Sal's Pawn Shop." % [str(row.get("display_name", "Grand Casino Chips")), str(row.get("float_summary", ""))])
-				continue
-			_add_meta_action_card(
-				str(row.get("display_name", "Collection Item")),
-				"%s. %s" % [str(row.get("collection_display_name", "Collection")), str(row.get("float_summary", ""))],
-				"Packed" if bool(row.get("packed", false)) else "Stored",
-				Callable(self, "_toggle_meta_item_pack").bind(int(row.get("instance_id", 0)), not bool(row.get("packed", false))),
-				"Unpack" if bool(row.get("packed", false)) else "Pack",
-				true
-			)
-		if rows.size() > 10:
-			_add_meta_popup_line("+%d more item(s)." % (rows.size() - 10))
-	_add_meta_close_card()
+	_open_meta_item_interaction(MetaItemInteractionViewModelScript.MODE_CONTAINER, selected_meta_item_key, container_id)
 
 
 func open_meta_bag(instance_id: int) -> void:
 	if instance_id <= 0:
 		_show_message("Bag is not available.")
 		return
-	var result: Dictionary = meta_collection_service.open_bag(instance_id)
-	if bool(result.get("ok", false)):
-		meta_collection_service.save()
-		meta_last_panel_message = _collection_reveal_text(result)
-		_apply_meta_environment(meta_session_location_id)
-	_show_meta_popup("Bag Opened", _collection_reveal_text(result), "meta_bag")
-	_add_meta_close_card()
-	_refresh()
+	_open_meta_item_interaction(MetaItemInteractionViewModelScript.MODE_BAGS, "meta:bag:%d" % instance_id)
 
 
 func buy_meta_home_upgrade() -> void:
@@ -9540,22 +9780,8 @@ func buy_meta_home_upgrade() -> void:
 
 
 func open_meta_trade_up() -> void:
-	var candidates := _meta_trade_up_candidates()
-	_show_meta_popup("Trade-Up Station", "Trade five same-tier, same-collection items for one next-tier item.", "meta_trade_up")
-	if candidates.is_empty():
-		_add_meta_popup_line("No eligible 5-item set is available.")
-	else:
-		for candidate_value in candidates.slice(0, 4):
-			var candidate := _copy_dict(candidate_value)
-			_add_meta_action_card(
-				str(candidate.get("label", "Trade")),
-				str(candidate.get("summary", "")),
-				"Consumes five items.",
-				Callable(self, "_arm_meta_trade_up").bind(_copy_array(candidate.get("instance_ids", []))),
-				"Trade",
-				true
-			)
-	_add_meta_close_card()
+	meta_trade_selected_instance_ids.clear()
+	_open_meta_item_interaction(MetaItemInteractionViewModelScript.MODE_TRADE)
 
 
 func open_meta_sal_shelf(slot_index: int) -> void:
@@ -9645,6 +9871,9 @@ func _confirm_meta_sal_purchase(token: String) -> void:
 	meta_last_panel_message = str(result.get("message", "Purchase complete."))
 	_apply_meta_environment(meta_session_location_id)
 	_hide_event_choice_popup()
+	var purchased_item := _copy_dict(result.get("item", {}))
+	selected_meta_item_key = "meta:item:%d" % int(purchased_item.get("instance_id", 0))
+	_open_meta_item_interaction(MetaItemInteractionViewModelScript.MODE_CONTAINER, selected_meta_item_key)
 	if not _copy_dict(result.get("starter_offer", {})).is_empty():
 		_resume_sal_starter_offer()
 	else:
@@ -9656,24 +9885,7 @@ func open_meta_sell_counter() -> void:
 	if _sal_starter_offer_is_pending():
 		_resume_sal_starter_offer()
 		return
-	_show_meta_popup("Sell Counter", "Choose one collection item or unopened bag to sell for gold.", "meta_pawn_counter")
-	var rows := _meta_sale_rows()
-	if rows.is_empty():
-		_add_meta_popup_line("Nothing is available to sell.")
-	else:
-		for row_value in rows.slice(0, 12):
-			var row := _copy_dict(row_value)
-			_add_meta_action_card(
-				str(row.get("display_name", "Item")),
-				str(row.get("detail", "")),
-				"%d gold" % int(row.get("price", 0)),
-				Callable(self, "_show_meta_sale_confirm").bind(str(row.get("kind", "")), int(row.get("instance_id", 0))),
-				"Sell",
-				true
-			)
-		if rows.size() > 12:
-			_add_meta_popup_line("+%d more sale option(s)." % (rows.size() - 12))
-	_add_meta_close_card()
+	_open_meta_item_interaction(MetaItemInteractionViewModelScript.MODE_SALE)
 
 
 func _toggle_meta_item_pack(instance_id: int, should_pack: bool) -> void:
@@ -9682,8 +9894,126 @@ func _toggle_meta_item_pack(instance_id: int, should_pack: bool) -> void:
 		meta_collection_service.save()
 		_apply_meta_environment(meta_session_location_id)
 	meta_last_panel_message = str(result.get("message", "Packing unchanged."))
-	open_meta_container()
+	selected_meta_item_key = "meta:item:%d" % instance_id
+	_refresh_meta_item_interaction()
 	_refresh()
+
+
+func _open_meta_item_interaction(mode: String, focus_key: String = "", container_id: String = "") -> void:
+	if meta_item_interaction_screen == null or meta_collection_service == null:
+		return
+	_hide_event_choice_popup()
+	close_meta_item_interaction()
+	_hide_run_inventory_popup()
+	_hide_run_journal_popup()
+	_hide_world_map_overlay()
+	meta_item_interaction_mode = mode
+	if not focus_key.strip_edges().is_empty():
+		selected_meta_item_key = focus_key.strip_edges()
+	var model := MetaItemInteractionViewModelScript.build(meta_collection_service, mode, selected_meta_item_key, meta_trade_selected_instance_ids)
+	model["focus_explicit"] = not focus_key.strip_edges().is_empty()
+	if not container_id.strip_edges().is_empty():
+		var container_focus := _first_meta_selection_in_container(model, container_id)
+		if not container_focus.is_empty():
+			selected_meta_item_key = container_focus
+			model = MetaItemInteractionViewModelScript.build(meta_collection_service, mode, selected_meta_item_key, meta_trade_selected_instance_ids)
+			model["focus_explicit"] = true
+	selected_meta_item_key = str(model.get("selected_key", ""))
+	meta_trade_selected_instance_ids = _copy_array(model.get("trade_selected_ids", []))
+	meta_item_interaction_screen.open(model)
+
+
+func _refresh_meta_item_interaction() -> void:
+	if meta_item_interaction_screen == null or not meta_item_interaction_screen.is_open() or meta_item_interaction_mode.is_empty():
+		return
+	var model := MetaItemInteractionViewModelScript.build(meta_collection_service, meta_item_interaction_mode, selected_meta_item_key, meta_trade_selected_instance_ids)
+	selected_meta_item_key = str(model.get("selected_key", ""))
+	meta_trade_selected_instance_ids = _copy_array(model.get("trade_selected_ids", []))
+	meta_item_interaction_screen.update_model(model)
+
+
+func close_meta_item_interaction() -> void:
+	if meta_item_interaction_screen != null:
+		meta_item_interaction_screen.close()
+	meta_item_interaction_mode = ""
+	selected_meta_item_key = ""
+	meta_trade_selected_instance_ids.clear()
+
+
+func _meta_item_interaction_is_visible() -> bool:
+	return meta_item_interaction_screen != null and meta_item_interaction_screen.is_open()
+
+
+func _on_meta_item_selection_changed(selection_key: String) -> void:
+	selected_meta_item_key = selection_key.strip_edges()
+
+
+func _on_meta_item_action_requested(action_id: String, payload: Dictionary) -> void:
+	match action_id:
+		"pack":
+			_toggle_meta_item_pack(int(payload.get("instance_id", 0)), true)
+		"unpack":
+			_toggle_meta_item_pack(int(payload.get("instance_id", 0)), false)
+		"open_bag":
+			_open_selected_meta_bag(int(payload.get("instance_id", 0)))
+		"arm_sale":
+			_show_meta_sale_confirm(str(payload.get("kind", "")), int(payload.get("instance_id", 0)))
+		"toggle_trade":
+			_toggle_meta_trade_selection(int(payload.get("instance_id", 0)))
+		"arm_trade":
+			_arm_meta_trade_up(_copy_array(payload.get("instance_ids", [])))
+
+
+func _toggle_meta_trade_selection(instance_id: int) -> void:
+	if instance_id <= 0:
+		return
+	var existing_index := meta_trade_selected_instance_ids.find(instance_id)
+	if existing_index >= 0:
+		meta_trade_selected_instance_ids.remove_at(existing_index)
+	elif meta_trade_selected_instance_ids.size() < 5:
+		meta_trade_selected_instance_ids.append(instance_id)
+	selected_meta_item_key = "meta:item:%d" % instance_id
+	_refresh_meta_item_interaction()
+
+
+func _open_selected_meta_bag(instance_id: int) -> void:
+	if instance_id <= 0:
+		_show_message("Bag is not available.")
+		return
+	var result: Dictionary = meta_collection_service.open_bag(instance_id)
+	if not bool(result.get("ok", false)):
+		meta_last_panel_message = str(result.get("message", "Bag could not be opened."))
+		_show_message(meta_last_panel_message)
+		_refresh_meta_item_interaction()
+		return
+	var save_error := meta_collection_service.save()
+	if save_error != OK:
+		meta_collection_service.load()
+		meta_last_panel_message = "The bag could not be saved, so nothing changed."
+		_show_message(meta_last_panel_message)
+		_refresh_meta_item_interaction()
+		return
+	var revealed_item := _copy_dict(result.get("item", {}))
+	selected_meta_item_key = "meta:item:%d" % int(revealed_item.get("instance_id", 0))
+	meta_trade_selected_instance_ids.clear()
+	meta_last_panel_message = _collection_reveal_text(result)
+	_apply_meta_environment(meta_session_location_id)
+	_open_meta_item_interaction(MetaItemInteractionViewModelScript.MODE_CONTAINER, selected_meta_item_key)
+	_show_message(meta_last_panel_message)
+	_refresh()
+
+
+func _first_meta_selection_in_container(model: Dictionary, container_id: String) -> String:
+	var clean_id := container_id.strip_edges()
+	for container_value in _copy_array(model.get("containers", [])):
+		var container := _copy_dict(container_value)
+		if str(container.get("container_type", "")) != clean_id and str(container.get("key", "")) != clean_id:
+			continue
+		for slot_value in _copy_array(container.get("slots", [])):
+			var key := str(_copy_dict(slot_value).get("selection_key", ""))
+			if not key.is_empty():
+				return key
+	return ""
 
 
 func _arm_meta_trade_up(instance_ids: Array) -> void:
@@ -9699,11 +10029,26 @@ func _arm_meta_trade_up(instance_ids: Array) -> void:
 
 func _confirm_meta_trade_up(token: String) -> void:
 	var result: Dictionary = meta_collection_service.confirm_trade_up(token)
-	if bool(result.get("ok", false)):
-		meta_collection_service.save()
-		_apply_meta_environment(meta_session_location_id)
-	_show_meta_popup("Trade-Up Station", str(result.get("message", "Trade-up complete.")), "meta_trade_up")
-	_add_meta_close_card()
+	if not bool(result.get("ok", false)):
+		_show_meta_popup("Trade-Up Station", str(result.get("message", "Trade-up unavailable.")), "meta_trade_up")
+		_add_meta_close_card()
+		_refresh()
+		return
+	var save_error := meta_collection_service.save()
+	if save_error != OK:
+		meta_collection_service.load()
+		_show_meta_popup("Trade-Up Station", "The trade-up could not be saved, so nothing changed.", "meta_trade_up")
+		_add_meta_close_card()
+		_refresh()
+		return
+	var granted := _copy_dict(result.get("item", {}))
+	selected_meta_item_key = "meta:item:%d" % int(granted.get("instance_id", 0))
+	meta_trade_selected_instance_ids.clear()
+	meta_last_panel_message = str(result.get("message", "Trade-up complete."))
+	_apply_meta_environment(meta_session_location_id)
+	_hide_event_choice_popup()
+	_open_meta_item_interaction(MetaItemInteractionViewModelScript.MODE_TRADE, selected_meta_item_key)
+	_show_message(meta_last_panel_message)
 	_refresh()
 
 
@@ -9734,10 +10079,10 @@ func _confirm_meta_sale(token: String) -> void:
 		_refresh()
 		return
 	_apply_meta_environment(meta_session_location_id)
-	_show_meta_popup("Sell Counter", str(result.get("message", "Sale complete.")), "meta_pawn_counter")
-	_add_meta_close_card()
+	meta_last_panel_message = str(result.get("message", "Sale complete."))
 	_refresh()
 	_hide_event_choice_popup()
+	_refresh_meta_item_interaction()
 	_start_sal_routine_dialogue("sale")
 
 
@@ -10656,7 +11001,10 @@ func claim_victory_collection_bag(marker_id: String) -> void:
 func claim_victory_container_item(item_id: String) -> void:
 	if run_state == null or run_state.run_status != RunState.RUN_STATUS_ENDED:
 		return
-	if bool(run_state.narrative_flags.get("victory_container_extracted", false)):
+	if not run_state.meta_collection_enabled_for_run():
+		_show_message("Items cannot be brought home from this run type.")
+		return
+	if bool(run_state.narrative_flags.get(RunReportViewModelScript.TAKE_HOME_ITEM_EXTRACTED_FLAG, false)):
 		_show_message("A container was already brought home.")
 		return
 	var clean_id := item_id.strip_edges()
@@ -10677,14 +11025,25 @@ func claim_victory_container_item(item_id: String) -> void:
 		_show_message("That container cannot be brought home.")
 		return
 	var display_name := str(selected.get("display_name", _label_from_id(clean_id)))
-	run_state.narrative_flags["victory_container_extracted"] = true
-	run_state.narrative_flags["victory_container_extracted_item_id"] = clean_id
-	run_state.narrative_flags["victory_container_extracted_line"] = "Brought home %s." % display_name
+	run_state.narrative_flags[RunReportViewModelScript.TAKE_HOME_ITEM_EXTRACTED_FLAG] = true
+	run_state.narrative_flags[RunReportViewModelScript.TAKE_HOME_ITEM_ID_FLAG] = clean_id
+	run_state.narrative_flags[RunReportViewModelScript.TAKE_HOME_ITEM_LINE_FLAG] = "Brought home %s." % display_name
 	var save_error := meta_collection_service.save()
 	if save_error == OK:
 		save_status_message = "Container stored at home."
+		if save_service != null:
+			save_service.save_run(run_state, autosave_slot_id)
 	_show_message("Brought home %s." % display_name)
+	run_report_model_key = ""
 	_render_run_report()
+
+
+func _terminal_reward_selection_pending() -> bool:
+	if run_state == null or run_state.run_status != RunState.RUN_STATUS_ENDED or not run_state.meta_collection_enabled_for_run():
+		return false
+	var bag_pending := not bool(run_state.narrative_flags.get(CollectionDropServiceScript.FLUSHED_FLAG, false)) and not run_state.pending_bag_markers().is_empty()
+	var item_pending := not bool(run_state.narrative_flags.get(RunReportViewModelScript.TAKE_HOME_ITEM_EXTRACTED_FLAG, false)) and not _victory_container_item_choices().is_empty()
+	return bag_pending or item_pending
 
 
 func _record_profile_run_result_once(terminal_result: Dictionary = {}) -> void:
@@ -11190,10 +11549,10 @@ func _position_event_choice_popup() -> void:
 	if overlay_rect.size.x <= 0.0 or overlay_rect.size.y <= 0.0:
 		return
 	var margin := 12.0
-	var width := clampf(overlay_rect.size.x * 0.54, 460.0, 640.0)
-	var height := clampf(overlay_rect.size.y * 0.56, 320.0, 500.0)
+	var width := clampf(overlay_rect.size.x * 0.54, EVENT_CHOICE_POPUP_BASE_SIZE.x, EVENT_CHOICE_POPUP_MAX_SIZE.x)
+	var height := clampf(overlay_rect.size.y * 0.56, EVENT_CHOICE_POPUP_BASE_SIZE.y, EVENT_CHOICE_POPUP_MAX_SIZE.y)
 	if overlay_rect.size.x < 560.0:
-		width = clampf(overlay_rect.size.x - margin * 2.0, 300.0, 460.0)
+		width = clampf(overlay_rect.size.x - margin * 2.0, 300.0, EVENT_CHOICE_POPUP_BASE_SIZE.x)
 	if overlay_rect.size.y < 420.0:
 		height = clampf(overlay_rect.size.y - margin * 2.0, 260.0, 380.0)
 	var popup_size := Vector2(width, height)
@@ -11204,6 +11563,7 @@ func _position_event_choice_popup() -> void:
 	global_position.x = clampf(global_position.x, overlay_rect.position.x + margin, overlay_rect.position.x + overlay_rect.size.x - popup_size.x - margin)
 	global_position.y = clampf(global_position.y, overlay_rect.position.y + margin, overlay_rect.position.y + overlay_rect.size.y - popup_size.y - margin)
 	event_choice_popup_panel.position = global_position - overlay_rect.position
+	event_choice_popup_panel.custom_minimum_size = popup_size
 	event_choice_popup_panel.size = popup_size
 
 
@@ -12310,7 +12670,11 @@ func _apply_accessibility_settings() -> void:
 	if game_surface_canvas != null:
 		game_surface_canvas.set_small_screen_mode(small_screen_enabled)
 	if run_inventory_screen != null:
+		run_inventory_screen.set_reduced_motion(bool(user_settings.reduce_motion) if user_settings != null else false)
 		run_inventory_screen.set_small_screen_mode(small_screen_enabled)
+	if meta_item_interaction_screen != null:
+		meta_item_interaction_screen.set_reduced_motion(bool(user_settings.reduce_motion) if user_settings != null else false)
+		meta_item_interaction_screen.set_small_screen_mode(small_screen_enabled)
 	if run_report_screen != null:
 		run_report_screen.set_reduce_motion(bool(user_settings.reduce_motion) if user_settings != null else false)
 		run_report_screen.set_small_screen_mode(small_screen_enabled)

@@ -118,7 +118,9 @@ static func interactable_object_view_list(run_state: RunState, library: ContentL
 	var failed_reason := str(data.get("failed_reason", "Run failed."))
 	var selection: Dictionary = data.get("selection", {})
 	var layout: Dictionary = data.get("layout", {})
+	var game_fixture_counts := _copy_dict(layout.get("game_fixture_counts", {}))
 	var risk_cue := str(data.get("risk_cue", ""))
+	var game_layout_index := 0
 	for source_value in data.get("game_sources", []):
 		if typeof(source_value) != TYPE_DICTIONARY:
 			continue
@@ -127,40 +129,51 @@ static func interactable_object_view_list(run_state: RunState, library: ContentL
 		var definition: Dictionary = game_source.get("definition", {})
 		var runtime_state := _copy_dict(game_source.get("runtime_state", {}))
 		var object_state := _copy_dict(game_source.get("object_state", {}))
+		var fixture_object_states := _copy_dict(game_source.get("fixture_object_states", {}))
 		for runtime_key in _copy_dict(object_state.get("runtime_state", {})).keys():
 			runtime_state[runtime_key] = (object_state.get("runtime_state", {}) as Dictionary)[runtime_key]
-		var description := str(definition.get("description", ""))
-		if description.is_empty():
-			description = str(definition.get("intro", "Choose a stake on the surface, then click an action."))
-		var runtime_status := str(runtime_state.get("status_label", "")).strip_edges()
-		if not runtime_status.is_empty():
-			description = "%s Status: %s." % [description, runtime_status]
 		var enabled := not definition.is_empty() and not failed
-		var object_id := "game:%s" % game_id
-		objects.append(_object_with_rect({
-			"object_id": object_id,
-			"object_type": "game",
-			"source_id": game_id,
-			"label": str(definition.get("display_name", _label_from_id(game_id))),
-			"short_description": description,
-			"presence": "fixture",
-			"enabled": enabled,
-			"disabled_reason": "" if enabled else failed_reason if failed else "Game definition is missing.",
-			"action_summary": "Double-click this machine to enter." if enabled else "This game is unavailable.",
-			"status_summary": str(object_state.get("status_summary", "")),
-			"effect_summary": str(object_state.get("effect_summary", "")),
-			"impact_summary": str(object_state.get("impact_summary", "")),
-			"state_badge": str(object_state.get("state_badge", "")),
-			"risk_summary": risk_cue,
-			"runtime_state": runtime_state,
-			"visual_state": _copy_dict(object_state.get("visual_state", {})),
-			"visual_key": str(definition.get("family", definition.get("type", "game"))),
-			"prop": str(definition.get("environment_prop", definition.get("prop", "card_table"))),
-			"icon_key": str(definition.get("icon_key", game_id)),
-			"asset_path": str(definition.get("asset_path", "")),
-			"available_actions": [{"id": "enter_game", "label": "Double-click to enter"}] if enabled else [],
-			"confirm_action_id": "enter_game" if enabled else "",
-		}, selection, layout, int(game_source.get("index", 0))))
+		var fixture_count := maxi(1, int(game_fixture_counts.get(game_id, 1)))
+		for fixture_index in range(fixture_count):
+			var object_id := "game:%s" % game_id if fixture_index == 0 else "game:%s:%d" % [game_id, fixture_index + 1]
+			var fixture_object_state := _copy_dict(fixture_object_states.get(object_id, object_state))
+			var fixture_runtime_state := runtime_state.duplicate(true)
+			for runtime_key in _copy_dict(fixture_object_state.get("runtime_state", {})).keys():
+				fixture_runtime_state[runtime_key] = (fixture_object_state.get("runtime_state", {}) as Dictionary)[runtime_key]
+			var description := str(definition.get("description", ""))
+			if description.is_empty():
+				description = str(definition.get("intro", "Choose a stake on the surface, then click an action."))
+			var runtime_status := str(fixture_runtime_state.get("status_label", "")).strip_edges()
+			if not runtime_status.is_empty():
+				description = "%s Status: %s." % [description, runtime_status]
+			var label := str(definition.get("display_name", _label_from_id(game_id)))
+			if fixture_count > 1:
+				label = "%s %d" % [label, fixture_index + 1]
+			objects.append(_object_with_rect({
+				"object_id": object_id,
+				"object_type": "game",
+				"source_id": game_id,
+				"label": label,
+				"short_description": description,
+				"presence": "fixture",
+				"enabled": enabled,
+				"disabled_reason": "" if enabled else failed_reason if failed else "Game definition is missing.",
+				"action_summary": "Double-click this machine to enter." if enabled else "This game is unavailable.",
+				"status_summary": str(fixture_object_state.get("status_summary", "")),
+				"effect_summary": str(fixture_object_state.get("effect_summary", "")),
+				"impact_summary": str(fixture_object_state.get("impact_summary", "")),
+				"state_badge": str(fixture_object_state.get("state_badge", "")),
+				"risk_summary": risk_cue,
+				"runtime_state": fixture_runtime_state,
+				"visual_state": _copy_dict(fixture_object_state.get("visual_state", {})),
+				"visual_key": str(definition.get("family", definition.get("type", "game"))),
+				"prop": str(definition.get("environment_prop", definition.get("prop", "card_table"))),
+				"icon_key": str(definition.get("icon_key", game_id)),
+				"asset_path": str(definition.get("asset_path", "")),
+				"available_actions": [{"id": "enter_game", "label": "Double-click to enter"}] if enabled else [],
+				"confirm_action_id": "enter_game" if enabled else "",
+			}, selection, layout, game_layout_index))
+			game_layout_index += 1
 	var event_index := 0
 	for event_value in data.get("event_options", []):
 		if typeof(event_value) != TYPE_DICTIONARY:

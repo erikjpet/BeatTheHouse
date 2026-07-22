@@ -277,6 +277,12 @@ func resolve_run_item(instance: Dictionary) -> Dictionary:
 			"instance_id": instance_id,
 			"tier": str(definition.get("tier", "")),
 			"condition_band": str(band.get("id", "")),
+			"floats": {
+				"potency": float(normalized.get("potency", 0.0)),
+				"condition": float(normalized.get("condition", 0.0)),
+				"resonance": float(normalized.get("resonance", 0.0)),
+				"usage": float(normalized.get("usage", 0.0)),
+			},
 			"instance_data": _copy_dict(normalized.get("instance_data", {})),
 			"stack_amount": maxi(0, int(normalized.get("stack_amount", 0))),
 			"face_value": maxi(0, int(normalized.get("face_value", 0))),

@@ -288,6 +288,62 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 	})
 
 
+func surface_realtime_state_patch(run_state: RunState, environment: Dictionary, ui_state: Dictionary, current_surface_state: Dictionary = {}) -> Dictionary:
+	var table := _peek_table_state(environment)
+	if table.is_empty():
+		return {}
+	var session := _normalized_session(run_state, environment, ui_state, table)
+	var bets := _bet_dict(session.get("baccarat_bets", current_surface_state.get("baccarat_bets", {})))
+	var total_wager := _total_wager(bets)
+	var last_result := _copy_dict(table.get("last_result", current_surface_state.get("last_result", {})))
+	var now_msec := int(ui_state.get("surface_time_msec", Time.get_ticks_msec()))
+	var elapsed_msec := now_msec - int(last_result.get("resolved_at_msec", 0))
+	var deal_active := not last_result.is_empty() and elapsed_msec >= 0 and elapsed_msec < DEAL_ANIMATION_DURATION_MSEC
+	var payout_active := not last_result.is_empty() and elapsed_msec >= DEAL_ANIMATION_DURATION_MSEC and elapsed_msec < DEAL_ANIMATION_DURATION_MSEC + PAYOUT_ANIMATION_DURATION_MSEC
+	var min_ready := total_wager >= int(table.get("table_minimum", current_surface_state.get("table_minimum", 20)))
+	var timer_active := not deal_active and not payout_active
+	var round_timer := GameModule.table_round_timer_status_peek(table, now_msec, "Next hand") if timer_active else {}
+	var table_notice := _table_notice(table, session, last_result, deal_active, payout_active, round_timer)
+	var hand_explainer := _baccarat_hand_explainer(session, last_result, deal_active, payout_active, round_timer)
+	var shoe_read_challenge := _normalized_shoe_read_challenge(session.get("shoe_read_challenge", current_surface_state.get("shoe_read_challenge", {})))
+	var shoe_read_status := _shoe_read_status(shoe_read_challenge, now_msec)
+	var shoe_read_active := not shoe_read_challenge.is_empty() and str(shoe_read_challenge.get("skill_grade", "")).is_empty()
+	return {
+		"surface_realtime_state_refresh": deal_active or payout_active or shoe_read_active,
+		"surface_time_msec": now_msec,
+		"surface_animation_channels": [
+			GameModule.surface_animation_channel(
+				BACCARAT_DEAL_CHANNEL,
+				str(last_result.get("deal_animation_id", "")) if deal_active else "",
+				DEAL_ANIMATION_DURATION_MSEC if deal_active else 0,
+				int(last_result.get("resolved_at_msec", 0)),
+				{"metadata": {"winner": str(last_result.get("winner", ""))}}
+			),
+			GameModule.surface_animation_channel(
+				BACCARAT_PAYOUT_CHANNEL,
+				str(last_result.get("payout_animation_id", "")) if payout_active else "",
+				PAYOUT_ANIMATION_DURATION_MSEC if payout_active else 0,
+				int(last_result.get("resolved_at_msec", 0)) + DEAL_ANIMATION_DURATION_MSEC
+			),
+		],
+		"surface_action_blocks": _surface_action_blocks(),
+		"phase": "dealing" if deal_active else "payout" if payout_active else "betting",
+		"dealer_attention_pressure": 10 if deal_active else 6 if payout_active else 0,
+		"can_deal": (total_wager <= 0 or min_ready) and not deal_active and not payout_active,
+		"can_clear": not bets.is_empty() and not deal_active and not payout_active,
+		"can_undo": not (_array(session.get("baccarat_undo_stack", [])).is_empty()) and not deal_active and not payout_active,
+		"can_rebet": not _bet_dict(session.get("baccarat_rebet", table.get("last_bets", {}))).is_empty() and not deal_active and not payout_active,
+		"baccarat_explainer": hand_explainer,
+		"shoe_read_challenge": shoe_read_challenge,
+		"shoe_read_status": shoe_read_status,
+		"shoe_read_active": shoe_read_active,
+		"result_message": str(last_result.get("summary", "")) if not deal_active else "",
+		"table_notice": table_notice,
+		"table_round_timer": round_timer,
+		"native_selected_surface_actions": _selected_surface_actions(bets, session),
+	}
+
+
 func draw_surface(surface, surface_state: Dictionary, _render_context: Dictionary = {}) -> bool:
 	if str(surface_state.get("surface_renderer", "")) != "baccarat":
 		return false

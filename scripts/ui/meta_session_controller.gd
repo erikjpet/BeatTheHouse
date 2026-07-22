@@ -13,6 +13,7 @@ const CONTEXT_MODE_META_PAWN_COUNTER := "meta_pawn_counter"
 const CONTEXT_MODE_META_SAL_SHELF := "meta_sal_shelf"
 const CONTEXT_MODE_META_SAL_TALK := "meta_sal_talk"
 const META_LOCATION_HOME := "home"
+const META_LOCATION_START_RUN := "start_run"
 
 const MetaCollectionServiceScript := preload("res://scripts/core/meta_collection_service.gd")
 const CollectionItemResolverScript := preload("res://scripts/core/collection_item_resolver.gd")
@@ -296,13 +297,20 @@ func collection_reveal_text(result: Dictionary) -> String:
 
 
 func map_node_ids() -> Array:
-	return [META_LOCATION_HOME, pawn_location_id()]
+	return [META_LOCATION_HOME, META_LOCATION_START_RUN, pawn_location_id()]
 
 
 func travel_target_ids(location_id: String) -> Array:
-	if location_id == pawn_location_id():
-		return [META_LOCATION_HOME]
-	return [pawn_location_id()]
+	var targets: Array = []
+	var ordered_ids: Array = [META_LOCATION_HOME, pawn_location_id(), META_LOCATION_START_RUN]
+	if location_id == META_LOCATION_HOME:
+		ordered_ids = [pawn_location_id(), META_LOCATION_START_RUN]
+	elif location_id == pawn_location_id():
+		ordered_ids = [META_LOCATION_HOME, META_LOCATION_START_RUN]
+	for node_id in ordered_ids:
+		if str(node_id) != location_id:
+			targets.append(node_id)
+	return targets
 
 
 func travel_choice(target_id: String, location_id: String) -> Dictionary:
@@ -310,20 +318,26 @@ func travel_choice(target_id: String, location_id: String) -> Dictionary:
 	if not map_node_ids().has(clean_id):
 		return {}
 	var label := "Home"
+	var description := "Free out-of-run travel."
+	var travel_method := "Walk"
 	if clean_id == pawn_location_id():
 		label = "Sal's Pawn Shop"
+	elif clean_id == META_LOCATION_START_RUN:
+		label = "Start Run"
+		description = "Begin a clean run immediately with a random seed and no challenge modifiers."
+		travel_method = "Begin"
 	return {
 		"id": clean_id,
 		"label": label,
 		"kind": "meta",
 		"tier": 0,
-		"description": "Free out-of-run travel.",
+		"description": description,
 		"route": {
 			"id": clean_id,
 			"cost": 0,
 			"distance": "near",
 			"distance_blocks": 0,
-			"travel_method": "Walk",
+			"travel_method": travel_method,
 		},
 		"cost": 0,
 		"distance": "near",
@@ -342,21 +356,29 @@ func world_map_snapshot(location_id: String, selected_node_id: String) -> Dictio
 	if selected_id.is_empty():
 		selected_id = location_id
 	var nodes: Array = [
-		_world_map_node(META_LOCATION_HOME, Vector2(0.36, 0.50), selected_id, location_id),
-		_world_map_node(pawn_location_id(), Vector2(0.64, 0.50), selected_id, location_id),
+		_world_map_node(META_LOCATION_HOME, Vector2(0.34, 0.56), selected_id, location_id),
+		_world_map_node(META_LOCATION_START_RUN, Vector2(0.52, 0.34), selected_id, location_id),
+		_world_map_node(pawn_location_id(), Vector2(0.68, 0.56), selected_id, location_id),
 	]
 	var targets := travel_target_ids(location_id)
+	var travel_paths: Array = []
+	for target_id in targets:
+		travel_paths.append({"target_id": target_id, "path": [location_id, target_id], "enabled": true})
 	return {
 		"schema_version": 1,
 		"current_node_id": location_id,
 		"selected_node_id": selected_id,
 		"nodes": nodes,
-		"edges": [{"id": "home-pawn", "a": META_LOCATION_HOME, "b": pawn_location_id(), "distance": "near"}],
+		"edges": [
+			{"id": "home-pawn", "a": META_LOCATION_HOME, "b": pawn_location_id(), "distance": "near"},
+			{"id": "home-start-run", "a": META_LOCATION_HOME, "b": META_LOCATION_START_RUN, "distance": "near"},
+			{"id": "pawn-start-run", "a": pawn_location_id(), "b": META_LOCATION_START_RUN, "distance": "near"},
+		],
 		"visited_path": [location_id],
 		"travel_target_ids": targets,
 		"travel_enabled_node_ids": targets,
 		"travel_disabled_node_ids": [],
-		"travel_paths": [{"target_id": targets[0], "path": [location_id, targets[0]], "enabled": true}] if not targets.is_empty() else [],
+		"travel_paths": travel_paths,
 		"map_focus_node_ids": map_node_ids(),
 		"background_path": WorldMapScript.MAP_BACKGROUND_PATH,
 	}
@@ -365,6 +387,8 @@ func world_map_snapshot(location_id: String, selected_node_id: String) -> Dictio
 func archetype_id_for_location(node_id: String) -> String:
 	if node_id == pawn_location_id():
 		return pawn_location_id()
+	if node_id == META_LOCATION_START_RUN:
+		return "gas_station_casino"
 	if meta_collection_service == null:
 		return MetaCollectionServiceScript.HOUSING_BACK_ALLEY
 	return str(meta_collection_service.housing_definition().get("archetype_id", MetaCollectionServiceScript.HOUSING_BACK_ALLEY))
@@ -373,6 +397,8 @@ func archetype_id_for_location(node_id: String) -> String:
 func map_icon_archetype_id(node_id: String) -> String:
 	if node_id == pawn_location_id():
 		return pawn_location_id()
+	if node_id == META_LOCATION_START_RUN:
+		return "gas_station_casino"
 	return archetype_id_for_location(node_id)
 
 
@@ -381,10 +407,25 @@ func world_map_detail_view(location_id: String, selected_node_id: String) -> Dic
 	if selected_node_id.is_empty():
 		lines.append("Select a revealed stop.")
 		return {"text": "\n".join(lines), "confirm_enabled": false, "badges": []}
-	var label := "Home" if selected_node_id == META_LOCATION_HOME else "Sal's Pawn Shop"
-	var destination_kind := "shop" if selected_node_id == pawn_location_id() else "home"
+	var label := "Home"
+	var destination_kind := "home"
+	if selected_node_id == pawn_location_id():
+		label = "Sal's Pawn Shop"
+		destination_kind = "shop"
+	elif selected_node_id == META_LOCATION_START_RUN:
+		label = "Start Run"
+		destination_kind = "casino"
 	var route := travel_choice(selected_node_id, location_id)
 	lines.append("Stop: %s" % label)
+	if selected_node_id == META_LOCATION_START_RUN:
+		lines.append("Run: random seed")
+		lines.append("Challenge: none")
+		lines.append("Modifiers: none")
+		if selected_node_id == location_id:
+			lines.append("Status: You are here.")
+			return {"text": "\n".join(lines), "confirm_enabled": false, "badges": AttributeBadgesScript.for_world_map_detail(destination_kind)}
+		lines.append("Status: Ready.")
+		return {"text": "\n".join(lines), "confirm_enabled": true, "badges": AttributeBadgesScript.for_world_map_detail(destination_kind, route)}
 	lines.append("Travel: Walk · Cost: $0")
 	lines.append("Distance: Near / 1 block")
 	lines.append("Clock: no time passes")
@@ -420,8 +461,8 @@ func _build_home_environment(run_state: RunState) -> Dictionary:
 	data["service_ids"] = []
 	data["lender_hooks"] = []
 	data["object_fixtures"] = []
-	data["travel_hooks"] = [pawn_location_id()]
-	data["next_archetypes"] = [pawn_location_id()]
+	data["travel_hooks"] = [META_LOCATION_START_RUN, pawn_location_id()]
+	data["next_archetypes"] = [META_LOCATION_START_RUN, pawn_location_id()]
 	data["home_profile"] = _copy_dict(archetype.get("home_profile", {}))
 	data["home_containers"] = _container_rows()
 	data["home_container_index"] = _copy_array(data.get("home_containers", [])).size()
@@ -453,8 +494,8 @@ func _build_pawn_environment(run_state: RunState) -> Dictionary:
 	data["service_ids"] = []
 	data["lender_hooks"] = []
 	data["object_fixtures"] = []
-	data["travel_hooks"] = [META_LOCATION_HOME]
-	data["next_archetypes"] = [META_LOCATION_HOME]
+	data["travel_hooks"] = [META_LOCATION_HOME, META_LOCATION_START_RUN]
+	data["next_archetypes"] = [META_LOCATION_HOME, META_LOCATION_START_RUN]
 	data["home_containers"] = []
 	data["meta_session"] = true
 	data["meta_location"] = pawn_location
@@ -769,6 +810,9 @@ func _world_map_node(node_id: String, position: Vector2, selected_id: String, lo
 	var is_current := node_id == location_id
 	var label := "Home" if node_id == META_LOCATION_HOME else "Sal's Pawn Shop"
 	var flavor := "Your current housing room." if node_id == META_LOCATION_HOME else "Sell collection finds at the pawn shop."
+	if node_id == META_LOCATION_START_RUN:
+		label = "Start Run"
+		flavor = "Begin a clean random run without challenge modifiers."
 	return {
 		"id": node_id,
 		"archetype_id": archetype_id_for_location(node_id),
