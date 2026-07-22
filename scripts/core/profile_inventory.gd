@@ -8,6 +8,7 @@ const INVENTORY_PATH_ENV := "BTH_PROFILE_INVENTORY_PATH"
 const SCHEMA_VERSION := 5
 const RUN_HISTORY_LIMIT := 20
 const REFERENCE_CHIP_ID := "profile_poker_chip"
+const ACTIVE_SCRATCH_TICKET_IDS := ["two_fer", "lucky_7s", "tic_tac_gold", "crossword_corner", "bonus_bingo", "high_roller_holdem", "golden_vault"]
 const REFERENCE_CHIP := {
 	"id": REFERENCE_CHIP_ID,
 	"display_name": "Rain City Poker Chip",
@@ -95,7 +96,11 @@ func from_dict(data: Dictionary) -> void:
 	daily_runs = _normalize_daily_runs(data.get("daily_runs", {}))
 	lifetime_stats = _normalize_lifetime_stats(data.get("lifetime_stats", {}))
 	act_seam = _normalize_act_seam(data.get("act_seam", {}))
-	scratch_ticket_types_discovered = _normalize_string_set(data.get("scratch_ticket_types_discovered", []))
+	scratch_ticket_types_discovered = []
+	for type_id_value in _normalize_string_set(data.get("scratch_ticket_types_discovered", [])):
+		var type_id := str(type_id_value)
+		if ACTIVE_SCRATCH_TICKET_IDS.has(type_id):
+			scratch_ticket_types_discovered.append(type_id)
 	tips_seen = _normalize_seen_map(data.get("tips_seen", {}))
 	tutorial_completed = bool(data.get("tutorial_completed", false))
 	var loaded: Variant = data.get("items", [])
@@ -180,7 +185,7 @@ func item_quantity(item_id: String) -> int:
 
 func discover_scratch_ticket_type(type_id: String) -> bool:
 	var normalized := type_id.strip_edges()
-	if normalized.is_empty() or scratch_ticket_types_discovered.has(normalized):
+	if not ACTIVE_SCRATCH_TICKET_IDS.has(normalized) or scratch_ticket_types_discovered.has(normalized):
 		return false
 	scratch_ticket_types_discovered.append(normalized)
 	scratch_ticket_types_discovered.sort()

@@ -135,6 +135,21 @@ func _check_roulette_surface_contract(game: GameModule, failures: Array, library
 		failures.append("Roulette straight bet did not create a $%d wager: %s." % [contract_chip, JSON.stringify(bet_click)])
 	if str(bet_click.get("surface_audio_cue", "")) != "roulette_chip_place":
 		failures.append("Roulette accepted direct bet did not return a post-validation chip-place cue.")
+	var cash_fallback_run: RunState = RunStateScript.new()
+	cash_fallback_run.start_new("ROULETTE-CASH-FALLBACK")
+	cash_fallback_run.bankroll = contract_chip
+	cash_fallback_run.grand_casino_chips = 0
+	var cash_fallback_environment := environment.duplicate(true)
+	cash_fallback_environment["id"] = "grand_casino_high_limit_cash_fallback"
+	cash_fallback_environment["archetype_id"] = RunState.GRAND_CASINO_HIGH_LIMIT_ARCHETYPE_ID
+	cash_fallback_run.set_environment(cash_fallback_environment)
+	var cash_fallback_bet := game.surface_action_command("roulette_bet", straight_17_index, false, {"selected_chip": contract_chip}, cash_fallback_run, cash_fallback_run.current_environment)
+	var cash_fallback_ui: Dictionary = cash_fallback_bet.get("ui_state", {}) if typeof(cash_fallback_bet.get("ui_state", {})) == TYPE_DICTIONARY else {}
+	var cash_fallback_bets: Array = cash_fallback_ui.get("roulette_bets", []) as Array
+	var cash_fallback_validation: Dictionary = game.call("_validate_roulette_bets", cash_fallback_bets, table, cash_fallback_run, cash_fallback_run.current_environment)
+	var cash_fallback_surface := game.surface_state(cash_fallback_run, cash_fallback_run.current_environment, cash_fallback_ui)
+	if game.call("_total_wager", cash_fallback_bets) != contract_chip or not bool(cash_fallback_validation.get("ok", false)) or int(cash_fallback_surface.get("bankroll", -1)) != contract_chip:
+		failures.append("Grand Casino roulette did not expose zero-chip cash as usable betting capacity.")
 	var red_index := _roulette_target_index(targets, "red", "1")
 	if red_index < 0:
 		failures.append("Roulette betting layout did not expose a RED outside target.")
@@ -3463,6 +3478,7 @@ func _check_pull_tabs_surface_contract(game: GameModule, failures: Array) -> voi
 	_clear_pull_tab_winners(environment)
 	_set_pull_tab_loser_count(environment, 3)
 	_inject_pull_tab_winner(environment, _pull_tab_test_ticket_result("clean", 5))
+	run_state.capture_portable_ticket_piles_from_environment(environment)
 	var redeem_before := _run_state_result_snapshot(run_state)
 	var redeem_command := game.environment_action_command("ticket_redeemer", "redeem_pull_tab_winners", run_state, environment, run_state.create_rng("pull_tab_redeem"))
 	if not bool(redeem_command.get("handled", false)):
@@ -3481,6 +3497,7 @@ func _check_pull_tabs_surface_contract(game: GameModule, failures: Array) -> voi
 	_set_pull_tab_loser_count(environment, 0)
 	for high_ticket_index in range(2):
 		_inject_pull_tab_winner(environment, _pull_tab_test_ticket_result("high:%d" % high_ticket_index, 40))
+	run_state.capture_portable_ticket_piles_from_environment(environment)
 	var pattern_redeem_before := _run_state_result_snapshot(run_state)
 	var pattern_redeem_command := game.environment_action_command("ticket_redeemer", "redeem_pull_tab_winners", run_state, environment, run_state.create_rng("pull_tab_pattern_redeem"))
 	var pattern_redeem_result: Dictionary = pattern_redeem_command.get("result", {})
@@ -3503,6 +3520,92 @@ func _check_pull_tabs_surface_contract(game: GameModule, failures: Array) -> voi
 	var restored_game_states: Dictionary = restored.current_environment.get("game_states", {})
 	if not restored_game_states.has("pull_tabs"):
 		failures.append("Pull Tabs generated deal state did not round-trip through RunState serialization.")
+	_check_pull_tab_portable_inventory(game, failures)
+
+
+func _check_pull_tab_portable_inventory(game: GameModule, failures: Array) -> void:
+	var run_state: RunState = RunStateScript.new()
+	run_state.start_new("PULL-TABS-PORTABLE-INVENTORY")
+	run_state.bankroll = 500
+	var origin := {
+		"id": "portable_jazz_a",
+		"world_node_id": "jazz-node-a",
+		"display_name": "Blue Note Jazz Club",
+		"archetype_id": "jazz_club",
+		"kind": "bar",
+		"game_ids": ["pull_tabs"],
+		"game_states": {},
+		"economic_profile": {"stake_floor": 1, "stake_ceiling": 20},
+		"visual_context": {"scene_type": "jazz_club"},
+	}
+	origin["game_states"] = {"pull_tabs": game.generate_environment_state(run_state, origin, run_state.create_rng("portable-tabs-stock-a"))}
+	run_state.current_environment = origin
+	var buy := game.surface_action_command("pull_tab_buy", 0, false, {}, run_state, run_state.current_environment)
+	game.resolve_with_context("buy_tab", int(buy.get("set_stake", 1)), run_state, run_state.current_environment, run_state.create_rng("portable-tabs-buy-a"), buy.get("ui_state", {}))
+	game.surface_action_command("pull_tab_collect_tray", 0, false, {}, run_state, run_state.current_environment)
+	if not run_state.inventory.has(RunState.PULL_TAB_PILE_ITEM_ID):
+		failures.append("Pull Tabs purchase did not add the Pile of Pull Tabs inventory item.")
+	var reveal := game.surface_action_command("pull_tab_reveal_next", 0, false, {}, run_state, run_state.current_environment)
+	var reveal_state: Dictionary = reveal.get("ui_state", {})
+	game.checkpoint_surface_ui_state(reveal_state, run_state, run_state.current_environment)
+	var stored_stack: Array = run_state.portable_ticket_state("pull_tabs", run_state.current_environment).get("ticket_stack", [])
+	if stored_stack.is_empty() or not bool((stored_stack[0] as Dictionary).get("fully_revealed", false)):
+		failures.append("Pull Tabs did not checkpoint its opened-window state into the inventory pile when leaving the surface.")
+	elif str((stored_stack[0] as Dictionary).get("origin_key", "")) != RunState.portable_ticket_origin_key(run_state.current_environment):
+		failures.append("Pull Tabs portable record did not stamp its purchase origin on the ticket.")
+	var origin_return := run_state.current_environment.duplicate(true)
+	var elsewhere := {
+		"id": "portable_jazz_b",
+		"world_node_id": "jazz-node-b",
+		"display_name": "Second Jazz Club",
+		"archetype_id": "jazz_club",
+		"kind": "bar",
+		"game_ids": ["pull_tabs"],
+		"game_states": {},
+		"economic_profile": {"stake_floor": 1, "stake_ceiling": 20},
+		"visual_context": {"scene_type": "jazz_club"},
+	}
+	elsewhere["game_states"] = {"pull_tabs": game.generate_environment_state(run_state, elsewhere, run_state.create_rng("portable-tabs-stock-b"))}
+	run_state.set_environment(elsewhere)
+	var elsewhere_surface := game.surface_state(run_state, run_state.current_environment, {})
+	if int(elsewhere_surface.get("pull_tab_stack_count", 0)) != 0 or int(elsewhere_surface.get("pull_tab_tray_count", 0)) != 0:
+		failures.append("Pull Tabs exposed another location's owned tickets on the wrong machine.")
+	var loaded: RunState = RunStateScript.new()
+	loaded.from_dict(run_state.to_dict())
+	loaded.set_environment(origin_return)
+	var returned_surface := game.surface_state(loaded, loaded.current_environment, {})
+	var returned_stack: Array = returned_surface.get("pull_tab_stack", [])
+	if returned_stack.is_empty() or not bool((returned_stack[0] as Dictionary).get("fully_revealed", false)):
+		failures.append("Pull Tabs did not save/load and restore the exact opened-window state at its purchase location.")
+	var portable := loaded.portable_ticket_state("pull_tabs", loaded.current_environment).duplicate(true)
+	var forced_winner := {
+		"id": "portable-tab-winner",
+		"display_name": "Portable Pull-Tab",
+		"ticket_number": "P-100",
+		"price": 1,
+		"payout": 25,
+		"rows": [["BAR", "BAR", "BAR"]],
+		"revealed_count": 1,
+		"fully_revealed": true,
+		"sorted": true,
+		"origin_key": RunState.portable_ticket_origin_key(loaded.current_environment),
+		"origin_name": RunState.portable_ticket_origin_name(loaded.current_environment),
+	}
+	portable["winner_pile"] = [forced_winner]
+	loaded.remember_portable_ticket_state("pull_tabs", loaded.current_environment, portable)
+	game.surface_state(loaded, loaded.current_environment, {})
+	origin_return = loaded.current_environment.duplicate(true)
+	loaded.set_environment(elsewhere)
+	var wrong_cash_before := loaded.bankroll
+	var wrong_cash: Dictionary = game.environment_action_command("ticket_redeemer", "redeem_pull_tab_winners", loaded, loaded.current_environment, loaded.create_rng("portable-tabs-wrong-clerk")).get("result", {})
+	if int(wrong_cash.get("bankroll_delta", 0)) != 0 or loaded.bankroll != wrong_cash_before:
+		failures.append("Pull Tabs allowed a winning ticket to be redeemed away from its purchase location.")
+	loaded.set_environment(origin_return)
+	var origin_cash_before := loaded.bankroll
+	var origin_cash: Dictionary = game.environment_action_command("ticket_redeemer", "redeem_pull_tab_winners", loaded, loaded.current_environment, loaded.create_rng("portable-tabs-origin-clerk")).get("result", {})
+	GameModule.apply_result(loaded, origin_cash, loaded.create_rng("portable-tabs-origin-apply"))
+	if int(origin_cash.get("bankroll_delta", 0)) != 25 or loaded.bankroll != origin_cash_before + 25:
+		failures.append("Pull Tabs purchase-location clerk did not redeem a returned winning ticket.")
 
 
 func _check_pull_tab_item_cheat_exemption(game: GameModule, failures: Array) -> void:

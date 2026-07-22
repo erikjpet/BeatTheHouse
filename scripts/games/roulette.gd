@@ -1418,7 +1418,7 @@ func _validate_roulette_bets(bets: Array, table: Dictionary, run_state: RunState
 	var max_table := int(rules.get("table_max", 100))
 	if total > max_table:
 		return {"ok": false, "message": "That exceeds the table maximum."}
-	var bankroll := maxi(0, run_state.wager_balance_for_game(get_id(), environment) if run_state != null else total)
+	var bankroll := maxi(0, run_state.wager_capacity_for_game(get_id(), environment) if run_state != null else total)
 	if total > bankroll:
 		return {"ok": false, "message": "You do not have enough bankroll for those roulette chips."}
 	var outside_min := int(rules.get("outside_min_each", 1))
@@ -2177,12 +2177,12 @@ func _draw_roulette_table(surface, _surface_state: Dictionary) -> void:
 
 
 func _draw_roulette_wheel(surface, surface_state: Dictionary, low_detail: bool = false) -> void:
-	var sequence := _string_array(surface_state.get("wheel_sequence", AMERICAN_SEQUENCE))
-	var trajectory := _dictionary_array(surface_state.get("spin_trajectory", []))
-	var last_result := _copy_dict(surface_state.get("last_result", {}))
+	var sequence := _array_ref(surface_state.get("wheel_sequence", AMERICAN_SEQUENCE))
+	var trajectory := _array_ref(surface_state.get("spin_trajectory", []))
+	var last_result := _dict_ref(surface_state.get("last_result", {}))
 	var motion := _roulette_wheel_motion(surface, surface_state)
 	var spin_active := bool(motion.get("spin_active", false))
-	var keyframe := _copy_dict(motion.get("keyframe", {}))
+	var keyframe := _dict_ref(motion.get("keyframe", {}))
 	var wheel_angle := float(motion.get("wheel_angle", 0.0))
 	var winning_index := int(last_result.get("winning_index", -1))
 	var settled_spin := not spin_active and not last_result.is_empty()
@@ -2255,12 +2255,12 @@ func _draw_roulette_wheel(surface, surface_state: Dictionary, low_detail: bool =
 
 
 func _roulette_wheel_motion(surface, surface_state: Dictionary) -> Dictionary:
-	var trajectory := _dictionary_array(surface_state.get("spin_trajectory", []))
+	var trajectory := _array_ref(surface_state.get("spin_trajectory", []))
 	var spin_active: bool = bool(surface.surface_animation_active(ROULETTE_SPIN_CHANNEL))
 	var progress: float = surface.surface_animation_progress(ROULETTE_SPIN_CHANNEL) if spin_active else 1.0
 	var keyframe := _trajectory_keyframe(trajectory, progress)
 	var clock := _surface_clock(surface)
-	var last_result := _copy_dict(surface_state.get("last_result", {}))
+	var last_result := _dict_ref(surface_state.get("last_result", {}))
 	var settled_spin := not spin_active and not last_result.is_empty()
 	var wheel_default_angle := clock * -0.5 if spin_active else 0.0
 	var wheel_angle := float(keyframe.get("wheel_angle", wheel_default_angle))
@@ -2310,8 +2310,8 @@ func _draw_static_croupier_station(surface, surface_state: Dictionary) -> void:
 
 
 func _draw_static_table_patrons(surface, surface_state: Dictionary) -> void:
-	var patrons := _dictionary_array(surface_state.get("patrons", []))
-	var layout := _dictionary_array(surface_state.get("patron_layout", []))
+	var patrons := _array_ref(surface_state.get("patrons", []))
+	var layout := _array_ref(surface_state.get("patron_layout", []))
 	if layout.size() < patrons.size():
 		layout = _roulette_patron_layout(patrons)
 	var focused_index := _focused_patron_index(surface_state, patrons)
@@ -2345,8 +2345,8 @@ func _draw_static_table_patrons(surface, surface_state: Dictionary) -> void:
 
 
 func _draw_table_patrons(surface, surface_state: Dictionary) -> void:
-	var patrons := _dictionary_array(surface_state.get("patrons", []))
-	var layout := _dictionary_array(surface_state.get("patron_layout", []))
+	var patrons := _array_ref(surface_state.get("patrons", []))
+	var layout := _array_ref(surface_state.get("patron_layout", []))
 	if layout.size() < patrons.size():
 		layout = _roulette_patron_layout(patrons)
 	var focused_index := _focused_patron_index(surface_state, patrons)
@@ -2437,7 +2437,7 @@ func _draw_croupier_station(surface, surface_state: Dictionary) -> void:
 
 
 func _draw_recent_numbers(surface, surface_state: Dictionary) -> void:
-	var recent := _dictionary_array(surface_state.get("recent_numbers", surface_state.get("roulette_recent_numbers", [])))
+	var recent := _array_ref(surface_state.get("recent_numbers", surface_state.get("roulette_recent_numbers", [])))
 	var rect := Rect2(250, 6, 436, 28)
 	_draw_neon_panel(surface, rect, C_CYAN, 0.08)
 	surface.surface_label("RECENT", rect.position + Vector2(8, 18), 8, C_SOFT)
@@ -2457,11 +2457,11 @@ func _draw_recent_numbers(surface, surface_state: Dictionary) -> void:
 
 
 func _draw_betting_layout(surface, surface_state: Dictionary) -> void:
-	var red_numbers := _string_array(surface_state.get("red_numbers", RED_NUMBERS))
+	var red_numbers := _array_ref(surface_state.get("red_numbers", RED_NUMBERS))
 	surface.draw_rect(ZERO_RECT, Color("#0b7b4e"))
 	surface.draw_rect(ZERO_RECT, C_YELLOW, false, 1)
 	surface.surface_label_centered_plain("0", ZERO_RECT, 18, C_WHITE)
-	if int(_copy_dict(surface_state.get("rules", {})).get("zero_count", 2)) == 2:
+	if int(_dict_ref(surface_state.get("rules", {})).get("zero_count", 2)) == 2:
 		surface.draw_rect(DOUBLE_ZERO_RECT, Color("#0b7b4e"))
 		surface.draw_rect(DOUBLE_ZERO_RECT, C_YELLOW, false, 1)
 		surface.surface_label_centered_plain("00", DOUBLE_ZERO_RECT, 16, C_WHITE)
@@ -2473,7 +2473,7 @@ func _draw_betting_layout(surface, surface_state: Dictionary) -> void:
 		surface.draw_rect(rect, Color(C_SOFT.r, C_SOFT.g, C_SOFT.b, 0.28), false, 1)
 		surface.surface_label_centered_plain(number_text, rect, 12, C_WHITE)
 	_draw_outside_labels(surface)
-	var targets := _dictionary_array(surface_state.get("bet_targets", []))
+	var targets := _array_ref(surface_state.get("bet_targets", []))
 	var hovered_index: int = surface.surface_hovered_index("roulette_bet") if surface.has_method("surface_hovered_index") else -1
 	if hovered_index >= 0 and hovered_index < targets.size():
 		var hovered_target: Dictionary = targets[hovered_index]
@@ -2566,8 +2566,8 @@ func _draw_result_bet_chips(surface, entries_value: Variant, include_losers: boo
 
 
 func _draw_patron_roulette_chips(surface, surface_state: Dictionary) -> void:
-	var patrons := _dictionary_array(surface_state.get("patrons", []))
-	var targets := _dictionary_array(surface_state.get("bet_targets", []))
+	var patrons := _array_ref(surface_state.get("patrons", []))
+	var targets := _array_ref(surface_state.get("bet_targets", []))
 	for i in range(patrons.size()):
 		var patron: Dictionary = patrons[i]
 		var wager := _copy_dict(patron.get("visible_bet", {}))
@@ -2612,7 +2612,7 @@ func _draw_chip_rack(surface, surface_state: Dictionary) -> void:
 	surface.draw_rect(rack, Color(C_YELLOW.r, C_YELLOW.g, C_YELLOW.b, 0.28), false, 1)
 	surface.surface_label("CHIP RAIL", rack.position + Vector2(10, 14), 10, C_SOFT)
 	surface.surface_label("BET $%d" % int(surface_state.get("total_wager_cost", 0)), rack.position + Vector2(112, 14), 11, C_YELLOW)
-	var chips := _array(surface_state.get("chip_denominations", []))
+	var chips := _array_ref(surface_state.get("chip_denominations", []))
 	for i in range(chips.size()):
 		var center := Vector2(rack.position.x + 32 + float(i) * 40.0, rack.position.y + 44)
 		_draw_chip_button(surface, center, int(chips[i]), "roulette_chip", i, int(surface_state.get("selected_chip", 1)) == int(chips[i]))
@@ -2626,7 +2626,7 @@ func _draw_table_actions(surface, surface_state: Dictionary) -> void:
 	if bool(surface_state.get("table_barred", false)):
 		surface.surface_label("TABLE CLOSED", panel.position + Vector2(14, 42), 15, C_PINK)
 		return
-	var selected_actions := _string_array(surface_state.get("native_selected_surface_actions", []))
+	var selected_actions := _array_ref(surface_state.get("native_selected_surface_actions", []))
 	var phase := str(surface_state.get("phase", "betting"))
 	if phase == "payout":
 		var past_post_selected := selected_actions.has("roulette_past_post")
@@ -2671,7 +2671,7 @@ func _draw_wheel_read_meter(surface, state: Dictionary, rect: Rect2) -> void:
 func _draw_spin_result(surface, surface_state: Dictionary) -> void:
 	if not bool(surface_state.get("roulette_result_settled", true)):
 		return
-	var result := _copy_dict(surface_state.get("last_result", {}))
+	var result := _dict_ref(surface_state.get("last_result", {}))
 	if result.is_empty():
 		return
 	if surface.surface_animation_active(ROULETTE_SPIN_CHANNEL):
@@ -2690,7 +2690,7 @@ func _draw_spin_result(surface, surface_state: Dictionary) -> void:
 
 
 func _draw_rule_hover_overlay(surface, surface_state: Dictionary) -> void:
-	var targets := _dictionary_array(surface_state.get("bet_targets", []))
+	var targets := _array_ref(surface_state.get("bet_targets", []))
 	var target_index := -1
 	for i in range(targets.size()):
 		if surface.surface_region_hovered("roulette_bet", i):
@@ -2711,8 +2711,8 @@ func _draw_payout_animation(surface, surface_state: Dictionary) -> void:
 	if not surface.surface_animation_active(ROULETTE_PAYOUT_CHANNEL):
 		return
 	var progress: float = surface.surface_animation_progress(ROULETTE_PAYOUT_CHANNEL)
-	var result := _copy_dict(surface_state.get("last_result", {}))
-	var wins := _dictionary_array(result.get("bet_results", []))
+	var result := _dict_ref(surface_state.get("last_result", {}))
+	var wins := _array_ref(result.get("bet_results", []))
 	var start := Vector2(468, 114)
 	var index := 0
 	for win_value in wins:
@@ -3078,7 +3078,7 @@ func _roulette_result_settled_for_surface(last_result: Dictionary, phase_status:
 func _roulette_visible_bankroll(run_state: RunState, environment: Dictionary, last_result: Dictionary, result_settled: bool) -> int:
 	if run_state == null:
 		return 0
-	var bankroll := run_state.wager_balance_for_game(get_id(), environment)
+	var bankroll := run_state.wager_capacity_for_game(get_id(), environment)
 	if result_settled or last_result.is_empty():
 		return bankroll
 	return bankroll - _roulette_pending_display_bankroll_delta(last_result)
@@ -3919,6 +3919,15 @@ func _array(value: Variant) -> Array:
 	if typeof(value) != TYPE_ARRAY:
 		return []
 	return (value as Array).duplicate(true)
+
+
+# Read-only renderer views. Draw code must not mutate these references.
+func _array_ref(value: Variant) -> Array:
+	return value as Array if typeof(value) == TYPE_ARRAY else []
+
+
+func _dict_ref(value: Variant) -> Dictionary:
+	return value as Dictionary if typeof(value) == TYPE_DICTIONARY else {}
 
 
 func _dictionary_array(value: Variant) -> Array:

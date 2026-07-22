@@ -28,15 +28,13 @@ static func crew_interacted(flags: Dictionary, debts: Array) -> bool:
 static func pat_down(inventory: Array, config: Dictionary, watched_cheat: bool) -> Dictionary:
 	var contraband_ids: Array = []
 	var surveillance_ids: Array = []
-	for classification_value in _copy_array(config.get("classifications", [])):
-		if typeof(classification_value) != TYPE_DICTIONARY:
-			continue
-		var classification: Dictionary = classification_value
-		var target := surveillance_ids if str(classification.get("id", "")) == "surveillance" else contraband_ids
-		for item_value in _copy_array(classification.get("item_ids", [])):
-			var item_id := str(item_value).strip_edges()
-			if not item_id.is_empty() and inventory.has(item_id) and not target.has(item_id):
-				target.append(item_id)
+	for item_value in inventory:
+		var item_id := str(item_value).strip_edges()
+		var classification_id := item_classification_id(item_id, config)
+		if classification_id == "contraband" and not contraband_ids.has(item_id):
+			contraband_ids.append(item_id)
+		elif classification_id == "surveillance" and not surveillance_ids.has(item_id):
+			surveillance_ids.append(item_id)
 	var carried: Array = contraband_ids.duplicate()
 	for item_id in surveillance_ids:
 		if not carried.has(item_id):
@@ -186,6 +184,23 @@ static func build_duel_terms(snapshot: Dictionary, pat_down_data: Dictionary, an
 			"social_support": social_support,
 		},
 	}
+
+
+static func item_classification_id(item_id: String, config: Dictionary) -> String:
+	var clean_id := item_id.strip_edges()
+	if clean_id.is_empty():
+		return ""
+	for classification_value in _copy_array(config.get("classifications", [])):
+		if typeof(classification_value) != TYPE_DICTIONARY:
+			continue
+		var classification: Dictionary = classification_value
+		if _copy_array(classification.get("item_ids", [])).has(clean_id):
+			return str(classification.get("id", "")).strip_edges().to_lower()
+	return ""
+
+
+static func item_forbidden_by_pat_down(item_id: String, config: Dictionary) -> bool:
+	return ["contraband", "surveillance"].has(item_classification_id(item_id, config))
 
 
 static func _evidence_matches(condition: String, snapshot: Dictionary) -> bool:

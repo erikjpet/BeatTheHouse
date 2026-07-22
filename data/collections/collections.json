@@ -43,7 +43,7 @@
 			},
 			"map_nodes": [
 				{"id": "home", "label": "Home", "kind": "home"},
-				{"id": "pawn_shop", "label": "Sal's Pawn Counter", "kind": "pawn_shop"}
+				{"id": "pawn_shop", "label": "Sal's Pawn Shop", "kind": "pawn_shop"}
 			],
 			"design_note": "Meta housing is bought once with gold and has no rent. Future rent or upkeep belongs in a separate owner-approved economy pass.",
 			"prestige": {

@@ -41,11 +41,18 @@ func _check_authored_contract(library: ContentLibrary, failures: Array) -> void:
 		return
 	var speaker: Dictionary = definition.get("speaker", {})
 	var payload: Dictionary = definition.get("payload", {})
+	var trigger: Dictionary = definition.get("trigger", {})
+	var conditions: Dictionary = definition.get("conditions", {})
+	var required_context: Dictionary = conditions.get("requires_context", {})
 	var choices: Array = payload.get("choices", [])
 	if str(definition.get("presentation", "")) != "talk" or str(speaker.get("name", "")) != "Dave":
 		failures.append("Dave event does not use the existing talk presentation with Dave as speaker.")
 	if str(payload.get("summary", "")) != DAVE_LINE:
 		failures.append("Dave event does not contain the exact required sentence.")
+	if str(trigger.get("type", "")) != "travel" or int(trigger.get("chance_percent", -1)) != 1:
+		failures.append("Dave event must use an exact 1-in-100 travel trigger.")
+	if str(required_context.get("travel_method_kind", "")) != "bus":
+		failures.append("Dave event must require the canonical bus travel method.")
 	if choices.size() != 1 or str((choices[0] as Dictionary).get("id", "")) != "acknowledge":
 		failures.append("Dave event must expose exactly one acknowledgement choice.")
 	if not choices.is_empty():
@@ -104,6 +111,7 @@ func _check_ui_queue_resolution_and_save(_library: ContentLibrary, failures: Arr
 	state.set_environment(_fixture_environment())
 	state.event_cadence["visit_should_fire"] = false
 	state.event_cadence["last_modal_closed_action"] = int(state.event_cadence.get("action_index", 0))
+	state.event_cadence["rng_state"] = 31 # Next deterministic 1..100 roll is 2: Dave must miss.
 	state.enqueue_triggered_event("family_loan", "fixture_modal", {}, {"presentation": "modal"})
 	state.begin_triggered_event_resolution(state.next_pending_triggered_event())
 	var context := {
@@ -114,8 +122,11 @@ func _check_ui_queue_resolution_and_save(_library: ContentLibrary, failures: Arr
 		"travel_method_kind": "bus",
 		"travel_method": "Bus ticket",
 	}
+	if bool(app.call("_enqueue_triggered_events_for_context", "travel", context, state.current_environment)) or not state.pending_talk_event(EVENT_ID).is_empty():
+		failures.append("Dave queued when the deterministic 1-in-100 travel roll was 2.")
+	state.event_cadence["rng_state"] = 100 # Next deterministic 1..100 roll is 1: Dave must hit.
 	if not bool(app.call("_enqueue_triggered_events_for_context", "travel", context, state.current_environment)):
-		failures.append("First bus ride did not deterministically queue Dave while another modal was active.")
+		failures.append("Dave did not queue when the deterministic 1-in-100 travel roll was 1.")
 	var queued := state.pending_talk_event(EVENT_ID)
 	if queued.is_empty() or str((queued.get("context", {}) as Dictionary).get("travel_method_kind", "")) != "bus":
 		failures.append("Queued Dave encounter did not preserve canonical bus context.")
@@ -141,6 +152,7 @@ func _check_ui_queue_resolution_and_save(_library: ContentLibrary, failures: Arr
 		failures.append("Acknowledging Dave changed bankroll or heat.")
 	if not _has_dave_story_lead(state.story_log):
 		failures.append("Acknowledging Dave did not write the followable story-log lead.")
+	state.event_cadence["rng_state"] = 100
 	if bool(app.call("_enqueue_triggered_events_for_context", "travel", context, state.current_environment)) or not state.pending_talk_event(EVENT_ID).is_empty():
 		failures.append("A second bus ride repeated Dave after acknowledgement.")
 	var after_resolution: RunState = RunStateScript.new()

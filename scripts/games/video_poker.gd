@@ -390,7 +390,7 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 		"multi_hand_mode": "%d Play" % hand_count,
 		"bet_credits": total_bet,
 		"win_credits": win_credits,
-		"credits": maxi(0, run_state.bankroll),
+		"credits": maxi(0, run_state.wager_capacity_for_game(get_id(), environment)),
 		"progressive_meter": int(state.get("progressive_meter", PROGRESSIVE_BASE)),
 		"holdout_tell": str(state.get("holdout_tell", "")),
 		"hand": hand,
@@ -641,8 +641,9 @@ func _resolve_draw(action_id: String, run_state: RunState, environment: Dictiona
 	ui["denomination_index"] = _next_playable_denomination_index(state, _denomination_index(ui, state) - 1, run_state, environment)
 
 	# Step down the bet ladder until the wager fits the bankroll and economy ceiling.
-	var stake_ceiling := run_state.wager_stake_ceiling(int(_copy_dict(environment.get("economic_profile", {})).get("stake_ceiling", run_state.bankroll)))
-	var affordable := mini(stake_ceiling, maxi(0, run_state.bankroll))
+	var wager_capacity := run_state.wager_capacity_for_game(get_id(), environment)
+	var stake_ceiling := run_state.wager_stake_ceiling(int(_copy_dict(environment.get("economic_profile", {})).get("stake_ceiling", wager_capacity)))
+	var affordable := mini(stake_ceiling, maxi(0, wager_capacity))
 	var bet_level := _bet_level(ui)
 	ui["bet_level"] = bet_level
 	while bet_level > 0 and _wager_for(state, ui) > affordable:
@@ -1389,9 +1390,10 @@ func _playable_denomination_indices(denominations: Array, hand_count: int, wager
 func _affordable_bet_level(state: Dictionary, ui: Dictionary, run_state: RunState, environment: Dictionary) -> int:
 	var level := _bet_level(ui)
 	var economic_profile: Dictionary = _copy_dict(environment.get("economic_profile", {}))
-	var base_ceiling := int(economic_profile.get("stake_ceiling", run_state.bankroll if run_state != null else 20))
+	var wager_capacity := run_state.wager_capacity_for_game(get_id(), environment) if run_state != null else 20
+	var base_ceiling := int(economic_profile.get("stake_ceiling", wager_capacity))
 	var wager_ceiling := run_state.wager_stake_ceiling(base_ceiling) if run_state != null else base_ceiling
-	var affordable := mini(wager_ceiling, maxi(0, run_state.bankroll if run_state != null else wager_ceiling))
+	var affordable := mini(wager_ceiling, maxi(0, wager_capacity))
 	var next: Dictionary = ui.duplicate(true)
 	while level > 0:
 		next["bet_level"] = level
@@ -1405,7 +1407,8 @@ func _affordable_bet_level(state: Dictionary, ui: Dictionary, run_state: RunStat
 func _next_playable_denomination_index(state: Dictionary, current_index: int, run_state: RunState, environment: Dictionary) -> int:
 	var denominations: Array = _coin_denominations(state)
 	var economic_profile: Dictionary = _copy_dict(environment.get("economic_profile", {}))
-	var base_ceiling := int(economic_profile.get("stake_ceiling", run_state.bankroll if run_state != null else 20))
+	var wager_capacity := run_state.wager_capacity_for_game(get_id(), environment) if run_state != null else 20
+	var base_ceiling := int(economic_profile.get("stake_ceiling", wager_capacity))
 	var wager_ceiling := run_state.wager_stake_ceiling(base_ceiling) if run_state != null else base_ceiling
 	var playable: Array = _playable_denomination_indices(denominations, _hand_count(state), wager_ceiling)
 	if playable.is_empty():

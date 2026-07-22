@@ -2223,7 +2223,9 @@ func _run() -> void:
 	var pull_tab_thump_sfx: AudioStreamWAV = slot_sfx.preview_event_stream("pull_tab_thump")
 	var paper_peel_sfx: AudioStreamWAV = slot_sfx.preview_event_stream("paper_peel")
 	var pinball_money_sfx: AudioStreamWAV = slot_sfx.preview_event_stream("pinball_money_ding")
-	if lever_sfx == null or reel_loop_sfx == null or jackpot_sfx == null or pull_tab_thump_sfx == null or paper_peel_sfx == null or pinball_money_sfx == null:
+	var drink_sfx: AudioStreamWAV = slot_sfx.preview_event_stream("drink_consumed")
+	var scratch_paper_foley_sfx: AudioStreamWAV = slot_sfx.preview_event_stream("scratch_paper_foley_loop")
+	if lever_sfx == null or reel_loop_sfx == null or jackpot_sfx == null or pull_tab_thump_sfx == null or paper_peel_sfx == null or pinball_money_sfx == null or drink_sfx == null or scratch_paper_foley_sfx == null:
 		push_error("SFX player did not generate required procedural streams.")
 		quit(1)
 		return
@@ -2237,6 +2239,29 @@ func _run() -> void:
 		return
 	if pinball_money_sfx.data.size() <= 2048:
 		push_error("Pinball money ding SFX is too small to represent a positive hit cue.")
+		quit(1)
+		return
+	if drink_sfx.data.size() <= 2048 or drink_sfx.loop_mode != AudioStreamWAV.LOOP_DISABLED or slot_sfx.debug_normalized_event_id("drink_consumed") != "drink_consumed":
+		push_error("Drink confirmation SFX was not generated as a dedicated one-shot cue.")
+		quit(1)
+		return
+	var drink_has_signal := false
+	for sample_byte in drink_sfx.data:
+		if int(sample_byte) != 0:
+			drink_has_signal = true
+			break
+	if not drink_has_signal:
+		push_error("Drink confirmation SFX generated silent audio.")
+		quit(1)
+		return
+	if scratch_paper_foley_sfx.data.size() <= 2048 or scratch_paper_foley_sfx.loop_mode != AudioStreamWAV.LOOP_FORWARD or slot_sfx.debug_normalized_event_id("scratch_paper_foley_loop") != "scratch_paper_foley_loop":
+		push_error("Scratch interaction SFX was not generated as a dedicated cached loop.")
+		quit(1)
+		return
+	if not bool(app.call("_result_consumed_alcohol", {"ok": true, "deltas": {"alcohol_intake": 8}})) \
+		or bool(app.call("_result_consumed_alcohol", {"ok": false, "deltas": {"alcohol_intake": 8}})) \
+		or bool(app.call("_result_consumed_alcohol", {"ok": true, "deltas": {"alcohol_intake": 0, "drunk_delta": 8}})):
+		push_error("Drink confirmation routing did not distinguish consumed alcohol from failed or delayed drunk effects.")
 		quit(1)
 		return
 	if reel_loop_sfx.loop_mode != AudioStreamWAV.LOOP_FORWARD:

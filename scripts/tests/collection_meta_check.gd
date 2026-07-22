@@ -32,6 +32,10 @@ func _run() -> void:
 	_test_usage_decay(resolver)
 	_test_resolve_run_item(resolver)
 	_test_store_round_trip(resolver)
+	_test_sal_shelf_defaults_and_migration(resolver)
+	_test_sal_float_rarity_curve(resolver)
+	_test_sal_stocking_and_idempotency()
+	_test_sal_purchase_and_starter_buyback()
 	_test_meta_home_rules(resolver)
 	_test_pawn_sale_and_trade_up(resolver)
 	_test_failure_decay_and_run_modifiers(resolver)
@@ -175,8 +179,8 @@ func _test_store_round_trip(resolver: Variant) -> void:
 	var loaded_service: Variant = MetaCollectionServiceScript.new()
 	var loaded: Dictionary = loaded_service.load()
 	_check(JSON.stringify(before_save) == JSON.stringify(loaded), "Meta collection store did not round-trip identically.")
-	_check(int(granted.get("instance_id", 0)) == 1, "First granted item did not receive monotonic instance id 1.")
-	var removed: bool = loaded_service.remove_instance(1)
+	_check(int(granted.get("instance_id", 0)) == 2, "First player-owned grant did not follow the starter shelf item in the shared monotonic namespace.")
+	var removed: bool = loaded_service.remove_instance(int(granted.get("instance_id", 0)))
 	_check(removed, "remove_instance did not remove the granted owned instance.")
 	_check(loaded_service.owned_instances().is_empty(), "owned_instances still returned removed instance.")
 	var corrupt_file := FileAccess.open(TEST_STORE_PATH, FileAccess.WRITE)
@@ -339,6 +343,239 @@ func _test_players_card_mint_and_profile_lifecycle() -> void:
 	var hidden_card := _copy_dict(hidden_service.owned_instances()[0]) if not hidden_service.owned_instances().is_empty() else {}
 	var hidden_stamp := _copy_dict(hidden_card.get("instance_data", {}))
 	_check(bool(hidden_stamp.get("seed_hidden", false)) and str(hidden_stamp.get("seed", "")).find("owner-secret-seed") < 0, "Hidden challenge seed leaked into the Players Card stamp.")
+	_remove_user_file(TEST_STORE_PATH)
+	OS.set_environment(MetaCollectionServiceScript.STORE_PATH_ENV, "")
+
+
+func _test_sal_shelf_defaults_and_migration(resolver: Variant) -> void:
+	OS.set_environment(MetaCollectionServiceScript.STORE_PATH_ENV, TEST_STORE_PATH)
+	_remove_user_file(TEST_STORE_PATH)
+	var service: Variant = MetaCollectionServiceScript.new()
+	var fresh: Dictionary = service.load()
+	if not service.has_method("sal_shelf_rows"):
+		_check(false, "Meta collection service is missing the Sal shelf API.")
+		_remove_user_file(TEST_STORE_PATH)
+		OS.set_environment(MetaCollectionServiceScript.STORE_PATH_ENV, "")
+		return
+	var rows: Array = service.sal_shelf_rows()
+	_check(rows.size() == 6, "Fresh Sal shelf did not normalize to exactly six slots.")
+	var occupied: Array = rows.filter(func(row: Dictionary) -> bool: return bool(row.get("occupied", false)))
+	_check(occupied.size() == 1, "Fresh Sal shelf did not contain exactly one starter listing.")
+	var starter := _copy_dict(occupied[0]) if not occupied.is_empty() else {}
+	var item := _copy_dict(starter.get("item", {}))
+	var rare_channel := str(starter.get("starter_rare_channel", ""))
+	_check(str(starter.get("listing_mode", "")) == "starter_discount", "Starter listing did not use starter_discount mode.")
+	_check(float(item.get("condition", 0.0)) > 0.0 and float(item.get("condition", 1.0)) < 0.30, "Starter condition was not inside (0, .30).")
+	_check(["potency", "resonance", "usage"].has(rare_channel) and float(item.get(rare_channel, 1.0)) <= 0.01, "Starter did not record one <=1% non-condition float.")
+	_check(not resolver.bag_item_options_for_bag(int(starter.get("virtual_bagdef_id", -1))).filter(func(definition: Dictionary) -> bool: return int(definition.get("itemdef_id", -1)) == int(item.get("itemdef_id", -2))).is_empty(), "Starter is not a valid item for its virtual bag.")
+	var before := JSON.stringify(fresh.get("sal_resale", {}))
+	_check(service.save() == OK, "Fresh Sal shelf save failed.")
+	var restored: Variant = MetaCollectionServiceScript.new()
+	var loaded: Dictionary = restored.load()
+	_check(JSON.stringify(loaded.get("sal_resale", {})) == before, "Repeated Sal shelf load/save changed starter identity or floats.")
+	var legacy_file := FileAccess.open(TEST_STORE_PATH, FileAccess.WRITE)
+	if legacy_file != null:
+		legacy_file.store_string(JSON.stringify({
+			"schema_version": 2,
+			"owned_instances": [],
+			"unopened_bags": [],
+			"gold_balance": 41,
+			"housing_tier": "motel_room",
+			"owned_containers": [{"item_id": "bag", "instance_id": 0, "capacity": 3}],
+			"loadout": [],
+			"meta_home": {"housing_tier": "motel_room", "current_location": "home"},
+			"unknown_owner_key": {"keep": true},
+			"next_instance_id": 12,
+		}))
+		legacy_file.close()
+	var migrated: Variant = MetaCollectionServiceScript.new()
+	var migrated_snapshot: Dictionary = migrated.load()
+	_check(migrated.sal_shelf_rows().size() == 6 and migrated.sal_shelf_rows().filter(func(row: Dictionary) -> bool: return bool(row.get("occupied", false))).size() == 1, "Legacy store did not receive one starter and six Sal slots.")
+	_check(int(migrated_snapshot.get("gold_balance", 0)) == 41 and bool(_copy_dict(migrated_snapshot.get("unknown_owner_key", {})).get("keep", false)), "Sal migration changed legacy gold or dropped an unknown key.")
+	_remove_user_file(TEST_STORE_PATH)
+	OS.set_environment(MetaCollectionServiceScript.STORE_PATH_ENV, "")
+
+
+func _test_sal_float_rarity_curve(resolver: Variant) -> void:
+	var service: Variant = MetaCollectionServiceScript.new()
+	if not service.has_method("ordinary_collection_price_breakdown"):
+		_check(false, "Meta collection service is missing the pure Sal rarity evaluator.")
+		return
+	var definition: Dictionary = resolver.item_definition(1000)
+	var base_prices := _copy_dict(_copy_dict(resolver.meta_home_config().get("sale_prices", {})).get("items", {}))
+	var base := int(base_prices.get(str(definition.get("tier", "blue")), 0))
+	for value in [0.0, 0.01, 0.5, 0.99, 1.0]:
+		var edge_instance := {"itemdef_id": 1000, "potency": value, "condition": 0.0, "resonance": 0.5, "usage": 0.5}
+		var edge: Dictionary = service.ordinary_collection_price_breakdown(edge_instance)
+		var expected_edge := pow(absf(2.0 * value - 1.0), 4.0)
+		_check(is_equal_approx(float(_copy_dict(edge.get("rarity_scores", {})).get("potency", -1.0)), expected_edge), "Potency edge fixture %.2f used the wrong fourth-power score." % value)
+		_check(int(edge.get("tier_base", -1)) == base, "Rarity evaluator did not use the tier base sale value.")
+	var low: Dictionary = service.ordinary_collection_price_breakdown({"itemdef_id": 1000, "potency": 0.01, "condition": 0.0, "resonance": 0.5, "usage": 0.5})
+	var high: Dictionary = service.ordinary_collection_price_breakdown({"itemdef_id": 1000, "potency": 0.99, "condition": 0.0, "resonance": 0.5, "usage": 0.5})
+	var middle: Dictionary = service.ordinary_collection_price_breakdown({"itemdef_id": 1000, "potency": 0.5, "condition": 0.0, "resonance": 0.5, "usage": 0.5})
+	_check(is_equal_approx(float(low.get("rarity_multiplier", 0.0)), float(high.get("rarity_multiplier", -1.0))), "Symmetric .01/.99 float values did not contribute equally.")
+	_check(int(low.get("pawn_quote", 0)) > int(middle.get("pawn_quote", 0)), "A 1% non-condition edge was not worth more than 50%.")
+	var condition_values: Array = []
+	for value in [0.0, 0.01, 0.5, 0.99, 1.0]:
+		var condition: Dictionary = service.ordinary_collection_price_breakdown({"itemdef_id": 1000, "potency": 0.5, "condition": value, "resonance": 0.5, "usage": 0.5})
+		condition_values.append(float(_copy_dict(condition.get("rarity_scores", {})).get("condition", -1.0)))
+		_check(float(condition.get("rarity_multiplier", 0.0)) >= 1.0 and float(condition.get("rarity_multiplier", 4.0)) <= 3.0, "Rarity multiplier left [1,3].")
+	_check(condition_values == [0.0, pow(0.01, 4.0), pow(0.5, 4.0), pow(0.99, 4.0), 1.0], "Condition fixtures were not monotonic fourth-power durability.")
+	var all_edges := {"itemdef_id": 1000, "potency": 0.0, "condition": 1.0, "resonance": 1.0, "usage": 0.0}
+	var all_edges_before := JSON.stringify(all_edges)
+	var maximum: Dictionary = service.ordinary_collection_price_breakdown(all_edges)
+	_check(is_equal_approx(float(maximum.get("rarity_multiplier", 0.0)), 3.0), "All four maximum rarity contributions did not cap at 3x.")
+	_check(JSON.stringify(all_edges) == all_edges_before, "Pure Sal quote evaluation mutated its input instance.")
+	for channel in ["potency", "resonance", "usage"]:
+		for value in [0.0, 0.01, 0.5, 0.99, 1.0]:
+			var fixture := {"itemdef_id": 1000, "potency": 0.5, "condition": 0.0, "resonance": 0.5, "usage": 0.5}
+			fixture[channel] = value
+			var breakdown: Dictionary = service.ordinary_collection_price_breakdown(fixture)
+			var expected_contribution := 0.5 * pow(absf(2.0 * value - 1.0), 4.0)
+			_check(is_equal_approx(float(_copy_dict(breakdown.get("rarity_contributions", {})).get(channel, -1.0)), expected_contribution), "%s %.2f used the wrong edge contribution." % [channel.capitalize(), value])
+	var middle_instance := {"itemdef_id": 1000, "potency": 0.5, "condition": 0.0, "resonance": 0.5, "usage": 0.5}
+	var normal: Dictionary = service.ordinary_collection_price_breakdown(middle_instance, "normal")
+	var starter: Dictionary = service.ordinary_collection_price_breakdown(middle_instance, "starter_discount")
+	_check(int(normal.get("final_price", 0)) == maxi(int(normal.get("pawn_quote", 0)) + 1, int(ceil(float(normal.get("pawn_quote", 0)) * 1.5))), "Normal listing did not use the exact ceiling/quote+1 rule.")
+	_check(int(starter.get("final_price", 0)) == maxi(1, int(round(float(starter.get("pawn_quote", 0)) * 0.75))), "Starter listing did not use the exact 0.75x rounding rule.")
+
+
+func _test_sal_stocking_and_idempotency() -> void:
+	OS.set_environment(MetaCollectionServiceScript.STORE_PATH_ENV, TEST_STORE_PATH)
+	_remove_user_file(TEST_STORE_PATH)
+	var service: Variant = MetaCollectionServiceScript.new()
+	service.load()
+	var drop_service: Variant = CollectionDropServiceScript.new()
+	if not drop_service.has_method("stock_sal_after_success"):
+		_check(false, "Collection drop service is missing all-success Sal stocking.")
+		_remove_user_file(TEST_STORE_PATH)
+		OS.set_environment(MetaCollectionServiceScript.STORE_PATH_ENV, "")
+		return
+	var success: Variant = _terminal_run("sal-stock-standard")
+	var first: Dictionary = drop_service.stock_sal_after_success(success, service)
+	var repeat: Dictionary = drop_service.stock_sal_after_success(success, service)
+	_check(bool(first.get("stocked", false)) and not bool(repeat.get("stocked", true)), "One successful run did not stock Sal exactly once.")
+	_check(service.sal_shelf_rows().filter(func(row: Dictionary) -> bool: return bool(row.get("occupied", false))).size() == 2, "First success did not fill the lowest empty shelf slot.")
+	var daily: Variant = _terminal_run("sal-stock-daily", "", false, "daily")
+	var challenge: Variant = _terminal_run("sal-stock-challenge", "challenge_sal", false, "custom")
+	var tutorial: Variant = _terminal_run("sal-stock-tutorial", "tutorial_sal", false, "custom")
+	_check(bool(drop_service.stock_sal_after_success(daily, service).get("stocked", false)), "Meta-disabled daily victory did not stock Sal.")
+	_check(bool(drop_service.stock_sal_after_success(challenge, service).get("stocked", false)), "Meta-disabled challenge victory did not stock Sal.")
+	_check(bool(drop_service.stock_sal_after_success(tutorial, service).get("stocked", false)), "Meta-disabled tutorial victory did not stock Sal.")
+	var failed: Variant = _terminal_run("sal-stock-failed")
+	failed.run_status = RunStateScript.RUN_STATUS_FAILED
+	var before_failed := JSON.stringify(service.sal_shelf_rows())
+	_check(not bool(drop_service.stock_sal_after_success(failed, service).get("stocked", false)) and JSON.stringify(service.sal_shelf_rows()) == before_failed, "Failed run changed Sal stock.")
+	var nonterminal: Variant = _terminal_run("sal-stock-active")
+	nonterminal.run_status = RunStateScript.RUN_STATUS_ACTIVE
+	_check(not bool(drop_service.stock_sal_after_success(nonterminal, service).get("stocked", false)) and JSON.stringify(service.sal_shelf_rows()) == before_failed, "Nonterminal run changed Sal stock.")
+	var same_seed_new: Variant = _terminal_run("sal-stock-standard")
+	_check(bool(drop_service.stock_sal_after_success(same_seed_new, service).get("stocked", false)), "A genuine new same-seed run did not stock again.")
+	var rng_before := JSON.stringify(service.sal_resale_rng_snapshot())
+	service.sal_shelf_rows()
+	service.sal_shelf_row(0)
+	service.snapshot()
+	_check(JSON.stringify(service.sal_resale_rng_snapshot()) == rng_before, "Sal shelf views or snapshots consumed RNG.")
+	while service.sal_shelf_rows().filter(func(row: Dictionary) -> bool: return bool(row.get("occupied", false))).size() < 6:
+		var fill_index: int = service.sal_shelf_rows().filter(func(row: Dictionary) -> bool: return bool(row.get("occupied", false))).size()
+		service.generate_and_insert_sal_stock("fill:%d" % fill_index)
+	var full_before: Array = service.sal_shelf_rows()
+	var protected_id := int(_copy_dict(_copy_dict(full_before[0]).get("item", {})).get("instance_id", 0))
+	var replacement: Dictionary = service.generate_and_insert_sal_stock("full:replacement")
+	var full_after: Array = service.sal_shelf_rows()
+	var changed_slots := 0
+	for index in range(6):
+		if int(_copy_dict(_copy_dict(full_before[index]).get("item", {})).get("instance_id", 0)) != int(_copy_dict(_copy_dict(full_after[index]).get("item", {})).get("instance_id", 0)):
+			changed_slots += 1
+	_check(bool(replacement.get("stocked", false)) and changed_slots == 1, "Full Sal shelf did not replace exactly one eligible slot.")
+	_check(int(_copy_dict(_copy_dict(full_after[0]).get("item", {})).get("instance_id", 0)) == protected_id, "Full-shelf replacement removed the protected starter.")
+	_remove_user_file(TEST_STORE_PATH)
+	OS.set_environment(MetaCollectionServiceScript.STORE_PATH_ENV, "")
+
+
+func _test_sal_purchase_and_starter_buyback() -> void:
+	OS.set_environment(MetaCollectionServiceScript.STORE_PATH_ENV, TEST_STORE_PATH)
+	_remove_user_file(TEST_STORE_PATH)
+	var service: Variant = MetaCollectionServiceScript.new()
+	var resolver: Variant = CollectionItemResolverScript.new()
+	service.load()
+	if not service.has_method("arm_sal_shelf_purchase") or not service.has_method("resolve_starter_buyback"):
+		_check(false, "Meta collection service is missing Sal purchase/buyback transaction APIs.")
+		_remove_user_file(TEST_STORE_PATH)
+		OS.set_environment(MetaCollectionServiceScript.STORE_PATH_ENV, "")
+		return
+	var starter_rows: Array = service.sal_shelf_rows().filter(func(row: Dictionary) -> bool: return bool(row.get("occupied", false)))
+	var starter := _copy_dict(starter_rows[0]) if not starter_rows.is_empty() else {}
+	var slot_index := int(starter.get("slot_index", -1))
+	var starter_item := _copy_dict(starter.get("item", {}))
+	var price := int(starter.get("asking_price", 0))
+	service.add_gold(price)
+	var armed: Dictionary = service.arm_sal_shelf_purchase(slot_index)
+	var bought: Dictionary = service.confirm_sal_shelf_purchase(str(armed.get("token", "")))
+	_check(bool(bought.get("ok", false)) and int(service.snapshot().get("gold_balance", -1)) == 0, "Starter purchase did not debit the exact asking price once.")
+	var owned: Array = service.owned_instances()
+	var purchased := _copy_dict(owned[0]) if not owned.is_empty() else {}
+	_check(owned.size() == 1 and int(purchased.get("instance_id", 0)) == int(starter_item.get("instance_id", -1)) and JSON.stringify(purchased) == JSON.stringify(starter_item), "Starter purchase did not transfer the exact persistent instance and floats.")
+	var pending: Dictionary = service.pending_starter_buyback()
+	_check(not pending.is_empty() and int(pending.get("offer_price", 0)) == int(ceil(float(pending.get("pawn_quote", 0)) * 1.25)), "Starter purchase did not persist the exact 1.25x pending offer.")
+	_check(service.save() == OK, "Pending starter offer save failed.")
+	var pending_restored: Variant = MetaCollectionServiceScript.new()
+	pending_restored.load()
+	_check(JSON.stringify(pending_restored.pending_starter_buyback()) == JSON.stringify(pending), "Pending starter offer did not survive profile reload exactly.")
+	service = pending_restored
+	var sold_back: Dictionary = service.resolve_starter_buyback("sell_back")
+	var repeated: Dictionary = service.resolve_starter_buyback("sell_back")
+	var relisted: Dictionary = service.sal_shelf_row(slot_index)
+	_check(bool(sold_back.get("ok", false)) and not bool(repeated.get("ok", true)), "Starter buyback did not resolve exactly once.")
+	_check(service.owned_instances().is_empty() and int(_copy_dict(relisted.get("item", {})).get("instance_id", 0)) == int(starter_item.get("instance_id", -1)), "Buyback did not return the exact starter instance to its original slot.")
+	_check(str(relisted.get("listing_mode", "")) == "mocking_relist" and int(relisted.get("asking_price", 0)) == int(ceil(float(sold_back.get("pawn_quote", 0)) * 10.0)), "Accepted starter buyback did not create the exact 10x mocking relist.")
+	_check(int(service.snapshot().get("gold_balance", -1)) == int(sold_back.get("offer_price", -2)), "Starter buyback did not pay the exact one-time offer.")
+	var relist_price := int(relisted.get("asking_price", 0))
+	service.add_gold(relist_price)
+	var relist_arm: Dictionary = service.arm_sal_shelf_purchase(slot_index)
+	var repurchased: Dictionary = service.confirm_sal_shelf_purchase(str(relist_arm.get("token", "")))
+	_check(bool(repurchased.get("ok", false)) and service.pending_starter_buyback().is_empty(), "Repurchasing the 10x relist retriggered the starter offer.")
+	var shelf_before_sale := JSON.stringify(service.sal_shelf_rows())
+	var sale_arm: Dictionary = service.arm_sale("item", int(starter_item.get("instance_id", 0)))
+	var sale_result: Dictionary = service.confirm_sale(str(sale_arm.get("token", "")))
+	_check(bool(sale_result.get("ok", false)) and JSON.stringify(service.sal_shelf_rows()) == shelf_before_sale, "Ordinary player sale copied or referenced the sold item on Sal's shelf.")
+
+	_remove_user_file(TEST_STORE_PATH)
+	var keep_service: Variant = MetaCollectionServiceScript.new()
+	keep_service.load()
+	var keep_starter := _copy_dict(keep_service.sal_shelf_rows()[0])
+	var keep_price := int(keep_starter.get("asking_price", 0))
+	keep_service.add_gold(keep_price + 7)
+	var keep_arm: Dictionary = keep_service.arm_sal_shelf_purchase(0)
+	keep_service.confirm_sal_shelf_purchase(str(keep_arm.get("token", "")))
+	var keep_owned_before := JSON.stringify(keep_service.owned_instances())
+	var keep_gold_before := int(keep_service.snapshot().get("gold_balance", -1))
+	var kept: Dictionary = keep_service.resolve_starter_buyback("keep")
+	_check(bool(kept.get("ok", false)) and JSON.stringify(keep_service.owned_instances()) == keep_owned_before and int(keep_service.snapshot().get("gold_balance", -2)) == keep_gold_before, "Keep choice changed starter ownership or gold.")
+	_check(not bool(keep_service.resolve_starter_buyback("keep").get("ok", true)), "Keep choice did not permanently resolve the starter offer.")
+
+	_remove_user_file(TEST_STORE_PATH)
+	var failure_service: Variant = MetaCollectionServiceScript.new()
+	failure_service.load()
+	var failure_starter := _copy_dict(failure_service.sal_shelf_rows()[0])
+	var failure_price := int(failure_starter.get("asking_price", 0))
+	var insufficient_before := JSON.stringify(failure_service.snapshot())
+	_check(not bool(failure_service.arm_sal_shelf_purchase(0).get("ok", true)) and JSON.stringify(failure_service.snapshot()) == insufficient_before, "Insufficient-gold purchase mutated profile state.")
+	failure_service.add_gold(failure_price)
+	var stale_arm: Dictionary = failure_service.arm_sal_shelf_purchase(0)
+	var stale_before := JSON.stringify(failure_service.snapshot())
+	_check(not bool(failure_service.confirm_sal_shelf_purchase("stale-token").get("ok", true)) and JSON.stringify(failure_service.snapshot()) == stale_before, "Stale shelf token mutated profile state.")
+
+	_remove_user_file(TEST_STORE_PATH)
+	var full_service: Variant = MetaCollectionServiceScript.new()
+	full_service.load()
+	full_service.grant_container("bag")
+	for seed_index in range(full_service.total_owned_capacity()):
+		full_service.grant_instance(resolver.roll_instance(1000, "sal-capacity-%d" % seed_index))
+	var full_starter := _copy_dict(full_service.sal_shelf_rows()[0])
+	full_service.add_gold(int(full_starter.get("asking_price", 0)))
+	var capacity_before := JSON.stringify(full_service.sal_shelf_rows())
+	_check(not bool(full_service.arm_sal_shelf_purchase(0).get("ok", true)) and JSON.stringify(full_service.sal_shelf_rows()) == capacity_before, "Full owned-item capacity allowed or mutated a shelf purchase.")
 	_remove_user_file(TEST_STORE_PATH)
 	OS.set_environment(MetaCollectionServiceScript.STORE_PATH_ENV, "")
 
@@ -576,7 +813,7 @@ func _test_collection_browser_view_model_read_only(resolver: Variant) -> void:
 	_check(int(view.get("owned_count", 0)) == 1, "Collection browser owned count mismatch.")
 	var home := _copy_dict(view.get("home", {}))
 	_check(str(home.get("housing_tier", "")) == MetaCollectionServiceScript.HOUSING_BACK_ALLEY, "Collection browser did not expose meta home state.")
-	_check(str(_copy_dict(home.get("pawn_shop", {})).get("interaction", "")) == "sell_counter_only", "Collection browser did not restrict pawn shop to sell counter.")
+	_check(str(_copy_dict(home.get("pawn_shop", {})).get("interaction", "")) == "buy_and_sell" and int(_copy_dict(home.get("pawn_shop", {})).get("shelf_slots", 0)) == 6, "Collection browser did not expose Sal's six-slot buy-and-sell shop.")
 	_remove_user_file(TEST_STORE_PATH)
 	OS.set_environment(MetaCollectionServiceScript.STORE_PATH_ENV, "")
 

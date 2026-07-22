@@ -2504,8 +2504,10 @@ func _check_onboarding_tutorial_arc(library: ContentLibrary, failures: Array) ->
 	var tutorial_spin: Dictionary = tutorial_slot.resolve_with_context("spin", 2, run_a, run_a.current_environment, tutorial_spin_rng, {})
 	GameModule.apply_result(run_a, tutorial_spin, tutorial_spin_rng)
 	var ready_status := run_a.demo_objective_status()
-	if not bool(tutorial_spin.get("tutorial_first_night_match", false)) or int(ready_status.get("grand_casino_games_played", 0)) != 1 or int(ready_status.get("grand_casino_net_winnings", 0)) < 1 or str(ready_status.get("players_card_tier", "")) != RunState.GRAND_CASINO_PLAYERS_CARD_TIER_GOLD or not bool(ready_status.get("high_roller_ready", false)):
+	if not bool(tutorial_spin.get("tutorial_first_night_match", false)) or int(ready_status.get("grand_casino_games_played", 0)) != 1 or int(ready_status.get("grand_casino_net_winnings", 0)) < 1 or str(ready_status.get("players_card_tier", "")) != RunState.GRAND_CASINO_PLAYERS_CARD_TIER_SILVER or str(ready_status.get("players_card_next_tier", "")) != RunState.GRAND_CASINO_PLAYERS_CARD_TIER_GOLD or not bool(ready_status.get("high_roller_ready", false)):
 		failures.append("Tutorial fixed-seed Main Floor spin did not reach the compressed Gold review: %s" % JSON.stringify(ready_status))
+	if not generator_a.enter_grand_casino_room(run_a, RunState.GRAND_CASINO_CAGE_ARCHETYPE_ID):
+		failures.append("Tutorial did not permit the required return to Linda in the Cage.")
 	var tutorial_cashout := run_a.complete_grand_casino_high_roller_cashout({"success_message": "Tutorial card issued."})
 	if not bool(tutorial_cashout.get("ok", false)) or run_a.run_status != RunState.RUN_STATUS_ENDED:
 		failures.append("Tutorial Linda review did not complete the real clean-victory route.")

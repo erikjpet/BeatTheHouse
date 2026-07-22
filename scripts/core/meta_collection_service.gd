@@ -7,8 +7,14 @@ const RngStreamScript := preload("res://scripts/core/rng_stream.gd")
 const STORE_PATH := "user://meta_collection.json"
 const STORE_PATH_ENV := "BTH_META_COLLECTION_PATH"
 const ITEMS_PATH := "res://data/items/items.json"
-const SCHEMA_VERSION := 2
+const SCHEMA_VERSION := 3
 const FIRST_INSTANCE_ID := 1
+const SAL_RESALE_SCHEMA_VERSION := 1
+const SAL_SHELF_SLOT_COUNT := 6
+const SAL_HISTORY_LIMIT := 64
+const SAL_RECEIPT_LIMIT := 256
+const SAL_STARTER_CONDITION := 0.18
+const SAL_STARTER_RARE_VALUE := 0.01
 const REVEAL_BAG_KEY := "bag"
 const HOUSING_BACK_ALLEY := "back_alley"
 const HOUSING_MOTEL_ROOM := "motel_room"
@@ -16,6 +22,11 @@ const HOUSING_APARTMENT := "apartment"
 const HOUSING_HOUSE := "house"
 const SALE_KIND_ITEM := "item"
 const SALE_KIND_BAG := "bag"
+const LISTING_MODE_PAWN := "pawn"
+const LISTING_MODE_NORMAL := "normal"
+const LISTING_MODE_STARTER_DISCOUNT := "starter_discount"
+const LISTING_MODE_STARTER_BUYBACK := "starter_buyback"
+const LISTING_MODE_MOCKING_RELIST := "mocking_relist"
 const FAILURE_DECAY_FLAG := "_meta_collection_failure_decay_applied"
 const FIXTURE_POLLUTION_MIGRATION_FLAG := "_fixture_pollution_quarantined_v1"
 const FAILURE_DURABILITY_LOSS := 0.10
@@ -41,6 +52,7 @@ const FIXTURE_PROVENANCE_TOKENS := [
 var _store: Dictionary = {}
 var _item_definitions_by_id: Dictionary = {}
 var _items_loaded := false
+var _shared_collection_resolver: CollectionItemResolver
 
 
 func _init() -> void:
@@ -490,6 +502,406 @@ func sale_quote(kind: String, instance_id: int) -> Dictionary:
 	return _item_sale_quote(instance_id)
 
 
+func ordinary_collection_price_breakdown(instance: Dictionary, listing_mode: String = LISTING_MODE_PAWN) -> Dictionary:
+	var resolver: Variant = _collection_resolver()
+	var normalized: Dictionary = resolver.normalize_instance_for_definition(instance)
+	var definition: Dictionary = resolver.item_definition(int(normalized.get("itemdef_id", -1)))
+	if definition.is_empty() or str(definition.get("item_class", CollectionItemResolverScript.ITEM_CLASS_COLLECTION)) != CollectionItemResolverScript.ITEM_CLASS_COLLECTION:
+		return {"ok": false, "message": "That item does not use Sal's collection price curve."}
+	var floats := {
+		"potency": clampf(float(normalized.get("potency", 0.0)), 0.0, 1.0),
+		"condition": clampf(float(normalized.get("condition", 0.0)), 0.0, 1.0),
+		"resonance": clampf(float(normalized.get("resonance", 0.0)), 0.0, 1.0),
+		"usage": clampf(float(normalized.get("usage", 0.0)), 0.0, 1.0),
+	}
+	var potency_score := snappedf(pow(absf(2.0 * float(floats.get("potency", 0.0)) - 1.0), 4.0), 0.000000000001)
+	var resonance_score := snappedf(pow(absf(2.0 * float(floats.get("resonance", 0.0)) - 1.0), 4.0), 0.000000000001)
+	var usage_score := snappedf(pow(absf(2.0 * float(floats.get("usage", 0.0)) - 1.0), 4.0), 0.000000000001)
+	var condition_score := snappedf(pow(float(floats.get("condition", 0.0)), 4.0), 0.000000000001)
+	var scores := {
+		"potency": potency_score,
+		"condition": condition_score,
+		"resonance": resonance_score,
+		"usage": usage_score,
+	}
+	var contributions := {
+		"potency": snappedf(0.5 * potency_score, 0.000000000001),
+		"condition": snappedf(0.5 * condition_score, 0.000000000001),
+		"resonance": snappedf(0.5 * resonance_score, 0.000000000001),
+		"usage": snappedf(0.5 * usage_score, 0.000000000001),
+	}
+	var rarity_multiplier := snappedf(clampf(
+		1.0
+		+ float(contributions.get("potency", 0.0))
+		+ float(contributions.get("condition", 0.0))
+		+ float(contributions.get("resonance", 0.0))
+		+ float(contributions.get("usage", 0.0)),
+		1.0,
+		3.0
+	), 0.000000000001)
+	var tier := str(definition.get("tier", "blue"))
+	var prices := _copy_dict(_copy_dict(_meta_home_config().get("sale_prices", {})).get("items", {}))
+	var tier_base := maxi(1, int(prices.get(tier, 1)))
+	var pawn_quote := maxi(1, int(round(float(tier_base) * rarity_multiplier)))
+	var mode := listing_mode.strip_edges().to_lower()
+	if not [LISTING_MODE_PAWN, LISTING_MODE_NORMAL, LISTING_MODE_STARTER_DISCOUNT, LISTING_MODE_STARTER_BUYBACK, LISTING_MODE_MOCKING_RELIST].has(mode):
+		mode = LISTING_MODE_PAWN
+	var listing_multiplier := 1.0
+	var final_price := pawn_quote
+	match mode:
+		LISTING_MODE_NORMAL:
+			listing_multiplier = 1.5
+			final_price = maxi(pawn_quote + 1, int(ceil(float(pawn_quote) * listing_multiplier)))
+		LISTING_MODE_STARTER_DISCOUNT:
+			listing_multiplier = 0.75
+			final_price = maxi(1, int(round(float(pawn_quote) * listing_multiplier)))
+		LISTING_MODE_STARTER_BUYBACK:
+			listing_multiplier = 1.25
+			final_price = maxi(1, int(ceil(float(pawn_quote) * listing_multiplier)))
+		LISTING_MODE_MOCKING_RELIST:
+			listing_multiplier = 10.0
+			final_price = maxi(1, int(ceil(float(pawn_quote) * listing_multiplier)))
+	return {
+		"ok": true,
+		"itemdef_id": int(normalized.get("itemdef_id", -1)),
+		"instance_id": int(normalized.get("instance_id", 0)),
+		"display_name": str(definition.get("display_name", "Collection Item")),
+		"collection_id": str(definition.get("collection_id", "")),
+		"tier": tier,
+		"tier_base": tier_base,
+		"clamped_floats": floats,
+		"rarity_scores": scores,
+		"rarity_contributions": contributions,
+		"rarity_multiplier": rarity_multiplier,
+		"pawn_quote": pawn_quote,
+		"listing_mode": mode,
+		"listing_multiplier": listing_multiplier,
+		"final_price": final_price,
+		"price": final_price,
+	}
+
+
+func sal_shelf_rows() -> Array:
+	var resale := _copy_dict(_store.get("sal_resale", {}))
+	var result: Array = []
+	for slot_value in _copy_array(resale.get("slots", [])):
+		var slot := _copy_dict(slot_value)
+		if bool(slot.get("occupied", false)):
+			var mode := str(slot.get("listing_mode", LISTING_MODE_NORMAL))
+			var breakdown := ordinary_collection_price_breakdown(_copy_dict(slot.get("item", {})), mode)
+			slot["quote_basis"] = breakdown
+			slot["asking_price"] = int(breakdown.get("final_price", slot.get("asking_price", 0)))
+		result.append(slot)
+	return result
+
+
+func sal_shelf_row(slot_index: int) -> Dictionary:
+	if slot_index < 0 or slot_index >= SAL_SHELF_SLOT_COUNT:
+		return {}
+	var rows := sal_shelf_rows()
+	if slot_index >= rows.size():
+		return {}
+	return _copy_dict(rows[slot_index])
+
+
+func sal_resale_rng_snapshot() -> Dictionary:
+	return _copy_dict(_copy_dict(_store.get("sal_resale", {})).get("rng_streams", {}))
+
+
+func allocate_sal_run_receipt(seed_text: String) -> String:
+	_store = _normalize_store(_store)
+	var resale := _copy_dict(_store.get("sal_resale", {}))
+	var next_id := maxi(1, int(resale.get("next_run_receipt_id", 1)))
+	resale["next_run_receipt_id"] = next_id + 1
+	_store["sal_resale"] = resale
+	return "sal-run:%d:%s" % [next_id, seed_text.strip_edges()]
+
+
+func sal_run_receipt_processed(receipt: String) -> bool:
+	var clean := receipt.strip_edges()
+	return not clean.is_empty() and _copy_array(_copy_dict(_store.get("sal_resale", {})).get("processed_run_receipts", [])).has(clean)
+
+
+func generate_and_insert_sal_stock(run_receipt: String) -> Dictionary:
+	_store = _normalize_store(_store)
+	var receipt := run_receipt.strip_edges()
+	if receipt.is_empty():
+		return {"ok": false, "stocked": false, "message": "Sal stock needs a run receipt."}
+	if sal_run_receipt_processed(receipt):
+		return {"ok": true, "stocked": false, "receipt": receipt, "message": "Sal already stocked this run."}
+	var resale := _copy_dict(_store.get("sal_resale", {}))
+	var streams := _copy_dict(resale.get("rng_streams", {}))
+	var stock_rng := _rng_from_snapshot(_copy_dict(streams.get("sal_resale_stock", {})))
+	var resolver: Variant = _collection_resolver()
+	var rolled: Dictionary = resolver.roll_virtual_bag_item(stock_rng, "sal_resale_stock|%s" % receipt)
+	if rolled.is_empty():
+		return {"ok": false, "stocked": false, "receipt": receipt, "message": "Sal could not generate stock."}
+	streams["sal_resale_stock"] = stock_rng.snapshot()
+	var item: Dictionary = resolver.normalize_instance_for_definition(_copy_dict(rolled.get("item", {})))
+	item["schema_version"] = SCHEMA_VERSION
+	item["instance_id"] = _take_next_instance_id()
+	item["source"] = "sal_run_stock"
+	item["source_id"] = receipt
+	item["generation_seed"] = str(rolled.get("generation_seed", ""))
+	var provenance := _sal_roll_provenance(rolled, "sal_run_stock", receipt)
+	var listing := _sal_listing_from_item(item, LISTING_MODE_NORMAL, provenance)
+	var slots := _copy_array(resale.get("slots", []))
+	var slot_index := -1
+	for index in range(slots.size()):
+		if not bool(_copy_dict(slots[index]).get("occupied", false)):
+			slot_index = index
+			break
+	var replaced: Dictionary = {}
+	if slot_index < 0:
+		var eligible: Array = []
+		for index in range(slots.size()):
+			var candidate := _copy_dict(slots[index])
+			if bool(candidate.get("occupied", false)) and not bool(candidate.get("protected", false)):
+				eligible.append(index)
+		if eligible.is_empty():
+			return {"ok": false, "stocked": false, "receipt": receipt, "message": "No eligible Sal shelf slot can be replaced."}
+		var replacement_rng := _rng_from_snapshot(_copy_dict(streams.get("sal_resale_replacement", {})))
+		slot_index = int(eligible[replacement_rng.randi_range(0, eligible.size() - 1)])
+		streams["sal_resale_replacement"] = replacement_rng.snapshot()
+		replaced = _copy_dict(slots[slot_index])
+	listing["slot_index"] = slot_index
+	slots[slot_index] = listing
+	resale["slots"] = slots
+	resale["rng_streams"] = streams
+	var receipts := _copy_array(resale.get("processed_run_receipts", []))
+	receipts.append(receipt)
+	resale["processed_run_receipts"] = _bounded_array(receipts, SAL_RECEIPT_LIMIT)
+	var history := _copy_array(resale.get("stock_history", []))
+	history.append({
+		"receipt": receipt,
+		"slot_index": slot_index,
+		"instance_id": int(item.get("instance_id", 0)),
+		"itemdef_id": int(item.get("itemdef_id", -1)),
+		"virtual_bagdef_id": int(provenance.get("virtual_bagdef_id", -1)),
+		"collection_id": str(provenance.get("collection_id", "")),
+		"tier": str(provenance.get("tier", "")),
+		"generation_seed": str(provenance.get("generation_seed", "")),
+		"replaced_instance_id": int(_copy_dict(replaced.get("item", {})).get("instance_id", 0)),
+	})
+	resale["stock_history"] = _bounded_array(history, SAL_HISTORY_LIMIT)
+	resale["revision"] = maxi(0, int(resale.get("revision", 0))) + 1
+	_store["sal_resale"] = resale
+	return {
+		"ok": true,
+		"stocked": true,
+		"receipt": receipt,
+		"slot_index": slot_index,
+		"listing": listing.duplicate(true),
+		"replaced": replaced,
+		"summary_line": "Sal stocked something new.",
+	}
+
+
+func arm_sal_shelf_purchase(slot_index: int) -> Dictionary:
+	_store = _normalize_store(_store)
+	var quote := _authoritative_sal_slot_quote(slot_index)
+	if not bool(quote.get("ok", false)):
+		return quote
+	if not can_accept_owned_instance():
+		return {"ok": false, "message": "No room for another collection item."}
+	var price := int(quote.get("asking_price", 0))
+	if int(_store.get("gold_balance", 0)) < price:
+		return {"ok": false, "message": "Not enough gold for that shelf item.", "asking_price": price}
+	var resale := _copy_dict(_store.get("sal_resale", {}))
+	var token := "sal-buy:%d:%d:%s:%d:%d" % [
+		slot_index,
+		int(quote.get("instance_id", 0)),
+		str(quote.get("listing_mode", "")),
+		price,
+		int(resale.get("revision", 0)),
+	]
+	var pending := quote.duplicate(true)
+	pending["token"] = token
+	resale["pending_purchase"] = pending
+	_store["sal_resale"] = resale
+	return pending
+
+
+func confirm_sal_shelf_purchase(token: String) -> Dictionary:
+	_store = _normalize_store(_store)
+	var resale := _copy_dict(_store.get("sal_resale", {}))
+	var pending := _copy_dict(resale.get("pending_purchase", {}))
+	if token.strip_edges().is_empty() or str(pending.get("token", "")) != token:
+		return {"ok": false, "message": "Shelf purchase confirmation expired."}
+	var slot_index := int(pending.get("slot_index", -1))
+	var quote := _authoritative_sal_slot_quote(slot_index)
+	if not bool(quote.get("ok", false)) \
+		or int(quote.get("instance_id", 0)) != int(pending.get("instance_id", -1)) \
+		or str(quote.get("listing_mode", "")) != str(pending.get("listing_mode", "")) \
+		or int(quote.get("asking_price", 0)) != int(pending.get("asking_price", -1)):
+		resale["pending_purchase"] = {}
+		_store["sal_resale"] = resale
+		return {"ok": false, "message": "That shelf listing changed before confirmation."}
+	if not can_accept_owned_instance():
+		return {"ok": false, "message": "No room for another collection item."}
+	var price := int(quote.get("asking_price", 0))
+	var gold := int(_store.get("gold_balance", 0))
+	if gold < price:
+		return {"ok": false, "message": "Not enough gold for that shelf item."}
+	var slots := _copy_array(resale.get("slots", []))
+	var listing := _copy_dict(slots[slot_index])
+	var item := _copy_dict(listing.get("item", {}))
+	_store["gold_balance"] = gold - price
+	var owned := _copy_array(_store.get("owned_instances", []))
+	owned.append(item.duplicate(true))
+	_store["owned_instances"] = owned
+	slots[slot_index] = _empty_sal_slot(slot_index)
+	resale["slots"] = slots
+	var history := _copy_array(resale.get("purchase_history", []))
+	var purchase_record := {
+		"slot_index": slot_index,
+		"instance_id": int(item.get("instance_id", 0)),
+		"itemdef_id": int(item.get("itemdef_id", -1)),
+		"listing_mode": str(listing.get("listing_mode", "")),
+		"pawn_quote": int(quote.get("pawn_quote", 0)),
+		"price": price,
+		"gold_balance": int(_store.get("gold_balance", 0)),
+	}
+	history.append(purchase_record)
+	resale["purchase_history"] = _bounded_array(history, SAL_HISTORY_LIMIT)
+	var starter_offer := {}
+	if str(listing.get("listing_mode", "")) == LISTING_MODE_STARTER_DISCOUNT \
+		and bool(listing.get("starter_tutorial_eligible", false)) \
+		and not bool(resale.get("starter_first_purchased", false)) \
+		and not bool(resale.get("starter_tutorial_resolved", false)):
+		var offer_breakdown := ordinary_collection_price_breakdown(item, LISTING_MODE_STARTER_BUYBACK)
+		starter_offer = {
+			"instance_id": int(item.get("instance_id", 0)),
+			"itemdef_id": int(item.get("itemdef_id", -1)),
+			"item": item.duplicate(true),
+			"provenance": _copy_dict(listing.get("provenance", {})),
+			"original_slot_index": slot_index,
+			"rare_channel": str(listing.get("starter_rare_channel", "")),
+			"rare_value": float(listing.get("starter_rare_value", 0.0)),
+			"pawn_quote": int(offer_breakdown.get("pawn_quote", 0)),
+			"offer_price": int(offer_breakdown.get("final_price", 0)),
+			"resolved": false,
+		}
+		resale["pending_starter_buyback"] = starter_offer
+		resale["starter_first_purchased"] = true
+	resale["pending_purchase"] = {}
+	resale["revision"] = maxi(0, int(resale.get("revision", 0))) + 1
+	_store["sal_resale"] = resale
+	return {
+		"ok": true,
+		"message": "Bought %s for %d gold." % [str(quote.get("display_name", "collection item")), price],
+		"slot_index": slot_index,
+		"item": item.duplicate(true),
+		"price": price,
+		"gold_balance": int(_store.get("gold_balance", 0)),
+		"pawn_quote": int(quote.get("pawn_quote", 0)),
+		"listing_mode": str(listing.get("listing_mode", "")),
+		"starter_offer": starter_offer,
+	}
+
+
+func pending_starter_buyback() -> Dictionary:
+	return _copy_dict(_copy_dict(_store.get("sal_resale", {})).get("pending_starter_buyback", {}))
+
+
+func resolve_starter_buyback(choice: String) -> Dictionary:
+	_store = _normalize_store(_store)
+	var resale := _copy_dict(_store.get("sal_resale", {}))
+	var pending := _copy_dict(resale.get("pending_starter_buyback", {}))
+	if pending.is_empty() or bool(pending.get("resolved", false)) or bool(resale.get("starter_tutorial_resolved", false)):
+		return {"ok": false, "message": "Sal's special offer is already resolved."}
+	var clean_choice := choice.strip_edges().to_lower()
+	if clean_choice == "keep":
+		resale["pending_starter_buyback"] = {}
+		resale["starter_tutorial_resolved"] = true
+		resale["revision"] = maxi(0, int(resale.get("revision", 0))) + 1
+		_store["sal_resale"] = resale
+		return {"ok": true, "choice": "keep", "message": "You kept the item."}
+	if clean_choice != "sell_back":
+		return {"ok": false, "message": "Choose whether to keep it or sell it back."}
+	var instance_id := int(pending.get("instance_id", 0))
+	var owned_item := _owned_instance(instance_id)
+	if owned_item.is_empty() or not _same_sal_instance_identity(owned_item, _copy_dict(pending.get("item", {}))):
+		return {"ok": false, "message": "The exact starter item is no longer available for Sal's offer."}
+	var slot_index := int(pending.get("original_slot_index", -1))
+	var slots := _copy_array(resale.get("slots", []))
+	if slot_index < 0 or slot_index >= slots.size() or bool(_copy_dict(slots[slot_index]).get("occupied", false)):
+		return {"ok": false, "message": "The original shelf slot is no longer empty."}
+	var offer_breakdown := ordinary_collection_price_breakdown(owned_item, LISTING_MODE_STARTER_BUYBACK)
+	var pawn_quote := int(offer_breakdown.get("pawn_quote", 0))
+	var offer_price := int(offer_breakdown.get("final_price", 0))
+	if pawn_quote != int(pending.get("pawn_quote", -1)) or offer_price != int(pending.get("offer_price", -1)):
+		return {"ok": false, "message": "Sal's saved offer no longer matches the item."}
+	if not remove_instance(instance_id):
+		return {"ok": false, "message": "The starter item could not be transferred."}
+	var loadout := _filtered_packed_ids(_copy_array(_store.get("loadout", [])))
+	loadout.erase(instance_id)
+	_store["loadout"] = loadout
+	_store["gold_balance"] = maxi(0, int(_store.get("gold_balance", 0)) + offer_price)
+	var provenance := _copy_dict(pending.get("provenance", {}))
+	if provenance.is_empty():
+		provenance = {"source": "sal_starter_buyback", "source_id": "starter"}
+	var relisted := _sal_listing_from_item(owned_item, LISTING_MODE_MOCKING_RELIST, provenance)
+	relisted["slot_index"] = slot_index
+	relisted["starter_rare_channel"] = str(pending.get("rare_channel", ""))
+	relisted["starter_rare_value"] = float(pending.get("rare_value", 0.0))
+	slots[slot_index] = relisted
+	resale["slots"] = slots
+	resale["pending_starter_buyback"] = {}
+	resale["starter_tutorial_resolved"] = true
+	var history := _copy_array(resale.get("purchase_history", []))
+	history.append({
+		"kind": "starter_buyback",
+		"instance_id": instance_id,
+		"slot_index": slot_index,
+		"pawn_quote": pawn_quote,
+		"offer_price": offer_price,
+		"relist_price": int(relisted.get("asking_price", 0)),
+		"gold_balance": int(_store.get("gold_balance", 0)),
+	})
+	resale["purchase_history"] = _bounded_array(history, SAL_HISTORY_LIMIT)
+	resale["revision"] = maxi(0, int(resale.get("revision", 0))) + 1
+	_store["sal_resale"] = resale
+	return {
+		"ok": true,
+		"choice": "sell_back",
+		"message": "Sal bought it back for %d gold." % offer_price,
+		"pawn_quote": pawn_quote,
+		"offer_price": offer_price,
+		"relist_price": int(relisted.get("asking_price", 0)),
+		"gold_balance": int(_store.get("gold_balance", 0)),
+		"listing": relisted,
+	}
+
+
+func _authoritative_sal_slot_quote(slot_index: int) -> Dictionary:
+	if slot_index < 0 or slot_index >= SAL_SHELF_SLOT_COUNT:
+		return {"ok": false, "message": "That shelf slot does not exist."}
+	var resale := _copy_dict(_store.get("sal_resale", {}))
+	var slots := _copy_array(resale.get("slots", []))
+	if slot_index >= slots.size():
+		return {"ok": false, "message": "That shelf slot does not exist."}
+	var listing := _copy_dict(slots[slot_index])
+	if not bool(listing.get("occupied", false)):
+		return {"ok": false, "message": "That shelf slot is empty."}
+	var item := _copy_dict(listing.get("item", {}))
+	var mode := str(listing.get("listing_mode", LISTING_MODE_NORMAL))
+	var breakdown := ordinary_collection_price_breakdown(item, mode)
+	if not bool(breakdown.get("ok", false)):
+		return breakdown
+	breakdown["slot_index"] = slot_index
+	breakdown["instance_id"] = int(item.get("instance_id", 0))
+	breakdown["asking_price"] = int(breakdown.get("final_price", 0))
+	return breakdown
+
+
+func _same_sal_instance_identity(left: Dictionary, right: Dictionary) -> bool:
+	for key in ["instance_id", "itemdef_id", "potency", "condition", "resonance", "usage"]:
+		if left.get(key) != right.get(key):
+			return false
+	return true
+
+
 func arm_sale(kind: String, instance_id: int) -> Dictionary:
 	var quote := sale_quote(kind, instance_id)
 	if not bool(quote.get("ok", false)):
@@ -507,6 +919,13 @@ func confirm_sale(token: String) -> Dictionary:
 		return {"ok": false, "message": "Sale confirmation expired."}
 	var kind := str(pending.get("kind", ""))
 	var instance_id := int(pending.get("instance_id", 0))
+	var authoritative := sale_quote(kind, instance_id)
+	if not bool(authoritative.get("ok", false)) \
+		or str(authoritative.get("kind", "")) != kind \
+		or int(authoritative.get("instance_id", 0)) != instance_id \
+		or int(authoritative.get("price", -1)) != int(pending.get("price", -2)):
+		_store["pending_sale"] = {}
+		return {"ok": false, "message": "That sale quote changed before confirmation."}
 	var removed := false
 	if kind == SALE_KIND_BAG:
 		removed = _remove_bag(instance_id)
@@ -518,7 +937,7 @@ func confirm_sale(token: String) -> Dictionary:
 	if not removed:
 		_store["pending_sale"] = {}
 		return {"ok": false, "message": "That item is no longer available to sell."}
-	var price := maxi(0, int(pending.get("price", 0)))
+	var price := maxi(0, int(authoritative.get("price", 0)))
 	_store["gold_balance"] = maxi(0, int(_store.get("gold_balance", 0)) + price)
 	var history := _copy_array(_store.get("sale_history", []))
 	var record := pending.duplicate(true)
@@ -526,7 +945,15 @@ func confirm_sale(token: String) -> Dictionary:
 	history.append(record)
 	_store["sale_history"] = history
 	_store["pending_sale"] = {}
-	return {"ok": true, "message": "Sold for %d gold." % price, "price": price, "gold_balance": int(_store.get("gold_balance", 0))}
+	return {
+		"ok": true,
+		"message": "Sold for %d gold." % price,
+		"kind": kind,
+		"instance_id": instance_id,
+		"display_name": str(authoritative.get("display_name", "Item")),
+		"price": price,
+		"gold_balance": int(_store.get("gold_balance", 0)),
+	}
 
 
 func arm_trade_up(instance_ids: Array) -> Dictionary:
@@ -690,7 +1117,234 @@ func _normalize_store(data: Dictionary) -> Dictionary:
 		maxi(FIRST_INSTANCE_ID, int(normalized.get("next_instance_id", FIRST_INSTANCE_ID))),
 		_max_recorded_instance_id(normalized) + 1
 	)
+	normalized["sal_resale"] = _normalize_sal_resale(normalized.get("sal_resale", {}), normalized)
+	normalized["next_instance_id"] = maxi(
+		maxi(FIRST_INSTANCE_ID, int(normalized.get("next_instance_id", FIRST_INSTANCE_ID))),
+		_max_recorded_instance_id(normalized) + 1
+	)
 	return normalized
+
+
+func _normalize_sal_resale(value: Variant, root: Dictionary) -> Dictionary:
+	var resale := _copy_dict(value)
+	var initialized := bool(resale.get("initialized", false))
+	resale["schema_version"] = SAL_RESALE_SCHEMA_VERSION
+	resale["initialized"] = true
+	resale["rng_streams"] = _normalized_sal_rng_streams(resale.get("rng_streams", {}))
+	var source_slots := _copy_array(resale.get("slots", []))
+	var slots: Array = []
+	for index in range(SAL_SHELF_SLOT_COUNT):
+		slots.append(_empty_sal_slot(index))
+	for slot_value in source_slots:
+		var source := _copy_dict(slot_value)
+		var index := int(source.get("slot_index", -1))
+		if index < 0 or index >= SAL_SHELF_SLOT_COUNT:
+			continue
+		slots[index] = _normalize_sal_slot(source, index)
+	resale["slots"] = slots
+	resale["starter_seeded"] = bool(resale.get("starter_seeded", initialized))
+	resale["starter_first_purchased"] = bool(resale.get("starter_first_purchased", false))
+	resale["starter_tutorial_resolved"] = bool(resale.get("starter_tutorial_resolved", false))
+	resale["pending_starter_buyback"] = _normalize_pending_starter_buyback(resale.get("pending_starter_buyback", {}))
+	resale["pending_purchase"] = _normalize_pending_sal_purchase(resale.get("pending_purchase", {}))
+	resale["stock_history"] = _bounded_array(_copy_array(resale.get("stock_history", [])), SAL_HISTORY_LIMIT)
+	resale["purchase_history"] = _bounded_array(_copy_array(resale.get("purchase_history", [])), SAL_HISTORY_LIMIT)
+	resale["processed_run_receipts"] = _bounded_unique_strings(_copy_array(resale.get("processed_run_receipts", [])), SAL_RECEIPT_LIMIT)
+	resale["next_run_receipt_id"] = maxi(1, int(resale.get("next_run_receipt_id", 1)))
+	resale["dialogue_counts"] = _copy_dict(resale.get("dialogue_counts", {}))
+	resale["revision"] = maxi(0, int(resale.get("revision", 0)))
+	if not initialized:
+		var starter := _seed_sal_starter_listing(resale, root)
+		if not starter.is_empty():
+			starter["slot_index"] = 0
+			slots[0] = starter
+			resale["slots"] = slots
+			resale["starter_seeded"] = true
+			resale["revision"] = maxi(1, int(resale.get("revision", 0)) + 1)
+	return resale
+
+
+func _normalize_pending_starter_buyback(value: Variant) -> Dictionary:
+	var pending := _copy_dict(value)
+	if pending.is_empty():
+		return {}
+	var resolver: Variant = _collection_resolver()
+	pending["instance_id"] = int(pending.get("instance_id", 0))
+	pending["itemdef_id"] = int(pending.get("itemdef_id", -1))
+	var item: Dictionary = resolver.normalize_instance_for_definition(_copy_dict(pending.get("item", {})))
+	item["provenance"] = _normalize_sal_provenance(item.get("provenance", pending.get("provenance", {})))
+	pending["item"] = item
+	pending["original_slot_index"] = int(pending.get("original_slot_index", -1))
+	pending["rare_channel"] = str(pending.get("rare_channel", ""))
+	pending["rare_value"] = clampf(float(pending.get("rare_value", 0.0)), 0.0, 1.0)
+	pending["pawn_quote"] = maxi(0, int(pending.get("pawn_quote", 0)))
+	pending["offer_price"] = maxi(0, int(pending.get("offer_price", 0)))
+	pending["provenance"] = _normalize_sal_provenance(pending.get("provenance", {}))
+	pending["resolved"] = bool(pending.get("resolved", false))
+	return pending
+
+
+func _normalize_pending_sal_purchase(value: Variant) -> Dictionary:
+	var pending := _copy_dict(value)
+	if pending.is_empty():
+		return {}
+	for key in ["slot_index", "instance_id", "itemdef_id", "tier_base", "pawn_quote", "final_price", "price", "asking_price"]:
+		if pending.has(key):
+			pending[key] = int(pending.get(key, 0))
+	pending["token"] = str(pending.get("token", ""))
+	pending["listing_mode"] = str(pending.get("listing_mode", ""))
+	return pending
+
+
+func _normalize_sal_provenance(value: Variant) -> Dictionary:
+	var provenance := _copy_dict(value)
+	provenance["virtual_bagdef_id"] = int(provenance.get("virtual_bagdef_id", -1))
+	return provenance
+
+
+func _normalize_sal_slot(value: Dictionary, slot_index: int) -> Dictionary:
+	var slot := value.duplicate(true)
+	slot["slot_index"] = slot_index
+	var item := _copy_dict(slot.get("item", {}))
+	var resolver: Variant = _collection_resolver()
+	item = resolver.normalize_instance_for_definition(item)
+	var definition: Dictionary = resolver.item_definition(int(item.get("itemdef_id", -1)))
+	if item.is_empty() or definition.is_empty() or str(definition.get("item_class", CollectionItemResolverScript.ITEM_CLASS_COLLECTION)) != CollectionItemResolverScript.ITEM_CLASS_COLLECTION:
+		return _empty_sal_slot(slot_index)
+	slot["occupied"] = true
+	var mode := str(slot.get("listing_mode", LISTING_MODE_NORMAL)).strip_edges().to_lower()
+	if not [LISTING_MODE_NORMAL, LISTING_MODE_STARTER_DISCOUNT, LISTING_MODE_MOCKING_RELIST].has(mode):
+		mode = LISTING_MODE_NORMAL
+	slot["listing_mode"] = mode
+	var normalized_provenance := _normalize_sal_provenance(slot.get("provenance", {}))
+	slot["provenance"] = normalized_provenance
+	item["provenance"] = normalized_provenance.duplicate(true)
+	slot["item"] = item
+	slot["protected"] = bool(slot.get("protected", mode == LISTING_MODE_STARTER_DISCOUNT))
+	slot["starter_tutorial_eligible"] = bool(slot.get("starter_tutorial_eligible", mode == LISTING_MODE_STARTER_DISCOUNT))
+	slot["starter_rare_channel"] = str(slot.get("starter_rare_channel", ""))
+	slot["starter_rare_value"] = clampf(float(slot.get("starter_rare_value", item.get(str(slot.get("starter_rare_channel", "")), 0.0))), 0.0, 1.0)
+	var provenance := _copy_dict(slot.get("provenance", {}))
+	slot["virtual_bagdef_id"] = int(slot.get("virtual_bagdef_id", provenance.get("virtual_bagdef_id", -1)))
+	var breakdown := ordinary_collection_price_breakdown(item, mode)
+	slot["quote_basis"] = breakdown
+	slot["asking_price"] = int(breakdown.get("final_price", slot.get("asking_price", 0)))
+	return slot
+
+
+func _seed_sal_starter_listing(resale: Dictionary, root: Dictionary) -> Dictionary:
+	var streams := _copy_dict(resale.get("rng_streams", {}))
+	var rng := _rng_from_snapshot(_copy_dict(streams.get("sal_starter_item", {})))
+	var resolver: Variant = _collection_resolver()
+	var rolled: Dictionary = resolver.roll_virtual_bag_item(rng, "sal_starter_item")
+	if rolled.is_empty():
+		return {}
+	var rare_channels := ["potency", "resonance", "usage"]
+	var rare_channel := str(rare_channels[rng.randi_range(0, rare_channels.size() - 1)])
+	streams["sal_starter_item"] = rng.snapshot()
+	resale["rng_streams"] = streams
+	var item: Dictionary = resolver.normalize_instance_for_definition(_copy_dict(rolled.get("item", {})))
+	var instance_id := maxi(FIRST_INSTANCE_ID, int(root.get("next_instance_id", FIRST_INSTANCE_ID)))
+	root["next_instance_id"] = instance_id + 1
+	item["schema_version"] = SCHEMA_VERSION
+	item["instance_id"] = instance_id
+	item["condition"] = SAL_STARTER_CONDITION
+	item[rare_channel] = SAL_STARTER_RARE_VALUE
+	item["source"] = "sal_starter_stock"
+	item["source_id"] = "starter"
+	item["generation_seed"] = str(rolled.get("generation_seed", ""))
+	var provenance := _sal_roll_provenance(rolled, "sal_starter_stock", "starter")
+	var listing := _sal_listing_from_item(item, LISTING_MODE_STARTER_DISCOUNT, provenance)
+	listing["protected"] = true
+	listing["starter_tutorial_eligible"] = true
+	listing["starter_rare_channel"] = rare_channel
+	listing["starter_rare_value"] = SAL_STARTER_RARE_VALUE
+	return listing
+
+
+func _sal_listing_from_item(item: Dictionary, listing_mode: String, provenance: Dictionary) -> Dictionary:
+	var stored_item := item.duplicate(true)
+	stored_item["provenance"] = provenance.duplicate(true)
+	var breakdown := ordinary_collection_price_breakdown(stored_item, listing_mode)
+	return {
+		"slot_index": -1,
+		"occupied": true,
+		"item": stored_item,
+		"provenance": provenance.duplicate(true),
+		"listing_mode": listing_mode,
+		"quote_basis": breakdown,
+		"asking_price": int(breakdown.get("final_price", 0)),
+		"protected": false,
+		"starter_tutorial_eligible": false,
+		"starter_rare_channel": "",
+		"starter_rare_value": 0.0,
+		"virtual_bagdef_id": int(provenance.get("virtual_bagdef_id", -1)),
+	}
+
+
+func _sal_roll_provenance(rolled: Dictionary, source: String, source_id: String) -> Dictionary:
+	var collection := _copy_dict(rolled.get("collection", {}))
+	var bag := _copy_dict(rolled.get("virtual_bag", {}))
+	return {
+		"source": source,
+		"source_id": source_id,
+		"run_receipt": source_id if source == "sal_run_stock" else "",
+		"virtual_bagdef_id": int(bag.get("itemdef_id", -1)),
+		"virtual_bag_id": str(bag.get("id", "")),
+		"collection_id": str(collection.get("id", bag.get("collection_id", ""))),
+		"tier": str(rolled.get("tier", bag.get("tier", ""))),
+		"generation_seed": str(rolled.get("generation_seed", "")),
+	}
+
+
+func _empty_sal_slot(slot_index: int) -> Dictionary:
+	return {
+		"slot_index": slot_index,
+		"occupied": false,
+		"item": {},
+		"provenance": {},
+		"listing_mode": "",
+		"quote_basis": {},
+		"asking_price": 0,
+		"protected": false,
+		"starter_tutorial_eligible": false,
+		"starter_rare_channel": "",
+		"starter_rare_value": 0.0,
+		"virtual_bagdef_id": -1,
+	}
+
+
+func _normalized_sal_rng_streams(value: Variant) -> Dictionary:
+	var streams := _copy_dict(value)
+	for key in ["sal_resale_stock", "sal_resale_replacement", "sal_starter_item"]:
+		var fallback_seed := RngStreamScript.derive_seed(904613, 904613, key)
+		var source := _copy_dict(streams.get(key, {}))
+		var rng := RngStreamScript.new()
+		rng.configure(int(source.get("seed", fallback_seed)), int(source.get("state", source.get("seed", fallback_seed))))
+		streams[key] = rng.snapshot()
+	return streams
+
+
+func _rng_from_snapshot(snapshot_value: Dictionary) -> RngStream:
+	var rng: RngStream = RngStreamScript.new()
+	rng.restore(snapshot_value)
+	return rng
+
+
+func _bounded_array(values: Array, limit: int) -> Array:
+	var result := values.duplicate(true)
+	while result.size() > maxi(0, limit):
+		result.pop_front()
+	return result
+
+
+func _bounded_unique_strings(values: Array, limit: int) -> Array:
+	var result: Array = []
+	for value in values:
+		var clean := str(value).strip_edges()
+		if not clean.is_empty() and not result.has(clean):
+			result.append(clean)
+	return _bounded_array(result, limit)
 
 
 func _migrate_fixture_pollution(data: Dictionary) -> Dictionary:
@@ -957,18 +1611,11 @@ func _item_sale_quote(instance_id: int) -> Dictionary:
 			"face_value": face_value,
 			"gold_rate": gold_rate,
 		}
-	var tier := str(definition.get("tier", "blue"))
-	var prices := _copy_dict(_copy_dict(_meta_home_config().get("sale_prices", {})).get("items", {}))
-	var base_price := maxi(1, int(prices.get(tier, 1)))
-	var price := maxi(1, int(round(float(base_price) * float(resolver.value_multiplier(definition, instance)))))
-	return {
-		"ok": true,
-		"kind": SALE_KIND_ITEM,
-		"instance_id": instance_id,
-		"price": price,
-		"display_name": str(definition.get("display_name", "Collection Item")),
-		"tier": tier,
-	}
+	var breakdown := ordinary_collection_price_breakdown(instance, LISTING_MODE_PAWN)
+	if not bool(breakdown.get("ok", false)):
+		return breakdown
+	breakdown["kind"] = SALE_KIND_ITEM
+	return breakdown
 
 
 func _bag_sale_quote(instance_id: int) -> Dictionary:
@@ -1054,11 +1701,16 @@ func _max_recorded_instance_id(data: Dictionary) -> int:
 	for bag_value in _copy_array(data.get("unopened_bags", [])):
 		var bag := _copy_dict(bag_value)
 		max_id = maxi(max_id, int(bag.get("instance_id", 0)))
+	var resale := _copy_dict(data.get("sal_resale", {}))
+	for slot_value in _copy_array(resale.get("slots", [])):
+		var slot := _copy_dict(slot_value)
+		max_id = maxi(max_id, int(_copy_dict(slot.get("item", {})).get("instance_id", 0)))
+	max_id = maxi(max_id, int(_copy_dict(_copy_dict(resale.get("pending_starter_buyback", {})).get("item", {})).get("instance_id", 0)))
 	return max_id
 
 
 func _default_store() -> Dictionary:
-	return {
+	return _normalize_store({
 		"schema_version": SCHEMA_VERSION,
 		"owned_instances": [],
 		"unopened_bags": [],
@@ -1076,7 +1728,7 @@ func _default_store() -> Dictionary:
 			"state": 904613,
 		},
 		"next_instance_id": FIRST_INSTANCE_ID,
-	}
+	})
 
 
 static func _copy_dict(value: Variant) -> Dictionary:
@@ -1084,6 +1736,12 @@ static func _copy_dict(value: Variant) -> Dictionary:
 		return {}
 	var dictionary: Dictionary = value
 	return dictionary.duplicate(true)
+
+
+func _collection_resolver() -> CollectionItemResolver:
+	if _shared_collection_resolver == null:
+		_shared_collection_resolver = CollectionItemResolverScript.new()
+	return _shared_collection_resolver
 
 
 static func _copy_array(value: Variant) -> Array:

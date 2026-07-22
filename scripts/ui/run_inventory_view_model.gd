@@ -32,6 +32,21 @@ static func _pawn_counter_item_details(run_state: RunState, run_action_service: 
 	var result: Array = []
 	if run_state == null or run_action_service == null:
 		return result
+	for cash_value in run_action_service.portable_ticket_cash_options(lender_id):
+		if typeof(cash_value) != TYPE_DICTIONARY:
+			continue
+		var cash_quote := cash_value as Dictionary
+		var pile_item_id := str(cash_quote.get("item_id", "")).strip_edges()
+		var pile_detail := run_action_service.inventory_item_detail(pile_item_id)
+		if pile_detail.is_empty():
+			continue
+		pile_detail["storage_source"] = "carried"
+		pile_detail["pawn_action"] = "cash_ticket_pile"
+		pile_detail["lender_id"] = lender_id
+		pile_detail["ticket_count"] = maxi(0, int(cash_quote.get("ticket_count", 0)))
+		pile_detail["ticket_face_value"] = maxi(0, int(cash_quote.get("face_value", 0)))
+		pile_detail["sal_cash_value"] = maxi(0, int(cash_quote.get("cash_value", 0)))
+		result.append(pile_detail)
 	for quote_value in run_action_service.pawn_quote_options(lender_id):
 		if typeof(quote_value) != TYPE_DICTIONARY:
 			continue
@@ -118,7 +133,7 @@ static func _summary_text(run_state: RunState, run_action_service: RunActionServ
 	if mode == "merchant_sale":
 		return "Sellable run items can be sold here."
 	if mode == "pawn_counter":
-		return "Cash $%d. Pawn carried gear, or redeem an open ticket before Sal shelves it." % (run_state.bankroll if run_state != null else 0)
+		return "Cash $%d. Pawn carried gear, redeem pawn tickets, or let Sal cash revealed lottery winners for 20%%." % (run_state.bankroll if run_state != null else 0)
 	if mode == "place_container":
 		return "Select a carried container to place it as home storage."
 	if mode == "home_container":
@@ -168,6 +183,8 @@ static func _storable_inventory_item_ids(run_state: RunState, run_action_service
 	if run_state == null:
 		return result
 	for item_id in _string_array(run_state.inventory):
+		if RunState.is_portable_ticket_pile_item(item_id):
+			continue
 		if _container_item_option(run_action_service, item_id).is_empty():
 			result.append(item_id)
 	return result

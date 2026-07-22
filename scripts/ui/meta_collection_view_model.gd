@@ -61,9 +61,9 @@ static func _home_view(meta_service: Variant, snapshot: Dictionary) -> Dictionar
 		"upgrade": upgrade,
 		"map_nodes": [
 			{"id": "home", "label": "Home", "kind": "home", "selected": true},
-			{"id": "pawn_shop", "label": "Sal's Pawn Counter", "kind": "pawn_shop", "selected": false},
+			{"id": "pawn_shop", "label": "Sal's Pawn Shop", "kind": "pawn_shop", "selected": false},
 		],
-		"pawn_shop": {"interaction": "sell_counter_only"},
+		"pawn_shop": {"interaction": "buy_and_sell", "shelf_slots": 6},
 	}
 
 

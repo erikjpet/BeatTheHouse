@@ -1011,7 +1011,7 @@ static func _grand_casino_local_target_ids(environment_data: Dictionary) -> Arra
 
 static func _is_grand_casino_archetype(environment_data: Dictionary) -> bool:
 	var archetype_id := str(environment_data.get("archetype_id", environment_data.get("id", ""))).strip_edges()
-	return archetype_id == "grand_casino" or archetype_id == "grand_casino_high_limit" or archetype_id == "grand_casino_back_room"
+	return archetype_id == "grand_casino" or archetype_id == "grand_casino_high_limit" or archetype_id == "grand_casino_back_room" or archetype_id == "grand_casino_cage"
 
 
 static func _game_hook_layout_entries(environment_data: Dictionary) -> Array:

@@ -43,6 +43,8 @@ const CAMERA_OFFSET_SNAP_EPSILON := 0.35
 const OBJECT_LAYOUT_MARGIN := 16.0
 const OBJECT_LAYOUT_GAP := 8.0
 const OBJECT_LAYOUT_MAX_OVERLAP_AREA := 0.01
+const DEFAULT_OBJECT_VISUAL_MIN_SIZE := Vector2(72.0, 48.0)
+const SAL_SHELF_VISUAL_MIN_SIZE := Vector2(44.0, 44.0)
 const OBJECT_INFO_WIDTH := 326.0
 const OBJECT_INFO_ITEM_WIDTH := 286.0
 const OBJECT_INFO_MIN_WIDTH := 148.0
@@ -64,7 +66,7 @@ const OBJECT_INFO_ACTION_GAP := 5.0
 const OBJECT_INFO_INLINE_ACTION_HEIGHT := 19.0
 const OBJECT_INFO_INLINE_ACTION_DETAIL_HEIGHT := 11.0
 const OBJECT_INFO_INLINE_ACTION_GAP := 5.0
-const OBJECT_INFO_INLINE_ACTION_MAX := 3
+const OBJECT_INFO_INLINE_ACTION_MAX := 4
 const OBJECT_INFO_BOTTOM_PADDING := 8.0
 const OBJECT_INFO_ANIMATION_SPEED := 14.0
 const OBJECT_INFO_RECT_SNAP_EPSILON := 0.25
@@ -89,6 +91,7 @@ const SCENE_SPARKLES_DELTA_QUEEN := [Vector2(128, 96), Vector2(448, 96), Vector2
 const SCENE_SPARKLES_UNDERGROUND := [Vector2(154, 134), Vector2(505, 136), Vector2(772, 142)]
 const SCENE_SPARKLES_GRAND_CASINO := [Vector2(132, 118), Vector2(728, 118), Vector2(444, 154)]
 const SCENE_SPARKLES_PAWN_SHOP := [Vector2(150, 84), Vector2(414, 118), Vector2(690, 154)]
+const LINDA_CAGE_FEET := [Vector2(330, 252), Vector2(420, 252), Vector2(512, 252), Vector2(590, 252)]
 
 var environment_id: String = "corner_store"
 var environment_name: String = "Corner Store"
@@ -526,6 +529,8 @@ func _draw() -> void:
 				_draw_underground()
 			"grand_casino", "grand_casino_high_limit", "grand_casino_back_room":
 				_draw_grand_casino()
+			"grand_casino_cage":
+				_draw_grand_casino_cage()
 			_:
 				_draw_corner_store()
 	_draw_scene_life()
@@ -1070,6 +1075,74 @@ func _draw_grand_casino() -> void:
 		draw_rect(Rect2(x + 10, 302, 76, 2), Color(C_PINK.r, C_PINK.g, C_PINK.b, 0.22))
 
 
+func _draw_grand_casino_cage() -> void:
+	# A room-native Cage: teller bars dominate the center while ATM, gift case,
+	# and return door remain visually and spatially separate.
+	draw_rect(Rect2(0, 0, 900, 420), Color("#080914"))
+	for x in range(0, 900, 72):
+		draw_rect(Rect2(x, 0, 34, 250), Color("#11132a"))
+		draw_rect(Rect2(x + 34, 0, 38, 250), Color("#0c0d1d"))
+	draw_rect(Rect2(0, 0, 900, 34), Color("#1b1034"))
+	draw_rect(Rect2(0, 34, 900, 5), C_CYAN)
+	_neon_text("THE CAGE", Vector2(350, 66), 30, C_YELLOW)
+	# Gift case at left.
+	draw_rect(Rect2(54, 124, 190, 150), Color("#090b16"))
+	draw_rect(Rect2(62, 132, 174, 112), Color(C_CYAN.r, C_CYAN.g, C_CYAN.b, 0.13))
+	for shelf_y in [170, 214]:
+		draw_line(Vector2(66, shelf_y), Vector2(232, shelf_y), C_SOFT.darkened(0.35), 3)
+	var shop_state: Dictionary = foundation_snapshot.get("cage_gift_shop_state", {}) if typeof(foundation_snapshot.get("cage_gift_shop_state", {})) == TYPE_DICTIONARY else {}
+	var available_stock: Array = []
+	for stock_value in shop_state.get("stock", []):
+		if typeof(stock_value) == TYPE_DICTIONARY and not bool((stock_value as Dictionary).get("sold", false)):
+			available_stock.append(stock_value)
+	for index in range(mini(4, available_stock.size())):
+		var item_x := 82 + (index % 2) * 86
+		var item_y := 144 + int(index / 2) * 44
+		draw_rect(Rect2(item_x, item_y, 34, 23), _cycle_color(index + 4).darkened(0.2))
+		draw_rect(Rect2(item_x + 7, item_y + 24, 20, 4), C_YELLOW)
+	if available_stock.is_empty():
+		_neon_text("EMPTY", Vector2(116, 198), 13, C_SOFT.darkened(0.25))
+	draw_rect(Rect2(60, 246, 178, 20), Color("#241331"))
+	_neon_text("CHIPS ONLY", Vector2(92, 260), 12, C_PINK)
+	# Counter, trays, ledger, and barred teller windows.
+	draw_rect(Rect2(274, 112, 356, 168), Color("#050711"))
+	for window_index in range(3):
+		var window_x := 286 + window_index * 112
+		draw_rect(Rect2(window_x, 124, 98, 112), Color("#13152b"))
+		for bar_x in range(window_x + 8, window_x + 98, 15):
+			draw_rect(Rect2(bar_x, 124, 4, 112), Color("#6b7080"))
+		draw_rect(Rect2(window_x + 10, 218, 78, 10), Color("#020309"))
+	draw_rect(Rect2(260, 260, 388, 56), Color("#2b1a25"))
+	draw_rect(Rect2(270, 270, 368, 34), Color("#5b3a38"))
+	for tray_x in [304, 416, 528]:
+		draw_rect(Rect2(tray_x, 280, 72, 15), Color("#11131d"))
+		draw_rect(Rect2(tray_x + 8, 283, 56, 5), C_AMBER.darkened(0.3))
+	draw_rect(Rect2(464, 246, 58, 10), Color("#d5d0b2"))
+	for line_y in range(248, 255, 3):
+		draw_line(Vector2(470, line_y), Vector2(516, line_y), Color("#43384a"), 1)
+	# Queue rails keep the counter zone readable.
+	for rail_x in [296, 430, 604]:
+		draw_line(Vector2(rail_x, 320), Vector2(rail_x, 370), C_AMBER, 4)
+	draw_line(Vector2(296, 330), Vector2(430, 330), C_PINK_2, 3)
+	draw_line(Vector2(430, 330), Vector2(604, 330), C_PINK_2, 3)
+	# ATM at right, separated from the counter by a lit wall strip.
+	draw_rect(Rect2(668, 116, 104, 174), Color("#10172a"))
+	draw_rect(Rect2(680, 132, 80, 54), Color("#143f49"))
+	draw_rect(Rect2(690, 144, 60, 10), C_CYAN.darkened(0.25))
+	draw_rect(Rect2(692, 198, 56, 8), C_SOFT.darkened(0.4))
+	for key_index in range(12):
+		var key_x := 688 + (key_index % 3) * 21
+		var key_y := 218 + int(key_index / 3) * 15
+		draw_rect(Rect2(key_x, key_y, 13, 8), Color("#51566b"))
+	draw_rect(Rect2(782, 102, 5, 204), Color(C_CYAN.r, C_CYAN.g, C_CYAN.b, 0.35))
+	# Main-floor return door.
+	draw_rect(Rect2(812, 118, 70, 206), Color("#23152e"))
+	draw_rect(Rect2(820, 128, 54, 184), Color("#100d1d"))
+	draw_rect(Rect2(862, 220, 7, 7), C_YELLOW)
+	_neon_text("FLOOR", Vector2(824, 152), 11, C_CYAN)
+	_floor_reflections()
+
+
 func _draw_scene_life() -> void:
 	# Venue animation overlays run on both production PNGs and procedural fallback art.
 	# They sit below interactable props so motion never hides gameplay-critical clicks.
@@ -1199,6 +1272,12 @@ func _draw_scene_life() -> void:
 			_neon_text("WATCHED" if watched else "ROURKE HERE" if watch_active else "ROURKE AWAY", Vector2(398 if watch_active else 396, 164), 10, badge_color)
 			_draw_sign_pulse(Rect2(336, 58, 226, 54), C_YELLOW, 0.14, 3.8)
 			_draw_sparkles(SCENE_SPARKLES_GRAND_CASINO, C_YELLOW, 0.18)
+		"grand_casino_cage":
+			_draw_sign_pulse(Rect2(338, 40, 224, 48), C_YELLOW, 0.12, 3.4)
+			var terminal_scan := 138 + int(abs(sin(flicker * 1.6)) * 38.0)
+			draw_rect(Rect2(682, terminal_scan, 76, 3), Color(C_CYAN.r, C_CYAN.g, C_CYAN.b, 0.30))
+			for bar_x in range(294, 620, 30):
+				draw_rect(Rect2(bar_x, 124, 3, 112), Color(C_SOFT.r, C_SOFT.g, C_SOFT.b, 0.12 + abs(sin(flicker * 1.8 + bar_x)) * 0.08))
 
 
 func _draw_familiar_characters() -> void:
@@ -1252,6 +1331,25 @@ func _draw_familiar_characters() -> void:
 			_draw_grand_casino_living_characters()
 		"grand_casino_back_room":
 			_draw_grand_casino_living_characters()
+		"grand_casino_cage":
+			_draw_linda_cage_silhouette()
+
+
+func _draw_linda_cage_silhouette() -> void:
+	var cage_state: Dictionary = foundation_snapshot.get("linda_cage", {}) if typeof(foundation_snapshot.get("linda_cage", {})) == TYPE_DICTIONARY else {}
+	var pose_index := clampi(int(cage_state.get("pose_index", 1)), 0, 3)
+	var facing := str(cage_state.get("facing", "left"))
+	var feet: Vector2 = LINDA_CAGE_FEET[pose_index]
+	var idle_y: float = 0.0 if reduce_motion else sin(flicker * 1.7 + float(pose_index)) * 1.5
+	var pos: Vector2 = feet + Vector2(0, idle_y)
+	# Featureless by contract: opaque head/body only, with no skin, eye, nose,
+	# mouth, or hair layers. The bars are redrawn across her afterward.
+	draw_rect(Rect2(pos.x - 16, pos.y - 74, 32, 30), Color("#03040a"))
+	draw_rect(Rect2(pos.x - 25, pos.y - 46, 50, 48), Color("#04050b"))
+	draw_rect(Rect2(pos.x - 31 if facing == "left" else pos.x + 21, pos.y - 39, 10, 38), Color("#03040a"))
+	draw_rect(Rect2(pos.x - 19, pos.y - 43, 38, 5), Color(C_PURPLE.r, C_PURPLE.g, C_PURPLE.b, 0.35))
+	for bar_x in range(294, 620, 15):
+		draw_rect(Rect2(bar_x, 124, 4, 112), Color("#6b7080"))
 
 
 func _draw_named_character(id: String, foot: Vector2, scale_value: float, role: String, facing: String = "right") -> void:
@@ -1813,6 +1911,7 @@ func _objects_from_interactable_records(records: Array) -> Array:
 		var object_type := str(record.get("visual_type", interaction_type))
 		var normalized_rect := _normalized_rect_from_record(record)
 		var focus_point := normalized_rect.position + normalized_rect.size * 0.5
+		var minimum_visual_size := _minimum_object_visual_size(object_type)
 		var scene_object := {
 			"id": object_id,
 			"type": object_type,
@@ -1826,8 +1925,8 @@ func _objects_from_interactable_records(records: Array) -> Array:
 			"decorative": bool(record.get("decorative", not bool(record.get("interactive", true)))),
 			"position": focus_point,
 			"size": Vector2(
-				maxf(normalized_rect.size.x * float(BOARD_SIZE.x), 72.0),
-				maxf(normalized_rect.size.y * float(BOARD_SIZE.y), 48.0)
+				maxf(normalized_rect.size.x * float(BOARD_SIZE.x), minimum_visual_size.x),
+				maxf(normalized_rect.size.y * float(BOARD_SIZE.y), minimum_visual_size.y)
 			),
 			"disabled": not bool(record.get("enabled", true)),
 			"disabled_reason": str(record.get("disabled_reason", "")),
@@ -1952,13 +2051,28 @@ func _apply_draw_hints(object_data: Dictionary, object_type: String, index: int)
 
 func _normalized_rect_from_record(record: Dictionary) -> Rect2:
 	var rect := _rect_from_dict(record.get("normalized_rect", record.get("focus_rect", {})))
+	var object_type := str(record.get("visual_type", record.get("object_type", "info")))
+	var minimum_visual_size := _minimum_object_visual_size(object_type)
+	var minimum_normalized_size := Vector2(
+		minimum_visual_size.x / float(BOARD_SIZE.x),
+		minimum_visual_size.y / float(BOARD_SIZE.y)
+	)
 	if rect.size.x <= 0.0 or rect.size.y <= 0.0:
 		var focus_point := _vector2_from_dict(record.get("focus_point", {}), Vector2(0.5, 0.5))
 		rect = Rect2(focus_point - Vector2(0.08, 0.14) * 0.5, Vector2(0.08, 0.14))
 	return Rect2(
 		Vector2(clampf(rect.position.x, 0.02, 0.96), clampf(rect.position.y, 0.04, 0.92)),
-		Vector2(clampf(rect.size.x, 0.08, 0.22), clampf(rect.size.y, 0.12, 0.28))
+		Vector2(
+			clampf(rect.size.x, minimum_normalized_size.x, 0.22),
+			clampf(rect.size.y, minimum_normalized_size.y, 0.28)
+		)
 	)
+
+
+func _minimum_object_visual_size(object_type: String) -> Vector2:
+	if object_type == "meta_sal_shelf":
+		return SAL_SHELF_VISUAL_MIN_SIZE
+	return DEFAULT_OBJECT_VISUAL_MIN_SIZE
 
 
 func _string_array(value: Variant) -> Array:

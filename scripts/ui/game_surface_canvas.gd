@@ -41,6 +41,7 @@ const EMULATED_TOUCH_SUPPRESS_MS := 750
 const EMULATED_TOUCH_SUPPRESS_DISTANCE := 18.0
 const SURFACE_ANIMATION_FPS := 60.0
 const SURFACE_ANIMATION_INTERVAL_SEC := 1.0 / SURFACE_ANIMATION_FPS
+const TRANSIENT_SURFACE_LOOP_HOLD_MSEC := 95
 
 var game_id: String = ""
 var state: Dictionary = {}
@@ -55,6 +56,8 @@ var hovered_surface_action: String = ""
 var hovered_surface_index: int = -1
 var captured_surface_action: String = ""
 var captured_surface_index: int = -1
+var captured_pointer_move_pending := false
+var captured_pointer_move_position := Vector2.ZERO
 var surface_animation_channels: Dictionary = {}
 var surface_sfx_player: Node
 var drunk_distortion_overlay: DrunkDistortionOverlay
@@ -81,6 +84,8 @@ var surface_animation_redraw_accumulator := 0.0
 var surface_animation_redraw_count := 0
 var surface_animation_handoff_until_msec := 0
 var surface_render_elapsed_sec := 0.0
+var transient_surface_loop_deadline_msec := 0
+var transient_surface_loop_id := ""
 
 
 func set_game_module(game_module: GameModule) -> void:
@@ -105,6 +110,8 @@ func clear_runtime_state() -> void:
 	hovered_surface_index = -1
 	captured_surface_action = ""
 	captured_surface_index = -1
+	captured_pointer_move_pending = false
+	captured_pointer_move_position = Vector2.ZERO
 	surface_animation_channels = {}
 	continuous_redraw_was_active = false
 	last_audio_profile_id = ""
@@ -115,6 +122,8 @@ func clear_runtime_state() -> void:
 	surface_animation_redraw_count = 0
 	surface_animation_handoff_until_msec = 0
 	surface_render_elapsed_sec = 0.0
+	transient_surface_loop_deadline_msec = 0
+	transient_surface_loop_id = ""
 	_update_drunk_distortion_overlay()
 	queue_redraw()
 
@@ -130,6 +139,17 @@ func render_game_snapshot(snapshot: Dictionary) -> void:
 	drunk_effect_mode = _normalized_drunk_effect_mode(str(state.get("drunk_effect_mode", drunk_effect_mode)))
 	_update_drunk_distortion_overlay()
 	_update_surface_animation_channels()
+	queue_redraw()
+
+
+func apply_surface_state_patch(patch: Dictionary) -> void:
+	if patch.is_empty():
+		return
+	for key in patch.keys():
+		view_data[key] = patch[key]
+	state = view_data
+	if patch.has("surface_animation_channels"):
+		_update_surface_animation_channels()
 	queue_redraw()
 
 
@@ -194,6 +214,7 @@ func surface_runtime_status() -> Dictionary:
 		"board_size": _vector_snapshot(_active_board_size()),
 		"board_aspect_ratio": _active_board_aspect_ratio(),
 		"preserves_aspect_ratio": true,
+		"small_screen_mode": small_screen_mode,
 		"outcome_message": str(state.get("outcome_message", state.get("result_message", ""))),
 		"outcome_bankroll_delta": int(state.get("outcome_bankroll_delta", state.get("bankroll_delta", 0))),
 		"outcome_suspicion_delta": int(state.get("outcome_suspicion_delta", state.get("suspicion_delta", 0))),
@@ -466,6 +487,25 @@ func surface_play_audio_cue(cue_id: String, context: Dictionary = {}) -> void:
 	surface_sfx_player.play_surface_cue(normalized_cue, context, state)
 
 
+func surface_start_audio_loop(cue_id: String, volume_db: float = -10.0, pitch: float = 1.0) -> void:
+	var normalized_cue := cue_id.strip_edges()
+	if normalized_cue.is_empty():
+		return
+	_ensure_surface_sfx_player()
+	if normalized_cue == "scratch_paper_foley_loop":
+		transient_surface_loop_id = normalized_cue
+		transient_surface_loop_deadline_msec = Time.get_ticks_msec() + TRANSIENT_SURFACE_LOOP_HOLD_MSEC
+	if surface_sfx_player.has_method("start_surface_loop"):
+		surface_sfx_player.call("start_surface_loop", normalized_cue, volume_db, pitch)
+
+
+func surface_stop_audio_loop(cue_id: String = "") -> void:
+	transient_surface_loop_deadline_msec = 0
+	transient_surface_loop_id = ""
+	if surface_sfx_player != null and surface_sfx_player.has_method("stop_surface_loop"):
+		surface_sfx_player.call("stop_surface_loop", cue_id)
+
+
 func surface_add_hit(rect: Rect2, action: String, index: int = -1, expand_touch_hit: bool = true) -> void:
 	hit_regions.append({"rect": _touch_hit_rect(rect, expand_touch_hit), "action": action, "index": index})
 	if not bool(state.get("surface_debug_hit_regions", false)):
@@ -634,7 +674,7 @@ func _gui_input(event: InputEvent) -> void:
 	if motion_event != null:
 		_set_hovered_surface_region(motion_event.position)
 		if not captured_surface_action.is_empty() and (motion_event.button_mask & MOUSE_BUTTON_MASK_LEFT) != 0:
-			_emit_captured_surface_pointer("move", motion_event.position)
+			_queue_or_emit_captured_pointer_move(motion_event.position)
 		return
 	var mouse_event := event as InputEventMouseButton
 	if mouse_event != null:
@@ -645,6 +685,7 @@ func _gui_input(event: InputEvent) -> void:
 			_remember_mouse_press(mouse_event.position)
 			_activate_surface_at_position(mouse_event.position, mouse_event.double_click)
 		elif not mouse_event.pressed and mouse_event.button_index == MOUSE_BUTTON_LEFT and not captured_surface_action.is_empty():
+			_flush_captured_pointer_move()
 			_emit_captured_surface_pointer("end", mouse_event.position)
 		return
 	var touch_event := event as InputEventScreenTouch
@@ -656,11 +697,12 @@ func _gui_input(event: InputEvent) -> void:
 			_remember_touch_press(touch_event.position)
 			_activate_surface_at_position(touch_event.position, touch_event.double_tap)
 		elif not touch_event.pressed and not captured_surface_action.is_empty():
+			_flush_captured_pointer_move()
 			_emit_captured_surface_pointer("end", touch_event.position)
 		return
 	var drag_event := event as InputEventScreenDrag
 	if drag_event != null and not captured_surface_action.is_empty():
-		_emit_captured_surface_pointer("move", drag_event.position)
+		_queue_or_emit_captured_pointer_move(drag_event.position)
 		return
 
 
@@ -727,12 +769,32 @@ func _emit_captured_surface_pointer(phase: String, screen_position: Vector2) -> 
 	if phase == "end":
 		captured_surface_action = ""
 		captured_surface_index = -1
+		captured_pointer_move_pending = false
 	accept_event()
+
+
+func _queue_or_emit_captured_pointer_move(screen_position: Vector2) -> void:
+	if bool(state.get("surface_pointer_coalesce_moves", false)):
+		captured_pointer_move_position = screen_position
+		captured_pointer_move_pending = true
+		accept_event()
+		return
+	_emit_captured_surface_pointer("move", screen_position)
+
+
+func _flush_captured_pointer_move() -> void:
+	if not captured_pointer_move_pending or captured_surface_action.is_empty():
+		return
+	captured_pointer_move_pending = false
+	_emit_captured_surface_pointer("move", captured_pointer_move_position)
 
 
 func _process(delta: float) -> void:
 	if not is_visible_in_tree():
 		return
+	_flush_captured_pointer_move()
+	if transient_surface_loop_deadline_msec > 0 and Time.get_ticks_msec() >= transient_surface_loop_deadline_msec:
+		surface_stop_audio_loop(transient_surface_loop_id)
 	if reduce_motion:
 		flicker = 0.0
 		surface_render_elapsed_sec = 0.0

@@ -5,6 +5,7 @@ extends RefCounted
 
 const GrandCasinoShowdownModelScript := preload("res://scripts/core/grand_casino_showdown_model.gd")
 const GrandCasinoDuelModelScript := preload("res://scripts/core/grand_casino_duel_model.gd")
+const CageEconomyModelScript := preload("res://scripts/core/cage_economy_model.gd")
 
 const DEFAULT_BANKROLL := 100
 const LOCAL_RISK_DECAY_BY_DISTANCE := {
@@ -54,12 +55,15 @@ const ABANDONED_FAILURE_MESSAGE := "You walk away from the table. The run is ove
 const GRAND_CASINO_ARCHETYPE_ID := "grand_casino"
 const GRAND_CASINO_HIGH_LIMIT_ARCHETYPE_ID := "grand_casino_high_limit"
 const GRAND_CASINO_BACK_ROOM_ARCHETYPE_ID := "grand_casino_back_room"
+const GRAND_CASINO_CAGE_ARCHETYPE_ID := "grand_casino_cage"
 const GRAND_CASINO_ARCHETYPE_IDS := [
 	GRAND_CASINO_ARCHETYPE_ID,
 	GRAND_CASINO_HIGH_LIMIT_ARCHETYPE_ID,
 	GRAND_CASINO_BACK_ROOM_ARCHETYPE_ID,
+	GRAND_CASINO_CAGE_ARCHETYPE_ID,
 ]
 const GRAND_CASINO_TABLE_GAME_IDS := ["blackjack", "baccarat", "roulette"]
+const GRAND_CASINO_CHIP_GAME_IDS := ["blackjack", "baccarat", "roulette", "slot", "video_poker", "pull_tabs", "bar_dice"]
 const GRAND_CASINO_OBJECTIVE_ID := "grand_casino_demo_bankroll"
 const GRAND_CASINO_SHOWDOWN_EVENT_ID := "the_house_calls"
 const GRAND_CASINO_HIGH_ROLLER_EVENT_ID := "high_roller_cashout"
@@ -185,6 +189,17 @@ const CREW_MAX_LOAN_LOCATIONS := 3
 const LENDER_REPAY_HEAT_REDUCTION := 3
 const SALS_PAWN_COUNTER_ID := "sals_pawn_counter"
 const PAWN_SHOP_ARCHETYPE_ID := "pawn_shop"
+const PULL_TAB_PILE_ITEM_ID := "pile_of_pull_tabs"
+const SCRATCH_TICKET_PILE_ITEM_ID := "pile_of_scratch_tickets"
+const PORTABLE_TICKET_KINDS := ["pull_tabs", "scratch_tickets"]
+const PORTABLE_TICKET_ITEM_IDS := {
+	"pull_tabs": PULL_TAB_PILE_ITEM_ID,
+	"scratch_tickets": SCRATCH_TICKET_PILE_ITEM_ID,
+}
+const PORTABLE_TICKET_PLAYER_FIELDS := {
+	"pull_tabs": ["tray_stack", "ticket_stack", "winner_pile", "loser_pile"],
+	"scratch_tickets": ["active_ticket", "winner_pile", "loser_pile", "pending_penalty", "penalty_shields_remaining", "last_settled_ticket", "last_settled_pile", "last_file_id", "file_started_msec", "last_sweep_id", "last_sweep_section", "sweep_started_msec"],
+}
 
 var seed_text: String = ""
 var seed_value: int = 1
@@ -195,6 +210,7 @@ var bankroll: int = DEFAULT_BANKROLL
 var grand_casino_chips: int = 0
 var economic_state: String = "stable"
 var inventory: Array = []
+var portable_ticket_piles: Dictionary = {}
 var active_item_id: String = ""
 var debt: Array = []
 var sals_forfeited_item_ids: Array = []
@@ -214,6 +230,7 @@ var rourke_facing: String = "right"
 var rourke_actions_until_move: int = ROURKE_MOVE_EVALUATION_ACTIONS
 var rourke_off_floor_actions: int = 0
 var rourke_floor_action_index: int = 0
+var linda_cage_state: Dictionary = {}
 var grand_casino_room_heat_accumulators: Dictionary = {}
 var rival_cheaters: Array = []
 var rival_cheater_day: int = 0
@@ -235,6 +252,8 @@ var story_log_archive_count: int = 0
 var heat_history: Array = []
 var simulation_msec: int = 0
 var game_clock_minutes: int = GAME_CLOCK_START_MINUTE
+var grand_casino_atm_interest_boundary_index: int = -1
+var grand_casino_atm_interest_notifications: Array = []
 var closing_time_state: Dictionary = {}
 var act_index: int = 0
 var home_state: Dictionary = {}
@@ -260,6 +279,7 @@ func start_new(p_seed_text: String = "FOUNDATION-SEED", p_challenge_config: Dict
 	grand_casino_chips = 0
 	economic_state = "stable"
 	inventory = []
+	portable_ticket_piles = {}
 	active_item_id = ""
 	debt = []
 	sals_forfeited_item_ids = []
@@ -283,6 +303,7 @@ func start_new(p_seed_text: String = "FOUNDATION-SEED", p_challenge_config: Dict
 	rourke_actions_until_move = ROURKE_MOVE_EVALUATION_ACTIONS
 	rourke_off_floor_actions = 0
 	rourke_floor_action_index = 0
+	linda_cage_state = _default_linda_cage_state()
 	grand_casino_room_heat_accumulators = _empty_grand_casino_room_heat_accumulators()
 	rival_cheaters = []
 	rival_cheater_day = 0
@@ -304,6 +325,8 @@ func start_new(p_seed_text: String = "FOUNDATION-SEED", p_challenge_config: Dict
 	heat_history = []
 	simulation_msec = 0
 	game_clock_minutes = GAME_CLOCK_START_MINUTE
+	grand_casino_atm_interest_boundary_index = CageEconomyModelScript.boundary_index_at_or_before(game_clock_minutes)
+	grand_casino_atm_interest_notifications = []
 	closing_time_state = {}
 	act_index = 0
 	home_state = {}
@@ -493,8 +516,10 @@ func clock_display_text(include_day: bool = true) -> String:
 func advance_game_clock_minutes(amount: int) -> void:
 	if amount <= 0 or is_terminal():
 		return
+	var previous_minutes := game_clock_minutes
 	var previous_day := game_day()
 	game_clock_minutes = maxi(0, game_clock_minutes + amount)
+	_process_grand_casino_atm_interest_boundaries(previous_minutes, game_clock_minutes)
 	var next_day := game_day()
 	if next_day > previous_day:
 		_advance_grand_casino_staff_day_rollovers(previous_day, next_day)
@@ -1173,10 +1198,12 @@ func _event_cadence_visit_key(environment_data: Dictionary) -> String:
 func set_environment(environment_data: Dictionary) -> void:
 	var previous_was_grand_casino := _is_grand_casino_environment(current_environment)
 	if not current_environment.is_empty():
+		capture_portable_ticket_piles_from_environment(current_environment)
 		_store_current_local_suspicion()
 		environment_history.append(_environment_history_entry(current_environment))
 		_compact_environment_history()
 	current_environment = _normalize_environment(environment_data)
+	restore_portable_ticket_piles_to_environment(current_environment)
 	current_environment["entered_game_clock_minutes"] = maxi(0, game_clock_minutes)
 	if _is_grand_casino_environment(current_environment):
 		store_grand_casino_room_environment(current_environment)
@@ -1354,7 +1381,7 @@ func grand_casino_room_access_status(target_archetype_id: String, high_limit_buy
 			return {"available": false, "locked": true, "reason": "Locked for this lesson. The Main Floor has everything you need; a Players Card can open High-Limit on later runs."}
 		if target_id == GRAND_CASINO_BACK_ROOM_ARCHETYPE_ID:
 			return {"available": false, "locked": true, "reason": "Locked for this lesson. Rourke's Back Room belongs to later runs."}
-		if target_id == GRAND_CASINO_ARCHETYPE_ID:
+		if target_id == GRAND_CASINO_ARCHETYPE_ID or target_id == GRAND_CASINO_CAGE_ARCHETYPE_ID:
 			return {"available": true, "access_method": "tutorial_main_floor", "cost": 0}
 	if bool(narrative_flags.get("grand_casino_showdown_active", false)):
 		if target_id == GRAND_CASINO_BACK_ROOM_ARCHETYPE_ID and str(narrative_flags.get("grand_casino_showdown_step", "")) == GRAND_CASINO_SHOWDOWN_STEP_DUEL:
@@ -1369,7 +1396,7 @@ func grand_casino_room_access_status(target_archetype_id: String, high_limit_buy
 		if bankroll < buy_in:
 			return {"available": false, "locked": true, "cash_buy_in_required": true, "cost": buy_in, "reason": "High-Limit requires Silver card access or a $%d cash buy-in." % buy_in}
 		return {"available": true, "cash_buy_in_required": true, "access_method": "cash_buy_in", "cost": buy_in}
-	if target_id == GRAND_CASINO_ARCHETYPE_ID:
+	if target_id == GRAND_CASINO_ARCHETYPE_ID or target_id == GRAND_CASINO_CAGE_ARCHETYPE_ID:
 		return {"available": true, "access_method": "interior", "cost": 0}
 	return {"available": false, "reason": "That room is not part of the Grand Casino."}
 
@@ -1399,7 +1426,11 @@ func change_bankroll(delta: int, defer_bankroll_zero: bool = false) -> void:
 
 
 func grand_casino_table_uses_chips(game_id: String, environment: Dictionary = {}) -> bool:
-	if not GRAND_CASINO_TABLE_GAME_IDS.has(game_id):
+	return grand_casino_game_uses_chips(game_id, environment)
+
+
+func grand_casino_game_uses_chips(game_id: String, environment: Dictionary = {}) -> bool:
+	if not GRAND_CASINO_CHIP_GAME_IDS.has(game_id):
 		return false
 	var source := current_environment if environment.is_empty() else environment
 	var archetype_id := str(source.get("archetype_id", ""))
@@ -1412,11 +1443,59 @@ func grand_casino_table_uses_chips(game_id: String, environment: Dictionary = {}
 
 
 func wager_balance_for_game(game_id: String, environment: Dictionary = {}) -> int:
-	return grand_casino_chips if grand_casino_table_uses_chips(game_id, environment) else bankroll
+	return bankroll + grand_casino_chips if grand_casino_game_uses_chips(game_id, environment) else bankroll
 
 
 func wager_capacity_for_game(game_id: String, environment: Dictionary = {}) -> int:
-	return bankroll + grand_casino_chips if grand_casino_table_uses_chips(game_id, environment) else bankroll
+	return bankroll + grand_casino_chips if grand_casino_game_uses_chips(game_id, environment) else bankroll
+
+
+func fund_grand_casino_wager(game_id: String, wager_amount: int, environment: Dictionary = {}) -> Dictionary:
+	var amount := maxi(0, wager_amount)
+	if amount <= 0 or not grand_casino_game_uses_chips(game_id, environment):
+		return {
+			"ok": true,
+			"wager": amount,
+			"existing_chips_used": 0,
+			"chips_bought": 0,
+			"cash_used": 0,
+		}
+	var existing_chips_used := mini(grand_casino_chips, amount)
+	var required_chips := maxi(0, amount - grand_casino_chips)
+	if required_chips <= 0:
+		return {
+			"ok": true,
+			"wager": amount,
+			"existing_chips_used": existing_chips_used,
+			"chips_bought": 0,
+			"cash_used": 0,
+		}
+	var rate := grand_casino_chip_exchange_rate()
+	var cash_cost := required_chips * rate
+	if cash_cost > bankroll:
+		return {
+			"ok": false,
+			"wager": amount,
+			"existing_chips_used": existing_chips_used,
+			"chips_bought": 0,
+			"cash_used": 0,
+			"message": "That wager needs %d chips plus $%d cash, but you only have $%d cash available." % [existing_chips_used, cash_cost, bankroll],
+		}
+	var buy_result := buy_grand_casino_chips(required_chips, rate)
+	if not bool(buy_result.get("ok", false)):
+		return buy_result
+	return {
+		"ok": true,
+		"wager": amount,
+		"existing_chips_used": existing_chips_used,
+		"chips_bought": required_chips,
+		"cash_used": cash_cost,
+		"message": "Wagered %d chips first and covered the remaining %d with cash." % [existing_chips_used, required_chips],
+	}
+
+
+func fund_grand_casino_table_wager(game_id: String, wager_amount: int, environment: Dictionary = {}) -> Dictionary:
+	return fund_grand_casino_wager(game_id, wager_amount, environment)
 
 
 func grand_casino_total_money() -> int:
@@ -1451,21 +1530,219 @@ func buy_grand_casino_chips(chip_amount: int, cash_rate: int = 1) -> Dictionary:
 
 
 func cash_out_grand_casino_chips(chip_amount: int = -1, cash_rate: int = 1) -> Dictionary:
-	if not _is_grand_casino_environment(current_environment):
-		return {"ok": false, "message": "The Cage is only available inside the Grand Casino."}
+	if str(current_environment.get("archetype_id", "")) != GRAND_CASINO_CAGE_ARCHETYPE_ID:
+		return {"ok": false, "message": "Chip redemption is available at Linda's Cage counter."}
 	if bool(narrative_flags.get("grand_casino_walked_with_chips", false)):
 		return {"ok": false, "message": "Rourke closed the Cage account when you were shown the door."}
 	if bool(narrative_flags.get("grand_casino_showdown_active", false)) and str(narrative_flags.get("grand_casino_duel_outcome", "")) != GrandCasinoDuelModelScript.OUTCOME_WALK_OUT_CLEAN:
 		return {"ok": false, "message": "The Cage is locked while Rourke's duel is active."}
-	var amount := grand_casino_chips if chip_amount < 0 else mini(grand_casino_chips, maxi(0, chip_amount))
-	if amount <= 0:
-		return {"ok": false, "message": "You do not have any chips to cash out."}
+	var amount := grand_casino_chips if chip_amount < 0 else chip_amount
 	var rate := maxi(1, cash_rate)
-	var cash_value := amount * rate
-	grand_casino_chips -= amount
-	bankroll += cash_value
-	_refresh_economy()
-	return {"ok": true, "cash_delta": cash_value, "chips_delta": -amount, "message": "Cashed out %d chips for $%d." % [amount, cash_value]}
+	var preview := CageEconomyModelScript.cashout_preview(
+		grand_casino_chips,
+		amount,
+		rate,
+		grand_casino_atm_debt(),
+		bankroll
+	)
+	if not bool(preview.get("ok", false)):
+		return {"ok": false, "message": str(preview.get("reason", "You do not have that many chips to redeem.")), "preview": preview}
+	var debt_paid := int(preview.get("debt_paid", 0))
+	grand_casino_chips = int(preview.get("chips_after", grand_casino_chips))
+	bankroll = int(preview.get("cash_after", bankroll))
+	_set_grand_casino_atm_debt(int(preview.get("debt_after", grand_casino_atm_debt())))
+	if debt_paid > 0 and narrative_flags.has("grand_casino_entry_bankroll"):
+		narrative_flags["grand_casino_entry_bankroll"] = int(narrative_flags.get("grand_casino_entry_bankroll", 0)) - debt_paid
+	_refresh_economy(true)
+	log_story({
+		"type": "grand_casino_chip_cashout",
+		"chips_redeemed": amount,
+		"exchange_rate": rate,
+		"gross_value": int(preview.get("gross_value", 0)),
+		"debt_paid": debt_paid,
+		"debt_remaining": grand_casino_atm_debt(),
+		"cash_paid": int(preview.get("cash_paid", 0)),
+		"bankroll_delta": int(preview.get("cash_paid", 0)),
+		"chips_delta": -amount,
+		"message": "Linda redeems %d chips: $%d to the marker, $%d cash, $%d marker remaining." % [amount, debt_paid, int(preview.get("cash_paid", 0)), grand_casino_atm_debt()],
+	})
+	evaluate_environment_objective_state()
+	return preview.merged({
+		"ok": true,
+		"cash_delta": int(preview.get("cash_paid", 0)),
+		"chips_delta": -amount,
+		"message": "Redeemed %d chips. Marker paid $%d; cash paid $%d; marker remaining $%d." % [amount, debt_paid, int(preview.get("cash_paid", 0)), grand_casino_atm_debt()],
+	}, true)
+
+
+func grand_casino_atm_debt() -> int:
+	var index := _debt_index(CageEconomyModelScript.ATM_DEBT_ID)
+	if index < 0 or typeof(debt[index]) != TYPE_DICTIONARY:
+		return 0
+	return maxi(0, int((debt[index] as Dictionary).get("balance", 0)))
+
+
+func grand_casino_atm_debt_entry() -> Dictionary:
+	var index := _debt_index(CageEconomyModelScript.ATM_DEBT_ID)
+	return (debt[index] as Dictionary).duplicate(true) if index >= 0 and typeof(debt[index]) == TYPE_DICTIONARY else {}
+
+
+func grand_casino_atm_status() -> Dictionary:
+	var balance := grand_casino_atm_debt()
+	var next_boundary := CageEconomyModelScript.next_interest_boundary(game_clock_minutes)
+	return {
+		"debt": balance,
+		"cash": bankroll,
+		"loan_increment": CageEconomyModelScript.LOAN_INCREMENT,
+		"loan_cap": CageEconomyModelScript.LOAN_CAP,
+		"origination_fee": CageEconomyModelScript.ORIGINATION_FEE,
+		"daily_interest_rate": CageEconomyModelScript.DAILY_INTEREST_RATE,
+		"interest_minute_of_day": CageEconomyModelScript.INTEREST_MINUTE_OF_DAY,
+		"next_interest_absolute_minute": next_boundary,
+		"projected_next_balance": CageEconomyModelScript.interest_balance(balance),
+		"available_credit": maxi(0, CageEconomyModelScript.LOAN_CAP - balance),
+		"interest_boundary_index": grand_casino_atm_interest_boundary_index,
+	}
+
+
+func borrow_from_grand_casino_atm(amount: int) -> Dictionary:
+	if str(current_environment.get("archetype_id", "")) != GRAND_CASINO_CAGE_ARCHETYPE_ID:
+		return {"ok": false, "message": "The Grand Casino ATM is inside the Cage."}
+	var preview := CageEconomyModelScript.borrow_preview(grand_casino_atm_debt(), amount)
+	if not bool(preview.get("ok", false)):
+		return {"ok": false, "message": str(preview.get("reason", "The ATM declines that draw.")), "preview": preview}
+	var cash_received := int(preview.get("cash_received", 0))
+	_set_grand_casino_atm_debt(int(preview.get("debt_after", 0)))
+	bankroll += cash_received
+	if narrative_flags.has("grand_casino_entry_bankroll"):
+		narrative_flags["grand_casino_entry_bankroll"] = int(narrative_flags.get("grand_casino_entry_bankroll", 0)) + cash_received
+	_refresh_economy(true)
+	log_story({
+		"type": "lender_hook",
+		"id": "grand_casino_atm",
+		"label": "Grand Casino ATM",
+		"debt_id": CageEconomyModelScript.ATM_DEBT_ID,
+		"lender_id": "grand_casino_atm",
+		"debt_changes": [grand_casino_atm_debt_entry()],
+		"amount": cash_received,
+		"bankroll_delta": cash_received,
+		"balance": grand_casino_atm_debt(),
+		"message": "The Grand Casino ATM advances $%d cash. House marker: $%d." % [cash_received, grand_casino_atm_debt()],
+	})
+	return preview.merged({
+		"ok": true,
+		"cash_delta": cash_received,
+		"message": "Borrowed $%d cash. Grand Casino marker: $%d." % [cash_received, grand_casino_atm_debt()],
+	}, true)
+
+
+func repay_grand_casino_atm_debt(amount: int = -1) -> Dictionary:
+	if str(current_environment.get("archetype_id", "")) != GRAND_CASINO_CAGE_ARCHETYPE_ID:
+		return {"ok": false, "message": "Cash marker payments are accepted at the Cage ATM."}
+	var balance := grand_casino_atm_debt()
+	var requested := mini(balance, bankroll) if amount < 0 else amount
+	var preview := CageEconomyModelScript.repayment_preview(balance, bankroll, requested)
+	if not bool(preview.get("ok", false)):
+		return {"ok": false, "message": str(preview.get("reason", "The ATM cannot accept that payment.")), "preview": preview}
+	var payment := int(preview.get("amount", 0))
+	bankroll -= payment
+	_set_grand_casino_atm_debt(int(preview.get("debt_after", 0)))
+	if narrative_flags.has("grand_casino_entry_bankroll"):
+		narrative_flags["grand_casino_entry_bankroll"] = int(narrative_flags.get("grand_casino_entry_bankroll", 0)) - payment
+	_refresh_economy(true)
+	log_story({
+		"type": "debt_paid" if grand_casino_atm_debt() <= 0 else "debt_payment",
+		"debt_id": CageEconomyModelScript.ATM_DEBT_ID,
+		"lender_id": "grand_casino_atm",
+		"payment": payment,
+		"bankroll_delta": -payment,
+		"balance": grand_casino_atm_debt(),
+		"message": "Paid $%d cash toward the Grand Casino marker. Balance: $%d." % [payment, grand_casino_atm_debt()],
+	})
+	evaluate_environment_objective_state()
+	return preview.merged({
+		"ok": true,
+		"cash_delta": -payment,
+		"payment": payment,
+		"paid_off": grand_casino_atm_debt() <= 0,
+		"message": "Paid $%d. Grand Casino marker: $%d." % [payment, grand_casino_atm_debt()],
+	}, true)
+
+
+func grand_casino_atm_pending_interest_notifications() -> Array:
+	return grand_casino_atm_interest_notifications.duplicate(true)
+
+
+func consume_grand_casino_atm_interest_notifications() -> Array:
+	var result := grand_casino_atm_interest_notifications.duplicate(true)
+	grand_casino_atm_interest_notifications.clear()
+	return result
+
+
+func _set_grand_casino_atm_debt(balance: int) -> void:
+	var normalized_balance := maxi(0, balance)
+	var index := _debt_index(CageEconomyModelScript.ATM_DEBT_ID)
+	if normalized_balance <= 0:
+		if index >= 0:
+			debt.remove_at(index)
+		return
+	var entry := {
+		"id": CageEconomyModelScript.ATM_DEBT_ID,
+		"lender_id": "grand_casino_atm",
+		"lender_name": "Grand Casino ATM",
+		"status": "active",
+		"debt_kind": "casino_marker",
+		"balance": normalized_balance,
+		"principal": normalized_balance,
+		"deadline_turns": 0,
+		"turns_remaining": 0,
+		"no_default": true,
+		"no_collector": true,
+		"stackable": false,
+	}
+	if index >= 0:
+		var existing := (debt[index] as Dictionary).duplicate(true)
+		entry["principal"] = maxi(int(existing.get("principal", 0)), normalized_balance)
+		debt[index] = entry
+	else:
+		debt.append(entry)
+
+
+func _process_grand_casino_atm_interest_boundaries(previous_minutes: int, current_minutes: int) -> void:
+	var crossings := CageEconomyModelScript.crossed_interest_boundary_indices(
+		previous_minutes,
+		current_minutes,
+		grand_casino_atm_interest_boundary_index
+	)
+	for boundary_value in crossings:
+		var boundary_index := int(boundary_value)
+		grand_casino_atm_interest_boundary_index = maxi(grand_casino_atm_interest_boundary_index, boundary_index)
+		var old_balance := grand_casino_atm_debt()
+		if old_balance <= 0:
+			continue
+		var new_balance := CageEconomyModelScript.interest_balance(old_balance)
+		var interest_added := new_balance - old_balance
+		_set_grand_casino_atm_debt(new_balance)
+		var notification := {
+			"boundary_index": boundary_index,
+			"absolute_minute": CageEconomyModelScript.INTEREST_MINUTE_OF_DAY + boundary_index * CageEconomyModelScript.MINUTES_PER_DAY,
+			"old_balance": old_balance,
+			"rate": CageEconomyModelScript.DAILY_INTEREST_RATE,
+			"interest_added": interest_added,
+			"new_balance": new_balance,
+			"message": "3:00 AM marker interest added $%d. Grand Casino ATM balance: $%d." % [interest_added, new_balance],
+		}
+		grand_casino_atm_interest_notifications.append(notification)
+		log_story({
+			"type": "debt_interest",
+			"debt_id": CageEconomyModelScript.ATM_DEBT_ID,
+			"old_balance": old_balance,
+			"rate": CageEconomyModelScript.DAILY_INTEREST_RATE,
+			"interest_added": interest_added,
+			"new_balance": new_balance,
+			"boundary_index": boundary_index,
+			"message": str(notification.get("message", "")),
+		})
 
 
 func grand_casino_players_card_comp_result(comp_id: String) -> Dictionary:
@@ -1546,9 +1823,16 @@ func grand_casino_players_card_comp_result(comp_id: String) -> Dictionary:
 func route_grand_casino_game_currency(result: Dictionary, deltas: Dictionary) -> Dictionary:
 	var routed := deltas
 	var game_id := str(result.get("game_id", result.get("source_id", ""))).strip_edges()
-	if not grand_casino_table_uses_chips(game_id):
+	if not grand_casino_game_uses_chips(game_id):
 		return routed
 	var chips_delta := int(routed.get("bankroll_delta", result.get("bankroll_delta", 0)))
+	var funding_amount := _grand_casino_result_wager_funding_amount(result, chips_delta)
+	if funding_amount > grand_casino_chips:
+		var funding := fund_grand_casino_wager(game_id, funding_amount, current_environment)
+		if bool(funding.get("ok", false)):
+			result["wager_existing_chips_used"] = int(funding.get("existing_chips_used", 0))
+			result["wager_chips_bought"] = int(funding.get("chips_bought", 0))
+			result["wager_cash_used"] = int(funding.get("cash_used", 0))
 	routed["bankroll_delta"] = 0
 	routed["chips_delta"] = chips_delta
 	result["bankroll_delta"] = 0
@@ -1557,6 +1841,21 @@ func route_grand_casino_game_currency(result: Dictionary, deltas: Dictionary) ->
 	result["currency"] = "chips"
 	result["deltas"] = routed
 	return routed
+
+
+func _grand_casino_result_wager_funding_amount(result: Dictionary, bankroll_delta: int) -> int:
+	var game_id := str(result.get("game_id", result.get("source_id", ""))).strip_edges()
+	var action_id := str(result.get("action_id", "")).strip_edges()
+	if game_id == "blackjack":
+		if action_id != "blackjack_place_bet":
+			return 0
+		return maxi(0, -bankroll_delta)
+	var wager := maxi(0, int(result.get("stake", 0)))
+	if game_id == "roulette":
+		wager = maxi(wager, int(result.get("roulette_total_wager", 0)))
+	elif game_id == "baccarat":
+		wager = maxi(wager, int(result.get("baccarat_total_wager", 0)))
+	return maxi(wager, maxi(0, -bankroll_delta))
 
 
 func change_grand_casino_chips(delta: int, defer_zero: bool = false) -> void:
@@ -2360,31 +2659,37 @@ func _grand_casino_demo_objective_status(source: Dictionary, objective: Dictiona
 	var cheat_evidence := bool(narrative_flags.get("grand_casino_cheat_evidence", false))
 	var watched_cheat_evidence := bool(narrative_flags.get("grand_casino_watched_cheat_evidence", false))
 	var card_eligible := not bool(narrative_flags.get("grand_casino_players_card_ineligible", false)) and not cheat_evidence and not watched_cheat_evidence
-	var derived_tier := _grand_casino_players_card_derived_tier(config, games_played, net_winnings, max_visit_heat, card_eligible)
-	var stored_tier := str(narrative_flags.get("grand_casino_players_card_tier", GRAND_CASINO_PLAYERS_CARD_TIER_NONE)).strip_edges().to_lower()
-	if not GRAND_CASINO_PLAYERS_CARD_TIERS.has(stored_tier):
-		stored_tier = GRAND_CASINO_PLAYERS_CARD_TIER_NONE
-	var card_tier := stored_tier
-	if _grand_casino_players_card_tier_index(derived_tier) > _grand_casino_players_card_tier_index(card_tier):
-		card_tier = derived_tier
-	if not card_eligible:
-		card_tier = GRAND_CASINO_PLAYERS_CARD_TIER_NONE
+	var card_tier := _grand_casino_players_card_awarded_tier()
 	var card_tier_label := card_tier.capitalize() if card_tier != GRAND_CASINO_PLAYERS_CARD_TIER_NONE else "Unranked"
 	if not card_eligible:
-		card_tier_label = "Ineligible"
+		card_tier_label = "%s (program closed)" % card_tier_label
 	var next_tier := _grand_casino_players_card_next_definition(config, card_tier) if card_eligible else {}
 	var next_tier_id := str(next_tier.get("id", ""))
 	var next_tier_label := str(next_tier.get("label", ""))
 	var next_tier_min_games := int(next_tier.get("min_games", min_games))
 	var next_tier_net := int(next_tier.get("net_winnings", required_net))
 	var next_tier_max_heat := int(next_tier.get("max_heat", max_heat))
-	var card_benefits := _grand_casino_players_card_benefits(config, card_tier) if card_eligible else []
+	var segment_games := maxi(0, int(narrative_flags.get("grand_casino_players_card_segment_games", 0)))
+	var segment_net := int(narrative_flags.get("grand_casino_players_card_segment_net_winnings", 0))
+	var segment_max_heat := clampi(int(narrative_flags.get("grand_casino_players_card_segment_max_heat", current_heat)), 0, 100)
+	var ready_to_claim := bool(narrative_flags.get("grand_casino_players_card_ready_to_claim", false)) and not next_tier_id.is_empty() and card_eligible
+	var card_debt := grand_casino_atm_debt() if has_method("grand_casino_atm_debt") else 0
+	var claim_block_reason := ""
+	if not card_eligible:
+		claim_block_reason = "Cheat evidence permanently closes the Players Card program for this run."
+	elif bool(narrative_flags.get("grand_casino_showdown_pending", false)) or bool(narrative_flags.get("grand_casino_showdown_active", false)):
+		claim_block_reason = "Rourke's showdown has priority over the Players Card program."
+	elif card_debt > 0:
+		claim_block_reason = "Settle the $%d Grand Casino ATM marker before Linda can issue %s." % [card_debt, next_tier_label]
+	elif not ready_to_claim:
+		claim_block_reason = "%s requirements are still in progress." % next_tier_label if not next_tier_label.is_empty() else "No later Players Card tier remains."
+	var card_benefits := _grand_casino_players_card_benefits(config, card_tier)
 	var money_target_met := net_winnings >= required_net
 	if required_net <= 0 and target_bankroll > 0:
 		money_target_met = total_money >= target_bankroll
 	var game_target_met := games_played >= min_games
 	var heat_clean := max_visit_heat <= max_heat
-	var high_roller_ready := card_tier == GRAND_CASINO_PLAYERS_CARD_TIER_GOLD and money_target_met and game_target_met and heat_clean and card_eligible
+	var high_roller_ready := next_tier_id == GRAND_CASINO_PLAYERS_CARD_TIER_GOLD and ready_to_claim and card_debt <= 0 and claim_block_reason.is_empty()
 	var high_roller_pending := bool(narrative_flags.get("high_roller_cashout_pending", false))
 	var showdown_event_id := str(config.get("showdown_event_id", GRAND_CASINO_SHOWDOWN_EVENT_ID))
 	var high_roller_event_id := str(config.get("high_roller_event_id", GRAND_CASINO_HIGH_ROLLER_EVENT_ID))
@@ -2452,6 +2757,7 @@ func _grand_casino_demo_objective_status(source: Dictionary, objective: Dictiona
 		"players_card_required_net_winnings": required_net,
 		"players_card_remaining_net_winnings": remaining_net,
 		"players_card_tier": card_tier,
+		"players_card_awarded_tier": card_tier,
 		"players_card_tier_label": card_tier_label,
 		"players_card_eligible": card_eligible,
 		"players_card_ineligible_reason": "Cheat evidence permanently closes the Players Card program for this run." if not card_eligible else "",
@@ -2460,8 +2766,15 @@ func _grand_casino_demo_objective_status(source: Dictionary, objective: Dictiona
 		"players_card_next_min_games": next_tier_min_games,
 		"players_card_next_net_winnings": next_tier_net,
 		"players_card_next_max_heat": next_tier_max_heat,
-		"players_card_next_remaining_games": maxi(0, next_tier_min_games - games_played),
-		"players_card_next_remaining_net_winnings": maxi(0, next_tier_net - net_winnings),
+		"players_card_segment_games": segment_games,
+		"players_card_segment_net_winnings": segment_net,
+		"players_card_segment_max_heat": segment_max_heat,
+		"players_card_next_remaining_games": maxi(0, next_tier_min_games - segment_games),
+		"players_card_next_remaining_net_winnings": maxi(0, next_tier_net - segment_net),
+		"players_card_ready_to_claim": ready_to_claim,
+		"players_card_can_claim": ready_to_claim and claim_block_reason.is_empty(),
+		"players_card_claim_block_reason": claim_block_reason,
+		"grand_casino_atm_debt": card_debt,
 		"players_card_benefits": card_benefits,
 		"players_card_next_benefits": _copy_array(next_tier.get("benefits", [])),
 		"players_card_drink_comps": maxi(0, int(narrative_flags.get("grand_casino_comp_drink_tokens", 0))),
@@ -2514,6 +2827,9 @@ func _evaluate_grand_casino_objective_state(status: Dictionary) -> void:
 		return
 	_initialize_grand_casino_objective_runtime()
 	_update_grand_casino_players_card_state(status)
+	# Segment readiness is an action-boundary mutation. Rebuild the read-only
+	# objective snapshot before deciding whether Gold or the showdown is ready.
+	status = demo_objective_status()
 	if tutorial_main_floor_only():
 		if bool(status.get("high_roller_ready", false)):
 			_set_grand_casino_high_roller_ready(status)
@@ -2536,46 +2852,104 @@ func _update_grand_casino_players_card_state(status: Dictionary) -> void:
 	narrative_flags["grand_casino_net_winnings"] = int(status.get("grand_casino_net_winnings", narrative_flags.get("grand_casino_net_winnings", 0)))
 	if not bool(status.get("players_card_eligible", true)):
 		narrative_flags["grand_casino_players_card_ineligible"] = true
-		narrative_flags["grand_casino_players_card_tier"] = GRAND_CASINO_PLAYERS_CARD_TIER_NONE
 		narrative_flags["grand_casino_linda_look_away_available"] = false
 		if str(narrative_flags.get("grand_casino_high_limit_access_method", "")) == "silver_card":
 			narrative_flags["grand_casino_high_limit_access"] = false
 			narrative_flags["grand_casino_high_limit_access_method"] = ""
 		return
 	narrative_flags["grand_casino_players_card_ineligible"] = false
-	var target_tier := str(status.get("players_card_tier", GRAND_CASINO_PLAYERS_CARD_TIER_NONE))
-	var current_tier := str(narrative_flags.get("grand_casino_players_card_tier", GRAND_CASINO_PLAYERS_CARD_TIER_NONE))
-	_advance_grand_casino_players_card_tier(current_tier, target_tier, true)
+	if bool(narrative_flags.get("grand_casino_players_card_ready_to_claim", false)):
+		return
+	var card_tier := _grand_casino_players_card_awarded_tier()
+	var config := _grand_casino_objective_config(_copy_dict(current_environment.get("demo_objective", {})))
+	var next_definition := _grand_casino_players_card_next_definition(config, card_tier)
+	if next_definition.is_empty():
+		return
+	var total_games := maxi(0, int(narrative_flags.get("grand_casino_games_played", 0)))
+	var total_net := int(narrative_flags.get("grand_casino_net_winnings", 0))
+	var baseline_games := maxi(0, int(narrative_flags.get("grand_casino_players_card_segment_start_games", total_games)))
+	var baseline_net := int(narrative_flags.get("grand_casino_players_card_segment_start_net_winnings", total_net))
+	var segment_games := maxi(0, total_games - baseline_games)
+	var segment_net := total_net - baseline_net
+	var segment_max_heat := maxi(
+		clampi(int(narrative_flags.get("grand_casino_players_card_segment_max_heat", suspicion_level())), 0, 100),
+		suspicion_level()
+	)
+	narrative_flags["grand_casino_players_card_segment_games"] = segment_games
+	narrative_flags["grand_casino_players_card_segment_net_winnings"] = segment_net
+	narrative_flags["grand_casino_players_card_segment_max_heat"] = segment_max_heat
+	var ready := (
+		segment_games >= int(next_definition.get("min_games", 0))
+		and segment_net >= int(next_definition.get("net_winnings", 0))
+		and segment_max_heat <= int(next_definition.get("max_heat", 100))
+	)
+	if ready:
+		narrative_flags["grand_casino_players_card_ready_to_claim"] = true
+		narrative_flags["grand_casino_players_card_ready_tier"] = str(next_definition.get("id", ""))
+		log_story({
+			"type": "grand_casino_players_card_ready",
+			"tier": str(next_definition.get("id", "")),
+			"segment_games": segment_games,
+			"segment_net_winnings": segment_net,
+			"segment_max_heat": segment_max_heat,
+			"message": "%s Players Card qualification is ready for Linda." % str(next_definition.get("label", "Next")),
+		})
 
 
-func _advance_grand_casino_players_card_tier(current_tier: String, target_tier: String, queue_dialogue: bool) -> void:
+func _grant_grand_casino_players_card_tier(target_tier: String, queue_dialogue: bool) -> bool:
+	var current_tier := _grand_casino_players_card_awarded_tier()
 	var current_index := _grand_casino_players_card_tier_index(current_tier)
 	var target_index := _grand_casino_players_card_tier_index(target_tier)
-	if target_index <= current_index:
-		narrative_flags["grand_casino_players_card_tier"] = GRAND_CASINO_PLAYERS_CARD_TIERS[current_index]
-		return
+	if target_index != current_index + 1:
+		return false
 	var config := _grand_casino_objective_config(_copy_dict(current_environment.get("demo_objective", {})))
-	for tier_index in range(current_index + 1, target_index + 1):
-		var tier_id := str(GRAND_CASINO_PLAYERS_CARD_TIERS[tier_index])
-		var definition := _grand_casino_players_card_tier_definition(config, tier_id)
-		_apply_grand_casino_players_card_tier_benefits(definition)
-		narrative_flags["grand_casino_players_card_tier"] = tier_id
-		narrative_flags["grand_casino_players_card_highest_tier"] = tier_id
-		log_story({
-			"type": "grand_casino_players_card_tier",
+	var tier_id := str(GRAND_CASINO_PLAYERS_CARD_TIERS[target_index])
+	var definition := _grand_casino_players_card_tier_definition(config, tier_id)
+	_apply_grand_casino_players_card_tier_benefits(definition)
+	narrative_flags["grand_casino_players_card_awarded_tier"] = tier_id
+	narrative_flags["grand_casino_players_card_tier"] = tier_id
+	narrative_flags["grand_casino_players_card_highest_tier"] = tier_id
+	narrative_flags["grand_casino_players_card_ready_to_claim"] = false
+	narrative_flags.erase("grand_casino_players_card_ready_tier")
+	narrative_flags["grand_casino_players_card_segment_start_games"] = maxi(0, int(narrative_flags.get("grand_casino_games_played", 0)))
+	narrative_flags["grand_casino_players_card_segment_start_net_winnings"] = int(narrative_flags.get("grand_casino_net_winnings", 0))
+	narrative_flags["grand_casino_players_card_segment_games"] = 0
+	narrative_flags["grand_casino_players_card_segment_net_winnings"] = 0
+	narrative_flags["grand_casino_players_card_segment_max_heat"] = suspicion_level()
+	log_story({
+		"type": "grand_casino_players_card_tier",
+		"tier": tier_id,
+		"games_played": maxi(0, int(narrative_flags.get("grand_casino_games_played", 0))),
+		"net_winnings": int(narrative_flags.get("grand_casino_net_winnings", 0)),
+		"environment_id": str(current_environment.get("id", "")),
+		"environment_archetype_id": str(current_environment.get("archetype_id", "")),
+		"message": "Linda awards the %s Players Card tier." % tier_id.capitalize(),
+	})
+	if queue_dialogue and not is_tutorial_run() and GRAND_CASINO_LINDA_TIER_DIALOGUES.has(tier_id):
+		var dialogue_id := str(GRAND_CASINO_LINDA_TIER_DIALOGUES[tier_id])
+		enqueue_dialogue(dialogue_id, "dialogue:%s" % dialogue_id, GRAND_CASINO_LINDA_SPEAKER, "recognition", "players_card_tier", {
 			"tier": tier_id,
-			"games_played": maxi(0, int(narrative_flags.get("grand_casino_games_played", 0))),
-			"net_winnings": int(narrative_flags.get("grand_casino_net_winnings", 0)),
-			"environment_id": str(current_environment.get("id", "")),
-			"environment_archetype_id": str(current_environment.get("archetype_id", "")),
-			"message": "Linda marks the Players Card %s." % tier_id.capitalize(),
+			"environment_snapshot": current_environment.duplicate(true),
 		})
-		if queue_dialogue and not is_tutorial_run() and GRAND_CASINO_LINDA_TIER_DIALOGUES.has(tier_id):
-			var dialogue_id := str(GRAND_CASINO_LINDA_TIER_DIALOGUES[tier_id])
-			enqueue_dialogue(dialogue_id, "dialogue:%s" % dialogue_id, GRAND_CASINO_LINDA_SPEAKER, "recognition", "players_card_tier", {
-				"tier": tier_id,
-				"environment_snapshot": current_environment.duplicate(true),
-			})
+	return true
+
+
+func claim_grand_casino_players_card_tier() -> Dictionary:
+	if str(current_environment.get("archetype_id", "")) != GRAND_CASINO_CAGE_ARCHETYPE_ID:
+		return {"ok": false, "message": "Linda awards Players Card tiers only at the Cage counter."}
+	var status := demo_objective_status()
+	if not bool(status.get("players_card_eligible", false)):
+		return {"ok": false, "message": str(status.get("players_card_claim_block_reason", "Cheat evidence closed the Players Card program."))}
+	if not bool(status.get("players_card_ready_to_claim", false)):
+		return {"ok": false, "message": str(status.get("players_card_claim_block_reason", "The next tier is not ready."))}
+	if not bool(status.get("players_card_can_claim", false)):
+		return {"ok": false, "message": str(status.get("players_card_claim_block_reason", "Linda cannot issue the tier yet."))}
+	var next_tier := str(status.get("players_card_next_tier", ""))
+	if next_tier == GRAND_CASINO_PLAYERS_CARD_TIER_GOLD:
+		return {"ok": true, "review_required": true, "tier": next_tier, "message": "Linda is ready to complete the Gold review."}
+	if not _grant_grand_casino_players_card_tier(next_tier, true):
+		return {"ok": false, "message": "The Players Card tier sequence is invalid."}
+	return {"ok": true, "tier": next_tier, "message": "Linda awards the %s Players Card tier." % next_tier.capitalize(), "status": demo_objective_status()}
 
 
 func _apply_grand_casino_players_card_tier_benefits(definition: Dictionary) -> void:
@@ -2632,18 +3006,24 @@ func _set_grand_casino_high_roller_ready(status: Dictionary) -> void:
 func complete_grand_casino_high_roller_cashout(config: Dictionary = {}) -> Dictionary:
 	if run_status == RUN_STATUS_ENDED or run_status == RUN_STATUS_FAILED:
 		return {"ok": false, "message": "The run is already over."}
-	if not _is_grand_casino_environment(current_environment):
-		return {"ok": false, "message": "The Players Card desk is only available in the Grand Casino."}
+	if str(current_environment.get("archetype_id", "")) != GRAND_CASINO_CAGE_ARCHETYPE_ID:
+		return {"ok": false, "message": "Linda completes the Gold review only at the Cage counter."}
 	var status := demo_objective_status()
 	if not bool(status.get("grand_casino_objective", false)):
 		return {"ok": false, "message": "The Players Card is not available here."}
 	if bool(status.get("showdown_pending", false)) or bool(status.get("showdown_active", false)):
 		return {"ok": false, "message": "Rourke's call has priority now."}
+	if grand_casino_atm_debt() > 0:
+		return {"ok": false, "message": "Settle the $%d Grand Casino ATM marker before Linda can complete Gold." % grand_casino_atm_debt()}
 	if not bool(status.get("high_roller_ready", false)) and not bool(narrative_flags.get("high_roller_cashout_pending", false)):
 		evaluate_environment_objective_state()
 		status = demo_objective_status()
 	if not bool(status.get("high_roller_ready", false)) and not bool(narrative_flags.get("high_roller_cashout_pending", false)):
 		return {"ok": false, "message": "The host is not ready to issue the Players Card yet."}
+	if str(status.get("players_card_next_tier", "")) != GRAND_CASINO_PLAYERS_CARD_TIER_GOLD or not bool(status.get("players_card_ready_to_claim", false)):
+		return {"ok": false, "message": "Gold has not completed its sequential qualification segment."}
+	if not _grant_grand_casino_players_card_tier(GRAND_CASINO_PLAYERS_CARD_TIER_GOLD, false):
+		return {"ok": false, "message": "Linda could not issue Gold without the prior Players Card tiers."}
 	var high_roller_event_id := str(status.get("high_roller_event_id", GRAND_CASINO_HIGH_ROLLER_EVENT_ID)).strip_edges()
 	if high_roller_event_id.is_empty():
 		high_roller_event_id = GRAND_CASINO_HIGH_ROLLER_EVENT_ID
@@ -3993,6 +4373,7 @@ func _advance_grand_casino_living_floor(amount: int) -> void:
 	_initialize_grand_casino_living_floor()
 	for _action in range(amount):
 		rourke_floor_action_index += 1
+		_advance_linda_cage_simulation()
 		_decay_grand_casino_room_heat()
 		_advance_rival_cheater_heat()
 		if rourke_off_floor_actions > 0:
@@ -4012,6 +4393,54 @@ func _advance_grand_casino_living_floor(amount: int) -> void:
 			_evaluate_rourke_movement()
 			rourke_actions_until_move = ROURKE_MOVE_EVALUATION_ACTIONS
 		_evaluate_rourke_escort()
+
+
+func linda_cage_snapshot() -> Dictionary:
+	if linda_cage_state.is_empty():
+		linda_cage_state = _default_linda_cage_state()
+	return linda_cage_state.duplicate(true)
+
+
+func _advance_linda_cage_simulation() -> void:
+	if linda_cage_state.is_empty():
+		linda_cage_state = _default_linda_cage_state()
+	var action_index := maxi(0, int(linda_cage_state.get("action_index", 0))) + 1
+	var remaining := maxi(0, int(linda_cage_state.get("actions_until_move", 1)) - 1)
+	linda_cage_state["action_index"] = action_index
+	if remaining > 0:
+		linda_cage_state["actions_until_move"] = remaining
+		return
+	var pose_rng := create_rng("linda_cage").fork("pose:%d" % action_index)
+	var previous_pose := clampi(int(linda_cage_state.get("pose_index", 1)), 0, 3)
+	var step := 1 if pose_rng.randi_range(0, 1) == 1 else -1
+	var next_pose := clampi(previous_pose + step, 0, 3)
+	if next_pose == previous_pose:
+		next_pose = clampi(previous_pose - step, 0, 3)
+	linda_cage_state["pose_index"] = next_pose
+	linda_cage_state["facing"] = "right" if next_pose > previous_pose else "left"
+	linda_cage_state["actions_until_move"] = pose_rng.randi_range(2, 4)
+	linda_cage_state["fork_state"] = pose_rng.snapshot()
+
+
+static func _default_linda_cage_state() -> Dictionary:
+	return {
+		"pose_index": 1,
+		"facing": "left",
+		"actions_until_move": 2,
+		"action_index": 0,
+		"fork_state": {},
+		"presentation": "faceless_silhouette",
+	}
+
+
+static func _normalize_linda_cage_state(value: Dictionary) -> Dictionary:
+	var normalized := _default_linda_cage_state()
+	normalized["pose_index"] = clampi(int(value.get("pose_index", normalized["pose_index"])), 0, 3)
+	normalized["facing"] = "right" if str(value.get("facing", normalized["facing"])) == "right" else "left"
+	normalized["actions_until_move"] = clampi(int(value.get("actions_until_move", normalized["actions_until_move"])), 0, 4)
+	normalized["action_index"] = maxi(0, int(value.get("action_index", 0)))
+	normalized["fork_state"] = _copy_dict(value.get("fork_state", {}))
+	return normalized
 
 
 func _decay_grand_casino_room_heat() -> void:
@@ -4175,7 +4604,7 @@ func _initialize_grand_casino_objective_runtime() -> void:
 	var objective := _copy_dict(current_environment.get("demo_objective", {}))
 	if not _is_grand_casino_objective(objective):
 		return
-	var had_players_card_tier := narrative_flags.has("grand_casino_players_card_tier")
+	var had_sequential_card_state := narrative_flags.has("grand_casino_players_card_awarded_tier")
 	var environment_id := GRAND_CASINO_ARCHETYPE_ID
 	var previous_environment_id := str(narrative_flags.get("grand_casino_entry_environment_id", ""))
 	if previous_environment_id != environment_id:
@@ -4218,21 +4647,53 @@ func _initialize_grand_casino_objective_runtime() -> void:
 		narrative_flags["grand_casino_comp_suite_rests"] = 0
 	if not narrative_flags.has("grand_casino_linda_look_away_consumed"):
 		narrative_flags["grand_casino_linda_look_away_consumed"] = false
-	if not had_players_card_tier:
-		var config := _grand_casino_objective_config(objective)
-		var eligible := not bool(narrative_flags.get("grand_casino_players_card_ineligible", false)) and not bool(narrative_flags.get("grand_casino_cheat_evidence", false)) and not bool(narrative_flags.get("grand_casino_watched_cheat_evidence", false))
-		var legacy_tier := _grand_casino_players_card_derived_tier(
-			config,
-			maxi(0, int(narrative_flags.get("grand_casino_games_played", 0))),
-			int(narrative_flags.get("grand_casino_net_winnings", 0)),
-			maxi(suspicion_level(), int(narrative_flags.get("grand_casino_max_heat", suspicion_level()))),
-			eligible
-		)
-		narrative_flags["grand_casino_players_card_tier"] = GRAND_CASINO_PLAYERS_CARD_TIER_NONE
-		if eligible:
-			_advance_grand_casino_players_card_tier(GRAND_CASINO_PLAYERS_CARD_TIER_NONE, legacy_tier, false)
+	var total_games := maxi(0, int(narrative_flags.get("grand_casino_games_played", 0)))
+	var total_net := int(narrative_flags.get("grand_casino_net_winnings", 0))
+	if not had_sequential_card_state:
+		var legacy_tier := str(narrative_flags.get("grand_casino_players_card_tier", GRAND_CASINO_PLAYERS_CARD_TIER_NONE)).strip_edges().to_lower()
+		if not GRAND_CASINO_PLAYERS_CARD_TIERS.has(legacy_tier):
+			legacy_tier = GRAND_CASINO_PLAYERS_CARD_TIER_NONE
+		# The old cumulative system marked Gold before Linda's review. Preserve an
+		# open review as Silver + a frozen Gold claim; otherwise retain a genuinely
+		# awarded legacy tier without deriving anything from excess totals.
+		if bool(narrative_flags.get("high_roller_cashout_pending", false)) and legacy_tier == GRAND_CASINO_PLAYERS_CARD_TIER_GOLD:
+			narrative_flags["grand_casino_players_card_awarded_tier"] = GRAND_CASINO_PLAYERS_CARD_TIER_SILVER
+			narrative_flags["grand_casino_players_card_ready_to_claim"] = true
+			narrative_flags["grand_casino_players_card_ready_tier"] = GRAND_CASINO_PLAYERS_CARD_TIER_GOLD
 		else:
-			narrative_flags["grand_casino_players_card_ineligible"] = true
+			narrative_flags["grand_casino_players_card_awarded_tier"] = legacy_tier
+			narrative_flags["grand_casino_players_card_ready_to_claim"] = false
+		if is_tutorial_run():
+			# The authored tutorial is deliberately compressed to one clean game and
+			# the canonical Gold review. Its hidden training account starts at Silver;
+			# standard and prestige runs always begin Unranked.
+			narrative_flags["grand_casino_players_card_awarded_tier"] = GRAND_CASINO_PLAYERS_CARD_TIER_SILVER
+			narrative_flags["grand_casino_players_card_ready_to_claim"] = false
+	# A carried meta Gold card keeps its prestige recognition modifiers, but a
+	# new run's card program begins Unranked. This is deliberate: prestige makes
+	# the standards tighter/safer; it never skips a run-local Linda award.
+	var awarded_tier := _grand_casino_players_card_awarded_tier()
+	narrative_flags["grand_casino_players_card_tier"] = awarded_tier
+	if not narrative_flags.has("grand_casino_players_card_highest_tier"):
+		narrative_flags["grand_casino_players_card_highest_tier"] = awarded_tier
+	if not narrative_flags.has("grand_casino_players_card_segment_start_games"):
+		narrative_flags["grand_casino_players_card_segment_start_games"] = total_games
+	if not narrative_flags.has("grand_casino_players_card_segment_start_net_winnings"):
+		narrative_flags["grand_casino_players_card_segment_start_net_winnings"] = total_net
+	if not narrative_flags.has("grand_casino_players_card_segment_games"):
+		narrative_flags["grand_casino_players_card_segment_games"] = 0
+	if not narrative_flags.has("grand_casino_players_card_segment_net_winnings"):
+		narrative_flags["grand_casino_players_card_segment_net_winnings"] = 0
+	if not narrative_flags.has("grand_casino_players_card_segment_max_heat"):
+		narrative_flags["grand_casino_players_card_segment_max_heat"] = suspicion_level()
+	if not narrative_flags.has("grand_casino_players_card_ready_to_claim"):
+		narrative_flags["grand_casino_players_card_ready_to_claim"] = false
+	if bool(narrative_flags.get("grand_casino_players_card_ready_to_claim", false)) and not narrative_flags.has("grand_casino_players_card_ready_tier"):
+		var config := _grand_casino_objective_config(objective)
+		var next_definition := _grand_casino_players_card_next_definition(config, awarded_tier)
+		narrative_flags["grand_casino_players_card_ready_tier"] = str(next_definition.get("id", ""))
+	if bool(narrative_flags.get("grand_casino_cheat_evidence", false)) or bool(narrative_flags.get("grand_casino_watched_cheat_evidence", false)):
+		narrative_flags["grand_casino_players_card_ineligible"] = true
 
 
 func _apply_grand_casino_prestige_recognition() -> void:
@@ -4355,6 +4816,14 @@ func _grand_casino_objective_config(objective: Dictionary) -> Dictionary:
 	config["players_card_gold_net_winnings"] = maxi(int(config.get("players_card_gold_net_winnings", 0)), high_roller_net)
 	config["players_card_gold_max_heat"] = clampi(int(config.get("players_card_gold_max_heat", high_roller_max_heat)), 0, 100)
 	return config
+
+
+func _grand_casino_players_card_awarded_tier() -> String:
+	var tier_id := str(narrative_flags.get(
+		"grand_casino_players_card_awarded_tier",
+		narrative_flags.get("grand_casino_players_card_tier", GRAND_CASINO_PLAYERS_CARD_TIER_NONE)
+	)).strip_edges().to_lower()
+	return tier_id if GRAND_CASINO_PLAYERS_CARD_TIERS.has(tier_id) else GRAND_CASINO_PLAYERS_CARD_TIER_NONE
 
 
 func _grand_casino_players_card_tier_index(tier_id: String) -> int:
@@ -4522,6 +4991,201 @@ func current_demo_victory_message() -> String:
 	return str(demo_objective_status().get("victory_message", "Demo Victory: you beat the house for now."))
 
 
+# Returns the stable purchase-location identity used by portable tickets.
+# World nodes take priority so two instances of the same archetype never share
+# tickets, while fixtures and legacy saves without a map still have a fallback.
+static func portable_ticket_origin_key(environment: Dictionary) -> String:
+	var world_node_id := str(environment.get("world_node_id", "")).strip_edges()
+	if not world_node_id.is_empty():
+		return "world:%s" % world_node_id
+	var environment_id := str(environment.get("id", "")).strip_edges()
+	if not environment_id.is_empty():
+		return "environment:%s" % environment_id
+	var archetype_id := str(environment.get("archetype_id", "")).strip_edges()
+	return "archetype:%s" % archetype_id if not archetype_id.is_empty() else ""
+
+
+static func portable_ticket_origin_name(environment: Dictionary) -> String:
+	var fallback := str(environment.get("archetype_id", environment.get("id", "location"))).replace("_", " ").capitalize()
+	return str(environment.get("display_name", fallback)).strip_edges()
+
+
+static func portable_ticket_kind_for_item(item_id: String) -> String:
+	var clean_id := item_id.strip_edges()
+	for kind_value in PORTABLE_TICKET_ITEM_IDS.keys():
+		var kind := str(kind_value)
+		if str(PORTABLE_TICKET_ITEM_IDS.get(kind, "")) == clean_id:
+			return kind
+	return ""
+
+
+static func is_portable_ticket_pile_item(item_id: String) -> bool:
+	return not portable_ticket_kind_for_item(item_id).is_empty()
+
+
+# Returns the live per-origin ticket record. Callers must not replace fields
+# without following with remember_portable_ticket_state(). Ticket cell/window
+# dictionaries intentionally remain shared so pointer scratching stays O(1).
+func portable_ticket_state(kind: String, environment: Dictionary) -> Dictionary:
+	var clean_kind := kind.strip_edges()
+	var origin_key := portable_ticket_origin_key(environment)
+	if not PORTABLE_TICKET_KINDS.has(clean_kind) or origin_key.is_empty():
+		return {}
+	var origins_value: Variant = portable_ticket_piles.get(clean_kind, {})
+	if typeof(origins_value) != TYPE_DICTIONARY:
+		return {}
+	var state_value: Variant = (origins_value as Dictionary).get(origin_key, {})
+	return state_value as Dictionary if typeof(state_value) == TYPE_DICTIONARY else {}
+
+
+# Stores the player-owned portion of a ticket machine without copying its
+# location-owned stock/deals. This is called at action boundaries, never per
+# frame, and adds/removes the inventory marker as appropriate.
+func remember_portable_ticket_state(kind: String, environment: Dictionary, state: Dictionary) -> void:
+	var clean_kind := kind.strip_edges()
+	var origin_key := portable_ticket_origin_key(environment)
+	if not PORTABLE_TICKET_KINDS.has(clean_kind) or origin_key.is_empty():
+		return
+	# Machine modules hand over their owned arrays at an action boundary. Keep
+	# those live references here; save serialization is the deep-copy boundary.
+	# Re-copying an accumulated ticket pile after every purchase is quadratic.
+	var stored := state.duplicate(false)
+	stored["origin_key"] = origin_key
+	stored["origin_name"] = portable_ticket_origin_name(environment)
+	stored["origin_environment_id"] = str(environment.get("id", "")).strip_edges()
+	stored["origin_world_node_id"] = str(environment.get("world_node_id", "")).strip_edges()
+	stored["origin_archetype_id"] = str(environment.get("archetype_id", "")).strip_edges()
+	var origins_value: Variant = portable_ticket_piles.get(clean_kind, {})
+	var origins: Dictionary = (origins_value as Dictionary).duplicate(false) if typeof(origins_value) == TYPE_DICTIONARY else {}
+	origins[origin_key] = stored
+	portable_ticket_piles[clean_kind] = origins
+	_sync_portable_ticket_inventory_markers()
+
+
+func capture_portable_ticket_piles_from_environment(environment: Dictionary) -> void:
+	if environment.is_empty():
+		return
+	var game_states_value: Variant = environment.get("game_states", {})
+	if typeof(game_states_value) != TYPE_DICTIONARY:
+		return
+	var game_states: Dictionary = game_states_value
+	for kind_value in PORTABLE_TICKET_KINDS:
+		var kind := str(kind_value)
+		var machine_value: Variant = game_states.get(kind, {})
+		if typeof(machine_value) != TYPE_DICTIONARY or (machine_value as Dictionary).is_empty():
+			continue
+		var player_state := _portable_ticket_player_state(kind, machine_value as Dictionary)
+		if _portable_ticket_state_count(kind, player_state) > 0 or not portable_ticket_state(kind, environment).is_empty():
+			remember_portable_ticket_state(kind, environment, player_state)
+
+
+func restore_portable_ticket_piles_to_environment(environment: Dictionary) -> void:
+	if environment.is_empty():
+		return
+	var game_states_value: Variant = environment.get("game_states", {})
+	if typeof(game_states_value) != TYPE_DICTIONARY:
+		return
+	var game_states: Dictionary = (game_states_value as Dictionary).duplicate(false)
+	var changed := false
+	for kind_value in PORTABLE_TICKET_KINDS:
+		var kind := str(kind_value)
+		var portable := portable_ticket_state(kind, environment)
+		if portable.is_empty():
+			continue
+		var machine_value: Variant = game_states.get(kind, {})
+		if typeof(machine_value) != TYPE_DICTIONARY or (machine_value as Dictionary).is_empty():
+			continue
+		var machine: Dictionary = machine_value
+		_apply_portable_ticket_state_to_machine(kind, portable, machine)
+		game_states[kind] = machine
+		changed = true
+	if changed:
+		environment["game_states"] = game_states
+
+
+func portable_ticket_pile_summary(item_id: String) -> Dictionary:
+	var kind := portable_ticket_kind_for_item(item_id)
+	if kind.is_empty():
+		return {}
+	var total_count := 0
+	var unplayed_count := 0
+	var winner_count := 0
+	var face_value := 0
+	var origin_names: Array = []
+	var origins_value: Variant = portable_ticket_piles.get(kind, {})
+	if typeof(origins_value) == TYPE_DICTIONARY:
+		for state_value in (origins_value as Dictionary).values():
+			if typeof(state_value) != TYPE_DICTIONARY:
+				continue
+			var state: Dictionary = state_value
+			var state_count := _portable_ticket_state_count(kind, state)
+			if state_count <= 0:
+				continue
+			total_count += state_count
+			var origin_name := str(state.get("origin_name", "Unknown location")).strip_edges()
+			if not origin_name.is_empty() and not origin_names.has(origin_name):
+				origin_names.append(origin_name)
+			var winners := _portable_ticket_dictionary_array(state.get("winner_pile", []))
+			winner_count += winners.size()
+			for ticket in winners:
+				face_value += maxi(0, int((ticket as Dictionary).get("payout", 0)))
+			if kind == "pull_tabs":
+				unplayed_count += _portable_ticket_array_size(state.get("tray_stack", []))
+				for ticket in _portable_ticket_dictionary_array(state.get("ticket_stack", [])):
+					var ticket_data: Dictionary = ticket
+					var rows := _copy_array(ticket_data.get("rows", []))
+					if int(ticket_data.get("revealed_count", 0)) < rows.size():
+						unplayed_count += 1
+			else:
+				var active := _copy_dict(state.get("active_ticket", {}))
+				if not active.is_empty():
+					unplayed_count += 1
+	return {
+		"kind": kind,
+		"item_id": str(PORTABLE_TICKET_ITEM_IDS.get(kind, "")),
+		"ticket_count": total_count,
+		"unplayed_count": unplayed_count,
+		"winner_count": winner_count,
+		"face_value": face_value,
+		"sal_cash_value": int(face_value / 5),
+		"origin_count": origin_names.size(),
+		"origin_names": origin_names,
+	}
+
+
+# Removes only completed, verified winners. Unknown outcomes and partially
+# opened tickets remain playable, preventing Sal's fallback from becoming an
+# outcome-inspection exploit.
+func surrender_portable_ticket_winners_to_sal(item_id: String) -> Dictionary:
+	var summary := portable_ticket_pile_summary(item_id)
+	var kind := str(summary.get("kind", ""))
+	var face_value := maxi(0, int(summary.get("face_value", 0)))
+	var cash_value := maxi(0, int(summary.get("sal_cash_value", 0)))
+	if kind.is_empty() or int(summary.get("winner_count", 0)) <= 0:
+		return {"ok": false, "message": "There are no revealed winning tickets for Sal to cash."}
+	if cash_value <= 0:
+		return {"ok": false, "message": "Those winning tickets are worth less than $5; Sal cannot pay a whole dollar for them."}
+	var removed_count := 0
+	var origins_value: Variant = portable_ticket_piles.get(kind, {})
+	if typeof(origins_value) == TYPE_DICTIONARY:
+		for origin_key_value in (origins_value as Dictionary).keys():
+			var state_value: Variant = (origins_value as Dictionary).get(origin_key_value, {})
+			if typeof(state_value) != TYPE_DICTIONARY:
+				continue
+			var state: Dictionary = state_value
+			removed_count += _portable_ticket_array_size(state.get("winner_pile", []))
+			state["winner_pile"] = []
+	_sync_portable_ticket_inventory_markers()
+	return {
+		"ok": true,
+		"kind": kind,
+		"item_id": item_id,
+		"ticket_count": removed_count,
+		"face_value": face_value,
+		"cash_value": cash_value,
+	}
+
+
 # Adds a run item if it is not already owned.
 func add_item(item_id: String) -> void:
 	if item_id.is_empty():
@@ -4533,6 +5197,8 @@ func add_item(item_id: String) -> void:
 # Removes a run item and clears the active slot if that item was equipped.
 func remove_item(item_id: String) -> void:
 	if item_id.is_empty():
+		return
+	if is_portable_ticket_pile_item(item_id) and int(portable_ticket_pile_summary(item_id).get("ticket_count", 0)) > 0:
 		return
 	inventory.erase(item_id)
 	if active_item_id == item_id:
@@ -5456,7 +6122,8 @@ func economy_stake_ceiling(base_ceiling: int = -1) -> int:
 # Returns the hard wager ceiling. Economy pressure may recommend smaller bets,
 # but wager actions can still risk any cash the player actually has.
 func wager_stake_ceiling(base_ceiling: int = -1) -> int:
-	var available := bankroll if base_ceiling < 0 else mini(base_ceiling, bankroll)
+	var liquid_balance := bankroll + grand_casino_chips if _is_grand_casino_environment(current_environment) else bankroll
+	var available := liquid_balance if base_ceiling < 0 else mini(base_ceiling, liquid_balance)
 	return maxi(0, available)
 
 
@@ -5678,6 +6345,8 @@ func _advance_debt_clocks(amount: int) -> void:
 		if index >= debt.size() or typeof(debt[index]) != TYPE_DICTIONARY:
 			continue
 		var debt_data := (debt[index] as Dictionary).duplicate(true)
+		if str(debt_data.get("debt_kind", "")) == "casino_marker" or bool(debt_data.get("no_default", false)):
+			continue
 		var status := str(debt_data.get("status", "active"))
 		if status == "active":
 			var remaining := int(debt_data.get("turns_remaining", debt_data.get("deadline_turns", 0)))
@@ -5731,6 +6400,8 @@ func _tick_recurring_debt_pressure(index: int, debt_data: Dictionary, amount: in
 
 
 func _apply_debt_item_modifiers_to_new_debt(debt_data: Dictionary) -> void:
+	if str(debt_data.get("debt_kind", "")) == "casino_marker":
+		return
 	if str(debt_data.get("status", "active")) != "active":
 		return
 	var grace_bonus := item_effect_total("debt_grace_turns")
@@ -6588,8 +7259,10 @@ func to_dict() -> Dictionary:
 		"challenge_config": challenge_config.duplicate(true),
 		"bankroll": bankroll,
 		"grand_casino_chips": grand_casino_chips,
+		"grand_casino_atm_debt": grand_casino_atm_debt(),
 		"economic_state": economic_state,
 		"inventory": inventory.duplicate(true),
+		"portable_ticket_piles": portable_ticket_piles.duplicate(true),
 		"active_item_id": active_item_id,
 		"debt": debt.duplicate(true),
 		"sals_forfeited_item_ids": sals_forfeited_item_ids.duplicate(true),
@@ -6609,6 +7282,7 @@ func to_dict() -> Dictionary:
 		"rourke_actions_until_move": rourke_actions_until_move,
 		"rourke_off_floor_actions": rourke_off_floor_actions,
 		"rourke_floor_action_index": rourke_floor_action_index,
+		"linda_cage_state": linda_cage_snapshot(),
 		"grand_casino_room_heat_accumulators": grand_casino_room_heat_accumulators.duplicate(true),
 		"rival_cheaters": rival_cheaters.duplicate(true),
 		"rival_cheater_day": rival_cheater_day,
@@ -6630,6 +7304,8 @@ func to_dict() -> Dictionary:
 		"heat_history": normalize_heat_history(heat_history),
 		"simulation_msec": simulation_msec,
 		"game_clock_minutes": game_clock_minutes,
+		"grand_casino_atm_interest_boundary_index": grand_casino_atm_interest_boundary_index,
+		"grand_casino_atm_interest_notifications": grand_casino_atm_interest_notifications.duplicate(true),
 		"closing_time_state": _normalize_closing_time_state(closing_time_state),
 		"act": act_marker(),
 		"act_index": act_marker(),
@@ -6652,10 +7328,13 @@ func from_dict(data: Dictionary) -> void:
 	grand_casino_chips = maxi(0, int(data.get("grand_casino_chips", 0)))
 	economic_state = str(data.get("economic_state", "stable"))
 	inventory = _copy_array(data.get("inventory", []))
+	portable_ticket_piles = _normalize_portable_ticket_piles(_copy_dict(data.get("portable_ticket_piles", {})))
 	active_item_id = str(data.get("active_item_id", ""))
 	if not inventory.has(active_item_id):
 		active_item_id = ""
 	debt = _normalize_debt_entries(_copy_array(data.get("debt", [])))
+	if _debt_index(CageEconomyModelScript.ATM_DEBT_ID) < 0 and int(data.get("grand_casino_atm_debt", 0)) > 0:
+		_set_grand_casino_atm_debt(int(data.get("grand_casino_atm_debt", 0)))
 	sals_forfeited_item_ids = _string_array(_copy_array(data.get("sals_forfeited_item_ids", [])))
 	suspicion = _normalize_suspicion(_copy_dict(data.get("suspicion", {"level": 0, "cues": []})))
 	baseline_luck = clampi(int(data.get("baseline_luck", 0)), BASELINE_LUCK_MIN, BASELINE_LUCK_MAX)
@@ -6664,6 +7343,11 @@ func from_dict(data: Dictionary) -> void:
 	pending_drunk_absorption = _normalize_pending_drunk_absorption(_copy_array(data.get("pending_drunk_absorption", [])))
 	drunk_distortion_suppression_turns = maxi(0, int(data.get("drunk_distortion_suppression_turns", 0)))
 	current_environment = _normalize_environment(_copy_dict(data.get("current_environment", {})))
+	# Import current-room machine ownership from pre-portable saves, then make
+	# the portable record authoritative for the restored surface.
+	capture_portable_ticket_piles_from_environment(current_environment)
+	restore_portable_ticket_piles_to_environment(current_environment)
+	_sync_portable_ticket_inventory_markers()
 	_apply_sals_forfeited_shelf_to_current_environment()
 	world_map = WorldMap.normalize(_copy_dict(data.get("world_map", {})))
 	grand_casino_room_states = _normalize_grand_casino_room_states(_copy_dict(data.get("grand_casino_room_states", {})))
@@ -6674,6 +7358,7 @@ func from_dict(data: Dictionary) -> void:
 	rourke_actions_until_move = clampi(int(data.get("rourke_actions_until_move", ROURKE_MOVE_EVALUATION_ACTIONS)), 0, ROURKE_MOVE_EVALUATION_ACTIONS)
 	rourke_off_floor_actions = clampi(int(data.get("rourke_off_floor_actions", 0)), 0, ROURKE_OFF_FLOOR_ACTIONS)
 	rourke_floor_action_index = maxi(0, int(data.get("rourke_floor_action_index", 0)))
+	linda_cage_state = _normalize_linda_cage_state(_copy_dict(data.get("linda_cage_state", {})))
 	grand_casino_room_heat_accumulators = _normalize_grand_casino_room_heat_accumulators(_copy_dict(data.get("grand_casino_room_heat_accumulators", {})))
 	rival_cheaters = _normalize_rival_cheaters(_copy_array(data.get("rival_cheaters", [])))
 	rival_cheater_day = maxi(0, int(data.get("rival_cheater_day", 0)))
@@ -6713,6 +7398,11 @@ func from_dict(data: Dictionary) -> void:
 	if bool(narrative_flags.get("grand_casino_showdown_active", false)) and str(narrative_flags.get("grand_casino_showdown_step", "")) == GRAND_CASINO_SHOWDOWN_STEP_LEGACY_CHECK and not _copy_dict(narrative_flags.get("grand_casino_duel_terms", {})).is_empty():
 		_begin_grand_casino_duel(_copy_dict(narrative_flags.get("grand_casino_duel_terms", {})))
 	game_clock_minutes = maxi(0, int(data.get("game_clock_minutes", GAME_CLOCK_START_MINUTE)))
+	grand_casino_atm_interest_boundary_index = int(data.get(
+		"grand_casino_atm_interest_boundary_index",
+		CageEconomyModelScript.boundary_index_at_or_before(game_clock_minutes)
+	))
+	grand_casino_atm_interest_notifications = _copy_array(data.get("grand_casino_atm_interest_notifications", []))
 	closing_time_state = _normalize_closing_time_state(_copy_dict(data.get("closing_time_state", {})))
 	act_index = maxi(1, int(data.get("act", data.get("act_index", 1))))
 	home_state = _normalize_home_state(_copy_dict(data.get("home_state", {})))
@@ -6961,6 +7651,91 @@ static func _offer_list_item_index(offers: Array, item_id: String) -> int:
 	return -1
 
 
+func _sync_portable_ticket_inventory_markers() -> void:
+	for kind_value in PORTABLE_TICKET_KINDS:
+		var kind := str(kind_value)
+		var item_id := str(PORTABLE_TICKET_ITEM_IDS.get(kind, ""))
+		var count := 0
+		var origins_value: Variant = portable_ticket_piles.get(kind, {})
+		if typeof(origins_value) == TYPE_DICTIONARY:
+			for state_value in (origins_value as Dictionary).values():
+				if typeof(state_value) == TYPE_DICTIONARY:
+					count += _portable_ticket_state_count(kind, state_value as Dictionary)
+		if count > 0:
+			if not inventory.has(item_id):
+				inventory.append(item_id)
+		elif inventory.has(item_id):
+			inventory.erase(item_id)
+			if active_item_id == item_id:
+				active_item_id = ""
+
+
+static func _portable_ticket_player_state(kind: String, machine: Dictionary) -> Dictionary:
+	var result := {}
+	for field_value in _copy_array(PORTABLE_TICKET_PLAYER_FIELDS.get(kind, [])):
+		var field := str(field_value)
+		var value: Variant = machine.get(field, [] if field.ends_with("pile") or field.ends_with("stack") else {})
+		if typeof(value) == TYPE_ARRAY:
+			result[field] = (value as Array).duplicate(true)
+		elif typeof(value) == TYPE_DICTIONARY:
+			result[field] = (value as Dictionary).duplicate(true)
+		else:
+			result[field] = value
+	return result
+
+
+static func _apply_portable_ticket_state_to_machine(kind: String, portable: Dictionary, machine: Dictionary) -> void:
+	for field_value in _copy_array(PORTABLE_TICKET_PLAYER_FIELDS.get(kind, [])):
+		var field := str(field_value)
+		if portable.has(field):
+			# Keep live array/dictionary references. Scratch pointer moves mutate
+			# only the active ticket's masks and must not copy the whole pile.
+			machine[field] = portable[field]
+
+
+static func _portable_ticket_state_count(kind: String, state: Dictionary) -> int:
+	var count := _portable_ticket_array_size(state.get("winner_pile", [])) + _portable_ticket_array_size(state.get("loser_pile", []))
+	if kind == "pull_tabs":
+		return count + _portable_ticket_array_size(state.get("tray_stack", [])) + _portable_ticket_array_size(state.get("ticket_stack", []))
+	if kind == "scratch_tickets" and not _copy_dict(state.get("active_ticket", {})).is_empty():
+		count += 1
+	return count
+
+
+static func _portable_ticket_array_size(value: Variant) -> int:
+	return (value as Array).size() if typeof(value) == TYPE_ARRAY else 0
+
+
+static func _portable_ticket_dictionary_array(value: Variant) -> Array:
+	var result: Array = []
+	if typeof(value) != TYPE_ARRAY:
+		return result
+	for entry in value as Array:
+		if typeof(entry) == TYPE_DICTIONARY:
+			result.append(entry)
+	return result
+
+
+static func _normalize_portable_ticket_piles(value: Dictionary) -> Dictionary:
+	var result := {}
+	for kind_value in PORTABLE_TICKET_KINDS:
+		var kind := str(kind_value)
+		var origins_value: Variant = value.get(kind, {})
+		var origins := {}
+		if typeof(origins_value) == TYPE_DICTIONARY:
+			for origin_key_value in (origins_value as Dictionary).keys():
+				var origin_key := str(origin_key_value).strip_edges()
+				var state_value: Variant = (origins_value as Dictionary).get(origin_key_value, {})
+				if origin_key.is_empty() or typeof(state_value) != TYPE_DICTIONARY:
+					continue
+				var state: Dictionary = (state_value as Dictionary).duplicate(true)
+				state["origin_key"] = origin_key
+				origins[origin_key] = state
+		if not origins.is_empty() or value.has(kind):
+			result[kind] = origins
+	return result
+
+
 static func _inventory_item_id(entry: Variant) -> String:
 	if typeof(entry) == TYPE_DICTIONARY:
 		return str((entry as Dictionary).get("id", "")).strip_edges()
@@ -7135,6 +7910,7 @@ static func _empty_grand_casino_room_heat_accumulators() -> Dictionary:
 		GRAND_CASINO_ARCHETYPE_ID: 0,
 		GRAND_CASINO_HIGH_LIMIT_ARCHETYPE_ID: 0,
 		GRAND_CASINO_BACK_ROOM_ARCHETYPE_ID: 0,
+		GRAND_CASINO_CAGE_ARCHETYPE_ID: 0,
 	}
 
 

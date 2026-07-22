@@ -2307,8 +2307,15 @@ func _check_meta_home_fresh_store_defaults(failures: Array) -> void:
 		var container := _copy_dict(containers[0])
 		if str(container.get("item_id", "")) != "bag" or int(container.get("capacity", 0)) != 3:
 			failures.append("Fresh meta store starter container should be the empty spawn bag.")
-	if int(fresh.get("next_instance_id", 0)) != MetaCollectionServiceScript.FIRST_INSTANCE_ID:
-		failures.append("Fresh meta store next_instance_id should not advance without grants.")
+	var sal_resale := _copy_dict(fresh.get("sal_resale", {}))
+	var sal_slots := _copy_array(sal_resale.get("slots", []))
+	var starter_instances: Array = sal_slots.filter(func(slot_value: Dictionary) -> bool: return bool(slot_value.get("protected", false)) and not _copy_dict(slot_value.get("item", {})).is_empty())
+	if starter_instances.size() != 1:
+		failures.append("Fresh meta store must reserve exactly one protected Sal starter instance.")
+	else:
+		var starter_id := int(_copy_dict(_copy_dict(starter_instances[0]).get("item", {})).get("instance_id", 0))
+		if starter_id < MetaCollectionServiceScript.FIRST_INSTANCE_ID or int(fresh.get("next_instance_id", 0)) != starter_id + 1:
+			failures.append("Fresh meta store next_instance_id did not advance past the protected Sal starter.")
 	var save_error: Error = service.save()
 	if save_error != OK:
 		failures.append("Fresh meta store save failed with error %d." % int(save_error))

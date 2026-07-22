@@ -159,10 +159,23 @@ func surface_action_command(_surface_action: String, _index: int, _confirm_reque
 	return {"handled": false}
 
 
+# Commits UI-local interaction state only when a surface is being dismissed.
+# This preserves the non-mutating click contract while allowing physical
+# partially opened objects to survive travel, closure, inventory, and save UI.
+func checkpoint_surface_ui_state(_ui_state: Dictionary, _run_state: RunState, _environment: Dictionary) -> void:
+	pass
+
+
 # Optional pointer-capture path for drag-native surfaces. Positions are in the
 # shared board design space and phases are begin, move, or end.
 func surface_pointer_command(_surface_action: String, _index: int, _phase: String, _board_position: Vector2, _ui_state: Dictionary, _run_state: RunState, _environment: Dictionary) -> Dictionary:
 	return {"handled": false}
+
+
+# Drag-heavy surfaces can opt out of rebuilding time/status/talk UI state for
+# every pointer sample. Their pointer handler must only consume UI-local keys.
+func surface_pointer_uses_lightweight_ui_state(_surface_action: String) -> bool:
+	return false
 
 
 # Optional per-frame game-surface automation hook. The foundation UI provides
@@ -373,10 +386,12 @@ static func _is_skill_action_kind(action_kind: String) -> bool:
 
 
 # Normalizes UI-local command responses from surface click handlers.
-static func surface_command(payload: Dictionary = {}) -> Dictionary:
-	var command := payload.duplicate(true)
+static func surface_command(payload: Dictionary = {}, zero_copy_transient: bool = false) -> Dictionary:
+	var command := payload.duplicate(not zero_copy_transient)
 	command["handled"] = bool(command.get("handled", true))
-	command["ui_state"] = _copy_dict(command.get("ui_state", {}))
+	var ui_state_value: Variant = command.get("ui_state", {})
+	command["ui_state"] = (ui_state_value as Dictionary).duplicate(not zero_copy_transient) if typeof(ui_state_value) == TYPE_DICTIONARY else {}
+	command["surface_transient"] = bool(command.get("surface_transient", zero_copy_transient))
 	command["selected_index"] = int(command.get("selected_index", -1))
 	command["action_id"] = str(command.get("action_id", ""))
 	command["action_kind"] = str(command.get("action_kind", ""))

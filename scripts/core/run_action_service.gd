@@ -208,6 +208,119 @@ func buy_item_offer(item_id: String) -> Dictionary:
 	return _service_success(result)
 
 
+func cage_gift_shop_offer_view_list() -> Array:
+	if not is_ready() or str(run_state.current_environment.get("archetype_id", "")) != RunState.GRAND_CASINO_CAGE_ARCHETYPE_ID:
+		return []
+	var shop_state: Dictionary = run_state.current_environment.get("cage_gift_shop_state", {}) if typeof(run_state.current_environment.get("cage_gift_shop_state", {})) == TYPE_DICTIONARY else {}
+	var result: Array = []
+	for stock_value in _copy_array(shop_state.get("stock", [])):
+		if typeof(stock_value) != TYPE_DICTIONARY:
+			continue
+		var stock: Dictionary = stock_value
+		var item_id := str(stock.get("item_id", stock.get("id", "")))
+		var definition := library.item(item_id)
+		if definition.is_empty():
+			continue
+		var price := maxi(1, int(stock.get("chip_price", 1)))
+		var sold := bool(stock.get("sold", false))
+		result.append({
+			"id": item_id,
+			"item_id": item_id,
+			"display_name": str(definition.get("display_name", item_id)),
+			"description": str(definition.get("description", "")),
+			"purpose_summary": _item_purpose_summary(definition),
+			"icon_key": str(definition.get("icon_key", item_id)),
+			"asset_path": str(definition.get("asset_path", "")),
+			"chip_price": price,
+			"sold": sold,
+			"affordable": not sold and run_state.grand_casino_chips >= price,
+			"enabled": not sold and run_state.grand_casino_chips >= price,
+			"disabled_reason": "Sold." if sold else "Need %d chips." % price if run_state.grand_casino_chips < price else "",
+		})
+	return result
+
+
+func buy_cage_gift_shop_offer(item_id: String) -> Dictionary:
+	if not is_ready() or str(run_state.current_environment.get("archetype_id", "")) != RunState.GRAND_CASINO_CAGE_ARCHETYPE_ID:
+		return _service_error("The Grand Casino gift case is inside the Cage.")
+	var offer: Dictionary = {}
+	for offer_value in cage_gift_shop_offer_view_list():
+		if typeof(offer_value) == TYPE_DICTIONARY and str((offer_value as Dictionary).get("item_id", "")) == item_id:
+			offer = (offer_value as Dictionary).duplicate(true)
+			break
+	if offer.is_empty() or bool(offer.get("sold", false)):
+		return _service_error("That gift-case item is no longer available.")
+	var price := maxi(1, int(offer.get("chip_price", 1)))
+	if run_state.grand_casino_chips < price:
+		return _service_error("Need %d chips for %s." % [price, str(offer.get("display_name", item_id))])
+	var item_definition := library.item(item_id)
+	if item_definition.is_empty() or not _item_enabled_for_run(item_id):
+		return _service_error("That item is not part of this run.")
+	var item_effect := ItemEffectScript.new()
+	item_effect.setup(item_definition)
+	var effect_result := item_effect.apply({
+		"domain": str(item_definition.get("domain", "global")),
+		"domains": [str(item_definition.get("domain", "global")), "global"],
+		"environment_id": str(run_state.current_environment.get("id", "")),
+		"action_id": "buy_item",
+	})
+	var result := purchase_item_result(effect_result, item_definition, {"id": item_id, "price": 0})
+	var deltas := copy_result_deltas(result.get("deltas", {}))
+	deltas["bankroll_delta"] = 0
+	deltas["chips_delta"] = int(deltas.get("chips_delta", 0)) - price
+	var display_name := str(offer.get("display_name", item_id))
+	var message := "Bought %s for %d Grand Casino chips." % [display_name, price]
+	var story: Array = []
+	for story_value in _copy_array(deltas.get("story_log", [])):
+		if typeof(story_value) != TYPE_DICTIONARY or str((story_value as Dictionary).get("type", "")) != "item_purchase":
+			story.append(story_value)
+	story.append({
+		"type": "item_purchase",
+		"item_id": item_id,
+		"item_name": display_name,
+		"price": price,
+		"currency": "chips",
+		"environment_id": str(run_state.current_environment.get("id", "")),
+		"message": message,
+	})
+	deltas["story_log"] = story
+	deltas["messages"] = [message]
+	result["ok"] = bool(effect_result.get("ok", true))
+	result["type"] = "item_purchase"
+	result["action_id"] = "buy_item"
+	result["action_kind"] = "merchant"
+	result["currency"] = "chips"
+	result["price"] = price
+	result["bankroll_delta"] = 0
+	result["chips_delta"] = -price
+	result["deltas"] = deltas
+	result["message"] = message
+	if not bool(result.get("ok", false)):
+		return _service_error(str(result.get("message", "The gift case declines the purchase.")))
+	run_state.advance_environment_turns(1)
+	GameModule.apply_result(run_state, result)
+	if _definition_is_active_item(item_definition):
+		_auto_select_active_item_after_gain(item_id)
+	_mark_cage_gift_shop_offer_sold(item_id)
+	return _service_success(result)
+
+
+func _mark_cage_gift_shop_offer_sold(item_id: String) -> void:
+	var shop_state: Dictionary = run_state.current_environment.get("cage_gift_shop_state", {}) if typeof(run_state.current_environment.get("cage_gift_shop_state", {})) == TYPE_DICTIONARY else {}
+	var stock: Array = _copy_array(shop_state.get("stock", []))
+	for index in range(stock.size()):
+		if typeof(stock[index]) != TYPE_DICTIONARY:
+			continue
+		var entry := (stock[index] as Dictionary).duplicate(true)
+		if str(entry.get("item_id", entry.get("id", ""))) != item_id:
+			continue
+		entry["sold"] = true
+		stock[index] = entry
+		break
+	shop_state["stock"] = stock
+	run_state.current_environment["cage_gift_shop_state"] = shop_state
+
+
 # Builds presentation data for current run inventory.
 func inventory_item_view_list() -> Array:
 	if not is_ready():
@@ -284,7 +397,7 @@ func inventory_item_detail(item_id: String) -> Dictionary:
 	var item_context := definition.duplicate(true)
 	item_context["item_class"] = item_class
 	item_context["sale_price"] = sale_price
-	return {
+	var detail := {
 		"id": item_id,
 		"display_name": str(definition.get("display_name", item_id.capitalize())),
 		"description": str(definition.get("description", "")),
@@ -305,6 +418,60 @@ func inventory_item_detail(item_id: String) -> Dictionary:
 		"repair_cost": maxi(0, int(effect.get("repair_cost", 0))),
 		"repair_to_item": str(effect.get("repair_to_item", "")),
 	}
+	if run_state != null and RunState.is_portable_ticket_pile_item(item_id):
+		var summary := run_state.portable_ticket_pile_summary(item_id)
+		var ticket_count := maxi(0, int(summary.get("ticket_count", 0)))
+		var unplayed_count := maxi(0, int(summary.get("unplayed_count", 0)))
+		var winner_count := maxi(0, int(summary.get("winner_count", 0)))
+		var face_value := maxi(0, int(summary.get("face_value", 0)))
+		var origin_count := maxi(0, int(summary.get("origin_count", 0)))
+		var status := "%d ticket%s from %d location%s" % [ticket_count, "" if ticket_count == 1 else "s", origin_count, "" if origin_count == 1 else "s"]
+		if unplayed_count > 0:
+			status += "; %d still unopened" % unplayed_count
+		if winner_count > 0:
+			status += "; %d revealed winner%s worth $%d" % [winner_count, "" if winner_count == 1 else "s", face_value]
+		detail["description"] = status + ". Return winners to their purchase location, or let Sal cash revealed winners for 20%."
+		detail["ticket_count"] = ticket_count
+		detail["ticket_origin_count"] = origin_count
+		detail["ticket_origin_names"] = summary.get("origin_names", [])
+		detail["ticket_unplayed_count"] = unplayed_count
+		detail["ticket_winner_count"] = winner_count
+		detail["ticket_face_value"] = face_value
+		detail["sal_cash_value"] = maxi(0, int(summary.get("sal_cash_value", 0)))
+	return detail
+
+
+func portable_ticket_cash_options(lender_id: String = SALS_PAWN_COUNTER_ID) -> Array:
+	if not is_ready():
+		return []
+	var definition := hook_definition("lender", lender_id)
+	if definition.is_empty() or str(definition.get("lender_type", "")) != "pawn":
+		return []
+	var result: Array = []
+	for item_id in [RunState.PULL_TAB_PILE_ITEM_ID, RunState.SCRATCH_TICKET_PILE_ITEM_ID]:
+		if not run_state.inventory.has(item_id):
+			continue
+		var summary := run_state.portable_ticket_pile_summary(item_id)
+		var cash_value := maxi(0, int(summary.get("sal_cash_value", 0)))
+		if int(summary.get("winner_count", 0)) <= 0 or cash_value <= 0:
+			continue
+		result.append({
+			"item_id": item_id,
+			"ticket_count": maxi(0, int(summary.get("winner_count", 0))),
+			"face_value": maxi(0, int(summary.get("face_value", 0))),
+			"cash_value": cash_value,
+		})
+	return result
+
+
+func _portable_ticket_cashout_available() -> bool:
+	if run_state == null:
+		return false
+	for item_id in [RunState.PULL_TAB_PILE_ITEM_ID, RunState.SCRATCH_TICKET_PILE_ITEM_ID]:
+		var summary := run_state.portable_ticket_pile_summary(item_id)
+		if int(summary.get("winner_count", 0)) > 0 and int(summary.get("sal_cash_value", 0)) > 0:
+			return true
+	return false
 
 
 func pawn_quote_options(lender_id: String = SALS_PAWN_COUNTER_ID) -> Array:
@@ -325,6 +492,44 @@ func pawn_inventory_item(item_id: String, lender_id: String = SALS_PAWN_COUNTER_
 	var status := hook_run_status("lender", definition)
 	if not bool(status.get("available", true)):
 		return _service_error(str(status.get("disabled_reason", "Pawn counter is not available.")))
+	if RunState.is_portable_ticket_pile_item(item_id):
+		var surrendered := run_state.surrender_portable_ticket_winners_to_sal(item_id)
+		if not bool(surrendered.get("ok", false)):
+			return _service_error(str(surrendered.get("message", "Sal cannot cash those tickets.")))
+		var ticket_count := maxi(0, int(surrendered.get("ticket_count", 0)))
+		var face_value := maxi(0, int(surrendered.get("face_value", 0)))
+		var cash_value := maxi(0, int(surrendered.get("cash_value", 0)))
+		var item_name := str(inventory_item_detail(item_id).get("display_name", item_id.replace("_", " ").capitalize()))
+		var message := "Sal takes %d revealed winner%s from your %s and pays $%d (20%% of $%d)." % [ticket_count, "" if ticket_count == 1 else "s", item_name, cash_value, face_value]
+		var deltas := GameModule.empty_result_deltas()
+		deltas["bankroll_delta"] = cash_value
+		deltas["messages"] = [message]
+		deltas["story_log"] = [{
+			"type": "portable_ticket_sal_cashout",
+			"lender_id": lender_id,
+			"item_id": item_id,
+			"ticket_count": ticket_count,
+			"face_value": face_value,
+			"bankroll_delta": cash_value,
+			"environment_id": str(run_state.current_environment.get("id", "")),
+		}]
+		var cashout_result := GameModule.build_action_result({
+			"ok": true,
+			"type": "portable_ticket_sal_cashout",
+			"source_id": lender_id,
+			"action_id": "cash_portable_tickets",
+			"action_kind": "legal",
+			"stake": 0,
+			"bankroll_delta": cash_value,
+			"payout": cash_value,
+			"won": cash_value > 0,
+			"deltas": deltas,
+			"environment_id": str(run_state.current_environment.get("id", "")),
+			"message": message,
+		})
+		run_state.advance_environment_turns(1)
+		GameModule.apply_result(run_state, cashout_result)
+		return _service_success(cashout_result)
 	var quote := _pawn_quote_for_item(item_id, _copy_dict(definition.get("debt_profile", {})))
 	if quote.is_empty():
 		return _service_error("Sal needs a sellable item as collateral.")
@@ -1083,11 +1288,11 @@ func _dynamic_lender_status(definition: Dictionary, base_status: Dictionary) -> 
 	var profile := _copy_dict(definition.get("debt_profile", {}))
 	if lender_type == "pawn":
 		var collateral := _pawn_collateral_option(profile)
-		if collateral.is_empty():
+		if collateral.is_empty() and not _portable_ticket_cashout_available():
 			status["available"] = false
 			status["disabled_reason"] = "Sal needs a sellable item as collateral."
 			status["availability_class"] = RunState.AVAILABILITY_TRANSIENT_BLOCKED
-		else:
+		elif not collateral.is_empty():
 			status["collateral_item_id"] = str(collateral.get("item_id", ""))
 			status["collateral_item_name"] = str(collateral.get("item_name", ""))
 			status["loan_amount"] = int(collateral.get("loan_amount", 0))

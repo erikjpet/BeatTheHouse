@@ -171,6 +171,40 @@ func bag_item_options_for_bag(bagdef_id: int) -> Array:
 	return item_definitions_for_collection_tier(str(bag.get("collection_id", "")), str(bag.get("tier", "")))
 
 
+func roll_virtual_bag_item(rng: RngStream, generation_seed: String) -> Dictionary:
+	_ensure_loaded()
+	if rng == null or _collections.is_empty():
+		return {}
+	var collection := _copy_dict(_collections[rng.randi_range(0, _collections.size() - 1)])
+	var tier := _roll_weighted_collection_tier(collection, rng)
+	var bag_options := bag_item_definitions(str(collection.get("id", "")), tier)
+	if bag_options.is_empty():
+		return {}
+	var virtual_bag := _copy_dict(bag_options[rng.randi_range(0, bag_options.size() - 1)])
+	var item_options := bag_item_options_for_bag(int(virtual_bag.get("itemdef_id", -1)))
+	if item_options.is_empty():
+		return {}
+	var definition := _copy_dict(item_options[rng.randi_range(0, item_options.size() - 1)])
+	var roll_seed := "%s|collection:%s|tier:%s|bag:%d|item:%d|state:%d" % [
+		generation_seed,
+		str(collection.get("id", "")),
+		tier,
+		int(virtual_bag.get("itemdef_id", -1)),
+		int(definition.get("itemdef_id", -1)),
+		rng.state_value,
+	]
+	var item := roll_instance(int(definition.get("itemdef_id", -1)), roll_seed)
+	return {
+		"collection": collection,
+		"tier": tier,
+		"virtual_bag": virtual_bag,
+		"definition": definition,
+		"item": item,
+		"generation_seed": roll_seed,
+		"rng_snapshot": rng.snapshot(),
+	}
+
+
 func roll_instance(itemdef_id: int, rng_seed: String) -> Dictionary:
 	_ensure_loaded()
 	var definition := item_definition(itemdef_id)
@@ -490,6 +524,29 @@ func _scaled_effect(definition: Dictionary, instance: Dictionary) -> Dictionary:
 	if not resonance_key.is_empty() and clampf(float(instance.get("resonance", 0.0)), 0.0, 1.0) >= clampf(float(resonance.get("threshold", 1.0)), 0.0, 1.0):
 		effect[resonance_key] = int(effect.get(resonance_key, 0)) + int(resonance.get("value", 0))
 	return effect
+
+
+func _roll_weighted_collection_tier(collection: Dictionary, rng: RngStream) -> String:
+	var drop_table := _copy_dict(collection.get("drop_table", {}))
+	var weighted: Array = []
+	var total := 0
+	for tier_value in TIERS:
+		var tier := str(tier_value)
+		var weight := maxi(0, int(drop_table.get(tier, 0)))
+		if weight <= 0:
+			continue
+		weighted.append({"tier": tier, "weight": weight})
+		total += weight
+	if weighted.is_empty() or total <= 0:
+		return "blue"
+	var roll := rng.randi_range(1, total)
+	var running := 0
+	for entry_value in weighted:
+		var entry := _copy_dict(entry_value)
+		running += int(entry.get("weight", 0))
+		if roll <= running:
+			return str(entry.get("tier", "blue"))
+	return "blue"
 
 
 func _players_card_condition(definition: Dictionary) -> float:

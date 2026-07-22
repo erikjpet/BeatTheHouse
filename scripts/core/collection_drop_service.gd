@@ -18,8 +18,53 @@ const PLAYERS_CARD_REWARD_FLAG := "_meta_players_card_reward"
 const PLAYERS_CARD_DESTROYED_FLAG := "_meta_players_card_destroyed"
 const GRAND_CASINO_CHIPS_REWARD_FLAG := "_meta_grand_casino_chips_reward"
 const PRESTIGE_RESULT_FLAG := "_meta_prestige_result"
+const SAL_STOCK_RECEIPT_FLAG := "_sal_resale_stock_receipt"
+const SAL_STOCK_PROCESSED_FLAG := "_sal_resale_stock_processed"
+const SAL_STOCK_SUMMARY_FLAG := "_sal_resale_stock_summary"
 const HIGH_HEAT_CLEAN_ESCAPE_THRESHOLD := 65
 const HIGH_HEAT_CLEAN_ESCAPE_CHANCE_PERCENT := 35
+
+
+func stock_sal_after_success(run_state: RunState, meta_collection_service: Variant) -> Dictionary:
+	if run_state == null or meta_collection_service == null:
+		return {"ok": false, "stocked": false}
+	if run_state.run_status != RunState.RUN_STATUS_ENDED or not run_state.is_terminal():
+		return {"ok": true, "stocked": false}
+	if bool(run_state.challenge_config.get("preview", false)) or bool(run_state.challenge_config.get("dry_run", false)) or bool(run_state.narrative_flags.get("preview", false)) or bool(run_state.narrative_flags.get("dry_run", false)):
+		return {"ok": true, "stocked": false}
+	if bool(run_state.narrative_flags.get(SAL_STOCK_PROCESSED_FLAG, false)):
+		return {
+			"ok": true,
+			"stocked": false,
+			"receipt": str(run_state.narrative_flags.get(SAL_STOCK_RECEIPT_FLAG, "")),
+			"summary_line": str(run_state.narrative_flags.get(SAL_STOCK_SUMMARY_FLAG, "")),
+		}
+	var receipt := str(run_state.narrative_flags.get(SAL_STOCK_RECEIPT_FLAG, "")).strip_edges()
+	if receipt.is_empty():
+		receipt = meta_collection_service.allocate_sal_run_receipt(run_state.seed_text)
+		run_state.narrative_flags[SAL_STOCK_RECEIPT_FLAG] = receipt
+	if meta_collection_service.sal_run_receipt_processed(receipt):
+		run_state.narrative_flags[SAL_STOCK_PROCESSED_FLAG] = true
+		run_state.narrative_flags[SAL_STOCK_SUMMARY_FLAG] = "Sal stocked something new."
+		return {"ok": true, "stocked": false, "recovered": true, "receipt": receipt, "summary_line": "Sal stocked something new."}
+	var result: Dictionary = meta_collection_service.generate_and_insert_sal_stock(receipt)
+	if not bool(result.get("stocked", false)):
+		return result
+	var save_error: Error = meta_collection_service.save()
+	if save_error != OK:
+		meta_collection_service.load()
+		run_state.narrative_flags.erase(SAL_STOCK_RECEIPT_FLAG)
+		return {"ok": false, "stocked": false, "save_error": save_error, "message": "Sal stock could not be saved."}
+	var summary_line := str(result.get("summary_line", "Sal stocked something new."))
+	run_state.narrative_flags[SAL_STOCK_PROCESSED_FLAG] = true
+	run_state.narrative_flags[SAL_STOCK_SUMMARY_FLAG] = summary_line
+	run_state.log_story({
+		"type": "sal_resale_stocked",
+		"receipt": receipt,
+		"slot_index": int(result.get("slot_index", -1)),
+		"message": summary_line,
+	})
+	return result
 
 
 func apply_terminal_special_outcome(run_state: RunState, meta_collection_service: Variant) -> Dictionary:

@@ -339,7 +339,7 @@ static func casino_spatial_interactable_objects(host: Variant) -> Array:
 		if fixture_id.is_empty():
 			continue
 		var object_id := "casino_fixture:%s" % fixture_id
-		objects.append(host._make_interactable_object({
+		var object_data := {
 			"object_id": object_id,
 			"object_type": host.CONTEXT_MODE_CASINO_FIXTURE,
 			"source_id": fixture_id,
@@ -357,7 +357,12 @@ static func casino_spatial_interactable_objects(host: Variant) -> Array:
 			"available_actions": [{"id": "inspect_casino_fixture", "label": "Inspect"}],
 			"confirm_action_id": "inspect_casino_fixture",
 			"focus_rect": host._interaction_rect_for_object(object_id, host.CONTEXT_MODE_CASINO_FIXTURE, fixture_index),
-		}))
+		}
+		if fixture_id == "cage_atm":
+			object_data["inline_actions"] = host._cage_atm_inline_actions()
+		elif fixture_id == "cage_gift_shop":
+			object_data["inline_actions"] = host._cage_gift_shop_inline_actions()
+		objects.append(host._make_interactable_object(object_data))
 		fixture_index += 1
 	var door_index := 0
 	for target_id_value in host._copy_array(flags.get("casino_room_targets", [])):

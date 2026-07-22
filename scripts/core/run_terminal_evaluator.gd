@@ -45,11 +45,13 @@ static func evaluate(run_state: RunState, library: ContentLibrary = null) -> Dic
 
 	result["wager_available"] = _has_valid_wager(run_state, library)
 	result["travel_available"] = _has_available_travel(run_state, library)
+	result["local_room_travel_available"] = _has_available_local_room_travel(run_state)
 	result["event_recovery_available"] = _has_event_recovery(run_state, library)
 	result["lender_available"] = _has_lender_recovery(run_state, library)
 	result["merchant_sale_available"] = _has_merchant_sale_recovery(run_state, library)
 	result["game_hook_recovery_available"] = _has_game_hook_recovery(run_state, library)
 	var recovery_available := bool(result.get("travel_available", false)) \
+		or bool(result.get("local_room_travel_available", false)) \
 		or bool(result.get("event_recovery_available", false)) \
 		or bool(result.get("lender_available", false)) \
 		or bool(result.get("merchant_sale_available", false)) \
@@ -83,6 +85,7 @@ static func _base_result() -> Dictionary:
 		"message": "",
 		"wager_available": false,
 		"travel_available": false,
+		"local_room_travel_available": false,
 		"event_recovery_available": false,
 		"lender_available": false,
 		"merchant_sale_available": false,
@@ -126,6 +129,21 @@ static func _has_available_travel(run_state: RunState, library: ContentLibrary) 
 		var status := run_state.travel_route_status(route)
 		var cost := int(status.get("cost", route.get("cost", 0)))
 		if bool(status.get("available", false)) and run_state.bankroll - cost > 0:
+			return true
+	return false
+
+
+static func _has_available_local_room_travel(run_state: RunState) -> bool:
+	if run_state == null or not run_state.is_grand_casino_environment():
+		return false
+	var flags: Dictionary = run_state.current_environment.get("local_narrative_flags", {}) if typeof(run_state.current_environment.get("local_narrative_flags", {})) == TYPE_DICTIONARY else {}
+	for target_value in _copy_array(flags.get("casino_room_targets", [])):
+		var target_id := str(target_value).strip_edges()
+		if target_id.is_empty() or target_id == str(run_state.current_environment.get("archetype_id", "")):
+			continue
+		var access := run_state.grand_casino_room_access_status(target_id)
+		var cost := maxi(0, int(access.get("cost", 0)))
+		if bool(access.get("available", false)) and (cost == 0 or run_state.bankroll - cost > 0):
 			return true
 	return false
 

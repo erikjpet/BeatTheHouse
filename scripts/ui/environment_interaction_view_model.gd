@@ -24,12 +24,14 @@ static func snapshot_signature(run_state: RunState) -> String:
 		str(environment.get("travel_hooks", [])),
 		str(environment.get("object_fixtures", [])),
 		str(environment.get("home_containers", [])),
+		str(environment.get("cage_gift_shop_state", {})),
 		str(environment.get("layout", {})),
 		str(run_state.rourke_current_room),
 		str(run_state.rourke_current_spot),
 		str(run_state.rourke_facing),
 		str(run_state.rourke_actions_until_move),
 		str(run_state.rourke_off_floor_actions),
+		str(run_state.linda_cage_state),
 		str(run_state.grand_casino_room_heat_accumulators),
 		str(run_state.rival_cheaters),
 		str(run_state.rourke_escort_state),
@@ -63,6 +65,7 @@ static func environment_snapshot(run_state: RunState, data: Dictionary) -> Dicti
 	snapshot["demo_objective"] = run_state.demo_objective_status()
 	snapshot["pit_boss_watch"] = run_state.pit_boss_watch_status(run_state.current_environment)
 	snapshot["grand_casino_living_floor"] = run_state.grand_casino_living_floor_snapshot(run_state.current_environment)
+	snapshot["linda_cage"] = run_state.linda_cage_snapshot()
 	snapshot["grand_casino_staffing"] = run_state.grand_casino_staffing_snapshot(run_state.current_environment)
 	snapshot["grand_casino_entry_cue"] = run_state.pending_grand_casino_entry_cue()
 	snapshot["travel_choices"] = data.get("travel_choices", [])

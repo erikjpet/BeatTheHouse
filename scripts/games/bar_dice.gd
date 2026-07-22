@@ -326,7 +326,7 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 		"active_stake": active_stake,
 		"side_bet": 0,
 		"bet_meter": active_stake,
-		"chips_meter": maxi(0, run_state.bankroll) if run_state != null else 0,
+		"chips_meter": maxi(0, run_state.wager_capacity_for_game(get_id(), environment)) if run_state != null else 0,
 		"pot_meter": working_pot,
 		"rake_meter": rake,
 		"win_meter": int(last_result.get("gross_payout", 0)) if showing_result else _gross_payout_for_pot(working_pot, rake, state),
@@ -637,7 +637,7 @@ func resolve_with_context(action_id: String, stake: int, run_state: RunState, en
 	var state := _dice_state(run_state, environment)
 	var ui := _normalized_ui_state(run_state, environment, ui_state, state)
 	var adjusted_stake := _active_stake_from_context(stake, state, ui, run_state, environment)
-	if adjusted_stake <= 0 or adjusted_stake > run_state.bankroll:
+	if adjusted_stake <= 0 or adjusted_stake > run_state.wager_balance_for_game(get_id(), environment):
 		return _empty_result(action_id, stake, environment, "You do not have enough bankroll for this ante.")
 	var table_result := _resolve_table_round(action_id, adjusted_stake, run_state, state, rng, ui)
 	var outcome := str(table_result.get("outcome", "lose"))
@@ -1116,7 +1116,7 @@ func _resolve_press(stake: int, run_state: RunState, environment: Dictionary, rn
 	var offer := _copy_dict(last_result.get("press_offer", {}))
 	if not bool(offer.get("available", false)):
 		return _empty_result("press", stake, environment, "No clean bar dice win is available to press.")
-	var risk := mini(maxi(1, int(offer.get("risk", 0))), maxi(0, run_state.bankroll))
+	var risk := mini(maxi(1, int(offer.get("risk", 0))), maxi(0, run_state.wager_balance_for_game(get_id(), environment)))
 	if risk <= 0:
 		return _empty_result("press", stake, environment, "You do not have enough chips to press.")
 	var level := int(offer.get("level", 0))
@@ -2010,8 +2010,8 @@ func _active_stake_from_context(stake: int, state: Dictionary, ui_state: Diction
 	var bankroll_limit := int(ladder[selected])
 	var stake_ceiling := int(ladder[selected])
 	if run_state != null:
-		bankroll_limit = maxi(0, run_state.bankroll)
-		stake_ceiling = run_state.wager_stake_ceiling(int(economic_profile.get("stake_ceiling", run_state.bankroll)))
+		bankroll_limit = maxi(0, run_state.wager_capacity_for_game(get_id(), environment))
+		stake_ceiling = run_state.wager_stake_ceiling(int(economic_profile.get("stake_ceiling", bankroll_limit)))
 	return mini(mini(int(ladder[selected]), maxi(0, stake_ceiling)), bankroll_limit)
 
 

@@ -1,5 +1,7 @@
 extends "res://scripts/tests/ui_scene/compile_environment_layout.gd"
 
+const CageCounterViewModelScript := preload("res://scripts/ui/cage_counter_view_model.gd")
+
 
 func _check_onboarding_tutorial_ui_flow(app: Control) -> bool:
 	var profile: ProfileInventory = app.get("profile_inventory")
@@ -726,8 +728,11 @@ func _check_all_in_wager_confirmation_recovery(app: Control) -> bool:
 	if int(refund_machine_after.get("spin_count", 0)) != refunded_spin_count_before + 1:
 		push_error("The guaranteed-refund slot spin did not execute after skipping confirmation.")
 		return false
-	if int(run_state.bankroll) <= 0:
-		push_error("Coin-Return Shim did not preserve bankroll after the all-in slot spin.")
+	if not run_state.has_liquid_run_funds():
+		push_error("Coin-Return Shim did not preserve spendable funds after the all-in slot spin.")
+		return false
+	if run_state.grand_casino_game_uses_chips("slot", run_state.current_environment) and run_state.grand_casino_chips <= 0:
+		push_error("Grand Casino Coin-Return Shim refund did not return as a redeemable chip.")
 		return false
 	app.call("return_to_main_menu")
 	await process_frame
@@ -1510,8 +1515,10 @@ func _check_final_demo_objective_hud_matrix(app: Control) -> bool:
 	var close_snapshot: Dictionary = app.call("current_objective_hud_snapshot")
 	if not _assert_objective_state(close_snapshot, "grand-incomplete", "Grand Casino close cashout HUD"):
 		return false
-	if str(close_snapshot.get("goal", "")).find("Close to Players Card") == -1 or not bool((close_snapshot.get("guidance", {}) as Dictionary).get("clean_progress_close", false)):
-		push_error("Grand Casino close Players Card HUD did not present clean progress guidance.")
+	if str(close_snapshot.get("goal", "")).find("Bronze ready") == -1 or str(((close_snapshot.get("guidance", {}) as Dictionary).get("text", ""))).find("Bronze is ready") == -1:
+		push_error("Grand Casino sequential Players Card HUD did not direct a frozen Bronze claim to Linda.")
+		return false
+	if not _assert_next_objective(close_snapshot, "travel", "travel:grand_casino_cage", "Grand Casino Bronze-ready HUD"):
 		return false
 
 	var heat_close_run := _grand_casino_fixture_run("UI-HUD-GRAND-HEAT", grand_environment)
@@ -1526,6 +1533,13 @@ func _check_final_demo_objective_hud_matrix(app: Control) -> bool:
 		return false
 
 	var high_roller_run := _grand_casino_fixture_run("UI-HUD-HIGH-ROLLER", grand_environment)
+	high_roller_run.narrative_flags["grand_casino_players_card_awarded_tier"] = RunState.GRAND_CASINO_PLAYERS_CARD_TIER_SILVER
+	high_roller_run.narrative_flags["grand_casino_players_card_tier"] = RunState.GRAND_CASINO_PLAYERS_CARD_TIER_SILVER
+	high_roller_run.narrative_flags["grand_casino_players_card_highest_tier"] = RunState.GRAND_CASINO_PLAYERS_CARD_TIER_SILVER
+	high_roller_run.narrative_flags["grand_casino_players_card_segment_start_games"] = 0
+	high_roller_run.narrative_flags["grand_casino_players_card_segment_start_net_winnings"] = 0
+	high_roller_run.narrative_flags["grand_casino_comp_drink_tokens"] = 1
+	high_roller_run.narrative_flags["grand_casino_comp_suite_rests"] = 1
 	_record_grand_casino_clean_games(high_roller_run, high_roller_min_games)
 	high_roller_run.bankroll = maxi(high_roller_target, int(high_roller_run.narrative_flags.get("grand_casino_entry_bankroll", 0)) + high_roller_net)
 	high_roller_run.evaluate_environment_objective_state()
@@ -1533,43 +1547,67 @@ func _check_final_demo_objective_hud_matrix(app: Control) -> bool:
 	var high_roller_snapshot: Dictionary = app.call("current_objective_hud_snapshot")
 	if not _assert_objective_state(high_roller_snapshot, "high-roller-ready", "High-roller ready objective HUD"):
 		return false
-	if not _assert_next_objective(high_roller_snapshot, "casino_fixture", "casino_fixture:cage", "High-roller ready objective HUD"):
+	if not _assert_next_objective(high_roller_snapshot, "travel", "travel:grand_casino_cage", "High-roller ready objective HUD"):
 		return false
 	high_roller_run.current_environment["event_ids"] = ["high_roller_cashout"]
 	if not (app.call("_eligible_event_option_view_list") as Array).is_empty():
 		push_error("High-roller Players Card review still appeared on the event surface instead of the Cage.")
 		return false
-	if not bool(app.call("_open_cage_window")):
-		push_error("High-roller Players Card review could not open the Cage window.")
+	var ui_generator: RunGenerator = app.get("generator")
+	if ui_generator == null or not ui_generator.enter_grand_casino_room(high_roller_run, RunState.GRAND_CASINO_CAGE_ARCHETYPE_ID):
+		push_error("High-roller Players Card review could not enter the walkable Cage room.")
 		return false
-	var ready_cage: Dictionary = app.call("current_cage_window_snapshot")
-	var ready_cage_model: Dictionary = ready_cage.get("model", {}) if typeof(ready_cage.get("model", {})) == TYPE_DICTIONARY else {}
+	app.call("_refresh")
+	var cage_objects: Dictionary = {}
+	for cage_object_value in app.call("_interactable_object_view_list"):
+		if typeof(cage_object_value) == TYPE_DICTIONARY:
+			cage_objects[str((cage_object_value as Dictionary).get("object_id", ""))] = cage_object_value
+	for cage_object_id in ["casino_fixture:cage_counter", "casino_fixture:cage_atm", "casino_fixture:cage_gift_shop", "travel:grand_casino"]:
+		if not cage_objects.has(cage_object_id):
+			push_error("Walkable Cage did not expose authored object %s." % cage_object_id)
+			return false
+	var atm_object: Dictionary = cage_objects.get("casino_fixture:cage_atm", {})
+	if (atm_object.get("inline_actions", []) as Array).size() != 4:
+		push_error("Cage ATM did not expose compact borrow, partial repayment, and payoff controls.")
+		return false
+	var atm_cash_before := high_roller_run.bankroll
+	if not bool(app.call("activate_interactable_object", "cage_atm_action:borrow:50")) or high_roller_run.bankroll != atm_cash_before + 50 or high_roller_run.grand_casino_atm_debt() != 50:
+		push_error("Cage ATM inline borrow did not atomically add matching cash and marker debt.")
+		return false
+	if not bool(app.call("activate_interactable_object", "cage_atm_action:repay:full")) or high_roller_run.bankroll != atm_cash_before or high_roller_run.grand_casino_atm_debt() != 0:
+		push_error("Cage ATM inline Pay in Full did not clear the marker from cash.")
+		return false
+	var gift_actions: Array = (cage_objects.get("casino_fixture:cage_gift_shop", {}) as Dictionary).get("inline_actions", [])
+	if gift_actions.size() < 3 or gift_actions.size() > 4 or str((gift_actions[0] as Dictionary).get("emit_object_id", "")).find("cage_gift_action:buy:") != 0:
+		push_error("Cage gift case did not expose its 3-4 saved chip-priced offers as focused room controls.")
+		return false
+	if not bool(app.call("_start_linda_cage_services", {"object_id": "casino_fixture:cage_counter"})):
+		push_error("High-roller Players Card review could not open Linda's talk menu.")
+		return false
+	var ready_cage_model: Dictionary = CageCounterViewModelScript.build(high_roller_run)
 	var ready_balance: Dictionary = ready_cage_model.get("balance", {}) if typeof(ready_cage_model.get("balance", {})) == TYPE_DICTIONARY else {}
 	var ready_card: Dictionary = ready_cage_model.get("card", {}) if typeof(ready_cage_model.get("card", {})) == TYPE_DICTIONARY else {}
-	if not bool(ready_cage.get("visible", false)) or not bool(ready_cage.get("portrait_animated", false)) or str((ready_cage_model.get("host", {}) as Dictionary).get("name", "")) != "Linda" or (ready_cage_model.get("promotions", []) as Array).is_empty() or int(ready_balance.get("cash", -1)) < 0 or not bool(ready_card.get("can_review", false)):
-		push_error("Ready Cage window did not expose animated Linda, balances, promotions, and the Players Card review action.")
+	var ready_talk: Dictionary = app.call("current_talk_dock_snapshot")
+	if not bool(ready_talk.get("visible", false)) or not bool(ready_talk.get("portrait_animation_active", false)) or str((ready_cage_model.get("host", {}) as Dictionary).get("name", "")) != "Linda" or str((ready_cage_model.get("host", {}) as Dictionary).get("presentation", "")) != "faceless_silhouette" or (ready_cage_model.get("promotions", []) as Array).is_empty() or int(ready_balance.get("cash", -1)) < 0 or not bool(ready_card.get("can_review", false)):
+		push_error("Ready Cage counter did not expose animated silhouette Linda, balances, promotions, and the Players Card review action.")
 		return false
-	if str(ready_card.get("tier", "")) != "Gold" or str(ready_card.get("progress", "")).find("Gold earned") == -1 or (ready_cage_model.get("comp_actions", []) as Array).size() != 2:
-		push_error("Ready Cage window did not expose exact Gold progress, benefits, and comp controls.")
+	if str(ready_card.get("tier", "")) != "Silver" or str(ready_card.get("progress", "")).find("Gold") == -1 or (ready_cage_model.get("comp_actions", []) as Array).size() != 2:
+		push_error("Ready Cage counter did not expose exact Gold progress, benefits, and comp controls.")
 		return false
 	while not high_roller_run.next_pending_talk_event().is_empty():
 		high_roller_run.complete_talk_event_resolution(str(high_roller_run.next_pending_talk_event().get("event_id", "")))
 	app.call("_refresh_talk_dock")
-	app.call("_hide_cage_window")
-	if not bool(app.call("_start_linda_ambient_dialogue", {"object_id": "casino_fixture:host_desk"})):
-		push_error("Bronze-or-better host desk did not open Linda's Main Floor ambient dialogue.")
+	if not bool(app.call("_start_linda_ambient_dialogue", {"object_id": "casino_fixture:cage_counter"})):
+		push_error("Bronze-or-better Cage counter did not open Linda's ambient dialogue.")
 		return false
 	if str(high_roller_run.next_pending_talk_event().get("dialogue_id", "")) != "linda_main_floor_ambient_1":
-		push_error("Linda host-desk interaction did not use the authored ambient talk scene.")
+		push_error("Linda Cage-counter interaction did not use the authored ambient talk scene.")
 		return false
 	high_roller_run.complete_talk_event_resolution(str(high_roller_run.next_pending_talk_event().get("event_id", "")))
 	app.call("_refresh_talk_dock")
-	if not bool(app.call("_open_cage_window")):
-		push_error("Cage did not reopen after Linda's ambient host-desk scene.")
-		return false
 	app.call("_complete_cage_players_card_review")
 	var gold_review_talk: Dictionary = app.call("current_talk_dock_snapshot")
-	if not bool(gold_review_talk.get("visible", false)) or str(high_roller_run.next_pending_talk_event().get("dialogue_id", "")) != "linda_gold_review" or bool((app.call("current_cage_window_snapshot") as Dictionary).get("visible", true)):
+	if not bool(gold_review_talk.get("visible", false)) or str(high_roller_run.next_pending_talk_event().get("dialogue_id", "")) != "linda_gold_review":
 		push_error("Cage Gold review did not move into Linda's talk-dock dialogue scene.")
 		return false
 
@@ -1577,16 +1615,11 @@ func _check_final_demo_objective_hud_matrix(app: Control) -> bool:
 	showdown_run.add_suspicion("ui_hud_showdown", showdown_heat_threshold, "behavior")
 	showdown_run.evaluate_environment_objective_state()
 	_set_ui_fixture_run(app, showdown_run)
-	if not bool(app.call("_open_cage_window")):
-		push_error("Showdown fixture could not open the Cage to show its blocked review state.")
-		return false
-	var blocked_cage: Dictionary = app.call("current_cage_window_snapshot")
-	var blocked_model: Dictionary = blocked_cage.get("model", {}) if typeof(blocked_cage.get("model", {})) == TYPE_DICTIONARY else {}
+	var blocked_model: Dictionary = CageCounterViewModelScript.build(showdown_run)
 	var blocked_card: Dictionary = blocked_model.get("card", {}) if typeof(blocked_model.get("card", {})) == TYPE_DICTIONARY else {}
 	if str(blocked_card.get("review_state", "")) != "blocked" or bool(blocked_card.get("can_review", true)) or str(blocked_card.get("review_detail", "")).find("Rourke") == -1:
 		push_error("Cage did not visibly route the blocked Players Card review to Rourke.")
 		return false
-	app.call("_hide_cage_window")
 	var showdown_snapshot: Dictionary = app.call("current_objective_hud_snapshot")
 	if not _assert_objective_state(showdown_snapshot, "showdown-pending", "Showdown pending objective HUD"):
 		return false
@@ -1738,7 +1771,17 @@ func _set_ui_fixture_run(app: Control, run_state: RunState) -> void:
 
 func _check_grand_casino_spatial_ui(app: Control) -> bool:
 	app.call("_invalidate_travel_view_cache")
-	var run_state: RunState = app.get("run_state")
+	var original_run_state: RunState = app.get("run_state")
+	var run_state: RunState = RunStateScript.new()
+	run_state.from_dict(original_run_state.to_dict())
+	_set_ui_fixture_run(app, run_state)
+	# This fixture is about door presentation, not card progression. Model an
+	# already-issued sequential Silver card explicitly instead of relying on the
+	# removed cumulative auto-tier derivation.
+	run_state.narrative_flags["grand_casino_players_card_awarded_tier"] = RunState.GRAND_CASINO_PLAYERS_CARD_TIER_SILVER
+	run_state.narrative_flags["grand_casino_players_card_tier"] = RunState.GRAND_CASINO_PLAYERS_CARD_TIER_SILVER
+	run_state.narrative_flags["grand_casino_high_limit_access"] = true
+	run_state.narrative_flags["grand_casino_high_limit_access_method"] = "silver_card"
 	var staffing := run_state.grand_casino_staffing_snapshot()
 	var assignments: Dictionary = staffing.get("assignments", {}) if typeof(staffing.get("assignments", {})) == TYPE_DICTIONARY else {}
 	var constants: Dictionary = staffing.get("constants", {}) if typeof(staffing.get("constants", {})) == TYPE_DICTIONARY else {}
@@ -1771,7 +1814,7 @@ func _check_grand_casino_spatial_ui(app: Control) -> bool:
 	for object_value in objects:
 		if typeof(object_value) == TYPE_DICTIONARY:
 			objects_by_id[str((object_value as Dictionary).get("object_id", ""))] = object_value
-	for object_id in ["casino_fixture:cage", "casino_fixture:host_desk", "travel:grand_casino_high_limit", "travel:grand_casino_back_room"]:
+	for object_id in ["casino_fixture:host_desk", "travel:grand_casino_high_limit", "travel:grand_casino_back_room", "travel:grand_casino_cage"]:
 		if not objects_by_id.has(object_id):
 			push_error("Grand Casino spatial UI did not expose authored object: %s." % object_id)
 			return false
@@ -1784,17 +1827,21 @@ func _check_grand_casino_spatial_ui(app: Control) -> bool:
 		push_error("Grand Casino High-Limit door did not expose Silver-or-better card access without a buy-in.")
 		return false
 	var table_game: GameModule = app.call("_game_module_for_id", "blackjack")
-	if table_game == null or not bool(app.call("_casino_table_wager_needs_top_up", table_game, 25)):
-		push_error("Grand Casino table did not detect a short chip balance for automatic top-up.")
+	if table_game == null:
+		push_error("Grand Casino spatial UI could not load blackjack for cash-fallback coverage.")
 		return false
-	app.set("current_game", table_game)
-	app.call("_show_casino_chip_top_up_popup", "play_basic", 25, true, false)
-	var top_up_overlay: Dictionary = app.call("current_overlay_state_snapshot")
-	if not bool(top_up_overlay.get("event_choice_popup_visible", false)) or str(top_up_overlay.get("event_choice_popup_type", "")) != "casino_chip_top_up":
-		push_error("Grand Casino table chip shortage did not open the automatic top-up decision.")
+	var funding_run := _grand_casino_fixture_run("GC-SPATIAL-CASH-FALLBACK", run_state.current_environment)
+	funding_run.bankroll = 100
+	funding_run.grand_casino_chips = 5
+	var funding: Dictionary = funding_run.fund_grand_casino_table_wager(table_game.get_id(), 25, funding_run.current_environment)
+	if not bool(funding.get("ok", false)) or int(funding.get("existing_chips_used", -1)) != 5 or int(funding.get("cash_used", -1)) != 20 or funding_run.bankroll != 80 or funding_run.grand_casino_chips != 25:
+		push_error("Grand Casino table UI path did not cover a short chip balance directly from cash.")
 		return false
-	app.call("cancel_pending_casino_chip_top_up")
-	app.set("current_game", null)
+	var funding_overlay: Dictionary = app.call("current_overlay_state_snapshot")
+	if bool(funding_overlay.get("event_choice_popup_visible", false)) and str(funding_overlay.get("event_choice_popup_type", "")) == "casino_chip_top_up":
+		push_error("Grand Casino cash fallback still opened the removed chip top-up decision.")
+		return false
+	_set_ui_fixture_run(app, original_run_state)
 	return true
 
 

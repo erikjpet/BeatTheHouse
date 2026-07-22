@@ -6,6 +6,7 @@ extends SceneTree
 const MainScene := preload("res://scenes/main.tscn")
 const VisualStyleScript := preload("res://scripts/ui/visual_style.gd")
 const UserSettingsScript := preload("res://scripts/core/user_settings.gd")
+const CageCounterViewModelScript := preload("res://scripts/ui/cage_counter_view_model.gd")
 const REPORT_PATH := "user://foundation_visual_qa_report.json"
 const TEST_SETTINGS_PATH := "user://settings_foundation_visual_qa.json"
 const TEST_META_COLLECTION_PATH := "user://foundation_visual_qa_meta_collection.json"
@@ -371,6 +372,7 @@ func _run() -> void:
 	await _verify_grand_casino_showdown_event_snapshot()
 	await _verify_terminal_victory_summary_snapshot()
 	await _verify_t4_7_event_visual_model()
+	await _verify_sal_resale_shelf_visual_states()
 
 	_write_report()
 	quit(0)
@@ -416,6 +418,78 @@ func _use_isolated_meta_collection_store(path: String) -> void:
 		"next_instance_id": 1,
 	}, "\t"))
 	file.close()
+
+
+func _verify_sal_resale_shelf_visual_states() -> void:
+	_use_isolated_meta_collection_store(TEST_META_COLLECTION_PATH)
+	app.call("_initialize_meta_collection")
+	app.call("open_meta_home")
+	app.call("_enter_meta_location", "pawn_shop")
+	await _settle()
+	var service: Variant = app.get("meta_collection_service")
+	_require(service != null, "Sal visual QA could not access the isolated meta collection service.")
+	var rows: Array = service.sal_shelf_rows()
+	var shelf_objects: Array = app.call("current_spatial_interaction_snapshot").get("objects", []).filter(func(object_data: Dictionary) -> bool: return str(object_data.get("object_id", "")).begins_with("meta_sal_shelf:"))
+	_require(rows.size() == 6 and shelf_objects.size() == 6, "Fresh Sal visual QA did not expose exactly six persistent shelf spots.")
+	_require(rows.filter(func(row: Dictionary) -> bool: return bool(row.get("occupied", false))).size() == 1, "Fresh Sal visual QA did not show one starter and five empty spots.")
+	_record_state("sal_fresh_shelf", "Fresh Sal room shows one discounted damaged starter, five empty locked spots, Sal, the sell tray, and the exit.")
+
+	service.generate_and_insert_sal_stock("visual-sal-partial-1")
+	service.generate_and_insert_sal_stock("visual-sal-partial-2")
+	service.save()
+	app.call("_apply_meta_environment", "pawn_shop")
+	await _settle()
+	_record_state("sal_partially_filled_shelf", "Three occupied physical shelf spots remain distinct from three empty spots and the sell counter.")
+
+	var fill_index := 0
+	while service.sal_shelf_rows().filter(func(row: Dictionary) -> bool: return bool(row.get("occupied", false))).size() < 6:
+		service.generate_and_insert_sal_stock("visual-sal-full-%d" % fill_index)
+		fill_index += 1
+	service.save()
+	app.call("_apply_meta_environment", "pawn_shop")
+	await _settle()
+	_record_state("sal_full_shelf", "All six authored item spots show persistent resale listings without obscuring Sal, the sell tray, or exit.")
+
+	app.call("open_meta_sal_shelf", 0)
+	await _settle()
+	var inspect_popup: Dictionary = app.call("current_event_choice_popup_snapshot")
+	_require(str(inspect_popup.get("summary", "")).contains("Rarity multiplier") and str(inspect_popup.get("summary", "")).contains("Pawn quote"), "Sal inspect visual did not expose rarity and price breakdown copy.")
+	_record_state("sal_inspected_float_breakdown", "Starter inspection shows collection, tier, all four percentages, edge contributions, multiplier, pawn quote, policy, price, and gold.")
+	app.call("_hide_event_choice_popup")
+
+	var starter: Dictionary = service.sal_shelf_row(0)
+	var starter_price := int(starter.get("asking_price", 0))
+	service.add_gold(starter_price)
+	var purchase: Dictionary = service.arm_sal_shelf_purchase(0)
+	app.call("_confirm_meta_sal_purchase", str(purchase.get("token", "")))
+	await _settle()
+	var talk: Dictionary = app.call("current_talk_dock_snapshot")
+	_require(str(talk.get("summary", "")).contains("1.00%") and str(talk.get("summary", "")).contains(str(int(service.pending_starter_buyback().get("offer_price", 0)))), "Starter purchase visual did not show the exact rare float and buyback amount.")
+	_record_state("sal_starter_purchase_dialogue", "Buying the starter immediately opens blocking authored Sal dialogue naming the one-percent edge.")
+	_record_state("sal_starter_buyback_choice", "The persisted special offer visibly presents Sell it back and Keep it with the exact gold amount.")
+	_record_state("sal_empty_slot_after_purchase", "The purchased starter's original physical shelf spot remains visibly empty until future stock or buyback.")
+
+	app.call("resolve_event_choice", "dialogue:sal_starter_offer", "sal_starter_sell_back")
+	await _settle()
+	var relisted: Dictionary = service.sal_shelf_row(0)
+	_require(str(relisted.get("listing_mode", "")) == "mocking_relist", "Sal visual QA did not restore the exact starter as a mocking relist.")
+	_record_state("sal_mocking_ten_x_relist", "Accepted buyback returns the exact item to its original spot and Sal's continuation shows the exact ten-times relist policy.")
+	app.call("resolve_event_choice", "dialogue:sal_starter_mocking_relist", "move_on")
+	await _settle()
+
+	var settings: Variant = app.get("user_settings")
+	if settings != null:
+		settings.play_on_small_screen = true
+		app.call("_apply_accessibility_settings")
+		await _settle()
+		_record_state("sal_small_screen_shelf", "All six shelf spots and transaction fixtures remain usable with small-screen hit targets.")
+		settings.play_on_small_screen = false
+		settings.reduce_motion = true
+		app.call("_apply_accessibility_settings")
+		await _settle()
+		_record_state("sal_reduced_motion_shelf", "Reduced motion preserves Sal's room, shelf rarity cues, and all transaction information.")
+		settings.reduce_motion = false
+		app.call("_apply_accessibility_settings")
 
 
 func _try_follow_visible_objective_once() -> bool:
@@ -821,6 +895,13 @@ func _verify_grand_casino_high_roller_cashout_snapshot() -> void:
 	var target_bankroll := int(objective.get("high_roller_target_bankroll", objective.get("target_bankroll", 0)))
 	var required_net := int(objective.get("high_roller_net_winnings", 75))
 	var min_games := int(objective.get("high_roller_min_grand_casino_games", 3))
+	fixture_run.narrative_flags["grand_casino_players_card_awarded_tier"] = RunState.GRAND_CASINO_PLAYERS_CARD_TIER_SILVER
+	fixture_run.narrative_flags["grand_casino_players_card_tier"] = RunState.GRAND_CASINO_PLAYERS_CARD_TIER_SILVER
+	fixture_run.narrative_flags["grand_casino_players_card_highest_tier"] = RunState.GRAND_CASINO_PLAYERS_CARD_TIER_SILVER
+	fixture_run.narrative_flags["grand_casino_players_card_segment_start_games"] = 0
+	fixture_run.narrative_flags["grand_casino_players_card_segment_start_net_winnings"] = 0
+	fixture_run.narrative_flags["grand_casino_comp_drink_tokens"] = 1
+	fixture_run.narrative_flags["grand_casino_comp_suite_rests"] = 1
 	for game_index in range(min_games):
 		var deltas := GameModule.empty_result_deltas()
 		deltas["story_log"] = [{"type": "game_action", "game_id": "blackjack", "stake_cost": 10 + game_index}]
@@ -860,31 +941,109 @@ func _verify_grand_casino_high_roller_cashout_snapshot() -> void:
 	var constants: Dictionary = staffing.get("constants", {}) if typeof(staffing.get("constants", {})) == TYPE_DICTIONARY else {}
 	_require(assignments.size() == 4, "Grand Casino visual QA did not receive the rotating dealer and bartender cast.")
 	_require(str((constants.get("rourke", {}) as Dictionary).get("name", "")) == "Rourke" and str((constants.get("linda", {}) as Dictionary).get("name", "")) == "Linda", "Grand Casino visual QA did not keep Rourke and Linda constant.")
-	var cage_object := _canvas_object_by_id(canvas, "casino_fixture:cage")
-	_require(not cage_object.is_empty(), "Players Card visual QA could not find the visible Cage fixture.")
-	var cage_label := await _double_click_canvas_object_data(canvas, cage_object, "casino_fixture")
-	_require(not cage_label.is_empty(), "Players Card visual QA could not open the Cage through its visible room fixture.")
-	var cage_snapshot: Dictionary = app.call("current_cage_window_snapshot")
-	var cage_model: Dictionary = cage_snapshot.get("model", {}) if typeof(cage_snapshot.get("model", {})) == TYPE_DICTIONARY else {}
+	var generator := app.get("generator") as RunGenerator
+	_require(generator != null and generator.enter_grand_casino_room(fixture_run, RunState.GRAND_CASINO_CAGE_ARCHETYPE_ID), "Players Card visual QA could not enter the walkable Cage room.")
+	app.call("_refresh")
+	await _settle()
+	_return_to_room_view()
+	await _settle()
+	canvas = app.get("environment_canvas") as Control
+	var cage_screen_snapshot: Dictionary = app.call("current_screen_snapshot")
+	_require(canvas != null and canvas.visible, "Players Card visual QA could not render the walkable Cage room (screen=%s, run_status=%s, failure=%s, cash=%d, environment=%s)." % [str(cage_screen_snapshot.get("screen", "")), str(fixture_run.run_status), str(fixture_run.run_failure_reason), fixture_run.bankroll, str(fixture_run.current_environment.get("archetype_id", ""))])
+	for fixture_id in ["casino_fixture:cage_counter", "casino_fixture:cage_atm", "casino_fixture:cage_gift_shop"]:
+		_require(not _canvas_object_by_id(canvas, fixture_id).is_empty(), "Walkable Cage visual QA could not find fixture %s." % fixture_id)
+	var cage_model: Dictionary = CageCounterViewModelScript.build(fixture_run)
 	var cage_card: Dictionary = cage_model.get("card", {}) if typeof(cage_model.get("card", {})) == TYPE_DICTIONARY else {}
-	_require(bool(cage_snapshot.get("visible", false)), "Players Card visual QA did not open the Cage window.")
-	_require(bool(cage_snapshot.get("portrait_animated", false)), "Linda's Cage portrait was not alive while the window was open.")
-	_require(str((cage_model.get("host", {}) as Dictionary).get("name", "")) == "Linda", "Players Card Cage window did not identify Linda.")
-	_require(bool(cage_card.get("can_review", false)) and str(cage_card.get("review_state", "")) == "ready", "Players Card Cage window did not expose the ready review action.")
-	_require(cage_model.has("balance") and not (cage_model.get("promotions", []) as Array).is_empty() and str(cage_card.get("tier", "")) == "Gold", "Cage visual QA could not read Gold tier benefits and promotions.")
+	var cage_host: Dictionary = cage_model.get("host", {}) if typeof(cage_model.get("host", {})) == TYPE_DICTIONARY else {}
+	_require(str(cage_host.get("name", "")) == "Linda" and str(cage_host.get("presentation", "")) == "faceless_silhouette", "Players Card Cage counter did not identify faceless-silhouette Linda.")
+	_require(bool(cage_card.get("can_review", false)) and str(cage_card.get("review_state", "")) == "ready", "Players Card Cage counter did not expose the ready review action.")
+	_require(cage_model.has("balance") and not (cage_model.get("promotions", []) as Array).is_empty() and str(cage_card.get("next_tier", "")) == "Gold", "Cage visual QA could not read exact Gold progress, benefits, and promotions.")
+	while not fixture_run.next_pending_talk_event().is_empty():
+		fixture_run.complete_talk_event_resolution(str(fixture_run.next_pending_talk_event().get("event_id", "")))
+	app.call("_refresh_talk_dock")
+	await _settle()
+	await _resolve_blocking_talk_dock()
+	var counter_object := _canvas_object_by_id(canvas, "casino_fixture:cage_counter")
+	_require(not (await _double_click_canvas_object_data(canvas, counter_object, "casino_fixture")).is_empty(), "Cage visual QA could not speak with Linda through her physical counter.")
+	await _settle()
+	var cage_talk: Dictionary = app.call("current_talk_dock_snapshot")
+	_require(bool(cage_talk.get("visible", false)) and bool(cage_talk.get("portrait_animation_active", false)), "Linda's physical Cage-counter silhouette was not alive in the talk dock.")
 	var chips_before_buy := fixture_run.grand_casino_chips
-	_require(not _click_button_exact("Buy 25").is_empty(), "Cage visual QA could not buy chips through the visible control.")
+	_require(not _click_button_exact("Chips and Cashout").is_empty(), "Cage visual QA could not open Linda's chip services through the visible control.")
+	await _settle()
+	_require(not _click_button_exact("Buy 25 Chips").is_empty(), "Cage visual QA could not buy chips through the visible control.")
 	await _settle()
 	_require(fixture_run.grand_casino_chips == chips_before_buy + 25, "Visible Cage buy-in did not credit chips.")
-	_require(not _click_button_exact("Cash Out All").is_empty(), "Cage visual QA could not cash out through the visible control.")
+	_require(not _click_button_exact("Redeem All Chips").is_empty(), "Cage visual QA could not cash out through the visible control.")
 	await _settle()
 	_require(fixture_run.grand_casino_chips == 0, "Visible Cage cash-out did not return all chips to cash.")
 	_cover("grand_casino_high_roller_cashout")
-	_record_state("grand_casino_high_roller_cashout_available", "Grand Casino Cage shows animated Linda, chip transfers, exact Gold progress, tier benefits, and comps.")
-	_require(not _click_button_exact("Complete Gold Review").is_empty(), "Cage visual QA could not start Linda's ready Gold review through the visible control.")
+	_record_state("grand_casino_cage_room", "The fourth walkable Grand Casino room shows Linda's counter, ATM, and chip-priced gift case.")
+	_record_state("grand_casino_cage_normal_shop", "The saved gift case presents three or four focused chip-priced offers.")
+	var normal_shop_state: Dictionary = fixture_run.current_environment.get("cage_gift_shop_state", {}).duplicate(true)
+	var empty_shop_state := normal_shop_state.duplicate(true)
+	var empty_stock: Array = empty_shop_state.get("stock", []).duplicate(true)
+	for stock_index in range(empty_stock.size()):
+		if typeof(empty_stock[stock_index]) == TYPE_DICTIONARY:
+			var sold_entry := (empty_stock[stock_index] as Dictionary).duplicate(true)
+			sold_entry["sold"] = true
+			empty_stock[stock_index] = sold_entry
+	empty_shop_state["stock"] = empty_stock
+	fixture_run.current_environment["cage_gift_shop_state"] = empty_shop_state
+	app.call("_refresh")
+	await _settle()
+	_record_state("grand_casino_cage_empty_shop", "The sold-out gift case visibly empties without changing the room or merging with another service.")
+	fixture_run.current_environment["cage_gift_shop_state"] = normal_shop_state
+	app.call("_refresh")
+	await _settle()
+	var cage_settings: Variant = app.get("user_settings")
+	if cage_settings != null:
+		cage_settings.play_on_small_screen = true
+		app.call("_apply_accessibility_settings")
+		await _settle()
+		_record_state("grand_casino_cage_small_screen", "The Cage room and focused fixture controls remain usable with small-screen hit targets.")
+		cage_settings.play_on_small_screen = false
+		cage_settings.reduce_motion = true
+		app.call("_apply_accessibility_settings")
+		await _settle()
+		_record_state("grand_casino_cage_reduced_motion", "Reduced motion keeps Linda and all Cage account information visible without motion dependence.")
+		cage_settings.reduce_motion = false
+		app.call("_apply_accessibility_settings")
+		await _settle()
+	fixture_run.borrow_from_grand_casino_atm(50)
+	app.call("_refresh")
+	await _settle()
+	_record_state("grand_casino_cage_indebted_atm_counter", "The Cage ATM and counter expose the exact active marker balance.")
+	_record_state("grand_casino_cage_debt_blocked_tier", "Linda preserves ready Players Card progress while the casino marker blocks the claim.")
+	fixture_run.repay_grand_casino_atm_debt(-1)
+	app.call("_refresh_talk_dock")
+	await _settle()
+	_record_state("grand_casino_cage_debt_free_claim", "Clearing the marker immediately restores Linda's ready Players Card claim.")
+	_require(not _click_button_exact("Back").is_empty(), "Cage visual QA could not return to Linda's counter menu.")
+	await _settle()
+	_require(not _click_button_exact("Players Card").is_empty(), "Cage visual QA could not open Linda's Players Card controls.")
+	await _settle()
+	# Buying and redeeming chips advances the room clock and can legitimately
+	# queue an unrelated timed patron. Keep this focused fixture on Linda's
+	# already-open service dialogue so the claim action itself is what is tested.
+	for queued_value in fixture_run.pending_triggered_events.duplicate(true):
+		if typeof(queued_value) != TYPE_DICTIONARY:
+			continue
+		var queued_entry := queued_value as Dictionary
+		if str(queued_entry.get("presentation", "modal")) != "talk":
+			continue
+		var queued_event_id := str(queued_entry.get("event_id", ""))
+		if queued_event_id != "dialogue:linda_cage_services":
+			fixture_run.complete_talk_event_resolution(queued_event_id)
+	app.call("_refresh_talk_dock")
+	await _settle()
+	_require(not _click_button_exact("Claim Ready Tier").is_empty(), "Cage visual QA could not start Linda's ready Gold review through the visible control.")
 	await _settle()
 	var gold_talk: Dictionary = app.call("current_talk_dock_snapshot")
-	_require(bool(gold_talk.get("visible", false)) and str(fixture_run.next_pending_talk_event().get("dialogue_id", "")) == "linda_gold_review", "Visible Cage Gold review did not open Linda's talk-dock scene.")
+	var gold_pending_id := str(fixture_run.next_pending_talk_event().get("dialogue_id", ""))
+	var current_message := str((app.get("message_label") as Label).text) if app.get("message_label") is Label else ""
+	var gold_event_id := str(gold_talk.get("event_id", ""))
+	_require(bool(gold_talk.get("visible", false)) and gold_pending_id == "linda_gold_review", "Visible Cage Gold review did not open Linda's talk-dock scene (visible=%s, event=%s, dialogue=%s, status=%s, tier=%s, message=%s)." % [str(gold_talk.get("visible", false)), gold_event_id, gold_pending_id, str(fixture_run.run_status), str(fixture_run.narrative_flags.get("grand_casino_players_card_awarded_tier", "")), current_message])
 	await _resolve_blocking_talk_dock()
 	_require(fixture_run.run_status == RunState.RUN_STATUS_ENDED and str(fixture_run.narrative_flags.get("demo_victory_route", "")) == RunState.GRAND_CASINO_HIGH_ROLLER_EVENT_ID, "Visible Cage Players Card action did not preserve the canonical clean victory transition.")
 
@@ -1817,6 +1976,9 @@ func _record_state(name: String, description: String) -> void:
 		"environment": _environment_summary(app.call("current_environment_view_snapshot")),
 		"game": _game_summary(app.call("current_game_view_snapshot")),
 		"consequence": _consequence_summary(app.call("current_consequence_view_snapshot")),
+		"spatial": app.call("current_spatial_interaction_snapshot") if app.has_method("current_spatial_interaction_snapshot") else {},
+		"popup": app.call("current_event_choice_popup_snapshot") if app.has_method("current_event_choice_popup_snapshot") else {},
+		"talk": app.call("current_talk_dock_snapshot") if app.has_method("current_talk_dock_snapshot") else {},
 	})
 
 
@@ -2480,15 +2642,11 @@ func _assert_no_scroll_critical_path(context: String) -> void:
 	_assert_result_area_useful_or_hidden(context)
 	var environment_control := app.get("environment_canvas") as Control
 	var game_surface_control := app.get("game_surface_canvas") as Control
-	var cage_snapshot: Dictionary = app.call("current_cage_window_snapshot") if app.has_method("current_cage_window_snapshot") else {}
-	var cage_visible := bool(cage_snapshot.get("visible", false))
-	if cage_visible:
-		var cage_rect: Rect2 = cage_snapshot.get("popup_rect", Rect2())
-		_require(cage_rect.size.x > 0.0 and cage_rect.size.y > 0.0, "%s Cage popup has no visible bounds." % context)
-		_require(viewport_rect.encloses(cage_rect), "%s Cage popup is outside the visible viewport: popup=%s viewport=%s." % [context, str(cage_rect), str(viewport_rect)])
+	var talk_snapshot: Dictionary = app.call("current_talk_dock_snapshot") if app.has_method("current_talk_dock_snapshot") else {}
+	var talk_visible := bool(talk_snapshot.get("visible", false))
 	if environment_control != null and environment_control.visible:
 		_assert_environment_canvas_contained(context)
-		if str(screen_snapshot.get("screen", "")) == "ENVIRONMENT" and not cage_visible:
+		if str(screen_snapshot.get("screen", "")) == "ENVIRONMENT" and not talk_visible:
 			_require(_has_visible_text(app, "double-click glowing props to act"), "%s room mode does not show visible object interaction guidance." % context)
 	if game_surface_control != null and game_surface_control.visible:
 		_assert_game_surface_contained(context)

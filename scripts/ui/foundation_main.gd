@@ -38,6 +38,8 @@ const CONTEXT_MODE_META_BAG := "meta_bag"
 const CONTEXT_MODE_META_UPGRADE := "meta_upgrade"
 const CONTEXT_MODE_META_TRADE_UP := "meta_trade_up"
 const CONTEXT_MODE_META_PAWN_COUNTER := "meta_pawn_counter"
+const CONTEXT_MODE_META_SAL_SHELF := "meta_sal_shelf"
+const CONTEXT_MODE_META_SAL_TALK := "meta_sal_talk"
 const META_LOCATION_HOME := "home"
 const RUN_INFO_BAND_RATIO := 0.15
 const RUN_SURFACE_BAND_RATIO := 0.85
@@ -93,8 +95,8 @@ const SmallScreenPolicyScript := preload("res://scripts/ui/small_screen_policy.g
 const AttributeBadgeRowScript := preload("res://scripts/ui/attribute_badge_row.gd")
 const RunInventoryScreenScript := preload("res://scripts/ui/run_inventory_screen.gd")
 const RunInventoryViewModelScript := preload("res://scripts/ui/run_inventory_view_model.gd")
-const CageWindowScript := preload("res://scripts/ui/cage_window.gd")
-const CageWindowViewModelScript := preload("res://scripts/ui/cage_window_view_model.gd")
+const CageCounterViewModelScript := preload("res://scripts/ui/cage_counter_view_model.gd")
+const CageAtmViewModelScript := preload("res://scripts/ui/cage_atm_view_model.gd")
 const MetaCollectionViewModelScript := preload("res://scripts/ui/meta_collection_view_model.gd")
 const RunJournalViewModelScript := preload("res://scripts/ui/run_journal_view_model.gd")
 const RunReportViewModelScript := preload("res://scripts/ui/run_report_view_model.gd")
@@ -174,10 +176,6 @@ var pending_wager_confirm_skip_stake_validation := false
 var pending_wager_confirm_preserve_surface_ui_state := false
 var pending_wager_confirm_stake: int = 0
 var pending_wager_confirm_source_game_id: String = ""
-var pending_chip_top_up_action_id: String = ""
-var pending_chip_top_up_skip_stake_validation := false
-var pending_chip_top_up_preserve_surface_ui_state := false
-var pending_chip_top_up_required: int = 0
 var pending_all_in_result_terminal_check := false
 var terminal_evaluator_call_count := 0
 var presented_bankroll_hold_active := false
@@ -303,7 +301,6 @@ var conclusion_animation_overlay: Control
 var conclusion_animation_snapshot: Dictionary = {}
 var conclusion_animation_tweens: Array[Tween] = []
 var run_inventory_screen: RunInventoryScreen
-var cage_window: CageWindow
 var run_inventory_overlay: Control
 var run_inventory_panel: PanelContainer
 var run_inventory_items_scroll: ScrollContainer
@@ -520,7 +517,6 @@ func start_foundation_run(seed_text: String = DEFAULT_SEED, challenge_config: Di
 	close_content_group_config()
 	close_challenge_selection()
 	_hide_run_menu()
-	_hide_cage_window()
 	_hide_world_map_overlay()
 	_hide_run_journal_popup()
 	_hide_travel_transition()
@@ -547,7 +543,6 @@ func start_foundation_run(seed_text: String = DEFAULT_SEED, challenge_config: Di
 	selected_action_category = ACTION_CATEGORY_GAMES
 	_set_current_screen(SCREEN_ENVIRONMENT)
 	_hide_event_choice_popup()
-	_hide_cage_window()
 	_hide_run_inventory_popup()
 	_hide_run_journal_popup()
 	_hide_world_map_overlay()
@@ -634,9 +629,9 @@ func enter_game(game_id: String) -> void:
 	if game_module == null:
 		_show_message("This game is not ready here.")
 		return
+	_reset_game_surface_runtime_state()
 	current_game = game_module
 	_sync_presented_bankroll_to_actual()
-	_reset_game_surface_runtime_state()
 	selected_action_category = ACTION_CATEGORY_GAMES
 	_set_current_screen(SCREEN_GAME)
 	focus_interactable_object("game:%s" % game_id)
@@ -653,6 +648,7 @@ func enter_game(game_id: String) -> void:
 func _enter_grand_casino_duel_surface() -> bool:
 	if run_state == null or not run_state.grand_casino_duel_active(run_state.current_environment):
 		return false
+	_reset_game_surface_runtime_state()
 	if str(run_state.current_environment.get("archetype_id", "")) != RunState.GRAND_CASINO_BACK_ROOM_ARCHETYPE_ID:
 		if not generator.enter_grand_casino_room(run_state, RunState.GRAND_CASINO_BACK_ROOM_ARCHETYPE_ID):
 			return false
@@ -665,7 +661,6 @@ func _enter_grand_casino_duel_surface() -> bool:
 		return false
 	current_game = game_module
 	_sync_presented_bankroll_to_actual()
-	_reset_game_surface_runtime_state()
 	selected_action_category = ACTION_CATEGORY_GAMES
 	_set_current_screen(SCREEN_GAME)
 	focus_interactable_object("game:%s" % duel_game_id)
@@ -772,7 +767,8 @@ func _on_game_surface_action_blocked(_action: String, reason: String) -> void:
 func _on_game_surface_pointer_action(action: String, index: int, phase: String, board_position: Vector2) -> void:
 	if current_game == null or _guard_player_input_route(false, action):
 		return
-	var ui_state := _current_game_surface_ui_state()
+	var lightweight_state := current_game.surface_pointer_uses_lightweight_ui_state(action)
+	var ui_state := game_surface_ui_state.duplicate(false) if lightweight_state else _current_game_surface_ui_state()
 	ui_state["selected_action_id"] = selected_action_id
 	ui_state["selected_action_kind"] = selected_action_kind
 	ui_state["selected_stake"] = _current_selected_stake()
@@ -797,7 +793,7 @@ func _apply_game_surface_command(command: Dictionary, index: int = -1, confirm_r
 	if not game_surface_auto_resolving and _guard_player_input_route():
 		return true
 	if command.has("ui_state") and typeof(command.get("ui_state")) == TYPE_DICTIONARY:
-		_store_current_game_surface_ui_state(command.get("ui_state", {}) as Dictionary)
+		_store_current_game_surface_ui_state(command.get("ui_state", {}) as Dictionary, not bool(command.get("surface_transient", false)))
 	if command.has("selected_index") and game_surface_canvas != null:
 		game_surface_canvas.set_selected_index(int(command.get("selected_index", index)))
 	if command.has("stake_multiplier"):
@@ -821,6 +817,10 @@ func _apply_game_surface_command(command: Dictionary, index: int = -1, confirm_r
 			return true
 	elif command.has("message"):
 		_show_message(str(command.get("message", "")))
+	var surface_patch_value: Variant = command.get("surface_state_patch", {})
+	if typeof(surface_patch_value) == TYPE_DICTIONARY and not (surface_patch_value as Dictionary).is_empty() and game_surface_canvas != null:
+		game_surface_canvas.apply_surface_state_patch(surface_patch_value as Dictionary)
+		return true
 	if environment_changed:
 		_autosave_foundation_run("Autosaved.")
 	_refresh()
@@ -830,6 +830,12 @@ func _apply_game_surface_command(command: Dictionary, index: int = -1, confirm_r
 func _play_surface_command_audio(command: Dictionary, fallback_index: int) -> void:
 	if game_surface_canvas == null:
 		return
+	var loop_stop := str(command.get("surface_audio_loop_stop", "")).strip_edges()
+	if not loop_stop.is_empty():
+		game_surface_canvas.surface_stop_audio_loop(loop_stop)
+	var loop_start := str(command.get("surface_audio_loop_start", "")).strip_edges()
+	if not loop_start.is_empty():
+		game_surface_canvas.surface_start_audio_loop(loop_start, float(command.get("surface_audio_loop_volume_db", -10.0)), float(command.get("surface_audio_loop_pitch", 1.0)))
 	var cue_id := str(command.get("surface_audio_cue", "")).strip_edges()
 	if cue_id.is_empty():
 		return
@@ -1141,7 +1147,13 @@ func _current_game_surface_auto_tick_state() -> Dictionary:
 	return _apply_game_surface_time_fields(ui_state)
 
 
+func _checkpoint_current_game_surface_ui_state() -> void:
+	if current_game != null and run_state != null and not run_state.current_environment.is_empty() and not game_surface_ui_state.is_empty():
+		current_game.checkpoint_surface_ui_state(game_surface_ui_state, run_state, run_state.current_environment)
+
+
 func _reset_game_surface_runtime_state() -> void:
+	_checkpoint_current_game_surface_ui_state()
 	if game_surface_canvas != null:
 		game_surface_canvas.clear_runtime_state()
 	_stop_surface_feature_music()
@@ -1494,6 +1506,7 @@ func resolve_event_choice(event_id: String, choice_id: String) -> void:
 	)
 	_show_item_found_popups(result, inventory_before)
 	_start_conclusion_animation(result, popup_rect)
+	_play_result_drink_audio_cue(result)
 	if was_triggered_popup and run_state != null:
 		run_state.complete_triggered_event_resolution(event_id)
 	if resolving_talk and run_state != null:
@@ -1765,6 +1778,12 @@ func _enqueue_triggered_events_for_context(source: String, context: Dictionary, 
 		if trigger_type == "random":
 			candidates.append({"id": event_id, "trigger": trigger, "event": event_definition})
 		elif ["timed", "travel"].has(trigger_type):
+			if trigger_type == "travel":
+				var travel_chance := clampi(int(trigger.get("chance_percent", 100)), 0, 100)
+				if travel_chance <= 0:
+					continue
+				if travel_chance < 100 and cadence_rng.randi_range(1, 100) > travel_chance:
+					continue
 			if run_state.enqueue_triggered_event(event_id, source, _event_context_with_environment(context, environment), _triggered_entry_overrides(event_definition)):
 				run_state.event_cadence_note_event_enqueued(event_id, not run_state.event_cadence_event_bypasses_budget(event_id, trigger_type, source, event_definition))
 				enqueued = true
@@ -2186,13 +2205,26 @@ func _dialogue_option_for_entry(entry: Dictionary) -> Dictionary:
 			"enabled": true,
 			"attribute_badges": [],
 		})
+	var summary := str(node.get("text", ""))
+	if dialogue_id == "linda_cage_services":
+		summary = CageCounterViewModelScript.service_summary(run_state, node_id)
+	elif dialogue_id == "sal_starter_offer":
+		summary = _sal_starter_offer_summary()
+	elif dialogue_id == "sal_starter_mocking_relist" and meta_collection_service != null:
+		for row_value in meta_collection_service.sal_shelf_rows():
+			var row := _copy_dict(row_value)
+			if str(row.get("listing_mode", "")) != MetaCollectionServiceScript.LISTING_MODE_MOCKING_RELIST:
+				continue
+			var relist_quote := _copy_dict(row.get("quote_basis", {}))
+			summary = "Same exact item. Pawn quote %d gold; asking price ceil(%d × 10) = %d gold." % [int(relist_quote.get("pawn_quote", 0)), int(relist_quote.get("pawn_quote", 0)), int(row.get("asking_price", 0))]
+			break
 	return {
 		"id": str(entry.get("event_id", "dialogue:%s" % dialogue_id)),
 		"dialogue_id": dialogue_id,
 		"display_name": str(dialogue.get("display_name", dialogue_id.replace("_", " ").capitalize())),
 		"type": "dialogue",
 		"interaction_mode": "triggered",
-		"summary": str(node.get("text", "")),
+		"summary": summary,
 		"choices": choices,
 	}
 
@@ -2249,6 +2281,17 @@ func _dialogue_choice_views(dialogue_id: String, node: Dictionary) -> Array:
 			"enabled": bool(requirement.get("enabled", true)),
 			"disabled_reason": str(requirement.get("reason", "")),
 		}
+		if dialogue_id == "linda_cage_services":
+			var service_status := _linda_cage_choice_status(choice_id)
+			if not service_status.is_empty():
+				option_choice["enabled"] = bool(service_status.get("enabled", true))
+				option_choice["disabled_reason"] = str(service_status.get("reason", ""))
+		elif dialogue_id == "sal_starter_offer" and choice_id == "sal_starter_sell_back":
+			var pending_offer := meta_collection_service.pending_starter_buyback() if meta_collection_service != null else {}
+			option_choice["label"] = "Sell it back · %d gold" % int(pending_offer.get("offer_price", 0))
+			option_choice["consequence_summary"] = "Exact one-time buyback"
+		elif dialogue_id == "sal_starter_offer" and choice_id == "sal_starter_keep":
+			option_choice["consequence_summary"] = "Keep the exact item"
 		option_choice["attribute_badges"] = [] if bool(choice.get("effects_hidden", false)) else AttributeBadgesScript.for_event_choice(option_choice)
 		result.append(option_choice)
 	return result
@@ -2296,6 +2339,12 @@ func _resolve_dialogue_choice(entry: Dictionary, choice_id: String) -> void:
 		_show_message("Travel is already in progress.")
 		_refresh_modal_contract_owner()
 		return
+	if str(entry.get("dialogue_id", "")) == "linda_cage_services" and choice_id.begins_with("cage_"):
+		_resolve_linda_cage_service_choice(entry, choice_id)
+		return
+	if str(entry.get("dialogue_id", "")) == "sal_starter_offer" and choice_id in ["sal_starter_sell_back", "sal_starter_keep"]:
+		_resolve_sal_starter_dialogue_choice(entry, choice_id)
+		return
 	var option := _dialogue_option_for_entry(entry)
 	var option_choice := _event_choice(option, choice_id)
 	if option_choice.is_empty():
@@ -2323,6 +2372,7 @@ func _resolve_dialogue_choice(entry: Dictionary, choice_id: String) -> void:
 	var result := event_module.resolve(run_state, event_environment, choice_id)
 	_show_item_found_popups(result, inventory_before)
 	_start_conclusion_animation(result, _talk_dock_panel_rect())
+	_play_result_drink_audio_cue(result)
 	if bool(result.get("ok", false)):
 		var goto_id := str(choice_definition.get("goto", "")).strip_edges()
 		if not goto_id.is_empty():
@@ -2339,6 +2389,87 @@ func _resolve_dialogue_choice(entry: Dictionary, choice_id: String) -> void:
 	if bool(result.get("ok", false)) and _apply_post_action_environment_interrupt("dialogue"):
 		_refresh()
 		return
+	_refresh()
+
+
+func _sal_starter_offer_summary() -> String:
+	if meta_collection_service == null:
+		return "Sal's offer is unavailable."
+	var pending := meta_collection_service.pending_starter_buyback()
+	if pending.is_empty():
+		return "Sal has already closed the offer."
+	var channel := str(pending.get("rare_channel", "edge")).replace("_", " ").capitalize()
+	return "Sal taps the %s reading: %.2f%%. ‘Edge sample. I'll pay %d gold right now. Sell it back?’" % [
+		channel,
+		float(pending.get("rare_value", 0.0)) * 100.0,
+		int(pending.get("offer_price", 0)),
+	]
+
+
+func _sal_starter_offer_is_pending() -> bool:
+	return meta_collection_service != null and not meta_collection_service.pending_starter_buyback().is_empty()
+
+
+func _resume_sal_starter_offer() -> bool:
+	if not _sal_starter_offer_is_pending():
+		return false
+	_hide_event_choice_popup()
+	return start_dialogue("sal_starter_offer", {
+		"event_id": "dialogue:sal_starter_offer",
+		"source": "sal_resale_tutorial",
+		"source_object_id": "meta_sal:talk",
+	})
+
+
+func _talk_to_sal() -> bool:
+	if _sal_starter_offer_is_pending():
+		return _resume_sal_starter_offer()
+	return start_dialogue("sal_shop_talk", {
+		"source": "sal_pawn_shop",
+		"source_object_id": "meta_sal:talk",
+	})
+
+
+func _start_sal_routine_dialogue(kind: String) -> bool:
+	if meta_collection_service == null:
+		return false
+	var snapshot := meta_collection_service.snapshot()
+	var pool: Array[String] = ["sal_purchase_1", "sal_purchase_2"]
+	var count := _copy_array(_copy_dict(snapshot.get("sal_resale", {})).get("purchase_history", [])).size()
+	if kind == "sale":
+		pool = ["sal_sale_1", "sal_sale_2"]
+		count = _copy_array(snapshot.get("sale_history", [])).size()
+	var index := posmod(maxi(0, count - 1), pool.size())
+	return start_dialogue(pool[index], {
+		"source": "sal_%s" % kind,
+		"source_object_id": "meta_sal:talk",
+	})
+
+
+func _resolve_sal_starter_dialogue_choice(entry: Dictionary, choice_id: String) -> void:
+	var choice := "sell_back" if choice_id == "sal_starter_sell_back" else "keep"
+	var result: Dictionary = meta_collection_service.resolve_starter_buyback(choice)
+	if not bool(result.get("ok", false)):
+		_show_message(str(result.get("message", "Sal's offer could not be resolved.")))
+		_refresh_talk_dock()
+		_refresh()
+		return
+	var save_error := meta_collection_service.save()
+	if save_error != OK:
+		meta_collection_service.load()
+		_show_message("Sal's offer could not be saved, so nothing changed.")
+		_refresh_talk_dock()
+		_refresh()
+		return
+	run_state.complete_talk_event_resolution(str(entry.get("event_id", "dialogue:sal_starter_offer")))
+	_apply_meta_environment(meta_session_location_id)
+	_refresh_talk_dock()
+	_show_message(str(result.get("message", "Sal's offer is closed.")))
+	var continuation := "sal_starter_mocking_relist" if choice == "sell_back" else "sal_starter_kept"
+	start_dialogue(continuation, {
+		"source": "sal_resale_tutorial",
+		"source_object_id": "meta_sal:talk",
+	})
 	_refresh()
 
 
@@ -2539,6 +2670,7 @@ func apply_item_offer(item_id: String) -> bool:
 		return false
 	var result: Dictionary = resolved.get("result", {})
 	last_item_result = result.duplicate(true)
+	_play_result_drink_audio_cue(result)
 	last_game_result = {}
 	last_hook_result = {}
 	_clear_selected_item_offer()
@@ -2774,6 +2906,7 @@ func _use_active_item(item_id: String) -> bool:
 		if bool(result.get("ok", false)):
 			run_state.advance_environment_turns(1)
 		GameModule.apply_result(run_state, result, run_state.create_rng("active_item_apply:%s" % item_id))
+		_play_result_drink_audio_cue(result)
 		last_item_result = result.duplicate(true)
 		last_game_result = {}
 		last_hook_result = {}
@@ -2805,6 +2938,7 @@ func _use_global_active_item(item_id: String, detail: Dictionary) -> bool:
 		"action_id": "use_active_item",
 		"action_kind": "item",
 	}, run_state)
+	_play_result_drink_audio_cue(result)
 	last_item_result = result.duplicate(true)
 	last_game_result = {}
 	last_hook_result = {}
@@ -2988,6 +3122,7 @@ func use_service_hook(service_id: String) -> bool:
 		return false
 	var result: Dictionary = resolved.get("result", {})
 	_show_item_found_popups(result, inventory_before)
+	_play_result_drink_audio_cue(result)
 	last_hook_result = result.duplicate(true)
 	_clear_selected_service_hook()
 	_set_current_screen(SCREEN_RESULT)
@@ -3180,6 +3315,7 @@ func use_game_environment_hook(game_id: String, hook_id: String, action_id: Stri
 	if bool(result.get("ok", false)):
 		run_state.advance_environment_turns(1)
 		GameModule.apply_result(run_state, result, rng)
+		_play_result_drink_audio_cue(result)
 		_advance_alcohol_absorption()
 	last_hook_result = result.duplicate(true)
 	last_game_result = {}
@@ -3205,6 +3341,8 @@ func save_foundation_run() -> void:
 func _autosave_foundation_run(status_text: String = "Autosaved.", force: bool = false) -> bool:
 	if run_state == null:
 		return false
+	if _is_meta_session():
+		return false
 	if dev_game_test_mode:
 		save_status_message = "Practice sessions are not autosaved."
 		return false
@@ -3219,6 +3357,7 @@ func _autosave_foundation_run(status_text: String = "Autosaved.", force: bool = 
 func _write_foundation_run_save(status_text: String = "Autosaved.") -> bool:
 	if run_state == null:
 		return false
+	_checkpoint_current_game_surface_ui_state()
 	_evaluate_run_terminal_state()
 	if save_service == null:
 		save_status_message = "Autosave unavailable."
@@ -3415,7 +3554,6 @@ func _travel_to(target_id: String, target_label: String, choice_data: Dictionary
 		return
 	if travel_transition_active:
 		return
-	var previous_environment := run_state.current_environment.duplicate(true)
 	var ignored_talk_entries: Array = []
 	if choice_data.is_empty():
 		choice_data = _travel_choice(target_id)
@@ -3433,6 +3571,10 @@ func _travel_to(target_id: String, target_label: String, choice_data: Dictionary
 		_show_message("That interior casino door is not available.")
 		_refresh()
 		return
+	# Persist UI-local ticket reveals while the module still points at the
+	# environment where the tickets were purchased.
+	_reset_game_surface_runtime_state()
+	var previous_environment := run_state.current_environment.duplicate(true)
 	ignored_talk_entries = _pending_talk_entries()
 	if world_map_overlay != null:
 		world_map_overlay.visible = false
@@ -3476,7 +3618,6 @@ func _travel_to(target_id: String, target_label: String, choice_data: Dictionary
 	run_state.clear_closing_time_state()
 	var travel_decay := run_state.finish_travel_suspicion_decay(travel_heat)
 	_update_procedural_music()
-	_reset_game_surface_runtime_state()
 	current_game = null
 	last_game_result = {}
 	last_item_result = {}
@@ -3535,6 +3676,66 @@ func _travel_to(target_id: String, target_label: String, choice_data: Dictionary
 		else:
 			_refresh_talk_dock()
 			_refresh()
+
+
+func _linda_cage_choice_status(choice_id: String) -> Dictionary:
+	if run_state == null:
+		return {"enabled": false, "reason": "No active run."}
+	var model := CageCounterViewModelScript.build(run_state)
+	var balance: Dictionary = model.get("balance", {}) if typeof(model.get("balance", {})) == TYPE_DICTIONARY else {}
+	var card: Dictionary = model.get("card", {}) if typeof(model.get("card", {})) == TYPE_DICTIONARY else {}
+	match choice_id:
+		"cage_buy_25":
+			var cost_25 := 25 * maxi(1, int(balance.get("rate", 1)))
+			return {"enabled": run_state.bankroll >= cost_25, "reason": "Needs $%d cash." % cost_25}
+		"cage_buy_50":
+			var cost_50 := 50 * maxi(1, int(balance.get("rate", 1)))
+			return {"enabled": run_state.bankroll >= cost_50, "reason": "Needs $%d cash." % cost_50}
+		"cage_cashout_all":
+			return {"enabled": run_state.grand_casino_chips > 0, "reason": "No chips to redeem."}
+		"cage_claim_card":
+			return {"enabled": bool(card.get("can_claim", false)), "reason": str(card.get("review_detail", "No tier is ready."))}
+		"cage_comp_drink":
+			var drink_status := run_state.grand_casino_players_card_comp_result("drink")
+			return {"enabled": bool(drink_status.get("ok", false)), "reason": str(drink_status.get("message", "No drink comp is ready."))}
+		"cage_comp_suite":
+			var suite_status := run_state.grand_casino_players_card_comp_result("suite_rest")
+			return {"enabled": bool(suite_status.get("ok", false)), "reason": str(suite_status.get("message", "No suite rest is ready."))}
+		"cage_comp_look_away":
+			return {"enabled": bool(run_state.narrative_flags.get("grand_casino_linda_look_away_available", false)), "reason": "Linda has no look-away ready."}
+	return {}
+
+
+func _resolve_linda_cage_service_choice(entry: Dictionary, choice_id: String) -> void:
+	var status := _linda_cage_choice_status(choice_id)
+	if not bool(status.get("enabled", true)):
+		_show_message(str(status.get("reason", "That counter action is unavailable.")))
+		_refresh_talk_dock()
+		_refresh()
+		return
+	match choice_id:
+		"cage_buy_25":
+			_buy_cage_chips(25)
+		"cage_buy_50":
+			_buy_cage_chips(50)
+		"cage_cashout_all":
+			_cash_out_cage_chips()
+		"cage_claim_card":
+			run_state.complete_talk_event_resolution(str(entry.get("event_id", "")))
+			_refresh_talk_dock()
+			_complete_cage_players_card_review()
+		"cage_comp_drink":
+			_use_cage_players_card_comp("drink")
+		"cage_comp_suite":
+			_use_cage_players_card_comp("suite_rest")
+		"cage_comp_look_away":
+			_show_message("Linda will look away automatically from the next small heat gain. It is ready now.")
+		"cage_ambient":
+			run_state.complete_talk_event_resolution(str(entry.get("event_id", "")))
+			_refresh_talk_dock()
+			_start_linda_ambient_dialogue({"object_id": "casino_fixture:cage_counter"})
+	_refresh_talk_dock()
+	_refresh()
 
 
 func _travel_result(target_id: String, destination_name: String, route: Dictionary, previous_environment: Dictionary, destination_environment: Dictionary, travel_decay: Dictionary = {}, route_risk: Dictionary = {}) -> Dictionary:
@@ -4546,21 +4747,6 @@ func _build_run_inventory_overlay() -> void:
 	run_inventory_screen.take_item_requested.connect(Callable(self, "_take_home_container_item_from_popup"))
 	add_child(run_inventory_screen)
 	run_inventory_overlay = run_inventory_screen
-
-
-func _build_cage_window() -> void:
-	if cage_window != null:
-		return
-	cage_window = CageWindowScript.new()
-	cage_window.close_requested.connect(Callable(self, "_request_close_cage_window"))
-	cage_window.buy_chips_requested.connect(Callable(self, "_buy_cage_chips"))
-	cage_window.cash_out_requested.connect(Callable(self, "_cash_out_cage_chips"))
-	cage_window.review_requested.connect(Callable(self, "_complete_cage_players_card_review"))
-	cage_window.comp_requested.connect(Callable(self, "_use_cage_players_card_comp"))
-	add_child(cage_window)
-	cage_window.set_reduce_motion(bool(user_settings.reduce_motion) if user_settings != null else false)
-	cage_window.set_small_screen_mode(_small_screen_enabled())
-	_apply_accessibility_to_node(cage_window, _accessibility_font_scale(), _accessibility_control_scale())
 
 
 func _build_run_journal_overlay() -> void:
@@ -5935,6 +6121,10 @@ func _add_context_object_actions(card: VBoxContainer, object_data: Dictionary) -
 			_add_card_button(card, "Review trades", Callable(self, "open_meta_trade_up"), false, true)
 		CONTEXT_MODE_META_PAWN_COUNTER:
 			_add_card_button(card, "Sell", Callable(self, "open_meta_sell_counter"), false, true)
+		CONTEXT_MODE_META_SAL_SHELF:
+			_add_card_button(card, "Inspect", Callable(self, "open_meta_sal_shelf").bind(int(source_id)), false, true)
+		CONTEXT_MODE_META_SAL_TALK:
+			_add_card_button(card, "Talk", Callable(self, "_talk_to_sal"), false, true)
 		CONTEXT_MODE_TRAVEL:
 			_add_context_travel_actions(card, source_id)
 		CONTEXT_MODE_SERVICE:
@@ -6306,7 +6496,7 @@ func _add_current_game_panel(environment: Dictionary) -> void:
 		description_label.clip_text = true
 		actions_list.add_child(description_label)
 	var balance_text := "Current bankroll: %d" % _presented_bankroll()
-	if run_state.grand_casino_table_uses_chips(current_game.get_id(), environment):
+	if run_state.grand_casino_game_uses_chips(current_game.get_id(), environment):
 		balance_text = "Current chips: %d  |  Cash: %d" % [run_state.grand_casino_chips, run_state.bankroll]
 	actions_list.add_child(_label(balance_text, 12))
 	actions_list.add_child(_button("Back to environment", Callable(self, "back_to_environment")))
@@ -6352,10 +6542,6 @@ func _resolve_game_action(action_id: String, skip_stake_validation: bool = false
 		_refresh_stake_input()
 		return
 	var wager_cost := _wager_cost_for_action(action_id, stake)
-	if not wager_confirmed and _casino_table_wager_needs_top_up(current_game, wager_cost):
-		_pause_repeating_surface_action_for_wager_confirmation()
-		_show_casino_chip_top_up_popup(action_id, wager_cost, skip_stake_validation, preserve_surface_ui_state)
-		return
 	if not wager_confirmed and _wager_needs_final_bankroll_confirmation(current_game, action_id, stake, wager_cost, _current_game_surface_ui_state()):
 		_pause_repeating_surface_action_for_wager_confirmation()
 		_show_wager_confirmation_popup(action_id, stake, wager_cost, skip_stake_validation, preserve_surface_ui_state)
@@ -6363,6 +6549,13 @@ func _resolve_game_action(action_id: String, skip_stake_validation: bool = false
 	var confirmed_all_in_wager := wager_confirmed and _wager_needs_final_bankroll_confirmation(current_game, action_id, stake, wager_cost, _current_game_surface_ui_state())
 	if confirmed_all_in_wager:
 		run_state.begin_deferred_bankroll_zero_resolution()
+	var wager_funding := run_state.fund_grand_casino_wager(current_game.get_id(), wager_cost, run_state.current_environment)
+	if not bool(wager_funding.get("ok", false)):
+		if confirmed_all_in_wager:
+			run_state.clear_deferred_bankroll_zero_resolution()
+		_show_message(str(wager_funding.get("message", "You do not have enough cash or chips for that wager.")))
+		_refresh()
+		return
 	var bankroll_before_result := run_state.bankroll
 	var rng := run_state.create_rng()
 	var result := current_game.resolve_with_context(action_id, stake, run_state, run_state.current_environment, rng, _current_game_surface_ui_state())
@@ -6396,6 +6589,7 @@ func _resolve_game_action(action_id: String, skip_stake_validation: bool = false
 		if not outcome_schedule.is_empty():
 			last_game_result["music_outcome_schedule"] = outcome_schedule
 	_play_result_surface_audio_cue(result)
+	_play_result_drink_audio_cue(result)
 	pending_all_in_result_terminal_check = confirmed_all_in_wager and bool(result.get("ok", false)) and run_state != null and not run_state.has_liquid_run_funds() and not bool(result.get("won", false))
 	if runtime_tick_in_progress:
 		if game_surface_canvas != null and current_screen == SCREEN_GAME:
@@ -6435,6 +6629,22 @@ func _play_result_surface_audio_cue(result: Dictionary) -> void:
 	game_surface_canvas.surface_play_audio_cue(cue_id, context)
 
 
+func _play_result_drink_audio_cue(result: Dictionary) -> void:
+	if not _result_consumed_alcohol(result) or game_surface_canvas == null:
+		return
+	game_surface_canvas.surface_play_audio_cue("drink_consumed", {
+		"action": "drink_consumed",
+		"volume_db": -2.0,
+	})
+
+
+func _result_consumed_alcohol(result: Dictionary) -> bool:
+	if result.is_empty() or not bool(result.get("ok", false)):
+		return false
+	var deltas: Dictionary = result.get("deltas", {}) if typeof(result.get("deltas", {})) == TYPE_DICTIONARY else {}
+	return int(deltas.get("alcohol_intake", result.get("alcohol_intake", 0))) > 0
+
+
 func confirm_pending_wager_action() -> void:
 	if pending_wager_confirm_action_id.is_empty():
 		_hide_event_choice_popup()
@@ -6456,89 +6666,6 @@ func cancel_pending_wager_confirmation() -> void:
 	_hide_event_choice_popup()
 	_show_message("All-in wager canceled. Choose a smaller stake or another action.")
 	_refresh()
-
-
-func _casino_table_wager_needs_top_up(game: GameModule, wager_cost: int) -> bool:
-	return run_state != null \
-		and game != null \
-		and wager_cost > run_state.grand_casino_chips \
-		and run_state.grand_casino_table_uses_chips(game.get_id(), run_state.current_environment)
-
-
-func _show_casino_chip_top_up_popup(action_id: String, wager_cost: int, skip_stake_validation: bool, preserve_surface_ui_state: bool) -> void:
-	var required := maxi(0, wager_cost - run_state.grand_casino_chips)
-	var rate := run_state.grand_casino_chip_exchange_rate()
-	var cash_cost := required * rate
-	if required <= 0:
-		_resolve_game_action(action_id, skip_stake_validation, preserve_surface_ui_state)
-		return
-	if cash_cost > run_state.bankroll:
-		_show_message("That wager needs %d more chips, but you only have $%d cash available to convert." % [required, run_state.bankroll])
-		_refresh()
-		return
-	if event_choice_popup_overlay == null or event_choice_popup_choices_list == null:
-		_show_message("Buy %d chips for $%d at the Cage before placing this wager." % [required, cash_cost])
-		return
-	pending_chip_top_up_action_id = action_id
-	pending_chip_top_up_skip_stake_validation = skip_stake_validation
-	pending_chip_top_up_preserve_surface_ui_state = preserve_surface_ui_state
-	pending_chip_top_up_required = required
-	pending_event_choice_popup_event_id = ""
-	pending_event_choice_popup_focus_choice_id = ""
-	pending_event_choice_popup_snapshot = {
-		"visible": true,
-		"blocking": true,
-		"popup_type": "casino_chip_top_up",
-		"interaction_kind": "blocking_decision",
-		"dismissible": false,
-		"required_chips": required,
-		"cash_cost": cash_cost,
-		"summary": "This table needs %d more chips. Convert $%d at the casino's %d:1 rate?" % [required, cash_cost, rate],
-	}
-	if event_choice_popup_title_label != null:
-		event_choice_popup_title_label.text = "Buy Chips"
-	if event_choice_popup_summary_label != null:
-		event_choice_popup_summary_label.text = str(pending_event_choice_popup_snapshot.get("summary", ""))
-	_clear(event_choice_popup_choices_list)
-	_add_wager_confirmation_card("Buy %d chips" % required, "Convert only the amount this wager needs.", "", Callable(self, "confirm_pending_casino_chip_top_up"), true)
-	_add_wager_confirmation_card("Cancel", "Return to the table without placing the wager.", "", Callable(self, "cancel_pending_casino_chip_top_up"), false)
-	event_choice_popup_overlay.visible = true
-	event_choice_popup_overlay.move_to_front()
-	_position_event_choice_popup()
-	call_deferred("_position_event_choice_popup")
-
-
-func confirm_pending_casino_chip_top_up() -> void:
-	if pending_chip_top_up_action_id.is_empty() or run_state == null:
-		_hide_event_choice_popup()
-		return
-	var action_id := pending_chip_top_up_action_id
-	var skip_stake_validation := pending_chip_top_up_skip_stake_validation
-	var preserve_surface_ui_state := pending_chip_top_up_preserve_surface_ui_state
-	var required := pending_chip_top_up_required
-	_clear_pending_chip_top_up()
-	_hide_event_choice_popup()
-	var result := run_state.buy_grand_casino_chips(required, run_state.grand_casino_chip_exchange_rate())
-	if not bool(result.get("ok", false)):
-		_show_message(str(result.get("message", "The table buy-in could not be completed.")))
-		_refresh()
-		return
-	_show_message(str(result.get("message", "The table converted your cash to chips.")))
-	_resolve_game_action(action_id, skip_stake_validation, preserve_surface_ui_state)
-
-
-func cancel_pending_casino_chip_top_up() -> void:
-	_clear_pending_chip_top_up()
-	_hide_event_choice_popup()
-	_show_message("Table buy-in canceled. Choose a smaller wager or visit the Cage.")
-	_refresh()
-
-
-func _clear_pending_chip_top_up() -> void:
-	pending_chip_top_up_action_id = ""
-	pending_chip_top_up_skip_stake_validation = false
-	pending_chip_top_up_preserve_surface_ui_state = false
-	pending_chip_top_up_required = 0
 
 
 func _wager_cost_for_action(action_id: String, stake: int) -> int:
@@ -6620,7 +6747,7 @@ func _blocking_decision_popup_is_visible() -> bool:
 
 
 func _modal_contract_blocks_player_input() -> bool:
-	return travel_transition_active or _event_choice_popup_is_visible() or _cage_window_is_open() or _run_inventory_popup_is_visible() or _run_journal_popup_is_visible() or _world_map_overlay_is_visible() or _run_menu_is_visible()
+	return travel_transition_active or _event_choice_popup_is_visible() or _run_inventory_popup_is_visible() or _run_journal_popup_is_visible() or _world_map_overlay_is_visible() or _run_menu_is_visible()
 
 
 func _blocking_modal_message() -> String:
@@ -6628,8 +6755,6 @@ func _blocking_modal_message() -> String:
 		return "Travel is already in progress."
 	if _event_choice_popup_is_visible():
 		return "Choose a response before doing anything else."
-	if _cage_window_is_open():
-		return "Close the Cage before doing anything else."
 	if _world_map_overlay_is_visible():
 		return "Close the map before doing anything else."
 	if _run_inventory_popup_is_visible():
@@ -6735,7 +6860,6 @@ func current_overlay_state_snapshot() -> Dictionary:
 		"event_choice_popup_type": str(pending_event_choice_popup_snapshot.get("popup_type", "")),
 		"event_choice_popup_blocking": _blocking_decision_popup_is_visible(),
 		"talk_dock_visible": talk_dock != null and talk_dock.visible,
-		"cage_window_visible": _cage_window_is_open(),
 		"world_map_visible": _world_map_overlay_is_visible(),
 		"run_inventory_visible": _run_inventory_popup_is_visible(),
 		"run_inventory_mode": run_inventory_popup_mode,
@@ -6757,7 +6881,6 @@ func _overlay_state_contract_violations(snapshot: Dictionary = {}) -> Array:
 			"screen": current_screen,
 			"event_choice_popup_visible": _event_choice_popup_is_visible(),
 			"event_choice_popup_type": str(pending_event_choice_popup_snapshot.get("popup_type", "")),
-			"cage_window_visible": _cage_window_is_open(),
 			"world_map_visible": _world_map_overlay_is_visible(),
 			"run_inventory_visible": _run_inventory_popup_is_visible(),
 			"run_journal_visible": _run_journal_popup_is_visible(),
@@ -6767,7 +6890,6 @@ func _overlay_state_contract_violations(snapshot: Dictionary = {}) -> Array:
 		}
 	var violations: Array = []
 	var event_visible := bool(snapshot.get("event_choice_popup_visible", false))
-	var cage_visible := bool(snapshot.get("cage_window_visible", false))
 	var world_map_visible := bool(snapshot.get("world_map_visible", false))
 	var inventory_visible := bool(snapshot.get("run_inventory_visible", false))
 	var journal_visible := bool(snapshot.get("run_journal_visible", false))
@@ -6775,17 +6897,13 @@ func _overlay_state_contract_violations(snapshot: Dictionary = {}) -> Array:
 	var run_menu_visible := bool(snapshot.get("run_menu_visible", false))
 	var travel_visible := bool(snapshot.get("travel_transition_active", false))
 	if travel_visible:
-		for label in ["event_choice_popup_visible", "cage_window_visible", "world_map_visible", "run_inventory_visible", "run_journal_visible", "run_menu_visible", "settings_visible"]:
+		for label in ["event_choice_popup_visible", "world_map_visible", "run_inventory_visible", "run_journal_visible", "run_menu_visible", "settings_visible"]:
 			if bool(snapshot.get(label, false)):
 				violations.append("travel_transition overlaps %s" % label)
 	if event_visible:
-		for label in ["cage_window_visible", "world_map_visible", "run_inventory_visible", "run_journal_visible", "run_menu_visible", "settings_visible"]:
-			if bool(snapshot.get(label, false)):
-				violations.append("decision_popup overlaps %s" % label)
-	if cage_visible:
 		for label in ["world_map_visible", "run_inventory_visible", "run_journal_visible", "run_menu_visible", "settings_visible"]:
 			if bool(snapshot.get(label, false)):
-				violations.append("cage_window overlaps %s" % label)
+				violations.append("decision_popup overlaps %s" % label)
 	if world_map_visible:
 		for label in ["run_inventory_visible", "run_journal_visible", "run_menu_visible", "settings_visible"]:
 			if bool(snapshot.get(label, false)):
@@ -7389,6 +7507,10 @@ func activate_interactable_object(object_id: String) -> bool:
 		return open_world_map()
 	if object_id.begins_with("event_response:"):
 		return _activate_event_response_action(object_id)
+	if object_id.begins_with("cage_atm_action:"):
+		return _activate_cage_atm_action(object_id)
+	if object_id.begins_with("cage_gift_action:"):
+		return _activate_cage_gift_shop_action(object_id)
 	if not focus_interactable_object(object_id):
 		return false
 	var object_data := _interactable_object(object_id)
@@ -7470,9 +7592,33 @@ func activate_interactable_object(object_id: String) -> bool:
 func _inspect_casino_fixture(object_data: Dictionary) -> bool:
 	var fixture_id := str(object_data.get("source_id", "")).strip_edges()
 	if fixture_id == "cage":
-		return _open_cage_window()
+		# Compatibility alias for old tutorial/save anchors. It routes to the new
+		# room and never constructs the retired modal.
+		if run_state != null and str(run_state.current_environment.get("archetype_id", "")) == RunState.GRAND_CASINO_ARCHETYPE_ID:
+			if select_travel_option(RunState.GRAND_CASINO_CAGE_ARCHETYPE_ID):
+				confirm_selected_travel()
+				return true
+		return _start_linda_cage_services(object_data)
+	if fixture_id == "cage_counter":
+		return _start_linda_cage_services(object_data)
+	if fixture_id == "cage_atm":
+		var atm := CageAtmViewModelScript.build(run_state)
+		_show_message(str(atm.get("summary", "The ATM shows the house marker account.")))
+		_refresh()
+		return true
+	if fixture_id == "cage_gift_shop":
+		var offers := _cage_gift_shop_offer_view_list()
+		var available_count := 0
+		for offer_value in offers:
+			if typeof(offer_value) == TYPE_DICTIONARY and not bool((offer_value as Dictionary).get("sold", false)):
+				available_count += 1
+		_show_message("The gift case has %d chip-priced item%s available." % [available_count, "" if available_count == 1 else "s"])
+		_refresh()
+		return true
 	if fixture_id == "host_desk":
-		return _start_linda_ambient_dialogue(object_data)
+		_show_message("The host desk points you toward Linda's barred counter in the Cage.")
+		_refresh()
+		return true
 	var message := str(object_data.get("interaction_message", object_data.get("short_description", "The casino staff acknowledge you."))).strip_edges()
 	if message.is_empty():
 		message = "The casino staff acknowledge you."
@@ -7481,52 +7627,78 @@ func _inspect_casino_fixture(object_data: Dictionary) -> bool:
 	return true
 
 
-func _open_cage_window() -> bool:
-	if run_state == null or str(run_state.current_environment.get("archetype_id", "")) != RunState.GRAND_CASINO_ARCHETYPE_ID:
-		_show_message("The Cage window is only available on the Grand Casino Main Floor.")
+func _cage_atm_inline_actions() -> Array:
+	return CageAtmViewModelScript.inline_actions(run_state) if run_state != null else []
+
+
+func _activate_cage_atm_action(object_id: String) -> bool:
+	if run_state == null or str(run_state.current_environment.get("archetype_id", "")) != RunState.GRAND_CASINO_CAGE_ARCHETYPE_ID:
+		return false
+	var parts := object_id.split(":")
+	if parts.size() < 3:
+		return false
+	var result: Dictionary = {}
+	if str(parts[1]) == "borrow":
+		result = run_state.borrow_from_grand_casino_atm(int(parts[2]))
+	elif str(parts[1]) == "repay":
+		result = run_state.repay_grand_casino_atm_debt(-1 if str(parts[2]) == "full" else int(parts[2]))
+	else:
+		return false
+	if bool(result.get("ok", false)):
+		run_state.advance_environment_turns(1)
+		_autosave_foundation_run("Autosaved.")
+	_show_message(str(result.get("message", "The ATM declines the transaction.")))
+	_refresh_talk_dock()
+	_refresh_runtime_environment_views()
+	return bool(result.get("ok", false))
+
+
+func _cage_gift_shop_offer_view_list() -> Array:
+	_refresh_run_action_service()
+	return run_action_service.cage_gift_shop_offer_view_list() if run_action_service != null else []
+
+
+func _cage_gift_shop_inline_actions() -> Array:
+	var actions: Array = []
+	for offer_value in _cage_gift_shop_offer_view_list():
+		if typeof(offer_value) != TYPE_DICTIONARY:
+			continue
+		var offer: Dictionary = offer_value
+		actions.append({
+			"id": "buy_%s" % str(offer.get("item_id", "")),
+			"emit_object_id": "cage_gift_action:buy:%s" % str(offer.get("item_id", "")),
+			"label": "%s · %d chips" % [str(offer.get("display_name", "Gift")), int(offer.get("chip_price", 0))],
+			"detail": str(offer.get("purpose_summary", "A useful run item.")),
+			"enabled": bool(offer.get("enabled", false)),
+			"disabled_reason": str(offer.get("disabled_reason", "")),
+		})
+	return actions
+
+
+func _activate_cage_gift_shop_action(object_id: String) -> bool:
+	if run_state == null or str(run_state.current_environment.get("archetype_id", "")) != RunState.GRAND_CASINO_CAGE_ARCHETYPE_ID:
+		return false
+	var parts := object_id.split(":", false, 3)
+	if parts.size() < 3 or str(parts[1]) != "buy":
+		return false
+	_refresh_run_action_service()
+	var result := run_action_service.buy_cage_gift_shop_offer(str(parts[2]))
+	if bool(result.get("ok", false)):
+		_autosave_foundation_run("Autosaved.")
+	_show_message(str(result.get("message", "The gift case declines the purchase.")))
+	_refresh_runtime_environment_views()
+	return bool(result.get("ok", false))
+
+
+func _start_linda_cage_services(object_data: Dictionary) -> bool:
+	if run_state == null or str(run_state.current_environment.get("archetype_id", "")) != RunState.GRAND_CASINO_CAGE_ARCHETYPE_ID:
+		_show_message("Linda serves the account from the walkable Cage room.")
 		_refresh()
 		return false
-	_build_cage_window()
-	_hide_event_choice_popup()
-	_hide_run_inventory_popup()
-	_hide_run_journal_popup()
-	_hide_world_map_overlay()
-	var model := CageWindowViewModelScript.build(run_state)
-	if model.is_empty():
-		_show_message("Linda cannot open the Cage account right now.")
-		return false
-	cage_window.open(model)
-	_show_message("Linda opens your Cage account.")
-	_refresh_coach_at_boundary()
-	return true
-
-
-func _request_close_cage_window() -> void:
-	if coach_overlay != null and not coach_overlay.input_allowed("cage:close"):
-		_show_message("Follow the highlighted advice first.")
-		return
-	if coach_overlay != null:
-		coach_overlay.notify_action("cage:close")
-	_hide_cage_window()
-	_refresh_coach_at_boundary()
-
-
-func _hide_cage_window() -> void:
-	if cage_window != null:
-		cage_window.close()
-
-
-func _cage_window_is_open() -> bool:
-	return cage_window != null and cage_window.is_open()
-
-
-func current_cage_window_snapshot() -> Dictionary:
-	return cage_window.current_view_snapshot() if cage_window != null else {"visible": false}
-
-
-func _refresh_cage_window_after_state_change() -> void:
-	if _cage_window_is_open():
-		cage_window.update_model(CageWindowViewModelScript.build(run_state))
+	return start_dialogue("linda_cage_services", {
+		"source": "casino_cage_counter",
+		"source_object_id": str(object_data.get("object_id", "casino_fixture:cage_counter")),
+	})
 
 
 func _buy_cage_chips(amount: int) -> void:
@@ -7542,7 +7714,7 @@ func _buy_cage_chips(amount: int) -> void:
 		run_state.advance_environment_turns(1)
 		_autosave_foundation_run("Autosaved.")
 	_show_message(str(result.get("message", "The Cage could not complete that buy-in.")))
-	_refresh_cage_window_after_state_change()
+	_refresh_talk_dock()
 	_refresh_runtime_environment_views()
 
 
@@ -7559,7 +7731,7 @@ func _cash_out_cage_chips() -> void:
 		run_state.advance_environment_turns(1)
 		_autosave_foundation_run("Autosaved.")
 	_show_message(str(result.get("message", "The Cage could not complete that cash-out.")))
-	_refresh_cage_window_after_state_change()
+	_refresh_talk_dock()
 	_refresh_runtime_environment_views()
 
 
@@ -7569,17 +7741,22 @@ func _complete_cage_players_card_review() -> void:
 	if coach_overlay != null and not coach_overlay.input_allowed("cage:review"):
 		_show_message("Follow the highlighted advice first.")
 		return
-	var model := CageWindowViewModelScript.build(run_state)
-	var card: Dictionary = model.get("card", {}) if typeof(model.get("card", {})) == TYPE_DICTIONARY else {}
-	if not bool(card.get("can_review", false)):
-		_show_message(str(card.get("review_detail", "The Gold review is not ready.")))
-		_refresh_cage_window_after_state_change()
+	var claim_result := run_state.claim_grand_casino_players_card_tier()
+	if not bool(claim_result.get("ok", false)):
+		_show_message(str(claim_result.get("message", "The Players Card tier is not ready.")))
+		_refresh_talk_dock()
 		return
 	if coach_overlay != null:
 		coach_overlay.notify_action("cage:review")
-	_hide_cage_window()
+	if not bool(claim_result.get("review_required", false)):
+		run_state.advance_environment_turns(1)
+		_autosave_foundation_run("Autosaved.")
+		_show_message(str(claim_result.get("message", "Linda issues the next Players Card tier.")))
+		_refresh_talk_dock()
+		_refresh_runtime_environment_views()
+		return
 	var dialogue_id := "tutorial_linda_gold_review" if run_state.is_tutorial_run() else "linda_gold_review"
-	if not start_dialogue(dialogue_id, {"source": "cage_gold_review", "source_object_id": "casino_fixture:cage"}):
+	if not start_dialogue(dialogue_id, {"source": "cage_gold_review", "source_object_id": "casino_fixture:cage_counter"}):
 		_show_message("Linda's Gold review is unavailable.")
 
 
@@ -7589,6 +7766,7 @@ func _use_cage_players_card_comp(comp_id: String) -> void:
 	var result := run_state.grand_casino_players_card_comp_result(comp_id)
 	if bool(result.get("ok", false)):
 		GameModule.apply_result(run_state, result)
+		_play_result_drink_audio_cue(result)
 		var duration_minutes := maxi(0, int(result.get("duration_minutes", 0)))
 		if duration_minutes > 0:
 			run_state.advance_game_clock_minutes(duration_minutes)
@@ -7598,7 +7776,7 @@ func _use_cage_players_card_comp(comp_id: String) -> void:
 		_advance_alcohol_absorption()
 		_autosave_foundation_run("Autosaved.")
 	_show_message(str(result.get("message", "Linda cannot use that comp right now.")))
-	_refresh_cage_window_after_state_change()
+	_refresh_talk_dock()
 	_refresh_runtime_environment_views()
 
 
@@ -7637,6 +7815,9 @@ func _activate_event_response_action(action_object_id: String) -> bool:
 
 
 func _activate_meta_interactable_object(object_id: String) -> bool:
+	if _sal_starter_offer_is_pending():
+		_resume_sal_starter_offer()
+		return true
 	if object_id == "travel:leave":
 		focus_interactable_object(object_id)
 		return open_world_map()
@@ -7671,6 +7852,11 @@ func _activate_meta_interactable_object(object_id: String) -> bool:
 		CONTEXT_MODE_META_PAWN_COUNTER:
 			open_meta_sell_counter()
 			return true
+		CONTEXT_MODE_META_SAL_SHELF:
+			open_meta_sal_shelf(int(source_id))
+			return true
+		CONTEXT_MODE_META_SAL_TALK:
+			return _talk_to_sal()
 		CONTEXT_MODE_TRAVEL:
 			return open_world_map()
 	_show_message("Inspect this first.")
@@ -8152,8 +8338,8 @@ func _current_game_embeds_result_feedback() -> bool:
 	return FoundationActionViewModelScript.current_game_embeds_result_feedback(self)
 
 
-func _store_current_game_surface_ui_state(ui_state: Dictionary) -> void:
-	game_surface_ui_state = ui_state.duplicate(true)
+func _store_current_game_surface_ui_state(ui_state: Dictionary, deep_copy: bool = true) -> void:
+	game_surface_ui_state = ui_state.duplicate(deep_copy)
 
 
 func _preserved_game_surface_preference_state(ui_state: Dictionary) -> Dictionary:
@@ -8740,7 +8926,17 @@ func _default_stake() -> int:
 
 
 func _show_message(text: String) -> void:
-	var display_text := _player_facing_text(text)
+	var notice_lines: Array = []
+	if run_state != null and run_state.has_method("grand_casino_atm_pending_interest_notifications"):
+		var pending_notices: Array = run_state.grand_casino_atm_pending_interest_notifications()
+		if not pending_notices.is_empty() and not _event_choice_popup_is_visible():
+			for notice_value in run_state.consume_grand_casino_atm_interest_notifications():
+				if typeof(notice_value) == TYPE_DICTIONARY:
+					notice_lines.append(str((notice_value as Dictionary).get("message", "")))
+	var combined_text := text
+	if not notice_lines.is_empty():
+		combined_text = "%s %s" % [" ".join(notice_lines), text]
+	var display_text := _player_facing_text(combined_text.strip_edges())
 	if message_label != null:
 		message_label.text = display_text
 	if start_status_label != null and run_state == null:
@@ -9130,6 +9326,8 @@ func _enter_meta_location(location_id: String) -> void:
 	clear_interaction_focus()
 	_show_message("Home is ready." if clean_location == META_LOCATION_HOME else "Sal's Pawn Shop is open.")
 	_refresh()
+	if clean_location == pawn_location and _sal_starter_offer_is_pending():
+		_resume_sal_starter_offer()
 
 
 func _exit_meta_session() -> void:
@@ -9360,7 +9558,104 @@ func open_meta_trade_up() -> void:
 	_add_meta_close_card()
 
 
+func open_meta_sal_shelf(slot_index: int) -> void:
+	if _sal_starter_offer_is_pending():
+		_resume_sal_starter_offer()
+		return
+	_ensure_meta_session_controller()
+	var rows := meta_session_controller.sal_shelf_rows()
+	if slot_index < 0 or slot_index >= rows.size():
+		_show_meta_popup("Sal's Shelf", "That shelf spot does not exist.", "meta_sal_shelf")
+		_add_meta_close_card()
+		return
+	var row := _copy_dict(rows[slot_index])
+	if not bool(row.get("occupied", false)):
+		_show_meta_popup("Empty Shelf", "This locked shelf spot is empty. A later victory may restock it.", "meta_sal_shelf")
+		_add_meta_close_card()
+		return
+	var item := _copy_dict(row.get("item", {}))
+	var quote := _copy_dict(row.get("quote_basis", {}))
+	var floats := _copy_dict(quote.get("clamped_floats", {}))
+	var contributions := _copy_dict(quote.get("rarity_contributions", {}))
+	var mode := str(row.get("listing_mode", "normal"))
+	var policy := "Normal shelf: ceil(max(quote + 1, quote × 1.5))."
+	if mode == MetaCollectionServiceScript.LISTING_MODE_STARTER_DISCOUNT:
+		policy = "Starter discount: max(1, round(quote × 0.75))."
+	elif mode == MetaCollectionServiceScript.LISTING_MODE_MOCKING_RELIST:
+		policy = "Sal's relist: ceil(quote × 10)."
+	var summary := "%s · %s · %s\nPotency %.2f%% · Condition %.2f%% · Resonance %.2f%% · Usage %.2f%%\nRarity contributions P %.4f · C %.4f · R %.4f · U %.4f\nRarity multiplier %.6fx · Pawn quote %d gold\n%s\nAsking price %d gold · You have %d gold" % [
+		str(row.get("display_name", "Collection Item")),
+		str(row.get("collection_display_name", "Collection")),
+		str(row.get("tier", "")).capitalize(),
+		float(floats.get("potency", item.get("potency", 0.0))) * 100.0,
+		float(floats.get("condition", item.get("condition", 0.0))) * 100.0,
+		float(floats.get("resonance", item.get("resonance", 0.0))) * 100.0,
+		float(floats.get("usage", item.get("usage", 0.0))) * 100.0,
+		float(contributions.get("potency", 0.0)),
+		float(contributions.get("condition", 0.0)),
+		float(contributions.get("resonance", 0.0)),
+		float(contributions.get("usage", 0.0)),
+		float(quote.get("rarity_multiplier", 1.0)),
+		int(quote.get("pawn_quote", 0)),
+		policy,
+		int(row.get("asking_price", 0)),
+		int(row.get("gold_balance", 0)),
+	]
+	_show_meta_popup("Sal's Shelf · Slot %d" % (slot_index + 1), summary, "meta_sal_shelf")
+	_add_meta_action_card(
+		"Buy exact item",
+		"Transfer instance %d with all four displayed values unchanged." % int(item.get("instance_id", 0)),
+		"Costs %d gold." % int(row.get("asking_price", 0)),
+		Callable(self, "_show_meta_sal_purchase_confirm").bind(slot_index),
+		"Buy",
+		true
+	)
+	_add_meta_close_card()
+
+
+func _show_meta_sal_purchase_confirm(slot_index: int) -> void:
+	var quote: Dictionary = meta_collection_service.arm_sal_shelf_purchase(slot_index)
+	if not bool(quote.get("ok", false)):
+		_show_meta_popup("Sal's Shelf", str(quote.get("message", "Purchase unavailable.")), "meta_sal_shelf")
+		_add_meta_close_card()
+		return
+	_show_meta_popup(
+		"Confirm Purchase",
+		"Buy %s for %d gold? The exact saved instance moves to your collection." % [str(quote.get("display_name", "collection item")), int(quote.get("asking_price", 0))],
+		"meta_sal_shelf"
+	)
+	_add_meta_action_card("Confirm Purchase", "The listing leaves Sal's shelf.", "Permanent", Callable(self, "_confirm_meta_sal_purchase").bind(str(quote.get("token", ""))), "Confirm", true)
+	_add_meta_close_card()
+
+
+func _confirm_meta_sal_purchase(token: String) -> void:
+	var result: Dictionary = meta_collection_service.confirm_sal_shelf_purchase(token)
+	if not bool(result.get("ok", false)):
+		_show_meta_popup("Sal's Shelf", str(result.get("message", "Purchase unavailable.")), "meta_sal_shelf")
+		_add_meta_close_card()
+		_refresh()
+		return
+	var save_error := meta_collection_service.save()
+	if save_error != OK:
+		meta_collection_service.load()
+		_show_meta_popup("Sal's Shelf", "The purchase could not be saved, so nothing changed.", "meta_sal_shelf")
+		_add_meta_close_card()
+		_refresh()
+		return
+	meta_last_panel_message = str(result.get("message", "Purchase complete."))
+	_apply_meta_environment(meta_session_location_id)
+	_hide_event_choice_popup()
+	if not _copy_dict(result.get("starter_offer", {})).is_empty():
+		_resume_sal_starter_offer()
+	else:
+		_start_sal_routine_dialogue("purchase")
+	_refresh()
+
+
 func open_meta_sell_counter() -> void:
+	if _sal_starter_offer_is_pending():
+		_resume_sal_starter_offer()
+		return
 	_show_meta_popup("Sell Counter", "Choose one collection item or unopened bag to sell for gold.", "meta_pawn_counter")
 	var rows := _meta_sale_rows()
 	if rows.is_empty():
@@ -9426,12 +9721,24 @@ func _show_meta_sale_confirm(kind: String, instance_id: int) -> void:
 
 func _confirm_meta_sale(token: String) -> void:
 	var result: Dictionary = meta_collection_service.confirm_sale(token)
-	if bool(result.get("ok", false)):
-		meta_collection_service.save()
-		_apply_meta_environment(meta_session_location_id)
+	if not bool(result.get("ok", false)):
+		_show_meta_popup("Sell Counter", str(result.get("message", "Sale unavailable.")), "meta_pawn_counter")
+		_add_meta_close_card()
+		_refresh()
+		return
+	var save_error := meta_collection_service.save()
+	if save_error != OK:
+		meta_collection_service.load()
+		_show_meta_popup("Sell Counter", "The sale could not be saved, so nothing changed.", "meta_pawn_counter")
+		_add_meta_close_card()
+		_refresh()
+		return
+	_apply_meta_environment(meta_session_location_id)
 	_show_meta_popup("Sell Counter", str(result.get("message", "Sale complete.")), "meta_pawn_counter")
 	_add_meta_close_card()
 	_refresh()
+	_hide_event_choice_popup()
+	_start_sal_routine_dialogue("sale")
 
 
 func _show_meta_popup(title: String, summary: String, popup_type: String) -> void:
@@ -10109,6 +10416,10 @@ func _next_objective_option() -> Dictionary:
 
 
 func _next_objective_option_for_state(state: String, demo_objective: Dictionary) -> Dictionary:
+	if run_state != null and bool(demo_objective.get("players_card_ready_to_claim", false)):
+		if str(run_state.current_environment.get("archetype_id", "")) == RunState.GRAND_CASINO_CAGE_ARCHETYPE_ID:
+			return _objective_for_object(CONTEXT_MODE_CASINO_FIXTURE, "casino_fixture:cage_counter", "settle any marker and claim the next tier from Linda", true)
+		return _objective_for_object(CONTEXT_MODE_TRAVEL, "travel:grand_casino_cage", "enter the Cage to settle or claim the next tier", true)
 	return FoundationHudViewModelScript.next_objective_option_for_state(state, demo_objective, Callable(self, "_player_facing_text"))
 
 
@@ -10297,13 +10608,21 @@ func _route_failed_run_if_needed(terminal_result: Dictionary = {}) -> bool:
 func _process_terminal_meta_bag_drops() -> void:
 	if run_state == null or not run_state.is_terminal():
 		return
+	if meta_collection_service == null or collection_drop_service == null:
+		_initialize_meta_collection()
+	var sal_stock: Dictionary = collection_drop_service.stock_sal_after_success(run_state, meta_collection_service)
+	if bool(sal_stock.get("stocked", false)) or bool(sal_stock.get("recovered", false)):
+		run_report_model_key = ""
+		save_status_message = "Sal's shelf updated."
+		if save_service != null:
+			var receipt_save_error := save_service.save_run(run_state, autosave_slot_id)
+			if receipt_save_error != OK:
+				save_status_message = "Sal stocked; terminal receipt save failed."
 	var tutorial_card_victory := run_state.is_tutorial_run() \
 		and run_state.run_status == RunState.RUN_STATUS_ENDED \
 		and str(run_state.narrative_flags.get("demo_victory_route", "")) == RunState.GRAND_CASINO_HIGH_ROLLER_EVENT_ID
 	if not run_state.meta_collection_enabled_for_run() and not tutorial_card_victory:
 		return
-	if meta_collection_service == null or collection_drop_service == null:
-		_initialize_meta_collection()
 	var special_outcome: Dictionary = collection_drop_service.apply_terminal_special_outcome(run_state, meta_collection_service)
 	if bool(special_outcome.get("mutated", false)):
 		var special_save_error := meta_collection_service.save()
@@ -10902,7 +11221,6 @@ func _hide_event_choice_popup(clear_snapshot: bool = true) -> void:
 	if clear_snapshot:
 		pending_event_choice_popup_snapshot = {}
 	_clear_pending_wager_confirmation()
-	_clear_pending_chip_top_up()
 
 
 func _event_choice_popup_is_visible() -> bool:
@@ -11891,7 +12209,7 @@ func _coach_context_snapshot() -> Dictionary:
 		"ui": {
 			"pawn_counter_open": _run_inventory_popup_is_visible() and run_inventory_popup_mode == "pawn_counter",
 			"world_map_open": _world_map_overlay_is_visible(),
-			"cage_window_open": _cage_window_is_open(),
+			"cage_counter_talking": not run_state.pending_talk_event("dialogue:linda_cage_services").is_empty() if run_state != null else false,
 		},
 		"meta": {
 			"home": _is_meta_session() and meta_session_location_id == META_LOCATION_HOME,
@@ -11987,9 +12305,6 @@ func _apply_accessibility_settings() -> void:
 	if coach_overlay != null:
 		coach_overlay.set_reduce_motion(bool(user_settings.reduce_motion) if user_settings != null else false)
 		coach_overlay.set_small_screen_mode(small_screen_enabled)
-	if cage_window != null:
-		cage_window.set_reduce_motion(bool(user_settings.reduce_motion) if user_settings != null else false)
-		cage_window.set_small_screen_mode(small_screen_enabled)
 	if environment_canvas != null:
 		environment_canvas.set_small_screen_mode(small_screen_enabled)
 	if game_surface_canvas != null:

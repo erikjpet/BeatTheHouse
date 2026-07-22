@@ -1,7 +1,7 @@
 extends "res://scripts/tests/foundation/check_items_events_world.gd"
 
 const RunReportViewModelScript := preload("res://scripts/ui/run_report_view_model.gd")
-const CageWindowViewModelScript := preload("res://scripts/ui/cage_window_view_model.gd")
+const CageCounterViewModelScript := preload("res://scripts/ui/cage_counter_view_model.gd")
 const StaffBlackjackGameScript := preload("res://scripts/games/blackjack.gd")
 const StaffBaccaratGameScript := preload("res://scripts/games/baccarat.gd")
 const StaffRouletteGameScript := preload("res://scripts/games/roulette.gd")
@@ -1209,6 +1209,7 @@ func _check_demo_boss_objective_foundation(library: ContentLibrary, failures: Ar
 		failures.append("Grand Casino boss archetype is missing.")
 		return
 	_check_grand_casino_spatial_split(library, boss_archetype, failures)
+	_check_cage_environment_rework(library, failures)
 	_check_grand_casino_chips_and_cage(library, boss_archetype, failures)
 	_check_grand_casino_living_floor(library, boss_archetype, failures)
 	_check_grand_casino_staff_rotation(library, boss_archetype, failures)
@@ -1325,30 +1326,14 @@ func _check_demo_boss_objective_foundation(library: ContentLibrary, failures: Ar
 	var clean_run: RunState = RunStateScript.new()
 	clean_run.start_new("M2-FUN-BOSS-CLEAN")
 	clean_run.set_environment(environment.to_dict())
-	for game_index in range(high_roller_min_games):
-		var progress_deltas := GameModule.empty_result_deltas()
-		progress_deltas["story_log"] = [{"type": "game_action", "game_id": "blackjack", "stake_cost": 10 + game_index}]
-		var progress_result := GameModule.build_action_result({
-			"ok": true,
-			"type": "game_action",
-			"source_id": "blackjack",
-			"game_id": "blackjack",
-			"action_id": "clean_progress",
-			"action_kind": "legal",
-			"stake": 10 + game_index,
-			"deltas": progress_deltas,
-			"environment_id": str(clean_run.current_environment.get("id", "")),
-			"message": "Clean boss-floor progress.",
-		})
-		clean_run.record_grand_casino_game_result(progress_result)
-	clean_run.bankroll = int(clean_run.narrative_flags.get("grand_casino_entry_bankroll", 0)) + high_roller_net
-	clean_run.evaluate_environment_objective_state()
+	if not _prepare_players_card_gold_ready(clean_run, library, failures):
+		failures.append("Grand Casino clean route could not reach sequential Gold readiness.")
 	var clean_status := clean_run.demo_objective_status()
 	if not bool(clean_status.get("high_roller_ready", false)) or not bool(clean_status.get("players_card_ready", false)) or not bool(clean_run.narrative_flags.get("high_roller_cashout_pending", false)):
 		failures.append("Grand Casino clean lane did not report Players Card readiness.")
 	if bool(clean_run.narrative_flags.get("demo_victory", false)) or clean_run.run_status != RunState.RUN_STATUS_ACTIVE:
 		failures.append("Grand Casino clean lane should not set victory during A1 state reporting.")
-	var ready_cage := CageWindowViewModelScript.build(clean_run)
+	var ready_cage := CageCounterViewModelScript.build(clean_run)
 	var ready_card: Dictionary = ready_cage.get("card", {}) if typeof(ready_cage.get("card", {})) == TYPE_DICTIONARY else {}
 	if str(_copy_dict(ready_cage.get("host", {})).get("name", "")) != "Linda" or not bool(ready_card.get("can_review", false)) or str(ready_card.get("review_state", "")) != "ready":
 		failures.append("Cage view model did not expose Linda and the ready Players Card review.")
@@ -1366,7 +1351,7 @@ func _check_demo_boss_objective_foundation(library: ContentLibrary, failures: Ar
 		failures.append("Save service could not reload Grand Casino clean objective state.")
 		return
 	var loaded_clean_status: Dictionary = loaded_clean.demo_objective_status()
-	if not bool(loaded_clean_status.get("high_roller_ready", false)) or int(loaded_clean_status.get("grand_casino_games_played", 0)) != high_roller_min_games:
+	if not bool(loaded_clean_status.get("high_roller_ready", false)) or str(loaded_clean_status.get("players_card_next_tier", "")) != RunState.GRAND_CASINO_PLAYERS_CARD_TIER_GOLD:
 		failures.append("Grand Casino clean objective metadata did not survive SaveService load.")
 	if _string_array(loaded_clean.current_environment.get("event_ids", [])).has("high_roller_cashout"):
 		failures.append("Players Card review should remain at the Cage instead of the Grand Casino event surface.")
@@ -1445,7 +1430,7 @@ func _check_demo_boss_objective_foundation(library: ContentLibrary, failures: Ar
 		failures.append("Cheated Grand Casino money target should route to the Pit Boss Showdown.")
 	if int(cheated_cashout_status.get("grand_casino_open_cheat_actions", 0)) <= 0:
 		failures.append("Grand Casino open cheat action count was not tracked.")
-	var blocked_cage := CageWindowViewModelScript.build(cheated_cashout_run)
+	var blocked_cage := CageCounterViewModelScript.build(cheated_cashout_run)
 	var blocked_card: Dictionary = blocked_cage.get("card", {}) if typeof(blocked_cage.get("card", {})) == TYPE_DICTIONARY else {}
 	if str(blocked_card.get("review_state", "")) != "ineligible" or bool(blocked_card.get("can_review", true)) or str(blocked_card.get("review_detail", "")).find("permanently") == -1:
 		failures.append("Cage view model did not make permanent Players Card ineligibility visible.")
@@ -1977,32 +1962,61 @@ func _check_grand_casino_players_card_tiers(library: ContentLibrary, main_archet
 	run_state.start_new("GC-PLAYERS-CARD-TIERS")
 	var environment := EnvironmentInstance.from_archetype(main_archetype, 3, run_state.create_rng("gc_card_tiers_environment"), library)
 	run_state.set_environment(environment.to_dict())
-	_record_players_card_clean_games(run_state, bronze_games)
-	var entry_bankroll := int(run_state.narrative_flags.get("grand_casino_entry_bankroll", run_state.grand_casino_total_money()))
-	run_state.bankroll = maxi(0, entry_bankroll + bronze_net - run_state.grand_casino_chips)
-	run_state.evaluate_environment_objective_state()
+	var generator: RunGenerator = RunGeneratorScript.new(library)
+	_qualify_active_players_card_segment(run_state, bronze_games, bronze_net)
 	var bronze_status := run_state.demo_objective_status()
-	if str(bronze_status.get("players_card_tier", "")) != RunState.GRAND_CASINO_PLAYERS_CARD_TIER_BRONZE:
-		failures.append("Scripted clean play did not cross the Bronze Players Card threshold.")
-	if run_state.grand_casino_chips != int(objective.get("players_card_bronze_chip_bonus", 0)) or int(run_state.narrative_flags.get("grand_casino_comp_drink_tokens", 0)) != int(objective.get("players_card_bronze_drink_comps", 0)):
-		failures.append("Bronze did not grant its data-tuned chip and drink comps.")
-	if str(run_state.next_pending_talk_event().get("dialogue_id", "")) != "linda_bronze_tier":
-		failures.append("Bronze tier-up did not enqueue Linda's talk-dock scene.")
-	_record_players_card_clean_games(run_state, silver_games)
-	entry_bankroll = int(run_state.narrative_flags.get("grand_casino_entry_bankroll", run_state.grand_casino_total_money()))
-	run_state.bankroll = maxi(0, entry_bankroll + silver_net - run_state.grand_casino_chips)
+	if str(bronze_status.get("players_card_tier", "")) != RunState.GRAND_CASINO_PLAYERS_CARD_TIER_NONE or not bool(bronze_status.get("players_card_ready_to_claim", false)) or str(bronze_status.get("players_card_next_tier", "")) != RunState.GRAND_CASINO_PLAYERS_CARD_TIER_BRONZE:
+		failures.append("Unranked play did not freeze at Bronze readiness without auto-awarding it.")
+	var frozen_games := int(bronze_status.get("players_card_segment_games", -1))
+	var frozen_net := int(bronze_status.get("players_card_segment_net_winnings", -1))
+	_record_players_card_clean_games(run_state, int(run_state.narrative_flags.get("grand_casino_games_played", 0)) + silver_games + gold_games)
+	run_state.bankroll += silver_net + gold_net
 	run_state.evaluate_environment_objective_state()
+	var frozen_status := run_state.demo_objective_status()
+	if int(frozen_status.get("players_card_segment_games", -2)) != frozen_games or int(frozen_status.get("players_card_segment_net_winnings", -2)) != frozen_net or str(frozen_status.get("players_card_next_tier", "")) != RunState.GRAND_CASINO_PLAYERS_CARD_TIER_BRONZE:
+		failures.append("Extra play after Bronze readiness leaked into Silver progress.")
+	if not generator.enter_grand_casino_room(run_state, RunState.GRAND_CASINO_CAGE_ARCHETYPE_ID):
+		failures.append("Players Card fixture could not enter the Cage for Bronze claim.")
+		return
+	var marker_draw := run_state.borrow_from_grand_casino_atm(50)
+	var debt_blocked_claim := run_state.claim_grand_casino_players_card_tier()
+	var debt_blocked_status := run_state.demo_objective_status()
+	if not bool(marker_draw.get("ok", false)) or bool(debt_blocked_claim.get("ok", true)) or not bool(debt_blocked_status.get("players_card_ready_to_claim", false)) or str(debt_blocked_status.get("players_card_claim_block_reason", "")).find("$50") == -1:
+		failures.append("Grand Casino ATM debt did not temporarily block Bronze while preserving readiness and exact balance copy.")
+	var marker_payoff := run_state.repay_grand_casino_atm_debt(-1)
+	if not bool(marker_payoff.get("ok", false)) or not bool(run_state.demo_objective_status().get("players_card_can_claim", false)):
+		failures.append("Clearing the Grand Casino ATM marker did not immediately re-enable the pending Bronze claim.")
+	var bronze_claim := run_state.claim_grand_casino_players_card_tier()
+	if not bool(bronze_claim.get("ok", false)) or str(bronze_claim.get("tier", "")) != RunState.GRAND_CASINO_PLAYERS_CARD_TIER_BRONZE:
+		failures.append("Linda did not issue Bronze at the Cage.")
+	if run_state.grand_casino_chips != int(objective.get("players_card_bronze_chip_bonus", 0)) or int(run_state.narrative_flags.get("grand_casino_comp_drink_tokens", 0)) != int(objective.get("players_card_bronze_drink_comps", 0)):
+		failures.append("Bronze claim did not grant its data-tuned chip and drink comps exactly once.")
+	if str(run_state.next_pending_talk_event().get("dialogue_id", "")) != "linda_bronze_tier":
+		failures.append("Bronze claim did not enqueue Linda's talk-dock scene.")
+	if int(run_state.demo_objective_status().get("players_card_segment_games", -1)) != 0 or int(run_state.demo_objective_status().get("players_card_segment_net_winnings", -1)) != 0:
+		failures.append("Bronze claim did not start Silver from a fresh zero segment.")
+	if not generator.enter_grand_casino_room(run_state, RunState.GRAND_CASINO_ARCHETYPE_ID):
+		failures.append("Players Card fixture could not return to the Main Floor for Silver progress.")
+		return
+	_qualify_active_players_card_segment(run_state, silver_games, silver_net)
 	var silver_status := run_state.demo_objective_status()
-	if str(silver_status.get("players_card_tier", "")) != RunState.GRAND_CASINO_PLAYERS_CARD_TIER_SILVER:
-		failures.append("Scripted clean play did not cross the Silver Players Card threshold.")
+	if str(silver_status.get("players_card_tier", "")) != RunState.GRAND_CASINO_PLAYERS_CARD_TIER_BRONZE or not bool(silver_status.get("players_card_ready_to_claim", false)):
+		failures.append("Bronze play did not freeze at Silver readiness without auto-awarding it.")
+	if not generator.enter_grand_casino_room(run_state, RunState.GRAND_CASINO_CAGE_ARCHETYPE_ID):
+		failures.append("Players Card fixture could not enter the Cage for Silver claim.")
+		return
+	var silver_claim := run_state.claim_grand_casino_players_card_tier()
+	if not bool(silver_claim.get("ok", false)) or str(silver_claim.get("tier", "")) != RunState.GRAND_CASINO_PLAYERS_CARD_TIER_SILVER:
+		failures.append("Linda did not issue Silver at the Cage.")
+	silver_status = run_state.demo_objective_status()
 	var silver_access := run_state.grand_casino_room_access_status(RunState.GRAND_CASINO_HIGH_LIMIT_ARCHETYPE_ID, 60)
 	if not bool(silver_access.get("available", false)) or str(silver_access.get("access_method", "")) != "silver_card" or int(silver_access.get("cost", -1)) != 0:
 		failures.append("Silver Players Card did not open the High-Limit Room without a cash buy-in.")
 	if not bool(run_state.narrative_flags.get("grand_casino_linda_look_away_available", false)) or int(run_state.narrative_flags.get("grand_casino_comp_suite_rests", 0)) != int(objective.get("players_card_silver_suite_rests", 0)):
 		failures.append("Silver did not grant Linda's look-away and suite-rest benefits.")
 	var expected_net_before_comps := int(silver_status.get("grand_casino_net_winnings", -1))
-	if expected_net_before_comps != silver_net:
-		failures.append("Tier chip comps incorrectly changed canonical Grand Casino net winnings.")
+	if expected_net_before_comps < bronze_net + silver_net:
+		failures.append("Tier claims corrupted retained total Grand Casino net winnings.")
 	var silver_payload := run_state.to_dict()
 	var loaded_silver: RunState = RunStateScript.new()
 	loaded_silver.from_dict(silver_payload)
@@ -2010,20 +2024,14 @@ func _check_grand_casino_players_card_tiers(library: ContentLibrary, main_archet
 		failures.append("Silver tier and benefits did not survive save/load.")
 	var legacy_payload := silver_payload.duplicate(true)
 	var legacy_flags: Dictionary = legacy_payload.get("narrative_flags", {}).duplicate(true)
-	var awarded_chip_comps := int(objective.get("players_card_bronze_chip_bonus", 0)) + int(objective.get("players_card_silver_chip_bonus", 0))
-	legacy_payload["grand_casino_chips"] = maxi(0, int(legacy_payload.get("grand_casino_chips", 0)) - awarded_chip_comps)
-	legacy_flags["grand_casino_entry_bankroll"] = maxi(0, int(legacy_flags.get("grand_casino_entry_bankroll", 0)) - awarded_chip_comps)
-	for key in legacy_flags.keys().duplicate():
-		var key_text := str(key)
-		if key_text.begins_with("grand_casino_players_card_") or key_text.begins_with("grand_casino_comp_") or key_text.begins_with("grand_casino_linda_look_away"):
-			legacy_flags.erase(key)
-	legacy_flags.erase("grand_casino_high_limit_access")
-	legacy_flags.erase("grand_casino_high_limit_access_method")
+	for key in ["grand_casino_players_card_awarded_tier", "grand_casino_players_card_segment_start_games", "grand_casino_players_card_segment_start_net_winnings", "grand_casino_players_card_segment_games", "grand_casino_players_card_segment_net_winnings", "grand_casino_players_card_segment_max_heat", "grand_casino_players_card_ready_to_claim", "grand_casino_players_card_ready_tier"]:
+		legacy_flags.erase(key)
 	legacy_payload["narrative_flags"] = legacy_flags
 	var legacy_run: RunState = RunStateScript.new()
 	legacy_run.from_dict(legacy_payload)
-	if str(legacy_run.demo_objective_status().get("players_card_tier", "")) != RunState.GRAND_CASINO_PLAYERS_CARD_TIER_SILVER or not bool(legacy_run.narrative_flags.get("grand_casino_high_limit_access", false)):
-		failures.append("Legacy Grand Casino save did not derive Silver tier and benefits from existing counters.")
+	var legacy_status := legacy_run.demo_objective_status()
+	if str(legacy_status.get("players_card_tier", "")) != RunState.GRAND_CASINO_PLAYERS_CARD_TIER_SILVER or bool(legacy_status.get("players_card_ready_to_claim", true)) or int(legacy_status.get("players_card_segment_games", -1)) != 0:
+		failures.append("Legacy Grand Casino save did not retain Silver with a conservative fresh Gold segment.")
 	var look_away_max := int(objective.get("players_card_look_away_max_heat_gain", 0))
 	var too_large := run_state.add_suspicion("linda_large_heat", look_away_max + 1, "behavior", false, {"action_kind": "risky"})
 	if too_large != look_away_max + 1 or not bool(run_state.narrative_flags.get("grand_casino_linda_look_away_available", false)):
@@ -2057,12 +2065,15 @@ func _check_grand_casino_players_card_tiers(library: ContentLibrary, main_archet
 	run_state.advance_game_clock_minutes(int(rest_result.get("duration_minutes", 0)))
 	if not bool(rest_result.get("ok", false)) or run_state.suspicion_level() >= heat_before_rest or run_state.drunk_level >= drunk_before_rest or int(rest_result.get("duration_minutes", 0)) != int(objective.get("players_card_suite_rest_minutes", 0)):
 		failures.append("Players Card suite rest did not reuse service deltas for time, heat, and drunk recovery.")
-	_record_players_card_clean_games(run_state, gold_games)
-	entry_bankroll = int(run_state.narrative_flags.get("grand_casino_entry_bankroll", run_state.grand_casino_total_money()))
-	run_state.bankroll = maxi(0, entry_bankroll + gold_net - run_state.grand_casino_chips)
-	run_state.evaluate_environment_objective_state()
+	if not generator.enter_grand_casino_room(run_state, RunState.GRAND_CASINO_ARCHETYPE_ID):
+		failures.append("Players Card fixture could not return to the Main Floor for Gold progress.")
+		return
+	_qualify_active_players_card_segment(run_state, gold_games, gold_net)
+	if not generator.enter_grand_casino_room(run_state, RunState.GRAND_CASINO_CAGE_ARCHETYPE_ID):
+		failures.append("Players Card fixture could not enter the Cage for Gold review.")
+		return
 	var gold_status := run_state.demo_objective_status()
-	if str(gold_status.get("players_card_tier", "")) != RunState.GRAND_CASINO_PLAYERS_CARD_TIER_GOLD or not bool(gold_status.get("high_roller_ready", false)):
+	if str(gold_status.get("players_card_tier", "")) != RunState.GRAND_CASINO_PLAYERS_CARD_TIER_SILVER or str(gold_status.get("players_card_next_tier", "")) != RunState.GRAND_CASINO_PLAYERS_CARD_TIER_GOLD or not bool(gold_status.get("high_roller_ready", false)):
 		failures.append("Scripted clean play did not cross Gold into deliberate Cage review readiness.")
 	var gold_result := run_state.apply_demo_finale_result({
 		"event_id": RunState.GRAND_CASINO_HIGH_ROLLER_EVENT_ID,
@@ -2087,17 +2098,13 @@ func _check_grand_casino_players_card_tiers(library: ContentLibrary, main_archet
 	var evidence_run: RunState = RunStateScript.new()
 	evidence_run.start_new("GC-PLAYERS-CARD-EVIDENCE")
 	evidence_run.set_environment(environment.to_dict())
-	_record_players_card_clean_games(evidence_run, silver_games)
-	entry_bankroll = int(evidence_run.narrative_flags.get("grand_casino_entry_bankroll", evidence_run.grand_casino_total_money()))
-	evidence_run.bankroll = maxi(0, entry_bankroll + silver_net - evidence_run.grand_casino_chips)
-	evidence_run.evaluate_environment_objective_state()
 	evidence_run.narrative_flags["grand_casino_cheat_evidence"] = true
 	evidence_run.evaluate_environment_objective_state()
 	var evidence_status := evidence_run.demo_objective_status()
-	var evidence_cage := CageWindowViewModelScript.build(evidence_run)
+	var evidence_cage := CageCounterViewModelScript.build(evidence_run)
 	var evidence_card: Dictionary = evidence_cage.get("card", {}) if typeof(evidence_cage.get("card", {})) == TYPE_DICTIONARY else {}
 	if bool(evidence_status.get("players_card_eligible", true)) or str(evidence_card.get("review_state", "")) != "ineligible" or str(evidence_card.get("review_detail", "")).find("permanently") == -1:
-		failures.append("Cheat evidence did not permanently lock every Players Card tier in the Cage window.")
+		failures.append("Cheat evidence did not permanently lock every Players Card tier at Linda's Cage counter.")
 	var evidence_access := evidence_run.grand_casino_room_access_status(RunState.GRAND_CASINO_HIGH_LIMIT_ARCHETYPE_ID, 60)
 	if not bool(evidence_access.get("cash_buy_in_required", false)) or str(evidence_access.get("access_method", "")) != "cash_buy_in":
 		failures.append("Cheat evidence did not revoke Silver access while preserving the independent cash buy-in path.")
@@ -2130,6 +2137,49 @@ func _record_players_card_clean_games(run_state: RunState, target_games: int) ->
 		run_state.record_grand_casino_game_result(result)
 
 
+func _qualify_active_players_card_segment(run_state: RunState, game_count: int, net_winnings: int) -> void:
+	var start_games := maxi(0, int(run_state.narrative_flags.get("grand_casino_games_played", 0)))
+	_record_players_card_clean_games(run_state, start_games + maxi(0, game_count))
+	var entry_bankroll := int(run_state.narrative_flags.get("grand_casino_entry_bankroll", run_state.grand_casino_total_money()))
+	var segment_start_net := int(run_state.narrative_flags.get("grand_casino_players_card_segment_start_net_winnings", 0))
+	var target_total_money := entry_bankroll + segment_start_net + net_winnings
+	run_state.bankroll = maxi(0, target_total_money - run_state.grand_casino_chips)
+	run_state.evaluate_environment_objective_state()
+
+
+func _prepare_players_card_gold_ready(run_state: RunState, library: ContentLibrary, failures: Array) -> bool:
+	var generator: RunGenerator = RunGeneratorScript.new(library)
+	for expected_tier in [RunState.GRAND_CASINO_PLAYERS_CARD_TIER_BRONZE, RunState.GRAND_CASINO_PLAYERS_CARD_TIER_SILVER]:
+		var status := run_state.demo_objective_status()
+		var required_games := int(status.get("players_card_next_min_games", 0))
+		var required_net := int(status.get("players_card_next_net_winnings", 0))
+		_qualify_active_players_card_segment(run_state, required_games, required_net)
+		status = run_state.demo_objective_status()
+		if not bool(status.get("players_card_ready_to_claim", false)) or str(status.get("players_card_next_tier", "")) != expected_tier:
+			failures.append("Sequential Players Card fixture did not prepare %s." % expected_tier)
+			return false
+		if not generator.enter_grand_casino_room(run_state, RunState.GRAND_CASINO_CAGE_ARCHETYPE_ID):
+			failures.append("Sequential Players Card fixture could not enter the Cage for %s." % expected_tier)
+			return false
+		var claim := run_state.claim_grand_casino_players_card_tier()
+		if not bool(claim.get("ok", false)) or str(claim.get("tier", "")) != expected_tier:
+			failures.append("Linda did not award sequential %s: %s" % [expected_tier, str(claim.get("message", ""))])
+			return false
+		if not generator.enter_grand_casino_room(run_state, RunState.GRAND_CASINO_ARCHETYPE_ID):
+			failures.append("Sequential Players Card fixture could not return to the Main Floor after %s." % expected_tier)
+			return false
+	var gold_status := run_state.demo_objective_status()
+	_qualify_active_players_card_segment(
+		run_state,
+		int(gold_status.get("players_card_next_min_games", 0)),
+		int(gold_status.get("players_card_next_net_winnings", 0))
+	)
+	if not generator.enter_grand_casino_room(run_state, RunState.GRAND_CASINO_CAGE_ARCHETYPE_ID):
+		failures.append("Sequential Players Card fixture could not enter the Cage for Gold.")
+		return false
+	return bool(run_state.demo_objective_status().get("high_roller_ready", false))
+
+
 func _check_grand_casino_chips_and_cage(library: ContentLibrary, main_archetype: Dictionary, failures: Array) -> void:
 	var run_state: RunState = RunStateScript.new()
 	run_state.start_new("GC-CHIPS-CAGE")
@@ -2140,10 +2190,81 @@ func _check_grand_casino_chips_and_cage(library: ContentLibrary, main_archetype:
 	var buy_result := run_state.buy_grand_casino_chips(40, run_state.grand_casino_chip_exchange_rate())
 	if not bool(buy_result.get("ok", false)) or run_state.bankroll != 60 or run_state.grand_casino_chips != 40 or run_state.grand_casino_total_money() != 100:
 		failures.append("Grand Casino 1:1 table buy-in did not conserve cash plus chips.")
-	if run_state.wager_balance_for_game("blackjack", run_state.current_environment) != 40 or run_state.wager_capacity_for_game("blackjack", run_state.current_environment) != 100:
-		failures.append("Grand Casino table balance did not keep actual chips separate from explicitly convertible cash capacity.")
+	if run_state.wager_balance_for_game("blackjack", run_state.current_environment) != 100 or run_state.wager_capacity_for_game("blackjack", run_state.current_environment) != 100:
+		failures.append("Grand Casino table wager balance did not include cash available for seamless chip fallback.")
 	if run_state.run_spending_score != score_before:
 		failures.append("Grand Casino chip buy-in incorrectly counted a currency transfer as score spending.")
+	var fallback_run: RunState = RunStateScript.new()
+	fallback_run.start_new("GC-CASH-FALLBACK")
+	fallback_run.set_environment(environment.to_dict())
+	fallback_run.bankroll = 50
+	fallback_run.grand_casino_chips = 5
+	var fallback_total_before := fallback_run.grand_casino_total_money()
+	var fallback_funding := fallback_run.fund_grand_casino_table_wager("roulette", 20, fallback_run.current_environment)
+	if not bool(fallback_funding.get("ok", false)) \
+		or int(fallback_funding.get("existing_chips_used", -1)) != 5 \
+		or int(fallback_funding.get("chips_bought", -1)) != 15 \
+		or int(fallback_funding.get("cash_used", -1)) != 15 \
+		or fallback_run.bankroll != 35 \
+		or fallback_run.grand_casino_chips != 20 \
+		or fallback_run.grand_casino_total_money() != fallback_total_before:
+		failures.append("Grand Casino wager funding did not spend existing chips first and cover only the shortage with cash.")
+	var winning_deltas := GameModule.empty_result_deltas()
+	winning_deltas["bankroll_delta"] = 20
+	var winning_result := GameModule.build_action_result({
+		"ok": true,
+		"type": "game_action",
+		"source_id": "roulette",
+		"game_id": "roulette",
+		"action_id": "cash_fallback_win_fixture",
+		"action_kind": "legal",
+		"stake": 20,
+		"deltas": winning_deltas,
+		"environment_id": str(fallback_run.current_environment.get("id", "")),
+		"message": "Cash fallback win fixture.",
+	})
+	GameModule.apply_result(fallback_run, winning_result)
+	if fallback_run.bankroll != 35 or fallback_run.grand_casino_chips != 40 or fallback_run.grand_casino_total_money() != fallback_total_before + 20:
+		failures.append("A cash-funded Grand Casino winning wager did not return the stake and winnings as redeemable chips.")
+	var direct_run: RunState = RunStateScript.new()
+	direct_run.start_new("GC-CASH-FALLBACK-DIRECT")
+	direct_run.set_environment(environment.to_dict())
+	direct_run.bankroll = 50
+	direct_run.grand_casino_chips = 0
+	var direct_deltas := GameModule.empty_result_deltas()
+	direct_deltas["bankroll_delta"] = 10
+	var direct_result := GameModule.build_action_result({
+		"ok": true,
+		"type": "game_action",
+		"source_id": "roulette",
+		"game_id": "roulette",
+		"action_id": "direct_cash_fallback_fixture",
+		"action_kind": "legal",
+		"stake": 10,
+		"deltas": direct_deltas,
+		"environment_id": str(direct_run.current_environment.get("id", "")),
+		"message": "Direct cash fallback fixture.",
+	})
+	GameModule.apply_result(direct_run, direct_result)
+	if direct_run.bankroll != 40 or direct_run.grand_casino_chips != 20 or int(direct_result.get("wager_cash_used", 0)) != 10:
+		failures.append("Direct Grand Casino settlement did not fund a zero-chip cash wager before returning its gross payout as chips.")
+	var machine_funding_run: RunState = RunStateScript.new()
+	machine_funding_run.start_new("GC-MACHINE-CASH-FALLBACK")
+	machine_funding_run.set_environment(environment.to_dict())
+	machine_funding_run.bankroll = 20
+	machine_funding_run.grand_casino_chips = 0
+	var machine_funding := machine_funding_run.fund_grand_casino_table_wager("slot", 10, machine_funding_run.current_environment)
+	if not bool(machine_funding.get("ok", false)) or int(machine_funding.get("cash_used", -1)) != 10 or machine_funding_run.bankroll != 10 or machine_funding_run.grand_casino_chips != 10:
+		failures.append("A Grand Casino machine did not use seamless cash fallback when its chip rack was empty.")
+	var insufficient_run: RunState = RunStateScript.new()
+	insufficient_run.start_new("GC-CASH-FALLBACK-INSUFFICIENT")
+	insufficient_run.set_environment(environment.to_dict())
+	insufficient_run.bankroll = 4
+	insufficient_run.grand_casino_chips = 3
+	var insufficient_before := insufficient_run.grand_casino_total_money()
+	var insufficient_funding := insufficient_run.fund_grand_casino_table_wager("baccarat", 8, insufficient_run.current_environment)
+	if bool(insufficient_funding.get("ok", true)) or insufficient_run.grand_casino_total_money() != insufficient_before:
+		failures.append("Grand Casino cash fallback accepted an unaffordable wager or mutated funds on rejection.")
 
 	for table_id in RunState.GRAND_CASINO_TABLE_GAME_IDS:
 		var table_deltas := GameModule.empty_result_deltas()
@@ -2178,13 +2299,13 @@ func _check_grand_casino_chips_and_cage(library: ContentLibrary, main_archetype:
 		"stake": 1,
 		"deltas": machine_deltas,
 		"environment_id": str(run_state.current_environment.get("id", "")),
-		"message": "Casino machine cash fixture.",
+		"message": "Casino machine chip fixture.",
 	})
 	var machine_cash_before := run_state.bankroll
 	var machine_chips_before := run_state.grand_casino_chips
 	GameModule.apply_result(run_state, machine_result)
-	if run_state.bankroll != machine_cash_before + 7 or run_state.grand_casino_chips != machine_chips_before or machine_result.has("chips_delta"):
-		failures.append("Grand Casino machine result did not remain cash-only.")
+	if run_state.bankroll != machine_cash_before or run_state.grand_casino_chips != machine_chips_before + 7 or int(machine_result.get("chips_delta", 0)) != 7 or str(machine_result.get("currency", "")) != "chips":
+		failures.append("Grand Casino machine payout did not remain in chips for Cage redemption.")
 
 	var outside_environment := run_state.current_environment.duplicate(true)
 	outside_environment["id"] = "outside_table_currency_fixture"
@@ -2210,12 +2331,35 @@ func _check_grand_casino_chips_and_cage(library: ContentLibrary, main_archetype:
 	GameModule.apply_result(run_state, outside_result)
 	if run_state.bankroll != outside_cash_before - 3 or run_state.grand_casino_chips != outside_chips_before or outside_result.has("chips_delta"):
 		failures.append("Blackjack outside the Grand Casino did not remain cash-only.")
+	var outside_machine_deltas := GameModule.empty_result_deltas()
+	outside_machine_deltas["bankroll_delta"] = 4
+	var outside_machine_result := GameModule.build_action_result({
+		"ok": true,
+		"type": "game_action",
+		"source_id": "slot",
+		"game_id": "slot",
+		"action_id": "outside_machine_cash_fixture",
+		"action_kind": "legal",
+		"stake": 2,
+		"deltas": outside_machine_deltas,
+		"environment_id": "outside_table_currency_fixture",
+		"message": "Outside machine cash fixture.",
+	})
+	outside_cash_before = run_state.bankroll
+	outside_chips_before = run_state.grand_casino_chips
+	GameModule.apply_result(run_state, outside_machine_result)
+	if run_state.bankroll != outside_cash_before + 4 or run_state.grand_casino_chips != outside_chips_before or outside_machine_result.has("chips_delta"):
+		failures.append("Slot play outside the Grand Casino did not remain cash-only.")
 
 	run_state.set_environment(environment.to_dict())
+	var cashout_generator: RunGenerator = RunGeneratorScript.new(library)
+	if not cashout_generator.enter_grand_casino_room(run_state, RunState.GRAND_CASINO_CAGE_ARCHETYPE_ID):
+		failures.append("Grand Casino chip fixture could not enter the Cage for redemption.")
+		return
 	var saved := run_state.to_dict()
 	var restored: RunState = RunStateScript.new()
 	restored.from_dict(saved)
-	if restored.grand_casino_chips != run_state.grand_casino_chips or str(restored.current_environment.get("archetype_id", "")) != RunState.GRAND_CASINO_ARCHETYPE_ID:
+	if restored.grand_casino_chips != run_state.grand_casino_chips or str(restored.current_environment.get("archetype_id", "")) != RunState.GRAND_CASINO_CAGE_ARCHETYPE_ID:
 		failures.append("Grand Casino chip balance or Cage availability did not survive save/load.")
 	var total_before_cash_out := restored.grand_casino_total_money()
 	var score_before_cash_out := restored.run_spending_score
@@ -2465,7 +2609,7 @@ func _check_grand_casino_memory_entry_lines(main_environment: Dictionary, outsid
 		{"key": "high_heat", "flags": {"grand_casino_max_heat": 58}, "heat": 0},
 		{"key": "cheat_evidence", "flags": {"grand_casino_cheat_evidence": true}, "heat": 0},
 		{"key": "showdown_pressure", "flags": {"grand_casino_attention_pit_boss_sweep": true}, "heat": 0},
-		{"key": "pending_review", "flags": {"grand_casino_entry_bankroll": 100, "grand_casino_games_played": 5}, "heat": 0, "bankroll": 140},
+		{"key": "pending_review", "flags": {"grand_casino_entry_bankroll": 100, "grand_casino_games_played": 9, "grand_casino_players_card_awarded_tier": "silver", "grand_casino_players_card_tier": "silver", "grand_casino_players_card_ready_to_claim": true, "grand_casino_players_card_ready_tier": "gold", "high_roller_cashout_pending": true}, "heat": 0, "bankroll": 140},
 	]
 	for case_value in cases:
 		var case: Dictionary = case_value
@@ -2488,11 +2632,14 @@ func _check_grand_casino_memory_entry_lines(main_environment: Dictionary, outsid
 func _check_grand_casino_spatial_split(library: ContentLibrary, main_archetype: Dictionary, failures: Array) -> void:
 	var high_limit := _archetype_by_id(library, RunState.GRAND_CASINO_HIGH_LIMIT_ARCHETYPE_ID)
 	var back_room := _archetype_by_id(library, RunState.GRAND_CASINO_BACK_ROOM_ARCHETYPE_ID)
-	if high_limit.is_empty() or back_room.is_empty():
-		failures.append("Grand Casino spatial split is missing the High-Limit or Back Room archetype.")
+	var cage := _archetype_by_id(library, RunState.GRAND_CASINO_CAGE_ARCHETYPE_ID)
+	if high_limit.is_empty() or back_room.is_empty() or cage.is_empty():
+		failures.append("Grand Casino spatial split is missing the High-Limit, Back Room, or Cage archetype.")
 		return
-	if not bool(high_limit.get("map_hidden", false)) or not bool(back_room.get("map_hidden", false)):
+	if not bool(high_limit.get("map_hidden", false)) or not bool(back_room.get("map_hidden", false)) or not bool(cage.get("map_hidden", false)):
 		failures.append("Grand Casino subrooms must be hidden from world-map node generation.")
+	if not _string_array(cage.get("game_pool", [])).is_empty() or RunState.ROURKE_ROOM_PATH.has(RunState.GRAND_CASINO_CAGE_ARCHETYPE_ID) or RunState.RIVAL_CHEATER_ROOMS.has(RunState.GRAND_CASINO_CAGE_ARCHETYPE_ID):
+		failures.append("Grand Casino Cage leaked into a game, Rourke patrol, or rival-cheater room set.")
 	var main_games := _string_array(main_archetype.get("game_pool", []))
 	var high_games := _string_array(high_limit.get("game_pool", []))
 	for machine_id in ["slot", "video_poker", "pull_tabs", "bar_dice"]:
@@ -2517,7 +2664,7 @@ func _check_grand_casino_spatial_split(library: ContentLibrary, main_archetype: 
 			var node_id := str((node_value as Dictionary).get("id", ""))
 			if node_id.begins_with("grand_casino"):
 				grand_node_count += 1
-		if grand_node_count != 1 or not WorldMapScript.node_by_id(map_data, RunState.GRAND_CASINO_HIGH_LIMIT_ARCHETYPE_ID).is_empty() or not WorldMapScript.node_by_id(map_data, RunState.GRAND_CASINO_BACK_ROOM_ARCHETYPE_ID).is_empty():
+		if grand_node_count != 1 or not WorldMapScript.node_by_id(map_data, RunState.GRAND_CASINO_HIGH_LIMIT_ARCHETYPE_ID).is_empty() or not WorldMapScript.node_by_id(map_data, RunState.GRAND_CASINO_BACK_ROOM_ARCHETYPE_ID).is_empty() or not WorldMapScript.node_by_id(map_data, RunState.GRAND_CASINO_CAGE_ARCHETYPE_ID).is_empty():
 			failures.append("World map seed %d did not contain exactly one Grand Casino node." % seed_index)
 			break
 
@@ -2527,7 +2674,7 @@ func _check_grand_casino_spatial_split(library: ContentLibrary, main_archetype: 
 	var generator: RunGenerator = RunGeneratorScript.new(library)
 	var layout := _copy_dict(run_state.current_environment.get("layout", {}))
 	var object_rects := _copy_dict(layout.get("object_rects", {}))
-	for object_id in ["casino_fixture:cage", "casino_fixture:host_desk", "travel:grand_casino_high_limit", "travel:grand_casino_back_room"]:
+	for object_id in ["casino_fixture:host_desk", "travel:grand_casino_high_limit", "travel:grand_casino_back_room", "travel:grand_casino_cage"]:
 		if not object_rects.has(object_id):
 			failures.append("Grand Casino Main Floor layout is missing authored object placement: %s." % object_id)
 	var buy_in := int(_copy_dict(run_state.current_environment.get("local_narrative_flags", {})).get("casino_high_limit_buy_in", 60))
@@ -2540,6 +2687,18 @@ func _check_grand_casino_spatial_split(library: ContentLibrary, main_archetype: 
 		failures.append("Grand Casino High-Limit cash buy-in gate did not admit and price an eligible player.")
 	if bool(run_state.grand_casino_room_access_status(RunState.GRAND_CASINO_BACK_ROOM_ARCHETYPE_ID, buy_in).get("available", true)) or generator.enter_grand_casino_room(run_state, RunState.GRAND_CASINO_BACK_ROOM_ARCHETYPE_ID):
 		failures.append("Grand Casino Back Room was reachable without the showdown.")
+	if not bool(run_state.grand_casino_room_access_status(RunState.GRAND_CASINO_CAGE_ARCHETYPE_ID, buy_in).get("available", false)):
+		failures.append("Grand Casino Cage was not freely accessible from the Main Floor.")
+	if not generator.enter_grand_casino_room(run_state, RunState.GRAND_CASINO_CAGE_ARCHETYPE_ID):
+		failures.append("Grand Casino room seam could not enter the freely accessible Cage.")
+		return
+	var cage_rects := _copy_dict(_copy_dict(run_state.current_environment.get("layout", {})).get("object_rects", {}))
+	for object_id in ["casino_fixture:cage_counter", "casino_fixture:cage_atm", "casino_fixture:cage_gift_shop", "travel:grand_casino"]:
+		if not cage_rects.has(object_id):
+			failures.append("Grand Casino Cage layout is missing authored object placement: %s." % object_id)
+	if not generator.enter_grand_casino_room(run_state, RunState.GRAND_CASINO_ARCHETYPE_ID):
+		failures.append("Grand Casino Cage return door could not restore the Main Floor.")
+		return
 
 	run_state.add_suspicion("gc_room_shared_heat", 23, "behavior")
 	run_state.narrative_flags["grand_casino_attention_eye_in_the_sky"] = true
@@ -2573,17 +2732,11 @@ func _check_grand_casino_spatial_split(library: ContentLibrary, main_archetype: 
 		return
 	var clean_generator: RunGenerator = RunGeneratorScript.new(library)
 	clean_run.record_grand_casino_game_result({"ok": true, "game_id": "slot", "action_kind": "legal", "stake": 5})
-	clean_run.narrative_flags["grand_casino_high_limit_access"] = true
-	if not clean_generator.enter_grand_casino_room(clean_run, RunState.GRAND_CASINO_HIGH_LIMIT_ARCHETYPE_ID):
-		failures.append("Grand Casino split clean-route fixture could not enter High-Limit.")
+	if not _prepare_players_card_gold_ready(clean_run, library, failures):
+		failures.append("Grand Casino split clean-route fixture could not complete its sequential card path.")
 		return
-	var objective := _copy_dict(clean_run.current_environment.get("demo_objective", {}))
-	var min_games := maxi(1, int(objective.get("high_roller_min_grand_casino_games", 5)))
-	for game_index in range(1, min_games):
-		clean_run.record_grand_casino_game_result({"ok": true, "game_id": "blackjack", "action_kind": "legal", "stake": 25})
-	clean_run.bankroll = int(clean_run.narrative_flags.get("grand_casino_entry_bankroll", clean_run.bankroll)) + maxi(1, int(objective.get("high_roller_net_winnings", 30)))
-	var split_status := clean_run.evaluate_environment_objective_state()
-	if not bool(split_status.get("high_roller_ready", false)) or int(split_status.get("grand_casino_games_played", 0)) != min_games:
+	var split_status := clean_run.demo_objective_status()
+	if not bool(split_status.get("high_roller_ready", false)) or str(split_status.get("players_card_next_tier", "")) != RunState.GRAND_CASINO_PLAYERS_CARD_TIER_GOLD:
 		failures.append("Grand Casino clean route did not complete its ready transition with play split across rooms.")
 
 
@@ -2767,6 +2920,7 @@ func _check_broke_pull_tab_deferred_terminal_boundary(library: ContentLibrary, f
 	stored_machine["winner_pile"] = []
 	states["pull_tabs"] = stored_machine
 	run_state.current_environment["game_states"] = states
+	run_state.capture_portable_ticket_piles_from_environment(run_state.current_environment)
 	var failed_status := RunTerminalEvaluatorScript.evaluate_and_apply(run_state, library)
 	if not bool(failed_status.get("failed", false)) or run_state.run_failure_reason != RunState.FAILURE_BANKROLL_ZERO:
 		failures.append("Clearing zero-bankroll pull-tab recovery did not fail at the action boundary with bankroll-zero reason.")

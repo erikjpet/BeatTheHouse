@@ -10,10 +10,13 @@ const CONTEXT_MODE_META_BAG := "meta_bag"
 const CONTEXT_MODE_META_UPGRADE := "meta_upgrade"
 const CONTEXT_MODE_META_TRADE_UP := "meta_trade_up"
 const CONTEXT_MODE_META_PAWN_COUNTER := "meta_pawn_counter"
+const CONTEXT_MODE_META_SAL_SHELF := "meta_sal_shelf"
+const CONTEXT_MODE_META_SAL_TALK := "meta_sal_talk"
 const META_LOCATION_HOME := "home"
 
 const MetaCollectionServiceScript := preload("res://scripts/core/meta_collection_service.gd")
 const CollectionItemResolverScript := preload("res://scripts/core/collection_item_resolver.gd")
+const EnvironmentInstanceScript := preload("res://scripts/core/environment_instance.gd")
 const MetaCollectionViewModelScript := preload("res://scripts/ui/meta_collection_view_model.gd")
 const WorldMapScript := preload("res://scripts/core/world_map.gd")
 const AttributeBadgesScript := preload("res://scripts/core/attribute_badges.gd")
@@ -22,6 +25,7 @@ var library: ContentLibrary
 var meta_collection_service: MetaCollectionService
 var interactable_object_view_cache: Array = []
 var interactable_object_view_cache_key := ""
+var _shared_collection_resolver: CollectionItemResolver
 
 
 func configure(source_library: ContentLibrary, source_meta_collection_service: MetaCollectionService) -> void:
@@ -90,7 +94,7 @@ func unopened_bag_rows() -> Array:
 	var rows: Array = []
 	if meta_collection_service == null:
 		return rows
-	var resolver: Variant = CollectionItemResolverScript.new()
+	var resolver: Variant = _collection_resolver()
 	for bag_value in meta_collection_service.unopened_bags():
 		if typeof(bag_value) != TYPE_DICTIONARY:
 			continue
@@ -123,7 +127,7 @@ func owned_item_rows() -> Array:
 	var rows: Array = []
 	if meta_collection_service == null:
 		return rows
-	var resolver: Variant = CollectionItemResolverScript.new()
+	var resolver: Variant = _collection_resolver()
 	var packed_ids := meta_collection_service.carried_instance_ids()
 	for instance_value in meta_collection_service.owned_instances():
 		if typeof(instance_value) != TYPE_DICTIONARY:
@@ -176,7 +180,7 @@ func sale_rows() -> Array:
 			"detail": "%s. %s" % [str(item_row.get("collection_display_name", "Collection")), str(item_row.get("float_summary", ""))],
 			"price": int(quote.get("price", 0)),
 		})
-	var resolver: Variant = CollectionItemResolverScript.new()
+	var resolver: Variant = _collection_resolver()
 	for bag_value in meta_collection_service.unopened_bags():
 		if typeof(bag_value) != TYPE_DICTIONARY:
 			continue
@@ -198,11 +202,34 @@ func sale_rows() -> Array:
 	return rows
 
 
+func sal_shelf_rows() -> Array:
+	var rows: Array = []
+	if meta_collection_service == null:
+		return rows
+	var resolver: Variant = _collection_resolver()
+	var store_snapshot: Dictionary = meta_collection_service.snapshot()
+	var gold_balance := int(store_snapshot.get("gold_balance", 0))
+	for slot_value in meta_collection_service.sal_shelf_rows():
+		var slot := _copy_dict(slot_value)
+		var item := _copy_dict(slot.get("item", {}))
+		var definition: Dictionary = resolver.item_definition(int(item.get("itemdef_id", -1)))
+		var collection: Dictionary = resolver.collection_definition(str(definition.get("collection_id", "")))
+		var quote := _copy_dict(slot.get("quote_basis", {}))
+		slot["display_name"] = str(definition.get("display_name", "Empty Shelf")) if bool(slot.get("occupied", false)) else "Empty Shelf"
+		slot["collection_display_name"] = str(collection.get("display_name", "Collection"))
+		slot["tier"] = str(definition.get("tier", ""))
+		slot["icon_key"] = str(definition.get("icon_key", "pawn_receipt_sleeve"))
+		slot["gold_balance"] = gold_balance
+		slot["quote_basis"] = quote
+		rows.append(slot)
+	return rows
+
+
 func trade_up_candidates() -> Array:
 	var grouped: Dictionary = {}
 	if meta_collection_service == null:
 		return []
-	var resolver: Variant = CollectionItemResolverScript.new()
+	var resolver: Variant = _collection_resolver()
 	for instance_value in meta_collection_service.owned_instances():
 		if typeof(instance_value) != TYPE_DICTIONARY:
 			continue
@@ -418,11 +445,11 @@ func _build_pawn_environment(run_state: RunState) -> Dictionary:
 	data["world_map_travel"] = true
 	data["kind"] = "pawn" + "_shop"
 	data["display_name"] = "Sal's Pawn Shop"
-	data["objective_hint"] = "Sell collection items or unopened bags for gold."
+	data["objective_hint"] = "Inspect Sal's shelf, buy collection items, or sell at the counter."
 	data["game_ids"] = []
 	data["game_states"] = {}
 	data["event_ids"] = []
-	data["item_offers"] = []
+	data["item_offers"] = _sal_layout_item_offers()
 	data["service_ids"] = []
 	data["lender_hooks"] = []
 	data["object_fixtures"] = []
@@ -485,6 +512,9 @@ func _interactable_object_view_cache_key(location_id: String) -> String:
 		parts.append(JSON.stringify(snapshot.get("owned_instances", [])))
 		parts.append(JSON.stringify(snapshot.get("unopened_bags", [])))
 		parts.append(JSON.stringify(snapshot.get("loadout", [])))
+		var resale := _copy_dict(snapshot.get("sal_resale", {}))
+		parts.append(str(resale.get("revision", 0)))
+		parts.append(str(not _copy_dict(resale.get("pending_starter_buyback", {})).is_empty()))
 	return "|".join(parts)
 
 
@@ -607,7 +637,41 @@ func _home_interactable_objects(run_state: RunState, hover_target_id: String, fo
 
 
 func _pawn_interactable_objects(run_state: RunState, hover_target_id: String, focus_target_id: String, selected_object_id: String) -> Array:
-	return [
+	var objects: Array = []
+	for slot_value in sal_shelf_rows():
+		var slot := _copy_dict(slot_value)
+		var index := int(slot.get("slot_index", objects.size()))
+		var occupied := bool(slot.get("occupied", false))
+		var item := _copy_dict(slot.get("item", {}))
+		var quote := _copy_dict(slot.get("quote_basis", {}))
+		var mode := str(slot.get("listing_mode", ""))
+		objects.append(_make_interactable_object({
+			"object_id": "meta_sal_shelf:%d" % index,
+			"object_type": CONTEXT_MODE_META_SAL_SHELF,
+			"visual_type": CONTEXT_MODE_META_SAL_SHELF,
+			"source_id": str(index),
+			"label": str(slot.get("display_name", "Empty Shelf")),
+			"short_description": "%s, %s." % [str(slot.get("collection_display_name", "Collection")), str(slot.get("tier", "")).capitalize()] if occupied else "An empty spot behind Sal's locked glass.",
+			"identity_summary": "Instance %d" % int(item.get("instance_id", 0)) if occupied else "Slot %d" % (index + 1),
+			"presence": "fixture",
+			"interactive": true,
+			"enabled": occupied,
+			"disabled_reason": "This shelf spot is empty.",
+			"action_summary": "Inspect and buy this exact item." if occupied else "Nothing is listed here.",
+			"status_summary": "%s listing" % mode.replace("_", " ").capitalize() if occupied else "Empty",
+			"effect_summary": "Rarity %.3fx · Sal pays %d" % [float(quote.get("rarity_multiplier", 1.0)), int(quote.get("pawn_quote", 0))] if occupied else "A later victory may restock it.",
+			"cost_summary": "%d gold · You have %d" % [int(slot.get("asking_price", 0)), int(slot.get("gold_balance", 0))] if occupied else "",
+			"runtime_state": {"slot": slot},
+			"visual_state": {"occupied": occupied, "listing_mode": mode, "tier": str(slot.get("tier", ""))},
+			"state_badge": str(slot.get("tier", "")).capitalize() if occupied else "EMPTY",
+			"visual_key": "meta_sal_shelf_item" if occupied else "meta_sal_shelf_empty",
+			"prop": "locked_shelf_item" if occupied else "empty_shelf",
+			"icon_key": str(slot.get("icon_key", "pawn_receipt_sleeve")) if occupied else "storage",
+			"available_actions": [{"id": "inspect_sal_shelf", "label": "Inspect"}] if occupied else [],
+			"confirm_action_id": "inspect_sal_shelf" if occupied else "",
+			"focus_rect": _sal_shelf_interaction_rect(run_state, index),
+		}, hover_target_id, focus_target_id, selected_object_id))
+	objects.append_array([
 		_make_interactable_object({
 			"object_id": "meta_pawn_counter:sell",
 			"object_type": CONTEXT_MODE_META_PAWN_COUNTER,
@@ -628,6 +692,24 @@ func _pawn_interactable_objects(run_state: RunState, hover_target_id: String, fo
 			"focus_rect": _interaction_rect_for_object(run_state, "meta_pawn_counter:sell", CONTEXT_MODE_META_PAWN_COUNTER, 0),
 		}, hover_target_id, focus_target_id, selected_object_id),
 		_make_interactable_object({
+			"object_id": "meta_sal:talk",
+			"object_type": CONTEXT_MODE_META_SAL_TALK,
+			"visual_type": CONTEXT_MODE_META_SAL_TALK,
+			"source_id": "sal",
+			"label": "Sal",
+			"short_description": "Sal waits behind the barred counter.",
+			"presence": "fixture",
+			"interactive": true,
+			"enabled": true,
+			"action_summary": "Talk to Sal.",
+			"visual_key": "meta_sal",
+			"prop": "pawn_broker",
+			"icon_key": "pawn_receipt_sleeve",
+			"available_actions": [{"id": "talk_sal", "label": "Talk"}],
+			"confirm_action_id": "talk_sal",
+			"focus_rect": _interaction_rect_for_object(run_state, "meta_sal:talk", CONTEXT_MODE_META_SAL_TALK, 0),
+		}, hover_target_id, focus_target_id, selected_object_id),
+		_make_interactable_object({
 			"object_id": "travel:leave",
 			"object_type": CONTEXT_MODE_TRAVEL,
 			"source_id": "leave",
@@ -641,9 +723,46 @@ func _pawn_interactable_objects(run_state: RunState, hover_target_id: String, fo
 			"icon_key": "travel",
 			"available_actions": [{"id": "open_meta_map", "label": "Open Map"}],
 			"confirm_action_id": "open_meta_map",
-			"focus_rect": _interaction_rect_for_object(run_state, "travel:leave", CONTEXT_MODE_TRAVEL, 0),
+			"focus_rect": _pawn_exit_interaction_rect(run_state),
 		}, hover_target_id, focus_target_id, selected_object_id),
-	]
+	])
+	return objects
+
+
+func _sal_layout_item_offers() -> Array:
+	var offers: Array = []
+	for slot_value in sal_shelf_rows():
+		var slot := _copy_dict(slot_value)
+		var index := int(slot.get("slot_index", offers.size()))
+		offers.append({
+			"id": "sal_shelf_%d" % index,
+			"item_id": "sal_shelf_%d" % index,
+			"display_name": str(slot.get("display_name", "Empty Shelf")),
+			"icon_key": str(slot.get("icon_key", "storage")),
+			"price": int(slot.get("asking_price", 0)),
+			"meta_sal_slot": true,
+			"occupied": bool(slot.get("occupied", false)),
+		})
+	return offers
+
+
+func _sal_shelf_interaction_rect(run_state: RunState, index: int) -> Rect2:
+	var layout := _current_environment_layout(run_state)
+	var authored: Rect2 = EnvironmentInstanceScript._object_rect_from_layout(layout, "item", index, "item_spots")
+	if authored.size.x > 0.0 and authored.size.y > 0.0:
+		var center := authored.position + authored.size * 0.5
+		var board_size := Vector2(VisualStyle.ENVIRONMENT_BOARD_SIZE)
+		var shelf_size := Vector2(46.0 / board_size.x, 44.0 / board_size.y)
+		return Rect2(center - shelf_size * 0.5, shelf_size)
+	return _normalized_interaction_rect(CONTEXT_MODE_META_SAL_SHELF, index)
+
+
+func _pawn_exit_interaction_rect(run_state: RunState) -> Rect2:
+	var layout := _current_environment_layout(run_state)
+	var authored: Rect2 = EnvironmentInstanceScript._object_rect_from_layout(layout, "travel", 0, "travel_spots")
+	if authored.size.x > 0.0 and authored.size.y > 0.0:
+		return authored
+	return _normalized_interaction_rect(CONTEXT_MODE_TRAVEL, 0)
 
 
 func _world_map_node(node_id: String, position: Vector2, selected_id: String, location_id: String) -> Dictionary:
@@ -805,6 +924,12 @@ func _normalized_interaction_rect(object_type: String, index: int) -> Rect2:
 		CONTEXT_MODE_META_PAWN_COUNTER:
 			center = Vector2(0.50, 0.48)
 			size = Vector2(136.0 / board_size.x, 72.0 / board_size.y)
+		CONTEXT_MODE_META_SAL_SHELF:
+			center = Vector2(0.16 + float(index % 2) * 0.08 if index < 2 else 0.78 + float(index % 2) * 0.08, 0.34 + float(index / 2) * 0.16)
+			size = Vector2(62.0 / board_size.x, 52.0 / board_size.y)
+		CONTEXT_MODE_META_SAL_TALK:
+			center = Vector2(0.50, 0.23)
+			size = Vector2(96.0 / board_size.x, 76.0 / board_size.y)
 	return Rect2(center - size * 0.5, size)
 
 
@@ -840,6 +965,12 @@ func _copy_array(value: Variant) -> Array:
 	if typeof(value) != TYPE_ARRAY:
 		return []
 	return (value as Array).duplicate(true)
+
+
+func _collection_resolver() -> CollectionItemResolver:
+	if _shared_collection_resolver == null:
+		_shared_collection_resolver = CollectionItemResolverScript.new()
+	return _shared_collection_resolver
 
 
 func _copy_dict(value: Variant) -> Dictionary:
