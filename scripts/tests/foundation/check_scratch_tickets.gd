@@ -26,6 +26,11 @@ func _check_scratch_tickets_surface_contract(game: GameModule, failures: Array) 
 		failures.append("Scratch Tickets idle liveness/zero-copy flags are incorrect.")
 	if not bool(surface.get("surface_pointer_coalesce_moves", false)) or not game.surface_pointer_uses_lightweight_ui_state("scratch_scrub"):
 		failures.append("Scratch Tickets did not retain coalesced lightweight pointer input.")
+	if bool(surface.get("scratch_core_surface_scroll", true)) or str(surface.get("scratch_ui_mode", "")) != "machine_surface_split":
+		failures.append("Scratch Tickets desktop UI lost its non-scrolling machine/surface split.")
+	var compact_surface := game.surface_state(run_state, environment, {"surface_runtime_status": {"small_screen_mode": true}})
+	if str(compact_surface.get("scratch_ui_mode", "")) != "compact_tabs" or bool(compact_surface.get("scratch_core_surface_scroll", true)):
+		failures.append("Scratch Tickets small-screen UI did not compact without scrolling.")
 	var art_features: Array = surface.get("scratch_machine_art_features", []) if typeof(surface.get("scratch_machine_art_features", [])) == TYPE_ARRAY else []
 	for feature in ["floor_unit", "jackpot_marquee", "glass_stock_rows", "branded_side_panel", "selection_buttons", "dispensing_tray"]:
 		if not art_features.has(feature):
@@ -88,8 +93,13 @@ func _check_scratch_purchase_and_input(game: GameModule, run_state: RunState, en
 	if str(drag_end.get("surface_audio_loop_stop", "")) != "scratch_paper_foley_loop":
 		failures.append("Scratch pointer release did not stop the paper-foley loop.")
 	var reduced := game.surface_state(run_state, environment, {"reduce_motion": true})
-	if not bool(reduced.get("scratch_reduce_motion", false)):
+	if not bool(reduced.get("scratch_reduce_motion", false)) or not bool(reduced.get("scratch_all_available", false)):
 		failures.append("Scratch Tickets did not expose its reduce-motion presentation path.")
+	var active_harness := SurfaceHarness.new()
+	active_harness.setup(reduced)
+	game.draw_surface(active_harness, reduced, {"contract_harness": true})
+	if not _surface_harness_has_action(active_harness, "scratch_all"):
+		failures.append("Scratch Tickets active HUD did not expose Scratch All.")
 
 
 func _check_scratch_determinism(game: GameModule, failures: Array) -> void:
@@ -177,8 +187,8 @@ func _prime_section_just_below_sweep(game: GameModule, ticket: Dictionary, secti
 	for sample_index in range(mask.size()):
 		var normalized: Vector2 = game.call("_mask_sample_normalized", sample_index, columns, rows)
 		if int(game.call("_section_index_at_normalized", sections, normalized)) == section_index:
-			mask[sample_index] = 53
-			remaining += 53
+			mask[sample_index] = 52
+			remaining += 52
 	var section: Dictionary = sections[section_index]
 	section["mask_remaining_units"] = remaining
 	section["coverage"] = 1.0 - float(remaining) / float(maxi(1, int(section.get("sample_total", 1)) * 255))
