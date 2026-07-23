@@ -10,6 +10,8 @@ const PixelSceneCanvasScript := preload("res://scripts/ui/pixel_scene_canvas.gd"
 const GameSurfaceCanvasScript := preload("res://scripts/ui/game_surface_canvas.gd")
 const PerformanceLivenessGuardScript := preload("res://scripts/ui/performance_liveness_guard.gd")
 const RunInventoryScreenScript := preload("res://scripts/ui/run_inventory_screen.gd")
+const BagOpenReelScript := preload("res://scripts/ui/bag_open_reel.gd")
+const BagOpenReelViewModelScript := preload("res://scripts/ui/bag_open_reel_view_model.gd")
 const TalkDockScript := preload("res://scripts/ui/talk_dock.gd")
 const ItemFoundPopupScript := preload("res://scripts/ui/item_found_popup.gd")
 const CoachOverlayScript := preload("res://scripts/ui/coach_overlay.gd")
@@ -379,6 +381,71 @@ func _check_run_inventory_screen_component() -> bool:
 		push_error("Standalone run inventory close did not hide the component.")
 		return false
 	parent.queue_free()
+	return true
+
+
+func _check_bag_open_reel_component() -> bool:
+	var resolver: Variant = preload("res://scripts/core/collection_item_resolver.gd").new()
+	var possible: Array = resolver.bag_item_options_for_bag(9000)
+	if possible.is_empty():
+		push_error("Bag reel component fixture has no possible contents.")
+		return false
+	var definition: Dictionary = possible[0]
+	var item: Dictionary = resolver.roll_instance(int(definition.get("itemdef_id", -1)), "ui-bag-reel")
+	var result: Dictionary = {
+		"ok": true,
+		"item": item,
+		"definition": definition,
+		"run_item": resolver.resolve_run_item(item),
+	}
+	result[BagOpenReelViewModelScript.RESULT_BAG_KEY] = {
+		"instance_id": 4242,
+		"bagdef_id": 9000,
+		"rng_seed": "ui-bag-reel",
+		"display_name": "UI Reel Bag",
+	}
+	var model: Dictionary = BagOpenReelViewModelScript.build(result, possible, false, "ui-reel")
+	var reel: BagOpenReel = BagOpenReelScript.new()
+	reel.configure(Callable(self, "_run_inventory_test_texture"))
+	reel.size = Vector2(1280, 720)
+	root.add_child(reel)
+	reel.open(model)
+	await process_frame
+	var opening_snapshot: Dictionary = reel.layout_snapshot()
+	if not bool(opening_snapshot.get("visible", false)) or bool(opening_snapshot.get("spin_complete", true)):
+		push_error("Bag reel component did not open in spinning state.")
+		reel.queue_free()
+		return false
+	if int(opening_snapshot.get("landing_itemdef_id", -1)) != int(item.get("itemdef_id", -2)):
+		push_error("Bag reel component landing card was not pinned to the committed item.")
+		reel.queue_free()
+		return false
+	reel.finish_spin()
+	await process_frame
+	var finished_snapshot: Dictionary = reel.layout_snapshot()
+	if not bool(finished_snapshot.get("spin_complete", false)):
+		push_error("Bag reel component skip did not snap to completion.")
+		reel.queue_free()
+		return false
+	reel.set_small_screen_mode(true)
+	await process_frame
+	var small_snapshot: Dictionary = reel.layout_snapshot()
+	var panel: Rect2 = small_snapshot.get("panel_rect", Rect2())
+	var showcase: Rect2 = small_snapshot.get("showcase_rect", Rect2())
+	if not bool(small_snapshot.get("small_screen_mode", false)) or panel.end.x > reel.size.x + 0.1 or showcase.end.y > reel.size.y + 0.1:
+		push_error("Bag reel small-screen layout exceeded the viewport.")
+		reel.queue_free()
+		return false
+	var reduced_model: Dictionary = BagOpenReelViewModelScript.build(result, possible, true, "ui-reel")
+	reel.open(reduced_model)
+	await process_frame
+	var reduced_snapshot: Dictionary = reel.layout_snapshot()
+	if not bool(reduced_snapshot.get("reduce_motion", false)) or not bool(reduced_snapshot.get("spin_complete", false)):
+		push_error("Bag reel reduce-motion path did not open directly on the result.")
+		reel.queue_free()
+		return false
+	reel.close()
+	reel.queue_free()
 	return true
 
 
@@ -1334,6 +1401,9 @@ func _run() -> void:
 		quit(1)
 		return
 	if not await _check_run_inventory_screen_component():
+		quit(1)
+		return
+	if not await _check_bag_open_reel_component():
 		quit(1)
 		return
 	if not await _check_talk_dock_component():

@@ -4,6 +4,7 @@ const CollectionItemResolverScript := preload("res://scripts/core/collection_ite
 const MetaCollectionServiceScript := preload("res://scripts/core/meta_collection_service.gd")
 const CollectionDropServiceScript := preload("res://scripts/core/collection_drop_service.gd")
 const MetaCollectionViewModelScript := preload("res://scripts/ui/meta_collection_view_model.gd")
+const BagOpenReelViewModelScript := preload("res://scripts/ui/bag_open_reel_view_model.gd")
 const RunReportViewModelScript := preload("res://scripts/ui/run_report_view_model.gd")
 const RunStateScript := preload("res://scripts/core/run_state.gd")
 
@@ -48,6 +49,7 @@ func _run() -> void:
 	_test_failed_run_discards_pending_bags()
 	_test_daily_and_challenge_runs_are_meta_isolated()
 	_test_open_bag_consumes_once()
+	_test_bag_open_reel_view_model_pins_committed_item(resolver)
 	_test_collection_browser_view_model_read_only(resolver)
 	_test_end_summary_lists_bags()
 	_finish()
@@ -797,6 +799,58 @@ func _test_open_bag_consumes_once() -> void:
 	OS.set_environment(MetaCollectionServiceScript.STORE_PATH_ENV, "")
 
 
+func _test_bag_open_reel_view_model_pins_committed_item(resolver: Variant) -> void:
+	var rarity_html := {}
+	for tier in TIERS:
+		var color := VisualStyle.rarity_outline_color(tier)
+		_check(not rarity_html.values().has(color.to_html(false)), "Bag reel rarity outline color was not distinct for %s." % tier)
+		rarity_html[tier] = color.to_html(false)
+	for tier in TIERS:
+		var tier_store_path := "user://collection_meta_check_reel_%s.json" % tier
+		OS.set_environment(MetaCollectionServiceScript.STORE_PATH_ENV, tier_store_path)
+		_remove_user_file(tier_store_path)
+		var service: Variant = MetaCollectionServiceScript.new()
+		service.load()
+		var bag_defs := _copy_array(resolver.bag_item_definitions("", tier))
+		if bag_defs.is_empty():
+			failures.append("No bag definition available for reel tier %s." % tier)
+			_remove_user_file(tier_store_path)
+			continue
+		var bag_def := _copy_dict(bag_defs[0])
+		var granted_bag: Dictionary = service.grant_bag(int(bag_def.get("itemdef_id", -1)), "reel-earned:%s" % tier, {"display_name": "%s Reel Bag" % tier.capitalize()})
+		var before_owned_count: int = service.owned_instances().size()
+		var result: Dictionary = service.open_bag(int(granted_bag.get("instance_id", 0)))
+		_check(bool(result.get("ok", false)), "Bag open failed before reel model for %s." % tier)
+		if not bool(result.get("ok", false)):
+			_remove_user_file(tier_store_path)
+			continue
+		var possible := _copy_array(resolver.bag_item_options_for_bag(int(bag_def.get("itemdef_id", -1))))
+		var model: Dictionary = BagOpenReelViewModelScript.build(result, possible, false, "unit:%s" % tier)
+		var landing := _copy_dict(BagOpenReelViewModelScript.landing_card(model))
+		var item := _copy_dict(result.get("item", {}))
+		_check(int(landing.get("itemdef_id", -1)) == int(item.get("itemdef_id", -2)), "Bag reel landing itemdef was not the committed open_bag item for %s." % tier)
+		_check(int(landing.get("instance_id", 0)) == int(item.get("instance_id", -1)), "Bag reel landing instance was not the granted item for %s." % tier)
+		_check(int(model.get("committed_instance_id", 0)) == int(item.get("instance_id", -1)), "Bag reel model lost committed instance id for %s." % tier)
+		_check(int(model.get("landing_index", -1)) == BagOpenReelViewModelScript.LANDING_INDEX, "Bag reel model landing index drifted for %s." % tier)
+		_check(_copy_array(model.get("sequence", [])).size() == BagOpenReelViewModelScript.CARD_COUNT, "Bag reel did not precompute its full card sequence for %s." % tier)
+		_check(JSON.stringify(BagOpenReelViewModelScript.showcase_itemdef_ids(model)) == JSON.stringify(_itemdef_ids(possible)), "Bag reel showcase did not exactly match possible contents for %s." % tier)
+		var reduced: Dictionary = BagOpenReelViewModelScript.build(result, possible, true, "unit:%s" % tier)
+		_check(bool(reduced.get("reduce_motion", false)) and float(reduced.get("spin_duration_sec", 1.0)) == 0.0, "Bag reel reduce-motion model still animates for %s." % tier)
+		_check(int(_copy_dict(BagOpenReelViewModelScript.landing_card(reduced)).get("instance_id", 0)) == int(item.get("instance_id", -1)), "Bag reel reduce-motion path changed the committed item for %s." % tier)
+		_check(service.owned_instances().size() == before_owned_count + 1, "Bag reel model construction double-granted an item for %s." % tier)
+		var save_error: Error = service.save()
+		_check(save_error == OK, "Bag reel mid-spin save simulation could not save for %s." % tier)
+		var reloaded: Variant = MetaCollectionServiceScript.new()
+		reloaded.load()
+		var matching := 0
+		for instance_value in _copy_array(reloaded.owned_instances()):
+			if int(_copy_dict(instance_value).get("instance_id", 0)) == int(item.get("instance_id", -1)):
+				matching += 1
+		_check(matching == 1, "Bag reel mid-spin reload did not preserve exactly one granted item for %s." % tier)
+		_remove_user_file(tier_store_path)
+	OS.set_environment(MetaCollectionServiceScript.STORE_PATH_ENV, "")
+
+
 func _test_collection_browser_view_model_read_only(resolver: Variant) -> void:
 	OS.set_environment(MetaCollectionServiceScript.STORE_PATH_ENV, TEST_STORE_PATH)
 	_remove_user_file(TEST_STORE_PATH)
@@ -891,6 +945,15 @@ func _instance_ids(instances: Array) -> Array:
 	for instance_value in instances:
 		var instance := _copy_dict(instance_value)
 		ids.append(int(instance.get("instance_id", 0)))
+	return ids
+
+
+func _itemdef_ids(definitions: Array) -> Array:
+	var ids: Array = []
+	for definition_value in definitions:
+		var definition := _copy_dict(definition_value)
+		ids.append(int(definition.get("itemdef_id", -1)))
+	ids.sort()
 	return ids
 
 
