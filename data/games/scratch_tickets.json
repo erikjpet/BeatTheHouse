@@ -25,15 +25,16 @@
 		"price": 5,
 		"size_id": "medium_square",
 		"face": {"layout": "lucky_seven_neon", "symbol_set": "number_sevens", "palette": {"paper": "#fff6d8", "ink": "#34132e", "accent": "#f02f59", "latex": "#c2c3ca", "trim": "#ffe13c"}},
-		"mechanic": {"type": "key_number_match", "rules": ["Match either Winning Number to win that prize.", "Winning 7 wins all prizes.", "Your 7 wins its prize automatically."], "winning_number_count": 2, "your_number_count": 6},
+		"mechanic": {"type": "key_number_match", "rules": ["Match either Winning Number to win that prize.", "Winning 7 wins all prizes.", "Your 7 wins its prize automatically.", "Reveal a 7 in BONUS to win $50."], "winning_number_count": 2, "your_number_count": 6, "bonus_prize": 50},
 		"sections": [
 			{"id": "winning_numbers", "label": "WINNING NUMBERS", "rect": [0.12, 0.05, 0.76, 0.22]},
-			{"id": "your_numbers", "label": "YOUR NUMBERS", "rect": [0.06, 0.34, 0.88, 0.60]}
+			{"id": "your_numbers", "label": "YOUR NUMBERS + BONUS", "rect": [0.27, 0.30, 0.68, 0.64]}
 		],
 		"prize_table": [
 			{"id": "no_match", "weight": 6300, "payout": 0},
 			{"id": "your_seven", "weight": 2000, "payout": 5, "your_seven_count": 1},
 			{"id": "one_match", "weight": 1200, "payout": 10, "match_count": 1},
+			{"id": "bonus_seven", "weight": 20, "payout": 50, "bonus": true},
 			{"id": "seven_and_match", "weight": 400, "payout": 25, "your_seven_count": 1, "match_count": 1},
 			{"id": "winning_seven", "weight": 90, "payout": 60, "winning_seven": true},
 			{"id": "seven_jackpot", "weight": 10, "payout": 250, "winning_seven": true}
@@ -99,11 +100,11 @@
 		"face": {"layout": "four_card_bingo", "symbol_set": "bingo_numbers", "palette": {"paper": "#e9f4e6", "ink": "#17382c", "accent": "#2a9b67", "latex": "#b5c3b8", "trim": "#f2b632"}},
 		"mechanic": {"type": "bingo", "rules": ["Reveal 24 caller numbers.", "Every completed card line pays.", "A blackout pays the large prize."], "caller_count": 24, "card_count": 4},
 		"sections": [
-			{"id": "callers", "label": "CALLER NUMBERS", "rect": [0.03, 0.05, 0.22, 0.90]},
-			{"id": "card_1", "label": "CARD 1", "rect": [0.29, 0.05, 0.31, 0.41]},
-			{"id": "card_2", "label": "CARD 2", "rect": [0.65, 0.05, 0.31, 0.41]},
-			{"id": "card_3", "label": "CARD 3", "rect": [0.29, 0.54, 0.31, 0.41]},
-			{"id": "card_4", "label": "CARD 4", "rect": [0.65, 0.54, 0.31, 0.41]}
+			{"id": "callers", "label": "CALLER NUMBERS", "rect": [0.06, 0.27, 0.88, 0.15]},
+			{"id": "card_1", "label": "CARD 1", "rect": [0.07, 0.55, 0.19, 0.26]},
+			{"id": "card_2", "label": "CARD 2", "rect": [0.30, 0.55, 0.19, 0.26]},
+			{"id": "card_3", "label": "CARD 3", "rect": [0.53, 0.55, 0.19, 0.26]},
+			{"id": "card_4", "label": "CARD 4", "rect": [0.76, 0.55, 0.19, 0.26]}
 		],
 		"prize_table": [
 			{"id": "no_line", "weight": 6500, "payout": 0, "line_count": 0},

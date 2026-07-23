@@ -890,6 +890,8 @@ func _ticket_art_regions(ticket: Dictionary) -> Array:
 			for index in range(2, mini(8, spots.size())):
 				var your_index := index - 2
 				result.append(_scratch_region(index, spots[index], "your_numbers", "YOUR %d" % (your_index + 1), [0.39 + float(your_index % 3) * 0.18, 0.34 + float(your_index / 3) * 0.17, 0.14, 0.12]))
+			if spots.size() > 8:
+				result.append(_scratch_region(8, spots[8], "bonus", "BONUS", [0.29, 0.78, 0.17, 0.15]))
 		"tic_tac_gold":
 			for index in range(mini(9, spots.size())):
 				result.append(_scratch_region(index, spots[index], "board", "GRID %d" % (index + 1), [0.18 + float(index % 3) * 0.18, 0.37 + float(index / 3) * 0.16, 0.14, 0.13]))
@@ -908,12 +910,12 @@ func _ticket_art_regions(ticket: Dictionary) -> Array:
 			for index in range(mini(24, spots.size())):
 				result.append(_scratch_region(index, spots[index], "callers", "CALL %d" % (index + 1), [0.06 + float(index % 12) * 0.075, 0.27 + float(index / 12) * 0.085, 0.055, 0.060]))
 			for card_index in range(4):
-				var origin := Vector2(0.09 + float(card_index) * 0.22, 0.55)
+				var origin := Vector2(0.07 + float(card_index) * 0.23, 0.55)
 				for cell_index in range(25):
 					var spot_index := 24 + card_index * 25 + cell_index
 					if spot_index >= spots.size():
 						continue
-					result.append(_scratch_region(spot_index, spots[spot_index], "card_%d" % (card_index + 1), "CARD %d-%d" % [card_index + 1, cell_index + 1], [origin.x + float(cell_index % 5) * 0.035, origin.y + float(cell_index / 5) * 0.045, 0.032, 0.038]))
+					result.append(_scratch_region(spot_index, spots[spot_index], "card_%d" % (card_index + 1), "CARD %d-%d" % [card_index + 1, cell_index + 1], [origin.x + float(cell_index % 5) * 0.038, origin.y + float(cell_index / 5) * 0.052, 0.036, 0.046]))
 		"high_roller_holdem":
 			for index in range(mini(5, spots.size())):
 				result.append(_scratch_region(index, spots[index], "your_hand", "YOUR CARD %d" % (index + 1), [0.18 + float(index) * 0.13, 0.43, 0.10, 0.075]))
@@ -927,7 +929,7 @@ func _ticket_art_regions(ticket: Dictionary) -> Array:
 				result.append(_scratch_region(0, spots[0], "multiplier", "MULTIPLIER", [0.24, 0.47, 0.52, 0.07]))
 			for index in range(1, mini(6, spots.size())):
 				var rung_index := index - 1
-				result.append(_scratch_region(index, spots[index], "cash_ladder", "RUNG %d" % (rung_index + 1), [0.75, 0.63 + float(rung_index) * 0.046, 0.16, 0.038]))
+				result.append(_scratch_region(index, spots[index], "cash_ladder", "RUNG %d" % (rung_index + 1), [0.13, 0.63 + float(rung_index) * 0.046, 0.74, 0.038]))
 			if spots.size() > 6:
 				result.append(_scratch_region(6, spots[6], "gold_bar", "GOLD BAR", [0.14, 0.88, 0.32, 0.052]))
 			if spots.size() > 7:
@@ -1102,6 +1104,8 @@ func _build_two_fer_content(mechanic: Dictionary, prize: Dictionary, rng: RngStr
 
 func _build_lucky_sevens_content(prize: Dictionary) -> Dictionary:
 	var winning_seven := bool(prize.get("winning_seven", false))
+	var bonus := bool(prize.get("bonus", false))
+	var bonus_prize := 50 if bonus else 0
 	var winning_numbers: Array = [7, 19] if winning_seven else [12, 23]
 	var your_numbers: Array = [3, 9, 16, 28, 31, 40]
 	var your_seven_count := clampi(int(prize.get("your_seven_count", 0)), 0, 6)
@@ -1111,7 +1115,7 @@ func _build_lucky_sevens_content(prize: Dictionary) -> Dictionary:
 	for index in range(match_count):
 		your_numbers[your_seven_count + index] = int(winning_numbers[index % winning_numbers.size()])
 	var winner_count := 6 if winning_seven else your_seven_count + match_count
-	var prizes := _split_amount(maxi(0, int(prize.get("payout", 0))), winner_count)
+	var prizes := _split_amount(maxi(0, int(prize.get("payout", 0)) - bonus_prize), winner_count)
 	var your_spots: Array = []
 	var spots: Array = []
 	for index in range(winning_numbers.size()):
@@ -1126,7 +1130,9 @@ func _build_lucky_sevens_content(prize: Dictionary) -> Dictionary:
 		var spot := {"index": spots.size(), "section_id": "your_numbers", "number": number, "prize": amount, "winner": winner, "auto_seven": number == 7, "role": "your_number"}
 		your_spots.append(spot)
 		spots.append(spot)
-	return {"spots": spots, "winning_numbers": winning_numbers, "your_numbers": your_spots, "winning_seven": winning_seven}
+	var bonus_spot := {"index": spots.size(), "section_id": "bonus", "number": 7 if bonus else 2, "prize": bonus_prize, "winner": bonus, "role": "bonus_number"}
+	spots.append(bonus_spot)
+	return {"spots": spots, "winning_numbers": winning_numbers, "your_numbers": your_spots, "winning_seven": winning_seven, "bonus": bonus, "bonus_prize": bonus_prize, "bonus_number": int(bonus_spot.get("number", 0))}
 
 
 func _build_tic_tac_gold_content(prize: Dictionary) -> Dictionary:
@@ -1385,6 +1391,8 @@ func _evaluate_mechanic(ticket: Dictionary) -> int:
 				var number := int(spot.get("number", -1))
 				if win_all or number == 7 or winning.has(number):
 					total += maxi(0, int(spot.get("prize", 0)))
+			if bool(result.get("bonus", false)) and int(result.get("bonus_number", 0)) == 7:
+				total += maxi(0, int(result.get("bonus_prize", 0)))
 			return total
 		"tic_tac_toe":
 			var total := maxi(0, int(result.get("bonus_prize", 0))) if bool(result.get("bonus", false)) else 0
@@ -1741,7 +1749,6 @@ func _draw_ticket(surface, state: Dictionary) -> void:
 	if uses_production_art:
 		surface.draw_texture_rect(art_texture, active_ticket_rect, false)
 		surface.draw_rect(active_ticket_rect.grow(-2), trim, false, 2)
-		_draw_production_ticket_overprint(surface, ticket, paper, ink, accent, trim)
 	else:
 		surface.draw_rect(active_ticket_rect.grow(-4), trim, false, 3)
 		_draw_ticket_background(surface, ticket, paper, ink, accent, trim)
@@ -1752,7 +1759,8 @@ func _draw_ticket(surface, state: Dictionary) -> void:
 	if int(state.get("scratch_penalty_shields", 0)) > 0:
 		surface.surface_label("PENNY ASSIST", active_ticket_rect.position + Vector2(20, 104), 7, accent)
 	var xray_peeks := _array_ref(state.get("scratch_xray_peeks", []))
-	_draw_layer_slot_wells(surface, ticket, ink, accent, trim)
+	if not uses_production_art:
+		_draw_layer_slot_wells(surface, ticket, ink, accent, trim)
 	_draw_mechanic_result(surface, ticket, ink, accent, trim)
 	_draw_ticket_latex_mask(surface, ticket, latex)
 	_draw_xray_peeks(surface, xray_peeks, accent)
@@ -2070,6 +2078,8 @@ func _spot_symbol_texture_id(ticket: Dictionary, spot: Dictionary) -> String:
 			return "winning_star"
 		"your_number":
 			return "lucky_seven" if int(spot.get("number", 0)) == 7 else "number_coin"
+		"bonus_number":
+			return "lucky_seven" if int(spot.get("number", 0)) == 7 else "number_coin"
 		"board_mark":
 			return "gold_coin" if str(spot.get("mark", "")) == "WIN" else "miss_cross"
 		"bonus":
@@ -2102,7 +2112,7 @@ func _spot_symbol_texture_id(ticket: Dictionary, spot: Dictionary) -> String:
 func _spot_symbol_main_text(ticket: Dictionary, spot: Dictionary) -> String:
 	var role := str(spot.get("role", ""))
 	match role:
-		"winning_number", "your_number", "caller":
+		"winning_number", "your_number", "bonus_number", "caller":
 			return str(int(spot.get("number", 0)))
 		"bingo_cell":
 			var number := int(spot.get("number", 0))
@@ -2133,7 +2143,7 @@ func _spot_symbol_sub_text(ticket: Dictionary, result: Dictionary, spot: Diction
 			var prize := int(legend.get(str(spot.get("symbol", "")), 0))
 			return "$%d" % prize if prize > 0 else ""
 		"lucky_7s":
-			if str(spot.get("role", "")) == "your_number":
+			if str(spot.get("role", "")) == "your_number" or str(spot.get("role", "")) == "bonus_number":
 				return "$%d" % int(spot.get("prize", 0))
 		"high_roller_holdem":
 			return "YOU" if str(spot.get("role", "")).begins_with("your") else "HOUSE" if str(spot.get("role", "")).begins_with("dealer") else ""
@@ -3003,6 +3013,8 @@ func _ticket_win_reason(ticket: Dictionary) -> String:
 					return "Matched two %s symbols." % str(symbol_value).capitalize()
 			return "No two symbols matched."
 		"lucky_7s":
+			if bool(result.get("bonus", false)) and int(result.get("bonus_number", 0)) == 7:
+				return "Bonus 7 paid $%d." % int(result.get("bonus_prize", 0))
 			if bool(result.get("winning_seven", false)):
 				return "Winning 7 pays every prize."
 			var winners := 0
