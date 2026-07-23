@@ -38,9 +38,19 @@ const DEFAULT_PASS_REMOVAL := 0.66
 const DEFAULT_SWEEP_THRESHOLD := 0.80
 const DEFAULT_MASK_COLUMNS := 48
 const DEFAULT_MASK_ROWS := 32
+const PRODUCTION_TICKET_ART := {
+	"two_fer": "res://assets/art/scratch_tickets/two_fer_production_v1.png",
+	"lucky_7s": "res://assets/art/scratch_tickets/lucky_7s_production_v1.png",
+	"tic_tac_gold": "res://assets/art/scratch_tickets/tic_tac_gold_production_v1.png",
+	"crossword_corner": "res://assets/art/scratch_tickets/crossword_corner_production_v1.png",
+	"bonus_bingo": "res://assets/art/scratch_tickets/bonus_bingo_production_v1.png",
+	"high_roller_holdem": "res://assets/art/scratch_tickets/high_roller_holdem_production_v1.png",
+	"golden_vault": "res://assets/art/scratch_tickets/golden_vault_production_v1.png",
+}
 
 var active_ticket_rect := DEFAULT_TICKET_RECT
 var active_scratch_rect := DEFAULT_SCRATCH_RECT
+var production_ticket_texture_cache: Dictionary = {}
 
 
 func gameplay_model() -> String:
@@ -841,52 +851,52 @@ func _ticket_art_regions(ticket: Dictionary) -> Array:
 	match str(ticket.get("type_id", "")):
 		"two_fer":
 			for index in range(mini(3, spots.size())):
-				result.append(_scratch_region(index, spots[index], "play", "SPOT %d" % (index + 1), [0.12 + float(index) * 0.29, 0.30, 0.18, 0.45]))
+				result.append(_scratch_region(index, spots[index], "play", "SPOT %d" % (index + 1), [0.12, 0.32 + float(index) * 0.17, 0.76, 0.15]))
 		"lucky_7s":
 			for index in range(mini(2, spots.size())):
-				result.append(_scratch_region(index, spots[index], "winning_numbers", "WIN %d" % (index + 1), [0.02, 0.16 + float(index) * 0.33, 0.18, 0.23]))
+				result.append(_scratch_region(index, spots[index], "winning_numbers", "WIN %d" % (index + 1), [0.12, 0.34 + float(index) * 0.12, 0.17, 0.09]))
 			for index in range(2, mini(8, spots.size())):
 				var your_index := index - 2
-				result.append(_scratch_region(index, spots[index], "your_numbers", "YOUR %d" % (your_index + 1), [0.28 + float(your_index % 3) * 0.23, 0.13 + float(your_index / 3) * 0.34, 0.18, 0.24]))
+				result.append(_scratch_region(index, spots[index], "your_numbers", "YOUR %d" % (your_index + 1), [0.47 + float(your_index % 2) * 0.22, 0.34 + float(your_index / 2) * 0.12, 0.17, 0.09]))
 		"tic_tac_gold":
 			for index in range(mini(9, spots.size())):
-				result.append(_scratch_region(index, spots[index], "board", "GRID %d" % (index + 1), [0.04 + float(index % 3) * 0.215, 0.05 + float(index / 3) * 0.30, 0.19, 0.26]))
+				result.append(_scratch_region(index, spots[index], "board", "GRID %d" % (index + 1), [0.18 + float(index % 3) * 0.22, 0.32 + float(index / 3) * 0.105, 0.18, 0.085]))
 			if spots.size() > 9:
-				result.append(_scratch_region(9, spots[9], "bonus", "BONUS", [0.75, 0.30, 0.21, 0.42]))
+				result.append(_scratch_region(9, spots[9], "bonus", "BONUS", [0.22, 0.70, 0.56, 0.10]))
 		"crossword_corner":
 			for index in range(mini(18, spots.size())):
-				result.append(_scratch_region(index, spots[index], "letter_bank", "LETTER %d" % (index + 1), [0.02 + float(index % 3) * 0.075, 0.03 + float(index / 3) * 0.155, 0.061, 0.128]))
+				result.append(_scratch_region(index, spots[index], "letter_bank", "LETTER %d" % (index + 1), [0.22 + float(index % 9) * 0.065, 0.73 + float(index / 9) * 0.055, 0.052, 0.044]))
 			for index in range(18, spots.size()):
 				var word_index := index - 18
-				result.append(_scratch_region(index, spots[index], "crossword", "WORD %d" % (word_index + 1), [0.33, 0.02 + float(word_index) * 0.135, 0.64, 0.11]))
+				result.append(_scratch_region(index, spots[index], "crossword", "WORD %d" % (word_index + 1), [0.30, 0.32 + float(word_index) * 0.045, 0.46, 0.036]))
 		"bonus_bingo":
 			for index in range(mini(24, spots.size())):
-				result.append(_scratch_region(index, spots[index], "callers", "CALL %d" % (index + 1), [0.02 + float(index % 4) * 0.055, 0.03 + float(index / 4) * 0.155, 0.045, 0.12]))
+				result.append(_scratch_region(index, spots[index], "callers", "CALL %d" % (index + 1), [0.18 + float(index % 6) * 0.10, 0.25 + float(index / 6) * 0.052, 0.075, 0.042]))
 			for card_index in range(4):
-				var origin := Vector2(0.30 + float(card_index % 2) * 0.35, 0.04 + float(card_index / 2) * 0.49)
+				var origin := Vector2(0.08 + float(card_index % 2) * 0.44, 0.36 + float(card_index / 2) * 0.30)
 				for cell_index in range(25):
 					var spot_index := 24 + card_index * 25 + cell_index
 					if spot_index >= spots.size():
 						continue
-					result.append(_scratch_region(spot_index, spots[spot_index], "card_%d" % (card_index + 1), "CARD %d-%d" % [card_index + 1, cell_index + 1], [origin.x + float(cell_index % 5) * 0.058, origin.y + float(cell_index / 5) * 0.073, 0.052, 0.062]))
+					result.append(_scratch_region(spot_index, spots[spot_index], "card_%d" % (card_index + 1), "CARD %d-%d" % [card_index + 1, cell_index + 1], [origin.x + float(cell_index % 5) * 0.080, origin.y + float(cell_index / 5) * 0.055, 0.065, 0.045]))
 		"high_roller_holdem":
 			for index in range(mini(5, spots.size())):
-				result.append(_scratch_region(index, spots[index], "your_hand", "YOUR CARD %d" % (index + 1), [0.06 + float(index) * 0.17, 0.08, 0.14, 0.29]))
+				result.append(_scratch_region(index, spots[index], "your_hand", "YOUR CARD %d" % (index + 1), [0.24 + float(index % 2) * 0.25, 0.30 + float(index / 2) * 0.065, 0.18, 0.055]))
 			for index in range(5, mini(10, spots.size())):
 				var card_index := index - 5
-				result.append(_scratch_region(index, spots[index], "dealer_hand", "DEALER CARD %d" % (card_index + 1), [0.06 + float(card_index) * 0.17, 0.49, 0.14, 0.29]))
+				result.append(_scratch_region(index, spots[index], "dealer_hand", "DEALER CARD %d" % (card_index + 1), [0.20 + float(card_index % 3) * 0.20, 0.46 + float(card_index / 3) * 0.065, 0.15, 0.055]))
 			if spots.size() > 10:
-				result.append(_scratch_region(10, spots[10], "wild", "WILD", [0.18, 0.84, 0.64, 0.13]))
+				result.append(_scratch_region(10, spots[10], "wild", "WILD", [0.18, 0.72, 0.64, 0.08]))
 		"golden_vault":
 			if spots.size() > 0:
-				result.append(_scratch_region(0, spots[0], "multiplier", "MULTIPLIER", [0.20, 0.02, 0.60, 0.14]))
+				result.append(_scratch_region(0, spots[0], "multiplier", "MULTIPLIER", [0.20, 0.51, 0.60, 0.07]))
 			for index in range(1, mini(6, spots.size())):
 				var rung_index := index - 1
-				result.append(_scratch_region(index, spots[index], "cash_ladder", "RUNG %d" % (rung_index + 1), [0.10, 0.22 + float(rung_index) * 0.095, 0.80, 0.075]))
+				result.append(_scratch_region(index, spots[index], "cash_ladder", "RUNG %d" % (rung_index + 1), [0.22, 0.66 + float(rung_index) * 0.042, 0.56, 0.034]))
 			if spots.size() > 6:
-				result.append(_scratch_region(6, spots[6], "gold_bar", "GOLD BAR", [0.10, 0.70, 0.80, 0.10]))
+				result.append(_scratch_region(6, spots[6], "gold_bar", "GOLD BAR", [0.20, 0.88, 0.60, 0.045]))
 			if spots.size() > 7:
-				result.append(_scratch_region(7, spots[7], "final_vault", "FINAL VAULT", [0.10, 0.86, 0.80, 0.10]))
+				result.append(_scratch_region(7, spots[7], "final_vault", "FINAL VAULT", [0.20, 0.93, 0.60, 0.045]))
 	if result.is_empty():
 		for index in range(spots.size()):
 			result.append(_scratch_region(index, spots[index], str((spots[index] as Dictionary).get("section_id", "play")), "SPOT %d" % (index + 1), [0.05, 0.05, 0.90, 0.90]))
@@ -1615,15 +1625,22 @@ func _draw_ticket(surface, state: Dictionary) -> void:
 	var accent := Color(str(palette.get("accent", "#ef3156")))
 	var latex := Color(str(palette.get("latex", "#b9bcc8")))
 	var trim := Color(str(palette.get("trim", "#ffd447")))
+	var art_texture := _production_ticket_texture(str(ticket.get("type_id", "")))
+	var uses_production_art := art_texture != null
 	var ticket_shape := [active_ticket_rect.position + Vector2(7, 0), active_ticket_rect.end - Vector2(7, active_ticket_rect.size.y), active_ticket_rect.end - Vector2(0, 7), active_ticket_rect.end - Vector2(7, 0), active_ticket_rect.position + Vector2(7, active_ticket_rect.size.y), active_ticket_rect.position + Vector2(0, active_ticket_rect.size.y - 7), active_ticket_rect.position + Vector2(0, 7)]
 	var shadow_shape: Array = []
 	for point_value in ticket_shape:
 		shadow_shape.append((point_value as Vector2) + Vector2(5, 5))
 	surface.draw_polygon(shadow_shape, [Color(0.0, 0.0, 0.0, 0.35)])
 	surface.draw_polygon(ticket_shape, [paper])
-	surface.draw_rect(active_ticket_rect.grow(-4), trim, false, 3)
-	_draw_ticket_background(surface, ticket, paper, ink, accent, trim)
-	_draw_ticket_header(surface, ticket, paper, ink, accent, trim)
+	if uses_production_art:
+		surface.draw_texture_rect(art_texture, active_ticket_rect, false)
+		surface.draw_rect(active_ticket_rect.grow(-2), trim, false, 2)
+		_draw_production_ticket_overprint(surface, ticket, paper, ink, accent, trim)
+	else:
+		surface.draw_rect(active_ticket_rect.grow(-4), trim, false, 3)
+		_draw_ticket_background(surface, ticket, paper, ink, accent, trim)
+		_draw_ticket_header(surface, ticket, paper, ink, accent, trim)
 	var fortune := str(state.get("scratch_fortune", ""))
 	if not fortune.is_empty():
 		surface.surface_label("TAROT: %s" % fortune.to_upper(), active_ticket_rect.position + Vector2(active_ticket_rect.size.x - 112, 104), 7, accent)
@@ -1639,7 +1656,8 @@ func _draw_ticket(surface, state: Dictionary) -> void:
 		surface.surface_add_hit(active_ticket_rect.grow(-10), FILE_TICKET_ACTION, 0)
 	else:
 		surface.surface_add_drag_hit(scratch_rect.grow(5), SCRUB_ACTION, 0)
-	_draw_ticket_rules(surface, ticket, ink, accent, trim)
+	if not uses_production_art:
+		_draw_ticket_rules(surface, ticket, ink, accent, trim)
 	var crumbs := _array_ref(state.get("scratch_crumbs", []))
 	for crumb_value in crumbs:
 		var crumb: Dictionary = crumb_value
@@ -1980,6 +1998,35 @@ func _draw_empty_ticket_outline(surface) -> void:
 		surface.draw_rect(Rect2(PLAY_SURFACE_RECT.position + offset, Vector2(20, 20)), Color("#6b5143"), false, 2)
 	surface.surface_label_centered("TICKET LANDING TRAY", Rect2(PLAY_SURFACE_RECT.position + Vector2(28, 154), Vector2(PLAY_SURFACE_RECT.size.x - 56, 28)), 16, Color("#a78a77"))
 	surface.surface_label_centered("Choose a printed ticket from the cabinet", Rect2(PLAY_SURFACE_RECT.position + Vector2(24, 186), Vector2(PLAY_SURFACE_RECT.size.x - 48, 20)), 9, Color("#816b5e"))
+
+
+func _production_ticket_texture(type_id: String) -> Texture2D:
+	var path := str(PRODUCTION_TICKET_ART.get(type_id, ""))
+	if path.is_empty():
+		return null
+	if production_ticket_texture_cache.has(path):
+		return production_ticket_texture_cache[path] as Texture2D
+	var resource := ResourceLoader.load(path, "Texture2D", ResourceLoader.CACHE_MODE_REUSE)
+	var texture := resource as Texture2D
+	production_ticket_texture_cache[path] = texture
+	return texture
+
+
+func _draw_production_ticket_overprint(surface, ticket: Dictionary, paper: Color, ink: Color, accent: Color, trim: Color) -> void:
+	# The generated ticket face supplies the production art; this pass only corrects values that must match gameplay.
+	var price_rect := Rect2(active_ticket_rect.position + Vector2(6, 6), Vector2(38, 24))
+	surface.draw_rect(price_rect, Color(0, 0, 0, 0.72))
+	surface.draw_rect(price_rect, C_WHITE, false, 1)
+	surface.surface_label_centered("$%d" % int(ticket.get("price", 1)), price_rect, 12, C_WHITE)
+	var prize_rect := Rect2(active_ticket_rect.position + Vector2(active_ticket_rect.size.x * 0.16, active_ticket_rect.size.y * 0.205), Vector2(active_ticket_rect.size.x * 0.68, 22))
+	_draw_top_prize_ribbon(surface, "WIN UP TO $%d" % int(ticket.get("top_prize", 0)), prize_rect, trim, accent, paper)
+	var serial_rect := Rect2(active_ticket_rect.position + Vector2(active_ticket_rect.size.x * 0.22, active_ticket_rect.size.y - 28), Vector2(active_ticket_rect.size.x * 0.56, 12))
+	surface.draw_rect(serial_rect, Color(1, 1, 1, 0.78))
+	for index in range(18):
+		var x := serial_rect.position.x + 4.0 + float(index) * serial_rect.size.x / 20.0
+		var width := 2.0 if index % 4 == 0 else 1.0
+		surface.draw_rect(Rect2(Vector2(x, serial_rect.position.y + 2), Vector2(width, serial_rect.size.y - 4)), Color(0, 0, 0, 0.58))
+	surface.surface_label_centered("%03d" % int(ticket.get("purchase_number", 0)), Rect2(active_ticket_rect.position + Vector2(active_ticket_rect.size.x - 36, active_ticket_rect.size.y - 27), Vector2(26, 12)), 6, ink)
 
 
 func _draw_ticket_header(surface, ticket: Dictionary, paper: Color, ink: Color, accent: Color, trim: Color) -> void:
@@ -2603,16 +2650,18 @@ func _ticket_complete(ticket: Dictionary) -> bool:
 func _ticket_scratch_rect(_ticket: Dictionary) -> Rect2:
 	var size_id := str(_ticket.get("size_id", "medium_square"))
 	var rect := _ticket_rect_for_size(size_id, false)
+	if _has_production_ticket_art(str(_ticket.get("type_id", ""))):
+		return _production_scratch_rect_for_ticket(rect)
 	return _scratch_rect_for_ticket_rect(size_id, rect)
 
 
 func _ticket_rect_for_size(size_id: String, _compact: bool = false) -> Rect2:
-	var size := Vector2(354, 356)
+	var size := Vector2(260, 366)
 	match size_id:
-		"small_rectangle": size = Vector2(500, 224)
-		"medium_square": size = Vector2(354, 356)
-		"large_rectangle": size = Vector2(548, 356)
-		"tall": size = Vector2(292, 366)
+		"small_rectangle": size = Vector2(230, 366)
+		"medium_square": size = Vector2(260, 366)
+		"large_rectangle": size = Vector2(292, 366)
+		"tall": size = Vector2(230, 366)
 	return Rect2(PLAY_SURFACE_RECT.get_center() - size * 0.5, size)
 
 
@@ -2641,7 +2690,15 @@ func _scratch_rect_for_ticket_rect(size_id: String, rect: Rect2) -> Rect2:
 func _configure_active_ticket_layout(ticket: Dictionary, compact: bool) -> void:
 	var size_id := str(ticket.get("size_id", "medium_square")) if not ticket.is_empty() else "medium_square"
 	active_ticket_rect = _ticket_rect_for_size(size_id, compact)
-	active_scratch_rect = _scratch_rect_for_ticket_rect(size_id, active_ticket_rect)
+	active_scratch_rect = _production_scratch_rect_for_ticket(active_ticket_rect) if _has_production_ticket_art(str(ticket.get("type_id", ""))) else _scratch_rect_for_ticket_rect(size_id, active_ticket_rect)
+
+
+func _has_production_ticket_art(type_id: String) -> bool:
+	return PRODUCTION_TICKET_ART.has(type_id)
+
+
+func _production_scratch_rect_for_ticket(rect: Rect2) -> Rect2:
+	return rect
 
 
 func _mask_sample_normalized(sample_index: int, columns: int, rows: int) -> Vector2:

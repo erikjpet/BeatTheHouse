@@ -113,7 +113,7 @@
 			{"id": "blackout", "weight": 45, "payout": 500, "line_count": 4, "blackout_cards": 1},
 			{"id": "four_blackouts", "weight": 5, "payout": 5000, "line_count": 8, "blackout_cards": 4}
 		],
-		"scratch": {"brush_radius": 14.0, "pass_removal": 0.66, "sweep_threshold": 0.80, "mask_columns": 56, "mask_rows": 38, "crumb_count": 8},
+		"scratch": {"brush_radius": 20.0, "pass_removal": 0.66, "sweep_threshold": 0.80, "mask_columns": 56, "mask_rows": 38, "crumb_count": 8},
 		"stock_weight": 125,
 		"stock_count": [2, 4],
 		"rtp_band": [0.77, 0.84]
