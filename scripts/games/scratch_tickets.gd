@@ -14,13 +14,15 @@ const SCRUB_ACTION := "scratch_scrub"
 const SCRATCH_ALL_ACTION := "scratch_all"
 const SETTLE_ACTION := "settle_scratch_ticket"
 const REVEAL_ACTION := "scratch_reveal"
+const FILE_TICKET_ACTION := "scratch_file_ticket"
 const DISPENSE_CHANNEL := "scratch_ticket_dispense"
 const FILE_CHANNEL := "scratch_ticket_file"
-const SWEEP_CHANNEL := "scratch_section_sweep"
+const SWEEP_CHANNEL := "scratch_box_pop"
 const DISPENSE_DURATION_MSEC := 760
 const FILE_DURATION_MSEC := 620
-const SWEEP_DURATION_MSEC := 280
+const SWEEP_DURATION_MSEC := 220
 const SCRATCH_AUDIO_LOOP := "scratch_paper_foley_loop"
+const SCRATCH_POP_CUE := "scratch_box_pop"
 const REDEEM_HOOK_ID := "scratch_ticket_clerk"
 const REDEEM_ACTION_ID := "redeem_scratch_winners"
 const MACHINE_RECT := Rect2(18, 13, 278, 404)
@@ -76,6 +78,7 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 	var machine := _read_machine_state(run_state, environment)
 	var active_ticket := _copy_dict(machine.get("active_ticket", {}))
 	var stock := _stock_view(machine)
+	var queue := _dictionary_array(machine.get("pending_queue", []))
 	var crumbs := _dictionary_array(ui_state.get("scratch_crumbs", []))
 	var discovered := _string_array(run_state.narrative_flags.get("scratch_ticket_types_discovered", [])) if run_state != null else []
 	var last_dispense_id := str(machine.get("last_dispense_id", ""))
@@ -101,6 +104,11 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 		"machine_name": str(machine.get("machine_name", "Highway Scratch Center")),
 		"scratch_stock": stock,
 		"scratch_ticket": active_ticket,
+		"scratch_queue": queue,
+		"scratch_queue_count": queue.size(),
+		"scratch_result_ready": bool(active_ticket.get("result_ready", false)),
+		"scratch_result_summary": _ticket_result_summary(active_ticket),
+		"scratch_result_reason": _ticket_win_reason(active_ticket),
 		"scratch_pending_payout": _pending_payout(machine),
 		"scratch_current_winnings": _pending_payout(machine),
 		"scratch_active_price": int(active_ticket.get("price", 0)),
@@ -133,11 +141,11 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 		"scratch_xray_peeks": _dictionary_array(active_ticket.get("xray_peeks", [])),
 		"scratch_fortune": str(active_ticket.get("fortune_tier", "")),
 		"scratch_penalty_shields": int(machine.get("penalty_shields_remaining", 0)),
-		"scratch_rules": "Drag anywhere on the latex. Rework each patch; sections sweep clean at 80%. Winners cash at the clerk.",
+		"scratch_rules": "%s Winners wait for the clerk." % _ticket_play_label(str(active_ticket.get("type_id", "")), _dict_ref(active_ticket.get("mechanic", {}))) if not active_ticket.is_empty() else "Buy a ticket, scratch each silver box, then file the result.",
 		"surface_animation_channels": [
 			GameModule.surface_animation_channel(DISPENSE_CHANNEL, last_dispense_id, DISPENSE_DURATION_MSEC, int(machine.get("dispense_started_msec", 0)), {"metadata": {"ticket_id": str(active_ticket.get("id", "")), "slot": int(machine.get("last_dispense_slot", 0))}}),
 			GameModule.surface_animation_channel(FILE_CHANNEL, last_file_id, FILE_DURATION_MSEC, int(machine.get("file_started_msec", 0)), {"metadata": {"pile": str(machine.get("last_settled_pile", ""))}}),
-			GameModule.surface_animation_channel(SWEEP_CHANNEL, str(machine.get("last_sweep_id", "")), sweep_duration, int(machine.get("sweep_started_msec", 0)), {"metadata": {"section": str(machine.get("last_sweep_section", ""))}}),
+			GameModule.surface_animation_channel(SWEEP_CHANNEL, str(machine.get("last_sweep_id", "")), sweep_duration, int(machine.get("sweep_started_msec", 0)), {"metadata": {"region": str(machine.get("last_sweep_section", ""))}}),
 		],
 		"surface_ui_protected_regions": [
 			{"x": MACHINE_RECT.position.x, "y": MACHINE_RECT.position.y, "w": MACHINE_RECT.size.x, "h": MACHINE_RECT.size.y},
@@ -146,7 +154,7 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 		],
 		"surface_audio": GameModule.surface_audio_spec({
 			"profile_id": "scratch_ticket_machine",
-			"action_cues": {BUY_ACTION: "ticket_dispenser", SCRATCH_ALL_ACTION: "ticket_peel"},
+			"action_cues": {BUY_ACTION: "ticket_dispenser", SCRATCH_ALL_ACTION: "ticket_peel", FILE_TICKET_ACTION: "paper_peel", SCRATCH_POP_CUE: SCRATCH_POP_CUE},
 		}),
 	})
 
@@ -187,26 +195,27 @@ func surface_action_command(surface_action: String, index: int, _confirm_request
 			return GameModule.surface_command({"ui_state": tab_state, "message": "Ticket machine." if surface_action.ends_with("machine") else "Scratch surface."})
 		"scratch_buy":
 			var stock := _dictionary_array(machine.get("stock", []))
-			if index < 0 or index >= stock.size():
+			var quantity := 1 + maxi(0, int(index / 100))
+			var stock_index := posmod(index, 100)
+			if stock_index < 0 or stock_index >= stock.size():
 				return GameModule.surface_command({"message": "That vending slot is empty."})
-			if not _copy_dict(machine.get("active_ticket", {})).is_empty():
-				return GameModule.surface_command({"message": "Finish the ticket on the play surface first."})
-			var slot: Dictionary = stock[index]
+			var slot: Dictionary = stock[stock_index]
 			var price := maxi(1, int(slot.get("price", 1)))
-			if int(slot.get("remaining", 0)) <= 0:
+			if int(slot.get("remaining", 0)) < quantity:
 				return GameModule.surface_command({"message": "%s is sold out." % str(slot.get("display_name", "That ticket"))})
-			if run_state.bankroll < price:
-				return GameModule.surface_command({"message": "You need $%d for that ticket." % price})
+			if run_state.bankroll < price * quantity:
+				return GameModule.surface_command({"message": "You need $%d for that stack." % (price * quantity)})
 			var next_state := ui_state.duplicate(true)
-			next_state["scratch_stock_index"] = index
+			next_state["scratch_stock_index"] = stock_index
+			next_state["scratch_buy_quantity"] = quantity
 			next_state["scratch_compact_tab"] = "ticket"
 			return GameModule.surface_command({
 				"ui_state": next_state,
 				"action_id": BUY_ACTION,
 				"action_kind": "legal",
 				"direct_resolve": true,
-				"set_stake": price,
-				"selected_index": index,
+				"set_stake": price * quantity,
+				"selected_index": stock_index,
 			})
 		SCRATCH_ALL_ACTION:
 			if _copy_dict(machine.get("active_ticket", {})).is_empty():
@@ -214,11 +223,22 @@ func surface_action_command(surface_action: String, index: int, _confirm_request
 			_reveal_all(machine)
 			_write_machine_state(environment, machine, run_state)
 			return GameModule.surface_command({
+				"environment_changed": true,
+				"message": "The remaining latex crumbles away. Read the result, then click the ticket to file it.",
+				"surface_audio_cue": SCRATCH_POP_CUE,
+			})
+		FILE_TICKET_ACTION:
+			if _copy_dict(machine.get("active_ticket", {})).is_empty():
+				return GameModule.surface_command({"message": "There is no ticket to file."})
+			if not _ticket_complete(_copy_dict(machine.get("active_ticket", {}))):
+				return GameModule.surface_command({"message": "Scratch every box before filing."})
+			return GameModule.surface_command({
 				"action_id": SETTLE_ACTION,
 				"action_kind": "legal",
 				"direct_resolve": true,
 				"skip_stake_validation": true,
-				"message": "The remaining latex crumbles away.",
+				"preserve_surface_ui_state": false,
+				"message": "Ticket filed.",
 			})
 	return {"handled": false}
 
@@ -264,10 +284,17 @@ func surface_pointer_command(surface_action: String, _index: int, phase: String,
 		"surface_audio_loop_volume_db": lerpf(-19.0, -10.5, activity),
 		"surface_audio_loop_pitch": lerpf(0.92, 1.06, activity),
 	}
-	if completed or penalty > 0:
+	if not _dictionary_array(scratch_result.get("swept_sections", [])).is_empty():
+		command["surface_audio_cue"] = SCRATCH_POP_CUE
+	if completed:
 		command.erase("surface_audio_loop_start")
 		command["surface_audio_loop_stop"] = SCRATCH_AUDIO_LOOP
-		command["action_id"] = SETTLE_ACTION if completed else REVEAL_ACTION
+		command["environment_changed"] = true
+		command["message"] = "%s Click the ticket to file it." % str(scratch_result.get("message", "Result revealed."))
+	elif penalty > 0:
+		command.erase("surface_audio_loop_start")
+		command["surface_audio_loop_stop"] = SCRATCH_AUDIO_LOOP
+		command["action_id"] = REVEAL_ACTION
 		command["action_kind"] = "legal"
 		command["direct_resolve"] = true
 		command["skip_stake_validation"] = true
@@ -280,6 +307,9 @@ func _scratch_pointer_surface_command(machine: Dictionary, ui_state: Dictionary,
 	command["surface_transient"] = true
 	command["surface_state_patch"] = {
 		"scratch_ticket": machine.get("active_ticket", {}),
+		"scratch_queue": machine.get("pending_queue", []),
+		"scratch_queue_count": _dictionary_array(machine.get("pending_queue", [])).size(),
+		"scratch_result_ready": bool(_copy_dict(machine.get("active_ticket", {})).get("result_ready", false)),
 		"scratch_crumbs": ui_state.get("scratch_crumbs", []),
 		"scratch_drag_active": bool(ui_state.get("scratch_drag_active", false)),
 		"scratch_last_pointer": ui_state.get("scratch_last_pointer", Vector2.ZERO),
@@ -296,9 +326,10 @@ func wager_cost_for_context(action_id: String, stake: int, run_state: RunState, 
 	var machine := _ensure_machine_state(run_state, environment, false)
 	var stock := _dictionary_array(machine.get("stock", []))
 	var index := int(ui_state.get("scratch_stock_index", 0))
+	var quantity := maxi(1, int(ui_state.get("scratch_buy_quantity", 1)))
 	if index < 0 or index >= stock.size():
 		return maxi(0, stake)
-	return maxi(1, int((stock[index] as Dictionary).get("price", stake)))
+	return maxi(1, int((stock[index] as Dictionary).get("price", stake))) * quantity
 
 
 func resolve(action_id: String, stake: int, run_state: RunState, environment: Dictionary, rng: RngStream) -> Dictionary:
@@ -415,65 +446,80 @@ func measure_rtp(type_id: String, samples: int = 20000, seed_text: String = "SCR
 
 func _resolve_purchase(_stake: int, run_state: RunState, environment: Dictionary, rng: RngStream, ui_state: Dictionary) -> Dictionary:
 	var machine := _ensure_machine_state(run_state, environment, true)
-	if not _copy_dict(machine.get("active_ticket", {})).is_empty():
-		return _scratch_empty_result(BUY_ACTION, environment, "Finish the active ticket first.")
 	var stock := _dictionary_array(machine.get("stock", []))
 	var stock_index := int(ui_state.get("scratch_stock_index", 0))
+	var quantity := maxi(1, int(ui_state.get("scratch_buy_quantity", 1)))
 	if stock_index < 0 or stock_index >= stock.size():
 		return _scratch_empty_result(BUY_ACTION, environment, "That vending slot is empty.")
 	var slot: Dictionary = stock[stock_index]
 	var price := maxi(1, int(slot.get("price", 1)))
-	if int(slot.get("remaining", 0)) <= 0:
+	if int(slot.get("remaining", 0)) < quantity:
 		return _scratch_empty_result(BUY_ACTION, environment, "%s is sold out." % str(slot.get("display_name", "That ticket")))
-	if run_state.bankroll < price:
-		return _scratch_empty_result(BUY_ACTION, environment, "Not enough cash for this ticket.")
+	var total_price := price * quantity
+	if run_state.bankroll < total_price:
+		return _scratch_empty_result(BUY_ACTION, environment, "Not enough cash for this ticket stack.")
 	var ticket_type := _ticket_type(str(slot.get("type_id", "")))
 	if ticket_type.is_empty():
 		return _scratch_empty_result(BUY_ACTION, environment, "That ticket type is unavailable.")
-	var purchase_number := int(machine.get("purchased_count", 0)) + 1
+	var first_purchase_number := int(machine.get("purchased_count", 0)) + 1
 	var luck := run_state.effective_luck() if run_state != null else 0
-	var ticket := _roll_ticket(ticket_type, rng, luck, "%s:%d" % [str(environment.get("id", "room")), purchase_number])
-	_stamp_ticket_origin(ticket, environment)
 	var xray_capacity := maxi(0, run_state.item_effect_total("scratch_peek_cells", get_family()) if run_state != null else 0)
-	if xray_capacity > 0:
-		ticket["xray_peeks"] = _xray_peeks(ticket, mini(xray_capacity, rng.randi_range(2, 3)), rng)
 	var tarot_strength := maxi(0, run_state.item_effect_total("scratch_fortune_hint", get_family()) if run_state != null else 0)
-	if tarot_strength > 0:
-		ticket["fortune_tier"] = _fortune_tier(ticket)
 	var shield_capacity := maxi(0, run_state.item_effect_total("scratch_penalty_shields", get_family()) if run_state != null else 0)
-	_reserve_penalty_shields(ticket, shield_capacity)
-	machine["penalty_shields_remaining"] = shield_capacity
-	slot["remaining"] = maxi(0, int(slot.get("remaining", 0)) - 1)
+	var queue := _dictionary_array(machine.get("pending_queue", []))
+	var purchased_tickets: Array = []
+	var active_value: Variant = machine.get("active_ticket", {})
+	var has_active_ticket := typeof(active_value) == TYPE_DICTIONARY and not (active_value as Dictionary).is_empty()
+	for offset in range(quantity):
+		var purchase_number := first_purchase_number + offset
+		var ticket_rng := rng if quantity == 1 and rng != null else (rng.fork("scratch-purchase:%d" % purchase_number) if rng != null else _seeded_rng("scratch-purchase:%d" % purchase_number))
+		var ticket := _roll_ticket(ticket_type, ticket_rng, luck, "%s:%d" % [str(environment.get("id", "room")), purchase_number], false)
+		_stamp_ticket_origin(ticket, environment)
+		if xray_capacity > 0:
+			ticket["xray_peeks"] = _xray_peeks(ticket, mini(xray_capacity, ticket_rng.randi_range(2, 3)), ticket_rng)
+		if tarot_strength > 0:
+			ticket["fortune_tier"] = _fortune_tier(ticket)
+		_reserve_penalty_shields(ticket, shield_capacity)
+		purchased_tickets.append(ticket)
+		if not has_active_ticket:
+			machine["active_ticket"] = ticket
+			machine["penalty_shields_remaining"] = shield_capacity
+			has_active_ticket = true
+		else:
+			queue.append(ticket)
+	slot["remaining"] = maxi(0, int(slot.get("remaining", 0)) - quantity)
 	stock[stock_index] = slot
 	machine["stock"] = stock
-	machine["active_ticket"] = ticket
-	machine["purchased_count"] = purchase_number
-	machine["last_ticket_id"] = str(ticket.get("id", ""))
-	machine["last_dispense_id"] = "scratch-dispense:%s" % str(ticket.get("id", purchase_number))
+	machine["pending_queue"] = queue
+	machine["purchased_count"] = first_purchase_number + quantity - 1
+	var first_ticket: Dictionary = purchased_tickets[0] if not purchased_tickets.is_empty() else {}
+	machine["last_ticket_id"] = str(first_ticket.get("id", ""))
+	machine["last_dispense_id"] = "scratch-dispense:%s" % str(first_ticket.get("id", first_purchase_number))
 	machine["last_dispense_slot"] = stock_index
 	machine["dispense_started_msec"] = GameModule.deterministic_time_msec(run_state, ui_state)
-	_write_machine_state(environment, machine, run_state)
-	var message := "%s slides onto the counter. Drag across the silver latex to reveal it." % str(ticket.get("display_name", "A scratch ticket"))
-	if not _dictionary_array(ticket.get("xray_peeks", [])).is_empty():
-		message += " X-Ray Glasses ghost %d symbols through the coating." % _dictionary_array(ticket.get("xray_peeks", [])).size()
-	if not str(ticket.get("fortune_tier", "")).is_empty():
-		message += " The tarot reads %s." % str(ticket.get("fortune_tier", "")).to_upper()
+	_write_machine_state(environment, machine, run_state, false)
+	var message := "%s%s paid for now. Scratch one at a time." % [str(first_ticket.get("display_name", "A scratch ticket")), " x%d" % quantity if quantity > 1 else ""]
+	if not _dictionary_array(first_ticket.get("xray_peeks", [])).is_empty():
+		message += " X-Ray Glasses ghost %d symbols through the coating." % _dictionary_array(first_ticket.get("xray_peeks", [])).size()
+	if not str(first_ticket.get("fortune_tier", "")).is_empty():
+		message += " The tarot reads %s." % str(first_ticket.get("fortune_tier", "")).to_upper()
 	var xray_heat := maxi(0, run_state.item_effect_total("scratch_peek_heat", get_family(), "cheat") if run_state != null and xray_capacity > 0 else 0)
 	var deltas := GameModule.empty_result_deltas()
-	deltas["bankroll_delta"] = -price
+	deltas["bankroll_delta"] = -total_price
 	deltas["suspicion_delta"] = xray_heat
 	deltas["messages"] = [message]
 	deltas["story_log"] = [{
 		"type": "game_action",
 		"game_id": get_id(),
 		"action_id": BUY_ACTION,
-		"ticket_id": str(ticket.get("id", "")),
-		"ticket_type": str(ticket.get("type_id", "")),
-		"cost": price,
-		"bankroll_delta": -price,
+		"ticket_id": str(first_ticket.get("id", "")),
+		"ticket_type": str(first_ticket.get("type_id", "")),
+		"cost": total_price,
+		"quantity": quantity,
+		"bankroll_delta": -total_price,
 		"luck_modifier": luck,
 		"outcome_fixed_at_purchase": true,
-		"xray_peek_count": _dictionary_array(ticket.get("xray_peeks", [])).size(),
+		"xray_peek_count": _dictionary_array(first_ticket.get("xray_peeks", [])).size(),
 		"xray_surveillance_heat": xray_heat,
 		"environment_id": str(environment.get("id", "")),
 	}]
@@ -484,8 +530,8 @@ func _resolve_purchase(_stake: int, run_state: RunState, environment: Dictionary
 		"game_id": get_id(),
 		"action_id": BUY_ACTION,
 		"action_kind": "legal",
-		"stake": price,
-		"bankroll_delta": -price,
+		"stake": total_price,
+		"bankroll_delta": -total_price,
 		"suspicion_delta": xray_heat,
 		"deltas": deltas,
 		"won": false,
@@ -495,11 +541,13 @@ func _resolve_purchase(_stake: int, run_state: RunState, environment: Dictionary
 	# The result and machine state share the purchase-fixed ticket. Consumers
 	# treat action results as immutable, so copying the full latex mask here only
 	# adds a second allocation at the purchase boundary.
-	result["scratch_ticket"] = ticket
+	result["scratch_ticket"] = first_ticket
+	result["scratch_purchased_tickets"] = purchased_tickets
+	result["scratch_buy_quantity"] = quantity
 	result["scratch_outcome_fixed_at_purchase"] = true
 	result["scratch_luck_modifier"] = luck
-	result["scratch_xray_peeks"] = _dictionary_array(ticket.get("xray_peeks", [])).duplicate(true)
-	result["scratch_fortune"] = str(ticket.get("fortune_tier", ""))
+	result["scratch_xray_peeks"] = _dictionary_array(first_ticket.get("xray_peeks", [])).duplicate(true)
+	result["scratch_fortune"] = str(first_ticket.get("fortune_tier", ""))
 	result["defer_bankroll_zero_failure"] = true
 	GameModule.apply_result(run_state, result, rng)
 	return result
@@ -516,16 +564,31 @@ func _resolve_reveal(run_state: RunState, environment: Dictionary, rng: RngStrea
 		if not _ticket_complete(ticket):
 			return _scratch_empty_result(SETTLE_ACTION, environment, "Some latex still covers this ticket.")
 		ticket["settled"] = true
+		ticket["result_ready"] = true
 		var pile_name := "winner_pile" if payout > 0 else "loser_pile"
 		var pile := _dictionary_array(machine.get(pile_name, []))
 		pile.append(ticket)
 		machine[pile_name] = pile
-		machine["active_ticket"] = {}
+		var queue := _dictionary_array(machine.get("pending_queue", []))
+		var next_ticket := {}
+		if not queue.is_empty():
+			next_ticket = queue.pop_front()
+			if typeof(next_ticket) == TYPE_DICTIONARY:
+				_ensure_ticket_regions(next_ticket)
+		machine["pending_queue"] = queue
+		machine["active_ticket"] = next_ticket
+		if typeof(next_ticket) == TYPE_DICTIONARY and not (next_ticket as Dictionary).is_empty():
+			machine["penalty_shields_remaining"] = maxi(0, int((next_ticket as Dictionary).get("lucky_penny_assist", 0)))
 		machine["last_settled_ticket"] = ticket.duplicate(true)
 		machine["last_settled_pile"] = pile_name
 		machine["last_file_id"] = "scratch-file:%s" % str(ticket.get("id", pile.size()))
-		machine["file_started_msec"] = 0
-		message = "%s wins $%d. The clerk must cash it." % [str(ticket.get("display_name", "Ticket")), payout] if payout > 0 else "%s is a loser." % str(ticket.get("display_name", "Ticket"))
+		machine["file_started_msec"] = GameModule.deterministic_time_msec(run_state, {})
+		message = "%s: %s %s" % [str(ticket.get("display_name", "Ticket")), _ticket_result_summary(ticket), _ticket_win_reason(ticket)]
+		if typeof(next_ticket) == TYPE_DICTIONARY and not (next_ticket as Dictionary).is_empty():
+			message += " Next up: %s." % str((next_ticket as Dictionary).get("display_name", "ticket"))
+	else:
+		ticket["result_ready"] = _ticket_complete(ticket)
+		machine["active_ticket"] = ticket
 	_write_machine_state(environment, machine, run_state)
 	var deltas := GameModule.empty_result_deltas()
 	deltas["messages"] = [message]
@@ -556,7 +619,7 @@ func _resolve_reveal(run_state: RunState, environment: Dictionary, rng: RngStrea
 		"environment_id": str(environment.get("id", "")),
 		"message": message,
 	})
-	result["defer_bankroll_zero_failure"] = not _copy_dict(machine.get("active_ticket", {})).is_empty() or _pending_payout(machine) > 0
+	result["defer_bankroll_zero_failure"] = not _copy_dict(machine.get("active_ticket", {})).is_empty() or not _dictionary_array(machine.get("pending_queue", [])).is_empty() or _pending_payout(machine) > 0
 	if settle:
 		result["scratch_discovered_type_id"] = str(ticket.get("type_id", ""))
 	GameModule.apply_result(run_state, result, rng)
@@ -644,6 +707,7 @@ func _generate_machine_state(_run_state: RunState, environment: Dictionary, rng:
 			"unique_object_priority": 100,
 		}],
 		"active_ticket": {},
+		"pending_queue": [],
 		"winner_pile": [],
 		"loser_pile": [],
 		"pending_penalty": 0,
@@ -683,7 +747,7 @@ func _weighted_stock_types(rng: RngStream, count: int) -> Array:
 	return selected
 
 
-func _roll_ticket(ticket_type: Dictionary, rng: RngStream, luck_modifier: int, purchase_key: String) -> Dictionary:
+func _roll_ticket(ticket_type: Dictionary, rng: RngStream, luck_modifier: int, purchase_key: String, initialize_mask: bool = true) -> Dictionary:
 	var prize := _weighted_prize(ticket_type, rng, luck_modifier)
 	var mechanic := _copy_dict(ticket_type.get("mechanic", {}))
 	var content := _build_mechanic_content(str(mechanic.get("type", "")), mechanic, prize, rng)
@@ -713,7 +777,8 @@ func _roll_ticket(ticket_type: Dictionary, rng: RngStream, luck_modifier: int, p
 		ticket["payout"] = maxi(0, int(prize.get("payout", 0)))
 	else:
 		ticket["payout"] = evaluated
-	_initialize_ticket_mask(ticket, ticket_type)
+	if initialize_mask:
+		_initialize_ticket_mask(ticket, ticket_type)
 	return ticket
 
 
@@ -734,30 +799,13 @@ func _initialize_ticket_mask(ticket: Dictionary, ticket_type: Dictionary) -> voi
 	scratch["pass_removal"] = clampf(float(scratch.get("pass_removal", DEFAULT_PASS_REMOVAL)), 0.10, 0.90)
 	scratch["sweep_threshold"] = clampf(float(scratch.get("sweep_threshold", DEFAULT_SWEEP_THRESHOLD)), 0.50, 0.98)
 	ticket["scratch"] = scratch
-	var definitions := _dictionary_array(ticket_type.get("sections", []))
-	if definitions.is_empty():
-		definitions = [{"id": "play", "label": "PLAY AREA", "rect": [0.0, 0.0, 1.0, 1.0]}]
-	var sections: Array = []
-	for index in range(definitions.size()):
-		var definition: Dictionary = definitions[index]
-		sections.append({
-			"id": str(definition.get("id", "section_%d" % index)),
-			"label": str(definition.get("label", "SECTION %d" % (index + 1))),
-			"rect": _normalized_rect_array(definition.get("rect", [0.0, 0.0, 1.0, 1.0])),
-			"sample_total": 0,
-			"mask_remaining_units": 0,
-			"coverage": 0.0,
-			"revealed": false,
-		})
+	var regions := _ticket_art_regions(ticket)
 	var mask: Array = []
 	mask.resize(mask_columns * mask_rows)
 	mask.fill(0)
-	# Section rectangles are non-overlapping normalized print areas. Rasterize
-	# their integer bounds directly instead of re-running dictionary lookups for
-	# every mask sample; the mask remains ticket-wide and presentation-only.
-	for section_index in range(sections.size()):
-		var section: Dictionary = sections[section_index]
-		var values: Array = section.get("rect", [])
+	for region_index in range(regions.size()):
+		var region: Dictionary = regions[region_index]
+		var values: Array = region.get("rect", [])
 		var left := float(values[0])
 		var top := float(values[1])
 		var right := minf(1.0, left + float(values[2]))
@@ -775,12 +823,184 @@ func _initialize_ticket_mask(ticket: Dictionary, ticket_type: Dictionary) -> voi
 					continue
 				mask[sample_index] = 255
 				sample_total += 1
-		section["sample_total"] = sample_total
-		section["mask_remaining_units"] = sample_total * 255
-		sections[section_index] = section
-	ticket["sections"] = sections
+		region["sample_total"] = sample_total
+		region["mask_remaining_units"] = sample_total * 255
+		region["coverage"] = 0.0
+		region["revealed"] = false
+		regions[region_index] = region
+	ticket["scratch_regions"] = regions
+	ticket["sections"] = _sections_from_regions(regions)
 	ticket["latex_mask"] = mask
 	ticket["mask_revision"] = 0
+	ticket["result_ready"] = false
+
+
+func _ticket_art_regions(ticket: Dictionary) -> Array:
+	var result: Array = []
+	var spots := _dictionary_array(ticket.get("spots", []))
+	match str(ticket.get("type_id", "")):
+		"two_fer":
+			for index in range(mini(3, spots.size())):
+				result.append(_scratch_region(index, spots[index], "play", "SPOT %d" % (index + 1), [0.03 + float(index) * 0.33, 0.10, 0.29, 0.78]))
+		"lucky_7s":
+			for index in range(mini(2, spots.size())):
+				result.append(_scratch_region(index, spots[index], "winning_numbers", "WIN %d" % (index + 1), [0.24 + float(index) * 0.28, 0.03, 0.22, 0.22]))
+			for index in range(2, mini(8, spots.size())):
+				var your_index := index - 2
+				result.append(_scratch_region(index, spots[index], "your_numbers", "YOUR %d" % (your_index + 1), [0.04 + float(your_index % 3) * 0.32, 0.36 + float(your_index / 3) * 0.31, 0.28, 0.25]))
+		"tic_tac_gold":
+			for index in range(mini(9, spots.size())):
+				result.append(_scratch_region(index, spots[index], "board", "GRID %d" % (index + 1), [0.04 + float(index % 3) * 0.215, 0.05 + float(index / 3) * 0.30, 0.19, 0.26]))
+			if spots.size() > 9:
+				result.append(_scratch_region(9, spots[9], "bonus", "BONUS", [0.75, 0.30, 0.21, 0.42]))
+		"crossword_corner":
+			for index in range(mini(18, spots.size())):
+				result.append(_scratch_region(index, spots[index], "letter_bank", "LETTER %d" % (index + 1), [0.02 + float(index % 3) * 0.075, 0.03 + float(index / 3) * 0.155, 0.061, 0.128]))
+			for index in range(18, spots.size()):
+				var word_index := index - 18
+				result.append(_scratch_region(index, spots[index], "crossword", "WORD %d" % (word_index + 1), [0.33, 0.02 + float(word_index) * 0.135, 0.64, 0.11]))
+		"bonus_bingo":
+			for index in range(mini(24, spots.size())):
+				result.append(_scratch_region(index, spots[index], "callers", "CALL %d" % (index + 1), [0.02 + float(index % 4) * 0.055, 0.03 + float(index / 4) * 0.155, 0.045, 0.12]))
+			for card_index in range(4):
+				var origin := Vector2(0.30 + float(card_index % 2) * 0.35, 0.04 + float(card_index / 2) * 0.49)
+				for cell_index in range(25):
+					var spot_index := 24 + card_index * 25 + cell_index
+					if spot_index >= spots.size():
+						continue
+					result.append(_scratch_region(spot_index, spots[spot_index], "card_%d" % (card_index + 1), "CARD %d-%d" % [card_index + 1, cell_index + 1], [origin.x + float(cell_index % 5) * 0.058, origin.y + float(cell_index / 5) * 0.073, 0.052, 0.062]))
+		"high_roller_holdem":
+			for index in range(mini(5, spots.size())):
+				result.append(_scratch_region(index, spots[index], "your_hand", "YOUR CARD %d" % (index + 1), [0.06 + float(index) * 0.17, 0.08, 0.14, 0.29]))
+			for index in range(5, mini(10, spots.size())):
+				var card_index := index - 5
+				result.append(_scratch_region(index, spots[index], "dealer_hand", "DEALER CARD %d" % (card_index + 1), [0.06 + float(card_index) * 0.17, 0.49, 0.14, 0.29]))
+			if spots.size() > 10:
+				result.append(_scratch_region(10, spots[10], "wild", "WILD", [0.18, 0.84, 0.64, 0.13]))
+		"golden_vault":
+			if spots.size() > 0:
+				result.append(_scratch_region(0, spots[0], "multiplier", "MULTIPLIER", [0.20, 0.02, 0.60, 0.14]))
+			for index in range(1, mini(6, spots.size())):
+				var rung_index := index - 1
+				result.append(_scratch_region(index, spots[index], "cash_ladder", "RUNG %d" % (rung_index + 1), [0.10, 0.22 + float(rung_index) * 0.095, 0.80, 0.075]))
+			if spots.size() > 6:
+				result.append(_scratch_region(6, spots[6], "gold_bar", "GOLD BAR", [0.10, 0.70, 0.80, 0.10]))
+			if spots.size() > 7:
+				result.append(_scratch_region(7, spots[7], "final_vault", "FINAL VAULT", [0.10, 0.86, 0.80, 0.10]))
+	if result.is_empty():
+		for index in range(spots.size()):
+			result.append(_scratch_region(index, spots[index], str((spots[index] as Dictionary).get("section_id", "play")), "SPOT %d" % (index + 1), [0.05, 0.05, 0.90, 0.90]))
+	return result
+
+
+func _scratch_region(index: int, spot: Dictionary, section_id: String, label: String, rect_values: Array) -> Dictionary:
+	var rect := _normalized_rect_array(rect_values)
+	return {
+		"id": "%s_%02d" % [section_id, index],
+		"spot_index": int(spot.get("index", index)),
+		"section_id": section_id,
+		"label": label,
+		"role": str(spot.get("role", "")),
+		"rect": rect,
+		"art_rect": rect.duplicate(false),
+		"sample_total": 0,
+		"mask_remaining_units": 0,
+		"coverage": 0.0,
+		"revealed": false,
+	}
+
+
+func _ensure_ticket_regions(ticket: Dictionary) -> void:
+	if ticket.is_empty():
+		return
+	var scratch: Dictionary = ticket.get("scratch", {}) if typeof(ticket.get("scratch", {})) == TYPE_DICTIONARY else {}
+	var columns := maxi(24, int(scratch.get("mask_columns", DEFAULT_MASK_COLUMNS)))
+	var rows := maxi(18, int(scratch.get("mask_rows", DEFAULT_MASK_ROWS)))
+	var mask: Array = ticket.get("latex_mask", []) if typeof(ticket.get("latex_mask", [])) == TYPE_ARRAY else []
+	var regions := _dictionary_array(ticket.get("scratch_regions", []))
+	if regions.is_empty() or int((regions[0] as Dictionary).get("sample_total", 0)) <= 0:
+		regions = _ticket_art_regions(ticket)
+		if mask.size() != columns * rows:
+			mask.resize(columns * rows)
+			mask.fill(0)
+			for region_index in range(regions.size()):
+				var sample_total := _rasterize_region_mask(mask, regions, region_index, columns, rows, 255)
+				var region: Dictionary = regions[region_index]
+				region["sample_total"] = sample_total
+				region["mask_remaining_units"] = sample_total * 255
+				region["coverage"] = 0.0
+				region["revealed"] = sample_total <= 0
+				regions[region_index] = region
+		else:
+			_refresh_region_units_from_mask(mask, regions, columns, rows)
+		ticket["scratch_regions"] = regions
+		ticket["latex_mask"] = mask
+		ticket["sections"] = _sections_from_regions(regions)
+		ticket["result_ready"] = _ticket_complete(ticket)
+
+
+func _refresh_region_units_from_mask(mask: Array, regions: Array, columns: int, rows: int) -> void:
+	for region_index in range(regions.size()):
+		var region: Dictionary = regions[region_index]
+		var sample_total := 0
+		var remaining_units := 0
+		for sample_index in range(mask.size()):
+			if _region_index_at_normalized(regions, _mask_sample_normalized(sample_index, columns, rows)) != region_index:
+				continue
+			sample_total += 1
+			remaining_units += maxi(0, int(mask[sample_index]))
+		region["sample_total"] = sample_total
+		region["mask_remaining_units"] = remaining_units
+		var total_units := maxi(1, sample_total * 255)
+		region["coverage"] = 1.0 - float(remaining_units) / float(total_units)
+		region["revealed"] = remaining_units <= 0
+		regions[region_index] = region
+
+
+func _sections_from_regions(regions: Array) -> Array:
+	var sections_by_id := {}
+	var order: Array = []
+	for region_value in regions:
+		var region: Dictionary = region_value
+		var section_id := str(region.get("section_id", "play"))
+		if not sections_by_id.has(section_id):
+			sections_by_id[section_id] = {"id": section_id, "label": section_id.to_upper().replace("_", " "), "sample_total": 0, "mask_remaining_units": 0, "coverage": 0.0, "revealed": true}
+			order.append(section_id)
+		var section: Dictionary = sections_by_id[section_id]
+		section["sample_total"] = int(section.get("sample_total", 0)) + int(region.get("sample_total", 0))
+		section["mask_remaining_units"] = int(section.get("mask_remaining_units", 0)) + int(region.get("mask_remaining_units", 0))
+		section["revealed"] = bool(section.get("revealed", true)) and bool(region.get("revealed", false))
+		sections_by_id[section_id] = section
+	var result: Array = []
+	for section_id in order:
+		var section: Dictionary = sections_by_id[section_id]
+		var total_units := maxi(1, int(section.get("sample_total", 0)) * 255)
+		section["coverage"] = 1.0 - float(section.get("mask_remaining_units", total_units)) / float(total_units)
+		result.append(section)
+	return result
+
+
+func _rasterize_region_mask(mask: Array, regions: Array, region_index: int, columns: int, rows: int, alpha: int) -> int:
+	var region: Dictionary = regions[region_index]
+	var values: Array = region.get("rect", [])
+	var left := float(values[0])
+	var top := float(values[1])
+	var right := minf(1.0, left + float(values[2]))
+	var bottom := minf(1.0, top + float(values[3]))
+	var column_start := clampi(int(ceil(left * float(columns) - 0.5)), 0, columns)
+	var column_end := clampi(int(ceil(right * float(columns) - 0.5)), column_start, columns)
+	var row_start := clampi(int(ceil(top * float(rows) - 0.5)), 0, rows)
+	var row_end := clampi(int(ceil(bottom * float(rows) - 0.5)), row_start, rows)
+	var changed := 0
+	for row in range(row_start, row_end):
+		var row_offset := row * columns
+		for column in range(column_start, column_end):
+			var sample_index := row_offset + column
+			if int(mask[sample_index]) == alpha:
+				continue
+			mask[sample_index] = alpha
+			changed += 1
+	return changed
 
 
 func _build_mechanic_content(mechanic_type: String, mechanic: Dictionary, prize: Dictionary, rng: RngStream) -> Dictionary:
@@ -1187,8 +1407,9 @@ func _scratch_segment(machine: Dictionary, from: Vector2, to: Vector2) -> Dictio
 	var mask_columns := maxi(24, int(scratch.get("mask_columns", DEFAULT_MASK_COLUMNS)))
 	var mask_rows := maxi(18, int(scratch.get("mask_rows", DEFAULT_MASK_ROWS)))
 	var mask: Array = ticket.get("latex_mask", []) if typeof(ticket.get("latex_mask", [])) == TYPE_ARRAY else []
-	var sections: Array = ticket.get("sections", []) if typeof(ticket.get("sections", [])) == TYPE_ARRAY else []
-	if mask.size() != mask_columns * mask_rows or sections.is_empty():
+	_ensure_ticket_regions(ticket)
+	var regions := _dictionary_array(ticket.get("scratch_regions", []))
+	if mask.size() != mask_columns * mask_rows or regions.is_empty():
 		return {"erased_samples": 0, "message": "This ticket's coating is damaged."}
 	var scratch_rect := _ticket_scratch_rect(ticket)
 	var segment_bounds := Rect2(Vector2(minf(from.x, to.x), minf(from.y, to.y)), Vector2(absf(to.x - from.x), absf(to.y - from.y))).grow(brush_radius)
@@ -1205,52 +1426,65 @@ func _scratch_segment(machine: Dictionary, from: Vector2, to: Vector2) -> Dictio
 		var sample_point := scratch_rect.position + normalized * scratch_rect.size
 		if not segment_bounds.has_point(sample_point) or _distance_squared_to_segment(sample_point, from, to) > brush_radius_squared:
 			continue
-		var section_index := _section_index_at_normalized(sections, normalized)
-		if section_index < 0 or bool((sections[section_index] as Dictionary).get("revealed", false)):
+		var region_index := _region_index_at_normalized(regions, normalized)
+		if region_index < 0 or bool((regions[region_index] as Dictionary).get("revealed", false)):
 			continue
 		var new_alpha := 0 if old_alpha <= 2 else clampi(int(round(float(old_alpha) * (1.0 - removal))), 0, old_alpha - 1)
 		var removed_units := old_alpha - new_alpha
 		mask[sample_index] = new_alpha
 		erased_samples += 1
 		erased_units += removed_units
-		var section: Dictionary = sections[section_index]
-		section["mask_remaining_units"] = maxi(0, int(section.get("mask_remaining_units", 0)) - removed_units)
-		sections[section_index] = section
-	var swept_sections: Array = []
-	for section_index in range(sections.size()):
-		var section: Dictionary = sections[section_index]
-		if bool(section.get("revealed", false)):
+		var region: Dictionary = regions[region_index]
+		region["mask_remaining_units"] = maxi(0, int(region.get("mask_remaining_units", 0)) - removed_units)
+		regions[region_index] = region
+	var swept_regions: Array = []
+	for region_index in range(regions.size()):
+		var region: Dictionary = regions[region_index]
+		if bool(region.get("revealed", false)):
 			continue
-		var total_units := maxi(1, int(section.get("sample_total", 0)) * 255)
-		var coverage := 1.0 - float(section.get("mask_remaining_units", total_units)) / float(total_units)
-		section["coverage"] = clampf(coverage, 0.0, 1.0)
+		var total_units := maxi(1, int(region.get("sample_total", 0)) * 255)
+		var coverage := 1.0 - float(region.get("mask_remaining_units", total_units)) / float(total_units)
+		region["coverage"] = clampf(coverage, 0.0, 1.0)
 		if coverage >= threshold:
-			_clear_mask_section(mask, sections, section_index, mask_columns, mask_rows)
-			section = sections[section_index]
-			section["revealed"] = true
-			section["coverage"] = 1.0
-			section["mask_remaining_units"] = 0
-			sections[section_index] = section
-			swept_sections.append(section)
-			machine["last_sweep_section"] = str(section.get("id", "section_%d" % section_index))
-			machine["last_sweep_id"] = "scratch-sweep:%s:%s:%d" % [str(ticket.get("id", "ticket")), str(section.get("id", section_index)), int(ticket.get("mask_revision", 0)) + 1]
+			_clear_mask_region(mask, regions, region_index, mask_columns, mask_rows)
+			region = regions[region_index]
+			region["revealed"] = true
+			region["coverage"] = 1.0
+			region["mask_remaining_units"] = 0
+			regions[region_index] = region
+			swept_regions.append(region)
+			machine["last_sweep_section"] = str(region.get("id", "region_%d" % region_index))
+			machine["last_sweep_id"] = "scratch-pop:%s:%s:%d" % [str(ticket.get("id", "ticket")), str(region.get("id", region_index)), int(ticket.get("mask_revision", 0)) + 1]
+		else:
+			regions[region_index] = region
 	ticket["latex_mask"] = mask
-	ticket["sections"] = sections
+	ticket["scratch_regions"] = regions
+	ticket["sections"] = _sections_from_regions(regions)
 	ticket["mask_revision"] = int(ticket.get("mask_revision", 0)) + 1
 	var complete := _ticket_complete(ticket)
+	ticket["result_ready"] = complete
 	var message := "Soft flakes lift; another pass will open the patch."
-	if not swept_sections.is_empty():
-		message = "%s sweeps clean." % str((swept_sections[0] as Dictionary).get("label", "The section"))
-	return {"erased_samples": erased_samples, "erased_units": erased_units, "interpolated_dabs": interpolated_dabs, "swept_sections": swept_sections, "penalty": 0, "ticket_complete": complete, "message": message}
+	if not swept_regions.is_empty():
+		message = "%s pops clean." % str((swept_regions[0] as Dictionary).get("label", "That box"))
+	return {"erased_samples": erased_samples, "erased_units": erased_units, "interpolated_dabs": interpolated_dabs, "swept_sections": swept_regions, "swept_regions": swept_regions, "penalty": 0, "ticket_complete": complete, "message": message}
 
 
 func _reveal_all(machine: Dictionary) -> void:
 	var ticket := _copy_dict(machine.get("active_ticket", {}))
+	_ensure_ticket_regions(ticket)
 	var mask: Array = ticket.get("latex_mask", []) if typeof(ticket.get("latex_mask", [])) == TYPE_ARRAY else []
 	for sample_index in range(mask.size()):
 		mask[sample_index] = 0
 	ticket["latex_mask"] = mask
 	var sections: Array = ticket.get("sections", []) if typeof(ticket.get("sections", [])) == TYPE_ARRAY else []
+	var regions := _dictionary_array(ticket.get("scratch_regions", []))
+	for region_index in range(regions.size()):
+		var region: Dictionary = regions[region_index]
+		region["revealed"] = true
+		region["coverage"] = 1.0
+		region["mask_remaining_units"] = 0
+		regions[region_index] = region
+	ticket["scratch_regions"] = regions
 	for section_index in range(sections.size()):
 		var section: Dictionary = sections[section_index]
 		section["revealed"] = true
@@ -1258,6 +1492,7 @@ func _reveal_all(machine: Dictionary) -> void:
 		section["mask_remaining_units"] = 0
 		sections[section_index] = section
 		ticket["sections"] = sections
+	ticket["result_ready"] = true
 	machine["active_ticket"] = ticket
 
 
@@ -1290,8 +1525,6 @@ func _draw_machine(surface, state: Dictionary) -> void:
 		var slot: Dictionary = stock[index]
 		var rect := Rect2(glass.position + Vector2(7, 7 + index * 59), Vector2(glass.size.x - 14, 54))
 		_draw_vending_window(surface, slot, rect, index)
-		if int(slot.get("remaining", 0)) > 0:
-			surface.surface_add_hit(rect, "scratch_buy", index)
 	var payment := Rect2(MACHINE_RECT.position + Vector2(17, 329), Vector2(68, 31))
 	surface.draw_rect(payment, Color("#361019"))
 	surface.draw_rect(payment, Color("#ff6070"), false, 2)
@@ -1347,6 +1580,15 @@ func _draw_vending_window(surface, slot: Dictionary, rect: Rect2, index: int) ->
 	surface.draw_rect(button, Color("#4a111b") if sold_out else Color("#14734e"))
 	surface.draw_rect(button, C_PINK if sold_out else Color("#65f2ac"), false, 2)
 	surface.surface_label_centered(str(index + 1), button, 10, C_WHITE)
+	if not sold_out:
+		surface.surface_add_hit(button, "scratch_buy", index)
+		var quantity_max := mini(3, int(slot.get("remaining", 0)))
+		for extra in range(2, quantity_max + 1):
+			var q_rect := Rect2(rect.end - Vector2(31 + float(extra - 1) * 26.0, 12), Vector2(23, 11))
+			surface.draw_rect(q_rect, Color("#233f2f"))
+			surface.draw_rect(q_rect, Color("#65f2ac"), false, 1)
+			surface.surface_label_centered("x%d" % extra, q_rect, 6, C_WHITE)
+			surface.surface_add_hit(q_rect, "scratch_buy", index + (extra - 1) * 100)
 
 
 func _dispenser_ticket_size(size_id: String) -> Vector2:
@@ -1362,6 +1604,7 @@ func _draw_ticket(surface, state: Dictionary) -> void:
 	var ticket := _dict_ref(state.get("scratch_ticket", {}))
 	_configure_active_ticket_layout(ticket, bool(state.get("scratch_compact_mode", false)))
 	_draw_counter_mat(surface)
+	_draw_queue_stack(surface, state)
 	if ticket.is_empty() or bool(surface.surface_animation_active(DISPENSE_CHANNEL)):
 		_draw_empty_ticket_outline(surface)
 		return
@@ -1399,9 +1642,12 @@ func _draw_ticket(surface, state: Dictionary) -> void:
 	_draw_mechanic_result(surface, ticket, ink, accent, trim)
 	_draw_ticket_latex_mask(surface, ticket, latex)
 	_draw_xray_peeks(surface, xray_peeks, accent)
-	_draw_section_status(surface, ticket, accent, trim)
 	var scratch_rect := _ticket_scratch_rect(ticket)
-	surface.surface_add_drag_hit(scratch_rect.grow(5), SCRUB_ACTION, 0)
+	if bool(ticket.get("result_ready", false)):
+		_draw_result_overlay(surface, ticket, trim, accent, ink)
+		surface.surface_add_hit(active_ticket_rect.grow(-10), FILE_TICKET_ACTION, 0)
+	else:
+		surface.surface_add_drag_hit(scratch_rect.grow(5), SCRUB_ACTION, 0)
 	_draw_ticket_rules(surface, ticket, ink, accent, trim)
 	var crumbs := _array_ref(state.get("scratch_crumbs", []))
 	for crumb_value in crumbs:
@@ -1412,9 +1658,54 @@ func _draw_ticket(surface, state: Dictionary) -> void:
 	_draw_sweep_feedback(surface, state, trim)
 
 
+func _draw_queue_stack(surface, state: Dictionary) -> void:
+	var queue := _array_ref(state.get("scratch_queue", []))
+	var count := int(state.get("scratch_queue_count", queue.size()))
+	if count <= 0:
+		return
+	var origin := PLAY_SURFACE_RECT.end - Vector2(126, 112)
+	for index in range(mini(4, count)):
+		var ticket: Dictionary = queue[index] if index < queue.size() and typeof(queue[index]) == TYPE_DICTIONARY else {}
+		var rect := Rect2(origin + Vector2(float(index) * 9.0, float(index) * 7.0), Vector2(86, 58))
+		_draw_mini_scratch_ticket(surface, ticket, rect, 0.82)
+	var badge := Rect2(origin + Vector2(8, 68), Vector2(96, 28))
+	surface.draw_rect(badge, Color("#171313"))
+	surface.draw_rect(badge, Color("#ffcf49"), false, 2)
+	surface.surface_label_centered("%d WAITING" % count, badge, 8, C_WHITE)
+
+
+func _draw_result_overlay(surface, ticket: Dictionary, trim: Color, accent: Color, ink: Color) -> void:
+	var panel := Rect2(active_ticket_rect.position + Vector2(22, active_ticket_rect.size.y * 0.32), Vector2(active_ticket_rect.size.x - 44, active_ticket_rect.size.y * 0.30))
+	var win := int(ticket.get("payout", 0)) > 0
+	surface.draw_rect(panel, Color("#102116") if win else Color("#241417"))
+	surface.draw_rect(panel, trim if win else accent, false, 3)
+	surface.surface_label_centered(_ticket_result_summary(ticket), Rect2(panel.position + Vector2(8, 7), Vector2(panel.size.x - 16, 34)), 20 if panel.size.x > 260 else 15, trim if win else C_PINK)
+	surface.surface_label_centered(_ticket_win_reason(ticket).left(58), Rect2(panel.position + Vector2(10, 45), Vector2(panel.size.x - 20, 24)), 8, C_WHITE)
+	var file_rect := Rect2(panel.position + Vector2(panel.size.x * 0.25, panel.size.y - 30), Vector2(panel.size.x * 0.50, 22))
+	surface.draw_rect(file_rect, Color("#17644c"))
+	surface.draw_rect(file_rect, Color("#69efb3"), false, 2)
+	surface.surface_label_centered("CLICK TO FILE", file_rect, 8, C_WHITE)
+	var scratch_regions := _dictionary_array(ticket.get("scratch_regions", []))
+	var spots := _dictionary_array(ticket.get("spots", []))
+	for region_value in scratch_regions:
+		var region: Dictionary = region_value
+		var spot_index := clampi(int(region.get("spot_index", 0)), 0, maxi(0, spots.size() - 1))
+		var spot: Dictionary = spots[spot_index] if spot_index < spots.size() else {}
+		if _spot_is_winner(ticket, _dict_ref(ticket.get("mechanic_result", {})), spot):
+			surface.draw_rect(_region_rect(region, active_scratch_rect).grow(3), trim, false, 2)
+
+
 func _draw_mechanic_result(surface, ticket: Dictionary, ink: Color, accent: Color, trim: Color) -> void:
 	var result: Dictionary = ticket.get("mechanic_result", {}) if typeof(ticket.get("mechanic_result", {})) == TYPE_DICTIONARY else {}
 	var play_rect := active_scratch_rect
+	var regions := _dictionary_array(ticket.get("scratch_regions", []))
+	var spots := _dictionary_array(ticket.get("spots", []))
+	for region_value in regions:
+		var region: Dictionary = region_value
+		var spot_index := clampi(int(region.get("spot_index", 0)), 0, maxi(0, spots.size() - 1))
+		var spot: Dictionary = spots[spot_index] if spot_index < spots.size() else {}
+		_draw_spot_box(surface, ticket, result, spot, region, _region_rect(region, play_rect), ink, accent, trim)
+	return
 	match str(ticket.get("type_id", "")):
 		"two_fer":
 			var symbols: Array = result.get("symbols", []) if typeof(result.get("symbols", [])) == TYPE_ARRAY else []
@@ -1486,6 +1777,111 @@ func _draw_mechanic_result(surface, ticket: Dictionary, ink: Color, accent: Colo
 				surface.surface_label(rung_text, rect.position + Vector2(76, 14), 7, trim if bool(rung.get("match", false)) else ink)
 			surface.surface_label_centered("GOLD BAR — WIN ALL" if bool(result.get("gold_bar", false)) else "BRASS BAR", Rect2(play_rect.position + Vector2(play_rect.size.x * 0.10, play_rect.size.y * 0.74), Vector2(play_rect.size.x * 0.80, play_rect.size.y * 0.09)), 8, trim)
 			surface.surface_label_centered("VAULT OPEN  $%d" % int(result.get("vault_payout", 0)) if bool(result.get("vault_win", false)) else "VAULT SEALED", Rect2(play_rect.position + Vector2(play_rect.size.x * 0.10, play_rect.size.y * 0.88), Vector2(play_rect.size.x * 0.80, play_rect.size.y * 0.09)), 8, trim)
+
+
+func _draw_spot_box(surface, ticket: Dictionary, result: Dictionary, spot: Dictionary, region: Dictionary, rect: Rect2, ink: Color, accent: Color, trim: Color) -> void:
+	var type_id := str(ticket.get("type_id", ""))
+	var winner := _spot_is_winner(ticket, result, spot)
+	var fill := Color(trim.r, trim.g, trim.b, 0.22) if winner else Color(ink.r, ink.g, ink.b, 0.08)
+	surface.draw_rect(rect, fill)
+	surface.draw_rect(rect, trim if winner else accent, false, 2)
+	var main := _spot_main_label(spot, region)
+	var sub := _spot_sub_label(ticket, result, spot, region)
+	match type_id:
+		"two_fer":
+			surface.draw_circle(rect.get_center(), minf(rect.size.x, rect.size.y) * 0.40, Color(accent.r, accent.g, accent.b, 0.25))
+		"lucky_7s":
+			surface.draw_circle(rect.get_center() - Vector2(0, rect.size.y * 0.08), minf(rect.size.x, rect.size.y) * 0.35, Color(trim.r, trim.g, trim.b, 0.28))
+		"tic_tac_gold":
+			surface.draw_rect(rect.grow(-4), Color("#ffe27a") if main == "GOLD" or main == "WIN" else Color(ink.r, ink.g, ink.b, 0.10), false, 2)
+		"bonus_bingo":
+			if bool(spot.get("daubed", false)) or str(spot.get("role", "")) == "caller":
+				surface.draw_circle(rect.get_center(), minf(rect.size.x, rect.size.y) * 0.40, Color(accent.r, accent.g, accent.b, 0.38))
+		"high_roller_holdem":
+			surface.draw_rect(rect.grow(-3), Color("#fff5d8"))
+			var card_ink := Color("#c22636") if main.contains("H") or main.contains("D") else Color("#171313")
+			surface.surface_label_centered(main, rect, 10, card_ink)
+			if not sub.is_empty():
+				surface.surface_label_centered(sub, Rect2(rect.position + Vector2(2, rect.size.y - 16), Vector2(rect.size.x - 4, 14)), 6, card_ink)
+			return
+		"golden_vault":
+			surface.draw_rect(rect.grow(-3), Color("#09090f") if not winner else Color("#3c2909"))
+	var font_size := 14
+	if rect.size.x < 42.0 or rect.size.y < 28.0:
+		font_size = 6
+	elif rect.size.x < 70.0 or rect.size.y < 42.0:
+		font_size = 9
+	elif main.length() > 7:
+		font_size = 10
+	surface.surface_label_centered(main, Rect2(rect.position + Vector2(3, 2), Vector2(rect.size.x - 6, rect.size.y * (0.68 if not sub.is_empty() else 0.58))), font_size, trim if winner and type_id == "golden_vault" else ink)
+	if not sub.is_empty():
+		surface.surface_label_centered(sub, Rect2(rect.position + Vector2(3, rect.size.y * 0.56), Vector2(rect.size.x - 6, rect.size.y * 0.38)), 6 if rect.size.x < 48.0 else 8, trim if winner else ink)
+
+
+func _spot_main_label(spot: Dictionary, region: Dictionary) -> String:
+	if spot.has("symbol"):
+		return str(spot.get("symbol", ""))
+	if spot.has("number"):
+		var number := int(spot.get("number", 0))
+		return "FREE" if number == 0 and str(spot.get("role", "")) == "bingo_cell" else str(number)
+	if spot.has("letter"):
+		return str(spot.get("letter", ""))
+	if spot.has("word"):
+		return str(spot.get("word", ""))
+	if spot.has("card"):
+		return str(spot.get("card", ""))
+	if spot.has("mark"):
+		return str(spot.get("mark", ""))
+	if spot.has("multiplier"):
+		return "%dx" % int(spot.get("multiplier", 1))
+	if spot.has("rung"):
+		return "RUNG %d" % int(spot.get("rung", 0))
+	return str(region.get("label", "SPOT"))
+
+
+func _spot_sub_label(ticket: Dictionary, result: Dictionary, spot: Dictionary, _region: Dictionary) -> String:
+	match str(ticket.get("type_id", "")):
+		"two_fer":
+			var legend: Dictionary = result.get("legend", {}) if typeof(result.get("legend", {})) == TYPE_DICTIONARY else {}
+			return "$%d" % int(legend.get(str(spot.get("symbol", "")), 0))
+		"lucky_7s":
+			return "WIN" if str(spot.get("role", "")) == "winning_number" else "$%d" % int(spot.get("prize", 0))
+		"tic_tac_gold":
+			return "$%d" % int(spot.get("prize", 0)) if int(spot.get("prize", 0)) > 0 else ""
+		"crossword_corner":
+			return "DONE" if bool(spot.get("complete", false)) else ""
+		"bonus_bingo":
+			return "DAUB" if bool(spot.get("daubed", false)) else ""
+		"high_roller_holdem":
+			if str(spot.get("role", "")) == "wild":
+				return "BOOST" if bool(result.get("wild", false)) else ""
+			return "YOU" if str(spot.get("role", "")).begins_with("your") else "HOUSE"
+		"golden_vault":
+			if spot.has("base_prize"):
+				return "$%d x %d" % [int(spot.get("base_prize", 0)), int(result.get("multiplier", 1))] if bool(spot.get("match", false)) else "LOCK"
+			if spot.has("payout"):
+				return "$%d" % int(spot.get("payout", 0)) if int(spot.get("payout", 0)) > 0 else ""
+	return ""
+
+
+func _spot_is_winner(ticket: Dictionary, result: Dictionary, spot: Dictionary) -> bool:
+	match str(ticket.get("type_id", "")):
+		"two_fer":
+			var symbols: Array = result.get("symbols", []) if typeof(result.get("symbols", [])) == TYPE_ARRAY else []
+			return symbols.count(spot.get("symbol", "")) >= 2
+		"lucky_7s":
+			return bool(spot.get("winner", false)) or bool(result.get("winning_seven", false))
+		"tic_tac_gold":
+			return str(spot.get("mark", "")) == "WIN" or str(spot.get("mark", "")) == "GOLD"
+		"crossword_corner":
+			return bool(spot.get("complete", false))
+		"bonus_bingo":
+			return bool(spot.get("daubed", false)) and str(spot.get("role", "")) == "bingo_cell"
+		"high_roller_holdem":
+			return int(ticket.get("payout", 0)) > 0 and (str(spot.get("role", "")).begins_with("your") or str(spot.get("role", "")) == "wild")
+		"golden_vault":
+			return bool(spot.get("match", false)) or bool(spot.get("win_all", false)) or str(spot.get("symbol", "")) == "OPEN"
+	return int(ticket.get("payout", 0)) > 0
 
 
 func _draw_number_medallion(surface, rect: Rect2, number: int, ink: Color, accent: Color) -> void:
@@ -1624,9 +2020,15 @@ func _draw_sweep_feedback(surface, state: Dictionary, trim: Color) -> void:
 	if bool(state.get("scratch_reduce_motion", false)) or not bool(surface.surface_animation_active(SWEEP_CHANNEL)):
 		return
 	var progress: float = float(surface.surface_animation_progress(SWEEP_CHANNEL))
-	var rect := _ticket_scratch_rect(state.get("scratch_ticket", {}) if typeof(state.get("scratch_ticket", {})) == TYPE_DICTIONARY else {})
-	var x := lerpf(rect.position.x, rect.end.x, progress)
-	surface.draw_rect(Rect2(Vector2(x - 8.0, rect.position.y), Vector2(16.0, rect.size.y)), Color(trim.r, trim.g, trim.b, 0.24 * (1.0 - progress)))
+	var ticket := _dict_ref(state.get("scratch_ticket", {}))
+	var region_id := str(surface.surface_animation_metadata(SWEEP_CHANNEL).get("region", ""))
+	var rect := _ticket_scratch_rect(ticket)
+	for region_value in _dictionary_array(ticket.get("scratch_regions", [])):
+		var region: Dictionary = region_value
+		if str(region.get("id", "")) == region_id:
+			rect = _region_rect(region, active_scratch_rect).grow(5.0 * (1.0 - progress))
+			break
+	surface.draw_rect(rect, Color(trim.r, trim.g, trim.b, 0.34 * (1.0 - progress)), false, 3)
 
 
 func _ticket_play_label(type_id: String, _mechanic: Dictionary) -> String:
@@ -1641,11 +2043,32 @@ func _ticket_play_label(type_id: String, _mechanic: Dictionary) -> String:
 	return "SCRATCH THE PRINTED PLAY AREAS"
 
 
+func _ticket_prize_legend(ticket: Dictionary) -> String:
+	match str(ticket.get("type_id", "")):
+		"two_fer": return "PAIR: CLOVER $2, BELL $4, STAR $10, 2FER $50"
+		"lucky_7s": return "MATCH PAYS PRIZE; ANY 7 IS SPECIAL"
+		"tic_tac_gold": return "WIN LINES ADD; BONUS GOLD PAYS"
+		"crossword_corner": return "3+ WORDS PAY MORE AS WORD COUNT RISES"
+		"bonus_bingo": return "LINES PAY; BLACKOUTS PAY BIG"
+		"high_roller_holdem": return "BETTER HAND WINS; POCKET ACES WIN ALL"
+		"golden_vault": return "LADDER x MULTIPLIER; VAULT IS TOP"
+	return "SCRATCH ALL BOXES, THEN FILE THE RESULT"
+
+
 func _draw_ticket_rules(surface, ticket: Dictionary, ink: Color, accent: Color, trim: Color) -> void:
 	var mechanic := _dict_ref(ticket.get("mechanic", {}))
 	var lines := _array_ref(mechanic.get("rules", []))
 	var rules_height := 54.0 if active_ticket_rect.size.y >= 300.0 else 42.0
 	var rules_rect := Rect2(active_ticket_rect.position + Vector2(14, active_ticket_rect.size.y - rules_height - 7), Vector2(active_ticket_rect.size.x - 28, rules_height))
+	surface.draw_rect(rules_rect, Color(0.0, 0.0, 0.0, 0.09))
+	surface.draw_rect(rules_rect, Color(accent.r, accent.g, accent.b, 0.65), false, 1)
+	surface.surface_label(_ticket_play_label(str(ticket.get("type_id", "")), mechanic).left(64), rules_rect.position + Vector2(7, 13), 7 if active_ticket_rect.size.x < 330 else 8, ink)
+	surface.surface_label(_ticket_prize_legend(ticket).left(64), rules_rect.position + Vector2(7, 28), 6 if active_ticket_rect.size.x < 330 else 7, ink)
+	var active_serial := str(ticket.get("id", "000000")).right(12).to_upper()
+	if rules_height >= 50.0:
+		surface.surface_label("VOID IF ALTERED  -  %s" % active_serial, rules_rect.position + Vector2(7, rules_height - 5), 5, Color(ink.r, ink.g, ink.b, 0.72))
+	surface.draw_rect(Rect2(active_ticket_rect.position + Vector2(4, active_ticket_rect.size.y - 3), Vector2(active_ticket_rect.size.x - 8, 3)), trim)
+	return
 	surface.draw_rect(rules_rect, Color(0.0, 0.0, 0.0, 0.09))
 	surface.draw_rect(rules_rect, Color(accent.r, accent.g, accent.b, 0.65), false, 1)
 	for index in range(lines.size()):
@@ -1666,33 +2089,22 @@ func _draw_surface_hud(surface, state: Dictionary) -> void:
 	surface.surface_label(name.left(22), STATUS_HUD_RECT.position + Vector2(10, 22), 9, C_WHITE)
 	surface.surface_label("PRICE $%d" % price if price > 0 else "SELECT ROW", STATUS_HUD_RECT.position + Vector2(145, 22), 8, C_YELLOW)
 	surface.surface_label("DUE $%d" % pending, STATUS_HUD_RECT.position + Vector2(215, 22), 8, Color("#62e3a2") if pending > 0 else C_SOFT)
+	var queue_count := int(state.get("scratch_queue_count", 0))
+	surface.surface_label("QUEUE %d" % queue_count, STATUS_HUD_RECT.position + Vector2(286, 22), 8, C_YELLOW if queue_count > 0 else C_SOFT)
 	var clerk_rect := Rect2(STATUS_HUD_RECT.end - Vector2(166, 29), Vector2(84, 24))
 	surface.draw_rect(clerk_rect, Color("#16452f") if pending > 0 else Color("#25211d"))
 	surface.draw_rect(clerk_rect, Color("#62e3a2") if pending > 0 else Color("#756858"), false, 1)
 	surface.surface_label_centered("CASH AT CLERK", clerk_rect, 7, C_WHITE if pending > 0 else C_SOFT)
 	if ticket.is_empty():
 		return
+	if bool(ticket.get("result_ready", false)):
+		surface.surface_label("RESULT READY - CLICK TICKET", STATUS_HUD_RECT.position + Vector2(10, 40), 7, Color("#69efb3"))
 	var all_rect := Rect2(STATUS_HUD_RECT.end - Vector2(78, 29), Vector2(72, 24))
 	var reduced := bool(state.get("scratch_reduce_motion", false))
 	surface.draw_rect(all_rect, Color("#613047") if not reduced else Color("#17644c"))
 	surface.draw_rect(all_rect, C_PINK if not reduced else Color("#69efb3"), false, 2)
 	surface.surface_label_centered("SCRATCH ALL", all_rect, 7, C_WHITE)
 	surface.surface_add_hit(all_rect, SCRATCH_ALL_ACTION, 0)
-
-
-func _draw_section_status(surface, ticket: Dictionary, accent: Color, trim: Color) -> void:
-	var sections := _array_ref(ticket.get("sections", []))
-	if sections.is_empty():
-		return
-	var gap := 3.0
-	var width := (active_scratch_rect.size.x - gap * float(sections.size() - 1)) / float(sections.size())
-	for index in range(sections.size()):
-		var section: Dictionary = sections[index]
-		var rect := Rect2(active_scratch_rect.position + Vector2(float(index) * (width + gap), -13), Vector2(width, 10))
-		var coverage := clampf(float(section.get("coverage", 0.0)), 0.0, 1.0)
-		surface.draw_rect(rect, Color(0.0, 0.0, 0.0, 0.28))
-		surface.draw_rect(Rect2(rect.position, Vector2(rect.size.x * coverage, rect.size.y)), trim if bool(section.get("revealed", false)) else Color(accent.r, accent.g, accent.b, 0.70))
-		surface.surface_label_centered("%s %d%%" % [str(section.get("label", "AREA")).left(9), int(round(coverage * 100.0))], rect, 5, C_WHITE)
 
 
 func _draw_mini_scratch_ticket(surface, ticket: Dictionary, rect: Rect2, alpha: float) -> void:
@@ -1781,14 +2193,40 @@ func _stock_view(machine: Dictionary) -> Array:
 	return result
 
 
+func _normalize_machine_state(machine: Dictionary) -> void:
+	var needs_upgrade := int(machine.get("version", 1)) < 2 or not machine.has("pending_queue")
+	if not machine.has("pending_queue"):
+		machine["pending_queue"] = []
+	if not machine.has("winner_pile"):
+		machine["winner_pile"] = []
+	if not machine.has("loser_pile"):
+		machine["loser_pile"] = []
+	var active_value: Variant = machine.get("active_ticket", {})
+	if typeof(active_value) == TYPE_DICTIONARY:
+		var active: Dictionary = active_value
+		if needs_upgrade or _dictionary_array(active.get("scratch_regions", [])).is_empty():
+			_ensure_ticket_regions(active)
+	if needs_upgrade:
+		var queue := _dictionary_array(machine.get("pending_queue", []))
+		for ticket_value in queue:
+			_ensure_ticket_regions(ticket_value as Dictionary)
+		machine["pending_queue"] = queue
+		for field in ["winner_pile", "loser_pile"]:
+			for ticket_value in _dictionary_array(machine.get(field, [])):
+				_ensure_ticket_regions(ticket_value as Dictionary)
+	machine["version"] = maxi(2, int(machine.get("version", 1)))
+
+
 func _ensure_machine_state(run_state: RunState, environment: Dictionary, persist: bool) -> Dictionary:
 	var states := _game_states_for_write(environment)
 	var value: Variant = states.get(get_id(), {})
 	if typeof(value) == TYPE_DICTIONARY and not (value as Dictionary).is_empty():
-		var machine := value as Dictionary
+		var machine := value as Dictionary if persist else (value as Dictionary).duplicate(true)
+		_normalize_machine_state(machine)
 		_sync_portable_ticket_state(run_state, environment, machine)
 		return machine
 	var generated := _generate_machine_state(run_state, environment, null)
+	_normalize_machine_state(generated)
 	_sync_portable_ticket_state(run_state, environment, generated)
 	if persist:
 		states[get_id()] = generated
@@ -1801,15 +2239,19 @@ func _read_machine_state(run_state: RunState, environment: Dictionary) -> Dictio
 	if typeof(states_value) == TYPE_DICTIONARY:
 		var value: Variant = (states_value as Dictionary).get(get_id(), {})
 		if typeof(value) == TYPE_DICTIONARY and not (value as Dictionary).is_empty():
-			var machine := value as Dictionary
+			var machine := (value as Dictionary).duplicate(true)
+			_normalize_machine_state(machine)
 			_sync_portable_ticket_state(run_state, environment, machine)
 			return machine
 	var generated := _generate_machine_state(run_state, environment, null)
+	_normalize_machine_state(generated)
 	_sync_portable_ticket_state(run_state, environment, generated)
 	return generated
 
 
-func _write_machine_state(environment: Dictionary, machine: Dictionary, run_state: RunState = null) -> void:
+func _write_machine_state(environment: Dictionary, machine: Dictionary, run_state: RunState = null, normalize_before_write: bool = true) -> void:
+	if normalize_before_write:
+		_normalize_machine_state(machine)
 	var states := _game_states_for_write(environment)
 	states[get_id()] = machine
 	environment["game_states"] = states
@@ -1829,14 +2271,16 @@ func _sync_portable_ticket_state(run_state: RunState, environment: Dictionary, m
 			portable = run_state.portable_ticket_state(get_id(), environment)
 	if portable.is_empty():
 		return
-	for field in ["active_ticket", "winner_pile", "loser_pile", "pending_penalty", "penalty_shields_remaining", "last_settled_ticket", "last_settled_pile", "last_file_id", "file_started_msec", "last_sweep_id", "last_sweep_section", "sweep_started_msec"]:
+	for field in ["active_ticket", "pending_queue", "winner_pile", "loser_pile", "pending_penalty", "penalty_shields_remaining", "last_settled_ticket", "last_settled_pile", "last_file_id", "file_started_msec", "last_sweep_id", "last_sweep_section", "sweep_started_msec"]:
 		if portable.has(field):
 			machine[field] = portable[field]
+	_normalize_machine_state(machine)
 
 
 func _portable_ticket_player_state(machine: Dictionary) -> Dictionary:
 	return {
 		"active_ticket": machine.get("active_ticket", {}),
+		"pending_queue": machine.get("pending_queue", []),
 		"winner_pile": machine.get("winner_pile", []),
 		"loser_pile": machine.get("loser_pile", []),
 		"pending_penalty": maxi(0, int(machine.get("pending_penalty", 0))),
@@ -1852,7 +2296,7 @@ func _portable_ticket_player_state(machine: Dictionary) -> Dictionary:
 
 
 func _portable_ticket_count(state: Dictionary) -> int:
-	return (0 if _copy_dict(state.get("active_ticket", {})).is_empty() else 1) + _dictionary_array(state.get("winner_pile", [])).size() + _dictionary_array(state.get("loser_pile", [])).size()
+	return (0 if _copy_dict(state.get("active_ticket", {})).is_empty() else 1) + _dictionary_array(state.get("pending_queue", [])).size() + _dictionary_array(state.get("winner_pile", [])).size() + _dictionary_array(state.get("loser_pile", [])).size()
 
 
 func _stamp_ticket_origin(ticket: Dictionary, environment: Dictionary) -> void:
@@ -1868,7 +2312,7 @@ func _stamp_machine_ticket_origins(machine: Dictionary, environment: Dictionary)
 	var active_value: Variant = machine.get("active_ticket", {})
 	if typeof(active_value) == TYPE_DICTIONARY:
 		_stamp_ticket_origin(active_value as Dictionary, environment)
-	for field in ["winner_pile", "loser_pile"]:
+	for field in ["pending_queue", "winner_pile", "loser_pile"]:
 		for ticket_value in _dictionary_array(machine.get(field, [])):
 			_stamp_ticket_origin(ticket_value as Dictionary, environment)
 
@@ -1892,6 +2336,68 @@ func _ticket_type(type_id: String) -> Dictionary:
 	return {}
 
 
+func _ticket_result_summary(ticket: Dictionary) -> String:
+	if ticket.is_empty() or not bool(ticket.get("result_ready", false)):
+		return ""
+	var payout := maxi(0, int(ticket.get("payout", 0)))
+	return "WIN $%d" % payout if payout > 0 else "NO WIN"
+
+
+func _ticket_win_reason(ticket: Dictionary) -> String:
+	if ticket.is_empty():
+		return ""
+	var result := _dict_ref(ticket.get("mechanic_result", {}))
+	var payout := maxi(0, int(ticket.get("payout", 0)))
+	match str(ticket.get("type_id", "")):
+		"two_fer":
+			var symbols: Array = result.get("symbols", []) if typeof(result.get("symbols", [])) == TYPE_ARRAY else []
+			for symbol_value in symbols:
+				if symbols.count(symbol_value) >= 2:
+					return "Matched two %s symbols." % str(symbol_value).capitalize()
+			return "No two symbols matched."
+		"lucky_7s":
+			if bool(result.get("winning_seven", false)):
+				return "Winning 7 pays every prize."
+			var winners := 0
+			for spot_value in _dictionary_array(result.get("your_numbers", [])):
+				if bool((spot_value as Dictionary).get("winner", false)):
+					winners += 1
+			return "%d number%s paid." % [winners, "" if winners == 1 else "s"] if winners > 0 else "No number matched and no 7 appeared."
+		"tic_tac_gold":
+			var lines := _array_ref(result.get("completed_lines", [])).size()
+			if bool(result.get("bonus", false)):
+				return "Bonus GOLD paid%s." % (" with %d win line%s" % [lines, "" if lines == 1 else "s"] if lines > 0 else "")
+			return "%d win line%s completed." % [lines, "" if lines == 1 else "s"] if lines > 0 else "No full WIN line."
+		"crossword_corner":
+			var words := int(result.get("word_count", 0))
+			return "%d word%s completed." % [words, "" if words == 1 else "s"] if payout > 0 else "Fewer than three words completed."
+		"bonus_bingo":
+			var lines := int(result.get("line_count", 0))
+			var blackouts := int(result.get("blackout_cards", 0))
+			if blackouts > 0:
+				return "%d blackout card%s paid." % [blackouts, "" if blackouts == 1 else "s"]
+			return "%d bingo line%s paid." % [lines, "" if lines == 1 else "s"] if lines > 0 else "No bingo line completed."
+		"high_roller_holdem":
+			if bool(result.get("pocket_aces", false)):
+				return "Pocket aces paid the full prize."
+			if payout > 0:
+				return "Your %s beat the dealer's %s." % [str(result.get("your_rank", "hand")).capitalize(), str(result.get("dealer_rank", "hand")).capitalize()]
+			return "Dealer's %s beat your %s." % [str(result.get("dealer_rank", "hand")).capitalize(), str(result.get("your_rank", "hand")).capitalize()]
+		"golden_vault":
+			if bool(result.get("vault_win", false)) and bool(result.get("gold_bar", false)):
+				return "Gold bar and final vault both opened."
+			if bool(result.get("vault_win", false)):
+				return "The final vault opened."
+			if bool(result.get("gold_bar", false)):
+				return "Gold bar paid every ladder rung."
+			var hits := 0
+			for rung_value in _dictionary_array(result.get("ladder", [])):
+				if bool((rung_value as Dictionary).get("match", false)):
+					hits += 1
+			return "%d ladder rung%s matched." % [hits, "" if hits == 1 else "s"] if hits > 0 else "The vault stayed sealed."
+	return "Ticket complete."
+
+
 func _pending_payout(machine: Dictionary) -> int:
 	var total := 0
 	for value in _dictionary_array(machine.get("winner_pile", [])):
@@ -1900,6 +2406,12 @@ func _pending_payout(machine: Dictionary) -> int:
 
 
 func _ticket_complete(ticket: Dictionary) -> bool:
+	var regions_value: Variant = ticket.get("scratch_regions", [])
+	if typeof(regions_value) == TYPE_ARRAY and not (regions_value as Array).is_empty():
+		for region_value in regions_value as Array:
+			if typeof(region_value) != TYPE_DICTIONARY or not bool((region_value as Dictionary).get("revealed", false)):
+				return false
+		return true
 	var sections_value: Variant = ticket.get("sections", [])
 	if typeof(sections_value) == TYPE_ARRAY and not (sections_value as Array).is_empty():
 		for section_value in sections_value as Array:
@@ -1976,11 +2488,38 @@ func _section_index_at_normalized(sections: Array, normalized: Vector2) -> int:
 	return -1
 
 
+func _region_index_at_normalized(regions: Array, normalized: Vector2) -> int:
+	for index in range(regions.size()):
+		var region: Dictionary = regions[index]
+		var values: Array = region.get("rect", []) if typeof(region.get("rect", [])) == TYPE_ARRAY else []
+		if values.size() < 4:
+			continue
+		var rect := Rect2(float(values[0]), float(values[1]), float(values[2]), float(values[3]))
+		if rect.has_point(normalized):
+			return index
+	return -1
+
+
+func _region_rect(region: Dictionary, play_rect: Rect2) -> Rect2:
+	var values: Array = region.get("art_rect", region.get("rect", [])) if typeof(region.get("art_rect", region.get("rect", []))) == TYPE_ARRAY else []
+	if values.size() < 4:
+		values = [0.0, 0.0, 1.0, 1.0]
+	return Rect2(play_rect.position + Vector2(float(values[0]) * play_rect.size.x, float(values[1]) * play_rect.size.y), Vector2(float(values[2]) * play_rect.size.x, float(values[3]) * play_rect.size.y))
+
+
 func _clear_mask_section(mask: Array, sections: Array, section_index: int, columns: int, rows: int) -> void:
 	for sample_index in range(mask.size()):
 		if int(mask[sample_index]) <= 0:
 			continue
 		if _section_index_at_normalized(sections, _mask_sample_normalized(sample_index, columns, rows)) == section_index:
+			mask[sample_index] = 0
+
+
+func _clear_mask_region(mask: Array, regions: Array, region_index: int, columns: int, rows: int) -> void:
+	for sample_index in range(mask.size()):
+		if int(mask[sample_index]) <= 0:
+			continue
+		if _region_index_at_normalized(regions, _mask_sample_normalized(sample_index, columns, rows)) == region_index:
 			mask[sample_index] = 0
 
 
@@ -2002,7 +2541,7 @@ func _scratch_animation_channels(machine: Dictionary, reduce_motion: bool) -> Ar
 	return [
 		GameModule.surface_animation_channel(DISPENSE_CHANNEL, str(machine.get("last_dispense_id", "")), DISPENSE_DURATION_MSEC, int(machine.get("dispense_started_msec", 0)), {"metadata": {"ticket_id": str(_copy_dict(machine.get("active_ticket", {})).get("id", "")), "slot": int(machine.get("last_dispense_slot", 0))}}),
 		GameModule.surface_animation_channel(FILE_CHANNEL, str(machine.get("last_file_id", "")), FILE_DURATION_MSEC, int(machine.get("file_started_msec", 0)), {"metadata": {"pile": str(machine.get("last_settled_pile", ""))}}),
-		GameModule.surface_animation_channel(SWEEP_CHANNEL, str(machine.get("last_sweep_id", "")), 0 if reduce_motion else SWEEP_DURATION_MSEC, int(machine.get("sweep_started_msec", 0)), {"metadata": {"section": str(machine.get("last_sweep_section", ""))}}),
+		GameModule.surface_animation_channel(SWEEP_CHANNEL, str(machine.get("last_sweep_id", "")), 0 if reduce_motion else SWEEP_DURATION_MSEC, int(machine.get("sweep_started_msec", 0)), {"metadata": {"region": str(machine.get("last_sweep_section", ""))}}),
 	]
 
 

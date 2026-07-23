@@ -49,6 +49,7 @@ const ROULETTE_PREWARM_EVENTS := [
 const ENVIRONMENT_PREWARM_EVENTS := [
 	"drink_consumed",
 	"scratch_paper_foley_loop",
+	"scratch_box_pop",
 ]
 const ROULETTE_RIM_TIMES := [0.42, 0.82, 1.26, 1.78, 2.34, 2.94, 3.32]
 const ROULETTE_SCATTER_TIMES := [3.66, 3.86, 4.08, 4.32]
@@ -1209,7 +1210,7 @@ func _normalized_event_id_uncached(event_id: String) -> String:
 		})
 	if family_event == "drink_consumed":
 		return family_event
-	if family_event == "scratch_paper_foley_loop":
+	if family_event == "scratch_paper_foley_loop" or family_event == "scratch_box_pop":
 		return family_event
 	match family_event:
 		"button", "button_pinball", "button_buffalo", "button_digital", "lever", "lever_buffalo", "lever_digital", "nudge", "nudge_pinball", "nudge_buffalo", "nudge_digital", "reel_loop", "reel_loop_pinball", "reel_loop_buffalo", "reel_loop_digital", "reel_stop", "reel_stop_pinball", "reel_stop_buffalo", "reel_stop_digital", "gold_coin_tease", "double_gold_coin_tease", "bonus_start", "bonus_start_pinball", "bonus_start_buffalo", "bonus_start_digital", "bumper", "pinball_money_ding", "bonus_step_buffalo", "bonus_step_digital", "jackpot_hit", "jackpot_hit_buffalo", "jackpot_hit_digital", "payout", "payout_digital", "bonus_total", "bonus_total_buffalo", "bonus_total_digital", "jackpot", "jackpot_buffalo", "jackpot_digital", "lose", "pull_tab_click", "pull_tab_thump", "paper_peek", "paper_peel", "blackjack_card", "blackjack_chip", "blackjack_felt", "blackjack_payout", "blackjack_bust", "blackjack_peek", "blackjack_count", "blackjack_distraction", "roulette_chip_select", "roulette_chip_place", "roulette_chip_lift", "roulette_chip_stack", "roulette_chip_sweep", "roulette_rotor_launch", "roulette_ball_loop", "roulette_ball_rim_tick", "roulette_ball_roll", "roulette_ball_drop", "roulette_ball_scatter", "roulette_ball_bounce", "roulette_ball_pocket", "roulette_dolly_tap", "roulette_payout":
@@ -1264,6 +1265,8 @@ func _event_seconds(event_id: String) -> float:
 			return 0.56
 		"scratch_paper_foley_loop":
 			return 0.28
+		"scratch_box_pop":
+			return 0.16
 		"lever", "lever_buffalo", "lever_digital":
 			return 0.34
 		"nudge", "nudge_pinball", "nudge_buffalo", "nudge_digital":
@@ -1362,6 +1365,8 @@ func _event_sample(event_id: String, t: float, frame: int, seconds: float) -> fl
 			return _sample_drink_consumed(t, frame, seconds)
 		"scratch_paper_foley_loop":
 			return _sample_scratch_paper_foley_loop(t, frame, seconds)
+		"scratch_box_pop":
+			return _sample_scratch_box_pop(t, frame, seconds)
 		"lever":
 			return _sample_lever(t, frame, seconds)
 		"lever_buffalo":
@@ -1521,6 +1526,13 @@ func _sample_scratch_paper_foley_loop(t: float, frame: int, seconds: float) -> f
 	var fiber := (_noise(frame, 3253) - _noise(frame / 2, 3259)) * 0.035
 	var pressure := 0.60 + 0.22 * _noise(frame / 71, 3301)
 	return (coarse + fiber * grain_envelope) * pressure
+
+
+func _sample_scratch_box_pop(t: float, frame: int, seconds: float) -> float:
+	var snap := _pulse_window(t, 0.0, 0.035) * (_noise(frame, 4547) * 0.18 + sin(TAU * 420.0 * t) * 0.08)
+	var paper_lift := _pulse_window(t, 0.018, 0.095) * (_noise(frame / 3, 4561) - _noise(frame / 7, 4567)) * 0.055
+	var soft_air := sin(TAU * lerpf(180.0, 92.0, clampf(t / maxf(0.001, seconds), 0.0, 1.0)) * t) * 0.045 * _decay_env(t, seconds, 0.002, 0.120)
+	return snap + paper_lift + soft_air
 
 
 func _sample_lever(t: float, frame: int, seconds: float) -> float:

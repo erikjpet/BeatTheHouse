@@ -51,7 +51,8 @@ func _check_scratch_tickets_surface_contract(game: GameModule, failures: Array) 
 	_check_scratch_luck_hook(game, failures)
 	_check_scratch_mechanics(game, failures)
 	_check_scratch_mask_feel(game, failures)
-	_check_scratch_section_sweeps(game, failures)
+	_check_scratch_per_box_reveals(game, failures)
+	_check_scratch_result_and_queue_flow(game, failures)
 	_check_scratch_save_restore(game, failures)
 	_check_scratch_sizes(game, failures)
 	_check_scratch_stock(game, failures)
@@ -87,6 +88,7 @@ func _check_scratch_purchase_and_input(game: GameModule, run_state: RunState, en
 	if not bool(purchase.get("scratch_outcome_fixed_at_purchase", false)) or run_state.bankroll != before - int(purchase.get("stake", 0)):
 		failures.append("Scratch Tickets purchase did not fix its outcome and charge cash once.")
 	var ticket: Dictionary = ((environment.get("game_states", {}) as Dictionary).get("scratch_tickets", {}) as Dictionary).get("active_ticket", {})
+	game.call("_ensure_ticket_regions", ticket)
 	var original_mask := (ticket.get("latex_mask", []) as Array).duplicate()
 	var begin := game.surface_pointer_command("scratch_scrub", 0, "begin", Vector2(400, 160), {}, run_state, environment)
 	game.surface_pointer_command("scratch_scrub", 0, "end", Vector2(400, 160), begin.get("ui_state", {}), run_state, environment)
@@ -241,47 +243,133 @@ func _check_scratch_mask_feel(game: GameModule, failures: Array) -> void:
 		failures.append("Fast swipe interpolation skipped coverage samples.")
 
 
-func _check_scratch_section_sweeps(game: GameModule, failures: Array) -> void:
+func _check_scratch_per_box_reveals(game: GameModule, failures: Array) -> void:
 	for type_id in SCRATCH_IDS:
 		var ticket: Dictionary = game.call("_roll_ticket", game.call("_ticket_type", type_id), _scratch_rng("sweep:%s" % type_id), 0, "sweep")
 		var machine := {"active_ticket": ticket, "pending_penalty": 0, "penalty_shields_remaining": 0}
-		var sections := _dict_array(ticket.get("sections", []))
-		for section_index in range(sections.size()):
-			_prime_section_just_below_sweep(game, ticket, section_index)
-			var values: Array = (sections[section_index] as Dictionary).get("rect", [])
+		var regions := _dict_array(ticket.get("scratch_regions", []))
+		if regions.size() != _dict_array(ticket.get("spots", [])).size():
+			failures.append("Scratch %s did not create one scratch region per printed spot." % type_id)
+			continue
+		for region_index in range(regions.size()):
+			var values: Array = (regions[region_index] as Dictionary).get("rect", [])
+			var art_rect: Array = (regions[region_index] as Dictionary).get("art_rect", [])
+			if JSON.stringify(art_rect) != JSON.stringify(values):
+				failures.append("Scratch %s region/art rectangle drifted at box %d." % [type_id, region_index])
+				break
+		var sample_indices := _scratch_representative_region_indices(regions)
+		for region_index in sample_indices:
+			_prime_region_just_below_pop(game, ticket, region_index)
+			regions = _dict_array(ticket.get("scratch_regions", []))
+			var sample_values: Array = (regions[region_index] as Dictionary).get("rect", [])
 			var scratch_rect: Rect2 = game.call("_ticket_scratch_rect", ticket)
-			var section: Dictionary = sections[section_index]
-			if bool(section.get("revealed", false)) or float(section.get("coverage", 1.0)) >= 0.80:
-				failures.append("Scratch section %s/%d swept before the 80%% threshold." % [type_id, section_index])
+			var region: Dictionary = regions[region_index]
+			if bool(region.get("revealed", false)) or float(region.get("coverage", 1.0)) >= 0.80:
+				failures.append("Scratch box %s/%d popped before the 80%% threshold." % [type_id, region_index])
 				break
-			var center_y := scratch_rect.position.y + (float(values[1]) + float(values[3]) * 0.5) * scratch_rect.size.y
-			var from_x := scratch_rect.position.x + (float(values[0]) + float(values[2]) * 0.15) * scratch_rect.size.x
-			var to_x := scratch_rect.position.x + (float(values[0]) + float(values[2]) * 0.85) * scratch_rect.size.x
+			var center_y := scratch_rect.position.y + (float(sample_values[1]) + float(sample_values[3]) * 0.5) * scratch_rect.size.y
+			var from_x := scratch_rect.position.x + (float(sample_values[0]) + float(sample_values[2]) * 0.15) * scratch_rect.size.x
+			var to_x := scratch_rect.position.x + (float(sample_values[0]) + float(sample_values[2]) * 0.85) * scratch_rect.size.x
 			var result: Dictionary = game.call("_scratch_segment", machine, Vector2(from_x, center_y), Vector2(to_x, center_y))
-			if _dict_array(result.get("swept_sections", [])).is_empty() or not bool((sections[section_index] as Dictionary).get("revealed", false)):
-				failures.append("Scratch section %s/%d did not auto-sweep at 80%%." % [type_id, section_index])
+			regions = _dict_array(ticket.get("scratch_regions", []))
+			if _dict_array(result.get("swept_regions", [])).is_empty() or not bool((regions[region_index] as Dictionary).get("revealed", false)):
+				failures.append("Scratch box %s/%d did not pop at 80%%." % [type_id, region_index])
 				break
-			if float((sections[section_index] as Dictionary).get("coverage", 0.0)) != 1.0:
-				failures.append("Scratch sweep did not clear the exact result-bearing section for %s." % type_id)
+			if float((regions[region_index] as Dictionary).get("coverage", 0.0)) != 1.0:
+				failures.append("Scratch pop did not fully clear the exact symbol box for %s." % type_id)
 				break
 
 
-func _prime_section_just_below_sweep(game: GameModule, ticket: Dictionary, section_index: int) -> void:
+func _prime_region_just_below_pop(game: GameModule, ticket: Dictionary, region_index: int) -> void:
 	var scratch: Dictionary = ticket.get("scratch", {})
 	var columns := int(scratch.get("mask_columns", 48))
 	var rows := int(scratch.get("mask_rows", 32))
 	var mask: Array = ticket.get("latex_mask", [])
-	var sections: Array = ticket.get("sections", [])
+	var regions: Array = ticket.get("scratch_regions", [])
 	var remaining := 0
-	for sample_index in range(mask.size()):
-		var normalized: Vector2 = game.call("_mask_sample_normalized", sample_index, columns, rows)
-		if int(game.call("_section_index_at_normalized", sections, normalized)) == section_index:
-			mask[sample_index] = 52
+	var values: Array = (regions[region_index] as Dictionary).get("rect", [])
+	var left := float(values[0])
+	var top := float(values[1])
+	var right := minf(1.0, left + float(values[2]))
+	var bottom := minf(1.0, top + float(values[3]))
+	var column_start := clampi(int(ceil(left * float(columns) - 0.5)), 0, columns)
+	var column_end := clampi(int(ceil(right * float(columns) - 0.5)), column_start, columns)
+	var row_start := clampi(int(ceil(top * float(rows) - 0.5)), 0, rows)
+	var row_end := clampi(int(ceil(bottom * float(rows) - 0.5)), row_start, rows)
+	for row in range(row_start, row_end):
+		var row_offset := row * columns
+		for column in range(column_start, column_end):
+			mask[row_offset + column] = 52
 			remaining += 52
-	var section: Dictionary = sections[section_index]
-	section["mask_remaining_units"] = remaining
-	section["coverage"] = 1.0 - float(remaining) / float(maxi(1, int(section.get("sample_total", 1)) * 255))
-	sections[section_index] = section
+	var region: Dictionary = regions[region_index]
+	region["mask_remaining_units"] = remaining
+	region["coverage"] = 1.0 - float(remaining) / float(maxi(1, int(region.get("sample_total", 1)) * 255))
+	region["revealed"] = false
+	regions[region_index] = region
+	ticket["sections"] = game.call("_sections_from_regions", regions)
+
+
+func _scratch_representative_region_indices(regions: Array) -> Array:
+	var result: Array = []
+	if regions.is_empty():
+		return result
+	for candidate in [0, regions.size() / 2, regions.size() - 1]:
+		var index := int(candidate)
+		if not result.has(index):
+			result.append(index)
+	for index in range(regions.size()):
+		var section_id := str((regions[index] as Dictionary).get("section_id", ""))
+		var seen_section := false
+		for selected in result:
+			if str((regions[int(selected)] as Dictionary).get("section_id", "")) == section_id:
+				seen_section = true
+				break
+		if not seen_section:
+			result.append(index)
+	return result
+
+
+func _check_scratch_result_and_queue_flow(game: GameModule, failures: Array) -> void:
+	var run_state: RunState = RunStateScript.new()
+	run_state.start_new("SCRATCH-QUEUE-FLOW")
+	run_state.bankroll = 500
+	var environment := _scratch_environment("scratch_queue")
+	var machine: Dictionary = game.call("_generate_machine_state", run_state, environment, _scratch_rng("queue-stock"))
+	var stock := _dict_array(machine.get("stock", []))
+	if stock.is_empty():
+		failures.append("Scratch queue test could not create stocked machine.")
+		return
+	(stock[0] as Dictionary)["remaining"] = maxi(3, int((stock[0] as Dictionary).get("remaining", 0)))
+	machine["stock"] = stock
+	environment["game_states"] = {"scratch_tickets": machine}
+	run_state.current_environment = environment
+	var before := run_state.bankroll
+	var buy := game.surface_action_command("scratch_buy", 200, false, {}, run_state, environment)
+	game.resolve_with_context("buy_scratch_ticket", int(buy.get("set_stake", 0)), run_state, environment, _scratch_rng("queue-buy"), buy.get("ui_state", {}))
+	machine = (environment.get("game_states", {}) as Dictionary).get("scratch_tickets", {})
+	if run_state.bankroll != before - int((stock[0] as Dictionary).get("price", 1)) * 3:
+		failures.append("Scratch multi-buy did not charge N times the ticket price.")
+	if _dict_array(machine.get("pending_queue", [])).size() != 2 or (machine.get("active_ticket", {}) as Dictionary).is_empty():
+		failures.append("Scratch multi-buy did not leave one active ticket plus a queued stack.")
+	var first_id := str((machine.get("active_ticket", {}) as Dictionary).get("id", ""))
+	game.surface_action_command("scratch_all", 0, false, {}, run_state, environment)
+	machine = (environment.get("game_states", {}) as Dictionary).get("scratch_tickets", {})
+	var active: Dictionary = machine.get("active_ticket", {})
+	if str(active.get("id", "")) != first_id or not bool(active.get("result_ready", false)):
+		failures.append("Scratch All should enter result state without filing the ticket.")
+	var surface := game.surface_state(run_state, environment, {"reduce_motion": true})
+	var harness := SurfaceHarness.new()
+	harness.setup(surface)
+	game.draw_surface(harness, surface, {"contract_harness": true})
+	if not _surface_harness_has_action(harness, "scratch_file_ticket"):
+		failures.append("Scratch result state did not expose a click-to-file hit region.")
+	if _surface_harness_label_contains(harness, "%") or _surface_harness_label_contains(harness, "COVERAGE"):
+		failures.append("Scratch surface rendered a progress/coverage readout.")
+	var file := game.surface_action_command("scratch_file_ticket", 0, false, {}, run_state, environment)
+	game.resolve_with_context("settle_scratch_ticket", 0, run_state, environment, _scratch_rng("queue-file"), file.get("ui_state", {}))
+	machine = (environment.get("game_states", {}) as Dictionary).get("scratch_tickets", {})
+	if _dict_array(machine.get("pending_queue", [])).size() != 1 or str((machine.get("active_ticket", {}) as Dictionary).get("id", "")) == first_id:
+		failures.append("Scratch filing did not advance to the next queued ticket.")
 
 
 func _check_scratch_save_restore(game: GameModule, failures: Array) -> void:
@@ -291,16 +379,22 @@ func _check_scratch_save_restore(game: GameModule, failures: Array) -> void:
 	var machine: Dictionary = game.call("_generate_machine_state", run_state, environment, _scratch_rng("save-stock"))
 	var ticket: Dictionary = game.call("_roll_ticket", game.call("_ticket_type", "crossword_corner"), _scratch_rng("save-ticket"), 0, "save")
 	machine["active_ticket"] = ticket
+	machine["pending_queue"] = [
+		game.call("_roll_ticket", game.call("_ticket_type", "two_fer"), _scratch_rng("save-queue-a"), 0, "save-queue-a"),
+		game.call("_roll_ticket", game.call("_ticket_type", "lucky_7s"), _scratch_rng("save-queue-b"), 0, "save-queue-b"),
+	]
 	environment["game_states"] = {"scratch_tickets": machine}
 	run_state.current_environment = environment
 	game.call("_scratch_segment", machine, Vector2(350, 170), Vector2(590, 250))
 	var outcome_json := JSON.stringify(ticket.get("mechanic_result", {}))
 	var mask_json := JSON.stringify(ticket.get("latex_mask", []))
+	var queue_json := JSON.stringify(machine.get("pending_queue", []))
 	var restored: RunState = RunStateScript.new()
 	restored.from_dict(run_state.to_dict())
 	var loaded: Dictionary = ((restored.current_environment.get("game_states", {}) as Dictionary).get("scratch_tickets", {}) as Dictionary).get("active_ticket", {})
-	if JSON.stringify(loaded.get("mechanic_result", {})) != outcome_json or JSON.stringify(loaded.get("latex_mask", [])) != mask_json:
-		failures.append("Scratch save/load did not restore both fixed outcome and partial mask.")
+	var loaded_machine: Dictionary = (restored.current_environment.get("game_states", {}) as Dictionary).get("scratch_tickets", {})
+	if JSON.stringify(loaded.get("mechanic_result", {})) != outcome_json or JSON.stringify(loaded.get("latex_mask", [])) != mask_json or JSON.stringify(loaded_machine.get("pending_queue", [])) != queue_json:
+		failures.append("Scratch save/load did not restore fixed outcome, partial mask, and queued tickets.")
 
 
 func _check_scratch_sizes(game: GameModule, failures: Array) -> void:
@@ -376,6 +470,9 @@ func _check_scratch_sound(failures: Array) -> void:
 	var stream: AudioStreamWAV = sfx.preview_event_stream("scratch_paper_foley_loop")
 	if stream == null or stream.loop_mode != AudioStreamWAV.LOOP_FORWARD or sfx.debug_normalized_event_id("scratch_paper_foley_loop") != "scratch_paper_foley_loop":
 		failures.append("Scratch paper foley is not routed as the active procedural loop.")
+	var pop_stream: AudioStreamWAV = sfx.preview_event_stream("scratch_box_pop")
+	if pop_stream == null or pop_stream.loop_mode != AudioStreamWAV.LOOP_DISABLED or sfx.debug_normalized_event_id("scratch_box_pop") != "scratch_box_pop":
+		failures.append("Scratch per-box pop is not routed as a one-shot procedural cue.")
 	var source := FileAccess.get_file_as_string("res://scripts/ui/sfx_player.gd")
 	if source.contains("scratch_scrape_loop") or source.contains("coin_edge") or source.contains("_sample_scratch_scrape"):
 		failures.append("Retired metallic scratch synthesis remains in the SFX source.")
@@ -464,3 +561,10 @@ func _scratch_string_array(value: Variant) -> Array:
 		for entry in value as Array:
 			result.append(str(entry))
 	return result
+
+
+func _surface_harness_label_contains(harness: SurfaceHarness, needle: String) -> bool:
+	for label_value in harness.labels:
+		if str(label_value).contains(needle):
+			return true
+	return false
