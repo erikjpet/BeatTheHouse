@@ -25,6 +25,11 @@ const WHITE := Color("#ffffff")
 const SOFT := Color("#d8e8ea")
 const SHADOW := Color("#171022")
 const BLUE := Color("#1d2140")
+const RARITY_BLUE := Color("#4ea1ff")
+const RARITY_PURPLE := Color("#9a63ff")
+const RARITY_PINK := Color("#ff4fa3")
+const RARITY_RED := Color("#ff4038")
+const RARITY_GOLD := Color("#ffd85a")
 
 const PALETTE := {
 	"dark": DARK,
@@ -45,6 +50,11 @@ const PALETTE := {
 	"soft": SOFT,
 	"shadow": SHADOW,
 	"blue": BLUE,
+	"rarity_blue": RARITY_BLUE,
+	"rarity_purple": RARITY_PURPLE,
+	"rarity_pink": RARITY_PINK,
+	"rarity_red": RARITY_RED,
+	"rarity_gold": RARITY_GOLD,
 }
 
 const HIGH_CONTRAST_PALETTE := {
@@ -66,6 +76,11 @@ const HIGH_CONTRAST_PALETTE := {
 	"soft": Color("#f5f7ff"),
 	"shadow": Color("#303040"),
 	"blue": Color("#5aa7ff"),
+	"rarity_blue": Color("#7ec4ff"),
+	"rarity_purple": Color("#c4a4ff"),
+	"rarity_pink": Color("#ff8fcb"),
+	"rarity_red": Color("#ff756d"),
+	"rarity_gold": Color("#ffe680"),
 }
 
 const ENVIRONMENT_BOARD_SIZE := ArtContractsScript.ENVIRONMENT_BOARD_SIZE
@@ -94,6 +109,21 @@ static func accessible_color(value: Color) -> Color:
 	if token.is_empty():
 		return value
 	return color(token, value)
+
+
+static func rarity_outline_color(tier: String) -> Color:
+	match tier.strip_edges().to_lower():
+		"blue":
+			return color("rarity_blue", RARITY_BLUE)
+		"purple":
+			return color("rarity_purple", RARITY_PURPLE)
+		"pink":
+			return color("rarity_pink", RARITY_PINK)
+		"red":
+			return color("rarity_red", RARITY_RED)
+		"gold":
+			return color("rarity_gold", RARITY_GOLD)
+	return color("soft", SOFT)
 
 
 static func accessibility_snapshot() -> Dictionary:
