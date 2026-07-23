@@ -48,6 +48,10 @@ const PRODUCTION_TICKET_ART := {
 	"golden_vault": "res://assets/art/scratch_tickets/layers/golden_vault_background_v2.png",
 }
 const SCRATCH_FOIL_TEXTURE := "res://assets/art/scratch_tickets/layers/scratch_foil_tile_v1.png"
+const CROSSWORD_COLUMNS := 11
+const CROSSWORD_ROWS := 10
+const CROSSWORD_GRID_RECT_VALUES := [0.06, 0.35, 0.50, 0.50]
+const CROSSWORD_BANK_RECT_VALUES := [0.62, 0.38, 0.31, 0.44]
 
 var active_ticket_rect := DEFAULT_TICKET_RECT
 var active_scratch_rect := DEFAULT_SCRATCH_RECT
@@ -866,11 +870,14 @@ func _ticket_art_regions(ticket: Dictionary) -> Array:
 			if spots.size() > 9:
 				result.append(_scratch_region(9, spots[9], "bonus", "BONUS", [0.73, 0.43, 0.18, 0.22]))
 		"crossword_corner":
-			for index in range(mini(18, spots.size())):
-				result.append(_scratch_region(index, spots[index], "letter_bank", "LETTER %d" % (index + 1), [0.61 + float(index % 5) * 0.068, 0.40 + float(index / 5) * 0.085, 0.052, 0.060]))
-			for index in range(18, spots.size()):
-				var word_index := index - 18
-				result.append(_scratch_region(index, spots[index], "crossword", "WORD %d" % (word_index + 1), [0.09, 0.39 + float(word_index) * 0.060, 0.42, 0.046]))
+			for index in range(spots.size()):
+				var spot: Dictionary = spots[index]
+				match str(spot.get("role", "")):
+					"bank_letter":
+						var bank_index := int(spot.get("bank_index", index))
+						result.append(_scratch_region(index, spot, "letter_bank", "LETTER %d" % (bank_index + 1), _crossword_bank_rect_values(bank_index)))
+					"crossword_cell":
+						result.append(_scratch_region(index, spot, "crossword", "GRID %d,%d" % [int(spot.get("column", 0)) + 1, int(spot.get("row", 0)) + 1], _crossword_cell_rect_values(int(spot.get("column", 0)), int(spot.get("row", 0)))))
 		"bonus_bingo":
 			for index in range(mini(24, spots.size())):
 				result.append(_scratch_region(index, spots[index], "callers", "CALL %d" % (index + 1), [0.06 + float(index % 12) * 0.075, 0.27 + float(index / 12) * 0.085, 0.055, 0.060]))
@@ -920,6 +927,26 @@ func _scratch_region(index: int, spot: Dictionary, section_id: String, label: St
 		"coverage": 0.0,
 		"revealed": false,
 	}
+
+
+func _crossword_cell_rect_values(column: int, row: int) -> Array:
+	var grid := _normalized_rect_array(CROSSWORD_GRID_RECT_VALUES)
+	var cell_w := float(grid[2]) / float(CROSSWORD_COLUMNS)
+	var cell_h := float(grid[3]) / float(CROSSWORD_ROWS)
+	return [float(grid[0]) + float(column) * cell_w, float(grid[1]) + float(row) * cell_h, cell_w, cell_h]
+
+
+func _crossword_bank_rect_values(index: int) -> Array:
+	var bank := _normalized_rect_array(CROSSWORD_BANK_RECT_VALUES)
+	var columns := 6
+	var rows := 3
+	var gap_x := 0.006
+	var gap_y := 0.012
+	var cell_w := (float(bank[2]) - gap_x * float(columns - 1)) / float(columns)
+	var cell_h := (float(bank[3]) - gap_y * float(rows - 1)) / float(rows)
+	var column := index % columns
+	var row := index / columns
+	return [float(bank[0]) + float(column) * (cell_w + gap_x), float(bank[1]) + float(row) * (cell_h + gap_y), cell_w, cell_h]
 
 
 func _ensure_ticket_regions(ticket: Dictionary) -> void:
@@ -1097,7 +1124,7 @@ func _build_tic_tac_gold_content(prize: Dictionary) -> Dictionary:
 
 
 func _build_crossword_content(mechanic: Dictionary, prize: Dictionary) -> Dictionary:
-	var words := _string_array(mechanic.get("words", []))
+	var words := _crossword_layout_words(_string_array(mechanic.get("words", [])))
 	var completed_count := clampi(int(prize.get("word_count", 0)), 0, words.size())
 	var completed_words: Array = []
 	for index in range(completed_count):
@@ -1116,10 +1143,60 @@ func _build_crossword_content(mechanic: Dictionary, prize: Dictionary) -> Dictio
 			break
 	var spots: Array = []
 	for index in range(bank.size()):
-		spots.append({"index": spots.size(), "section_id": "letter_bank", "letter": str(bank[index]), "role": "bank_letter"})
-	for word_value in words:
-		spots.append({"index": spots.size(), "section_id": "crossword", "word": str(word_value), "complete": completed_words.has(word_value), "role": "crossword_word"})
-	return {"spots": spots, "letter_bank": bank, "words": words, "completed_words": completed_words, "word_count": completed_count, "legend": _copy_dict(mechanic.get("legend", {}))}
+		spots.append({"index": spots.size(), "section_id": "letter_bank", "letter": str(bank[index]), "bank_index": index, "role": "bank_letter"})
+	var cell_map: Dictionary = {}
+	for entry in _crossword_layout_entries(words):
+		var word := str(entry.get("word", ""))
+		var across := str(entry.get("dir", "")) == "across"
+		for letter_index in range(word.length()):
+			var column := int(entry.get("x", 0)) + (letter_index if across else 0)
+			var row := int(entry.get("y", 0)) + (0 if across else letter_index)
+			var key := "%d,%d" % [column, row]
+			var letter := word.substr(letter_index, 1)
+			var cell: Dictionary = cell_map.get(key, {"column": column, "row": row, "letter": letter, "words": [], "complete": false, "matched": bank.has(letter)})
+			var cell_words: Array = cell.get("words", []) if typeof(cell.get("words", [])) == TYPE_ARRAY else []
+			if not cell_words.has(word):
+				cell_words.append(word)
+			cell["words"] = cell_words
+			cell["complete"] = bool(cell.get("complete", false)) or completed_words.has(word)
+			cell["matched"] = bool(cell.get("matched", false)) or bank.has(letter)
+			cell_map[key] = cell
+	var keys := cell_map.keys()
+	keys.sort()
+	for key in keys:
+		var cell: Dictionary = cell_map[key]
+		cell["index"] = spots.size()
+		cell["section_id"] = "crossword"
+		cell["role"] = "crossword_cell"
+		spots.append(cell)
+	return {"spots": spots, "letter_bank": bank, "words": words, "completed_words": completed_words, "word_count": completed_count, "legend": _copy_dict(mechanic.get("legend", {})), "crossword_layout": _crossword_layout_entries(words)}
+
+
+func _crossword_layout_words(fallback_words: Array) -> Array:
+	var configured := _string_array(fallback_words)
+	var defaults := ["CASH", "HOUSE", "SLOT", "GOLD", "LUCK", "RISK", "VAULT"]
+	var words: Array = []
+	for default_word in defaults:
+		words.append(default_word if configured.has(default_word) else default_word)
+	return words
+
+
+func _crossword_layout_entries(words: Array) -> Array:
+	var wanted := _string_array(words)
+	var entries := [
+		{"word": "CASH", "dir": "across", "x": 1, "y": 1},
+		{"word": "HOUSE", "dir": "down", "x": 4, "y": 1},
+		{"word": "SLOT", "dir": "across", "x": 4, "y": 4},
+		{"word": "GOLD", "dir": "down", "x": 6, "y": 3},
+		{"word": "LUCK", "dir": "across", "x": 2, "y": 7},
+		{"word": "RISK", "dir": "across", "x": 1, "y": 9},
+		{"word": "VAULT", "dir": "down", "x": 9, "y": 2},
+	]
+	var result: Array = []
+	for entry in entries:
+		if wanted.has(str((entry as Dictionary).get("word", ""))):
+			result.append((entry as Dictionary).duplicate(true))
+	return result
 
 
 func _build_bingo_content(prize: Dictionary) -> Dictionary:
@@ -1649,6 +1726,7 @@ func _draw_ticket(surface, state: Dictionary) -> void:
 	if int(state.get("scratch_penalty_shields", 0)) > 0:
 		surface.surface_label("PENNY ASSIST", active_ticket_rect.position + Vector2(20, 104), 7, accent)
 	var xray_peeks := _array_ref(state.get("scratch_xray_peeks", []))
+	_draw_layer_slot_wells(surface, ticket, ink, accent, trim)
 	_draw_mechanic_result(surface, ticket, ink, accent, trim)
 	_draw_ticket_latex_mask(surface, ticket, latex)
 	_draw_xray_peeks(surface, xray_peeks, accent)
@@ -1790,6 +1868,112 @@ func _draw_mechanic_result(surface, ticket: Dictionary, ink: Color, accent: Colo
 			surface.surface_label_centered("VAULT OPEN  $%d" % int(result.get("vault_payout", 0)) if bool(result.get("vault_win", false)) else "VAULT SEALED", Rect2(play_rect.position + Vector2(play_rect.size.x * 0.10, play_rect.size.y * 0.88), Vector2(play_rect.size.x * 0.80, play_rect.size.y * 0.09)), 8, trim)
 
 
+func _draw_layer_slot_wells(surface, ticket: Dictionary, ink: Color, accent: Color, trim: Color) -> void:
+	var type_id := str(ticket.get("type_id", ""))
+	var regions := _dictionary_array(ticket.get("scratch_regions", []))
+	if regions.is_empty():
+		return
+	if type_id == "crossword_corner":
+		_draw_crossword_slot_wells(surface, ticket, ink, accent, trim)
+		return
+	for region_value in regions:
+		var region: Dictionary = region_value
+		var rect := _region_rect(region, active_scratch_rect)
+		_draw_region_slot_well(surface, type_id, str(region.get("section_id", "")), rect, ink, accent, trim)
+
+
+func _draw_region_slot_well(surface, type_id: String, section_id: String, rect: Rect2, ink: Color, accent: Color, trim: Color) -> void:
+	var shadow := Rect2(rect.position + Vector2(2, 2), rect.size)
+	var panel := rect.grow(3)
+	match type_id:
+		"two_fer":
+			_draw_starburst(surface, rect.get_center(), minf(rect.size.x, rect.size.y) * 0.66, Color(0, 0, 0, 0.30))
+			_draw_starburst(surface, rect.get_center(), minf(rect.size.x, rect.size.y) * 0.62, Color(trim.r, trim.g, trim.b, 0.58))
+			surface.draw_circle(rect.get_center(), minf(rect.size.x, rect.size.y) * 0.47, Color("#fff0b3"))
+			surface.draw_circle(rect.get_center(), minf(rect.size.x, rect.size.y) * 0.47, accent, false, 3)
+		"lucky_7s":
+			if section_id == "winning_numbers":
+				_draw_starburst(surface, rect.get_center(), minf(rect.size.x, rect.size.y) * 0.62, Color("#ff2e65"))
+				surface.draw_circle(rect.get_center(), minf(rect.size.x, rect.size.y) * 0.38, Color("#121323"))
+				surface.draw_circle(rect.get_center(), minf(rect.size.x, rect.size.y) * 0.38, trim, false, 3)
+			else:
+				surface.draw_circle(rect.get_center(), minf(rect.size.x, rect.size.y) * 0.49, Color(0, 0, 0, 0.42))
+				surface.draw_circle(rect.get_center(), minf(rect.size.x, rect.size.y) * 0.45, Color("#10371e"))
+				surface.draw_circle(rect.get_center(), minf(rect.size.x, rect.size.y) * 0.45, trim, false, 2)
+		"tic_tac_gold":
+			surface.draw_rect(shadow, Color(0, 0, 0, 0.32))
+			surface.draw_rect(panel, Color("#071024"))
+			surface.draw_rect(panel.grow(-4), Color("#fff3bf"))
+			surface.draw_rect(panel.grow(-4), trim, false, 2)
+		"bonus_bingo":
+			if section_id == "callers":
+				surface.draw_circle(rect.get_center(), minf(rect.size.x, rect.size.y) * 0.50, Color("#fff7d4"))
+				surface.draw_circle(rect.get_center(), minf(rect.size.x, rect.size.y) * 0.50, accent, false, 2)
+			else:
+				surface.draw_rect(rect, Color("#f7fff1"))
+				surface.draw_rect(rect, Color(ink.r, ink.g, ink.b, 0.32), false, 1)
+		"high_roller_holdem":
+			surface.draw_polygon([rect.position + Vector2(3, 0), rect.end - Vector2(0, rect.size.y - 3), rect.end - Vector2(3, 0), rect.position + Vector2(0, rect.size.y - 3)], [Color(0, 0, 0, 0.30)])
+			surface.draw_polygon([rect.position + Vector2(4, 1), rect.end - Vector2(1, rect.size.y - 4), rect.end - Vector2(4, 1), rect.position + Vector2(1, rect.size.y - 4)], [Color("#fff5d8")])
+			surface.draw_rect(rect.grow(-2), accent, false, 2)
+		"golden_vault":
+			surface.draw_rect(shadow, Color(0, 0, 0, 0.34))
+			surface.draw_rect(panel, Color("#100d12"))
+			surface.draw_rect(panel.grow(-3), Color(trim.r, trim.g, trim.b, 0.24), false, 2)
+		_:
+			surface.draw_rect(shadow, Color(0, 0, 0, 0.28))
+			surface.draw_rect(panel, Color("#fff0c9"))
+			surface.draw_rect(panel, trim, false, 2)
+
+
+func _draw_crossword_slot_wells(surface, ticket: Dictionary, ink: Color, accent: Color, trim: Color) -> void:
+	var occupied: Dictionary = {}
+	for spot_value in _dictionary_array(ticket.get("spots", [])):
+		var spot: Dictionary = spot_value
+		if str(spot.get("role", "")) == "crossword_cell":
+			occupied["%d,%d" % [int(spot.get("column", 0)), int(spot.get("row", 0))]] = spot
+	var grid_panel := _ticket_relative_rect(CROSSWORD_GRID_RECT_VALUES).grow(6)
+	surface.draw_rect(grid_panel, Color("#0d1a26"))
+	surface.draw_rect(grid_panel.grow(-3), Color("#c9f3ef"))
+	surface.draw_rect(grid_panel, trim, false, 3)
+	for row in range(CROSSWORD_ROWS):
+		for column in range(CROSSWORD_COLUMNS):
+			var cell_rect := _ticket_relative_rect(_crossword_cell_rect_values(column, row))
+			var key := "%d,%d" % [column, row]
+			if occupied.has(key):
+				surface.draw_rect(cell_rect.grow(-1), Color("#f9f2d8"))
+				surface.draw_rect(cell_rect.grow(-1), Color(ink.r, ink.g, ink.b, 0.62), false, 1)
+			else:
+				surface.draw_rect(cell_rect.grow(-1), Color("#17202a"))
+				surface.draw_rect(cell_rect.grow(-1), Color("#283848"), false, 1)
+	var bank_panel := _ticket_relative_rect(CROSSWORD_BANK_RECT_VALUES).grow(8)
+	surface.draw_rect(bank_panel, Color("#09263c"))
+	surface.draw_rect(bank_panel, accent, false, 3)
+	surface.surface_label_centered("YOUR LETTERS", Rect2(bank_panel.position + Vector2(4, 3), Vector2(bank_panel.size.x - 8, 14)), 8, trim)
+	for index in range(18):
+		var letter_rect := _ticket_relative_rect(_crossword_bank_rect_values(index))
+		surface.draw_rect(letter_rect, Color("#d8fbff"))
+		surface.draw_rect(letter_rect, Color(ink.r, ink.g, ink.b, 0.48), false, 1)
+	var result := _dict_ref(ticket.get("mechanic_result", {}))
+	var legend := _dict_ref(result.get("legend", {}))
+	var legend_rect := Rect2(active_ticket_rect.position + Vector2(active_ticket_rect.size.x * 0.06, active_ticket_rect.size.y * 0.87), Vector2(active_ticket_rect.size.x * 0.88, active_ticket_rect.size.y * 0.085))
+	surface.draw_rect(legend_rect, Color("#fff8dc"))
+	surface.draw_rect(legend_rect, Color("#111827"), false, 2)
+	surface.surface_label("PRIZE LEGEND", legend_rect.position + Vector2(7, 11), 7, Color("#b4142f"))
+	var cursor_x := legend_rect.position.x + 85
+	for word_count in [3, 4, 5, 6, 7]:
+		var amount := int(legend.get(str(word_count), 0))
+		if amount <= 0:
+			continue
+		surface.surface_label("%d WORDS $%d" % [word_count, amount], Vector2(cursor_x, legend_rect.position.y + 11), 6, ink)
+		cursor_x += 82
+
+
+func _ticket_relative_rect(rect_values: Array) -> Rect2:
+	var values := _normalized_rect_array(rect_values)
+	return Rect2(active_ticket_rect.position + Vector2(float(values[0]) * active_ticket_rect.size.x, float(values[1]) * active_ticket_rect.size.y), Vector2(float(values[2]) * active_ticket_rect.size.x, float(values[3]) * active_ticket_rect.size.y))
+
+
 func _draw_spot_box(surface, ticket: Dictionary, result: Dictionary, spot: Dictionary, region: Dictionary, rect: Rect2, ink: Color, accent: Color, trim: Color) -> void:
 	var type_id := str(ticket.get("type_id", ""))
 	var winner := _spot_is_winner(ticket, result, spot)
@@ -1841,14 +2025,15 @@ func _draw_spot_box(surface, ticket: Dictionary, result: Dictionary, spot: Dicti
 			surface.draw_rect(rect.grow(-3), Color(trim.r, trim.g, trim.b, 0.20), false, 2)
 			surface.draw_circle(rect.position + Vector2(rect.size.x - 16, rect.size.y * 0.5), minf(rect.size.y, 24.0) * 0.30, trim if winner else accent, false, 2)
 		"crossword_corner":
-			if str(spot.get("role", "")).begins_with("letter"):
+			if str(spot.get("role", "")) == "bank_letter":
 				surface.draw_rect(rect, Color("#bcebef"))
 				surface.draw_rect(rect, accent, false, 2)
+				surface.surface_label_centered(main, Rect2(rect.position + Vector2(2, 1), Vector2(rect.size.x - 4, rect.size.y - 2)), 11 if rect.size.x > 24.0 else 8, ink)
 			else:
-				surface.draw_rect(rect, Color("#d9f0e5") if winner else Color("#e8f4ee"))
-				for cell in range(maxi(4, main.length())):
-					var cell_rect := Rect2(rect.position + Vector2(float(cell) * rect.size.x / float(maxi(4, main.length())), 0), Vector2(rect.size.x / float(maxi(4, main.length())), rect.size.y))
-					surface.draw_rect(cell_rect, Color(ink.r, ink.g, ink.b, 0.18), false, 1)
+				surface.draw_rect(rect.grow(-1), Color("#fff5d8"))
+				surface.draw_rect(rect.grow(-1), trim if winner else Color(ink.r, ink.g, ink.b, 0.58), false, 1)
+				surface.surface_label_centered(main, Rect2(rect.position + Vector2(1, 0), Vector2(rect.size.x - 2, rect.size.y)), 10 if rect.size.x > 24.0 else 7, ink)
+			return
 		_:
 			surface.draw_rect(rect, fill)
 			surface.draw_rect(rect, trim if winner else accent, false, 2)
@@ -1908,7 +2093,7 @@ func _spot_sub_label(ticket: Dictionary, result: Dictionary, spot: Dictionary, _
 		"tic_tac_gold":
 			return "$%d" % int(spot.get("prize", 0)) if int(spot.get("prize", 0)) > 0 else ""
 		"crossword_corner":
-			return "DONE" if bool(spot.get("complete", false)) else ""
+			return ""
 		"bonus_bingo":
 			return "DAUB" if bool(spot.get("daubed", false)) else ""
 		"high_roller_holdem":
