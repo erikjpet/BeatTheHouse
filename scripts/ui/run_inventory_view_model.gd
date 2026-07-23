@@ -287,8 +287,14 @@ static func _home_container_inventory_details(run_state: RunState, run_action_se
 		return result
 	var containers := _dictionary_array(run_state.current_home_containers())
 	var destinations := _storage_destinations(containers)
+	var stored_item_counts := _stored_item_counts(containers)
 	for item_id in _storable_inventory_item_ids(run_state, run_action_service):
-		var carried_detail := run_action_service.inventory_item_detail(str(item_id))
+		var clean_item_id := str(item_id)
+		var stored_count := int(stored_item_counts.get(clean_item_id, 0))
+		if stored_count > 0:
+			stored_item_counts[clean_item_id] = stored_count - 1
+			continue
+		var carried_detail := run_action_service.inventory_item_detail(clean_item_id)
 		if carried_detail.is_empty():
 			continue
 		carried_detail["storage_source"] = "carried"
@@ -362,6 +368,13 @@ static func _summary_text(run_state: RunState, run_action_service: RunActionServ
 	if mode == "place_container":
 		return "Select a carried container to place it as home storage."
 	if mode == "home_container":
+		var selected_container := _home_container_by_id(run_state, container_id)
+		if not selected_container.is_empty():
+			var used := _string_array(selected_container.get("items", [])).size()
+			var capacity := maxi(0, int(selected_container.get("capacity", 0)))
+			if bool(selected_container.get("meta_loadout", false)):
+				return "%d/%d packed from the meta-home. Packed item effects apply during this run; items are read-only here." % [used, capacity]
+			return "%d/%d stored in %s. Stored item effects do not apply until moved back to inventory." % [used, capacity, str(selected_container.get("display_name", "this container"))]
 		var total_stored := 0
 		var total_capacity := 0
 		for container_value in _dictionary_array(run_state.current_home_containers() if run_state != null else []):
@@ -446,6 +459,16 @@ static func _home_container_by_id(run_state: RunState, container_id: String) -> 
 		if str(container.get("id", "")) == container_id:
 			return container.duplicate(true)
 	return {}
+
+
+static func _stored_item_counts(containers: Array) -> Dictionary:
+	var result := {}
+	for container_value in containers:
+		if typeof(container_value) != TYPE_DICTIONARY:
+			continue
+		for item_id in _string_array((container_value as Dictionary).get("items", [])):
+			result[item_id] = int(result.get(item_id, 0)) + 1
+	return result
 
 
 static func _string_array(value: Variant) -> Array:

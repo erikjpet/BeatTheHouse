@@ -198,7 +198,7 @@ const PORTABLE_TICKET_ITEM_IDS := {
 }
 const PORTABLE_TICKET_PLAYER_FIELDS := {
 	"pull_tabs": ["tray_stack", "ticket_stack", "winner_pile", "loser_pile"],
-	"scratch_tickets": ["active_ticket", "winner_pile", "loser_pile", "pending_penalty", "penalty_shields_remaining", "last_settled_ticket", "last_settled_pile", "last_file_id", "file_started_msec", "last_sweep_id", "last_sweep_section", "sweep_started_msec"],
+	"scratch_tickets": ["active_ticket", "pending_queue", "winner_pile", "loser_pile", "pending_penalty", "penalty_shields_remaining", "last_settled_ticket", "last_settled_pile", "last_file_id", "file_started_msec", "last_sweep_id", "last_sweep_section", "sweep_started_msec"],
 }
 
 var seed_text: String = ""
@@ -7723,7 +7723,7 @@ static func _portable_ticket_player_state(kind: String, machine: Dictionary) -> 
 	var result := {}
 	for field_value in _copy_array(PORTABLE_TICKET_PLAYER_FIELDS.get(kind, [])):
 		var field := str(field_value)
-		var value: Variant = machine.get(field, [] if field.ends_with("pile") or field.ends_with("stack") else {})
+		var value: Variant = machine.get(field, [] if field.ends_with("pile") or field.ends_with("stack") or field.ends_with("queue") else {})
 		if typeof(value) == TYPE_ARRAY:
 			result[field] = (value as Array).duplicate(true)
 		elif typeof(value) == TYPE_DICTIONARY:
@@ -7748,6 +7748,8 @@ static func _portable_ticket_state_count(kind: String, state: Dictionary) -> int
 		return count + _portable_ticket_array_size(state.get("tray_stack", [])) + _portable_ticket_array_size(state.get("ticket_stack", []))
 	if kind == "scratch_tickets" and not _copy_dict(state.get("active_ticket", {})).is_empty():
 		count += 1
+	if kind == "scratch_tickets":
+		count += _portable_ticket_array_size(state.get("pending_queue", []))
 	return count
 
 
