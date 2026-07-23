@@ -841,13 +841,13 @@ func _ticket_art_regions(ticket: Dictionary) -> Array:
 	match str(ticket.get("type_id", "")):
 		"two_fer":
 			for index in range(mini(3, spots.size())):
-				result.append(_scratch_region(index, spots[index], "play", "SPOT %d" % (index + 1), [0.03 + float(index) * 0.33, 0.10, 0.29, 0.78]))
+				result.append(_scratch_region(index, spots[index], "play", "SPOT %d" % (index + 1), [0.12 + float(index) * 0.29, 0.30, 0.18, 0.45]))
 		"lucky_7s":
 			for index in range(mini(2, spots.size())):
-				result.append(_scratch_region(index, spots[index], "winning_numbers", "WIN %d" % (index + 1), [0.24 + float(index) * 0.28, 0.03, 0.22, 0.22]))
+				result.append(_scratch_region(index, spots[index], "winning_numbers", "WIN %d" % (index + 1), [0.02, 0.16 + float(index) * 0.33, 0.18, 0.23]))
 			for index in range(2, mini(8, spots.size())):
 				var your_index := index - 2
-				result.append(_scratch_region(index, spots[index], "your_numbers", "YOUR %d" % (your_index + 1), [0.04 + float(your_index % 3) * 0.32, 0.36 + float(your_index / 3) * 0.31, 0.28, 0.25]))
+				result.append(_scratch_region(index, spots[index], "your_numbers", "YOUR %d" % (your_index + 1), [0.28 + float(your_index % 3) * 0.23, 0.13 + float(your_index / 3) * 0.34, 0.18, 0.24]))
 		"tic_tac_gold":
 			for index in range(mini(9, spots.size())):
 				result.append(_scratch_region(index, spots[index], "board", "GRID %d" % (index + 1), [0.04 + float(index % 3) * 0.215, 0.05 + float(index / 3) * 0.30, 0.19, 0.26]))
@@ -1623,16 +1623,7 @@ func _draw_ticket(surface, state: Dictionary) -> void:
 	surface.draw_polygon(ticket_shape, [paper])
 	surface.draw_rect(active_ticket_rect.grow(-4), trim, false, 3)
 	_draw_ticket_background(surface, ticket, paper, ink, accent, trim)
-	var title_rect := Rect2(active_ticket_rect.position + Vector2(20, 10), Vector2(active_ticket_rect.size.x - 40, 38))
-	surface.surface_label_centered(str(ticket.get("display_name", "SCRATCH TICKET")).to_upper(), title_rect, 23 if str(ticket.get("display_name", "")).length() < 15 else 19, ink)
-	var price_badge := Rect2(active_ticket_rect.position + Vector2(8, 8), Vector2(38, 30))
-	surface.draw_circle(price_badge.get_center(), 19, accent)
-	surface.surface_label_centered("$%d" % int(ticket.get("price", 1)), price_badge, 14, C_WHITE)
-	var top_prize := int(ticket.get("top_prize", 0))
-	surface.surface_label_centered("WIN UP TO $%d" % top_prize, Rect2(active_ticket_rect.position + Vector2(34, 50), Vector2(active_ticket_rect.size.x - 68, 20)), 12, trim if paper.get_luminance() < 0.45 else accent)
-	var mechanic := _dict_ref(ticket.get("mechanic", {}))
-	var play_label := _ticket_play_label(str(ticket.get("type_id", "")), mechanic)
-	surface.surface_label_centered(play_label, Rect2(active_ticket_rect.position + Vector2(20, 72), Vector2(active_ticket_rect.size.x - 40, 18)), 8, ink)
+	_draw_ticket_header(surface, ticket, paper, ink, accent, trim)
 	var fortune := str(state.get("scratch_fortune", ""))
 	if not fortune.is_empty():
 		surface.surface_label("TAROT: %s" % fortune.to_upper(), active_ticket_rect.position + Vector2(active_ticket_rect.size.x - 112, 104), 7, accent)
@@ -1783,29 +1774,77 @@ func _draw_spot_box(surface, ticket: Dictionary, result: Dictionary, spot: Dicti
 	var type_id := str(ticket.get("type_id", ""))
 	var winner := _spot_is_winner(ticket, result, spot)
 	var fill := Color(trim.r, trim.g, trim.b, 0.22) if winner else Color(ink.r, ink.g, ink.b, 0.08)
-	surface.draw_rect(rect, fill)
-	surface.draw_rect(rect, trim if winner else accent, false, 2)
 	var main := _spot_main_label(spot, region)
 	var sub := _spot_sub_label(ticket, result, spot, region)
 	match type_id:
 		"two_fer":
-			surface.draw_circle(rect.get_center(), minf(rect.size.x, rect.size.y) * 0.40, Color(accent.r, accent.g, accent.b, 0.25))
+			_draw_starburst(surface, rect.get_center(), minf(rect.size.x, rect.size.y) * 0.60, Color(trim.r, trim.g, trim.b, 0.30 if winner else 0.16))
+			surface.draw_circle(rect.get_center(), minf(rect.size.x, rect.size.y) * 0.46, Color(accent.r, accent.g, accent.b, 0.32))
+			surface.draw_circle(rect.get_center(), minf(rect.size.x, rect.size.y) * 0.46, trim if winner else accent, false, 3)
+			surface.surface_label_centered(main.left(6), Rect2(rect.position + Vector2(2, rect.size.y * 0.20), Vector2(rect.size.x - 4, rect.size.y * 0.38)), 13, ink)
+			surface.surface_label_centered(sub, Rect2(rect.position + Vector2(2, rect.size.y * 0.56), Vector2(rect.size.x - 4, rect.size.y * 0.24)), 8, ink)
+			return
 		"lucky_7s":
-			surface.draw_circle(rect.get_center() - Vector2(0, rect.size.y * 0.08), minf(rect.size.x, rect.size.y) * 0.35, Color(trim.r, trim.g, trim.b, 0.28))
+			var winning_number := str(spot.get("role", "")) == "winning_number"
+			if winning_number:
+				_draw_starburst(surface, rect.get_center(), minf(rect.size.x, rect.size.y) * 0.58, Color("#ff2e65"))
+				surface.draw_circle(rect.get_center(), minf(rect.size.x, rect.size.y) * 0.34, Color("#151725"))
+				surface.draw_circle(rect.get_center(), minf(rect.size.x, rect.size.y) * 0.34, trim, false, 3)
+				surface.surface_label_centered(main, rect, 16, C_WHITE)
+				surface.surface_label_centered("WIN", Rect2(rect.position + Vector2(2, rect.size.y - 18), Vector2(rect.size.x - 4, 14)), 7, trim)
+			else:
+				for notch in range(12):
+					var angle := float(notch) * TAU / 12.0
+					surface.draw_circle(rect.get_center() + Vector2(cos(angle), sin(angle)) * minf(rect.size.x, rect.size.y) * 0.41, 3.0, Color(0, 0, 0, 0.55))
+				surface.draw_circle(rect.get_center(), minf(rect.size.x, rect.size.y) * 0.42, Color("#0e2219"))
+				surface.draw_circle(rect.get_center(), minf(rect.size.x, rect.size.y) * 0.42, trim if winner else Color("#0a0f16"), false, 3)
+				surface.surface_label_centered(main, Rect2(rect.position + Vector2(0, 1), Vector2(rect.size.x, rect.size.y * 0.56)), 15, C_WHITE if winner else trim)
+				surface.surface_label_centered(sub, Rect2(rect.position + Vector2(2, rect.size.y * 0.55), Vector2(rect.size.x - 4, rect.size.y * 0.32)), 8, C_WHITE)
+			return
 		"tic_tac_gold":
-			surface.draw_rect(rect.grow(-4), Color("#ffe27a") if main == "GOLD" or main == "WIN" else Color(ink.r, ink.g, ink.b, 0.10), false, 2)
+			surface.draw_rect(rect, Color("#06101e"))
+			surface.draw_rect(rect.grow(-4), Color("#ffe27a") if main == "GOLD" or main == "WIN" else Color(ink.r, ink.g, ink.b, 0.10), false, 3)
+			surface.draw_line(rect.position + Vector2(4, 4), rect.end - Vector2(4, rect.size.y - 4), Color(trim.r, trim.g, trim.b, 0.28), 2)
 		"bonus_bingo":
 			if bool(spot.get("daubed", false)) or str(spot.get("role", "")) == "caller":
 				surface.draw_circle(rect.get_center(), minf(rect.size.x, rect.size.y) * 0.40, Color(accent.r, accent.g, accent.b, 0.38))
 		"high_roller_holdem":
-			surface.draw_rect(rect.grow(-3), Color("#fff5d8"))
+			surface.draw_polygon([rect.position + Vector2(3, 0), rect.end - Vector2(0, rect.size.y - 3), rect.end - Vector2(3, 0), rect.position + Vector2(0, rect.size.y - 3)], [Color("#fff5d8")])
+			surface.draw_rect(rect.grow(-2), trim if winner else Color("#b64552"), false, 2)
 			var card_ink := Color("#c22636") if main.contains("H") or main.contains("D") else Color("#171313")
-			surface.surface_label_centered(main, rect, 10, card_ink)
+			surface.surface_label_centered(main, Rect2(rect.position + Vector2(2, 2), Vector2(rect.size.x - 4, rect.size.y - 4)), 10, card_ink)
 			if not sub.is_empty():
 				surface.surface_label_centered(sub, Rect2(rect.position + Vector2(2, rect.size.y - 16), Vector2(rect.size.x - 4, 14)), 6, card_ink)
 			return
 		"golden_vault":
-			surface.draw_rect(rect.grow(-3), Color("#09090f") if not winner else Color("#3c2909"))
+			surface.draw_rect(rect, Color("#09090f") if not winner else Color("#3c2909"))
+			surface.draw_rect(rect.grow(-3), Color(trim.r, trim.g, trim.b, 0.20), false, 2)
+			surface.draw_circle(rect.position + Vector2(rect.size.x - 16, rect.size.y * 0.5), minf(rect.size.y, 24.0) * 0.30, trim if winner else accent, false, 2)
+		"crossword_corner":
+			if str(spot.get("role", "")).begins_with("letter"):
+				surface.draw_rect(rect, Color("#bcebef"))
+				surface.draw_rect(rect, accent, false, 2)
+			else:
+				surface.draw_rect(rect, Color("#d9f0e5") if winner else Color("#e8f4ee"))
+				for cell in range(maxi(4, main.length())):
+					var cell_rect := Rect2(rect.position + Vector2(float(cell) * rect.size.x / float(maxi(4, main.length())), 0), Vector2(rect.size.x / float(maxi(4, main.length())), rect.size.y))
+					surface.draw_rect(cell_rect, Color(ink.r, ink.g, ink.b, 0.18), false, 1)
+		_:
+			surface.draw_rect(rect, fill)
+			surface.draw_rect(rect, trim if winner else accent, false, 2)
+	if type_id == "bonus_bingo":
+		if str(spot.get("role", "")) == "caller":
+			surface.draw_circle(rect.get_center(), minf(rect.size.x, rect.size.y) * 0.46, Color("#eefaf0"))
+			surface.draw_circle(rect.get_center(), minf(rect.size.x, rect.size.y) * 0.46, accent, false, 2)
+		else:
+			surface.draw_rect(rect, Color("#e9fff1"))
+			surface.draw_rect(rect, accent if bool(spot.get("daubed", false)) else Color(ink.r, ink.g, ink.b, 0.26), false, 1)
+			if bool(spot.get("daubed", false)):
+				surface.draw_circle(rect.get_center(), minf(rect.size.x, rect.size.y) * 0.32, Color(accent.r, accent.g, accent.b, 0.42))
+	else:
+		if not ["tic_tac_gold", "crossword_corner", "golden_vault"].has(type_id):
+			surface.draw_rect(rect, fill)
+			surface.draw_rect(rect, trim if winner else accent, false, 2)
 	var font_size := 14
 	if rect.size.x < 42.0 or rect.size.y < 28.0:
 		font_size = 6
@@ -1943,39 +1982,179 @@ func _draw_empty_ticket_outline(surface) -> void:
 	surface.surface_label_centered("Choose a printed ticket from the cabinet", Rect2(PLAY_SURFACE_RECT.position + Vector2(24, 186), Vector2(PLAY_SURFACE_RECT.size.x - 48, 20)), 9, Color("#816b5e"))
 
 
+func _draw_ticket_header(surface, ticket: Dictionary, paper: Color, ink: Color, accent: Color, trim: Color) -> void:
+	var type_id := str(ticket.get("type_id", ""))
+	var title := str(ticket.get("display_name", "SCRATCH TICKET")).to_upper()
+	var title_rect := Rect2(active_ticket_rect.position + Vector2(22, 10), Vector2(active_ticket_rect.size.x - 44, 38))
+	var prize_rect := Rect2(active_ticket_rect.position + Vector2(34, 50), Vector2(active_ticket_rect.size.x - 68, 22))
+	match type_id:
+		"two_fer":
+			title_rect = Rect2(active_ticket_rect.position + Vector2(74, 12), Vector2(active_ticket_rect.size.x - 112, 42))
+			prize_rect = Rect2(active_ticket_rect.position + Vector2(88, 55), Vector2(active_ticket_rect.size.x - 176, 22))
+			_draw_slash_banner(surface, _grow_rect_xy(title_rect, Vector2(20, 6)), accent, trim)
+		"lucky_7s":
+			_draw_slash_banner(surface, _grow_rect_xy(title_rect, Vector2(10, 6)), Color("#ff2e65"), trim)
+			for index in range(3):
+				_draw_starburst(surface, active_ticket_rect.position + Vector2(active_ticket_rect.size.x - 38.0 - index * 28.0, 16.0 + index * 13.0), 10.0 + float(index) * 2.0, C_WHITE)
+		"tic_tac_gold":
+			_draw_slash_banner(surface, _grow_rect_xy(title_rect, Vector2(8, 6)), Color("#0e1a2f"), trim)
+		"crossword_corner":
+			_draw_slash_banner(surface, _grow_rect_xy(title_rect, Vector2(8, 5)), Color("#1a9bc2"), C_WHITE)
+		"bonus_bingo":
+			_draw_slash_banner(surface, _grow_rect_xy(title_rect, Vector2(8, 5)), Color("#f3f7e8"), accent)
+		"high_roller_holdem":
+			_draw_slash_banner(surface, _grow_rect_xy(title_rect, Vector2(8, 5)), Color("#0b231b"), trim)
+		"golden_vault":
+			_draw_slash_banner(surface, _grow_rect_xy(title_rect, Vector2(8, 5)), Color("#0c0a10"), trim)
+		_:
+			_draw_slash_banner(surface, _grow_rect_xy(title_rect, Vector2(8, 5)), accent, trim)
+	_draw_lottery_serial(surface, ink)
+	_draw_price_badge(surface, int(ticket.get("price", 1)), accent, trim)
+	_draw_title_shadow(surface, title, title_rect, 23 if title.length() < 15 else 19, C_WHITE if paper.get_luminance() < 0.38 else ink, trim)
+	_draw_top_prize_ribbon(surface, "WIN UP TO $%d" % int(ticket.get("top_prize", 0)), prize_rect, trim, accent, paper)
+	surface.surface_label_centered(_ticket_play_label(type_id, _dict_ref(ticket.get("mechanic", {}))).left(66), Rect2(active_ticket_rect.position + Vector2(20, 76), Vector2(active_ticket_rect.size.x - 40, 17)), 8, C_WHITE if paper.get_luminance() < 0.38 else ink)
+
+
+func _grow_rect_xy(rect: Rect2, amount: Vector2) -> Rect2:
+	return Rect2(rect.position - amount, rect.size + amount * 2.0)
+
+
+func _draw_price_badge(surface, price: int, accent: Color, trim: Color) -> void:
+	var center := active_ticket_rect.position + Vector2(24, 24)
+	_draw_starburst(surface, center, 23.0, trim)
+	surface.draw_circle(center, 18.0, accent)
+	surface.draw_circle(center, 18.0, C_WHITE, false, 2)
+	surface.surface_label_centered("$%d" % price, Rect2(center - Vector2(19, 12), Vector2(38, 24)), 14, C_WHITE)
+
+
+func _draw_lottery_serial(surface, ink: Color) -> void:
+	var top := active_ticket_rect.position.y + 7.0
+	surface.surface_label("GOLD ROAD LOTTERY", active_ticket_rect.position + Vector2(active_ticket_rect.size.x - 124, 14), 6, Color(ink.r, ink.g, ink.b, 0.76))
+	var barcode := Rect2(active_ticket_rect.position + Vector2(active_ticket_rect.size.x - 78, top), Vector2(52, 8))
+	for index in range(12):
+		var width := 2.0 if index % 3 == 0 else 1.0
+		surface.draw_rect(Rect2(barcode.position + Vector2(float(index) * 4.0, 0), Vector2(width, barcode.size.y)), Color(ink.r, ink.g, ink.b, 0.70))
+
+
+func _draw_top_prize_ribbon(surface, text: String, rect: Rect2, trim: Color, accent: Color, paper: Color) -> void:
+	var fill := Color(accent.r, accent.g, accent.b, 0.90) if paper.get_luminance() > 0.42 else Color(trim.r, trim.g, trim.b, 0.92)
+	var text_color := C_DARK if fill.get_luminance() > 0.55 else C_WHITE
+	surface.draw_polygon([
+		rect.position + Vector2(12, 0),
+		rect.end - Vector2(12, rect.size.y),
+		rect.end,
+		rect.end - Vector2(12, 0),
+		rect.position + Vector2(12, rect.size.y),
+		rect.position,
+	], [fill])
+	surface.draw_rect(rect.grow(1), trim, false, 2)
+	surface.surface_label_centered(text, rect, 11, text_color)
+
+
+func _draw_slash_banner(surface, rect: Rect2, fill: Color, stroke: Color) -> void:
+	surface.draw_polygon([
+		rect.position + Vector2(12, 0),
+		rect.end - Vector2(0, rect.size.y),
+		rect.end - Vector2(12, 0),
+		rect.position + Vector2(0, rect.size.y),
+	], [Color(0, 0, 0, 0.28)])
+	var body := Rect2(rect.position + Vector2(0, -2), rect.size)
+	surface.draw_polygon([
+		body.position + Vector2(14, 0),
+		body.end - Vector2(0, body.size.y),
+		body.end - Vector2(14, 0),
+		body.position + Vector2(0, body.size.y),
+	], [fill])
+	surface.draw_line(body.position + Vector2(14, 1), body.end - Vector2(0, body.size.y - 1), stroke, 3)
+	surface.draw_line(body.position + Vector2(0, body.size.y - 2), body.end - Vector2(14, 2), stroke, 3)
+
+
+func _draw_title_shadow(surface, text: String, rect: Rect2, font_size: int, color: Color, shadow_color: Color) -> void:
+	surface.surface_label_centered(text, Rect2(rect.position + Vector2(3, 3), rect.size), font_size, Color(0, 0, 0, 0.78))
+	surface.surface_label_centered(text, Rect2(rect.position + Vector2(1, 1), rect.size), font_size, shadow_color)
+	surface.surface_label_centered(text, rect, font_size, color)
+
+
+func _draw_ticket_perforation(surface, color: Color) -> void:
+	for x in range(12, int(active_ticket_rect.size.x), 16):
+		surface.draw_circle(active_ticket_rect.position + Vector2(float(x), 2), 2.0, Color(color.r, color.g, color.b, 0.42))
+		surface.draw_circle(active_ticket_rect.position + Vector2(float(x), active_ticket_rect.size.y - 2), 2.0, Color(color.r, color.g, color.b, 0.42))
+
+
+func _draw_halftone(surface, rect: Rect2, color: Color, step: int = 18, radius: float = 2.0) -> void:
+	for y in range(0, int(rect.size.y), step):
+		for x in range(0, int(rect.size.x), step):
+			var alternate := ((x / step) + (y / step)) % 2 == 0
+			var alpha := 0.11 if alternate else 0.055
+			surface.draw_circle(rect.position + Vector2(float(x) + radius * 2.0, float(y) + radius * 2.0), radius, Color(color.r, color.g, color.b, alpha))
+
+
+func _draw_starburst(surface, center: Vector2, radius: float, color: Color) -> void:
+	var points: Array = []
+	for index in range(12):
+		var local_radius := radius if index % 2 == 0 else radius * 0.42
+		var angle := -PI * 0.5 + float(index) * TAU / 12.0
+		points.append(center + Vector2(cos(angle), sin(angle)) * local_radius)
+	surface.draw_polygon(points, [color])
+
+
 func _draw_ticket_background(surface, ticket: Dictionary, paper: Color, ink: Color, accent: Color, trim: Color) -> void:
 	# SA2_PER_FRAME_OK: bounded decorative geometry (at most 18 marks) is the ticket face itself; no state duplication or unbounded allocation.
 	var face := _dict_ref(ticket.get("face", {}))
 	var layout := str(face.get("layout", "classic_nine"))
+	_draw_ticket_perforation(surface, ink)
+	_draw_halftone(surface, active_ticket_rect.grow(-10), accent, 18, 2.0)
 	match layout:
 		"two_fer_burst":
+			surface.draw_polygon([active_ticket_rect.position + Vector2(0, 82), active_ticket_rect.position + Vector2(active_ticket_rect.size.x, 38), active_ticket_rect.position + Vector2(active_ticket_rect.size.x, 96), active_ticket_rect.position + Vector2(0, 126)], [Color(accent.r, accent.g, accent.b, 0.18)])
 			for ray in range(18):
 				var angle := float(ray) * TAU / 18.0
-				surface.draw_line(active_ticket_rect.position + Vector2(active_ticket_rect.size.x * 0.5, 70), active_ticket_rect.position + Vector2(active_ticket_rect.size.x * 0.5, 70) + Vector2(cos(angle), sin(angle)) * active_ticket_rect.size.x * 0.44, Color(accent.r, accent.g, accent.b, 0.09), 3)
+				surface.draw_line(active_ticket_rect.position + Vector2(active_ticket_rect.size.x * 0.5, 86), active_ticket_rect.position + Vector2(active_ticket_rect.size.x * 0.5, 86) + Vector2(cos(angle), sin(angle)) * active_ticket_rect.size.x * 0.50, Color(accent.r, accent.g, accent.b, 0.12), 3)
+			for star in range(7):
+				_draw_starburst(surface, active_ticket_rect.position + Vector2(38 + float(star) * 66.0, 102 + float(star % 2) * 42.0), 9.0, Color(trim.r, trim.g, trim.b, 0.54))
 		"lucky_seven_neon":
+			surface.draw_rect(active_ticket_rect.grow(-9), Color("#0488b7"))
+			_draw_halftone(surface, active_ticket_rect.grow(-8), Color("#00243a"), 15, 2.2)
 			for seven in range(7):
 				var point := active_ticket_rect.position + Vector2(24 + (seven * 47) % maxi(40, int(active_ticket_rect.size.x - 46)), 92 + (seven * 67) % maxi(60, int(active_ticket_rect.size.y - 130)))
-				surface.surface_label_centered("7", Rect2(point, Vector2(22, 24)), 15, Color(accent.r, accent.g, accent.b, 0.10))
+				surface.surface_label_centered("7", Rect2(point, Vector2(26, 28)), 18, Color(C_WHITE.r, C_WHITE.g, C_WHITE.b, 0.34))
+				_draw_starburst(surface, point + Vector2(22, 8), 7.0, Color(C_WHITE.r, C_WHITE.g, C_WHITE.b, 0.68))
 		"tic_tac_gold":
+			surface.draw_rect(active_ticket_rect.grow(-14), Color("#10162b"))
+			surface.draw_rect(active_ticket_rect.grow(-18), Color(trim.r, trim.g, trim.b, 0.22), false, 2)
 			for stripe in range(10):
 				var x := active_ticket_rect.position.x + float(stripe) * 44.0 - 40.0
-				surface.draw_polygon([Vector2(x, active_ticket_rect.position.y + 92), Vector2(x + 18, active_ticket_rect.position.y + 92), Vector2(x + 62, active_ticket_rect.position.y + 132), Vector2(x + 44, active_ticket_rect.position.y + 132)], [Color(trim.r, trim.g, trim.b, 0.10)]) # SA2_PER_FRAME_OK: bounded four-point gold stripe.
+				surface.draw_polygon([Vector2(x, active_ticket_rect.position.y + 92), Vector2(x + 18, active_ticket_rect.position.y + 92), Vector2(x + 62, active_ticket_rect.position.y + 132), Vector2(x + 44, active_ticket_rect.position.y + 132)], [Color(trim.r, trim.g, trim.b, 0.18)]) # SA2_PER_FRAME_OK: bounded four-point gold stripe.
 		"golden_vault":
+			surface.draw_rect(active_ticket_rect.grow(-12), Color("#07060b"))
+			surface.draw_rect(active_ticket_rect.grow(-18), Color(trim.r, trim.g, trim.b, 0.16), false, 3)
 			for ring in range(5):
-				surface.draw_circle(active_ticket_rect.position + Vector2(active_ticket_rect.size.x * 0.5, 96), 30.0 + float(ring) * 11.0, Color(accent.r, accent.g, accent.b, 0.07), false, 3)
-			surface.draw_circle(active_ticket_rect.get_center() + Vector2(0, 40), active_ticket_rect.size.x * 0.35, Color(trim.r, trim.g, trim.b, 0.08), false, 6)
+				surface.draw_circle(active_ticket_rect.position + Vector2(active_ticket_rect.size.x * 0.5, 114), 34.0 + float(ring) * 13.0, Color(accent.r, accent.g, accent.b, 0.10), false, 3)
+			surface.draw_circle(active_ticket_rect.get_center() + Vector2(0, 40), active_ticket_rect.size.x * 0.35, Color(trim.r, trim.g, trim.b, 0.11), false, 6)
 		"corner_crossword":
+			surface.draw_rect(active_ticket_rect.grow(-12), Color("#ef6677"))
+			_draw_halftone(surface, active_ticket_rect.grow(-18), Color("#7c1022"), 14, 2.2)
+			var grid_panel := Rect2(active_ticket_rect.position + Vector2(active_ticket_rect.size.x * 0.30, 92), Vector2(active_ticket_rect.size.x * 0.64, active_ticket_rect.size.y - 160))
+			surface.draw_rect(grid_panel, Color("#96d8da"))
+			for line in range(12):
+				surface.draw_line(grid_panel.position + Vector2(float(line) * grid_panel.size.x / 12.0, 0), grid_panel.position + Vector2(float(line) * grid_panel.size.x / 12.0, grid_panel.size.y), Color(ink.r, ink.g, ink.b, 0.18), 1)
+				surface.draw_line(grid_panel.position + Vector2(0, float(line) * grid_panel.size.y / 12.0), grid_panel.position + Vector2(grid_panel.size.x, float(line) * grid_panel.size.y / 12.0), Color(ink.r, ink.g, ink.b, 0.18), 1)
 			for line_index in range(9):
 				var offset := float(line_index) * 38.0
 				surface.draw_line(active_ticket_rect.position + Vector2(10 + offset, 92), active_ticket_rect.position + Vector2(10 + offset, active_ticket_rect.size.y - 20), Color(ink.r, ink.g, ink.b, 0.05), 1)
 		"four_card_bingo":
+			surface.draw_rect(active_ticket_rect.grow(-12), Color("#e9f8e6"))
+			_draw_halftone(surface, active_ticket_rect.grow(-16), accent, 19, 3.0)
 			for ball in range(14):
 				var point := active_ticket_rect.position + Vector2(16 + (ball * 71) % maxi(40, int(active_ticket_rect.size.x - 30)), 94 + (ball * 43) % maxi(60, int(active_ticket_rect.size.y - 115)))
-				surface.draw_circle(point, 9 + float(ball % 3), Color(accent.r, accent.g, accent.b, 0.07))
+				surface.draw_circle(point, 9 + float(ball % 3), Color(accent.r, accent.g, accent.b, 0.12))
 		"high_roller_felt":
+			surface.draw_rect(active_ticket_rect.grow(-12), Color("#08261e"))
+			surface.draw_circle(active_ticket_rect.position + Vector2(active_ticket_rect.size.x * 0.5, 160), active_ticket_rect.size.x * 0.45, Color("#175940"))
+			surface.draw_circle(active_ticket_rect.position + Vector2(active_ticket_rect.size.x * 0.5, 160), active_ticket_rect.size.x * 0.45, trim, false, 4)
 			for diamond in range(7):
 				var center := active_ticket_rect.position + Vector2(30 + (diamond * 46) % maxi(40, int(active_ticket_rect.size.x - 45)), 112 + (diamond % 2) * maxf(80, active_ticket_rect.size.y - 160))
-				surface.draw_polygon([center + Vector2(0, -12), center + Vector2(8, 0), center + Vector2(0, 12), center + Vector2(-8, 0)], [Color(trim.r, trim.g, trim.b, 0.13)])
+				surface.draw_polygon([center + Vector2(0, -12), center + Vector2(8, 0), center + Vector2(0, 12), center + Vector2(-8, 0)], [Color(trim.r, trim.g, trim.b, 0.18)])
 
 
 func _draw_ticket_latex_mask(surface, ticket: Dictionary, latex: Color) -> void:
