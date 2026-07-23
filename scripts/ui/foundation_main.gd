@@ -102,6 +102,8 @@ const RunInventoryScreenScript := preload("res://scripts/ui/run_inventory_screen
 const RunInventoryViewModelScript := preload("res://scripts/ui/run_inventory_view_model.gd")
 const MetaItemInteractionScreenScript := preload("res://scripts/ui/meta_item_interaction_screen.gd")
 const MetaItemInteractionViewModelScript := preload("res://scripts/ui/meta_item_interaction_view_model.gd")
+const BagOpenReelScript := preload("res://scripts/ui/bag_open_reel.gd")
+const BagOpenReelViewModelScript := preload("res://scripts/ui/bag_open_reel_view_model.gd")
 const CageCounterViewModelScript := preload("res://scripts/ui/cage_counter_view_model.gd")
 const CageAtmViewModelScript := preload("res://scripts/ui/cage_atm_view_model.gd")
 const MetaCollectionViewModelScript := preload("res://scripts/ui/meta_collection_view_model.gd")
@@ -310,6 +312,7 @@ var conclusion_animation_tweens: Array[Tween] = []
 var run_inventory_screen: RunInventoryScreen
 var run_inventory_overlay: Control
 var meta_item_interaction_screen: MetaItemInteractionScreen
+var bag_open_reel: BagOpenReel
 var meta_item_interaction_mode := ""
 var selected_meta_item_key := ""
 var meta_trade_selected_instance_ids: Array = []
@@ -4956,6 +4959,10 @@ func _build_meta_item_interaction_overlay() -> void:
 	meta_item_interaction_screen.selection_changed.connect(Callable(self, "_on_meta_item_selection_changed"))
 	meta_item_interaction_screen.action_requested.connect(Callable(self, "_on_meta_item_action_requested"))
 	add_child(meta_item_interaction_screen)
+	bag_open_reel = BagOpenReelScript.new()
+	bag_open_reel.configure(Callable(self, "_run_item_texture_for_asset_path"))
+	bag_open_reel.close_requested.connect(Callable(self, "_close_bag_open_reel"))
+	add_child(bag_open_reel)
 
 
 func _build_run_journal_overlay() -> void:
@@ -7592,7 +7599,12 @@ func current_meta_item_interaction_snapshot() -> Dictionary:
 	snapshot["mode"] = meta_item_interaction_mode
 	snapshot["selected_key"] = selected_meta_item_key
 	snapshot["trade_selected_instance_ids"] = meta_trade_selected_instance_ids.duplicate()
+	snapshot["bag_reel"] = current_bag_open_reel_snapshot()
 	return snapshot
+
+
+func current_bag_open_reel_snapshot() -> Dictionary:
+	return bag_open_reel.layout_snapshot() if bag_open_reel != null else {"visible": false}
 
 
 func current_run_journal_snapshot() -> Dictionary:
@@ -9965,6 +9977,7 @@ func _refresh_meta_item_interaction() -> void:
 
 
 func close_meta_item_interaction() -> void:
+	_close_bag_open_reel()
 	if meta_item_interaction_screen != null:
 		meta_item_interaction_screen.close()
 	meta_item_interaction_mode = ""
@@ -10031,8 +10044,24 @@ func _open_selected_meta_bag(instance_id: int) -> void:
 	meta_last_panel_message = _collection_reveal_text(result)
 	_apply_meta_environment(meta_session_location_id)
 	_open_meta_item_interaction(MetaItemInteractionViewModelScript.MODE_CONTAINER, selected_meta_item_key)
+	_open_bag_reel(result)
 	_show_message(meta_last_panel_message)
 	_refresh()
+
+
+func _open_bag_reel(open_result: Dictionary) -> void:
+	if bag_open_reel == null:
+		return
+	var resolver: Variant = CollectionItemResolverScript.new()
+	var bag := _copy_dict(open_result.get(BagOpenReelViewModelScript.RESULT_BAG_KEY, {}))
+	var possible_contents: Array = resolver.bag_item_options_for_bag(int(bag.get("bagdef_id", -1)))
+	var model := BagOpenReelViewModelScript.build(open_result, possible_contents, _reduce_motion_enabled())
+	bag_open_reel.open(model)
+
+
+func _close_bag_open_reel() -> void:
+	if bag_open_reel != null:
+		bag_open_reel.close()
 
 
 func _first_meta_selection_in_container(model: Dictionary, container_id: String) -> String:
@@ -12707,6 +12736,9 @@ func _apply_accessibility_settings() -> void:
 	if meta_item_interaction_screen != null:
 		meta_item_interaction_screen.set_reduced_motion(bool(user_settings.reduce_motion) if user_settings != null else false)
 		meta_item_interaction_screen.set_small_screen_mode(small_screen_enabled)
+	if bag_open_reel != null:
+		bag_open_reel.set_reduced_motion(bool(user_settings.reduce_motion) if user_settings != null else false)
+		bag_open_reel.set_small_screen_mode(small_screen_enabled)
 	if run_report_screen != null:
 		run_report_screen.set_reduce_motion(bool(user_settings.reduce_motion) if user_settings != null else false)
 		run_report_screen.set_small_screen_mode(small_screen_enabled)
