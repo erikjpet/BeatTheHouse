@@ -1677,14 +1677,6 @@ func _draw_queue_stack(surface, state: Dictionary) -> void:
 func _draw_result_overlay(surface, ticket: Dictionary, trim: Color, accent: Color, ink: Color) -> void:
 	var panel := Rect2(active_ticket_rect.position + Vector2(22, active_ticket_rect.size.y * 0.32), Vector2(active_ticket_rect.size.x - 44, active_ticket_rect.size.y * 0.30))
 	var win := int(ticket.get("payout", 0)) > 0
-	surface.draw_rect(panel, Color("#102116") if win else Color("#241417"))
-	surface.draw_rect(panel, trim if win else accent, false, 3)
-	surface.surface_label_centered(_ticket_result_summary(ticket), Rect2(panel.position + Vector2(8, 7), Vector2(panel.size.x - 16, 34)), 20 if panel.size.x > 260 else 15, trim if win else C_PINK)
-	surface.surface_label_centered(_ticket_win_reason(ticket).left(58), Rect2(panel.position + Vector2(10, 45), Vector2(panel.size.x - 20, 24)), 8, C_WHITE)
-	var file_rect := Rect2(panel.position + Vector2(panel.size.x * 0.25, panel.size.y - 30), Vector2(panel.size.x * 0.50, 22))
-	surface.draw_rect(file_rect, Color("#17644c"))
-	surface.draw_rect(file_rect, Color("#69efb3"), false, 2)
-	surface.surface_label_centered("CLICK TO FILE", file_rect, 8, C_WHITE)
 	var scratch_regions := _dictionary_array(ticket.get("scratch_regions", []))
 	var spots := _dictionary_array(ticket.get("spots", []))
 	for region_value in scratch_regions:
@@ -1693,6 +1685,14 @@ func _draw_result_overlay(surface, ticket: Dictionary, trim: Color, accent: Colo
 		var spot: Dictionary = spots[spot_index] if spot_index < spots.size() else {}
 		if _spot_is_winner(ticket, _dict_ref(ticket.get("mechanic_result", {})), spot):
 			surface.draw_rect(_region_rect(region, active_scratch_rect).grow(3), trim, false, 2)
+	surface.draw_rect(panel, Color("#102116") if win else Color("#241417"))
+	surface.draw_rect(panel, trim if win else accent, false, 3)
+	surface.surface_label_centered(_ticket_result_summary(ticket), Rect2(panel.position + Vector2(8, 7), Vector2(panel.size.x - 16, 34)), 20 if panel.size.x > 260 else 15, trim if win else C_PINK)
+	surface.surface_label_centered(_ticket_win_reason(ticket).left(58), Rect2(panel.position + Vector2(10, 45), Vector2(panel.size.x - 20, 24)), 8, C_WHITE)
+	var file_rect := Rect2(panel.position + Vector2(panel.size.x * 0.25, panel.size.y - 30), Vector2(panel.size.x * 0.50, 22))
+	surface.draw_rect(file_rect, Color("#17644c"))
+	surface.draw_rect(file_rect, Color("#69efb3"), false, 2)
+	surface.surface_label_centered("CLICK TO FILE", file_rect, 8, C_WHITE)
 
 
 func _draw_mechanic_result(surface, ticket: Dictionary, ink: Color, accent: Color, trim: Color) -> void:
