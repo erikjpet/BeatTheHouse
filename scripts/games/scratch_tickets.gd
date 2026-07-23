@@ -48,6 +48,31 @@ const PRODUCTION_TICKET_ART := {
 	"golden_vault": "res://assets/art/scratch_tickets/layers/golden_vault_background_v2.png",
 }
 const SCRATCH_FOIL_TEXTURE := "res://assets/art/scratch_tickets/layers/scratch_foil_tile_v1.png"
+const REVEAL_SYMBOL_ART := {
+	"bell": "res://assets/art/scratch_tickets/reveal_symbols/bell.png",
+	"bingo_ball": "res://assets/art/scratch_tickets/reveal_symbols/bingo_ball.png",
+	"bingo_cell": "res://assets/art/scratch_tickets/reveal_symbols/bingo_cell.png",
+	"brass_bar": "res://assets/art/scratch_tickets/reveal_symbols/brass_bar.png",
+	"card_black": "res://assets/art/scratch_tickets/reveal_symbols/card_black.png",
+	"card_red": "res://assets/art/scratch_tickets/reveal_symbols/card_red.png",
+	"cash_stack": "res://assets/art/scratch_tickets/reveal_symbols/cash_stack.png",
+	"clover": "res://assets/art/scratch_tickets/reveal_symbols/clover.png",
+	"crossword_cell": "res://assets/art/scratch_tickets/reveal_symbols/crossword_cell.png",
+	"dust": "res://assets/art/scratch_tickets/reveal_symbols/dust.png",
+	"gold_bar": "res://assets/art/scratch_tickets/reveal_symbols/gold_bar.png",
+	"gold_coin": "res://assets/art/scratch_tickets/reveal_symbols/gold_coin.png",
+	"letter_tile": "res://assets/art/scratch_tickets/reveal_symbols/letter_tile.png",
+	"lucky_seven": "res://assets/art/scratch_tickets/reveal_symbols/lucky_seven.png",
+	"miss_cross": "res://assets/art/scratch_tickets/reveal_symbols/miss_cross.png",
+	"multiplier_coin": "res://assets/art/scratch_tickets/reveal_symbols/multiplier_coin.png",
+	"number_coin": "res://assets/art/scratch_tickets/reveal_symbols/number_coin.png",
+	"star": "res://assets/art/scratch_tickets/reveal_symbols/star.png",
+	"twofer": "res://assets/art/scratch_tickets/reveal_symbols/twofer.png",
+	"vault_open": "res://assets/art/scratch_tickets/reveal_symbols/vault_open.png",
+	"vault_sealed": "res://assets/art/scratch_tickets/reveal_symbols/vault_sealed.png",
+	"wild_card": "res://assets/art/scratch_tickets/reveal_symbols/wild_card.png",
+	"winning_star": "res://assets/art/scratch_tickets/reveal_symbols/winning_star.png",
+}
 const CROSSWORD_COLUMNS := 11
 const CROSSWORD_ROWS := 10
 const CROSSWORD_GRID_RECT_VALUES := [0.06, 0.35, 0.50, 0.50]
@@ -56,6 +81,7 @@ const CROSSWORD_BANK_RECT_VALUES := [0.62, 0.38, 0.31, 0.44]
 var active_ticket_rect := DEFAULT_TICKET_RECT
 var active_scratch_rect := DEFAULT_SCRATCH_RECT
 var production_ticket_texture_cache: Dictionary = {}
+var reveal_symbol_texture_cache: Dictionary = {}
 var scratch_foil_texture_cache: Texture2D = null
 
 
@@ -1974,12 +2000,178 @@ func _ticket_relative_rect(rect_values: Array) -> Rect2:
 	return Rect2(active_ticket_rect.position + Vector2(float(values[0]) * active_ticket_rect.size.x, float(values[1]) * active_ticket_rect.size.y), Vector2(float(values[2]) * active_ticket_rect.size.x, float(values[3]) * active_ticket_rect.size.y))
 
 
+func _draw_spot_symbol_reveal(surface, ticket: Dictionary, result: Dictionary, spot: Dictionary, region: Dictionary, rect: Rect2, ink: Color, trim: Color) -> bool:
+	var symbol_id := _spot_symbol_texture_id(ticket, spot)
+	if symbol_id.is_empty():
+		return false
+	var winner := _spot_is_winner(ticket, result, spot)
+	var inset_rect := rect.grow(-maxf(1.0, minf(rect.size.x, rect.size.y) * 0.04))
+	if inset_rect.size.x <= 1.0 or inset_rect.size.y <= 1.0:
+		inset_rect = rect
+	var drawn := _draw_centered_reveal_symbol(surface, symbol_id, inset_rect, 0.96 if _spot_symbol_main_text(ticket, spot).is_empty() else 0.82)
+	if not drawn:
+		return false
+	if winner:
+		surface.draw_rect(rect.grow(-1), trim, false, 2)
+	var main_text := _spot_symbol_main_text(ticket, spot)
+	var sub_text := _spot_symbol_sub_text(ticket, result, spot)
+	if not main_text.is_empty():
+		var font_size := _symbol_main_font_size(rect, main_text)
+		var label_rect := Rect2(rect.position + Vector2(2, rect.size.y * 0.21), Vector2(rect.size.x - 4, rect.size.y * (0.45 if not sub_text.is_empty() else 0.36)))
+		if str(spot.get("role", "")) == "crossword_cell" or str(spot.get("role", "")) == "bank_letter":
+			label_rect = Rect2(rect.position + Vector2(1, 1), Vector2(rect.size.x - 2, rect.size.y - 2))
+		surface.surface_label_centered(main_text, label_rect, font_size, C_WHITE if _symbol_text_needs_light(symbol_id) else ink)
+	if not sub_text.is_empty():
+		var sub_rect := Rect2(rect.position + Vector2(2, rect.size.y * 0.61), Vector2(rect.size.x - 4, rect.size.y * 0.32))
+		surface.surface_label_centered(sub_text, sub_rect, 6 if rect.size.x < 48.0 else 8, C_WHITE if _symbol_text_needs_light(symbol_id) else ink)
+	return true
+
+
+func _draw_centered_reveal_symbol(surface, symbol_id: String, rect: Rect2, coverage: float = 0.86) -> bool:
+	var texture := _reveal_symbol_texture(symbol_id)
+	if texture == null:
+		return false
+	var texture_size := Vector2(float(texture.get_width()), float(texture.get_height()))
+	if texture_size.x <= 0.0 or texture_size.y <= 0.0:
+		return false
+	var available := Vector2(maxf(1.0, rect.size.x * coverage), maxf(1.0, rect.size.y * coverage))
+	var scale := minf(available.x / texture_size.x, available.y / texture_size.y)
+	var draw_size := texture_size * scale
+	var draw_rect := Rect2(rect.position + (rect.size - draw_size) * 0.5, draw_size)
+	surface.draw_texture_rect(texture, draw_rect, false)
+	return true
+
+
+func _reveal_symbol_texture(symbol_id: String) -> Texture2D:
+	if reveal_symbol_texture_cache.has(symbol_id):
+		return reveal_symbol_texture_cache[symbol_id] as Texture2D
+	var path := str(REVEAL_SYMBOL_ART.get(symbol_id, ""))
+	if path.is_empty():
+		return null
+	var resource := ResourceLoader.load(path, "Texture2D", ResourceLoader.CACHE_MODE_REUSE)
+	var texture := resource as Texture2D
+	if texture != null:
+		reveal_symbol_texture_cache[symbol_id] = texture
+	return texture
+
+
+func _spot_symbol_texture_id(ticket: Dictionary, spot: Dictionary) -> String:
+	var role := str(spot.get("role", ""))
+	var type_id := str(ticket.get("type_id", ""))
+	match role:
+		"pair_spot":
+			match str(spot.get("symbol", "")).to_upper():
+				"CLOVER": return "clover"
+				"BELL": return "bell"
+				"STAR": return "star"
+				"2FER": return "twofer"
+			return "number_coin"
+		"winning_number":
+			return "winning_star"
+		"your_number":
+			return "lucky_seven" if int(spot.get("number", 0)) == 7 else "number_coin"
+		"board_mark":
+			return "gold_coin" if str(spot.get("mark", "")) == "WIN" else "miss_cross"
+		"bonus":
+			return "gold_bar" if str(spot.get("mark", "")) == "GOLD" else "dust"
+		"bank_letter":
+			return "letter_tile"
+		"crossword_cell":
+			return "crossword_cell"
+		"caller":
+			return "bingo_ball"
+		"bingo_cell":
+			return "bingo_cell"
+		"your_card", "dealer_card":
+			return "card_red" if _card_symbol_is_red(str(spot.get("card", ""))) else "card_black"
+		"wild":
+			return "wild_card" if str(spot.get("card", "")) == "WILD" else "miss_cross"
+		"multiplier":
+			return "multiplier_coin"
+		"ladder":
+			return "cash_stack" if bool(spot.get("match", false)) else "vault_sealed"
+		"gold_bar":
+			return "gold_bar" if bool(spot.get("win_all", false)) else "brass_bar"
+		"vault":
+			return "vault_open" if str(spot.get("symbol", "")) == "OPEN" else "vault_sealed"
+	if type_id == "crossword_corner" and spot.has("letter"):
+		return "crossword_cell"
+	return ""
+
+
+func _spot_symbol_main_text(ticket: Dictionary, spot: Dictionary) -> String:
+	var role := str(spot.get("role", ""))
+	match role:
+		"winning_number", "your_number", "caller":
+			return str(int(spot.get("number", 0)))
+		"bingo_cell":
+			var number := int(spot.get("number", 0))
+			return "FREE" if number == 0 else str(number)
+		"bank_letter", "crossword_cell":
+			return str(spot.get("letter", ""))
+		"your_card", "dealer_card":
+			return str(spot.get("card", ""))
+		"wild":
+			return "WILD" if str(spot.get("card", "")) == "WILD" else "NO"
+		"multiplier":
+			return "%dx" % int(spot.get("multiplier", 1))
+		"ladder":
+			return "$%d" % int(spot.get("base_prize", 0)) if bool(spot.get("match", false)) else "LOCK"
+		"gold_bar":
+			return "GOLD" if bool(spot.get("win_all", false)) else "BRASS"
+		"vault":
+			return "OPEN" if str(spot.get("symbol", "")) == "OPEN" else "LOCK"
+	if str(ticket.get("type_id", "")) == "tic_tac_gold":
+		return str(spot.get("mark", ""))
+	return ""
+
+
+func _spot_symbol_sub_text(ticket: Dictionary, result: Dictionary, spot: Dictionary) -> String:
+	match str(ticket.get("type_id", "")):
+		"two_fer":
+			var legend: Dictionary = result.get("legend", {}) if typeof(result.get("legend", {})) == TYPE_DICTIONARY else {}
+			var prize := int(legend.get(str(spot.get("symbol", "")), 0))
+			return "$%d" % prize if prize > 0 else ""
+		"lucky_7s":
+			if str(spot.get("role", "")) == "your_number":
+				return "$%d" % int(spot.get("prize", 0))
+		"high_roller_holdem":
+			return "YOU" if str(spot.get("role", "")).begins_with("your") else "HOUSE" if str(spot.get("role", "")).begins_with("dealer") else ""
+		"golden_vault":
+			if str(spot.get("role", "")) == "ladder" and bool(spot.get("match", false)):
+				return "x%d" % int(result.get("multiplier", 1))
+			if str(spot.get("role", "")) == "vault" and int(spot.get("payout", 0)) > 0:
+				return "$%d" % int(spot.get("payout", 0))
+	return ""
+
+
+func _symbol_main_font_size(rect: Rect2, text: String) -> int:
+	var short_side := minf(rect.size.x, rect.size.y)
+	if short_side < 21.0:
+		return 5
+	if short_side < 30.0:
+		return 7 if text.length() <= 2 else 5
+	if short_side < 45.0:
+		return 10 if text.length() <= 3 else 7
+	return 15 if text.length() <= 3 else 10
+
+
+func _symbol_text_needs_light(symbol_id: String) -> bool:
+	return ["card_black", "vault_sealed", "miss_cross", "wild_card"].has(symbol_id)
+
+
+func _card_symbol_is_red(card: String) -> bool:
+	return card.contains("H") or card.contains("D") or card.contains("♥") or card.contains("♦")
+
+
 func _draw_spot_box(surface, ticket: Dictionary, result: Dictionary, spot: Dictionary, region: Dictionary, rect: Rect2, ink: Color, accent: Color, trim: Color) -> void:
 	var type_id := str(ticket.get("type_id", ""))
 	var winner := _spot_is_winner(ticket, result, spot)
 	var fill := Color(trim.r, trim.g, trim.b, 0.22) if winner else Color(ink.r, ink.g, ink.b, 0.08)
 	var main := _spot_main_label(spot, region)
 	var sub := _spot_sub_label(ticket, result, spot, region)
+	if _draw_spot_symbol_reveal(surface, ticket, result, spot, region, rect, ink, trim):
+		return
 	match type_id:
 		"two_fer":
 			_draw_starburst(surface, rect.get_center(), minf(rect.size.x, rect.size.y) * 0.60, Color(trim.r, trim.g, trim.b, 0.30 if winner else 0.16))
