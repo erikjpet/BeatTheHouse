@@ -54,6 +54,7 @@ func _check_scratch_tickets_surface_contract(game: GameModule, failures: Array) 
 	_check_scratch_per_box_reveals(game, failures)
 	_check_scratch_result_and_queue_flow(game, failures)
 	_check_scratch_save_restore(game, failures)
+	_check_scratch_stale_region_upgrade(game, failures)
 	_check_scratch_sizes(game, failures)
 	_check_scratch_stock(game, failures)
 	_check_scratch_rtp(game, failures)
@@ -395,6 +396,61 @@ func _check_scratch_save_restore(game: GameModule, failures: Array) -> void:
 	var loaded_machine: Dictionary = (restored.current_environment.get("game_states", {}) as Dictionary).get("scratch_tickets", {})
 	if JSON.stringify(loaded.get("mechanic_result", {})) != outcome_json or JSON.stringify(loaded.get("latex_mask", [])) != mask_json or JSON.stringify(loaded_machine.get("pending_queue", [])) != queue_json:
 		failures.append("Scratch save/load did not restore fixed outcome, partial mask, and queued tickets.")
+
+
+func _check_scratch_stale_region_upgrade(game: GameModule, failures: Array) -> void:
+	var run_state: RunState = RunStateScript.new()
+	run_state.start_new("SCRATCH-STALE-REGION-UPGRADE")
+	run_state.bankroll = 500000
+	var environment := _scratch_environment("scratch_stale_region_gas")
+	var ticket_type: Dictionary = game.call("_ticket_type", "lucky_7s")
+	var ticket: Dictionary = game.call("_roll_ticket", ticket_type, run_state.create_rng("scratch_stale_region_ticket"), 0, "stale-region-upgrade")
+	var original_payout := int(ticket.get("payout", 0))
+	var original_outcome := str(ticket.get("outcome_id", ""))
+	var old_regions := _dict_array(ticket.get("scratch_regions", []))
+	if old_regions.is_empty():
+		failures.append("Scratch stale-region upgrade could not build a ticket fixture.")
+		return
+	var stale_first: Dictionary = old_regions[0]
+	stale_first["art_rect"] = [0.0, 0.0, 1.0, 1.0]
+	stale_first["layout_version"] = 1
+	old_regions[0] = stale_first
+	ticket["scratch_regions"] = old_regions
+	ticket["region_layout_version"] = 1
+	var machine: Dictionary = game.generate_environment_state(run_state, environment, run_state.create_rng("scratch_stale_region_stock"))
+	machine["version"] = 2
+	machine["active_ticket"] = ticket
+	environment["game_states"] = {"scratch_tickets": machine}
+	run_state.current_environment = environment
+	var upgraded: Dictionary = game.call("_ensure_machine_state", run_state, environment, true)
+	var active: Dictionary = upgraded.get("active_ticket", {}) if typeof(upgraded.get("active_ticket", {})) == TYPE_DICTIONARY else {}
+	var regions := _dict_array(active.get("scratch_regions", []))
+	var expected := _dict_array(game.call("_ticket_art_regions", active))
+	if int(upgraded.get("version", 0)) < 3 or int(active.get("region_layout_version", 0)) < 3:
+		failures.append("Scratch stale-region upgrade did not stamp the current machine/ticket layout version.")
+	if int(active.get("payout", -1)) != original_payout or str(active.get("outcome_id", "")) != original_outcome:
+		failures.append("Scratch stale-region upgrade changed the fixed-at-purchase outcome.")
+	if regions.size() != expected.size():
+		failures.append("Scratch stale-region upgrade rebuilt %d regions; expected %d." % [regions.size(), expected.size()])
+	elif not _scratch_rect_values_equal((regions[0] as Dictionary).get("art_rect", []), (expected[0] as Dictionary).get("art_rect", [])):
+		failures.append("Scratch stale-region upgrade kept obsolete art_rect values.")
+	var surface := game.surface_state(run_state, environment, {})
+	var harness := SurfaceHarness.new()
+	harness.setup(surface)
+	game.draw_surface(harness, surface, {"contract_harness": true})
+
+
+func _scratch_rect_values_equal(left_value: Variant, right_value: Variant) -> bool:
+	if typeof(left_value) != TYPE_ARRAY or typeof(right_value) != TYPE_ARRAY:
+		return false
+	var left: Array = left_value
+	var right: Array = right_value
+	if left.size() < 4 or right.size() < 4:
+		return false
+	for index in range(4):
+		if absf(float(left[index]) - float(right[index])) > 0.0001:
+			return false
+	return true
 
 
 func _check_scratch_sizes(game: GameModule, failures: Array) -> void:

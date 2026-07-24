@@ -38,6 +38,8 @@ const DEFAULT_PASS_REMOVAL := 0.66
 const DEFAULT_SWEEP_THRESHOLD := 0.80
 const DEFAULT_MASK_COLUMNS := 48
 const DEFAULT_MASK_ROWS := 32
+const MACHINE_STATE_VERSION := 3
+const REGION_LAYOUT_VERSION := 3
 const PRODUCTION_TICKET_ART := {
 	"two_fer": "res://assets/art/scratch_tickets/layers/two_fer_background_v2.png",
 	"lucky_7s": "res://assets/art/scratch_tickets/layers/lucky_7s_background_v2.png",
@@ -735,7 +737,7 @@ func _generate_machine_state(_run_state: RunState, environment: Dictionary, rng:
 		})
 	return {
 		"schema": "scratch_ticket_machine_state",
-		"version": 1,
+		"version": MACHINE_STATE_VERSION,
 		"machine_name": "Highway Scratch Center",
 		"stock_day": int(environment.get("generated_day", environment.get("day", 0))),
 		"stock_stream_key": stream_key,
@@ -874,6 +876,7 @@ func _initialize_ticket_mask(ticket: Dictionary, ticket_type: Dictionary) -> voi
 	ticket["sections"] = _sections_from_regions(regions)
 	ticket["latex_mask"] = mask
 	ticket["mask_revision"] = 0
+	ticket["region_layout_version"] = REGION_LAYOUT_VERSION
 	ticket["result_ready"] = false
 
 
@@ -944,6 +947,7 @@ func _scratch_region(index: int, spot: Dictionary, section_id: String, label: St
 	var rect := _normalized_rect_array(rect_values)
 	return {
 		"id": "%s_%02d" % [section_id, index],
+		"layout_version": REGION_LAYOUT_VERSION,
 		"spot_index": int(spot.get("index", index)),
 		"section_id": section_id,
 		"label": label,
@@ -985,25 +989,55 @@ func _ensure_ticket_regions(ticket: Dictionary) -> void:
 	var rows := maxi(18, int(scratch.get("mask_rows", DEFAULT_MASK_ROWS)))
 	var mask: Array = ticket.get("latex_mask", []) if typeof(ticket.get("latex_mask", [])) == TYPE_ARRAY else []
 	var regions := _dictionary_array(ticket.get("scratch_regions", []))
-	if regions.is_empty() or int((regions[0] as Dictionary).get("sample_total", 0)) <= 0:
-		regions = _ticket_art_regions(ticket)
-		if mask.size() != columns * rows:
-			mask.resize(columns * rows)
-			mask.fill(0)
-			for region_index in range(regions.size()):
-				var sample_total := _rasterize_region_mask(mask, regions, region_index, columns, rows, 255)
-				var region: Dictionary = regions[region_index]
-				region["sample_total"] = sample_total
-				region["mask_remaining_units"] = sample_total * 255
-				region["coverage"] = 0.0
-				region["revealed"] = sample_total <= 0
-				regions[region_index] = region
-		else:
-			_refresh_region_units_from_mask(mask, regions, columns, rows)
-		ticket["scratch_regions"] = regions
-		ticket["latex_mask"] = mask
-		ticket["sections"] = _sections_from_regions(regions)
-		ticket["result_ready"] = _ticket_complete(ticket)
+	var metadata_stale := int(ticket.get("region_layout_version", 0)) != REGION_LAYOUT_VERSION or (not regions.is_empty() and int((regions[0] as Dictionary).get("layout_version", 0)) != REGION_LAYOUT_VERSION)
+	var needs_rebuild := regions.is_empty() or int((regions[0] as Dictionary).get("sample_total", 0)) <= 0 or mask.size() != columns * rows or metadata_stale
+	if not needs_rebuild:
+		return
+	regions = _rebuild_ticket_regions_preserving_progress(ticket, regions, columns, rows)
+	mask = ticket.get("latex_mask", []) if typeof(ticket.get("latex_mask", [])) == TYPE_ARRAY else []
+	ticket["scratch_regions"] = regions
+	ticket["latex_mask"] = mask
+	ticket["sections"] = _sections_from_regions(regions)
+	ticket["region_layout_version"] = REGION_LAYOUT_VERSION
+	ticket["result_ready"] = _ticket_complete(ticket)
+
+
+func _rebuild_ticket_regions_preserving_progress(ticket: Dictionary, old_regions: Array, columns: int, rows: int) -> Array:
+	var rebuilt := _ticket_art_regions(ticket)
+	var new_mask: Array = []
+	new_mask.resize(columns * rows)
+	new_mask.fill(0)
+	for region_index in range(rebuilt.size()):
+		var region: Dictionary = rebuilt[region_index]
+		var progress := _prior_region_progress(region, old_regions, bool(ticket.get("result_ready", false)))
+		var alpha := clampi(int(round(255.0 * (1.0 - progress))), 0, 255)
+		var sample_total := _rasterize_region_mask(new_mask, rebuilt, region_index, columns, rows, alpha)
+		region["sample_total"] = sample_total
+		region["mask_remaining_units"] = sample_total * alpha
+		region["coverage"] = 1.0 if sample_total <= 0 else 1.0 - float(region.get("mask_remaining_units", 0)) / float(sample_total * 255)
+		region["revealed"] = progress >= 0.995 or sample_total <= 0
+		region["layout_version"] = REGION_LAYOUT_VERSION
+		rebuilt[region_index] = region
+	ticket["latex_mask"] = new_mask
+	ticket["mask_revision"] = int(ticket.get("mask_revision", 0)) + 1
+	return rebuilt
+
+
+func _prior_region_progress(region: Dictionary, old_regions: Array, fallback_revealed: bool) -> float:
+	var best_progress := 1.0 if fallback_revealed else 0.0
+	var found := false
+	for old_value in old_regions:
+		var old_region: Dictionary = old_value
+		var same_identity := str(old_region.get("id", "")) == str(region.get("id", ""))
+		var same_spot := int(old_region.get("spot_index", -1)) == int(region.get("spot_index", -2)) and str(old_region.get("role", "")) == str(region.get("role", ""))
+		if not same_identity and not same_spot:
+			continue
+		found = true
+		var sample_total := maxi(1, int(old_region.get("sample_total", 0)))
+		var remaining_units := clampi(int(old_region.get("mask_remaining_units", sample_total * 255)), 0, sample_total * 255)
+		var progress := 1.0 if bool(old_region.get("revealed", false)) else clampf(float(old_region.get("coverage", 1.0 - float(remaining_units) / float(sample_total * 255))), 0.0, 1.0)
+		best_progress = maxf(best_progress, progress)
+	return best_progress if found else (1.0 if fallback_revealed else 0.0)
 
 
 func _refresh_region_units_from_mask(mask: Array, regions: Array, columns: int, rows: int) -> void:
@@ -2851,7 +2885,7 @@ func _stock_view(machine: Dictionary) -> Array:
 
 
 func _normalize_machine_state(machine: Dictionary) -> void:
-	var needs_upgrade := int(machine.get("version", 1)) < 2 or not machine.has("pending_queue")
+	var needs_upgrade := int(machine.get("version", 1)) < MACHINE_STATE_VERSION or not machine.has("pending_queue")
 	if not machine.has("pending_queue"):
 		machine["pending_queue"] = []
 	if not machine.has("winner_pile"):
@@ -2861,17 +2895,36 @@ func _normalize_machine_state(machine: Dictionary) -> void:
 	var active_value: Variant = machine.get("active_ticket", {})
 	if typeof(active_value) == TYPE_DICTIONARY:
 		var active: Dictionary = active_value
-		if needs_upgrade or _dictionary_array(active.get("scratch_regions", [])).is_empty():
+		if _ticket_region_upgrade_needed(active) or needs_upgrade:
 			_ensure_ticket_regions(active)
-	if needs_upgrade:
-		var queue := _dictionary_array(machine.get("pending_queue", []))
-		for ticket_value in queue:
-			_ensure_ticket_regions(ticket_value as Dictionary)
-		machine["pending_queue"] = queue
-		for field in ["winner_pile", "loser_pile"]:
-			for ticket_value in _dictionary_array(machine.get(field, [])):
-				_ensure_ticket_regions(ticket_value as Dictionary)
-	machine["version"] = maxi(2, int(machine.get("version", 1)))
+		machine["active_ticket"] = active
+	for field in ["pending_queue", "winner_pile", "loser_pile"]:
+		var tickets := _dictionary_array(machine.get(field, []))
+		if needs_upgrade:
+			for index in range(tickets.size()):
+				var ticket: Dictionary = tickets[index]
+				if _ticket_region_upgrade_needed(ticket) or needs_upgrade:
+					_ensure_ticket_regions(ticket)
+					tickets[index] = ticket
+			machine[field] = tickets
+	machine["version"] = maxi(MACHINE_STATE_VERSION, int(machine.get("version", 1)))
+
+
+func _ticket_region_upgrade_needed(ticket: Dictionary) -> bool:
+	if ticket.is_empty():
+		return false
+	var scratch: Dictionary = ticket.get("scratch", {}) if typeof(ticket.get("scratch", {})) == TYPE_DICTIONARY else {}
+	var columns := maxi(24, int(scratch.get("mask_columns", DEFAULT_MASK_COLUMNS)))
+	var rows := maxi(18, int(scratch.get("mask_rows", DEFAULT_MASK_ROWS)))
+	var mask: Array = ticket.get("latex_mask", []) if typeof(ticket.get("latex_mask", [])) == TYPE_ARRAY else []
+	var regions := _dictionary_array(ticket.get("scratch_regions", []))
+	if regions.is_empty() or mask.size() != columns * rows:
+		return true
+	if int(ticket.get("region_layout_version", 0)) != REGION_LAYOUT_VERSION:
+		return true
+	if int((regions[0] as Dictionary).get("layout_version", 0)) != REGION_LAYOUT_VERSION:
+		return true
+	return int((regions[0] as Dictionary).get("sample_total", 0)) <= 0
 
 
 func _ensure_machine_state(run_state: RunState, environment: Dictionary, persist: bool) -> Dictionary:
