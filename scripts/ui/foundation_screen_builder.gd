@@ -178,6 +178,10 @@ static func build_run_screen(host: Variant) -> void:
 	hud_stack.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	hud_stack.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	hud_margin.add_child(hud_stack)
+	host.structured_hud = host.FoundationHudBarScript.new()
+	host.structured_hud.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	host.structured_hud.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
+	hud_stack.add_child(host.structured_hud)
 	var hud_row := HBoxContainer.new()
 	hud_row.add_theme_constant_override("separation", 8)
 	hud_row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -191,11 +195,13 @@ static func build_run_screen(host: Variant) -> void:
 	host.top_inventory_button.tooltip_text = "Inspect current run items."
 	hud_row.add_child(host.top_inventory_button)
 	host.status_label = host._label("", 14)
+	host.status_label.visible = false
 	host.status_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	host.status_label.autowrap_mode = TextServer.AUTOWRAP_OFF
 	host.status_label.clip_text = true
 	hud_row.add_child(host.status_label)
 	host.save_status_label = host._label("", 13)
+	host.save_status_label.visible = false
 	host.save_status_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 	host.save_status_label.autowrap_mode = TextServer.AUTOWRAP_OFF
 	host.save_status_label.clip_text = true
@@ -209,7 +215,6 @@ static func build_run_screen(host: Variant) -> void:
 	var title_row := HBoxContainer.new()
 	title_row.add_theme_constant_override("separation", 8)
 	title_row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	hud_stack.add_child(title_row)
 	host.title_label = host._label("", 17)
 	host.title_label.autowrap_mode = TextServer.AUTOWRAP_OFF
 	host.title_label.clip_text = true
@@ -236,6 +241,7 @@ static func build_run_screen(host: Variant) -> void:
 	result_feedback_stack.add_child(host.environment_result_body_label)
 
 	host.objective_label = host._label("", 13)
+	host.objective_label.visible = false
 	host.objective_label.autowrap_mode = TextServer.AUTOWRAP_OFF
 	host.objective_label.clip_text = true
 	host.objective_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -246,7 +252,6 @@ static func build_run_screen(host: Variant) -> void:
 	host.summary_label.max_lines_visible = 1
 	host.summary_label.clip_text = true
 	host.summary_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	hud_stack.add_child(host.summary_label)
 
 	host.visual_panel_container = host._panel_container(VisualStyle.DARK_2, VisualStyle.CYAN_2)
 	host.visual_panel_container.clip_contents = true
@@ -259,6 +264,8 @@ static func build_run_screen(host: Variant) -> void:
 	visual_stack.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	visual_stack.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	host.visual_panel_container.add_child(visual_stack)
+	visual_stack.add_child(title_row)
+	visual_stack.add_child(host.summary_label)
 	host._build_run_report_screen(visual_stack)
 	host.environment_canvas = PixelSceneCanvasScript.new()
 	host.environment_canvas.clip_contents = true

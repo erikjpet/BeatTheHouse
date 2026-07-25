@@ -1508,7 +1508,7 @@ func _check_final_demo_objective_hud_matrix(app: Control) -> bool:
 		return false
 	close_cashout_run.grand_casino_chips = 17
 	var casino_status_hud: Dictionary = app.call("current_run_status_hud_snapshot")
-	if str(casino_status_hud.get("bankroll_text", "")).find("[CHIPS] 17") == -1:
+	if str(casino_status_hud.get("bankroll_text", "")).find("Chips 17") == -1:
 		push_error("Grand Casino HUD did not show chips alongside bankroll.")
 		return false
 	close_cashout_run.grand_casino_chips = 0
@@ -1662,7 +1662,7 @@ func _assert_objective_state(snapshot: Dictionary, expected_state: String, label
 	if str(guidance.get("text", "")).strip_edges().is_empty():
 		push_error("%s did not expose player-facing guidance text." % label)
 		return false
-	if str(snapshot.get("goal", "")).strip_edges().is_empty() or str(snapshot.get("text", "")).find("[GOAL]") == -1:
+	if str(snapshot.get("goal", "")).strip_edges().is_empty() or str(snapshot.get("text", "")).find("Goal:") == -1:
 		push_error("%s did not expose stable visible goal text." % label)
 		return false
 	return true

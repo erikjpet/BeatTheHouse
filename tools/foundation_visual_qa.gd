@@ -2086,9 +2086,9 @@ func _assert_objective_hud(context_label: String) -> void:
 	_require(objective_text.find("Cash:") != -1, "%s objective HUD does not include bankroll/economy pressure." % context_label)
 	_require(objective_text.find("Heat:") != -1, "%s objective HUD does not include heat/security pressure." % context_label)
 	_require(objective_text.find("Next:") != -1, "%s objective HUD does not include a next opportunity hint." % context_label)
-	_require(status_text.find("[$]") != -1 and status_text.find("[HEAT]") != -1 and status_text.find("[DEBT]") != -1 and status_text.find("[RUN]") != -1, "%s run-status HUD does not show compact bankroll, heat, debt, and run indicators." % context_label)
-	_require(objective_text.find("[GOAL]") != -1 and objective_text.find("[ENV]") != -1 and objective_text.find("[GEAR]") != -1, "%s run-status HUD does not show objective, environment, and gear indicators." % context_label)
-	_require(save_text.find("[AUTO]") != -1, "%s run-status HUD does not show autosave status." % context_label)
+	_require(status_text.find("Bankroll") != -1 and status_text.find("Heat") != -1 and status_text.find("Debt") != -1 and status_text.find("Run") != -1, "%s run-status HUD does not retain readable bankroll, heat, debt, and run telemetry." % context_label)
+	_require(objective_text.find("Goal:") != -1 and objective_text.find("Gear") != -1, "%s run-status HUD does not retain objective and gear telemetry." % context_label)
+	_require(save_text.find("Autosave") != -1, "%s run-status HUD does not retain autosave telemetry." % context_label)
 	for forbidden in ["serialized", "foundation", "contract", "module", "_", "state updated", "delta"]:
 		_require(objective_text.findn(forbidden) == -1 and status_text.findn(forbidden) == -1 and save_text.findn(forbidden) == -1, "%s run-status HUD exposes technical text: %s." % [context_label, forbidden])
 	if app.has_method("current_objective_hud_snapshot"):
@@ -2105,6 +2105,14 @@ func _assert_objective_hud(context_label: String) -> void:
 		_require(str(hud.get("status_text", "")) == status_text, "%s run-status HUD status snapshot does not match visible text." % context_label)
 		_require(str(hud.get("objective_text", "")) == objective_text, "%s run-status HUD objective snapshot does not match visible text." % context_label)
 		_require(str(hud.get("save_text", "")) == save_text, "%s run-status HUD save snapshot does not match visible text." % context_label)
+		var presentation: Dictionary = hud.get("presentation", {})
+		var heat_presentation: Dictionary = presentation.get("heat", {})
+		var drunk_presentation: Dictionary = presentation.get("drunk", {})
+		_require(str(presentation.get("wallet", "")).find("$") != -1, "%s structured HUD wallet is missing." % context_label)
+		_require(int(heat_presentation.get("segments", 0)) == 10, "%s structured HUD heat meter is not segmented." % context_label)
+		_require((heat_presentation.get("ticks", []) as Array).size() == 2, "%s structured HUD heat thresholds are missing." % context_label)
+		_require(drunk_presentation.has("ghost_visible"), "%s structured HUD pending-drink ghost state is missing." % context_label)
+		_require(bool(presentation.get("time_interactive", false)), "%s structured HUD time widget is not interactive." % context_label)
 		_cover("r100_run_status_hud_structured")
 	_cover("objective_hud")
 
@@ -2630,11 +2638,8 @@ func _assert_no_scroll_critical_path(context: String) -> void:
 		_cover("r100_stab_no_scroll_critical_path")
 		return
 	for entry in [
-		{"name": "status_label", "label": "HUD status"},
-		{"name": "objective_label", "label": "objective HUD"},
-		{"name": "save_status_label", "label": "save status"},
+		{"name": "structured_hud", "label": "structured HUD"},
 		{"name": "title_label", "label": "title"},
-		{"name": "summary_label", "label": "summary"},
 	]:
 		var control := app.get(str(entry.get("name", ""))) as Control
 		_require(control != null and control.visible and control.is_visible_in_tree(), "%s %s is not visible." % [context, str(entry.get("label", ""))])
@@ -2685,6 +2690,7 @@ func _assert_game_surface_contained(context: String) -> void:
 	_require(_control_fits_viewport(surface, "%s game surface" % context), "%s game surface is outside the visible viewport." % context)
 	var surface_rect := surface.get_global_rect()
 	for entry in [
+		{"name": "structured_hud", "label": "structured HUD"},
 		{"name": "status_label", "label": "HUD status"},
 		{"name": "objective_label", "label": "objective HUD"},
 		{"name": "save_status_label", "label": "save status"},
@@ -2744,6 +2750,7 @@ func _board_axis_stays_inside_canvas(start: float, end: float, canvas_length: fl
 
 func _check_environment_canvas_clear_of_controls(canvas: Control, context: String) -> void:
 	var controls := [
+		{"name": "structured_hud", "label": "structured HUD"},
 		{"name": "status_label", "label": "HUD status"},
 		{"name": "objective_label", "label": "objective HUD"},
 		{"name": "save_status_label", "label": "save status"},
@@ -2758,7 +2765,7 @@ func _check_environment_canvas_clear_of_controls(canvas: Control, context: Strin
 			continue
 		var control_label := "%s %s" % [context, str(entry.get("label", ""))]
 		_require(_control_fits_viewport(control, control_label), "%s is outside the viewport while the environment canvas is visible." % control_label)
-		_require(not canvas_rect.intersects(control.get_global_rect()), "%s environment canvas overlaps %s." % [context, str(entry.get("label", ""))])
+		_require(not canvas_rect.intersects(control.get_global_rect()), "%s environment canvas overlaps %s: canvas %s, control %s." % [context, str(entry.get("label", "")), canvas_rect, control.get_global_rect()])
 	_cover("r100_critical_controls_1280_visible")
 
 

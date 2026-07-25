@@ -2687,7 +2687,7 @@ func _run() -> void:
 		push_error("M1.5 environment layout did not show a visible venue title.")
 		quit(1)
 		return
-	if status_label == null or status_label.text.find("Bankroll") == -1 or status_label.text.find("Risk:") == -1:
+	if status_label == null or status_label.text.find("Bankroll") == -1 or status_label.text.find("Heat") == -1:
 		push_error("M1.5 top HUD did not show bankroll and risk cue.")
 		quit(1)
 		return
@@ -2709,20 +2709,23 @@ func _run() -> void:
 			push_error("R100 dynamic run-status HUD is missing field: %s." % field)
 			quit(1)
 			return
-	if status_label.text.find("[$]") == -1 or status_label.text.find("[HEAT]") == -1 or status_label.text.find("[DEBT]") == -1 or status_label.text.find("[RUN]") == -1:
-		push_error("R100 dynamic run-status HUD did not show compact bankroll, heat, debt, and run indicators.")
+	var hud_presentation: Dictionary = run_hud_snapshot.get("presentation", {})
+	var heat_presentation: Dictionary = hud_presentation.get("heat", {})
+	var drunk_presentation: Dictionary = hud_presentation.get("drunk", {})
+	if str(hud_presentation.get("wallet", "")).find("$") == -1 or int(heat_presentation.get("segments", 0)) != 10:
+		push_error("R100 structured run-status HUD did not expose the wallet and segmented heat bar.")
 		quit(1)
 		return
-	if objective_label.text.find("[GOAL]") == -1 or objective_label.text.find("[ENV]") == -1 or objective_label.text.find("[GEAR]") == -1:
-		push_error("R100 dynamic run-status HUD did not show objective, environment, and inventory indicators.")
+	if (heat_presentation.get("ticks", []) as Array).size() != 2 or not bool(hud_presentation.get("time_interactive", false)):
+		push_error("R100 structured run-status HUD is missing threshold ticks or interactive time.")
 		quit(1)
 		return
-	if str(run_hud_snapshot.get("heat_meter", "")).find("[") == -1 or str(run_hud_snapshot.get("heat_meter", "")).find("]") == -1:
-		push_error("R100 dynamic run-status HUD did not expose a heat meter.")
+	if not drunk_presentation.has("ghost_visible"):
+		push_error("R100 structured run-status HUD does not expose pending-drink ghost state.")
 		quit(1)
 		return
 	var save_status_label: Label = app.get("save_status_label")
-	if save_status_label == null or save_status_label.text.find("[AUTO]") == -1:
+	if save_status_label == null or save_status_label.text.find("Autosave") == -1:
 		push_error("R100 dynamic run-status HUD did not show autosave status as a compact indicator.")
 		quit(1)
 		return

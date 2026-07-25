@@ -114,6 +114,7 @@ const TerminalConsequenceViewModelScript := preload("res://scripts/ui/terminal_c
 const EnvironmentInteractionViewModelScript := preload("res://scripts/ui/environment_interaction_view_model.gd")
 const EnvironmentInteractionControllerScript := preload("res://scripts/ui/environment_interaction_controller.gd")
 const FoundationHudViewModelScript := preload("res://scripts/ui/foundation_hud_view_model.gd")
+const FoundationHudBarScript := preload("res://scripts/ui/foundation_hud_bar.gd")
 const FoundationActionViewModelScript := preload("res://scripts/ui/foundation_action_view_model.gd")
 const FoundationTravelViewModelScript := preload("res://scripts/ui/foundation_travel_view_model.gd")
 const FoundationScreenBuilderScript := preload("res://scripts/ui/foundation_screen_builder.gd")
@@ -365,6 +366,7 @@ var interactable_object_view_cache: Array = []
 var interactable_object_view_cache_valid := false
 var interactable_object_view_cache_key := ""
 var run_hud_panel: Panel
+var structured_hud: FoundationHudBar
 var visual_panel_container: PanelContainer
 var title_label: Label
 var summary_label: Label
@@ -5592,6 +5594,9 @@ func _render_environment_screen() -> void:
 	status_label.text = str(hud_model.get("status_text", ""))
 	if objective_label != null:
 		objective_label.text = str(hud_model.get("objective_text", ""))
+	if structured_hud != null:
+		structured_hud.set_reduce_motion(_reduce_motion_enabled())
+		structured_hud.render(hud_model)
 	_style_hud_for_recent_consequence()
 	if save_status_label != null:
 		save_status_label.text = str(hud_model.get("save_text", ""))
@@ -7671,7 +7676,9 @@ func current_objective_hud_snapshot() -> Dictionary:
 func current_run_status_hud_snapshot() -> Dictionary:
 	if run_state == null:
 		return {}
-	return _run_status_hud_model()
+	var snapshot := _run_status_hud_model()
+	snapshot["presentation"] = structured_hud.current_snapshot() if structured_hud != null else {}
+	return snapshot
 
 
 func current_spatial_interaction_snapshot() -> Dictionary:

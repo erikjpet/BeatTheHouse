@@ -17,38 +17,36 @@ static func run_status_model(run_state: RunState, data: Dictionary) -> Dictionar
 	var inventory_items: Array = data.get("inventory_items", [])
 	var environment := run_state.current_environment
 	var bankroll := int(data.get("presented_bankroll", run_state.bankroll))
-	var bankroll_text := "[$] Bankroll %d" % bankroll
+	var bankroll_text := "Bankroll $%d" % bankroll
 	if bankroll_delta != 0:
 		bankroll_text += " (%+d)" % bankroll_delta
+	var chips_delta := int(recent_result.get("chips_delta", deltas.get("chips_delta", 0)))
 	if run_state.is_grand_casino_environment():
-		var chips_delta := int(recent_result.get("chips_delta", deltas.get("chips_delta", 0)))
-		bankroll_text += "  [CHIPS] %d" % run_state.grand_casino_chips
+		bankroll_text += "  Chips %d" % run_state.grand_casino_chips
 		if chips_delta != 0:
 			bankroll_text += " (%+d)" % chips_delta
-	var heat_meter := hud_meter(run_state.suspicion_level(), 100, 10)
-	var heat_text := "[HEAT] Risk: %s %s" % [heat_meter, run_state.security_pressure_label().capitalize()]
+	var heat_text := "Heat %d · %s" % [run_state.suspicion_level(), run_state.security_pressure_label().capitalize()]
 	if heat_delta != 0:
 		heat_text += " (%+d)" % heat_delta
-	var drunk_meter := hud_meter(run_state.drunk_level, 100, 8)
 	var speed_percent := run_state.drunk_time_scale_percent()
-	var alcohol_text := "[DRINK] %s %s Luck %+d" % [run_state.alcohol_condition_label().capitalize(), drunk_meter, run_state.effective_luck()]
+	var alcohol_text := "Drunk %d · %s · Luck %+d" % [run_state.drunk_level, run_state.alcohol_condition_label().capitalize(), run_state.effective_luck()]
 	if run_state.drunk_level > 0:
 		alcohol_text += " Time %d%%" % speed_percent
 	var pending_drink := run_state.pending_drunk_absorption_amount()
 	if pending_drink > 0:
 		alcohol_text += " (+%d pending)" % pending_drink
 	var player_text: Callable = data.get("player_facing_text", Callable())
-	var debt_text := "[DEBT] %s" % hud_debt_text(debt_items, player_text)
-	var run_text := "[RUN] %s" % hud_run_status_text(run_state, pressure)
-	var clock_text := "[TIME] %s" % run_state.clock_display_text()
+	var debt_text := "Debt %s" % hud_debt_text(debt_items, player_text)
+	var run_text := "Run %s" % hud_run_status_text(run_state, pressure)
+	var clock_text := run_state.clock_display_text()
 	var save_text := hud_save_text(bool(data.get("has_save", false)), str(data.get("save_status_message", "")), player_text)
 	var goal_text := hud_goal_text(run_state, pressure, objective, player_text)
 	var label_from_id: Callable = data.get("label_from_id", Callable())
-	var environment_text := "[ENV] %s / %s" % [
+	var environment_text := "%s · %s" % [
 		hud_short(str(environment.get("display_name", "Environment")), 28, player_text),
 		_call_string(label_from_id, str(environment.get("kind", environment.get("archetype_id", "room")))),
 	]
-	var inventory_text := "[GEAR] %s" % hud_inventory_text(inventory_items, player_text)
+	var inventory_text := "Gear %s" % hud_inventory_text(inventory_items, player_text)
 	var economy_text := "Cash: %s" % str(data.get("economy_text", ""))
 	var heat_summary_text := "Heat: %s" % run_state.security_pressure_label().capitalize()
 	var pit_boss_text := pit_boss_hud_text(pit_boss)
@@ -57,7 +55,7 @@ static func run_status_model(run_state: RunState, data: Dictionary) -> Dictionar
 	var next_hint := str(next_objective.get("hint", ""))
 	var next_text := "Next: %s" % next_hint if not next_hint.is_empty() else "Next: inspect the room"
 	var pressure_text := objective_pressure_text(pressure)
-	var objective_parts := ["[GOAL] Goal: %s" % goal_text, economy_text, heat_summary_text, alcohol_summary_text, environment_text, inventory_text, next_text]
+	var objective_parts := ["Goal: %s" % goal_text, economy_text, heat_summary_text, alcohol_summary_text, environment_text, inventory_text, next_text]
 	if not pressure_text.is_empty():
 		objective_parts.insert(3, "Status: %s" % hud_short(pressure_text, 38, player_text))
 	if not pit_boss_text.is_empty():
@@ -65,6 +63,17 @@ static func run_status_model(run_state: RunState, data: Dictionary) -> Dictionar
 	var home_text := hud_home_text(run_state, player_text)
 	if not home_text.is_empty():
 		objective_parts.insert(5, home_text)
+	var status_icons: Array = []
+	if not debt_items.is_empty():
+		status_icons.append({"id": "debt", "icon": "debt", "label": "Debt", "tooltip": hud_debt_text(debt_items, player_text)})
+	if not home_text.is_empty():
+		status_icons.append({"id": "home", "icon": "home", "label": "Home", "tooltip": home_text})
+	if bool(pit_boss.get("active", false)):
+		status_icons.append({"id": "pit_boss", "icon": "alert", "label": "Pit boss", "tooltip": pit_boss_hud_text(pit_boss)})
+	if ["distressed", "recovery", "failed"].has(str(pressure.get("state", ""))):
+		status_icons.append({"id": "pressure", "icon": "danger", "label": "Pressure", "tooltip": objective_pressure_text(pressure)})
+	if bool(data.get("has_save", false)) or not str(data.get("save_status_message", "")).is_empty():
+		status_icons.append({"id": "save", "icon": "save", "label": "Save", "tooltip": save_text})
 	return {
 		"status_text": "%s  %s  %s  %s  %s  %s" % [clock_text, bankroll_text, heat_text, alcohol_text, debt_text, run_text],
 		"objective_text": " | ".join(objective_parts),
@@ -74,8 +83,11 @@ static func run_status_model(run_state: RunState, data: Dictionary) -> Dictionar
 		"bankroll_text": bankroll_text,
 		"bankroll": bankroll,
 		"bankroll_delta": bankroll_delta,
+		"show_chips": run_state.is_grand_casino_environment(),
+		"chips": run_state.grand_casino_chips,
+		"chips_delta": chips_delta,
 		"heat_text": heat_text,
-		"heat_meter": heat_meter,
+		"heat_meter": {"value": run_state.suspicion_level(), "maximum": 100, "ticks": [35, 70]},
 		"heat_level": run_state.suspicion_level(),
 		"heat_delta": heat_delta,
 		"alcohol_text": alcohol_text,
@@ -101,6 +113,9 @@ static func run_status_model(run_state: RunState, data: Dictionary) -> Dictionar
 		"next_objective": next_objective,
 		"pressure": pressure,
 		"run_status": run_state.run_status,
+		"clock_display": run_state.clock_display_text(),
+		"clock_tooltip": "Open the schedule for day/night timing and closing pressure.",
+		"status_icons": status_icons,
 	}
 
 
@@ -114,8 +129,8 @@ static func meta_status_model(home: Dictionary) -> Dictionary:
 		fields.append({"id": "next_home_price", "label": next_label, "value": next_price})
 	return {
 		"mode": "meta",
-		"status_text": "[GOLD] Gold %d" % gold,
-		"objective_text": "[HOME] %s - %d gold" % [next_label, next_price] if not upgrade.is_empty() else "",
+		"status_text": "Gold %d" % gold,
+		"objective_text": "%s · %d gold" % [next_label, next_price] if not upgrade.is_empty() else "",
 		"save_text": "",
 		"fields": fields,
 		"gold": gold,
@@ -315,12 +330,12 @@ static func hud_run_status_text(run_state: RunState, pressure: Dictionary) -> St
 
 
 static func hud_save_text(has_save: bool, status: String, player_facing_text: Callable) -> String:
-	return "[AUTO] %s / %s" % [("on" if has_save else "pending").capitalize(), hud_short("current run" if status.is_empty() else status, 24, player_facing_text)]
+	return "Autosave %s · %s" % [("on" if has_save else "pending").capitalize(), hud_short("current run" if status.is_empty() else status, 24, player_facing_text)]
 
 
 static func hud_meter(value: int, maximum: int, width: int) -> String:
 	var filled := clampi(roundi(float(clampi(value, 0, maximum)) / float(maximum) * float(width)), 0, width) if maximum > 0 and width > 0 else 0
-	return "[%s%s]" % ["#".repeat(filled), "-".repeat(maxi(0, width - filled))]
+	return "%d/%d (%d of %d segments)" % [clampi(value, 0, maximum), maximum, filled, width]
 
 
 static func hud_short(text: String, max_length: int, player_facing_text: Callable) -> String:
