@@ -24,6 +24,7 @@ var _surface: InventoryContainerSurface
 var _detail_panel: PanelContainer
 var _detail_box: VBoxContainer
 var _close_button: Button
+var _focus_return_target: Control
 
 
 func _init() -> void:
@@ -36,6 +37,10 @@ func configure(texture_provider: Callable) -> void:
 
 
 func open(model: Dictionary) -> void:
+	if not visible:
+		var focus_owner := get_viewport().gui_get_focus_owner() if get_viewport() != null else null
+		if focus_owner is Control and focus_owner != self and not is_ancestor_of(focus_owner):
+			_focus_return_target = focus_owner as Control
 	visible = true
 	update_model(model)
 	move_to_front()
@@ -57,10 +62,21 @@ func update_model(model: Dictionary) -> void:
 
 
 func close() -> void:
+	var was_visible := visible
 	visible = false
 	_model = {}
 	_surface.update_model({})
 	FoundationWidgets.clear(_detail_box)
+	if was_visible:
+		call_deferred("_restore_previous_focus")
+
+
+func _restore_previous_focus() -> void:
+	if visible:
+		return
+	if is_instance_valid(_focus_return_target) and _focus_return_target.visible and _focus_return_target.focus_mode != Control.FOCUS_NONE:
+		_focus_return_target.grab_focus()
+	_focus_return_target = null
 
 
 func is_open() -> bool:

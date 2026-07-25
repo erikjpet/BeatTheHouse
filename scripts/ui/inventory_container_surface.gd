@@ -38,7 +38,7 @@ var _container_backgrounds: Array = []
 var _container_foregrounds: Array = []
 var _container_fallbacks: Array = []
 var _container_labels: Array = []
-var _container_art_rects: Array = []
+var _container_art_rects: Dictionary = {}
 var _slot_buttons: Array = []
 var _slot_icons: Array = []
 var _slot_markers: Array = []
@@ -87,12 +87,14 @@ func focus_selection(selection_key: String, emit_intent: bool = true) -> void:
 	if location.is_empty():
 		return
 	var next_container_index := int(location.get("container_index", _active_container_index))
-	if next_container_index != _active_container_index:
-		_active_container_index = next_container_index
-		_render_active_container()
+	var changed_container := next_container_index != _active_container_index
+	_active_container_index = next_container_index
 	_selected_key = clean_key
 	_model["selected_key"] = _selected_key
-	_apply_slot_styles()
+	if changed_container or _small_screen_mode:
+		_render_active_container()
+	else:
+		_apply_slot_styles()
 	_focus_button_for_key(_selected_key)
 	if emit_intent:
 		slot_selected.emit(_selected_key)
@@ -104,12 +106,15 @@ func set_reduced_motion(enabled: bool) -> void:
 
 
 func set_small_screen_mode(enabled: bool) -> void:
+	if _small_screen_mode == enabled:
+		return
 	_small_screen_mode = enabled
+	_active_page_index = 0
 	if _previous_button != null:
 		_previous_button.custom_minimum_size.y = SmallScreenPolicyScript.control_height(FoundationWidgets.MIN_NATIVE_TOUCH_TARGET_HEIGHT, enabled)
 	if _next_button != null:
 		_next_button.custom_minimum_size.y = SmallScreenPolicyScript.control_height(FoundationWidgets.MIN_NATIVE_TOUCH_TARGET_HEIGHT, enabled)
-	_layout_slots()
+	_render_active_container()
 
 
 func active_container_key() -> String:
@@ -147,10 +152,12 @@ func layout_snapshot() -> Dictionary:
 	return {
 		"active_container_key": active_container_key(),
 		"active_container_type": str(_active_container().get("container_type", "loose_carry")),
+		"active_container_capacity": int(_active_container().get("capacity", 0)),
+		"active_container_occupied_count": _occupied_slot_count(_active_container()),
 		"container_count": _containers.size(),
 		"active_page_index": _active_page_index,
 		"visible_page_count": _page_count(_active_container()),
-		"visible_container_count": _containers.size(),
+		"visible_container_count": _visible_container_indices().size(),
 		"container_rects": _container_rect_snapshots(),
 		"stage_rect": _stage.get_global_rect() if _stage != null else Rect2(),
 		"empty_text_rect": _empty_label.get_global_rect() if _empty_label != null else Rect2(),
@@ -158,15 +165,52 @@ func layout_snapshot() -> Dictionary:
 		"selected_key": _selected_key,
 		"hovered_key": _hovered_key,
 		"focused_key": _focused_key,
+		"multi_selected_keys": _string_array(_model.get("multi_selected_keys", [])),
 		"slots": slots,
 		"pool_count": _slot_buttons.size(),
 		"rendered_slot_count": _slot_models.size(),
+		"texture_binding_count": _texture_binding_count(),
+		"unique_texture_count": _unique_texture_count(),
 		"small_screen_mode": _small_screen_mode,
 		"reduced_motion": _reduced_motion,
 		"high_contrast": VisualStyle.high_contrast_enabled,
 		"item_presentation": "transparent_cutout",
 		"selection_cue": "underline_and_marker",
 	}
+
+
+func _texture_binding_count() -> int:
+	var count := 0
+	for background_value in _container_backgrounds:
+		var background := background_value as TextureRect
+		if background.visible and background.texture != null:
+			count += 1
+	for foreground_value in _container_foregrounds:
+		var foreground := foreground_value as TextureRect
+		if foreground.visible and foreground.texture != null:
+			count += 1
+	for icon_value in _slot_icons:
+		var icon := icon_value as TextureRect
+		if icon.visible and icon.texture != null:
+			count += 1
+	return count
+
+
+func _unique_texture_count() -> int:
+	var ids: Dictionary = {}
+	for background_value in _container_backgrounds:
+		var background := background_value as TextureRect
+		if background.visible and background.texture != null:
+			ids[background.texture.get_instance_id()] = true
+	for foreground_value in _container_foregrounds:
+		var foreground := foreground_value as TextureRect
+		if foreground.visible and foreground.texture != null:
+			ids[foreground.texture.get_instance_id()] = true
+	for icon_value in _slot_icons:
+		var icon := icon_value as TextureRect
+		if icon.visible and icon.texture != null:
+			ids[icon.texture.get_instance_id()] = true
+	return ids.size()
 
 
 func _build() -> void:
@@ -262,8 +306,14 @@ func _render_active_container() -> void:
 	_container_art_rects.clear()
 	_slot_models = []
 	var aggregate_used_count := 0
-	var single_container_paged := _containers.size() == 1
-	for container_index in range(_containers.size()):
+	for index in range(_container_backgrounds.size()):
+		(_container_backgrounds[index] as TextureRect).visible = false
+		(_container_foregrounds[index] as TextureRect).visible = false
+		(_container_fallbacks[index] as Panel).visible = false
+		(_container_labels[index] as Label).visible = false
+	var paged_active_container := _small_screen_mode
+	for container_index_value in _visible_container_indices():
+		var container_index := int(container_index_value)
 		var container: Dictionary = _containers[container_index]
 		var container_type := str(container.get("container_type", "loose_carry"))
 		var presentation := CatalogScript.presentation(container_type, _catalog)
@@ -272,17 +322,20 @@ func _render_active_container() -> void:
 		var fallback := _container_fallbacks[container_index] as Panel
 		background.texture = _texture(str(presentation.get("background_path", "")))
 		foreground.texture = _texture(str(presentation.get("foreground_path", "")))
+		background.visible = true
+		foreground.visible = foreground.texture != null
 		fallback.visible = background.texture == null
+		(_container_labels[container_index] as Label).visible = true
 		var all_slots := _normalized_slots(container)
-		var page_size := _page_size(all_slots.size()) if single_container_paged else maxi(1, all_slots.size())
+		var page_size := _page_size(all_slots.size()) if paged_active_container else maxi(1, all_slots.size())
 		var page_count := maxi(1, int(ceil(float(all_slots.size()) / float(page_size))))
-		if single_container_paged and _small_screen_mode and not _selected_key.is_empty():
+		if paged_active_container and not _selected_key.is_empty():
 			for slot_index in range(all_slots.size()):
 				if str((all_slots[slot_index] as Dictionary).get("selection_key", "")) == _selected_key:
 					_active_page_index = slot_index / page_size
 					break
-		var page_index := clampi(_active_page_index, 0, page_count - 1) if single_container_paged else 0
-		if single_container_paged:
+		var page_index := clampi(_active_page_index, 0, page_count - 1) if paged_active_container else 0
+		if paged_active_container:
 			_active_page_index = page_index
 		var visible_slots := all_slots.slice(page_index * page_size, mini(all_slots.size(), (page_index + 1) * page_size))
 		for slot_index in range(visible_slots.size()):
@@ -311,24 +364,24 @@ func _render_active_container() -> void:
 		(_slot_icons[index] as TextureRect).texture = _texture(str(item.get("asset_path", item.get("icon_path", "")))) if occupied else null
 		(_slot_markers[index] as Label).text = str(slot.get("state_marker", "")) if occupied else ""
 		button.tooltip_text = _slot_tooltip(slot)
-	var current_page_count := _page_count(_active_container()) if single_container_paged else 1
-	var count_text := _surface_summary_label(current_page_count)
-	var page_count := 1
-	var used_count := aggregate_used_count
-	var container := _active_container()
-	var presentation := CatalogScript.presentation(str(container.get("container_type", "loose_carry")), _catalog)
-	if page_count > 1:
-		count_text += "  ·  Page %d/%d" % [_active_page_index + 1, page_count]
-	_container_label.text = "%s  -  %s" % [str(container.get("display_name", presentation.get("display_name", "Inventory"))), count_text]
-	_previous_button.visible = _containers.size() > 1 or page_count > 1
-	_next_button.visible = _containers.size() > 1 or page_count > 1
-	_empty_label.visible = used_count == 0
-	_container_label.text = count_text
-	_previous_button.visible = single_container_paged and current_page_count > 1
-	_next_button.visible = single_container_paged and current_page_count > 1
+	var current_page_count := _page_count(_active_container()) if paged_active_container else 1
+	_container_label.text = _surface_summary_label(current_page_count)
+	_previous_button.visible = _containers.size() > 1 or current_page_count > 1
+	_next_button.visible = _containers.size() > 1 or current_page_count > 1
 	_empty_label.visible = aggregate_used_count == 0
 	_layout_slots()
 	_apply_slot_styles()
+
+
+func _visible_container_indices() -> Array:
+	if _containers.is_empty():
+		return []
+	if _small_screen_mode and _containers.size() > 1:
+		return [clampi(_active_container_index, 0, _containers.size() - 1)]
+	var result: Array = []
+	for index in range(_containers.size()):
+		result.append(index)
+	return result
 
 
 func _normalized_slots(container: Dictionary) -> Array:
@@ -386,7 +439,8 @@ func _layout_container_art() -> void:
 	_container_art_rects.clear()
 	if _stage == null:
 		return
-	var count := _containers.size()
+	var visible_indices := _visible_container_indices()
+	var count := visible_indices.size()
 	if count <= 0:
 		return
 	var gap := 8.0
@@ -397,27 +451,28 @@ func _layout_container_art() -> void:
 		maxf(1.0, (_stage.size.x - gap * float(columns - 1)) / float(columns)),
 		maxf(1.0, (_stage.size.y - gap * float(rows - 1)) / float(rows))
 	)
-	for index in range(count):
-		var row := index / columns
-		var column := index % columns
+	for visible_index in range(count):
+		var container_index := int(visible_indices[visible_index])
+		var row := visible_index / columns
+		var column := visible_index % columns
 		var cell_pos := Vector2(float(column) * (cell_size.x + gap), float(row) * (cell_size.y + gap))
 		var board_side := floorf(minf(cell_size.x, maxf(1.0, cell_size.y - label_height)))
 		var board_rect := Rect2(
 			cell_pos + Vector2(floorf((cell_size.x - board_side) * 0.5), label_height),
 			Vector2(board_side, board_side)
 		)
-		_container_art_rects.append(board_rect)
-		var container: Dictionary = _containers[index]
+		_container_art_rects[container_index] = board_rect
+		var container: Dictionary = _containers[container_index]
 		var used_count := _occupied_slot_count(container)
 		var capacity := int(container.get("capacity", 0))
 		var count_text := "%d/%d" % [used_count, capacity] if capacity > 0 else "%d items" % used_count
-		var label := _container_labels[index] as Label
+		var label := _container_labels[container_index] as Label
 		label.position = cell_pos
 		label.size = Vector2(cell_size.x, label_height)
 		label.text = "%s  %s" % [str(container.get("display_name", "Container")).left(22), count_text]
-		var fallback := _container_fallbacks[index] as Panel
-		var background := _container_backgrounds[index] as TextureRect
-		var foreground := _container_foregrounds[index] as TextureRect
+		var fallback := _container_fallbacks[container_index] as Panel
+		var background := _container_backgrounds[container_index] as TextureRect
+		var foreground := _container_foregrounds[container_index] as TextureRect
 		for control in [fallback, background, foreground]:
 			var node := control as Control
 			node.position = board_rect.position
@@ -425,7 +480,7 @@ func _layout_container_art() -> void:
 
 
 func _container_art_rect(container_index: int) -> Rect2:
-	if container_index >= 0 and container_index < _container_art_rects.size():
+	if _container_art_rects.has(container_index):
 		return _container_art_rects[container_index] as Rect2
 	return _art_rect()
 
@@ -439,7 +494,7 @@ func _occupied_slot_count(container: Dictionary) -> int:
 
 
 func _surface_summary_label(page_count: int) -> String:
-	if _containers.size() == 1:
+	if _containers.size() == 1 or _small_screen_mode:
 		var container := _active_container()
 		var presentation := CatalogScript.presentation(str(container.get("container_type", "loose_carry")), _catalog)
 		var used_count := _occupied_slot_count(container)
@@ -448,17 +503,18 @@ func _surface_summary_label(page_count: int) -> String:
 		if page_count > 1:
 			count_text += "  Page %d/%d" % [_active_page_index + 1, page_count]
 		return "%s  -  %s" % [str(container.get("display_name", presentation.get("display_name", "Inventory"))), count_text]
-	return "Inventory containers  -  %d visible" % _containers.size()
+	return "Inventory containers  -  %d visible" % _visible_container_indices().size()
 
 
 func _container_rect_snapshots() -> Array:
 	var result: Array = []
-	for index in range(_container_art_rects.size()):
+	for index_value in _visible_container_indices():
+		var index := int(index_value)
 		var container: Dictionary = _containers[index] if index < _containers.size() else {}
 		result.append({
 			"key": str(container.get("key", "")),
 			"display_name": str(container.get("display_name", "")),
-			"rect": _container_art_rects[index],
+			"rect": _container_art_rects.get(index, Rect2()),
 		})
 	return result
 
@@ -517,8 +573,7 @@ func _layout_slots() -> void:
 		var container: Dictionary = _containers[container_index] if container_index < _containers.size() else _active_container()
 		var container_type := str(container.get("container_type", "loose_carry"))
 		var full_slot_count := maxi(_normalized_slots(container).size(), int(container.get("capacity", 0)))
-		var single_container_paged := _containers.size() == 1
-		var page_reflow := single_container_paged and _small_screen_mode and full_slot_count > SMALL_SCREEN_PAGE_SIZE
+		var page_reflow := _small_screen_mode and full_slot_count > SMALL_SCREEN_PAGE_SIZE
 		var normalized_rects := CatalogScript.slot_rects("small_screen_page" if page_reflow else container_type, _slot_models.size() if page_reflow else full_slot_count, _catalog)
 		var presentation := CatalogScript.presentation(container_type, _catalog)
 		var icon_scale := clampf(float(presentation.get("item_icon_scale", 0.70)), 0.25, 1.0)
@@ -531,10 +586,13 @@ func _layout_slots() -> void:
 			art_rect.position + normalized.position * art_rect.size,
 			normalized.size * art_rect.size
 		)
-		var minimum_target := SmallScreenPolicyScript.CONTROL_TOUCH_TARGET_HEIGHT if _small_screen_mode and _containers.size() == 1 else FoundationWidgets.MIN_NATIVE_TOUCH_TARGET_HEIGHT
+		var minimum_target := SmallScreenPolicyScript.CONTROL_TOUCH_TARGET_HEIGHT if _small_screen_mode else FoundationWidgets.MIN_NATIVE_TOUCH_TARGET_HEIGHT
 		if bool((_slot_models[index] as Dictionary).get("occupied", false)):
-			pixel_rect.size.x = maxf(pixel_rect.size.x, minimum_target)
-			pixel_rect.size.y = maxf(pixel_rect.size.y, minimum_target)
+			var expanded_size := Vector2(maxf(pixel_rect.size.x, minimum_target), maxf(pixel_rect.size.y, minimum_target))
+			pixel_rect.position -= (expanded_size - pixel_rect.size) * 0.5
+			pixel_rect.size = expanded_size
+			pixel_rect.position.x = clampf(pixel_rect.position.x, art_rect.position.x, maxf(art_rect.position.x, art_rect.end.x - pixel_rect.size.x))
+			pixel_rect.position.y = clampf(pixel_rect.position.y, art_rect.position.y, maxf(art_rect.position.y, art_rect.end.y - pixel_rect.size.y))
 		var button := _slot_buttons[index] as Button
 		button.position = pixel_rect.position
 		button.size = pixel_rect.size
@@ -645,9 +703,7 @@ func _on_slot_focused(index: int) -> void:
 
 func _on_slot_gui_input(event: InputEvent, index: int) -> void:
 	if event is InputEventMouseButton and event.double_click and event.button_index == MOUSE_BUTTON_LEFT:
-		var key := str((_slot_models[index] as Dictionary).get("selection_key", "")) if index >= 0 and index < _slot_models.size() else ""
-		if not key.is_empty():
-			slot_confirmed.emit(key)
+		_on_slot_pressed(index)
 		accept_event()
 		return
 	if not event is InputEventKey and not event is InputEventJoypadButton:
@@ -708,7 +764,7 @@ func _change_container(delta: int) -> void:
 		_active_container_index = posmod(_active_container_index + delta, _containers.size())
 		var destination_pages := _page_count(_active_container())
 		_active_page_index = destination_pages - 1 if delta < 0 else 0
-	_selected_key = _first_occupied_key_on_page(_active_container_index, _active_page_index)
+	_selected_key = _first_preferred_key_on_page(_active_container_index, _active_page_index)
 	if _selected_key.is_empty():
 		_reconcile_selection_in_active_container()
 	_render_active_container()
@@ -731,10 +787,10 @@ func _reconcile_selection(previous_hint: Dictionary = {}) -> void:
 			_active_container_index = previous_container_index
 			_model["selected_key"] = _selected_key
 			return
-	_selected_key = _first_occupied_key(_active_container_index)
+	_selected_key = _first_preferred_key(_active_container_index)
 	if _selected_key.is_empty():
 		for index in range(_containers.size()):
-			_selected_key = _first_occupied_key(index)
+			_selected_key = _first_preferred_key(index)
 			if not _selected_key.is_empty():
 				_active_container_index = index
 				break
@@ -786,32 +842,52 @@ func _nearest_occupied_key(container_index: int, hint: Dictionary) -> String:
 
 
 func _reconcile_selection_in_active_container() -> void:
-	_selected_key = _first_occupied_key(_active_container_index)
+	_selected_key = _first_preferred_key(_active_container_index)
 	_model["selected_key"] = _selected_key
 
 
-func _first_occupied_key(container_index: int) -> String:
+func _first_preferred_key(container_index: int) -> String:
 	if container_index < 0 or container_index >= _containers.size():
 		return ""
+	var first_inspectable := ""
 	for slot_value in _dictionary_array((_containers[container_index] as Dictionary).get("slots", [])):
-		if bool(slot_value.get("occupied", false)):
-			var key := str(slot_value.get("selection_key", ""))
-			if not key.is_empty():
-				return key
-	return ""
+		if not bool(slot_value.get("occupied", false)):
+			continue
+		var key := str(slot_value.get("selection_key", ""))
+		if key.is_empty():
+			continue
+		if first_inspectable.is_empty():
+			first_inspectable = key
+		if bool(slot_value.get("actionable", false)) and str(slot_value.get("disabled_reason", "")).is_empty():
+			return key
+	return first_inspectable
 
 
-func _first_occupied_key_on_page(container_index: int, page_index: int) -> String:
+func _first_occupied_key(container_index: int) -> String:
+	return _first_preferred_key(container_index)
+
+
+func _first_preferred_key_on_page(container_index: int, page_index: int) -> String:
 	if container_index < 0 or container_index >= _containers.size():
 		return ""
 	var slots := _dictionary_array((_containers[container_index] as Dictionary).get("slots", []))
 	var page_size := _page_size(maxi(slots.size(), int((_containers[container_index] as Dictionary).get("capacity", 0))))
 	var start := maxi(0, page_index) * page_size
+	var first_inspectable := ""
 	for index in range(start, mini(slots.size(), start + page_size)):
-		var key := str((slots[index] as Dictionary).get("selection_key", ""))
-		if bool((slots[index] as Dictionary).get("occupied", false)) and not key.is_empty():
+		var slot: Dictionary = slots[index]
+		var key := str(slot.get("selection_key", ""))
+		if not bool(slot.get("occupied", false)) or key.is_empty():
+			continue
+		if first_inspectable.is_empty():
+			first_inspectable = key
+		if bool(slot.get("actionable", false)) and str(slot.get("disabled_reason", "")).is_empty():
 			return key
-	return ""
+	return first_inspectable
+
+
+func _first_occupied_key_on_page(container_index: int, page_index: int) -> String:
+	return _first_preferred_key_on_page(container_index, page_index)
 
 
 func _page_size(slot_count: int) -> int:
@@ -908,4 +984,13 @@ func _dictionary_array(value: Variant) -> Array:
 	for entry in value as Array:
 		if typeof(entry) == TYPE_DICTIONARY:
 			result.append((entry as Dictionary).duplicate(true))
+	return result
+
+
+func _string_array(value: Variant) -> Array:
+	var result: Array = []
+	if typeof(value) != TYPE_ARRAY:
+		return result
+	for entry in value as Array:
+		result.append(str(entry))
 	return result

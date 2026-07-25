@@ -43,6 +43,7 @@ var _close_button: Button
 var _empty_label: Label
 var _small_screen_mode := false
 var _reduced_motion := false
+var _focus_return_target: Control
 
 
 func _init() -> void:
@@ -74,6 +75,10 @@ func set_reduced_motion(enabled: bool) -> void:
 
 
 func open(model: Dictionary) -> void:
+	if not visible:
+		var focus_owner := get_viewport().gui_get_focus_owner() if get_viewport() != null else null
+		if focus_owner is Control and focus_owner != self and not is_ancestor_of(focus_owner):
+			_focus_return_target = focus_owner as Control
 	visible = true
 	update_model(model)
 	move_to_front()
@@ -99,6 +104,7 @@ func update_model(model: Dictionary) -> void:
 
 
 func close() -> void:
+	var was_visible := visible
 	visible = false
 	if _container_surface != null:
 		_container_surface.update_model({})
@@ -110,6 +116,16 @@ func close() -> void:
 	_selected_item_source = ""
 	_selected_item_selection_key = ""
 	_model = {}
+	if was_visible:
+		call_deferred("_restore_previous_focus")
+
+
+func _restore_previous_focus() -> void:
+	if visible:
+		return
+	if is_instance_valid(_focus_return_target) and _focus_return_target.visible and _focus_return_target.focus_mode != Control.FOCUS_NONE:
+		_focus_return_target.grab_focus()
+	_focus_return_target = null
 
 
 func is_open() -> bool:
@@ -370,6 +386,8 @@ func _render_detail(item: Dictionary, merchant_mode: bool = false) -> void:
 	FoundationWidgets.add_detail_row(_detail_box, "Type", "%s / %s" % [str(item.get("item_class", "unknown")).capitalize(), str(item.get("domain", "global")).capitalize()])
 	if item.has("capacity") and int(item.get("capacity", 0)) > 0:
 		FoundationWidgets.add_detail_row(_detail_box, "Stores", "%d items" % int(item.get("capacity", 0)))
+	if _mode() == "place_container":
+		_add_open_container_preview(item)
 	_add_section_header("What It Does", "Read before you move or equip it.")
 	_add_attribute_badges(item)
 	_add_collection_float_rows(item)
@@ -389,6 +407,31 @@ func _render_detail(item: Dictionary, merchant_mode: bool = false) -> void:
 			_render_home_storage_actions(item)
 		_:
 			_render_inventory_actions(item)
+
+
+func _add_open_container_preview(item: Dictionary) -> void:
+	var container_type := str(item.get("id", "")).strip_edges().to_lower()
+	var presentation := InventoryContainerCatalogScript.presentation(container_type)
+	var art_path := str(presentation.get("background_path", "")).strip_edges()
+	var texture: Texture2D = null
+	if not art_path.is_empty() and _texture_provider.is_valid():
+		texture = _texture_provider.call(art_path) as Texture2D
+	if texture == null and not art_path.is_empty():
+		texture = load(art_path) as Texture2D
+	var preview := TextureRect.new()
+	preview.texture = texture
+	preview.custom_minimum_size = Vector2(180, 118)
+	preview.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	preview.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	preview.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	preview.tooltip_text = "Open %s preview with %d storage spaces" % [str(item.get("display_name", container_type)), int(item.get("capacity", 0))]
+	_detail_box.add_child(preview)
+	var caption := FoundationWidgets.muted_label(
+		"Open %s preview  -  %d selectable spaces after placement" % [str(item.get("display_name", container_type)), int(item.get("capacity", 0))],
+		11
+	)
+	caption.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_detail_box.add_child(caption)
 
 
 func _add_selected_item_header(item: Dictionary) -> void:

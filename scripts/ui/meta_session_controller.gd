@@ -259,7 +259,8 @@ func trade_up_candidates() -> Array:
 		candidates.append({
 			"label": "%s %s" % [str(collection.get("display_name", "Collection")), tier.capitalize()],
 			"summary": "Creates one %s item." % next_tier(tier).capitalize(),
-			"instance_ids": ids.slice(0, 5),
+			"eligible_instance_ids": ids,
+			"required_count": 5,
 		})
 	return candidates
 
