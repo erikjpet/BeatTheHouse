@@ -121,6 +121,7 @@ const ICON_SMALL := Vector2(24, 24)
 const ICON_MEDIUM := Vector2(32, 32)
 const ICON_LARGE := Vector2(48, 48)
 const HUD_METER_SIZE := Vector2(168, 18)
+const ENVIRONMENT_TITLE_SIZE := Vector2(320, 54)
 const TOOLTIP_MAX_WIDTH := 320.0
 const POPUP_MIN_WIDTH := 280.0
 const POPUP_MAX_WIDTH := 560.0

@@ -1,0 +1,92 @@
+[
+  {
+    "id": "corner_store",
+    "blurb": "Fluorescent aisles, a watchful clerk, and cheap chances near the register.",
+    "options": ["Browse counter", "Inspect games", "Leave"]
+  },
+  {
+    "id": "back_alley",
+    "blurb": "Bad light and worse offers. Read every silhouette before committing.",
+    "options": ["Hear offers", "Inspect pickups", "Find a route"]
+  },
+  {
+    "id": "motel",
+    "blurb": "A tired lobby where rooms, rumors, and bus routes cross.",
+    "options": ["Talk at desk", "Check services", "Travel"]
+  },
+  {
+    "id": "bar",
+    "blurb": "Loose talk, strong pours, and small games under warm neon.",
+    "options": ["Order", "Talk", "Play", "Leave"]
+  },
+  {
+    "id": "gas_station_casino",
+    "blurb": "Scratchers, machines, and road dust share one humming floor.",
+    "options": ["Play", "Shop", "Scout route"]
+  },
+  {
+    "id": "small_underground_casino",
+    "blurb": "Low ceiling, close tables, and no action without somebody noticing.",
+    "options": ["Choose table", "Read room", "Leave"]
+  },
+  {
+    "id": "jazz_club",
+    "blurb": "The band changes the room. Timing matters as much as the cards.",
+    "options": ["Listen", "Order", "Play", "Talk"]
+  },
+  {
+    "id": "kitty_cat_lounge",
+    "blurb": "Soft booths and sharp eyes hide a surprisingly serious floor.",
+    "options": ["Inspect lounge", "Play", "Talk", "Leave"]
+  },
+  {
+    "id": "delta_queen",
+    "blurb": "Riverboat tables roll beneath brass, velvet, and a practiced dealer's smile.",
+    "options": ["Choose table", "Walk deck", "Talk", "Disembark"]
+  },
+  {
+    "id": "beach",
+    "blurb": "Open air cools the heat, but every detour costs time.",
+    "options": ["Recover", "Inspect", "Travel"]
+  },
+  {
+    "id": "pawn_shop",
+    "blurb": "Cash, repairs, and second chances sit behind barred glass.",
+    "options": ["Buy", "Sell", "Repair", "Talk"]
+  },
+  {
+    "id": "grand_casino",
+    "blurb": "The main floor watches clean play, loud money, and every shortcut.",
+    "options": ["Choose table", "Read staff", "Visit Cage", "Travel"]
+  },
+  {
+    "id": "grand_casino_high_limit",
+    "blurb": "Bigger stakes and quieter scrutiny. The host remembers every hand.",
+    "options": ["Play high limit", "Read host", "Return"]
+  },
+  {
+    "id": "grand_casino_back_room",
+    "blurb": "Rourke asks once. Your answer, evidence, and heat decide the rest.",
+    "options": ["Answer", "Use evidence", "Hold nerve"]
+  },
+  {
+    "id": "grand_casino_cage",
+    "blurb": "Linda settles chips, markers, gifts, and Players Card business.",
+    "options": ["Cash out", "Settle marker", "Claim card", "Shop"]
+  },
+  {
+    "id": "motel_room",
+    "blurb": "Home room and lobby door. Regroup before the clock or rent turns.",
+    "options": ["Rest", "Manage storage", "Renew", "Enter lobby"]
+  },
+  {
+    "id": "apartment",
+    "blurb": "A steadier home with room to sort gear and plan the next run.",
+    "options": ["Rest", "Manage storage", "Review loadout", "Leave"]
+  },
+  {
+    "id": "house",
+    "blurb": "The long-term home: collection, storage, upgrades, and the next climb.",
+    "options": ["Collection", "Storage", "Trade up", "Start run"]
+  }
+]

@@ -115,6 +115,7 @@ const EnvironmentInteractionViewModelScript := preload("res://scripts/ui/environ
 const EnvironmentInteractionControllerScript := preload("res://scripts/ui/environment_interaction_controller.gd")
 const FoundationHudViewModelScript := preload("res://scripts/ui/foundation_hud_view_model.gd")
 const FoundationHudBarScript := preload("res://scripts/ui/foundation_hud_bar.gd")
+const EnvironmentHeaderScript := preload("res://scripts/ui/environment_header.gd")
 const FoundationActionViewModelScript := preload("res://scripts/ui/foundation_action_view_model.gd")
 const FoundationTravelViewModelScript := preload("res://scripts/ui/foundation_travel_view_model.gd")
 const FoundationScreenBuilderScript := preload("res://scripts/ui/foundation_screen_builder.gd")
@@ -367,6 +368,7 @@ var interactable_object_view_cache_valid := false
 var interactable_object_view_cache_key := ""
 var run_hud_panel: Panel
 var structured_hud: FoundationHudBar
+var environment_header: EnvironmentHeader
 var visual_panel_container: PanelContainer
 var title_label: Label
 var summary_label: Label
@@ -5597,6 +5599,8 @@ func _render_environment_screen() -> void:
 	if structured_hud != null:
 		structured_hud.set_reduce_motion(_reduce_motion_enabled())
 		structured_hud.render(hud_model)
+	if environment_header != null:
+		environment_header.render(run_state.current_environment, str(hud_model.get("goal_text", "")))
 	_style_hud_for_recent_consequence()
 	if save_status_label != null:
 		save_status_label.text = str(hud_model.get("save_text", ""))
@@ -7679,6 +7683,10 @@ func current_run_status_hud_snapshot() -> Dictionary:
 	var snapshot := _run_status_hud_model()
 	snapshot["presentation"] = structured_hud.current_snapshot() if structured_hud != null else {}
 	return snapshot
+
+
+func current_environment_header_snapshot() -> Dictionary:
+	return environment_header.current_snapshot() if environment_header != null else {}
 
 
 func current_spatial_interaction_snapshot() -> Dictionary:

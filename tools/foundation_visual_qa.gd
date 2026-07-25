@@ -2639,7 +2639,7 @@ func _assert_no_scroll_critical_path(context: String) -> void:
 		return
 	for entry in [
 		{"name": "structured_hud", "label": "structured HUD"},
-		{"name": "title_label", "label": "title"},
+		{"name": "environment_header", "label": "environment header"},
 	]:
 		var control := app.get(str(entry.get("name", ""))) as Control
 		_require(control != null and control.visible and control.is_visible_in_tree(), "%s %s is not visible." % [context, str(entry.get("label", ""))])

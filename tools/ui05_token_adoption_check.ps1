@@ -12,6 +12,7 @@ $tokenizedFiles = @(
     "scripts/ui/foundation_widgets.gd",
     "scripts/ui/foundation_hud_bar.gd",
     "scripts/ui/foundation_hud_view_model.gd",
+    "scripts/ui/environment_header.gd",
     "scripts/ui/segmented_meter.gd"
 )
 $violations = [System.Collections.Generic.List[string]]::new()

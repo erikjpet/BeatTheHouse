@@ -3,6 +3,7 @@ extends SceneTree
 const UIArtScript := preload("res://scripts/ui/ui_art.gd")
 const SegmentedMeterScript := preload("res://scripts/ui/segmented_meter.gd")
 const FoundationHudBarScript := preload("res://scripts/ui/foundation_hud_bar.gd")
+const EnvironmentHeaderScript := preload("res://scripts/ui/environment_header.gd")
 
 var failures: Array[String] = []
 
@@ -59,6 +60,28 @@ func _run() -> void:
 	hud.call("_on_time_pressed")
 	_check(bool(hud.current_snapshot().get("time_detail_visible", false)), "Time widget did not open its schedule detail.")
 	hud.queue_free()
+
+	var environment_config: Variant = JSON.parse_string(FileAccess.get_file_as_string("res://data/ui/environment_ui.json"))
+	_check(typeof(environment_config) == TYPE_ARRAY, "Environment UI data is not an authoritative data array.")
+	var environment_index: Dictionary = {}
+	for entry_value in environment_config:
+		if typeof(entry_value) == TYPE_DICTIONARY:
+			var entry: Dictionary = entry_value
+			environment_index[str(entry.get("id", ""))] = entry
+	for archetype_id in UIArtScript.ENVIRONMENT_TITLE_IDS:
+		_check(environment_index.has(archetype_id), "Environment UI data is missing %s." % archetype_id)
+		var entry: Dictionary = environment_index.get(archetype_id, {})
+		_check(not str(entry.get("blurb", "")).is_empty(), "%s has no cold-look blurb." % archetype_id)
+		_check(not (entry.get("options", []) as Array).is_empty(), "%s has no data-driven option strip." % archetype_id)
+	var header: EnvironmentHeader = EnvironmentHeaderScript.new()
+	root.add_child(header)
+	await process_frame
+	header.render({"archetype_id": "grand_casino_cage", "display_name": "Grand Casino Cage"}, "Settle the marker.")
+	var header_snapshot := header.current_snapshot()
+	_check(str(header_snapshot.get("archetype_id", "")) == "grand_casino_cage", "Environment header lost its archetype identity.")
+	_check(int(header_snapshot.get("option_count", 0)) == 4, "Environment header did not render its configured options.")
+	_check(not str(header_snapshot.get("title_texture", "")).is_empty(), "Environment header did not load its title plate.")
+	header.queue_free()
 
 	if failures.is_empty():
 		print("UI05_DESIGN_SYSTEM_CHECK PASS")

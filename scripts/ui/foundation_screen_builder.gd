@@ -216,6 +216,7 @@ static func build_run_screen(host: Variant) -> void:
 	title_row.add_theme_constant_override("separation", 8)
 	title_row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	host.title_label = host._label("", 17)
+	host.title_label.visible = false
 	host.title_label.autowrap_mode = TextServer.AUTOWRAP_OFF
 	host.title_label.clip_text = true
 	host.title_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -248,6 +249,7 @@ static func build_run_screen(host: Variant) -> void:
 	host._set_control_font_color(host.objective_label, VisualStyle.YELLOW)
 	hud_stack.add_child(host.objective_label)
 	host.summary_label = host._label("", 12)
+	host.summary_label.visible = false
 	host.summary_label.autowrap_mode = TextServer.AUTOWRAP_OFF
 	host.summary_label.max_lines_visible = 1
 	host.summary_label.clip_text = true
@@ -264,6 +266,9 @@ static func build_run_screen(host: Variant) -> void:
 	visual_stack.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	visual_stack.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	host.visual_panel_container.add_child(visual_stack)
+	host.environment_header = host.EnvironmentHeaderScript.new()
+	host.environment_header.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	visual_stack.add_child(host.environment_header)
 	visual_stack.add_child(title_row)
 	visual_stack.add_child(host.summary_label)
 	host._build_run_report_screen(visual_stack)
