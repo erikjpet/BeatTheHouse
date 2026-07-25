@@ -13,6 +13,7 @@ const VisualStyle := preload("res://scripts/ui/visual_style.gd")
 const SmallScreenPolicyScript := preload("res://scripts/ui/small_screen_policy.gd")
 const AttributeBadgesScript := preload("res://scripts/core/attribute_badges.gd")
 const AttributeBadgeRowScript := preload("res://scripts/ui/attribute_badge_row.gd")
+const FoundationWidgetsScript := preload("res://scripts/ui/foundation_widgets.gd")
 
 var overlay: Control
 var holder: Control
@@ -161,13 +162,13 @@ func position_detail_popup(snapshot: Dictionary) -> void:
 	var holder_size := holder.size
 	if holder_size.x <= 0.0 or holder_size.y <= 0.0:
 		holder_size = Vector2(800, 430)
-	var popup_size := Vector2(276, 150)
-	detail_popup.size = popup_size
+	detail_popup.custom_minimum_size = Vector2(VisualStyle.POPUP_MIN_WIDTH, VisualStyle.FLEXIBLE_SIZE)
+	var popup_size := FoundationWidgetsScript.autosize_popup(detail_popup, holder_size, detail_popup.get_combined_minimum_size())
 	detail_popup.visible = true
 	var center := holder_size * 0.5
 	if nodes_layer != null and nodes_layer.has_method("local_position_for_node") and bool(nodes_layer.call("node_is_in_view", node_id)):
 		center = nodes_layer.call("local_position_for_node", node_id) as Vector2
-	var margin := 12.0
+	var margin := float(VisualStyle.SPACE_5)
 	var x := center.x + 30.0
 	if x + popup_size.x > holder_size.x - margin:
 		x = center.x - popup_size.x - 30.0

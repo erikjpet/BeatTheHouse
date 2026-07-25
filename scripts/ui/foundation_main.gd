@@ -96,6 +96,7 @@ const PixelSceneCanvasScript := preload("res://scripts/ui/pixel_scene_canvas.gd"
 const GameSurfaceCanvasScript := preload("res://scripts/ui/game_surface_canvas.gd")
 const WorldMapCanvasScript := preload("res://scripts/ui/world_map_canvas.gd")
 const FoundationWidgetsScript := preload("res://scripts/ui/foundation_widgets.gd")
+const UIArtScript := preload("res://scripts/ui/ui_art.gd")
 const SmallScreenPolicyScript := preload("res://scripts/ui/small_screen_policy.gd")
 const AttributeBadgeRowScript := preload("res://scripts/ui/attribute_badge_row.gd")
 const RunInventoryScreenScript := preload("res://scripts/ui/run_inventory_screen.gd")
@@ -302,6 +303,7 @@ var boot_telemetry_events: Array = []
 var boot_start_msec := 0
 var event_choice_popup_overlay: Control
 var event_choice_popup_panel: PanelContainer
+var event_choice_popup_icon: TextureRect
 var event_choice_popup_title_label: Label
 var event_choice_popup_summary_label: Label
 var event_choice_popup_choices_list: VBoxContainer
@@ -4856,7 +4858,7 @@ func _build_event_choice_popup_overlay() -> void:
 	add_child(event_choice_popup_overlay)
 
 	event_choice_popup_panel = _panel_container(Color("#080817", 0.98), VisualStyle.AMBER)
-	event_choice_popup_panel.custom_minimum_size = EVENT_CHOICE_POPUP_BASE_SIZE
+	event_choice_popup_panel.custom_minimum_size = Vector2(VisualStyle.POPUP_MIN_WIDTH, VisualStyle.FLEXIBLE_SIZE)
 	event_choice_popup_panel.clip_contents = true
 	event_choice_popup_panel.mouse_filter = Control.MOUSE_FILTER_STOP
 	event_choice_popup_overlay.add_child(event_choice_popup_panel)
@@ -4867,9 +4869,18 @@ func _build_event_choice_popup_overlay() -> void:
 	stack.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	event_choice_popup_panel.add_child(stack)
 
-	event_choice_popup_title_label = _label("Offer", 18)
+	var title_zone := HBoxContainer.new()
+	title_zone.add_theme_constant_override("separation", VisualStyle.SPACE_3)
+	stack.add_child(title_zone)
+	event_choice_popup_icon = TextureRect.new()
+	event_choice_popup_icon.texture = UIArtScript.icon("alert")
+	event_choice_popup_icon.custom_minimum_size = VisualStyle.ICON_MEDIUM
+	event_choice_popup_icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	event_choice_popup_icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	title_zone.add_child(event_choice_popup_icon)
+	event_choice_popup_title_label = _label("Offer", VisualStyle.TYPE_HEADING)
 	_set_control_font_color(event_choice_popup_title_label, VisualStyle.YELLOW)
-	stack.add_child(event_choice_popup_title_label)
+	title_zone.add_child(event_choice_popup_title_label)
 
 	event_choice_popup_summary_label = _label("", 12)
 	_set_control_font_color(event_choice_popup_summary_label, VisualStyle.CYAN)
@@ -11633,14 +11644,10 @@ func _position_event_choice_popup() -> void:
 	var overlay_rect := event_choice_popup_overlay.get_global_rect()
 	if overlay_rect.size.x <= 0.0 or overlay_rect.size.y <= 0.0:
 		return
-	var margin := 12.0
-	var width := clampf(overlay_rect.size.x * 0.54, EVENT_CHOICE_POPUP_BASE_SIZE.x, EVENT_CHOICE_POPUP_MAX_SIZE.x)
-	var height := clampf(overlay_rect.size.y * 0.56, EVENT_CHOICE_POPUP_BASE_SIZE.y, EVENT_CHOICE_POPUP_MAX_SIZE.y)
-	if overlay_rect.size.x < 560.0:
-		width = clampf(overlay_rect.size.x - margin * 2.0, 300.0, EVENT_CHOICE_POPUP_BASE_SIZE.x)
-	if overlay_rect.size.y < 420.0:
-		height = clampf(overlay_rect.size.y - margin * 2.0, 260.0, 380.0)
-	var popup_size := Vector2(width, height)
+	var margin := float(VisualStyle.SPACE_5)
+	event_choice_popup_panel.custom_minimum_size = Vector2(VisualStyle.POPUP_MIN_WIDTH, VisualStyle.FLEXIBLE_SIZE)
+	var content_minimum := event_choice_popup_panel.get_combined_minimum_size()
+	var popup_size := FoundationWidgetsScript.autosize_popup(event_choice_popup_panel, overlay_rect.size, content_minimum)
 	var global_position := Vector2(
 		overlay_rect.position.x + (overlay_rect.size.x - popup_size.x) * 0.5,
 		overlay_rect.position.y + (overlay_rect.size.y - popup_size.y) * 0.5
@@ -11648,8 +11655,27 @@ func _position_event_choice_popup() -> void:
 	global_position.x = clampf(global_position.x, overlay_rect.position.x + margin, overlay_rect.position.x + overlay_rect.size.x - popup_size.x - margin)
 	global_position.y = clampf(global_position.y, overlay_rect.position.y + margin, overlay_rect.position.y + overlay_rect.size.y - popup_size.y - margin)
 	event_choice_popup_panel.position = global_position - overlay_rect.position
-	event_choice_popup_panel.custom_minimum_size = popup_size
 	event_choice_popup_panel.size = popup_size
+
+
+func current_selection_popup_anatomy_snapshot() -> Dictionary:
+	if event_choice_popup_panel == null:
+		return {}
+	var content_minimum := event_choice_popup_panel.get_combined_minimum_size()
+	return {
+		"visible": _event_choice_popup_is_visible(),
+		"title_zone": event_choice_popup_title_label != null and event_choice_popup_icon != null,
+		"content_zone": event_choice_popup_summary_label != null,
+		"action_zone": event_choice_popup_choices_list != null,
+		"icon_texture": event_choice_popup_icon.texture.resource_path if event_choice_popup_icon != null and event_choice_popup_icon.texture != null else "",
+		"panel_size": event_choice_popup_panel.size,
+		"content_minimum": content_minimum,
+		"dead_space": Vector2(
+			maxf(0.0, event_choice_popup_panel.size.x - content_minimum.x),
+			maxf(0.0, event_choice_popup_panel.size.y - content_minimum.y)
+		),
+		"autosized": true,
+	}
 
 
 func _hide_event_choice_popup(clear_snapshot: bool = true) -> void:

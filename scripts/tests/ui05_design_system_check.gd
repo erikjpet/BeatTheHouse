@@ -5,6 +5,8 @@ const SegmentedMeterScript := preload("res://scripts/ui/segmented_meter.gd")
 const FoundationHudBarScript := preload("res://scripts/ui/foundation_hud_bar.gd")
 const EnvironmentHeaderScript := preload("res://scripts/ui/environment_header.gd")
 const CheatDockScript := preload("res://scripts/ui/cheat_dock.gd")
+const FoundationWidgetsScript := preload("res://scripts/ui/foundation_widgets.gd")
+const VisualStyle := preload("res://scripts/ui/visual_style.gd")
 
 var failures: Array[String] = []
 
@@ -101,6 +103,22 @@ func _run() -> void:
 	dock.render({"cheat_actions": []})
 	_check(not bool(dock.current_snapshot().get("visible", true)), "Empty cheat dock remained visible.")
 	dock.queue_free()
+
+	for popup_case in [
+		{"viewport": Vector2(1280, 720), "content": Vector2(260, 120)},
+		{"viewport": Vector2(960, 540), "content": Vector2(420, 260)},
+		{"viewport": Vector2(640, 360), "content": Vector2(720, 640)},
+	]:
+		var popup := PanelContainer.new()
+		root.add_child(popup)
+		var viewport_size: Vector2 = popup_case["viewport"]
+		var content_size: Vector2 = popup_case["content"]
+		var popup_size := FoundationWidgetsScript.autosize_popup(popup, viewport_size, content_size)
+		_check(popup_size.x <= viewport_size.x, "Autosized popup escaped the viewport width.")
+		_check(popup_size.y <= viewport_size.y, "Autosized popup escaped the viewport height.")
+		_check(popup_size.x <= content_size.x + float(VisualStyle.SPACE_6 * 2) or is_equal_approx(popup_size.x, VisualStyle.POPUP_MIN_WIDTH), "Autosized popup retained unexplained horizontal dead space.")
+		_check(popup_size.y <= content_size.y + float(VisualStyle.SPACE_6 * 2), "Autosized popup retained unexplained vertical dead space.")
+		popup.queue_free()
 
 	if failures.is_empty():
 		print("UI05_DESIGN_SYSTEM_CHECK PASS")
