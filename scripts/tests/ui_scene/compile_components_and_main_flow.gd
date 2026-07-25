@@ -330,7 +330,7 @@ func _check_run_inventory_screen_component() -> bool:
 		parent.queue_free()
 		push_error("Standalone run inventory did not preserve item/source pair selection.")
 		return false
-	if not _click_visible_button(screen, "Move to Inventory") or str(emitted.get("take_container", "")) != "home_box" or str(emitted.get("take", "")) != "odds_notebook":
+	if not _click_visible_button(screen, "Take into carried inventory") or str(emitted.get("take_container", "")) != "home_box" or str(emitted.get("take", "")) != "odds_notebook":
 		parent.queue_free()
 		push_error("Standalone run inventory home-container mode did not emit take intent.")
 		return false

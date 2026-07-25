@@ -495,7 +495,7 @@ func _render_home_storage_actions(item: Dictionary) -> void:
 	if bool(item.get("container_read_only", false)) or source == "loadout":
 		FoundationWidgets.add_detail_row(_detail_box, "Transfer", str(item.get("disabled_reason", "Packed meta-home items are read-only during this run.")), true)
 	elif source == "container":
-		FoundationWidgets.add_card_button(_detail_box, "Move to Inventory", Callable(self, "_emit_take_item_requested").bind(container_id, str(item.get("id", ""))), false, true)
+		FoundationWidgets.add_card_button(_detail_box, "Take into carried inventory", Callable(self, "_emit_take_item_requested").bind(container_id, str(item.get("id", ""))), false, true)
 		_add_storage_destination_buttons(item, container_id)
 	elif bool(item.get("container_full", false)):
 		FoundationWidgets.add_detail_row(_detail_box, "Store", "Every available home container is full.", true)
