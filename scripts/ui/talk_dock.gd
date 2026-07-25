@@ -10,6 +10,7 @@ const VIEWPORT_MARGIN := Vector2(18, 18)
 const MAX_CHOICES := 4
 const IGNORE_PENALTY_HEAT := 5
 const SmallScreenPolicyScript := preload("res://scripts/ui/small_screen_policy.gd")
+const UIArtScript := preload("res://scripts/ui/ui_art.gd")
 
 
 class PortraitModel:
@@ -63,13 +64,13 @@ class PortraitModel:
 		if str(speaker.get("presentation", "")) == "faceless_silhouette":
 			_draw_faceless_silhouette()
 			return
-		var hair := _speaker_color("hair_color", Color("#171022"))
-		var jacket := _speaker_color("jacket_color", Color("#1d2030"))
+		var hair := _speaker_color("hair_color", VisualStyle.SHADOW)
+		var jacket := _speaker_color("jacket_color", VisualStyle.BLUE)
 		var cycle := fposmod(animation_clock, 4.2) / 4.2
 		var speaking_gesture := fposmod(animation_clock, 2.8) > 1.9
 		var style := {
 			"name": "",
-			"skin": Color("#c49371"),
+			"skin": VisualStyle.PORTRAIT_SKIN,
 			"hair": hair,
 			"jacket": jacket,
 			"accent": VisualStyle.CYAN_2,
@@ -88,7 +89,7 @@ class PortraitModel:
 		var character_scale := clampf(minf(size.x / 98.0, size.y / 150.0) * 0.92, 0.92, 2.6)
 		var idle_bob := 0.0 if reduce_motion else sin(animation_clock * 2.1) * 1.2 * character_scale
 		var foot := Vector2(size.x * 0.5, size.y + 18.0 + idle_bob)
-		var shadow := Color("#02030a")
+		var shadow := VisualStyle.DARK
 		var body := Rect2(foot + Vector2(-24, -92) * character_scale, Vector2(48, 92) * character_scale)
 		var head := Rect2(foot + Vector2(-17, -126) * character_scale, Vector2(34, 38) * character_scale)
 		draw_rect(Rect2(foot + Vector2(-30, -5) * character_scale, Vector2(60, 5) * character_scale), Color(0.0, 0.0, 0.0, 0.38))
@@ -100,7 +101,7 @@ class PortraitModel:
 		# Teller bars establish identity without adding facial or skin layers.
 		for bar_index in range(4):
 			var bar_x := foot.x + float(-30 + bar_index * 20) * character_scale
-			draw_rect(Rect2(bar_x, foot.y - 138 * character_scale, 3 * character_scale, 142 * character_scale), Color("#737989"))
+			draw_rect(Rect2(bar_x, foot.y - 138 * character_scale, 3 * character_scale, 142 * character_scale), VisualStyle.role("disabled"))
 
 	func surface_label(_text: String, _pos: Vector2, _font_size: int, _color: Color) -> void:
 		pass
@@ -196,6 +197,10 @@ var expanded := false
 var armed_choice_id := ""
 var reduce_motion := false
 var small_screen_mode := false
+var full_body_text := ""
+var reveal_elapsed := 0.0
+var typewriter_active := false
+var portrait_id := ""
 
 var panel: PanelContainer
 var stack: VBoxContainer
@@ -204,6 +209,8 @@ var collapse_button: Button
 var header_row: HBoxContainer
 var portrait_panel: Control
 var portrait_model: PortraitModel
+var portrait_texture: TextureRect
+var speaker_name_plate: PanelContainer
 var speaker_label: Label
 var summary_label: Label
 var body_label: Label
@@ -220,6 +227,17 @@ func _ready() -> void:
 	visible = false
 	_build()
 	_position_panel()
+	set_process(false)
+
+
+func _process(delta: float) -> void:
+	if not typewriter_active or body_label == null:
+		set_process(false)
+		return
+	reveal_elapsed += delta * VisualStyle.TYPEWRITER_CHARACTERS_PER_SECOND
+	body_label.visible_characters = mini(full_body_text.length(), maxi(1, int(floor(reveal_elapsed))))
+	if body_label.visible_characters >= full_body_text.length():
+		_complete_body_reveal()
 
 
 func set_entry(next_entry: Dictionary, next_option: Dictionary, next_queue_count: int) -> void:
@@ -247,6 +265,9 @@ func clear_entry() -> void:
 		portrait_model.set_animation_active(false)
 	if choice_list != null:
 		FoundationWidgets.clear(choice_list)
+	full_body_text = ""
+	typewriter_active = false
+	set_process(false)
 
 
 func handle_hotkey(event: InputEvent) -> bool:
@@ -294,6 +315,13 @@ func current_snapshot() -> Dictionary:
 		"response_icon_kinds": rendered_response_icon_kinds.duplicate(),
 		"portrait_animation_active": portrait_model.animation_active if portrait_model != null else false,
 		"portrait_animation_redraw_count": portrait_model.animation_redraw_count if portrait_model != null else 0,
+		"portrait_id": portrait_id,
+		"portrait_texture": portrait_texture.texture.resource_path if portrait_texture != null and portrait_texture.texture != null else "",
+		"name_plate": speaker_name_plate != null,
+		"typewriter_active": typewriter_active,
+		"visible_characters": body_label.visible_characters if body_label != null else -1,
+		"body_character_count": full_body_text.length(),
+		"click_to_skip": true,
 		"reduce_motion": reduce_motion,
 		"timing": timing.duplicate(true),
 		"panel_rect": panel.get_global_rect() if panel != null else Rect2(),
@@ -304,6 +332,8 @@ func current_snapshot() -> Dictionary:
 
 func set_reduce_motion(enabled: bool) -> void:
 	reduce_motion = enabled
+	if reduce_motion:
+		_complete_body_reveal()
 	if portrait_model != null:
 		portrait_model.set_reduce_motion(enabled)
 		portrait_model.set_animation_active(visible and expanded)
@@ -327,22 +357,22 @@ func _notification(what: int) -> void:
 
 
 func _build() -> void:
-	panel = FoundationWidgets.panel_container(Color("#090717", 0.98), VisualStyle.PINK_2)
+	panel = FoundationWidgets.panel_container(Color(VisualStyle.role("surface_overlay"), 0.98), VisualStyle.role("danger"))
 	panel.mouse_filter = Control.MOUSE_FILTER_STOP
 	add_child(panel)
 
 	stack = VBoxContainer.new()
-	stack.add_theme_constant_override("separation", 4)
+	stack.add_theme_constant_override("separation", VisualStyle.SPACE_2)
 	stack.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	stack.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	panel.add_child(stack)
 
 	collapsed_button = FoundationWidgets.button("", Callable(self, "_toggle_expanded"))
-	collapsed_button.custom_minimum_size = Vector2(0, FoundationWidgets.MIN_NATIVE_TOUCH_TARGET_HEIGHT)
+	collapsed_button.custom_minimum_size = Vector2(VisualStyle.FLEXIBLE_SIZE, FoundationWidgets.MIN_NATIVE_TOUCH_TARGET_HEIGHT)
 	stack.add_child(collapsed_button)
 
 	header_row = HBoxContainer.new()
-	header_row.add_theme_constant_override("separation", 12)
+	header_row.add_theme_constant_override("separation", VisualStyle.SPACE_5)
 	header_row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	stack.add_child(header_row)
 
@@ -354,42 +384,52 @@ func _build() -> void:
 	portrait_panel.add_child(portrait_model)
 	portrait_model.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	portrait_model.set_reduce_motion(reduce_motion)
+	portrait_texture = TextureRect.new()
+	portrait_texture.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	portrait_texture.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	portrait_texture.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	portrait_panel.add_child(portrait_texture)
+	portrait_texture.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 
 	var header_text := VBoxContainer.new()
-	header_text.add_theme_constant_override("separation", 2)
+	header_text.add_theme_constant_override("separation", VisualStyle.SPACE_1)
 	header_text.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	header_row.add_child(header_text)
 
-	speaker_label = FoundationWidgets.label("", 17)
-	speaker_label.custom_minimum_size = Vector2(0, 22)
+	speaker_name_plate = FoundationWidgets.panel_container(VisualStyle.role("surface_raised"), VisualStyle.role("accent_secondary"))
+	header_text.add_child(speaker_name_plate)
+	speaker_label = FoundationWidgets.label("", VisualStyle.TYPE_HEADING)
+	speaker_label.custom_minimum_size = Vector2(VisualStyle.FLEXIBLE_SIZE, VisualStyle.SPACE_7)
 	speaker_label.max_lines_visible = 1
 	speaker_label.clip_text = true
 	FoundationWidgets.set_control_font_color(speaker_label, VisualStyle.YELLOW)
-	header_text.add_child(speaker_label)
+	speaker_name_plate.add_child(speaker_label)
 
-	summary_label = FoundationWidgets.muted_label("", 12)
+	summary_label = FoundationWidgets.muted_label("", VisualStyle.TYPE_SMALL)
 	summary_label.max_lines_visible = 1
 	summary_label.clip_text = true
 	header_text.add_child(summary_label)
 
-	urgency_label = FoundationWidgets.label("", 11)
+	urgency_label = FoundationWidgets.label("", VisualStyle.TYPE_CAPTION)
 	urgency_label.max_lines_visible = 1
 	urgency_label.clip_text = true
 	FoundationWidgets.set_control_font_color(urgency_label, VisualStyle.PINK_2)
 	header_text.add_child(urgency_label)
 
-	badge_label = FoundationWidgets.muted_label("", 12)
+	badge_label = FoundationWidgets.muted_label("", VisualStyle.TYPE_SMALL)
 	badge_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
-	badge_label.custom_minimum_size = Vector2(54, 0)
+	badge_label.custom_minimum_size = Vector2(VisualStyle.TALK_BADGE_WIDTH, VisualStyle.FLEXIBLE_SIZE)
 	header_row.add_child(badge_label)
 
 	collapse_button = FoundationWidgets.button("Hide", Callable(self, "_toggle_expanded"))
-	collapse_button.custom_minimum_size = Vector2(72, FoundationWidgets.MIN_NATIVE_TOUCH_TARGET_HEIGHT)
+	collapse_button.custom_minimum_size = Vector2(VisualStyle.TALK_COLLAPSE_WIDTH, FoundationWidgets.MIN_NATIVE_TOUCH_TARGET_HEIGHT)
 	header_row.add_child(collapse_button)
 
-	body_label = FoundationWidgets.label("", 14)
+	body_label = FoundationWidgets.label("", VisualStyle.TYPE_BODY_LARGE)
 	body_label.max_lines_visible = 2
 	body_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	body_label.mouse_filter = Control.MOUSE_FILTER_STOP
+	body_label.gui_input.connect(Callable(self, "_on_body_gui_input"))
 	stack.add_child(body_label)
 
 	urgency_bar = ProgressBar.new()
@@ -397,13 +437,13 @@ func _build() -> void:
 	urgency_bar.max_value = 1.0
 	urgency_bar.value = 1.0
 	urgency_bar.show_percentage = false
-	urgency_bar.custom_minimum_size = Vector2(0, 5)
+	urgency_bar.custom_minimum_size = Vector2(VisualStyle.FLEXIBLE_SIZE, VisualStyle.TALK_URGENCY_HEIGHT)
 	stack.add_child(urgency_bar)
 
 	choice_list = GridContainer.new()
 	choice_list.columns = 2
-	choice_list.add_theme_constant_override("h_separation", 8)
-	choice_list.add_theme_constant_override("v_separation", 6)
+	choice_list.add_theme_constant_override("h_separation", VisualStyle.SPACE_4)
+	choice_list.add_theme_constant_override("v_separation", VisualStyle.SPACE_3)
 	choice_list.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	choice_list.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	stack.add_child(choice_list)
@@ -422,13 +462,16 @@ func _render() -> void:
 	speaker_label.text = "Speaking with %s" % (speaker_name if not speaker_name.is_empty() else "Someone")
 	summary_label.text = str(option.get("display_name", "Talk"))
 	summary_label.visible = false
-	body_label.text = summary
+	_begin_body_reveal(summary)
 	var timing: Dictionary = entry.get("timing", {}) if typeof(entry.get("timing", {})) == TYPE_DICTIONARY else {}
 	urgency_label.text = _urgency_text(timing)
 	badge_label.text = "+%d" % maxi(0, queue_count - 1) if queue_count > 1 else ""
 	if portrait_model != null:
 		var speaker: Dictionary = entry.get("speaker", {}) if typeof(entry.get("speaker", {})) == TYPE_DICTIONARY else {}
 		portrait_model.set_speaker(speaker)
+		portrait_id = _portrait_id_for_speaker(speaker)
+		portrait_texture.texture = UIArtScript.portrait(portrait_id)
+		portrait_texture.tooltip_text = "%s portrait" % (speaker_name if not speaker_name.is_empty() else "Conversation")
 	urgency_bar.visible = expanded and bool(timing.get("expires", false))
 	if urgency_bar.visible:
 		var duration := maxi(1, int(timing.get("duration_actions", 1)))
@@ -443,6 +486,56 @@ func _render() -> void:
 	_render_choices()
 	panel.custom_minimum_size = Vector2.ZERO
 	_position_panel()
+
+
+func _begin_body_reveal(text_value: String) -> void:
+	if text_value == full_body_text and (typewriter_active or body_label.visible_characters == -1):
+		return
+	full_body_text = text_value
+	reveal_elapsed = 0.0
+	body_label.text = full_body_text
+	if reduce_motion or full_body_text.is_empty():
+		_complete_body_reveal()
+		return
+	body_label.visible_characters = mini(1, full_body_text.length())
+	typewriter_active = true
+	set_process(true)
+
+
+func _complete_body_reveal() -> void:
+	typewriter_active = false
+	set_process(false)
+	if body_label != null:
+		body_label.visible_characters = -1
+
+
+func _on_body_gui_input(event: InputEvent) -> void:
+	if not typewriter_active:
+		return
+	if event is InputEventMouseButton and (event as InputEventMouseButton).pressed:
+		_complete_body_reveal()
+		get_viewport().set_input_as_handled()
+	elif event is InputEventScreenTouch and (event as InputEventScreenTouch).pressed:
+		_complete_body_reveal()
+		get_viewport().set_input_as_handled()
+
+
+func _portrait_id_for_speaker(speaker: Dictionary) -> String:
+	if str(speaker.get("presentation", "")) == "faceless_silhouette":
+		return "faceless_lender"
+	var name := str(speaker.get("name", "")).to_lower()
+	var role := str(speaker.get("role", "")).to_lower()
+	if name == "sal" or name.contains("pawn") or role.contains("merchant"):
+		return "pawn_broker"
+	if name == "rina" or name.contains("bartender") or role.contains("bartender"):
+		return "bartender"
+	if name == "linda" or name.contains("lender") or role.contains("lender"):
+		return "faceless_lender"
+	if name.contains("pit boss") or role.contains("pit"):
+		return "pit_boss"
+	if name == "dave" or name.contains("dealer") or role.contains("dealer"):
+		return "riverboat_dealer"
+	return "motel_clerk"
 
 
 func _render_choices() -> void:
@@ -465,7 +558,7 @@ func _render_choices() -> void:
 		if _choice_requires_confirm(choice_data) and armed_choice_id == choice_id:
 			label = "Confirm: %s" % label
 		var response := HBoxContainer.new()
-		response.add_theme_constant_override("separation", 3)
+		response.add_theme_constant_override("separation", VisualStyle.SPACE_2)
 		response.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		response.size_flags_vertical = Control.SIZE_EXPAND_FILL
 		var icon_kinds := _response_icon_kinds(choice_data)
@@ -475,7 +568,7 @@ func _render_choices() -> void:
 			response.add_child(response_icon)
 			rendered_response_icon_kinds.append(icon_kind)
 		var button := FoundationWidgets.button(label, Callable(self, "_on_choice_pressed").bind(choice_id))
-		button.custom_minimum_size = Vector2(0, SmallScreenPolicyScript.control_height(40.0, small_screen_mode))
+		button.custom_minimum_size = Vector2(VisualStyle.FLEXIBLE_SIZE, SmallScreenPolicyScript.control_height(VisualStyle.TALK_CHOICE_HEIGHT, small_screen_mode))
 		button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		button.size_flags_vertical = Control.SIZE_EXPAND_FILL
 		button.clip_text = true

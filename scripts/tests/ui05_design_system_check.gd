@@ -7,6 +7,7 @@ const EnvironmentHeaderScript := preload("res://scripts/ui/environment_header.gd
 const CheatDockScript := preload("res://scripts/ui/cheat_dock.gd")
 const FoundationWidgetsScript := preload("res://scripts/ui/foundation_widgets.gd")
 const VisualStyle := preload("res://scripts/ui/visual_style.gd")
+const TalkDockScript := preload("res://scripts/ui/talk_dock.gd")
 
 var failures: Array[String] = []
 
@@ -119,6 +120,40 @@ func _run() -> void:
 		_check(popup_size.x <= content_size.x + float(VisualStyle.SPACE_6 * 2) or is_equal_approx(popup_size.x, VisualStyle.POPUP_MIN_WIDTH), "Autosized popup retained unexplained horizontal dead space.")
 		_check(popup_size.y <= content_size.y + float(VisualStyle.SPACE_6 * 2), "Autosized popup retained unexplained vertical dead space.")
 		popup.queue_free()
+
+	var talk: TalkDock = TalkDockScript.new()
+	root.add_child(talk)
+	await process_frame
+	talk.set_entry({
+		"event_id": "ui05:test",
+		"speaker": {"name": "Sal", "role": "merchant"},
+	}, {
+		"display_name": "A quiet offer",
+		"summary": "Sal names the price and waits for an answer.",
+		"choices": [{"id": "leave", "label": "Leave"}],
+	}, 1)
+	var revealing_talk := talk.current_snapshot()
+	_check(bool(revealing_talk.get("typewriter_active", false)), "Conversation copy did not begin its typewriter reveal.")
+	_check(str(revealing_talk.get("portrait_id", "")) == "pawn_broker", "Conversation portrait did not map Sal to artist-swappable portrait art.")
+	_check(bool(revealing_talk.get("name_plate", false)), "Conversation speaker is missing a name plate.")
+	var skip_click := InputEventMouseButton.new()
+	skip_click.pressed = true
+	talk.call("_on_body_gui_input", skip_click)
+	_check(not bool(talk.current_snapshot().get("typewriter_active", true)), "Click did not skip the conversation typewriter.")
+	talk.set_reduce_motion(true)
+	talk.set_entry({
+		"event_id": "ui05:reduced",
+		"speaker": {"name": "Linda", "presentation": "faceless_silhouette"},
+	}, {
+		"display_name": "At the cage",
+		"summary": "Linda answers without a pause.",
+		"choices": [{"id": "leave", "label": "Leave"}],
+	}, 1)
+	var reduced_talk := talk.current_snapshot()
+	_check(not bool(reduced_talk.get("typewriter_active", true)), "Reduce-motion conversation copy still animates.")
+	_check(int(reduced_talk.get("visible_characters", 0)) == -1, "Reduce-motion conversation copy is not instantly complete.")
+	_check(str(reduced_talk.get("portrait_id", "")) == "faceless_lender", "Faceless speaker did not preserve the silhouette portrait contract.")
+	talk.queue_free()
 
 	if failures.is_empty():
 		print("UI05_DESIGN_SYSTEM_CHECK PASS")

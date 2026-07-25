@@ -130,6 +130,12 @@ const POPUP_MAX_HEIGHT_RATIO := 0.72
 const MOTION_QUICK := 0.12
 const MOTION_STANDARD := 0.18
 const MOTION_SLOW := 0.28
+const TYPEWRITER_CHARACTERS_PER_SECOND := 42.0
+const TALK_BADGE_WIDTH := 54.0
+const TALK_COLLAPSE_WIDTH := 72.0
+const TALK_URGENCY_HEIGHT := 5.0
+const TALK_CHOICE_HEIGHT := 40.0
+const PORTRAIT_SKIN := Color("#c49371")
 
 const COLOR_ROLES := {
 	"surface_base": "dark",
