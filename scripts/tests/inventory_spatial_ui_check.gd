@@ -12,6 +12,7 @@ const RunStateScript := preload("res://scripts/core/run_state.gd")
 const TEST_STORE_PATH := "user://inventory_spatial_ui_check.json"
 
 var failures: Array[String] = []
+var confirmed_keys: Array[String] = []
 
 
 func _init() -> void:
@@ -37,6 +38,7 @@ func _run() -> void:
 	root.add_child(surface)
 	surface.configure(Callable(), catalog)
 	surface.update_model(_surface_model(["a", "b", "c"], "b"))
+	surface.slot_confirmed.connect(_record_confirmed)
 	await process_frame
 	var stable_before := str(surface.layout_snapshot().get("stable_bounds_signature", ""))
 	var first_surface_snapshot := surface.layout_snapshot()
@@ -48,6 +50,26 @@ func _run() -> void:
 		var icon_rect: Rect2 = slot.get("icon_rect", Rect2())
 		_check(hit_rect.encloses(icon_rect), "An item model escaped its accessible slot target.")
 	var pool_before := int(surface.layout_snapshot().get("pool_count", 0))
+	var texture_bindings_before := int(surface.layout_snapshot().get("texture_binding_count", 0))
+	var unique_textures_before := int(surface.layout_snapshot().get("unique_texture_count", 0))
+	var double_click := InputEventMouseButton.new()
+	double_click.button_index = MOUSE_BUTTON_LEFT
+	double_click.pressed = true
+	double_click.double_click = true
+	surface.call("_on_slot_gui_input", double_click, 0)
+	_check(surface.selected_key() == "run:carried:a" and confirmed_keys.is_empty(), "First confirm on an unselected object did not commit selection without advancing.")
+	surface.call("_on_slot_gui_input", double_click, 0)
+	_check(confirmed_keys == ["run:carried:a"], "Second confirm on the committed object did not advance exactly once.")
+	surface.call("_on_slot_hovered", 1)
+	surface.call("_on_slot_focused", 2)
+	var interaction_snapshot := surface.layout_snapshot()
+	_check(str(interaction_snapshot.get("selected_key", "")) == "run:carried:a", "Hover or focus changed committed selection.")
+	_check(str(interaction_snapshot.get("hovered_key", "")) == "run:carried:b", "Hover state was not exposed distinctly.")
+	_check(str(interaction_snapshot.get("focused_key", "")) == "run:carried:c", "Focus state was not exposed distinctly.")
+	surface.call("_focus_neighbor", 0, Vector2.RIGHT)
+	_check(str(surface.layout_snapshot().get("focused_key", "")) == "run:carried:b", "Directional navigation did not choose the nearest object to the right.")
+	surface.call("_focus_neighbor", 0, Vector2.DOWN)
+	_check(str(surface.layout_snapshot().get("focused_key", "")) == "run:carried:c", "Directional navigation did not choose the nearest object below.")
 	surface.focus_selection("run:carried:c", false)
 	await process_frame
 	_check(stable_before == str(surface.layout_snapshot().get("stable_bounds_signature", "")), "Selection moved the container bounds.")
@@ -60,6 +82,8 @@ func _run() -> void:
 	var repeated_update_usec := Time.get_ticks_usec() - repeated_update_started_usec
 	var pool_after := int(surface.layout_snapshot().get("pool_count", 0))
 	_check(pool_after == pool_before, "Repeated updates grew the slot-control pool.")
+	_check(int(surface.layout_snapshot().get("texture_binding_count", 0)) == texture_bindings_before, "Repeated updates grew rendered texture bindings.")
+	_check(int(surface.layout_snapshot().get("unique_texture_count", 0)) == unique_textures_before, "Repeated updates grew unique rendered textures.")
 	surface.set_reduced_motion(true)
 	_check(bool(surface.layout_snapshot().get("reduced_motion", false)), "Reduced-motion state did not reach the surface.")
 	surface.set_small_screen_mode(true)
@@ -76,9 +100,15 @@ func _run() -> void:
 	for slot_value in _array(small_snapshot.get("slots", [])):
 		var target_rect: Rect2 = (slot_value as Dictionary).get("rect", Rect2())
 		_check(target_rect.size.x >= 48.0 and target_rect.size.y >= 48.0, "Small-screen slot target fell below policy minimum.")
+	surface.focus_selection("run:carried:trunk_8", false)
+	await process_frame
+	var second_trunk_page := surface.layout_snapshot()
+	_check(int(second_trunk_page.get("active_page_index", -1)) == 1, "Programmatic focus did not reveal an object on the second small-screen page.")
+	_check(str(second_trunk_page.get("selected_key", "")) == "run:carried:trunk_8", "Second-page focus lost exact object identity.")
 	surface.set_small_screen_mode(false)
 	surface.update_model({
 		"selected_key": "run:carried:a",
+		"multi_selected_keys": ["run:carried:a", "run:container:bag_a:b:0"],
 		"containers": [
 			{"key": "run_carried", "container_type": "loose_carry", "display_name": "Carried Items", "capacity": 0, "slots": [{"slot_index": 0, "occupied": true, "selection_key": "run:carried:a", "item": {"id": "a", "display_name": "A"}}]},
 			{"key": "run_home:bag_a", "container_type": "bag", "display_name": "Desk Bag", "capacity": 3, "slots": [{"slot_index": 0, "occupied": true, "selection_key": "run:container:bag_a:b:0", "item": {"id": "b", "display_name": "B", "storage_source": "container", "container_id": "bag_a"}}]},
@@ -90,8 +120,60 @@ func _run() -> void:
 	_check(int(multi_snapshot.get("visible_container_count", 0)) == 3, "Home storage surface did not keep all containers visible together.")
 	_check(_array(multi_snapshot.get("container_rects", [])).size() == 3, "Home storage surface did not report every visible container rect.")
 	_check(_array(multi_snapshot.get("slots", [])).size() >= 9, "Home storage surface collapsed multi-container slots into one active container.")
+	_check(_array(multi_snapshot.get("multi_selected_keys", [])).size() == 2, "Snapshot omitted multi-selection state.")
+	surface.set_small_screen_mode(true)
+	await process_frame
+	var compact_multi_snapshot := surface.layout_snapshot()
+	_check(int(compact_multi_snapshot.get("visible_container_count", 0)) == 1, "Small-screen multi-container layout did not switch to one explicit active container.")
+	_check(str(compact_multi_snapshot.get("active_container_key", "")) == "run_carried", "Small-screen container switcher did not retain the active container.")
+	for slot_value in _array(compact_multi_snapshot.get("slots", [])):
+		var target_rect: Rect2 = (slot_value as Dictionary).get("rect", Rect2())
+		if bool((slot_value as Dictionary).get("occupied", false)):
+			_check(target_rect.size.x >= 48.0 and target_rect.size.y >= 48.0, "Small-screen multi-container target fell below policy minimum.")
+	surface.call("_change_container", 1)
+	await process_frame
+	_check(str(surface.layout_snapshot().get("active_container_key", "")) == "run_home:bag_a", "Explicit container switching skipped the next home container.")
+	surface.call("_change_container", 1)
+	await process_frame
+	_check(str(surface.layout_snapshot().get("active_container_key", "")) == "run_home:bag_b", "Explicit container switching did not reach every home container.")
+	surface.set_small_screen_mode(false)
+	surface.update_model({
+		"selected_key": "",
+		"focus_explicit": true,
+		"containers": [{
+			"key": "preference",
+			"container_type": "bag",
+			"display_name": "Bag",
+			"capacity": 3,
+			"slots": [
+				{"slot_index": 0, "occupied": true, "actionable": false, "selection_key": "run:carried:inspect_only", "item": {"id": "inspect_only"}},
+				{"slot_index": 1, "occupied": true, "actionable": true, "selection_key": "run:carried:actionable", "item": {"id": "actionable"}},
+			],
+		}],
+	})
+	_check(surface.selected_key() == "run:carried:actionable", "Initial focus did not prefer the first actionable object over an inspect-only object.")
+	VisualStyle.set_high_contrast_enabled(true)
+	_check(bool(surface.layout_snapshot().get("high_contrast", false)), "High-contrast state did not reach the spatial surface.")
+	VisualStyle.set_high_contrast_enabled(false)
 	surface.queue_free()
 
+	var fallback_surface: InventoryContainerSurface = SurfaceScript.new()
+	fallback_surface.size = Vector2(420, 420)
+	root.add_child(fallback_surface)
+	fallback_surface.configure(Callable(), {"presentations": {}})
+	fallback_surface.update_model(_surface_model(["fallback_a", "fallback_b"], "fallback_a"))
+	await process_frame
+	var fallback_snapshot := fallback_surface.layout_snapshot()
+	_check(_array(fallback_snapshot.get("slots", [])).size() == 3, "Missing presentation fallback lost authoritative bag spaces.")
+	_check(fallback_surface.item_for_selection("run:carried:fallback_b").get("id", "") == "fallback_b", "Missing presentation fallback dropped an owned item.")
+	fallback_surface.queue_free()
+
+	var focus_origin := Button.new()
+	focus_origin.text = "Inventory origin"
+	focus_origin.focus_mode = Control.FOCUS_ALL
+	root.add_child(focus_origin)
+	focus_origin.grab_focus()
+	await process_frame
 	var run_screen: RunInventoryScreen = RunScreenScript.new()
 	root.add_child(run_screen)
 	run_screen.open({
@@ -108,6 +190,8 @@ func _run() -> void:
 	run_screen.select_item("same", "container", false)
 	_check(str(run_screen.selected_item_key().get("source", "")) == "container", "Run identity collapsed same-ID items from different sources.")
 	run_screen.close()
+	await process_frame
+	_check(root.gui_get_focus_owner() == focus_origin, "Closing run inventory did not restore focus to its originating control.")
 	run_screen.size = Vector2(1280, 720)
 	run_screen.open({
 		"mode": "home_container",
@@ -132,7 +216,41 @@ func _run() -> void:
 	_check(_control_tree_has_text(run_screen, "MOVE ITEM"), "Home storage action panel did not label the transfer controls clearly.")
 	_check(_control_tree_has_text(run_screen, "Take into carried inventory"), "Stored item panel did not expose the take-to-inventory action.")
 	_check(_control_tree_has_text(run_screen, "Move to Closet Pack"), "Stored item panel did not expose a direct container-to-container action.")
+	var screen_pool_count := int((home_layout.get("spatial", {}) as Dictionary).get("pool_count", 0))
+	for repeat_index in range(10):
+		run_screen.close()
+		run_screen.open({
+			"mode": "inspect",
+			"title": "Inventory",
+			"summary": "Leak check",
+			"items": [{"id": "repeat", "display_name": "Repeat", "storage_source": "carried", "selection_key": "run:carried:repeat"}],
+			"selected": {"id": "repeat", "source": "carried"},
+			"selected_key": "run:carried:repeat",
+			"containers": [{"key": "repeat", "container_type": "bag", "display_name": "Bag", "capacity": 3, "slots": [{"slot_index": 0, "occupied": true, "actionable": true, "selection_key": "run:carried:repeat", "item": {"id": "repeat", "display_name": "Repeat", "storage_source": "carried", "selection_key": "run:carried:repeat"}}]}],
+		})
+	var repeated_screen_pool := int((run_screen.layout_rects().get("spatial", {}) as Dictionary).get("pool_count", 0))
+	_check(repeated_screen_pool <= screen_pool_count, "Repeated screen open/close cycles grew the shared slot-control pool.")
+	run_screen.close()
+	run_screen.open({
+		"mode": "place_container",
+		"title": "Place Storage",
+		"summary": "Choose storage.",
+		"selected": {"id": "trunk", "source": "carried"},
+		"selected_key": "run:carried:trunk",
+		"items": [{"id": "trunk", "display_name": "Trunk", "item_class": "container", "domain": "home", "capacity": 10, "storage_source": "carried", "selection_key": "run:carried:trunk"}],
+		"containers": [{
+			"key": "run_carried",
+			"container_type": "loose_carry",
+			"display_name": "Containers to Place",
+			"capacity": 0,
+			"slots": [{"slot_index": 0, "occupied": true, "actionable": true, "selection_key": "run:carried:trunk", "item": {"id": "trunk", "display_name": "Trunk", "item_class": "container", "domain": "home", "capacity": 10, "storage_source": "carried", "selection_key": "run:carried:trunk"}}],
+		}],
+	})
+	await process_frame
+	_check(_control_tree_has_text(run_screen, "Open Trunk preview"), "Placement flow did not show the selected container's open-interior preview.")
+	_check(_control_tree_has_text(run_screen, "10 selectable spaces"), "Placement preview did not use the selected container's authoritative capacity.")
 	run_screen.queue_free()
+	focus_origin.queue_free()
 
 	var transfer_run: RunState = RunStateScript.new()
 	transfer_run.home_state = {"active": true, "home_node_id": "home_test"}
@@ -327,6 +445,10 @@ func _remove_test_store() -> void:
 	var path := ProjectSettings.globalize_path(TEST_STORE_PATH)
 	if FileAccess.file_exists(TEST_STORE_PATH):
 		DirAccess.remove_absolute(path)
+
+
+func _record_confirmed(selection_key: String) -> void:
+	confirmed_keys.append(selection_key)
 
 
 func _control_tree_has_text(node: Node, needle: String) -> bool:
