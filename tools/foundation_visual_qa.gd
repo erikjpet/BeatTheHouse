@@ -2656,6 +2656,11 @@ func _assert_no_scroll_critical_path(context: String) -> void:
 	if game_surface_control != null and game_surface_control.visible:
 		_assert_game_surface_contained(context)
 		var game_snapshot: Dictionary = app.call("current_game_view_snapshot")
+		var dock := app.get("cheat_dock") as Control
+		if int(game_snapshot.get("cheat_action_count", 0)) > 0:
+			_require(dock != null and dock.visible and dock.is_visible_in_tree(), "%s does not expose available cheats in the dedicated dock." % context)
+			_require(_control_fits_viewport(dock, "%s cheat dock" % context), "%s cheat dock is outside the viewport." % context)
+			_require(not dock.get_global_rect().intersects(game_surface_control.get_global_rect()), "%s cheat dock overlaps the game surface." % context)
 		_require(_game_surface_is_primary(game_surface_control), "%s game surface is not primary in game mode." % context)
 		_require(bool(game_snapshot.get("has_valid_stake", false)), "%s game surface does not expose a valid stake range." % context)
 		if game_surface_control.has_method("local_position_for_surface_action"):

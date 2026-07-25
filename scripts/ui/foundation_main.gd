@@ -116,6 +116,7 @@ const EnvironmentInteractionControllerScript := preload("res://scripts/ui/enviro
 const FoundationHudViewModelScript := preload("res://scripts/ui/foundation_hud_view_model.gd")
 const FoundationHudBarScript := preload("res://scripts/ui/foundation_hud_bar.gd")
 const EnvironmentHeaderScript := preload("res://scripts/ui/environment_header.gd")
+const CheatDockScript := preload("res://scripts/ui/cheat_dock.gd")
 const FoundationActionViewModelScript := preload("res://scripts/ui/foundation_action_view_model.gd")
 const FoundationTravelViewModelScript := preload("res://scripts/ui/foundation_travel_view_model.gd")
 const FoundationScreenBuilderScript := preload("res://scripts/ui/foundation_screen_builder.gd")
@@ -369,6 +370,7 @@ var interactable_object_view_cache_key := ""
 var run_hud_panel: Panel
 var structured_hud: FoundationHudBar
 var environment_header: EnvironmentHeader
+var cheat_dock: CheatDock
 var visual_panel_container: PanelContainer
 var title_label: Label
 var summary_label: Label
@@ -7689,6 +7691,10 @@ func current_environment_header_snapshot() -> Dictionary:
 	return environment_header.current_snapshot() if environment_header != null else {}
 
 
+func current_cheat_dock_snapshot() -> Dictionary:
+	return cheat_dock.current_snapshot() if cheat_dock != null else {}
+
+
 func current_spatial_interaction_snapshot() -> Dictionary:
 	return {
 		"hover_target_id": hover_target_id,
@@ -8341,12 +8347,15 @@ func select_environment_view_object(index: int = 0) -> void:
 func _render_foundation_snapshots() -> void:
 	var environment_visible := current_screen != SCREEN_GAME or current_game == null
 	var game_visible := current_screen == SCREEN_GAME and current_game != null
+	var game_snapshot: Dictionary = _game_view_snapshot() if game_visible else {}
 	if environment_canvas != null and environment_visible:
 		_render_environment_canvas_snapshot()
 	if game_surface_canvas != null:
 		game_surface_canvas.set_game_module(current_game)
 		if game_visible:
-			game_surface_canvas.render_game_snapshot(_game_view_snapshot())
+			game_surface_canvas.render_game_snapshot(game_snapshot)
+	if cheat_dock != null:
+		cheat_dock.render(game_snapshot)
 
 
 func _render_environment_canvas_snapshot() -> void:

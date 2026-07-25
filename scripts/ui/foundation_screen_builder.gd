@@ -290,6 +290,9 @@ static func build_run_screen(host: Variant) -> void:
 	host.game_surface_canvas.surface_pointer_action.connect(host._on_game_surface_pointer_action)
 	host.game_surface_canvas.surface_music_cue.connect(host._on_game_surface_music_cue)
 	visual_stack.add_child(host.game_surface_canvas)
+	host.cheat_dock = host.CheatDockScript.new()
+	host.cheat_dock.action_selected.connect(Callable(host, "select_game_action"))
+	visual_stack.add_child(host.cheat_dock)
 
 	host.action_panel_container = host._panel_container(VisualStyle.DARK_3, VisualStyle.PINK)
 	host.action_panel_container.custom_minimum_size = Vector2.ZERO

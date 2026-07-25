@@ -4,6 +4,7 @@ const UIArtScript := preload("res://scripts/ui/ui_art.gd")
 const SegmentedMeterScript := preload("res://scripts/ui/segmented_meter.gd")
 const FoundationHudBarScript := preload("res://scripts/ui/foundation_hud_bar.gd")
 const EnvironmentHeaderScript := preload("res://scripts/ui/environment_header.gd")
+const CheatDockScript := preload("res://scripts/ui/cheat_dock.gd")
 
 var failures: Array[String] = []
 
@@ -82,6 +83,24 @@ func _run() -> void:
 	_check(int(header_snapshot.get("option_count", 0)) == 4, "Environment header did not render its configured options.")
 	_check(not str(header_snapshot.get("title_texture", "")).is_empty(), "Environment header did not load its title plate.")
 	header.queue_free()
+
+	var dock: CheatDock = CheatDockScript.new()
+	root.add_child(dock)
+	await process_frame
+	dock.render({
+		"risk_cue": "Room attention raises the cost.",
+		"cheat_actions": [
+			{"id": "mark_card", "label": "Mark card", "summary": "Heat +8", "suspicion_delta": 8, "selected": false},
+			{"id": "signal_friend", "label": "Signal friend", "summary": "Heat +5", "suspicion_delta": 5, "selected": true},
+		],
+	})
+	var dock_snapshot := dock.current_snapshot()
+	_check(bool(dock_snapshot.get("visible", false)), "Cheat dock did not appear for available actions.")
+	_check(int(dock_snapshot.get("action_count", 0)) == 2, "Cheat dock lost available actions.")
+	_check(bool(dock_snapshot.get("selection_requires_confirmation", false)), "Cheat dock bypasses arm/confirm semantics.")
+	dock.render({"cheat_actions": []})
+	_check(not bool(dock.current_snapshot().get("visible", true)), "Empty cheat dock remained visible.")
+	dock.queue_free()
 
 	if failures.is_empty():
 		print("UI05_DESIGN_SYSTEM_CHECK PASS")
