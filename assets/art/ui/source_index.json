@@ -1,0 +1,54 @@
+{
+  "icon_source": "call_74DnnqcTIhnlR3gbur8A8gi6.png",
+  "portrait_source": "call_OlVJGR3J3Lc50pnVcWXCNrn4.png",
+  "icon_grid": {
+    "columns": 4,
+    "rows": 3,
+    "exports": [
+      "wallet",
+      "casino_chips",
+      "heat",
+      "drink",
+      "alert",
+      "debt",
+      "home",
+      "save",
+      "time",
+      "luck",
+      "cheat",
+      "danger"
+    ]
+  },
+  "portrait_grid": {
+    "columns": 3,
+    "rows": 2,
+    "exports": [
+      "motel_clerk",
+      "pit_boss",
+      "bartender",
+      "pawn_broker",
+      "riverboat_dealer",
+      "faceless_lender"
+    ]
+  },
+  "title_exports": [
+    "corner_store",
+    "back_alley",
+    "motel",
+    "bar",
+    "gas_station_casino",
+    "small_underground_casino",
+    "jazz_club",
+    "kitty_cat_lounge",
+    "delta_queen",
+    "beach",
+    "pawn_shop",
+    "grand_casino",
+    "grand_casino_high_limit",
+    "grand_casino_back_room",
+    "grand_casino_cage",
+    "motel_room",
+    "apartment",
+    "house"
+  ]
+}

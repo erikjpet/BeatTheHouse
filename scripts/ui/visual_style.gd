@@ -89,6 +89,63 @@ const ICON_SIZE := ArtContractsScript.ICON_SIZE
 const UI_BORDER_WIDTH := 2
 const UI_FONT_NAMES := ["Courier New", "Consolas", "monospace"]
 
+# 0.5 design tokens. Runtime UI code consumes these names instead of
+# inventing local measurements or state colors.
+const SPACE_1 := 2
+const SPACE_2 := 4
+const SPACE_3 := 6
+const SPACE_4 := 8
+const SPACE_5 := 12
+const SPACE_6 := 16
+const SPACE_7 := 20
+const SPACE_8 := 24
+const SPACE_9 := 32
+
+const TYPE_MICRO := 10
+const TYPE_CAPTION := 11
+const TYPE_SMALL := 12
+const TYPE_BODY := 13
+const TYPE_BODY_LARGE := 14
+const TYPE_SUBHEAD := 16
+const TYPE_HEADING := 18
+const TYPE_TITLE := 24
+const TYPE_DISPLAY := 38
+
+const RADIUS_NONE := 0
+const FLEXIBLE_SIZE := 0.0
+const BORDER_HAIRLINE := 1
+const BORDER_STANDARD := 2
+const BORDER_FOCUS := 3
+const TOUCH_TARGET := 44.0
+const ICON_SMALL := Vector2(24, 24)
+const ICON_MEDIUM := Vector2(32, 32)
+const ICON_LARGE := Vector2(48, 48)
+const HUD_METER_SIZE := Vector2(168, 18)
+const TOOLTIP_MAX_WIDTH := 320.0
+const POPUP_MIN_WIDTH := 280.0
+const POPUP_MAX_WIDTH := 560.0
+const POPUP_MAX_HEIGHT_RATIO := 0.72
+const MOTION_QUICK := 0.12
+const MOTION_STANDARD := 0.18
+const MOTION_SLOW := 0.28
+
+const COLOR_ROLES := {
+	"surface_base": "dark",
+	"surface_raised": "dark_2",
+	"surface_overlay": "dark_3",
+	"text_primary": "white",
+	"text_secondary": "soft",
+	"text_muted": "cyan_2",
+	"accent_primary": "cyan",
+	"accent_secondary": "pink",
+	"focus": "yellow",
+	"selected": "teal",
+	"warning": "amber",
+	"danger": "pink_2",
+	"disabled": "shadow",
+	"success": "teal",
+}
+
 static var high_contrast_enabled := false
 
 
@@ -100,6 +157,30 @@ static func color(id: String, fallback: Color = WHITE) -> Color:
 	var palette := HIGH_CONTRAST_PALETTE if high_contrast_enabled else PALETTE
 	var value: Variant = palette.get(id, fallback)
 	return value if typeof(value) == TYPE_COLOR else fallback
+
+
+static func role(id: String, fallback: Color = WHITE) -> Color:
+	var palette_id := str(COLOR_ROLES.get(id, ""))
+	return color(palette_id, fallback) if not palette_id.is_empty() else fallback
+
+
+static func spacing(step: int) -> int:
+	var scale := [0, SPACE_1, SPACE_2, SPACE_3, SPACE_4, SPACE_5, SPACE_6, SPACE_7, SPACE_8, SPACE_9]
+	return int(scale[clampi(step, 0, scale.size() - 1)])
+
+
+static func type_size(step: String) -> int:
+	match step:
+		"micro": return TYPE_MICRO
+		"caption": return TYPE_CAPTION
+		"small": return TYPE_SMALL
+		"body": return TYPE_BODY
+		"body_large": return TYPE_BODY_LARGE
+		"subhead": return TYPE_SUBHEAD
+		"heading": return TYPE_HEADING
+		"title": return TYPE_TITLE
+		"display": return TYPE_DISPLAY
+	return TYPE_BODY
 
 
 static func accessible_color(value: Color) -> Color:
@@ -145,15 +226,47 @@ static func pixel_box(fill: Color, border: Color, width: int = UI_BORDER_WIDTH) 
 	style.border_width_top = width
 	style.border_width_right = width
 	style.border_width_bottom = width
-	style.corner_radius_top_left = 0
-	style.corner_radius_top_right = 0
-	style.corner_radius_bottom_left = 0
-	style.corner_radius_bottom_right = 0
-	style.content_margin_left = 8
-	style.content_margin_right = 8
-	style.content_margin_top = 6
-	style.content_margin_bottom = 6
+	style.corner_radius_top_left = RADIUS_NONE
+	style.corner_radius_top_right = RADIUS_NONE
+	style.corner_radius_bottom_left = RADIUS_NONE
+	style.corner_radius_bottom_right = RADIUS_NONE
+	style.content_margin_left = SPACE_4
+	style.content_margin_right = SPACE_4
+	style.content_margin_top = SPACE_3
+	style.content_margin_bottom = SPACE_3
 	return style
+
+
+static func state_box(state: String, variant: String = "default") -> StyleBoxFlat:
+	var fill := role("surface_raised", DARK_2)
+	var border := role("accent_primary", CYAN)
+	var width := BORDER_HAIRLINE
+	match state:
+		"hover":
+			fill = role("surface_overlay", DARK_3)
+			border = role("accent_primary", CYAN)
+			width = BORDER_STANDARD
+		"focus":
+			fill = role("surface_overlay", DARK_3)
+			border = role("focus", YELLOW)
+			width = BORDER_FOCUS
+		"selected":
+			fill = color("blue", BLUE)
+			border = role("selected", TEAL)
+			width = BORDER_STANDARD
+		"armed":
+			fill = color("blue", BLUE)
+			border = role("warning", AMBER)
+			width = BORDER_FOCUS
+		"disabled":
+			border = role("disabled", SHADOW)
+	if variant == "danger":
+		border = role("danger", PINK_2) if state != "disabled" else role("disabled", SHADOW)
+	elif variant == "warning":
+		border = role("warning", AMBER) if state != "disabled" else role("disabled", SHADOW)
+	elif variant == "success":
+		border = role("success", TEAL) if state != "disabled" else role("disabled", SHADOW)
+	return pixel_box(fill, border, width)
 
 
 static func _palette_token_for_color(value: Color) -> String:
