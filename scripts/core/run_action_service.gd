@@ -392,6 +392,7 @@ func inventory_item_detail(item_id: String) -> Dictionary:
 	var item_class := str(definition.get("class", definition.get("item_type", "gear")))
 	var sellable := bool(definition.get("sellable", true))
 	var sale_price := item_sale_price(definition)
+	var sale_breakdown := item_sale_price_breakdown(definition)
 	var is_active := _definition_is_active_item(definition)
 	var selected_id := selected_active_item_id() if run_state != null else ""
 	var item_context := definition.duplicate(true)
@@ -406,6 +407,7 @@ func inventory_item_detail(item_id: String) -> Dictionary:
 		"domain": str(definition.get("domain", "global")),
 		"sellable": sellable,
 		"sale_price": sale_price,
+		"sale_breakdown": sale_breakdown,
 		"effect_summary": "",
 		"attribute_badges": AttributeBadgesScript.for_item(item_context),
 		"asset_path": str(definition.get("asset_path", "")),
@@ -646,6 +648,25 @@ func item_sale_price(item_definition: Dictionary) -> int:
 	var price_min := int(item_definition.get("price_min", 0))
 	var price_max := int(item_definition.get("price_max", price_min))
 	return maxi(0, int(round(float(price_min + price_max) * 0.25)))
+
+
+# Explains the authoritative sale quote without changing its arithmetic.
+func item_sale_price_breakdown(item_definition: Dictionary) -> Dictionary:
+	var quoted_price := item_sale_price(item_definition)
+	var price_min := int(item_definition.get("price_min", quoted_price))
+	var price_max := int(item_definition.get("price_max", price_min))
+	var market_midpoint := maxi(0, int(round(float(price_min + price_max) * 0.5)))
+	var explicit_quote := item_definition.has("sale_price")
+	var merchant_adjustment := quoted_price - market_midpoint
+	return {
+		"market_midpoint": market_midpoint,
+		"condition_adjustment": 0,
+		"usage_adjustment": 0,
+		"merchant_rate": 1.0 if explicit_quote or market_midpoint <= 0 else float(quoted_price) / float(market_midpoint),
+		"merchant_adjustment": merchant_adjustment,
+		"final_price": quoted_price,
+		"authoritative": true,
+	}
 
 
 # Returns whether the current environment can host merchant sales.

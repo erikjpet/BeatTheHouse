@@ -213,9 +213,27 @@ func _render_detail() -> void:
 	var disabled_reason := str(item.get("disabled_reason", ""))
 	if not disabled_reason.is_empty():
 		FoundationWidgets.add_detail_row(_detail_box, "Unavailable", disabled_reason, true)
+	if str(_model.get("mode", "")) == "meta_sale" and bool(item.get("sale_eligible", false)):
+		_render_sale_breakdown(item)
 	for action_value in _dictionary_array(item.get("actions", [])):
 		_add_action(action_value)
 	_add_global_actions()
+
+
+func _render_sale_breakdown(item: Dictionary) -> void:
+	var quote: Dictionary = item.get("sale_breakdown", {}) if typeof(item.get("sale_breakdown", {})) == TYPE_DICTIONARY else {}
+	var final_price := int(item.get("sale_price", quote.get("price", 0)))
+	var heading := FoundationWidgets.label("OFFER BREAKDOWN", VisualStyle.TYPE_SMALL)
+	FoundationWidgets.set_control_font_color(heading, VisualStyle.role("warning"))
+	_detail_box.add_child(heading)
+	if quote.has("face_value"):
+		FoundationWidgets.add_detail_row(_detail_box, "Face value", "%d gold" % int(quote.get("face_value", 0)))
+		FoundationWidgets.add_detail_row(_detail_box, "Fence rate", "%d%%" % int(round(float(quote.get("gold_rate", 0.0)) * 100.0)))
+	else:
+		FoundationWidgets.add_detail_row(_detail_box, "Tier base", "%d gold" % int(quote.get("tier_base", final_price)))
+		FoundationWidgets.add_detail_row(_detail_box, "Exact floats", "%+.0f%%" % ((float(quote.get("rarity_multiplier", 1.0)) - 1.0) * 100.0))
+		FoundationWidgets.add_detail_row(_detail_box, "Sal's mode", "%d%%" % int(round(float(quote.get("listing_multiplier", 1.0)) * 100.0)))
+	FoundationWidgets.add_detail_row(_detail_box, "Your offer", "%d gold" % final_price)
 
 
 func _add_global_actions() -> void:

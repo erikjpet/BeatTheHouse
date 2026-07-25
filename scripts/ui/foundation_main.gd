@@ -10490,6 +10490,10 @@ func _refresh_start_screen() -> void:
 		continue_button.disabled = not has_save
 		continue_button.text = "Continue"
 		continue_button.tooltip_text = "Load the saved run." if has_save else "No saved run yet."
+	if new_run_button != null:
+		FoundationWidgetsScript.style_focusable(new_run_button, not has_save)
+	if continue_button != null:
+		FoundationWidgetsScript.style_focusable(continue_button, has_save)
 	_refresh_content_group_controls()
 	_refresh_challenge_controls()
 

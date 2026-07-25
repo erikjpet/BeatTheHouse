@@ -167,6 +167,7 @@ static func _owned_item_models(meta_service: Variant, resolver: Variant, owned: 
 			},
 			"sale_eligible": bool(quote.get("ok", false)),
 			"sale_price": int(quote.get("price", 0)),
+			"sale_breakdown": quote.duplicate(true),
 			"trade_visible": trade_visible,
 			"trade_compatible": trade_compatible,
 			"disabled_reason": item_disabled_reason,
@@ -208,6 +209,7 @@ static func _bag_models(meta_service: Variant, resolver: Variant, bags: Array, m
 			"source_id": str(bag.get("source_id", "")),
 			"sale_eligible": bool(quote.get("ok", false)),
 			"sale_price": int(quote.get("price", 0)),
+			"sale_breakdown": quote.duplicate(true),
 			"actions": actions,
 		})
 	return result

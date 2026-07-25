@@ -500,6 +500,8 @@ func _render_pawn_actions(item: Dictionary) -> void:
 
 
 func _render_merchant_actions(item: Dictionary) -> void:
+	_add_section_header("Offer Breakdown", "The exact quote used when the sale is confirmed.")
+	_render_run_sale_breakdown(item)
 	_add_section_header("Shop Action", "Repair or sell the selected carried item.")
 	var any_action := false
 	if bool(item.get("repairable", false)):
@@ -510,6 +512,19 @@ func _render_merchant_actions(item: Dictionary) -> void:
 		any_action = true
 	if not any_action:
 		FoundationWidgets.add_detail_row(_detail_box, "Shop", "This item cannot be repaired or sold here.", true)
+
+
+func _render_run_sale_breakdown(item: Dictionary) -> void:
+	var breakdown: Dictionary = item.get("sale_breakdown", {}) if typeof(item.get("sale_breakdown", {})) == TYPE_DICTIONARY else {}
+	var final_price := int(item.get("sale_price", breakdown.get("final_price", 0)))
+	if breakdown.is_empty():
+		FoundationWidgets.add_detail_row(_detail_box, "Offer", "$%d" % final_price)
+		return
+	FoundationWidgets.add_detail_row(_detail_box, "Market midpoint", "$%d" % int(breakdown.get("market_midpoint", final_price)))
+	FoundationWidgets.add_detail_row(_detail_box, "Condition / usage", "%+d" % (int(breakdown.get("condition_adjustment", 0)) + int(breakdown.get("usage_adjustment", 0))))
+	FoundationWidgets.add_detail_row(_detail_box, "Merchant rate", "%d%%" % int(round(float(breakdown.get("merchant_rate", 1.0)) * 100.0)))
+	FoundationWidgets.add_detail_row(_detail_box, "Merchant adjustment", "%+d" % int(breakdown.get("merchant_adjustment", 0)))
+	FoundationWidgets.add_detail_row(_detail_box, "Your offer", "$%d" % final_price)
 
 
 func _render_inventory_actions(item: Dictionary) -> void:

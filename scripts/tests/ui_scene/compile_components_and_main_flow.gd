@@ -291,6 +291,10 @@ func _check_run_inventory_screen_component() -> bool:
 		return false
 	screen.update_model(_run_inventory_component_model("merchant_sale"))
 	await process_frame
+	if not _has_visible_text(screen, "Market midpoint") or not _has_visible_text(screen, "Merchant rate") or not _has_visible_text(screen, "Your offer"):
+		parent.queue_free()
+		push_error("Standalone run inventory merchant mode did not render the authoritative price breakdown.")
+		return false
 	if not _click_visible_button(screen, "Repair for 3") or str(emitted.get("repair", "")) != "odds_notebook":
 		parent.queue_free()
 		push_error("Standalone run inventory merchant mode did not emit repair intent.")
@@ -1170,6 +1174,15 @@ func _run_inventory_component_item(item_id: String, display_name: String, source
 		"capacity": 4 if container else 0,
 		"sellable": not container and source != "container",
 		"sale_price": 12,
+		"sale_breakdown": {
+			"market_midpoint": 48,
+			"condition_adjustment": 0,
+			"usage_adjustment": 0,
+			"merchant_rate": 0.25,
+			"merchant_adjustment": -36,
+			"final_price": 12,
+			"authoritative": true,
+		},
 		"repairable": not container and source != "container",
 		"repair_cost": 3,
 		"active_item": not container and source != "container",
