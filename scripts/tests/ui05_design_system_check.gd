@@ -52,6 +52,9 @@ func _run() -> void:
 		"heat_level": 70,
 		"drunk_level": 40,
 		"pending_drunk_absorption": 20,
+		"clock_day": 2,
+		"clock_minute_of_day": 1420,
+		"clock_exact_display": "11:40 PM",
 		"clock_display": "Night 2 · 11:40 PM",
 		"clock_tooltip": "Closes soon.",
 		"status_icons": [{"id": "debt", "icon": "debt", "tooltip": "Marker due"}],
@@ -63,6 +66,10 @@ func _run() -> void:
 	_check(int(hud_snapshot.get("status_icon_count", 0)) == 1, "Structured HUD conditional icon tray is incorrect.")
 	hud.call("_on_time_pressed")
 	_check(bool(hud.current_snapshot().get("time_detail_visible", false)), "Time widget did not open its schedule detail.")
+	_check(str(hud.current_snapshot().get("time_day", "")) == "DAY 2", "Time widget did not show the authoritative run day.")
+	_check(str(hud.current_snapshot().get("time_exact", "")) == "11:40 PM", "Time widget did not show the exact authoritative time.")
+	var watch_snapshot: Dictionary = hud.current_snapshot().get("time_watch", {})
+	_check(int(watch_snapshot.get("minute_of_day", -1)) == 1420, "Analog watch did not use the authoritative run minute.")
 	hud.queue_free()
 
 	var environment_config: Variant = JSON.parse_string(FileAccess.get_file_as_string("res://data/ui/environment_ui.json"))

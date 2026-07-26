@@ -5,6 +5,7 @@ signal time_requested
 
 const SegmentedMeterScript := preload("res://scripts/ui/segmented_meter.gd")
 const UIArtScript := preload("res://scripts/ui/ui_art.gd")
+const HudTimeWatchScript := preload("res://scripts/ui/hud_time_watch.gd")
 
 var wallet_value: Label
 var wallet_delta: Label
@@ -16,6 +17,9 @@ var drunk_meter: SegmentedMeter
 var drunk_value: Label
 var status_tray: HBoxContainer
 var time_button: Button
+var time_watch: HudTimeWatch
+var time_day_label: Label
+var time_exact_label: Label
 var time_detail: Label
 var reduce_motion := false
 var compact_mode := false
@@ -64,7 +68,13 @@ func render(model: Dictionary) -> void:
 	drunk_meter.configure("drunk", drunk, pending)
 	drunk_value.text = "%d%s" % [roundi(drunk), " +%d" % roundi(pending) if pending > 0.0 else ""]
 
-	time_button.text = str(model.get("clock_display", "Night"))
+	var clock_parts := _clock_parts(model)
+	var clock_day := int(clock_parts.get("day", 1))
+	var minute_of_day := int(clock_parts.get("minute_of_day", 0))
+	var exact_display := str(clock_parts.get("exact_display", "12:00 AM"))
+	time_day_label.text = "DAY %d" % clock_day
+	time_exact_label.text = exact_display
+	time_watch.set_minute_of_day(minute_of_day)
 	time_button.tooltip_text = str(model.get("clock_tooltip", "Open the day/night schedule."))
 	time_detail.text = time_button.tooltip_text
 	_render_status_icons(model.get("status_icons", []))
@@ -81,6 +91,9 @@ func current_snapshot() -> Dictionary:
 		"drunk": drunk_meter.current_snapshot() if drunk_meter != null else {},
 		"status_icon_count": status_tray.get_child_count() if status_tray != null else 0,
 		"time_interactive": time_button != null and not time_button.disabled,
+		"time_day": time_day_label.text if time_day_label != null else "",
+		"time_exact": time_exact_label.text if time_exact_label != null else "",
+		"time_watch": time_watch.current_snapshot() if time_watch != null else {},
 		"time_detail_visible": time_detail != null and time_detail.visible,
 		"compact_mode": compact_mode,
 		"reduce_motion": reduce_motion,
@@ -124,9 +137,35 @@ func _build() -> void:
 	time_stack.add_theme_constant_override("separation", VisualStyle.SPACE_1)
 	row.add_child(time_stack)
 	time_button = FoundationWidgets.variant_button("", _on_time_pressed)
-	time_button.icon = UIArtScript.icon("time")
-	time_button.expand_icon = true
+	time_button.custom_minimum_size = VisualStyle.HUD_TIME_WIDGET_SIZE
 	time_button.tooltip_text = "Open the day/night schedule."
+	var time_margin := MarginContainer.new()
+	time_margin.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	time_margin.add_theme_constant_override("margin_left", VisualStyle.SPACE_3)
+	time_margin.add_theme_constant_override("margin_right", VisualStyle.SPACE_3)
+	time_margin.add_theme_constant_override("margin_top", VisualStyle.SPACE_3)
+	time_margin.add_theme_constant_override("margin_bottom", VisualStyle.SPACE_3)
+	time_margin.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	time_button.add_child(time_margin)
+	var time_row := HBoxContainer.new()
+	time_row.add_theme_constant_override("separation", VisualStyle.SPACE_3)
+	time_row.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	time_margin.add_child(time_row)
+	time_watch = HudTimeWatchScript.new()
+	time_row.add_child(time_watch)
+	var time_copy := VBoxContainer.new()
+	time_copy.add_theme_constant_override("separation", VisualStyle.SPACE_1)
+	time_copy.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	time_copy.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	time_row.add_child(time_copy)
+	time_day_label = FoundationWidgets.muted_label("DAY 1", VisualStyle.TYPE_MICRO)
+	time_day_label.autowrap_mode = TextServer.AUTOWRAP_OFF
+	time_day_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	time_copy.add_child(time_day_label)
+	time_exact_label = FoundationWidgets.label("12:00 AM", VisualStyle.TYPE_BODY_LARGE)
+	time_exact_label.autowrap_mode = TextServer.AUTOWRAP_OFF
+	time_exact_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	time_copy.add_child(time_exact_label)
 	time_stack.add_child(time_button)
 	time_detail = FoundationWidgets.muted_label("", VisualStyle.TYPE_CAPTION)
 	time_detail.visible = false
@@ -221,3 +260,49 @@ func _render_status_icons(statuses_value: Variant) -> void:
 func _on_time_pressed() -> void:
 	time_detail.visible = not time_detail.visible
 	time_requested.emit()
+
+
+func _clock_parts(model: Dictionary) -> Dictionary:
+	if model.has("clock_day") and model.has("clock_minute_of_day"):
+		var authoritative_minute := posmod(int(model.get("clock_minute_of_day", 0)), 1440)
+		return {
+			"day": maxi(1, int(model.get("clock_day", 1))),
+			"minute_of_day": authoritative_minute,
+			"exact_display": str(model.get("clock_exact_display", _exact_time_label(authoritative_minute))),
+		}
+	var display := str(model.get("clock_display", "Day 1 12 AM")).replace("·", " ")
+	var tokens := display.split(" ", false)
+	var day := 1
+	var period := "AM"
+	var hour := 12
+	var minute := 0
+	for index in range(tokens.size()):
+		var token := str(tokens[index])
+		if token.to_lower() in ["day", "night"] and index + 1 < tokens.size() and str(tokens[index + 1]).is_valid_int():
+			day = maxi(1, int(tokens[index + 1]))
+		if token.to_upper() in ["AM", "PM"]:
+			period = token.to_upper()
+			if index > 0:
+				var time_parts := str(tokens[index - 1]).split(":", false)
+				if not time_parts.is_empty() and str(time_parts[0]).is_valid_int():
+					hour = clampi(int(time_parts[0]), 1, 12)
+				if time_parts.size() > 1 and str(time_parts[1]).is_valid_int():
+					minute = clampi(int(time_parts[1]), 0, 59)
+	var hour_24 := hour % 12
+	if period == "PM":
+		hour_24 += 12
+	var minute_of_day := hour_24 * 60 + minute
+	return {
+		"day": day,
+		"minute_of_day": minute_of_day,
+		"exact_display": _exact_time_label(minute_of_day),
+	}
+
+
+func _exact_time_label(minute_of_day: int) -> String:
+	var normalized := posmod(minute_of_day, 1440)
+	var hour_24 := int(floor(float(normalized) / 60.0))
+	var hour_12 := hour_24 % 12
+	if hour_12 == 0:
+		hour_12 = 12
+	return "%d:%02d %s" % [hour_12, normalized % 60, "AM" if hour_24 < 12 else "PM"]

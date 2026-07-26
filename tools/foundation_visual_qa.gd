@@ -2115,6 +2115,13 @@ func _assert_objective_hud(context_label: String) -> void:
 		_require((heat_presentation.get("ticks", []) as Array).size() == 2, "%s structured HUD heat thresholds are missing." % context_label)
 		_require(drunk_presentation.has("ghost_visible"), "%s structured HUD pending-drink ghost state is missing." % context_label)
 		_require(bool(presentation.get("time_interactive", false)), "%s structured HUD time widget is not interactive." % context_label)
+		var exact_time := str(presentation.get("time_exact", ""))
+		_require(exact_time.find(":") != -1 and _has_visible_text(app, exact_time), "%s structured HUD does not visibly show the exact time." % context_label)
+		var watch_presentation: Dictionary = presentation.get("time_watch", {})
+		_require(
+			int(watch_presentation.get("minute_of_day", -1)) == int(hud.get("clock_minute_of_day", -2)),
+			"%s analog watch does not match the authoritative run minute." % context_label
+		)
 		_cover("r100_run_status_hud_structured")
 	_cover("objective_hud")
 
