@@ -723,9 +723,9 @@ func _generate_machine_state(_run_state: RunState, environment: Dictionary, rng:
 	for ticket_type_value in _ticket_types():
 		var ticket_type: Dictionary = ticket_type_value
 		var count_range := _int_array(ticket_type.get("stock_count", [0, 5]))
-		var minimum := clampi(int(count_range[0]) if not count_range.is_empty() else 0, 0, 5)
-		var maximum := clampi(int(count_range[1]) if count_range.size() > 1 else minimum, minimum, 5)
-		var remaining := 0 if machine_rng.randi_range(0, 1) == 0 else machine_rng.randi_range(maxi(1, minimum), maxi(1, maximum))
+		var maximum := clampi(int(count_range[1]) if count_range.size() > 1 else 5, 1, 5)
+		var stock_roll := machine_rng.randi_range(0, 19)
+		var remaining := 0 if stock_roll < 15 else mini(maximum, stock_roll - 14)
 		stock.append({
 			"type_id": str(ticket_type.get("id", "")),
 			"display_name": str(ticket_type.get("display_name", "Ticket")),
@@ -741,7 +741,7 @@ func _generate_machine_state(_run_state: RunState, environment: Dictionary, rng:
 		"machine_name": "Highway Scratch Center",
 		"stock_day": int(environment.get("generated_day", environment.get("day", 0))),
 		"stock_stream_key": stream_key,
-		"stock_weighting": "full_roster_half_out_of_stock_0_to_5",
+		"stock_weighting": "full_roster_75_out_of_stock_1_to_5",
 		"stock": stock,
 		"environment_hooks": [{
 			"id": REDEEM_HOOK_ID,
@@ -1724,6 +1724,7 @@ func _draw_vending_window(surface, slot: Dictionary, rect: Rect2, index: int) ->
 	surface.draw_rect(button, C_PINK if sold_out else Color("#65f2ac"), false, 2)
 	surface.surface_label_centered(str(index + 1), button, 8 if compact else 10, C_WHITE)
 	if not sold_out:
+		surface.surface_add_hit(rect, "scratch_buy", index)
 		surface.surface_add_hit(button, "scratch_buy", index)
 		var quantity_max := mini(3, int(slot.get("remaining", 0)))
 		for extra in range(2, quantity_max + 1):
