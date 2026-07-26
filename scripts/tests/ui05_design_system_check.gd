@@ -83,7 +83,10 @@ func _run() -> void:
 	header.render({"archetype_id": "grand_casino_cage", "display_name": "Grand Casino Cage"}, "Settle the marker.")
 	var header_snapshot := header.current_snapshot()
 	_check(str(header_snapshot.get("archetype_id", "")) == "grand_casino_cage", "Environment header lost its archetype identity.")
-	_check(int(header_snapshot.get("option_count", 0)) == 4, "Environment header did not render its configured options.")
+	_check(int(header_snapshot.get("configured_option_count", 0)) == 4, "Environment header lost its configured room-option data.")
+	_check(int(header_snapshot.get("option_count", -1)) == 0, "Environment header still renders instructional option copy.")
+	_check(not bool(header_snapshot.get("guidance_visible", true)), "Environment header still renders goal or tutorial guidance.")
+	_check(bool(header_snapshot.get("compact", false)), "Environment header did not use its compact presentation.")
 	_check(not str(header_snapshot.get("title_texture", "")).is_empty(), "Environment header did not load its title plate.")
 	header.queue_free()
 

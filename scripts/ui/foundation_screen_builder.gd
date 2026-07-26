@@ -170,28 +170,31 @@ static func build_run_screen(host: Variant) -> void:
 	hud_margin.set_anchors_preset(Control.PRESET_FULL_RECT)
 	hud_margin.add_theme_constant_override("margin_left", 8)
 	hud_margin.add_theme_constant_override("margin_right", 8)
-	hud_margin.add_theme_constant_override("margin_top", 6)
-	hud_margin.add_theme_constant_override("margin_bottom", 4)
+	hud_margin.add_theme_constant_override("margin_top", 2)
+	hud_margin.add_theme_constant_override("margin_bottom", 2)
 	host.run_hud_panel.add_child(hud_margin)
 	var hud_stack := VBoxContainer.new()
 	hud_stack.add_theme_constant_override("separation", 2)
 	hud_stack.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	hud_stack.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	hud_margin.add_child(hud_stack)
-	host.structured_hud = host.FoundationHudBarScript.new()
-	host.structured_hud.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	host.structured_hud.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
-	hud_stack.add_child(host.structured_hud)
-	var hud_row := HBoxContainer.new()
-	hud_row.add_theme_constant_override("separation", 8)
+	var hud_row := HFlowContainer.new()
+	hud_row.add_theme_constant_override("h_separation", 8)
+	hud_row.add_theme_constant_override("v_separation", 2)
 	hud_row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	hud_stack.add_child(hud_row)
+	host.structured_hud = host.FoundationHudBarScript.new()
+	host.structured_hud.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
+	host.structured_hud.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
+	hud_row.add_child(host.structured_hud)
 	host.top_menu_button = host._hud_nav_button("Menu", Callable(host, "open_run_menu"))
+	host.top_menu_button.custom_minimum_size = Vector2(72, host.MIN_NATIVE_TOUCH_TARGET_HEIGHT)
 	hud_row.add_child(host.top_menu_button)
 	host.top_settings_button = host._hud_nav_button("Settings", Callable(host, "open_settings_menu"))
+	host.top_settings_button.custom_minimum_size = Vector2(76, host.MIN_NATIVE_TOUCH_TARGET_HEIGHT)
 	hud_row.add_child(host.top_settings_button)
 	host.top_inventory_button = host._hud_nav_button("Inventory", Callable(host, "open_run_inventory"))
-	host.top_inventory_button.custom_minimum_size = Vector2(118, host.MIN_NATIVE_TOUCH_TARGET_HEIGHT)
+	host.top_inventory_button.custom_minimum_size = Vector2(84, host.MIN_NATIVE_TOUCH_TARGET_HEIGHT)
 	host.top_inventory_button.tooltip_text = "Inspect current run items."
 	hud_row.add_child(host.top_inventory_button)
 	host.status_label = host._label("", 14)
@@ -208,7 +211,7 @@ static func build_run_screen(host: Variant) -> void:
 	host.save_status_label.custom_minimum_size = Vector2(260, 0)
 	hud_row.add_child(host.save_status_label)
 	host.active_item_button = host._hud_nav_button("Active: Empty", Callable(host, "use_active_item_slot"))
-	host.active_item_button.custom_minimum_size = Vector2(148, host.MIN_NATIVE_TOUCH_TARGET_HEIGHT)
+	host.active_item_button.custom_minimum_size = Vector2(124, host.MIN_NATIVE_TOUCH_TARGET_HEIGHT)
 	host.active_item_button.tooltip_text = "Use the equipped active item."
 	hud_row.add_child(host.active_item_button)
 
@@ -268,8 +271,12 @@ static func build_run_screen(host: Variant) -> void:
 	host.visual_panel_container.add_child(visual_stack)
 	host.environment_header = host.EnvironmentHeaderScript.new()
 	host.environment_header.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	visual_stack.add_child(host.environment_header)
-	visual_stack.add_child(title_row)
+	var compact_environment_row := HBoxContainer.new()
+	compact_environment_row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	compact_environment_row.add_child(host.environment_header)
+	title_row.size_flags_horizontal = Control.SIZE_SHRINK_END
+	compact_environment_row.add_child(title_row)
+	visual_stack.add_child(compact_environment_row)
 	visual_stack.add_child(host.summary_label)
 	host._build_run_report_screen(visual_stack)
 	host.environment_canvas = PixelSceneCanvasScript.new()

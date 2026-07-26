@@ -18,6 +18,7 @@ var status_tray: HBoxContainer
 var time_button: Button
 var time_detail: Label
 var reduce_motion := false
+var compact_mode := false
 var _last_bankroll := 0
 var _has_rendered := false
 
@@ -29,6 +30,17 @@ func _ready() -> void:
 
 func set_reduce_motion(enabled: bool) -> void:
 	reduce_motion = enabled
+
+
+func set_compact_mode(enabled: bool) -> void:
+	if compact_mode == enabled:
+		return
+	compact_mode = enabled
+	var meter_size := VisualStyle.HUD_METER_COMPACT_SIZE if compact_mode else VisualStyle.HUD_METER_SIZE
+	if heat_meter != null:
+		heat_meter.custom_minimum_size = meter_size
+	if drunk_meter != null:
+		drunk_meter.custom_minimum_size = meter_size
 
 
 func render(model: Dictionary) -> void:
@@ -70,6 +82,7 @@ func current_snapshot() -> Dictionary:
 		"status_icon_count": status_tray.get_child_count() if status_tray != null else 0,
 		"time_interactive": time_button != null and not time_button.disabled,
 		"time_detail_visible": time_detail != null and time_detail.visible,
+		"compact_mode": compact_mode,
 		"reduce_motion": reduce_motion,
 	}
 

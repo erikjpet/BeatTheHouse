@@ -30,7 +30,7 @@ func render(environment: Dictionary, goal_text: String) -> void:
 	title_art.texture = UIArtScript.environment_title(archetype_id)
 	accessible_title.text = display_name
 	accessible_title.tooltip_text = "%s title plate" % display_name
-	blurb_label.text = str(config.get("blurb", "Click objects to inspect this room."))
+	blurb_label.text = str(config.get("blurb", display_name))
 	var rendered_goal := goal_text.strip_edges()
 	if rendered_goal.is_empty():
 		rendered_goal = "Inspect the room and choose an available action."
@@ -54,8 +54,11 @@ func current_snapshot() -> Dictionary:
 		"title_texture": title_art.texture.resource_path if title_art != null and title_art.texture != null else "",
 		"accessible_title": accessible_title.text if accessible_title != null else "",
 		"blurb": blurb_label.text if blurb_label != null else "",
-		"goal": goal_label.text if goal_label != null else "",
-		"option_count": options_row.get_child_count() - 1 if options_row != null else 0,
+		"goal": "",
+		"option_count": 0,
+		"configured_option_count": options_row.get_child_count() - 1 if options_row != null else 0,
+		"guidance_visible": false,
+		"compact": true,
 		"data_path": CONFIG_PATH,
 		"fallback_ready": true,
 	}
@@ -70,7 +73,7 @@ func _build() -> void:
 	title_stack.add_theme_constant_override("separation", VisualStyle.SPACE_1)
 	row.add_child(title_stack)
 	title_art = TextureRect.new()
-	title_art.custom_minimum_size = VisualStyle.ENVIRONMENT_TITLE_SIZE
+	title_art.custom_minimum_size = VisualStyle.ENVIRONMENT_TITLE_COMPACT_SIZE
 	title_art.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	title_art.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 	title_art.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -78,22 +81,27 @@ func _build() -> void:
 	accessible_title = FoundationWidgets.label("", VisualStyle.TYPE_MICRO)
 	accessible_title.autowrap_mode = TextServer.AUTOWRAP_OFF
 	accessible_title.clip_text = true
+	accessible_title.visible = false
 	title_stack.add_child(accessible_title)
 	var copy_stack := VBoxContainer.new()
 	copy_stack.add_theme_constant_override("separation", VisualStyle.SPACE_2)
 	copy_stack.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	copy_stack.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	row.add_child(copy_stack)
 	blurb_label = FoundationWidgets.label("", VisualStyle.TYPE_SMALL)
-	blurb_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	blurb_label.max_lines_visible = 2
+	blurb_label.autowrap_mode = TextServer.AUTOWRAP_OFF
+	blurb_label.max_lines_visible = 1
+	blurb_label.clip_text = true
 	copy_stack.add_child(blurb_label)
 	goal_label = FoundationWidgets.label("", VisualStyle.TYPE_SMALL)
 	goal_label.autowrap_mode = TextServer.AUTOWRAP_OFF
 	goal_label.clip_text = true
 	FoundationWidgets.set_control_font_color(goal_label, VisualStyle.role("focus"))
+	goal_label.visible = false
 	copy_stack.add_child(goal_label)
 	options_row = HBoxContainer.new()
 	options_row.add_theme_constant_override("separation", VisualStyle.SPACE_5)
+	options_row.visible = false
 	copy_stack.add_child(options_row)
 
 

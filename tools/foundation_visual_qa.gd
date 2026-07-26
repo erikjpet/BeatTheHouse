@@ -156,7 +156,9 @@ func _run() -> void:
 	_assert_environment_canvas_contained("environment screen")
 	_assert_no_triggered_event_objects("environment screen")
 	_assert_objective_hud("start of run")
-	_require(_has_visible_text(app, "double-click glowing props to act"), "Environment screen does not prompt the player to inspect and activate world objects.")
+	_require(not _has_visible_text(app, "double-click glowing props to act"), "Environment header still shows persistent object-interaction tutorial copy.")
+	var compact_header: Dictionary = app.call("current_environment_header_snapshot")
+	_require(bool(compact_header.get("compact", false)) and not bool(compact_header.get("guidance_visible", true)), "Environment header did not use its compact guidance-free presentation.")
 	_require(not _is_control_visible("action_panel_container"), "The old room-object side panel is still visible in normal play.")
 	_require(not _has_visible_text(app, "What can I do?"), "Environment screen still requires the old What can I do side-box label.")
 	_require(not _has_visible_text(app, "Use the machine"), "Environment screen still requires the old Use the machine side-box label.")
@@ -2652,7 +2654,7 @@ func _assert_no_scroll_critical_path(context: String) -> void:
 	if environment_control != null and environment_control.visible:
 		_assert_environment_canvas_contained(context)
 		if str(screen_snapshot.get("screen", "")) == "ENVIRONMENT" and not talk_visible:
-			_require(_has_visible_text(app, "double-click glowing props to act"), "%s room mode does not show visible object interaction guidance." % context)
+			_require(not _has_visible_text(app, "double-click glowing props to act"), "%s room mode still shows persistent object-interaction tutorial copy." % context)
 	if game_surface_control != null and game_surface_control.visible:
 		_assert_game_surface_contained(context)
 		var game_snapshot: Dictionary = app.call("current_game_view_snapshot")

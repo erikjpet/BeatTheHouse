@@ -42,9 +42,9 @@ const CONTEXT_MODE_META_SAL_SHELF := "meta_sal_shelf"
 const CONTEXT_MODE_META_SAL_TALK := "meta_sal_talk"
 const META_LOCATION_HOME := "home"
 const META_LOCATION_START_RUN := "start_run"
-const RUN_INFO_BAND_RATIO := 0.15
+const RUN_INFO_BAND_RATIO := 0.10
 const RUN_SURFACE_BAND_RATIO := 0.85
-const RUN_INFO_MIN_HEIGHT := 144.0
+const RUN_INFO_MIN_HEIGHT := 72.0
 const ENVIRONMENT_CANVAS_MIN_SIZE := Vector2.ZERO
 const GAME_SURFACE_FOCUSED_MIN_SIZE := Vector2.ZERO
 const GAME_SURFACE_PREVIEW_MIN_SIZE := Vector2.ZERO
@@ -5611,6 +5611,7 @@ func _render_environment_screen() -> void:
 		objective_label.text = str(hud_model.get("objective_text", ""))
 	if structured_hud != null:
 		structured_hud.set_reduce_motion(_reduce_motion_enabled())
+		structured_hud.set_compact_mode(_small_screen_enabled())
 		structured_hud.render(hud_model)
 	if environment_header != null:
 		environment_header.render(run_state.current_environment, str(hud_model.get("goal_text", "")))
