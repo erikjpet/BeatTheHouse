@@ -2470,52 +2470,6 @@ func _production_ticket_texture(type_id: String) -> Texture2D:
 	return texture
 
 
-func _draw_production_ticket_overprint(surface, ticket: Dictionary, paper: Color, ink: Color, accent: Color, trim: Color) -> void:
-	# The generated ticket face supplies the production art; this pass only corrects values that must match gameplay.
-	var price_rect := Rect2(active_ticket_rect.position + Vector2(6, 6), Vector2(38, 24))
-	surface.draw_rect(price_rect, Color(0, 0, 0, 0.72))
-	surface.draw_rect(price_rect, C_WHITE, false, 1)
-	surface.surface_label_centered("$%d" % int(ticket.get("price", 1)), price_rect, 12, C_WHITE)
-	var prize_rect := _production_top_prize_rect(str(ticket.get("type_id", "")))
-	_draw_exact_top_prize_badge(surface, int(ticket.get("top_prize", 0)), prize_rect, trim, accent)
-	var serial_rect := Rect2(active_ticket_rect.position + Vector2(active_ticket_rect.size.x * 0.22, active_ticket_rect.size.y - 28), Vector2(active_ticket_rect.size.x * 0.56, 12))
-	surface.draw_rect(serial_rect, Color(1, 1, 1, 0.78))
-	for index in range(18):
-		var x := serial_rect.position.x + 4.0 + float(index) * serial_rect.size.x / 20.0
-		var width := 2.0 if index % 4 == 0 else 1.0
-		surface.draw_rect(Rect2(Vector2(x, serial_rect.position.y + 2), Vector2(width, serial_rect.size.y - 4)), Color(0, 0, 0, 0.58))
-	surface.surface_label_centered("%03d" % int(ticket.get("purchase_number", 0)), Rect2(active_ticket_rect.position + Vector2(active_ticket_rect.size.x - 36, active_ticket_rect.size.y - 27), Vector2(26, 12)), 6, ink)
-
-
-func _production_top_prize_rect(type_id: String) -> Rect2:
-	var normalized := Rect2(0.56, 0.12, 0.38, 0.17)
-	match type_id:
-		"two_fer":
-			normalized = Rect2(0.64, 0.10, 0.32, 0.18)
-		"lucky_7s":
-			normalized = Rect2(0.55, 0.13, 0.40, 0.17)
-		"tic_tac_gold":
-			normalized = Rect2(0.57, 0.15, 0.40, 0.18)
-		"crossword_corner":
-			normalized = Rect2(0.58, 0.11, 0.36, 0.18)
-		"bonus_bingo":
-			normalized = Rect2(0.63, 0.12, 0.34, 0.18)
-		"high_roller_holdem":
-			normalized = Rect2(0.18, 0.25, 0.64, 0.18)
-		"golden_vault":
-			normalized = Rect2(0.17, 0.23, 0.66, 0.17)
-	return Rect2(active_ticket_rect.position + normalized.position * active_ticket_rect.size, normalized.size * active_ticket_rect.size)
-
-
-func _draw_exact_top_prize_badge(surface, top_prize: int, rect: Rect2, trim: Color, accent: Color) -> void:
-	var shadow_rect := Rect2(rect.position + Vector2(3, 3), rect.size)
-	surface.draw_rect(shadow_rect, Color(0, 0, 0, 0.66))
-	surface.draw_rect(rect, Color(accent.r, accent.g, accent.b, 1.0))
-	surface.draw_rect(rect.grow(-3), Color(trim.r, trim.g, trim.b, 1.0), false, 2)
-	surface.surface_label_centered("TOP PRIZE", Rect2(rect.position + Vector2(4, 2), Vector2(rect.size.x - 8, rect.size.y * 0.38)), 7 if rect.size.x < 150.0 else 8, C_DARK)
-	surface.surface_label_centered("$%d" % top_prize, Rect2(rect.position + Vector2(4, rect.size.y * 0.34), Vector2(rect.size.x - 8, rect.size.y * 0.58)), 11 if rect.size.x < 150.0 else 13, C_DARK)
-
-
 func _draw_ticket_header(surface, ticket: Dictionary, paper: Color, ink: Color, accent: Color, trim: Color) -> void:
 	var type_id := str(ticket.get("type_id", ""))
 	var title := str(ticket.get("display_name", "SCRATCH TICKET")).to_upper()
