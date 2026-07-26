@@ -759,6 +759,49 @@ func _check_family_loan_unknown_caller(app: Control) -> bool:
 		return false
 	app.call("resolve_event_choice", "family_loan", "deny")
 	await process_frame
+	return await _check_crew_favor_conversation(app)
+
+
+func _check_crew_favor_conversation(app: Control) -> bool:
+	app.call("start_foundation_run", "UI-CREW-FAVOR-TALK")
+	await process_frame
+	var run_state: RunState = app.get("run_state")
+	var library: ContentLibrary = app.get("library")
+	var event_definition := library.event("crew_favor_delivery") if library != null else {}
+	if run_state == null or event_definition.is_empty():
+		push_error("Crew-favor talk fixture is unavailable.")
+		return false
+	run_state.narrative_flags["crew_favor_pending"] = true
+	var overrides: Dictionary = app.call("_triggered_entry_overrides", event_definition)
+	var trigger_context := {"trigger": "action", "type": "action", "turns": 1}
+	if not run_state.enqueue_triggered_event("crew_favor_delivery", "ui_fixture", trigger_context, overrides):
+		push_error("Crew-favor talk fixture could not be queued.")
+		return false
+	app.call("_refresh")
+	await process_frame
+	var talk: Dictionary = app.call("current_talk_dock_snapshot")
+	if not bool(talk.get("visible", false)) \
+		or str(talk.get("event_id", "")) != "crew_favor_delivery" \
+		or str(talk.get("speaker", "")) != "The Crew" \
+		or str(talk.get("topic", "")) != "Crew Favor" \
+		or int(talk.get("choice_count", 0)) != 2:
+		push_error("Crew favor did not use the standard title/topic/options conversation: %s" % JSON.stringify(talk))
+		return false
+	if str(talk.get("portrait_presentation", "")) != "faceless_silhouette" \
+		or str(talk.get("portrait_renderer", "")) != "animated_character_model" \
+		or int(talk.get("portrait_count", 0)) != 3 \
+		or not bool(talk.get("portrait_animation_active", false)):
+		push_error("Crew favor did not show three animated faceless people: %s" % JSON.stringify(talk))
+		return false
+	app.call("resolve_event_choice", "crew_favor_delivery", "run_package")
+	await process_frame
+	if not bool(run_state.narrative_flags.get("crew_favor_completed", false)) \
+		or bool(run_state.narrative_flags.get("crew_favor_pending", true)):
+		push_error("Crew-favor conversation changed the authoritative Run Package outcome.")
+		return false
+	if bool((app.call("current_talk_dock_snapshot") as Dictionary).get("visible", false)):
+		push_error("Crew-favor conversation remained open after resolution.")
+		return false
 	return true
 
 

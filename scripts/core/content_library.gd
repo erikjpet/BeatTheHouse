@@ -664,6 +664,7 @@ static func _normalize_event_speaker(value: Variant) -> Dictionary:
 		result["presentation"] = presentation
 	if typeof(source.get("face_layers", [])) == TYPE_ARRAY:
 		result["face_layers"] = (source.get("face_layers", []) as Array).duplicate(true)
+	result["portrait_count"] = clampi(int(source.get("portrait_count", 1)), 1, 3)
 	return result
 
 

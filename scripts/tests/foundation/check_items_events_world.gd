@@ -868,6 +868,7 @@ func _check_t4_7_event_interaction_model(library: ContentLibrary, failures: Arra
 	_check_t4_7_triggered_queue_round_trip(failures)
 	_check_t4_7_chain_determinism(library, failures)
 	_check_t4_7_family_loan_contract(library, failures)
+	_check_t4_7_crew_conversation_contract(library, failures)
 
 
 func _check_t4_7_validator_contract(library: ContentLibrary, failures: Array) -> void:
@@ -1260,6 +1261,39 @@ func _check_t4_7_family_loan_contract(library: ContentLibrary, failures: Array) 
 		failures.append("T4.7 family loan deny set the single-use flag.")
 	if bool(deny_run.narrative_flags.get("brother_in_law_phone_ready", true)):
 		failures.append("T4.7 family loan deny did not clear the phone-ready flag.")
+
+
+func _check_t4_7_crew_conversation_contract(library: ContentLibrary, failures: Array) -> void:
+	var crew_event_count := 0
+	for definition_variant in library.events:
+		if typeof(definition_variant) != TYPE_DICTIONARY:
+			continue
+		var definition: Dictionary = definition_variant
+		var event_id := str(definition.get("id", ""))
+		var speaker: Dictionary = definition.get("speaker", {}) if typeof(definition.get("speaker", {})) == TYPE_DICTIONARY else {}
+		var is_crew_event := event_id.begins_with("crew_") or str(speaker.get("name", "")) == "The Crew"
+		if not is_crew_event:
+			continue
+		crew_event_count += 1
+		if str(definition.get("presentation", "")) != "talk":
+			failures.append("T4.7 Crew event '%s' must use the conversation dock." % event_id)
+		if str(speaker.get("name", "")) != "The Crew":
+			failures.append("T4.7 Crew event '%s' must identify The Crew as its speaker." % event_id)
+		if str(speaker.get("presentation", "")) != "faceless_silhouette" \
+			or int(speaker.get("portrait_count", 0)) != 3 \
+			or not (speaker.get("face_layers", []) as Array).is_empty():
+			failures.append("T4.7 Crew event '%s' must show three animated faceless people." % event_id)
+
+	var favor_definition := library.event("crew_favor_delivery")
+	var favor_choices: Array = (favor_definition.get("payload", {}) as Dictionary).get("choices", []) if typeof(favor_definition.get("payload", {})) == TYPE_DICTIONARY else []
+	var favor_choice_ids: Array[String] = []
+	for choice_variant in favor_choices:
+		if typeof(choice_variant) == TYPE_DICTIONARY:
+			favor_choice_ids.append(str((choice_variant as Dictionary).get("id", "")))
+	if crew_event_count == 0 or favor_definition.is_empty():
+		failures.append("T4.7 Crew favor conversation fixture is missing.")
+	elif not favor_choice_ids.has("run_package") or not favor_choice_ids.has("refuse"):
+		failures.append("T4.7 Crew favor conversation lost its authoritative package choices.")
 
 
 # Checks T6.7 object visibility classes and deterministic world-event cadence.
