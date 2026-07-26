@@ -1725,14 +1725,13 @@ func _draw_vending_window(surface, slot: Dictionary, rect: Rect2, index: int) ->
 	surface.surface_label_centered(str(index + 1), button, 8 if compact else 10, C_WHITE)
 	if not sold_out:
 		surface.surface_add_hit(button, "scratch_buy", index)
-		if not compact:
-			var quantity_max := mini(3, int(slot.get("remaining", 0)))
-			for extra in range(2, quantity_max + 1):
-				var q_rect := Rect2(rect.end - Vector2(31 + float(extra - 1) * 26.0, 12), Vector2(23, 11))
-				surface.draw_rect(q_rect, Color("#233f2f"))
-				surface.draw_rect(q_rect, Color("#65f2ac"), false, 1)
-				surface.surface_label_centered("x%d" % extra, q_rect, 6, C_WHITE)
-				surface.surface_add_hit(q_rect, "scratch_buy", index + (extra - 1) * 100)
+		var quantity_max := mini(3, int(slot.get("remaining", 0)))
+		for extra in range(2, quantity_max + 1):
+			var q_rect := Rect2(button.position + Vector2(-23.0, float(extra - 2) * 11.0), Vector2(20, 9)) if compact else Rect2(rect.end - Vector2(31 + float(extra - 1) * 26.0, 12), Vector2(23, 11))
+			surface.draw_rect(q_rect, Color("#233f2f"))
+			surface.draw_rect(q_rect, Color("#65f2ac"), false, 1)
+			surface.surface_label_centered("x%d" % extra, q_rect, 5 if compact else 6, C_WHITE)
+			surface.surface_add_hit(q_rect, "scratch_buy", index + (extra - 1) * 100)
 
 
 func _dispenser_ticket_size(size_id: String) -> Vector2:
