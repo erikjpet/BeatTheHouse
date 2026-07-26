@@ -131,5 +131,30 @@ Set `"environment_actor": false` on a speaker who is heard remotely, such as a
 phone contact. Their conversation model still works, but no physical character
 is placed in the room.
 
+Every dialogue speaker, talk-event speaker, and human lender must reference an
+authored `character_id` or `character_pool_id` and a valid `voice_line_key`.
+Content validation rejects generic inline-only people, missing statements, and
+exactly duplicated model designs.
+
+Lender characters also declare only the authoritative lender reference:
+
+```json
+{
+  "id": "example_lender_character",
+  "lender_id": "example_lender",
+  "voice": {
+    "lines": {
+      "loan_offer": ["The authored offer statement."]
+    }
+  }
+}
+```
+
+Do not duplicate loan amounts in character data. At resolution time the
+character snapshot receives `lender_terms`—amount, range, interest, deadline,
+favor count, and default consequence—from `data/debt/lenders.json`. This keeps
+personality and visual design reusable while lender mechanics stay
+authoritative.
+
 Run `tools/validate_project.ps1` and the supported `ui` and `systems`
 Foundation suites after changing character content or rendering.

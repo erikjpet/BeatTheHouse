@@ -1355,6 +1355,9 @@ func _validate_lender_definitions() -> void:
 
 func _validate_character_definitions() -> void:
 	var event_ids := _ids_for(events)
+	var dialogue_ids := _ids_for(dialogues)
+	var lender_ids := _ids_for(lenders)
+	var design_owners: Dictionary = {}
 	for character_value in characters:
 		if typeof(character_value) != TYPE_DICTIONARY:
 			continue
@@ -1374,6 +1377,18 @@ func _validate_character_definitions() -> void:
 			var scale_value := float(model.get("scale", 1.0))
 			if scale_value < 0.75 or scale_value > 1.25:
 				validation_errors.append("characters %s model.scale must be between 0.75 and 1.25." % character_id)
+			var design_signature := "|".join([
+				str(model.get("skin_color", "")).to_lower(),
+				str(model.get("hair_color", "")).to_lower(),
+				str(model.get("jacket_color", "")).to_lower(),
+				str(model.get("accent_color", "")).to_lower(),
+				str(model.get("silhouette", "")).to_lower(),
+				"%.3f" % scale_value,
+			])
+			if design_owners.has(design_signature):
+				validation_errors.append("characters %s duplicates the complete model design of %s." % [character_id, str(design_owners.get(design_signature, ""))])
+			else:
+				design_owners[design_signature] = character_id
 		var voice_value: Variant = character.get("voice", {})
 		if typeof(voice_value) != TYPE_DICTIONARY:
 			validation_errors.append("characters %s voice must be a dictionary." % character_id)
@@ -1412,6 +1427,12 @@ func _validate_character_definitions() -> void:
 			var event_id := str(encounter.get("event_id", "")).strip_edges()
 			if not event_id.is_empty() and not bool(event_ids.get(event_id, false)):
 				validation_errors.append("characters %s encounters[%d] references unknown event_id: %s" % [character_id, encounter_index, event_id])
+			var dialogue_id := str(encounter.get("dialogue_id", "")).strip_edges()
+			if not dialogue_id.is_empty() and not bool(dialogue_ids.get(dialogue_id, false)):
+				validation_errors.append("characters %s encounters[%d] references unknown dialogue_id: %s" % [character_id, encounter_index, dialogue_id])
+		var lender_id := str(character.get("lender_id", "")).strip_edges()
+		if not lender_id.is_empty() and not bool(lender_ids.get(lender_id, false)):
+			validation_errors.append("characters %s references unknown lender_id: %s" % [character_id, lender_id])
 
 
 func _validate_character_pool_definitions() -> void:
@@ -1439,24 +1460,65 @@ func _validate_character_speaker_references() -> void:
 	var pool_ids := _ids_for(character_pools)
 	for event_value in events:
 		if typeof(event_value) == TYPE_DICTIONARY:
-			_validate_character_speaker_reference("events %s speaker" % str((event_value as Dictionary).get("id", "")), _as_dict((event_value as Dictionary).get("speaker", {})), character_ids, pool_ids)
+			var event: Dictionary = event_value
+			var require_character := str(event.get("presentation", "")).strip_edges() == "talk"
+			_validate_character_speaker_reference("events %s speaker" % str(event.get("id", "")), _as_dict(event.get("speaker", {})), character_ids, pool_ids, require_character)
 	for dialogue_value in dialogues:
 		if typeof(dialogue_value) == TYPE_DICTIONARY:
-			_validate_character_speaker_reference("dialogues %s speaker" % str((dialogue_value as Dictionary).get("id", "")), _as_dict((dialogue_value as Dictionary).get("speaker", {})), character_ids, pool_ids)
+			_validate_character_speaker_reference("dialogues %s speaker" % str((dialogue_value as Dictionary).get("id", "")), _as_dict((dialogue_value as Dictionary).get("speaker", {})), character_ids, pool_ids, true)
 	for lender_value in lenders:
 		if typeof(lender_value) == TYPE_DICTIONARY:
-			_validate_character_speaker_reference("lenders %s speaker" % str((lender_value as Dictionary).get("id", "")), _as_dict((lender_value as Dictionary).get("speaker", {})), character_ids, pool_ids)
+			var lender: Dictionary = lender_value
+			_validate_character_speaker_reference("lenders %s speaker" % str(lender.get("id", "")), _as_dict(lender.get("speaker", {})), character_ids, pool_ids, str(lender.get("lender_type", "")) != "atm")
+			_validate_lender_character_ownership(lender)
 
 
-func _validate_character_speaker_reference(label: String, speaker: Dictionary, character_ids: Dictionary, pool_ids: Dictionary) -> void:
+func _validate_character_speaker_reference(label: String, speaker: Dictionary, character_ids: Dictionary, pool_ids: Dictionary, required: bool = false) -> void:
 	var character_id := str(speaker.get("character_id", "")).strip_edges()
 	var pool_id := str(speaker.get("character_pool_id", "")).strip_edges()
+	if required and character_id.is_empty() and pool_id.is_empty():
+		validation_errors.append("%s must reference an authored character_id or character_pool_id." % label)
 	if not character_id.is_empty() and not bool(character_ids.get(character_id, false)):
 		validation_errors.append("%s references unknown character_id: %s" % [label, character_id])
 	if not pool_id.is_empty() and not bool(pool_ids.get(pool_id, false)):
 		validation_errors.append("%s references unknown character_pool_id: %s" % [label, pool_id])
 	if not character_id.is_empty() and not pool_id.is_empty():
 		validation_errors.append("%s must use character_id or character_pool_id, not both." % label)
+	var line_key := str(speaker.get("voice_line_key", "")).strip_edges()
+	if required and line_key.is_empty():
+		validation_errors.append("%s must define voice_line_key for its authored statements." % label)
+	if not line_key.is_empty() and not character_id.is_empty() and bool(character_ids.get(character_id, false)):
+		_validate_character_voice_key(label, character_id, line_key)
+	if not line_key.is_empty() and not pool_id.is_empty() and bool(pool_ids.get(pool_id, false)):
+		var pool := character_pool(pool_id)
+		for member_id_value in _string_array(pool.get("member_ids", [])):
+			_validate_character_voice_key(label, str(member_id_value), line_key)
+
+
+func _validate_character_voice_key(label: String, character_id: String, line_key: String) -> void:
+	var character_definition := character(character_id)
+	var voice: Dictionary = _as_dict(character_definition.get("voice", {}))
+	var lines: Dictionary = _as_dict(voice.get("lines", {}))
+	if not lines.has(line_key):
+		validation_errors.append("%s expects missing voice line %s on character %s." % [label, line_key, character_id])
+
+
+func _validate_lender_character_ownership(lender: Dictionary) -> void:
+	if str(lender.get("lender_type", "")) == "atm":
+		return
+	var lender_id := str(lender.get("id", "")).strip_edges()
+	var speaker := _as_dict(lender.get("speaker", {}))
+	var owner_ids: Array = []
+	var direct_id := str(speaker.get("character_id", "")).strip_edges()
+	if not direct_id.is_empty():
+		owner_ids.append(direct_id)
+	var pool_id := str(speaker.get("character_pool_id", "")).strip_edges()
+	if not pool_id.is_empty():
+		owner_ids.append_array(_string_array(character_pool(pool_id).get("member_ids", [])))
+	for character_id_value in owner_ids:
+		var character_id := str(character_id_value)
+		if str(character(character_id).get("lender_id", "")).strip_edges() != lender_id:
+			validation_errors.append("lenders %s speaker character %s must declare lender_id %s." % [lender_id, character_id, lender_id])
 
 
 # Validates service data that can later map cleanly to result-deltas.

@@ -4,6 +4,7 @@
     "display_name": "Rook",
     "title": "Wheelman",
     "role": "crew",
+    "lender_id": "the_crew",
     "model": {
       "skin_color": "#8f5f45",
       "hair_color": "#171018",
@@ -42,6 +43,7 @@
     "display_name": "Velvet",
     "title": "Fixer",
     "role": "crew",
+    "lender_id": "the_crew",
     "model": {
       "skin_color": "#c58b68",
       "hair_color": "#391c35",
@@ -80,6 +82,7 @@
     "display_name": "Knuckles",
     "title": "Collector",
     "role": "crew",
+    "lender_id": "the_crew",
     "model": {
       "skin_color": "#6f4637",
       "hair_color": "#0d0d13",
@@ -118,6 +121,7 @@
     "display_name": "Switch",
     "title": "Scout",
     "role": "crew",
+    "lender_id": "the_crew",
     "model": {
       "skin_color": "#d6a47b",
       "hair_color": "#c4d6e8",
@@ -156,6 +160,7 @@
     "display_name": "Mags",
     "title": "Planner",
     "role": "crew",
+    "lender_id": "the_crew",
     "model": {
       "skin_color": "#9c6f58",
       "hair_color": "#201d28",
@@ -194,6 +199,7 @@
     "display_name": "Bishop",
     "title": "Inside Man",
     "role": "crew",
+    "lender_id": "the_crew",
     "model": {
       "skin_color": "#4f342f",
       "hair_color": "#24160f",
@@ -232,6 +238,7 @@
     "display_name": "Lucky",
     "title": "Runner",
     "role": "crew",
+    "lender_id": "the_crew",
     "model": {
       "skin_color": "#b77b52",
       "hair_color": "#57292a",
@@ -264,5 +271,324 @@
         "event_id": "crew_favor_delivery"
       }
     ]
+  },
+  {
+    "id": "vic_street_lender",
+    "display_name": "Vic Mercer",
+    "title": "Street Lender",
+    "role": "lender",
+    "lender_id": "street_lender",
+    "model": {"skin_color": "#8a5741", "hair_color": "#171016", "jacket_color": "#4a2328", "accent_color": "#ff5d73", "silhouette": "rings", "scale": 1.1},
+    "voice": {"style": "Clipped and transactional; every sentence sounds notarized.", "lines": {"loan_offer": ["Twenty-five now. Thirty comes back before the third deadline, no stories."]}},
+    "encounters": [{"context": "loan_offer", "line_key": "loan_offer", "lender_id": "street_lender"}]
+  },
+  {
+    "id": "nico_motel_friend",
+    "display_name": "Nico Vale",
+    "title": "Motel Friend",
+    "role": "lender",
+    "lender_id": "motel_friend",
+    "model": {"skin_color": "#c88765", "hair_color": "#3b2025", "jacket_color": "#24404b", "accent_color": "#43d9c5", "silhouette": "coat", "scale": 1.0},
+    "voice": {"style": "Soft, familiar, and careful not to call the debt a debt.", "lines": {"loan_offer": ["I can spot you twenty. Four turns, then we settle the money or the favor."], "motel_knock": ["You looked short downstairs. I can help, if you can live with owing me."]}},
+    "encounters": [{"context": "loan_offer", "line_key": "loan_offer", "lender_id": "motel_friend"}, {"context": "motel_knock", "line_key": "motel_knock", "event_id": "motel_knock"}]
+  },
+  {
+    "id": "gabe_brother_in_law",
+    "display_name": "Gabe Mercer",
+    "title": "Brother-in-Law",
+    "role": "lender",
+    "lender_id": "brother_in_law",
+    "model": {"skin_color": "#a96d50", "hair_color": "#2b1a16", "jacket_color": "#34415a", "accent_color": "#7cc7ff", "silhouette": "glasses", "scale": 1.03},
+    "voice": {"style": "Concerned, faintly judgmental, and incapable of ending a call quickly.", "lines": {"loan_offer": ["Thirty is fair. Six turns is fair. The family lecture is free."], "family_loan": ["I can wire thirty, but do not make me explain this at dinner."]}},
+    "encounters": [{"context": "loan_offer", "line_key": "loan_offer", "lender_id": "brother_in_law"}, {"context": "family_loan", "line_key": "family_loan", "event_id": "family_loan"}]
+  },
+  {
+    "id": "sal_pawn_broker",
+    "display_name": "Sal Vescari",
+    "title": "Pawn Broker",
+    "role": "shopkeeper",
+    "lender_id": "sals_pawn_counter",
+    "model": {"skin_color": "#9d684f", "hair_color": "#2c211c", "jacket_color": "#453524", "accent_color": "#e9b949", "silhouette": "rings", "scale": 1.08},
+    "voice": {"style": "Dry, exact, and interested only when an object has a margin.", "lines": {"loan_offer": ["Collateral sets the number. Five turns to redeem it, plus my quarter."], "shop_greeting": ["Buy behind glass. Sell at the tray. I price the edges, not the story."], "purchase": ["Exact piece, exact numbers. Glass opens once."], "sale": ["That is my quote. The shelf price will be my business."], "starter_offer": ["One offer on the exact starter piece. Decide while I am generous."], "starter_relist": ["Same piece, back behind glass. The new price is the lesson."], "starter_kept": ["Keep it, then. Rare things do not need my permission."]}},
+    "encounters": [{"context": "loan_offer", "line_key": "loan_offer", "lender_id": "sals_pawn_counter"}, {"context": "shop_greeting", "line_key": "shop_greeting", "dialogue_id": "sal_shop_talk"}, {"context": "purchase", "line_key": "purchase", "dialogue_id": "sal_purchase_1"}, {"context": "sale", "line_key": "sale", "dialogue_id": "sal_sale_1"}, {"context": "starter_offer", "line_key": "starter_offer", "dialogue_id": "sal_starter_offer"}, {"context": "starter_relist", "line_key": "starter_relist", "dialogue_id": "sal_starter_mocking_relist"}, {"context": "starter_kept", "line_key": "starter_kept", "dialogue_id": "sal_starter_kept"}]
+  },
+  {
+    "id": "rina_pull_tab_clerk",
+    "display_name": "Rina Sol",
+    "title": "Pull-Tab Clerk",
+    "role": "staff",
+    "model": {"skin_color": "#b97858", "hair_color": "#24546a", "jacket_color": "#3b255f", "accent_color": "#2bd7ff", "silhouette": "glasses", "scale": 0.96},
+    "voice": {"style": "Dry and observant, with the patience of someone watching bad odds all night.", "lines": {"greeting": ["Got winners, questions, or trouble?"]}},
+    "encounters": [{"context": "greeting", "line_key": "greeting", "dialogue_id": "pull_tab_clerk"}]
+  },
+  {
+    "id": "mara_late_shift_clerk",
+    "display_name": "Mara Quill",
+    "title": "Late-Shift Clerk",
+    "role": "staff",
+    "model": {"skin_color": "#6f493c", "hair_color": "#171022", "jacket_color": "#27324a", "accent_color": "#ff8c42", "silhouette": "cap", "scale": 0.94},
+    "voice": {"style": "Tired, brisk, and willing to bend a price to end a conversation.", "lines": {"greeting": ["Late shelf. Quick sale if you do not linger."]}},
+    "encounters": [{"context": "greeting", "line_key": "greeting", "dialogue_id": "late_shift_discount"}]
+  },
+  {
+    "id": "june_chatty_clerk",
+    "display_name": "June Bell",
+    "title": "Night Clerk",
+    "role": "staff",
+    "model": {"skin_color": "#d2a17f", "hair_color": "#f1cf75", "jacket_color": "#1d4b57", "accent_color": "#49f2d1", "silhouette": "glasses", "scale": 0.98},
+    "voice": {"style": "Fast, friendly, and unable to keep local information to herself.", "lines": {"greeting": ["People talk when the cooler hums loud."]}},
+    "encounters": [{"context": "greeting", "line_key": "greeting", "dialogue_id": "chatty_clerk"}]
+  },
+  {
+    "id": "dorian_room_host",
+    "display_name": "Dorian Pike",
+    "title": "Room Host",
+    "role": "staff",
+    "model": {"skin_color": "#815542", "hair_color": "#0f1018", "jacket_color": "#522b59", "accent_color": "#d873ff", "silhouette": "coat", "scale": 1.06},
+    "voice": {"style": "Firm, courteous, and practiced at clearing a room without starting a scene.", "lines": {"closing_notice": ["That is closing time. Finish up and head out."]}},
+    "encounters": [{"context": "closing_notice", "line_key": "closing_notice", "dialogue_id": "venue_closing_notice"}]
+  },
+  {
+    "id": "linda_cage_host",
+    "display_name": "Linda Shaw",
+    "title": "Cage Host",
+    "role": "staff",
+    "model": {"skin_color": "#b77b61", "hair_color": "#35202f", "jacket_color": "#253f58", "accent_color": "#79d9ff", "silhouette": "glasses", "scale": 1.0},
+    "voice": {"style": "Warm, precise, and quietly protective of players who keep a clean account.", "lines": {"bronze": ["One clean table, a tidy count. Bronze suits you."], "silver": ["You held the ceiling. Silver opens the velvet rope."], "gold": ["Five settled games. Clean money. Sign here for Gold."], "ambient": ["The Cage remembers clean hands and cleaner records."], "services": ["Chips, cards, or comps? Keep the slips flat and tell me what you need."]}},
+    "encounters": [{"context": "bronze", "line_key": "bronze", "dialogue_id": "linda_bronze_tier"}, {"context": "silver", "line_key": "silver", "dialogue_id": "linda_silver_tier"}, {"context": "gold", "line_key": "gold", "dialogue_id": "linda_gold_review"}, {"context": "ambient", "line_key": "ambient", "dialogue_id": "linda_main_floor_ambient_1"}, {"context": "services", "line_key": "services", "dialogue_id": "linda_cage_services"}]
+  },
+  {
+    "id": "rourke_pit_boss",
+    "display_name": "Elias Rourke",
+    "title": "Pit Boss",
+    "role": "pit_boss",
+    "model": {"skin_color": "#8b5c49", "hair_color": "#1b1717", "jacket_color": "#171d2c", "accent_color": "#ff466d", "silhouette": "coat", "scale": 1.14},
+    "voice": {"style": "Controlled and low; he makes warnings sound like observations.", "lines": {"scouting": ["You are studying the room. Remember that the room studies back."], "heat_warning": ["Cash out or cool down. My next sentence will not be advice."]}},
+    "encounters": [{"context": "scouting", "line_key": "scouting", "event_id": "rourke_scouting_cameo"}, {"context": "heat_warning", "line_key": "heat_warning", "event_id": "pit_boss_heat_warning"}]
+  },
+  {
+    "id": "niles_suspicious_patron",
+    "display_name": "Niles Ward",
+    "title": "Suspicious Patron",
+    "role": "patron",
+    "model": {"skin_color": "#c18a69", "hair_color": "#35251e", "jacket_color": "#493147", "accent_color": "#e96ba8", "silhouette": "glasses", "scale": 0.97},
+    "voice": {"style": "Nosy and hesitant, probing for a reaction he can remember.", "lines": {"suspicious": ["You play like someone who already knows the next card."]}},
+    "encounters": [{"context": "suspicious", "line_key": "suspicious", "event_id": "suspicious_patron"}]
+  },
+  {
+    "id": "trio_elle_sax",
+    "display_name": "Elle March",
+    "title": "Saxophonist",
+    "role": "musician",
+    "model": {"skin_color": "#75483b", "hair_color": "#20131e", "jacket_color": "#542744", "accent_color": "#ff5fa2", "silhouette": "rings", "scale": 1.02},
+    "voice": {"style": "Smoky, playful, and always speaking on the upbeat.", "lines": {"set_break": ["Tip the solo, ask about the old room, or just listen. The set remembers generosity."]}},
+    "encounters": [{"context": "set_break", "line_key": "set_break", "event_id": "jazz_trio_set_break"}]
+  },
+  {
+    "id": "trio_mo_bass",
+    "display_name": "Mo Avery",
+    "title": "Bassist",
+    "role": "musician",
+    "model": {"skin_color": "#4f342e", "hair_color": "#0e1117", "jacket_color": "#1e3940", "accent_color": "#42dfc7", "silhouette": "coat", "scale": 1.12},
+    "voice": {"style": "Deep, unhurried, and more interested in rooms than rumors.", "lines": {"set_break": ["Quiet tables keep better time. I know one, if that is what you are asking."]}},
+    "encounters": [{"context": "set_break", "line_key": "set_break", "event_id": "jazz_trio_set_break"}]
+  },
+  {
+    "id": "trio_finch_keys",
+    "display_name": "Finch Rowe",
+    "title": "Pianist",
+    "role": "musician",
+    "model": {"skin_color": "#d1a17d", "hair_color": "#604134", "jacket_color": "#343056", "accent_color": "#a58cff", "silhouette": "glasses", "scale": 0.91},
+    "voice": {"style": "Bright, elliptical, and prone to answering in musical metaphors.", "lines": {"set_break": ["Every room has a key. Some cost a tip; some cost knowing when not to talk."]}},
+    "encounters": [{"context": "set_break", "line_key": "set_break", "event_id": "jazz_trio_set_break"}]
+  },
+  {
+    "id": "vivian_velvet_regular",
+    "display_name": "Vivian Cross",
+    "title": "Velvet Regular",
+    "role": "patron",
+    "model": {"skin_color": "#a56f58", "hair_color": "#3f1834", "jacket_color": "#622b5c", "accent_color": "#fd71c7", "silhouette": "rings", "scale": 1.01},
+    "voice": {"style": "Cultured, amused, and generous only when the introduction is worth it.", "lines": {"connected_regular": ["A real name costs less than a bad introduction and lasts longer."]}},
+    "encounters": [{"context": "connected_regular", "line_key": "connected_regular", "event_id": "jazz_connected_regular"}]
+  },
+  {
+    "id": "celeste_after_hours_host",
+    "display_name": "Celeste Wynn",
+    "title": "After-Hours Host",
+    "role": "staff",
+    "model": {"skin_color": "#c88d71", "hair_color": "#17131f", "jacket_color": "#3b2154", "accent_color": "#b56cff", "silhouette": "glasses", "scale": 1.04},
+    "voice": {"style": "Elegant and conspiratorial, as though every address is a confidence.", "lines": {"after_hours": ["The right address changes the night. The shades merely help you arrive looking expected."]}},
+    "encounters": [{"context": "after_hours", "line_key": "after_hours", "event_id": "jazz_after_hours_invitation"}]
+  },
+  {
+    "id": "dave_bus_regular",
+    "display_name": "Dave Harlan",
+    "title": "Bus Regular",
+    "role": "stranger",
+    "model": {"skin_color": "#9a6a53", "hair_color": "#5a4a3d", "jacket_color": "#2a4050", "accent_color": "#6dc8de", "silhouette": "cap", "scale": 1.07},
+    "voice": {"style": "Earnest and weathered, delivering warnings like hard-won favors.", "lines": {"bus_warning": ["Seek out the cruel and unusual."]}},
+    "encounters": [{"context": "bus_warning", "line_key": "bus_warning", "event_id": "dave_bus_warning"}]
+  },
+  {
+    "id": "cass_rival_counter",
+    "display_name": "Cass Venn",
+    "title": "Rival Counter",
+    "role": "patron",
+    "model": {"skin_color": "#70483c", "hair_color": "#12151c", "jacket_color": "#213649", "accent_color": "#34cfff", "silhouette": "glasses", "scale": 0.99},
+    "voice": {"style": "Quiet and competitive, speaking almost entirely in coded table references.", "lines": {"rival_counter": ["The shoe is loud tonight. Play through, warn me, or point the pit elsewhere."]}},
+    "encounters": [{"context": "rival_counter", "line_key": "rival_counter", "event_id": "rival_counter"}]
+  },
+  {
+    "id": "elliot_counter_runner",
+    "display_name": "Elliot Pryce",
+    "title": "Signal Runner",
+    "role": "patron",
+    "model": {"skin_color": "#d0a080", "hair_color": "#31251f", "jacket_color": "#37455f", "accent_color": "#76e0ff", "silhouette": "cap", "scale": 0.93},
+    "voice": {"style": "Nervous, numerical, and always checking who heard the last word.", "lines": {"counter_payoff": ["The count is live. Take the signal now or wave me off clean."]}},
+    "encounters": [{"context": "counter_payoff", "line_key": "counter_payoff", "event_id": "counter_payoff"}]
+  },
+  {
+    "id": "silas_snitch",
+    "display_name": "Silas Crow",
+    "title": "Floor Informant",
+    "role": "patron",
+    "model": {"skin_color": "#8c5f49", "hair_color": "#25211f", "jacket_color": "#4a3b31", "accent_color": "#e4a647", "silhouette": "coat", "scale": 1.05},
+    "voice": {"style": "Smug and indirect, savoring every fact he can make expensive.", "lines": {"snitch": ["The room has opinions about you. A round might improve their memory."]}},
+    "encounters": [{"context": "snitch", "line_key": "snitch", "event_id": "snitch_reputation"}]
+  },
+  {
+    "id": "ava_casino_host",
+    "display_name": "Ava Devere",
+    "title": "Casino Host",
+    "role": "staff",
+    "model": {"skin_color": "#b97b63", "hair_color": "#241527", "jacket_color": "#33254d", "accent_color": "#d880ff", "silhouette": "rings", "scale": 1.02},
+    "voice": {"style": "Immaculately gracious, with an edge that appears when hospitality is refused.", "lines": {"on_the_house": ["A drink, on the house. Hospitality is easier when accepted."], "whale": ["Our guest is drawing every eye in the room. Use the privacy wisely."]}},
+    "encounters": [{"context": "on_the_house", "line_key": "on_the_house", "event_id": "on_the_house"}, {"context": "whale", "line_key": "whale", "event_id": "whale_sighting"}]
+  },
+  {
+    "id": "marrow_collector",
+    "display_name": "Marrow Keene",
+    "title": "Debt Collector",
+    "role": "stranger",
+    "model": {"skin_color": "#5a3933", "hair_color": "#111117", "jacket_color": "#35232b", "accent_color": "#ff3f68", "silhouette": "rings", "scale": 1.18},
+    "voice": {"style": "Patient, heavy, and never louder than the consequence behind him.", "lines": {"collector": ["Pay now, promise well, or stand there long enough for the room to notice."]}},
+    "encounters": [{"context": "collector", "line_key": "collector", "event_id": "the_collector"}]
+  },
+  {
+    "id": "tess_rookie_floor",
+    "display_name": "Tess Navarro",
+    "title": "Rookie Floor",
+    "role": "staff",
+    "model": {"skin_color": "#a66e52", "hair_color": "#201a29", "jacket_color": "#1f4652", "accent_color": "#40e5cb", "silhouette": "cap", "scale": 0.92},
+    "voice": {"style": "Eager, procedural, and trying not to reveal when the handoff rattles her.", "lines": {"shift_change": ["The floor is changing hands. Move now if you know where the seam is."]}},
+    "encounters": [{"context": "shift_change", "line_key": "shift_change", "event_id": "shift_change"}]
+  },
+  {
+    "id": "omar_shift_dealer",
+    "display_name": "Omar Flint",
+    "title": "Relief Dealer",
+    "role": "staff",
+    "model": {"skin_color": "#74493a", "hair_color": "#111822", "jacket_color": "#223848", "accent_color": "#52bfff", "silhouette": "coat", "scale": 1.09},
+    "voice": {"style": "Professional and rhythmic, speaking in the same measured cadence as his deal.", "lines": {"staff_tip": ["A small tip buys the rhythm. Keeping your cash buys a smaller opening."]}},
+    "encounters": [{"context": "staff_tip", "line_key": "staff_tip", "event_id": "staff_shift_tip"}]
+  },
+  {
+    "id": "mina_blackjack_counter",
+    "display_name": "Mina Voss",
+    "title": "Blackjack Counter",
+    "role": "patron",
+    "model": {"skin_color": "#c58d70", "hair_color": "#181521", "jacket_color": "#2c3155", "accent_color": "#817cff", "silhouette": "glasses", "scale": 0.96},
+    "voice": {"style": "Cool, exact, and allergic to wasted information.", "lines": {"blackjack_probe": ["The running count is leaning. Are you trading it, hiding it, or letting it die?"]}},
+    "encounters": [{"context": "blackjack_probe", "line_key": "blackjack_probe", "event_id": "blackjack_counter_probe"}]
+  },
+  {
+    "id": "remy_roulette_regular",
+    "display_name": "Remy Gold",
+    "title": "Roulette Regular",
+    "role": "patron",
+    "model": {"skin_color": "#9e654b", "hair_color": "#6b3427", "jacket_color": "#544223", "accent_color": "#ffc14f", "silhouette": "rings", "scale": 1.03},
+    "voice": {"style": "Cheerful, superstitious, and absolutely certain the wheel recognizes loyalty.", "lines": {"lucky_regular": ["I have a number for you. Whether it is lucky depends on what you buy the story."]}},
+    "encounters": [{"context": "lucky_regular", "line_key": "lucky_regular", "event_id": "roulette_lucky_regular"}]
+  },
+  {
+    "id": "ines_off_duty_dealer",
+    "display_name": "Ines Mora",
+    "title": "Off-Duty Dealer",
+    "role": "patron",
+    "model": {"skin_color": "#b8795c", "hair_color": "#32201b", "jacket_color": "#1f3f3b", "accent_color": "#4be0b5", "silhouette": "coat", "scale": 0.98},
+    "voice": {"style": "Understated and technical, offering patterns without ever calling them advice.", "lines": {"baccarat_pattern": ["The shoe has a rhythm. Hear it for free, or tip me for discretion."]}},
+    "encounters": [{"context": "baccarat_pattern", "line_key": "baccarat_pattern", "event_id": "baccarat_off_duty_dealer"}]
+  },
+  {
+    "id": "leo_video_poker_neighbor",
+    "display_name": "Leo Marr",
+    "title": "Machine Neighbor",
+    "role": "patron",
+    "model": {"skin_color": "#d1a17f", "hair_color": "#534335", "jacket_color": "#28444f", "accent_color": "#45d6e8", "silhouette": "cap", "scale": 1.0},
+    "voice": {"style": "Friendly, fidgety, and incapable of watching a bad hold in silence.", "lines": {"video_poker_tip": ["That hold is costing you. Take the tip, take my seat, or pretend I said nothing."]}},
+    "encounters": [{"context": "video_poker_tip", "line_key": "video_poker_tip", "event_id": "video_poker_neighbor"}]
+  },
+  {
+    "id": "buck_tipsy_braggart",
+    "display_name": "Buck Danner",
+    "title": "Tipsy Braggart",
+    "role": "patron",
+    "model": {"skin_color": "#a76d4e", "hair_color": "#744126", "jacket_color": "#5a3523", "accent_color": "#ff9048", "silhouette": "rings", "scale": 1.13},
+    "voice": {"style": "Booming, sloppy, and delighted by any wager that keeps attention on him.", "lines": {"bar_dice_brag": ["Side bet says you cannot beat that throw. Laugh if you are scared."]}},
+    "encounters": [{"context": "bar_dice_brag", "line_key": "bar_dice_brag", "event_id": "bar_dice_tipsy_braggart"}]
+  },
+  {
+    "id": "jo_pull_tab_local",
+    "display_name": "Jo Rusk",
+    "title": "Pull-Tab Local",
+    "role": "patron",
+    "model": {"skin_color": "#865846", "hair_color": "#2c2421", "jacket_color": "#355044", "accent_color": "#7bd66b", "silhouette": "cap", "scale": 0.95},
+    "voice": {"style": "Plainspoken and neighborly, with strong opinions about every jar on the counter.", "lines": {"pull_tab_tip": ["That stack has a tell. Coffee buys the quiet version of the explanation."]}},
+    "encounters": [{"context": "pull_tab_tip", "line_key": "pull_tab_tip", "event_id": "pull_tabs_friendly_local"}]
+  },
+  {
+    "id": "nadia_floor_staff",
+    "display_name": "Nadia Price",
+    "title": "Floor Supervisor",
+    "role": "staff",
+    "model": {"skin_color": "#6b443b", "hair_color": "#17131d", "jacket_color": "#25364e", "accent_color": "#ff627f", "silhouette": "glasses", "scale": 1.05},
+    "voice": {"style": "Direct and even, trained to offer one polite warning before escalation.", "lines": {"heat_warning": ["Slow the rhythm, buy the rail some noise, or talk back and become paperwork."]}},
+    "encounters": [{"context": "heat_warning", "line_key": "heat_warning", "event_id": "floor_staff_heat_warning"}]
+  },
+  {
+    "id": "ada_corner_merchant",
+    "display_name": "Ada Pike",
+    "title": "Corner Merchant",
+    "role": "shopkeeper",
+    "model": {"skin_color": "#b7795b", "hair_color": "#252033", "jacket_color": "#30405a", "accent_color": "#56cfff", "silhouette": "glasses", "scale": 0.97},
+    "voice": {"style": "Efficient and welcoming, with a perfect memory for yesterday's price.", "lines": {"shop_greeting": ["Take your time looking. The price will still be exact when you decide."]}},
+    "encounters": [{"context": "shop_greeting", "line_key": "shop_greeting"}]
+  },
+  {
+    "id": "malik_night_merchant",
+    "display_name": "Malik Stone",
+    "title": "Night Merchant",
+    "role": "shopkeeper",
+    "model": {"skin_color": "#55362f", "hair_color": "#10131a", "jacket_color": "#263b35", "accent_color": "#45dcaa", "silhouette": "coat", "scale": 1.11},
+    "voice": {"style": "Calm and sparse, never using two words when one price will do.", "lines": {"shop_greeting": ["Shelf is open. Ask once if you need the honest version."]}},
+    "encounters": [{"context": "shop_greeting", "line_key": "shop_greeting"}]
+  },
+  {
+    "id": "priya_travel_merchant",
+    "display_name": "Priya Moss",
+    "title": "Travel Merchant",
+    "role": "shopkeeper",
+    "model": {"skin_color": "#9b684e", "hair_color": "#211727", "jacket_color": "#4b3152", "accent_color": "#c677ff", "silhouette": "rings", "scale": 0.94},
+    "voice": {"style": "Bright and persuasive, selling every object as the missing piece of a route.", "lines": {"shop_greeting": ["Everything here earns its space in a bag. Tell me where you are going."]}},
+    "encounters": [{"context": "shop_greeting", "line_key": "shop_greeting"}]
+  },
+  {
+    "id": "tomas_market_merchant",
+    "display_name": "Tomas Reed",
+    "title": "Market Merchant",
+    "role": "shopkeeper",
+    "model": {"skin_color": "#c28a68", "hair_color": "#463128", "jacket_color": "#4a4028", "accent_color": "#e8c34d", "silhouette": "cap", "scale": 1.04},
+    "voice": {"style": "Good-humored and shrewd, treating a sale like a short card game.", "lines": {"shop_greeting": ["Good pieces, fair numbers, short conversation. Pick any two."]}},
+    "encounters": [{"context": "shop_greeting", "line_key": "shop_greeting"}]
   }
 ]

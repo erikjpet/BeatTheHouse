@@ -8151,6 +8151,7 @@ static func _normalize_triggered_event_speaker(value: Variant) -> Dictionary:
 		"speaking_character_title": str(source.get("speaking_character_title", "")).strip_edges(),
 		"members": _copy_array(source.get("members", [])),
 		"encounter": _copy_dict(source.get("encounter", {})),
+		"lender_terms": _copy_dict(source.get("lender_terms", {})),
 	}
 
 

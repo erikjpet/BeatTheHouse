@@ -10,7 +10,10 @@
 			"silhouette": "coat",
 			"portrait_count": 1,
 			"face_layers": [],
-			"bind": "none"
+			"bind": "none",
+			"character_id": "vic_street_lender",
+			"character_identity_key": "street_lender",
+			"voice_line_key": "loan_offer"
 		},
 		"description": "Fast risky cash.",
 		"debt_profile": {
@@ -57,7 +60,10 @@
 			"silhouette": "coat",
 			"portrait_count": 1,
 			"face_layers": [],
-			"bind": "none"
+			"bind": "none",
+			"character_id": "nico_motel_friend",
+			"character_identity_key": "motel_friend",
+			"voice_line_key": "loan_offer"
 		},
 		"description": "Soft social loan.",
 		"debt_profile": {
@@ -137,7 +143,10 @@
 			"silhouette": "featureless",
 			"portrait_count": 1,
 			"face_layers": [],
-			"bind": "none"
+			"bind": "none",
+			"character_id": "gabe_brother_in_law",
+			"character_identity_key": "brother_in_law",
+			"voice_line_key": "loan_offer"
 		},
 		"description": "Fair family loan.",
 		"availability": {
@@ -173,7 +182,10 @@
 			"silhouette": "coat",
 			"portrait_count": 1,
 			"face_layers": [],
-			"bind": "none"
+			"bind": "none",
+			"character_id": "sal_pawn_broker",
+			"character_identity_key": "sals_pawn_counter",
+			"voice_line_key": "loan_offer"
 		},
 		"description": "Pawn item for cash.",
 		"debt_profile": {

@@ -12,5 +12,26 @@
       "crew_lucky"
     ],
     "lineup_size": 3
+  },
+  {
+    "id": "blue_note_trio",
+    "display_name": "Blue Note Trio",
+    "member_ids": [
+      "trio_elle_sax",
+      "trio_mo_bass",
+      "trio_finch_keys"
+    ],
+    "lineup_size": 3
+  },
+  {
+    "id": "shop_staff",
+    "display_name": "Independent Shop Staff",
+    "member_ids": [
+      "ada_corner_merchant",
+      "malik_night_merchant",
+      "priya_travel_merchant",
+      "tomas_market_merchant"
+    ],
+    "lineup_size": 1
   }
 ]

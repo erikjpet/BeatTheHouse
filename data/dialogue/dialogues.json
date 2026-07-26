@@ -5,6 +5,8 @@
     "speaker": {
       "role": "staff",
       "name": "Rina",
+      "character_id": "rina_pull_tab_clerk",
+      "voice_line_key": "greeting",
       "mood": "dry",
       "behavior": "watching",
       "silhouette": "glasses",
@@ -97,6 +99,8 @@
     "speaker": {
       "role": "staff",
       "name": "Mara",
+      "character_id": "mara_late_shift_clerk",
+      "voice_line_key": "greeting",
       "mood": "tired",
       "behavior": "clerk",
       "silhouette": "cap",
@@ -133,6 +137,8 @@
     "speaker": {
       "role": "staff",
       "name": "June",
+      "character_id": "june_chatty_clerk",
+      "voice_line_key": "greeting",
       "mood": "wired",
       "behavior": "talking",
       "silhouette": "glasses",
@@ -175,6 +181,8 @@
     "speaker": {
       "role": "staff",
       "name": "Room Host",
+      "character_id": "dorian_room_host",
+      "voice_line_key": "closing_notice",
       "mood": "firm",
       "behavior": "closing the room",
       "silhouette": "coat",
@@ -206,6 +214,8 @@
       "name": "Linda",
       "mood": "warm",
       "behavior": "keeping the count",
+      "character_id": "linda_cage_host",
+      "voice_line_key": "bronze",
       "silhouette": "featureless",
       "presentation": "faceless_silhouette",
       "face_layers": []
@@ -235,6 +245,8 @@
       "name": "Linda",
       "mood": "warm",
       "behavior": "opening the velvet rope",
+      "character_id": "linda_cage_host",
+      "voice_line_key": "silver",
       "silhouette": "featureless",
       "presentation": "faceless_silhouette",
       "face_layers": []
@@ -264,6 +276,8 @@
       "name": "Linda",
       "mood": "proud",
       "behavior": "closing the clean account",
+      "character_id": "linda_cage_host",
+      "voice_line_key": "gold",
       "silhouette": "featureless",
       "presentation": "faceless_silhouette",
       "face_layers": []
@@ -307,6 +321,8 @@
       "name": "Linda",
       "mood": "warm",
       "behavior": "sliding your first card across the counter",
+      "character_id": "linda_cage_host",
+      "voice_line_key": "gold",
       "silhouette": "featureless",
       "presentation": "faceless_silhouette",
       "face_layers": []
@@ -342,6 +358,8 @@
       "name": "Linda",
       "mood": "warm",
       "behavior": "sorting slips",
+      "character_id": "linda_cage_host",
+      "voice_line_key": "ambient",
       "silhouette": "featureless",
       "presentation": "faceless_silhouette",
       "face_layers": []
@@ -362,6 +380,8 @@
       "name": "Linda",
       "mood": "steady",
       "behavior": "watching the floor",
+      "character_id": "linda_cage_host",
+      "voice_line_key": "ambient",
       "silhouette": "featureless",
       "presentation": "faceless_silhouette",
       "face_layers": []
@@ -382,6 +402,8 @@
       "name": "Linda",
       "mood": "encouraging",
       "behavior": "checking the list",
+      "character_id": "linda_cage_host",
+      "voice_line_key": "ambient",
       "silhouette": "featureless",
       "presentation": "faceless_silhouette",
       "face_layers": []
@@ -402,6 +424,8 @@
       "name": "Linda",
       "mood": "warm",
       "behavior": "working behind the barred teller windows",
+      "character_id": "linda_cage_host",
+      "voice_line_key": "services",
       "silhouette": "featureless",
       "presentation": "faceless_silhouette",
       "face_layers": []
@@ -451,6 +475,8 @@
     "speaker": {
       "role": "shopkeeper",
       "name": "Sal",
+      "character_id": "sal_pawn_broker",
+      "voice_line_key": "shop_greeting",
       "mood": "dry",
       "behavior": "working behind the barred counter",
       "silhouette": "featureless",
@@ -470,6 +496,7 @@
     "display_name": "Sal · Purchase",
     "speaker": {
       "role": "shopkeeper", "name": "Sal", "mood": "opportunistic",
+      "character_id": "sal_pawn_broker", "voice_line_key": "purchase",
       "behavior": "unlocking one shelf door", "silhouette": "featureless",
       "presentation": "faceless_silhouette", "face_layers": []
     },
@@ -481,6 +508,7 @@
     "display_name": "Sal · Purchase",
     "speaker": {
       "role": "shopkeeper", "name": "Sal", "mood": "dry",
+      "character_id": "sal_pawn_broker", "voice_line_key": "purchase",
       "behavior": "sliding a collection item under the bars", "silhouette": "featureless",
       "presentation": "faceless_silhouette", "face_layers": []
     },
@@ -492,6 +520,7 @@
     "display_name": "Sal · Sale",
     "speaker": {
       "role": "shopkeeper", "name": "Sal", "mood": "dry",
+      "character_id": "sal_pawn_broker", "voice_line_key": "sale",
       "behavior": "pulling the sold item behind the barred counter", "silhouette": "featureless",
       "presentation": "faceless_silhouette", "face_layers": []
     },
@@ -503,6 +532,7 @@
     "display_name": "Sal · Sale",
     "speaker": {
       "role": "shopkeeper", "name": "Sal", "mood": "opportunistic",
+      "character_id": "sal_pawn_broker", "voice_line_key": "sale",
       "behavior": "counting gold beside the sell tray", "silhouette": "featureless",
       "presentation": "faceless_silhouette", "face_layers": []
     },
@@ -514,6 +544,7 @@
     "display_name": "Sal · Edge Sample",
     "speaker": {
       "role": "shopkeeper", "name": "Sal", "mood": "opportunistic",
+      "character_id": "sal_pawn_broker", "voice_line_key": "starter_offer",
       "behavior": "leaning over the barred counter", "silhouette": "featureless",
       "presentation": "faceless_silhouette", "face_layers": []
     },
@@ -533,6 +564,7 @@
     "display_name": "Sal · Back Behind Glass",
     "speaker": {
       "role": "shopkeeper", "name": "Sal", "mood": "dry",
+      "character_id": "sal_pawn_broker", "voice_line_key": "starter_relist",
       "behavior": "locking the same item back behind glass", "silhouette": "featureless",
       "presentation": "faceless_silhouette", "face_layers": []
     },
@@ -544,6 +576,7 @@
     "display_name": "Sal · Keep the Edge",
     "speaker": {
       "role": "shopkeeper", "name": "Sal", "mood": "dry",
+      "character_id": "sal_pawn_broker", "voice_line_key": "starter_kept",
       "behavior": "closing the sell tray", "silhouette": "featureless",
       "presentation": "faceless_silhouette", "face_layers": []
     },

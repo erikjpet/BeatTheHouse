@@ -199,6 +199,8 @@
     "speaker": {
       "role": "pit_boss",
       "name": "Rourke",
+      "character_id": "rourke_pit_boss",
+      "voice_line_key": "scouting",
       "silhouette": "vest",
       "bind": "none"
     },
@@ -262,6 +264,8 @@
     "speaker": {
       "role": "patron",
       "name": "Suspicious Patron",
+      "character_id": "niles_suspicious_patron",
+      "voice_line_key": "suspicious",
       "silhouette": "coat",
       "bind": "none"
     },
@@ -306,6 +310,9 @@
     "speaker": {
       "role": "staff",
       "name": "The Trio",
+      "character_pool_id": "blue_note_trio",
+      "character_identity_key": "blue_note_trio",
+      "voice_line_key": "set_break",
       "silhouette": "vest",
       "bind": "none"
     },
@@ -391,6 +398,8 @@
     "speaker": {
       "role": "patron",
       "name": "Velvet Regular",
+      "character_id": "vivian_velvet_regular",
+      "voice_line_key": "connected_regular",
       "silhouette": "glasses",
       "bind": "none"
     },
@@ -470,6 +479,8 @@
     "speaker": {
       "role": "staff",
       "name": "After-Hours Host",
+      "character_id": "celeste_after_hours_host",
+      "voice_line_key": "after_hours",
       "silhouette": "suit",
       "bind": "none"
     },
@@ -598,6 +609,8 @@
     "speaker": {
       "role": "stranger",
       "name": "Motel Friend",
+      "character_id": "nico_motel_friend",
+      "voice_line_key": "motel_knock",
       "silhouette": "cap",
       "bind": "none"
     },
@@ -777,6 +790,8 @@
     "speaker": {
       "role": "stranger",
       "name": "Dave",
+      "character_id": "dave_bus_regular",
+      "voice_line_key": "bus_warning",
       "silhouette": "coat",
       "bind": "none"
     },
@@ -1131,6 +1146,8 @@
     "speaker": {
       "role": "patron",
       "name": "Rival Counter",
+      "character_id": "cass_rival_counter",
+      "voice_line_key": "rival_counter",
       "silhouette": "glasses",
       "bind": "none"
     },
@@ -1210,6 +1227,8 @@
     "speaker": {
       "role": "patron",
       "name": "Counter",
+      "character_id": "elliot_counter_runner",
+      "voice_line_key": "counter_payoff",
       "silhouette": "coat",
       "bind": "none"
     },
@@ -1274,6 +1293,8 @@
     "speaker": {
       "role": "patron",
       "name": "Snitch",
+      "character_id": "silas_snitch",
+      "voice_line_key": "snitch",
       "silhouette": "cap",
       "bind": "none"
     },
@@ -1337,6 +1358,8 @@
     "speaker": {
       "role": "staff",
       "name": "Casino Host",
+      "character_id": "ava_casino_host",
+      "voice_line_key": "on_the_house",
       "silhouette": "vest",
       "bind": "none"
     },
@@ -1428,6 +1451,8 @@
     "speaker": {
       "role": "stranger",
       "name": "Collector",
+      "character_id": "marrow_collector",
+      "voice_line_key": "collector",
       "silhouette": "suit",
       "bind": "none"
     },
@@ -1524,6 +1549,8 @@
     "speaker": {
       "role": "staff",
       "name": "Rookie Floor",
+      "character_id": "tess_rookie_floor",
+      "voice_line_key": "shift_change",
       "silhouette": "vest",
       "bind": "none"
     },
@@ -1697,6 +1724,8 @@
     "speaker": {
       "role": "staff",
       "name": "Casino Host",
+      "character_id": "ava_casino_host",
+      "voice_line_key": "whale",
       "silhouette": "vest",
       "bind": "none"
     },
@@ -1750,6 +1779,8 @@
     "speaker": {
       "role": "staff",
       "name": "Dealer",
+      "character_id": "omar_shift_dealer",
+      "voice_line_key": "staff_tip",
       "silhouette": "vest",
       "bind": "none"
     },
@@ -2368,6 +2399,9 @@
     "speaker": {
       "role": "lender",
       "name": "Unknown Caller",
+      "character_id": "gabe_brother_in_law",
+      "voice_line_key": "family_loan",
+      "environment_actor": false,
       "mood": "guarded",
       "behavior": "speaking over the phone",
       "silhouette": "featureless",
@@ -2437,6 +2471,8 @@
     "speaker": {
       "role": "patron",
       "name": "Counter",
+      "character_id": "mina_blackjack_counter",
+      "voice_line_key": "blackjack_probe",
       "silhouette": "glasses",
       "bind": "table_patron"
     },
@@ -2506,6 +2542,8 @@
     "speaker": {
       "role": "patron",
       "name": "Regular",
+      "character_id": "remy_roulette_regular",
+      "voice_line_key": "lucky_regular",
       "silhouette": "coat",
       "bind": "table_patron"
     },
@@ -2575,6 +2613,8 @@
     "speaker": {
       "role": "patron",
       "name": "Dealer",
+      "character_id": "ines_off_duty_dealer",
+      "voice_line_key": "baccarat_pattern",
       "silhouette": "vest",
       "bind": "table_patron"
     },
@@ -2644,6 +2684,8 @@
     "speaker": {
       "role": "patron",
       "name": "Neighbor",
+      "character_id": "leo_video_poker_neighbor",
+      "voice_line_key": "video_poker_tip",
       "silhouette": "cap",
       "bind": "table_patron"
     },
@@ -2713,6 +2755,8 @@
     "speaker": {
       "role": "patron",
       "name": "Braggart",
+      "character_id": "buck_tipsy_braggart",
+      "voice_line_key": "bar_dice_brag",
       "silhouette": "coat",
       "bind": "table_patron"
     },
@@ -2781,6 +2825,8 @@
     "speaker": {
       "role": "patron",
       "name": "Local",
+      "character_id": "jo_pull_tab_local",
+      "voice_line_key": "pull_tab_tip",
       "silhouette": "cap",
       "bind": "table_patron"
     },
@@ -2850,6 +2896,8 @@
     "speaker": {
       "role": "staff",
       "name": "Floor Staff",
+      "character_id": "nadia_floor_staff",
+      "voice_line_key": "heat_warning",
       "silhouette": "vest",
       "bind": "none"
     },
@@ -2919,6 +2967,8 @@
     "speaker": {
       "role": "staff",
       "name": "Pit Boss",
+      "character_id": "rourke_pit_boss",
+      "voice_line_key": "heat_warning",
       "silhouette": "suit",
       "bind": "none"
     },

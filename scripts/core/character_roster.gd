@@ -73,6 +73,7 @@ static func resolve_speaker(
 	speaker["voice_line_key"] = line_key
 	speaker["voice_line"] = voice_line
 	speaker["encounter"] = _encounter_snapshot(lead_definition, line_key)
+	speaker["lender_terms"] = _lender_terms_snapshot(lead_definition, library)
 	return speaker
 
 
@@ -83,6 +84,7 @@ static func _member_snapshot(character: Dictionary) -> Dictionary:
 		"display_name": str(character.get("display_name", "")).strip_edges(),
 		"title": str(character.get("title", "")).strip_edges(),
 		"role": str(character.get("role", "character")).strip_edges(),
+		"lender_id": str(character.get("lender_id", "")).strip_edges(),
 		"model": {
 			"skin_color": str(model.get("skin_color", "")).strip_edges(),
 			"hair_color": str(model.get("hair_color", "")).strip_edges(),
@@ -91,6 +93,27 @@ static func _member_snapshot(character: Dictionary) -> Dictionary:
 			"silhouette": str(model.get("silhouette", "coat")).strip_edges(),
 			"scale": clampf(float(model.get("scale", 1.0)), 0.75, 1.25),
 		},
+	}
+
+
+static func _lender_terms_snapshot(character: Dictionary, library: ContentLibrary) -> Dictionary:
+	var lender_id := str(character.get("lender_id", "")).strip_edges()
+	if lender_id.is_empty() or library == null:
+		return {}
+	var lender := library.lender(lender_id)
+	if lender.is_empty():
+		return {}
+	var profile: Dictionary = lender.get("debt_profile", {}) if typeof(lender.get("debt_profile", {})) == TYPE_DICTIONARY else {}
+	return {
+		"lender_id": lender_id,
+		"display_name": str(lender.get("display_name", "")).strip_edges(),
+		"loan_amount": int(profile.get("loan_amount", profile.get("principal_min", 0))),
+		"principal_min": int(profile.get("principal_min", 0)),
+		"principal_max": int(profile.get("principal_max", 0)),
+		"interest_rate": float(profile.get("interest_rate", 0.0)),
+		"deadline_turns": int(profile.get("deadline_turns", 0)),
+		"favor_count": int(profile.get("favor_count", 0)),
+		"default_consequence": str(profile.get("default_consequence", "")).strip_edges(),
 	}
 
 
