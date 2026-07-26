@@ -1938,9 +1938,18 @@ func _check_lender_acceptance_does_not_open_motel_popup(app: Control) -> bool:
 		return false
 	await process_frame
 	if not bool(app.call("confirm_selected_lender_hook")):
-		push_error("Crew lender popup regression fixture could not accept The Crew offer.")
+		push_error("Crew lender popup regression fixture could not open The Crew conversation.")
 		return false
 	await process_frame
+	var talk: Dictionary = app.call("current_talk_dock_snapshot")
+	if not bool(talk.get("visible", false)) or str(talk.get("speaker", "")) != "The Crew" or int(talk.get("portrait_count", 0)) != 3 or str(talk.get("topic", "")) != "Loan Offer":
+		push_error("Crew lender did not open the standard titled three-person conversation: %s." % JSON.stringify(talk))
+		return false
+	app.call("_on_talk_dock_choice_requested", str(talk.get("event_id", "")), "accept")
+	await process_frame
+	if bool((app.call("current_talk_dock_snapshot") as Dictionary).get("visible", false)):
+		push_error("Crew lender conversation stayed open after accepting the offer.")
+		return false
 	var state: Dictionary = app.call("serialized_run_state")
 	if int(state.get("bankroll", 0)) <= 1:
 		push_error("Crew lender popup regression fixture did not apply the crew loan.")

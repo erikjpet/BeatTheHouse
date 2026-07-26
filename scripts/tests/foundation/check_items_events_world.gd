@@ -3674,9 +3674,15 @@ func _layout_rects_overlap_with_gap(first: Rect2, second: Rect2) -> bool:
 # Checks lender borrowing, repayment, defaults, special debt kinds, and save/load.
 func _check_lender_debt_foundation(library: ContentLibrary, failures: Array) -> void:
 	for lender_id in ["street_lender", "motel_friend", "the_crew", "brother_in_law", "sals_pawn_counter"]:
-		if library.lender(lender_id).is_empty():
+		var lender := library.lender(lender_id)
+		if lender.is_empty():
 			failures.append("Lender fixture is missing: %s." % lender_id)
 			return
+		var speaker: Dictionary = lender.get("speaker", {}) if typeof(lender.get("speaker", {})) == TYPE_DICTIONARY else {}
+		if str(speaker.get("presentation", "")) != "faceless_silhouette" or str(speaker.get("name", "")).strip_edges().is_empty():
+			failures.append("Person/group lender %s does not define a titled faceless conversation speaker." % lender_id)
+		if clampi(int(speaker.get("portrait_count", 0)), 0, 3) != (3 if lender_id == "the_crew" else 1):
+			failures.append("Lender %s does not define the authoritative conversation portrait count." % lender_id)
 	if library.service("call_brother_in_law").is_empty():
 		failures.append("Brother-in-law phone service is missing.")
 		return

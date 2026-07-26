@@ -474,9 +474,13 @@ func _check_talk_dock_component() -> bool:
 		parent.queue_free()
 		push_error("Talk dock fixture did not render an expanded timed entry.")
 		return false
-	if not bool(snapshot.get("speaker_label_visible", false)) or str(snapshot.get("speaker_text", "")).find("Mara") == -1:
+	if not bool(snapshot.get("speaker_label_visible", false)) or str(snapshot.get("speaker_text", "")) != "Mara":
 		parent.queue_free()
 		push_error("Expanded talk dock did not showcase the active speaker identity: %s." % str(snapshot.get("speaker_text", "")))
+		return false
+	if not bool(snapshot.get("topic_visible", false)) or str(snapshot.get("topic", "")).strip_edges().is_empty():
+		parent.queue_free()
+		push_error("Expanded talk dock did not show the conversation topic.")
 		return false
 	var animation_redraw_before := int(snapshot.get("portrait_animation_redraw_count", 0))
 	for _frame in range(20):
@@ -512,13 +516,20 @@ func _check_talk_dock_component() -> bool:
 		return false
 	dock.set_entry(_talk_dock_entry_fixture(), _talk_dock_option_fixture(), 1)
 	await process_frame
+	var repeated_panel_rect := _snapshot_rect(dock.current_snapshot().get("panel_rect", Rect2()))
+	if not repeated_panel_rect.size.is_equal_approx(_snapshot_rect(snapshot.get("panel_rect", Rect2())).size):
+		parent.queue_free()
+		push_error("A subsequent talk call changed the expanded popup size: first=%s repeated=%s." % [str(_snapshot_rect(snapshot.get("panel_rect", Rect2())).size), str(repeated_panel_rect.size)])
+		return false
 	if not _click_visible_button(dock, "Risk It") or int(emitted.get("count", 0)) != 1:
 		parent.queue_free()
 		push_error("Talk dock risky choice did not arm without resolving.")
 		return false
+	dock.set_entry(_talk_dock_entry_fixture(), _talk_dock_option_fixture(), 1)
+	await process_frame
 	if not _click_visible_button(dock, "Confirm: Risk It") or str(emitted.get("choice_id", "")) != "risk":
 		parent.queue_free()
-		push_error("Talk dock risky choice did not resolve on second click.")
+		push_error("Talk dock same-entry refresh reset or duplicated the armed confirmation.")
 		return false
 	var bad_key := InputEventKey.new()
 	bad_key.pressed = true
@@ -856,7 +867,7 @@ func _check_dialogue_dock_main_flow(app: Control) -> bool:
 	if not bool(snapshot.get("visible", false)) or str(snapshot.get("event_id", "")) != "dialogue:pull_tab_clerk":
 		push_error("Dialogue dock fixture did not expose the pilot dialogue.")
 		return false
-	if not bool(snapshot.get("speaker_label_visible", false)) or str(snapshot.get("speaker_text", "")).strip_edges().is_empty() or str(snapshot.get("speaker_text", "")) != "Speaking with %s" % str(snapshot.get("speaker", "")):
+	if not bool(snapshot.get("speaker_label_visible", false)) or str(snapshot.get("speaker_text", "")).strip_edges().is_empty() or str(snapshot.get("speaker_text", "")) != str(snapshot.get("speaker", "")):
 		push_error("Dialogue dock fixture did not show the active speaker inside the expanded popup: %s." % str(snapshot.get("speaker_text", "")))
 		return false
 	var panel_rect := _snapshot_rect(snapshot.get("panel_rect", Rect2()))
@@ -5007,10 +5018,21 @@ func _run() -> void:
 		quit(1)
 		return
 	if not bool(app.call("confirm_selected_lender_hook")):
-		push_error("Foundation UI rejected a supported lender hook result.")
+		push_error("Foundation UI rejected a supported lender conversation.")
 		quit(1)
 		return
 	await process_frame
+	var lender_talk: Dictionary = app.call("current_talk_dock_snapshot")
+	if not bool(lender_talk.get("visible", false)) or str(lender_talk.get("speaker_text", "")) != "Fixture Lender" or not bool(lender_talk.get("topic_visible", false)) or str(lender_talk.get("topic", "")) != "Loan Offer":
+		push_error("Supported lender hook did not use the standard title/topic/options conversation: %s." % JSON.stringify(lender_talk))
+		quit(1)
+		return
+	app.call("_on_talk_dock_choice_requested", str(lender_talk.get("event_id", "")), "accept")
+	await process_frame
+	if bool((app.call("current_talk_dock_snapshot") as Dictionary).get("visible", false)):
+		push_error("Supported lender conversation did not close after acceptance.")
+		quit(1)
+		return
 	var lender_result_state: Dictionary = app.call("serialized_run_state")
 	if (lender_result_state.get("debt", []) as Array).size() != debt_count_before_lender + 1:
 		push_error("Supported lender hook did not apply debt through result-delta.")

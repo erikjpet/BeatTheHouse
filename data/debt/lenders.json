@@ -3,6 +3,15 @@
 		"id": "street_lender",
 		"display_name": "Street Lender",
 		"lender_type": "criminal",
+		"speaker": {
+			"role": "lender",
+			"name": "Street Lender",
+			"presentation": "faceless_silhouette",
+			"silhouette": "coat",
+			"portrait_count": 1,
+			"face_layers": [],
+			"bind": "none"
+		},
 		"description": "Fast risky cash.",
 		"debt_profile": {
 			"principal_min": 25,
@@ -41,6 +50,15 @@
 		"id": "motel_friend",
 		"display_name": "Motel Friend",
 		"lender_type": "personal",
+		"speaker": {
+			"role": "lender",
+			"name": "Motel Friend",
+			"presentation": "faceless_silhouette",
+			"silhouette": "coat",
+			"portrait_count": 1,
+			"face_layers": [],
+			"bind": "none"
+		},
 		"description": "Soft social loan.",
 		"debt_profile": {
 			"principal_min": 15,
@@ -79,6 +97,15 @@
 		"id": "the_crew",
 		"display_name": "The Crew",
 		"lender_type": "favor_crew",
+		"speaker": {
+			"role": "lender",
+			"name": "The Crew",
+			"presentation": "faceless_silhouette",
+			"silhouette": "coat",
+			"portrait_count": 3,
+			"face_layers": [],
+			"bind": "none"
+		},
 		"description": "Cash for favors.",
 		"debt_profile": {
 			"principal_min": 35,
@@ -100,6 +127,15 @@
 		"id": "brother_in_law",
 		"display_name": "Your Brother-in-Law",
 		"lender_type": "family_phone",
+		"speaker": {
+			"role": "lender",
+			"name": "Unknown Caller",
+			"presentation": "faceless_silhouette",
+			"silhouette": "featureless",
+			"portrait_count": 1,
+			"face_layers": [],
+			"bind": "none"
+		},
 		"description": "Fair family loan.",
 		"availability": {
 			"requires_flags": {
@@ -127,6 +163,15 @@
 		"id": "sals_pawn_counter",
 		"display_name": "Sal's Pawn Counter",
 		"lender_type": "pawn",
+		"speaker": {
+			"role": "lender",
+			"name": "Sal",
+			"presentation": "faceless_silhouette",
+			"silhouette": "coat",
+			"portrait_count": 1,
+			"face_layers": [],
+			"bind": "none"
+		},
 		"description": "Pawn item for cash.",
 		"debt_profile": {
 			"principal_min": 10,

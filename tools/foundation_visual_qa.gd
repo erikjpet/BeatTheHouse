@@ -1205,7 +1205,7 @@ func _prepare_lender_pressure_visual_qa_fixture() -> void:
 		"resolved_event_ids": [],
 		"item_offers": [],
 		"service_ids": [],
-		"lender_hooks": ["street_lender"],
+		"lender_hooks": ["the_crew"],
 		"object_fixtures": [],
 	}, 30)
 
@@ -1780,6 +1780,7 @@ func _try_lender_object_in_current_room(lender_object: Dictionary, prepared_fixt
 	_cover("lender_card")
 	_cover("lender_object_double_click")
 	await _settle()
+	await _accept_visible_lender_conversation()
 	_require(serialized_before_lender != _serialized_run_text(), "Double-clicking lender did not update serialized RunState through a supported lender result.")
 	var serialized: Dictionary = app.call("serialized_run_state")
 	_require((serialized.get("debt", []) as Array).size() > 0, "Lender interaction did not create visible run debt.")
@@ -1825,6 +1826,7 @@ func _verify_mouse_only_recovery_pressure_flow() -> void:
 			lender_button = await _double_click_first_debt_lender_object()
 		_require(not lender_button.is_empty(), "Recovery pressure QA deterministic lender fixture did not expose an enabled visible debt lender object.")
 	await _settle()
+	await _accept_visible_lender_conversation()
 	_require(serialized_before_lender != _serialized_run_text(), "Recovery pressure QA lender interaction did not update RunState.")
 	var after_lender := _run_state_restore_summary(app.call("serialized_run_state"))
 	_require((after_lender.get("debt", []) as Array).size() > (before_lender.get("debt", []) as Array).size(), "Recovery pressure QA did not create visible debt.")
@@ -1937,6 +1939,44 @@ func _resolve_blocking_talk_dock(max_count: int = 8) -> void:
 			return
 		await _settle()
 	_require(dock == null or not dock.visible, "Talk dock response chain did not clear within the visual QA action bound.")
+
+
+func _accept_visible_lender_conversation() -> void:
+	var talk: Dictionary = app.call("current_talk_dock_snapshot")
+	var lender_event_id := str(talk.get("event_id", ""))
+	_require(bool(talk.get("visible", false)), "Visible lender activation did not open the conversation dock.")
+	if not bool(talk.get("visible", false)):
+		return
+	_require(bool(talk.get("speaker_label_visible", false)) and not str(talk.get("speaker_text", "")).strip_edges().is_empty(), "Lender conversation did not show the speaker title.")
+	_require(bool(talk.get("topic_visible", false)) and str(talk.get("topic", "")) == "Loan Offer", "Lender conversation did not show the addressed topic.")
+	if str(talk.get("speaker", "")) == "The Crew":
+		_require(int(talk.get("portrait_count", 0)) == 3, "The Crew conversation did not stage three animated people.")
+	_record_state("lender_conversation_screen", "A titled lender conversation shows the addressed topic, animated speaker group, and response options.")
+	var clicked := _click_button_exact("Accept Offer")
+	_require(not clicked.is_empty(), "Lender conversation did not expose the visible Accept Offer response.")
+	if clicked.is_empty():
+		return
+	await _settle()
+	talk = app.call("current_talk_dock_snapshot")
+	if bool(talk.get("visible", false)):
+		clicked = _click_button_exact("Confirm: Accept Offer")
+		_require(not clicked.is_empty(), "Lender debt response did not expose its visible confirmation.")
+		if clicked.is_empty():
+			return
+		await _settle()
+	var after_talk: Dictionary = app.call("current_talk_dock_snapshot")
+	var message_text := str((app.get("message_label") as Label).text) if app.get("message_label") is Label else ""
+	_require(
+		not bool(after_talk.get("visible", false)) or str(after_talk.get("event_id", "")) != lender_event_id,
+		"Accepted lender conversation did not close (before=%s after=%s buttons=%s message=%s)." % [
+			lender_event_id,
+			str(after_talk.get("event_id", "")),
+			str(_visible_button_text(app)),
+			message_text,
+		]
+	)
+	if bool(after_talk.get("visible", false)):
+		await _resolve_blocking_talk_dock()
 
 
 func _resolve_blocking_talk_dock_for_surface_flow() -> void:

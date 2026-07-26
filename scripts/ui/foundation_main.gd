@@ -1778,6 +1778,10 @@ func _on_talk_dock_choice_requested(event_id: String, choice_id: String) -> void
 	if event_id == CLOSING_TIME_TALK_EVENT_ID:
 		_acknowledge_closing_time_talk(choice_id)
 		return
+	var lender_entry := _pending_talk_event_entry(event_id)
+	if _is_lender_conversation_entry(lender_entry):
+		_resolve_lender_conversation_choice(lender_entry, choice_id)
+		return
 	if _talk_choice_is_ignore(choice_id) and _ignore_talk_event(event_id, "choice"):
 		_refresh()
 		return
@@ -2230,6 +2234,7 @@ func _normalized_talk_speaker(speaker: Dictionary) -> Dictionary:
 		"tell": str(speaker.get("tell", "")).strip_edges(),
 		"presentation": presentation,
 		"face_layers": _copy_array(speaker.get("face_layers", [])),
+		"portrait_count": clampi(int(speaker.get("portrait_count", 1)), 1, 3),
 	}
 
 
@@ -2352,6 +2357,8 @@ func _refresh_talk_dock() -> void:
 	var event_id := str(entry.get("event_id", ""))
 	var dialogue_id := str(entry.get("dialogue_id", "")).strip_edges()
 	var option := _dialogue_option_for_entry(entry) if not dialogue_id.is_empty() else {}
+	if option.is_empty() and _is_lender_conversation_entry(entry):
+		option = _lender_conversation_option(entry)
 	if option.is_empty():
 		var context: Dictionary = entry.get("context", {}) if typeof(entry.get("context", {})) == TYPE_DICTIONARY else {}
 		var event_environment := _event_environment_for_context(context)
@@ -3426,9 +3433,10 @@ func confirm_selected_lender_hook() -> bool:
 	if selected_lender_hook_id.is_empty():
 		_show_message("Select a lender first.")
 		return false
-	if _lender_is_pawn_counter(selected_lender_hook_id):
-		return open_pawn_counter(selected_lender_hook_id)
-	return use_lender_hook(selected_lender_hook_id)
+	return _start_lender_conversation(
+		selected_lender_hook_id,
+		"pawn" if _lender_is_pawn_counter(selected_lender_hook_id) else "borrow"
+	)
 
 
 # Applies a supported lender hook through the shared result-delta path.
@@ -3480,6 +3488,17 @@ func repay_lender_debt(lender_id: String) -> bool:
 		return false
 	if not bool(status.get("enabled", false)):
 		_show_message(str(status.get("disabled_reason", "Not enough bankroll to repay this loan.")))
+		_refresh()
+		return false
+	return _start_lender_conversation(lender_id, "repay")
+
+
+func _execute_lender_repayment(lender_id: String) -> bool:
+	if run_state == null:
+		return false
+	var status := run_state.lender_repayment_status(lender_id)
+	if not bool(status.get("available", false)) or not bool(status.get("enabled", false)):
+		_show_message(str(status.get("disabled_reason", "This loan cannot be repaid right now.")))
 		_refresh()
 		return false
 	var result := run_state.repay_debt(str(status.get("debt_id", "")))
@@ -6685,7 +6704,7 @@ func _add_context_lender_actions(card: VBoxContainer, lender_id: String) -> void
 			card.add_child(_muted_label(str(option.get("disabled_reason", "Sal needs a sellable item as collateral.")), 13))
 		else:
 			card.add_child(_muted_label("%d item%s to pawn, %d ticket%s open." % [quotes.size(), "" if quotes.size() == 1 else "s", tickets.size(), "" if tickets.size() == 1 else "s"], 13))
-		_add_card_button(card, "Open Pawn Counter", Callable(self, "open_pawn_counter").bind(lender_id), false, true)
+		_add_card_button(card, "Talk to Sal", Callable(self, "_start_lender_conversation").bind(lender_id, "pawn"), false, true)
 		return
 	if not bool(option.get("enabled", true)):
 		if run_state != null:
@@ -7989,6 +8008,164 @@ func _inspect_casino_fixture(object_data: Dictionary) -> bool:
 	_show_message(message)
 	_refresh()
 	return true
+
+
+func _start_lender_conversation(lender_id: String, mode: String) -> bool:
+	if run_state == null or library == null:
+		return false
+	var clean_id := lender_id.strip_edges()
+	var clean_mode := mode.strip_edges().to_lower()
+	if clean_id.is_empty() or not ["borrow", "repay", "pawn"].has(clean_mode):
+		return false
+	var definition := library.lender(clean_id)
+	if definition.is_empty():
+		_show_message("That lender is not available.")
+		return false
+	var event_id := "lender_conversation:%s:%s" % [clean_mode, clean_id]
+	if not run_state.pending_talk_event(event_id).is_empty():
+		_refresh_talk_dock()
+		_show_message("Conversation is already open.")
+		_refresh()
+		return true
+	var speaker: Dictionary = definition.get("speaker", {}) if typeof(definition.get("speaker", {})) == TYPE_DICTIONARY else {}
+	if speaker.is_empty():
+		speaker = {
+			"role": "lender",
+			"name": str(definition.get("display_name", "Unknown")),
+			"presentation": "faceless_silhouette",
+			"portrait_count": 1,
+			"face_layers": [],
+			"bind": "none",
+		}
+	var context := {
+		"trigger": "lender_conversation",
+		"type": "lender_conversation",
+		"lender_id": clean_id,
+		"lender_mode": clean_mode,
+		"source_object_id": "lender:%s" % clean_id,
+		"environment_snapshot": run_state.current_environment.duplicate(true),
+	}
+	if not run_state.enqueue_triggered_event(event_id, "lender", context, {
+		"presentation": "talk",
+		"speaker": _normalized_talk_speaker(speaker),
+	}):
+		_show_message("Conversation is already queued.")
+		_refresh()
+		return false
+	_refresh_talk_dock()
+	_show_message("Talking to %s." % str(speaker.get("name", definition.get("display_name", "Unknown"))))
+	_autosave_foundation_run("Autosaved.")
+	_refresh()
+	return true
+
+
+func _is_lender_conversation_entry(entry: Dictionary) -> bool:
+	if entry.is_empty():
+		return false
+	var context: Dictionary = entry.get("context", {}) if typeof(entry.get("context", {})) == TYPE_DICTIONARY else {}
+	return str(context.get("type", "")) == "lender_conversation"
+
+
+func _lender_conversation_option(entry: Dictionary) -> Dictionary:
+	var context: Dictionary = entry.get("context", {}) if typeof(entry.get("context", {})) == TYPE_DICTIONARY else {}
+	var lender_id := str(context.get("lender_id", "")).strip_edges()
+	var mode := str(context.get("lender_mode", "borrow")).strip_edges().to_lower()
+	if lender_id.is_empty() or library == null:
+		return {}
+	var definition := library.lender(lender_id)
+	if definition.is_empty():
+		return {}
+	var display_name := str(definition.get("display_name", lender_id.replace("_", " ").capitalize()))
+	var topic := "Loan Offer"
+	var summary := str(definition.get("description", "They want to discuss a loan."))
+	var accept_label := "Accept Offer"
+	var consequence_summary := "Take the offered loan and its debt."
+	var enabled := true
+	var disabled_reason := ""
+	if mode == "repay":
+		var repayment := run_state.lender_repayment_status(lender_id) if run_state != null else {}
+		var payoff := maxi(0, int(repayment.get("payoff_amount", 0)))
+		topic = "Loan Repayment"
+		summary = "%s addresses the $%d payoff on your active loan." % [display_name, payoff]
+		accept_label = "Pay $%d" % payoff
+		consequence_summary = "Pay off this lender debt."
+		enabled = bool(repayment.get("available", false)) and bool(repayment.get("enabled", false))
+		disabled_reason = str(repayment.get("disabled_reason", "This loan cannot be repaid right now."))
+	elif mode == "pawn":
+		topic = "Pawn Services"
+		summary = "%s addresses collateral, cash, and any open pawn tickets." % display_name
+		accept_label = "Review Collateral"
+		consequence_summary = "Open the pawn counter."
+	else:
+		var lender_option := _lender_hook(lender_id)
+		if lender_option.is_empty():
+			return {}
+		var delta_summary := str(lender_option.get("delta_summary", "")).strip_edges()
+		summary = "%s %s" % [
+			str(definition.get("description", "They make a loan offer.")).strip_edges(),
+			delta_summary if not delta_summary.is_empty() else "Accepting creates an active obligation.",
+		]
+		enabled = bool(lender_option.get("enabled", true))
+		disabled_reason = str(lender_option.get("disabled_reason", "This offer is not available right now."))
+	return {
+		"id": str(entry.get("event_id", "lender_conversation:%s:%s" % [mode, lender_id])),
+		"display_name": topic,
+		"type": "lender_conversation",
+		"interaction_mode": "triggered",
+		"summary": summary.strip_edges(),
+		"choices": [
+			{
+				"id": "accept",
+				"label": accept_label,
+				"text": summary.strip_edges(),
+				"consequence_summary": consequence_summary,
+				"enabled": enabled,
+				"disabled_reason": "" if enabled else disabled_reason,
+				"requires_confirm": mode == "borrow",
+			},
+			{
+				"id": "decline",
+				"label": "Not Now",
+				"text": "End the conversation without making a deal.",
+				"consequence_summary": "Leave the conversation.",
+				"enabled": true,
+				"requires_confirm": false,
+			},
+		],
+	}
+
+
+func _resolve_lender_conversation_choice(entry: Dictionary, choice_id: String) -> void:
+	if run_state == null:
+		return
+	var event_id := str(entry.get("event_id", ""))
+	var context: Dictionary = entry.get("context", {}) if typeof(entry.get("context", {})) == TYPE_DICTIONARY else {}
+	var lender_id := str(context.get("lender_id", "")).strip_edges()
+	var mode := str(context.get("lender_mode", "borrow")).strip_edges().to_lower()
+	if choice_id == "decline":
+		run_state.complete_talk_event_resolution(event_id)
+		_show_message("You leave the offer on the table.")
+		_autosave_foundation_run("Autosaved.")
+		_refresh_talk_dock()
+		_refresh()
+		return
+	if choice_id != "accept" or lender_id.is_empty():
+		_show_message("That conversation option is not available.")
+		return
+	var option := _lender_conversation_option(entry)
+	var choice := _event_choice(option, choice_id)
+	if choice.is_empty() or not bool(choice.get("enabled", true)):
+		_show_message(str(choice.get("disabled_reason", "That option is no longer available.")))
+		_refresh()
+		return
+	run_state.complete_talk_event_resolution(event_id)
+	_refresh_talk_dock()
+	if mode == "repay":
+		_execute_lender_repayment(lender_id)
+	elif mode == "pawn":
+		open_pawn_counter(lender_id)
+	else:
+		use_lender_hook(lender_id)
 
 
 func _cage_atm_inline_actions() -> Array:

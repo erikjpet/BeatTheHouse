@@ -8139,6 +8139,7 @@ static func _normalize_triggered_event_speaker(value: Variant) -> Dictionary:
 		"tell": str(source.get("tell", "")).strip_edges(),
 		"presentation": presentation,
 		"face_layers": _copy_array(source.get("face_layers", [])),
+		"portrait_count": clampi(int(source.get("portrait_count", 1)), 1, 3),
 	}
 
 

@@ -4,8 +4,9 @@ extends Control
 signal choice_requested(event_id: String, choice_id: String)
 
 const COLLAPSED_SIZE := Vector2(420, 58)
-const EXPANDED_PANEL_SIZE := Vector2(540, 168)
+const EXPANDED_PANEL_SIZE := Vector2(540, 180)
 const EXPANDED_PORTRAIT_SIZE := Vector2(280, 390)
+const SMALL_SCREEN_EXPANDED_PANEL_HEIGHT := 220.0
 const VIEWPORT_MARGIN := Vector2(18, 18)
 const MAX_CHOICES := 4
 const IGNORE_PENALTY_HEAT := 5
@@ -60,9 +61,15 @@ class PortraitModel:
 		queue_redraw()
 
 	func _draw() -> void:
-		if str(speaker.get("presentation", "")) == "faceless_silhouette":
+		var portrait_count := clampi(int(speaker.get("portrait_count", 1)), 1, 3)
+		if portrait_count > 1:
+			_draw_speaker_group(portrait_count)
+		elif str(speaker.get("presentation", "")) == "faceless_silhouette":
 			_draw_faceless_silhouette()
-			return
+		else:
+			_draw_visible_speaker()
+
+	func _draw_visible_speaker() -> void:
 		var hair := _speaker_color("hair_color", VisualStyle.SHADOW)
 		var jacket := _speaker_color("jacket_color", VisualStyle.BLUE)
 		var cycle := fposmod(animation_clock, 4.2) / 4.2
@@ -84,25 +91,64 @@ class PortraitModel:
 		var speech_bob := sin(animation_clock * 3.1) * 1.15 * character_scale
 		PortraitTableGameVisualsScript._draw_table_character(self, style, Vector2(size.x * 0.5, size.y + 18.0 + speech_bob), character_scale, animation_clock)
 
+	func _draw_speaker_group(portrait_count: int) -> void:
+		var faceless := str(speaker.get("presentation", "")) == "faceless_silhouette"
+		var base_scale := clampf(minf(size.x / 98.0, size.y / 150.0) * 0.68, 0.82, 1.9)
+		var back_scale := base_scale * 0.82
+		if portrait_count >= 2:
+			_draw_group_member(Vector2(size.x * 0.31, size.y + 8.0), back_scale, animation_clock + 0.7, faceless)
+		if portrait_count >= 3:
+			_draw_group_member(Vector2(size.x * 0.69, size.y + 8.0), back_scale, animation_clock + 1.4, faceless)
+		_draw_group_member(Vector2(size.x * 0.5, size.y + 20.0), base_scale, animation_clock, faceless)
+
+	func _draw_group_member(anchor: Vector2, character_scale: float, phase: float, faceless: bool) -> void:
+		var idle_bob := 0.0 if reduce_motion else sin(phase * 2.1) * 1.2 * character_scale
+		var style := _faceless_style(phase) if faceless else _visible_style(phase)
+		PortraitTableGameVisualsScript._draw_table_character(
+			self,
+			style,
+			anchor + Vector2(0.0, idle_bob),
+			character_scale,
+			phase
+		)
+
 	func _draw_faceless_silhouette() -> void:
 		var character_scale := clampf(minf(size.x / 98.0, size.y / 150.0) * 0.92, 0.92, 2.6)
 		var idle_bob := 0.0 if reduce_motion else sin(animation_clock * 2.1) * 1.2 * character_scale
-		var speaking_gesture := fposmod(animation_clock, 2.8) > 1.9
+		PortraitTableGameVisualsScript._draw_table_character(self, _faceless_style(animation_clock), Vector2(size.x * 0.5, size.y + 18.0 + idle_bob), character_scale, animation_clock)
+
+	func _faceless_style(phase: float) -> Dictionary:
 		var shadow := VisualStyle.role("shadow")
-		PortraitTableGameVisualsScript._draw_table_character(self, {
+		return {
 			"name": "",
 			"skin": shadow,
 			"hair": shadow,
 			"jacket": shadow,
 			"accent": VisualStyle.role("disabled"),
 			"role": str(speaker.get("role", "stranger")),
-			"pose": "watching" if speaking_gesture else "speaking",
+			"pose": "watching" if fposmod(phase, 2.8) > 1.9 else "speaking",
 			"eye_offset": 0.0,
 			"blink": false,
 			"holding_card": false,
 			"silhouette": str(speaker.get("silhouette", "featureless")),
 			"faceless": true,
-		}, Vector2(size.x * 0.5, size.y + 18.0 + idle_bob), character_scale, animation_clock)
+		}
+
+	func _visible_style(phase: float) -> Dictionary:
+		var cycle := fposmod(phase, 4.2) / 4.2
+		return {
+			"name": "",
+			"skin": VisualStyle.PORTRAIT_SKIN,
+			"hair": _speaker_color("hair_color", VisualStyle.SHADOW),
+			"jacket": _speaker_color("jacket_color", VisualStyle.BLUE),
+			"accent": VisualStyle.CYAN_2,
+			"role": str(speaker.get("role", "staff")),
+			"pose": "watching" if fposmod(phase, 2.8) > 1.9 else "speaking",
+			"eye_offset": sin(phase * 0.72) * 0.55,
+			"blink": cycle > 0.92 and cycle < 0.975,
+			"holding_card": false,
+			"silhouette": str(speaker.get("silhouette", "coat")),
+		}
 
 	func surface_label(_text: String, _pos: Vector2, _font_size: int, _color: Color) -> void:
 		pass
@@ -201,6 +247,7 @@ var small_screen_mode := false
 var full_body_text := ""
 var reveal_elapsed := 0.0
 var typewriter_active := false
+var rendered_entry_key := ""
 
 var panel: PanelContainer
 var stack: VBoxContainer
@@ -240,6 +287,13 @@ func _process(delta: float) -> void:
 
 
 func set_entry(next_entry: Dictionary, next_option: Dictionary, next_queue_count: int) -> void:
+	var next_key := JSON.stringify({
+		"entry": next_entry,
+		"option": next_option,
+		"queue_count": maxi(0, next_queue_count),
+	})
+	if visible and next_key == rendered_entry_key:
+		return
 	entry = next_entry.duplicate(true)
 	option = next_option.duplicate(true)
 	queue_count = maxi(0, next_queue_count)
@@ -248,6 +302,7 @@ func set_entry(next_entry: Dictionary, next_option: Dictionary, next_queue_count
 		return
 	expanded = true
 	armed_choice_id = ""
+	rendered_entry_key = next_key
 	visible = true
 	_render()
 	_play_attention_animation()
@@ -259,6 +314,7 @@ func clear_entry() -> void:
 	queue_count = 0
 	expanded = false
 	armed_choice_id = ""
+	rendered_entry_key = ""
 	visible = false
 	if portrait_model != null:
 		portrait_model.set_animation_active(false)
@@ -316,7 +372,10 @@ func current_snapshot() -> Dictionary:
 		"portrait_animation_redraw_count": portrait_model.animation_redraw_count if portrait_model != null else 0,
 		"portrait_renderer": "animated_character_model",
 		"portrait_presentation": str(portrait_model.speaker.get("presentation", "")) if portrait_model != null else "",
+		"portrait_count": clampi(int(portrait_model.speaker.get("portrait_count", 1)), 1, 3) if portrait_model != null else 0,
 		"name_plate": speaker_name_plate != null,
+		"topic": summary_label.text if summary_label != null else "",
+		"topic_visible": summary_label != null and summary_label.is_visible_in_tree(),
 		"typewriter_active": typewriter_active,
 		"visible_characters": body_label.visible_characters if body_label != null else -1,
 		"body_character_count": full_body_text.length(),
@@ -358,6 +417,7 @@ func _notification(what: int) -> void:
 func _build() -> void:
 	panel = FoundationWidgets.panel_container(Color(VisualStyle.role("surface_overlay"), 0.98), VisualStyle.role("danger"))
 	panel.mouse_filter = Control.MOUSE_FILTER_STOP
+	panel.clip_contents = true
 	add_child(panel)
 
 	stack = VBoxContainer.new()
@@ -452,9 +512,9 @@ func _render() -> void:
 		summary.left(52) if not summary.is_empty() else str(option.get("display_name", "Talk")),
 		"  +%d" % maxi(0, queue_count - 1) if queue_count > 1 else "",
 	]
-	speaker_label.text = "Speaking with %s" % (speaker_name if not speaker_name.is_empty() else "Someone")
+	speaker_label.text = speaker_name if not speaker_name.is_empty() else "Unknown"
 	summary_label.text = str(option.get("display_name", "Talk"))
-	summary_label.visible = false
+	summary_label.visible = expanded
 	_begin_body_reveal(summary)
 	var timing: Dictionary = entry.get("timing", {}) if typeof(entry.get("timing", {})) == TYPE_DICTIONARY else {}
 	urgency_label.text = _urgency_text(timing)
@@ -476,6 +536,7 @@ func _render() -> void:
 	_render_choices()
 	panel.custom_minimum_size = Vector2.ZERO
 	_position_panel()
+	call_deferred("_position_panel")
 
 
 func _begin_body_reveal(text_value: String) -> void:
@@ -706,6 +767,8 @@ func _speaker_name() -> String:
 	var name := str(speaker.get("name", "")).strip_edges()
 	if not name.is_empty():
 		return name
+	if str(speaker.get("presentation", "")) == "faceless_silhouette":
+		return "Unknown"
 	var role := str(speaker.get("role", "stranger")).strip_edges()
 	return role.replace("_", " ").capitalize()
 
@@ -743,9 +806,10 @@ func _position_panel() -> void:
 		minf(EXPANDED_PANEL_SIZE.x, panel_available_width),
 		minf(EXPANDED_PANEL_SIZE.y, available_size.y)
 	)
-	var minimum_size := panel.get_combined_minimum_size()
-	panel_size.x = minf(maxf(panel_size.x, minimum_size.x), panel_available_width)
-	panel_size.y = minf(maxf(panel_size.y, minimum_size.y), available_size.y)
+	panel_size.y = minf(
+		SMALL_SCREEN_EXPANDED_PANEL_HEIGHT if small_screen_mode else EXPANDED_PANEL_SIZE.y,
+		available_size.y
+	)
 	panel.size = panel_size
 	panel.position = Vector2(panel_left, maxf(VIEWPORT_MARGIN.y, size.y - panel_size.y - VIEWPORT_MARGIN.y))
 

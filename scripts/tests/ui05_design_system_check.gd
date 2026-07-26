@@ -151,6 +151,8 @@ func _run() -> void:
 	_check(bool(revealing_talk.get("portrait_animation_active", false)), "Conversation character model did not animate.")
 	_check(not revealing_talk.has("portrait_texture"), "Conversation unexpectedly exposed a static portrait texture.")
 	_check(bool(revealing_talk.get("name_plate", false)), "Conversation speaker is missing a name plate.")
+	_check(str(revealing_talk.get("speaker_text", "")) == "Sal", "Conversation title does not show the speaker.")
+	_check(bool(revealing_talk.get("topic_visible", false)) and str(revealing_talk.get("topic", "")) == "A quiet offer", "Conversation topic is not visible under the title.")
 	var skip_click := InputEventMouseButton.new()
 	skip_click.pressed = true
 	talk.call("_on_body_gui_input", skip_click)
@@ -169,6 +171,25 @@ func _run() -> void:
 	_check(int(reduced_talk.get("visible_characters", 0)) == -1, "Reduce-motion conversation copy is not instantly complete.")
 	_check(str(reduced_talk.get("portrait_renderer", "")) == "animated_character_model", "Reduced-motion conversation replaced the character model.")
 	_check(str(reduced_talk.get("portrait_presentation", "")) == "faceless_silhouette", "Faceless speaker did not preserve the silhouette model contract.")
+	talk.set_entry({
+		"event_id": "ui05:group",
+		"speaker": {"name": "The Crew", "presentation": "faceless_silhouette", "portrait_count": 3},
+	}, {
+		"display_name": "Loan Offer",
+		"summary": "Three figures wait on your answer.",
+		"choices": [{"id": "leave", "label": "Leave"}],
+	}, 1)
+	var group_talk := talk.current_snapshot()
+	_check(int(group_talk.get("portrait_count", 0)) == 3, "Conversation renderer did not preserve a three-person speaker group.")
+	talk.set_entry({
+		"event_id": "ui05:unknown",
+		"speaker": {"name": "", "presentation": "faceless_silhouette"},
+	}, {
+		"display_name": "A guarded request",
+		"summary": "A hidden figure addresses you.",
+		"choices": [{"id": "leave", "label": "Leave"}],
+	}, 1)
+	_check(str(talk.current_snapshot().get("speaker_text", "")) == "Unknown", "Nameless faceless conversation did not use the Unknown title.")
 	talk.queue_free()
 
 	if failures.is_empty():
