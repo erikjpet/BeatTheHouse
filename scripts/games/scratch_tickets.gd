@@ -31,7 +31,6 @@ const DEFAULT_TICKET_RECT := Rect2(422, 54, 354, 356)
 const DEFAULT_SCRATCH_RECT := Rect2(444, 169, 310, 176)
 const STATUS_HUD_RECT := Rect2(306, 8, 460, 34)
 const BIG_WIN_THRESHOLD := 100
-const STOCK_SLOT_COUNT := 4
 const COLLECTION_TOTAL := 7
 const DEFAULT_BRUSH_RADIUS := 15.0
 const DEFAULT_PASS_REMOVAL := 0.66
@@ -721,16 +720,17 @@ func _generate_machine_state(_run_state: RunState, environment: Dictionary, rng:
 	var root_rng := rng if rng != null else _seeded_rng("scratch-stock-root:%s" % str(environment.get("id", "room")))
 	var machine_rng := root_rng.fork(stream_key)
 	var stock: Array = []
-	for ticket_type_value in _weighted_stock_types(machine_rng, STOCK_SLOT_COUNT):
+	for ticket_type_value in _ticket_types():
 		var ticket_type: Dictionary = ticket_type_value
-		var count_range := _int_array(ticket_type.get("stock_count", [2, 4]))
-		var minimum := int(count_range[0]) if not count_range.is_empty() else 2
-		var maximum := int(count_range[1]) if count_range.size() > 1 else minimum
+		var count_range := _int_array(ticket_type.get("stock_count", [0, 5]))
+		var minimum := clampi(int(count_range[0]) if not count_range.is_empty() else 0, 0, 5)
+		var maximum := clampi(int(count_range[1]) if count_range.size() > 1 else minimum, minimum, 5)
+		var remaining := 0 if machine_rng.randi_range(0, 1) == 0 else machine_rng.randi_range(maxi(1, minimum), maxi(1, maximum))
 		stock.append({
 			"type_id": str(ticket_type.get("id", "")),
 			"display_name": str(ticket_type.get("display_name", "Ticket")),
 			"price": maxi(1, int(ticket_type.get("price", 1))),
-			"remaining": machine_rng.randi_range(minimum, maximum),
+			"remaining": remaining,
 			"stock_weight": maxi(1, int(ticket_type.get("stock_weight", 1))),
 			"size_id": str(ticket_type.get("size_id", "medium_square")),
 			"palette": _copy_dict(_copy_dict(ticket_type.get("face", {})).get("palette", {})),
@@ -741,7 +741,7 @@ func _generate_machine_state(_run_state: RunState, environment: Dictionary, rng:
 		"machine_name": "Highway Scratch Center",
 		"stock_day": int(environment.get("generated_day", environment.get("day", 0))),
 		"stock_stream_key": stream_key,
-		"stock_weighting": "inverse_price_without_replacement",
+		"stock_weighting": "full_roster_half_out_of_stock_0_to_5",
 		"stock": stock,
 		"environment_hooks": [{
 			"id": REDEEM_HOOK_ID,
@@ -769,26 +769,6 @@ func _generate_machine_state(_run_state: RunState, environment: Dictionary, rng:
 		"last_sweep_section": "",
 		"sweep_started_msec": 0,
 	}
-
-
-func _weighted_stock_types(rng: RngStream, count: int) -> Array:
-	var candidates := _ticket_types().duplicate(true)
-	var selected: Array = []
-	while not candidates.is_empty() and selected.size() < maxi(0, count):
-		var total_weight := 0
-		for candidate_value in candidates:
-			total_weight += maxi(1, int((candidate_value as Dictionary).get("stock_weight", 1)))
-		var roll := rng.randi_range(1, maxi(1, total_weight))
-		var cursor := 0
-		var selected_index := candidates.size() - 1
-		for index in range(candidates.size()):
-			cursor += maxi(1, int((candidates[index] as Dictionary).get("stock_weight", 1)))
-			if roll <= cursor:
-				selected_index = index
-				break
-		selected.append(candidates[selected_index])
-		candidates.remove_at(selected_index)
-	return selected
 
 
 func _roll_ticket(ticket_type: Dictionary, rng: RngStream, luck_modifier: int, purchase_key: String, initialize_mask: bool = true) -> Dictionary:
@@ -1678,9 +1658,11 @@ func _draw_machine(surface, state: Dictionary) -> void:
 	surface.draw_rect(glass, Color("#90a8b5"), false, 3)
 	surface.draw_polygon([glass.position + Vector2(7, 4), glass.position + Vector2(36, 4), glass.position + Vector2(112, glass.size.y - 4), glass.position + Vector2(82, glass.size.y - 4)], [Color(0.65, 0.90, 1.0, 0.055)])
 	var stock := _array_ref(state.get("scratch_stock", []))
+	var row_count := maxi(1, stock.size())
+	var row_height := (glass.size.y - 14.0) / float(row_count)
 	for index in range(stock.size()):
 		var slot: Dictionary = stock[index]
-		var rect := Rect2(glass.position + Vector2(7, 7 + index * 59), Vector2(glass.size.x - 14, 54))
+		var rect := Rect2(glass.position + Vector2(7, 7.0 + float(index) * row_height), Vector2(glass.size.x - 14, maxf(24.0, row_height - 5.0)))
 		_draw_vending_window(surface, slot, rect, index)
 	var payment := Rect2(MACHINE_RECT.position + Vector2(17, 329), Vector2(68, 31))
 	surface.draw_rect(payment, Color("#361019"))
@@ -1719,33 +1701,38 @@ func _draw_vending_window(surface, slot: Dictionary, rect: Rect2, index: int) ->
 	var ink := Color(str(palette.get("ink", "#35152e")))
 	var accent := Color(str(palette.get("accent", "#ef3156")))
 	var sold_out := int(slot.get("remaining", 0)) <= 0
+	var compact := rect.size.y < 42.0
 	surface.draw_rect(rect, Color("#171c25"))
 	surface.draw_rect(rect, Color("#4f5f6b"), false, 1)
 	var mini_size := _dispenser_ticket_size(str(slot.get("size_id", "medium_square")))
-	mini_size *= 0.68
-	var ticket := Rect2(rect.position + Vector2(8.0 + (58.0 - mini_size.x) * 0.5, (rect.size.y - mini_size.y) * 0.5), mini_size)
+	mini_size *= 0.42 if compact else 0.68
+	var preview_column_width := 46.0 if compact else 58.0
+	var ticket := Rect2(rect.position + Vector2(8.0 + (preview_column_width - mini_size.x) * 0.5, (rect.size.y - mini_size.y) * 0.5), mini_size)
 	surface.draw_rect(Rect2(ticket.position + Vector2(3, 3), ticket.size), Color(0.0, 0.0, 0.0, 0.42))
 	surface.draw_rect(ticket, Color(paper.r * (0.42 if sold_out else 1.0), paper.g * (0.42 if sold_out else 1.0), paper.b * (0.42 if sold_out else 1.0)))
-	surface.draw_rect(Rect2(ticket.position, Vector2(ticket.size.x, minf(18.0, ticket.size.y * 0.30))), Color(accent.r, accent.g, accent.b, 0.45 if sold_out else 1.0))
-	surface.surface_label_centered(str(slot.get("display_name", "Ticket")).to_upper().left(15), Rect2(ticket.position + Vector2(2, 2), Vector2(ticket.size.x - 4, minf(14.0, ticket.size.y * 0.28))), 6, C_DARK if not sold_out else C_SOFT)
+	surface.draw_rect(Rect2(ticket.position, Vector2(ticket.size.x, minf(12.0 if compact else 18.0, ticket.size.y * 0.30))), Color(accent.r, accent.g, accent.b, 0.45 if sold_out else 1.0))
+	if not compact:
+		surface.surface_label_centered(str(slot.get("display_name", "Ticket")).to_upper().left(15), Rect2(ticket.position + Vector2(2, 2), Vector2(ticket.size.x - 4, minf(14.0, ticket.size.y * 0.28))), 6, C_DARK if not sold_out else C_SOFT)
 	for mark_index in range(6):
 		var mark_center := ticket.position + Vector2(ticket.size.x * (0.25 + float(mark_index % 3) * 0.25), ticket.size.y * (0.56 + float(mark_index / 3) * 0.25))
 		surface.draw_circle(mark_center, maxf(2.0, minf(ticket.size.x, ticket.size.y) * 0.07), Color(accent.r, accent.g, accent.b, 0.22 if sold_out else 0.72))
-	surface.surface_label(str(slot.get("display_name", "Ticket")).to_upper().left(20), rect.position + Vector2(72, 16), 7, C_SOFT)
-	surface.surface_label("SOLD OUT" if sold_out else "$%d • %d LEFT" % [int(slot.get("price", 1)), int(slot.get("remaining", 0))], rect.position + Vector2(72, 35), 8, C_PINK if sold_out else C_WHITE)
-	var button := Rect2(rect.end - Vector2(31, 39), Vector2(23, 29))
+	var label_x := 60.0 if compact else 72.0
+	surface.surface_label(str(slot.get("display_name", "Ticket")).to_upper().left(21 if compact else 20), rect.position + Vector2(label_x, 10 if compact else 16), 6 if compact else 7, C_SOFT)
+	surface.surface_label("SOLD OUT" if sold_out else "$%d • %d LEFT" % [int(slot.get("price", 1)), int(slot.get("remaining", 0))], rect.position + Vector2(label_x, 23 if compact else 35), 6 if compact else 8, C_PINK if sold_out else C_WHITE)
+	var button := Rect2(rect.end - Vector2(27, 26), Vector2(20, 20)) if compact else Rect2(rect.end - Vector2(31, 39), Vector2(23, 29))
 	surface.draw_rect(button, Color("#4a111b") if sold_out else Color("#14734e"))
 	surface.draw_rect(button, C_PINK if sold_out else Color("#65f2ac"), false, 2)
-	surface.surface_label_centered(str(index + 1), button, 10, C_WHITE)
+	surface.surface_label_centered(str(index + 1), button, 8 if compact else 10, C_WHITE)
 	if not sold_out:
 		surface.surface_add_hit(button, "scratch_buy", index)
-		var quantity_max := mini(3, int(slot.get("remaining", 0)))
-		for extra in range(2, quantity_max + 1):
-			var q_rect := Rect2(rect.end - Vector2(31 + float(extra - 1) * 26.0, 12), Vector2(23, 11))
-			surface.draw_rect(q_rect, Color("#233f2f"))
-			surface.draw_rect(q_rect, Color("#65f2ac"), false, 1)
-			surface.surface_label_centered("x%d" % extra, q_rect, 6, C_WHITE)
-			surface.surface_add_hit(q_rect, "scratch_buy", index + (extra - 1) * 100)
+		if not compact:
+			var quantity_max := mini(3, int(slot.get("remaining", 0)))
+			for extra in range(2, quantity_max + 1):
+				var q_rect := Rect2(rect.end - Vector2(31 + float(extra - 1) * 26.0, 12), Vector2(23, 11))
+				surface.draw_rect(q_rect, Color("#233f2f"))
+				surface.draw_rect(q_rect, Color("#65f2ac"), false, 1)
+				surface.surface_label_centered("x%d" % extra, q_rect, 6, C_WHITE)
+				surface.surface_add_hit(q_rect, "scratch_buy", index + (extra - 1) * 100)
 
 
 func _dispenser_ticket_size(size_id: String) -> Vector2:

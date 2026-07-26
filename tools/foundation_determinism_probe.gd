@@ -327,7 +327,7 @@ func _install_all_game_environment(run_state: RunState, seed_index: int) -> void
 func _apply_all_game_resolves(run_state: RunState, checkpoints: Array, seed: String) -> void:
 	_resolve_game(run_state, checkpoints, seed, "slot", "spin", 0, _timed_ui(run_state, "slot_spin"))
 	_resolve_game(run_state, checkpoints, seed, "pull_tabs", "buy_tab", 0, _timed_ui(run_state, "pull_tabs_buy", {"pull_tab_deal_index": 0}))
-	_resolve_game(run_state, checkpoints, seed, "scratch_tickets", "buy_scratch_ticket", 2, _timed_ui(run_state, "scratch_ticket_buy", {"scratch_stock_index": 0}))
+	_resolve_game(run_state, checkpoints, seed, "scratch_tickets", "buy_scratch_ticket", 2, _timed_ui(run_state, "scratch_ticket_buy", _scratch_buy_ui(run_state)))
 	_resolve_game(run_state, checkpoints, seed, "blackjack", "play_basic", 20, _timed_ui(run_state, "blackjack_play", {"selected_stake": 20}))
 	_resolve_game(run_state, checkpoints, seed, "baccarat", "deal_baccarat", 20, _timed_ui(run_state, "baccarat_deal", {"baccarat_bets": {"player": 20}}))
 	_resolve_game(run_state, checkpoints, seed, "roulette", "spin_roulette", 20, _timed_ui(run_state, "roulette_spin", {"roulette_bets": [_roulette_bet(20)]}))
@@ -529,6 +529,23 @@ func _timed_ui(run_state: RunState, key: String, extras: Dictionary = {}) -> Dic
 	ui_state["surface_time_msec"] = run_state.simulation_time_msec() + 10000 + int(_stable_hash_text("%s:%s" % [run_state.seed_text, key])) % 60000
 	ui_state["drunk_scaled_surface_time_msec"] = ui_state["surface_time_msec"]
 	return ui_state
+
+
+func _scratch_buy_ui(run_state: RunState) -> Dictionary:
+	var game_states: Dictionary = run_state.current_environment.get("game_states", {}) if typeof(run_state.current_environment.get("game_states", {})) == TYPE_DICTIONARY else {}
+	var machine: Dictionary = game_states.get("scratch_tickets", {}) if typeof(game_states.get("scratch_tickets", {})) == TYPE_DICTIONARY else {}
+	var stock: Array = machine.get("stock", []) if typeof(machine.get("stock", [])) == TYPE_ARRAY else []
+	for index in range(stock.size()):
+		if typeof(stock[index]) == TYPE_DICTIONARY and int((stock[index] as Dictionary).get("remaining", 0)) > 0:
+			return {"scratch_stock_index": index}
+	if not stock.is_empty() and typeof(stock[0]) == TYPE_DICTIONARY:
+		var slot: Dictionary = stock[0]
+		slot["remaining"] = 1
+		stock[0] = slot
+		machine["stock"] = stock
+		game_states["scratch_tickets"] = machine
+		run_state.current_environment["game_states"] = game_states
+	return {"scratch_stock_index": 0}
 
 
 func _travel_result(target_id: String, previous_environment: Dictionary, destination_environment: Dictionary, route: Dictionary, travel_decay: Dictionary, route_risk: Dictionary) -> Dictionary:

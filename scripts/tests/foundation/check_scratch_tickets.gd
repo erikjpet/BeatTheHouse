@@ -18,8 +18,8 @@ func _check_scratch_tickets_surface_contract(game: GameModule, failures: Array) 
 	var machine: Dictionary = game.generate_environment_state(run_state, environment, run_state.create_rng("scratch_stock"))
 	environment["game_states"] = {"scratch_tickets": machine}
 	run_state.current_environment = environment
-	if str(machine.get("schema", "")) != "scratch_ticket_machine_state" or _dict_array(machine.get("stock", [])).size() != 4:
-		failures.append("Scratch Tickets did not generate its four-slot machine state.")
+	if str(machine.get("schema", "")) != "scratch_ticket_machine_state" or _dict_array(machine.get("stock", [])).size() != SCRATCH_IDS.size():
+		failures.append("Scratch Tickets did not generate its scarce seven-ticket machine state.")
 	var surface := game.surface_state(run_state, environment, {})
 	if str(surface.get("surface_renderer", "")) != "scratch_tickets" or not bool(surface.get("surface_controls_native", false)):
 		failures.append("Scratch Tickets did not route to its native surface.")
@@ -83,7 +83,11 @@ func _check_scratch_roster(game: GameModule, failures: Array) -> void:
 
 
 func _check_scratch_purchase_and_input(game: GameModule, run_state: RunState, environment: Dictionary, failures: Array) -> void:
-	var buy_command := game.surface_action_command("scratch_buy", 0, false, {}, run_state, environment)
+	var buy_index := _first_stocked_scratch_index((environment.get("game_states", {}) as Dictionary).get("scratch_tickets", {}))
+	if buy_index < 0:
+		failures.append("Scratch purchase contract generated no stocked ticket rows.")
+		return
+	var buy_command := game.surface_action_command("scratch_buy", buy_index, false, {}, run_state, environment)
 	var before := run_state.bankroll
 	var purchase := game.resolve_with_context("buy_scratch_ticket", int(buy_command.get("set_stake", 0)), run_state, environment, run_state.create_rng("scratch_purchase"), buy_command.get("ui_state", {}))
 	if not bool(purchase.get("scratch_outcome_fixed_at_purchase", false)) or run_state.bankroll != before - int(purchase.get("stake", 0)):
@@ -345,10 +349,15 @@ func _check_scratch_result_and_queue_flow(game: GameModule, failures: Array) -> 
 	environment["game_states"] = {"scratch_tickets": machine}
 	run_state.current_environment = environment
 	var before := run_state.bankroll
-	var buy := game.surface_action_command("scratch_buy", 200, false, {}, run_state, environment)
+	var queue_index := _ensure_stock_for_quantity((environment.get("game_states", {}) as Dictionary).get("scratch_tickets", {}), 3)
+	if queue_index < 0:
+		failures.append("Scratch queue test could not find or create a stocked row.")
+		return
+	var expected_price := int((stock[queue_index] as Dictionary).get("price", 1))
+	var buy := game.surface_action_command("scratch_buy", queue_index + 200, false, {}, run_state, environment)
 	game.resolve_with_context("buy_scratch_ticket", int(buy.get("set_stake", 0)), run_state, environment, _scratch_rng("queue-buy"), buy.get("ui_state", {}))
 	machine = (environment.get("game_states", {}) as Dictionary).get("scratch_tickets", {})
-	if run_state.bankroll != before - int((stock[0] as Dictionary).get("price", 1)) * 3:
+	if run_state.bankroll != before - expected_price * 3:
 		failures.append("Scratch multi-buy did not charge N times the ticket price.")
 	if _dict_array(machine.get("pending_queue", [])).size() != 2 or (machine.get("active_ticket", {}) as Dictionary).is_empty():
 		failures.append("Scratch multi-buy did not leave one active ticket plus a queued stack.")
@@ -474,33 +483,33 @@ func _check_scratch_stock(game: GameModule, failures: Array) -> void:
 	var second: Dictionary = game.call("_generate_machine_state", null, {"id": "stock", "day": 4}, _scratch_rng("stock-root"))
 	if first.get("stock", []) != second.get("stock", []):
 		failures.append("Scratch stock was not deterministic for seed and day.")
-	if str(first.get("stock_stream_key", "")) != "scratch-stock:stock:day:4" or str(first.get("stock_weighting", "")) != "inverse_price_without_replacement":
+	if str(first.get("stock_stream_key", "")) != "scratch-stock:stock:day:4" or str(first.get("stock_weighting", "")) != "full_roster_half_out_of_stock_0_to_5":
 		failures.append("Scratch stock did not record its named day-keyed weighted fork.")
-	var previous_weight := 1000000
+	var stock := _dict_array(first.get("stock", []))
+	if stock.size() != SCRATCH_IDS.size():
+		failures.append("Scratch stock must show every ticket type in the machine.")
+	var seen_types := {}
+	for slot_value in stock:
+		var slot: Dictionary = slot_value
+		var type_id := str(slot.get("type_id", ""))
+		seen_types[type_id] = true
+		var remaining := int(slot.get("remaining", -1))
+		if remaining < 0 or remaining > 5:
+			failures.append("Scratch stock row %s has %d remaining; expected 0-5." % [type_id, remaining])
 	for type_id in SCRATCH_IDS:
-		var definition: Dictionary = game.call("_ticket_type", type_id)
-		var weight := int(definition.get("stock_weight", 0))
-		if weight <= 0 or weight >= previous_weight:
-			failures.append("Scratch stock weights are not strictly inverse to price at %s." % type_id)
-		previous_weight = weight
-	var appearances: Dictionary = {}
-	for type_id in SCRATCH_IDS:
-		appearances[type_id] = 0
-	for sample in range(2500):
-		var selected := game.call("_weighted_stock_types", _scratch_rng("stock-mass:%d" % sample), 4) as Array
-		for definition_value in selected:
-			var type_id := str((definition_value as Dictionary).get("id", ""))
-			appearances[type_id] = int(appearances.get(type_id, 0)) + 1
-	var previous_appearances := 1000000
-	for type_id in SCRATCH_IDS:
-		var count := int(appearances.get(type_id, 0))
-		if count <= 0:
-			failures.append("Scratch stock made %s impossible to find." % type_id)
-		if count >= previous_appearances:
-			failures.append("Scratch seeded stock rarity no longer rises with price at %s: %s" % [type_id, JSON.stringify(appearances)])
-		previous_appearances = count
-	if int(appearances.get("golden_vault", 0)) <= 0 or int(appearances.get("golden_vault", 0)) >= int(appearances.get("two_fer", 0)) / 4:
-		failures.append("Scratch stock mass sample did not make the $100 vault a rare but possible find: %s" % JSON.stringify(appearances))
+		if not seen_types.has(type_id):
+			failures.append("Scratch machine stock omitted %s." % type_id)
+	var out_of_stock_rows := 0
+	var total_rows := 0
+	for sample in range(512):
+		var sample_machine: Dictionary = game.call("_generate_machine_state", null, {"id": "stock-mass", "day": sample}, _scratch_rng("stock-mass:%d" % sample))
+		for slot_value in _dict_array(sample_machine.get("stock", [])):
+			total_rows += 1
+			if int((slot_value as Dictionary).get("remaining", 0)) <= 0:
+				out_of_stock_rows += 1
+	var sold_out_rate := float(out_of_stock_rows) / float(maxi(1, total_rows))
+	if sold_out_rate < 0.43 or sold_out_rate > 0.57:
+		failures.append("Scratch stock sold-out rate %.3f did not stay near the 50%% scarcity target." % sold_out_rate)
 	var rotated := false
 	for day in range(5, 11):
 		var day_machine: Dictionary = game.call("_generate_machine_state", null, {"id": "stock", "day": day}, null)
@@ -515,10 +524,33 @@ func _check_scratch_rtp(game: GameModule, failures: Array) -> void:
 	for type_id in SCRATCH_IDS:
 		var metrics: Dictionary = game.call("measure_rtp", type_id, 100000, "FOUNDATION-RTP")
 		var definition: Dictionary = game.call("_ticket_type", type_id)
+		_check_scratch_prize_tier_weights(definition, failures)
 		var band: Array = definition.get("rtp_band", [])
 		var rtp := float(metrics.get("rtp", -1.0))
 		if band.size() != 2 or rtp < float(band[0]) or rtp > float(band[1]):
 			failures.append("Scratch RTP %s %.4f fell outside %s." % [type_id, rtp, JSON.stringify(band)])
+
+
+func _check_scratch_prize_tier_weights(definition: Dictionary, failures: Array) -> void:
+	var price := maxi(1, int(definition.get("price", 1)))
+	var table := _dict_array(definition.get("prize_table", []))
+	var one_x_weight := -1
+	var two_x_weight := -1
+	var significant_weight := 0
+	for prize_value in table:
+		var prize: Dictionary = prize_value
+		var payout := int(prize.get("payout", 0))
+		var weight := int(prize.get("weight", 0))
+		if payout == price:
+			one_x_weight = weight
+		elif payout == price * 2:
+			two_x_weight = weight
+		elif payout >= price * 5:
+			significant_weight += weight
+	if one_x_weight <= 0 or two_x_weight <= 0 or one_x_weight != two_x_weight:
+		failures.append("Scratch %s must have equal 1x and 2x winner weights." % str(definition.get("id", "")))
+	if significant_weight <= one_x_weight:
+		failures.append("Scratch %s did not boost significant winner weight above the 1x tier." % str(definition.get("id", "")))
 
 
 func _check_scratch_sound(failures: Array) -> void:
@@ -574,7 +606,11 @@ func _check_scratch_portable_state(game: GameModule, failures: Array) -> void:
 	var machine: Dictionary = game.call("_generate_machine_state", run_state, environment, _scratch_rng("portable-stock"))
 	environment["game_states"] = {"scratch_tickets": machine}
 	run_state.current_environment = environment
-	var buy := game.surface_action_command("scratch_buy", 0, false, {}, run_state, environment)
+	var buy_index := _first_stocked_scratch_index(machine)
+	if buy_index < 0:
+		failures.append("Scratch portable contract generated no stocked ticket rows.")
+		return
+	var buy := game.surface_action_command("scratch_buy", buy_index, false, {}, run_state, environment)
 	game.resolve_with_context("buy_scratch_ticket", int(buy.get("set_stake", 0)), run_state, environment, _scratch_rng("portable-buy"), buy.get("ui_state", {}))
 	if not run_state.inventory.has(RunState.SCRATCH_TICKET_PILE_ITEM_ID):
 		failures.append("Scratch purchase did not retain the portable ticket-pile flow.")
@@ -617,6 +653,29 @@ func _scratch_string_array(value: Variant) -> Array:
 		for entry in value as Array:
 			result.append(str(entry))
 	return result
+
+
+func _first_stocked_scratch_index(machine: Dictionary) -> int:
+	var stock := _dict_array(machine.get("stock", []))
+	for index in range(stock.size()):
+		if int((stock[index] as Dictionary).get("remaining", 0)) > 0:
+			return index
+	return -1
+
+
+func _ensure_stock_for_quantity(machine: Dictionary, quantity: int) -> int:
+	var stock := _dict_array(machine.get("stock", []))
+	for index in range(stock.size()):
+		var slot: Dictionary = stock[index]
+		if int(slot.get("remaining", 0)) >= quantity:
+			return index
+	if not stock.is_empty():
+		var slot: Dictionary = stock[0]
+		slot["remaining"] = quantity
+		stock[0] = slot
+		machine["stock"] = stock
+		return 0
+	return -1
 
 
 func _surface_harness_label_contains(harness: SurfaceHarness, needle: String) -> bool:

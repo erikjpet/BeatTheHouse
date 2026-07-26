@@ -1122,7 +1122,7 @@ func _resolve_probe_ui_state(game_id: String, sample_index: int, game: GameModul
 		"pull_tabs":
 			return {"pull_tab_deal_index": sample_index % 4}
 		"scratch_tickets":
-			return {"scratch_stock_index": sample_index % 4}
+			return {"scratch_stock_index": _stocked_scratch_index(run_state, environment, sample_index)}
 		"bar_dice":
 			var roll_command := game.surface_action_command("bar_dice_roll", 0, false, {}, run_state, environment)
 			var ui: Dictionary = roll_command.get("ui_state", {})
@@ -1312,6 +1312,28 @@ func _interactable_object_by_id(objects: Array, object_id: String) -> Dictionary
 		if typeof(object_value) == TYPE_DICTIONARY and str((object_value as Dictionary).get("object_id", "")) == object_id:
 			return (object_value as Dictionary).duplicate(true)
 	return {}
+
+
+func _stocked_scratch_index(run_state: RunState, environment: Dictionary, sample_index: int) -> int:
+	var game_states: Dictionary = environment.get("game_states", {}) if typeof(environment.get("game_states", {})) == TYPE_DICTIONARY else {}
+	var machine: Dictionary = game_states.get("scratch_tickets", {}) if typeof(game_states.get("scratch_tickets", {})) == TYPE_DICTIONARY else {}
+	var stock: Array = machine.get("stock", []) if typeof(machine.get("stock", [])) == TYPE_ARRAY else []
+	if stock.is_empty():
+		return 0
+	for offset in range(stock.size()):
+		var index := (sample_index + offset) % stock.size()
+		if typeof(stock[index]) == TYPE_DICTIONARY and int((stock[index] as Dictionary).get("remaining", 0)) > 0:
+			return index
+	if typeof(stock[0]) == TYPE_DICTIONARY:
+		var slot: Dictionary = stock[0]
+		slot["remaining"] = 1
+		stock[0] = slot
+		machine["stock"] = stock
+		game_states["scratch_tickets"] = machine
+		environment["game_states"] = game_states
+		if run_state != null:
+			run_state.current_environment = environment
+	return 0
 
 
 func _open_fresh_app() -> void:
