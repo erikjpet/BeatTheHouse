@@ -563,6 +563,14 @@ func _check_pull_tab_buy_button_single_activation(app: Control) -> bool:
 	if deals.is_empty() or typeof(deals[0]) != TYPE_DICTIONARY:
 		push_error("Pull-tab duplicate-input fixture did not expose a purchasable deal.")
 		return false
+	var scan_position: Vector2 = canvas.call("local_position_for_surface_action", "pull_tab_detector_scan", 0)
+	if scan_position.x < 0.0 or scan_position.y < 0.0:
+		push_error("Pull-tab surface did not expose its detector scan as a physical cabinet control.")
+		return false
+	var cheat_dock := app.get("cheat_dock") as Control
+	if cheat_dock == null or cheat_dock.visible or cheat_dock.is_visible_in_tree():
+		push_error("Pull-tab surface still exposes the separate cheats and distractions dock.")
+		return false
 	var first_deal: Dictionary = deals[0]
 	var ticket_price := maxi(1, int(first_deal.get("price", 1)))
 	var tray_before := int(before_snapshot.get("pull_tab_tray_count", 0))

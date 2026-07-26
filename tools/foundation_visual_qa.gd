@@ -2667,9 +2667,12 @@ func _assert_no_scroll_critical_path(context: String) -> void:
 		var game_snapshot: Dictionary = app.call("current_game_view_snapshot")
 		var dock := app.get("cheat_dock") as Control
 		if int(game_snapshot.get("cheat_action_count", 0)) > 0:
-			_require(dock != null and dock.visible and dock.is_visible_in_tree(), "%s does not expose available cheats in the dedicated dock." % context)
-			_require(_control_fits_viewport(dock, "%s cheat dock" % context), "%s cheat dock is outside the viewport." % context)
-			_require(not dock.get_global_rect().intersects(game_surface_control.get_global_rect()), "%s cheat dock overlaps the game surface." % context)
+			_require(dock != null and not dock.visible and not dock.is_visible_in_tree(), "%s still renders a separate cheats and distractions dock." % context)
+			var dock_snapshot: Dictionary = app.call("current_cheat_dock_snapshot")
+			_require(bool(dock_snapshot.get("actions_on_game_surface", false)), "%s does not assign risky actions to the physical game surface." % context)
+			_require(not bool(dock_snapshot.get("resizes_environment", true)), "%s risky actions still resize the game surface." % context)
+			var surface_snapshot: Dictionary = game_surface_control.call("current_view_snapshot")
+			_require(not (surface_snapshot.get("surface_hit_actions", []) as Array).is_empty(), "%s game surface exposes no inline action controls." % context)
 		_require(_game_surface_is_primary(game_surface_control), "%s game surface is not primary in game mode." % context)
 		_require(bool(game_snapshot.get("has_valid_stake", false)), "%s game surface does not expose a valid stake range." % context)
 		if game_surface_control.has_method("local_position_for_surface_action"):

@@ -166,6 +166,7 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 		"native_selected_surface_actions": _selected_surface_actions(ui_state),
 		"surface_action_bindings": {
 			"legal": {"action": "pull_tab_buy", "index": 0},
+			"cheat": {"action": "pull_tab_detector_scan", "index": 0},
 		},
 		"surface_animation_channels": [
 			GameModule.surface_animation_channel(
@@ -212,6 +213,7 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 				"pull_tab_next": "ticket_navigation",
 				"pull_tab_latest": "ticket_navigation",
 				"pull_tab_next_unopened": "ticket_navigation",
+				"pull_tab_detector_scan": "machine_button",
 			},
 			"state_sync": {
 				"method": "pull_tab_dispense_state",
@@ -556,6 +558,15 @@ func surface_action_command(surface_action: String, index: int, _confirm_request
 				"set_stake": total_price,
 				"selected_index": available_indices[0],
 				"message": "The master button starts a four-column dispense cycle.",
+			}
+		"pull_tab_detector_scan":
+			return {
+				"handled": true,
+				"action_id": "tab_detector_scan",
+				"action_kind": "cheat",
+				"skip_stake_validation": true,
+				"selected_index": 0,
+				"message": "Detector scan selected. Press SCAN again to accept the heat risk.",
 			}
 		PULL_TAB_COLLECT_TRAY_ACTION:
 			return _collect_tray_surface_command(machine, ui_state, run_state, environment)
@@ -2717,6 +2728,8 @@ func _selected_surface_actions(ui_state: Dictionary) -> Array:
 	var action_kind := str(ui_state.get("selected_action_kind", ""))
 	if action_id == "buy_tab" and action_kind == "legal":
 		return ["pull_tab_buy"]
+	if action_id == "tab_detector_scan" and action_kind == "cheat":
+		return ["pull_tab_detector_scan"]
 	return []
 
 
@@ -2939,7 +2952,7 @@ func _draw_pull_tab_cabinet(surface, cabinet: Rect2, deals: Array, tray_stack: A
 	var window := Rect2(cabinet.position + Vector2(30, 82), Vector2(242, 166))
 	_draw_pull_tab_window_stacks(surface, window, deals, surface_state)
 	var control_panel := Rect2(cabinet.position + Vector2(282, 82), Vector2(76, 166))
-	_draw_pull_tab_control_panel(surface, control_panel, deals)
+	_draw_pull_tab_control_panel(surface, control_panel, deals, surface_state)
 	var button_rail := Rect2(cabinet.position + Vector2(18, 254), Vector2(340, 42))
 	surface.draw_rect(button_rail, Color("#0c0e12"))
 	surface.draw_rect(button_rail, Color("#353a43"), false, 2)
@@ -3036,7 +3049,7 @@ func _draw_pull_tab_column_stack(surface, rect: Rect2, deal: Dictionary, index: 
 		surface.draw_rect(thin_rect, Color(C_AMBER.r, C_AMBER.g, C_AMBER.b, 0.42))
 
 
-func _draw_pull_tab_control_panel(surface, rect: Rect2, deals: Array) -> void:
+func _draw_pull_tab_control_panel(surface, rect: Rect2, deals: Array, surface_state: Dictionary) -> void:
 	surface.draw_rect(rect, Color("#ece9dd"))
 	surface.draw_rect(rect, Color("#2b3038"), false, 2)
 	surface.draw_circle(rect.position + Vector2(rect.size.x * 0.5, 14), 5, Color("#1b2028"))
@@ -3044,8 +3057,18 @@ func _draw_pull_tab_control_panel(surface, rect: Rect2, deals: Array) -> void:
 	surface.surface_label("PLAY", rect.position + Vector2(19, 64), 12, C_PINK)
 	surface.surface_label("THE", rect.position + Vector2(25, 82), 13, C_PINK)
 	surface.surface_label("MASTER", rect.position + Vector2(8, 104), 17, C_PINK)
-	surface.draw_rect(Rect2(rect.position + Vector2(14, 126), Vector2(rect.size.x - 28, 22)), Color("#16191f"))
-	surface.draw_rect(Rect2(rect.position + Vector2(24, 133), Vector2(rect.size.x - 48, 5)), Color("#0b0d12"))
+	var scan_rect := Rect2(rect.position + Vector2(10, 124), Vector2(rect.size.x - 20, 30))
+	var item_state: Dictionary = surface_state.get("pull_tab_item_state", {})
+	var active := bool(item_state.get("tab_detector_active", false))
+	var armed := bool(surface.surface_native_action_selected("pull_tab_detector_scan"))
+	var hovered := bool(surface.surface_region_hovered("pull_tab_detector_scan", 0))
+	var scan_color := C_TEAL if active else C_YELLOW if armed else C_PINK
+	surface.draw_rect(scan_rect, Color(scan_color.r, scan_color.g, scan_color.b, 0.28 if active or armed or hovered else 0.12))
+	surface.draw_rect(scan_rect, C_WHITE if hovered else scan_color, false, 2 if hovered or active or armed else 1)
+	var scan_label := "ON" if active else "CONFIRM" if armed else "SCAN"
+	surface.surface_label_centered(scan_label, Rect2(scan_rect.position + Vector2(2, 2), Vector2(scan_rect.size.x - 4, 13)), 8, scan_color)
+	surface.surface_label_centered("HEAT +%d" % int(item_state.get("tab_detector_next_heat", TAB_DETECTOR_BASE_HEAT)), Rect2(scan_rect.position + Vector2(2, 15), Vector2(scan_rect.size.x - 4, 11)), 6, C_SOFT)
+	surface.surface_add_hit(scan_rect, "pull_tab_detector_scan", 0)
 
 
 func _draw_pull_tab_column_button(surface, deal: Dictionary, index: int, rect: Rect2) -> void:

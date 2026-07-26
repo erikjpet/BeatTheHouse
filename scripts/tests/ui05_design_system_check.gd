@@ -108,11 +108,14 @@ func _run() -> void:
 		],
 	})
 	var dock_snapshot := dock.current_snapshot()
-	_check(bool(dock_snapshot.get("visible", false)), "Cheat dock did not appear for available actions.")
-	_check(int(dock_snapshot.get("action_count", 0)) == 2, "Cheat dock lost available actions.")
-	_check(bool(dock_snapshot.get("selection_requires_confirmation", false)), "Cheat dock bypasses arm/confirm semantics.")
+	_check(not bool(dock_snapshot.get("visible", true)), "Legacy cheat dock still renders as a separate menu.")
+	_check(int(dock_snapshot.get("action_count", 0)) == 2, "Integrated action compatibility snapshot lost available actions.")
+	_check(str(dock_snapshot.get("presentation", "")) == "integrated_game_surface_actions", "Risky actions are not declared as game-surface controls.")
+	_check(bool(dock_snapshot.get("actions_on_game_surface", false)), "Risky actions are not assigned to the game surface.")
+	_check(not bool(dock_snapshot.get("resizes_environment", true)), "Risky actions still resize the game environment.")
+	_check(bool(dock_snapshot.get("selection_requires_confirmation", false)), "Integrated risky actions bypass arm/confirm semantics.")
 	dock.render({"cheat_actions": []})
-	_check(not bool(dock.current_snapshot().get("visible", true)), "Empty cheat dock remained visible.")
+	_check(not bool(dock.current_snapshot().get("visible", true)), "Legacy cheat dock became visible when emptied.")
 	dock.queue_free()
 
 	for popup_case in [

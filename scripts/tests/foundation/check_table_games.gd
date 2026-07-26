@@ -3354,6 +3354,13 @@ func _check_pull_tabs_surface_contract(game: GameModule, failures: Array) -> voi
 		failures.append("Pull Tabs buy button did not map to the legal ticket purchase action.")
 	if not bool(buy_click.get("direct_resolve", false)) or not bool(buy_click.get("resolve", false)):
 		failures.append("Pull Tabs buy button should purchase on the first click without requiring confirm.")
+	var scan_click := _check_surface_command_non_mutating(game, "pull_tab_detector_scan", 0, false, {}, run_state, environment, "pull-tab detector scan", failures)
+	if str(scan_click.get("action_kind", "")) != "cheat" or str(scan_click.get("action_id", "")) != "tab_detector_scan":
+		failures.append("Pull Tabs SCAN button did not map to the detector cheat action.")
+	if bool(scan_click.get("direct_resolve", false)) or bool(scan_click.get("resolve", false)):
+		failures.append("Pull Tabs SCAN button bypassed risky-action arm/confirm semantics.")
+	if not bool(scan_click.get("skip_stake_validation", false)):
+		failures.append("Pull Tabs detector scan incorrectly requires a ticket stake.")
 	var machine_for_buy: Dictionary = (environment.get("game_states", {}) as Dictionary).get("pull_tabs", {})
 	var deals_before_buy: Array = machine_for_buy.get("deals", [])
 	var first_deal_before: Dictionary = deals_before_buy[0] if not deals_before_buy.is_empty() else {}
