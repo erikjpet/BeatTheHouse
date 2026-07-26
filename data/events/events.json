@@ -2352,6 +2352,17 @@
     "display_name": "Family Loan",
     "type": "debt",
     "interaction_mode": "triggered",
+    "presentation": "talk",
+    "speaker": {
+      "role": "lender",
+      "name": "Unknown Caller",
+      "mood": "guarded",
+      "behavior": "speaking over the phone",
+      "silhouette": "featureless",
+      "presentation": "faceless_silhouette",
+      "face_layers": [],
+      "bind": "none"
+    },
     "scopes": [
       "any"
     ],

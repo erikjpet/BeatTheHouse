@@ -1891,6 +1891,9 @@ func _open_fresh_app() -> void:
 		app.queue_free()
 		await process_frame
 	app = MainScene.instantiate()
+	# Visual QA owns simulation time explicitly so non-mutating UI comparisons
+	# are not invalidated by the production clock advancing between frames.
+	app.set("continuous_environment_clock_enabled", false)
 	root.add_child(app)
 	await _settle()
 

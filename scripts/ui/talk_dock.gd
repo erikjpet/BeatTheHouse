@@ -87,20 +87,22 @@ class PortraitModel:
 	func _draw_faceless_silhouette() -> void:
 		var character_scale := clampf(minf(size.x / 98.0, size.y / 150.0) * 0.92, 0.92, 2.6)
 		var idle_bob := 0.0 if reduce_motion else sin(animation_clock * 2.1) * 1.2 * character_scale
-		var foot := Vector2(size.x * 0.5, size.y + 18.0 + idle_bob)
-		var shadow := VisualStyle.DARK
-		var body := Rect2(foot + Vector2(-24, -92) * character_scale, Vector2(48, 92) * character_scale)
-		var head := Rect2(foot + Vector2(-17, -126) * character_scale, Vector2(34, 38) * character_scale)
-		draw_rect(Rect2(foot + Vector2(-30, -5) * character_scale, Vector2(60, 5) * character_scale), Color(0.0, 0.0, 0.0, 0.38))
-		draw_rect(body, shadow)
-		draw_rect(head, shadow)
-		draw_rect(Rect2(foot + Vector2(-31, -78) * character_scale, Vector2(10, 76) * character_scale), shadow)
-		draw_rect(Rect2(foot + Vector2(21, -78) * character_scale, Vector2(10, 76) * character_scale), shadow)
-		draw_rect(Rect2(body.position + Vector2(4, 7) * character_scale, Vector2(body.size.x - 8 * character_scale, 6 * character_scale)), Color(VisualStyle.PURPLE, 0.42))
-		# Teller bars establish identity without adding facial or skin layers.
-		for bar_index in range(4):
-			var bar_x := foot.x + float(-30 + bar_index * 20) * character_scale
-			draw_rect(Rect2(bar_x, foot.y - 138 * character_scale, 3 * character_scale, 142 * character_scale), VisualStyle.role("disabled"))
+		var speaking_gesture := fposmod(animation_clock, 2.8) > 1.9
+		var shadow := VisualStyle.role("shadow")
+		PortraitTableGameVisualsScript._draw_table_character(self, {
+			"name": "",
+			"skin": shadow,
+			"hair": shadow,
+			"jacket": shadow,
+			"accent": VisualStyle.role("disabled"),
+			"role": str(speaker.get("role", "stranger")),
+			"pose": "watching" if speaking_gesture else "speaking",
+			"eye_offset": 0.0,
+			"blink": false,
+			"holding_card": false,
+			"silhouette": str(speaker.get("silhouette", "featureless")),
+			"faceless": true,
+		}, Vector2(size.x * 0.5, size.y + 18.0 + idle_bob), character_scale, animation_clock)
 
 	func surface_label(_text: String, _pos: Vector2, _font_size: int, _color: Color) -> void:
 		pass

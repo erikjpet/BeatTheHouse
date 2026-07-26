@@ -374,6 +374,7 @@ static func _draw_table_character(surface, style: Dictionary, foot: Vector2, sca
 	var hair: Color = style.get("hair", Color("#171022")) if typeof(style.get("hair", Color("#171022"))) == TYPE_COLOR else Color("#171022")
 	var jacket: Color = style.get("jacket", Color("#1d2030")) if typeof(style.get("jacket", Color("#1d2030"))) == TYPE_COLOR else Color("#1d2030")
 	var pose := str(style.get("pose", "idle"))
+	var faceless := bool(style.get("faceless", false))
 	var sway := sin(clock * 1.8) * 2.0 * scale_value
 	var lean := 4.0 * scale_value if pose == "snitch" else -4.0 * scale_value if pose == "covered" or pose == "lookaway" else 0.0
 	var pos := foot + Vector2(sway + lean, 0)
@@ -383,11 +384,12 @@ static func _draw_table_character(surface, style: Dictionary, foot: Vector2, sca
 	surface.draw_rect(body, Color("#05060a"))
 	surface.draw_rect(Rect2(body.position + Vector2(4, 5) * scale_value, body.size - Vector2(8, 9) * scale_value), jacket)
 	surface.draw_rect(Rect2(pos + Vector2(-18, -56) * scale_value, Vector2(36, 6) * scale_value), accent)
-	_draw_character_arm(surface, pos, scale_value, accent, pose, true)
-	_draw_character_arm(surface, pos, scale_value, accent, pose, false)
+	_draw_character_arm(surface, pos, scale_value, accent, pose, true, skin)
+	_draw_character_arm(surface, pos, scale_value, accent, pose, false, skin)
 	surface.draw_rect(head, skin)
 	surface.draw_rect(Rect2(head.position, Vector2(head.size.x, 8 * scale_value)), hair)
-	_draw_character_face(surface, head, scale_value, float(style.get("eye_offset", 0.0)), bool(style.get("blink", false)), pose)
+	if not faceless:
+		_draw_character_face(surface, head, scale_value, float(style.get("eye_offset", 0.0)), bool(style.get("blink", false)), pose)
 	if str(style.get("silhouette", "")) == "cap":
 		surface.draw_rect(Rect2(head.position + Vector2(-3, -3) * scale_value, Vector2(head.size.x + 8 * scale_value, 5 * scale_value)), hair)
 	elif str(style.get("silhouette", "")) == "glasses":
@@ -402,7 +404,7 @@ static func _draw_table_character(surface, style: Dictionary, foot: Vector2, sca
 		surface.surface_label(name.left(10), pos + Vector2(-26, 10) * scale_value, int(10 * scale_value), accent)
 
 
-static func _draw_character_arm(surface, pos: Vector2, scale_value: float, accent: Color, pose: String, left: bool) -> void:
+static func _draw_character_arm(surface, pos: Vector2, scale_value: float, accent: Color, pose: String, left: bool, hand_color: Color = Color("#c49371")) -> void:
 	var side := -1.0 if left else 1.0
 	var shoulder := pos + Vector2(side * 24, -45) * scale_value
 	var hand := pos + Vector2(side * 42, -22) * scale_value
@@ -416,7 +418,7 @@ static func _draw_character_arm(surface, pos: Vector2, scale_value: float, accen
 		hand = pos + Vector2(side * 30, -18) * scale_value
 	surface.draw_line(shoulder, hand, Color("#05060a"), maxf(2.0, 6.0 * scale_value))
 	surface.draw_line(shoulder, hand, Color(accent.r, accent.g, accent.b, 0.42), maxf(1.0, 2.0 * scale_value))
-	surface.draw_rect(Rect2(hand + Vector2(-3, -2) * scale_value, Vector2(6, 6) * scale_value), Color("#c49371"))
+	surface.draw_rect(Rect2(hand + Vector2(-3, -2) * scale_value, Vector2(6, 6) * scale_value), hand_color)
 
 
 static func _draw_character_face(surface, head: Rect2, scale_value: float, eye_offset: float, blink: bool, pose: String) -> void:

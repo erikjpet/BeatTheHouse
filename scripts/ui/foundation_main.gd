@@ -2214,6 +2214,9 @@ func _normalized_talk_speaker(speaker: Dictionary) -> Dictionary:
 	var bind := str(speaker.get("bind", "none")).strip_edges().to_lower()
 	if not ["table_patron", "none"].has(bind):
 		bind = "none"
+	var presentation := str(speaker.get("presentation", "")).strip_edges().to_lower()
+	if presentation != "faceless_silhouette":
+		presentation = ""
 	return {
 		"role": role,
 		"name": str(speaker.get("name", "")).strip_edges(),
@@ -2225,6 +2228,8 @@ func _normalized_talk_speaker(speaker: Dictionary) -> Dictionary:
 		"hair_color": str(speaker.get("hair_color", "")).strip_edges(),
 		"jacket_color": str(speaker.get("jacket_color", "")).strip_edges(),
 		"tell": str(speaker.get("tell", "")).strip_edges(),
+		"presentation": presentation,
+		"face_layers": _copy_array(speaker.get("face_layers", [])),
 	}
 
 
@@ -4922,7 +4927,7 @@ func _build_event_choice_popup_overlay() -> void:
 	add_child(event_choice_popup_overlay)
 
 	event_choice_popup_panel = _panel_container(Color("#080817", 0.98), VisualStyle.AMBER)
-	event_choice_popup_panel.custom_minimum_size = Vector2(VisualStyle.POPUP_MIN_WIDTH, VisualStyle.FLEXIBLE_SIZE)
+	event_choice_popup_panel.custom_minimum_size = Vector2(EVENT_CHOICE_POPUP_BASE_SIZE.x, VisualStyle.FLEXIBLE_SIZE)
 	event_choice_popup_panel.clip_contents = true
 	event_choice_popup_panel.mouse_filter = Control.MOUSE_FILTER_STOP
 	event_choice_popup_overlay.add_child(event_choice_popup_panel)
@@ -4966,6 +4971,7 @@ func _build_event_choice_popup_overlay() -> void:
 
 	event_choice_popup_choices_list = VBoxContainer.new()
 	event_choice_popup_choices_list.add_theme_constant_override("separation", 8)
+	event_choice_popup_choices_list.custom_minimum_size.x = EVENT_CHOICE_POPUP_BASE_SIZE.x - float(VisualStyle.SPACE_6 * 2)
 	event_choice_popup_choices_list.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	scroll.add_child(event_choice_popup_choices_list)
 
@@ -7359,16 +7365,19 @@ func _add_wager_confirmation_card(label: String, text: String, _impact: String, 
 	card.add_child(stack)
 	var heading := _label(label, 16)
 	_set_control_font_color(heading, border)
+	heading.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	heading.max_lines_visible = 1
 	heading.clip_text = true
 	stack.add_child(heading)
 	var body := _label(text, 13)
+	body.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	body.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	body.max_lines_visible = EVENT_CHOICE_TEXT_MAX_LINES
 	body.clip_text = true
 	stack.add_child(body)
 	_add_attribute_badge_row(stack, badges_value, 16)
 	var button := _button(label, callback)
+	button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	if primary:
 		_style_selected_button(button)
 	stack.add_child(button)
@@ -11714,7 +11723,14 @@ func _position_event_choice_popup() -> void:
 	if overlay_rect.size.x <= 0.0 or overlay_rect.size.y <= 0.0:
 		return
 	var margin := float(VisualStyle.SPACE_5)
-	event_choice_popup_panel.custom_minimum_size = Vector2(VisualStyle.POPUP_MIN_WIDTH, VisualStyle.FLEXIBLE_SIZE)
+	var available_width := maxf(1.0, overlay_rect.size.x - margin * 2.0)
+	var preferred_width := minf(EVENT_CHOICE_POPUP_BASE_SIZE.x, available_width)
+	event_choice_popup_panel.custom_minimum_size = Vector2(preferred_width, VisualStyle.FLEXIBLE_SIZE)
+	if event_choice_popup_choices_list != null:
+		event_choice_popup_choices_list.custom_minimum_size.x = maxf(
+			VisualStyle.FLEXIBLE_SIZE,
+			preferred_width - float(VisualStyle.SPACE_6 * 2)
+		)
 	var content_minimum := event_choice_popup_panel.get_combined_minimum_size()
 	var popup_size := FoundationWidgetsScript.autosize_popup(event_choice_popup_panel, overlay_rect.size, content_minimum)
 	var global_position := Vector2(
@@ -11739,6 +11755,7 @@ func current_selection_popup_anatomy_snapshot() -> Dictionary:
 		"icon_texture": event_choice_popup_icon.texture.resource_path if event_choice_popup_icon != null and event_choice_popup_icon.texture != null else "",
 		"panel_size": event_choice_popup_panel.size,
 		"content_minimum": content_minimum,
+		"action_zone_width": event_choice_popup_choices_list.size.x if event_choice_popup_choices_list != null else 0.0,
 		"dead_space": Vector2(
 			maxf(0.0, event_choice_popup_panel.size.x - content_minimum.x),
 			maxf(0.0, event_choice_popup_panel.size.y - content_minimum.y)

@@ -244,6 +244,13 @@ func _consequence_deltas(consequences: Dictionary, story_entry: Dictionary, mess
 		trigger_event["type"] = "trigger_event"
 		trigger_event["source_event_id"] = get_id()
 		trigger_event["source_choice_id"] = str(story_entry.get("choice_id", ""))
+		var target_event_id := str(trigger_event.get("event_id", "")).strip_edges()
+		var target_event := content_library.event(target_event_id) if content_library != null and not target_event_id.is_empty() else {}
+		if not target_event.is_empty():
+			trigger_event["entry_overrides"] = {
+				"presentation": str(target_event.get("presentation", "modal")),
+				"speaker": _copy_dict(target_event.get("speaker", {})),
+			}
 		deltas["event_hooks"].append(trigger_event)
 	return deltas
 
@@ -309,7 +316,7 @@ static func _apply_trigger_event_hook(run_state: RunState, source_result: Dictio
 		context["source_choice_id"] = str(hook_data.get("source_choice_id", source_result.get("choice_id", "")))
 		context["chance"] = chance
 		context["roll"] = roll
-		run_state.enqueue_triggered_event(target_id, "event_chain", context)
+		run_state.enqueue_triggered_event(target_id, "event_chain", context, _copy_dict(hook_data.get("entry_overrides", {})))
 	else:
 		run_state.log_story({
 			"type": "event_chain_miss",

@@ -8123,6 +8123,9 @@ static func _normalize_triggered_event_speaker(value: Variant) -> Dictionary:
 	var bind := str(source.get("bind", "none")).strip_edges().to_lower()
 	if not ["table_patron", "none"].has(bind):
 		bind = "none"
+	var presentation := str(source.get("presentation", "")).strip_edges().to_lower()
+	if presentation != "faceless_silhouette":
+		presentation = ""
 	return {
 		"role": role,
 		"name": str(source.get("name", "")).strip_edges(),
@@ -8134,6 +8137,8 @@ static func _normalize_triggered_event_speaker(value: Variant) -> Dictionary:
 		"hair_color": str(source.get("hair_color", "")).strip_edges(),
 		"jacket_color": str(source.get("jacket_color", "")).strip_edges(),
 		"tell": str(source.get("tell", "")).strip_edges(),
+		"presentation": presentation,
+		"face_layers": _copy_array(source.get("face_layers", [])),
 	}
 
 

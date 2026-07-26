@@ -1199,10 +1199,22 @@ func _t4_7_phone_chain_triggers(library: ContentLibrary, seed: String) -> bool:
 	var event_module := EventModule.new()
 	event_module.setup(library.event("call_brother_in_law"), library)
 	event_module.resolve(run_state, run_state.current_environment, "make_call")
-	return run_state.pending_triggered_events.size() == 1 and str((run_state.pending_triggered_events[0] as Dictionary).get("event_id", "")) == "family_loan"
+	if run_state.pending_triggered_events.size() != 1:
+		return false
+	var entry: Dictionary = run_state.pending_triggered_events[0]
+	var speaker: Dictionary = entry.get("speaker", {}) if typeof(entry.get("speaker", {})) == TYPE_DICTIONARY else {}
+	return str(entry.get("event_id", "")) == "family_loan" \
+		and str(entry.get("presentation", "")) == "talk" \
+		and str(speaker.get("presentation", "")) == "faceless_silhouette"
 
 
 func _check_t4_7_family_loan_contract(library: ContentLibrary, failures: Array) -> void:
+	var family_definition := library.event("family_loan")
+	var family_speaker: Dictionary = family_definition.get("speaker", {}) if typeof(family_definition.get("speaker", {})) == TYPE_DICTIONARY else {}
+	if str(family_definition.get("presentation", "")) != "talk":
+		failures.append("T4.7 family loan should use the conversation dock instead of a blocking selection popup.")
+	if str(family_speaker.get("presentation", "")) != "faceless_silhouette" or not (family_speaker.get("face_layers", []) as Array).is_empty():
+		failures.append("T4.7 family loan speaker should use the animated faceless silhouette contract.")
 	var event_run: RunState = RunStateScript.new()
 	event_run.start_new("T47-FAMILY-ACCEPT")
 	event_run.set_environment(_t4_3_fixture_environment("motel", "shop", 1, [], [], ["bar"]))

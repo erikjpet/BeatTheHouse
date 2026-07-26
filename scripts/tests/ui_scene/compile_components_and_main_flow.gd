@@ -717,6 +717,37 @@ func _check_talk_dock_main_flow(app: Control) -> bool:
 	if bool(popup.get("visible", false)):
 		push_error("Talk dock resolution left a blocking event popup visible.")
 		return false
+	return await _check_family_loan_unknown_caller(app)
+
+
+func _check_family_loan_unknown_caller(app: Control) -> bool:
+	app.call("start_foundation_run", "UI-FAMILY-LOAN-TALK")
+	await process_frame
+	var run_state: RunState = app.get("run_state")
+	var library: ContentLibrary = app.get("library")
+	var event_definition := library.event("family_loan") if library != null else {}
+	if run_state == null or event_definition.is_empty():
+		push_error("Family-loan talk fixture is unavailable.")
+		return false
+	run_state.narrative_flags["brother_in_law_phone_ready"] = true
+	var overrides: Dictionary = app.call("_triggered_entry_overrides", event_definition)
+	if not run_state.enqueue_triggered_event("family_loan", "ui_fixture", {"trigger": "chain"}, overrides):
+		push_error("Family-loan talk fixture could not be queued.")
+		return false
+	app.call("_refresh")
+	await process_frame
+	var talk: Dictionary = app.call("current_talk_dock_snapshot")
+	if not bool(talk.get("visible", false)) or str(talk.get("event_id", "")) != "family_loan":
+		push_error("Family loan did not open through the conversation dock.")
+		return false
+	if str(talk.get("speaker", "")) != "Unknown Caller" or str(talk.get("portrait_presentation", "")) != "faceless_silhouette":
+		push_error("Family loan did not present the shared unknown-person silhouette: %s" % JSON.stringify(talk))
+		return false
+	if str(talk.get("portrait_renderer", "")) != "animated_character_model" or not bool(talk.get("portrait_animation_active", false)):
+		push_error("Family-loan silhouette did not retain animated character-model rendering.")
+		return false
+	app.call("resolve_event_choice", "family_loan", "deny")
+	await process_frame
 	return true
 
 
@@ -775,6 +806,11 @@ func _resolve_talk_event_fixture(app: Control, presentation: String) -> int:
 		var popup: Dictionary = app.call("current_event_choice_popup_snapshot")
 		if not bool(popup.get("visible", false)):
 			push_error("Talk dock modal comparison did not expose a blocking popup.")
+			return -1
+		var anatomy: Dictionary = app.call("current_selection_popup_anatomy_snapshot")
+		var panel_size: Vector2 = anatomy.get("panel_size", Vector2.ZERO)
+		if panel_size.x < 440.0 or float(anatomy.get("action_zone_width", 0.0)) < 360.0:
+			push_error("Event-choice popup collapsed its response text width: %s" % JSON.stringify(anatomy))
 			return -1
 	else:
 		var talk_snapshot: Dictionary = app.call("current_talk_dock_snapshot")
