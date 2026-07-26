@@ -733,7 +733,6 @@ func _resolve_redemption(run_state: RunState, environment: Dictionary, rng: RngS
 		"environment_id": str(environment.get("id", "")),
 		"message": message,
 	})
-	GameModule.apply_result(run_state, result, rng)
 	return result
 
 

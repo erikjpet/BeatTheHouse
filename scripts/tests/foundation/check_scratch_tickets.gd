@@ -669,8 +669,12 @@ func _check_scratch_clerk(game: GameModule, failures: Array) -> void:
 	environment["game_states"] = {"scratch_tickets": machine}
 	run_state.current_environment = environment
 	var before := run_state.bankroll
-	var command: Dictionary = game.environment_action_command("scratch_ticket_clerk", "redeem_scratch_winners", run_state, environment, _scratch_rng("clerk-redeem"))
+	var rng := _scratch_rng("clerk-redeem")
+	var command: Dictionary = game.environment_action_command("scratch_ticket_clerk", "redeem_scratch_winners", run_state, environment, rng)
 	var result: Dictionary = command.get("result", {})
+	if run_state.bankroll != before:
+		failures.append("Scratch clerk redemption pre-applied bankroll before the host consumed the hook result.")
+	GameModule.apply_result(run_state, result, rng)
 	if run_state.bankroll != before + 500 or int(result.get("suspicion_delta", 0)) <= 0:
 		failures.append("Scratch clerk did not cash a conspicuous winner with attention heat.")
 
