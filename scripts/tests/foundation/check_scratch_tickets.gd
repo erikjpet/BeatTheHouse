@@ -48,6 +48,7 @@ func _check_scratch_tickets_surface_contract(game: GameModule, failures: Array) 
 	if not _surface_harness_has_action(harness, "scratch_buy"):
 		failures.append("Scratch Tickets machine exposed no spatial buy targets.")
 	_check_scratch_purchase_and_input(game, run_state, environment, failures)
+	_check_scratch_render_layers(game, failures)
 	_check_scratch_determinism(game, failures)
 	_check_scratch_luck_hook(game, failures)
 	_check_scratch_mechanics(game, failures)
@@ -131,6 +132,28 @@ func _check_scratch_purchase_and_input(game: GameModule, run_state: RunState, en
 	game.draw_surface(compact_active_harness, compact_active, {"contract_harness": true})
 	if not _surface_harness_has_action(compact_active_harness, "scratch_all") or _surface_harness_has_action(compact_active_harness, "scratch_buy"):
 		failures.append("Scratch Tickets compact ticket tab did not isolate the scratch surface from machine buy rows.")
+
+
+func _check_scratch_render_layers(game: GameModule, failures: Array) -> void:
+	for type_id in SCRATCH_IDS:
+		var run_state: RunState = RunStateScript.new()
+		run_state.start_new("SCRATCH-LAYERS-%s" % type_id)
+		run_state.bankroll = 500000
+		var environment := _scratch_environment("scratch_layers_%s" % type_id)
+		var ticket: Dictionary = game.call("_roll_ticket", game.call("_ticket_type", type_id), _scratch_rng("layers:%s" % type_id), 1, "layers")
+		game.call("_ensure_ticket_regions", ticket)
+		environment["game_states"] = {"scratch_tickets": {"schema": "scratch_ticket_machine_state", "stock": [], "pending_queue": [], "winner_pile": [], "loser_pile": [], "active_ticket": ticket}}
+		run_state.current_environment = environment
+		var surface := game.surface_state(run_state, environment, {})
+		var layers := _scratch_string_array(surface.get("scratch_ticket_render_layers", []))
+		if layers != ["production_background_art", "generated_result_symbols", "ticket_specific_foil_mask"]:
+			failures.append("Scratch %s render layers should use one production background plus symbols plus styled foil, got %s." % [type_id, JSON.stringify(layers)])
+		if str(surface.get("scratch_foil_style_id", "")).is_empty():
+			failures.append("Scratch %s did not expose a ticket-specific foil style." % type_id)
+		var harness := SurfaceHarness.new()
+		harness.setup(surface)
+		if not game.draw_surface(harness, surface, {"contract_harness": true}):
+			failures.append("Scratch %s production render failed in the surface harness." % type_id)
 
 
 func _check_scratch_determinism(game: GameModule, failures: Array) -> void:

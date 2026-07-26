@@ -164,6 +164,8 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 		"scratch_machine_style": "physical_lottery_vending_cabinet",
 		"scratch_machine_art_features": ["floor_unit", "jackpot_marquee", "glass_stock_rows", "branded_side_panel", "selection_buttons", "dispensing_tray"],
 		"scratch_ticket_face_style": "layered_printed_lottery_ticket",
+		"scratch_ticket_render_layers": _ticket_render_layers(active_ticket),
+		"scratch_foil_style_id": _ticket_foil_style_id(active_ticket),
 		"scratch_dispense_animation": not last_dispense_id.is_empty(),
 		"scratch_crumbs": crumbs,
 		"scratch_drag_active": bool(ui_state.get("scratch_drag_active", false)),
@@ -227,6 +229,27 @@ func draw_surface(surface, state: Dictionary, _render_context: Dictionary = {}) 
 		_draw_dispense_animation(surface, state)
 		_draw_file_animation(surface, state)
 	return true
+
+
+func _ticket_render_layers(ticket: Dictionary) -> Array:
+	if ticket.is_empty():
+		return []
+	var type_id := str(ticket.get("type_id", ""))
+	if _has_production_ticket_art(type_id):
+		return ["production_background_art", "generated_result_symbols", "ticket_specific_foil_mask"]
+	return ["procedural_background", "generated_result_symbols", "generic_foil_mask"]
+
+
+func _ticket_foil_style_id(ticket: Dictionary) -> String:
+	if ticket.is_empty():
+		return ""
+	var face := _dict_ref(ticket.get("face", {}))
+	var palette := _dict_ref(face.get("palette", {}))
+	var latex := Color(str(palette.get("latex", "#b9bcc8")))
+	var ink := Color(str(palette.get("ink", "#35152e")))
+	var accent := Color(str(palette.get("accent", "#ef3156")))
+	var trim := Color(str(palette.get("trim", "#ffd447")))
+	return str(_scratch_foil_style(ticket, latex, ink, accent, trim).get("id", ""))
 
 
 func surface_action_command(surface_action: String, index: int, _confirm_requested: bool, ui_state: Dictionary, run_state: RunState, environment: Dictionary) -> Dictionary:
@@ -1769,7 +1792,6 @@ func _draw_ticket(surface, state: Dictionary) -> void:
 	surface.draw_polygon(ticket_shape, [paper])
 	if uses_production_art:
 		surface.draw_texture_rect(art_texture, active_ticket_rect, false)
-		surface.draw_rect(active_ticket_rect.grow(-2), trim, false, 2)
 	else:
 		surface.draw_rect(active_ticket_rect.grow(-4), trim, false, 3)
 		_draw_ticket_background(surface, ticket, paper, ink, accent, trim)
@@ -1783,7 +1805,7 @@ func _draw_ticket(surface, state: Dictionary) -> void:
 	if not uses_production_art:
 		_draw_layer_slot_wells(surface, ticket, ink, accent, trim)
 	_draw_mechanic_result(surface, ticket, ink, accent, trim)
-	_draw_ticket_latex_mask(surface, ticket, latex)
+	_draw_ticket_latex_mask(surface, ticket, latex, ink, accent, trim)
 	_draw_xray_peeks(surface, xray_peeks, accent)
 	var scratch_rect := _ticket_scratch_rect(ticket)
 	if bool(ticket.get("result_ready", false)):
@@ -2203,6 +2225,9 @@ func _draw_spot_box(surface, ticket: Dictionary, result: Dictionary, spot: Dicti
 	var sub := _spot_sub_label(ticket, result, spot, region)
 	if _draw_spot_symbol_reveal(surface, ticket, result, spot, region, rect, ink, trim):
 		return
+	if _has_production_ticket_art(type_id):
+		_draw_production_spot_text(surface, ticket, result, spot, region, rect, ink, trim)
+		return
 	match type_id:
 		"two_fer":
 			_draw_starburst(surface, rect.get_center(), minf(rect.size.x, rect.size.y) * 0.60, Color(trim.r, trim.g, trim.b, 0.30 if winner else 0.16))
@@ -2283,6 +2308,29 @@ func _draw_spot_box(surface, ticket: Dictionary, result: Dictionary, spot: Dicti
 	surface.surface_label_centered(main, Rect2(rect.position + Vector2(3, 2), Vector2(rect.size.x - 6, rect.size.y * (0.68 if not sub.is_empty() else 0.58))), font_size, trim if winner and type_id == "golden_vault" else ink)
 	if not sub.is_empty():
 		surface.surface_label_centered(sub, Rect2(rect.position + Vector2(3, rect.size.y * 0.56), Vector2(rect.size.x - 6, rect.size.y * 0.38)), 6 if rect.size.x < 48.0 else 8, trim if winner else ink)
+
+
+func _draw_production_spot_text(surface, ticket: Dictionary, result: Dictionary, spot: Dictionary, region: Dictionary, rect: Rect2, ink: Color, trim: Color) -> void:
+	var main := _spot_main_label(spot, region)
+	var sub := _spot_sub_label(ticket, result, spot, region)
+	if main.is_empty() and sub.is_empty():
+		return
+	var winner := _spot_is_winner(ticket, result, spot)
+	var role := str(spot.get("role", ""))
+	var main_rect := Rect2(rect.position + Vector2(2, rect.size.y * 0.18), Vector2(rect.size.x - 4, rect.size.y * (0.48 if not sub.is_empty() else 0.64)))
+	if role == "crossword_cell" or role == "bank_letter" or role == "bingo_cell":
+		main_rect = Rect2(rect.position + Vector2(1, 1), Vector2(rect.size.x - 2, rect.size.y - 2))
+	var main_size := _symbol_main_font_size(rect, main)
+	if main.length() > 6:
+		main_size = mini(main_size, 9)
+	var label_color := trim if winner and str(ticket.get("type_id", "")) == "golden_vault" else ink
+	var shadow := Color(0.0, 0.0, 0.0, 0.55)
+	surface.surface_label_centered(main.left(10), Rect2(main_rect.position + Vector2(1, 1), main_rect.size), main_size, shadow)
+	surface.surface_label_centered(main.left(10), main_rect, main_size, label_color)
+	if not sub.is_empty() and role != "crossword_cell" and role != "bank_letter" and role != "bingo_cell":
+		var sub_rect := Rect2(rect.position + Vector2(2, rect.size.y * 0.60), Vector2(rect.size.x - 4, rect.size.y * 0.32))
+		surface.surface_label_centered(sub.left(12), Rect2(sub_rect.position + Vector2(1, 1), sub_rect.size), 6 if rect.size.x < 48.0 else 8, shadow)
+		surface.surface_label_centered(sub.left(12), sub_rect, 6 if rect.size.x < 48.0 else 8, label_color)
 
 
 func _spot_main_label(spot: Dictionary, region: Dictionary) -> String:
@@ -2643,7 +2691,7 @@ func _draw_ticket_background(surface, ticket: Dictionary, paper: Color, ink: Col
 				surface.draw_polygon([center + Vector2(0, -12), center + Vector2(8, 0), center + Vector2(0, 12), center + Vector2(-8, 0)], [Color(trim.r, trim.g, trim.b, 0.18)])
 
 
-func _draw_ticket_latex_mask(surface, ticket: Dictionary, latex: Color) -> void:
+func _draw_ticket_latex_mask(surface, ticket: Dictionary, latex: Color, ink: Color, accent: Color, trim: Color) -> void:
 	var scratch: Dictionary = ticket.get("scratch", {}) if typeof(ticket.get("scratch", {})) == TYPE_DICTIONARY else {}
 	var columns := maxi(24, int(scratch.get("mask_columns", DEFAULT_MASK_COLUMNS)))
 	var rows := maxi(18, int(scratch.get("mask_rows", DEFAULT_MASK_ROWS)))
@@ -2652,7 +2700,7 @@ func _draw_ticket_latex_mask(surface, ticket: Dictionary, latex: Color) -> void:
 		return
 	var rect := _ticket_scratch_rect(ticket)
 	var sample_size := Vector2(rect.size.x / float(columns), rect.size.y / float(rows))
-	var foil_texture := _scratch_foil_texture()
+	var foil_style := _scratch_foil_style(ticket, latex, ink, accent, trim)
 	# Runs of equal alpha keep the high-resolution buffer cheap to draw without copying it.
 	for row in range(rows):
 		var column := 0
@@ -2666,11 +2714,81 @@ func _draw_ticket_latex_mask(surface, ticket: Dictionary, latex: Color) -> void:
 				run_end += 1
 			var run_rect := Rect2(rect.position + Vector2(float(column) * sample_size.x, float(row) * sample_size.y), Vector2(float(run_end - column) * sample_size.x + 0.5, sample_size.y + 0.5))
 			var run_alpha := float(alpha) / 255.0
-			if foil_texture != null:
-				surface.draw_texture_rect(foil_texture, run_rect, true, Color(1.0, 1.0, 1.0, run_alpha))
-			else:
-				surface.draw_rect(run_rect, Color(latex.r, latex.g, latex.b, run_alpha))
+			_draw_scratch_foil_run(surface, ticket, run_rect, run_alpha, foil_style, row, column, sample_size)
 			column = run_end
+
+
+func _scratch_foil_style(ticket: Dictionary, latex: Color, ink: Color, accent: Color, trim: Color) -> Dictionary:
+	var type_id := str(ticket.get("type_id", ""))
+	match type_id:
+		"two_fer":
+			return {"id": "two_fer_blue_magenta_burst", "base": Color("#009ed3"), "tint": Color("#ff4aac"), "glint": Color("#d9fbff"), "mark": Color("#fff04d"), "pattern": "burst"}
+		"lucky_7s":
+			return {"id": "lucky_7s_green_gold_slots", "base": Color("#00a761"), "tint": Color("#f7d244"), "glint": Color("#fff5a7"), "mark": Color("#0a5330"), "pattern": "sevens"}
+		"tic_tac_gold":
+			return {"id": "tic_tac_gold_foil", "base": Color("#d6a320"), "tint": Color("#fff09b"), "glint": Color("#fff9cf"), "mark": Color("#7b2f00"), "pattern": "gold_hatch"}
+		"crossword_corner":
+			return {"id": "crossword_corner_cyan_letterfoil", "base": Color("#62d8ef"), "tint": Color("#fff0a0"), "glint": Color("#eaffff"), "mark": Color("#176985"), "pattern": "crossword_grid"}
+		"bonus_bingo":
+			return {"id": "bonus_bingo_red_ballfoil", "base": Color("#f05b5e"), "tint": Color("#ffd966"), "glint": Color("#fff2e8"), "mark": Color("#b01732"), "pattern": "bingo_dots"}
+		"high_roller_holdem":
+			return {"id": "high_roller_holdem_cardfoil", "base": Color("#12875d"), "tint": Color("#f0cf77"), "glint": Color("#fff4da"), "mark": Color("#101010"), "pattern": "card_suits"}
+		"golden_vault":
+			return {"id": "golden_vault_black_gold_security", "base": Color("#20190f"), "tint": Color("#f4c64a"), "glint": Color("#fff1a8"), "mark": Color("#be8a25"), "pattern": "vault_hatch"}
+	return {"id": "generic_colored_foil", "base": latex, "tint": trim, "glint": Color("#fff8dc"), "mark": accent, "pattern": "hatch"}
+
+
+func _draw_scratch_foil_run(surface, _ticket: Dictionary, run_rect: Rect2, run_alpha: float, style: Dictionary, row: int, column: int, sample_size: Vector2) -> void:
+	var base: Color = style.get("base", Color("#b9bcc8")) as Color
+	var tint: Color = style.get("tint", Color("#ffffff")) as Color
+	var glint: Color = style.get("glint", Color("#ffffff")) as Color
+	var mark: Color = style.get("mark", Color("#ffffff")) as Color
+	var pattern := str(style.get("pattern", "hatch"))
+	var texture := _scratch_foil_texture()
+	surface.draw_rect(run_rect, Color(base.r, base.g, base.b, minf(1.0, 0.96 * run_alpha)))
+	if texture != null:
+		surface.draw_texture_rect(texture, run_rect, true, Color(tint.r, tint.g, tint.b, 0.46 * run_alpha))
+	var phase := int((row * 5 + column * 3) % 8)
+	var can_detail := run_rect.size.x >= sample_size.x * 1.75 and run_rect.size.y >= 2.0
+	if not can_detail:
+		return
+	match pattern:
+		"burst":
+			if phase % 2 == 0:
+				surface.draw_line(run_rect.position + Vector2(0, run_rect.size.y * 0.70), run_rect.position + Vector2(run_rect.size.x, run_rect.size.y * 0.18), Color(glint.r, glint.g, glint.b, 0.38 * run_alpha), 1)
+			if phase % 4 == 0:
+				surface.draw_line(run_rect.position + Vector2(run_rect.size.x * 0.15, 0), run_rect.position + Vector2(run_rect.size.x * 0.38, run_rect.size.y), Color(mark.r, mark.g, mark.b, 0.30 * run_alpha), 1)
+		"sevens":
+			if phase % 3 == 0:
+				surface.draw_line(run_rect.position + Vector2(2, run_rect.size.y * 0.25), run_rect.position + Vector2(run_rect.size.x - 2, run_rect.size.y * 0.25), Color(glint.r, glint.g, glint.b, 0.28 * run_alpha), 1)
+				surface.draw_line(run_rect.position + Vector2(run_rect.size.x * 0.56, run_rect.size.y * 0.25), run_rect.position + Vector2(run_rect.size.x * 0.42, run_rect.size.y * 0.88), Color(mark.r, mark.g, mark.b, 0.26 * run_alpha), 1)
+		"gold_hatch":
+			surface.draw_line(run_rect.position + Vector2(0, run_rect.size.y), run_rect.position + Vector2(run_rect.size.x, 0), Color(glint.r, glint.g, glint.b, 0.28 * run_alpha), 1)
+			if phase % 4 == 1:
+				surface.draw_line(run_rect.position + Vector2(run_rect.size.x * 0.10, 0), run_rect.position + Vector2(run_rect.size.x * 0.64, run_rect.size.y), Color(mark.r, mark.g, mark.b, 0.18 * run_alpha), 1)
+		"crossword_grid":
+			if row % 3 == 0:
+				surface.draw_line(run_rect.position + Vector2(0, run_rect.size.y * 0.50), run_rect.position + Vector2(run_rect.size.x, run_rect.size.y * 0.50), Color(mark.r, mark.g, mark.b, 0.24 * run_alpha), 1)
+			if phase % 4 == 0:
+				surface.draw_line(run_rect.position + Vector2(run_rect.size.x * 0.33, 0), run_rect.position + Vector2(run_rect.size.x * 0.33, run_rect.size.y), Color(glint.r, glint.g, glint.b, 0.22 * run_alpha), 1)
+		"bingo_dots":
+			if phase % 2 == 0:
+				surface.draw_circle(run_rect.get_center(), minf(run_rect.size.x, maxf(2.0, run_rect.size.y)) * 0.24, Color(glint.r, glint.g, glint.b, 0.22 * run_alpha))
+			if phase % 5 == 0:
+				surface.draw_circle(run_rect.position + Vector2(run_rect.size.x * 0.22, run_rect.size.y * 0.48), minf(run_rect.size.x, maxf(2.0, run_rect.size.y)) * 0.18, Color(mark.r, mark.g, mark.b, 0.20 * run_alpha))
+		"card_suits":
+			if phase % 3 == 0:
+				var center := run_rect.get_center()
+				var suit := [center + Vector2(0, -run_rect.size.y * 0.28), center + Vector2(run_rect.size.y * 0.22, 0), center + Vector2(0, run_rect.size.y * 0.28), center + Vector2(-run_rect.size.y * 0.22, 0)]
+				surface.draw_polygon(suit, [Color(glint.r, glint.g, glint.b, 0.26 * run_alpha)])
+			else:
+				surface.draw_line(run_rect.position + Vector2(0, run_rect.size.y * 0.18), run_rect.position + Vector2(run_rect.size.x, run_rect.size.y * 0.82), Color(mark.r, mark.g, mark.b, 0.14 * run_alpha), 1)
+		"vault_hatch":
+			surface.draw_line(run_rect.position + Vector2(0, run_rect.size.y * 0.18), run_rect.position + Vector2(run_rect.size.x, run_rect.size.y * 0.18), Color(tint.r, tint.g, tint.b, 0.26 * run_alpha), 1)
+			if phase % 3 == 0:
+				surface.draw_rect(Rect2(run_rect.position + Vector2(run_rect.size.x * 0.15, run_rect.size.y * 0.42), Vector2(run_rect.size.x * 0.70, maxf(1.0, run_rect.size.y * 0.18))), Color(mark.r, mark.g, mark.b, 0.24 * run_alpha))
+		_:
+			surface.draw_line(run_rect.position + Vector2(0, run_rect.size.y), run_rect.position + Vector2(run_rect.size.x, 0), Color(glint.r, glint.g, glint.b, 0.24 * run_alpha), 1)
 
 
 func _scratch_foil_texture() -> Texture2D:
