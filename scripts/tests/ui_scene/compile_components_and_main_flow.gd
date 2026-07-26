@@ -1050,6 +1050,56 @@ func _check_service_item_found_main_flow(app: Control) -> bool:
 	return true
 
 
+func _check_shared_selection_popup_text_flow(app: Control) -> bool:
+	app.call("start_foundation_run", "UI-ACTIVE-ITEM-POPUP")
+	await process_frame
+	var run_state: RunState = app.get("run_state")
+	if run_state == null:
+		push_error("Active-item popup fixture could not access run state.")
+		return false
+	run_state.add_item("cumquat_sandwich")
+	if not bool(app.call("select_active_inventory_item", "cumquat_sandwich")):
+		push_error("Active-item popup fixture could not equip the Cumquat Sandwich.")
+		return false
+	var stable_size := Vector2.ZERO
+	for open_index in range(3):
+		if not bool(app.call("use_active_item_slot")):
+			push_error("Active-item confirmation did not open on pass %d." % open_index)
+			return false
+		await process_frame
+		await process_frame
+		var popup: Dictionary = app.call("current_event_choice_popup_snapshot")
+		var anatomy: Dictionary = app.call("current_selection_popup_anatomy_snapshot")
+		var title_label: Label = app.get("event_choice_popup_title_label")
+		var panel_size: Vector2 = anatomy.get("panel_size", Vector2.ZERO)
+		if str(popup.get("popup_type", "")) != "active_item_confirmation" \
+			or title_label == null \
+			or title_label.text != "Use Cumquat Sandwich":
+			push_error("Active-item confirmation lost its shared popup title: %s" % JSON.stringify(popup))
+			return false
+		if title_label.autowrap_mode != TextServer.AUTOWRAP_OFF \
+			or title_label.size.x < 260.0 \
+			or title_label.size.y > 48.0:
+			push_error("Shared popup title collapsed into vertical text: %s" % JSON.stringify({
+				"text": title_label.text,
+				"size": title_label.size,
+				"autowrap": title_label.autowrap_mode,
+			}))
+			return false
+		if panel_size.x > 560.0 \
+			or panel_size.y > 420.0 \
+			or float(anatomy.get("action_zone_width", 0.0)) < 360.0:
+			push_error("Active-item confirmation expanded beyond its compact popup bounds: %s" % JSON.stringify(anatomy))
+			return false
+		if open_index > 0 and not panel_size.is_equal_approx(stable_size):
+			push_error("Repeated active-item confirmations changed popup size from %s to %s." % [stable_size, panel_size])
+			return false
+		stable_size = panel_size
+		app.call("cancel_pending_active_item_use")
+		await process_frame
+	return true
+
+
 func _check_world_map_selection_stable_component() -> bool:
 	var canvas: Control = WorldMapCanvasScript.new()
 	canvas.size = Vector2(560, 360)
@@ -2914,6 +2964,9 @@ func _run() -> void:
 		quit(1)
 		return
 	if not await _check_service_item_found_main_flow(app):
+		quit(1)
+		return
+	if not await _check_shared_selection_popup_text_flow(app):
 		quit(1)
 		return
 	app.call("start_foundation_run", "UI-COMPILE-SEED")

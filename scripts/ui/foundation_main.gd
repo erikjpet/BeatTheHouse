@@ -4960,6 +4960,7 @@ func _build_event_choice_popup_overlay() -> void:
 
 	var title_zone := HBoxContainer.new()
 	title_zone.add_theme_constant_override("separation", VisualStyle.SPACE_3)
+	title_zone.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	stack.add_child(title_zone)
 	event_choice_popup_icon = TextureRect.new()
 	event_choice_popup_icon.texture = UIArtScript.icon("alert")
@@ -4969,6 +4970,11 @@ func _build_event_choice_popup_overlay() -> void:
 	title_zone.add_child(event_choice_popup_icon)
 	event_choice_popup_title_label = _label("Offer", VisualStyle.TYPE_HEADING)
 	_set_control_font_color(event_choice_popup_title_label, VisualStyle.YELLOW)
+	event_choice_popup_title_label.autowrap_mode = TextServer.AUTOWRAP_OFF
+	event_choice_popup_title_label.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+	event_choice_popup_title_label.max_lines_visible = 1
+	event_choice_popup_title_label.clip_text = true
+	event_choice_popup_title_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	title_zone.add_child(event_choice_popup_title_label)
 
 	event_choice_popup_summary_label = _label("", 12)
@@ -7386,6 +7392,8 @@ func _add_wager_confirmation_card(label: String, text: String, _impact: String, 
 	var heading := _label(label, 16)
 	_set_control_font_color(heading, border)
 	heading.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	heading.autowrap_mode = TextServer.AUTOWRAP_OFF
+	heading.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
 	heading.max_lines_visible = 1
 	heading.clip_text = true
 	stack.add_child(heading)
@@ -7398,6 +7406,8 @@ func _add_wager_confirmation_card(label: String, text: String, _impact: String, 
 	_add_attribute_badge_row(stack, badges_value, 16)
 	var button := _button(label, callback)
 	button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	button.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+	button.clip_text = true
 	if primary:
 		_style_selected_button(button)
 	stack.add_child(button)
