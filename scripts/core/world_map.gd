@@ -164,7 +164,26 @@ func route_for_target(map_data: Dictionary, current_id: String, target_id: Strin
 	if str(route.get("method", "")).strip_edges().is_empty():
 		route["method"] = str(route.get("travel_method", ""))
 	route["generated_world_route"] = true
+	route = _apply_directional_route_overrides(route, source_id, destination_id)
 	return route
+
+
+static func _apply_directional_route_overrides(route: Dictionary, source_id: String, destination_id: String) -> Dictionary:
+	var result := route.duplicate(true)
+	if source_id != BEACH_ID or destination_id != BEACH_GATEWAY_ID:
+		return result
+	result["base_cost"] = 0
+	result["cost"] = 0
+	result["requires_travel_count_min"] = 0
+	result.erase("availability_window")
+	result.erase("hide_until_travel_count_met")
+	result.erase("travel_count_condition_text")
+	result["condition_text"] = "Free walk back while the River Queen is open."
+	result["travel_method_kind"] = TRAVEL_METHOD_WALK
+	result["travel_method"] = travel_method_label(TRAVEL_METHOD_WALK)
+	result["method"] = travel_method_label(TRAVEL_METHOD_WALK)
+	result["beach_return_walk"] = true
+	return result
 
 
 func preview_for_target(map_data: Dictionary, target_id: String) -> Dictionary:

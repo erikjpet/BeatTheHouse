@@ -1100,6 +1100,48 @@ func _check_shared_selection_popup_text_flow(app: Control) -> bool:
 	return true
 
 
+func _check_beach_return_travel_choice(app: Control) -> bool:
+	app.call("start_foundation_run", "UI-BEACH-RETURN")
+	await process_frame
+	var run_state: RunState = app.get("run_state")
+	if run_state == null or not run_state.has_world_map():
+		push_error("Beach return fixture could not access the generated world map.")
+		return false
+	var beach_environment := run_state.current_environment.duplicate(true)
+	beach_environment["id"] = "ui_beach_return"
+	beach_environment["archetype_id"] = "beach"
+	beach_environment["world_node_id"] = "beach"
+	beach_environment["display_name"] = "The Beach"
+	beach_environment["kind"] = "recovery"
+	beach_environment["tier"] = 2
+	var map_data := WorldMapScript.unlock_nodes(
+		run_state.world_map,
+		["beach", "delta_queen"],
+		WorldMapScript.DISCOVERY_SOURCE_EVENT
+	)
+	map_data = WorldMapScript.enter_node(map_data, "beach", beach_environment)
+	run_state.set_environment(beach_environment)
+	run_state.set_world_map(map_data)
+	run_state.bankroll = 0
+	run_state.game_clock_minutes = 12 * 60
+	app.call("_invalidate_travel_view_cache")
+	var open_choice: Dictionary = app.call("_travel_choice", "delta_queen", ["delta_queen"])
+	if not bool(open_choice.get("enabled", false)) \
+		or int(open_choice.get("cost", -1)) != 0 \
+		or str(open_choice.get("travel_method", "")) != "Walk":
+		push_error("Open River Queen did not expose the free Beach return walk: %s" % JSON.stringify(open_choice))
+		return false
+	run_state.game_clock_minutes = 3 * 60
+	app.call("_invalidate_travel_view_cache")
+	var closed_choice: Dictionary = app.call("_travel_choice", "delta_queen", ["delta_queen"])
+	if bool(closed_choice.get("enabled", true)) \
+		or int(closed_choice.get("cost", -1)) != 0 \
+		or str(closed_choice.get("disabled_reason", "")).findn("opens at") == -1:
+		push_error("Closed River Queen did not retain its hours gate on the free Beach return: %s" % JSON.stringify(closed_choice))
+		return false
+	return true
+
+
 func _check_world_map_selection_stable_component() -> bool:
 	var canvas: Control = WorldMapCanvasScript.new()
 	canvas.size = Vector2(560, 360)
@@ -2967,6 +3009,9 @@ func _run() -> void:
 		quit(1)
 		return
 	if not await _check_shared_selection_popup_text_flow(app):
+		quit(1)
+		return
+	if not await _check_beach_return_travel_choice(app):
 		quit(1)
 		return
 	app.call("start_foundation_run", "UI-COMPILE-SEED")

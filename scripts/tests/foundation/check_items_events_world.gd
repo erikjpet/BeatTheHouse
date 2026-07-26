@@ -2840,6 +2840,31 @@ func _world_map_beach_route_gate_ok(map_data: Dictionary, label: String, library
 	if not beach_targets.has("delta_queen"):
 		failures.append("World map beach should still allow return travel to delta_queen for %s." % label)
 		return false
+	var return_route: Dictionary = map_service.route_for_target(gated_map, "beach", "delta_queen")
+	if int(return_route.get("cost", -1)) != 0 \
+		or int(return_route.get("base_cost", -1)) != 0 \
+		or str(return_route.get("travel_method_kind", "")) != WorldMapScript.TRAVEL_METHOD_WALK \
+		or str(return_route.get("travel_method", "")) != "Walk":
+		failures.append("World map beach return must be a free walk to delta_queen for %s: %s." % [label, JSON.stringify(return_route)])
+		return false
+	if return_route.has("availability_window") \
+		or int(return_route.get("requires_travel_count_min", -1)) != 0 \
+		or not bool(return_route.get("beach_return_walk", false)):
+		failures.append("World map beach return retained the River Queen fare/schedule gate for %s." % label)
+		return false
+	var broke_return_run: RunState = RunStateScript.new()
+	broke_return_run.start_new("BEACH-RETURN-FREE")
+	broke_return_run.bankroll = 0
+	var return_status := broke_return_run.travel_route_status(return_route)
+	if not bool(return_status.get("available", false)) or int(return_status.get("cost", -1)) != 0:
+		failures.append("A broke player could not take the free Beach return walk for %s." % label)
+		return false
+	var delta_archetype := _archetype_by_id(library, "delta_queen")
+	if delta_archetype.is_empty() \
+		or not EnvironmentHoursScript.environment_open_at(delta_archetype, 12 * 60) \
+		or EnvironmentHoursScript.environment_open_at(delta_archetype, 3 * 60):
+		failures.append("Beach return fixture lost the River Queen's clock-based open-hours gate for %s." % label)
+		return false
 	for node_id_value in WorldMapScript.visible_node_ids(gated_map):
 		var source_id := str(node_id_value)
 		if source_id == "delta_queen" or source_id == "beach":
