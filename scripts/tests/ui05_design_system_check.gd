@@ -134,7 +134,9 @@ func _run() -> void:
 	}, 1)
 	var revealing_talk := talk.current_snapshot()
 	_check(bool(revealing_talk.get("typewriter_active", false)), "Conversation copy did not begin its typewriter reveal.")
-	_check(str(revealing_talk.get("portrait_id", "")) == "pawn_broker", "Conversation portrait did not map Sal to artist-swappable portrait art.")
+	_check(str(revealing_talk.get("portrait_renderer", "")) == "animated_character_model", "Conversation did not use the animated character-model renderer.")
+	_check(bool(revealing_talk.get("portrait_animation_active", false)), "Conversation character model did not animate.")
+	_check(not revealing_talk.has("portrait_texture"), "Conversation unexpectedly exposed a static portrait texture.")
 	_check(bool(revealing_talk.get("name_plate", false)), "Conversation speaker is missing a name plate.")
 	var skip_click := InputEventMouseButton.new()
 	skip_click.pressed = true
@@ -152,7 +154,8 @@ func _run() -> void:
 	var reduced_talk := talk.current_snapshot()
 	_check(not bool(reduced_talk.get("typewriter_active", true)), "Reduce-motion conversation copy still animates.")
 	_check(int(reduced_talk.get("visible_characters", 0)) == -1, "Reduce-motion conversation copy is not instantly complete.")
-	_check(str(reduced_talk.get("portrait_id", "")) == "faceless_lender", "Faceless speaker did not preserve the silhouette portrait contract.")
+	_check(str(reduced_talk.get("portrait_renderer", "")) == "animated_character_model", "Reduced-motion conversation replaced the character model.")
+	_check(str(reduced_talk.get("portrait_presentation", "")) == "faceless_silhouette", "Faceless speaker did not preserve the silhouette model contract.")
 	talk.queue_free()
 
 	if failures.is_empty():

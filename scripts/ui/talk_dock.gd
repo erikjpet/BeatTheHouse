@@ -10,7 +10,6 @@ const VIEWPORT_MARGIN := Vector2(18, 18)
 const MAX_CHOICES := 4
 const IGNORE_PENALTY_HEAT := 5
 const SmallScreenPolicyScript := preload("res://scripts/ui/small_screen_policy.gd")
-const UIArtScript := preload("res://scripts/ui/ui_art.gd")
 
 
 class PortraitModel:
@@ -200,7 +199,6 @@ var small_screen_mode := false
 var full_body_text := ""
 var reveal_elapsed := 0.0
 var typewriter_active := false
-var portrait_id := ""
 
 var panel: PanelContainer
 var stack: VBoxContainer
@@ -209,7 +207,6 @@ var collapse_button: Button
 var header_row: HBoxContainer
 var portrait_panel: Control
 var portrait_model: PortraitModel
-var portrait_texture: TextureRect
 var speaker_name_plate: PanelContainer
 var speaker_label: Label
 var summary_label: Label
@@ -315,8 +312,8 @@ func current_snapshot() -> Dictionary:
 		"response_icon_kinds": rendered_response_icon_kinds.duplicate(),
 		"portrait_animation_active": portrait_model.animation_active if portrait_model != null else false,
 		"portrait_animation_redraw_count": portrait_model.animation_redraw_count if portrait_model != null else 0,
-		"portrait_id": portrait_id,
-		"portrait_texture": portrait_texture.texture.resource_path if portrait_texture != null and portrait_texture.texture != null else "",
+		"portrait_renderer": "animated_character_model",
+		"portrait_presentation": str(portrait_model.speaker.get("presentation", "")) if portrait_model != null else "",
 		"name_plate": speaker_name_plate != null,
 		"typewriter_active": typewriter_active,
 		"visible_characters": body_label.visible_characters if body_label != null else -1,
@@ -384,12 +381,6 @@ func _build() -> void:
 	portrait_panel.add_child(portrait_model)
 	portrait_model.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	portrait_model.set_reduce_motion(reduce_motion)
-	portrait_texture = TextureRect.new()
-	portrait_texture.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	portrait_texture.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-	portrait_texture.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-	portrait_panel.add_child(portrait_texture)
-	portrait_texture.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 
 	var header_text := VBoxContainer.new()
 	header_text.add_theme_constant_override("separation", VisualStyle.SPACE_1)
@@ -469,9 +460,6 @@ func _render() -> void:
 	if portrait_model != null:
 		var speaker: Dictionary = entry.get("speaker", {}) if typeof(entry.get("speaker", {})) == TYPE_DICTIONARY else {}
 		portrait_model.set_speaker(speaker)
-		portrait_id = _portrait_id_for_speaker(speaker)
-		portrait_texture.texture = UIArtScript.portrait(portrait_id)
-		portrait_texture.tooltip_text = "%s portrait" % (speaker_name if not speaker_name.is_empty() else "Conversation")
 	urgency_bar.visible = expanded and bool(timing.get("expires", false))
 	if urgency_bar.visible:
 		var duration := maxi(1, int(timing.get("duration_actions", 1)))
@@ -518,24 +506,6 @@ func _on_body_gui_input(event: InputEvent) -> void:
 	elif event is InputEventScreenTouch and (event as InputEventScreenTouch).pressed:
 		_complete_body_reveal()
 		get_viewport().set_input_as_handled()
-
-
-func _portrait_id_for_speaker(speaker: Dictionary) -> String:
-	if str(speaker.get("presentation", "")) == "faceless_silhouette":
-		return "faceless_lender"
-	var name := str(speaker.get("name", "")).to_lower()
-	var role := str(speaker.get("role", "")).to_lower()
-	if name == "sal" or name.contains("pawn") or role.contains("merchant"):
-		return "pawn_broker"
-	if name == "rina" or name.contains("bartender") or role.contains("bartender"):
-		return "bartender"
-	if name == "linda" or name.contains("lender") or role.contains("lender"):
-		return "faceless_lender"
-	if name.contains("pit boss") or role.contains("pit"):
-		return "pit_boss"
-	if name == "dave" or name.contains("dealer") or role.contains("dealer"):
-		return "riverboat_dealer"
-	return "motel_clerk"
 
 
 func _render_choices() -> void:
