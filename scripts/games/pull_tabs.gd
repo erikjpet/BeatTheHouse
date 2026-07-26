@@ -647,6 +647,12 @@ func surface_auto_action_command(ui_state: Dictionary, _run_state: RunState, env
 	var action_delay := PULL_TAB_FILE_DURATION_MSEC if str(command.get("action_id", "")) == SORT_TICKET_ACTION else PULL_TAB_REVEAL_TOTAL_MSEC
 	command_state["pull_tab_auto_open_next_msec"] = surface_time + action_delay + PULL_TAB_AUTO_OPEN_STEP_GAP_MSEC
 	command["ui_state"] = command_state
+	if str(command.get("action_id", "")) == SORT_TICKET_ACTION:
+		command["surface_audio_cue"] = "ticket_navigation"
+		command["surface_audio_action"] = PULL_TAB_FILE_TICKET_ACTION
+	elif command.has("ui_state"):
+		command["surface_audio_cue"] = "ticket_peel"
+		command["surface_audio_action"] = "pull_tab_reveal_next"
 	return GameModule.surface_command(command)
 
 

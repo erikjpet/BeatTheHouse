@@ -3448,6 +3448,8 @@ func _check_pull_tabs_surface_contract(game: GameModule, failures: Array) -> voi
 	if not game.surface_needs_auto_tick(auto_due_state, run_state, environment):
 		failures.append("Pull Tabs Auto Open did not request its scheduled reveal click.")
 	var auto_reveal := game.surface_auto_action_command(auto_due_state, run_state, environment, {})
+	if str(auto_reveal.get("surface_audio_cue", "")) != "ticket_peel" or str(auto_reveal.get("surface_audio_action", "")) != "pull_tab_reveal_next":
+		failures.append("Pull Tabs Auto Open reveal tick did not request the normal peel SFX cue.")
 	var auto_reveal_state: Dictionary = auto_reveal.get("ui_state", {}) if typeof(auto_reveal.get("ui_state", {})) == TYPE_DICTIONARY else {}
 	var auto_reveal_surface := game.surface_state(run_state, environment, auto_reveal_state)
 	var auto_reveal_stack: Array = auto_reveal_surface.get("pull_tab_stack", []) if typeof(auto_reveal_surface.get("pull_tab_stack", [])) == TYPE_ARRAY else []
@@ -3460,6 +3462,8 @@ func _check_pull_tabs_surface_contract(game: GameModule, failures: Array) -> voi
 	var auto_file := game.surface_auto_action_command(auto_file_state, run_state, environment, {})
 	if str(auto_file.get("action_id", "")) != "sort_tab_ticket" or not bool(auto_file.get("direct_resolve", false)):
 		failures.append("Pull Tabs Auto Open did not route its next tick through the normal ticket filing path.")
+	if str(auto_file.get("surface_audio_cue", "")) != "ticket_navigation" or str(auto_file.get("surface_audio_action", "")) != "pull_tab_file_ticket":
+		failures.append("Pull Tabs Auto Open file tick did not request the normal filing/navigation SFX cue.")
 	var auto_off := game.surface_action_command("pull_tab_auto_open", 0, false, auto_file.get("ui_state", {}), run_state, environment)
 	var auto_off_state: Dictionary = auto_off.get("ui_state", {}) if typeof(auto_off.get("ui_state", {})) == TYPE_DICTIONARY else {}
 	if bool(auto_off_state.get("pull_tab_auto_open_active", true)) or int(auto_off_state.get("pull_tab_auto_open_next_msec", -1)) != 0:
