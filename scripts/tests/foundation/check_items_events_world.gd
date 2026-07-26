@@ -2136,6 +2136,37 @@ func _check_world_map_foundation(library: ContentLibrary, failures: Array) -> vo
 			failures.append("World map reachability failed for seed %02d: Grand Casino hops=%d." % [seed_index, hops])
 			break
 
+	var early_shop_offer_count := 0
+	var jazz_offer_count := 0
+	var early_shop_map_service := WorldMapScript.new(library)
+	for early_shop_seed_index in range(100):
+		var early_shop_run: RunState = RunStateScript.new()
+		early_shop_run.start_new("WORLD-MAP-EARLY-SHOPS-%03d" % early_shop_seed_index)
+		var early_shop_rng := early_shop_run.create_rng()
+		early_shop_run.set_world_map(early_shop_map_service.build(early_shop_run, early_shop_rng.fork("world_map")))
+		var noon_targets: Array = generator.call(
+			"_world_travel_target_ids",
+			early_shop_run,
+			early_shop_run.world_map,
+			early_shop_run.current_world_node_id()
+		)
+		if _world_map_targets_include_kind(early_shop_run.world_map, noon_targets, "shop"):
+			early_shop_offer_count += 1
+
+		early_shop_run.game_clock_minutes = 17 * 60
+		var evening_targets: Array = generator.call(
+			"_world_travel_target_ids",
+			early_shop_run,
+			early_shop_run.world_map,
+			early_shop_run.current_world_node_id()
+		)
+		if _string_array(evening_targets).has(WorldMapScript.JAZZ_CLUB_ID):
+			jazz_offer_count += 1
+	if early_shop_offer_count < 95:
+		failures.append("World map should offer an open shop early in at least 95%% of seeded runs; offered %d/100." % early_shop_offer_count)
+	if jazz_offer_count < 20:
+		failures.append("World map should offer the open Jazz Club early in at least 20%% of seeded evening runs; offered %d/100." % jazz_offer_count)
+
 	for policy_seed_index in range(20):
 		var policy_run: RunState = RunStateScript.new()
 		policy_run.start_new("WORLD-MAP-POLICY-%02d" % policy_seed_index)
@@ -2974,6 +3005,14 @@ func _world_map_hops_to(map_data: Dictionary, start_id: String, target_id: Strin
 	return -1
 
 
+func _world_map_targets_include_kind(map_data: Dictionary, target_ids: Array, kind: String) -> bool:
+	for target_id_value in target_ids:
+		var node := WorldMapScript.node_by_id(map_data, str(target_id_value))
+		if str(node.get("kind", "")).strip_edges() == kind:
+			return true
+	return false
+
+
 func _fixture_travel_result(run_state: RunState, route: Dictionary, target_id: String, route_risk: Dictionary = {}) -> Dictionary:
 	var status := run_state.travel_route_status(route)
 	var cost := int(status.get("cost", 0))
@@ -3284,7 +3323,7 @@ func _check_jazz_club_foundation(library: ContentLibrary, failures: Array) -> vo
 		return
 	if str(jazz_archetype.get("kind", "")) != "shop":
 		failures.append("Jazz Club should be a shop/bar service venue, not a casino.")
-	if int(jazz_archetype.get("spawn_weight", 0)) < 4:
+	if int(jazz_archetype.get("spawn_weight", 0)) < 8:
 		failures.append("Jazz Club should have enough spawn weight to be discoverable once routed.")
 	if _item_count_ceiling(jazz_archetype.get("item_count", 0)) > 2:
 		failures.append("Jazz Club should stay uncluttered with no more than two item offers.")
@@ -3297,8 +3336,8 @@ func _check_jazz_club_foundation(library: ContentLibrary, failures: Array) -> vo
 			continue
 		if not _string_array(source_archetype.get("rare_next_archetypes", [])).has("jazz_club"):
 			failures.append("Jazz Club route source %s no longer exposes the music room." % source_id)
-		if int(source_archetype.get("rare_next_chance_percent", 0)) < 20:
-			failures.append("Jazz Club route source %s should expose the music room at least 20%% of the time." % source_id)
+		if int(source_archetype.get("rare_next_chance_percent", 0)) < 40:
+			failures.append("Jazz Club route source %s should expose the music room at least 40%% of the time." % source_id)
 	var jazz_game_pool := _string_array(jazz_archetype.get("game_pool", []))
 	if jazz_game_pool != ["pull_tabs"]:
 		failures.append("Jazz Club should always expose exactly the pull-tabs machine.")

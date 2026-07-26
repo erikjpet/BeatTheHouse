@@ -5,6 +5,7 @@ extends RefCounted
 
 const VERSION := 1
 const GRAND_CASINO_ID := "grand_casino"
+const JAZZ_CLUB_ID := "jazz_club"
 const UNDERGROUND_SHORTCUT_ID := "small_underground_casino"
 const BEACH_ID := "beach"
 const BEACH_GATEWAY_ID := "delta_queen"
@@ -1446,7 +1447,12 @@ static func _travel_candidate_entries_prepared(map_data: Dictionary, source_id: 
 			if kind == "casino" or kind == "boss":
 				score -= 1.5
 			elif kind == "shop":
-				score += 1.0
+				# Early supply stops should compete with gambling rooms instead of
+				# being crowded out by them. The Jazz Club stays uncommon, but its
+				# single pull-tabs machine no longer makes it practically invisible.
+				score -= 2.0
+				if target_id == JAZZ_CLUB_ID:
+					score -= 3.0
 			var game_capacity := int(node.get("game_capacity", 0))
 			if game_capacity >= 2:
 				score -= 4.0

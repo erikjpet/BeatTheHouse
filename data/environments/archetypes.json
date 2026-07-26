@@ -14,7 +14,7 @@
     "rare_next_archetypes": [
       "jazz_club"
     ],
-    "rare_next_chance_percent": 20,
+    "rare_next_chance_percent": 40,
     "tier": 1,
     "name_prefixes": [
       "Neon",
@@ -252,7 +252,7 @@
     "rare_next_archetypes": [
       "jazz_club"
     ],
-    "rare_next_chance_percent": 20,
+    "rare_next_chance_percent": 40,
     "tier": 1,
     "name_prefixes": [
       "Wet",
@@ -517,7 +517,7 @@
     "rare_next_archetypes": [
       "jazz_club"
     ],
-    "rare_next_chance_percent": 22,
+    "rare_next_chance_percent": 40,
     "tier": 1,
     "name_prefixes": [
       "Sunset",
@@ -757,7 +757,7 @@
     "rare_next_archetypes": [
       "jazz_club"
     ],
-    "rare_next_chance_percent": 30,
+    "rare_next_chance_percent": 45,
     "tier": 1,
     "name_prefixes": [
       "Roadside",
@@ -968,7 +968,7 @@
     "rare_next_archetypes": [
       "jazz_club"
     ],
-    "rare_next_chance_percent": 22,
+    "rare_next_chance_percent": 40,
     "tier": 1,
     "name_prefixes": [
       "Sunset",
@@ -1184,7 +1184,7 @@
     "rare_next_archetypes": [
       "jazz_club"
     ],
-    "rare_next_chance_percent": 22,
+    "rare_next_chance_percent": 40,
     "tier": 1,
     "name_prefixes": [
       "Pink Room",
@@ -1403,7 +1403,7 @@
     },
     "is_start": false,
     "rarity": "rare",
-    "spawn_weight": 4,
+    "spawn_weight": 8,
     "next_archetypes": [
       "bar",
       "motel",
