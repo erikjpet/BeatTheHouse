@@ -208,6 +208,7 @@ var selected_run_inventory_item_source: String = ""
 var travel_transition_active := false
 var travel_transition_target_id: String = ""
 var travel_transition_target_label: String = ""
+var travel_transition_force_web_runtime_for_test := false
 var game_surface_auto_resolving := false
 var environment_game_runtime_scan_count := 0
 var last_game_surface_realtime_refresh_msec := 0
@@ -4166,6 +4167,12 @@ func _hide_travel_transition() -> void:
 
 
 func _should_yield_for_travel_transition() -> bool:
+	# Browser tabs can suspend requestAnimationFrame while hidden or throttled.
+	# Holding the exclusive travel lock across a frame await can therefore strand
+	# the run even though destination generation already remains synchronous and
+	# bounded. Web travel stays atomic; desktop keeps the presentation frames.
+	if travel_transition_force_web_runtime_for_test or OS.has_feature("web") or OS.get_name() == "Web":
+		return false
 	return DisplayServer.get_name().to_lower() != "headless" and is_inside_tree()
 
 

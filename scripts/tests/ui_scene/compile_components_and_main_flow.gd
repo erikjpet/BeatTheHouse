@@ -1914,6 +1914,9 @@ func _run() -> void:
 	if not await _check_background_slot_all_in_confirmation(app):
 		quit(1)
 		return
+	if not await _check_web_travel_cannot_strand_transition(app):
+		quit(1)
+		return
 	if settings_menu.visible:
 		push_error("Settings menu should start closed on the main menu.")
 		quit(1)

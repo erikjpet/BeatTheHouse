@@ -540,6 +540,57 @@ func _travel_to_target_and_check_games(app: Control, target_id: String) -> bool:
 	return not traveled_game_ids.is_empty()
 
 
+func _check_web_travel_cannot_strand_transition(app: Control) -> bool:
+	app.call("start_foundation_run", "UI-WEB-TRAVEL-CONTINUATION")
+	await process_frame
+	app.set("travel_transition_force_web_runtime_for_test", true)
+	for travel_index in range(2):
+		var run_state: RunState = app.get("run_state")
+		var choices_value: Variant = app.call("_travel_choice_view_list")
+		var choices: Array = choices_value if typeof(choices_value) == TYPE_ARRAY else []
+		var selected_choice: Dictionary = {}
+		for choice_value in choices:
+			if typeof(choice_value) != TYPE_DICTIONARY:
+				continue
+			var choice: Dictionary = choice_value
+			var target_id := str(choice.get("id", "")).strip_edges()
+			if not target_id.is_empty() and bool(choice.get("enabled", true)) and target_id != run_state.current_world_node_id():
+				selected_choice = choice
+				break
+		if selected_choice.is_empty():
+			app.set("travel_transition_force_web_runtime_for_test", false)
+			push_error("Web travel regression could not find enabled route %d." % (travel_index + 1))
+			return false
+		var expected_target_id := str(selected_choice.get("id", ""))
+		var travel_count_before := run_state.environment_travel_count()
+		app.call("_travel_to", expected_target_id, str(selected_choice.get("label", expected_target_id)), selected_choice)
+		if bool(app.get("travel_transition_active")):
+			app.set("travel_transition_force_web_runtime_for_test", false)
+			push_error("Web travel %d stranded the exclusive transition lock." % (travel_index + 1))
+			return false
+		var overlay: Control = app.get("travel_transition_overlay")
+		if overlay != null and overlay.visible:
+			app.set("travel_transition_force_web_runtime_for_test", false)
+			push_error("Web travel %d left its blocking overlay visible." % (travel_index + 1))
+			return false
+		if run_state.current_world_node_id() != expected_target_id:
+			app.set("travel_transition_force_web_runtime_for_test", false)
+			push_error("Web travel %d did not synchronously reach %s." % [travel_index + 1, expected_target_id])
+			return false
+		if run_state.environment_travel_count() != travel_count_before + 1:
+			app.set("travel_transition_force_web_runtime_for_test", false)
+			push_error("Web travel %d did not advance exactly once." % (travel_index + 1))
+			return false
+		await process_frame
+	app.set("travel_transition_force_web_runtime_for_test", false)
+	app.call("return_to_main_menu")
+	await process_frame
+	if app.get("run_state") != null:
+		push_error("Web travel regression did not restore the main-menu fixture state.")
+		return false
+	return true
+
+
 func _check_pull_tab_buy_button_single_activation(app: Control) -> bool:
 	var original_run_state: Variant = app.get("run_state")
 	var original_dev_game_test_mode := bool(app.get("dev_game_test_mode"))
