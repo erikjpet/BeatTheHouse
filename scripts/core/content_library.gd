@@ -12,6 +12,8 @@ const ITEMS_PATH := "res://data/items/items.json"
 const CONTENT_GROUPS_PATH := "res://data/content_groups/groups.json"
 const EVENTS_PATH := "res://data/events/events.json"
 const DIALOGUES_PATH := "res://data/dialogue/dialogues.json"
+const CHARACTERS_PATH := "res://data/characters/characters.json"
+const CHARACTER_POOLS_PATH := "res://data/characters/pools.json"
 const CHALLENGES_PATH := "res://data/challenges/challenges.json"
 const LENDERS_PATH := "res://data/debt/lenders.json"
 const SERVICES_PATH := "res://data/services/services.json"
@@ -38,6 +40,8 @@ var items: Array = []
 var content_groups: Array = []
 var events: Array = []
 var dialogues: Array = []
+var characters: Array = []
+var character_pools: Array = []
 var challenges: Array = []
 var lenders: Array = []
 var services: Array = []
@@ -62,6 +66,8 @@ static func required_pack_paths() -> Dictionary:
 		"content_groups": CONTENT_GROUPS_PATH,
 		"events": EVENTS_PATH,
 		"dialogues": DIALOGUES_PATH,
+		"characters": CHARACTERS_PATH,
+		"character_pools": CHARACTER_POOLS_PATH,
 		"tutorial_lessons": TUTORIAL_LESSONS_PATH,
 	}
 
@@ -89,6 +95,8 @@ func load() -> Dictionary:
 	content_groups = _load_array(CONTENT_GROUPS_PATH, true)
 	events = _normalize_event_definitions(_load_array(EVENTS_PATH, true))
 	dialogues = _normalize_dialogue_definitions(_load_array(DIALOGUES_PATH, true))
+	characters = _load_array(CHARACTERS_PATH, true)
+	character_pools = _load_array(CHARACTER_POOLS_PATH, true)
 	challenges = _load_array(CHALLENGES_PATH, false)
 	lenders = _load_array(LENDERS_PATH, false)
 	services = _load_array(SERVICES_PATH, false)
@@ -115,6 +123,8 @@ func load() -> Dictionary:
 		"content_groups": content_groups,
 		"events": events,
 		"dialogues": dialogues,
+		"characters": characters,
+		"character_pools": character_pools,
 		"challenges": challenges,
 		"lenders": lenders,
 		"services": services,
@@ -205,6 +215,21 @@ func validate() -> Array:
 		"start",
 		"nodes",
 	])
+	_validate_collection("characters", characters, [
+		"id",
+		"display_name",
+		"title",
+		"role",
+		"model",
+		"voice",
+		"encounters",
+	])
+	_validate_collection("character_pools", character_pools, [
+		"id",
+		"display_name",
+		"member_ids",
+		"lineup_size",
+	])
 	_validate_collection("challenges", challenges, [
 		"id",
 		"title",
@@ -257,6 +282,8 @@ func validate() -> Array:
 	_validate_challenge_definitions()
 	_validate_event_definitions()
 	_validate_dialogue_definitions()
+	_validate_character_definitions()
+	_validate_character_pool_definitions()
 	_validate_lender_definitions()
 	_validate_service_definitions()
 	_validate_travel_route_definitions()
@@ -419,6 +446,16 @@ func event(event_id: String) -> Dictionary:
 # Finds a dialogue definition by id.
 func dialogue(dialogue_id: String) -> Dictionary:
 	return _lookup("dialogues", dialogues, dialogue_id)
+
+
+# Finds an authored reusable character identity.
+func character(character_id: String) -> Dictionary:
+	return _lookup("characters", characters, character_id)
+
+
+# Finds a pool used to assemble a deterministic encounter cast.
+func character_pool(pool_id: String) -> Dictionary:
+	return _lookup("character_pools", character_pools, pool_id)
 
 
 # Finds one data-driven tutorial or coach-tip lesson by stable id.
@@ -665,6 +702,15 @@ static func _normalize_event_speaker(value: Variant) -> Dictionary:
 	if typeof(source.get("face_layers", [])) == TYPE_ARRAY:
 		result["face_layers"] = (source.get("face_layers", []) as Array).duplicate(true)
 	result["portrait_count"] = clampi(int(source.get("portrait_count", 1)), 1, 3)
+	result["character_pool_id"] = str(source.get("character_pool_id", "")).strip_edges()
+	result["character_identity_key"] = str(source.get("character_identity_key", "")).strip_edges()
+	result["voice_line_key"] = str(source.get("voice_line_key", "")).strip_edges()
+	result["voice_line"] = str(source.get("voice_line", "")).strip_edges()
+	result["speaking_character_id"] = str(source.get("speaking_character_id", "")).strip_edges()
+	result["speaking_character_name"] = str(source.get("speaking_character_name", "")).strip_edges()
+	result["speaking_character_title"] = str(source.get("speaking_character_title", "")).strip_edges()
+	result["members"] = (source.get("members", []) as Array).duplicate(true) if typeof(source.get("members", [])) == TYPE_ARRAY else []
+	result["encounter"] = _as_dict(source.get("encounter", {}))
 	return result
 
 
@@ -692,6 +738,8 @@ func _rebuild_indexes() -> void:
 		"content_groups": _index_by_id(content_groups),
 		"events": _index_by_id(events),
 		"dialogues": _index_by_id(dialogues),
+		"characters": _index_by_id(characters),
+		"character_pools": _index_by_id(character_pools),
 		"challenges": _index_by_id(challenges),
 		"lenders": _index_by_id(lenders),
 		"services": _index_by_id(services),
@@ -715,6 +763,8 @@ func debug_soak_snapshot() -> Dictionary:
 			"content_groups": content_groups.size(),
 			"events": events.size(),
 			"dialogues": dialogues.size(),
+			"characters": characters.size(),
+			"character_pools": character_pools.size(),
 			"challenges": challenges.size(),
 			"lenders": lenders.size(),
 			"services": services.size(),
@@ -1298,6 +1348,87 @@ func _validate_lender_definitions() -> void:
 			validation_errors.append("lenders %s deadline_turns must be non-negative." % lender_id)
 		if typeof(lender_def.get("consequences", [])) != TYPE_ARRAY:
 			validation_errors.append("lenders %s consequences must be an array." % lender_id)
+
+
+func _validate_character_definitions() -> void:
+	var event_ids := _ids_for(events)
+	for character_value in characters:
+		if typeof(character_value) != TYPE_DICTIONARY:
+			continue
+		var character: Dictionary = character_value
+		var character_id := str(character.get("id", "")).strip_edges()
+		var model_value: Variant = character.get("model", {})
+		if typeof(model_value) != TYPE_DICTIONARY:
+			validation_errors.append("characters %s model must be a dictionary." % character_id)
+		else:
+			var model: Dictionary = model_value
+			for color_key in ["skin_color", "hair_color", "jacket_color", "accent_color"]:
+				var color_text := str(model.get(color_key, "")).strip_edges()
+				if color_text.is_empty() or not Color.html_is_valid(color_text):
+					validation_errors.append("characters %s model.%s must be a valid HTML color." % [character_id, color_key])
+			if str(model.get("silhouette", "")).strip_edges().is_empty():
+				validation_errors.append("characters %s model.silhouette must be non-empty." % character_id)
+			var scale_value := float(model.get("scale", 1.0))
+			if scale_value < 0.75 or scale_value > 1.25:
+				validation_errors.append("characters %s model.scale must be between 0.75 and 1.25." % character_id)
+		var voice_value: Variant = character.get("voice", {})
+		if typeof(voice_value) != TYPE_DICTIONARY:
+			validation_errors.append("characters %s voice must be a dictionary." % character_id)
+		else:
+			var voice: Dictionary = voice_value
+			if str(voice.get("style", "")).strip_edges().is_empty():
+				validation_errors.append("characters %s voice.style must be non-empty." % character_id)
+			var lines_value: Variant = voice.get("lines", {})
+			if typeof(lines_value) != TYPE_DICTIONARY or (lines_value as Dictionary).is_empty():
+				validation_errors.append("characters %s voice.lines must be a non-empty dictionary." % character_id)
+			else:
+				for line_key_value in (lines_value as Dictionary).keys():
+					_validate_non_empty_string_array(
+						"characters %s voice.lines.%s" % [character_id, str(line_key_value)],
+						(lines_value as Dictionary).get(line_key_value, [])
+					)
+		var encounters_value: Variant = character.get("encounters", [])
+		if typeof(encounters_value) != TYPE_ARRAY:
+			validation_errors.append("characters %s encounters must be an array." % character_id)
+			continue
+		for encounter_index in range((encounters_value as Array).size()):
+			var encounter_value: Variant = (encounters_value as Array)[encounter_index]
+			if typeof(encounter_value) != TYPE_DICTIONARY:
+				validation_errors.append("characters %s encounters[%d] must be a dictionary." % [character_id, encounter_index])
+				continue
+			var encounter: Dictionary = encounter_value
+			if str(encounter.get("context", "")).strip_edges().is_empty():
+				validation_errors.append("characters %s encounters[%d] is missing context." % [character_id, encounter_index])
+			var line_key := str(encounter.get("line_key", "")).strip_edges()
+			if line_key.is_empty():
+				validation_errors.append("characters %s encounters[%d] is missing line_key." % [character_id, encounter_index])
+			elif typeof(voice_value) == TYPE_DICTIONARY:
+				var authored_lines: Dictionary = (voice_value as Dictionary).get("lines", {}) if typeof((voice_value as Dictionary).get("lines", {})) == TYPE_DICTIONARY else {}
+				if not authored_lines.has(line_key):
+					validation_errors.append("characters %s encounters[%d] references missing voice line key: %s" % [character_id, encounter_index, line_key])
+			var event_id := str(encounter.get("event_id", "")).strip_edges()
+			if not event_id.is_empty() and not bool(event_ids.get(event_id, false)):
+				validation_errors.append("characters %s encounters[%d] references unknown event_id: %s" % [character_id, encounter_index, event_id])
+
+
+func _validate_character_pool_definitions() -> void:
+	var character_ids := _ids_for(characters)
+	for pool_value in character_pools:
+		if typeof(pool_value) != TYPE_DICTIONARY:
+			continue
+		var pool: Dictionary = pool_value
+		var pool_id := str(pool.get("id", "")).strip_edges()
+		var member_ids := _string_array(pool.get("member_ids", []))
+		if member_ids.is_empty():
+			validation_errors.append("character_pools %s member_ids must not be empty." % pool_id)
+			continue
+		_validate_id_references("character_pools %s member_ids" % pool_id, member_ids, character_ids)
+		var unique_members := _string_set(member_ids)
+		if unique_members.size() != member_ids.size():
+			validation_errors.append("character_pools %s member_ids must be unique." % pool_id)
+		var lineup_size := int(pool.get("lineup_size", 0))
+		if lineup_size <= 0 or lineup_size > member_ids.size():
+			validation_errors.append("character_pools %s lineup_size must be between 1 and its member count." % pool_id)
 
 
 # Validates service data that can later map cleanly to result-deltas.

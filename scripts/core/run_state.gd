@@ -8140,6 +8140,15 @@ static func _normalize_triggered_event_speaker(value: Variant) -> Dictionary:
 		"presentation": presentation,
 		"face_layers": _copy_array(source.get("face_layers", [])),
 		"portrait_count": clampi(int(source.get("portrait_count", 1)), 1, 3),
+		"character_pool_id": str(source.get("character_pool_id", "")).strip_edges(),
+		"character_identity_key": str(source.get("character_identity_key", "")).strip_edges(),
+		"voice_line_key": str(source.get("voice_line_key", "")).strip_edges(),
+		"voice_line": str(source.get("voice_line", "")).strip_edges(),
+		"speaking_character_id": str(source.get("speaking_character_id", "")).strip_edges(),
+		"speaking_character_name": str(source.get("speaking_character_name", "")).strip_edges(),
+		"speaking_character_title": str(source.get("speaking_character_title", "")).strip_edges(),
+		"members": _copy_array(source.get("members", [])),
+		"encounter": _copy_dict(source.get("encounter", {})),
 	}
 
 

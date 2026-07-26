@@ -199,6 +199,7 @@ Buffalo collection/conversion, must-hit meter data, and jackpot tiers.
 | `scripts/core/run_state.gd` | Authoritative run state, RNG state, bankroll, heat, alcohol/luck, debt, inventory, environment, story, terminal status, save payloads |
 | `scripts/core/rng_stream.gd` | Deterministic seeded RNG streams and forks |
 | `scripts/core/content_library.gd` | Loads and validates JSON content packs |
+| `scripts/core/character_roster.gd` | Resolves reusable character pools, stable encounter casts, models, and voice lines |
 | `scripts/core/environment_instance.gd` | Builds generated environment instances from archetypes |
 | `scripts/core/run_generator.gd` | Chooses starting and next environments |
 | `scripts/core/world_map.gd` | Builds and normalizes the seeded travel graph, node discovery, stored environments, and route paths |
@@ -260,7 +261,7 @@ shared state, autosave, and terminal presentation.
 
 ```text
 assets/                  PNG art used by environment, event, item, game, and UI presentation
-data/                    JSON content packs and art manifest
+data/                    JSON content packs, reusable character identities/pools, and art manifest
 docs/plans/              Active Act 1 board, release ledgers, design locks, and historical plans
 scenes/main.tscn          Active Godot scene wired to FoundationMain
 scripts/core/             Runtime state, content loading, generation, result application, save/load

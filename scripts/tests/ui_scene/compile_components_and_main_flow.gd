@@ -787,11 +787,22 @@ func _check_crew_favor_conversation(app: Control) -> bool:
 		or int(talk.get("choice_count", 0)) != 2:
 		push_error("Crew favor did not use the standard title/topic/options conversation: %s" % JSON.stringify(talk))
 		return false
-	if str(talk.get("portrait_presentation", "")) != "faceless_silhouette" \
+	var crew_character_ids: Array = talk.get("character_ids", []) if typeof(talk.get("character_ids", [])) == TYPE_ARRAY else []
+	var unique_crew_character_ids := {}
+	for character_id_value in crew_character_ids:
+		unique_crew_character_ids[str(character_id_value)] = true
+	if str(talk.get("character_pool_id", "")) != "crew_regulars" \
+		or str(talk.get("portrait_presentation", "")) == "faceless_silhouette" \
 		or str(talk.get("portrait_renderer", "")) != "animated_character_model" \
 		or int(talk.get("portrait_count", 0)) != 3 \
+		or crew_character_ids.size() != 3 \
+		or unique_crew_character_ids.size() != 3 \
+		or str(talk.get("voice_line_key", "")) != "favor_due" \
+		or str(talk.get("voice_line", "")).is_empty() \
+		or str(talk.get("speaking_character_title", "")).is_empty() \
+		or not str(talk.get("speaker_text", "")).contains(str(talk.get("speaking_character_name", ""))) \
 		or not bool(talk.get("portrait_animation_active", false)):
-		push_error("Crew favor did not show three animated faceless people: %s" % JSON.stringify(talk))
+		push_error("Crew favor did not show three unique animated Crew identities with an authored voice line: %s" % JSON.stringify(talk))
 		return false
 	app.call("resolve_event_choice", "crew_favor_delivery", "run_package")
 	await process_frame

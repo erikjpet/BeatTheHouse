@@ -1,0 +1,268 @@
+[
+  {
+    "id": "crew_rook",
+    "display_name": "Rook",
+    "title": "Wheelman",
+    "role": "crew",
+    "model": {
+      "skin_color": "#8f5f45",
+      "hair_color": "#171018",
+      "jacket_color": "#24334a",
+      "accent_color": "#21d7c5",
+      "silhouette": "cap",
+      "scale": 1.04
+    },
+    "voice": {
+      "style": "Low, economical, and always sounds ready to leave.",
+      "lines": {
+        "loan_offer": [
+          "Forty-five now. When the phone rings, you drive where we say.",
+          "Cash is easy. Being ready when we call is the part you owe."
+        ],
+        "favor_due": [
+          "Engine is running. Take the package and keep us on schedule.",
+          "Your marker is up. One clean delivery makes it smaller."
+        ]
+      }
+    },
+    "encounters": [
+      {
+        "context": "loan_offer",
+        "line_key": "loan_offer"
+      },
+      {
+        "context": "favor_due",
+        "line_key": "favor_due",
+        "event_id": "crew_favor_delivery"
+      }
+    ]
+  },
+  {
+    "id": "crew_velvet",
+    "display_name": "Velvet",
+    "title": "Fixer",
+    "role": "crew",
+    "model": {
+      "skin_color": "#c58b68",
+      "hair_color": "#391c35",
+      "jacket_color": "#512d61",
+      "accent_color": "#ff4f9a",
+      "silhouette": "glasses",
+      "scale": 0.96
+    },
+    "voice": {
+      "style": "Warm and polished, with every threat wrapped like a favor.",
+      "lines": {
+        "loan_offer": [
+          "Take the money, darling. We only ask that you remember who made tonight possible.",
+          "No interest, no paperwork. Just answer beautifully when we need you."
+        ],
+        "favor_due": [
+          "A small package needs a discreet new friend. Tonight, that is you.",
+          "We kept our promise. Now make our delivery look effortless."
+        ]
+      }
+    },
+    "encounters": [
+      {
+        "context": "loan_offer",
+        "line_key": "loan_offer"
+      },
+      {
+        "context": "favor_due",
+        "line_key": "favor_due",
+        "event_id": "crew_favor_delivery"
+      }
+    ]
+  },
+  {
+    "id": "crew_knuckles",
+    "display_name": "Knuckles",
+    "title": "Collector",
+    "role": "crew",
+    "model": {
+      "skin_color": "#6f4637",
+      "hair_color": "#0d0d13",
+      "jacket_color": "#493126",
+      "accent_color": "#ffca4b",
+      "silhouette": "rings",
+      "scale": 1.12
+    },
+    "voice": {
+      "style": "Blunt, impatient, and amused by complicated excuses.",
+      "lines": {
+        "loan_offer": [
+          "You need cash. We need someone useful. Keep it simple.",
+          "Forty-five bucks buys you a chance. The favor buys us even."
+        ],
+        "favor_due": [
+          "Package. Address. No detours. Then we can all stay friendly.",
+          "Time to earn the part where we did not charge interest."
+        ]
+      }
+    },
+    "encounters": [
+      {
+        "context": "loan_offer",
+        "line_key": "loan_offer"
+      },
+      {
+        "context": "favor_due",
+        "line_key": "favor_due",
+        "event_id": "crew_favor_delivery"
+      }
+    ]
+  },
+  {
+    "id": "crew_switch",
+    "display_name": "Switch",
+    "title": "Scout",
+    "role": "crew",
+    "model": {
+      "skin_color": "#d6a47b",
+      "hair_color": "#c4d6e8",
+      "jacket_color": "#1d4d51",
+      "accent_color": "#49f2d1",
+      "silhouette": "cap",
+      "scale": 0.9
+    },
+    "voice": {
+      "style": "Fast, alert, and constantly halfway through the next plan.",
+      "lines": {
+        "loan_offer": [
+          "Quick deal: our cash, your legs, one future call. Yes or no?",
+          "You can keep circling broke, or take the shortcut we brought."
+        ],
+        "favor_due": [
+          "Route is clean for six minutes. Grab the package and move.",
+          "Eyes are looking elsewhere right now. That is your window."
+        ]
+      }
+    },
+    "encounters": [
+      {
+        "context": "loan_offer",
+        "line_key": "loan_offer"
+      },
+      {
+        "context": "favor_due",
+        "line_key": "favor_due",
+        "event_id": "crew_favor_delivery"
+      }
+    ]
+  },
+  {
+    "id": "crew_mags",
+    "display_name": "Mags",
+    "title": "Planner",
+    "role": "crew",
+    "model": {
+      "skin_color": "#9c6f58",
+      "hair_color": "#201d28",
+      "jacket_color": "#26375b",
+      "accent_color": "#8f7cff",
+      "silhouette": "glasses",
+      "scale": 0.98
+    },
+    "voice": {
+      "style": "Measured, precise, and quietly irritated by improvisation.",
+      "lines": {
+        "loan_offer": [
+          "The amount is forty-five. The cost is two favors. Those are separate numbers.",
+          "We solve tonight's cash problem. Later, you solve a scheduling problem."
+        ],
+        "favor_due": [
+          "The handoff has three steps. Follow them in order and nobody needs a fourth.",
+          "Your delivery window is open. Missing it creates unnecessary variables."
+        ]
+      }
+    },
+    "encounters": [
+      {
+        "context": "loan_offer",
+        "line_key": "loan_offer"
+      },
+      {
+        "context": "favor_due",
+        "line_key": "favor_due",
+        "event_id": "crew_favor_delivery"
+      }
+    ]
+  },
+  {
+    "id": "crew_bishop",
+    "display_name": "Bishop",
+    "title": "Inside Man",
+    "role": "crew",
+    "model": {
+      "skin_color": "#4f342f",
+      "hair_color": "#24160f",
+      "jacket_color": "#3b2547",
+      "accent_color": "#f05dff",
+      "silhouette": "coat",
+      "scale": 1.08
+    },
+    "voice": {
+      "style": "Patient and formal, speaking as if every deal is already recorded.",
+      "lines": {
+        "loan_offer": [
+          "Accepting means the Crew may call twice. Declining means this conversation ends cleanly.",
+          "We offer liquidity without interest. Reliability is the collateral."
+        ],
+        "favor_due": [
+          "The Crew is exercising one favor. Complete the delivery and the record changes.",
+          "A promise is most valuable when collected at the proper hour."
+        ]
+      }
+    },
+    "encounters": [
+      {
+        "context": "loan_offer",
+        "line_key": "loan_offer"
+      },
+      {
+        "context": "favor_due",
+        "line_key": "favor_due",
+        "event_id": "crew_favor_delivery"
+      }
+    ]
+  },
+  {
+    "id": "crew_lucky",
+    "display_name": "Lucky",
+    "title": "Runner",
+    "role": "crew",
+    "model": {
+      "skin_color": "#b77b52",
+      "hair_color": "#57292a",
+      "jacket_color": "#5b3f20",
+      "accent_color": "#ff8c42",
+      "silhouette": "rings",
+      "scale": 0.94
+    },
+    "voice": {
+      "style": "Bright, reckless, and delighted that the stakes are real.",
+      "lines": {
+        "loan_offer": [
+          "Free money tonight, one exciting favor later. Best odds in town.",
+          "Take the forty-five. Future you loves solving future problems."
+        ],
+        "favor_due": [
+          "Good news: the package is small. Better news: they are watching somebody else.",
+          "Your lucky favor just came in. Run it fast and we both look brilliant."
+        ]
+      }
+    },
+    "encounters": [
+      {
+        "context": "loan_offer",
+        "line_key": "loan_offer"
+      },
+      {
+        "context": "favor_due",
+        "line_key": "favor_due",
+        "event_id": "crew_favor_delivery"
+      }
+    ]
+  }
+]

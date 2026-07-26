@@ -1,5 +1,7 @@
 extends "res://scripts/tests/foundation/check_table_games.gd"
 
+const CharacterRosterScript := preload("res://scripts/core/character_roster.gd")
+
 func _check_surface_command_non_mutating(game: GameModule, action: String, index: int, confirm_requested: bool, ui_state: Dictionary, run_state: RunState, environment: Dictionary, label: String, failures: Array) -> Dictionary:
 	var before := JSON.stringify(run_state.to_dict())
 	var command: Dictionary = game.surface_action_command(action, index, confirm_requested, ui_state, run_state, environment)
@@ -1264,7 +1266,27 @@ func _check_t4_7_family_loan_contract(library: ContentLibrary, failures: Array) 
 
 
 func _check_t4_7_crew_conversation_contract(library: ContentLibrary, failures: Array) -> void:
+	var crew_pool := library.character_pool("crew_regulars")
+	var pool_member_ids: Array = crew_pool.get("member_ids", []) if typeof(crew_pool.get("member_ids", [])) == TYPE_ARRAY else []
+	if library.characters.size() != 7 or pool_member_ids.size() != 7 or int(crew_pool.get("lineup_size", 0)) != 3:
+		failures.append("T4.7 Crew character catalog must expose seven identities and three-person lineups.")
+	var authored_ids := {}
+	for character_value in library.characters:
+		if typeof(character_value) != TYPE_DICTIONARY:
+			continue
+		var character: Dictionary = character_value
+		var character_id := str(character.get("id", ""))
+		authored_ids[character_id] = true
+		var model: Dictionary = character.get("model", {}) if typeof(character.get("model", {})) == TYPE_DICTIONARY else {}
+		var voice: Dictionary = character.get("voice", {}) if typeof(character.get("voice", {})) == TYPE_DICTIONARY else {}
+		var lines: Dictionary = voice.get("lines", {}) if typeof(voice.get("lines", {})) == TYPE_DICTIONARY else {}
+		if str(character.get("display_name", "")).is_empty() or model.is_empty() or (lines.get("loan_offer", []) as Array).is_empty() or (lines.get("favor_due", []) as Array).is_empty():
+			failures.append("T4.7 Crew character %s is missing identity, model, or encounter voice lines." % character_id)
+	for member_id_value in pool_member_ids:
+		if not bool(authored_ids.get(str(member_id_value), false)):
+			failures.append("T4.7 Crew pool references a missing character: %s." % str(member_id_value))
 	var crew_event_count := 0
+	var crew_event_speaker: Dictionary = {}
 	for definition_variant in library.events:
 		if typeof(definition_variant) != TYPE_DICTIONARY:
 			continue
@@ -1279,10 +1301,13 @@ func _check_t4_7_crew_conversation_contract(library: ContentLibrary, failures: A
 			failures.append("T4.7 Crew event '%s' must use the conversation dock." % event_id)
 		if str(speaker.get("name", "")) != "The Crew":
 			failures.append("T4.7 Crew event '%s' must identify The Crew as its speaker." % event_id)
-		if str(speaker.get("presentation", "")) != "faceless_silhouette" \
+		if str(speaker.get("character_pool_id", "")) != "crew_regulars" \
+			or str(speaker.get("character_identity_key", "")) != "the_crew" \
 			or int(speaker.get("portrait_count", 0)) != 3 \
 			or not (speaker.get("face_layers", []) as Array).is_empty():
-			failures.append("T4.7 Crew event '%s' must show three animated faceless people." % event_id)
+			failures.append("T4.7 Crew event '%s' must use the reusable three-member Crew pool." % event_id)
+		if event_id == "crew_favor_delivery":
+			crew_event_speaker = speaker
 
 	var favor_definition := library.event("crew_favor_delivery")
 	var favor_choices: Array = (favor_definition.get("payload", {}) as Dictionary).get("choices", []) if typeof(favor_definition.get("payload", {})) == TYPE_DICTIONARY else []
@@ -1294,6 +1319,39 @@ func _check_t4_7_crew_conversation_contract(library: ContentLibrary, failures: A
 		failures.append("T4.7 Crew favor conversation fixture is missing.")
 	elif not favor_choice_ids.has("run_package") or not favor_choice_ids.has("refuse"):
 		failures.append("T4.7 Crew favor conversation lost its authoritative package choices.")
+	if not crew_event_speaker.is_empty():
+		var first_run: RunState = RunStateScript.new()
+		first_run.start_new("T47-CREW-ROSTER")
+		var second_run: RunState = RunStateScript.new()
+		second_run.start_new("T47-CREW-ROSTER")
+		var crew_lender_speaker: Dictionary = library.lender("the_crew").get("speaker", {})
+		var rng_state_before_resolution: int = first_run.rng_state
+		var loan_speaker := CharacterRosterScript.resolve_speaker(crew_lender_speaker, library, first_run, "the_crew", "loan_offer")
+		var favor_speaker := CharacterRosterScript.resolve_speaker(crew_event_speaker, library, second_run, "crew_favor_delivery", "favor_due")
+		if first_run.rng_state != rng_state_before_resolution:
+			failures.append("T4.7 Crew roster resolution consumed authoritative run RNG.")
+		var loan_members: Array = loan_speaker.get("members", []) if typeof(loan_speaker.get("members", [])) == TYPE_ARRAY else []
+		var favor_members: Array = favor_speaker.get("members", []) if typeof(favor_speaker.get("members", [])) == TYPE_ARRAY else []
+		var selected_ids := {}
+		for member_value in loan_members:
+			if typeof(member_value) == TYPE_DICTIONARY:
+				selected_ids[str((member_value as Dictionary).get("character_id", ""))] = true
+		if loan_members.size() != 3 or selected_ids.size() != 3:
+			failures.append("T4.7 Crew roster resolver did not select exactly three unique characters.")
+		if JSON.stringify(loan_members) != JSON.stringify(favor_members):
+			failures.append("T4.7 The same Crew identity reshuffled between loan and favor encounters.")
+		if str(loan_speaker.get("voice_line", "")).is_empty() or str(favor_speaker.get("voice_line", "")).is_empty():
+			failures.append("T4.7 Crew roster resolver did not select the lead character's encounter voice line.")
+		var favor_encounter: Dictionary = favor_speaker.get("encounter", {}) if typeof(favor_speaker.get("encounter", {})) == TYPE_DICTIONARY else {}
+		if str(favor_encounter.get("event_id", "")) != "crew_favor_delivery" or str(favor_encounter.get("context", "")) != "favor_due":
+			failures.append("T4.7 Crew lead did not expose its authored encounter hook.")
+		first_run.enqueue_triggered_event("crew_roster_round_trip", "fixture", {}, {"presentation": "talk", "speaker": loan_speaker})
+		var restored_run: RunState = RunStateScript.new()
+		restored_run.from_dict(first_run.to_dict())
+		var restored_entry := restored_run.pending_talk_event("crew_roster_round_trip")
+		var restored_speaker: Dictionary = restored_entry.get("speaker", {}) if typeof(restored_entry.get("speaker", {})) == TYPE_DICTIONARY else {}
+		if JSON.stringify(restored_speaker.get("members", [])) != JSON.stringify(loan_members) or str(restored_speaker.get("voice_line", "")) != str(loan_speaker.get("voice_line", "")):
+			failures.append("T4.7 Crew identities and selected voice line did not survive save/load.")
 
 
 # Checks T6.7 object visibility classes and deterministic world-event cadence.
@@ -3785,8 +3843,13 @@ func _check_lender_debt_foundation(library: ContentLibrary, failures: Array) -> 
 			failures.append("Lender fixture is missing: %s." % lender_id)
 			return
 		var speaker: Dictionary = lender.get("speaker", {}) if typeof(lender.get("speaker", {})) == TYPE_DICTIONARY else {}
-		if str(speaker.get("presentation", "")) != "faceless_silhouette" or str(speaker.get("name", "")).strip_edges().is_empty():
-			failures.append("Person/group lender %s does not define a titled faceless conversation speaker." % lender_id)
+		if str(speaker.get("name", "")).strip_edges().is_empty():
+			failures.append("Person/group lender %s does not define a titled conversation speaker." % lender_id)
+		elif lender_id == "the_crew":
+			if str(speaker.get("character_pool_id", "")) != "crew_regulars" or str(speaker.get("presentation", "")) == "faceless_silhouette":
+				failures.append("The Crew lender does not use the visible reusable character pool.")
+		elif str(speaker.get("presentation", "")) != "faceless_silhouette":
+			failures.append("Person lender %s does not define a faceless conversation speaker." % lender_id)
 		if clampi(int(speaker.get("portrait_count", 0)), 0, 3) != (3 if lender_id == "the_crew" else 1):
 			failures.append("Lender %s does not define the authoritative conversation portrait count." % lender_id)
 	if library.service("call_brother_in_law").is_empty():

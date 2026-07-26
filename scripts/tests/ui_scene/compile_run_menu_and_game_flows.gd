@@ -2012,6 +2012,32 @@ func _check_lender_acceptance_does_not_open_motel_popup(app: Control) -> bool:
 	if not bool(talk.get("visible", false)) or str(talk.get("speaker", "")) != "The Crew" or int(talk.get("portrait_count", 0)) != 3 or str(talk.get("topic", "")) != "Loan Offer":
 		push_error("Crew lender did not open the standard titled three-person conversation: %s." % JSON.stringify(talk))
 		return false
+	var crew_character_ids: Array = talk.get("character_ids", []) if typeof(talk.get("character_ids", [])) == TYPE_ARRAY else []
+	var unique_crew_character_ids := {}
+	for character_id_value in crew_character_ids:
+		unique_crew_character_ids[str(character_id_value)] = true
+	if str(talk.get("character_pool_id", "")) != "crew_regulars" \
+		or crew_character_ids.size() != 3 \
+		or unique_crew_character_ids.size() != 3 \
+		or not crew_character_ids.has(str(talk.get("speaking_character_id", ""))) \
+		or str(talk.get("speaking_character_name", "")).is_empty() \
+		or str(talk.get("speaking_character_title", "")).is_empty() \
+		or not str(talk.get("speaker_text", "")).contains(str(talk.get("speaking_character_name", ""))) \
+		or not str(talk.get("speaker_text", "")).contains(str(talk.get("speaking_character_title", ""))) \
+		or str(talk.get("voice_line", "")).is_empty() \
+		or str(talk.get("portrait_presentation", "")) == "faceless_silhouette":
+		push_error("Crew lender did not resolve three visible unique identities with an authored lead voice: %s." % JSON.stringify(talk))
+		return false
+	var crew_entry: Dictionary = run_state.pending_talk_event(str(talk.get("event_id", "")))
+	var crew_speaker: Dictionary = crew_entry.get("speaker", {}) if typeof(crew_entry.get("speaker", {})) == TYPE_DICTIONARY else {}
+	var crew_members: Array = crew_speaker.get("members", []) if typeof(crew_speaker.get("members", [])) == TYPE_ARRAY else []
+	var unique_models := {}
+	for member_value in crew_members:
+		if typeof(member_value) == TYPE_DICTIONARY:
+			unique_models[JSON.stringify((member_value as Dictionary).get("model", {}))] = true
+	if unique_models.size() != 3:
+		push_error("Crew lender lineup did not preserve three distinct animated character models.")
+		return false
 	app.call("_on_talk_dock_choice_requested", str(talk.get("event_id", "")), "accept")
 	await process_frame
 	if bool((app.call("current_talk_dock_snapshot") as Dictionary).get("visible", false)):

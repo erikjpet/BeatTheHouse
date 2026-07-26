@@ -1943,11 +1943,13 @@
     "speaker": {
       "role": "lender",
       "name": "The Crew",
-      "presentation": "faceless_silhouette",
       "silhouette": "coat",
       "portrait_count": 3,
       "face_layers": [],
-      "bind": "none"
+      "bind": "none",
+      "character_pool_id": "crew_regulars",
+      "character_identity_key": "the_crew",
+      "voice_line_key": "favor_due"
     },
     "scopes": [
       "any"

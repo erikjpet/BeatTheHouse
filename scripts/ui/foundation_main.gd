@@ -138,6 +138,7 @@ const RunActionServiceScript := preload("res://scripts/core/run_action_service.g
 const AttributeBadgesScript := preload("res://scripts/core/attribute_badges.gd")
 const ItemEffectScript := preload("res://scripts/core/item_effect.gd")
 const WorldMapScript := preload("res://scripts/core/world_map.gd")
+const CharacterRosterScript := preload("res://scripts/core/character_roster.gd")
 
 var user_settings: UserSettings
 var profile_inventory: ProfileInventory
@@ -2172,9 +2173,14 @@ func _enqueue_table_approach_talk_events(source: String) -> bool:
 func _triggered_entry_overrides(event_definition: Dictionary, speaker_override: Dictionary = {}) -> Dictionary:
 	var payload: Dictionary = event_definition.get("payload", {}) if typeof(event_definition.get("payload", {})) == TYPE_DICTIONARY else {}
 	var speaker := speaker_override.duplicate(true) if not speaker_override.is_empty() else _copy_dict(event_definition.get("speaker", {}))
+	speaker = _resolve_character_speaker(
+		_normalized_talk_speaker(speaker),
+		str(event_definition.get("id", "")),
+		str(speaker.get("voice_line_key", ""))
+	)
 	return {
 		"presentation": str(event_definition.get("presentation", "modal")),
-		"speaker": _normalized_talk_speaker(speaker),
+		"speaker": speaker,
 		"timing": _triggered_entry_timing(payload),
 	}
 
@@ -2239,7 +2245,20 @@ func _normalized_talk_speaker(speaker: Dictionary) -> Dictionary:
 		"presentation": presentation,
 		"face_layers": _copy_array(speaker.get("face_layers", [])),
 		"portrait_count": clampi(int(speaker.get("portrait_count", 1)), 1, 3),
+		"character_pool_id": str(speaker.get("character_pool_id", "")).strip_edges(),
+		"character_identity_key": str(speaker.get("character_identity_key", "")).strip_edges(),
+		"voice_line_key": str(speaker.get("voice_line_key", "")).strip_edges(),
+		"voice_line": str(speaker.get("voice_line", "")).strip_edges(),
+		"speaking_character_id": str(speaker.get("speaking_character_id", "")).strip_edges(),
+		"speaking_character_name": str(speaker.get("speaking_character_name", "")).strip_edges(),
+		"speaking_character_title": str(speaker.get("speaking_character_title", "")).strip_edges(),
+		"members": _copy_array(speaker.get("members", [])),
+		"encounter": _copy_dict(speaker.get("encounter", {})),
 	}
+
+
+func _resolve_character_speaker(speaker: Dictionary, encounter_id: String, fallback_line_key: String = "") -> Dictionary:
+	return CharacterRosterScript.resolve_speaker(speaker, library, run_state, encounter_id, fallback_line_key)
 
 
 func _weighted_triggered_event_pick(candidates: Array, rng: RngStream) -> Dictionary:
@@ -2371,6 +2390,12 @@ func _refresh_talk_dock() -> void:
 		run_state.complete_talk_event_resolution(event_id)
 		talk_dock.clear_entry()
 		return
+	var entry_speaker: Dictionary = entry.get("speaker", {}) if typeof(entry.get("speaker", {})) == TYPE_DICTIONARY else {}
+	var voice_line := str(entry_speaker.get("voice_line", "")).strip_edges()
+	if not voice_line.is_empty():
+		option = option.duplicate(true)
+		var voice_name := str(entry_speaker.get("speaking_character_name", "")).strip_edges()
+		option["summary"] = "%s: \"%s\"" % [voice_name, voice_line] if not voice_name.is_empty() else voice_line
 	talk_dock.set_entry(entry, option, run_state.pending_talk_event_count())
 	if item_found_popup != null and item_found_popup.is_open():
 		item_found_talk_dock_suspended = true
@@ -2412,6 +2437,7 @@ func start_dialogue(dialogue_id: String, source_data: Dictionary = {}) -> bool:
 	if not source_event_id.is_empty():
 		context["source_event_id"] = source_event_id
 	var speaker: Dictionary = dialogue.get("speaker", {}) if typeof(dialogue.get("speaker", {})) == TYPE_DICTIONARY else {}
+	speaker = _resolve_character_speaker(_normalized_talk_speaker(speaker), clean_id, str(speaker.get("voice_line_key", "")))
 	var start_node := str(dialogue.get("start", "")).strip_edges()
 	if not run_state.enqueue_dialogue(clean_id, event_id, speaker, start_node, "dialogue", context):
 		_show_message("Conversation is already queued.")
@@ -8083,9 +8109,11 @@ func _start_lender_conversation(lender_id: String, mode: String) -> bool:
 		"source_object_id": "lender:%s" % clean_id,
 		"environment_snapshot": run_state.current_environment.duplicate(true),
 	}
+	var lender_line_key := "loan_offer" if clean_mode == "borrow" else "loan_repayment" if clean_mode == "repay" else "pawn_offer"
+	speaker = _resolve_character_speaker(_normalized_talk_speaker(speaker), clean_id, lender_line_key)
 	if not run_state.enqueue_triggered_event(event_id, "lender", context, {
 		"presentation": "talk",
-		"speaker": _normalized_talk_speaker(speaker),
+		"speaker": speaker,
 	}):
 		_show_message("Conversation is already queued.")
 		_refresh()

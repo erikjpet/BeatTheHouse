@@ -93,17 +93,21 @@ class PortraitModel:
 
 	func _draw_speaker_group(portrait_count: int) -> void:
 		var faceless := str(speaker.get("presentation", "")) == "faceless_silhouette"
+		var members: Array = speaker.get("members", []) if typeof(speaker.get("members", [])) == TYPE_ARRAY else []
 		var base_scale := clampf(minf(size.x / 98.0, size.y / 150.0) * 0.68, 0.82, 1.9)
 		var back_scale := base_scale * 0.82
 		if portrait_count >= 2:
-			_draw_group_member(Vector2(size.x * 0.31, size.y + 8.0), back_scale, animation_clock + 0.7, faceless)
+			var left_member: Dictionary = members[1] if members.size() > 1 and typeof(members[1]) == TYPE_DICTIONARY else {}
+			_draw_group_member(Vector2(size.x * 0.31, size.y + 8.0), back_scale * _member_scale(left_member), animation_clock + 0.7, faceless, left_member)
 		if portrait_count >= 3:
-			_draw_group_member(Vector2(size.x * 0.69, size.y + 8.0), back_scale, animation_clock + 1.4, faceless)
-		_draw_group_member(Vector2(size.x * 0.5, size.y + 20.0), base_scale, animation_clock, faceless)
+			var right_member: Dictionary = members[2] if members.size() > 2 and typeof(members[2]) == TYPE_DICTIONARY else {}
+			_draw_group_member(Vector2(size.x * 0.69, size.y + 8.0), back_scale * _member_scale(right_member), animation_clock + 1.4, faceless, right_member)
+		var lead_member: Dictionary = members[0] if not members.is_empty() and typeof(members[0]) == TYPE_DICTIONARY else {}
+		_draw_group_member(Vector2(size.x * 0.5, size.y + 20.0), base_scale * _member_scale(lead_member), animation_clock, faceless, lead_member)
 
-	func _draw_group_member(anchor: Vector2, character_scale: float, phase: float, faceless: bool) -> void:
+	func _draw_group_member(anchor: Vector2, character_scale: float, phase: float, faceless: bool, member: Dictionary = {}) -> void:
 		var idle_bob := 0.0 if reduce_motion else sin(phase * 2.1) * 1.2 * character_scale
-		var style := _faceless_style(phase) if faceless else _visible_style(phase)
+		var style := _faceless_style(phase) if faceless else _visible_style(phase, member)
 		PortraitTableGameVisualsScript._draw_table_character(
 			self,
 			style,
@@ -134,20 +138,21 @@ class PortraitModel:
 			"faceless": true,
 		}
 
-	func _visible_style(phase: float) -> Dictionary:
+	func _visible_style(phase: float, member: Dictionary = {}) -> Dictionary:
 		var cycle := fposmod(phase, 4.2) / 4.2
+		var model: Dictionary = member.get("model", {}) if typeof(member.get("model", {})) == TYPE_DICTIONARY else {}
 		return {
 			"name": "",
-			"skin": VisualStyle.PORTRAIT_SKIN,
-			"hair": _speaker_color("hair_color", VisualStyle.SHADOW),
-			"jacket": _speaker_color("jacket_color", VisualStyle.BLUE),
-			"accent": VisualStyle.CYAN_2,
-			"role": str(speaker.get("role", "staff")),
+			"skin": _model_color(model, "skin_color", VisualStyle.PORTRAIT_SKIN),
+			"hair": _model_color(model, "hair_color", _speaker_color("hair_color", VisualStyle.SHADOW)),
+			"jacket": _model_color(model, "jacket_color", _speaker_color("jacket_color", VisualStyle.BLUE)),
+			"accent": _model_color(model, "accent_color", VisualStyle.CYAN_2),
+			"role": str(member.get("role", speaker.get("role", "staff"))),
 			"pose": "watching" if fposmod(phase, 2.8) > 1.9 else "speaking",
 			"eye_offset": sin(phase * 0.72) * 0.55,
 			"blink": cycle > 0.92 and cycle < 0.975,
 			"holding_card": false,
-			"silhouette": str(speaker.get("silhouette", "coat")),
+			"silhouette": str(model.get("silhouette", speaker.get("silhouette", "coat"))),
 		}
 
 	func surface_label(_text: String, _pos: Vector2, _font_size: int, _color: Color) -> void:
@@ -158,6 +163,14 @@ class PortraitModel:
 		if text.is_empty():
 			return fallback
 		return Color(text)
+
+	func _model_color(model: Dictionary, field: String, fallback: Color) -> Color:
+		var text := str(model.get(field, "")).strip_edges()
+		return Color(text) if not text.is_empty() else fallback
+
+	func _member_scale(member: Dictionary) -> float:
+		var model: Dictionary = member.get("model", {}) if typeof(member.get("model", {})) == TYPE_DICTIONARY else {}
+		return clampf(float(model.get("scale", 1.0)), 0.75, 1.25)
 
 
 class ResponseIcon:
@@ -353,6 +366,16 @@ func handle_hotkey(event: InputEvent) -> bool:
 
 func current_snapshot() -> Dictionary:
 	var timing: Dictionary = entry.get("timing", {}) if typeof(entry.get("timing", {})) == TYPE_DICTIONARY else {}
+	var portrait_speaker: Dictionary = portrait_model.speaker if portrait_model != null else {}
+	var portrait_members: Array = portrait_speaker.get("members", []) if typeof(portrait_speaker.get("members", [])) == TYPE_ARRAY else []
+	var character_ids: Array = []
+	var character_names: Array = []
+	for member_value in portrait_members:
+		if typeof(member_value) != TYPE_DICTIONARY:
+			continue
+		var member: Dictionary = member_value
+		character_ids.append(str(member.get("character_id", "")))
+		character_names.append(str(member.get("display_name", "")))
 	return {
 		"visible": visible,
 		"expanded": expanded,
@@ -373,6 +396,15 @@ func current_snapshot() -> Dictionary:
 		"portrait_renderer": "animated_character_model",
 		"portrait_presentation": str(portrait_model.speaker.get("presentation", "")) if portrait_model != null else "",
 		"portrait_count": clampi(int(portrait_model.speaker.get("portrait_count", 1)), 1, 3) if portrait_model != null else 0,
+		"character_pool_id": str(portrait_speaker.get("character_pool_id", "")),
+		"character_ids": character_ids,
+		"character_names": character_names,
+		"speaking_character_id": str(portrait_speaker.get("speaking_character_id", "")),
+		"speaking_character_name": str(portrait_speaker.get("speaking_character_name", "")),
+		"speaking_character_title": str(portrait_speaker.get("speaking_character_title", "")),
+		"voice_line_key": str(portrait_speaker.get("voice_line_key", "")),
+		"voice_line": str(portrait_speaker.get("voice_line", "")),
+		"character_encounter": (portrait_speaker.get("encounter", {}) as Dictionary).duplicate(true) if typeof(portrait_speaker.get("encounter", {})) == TYPE_DICTIONARY else {},
 		"name_plate": speaker_name_plate != null,
 		"topic": summary_label.text if summary_label != null else "",
 		"topic_visible": summary_label != null and summary_label.is_visible_in_tree(),
@@ -512,7 +544,7 @@ func _render() -> void:
 		summary.left(52) if not summary.is_empty() else str(option.get("display_name", "Talk")),
 		"  +%d" % maxi(0, queue_count - 1) if queue_count > 1 else "",
 	]
-	speaker_label.text = speaker_name if not speaker_name.is_empty() else "Unknown"
+	speaker_label.text = _speaker_display_name()
 	summary_label.text = str(option.get("display_name", "Talk"))
 	summary_label.visible = expanded
 	_begin_body_reveal(summary)
@@ -771,6 +803,16 @@ func _speaker_name() -> String:
 		return "Unknown"
 	var role := str(speaker.get("role", "stranger")).strip_edges()
 	return role.replace("_", " ").capitalize()
+
+
+func _speaker_display_name() -> String:
+	var speaker: Dictionary = entry.get("speaker", {}) if typeof(entry.get("speaker", {})) == TYPE_DICTIONARY else {}
+	var character_name := str(speaker.get("speaking_character_name", "")).strip_edges()
+	var character_title := str(speaker.get("speaking_character_title", "")).strip_edges()
+	if not character_name.is_empty():
+		return "%s — %s" % [character_name, character_title] if not character_title.is_empty() else character_name
+	var speaker_name := _speaker_name()
+	return speaker_name if not speaker_name.is_empty() else "Unknown"
 
 
 func _position_panel() -> void:

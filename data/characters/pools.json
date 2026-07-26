@@ -1,0 +1,16 @@
+[
+  {
+    "id": "crew_regulars",
+    "display_name": "Crew Regulars",
+    "member_ids": [
+      "crew_rook",
+      "crew_velvet",
+      "crew_knuckles",
+      "crew_switch",
+      "crew_mags",
+      "crew_bishop",
+      "crew_lucky"
+    ],
+    "lineup_size": 3
+  }
+]
