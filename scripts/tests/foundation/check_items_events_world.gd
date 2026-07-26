@@ -1268,7 +1268,7 @@ func _check_t4_7_family_loan_contract(library: ContentLibrary, failures: Array) 
 func _check_t4_7_crew_conversation_contract(library: ContentLibrary, failures: Array) -> void:
 	var crew_pool := library.character_pool("crew_regulars")
 	var pool_member_ids: Array = crew_pool.get("member_ids", []) if typeof(crew_pool.get("member_ids", [])) == TYPE_ARRAY else []
-	if library.characters.size() != 7 or pool_member_ids.size() != 7 or int(crew_pool.get("lineup_size", 0)) != 3:
+	if pool_member_ids.size() != 7 or int(crew_pool.get("lineup_size", 0)) != 3:
 		failures.append("T4.7 Crew character catalog must expose seven identities and three-person lineups.")
 	var authored_ids := {}
 	for character_value in library.characters:
@@ -1280,7 +1280,7 @@ func _check_t4_7_crew_conversation_contract(library: ContentLibrary, failures: A
 		var model: Dictionary = character.get("model", {}) if typeof(character.get("model", {})) == TYPE_DICTIONARY else {}
 		var voice: Dictionary = character.get("voice", {}) if typeof(character.get("voice", {})) == TYPE_DICTIONARY else {}
 		var lines: Dictionary = voice.get("lines", {}) if typeof(voice.get("lines", {})) == TYPE_DICTIONARY else {}
-		if str(character.get("display_name", "")).is_empty() or model.is_empty() or (lines.get("loan_offer", []) as Array).is_empty() or (lines.get("favor_due", []) as Array).is_empty():
+		if pool_member_ids.has(character_id) and (str(character.get("display_name", "")).is_empty() or model.is_empty() or (lines.get("loan_offer", []) as Array).is_empty() or (lines.get("favor_due", []) as Array).is_empty()):
 			failures.append("T4.7 Crew character %s is missing identity, model, or encounter voice lines." % character_id)
 	for member_id_value in pool_member_ids:
 		if not bool(authored_ids.get(str(member_id_value), false)):
@@ -1340,7 +1340,9 @@ func _check_t4_7_crew_conversation_contract(library: ContentLibrary, failures: A
 		var direct_members: Array = direct_speaker.get("members", []) if typeof(direct_speaker.get("members", [])) == TYPE_ARRAY else []
 		if direct_members.size() != 1 \
 			or str((direct_members[0] as Dictionary).get("character_id", "")) != "crew_rook" \
-			or str(direct_speaker.get("voice_line", "")).is_empty():
+			or str(direct_speaker.get("voice_line", "")).is_empty() \
+			or str((direct_speaker.get("lender_terms", {}) as Dictionary).get("lender_id", "")) != "the_crew" \
+			or int((direct_speaker.get("lender_terms", {}) as Dictionary).get("loan_amount", 0)) != 45:
 			failures.append("T4.7 Direct character_id speakers do not resolve a reusable model and voice.")
 		var loan_members: Array = loan_speaker.get("members", []) if typeof(loan_speaker.get("members", [])) == TYPE_ARRAY else []
 		var favor_members: Array = favor_speaker.get("members", []) if typeof(favor_speaker.get("members", [])) == TYPE_ARRAY else []
@@ -2678,8 +2680,10 @@ func _check_time_open_hours_foundation(library: ContentLibrary, failures: Array)
 	if str(closing_talk.get("dialogue_id", "")) != "venue_closing_notice":
 		failures.append("Closing-time forced travel did not queue the venue closing dialogue before opening the map.")
 	var closing_speaker: Dictionary = closing_talk.get("speaker", {}) if typeof(closing_talk.get("speaker", {})) == TYPE_DICTIONARY else {}
-	if str(closing_speaker.get("name", "")).strip_edges().is_empty():
-		failures.append("Closing-time departure dialogue did not identify an environment speaker.")
+	if str(closing_speaker.get("name", "")).strip_edges().is_empty() \
+		or str(closing_speaker.get("speaking_character_id", "")) != "dorian_room_host" \
+		or str(closing_speaker.get("voice_line", "")).strip_edges().is_empty():
+		failures.append("Closing-time departure dialogue did not resolve its authored room-host character.")
 	if bool(app.call("_world_map_overlay_is_visible")):
 		failures.append("Closing-time forced travel opened the map before the player acknowledged the departure dialogue.")
 	app.call("_acknowledge_closing_time_talk", "head_out")

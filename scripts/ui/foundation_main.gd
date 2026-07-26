@@ -1920,18 +1920,16 @@ func _ensure_closing_time_departure_talk() -> bool:
 
 
 func _closing_time_talk_speaker(dialogue: Dictionary) -> Dictionary:
-	if current_game != null and run_state != null:
-		var surface := current_game.surface_state(run_state, run_state.current_environment, _current_game_surface_ui_state())
-		var patrons := _copy_array(surface.get("patrons", surface.get("rail_bettors", [])))
-		for patron_index in range(patrons.size()):
-			if typeof(patrons[patron_index]) == TYPE_DICTIONARY and not (patrons[patron_index] as Dictionary).is_empty():
-				return _talk_speaker_from_patron(patrons[patron_index], patron_index, dialogue)
 	var fallback: Dictionary = dialogue.get("speaker", {}).duplicate(true) if typeof(dialogue.get("speaker", {})) == TYPE_DICTIONARY else {}
 	if run_state != null:
 		var room_name := str(run_state.current_environment.get("display_name", "Room")).strip_edges()
 		fallback["name"] = "%s Host" % room_name
 		fallback["behavior"] = "closing the room"
-	return _normalized_talk_speaker(fallback)
+	return _resolve_character_speaker(
+		_normalized_talk_speaker(fallback),
+		str(dialogue.get("id", CLOSING_TIME_DIALOGUE_ID)),
+		str(fallback.get("voice_line_key", "closing_notice"))
+	)
 
 
 func _acknowledge_closing_time_talk(choice_id: String) -> void:
@@ -2218,6 +2216,10 @@ func _talk_speaker_from_patron(patron: Dictionary, patron_index: int, event_defi
 		"hair_color": str(patron.get("hair_color", patron.get("hair", ""))),
 		"jacket_color": str(patron.get("jacket_color", patron.get("jacket", ""))),
 		"tell": str(patron.get("tell", "")),
+		"character_id": str(definition_speaker.get("character_id", "")).strip_edges(),
+		"character_pool_id": str(definition_speaker.get("character_pool_id", "")).strip_edges(),
+		"character_identity_key": str(definition_speaker.get("character_identity_key", "")).strip_edges(),
+		"voice_line_key": str(definition_speaker.get("voice_line_key", "")).strip_edges(),
 	}
 
 
@@ -2256,6 +2258,7 @@ func _normalized_talk_speaker(speaker: Dictionary) -> Dictionary:
 		"speaking_character_title": str(speaker.get("speaking_character_title", "")).strip_edges(),
 		"members": _copy_array(speaker.get("members", [])),
 		"encounter": _copy_dict(speaker.get("encounter", {})),
+		"lender_terms": _copy_dict(speaker.get("lender_terms", {})),
 	}
 
 

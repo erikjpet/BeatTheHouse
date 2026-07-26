@@ -933,7 +933,11 @@ func _check_dialogue_dock_main_flow(app: Control) -> bool:
 	if not bool(snapshot.get("visible", false)) or str(snapshot.get("event_id", "")) != "dialogue:pull_tab_clerk":
 		push_error("Dialogue dock fixture did not expose the pilot dialogue.")
 		return false
-	if not bool(snapshot.get("speaker_label_visible", false)) or str(snapshot.get("speaker_text", "")).strip_edges().is_empty() or str(snapshot.get("speaker_text", "")) != str(snapshot.get("speaker", "")):
+	var speaking_character_name := str(snapshot.get("speaking_character_name", "")).strip_edges()
+	if not bool(snapshot.get("speaker_label_visible", false)) \
+		or speaking_character_name != "Rina Sol" \
+		or str(snapshot.get("speaking_character_id", "")) != "rina_pull_tab_clerk" \
+		or not str(snapshot.get("speaker_text", "")).contains(speaking_character_name):
 		push_error("Dialogue dock fixture did not show the active speaker inside the expanded popup: %s." % str(snapshot.get("speaker_text", "")))
 		return false
 	var panel_rect := _snapshot_rect(snapshot.get("panel_rect", Rect2()))

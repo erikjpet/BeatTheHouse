@@ -45,7 +45,10 @@ func _check_authored_contract(library: ContentLibrary, failures: Array) -> void:
 	var conditions: Dictionary = definition.get("conditions", {})
 	var required_context: Dictionary = conditions.get("requires_context", {})
 	var choices: Array = payload.get("choices", [])
-	if str(definition.get("presentation", "")) != "talk" or str(speaker.get("name", "")) != "Dave":
+	if str(definition.get("presentation", "")) != "talk" \
+		or str(speaker.get("name", "")) != "Dave" \
+		or str(speaker.get("character_id", "")) != "dave_bus_regular" \
+		or str(speaker.get("voice_line_key", "")) != "bus_warning":
 		failures.append("Dave event does not use the existing talk presentation with Dave as speaker.")
 	if str(payload.get("summary", "")) != DAVE_LINE:
 		failures.append("Dave event does not contain the exact required sentence.")
@@ -140,7 +143,11 @@ func _check_ui_queue_resolution_and_save(_library: ContentLibrary, failures: Arr
 	var talk: Dictionary = app.call("current_talk_dock_snapshot")
 	if not bool(talk.get("visible", false)) or str(talk.get("event_id", "")) != EVENT_ID:
 		failures.append("Dave did not become the next talk encounter after the modal cleared.")
-	if str(talk.get("speaker", "")) != "Dave" or str(talk.get("summary", "")) != DAVE_LINE:
+	if str(talk.get("speaker", "")) != "Dave" \
+		or str(talk.get("speaking_character_name", "")) != "Dave Harlan" \
+		or str(talk.get("speaking_character_id", "")) != "dave_bus_regular" \
+		or str(talk.get("voice_line", "")) != DAVE_LINE \
+		or not str(talk.get("summary", "")).contains(DAVE_LINE):
 		failures.append("Dave talk presentation did not show his name and exact sentence: %s" % JSON.stringify(talk))
 	var bankroll_before := state.bankroll
 	var heat_before := state.suspicion_level()

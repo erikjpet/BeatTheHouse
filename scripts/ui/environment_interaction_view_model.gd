@@ -3,6 +3,7 @@ extends RefCounted
 
 const VisualStyle := preload("res://scripts/ui/visual_style.gd")
 const AttributeBadgesScript := preload("res://scripts/core/attribute_badges.gd")
+const CharacterRosterScript := preload("res://scripts/core/character_roster.gd")
 
 
 static func snapshot_signature(run_state: RunState) -> String:
@@ -251,18 +252,28 @@ static func interactable_object_view_list(run_state: RunState, library: ContentL
 	if bool(data.get("shopkeeper_should_draw", false)):
 		var enabled := bool(data.get("shopkeeper_available", false)) and not failed
 		var disabled_reason := "" if enabled else failed_reason if failed else "The counter is quiet right now."
-		var shopkeeper_actor := {
+		var shopkeeper_speaker := {
 			"role": "staff",
 			"name": str(data.get("shopkeeper_label", "Shopkeeper")),
-			"silhouette": "coat",
-			"portrait_count": 1,
+			"character_id": "sal_pawn_broker" if str(run_state.current_environment.get("archetype_id", "")) == "pawn_shop" else "",
+			"character_pool_id": "" if str(run_state.current_environment.get("archetype_id", "")) == "pawn_shop" else "shop_staff",
+			"character_identity_key": str(run_state.current_environment.get("id", run_state.current_environment.get("archetype_id", "merchant"))),
+			"voice_line_key": "shop_greeting",
 		}
+		var shopkeeper_actor := CharacterRosterScript.resolve_speaker(
+			shopkeeper_speaker,
+			library,
+			run_state,
+			str(shopkeeper_speaker.get("character_identity_key", "merchant")),
+			"shop_greeting"
+		)
+		var shopkeeper_name := str(shopkeeper_actor.get("speaking_character_name", data.get("shopkeeper_label", "Shopkeeper")))
 		objects.append(_object_with_rect({
 			"object_id": "shopkeeper:merchant",
 			"object_type": "shopkeeper",
 			"visual_type": "character",
 			"source_id": "merchant",
-			"label": str(data.get("shopkeeper_label", "Shopkeeper")),
+			"label": shopkeeper_name,
 			"short_description": str(data.get("shop_description", "")),
 			"identity_summary": character_identity_summary(shopkeeper_actor),
 			"presence": "fixture",

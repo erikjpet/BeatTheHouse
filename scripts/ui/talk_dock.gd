@@ -70,24 +70,11 @@ class PortraitModel:
 			_draw_visible_speaker()
 
 	func _draw_visible_speaker() -> void:
-		var hair := _speaker_color("hair_color", VisualStyle.SHADOW)
-		var jacket := _speaker_color("jacket_color", VisualStyle.BLUE)
-		var cycle := fposmod(animation_clock, 4.2) / 4.2
-		var speaking_gesture := fposmod(animation_clock, 2.8) > 1.9
-		var style := {
-			"name": "",
-			"skin": VisualStyle.PORTRAIT_SKIN,
-			"hair": hair,
-			"jacket": jacket,
-			"accent": VisualStyle.CYAN_2,
-			"role": str(speaker.get("role", "staff")),
-			"pose": "watching" if speaking_gesture else "speaking",
-			"eye_offset": sin(animation_clock * 0.72) * 0.55,
-			"blink": cycle > 0.92 and cycle < 0.975,
-			"holding_card": false,
-			"silhouette": str(speaker.get("silhouette", "coat")),
-		}
+		var members: Array = speaker.get("members", []) if typeof(speaker.get("members", [])) == TYPE_ARRAY else []
+		var member: Dictionary = members[0] if not members.is_empty() and typeof(members[0]) == TYPE_DICTIONARY else {}
+		var style := _visible_style(animation_clock, member)
 		var character_scale := clampf(minf(size.x / 98.0, size.y / 150.0) * 0.92, 0.92, 2.6)
+		character_scale *= _member_scale(member)
 		var speech_bob := sin(animation_clock * 3.1) * 1.15 * character_scale
 		PortraitTableGameVisualsScript._draw_table_character(self, style, Vector2(size.x * 0.5, size.y + 18.0 + speech_bob), character_scale, animation_clock)
 
