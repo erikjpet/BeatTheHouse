@@ -1436,6 +1436,9 @@ func _run() -> void:
 		return
 
 	var app: Control = MainScene.instantiate()
+	# UI interaction fixtures advance their simulation state explicitly. The
+	# continuous production clock has dedicated systems coverage.
+	app.set("continuous_environment_clock_enabled", false)
 	root.add_child(app)
 	await process_frame
 	await process_frame

@@ -2450,8 +2450,8 @@ func _check_time_open_hours_foundation(library: ContentLibrary, failures: Array)
 		failures.append("Clock display should roll over to Day 2 at midnight.")
 	var action_clock_before := run_state.game_clock_minutes
 	run_state.advance_environment_turns(2)
-	if run_state.game_clock_minutes != action_clock_before + RunState.ACTION_CLOCK_MINUTES * 2:
-		failures.append("Environment actions should advance the game clock by the action clock cost.")
+	if run_state.game_clock_minutes != action_clock_before:
+		failures.append("Environment actions should not advance the continuous game clock.")
 	run_state.game_clock_minutes = (24 + 3) * 60
 	if EnvironmentHoursScript.environment_open_at(bar_archetype, run_state.game_minute_of_day()):
 		failures.append("Bar should be closed at its 3 AM boundary.")
@@ -2493,10 +2493,20 @@ func _check_time_open_hours_foundation(library: ContentLibrary, failures: Array)
 	ui_environment["travel_hooks"] = []
 	ui_environment["layout"] = EnvironmentInstance.ensure_generated_layout(ui_environment)
 	ui_run.set_environment(ui_environment)
+	app.set("run_state", ui_run)
+	app.call("_set_current_screen", "ENVIRONMENT")
+	app.call("_refresh")
+	ui_run.game_clock_minutes = (24 + 3) * 60 - 1
+	app.set("environment_clock_fractional_minutes", 0.0)
+	app.call("_advance_run_game_clock", 0.26)
+	if ui_run.game_clock_minutes != (24 + 3) * 60:
+		failures.append("Idle environment time did not advance from real elapsed time at the authoritative rate.")
+	if not ui_run.closing_time_active():
+		failures.append("Idle environment time did not activate venue closing at the clock boundary.")
+	ui_run.clear_closing_time_state()
 	ui_run.game_clock_minutes = (24 + 3) * 60
 	ui_run.begin_closing_time(ui_run.current_environment, ui_run.game_minute_of_day())
 	ui_run.spend_closing_time_grace_action()
-	app.set("run_state", ui_run)
 	var closing_slot: GameModule = SlotGameScript.new()
 	closing_slot.setup(library.game("slot"))
 	var closing_game_states: Dictionary = ui_run.current_environment.get("game_states", {}).duplicate(true) if typeof(ui_run.current_environment.get("game_states", {})) == TYPE_DICTIONARY else {}

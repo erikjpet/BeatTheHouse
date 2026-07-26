@@ -6313,7 +6313,6 @@ func advance_environment_turns(amount: int = 1) -> void:
 	if current_environment.is_empty() or is_terminal():
 		return
 	var safe_amount := maxi(0, amount)
-	advance_action_clock(safe_amount)
 	simulation_msec = maxi(0, simulation_msec + safe_amount * SIMULATION_ACTION_MSEC)
 	event_cadence_advance_actions(safe_amount)
 	var alcohol_decay := safe_amount * DRUNK_TURN_DECAY

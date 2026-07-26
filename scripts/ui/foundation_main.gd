@@ -49,6 +49,8 @@ const ENVIRONMENT_CANVAS_MIN_SIZE := Vector2.ZERO
 const GAME_SURFACE_FOCUSED_MIN_SIZE := Vector2.ZERO
 const GAME_SURFACE_PREVIEW_MIN_SIZE := Vector2.ZERO
 const GAME_SURFACE_REALTIME_REFRESH_INTERVAL_MSEC := 16
+# Environment time is continuous: four in-game minutes pass per real second
+# while the player is on an unpaused room or game surface.
 const GAME_CLOCK_MINUTES_PER_REAL_SECOND := 4.0
 const TRAVEL_CLOCK_MINUTES_PER_BLOCK := 6
 const WALK_CLOCK_MINUTES_PER_BLOCK := 10
@@ -213,6 +215,8 @@ var surface_feature_music_ducking := false
 var drunk_time_anchor_real_msec := 0
 var drunk_time_anchor_scaled_msec := 0
 var drunk_time_last_scale := 1.0
+var continuous_environment_clock_enabled := true
+var environment_clock_fractional_minutes := 0.0
 var dev_game_test_mode := false
 var meta_session_active := false
 var meta_session_location_id: String = ""
@@ -453,10 +457,11 @@ func _ready() -> void:
 	_initialize_perf_telemetry()
 
 
-func _process(_delta: float) -> void:
+func _process(delta: float) -> void:
 	if perf_telemetry_overlay == null:
 		if run_layout_dirty:
 			_apply_run_screen_layout()
+		_advance_run_game_clock(delta)
 		if current_screen == SCREEN_GAME:
 			_advance_game_surface_automation()
 			_advance_game_surface_realtime_state()
@@ -472,6 +477,9 @@ func _process(_delta: float) -> void:
 		var layout_started_usec := Time.get_ticks_usec()
 		_apply_run_screen_layout()
 		perf_telemetry_overlay.record_foundation_subsystem_usec("layout", Time.get_ticks_usec() - layout_started_usec)
+	var clock_started_usec := Time.get_ticks_usec()
+	_advance_run_game_clock(delta)
+	perf_telemetry_overlay.record_foundation_subsystem_usec("environment_runtime", Time.get_ticks_usec() - clock_started_usec)
 	if current_screen == SCREEN_GAME:
 		var snapshot_started_usec := Time.get_ticks_usec()
 		_advance_game_surface_automation()
@@ -489,6 +497,29 @@ func _process(_delta: float) -> void:
 		var autosave_started_usec := Time.get_ticks_usec()
 		_flush_pending_autosave_if_ready()
 		perf_telemetry_overlay.record_foundation_subsystem_usec("autosave_flush", Time.get_ticks_usec() - autosave_started_usec)
+
+
+func _advance_run_game_clock(delta: float) -> void:
+	if not continuous_environment_clock_enabled:
+		return
+	if run_state == null or run_state.is_terminal() or meta_session_active:
+		return
+	if current_screen != SCREEN_ENVIRONMENT and current_screen != SCREEN_GAME:
+		return
+	var tree_paused := is_inside_tree() and get_tree().paused
+	if _modal_contract_blocks_player_input() or tree_paused:
+		return
+	environment_clock_fractional_minutes += maxf(0.0, delta) * GAME_CLOCK_MINUTES_PER_REAL_SECOND
+	var elapsed_minutes := int(floor(environment_clock_fractional_minutes))
+	if elapsed_minutes <= 0:
+		return
+	environment_clock_fractional_minutes -= float(elapsed_minutes)
+	run_state.advance_game_clock_minutes(elapsed_minutes)
+	var boundary_changed := _apply_closing_time_clock_boundary()
+	if structured_hud != null:
+		structured_hud.render(_run_status_hud_model())
+	if boundary_changed:
+		_refresh()
 
 
 func _input(event: InputEvent) -> void:
@@ -532,6 +563,7 @@ func start_foundation_run(seed_text: String = DEFAULT_SEED, challenge_config: Di
 	pending_autosave = false
 	pending_autosave_status_text = "Autosaved."
 	pending_autosave_after_frame = -1
+	environment_clock_fractional_minutes = 0.0
 	last_environment_runtime_result = {}
 	run_report_model = {}
 	run_report_model_key = ""
@@ -1813,6 +1845,37 @@ func _apply_closing_time_action_boundary(_source: String) -> bool:
 	_show_message(str(started.get("message", "The venue is closing.")))
 	_invalidate_travel_view_cache()
 	return false
+
+
+func _apply_closing_time_clock_boundary() -> bool:
+	if run_state == null or library == null or run_state.current_environment.is_empty():
+		return false
+	var open_status := _environment_open_status(_current_environment_archetype())
+	var closing_matches_current := _closing_time_state_matches_current_environment()
+	if bool(open_status.get("open", true)):
+		if closing_matches_current:
+			run_state.clear_closing_time_state()
+			_invalidate_travel_view_cache()
+			_autosave_foundation_run("Reopening time autosaved.")
+			return true
+		return false
+	if run_state.closing_time_active() and closing_matches_current:
+		return false
+	var started := run_state.begin_closing_time(run_state.current_environment, run_state.game_minute_of_day())
+	run_state.log_story({
+		"type": "closing_time",
+		"environment_id": str(run_state.current_environment.get("id", "")),
+		"environment_archetype_id": str(run_state.current_environment.get("archetype_id", "")),
+		"game_clock_minutes": run_state.game_clock_minutes,
+		"message": str(started.get("message", "The venue is closing.")),
+	})
+	if _current_wager_activity_incomplete():
+		_show_message("Closing time. Finish the wager already in progress.")
+	else:
+		_show_message(str(started.get("message", "The venue is closing.")))
+	_invalidate_travel_view_cache()
+	_autosave_foundation_run("Closing time autosaved.")
+	return true
 
 
 func _current_wager_activity_incomplete() -> bool:
@@ -3649,6 +3712,7 @@ func _load_foundation_run_from_slot(return_to_start_on_missing: bool) -> bool:
 	pending_autosave = false
 	pending_autosave_status_text = "Autosaved."
 	pending_autosave_after_frame = -1
+	environment_clock_fractional_minutes = 0.0
 	run_item_icon_texture_cache.clear()
 	run_state = loaded
 	_configure_coach_for_run()

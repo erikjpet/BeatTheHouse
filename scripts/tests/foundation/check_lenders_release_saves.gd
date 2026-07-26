@@ -102,7 +102,15 @@ func _check_run_report_foundation(failures: Array) -> void:
 	if bool(stored_take_home_reward.get("pending", true)) or str(stored_take_home_reward.get("summary_line", "")) != "Brought home Backpack.":
 		failures.append("Run report did not replace the take-home selector with its stored-item confirmation.")
 
-	var timeline := RunReportViewModelScript.build_timeline(run_state.heat_history, {"visited_path": ["bar", "grand_casino"], "nodes": [{"id": "bar", "display_name": "Bar", "position": {"x": 0.1, "y": 0.4}}, {"id": "grand_casino", "display_name": "Grand Casino", "position": {"x": 0.9, "y": 0.5}}]}, 8)
+	var report_start_clock := RunState.GAME_CLOCK_START_MINUTE
+	var timeline := RunReportViewModelScript.build_timeline(
+		run_state.heat_history,
+		{"visited_path": ["bar", "grand_casino"], "nodes": [{"id": "bar", "display_name": "Bar", "position": {"x": 0.1, "y": 0.4}}, {"id": "grand_casino", "display_name": "Grand Casino", "position": {"x": 0.9, "y": 0.5}}]},
+		8,
+		[{"type": "travel", "from_world_node_id": "bar", "to_world_node_id": "grand_casino", "departed_game_clock_minutes": report_start_clock + 16, "arrived_game_clock_minutes": report_start_clock + 24, "travel_minutes": 8}],
+		report_start_clock,
+		report_start_clock + 32
+	)
 	var boundary := RunReportViewModelScript.cursor_for_progress(timeline, 1.0)
 	if not bool(timeline.get("precomputed", false)) or int(boundary.get("action_index", -1)) != 8 or int(boundary.get("leg_index", -1)) != 1:
 		failures.append("Run report shared timeline did not map action, travel leg, and heat sample boundaries.")
