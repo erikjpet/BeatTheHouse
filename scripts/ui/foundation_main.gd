@@ -3876,13 +3876,22 @@ func _travel_to(target_id: String, target_label: String, choice_data: Dictionary
 	ignored_talk_entries = _pending_talk_entries()
 	if world_map_overlay != null:
 		world_map_overlay.visible = false
-	_show_travel_transition(target_id, target_label, "Leaving %s..." % str(previous_environment.get("display_name", "this room")))
+	var web_atomic_travel := _should_use_atomic_web_travel_transition()
+	if web_atomic_travel:
+		travel_transition_active = true
+		travel_transition_target_id = target_id
+		travel_transition_target_label = target_label
+		if travel_transition_overlay != null:
+			travel_transition_overlay.visible = false
+	else:
+		_show_travel_transition(target_id, target_label, "Leaving %s..." % str(previous_environment.get("display_name", "this room")))
 	_hide_event_choice_popup()
 	_hide_run_inventory_popup()
 	_hide_run_journal_popup()
 	_show_message("Traveling to %s..." % target_label)
-	_refresh()
-	if _should_yield_for_travel_transition():
+	if not web_atomic_travel:
+		_refresh()
+	if not web_atomic_travel and _should_yield_for_travel_transition():
 		await get_tree().process_frame
 	var route_risk := {} if local_casino_room_move else run_state.travel_route_risk(route, target_id)
 	var travel_heat := run_state.begin_travel_suspicion_decay(route, target_id)
@@ -3952,8 +3961,11 @@ func _travel_to(target_id: String, target_label: String, choice_data: Dictionary
 	_show_message(str(travel_result.get("message", "Travel complete: %s." % destination_name)))
 	_advance_alcohol_absorption()
 	_autosave_foundation_run("Autosaved.")
-	_refresh()
-	if travel_transition_active:
+	if web_atomic_travel:
+		_hide_travel_transition()
+	else:
+		_refresh()
+	if not web_atomic_travel and travel_transition_active:
 		_update_travel_transition("Arrived at %s" % destination_name, "The room is ready.")
 		if _should_yield_for_travel_transition():
 			await get_tree().process_frame
@@ -3974,6 +3986,8 @@ func _travel_to(target_id: String, target_label: String, choice_data: Dictionary
 		else:
 			_refresh_talk_dock()
 			_refresh()
+	elif web_atomic_travel:
+		_refresh()
 
 
 func _linda_cage_choice_status(choice_id: String) -> Dictionary:
@@ -4166,12 +4180,16 @@ func _hide_travel_transition() -> void:
 		travel_transition_overlay.visible = false
 
 
+func _should_use_atomic_web_travel_transition() -> bool:
+	return travel_transition_force_web_runtime_for_test or OS.has_feature("web") or OS.get_name() == "Web"
+
+
 func _should_yield_for_travel_transition() -> bool:
 	# Browser tabs can suspend requestAnimationFrame while hidden or throttled.
 	# Holding the exclusive travel lock across a frame await can therefore strand
 	# the run even though destination generation already remains synchronous and
 	# bounded. Web travel stays atomic; desktop keeps the presentation frames.
-	if travel_transition_force_web_runtime_for_test or OS.has_feature("web") or OS.get_name() == "Web":
+	if _should_use_atomic_web_travel_transition():
 		return false
 	return DisplayServer.get_name().to_lower() != "headless" and is_inside_tree()
 

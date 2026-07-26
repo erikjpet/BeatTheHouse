@@ -549,14 +549,19 @@ func _check_web_travel_cannot_strand_transition(app: Control) -> bool:
 		var choices_value: Variant = app.call("_travel_choice_view_list")
 		var choices: Array = choices_value if typeof(choices_value) == TYPE_ARRAY else []
 		var selected_choice: Dictionary = {}
-		for choice_value in choices:
-			if typeof(choice_value) != TYPE_DICTIONARY:
-				continue
-			var choice: Dictionary = choice_value
-			var target_id := str(choice.get("id", "")).strip_edges()
-			if not target_id.is_empty() and bool(choice.get("enabled", true)) and target_id != run_state.current_world_node_id():
-				selected_choice = choice
-				break
+		if travel_index == 0 and run_state.current_world_node_id() != "corner_store":
+			selected_choice = app.call("_travel_choice", "corner_store")
+			if selected_choice.is_empty() or not bool(selected_choice.get("enabled", true)):
+				selected_choice = {"id": "corner_store", "label": "Corner Store", "enabled": true, "route": app.call("_world_route_for_target", "corner_store")}
+		else:
+			for choice_value in choices:
+				if typeof(choice_value) != TYPE_DICTIONARY:
+					continue
+				var choice: Dictionary = choice_value
+				var target_id := str(choice.get("id", "")).strip_edges()
+				if not target_id.is_empty() and bool(choice.get("enabled", true)) and target_id != run_state.current_world_node_id():
+					selected_choice = choice
+					break
 		if selected_choice.is_empty():
 			app.set("travel_transition_force_web_runtime_for_test", false)
 			push_error("Web travel regression could not find enabled route %d." % (travel_index + 1))
@@ -582,6 +587,17 @@ func _check_web_travel_cannot_strand_transition(app: Control) -> bool:
 			push_error("Web travel %d did not advance exactly once." % (travel_index + 1))
 			return false
 		await process_frame
+		for settle_frame in range(4):
+			await process_frame
+			var overlay_snapshot: Dictionary = app.call("current_overlay_state_snapshot")
+			if bool(overlay_snapshot.get("travel_transition_active", false)):
+				app.set("travel_transition_force_web_runtime_for_test", false)
+				push_error("Web travel %d reactivated the transition lock after frame %d." % [travel_index + 1, settle_frame + 1])
+				return false
+			if not bool(overlay_snapshot.get("contract_valid", false)):
+				app.set("travel_transition_force_web_runtime_for_test", false)
+				push_error("Web travel %d left invalid overlay state after frame %d: %s" % [travel_index + 1, settle_frame + 1, JSON.stringify(overlay_snapshot.get("violations", []))])
+				return false
 	app.set("travel_transition_force_web_runtime_for_test", false)
 	app.call("return_to_main_menu")
 	await process_frame
