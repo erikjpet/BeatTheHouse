@@ -556,6 +556,8 @@ func start_foundation_run(seed_text: String = DEFAULT_SEED, challenge_config: Di
 	if library == null:
 		_initialize_foundation()
 	_finish_conclusion_animation()
+	if structured_hud != null:
+		structured_hud.reset_wallet_delta()
 	meta_session_active = false
 	meta_session_location_id = ""
 	meta_last_panel_message = ""

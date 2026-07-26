@@ -24,6 +24,8 @@ var time_detail: Label
 var reduce_motion := false
 var compact_mode := false
 var _last_bankroll := 0
+var _last_bankroll_delta := 0
+var _wallet_delta_tone := ""
 var _has_rendered := false
 
 
@@ -34,6 +36,16 @@ func _ready() -> void:
 
 func set_reduce_motion(enabled: bool) -> void:
 	reduce_motion = enabled
+
+
+func reset_wallet_delta() -> void:
+	_last_bankroll = 0
+	_last_bankroll_delta = 0
+	_wallet_delta_tone = ""
+	_has_rendered = false
+	if wallet_delta != null:
+		wallet_delta.text = ""
+		wallet_delta.modulate = Color.WHITE
 
 
 func set_compact_mode(enabled: bool) -> void:
@@ -52,8 +64,13 @@ func render(model: Dictionary) -> void:
 		return
 	var bankroll := int(model.get("bankroll", 0))
 	wallet_value.text = "$%d" % bankroll
-	var bankroll_delta := int(model.get("bankroll_delta", bankroll - _last_bankroll if _has_rendered else 0))
-	_render_delta(bankroll_delta)
+	var observed_delta := bankroll - _last_bankroll if _has_rendered else 0
+	var bankroll_delta := int(model.get("bankroll_delta", observed_delta))
+	if bankroll_delta == 0:
+		bankroll_delta = observed_delta
+	if bankroll_delta != 0:
+		_last_bankroll_delta = bankroll_delta
+	_render_delta(_last_bankroll_delta)
 	_last_bankroll = bankroll
 	_has_rendered = true
 
@@ -85,6 +102,9 @@ func current_snapshot() -> Dictionary:
 		"rect": get_global_rect(),
 		"wallet": wallet_value.text if wallet_value != null else "",
 		"wallet_delta": wallet_delta.text if wallet_delta != null else "",
+		"wallet_delta_alpha": wallet_delta.modulate.a if wallet_delta != null else 0.0,
+		"wallet_delta_tone": _wallet_delta_tone,
+		"wallet_delta_static": true,
 		"chips_visible": chips_chip != null and chips_chip.visible,
 		"chips": chips_value.text if chips_value != null else "",
 		"heat": heat_meter.current_snapshot() if heat_meter != null else {},
@@ -228,16 +248,13 @@ func _meter_group(icon_id: String, title: String) -> HBoxContainer:
 
 func _render_delta(delta: int) -> void:
 	wallet_delta.text = "%+d" % delta if delta != 0 else ""
-	if delta == 0 or reduce_motion:
+	if delta == 0:
+		_wallet_delta_tone = ""
 		wallet_delta.modulate = Color.WHITE
 		return
-	wallet_delta.modulate = Color(VisualStyle.role("success" if delta > 0 else "danger"), 0.0)
-	var tween := create_tween()
-	tween.set_trans(Tween.TRANS_CUBIC)
-	tween.set_ease(Tween.EASE_OUT)
-	tween.tween_property(wallet_delta, "modulate:a", 1.0, VisualStyle.MOTION_QUICK)
-	tween.tween_interval(VisualStyle.MOTION_STANDARD)
-	tween.tween_property(wallet_delta, "modulate:a", 0.0, VisualStyle.MOTION_SLOW)
+	_wallet_delta_tone = "success" if delta > 0 else "danger"
+	FoundationWidgets.set_control_font_color(wallet_delta, VisualStyle.role(_wallet_delta_tone))
+	wallet_delta.modulate = Color(Color.WHITE, VisualStyle.HUD_LAST_DELTA_ALPHA)
 
 
 func _render_status_icons(statuses_value: Variant) -> void:
