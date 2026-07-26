@@ -87,6 +87,18 @@ static func game_hook_interactable_objects(host: Variant, apply_failure_lock: bo
 				continue
 			var dialogue_id := str(hook.get("dialogue_id", "")).strip_edges()
 			var object_type = host.CONTEXT_MODE_DIALOGUE if not dialogue_id.is_empty() else host.CONTEXT_MODE_GAME_HOOK
+			var character_actor: Dictionary = {}
+			var visual_type := str(hook.get("visual_type", "service"))
+			if not dialogue_id.is_empty():
+				var dialogue_definition: Dictionary = host.library.dialogue(dialogue_id)
+				var dialogue_speaker: Dictionary = dialogue_definition.get("speaker", {}) if typeof(dialogue_definition.get("speaker", {})) == TYPE_DICTIONARY else {}
+				if not dialogue_speaker.is_empty() and bool(dialogue_speaker.get("environment_actor", true)):
+					character_actor = host._resolve_character_speaker(
+						host._normalized_talk_speaker(dialogue_speaker),
+						dialogue_id,
+						str(dialogue_speaker.get("voice_line_key", ""))
+					)
+					visual_type = "character"
 			var object_id := str(hook.get("object_id", ""))
 			if object_id.is_empty():
 				object_id = "dialogue:%s" % dialogue_id if not dialogue_id.is_empty() else "game_hook:%s:%s" % [game_id, hook_id]
@@ -98,11 +110,12 @@ static func game_hook_interactable_objects(host: Variant, apply_failure_lock: bo
 			objects.append(host._make_interactable_object({
 				"object_id": object_id,
 				"object_type": object_type,
-				"visual_type": str(hook.get("visual_type", "service")),
+				"visual_type": visual_type,
 				"source_id": dialogue_id if not dialogue_id.is_empty() else hook_id,
 				"parent_id": game_id,
 				"label": str(hook.get("label", host._label_from_id(hook_id))),
 				"short_description": str(hook.get("short_description", "")),
+				"identity_summary": host.EnvironmentInteractionViewModelScript.character_identity_summary(character_actor),
 				"enabled": enabled,
 				"disabled_reason": disabled_reason if not enabled else "",
 				"action_summary": str(hook.get("action_summary", "")),
@@ -112,6 +125,7 @@ static func game_hook_interactable_objects(host: Variant, apply_failure_lock: bo
 				"attribute_badges": host._copy_array(hook.get("attribute_badges", [])),
 				"visual_key": str(hook.get("visual_key", "")),
 				"icon_key": str(hook.get("icon_key", "service")),
+				"character_actor": character_actor,
 				"unique_object_class": str(hook.get("unique_object_class", "")).strip_edges(),
 				"unique_object_priority": int(hook.get("unique_object_priority", 0)),
 				"allow_duplicate_unique_class": bool(hook.get("allow_duplicate_unique_class", false)),
@@ -254,6 +268,17 @@ static func hook_interactable_objects(host: Variant, object_type: String, option
 		var duration_minutes := maxi(0, int(option.get("duration_minutes", 0)))
 		var duration_summary := "Takes 1 hour." if duration_minutes == 60 else "Takes %d minutes." % duration_minutes if duration_minutes > 0 else ""
 		var visual_type := "drink" if object_type == host.CONTEXT_MODE_SERVICE and category == "alcohol" else object_type
+		var character_actor: Dictionary = {}
+		if object_type == host.CONTEXT_MODE_LENDER:
+			var lender_definition: Dictionary = host.library.lender(hook_id)
+			var lender_speaker: Dictionary = lender_definition.get("speaker", {}) if typeof(lender_definition.get("speaker", {})) == TYPE_DICTIONARY else {}
+			if str(lender_definition.get("lender_type", "")) != "family_phone" and not lender_speaker.is_empty() and bool(lender_speaker.get("environment_actor", true)):
+				character_actor = host._resolve_character_speaker(
+					host._normalized_talk_speaker(lender_speaker),
+					hook_id,
+					str(lender_speaker.get("voice_line_key", "loan_offer"))
+				)
+				visual_type = "character"
 		var icon_key := str(option.get("icon_key", visual_type)).strip_edges()
 		if icon_key.is_empty():
 			icon_key = visual_type
@@ -264,6 +289,7 @@ static func hook_interactable_objects(host: Variant, object_type: String, option
 			"source_id": hook_id,
 			"label": str(option.get("display_name", host._label_from_id(hook_id))),
 			"short_description": str(option.get("summary", "")),
+			"identity_summary": host.EnvironmentInteractionViewModelScript.character_identity_summary(character_actor),
 			"presence": presence,
 			"interactive": enabled or availability_class == RunState.AVAILABILITY_TRANSIENT_BLOCKED,
 			"enabled": enabled,
@@ -279,6 +305,7 @@ static func hook_interactable_objects(host: Variant, object_type: String, option
 			"surface": str(option.get("surface", "")),
 			"icon_key": icon_key,
 			"asset_path": str(option.get("asset_path", "")),
+			"character_actor": character_actor,
 			"available_actions": [{"id": "use_%s_hook" % object_type, "label": "Use"}] if enabled else [],
 			"confirm_action_id": "use_%s_hook" % object_type if enabled else "",
 			"focus_rect": host._interaction_rect_for_object(object_id, object_type, index),

@@ -540,6 +540,14 @@ static func eligible_event_option_with_context(host: Variant, event_id: String, 
 		var option_choice: Dictionary = option_choices[last_index]
 		option_choice["attribute_badges"] = host.AttributeBadgesScript.for_event_choice(option_choice)
 		option_choices[last_index] = option_choice
+	var presentation := str(event_definition.get("presentation", "modal")).strip_edges()
+	var speaker: Dictionary = event_definition.get("speaker", {}) if typeof(event_definition.get("speaker", {})) == TYPE_DICTIONARY else {}
+	if presentation == "talk" and not speaker.is_empty():
+		speaker = host._resolve_character_speaker(
+			host._normalized_talk_speaker(speaker),
+			event_id,
+			str(speaker.get("voice_line_key", ""))
+		)
 	return {
 		"id": event_id,
 		"display_name": event_module.get_display_name(),
@@ -550,6 +558,8 @@ static func eligible_event_option_with_context(host: Variant, event_id: String, 
 		"visual_key": str(event_definition.get("visual_key", event_definition.get("type", "event"))),
 		"icon_key": str(event_definition.get("icon_key", event_id)),
 		"environment_prop": str(event_definition.get("environment_prop", event_definition.get("prop", ""))),
+		"presentation": presentation,
+		"speaker": speaker,
 		"unique_object_class": str(event_definition.get("unique_object_class", "")).strip_edges(),
 		"unique_object_priority": int(event_definition.get("unique_object_priority", 0)),
 		"allow_duplicate_unique_class": bool(event_definition.get("allow_duplicate_unique_class", false)),

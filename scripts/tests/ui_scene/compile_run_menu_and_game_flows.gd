@@ -2000,6 +2000,37 @@ func _check_lender_acceptance_does_not_open_motel_popup(app: Control) -> bool:
 	app.call("clear_interaction_focus")
 	app.call("_refresh")
 	await process_frame
+	var environment_snapshot: Dictionary = app.call("current_environment_view_snapshot")
+	var crew_world_object := _object_by_id(environment_snapshot.get("interactable_objects", []), "lender:the_crew")
+	var crew_world_actor: Dictionary = crew_world_object.get("character_actor", {}) if typeof(crew_world_object.get("character_actor", {})) == TYPE_DICTIONARY else {}
+	var crew_world_members: Array = crew_world_actor.get("members", []) if typeof(crew_world_actor.get("members", [])) == TYPE_ARRAY else []
+	var crew_world_actions: Array = crew_world_object.get("available_actions", []) if typeof(crew_world_object.get("available_actions", [])) == TYPE_ARRAY else []
+	if str(crew_world_object.get("visual_type", "")) != "character" \
+		or crew_world_members.size() != 3 \
+		or str(crew_world_object.get("identity_summary", "")).find("Present:") == -1 \
+		or crew_world_actions.is_empty() \
+		or str(crew_world_object.get("confirm_action_id", "")) != "use_lender_hook":
+		push_error("The Crew lender was not represented by its three interactive environment actors: %s." % JSON.stringify(crew_world_object))
+		return false
+	var environment_canvas: Control = app.get("environment_canvas")
+	var canvas_snapshot: Dictionary = environment_canvas.call("current_view_snapshot")
+	var crew_canvas_object := _canvas_object_by_id(canvas_snapshot.get("objects", []), "lender:the_crew")
+	var crew_canvas_actor: Dictionary = crew_canvas_object.get("character_actor", {}) if typeof(crew_canvas_object.get("character_actor", {})) == TYPE_DICTIONARY else {}
+	var crew_canvas_members: Array = crew_canvas_actor.get("members", []) if typeof(crew_canvas_actor.get("members", [])) == TYPE_ARRAY else []
+	if str(crew_canvas_object.get("type", "")) != "character" or crew_canvas_members.size() != 3:
+		push_error("The Crew environment actor fell back to an icon object: %s." % JSON.stringify(crew_canvas_object))
+		return false
+	environment_canvas.call("_set_hovered_object", "lender:the_crew")
+	await process_frame
+	var hover_snapshot: Dictionary = environment_canvas.call("current_view_snapshot")
+	var hover_info: Dictionary = hover_snapshot.get("selected_info", {}) if typeof(hover_snapshot.get("selected_info", {})) == TYPE_DICTIONARY else {}
+	var hover_lines: Array = hover_info.get("lines", []) if typeof(hover_info.get("lines", [])) == TYPE_ARRAY else []
+	if str(hover_snapshot.get("hovered_object_id", "")) != "lender:the_crew" \
+		or not bool(hover_info.get("visible", false)) \
+		or str(hover_info.get("object_id", "")) != "lender:the_crew" \
+		or "\n".join(hover_lines).find("Present:") == -1:
+		push_error("Hovering the Crew actors did not expose their existing information tooltip: %s." % JSON.stringify(hover_snapshot))
+		return false
 	if not bool(app.call("select_lender_hook", "the_crew")):
 		push_error("Crew lender popup regression fixture could not select The Crew.")
 		return false
@@ -2016,6 +2047,10 @@ func _check_lender_acceptance_does_not_open_motel_popup(app: Control) -> bool:
 	var unique_crew_character_ids := {}
 	for character_id_value in crew_character_ids:
 		unique_crew_character_ids[str(character_id_value)] = true
+	var crew_world_character_ids: Array = []
+	for member_value in crew_world_members:
+		if typeof(member_value) == TYPE_DICTIONARY:
+			crew_world_character_ids.append(str((member_value as Dictionary).get("character_id", "")))
 	if str(talk.get("character_pool_id", "")) != "crew_regulars" \
 		or crew_character_ids.size() != 3 \
 		or unique_crew_character_ids.size() != 3 \
@@ -2025,6 +2060,7 @@ func _check_lender_acceptance_does_not_open_motel_popup(app: Control) -> bool:
 		or not str(talk.get("speaker_text", "")).contains(str(talk.get("speaking_character_name", ""))) \
 		or not str(talk.get("speaker_text", "")).contains(str(talk.get("speaking_character_title", ""))) \
 		or str(talk.get("voice_line", "")).is_empty() \
+		or JSON.stringify(crew_character_ids) != JSON.stringify(crew_world_character_ids) \
 		or str(talk.get("portrait_presentation", "")) == "faceless_silhouette":
 		push_error("Crew lender did not resolve three visible unique identities with an authored lead voice: %s." % JSON.stringify(talk))
 		return false
@@ -2417,18 +2453,6 @@ func _map_icon_marker(markers: Array, node_id: String) -> Dictionary:
 		if str(marker.get("id", "")) == node_id:
 			return marker.duplicate(true)
 	return {}
-
-
-func _copy_array(value: Variant) -> Array:
-	if typeof(value) != TYPE_ARRAY:
-		return []
-	return (value as Array).duplicate(true)
-
-
-func _copy_dict(value: Variant) -> Dictionary:
-	if typeof(value) != TYPE_DICTIONARY:
-		return {}
-	return (value as Dictionary).duplicate(true)
 
 
 func _event_choice_has_trigger_event(event_definition: Dictionary, choice_id: String) -> bool:

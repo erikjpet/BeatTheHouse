@@ -12,6 +12,7 @@ const SmallScreenPolicyScript := preload("res://scripts/ui/small_screen_policy.g
 const IconSpriteRendererScript := preload("res://scripts/ui/icon_sprite_renderer.gd")
 const AttributeBadgeRowScript := preload("res://scripts/ui/attribute_badge_row.gd")
 const DrunkDistortionOverlayScript := preload("res://scripts/ui/drunk_distortion_overlay.gd")
+const TableGameVisualsScript := preload("res://scripts/games/table_game_visuals.gd")
 
 const C_DARK := VisualStyleScript.DARK
 const C_DARK_2 := VisualStyleScript.DARK_2
@@ -1617,6 +1618,8 @@ func _draw_scene_objects() -> void:
 				_draw_travel_prop(rect, object_data, selected or hovered)
 			"event":
 				_draw_event_prop(rect, object_data, selected or hovered)
+			"character":
+				_draw_character_actor(rect, object_data)
 			"drink":
 				_draw_drink_prop(rect, selected or hovered)
 			_:
@@ -1643,6 +1646,7 @@ func _draw_selected_object_info() -> void:
 		return
 	var object_data: Dictionary = info.get("object", {})
 	var object_type := str(object_data.get("type", "item"))
+	var interaction_type := str(object_data.get("interaction_type", object_type))
 	var card := _animated_info_card_rect(info)
 	var title := str(info.get("title", "")).strip_edges()
 	var lines: Array = info.get("lines", [])
@@ -1653,7 +1657,7 @@ func _draw_selected_object_info() -> void:
 	draw_rect(card, Color(accent.r, accent.g, accent.b, 0.82), false, 1)
 	draw_line(card.position + Vector2(0, OBJECT_INFO_HEADER_RULE_Y), Vector2(card.end.x, card.position.y + OBJECT_INFO_HEADER_RULE_Y), Color(accent.r, accent.g, accent.b, 0.34), 1)
 	var font := get_theme_default_font()
-	var type_text := _player_facing_object_type(object_type)
+	var type_text := _player_facing_object_type(interaction_type)
 	var title_text := title if not title.is_empty() else type_text
 	var type_width := _object_info_type_width(type_text, font)
 	var title_width := maxf(20.0, card.size.x - type_width - OBJECT_INFO_PADDING_X * 2.0 - OBJECT_INFO_TYPE_GAP)
@@ -1949,6 +1953,7 @@ func _objects_from_interactable_records(records: Array) -> Array:
 			"attribute_badges": _copy_array(record.get("attribute_badges", [])),
 			"runtime_state": (record.get("runtime_state", {}) as Dictionary).duplicate(true) if typeof(record.get("runtime_state", {})) == TYPE_DICTIONARY else {},
 			"visual_state": (record.get("visual_state", {}) as Dictionary).duplicate(true) if typeof(record.get("visual_state", {})) == TYPE_DICTIONARY else {},
+			"character_actor": (record.get("character_actor", {}) as Dictionary).duplicate(true) if typeof(record.get("character_actor", {})) == TYPE_DICTIONARY else {},
 			"state_badge": str(record.get("state_badge", "")),
 			"visual_key": str(record.get("visual_key", "")),
 			"prop": str(record.get("prop", "")),
@@ -2270,6 +2275,8 @@ func _fallback_object_description(object_data: Dictionary) -> String:
 			return "A merchant watching the counter."
 		"lender":
 			return "Fast cash with strings attached."
+		"character":
+			return "Someone waiting to talk."
 		_:
 			return str(object_data.get("action_summary", "")).strip_edges()
 
@@ -2292,6 +2299,8 @@ func _player_facing_object_type(object_type: String) -> String:
 			return "Shopkeeper"
 		"lender":
 			return "Lender"
+		"character":
+			return "Character"
 		"home_tenure":
 			return "Home"
 		"home_sleep":
@@ -3235,7 +3244,7 @@ func _color_for_object_type(object_type: String) -> Color:
 			return C_PINK
 		"travel":
 			return C_ORANGE
-		"item", "drink", "service", "shopkeeper", "lender":
+		"item", "drink", "service", "shopkeeper", "lender", "character":
 			return C_YELLOW
 		"home_tenure":
 			return C_AMBER
@@ -3444,6 +3453,76 @@ func _prune_object_animation_phase_cache() -> void:
 		var key := str(key_value)
 		if not bool(active_keys.get(key, false)):
 			object_animation_phase_cache.erase(key)
+
+
+func _draw_character_actor(rect: Rect2, object_data: Dictionary) -> void:
+	var actor: Dictionary = object_data.get("character_actor", {}) if typeof(object_data.get("character_actor", {})) == TYPE_DICTIONARY else {}
+	if actor.is_empty():
+		return
+	var members: Array = actor.get("members", []) if typeof(actor.get("members", [])) == TYPE_ARRAY else []
+	var portrait_count := clampi(int(actor.get("portrait_count", maxi(1, members.size()))), 1, 3)
+	var faceless := str(actor.get("presentation", "")) == "faceless_silhouette"
+	var phase := _object_animation_phase(object_data)
+	var animation_clock := phase if reduce_motion else flicker + phase
+	var width_requirement := 54.0 + float(portrait_count - 1) * 38.0
+	var base_scale := clampf(minf(rect.size.y / 86.0, rect.size.x / width_requirement), 0.42, 0.74)
+	var foot_y := rect.end.y - 2.0
+	if portrait_count >= 2:
+		var left_member: Dictionary = members[1] if members.size() > 1 and typeof(members[1]) == TYPE_DICTIONARY else {}
+		TableGameVisualsScript._draw_table_character(
+			self,
+			_character_actor_style(left_member, actor, faceless, animation_clock + 0.7),
+			Vector2(rect.position.x + rect.size.x * 0.30, foot_y - 1.0),
+			base_scale * 0.82 * _character_actor_scale(left_member),
+			animation_clock + 0.7
+		)
+	if portrait_count >= 3:
+		var right_member: Dictionary = members[2] if members.size() > 2 and typeof(members[2]) == TYPE_DICTIONARY else {}
+		TableGameVisualsScript._draw_table_character(
+			self,
+			_character_actor_style(right_member, actor, faceless, animation_clock + 1.4),
+			Vector2(rect.position.x + rect.size.x * 0.70, foot_y - 1.0),
+			base_scale * 0.82 * _character_actor_scale(right_member),
+			animation_clock + 1.4
+		)
+	var lead_member: Dictionary = members[0] if not members.is_empty() and typeof(members[0]) == TYPE_DICTIONARY else {}
+	TableGameVisualsScript._draw_table_character(
+		self,
+		_character_actor_style(lead_member, actor, faceless, animation_clock),
+		Vector2(rect.position.x + rect.size.x * 0.50, foot_y),
+		base_scale * _character_actor_scale(lead_member),
+		animation_clock
+	)
+
+
+func _character_actor_style(member: Dictionary, actor: Dictionary, faceless: bool, clock: float) -> Dictionary:
+	var model: Dictionary = member.get("model", {}) if typeof(member.get("model", {})) == TYPE_DICTIONARY else {}
+	var cycle := fposmod(clock, 4.2) / 4.2
+	return {
+		"name": "",
+		"skin": C_DARK_3 if faceless else _character_actor_color(model, "skin_color", Color("#c49371")),
+		"hair": C_DARK if faceless else _character_actor_color(model, "hair_color", _character_actor_color(actor, "hair_color", C_SHADOW)),
+		"jacket": C_SHADOW if faceless else _character_actor_color(model, "jacket_color", _character_actor_color(actor, "jacket_color", C_BLUE)),
+		"accent": C_SOFT if faceless else _character_actor_color(model, "accent_color", C_CYAN_2),
+		"role": str(member.get("role", actor.get("role", "staff"))),
+		"pose": "watching" if fposmod(clock, 2.8) > 1.9 else "idle",
+		"eye_offset": 0.0 if reduce_motion else sin(clock * 0.72) * 0.55,
+		"blink": false if reduce_motion else cycle > 0.92 and cycle < 0.975,
+		"holding_card": false,
+		"silhouette": str(model.get("silhouette", actor.get("silhouette", "coat"))),
+		"faceless": faceless,
+	}
+
+
+func _character_actor_color(source: Dictionary, field: String, fallback: Color) -> Color:
+	var text := str(source.get(field, "")).strip_edges()
+	return Color(text) if not text.is_empty() and Color.html_is_valid(text) else fallback
+
+
+func _character_actor_scale(member: Dictionary) -> float:
+	var model: Dictionary = member.get("model", {}) if typeof(member.get("model", {})) == TYPE_DICTIONARY else {}
+	var authored_scale := clampf(float(model.get("scale", 1.0)), 0.75, 1.25)
+	return lerpf(0.90, 1.08, (authored_scale - 0.75) / 0.50)
 
 
 func _draw_item_prop(rect: Rect2, object_data: Dictionary, selected: bool, surface: String) -> void:

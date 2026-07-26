@@ -1330,6 +1330,18 @@ func _check_t4_7_crew_conversation_contract(library: ContentLibrary, failures: A
 		var favor_speaker := CharacterRosterScript.resolve_speaker(crew_event_speaker, library, second_run, "crew_favor_delivery", "favor_due")
 		if first_run.rng_state != rng_state_before_resolution:
 			failures.append("T4.7 Crew roster resolution consumed authoritative run RNG.")
+		var direct_speaker := CharacterRosterScript.resolve_speaker(
+			{"character_id": "crew_rook", "character_identity_key": "rook_contact"},
+			library,
+			first_run,
+			"rook_contact",
+			"loan_offer"
+		)
+		var direct_members: Array = direct_speaker.get("members", []) if typeof(direct_speaker.get("members", [])) == TYPE_ARRAY else []
+		if direct_members.size() != 1 \
+			or str((direct_members[0] as Dictionary).get("character_id", "")) != "crew_rook" \
+			or str(direct_speaker.get("voice_line", "")).is_empty():
+			failures.append("T4.7 Direct character_id speakers do not resolve a reusable model and voice.")
 		var loan_members: Array = loan_speaker.get("members", []) if typeof(loan_speaker.get("members", [])) == TYPE_ARRAY else []
 		var favor_members: Array = favor_speaker.get("members", []) if typeof(favor_speaker.get("members", [])) == TYPE_ARRAY else []
 		var selected_ids := {}
@@ -3848,6 +3860,11 @@ func _check_lender_debt_foundation(library: ContentLibrary, failures: Array) -> 
 		elif lender_id == "the_crew":
 			if str(speaker.get("character_pool_id", "")) != "crew_regulars" or str(speaker.get("presentation", "")) == "faceless_silhouette":
 				failures.append("The Crew lender does not use the visible reusable character pool.")
+		elif lender_id == "brother_in_law":
+			if bool(speaker.get("environment_actor", true)):
+				failures.append("Phone-only brother-in-law lender was placed as a physical environment actor.")
+			if str(speaker.get("presentation", "")) != "faceless_silhouette":
+				failures.append("Phone-only brother-in-law lender does not use a faceless conversation speaker.")
 		elif str(speaker.get("presentation", "")) != "faceless_silhouette":
 			failures.append("Person lender %s does not define a faceless conversation speaker." % lender_id)
 		if clampi(int(speaker.get("portrait_count", 0)), 0, 3) != (3 if lender_id == "the_crew" else 1):

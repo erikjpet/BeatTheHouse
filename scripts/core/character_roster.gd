@@ -17,17 +17,31 @@ static func resolve_speaker(
 	if library == null:
 		return speaker
 	var pool_id := str(speaker.get("character_pool_id", "")).strip_edges()
-	if pool_id.is_empty():
+	var direct_character_id := str(speaker.get("character_id", "")).strip_edges()
+	var member_ids: Array = []
+	var lineup_size := 1
+	if not pool_id.is_empty():
+		var pool := library.character_pool(pool_id)
+		if pool.is_empty():
+			return speaker
+		member_ids = _string_array(pool.get("member_ids", []))
+		lineup_size = clampi(int(pool.get("lineup_size", 1)), 1, member_ids.size())
+	elif not direct_character_id.is_empty():
+		if library.character(direct_character_id).is_empty():
+			return speaker
+		member_ids = [direct_character_id]
+	else:
 		return speaker
-	var pool := library.character_pool(pool_id)
-	if pool.is_empty():
-		return speaker
-	var member_ids := _string_array(pool.get("member_ids", []))
-	var lineup_size := clampi(int(pool.get("lineup_size", 1)), 1, member_ids.size())
 	var identity_key := str(speaker.get("character_identity_key", encounter_id)).strip_edges()
 	if identity_key.is_empty():
-		identity_key = pool_id
-	var roster_rng := _stable_run_rng(run_state, "character_pool:%s:%s" % [pool_id, identity_key])
+		identity_key = pool_id if not pool_id.is_empty() else direct_character_id
+	var roster_key := pool_id if not pool_id.is_empty() else direct_character_id
+	var roster_stream := (
+		"character_pool:%s:%s" % [roster_key, identity_key]
+		if not pool_id.is_empty()
+		else "character_direct:%s:%s" % [roster_key, identity_key]
+	)
+	var roster_rng := _stable_run_rng(run_state, roster_stream)
 	var selected_ids := roster_rng.pick_many(member_ids, lineup_size)
 	var members: Array = []
 	for character_id_value in selected_ids:
@@ -46,9 +60,10 @@ static func resolve_speaker(
 	var voice_line := _voice_line(
 		lead_definition,
 		line_key,
-		_stable_run_rng(run_state, "character_voice:%s:%s:%s" % [pool_id, identity_key, line_key])
+		_stable_run_rng(run_state, "character_voice:%s:%s:%s" % [roster_key, identity_key, line_key])
 	)
 	speaker["character_pool_id"] = pool_id
+	speaker["character_id"] = direct_character_id
 	speaker["character_identity_key"] = identity_key
 	speaker["members"] = members
 	speaker["portrait_count"] = members.size()

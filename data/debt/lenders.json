@@ -133,6 +133,7 @@
 			"role": "lender",
 			"name": "Unknown Caller",
 			"presentation": "faceless_silhouette",
+			"environment_actor": false,
 			"silhouette": "featureless",
 			"portrait_count": 1,
 			"face_layers": [],

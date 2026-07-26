@@ -104,5 +104,32 @@ The first selected member speaks in front, and their name and title appear on
 the name plate. The other two render behind, side-by-side. UI refreshes and
 save/load cannot reshuffle an open conversation.
 
+In-person lenders and interactable talk events automatically use the resolved
+character model in the environment. The actor keeps the same object ID,
+highlight, tooltip card, keyboard/controller focus, touch target, and
+interaction action as the older prop. Phone-only lenders remain non-physical.
+
+## Use one specific character
+
+For a named character who should not be selected from a pool, use
+`character_id`:
+
+```json
+{
+  "name": "Example",
+  "character_id": "crew_example",
+  "character_identity_key": "example_contact",
+  "voice_line_key": "loan_offer"
+}
+```
+
+`character_id` and `character_pool_id` are mutually exclusive and validated.
+The same definition drives both the in-environment animated actor and the
+conversation model, so their appearance cannot drift.
+
+Set `"environment_actor": false` on a speaker who is heard remotely, such as a
+phone contact. Their conversation model still works, but no physical character
+is placed in the room.
+
 Run `tools/validate_project.ps1` and the supported `ui` and `systems`
 Foundation suites after changing character content or rendering.

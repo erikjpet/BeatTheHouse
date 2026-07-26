@@ -36,6 +36,18 @@ const TEST_META_COLLECTION_PATH := "user://ui_scene_compile_meta_collection.json
 const TEST_PROFILE_INVENTORY_PATH := "user://ui_scene_compile_profile_inventory.json"
 
 
+func _copy_array(value: Variant) -> Array:
+	if typeof(value) != TYPE_ARRAY:
+		return []
+	return (value as Array).duplicate(true)
+
+
+func _copy_dict(value: Variant) -> Dictionary:
+	if typeof(value) != TYPE_DICTIONARY:
+		return {}
+	return (value as Dictionary).duplicate(true)
+
+
 func _check_run_report_screen_component() -> bool:
 	var screen: RunReportScreen = RunReportScreenScript.new()
 	screen.size = Vector2(1280, 720)

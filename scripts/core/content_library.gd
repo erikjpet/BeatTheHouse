@@ -284,6 +284,7 @@ func validate() -> Array:
 	_validate_dialogue_definitions()
 	_validate_character_definitions()
 	_validate_character_pool_definitions()
+	_validate_character_speaker_references()
 	_validate_lender_definitions()
 	_validate_service_definitions()
 	_validate_travel_route_definitions()
@@ -695,6 +696,7 @@ static func _normalize_event_speaker(value: Variant) -> Dictionary:
 		"name": str(source.get("name", "")).strip_edges(),
 		"silhouette": str(source.get("silhouette", "")).strip_edges(),
 		"bind": bind,
+		"environment_actor": bool(source.get("environment_actor", true)),
 	}
 	var presentation := str(source.get("presentation", "")).strip_edges()
 	if not presentation.is_empty():
@@ -702,6 +704,7 @@ static func _normalize_event_speaker(value: Variant) -> Dictionary:
 	if typeof(source.get("face_layers", [])) == TYPE_ARRAY:
 		result["face_layers"] = (source.get("face_layers", []) as Array).duplicate(true)
 	result["portrait_count"] = clampi(int(source.get("portrait_count", 1)), 1, 3)
+	result["character_id"] = str(source.get("character_id", "")).strip_edges()
 	result["character_pool_id"] = str(source.get("character_pool_id", "")).strip_edges()
 	result["character_identity_key"] = str(source.get("character_identity_key", "")).strip_edges()
 	result["voice_line_key"] = str(source.get("voice_line_key", "")).strip_edges()
@@ -1429,6 +1432,31 @@ func _validate_character_pool_definitions() -> void:
 		var lineup_size := int(pool.get("lineup_size", 0))
 		if lineup_size <= 0 or lineup_size > member_ids.size():
 			validation_errors.append("character_pools %s lineup_size must be between 1 and its member count." % pool_id)
+
+
+func _validate_character_speaker_references() -> void:
+	var character_ids := _ids_for(characters)
+	var pool_ids := _ids_for(character_pools)
+	for event_value in events:
+		if typeof(event_value) == TYPE_DICTIONARY:
+			_validate_character_speaker_reference("events %s speaker" % str((event_value as Dictionary).get("id", "")), _as_dict((event_value as Dictionary).get("speaker", {})), character_ids, pool_ids)
+	for dialogue_value in dialogues:
+		if typeof(dialogue_value) == TYPE_DICTIONARY:
+			_validate_character_speaker_reference("dialogues %s speaker" % str((dialogue_value as Dictionary).get("id", "")), _as_dict((dialogue_value as Dictionary).get("speaker", {})), character_ids, pool_ids)
+	for lender_value in lenders:
+		if typeof(lender_value) == TYPE_DICTIONARY:
+			_validate_character_speaker_reference("lenders %s speaker" % str((lender_value as Dictionary).get("id", "")), _as_dict((lender_value as Dictionary).get("speaker", {})), character_ids, pool_ids)
+
+
+func _validate_character_speaker_reference(label: String, speaker: Dictionary, character_ids: Dictionary, pool_ids: Dictionary) -> void:
+	var character_id := str(speaker.get("character_id", "")).strip_edges()
+	var pool_id := str(speaker.get("character_pool_id", "")).strip_edges()
+	if not character_id.is_empty() and not bool(character_ids.get(character_id, false)):
+		validation_errors.append("%s references unknown character_id: %s" % [label, character_id])
+	if not pool_id.is_empty() and not bool(pool_ids.get(pool_id, false)):
+		validation_errors.append("%s references unknown character_pool_id: %s" % [label, pool_id])
+	if not character_id.is_empty() and not pool_id.is_empty():
+		validation_errors.append("%s must use character_id or character_pool_id, not both." % label)
 
 
 # Validates service data that can later map cleanly to result-deltas.
