@@ -49,9 +49,10 @@ const ENVIRONMENT_CANVAS_MIN_SIZE := Vector2.ZERO
 const GAME_SURFACE_FOCUSED_MIN_SIZE := Vector2.ZERO
 const GAME_SURFACE_PREVIEW_MIN_SIZE := Vector2.ZERO
 const GAME_SURFACE_REALTIME_REFRESH_INTERVAL_MSEC := 16
-# Environment time is continuous: four in-game minutes pass per real second
-# while the player is on an unpaused room or game surface.
-const GAME_CLOCK_MINUTES_PER_REAL_SECOND := 4.0
+# Environment time is continuous: one in-game hour passes every 40 real
+# seconds while the player is on an active, unpaused run surface.
+const GAME_CLOCK_REAL_SECONDS_PER_GAME_HOUR := 40.0
+const GAME_CLOCK_MINUTES_PER_REAL_SECOND := 60.0 / GAME_CLOCK_REAL_SECONDS_PER_GAME_HOUR
 const TRAVEL_CLOCK_MINUTES_PER_BLOCK := 6
 const WALK_CLOCK_MINUTES_PER_BLOCK := 10
 const TALK_IGNORE_HEAT_DELTA := 5
@@ -504,7 +505,7 @@ func _advance_run_game_clock(delta: float) -> void:
 		return
 	if run_state == null or run_state.is_terminal() or meta_session_active:
 		return
-	if current_screen != SCREEN_ENVIRONMENT and current_screen != SCREEN_GAME:
+	if current_screen == SCREEN_START:
 		return
 	var tree_paused := is_inside_tree() and get_tree().paused
 	if _modal_contract_blocks_player_input() or tree_paused:

@@ -2508,11 +2508,11 @@ func _check_time_open_hours_foundation(library: ContentLibrary, failures: Array)
 	app.set("run_state", ui_run)
 	app.call("_set_current_screen", "ENVIRONMENT")
 	app.call("_refresh")
-	ui_run.game_clock_minutes = (24 + 3) * 60 - 1
+	ui_run.game_clock_minutes = (24 + 2) * 60
 	app.set("environment_clock_fractional_minutes", 0.0)
-	app.call("_advance_run_game_clock", 0.26)
+	app.call("_advance_run_game_clock", 40.0)
 	if ui_run.game_clock_minutes != (24 + 3) * 60:
-		failures.append("Idle environment time did not advance from real elapsed time at the authoritative rate.")
+		failures.append("Idle environment time did not advance exactly one game hour per 40 real seconds.")
 	if not ui_run.closing_time_active():
 		failures.append("Idle environment time did not activate venue closing at the clock boundary.")
 	ui_run.clear_closing_time_state()
@@ -2571,6 +2571,14 @@ func _check_time_open_hours_foundation(library: ContentLibrary, failures: Array)
 		failures.append("Closing-time forced travel did not advance the action-driven travel clock.")
 	if ui_run.closing_time_forced_travel_required():
 		failures.append("Closing-time forced travel state was not cleared after successful travel.")
+	var destination_clock_before_idle := ui_run.game_clock_minutes
+	var destination_screen := str(app.get("current_screen"))
+	app.set("environment_clock_fractional_minutes", 0.0)
+	app.call("_advance_run_game_clock", 40.0)
+	if destination_screen != "RESULT":
+		failures.append("Travel timing fixture did not land on the destination result surface.")
+	if ui_run.game_clock_minutes != destination_clock_before_idle + 60:
+		failures.append("Continuous time stopped after travel instead of advancing on the destination result surface.")
 	_sb4_dispose_app(app)
 
 
