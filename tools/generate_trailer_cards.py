@@ -1,4 +1,4 @@
-"""Generate neon title cards for the Beat the House gameplay trailer."""
+"""Generate transparent, game-native text overlays for the gameplay trailer."""
 
 from __future__ import annotations
 
@@ -24,15 +24,15 @@ SOFT = (165, 190, 198, 255)
 
 CARDS = {
     "logo": {
-        "kicker": "ONE BAD NIGHT. ONE LAST RUN.",
+        "kicker": "CASINO ROGUELIKE",
         "title": "BEAT THE HOUSE",
-        "subtitle": "A CASINO ROGUELIKE",
+        "subtitle": "ONE BAD NIGHT. ONE LAST RUN.",
         "accent": PINK,
     },
     "eight_games": {
         "kicker": "PUSH YOUR LUCK",
-        "title": "EIGHT CASINO GAMES",
-        "subtitle": "EVERY TABLE HAS AN EDGE",
+        "title": "EIGHT GAMES. ONE RUN.",
+        "subtitle": "EVERY TABLE HAS AN EDGE.",
         "accent": YELLOW,
     },
     "dodge_heat": {
@@ -205,36 +205,79 @@ def _render_card(
     width: int,
     height: int,
 ) -> Image.Image:
-    image = Image.new("RGBA", (width, height), BLACK)
+    image = Image.new("RGBA", (width, height), (0, 0, 0, 0))
     accent = card["accent"]
     assert isinstance(accent, tuple)
-    stable_seed = sum((index + 1) * ord(character) for index, character in enumerate(card_id))
-    _draw_backdrop(image, accent, stable_seed)
     draw = ImageDraw.Draw(image)
 
     vertical = height > width
-    max_text_width = int(width * (0.78 if not vertical else 0.80))
-    title_size = int(height * (0.105 if not vertical else 0.060))
-    title_min = int(height * (0.060 if not vertical else 0.036))
+    is_cta = card_id == "cta"
+    is_logo = card_id == "logo"
+    if is_cta:
+        panel_box = (
+            int(width * 0.06),
+            int(height * (0.62 if not vertical else 0.68)),
+            int(width * 0.94),
+            int(height * (0.94 if not vertical else 0.91)),
+        )
+    elif is_logo:
+        panel_box = (
+            int(width * (0.16 if not vertical else 0.06)),
+            int(height * 0.055),
+            int(width * (0.84 if not vertical else 0.94)),
+            int(height * (0.32 if not vertical else 0.23)),
+        )
+    else:
+        panel_box = (
+            int(width * (0.20 if not vertical else 0.05)),
+            int(height * (0.68 if not vertical else 0.72)),
+            int(width * (0.80 if not vertical else 0.95)),
+            int(height * (0.94 if not vertical else 0.91)),
+        )
+    radius = max(12, width // 90)
+    draw.rounded_rectangle(
+        panel_box,
+        radius=radius,
+        fill=(4, 5, 11, 205),
+        outline=(accent[0], accent[1], accent[2], 235),
+        width=max(3, width // 420),
+    )
+    inner = (
+        panel_box[0] + max(8, width // 150),
+        panel_box[1] + max(8, width // 150),
+        panel_box[2] - max(8, width // 150),
+        panel_box[3] - max(8, width // 150),
+    )
+    draw.rounded_rectangle(
+        inner,
+        radius=max(8, radius - 4),
+        outline=(CYAN[0], CYAN[1], CYAN[2], 95),
+        width=max(2, width // 700),
+    )
+
+    max_text_width = int((panel_box[2] - panel_box[0]) * 0.88)
+    title_size = int(height * (0.075 if not vertical else 0.043))
+    title_min = int(height * (0.045 if not vertical else 0.028))
     title_font = _fit_font(draw, str(card["title"]), max_text_width, title_size, title_min)
     kicker_font = _fit_font(
         draw,
         str(card["kicker"]),
         max_text_width,
-        int(height * (0.026 if not vertical else 0.018)),
+        int(height * (0.021 if not vertical else 0.014)),
         int(height * 0.014),
     )
     subtitle_font = _fit_font(
         draw,
         str(card["subtitle"]),
         max_text_width,
-        int(height * (0.034 if not vertical else 0.023)),
+        int(height * (0.025 if not vertical else 0.016)),
         int(height * 0.015),
     )
 
-    title_y = int(height * (0.405 if not vertical else 0.43))
-    kicker_y = int(height * (0.30 if not vertical else 0.35))
-    subtitle_y = int(height * (0.57 if not vertical else 0.55))
+    panel_height = panel_box[3] - panel_box[1]
+    kicker_y = panel_box[1] + int(panel_height * 0.12)
+    title_y = panel_box[1] + int(panel_height * 0.34)
+    subtitle_y = panel_box[1] + int(panel_height * 0.70)
     _centered_text(image, str(card["kicker"]), kicker_y, kicker_font, SOFT, accent, 1)
     _centered_text(
         image,
@@ -247,24 +290,7 @@ def _render_card(
     )
     _centered_text(image, str(card["subtitle"]), subtitle_y, subtitle_font, accent, accent, 1)
 
-    draw = ImageDraw.Draw(image, "RGBA")
-    line_y = int(height * (0.66 if not vertical else 0.63))
-    line_half = int(width * (0.17 if not vertical else 0.23))
-    draw.line(
-        (width // 2 - line_half, line_y, width // 2 + line_half, line_y),
-        fill=accent,
-        width=max(3, width // 500),
-    )
-    draw.rectangle(
-        (
-            width // 2 - max(5, width // 240),
-            line_y - max(5, width // 240),
-            width // 2 + max(5, width // 240),
-            line_y + max(5, width // 240),
-        ),
-        fill=YELLOW,
-    )
-    return image.convert("RGB")
+    return image
 
 
 def generate(output: Path) -> None:

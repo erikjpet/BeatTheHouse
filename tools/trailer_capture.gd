@@ -11,7 +11,7 @@ const MainScene := preload("res://scenes/main.tscn")
 const CAPTURE_SEED := "BEAT-THE-HOUSE-TRAILER-05"
 const CAPTURE_FPS := 60
 const VISUAL_WARMUP_SECONDS := 2.0
-const MUSIC_WARMUP_SECONDS := 8.0
+const MUSIC_WARMUP_SECONDS := 2.0
 
 const GAME_ENVIRONMENTS := {
 	"blackjack": "small_underground_casino",
@@ -27,8 +27,6 @@ const GAME_ENVIRONMENTS := {
 const GAME_ACTIONS := {
 	"blackjack": [
 		["blackjack_deal"],
-		["blackjack_hit"],
-		["blackjack_stand"],
 	],
 	"roulette": [
 		["roulette_bet"],
@@ -47,7 +45,6 @@ const GAME_ACTIONS := {
 	"baccarat": [
 		["baccarat_bet"],
 		["baccarat_deal"],
-		["baccarat_squeeze_reveal"],
 	],
 	"video_poker": [
 		["video_poker_deal"],
@@ -56,8 +53,7 @@ const GAME_ACTIONS := {
 	],
 	"pull_tabs": [
 		["pull_tab_buy_all", "pull_tab_buy"],
-		["pull_tab_reveal_next", "pull_tab_reveal"],
-		["pull_tab_file_ticket", "pull_tab_redeem"],
+		["pull_tab_collect_tray"],
 	],
 }
 
@@ -65,6 +61,8 @@ var app: Control
 var segment := "roadside"
 var runtime_dir := ".tmp/trailer/runtime"
 var action_failures: Array[String] = []
+var timing_markers: Dictionary = {}
+var action_marker_counts: Dictionary = {}
 
 
 func _init() -> void:
@@ -84,6 +82,7 @@ func _run() -> void:
 	await _settle_frames(8)
 	var ok := await _capture_segment()
 	await _settle_frames(4)
+	_write_timing_markers()
 	_cleanup_capture_save()
 	if not ok:
 		push_error("Trailer segment failed: %s" % segment)
@@ -121,11 +120,31 @@ func _capture_segment() -> bool:
 func _capture_music_bed() -> bool:
 	if not await _prepare_environment("jazz_club"):
 		return false
-	app.get("run_state").change_drunk(18)
+	var run_state: RunState = app.get("run_state")
+	run_state.bankroll = 18
+	run_state.change_drunk(36)
+	run_state.add_suspicion("trailer_music_peak", 100, "behavior", true)
 	app.call("_refresh")
 	await _hold_seconds(MUSIC_WARMUP_SECONDS)
+	var music_player: Node = app.get("procedural_music_player")
+	var profile: Dictionary = run_state.current_environment.get("music_profile", {})
+	var choreography: Dictionary = profile.get("layer_choreography", {})
+	var stages: Array = choreography.get("stages", [])
+	for stage_index in range(stages.size()):
+		if typeof(stages[stage_index]) != TYPE_DICTIONARY:
+			continue
+		var stage: Dictionary = (stages[stage_index] as Dictionary).duplicate(true)
+		if str(stage.get("id", "")) != "peak":
+			continue
+		stage["index"] = stage_index
+		if music_player != null:
+			music_player.call("_set_music_choreography_stage", stage, true)
+			music_player.set("_adaptive_tempo_current_bpm", 124.0)
+			music_player.set("_adaptive_tempo_target_bpm", 124.0)
+		break
+	_mark("active")
 	print("TRAILER_CAPTURE_ACTIVE segment=music_bed frame=%d" % _movie_frame())
-	await _hold_seconds(68.0)
+	await _hold_seconds(16.0)
 	return true
 
 
@@ -133,9 +152,10 @@ func _capture_roadside() -> bool:
 	if not await _prepare_environment("bar"):
 		return false
 	await _hold_seconds(VISUAL_WARMUP_SECONDS)
+	_mark("active")
 	print("TRAILER_CAPTURE_ACTIVE segment=roadside frame=%d" % _movie_frame())
-	await _focus_first_object_with_prefix("game:")
-	await _hold_seconds(6.0)
+	await _cycle_environment_focus(["game:", "service:", "event:"], 0.72)
+	await _hold_seconds(1.2)
 	return true
 
 
@@ -148,10 +168,11 @@ func _capture_world_map() -> bool:
 	await _settle_frames(6)
 	app.call("open_world_map", true)
 	await _settle_frames(10)
-	_select_first_world_map_destination()
 	await _hold_seconds(VISUAL_WARMUP_SECONDS)
+	_mark("active")
 	print("TRAILER_CAPTURE_ACTIVE segment=world_map frame=%d" % _movie_frame())
-	await _hold_seconds(5.0)
+	await _cycle_world_map_destinations(0.62)
+	await _hold_seconds(1.0)
 	return true
 
 
@@ -167,13 +188,14 @@ func _capture_heat_cheat() -> bool:
 	app.call("_refresh")
 	await _settle_frames(8)
 	await _hold_seconds(VISUAL_WARMUP_SECONDS)
+	_mark("active")
 	print("TRAILER_CAPTURE_ACTIVE segment=heat_cheat frame=%d" % _movie_frame())
 	await _try_surface_actions(["blackjack_deal"])
-	await _hold_seconds(1.0)
+	await _hold_seconds(0.72)
 	await _try_surface_actions(["blackjack_peek"])
-	await _hold_seconds(1.0)
-	await _try_surface_actions(["blackjack_hit", "blackjack_stand"])
-	await _hold_seconds(4.0)
+	await _hold_seconds(0.72)
+	await _play_blackjack_strategy(2)
+	await _hold_seconds(1.2)
 	return true
 
 
@@ -185,17 +207,23 @@ func _capture_game(game_id: String) -> bool:
 		return false
 	var run_state: RunState = app.get("run_state")
 	run_state.bankroll = 400
+	if game_id == "blackjack":
+		run_state.add_item("basic_strategy_card")
 	app.set("selected_stake", 10)
 	app.call("_refresh")
 	await _settle_frames(8)
 	await _hold_seconds(VISUAL_WARMUP_SECONDS)
+	_mark("active")
 	print("TRAILER_CAPTURE_ACTIVE segment=game_%s frame=%d" % [game_id, _movie_frame()])
+	await _hold_seconds(0.18)
 	var action_groups: Array = GAME_ACTIONS.get(game_id, [])
 	for group_value in action_groups:
 		var candidates: Array = group_value if typeof(group_value) == TYPE_ARRAY else []
 		await _try_surface_actions(candidates)
-		await _hold_seconds(0.8)
-	await _hold_seconds(2.8)
+		await _hold_seconds(0.72)
+	if game_id == "blackjack":
+		await _play_blackjack_strategy(3)
+	await _hold_seconds(1.2)
 	return true
 
 
@@ -213,11 +241,18 @@ func _capture_grand_casino() -> bool:
 	_set_fixture_run(run_state)
 	await _settle_frames(12)
 	await _hold_seconds(VISUAL_WARMUP_SECONDS)
+	_mark("active")
 	print("TRAILER_CAPTURE_ACTIVE segment=grand_casino frame=%d" % _movie_frame())
 	app.call("focus_interactable_object", "casino_fixture:host_desk")
-	await _hold_seconds(2.4)
+	await _hold_seconds(0.75)
 	app.call("focus_interactable_object", "travel:grand_casino_high_limit")
-	await _hold_seconds(2.8)
+	await _hold_seconds(0.75)
+	var generator: RunGenerator = app.get("generator")
+	if generator != null and generator.enter_grand_casino_room(run_state, RunState.GRAND_CASINO_HIGH_LIMIT_ARCHETYPE_ID):
+		app.call("clear_interaction_focus")
+		app.call("_refresh")
+		_mark("high_limit_room")
+	await _hold_seconds(1.4)
 	return true
 
 
@@ -255,8 +290,14 @@ func _capture_cage_card() -> bool:
 	app.call("_complete_cage_players_card_review")
 	await _settle_frames(12)
 	await _hold_seconds(VISUAL_WARMUP_SECONDS)
+	_mark("active")
 	print("TRAILER_CAPTURE_ACTIVE segment=cage_card frame=%d" % _movie_frame())
-	await _hold_seconds(5.2)
+	await _hold_seconds(1.0)
+	var review_entry: Dictionary = run_state.next_pending_talk_event()
+	if not review_entry.is_empty():
+		_mark("accept_gold_card")
+		app.call("_resolve_dialogue_choice", review_entry, "accept_gold_card")
+	await _hold_seconds(2.0)
 	return true
 
 
@@ -276,24 +317,31 @@ func _capture_rourke(enter_duel: bool) -> bool:
 	if not bool(app.call("_show_interactable_event_popup", RunState.GRAND_CASINO_SHOWDOWN_EVENT_ID)):
 		push_error("Trailer could not open Rourke's call.")
 		return false
+	await _hold_seconds(VISUAL_WARMUP_SECONDS)
+	_mark("active")
+	print("TRAILER_CAPTURE_ACTIVE segment=%s frame=%d" % [segment, _movie_frame()])
+	_mark("enter_back_room")
 	app.call("resolve_event_choice", RunState.GRAND_CASINO_SHOWDOWN_EVENT_ID, "enter_back_room")
-	await _settle_frames(3)
+	await _hold_seconds(0.72)
+	_mark("keep_everything")
 	app.call("resolve_event_choice", RunState.GRAND_CASINO_SHOWDOWN_EVENT_ID, "keep_everything")
-	await _settle_frames(3)
+	await _hold_seconds(0.72)
+	_mark("face_rourke")
 	app.call("resolve_event_choice", RunState.GRAND_CASINO_SHOWDOWN_EVENT_ID, "face_rourke")
-	await _settle_frames(5)
+	await _hold_seconds(0.72)
 	if enter_duel:
 		for _beat in range(3):
 			app.call("resolve_event_choice", RunState.GRAND_CASINO_SHOWDOWN_EVENT_ID, "hold_steady")
-			await _settle_frames(5)
-		await _settle_frames(12)
-	await _hold_seconds(VISUAL_WARMUP_SECONDS)
-	print("TRAILER_CAPTURE_ACTIVE segment=%s frame=%d" % [segment, _movie_frame()])
+			await _hold_seconds(0.42)
+		_mark("duel_ready")
 	if enter_duel:
-		await _try_surface_actions(["blackjack_deal"])
-		await _hold_seconds(1.0)
-		await _try_surface_actions(["blackjack_hit", "blackjack_stand"])
-	await _hold_seconds(5.0)
+		for _hand_index in range(2):
+			if not await _try_surface_actions(["blackjack_deal"]):
+				break
+			await _hold_seconds(0.82)
+			await _play_blackjack_strategy(3)
+			await _hold_seconds(0.42)
+	await _hold_seconds(1.0)
 	return true
 
 
@@ -408,6 +456,7 @@ func _try_surface_actions(candidates: Array) -> bool:
 			var hit: Dictionary = hit_value
 			if str(hit.get("action", "")) != candidate:
 				continue
+			_mark_action(candidate)
 			app.call("_on_game_surface_action", candidate, int(hit.get("index", 0)), true)
 			await _settle_frames(4)
 			return true
@@ -424,6 +473,84 @@ func _try_surface_actions(candidates: Array) -> bool:
 		",".join(available_actions),
 	])
 	return false
+
+
+func _play_blackjack_strategy(max_decisions: int) -> void:
+	for decision_index in range(maxi(0, max_decisions)):
+		var surface_canvas: Control = app.get("game_surface_canvas")
+		if surface_canvas == null or not surface_canvas.visible:
+			return
+		var snapshot: Dictionary = surface_canvas.call("current_view_snapshot")
+		var state: Dictionary = snapshot.get("state", {})
+		var total := int(state.get("blackjack_total", 0))
+		if total <= 0 or not bool(state.get("can_stand", false)):
+			return
+		var advice: Dictionary = state.get("basic_strategy_advice", {})
+		var recommended := str(advice.get("action", "")).strip_edges()
+		var candidate := ""
+		if total >= 17:
+			candidate = "blackjack_stand"
+		elif not recommended.is_empty():
+			candidate = "blackjack_%s" % recommended
+		elif total <= 11:
+			candidate = "blackjack_hit"
+		else:
+			candidate = "blackjack_stand"
+		print("TRAILER_BLACKJACK_DECISION segment=%s decision=%d total=%d recommended=%s action=%s" % [
+			segment,
+			decision_index + 1,
+			total,
+			recommended,
+			candidate,
+		])
+		_mark("blackjack_decision_%d_total_%d" % [decision_index + 1, total])
+		if not await _try_surface_actions([candidate]):
+			if candidate != "blackjack_stand" and await _try_surface_actions(["blackjack_stand"]):
+				pass
+			else:
+				return
+		await _hold_seconds(0.72)
+
+
+func _cycle_environment_focus(prefixes: Array[String], dwell_seconds: float) -> void:
+	var snapshot: Dictionary = app.call("current_spatial_interaction_snapshot")
+	var objects: Array = snapshot.get("objects", [])
+	var used_ids: Array[String] = []
+	for prefix in prefixes:
+		for object_value in objects:
+			if typeof(object_value) != TYPE_DICTIONARY:
+				continue
+			var object_data: Dictionary = object_value
+			var object_id := str(object_data.get("object_id", ""))
+			if object_id.begins_with(prefix) and not used_ids.has(object_id):
+				_mark("focus_%s" % object_id.replace(":", "_"))
+				app.call("focus_interactable_object", object_id)
+				used_ids.append(object_id)
+				await _hold_seconds(dwell_seconds)
+				break
+
+
+func _cycle_world_map_destinations(dwell_seconds: float) -> void:
+	var run_state: RunState = app.get("run_state")
+	if run_state == null:
+		return
+	var map_data: Dictionary = run_state.world_map
+	var current_id := str(map_data.get("current_node_id", ""))
+	var nodes: Array = map_data.get("nodes", [])
+	var selected_count := 0
+	for node_value in nodes:
+		if typeof(node_value) != TYPE_DICTIONARY:
+			continue
+		var node: Dictionary = node_value
+		var node_id := str(node.get("id", ""))
+		if node_id.is_empty() or node_id == current_id or str(node.get("state", "hidden")) == "hidden":
+			continue
+		if bool(app.call("select_world_map_node", node_id)):
+			_mark("map_select_%d" % selected_count)
+			selected_count += 1
+			await _hold_seconds(dwell_seconds)
+			if selected_count >= 4:
+				return
 
 
 func _focus_first_object_with_prefix(prefix: String) -> bool:
@@ -457,6 +584,32 @@ func _select_first_world_map_destination() -> void:
 			continue
 		if bool(app.call("select_world_map_node", node_id)):
 			return
+
+
+func _mark(label: String) -> void:
+	timing_markers[label] = float(_movie_frame()) / float(CAPTURE_FPS)
+	print("TRAILER_MARKER segment=%s marker=%s frame=%d" % [segment, label, _movie_frame()])
+
+
+func _mark_action(action_id: String) -> void:
+	var count := int(action_marker_counts.get(action_id, 0)) + 1
+	action_marker_counts[action_id] = count
+	_mark("action_%s_%d" % [action_id, count])
+
+
+func _write_timing_markers() -> void:
+	var absolute_runtime_dir := ProjectSettings.globalize_path("res://%s" % runtime_dir)
+	DirAccess.make_dir_recursive_absolute(absolute_runtime_dir)
+	var path := "%s/timing_%s.json" % [absolute_runtime_dir, segment]
+	var file := FileAccess.open(path, FileAccess.WRITE)
+	if file == null:
+		push_error("Trailer could not write timing markers: %s" % path)
+		return
+	file.store_string(JSON.stringify({
+		"segment": segment,
+		"fps": CAPTURE_FPS,
+		"markers": timing_markers,
+	}, "\t"))
 
 
 func _isolate_capture_profile() -> void:

@@ -1,5 +1,6 @@
 param(
 	[switch]$SkipCapture,
+	[switch]$SkipCards,
 	[switch]$Force
 )
 
@@ -51,12 +52,32 @@ function Invoke-Ffmpeg {
 	Assert-ExitCode $Label
 }
 
+function Get-TrailerMarker {
+	param(
+		[string]$Segment,
+		[string]$Marker = "active",
+		[double]$Offset = 0.0
+	)
+	$timingPath = Join-Path $RuntimeRoot "timing_${Segment}.json"
+	if (-not (Test-Path -LiteralPath $timingPath)) {
+		throw "Missing timing markers for ${Segment}: $timingPath"
+	}
+	$timing = Get-Content -Raw -LiteralPath $timingPath | ConvertFrom-Json
+	$property = $timing.markers.PSObject.Properties[$Marker]
+	if ($null -eq $property) {
+		throw "Marker '$Marker' is missing for trailer segment '$Segment'."
+	}
+	return [Math]::Max(0.0, [double]$property.Value + $Offset)
+}
+
 function New-GameplayClip {
 	param(
 		[string]$ClipId,
 		[string]$Segment,
-		[double]$Start,
 		[double]$Duration,
+		[string]$Marker = "active",
+		[double]$MarkerOffset = 0.0,
+		[string]$OverlayId = "",
 		[int]$CropX = 437,
 		[switch]$Vertical
 	)
@@ -74,17 +95,14 @@ function New-GameplayClip {
 	if (-not (Test-Path -LiteralPath $input)) {
 		throw "Missing raw trailer segment: $input"
 	}
+	$start = Get-TrailerMarker -Segment $Segment -Marker $Marker -Offset $MarkerOffset
 	$filter = "scale=1920:1080:flags=neighbor,setsar=1,fps=60"
 	if ($Vertical) {
 		$filter = "crop=405:720:${CropX}:0,scale=1080:1920:flags=neighbor,setsar=1,fps=60"
 	}
-	Invoke-Ffmpeg @(
-		"-hide_banner", "-loglevel", "warning",
-		"-ss", $Start.ToString("0.###", [Globalization.CultureInfo]::InvariantCulture),
-		"-i", $input,
+	$commonOutput = @(
 		"-t", $Duration.ToString("0.###", [Globalization.CultureInfo]::InvariantCulture),
 		"-an",
-		"-vf", $filter,
 		"-c:v", "libx264",
 		"-preset", "medium",
 		"-crf", "14",
@@ -93,49 +111,33 @@ function New-GameplayClip {
 		"-video_track_timescale", "60000",
 		"-movflags", "+faststart",
 		"-y", $output
-	) "clip $ClipId"
-	return $output
-}
-
-function New-CardClip {
-	param(
-		[string]$ClipId,
-		[string]$CardId,
-		[double]$Duration,
-		[switch]$Vertical
 	)
-	$folderName = "vertical"
-	if (-not $Vertical) {
-		$folderName = "full"
+	if ([string]::IsNullOrWhiteSpace($OverlayId)) {
+		Invoke-Ffmpeg (@(
+			"-hide_banner", "-loglevel", "warning",
+			"-ss", $start.ToString("0.###", [Globalization.CultureInfo]::InvariantCulture),
+			"-i", $input,
+			"-vf", $filter
+		) + $commonOutput) "clip $ClipId"
+	} else {
+		$suffix = "vertical"
+		if (-not $Vertical) {
+			$suffix = "1080p"
+		}
+		$overlay = Join-Path $CardRoot "${OverlayId}_${suffix}.png"
+		if (-not (Test-Path -LiteralPath $overlay)) {
+			throw "Missing trailer overlay: $overlay"
+		}
+		$complex = "[0:v]${filter}[base];[base][1:v]overlay=0:0:format=auto,format=yuv420p[outv]"
+		Invoke-Ffmpeg (@(
+			"-hide_banner", "-loglevel", "warning",
+			"-ss", $start.ToString("0.###", [Globalization.CultureInfo]::InvariantCulture),
+			"-i", $input,
+			"-loop", "1", "-i", $overlay,
+			"-filter_complex", $complex,
+			"-map", "[outv]"
+		) + $commonOutput) "clip $ClipId"
 	}
-	$folder = Join-Path $ClipRoot $folderName
-	New-Item -ItemType Directory -Force -Path $folder | Out-Null
-	$output = Join-Path $folder "$ClipId.mp4"
-	if ((Test-Path -LiteralPath $output) -and -not $Force) {
-		return $output
-	}
-	$suffix = "vertical"
-	if (-not $Vertical) {
-		$suffix = "1080p"
-	}
-	$input = Join-Path $CardRoot "${CardId}_${suffix}.png"
-	Invoke-Ffmpeg @(
-		"-hide_banner", "-loglevel", "warning",
-		"-loop", "1",
-		"-framerate", "60",
-		"-i", $input,
-		"-t", $Duration.ToString("0.###", [Globalization.CultureInfo]::InvariantCulture),
-		"-an",
-		"-vf", "fps=60,format=yuv420p",
-		"-c:v", "libx264",
-		"-preset", "medium",
-		"-crf", "14",
-		"-pix_fmt", "yuv420p",
-		"-r", "60",
-		"-video_track_timescale", "60000",
-		"-movflags", "+faststart",
-		"-y", $output
-	) "card clip $ClipId"
 	return $output
 }
 
@@ -161,8 +163,10 @@ New-Item -ItemType Directory -Force -Path $TrailerRoot, $RawRoot, $ClipRoot, $Ru
 
 Push-Location $Root
 try {
-	python "tools\generate_trailer_cards.py"
-	Assert-ExitCode "title-card generation"
+	if (-not $SkipCards) {
+		python "tools\generate_trailer_cards.py"
+		Assert-ExitCode "trailer-overlay generation"
+	}
 
 	$segments = @(
 		"music_bed",
@@ -195,45 +199,60 @@ try {
 		}
 	}
 
-	$music = Join-Path $TempRoot "music_bed_60s.wav"
+	$music = Join-Path $TempRoot "music_bed_30s.wav"
+	$musicPeak = Join-Path $TempRoot "music_peak_16s.wav"
+	$musicStart = Get-TrailerMarker -Segment "music_bed"
 	Invoke-Ffmpeg @(
 		"-hide_banner", "-loglevel", "warning",
-		"-ss", "8.0",
+		"-ss", $musicStart.ToString("0.###", [Globalization.CultureInfo]::InvariantCulture),
 		"-i", (Join-Path $RawRoot "music_bed.avi"),
-		"-t", "60",
+		"-t", "16",
 		"-vn",
-		"-af", "loudnorm=I=-16:LRA=10:TP=-1.5,afade=t=in:st=0:d=0.15,afade=t=out:st=59.5:d=0.5",
+		"-ar", "48000",
+		"-ac", "2",
+		"-c:a", "pcm_s16le",
+		"-y", $musicPeak
+	) "music-peak extraction"
+	Invoke-Ffmpeg @(
+		"-hide_banner", "-loglevel", "warning",
+		"-stream_loop", "2",
+		"-i", $musicPeak,
+		"-t", "30",
+		"-vn",
+		"-af", "loudnorm=I=-15:LRA=8:TP=-1.5,afade=t=in:st=0:d=0.08,afade=t=out:st=29.5:d=0.5",
 		"-ar", "48000",
 		"-ac", "2",
 		"-c:a", "pcm_s16le",
 		"-y", $music
-	) "music-bed extraction"
+	) "upbeat music-bed assembly"
 
 	$full = @()
-	$full += New-GameplayClip "00_hook" "rourke_duel" 2.75 2.5
-	$full += New-CardClip "01_logo" "logo" 1.5
-	$full += New-GameplayClip "02_roadside" "roadside" 2.42 5.5
-	$full += New-CardClip "03_eight_games" "eight_games" 1.0
-	$full += New-GameplayClip "04_blackjack" "game_blackjack" 2.85 1.5
-	$full += New-GameplayClip "05_roulette" "game_roulette" 3.45 1.5
-	$full += New-GameplayClip "06_slot" "game_slot" 2.75 1.5
-	$full += New-GameplayClip "07_scratch" "game_scratch_tickets" 3.25 1.5
-	$full += New-GameplayClip "08_bar_dice" "game_bar_dice" 2.75 1.5
-	$full += New-GameplayClip "09_baccarat" "game_baccarat" 3.45 1.5
-	$full += New-GameplayClip "10_video_poker" "game_video_poker" 2.75 1.5
-	$full += New-GameplayClip "11_pull_tabs" "game_pull_tabs" 2.75 1.5
-	$full += New-GameplayClip "12_slot_result" "game_slot" 4.65 1.5
-	$full += New-CardClip "13_dodge_heat" "dodge_heat" 1.0
-	$full += New-GameplayClip "14_heat" "heat_cheat" 2.75 4.0
-	$full += New-CardClip "15_cheat" "cheat_dare" 1.0
-	$full += New-GameplayClip "16_cheat_action" "heat_cheat" 4.75 4.0
-	$full += New-CardClip "17_beat_house" "beat_house" 1.0
-	$full += New-GameplayClip "18_map" "world_map" 2.68 5.0
-	$full += New-GameplayClip "19_grand" "grand_casino" 2.32 5.0
-	$full += New-GameplayClip "20_cage" "cage_card" 2.52 4.0
-	$full += New-GameplayClip "21_call" "rourke_call" 2.30 3.0
-	$full += New-GameplayClip "22_duel" "rourke_duel" 2.75 3.5
-	$full += New-CardClip "23_cta" "cta" 4.5
+	$full += New-GameplayClip "00_hook" "rourke_duel" 1.0 -Marker "duel_ready"
+	$full += New-GameplayClip "01_logo" "game_roulette" 2.4 -Marker "action_roulette_spin_1" -MarkerOffset -0.15 -OverlayId "logo"
+	$full += New-GameplayClip "02_roadside" "roadside" 2.0 -OverlayId "eight_games"
+	$full += New-GameplayClip "03_blackjack" "game_blackjack" 1.0
+	$full += New-GameplayClip "04_roulette" "game_roulette" 1.0 -Marker "action_roulette_spin_1" -MarkerOffset -0.15
+	$full += New-GameplayClip "05_slot" "game_slot" 1.0
+	$full += New-GameplayClip "06_scratch" "game_scratch_tickets" 0.5 -Marker "action_scratch_all_1" -MarkerOffset -0.15
+	$full += New-GameplayClip "07_bar_dice" "game_bar_dice" 1.0
+	$full += New-GameplayClip "08_baccarat" "game_baccarat" 1.0 -Marker "action_baccarat_deal_1" -MarkerOffset -0.15
+	$full += New-GameplayClip "09_video_poker" "game_video_poker" 0.75 -Marker "action_video_poker_draw_1" -MarkerOffset -0.15
+	$full += New-GameplayClip "10_pull_tabs" "game_pull_tabs" 0.75 -Marker "action_pull_tab_collect_tray_1" -MarkerOffset -0.15
+	$full += New-GameplayClip "11_heat_cheat" "heat_cheat" 2.5 -OverlayId "cheat_dare"
+	$full += New-GameplayClip "12_grand" "grand_casino" 2.5 -OverlayId "beat_house"
+	$full += New-GameplayClip "14_call" "rourke_call" 2.5
+	$full += New-GameplayClip "15_duel" "rourke_duel" 1.1 -Marker "duel_ready"
+	$full += New-GameplayClip "16_payoff_roulette" "game_roulette" 0.75 -Marker "action_roulette_spin_1" -MarkerOffset -0.1
+	$full += New-GameplayClip "17_payoff_slot" "game_slot" 0.75
+	$full += New-GameplayClip "18_payoff_dice" "game_bar_dice" 0.75
+	$full += New-GameplayClip "19_payoff_baccarat" "game_baccarat" 0.75 -Marker "action_baccarat_deal_1" -MarkerOffset -0.1
+	$full += New-GameplayClip "20_payoff_scratch" "game_scratch_tickets" 0.75 -Marker "action_scratch_all_1" -MarkerOffset -0.1
+	$full += New-GameplayClip "21_payoff_poker" "game_video_poker" 0.75 -Marker "action_video_poker_draw_1" -MarkerOffset -0.1
+	$full += New-GameplayClip "22_cta_roulette" "game_roulette" 0.9 -Marker "action_roulette_spin_1" -MarkerOffset -0.1 -OverlayId "cta"
+	$full += New-GameplayClip "23_cta_slot" "game_slot" 0.9 -OverlayId "cta"
+	$full += New-GameplayClip "24_cta_scratch" "game_scratch_tickets" 0.9 -Marker "action_scratch_all_1" -MarkerOffset -0.1 -OverlayId "cta"
+	$full += New-GameplayClip "25_cta_dice" "game_bar_dice" 0.9 -OverlayId "cta"
+	$full += New-GameplayClip "26_cta_baccarat" "game_baccarat" 0.9 -Marker "action_baccarat_deal_1" -MarkerOffset -0.1 -OverlayId "cta"
 	$fullList = Join-Path $TempRoot "full_concat.txt"
 	Write-ConcatList $fullList $full
 
@@ -245,35 +264,36 @@ try {
 		"-map", "0:v:0", "-map", "1:a:0",
 		"-c:v", "copy",
 		"-c:a", "aac", "-b:a", "192k", "-ar", "48000",
-		"-t", "60",
+		"-t", "30",
 		"-movflags", "+faststart",
 		"-y", $fullOutput
 	) "1080p trailer assembly"
 
 	$vertical = @()
-	$vertical += New-GameplayClip "00_hook" "rourke_duel" 2.75 2.5 -Vertical
-	$vertical += New-CardClip "01_logo" "logo" 1.5 -Vertical
-	$vertical += New-GameplayClip "02_roadside" "roadside" 2.42 3.0 -Vertical
-	$vertical += New-CardClip "03_eight_games" "eight_games" 1.0 -Vertical
-	$vertical += New-GameplayClip "04_blackjack" "game_blackjack" 2.85 1.5 -Vertical
-	$vertical += New-GameplayClip "05_roulette" "game_roulette" 3.45 1.5 -Vertical
-	$vertical += New-GameplayClip "06_slot" "game_slot" 2.75 1.5 -Vertical
-	$vertical += New-GameplayClip "07_scratch" "game_scratch_tickets" 3.25 1.5 -Vertical
-	$vertical += New-GameplayClip "08_bar_dice" "game_bar_dice" 2.75 1.5 -Vertical
-	$vertical += New-GameplayClip "09_baccarat" "game_baccarat" 3.45 1.5 -Vertical
-	$vertical += New-GameplayClip "10_video_poker" "game_video_poker" 2.75 1.5 -Vertical
-	$vertical += New-GameplayClip "11_pull_tabs" "game_pull_tabs" 2.75 1.5 -Vertical
-	$vertical += New-CardClip "12_dodge_heat" "dodge_heat" 1.0 -Vertical
-	$vertical += New-GameplayClip "13_heat" "heat_cheat" 2.75 3.0 -Vertical
-	$vertical += New-CardClip "14_cheat" "cheat_dare" 1.0 -Vertical
-	$vertical += New-GameplayClip "15_cheat_action" "heat_cheat" 4.75 3.0 -Vertical
-	$vertical += New-CardClip "16_beat_house" "beat_house" 1.0 -Vertical
-	$vertical += New-GameplayClip "17_map" "world_map" 2.68 3.0 -Vertical
-	$vertical += New-GameplayClip "18_grand" "grand_casino" 2.32 3.0 -Vertical
-	$vertical += New-GameplayClip "19_cage" "cage_card" 2.52 3.0 -CropX 300 -Vertical
-	$vertical += New-GameplayClip "20_call" "rourke_call" 2.30 2.5 -Vertical
-	$vertical += New-GameplayClip "21_duel" "rourke_duel" 2.75 2.5 -Vertical
-	$vertical += New-CardClip "22_cta" "cta" 2.0 -Vertical
+	$vertical += New-GameplayClip "00_hook" "rourke_duel" 1.0 -Marker "duel_ready" -Vertical
+	$vertical += New-GameplayClip "01_logo" "game_roulette" 2.15 -OverlayId "logo" -Vertical
+	$vertical += New-GameplayClip "02_blackjack" "game_blackjack" 0.75 -Vertical
+	$vertical += New-GameplayClip "03_roulette" "game_roulette" 0.75 -Marker "action_roulette_spin_1" -MarkerOffset -0.1 -Vertical
+	$vertical += New-GameplayClip "04_slot" "game_slot" 0.75 -Vertical
+	$vertical += New-GameplayClip "05_scratch" "game_scratch_tickets" 0.5 -Marker "action_scratch_all_1" -MarkerOffset -0.1 -Vertical
+	$vertical += New-GameplayClip "06_bar_dice" "game_bar_dice" 0.75 -Vertical
+	$vertical += New-GameplayClip "07_baccarat" "game_baccarat" 0.75 -Marker "action_baccarat_deal_1" -MarkerOffset -0.1 -Vertical
+	$vertical += New-GameplayClip "08_video_poker" "game_video_poker" 0.75 -Marker "action_video_poker_draw_1" -MarkerOffset -0.1 -Vertical
+	$vertical += New-GameplayClip "09_pull_tabs" "game_pull_tabs" 0.75 -Marker "action_pull_tab_collect_tray_1" -MarkerOffset -0.1 -Vertical
+	$vertical += New-GameplayClip "10_heat" "heat_cheat" 2.0 -OverlayId "cheat_dare" -Vertical
+	$vertical += New-GameplayClip "11_grand" "grand_casino" 1.5 -OverlayId "beat_house" -Vertical
+	$vertical += New-GameplayClip "13_call" "rourke_call" 2.0 -Vertical
+	$vertical += New-GameplayClip "14_duel" "rourke_duel" 1.1 -Marker "duel_ready" -Vertical
+	$vertical += New-GameplayClip "15_payoff_roulette" "game_roulette" 0.5 -Marker "action_roulette_spin_1" -MarkerOffset -0.05 -Vertical
+	$vertical += New-GameplayClip "16_payoff_slot" "game_slot" 0.5 -Vertical
+	$vertical += New-GameplayClip "17_payoff_scratch" "game_scratch_tickets" 0.5 -Marker "action_scratch_all_1" -MarkerOffset -0.05 -Vertical
+	$vertical += New-GameplayClip "18_payoff_dice" "game_bar_dice" 0.5 -Vertical
+	$vertical += New-GameplayClip "19_payoff_baccarat" "game_baccarat" 0.5 -Marker "action_baccarat_deal_1" -MarkerOffset -0.05 -Vertical
+	$vertical += New-GameplayClip "20_cta_roulette" "game_roulette" 0.8 -Marker "action_roulette_spin_1" -MarkerOffset -0.05 -OverlayId "cta" -Vertical
+	$vertical += New-GameplayClip "21_cta_slot" "game_slot" 0.8 -OverlayId "cta" -Vertical
+	$vertical += New-GameplayClip "22_cta_scratch" "game_scratch_tickets" 0.8 -Marker "action_scratch_all_1" -MarkerOffset -0.05 -OverlayId "cta" -Vertical
+	$vertical += New-GameplayClip "23_cta_dice" "game_bar_dice" 0.8 -OverlayId "cta" -Vertical
+	$vertical += New-GameplayClip "24_cta_baccarat" "game_baccarat" 0.8 -Marker "action_baccarat_deal_1" -MarkerOffset -0.05 -OverlayId "cta" -Vertical
 	$verticalList = Join-Path $TempRoot "vertical_concat.txt"
 	Write-ConcatList $verticalList $vertical
 
@@ -285,17 +305,22 @@ try {
 		"-map", "0:v:0", "-map", "1:a:0",
 		"-c:v", "copy",
 		"-c:a", "aac", "-b:a", "192k", "-ar", "48000",
-		"-t", "45",
+		"-t", "22",
 		"-movflags", "+faststart",
 		"-y", $verticalOutput
 	) "vertical trailer assembly"
 
 	$loop = @(
-		(New-GameplayClip "00_roulette" "game_roulette" 3.45 1.5),
-		(New-GameplayClip "01_slot" "game_slot" 2.75 1.5),
-		(New-GameplayClip "02_scratch" "game_scratch_tickets" 3.25 1.5),
-		(New-GameplayClip "03_grand" "grand_casino" 2.32 2.0),
-		(New-GameplayClip "04_duel" "rourke_duel" 2.75 1.5)
+		(New-GameplayClip "00_loop_roulette" "game_roulette" 0.8 -Marker "action_roulette_spin_1" -MarkerOffset -0.05),
+		(New-GameplayClip "01_loop_slot" "game_slot" 0.8),
+		(New-GameplayClip "02_loop_scratch" "game_scratch_tickets" 0.8 -Marker "action_scratch_all_1" -MarkerOffset -0.05),
+		(New-GameplayClip "03_loop_dice" "game_bar_dice" 0.8),
+		(New-GameplayClip "04_loop_baccarat" "game_baccarat" 0.8 -Marker "action_baccarat_deal_1" -MarkerOffset -0.05),
+		(New-GameplayClip "05_loop_blackjack" "game_blackjack" 0.8),
+		(New-GameplayClip "06_loop_roulette" "game_roulette" 0.8 -Marker "action_roulette_spin_1" -MarkerOffset 0.15),
+		(New-GameplayClip "07_loop_slot" "game_slot" 0.8 -MarkerOffset 0.25),
+		(New-GameplayClip "08_loop_scratch" "game_scratch_tickets" 0.8 -Marker "action_scratch_all_1" -MarkerOffset 0.15),
+		(New-GameplayClip "09_loop_duel" "rourke_duel" 0.8 -Marker "duel_ready")
 	)
 	$loopList = Join-Path $TempRoot "loop_concat.txt"
 	Write-ConcatList $loopList $loop
