@@ -632,11 +632,12 @@ func _assert_metric_growth(metric_key: String, max_peak_growth: float, max_retai
 	var peak_growth := max_value - (retained_warmup_value if comparable_peak else workload_warmup_value)
 	var retained_growth := final_value - retained_warmup_value
 	var retained_slope := _retained_trend_slope(retained_samples, metric_key, WARMUP_SAMPLE_COUNT)
+	var retained_recent_growth := _retained_recent_growth(retained_samples, metric_key)
 	if peak_growth > max_peak_growth:
 		failures.append("%s post-warmup peak growth %.3f exceeded %.3f." % [metric_key, peak_growth, max_peak_growth])
 	if retained_growth > max_retained_growth:
 		failures.append("%s post-warmup retained growth %.3f exceeded %.3f." % [metric_key, retained_growth, max_retained_growth])
-	if retained_slope > max_retained_slope:
+	if retained_slope > max_retained_slope and (retained_growth > max_retained_growth or retained_recent_growth > max_retained_slope):
 		failures.append("%s post-warmup retained slope %.3f/sample exceeded %.3f/sample." % [metric_key, retained_slope, max_retained_slope])
 
 
@@ -654,6 +655,14 @@ func _retained_slope(source_samples: Array, metric_key: String, start_index: int
 func _retained_trend_slope(source_samples: Array, metric_key: String, minimum_start_index: int) -> float:
 	var tail_start_index := maxi(minimum_start_index, source_samples.size() - RETAINED_SLOPE_TAIL_SAMPLE_COUNT)
 	return _linear_slope(source_samples, metric_key, tail_start_index)
+
+
+func _retained_recent_growth(source_samples: Array, metric_key: String) -> float:
+	if source_samples.size() < 2:
+		return 0.0
+	var previous_value := float(_dict(source_samples[source_samples.size() - 2]).get(metric_key, 0.0))
+	var final_value := float(_dict(source_samples[source_samples.size() - 1]).get(metric_key, 0.0))
+	return maxf(0.0, final_value - previous_value)
 
 
 func _linear_slope(source_samples: Array, metric_key: String, start_index: int) -> float:

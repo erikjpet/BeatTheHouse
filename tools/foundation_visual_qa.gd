@@ -3161,10 +3161,18 @@ func _double_click_first_enabled_canvas_object_type(object_type: String) -> Stri
 
 
 func _double_click_canvas_object_data(canvas: Control, object_data: Dictionary, object_type: String) -> String:
-	var object_id := str(object_data.get("id", ""))
+	var object_id := _canvas_object_id(object_data)
 	var local_position := _canvas_local_hit_position_for_object(canvas, object_data)
 	if local_position.x < 0.0 or local_position.y < 0.0 or local_position.x > canvas.size.x or local_position.y > canvas.size.y:
-		return ""
+		_return_to_room_view()
+		await _settle()
+		var retried_object := _canvas_object_by_id(canvas, object_id)
+		if retried_object.is_empty():
+			return ""
+		object_data = retried_object
+		local_position = _canvas_local_hit_position_for_object(canvas, object_data)
+		if local_position.x < 0.0 or local_position.y < 0.0 or local_position.x > canvas.size.x or local_position.y > canvas.size.y:
+			return ""
 	var global_position := canvas.get_global_rect().position + local_position
 	_push_mouse_motion(global_position)
 	await _settle()
@@ -3411,13 +3419,13 @@ func _canvas_object_by_id(canvas: Control, object_id: String) -> Dictionary:
 		if typeof(item) != TYPE_DICTIONARY:
 			continue
 		var object_data: Dictionary = item
-		if str(object_data.get("id", "")) == object_id:
+		if _canvas_object_id(object_data) == object_id:
 			return object_data.duplicate(true)
 	return {}
 
 
 func _canvas_object_center_hits(canvas: Control, object_data: Dictionary) -> bool:
-	var object_id := str(object_data.get("id", ""))
+	var object_id := _canvas_object_id(object_data)
 	if object_id.is_empty():
 		return false
 	var local_position := _canvas_local_hit_position_for_object(canvas, object_data)
@@ -3482,7 +3490,7 @@ func _canvas_local_center_for_object(canvas: Control, object_data: Dictionary) -
 
 
 func _canvas_local_hit_position_for_object(canvas: Control, object_data: Dictionary) -> Vector2:
-	var object_id := str(object_data.get("id", ""))
+	var object_id := _canvas_object_id(object_data)
 	if object_id.is_empty():
 		return Vector2(-1.0, -1.0)
 	for board_point_value in _canvas_object_board_hit_candidates(object_data):
@@ -3494,6 +3502,10 @@ func _canvas_local_hit_position_for_object(canvas: Control, object_data: Diction
 			continue
 		return local_position
 	return Vector2(-1.0, -1.0)
+
+
+func _canvas_object_id(object_data: Dictionary) -> String:
+	return str(object_data.get("id", object_data.get("object_id", ""))).strip_edges()
 
 
 func _canvas_object_board_hit_candidates(object_data: Dictionary) -> Array:
