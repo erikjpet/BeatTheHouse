@@ -2072,26 +2072,113 @@ func _draw_spot_symbol_reveal(surface, ticket: Dictionary, result: Dictionary, s
 	if symbol_id.is_empty():
 		return false
 	var winner := _spot_is_winner(ticket, result, spot)
-	var inset_rect := rect.grow(-maxf(1.0, minf(rect.size.x, rect.size.y) * 0.04))
+	var role := str(spot.get("role", ""))
+	var main_text := _spot_symbol_main_text(ticket, spot)
+	var sub_text := _spot_symbol_sub_text(ticket, result, spot)
+	if _symbol_role_suppresses_sub_label(role):
+		sub_text = ""
+	_draw_symbol_readability_plaque(surface, symbol_id, role, rect, winner, ink, trim)
+	var inset_rect := rect.grow(-maxf(0.5, minf(rect.size.x, rect.size.y) * 0.025))
 	if inset_rect.size.x <= 1.0 or inset_rect.size.y <= 1.0:
 		inset_rect = rect
-	var drawn := _draw_centered_reveal_symbol(surface, symbol_id, inset_rect, 0.96 if _spot_symbol_main_text(ticket, spot).is_empty() else 0.82)
+	var drawn := _draw_centered_reveal_symbol(surface, symbol_id, inset_rect, _symbol_icon_coverage(role, main_text, sub_text))
 	if not drawn:
 		return false
 	if winner:
-		surface.draw_rect(rect.grow(-1), trim, false, 2)
-	var main_text := _spot_symbol_main_text(ticket, spot)
-	var sub_text := _spot_symbol_sub_text(ticket, result, spot)
+		surface.draw_rect(rect.grow(-1), trim, false, 3 if minf(rect.size.x, rect.size.y) >= 32.0 else 2)
 	if not main_text.is_empty():
 		var font_size := _symbol_main_font_size(rect, main_text)
-		var label_rect := Rect2(rect.position + Vector2(2, rect.size.y * 0.21), Vector2(rect.size.x - 4, rect.size.y * (0.45 if not sub_text.is_empty() else 0.36)))
-		if str(spot.get("role", "")) == "crossword_cell" or str(spot.get("role", "")) == "bank_letter":
-			label_rect = Rect2(rect.position + Vector2(1, 1), Vector2(rect.size.x - 2, rect.size.y - 2))
-		surface.surface_label_centered(main_text, label_rect, font_size, C_WHITE if _symbol_text_needs_light(symbol_id) else ink)
+		var label_rect := _symbol_main_label_rect(role, rect, not sub_text.is_empty())
+		_draw_symbol_label(surface, main_text, label_rect, font_size, _symbol_text_color(symbol_id, role, ink, trim), _symbol_text_stroke(symbol_id, role))
 	if not sub_text.is_empty():
-		var sub_rect := Rect2(rect.position + Vector2(2, rect.size.y * 0.61), Vector2(rect.size.x - 4, rect.size.y * 0.32))
-		surface.surface_label_centered(sub_text, sub_rect, 6 if rect.size.x < 48.0 else 8, C_WHITE if _symbol_text_needs_light(symbol_id) else ink)
+		var sub_rect := _symbol_sub_label_rect(role, rect)
+		_draw_symbol_label(surface, sub_text, sub_rect, _symbol_sub_font_size(rect, sub_text), _symbol_text_color(symbol_id, role, ink, trim), _symbol_text_stroke(symbol_id, role))
 	return true
+
+
+func _draw_symbol_readability_plaque(surface, symbol_id: String, role: String, rect: Rect2, winner: bool, ink: Color, trim: Color) -> void:
+	var short_side := minf(rect.size.x, rect.size.y)
+	var plaque := rect.grow(-maxf(0.0, short_side * 0.015))
+	var bg := Color("#fff8df")
+	var border := Color("#141019")
+	match role:
+		"winning_number":
+			bg = Color("#191528")
+			border = trim
+		"your_number", "bonus_number", "caller":
+			bg = Color("#fff2a8")
+			border = Color("#2b1b11")
+		"bank_letter":
+			bg = Color("#d8fbff")
+			border = Color("#123f52")
+		"crossword_cell", "bingo_cell":
+			bg = Color("#fffdf0")
+			border = Color("#123821")
+		"your_card", "dealer_card", "wild":
+			bg = Color("#fff7e1")
+			border = Color("#1c1420")
+		"ladder", "gold_bar", "vault", "multiplier":
+			bg = Color("#17131c")
+			border = trim
+	var alpha := 0.96
+	if _symbol_text_needs_light(symbol_id):
+		alpha = 0.92
+	surface.draw_rect(plaque, Color(bg.r, bg.g, bg.b, alpha))
+	surface.draw_rect(plaque, border, false, 2 if short_side >= 26.0 else 1)
+	if winner:
+		surface.draw_rect(plaque.grow(2), trim, false, 2)
+
+
+func _symbol_icon_coverage(role: String, main_text: String, sub_text: String) -> float:
+	if main_text.is_empty():
+		return 0.98
+	match role:
+		"crossword_cell", "bank_letter", "bingo_cell", "caller":
+			return 1.00
+		"your_card", "dealer_card", "wild":
+			return 0.98
+		"ladder", "gold_bar", "vault", "multiplier":
+			return 0.92
+	return 0.96 if sub_text.is_empty() else 0.90
+
+
+func _symbol_main_label_rect(role: String, rect: Rect2, has_sub_text: bool) -> Rect2:
+	match role:
+		"crossword_cell", "bank_letter", "bingo_cell", "caller", "your_card", "dealer_card", "wild":
+			return Rect2(rect.position + Vector2(1, 1), Vector2(rect.size.x - 2, rect.size.y - 2))
+		"ladder", "gold_bar", "vault", "multiplier":
+			return Rect2(rect.position + Vector2(2, 1), Vector2(rect.size.x - 4, rect.size.y * (0.66 if has_sub_text else 0.86)))
+	return Rect2(rect.position + Vector2(2, rect.size.y * (0.10 if has_sub_text else 0.06)), Vector2(rect.size.x - 4, rect.size.y * (0.58 if has_sub_text else 0.84)))
+
+
+func _symbol_sub_label_rect(role: String, rect: Rect2) -> Rect2:
+	match role:
+		"ladder", "gold_bar", "vault", "multiplier":
+			return Rect2(rect.position + Vector2(2, rect.size.y * 0.58), Vector2(rect.size.x - 4, rect.size.y * 0.38))
+	return Rect2(rect.position + Vector2(2, rect.size.y * 0.60), Vector2(rect.size.x - 4, rect.size.y * 0.36))
+
+
+func _symbol_role_suppresses_sub_label(role: String) -> bool:
+	return ["crossword_cell", "bank_letter", "bingo_cell", "caller", "your_card", "dealer_card"].has(role)
+
+
+func _draw_symbol_label(surface, text: String, rect: Rect2, font_size: int, fill: Color, stroke: Color) -> void:
+	if text.is_empty():
+		return
+	_draw_symbol_label_shadow(surface, text, rect, font_size, stroke, -1.0, 0.0)
+	_draw_symbol_label_shadow(surface, text, rect, font_size, stroke, 1.0, 0.0)
+	_draw_symbol_label_shadow(surface, text, rect, font_size, stroke, 0.0, -1.0)
+	_draw_symbol_label_shadow(surface, text, rect, font_size, stroke, 0.0, 1.0)
+	if minf(rect.size.x, rect.size.y) >= 24.0:
+		_draw_symbol_label_shadow(surface, text, rect, font_size, stroke, -1.0, -1.0)
+		_draw_symbol_label_shadow(surface, text, rect, font_size, stroke, 1.0, -1.0)
+		_draw_symbol_label_shadow(surface, text, rect, font_size, stroke, -1.0, 1.0)
+		_draw_symbol_label_shadow(surface, text, rect, font_size, stroke, 1.0, 1.0)
+	surface.surface_label_centered(text, rect, font_size, fill)
+
+
+func _draw_symbol_label_shadow(surface, text: String, rect: Rect2, font_size: int, stroke: Color, offset_x: float, offset_y: float) -> void:
+	surface.surface_label_centered(text, Rect2(rect.position + Vector2(offset_x, offset_y), rect.size), font_size, stroke)
 
 
 func _draw_centered_reveal_symbol(surface, symbol_id: String, rect: Rect2, coverage: float = 0.86) -> bool:
@@ -2217,12 +2304,40 @@ func _spot_symbol_sub_text(ticket: Dictionary, result: Dictionary, spot: Diction
 func _symbol_main_font_size(rect: Rect2, text: String) -> int:
 	var short_side := minf(rect.size.x, rect.size.y)
 	if short_side < 21.0:
-		return 5
+		return 7 if text.length() <= 2 else 6
 	if short_side < 30.0:
-		return 7 if text.length() <= 2 else 5
+		return 10 if text.length() <= 2 else 8
 	if short_side < 45.0:
-		return 10 if text.length() <= 3 else 7
-	return 15 if text.length() <= 3 else 10
+		return 14 if text.length() <= 3 else 10
+	return 19 if text.length() <= 3 else 13
+
+
+func _symbol_sub_font_size(rect: Rect2, text: String) -> int:
+	if minf(rect.size.x, rect.size.y) < 30.0:
+		return 7 if text.length() <= 5 else 6
+	return 9 if text.length() <= 7 else 8
+
+
+func _symbol_text_color(symbol_id: String, role: String, ink: Color, trim: Color) -> Color:
+	match role:
+		"winning_number":
+			return C_WHITE
+		"your_card", "dealer_card":
+			return Color("#d62236") if symbol_id == "card_red" else Color("#101018")
+		"wild", "ladder", "gold_bar", "vault", "multiplier":
+			return trim
+	if _symbol_text_needs_light(symbol_id):
+		return C_WHITE
+	return ink
+
+
+func _symbol_text_stroke(symbol_id: String, role: String) -> Color:
+	match role:
+		"your_card", "dealer_card", "crossword_cell", "bank_letter", "bingo_cell", "caller", "your_number", "bonus_number":
+			return Color(1.0, 1.0, 1.0, 0.72)
+	if _symbol_text_needs_light(symbol_id):
+		return Color(0.0, 0.0, 0.0, 0.92)
+	return Color(0.0, 0.0, 0.0, 0.76)
 
 
 func _symbol_text_needs_light(symbol_id: String) -> bool:

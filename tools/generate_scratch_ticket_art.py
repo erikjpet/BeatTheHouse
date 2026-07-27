@@ -571,36 +571,49 @@ def save_symbol(name: str, draw_fn: Callable[[ImageDraw.ImageDraw], None]) -> No
 
 
 def generate_symbols() -> None:
+    """Generate high-legibility reveal icons.
+
+    Runtime overlays the actual numbers, letters, and card ranks, so these
+    assets should read as unmistakable icon backplates at tiny in-game sizes:
+    big silhouettes, thick outlines, and quiet interiors behind text.
+    """
     SYMBOLS_DIR.mkdir(parents=True, exist_ok=True)
 
-    def coin(d, fill, outline, inner=(255, 255, 255, 80)):
-        d.ellipse((10, 10, 118, 118), fill=(0, 0, 0, 70))
-        d.ellipse((8, 6, 116, 114), fill=fill, outline=outline, width=5)
-        d.ellipse((23, 21, 101, 99), outline=inner, width=4)
+    def plaque(d, box, fill, outline, width: int = 6, radius: int = 12):
+        rounded(d, (box[0] + 5, box[1] + 6, box[2] + 5, box[3] + 6), radius, (0, 0, 0, 105))
+        rounded(d, box, radius, fill, outline, width)
 
-    save_symbol("number_coin", lambda d: coin(d, (255, 217, 81, 255), (72, 47, 16, 255)))
-    save_symbol("winning_star", lambda d: (coin(d, (238, 48, 88, 255), (255, 233, 64, 255)), d.polygon(star_points(62, 58, 40, 18), fill=(255, 239, 88, 210), outline=(70, 30, 20, 255))))
-    save_symbol("lucky_seven", lambda d: (coin(d, (20, 73, 39, 255), (255, 231, 68, 255)), center_text(d, (23, 16, 80, 84), "7", 76, (240, 48, 80, 185), condensed=True, stroke_fill=(255, 232, 80, 180), stroke_width=2)))
-    save_symbol("clover", lambda d: (coin(d, (31, 126, 61, 255), (255, 233, 80, 255)), [d.ellipse(b, fill=(22, 194, 83, 255), outline=(10, 80, 33, 255), width=2) for b in [(31, 27, 65, 61), (63, 27, 97, 61), (31, 59, 65, 93), (63, 59, 97, 93)]], d.rectangle((61, 73, 68, 104), fill=(10, 80, 33, 255))))
-    save_symbol("bell", lambda d: (coin(d, (255, 211, 84, 255), (94, 56, 20, 255)), d.pieslice((34, 28, 94, 106), 190, 350, fill=(255, 237, 111, 255), outline=(101, 59, 19, 255), width=4), d.rectangle((30, 85, 98, 98), fill=(236, 170, 42, 255), outline=(101, 59, 19, 255), width=3), d.ellipse((56, 94, 72, 110), fill=(101, 59, 19, 255))))
-    save_symbol("star", lambda d: (coin(d, (34, 86, 161, 255), (255, 233, 80, 255)), d.polygon(star_points(64, 60, 42, 18), fill=(255, 245, 96, 255), outline=(79, 55, 10, 255))))
-    save_symbol("twofer", lambda d: (coin(d, (239, 52, 79, 255), (255, 226, 75, 255)), center_text(d, (20, 42, 88, 34), "2FER", 28, (255, 255, 255, 255), condensed=True, stroke_fill=(63, 20, 28, 255), stroke_width=2)))
-    save_symbol("gold_coin", lambda d: (coin(d, (255, 211, 71, 255), (95, 63, 17, 255)), d.polygon(star_points(64, 61, 34, 15), fill=(255, 244, 146, 215))))
-    save_symbol("miss_cross", lambda d: (coin(d, (41, 47, 57, 255), (119, 125, 138, 255)), d.line((38, 38, 90, 90), fill=(255, 255, 255, 190), width=10), d.line((90, 38, 38, 90), fill=(255, 255, 255, 190), width=10)))
-    save_symbol("dust", lambda d: (coin(d, (132, 116, 87, 255), (80, 70, 50, 255)), [d.ellipse((20+i*17, 33+(i%3)*16, 29+i*17, 42+(i%3)*16), fill=(214, 196, 148, 210)) for i in range(5)]))
-    save_symbol("gold_bar", lambda d: (d.rectangle((24, 55, 104, 92), fill=(0, 0, 0, 80)), d.polygon([(20, 46), (98, 46), (110, 85), (32, 85)], fill=(255, 212, 72, 255), outline=(105, 68, 17, 255)), d.polygon([(35, 29), (82, 29), (96, 48), (22, 48)], fill=(255, 236, 126, 255), outline=(105, 68, 17, 255))))
-    save_symbol("brass_bar", lambda d: (d.rectangle((24, 55, 104, 92), fill=(0, 0, 0, 80)), d.polygon([(20, 46), (98, 46), (110, 85), (32, 85)], fill=(164, 111, 52, 255), outline=(75, 50, 30, 255)), d.polygon([(35, 29), (82, 29), (96, 48), (22, 48)], fill=(193, 139, 77, 255), outline=(75, 50, 30, 255))))
-    save_symbol("letter_tile", lambda d: rounded(d, (16, 16, 112, 112), 10, (219, 250, 255, 255), (23, 63, 86, 255), 5))
-    save_symbol("crossword_cell", lambda d: rounded(d, (13, 13, 115, 115), 6, (245, 238, 198, 255), (37, 61, 65, 255), 4))
-    save_symbol("bingo_ball", lambda d: (d.ellipse((8, 8, 118, 118), fill=(0, 0, 0, 70)), d.ellipse((8, 5, 116, 113), fill=(255, 245, 217, 255), outline=(20, 98, 56, 255), width=5), d.arc((22, 19, 101, 101), 215, 330, fill=(255, 180, 63, 255), width=7)))
-    save_symbol("bingo_cell", lambda d: rounded(d, (12, 12, 116, 116), 8, (255, 255, 241, 255), (18, 76, 43, 255), 4))
-    save_symbol("cash_stack", lambda d: ([rounded(d, (22, 38+i*11, 106, 68+i*11), 5, (44, 156, 78, 255), (11, 73, 34, 255), 3) for i in range(3)], center_text(d, (28, 48, 72, 34), "$", 42, (255, 239, 126, 255), stroke_fill=(10, 69, 31, 255), stroke_width=1)))
-    save_symbol("multiplier_coin", lambda d: (coin(d, (255, 213, 80, 255), (71, 43, 17, 255)), d.ellipse((34, 33, 94, 93), fill=(84, 46, 19, 110))))
-    save_symbol("vault_sealed", lambda d: (rounded(d, (17, 20, 111, 108), 12, (35, 38, 45, 255), (150, 118, 56, 255), 5), d.ellipse((39, 39, 89, 89), outline=(217, 175, 72, 255), width=7), d.ellipse((56, 56, 72, 72), fill=(217, 175, 72, 255))))
-    save_symbol("vault_open", lambda d: (rounded(d, (12, 24, 86, 108), 11, (35, 38, 45, 255), (150, 118, 56, 255), 5), rounded(d, (66, 19, 116, 103), 11, (88, 72, 36, 255), (255, 214, 85, 255), 4), d.polygon(star_points(58, 63, 26, 11), fill=(255, 235, 92, 210))))
-    save_symbol("wild_card", lambda d: (rounded(d, (22, 12, 106, 116), 8, (34, 23, 39, 255), (234, 194, 75, 255), 5), center_text(d, (28, 37, 72, 42), "WILD", 26, (255, 245, 177, 255), condensed=True, stroke_fill=(0, 0, 0, 255), stroke_width=1)))
-    save_symbol("card_red", lambda d: (rounded(d, (19, 10, 109, 118), 8, (130, 24, 41, 255), (255, 236, 192, 255), 5), label(d, (44, 43), "♥", 44, (255, 225, 225, 180), bold=True)))
-    save_symbol("card_black", lambda d: (rounded(d, (19, 10, 109, 118), 8, (20, 21, 27, 255), (255, 236, 192, 255), 5), label(d, (44, 43), "♠", 44, (255, 255, 255, 150), bold=True)))
+    def coin(d, fill, outline, inner=(255, 255, 255, 115)):
+        d.ellipse((9, 10, 119, 120), fill=(0, 0, 0, 90))
+        d.ellipse((7, 5, 117, 115), fill=fill, outline=outline, width=7)
+        d.ellipse((23, 21, 101, 99), fill=mix(fill, (255, 255, 255, 255), 0.18), outline=inner, width=5)
+
+    def centered_word(d, text, fill, stroke, y=39, size=32):
+        center_text(d, (12, y, 104, 44), text, size, fill, condensed=True, stroke_fill=stroke, stroke_width=3)
+
+    save_symbol("number_coin", lambda d: (coin(d, (255, 221, 82, 255), (59, 38, 12, 255)), d.rectangle((40, 58, 88, 69), fill=(97, 65, 17, 180))))
+    save_symbol("winning_star", lambda d: (coin(d, (235, 39, 83, 255), (255, 234, 61, 255)), d.polygon(star_points(64, 62, 43, 19), fill=(255, 241, 78, 255), outline=(57, 28, 12, 255))))
+    save_symbol("lucky_seven", lambda d: (coin(d, (19, 78, 40, 255), (255, 230, 62, 255)), center_text(d, (22, 12, 84, 88), "7", 82, (246, 33, 67, 255), condensed=True, stroke_fill=(255, 238, 92, 255), stroke_width=4)))
+    save_symbol("clover", lambda d: (coin(d, (23, 126, 58, 255), (255, 233, 71, 255)), [d.ellipse(b, fill=(18, 207, 81, 255), outline=(5, 72, 28, 255), width=5) for b in [(26, 24, 66, 64), (62, 24, 102, 64), (26, 59, 66, 99), (62, 59, 102, 99)]], d.rectangle((59, 75, 70, 108), fill=(5, 72, 28, 255))))
+    save_symbol("bell", lambda d: (coin(d, (255, 213, 78, 255), (87, 52, 14, 255)), d.pieslice((29, 24, 99, 106), 190, 350, fill=(255, 236, 99, 255), outline=(86, 48, 13, 255), width=6), d.rectangle((25, 83, 103, 100), fill=(230, 157, 33, 255), outline=(86, 48, 13, 255), width=5), d.ellipse((55, 95, 73, 113), fill=(86, 48, 13, 255))))
+    save_symbol("star", lambda d: (coin(d, (27, 75, 163, 255), (255, 232, 69, 255)), d.polygon(star_points(64, 62, 45, 20), fill=(255, 245, 90, 255), outline=(58, 43, 7, 255))))
+    save_symbol("twofer", lambda d: (coin(d, (239, 46, 79, 255), (255, 226, 68, 255)), centered_word(d, "2FER", (255, 255, 255, 255), (57, 17, 25, 255), 39, 33)))
+    save_symbol("gold_coin", lambda d: (coin(d, (255, 211, 65, 255), (94, 59, 13, 255)), d.polygon(star_points(64, 62, 34, 15), fill=(255, 246, 142, 235), outline=(122, 80, 18, 255))))
+    save_symbol("miss_cross", lambda d: (coin(d, (38, 45, 55, 255), (139, 147, 162, 255)), d.line((34, 34, 94, 94), fill=(255, 255, 255, 235), width=15), d.line((94, 34, 34, 94), fill=(255, 255, 255, 235), width=15)))
+    save_symbol("dust", lambda d: (coin(d, (127, 108, 76, 255), (63, 52, 34, 255)), centered_word(d, "MISS", (249, 226, 151, 255), (50, 41, 28, 255), 42, 27)))
+    save_symbol("gold_bar", lambda d: (d.rectangle((17, 69, 111, 102), fill=(0, 0, 0, 95)), d.polygon([(13, 51), (97, 51), (113, 91), (29, 91)], fill=(255, 211, 59, 255), outline=(91, 55, 8, 255)), d.polygon([(32, 28), (83, 28), (99, 51), (15, 51)], fill=(255, 239, 118, 255), outline=(91, 55, 8, 255)), centered_word(d, "GOLD", (74, 45, 8, 255), (255, 246, 153, 255), 51, 24)))
+    save_symbol("brass_bar", lambda d: (d.rectangle((17, 69, 111, 102), fill=(0, 0, 0, 95)), d.polygon([(13, 51), (97, 51), (113, 91), (29, 91)], fill=(165, 101, 43, 255), outline=(60, 38, 21, 255)), d.polygon([(32, 28), (83, 28), (99, 51), (15, 51)], fill=(206, 145, 68, 255), outline=(60, 38, 21, 255)), centered_word(d, "BRASS", (255, 230, 158, 255), (55, 36, 20, 255), 52, 22)))
+    save_symbol("letter_tile", lambda d: plaque(d, (10, 10, 118, 118), (220, 250, 255, 255), (8, 57, 80, 255), 7, 10))
+    save_symbol("crossword_cell", lambda d: plaque(d, (9, 9, 119, 119), (255, 248, 214, 255), (28, 55, 59, 255), 7, 7))
+    save_symbol("bingo_ball", lambda d: (d.ellipse((8, 9, 120, 121), fill=(0, 0, 0, 85)), d.ellipse((6, 5, 118, 117), fill=(255, 247, 220, 255), outline=(18, 96, 50, 255), width=7), d.ellipse((31, 30, 93, 92), fill=(255, 255, 250, 255), outline=(255, 179, 47, 255), width=6)))
+    save_symbol("bingo_cell", lambda d: plaque(d, (8, 8, 120, 120), (255, 255, 242, 255), (12, 76, 38, 255), 7, 8))
+    save_symbol("cash_stack", lambda d: ([rounded(d, (17, 33 + i * 14, 111, 68 + i * 14), 6, (39, 159, 77, 255), (6, 66, 28, 255), 4) for i in range(3)], center_text(d, (21, 46, 86, 44), "$", 48, (255, 242, 118, 255), stroke_fill=(5, 61, 27, 255), stroke_width=3)))
+    save_symbol("multiplier_coin", lambda d: (coin(d, (255, 214, 74, 255), (67, 42, 13, 255)), centered_word(d, "X", (67, 42, 13, 255), (255, 246, 151, 255), 36, 48)))
+    save_symbol("vault_sealed", lambda d: (plaque(d, (14, 18, 114, 112), (29, 32, 40, 255), (204, 164, 68, 255), 6, 12), d.ellipse((38, 37, 90, 89), outline=(238, 192, 79, 255), width=9), d.line((46, 46, 82, 82), fill=(238, 192, 79, 255), width=6), d.line((82, 46, 46, 82), fill=(238, 192, 79, 255), width=6)))
+    save_symbol("vault_open", lambda d: (plaque(d, (10, 24, 84, 114), (31, 34, 42, 255), (202, 162, 65, 255), 5, 10), plaque(d, (64, 17, 119, 106), (100, 77, 32, 255), (255, 217, 82, 255), 5, 10), d.polygon(star_points(58, 66, 29, 13), fill=(255, 239, 88, 235), outline=(105, 70, 14, 255))))
+    save_symbol("wild_card", lambda d: (plaque(d, (20, 9, 108, 119), (34, 22, 42, 255), (242, 199, 72, 255), 6, 8), centered_word(d, "WILD", (255, 245, 177, 255), (0, 0, 0, 255), 42, 27)))
+    save_symbol("card_red", lambda d: (plaque(d, (18, 8, 110, 120), (255, 247, 228, 255), (145, 24, 41, 255), 6, 8), center_text(d, (26, 33, 76, 58), "H", 54, (199, 30, 47, 255), stroke_fill=(255, 255, 255, 255), stroke_width=3)))
+    save_symbol("card_black", lambda d: (plaque(d, (18, 8, 110, 120), (255, 247, 228, 255), (18, 19, 27, 255), 6, 8), center_text(d, (26, 33, 76, 58), "S", 54, (18, 19, 27, 255), stroke_fill=(255, 255, 255, 255), stroke_width=3)))
 
 
 def generate_foil_tile() -> None:
