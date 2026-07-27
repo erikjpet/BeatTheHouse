@@ -347,9 +347,56 @@ static func filter_unique_objects(objects: Array) -> Array:
 			continue
 		var existing_index := int(class_indexes[unique_class])
 		var existing: Dictionary = result[existing_index]
-		if int(object_data.get("unique_object_priority", 0)) > int(existing.get("unique_object_priority", 0)):
-			result[existing_index] = object_data
+		result[existing_index] = merge_unique_object(existing, object_data)
 	return result
+
+
+static func merge_unique_object(existing: Dictionary, incoming: Dictionary) -> Dictionary:
+	var existing_priority := int(existing.get("unique_object_priority", 0))
+	var incoming_priority := int(incoming.get("unique_object_priority", 0))
+	var primary := incoming.duplicate(true) if incoming_priority > existing_priority else existing.duplicate(true)
+	var secondary := existing if incoming_priority > existing_priority else incoming
+	primary["available_actions"] = _merged_actions(_copy_array(primary.get("available_actions", [])), _copy_array(secondary.get("available_actions", [])))
+	primary["action_summary"] = _joined_summary_lines([existing.get("action_summary", ""), incoming.get("action_summary", "")])
+	primary["effect_summary"] = _joined_summary_lines([existing.get("effect_summary", ""), incoming.get("effect_summary", "")])
+	primary["status_summary"] = _joined_summary_lines([existing.get("status_summary", ""), incoming.get("status_summary", "")])
+	primary["risk_summary"] = _joined_summary_lines([existing.get("risk_summary", ""), incoming.get("risk_summary", "")])
+	if str(primary.get("label", "")).strip_edges().is_empty():
+		primary["label"] = str(secondary.get("label", ""))
+	if str(primary.get("short_description", "")).strip_edges().is_empty():
+		primary["short_description"] = str(secondary.get("short_description", ""))
+	return primary
+
+
+static func _merged_actions(primary_actions: Array, secondary_actions: Array) -> Array:
+	var result: Array = []
+	var seen: Dictionary = {}
+	for source in [primary_actions, secondary_actions]:
+		for action_value in source:
+			if typeof(action_value) != TYPE_DICTIONARY:
+				continue
+			var action_data: Dictionary = (action_value as Dictionary).duplicate(true)
+			var key := "%s|%s|%s|%s" % [
+				str(action_data.get("object_type", "")),
+				str(action_data.get("parent_id", "")),
+				str(action_data.get("source_id", action_data.get("hook_id", ""))),
+				str(action_data.get("id", "")),
+			]
+			if seen.has(key):
+				continue
+			seen[key] = true
+			result.append(action_data)
+	return result
+
+
+static func _joined_summary_lines(values: Array) -> String:
+	var lines: Array[String] = []
+	for value in values:
+		var text := str(value).strip_edges()
+		if text.is_empty() or lines.has(text):
+			continue
+		lines.append(text)
+	return " ".join(lines)
 
 
 static func objects_with_closing_time_lock(objects: Array, disabled_reason: String) -> Array:

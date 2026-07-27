@@ -420,11 +420,12 @@ func environment_interactable_objects(run_state: RunState, environment: Dictiona
 	var machine := _read_machine_state(run_state, environment)
 	var payout := _pending_payout(machine)
 	var winners := _dictionary_array(machine.get("winner_pile", [])).size()
+	var label := _redeemer_label(environment)
 	return [{
 		"id": REDEEM_HOOK_ID,
 		"object_id": "game_hook:%s:%s" % [get_id(), REDEEM_HOOK_ID],
-		"label": "Scratch-Ticket Clerk",
-		"short_description": "Checks and cashes scratched winners.",
+		"label": label,
+		"short_description": "Checks and cashes winning lottery tickets from this room.",
 		"enabled": true,
 		"recovery": payout > 0,
 		"action_summary": "Cash %d winner%s for $%d." % [winners, "" if winners == 1 else "s", payout] if winners > 0 else "No scratched winners to cash.",
@@ -434,8 +435,8 @@ func environment_interactable_objects(run_state: RunState, environment: Dictiona
 		"visual_key": "pull_tab_redeemer",
 		"visual_type": "service",
 		"icon_key": "service",
-		"unique_object_class": "scratch_ticket_clerk",
-		"unique_object_priority": 100,
+		"unique_object_class": "lottery_redemption_clerk",
+		"unique_object_priority": 120 if payout > 0 else 90,
 		"available_actions": [{"id": REDEEM_ACTION_ID, "label": "Cash tickets"}],
 		"confirm_action_id": REDEEM_ACTION_ID,
 	}]
@@ -737,6 +738,13 @@ func _resolve_redemption(run_state: RunState, environment: Dictionary, rng: RngS
 		"message": message,
 	})
 	return result
+
+
+func _redeemer_label(environment: Dictionary) -> String:
+	var scene_type := str(environment.get("visual_context", {}).get("scene_type", ""))
+	if scene_type == "bar" or str(environment.get("archetype_id", "")) == "bar":
+		return "Bartender"
+	return "Lottery Clerk"
 
 
 func _generate_machine_state(_run_state: RunState, environment: Dictionary, rng: RngStream) -> Dictionary:

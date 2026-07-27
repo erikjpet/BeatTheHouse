@@ -272,7 +272,7 @@ func environment_interactable_objects(run_state: RunState, environment: Dictiona
 		"id": REDEEM_HOOK_ID,
 		"object_id": "game_hook:%s:%s" % [get_id(), REDEEM_HOOK_ID],
 		"label": label,
-		"short_description": "Cashes winning pull-tabs from this room.",
+		"short_description": "Cashes winning lottery tickets from this room.",
 		"enabled": true,
 		"recovery": pending_payout > 0,
 		"action_summary": "Redeem %d winner%s for $%d." % [winner_count, "" if winner_count == 1 else "s", pending_payout] if winner_count > 0 else "No winning tabs to redeem.",
@@ -282,9 +282,9 @@ func environment_interactable_objects(run_state: RunState, environment: Dictiona
 		"visual_key": "pull_tab_redeemer",
 		"visual_type": "service",
 		"icon_key": "service",
-		"unique_object_class": "pull_tab_clerk",
-		"unique_object_priority": 100,
-		"available_actions": [{"id": REDEEM_ACTION_ID, "label": "Redeem tabs"}],
+		"unique_object_class": "lottery_redemption_clerk",
+		"unique_object_priority": 120 if pending_payout > 0 else 90,
+		"available_actions": [{"id": REDEEM_ACTION_ID, "label": "Redeem pull-tabs"}],
 		"confirm_action_id": REDEEM_ACTION_ID,
 	}]
 
@@ -2678,7 +2678,7 @@ func _redeemer_label(environment: Dictionary) -> String:
 	var scene_type := str(environment.get("visual_context", {}).get("scene_type", ""))
 	if scene_type == "bar" or str(environment.get("archetype_id", "")) == "bar":
 		return "Bartender"
-	return "Pull-Tab Clerk"
+	return "Lottery Clerk"
 
 
 func _redeemed_ticket_history(machine: Dictionary, redeemed: Array) -> Array:

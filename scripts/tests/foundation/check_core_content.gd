@@ -437,6 +437,7 @@ func _foundation_run_system_suite(content_library: ContentLibrary, fixture_libra
 	_foundation_run_check(report, failures, "item_build_interaction_foundation", Callable(self, "_check_item_build_interaction_foundation"), [content_library])
 	_foundation_run_check(report, failures, "event_module_foundation", Callable(self, "_check_event_module_foundation"), [content_library])
 	_foundation_run_check(report, failures, "event_system_state_foundation", Callable(self, "_check_event_system_state_foundation"), [content_library])
+	_foundation_run_check(report, failures, "lottery_redemption_clerk_merge", Callable(self, "_check_lottery_redemption_clerk_merge"), [])
 	_foundation_run_check(report, failures, "talk_decision_system_foundation", Callable(self, "_check_talk_decision_system_foundation"), [content_library])
 	_foundation_run_check(report, failures, "dialogue_system_foundation", Callable(self, "_check_dialogue_system_foundation"), [content_library])
 	_foundation_run_check(report, failures, "t4_7_event_interaction_model", Callable(self, "_check_t4_7_event_interaction_model"), [content_library])
@@ -2299,6 +2300,63 @@ func _first_shop_archetype(library: ContentLibrary) -> Dictionary:
 		if str(archetype.get("kind", "")) == "shop":
 			return archetype
 	return {}
+
+
+func _check_lottery_redemption_clerk_merge(failures: Array) -> void:
+	var view_model_script = load("res://scripts/ui/environment_interaction_view_model.gd")
+	var pull_tab_clerk: Dictionary = view_model_script.make_interactable_object({
+		"object_id": "game_hook:pull_tabs:ticket_redeemer",
+		"object_type": "game_hook",
+		"source_id": "ticket_redeemer",
+		"parent_id": "pull_tabs",
+		"label": "Lottery Clerk",
+		"short_description": "Cashes winning lottery tickets from this room.",
+		"action_summary": "Redeem 1 winner for $5.",
+		"effect_summary": "Pending payout $5.",
+		"risk_summary": "Routine cashout.",
+		"unique_object_class": "lottery_redemption_clerk",
+		"unique_object_priority": 120,
+		"available_actions": [{"id": "redeem_pull_tab_winners", "label": "Redeem pull-tabs", "parent_id": "pull_tabs", "source_id": "ticket_redeemer", "hook_id": "ticket_redeemer", "object_type": "game_hook"}],
+		"confirm_action_id": "redeem_pull_tab_winners",
+	}, {})
+	var scratch_clerk: Dictionary = view_model_script.make_interactable_object({
+		"object_id": "game_hook:scratch_tickets:scratch_ticket_clerk",
+		"object_type": "game_hook",
+		"source_id": "scratch_ticket_clerk",
+		"parent_id": "scratch_tickets",
+		"label": "Lottery Clerk",
+		"short_description": "Checks and cashes winning lottery tickets from this room.",
+		"action_summary": "Cash 2 winners for $12.",
+		"effect_summary": "$12 waits at the counter.",
+		"risk_summary": "Large prizes draw the clerk's attention.",
+		"unique_object_class": "lottery_redemption_clerk",
+		"unique_object_priority": 120,
+		"available_actions": [{"id": "redeem_scratch_winners", "label": "Cash tickets", "parent_id": "scratch_tickets", "source_id": "scratch_ticket_clerk", "hook_id": "scratch_ticket_clerk", "object_type": "game_hook"}],
+		"confirm_action_id": "redeem_scratch_winners",
+	}, {})
+	var merged: Array = view_model_script.filter_unique_objects([pull_tab_clerk, scratch_clerk])
+	if merged.size() != 1:
+		failures.append("Lottery redemption clerks did not merge into one room object.")
+		return
+	var clerk: Dictionary = merged[0]
+	var actions := clerk.get("available_actions", []) as Array
+	if actions.size() != 2:
+		failures.append("Merged lottery clerk did not preserve both pull-tab and scratch-ticket actions.")
+	var saw_pull_tabs := false
+	var saw_scratch := false
+	for action_value in actions:
+		if typeof(action_value) != TYPE_DICTIONARY:
+			continue
+		var action: Dictionary = action_value
+		if str(action.get("parent_id", "")) == "pull_tabs" and str(action.get("id", "")) == "redeem_pull_tab_winners":
+			saw_pull_tabs = true
+		if str(action.get("parent_id", "")) == "scratch_tickets" and str(action.get("id", "")) == "redeem_scratch_winners":
+			saw_scratch = true
+	if not saw_pull_tabs or not saw_scratch:
+		failures.append("Merged lottery clerk lost a target game/action route.")
+	var summary := str(clerk.get("action_summary", ""))
+	if summary.find("Redeem 1 winner") == -1 or summary.find("Cash 2 winners") == -1:
+		failures.append("Merged lottery clerk did not combine redemption summaries.")
 
 
 func _check_foundation_contract_smoke(library: ContentLibrary, failures: Array, suite: String = "all") -> void:

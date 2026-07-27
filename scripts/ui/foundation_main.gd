@@ -6736,6 +6736,21 @@ func _add_context_game_hook_actions(card: VBoxContainer, object_data: Dictionary
 	var action_id := str(object_data.get("confirm_action_id", ""))
 	var label := "Use"
 	var actions := _copy_array(object_data.get("available_actions", []))
+	var rendered := false
+	for action_value in actions:
+		if typeof(action_value) != TYPE_DICTIONARY:
+			continue
+		var action_data: Dictionary = action_value
+		var action_label := str(action_data.get("label", label))
+		var action_game_id := str(action_data.get("parent_id", game_id))
+		var action_hook_id := str(action_data.get("source_id", action_data.get("hook_id", hook_id)))
+		var action_action_id := str(action_data.get("id", action_id))
+		if action_game_id.is_empty() or action_hook_id.is_empty() or action_action_id.is_empty():
+			continue
+		_add_card_button(card, action_label, Callable(self, "use_game_environment_hook").bind(action_game_id, action_hook_id, action_action_id), false, action_action_id == action_id and action_game_id == game_id and action_hook_id == hook_id)
+		rendered = true
+	if rendered:
+		return
 	if not actions.is_empty() and typeof(actions[0]) == TYPE_DICTIONARY:
 		label = str((actions[0] as Dictionary).get("label", label))
 		if action_id.is_empty():

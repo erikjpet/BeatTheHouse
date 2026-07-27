@@ -107,6 +107,18 @@ static func game_hook_interactable_objects(host: Variant, apply_failure_lock: bo
 			var disabled_reason := str(hook.get("disabled_reason", ""))
 			if run_failed_without_recovery:
 				disabled_reason = failed_reason
+			var hook_actions: Array = [{"id": "start_dialogue", "label": "Talk"}] if enabled and not dialogue_id.is_empty() else host._copy_array(hook.get("available_actions", [])) if enabled else []
+			var confirm_action: String = "start_dialogue" if enabled and not dialogue_id.is_empty() else str(hook.get("confirm_action_id", "")) if enabled else ""
+			var enriched_actions: Array = []
+			for action_value in hook_actions:
+				if typeof(action_value) != TYPE_DICTIONARY:
+					continue
+				var action_data: Dictionary = (action_value as Dictionary).duplicate(true)
+				action_data["parent_id"] = game_id
+				action_data["source_id"] = dialogue_id if not dialogue_id.is_empty() else hook_id
+				action_data["hook_id"] = hook_id
+				action_data["object_type"] = object_type
+				enriched_actions.append(action_data)
 			objects.append(host._make_interactable_object({
 				"object_id": object_id,
 				"object_type": object_type,
@@ -129,8 +141,8 @@ static func game_hook_interactable_objects(host: Variant, apply_failure_lock: bo
 				"unique_object_class": str(hook.get("unique_object_class", "")).strip_edges(),
 				"unique_object_priority": int(hook.get("unique_object_priority", 0)),
 				"allow_duplicate_unique_class": bool(hook.get("allow_duplicate_unique_class", false)),
-				"available_actions": [{"id": "start_dialogue", "label": "Talk"}] if enabled and not dialogue_id.is_empty() else host._copy_array(hook.get("available_actions", [])) if enabled else [],
-				"confirm_action_id": "start_dialogue" if enabled and not dialogue_id.is_empty() else str(hook.get("confirm_action_id", "")) if enabled else "",
+				"available_actions": enriched_actions,
+				"confirm_action_id": confirm_action,
 				"focus_rect": host._interaction_rect_for_object(object_id, object_type, hook_index),
 			}))
 			hook_index += 1
