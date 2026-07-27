@@ -633,25 +633,32 @@ func _check_scratch_rtp(game: GameModule, failures: Array) -> void:
 
 
 func _check_scratch_prize_tier_weights(definition: Dictionary, failures: Array) -> void:
-	var price := maxi(1, int(definition.get("price", 1)))
 	var table := _dict_array(definition.get("prize_table", []))
-	var one_x_weight := -1
-	var two_x_weight := -1
-	var significant_weight := 0
+	var total_weight := 0
+	var loss_weight := 0
+	var positive_tiers: Array = []
 	for prize_value in table:
 		var prize: Dictionary = prize_value
 		var payout := int(prize.get("payout", 0))
 		var weight := int(prize.get("weight", 0))
-		if payout == price:
-			one_x_weight = weight
-		elif payout == price * 2:
-			two_x_weight = weight
-		elif payout >= price * 5:
-			significant_weight += weight
-	if one_x_weight <= 0 or two_x_weight <= 0 or one_x_weight != two_x_weight:
-		failures.append("Scratch %s must have equal 1x and 2x winner weights." % str(definition.get("id", "")))
-	if significant_weight <= one_x_weight:
-		failures.append("Scratch %s did not boost significant winner weight above the 1x tier." % str(definition.get("id", "")))
+		total_weight += maxi(0, weight)
+		if payout <= 0:
+			loss_weight += maxi(0, weight)
+		else:
+			positive_tiers.append({"payout": payout, "weight": weight})
+	if total_weight <= 0:
+		failures.append("Scratch %s prize table has no positive total weight." % str(definition.get("id", "")))
+		return
+	if float(loss_weight) / float(total_weight) <= 0.50:
+		failures.append("Scratch %s must keep no-payout odds above 50%%." % str(definition.get("id", "")))
+	positive_tiers.sort_custom(func(a: Dictionary, b: Dictionary) -> bool:
+		return int(a.get("payout", 0)) < int(b.get("payout", 0))
+	)
+	for index in range(1, positive_tiers.size()):
+		var previous: Dictionary = positive_tiers[index - 1]
+		var current: Dictionary = positive_tiers[index]
+		if int(current.get("payout", 0)) > int(previous.get("payout", 0)) and int(current.get("weight", 0)) >= int(previous.get("weight", 0)):
+			failures.append("Scratch %s prize weights must descend as payouts rise: $%d weight %d, $%d weight %d." % [str(definition.get("id", "")), int(previous.get("payout", 0)), int(previous.get("weight", 0)), int(current.get("payout", 0)), int(current.get("weight", 0))])
 
 
 func _check_scratch_sound(failures: Array) -> void:

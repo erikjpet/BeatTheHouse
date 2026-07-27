@@ -8,16 +8,16 @@
 		"mechanic": {"type": "match_two_of_three", "rules": ["Scratch three symbols.", "Any matching pair wins its legend prize."], "legend": {"CLOVER": 2, "BELL": 4, "STAR": 10, "2FER": 50}},
 		"sections": [{"id": "play", "label": "THREE SPOTS", "rect": [0.08, 0.15, 0.84, 0.70]}],
 		"prize_table": [
-			{"id": "no_pair", "weight": 3600, "payout": 0},
-			{"id": "clover_pair", "weight": 1000, "payout": 2, "match_symbol": "CLOVER"},
-			{"id": "bell_pair", "weight": 1000, "payout": 4, "match_symbol": "BELL"},
-			{"id": "star_pair", "weight": 1800, "payout": 10, "match_symbol": "STAR"},
-			{"id": "top_pair", "weight": 2600, "payout": 50, "match_symbol": "2FER"}
+			{"id": "no_pair", "weight": 5100, "payout": 0},
+			{"id": "clover_pair", "weight": 1260, "payout": 2, "match_symbol": "CLOVER"},
+			{"id": "bell_pair", "weight": 1240, "payout": 4, "match_symbol": "BELL"},
+			{"id": "star_pair", "weight": 1210, "payout": 10, "match_symbol": "STAR"},
+			{"id": "top_pair", "weight": 1190, "payout": 50, "match_symbol": "2FER"}
 		],
 		"scratch": {"brush_radius": 15.0, "pass_removal": 0.66, "sweep_threshold": 0.80, "mask_columns": 48, "mask_rows": 32, "crumb_count": 5},
 		"stock_weight": 1000,
 		"stock_count": [0, 5],
-		"rtp_band": [7.55, 7.85]
+		"rtp_band": [3.80, 4.10]
 	},
 	{
 		"id": "lucky_7s",
@@ -31,18 +31,18 @@
 			{"id": "your_numbers", "label": "YOUR NUMBERS + BONUS", "rect": [0.27, 0.30, 0.68, 0.64]}
 		],
 		"prize_table": [
-			{"id": "no_match", "weight": 4200, "payout": 0},
-			{"id": "your_seven", "weight": 1000, "payout": 5, "your_seven_count": 1},
-			{"id": "one_match", "weight": 1000, "payout": 10, "match_count": 1},
-			{"id": "seven_and_match", "weight": 1200, "payout": 25, "your_seven_count": 1, "match_count": 1},
-			{"id": "bonus_seven", "weight": 800, "payout": 50, "bonus": true},
-			{"id": "winning_seven", "weight": 800, "payout": 60, "winning_seven": true},
-			{"id": "seven_jackpot", "weight": 1000, "payout": 250, "winning_seven": true}
+			{"id": "no_match", "weight": 5100, "payout": 0},
+			{"id": "your_seven", "weight": 1250, "payout": 5, "your_seven_count": 1},
+			{"id": "one_match", "weight": 1050, "payout": 10, "match_count": 1},
+			{"id": "seven_and_match", "weight": 850, "payout": 25, "your_seven_count": 1, "match_count": 1},
+			{"id": "bonus_seven", "weight": 750, "payout": 50, "bonus": true},
+			{"id": "winning_seven", "weight": 650, "payout": 60, "winning_seven": true},
+			{"id": "seven_jackpot", "weight": 350, "payout": 250, "winning_seven": true}
 		],
 		"scratch": {"brush_radius": 15.0, "pass_removal": 0.66, "sweep_threshold": 0.80, "mask_columns": 48, "mask_rows": 36, "crumb_count": 6},
 		"stock_weight": 500,
 		"stock_count": [0, 5],
-		"rtp_band": [7.45, 7.90]
+		"rtp_band": [3.85, 4.20]
 	},
 	{
 		"id": "tic_tac_gold",
@@ -56,17 +56,17 @@
 			{"id": "bonus", "label": "BONUS", "rect": [0.79, 0.30, 0.16, 0.40]}
 		],
 		"prize_table": [
-			{"id": "empty_grid", "weight": 4000, "payout": 0, "line_count": 0},
+			{"id": "empty_grid", "weight": 5500, "payout": 0, "line_count": 0},
 			{"id": "bonus_hit", "weight": 1300, "payout": 10, "line_count": 0, "bonus": true},
-			{"id": "one_line", "weight": 1300, "payout": 20, "line_count": 1},
-			{"id": "two_lines", "weight": 1300, "payout": 50, "line_count": 2},
-			{"id": "gold_cross", "weight": 900, "payout": 100, "line_count": 4},
-			{"id": "gold_board", "weight": 1200, "payout": 500, "line_count": 8}
+			{"id": "one_line", "weight": 1100, "payout": 20, "line_count": 1},
+			{"id": "two_lines", "weight": 900, "payout": 50, "line_count": 2},
+			{"id": "gold_cross", "weight": 700, "payout": 100, "line_count": 4},
+			{"id": "gold_board", "weight": 500, "payout": 500, "line_count": 8}
 		],
 		"scratch": {"brush_radius": 15.0, "pass_removal": 0.66, "sweep_threshold": 0.80, "mask_columns": 48, "mask_rows": 36, "crumb_count": 7},
 		"stock_weight": 250,
 		"stock_count": [0, 5],
-		"rtp_band": [7.70, 8.20]
+		"rtp_band": [3.80, 4.25]
 	},
 	{
 		"id": "crossword_corner",
@@ -80,17 +80,17 @@
 			{"id": "crossword", "label": "CROSSWORD", "rect": [0.33, 0.05, 0.63, 0.90]}
 		],
 		"prize_table": [
-			{"id": "under_three", "weight": 4700, "payout": 0, "word_count": 2},
-			{"id": "three_words", "weight": 1000, "payout": 15, "word_count": 3},
-			{"id": "four_words", "weight": 1000, "payout": 30, "word_count": 4},
-			{"id": "five_words", "weight": 1500, "payout": 75, "word_count": 5},
-			{"id": "six_words", "weight": 1200, "payout": 250, "word_count": 6},
-			{"id": "seven_words", "weight": 600, "payout": 1500, "word_count": 7}
+			{"id": "under_three", "weight": 5500, "payout": 0, "word_count": 2},
+			{"id": "three_words", "weight": 1450, "payout": 15, "word_count": 3},
+			{"id": "four_words", "weight": 1250, "payout": 30, "word_count": 4},
+			{"id": "five_words", "weight": 950, "payout": 75, "word_count": 5},
+			{"id": "six_words", "weight": 650, "payout": 250, "word_count": 6},
+			{"id": "seven_words", "weight": 200, "payout": 1500, "word_count": 7}
 		],
 		"scratch": {"brush_radius": 14.0, "pass_removal": 0.66, "sweep_threshold": 0.80, "mask_columns": 56, "mask_rows": 38, "crumb_count": 7},
 		"stock_weight": 165,
 		"stock_count": [0, 5],
-		"rtp_band": [8.75, 9.35]
+		"rtp_band": [3.75, 4.20]
 	},
 	{
 		"id": "bonus_bingo",
@@ -107,17 +107,17 @@
 			{"id": "card_4", "label": "CARD 4", "rect": [0.76, 0.55, 0.19, 0.26]}
 		],
 		"prize_table": [
-			{"id": "no_line", "weight": 5000, "payout": 0, "line_count": 0},
-			{"id": "one_line", "weight": 1000, "payout": 20, "line_count": 1},
-			{"id": "two_line_double", "weight": 1000, "payout": 40, "line_count": 2},
-			{"id": "four_lines", "weight": 1600, "payout": 100, "line_count": 4},
-			{"id": "blackout", "weight": 1250, "payout": 500, "line_count": 4, "blackout_cards": 1},
-			{"id": "four_blackouts", "weight": 150, "payout": 5000, "line_count": 8, "blackout_cards": 4}
+			{"id": "no_line", "weight": 5640, "payout": 0, "line_count": 0},
+			{"id": "one_line", "weight": 1450, "payout": 20, "line_count": 1},
+			{"id": "two_line_double", "weight": 1250, "payout": 40, "line_count": 2},
+			{"id": "four_lines", "weight": 950, "payout": 100, "line_count": 4},
+			{"id": "blackout", "weight": 650, "payout": 500, "line_count": 4, "blackout_cards": 1},
+			{"id": "four_blackouts", "weight": 60, "payout": 5000, "line_count": 8, "blackout_cards": 4}
 		],
 		"scratch": {"brush_radius": 20.0, "pass_removal": 0.66, "sweep_threshold": 0.80, "mask_columns": 56, "mask_rows": 38, "crumb_count": 8},
 		"stock_weight": 125,
 		"stock_count": [0, 5],
-		"rtp_band": [7.70, 8.30]
+		"rtp_band": [3.75, 4.25]
 	},
 	{
 		"id": "high_roller_holdem",
@@ -132,18 +132,18 @@
 			{"id": "wild", "label": "WILD / ACES", "rect": [0.18, 0.84, 0.64, 0.13]}
 		],
 		"prize_table": [
-			{"id": "dealer_wins", "weight": 5650, "payout": 0, "your_rank": "HIGH CARD", "dealer_rank": "PAIR"},
-			{"id": "pair_wins", "weight": 800, "payout": 50, "your_rank": "PAIR", "dealer_rank": "HIGH CARD"},
-			{"id": "two_pair", "weight": 800, "payout": 100, "your_rank": "TWO PAIR", "dealer_rank": "PAIR"},
-			{"id": "straight", "weight": 1100, "payout": 250, "your_rank": "STRAIGHT", "dealer_rank": "TWO PAIR"},
-			{"id": "wild_flush", "weight": 1000, "payout": 500, "your_rank": "FLUSH", "dealer_rank": "STRAIGHT", "wild": true},
-			{"id": "pocket_aces", "weight": 500, "payout": 2500, "your_rank": "PAIR", "dealer_rank": "FULL HOUSE", "pocket_aces": true},
-			{"id": "royal", "weight": 150, "payout": 15000, "your_rank": "ROYAL FLUSH", "dealer_rank": "FULL HOUSE", "wild": true}
+			{"id": "dealer_wins", "weight": 6000, "payout": 0, "your_rank": "HIGH CARD", "dealer_rank": "PAIR"},
+			{"id": "pair_wins", "weight": 1255, "payout": 50, "your_rank": "PAIR", "dealer_rank": "HIGH CARD"},
+			{"id": "two_pair", "weight": 1100, "payout": 100, "your_rank": "TWO PAIR", "dealer_rank": "PAIR"},
+			{"id": "straight", "weight": 850, "payout": 250, "your_rank": "STRAIGHT", "dealer_rank": "TWO PAIR"},
+			{"id": "wild_flush", "weight": 500, "payout": 500, "your_rank": "FLUSH", "dealer_rank": "STRAIGHT", "wild": true},
+			{"id": "pocket_aces", "weight": 240, "payout": 2500, "your_rank": "PAIR", "dealer_rank": "FULL HOUSE", "pocket_aces": true},
+			{"id": "royal", "weight": 55, "payout": 15000, "your_rank": "ROYAL FLUSH", "dealer_rank": "FULL HOUSE", "wild": true}
 		],
 		"scratch": {"brush_radius": 13.5, "pass_removal": 0.66, "sweep_threshold": 0.80, "mask_columns": 42, "mask_rows": 54, "crumb_count": 8},
 		"stock_weight": 50,
 		"stock_count": [0, 5],
-		"rtp_band": [8.35, 9.20]
+		"rtp_band": [3.80, 4.40]
 	},
 	{
 		"id": "golden_vault",
@@ -159,17 +159,17 @@
 			{"id": "final_vault", "label": "FINAL VAULT", "rect": [0.10, 0.85, 0.80, 0.12]}
 		],
 		"prize_table": [
-			{"id": "sealed", "weight": 6850, "payout": 0, "multiplier": 2, "ladder_hits": 0},
-			{"id": "first_rung", "weight": 700, "payout": 100, "multiplier": 2, "ladder_hits": 1},
-			{"id": "ladder", "weight": 700, "payout": 200, "multiplier": 2, "ladder_hits": 2},
-			{"id": "multiplied", "weight": 1000, "payout": 500, "multiplier": 5, "ladder_hits": 2},
-			{"id": "gold_bar", "weight": 500, "payout": 2000, "multiplier": 10, "ladder_hits": 0, "gold_bar": true},
-			{"id": "vault_prize", "weight": 200, "payout": 10000, "multiplier": 20, "ladder_hits": 5, "vault_win": true},
-			{"id": "top_vault", "weight": 50, "payout": 100000, "multiplier": 20, "ladder_hits": 0, "gold_bar": true, "vault_win": true}
+			{"id": "sealed", "weight": 6500, "payout": 0, "multiplier": 2, "ladder_hits": 0},
+			{"id": "first_rung", "weight": 1365, "payout": 100, "multiplier": 2, "ladder_hits": 1},
+			{"id": "ladder", "weight": 1050, "payout": 200, "multiplier": 2, "ladder_hits": 2},
+			{"id": "multiplied", "weight": 650, "payout": 500, "multiplier": 5, "ladder_hits": 2},
+			{"id": "gold_bar", "weight": 300, "payout": 2000, "multiplier": 10, "ladder_hits": 0, "gold_bar": true},
+			{"id": "vault_prize", "weight": 120, "payout": 10000, "multiplier": 20, "ladder_hits": 5, "vault_win": true},
+			{"id": "top_vault", "weight": 15, "payout": 100000, "multiplier": 20, "ladder_hits": 0, "gold_bar": true, "vault_win": true}
 		],
 		"scratch": {"brush_radius": 13.0, "pass_removal": 0.66, "sweep_threshold": 0.80, "mask_columns": 42, "mask_rows": 56, "crumb_count": 9},
 		"stock_weight": 20,
 		"stock_count": [0, 5],
-		"rtp_band": [8.10, 9.80]
+		"rtp_band": [3.70, 4.25]
 	}
 ]
