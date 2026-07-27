@@ -393,6 +393,10 @@ func _check_music_fx_foundation(library: ContentLibrary, failures: Array) -> voi
 		failures.append("Web audio bridge must keep a browser-side compressor before destination output.")
 	if not bool(web_contract.get("script_has_pcm_decoder", false)) or not bool(web_contract.get("script_has_music_stems", false)):
 		failures.append("Web audio bridge must decode PCM buffers and play the normal music stem set.")
+	if int(web_contract.get("minimum_buffer_sample_rate", 0)) < 3000 or not bool(web_contract.get("script_resamples_low_rate_pcm", false)):
+		failures.append("Web audio bridge must upsample bandwidth-bounded music beds to a browser-supported AudioBuffer rate.")
+	if not bool(web_contract.get("script_rejects_empty_music_groups", false)):
+		failures.append("Web audio bridge must not cache a music group when every stem failed to start.")
 	if not bool(web_contract.get("script_accepts_json_payloads", false)):
 		failures.append("Web audio bridge JavaScript methods must parse JSON string payloads from direct interface calls.")
 	if not bool(web_contract.get("script_has_loop_stop", false)):

@@ -1193,6 +1193,18 @@ func _check_t4_7_chain_determinism(library: ContentLibrary, failures: Array) -> 
 		failures.append("T4.7 phone-chain success seed did not replay deterministically.")
 	if _t4_7_phone_chain_triggers(library, failure_seed):
 		failures.append("T4.7 phone-chain miss seed did not replay deterministically.")
+	var miss_run: RunState = RunStateScript.new()
+	miss_run.start_new(failure_seed)
+	miss_run.set_environment(_t4_3_fixture_environment("motel", "shop", 1, [], ["call_brother_in_law"], ["bar"]))
+	var miss_module := EventModule.new()
+	miss_module.setup(library.event("call_brother_in_law"), library)
+	var miss_result := miss_module.resolve(miss_run, miss_run.current_environment, "make_call")
+	if str(miss_result.get("audio_cue", "")) != "phone_call":
+		failures.append("T4.7 phone-chain miss did not request the phone_call audio cue.")
+	if not miss_run.pending_triggered_events.is_empty():
+		failures.append("T4.7 phone-chain miss queued a triggered lender event.")
+	if str(miss_result.get("post_resolution_message", "")) != "No one picked up.":
+		failures.append("T4.7 phone-chain miss did not surface the no-answer toast.")
 
 
 func _t4_7_phone_chain_triggers(library: ContentLibrary, seed: String) -> bool:
@@ -1201,7 +1213,9 @@ func _t4_7_phone_chain_triggers(library: ContentLibrary, seed: String) -> bool:
 	run_state.set_environment(_t4_3_fixture_environment("motel", "shop", 1, [], ["call_brother_in_law"], ["bar"]))
 	var event_module := EventModule.new()
 	event_module.setup(library.event("call_brother_in_law"), library)
-	event_module.resolve(run_state, run_state.current_environment, "make_call")
+	var event_result := event_module.resolve(run_state, run_state.current_environment, "make_call")
+	if str(event_result.get("audio_cue", "")) != "phone_call":
+		return false
 	if run_state.pending_triggered_events.size() != 1:
 		return false
 	var entry: Dictionary = run_state.pending_triggered_events[0]
@@ -4033,6 +4047,9 @@ func _check_family_lender_lifecycle(library: ContentLibrary, failures: Array) ->
 	var phone := resolver.use_hook("service", "call_brother_in_law")
 	if not bool(phone.get("ok", false)) or not bool(run_state.narrative_flags.get("brother_in_law_phone_ready", false)):
 		failures.append("Brother-in-law phone service did not set the availability flag.")
+	var phone_result: Dictionary = phone.get("result", {}) if typeof(phone.get("result", {})) == TYPE_DICTIONARY else {}
+	if str(phone_result.get("audio_cue", "")) != "phone_call":
+		failures.append("Brother-in-law phone service did not request the phone_call audio cue.")
 	var borrow := resolver.use_hook("lender", "brother_in_law")
 	if not bool(borrow.get("ok", false)):
 		failures.append("Brother-in-law lender did not resolve after the phone call.")

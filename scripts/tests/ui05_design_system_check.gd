@@ -74,6 +74,30 @@ func _run() -> void:
 	_check(str(hud.current_snapshot().get("time_exact", "")) == "11:40 PM", "Time widget did not show the exact authoritative time.")
 	var watch_snapshot: Dictionary = hud.current_snapshot().get("time_watch", {})
 	_check(int(watch_snapshot.get("minute_of_day", -1)) == 1420, "Analog watch did not use the authoritative run minute.")
+	var status_tray: HBoxContainer = hud.status_tray
+	var status_icon_id := status_tray.get_child(0).get_instance_id()
+	hud.render({
+		"bankroll": 240,
+		"status_icons": [{"id": "debt", "icon": "debt", "tooltip": "Marker due"}],
+	})
+	_check(
+		status_tray.get_child_count() == 1 and status_tray.get_child(0).get_instance_id() == status_icon_id,
+		"Unchanged HUD status data rebuilt the conditional icon tray.",
+	)
+	hud.render_clock({
+		"clock_day": 3,
+		"clock_minute_of_day": 75,
+		"clock_exact_display": "1:15 AM",
+		"clock_tooltip": "Late-run clock tick.",
+	})
+	var clock_tick_snapshot := hud.current_snapshot()
+	_check(str(clock_tick_snapshot.get("time_day", "")) == "DAY 3", "Clock-only HUD refresh did not advance the day.")
+	_check(str(clock_tick_snapshot.get("time_exact", "")) == "1:15 AM", "Clock-only HUD refresh did not advance the exact time.")
+	_check(str(clock_tick_snapshot.get("wallet", "")) == "$240", "Clock-only HUD refresh disturbed authoritative run status.")
+	_check(
+		status_tray.get_child_count() == 1 and status_tray.get_child(0).get_instance_id() == status_icon_id,
+		"Clock-only HUD refresh rebuilt the conditional icon tray.",
+	)
 	hud.render({"bankroll": 240, "bankroll_delta": 0})
 	_check(str(hud.current_snapshot().get("wallet_delta", "")) == "+40", "A zero-cash refresh cleared the last bankroll change.")
 	hud.render({"bankroll": 210, "bankroll_delta": -30})

@@ -17,9 +17,13 @@ func _ready() -> void:
 
 
 func configure(kind: String, value: float, pending: float = VALUE_MIN) -> void:
+	var next_value := clampf(value, VALUE_MIN, VALUE_MAX)
+	var next_pending := clampf(pending, VALUE_MIN, VALUE_MAX - next_value)
+	if meter_kind == kind and is_equal_approx(meter_value, next_value) and is_equal_approx(pending_value, next_pending):
+		return
 	meter_kind = kind
-	meter_value = clampf(value, VALUE_MIN, VALUE_MAX)
-	pending_value = clampf(pending, VALUE_MIN, VALUE_MAX - meter_value)
+	meter_value = next_value
+	pending_value = next_pending
 	queue_redraw()
 
 

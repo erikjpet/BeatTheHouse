@@ -27,6 +27,7 @@ var _last_bankroll := 0
 var _last_bankroll_delta := 0
 var _wallet_delta_tone := ""
 var _has_rendered := false
+var _status_icons_key := ""
 
 
 func _ready() -> void:
@@ -85,6 +86,13 @@ func render(model: Dictionary) -> void:
 	drunk_meter.configure("drunk", drunk, pending)
 	drunk_value.text = "%d%s" % [roundi(drunk), " +%d" % roundi(pending) if pending > 0.0 else ""]
 
+	render_clock(model)
+	_render_status_icons(model.get("status_icons", []))
+
+
+func render_clock(model: Dictionary) -> void:
+	if time_watch == null or time_day_label == null or time_exact_label == null or time_button == null or time_detail == null:
+		return
 	var clock_parts := _clock_parts(model)
 	var clock_day := int(clock_parts.get("day", 1))
 	var minute_of_day := int(clock_parts.get("minute_of_day", 0))
@@ -94,7 +102,6 @@ func render(model: Dictionary) -> void:
 	time_watch.set_minute_of_day(minute_of_day)
 	time_button.tooltip_text = str(model.get("clock_tooltip", "Open the day/night schedule."))
 	time_detail.text = time_button.tooltip_text
-	_render_status_icons(model.get("status_icons", []))
 
 
 func current_snapshot() -> Dictionary:
@@ -258,10 +265,28 @@ func _render_delta(delta: int) -> void:
 
 
 func _render_status_icons(statuses_value: Variant) -> void:
-	FoundationWidgets.clear(status_tray)
 	if typeof(statuses_value) != TYPE_ARRAY:
+		if not _status_icons_key.is_empty():
+			FoundationWidgets.clear(status_tray)
+			_status_icons_key = ""
 		return
-	for status_value in statuses_value:
+	var statuses: Array = statuses_value
+	var key_parts: Array[String] = []
+	for status_value in statuses:
+		if typeof(status_value) != TYPE_DICTIONARY:
+			continue
+		var status: Dictionary = status_value
+		key_parts.append("%s|%s|%s" % [
+			str(status.get("id", "")),
+			str(status.get("icon", "alert")),
+			str(status.get("tooltip", status.get("label", ""))),
+		])
+	var next_key := "\n".join(key_parts)
+	if next_key == _status_icons_key:
+		return
+	_status_icons_key = next_key
+	FoundationWidgets.clear(status_tray)
+	for status_value in statuses:
 		if typeof(status_value) != TYPE_DICTIONARY:
 			continue
 		var status: Dictionary = status_value

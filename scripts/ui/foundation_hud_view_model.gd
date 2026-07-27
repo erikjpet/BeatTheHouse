@@ -2,6 +2,27 @@ class_name FoundationHudViewModel
 extends RefCounted
 
 
+static func clock_model(run_state: RunState) -> Dictionary:
+	if run_state == null:
+		return {}
+	var minute_of_day := run_state.game_minute_of_day()
+	var hour_24 := int(floor(float(minute_of_day) / 60.0)) % 24
+	var hour_12 := hour_24 % 12
+	if hour_12 == 0:
+		hour_12 = 12
+	return {
+		"clock_display": run_state.clock_display_text(),
+		"clock_day": run_state.game_day(),
+		"clock_minute_of_day": minute_of_day,
+		"clock_exact_display": "%d:%02d %s" % [
+			hour_12,
+			minute_of_day % 60,
+			"AM" if hour_24 < 12 else "PM",
+		],
+		"clock_tooltip": "Open the schedule for day/night timing and closing pressure.",
+	}
+
+
 static func run_status_model(run_state: RunState, data: Dictionary) -> Dictionary:
 	if run_state == null:
 		return {}
@@ -38,17 +59,8 @@ static func run_status_model(run_state: RunState, data: Dictionary) -> Dictionar
 	var player_text: Callable = data.get("player_facing_text", Callable())
 	var debt_text := "Debt %s" % hud_debt_text(debt_items, player_text)
 	var run_text := "Run %s" % hud_run_status_text(run_state, pressure)
-	var clock_text := run_state.clock_display_text()
-	var clock_minute_of_day := run_state.game_minute_of_day()
-	var clock_hour_24 := int(floor(float(clock_minute_of_day) / 60.0)) % 24
-	var clock_hour_12 := clock_hour_24 % 12
-	if clock_hour_12 == 0:
-		clock_hour_12 = 12
-	var clock_exact_display := "%d:%02d %s" % [
-		clock_hour_12,
-		clock_minute_of_day % 60,
-		"AM" if clock_hour_24 < 12 else "PM",
-	]
+	var clock := clock_model(run_state)
+	var clock_text := str(clock.get("clock_display", ""))
 	var save_text := hud_save_text(bool(data.get("has_save", false)), str(data.get("save_status_message", "")), player_text)
 	var goal_text := hud_goal_text(run_state, pressure, objective, player_text)
 	var label_from_id: Callable = data.get("label_from_id", Callable())
@@ -89,9 +101,9 @@ static func run_status_model(run_state: RunState, data: Dictionary) -> Dictionar
 		"objective_text": " | ".join(objective_parts),
 		"save_text": save_text,
 		"clock_text": clock_text,
-		"clock_day": run_state.game_day(),
-		"clock_minute_of_day": clock_minute_of_day,
-		"clock_exact_display": clock_exact_display,
+		"clock_day": int(clock.get("clock_day", 1)),
+		"clock_minute_of_day": int(clock.get("clock_minute_of_day", 0)),
+		"clock_exact_display": str(clock.get("clock_exact_display", "12:00 AM")),
 		"home_text": home_text,
 		"bankroll_text": bankroll_text,
 		"bankroll": bankroll,
@@ -126,8 +138,8 @@ static func run_status_model(run_state: RunState, data: Dictionary) -> Dictionar
 		"next_objective": next_objective,
 		"pressure": pressure,
 		"run_status": run_state.run_status,
-		"clock_display": run_state.clock_display_text(),
-		"clock_tooltip": "Open the schedule for day/night timing and closing pressure.",
+		"clock_display": str(clock.get("clock_display", "")),
+		"clock_tooltip": str(clock.get("clock_tooltip", "")),
 		"status_icons": status_icons,
 	}
 

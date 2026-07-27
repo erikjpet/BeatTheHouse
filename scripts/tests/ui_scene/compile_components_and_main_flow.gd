@@ -2664,8 +2664,9 @@ func _run() -> void:
 	var paper_peel_sfx: AudioStreamWAV = slot_sfx.preview_event_stream("paper_peel")
 	var pinball_money_sfx: AudioStreamWAV = slot_sfx.preview_event_stream("pinball_money_ding")
 	var drink_sfx: AudioStreamWAV = slot_sfx.preview_event_stream("drink_consumed")
+	var phone_sfx: AudioStreamWAV = slot_sfx.preview_event_stream("phone_call")
 	var scratch_paper_foley_sfx: AudioStreamWAV = slot_sfx.preview_event_stream("scratch_paper_foley_loop")
-	if lever_sfx == null or reel_loop_sfx == null or jackpot_sfx == null or pull_tab_thump_sfx == null or paper_peel_sfx == null or pinball_money_sfx == null or drink_sfx == null or scratch_paper_foley_sfx == null:
+	if lever_sfx == null or reel_loop_sfx == null or jackpot_sfx == null or pull_tab_thump_sfx == null or paper_peel_sfx == null or pinball_money_sfx == null or drink_sfx == null or phone_sfx == null or scratch_paper_foley_sfx == null:
 		push_error("SFX player did not generate required procedural streams.")
 		quit(1)
 		return
@@ -2683,6 +2684,10 @@ func _run() -> void:
 		return
 	if drink_sfx.data.size() <= 2048 or drink_sfx.loop_mode != AudioStreamWAV.LOOP_DISABLED or slot_sfx.debug_normalized_event_id("drink_consumed") != "drink_consumed":
 		push_error("Drink confirmation SFX was not generated as a dedicated one-shot cue.")
+		quit(1)
+		return
+	if phone_sfx.data.size() <= 2048 or phone_sfx.loop_mode != AudioStreamWAV.LOOP_DISABLED or slot_sfx.debug_normalized_event_id("phone_call") != "phone_call":
+		push_error("Phone call SFX was not generated as a dedicated one-shot cue.")
 		quit(1)
 		return
 	var drink_has_signal := false

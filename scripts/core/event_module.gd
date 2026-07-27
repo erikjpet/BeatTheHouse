@@ -139,6 +139,10 @@ func resolve(run_state: RunState, environment: Dictionary, choice_id: String = "
 	result["event_id"] = get_id()
 	result["choice_id"] = choice_key
 	result["interaction_mode"] = get_interaction_mode()
+	var audio_cue := str(selected_choice.get("audio_cue", consequences.get("audio_cue", ""))).strip_edges()
+	if not audio_cue.is_empty():
+		result["audio_cue"] = audio_cue
+		result["audio_cue_volume_db"] = float(selected_choice.get("audio_cue_volume_db", consequences.get("audio_cue_volume_db", -1.0)))
 	var conclusion_animation := str(selected_choice.get("conclusion_animation", consequences.get("conclusion_animation", ""))).strip_edges()
 	if conclusion_animation.is_empty() and bankroll_delta > 0:
 		conclusion_animation = "bankroll_transfer"
@@ -320,6 +324,10 @@ static func _apply_trigger_event_hook(run_state: RunState, source_result: Dictio
 		context["roll"] = roll
 		run_state.enqueue_triggered_event(target_id, "event_chain", context, _copy_dict(hook_data.get("entry_overrides", {})))
 	else:
+		var failure_message := str(hook_data.get("failure_message", "The follow-up does not land.")).strip_edges()
+		if not failure_message.is_empty():
+			source_result["event_chain_miss_message"] = failure_message
+			source_result["post_resolution_message"] = failure_message
 		run_state.log_story({
 			"type": "event_chain_miss",
 			"event_id": str(hook_data.get("source_event_id", source_result.get("event_id", ""))),
@@ -327,7 +335,7 @@ static func _apply_trigger_event_hook(run_state: RunState, source_result: Dictio
 			"target_event_id": target_id,
 			"chance": chance,
 			"roll": roll,
-			"message": str(hook_data.get("failure_message", "The follow-up does not land.")),
+			"message": failure_message,
 		})
 
 

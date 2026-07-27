@@ -80,6 +80,7 @@ const EMULATED_TOUCH_SUPPRESS_DISTANCE := 18.0
 const DRUNK_TIME_SCALE_MIN := 0.33
 const SCENE_IDLE_ANIMATION_FPS := 60.0
 const SCENE_IDLE_ANIMATION_INTERVAL_SEC := 1.0 / SCENE_IDLE_ANIMATION_FPS
+const WEB_SCENE_IDLE_ANIMATION_FPS := 30.0
 const ITEM_ICON_TEXTURE_CACHE_LIMIT := 32
 const SCENE_SPARKLES_CORNER_STORE := [Vector2(384, 220), Vector2(478, 224), Vector2(668, 138), Vector2(746, 144)]
 const SCENE_PUDDLES_BACK_ALLEY := [Vector2(180, 304), Vector2(420, 292), Vector2(710, 312)]
@@ -459,16 +460,8 @@ func _process(delta: float) -> void:
 	if camera_offset.distance_squared_to(target_camera_offset) <= CAMERA_OFFSET_SNAP_EPSILON * CAMERA_OFFSET_SNAP_EPSILON:
 		camera_offset = target_camera_offset
 	var camera_changed := absf(previous_zoom - camera_zoom) > CAMERA_ZOOM_SNAP_EPSILON or previous_offset.distance_squared_to(camera_offset) > CAMERA_OFFSET_SNAP_EPSILON * CAMERA_OFFSET_SNAP_EPSILON
-	if camera_changed or info_card_animating or was_info_animating or _needs_continuous_scene_redraw() or _scene_idle_animation_redraw_due(scaled_delta):
+	if camera_changed or info_card_animating or was_info_animating or _scene_idle_animation_redraw_due(scaled_delta):
 		queue_redraw()
-
-
-func _needs_continuous_scene_redraw() -> bool:
-	if suspicion_level > 0:
-		return true
-	if drunk_effect_mode == "classic" and drunk_level >= 12:
-		return true
-	return drunk_distortion_overlay != null and drunk_distortion_overlay.visible
 
 
 func _scene_idle_animation_active() -> bool:
@@ -480,14 +473,20 @@ func _scene_idle_animation_redraw_due(delta: float) -> bool:
 		scene_idle_animation_redraw_accumulator = 0.0
 		return false
 	scene_idle_animation_redraw_accumulator += maxf(0.0, delta)
-	if scene_idle_animation_redraw_accumulator < SCENE_IDLE_ANIMATION_INTERVAL_SEC:
+	var redraw_interval := _scene_idle_animation_interval_sec()
+	if scene_idle_animation_redraw_accumulator < redraw_interval:
 		return false
 	scene_idle_animation_redraw_accumulator = minf(
-		scene_idle_animation_redraw_accumulator - SCENE_IDLE_ANIMATION_INTERVAL_SEC,
-		SCENE_IDLE_ANIMATION_INTERVAL_SEC
+		scene_idle_animation_redraw_accumulator - redraw_interval,
+		redraw_interval
 	)
 	scene_idle_animation_redraw_count += 1
 	return true
+
+
+func _scene_idle_animation_interval_sec() -> float:
+	var target_fps := WEB_SCENE_IDLE_ANIMATION_FPS if OS.has_feature("web") else SCENE_IDLE_ANIMATION_FPS
+	return 1.0 / maxf(1.0, target_fps)
 
 
 # Selects the active venue drawing routine.

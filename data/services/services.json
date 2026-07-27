@@ -33,6 +33,8 @@
 		"description": "Unlocks family loan.",
 		"cost": 0,
 		"message": "You make the family call and hear the strings before the cash.",
+		"audio_cue": "phone_call",
+		"audio_cue_volume_db": -3.0,
 		"effect": {
 			"flags_set": {
 				"brother_in_law_phone_ready": true

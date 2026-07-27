@@ -142,6 +142,8 @@ func configure(owner: FoundationMain) -> void:
 		call_deferred("_run_la5_plan")
 	elif plan_id == "la6":
 		call_deferred("_run_la6_plan")
+	elif plan_id == "grand_casino":
+		call_deferred("_run_grand_casino_plan")
 
 
 func configure_for_probe(owner: FoundationMain, overlay_visible: bool) -> void:
@@ -274,6 +276,77 @@ func _run_corner_store_plan() -> void:
 	dump_report()
 	if auto_quit:
 		get_tree().quit()
+
+
+func _run_grand_casino_plan() -> void:
+	if l02_driver_started:
+		return
+	l02_driver_started = true
+	await _wait_frames(8)
+	_end_scenario()
+	if app == null:
+		mark_event("grand_casino_missing_app")
+		dump_report()
+		if auto_quit:
+			get_tree().quit()
+		return
+	app.start_foundation_run("WEB-GRAND-CASINO-LATE")
+	await _wait_frames(8)
+	var run_state: RunState = app.get("run_state") as RunState
+	var generator: RunGenerator = app.get("generator") as RunGenerator
+	if run_state == null or generator == null:
+		mark_event("grand_casino_missing_runtime")
+		dump_report()
+		if auto_quit:
+			get_tree().quit()
+		return
+	run_state.bankroll = maxi(run_state.bankroll, 5000)
+	run_state.narrative_flags["grand_casino_invite"] = true
+	generator.next_environment(run_state, RunState.GRAND_CASINO_ARCHETYPE_ID, true)
+	run_state.add_suspicion("web_grand_casino_late_probe", 85, "behavior")
+	app.call("_refresh")
+	_begin_scenario("grand_casino_late_settle", {"surface": "grand_casino", "mode": "late_run_entry"})
+	await _wait_frames(maxi(scenario_frames, 360))
+	_end_scenario()
+	run_state.narrative_flags["grand_casino_high_limit_access"] = true
+	run_state.narrative_flags["grand_casino_high_limit_access_method"] = "performance_probe"
+	_begin_scenario("grand_casino_room_churn", {"surface": "grand_casino", "mode": "repeated_room_transitions"})
+	var room_sequence := [
+		RunState.GRAND_CASINO_CAGE_ARCHETYPE_ID,
+		RunState.GRAND_CASINO_ARCHETYPE_ID,
+		RunState.GRAND_CASINO_HIGH_LIMIT_ARCHETYPE_ID,
+		RunState.GRAND_CASINO_ARCHETYPE_ID,
+	]
+	for cycle in range(2):
+		for room_id_value in room_sequence:
+			var room_id := str(room_id_value)
+			if not generator.enter_grand_casino_room(run_state, room_id):
+				mark_event("grand_casino_room_transition_failed", {"cycle": cycle, "room_id": room_id})
+				continue
+			app.call("_update_procedural_music")
+			app.call("_refresh")
+			await _wait_frames(90)
+	_end_scenario()
+	await _measure_scenario("grand_casino_late_idle", {"surface": "grand_casino", "mode": "late_run_idle"}, scenario_frames)
+	mark_event("grand_casino_late_debug", app.call("debug_soak_snapshot"))
+	mark_event("grand_casino_web_audio_bridge_stats", WebAudioBridgeScript.debug_stats())
+	l02_driver_complete = true
+	dump_report()
+	_publish_grand_casino_browser_summary()
+	if auto_quit:
+		get_tree().quit()
+
+
+func _publish_grand_casino_browser_summary() -> void:
+	if not OS.has_feature("web"):
+		return
+	var summary := {
+		"scenarios": scenario_records,
+		"events": telemetry_events,
+		"telemetry_overhead": _overhead_stats(),
+	}
+	var title := "BTH_GC_REPORT " + JSON.stringify(summary)
+	JavaScriptBridge.eval("document.title = %s;" % JSON.stringify(title), true)
 
 
 func _measure_corner_store() -> void:

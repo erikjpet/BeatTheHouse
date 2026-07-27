@@ -981,6 +981,10 @@ func hook_result(kind: String, hook_id: String) -> Dictionary:
 		"deltas": deltas,
 		"message": message,
 	})
+	var audio_cue := str(definition.get("audio_cue", "")).strip_edges()
+	if not audio_cue.is_empty():
+		result["audio_cue"] = audio_cue
+		result["audio_cue_volume_db"] = float(definition.get("audio_cue_volume_db", -1.0))
 	if kind == "lender" and int(deltas.get("bankroll_delta", 0)) > 0:
 		result["conclusion_animation"] = "bankroll_transfer"
 	return result

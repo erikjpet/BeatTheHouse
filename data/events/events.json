@@ -2362,6 +2362,8 @@
           "id": "make_call",
           "label": "Make the Call",
           "text": "You dial from memory and wait through the rings.",
+          "audio_cue": "phone_call",
+          "audio_cue_volume_db": -3.0,
           "consequence_summary": "75% family answers; otherwise no answer.",
           "consequences": {
             "resolve_event": true,
@@ -2374,7 +2376,7 @@
               "failure_flags": {
                 "brother_in_law_phone_ready": false
               },
-              "failure_message": "No answer. The phone is still there for next time.",
+              "failure_message": "No one picked up.",
               "failure_story_log": [
                 {
                   "type": "event",

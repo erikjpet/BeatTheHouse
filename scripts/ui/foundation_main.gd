@@ -523,7 +523,7 @@ func _advance_run_game_clock(delta: float) -> void:
 	run_state.advance_game_clock_minutes(elapsed_minutes)
 	var boundary_changed := _apply_closing_time_clock_boundary()
 	if structured_hud != null:
-		structured_hud.render(_run_status_hud_model())
+		structured_hud.render_clock(FoundationHudViewModelScript.clock_model(run_state))
 	if boundary_changed:
 		_refresh()
 
@@ -1734,6 +1734,7 @@ func resolve_event_choice(event_id: String, choice_id: String) -> void:
 	)
 	_show_item_found_popups(result, inventory_before)
 	_start_conclusion_animation(result, popup_rect)
+	_play_result_environment_audio_cue(result)
 	_play_result_drink_audio_cue(result)
 	if was_triggered_popup and run_state != null:
 		run_state.complete_triggered_event_resolution(event_id)
@@ -1743,7 +1744,7 @@ func resolve_event_choice(event_id: String, choice_id: String) -> void:
 		run_state.event_cadence_note_modal_closed()
 	_hide_event_choice_popup()
 	_clear_selected_event_choice()
-	_show_message(str(result.get("message", "")))
+	_show_message(_result_presentation_message(result))
 	_advance_alcohol_absorption()
 	_autosave_foundation_run("Autosaved.")
 	_refresh_talk_dock()
@@ -3455,6 +3456,7 @@ func use_service_hook(service_id: String) -> bool:
 		return false
 	var result: Dictionary = resolved.get("result", {})
 	_show_item_found_popups(result, inventory_before)
+	_play_result_environment_audio_cue(result)
 	_play_result_drink_audio_cue(result)
 	last_hook_result = result.duplicate(true)
 	_clear_selected_service_hook()
@@ -7130,6 +7132,22 @@ func _play_result_drink_audio_cue(result: Dictionary) -> void:
 	})
 
 
+func _play_result_environment_audio_cue(result: Dictionary) -> void:
+	if result.is_empty() or not bool(result.get("ok", false)):
+		return
+	var cue_id := str(result.get("audio_cue", "")).strip_edges()
+	if cue_id.is_empty():
+		return
+	_play_environment_audio_cue(cue_id, float(result.get("audio_cue_volume_db", -1.0)))
+
+
+func _result_presentation_message(result: Dictionary) -> String:
+	var post_message := str(result.get("post_resolution_message", "")).strip_edges()
+	if not post_message.is_empty():
+		return post_message
+	return str(result.get("message", ""))
+
+
 func _result_consumed_alcohol(result: Dictionary) -> bool:
 	if result.is_empty() or not bool(result.get("ok", false)):
 		return false
@@ -7449,7 +7467,7 @@ func _play_environment_audio_cue(cue_id: String, volume_db: float = -1.0) -> voi
 	if normalized_cue.begins_with("bonus_start") and environment_sfx_player.has_method("play_slot_event"):
 		environment_sfx_player.call("play_slot_event", normalized_cue, volume_db, 1.0)
 	elif environment_sfx_player.has_method("play_surface_cue"):
-		environment_sfx_player.call("play_surface_cue", normalized_cue, {"route": "slot_button", "action": normalized_cue, "volume_db": volume_db}, {})
+		environment_sfx_player.call("play_surface_cue", normalized_cue, {"action": normalized_cue, "volume_db": volume_db}, {})
 
 
 func _on_game_surface_music_cue(cue_id: String, context: Dictionary) -> void:

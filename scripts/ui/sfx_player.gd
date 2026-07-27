@@ -48,6 +48,7 @@ const ROULETTE_PREWARM_EVENTS := [
 ]
 const ENVIRONMENT_PREWARM_EVENTS := [
 	"drink_consumed",
+	"phone_call",
 	"scratch_paper_foley_loop",
 	"scratch_box_pop",
 ]
@@ -1208,7 +1209,7 @@ func _normalized_event_id_uncached(event_id: String) -> String:
 			"jackpot": "jackpot_buffalo",
 			"loss": "lose",
 		})
-	if family_event == "drink_consumed":
+	if family_event == "drink_consumed" or family_event == "phone_call":
 		return family_event
 	if family_event == "scratch_paper_foley_loop" or family_event == "scratch_box_pop":
 		return family_event
@@ -1263,6 +1264,8 @@ func _event_seconds(event_id: String) -> float:
 			return 0.09
 		"drink_consumed":
 			return 0.56
+		"phone_call":
+			return 1.08
 		"scratch_paper_foley_loop":
 			return 0.28
 		"scratch_box_pop":
@@ -1363,6 +1366,8 @@ func _event_sample(event_id: String, t: float, frame: int, seconds: float) -> fl
 			return _sample_digital_button(t, frame, seconds)
 		"drink_consumed":
 			return _sample_drink_consumed(t, frame, seconds)
+		"phone_call":
+			return _sample_phone_call(t, frame, seconds)
 		"scratch_paper_foley_loop":
 			return _sample_scratch_paper_foley_loop(t, frame, seconds)
 		"scratch_box_pop":
@@ -1515,6 +1520,22 @@ func _sample_drink_consumed(t: float, frame: int, seconds: float) -> float:
 		swallow = (sin(TAU * swallow_frequency * swallow_t) * 0.15 + _noise(frame, 1913) * 0.025) * swallow_env
 	var settle := sin(TAU * 1180.0 * (t - 0.46)) * 0.035 * _pulse_window(t, 0.46, seconds - 0.46)
 	return glass + liquid + bubbles + swallow + settle
+
+
+func _sample_phone_call(t: float, frame: int, seconds: float) -> float:
+	var ring_one := _pulse_window(t, 0.02, 0.34)
+	var ring_two := _pulse_window(t, 0.58, 0.34)
+	var dial_click := _pulse_window(t, 0.0, 0.045) * (_noise(frame, 6029) * 0.12 + sin(TAU * 1180.0 * t) * 0.09)
+	var ring_env := ring_one + ring_two
+	var warble := sin(TAU * 6.3 * t) * 10.0
+	var bell_a := sin(TAU * (438.0 + warble) * t) * 0.20
+	var bell_b := sin(TAU * (552.0 - warble * 0.6) * t) * 0.12
+	var line_hiss := (_noise(frame, 6043) - _noise(frame / 3, 6047)) * 0.030 * _pulse_window(t, 0.04, seconds - 0.04)
+	var cradle_tail_t := t - 0.96
+	var cradle := 0.0
+	if cradle_tail_t >= 0.0:
+		cradle = (sin(TAU * 190.0 * cradle_tail_t) * 0.11 + _noise(frame, 6053) * 0.05) * _decay_env(cradle_tail_t, 0.12, 0.002, 0.060)
+	return dial_click + (bell_a + bell_b) * ring_env * 0.85 + line_hiss + cradle
 
 
 func _sample_scratch_paper_foley_loop(t: float, frame: int, seconds: float) -> float:

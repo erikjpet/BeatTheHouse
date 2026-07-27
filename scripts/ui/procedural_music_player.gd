@@ -113,7 +113,7 @@ const MUSIC_AUTHORED_ROOT := "res://assets/audio/music"
 const AUTHORED_MANIFEST_CACHE_LIMIT := 32
 const MUSIC_MIN_VOLUME_DB := -80.0
 const WEB_AUDIO_MUSIC_STEM_MAX_PCM_BYTES := 393216
-const WEB_AUDIO_MUSIC_BED_SECONDS := 60.0
+const WEB_AUDIO_MUSIC_BED_SECONDS := 30.0
 const WEB_AUDIO_MUSIC_BED_SAMPLE_RATE := 1000
 const WEB_AUDIO_RENDER_STRIDE_FRAMES := 2
 const WEB_AUDIO_WORKER_YIELD_SOURCE_FRAMES := 512
@@ -2971,6 +2971,7 @@ func _generate_ambient_data_thread(profile: Dictionary, cache_key: String, token
 		stem_set = _procedural_stem_set_from_context(profile, context, stage, token)
 	if stage == AMBIENT_STAGE_WEB:
 		frames = int(stem_set.get("loop_frames", 0))
+		_prepare_web_bridge_payloads(stem_set)
 	if _generation_was_cancelled(token):
 		return {
 			"cancelled": true,
@@ -2987,6 +2988,15 @@ func _generate_ambient_data_thread(profile: Dictionary, cache_key: String, token
 		"frames": frames,
 		"stem_set": stem_set,
 	}
+
+
+func _prepare_web_bridge_payloads(stem_set: Dictionary) -> void:
+	var stems_value: Variant = stem_set.get("stems", {})
+	if typeof(stems_value) != TYPE_DICTIONARY:
+		return
+	for stream_value in (stems_value as Dictionary).values():
+		if stream_value is AudioStream:
+			WebAudioBridgeScript.prepare_pcm_stream_for_bridge(stream_value as AudioStream)
 
 
 func _poll_generation_thread() -> void:

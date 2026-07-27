@@ -10,8 +10,12 @@ static var _registered_pcm_keys: Dictionary = {}
 static var _active_music_groups: Dictionary = {}
 static var _call_counts: Dictionary = {}
 static var _payload_bytes := 0
+static var _preencoded_payload_hits := 0
+static var _synchronous_payload_encodes := 0
 
-const WEB_AUDIO_VERSION := 4
+const WEB_AUDIO_VERSION := 5
+const WEB_AUDIO_MIN_BUFFER_SAMPLE_RATE := 3000
+const PCM_BASE64_META: StringName = &"_bth_web_pcm_base64"
 const WEB_MASTER_GAIN := 0.72
 const WEB_OUTPUT_GAIN := 0.92
 const WEB_HIGHPASS_HZ := 38.0
@@ -24,7 +28,7 @@ const WEB_MUSIC_STEM_ROLES := ["pad", "bass", "bass_dark", "lead", "drums_low", 
 
 const WEB_AUDIO_SCRIPT := """
 (function () {
-	var BRIDGE_VERSION = 4;
+	var BRIDGE_VERSION = 5;
 	if (window.BTHWebAudio && window.BTHWebAudio.version === BRIDGE_VERSION) {
 		return true;
 	}
@@ -78,22 +82,27 @@ const WEB_AUDIO_SCRIPT := """
 	}
 	function decodePcm16(payload, ctx) {
 		var channels = Math.max(1, Math.min(2, Number(payload.channels || 1) | 0));
-		var sampleRate = Math.max(1, Number(payload.sample_rate || 22050) | 0);
+		var inputSampleRate = Math.max(1, Number(payload.sample_rate || 22050) | 0);
 		var bytes = base64ToBytes(payload.data);
-		var frames = Math.max(1, Math.floor(bytes.length / (channels * 2)));
-		var buffer = ctx.createBuffer(channels, frames, sampleRate);
+		var inputFrames = Math.max(1, Math.floor(bytes.length / (channels * 2)));
+		// Chromium rejects AudioBuffer sample rates below 3000 Hz. The
+		// bandwidth-bounded procedural music bed is intentionally rendered at
+		// 1000 Hz, so upsample it here without changing its duration or pitch.
+		var outputSampleRate = Math.max(3000, inputSampleRate);
+		var outputFrames = Math.max(1, Math.round(inputFrames * outputSampleRate / inputSampleRate));
+		var buffer = ctx.createBuffer(channels, outputFrames, outputSampleRate);
 		for (var channel = 0; channel < channels; channel += 1) {
 			var output = buffer.getChannelData(channel);
-			var byteIndex = channel * 2;
-			for (var frame = 0; frame < frames; frame += 1) {
+			for (var outputFrame = 0; outputFrame < outputFrames; outputFrame += 1) {
+				var sourceFrame = Math.min(inputFrames - 1, Math.floor(outputFrame * inputSampleRate / outputSampleRate));
+				var byteIndex = (sourceFrame * channels + channel) * 2;
 				var lo = bytes[byteIndex] || 0;
 				var hi = bytes[byteIndex + 1] || 0;
-				var sample = (hi << 8) | lo;
-				if (sample >= 32768) {
-					sample -= 65536;
+				var sampleValue = (hi << 8) | lo;
+				if (sampleValue >= 32768) {
+					sampleValue -= 65536;
 				}
-				output[frame] = clamp(sample / 32768, -1, 1);
-				byteIndex += channels * 2;
+				output[outputFrame] = clamp(sampleValue / 32768, -1, 1);
 			}
 		}
 		return buffer;
@@ -183,7 +192,12 @@ const WEB_AUDIO_SCRIPT := """
 			if (!payload.data) {
 				return false;
 			}
-			this.pcmBuffers[key] = decodePcm16(payload, this.ctx);
+			try {
+				this.pcmBuffers[key] = decodePcm16(payload, this.ctx);
+			} catch (error) {
+				console.error("BTH Web Audio PCM decode failed:", error);
+				return false;
+			}
 			return true;
 		},
 		playPcm: function (payload) {
@@ -284,6 +298,9 @@ const WEB_AUDIO_SCRIPT := """
 				group.sources[role] = source;
 				group.gains[role] = gain;
 				source.start(0, offset);
+			}
+			if (!Object.keys(group.sources).length) {
+				return false;
 			}
 			this.musicGroups[groupId] = group;
 			return true;
@@ -401,7 +418,8 @@ static func play_stream(stream: AudioStream, stream_id: String, volume_db: float
 		return false
 	var payload_json := JSON.stringify(payload)
 	_record_bridge_call("play_pcm", payload_json.length())
-	_bridge_interface.playPcm(payload_json)
+	if not bool(_bridge_interface.playPcm(payload_json)):
+		return false
 	_mark_pcm_registered(payload)
 	return true
 
@@ -460,7 +478,8 @@ static func play_music_stems(group_id: String, stem_set_key: String, stem_set: D
 	}
 	var payload_json := JSON.stringify(payload)
 	_record_bridge_call("play_music_stems", payload_json.length())
-	_bridge_interface.playMusicStems(payload_json)
+	if not bool(_bridge_interface.playMusicStems(payload_json)):
+		return false
 	for stem_payload_value in stem_payloads:
 		if typeof(stem_payload_value) == TYPE_DICTIONARY:
 			_mark_pcm_registered(stem_payload_value as Dictionary)
@@ -529,6 +548,8 @@ static func stop_music(group_id: String = "") -> void:
 static func reset_debug_stats() -> void:
 	_call_counts = {}
 	_payload_bytes = 0
+	_preencoded_payload_hits = 0
+	_synchronous_payload_encodes = 0
 	_last_music_payload_key = ""
 	_last_music_mix_keys = {}
 	_last_music_mix_msec = {}
@@ -542,6 +563,8 @@ static func debug_stats() -> Dictionary:
 		"ensured": _ensured,
 		"call_counts": _call_counts.duplicate(true),
 		"payload_bytes": _payload_bytes,
+		"preencoded_payload_hits": _preencoded_payload_hits,
+		"synchronous_payload_encodes": _synchronous_payload_encodes,
 		"registered_pcm_count": _registered_pcm_keys.size(),
 		"active_music_group_count": _active_music_groups.size(),
 	}
@@ -556,6 +579,7 @@ static func mix_contract_snapshot() -> Dictionary:
 		"compressor_threshold_db": WEB_COMPRESSOR_THRESHOLD_DB,
 		"compressor_ratio": WEB_COMPRESSOR_RATIO,
 		"sfx_max_gain": WEB_SFX_MAX_GAIN,
+		"minimum_buffer_sample_rate": WEB_AUDIO_MIN_BUFFER_SAMPLE_RATE,
 		"music_mix_min_interval_msec": WEB_MUSIC_MIX_MIN_INTERVAL_MSEC,
 		"stream_bridge_enabled": WEB_AUDIO_BRIDGE_ENABLED,
 		"pcm_stream_bridge_default": WEB_AUDIO_BRIDGE_ENABLED,
@@ -563,7 +587,9 @@ static func mix_contract_snapshot() -> Dictionary:
 		"script_has_version_guard": WEB_AUDIO_SCRIPT.find("version === BRIDGE_VERSION") >= 0,
 		"script_has_highpass": WEB_AUDIO_SCRIPT.find("this.highpass.type = \"highpass\"") >= 0 and WEB_AUDIO_SCRIPT.find("this.highpass.frequency.value = 38") >= 0,
 		"script_has_compressor": WEB_AUDIO_SCRIPT.find("createDynamicsCompressor") >= 0 and WEB_AUDIO_SCRIPT.find("this.compressor.threshold.value = -6") >= 0,
-		"script_has_pcm_decoder": WEB_AUDIO_SCRIPT.find("decodePcm16") >= 0 and WEB_AUDIO_SCRIPT.find("createBuffer(channels, frames, sampleRate)") >= 0,
+		"script_has_pcm_decoder": WEB_AUDIO_SCRIPT.find("decodePcm16") >= 0 and WEB_AUDIO_SCRIPT.find("createBuffer(channels, outputFrames, outputSampleRate)") >= 0,
+		"script_resamples_low_rate_pcm": WEB_AUDIO_SCRIPT.find("Math.max(3000, inputSampleRate)") >= 0 and WEB_AUDIO_SCRIPT.find("outputFrame * inputSampleRate / outputSampleRate") >= 0,
+		"script_rejects_empty_music_groups": WEB_AUDIO_SCRIPT.find("if (!Object.keys(group.sources).length)") >= 0,
 		"script_accepts_json_payloads": WEB_AUDIO_SCRIPT.find("parsePayload") >= 0 and WEB_AUDIO_SCRIPT.find("JSON.parse(payload)") >= 0,
 		"script_has_music_stems": WEB_AUDIO_SCRIPT.find("playMusicStems") >= 0 and WEB_AUDIO_SCRIPT.find("setMusicMix") >= 0,
 		"script_has_loop_stop": WEB_AUDIO_SCRIPT.find("stopLoop") >= 0,
@@ -615,8 +641,26 @@ static func _stream_payload(stream: AudioStream, stream_id: String, volume_db: f
 		"registered": registered,
 	}
 	if not registered:
-		payload["data"] = Marshalls.raw_to_base64(data)
+		var preencoded := str(wav.get_meta(PCM_BASE64_META, ""))
+		if preencoded.is_empty():
+			_synchronous_payload_encodes += 1
+			preencoded = Marshalls.raw_to_base64(data)
+		else:
+			_preencoded_payload_hits += 1
+		payload["data"] = preencoded
 	return payload
+
+
+static func prepare_pcm_stream_for_bridge(stream: AudioStream) -> bool:
+	if not (stream is AudioStreamWAV):
+		return false
+	var wav := stream as AudioStreamWAV
+	if wav.format != AudioStreamWAV.FORMAT_16_BITS or wav.data.is_empty():
+		return false
+	if not str(wav.get_meta(PCM_BASE64_META, "")).is_empty():
+		return true
+	wav.set_meta(PCM_BASE64_META, Marshalls.raw_to_base64(wav.data))
+	return true
 
 
 static func _mark_pcm_registered(payload: Dictionary) -> void:
