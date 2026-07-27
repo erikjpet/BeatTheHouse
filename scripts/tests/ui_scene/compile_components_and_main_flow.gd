@@ -1671,6 +1671,18 @@ func _run() -> void:
 		push_error("Foundation UI shell should wait for player start before creating RunState.")
 		quit(1)
 		return
+	var first_menu_snapshot: Dictionary = app.call("current_start_menu_snapshot")
+	var first_panel_size: Vector2 = first_menu_snapshot.get("menu_panel_size", Vector2.ZERO)
+	var first_menu_rect := _snapshot_rect(first_menu_snapshot.get("menu_panel_rect", {}))
+	var first_stack_rect := _snapshot_rect(first_menu_snapshot.get("start_menu_stack_rect", {}))
+	if first_panel_size.x <= 1.0 or first_panel_size.y <= 1.0 or first_menu_rect.size.x <= 1.0 or first_menu_rect.size.y <= 1.0:
+		push_error("Main menu panel measured as a collapsed zero-viewport layout on first pass: size=%s rect=%s." % [str(first_panel_size), str(first_menu_rect)])
+		quit(1)
+		return
+	if first_stack_rect.size.x <= 0.0 or first_stack_rect.size.y <= 0.0 or not first_menu_rect.grow(1.0).encloses(first_stack_rect):
+		push_error("Main menu first-pass panel does not contain the stack: panel=%s stack=%s." % [str(first_menu_rect), str(first_stack_rect)])
+		quit(1)
+		return
 	if not await _check_onboarding_tutorial_ui_flow(app):
 		quit(1)
 		return

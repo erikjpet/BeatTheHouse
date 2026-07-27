@@ -322,22 +322,22 @@ New-Item -ItemType Directory -Force -Path $script:ReportRoot | Out-Null
 $script:StageResults = New-Object System.Collections.Generic.List[object]
 $FoundationSuiteBudgetMultiplier = 1.5
 $FoundationSuiteStageBaselinesSec = @{
-    "foundation_all" = 151.156
-    "foundation_systems" = 30.000
+    "foundation_all" = 153.768
+    "foundation_systems" = 29.141
     # Expanded GC05.2 coverage and same-host Stage 1 control: .tmp/gc05_2_ui_baseline_evidence.md
-    "ui_scene_compile" = 72.000
-    "foundation_contracts" = 150.727
-    "foundation_games" = 150.015
-    "foundation_slot" = 21.710
-    "foundation_slot_acceptance" = 701.889
-    "foundation_audit" = 701.889
-    "foundation_blackjack" = 8.772
-    "foundation_roulette" = 8.489
-    "foundation_baccarat" = 8.768
-    "foundation_video_poker" = 65.390
-    "foundation_bar_dice" = 38.103
-    "foundation_pull_tabs" = 9.140
-    "foundation_scratch_tickets" = 12.000
+    "ui_scene_compile" = 83.234
+    "foundation_contracts" = 153.594
+    "foundation_games" = 146.950
+    "foundation_slot" = 25.535
+    "foundation_slot_acceptance" = 638.945
+    "foundation_audit" = 646.713
+    "foundation_blackjack" = 11.860
+    "foundation_roulette" = 11.031
+    "foundation_baccarat" = 11.209
+    "foundation_video_poker" = 85.802
+    "foundation_bar_dice" = 60.646
+    "foundation_pull_tabs" = 13.253
+    "foundation_scratch_tickets" = 12.683
 }
 
 function Get-FoundationSuiteStageBaselineSec {
