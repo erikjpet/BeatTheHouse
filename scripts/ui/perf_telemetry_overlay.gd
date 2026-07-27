@@ -132,6 +132,8 @@ func configure(owner: FoundationMain) -> void:
 	})
 	if plan_id == "l02":
 		call_deferred("_run_l02_plan")
+	elif plan_id == "corner_store":
+		call_deferred("_run_corner_store_plan")
 	elif plan_id == "lb3":
 		call_deferred("_run_lb3_plan")
 	elif plan_id == "la1":
@@ -241,6 +243,7 @@ func _run_l02_plan() -> void:
 	await _wait_frames(8)
 	_end_scenario()
 	await _measure_scenario("start_menu_idle", {"surface": "menu", "mode": "idle"}, scenario_frames)
+	await _measure_corner_store()
 	for game_id_value in REQUIRED_GAME_IDS:
 		var game_id := str(game_id_value)
 		await _measure_game(game_id)
@@ -252,6 +255,52 @@ func _run_l02_plan() -> void:
 	dump_report()
 	if auto_quit:
 		get_tree().quit()
+
+
+func _run_corner_store_plan() -> void:
+	if l02_driver_started:
+		return
+	l02_driver_started = true
+	await _wait_frames(8)
+	_end_scenario()
+	if app == null:
+		mark_event("corner_store_missing_app")
+		dump_report()
+		if auto_quit:
+			get_tree().quit()
+		return
+	await _measure_corner_store()
+	l02_driver_complete = true
+	dump_report()
+	if auto_quit:
+		get_tree().quit()
+
+
+func _measure_corner_store() -> void:
+	app.start_foundation_run("WEB-CORNER-STORE")
+	await _wait_frames(8)
+	var run_state: RunState = app.get("run_state") as RunState
+	var choice: Dictionary = app.call("_travel_choice", "corner_store")
+	if choice.is_empty() or not bool(choice.get("enabled", true)):
+		choice = {
+			"id": "corner_store",
+			"label": "Corner Store",
+			"enabled": true,
+			"route": app.call("_world_route_for_target", "corner_store"),
+		}
+	var started_usec := Time.get_ticks_usec()
+	_emit_console("BTH_CORNER_STORE_OPEN_START ", {
+		"from": run_state.current_world_node_id() if run_state != null else "",
+		"target": "corner_store",
+	})
+	app.call("_travel_to", "corner_store", "Corner Store", choice)
+	var duration_ms := _duration_ms_since(started_usec)
+	_emit_console("BTH_CORNER_STORE_OPEN_DONE ", {
+		"duration_ms": duration_ms,
+		"environment_id": str(run_state.current_environment.get("archetype_id", "")) if run_state != null else "",
+	})
+	mark_event("corner_store_open", {"duration_ms": duration_ms})
+	await _measure_scenario("corner_store_idle", {"surface": "environment", "mode": "idle"}, scenario_frames)
 
 
 func _run_lb3_plan() -> void:

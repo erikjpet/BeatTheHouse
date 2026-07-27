@@ -22,6 +22,7 @@ if (-not $node) {
 $frameP95BudgetsMs = @{
     "menu_idle" = 180.0
     "start_menu_idle" = 20.0
+    "corner_store_idle" = 120.0
     "pull_tabs_idle" = 20.0
     "pull_tabs_active" = 60.0
     "slot_idle" = 45.0
@@ -42,6 +43,7 @@ $frameP95BudgetsMs = @{
     "scripted_play_memory_10m" = 45.0
 }
 $readyBudgetMs = 20000
+$cornerStoreOpenBudgetMs = 1200
 $telemetryOverheadAvgBudgetMs = 0.1
 $scenarioMemoryDeltaBudgetBytes = 128MB
 
@@ -136,6 +138,14 @@ Assert-Condition -Condition ($readyWall -le $readyBudgetMs) -Message ("Web ready
 $overheadAvg = [double]$report.telemetry_overhead.avg_ms
 Assert-Condition -Condition ($overheadAvg -le $telemetryOverheadAvgBudgetMs) -Message ("Telemetry overhead avg {0:N4}ms exceeded {1:N4}ms." -f $overheadAvg, $telemetryOverheadAvgBudgetMs) -Failures $failures
 
+$cornerStoreOpenEvents = @($report.events | Where-Object { [string]$_.id -eq "corner_store_open" })
+Assert-Condition -Condition ($cornerStoreOpenEvents.Count -gt 0) -Message "Missing corner_store_open web transition event." -Failures $failures
+$cornerStoreOpenMs = 0.0
+if ($cornerStoreOpenEvents.Count -gt 0) {
+    $cornerStoreOpenMs = [double]$cornerStoreOpenEvents[-1].data.duration_ms
+    Assert-Condition -Condition ($cornerStoreOpenMs -le $cornerStoreOpenBudgetMs) -Message ("Corner Store open {0:N3}ms exceeded {1:N3}ms." -f $cornerStoreOpenMs, $cornerStoreOpenBudgetMs) -Failures $failures
+}
+
 $scenariosByName = @{}
 foreach ($scenario in @($report.scenarios)) {
     $scenariosByName[[string]$scenario.name] = $scenario
@@ -165,6 +175,8 @@ $summary = [ordered]@{
     ready_budget_msec = $readyBudgetMs
     telemetry_overhead_avg_ms = $overheadAvg
     telemetry_overhead_avg_budget_ms = $telemetryOverheadAvgBudgetMs
+    corner_store_open_ms = $cornerStoreOpenMs
+    corner_store_open_budget_ms = $cornerStoreOpenBudgetMs
     scenario_frame_p95_budgets_ms = $frameP95BudgetsMs
     scenario_memory_delta_budget_bytes = $scenarioMemoryDeltaBudgetBytes
     report = $outPath
