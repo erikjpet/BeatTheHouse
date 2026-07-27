@@ -179,24 +179,24 @@ func _build() -> void:
 	focus_layer.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	focus_layer.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(focus_layer)
-	panel = FoundationWidgets.panel(Color("#11101f", 0.98), VisualStyle.YELLOW)
+	panel = FoundationWidgets.panel(Color(VisualStyle.role("surface_overlay"), 0.98), VisualStyle.YELLOW)
 	panel.mouse_filter = Control.MOUSE_FILTER_STOP
 	panel.clip_contents = true
 	add_child(panel)
 	var margin := MarginContainer.new()
 	margin.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	margin.add_theme_constant_override("margin_left", 12)
-	margin.add_theme_constant_override("margin_right", 12)
-	margin.add_theme_constant_override("margin_top", 10)
-	margin.add_theme_constant_override("margin_bottom", 10)
+	margin.add_theme_constant_override("margin_left", VisualStyle.SPACE_5)
+	margin.add_theme_constant_override("margin_right", VisualStyle.SPACE_5)
+	margin.add_theme_constant_override("margin_top", VisualStyle.TYPE_MICRO)
+	margin.add_theme_constant_override("margin_bottom", VisualStyle.TYPE_MICRO)
 	panel.add_child(margin)
 	var stack := VBoxContainer.new()
-	stack.add_theme_constant_override("separation", 7)
+	stack.add_theme_constant_override("separation", VisualStyle.SPACE_4 - VisualStyle.BORDER_HAIRLINE)
 	margin.add_child(stack)
-	eyebrow_label = FoundationWidgets.label("DEALER'S ADVICE", 12)
+	eyebrow_label = FoundationWidgets.label("DEALER'S ADVICE", VisualStyle.TYPE_SMALL)
 	FoundationWidgets.set_control_font_color(eyebrow_label, VisualStyle.YELLOW)
 	stack.add_child(eyebrow_label)
-	copy_label = FoundationWidgets.label("", 15)
+	copy_label = FoundationWidgets.label("", VisualStyle.TYPE_BODY_LARGE + VisualStyle.BORDER_HAIRLINE)
 	copy_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	copy_label.max_lines_visible = 3
 	stack.add_child(copy_label)
