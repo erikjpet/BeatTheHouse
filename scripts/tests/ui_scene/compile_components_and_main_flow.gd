@@ -4731,8 +4731,15 @@ func _run() -> void:
 		quit(1)
 		return
 	var home_pickup_objects: Array = app.call("current_spatial_interaction_snapshot").get("objects", [])
-	if _interactable_by_type(home_pickup_objects, "item").is_empty() or not _interactable_by_type(home_pickup_objects, "shopkeeper").is_empty():
+	var home_pickup_item := _interactable_by_type(home_pickup_objects, "item")
+	if home_pickup_item.is_empty() or not _interactable_by_type(home_pickup_objects, "shopkeeper").is_empty():
 		push_error("Starting home did not expose pickup items without a shopkeeper.")
+		quit(1)
+		return
+	var home_pickup_actions: Array = home_pickup_item.get("available_actions", []) if typeof(home_pickup_item.get("available_actions", [])) == TYPE_ARRAY else []
+	var home_pickup_action: Dictionary = home_pickup_actions[0] if not home_pickup_actions.is_empty() and typeof(home_pickup_actions[0]) == TYPE_DICTIONARY else {}
+	if str(home_pickup_action.get("label", "")) != "Pickup":
+		push_error("Starting home pickup item action did not use Pickup copy.")
 		quit(1)
 		return
 	var item_fixture_run_state: RunState = app.get("run_state")

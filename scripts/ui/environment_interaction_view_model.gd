@@ -226,6 +226,7 @@ static func interactable_object_view_list(run_state: RunState, library: ContentL
 			continue
 		var enabled := bool(offer.get("affordable", true)) and not failed
 		var object_id := "item:%s" % item_id
+		var action_label := "Pickup" if bool(offer.get("pickup", false)) else str(offer.get("action_label", "Buy"))
 		objects.append(_object_with_rect({
 			"object_id": object_id,
 			"object_type": "item",
@@ -245,7 +246,7 @@ static func interactable_object_view_list(run_state: RunState, library: ContentL
 			"surface": str(offer.get("surface", "counter")),
 			"icon_key": str(offer.get("icon_key", item_id)),
 			"asset_path": str(offer.get("asset_path", "")),
-			"available_actions": [{"id": "buy_item", "label": str(offer.get("action_label", "Buy"))}] if enabled else [],
+			"available_actions": [{"id": "buy_item", "label": action_label}] if enabled else [],
 			"confirm_action_id": "buy_item" if enabled else "",
 		}, selection, layout, item_index))
 		item_index += 1
