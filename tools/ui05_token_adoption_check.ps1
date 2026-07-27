@@ -15,6 +15,8 @@ $tokenizedFiles = @(
     "scripts/ui/hud_time_watch.gd",
     "scripts/ui/environment_header.gd",
     "scripts/ui/cheat_dock.gd",
+    "scripts/ui/career_stats_screen.gd",
+    "scripts/ui/career_stats_view_model.gd",
     "scripts/ui/segmented_meter.gd",
     "scripts/ui/talk_dock.gd"
 )

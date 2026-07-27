@@ -143,6 +143,8 @@ static func build_start_screen(host: Variant) -> void:
 	host.start_menu_action_controls.append(utility_row)
 	host.settings_button = host._main_menu_button("Settings", "Resolution and sound", Callable(host, "open_settings_menu"))
 	utility_row.add_child(host.settings_button)
+	host.career_button = host._main_menu_button("Career", "Stats and run history", Callable(host, "open_career_stats_screen"))
+	utility_row.add_child(host.career_button)
 	host.inventory_button = host._main_menu_button("Inventory", "Profile stash", Callable(host, "open_inventory_page"))
 	utility_row.add_child(host.inventory_button)
 	host.collections_button = host._main_menu_button("Home", "Meta home, pawn shop, and bags", Callable(host, "open_collection_browser"))
@@ -156,6 +158,7 @@ static func build_start_screen(host: Variant) -> void:
 	host.start_menu_action_controls.append(host.exit_game_button)
 
 	host._build_inventory_page(stack)
+	host._build_career_stats_screen(stack)
 	if host.show_game_library_launcher:
 		host._build_game_test_menu(stack)
 

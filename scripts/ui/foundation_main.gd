@@ -114,6 +114,7 @@ const MetaCollectionViewModelScript := preload("res://scripts/ui/meta_collection
 const RunJournalViewModelScript := preload("res://scripts/ui/run_journal_view_model.gd")
 const RunReportViewModelScript := preload("res://scripts/ui/run_report_view_model.gd")
 const RunReportScreenScript := preload("res://scripts/ui/run_report_screen.gd")
+const CareerStatsScreenScript := preload("res://scripts/ui/career_stats_screen.gd")
 const TerminalConsequenceViewModelScript := preload("res://scripts/ui/terminal_consequence_view_model.gd")
 const EnvironmentInteractionViewModelScript := preload("res://scripts/ui/environment_interaction_view_model.gd")
 const EnvironmentInteractionControllerScript := preload("res://scripts/ui/environment_interaction_controller.gd")
@@ -242,6 +243,7 @@ var release_framing_label: Label
 var release_version_label: Label
 var main_menu_background: Control
 var inventory_page: VBoxContainer
+var career_stats_screen: CareerStatsScreen
 var inventory_status_label: Label
 var inventory_items_list: VBoxContainer
 var game_test_menu: VBoxContainer
@@ -254,6 +256,7 @@ var game_test_stake_ceiling_input: SpinBox
 var game_test_security_option: OptionButton
 var game_test_generation_overrides_text: TextEdit
 var acquire_chip_button: Button
+var career_button: Button
 var inventory_button: Button
 var collections_button: Button
 var profile_chip_texture: Texture2D
@@ -4643,6 +4646,8 @@ func open_content_group_config() -> void:
 		return
 	if challenge_panel != null:
 		challenge_panel.visible = false
+	if career_stats_screen != null:
+		career_stats_screen.visible = false
 	_ensure_menu_content_groups_initialized()
 	_refresh_content_group_controls()
 	if start_menu_intro != null:
@@ -4677,6 +4682,8 @@ func open_challenge_selection() -> void:
 		return
 	if content_group_panel != null:
 		content_group_panel.visible = false
+	if career_stats_screen != null:
+		career_stats_screen.visible = false
 	_rebuild_challenge_options()
 	_refresh_challenge_controls()
 	if start_menu_intro != null:
@@ -5449,6 +5456,15 @@ func _build_inventory_page(parent: Node) -> void:
 	inventory_page.add_child(inventory_items_list)
 
 	_refresh_profile_inventory_page()
+
+
+func _build_career_stats_screen(parent: Node) -> void:
+	career_stats_screen = CareerStatsScreenScript.new()
+	career_stats_screen.visible = false
+	career_stats_screen.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	career_stats_screen.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	career_stats_screen.close_requested.connect(close_career_stats_screen)
+	parent.add_child(career_stats_screen)
 
 
 func _build_game_test_menu(parent: Node) -> void:
@@ -7676,6 +7692,7 @@ func current_start_menu_snapshot() -> Dictionary:
 		"challenge_status": challenge_status_label.text if challenge_status_label != null else "",
 		"challenge_config_visible": challenge_panel.visible if challenge_panel != null else false,
 		"release_version_text": release_version_label.text if release_version_label != null else "",
+		"career_stats": career_stats_screen.current_snapshot() if career_stats_screen != null else {"visible": false},
 		"menu_panel_size": main_menu_panel.custom_minimum_size if main_menu_panel != null else Vector2.ZERO,
 	}
 	if main_menu_panel != null:
@@ -9865,6 +9882,8 @@ func return_to_main_menu() -> void:
 		start_menu_intro.visible = true
 	if inventory_page != null:
 		inventory_page.visible = false
+	if career_stats_screen != null:
+		career_stats_screen.visible = false
 	if game_test_menu != null:
 		game_test_menu.visible = false
 	close_settings_menu()
@@ -9887,6 +9906,8 @@ func open_settings_menu() -> void:
 		start_menu_controls.visible = false
 	if inventory_page != null:
 		inventory_page.visible = false
+	if career_stats_screen != null:
+		career_stats_screen.visible = false
 	if game_test_menu != null:
 		game_test_menu.visible = false
 	if start_menu_intro != null:
@@ -9965,6 +9986,8 @@ func open_inventory_page() -> void:
 	close_challenge_selection()
 	if settings_menu != null:
 		settings_menu.visible = false
+	if career_stats_screen != null:
+		career_stats_screen.visible = false
 	if start_menu_intro != null:
 		start_menu_intro.visible = true
 	if start_menu_controls != null:
@@ -10628,6 +10651,49 @@ func close_inventory_page() -> void:
 	_refresh_start_screen()
 
 
+func open_career_stats_screen() -> void:
+	if career_stats_screen == null:
+		return
+	close_content_group_config()
+	close_challenge_selection()
+	if settings_menu != null:
+		settings_menu.visible = false
+	if inventory_page != null:
+		inventory_page.visible = false
+	if career_stats_screen != null:
+		career_stats_screen.visible = false
+	if game_test_menu != null:
+		game_test_menu.visible = false
+	if start_menu_intro != null:
+		start_menu_intro.visible = false
+	if start_menu_controls != null:
+		start_menu_controls.visible = false
+	_refresh_career_stats_screen()
+	career_stats_screen.visible = true
+	_apply_main_menu_panel_size(MAIN_MENU_EXPANDED_SIZE)
+
+
+func close_career_stats_screen() -> void:
+	if career_stats_screen != null:
+		career_stats_screen.visible = false
+	if start_menu_intro != null:
+		start_menu_intro.visible = true
+	if start_menu_controls != null:
+		start_menu_controls.visible = true
+	_apply_main_menu_panel_size(MAIN_MENU_COLLAPSED_SIZE)
+	_refresh_start_screen()
+
+
+func _refresh_career_stats_screen() -> void:
+	if career_stats_screen == null:
+		return
+	if profile_inventory == null:
+		_initialize_profile_inventory()
+	career_stats_screen.set_small_screen_mode(_small_screen_enabled())
+	career_stats_screen.set_reduce_motion(_reduce_motion_enabled())
+	career_stats_screen.set_profile(profile_inventory)
+
+
 func open_game_test_menu() -> void:
 	if not show_game_library_launcher:
 		return
@@ -10639,6 +10705,8 @@ func open_game_test_menu() -> void:
 		settings_menu.visible = false
 	if inventory_page != null:
 		inventory_page.visible = false
+	if career_stats_screen != null:
+		career_stats_screen.visible = false
 	if start_menu_controls != null:
 		start_menu_controls.visible = false
 	if start_menu_intro != null:
@@ -10722,7 +10790,6 @@ func _refresh_profile_inventory_page() -> void:
 	if inventory_items_list == null:
 		return
 	_clear(inventory_items_list)
-	_add_profile_summary_sections()
 	var stash_heading := _section("Profile Stash")
 	_set_control_font_color(stash_heading, VisualStyle.YELLOW)
 	inventory_items_list.add_child(stash_heading)
@@ -10752,82 +10819,6 @@ func _refresh_profile_inventory_page() -> void:
 		var description := _label(str(item_data.get("description", "")), 12)
 		_set_control_font_color(description, VisualStyle.CYAN_2)
 		text_stack.add_child(description)
-
-
-func _add_profile_summary_sections() -> void:
-	if inventory_items_list == null or profile_inventory == null:
-		return
-	var daily := _copy_dict(profile_inventory.daily_runs)
-	var lifetime := _copy_dict(profile_inventory.lifetime_stats)
-	var summary_panel := _panel_container(Color("#05070d", 0.86), VisualStyle.CYAN_2)
-	summary_panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	inventory_items_list.add_child(summary_panel)
-	var stack := VBoxContainer.new()
-	stack.add_theme_constant_override("separation", 5)
-	stack.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	summary_panel.add_child(stack)
-	var summary_heading := _label("Profile Summary", 15)
-	_set_control_font_color(summary_heading, VisualStyle.CYAN)
-	stack.add_child(summary_heading)
-	stack.add_child(_profile_line("Runs: %d  Daily streak: %d / best %d" % [
-		int(lifetime.get("total_runs", 0)),
-		int(daily.get("current_streak", 0)),
-		int(daily.get("best_streak", 0)),
-	]))
-	var victories := _copy_dict(lifetime.get("victories_per_route", {}))
-	stack.add_child(_profile_line("Victories: card %d, showdown %d" % [
-		int(victories.get("players_card_cashout", 0)),
-		int(victories.get("showdown", 0)),
-	]))
-	stack.add_child(_profile_line("Bankroll won/lost: $%d / $%d  Biggest win: $%d" % [
-		int(lifetime.get("total_bankroll_won", 0)),
-		int(lifetime.get("total_bankroll_lost", 0)),
-		int(lifetime.get("biggest_single_win", 0)),
-	]))
-	var challenge_rows := profile_inventory.completed_challenge_rows()
-	var challenge_heading := _section("Completed Challenges")
-	_set_control_font_color(challenge_heading, VisualStyle.YELLOW)
-	inventory_items_list.add_child(challenge_heading)
-	if challenge_rows.is_empty():
-		inventory_items_list.add_child(_profile_line("No completed challenges yet."))
-	else:
-		for challenge_value in challenge_rows:
-			var challenge := _copy_dict(challenge_value)
-			var title := str(challenge.get("title", challenge.get("flag", "Challenge"))).strip_edges()
-			inventory_items_list.add_child(_profile_line(title))
-	var history_heading := _section("Recent Runs")
-	_set_control_font_color(history_heading, VisualStyle.YELLOW)
-	inventory_items_list.add_child(history_heading)
-	var history := _copy_array(profile_inventory.run_history)
-	if history.is_empty():
-		inventory_items_list.add_child(_profile_line("No completed runs recorded yet."))
-	else:
-		var count := mini(history.size(), 8)
-		for index in range(count):
-			var entry := _copy_dict(history[index])
-			inventory_items_list.add_child(_profile_line("%s - %s - $%d - Day %d - %d actions" % [
-				str(entry.get("completed_date", "")),
-				_profile_history_outcome_text(entry),
-				int(entry.get("final_bankroll", 0)),
-				int(entry.get("day_count", 1)),
-				int(entry.get("duration_actions", 0)),
-			]))
-
-
-func _profile_line(text: String) -> Label:
-	var label := _label(text, 12)
-	label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	_set_control_font_color(label, VisualStyle.SOFT)
-	return label
-
-
-func _profile_history_outcome_text(entry: Dictionary) -> String:
-	var outcome := str(entry.get("outcome", "")).capitalize()
-	var route := str(entry.get("route", "")).replace("_", " ").capitalize()
-	if route.is_empty() or route == outcome:
-		return outcome
-	return "%s: %s" % [outcome, route]
-
 
 func _collection_reveal_text(result: Dictionary) -> String:
 	_ensure_meta_session_controller()
@@ -13170,6 +13161,9 @@ func _apply_accessibility_settings() -> void:
 	if run_report_screen != null:
 		run_report_screen.set_reduce_motion(bool(user_settings.reduce_motion) if user_settings != null else false)
 		run_report_screen.set_small_screen_mode(small_screen_enabled)
+	if career_stats_screen != null:
+		career_stats_screen.set_reduce_motion(bool(user_settings.reduce_motion) if user_settings != null else false)
+		career_stats_screen.set_small_screen_mode(small_screen_enabled)
 	_ensure_world_map_overlay_controller()
 	world_map_overlay_controller.set_small_screen_mode(small_screen_enabled)
 	_apply_accessibility_to_node(self, _accessibility_font_scale(), _accessibility_control_scale())

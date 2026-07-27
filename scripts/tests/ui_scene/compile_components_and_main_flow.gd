@@ -1689,6 +1689,20 @@ func _run() -> void:
 		push_error("Rendered release version does not match ProjectSettings: rendered=%s project=%s." % [rendered_version, project_version])
 		quit(1)
 		return
+	app.call("open_career_stats_screen")
+	await process_frame
+	var career_menu_snapshot: Dictionary = app.call("current_start_menu_snapshot")
+	var career_snapshot: Dictionary = career_menu_snapshot.get("career_stats", {}) if typeof(career_menu_snapshot.get("career_stats", {})) == TYPE_DICTIONARY else {}
+	if not bool(career_snapshot.get("visible", false)) or int(career_snapshot.get("headline_count", 0)) < 4:
+		push_error("Career/stats surface did not open with the designed headline summary: %s." % JSON.stringify(career_snapshot))
+		quit(1)
+		return
+	if app.get("run_state") != null:
+		push_error("Opening the Career/stats surface from the main menu should not create RunState.")
+		quit(1)
+		return
+	app.call("close_career_stats_screen")
+	await process_frame
 	if not await _check_onboarding_tutorial_ui_flow(app):
 		quit(1)
 		return
@@ -2109,8 +2123,8 @@ func _run() -> void:
 		push_error("Profile inventory page did not expose storage controls.")
 		quit(1)
 		return
-	if not _has_visible_text(app, "Profile Summary") or not _has_visible_text(app, "Recent Runs") or not _has_visible_text(app, "Completed Challenges"):
-		push_error("Profile page did not expose summary, recent run, and completed challenge sections.")
+	if not _has_visible_text(app, "Profile Stash"):
+		push_error("Profile inventory page did not expose the stash section after career data moved to its own surface.")
 		quit(1)
 		return
 	app.call("close_inventory_page")
@@ -2121,6 +2135,28 @@ func _run() -> void:
 		return
 	if app.get("run_state") != null:
 		push_error("Opening Profile Inventory should not start or mutate a run.")
+		quit(1)
+		return
+	var career_button: Button = app.get("career_button")
+	if career_button == null:
+		push_error("Main menu did not expose the Career/stats entry.")
+		quit(1)
+		return
+	career_button.emit_signal("pressed")
+	await process_frame
+	var career_snapshot_after_settings: Dictionary = app.call("current_start_menu_snapshot").get("career_stats", {})
+	if not bool(career_snapshot_after_settings.get("visible", false)) or int(career_snapshot_after_settings.get("headline_count", 0)) < 4:
+		push_error("Career button did not open the designed career/stats surface.")
+		quit(1)
+		return
+	if app.get("run_state") != null:
+		push_error("Opening Career/stats should not start or mutate a run.")
+		quit(1)
+		return
+	app.call("close_career_stats_screen")
+	await process_frame
+	if bool((app.call("current_start_menu_snapshot").get("career_stats", {}) as Dictionary).get("visible", false)) or not start_menu_controls.visible:
+		push_error("Career/stats page did not return to the main menu controls.")
 		quit(1)
 		return
 	if app.get("save_status_label") == null:
