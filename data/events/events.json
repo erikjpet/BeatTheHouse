@@ -272,10 +272,18 @@
     "scopes": [
       "any"
     ],
+    "conditions": {
+      "requires_context": {
+        "source": "game_action",
+        "action_kind": "cheat",
+        "game_family": "cards"
+      }
+    },
     "asset_path": "res://assets/art/events/suspicious_patron.png",
     "trigger": {
-      "type": "timed",
-      "turns": 2
+      "type": "random",
+      "turns": 0,
+      "chance_percent": 18
     },
     "payload": {
       "summary": "Heat check.",

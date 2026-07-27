@@ -2920,12 +2920,28 @@ func _talk_ignore_story_message(entry: Dictionary, reason: String) -> String:
 
 
 func _event_action_trigger_context(source: String) -> Dictionary:
-	return {
+	var context := {
 		"trigger": "action",
 		"type": "action",
 		"source": source,
 		"turns": int(run_state.current_environment.get("turns", 0)) if run_state != null else 0,
 	}
+	if ["game_action", "game_hook", "environment_game"].has(source):
+		var result := _recent_result_snapshot()
+		var game_id := str(result.get("game_id", result.get("source_id", ""))).strip_edges()
+		if game_id.is_empty() and current_game != null:
+			game_id = current_game.get_id()
+		var game_family := ""
+		if current_game != null and current_game.get_id() == game_id:
+			game_family = current_game.get_family()
+		elif library != null and not game_id.is_empty():
+			var game_definition := library.game(game_id)
+			game_family = str(game_definition.get("family", "")).strip_edges()
+		context["game_id"] = game_id
+		context["game_family"] = game_family
+		context["action_id"] = str(result.get("action_id", selected_action_id)).strip_edges()
+		context["action_kind"] = str(result.get("action_kind", selected_action_kind)).strip_edges()
+	return context
 
 
 func _pending_event_trigger_context(event_id: String) -> Dictionary:

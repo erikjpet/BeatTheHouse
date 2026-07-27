@@ -1602,20 +1602,32 @@ func _check_t4_3_event_conditions(library: ContentLibrary, failures: Array) -> v
 
 	var suspicious_event := EventModule.new()
 	suspicious_event.setup(library.event("suspicious_patron"))
+	var card_cheat_context := {"trigger": "action", "type": "action", "source": "game_action", "turns": 2, "action_kind": "cheat", "game_id": "blackjack", "game_family": "cards"}
+	var card_legal_context := {"trigger": "action", "type": "action", "source": "game_action", "turns": 2, "action_kind": "legal", "game_id": "blackjack", "game_family": "cards"}
+	var dice_cheat_context := {"trigger": "action", "type": "action", "source": "game_action", "turns": 2, "action_kind": "cheat", "game_id": "bar_dice", "game_family": "dice"}
 	var casino_talk_run: RunState = RunStateScript.new()
 	casino_talk_run.start_new("T43-SUSPICIOUS-CASINO")
 	casino_talk_run.set_environment(_t4_3_fixture_environment("delta_queen", "casino", 2, ["blackjack"], ["suspicious_patron"], ["grand_casino"]))
-	if not suspicious_event.can_trigger(casino_talk_run, casino_talk_run.current_environment, action_context):
-		failures.append("Suspicious Patron should still trigger in a populated casino room.")
+	if suspicious_event.can_trigger(casino_talk_run, casino_talk_run.current_environment, action_context):
+		failures.append("Suspicious Patron triggered from ambient casino cadence instead of a card-game cheat.")
+	if suspicious_event.can_trigger(casino_talk_run, casino_talk_run.current_environment, card_legal_context):
+		failures.append("Suspicious Patron triggered from legal card play instead of a cheat.")
+	if not suspicious_event.can_trigger(casino_talk_run, casino_talk_run.current_environment, card_cheat_context):
+		failures.append("Suspicious Patron did not trigger from a blackjack cheat context.")
+	var dice_talk_run: RunState = RunStateScript.new()
+	dice_talk_run.start_new("T43-SUSPICIOUS-DICE")
+	dice_talk_run.set_environment(_t4_3_fixture_environment("kitty_cat_lounge", "casino", 1, ["bar_dice"], ["suspicious_patron"], ["bar"]))
+	if suspicious_event.can_trigger(dice_talk_run, dice_talk_run.current_environment, dice_cheat_context):
+		failures.append("Suspicious Patron triggered from dice cheating instead of card-game cheating.")
 	var home_talk_run: RunState = RunStateScript.new()
 	home_talk_run.start_new("T43-SUSPICIOUS-HOME")
 	home_talk_run.set_environment(_t4_3_fixture_environment("motel", "home", 1, [], ["suspicious_patron"], ["bar"]))
-	if suspicious_event.can_trigger(home_talk_run, home_talk_run.current_environment, action_context):
+	if suspicious_event.can_trigger(home_talk_run, home_talk_run.current_environment, card_cheat_context):
 		failures.append("Suspicious Patron triggered inside the home environment.")
 	var beach_talk_run: RunState = RunStateScript.new()
 	beach_talk_run.start_new("T43-SUSPICIOUS-BEACH")
 	beach_talk_run.set_environment(_t4_3_fixture_environment("beach", "recovery", 2, ["slot"], ["suspicious_patron"], ["delta_queen"]))
-	if suspicious_event.can_trigger(beach_talk_run, beach_talk_run.current_environment, action_context):
+	if suspicious_event.can_trigger(beach_talk_run, beach_talk_run.current_environment, card_cheat_context):
 		failures.append("Suspicious Patron triggered on the people-free Beach recovery environment.")
 
 	var blackjack_run: RunState = RunStateScript.new()

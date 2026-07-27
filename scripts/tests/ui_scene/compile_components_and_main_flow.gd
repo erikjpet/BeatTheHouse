@@ -4223,6 +4223,9 @@ func _run() -> void:
 		"type": "action",
 		"source": "game_action",
 		"turns": int(game_interrupt_run_state.current_environment.get("turns", 0)),
+		"game_id": "blackjack",
+		"game_family": "cards",
+		"action_kind": "cheat",
 	}
 	if not game_interrupt_run_state.enqueue_triggered_event("suspicious_patron", "game_action", game_interrupt_context):
 		push_error("Game interrupt regression could not enqueue a triggered event.")
