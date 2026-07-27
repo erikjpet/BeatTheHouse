@@ -41,7 +41,10 @@ func load() -> void:
 	if not FileAccess.file_exists(path):
 		return
 	var text := FileAccess.get_file_as_string(path)
-	var parsed: Variant = JSON.parse_string(text)
+	var json := JSON.new()
+	if json.parse(text) != OK:
+		return
+	var parsed: Variant = json.data
 	if typeof(parsed) == TYPE_DICTIONARY:
 		from_dict(parsed)
 		loaded_from_disk = true

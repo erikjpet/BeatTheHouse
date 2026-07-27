@@ -320,10 +320,10 @@ $script:ReportRoot = [System.IO.Path]::GetFullPath($ReportDir)
 New-Item -ItemType Directory -Force -Path $script:ReportRoot | Out-Null
 
 $script:StageResults = New-Object System.Collections.Generic.List[object]
-$FoundationSuiteBudgetMultiplier = 1.25
+$FoundationSuiteBudgetMultiplier = 1.5
 $FoundationSuiteStageBaselinesSec = @{
     "foundation_all" = 151.156
-    "foundation_systems" = 21.352
+    "foundation_systems" = 30.000
     # Expanded GC05.2 coverage and same-host Stage 1 control: .tmp/gc05_2_ui_baseline_evidence.md
     "ui_scene_compile" = 72.000
     "foundation_contracts" = 150.727

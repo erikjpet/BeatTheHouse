@@ -2400,7 +2400,12 @@ func _refresh_talk_dock() -> void:
 	if not voice_line.is_empty():
 		option = option.duplicate(true)
 		var voice_name := str(entry_speaker.get("speaking_character_name", "")).strip_edges()
-		option["summary"] = "%s: \"%s\"" % [voice_name, voice_line] if not voice_name.is_empty() else voice_line
+		var spoken_summary := "%s: \"%s\"" % [voice_name, voice_line] if not voice_name.is_empty() else voice_line
+		var precise_summary := str(option.get("summary", "")).strip_edges()
+		if dialogue_id == "sal_starter_offer" and not precise_summary.is_empty():
+			option["summary"] = "%s\n%s" % [spoken_summary, precise_summary]
+		else:
+			option["summary"] = spoken_summary
 	talk_dock.set_entry(entry, option, run_state.pending_talk_event_count())
 	if item_found_popup != null and item_found_popup.is_open():
 		item_found_talk_dock_suspended = true
@@ -4577,7 +4582,12 @@ func _build_challenge_controls(parent: VBoxContainer) -> void:
 func _apply_main_menu_panel_size(size: Vector2) -> void:
 	if main_menu_panel == null:
 		return
-	var viewport_size := get_viewport_rect().size
+	var viewport_size := Vector2(
+		float(ProjectSettings.get_setting("display/window/size/viewport_width", 1280)),
+		float(ProjectSettings.get_setting("display/window/size/viewport_height", 720))
+	)
+	if is_inside_tree():
+		viewport_size = get_viewport_rect().size
 	var max_size := Vector2(
 		maxf(1.0, viewport_size.x - MAIN_MENU_VIEWPORT_MARGIN.x * 2.0),
 		maxf(1.0, viewport_size.y - MAIN_MENU_VIEWPORT_MARGIN.y * 2.0)

@@ -170,7 +170,10 @@ func _read_run_state_from_path(path: String) -> Dictionary:
 	if not FileAccess.file_exists(path):
 		return {"exists": false, "loadable": false, "run_state": null}
 	var text := FileAccess.get_file_as_string(path)
-	var parsed: Variant = JSON.parse_string(text)
+	var json := JSON.new()
+	if json.parse(text) != OK:
+		return {"exists": true, "loadable": false, "run_state": null}
+	var parsed: Variant = json.data
 	if typeof(parsed) != TYPE_DICTIONARY:
 		return {"exists": true, "loadable": false, "run_state": null}
 	var run_data := _run_data_from_payload(parsed as Dictionary)

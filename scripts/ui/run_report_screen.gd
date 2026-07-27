@@ -47,16 +47,18 @@ var seed_label: Label
 var button_row: HBoxContainer
 var new_run_button: Button
 var home_button: Button
+var _built := false
 
 
 func _ready() -> void:
 	clip_contents = true
 	mouse_filter = Control.MOUSE_FILTER_PASS
-	_build()
+	_ensure_built()
 	set_process(false)
 
 
 func set_report(model: Dictionary) -> void:
+	_ensure_built()
 	report_model = model
 	var tutorial_failure := bool(model.get("tutorial_failure", false))
 	new_run_button.text = "Replay Lessons" if tutorial_failure else "New Run"
@@ -179,6 +181,13 @@ func _on_timeline_seek(progress: float) -> void:
 	_update_replay_clock()
 	play_button.text = "▶ Continue" if replay_progress < 1.0 else "↻ Replay"
 	set_process(false)
+
+
+func _ensure_built() -> void:
+	if _built:
+		return
+	_build()
+	_built = true
 
 
 func _build() -> void:

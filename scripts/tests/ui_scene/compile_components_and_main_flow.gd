@@ -2101,6 +2101,10 @@ func _run() -> void:
 		push_error("Inventory page did not return to the main menu controls.")
 		quit(1)
 		return
+	if app.get("run_state") != null:
+		push_error("Opening Profile Inventory should not start or mutate a run.")
+		quit(1)
+		return
 	if app.get("save_status_label") == null:
 		push_error("Main UI did not build the save status label.")
 		quit(1)

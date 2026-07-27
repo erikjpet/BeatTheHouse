@@ -2491,7 +2491,8 @@ func _check_onboarding_tutorial_arc(library: ContentLibrary, failures: Array) ->
 		failures.append("Tutorial tier compression changed normal Grand Casino objective balance.")
 	var normal_slot_run := RunStateScript.new()
 	normal_slot_run.start_new("TUTORIAL-NORMAL-SLOT-CONTROL")
-	var normal_slot_environment := run_a.current_environment.duplicate(true)
+	var current_environment_value: Variant = run_a.get("current_environment")
+	var normal_slot_environment: Dictionary = current_environment_value.to_dict() if current_environment_value is EnvironmentInstance else (current_environment_value as Dictionary).duplicate(true)
 	normal_slot_environment["game_states"] = {}
 	normal_slot_run.set_environment(normal_slot_environment)
 	var normal_slot: GameModule = SlotGameScript.new()
