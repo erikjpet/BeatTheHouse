@@ -24,6 +24,7 @@ var daily_runs: Dictionary = {}
 var lifetime_stats: Dictionary = {}
 var act_seam: Dictionary = {}
 var scratch_ticket_types_discovered: Array = []
+var scratch_ticket_collection_acknowledged := false
 var tips_seen: Dictionary = {}
 var tutorial_completed := false
 var loaded_from_disk := false
@@ -81,6 +82,7 @@ func to_dict() -> Dictionary:
 		"lifetime_stats": lifetime_stats.duplicate(true),
 		"act_seam": act_seam.duplicate(true),
 		"scratch_ticket_types_discovered": scratch_ticket_types_discovered.duplicate(),
+		"scratch_ticket_collection_acknowledged": scratch_ticket_collection_acknowledged,
 		"tips_seen": tips_seen.duplicate(true),
 		"tutorial_completed": tutorial_completed,
 	}, true)
@@ -91,7 +93,7 @@ func from_dict(data: Dictionary) -> void:
 	loaded_schema_version = int(data.get("schema_version", 0))
 	tutorial_field_present = data.has("tutorial_completed")
 	_unknown_fields = data.duplicate(true)
-	for key in ["schema_version", "act", "items", "challenge_completions", "completed_challenge_flags", "run_history", "daily_runs", "lifetime_stats", "act_seam", "scratch_ticket_types_discovered", "tips_seen", "tutorial_completed"]:
+	for key in ["schema_version", "act", "items", "challenge_completions", "completed_challenge_flags", "run_history", "daily_runs", "lifetime_stats", "act_seam", "scratch_ticket_types_discovered", "scratch_ticket_collection_acknowledged", "tips_seen", "tutorial_completed"]:
 		_unknown_fields.erase(key)
 	items = []
 	challenge_completions = _normalize_challenge_completions(data.get("challenge_completions", data.get("completed_challenge_flags", {})))
@@ -104,6 +106,7 @@ func from_dict(data: Dictionary) -> void:
 		var type_id := str(type_id_value)
 		if ACTIVE_SCRATCH_TICKET_IDS.has(type_id):
 			scratch_ticket_types_discovered.append(type_id)
+	scratch_ticket_collection_acknowledged = bool(data.get("scratch_ticket_collection_acknowledged", false)) and scratch_ticket_collection_complete()
 	tips_seen = _normalize_seen_map(data.get("tips_seen", {}))
 	tutorial_completed = bool(data.get("tutorial_completed", false))
 	var loaded: Variant = data.get("items", [])
@@ -201,6 +204,17 @@ func has_discovered_scratch_ticket_type(type_id: String) -> bool:
 
 func scratch_ticket_discovery_count() -> int:
 	return scratch_ticket_types_discovered.size()
+
+
+func scratch_ticket_collection_complete() -> bool:
+	return scratch_ticket_types_discovered.size() >= ACTIVE_SCRATCH_TICKET_IDS.size()
+
+
+func mark_scratch_ticket_collection_acknowledged() -> bool:
+	if scratch_ticket_collection_acknowledged or not scratch_ticket_collection_complete():
+		return false
+	scratch_ticket_collection_acknowledged = true
+	return true
 
 
 func mark_challenge_completed(completion_flag: String, challenge_id: String = "", title: String = "") -> void:

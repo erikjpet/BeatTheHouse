@@ -124,6 +124,7 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 	var queue := _dictionary_array(machine.get("pending_queue", []))
 	var crumbs := _dictionary_array(ui_state.get("scratch_crumbs", []))
 	var discovered := _string_array(run_state.narrative_flags.get("scratch_ticket_types_discovered", [])) if run_state != null else []
+	var collection_complete := discovered.size() >= COLLECTION_TOTAL
 	var last_dispense_id := str(machine.get("last_dispense_id", ""))
 	var last_file_id := str(machine.get("last_file_id", ""))
 	var reduce_motion := _reduce_motion_enabled(ui_state)
@@ -183,6 +184,8 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 		"scratch_drunk_level": run_state.drunk_level if run_state != null else 0,
 		"scratch_collection_count": discovered.size(),
 		"scratch_collection_total": COLLECTION_TOTAL,
+		"scratch_collection_complete": collection_complete,
+		"scratch_collection_status": "FULL SET FOUND" if collection_complete else "%d/%d PRINTS FOUND" % [discovered.size(), COLLECTION_TOTAL],
 		"scratch_xray_peeks": _dictionary_array(active_ticket.get("xray_peeks", [])),
 		"scratch_fortune": str(active_ticket.get("fortune_tier", "")),
 		"scratch_penalty_shields": int(machine.get("penalty_shields_remaining", 0)),
@@ -1701,7 +1704,13 @@ func _draw_machine(surface, state: Dictionary) -> void:
 	surface.surface_label_centered("TAKE TICKET", chute, 8, C_SOFT)
 	for foot_x in [24.0, MACHINE_RECT.size.x - 38.0]:
 		surface.draw_rect(Rect2(MACHINE_RECT.position + Vector2(foot_x, 397), Vector2(14, 7)), Color("#32151a"))
-	surface.surface_label_centered("%d/%d PRINTS FOUND" % [int(state.get("scratch_collection_count", 0)), int(state.get("scratch_collection_total", COLLECTION_TOTAL))], Rect2(MACHINE_RECT.position + Vector2(91, 399), Vector2(150, 10)), 6, C_YELLOW)
+	var complete := bool(state.get("scratch_collection_complete", false))
+	var collection_label := str(state.get("scratch_collection_status", "%d/%d PRINTS FOUND" % [int(state.get("scratch_collection_count", 0)), int(state.get("scratch_collection_total", COLLECTION_TOTAL))]))
+	var collection_rect := Rect2(MACHINE_RECT.position + Vector2(91, 399), Vector2(150, 10))
+	if complete:
+		surface.draw_rect(collection_rect.grow(3), Color("#f7d753", 0.22))
+		surface.draw_rect(collection_rect.grow(3), Color("#fff2a6"), false, 1)
+	surface.surface_label_centered(collection_label, collection_rect, 6, C_WHITE if complete else C_YELLOW)
 
 
 func _draw_compact_tabs(surface, active_tab: String) -> void:

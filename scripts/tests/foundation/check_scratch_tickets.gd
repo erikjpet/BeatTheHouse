@@ -59,6 +59,7 @@ func _check_scratch_tickets_surface_contract(game: GameModule, failures: Array) 
 	_check_scratch_stale_region_upgrade(game, failures)
 	_check_scratch_sizes(game, failures)
 	_check_scratch_stock(game, failures)
+	_check_scratch_collection_completion(game, failures)
 	_check_scratch_single_remaining_purchase(game, failures)
 	_check_scratch_rtp(game, failures)
 	_check_scratch_sound(failures)
@@ -552,6 +553,29 @@ func _check_scratch_stock(game: GameModule, failures: Array) -> void:
 			break
 	if not rotated:
 		failures.append("Scratch stock did not rotate across day-keyed streams.")
+
+
+func _check_scratch_collection_completion(game: GameModule, failures: Array) -> void:
+	var run_state: RunState = RunStateScript.new()
+	run_state.start_new("SCRATCH-COLLECTION-COMPLETE")
+	run_state.bankroll = 500000
+	run_state.narrative_flags["scratch_ticket_types_discovered"] = SCRATCH_IDS.duplicate()
+	var environment := _scratch_environment("scratch_collection_complete")
+	var machine: Dictionary = game.call("_generate_machine_state", run_state, environment, _scratch_rng("collection-complete-stock"))
+	environment["game_states"] = {"scratch_tickets": machine}
+	run_state.current_environment = environment
+	var surface := game.surface_state(run_state, environment, {})
+	if not bool(surface.get("scratch_collection_complete", false)) or str(surface.get("scratch_collection_status", "")) != "FULL SET FOUND":
+		failures.append("Scratch collection completion does not produce the cabinet's finished state.")
+	var profile: ProfileInventory = ProfileInventoryScript.new()
+	for type_id in SCRATCH_IDS:
+		profile.discover_scratch_ticket_type(type_id)
+	if not profile.scratch_ticket_collection_complete():
+		failures.append("Scratch profile did not detect a complete seven-print collection.")
+	if not profile.mark_scratch_ticket_collection_acknowledged():
+		failures.append("Scratch profile did not mark the first completion acknowledgement.")
+	if profile.mark_scratch_ticket_collection_acknowledged():
+		failures.append("Scratch profile completion acknowledgement was not one-time.")
 
 
 func _check_scratch_single_remaining_purchase(game: GameModule, failures: Array) -> void:

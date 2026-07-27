@@ -4357,13 +4357,34 @@ func _sync_scratch_ticket_discovery_to_run() -> void:
 	run_state.narrative_flags["scratch_ticket_types_discovered"] = profile_inventory.scratch_ticket_types_discovered.duplicate()
 
 
-func _record_scratch_ticket_discovery(type_id: String) -> void:
+func _record_scratch_ticket_discovery(type_id: String) -> Dictionary:
 	var normalized := type_id.strip_edges()
 	if normalized.is_empty() or profile_inventory == null:
-		return
+		return {}
+	var completion_event: Dictionary = {}
+	var already_complete := profile_inventory.scratch_ticket_collection_complete()
 	if profile_inventory.discover_scratch_ticket_type(normalized):
+		if not already_complete and profile_inventory.scratch_ticket_collection_complete() and profile_inventory.mark_scratch_ticket_collection_acknowledged():
+			completion_event = {
+				"type": "scratch_collection_complete",
+				"message": "The clerk taps the cabinet glass: full print set found. Every scratcher in the rack has been seen.",
+				"collection_count": profile_inventory.scratch_ticket_discovery_count(),
+				"collection_total": ProfileInventoryScript.ACTIVE_SCRATCH_TICKET_IDS.size(),
+			}
+			if run_state != null:
+				run_state.narrative_flags["scratch_ticket_collection_completed"] = true
+				var source_game_id := current_game.get_id() if current_game != null else ""
+				run_state.log_story({
+					"type": "scratch_collection_complete",
+					"game_id": source_game_id,
+					"ticket_type": normalized,
+					"message": str(completion_event.get("message", "")),
+					"collection_count": int(completion_event.get("collection_count", 0)),
+					"collection_total": int(completion_event.get("collection_total", 0)),
+				})
 		profile_inventory.save()
 	_sync_scratch_ticket_discovery_to_run()
+	return completion_event
 
 
 func _initialize_meta_collection() -> void:
@@ -6973,7 +6994,18 @@ func _resolve_game_action(action_id: String, skip_stake_validation: bool = false
 	var rng := run_state.create_rng()
 	var result := current_game.resolve_with_context(action_id, stake, run_state, run_state.current_environment, rng, _current_game_surface_ui_state())
 	if bool(result.get("ok", false)):
-		_record_scratch_ticket_discovery(str(result.get("scratch_discovered_type_id", "")))
+		var scratch_completion: Dictionary = _record_scratch_ticket_discovery(str(result.get("scratch_discovered_type_id", "")))
+		if not scratch_completion.is_empty():
+			var completion_message := str(scratch_completion.get("message", "")).strip_edges()
+			if not completion_message.is_empty():
+				var original_message := str(result.get("message", "")).strip_edges()
+				result["message"] = completion_message if original_message.is_empty() else "%s %s" % [original_message, completion_message]
+				var deltas: Dictionary = result.get("deltas", {}) if typeof(result.get("deltas", {})) == TYPE_DICTIONARY else {}
+				deltas = deltas.duplicate(true)
+				var messages := _copy_array(deltas.get("messages", []))
+				messages.append(completion_message)
+				deltas["messages"] = messages
+				result["deltas"] = deltas
 	if confirmed_all_in_wager:
 		result["defer_bankroll_zero_failure"] = true
 	var result_updates_surface_ui := result.has("ui_state") and typeof(result.get("ui_state")) == TYPE_DICTIONARY
