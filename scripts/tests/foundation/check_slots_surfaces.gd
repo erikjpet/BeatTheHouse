@@ -3133,6 +3133,27 @@ func _sb4_open_triggered_event_popup(library: ContentLibrary, app: Control, seed
 	if run_state == null:
 		failures.append("SB.4 could not start a run for triggered-event modal coverage.")
 		return {}
+	var blackjack: GameModule = _load_surface_contract_game(library, "blackjack", failures)
+	if blackjack == null:
+		return {}
+	var event_modal_environment := {
+		"id": "sb4_event_modal_casino",
+		"archetype_id": "delta_queen",
+		"display_name": "SB4 Event Modal Casino",
+		"kind": "casino",
+		"tier": 2,
+		"game_ids": ["blackjack"],
+		"event_ids": ["suspicious_patron"],
+		"resolved_event_ids": [],
+		"next_archetypes": ["grand_casino"],
+		"travel_hooks": ["grand_casino"],
+		"turns": 99,
+		"economic_profile": {"stake_floor": 1, "stake_ceiling": 50},
+	}
+	var blackjack_table := blackjack.generate_environment_state(run_state, event_modal_environment, run_state.create_rng("sb4_event_modal_blackjack"))
+	event_modal_environment["game_states"] = {"blackjack": blackjack_table}
+	event_modal_environment["layout"] = EnvironmentInstance.ensure_generated_layout(event_modal_environment)
+	run_state.set_environment(event_modal_environment)
 	var trigger_context := _sb4_trigger_context()
 	var event_id := _sb4_first_triggerable_event_id(library, run_state, trigger_context)
 	if event_id.is_empty():

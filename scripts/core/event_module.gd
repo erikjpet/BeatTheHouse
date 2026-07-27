@@ -75,6 +75,8 @@ func can_trigger(run_state: RunState, environment: Dictionary, context: Dictiona
 	var scopes := _copy_array(definition.get("scopes", []))
 	if not scopes.is_empty() and not scopes.has("any") and not scopes.has(str(environment.get("kind", ""))):
 		return false
+	if _event_requires_room_actor(context) and not _environment_allows_room_actor(environment):
+		return false
 	if not _conditions_allow(run_state, environment, context):
 		return false
 	return _trigger_allows(environment, context)
@@ -376,6 +378,27 @@ func _trigger_allows(environment: Dictionary, context: Dictionary = {}) -> bool:
 			return int(context.get("hands_played", context.get("rounds_played", 0))) >= int(trigger.get("min_hands", 0))
 		_:
 			return false
+
+
+func _event_requires_room_actor(context: Dictionary = {}) -> bool:
+	if str(context.get("trigger", context.get("type", ""))) == "travel":
+		return false
+	var speaker := _copy_dict(definition.get("speaker", {}))
+	if speaker.is_empty():
+		return false
+	if speaker.has("environment_actor") and not bool(speaker.get("environment_actor", true)):
+		return false
+	return true
+
+
+func _environment_allows_room_actor(environment: Dictionary) -> bool:
+	var kind := str(environment.get("kind", "")).strip_edges().to_lower()
+	var archetype_id := str(environment.get("archetype_id", "")).strip_edges().to_lower()
+	if ["home", "recovery"].has(kind):
+		return false
+	if ["beach"].has(archetype_id):
+		return false
+	return true
 
 
 # Checks optional run-state/system conditions without mutating the run.

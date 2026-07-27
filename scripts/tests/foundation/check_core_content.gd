@@ -1600,6 +1600,24 @@ func _check_t4_3_event_conditions(library: ContentLibrary, failures: Array) -> v
 	if health_event.can_trigger(motel_run, motel_run.current_environment, action_context):
 		failures.append("Health Inspector triggered outside the bar archetype.")
 
+	var suspicious_event := EventModule.new()
+	suspicious_event.setup(library.event("suspicious_patron"))
+	var casino_talk_run: RunState = RunStateScript.new()
+	casino_talk_run.start_new("T43-SUSPICIOUS-CASINO")
+	casino_talk_run.set_environment(_t4_3_fixture_environment("delta_queen", "casino", 2, ["blackjack"], ["suspicious_patron"], ["grand_casino"]))
+	if not suspicious_event.can_trigger(casino_talk_run, casino_talk_run.current_environment, action_context):
+		failures.append("Suspicious Patron should still trigger in a populated casino room.")
+	var home_talk_run: RunState = RunStateScript.new()
+	home_talk_run.start_new("T43-SUSPICIOUS-HOME")
+	home_talk_run.set_environment(_t4_3_fixture_environment("motel", "home", 1, [], ["suspicious_patron"], ["bar"]))
+	if suspicious_event.can_trigger(home_talk_run, home_talk_run.current_environment, action_context):
+		failures.append("Suspicious Patron triggered inside the home environment.")
+	var beach_talk_run: RunState = RunStateScript.new()
+	beach_talk_run.start_new("T43-SUSPICIOUS-BEACH")
+	beach_talk_run.set_environment(_t4_3_fixture_environment("beach", "recovery", 2, ["slot"], ["suspicious_patron"], ["delta_queen"]))
+	if suspicious_event.can_trigger(beach_talk_run, beach_talk_run.current_environment, action_context):
+		failures.append("Suspicious Patron triggered on the people-free Beach recovery environment.")
+
 	var blackjack_run: RunState = RunStateScript.new()
 	blackjack_run.start_new("T43-RIVAL")
 	blackjack_run.set_environment(_t4_3_fixture_environment("delta_queen", "casino", 2, ["blackjack", "roulette"], ["rival_counter"], ["grand_casino"]))
