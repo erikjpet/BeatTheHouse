@@ -38,7 +38,7 @@ const DEFAULT_SWEEP_THRESHOLD := 0.80
 const DEFAULT_MASK_COLUMNS := 48
 const DEFAULT_MASK_ROWS := 32
 const MACHINE_STATE_VERSION := 3
-const REGION_LAYOUT_VERSION := 3
+const REGION_LAYOUT_VERSION := 4
 const PRODUCTION_TICKET_ART := {
 	"two_fer": "res://assets/art/scratch_tickets/layers/two_fer_background_v2.png",
 	"lucky_7s": "res://assets/art/scratch_tickets/layers/lucky_7s_background_v2.png",
@@ -891,20 +891,20 @@ func _ticket_art_regions(ticket: Dictionary) -> Array:
 	match str(ticket.get("type_id", "")):
 		"two_fer":
 			for index in range(mini(3, spots.size())):
-				result.append(_scratch_region(index, spots[index], "play", "SPOT %d" % (index + 1), [0.12 + float(index) * 0.28, 0.42, 0.20, 0.30]))
+				result.append(_scratch_region(index, spots[index], "play", "SPOT %d" % (index + 1), [0.12 + float(index) * 0.28, 0.50, 0.20, 0.24]))
 		"lucky_7s":
 			for index in range(mini(2, spots.size())):
-				result.append(_scratch_region(index, spots[index], "winning_numbers", "WIN %d" % (index + 1), [0.07, 0.35 + float(index) * 0.15, 0.13, 0.11]))
+				result.append(_scratch_region(index, spots[index], "winning_numbers", "WIN %d" % (index + 1), [0.075, 0.43 + float(index) * 0.15, 0.135, 0.105]))
 			for index in range(2, mini(8, spots.size())):
 				var your_index := index - 2
-				result.append(_scratch_region(index, spots[index], "your_numbers", "YOUR %d" % (your_index + 1), [0.39 + float(your_index % 3) * 0.18, 0.34 + float(your_index / 3) * 0.17, 0.14, 0.12]))
+				result.append(_scratch_region(index, spots[index], "your_numbers", "YOUR %d" % (your_index + 1), [0.38 + float(your_index % 3) * 0.18, 0.42 + float(your_index / 3) * 0.165, 0.145, 0.115]))
 			if spots.size() > 8:
-				result.append(_scratch_region(8, spots[8], "bonus", "BONUS", [0.29, 0.78, 0.17, 0.15]))
+				result.append(_scratch_region(8, spots[8], "bonus", "BONUS", [0.28, 0.80, 0.18, 0.13]))
 		"tic_tac_gold":
 			for index in range(mini(9, spots.size())):
-				result.append(_scratch_region(index, spots[index], "board", "GRID %d" % (index + 1), [0.18 + float(index % 3) * 0.18, 0.37 + float(index / 3) * 0.16, 0.14, 0.13]))
+				result.append(_scratch_region(index, spots[index], "board", "GRID %d" % (index + 1), [0.18 + float(index % 3) * 0.18, 0.405 + float(index / 3) * 0.135, 0.14, 0.105]))
 			if spots.size() > 9:
-				result.append(_scratch_region(9, spots[9], "bonus", "BONUS", [0.73, 0.43, 0.18, 0.22]))
+				result.append(_scratch_region(9, spots[9], "bonus", "BONUS", [0.73, 0.45, 0.18, 0.18]))
 		"crossword_corner":
 			for index in range(spots.size()):
 				var spot: Dictionary = spots[index]
@@ -926,22 +926,22 @@ func _ticket_art_regions(ticket: Dictionary) -> Array:
 					result.append(_scratch_region(spot_index, spots[spot_index], "card_%d" % (card_index + 1), "CARD %d-%d" % [card_index + 1, cell_index + 1], [origin.x + float(cell_index % 5) * 0.038, origin.y + float(cell_index / 5) * 0.052, 0.036, 0.046]))
 		"high_roller_holdem":
 			for index in range(mini(5, spots.size())):
-				result.append(_scratch_region(index, spots[index], "your_hand", "YOUR CARD %d" % (index + 1), [0.18 + float(index) * 0.13, 0.43, 0.10, 0.075]))
+				result.append(_scratch_region(index, spots[index], "your_hand", "YOUR CARD %d" % (index + 1), [0.16 + float(index) * 0.135, 0.40, 0.105, 0.075]))
 			for index in range(5, mini(10, spots.size())):
 				var card_index := index - 5
-				result.append(_scratch_region(index, spots[index], "dealer_hand", "DEALER CARD %d" % (card_index + 1), [0.18 + float(card_index) * 0.13, 0.55, 0.10, 0.075]))
+				result.append(_scratch_region(index, spots[index], "dealer_hand", "DEALER CARD %d" % (card_index + 1), [0.16 + float(card_index) * 0.135, 0.55, 0.105, 0.075]))
 			if spots.size() > 10:
-				result.append(_scratch_region(10, spots[10], "wild", "WILD", [0.16, 0.79, 0.68, 0.08]))
+				result.append(_scratch_region(10, spots[10], "wild", "WILD", [0.15, 0.74, 0.70, 0.075]))
 		"golden_vault":
 			if spots.size() > 0:
-				result.append(_scratch_region(0, spots[0], "multiplier", "MULTIPLIER", [0.24, 0.47, 0.52, 0.07]))
+				result.append(_scratch_region(0, spots[0], "multiplier", "MULTIPLIER", [0.24, 0.405, 0.52, 0.075]))
 			for index in range(1, mini(6, spots.size())):
 				var rung_index := index - 1
-				result.append(_scratch_region(index, spots[index], "cash_ladder", "RUNG %d" % (rung_index + 1), [0.13, 0.63 + float(rung_index) * 0.046, 0.74, 0.038]))
+				result.append(_scratch_region(index, spots[index], "cash_ladder", "RUNG %d" % (rung_index + 1), [0.13, 0.535 + float(rung_index) * 0.055, 0.74, 0.045]))
 			if spots.size() > 6:
-				result.append(_scratch_region(6, spots[6], "gold_bar", "GOLD BAR", [0.14, 0.88, 0.32, 0.052]))
+				result.append(_scratch_region(6, spots[6], "gold_bar", "GOLD BAR", [0.13, 0.825, 0.34, 0.060]))
 			if spots.size() > 7:
-				result.append(_scratch_region(7, spots[7], "final_vault", "FINAL VAULT", [0.50, 0.88, 0.34, 0.052]))
+				result.append(_scratch_region(7, spots[7], "final_vault", "FINAL VAULT", [0.53, 0.825, 0.34, 0.060]))
 	if result.is_empty():
 		for index in range(spots.size()):
 			result.append(_scratch_region(index, spots[index], str((spots[index] as Dictionary).get("section_id", "play")), "SPOT %d" % (index + 1), [0.05, 0.05, 0.90, 0.90]))

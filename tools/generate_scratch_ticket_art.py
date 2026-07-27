@@ -235,7 +235,7 @@ def money(amount: int) -> str:
 
 
 def draw_rules(draw: ImageDraw.ImageDraw, w: int, h: int, lines: list[str], ink, fill, *, y: int | None = None, compact: bool = False) -> None:
-    height = 36 if compact else 48
+    height = 30 if compact else 48
     if y is None:
         y = h - height - 28
     box = (16, y, w - 16, y + height)
@@ -285,17 +285,17 @@ def ticket_regions(ticket_id: str) -> list[tuple[str, tuple[float, float, float,
     regions: list[tuple[str, tuple[float, float, float, float]]] = []
     if ticket_id == "two_fer":
         for i in range(3):
-            regions.append(("SPOT %d" % (i + 1), (0.12 + i * 0.28, 0.42, 0.20, 0.30)))
+            regions.append(("SPOT %d" % (i + 1), (0.12 + i * 0.28, 0.50, 0.20, 0.24)))
     elif ticket_id == "lucky_7s":
         for i in range(2):
-            regions.append(("WIN %d" % (i + 1), (0.07, 0.35 + i * 0.15, 0.13, 0.11)))
+            regions.append(("WIN %d" % (i + 1), (0.075, 0.43 + i * 0.15, 0.135, 0.105)))
         for i in range(6):
-            regions.append(("YOUR %d" % (i + 1), (0.39 + (i % 3) * 0.18, 0.34 + (i // 3) * 0.17, 0.14, 0.12)))
-        regions.append(("BONUS", (0.29, 0.78, 0.17, 0.15)))
+            regions.append(("YOUR %d" % (i + 1), (0.38 + (i % 3) * 0.18, 0.42 + (i // 3) * 0.165, 0.145, 0.115)))
+        regions.append(("BONUS", (0.28, 0.80, 0.18, 0.13)))
     elif ticket_id == "tic_tac_gold":
         for i in range(9):
-            regions.append(("GRID %d" % (i + 1), (0.18 + (i % 3) * 0.18, 0.37 + (i // 3) * 0.16, 0.14, 0.13)))
-        regions.append(("BONUS", (0.73, 0.43, 0.18, 0.22)))
+            regions.append(("GRID %d" % (i + 1), (0.18 + (i % 3) * 0.18, 0.405 + (i // 3) * 0.135, 0.14, 0.105)))
+        regions.append(("BONUS", (0.73, 0.45, 0.18, 0.18)))
     elif ticket_id == "crossword_corner":
         for i in range(18):
             regions.append(("LETTER %d" % (i + 1), crossword_bank_rect(i)))
@@ -310,16 +310,16 @@ def ticket_regions(ticket_id: str) -> list[tuple[str, tuple[float, float, float,
                 regions.append(("CARD %d-%d" % (card + 1, cell + 1), (ox + (cell % 5) * 0.038, 0.55 + (cell // 5) * 0.052, 0.036, 0.046)))
     elif ticket_id == "high_roller_holdem":
         for i in range(5):
-            regions.append(("YOUR CARD %d" % (i + 1), (0.18 + i * 0.13, 0.43, 0.10, 0.075)))
+            regions.append(("YOUR CARD %d" % (i + 1), (0.16 + i * 0.135, 0.40, 0.105, 0.075)))
         for i in range(5):
-            regions.append(("DEALER CARD %d" % (i + 1), (0.18 + i * 0.13, 0.55, 0.10, 0.075)))
-        regions.append(("WILD", (0.16, 0.79, 0.68, 0.08)))
+            regions.append(("DEALER CARD %d" % (i + 1), (0.16 + i * 0.135, 0.55, 0.105, 0.075)))
+        regions.append(("WILD", (0.15, 0.74, 0.70, 0.075)))
     elif ticket_id == "golden_vault":
-        regions.append(("MULTIPLIER", (0.24, 0.47, 0.52, 0.07)))
+        regions.append(("MULTIPLIER", (0.24, 0.405, 0.52, 0.075)))
         for i in range(5):
-            regions.append(("RUNG %d" % (i + 1), (0.13, 0.63 + i * 0.046, 0.74, 0.038)))
-        regions.append(("GOLD BAR", (0.14, 0.88, 0.32, 0.052)))
-        regions.append(("FINAL VAULT", (0.50, 0.88, 0.34, 0.052)))
+            regions.append(("RUNG %d" % (i + 1), (0.13, 0.535 + i * 0.055, 0.74, 0.045)))
+        regions.append(("GOLD BAR", (0.13, 0.825, 0.34, 0.060)))
+        regions.append(("FINAL VAULT", (0.53, 0.825, 0.34, 0.060)))
     return regions
 
 
@@ -352,10 +352,10 @@ def draw_two_fer(ticket: TicketArt) -> Image.Image:
     draw_ticket_edge(d, w, h, (255, 222, 79, 255), (72, 21, 28, 255))
     draw_price_badge(d, ticket.price, (255, 220, 79, 255), (242, 52, 78, 255), (32, 22, 29, 255))
     draw_title(d, w, "TWO FER", 28, (255, 238, 145, 255), size=56)
-    draw_prize_ribbon(d, w, 86, f"WIN UP TO {money(ticket.top_prize)}", (255, 218, 80, 255), (26, 142, 83, 255), (52, 25, 35, 255), left=166, right_margin=34)
-    panel = (36, 116, w - 36, 188)
+    draw_prize_ribbon(d, w, 86, f"WIN UP TO {money(ticket.top_prize)}", (255, 218, 80, 255), (26, 142, 83, 255), (52, 25, 35, 255), left=150, right_margin=34)
+    panel = (34, 108, w - 34, 184)
     rounded(d, panel, 16, (255, 240, 177, 255), (53, 29, 33, 255), 3)
-    center_text(d, (panel[0], 104, panel[2] - panel[0], 18), "MATCH ANY TWO SYMBOLS", 14, (53, 29, 33, 255), stroke_fill=(255, 255, 255, 200), stroke_width=1)
+    center_text(d, (panel[0], 112, panel[2] - panel[0], 16), "MATCH ANY TWO SYMBOLS", 12, (53, 29, 33, 255), stroke_fill=(255, 255, 255, 200), stroke_width=1)
     for label_text, r in ticket_regions(ticket.ticket_id):
         well(d, rect_abs(r, (w, h), 2), shape="rect", fill=(255, 245, 193, 255), outline=(46, 24, 31, 255), trim=(238, 45, 93, 255), label_text="")
     legends = [("CLOVER", 2), ("BELL", 4), ("STAR", 10), ("2FER", 50)]
@@ -378,13 +378,13 @@ def draw_lucky_7s(ticket: TicketArt) -> Image.Image:
     center_text(d, (66, 18, w - 88, 76), "LUCKY", 45, (255, 234, 96, 255), condensed=True, stroke_fill=(15, 26, 54, 255), stroke_width=3)
     center_text(d, (105, 68, w - 136, 80), "7s", 88, (235, 45, 78, 255), condensed=True, stroke_fill=(255, 232, 78, 255), stroke_width=2)
     draw_prize_ribbon(d, w, 116, f"TOP PRIZE {money(ticket.top_prize)}", (255, 233, 75, 255), (239, 45, 91, 255), (16, 26, 54, 255), left=166, right_margin=18)
-    rounded(d, rect_abs((0.045, 0.325, 0.18, 0.33), (w, h), 0), 10, (236, 45, 89, 255), (255, 239, 66, 255), 3)
-    center_text(d, (18, 114, 65, 18), "WINNING", 8, (255, 255, 255, 255), stroke_fill=(0, 0, 0, 255), stroke_width=1)
-    rounded(d, rect_abs((0.35, 0.29, 0.57, 0.37), (w, h), 0), 13, (8, 56, 38, 245), (255, 239, 66, 255), 3)
-    center_text(d, (136, 107, 187, 18), "YOUR NUMBERS", 10, (255, 255, 255, 255), stroke_fill=(0, 0, 0, 255), stroke_width=1)
-    rounded(d, rect_abs((0.25, 0.745, 0.45, 0.19), (w, h), 0), 8, (11, 74, 115, 245), (255, 239, 66, 255), 3)
-    center_text(d, (92, 265, 68, 20), "BONUS", 14, (255, 239, 66, 255), stroke_fill=(0, 0, 0, 255), stroke_width=1)
-    label(d, (164, 286), "REVEAL A 7\nWIN $50", 10, (255, 255, 255, 255), bold=True, stroke=(0, 0, 0, 255))
+    rounded(d, rect_abs((0.045, 0.395, 0.19, 0.31), (w, h), 0), 10, (236, 45, 89, 245), (255, 239, 66, 255), 3)
+    center_text(d, (14, 139, 74, 18), "WINNING", 8, (255, 255, 255, 255), stroke_fill=(0, 0, 0, 255), stroke_width=1)
+    rounded(d, rect_abs((0.34, 0.375, 0.59, 0.35), (w, h), 0), 13, (8, 56, 38, 245), (255, 239, 66, 255), 3)
+    center_text(d, (126, 132, 198, 18), "YOUR NUMBERS", 10, (255, 255, 255, 255), stroke_fill=(0, 0, 0, 255), stroke_width=1)
+    rounded(d, rect_abs((0.245, 0.765, 0.50, 0.18), (w, h), 0), 8, (11, 74, 115, 245), (255, 239, 66, 255), 3)
+    center_text(d, (88, 273, 76, 18), "BONUS", 13, (255, 239, 66, 255), stroke_fill=(0, 0, 0, 255), stroke_width=1)
+    label(d, (168, 286), "REVEAL A 7\nWIN $50", 9, (255, 255, 255, 255), bold=True, stroke=(0, 0, 0, 255))
     for txt, r in ticket_regions(ticket.ticket_id):
         section_shape = "circle" if not txt.startswith("BONUS") else "rect"
         well(d, rect_abs(r, (w, h), 2), shape=section_shape, fill=(15, 27, 50, 255), outline=(5, 10, 24, 255), trim=(255, 225, 59, 255))
@@ -402,18 +402,18 @@ def draw_tic_tac_gold(ticket: TicketArt) -> Image.Image:
         d.polygon(star_points(x, y, 7, 3), fill=(255, 219, 58, 165))
     draw_ticket_edge(d, w, h, (255, 219, 65, 255), (8, 30, 20, 255))
     draw_price_badge(d, ticket.price, (255, 219, 65, 255), (18, 133, 70, 255), (8, 22, 18, 255))
-    draw_title(d, w, "TIC TAC", 33, (255, 235, 139, 255), size=43)
-    draw_title(d, w, "GOLD", 82, (255, 207, 53, 255), size=64)
-    draw_prize_ribbon(d, w, 137, f"TOP PRIZE {money(ticket.top_prize)}", (255, 222, 72, 255), (14, 115, 64, 255), (13, 28, 21, 255), left=178, right_margin=22)
-    rounded(d, rect_abs((0.12, 0.32, 0.52, 0.55), (w, h), -6), 11, (9, 21, 28, 240), (255, 222, 72, 255), 3)
-    center_text(d, (39, 117, 192, 17), "3 IN A ROW WINS PRINTED PRIZE", 9, (255, 255, 255, 255), stroke_fill=(0, 0, 0, 255), stroke_width=1)
+    draw_title(d, w, "TIC TAC", 24, (255, 235, 139, 255), size=37)
+    draw_title(d, w, "GOLD", 64, (255, 207, 53, 255), size=50)
+    draw_prize_ribbon(d, w, 121, f"TOP PRIZE {money(ticket.top_prize)}", (255, 222, 72, 255), (14, 115, 64, 255), (13, 28, 21, 255), left=178, right_margin=22)
+    rounded(d, rect_abs((0.12, 0.365, 0.52, 0.42), (w, h), -6), 11, (9, 21, 28, 240), (255, 222, 72, 255), 3)
+    center_text(d, (39, 132, 192, 16), "3 IN A ROW WINS PRINTED PRIZE", 8, (255, 255, 255, 255), stroke_fill=(0, 0, 0, 255), stroke_width=1)
     for txt, r in ticket_regions(ticket.ticket_id):
         if txt.startswith("GRID"):
             well(d, rect_abs(r, (w, h), 1), shape="rect", fill=(255, 239, 184, 255), outline=(12, 22, 29, 255), trim=(255, 222, 72, 255))
-    rounded(d, rect_abs((0.70, 0.37, 0.24, 0.32), (w, h), -4), 18, (20, 55, 41, 245), (255, 222, 72, 255), 3)
-    center_text(d, (251, 137, 73, 23), "BONUS", 13, (255, 222, 72, 255), stroke_fill=(0, 0, 0, 255), stroke_width=1)
-    well(d, rect_abs((0.73, 0.43, 0.18, 0.22), (w, h), 2), shape="rect", fill=(255, 239, 184, 255), outline=(12, 22, 29, 255), trim=(255, 222, 72, 255))
-    draw_rules(d, w, h, ["Full WIN line pays.", "Multiple lines add.", "BONUS is instant."], (9, 30, 20, 255), (255, 243, 185, 230), y=288, compact=True)
+    rounded(d, rect_abs((0.70, 0.39, 0.24, 0.28), (w, h), -4), 18, (20, 55, 41, 245), (255, 222, 72, 255), 3)
+    center_text(d, (251, 144, 73, 20), "BONUS", 12, (255, 222, 72, 255), stroke_fill=(0, 0, 0, 255), stroke_width=1)
+    well(d, rect_abs((0.73, 0.45, 0.18, 0.18), (w, h), 2), shape="rect", fill=(255, 239, 184, 255), outline=(12, 22, 29, 255), trim=(255, 222, 72, 255))
+    draw_rules(d, w, h, ["Full WIN line pays.", "Multiple lines add.", "BONUS is instant."], (9, 30, 20, 255), (255, 243, 185, 230), y=292, compact=True)
     draw_footer(d, w, h, (9, 30, 20, 255), (255, 222, 72, 255), "280-345625-010")
     return img
 
@@ -500,16 +500,16 @@ def draw_holdem(ticket: TicketArt) -> Image.Image:
     draw_title(d, w, "HIGH ROLLER", 28, (255, 235, 142, 255), size=39)
     draw_title(d, w, "HOLD'EM", 70, (255, 220, 92, 255), size=45)
     draw_prize_ribbon(d, w, 125, f"TOP PRIZE {money(ticket.top_prize)}", (229, 188, 73, 255), (143, 43, 82, 255), (23, 15, 30, 255), left=42, right_margin=24)
-    rounded(d, rect_abs((0.10, 0.39, 0.80, 0.28), (w, h), -5), 10, (18, 83, 55, 245), (229, 188, 73, 255), 3)
-    center_text(d, (28, 139, w - 56, 16), "YOUR HAND", 10, (255, 238, 165, 255), stroke_fill=(0, 0, 0, 255), stroke_width=1)
-    rounded(d, rect_abs((0.10, 0.52, 0.80, 0.16), (w, h), -5), 10, (41, 25, 31, 245), (229, 188, 73, 255), 3)
-    center_text(d, (28, 183, w - 56, 16), "DEALER'S HAND", 10, (255, 238, 165, 255), stroke_fill=(0, 0, 0, 255), stroke_width=1)
+    rounded(d, rect_abs((0.09, 0.365, 0.82, 0.15), (w, h), -5), 10, (18, 83, 55, 245), (229, 188, 73, 255), 3)
+    center_text(d, (28, 134, w - 56, 16), "YOUR HAND", 10, (255, 238, 165, 255), stroke_fill=(0, 0, 0, 255), stroke_width=1)
+    rounded(d, rect_abs((0.09, 0.515, 0.82, 0.15), (w, h), -5), 10, (41, 25, 31, 245), (229, 188, 73, 255), 3)
+    center_text(d, (28, 189, w - 56, 16), "DEALER'S HAND", 10, (255, 238, 165, 255), stroke_fill=(0, 0, 0, 255), stroke_width=1)
     for txt, r in ticket_regions(ticket.ticket_id):
         shape = "card" if "CARD" in txt else "rect"
         well(d, rect_abs(r, (w, h), 1), shape=shape, fill=(255, 246, 216, 255), outline=(32, 22, 27, 255), trim=(229, 188, 73, 255))
-    rounded(d, rect_abs((0.12, 0.755, 0.76, 0.18), (w, h), -4), 8, (27, 15, 30, 245), (229, 188, 73, 255), 3)
-    center_text(d, (31, 278, w - 62, 16), "WILD / POCKET ACES", 10, (255, 238, 165, 255), stroke_fill=(0, 0, 0, 255), stroke_width=1)
-    draw_rules(d, w, h, ["Reveal both 5-card hands.", "Beat dealer to win.", "Wild improves your hand."], (26, 15, 30, 255), (255, 239, 188, 230), y=318, compact=True)
+    rounded(d, rect_abs((0.12, 0.715, 0.76, 0.14), (w, h), -4), 8, (27, 15, 30, 245), (229, 188, 73, 255), 3)
+    center_text(d, (31, 263, w - 62, 15), "WILD / POCKET ACES", 9, (255, 238, 165, 255), stroke_fill=(0, 0, 0, 255), stroke_width=1)
+    draw_rules(d, w, h, ["Reveal both hands.", "Beat dealer to win.", "Wild improves hand."], (26, 15, 30, 255), (255, 239, 188, 230), y=306, compact=True)
     draw_footer(d, w, h, (26, 15, 30, 255), (229, 188, 73, 255), "280-345625-050")
     return img
 
@@ -527,20 +527,22 @@ def draw_golden_vault(ticket: TicketArt) -> Image.Image:
     draw_price_badge(d, ticket.price, (255, 220, 92, 255), (107, 73, 25, 255), (18, 17, 25, 255))
     draw_title(d, w, "GOLDEN", 32, (255, 232, 128, 255), size=44)
     draw_title(d, w, "VAULT", 76, (255, 216, 70, 255), size=53)
-    draw_prize_ribbon(d, w, 135, f"TOP PRIZE {money(ticket.top_prize)}", (255, 220, 92, 255), (132, 89, 27, 255), (18, 17, 25, 255), left=42, right_margin=24)
-    d.rectangle((44, 184, w - 44, 202), fill=(95, 61, 19, 255), outline=(255, 220, 92, 255), width=2)
-    center_text(d, (44, 181, w - 88, 20), "YOUR MULTIPLIER", 9, (255, 241, 163, 255), stroke_fill=(0, 0, 0, 255), stroke_width=1)
-    well(d, rect_abs((0.24, 0.47, 0.52, 0.07), (w, h), 1), shape="rect", fill=(38, 25, 23, 255), outline=(14, 13, 18, 255), trim=(255, 220, 92, 255))
-    rounded(d, rect_abs((0.10, 0.60, 0.80, 0.27), (w, h), -5), 10, (36, 26, 21, 245), (255, 220, 92, 255), 3)
-    center_text(d, (34, 219, w - 68, 17), "CASH LADDER", 10, (255, 241, 163, 255), stroke_fill=(0, 0, 0, 255), stroke_width=1)
+    draw_prize_ribbon(d, w, 128, f"TOP PRIZE {money(ticket.top_prize)}", (255, 220, 92, 255), (132, 89, 27, 255), (18, 17, 25, 255), left=42, right_margin=24)
+    d.rectangle((44, 156, w - 44, 184), fill=(95, 61, 19, 255), outline=(255, 220, 92, 255), width=2)
+    center_text(d, (44, 150, w - 88, 18), "YOUR MULTIPLIER", 9, (255, 241, 163, 255), stroke_fill=(0, 0, 0, 255), stroke_width=1)
+    well(d, rect_abs((0.24, 0.405, 0.52, 0.075), (w, h), 1), shape="rect", fill=(38, 25, 23, 255), outline=(14, 13, 18, 255), trim=(255, 220, 92, 255))
+    rounded(d, rect_abs((0.10, 0.50, 0.80, 0.315), (w, h), -5), 10, (36, 26, 21, 245), (255, 220, 92, 255), 3)
+    center_text(d, (34, 185, w - 68, 17), "CASH LADDER", 10, (255, 241, 163, 255), stroke_fill=(0, 0, 0, 255), stroke_width=1)
     for txt, r in ticket_regions(ticket.ticket_id):
         if txt.startswith("RUNG"):
             well(d, rect_abs(r, (w, h), 1), shape="rect", fill=(46, 31, 23, 255), outline=(12, 11, 16, 255), trim=(255, 220, 92, 255))
-    center_text(d, rect_xywh((0.14, 0.856, 0.32, 0.018), (w, h)), "GOLD BAR", 8, (255, 241, 163, 255), stroke_fill=(0, 0, 0, 255), stroke_width=1)
-    center_text(d, rect_xywh((0.50, 0.856, 0.34, 0.018), (w, h)), "FINAL VAULT", 8, (255, 241, 163, 255), stroke_fill=(0, 0, 0, 255), stroke_width=1)
-    well(d, rect_abs((0.14, 0.88, 0.32, 0.052), (w, h), 1), shape="rect", fill=(48, 31, 24, 255), outline=(12, 11, 16, 255), trim=(255, 220, 92, 255))
-    well(d, rect_abs((0.50, 0.88, 0.34, 0.052), (w, h), 1), shape="rect", fill=(48, 31, 24, 255), outline=(12, 11, 16, 255), trim=(255, 220, 92, 255))
-    draw_rules(d, w, h, ["Matched rungs pay multiplier.", "GOLD BAR wins ladder.", "Final vault holds top prize."], (255, 238, 168, 255), (18, 17, 25, 210), y=312, compact=True)
+    center_text(d, rect_xywh((0.13, 0.798, 0.34, 0.020), (w, h)), "GOLD BAR", 8, (255, 241, 163, 255), stroke_fill=(0, 0, 0, 255), stroke_width=1)
+    center_text(d, rect_xywh((0.53, 0.798, 0.34, 0.020), (w, h)), "FINAL VAULT", 8, (255, 241, 163, 255), stroke_fill=(0, 0, 0, 255), stroke_width=1)
+    well(d, rect_abs((0.13, 0.825, 0.34, 0.060), (w, h), 1), shape="rect", fill=(48, 31, 24, 255), outline=(12, 11, 16, 255), trim=(255, 220, 92, 255))
+    well(d, rect_abs((0.53, 0.825, 0.34, 0.060), (w, h), 1), shape="rect", fill=(48, 31, 24, 255), outline=(12, 11, 16, 255), trim=(255, 220, 92, 255))
+    rule_band = (14, 328, w - 14, 339)
+    rounded(d, rule_band, 3, (18, 17, 25, 215), (255, 220, 92, 255), 1)
+    center_text(d, (rule_band[0] + 3, rule_band[1], rule_band[2] - rule_band[0] - 6, rule_band[3] - rule_band[1]), "Rungs pay multiplier • Gold bar wins ladder • Final vault top prize", 6, (255, 238, 168, 255), bold=True)
     draw_footer(d, w, h, (255, 238, 168, 255), (255, 220, 92, 255), "280-345625-100")
     return img
 
