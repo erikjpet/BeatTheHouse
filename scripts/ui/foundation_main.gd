@@ -7643,6 +7643,7 @@ func current_start_menu_snapshot() -> Dictionary:
 		"selected_challenge_id": selected_challenge_id,
 		"challenge_status": challenge_status_label.text if challenge_status_label != null else "",
 		"challenge_config_visible": challenge_panel.visible if challenge_panel != null else false,
+		"release_version_text": release_version_label.text if release_version_label != null else "",
 		"menu_panel_size": main_menu_panel.custom_minimum_size if main_menu_panel != null else Vector2.ZERO,
 	}
 	if main_menu_panel != null:
@@ -10831,9 +10832,10 @@ func _refresh_start_screen() -> void:
 
 
 func _release_version_text() -> String:
-	var release_version := str(ProjectSettings.get_setting("application/config/version", "0.4.0")).strip_edges()
+	const FALLBACK_RELEASE_VERSION := "0.5.0"
+	var release_version := str(ProjectSettings.get_setting("application/config/version", FALLBACK_RELEASE_VERSION)).strip_edges()
 	if release_version.is_empty():
-		release_version = "0.4.0"
+		release_version = FALLBACK_RELEASE_VERSION
 	return "Version %s" % release_version
 
 

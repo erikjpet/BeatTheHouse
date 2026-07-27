@@ -1683,6 +1683,12 @@ func _run() -> void:
 		push_error("Main menu first-pass panel does not contain the stack: panel=%s stack=%s." % [str(first_menu_rect), str(first_stack_rect)])
 		quit(1)
 		return
+	var project_version := str(ProjectSettings.get_setting("application/config/version", "")).strip_edges()
+	var rendered_version := str(first_menu_snapshot.get("release_version_text", "")).strip_edges()
+	if project_version.is_empty() or rendered_version != "Version %s" % project_version:
+		push_error("Rendered release version does not match ProjectSettings: rendered=%s project=%s." % [rendered_version, project_version])
+		quit(1)
+		return
 	if not await _check_onboarding_tutorial_ui_flow(app):
 		quit(1)
 		return
