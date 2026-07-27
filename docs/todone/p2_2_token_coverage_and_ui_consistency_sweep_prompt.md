@@ -135,7 +135,7 @@ Implementation commit:
 
 Archive commit:
 
-- This commit archives the completed prompt after green gates.
+- `8f6a831f` — Archive p2_2 token coverage prompt.
 
 Summary:
 
