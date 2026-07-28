@@ -53,6 +53,7 @@ const GAME_SURFACE_REALTIME_REFRESH_INTERVAL_MSEC := 16
 # seconds while the player is on an active, unpaused run surface.
 const GAME_CLOCK_REAL_SECONDS_PER_GAME_HOUR := 40.0
 const GAME_CLOCK_MINUTES_PER_REAL_SECOND := 60.0 / GAME_CLOCK_REAL_SECONDS_PER_GAME_HOUR
+const WEB_STORED_GRAND_CASINO_RUNTIME_INTERVAL_MSEC := 1500
 const TRAVEL_CLOCK_MINUTES_PER_BLOCK := 6
 const WALK_CLOCK_MINUTES_PER_BLOCK := 10
 const TALK_IGNORE_HEAT_DELTA := 5
@@ -221,6 +222,7 @@ var drunk_time_anchor_scaled_msec := 0
 var drunk_time_last_scale := 1.0
 var continuous_environment_clock_enabled := true
 var environment_clock_fractional_minutes := 0.0
+var stored_grand_casino_runtime_last_msec := -100000
 var dev_game_test_mode := false
 var meta_session_active := false
 var meta_session_location_id: String = ""
@@ -572,6 +574,7 @@ func start_foundation_run(seed_text: String = DEFAULT_SEED, challenge_config: Di
 	pending_autosave_status_text = "Autosaved."
 	pending_autosave_after_frame = -1
 	environment_clock_fractional_minutes = 0.0
+	stored_grand_casino_runtime_last_msec = -100000
 	last_environment_runtime_result = {}
 	run_report_model = {}
 	run_report_model_key = ""
@@ -1212,10 +1215,13 @@ func _advance_grand_casino_stored_main_floor_slot_runtime(now_msec: int) -> bool
 	var current_archetype_id := str(run_state.current_environment.get("archetype_id", "")).strip_edges()
 	if current_archetype_id == RunState.GRAND_CASINO_ARCHETYPE_ID or not RunState.GRAND_CASINO_ARCHETYPE_IDS.has(current_archetype_id):
 		return false
+	if OS.has_feature("web") and now_msec - stored_grand_casino_runtime_last_msec < WEB_STORED_GRAND_CASINO_RUNTIME_INTERVAL_MSEC:
+		return false
 	var main_floor := run_state.grand_casino_room_environment(RunState.GRAND_CASINO_ARCHETYPE_ID)
 	var main_floor_slot_id := _main_floor_slot_game_id()
 	if main_floor_slot_id.is_empty() or main_floor.is_empty() or not _string_array(main_floor.get("game_ids", [])).has(main_floor_slot_id):
 		return false
+	stored_grand_casino_runtime_last_msec = now_msec
 	var scanned := _advance_environment_game_runtime_for_environment(main_floor, now_msec, [main_floor_slot_id])
 	if scanned:
 		run_state.store_grand_casino_room_environment(main_floor)

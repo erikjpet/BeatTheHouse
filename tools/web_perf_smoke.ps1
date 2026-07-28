@@ -8,6 +8,8 @@ param(
     [int]$MemorySeconds = 20,
     [int]$TimeoutMs = 600000,
     [string]$Out = ".tmp/web_perf_smoke/report.json",
+    [ValidateSet("l02", "grand_casino")]
+    [string]$Plan = "l02",
     [switch]$SkipExport,
     [switch]$Headed
 )
@@ -41,6 +43,14 @@ $frameP95BudgetsMs = @{
     "pinball_feature_session" = 180.0
     "world_map_idle" = 45.0
     "scripted_play_memory_10m" = 45.0
+}
+if ($Plan -eq "grand_casino") {
+    $frameP95BudgetsMs = @{
+        "menu_idle" = 180.0
+        "grand_casino_late_settle" = 60.0
+        "grand_casino_room_churn" = 50.0
+        "grand_casino_late_idle" = 50.0
+    }
 }
 $readyBudgetMs = 20000
 $cornerStoreOpenBudgetMs = 1200
@@ -97,7 +107,7 @@ try {
     $server = Start-Process -FilePath (Get-Command powershell -ErrorAction Stop).Source -ArgumentList $serverArgs -WindowStyle Hidden -PassThru -RedirectStandardOutput $serverStdout -RedirectStandardError $serverStderr
     Wait-ForWebServer -Url "http://127.0.0.1:$Port/" -TimeoutSec 30
     $headless = if ($Headed) { "false" } else { "true" }
-    $url = "http://127.0.0.1:$Port/?bth_perf=1&bth_perf_plan=l02&bth_perf_auto_quit=1&bth_perf_frames=$Frames&bth_perf_active_frames=$ActiveFrames&bth_perf_memory_seconds=$MemorySeconds"
+    $url = "http://127.0.0.1:$Port/?bth_perf=1&bth_perf_plan=$Plan&bth_perf_auto_quit=1&bth_perf_frames=$Frames&bth_perf_active_frames=$ActiveFrames&bth_perf_memory_seconds=$MemorySeconds"
     $profile = Join-Path $root (".tmp/web_perf_smoke/{0}_profile" -f $Browser)
     $probeArgs = @(
         (Join-Path $PSScriptRoot "l02_web_perf_probe.mjs"),
@@ -138,12 +148,14 @@ Assert-Condition -Condition ($readyWall -le $readyBudgetMs) -Message ("Web ready
 $overheadAvg = [double]$report.telemetry_overhead.avg_ms
 Assert-Condition -Condition ($overheadAvg -le $telemetryOverheadAvgBudgetMs) -Message ("Telemetry overhead avg {0:N4}ms exceeded {1:N4}ms." -f $overheadAvg, $telemetryOverheadAvgBudgetMs) -Failures $failures
 
-$cornerStoreOpenEvents = @($report.events | Where-Object { [string]$_.id -eq "corner_store_open" })
-Assert-Condition -Condition ($cornerStoreOpenEvents.Count -gt 0) -Message "Missing corner_store_open web transition event." -Failures $failures
 $cornerStoreOpenMs = 0.0
-if ($cornerStoreOpenEvents.Count -gt 0) {
-    $cornerStoreOpenMs = [double]$cornerStoreOpenEvents[-1].data.duration_ms
-    Assert-Condition -Condition ($cornerStoreOpenMs -le $cornerStoreOpenBudgetMs) -Message ("Corner Store open {0:N3}ms exceeded {1:N3}ms." -f $cornerStoreOpenMs, $cornerStoreOpenBudgetMs) -Failures $failures
+if ($Plan -eq "l02") {
+    $cornerStoreOpenEvents = @($report.events | Where-Object { [string]$_.id -eq "corner_store_open" })
+    Assert-Condition -Condition ($cornerStoreOpenEvents.Count -gt 0) -Message "Missing corner_store_open web transition event." -Failures $failures
+    if ($cornerStoreOpenEvents.Count -gt 0) {
+        $cornerStoreOpenMs = [double]$cornerStoreOpenEvents[-1].data.duration_ms
+        Assert-Condition -Condition ($cornerStoreOpenMs -le $cornerStoreOpenBudgetMs) -Message ("Corner Store open {0:N3}ms exceeded {1:N3}ms." -f $cornerStoreOpenMs, $cornerStoreOpenBudgetMs) -Failures $failures
+    }
 }
 
 $scenariosByName = @{}
@@ -166,6 +178,7 @@ foreach ($scenarioName in $frameP95BudgetsMs.Keys) {
 $summary = [ordered]@{
     tool = "web_perf_smoke"
     passed = ($failures.Count -eq 0)
+    plan = $Plan
     browser = $Browser
     cpu_throttle_rate = $Cpu
     frames = $Frames

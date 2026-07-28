@@ -81,6 +81,7 @@ const DRUNK_TIME_SCALE_MIN := 0.33
 const SCENE_IDLE_ANIMATION_FPS := 60.0
 const SCENE_IDLE_ANIMATION_INTERVAL_SEC := 1.0 / SCENE_IDLE_ANIMATION_FPS
 const WEB_SCENE_IDLE_ANIMATION_FPS := 30.0
+const WEB_GRAND_CASINO_IDLE_ANIMATION_FPS := 15.0
 const ITEM_ICON_TEXTURE_CACHE_LIMIT := 32
 const SCENE_SPARKLES_CORNER_STORE := [Vector2(384, 220), Vector2(478, 224), Vector2(668, 138), Vector2(746, 144)]
 const SCENE_PUDDLES_BACK_ALLEY := [Vector2(180, 304), Vector2(420, 292), Vector2(710, 312)]
@@ -486,7 +487,19 @@ func _scene_idle_animation_redraw_due(delta: float) -> bool:
 
 func _scene_idle_animation_interval_sec() -> float:
 	var target_fps := WEB_SCENE_IDLE_ANIMATION_FPS if OS.has_feature("web") else SCENE_IDLE_ANIMATION_FPS
+	if _grand_casino_web_low_detail():
+		target_fps = WEB_GRAND_CASINO_IDLE_ANIMATION_FPS
 	return 1.0 / maxf(1.0, target_fps)
+
+
+func _grand_casino_web_low_detail() -> bool:
+	if not OS.has_feature("web"):
+		return false
+	match environment_id:
+		"grand_casino", "grand_casino_high_limit", "grand_casino_back_room", "grand_casino_cage":
+			return true
+		_:
+			return false
 
 
 # Selects the active venue drawing routine.
@@ -1263,24 +1276,28 @@ func _draw_scene_life() -> void:
 			_draw_string_lights()
 			_draw_sparkles(SCENE_SPARKLES_UNDERGROUND, C_TEAL, 0.16)
 		"grand_casino", "grand_casino_high_limit", "grand_casino_back_room":
-			for i in range(5):
-				var x := 250 + i * 100
-				draw_rect(Rect2(x, 124, 52, 8), Color(C_YELLOW.r, C_YELLOW.g, C_YELLOW.b, 0.14 + abs(sin(flicker * 5.0 + i)) * 0.20))
+			var low_detail := _grand_casino_web_low_detail()
+			var light_count := 3 if low_detail else 5
+			for i in range(light_count):
+				var x := 300 + i * 150 if low_detail else 250 + i * 100
+				draw_rect(Rect2(x, 124, 52, 8), Color(C_YELLOW.r, C_YELLOW.g, C_YELLOW.b, 0.12 + abs(sin(flicker * 3.2 + i)) * (0.12 if low_detail else 0.20)))
 			var watch_status := _pit_boss_watch_snapshot()
 			var sweep := 250 + int(abs(sin(flicker * 1.35)) * 400.0)
 			var watched := bool(watch_status.get("watched", false))
 			var beam := C_PINK if watched else C_CYAN
 			var primary_alpha := 0.42 if watched else 0.20
 			_draw_camera_sweep(Vector2(450, 92), Vector2(sweep, 226), beam, primary_alpha)
-			_draw_camera_sweep(Vector2(252, 92), Vector2(170 + int(abs(sin(flicker * 1.0)) * 210.0), 220), C_CYAN, 0.18)
-			_draw_camera_sweep(Vector2(648, 92), Vector2(520 + int(abs(cos(flicker * 1.1)) * 210.0), 220), C_CYAN, 0.18)
+			if not low_detail:
+				_draw_camera_sweep(Vector2(252, 92), Vector2(170 + int(abs(sin(flicker * 1.0)) * 210.0), 220), C_CYAN, 0.18)
+				_draw_camera_sweep(Vector2(648, 92), Vector2(520 + int(abs(cos(flicker * 1.1)) * 210.0), 220), C_CYAN, 0.18)
 			var badge_color := C_POLICE_RED if watched else C_CYAN
 			draw_rect(Rect2(386, 150, 128, 18), Color(0.0, 0.0, 0.0, 0.50))
 			draw_rect(Rect2(392, 154, 116, 5), Color(badge_color.r, badge_color.g, badge_color.b, 0.34 + abs(sin(flicker * 2.4)) * 0.28))
 			var watch_active := bool(watch_status.get("active", false))
 			_neon_text("WATCHED" if watched else "ROURKE HERE" if watch_active else "ROURKE AWAY", Vector2(398 if watch_active else 396, 164), 10, badge_color)
 			_draw_sign_pulse(Rect2(336, 58, 226, 54), C_YELLOW, 0.14, 3.8)
-			_draw_sparkles(SCENE_SPARKLES_GRAND_CASINO, C_YELLOW, 0.18)
+			if not low_detail:
+				_draw_sparkles(SCENE_SPARKLES_GRAND_CASINO, C_YELLOW, 0.18)
 		"grand_casino_cage":
 			_draw_sign_pulse(Rect2(338, 40, 224, 48), C_YELLOW, 0.12, 3.4)
 			var terminal_scan := 138 + int(abs(sin(flicker * 1.6)) * 38.0)
@@ -1523,7 +1540,8 @@ func _draw_interactable_light(rect: Rect2, accent: Color, selected: bool) -> voi
 
 
 func _draw_floor_sheen() -> void:
-	for i in range(7):
+	var sheen_count := 3 if _grand_casino_web_low_detail() else 7
+	for i in range(sheen_count):
 		var x := int(fmod(flicker * (18.0 + float(i) * 2.5) + float(i * 137), 1040.0)) - 90
 		var y := 274 + (i % 4) * 14
 		var color := _cycle_color(i * 31)
@@ -1602,6 +1620,7 @@ func _draw_string_lights() -> void:
 
 func _draw_scene_objects() -> void:
 	# Interactable props are rendered here; transparent buttons only provide hit testing.
+	var low_detail := _grand_casino_web_low_detail()
 	for object_data in _active_scene_objects():
 		var rect := _board_rect_for_object(object_data)
 		var object_id := str(object_data.get("id", ""))
@@ -1633,7 +1652,7 @@ func _draw_scene_objects() -> void:
 				_draw_selected_item_frame(rect, object_type)
 		elif hovered:
 			_draw_hover_scene_mark(rect)
-		elif not disabled:
+		elif not disabled and not low_detail:
 			_draw_hotspot_hint(rect, object_type)
 		_draw_object_label(rect, str(object_data.get("label", "")), object_type, disabled, selected or hovered)
 	_draw_selected_object_info()
@@ -3663,6 +3682,10 @@ func _draw_game_prop(rect: Rect2, object_data: Dictionary, selected: bool) -> vo
 	var accent := C_PINK if selected else C_CYAN
 	if disabled:
 		accent = C_SOFT
+	if _grand_casino_web_low_detail() and not selected:
+		_draw_low_detail_game_prop(rect, object_data, accent, disabled)
+		_draw_game_runtime_badge(rect, object_data, accent)
+		return
 	_draw_interactable_light(rect, accent, selected)
 	var prop := str(object_data.get("prop", "card_table"))
 	if prop == "machine":
@@ -3685,6 +3708,36 @@ func _draw_game_prop(rect: Rect2, object_data: Dictionary, selected: bool) -> vo
 				_card_back(Rect2(rect.position + Vector2(26 + i * 28, 6 + i % 2 * 6), Vector2(20, 28)))
 			_draw_game_object_icon(object_data, _centered_icon_rect(rect, 32.0, Vector2(34, -9)), accent, selected, disabled)
 	_draw_game_runtime_badge(rect, object_data, accent)
+
+
+func _draw_low_detail_game_prop(rect: Rect2, object_data: Dictionary, accent: Color, disabled: bool = false) -> void:
+	var prop := str(object_data.get("prop", "card_table"))
+	var source_id := str(object_data.get("source_id", object_data.get("icon_key", "")))
+	var base_alpha := 0.18 if disabled else 0.30
+	draw_rect(Rect2(rect.position + Vector2(rect.size.x * 0.12, rect.size.y * 0.82), Vector2(rect.size.x * 0.76, 4)), Color(accent.r, accent.g, accent.b, base_alpha))
+	if prop == "machine" or prop == "video_poker_machine":
+		var cabinet := Rect2(rect.position + Vector2(rect.size.x * 0.24, rect.size.y * 0.18), Vector2(rect.size.x * 0.52, rect.size.y * 0.58))
+		draw_rect(cabinet, Color("#090a14"))
+		draw_rect(cabinet, Color(accent.r, accent.g, accent.b, 0.18), false, 1)
+		var screen := Rect2(cabinet.position + Vector2(cabinet.size.x * 0.18, cabinet.size.y * 0.26), Vector2(cabinet.size.x * 0.64, cabinet.size.y * 0.26))
+		var screen_color := Color("#f0ead7") if prop == "machine" else Color("#07131b")
+		draw_rect(screen, screen_color)
+		draw_rect(screen, Color(accent.r, accent.g, accent.b, 0.28), false, 1)
+		for i in range(3):
+			var reel := Rect2(screen.position + Vector2(3.0 + float(i) * screen.size.x * 0.30, 3.0), Vector2(screen.size.x * 0.18, maxf(5.0, screen.size.y - 6.0)))
+			draw_rect(reel, _cycle_color(i * 23 + int(rect.position.x)).darkened(0.10))
+		var label := "SLOT" if source_id == "slot" or prop == "machine" else "POKER"
+		var font := get_theme_default_font()
+		draw_string(font, cabinet.position + Vector2(2.0, cabinet.size.y * 0.82), _fit_draw_text(label, font, 7, cabinet.size.x - 4.0), HORIZONTAL_ALIGNMENT_CENTER, cabinet.size.x - 4.0, 7, C_YELLOW)
+	else:
+		var table := Rect2(rect.position + Vector2(rect.size.x * 0.08, rect.size.y * 0.44), Vector2(rect.size.x * 0.84, rect.size.y * 0.30))
+		draw_rect(table, Color("#123f30"))
+		draw_rect(Rect2(table.position + Vector2(table.size.x * 0.08, table.size.y * 0.18), Vector2(table.size.x * 0.84, table.size.y * 0.48)), Color("#1a7755"))
+		draw_rect(table, Color(accent.r, accent.g, accent.b, 0.20), false, 1)
+		for i in range(2):
+			_card_back(Rect2(table.position + Vector2(table.size.x * (0.28 + float(i) * 0.24), -8.0 + float(i) * 2.0), Vector2(16, 22)))
+	if disabled:
+		draw_rect(rect.grow(-3.0), Color(0.0, 0.0, 0.0, 0.38))
 
 
 func _draw_game_runtime_badge(rect: Rect2, object_data: Dictionary, accent: Color) -> void:
@@ -4041,10 +4094,13 @@ func _draw_drunk_overlay() -> void:
 func _floor_reflections() -> void:
 	var reflection_y := float(BOARD_SIZE.y) - 52.0
 	var glint_y := float(BOARD_SIZE.y) - 38.0
-	for x in range(24, 880, 54):
+	var low_detail := _grand_casino_web_low_detail()
+	var step := 108 if low_detail else 54
+	for x in range(24, 880, step):
 		var color := _cycle_color(x)
 		draw_rect(Rect2(x, reflection_y + int(sin(flicker * 2.0 + x) * 4.0), 38, 4), Color(color.r, color.g, color.b, 0.35))
-		draw_rect(Rect2(x + 8, glint_y, 68, 2), Color(color.r, color.g, color.b, 0.18))
+		if not low_detail:
+			draw_rect(Rect2(x + 8, glint_y, 68, 2), Color(color.r, color.g, color.b, 0.18))
 
 
 func _silhouette(pos: Vector2, scale_value: float, color: Color) -> void:
