@@ -398,6 +398,7 @@ func current_snapshot() -> Dictionary:
 		"typewriter_active": typewriter_active,
 		"visible_characters": body_label.visible_characters if body_label != null else -1,
 		"body_character_count": full_body_text.length(),
+		"urgency_bar_visible": urgency_bar != null and urgency_bar.is_visible_in_tree(),
 		"click_to_skip": true,
 		"reduce_motion": reduce_motion,
 		"timing": timing.duplicate(true),
@@ -510,7 +511,6 @@ func _build() -> void:
 	urgency_bar.value = 1.0
 	urgency_bar.show_percentage = false
 	urgency_bar.custom_minimum_size = Vector2(VisualStyle.FLEXIBLE_SIZE, VisualStyle.TALK_URGENCY_HEIGHT)
-	stack.add_child(urgency_bar)
 
 	choice_list = GridContainer.new()
 	choice_list.columns = 2
@@ -541,8 +541,8 @@ func _render() -> void:
 	if portrait_model != null:
 		var speaker: Dictionary = entry.get("speaker", {}) if typeof(entry.get("speaker", {})) == TYPE_DICTIONARY else {}
 		portrait_model.set_speaker(speaker)
-	urgency_bar.visible = expanded and bool(timing.get("expires", false))
-	if urgency_bar.visible:
+	urgency_bar.visible = false
+	if bool(timing.get("expires", false)):
 		var duration := maxi(1, int(timing.get("duration_actions", 1)))
 		urgency_bar.value = clampf(float(int(timing.get("remaining_actions", duration))) / float(duration), 0.0, 1.0)
 	portrait_panel.visible = expanded
@@ -652,8 +652,6 @@ func _response_icon_kinds(choice: Dictionary) -> Array[String]:
 		_append_icon_kind(kinds, "route")
 	if lowered.contains("risk") or bool(choice.get("requires_confirm", false)):
 		_append_icon_kind(kinds, "uncertain")
-	if kinds.is_empty():
-		kinds.append("talk")
 	if kinds.size() > 2:
 		kinds.resize(2)
 	return kinds

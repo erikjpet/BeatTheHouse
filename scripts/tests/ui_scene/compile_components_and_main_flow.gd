@@ -490,6 +490,10 @@ func _check_talk_dock_component() -> bool:
 		parent.queue_free()
 		push_error("Expanded talk dock did not showcase the active speaker identity: %s." % str(snapshot.get("speaker_text", "")))
 		return false
+	if bool(snapshot.get("urgency_bar_visible", false)):
+		parent.queue_free()
+		push_error("Expanded talk dock rendered an unlabeled urgency meter beside the discussion copy.")
+		return false
 	if not bool(snapshot.get("topic_visible", false)) or str(snapshot.get("topic", "")).strip_edges().is_empty():
 		parent.queue_free()
 		push_error("Expanded talk dock did not show the conversation topic.")
