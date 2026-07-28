@@ -2394,6 +2394,9 @@ func _refresh_talk_dock() -> void:
 		return
 	var event_id := str(entry.get("event_id", ""))
 	var dialogue_id := str(entry.get("dialogue_id", "")).strip_edges()
+	if dialogue_id.is_empty() and _event_uses_canonical_popup_choice_surface(event_id):
+		talk_dock.clear_entry()
+		return
 	var option := _dialogue_option_for_entry(entry) if not dialogue_id.is_empty() else {}
 	if option.is_empty() and _is_lender_conversation_entry(entry):
 		option = _lender_conversation_option(entry)
@@ -6645,6 +6648,9 @@ func _add_context_event_actions(card: VBoxContainer, event_id: String) -> void:
 	if not str(event_definition.get("dialogue_id", "")).strip_edges().is_empty():
 		_add_card_button(card, "Talk", Callable(self, "_start_event_dialogue").bind(event_id), false, true)
 		return
+	if _event_uses_canonical_popup_choice_surface(event_id):
+		_add_card_button(card, "Open Responses", Callable(self, "_activate_event_object").bind(event_id), false, true)
+		return
 	for choice in event_option.get("choices", []):
 		if typeof(choice) != TYPE_DICTIONARY:
 			continue
@@ -6715,6 +6721,8 @@ func _event_choice_action_detail(choice_data: Dictionary) -> String:
 
 
 func _event_inline_response_actions(event_id: String, choices: Array) -> Array:
+	if _event_uses_canonical_popup_choice_surface(event_id):
+		return []
 	var actions: Array = []
 	for choice in choices:
 		if typeof(choice) != TYPE_DICTIONARY:
@@ -7805,6 +7813,14 @@ func current_accessibility_snapshot() -> Dictionary:
 func current_event_choice_popup_snapshot() -> Dictionary:
 	var snapshot := pending_event_choice_popup_snapshot.duplicate(true)
 	snapshot["visible"] = _event_choice_popup_is_visible()
+	var choice_ids: Array = []
+	for choice_value in _copy_array(snapshot.get("choices", [])):
+		if typeof(choice_value) != TYPE_DICTIONARY:
+			continue
+		var choice_id := str((choice_value as Dictionary).get("id", "")).strip_edges()
+		if not choice_id.is_empty():
+			choice_ids.append(choice_id)
+	snapshot["choice_ids"] = choice_ids
 	if not snapshot.has("blocking"):
 		snapshot["blocking"] = _event_choice_popup_is_visible()
 	if _event_choice_popup_is_visible():
@@ -8419,6 +8435,10 @@ func _cage_gift_shop_inline_actions() -> Array:
 			"disabled_reason": str(offer.get("disabled_reason", "")),
 		})
 	return actions
+
+
+func _event_uses_canonical_popup_choice_surface(event_id: String) -> bool:
+	return event_id == RunState.GRAND_CASINO_SHOWDOWN_EVENT_ID
 
 
 func _activate_cage_gift_shop_action(object_id: String) -> bool:

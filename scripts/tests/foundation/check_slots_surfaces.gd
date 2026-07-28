@@ -3031,6 +3031,7 @@ func _check_ui_state_machine_input_fuzz_foundation(library: ContentLibrary, fail
 		return
 	_sb4_assert_overlay_contract(app, "initial scene", failures)
 	_sb4_check_event_modal_routes(library, app, failures)
+	_sb4_check_rourke_showdown_single_choice_surface(library, app, failures)
 	_sb4_check_wager_modal_routes(library, app, failures)
 	_sb4_check_travel_transition_routes(app, failures)
 	_sb4_check_seeded_menu_canvas_routes(app, failures)
@@ -3173,6 +3174,116 @@ func _sb4_open_triggered_event_popup(library: ContentLibrary, app: Control, seed
 		return {}
 	_sb4_assert_overlay_contract(app, "triggered-event popup open", failures)
 	return popup
+
+
+func _sb4_check_rourke_showdown_single_choice_surface(library: ContentLibrary, app: Control, failures: Array) -> void:
+	app.call("start_foundation_run", "SB4-ROURKE-SINGLE-SURFACE")
+	var run_state: RunState = app.get("run_state")
+	if run_state == null:
+		failures.append("SB.4 Rourke single-surface coverage could not start a run.")
+		return
+	var boss_archetype := _archetype_by_id(library, RunState.GRAND_CASINO_ARCHETYPE_ID)
+	if boss_archetype.is_empty():
+		failures.append("SB.4 Rourke single-surface coverage could not load the Grand Casino archetype.")
+		return
+	var environment := EnvironmentInstance.from_archetype(boss_archetype, 3, run_state.create_rng("sb4_rourke_environment"), library).to_dict()
+	environment["id"] = "sb4_rourke_showdown_surface"
+	environment["display_name"] = "SB4 Rourke Surface"
+	environment["archetype_id"] = RunState.GRAND_CASINO_ARCHETYPE_ID
+	environment["kind"] = "boss"
+	environment["event_ids"] = [RunState.GRAND_CASINO_SHOWDOWN_EVENT_ID]
+	environment["resolved_event_ids"] = []
+	environment["game_ids"] = []
+	environment["game_states"] = {}
+	environment["turns"] = 99
+	environment["layout"] = EnvironmentInstance.ensure_generated_layout(environment)
+	run_state.set_environment(environment)
+	run_state.narrative_flags["the_house_calls_pending"] = true
+	run_state.narrative_flags["grand_casino_showdown_pending"] = true
+	run_state.narrative_flags["demo_finale_event_id"] = RunState.GRAND_CASINO_SHOWDOWN_EVENT_ID
+	run_state.add_item("scratch_pad")
+	app.set("run_state", run_state)
+	app.set("current_game", null)
+	app.call("_set_current_screen", "EVENT")
+	app.call("_hide_event_choice_popup")
+	app.call("_refresh")
+	if not bool(app.call("activate_interactable_object", "event:%s" % RunState.GRAND_CASINO_SHOWDOWN_EVENT_ID)):
+		failures.append("SB.4 Rourke single-surface coverage could not open the showdown event.")
+		return
+	_sb4_assert_showdown_choice_surface(app, "pending call", failures)
+	app.call("resolve_event_choice", RunState.GRAND_CASINO_SHOWDOWN_EVENT_ID, "enter_back_room")
+	_sb4_assert_showdown_choice_surface(app, "walk beat", failures)
+	var walk_popup: Dictionary = app.call("current_event_choice_popup_snapshot")
+	var walk_choice_ids := _slot_array(walk_popup.get("choice_ids", []))
+	if not walk_choice_ids.has("keep_everything"):
+		failures.append("SB.4 Rourke walk beat did not include the keep-everything response.")
+		return
+	app.call("resolve_event_choice", RunState.GRAND_CASINO_SHOWDOWN_EVENT_ID, "keep_everything")
+	_sb4_assert_showdown_choice_surface(app, "pat-down beat", failures)
+	app.call("resolve_event_choice", RunState.GRAND_CASINO_SHOWDOWN_EVENT_ID, "face_rourke")
+	_sb4_assert_showdown_choice_surface(app, "interrogation beat", failures)
+
+
+func _sb4_assert_showdown_choice_surface(app: Control, label: String, failures: Array) -> void:
+	var popup: Dictionary = app.call("current_event_choice_popup_snapshot")
+	if not bool(popup.get("visible", false)):
+		failures.append("SB.4 Rourke %s did not render the canonical event-choice popup." % label)
+		return
+	var popup_choice_ids := _slot_array(popup.get("choice_ids", []))
+	if popup_choice_ids.is_empty():
+		failures.append("SB.4 Rourke %s popup did not expose choice ids." % label)
+		return
+	var source_by_choice: Dictionary = {}
+	for choice_id_value in popup_choice_ids:
+		_sb4_note_choice_source(source_by_choice, str(choice_id_value), "popup")
+	var objects: Array = app.call("_interactable_object_view_list")
+	for object_value in objects:
+		if typeof(object_value) != TYPE_DICTIONARY:
+			continue
+		var object_data: Dictionary = object_value
+		if str(object_data.get("source_id", "")) != RunState.GRAND_CASINO_SHOWDOWN_EVENT_ID:
+			continue
+		for action_value in _slot_array(object_data.get("inline_actions", [])):
+			if typeof(action_value) != TYPE_DICTIONARY:
+				continue
+			var action_data: Dictionary = action_value
+			var choice_id := _sb4_choice_id_from_event_response(str(action_data.get("emit_object_id", action_data.get("id", ""))))
+			if not choice_id.is_empty():
+				_sb4_note_choice_source(source_by_choice, choice_id, "inline")
+	var talk: Dictionary = app.call("current_talk_dock_snapshot")
+	if bool(talk.get("visible", false)) and str(talk.get("event_id", "")) == RunState.GRAND_CASINO_SHOWDOWN_EVENT_ID:
+		for choice_id_value in _slot_array(talk.get("choice_ids", [])):
+			_sb4_note_choice_source(source_by_choice, str(choice_id_value), "talk_dock")
+	for choice_id in source_by_choice.keys():
+		var sources := _slot_array(source_by_choice.get(choice_id, []))
+		if sources.size() > 1:
+			failures.append("SB.4 Rourke %s rendered duplicate controls for choice %s via %s." % [label, str(choice_id), ", ".join(sources)])
+	var unique_popup := {}
+	for choice_id_value in popup_choice_ids:
+		var choice_id := str(choice_id_value)
+		if unique_popup.has(choice_id):
+			failures.append("SB.4 Rourke %s popup duplicated choice id %s inside the canonical surface." % [label, choice_id])
+		unique_popup[choice_id] = true
+
+
+func _sb4_note_choice_source(source_by_choice: Dictionary, choice_id: String, source: String) -> void:
+	var clean_id := choice_id.strip_edges()
+	if clean_id.is_empty():
+		return
+	var sources: Array = source_by_choice.get(clean_id, []) if typeof(source_by_choice.get(clean_id, [])) == TYPE_ARRAY else []
+	if not sources.has(source):
+		sources.append(source)
+	source_by_choice[clean_id] = sources
+
+
+func _sb4_choice_id_from_event_response(action_id: String) -> String:
+	if not action_id.begins_with("event_response:"):
+		return ""
+	var payload := action_id.trim_prefix("event_response:")
+	var separator := payload.find(":")
+	if separator <= 0 or separator >= payload.length() - 1:
+		return ""
+	return payload.substr(separator + 1)
 
 
 func _sb4_trigger_context() -> Dictionary:

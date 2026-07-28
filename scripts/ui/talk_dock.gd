@@ -357,6 +357,13 @@ func current_snapshot() -> Dictionary:
 	var portrait_members: Array = portrait_speaker.get("members", []) if typeof(portrait_speaker.get("members", [])) == TYPE_ARRAY else []
 	var character_ids: Array = []
 	var character_names: Array = []
+	var choice_ids: Array = []
+	for choice_value in _choices():
+		if typeof(choice_value) != TYPE_DICTIONARY:
+			continue
+		var choice_id := str((choice_value as Dictionary).get("id", "")).strip_edges()
+		if not choice_id.is_empty():
+			choice_ids.append(choice_id)
 	for member_value in portrait_members:
 		if typeof(member_value) != TYPE_DICTIONARY:
 			continue
@@ -373,6 +380,7 @@ func current_snapshot() -> Dictionary:
 		"summary": str(option.get("summary", "")),
 		"queue_count": queue_count,
 		"choice_count": _choices().size(),
+		"choice_ids": choice_ids,
 		"ignore_penalty_heat": IGNORE_PENALTY_HEAT,
 		"anchored_bottom_left": true,
 		"presentation": "environment_overlay",
