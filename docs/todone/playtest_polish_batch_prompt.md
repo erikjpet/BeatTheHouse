@@ -255,3 +255,51 @@ On an unfixable item, land the others, leave that item's finding in the
 report, and (if it needs more than this batch) write a focused follow-up
 prompt into `docs/todo/`. On a gate you cannot green, stop at the last
 green commit, do NOT push, and report verbatim.
+
+---
+
+## Execution record — 2026-07-27 22:59 -05:00
+
+Implemented top to bottom and confirmed in the running Godot gates. No items were left unresolved and no follow-up prompt was needed.
+
+Per-item commits:
+
+- `178c1c50` — Clarify travel unlock event copy.
+- `3df8fee7` — Mark current location on world map.
+- `d760ac35` — Add item game affinity nudges.
+- `9c096a2d` — Make coach tips always dismissible.
+- `cf41a21e` — Protect surface text from drunk distortion.
+- `fead0ff9` — Guard bar dice stake lifecycle.
+- `99dba1ec` — Collapse Rourke choices to one surface.
+- `02bdc9e9` — Guard Rourke duel double settlement.
+- `f53ae092` — Rebuild run report path from visits.
+- `3ce8675c` — Stabilize visual QA interaction paths.
+
+Reconciliation / deviations:
+
+- The repo was clean at preflight, so no in-flight user changes needed to be preserved or reconciled.
+- Final visual QA exposed two adjacent interaction-path regressions while validating this batch: Linda's no-effect service submenu choices were advancing as events instead of pure dialogue navigation, and Rourke's one-choice arrival beat needed a canvas inline response without reintroducing duplicate controls on later blocking showdown beats. Both were fixed in `3ce8675c`.
+- Final visual QA also exposed the pull-tab clerk/redeemer layout identity mismatch; the live pull-tab dialogue hook now shares the merged lottery-redemption clerk class so the visible clerk is unique and non-overlapping.
+
+Final gate results on the committed tree:
+
+- `tools\validate_project.ps1` — PASS.
+- `tools\check_godot.ps1 -FoundationSuite smoke -TimeoutSec 300` — PASS (`.tmp/test_reports/20260727_220843_smoke/summary.json`).
+- `tools\check_godot.ps1 -FoundationSuite contracts -TimeoutSec 300` — PASS (`.tmp/test_reports/20260727_221011_smoke/summary.json`).
+- `tools\check_godot.ps1 -FoundationSuite games -TimeoutSec 300` — PASS (`.tmp/test_reports/20260727_221326_smoke/summary.json`).
+- `tools\check_godot.ps1 -FoundationSuite systems -TimeoutSec 300` — PASS (`.tmp/test_reports/20260727_221643_smoke/summary.json`).
+- `tools\check_godot.ps1 -FoundationSuite ui -TimeoutSec 300` — PASS (`.tmp/test_reports/20260727_221814_smoke/summary.json`).
+- `tools\check_godot.ps1 -FoundationSuite slot -TimeoutSec 300` — PASS (`.tmp/test_reports/20260727_222055_smoke/summary.json`).
+- `tools\check_godot.ps1 -FoundationSuite blackjack -TimeoutSec 300` — PASS (`.tmp/test_reports/20260727_222218_smoke/summary.json`).
+- `tools\check_godot.ps1 -FoundationSuite roulette -TimeoutSec 300` — PASS (`.tmp/test_reports/20260727_222327_smoke/summary.json`).
+- `tools\check_godot.ps1 -FoundationSuite baccarat -TimeoutSec 300` — PASS (`.tmp/test_reports/20260727_222438_smoke/summary.json`).
+- `tools\check_godot.ps1 -FoundationSuite video_poker -TimeoutSec 300` — PASS (`.tmp/test_reports/20260727_222547_smoke/summary.json`).
+- `tools\check_godot.ps1 -FoundationSuite bar_dice -TimeoutSec 300` — PASS (`.tmp/test_reports/20260727_222758_smoke/summary.json`).
+- `tools\check_godot.ps1 -FoundationSuite pull_tabs -TimeoutSec 300` — PASS (`.tmp/test_reports/20260727_222939_smoke/summary.json`).
+- `tools\check_godot.ps1 -FoundationSuite scratch_tickets -TimeoutSec 300` — PASS (`.tmp/test_reports/20260727_223048_smoke/summary.json`).
+- `tools\check_godot.ps1 -FoundationSuite slot_acceptance -TimeoutSec 959` — PASS (`.tmp/test_reports/20260727_223158_smoke/summary.json`).
+- `tools\check_godot.ps1 -FoundationSuite audit -TimeoutSec 971` — PASS (`.tmp/test_reports/20260727_224251_smoke/summary.json`).
+- `tools\check_godot.ps1 -FoundationSuite all -TimeoutSec 300` — PASS (`.tmp/test_reports/20260727_225341_smoke/summary.json`).
+- `tools\foundation_visual_qa.ps1` — PASS.
+- `tools\foundation_determinism_probe.ps1 -RequireGodot -SeedCount 10` — PASS, 10 seeds, 320 checkpoints, combined hash `2238995931`.
+- `tools\foundation_performance_probe.ps1 -RequireGodot` — PASS, 62 observations across 8 seeds; idle liveness guard proof passed and no 0.000 idle-draw was accepted without the liveness check.
