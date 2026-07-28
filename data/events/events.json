@@ -114,8 +114,8 @@
       "choices": [
         {
           "id": "follow_tip",
-          "label": "Follow Tip",
-          "text": "A riskier route opens up.",
+          "label": "Open Underground Route",
+          "text": "A new route opens on your map: Small Underground Casino.",
           "consequences": {
             "add_next_archetypes": [
               "small_underground_casino"
@@ -163,7 +163,7 @@
         {
           "id": "accept_invite",
           "label": "Accept Invitation",
-          "text": "Take the card and open the boss-floor route.",
+          "text": "Take the card and open the Grand Casino route on your map.",
           "consequences": {
             "add_next_archetypes": [
               "grand_casino"
@@ -173,7 +173,7 @@
             },
             "resolve_event": true,
             "messages": [
-              "The Grand Casino is open to you."
+              "A new route opens on your map: Grand Casino."
             ]
           }
         },
@@ -367,9 +367,9 @@
         },
         {
           "id": "ask_old_room",
-          "label": "Ask Room",
-          "text": "The cellist names a quieter room with serious tables.",
-          "consequence_summary": "Underground route",
+          "label": "Open Underground Route",
+          "text": "The cellist names a quieter room with serious tables; a new route opens on your map: Small Underground Casino.",
+          "consequence_summary": "Small Underground Casino route opens",
           "consequences": {
             "add_next_archetypes": [
               "small_underground_casino"
@@ -434,9 +434,9 @@
       "choices": [
         {
           "id": "buy_the_name",
-          "label": "Buy Name",
-          "text": "You buy the table's next drink and get a real introduction.",
-          "consequence_summary": "$ -8, underground route",
+          "label": "Buy Route Name",
+          "text": "You buy the table's next drink and get a real introduction; a new route opens on your map: Small Underground Casino.",
+          "consequence_summary": "$ -8, Small Underground Casino route opens",
           "consequences": {
             "bankroll_delta": -8,
             "add_next_archetypes": [
@@ -538,9 +538,9 @@
         },
         {
           "id": "take_address",
-          "label": "Take Address",
-          "text": "You take the address and keep your cash in your pocket.",
-          "consequence_summary": "Grand Casino route",
+          "label": "Open Grand Casino Route",
+          "text": "You take the address and keep your cash in your pocket; the Grand Casino route opens on your map.",
+          "consequence_summary": "Grand Casino route opens",
           "consequences": {
             "add_next_archetypes": [
               "grand_casino"
@@ -776,8 +776,8 @@
         },
         {
           "id": "dark_route",
-          "label": "Dark Route",
-          "text": "You hear about the back alley circuit.",
+          "label": "Open Dark Route",
+          "text": "You hear about the back alley circuit; the Back Alley route opens on your map.",
           "consequences": {
             "add_next_archetypes": [
               "back_alley"
@@ -3112,7 +3112,7 @@
         {
           "id": "accept_first_invitation",
           "label": "Accept the Invitation",
-          "text": "Take the card and thank the host.",
+          "text": "Take the card and thank the host; the Grand Casino route opens on your map.",
           "response_type": "warm",
           "consequences": {
             "add_next_archetypes": ["grand_casino"],
@@ -3121,7 +3121,7 @@
               "tutorial_invitation_complete": true
             },
             "resolve_event": true,
-            "messages": ["The Grand Casino is open to you."]
+            "messages": ["A new route opens on your map: Grand Casino."]
           }
         }
       ]

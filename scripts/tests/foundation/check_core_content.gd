@@ -536,6 +536,7 @@ func _check_content(library: ContentLibrary, failures: Array) -> void:
 	_check_baccarat_grand_casino_only(library, failures)
 	_check_environment_game_pool_distribution(library, failures)
 	_check_environment_encounter_freshness(library, failures)
+	_check_travel_unlock_event_copy(library, failures)
 	_check_high_risk_table_limit_overrides(library, failures)
 	_check_environment_open_hours(library, failures)
 	_check_dialogue_system_content(library, failures)
@@ -680,6 +681,52 @@ func _check_player_facing_description_copy(library: ContentLibrary, failures: Ar
 		var archetype: Dictionary = archetype_value
 		var visual_context: Dictionary = archetype.get("visual_context", {}) if typeof(archetype.get("visual_context", {})) == TYPE_DICTIONARY else {}
 		_check_copy_word_limit("environment %s description" % str(archetype.get("id", "")), str(visual_context.get("description", "")), 8, failures)
+
+
+func _check_travel_unlock_event_copy(library: ContentLibrary, failures: Array) -> void:
+	for event_value in library.events:
+		if typeof(event_value) != TYPE_DICTIONARY:
+			continue
+		var event: Dictionary = event_value
+		var payload: Dictionary = event.get("payload", {}) if typeof(event.get("payload", {})) == TYPE_DICTIONARY else {}
+		var choices: Array = payload.get("choices", []) if typeof(payload.get("choices", [])) == TYPE_ARRAY else []
+		for choice_value in choices:
+			if typeof(choice_value) != TYPE_DICTIONARY:
+				continue
+			var choice: Dictionary = choice_value
+			var consequences: Dictionary = choice.get("consequences", {}) if typeof(choice.get("consequences", {})) == TYPE_DICTIONARY else {}
+			var granted_routes := _travel_unlock_string_array(consequences.get("add_next_archetypes", []))
+			granted_routes.append_array(_travel_unlock_string_array(consequences.get("travel_hooks_add", [])))
+			if granted_routes.is_empty():
+				continue
+			var copy_parts := [
+				str(payload.get("summary", "")),
+				str(choice.get("label", "")),
+				str(choice.get("text", "")),
+				str(choice.get("consequence_summary", "")),
+			]
+			for message in _travel_unlock_string_array(consequences.get("messages", [])):
+				copy_parts.append(message)
+			var combined := " ".join(copy_parts).to_lower()
+			var mentions_travel := combined.find("route") != -1 or combined.find("travel") != -1 or combined.find("map") != -1
+			var mentions_opened := combined.find("open") != -1 or combined.find("unlock") != -1 or combined.find("new") != -1 or combined.find("available") != -1
+			if not mentions_travel or not mentions_opened:
+				failures.append("Travel-unlocking event choice lacks explicit route-open copy: %s/%s." % [str(event.get("id", "")), str(choice.get("id", ""))])
+			for route_id in granted_routes:
+				var normalized_route: String = str(route_id).replace("_", " ").to_lower()
+				if combined.find(normalized_route) == -1:
+					failures.append("Travel-unlocking event choice does not name destination '%s': %s/%s." % [route_id, str(event.get("id", "")), str(choice.get("id", ""))])
+
+
+func _travel_unlock_string_array(values: Variant) -> Array:
+	var result: Array = []
+	if typeof(values) != TYPE_ARRAY:
+		return result
+	for value in values:
+		var text := str(value).strip_edges()
+		if not text.is_empty():
+			result.append(text)
+	return result
 
 
 func _check_description_list(label: String, values: Array, field: String, max_words: int, failures: Array) -> void:
