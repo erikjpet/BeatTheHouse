@@ -3892,6 +3892,10 @@ func _run() -> void:
 		push_error("Game drunk distortion did not protect readable UI regions.")
 		quit(1)
 		return
+	if int(distortion_game_canvas_snapshot.get("surface_text_protected_rect_count", 0)) <= 0:
+		push_error("Game drunk distortion did not register drawn text as protected readable UI.")
+		quit(1)
+		return
 	var slow_game_snapshot := game_snapshot_before.duplicate(true)
 	slow_game_snapshot["drunk_level"] = 100
 	slow_game_snapshot["drunk_time_scale"] = RunState.DRUNK_TIME_SCALE_MIN

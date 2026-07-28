@@ -69,6 +69,7 @@ var perf_full_snapshot_calls := 0
 var perf_runtime_status_calls := 0
 var perf_draw_frame_usec_samples: Array = []
 var surface_label_fit_cache: Dictionary = {}
+var surface_text_protected_rects: Array = []
 var hit_region_group_cache: Dictionary = {}
 var active_design_scale := Vector2.ONE
 var active_design_offset := Vector2.ZERO
@@ -198,6 +199,7 @@ func current_view_snapshot() -> Dictionary:
 		"drunk_time_scale": drunk_time_scale,
 		"drunk_time_scale_percent": int(round(drunk_time_scale * 100.0)),
 		"reduce_motion": reduce_motion,
+		"surface_text_protected_rect_count": surface_text_protected_rects.size(),
 		"drunk_distortion_visible": drunk_distortion_overlay != null and drunk_distortion_overlay.visible,
 		"drunk_distortion_debug": drunk_distortion_overlay.debug_snapshot() if drunk_distortion_overlay != null else {},
 		"surface_animations": _surface_animation_status_snapshot(),
@@ -234,6 +236,7 @@ func surface_runtime_status() -> Dictionary:
 		"drunk_time_scale": drunk_time_scale,
 		"drunk_time_scale_percent": int(round(drunk_time_scale * 100.0)),
 		"reduce_motion": reduce_motion,
+		"surface_text_protected_rect_count": surface_text_protected_rects.size(),
 		"drunk_distortion_visible": drunk_distortion_overlay != null and drunk_distortion_overlay.visible,
 		"drunk_distortion_debug": drunk_distortion_overlay.debug_snapshot() if drunk_distortion_overlay != null else {},
 		"surface_animations": _surface_animation_status_snapshot(),
@@ -587,15 +590,18 @@ func surface_native_action_selected(action: String) -> bool:
 
 
 func surface_label(text: String, pos: Vector2, font_size: int, color: Color) -> void:
+	_register_surface_text_rect(text, pos, font_size)
 	draw_string(get_theme_default_font(), pos + Vector2(1, 1), text, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size, Color(0.0, 0.0, 0.0, 0.62))
 	draw_string(get_theme_default_font(), pos, text, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size, color)
 
 
 func surface_label_plain(text: String, pos: Vector2, font_size: int, color: Color) -> void:
+	_register_surface_text_rect(text, pos, font_size)
 	draw_string(get_theme_default_font(), pos, text, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size, color)
 
 
 func surface_label_centered(text: String, rect: Rect2, font_size: int, color: Color) -> void:
+	_register_surface_text_panel_rect(rect)
 	var font := get_theme_default_font()
 	var fitted_size := _centered_label_fit_size(font, text, rect, font_size)
 	var ascent := font.get_ascent(fitted_size)
@@ -607,6 +613,7 @@ func surface_label_centered(text: String, rect: Rect2, font_size: int, color: Co
 
 
 func surface_label_centered_plain(text: String, rect: Rect2, font_size: int, color: Color) -> void:
+	_register_surface_text_panel_rect(rect)
 	var font := get_theme_default_font()
 	var fitted_size := _centered_label_fit_size(font, text, rect, font_size)
 	var ascent := font.get_ascent(fitted_size)
@@ -630,6 +637,22 @@ func _centered_label_fit_size(font: Font, text: String, rect: Rect2, font_size: 
 		surface_label_fit_cache.clear()
 	surface_label_fit_cache[cache_key] = fitted_size
 	return fitted_size
+
+
+func _register_surface_text_rect(text: String, pos: Vector2, font_size: int) -> void:
+	var clean := text.strip_edges()
+	if clean.is_empty():
+		return
+	var estimated_width := clampf(float(clean.length()) * float(maxi(1, font_size)) * 0.62 + 4.0, 18.0, _active_board_size().x)
+	_register_surface_text_panel_rect(Rect2(pos + Vector2(-2.0, -float(font_size) - 2.0), Vector2(estimated_width, float(font_size) + 8.0)))
+
+
+func _register_surface_text_panel_rect(rect: Rect2) -> void:
+	if rect.size.x <= 0.0 or rect.size.y <= 0.0:
+		return
+	if surface_text_protected_rects.size() >= DrunkDistortionOverlay.MAX_UI_PROTECTED_RECTS:
+		return
+	surface_text_protected_rects.append(rect)
 
 
 func surface_title(text: String, pos: Vector2, color: Color) -> void:
@@ -848,6 +871,7 @@ func _schedule_surface_animation_redraws(delta: float) -> void:
 func _draw() -> void:
 	var draw_started_usec := Time.get_ticks_usec()
 	hit_regions = []
+	surface_text_protected_rects = []
 	active_design_scale = Vector2.ONE
 	active_design_offset = Vector2.ZERO
 	design_space_active = false
@@ -1172,6 +1196,9 @@ func _update_drunk_distortion_protected_rects() -> void:
 
 func _surface_ui_protected_board_rects() -> Array:
 	var protected_rects: Array = []
+	for rect in surface_text_protected_rects:
+		if typeof(rect) == TYPE_RECT2:
+			protected_rects.append(rect)
 	for rect in _surface_state_rects("surface_ui_protected_regions"):
 		protected_rects.append(rect)
 	for rect in _surface_state_rects("surface_hover_ui_protected_regions", true):
