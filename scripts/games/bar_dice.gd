@@ -892,6 +892,7 @@ func resolve_with_context(action_id: String, stake: int, run_state: RunState, en
 	result["bar_dice_luck_bonus"] = luck_bonus
 	result["bar_dice_pot"] = pot
 	result["bar_dice_rake"] = rake
+	result["bar_dice_gross_payout"] = gross_payout
 	result["bar_dice_carryover_pot"] = carryover_pot
 	if is_cheat:
 		result["bar_dice_pit_boss_watched"] = pit_boss_watched

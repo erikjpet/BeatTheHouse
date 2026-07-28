@@ -3920,6 +3920,7 @@ func _check_bar_dice_contract(library: ContentLibrary, failures: Array) -> void:
 	_check_bar_dice_keep_reroll(game, failures)
 	_check_bar_dice_patron_turn_determinism(game, failures)
 	_check_bar_dice_match_and_bonuses(game, failures)
+	_check_bar_dice_stake_lifecycle(game, failures)
 	_check_bar_dice_cheat(game, failures)
 	_check_bar_dice_item_luck_alcohol(game, failures)
 	_check_bar_dice_edge_band(game, library, failures)
@@ -4430,6 +4431,62 @@ func _check_bar_dice_carryover_math(game: GameModule, failures: Array) -> void:
 		failures.append("Bar Dice carryover pot did not clear after a non-carry round.")
 
 
+func _check_bar_dice_stake_lifecycle(game: GameModule, failures: Array) -> void:
+	var fixtures := {
+		"win": 2,
+		"lose": 10,
+		"carry": 20,
+	}
+	for outcome_key in fixtures.keys():
+		var target_outcome := str(outcome_key)
+		var target_stake := int(fixtures.get(outcome_key, 10))
+		var found_result: Dictionary = {}
+		var found_before_bankroll := 0
+		var found_after_bankroll := 0
+		var run_state: RunState = RunStateScript.new()
+		run_state.start_new("BAR-DICE-STAKE-LIFECYCLE-%s" % target_outcome)
+		run_state.bankroll = 100000
+		var environment := _surface_contract_environment()
+		environment["game_states"] = {"bar_dice": _bar_dice_state_for(game, run_state, environment, "ship_captain_crew", "standard", "pot_rake")}
+		run_state.current_environment = environment.duplicate(true)
+		var rng: RngStream = run_state.create_rng("bar_dice_stake_lifecycle_%s" % target_outcome)
+		for _attempt in range(360):
+			var before_bankroll := run_state.bankroll
+			var result := _bar_dice_play_round(game, run_state, rng, "roll", target_stake)
+			if str(result.get("bar_dice_outcome", "")) != target_outcome:
+				continue
+			found_result = result
+			found_before_bankroll = before_bankroll
+			found_after_bankroll = run_state.bankroll
+			break
+		if found_result.is_empty():
+			failures.append("Bar Dice stake lifecycle fixture could not find a %s result." % target_outcome)
+			continue
+		var stake := int(found_result.get("bar_dice_stake", 0))
+		var participants := int(found_result.get("bar_dice_match_legs", []).size()) + 1
+		var expected_min_pot := stake * participants
+		var pot := int(found_result.get("bar_dice_pot", 0))
+		if stake != target_stake:
+			failures.append("Bar Dice %s lifecycle used stake %d instead of selected tier %d." % [target_outcome, stake, target_stake])
+		if pot < expected_min_pot:
+			failures.append("Bar Dice %s lifecycle pot %d was below stake x seats %d." % [target_outcome, pot, expected_min_pot])
+		var bankroll_delta := int(found_result.get("bankroll_delta", 0))
+		if found_after_bankroll - found_before_bankroll != bankroll_delta:
+			failures.append("Bar Dice %s lifecycle bankroll changed %+d but result reported %+d." % [target_outcome, found_after_bankroll - found_before_bankroll, bankroll_delta])
+		if target_outcome == "win":
+			var gross_payout := int(found_result.get("bar_dice_gross_payout", found_result.get("bar_dice_payout", 0)))
+			if gross_payout <= 0:
+				gross_payout = int(found_result.get("bar_dice_pot", 0)) - int(found_result.get("bar_dice_rake", 0))
+			if bankroll_delta != gross_payout - stake:
+				failures.append("Bar Dice win lifecycle delta %+d did not equal gross payout %d minus stake %d." % [bankroll_delta, gross_payout, stake])
+		elif bankroll_delta != -stake:
+			failures.append("Bar Dice %s lifecycle should charge exactly the ante (%+d != -%d)." % [target_outcome, bankroll_delta, stake])
+		if target_outcome == "carry":
+			var table: Dictionary = (run_state.current_environment.get("game_states", {}) as Dictionary).get("bar_dice", {})
+			if int(table.get("carryover_pot", 0)) != pot:
+				failures.append("Bar Dice carry lifecycle did not store the full pot as carryover.")
+
+
 func _check_bar_dice_cheat(game: GameModule, failures: Array) -> void:
 	var run_state: RunState = RunStateScript.new()
 	run_state.start_new("BAR-DICE-CHEAT")
@@ -4726,9 +4783,10 @@ func _check_bar_dice_save_load_mid_round(game: GameModule, failures: Array) -> v
 		failures.append("Bar Dice restored mid-round state could not resolve a valid table round.")
 
 
-func _bar_dice_play_round(game: GameModule, run_state: RunState, rng: RngStream, action_id: String) -> Dictionary:
+func _bar_dice_play_round(game: GameModule, run_state: RunState, rng: RngStream, action_id: String, stake: int = 10) -> Dictionary:
 	var environment: Dictionary = run_state.current_environment
-	var roll_command: Dictionary = game.surface_action_command("bar_dice_roll", 0, false, {}, run_state, environment)
+	var initial_ui := _bar_dice_stake_ui(run_state, stake)
+	var roll_command: Dictionary = game.surface_action_command("bar_dice_roll", 0, false, initial_ui, run_state, environment)
 	var ui: Dictionary = roll_command.get("ui_state", {})
 	while int(ui.get("shake_number", 0)) < 3:
 		var dice: Array = ui.get("dice", []) if typeof(ui.get("dice", [])) == TYPE_ARRAY else []
@@ -4744,7 +4802,22 @@ func _bar_dice_play_round(game: GameModule, run_state: RunState, rng: RngStream,
 		ui = _bar_dice_controlled_roll_timed_ui(game, run_state, ui, 0)
 	elif action_id == "palmed_swap":
 		ui = _bar_dice_palmed_swap_timed_ui(game, run_state, ui, 0)
-	return game.resolve_with_context(action_id, 10, run_state, environment, rng, ui)
+	return game.resolve_with_context(action_id, stake, run_state, environment, rng, ui)
+
+
+func _bar_dice_stake_ui(run_state: RunState, stake: int) -> Dictionary:
+	var game_states: Dictionary = run_state.current_environment.get("game_states", {}) if typeof(run_state.current_environment.get("game_states", {})) == TYPE_DICTIONARY else {}
+	var state: Dictionary = game_states.get("bar_dice", {}) if typeof(game_states.get("bar_dice", {})) == TYPE_DICTIONARY else {}
+	var ladder: Array = []
+	if typeof(state.get("stake_ladder", [])) == TYPE_ARRAY:
+		for value in state.get("stake_ladder", []):
+			ladder.append(int(value))
+	var selected_index := int(state.get("selected_stake_index", 0))
+	for index in range(ladder.size()):
+		if int(ladder[index]) == stake:
+			selected_index = index
+			break
+	return {"selected_stake_index": selected_index}
 
 
 func _bar_dice_controlled_roll_timed_ui(game: GameModule, run_state: RunState, base_ui: Dictionary, margin_msec: int = 0) -> Dictionary:
