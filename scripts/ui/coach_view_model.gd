@@ -79,6 +79,9 @@ static func build(lesson: Dictionary, context: Dictionary) -> Dictionary:
 		"bubble_rect": _rect_dict(bubble_rect),
 		"viewport_rect": _rect_dict(viewport_rect),
 		"completion_type": completion_type,
+		"dismissible": true,
+		"dismiss_action_id": "coach:ok" if completion_type == "explicit_ok" else "coach:skip",
+		"dismiss_label": "Got it" if completion_type == "explicit_ok" else "Skip tip",
 		"gating": not gating.is_empty(),
 		"allowed_action_ids": _string_array(gating.get("allowed_action_ids", [])),
 		"reduce_motion": bool(context.get("reduce_motion", false)),
@@ -91,11 +94,15 @@ static func input_allowed(snapshot: Dictionary, action_id: String) -> bool:
 	if snapshot.is_empty() or not bool(snapshot.get("gating", false)):
 		return true
 	var normalized := action_id.strip_edges()
+	if normalized == "coach:ok" or normalized == "coach:skip":
+		return true
 	var allowed := _string_array(snapshot.get("allowed_action_ids", []))
 	return allowed.has("*") or (not normalized.is_empty() and allowed.has(normalized))
 
 
 static func completion_matches(lesson: Dictionary, action_id: String) -> bool:
+	if action_id == "coach:skip":
+		return true
 	var completion := _dict(lesson.get("completion", {}))
 	match str(completion.get("type", "any_action")):
 		"any_action":

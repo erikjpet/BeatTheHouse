@@ -2587,6 +2587,22 @@ func _check_coach_engine_foundation(library: ContentLibrary, failures: Array) ->
 		failures.append("Coach gating did not restrict only undeclared input routes.")
 	if not CoachViewModelScript.input_allowed(object_model, "wrong:door"):
 		failures.append("Non-gating coach tip blocked player input.")
+	var missing_anchor_lesson := _coach_lesson_fixture("missing_anchor_skip")
+	missing_anchor_lesson["anchor"] = {"kind": "surface_action", "id": "never:drawn"}
+	missing_anchor_lesson["completion"] = {"type": "anchored_action", "action_id": "never:drawn"}
+	missing_anchor_lesson["gating"] = {"allowed_action_ids": ["never:drawn"]}
+	var missing_anchor_model := CoachViewModelScript.build(missing_anchor_lesson, {
+		"viewport_rect": Rect2(Vector2.ZERO, Vector2(1280, 720)),
+		"anchor_rects": {"surface_actions": {}},
+	})
+	if bool(missing_anchor_model.get("anchor_found", true)):
+		failures.append("Coach missing-anchor fixture unexpectedly resolved its anchor.")
+	if not bool(missing_anchor_model.get("dismissible", false)) or str(missing_anchor_model.get("dismiss_action_id", "")) != "coach:skip":
+		failures.append("Coach missing-anchor fixture did not expose a skip dismiss action.")
+	if not CoachViewModelScript.input_allowed(missing_anchor_model, "coach:skip"):
+		failures.append("Coach gating blocked the skip dismiss action.")
+	if not CoachViewModelScript.completion_matches(missing_anchor_lesson, "coach:skip"):
+		failures.append("Coach skip dismiss action did not complete an unreachable anchored lesson.")
 	var settings := UserSettingsScript.new()
 	settings.coach_tips_enabled = false
 	var restored_settings := UserSettingsScript.new()

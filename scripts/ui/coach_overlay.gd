@@ -233,7 +233,8 @@ func _render_active(play_motion: bool) -> void:
 	active_layout_key = _layout_key(active_lesson, active_context)
 	eyebrow_label.text = str(prepared_snapshot.get("eyebrow", "DEALER'S ADVICE"))
 	copy_label.text = str(prepared_snapshot.get("copy", ""))
-	ok_button.visible = str(prepared_snapshot.get("completion_type", "")) == "explicit_ok"
+	ok_button.text = str(prepared_snapshot.get("dismiss_label", "Got it"))
+	ok_button.visible = bool(prepared_snapshot.get("dismissible", true))
 	ok_button.custom_minimum_size.y = float(prepared_snapshot.get("minimum_control_height", 40.0))
 	var bubble_rect := CoachViewModelScript._rect(prepared_snapshot.get("bubble_rect", {}))
 	panel.position = bubble_rect.position
@@ -260,8 +261,10 @@ func _finish_active() -> void:
 
 
 func _on_ok_pressed() -> void:
-	if notify_action("coach:ok"):
-		_show_next()
+	if active_lesson.is_empty():
+		return
+	_finish_active()
+	_show_next()
 
 
 func _play_attention_motion() -> void:
