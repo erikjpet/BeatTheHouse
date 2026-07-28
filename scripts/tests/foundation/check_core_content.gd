@@ -25,6 +25,7 @@ const MusicArrangementSelectorScript := preload("res://scripts/ui/music_arrangem
 const SfxPlayerScript := preload("res://scripts/ui/sfx_player.gd")
 const WebAudioBridgeScript := preload("res://scripts/ui/web_audio_bridge.gd")
 const GameSurfaceCanvasScript := preload("res://scripts/ui/game_surface_canvas.gd")
+const WorldMapCanvasScript := preload("res://scripts/ui/world_map_canvas.gd")
 const RunInventoryViewModelScript := preload("res://scripts/ui/run_inventory_view_model.gd")
 const CoachViewModelScript := preload("res://scripts/ui/coach_view_model.gd")
 const SlotGameScript := preload("res://scripts/games/slot.gd")

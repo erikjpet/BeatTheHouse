@@ -2110,6 +2110,28 @@ func _enabled_world_route_ids_for_run(library: ContentLibrary, run_state: RunSta
 	return result
 
 
+func _check_world_map_current_marker(snapshot: Dictionary, expected_node_id: String, failures: Array) -> void:
+	var canvas: WorldMapCanvas = WorldMapCanvasScript.new()
+	canvas.size = Vector2(540.0, 390.0)
+	canvas.set_map_snapshot(snapshot)
+	var view := canvas.current_view_snapshot()
+	var marker: Dictionary = view.get("current_marker", {}) if typeof(view.get("current_marker", {})) == TYPE_DICTIONARY else {}
+	if str(marker.get("id", "")) != expected_node_id:
+		failures.append("World map canvas did not expose a current-node marker for %s." % expected_node_id)
+	if str(marker.get("label", "")) != "YOU ARE HERE":
+		failures.append("World map canvas current marker did not expose the YOU ARE HERE label.")
+	if str(marker.get("node_label", "")).strip_edges().is_empty():
+		failures.append("World map canvas current marker did not include the current stop label.")
+	var reduced_snapshot := snapshot.duplicate(true)
+	reduced_snapshot["reduce_motion"] = true
+	canvas.set_map_snapshot(reduced_snapshot)
+	var reduced_view := canvas.current_view_snapshot()
+	var reduced_marker: Dictionary = reduced_view.get("current_marker", {}) if typeof(reduced_view.get("current_marker", {})) == TYPE_DICTIONARY else {}
+	if not bool(reduced_marker.get("reduce_motion", false)):
+		failures.append("World map canvas current marker did not preserve reduce-motion state.")
+	canvas.queue_free()
+
+
 func _check_world_map_foundation(library: ContentLibrary, failures: Array) -> void:
 	var generator: RunGenerator = RunGeneratorScript.new(library)
 	var run_a: RunState = RunStateScript.new()
@@ -2143,6 +2165,7 @@ func _check_world_map_foundation(library: ContentLibrary, failures: Array) -> vo
 		failures.append("World map exposed more than two new travel targets from the start node.")
 	if _string_array(run_a.current_environment.get("travel_hooks", [])) != travel_targets or _string_array(run_a.current_environment.get("next_archetypes", [])) != travel_targets:
 		failures.append("Current environment travel hooks should mirror capped world-map travel targets.")
+	_check_world_map_current_marker(snapshot, start_node_id, failures)
 	_check_closing_soon_world_travel(library, failures)
 	var layout: Dictionary = run_a.current_environment.get("layout", {}) if typeof(run_a.current_environment.get("layout", {})) == TYPE_DICTIONARY else {}
 	var object_rects: Dictionary = layout.get("object_rects", {}) if typeof(layout.get("object_rects", {})) == TYPE_DICTIONARY else {}

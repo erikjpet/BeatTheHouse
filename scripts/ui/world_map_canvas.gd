@@ -12,6 +12,11 @@ const MAP_ICON_DIR := "res://assets/art/map_icons"
 const SELECTED_FOCUS_ZOOM := 0.86
 const SELECTED_FOCUS_LERP_SPEED := 22.0
 const MAP_BOUNDS_SNAP_EPSILON := 0.00035
+const CURRENT_MARKER_RING := Color("#00f5ff")
+const CURRENT_MARKER_CORE := Color("#5df2a2")
+const CURRENT_MARKER_LABEL_BG := Color("#05060a", 0.90)
+const CURRENT_MARKER_LABEL_TEXT := Color("#ffffff")
+const CURRENT_MARKER_LABEL_FONT_SIZE := 11
 
 var snapshot: Dictionary = {}
 var icon_texture_cache: Dictionary = {}
@@ -55,6 +60,8 @@ func _process(delta: float) -> void:
 		_rebuild_node_screen_position_cache()
 		layout_changed.emit()
 		queue_redraw()
+	elif _current_marker_pulse_active():
+		queue_redraw()
 
 
 func set_map_snapshot(map_snapshot: Dictionary) -> void:
@@ -95,6 +102,8 @@ func current_view_snapshot() -> Dictionary:
 	_ensure_layout_cache()
 	var view := snapshot.duplicate(true)
 	var markers: Array = []
+	var current_marker: Dictionary = {}
+	var current_id := str(snapshot.get("current_node_id", ""))
 	for node_value in _array_view(snapshot.get("nodes", [])):
 		if typeof(node_value) != TYPE_DICTIONARY:
 			continue
@@ -112,7 +121,16 @@ func current_view_snapshot() -> Dictionary:
 			"travel_enabled": bool(node.get("travel_enabled", false)),
 			"attribute_badges": _copy_array(node.get("attribute_badges", [])),
 		})
+		if node_id == current_id:
+			current_marker = {
+				"id": node_id,
+				"label": "YOU ARE HERE",
+				"node_label": str(node.get("label", node_id.replace("_", " ").capitalize())),
+				"screen_center": {"x": center.x, "y": center.y},
+				"reduce_motion": bool(snapshot.get("reduce_motion", false)),
+			}
 	view["icon_markers"] = markers
+	view["current_marker"] = current_marker
 	var bounds := map_view_bounds_cache
 	view["canvas_size"] = {
 		"x": size.x,
@@ -414,6 +432,8 @@ func _draw_nodes() -> void:
 			fill = Color("#173927", 0.98)
 		if node_id == selected_id:
 			draw_circle(pos, radius + 7.0, Color("#f27fb3", 0.36))
+		if is_current:
+			_draw_current_node_ring(pos, radius)
 		draw_circle(pos, radius, fill)
 		draw_circle(pos, radius, color, false, 2.0)
 		if travel_enabled and not is_current:
@@ -426,7 +446,7 @@ func _draw_nodes() -> void:
 		else:
 			draw_circle(pos, 7.0, color if is_current or travel_enabled else Color(color.r, color.g, color.b, alpha))
 		if is_current:
-			draw_circle(pos, radius + 3.0, Color("#5df2a2", 0.22), false, 2.0)
+			_draw_current_node_pin(pos, node)
 		if travel_target:
 			var status_color := Color("#5df2a2", alpha)
 			if bool(node.get("closing_soon", false)):
@@ -434,6 +454,49 @@ func _draw_nodes() -> void:
 			elif not bool(node.get("open_now", true)):
 				status_color = Color("#f26d7d", alpha)
 			draw_circle(pos + Vector2(radius - 2.0, -radius + 2.0), 4.0, status_color)
+
+
+func _draw_current_node_ring(pos: Vector2, radius: float) -> void:
+	var reduce_motion := bool(snapshot.get("reduce_motion", false))
+	var pulse := 0.0
+	if not reduce_motion:
+		pulse = sin(float(Time.get_ticks_msec()) * 0.006) * 0.5 + 0.5
+	draw_circle(pos, radius + 9.0 + pulse * 3.0, Color(CURRENT_MARKER_RING, 0.18 + pulse * 0.12), false, 3.0)
+	draw_circle(pos, radius + 5.0, Color(CURRENT_MARKER_CORE, 0.72), false, 2.0)
+	draw_circle(pos, radius + 1.5, Color("#ffffff", 0.80), false, 1.5)
+
+
+func _draw_current_node_pin(pos: Vector2, node: Dictionary) -> void:
+	var pin_tip := pos + Vector2(0.0, MARKER_RADIUS + 15.0)
+	draw_line(pos + Vector2(-5.0, MARKER_RADIUS + 2.0), pin_tip, Color("#ffffff", 0.78), 2.0)
+	draw_line(pos + Vector2(5.0, MARKER_RADIUS + 2.0), pin_tip, Color("#ffffff", 0.78), 2.0)
+	draw_circle(pin_tip, 3.0, CURRENT_MARKER_CORE)
+	_draw_current_node_label(pos, str(node.get("label", node.get("display_name", "Current stop"))))
+
+
+func _draw_current_node_label(pos: Vector2, node_label: String) -> void:
+	var label := "YOU ARE HERE"
+	var font := ThemeDB.fallback_font
+	var text_size := font.get_string_size(label, HORIZONTAL_ALIGNMENT_LEFT, -1.0, CURRENT_MARKER_LABEL_FONT_SIZE)
+	var label_size := Vector2(maxf(112.0, text_size.x + 18.0), 38.0)
+	var label_pos := pos + Vector2(18.0, -MARKER_RADIUS - 19.0)
+	if label_pos.x + label_size.x > size.x - 8.0:
+		label_pos.x = pos.x - label_size.x - 18.0
+	if label_pos.x < 8.0:
+		label_pos.x = 8.0
+	if label_pos.y < 8.0:
+		label_pos.y = pos.y + MARKER_RADIUS + 12.0
+	var label_rect := Rect2(label_pos, label_size)
+	draw_rect(label_rect, CURRENT_MARKER_LABEL_BG)
+	draw_rect(label_rect, CURRENT_MARKER_RING, false, 1.5)
+	draw_string(font, label_pos + Vector2(9.0, 15.0), label, HORIZONTAL_ALIGNMENT_LEFT, label_size.x - 18.0, CURRENT_MARKER_LABEL_FONT_SIZE, CURRENT_MARKER_LABEL_TEXT)
+	var stop_text := node_label.left(24)
+	if not stop_text.strip_edges().is_empty():
+		draw_string(font, label_pos + Vector2(9.0, 31.0), stop_text, HORIZONTAL_ALIGNMENT_LEFT, 128.0, 9, Color("#b7f8ff", 0.86))
+
+
+func _current_marker_pulse_active() -> bool:
+	return not bool(snapshot.get("reduce_motion", false)) and not str(snapshot.get("current_node_id", "")).strip_edges().is_empty()
 
 func _rebuild_snapshot_cache() -> void:
 	nodes_by_id_cache = {}
