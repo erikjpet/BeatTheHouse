@@ -109,6 +109,7 @@ try {
     $headless = if ($Headed) { "false" } else { "true" }
     $url = "http://127.0.0.1:$Port/?bth_perf=1&bth_perf_plan=$Plan&bth_perf_auto_quit=1&bth_perf_frames=$Frames&bth_perf_active_frames=$ActiveFrames&bth_perf_memory_seconds=$MemorySeconds"
     $profile = Join-Path $root (".tmp/web_perf_smoke/{0}_profile" -f $Browser)
+    $coldCache = if ($SkipExport) { "false" } else { "true" }
     $probeArgs = @(
         (Join-Path $PSScriptRoot "l02_web_perf_probe.mjs"),
         "--browser=$Browser",
@@ -118,7 +119,7 @@ try {
         "--url=$url",
         "--out=$outPath",
         "--profile=$profile",
-        "--cold-cache=true"
+        "--cold-cache=$coldCache"
     )
     & $node.Source @probeArgs
     if ($LASTEXITCODE -ne 0) {
@@ -140,7 +141,12 @@ $failures = [System.Collections.Generic.List[string]]::new()
 
 $readyWall = 0
 if ($null -ne $reportEnvelope.ready) {
-    $readyWall = [int]$reportEnvelope.ready.wall_msec
+    if ($null -ne $reportEnvelope.ready.navigation_wall_msec) {
+        $readyWall = [int]$reportEnvelope.ready.navigation_wall_msec
+    }
+    else {
+        $readyWall = [int]$reportEnvelope.ready.wall_msec
+    }
 }
 Assert-Condition -Condition ($readyWall -gt 0) -Message "BTH_PERF_READY was not captured." -Failures $failures
 Assert-Condition -Condition ($readyWall -le $readyBudgetMs) -Message ("Web ready wall time {0}ms exceeded {1}ms." -f $readyWall, $readyBudgetMs) -Failures $failures
@@ -185,6 +191,8 @@ $summary = [ordered]@{
     active_frames = $ActiveFrames
     memory_seconds = $MemorySeconds
     ready_wall_msec = $readyWall
+    ready_browser_wall_msec = if ($null -ne $reportEnvelope.ready -and $null -ne $reportEnvelope.ready.wall_msec) { [int]$reportEnvelope.ready.wall_msec } else { 0 }
+    ready_node_navigation_wall_msec = if ($null -ne $reportEnvelope.ready -and $null -ne $reportEnvelope.ready.node_navigation_wall_msec) { [int]$reportEnvelope.ready.node_navigation_wall_msec } else { 0 }
     ready_budget_msec = $readyBudgetMs
     telemetry_overhead_avg_ms = $overheadAvg
     telemetry_overhead_avg_budget_ms = $telemetryOverheadAvgBudgetMs

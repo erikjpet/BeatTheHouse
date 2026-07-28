@@ -519,6 +519,8 @@ func _build() -> void:
 	urgency_bar.value = 1.0
 	urgency_bar.show_percentage = false
 	urgency_bar.custom_minimum_size = Vector2(VisualStyle.FLEXIBLE_SIZE, VisualStyle.TALK_URGENCY_HEIGHT)
+	urgency_bar.visible = false
+	stack.add_child(urgency_bar)
 
 	choice_list = GridContainer.new()
 	choice_list.columns = 2
@@ -549,10 +551,10 @@ func _render() -> void:
 	if portrait_model != null:
 		var speaker: Dictionary = entry.get("speaker", {}) if typeof(entry.get("speaker", {})) == TYPE_DICTIONARY else {}
 		portrait_model.set_speaker(speaker)
-	urgency_bar.visible = false
 	if bool(timing.get("expires", false)):
 		var duration := maxi(1, int(timing.get("duration_actions", 1)))
 		urgency_bar.value = clampf(float(int(timing.get("remaining_actions", duration))) / float(duration), 0.0, 1.0)
+	urgency_bar.visible = false
 	portrait_panel.visible = expanded
 	collapsed_button.visible = not expanded
 	header_row.visible = expanded

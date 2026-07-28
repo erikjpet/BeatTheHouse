@@ -606,8 +606,9 @@ func _set_icon(target: TextureRect, path: String) -> void:
 
 func _clear(container: Node, keep_count: int = 0) -> void:
 	while container.get_child_count() > keep_count:
-		container.get_child(keep_count).queue_free()
-		container.remove_child(container.get_child(keep_count))
+		var child := container.get_child(keep_count)
+		container.remove_child(child)
+		child.queue_free()
 
 
 func _dict(value: Variant) -> Dictionary:

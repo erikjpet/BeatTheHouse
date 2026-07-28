@@ -4,13 +4,7 @@ const PixelSceneCanvasScript := preload("res://scripts/ui/pixel_scene_canvas.gd"
 
 
 static func build_start_screen(host: Variant) -> void:
-	host.main_menu_background = PixelSceneCanvasScript.new()
-	host.main_menu_background.set_anchors_preset(Control.PRESET_FULL_RECT)
-	host.start_screen.add_child(host.main_menu_background)
-	var menu_environment_id = host._main_menu_background_environment_id()
-	if not menu_environment_id.is_empty():
-		host.main_menu_background.set("environment_id", menu_environment_id)
-	host.main_menu_background.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	host.call_deferred("_ensure_main_menu_background_built")
 
 	var menu_panel = host._panel_container(Color(VisualStyle.role("surface_base"), 0.96), VisualStyle.PURPLE_2)
 	host.main_menu_panel = menu_panel
@@ -117,8 +111,8 @@ static func build_start_screen(host: Variant) -> void:
 	host._set_control_font_size(host.challenge_select_button, VisualStyle.TYPE_BODY)
 	seed_row.add_child(host.challenge_select_button)
 
-	host._build_content_group_controls(host.start_menu_controls)
-	host._build_challenge_controls(host.start_menu_controls)
+	if not host._defer_start_menu_secondary_panels():
+		host._ensure_start_menu_config_panels_built()
 
 	var run_row := HFlowContainer.new()
 	run_row.add_theme_constant_override("h_separation", VisualStyle.SPACE_5)
@@ -156,11 +150,10 @@ static func build_start_screen(host: Variant) -> void:
 	host.exit_game_button = host._main_menu_button("Exit Game", "Close the game window", Callable(host, "exit_game"))
 	host.start_menu_controls.add_child(host.exit_game_button)
 	host.start_menu_action_controls.append(host.exit_game_button)
-
-	host._build_inventory_page(stack)
-	host._build_career_stats_screen(stack)
-	if host.show_game_library_launcher:
-		host._build_game_test_menu(stack)
+	if not host._defer_start_menu_secondary_panels():
+		host._build_inventory_page(stack)
+		if host.show_game_library_launcher:
+			host._build_game_test_menu(stack)
 
 
 static func build_run_screen(host: Variant) -> void:

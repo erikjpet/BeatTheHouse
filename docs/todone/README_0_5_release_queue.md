@@ -1,4 +1,10 @@
-# 0.5 Release Queue - execution order
+# 0.5 Release Queue - completed historical index
+
+Status: **COMPLETED / ARCHIVED.** This file originally lived in `docs/todo/`
+as the execution order for the 0.5 release queue. The queue prompts it named
+have since been executed and archived under `docs/todone/`; this file is kept
+only as historical context for why the queue was ordered this way. Do not treat
+the prompt list below as active work.
 
 Re-assessed 2026-07-26 (second pass) against the tree at `fab0ee82` plus
 uncommitted scratch-ticket edits. Run in order; each prompt is self-contained.

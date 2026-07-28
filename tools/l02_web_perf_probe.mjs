@@ -47,6 +47,8 @@ let context;
 let report = null;
 let ready = null;
 const started = Date.now();
+let navigationStarted = 0;
+let readyPageMsec = 0;
 
 try {
   context = await browserType.launchPersistentContext(profileDir, launchOptions);
@@ -55,11 +57,26 @@ try {
     const cdp = await context.newCDPSession(page);
     await cdp.send("Emulation.setCPUThrottlingRate", { rate: cpuRate });
   }
+  await page.addInitScript(() => {
+    const originalLog = console.log.bind(console);
+    console.log = (...values) => {
+      const first = values.length > 0 ? String(values[0]) : "";
+      if (first.startsWith("BTH_PERF_READY ")) {
+        originalLog(`__BTH_READY_PAGE_MSEC__ ${Math.round(performance.now())}`);
+      }
+      originalLog(...values);
+    };
+  });
   page.on("console", (message) => {
     const text = message.text();
-    if (text.startsWith("BTH_PERF_READY ")) {
+    if (text.startsWith("__BTH_READY_PAGE_MSEC__ ")) {
+      readyPageMsec = Number(text.slice("__BTH_READY_PAGE_MSEC__ ".length)) || 0;
+    } else if (text.startsWith("BTH_PERF_READY ")) {
+      const nodeNavigationWallMsec = navigationStarted > 0 ? Date.now() - navigationStarted : Date.now() - started;
       ready = {
         wall_msec: Date.now() - started,
+        navigation_wall_msec: readyPageMsec > 0 ? readyPageMsec : nodeNavigationWallMsec,
+        node_navigation_wall_msec: nodeNavigationWallMsec,
         payload: safeJson(text.slice("BTH_PERF_READY ".length)),
       };
       console.log(text);
@@ -70,6 +87,7 @@ try {
       console.log(text);
     }
   });
+  navigationStarted = Date.now();
   await page.goto(url, { waitUntil: "domcontentloaded", timeout: timeoutMs });
   const deadline = Date.now() + timeoutMs;
   while (report === null && Date.now() < deadline) {

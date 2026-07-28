@@ -50,6 +50,7 @@ var music_tracks: Array = []
 var tutorial_lessons: Array = []
 var validation_errors: Array = []
 var validation_warnings: Array = []
+var validation_complete := false
 var _load_errors: Array = []
 var _indexes: Dictionary = {}
 var _load_timing: Dictionary = {}
@@ -84,10 +85,11 @@ static func future_pack_paths() -> Dictionary:
 
 
 # Loads the active packs and any future packs that already exist.
-func load() -> Dictionary:
+func load(run_validation: bool = true) -> Dictionary:
 	var load_started_usec := Time.get_ticks_usec()
 	_load_errors = []
 	_load_pack_timings = []
+	validation_complete = false
 	environment_archetypes = _load_array(ENVIRONMENT_ARCHETYPES_PATH, true)
 	games = _load_array(GAMES_PATH, true)
 	scratch_ticket_types = _load_array(SCRATCH_TICKETS_PATH, true)
@@ -106,13 +108,18 @@ func load() -> Dictionary:
 	var parse_complete_usec := Time.get_ticks_usec()
 	_rebuild_indexes()
 	var index_complete_usec := Time.get_ticks_usec()
-	validate()
+	if run_validation:
+		validate()
+	else:
+		validation_errors = _load_errors.duplicate(true)
+		validation_warnings = []
 	var validate_complete_usec := Time.get_ticks_usec()
 	_load_timing = {
 		"total_ms": _elapsed_ms(load_started_usec, validate_complete_usec),
 		"parse_ms": _elapsed_ms(load_started_usec, parse_complete_usec),
 		"index_ms": _elapsed_ms(parse_complete_usec, index_complete_usec),
-		"validate_ms": _elapsed_ms(index_complete_usec, validate_complete_usec),
+		"validate_ms": _elapsed_ms(index_complete_usec, validate_complete_usec) if run_validation else 0.0,
+		"validation_deferred": not run_validation,
 		"packs": _load_pack_timings.duplicate(true),
 	}
 	return {
@@ -136,6 +143,7 @@ func load() -> Dictionary:
 
 # Validates loaded packs without reading demo runtime data.
 func validate() -> Array:
+	validation_complete = true
 	events = _normalize_event_definitions(events)
 	dialogues = _normalize_dialogue_definitions(dialogues)
 	validation_errors = _load_errors.duplicate(true)

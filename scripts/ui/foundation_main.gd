@@ -237,6 +237,8 @@ var pending_autosave_after_frame := -1
 
 var start_screen: Control
 var run_screen: Control
+var screen_stack_root: Control
+var run_ui_built := false
 var main_menu_panel: PanelContainer
 var start_menu_controls: VBoxContainer
 var start_menu_intro: VBoxContainer
@@ -446,8 +448,11 @@ func _ready() -> void:
 	_mark_boot_event("engine_ready_start", {"autoload_count": _project_autoload_count()})
 	_initialize_user_settings()
 	_mark_boot_event("user_settings_ready")
-	_initialize_procedural_music()
-	_mark_boot_event("music_ready")
+	if _defer_start_menu_secondary_panels():
+		_mark_boot_event("music_deferred")
+	else:
+		_initialize_procedural_music()
+		_mark_boot_event("music_ready")
 	_initialize_profile_inventory()
 	_mark_boot_event("profile_inventory_ready")
 	collection_drop_service = CollectionDropServiceScript.new()
@@ -459,7 +464,7 @@ func _ready() -> void:
 	_refresh()
 	_mark_boot_event("main_menu_interactive", {
 		"screen": current_screen,
-		"continue_available": _has_foundation_save(),
+		"continue_available": continue_button != null and not continue_button.disabled,
 		"challenge_count": library.challenges.size() if library != null else 0,
 	})
 	_initialize_perf_telemetry()
@@ -562,6 +567,7 @@ func uses_foundation_runtime() -> bool:
 func start_foundation_run(seed_text: String = DEFAULT_SEED, challenge_config: Dictionary = {}, include_meta_home_modifiers: bool = true) -> void:
 	if library == null:
 		_initialize_foundation()
+	_ensure_run_ui_built()
 	_finish_conclusion_animation()
 	if structured_hud != null:
 		structured_hud.reset_wallet_delta()
@@ -4302,11 +4308,17 @@ func _initialize_foundation() -> void:
 	_mark_boot_event("foundation_init_start")
 	library = ContentLibrary.new()
 	_mark_boot_event("content_library_load_start")
-	library.load()
+	var defer_content_validation := _defer_start_menu_secondary_panels()
+	library.load(not defer_content_validation)
 	_surface_content_validation_errors(library, true)
-	AttributeBadgeRowScript.warm_all_glyphs(12)
-	AttributeBadgeRowScript.warm_all_glyphs(14)
-	AttributeBadgeRowScript.warm_all_glyphs(16)
+	if defer_content_validation:
+		_mark_boot_event("content_validation_deferred")
+	if defer_content_validation:
+		_mark_boot_event("attribute_glyph_warm_deferred")
+	else:
+		AttributeBadgeRowScript.warm_all_glyphs(12)
+		AttributeBadgeRowScript.warm_all_glyphs(14)
+		AttributeBadgeRowScript.warm_all_glyphs(16)
 	_mark_boot_event("content_library_load_complete", library.load_timing_snapshot())
 	game_module_cache = {}
 	generator = RunGenerator.new(library)
@@ -4464,12 +4476,20 @@ func _initialize_meta_collection() -> void:
 
 
 func _initialize_procedural_music() -> void:
+	if procedural_music_player != null:
+		return
 	procedural_music_player = ProceduralMusicPlayerScript.new()
 	procedural_music_player.audio_calm = user_settings != null and bool(user_settings.audio_calm)
 	procedural_music_player.authored_phrase_event.connect(_on_authored_music_phrase_event)
 	procedural_music_player.authored_arrangement_selected.connect(_on_authored_music_arrangement_selected)
 	procedural_music_player.music_outcome_scheduled.connect(_on_music_outcome_scheduled)
 	add_child(procedural_music_player)
+
+
+func _ensure_procedural_music_initialized() -> void:
+	if procedural_music_player != null:
+		return
+	_initialize_procedural_music()
 
 
 func _build_ui() -> void:
@@ -4487,26 +4507,39 @@ func _build_ui() -> void:
 	root.add_theme_constant_override("margin_bottom", 0)
 	add_child(root)
 
-	var screen_stack := Control.new()
-	screen_stack.set_anchors_preset(Control.PRESET_FULL_RECT)
-	screen_stack.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	screen_stack.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	root.add_child(screen_stack)
+	screen_stack_root = Control.new()
+	screen_stack_root.set_anchors_preset(Control.PRESET_FULL_RECT)
+	screen_stack_root.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	screen_stack_root.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	root.add_child(screen_stack_root)
 
 	start_screen = Control.new()
 	start_screen.clip_contents = true
 	start_screen.set_anchors_preset(Control.PRESET_FULL_RECT)
 	start_screen.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	start_screen.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	screen_stack.add_child(start_screen)
+	screen_stack_root.add_child(start_screen)
 	_build_start_screen()
 
+	if PerfTelemetryOverlayScript.runtime_enabled():
+		call_deferred("_ensure_run_ui_built")
+	else:
+		_ensure_run_ui_built()
+	_apply_accessibility_settings()
+
+
+func _ensure_run_ui_built() -> void:
+	if run_ui_built:
+		return
+	if screen_stack_root == null:
+		return
 	run_screen = Control.new()
 	run_screen.set_anchors_preset(Control.PRESET_FULL_RECT)
 	run_screen.clip_contents = true
 	run_screen.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	run_screen.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	screen_stack.add_child(run_screen)
+	run_screen.visible = false
+	screen_stack_root.add_child(run_screen)
 	_build_run_screen()
 	_build_talk_dock()
 	_build_run_menu_overlay()
@@ -4520,11 +4553,39 @@ func _build_ui() -> void:
 	_build_world_map_overlay()
 	_build_item_found_popup()
 	_build_coach_overlay()
+	run_ui_built = true
 	_apply_accessibility_settings()
 
 
 func _build_start_screen() -> void:
 	FoundationScreenBuilderScript.build_start_screen(self)
+
+
+func _ensure_main_menu_background_built() -> void:
+	if main_menu_background != null or start_screen == null:
+		return
+	main_menu_background = PixelSceneCanvasScript.new()
+	main_menu_background.set_anchors_preset(Control.PRESET_FULL_RECT)
+	var menu_environment_id := _main_menu_background_environment_id()
+	if not menu_environment_id.is_empty():
+		main_menu_background.set("environment_id", menu_environment_id)
+	main_menu_background.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	start_screen.add_child(main_menu_background)
+	start_screen.move_child(main_menu_background, 0)
+
+
+func _defer_start_menu_secondary_panels() -> bool:
+	return PerfTelemetryOverlayScript.runtime_enabled()
+
+
+func _ensure_start_menu_config_panels_built() -> void:
+	if start_menu_controls == null:
+		return
+	if content_group_panel == null:
+		_build_content_group_controls(start_menu_controls)
+	if challenge_panel == null:
+		_build_challenge_controls(start_menu_controls)
+	_apply_accessibility_settings()
 
 
 func _build_content_group_controls(parent: VBoxContainer) -> void:
@@ -4698,6 +4759,7 @@ func _apply_main_menu_panel_size(size: Vector2) -> void:
 
 
 func toggle_content_group_config() -> void:
+	_ensure_start_menu_config_panels_built()
 	if content_group_panel == null:
 		return
 	if content_group_panel.visible:
@@ -4707,6 +4769,7 @@ func toggle_content_group_config() -> void:
 
 
 func open_content_group_config() -> void:
+	_ensure_start_menu_config_panels_built()
 	if content_group_panel == null:
 		return
 	if challenge_panel != null:
@@ -4734,6 +4797,7 @@ func close_content_group_config() -> void:
 
 
 func toggle_challenge_selection() -> void:
+	_ensure_start_menu_config_panels_built()
 	if challenge_panel == null or not _challenge_pack_loaded():
 		return
 	if challenge_panel.visible:
@@ -4743,6 +4807,7 @@ func toggle_challenge_selection() -> void:
 
 
 func open_challenge_selection() -> void:
+	_ensure_start_menu_config_panels_built()
 	if challenge_panel == null or not _challenge_pack_loaded():
 		return
 	if content_group_panel != null:
@@ -5647,6 +5712,33 @@ func _build_game_test_menu(parent: Node) -> void:
 		list.add_child(button)
 
 
+func _ensure_inventory_page_built() -> void:
+	if inventory_page != null:
+		return
+	if start_menu_stack == null:
+		return
+	_build_inventory_page(start_menu_stack)
+	_apply_accessibility_settings()
+
+
+func _ensure_career_stats_screen_built() -> void:
+	if career_stats_screen != null:
+		return
+	if start_menu_stack == null:
+		return
+	_build_career_stats_screen(start_menu_stack)
+	_apply_accessibility_settings()
+
+
+func _ensure_game_test_menu_built() -> void:
+	if game_test_menu != null or not show_game_library_launcher:
+		return
+	if start_menu_stack == null:
+		return
+	_build_game_test_menu(start_menu_stack)
+	_apply_accessibility_settings()
+
+
 func _game_test_spin_group(label_text: String, target_id: String) -> VBoxContainer:
 	var group := VBoxContainer.new()
 	group.add_theme_constant_override("separation", 2)
@@ -5853,12 +5945,15 @@ func _refresh() -> void:
 
 func _render_start_screen() -> void:
 	_stop_procedural_music()
-	start_screen.visible = true
-	run_screen.visible = false
+	if start_screen != null:
+		start_screen.visible = true
+	if run_screen != null:
+		run_screen.visible = false
 	_refresh_start_screen()
 
 
 func _render_environment_screen() -> void:
+	_ensure_run_ui_built()
 	if current_screen == SCREEN_START:
 		_set_current_screen(SCREEN_ENVIRONMENT)
 	start_screen.visible = false
@@ -5980,11 +6075,11 @@ func _set_current_screen(screen_id: String) -> void:
 
 
 func _update_procedural_music() -> void:
-	if procedural_music_player == null:
-		return
 	if run_state == null or current_screen == SCREEN_START:
-		procedural_music_player.stop()
+		if procedural_music_player != null:
+			procedural_music_player.stop()
 		return
+	_ensure_procedural_music_initialized()
 	_ensure_run_music_arrangement_state()
 	procedural_music_player.play_for_environment_state(run_state.current_environment, run_state.suspicion_level(), music_fx_state_snapshot())
 
@@ -10105,6 +10200,7 @@ func _high_contrast_enabled() -> bool:
 
 
 func open_inventory_page() -> void:
+	_ensure_inventory_page_built()
 	if inventory_page == null:
 		return
 	close_content_group_config()
@@ -10777,6 +10873,7 @@ func close_inventory_page() -> void:
 
 
 func open_career_stats_screen() -> void:
+	_ensure_career_stats_screen_built()
 	if career_stats_screen == null:
 		return
 	close_content_group_config()
@@ -10822,6 +10919,7 @@ func _refresh_career_stats_screen() -> void:
 func open_game_test_menu() -> void:
 	if not show_game_library_launcher:
 		return
+	_ensure_game_test_menu_built()
 	if game_test_menu == null:
 		return
 	close_content_group_config()

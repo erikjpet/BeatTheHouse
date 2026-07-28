@@ -130,6 +130,7 @@ func _run() -> void:
 	_assert_growth()
 	_write_report()
 	_print_summary()
+	await _cleanup_app()
 	if not failures.is_empty():
 		for failure in failures:
 			push_error(str(failure))
@@ -545,15 +546,17 @@ func _sample(sample_index: int, retained_measurement: bool = false) -> void:
 		int(environment_debug.get("item_icon_texture_cache_size", 0)),
 		int(app_debug.get("run_item_icon_texture_cache_size", 0)),
 	])
+	if int(sample.get("orphan_node_count", 0)) > 0 and str(OS.get_environment("BTH_SOAK_PRINT_ORPHANS")).to_lower() in ["1", "true", "yes"]:
+		Node.print_orphan_nodes()
 
 
 func _assert_coverage() -> void:
 	for key in ["runs_started", "save_loads", "world_travels", "game_actions", "slot_autoplay_blocks", "pinball_cache_stress_blocks"]:
-		if int(coverage.get(key, 0)) <= 0:
+		if _total_coverage_count(key) <= 0:
 			failures.append("Soak probe did not exercise required path: %s." % key)
-	if int(coverage.get("runs_started", 0)) < 3:
-		failures.append("Soak probe expected at least 3 back-to-back runs, got %d." % int(coverage.get("runs_started", 0)))
-	if int(coverage.get("event_actions", 0)) + int(coverage.get("lender_actions", 0)) + int(coverage.get("service_actions", 0)) <= 0:
+	if _total_coverage_count("runs_started") < 3:
+		failures.append("Soak probe expected at least 3 back-to-back runs, got %d." % _total_coverage_count("runs_started"))
+	if _total_coverage_count("event_actions") + _total_coverage_count("lender_actions") + _total_coverage_count("service_actions") <= 0:
 		failures.append("Soak probe did not exercise any event/lender/service lifecycle path.")
 	var slot_background_cache_cap := int(coverage.get("slot_background_texture_cache_cap", 0))
 	if slot_background_cache_cap <= 0 or int(coverage.get("slot_background_textures_prewarmed", 0)) != slot_background_cache_cap:
@@ -730,6 +733,7 @@ func _write_report() -> void:
 		"failures": failures.duplicate(),
 		"warnings": warnings.duplicate(),
 		"coverage": coverage.duplicate(true),
+		"total_coverage": _total_coverage_snapshot(),
 		"config": {
 			"sim_minutes": sim_minutes,
 			"sample_interval_minutes": SAMPLE_INTERVAL_MINUTES,
@@ -833,6 +837,18 @@ func _metric_sample(sample: Dictionary) -> Dictionary:
 	}
 
 
+func _cleanup_app() -> void:
+	if app == null:
+		return
+	var parent := app.get_parent()
+	if parent != null:
+		parent.remove_child(app)
+	app.queue_free()
+	app = null
+	for _index in range(8):
+		await process_frame
+
+
 func _run_is_terminal() -> bool:
 	var state: Dictionary = app.call("serialized_run_state") if app != null else {}
 	var status := str(state.get("run_status", ""))
@@ -895,6 +911,29 @@ func _increment_object_coverage(object_type: String) -> void:
 			coverage["lender_actions"] = int(coverage.get("lender_actions", 0)) + 1
 		_:
 			coverage["object:%s" % object_type] = int(coverage.get("object:%s" % object_type, 0)) + 1
+
+
+func _total_coverage_count(key: String) -> int:
+	var total := int(coverage.get(key, 0))
+	var prewarm: Variant = coverage.get("workload_prewarm_coverage", {})
+	if typeof(prewarm) == TYPE_DICTIONARY:
+		total += int((prewarm as Dictionary).get(key, 0))
+	return total
+
+
+func _total_coverage_snapshot() -> Dictionary:
+	var keys := {}
+	for key in coverage.keys():
+		if str(key) != "workload_prewarm_coverage":
+			keys[str(key)] = true
+	var prewarm: Variant = coverage.get("workload_prewarm_coverage", {})
+	if typeof(prewarm) == TYPE_DICTIONARY:
+		for key in (prewarm as Dictionary).keys():
+			keys[str(key)] = true
+	var result := {}
+	for key in keys.keys():
+		result[str(key)] = _total_coverage_count(str(key))
+	return result
 
 
 func _max_sample_int(metric_key: String) -> int:
