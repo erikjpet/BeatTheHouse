@@ -151,3 +151,35 @@ the running game:
 
 On an unfixable gate, stop at the last green commit, do NOT push, and
 report verbatim.
+
+---
+
+## Execution record — 2026-07-27 23:29 -05:00
+
+- Implementation commit: `1871b0e1` (`Rework video poker holdout flow`).
+- Archive commit: this archival commit.
+- Scope completed:
+  - Replaced the old single PALM timing check with a center-screen PALM / SWAP / COVER chain.
+  - Added a reusable yellow guidance-border helper on the shared surface canvas.
+  - Preserved the old holdout economy mapping by feeding the chain aggregate into the existing `perfect`, `good`, `partial`, `miss`, and `blown` tier hooks.
+  - Kept seeded target-card selection, item/alcohol timing-window modifiers, heat/evidence tiers, and save-load survival.
+  - Removed the manual collect affordance from settled video-poker results; payouts apply at draw resolution and double-up remains explicit opt-in.
+  - Added reduce-motion fallback: one generous center input, no realtime timing redraw.
+- Tuning values:
+  - Standard chain beats: PALM target `0.52`, SWAP target `0.46`, COVER target `0.64` across beat durations `760ms`, `700ms`, `860ms`.
+  - First PALM target retains the old seeded offset (`520ms ± 70ms`) and the existing item/alcohol-adjusted windows.
+  - Grade windows remain the prior economy windows: perfect `80ms`, good `210ms`, close/partial `340ms`, modified by the existing item/alcohol hooks.
+  - Reduce-motion duration: `1120ms`; any completed fallback input resolves as a perfect accessible holdout trigger.
+- Gate results:
+  - `tools\validate_project.ps1`: PASS.
+  - `tools\check_godot.ps1 -FoundationSuite games -TimeoutSec 300`: PASS (`.tmp/test_reports/20260727_231408_smoke/summary.json`).
+  - `tools\check_godot.ps1 -FoundationSuite ui -TimeoutSec 300`: PASS (`.tmp/test_reports/20260727_231950_smoke/summary.json`).
+  - `tools\check_godot.ps1 -FoundationSuite systems -TimeoutSec 300`: PASS (`.tmp/test_reports/20260727_232235_smoke/summary.json`).
+  - `tools\check_godot.ps1 -FoundationSuite video_poker -TimeoutSec 300`: PASS (`.tmp/test_reports/20260727_231728_smoke/summary.json`).
+  - `tools\foundation_determinism_probe.ps1 -RequireGodot -SeedCount 10`: PASS; seeds `10`, checkpoints `320`, combined hash `300794035`.
+  - `tools\foundation_performance_probe.ps1 -RequireGodot`: PASS; 62 observations across 8 seeds; liveness guard proof passed.
+  - `tools\foundation_visual_qa.ps1`: PASS.
+  - `tools\foundation_mouse_playtest.ps1`: PASS; 63 mouse events, visible-control victory and recovery/debt pressure verified.
+  - Manual focused probe (`.tmp/manual_video_poker_rework_probe.gd`): PASS; normal PALM/SWAP/COVER completed as perfect, cheat draw resolved with that grade, auto-pay settled phase displayed, reduce-motion collapsed to one input.
+- Deviations:
+  - An attempted parallel gate launch hit the repo's Godot concurrency guard for UI/systems while the video-poker suite was importing. No result was accepted from those contended attempts; Godot was confirmed quiet and UI/systems were rerun serially before completion.
