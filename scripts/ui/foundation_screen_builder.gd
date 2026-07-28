@@ -200,6 +200,10 @@ static func build_run_screen(host: Variant) -> void:
 	host.top_inventory_button.custom_minimum_size = Vector2(VisualStyle.SPACE_9 * 2.0 + VisualStyle.SPACE_7, host.MIN_NATIVE_TOUCH_TARGET_HEIGHT)
 	host.top_inventory_button.tooltip_text = "Inspect current run items."
 	hud_row.add_child(host.top_inventory_button)
+	host.active_item_button = host._hud_nav_button("Use Item: Empty", Callable(host, "use_active_item_slot"))
+	host.active_item_button.custom_minimum_size = Vector2(VisualStyle.SPACE_9 * 3.0 + VisualStyle.SPACE_8, host.MIN_NATIVE_TOUCH_TARGET_HEIGHT)
+	host.active_item_button.tooltip_text = "Use or choose the equipped active item."
+	hud_row.add_child(host.active_item_button)
 	host.status_label = host._label("", VisualStyle.TYPE_BODY_LARGE)
 	host.status_label.visible = false
 	host.status_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -213,10 +217,6 @@ static func build_run_screen(host: Variant) -> void:
 	host.save_status_label.clip_text = true
 	host.save_status_label.custom_minimum_size = Vector2(VisualStyle.ENVIRONMENT_TITLE_COMPACT_SIZE.x, VisualStyle.FLEXIBLE_SIZE)
 	hud_row.add_child(host.save_status_label)
-	host.active_item_button = host._hud_nav_button("Active: Empty", Callable(host, "use_active_item_slot"))
-	host.active_item_button.custom_minimum_size = Vector2(VisualStyle.SPACE_9 * 4.0 - VisualStyle.SPACE_2, host.MIN_NATIVE_TOUCH_TARGET_HEIGHT)
-	host.active_item_button.tooltip_text = "Use the equipped active item."
-	hud_row.add_child(host.active_item_button)
 
 	var title_row := HBoxContainer.new()
 	title_row.add_theme_constant_override("separation", VisualStyle.SPACE_4)

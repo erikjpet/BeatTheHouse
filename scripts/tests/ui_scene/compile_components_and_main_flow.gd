@@ -1092,6 +1092,26 @@ func _check_shared_selection_popup_text_flow(app: Control) -> bool:
 	if not bool(app.call("select_active_inventory_item", "cumquat_sandwich")):
 		push_error("Active-item popup fixture could not equip the Cumquat Sandwich.")
 		return false
+	await process_frame
+	var top_inventory_button := app.get("top_inventory_button") as Button
+	var active_item_button := app.get("active_item_button") as Button
+	var status_label := app.get("status_label") as Label
+	if active_item_button == null or not active_item_button.visible:
+		push_error("Active-item top-bar use slot was not visible after equipping an active item.")
+		return false
+	if top_inventory_button == null \
+		or active_item_button.get_parent() != top_inventory_button.get_parent() \
+		or active_item_button.get_index() != top_inventory_button.get_index() + 1:
+		push_error("Active-item top-bar use slot was not grouped directly after Inventory.")
+		return false
+	if status_label != null \
+		and active_item_button.get_parent() == status_label.get_parent() \
+		and active_item_button.get_index() > status_label.get_index():
+		push_error("Active-item top-bar use slot was placed after expandable HUD status text.")
+		return false
+	if active_item_button.text.find("Use:") == -1 or active_item_button.text.find("Cumquat") == -1:
+		push_error("Active-item top-bar use slot did not identify the equipped item: %s" % active_item_button.text)
+		return false
 	var stable_size := Vector2.ZERO
 	for open_index in range(3):
 		if not bool(app.call("use_active_item_slot")):

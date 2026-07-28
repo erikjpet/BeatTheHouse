@@ -12463,20 +12463,20 @@ func _refresh_active_item_slot() -> void:
 	if active_item_button == null:
 		return
 	if run_state == null:
-		active_item_button.text = "Active: Empty"
+		active_item_button.text = "Use Item: Empty"
 		active_item_button.icon = null
 		active_item_button.tooltip_text = "No active run."
 		return
 	_refresh_run_action_service()
 	var item := run_action_service.active_item_detail()
 	if item.is_empty():
-		active_item_button.text = "Active: Empty"
+		active_item_button.text = "Use Item: Empty"
 		active_item_button.icon = null
-		active_item_button.tooltip_text = "Open inventory to choose an active item."
+		active_item_button.tooltip_text = "Click to choose an active item from inventory."
 		return
 	var display_name := str(item.get("display_name", item.get("id", "Item")))
-	active_item_button.text = display_name.left(18)
-	active_item_button.tooltip_text = str(item.get("description", "Use active item."))
+	active_item_button.text = "Use: %s" % display_name.left(16)
+	active_item_button.tooltip_text = "%s\nClick to use this active item." % str(item.get("description", "Use active item."))
 	active_item_button.icon = _run_item_texture_for_asset_path(str(item.get("asset_path", "")))
 
 
