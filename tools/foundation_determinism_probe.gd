@@ -399,11 +399,23 @@ func _resolve_video_poker_holdout(run_state: RunState, checkpoints: Array, seed:
 	ui_state["surface_time_msec"] = int(ui_state.get("surface_time_msec", run_state.simulation_time_msec())) + 600
 	var mark_command: Dictionary = game.surface_action_command("video_poker_mark", 0, false, ui_state, run_state, run_state.current_environment)
 	ui_state = _copy_dict(mark_command.get("ui_state", ui_state))
-	var challenge: Dictionary = _copy_dict(ui_state.get("holdout_challenge", {}))
-	ui_state["holdout_input_msec"] = int(challenge.get("perfect_msec", ui_state.get("surface_time_msec", 0)))
-	ui_state["surface_time_msec"] = int(ui_state["holdout_input_msec"])
-	var palm_command: Dictionary = game.surface_action_command("video_poker_palm", 0, false, ui_state, run_state, run_state.current_environment)
-	ui_state = _copy_dict(palm_command.get("ui_state", ui_state))
+	for _beat_step in range(5):
+		var challenge: Dictionary = _copy_dict(ui_state.get("holdout_challenge", {}))
+		if bool(challenge.get("chain_complete", false)) or not str(challenge.get("skill_grade", "")).is_empty():
+			break
+		var beats: Array = challenge.get("beats", []) if typeof(challenge.get("beats", [])) == TYPE_ARRAY else []
+		var action_index := 0
+		if beats.is_empty():
+			ui_state["holdout_input_msec"] = int(challenge.get("perfect_msec", ui_state.get("surface_time_msec", 0)))
+		else:
+			var beat_index := clampi(int(challenge.get("current_beat", 0)), 0, maxi(0, beats.size() - 1))
+			var beat: Dictionary = beats[beat_index] if typeof(beats[beat_index]) == TYPE_DICTIONARY else {}
+			ui_state["holdout_input_msec"] = int(beat.get("target_msec", ui_state.get("surface_time_msec", 0)))
+			if str(beat.get("kind", "")) == "target":
+				action_index = int(challenge.get("target_slot", 0))
+		ui_state["surface_time_msec"] = int(ui_state["holdout_input_msec"])
+		var palm_command: Dictionary = game.surface_action_command("video_poker_palm", action_index, false, ui_state, run_state, run_state.current_environment)
+		ui_state = _copy_dict(palm_command.get("ui_state", ui_state))
 	var result := _resolve_game(run_state, checkpoints, seed, "video_poker", "mark_holds", 0, ui_state, false)
 	if bool(result.get("ok", false)):
 		run_state.advance_environment_turns(1)

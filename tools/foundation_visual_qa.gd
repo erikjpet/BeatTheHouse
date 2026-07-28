@@ -2893,7 +2893,7 @@ func _native_game_surface_action_binding(kind: String, fallback: Dictionary) -> 
 	var hit_actions: Array = surface_snapshot.get("surface_hit_actions", [])
 	var preferred_actions := []
 	if kind == "legal":
-		preferred_actions = ["video_poker_draw", "video_poker_deal", "video_poker_collect", "slot_spin", "bar_dice_roll"]
+		preferred_actions = ["video_poker_draw", "video_poker_deal", "slot_spin", "bar_dice_roll"]
 	elif kind == "cheat_setup":
 		preferred_actions = ["bar_dice_roll", "video_poker_deal", "pull_tab_buy"]
 	else:

@@ -1179,7 +1179,7 @@ func _native_game_surface_action_binding(app: Control, kind: String, fallback: D
 		hit_actions = hit_actions_value
 	var preferred_actions := []
 	if kind == "legal":
-		preferred_actions = ["video_poker_draw", "video_poker_deal", "video_poker_collect", "bar_dice_roll", "slot_spin"]
+		preferred_actions = ["video_poker_draw", "video_poker_deal", "bar_dice_roll", "slot_spin"]
 	else:
 		preferred_actions = ["video_poker_mark", "blackjack_peek", "bar_dice_load", "roulette_late_bet", "baccarat_palm"]
 	for preferred_action in preferred_actions:

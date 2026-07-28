@@ -63,6 +63,13 @@ const HOLDOUT_PROMPT_BASE_MSEC := 520
 const HOLDOUT_PERFECT_WINDOW_MSEC := 80
 const HOLDOUT_GOOD_WINDOW_MSEC := 210
 const HOLDOUT_CLOSE_WINDOW_MSEC := 340
+const HOLDOUT_CHAIN_VERSION := 2
+const HOLDOUT_BEAT_TARGETS := [0.52, 0.46, 0.64]
+const HOLDOUT_BEAT_DURATIONS_MSEC := [760, 700, 860]
+const HOLDOUT_BEAT_IDS := ["palm", "swap", "cover"]
+const HOLDOUT_BEAT_LABELS := ["PALM", "SWAP", "COVER"]
+const HOLDOUT_BEAT_KINDS := ["timing", "target", "release"]
+const HOLDOUT_REDUCED_DURATION_MSEC := 1120
 const HOLDOUT_BASE_HEAT := 14
 const HOLDOUT_PERFECT_HEAT_REDUCTION := 4
 const HOLDOUT_PARTIAL_HEAT_BONUS := 3
@@ -311,12 +318,9 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 	ui["bet_level"] = _affordable_bet_level(state, ui, run_state, environment)
 	var last_result: Dictionary = _copy_dict(state.get("last_result", {}))
 	var hand_active := bool(ui.get("hand_active", false))
-	var result_collected := bool(ui.get("collected", false))
-	var double_phase := not result_collected and bool(ui.get("double_active", false)) and _pending_double_credits(last_result) > 0
-	var showing_result := not result_collected and not hand_active and not last_result.is_empty()
+	var double_phase := bool(ui.get("double_active", false)) and _pending_double_credits(last_result) > 0
+	var showing_result := not hand_active and not last_result.is_empty()
 	var idle_phase := not hand_active and last_result.is_empty() and not double_phase
-	if result_collected and not hand_active:
-		idle_phase = true
 	var phase := "double_up" if double_phase else ("idle" if idle_phase else ("settled" if showing_result else "hold"))
 	var bet_level := _bet_level(ui)
 	var coin_count := _coin_count_for_level(bet_level)
@@ -356,7 +360,7 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 	var holdout_challenge: Dictionary = _normalized_holdout_challenge(ui.get("holdout_challenge", {})) if marked else {}
 	var holdout_meter: Dictionary = _holdout_meter(holdout_challenge, ui) if not holdout_challenge.is_empty() else {}
 	var win_credits := int(last_result.get("win_credits", 0)) if (phase == "settled" or phase == "double_up") else 0
-	var pending_double := 0 if result_collected else _pending_double_credits(last_result)
+	var pending_double := _pending_double_credits(last_result)
 	var double_view: Dictionary = _double_up_view(run_state, state, ui, last_result) if phase == "double_up" else {}
 	var flip: Dictionary = _active_flip(ui, last_result, hand_active)
 	var pit_boss: Dictionary = run_state.pit_boss_watch_status(environment)
@@ -371,7 +375,8 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 		"surface_stake_controls_required": false,
 		"surface_embeds_outcomes": true,
 		"surface_animates_idle": false,
-		"surface_realtime_state_refresh": marked and str(holdout_challenge.get("skill_grade", "")).is_empty(),
+		"surface_realtime_state_refresh": marked and str(holdout_challenge.get("skill_grade", "")).is_empty() and not bool(ui.get("reduce_motion", false)),
+		"reduce_motion": bool(ui.get("reduce_motion", false)),
 		"phase": phase,
 		"machine_name": str(state.get("machine_name", "Video Poker")),
 		"cabinet_key": str(state.get("cabinet_key", "")),
@@ -451,7 +456,6 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 				"video_poker_bet_one": "machine_button",
 				"video_poker_bet_max": "machine_button",
 				"video_poker_double": "machine_button",
-				"video_poker_collect": "machine_button",
 				"video_poker_double_pick": "machine_button",
 			},
 		}),
@@ -481,13 +485,13 @@ func draw_surface(surface, surface_state: Dictionary, _render_context: Dictionar
 	_draw_machine(surface, surface_state)
 	_draw_paytable_grid(surface, surface_state)
 	_draw_meters(surface, surface_state)
-	_draw_holdout_meter(surface, surface_state)
 	if phase == "double_up":
 		_draw_double_up(surface, surface_state)
 	else:
 		_draw_card_row(surface, surface_state, phase)
 	_draw_info_line(surface, surface_state)
 	_draw_controls(surface, surface_state, phase)
+	_draw_holdout_meter(surface, surface_state)
 	return true
 
 
@@ -516,8 +520,11 @@ func surface_action_command(surface_action: String, index: int, confirm_requeste
 		"video_poker_deal":
 			var level2 := _bet_level(next)
 			var denom2 := _denomination_index(next, state)
+			var reduced2 := bool(next.get("reduce_motion", false))
 			var deal_started_msec := _surface_time_msec(ui_state)
 			next = {"hand_active": true, "holds": [], "marked": false, "bet_level": level2, "denomination_index": denom2}
+			if reduced2:
+				next["reduce_motion"] = true
 			next["deal_id"] = "deal_%d" % deal_started_msec
 			next["deal_started_msec"] = deal_started_msec
 			return GameModule.surface_command({
@@ -552,7 +559,11 @@ func surface_action_command(surface_action: String, index: int, confirm_requeste
 			if not bool(next.get("hand_active", false)):
 				return _message_command(next, "Deal a hand first.")
 			next["hand_active"] = true
-			if bool(next.get("marked", false)) and not _normalized_holdout_challenge(next.get("holdout_challenge", {})).is_empty():
+			var draw_challenge: Dictionary = _normalized_holdout_challenge(next.get("holdout_challenge", {}))
+			if bool(next.get("marked", false)) and not draw_challenge.is_empty():
+				if not _holdout_chain_complete(draw_challenge):
+					next["holdout_challenge"] = draw_challenge
+					return _message_command(next, "Finish the PALM / SWAP / COVER chain before the draw.")
 				return _action_command("mark_holds", "cheat", confirm_requested, next, index, _wager_for(state, next), "Draw with the holdout. Click again to risk the palm.")
 			next["marked"] = false
 			next.erase("holdout_challenge")
@@ -564,7 +575,7 @@ func surface_action_command(surface_action: String, index: int, confirm_requeste
 			next["holds"] = _suggested_holds(_opening_hand(run_state, state), variant)
 			next["marked"] = true
 			next["holdout_challenge"] = _start_holdout_challenge(next, run_state, state, variant, environment)
-			return _action_command("mark_holds", "cheat", false, next, index, _wager_for(state, next), "Holdout window armed. Tap PALM in the gap, then draw.")
+			return _action_command("mark_holds", "cheat", false, next, index, _wager_for(state, next), "Holdout chain armed. Follow the yellow PALM / SWAP / COVER prompts.")
 		"video_poker_palm":
 			if not bool(next.get("hand_active", false)):
 				return _message_command(next, "Deal a hand first.")
@@ -572,33 +583,21 @@ func surface_action_command(surface_action: String, index: int, confirm_requeste
 			if palm_challenge.is_empty():
 				return _message_command(next, "Mark the holds before trying the palm.")
 			var input_msec := int(next.get("holdout_input_msec", _surface_time_msec(next)))
-			palm_challenge["input_msec"] = input_msec
-			palm_challenge = _grade_holdout_challenge(palm_challenge)
+			palm_challenge = _record_holdout_chain_input(palm_challenge, input_msec, index)
 			next["marked"] = true
 			next["holdout_challenge"] = palm_challenge
 			next.erase("holdout_input_msec")
-			var grade_label := str(palm_challenge.get("skill_grade", "miss")).replace("_", " ").capitalize()
+			var grade_label := _holdout_chain_status_label(palm_challenge)
 			return GameModule.surface_command({
 				"handled": true,
 				"ui_state": next,
 				"selected_index": index,
 				"preserve_surface_ui_state": true,
 				"set_stake": _wager_for(state, next),
-				"message": "Palm timing locked: %s." % grade_label,
+				"message": grade_label,
 			})
 		"video_poker_collect":
-			next = {
-				"hand_active": false,
-				"collected": true,
-				"bet_level": _bet_level(next),
-				"denomination_index": _denomination_index(next, state),
-			}
-			return GameModule.surface_command({
-				"handled": true,
-				"ui_state": next,
-				"selected_index": index,
-				"message": "Win collected. Deal again to play on.",
-			})
+			return _message_command(next, "Video poker pays automatically. Deal again or choose DOUBLE UP when available.")
 		"video_poker_double":
 			var double_started_msec := _surface_time_msec(ui_state)
 			next["double_active"] = true
@@ -1087,7 +1086,14 @@ func _normalized_holdout_challenge(value: Variant) -> Dictionary:
 		"pit_boss_watched_start": bool(source.get("pit_boss_watched_start", false)),
 		"base_heat": maxi(1, int(source.get("base_heat", HOLDOUT_BASE_HEAT))),
 		"item_modifiers": _copy_array(source.get("item_modifiers", [])),
+		"chain_version": maxi(1, int(source.get("chain_version", HOLDOUT_CHAIN_VERSION))),
+		"reduce_motion": bool(source.get("reduce_motion", false)),
 	}
+	var beats: Array = _normalized_holdout_beats(source.get("beats", []), normalized)
+	if not beats.is_empty():
+		normalized["beats"] = beats
+		normalized["current_beat"] = _holdout_current_beat_index(beats, int(source.get("current_beat", 0)))
+		normalized["chain_complete"] = _holdout_beats_complete(beats)
 	if source.has("input_msec"):
 		normalized["input_msec"] = maxi(0, int(source.get("input_msec", 0)))
 	normalized["margin_msec"] = int(source.get("margin_msec", 0))
@@ -1099,10 +1105,75 @@ func _normalized_holdout_challenge(value: Variant) -> Dictionary:
 	return normalized
 
 
+func _normalized_holdout_beats(value: Variant, challenge: Dictionary) -> Array:
+	var source: Array = value if typeof(value) == TYPE_ARRAY else []
+	var normalized: Array = []
+	for i in range(source.size()):
+		var raw: Dictionary = source[i] if typeof(source[i]) == TYPE_DICTIONARY else {}
+		var beat_id := str(raw.get("id", ""))
+		if beat_id.is_empty():
+			beat_id = "beat_%d" % i
+		var duration := maxi(1, int(raw.get("duration_msec", HOLDOUT_BEAT_DURATIONS_MSEC[mini(i, HOLDOUT_BEAT_DURATIONS_MSEC.size() - 1)])))
+		var start := maxi(0, int(raw.get("started_msec", challenge.get("started_msec", 0))))
+		var target := maxi(start, int(raw.get("target_msec", start + int(round(float(duration) * HOLDOUT_BEAT_TARGETS[mini(i, HOLDOUT_BEAT_TARGETS.size() - 1)])))))
+		var beat := {
+			"id": beat_id,
+			"label": str(raw.get("label", beat_id.to_upper())),
+			"kind": str(raw.get("kind", "timing")),
+			"started_msec": start,
+			"duration_msec": duration,
+			"target_msec": target,
+			"target_slot": clampi(int(raw.get("target_slot", challenge.get("target_slot", -1))), -1, HAND_SIZE - 1),
+			"target_card": _copy_dict(raw.get("target_card", challenge.get("target_card", {}))),
+		}
+		if raw.has("input_msec"):
+			beat["input_msec"] = maxi(0, int(raw.get("input_msec", 0)))
+		if raw.has("selected_slot"):
+			beat["selected_slot"] = clampi(int(raw.get("selected_slot", -1)), -1, HAND_SIZE - 1)
+		var grade := str(raw.get("skill_grade", ""))
+		if ["perfect", "good", "partial", "miss", "blown"].has(grade):
+			beat["skill_grade"] = grade
+		if raw.has("margin_msec"):
+			beat["margin_msec"] = int(raw.get("margin_msec", 0))
+		if raw.has("skill_accuracy"):
+			beat["skill_accuracy"] = clampi(int(raw.get("skill_accuracy", 0)), 0, 100)
+		normalized.append(beat)
+	return normalized
+
+
+func _holdout_current_beat_index(beats: Array, fallback: int = 0) -> int:
+	for i in range(beats.size()):
+		var beat: Dictionary = beats[i] if typeof(beats[i]) == TYPE_DICTIONARY else {}
+		if str(beat.get("skill_grade", "")).is_empty():
+			return i
+	return clampi(fallback, 0, maxi(0, beats.size() - 1))
+
+
+func _holdout_beats_complete(beats: Array) -> bool:
+	if beats.is_empty():
+		return false
+	for beat_value in beats:
+		var beat: Dictionary = beat_value if typeof(beat_value) == TYPE_DICTIONARY else {}
+		if str(beat.get("skill_grade", "")).is_empty():
+			return false
+	return true
+
+
+func _holdout_chain_complete(challenge: Dictionary) -> bool:
+	var normalized := _normalized_holdout_challenge(challenge)
+	if normalized.is_empty():
+		return false
+	if bool(normalized.get("chain_complete", false)):
+		return true
+	return not str(normalized.get("skill_grade", "")).is_empty() and _holdout_beats_complete(normalized.get("beats", []))
+
+
 func _surface_time_msec(ui_state: Dictionary) -> int:
 	if ui_state.has("surface_time_msec"):
 		return maxi(0, int(ui_state.get("surface_time_msec", 0)))
-	return Time.get_ticks_msec()
+	if ui_state.has("deal_started_msec"):
+		return maxi(0, int(ui_state.get("deal_started_msec", 0)))
+	return 0
 
 
 func _holdout_windows(run_state: RunState) -> Dictionary:
@@ -1134,6 +1205,8 @@ func _start_holdout_challenge(ui_state: Dictionary, run_state: RunState, state: 
 	var holds: Array = _index_array(ui_state.get("holds", []))
 	var target: Dictionary = _holdout_target(opening, holds, variant)
 	var now_msec := _surface_time_msec(ui_state)
+	if now_msec <= 0 and run_state != null:
+		now_msec = maxi(0, int(run_state.simulation_time_msec()))
 	var seed := "%s:%s:%d:%s:%d" % [
 		str(state.get("cabinet_key", "")),
 		str(run_state.seed_text if run_state != null else ""),
@@ -1158,7 +1231,46 @@ func _start_holdout_challenge(ui_state: Dictionary, run_state: RunState, state: 
 		"pit_boss_watched_start": bool(pit_boss.get("watched", false)) if bool(pit_boss.get("active", false)) else false,
 		"base_heat": _holdout_base_heat(run_state),
 		"item_modifiers": skill_item_modifier_badges(run_state, HOLDOUT_ITEM_EFFECT_KEYS),
+		"chain_version": HOLDOUT_CHAIN_VERSION,
+		"reduce_motion": bool(ui_state.get("reduce_motion", false)),
+		"current_beat": 0,
+		"chain_complete": false,
+		"beats": _build_holdout_beats(now_msec, prompt_offset, windows, target, bool(ui_state.get("reduce_motion", false))),
 	}
+
+
+func _build_holdout_beats(started_msec: int, first_prompt_offset: int, windows: Dictionary, target: Dictionary, reduce_motion: bool) -> Array:
+	if reduce_motion:
+		return [{
+			"id": "reduced",
+			"label": "PALM",
+			"kind": "simple",
+			"started_msec": started_msec,
+			"duration_msec": HOLDOUT_REDUCED_DURATION_MSEC,
+			"target_msec": started_msec + HOLDOUT_REDUCED_DURATION_MSEC / 2,
+			"target_slot": int(target.get("slot", -1)),
+			"target_card": _copy_dict(target.get("card", {})),
+		}]
+	var beats: Array = []
+	var cursor := started_msec
+	for i in range(HOLDOUT_BEAT_IDS.size()):
+		var duration := int(HOLDOUT_BEAT_DURATIONS_MSEC[i])
+		var target_msec := cursor + int(round(float(duration) * float(HOLDOUT_BEAT_TARGETS[i])))
+		if i == 0:
+			duration = maxi(duration, first_prompt_offset + int(windows.get("close", HOLDOUT_CLOSE_WINDOW_MSEC)) + 60)
+			target_msec = started_msec + first_prompt_offset
+		beats.append({
+			"id": str(HOLDOUT_BEAT_IDS[i]),
+			"label": str(HOLDOUT_BEAT_LABELS[i]),
+			"kind": str(HOLDOUT_BEAT_KINDS[i]),
+			"started_msec": cursor,
+			"duration_msec": duration,
+			"target_msec": target_msec,
+			"target_slot": int(target.get("slot", -1)),
+			"target_card": _copy_dict(target.get("card", {})),
+		})
+		cursor += duration + 120
+	return beats
 
 
 func _holdout_target(hand: Array, holds: Array, variant: Dictionary) -> Dictionary:
@@ -1181,6 +1293,23 @@ func _grade_holdout_challenge(challenge: Dictionary) -> Dictionary:
 	var graded: Dictionary = _normalized_holdout_challenge(challenge)
 	if graded.is_empty():
 		return {}
+	var beats: Array = graded.get("beats", []) if typeof(graded.get("beats", [])) == TYPE_ARRAY else []
+	if not beats.is_empty():
+		for i in range(beats.size()):
+			var beat: Dictionary = beats[i] if typeof(beats[i]) == TYPE_DICTIONARY else {}
+			if str(beat.get("skill_grade", "")).is_empty():
+				beat["skill_grade"] = "miss"
+				beat["margin_msec"] = 0
+				beat["skill_accuracy"] = 0
+			beats[i] = beat
+		graded["beats"] = beats
+		graded["chain_complete"] = true
+		graded["current_beat"] = maxi(0, beats.size() - 1)
+		var aggregate := _aggregate_holdout_chain_grade(beats)
+		graded["skill_grade"] = str(aggregate.get("skill_grade", "miss"))
+		graded["skill_accuracy"] = clampi(int(aggregate.get("skill_accuracy", 0)), 0, 100)
+		graded["margin_msec"] = int(aggregate.get("margin_msec", 0))
+		return graded
 	if not graded.has("input_msec") or int(graded.get("input_msec", 0)) <= 0:
 		graded["skill_grade"] = "miss"
 		graded["margin_msec"] = 0
@@ -1199,6 +1328,119 @@ func _grade_holdout_challenge(challenge: Dictionary) -> Dictionary:
 	graded["margin_msec"] = margin
 	graded["skill_accuracy"] = clampi(int(timing.get("skill_accuracy", 0)), 0, 100)
 	return graded
+
+
+func _record_holdout_chain_input(challenge: Dictionary, input_msec: int, selected_index: int) -> Dictionary:
+	var next: Dictionary = _normalized_holdout_challenge(challenge)
+	if next.is_empty():
+		return {}
+	var beats: Array = next.get("beats", []) if typeof(next.get("beats", [])) == TYPE_ARRAY else []
+	if beats.is_empty():
+		next["input_msec"] = input_msec
+		return _grade_holdout_challenge(next)
+	var beat_index := _holdout_current_beat_index(beats, int(next.get("current_beat", 0)))
+	var beat: Dictionary = beats[beat_index] if typeof(beats[beat_index]) == TYPE_DICTIONARY else {}
+	beat["input_msec"] = maxi(0, input_msec)
+	if str(beat.get("kind", "")) == "target":
+		beat["selected_slot"] = clampi(selected_index, -1, HAND_SIZE - 1)
+	beat = _grade_holdout_beat(beat, next)
+	beats[beat_index] = beat
+	next["beats"] = beats
+	next["current_beat"] = _holdout_current_beat_index(beats, beat_index + 1)
+	next["chain_complete"] = _holdout_beats_complete(beats)
+	if bool(next.get("chain_complete", false)):
+		next = _grade_holdout_challenge(next)
+	return next
+
+
+func _grade_holdout_beat(beat: Dictionary, challenge: Dictionary) -> Dictionary:
+	var graded := beat.duplicate(true)
+	var kind := str(graded.get("kind", "timing"))
+	if kind == "simple":
+		graded["skill_grade"] = "perfect"
+		graded["margin_msec"] = 0
+		graded["skill_accuracy"] = 100
+		return graded
+	if kind == "target" and int(graded.get("selected_slot", -99)) != int(challenge.get("target_slot", -1)):
+		graded["skill_grade"] = "blown" if int(graded.get("selected_slot", -1)) >= 0 else "miss"
+		graded["margin_msec"] = 0
+		graded["skill_accuracy"] = 0
+		return graded
+	var margin := int(graded.get("input_msec", 0)) - int(graded.get("target_msec", 0))
+	var abs_margin := absi(margin)
+	var timing := GameModule.skill_timing_grade_from_distance(
+		abs_margin,
+		int(challenge.get("perfect_window_msec", HOLDOUT_PERFECT_WINDOW_MSEC)),
+		int(challenge.get("good_window_msec", HOLDOUT_GOOD_WINDOW_MSEC)),
+		int(challenge.get("close_window_msec", HOLDOUT_CLOSE_WINDOW_MSEC)),
+		20
+	)
+	graded["skill_grade"] = str(timing.get("skill_grade", "blown"))
+	graded["margin_msec"] = margin
+	graded["skill_accuracy"] = clampi(int(timing.get("skill_accuracy", 0)), 0, 100)
+	return graded
+
+
+func _aggregate_holdout_chain_grade(beats: Array) -> Dictionary:
+	var worst_rank := 0
+	var accuracy_total := 0
+	var margin_total := 0
+	for beat_value in beats:
+		var beat: Dictionary = beat_value if typeof(beat_value) == TYPE_DICTIONARY else {}
+		var grade := str(beat.get("skill_grade", "miss"))
+		worst_rank = maxi(worst_rank, _holdout_grade_rank(grade))
+		accuracy_total += clampi(int(beat.get("skill_accuracy", 0)), 0, 100)
+		margin_total += int(beat.get("margin_msec", 0))
+	var averaged_accuracy := int(round(float(accuracy_total) / float(maxi(1, beats.size()))))
+	var averaged_margin := int(round(float(margin_total) / float(maxi(1, beats.size()))))
+	return {
+		"skill_grade": _holdout_rank_grade(worst_rank),
+		"skill_accuracy": averaged_accuracy,
+		"margin_msec": averaged_margin,
+	}
+
+
+func _holdout_grade_rank(grade: String) -> int:
+	match grade:
+		"perfect":
+			return 0
+		"good":
+			return 1
+		"partial":
+			return 2
+		"miss":
+			return 3
+		"blown":
+			return 4
+	return 3
+
+
+func _holdout_rank_grade(rank: int) -> String:
+	match rank:
+		0:
+			return "perfect"
+		1:
+			return "good"
+		2:
+			return "partial"
+		4:
+			return "blown"
+	return "miss"
+
+
+func _holdout_chain_status_label(challenge: Dictionary) -> String:
+	var normalized := _normalized_holdout_challenge(challenge)
+	var beats: Array = normalized.get("beats", []) if typeof(normalized.get("beats", [])) == TYPE_ARRAY else []
+	if bool(normalized.get("chain_complete", false)):
+		return "Holdout chain locked: %s." % str(normalized.get("skill_grade", "miss")).replace("_", " ").capitalize()
+	var current := _holdout_current_beat_index(beats, int(normalized.get("current_beat", 0)))
+	if current < beats.size():
+		var beat: Dictionary = beats[current] if typeof(beats[current]) == TYPE_DICTIONARY else {}
+		return "%s locked. Next: %s." % [
+			str(HOLDOUT_BEAT_LABELS[maxi(0, current - 1)] if current > 0 and current - 1 < HOLDOUT_BEAT_LABELS.size() else "Beat"),
+			str(beat.get("label", "BEAT")).to_upper(),
+		]
+	return "Holdout chain waiting for the draw."
 
 
 func _finalize_holdout_challenge(ui: Dictionary, run_state: RunState, state: Dictionary, variant: Dictionary, environment: Dictionary) -> Dictionary:
@@ -1233,21 +1475,37 @@ func _holdout_skill_outcome(grade: String) -> String:
 
 func _holdout_meter(challenge: Dictionary, ui_state: Dictionary) -> Dictionary:
 	var current_msec := _surface_time_msec(ui_state)
-	var started := int(challenge.get("started_msec", current_msec))
-	var perfect := int(challenge.get("perfect_msec", started + HOLDOUT_PROMPT_BASE_MSEC))
-	var close_window := maxi(1, int(challenge.get("close_window_msec", HOLDOUT_CLOSE_WINDOW_MSEC)))
-	var span := maxi(1, (perfect - started) + close_window)
-	var progress := clampf(float(current_msec - started) / float(span), 0.0, 1.0)
-	var target := clampf(float(perfect - started) / float(span), 0.0, 1.0)
+	var beats: Array = challenge.get("beats", []) if typeof(challenge.get("beats", [])) == TYPE_ARRAY else []
+	var current_beat := _holdout_current_beat_index(beats, int(challenge.get("current_beat", 0))) if not beats.is_empty() else 0
+	var beat: Dictionary = beats[current_beat] if current_beat < beats.size() and typeof(beats[current_beat]) == TYPE_DICTIONARY else {}
+	var started := int(beat.get("started_msec", challenge.get("started_msec", current_msec)))
+	var duration := maxi(1, int(beat.get("duration_msec", HOLDOUT_PROMPT_BASE_MSEC + HOLDOUT_CLOSE_WINDOW_MSEC)))
+	var perfect := int(beat.get("target_msec", challenge.get("perfect_msec", started + HOLDOUT_PROMPT_BASE_MSEC)))
+	var progress := clampf(float(current_msec - started) / float(duration), 0.0, 1.0)
+	var target := clampf(float(perfect - started) / float(duration), 0.0, 1.0)
 	var input_progress := -1.0
-	if challenge.has("input_msec"):
-		input_progress = clampf(float(int(challenge.get("input_msec", 0)) - started) / float(span), 0.0, 1.0)
+	if beat.has("input_msec"):
+		input_progress = clampf(float(int(beat.get("input_msec", 0)) - started) / float(duration), 0.0, 1.0)
+	elif challenge.has("input_msec"):
+		input_progress = clampf(float(int(challenge.get("input_msec", 0)) - started) / float(duration), 0.0, 1.0)
 	return {
 		"active": true,
+		"center_focus": true,
+		"chain_version": int(challenge.get("chain_version", HOLDOUT_CHAIN_VERSION)),
+		"beat_index": current_beat,
+		"beat_count": maxi(1, beats.size()),
+		"beat_id": str(beat.get("id", "palm")),
+		"beat_label": str(beat.get("label", "PALM")),
+		"beat_kind": str(beat.get("kind", "timing")),
+		"target_slot": int(challenge.get("target_slot", -1)),
+		"target_card": _copy_dict(challenge.get("target_card", {})),
+		"reduce_motion": bool(challenge.get("reduce_motion", ui_state.get("reduce_motion", false))),
+		"chain_complete": bool(challenge.get("chain_complete", false)),
 		"progress": progress,
 		"target": target,
 		"input": input_progress,
 		"skill_grade": str(challenge.get("skill_grade", "")),
+		"beat_results": beats,
 	}
 
 
@@ -2198,7 +2456,10 @@ func _info_text(phase: String, hand: Array, holds: Array, last_result: Dictionar
 		var grade := str(holdout_challenge.get("skill_grade", ""))
 		if not grade.is_empty():
 			return "Holdout %s locked. Draw to finish the swap." % grade.replace("_", " ").capitalize()
-		return "Holdout armed. Tap PALM in the gap, then draw."
+		var beats: Array = holdout_challenge.get("beats", []) if typeof(holdout_challenge.get("beats", [])) == TYPE_ARRAY else []
+		var beat_index := _holdout_current_beat_index(beats, int(holdout_challenge.get("current_beat", 0))) if not beats.is_empty() else 0
+		var beat: Dictionary = beats[beat_index] if beat_index < beats.size() and typeof(beats[beat_index]) == TYPE_DICTIONARY else {}
+		return "Holdout armed. Complete %s (%d/%d), then draw." % [str(beat.get("label", "PALM")).to_upper(), beat_index + 1, maxi(1, beats.size())]
 	var descriptor: Dictionary = _evaluate(hand, _wild_ranks(variant))
 	var pay_row: Dictionary = _pay_for(descriptor, variant)
 	var holding := str(pay_row.get("label", "No Pay")) if int(pay_row.get("mult", 0)) > 0 else "no pay yet"
@@ -2438,21 +2699,66 @@ func _draw_holdout_meter(surface, surface_state: Dictionary) -> void:
 	if not bool(surface_state.get("holdout_ready", false)):
 		return
 	var meter: Dictionary = surface_state.get("holdout_meter", {}) if typeof(surface_state.get("holdout_meter", {})) == TYPE_DICTIONARY else {}
-	var panel := STATUS_PANEL_RECT
-	var bar := Rect2(panel.position + Vector2(16, 142), Vector2(panel.size.x - 32, 8))
-	surface.surface_label("PALM WINDOW", panel.position + Vector2(16, 134), 8, C_PINK)
-	surface.draw_rect(bar, Color("#04060c"))
-	surface.draw_rect(bar, Color(C_PINK.r, C_PINK.g, C_PINK.b, 0.35), false, 1)
-	var progress_x := bar.position.x + bar.size.x * clampf(float(meter.get("progress", 0.0)), 0.0, 1.0)
-	var target_x := bar.position.x + bar.size.x * clampf(float(meter.get("target", 0.5)), 0.0, 1.0)
-	surface.draw_rect(Rect2(target_x - 1.0, bar.position.y - 3.0, 2.0, bar.size.y + 6.0), C_YELLOW)
-	surface.draw_rect(Rect2(bar.position.x, bar.position.y, maxf(0.0, progress_x - bar.position.x), bar.size.y), Color(C_TEAL.r, C_TEAL.g, C_TEAL.b, 0.28))
+	if bool(meter.get("chain_complete", false)):
+		return
+	var reduce_motion := bool(meter.get("reduce_motion", surface_state.get("reduce_motion", false)))
+	var overlay := Rect2(154, 92, 592, 224)
+	surface.draw_rect(Rect2(Vector2.ZERO, surface.surface_board_size()), Color(0.0, 0.0, 0.0, 0.56))
+	surface.draw_rect(overlay, Color("#0b0d18"))
+	surface.draw_rect(overlay, Color(C_YELLOW.r, C_YELLOW.g, C_YELLOW.b, 0.62), false, 3)
+	surface.draw_rect(overlay.grow(-8.0), Color(C_CYAN.r, C_CYAN.g, C_CYAN.b, 0.22), false, 1)
+	var beat_label := str(meter.get("beat_label", "PALM")).to_upper()
+	var beat_index := int(meter.get("beat_index", 0))
+	var beat_count := maxi(1, int(meter.get("beat_count", 1)))
+	surface.surface_label_centered("HOLDOUT CHEAT  %d/%d" % [beat_index + 1, beat_count], Rect2(overlay.position + Vector2(14, 12), Vector2(overlay.size.x - 28, 20)), 13, C_YELLOW)
+	surface.surface_label_centered(beat_label, Rect2(overlay.position + Vector2(18, 38), Vector2(overlay.size.x - 36, 42)), 28, C_CYAN)
+	var kind := str(meter.get("beat_kind", "timing"))
+	var instructions := "Tap inside the yellow box at the timing notch."
+	if kind == "target":
+		instructions = "Pick the yellow card slot to swap in the ideal card."
+	elif kind == "release":
+		instructions = "Cover the move by releasing on the yellow notch."
+	elif kind == "simple":
+		instructions = "Reduced motion: press the yellow box to complete the holdout."
+	surface.surface_label_centered(instructions, Rect2(overlay.position + Vector2(28, 82), Vector2(overlay.size.x - 56, 18)), 11, C_SOFT)
+	var track := Rect2(overlay.position + Vector2(70, 122), Vector2(overlay.size.x - 140, 12))
+	surface.draw_rect(track, Color("#050713"))
+	surface.draw_rect(track, Color(C_SOFT.r, C_SOFT.g, C_SOFT.b, 0.30), false, 1)
+	var progress_x := track.position.x + track.size.x * clampf(float(meter.get("progress", 0.0)), 0.0, 1.0)
+	var target_x := track.position.x + track.size.x * clampf(float(meter.get("target", 0.5)), 0.0, 1.0)
+	surface.draw_rect(Rect2(track.position.x, track.position.y, maxf(0.0, progress_x - track.position.x), track.size.y), Color(C_TEAL.r, C_TEAL.g, C_TEAL.b, 0.42))
+	surface.draw_rect(Rect2(target_x - 2.0, track.position.y - 8.0, 4.0, track.size.y + 16.0), C_YELLOW)
 	var input := float(meter.get("input", -1.0))
 	if input >= 0.0:
-		var input_x := bar.position.x + bar.size.x * clampf(input, 0.0, 1.0)
-		surface.draw_rect(Rect2(input_x - 1.0, bar.position.y - 4.0, 2.0, bar.size.y + 8.0), C_CYAN)
-		var grade := str(meter.get("skill_grade", "")).replace("_", " ").to_upper()
-		surface.surface_label(grade.left(18), panel.position + Vector2(106, 134), 8, C_CYAN)
+		var input_x := track.position.x + track.size.x * clampf(input, 0.0, 1.0)
+		surface.draw_rect(Rect2(input_x - 2.0, track.position.y - 8.0, 4.0, track.size.y + 16.0), C_CYAN)
+	if kind == "target":
+		var slot_w := 82.0
+		var slot_gap := 18.0
+		var row_w := slot_w * HAND_SIZE + slot_gap * float(HAND_SIZE - 1)
+		var row_x := overlay.position.x + (overlay.size.x - row_w) * 0.5
+		var target_slot := int(meter.get("target_slot", -1))
+		for i in range(HAND_SIZE):
+			var slot := Rect2(row_x + float(i) * (slot_w + slot_gap), overlay.position.y + 154.0, slot_w, 44.0)
+			var active := i == target_slot
+			surface.draw_rect(slot, Color(C_CYAN.r, C_CYAN.g, C_CYAN.b, 0.12 if active else 0.06))
+			surface.surface_label_centered("SLOT %d" % (i + 1), slot.grow(-4.0), 12, C_YELLOW if active else C_SOFT)
+			surface.surface_add_hit(slot, "video_poker_palm", i)
+			if active:
+				_draw_guidance_border(surface, slot, "SWAP", true)
+	else:
+		var prompt := Rect2(overlay.position + Vector2(overlay.size.x * 0.5 - 78.0, 154.0), Vector2(156, 46))
+		surface.draw_rect(prompt, Color(C_PINK.r, C_PINK.g, C_PINK.b, 0.18))
+		surface.surface_label_centered(beat_label, prompt.grow(-5.0), 18, C_YELLOW)
+		surface.surface_add_hit(prompt, "video_poker_palm", 0)
+		_draw_guidance_border(surface, prompt, beat_label, true)
+
+
+func _draw_guidance_border(surface, rect: Rect2, label: String, active: bool) -> void:
+	if surface.has_method("surface_draw_guidance_border"):
+		surface.call("surface_draw_guidance_border", rect, label, active)
+	else:
+		surface.draw_rect(rect.grow(3.0), C_YELLOW if active else Color(C_SOFT.r, C_SOFT.g, C_SOFT.b, 0.42), false, 3)
 
 
 func _draw_card_row(surface, surface_state: Dictionary, phase: String) -> void:
@@ -2552,7 +2858,9 @@ func _draw_double_up(surface, surface_state: Dictionary) -> void:
 		surface.draw_rect(Rect2(pick_pos + Vector2(4, 4), CARD_SIZE - Vector2(8, 8)), C_PINK if pick_index != new_selected else C_TEAL)
 		surface.draw_rect(Rect2(pick_pos + Vector2(12, 12), CARD_SIZE - Vector2(24, 24)), Color("#563be0"))
 		surface.surface_label("?", pick_pos + CARD_SIZE * 0.5 + Vector2(-7, 8), 26, C_WHITE)
-		surface.surface_add_exact_hit(Rect2(pick_pos, CARD_SIZE), "video_poker_double_pick", pick_index)
+		var pick_rect := Rect2(pick_pos, CARD_SIZE)
+		surface.surface_add_exact_hit(pick_rect, "video_poker_double_pick", pick_index)
+		_draw_guidance_border(surface, pick_rect, "PICK" if pick_index == new_selected else "", true)
 	return
 	surface.surface_label("DOUBLE OR NOTHING — %d at risk" % int(view.get("at_risk", 0)), Vector2(56, 224), 15, C_AMBER)
 	surface.surface_label("Dealer", Vector2(60, 244), 12, C_SOFT)
@@ -2635,7 +2943,7 @@ func _draw_info_line(surface, surface_state: Dictionary) -> void:
 func _draw_controls(surface, surface_state: Dictionary, phase: String) -> void:
 	if phase == "double_up":
 		_draw_cabinet_button(surface, Rect2(24, 374, 128, 36), "DOUBLE", "video_poker_double", 0, C_AMBER, false)
-		_draw_cabinet_button(surface, Rect2(160, 374, 128, 36), "COLLECT", "video_poker_collect", 0, C_TEAL, false)
+		_draw_cabinet_button(surface, Rect2(160, 374, 128, 36), "DEAL", "video_poker_deal", 0, C_TEAL, false)
 		surface.surface_label_centered("PICK A CARD ABOVE", Rect2(320, 378, 240, 24), 12, C_AMBER)
 		return
 	var win_pending := phase == "settled" and bool(surface_state.get("double_up_available", false))
@@ -2660,7 +2968,7 @@ func _draw_controls(surface, surface_state: Dictionary, phase: String) -> void:
 	_draw_cabinet_button(surface, Rect2(230, 374, 92, 36), str(surface_state.get("coin_label", "DENOM")).to_upper(), "video_poker_denom", 0, C_AMBER, betting_enabled)
 	_draw_cabinet_button(surface, Rect2(338, 370, 116, 44), "DRAW" if phase == "hold" else "DEAL", "video_poker_draw" if phase == "hold" else "video_poker_deal", 0, C_TEAL, true)
 	_draw_cabinet_button(surface, Rect2(470, 374, 104, 36), cheat_button_label, cheat_button_action, 0, cheat_button_accent, cheat_button_enabled)
-	_draw_cabinet_button(surface, Rect2(582, 374, 104, 36), "COLLECT", "video_poker_collect", 0, C_TEAL, phase == "settled")
+	_draw_cabinet_button(surface, Rect2(582, 374, 104, 36), "AUTO PAY", "video_poker_collect", 0, C_TEAL, false)
 	if phase == "settled":
 		var delta := int(surface_state.get("result_bankroll_delta", 0))
 		var color := C_TEAL if delta > 0 else (C_YELLOW if delta == 0 else C_ORANGE)

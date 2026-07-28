@@ -705,6 +705,33 @@ func surface_draw_action_button(rect: Rect2, label: String, action: String, inde
 	surface_add_hit(rect, action, index)
 
 
+func surface_draw_guidance_border(rect: Rect2, label: String = "", active: bool = true) -> void:
+	var color := C_YELLOW if active else Color(C_SOFT.r, C_SOFT.g, C_SOFT.b, 0.42)
+	var hovered := active and _hit_region_hovered_rect(rect)
+	var border_width := 4 if hovered and not reduce_motion else 3
+	var glow_alpha := 0.20 if reduce_motion else (0.30 + 0.12 * sin(float(Time.get_ticks_msec()) / 90.0))
+	if active:
+		draw_rect(rect.grow(8.0), Color(C_YELLOW.r, C_YELLOW.g, C_YELLOW.b, glow_alpha), false, 3)
+	draw_rect(rect.grow(3.0), C_WHITE if hovered else color, false, border_width)
+	draw_rect(rect.grow(-2.0), color, false, 1)
+	if not label.strip_edges().is_empty():
+		var badge_width := clampf(float(label.length()) * 7.0 + 18.0, 52.0, rect.size.x + 18.0)
+		var badge := Rect2(rect.position + Vector2((rect.size.x - badge_width) * 0.5, -24.0), Vector2(badge_width, 20.0))
+		draw_rect(badge, Color(0.0, 0.0, 0.0, 0.82))
+		draw_rect(badge, color, false, 1)
+		surface_label_centered(label.to_upper(), badge.grow(-2.0), 10, color)
+
+
+func _hit_region_hovered_rect(rect: Rect2) -> bool:
+	for region_value in hit_regions:
+		var region: Dictionary = region_value if typeof(region_value) == TYPE_DICTIONARY else {}
+		var hit_rect: Rect2 = region.get("rect", Rect2())
+		if hit_rect.intersects(rect):
+			if surface_region_hovered(str(region.get("action", "")), int(region.get("index", -1))):
+				return true
+	return false
+
+
 func _ready() -> void:
 	mouse_filter = Control.MOUSE_FILTER_STOP
 	clip_contents = true

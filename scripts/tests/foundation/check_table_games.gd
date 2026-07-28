@@ -2710,6 +2710,10 @@ func _check_video_poker_surface_contract(game: GameModule, failures: Array) -> v
 	var mark_challenge: Dictionary = mark_state.get("holdout_challenge", {}) if typeof(mark_state.get("holdout_challenge", {})) == TYPE_DICTIONARY else {}
 	if mark_challenge.is_empty():
 		failures.append("Video poker mark did not create a timed holdout challenge.")
+	else:
+		var beats: Array = mark_challenge.get("beats", []) if typeof(mark_challenge.get("beats", [])) == TYPE_ARRAY else []
+		if beats.size() != 3 or int(mark_challenge.get("chain_version", 0)) < 2:
+			failures.append("Video poker holdout did not create the required three-beat PALM/SWAP/COVER chain.")
 	# The cheat's marked holds match the module's own suggested holds for the deal.
 	var fresh_surface := game.surface_state(run_state, environment, deal_state)
 	if JSON.stringify(mark_state.get("holds", [])) != JSON.stringify(fresh_surface.get("suggested_holds", [])):
@@ -2722,15 +2726,27 @@ func _check_video_poker_surface_contract(game: GameModule, failures: Array) -> v
 		failures.append("Video poker marked holdout surface is missing the PALM timing control.")
 	if not bool(marked_surface.get("surface_realtime_state_refresh", false)):
 		failures.append("Video poker marked holdout surface did not request realtime timing refresh.")
-	mark_state["holdout_input_msec"] = int(mark_challenge.get("perfect_msec", 0))
-	var palm_click := game.surface_action_command("video_poker_palm", 0, false, mark_state, run_state, environment)
-	var palm_state: Dictionary = palm_click.get("ui_state", {})
+	var holdout_meter: Dictionary = marked_surface.get("holdout_meter", {}) if typeof(marked_surface.get("holdout_meter", {})) == TYPE_DICTIONARY else {}
+	if not bool(holdout_meter.get("center_focus", false)):
+		failures.append("Video poker holdout did not expose a center-screen minigame meter.")
+	var palm_state: Dictionary = _video_poker_complete_holdout_chain(game, run_state, mark_state, 0)
 	var palm_challenge: Dictionary = palm_state.get("holdout_challenge", {}) if typeof(palm_state.get("holdout_challenge", {})) == TYPE_DICTIONARY else {}
-	if str(palm_challenge.get("skill_grade", "")) != "perfect":
-		failures.append("Video poker PALM did not grade a perfect timed input.")
+	if str(palm_challenge.get("skill_grade", "")) != "perfect" or not bool(palm_challenge.get("chain_complete", false)):
+		failures.append("Video poker PALM/SWAP/COVER chain did not grade perfect timed inputs.")
 	var cheat_draw := game.surface_action_command("video_poker_draw", 0, true, palm_state, run_state, environment)
 	if str(cheat_draw.get("action_id", "")) != "mark_holds" or str(cheat_draw.get("action_kind", "")) != "cheat" or not bool(cheat_draw.get("resolve", false)):
 		failures.append("Video poker DRAW did not resolve the armed holdout cheat.")
+	var reduced_run: RunState = _vp_fresh(game, "jacks_or_better", "VIDEO-POKER-REDUCED-HOLDOUT", 5000)
+	var reduced_deal := game.surface_action_command("video_poker_deal", 0, false, {"reduce_motion": true, "surface_time_msec": 41000}, reduced_run, reduced_run.current_environment)
+	var reduced_mark := game.surface_action_command("video_poker_mark", 0, false, reduced_deal.get("ui_state", {}), reduced_run, reduced_run.current_environment)
+	var reduced_ui: Dictionary = reduced_mark.get("ui_state", {})
+	var reduced_surface := game.surface_state(reduced_run, reduced_run.current_environment, reduced_ui)
+	var reduced_challenge: Dictionary = reduced_ui.get("holdout_challenge", {}) if typeof(reduced_ui.get("holdout_challenge", {})) == TYPE_DICTIONARY else {}
+	var reduced_beats: Array = reduced_challenge.get("beats", []) if typeof(reduced_challenge.get("beats", [])) == TYPE_ARRAY else []
+	if reduced_beats.size() != 1 or not bool(reduced_challenge.get("reduce_motion", false)):
+		failures.append("Video poker reduce-motion holdout did not collapse to a single accessible input.")
+	if bool(reduced_surface.get("surface_realtime_state_refresh", false)):
+		failures.append("Video poker reduce-motion holdout still requested continuous realtime redraw.")
 
 
 # Video poker is a full-simulation draw-poker module: hand evaluation, holds
@@ -2948,6 +2964,11 @@ func _check_video_poker_result_visible(game: GameModule, failures: Array) -> voi
 		failures.append("Video poker surface did not show the settled result after drawing (phase=%s)." % str(settled.get("phase", "")))
 	if str(settled.get("result_message", "")).strip_edges().is_empty():
 		failures.append("Video poker settled surface did not expose the hand result after drawing.")
+	var settled_harness := SurfaceHarness.new()
+	settled_harness.setup(settled)
+	game.draw_surface(settled_harness, settled, {"contract_harness": true})
+	if _surface_harness_has_action(settled_harness, "video_poker_collect"):
+		failures.append("Video poker settled surface still exposes a manual COLLECT action instead of automatic payout.")
 
 
 func _check_video_poker_save_load_mid_hand(game: GameModule, failures: Array) -> void:
@@ -3002,10 +3023,31 @@ func _video_poker_holdout_timed_ui(game: GameModule, run_state: RunState, base_u
 	ui["surface_time_msec"] = int(ui.get("surface_time_msec", 12000))
 	var mark_cmd: Dictionary = game.surface_action_command("video_poker_mark", 0, false, ui, run_state, run_state.current_environment)
 	var mark_ui: Dictionary = mark_cmd.get("ui_state", ui)
-	var challenge: Dictionary = mark_ui.get("holdout_challenge", {}) if typeof(mark_ui.get("holdout_challenge", {})) == TYPE_DICTIONARY else {}
-	mark_ui["holdout_input_msec"] = int(challenge.get("perfect_msec", int(mark_ui.get("surface_time_msec", 12000)))) + margin_msec
-	var palm_cmd: Dictionary = game.surface_action_command("video_poker_palm", 0, false, mark_ui, run_state, run_state.current_environment)
-	return palm_cmd.get("ui_state", mark_ui)
+	return _video_poker_complete_holdout_chain(game, run_state, mark_ui, margin_msec)
+
+
+func _video_poker_complete_holdout_chain(game: GameModule, run_state: RunState, mark_ui: Dictionary, margin_msec: int = 0) -> Dictionary:
+	var ui: Dictionary = mark_ui.duplicate(true)
+	var safety := 0
+	while safety < 5:
+		safety += 1
+		var challenge: Dictionary = ui.get("holdout_challenge", {}) if typeof(ui.get("holdout_challenge", {})) == TYPE_DICTIONARY else {}
+		var beats: Array = challenge.get("beats", []) if typeof(challenge.get("beats", [])) == TYPE_ARRAY else []
+		if bool(challenge.get("chain_complete", false)) or not str(challenge.get("skill_grade", "")).is_empty():
+			break
+		if beats.is_empty():
+			ui["holdout_input_msec"] = int(challenge.get("perfect_msec", int(ui.get("surface_time_msec", 12000)))) + margin_msec
+			var legacy_cmd: Dictionary = game.surface_action_command("video_poker_palm", 0, false, ui, run_state, run_state.current_environment)
+			ui = legacy_cmd.get("ui_state", ui)
+			break
+		var beat_index := clampi(int(challenge.get("current_beat", 0)), 0, maxi(0, beats.size() - 1))
+		var beat: Dictionary = beats[beat_index] if typeof(beats[beat_index]) == TYPE_DICTIONARY else {}
+		var index := int(challenge.get("target_slot", 0)) if str(beat.get("kind", "")) == "target" else 0
+		ui["holdout_input_msec"] = int(beat.get("target_msec", int(ui.get("surface_time_msec", 12000)))) + margin_msec
+		ui["surface_time_msec"] = int(ui["holdout_input_msec"])
+		var palm_cmd: Dictionary = game.surface_action_command("video_poker_palm", index, false, ui, run_state, run_state.current_environment)
+		ui = palm_cmd.get("ui_state", ui)
+	return ui
 
 
 func _check_video_poker_multi_hand(game: GameModule, failures: Array) -> void:
