@@ -75,6 +75,7 @@ func item_offer_view_list(selected_item_id: String = "") -> Array:
 		var item_context := item_definition.duplicate(true)
 		item_context["price"] = price
 		item_context["pickup"] = pickup
+		var game_affinity := AttributeBadgesScript.item_game_affinity_id(item_context)
 		offers.append({
 			"id": item_id,
 			"display_name": display_name,
@@ -89,6 +90,8 @@ func item_offer_view_list(selected_item_id: String = "") -> Array:
 			"surface": str(item_definition.get("surface", "counter")),
 			"effect_summary": "",
 			"attribute_badges": AttributeBadgesScript.for_item(item_context),
+			"game_affinity": game_affinity,
+			"game_affinity_label": AttributeBadgesScript.item_game_affinity_label(item_context),
 			"affordable": run_state.bankroll >= price,
 			"selected": item_id == selected_item_id,
 		})
@@ -881,6 +884,7 @@ func purchase_item_result(effect_result: Dictionary, item_definition: Dictionary
 	var display_name := str(item_definition.get("display_name", offer.get("display_name", item_id)))
 	var price := int(offer.get("price", 0))
 	var pickup := bool(offer.get("pickup", false))
+	var game_affinity := AttributeBadgesScript.item_game_affinity_id(item_definition)
 	var result := effect_result.duplicate(true)
 	var deltas := copy_result_deltas(effect_result.get("deltas", {}))
 	if _definition_is_active_item(item_definition):
@@ -905,6 +909,9 @@ func purchase_item_result(effect_result: Dictionary, item_definition: Dictionary
 	var messages: Array = deltas.get("messages", [])
 	if messages.is_empty():
 		messages.append(message)
+	var affinity_nudge := _item_affinity_nudge(game_affinity)
+	if not affinity_nudge.is_empty() and not messages.has(affinity_nudge):
+		messages.append(affinity_nudge)
 	deltas["messages"] = messages
 	result["ok"] = bool(effect_result.get("ok", true))
 	result["type"] = "item_effect"
@@ -912,6 +919,10 @@ func purchase_item_result(effect_result: Dictionary, item_definition: Dictionary
 	result["item_id"] = item_id
 	result["item_effect_id"] = item_id
 	result["action_id"] = "buy_item"
+	result["item_game_affinity"] = game_affinity
+	result["item_affinity_nudge"] = affinity_nudge
+	if _string_array(run_state.current_environment.get("game_ids", [])).has(game_affinity):
+		result["highlight_game_id"] = game_affinity
 	result["price"] = price
 	result["bankroll_delta"] = int(deltas.get("bankroll_delta", 0))
 	result["suspicion_delta"] = int(deltas.get("suspicion_delta", 0))
@@ -921,6 +932,13 @@ func purchase_item_result(effect_result: Dictionary, item_definition: Dictionary
 	result["ended"] = bool(deltas.get("ended", false))
 	result["state"] = GameModule.RESULT_ENDED if bool(result.get("ended", false)) else GameModule.RESULT_CONTINUE
 	return result
+
+
+func _item_affinity_nudge(game_affinity: String) -> String:
+	var clean := game_affinity.strip_edges()
+	if clean.is_empty() or clean == "global":
+		return ""
+	return "Try it at the %s." % _purpose_domain_label(clean)
 
 
 func _clear_active_purchase_use_deltas(deltas: Dictionary) -> void:

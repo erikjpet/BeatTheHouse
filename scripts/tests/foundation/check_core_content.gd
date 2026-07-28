@@ -604,6 +604,7 @@ func _check_attribute_glyph_foundation(library: ContentLibrary, failures: Array)
 			failures.append("Attribute glyph item builder returned no badges.")
 		if JSON.stringify(item) != item_before:
 			failures.append("Attribute glyph item builder mutated its input.")
+	_check_item_game_affinity_badges(library, failures)
 	var event_choice := _first_event_choice_fixture(library)
 	if event_choice.is_empty():
 		failures.append("Attribute glyph event choice fixture is missing.")
@@ -647,6 +648,30 @@ func _first_event_choice_fixture(library: ContentLibrary) -> Dictionary:
 			choice["event_type"] = str(event.get("type", ""))
 			return choice
 	return {}
+
+
+func _check_item_game_affinity_badges(library: ContentLibrary, failures: Array) -> void:
+	for item_value in library.items:
+		if typeof(item_value) != TYPE_DICTIONARY:
+			continue
+		var item: Dictionary = item_value
+		var badges := AttributeBadgesScript.for_item(item)
+		var affinity_id := AttributeBadgesScript.item_game_affinity_id(item)
+		var expected_glyph := "game_%s" % affinity_id
+		var saw_affinity := false
+		for badge_value in badges:
+			if typeof(badge_value) != TYPE_DICTIONARY:
+				continue
+			var badge: Dictionary = badge_value
+			if str(badge.get("glyph_id", "")) == expected_glyph:
+				saw_affinity = true
+				break
+		if not saw_affinity:
+			failures.append("Item %s did not expose its %s game-affinity badge." % [str(item.get("id", "")), affinity_id])
+		var domain := str(item.get("domain", "")).strip_edges().to_lower()
+		var effect: Dictionary = item.get("effect", {}) if typeof(item.get("effect", {})) == TYPE_DICTIONARY else {}
+		if domain == "games" and affinity_id == "global" and not effect.is_empty():
+			failures.append("Game-scoped item %s fell back to the global affinity badge." % str(item.get("id", "")))
 
 
 func _first_dictionary(values: Array) -> Dictionary:

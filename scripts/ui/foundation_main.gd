@@ -3004,6 +3004,7 @@ func apply_item_offer(item_id: String) -> bool:
 	last_game_result = {}
 	last_hook_result = {}
 	_clear_selected_item_offer()
+	_focus_post_purchase_affinity(result)
 	_set_current_screen(SCREEN_RESULT)
 	_show_message(str(result.get("message", "")))
 	_advance_alcohol_absorption()
@@ -3013,6 +3014,24 @@ func apply_item_offer(item_id: String) -> bool:
 		return true
 	_refresh()
 	return true
+
+
+func _focus_post_purchase_affinity(result: Dictionary) -> void:
+	var game_id := str(result.get("highlight_game_id", "")).strip_edges()
+	if game_id.is_empty():
+		return
+	var object_id := "game:%s" % game_id
+	if focus_interactable_object(object_id):
+		return
+	var fixture_prefix := "%s:" % object_id
+	for object_value in _interactable_object_view_list():
+		if typeof(object_value) != TYPE_DICTIONARY:
+			continue
+		var object: Dictionary = object_value
+		var candidate_id := str(object.get("object_id", ""))
+		if candidate_id == object_id or candidate_id.begins_with(fixture_prefix):
+			focus_interactable_object(candidate_id)
+			return
 
 
 func confirm_home_tenure_action() -> bool:

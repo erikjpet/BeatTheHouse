@@ -162,6 +162,7 @@ static func for_item(item: Dictionary) -> Array:
 	var badges: Array = []
 	var item_class := str(source.get("item_class", source.get("class", source.get("item_type", "")))).strip_edges().to_lower()
 	badges.append(class_badge("item", item_class))
+	_add_badge(badges, _item_game_affinity_badge(source))
 	if bool(source.get("pickup", false)):
 		_add_badge(badges, _badge("cost", "0", "good", "Pickup item"))
 	elif source.has("price"):
@@ -179,6 +180,35 @@ static func for_item(item: Dictionary) -> Array:
 	if int(source.get("capacity", source.get("container_capacity", 0))) > 0:
 		_add_badge(badges, _badge("inventory", "x%d" % int(source.get("capacity", source.get("container_capacity", 0))), "neutral", "Storage capacity"))
 	return _filtered_badges(badges)
+
+
+static func item_game_affinity_id(item: Dictionary) -> String:
+	var config := _item_game_affinity_config()
+	var default_game := str(config.get("default_game", "global")).strip_edges()
+	var aliases: Dictionary = config.get("domain_aliases", {}) if typeof(config.get("domain_aliases", {})) == TYPE_DICTIONARY else {}
+	var effect := _definition_effect(item)
+	var candidates: Array[String] = []
+	_add_affinity_candidate(candidates, _alias_game_id(str(item.get("domain", "")), aliases))
+	_add_affinity_candidate(candidates, _alias_game_id(str(effect.get("active_target", "")), aliases))
+	_add_affinity_candidate(candidates, _alias_game_id(str(effect.get("domain", "")), aliases))
+	var families: Dictionary = effect.get("families", {}) if typeof(effect.get("families", {})) == TYPE_DICTIONARY else {}
+	for family_id in families.keys():
+		_add_affinity_candidate(candidates, _alias_game_id(str(family_id), aliases))
+	var prefixes: Dictionary = config.get("effect_key_prefixes", {}) if typeof(config.get("effect_key_prefixes", {})) == TYPE_DICTIONARY else {}
+	for key in _effect_key_list(effect):
+		for prefix_value in prefixes.keys():
+			var prefix := str(prefix_value)
+			if str(key).begins_with(prefix):
+				_add_affinity_candidate(candidates, str(prefixes.get(prefix, "")))
+	if candidates.is_empty():
+		return default_game
+	return candidates[0]
+
+
+static func item_game_affinity_label(item: Dictionary) -> String:
+	var game_id := item_game_affinity_id(item)
+	var labels: Dictionary = _item_game_affinity_config().get("game_labels", {}) if typeof(_item_game_affinity_config().get("game_labels", {})) == TYPE_DICTIONARY else {}
+	return str(labels.get(game_id, game_id.replace("_", " ").capitalize()))
 
 
 static func for_event_choice(choice: Dictionary) -> Array:
@@ -310,6 +340,59 @@ static func _append_effect_badges(badges: Array, effect: Dictionary) -> void:
 static func _append_family_effect_badges(badges: Array, effect: Dictionary) -> void:
 	_add_delta_badge(badges, "win_chance", int(effect.get("win_chance", effect.get("slot_reel_win_weight_percent", 0))), "Family win weight")
 	_add_delta_badge(badges, "win_bonus", int(effect.get("win_bonus", effect.get("slot_feature_weight_bonus_percent", 0))), "Family payout or feature weight")
+
+
+static func _item_game_affinity_badge(item: Dictionary) -> Dictionary:
+	var game_id := item_game_affinity_id(item)
+	var config := _item_game_affinity_config()
+	var glyphs: Dictionary = config.get("game_glyphs", {}) if typeof(config.get("game_glyphs", {})) == TYPE_DICTIONARY else {}
+	var glyph_id := str(glyphs.get(game_id, glyphs.get(str(config.get("default_game", "global")), "game_global")))
+	var label := item_game_affinity_label(item)
+	return _badge(glyph_id, label, "neutral", "Item affinity: %s" % _title_text(game_id))
+
+
+static func _item_game_affinity_config() -> Dictionary:
+	_ensure_registry()
+	var value: Variant = _registry.get("item_game_affinity", {})
+	if typeof(value) != TYPE_DICTIONARY:
+		return {}
+	return (value as Dictionary).duplicate(true)
+
+
+static func _alias_game_id(raw_id: String, aliases: Dictionary) -> String:
+	var clean := raw_id.strip_edges().to_lower()
+	if clean.is_empty():
+		return ""
+	if not aliases.has(clean):
+		return ""
+	return str(aliases.get(clean, "")).strip_edges()
+
+
+static func _add_affinity_candidate(candidates: Array[String], game_id: String) -> void:
+	var clean := game_id.strip_edges()
+	if clean.is_empty() or clean == "games" or clean == "global":
+		return
+	if not candidates.has(clean):
+		candidates.append(clean)
+
+
+static func _effect_key_list(value: Variant) -> Array[String]:
+	var result: Array[String] = []
+	_collect_effect_keys(value, result)
+	return result
+
+
+static func _collect_effect_keys(value: Variant, result: Array[String]) -> void:
+	if typeof(value) == TYPE_DICTIONARY:
+		var dict: Dictionary = value
+		for key_value in dict.keys():
+			var key := str(key_value).strip_edges()
+			if not key.is_empty() and not result.has(key):
+				result.append(key)
+			_collect_effect_keys(dict.get(key_value), result)
+	elif typeof(value) == TYPE_ARRAY:
+		for nested in value:
+			_collect_effect_keys(nested, result)
 
 
 static func _definition_effect(definition: Dictionary) -> Dictionary:

@@ -513,6 +513,7 @@ func _check_item_build_interaction_foundation(library: ContentLibrary, failures:
 		failures.append("Item purchase did not apply item cost through result-delta bankroll.")
 	if JSON.parse_string(JSON.stringify(purchase_result)) == null:
 		failures.append("Item purchase result was not serializable.")
+	_check_item_affinity_purchase_nudge(library, failures)
 
 	var baseline_game := GameModule.new()
 	var item_game := GameModule.new()
@@ -568,6 +569,54 @@ func _seed_for_first_roll_between(min_roll: int, max_roll: int) -> String:
 		if roll >= min_roll and roll <= max_roll:
 			return seed
 	return ""
+
+
+func _check_item_affinity_purchase_nudge(library: ContentLibrary, failures: Array) -> void:
+	var item_def := library.item("marked_cards")
+	if item_def.is_empty():
+		failures.append("Item affinity fixture is missing: marked_cards.")
+		return
+	if AttributeBadgesScript.item_game_affinity_id(item_def) != "blackjack":
+		failures.append("Marked Cards should infer blackjack game affinity from data-authored effect keys.")
+	var run_state: RunState = RunStateScript.new()
+	run_state.start_new("ITEM-AFFINITY-PURCHASE")
+	run_state.bankroll = 1000
+	run_state.set_environment({
+		"id": "item_affinity_shop",
+		"archetype_id": "item_affinity_shop",
+		"kind": "shop",
+		"tier": 1,
+		"game_ids": ["blackjack"],
+		"item_offers": [{"id": "marked_cards", "price": 12}],
+		"service_ids": [],
+		"event_ids": [],
+		"lender_hooks": [],
+		"next_archetypes": [],
+		"travel_hooks": [],
+	})
+	var resolver: RunActionService = RunActionServiceScript.new()
+	resolver.setup(library, run_state)
+	var offer := resolver.item_offer("marked_cards")
+	if str(offer.get("game_affinity", "")) != "blackjack":
+		failures.append("Marked Cards item offer did not expose blackjack game affinity.")
+	var saw_blackjack_badge := false
+	for badge_value in _copy_array(offer.get("attribute_badges", [])):
+		if typeof(badge_value) == TYPE_DICTIONARY and str((badge_value as Dictionary).get("glyph_id", "")) == "game_blackjack":
+			saw_blackjack_badge = true
+			break
+	if not saw_blackjack_badge:
+		failures.append("Marked Cards item offer did not include the blackjack affinity glyph.")
+	var resolved := resolver.buy_item_offer("marked_cards")
+	if not bool(resolved.get("ok", false)):
+		failures.append("Marked Cards affinity purchase failed: %s" % str(resolved.get("message", "")))
+		return
+	var result: Dictionary = resolved.get("result", {}) if typeof(resolved.get("result", {})) == TYPE_DICTIONARY else {}
+	if str(result.get("highlight_game_id", "")) != "blackjack":
+		failures.append("Marked Cards purchase did not request a blackjack object highlight.")
+	if str(result.get("item_affinity_nudge", "")).find("blackjack") == -1:
+		failures.append("Marked Cards purchase did not nudge the player toward blackjack.")
+	if not _string_array(result.get("messages", [])).has(str(result.get("item_affinity_nudge", ""))):
+		failures.append("Marked Cards purchase nudge was not included in player-facing messages.")
 
 
 func _fixture_item_purchase_result(item_definition: Dictionary, price: int, environment_id: String) -> Dictionary:
