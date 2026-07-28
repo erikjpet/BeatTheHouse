@@ -264,7 +264,7 @@ func environment_interactable_objects(run_state: RunState, environment: Dictiona
 		"visual_key": "pull_tab_redeemer",
 		"visual_type": "service",
 		"icon_key": "clerk_chat",
-		"unique_object_class": "pull_tab_clerk",
+		"unique_object_class": "lottery_redemption_clerk",
 		"unique_object_priority": 80,
 		"available_actions": [{"id": "start_dialogue", "label": "Talk"}],
 		"confirm_action_id": "start_dialogue",

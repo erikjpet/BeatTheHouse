@@ -2680,6 +2680,25 @@ func _resolve_dialogue_choice(entry: Dictionary, choice_id: String) -> void:
 		_show_message("Dialogue choice is not available.")
 		return
 	var effects := _dialogue_choice_effects(choice_definition)
+	if effects.is_empty() and (choice_definition.has("goto") or bool(choice_definition.get("end", false))):
+		var goto_id := str(choice_definition.get("goto", "")).strip_edges()
+		if not goto_id.is_empty():
+			if not run_state.update_pending_talk_dialogue_node(str(entry.get("event_id", "")), goto_id):
+				_show_message("Dialogue page is unavailable.")
+			else:
+				_show_message("")
+			_refresh_talk_dock()
+			_refresh()
+			return
+		var source_context: Dictionary = entry.get("context", {}) if typeof(entry.get("context", {})) == TYPE_DICTIONARY else {}
+		var source_event_id := str(source_context.get("source_event_id", "")).strip_edges()
+		if not source_event_id.is_empty():
+			run_state.resolve_event(source_event_id)
+		run_state.complete_talk_event_resolution(str(entry.get("event_id", "")))
+		_show_message("")
+		_refresh_talk_dock()
+		_refresh()
+		return
 	var context: Dictionary = entry.get("context", {}) if typeof(entry.get("context", {})) == TYPE_DICTIONARY else {}
 	var event_environment := _event_environment_for_context(context)
 	var event_module := EventModule.new()
@@ -6721,7 +6740,7 @@ func _event_choice_action_detail(choice_data: Dictionary) -> String:
 
 
 func _event_inline_response_actions(event_id: String, choices: Array) -> Array:
-	if _event_uses_canonical_popup_choice_surface(event_id):
+	if _event_uses_canonical_popup_choice_surface(event_id) and not _event_allows_canvas_inline_response(event_id, choices):
 		return []
 	var actions: Array = []
 	for choice in choices:
@@ -8435,6 +8454,18 @@ func _cage_gift_shop_inline_actions() -> Array:
 			"disabled_reason": str(offer.get("disabled_reason", "")),
 		})
 	return actions
+
+
+func _event_allows_canvas_inline_response(event_id: String, choices: Array) -> bool:
+	if event_id != RunState.GRAND_CASINO_SHOWDOWN_EVENT_ID:
+		return true
+	if run_state != null and bool(run_state.narrative_flags.get("grand_casino_showdown_active", false)):
+		return false
+	if bool(pending_event_choice_popup_snapshot.get("visible", false)) and str(pending_event_choice_popup_snapshot.get("event_id", "")) == event_id:
+		return false
+	if choices.size() != 1 or typeof(choices[0]) != TYPE_DICTIONARY:
+		return false
+	return str((choices[0] as Dictionary).get("id", "")) == "enter_back_room"
 
 
 func _event_uses_canonical_popup_choice_surface(event_id: String) -> bool:
