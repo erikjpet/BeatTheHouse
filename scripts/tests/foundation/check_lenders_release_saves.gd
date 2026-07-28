@@ -114,6 +114,48 @@ func _check_run_report_foundation(failures: Array) -> void:
 	var boundary := RunReportViewModelScript.cursor_for_progress(timeline, 1.0)
 	if not bool(timeline.get("precomputed", false)) or int(boundary.get("action_index", -1)) != 8 or int(boundary.get("leg_index", -1)) != 1:
 		failures.append("Run report shared timeline did not map action, travel leg, and heat sample boundaries.")
+	var route_run_data := run_state.to_dict()
+	route_run_data["world_map"] = {
+		"visited_path": ["home", "grand_casino"],
+		"nodes": [
+			{"id": "home", "display_name": "Home", "position": {"x": 0.1, "y": 0.2}},
+			{"id": "bar", "display_name": "Bar", "position": {"x": 0.35, "y": 0.55}},
+			{"id": "grand_casino", "display_name": "Grand Casino", "position": {"x": 0.82, "y": 0.4}},
+		],
+		"edges": [{"id": "home-bar", "a": "home", "b": "bar"}],
+		"current_node_id": "",
+	}
+	route_run_data["environment_history"] = [
+		{"id": "home_env", "world_node_id": "home", "archetype_id": "home", "display_name": "Home", "entered_game_clock_minutes": report_start_clock, "departed_game_clock_minutes": report_start_clock + 4},
+		{"id": "bar_env", "world_node_id": "bar", "archetype_id": "bar", "display_name": "Bar", "entered_game_clock_minutes": report_start_clock + 8, "departed_game_clock_minutes": report_start_clock + 12},
+		{"id": "casino_env", "world_node_id": "grand_casino", "archetype_id": "grand_casino", "display_name": "Grand Casino", "entered_game_clock_minutes": report_start_clock + 16, "departed_game_clock_minutes": report_start_clock + 20},
+	]
+	route_run_data["current_environment"] = {"id": "bar_revisit_env", "world_node_id": "bar", "archetype_id": "bar", "display_name": "Bar Revisit", "entered_game_clock_minutes": report_start_clock + 24}
+	route_run_data["story_log"] = [
+		{"type": "travel", "from_world_node_id": "home", "to_world_node_id": "bar", "departed_game_clock_minutes": report_start_clock + 4, "arrived_game_clock_minutes": report_start_clock + 8, "travel_minutes": 4},
+		{"type": "travel", "from_world_node_id": "bar", "to_world_node_id": "grand_casino", "departed_game_clock_minutes": report_start_clock + 12, "arrived_game_clock_minutes": report_start_clock + 16, "travel_minutes": 4},
+		{"type": "travel", "from_world_node_id": "grand_casino", "to_world_node_id": "bar", "departed_game_clock_minutes": report_start_clock + 20, "arrived_game_clock_minutes": report_start_clock + 24, "travel_minutes": 4},
+	]
+	route_run_data["heat_history"] = [
+		{"action_index": 0, "game_clock_minutes": report_start_clock, "heat_value": 0, "world_node_id": "home", "transition": true},
+		{"action_index": 1, "game_clock_minutes": report_start_clock + 8, "heat_value": 2, "world_node_id": "bar", "transition": true},
+		{"action_index": 2, "game_clock_minutes": report_start_clock + 16, "heat_value": 5, "world_node_id": "grand_casino", "transition": true},
+		{"action_index": 3, "game_clock_minutes": report_start_clock + 24, "heat_value": 7, "world_node_id": "bar", "transition": true},
+	]
+	route_run_data["game_clock_minutes"] = report_start_clock + 28
+	var route_report := RunReportViewModelScript.build(route_run_data)
+	var route_timeline := _copy_dict(route_report.get("timeline", {}))
+	var route_path := _copy_array(route_timeline.get("visited_node_ids", []))
+	if JSON.stringify(route_path) != JSON.stringify(["home", "bar", "grand_casino", "bar"]):
+		failures.append("Run report route reconstruction did not preserve authoritative visits/revisit order: %s." % JSON.stringify(route_path))
+	var route_segments: Array = route_timeline.get("replay_segments", []) if typeof(route_timeline.get("replay_segments", [])) == TYPE_ARRAY else []
+	var travel_segment_count := 0
+	for segment_value in route_segments:
+		if typeof(segment_value) == TYPE_DICTIONARY and str((segment_value as Dictionary).get("kind", "")) == "travel":
+			travel_segment_count += 1
+	var route_map := _copy_dict(route_report.get("map_snapshot", {}))
+	if travel_segment_count != 3 or _copy_array(route_map.get("route_path_geometry", [])).size() != 3 or _copy_array(route_map.get("nodes", [])).size() != 3:
+		failures.append("Run report map did not render the full movement path with unique nodes and all travel legs: segments=%d geometry=%d nodes=%d." % [travel_segment_count, _copy_array(route_map.get("route_path_geometry", [])).size(), _copy_array(route_map.get("nodes", [])).size()])
 
 	var registry := RunReportViewModelScript.load_outcome_registry()
 	var base_data := run_state.to_dict()

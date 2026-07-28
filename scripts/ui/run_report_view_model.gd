@@ -30,7 +30,9 @@ static func build(run_data: Dictionary, catalogs: Dictionary = {}) -> Dictionary
 		maxi(0, int(_copy_dict(run_data.get("event_cadence", {})).get("action_index", 0))),
 		story_log,
 		RunState.GAME_CLOCK_START_MINUTE,
-		maxi(RunState.GAME_CLOCK_START_MINUTE, int(run_data.get("game_clock_minutes", RunState.GAME_CLOCK_START_MINUTE)))
+		maxi(RunState.GAME_CLOCK_START_MINUTE, int(run_data.get("game_clock_minutes", RunState.GAME_CLOCK_START_MINUTE))),
+		_dict_array(run_data.get("environment_history", [])),
+		_copy_dict(run_data.get("current_environment", {}))
 	)
 	var report_map := build_report_map_snapshot(_copy_dict(run_data.get("world_map", {})), timeline)
 	return {
@@ -338,7 +340,7 @@ static func build_debt_ledger(live_debt: Array, story_log: Array) -> Array:
 	return rows
 
 
-static func build_timeline(heat_entries: Array, world_map: Dictionary, final_action_index: int = 0, story_log: Array = [], start_game_clock_minutes: int = RunState.GAME_CLOCK_START_MINUTE, end_game_clock_minutes: int = -1) -> Dictionary:
+static func build_timeline(heat_entries: Array, world_map: Dictionary, final_action_index: int = 0, story_log: Array = [], start_game_clock_minutes: int = RunState.GAME_CLOCK_START_MINUTE, end_game_clock_minutes: int = -1, environment_history: Array = [], current_environment: Dictionary = {}) -> Dictionary:
 	var samples := RunState.normalize_heat_history(heat_entries)
 	if samples.is_empty():
 		samples = [{"action_index": 0, "game_clock_minutes": start_game_clock_minutes, "heat_value": 0, "environment_id": "", "environment_name": "", "world_node_id": "", "transition": true}]
@@ -371,7 +373,7 @@ static func build_timeline(heat_entries: Array, world_map: Dictionary, final_act
 	for entry_value in _dict_array(story_log):
 		if str(entry_value.get("type", "")) == "travel":
 			travel_entries.append(entry_value)
-	var path := _resolved_report_path(world_map, transitions, travel_entries)
+	var path := _resolved_report_path(world_map, transitions, travel_entries, environment_history, current_environment)
 	var keyframes: Array = []
 	var segments: Array = []
 	var arrival_clock := start_clock
@@ -430,8 +432,8 @@ static func build_timeline(heat_entries: Array, world_map: Dictionary, final_act
 	return {"max_action_index": max_action, "start_game_clock_minutes": start_clock, "end_game_clock_minutes": end_clock, "duration_minutes": end_clock - start_clock, "heat_samples": normalized_samples, "environment_bands": bands, "travel_keyframes": keyframes, "replay_segments": segments, "visited_node_ids": path, "precomputed": true}
 
 
-static func _resolved_report_path(world_map: Dictionary, transitions: Array, travel_entries: Array) -> Array:
-	var path := _string_array(world_map.get("visited_path", []))
+static func _resolved_report_path(world_map: Dictionary, transitions: Array, travel_entries: Array, environment_history: Array = [], current_environment: Dictionary = {}) -> Array:
+	var map_path := _string_array(world_map.get("visited_path", []))
 	var recorded_path: Array = []
 	for transition_value in transitions:
 		if typeof(transition_value) != TYPE_DICTIONARY:
@@ -444,13 +446,28 @@ static func _resolved_report_path(world_map: Dictionary, transitions: Array, tra
 		var entry: Dictionary = entry_value
 		_append_distinct_report_node(traveled_path, str(entry.get("from_world_node_id", "")))
 		_append_distinct_report_node(traveled_path, str(entry.get("to_world_node_id", "")))
-	_merge_missing_report_nodes(recorded_path, traveled_path)
+	var history_path: Array = []
+	for history_value in environment_history:
+		if typeof(history_value) != TYPE_DICTIONARY:
+			continue
+		_append_distinct_report_node(history_path, _report_node_id_from_environment(history_value as Dictionary))
+	if not current_environment.is_empty():
+		_append_distinct_report_node(history_path, _report_node_id_from_environment(current_environment))
+	var path := history_path.duplicate()
+	if path.is_empty():
+		path = traveled_path.duplicate()
 	if path.is_empty():
 		path = recorded_path.duplicate()
-	else:
-		_merge_missing_report_nodes(path, recorded_path)
+	if path.is_empty():
+		path = map_path.duplicate()
+	_merge_missing_report_nodes(path, traveled_path)
+	_merge_missing_report_nodes(recorded_path, traveled_path)
+	_merge_missing_report_nodes(path, recorded_path)
+	_merge_missing_report_nodes(path, map_path)
 	var current_node_id := str(world_map.get("current_node_id", "")).strip_edges()
-	if not current_node_id.is_empty() and not path.has(current_node_id):
+	if current_node_id.is_empty() and not current_environment.is_empty():
+		current_node_id = _report_node_id_from_environment(current_environment)
+	if not current_node_id.is_empty() and (path.is_empty() or str(path[-1]) != current_node_id):
 		path.append(current_node_id)
 	return path
 
@@ -460,6 +477,14 @@ static func _append_distinct_report_node(path: Array, node_id_value: String) -> 
 	if node_id.is_empty() or (not path.is_empty() and str(path[-1]) == node_id):
 		return
 	path.append(node_id)
+
+
+static func _report_node_id_from_environment(environment: Dictionary) -> String:
+	for key in ["world_node_id", "archetype_id", "id"]:
+		var node_id := str(environment.get(key, "")).strip_edges()
+		if not node_id.is_empty():
+			return node_id
+	return ""
 
 
 static func _merge_missing_report_nodes(path: Array, evidence_path: Array) -> void:
@@ -541,9 +566,10 @@ static func build_report_map_snapshot(world_map: Dictionary, timeline: Dictionar
 			source_nodes_by_id[node_id] = node_value.duplicate(true)
 	var timeline_positions_by_id := _timeline_positions_by_id(timeline)
 	var nodes: Array = []
+	var added_node_ids := {}
 	for node_id_value in path:
 		var node_id := str(node_id_value).strip_edges()
-		if node_id.is_empty() or not visited_lookup.has(node_id):
+		if node_id.is_empty() or not visited_lookup.has(node_id) or added_node_ids.has(node_id):
 			continue
 		var node: Dictionary = _copy_dict(source_nodes_by_id.get(node_id, {}))
 		if node.is_empty():
@@ -552,6 +578,7 @@ static func build_report_map_snapshot(world_map: Dictionary, timeline: Dictionar
 		node["travel_target"] = false
 		node["travel_enabled"] = false
 		nodes.append(node)
+		added_node_ids[node_id] = true
 	var edges: Array = []
 	for edge_value in _dict_array(world_map.get("edges", [])):
 		if visited_lookup.has(str(edge_value.get("a", ""))) and visited_lookup.has(str(edge_value.get("b", ""))):
