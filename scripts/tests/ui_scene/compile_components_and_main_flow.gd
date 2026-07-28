@@ -2686,6 +2686,20 @@ func _run() -> void:
 		push_error("Pinball money ding SFX is too small to represent a positive hit cue.")
 		quit(1)
 		return
+	var stale_win_audio_state := {
+		"slot_animation_id": "slot:stale-win",
+		"slot_payout": 50,
+		"slot_stake_cost": 5,
+		"slot_reel_stop_times": [0.24, 0.48, 0.72],
+	}
+	if bool(slot_sfx.debug_slot_final_cue_armed(stale_win_audio_state, 999.0, false)):
+		push_error("Slot SFX armed a stale final payout cue without an active animation.")
+		quit(1)
+		return
+	if not bool(slot_sfx.debug_slot_final_cue_armed(stale_win_audio_state, 1.20, true)):
+		push_error("Slot SFX no longer arms final payout cues during an active completed spin animation.")
+		quit(1)
+		return
 	if drink_sfx.data.size() <= 2048 or drink_sfx.loop_mode != AudioStreamWAV.LOOP_DISABLED or slot_sfx.debug_normalized_event_id("drink_consumed") != "drink_consumed":
 		push_error("Drink confirmation SFX was not generated as a dedicated one-shot cue.")
 		quit(1)

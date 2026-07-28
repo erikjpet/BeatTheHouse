@@ -406,7 +406,7 @@ func sync_slot_state(slot_state: Dictionary, elapsed: float, animation_active: b
 	var final_time := last_stop_time + 0.35
 	if not bonus_steps.is_empty():
 		final_time = bonus_start_time + float(bonus_steps.size()) * SLOT_BONUS_STEP_TIME + 0.22
-	if cue_stream.is_empty() and (elapsed >= final_time or not animation_active):
+	if cue_stream.is_empty() and animation_active and elapsed >= final_time:
 		_trigger_final(slot_state, profile)
 
 
@@ -719,6 +719,26 @@ func debug_music_director_cue_ids() -> Array:
 		result.append(str(cue_value))
 	result.sort()
 	return result
+
+
+func debug_slot_final_cue_armed(slot_state: Dictionary, elapsed: float, animation_active: bool) -> bool:
+	var timing := _dict(slot_state.get("_surface_audio_timing", {}))
+	var feature_scene := _dict(slot_state.get("slot_feature_scene", {}))
+	if _active_slot_audio_id(slot_state, feature_scene, timing).is_empty():
+		return false
+	if bool(feature_scene.get("active", false)):
+		return false
+	var cue_stream := _slot_audio_cues(slot_state)
+	if not cue_stream.is_empty() or not animation_active:
+		return false
+	var reel_stop_times := _slot_reel_stop_times(slot_state)
+	var last_stop_time := float(reel_stop_times[reel_stop_times.size() - 1]) if not reel_stop_times.is_empty() else 0.0
+	var final_time := last_stop_time + 0.35
+	var bonus_steps := _dictionary_array(slot_state.get("slot_bonus_steps", []))
+	if not bonus_steps.is_empty():
+		var bonus_start_time := float(slot_state.get("slot_bonus_start_time", last_stop_time + SLOT_POST_REEL_BONUS_DELAY))
+		final_time = bonus_start_time + float(bonus_steps.size()) * SLOT_BONUS_STEP_TIME + 0.22
+	return elapsed >= final_time
 
 
 func debug_soak_snapshot() -> Dictionary:
