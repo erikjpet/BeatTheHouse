@@ -134,6 +134,7 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 		compact_tab = "ticket" if not active_ticket.is_empty() else "machine"
 	var sweep_duration := 0 if reduce_motion else SWEEP_DURATION_MSEC
 	_configure_active_ticket_layout(active_ticket, compact_mode)
+	var result_ready := bool(active_ticket.get("result_ready", false))
 	return GameModule.surface_spec({
 		"surface_renderer": "scratch_tickets",
 		"surface_life": "scratch_vending_machine",
@@ -150,9 +151,9 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 		"scratch_ticket": active_ticket,
 		"scratch_queue": queue,
 		"scratch_queue_count": queue.size(),
-		"scratch_result_ready": bool(active_ticket.get("result_ready", false)),
+		"scratch_result_ready": result_ready,
 		"scratch_result_summary": _ticket_result_summary(active_ticket),
-		"scratch_result_reason": _ticket_win_reason(active_ticket),
+		"scratch_result_reason": _ticket_win_reason(active_ticket) if result_ready else "",
 		"scratch_pending_payout": _pending_payout(machine),
 		"scratch_current_winnings": _pending_payout(machine),
 		"scratch_active_price": int(active_ticket.get("price", 0)),
@@ -186,8 +187,8 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 		"scratch_collection_total": COLLECTION_TOTAL,
 		"scratch_collection_complete": collection_complete,
 		"scratch_collection_status": "FULL SET FOUND" if collection_complete else "%d/%d PRINTS FOUND" % [discovered.size(), COLLECTION_TOTAL],
-		"scratch_xray_peeks": _dictionary_array(active_ticket.get("xray_peeks", [])),
-		"scratch_fortune": str(active_ticket.get("fortune_tier", "")),
+		"scratch_xray_peeks": _dictionary_array(active_ticket.get("xray_peeks", [])) if result_ready else [],
+		"scratch_fortune": str(active_ticket.get("fortune_tier", "")) if result_ready else "",
 		"scratch_penalty_shields": int(machine.get("penalty_shields_remaining", 0)),
 		"scratch_rules": "%s Winners wait for the clerk." % _ticket_play_label(str(active_ticket.get("type_id", "")), _dict_ref(active_ticket.get("mechanic", {}))) if not active_ticket.is_empty() else "Buy a ticket, scratch each silver box, then file the result.",
 		"surface_animation_channels": [
@@ -2830,7 +2831,7 @@ func _draw_scratch_foil_run(surface, _ticket: Dictionary, run_rect: Rect2, run_a
 	var mark: Color = style.get("mark", Color("#ffffff")) as Color
 	var pattern := str(style.get("pattern", "hatch"))
 	var texture := _scratch_foil_texture()
-	surface.draw_rect(run_rect, Color(base.r, base.g, base.b, minf(1.0, 0.96 * run_alpha)))
+	surface.draw_rect(run_rect, Color(base.r, base.g, base.b, run_alpha))
 	if texture != null:
 		surface.draw_texture_rect(texture, run_rect, true, Color(tint.r, tint.g, tint.b, 0.46 * run_alpha))
 	var phase := int((row * 5 + column * 3) % 8)

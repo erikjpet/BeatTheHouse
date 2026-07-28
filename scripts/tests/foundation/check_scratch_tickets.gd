@@ -49,6 +49,7 @@ func _check_scratch_tickets_surface_contract(game: GameModule, failures: Array) 
 		failures.append("Scratch Tickets machine exposed no spatial buy targets.")
 	_check_scratch_purchase_and_input(game, run_state, environment, failures)
 	_check_scratch_render_layers(game, failures)
+	_check_scratch_pre_reveal_privacy(game, failures)
 	_check_scratch_determinism(game, failures)
 	_check_scratch_luck_hook(game, failures)
 	_check_scratch_mechanics(game, failures)
@@ -155,6 +156,32 @@ func _check_scratch_render_layers(game: GameModule, failures: Array) -> void:
 		harness.setup(surface)
 		if not game.draw_surface(harness, surface, {"contract_harness": true}):
 			failures.append("Scratch %s production render failed in the surface harness." % type_id)
+
+
+func _check_scratch_pre_reveal_privacy(game: GameModule, failures: Array) -> void:
+	var run_state: RunState = RunStateScript.new()
+	run_state.start_new("SCRATCH-PRE-REVEAL-PRIVACY")
+	run_state.bankroll = 500000
+	var environment := _scratch_environment("scratch_pre_reveal_privacy")
+	var ticket: Dictionary = game.call("_roll_ticket", game.call("_ticket_type", "two_fer"), _scratch_rng("pre-reveal-privacy"), 0, "privacy")
+	ticket["xray_peeks"] = game.call("_xray_peeks", ticket, 3, _scratch_rng("pre-reveal-xray"))
+	ticket["fortune_tier"] = game.call("_fortune_tier", ticket)
+	environment["game_states"] = {"scratch_tickets": {"schema": "scratch_ticket_machine_state", "stock": [], "pending_queue": [], "winner_pile": [], "loser_pile": [], "active_ticket": ticket}}
+	run_state.current_environment = environment
+	var surface := game.surface_state(run_state, environment, {})
+	if bool(surface.get("scratch_result_ready", true)) or not str(surface.get("scratch_result_summary", "")).is_empty() or not str(surface.get("scratch_result_reason", "")).is_empty():
+		failures.append("Scratch surface exposed result text before the ticket was fully scratched.")
+	if not _dict_array(surface.get("scratch_xray_peeks", [])).is_empty() or not str(surface.get("scratch_fortune", "")).is_empty():
+		failures.append("Scratch surface exposed item-derived spoiler hints before the ticket was fully scratched.")
+	var harness := SurfaceHarness.new()
+	harness.setup(surface)
+	game.draw_surface(harness, surface, {"contract_harness": true})
+	if _surface_harness_label_contains(harness, "X-RAY") or _surface_harness_label_contains(harness, "TAROT"):
+		failures.append("Scratch ticket drew a pre-reveal spoiler hint box on the ticket face.")
+	game.surface_action_command("scratch_all", 0, false, {}, run_state, environment)
+	var revealed := game.surface_state(run_state, environment, {})
+	if not bool(revealed.get("scratch_result_ready", false)) or str(revealed.get("scratch_result_summary", "")).is_empty() or str(revealed.get("scratch_result_reason", "")).is_empty():
+		failures.append("Scratch surface did not restore result text after the ticket was fully scratched.")
 
 
 func _check_scratch_determinism(game: GameModule, failures: Array) -> void:
