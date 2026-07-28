@@ -1767,6 +1767,45 @@ func _check_demo_boss_objective_foundation(library: ContentLibrary, failures: Ar
 			failures.append("Rourke boss surface did not deal a playable deterministic blackjack hand.")
 		if JSON.stringify(_save_load_canonical_value([dealt_ui.get("player_hands", []), dealt_ui.get("dealer_cards", []), win_run.grand_casino_duel_status().get("edge_schedule", [])])) != JSON.stringify(_save_load_canonical_value([replay_ui.get("player_hands", []), replay_ui.get("dealer_cards", []), replay_run.grand_casino_duel_status().get("edge_schedule", [])])):
 			failures.append("Identical Rourke duel seeds/actions did not reproduce hands and edge schedule.")
+		var double_run: RunState = RunStateScript.new()
+		double_run.from_dict(win_run.to_dict())
+		var double_ui := _copy_dict(dealt_ui)
+		double_ui["boss_duel_session"] = true
+		double_ui["selected_stake"] = int(duel_state.get("ante", 20))
+		double_ui["locked_stake"] = int(duel_state.get("ante", 20))
+		double_ui["active_hand_index"] = 0
+		double_ui["moves_made"] = false
+		double_ui["round_terminal"] = false
+		double_ui["settlement_pending"] = false
+		double_ui["dealer_hole_visible"] = false
+		double_ui["dealer_cards"] = [{"rank": 9, "suit": 0, "deck": 0}, {"rank": 7, "suit": 1, "deck": 0}]
+		double_ui["player_hands"] = [{
+			"cards": [{"rank": 5, "suit": 2, "deck": 0}, {"rank": 6, "suit": 3, "deck": 0}],
+			"stood": false,
+			"doubled": false,
+			"split": false,
+			"blackjack_eligible": true,
+			"wager_multiplier": 1,
+		}]
+		double_ui["shoe"] = [{"rank": 10, "suit": 0, "deck": 0}, {"rank": 2, "suit": 1, "deck": 0}, {"rank": 10, "suit": 2, "deck": 0}]
+		double_ui["shoe_refilled_during_hand"] = true
+		var double_hands_before := _copy_array(double_run.grand_casino_duel_status().get("hands", [])).size()
+		var double_command := game.surface_action_command("blackjack_double", 0, false, double_ui, double_run, double_run.current_environment)
+		var double_command_ui := _copy_dict(double_command.get("ui_state", {}))
+		if str(double_command.get("action_id", "")) != "play_basic" or not bool(double_command.get("resolve", double_command.get("direct_resolve", false))) or not bool(double_command_ui.get("settlement_pending", false)):
+			failures.append("Rourke duel double did not produce a normal hand-settlement command: %s." % JSON.stringify(double_command))
+		else:
+			var doubled_result := game.resolve_with_context("play_basic", int(duel_state.get("ante", 20)), double_run, double_run.current_environment, double_run.create_rng("duel_double_unused"), double_command_ui)
+			var doubled_status := double_run.grand_casino_duel_status()
+			var doubled_hands := _copy_array(doubled_status.get("hands", []))
+			var result_hands := _copy_array(doubled_result.get("blackjack_hand_results", []))
+			var result_hand: Dictionary = result_hands[0] if not result_hands.is_empty() and typeof(result_hands[0]) == TYPE_DICTIONARY else {}
+			if not bool(doubled_result.get("ok", false)) or not bool(doubled_result.get("blackjack_boss_duel", false)):
+				failures.append("Rourke duel double did not settle through the boss duel result path: %s." % JSON.stringify(doubled_result))
+			if double_run.run_status != RunState.RUN_STATUS_ACTIVE or double_run.is_terminal() or str(doubled_status.get("status", "")) != "active":
+				failures.append("Rourke duel double prematurely ended the run/status=%s duel=%s result=%s." % [str(double_run.run_status), JSON.stringify(doubled_status), JSON.stringify(doubled_result)])
+			if doubled_hands.size() != double_hands_before + 1 or not bool(result_hand.get("doubled", false)):
+				failures.append("Rourke duel double did not advance exactly one doubled hand: before=%d after=%d result_hands=%s." % [double_hands_before, doubled_hands.size(), JSON.stringify(result_hands)])
 		var mid_duel_slot_id := "foundation_check_rourke_mid_duel"
 		save_error = save_service.save_run(win_run, mid_duel_slot_id)
 		var loaded_mid_duel = save_service.load_run(mid_duel_slot_id)
