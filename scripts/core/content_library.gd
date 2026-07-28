@@ -2338,6 +2338,17 @@ func _validate_environment_references() -> void:
 			_validate_id_references("environment %s travel_hooks route metadata" % archetype_id, archetype.get("travel_hooks", []), route_ids)
 		_validate_id_references("environment %s next_archetypes" % archetype_id, archetype.get("next_archetypes", []), archetype_ids)
 		var economic_profile: Dictionary = _as_dict(archetype.get("economic_profile", {}))
+		var game_floor_overrides: Dictionary = _as_dict(economic_profile.get("game_stake_floor_overrides", {}))
+		for game_id_value in game_floor_overrides.keys():
+			var floor_game_id := str(game_id_value).strip_edges()
+			if floor_game_id.is_empty():
+				validation_errors.append("environment %s game_stake_floor_overrides contains an empty game id." % archetype_id)
+			elif not game_ids.has(floor_game_id):
+				validation_errors.append("environment %s game_stake_floor_overrides references unknown game id: %s" % [archetype_id, floor_game_id])
+			if typeof(game_floor_overrides.get(game_id_value)) != TYPE_INT and typeof(game_floor_overrides.get(game_id_value)) != TYPE_FLOAT:
+				validation_errors.append("environment %s game_stake_floor_overrides.%s must be numeric." % [archetype_id, floor_game_id])
+			elif int(game_floor_overrides.get(game_id_value, 0)) < 0:
+				validation_errors.append("environment %s game_stake_floor_overrides.%s must be non-negative." % [archetype_id, floor_game_id])
 		var game_limit_overrides: Dictionary = _as_dict(economic_profile.get("game_stake_ceiling_overrides", {}))
 		for game_id_value in game_limit_overrides.keys():
 			var game_id := str(game_id_value).strip_edges()

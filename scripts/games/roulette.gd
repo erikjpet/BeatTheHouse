@@ -108,11 +108,17 @@ func generate_environment_state(_run_state: RunState, environment: Dictionary, r
 	var variant := "american_double_zero"
 	var names := ["Neon Wheel", "Velvet Zero", "Copper Rotor", "Midnight 00", "Cyan Dolly"]
 	var table_max := maxi(50, _roulette_room_ceiling(environment, 100))
-	var chip_denominations := [1, 5, 10, 25]
-	if table_max >= 100:
-		chip_denominations.append(50)
-	if table_max >= 150:
-		chip_denominations.append(100)
+	var table_min := maxi(1, GameModule.stake_floor_for_game(environment, get_id(), 1))
+	var chip_denominations: Array = []
+	for chip_value in [1, 5, 10, 25, 50, 100, 250, 500]:
+		if int(chip_value) >= table_min and int(chip_value) <= table_max:
+			chip_denominations.append(int(chip_value))
+	if table_max >= 100 and not chip_denominations.has(50):
+		chip_denominations.push_front(50)
+	if not chip_denominations.has(table_min):
+		chip_denominations.push_front(table_min)
+	if chip_denominations.is_empty():
+		chip_denominations.append(table_min)
 	return {
 		"schema": "roulette_table_state",
 		"version": 1,
@@ -129,8 +135,8 @@ func generate_environment_state(_run_state: RunState, environment: Dictionary, r
 			"en_prison": false,
 			"call_bets_enabled": false,
 			"late_bets_allowed": false,
-			"inside_min_total": 1,
-			"outside_min_each": maxi(1, int(environment.get("economic_profile", {}).get("stake_floor", 1)) if typeof(environment.get("economic_profile", {})) == TYPE_DICTIONARY else 1),
+			"inside_min_total": table_min,
+			"outside_min_each": table_min,
 			"table_max": table_max,
 		},
 		"physics_profile": _standard_physics_profile(rng),

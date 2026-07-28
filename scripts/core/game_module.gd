@@ -96,7 +96,7 @@ func cheat_actions(run_state: RunState, environment: Dictionary) -> Array:
 
 # Packages all actions and stake bounds for the UI.
 func actions(run_state: RunState, environment: Dictionary) -> Dictionary:
-	var economic_profile: Dictionary = environment.get("economic_profile", {})
+	var economic_profile: Dictionary = environment.get("economic_profile", {}) if typeof(environment.get("economic_profile", {})) == TYPE_DICTIONARY else {}
 	var base_stake_ceiling := stake_ceiling_for_game(environment, get_id(), run_state.wager_capacity_for_game(get_id(), environment))
 	var economy_stake_ceiling := run_state.economy_stake_ceiling(base_stake_ceiling)
 	var wager_stake_ceiling := run_state.wager_stake_ceiling(base_stake_ceiling)
@@ -106,13 +106,24 @@ func actions(run_state: RunState, environment: Dictionary) -> Dictionary:
 		"game_id": get_id(),
 		"legal_actions": legal_actions(run_state, environment),
 		"cheat_actions": cheat_actions(run_state, environment),
-		"stake_floor": int(economic_profile.get("stake_floor", 1)),
+		"stake_floor": stake_floor_for_game(environment, get_id(), int(economic_profile.get("stake_floor", 1))),
 		"stake_ceiling": wager_stake_ceiling,
 		"base_stake_ceiling": base_stake_ceiling,
 		"economy_stake_ceiling": economy_stake_ceiling,
 		"economy_state": run_state.economy(),
 		"economy_pressure_applied": economy_stake_ceiling < wager_stake_ceiling,
-	}
+}
+
+
+# Returns the room stake floor, optionally overridden per game id.
+static func stake_floor_for_game(environment: Dictionary, game_id: String, fallback_floor: int = 1) -> int:
+	var economic_profile: Dictionary = environment.get("economic_profile", {}) if typeof(environment.get("economic_profile", {})) == TYPE_DICTIONARY else {}
+	var floor := int(economic_profile.get("stake_floor", fallback_floor))
+	var overrides: Dictionary = economic_profile.get("game_stake_floor_overrides", {}) if typeof(economic_profile.get("game_stake_floor_overrides", {})) == TYPE_DICTIONARY else {}
+	var normalized_game_id := game_id.strip_edges()
+	if not normalized_game_id.is_empty() and overrides.has(normalized_game_id):
+		floor = int(overrides.get(normalized_game_id, floor))
+	return maxi(0, floor)
 
 
 # Returns the room stake ceiling, optionally overridden per game id.
@@ -783,8 +794,8 @@ func resolve(action_id: String, stake: int, run_state: RunState, environment: Di
 		return _empty_result(action_id, stake, environment, "Action is not available.")
 
 	var is_cheat := _is_cheat_action(action_id)
-	var economic_profile: Dictionary = environment.get("economic_profile", {})
-	var stake_floor := int(economic_profile.get("stake_floor", 1))
+	var economic_profile: Dictionary = environment.get("economic_profile", {}) if typeof(environment.get("economic_profile", {})) == TYPE_DICTIONARY else {}
+	var stake_floor := stake_floor_for_game(environment, get_id(), int(economic_profile.get("stake_floor", 1)))
 	var stake_ceiling := run_state.wager_stake_ceiling(stake_ceiling_for_game(environment, get_id(), run_state.bankroll))
 	if stake_ceiling < stake_floor or stake_ceiling <= 0:
 		return _empty_result(action_id, stake, environment, "Economy pressure leaves no valid stake.")

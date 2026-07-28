@@ -8556,6 +8556,15 @@ static func _normalize_economic_profile(profile: Dictionary) -> Dictionary:
 	for key in ["stake_floor", "stake_ceiling"]:
 		if result.has(key):
 			result[key] = int(result.get(key, 0))
+	if typeof(result.get("game_stake_floor_overrides", {})) == TYPE_DICTIONARY:
+		var normalized_floor_overrides: Dictionary = {}
+		var floor_overrides: Dictionary = result.get("game_stake_floor_overrides", {})
+		for game_id in floor_overrides.keys():
+			var normalized_id := str(game_id).strip_edges()
+			if normalized_id.is_empty():
+				continue
+			normalized_floor_overrides[normalized_id] = maxi(0, int(floor_overrides.get(game_id, 0)))
+		result["game_stake_floor_overrides"] = normalized_floor_overrides
 	if typeof(result.get("game_stake_ceiling_overrides", {})) == TYPE_DICTIONARY:
 		var normalized_overrides: Dictionary = {}
 		var overrides: Dictionary = result.get("game_stake_ceiling_overrides", {})

@@ -4922,7 +4922,7 @@ func _surface_stake_floor(run_state: RunState, environment: Dictionary) -> int:
 	if run_state == null:
 		return 1
 	var profile: Dictionary = environment.get("economic_profile", {}) if typeof(environment.get("economic_profile", {})) == TYPE_DICTIONARY else {}
-	var floor := maxi(1, int(profile.get("stake_floor", 1)))
+	var floor := maxi(1, GameModule.stake_floor_for_game(environment, get_id(), int(profile.get("stake_floor", 1))))
 	if _item_effect_total("blackjack_table_minimum_to_previous_max", run_state) > 0:
 		floor = maxi(floor, _blackjack_original_stake_ceiling(run_state, environment))
 	return floor

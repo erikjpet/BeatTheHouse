@@ -2522,11 +2522,13 @@ func _premium_grand_casino_legal_result(game_id: String, game: GameModule, run_s
 	var environment: Dictionary = run_state.current_environment
 	match game_id:
 		"baccarat":
-			var baccarat_ui := {"baccarat_bets": {"player": 25}}
-			return game.resolve_with_context("deal_baccarat", 25, run_state, environment, run_state.create_rng("c3_baccarat_legal"), baccarat_ui)
+			var baccarat_stake := maxi(1, GameModule.stake_floor_for_game(environment, "baccarat", 25))
+			var baccarat_ui := {"baccarat_bets": {"player": baccarat_stake}}
+			return game.resolve_with_context("deal_baccarat", baccarat_stake, run_state, environment, run_state.create_rng("c3_baccarat_legal"), baccarat_ui)
 		"roulette":
-			var roulette_ui := {"roulette_bets": [game.call("_default_smoke_bet", 25)]}
-			return game.resolve_with_context("spin_roulette", 25, run_state, environment, run_state.create_rng("c3_roulette_legal"), roulette_ui)
+			var roulette_stake := maxi(1, GameModule.stake_floor_for_game(environment, "roulette", 25))
+			var roulette_ui := {"roulette_bets": [game.call("_default_smoke_bet", roulette_stake)]}
+			return game.resolve_with_context("spin_roulette", roulette_stake, run_state, environment, run_state.create_rng("c3_roulette_legal"), roulette_ui)
 	return {}
 
 

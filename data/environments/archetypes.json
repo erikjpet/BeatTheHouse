@@ -890,8 +890,8 @@
       "volume": 0.27
     },
     "economic_profile": {
-      "stake_floor": 2,
-      "stake_ceiling": 20,
+      "stake_floor": 10,
+      "stake_ceiling": 60,
       "cashout_tone": "informal"
     },
     "game_pool": [
@@ -1105,8 +1105,8 @@
       "volume": 0.26
     },
     "economic_profile": {
-      "stake_floor": 1,
-      "stake_ceiling": 18,
+      "stake_floor": 10,
+      "stake_ceiling": 60,
       "cashout_tone": "cashier"
     },
     "game_pool": [
@@ -1321,8 +1321,11 @@
       "volume": 0.25
     },
     "economic_profile": {
-      "stake_floor": 5,
-      "stake_ceiling": 35,
+      "stake_floor": 10,
+      "stake_ceiling": 70,
+      "game_stake_floor_overrides": {
+        "blackjack": 5
+      },
       "game_stake_ceiling_overrides": {
         "blackjack": 60
       },
@@ -1850,10 +1853,10 @@
       "volume": 0.28
     },
     "economic_profile": {
-      "stake_floor": 8,
-      "stake_ceiling": 45,
+      "stake_floor": 15,
+      "stake_ceiling": 100,
       "game_stake_ceiling_overrides": {
-        "roulette": 90
+        "roulette": 200
       },
       "price_tone": "velvet",
       "cashout_tone": "host"
@@ -2123,11 +2126,11 @@
       "volume": 0.27
     },
     "economic_profile": {
-      "stake_floor": 6,
-      "stake_ceiling": 42,
+      "stake_floor": 20,
+      "stake_ceiling": 120,
       "game_stake_ceiling_overrides": {
-        "blackjack": 80,
-        "roulette": 100
+        "blackjack": 200,
+        "roulette": 250
       },
       "price_tone": "mid-stakes",
       "cashout_tone": "purser"
@@ -2312,8 +2315,8 @@
       "volume": 0.22
     },
     "economic_profile": {
-      "stake_floor": 2,
-      "stake_ceiling": 20,
+      "stake_floor": 10,
+      "stake_ceiling": 60,
       "price_tone": "quiet",
       "cashout_tone": "machine"
     },
@@ -3050,12 +3053,12 @@
       "volume": 0.26
     },
     "economic_profile": {
-      "stake_floor": 25,
-      "stake_ceiling": 150,
+      "stake_floor": 100,
+      "stake_ceiling": 500,
       "game_stake_ceiling_overrides": {
-        "blackjack": 150,
-        "baccarat": 150,
-        "roulette": 150
+        "blackjack": 1000,
+        "baccarat": 1000,
+        "roulette": 1000
       },
       "cashout_tone": "cage"
     },
