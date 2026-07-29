@@ -8084,9 +8084,13 @@ func current_objective_hud_snapshot() -> Dictionary:
 			"status_text": str(meta_hud.get("status_text", "")),
 			"save_text": "",
 			"fields": _copy_array(meta_hud.get("fields", [])),
+			"location_text": str(meta_hud.get("location_text", "")),
 			"gold": int(meta_hud.get("gold", 0)),
+			"gold_text": str(meta_hud.get("gold_text", "")),
 			"next_home_label": str(meta_hud.get("next_home_label", "")),
 			"next_home_price": int(meta_hud.get("next_home_price", 0)),
+			"next_home_remaining_gold": int(meta_hud.get("next_home_remaining_gold", 0)),
+			"next_goal_text": str(meta_hud.get("next_goal_text", "")),
 			"housing_tier": str(meta_hud.get("housing_tier", "")),
 			"status_hud": meta_hud,
 		}
@@ -11261,7 +11265,13 @@ func _run_status_hud_model() -> Dictionary:
 
 
 func _meta_status_hud_model() -> Dictionary:
-	return FoundationHudViewModelScript.meta_status_model(_meta_home_summary_view())
+	var home := _meta_home_summary_view()
+	home["location_id"] = meta_session_location_id
+	if run_state != null:
+		home["location_display_name"] = str(run_state.current_environment.get("display_name", "Home"))
+	if meta_session_location_id == META_LOCATION_HOME:
+		home["location_display_name"] = "Home"
+	return FoundationHudViewModelScript.meta_status_model(home)
 
 
 func _apply_hud_mode_visibility() -> void:

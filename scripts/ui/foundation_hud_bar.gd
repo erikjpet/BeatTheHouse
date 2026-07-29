@@ -21,6 +21,11 @@ var time_watch: HudTimeWatch
 var time_day_label: Label
 var time_exact_label: Label
 var time_detail: Label
+var run_bar: HBoxContainer
+var meta_bar: HBoxContainer
+var meta_location_value: Label
+var meta_gold_value: Label
+var meta_goal_value: Label
 var reduce_motion := false
 var compact_mode := false
 var _last_bankroll := 0
@@ -63,6 +68,10 @@ func set_compact_mode(enabled: bool) -> void:
 func render(model: Dictionary) -> void:
 	if wallet_value == null:
 		return
+	if str(model.get("mode", "run")) == "meta":
+		_render_meta(model)
+		return
+	_set_meta_mode(false)
 	var bankroll := int(model.get("bankroll", 0))
 	wallet_value.text = "$%d" % bankroll
 	var observed_delta := bankroll - _last_bankroll if _has_rendered else 0
@@ -105,7 +114,8 @@ func render_clock(model: Dictionary) -> void:
 
 
 func current_snapshot() -> Dictionary:
-	return {
+	var mode := "meta" if meta_bar != null and meta_bar.visible else "run"
+	var snapshot := {
 		"rect": get_global_rect(),
 		"wallet": wallet_value.text if wallet_value != null else "",
 		"wallet_delta": wallet_delta.text if wallet_delta != null else "",
@@ -125,10 +135,15 @@ func current_snapshot() -> Dictionary:
 		"compact_mode": compact_mode,
 		"reduce_motion": reduce_motion,
 	}
+	if mode == "meta":
+		snapshot["mode"] = mode
+		snapshot["meta_fields"] = _meta_field_snapshot()
+	return snapshot
 
 
 func _build() -> void:
 	var row := HBoxContainer.new()
+	run_bar = row
 	row.add_theme_constant_override("separation", VisualStyle.SPACE_5)
 	row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	add_child(row)
@@ -199,6 +214,46 @@ func _build() -> void:
 	time_detail.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	time_detail.custom_minimum_size.x = VisualStyle.TOOLTIP_MAX_WIDTH
 	time_stack.add_child(time_detail)
+
+	meta_bar = HBoxContainer.new()
+	meta_bar.add_theme_constant_override("separation", VisualStyle.SPACE_5)
+	meta_bar.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	meta_bar.visible = false
+	add_child(meta_bar)
+	var location_chip := _value_chip("home", "Location")
+	meta_location_value = location_chip.get_meta("value_label") as Label
+	meta_bar.add_child(location_chip)
+	var gold_chip := _value_chip("wallet", "Gold")
+	meta_gold_value = gold_chip.get_meta("value_label") as Label
+	meta_bar.add_child(gold_chip)
+	var goal_chip := _value_chip("luck", "Next tier")
+	meta_goal_value = goal_chip.get_meta("value_label") as Label
+	meta_bar.add_child(goal_chip)
+
+
+func _render_meta(model: Dictionary) -> void:
+	_set_meta_mode(true)
+	meta_location_value.text = str(model.get("location_text", "Home"))
+	meta_gold_value.text = str(model.get("gold_text", "%dg" % int(model.get("gold", 0))))
+	meta_goal_value.text = str(model.get("next_goal_text", "Top tier"))
+	reset_wallet_delta()
+
+
+func _set_meta_mode(enabled: bool) -> void:
+	if run_bar != null:
+		run_bar.visible = not enabled
+	if meta_bar != null:
+		meta_bar.visible = enabled
+
+
+func _meta_field_snapshot() -> Array:
+	if meta_bar == null or not meta_bar.visible:
+		return []
+	return [
+		{"id": "location", "label": "Location", "value": meta_location_value.text if meta_location_value != null else ""},
+		{"id": "gold", "label": "Gold", "value": meta_gold_value.text if meta_gold_value != null else ""},
+		{"id": "next_tier", "label": "Next tier", "value": meta_goal_value.text if meta_goal_value != null else ""},
+	]
 
 
 func _value_chip(icon_id: String, title: String) -> HBoxContainer:

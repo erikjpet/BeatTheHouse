@@ -149,19 +149,39 @@ static func meta_status_model(home: Dictionary) -> Dictionary:
 	var upgrade := _copy_dict(home.get("upgrade", {}))
 	var next_price := maxi(0, int(upgrade.get("price", 0))) if not upgrade.is_empty() else 0
 	var next_label := str(upgrade.get("display_name", "Next home")) if not upgrade.is_empty() else ""
-	var fields: Array = [{"id": "gold", "label": "Gold", "value": gold}]
+	var location_label := str(home.get("location_display_name", "Home")).strip_edges()
+	if location_label.is_empty():
+		location_label = "Home"
+	var housing_label := str(home.get("display_name", home.get("housing_tier", "Home"))).strip_edges()
+	var location_text := location_label
+	if not housing_label.is_empty() and location_text.find(housing_label) == -1:
+		location_text = "%s · %s" % [location_text, housing_label]
+	var next_goal_text := "Top tier"
+	var remaining_gold := 0
 	if not upgrade.is_empty():
-		fields.append({"id": "next_home_price", "label": next_label, "value": next_price})
+		remaining_gold = maxi(0, next_price - gold)
+		next_goal_text = "Ready: %s" % next_label if remaining_gold <= 0 else "%dg to %s" % [remaining_gold, next_label]
+	var fields: Array = [
+		{"id": "location", "label": "Location", "value": location_text},
+		{"id": "gold", "label": "Gold", "value": "%dg" % gold, "numeric_value": gold},
+		{"id": "next_tier", "label": "Next tier", "value": next_goal_text, "price": next_price, "remaining_gold": remaining_gold},
+	]
 	return {
 		"mode": "meta",
-		"status_text": "Gold %d" % gold,
-		"objective_text": "%s · %d gold" % [next_label, next_price] if not upgrade.is_empty() else "",
+		"status_text": "%s  Gold %dg  %s" % [location_text, gold, next_goal_text],
+		"objective_text": next_goal_text,
 		"save_text": "",
 		"fields": fields,
+		"location_text": location_text,
+		"gold_text": "%dg" % gold,
+		"next_goal_text": next_goal_text,
+		"next_home_remaining_gold": remaining_gold,
 		"gold": gold,
 		"next_home_label": next_label,
 		"next_home_price": next_price,
 		"housing_tier": str(home.get("housing_tier", "")),
+		"housing_label": housing_label,
+		"location_id": str(home.get("location_id", "")),
 	}
 
 
