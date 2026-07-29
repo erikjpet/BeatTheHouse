@@ -1562,14 +1562,6 @@ func _settle_roulette_bets(winning_number: String, bets: Array, table: Dictionar
 	return results
 
 
-func _la_partage_applies(bet: Dictionary, table: Dictionary) -> bool:
-	if not bool(_table_rules(table).get("la_partage", false)):
-		return false
-	if str(bet.get("family", "")) != "outside":
-		return false
-	return int(bet.get("payout", 0)) == 1
-
-
 func _roulette_celebration_score(bet: Dictionary, won: bool) -> int:
 	if not won:
 		return 0
@@ -3110,10 +3102,6 @@ func _surface_last_result(value: Variant) -> Dictionary:
 			_:
 				result[key] = entry
 	return result
-
-
-func _roulette_recent_numbers(table: Dictionary) -> Array:
-	return _roulette_recent_numbers_from_history(_dictionary_array(table.get("last_results", [])))
 
 
 func _roulette_recent_numbers_from_history(history_entries: Array) -> Array:

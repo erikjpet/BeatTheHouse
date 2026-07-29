@@ -1054,24 +1054,6 @@ func _prior_region_progress(region: Dictionary, old_regions: Array, fallback_rev
 	return best_progress if found else (1.0 if fallback_revealed else 0.0)
 
 
-func _refresh_region_units_from_mask(mask: Array, regions: Array, columns: int, rows: int) -> void:
-	for region_index in range(regions.size()):
-		var region: Dictionary = regions[region_index]
-		var sample_total := 0
-		var remaining_units := 0
-		for sample_index in range(mask.size()):
-			if _region_index_at_normalized(regions, _mask_sample_normalized(sample_index, columns, rows)) != region_index:
-				continue
-			sample_total += 1
-			remaining_units += maxi(0, int(mask[sample_index]))
-		region["sample_total"] = sample_total
-		region["mask_remaining_units"] = remaining_units
-		var total_units := maxi(1, sample_total * 255)
-		region["coverage"] = 1.0 - float(remaining_units) / float(total_units)
-		region["revealed"] = remaining_units <= 0
-		regions[region_index] = region
-
-
 func _sections_from_regions(regions: Array) -> Array:
 	var sections_by_id := {}
 	var order: Array = []
@@ -1888,78 +1870,6 @@ func _draw_mechanic_result(surface, ticket: Dictionary, ink: Color, accent: Colo
 		var spot_index := clampi(int(region.get("spot_index", 0)), 0, maxi(0, spots.size() - 1))
 		var spot: Dictionary = spots[spot_index] if spot_index < spots.size() else {}
 		_draw_spot_box(surface, ticket, result, spot, region, _region_rect(region, play_rect), ink, accent, trim)
-	return
-	match str(ticket.get("type_id", "")):
-		"two_fer":
-			var symbols: Array = result.get("symbols", []) if typeof(result.get("symbols", [])) == TYPE_ARRAY else []
-			for index in range(symbols.size()):
-				var width := play_rect.size.x / 3.0 - 10.0
-				var rect := Rect2(play_rect.position + Vector2(5.0 + float(index) * (width + 10.0), 8.0), Vector2(width, play_rect.size.y - 16.0))
-				surface.draw_circle(rect.get_center(), 39.0, Color(accent.r, accent.g, accent.b, 0.12))
-				surface.draw_circle(rect.get_center(), 39.0, accent, false, 2)
-				surface.surface_label_centered(str(symbols[index]), rect, 13, ink)
-		"lucky_7s":
-			var winning: Array = result.get("winning_numbers", []) if typeof(result.get("winning_numbers", [])) == TYPE_ARRAY else []
-			for index in range(winning.size()):
-				_draw_number_medallion(surface, Rect2(play_rect.position + Vector2(play_rect.size.x * 0.27 + float(index) * play_rect.size.x * 0.28, 2.0), Vector2(play_rect.size.x * 0.20, play_rect.size.y * 0.23)), int(winning[index]), ink, trim)
-			var your_numbers := _array_ref(result.get("your_numbers", []))
-			for index in range(your_numbers.size()):
-				var spot: Dictionary = your_numbers[index]
-				var rect := Rect2(play_rect.position + Vector2(6.0 + float(index % 3) * play_rect.size.x / 3.0, play_rect.size.y * 0.34 + float(index / 3) * play_rect.size.y * 0.31), Vector2(play_rect.size.x / 3.0 - 12.0, play_rect.size.y * 0.26))
-				_draw_number_medallion(surface, rect, int(spot.get("number", 0)), ink, accent)
-				surface.surface_label_centered("$%d" % int(spot.get("prize", 0)), Rect2(rect.position + Vector2(0, 31), Vector2(rect.size.x, 13)), 7, ink)
-		"tic_tac_gold":
-			var marks: Array = result.get("marks", []) if typeof(result.get("marks", [])) == TYPE_ARRAY else []
-			for index in range(mini(9, marks.size())):
-				var board_size := minf(play_rect.size.y, play_rect.size.x * 0.68)
-				var rect := Rect2(play_rect.position + Vector2(float(index % 3) * board_size / 3.0, float(index / 3) * board_size / 3.0), Vector2(board_size / 3.0 - 4.0, board_size / 3.0 - 4.0))
-				surface.draw_rect(rect, Color(accent.r, accent.g, accent.b, 0.10))
-				surface.draw_rect(rect, trim, false, 2)
-				surface.surface_label_centered("WIN" if bool(marks[index]) else "—", rect, 13, trim if bool(marks[index]) else ink)
-			var bonus_rect := Rect2(play_rect.position + Vector2(play_rect.size.x * 0.73, play_rect.size.y * 0.22), Vector2(play_rect.size.x * 0.25, play_rect.size.y * 0.56))
-			surface.draw_rect(bonus_rect, Color(trim.r, trim.g, trim.b, 0.14))
-			surface.draw_rect(bonus_rect, trim, false, 3)
-			surface.surface_label_centered("GOLD" if bool(result.get("bonus", false)) else "DUST", bonus_rect, 13, ink)
-		"crossword_corner":
-			var bank: Array = result.get("letter_bank", []) if typeof(result.get("letter_bank", [])) == TYPE_ARRAY else []
-			for index in range(bank.size()):
-				var rect := Rect2(play_rect.position + Vector2(float(index % 3) * play_rect.size.x * 0.075, float(index / 3) * play_rect.size.y / 6.0 + 3.0), Vector2(play_rect.size.x * 0.065, play_rect.size.y / 6.0 - 4.0))
-				surface.draw_rect(rect, Color(accent.r, accent.g, accent.b, 0.13))
-				surface.surface_label_centered(str(bank[index]), rect, 9, ink)
-			var words: Array = result.get("words", []) if typeof(result.get("words", [])) == TYPE_ARRAY else []
-			var completed: Array = result.get("completed_words", []) if typeof(result.get("completed_words", [])) == TYPE_ARRAY else []
-			for index in range(words.size()):
-				var rect := Rect2(play_rect.position + Vector2(play_rect.size.x * 0.31, 3.0 + float(index) * play_rect.size.y / 7.0), Vector2(play_rect.size.x * 0.67, play_rect.size.y / 7.0 - 3.0))
-				surface.draw_rect(rect, Color(trim.r, trim.g, trim.b, 0.16) if completed.has(words[index]) else Color(ink.r, ink.g, ink.b, 0.06))
-				surface.surface_label("%s  %s" % ["✓" if completed.has(words[index]) else "·", str(words[index])], rect.position + Vector2(7, 15), 10, ink)
-		"bonus_bingo":
-			var callers: Array = result.get("caller_numbers", []) if typeof(result.get("caller_numbers", [])) == TYPE_ARRAY else []
-			for index in range(callers.size()):
-				var center := play_rect.position + Vector2(8.0 + float(index % 4) * play_rect.size.x * 0.055, 10.0 + float(index / 4) * play_rect.size.y / 6.0)
-				surface.draw_circle(center, 7.0, Color(trim.r, trim.g, trim.b, 0.32))
-				surface.surface_label_centered(str(callers[index]), Rect2(center - Vector2(7, 7), Vector2(14, 14)), 6, ink)
-			var cards := _array_ref(result.get("cards", []))
-			for card_index in range(cards.size()):
-				_draw_bingo_card(surface, cards[card_index], Rect2(play_rect.position + Vector2(play_rect.size.x * (0.29 + float(card_index % 2) * 0.36), play_rect.size.y * (0.02 + float(card_index / 2) * 0.50)), Vector2(play_rect.size.x * 0.31, play_rect.size.y * 0.44)), ink, accent, trim)
-		"high_roller_holdem":
-			_draw_poker_hand(surface, result.get("your_hand", []) if typeof(result.get("your_hand", [])) == TYPE_ARRAY else [], play_rect.position + Vector2(5, 14), ink, accent, play_rect.size.x)
-			_draw_poker_hand(surface, result.get("dealer_hand", []) if typeof(result.get("dealer_hand", [])) == TYPE_ARRAY else [], play_rect.position + Vector2(5, play_rect.size.y * 0.47), ink, Color("#8e9d98"), play_rect.size.x)
-			surface.surface_label("YOU: %s" % str(result.get("your_rank", "")), play_rect.position + Vector2(5, 10), 7, trim)
-			surface.surface_label("HOUSE: %s" % str(result.get("dealer_rank", "")), play_rect.position + Vector2(5, play_rect.size.y * 0.44), 7, ink)
-			var wild_label := "WILD %s → %s" % [str(result.get("base_your_rank", "")), str(result.get("your_rank", ""))] if bool(result.get("wild", false)) else "NO WILD"
-			surface.surface_label_centered("POCKET ACES — WIN ALL" if bool(result.get("pocket_aces", false)) else wild_label, Rect2(play_rect.position + Vector2(12, play_rect.size.y - 21), Vector2(play_rect.size.x - 24, 18)), 8, trim)
-		"golden_vault":
-			surface.surface_label_centered("%d×" % int(result.get("multiplier", 2)), Rect2(play_rect.position + Vector2(play_rect.size.x * 0.20, 1), Vector2(play_rect.size.x * 0.60, play_rect.size.y * 0.14)), 18, trim)
-			var ladder := _array_ref(result.get("ladder", []))
-			for index in range(ladder.size()):
-				var rung: Dictionary = ladder[index]
-				var rect := Rect2(play_rect.position + Vector2(play_rect.size.x * 0.10, play_rect.size.y * (0.18 + float(index) * 0.105)), Vector2(play_rect.size.x * 0.80, play_rect.size.y * 0.085))
-				surface.draw_rect(rect, Color(accent.r, accent.g, accent.b, 0.12 + float(index) * 0.025))
-				surface.surface_label("RUNG %d" % int(rung.get("rung", index + 1)), rect.position + Vector2(7, 14), 8, ink)
-				var rung_text := "$%d × %d = $%d" % [int(rung.get("base_prize", 0)), int(result.get("multiplier", 2)), int(rung.get("payout", 0))] if bool(rung.get("match", false)) else "LOCKED"
-				surface.surface_label(rung_text, rect.position + Vector2(76, 14), 7, trim if bool(rung.get("match", false)) else ink)
-			surface.surface_label_centered("GOLD BAR — WIN ALL" if bool(result.get("gold_bar", false)) else "BRASS BAR", Rect2(play_rect.position + Vector2(play_rect.size.x * 0.10, play_rect.size.y * 0.74), Vector2(play_rect.size.x * 0.80, play_rect.size.y * 0.09)), 8, trim)
-			surface.surface_label_centered("VAULT OPEN  $%d" % int(result.get("vault_payout", 0)) if bool(result.get("vault_win", false)) else "VAULT SEALED", Rect2(play_rect.position + Vector2(play_rect.size.x * 0.10, play_rect.size.y * 0.88), Vector2(play_rect.size.x * 0.80, play_rect.size.y * 0.09)), 8, trim)
 
 
 func _draw_layer_slot_wells(surface, ticket: Dictionary, ink: Color, accent: Color, trim: Color) -> void:
@@ -2939,7 +2849,6 @@ func _ticket_prize_legend(ticket: Dictionary) -> String:
 
 func _draw_ticket_rules(surface, ticket: Dictionary, ink: Color, accent: Color, trim: Color) -> void:
 	var mechanic := _dict_ref(ticket.get("mechanic", {}))
-	var lines := _array_ref(mechanic.get("rules", []))
 	var rules_height := 54.0 if active_ticket_rect.size.y >= 300.0 else 42.0
 	var rules_rect := Rect2(active_ticket_rect.position + Vector2(14, active_ticket_rect.size.y - rules_height - 7), Vector2(active_ticket_rect.size.x - 28, rules_height))
 	surface.draw_rect(rules_rect, Color(0.0, 0.0, 0.0, 0.09))
@@ -2949,15 +2858,6 @@ func _draw_ticket_rules(surface, ticket: Dictionary, ink: Color, accent: Color, 
 	var active_serial := str(ticket.get("id", "000000")).right(12).to_upper()
 	if rules_height >= 50.0:
 		surface.surface_label("VOID IF ALTERED  -  %s" % active_serial, rules_rect.position + Vector2(7, rules_height - 5), 5, Color(ink.r, ink.g, ink.b, 0.72))
-	surface.draw_rect(Rect2(active_ticket_rect.position + Vector2(4, active_ticket_rect.size.y - 3), Vector2(active_ticket_rect.size.x - 8, 3)), trim)
-	return
-	surface.draw_rect(rules_rect, Color(0.0, 0.0, 0.0, 0.09))
-	surface.draw_rect(rules_rect, Color(accent.r, accent.g, accent.b, 0.65), false, 1)
-	for index in range(lines.size()):
-		surface.surface_label(str(lines[index]).left(64), rules_rect.position + Vector2(7, 11 + index * 9), 6 if active_ticket_rect.size.x < 330 else 7, ink)
-	var serial := str(ticket.get("id", "000000")).right(12).to_upper()
-	if rules_height >= 50.0:
-		surface.surface_label("VOID IF ALTERED  •  %s" % serial, rules_rect.position + Vector2(7, rules_height - 5), 5, Color(ink.r, ink.g, ink.b, 0.72))
 	surface.draw_rect(Rect2(active_ticket_rect.position + Vector2(4, active_ticket_rect.size.y - 3), Vector2(active_ticket_rect.size.x - 8, 3)), trim)
 
 
@@ -3389,18 +3289,6 @@ func _normalized_rect_array(value: Variant) -> Array:
 	return [clampf(float(source[0]), 0.0, 1.0), clampf(float(source[1]), 0.0, 1.0), clampf(float(source[2]), 0.01, 1.0), clampf(float(source[3]), 0.01, 1.0)]
 
 
-func _section_index_at_normalized(sections: Array, normalized: Vector2) -> int:
-	for index in range(sections.size()):
-		var section: Dictionary = sections[index]
-		var values: Array = section.get("rect", []) if typeof(section.get("rect", [])) == TYPE_ARRAY else []
-		if values.size() < 4:
-			continue
-		var rect := Rect2(float(values[0]), float(values[1]), float(values[2]), float(values[3]))
-		if rect.has_point(normalized):
-			return index
-	return -1
-
-
 func _region_index_at_normalized(regions: Array, normalized: Vector2) -> int:
 	for index in range(regions.size()):
 		var region: Dictionary = regions[index]
@@ -3418,14 +3306,6 @@ func _region_rect(region: Dictionary, play_rect: Rect2) -> Rect2:
 	if values.size() < 4:
 		values = [0.0, 0.0, 1.0, 1.0]
 	return Rect2(play_rect.position + Vector2(float(values[0]) * play_rect.size.x, float(values[1]) * play_rect.size.y), Vector2(float(values[2]) * play_rect.size.x, float(values[3]) * play_rect.size.y))
-
-
-func _clear_mask_section(mask: Array, sections: Array, section_index: int, columns: int, rows: int) -> void:
-	for sample_index in range(mask.size()):
-		if int(mask[sample_index]) <= 0:
-			continue
-		if _section_index_at_normalized(sections, _mask_sample_normalized(sample_index, columns, rows)) == section_index:
-			mask[sample_index] = 0
 
 
 func _clear_mask_region(mask: Array, regions: Array, region_index: int, columns: int, rows: int) -> void:

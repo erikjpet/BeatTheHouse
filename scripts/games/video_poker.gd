@@ -54,7 +54,6 @@ const COIN_LEVELS := [1, 2, 3, 4, 5]
 const BET_LADDER := COIN_LEVELS
 const MAX_BET_LEVEL := 4
 const MAX_COIN_LEVEL := 4
-const ROYAL_MAX_MULT := 800
 const DOUBLE_UP_CAP := 5
 const PROGRESSIVE_BASE := 240
 const SEQUENTIAL_ROYAL_BONUS := 400
@@ -1686,10 +1685,6 @@ func _bet_level(ui: Dictionary) -> int:
 	return clampi(int(ui.get("bet_level", MAX_BET_LEVEL)), 0, MAX_BET_LEVEL)
 
 
-func _bet_for_level(level: int) -> int:
-	return _coin_count_for_level(level)
-
-
 func _coin_count_for_level(level: int) -> int:
 	return int(COIN_LEVELS[clampi(level, 0, MAX_COIN_LEVEL)])
 
@@ -2668,11 +2663,6 @@ func _draw_paytable_grid(surface, surface_state: Dictionary) -> void:
 			surface.surface_label_centered(str(pay), cell_rect, 8, C_YELLOW if is_active or is_win else Color(C_SOFT.r, C_SOFT.g, C_SOFT.b, 0.80))
 
 
-func _grid_cell_pay(row: Dictionary, col_index: int, bet_options: Array) -> int:
-	var bet := int(bet_options[clampi(col_index, 0, bet_options.size() - 1)])
-	return _row_pay(row, bet, col_index >= bet_options.size() - 1)
-
-
 func _draw_meters(surface, surface_state: Dictionary) -> void:
 	var panel := STATUS_PANEL_RECT
 	surface.surface_label_centered("MACHINE METERS", Rect2(panel.position + Vector2(10, 8), Vector2(panel.size.x - 20, 16)), 11, C_YELLOW)
@@ -2830,18 +2820,6 @@ func _draw_multi_hand_stack(surface, surface_state: Dictionary, phase: String) -
 		surface.surface_label("+%d MORE" % (hands.size() - visible_count), Vector2(panel.position.x + 162, list_top + 48), 9, C_AMBER)
 
 
-func _draw_mini_card(surface, card_value: Variant, pos: Vector2, paid: bool) -> void:
-	var card: Dictionary = card_value if typeof(card_value) == TYPE_DICTIONARY else {}
-	var rect := Rect2(pos, Vector2(28, 24))
-	surface.draw_rect(rect, Color("#fbf8e6"))
-	surface.draw_rect(rect, Color(C_TEAL.r, C_TEAL.g, C_TEAL.b, 0.55) if paid else Color(C_SOFT.r, C_SOFT.g, C_SOFT.b, 0.4), false, 1)
-	var rank := int(card.get("rank", 2))
-	var label := "J*" if bool(card.get("joker", false)) or rank == 0 else CardShoeScript.rank_label(rank)
-	var suit := int(card.get("suit", 0))
-	var color := C_PINK if suit == 1 or suit == 3 else C_DARK
-	surface.surface_label(label, pos + Vector2(4, 17), 9, color)
-
-
 func _draw_double_up(surface, surface_state: Dictionary) -> void:
 	var view: Dictionary = surface_state.get("double_up_view", {})
 	var dealer: Dictionary = view.get("dealer", {})
@@ -2861,25 +2839,6 @@ func _draw_double_up(surface, surface_state: Dictionary) -> void:
 		var pick_rect := Rect2(pick_pos, CARD_SIZE)
 		surface.surface_add_exact_hit(pick_rect, "video_poker_double_pick", pick_index)
 		_draw_guidance_border(surface, pick_rect, "PICK" if pick_index == new_selected else "", true)
-	return
-	surface.surface_label("DOUBLE OR NOTHING — %d at risk" % int(view.get("at_risk", 0)), Vector2(56, 224), 15, C_AMBER)
-	surface.surface_label("Dealer", Vector2(60, 244), 12, C_SOFT)
-	_draw_card(surface, dealer, CARD_ROW_ORIGIN + Vector2(0, 14), false, false, false)
-	surface.surface_label("Beat it:", Vector2(192, 244), 12, C_SOFT)
-	surface.draw_rect(PRIMARY_HAND_RECT, Color("#0c1422"))
-	surface.draw_rect(PRIMARY_HAND_RECT, Color(C_CYAN.r, C_CYAN.g, C_CYAN.b, 0.30), false, 2)
-	surface.surface_label("DOUBLE OR NOTHING - %d at risk" % int(view.get("at_risk", 0)), PRIMARY_HAND_RECT.position + Vector2(18, 24), 15, C_AMBER)
-	surface.surface_label("DEALER", CARD_ROW_ORIGIN + Vector2(8, -8), 12, C_SOFT)
-	_draw_card(surface, dealer, CARD_ROW_ORIGIN + Vector2(0, 12), false, false, false)
-	surface.surface_label("PICKS", Vector2(192, CARD_ROW_ORIGIN.y + 4), 12, C_SOFT)
-	var selected := int(view.get("selected_pick", -1))
-	for i in range(4):
-		var pos := Vector2(192 + i * CARD_SPACING, CARD_ROW_ORIGIN.y + 12)
-		surface.draw_rect(Rect2(pos, CARD_SIZE), C_SOFT)
-		surface.draw_rect(Rect2(pos + Vector2(4, 4), CARD_SIZE - Vector2(8, 8)), C_PINK if i != selected else C_TEAL)
-		surface.draw_rect(Rect2(pos + Vector2(12, 12), CARD_SIZE - Vector2(24, 24)), Color("#563be0"))
-		surface.surface_label("?", pos + CARD_SIZE * 0.5 + Vector2(-7, 8), 26, C_WHITE)
-		surface.surface_add_exact_hit(Rect2(pos, CARD_SIZE), "video_poker_double_pick", i)
 
 
 func _draw_card(surface, card_value: Variant, pos: Vector2, held: bool, suggested: bool, scoring: bool) -> void:

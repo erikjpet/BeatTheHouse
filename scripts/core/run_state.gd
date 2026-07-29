@@ -136,7 +136,6 @@ const GRAND_CASINO_MEMORY_DEFAULT_LINES := {
 	"returning": "A floor attendant recognizes you before you reach the felt.",
 }
 const GRAND_CASINO_SHOWDOWN_DEFAULT_SUCCESS_MESSAGE := "Rourke cannot prove enough to hold you. The casino lets you walk with your winnings. Rourke lets the elevator close; the house will remember your face."
-const GRAND_CASINO_SHOWDOWN_DEFAULT_FAILURE_MESSAGE := "The story falls apart in the back room. The casino takes you out back and the run ends."
 const GRAND_CASINO_HIGH_ROLLER_DEFAULT_SUCCESS_MESSAGE := "Linda issues the Gold Players Card and lets you leave with your winnings."
 const GRAND_CASINO_ACT_TWO_SEAM_MESSAGE := "The Gold card opens doors beyond this city."
 const ROURKE_MOVE_EVALUATION_ACTIONS := 3
@@ -4916,22 +4915,6 @@ func _grand_casino_players_card_tier_definitions(config: Dictionary) -> Array:
 			"benefits": ["Gold review completes the clean route"],
 		},
 	]
-
-
-func _grand_casino_players_card_derived_tier(config: Dictionary, games_played: int, net_winnings: int, max_visit_heat: int, eligible: bool) -> String:
-	if not eligible:
-		return GRAND_CASINO_PLAYERS_CARD_TIER_NONE
-	var result := GRAND_CASINO_PLAYERS_CARD_TIER_NONE
-	for definition_value in _grand_casino_players_card_tier_definitions(config):
-		var definition: Dictionary = definition_value
-		if games_played < int(definition.get("min_games", 0)):
-			break
-		if net_winnings < int(definition.get("net_winnings", 0)):
-			break
-		if max_visit_heat > int(definition.get("max_heat", 100)):
-			break
-		result = str(definition.get("id", GRAND_CASINO_PLAYERS_CARD_TIER_NONE))
-	return result
 
 
 func _grand_casino_players_card_tier_definition(config: Dictionary, tier_id: String) -> Dictionary:

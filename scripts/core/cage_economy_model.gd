@@ -1,12 +1,9 @@
 class_name CageEconomyModel
 extends RefCounted
 
-const ROOM_ID := "grand_casino_cage"
-const COUNTER_FIXTURE_ID := "cage_counter"
-const ATM_FIXTURE_ID := "cage_atm"
-const GIFT_SHOP_FIXTURE_ID := "cage_gift_shop"
+# Pure math for the Grand Casino cage/ATM. Fixture ids live in environment
+# data and UI controllers; this model owns only balances, limits, and interest.
 const ATM_DEBT_ID := "grand_casino_atm_marker"
-const ATM_DEBT_BALANCE_NAME := "grand_casino_atm_debt"
 
 const LOAN_INCREMENT := 50
 const LOAN_CAP := 500

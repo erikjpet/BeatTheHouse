@@ -71,7 +71,6 @@ const BAR_PATRON_POSITIONS := [
 	Vector2(808, 84),
 ]
 
-const RULESET_ORDER := ["ship_captain_crew"]
 const RULESET_LABEL := {
 	"ship_captain_crew": "Ship, Captain, Crew",
 }
@@ -2081,10 +2080,6 @@ func _roll_dice(rng: RngStream, count: int) -> Array:
 	return dice
 
 
-func _suggested_reroll(dice: Array) -> Array:
-	return _suggested_reroll_for_ruleset(dice, "ship_captain_crew")
-
-
 func _suggested_reroll_for_ruleset(dice: Array, _ruleset: String) -> Array:
 	return _ship_reroll_marks(dice)
 
@@ -2121,10 +2116,6 @@ func _ship_lock_indices(dice: Array) -> Array:
 	return locks
 
 
-func _loaded_value_for(dice: Array) -> int:
-	return _loaded_value_for_ruleset(dice, "ship_captain_crew")
-
-
 func _loaded_value_for_ruleset(dice_value: Variant, _ruleset: String) -> int:
 	var dice := _int_dice(dice_value)
 	var locks := _ship_lock_indices(dice)
@@ -2135,21 +2126,6 @@ func _loaded_value_for_ruleset(dice_value: Variant, _ruleset: String) -> int:
 	if locks.size() < 3:
 		return 4
 	return 6
-
-
-func _apply_loaded_die(dice_value: Variant, loaded_value: int) -> Array:
-	var dice := _int_dice(dice_value)
-	if dice.size() != DICE_COUNT or loaded_value < 1 or loaded_value > DIE_FACES:
-		return dice
-	var locks := _ship_lock_indices(dice)
-	var target_index := -1
-	for i in range(dice.size()):
-		if not locks.has(i):
-			target_index = i
-			break
-	if target_index >= 0:
-		dice[target_index] = loaded_value
-	return dice
 
 
 func _apply_controlled_roll(dice_value: Variant, controlled_roll: Dictionary) -> Array:
@@ -2266,10 +2242,6 @@ func _compare_signatures(a: Array, b: Array) -> int:
 	if a.size() < b.size():
 		return -1
 	return 0
-
-
-func _category_power(category: String) -> int:
-	return int(CATEGORY_RANK.get(category, 0))
 
 
 func _payout_multiplier(_category: String, state: Dictionary) -> float:
@@ -2586,10 +2558,6 @@ func _next_ship_target(score: Dictionary) -> String:
 			return "Crew: a 4"
 		_:
 			return ""
-
-
-func _remaining_from_score(score: Dictionary) -> int:
-	return maxi(0, MAX_SHAKES - int(score.get("stage", 0)))
 
 
 func _result_title(outcome: String) -> String:
@@ -3237,10 +3205,6 @@ func _reroll_summary(marks: Array) -> String:
 
 func _word_single(value: int) -> String:
 	return str(DIE_WORD.get(value, str(value)))
-
-
-func _word_plural(value: int) -> String:
-	return str(DIE_WORD_PLURAL.get(value, "%ss" % value))
 
 
 func _patron_banter_line(patron: Dictionary, selector: int, outcome: String) -> String:
